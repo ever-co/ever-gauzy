@@ -9,12 +9,15 @@ import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { firstValueFrom } from 'rxjs';
-import { filter, tap } from 'rxjs/operators';
-import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
+import { filter, tap, distinctUntilChanged } from 'rxjs/operators';
 import { LocalDataSource } from 'ng2-smart-table';
 import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import {
+	PaginationFilterBaseComponent,
+	IPaginationBase
+} from '../../@shared/pagination/pagination-filter-base.component';
 import {
 	EmployeeLevelService,
 	Store,
@@ -28,7 +31,7 @@ import {
 	styleUrls: ['employee-level.component.scss']
 })
 export class EmployeeLevelComponent
-	extends TranslationBaseComponent
+	extends PaginationFilterBaseComponent
 	implements OnInit, OnDestroy
 {
 	organization: IOrganization;
@@ -62,8 +65,19 @@ export class EmployeeLevelComponent
 	}
 
 	ngOnInit(): void {
-		this._loadSmartTableSettings();
-		this._applyTranslationOnSmartTable();
+		this.subject$
+			.pipe(
+				tap(() => this.loadEmployeeLevels()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.pagination$
+			.pipe(
+				distinctUntilChanged(),
+				tap(() => this.subject$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization: IOrganization) => !!organization),
@@ -71,17 +85,23 @@ export class EmployeeLevelComponent
 					(organization: IOrganization) =>
 						(this.organization = organization)
 				),
-				tap(() => this.loadEmployeeLevels()),
+				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
+		this._loadSmartTableSettings();
+		this._applyTranslationOnSmartTable();
 	}
 
 	ngOnDestroy(): void {}
 
 	private async loadEmployeeLevels() {
+		if (!this.organization) {
+			return;
+		}
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
+		const { activePage, itemsPerPage } = this.getPagination();
 
 		const { items } = await this.employeeLevelService.getAll(['tags'], {
 			tenantId,
@@ -90,28 +110,49 @@ export class EmployeeLevelComponent
 
 		if (items) {
 			this.employeeLevels = items;
+			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
 			this.smartTableSource.load(items);
+			if (
+				this.componentLayoutStyleEnum.CARDS_GRID ===
+				this.dataLayoutStyle
+			)
+				this._loadGridLayoutData();
 		}
-
 		await this.emptyListInvoke();
+	}
+
+	private async _loadGridLayoutData() {
+		this.employeeLevels = await this.smartTableSource.getElements();
+		this.setPagination({
+			...this.getPagination(),
+			totalItems: this.smartTableSource.count()
+		});
 	}
 
 	setView() {
 		this.viewComponentName = ComponentEnum.EMPLOYEE_LEVELS;
 		this.store
 			.componentLayout$(this.viewComponentName)
-			.pipe(untilDestroyed(this))
+			.pipe(
+				tap(() => this.subject$.next(true)),
+				untilDestroyed(this)
+			)
 			.subscribe((componentLayout) => {
 				this.dataLayoutStyle = componentLayout;
 				this.selectedEmployeeLevel = null;
 
 				//when layout selector change then hide edit show card
 				this.showAddCard = false;
+        this.cancel();
 			});
 	}
 
 	_loadSmartTableSettings() {
+		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
+			pager: {
+				perPage: pagination ? pagination : 10
+			},
 			actions: false,
 			columns: {
 				level: {
@@ -140,7 +181,7 @@ export class EmployeeLevelComponent
 				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EMPLOYEE_LEVELS.ADD_EMPLOYEE_LEVEL',
 				{ name: level }
 			);
-			this.loadEmployeeLevels();
+			this.subject$.next(true);
 			this.cancel();
 		} else {
 			this.toastrService.danger(
@@ -169,7 +210,7 @@ export class EmployeeLevelComponent
 			name: employeeLevelName
 		});
 
-		this.loadEmployeeLevels();
+		this.subject$.next(true);
 		this.cancel();
 	}
 
@@ -203,7 +244,7 @@ export class EmployeeLevelComponent
 				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EMPLOYEE_LEVELS.REMOVE_EMPLOYEE_LEVEL',
 				{ name }
 			);
-			this.loadEmployeeLevels();
+			this.subject$.next(true);
 		}
 	}
 
@@ -263,12 +304,12 @@ export class EmployeeLevelComponent
 		if (employeeLevel.data) employeeLevel = employeeLevel.data;
 		const res =
 			this.selected.employeeLevel &&
-			employeeLevel === this.selected.employeeLevel
+			employeeLevel.id === this.selected.employeeLevel.id
 				? { state: !this.selected.state }
 				: { state: true };
 		this.selected.state = res.state;
 		this.disabled = !res.state;
 		this.selected.employeeLevel = employeeLevel;
-    this.selectedEmployeeLevel =employeeLevel;
+		this.selectedEmployeeLevel = employeeLevel;
 	}
 }
