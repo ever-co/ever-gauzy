@@ -9,9 +9,8 @@ import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import { LocalDataSource } from 'ng2-smart-table';
-import { firstValueFrom, filter, tap } from 'rxjs';
+import { firstValueFrom, filter, tap, distinctUntilChanged } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import {
 	OrganizationPositionsService,
 	Store,
@@ -20,6 +19,10 @@ import {
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
+import {
+	PaginationFilterBaseComponent,
+	IPaginationBase
+} from '../../@shared/pagination/pagination-filter-base.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -28,7 +31,7 @@ import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-con
 	styleUrls: ['positions.component.scss']
 })
 export class PositionsComponent
-	extends TranslationBaseComponent
+	extends PaginationFilterBaseComponent
 	implements OnInit, OnDestroy
 {
 	showAddCard: boolean;
@@ -62,9 +65,19 @@ export class PositionsComponent
 	}
 
 	ngOnInit(): void {
-		this._loadSmartTableSettings();
-		this._applyTranslationOnSmartTable();
-
+		this.subject$
+			.pipe(
+				tap(() => this.loadPositions()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.pagination$
+			.pipe(
+				distinctUntilChange(),
+				tap(() => this.subject$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization: IOrganization) => !!organization),
@@ -72,16 +85,22 @@ export class PositionsComponent
 					(organization: IOrganization) =>
 						(this.organization = organization)
 				),
-				tap(() => this.loadPositions()),
+				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
+		this._loadSmartTableSettings();
+		this._applyTranslationOnSmartTable();
 	}
 
 	ngOnDestroy(): void {}
 
 	private _loadSmartTableSettings() {
+		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
+			pager: {
+				perPage: pagination ? pagination : 10
+			},
 			actions: false,
 			columns: {
 				name: {
@@ -113,7 +132,7 @@ export class PositionsComponent
 				{ name }
 			);
 
-			this.loadPositions();
+			this.subject$.next(true);
 		}
 	}
 
@@ -138,6 +157,7 @@ export class PositionsComponent
 					(componentLayout) =>
 						componentLayout === ComponentLayoutStyleEnum.CARDS_GRID
 				),
+				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe((componentLayout) => {
@@ -170,11 +190,12 @@ export class PositionsComponent
 			tenantId,
 			tags: this.tags
 		});
-		this.loadPositions();
+
 		this.toastrService.success(
 			'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_POSITIONS.UPDATED_POSITION',
 			{ name }
 		);
+		this.subject$.next(true);
 		this.cancel();
 	}
 
@@ -198,7 +219,7 @@ export class PositionsComponent
 				{ name }
 			);
 
-			this.loadPositions();
+			this.subject$.next(true);
 			this.cancel();
 		} else {
 			// TODO translate
@@ -217,6 +238,10 @@ export class PositionsComponent
 		this.selectedPosition = null;
 		this.isGridEdit = false;
 		this.tags = [];
+		this.selected = {
+			position: null,
+			state: false
+		};
 	}
 
 	showEditCard(position: IOrganizationPosition) {
@@ -231,6 +256,7 @@ export class PositionsComponent
 		}
 		const { id: organizationId } = this.organization;
 		const { tenantId } = this.store.user;
+		const { activePage, itemsPerPage } = this.getPagination();
 
 		const res = await this.organizationPositionsService.getAll(
 			{
@@ -241,7 +267,13 @@ export class PositionsComponent
 		);
 		if (res) {
 			this.positions = res.items;
+			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
 			this.smartTableSource.load(res.items);
+			if (
+				this.componentLayoutStyleEnum.CARDS_GRID ===
+				this.dataLayoutStyle
+			)
+				this._loadGridLayoutData();
 
 			if (this.positions.length <= 0) {
 				this.positionsExist = false;
@@ -251,6 +283,14 @@ export class PositionsComponent
 
 			this.emptyListInvoke();
 		}
+	}
+
+	private async _loadGridLayoutData() {
+		this.positions = await this.smartTableSource.getElements();
+		this.setPagination({
+			...this.getPagination(),
+			totalItems: this.smartTableSource.count()
+		});
 	}
 
 	selectedTagsEvent(ev) {

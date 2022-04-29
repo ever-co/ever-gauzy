@@ -45,13 +45,17 @@
 				positions?.length
 			"
 		>
-			<div class="grid-scroll-container">
-				<ga-card-grid
-					[settings]="settingsSmartTable"
-					[source]="positions"
-					[buttonTemplate]="actionButtons"
-				></ga-card-grid>
-			</div>
+			<ga-card-grid
+				[settings]="settingsSmartTable"
+				[source]="positions"
+				[doEmit]="false"
+				[totalItems]="pagination?.totalItems"
+				[itemsPerPage]="pagination?.itemsPerPage"
+				[activePage]="pagination?.activePage"
+				(onSelectedItem)="selectPosition($event)"
+				(selectedOption)="onUpdateOption($event)"
+				(selectedPage)="onPageChange($event)"
+			></ga-card-grid>
 		</ng-template>
 	</nb-card-body>
 </nb-card>
