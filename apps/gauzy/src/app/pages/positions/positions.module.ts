@@ -19,6 +19,7 @@ import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { TranslateModule } from '../../@shared/translate/translate.module';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
+import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
 
 @NgModule({
 	imports: [
@@ -39,7 +40,8 @@ import { HeaderTitleModule } from '../../@shared/components/header-title/header-
 		NbActionsModule,
 		NbDialogModule.forChild(),
 		TranslateModule,
-		HeaderTitleModule
+		HeaderTitleModule,
+    GauzyButtonActionModule
 	],
 	declarations: [PositionsComponent],
 	providers: [OrganizationPositionsService]
