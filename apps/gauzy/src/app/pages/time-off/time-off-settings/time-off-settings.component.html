@@ -56,7 +56,7 @@
 			<button
 				nbButton
 				status="basic"
-        class="action"
+				class="action"
 				[disabled]="!selectedItem && disableButton"
 				(click)="deletePolicy(selectedItem)"
 				size="small"
@@ -69,7 +69,12 @@
 </ng-template>
 <ng-template #visibleButton>
 	<ng-template ngxPermissionsOnly="POLICY_EDIT">
-		<button nbButton status="success" (click)="openAddPolicyDialog()">
+		<button
+			nbButton
+			status="success"
+			size="small"
+			(click)="openAddPolicyDialog()"
+		>
 			<nb-icon class="mr-1" icon="plus-outline"></nb-icon
 			>{{ 'BUTTONS.ADD' | translate }}
 		</button>
