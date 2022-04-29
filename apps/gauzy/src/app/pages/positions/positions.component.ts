@@ -133,6 +133,7 @@ export class PositionsComponent
 			);
 
 			this.subject$.next(true);
+			this.cancel();
 		}
 	}
 
@@ -242,6 +243,7 @@ export class PositionsComponent
 			position: null,
 			state: false
 		};
+		this.disabled = true;
 	}
 
 	showEditCard(position: IOrganizationPosition) {
