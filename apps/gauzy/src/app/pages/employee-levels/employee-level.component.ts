@@ -9,11 +9,12 @@ import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { firstValueFrom } from 'rxjs';
-import { filter, tap, distinctUntilChanged } from 'rxjs/operators';
+import { filter, tap } from 'rxjs/operators';
 import { LocalDataSource } from 'ng2-smart-table';
 import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { distinctUntilChange } from '@gauzy/common-angular';
 import {
 	PaginationFilterBaseComponent,
 	IPaginationBase
@@ -73,7 +74,7 @@ export class EmployeeLevelComponent
 			.subscribe();
 		this.pagination$
 			.pipe(
-				distinctUntilChanged(),
+				distinctUntilChange(),
 				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
