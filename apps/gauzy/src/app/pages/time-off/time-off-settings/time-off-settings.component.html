@@ -1,6 +1,6 @@
 <nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
-	<nb-card-header class="card-header-title">
-		<div class="card-header-title">
+	<nb-card-header class="d-flex flex-column pb-0">
+		<div class="card-header-title d-flex justify-content-start">
 			<ngx-back-navigation></ngx-back-navigation>
 			<h4>
 				<ngx-header-title [allowEmployee]="false">
@@ -8,13 +8,15 @@
 				</ngx-header-title>
 			</h4>
 		</div>
-		<ngx-gauzy-button-action
-			[isDisable]="disableButton"
-			[buttonTemplate]="actionButtons"
-			[buttonTemplateVisible]="visibleButton"
-			[componentName]="viewComponentName"
-		>
-		</ngx-gauzy-button-action>
+		<div class="align-self-end">
+			<ngx-gauzy-button-action
+				[isDisable]="disableButton"
+				[buttonTemplate]="actionButtons"
+				[buttonTemplateVisible]="visibleButton"
+				[componentName]="viewComponentName"
+			>
+			</ngx-gauzy-button-action>
+		</div>
 	</nb-card-header>
 	<nb-card-body>
 		<ng2-smart-table
