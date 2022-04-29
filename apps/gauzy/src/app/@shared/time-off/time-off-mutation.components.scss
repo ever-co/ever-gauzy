@@ -1,10 +1,11 @@
+@import 'gauzy/_gauzy-dialogs';
+
 .main {
-  width: 750px;
+  width: 645px;
 
   nb-card-header {
     display: flex;
     justify-content: space-between;
-    align-items: center;
 
     nb-icon {
       cursor: pointer;
@@ -29,4 +30,8 @@ img {
 .download-btn {
   height: 2rem;
   font-weight: 400;
+}
+
+nb-card {
+  background-color: nb-theme(gauzy-card-1);
 }
