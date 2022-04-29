@@ -246,6 +246,7 @@ export class EmployeeLevelComponent
 				{ name }
 			);
 			this.subject$.next(true);
+			this.cancel();
 		}
 	}
 
@@ -266,6 +267,7 @@ export class EmployeeLevelComponent
 		};
 		this.isGridEdit = false;
 		this.tags = [];
+    this.disabled = true;
 	}
 
 	selectedTagsEvent(ev) {
