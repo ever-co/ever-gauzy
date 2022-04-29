@@ -1,7 +1,17 @@
+@import 'themes';
+
 .center {
-	height: auto;
-	align-items: center;
-	border-radius: 2px;
-	justify-content: center;
-	display: flex;
+  height: auto;
+  align-items: center;
+  border-radius: 2px;
+  justify-content: start;
+  display: flex;
+}
+
+.badge-width {
+  border-radius: nb-theme(border-radius);
+  padding: 1px 8px 0 8px;
+  i {
+    font-size: 14px;
+  }
 }
