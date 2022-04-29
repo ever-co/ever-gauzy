@@ -9,7 +9,7 @@ import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import { LocalDataSource } from 'ng2-smart-table';
-import { firstValueFrom, filter, tap, distinctUntilChanged } from 'rxjs';
+import { firstValueFrom, filter, tap } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
 	OrganizationPositionsService,
