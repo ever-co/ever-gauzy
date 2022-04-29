@@ -184,7 +184,7 @@
 						'ORGANIZATIONS_PAGE.EDIT.POSITION_NAME' | translate
 					}}</label>
 					<input
-						#addInput="ngModel"
+						#editInput="ngModel"
 						nbInput
 						type="text"
 						[placeholder]="
@@ -219,10 +219,7 @@
 					</button>
 					<button
 						(click)="
-							editPosition(
-								selected.position.id,
-								selected.position.name
-							);
+							editPosition(selected.position.id, editInput.value);
 							disabled = true;
 							ref.close()
 						"
