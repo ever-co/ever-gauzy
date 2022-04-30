@@ -43,32 +43,32 @@
 	<nb-card-body>
 		<div class="row mb-3 justify-content-end" *ngIf="showFilter">
 			<div class="filter">
-        <nb-radio-group
-				class="align-center radio-group mr-5"
-				[(ngModel)]="selectedStatus"
-				(ngModelChange)="detectStatusChange($event)"
-			>
-				<nb-radio
-					class="d-flex"
-					*ngFor="let status of timeOffStatuses"
-					[value]="status"
-					>{{ 'TIME_OFF_PAGE.STATUSES.' + status | translate }}
-				</nb-radio>
-			</nb-radio-group>
-			<nb-toggle
-				(checkedChange)="changeIncludeArchived($event)"
-				status="warning"
-				class="my-auto align-center"
-			>
-				{{ 'FORM.CHECKBOXES.INCLUDE_ARCHIVED' | translate }}
-			</nb-toggle>
-      </div>
+				<nb-radio-group
+					class="align-center radio-group mr-5"
+					[(ngModel)]="selectedStatus"
+					(ngModelChange)="detectStatusChange($event)"
+				>
+					<nb-radio
+						class="d-flex"
+						*ngFor="let status of timeOffStatuses"
+						[value]="status"
+						>{{ 'TIME_OFF_PAGE.STATUSES.' + status | translate }}
+					</nb-radio>
+				</nb-radio-group>
+				<nb-toggle
+					(checkedChange)="changeIncludeArchived($event)"
+					status="warning"
+					class="my-auto align-center"
+				>
+					{{ 'FORM.CHECKBOXES.INCLUDE_ARCHIVED' | translate }}
+				</nb-toggle>
+			</div>
 		</div>
 		<ng-template
 			[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
 			[ngIfElse]="gridLayout"
 		>
-			<div class="table-scroll-container">
+			<div class="table-scroll-container custom-table">
 				<ng2-smart-table
 					class="time-off-table"
 					style="cursor: pointer"
@@ -79,6 +79,21 @@
 				>
 				</ng2-smart-table>
 			</div>
+			<ng-container
+				*ngIf="pagination.totalItems > pagination.itemsPerPage"
+			>
+				<div class="pagination-container">
+					<ga-pagination
+						(selectedOption)="onUpdateOption($event)"
+						(selectedPage)="onPageChange($event)"
+						[doEmit]="false"
+						[totalItems]="pagination?.totalItems"
+						[itemsPerPage]="pagination?.itemsPerPage"
+						[activePage]="pagination?.activePage"
+					>
+					</ga-pagination>
+				</div>
+			</ng-container>
 		</ng-template>
 		<ng-template #gridLayout>
 			<div class="grid-scroll-container">
@@ -180,10 +195,7 @@
 	</nb-card-body>
 </nb-card>
 
-<ng-template
-	#actionButtons
-	let-selectedItem="selectedItem"
->
+<ng-template #actionButtons let-selectedItem="selectedItem">
 	<ng-template ngxPermissionsOnly="TIME_OFF_EDIT">
 		<div class="btn-group actions">
 			<ng-container

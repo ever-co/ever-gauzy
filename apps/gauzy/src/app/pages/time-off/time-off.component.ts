@@ -17,12 +17,18 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import { ComponentEnum } from '../../@core/constants';
 import { Store, TimeOffService, ToastrService } from '../../@core/services';
-import { TimeOffHolidayMutationComponent, TimeOffRequestMutationComponent } from '../../@shared/time-off';
+import {
+	TimeOffHolidayMutationComponent,
+	TimeOffRequestMutationComponent
+} from '../../@shared/time-off';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
-import { TranslationBaseComponent } from '../../@shared/language-base';
 import { StatusBadgeComponent } from '../../@shared/status-badge';
 import { AvatarComponent } from '../../@shared/components/avatar/avatar.component';
 import { DateViewComponent } from '../../@shared/table-components';
+import {
+	PaginationFilterBaseComponent,
+	IPaginationBase
+} from '../../@shared/pagination/pagination-filter-base.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -30,9 +36,10 @@ import { DateViewComponent } from '../../@shared/table-components';
 	templateUrl: './time-off.component.html',
 	styleUrls: ['./time-off.component.scss']
 })
-export class TimeOffComponent extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
-
+export class TimeOffComponent
+	extends PaginationFilterBaseComponent
+	implements OnInit, OnDestroy
+{
 	settingsSmartTable: object;
 	selectedEmployeeId: string | null;
 	selectedDateRange: IDateRangePicker;
@@ -81,9 +88,9 @@ export class TimeOffComponent extends TranslationBaseComponent
 		this.timeoff$
 			.pipe(
 				debounceTime(300),
-				tap(() => this.loading = true),
 				tap(() => this.getTimeOffs()),
 				tap(() => this.clearItem()),
+				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -104,6 +111,13 @@ export class TimeOffComponent extends TranslationBaseComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
+		this.pagination$
+			.pipe(
+				distinctUntilChange(),
+				tap(() => this.timeoff$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	setView() {
@@ -112,8 +126,14 @@ export class TimeOffComponent extends TranslationBaseComponent
 			.componentLayout$(this.viewComponentName)
 			.pipe(
 				distinctUntilChange(),
-				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
-				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
+				tap(
+					(componentLayout) =>
+						(this.dataLayoutStyle = componentLayout)
+				),
+				filter(
+					(componentLayout) =>
+						componentLayout === ComponentLayoutStyleEnum.CARDS_GRID
+				),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -144,7 +164,8 @@ export class TimeOffComponent extends TranslationBaseComponent
 			.pipe(
 				tap(() => this._loadSmartTableSettings()),
 				untilDestroyed(this)
-			).subscribe();
+			)
+			.subscribe();
 	}
 
 	detectStatusChange(status: StatusTypesEnum) {
@@ -341,6 +362,7 @@ export class TimeOffComponent extends TranslationBaseComponent
 	}
 
 	private _loadSmartTableSettings() {
+		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
 			actions: false,
 			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA'),
@@ -356,9 +378,10 @@ export class TimeOffComponent extends TranslationBaseComponent
 						return {
 							name: row.fullName ? row.fullName : null,
 							src: row.imageUrl ? row.imageUrl : null,
-							id: (row.employees && row.employees.length === 1) ?
-								row.employees[0].id :
-								null
+							id:
+								row.employees && row.employees.length === 1
+									? row.employees[0].id
+									: null
 						};
 					},
 					class: 'align-row'
@@ -408,8 +431,8 @@ export class TimeOffComponent extends TranslationBaseComponent
 							)
 								? 'success'
 								: ['requested'].includes(cell.toLowerCase())
-									? 'warning'
-									: 'danger';
+								? 'warning'
+								: 'danger';
 						}
 						return {
 							text: cell,
@@ -419,32 +442,41 @@ export class TimeOffComponent extends TranslationBaseComponent
 				}
 			},
 			pager: {
-				display: true,
-				perPage: 8
+				display: false,
+				perPage: pagination ? pagination : 10
 			}
 		};
 	}
 
 	private getTimeOffs() {
+		if (!this.organization) {
+			return;
+		}
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
-
+		const { itemsPerPage, activePage } = this.getPagination();
 		try {
+			this.loading = true;
 			const request = {
 				organizationId,
 				tenantId,
 				employeeId: this.selectedEmployeeId || null,
 				...this.selectedDateRange
-			}
-			this.timeOffService.getAllTimeOffRecords([], request)
+			};
+			this.sourceSmartTable.setPaging(activePage, itemsPerPage, false);
+			this.timeOffService
+				.getAllTimeOffRecords([], request)
 				.pipe(
 					first(),
 					tap(({ items }) => this.mapTimeOffRequests(items)),
-					finalize(() => this.loading = false),
+					finalize(() => (this.loading = false)),
 					untilDestroyed(this)
-				).subscribe()
+				)
+				.subscribe();
 		} catch (error) {
-			this.toastrService.danger('TIME_OFF_PAGE.NOTIFICATIONS.ERR_LOAD_RECORDS')
+			this.toastrService.danger(
+				'TIME_OFF_PAGE.NOTIFICATIONS.ERR_LOAD_RECORDS'
+			);
 		}
 	}
 
@@ -456,7 +488,9 @@ export class TimeOffComponent extends TranslationBaseComponent
 			let extendedDescription = '';
 
 			if (timeOff.employees.length !== 1) {
-				employeeName = this.getTranslation('TIME_OFF_PAGE.MULTIPLE_EMPLOYEES');
+				employeeName = this.getTranslation(
+					'TIME_OFF_PAGE.MULTIPLE_EMPLOYEES'
+				);
 				employeeImage = 'assets/images/avatars/people-outline.svg';
 			} else {
 				employeeName = `${timeOff.employees[0].fullName}`;
@@ -485,6 +519,10 @@ export class TimeOffComponent extends TranslationBaseComponent
 		});
 		this.timeOffs = this.rows;
 		this.sourceSmartTable.load(this.rows);
+		this.setPagination({
+			...this.getPagination(),
+			totalItems: this.sourceSmartTable.count()
+		});
 	}
 
 	private _createRecord() {
@@ -495,34 +533,45 @@ export class TimeOffComponent extends TranslationBaseComponent
 					.pipe(
 						untilDestroyed(this),
 						first(),
-						tap(() => this.toastrService.success('TIME_OFF_PAGE.NOTIFICATIONS.RECORD_CREATED')),
-						finalize(() => this.timeoff$.next(true)),
+						tap(() =>
+							this.toastrService.success(
+								'TIME_OFF_PAGE.NOTIFICATIONS.RECORD_CREATED'
+							)
+						),
+						finalize(() => this.timeoff$.next(true))
 					)
 					.subscribe();
 			}
 		} catch (error) {
-			this.toastrService.danger('TIME_OFF_PAGE.NOTIFICATIONS.ERR_CREATE_RECORD');
+			this.toastrService.danger(
+				'TIME_OFF_PAGE.NOTIFICATIONS.ERR_CREATE_RECORD'
+			);
 		}
 	}
 
 	private _updateRecord(id: string) {
 		try {
-			this.timeOffService
-				.updateRequest(id, this.timeOffRequest)
-				.pipe(
-					untilDestroyed(this),
-					first(),
-					tap(() => this.toastrService.success('TIME_OFF_PAGE.NOTIFICATIONS.REQUEST_UPDATED')),
-					finalize(() => this.timeoff$.next(true)),
-				)
+			this.timeOffService.updateRequest(id, this.timeOffRequest).pipe(
+				untilDestroyed(this),
+				first(),
+				tap(() =>
+					this.toastrService.success(
+						'TIME_OFF_PAGE.NOTIFICATIONS.REQUEST_UPDATED'
+					)
+				),
+				finalize(() => this.timeoff$.next(true))
+			);
 		} catch (error) {
-			this.toastrService.danger('TIME_OFF_PAGE.NOTIFICATIONS.ERR_UPDATE_RECORD');
+			this.toastrService.danger(
+				'TIME_OFF_PAGE.NOTIFICATIONS.ERR_UPDATE_RECORD'
+			);
 		}
 	}
 
 	private _removeDocUrl() {
 		if (this.selectedTimeOffRecord.description) {
-			const index = this.selectedTimeOffRecord.description.lastIndexOf('>');
+			const index =
+				this.selectedTimeOffRecord.description.lastIndexOf('>');
 			const nativeDescription = this.selectedTimeOffRecord.description;
 			this.selectedTimeOffRecord.description = nativeDescription.substr(
 				index + 1
@@ -565,8 +614,8 @@ export class TimeOffComponent extends TranslationBaseComponent
 
 	/**
 	 * Navigate to employee edit section
-	 * 
-	 * @param row 
+	 *
+	 * @param row
 	 */
 	navigateToEmployee(row: ITimeOff) {
 		if (row?.employees.length > 0) {
@@ -577,5 +626,5 @@ export class TimeOffComponent extends TranslationBaseComponent
 		}
 	}
 
-	ngOnDestroy(): void { }
+	ngOnDestroy(): void {}
 }
