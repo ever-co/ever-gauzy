@@ -6,7 +6,6 @@ import {
 	ITimeOff,
 	ComponentLayoutStyleEnum,
 	IOrganization,
-	IEmployeeJobsStatisticsResponse,
 	IDateRangePicker
 } from '@gauzy/contracts';
 import { debounceTime, filter, first, tap, finalize } from 'rxjs/operators';
@@ -23,8 +22,9 @@ import {
 } from '../../@shared/time-off';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import { StatusBadgeComponent } from '../../@shared/status-badge';
-import { AvatarComponent } from '../../@shared/components/avatar/avatar.component';
 import { DateViewComponent } from '../../@shared/table-components';
+import { PictureNameTagsComponent } from '../../@shared/table-components/picture-name-tags/picture-name-tags.component';
+import { ApprovalPolicyComponent } from '../approvals/table-components/approval-policy/approval-policy.component';
 import {
 	PaginationFilterBaseComponent,
 	IPaginationBase
@@ -212,18 +212,18 @@ export class TimeOffComponent
 			this.timeOffService
 				.updateRequestStatus(requestId, 'approval')
 				.pipe(untilDestroyed(this), first())
-				.subscribe(
-					() => {
+				.subscribe({
+					next: () => {
 						this.toastrService.success(
 							'TIME_OFF_PAGE.NOTIFICATIONS.STATUS_SET_APPROVED'
 						);
 						this.timeoff$.next(true);
 					},
-					() =>
+					error: () =>
 						this.toastrService.danger(
 							'TIME_OFF_PAGE.NOTIFICATIONS.ERR_SET_STATUS'
 						)
-				);
+				});
 		} else {
 			this.toastrService.success(
 				'TIME_OFF_PAGE.NOTIFICATIONS.APPROVED_NO_CHANGES',
@@ -246,18 +246,18 @@ export class TimeOffComponent
 			this.timeOffService
 				.updateRequestStatus(requestId, 'denied')
 				.pipe(untilDestroyed(this), first())
-				.subscribe(
-					() => {
+				.subscribe({
+					next: () => {
 						this.toastrService.success(
 							'TIME_OFF_PAGE.NOTIFICATIONS.REQUEST_DENIED'
 						);
 						this.timeoff$.next(true);
 					},
-					() =>
+					error: () =>
 						this.toastrService.danger(
 							'TIME_OFF_PAGE.NOTIFICATIONS.ERR_SET_STATUS'
 						)
-				);
+				});
 		} else {
 			this.toastrService.success(
 				'TIME_OFF_PAGE.NOTIFICATIONS.DENIED_NO_CHANGES',
@@ -288,18 +288,18 @@ export class TimeOffComponent
 					this.timeOffService
 						.deleteDaysOffRequest(this.selectedTimeOffRecord.id)
 						.pipe(untilDestroyed(this), first())
-						.subscribe(
-							() => {
+						.subscribe({
+							next: () => {
 								this.toastrService.success(
 									'TIME_OFF_PAGE.NOTIFICATIONS.REQUEST_DELETED'
 								);
 								this.timeoff$.next(true);
 							},
-							() =>
+							error: () =>
 								this.toastrService.danger(
 									'TIME_OFF_PAGE.NOTIFICATIONS.ERR_DELETE_REQUEST'
 								)
-						);
+						});
 				}
 			});
 	}
@@ -370,20 +370,8 @@ export class TimeOffComponent
 				fullName: {
 					title: this.getTranslation('SM_TABLE.EMPLOYEE'),
 					type: 'custom',
-					renderComponent: AvatarComponent,
-					valuePrepareFunction: (
-						cell,
-						row: IEmployeeJobsStatisticsResponse
-					) => {
-						return {
-							name: row.fullName ? row.fullName : null,
-							src: row.imageUrl ? row.imageUrl : null,
-							id:
-								row.employees && row.employees.length === 1
-									? row.employees[0].id
-									: null
-						};
-					},
+					renderComponent: PictureNameTagsComponent,
+
 					class: 'align-row'
 				},
 				description: {
@@ -392,8 +380,12 @@ export class TimeOffComponent
 				},
 				policyName: {
 					title: this.getTranslation('SM_TABLE.POLICY'),
-					type: 'string',
-					class: 'text-center'
+					type: 'custom',
+					class: 'text-center',
+					renderComponent: ApprovalPolicyComponent,
+					valuePrepareFunction: (cell, row) => {
+						return { name: cell };
+					}
 				},
 				start: {
 					title: this.getTranslation('SM_TABLE.START'),
@@ -420,7 +412,7 @@ export class TimeOffComponent
 					title: this.getTranslation('SM_TABLE.STATUS'),
 					type: 'custom',
 					class: 'text-center',
-					width: '200px',
+					width: '5%',
 					renderComponent: StatusBadgeComponent,
 					filter: false,
 					valuePrepareFunction: (cell, row) => {
