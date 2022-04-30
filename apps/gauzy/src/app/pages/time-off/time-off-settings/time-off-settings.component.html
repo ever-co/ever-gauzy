@@ -51,7 +51,13 @@
 			*ngIf="dataLayoutStyle === 'CARDS_GRID'"
 			[settings]="smartTableSettings"
 			[source]="timeOffPolicyData"
-			[buttonTemplate]="actionButtons"
+			(onSelectedItem)="selectTimeOffPolicy($event)"
+			(selectedOption)="onUpdateOption($event)"
+			(selectedPage)="onPageChange($event)"
+			[doEmit]="false"
+			[totalItems]="pagination?.totalItems"
+			[itemsPerPage]="pagination?.itemsPerPage"
+			[activePage]="pagination?.activePage"
 		></ga-card-grid>
 	</nb-card-body>
 </nb-card>

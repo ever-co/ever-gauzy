@@ -333,6 +333,12 @@ export class TimeOffSettingsComponent
 							false
 						);
 						this.smartTableSource.load(policyVM);
+						if (
+							this.dataLayoutStyle ===
+							ComponentLayoutStyleEnum.CARDS_GRID
+						) {
+							this._loadGridLayoutData();
+						}
 						this.setPagination({
 							...this.getPagination(),
 							totalItems: this.smartTableSource.count()
@@ -351,6 +357,10 @@ export class TimeOffSettingsComponent
 				});
 		}
 		this.loading = false;
+	}
+
+	private async _loadGridLayoutData() {
+		this.timeOffPolicyData = await this.smartTableSource.getElements();
 	}
 
 	_applyTranslationOnSmartTable() {
