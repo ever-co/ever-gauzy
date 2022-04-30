@@ -62,7 +62,8 @@ import { PaginationModule } from '../../@shared/pagination/pagination.module';
 		NgxPermissionsModule.forChild(),
 		HeaderTitleModule,
 		GauzyButtonActionModule,
-		PaginationModule
+		PaginationModule,
+    NbToggleModule
 	],
 	declarations: [
 		TimeOffComponent,

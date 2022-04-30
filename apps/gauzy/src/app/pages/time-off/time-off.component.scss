@@ -1,3 +1,4 @@
+@import 'gauzy/gauzy-table';
 nb-radio-group {
   display: flex;
   flex-direction: row;
@@ -116,4 +117,19 @@ nb-radio-group {
   background-color: #fa0;
   color: #fff;
   border-radius: 0.25rem;
+}
+
+::ng-deep {
+  .toggle-label {
+    margin-bottom: 0;
+  }
+}
+:host {
+  .custom-toggle {
+    ::ng-deep {
+      span.text {
+        color: nb-theme(text-primary-color);
+      }
+    }
+  }
 }
