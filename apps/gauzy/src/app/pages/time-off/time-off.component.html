@@ -42,7 +42,8 @@
 	</nb-card-header>
 	<nb-card-body>
 		<div class="row mb-3 justify-content-end" *ngIf="showFilter">
-			<nb-radio-group
+			<div class="filter">
+        <nb-radio-group
 				class="align-center radio-group mr-5"
 				[(ngModel)]="selectedStatus"
 				(ngModelChange)="detectStatusChange($event)"
@@ -57,10 +58,11 @@
 			<nb-toggle
 				(checkedChange)="changeIncludeArchived($event)"
 				status="warning"
-				class="my-auto align-center mr-3"
+				class="my-auto align-center"
 			>
 				{{ 'FORM.CHECKBOXES.INCLUDE_ARCHIVED' | translate }}
 			</nb-toggle>
+      </div>
 		</div>
 		<ng-template
 			[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
@@ -180,11 +182,10 @@
 
 <ng-template
 	#actionButtons
-	let-buttonSize="buttonSize"
 	let-selectedItem="selectedItem"
 >
 	<ng-template ngxPermissionsOnly="TIME_OFF_EDIT">
-		<div class="btn-group actions" *ngIf="isRecordSelected">
+		<div class="btn-group actions">
 			<ng-container
 				*ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
 			>

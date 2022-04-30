@@ -1,4 +1,19 @@
 @import 'gauzy/gauzy-table';
+@import 'gauzy/_gauzy-cards';
+
+:host {
+  nb-card,
+  nb-card-body {
+    background-color: rgba(50, 50, 50, 0.03);
+    .custom-table {
+      max-height: calc(100vh - 27.5rem);
+    }
+    display: flex;
+    flex-direction: column;
+  }
+  @include nb-card-overrides(unset, $default-card-height, $default-radius);
+}
+
 nb-radio-group {
   display: flex;
   flex-direction: row;
@@ -132,4 +147,13 @@ nb-radio-group {
       }
     }
   }
+}
+
+.filter {
+  background-color: rgba(50, 50, 50, 0.03);
+  width: fit-content;
+  display: flex;
+  padding: 6px 12px;
+  margin-right: 16px;
+  border-radius: nb-theme(border-radius);
 }
