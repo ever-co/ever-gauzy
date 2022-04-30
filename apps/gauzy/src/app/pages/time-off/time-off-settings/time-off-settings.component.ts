@@ -204,14 +204,16 @@ export class TimeOffSettingsComponent
 					tap(() => this.subject$.next(true)),
 					untilDestroyed(this)
 				)
-				.subscribe(
-					() => {
+				.subscribe({
+					next: () => {
 						this.toastrService.success('NOTES.POLICY.ADD_POLICY', {
 							name: formData.name
 						});
 					},
-					() => this.toastrService.danger('NOTES.POLICY.SAVE_ERROR')
-				);
+					error: () => {
+						this.toastrService.danger('NOTES.POLICY.SAVE_ERROR');
+					}
+				});
 		}
 	}
 
@@ -242,16 +244,16 @@ export class TimeOffSettingsComponent
 		this.timeOffService
 			.updatePolicy(this.selectedPolicyId, formData)
 			.pipe(first(), untilDestroyed(this))
-			.subscribe(
-				() => {
+			.subscribe({
+				next: () => {
 					this.toastrService.success('NOTES.POLICY.EDIT_POLICY', {
 						name: formData.name
 					});
 
 					this.subject$.next(true);
 				},
-				(error) => this.errorHandler.handleError(error)
-			);
+				error: (error) => this.errorHandler.handleError(error)
+			});
 	}
 
 	deletePolicy(selectedItem?: ITimeOffPolicyVM) {
@@ -270,8 +272,8 @@ export class TimeOffSettingsComponent
 				}
 			})
 			.onClose.pipe(untilDestroyed(this))
-			.subscribe(
-				(result) => {
+			.subscribe({
+				next: (result) => {
 					if (result) {
 						this.timeOffService
 							.deletePolicy(this.selectedPolicy.id)
@@ -285,8 +287,8 @@ export class TimeOffSettingsComponent
 							});
 					}
 				},
-				(error) => this.errorHandler.handleError(error)
-			);
+				error: (error) => this.errorHandler.handleError(error)
+			});
 	}
 
 	selectTimeOffPolicy({ isSelected, data }) {
@@ -312,8 +314,8 @@ export class TimeOffSettingsComponent
 			this.timeOffService
 				.getAllPolicies(['employees'], findObj)
 				.pipe(first(), untilDestroyed(this))
-				.subscribe(
-					(res) => {
+				.subscribe({
+					next: (res) => {
 						const items = res.items;
 						const policyVM: ITimeOffPolicyVM[] = items.map((i) => {
 							return {
@@ -338,7 +340,7 @@ export class TimeOffSettingsComponent
 						this.showTable = true;
 						this.clearItem();
 					},
-					(error) => {
+					error: (error) => {
 						this.toastrService.danger(
 							this.getTranslation('', {
 								error: error.error.message || error.message
@@ -346,7 +348,7 @@ export class TimeOffSettingsComponent
 							this.getTranslation('TOASTR.TITLE.ERROR')
 						);
 					}
-				);
+				});
 		}
 		this.loading = false;
 	}
@@ -385,7 +387,4 @@ export class TimeOffSettingsComponent
 	}
 
 	ngOnDestroy() {}
-}
-function next(next: any, arg1: () => void, arg2: () => void) {
-	throw new Error('Function not implemented.');
 }
