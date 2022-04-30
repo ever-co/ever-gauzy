@@ -12,8 +12,7 @@ import {
 	NbSelectModule,
 	NbSpinnerModule,
 	NbTooltipModule,
-	NbRadioModule,
-	NbToggleModule
+	NbRadioModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
