@@ -1,183 +1,187 @@
-@import "themes";
-@import "var";
+@import 'var';
 
 :host {
-    padding: 20px;
-    background-color: nb-theme(background-basic-color-3);
-    height: 93%;
+  background-color: nb-theme(background-basic-color-3);
+  height: 93%;
+  border-radius: nb-theme(border-radius);
 }
 
 .content {
-    display: flex;
-    height: 100%;
+  display: flex;
+  height: 100%;
+  background-color: rgba(50, 50, 50, 0.03);
+  padding: 1rem;
+  border-radius: 0 nb-theme(border-radius) nb-theme(border-radius)
+    nb-theme(border-radius);
 }
 
 .organization-container {
-    padding: 15px;
+  padding: 15px;
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  flex-direction: column;
+  transition: transform 150ms ease-in-out;
+  background-color: nb-theme(background-basic-color-4);
+  border-radius: 10px;
+  width: 563px;
+  height: 100%;
+
+  .organization-photo {
+    width: fit-content;
+    height: fit-content;
     position: relative;
-    display: flex;
-    align-items: flex-start;
-    flex-direction: column;
-    transition: transform 150ms ease-in-out;
-    background-color: nb-theme(background-basic-color-4);
-    border-radius: 10px;
-    width: 563px;
-    height: 100%;
+    margin-left: 0 !important;
 
-    .organization-photo {
-        width: fit-content;
-        height: fit-content;
-        position: relative;
-        margin-left: 0 !important;
-
-        div {
-            pointer-events: none;
-            background: black;
-            position: absolute;
-            height: 100%;
-            width: 100%;
-            border-radius: 13px;
-        }
-
-        img {
-            width: 100px;
-            height: 100px;
-            border-radius: 8px;
-        }
-
-        input {
-            width: 100%;
-            height: 100%;
-            opacity: 0;
-            position: absolute;
-            z-index: 3;
-            cursor: pointer;
-        }
-
-        svg {
-            z-index: 2;
-            transition: opacity 0.2s ease-in;
-            opacity: 0.3;
-            position: absolute;
-            top: calc(50% - 68px / 2);
-            left: calc(50% - 68px / 2);
-        }
+    div {
+      pointer-events: none;
+      background: black;
+      position: absolute;
+      height: 100%;
+      width: 100%;
+      border-radius: 13px;
     }
-    .employees-count-text {
-        font-family: Inter;
-        font-size: 12px;
-        font-style: normal;
-        font-weight: 600;
-        line-height: 15px;
-        letter-spacing: 0em;
-        text-align: left;
-        margin-left: 1px;
+
+    img {
+      width: 100px;
+      height: 100px;
+      border-radius: 8px;
     }
+
+    input {
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      position: absolute;
+      z-index: 3;
+      cursor: pointer;
+    }
+
+    svg {
+      z-index: 2;
+      transition: opacity 0.2s ease-in;
+      opacity: 0.3;
+      position: absolute;
+      top: calc(50% - 68px / 2);
+      left: calc(50% - 68px / 2);
+    }
+  }
+  .employees-count-text {
+    font-family: Inter;
+    font-size: 12px;
+    font-style: normal;
+    font-weight: 600;
+    line-height: 15px;
+    letter-spacing: 0em;
+    text-align: left;
+    margin-left: 1px;
+  }
 }
 .main-form {
-    width: 100%;
-    padding-left: 20px;
-    padding-right: 20px;
+  width: 100%;
+  padding-left: 20px;
+  padding-right: 20px;
 
-    .actions {
-        margin-top: 60px;
-    }
+  .actions {
+    margin-top: 60px;
+  }
 }
 .row {
-    & .col {
-        max-width: 50%;
-    }
+  & .col {
+    max-width: 50%;
+  }
 }
 
 ::ng-deep ga-currency .form-group {
-    display: inline-flex;
-    flex-direction: column;
-    min-width: 180px;
+  display: inline-flex;
+  flex-direction: column;
+  min-width: 180px;
 }
 
 .tax-form-group {
-    display: flex;
-    flex-direction: column;
-    & #taxIdInput {
-        width: 80%;
-    }
+  display: flex;
+  flex-direction: column;
+  & #taxIdInput {
+    width: 80%;
+  }
 }
 
 .registration-form-group {
-    display: inline-flex;
-    flex-direction: column;
-    & #registrationDate {
-        width: 175px;
-    }
+  display: inline-flex;
+  flex-direction: column;
+  & #registrationDate {
+    width: 175px;
+  }
 }
 
 ::ng-deep nb-select.shape-rectangle .select-button {
-    border-radius: 8px;
+  border-radius: 8px;
 }
 
 @include respond(lg) {
-    .organization-container {
-        width: 350px;
-    }
-    .registration-form-group #registrationDate{
-        width: 100%;
-    }
-    .tax-form-group #taxIdInput {
-        width: 100%;
-    }
-    ::ng-deep ga-currency .form-group {
-        display: flex;
-        flex-direction: column;
-        //min-width: 180px;
-    }
+  .organization-container {
+    width: 350px;
+  }
+  .registration-form-group #registrationDate {
+    width: 100%;
+  }
+  .tax-form-group #taxIdInput {
+    width: 100%;
+  }
+  ::ng-deep ga-currency .form-group {
+    display: flex;
+    flex-direction: column;
+    //min-width: 180px;
+  }
 }
 
 @include respond(md) {
-    :host {
-        height: auto;
+  :host {
+    height: auto;
+  }
+  .content {
+    flex-direction: column;
+  }
+  .organization-container,
+  .main-form {
+    width: 100%;
+  }
+  .main-form {
+    padding: 0;
+    margin-top: 20px;
+  }
+  .row {
+    flex-direction: column;
+    max-width: 100%;
+    margin-left: 0;
+    & .col {
+      max-width: 100%;
+      padding: 0;
     }
-    .content {
-        flex-direction: column;
+  }
+  .form-group {
+    width: 100% !important;
+  }
+  .tax-form-group {
+    & #taxIdInput {
+      width: 100%;
     }
-    .organization-container, .main-form {
-        width: 100%;
+  }
+  .registration-form-group {
+    & #registrationDate {
+      width: 100%;
     }
-    .main-form {
-        padding: 0;
-        margin-top: 20px;
-    }
-    .row {
-        flex-direction: column;
-        max-width: 100%;
-        margin-left: 0;
-        & .col {
-            max-width: 100%;
-            padding: 0;
-        }
-    }
-    .form-group {
-        width: 100% !important;
-    }
-    .tax-form-group {
-        & #taxIdInput {
-            width: 100%;
-        }
-    }
-    .registration-form-group {
-        & #registrationDate {
-            width: 100%;
-        }
-    }
-    ::ng-deep ga-currency .form-group {
-        display: flex;
-    }
-    .col-6 {
-        max-width: 100%;
-        padding: 0 !important;
-    }
-    .main-form .actions {
-        margin-top: 20px;
-    }
+  }
+  ::ng-deep ga-currency .form-group {
+    display: flex;
+  }
+  .col-6 {
+    max-width: 100%;
+    padding: 0 !important;
+  }
+  .main-form .actions {
+    margin-top: 20px;
+  }
 }
 
 // .color {

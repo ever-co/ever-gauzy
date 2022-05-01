@@ -35,17 +35,35 @@
   background-color: #f10;
 }
 
-.tabset {
-  padding: 30px 30px;
-}
+// .tabset {
+//   padding: 30px 30px;
+// }
 
 .org-settings {
   width: 100%;
 }
 
-nb-tab,
-nb-tabset {
-  height: 100%;
+// nb-tab,
+// nb-tabset {
+//   height: 100%;
+// }
+
+:host {
+  nb-card {
+    nb-card-body {
+      overflow: unset;
+    }
+  }
+  ::ng-deep .route-tabset .route-tab a.tab-link {
+    border-radius: nb-theme(border-radius) nb-theme(border-radius) 0 0;
+    span.tab-text {
+      text-transform: lowercase;
+      display: block;
+      &:first-letter {
+        text-transform: uppercase;
+      }
+    }
+  }
 }
 
 :host ::ng-deep {
@@ -58,8 +76,7 @@ nb-tabset {
     }
 
     .tab-link {
-      padding: px2rem(10px) px2rem(20px);
-      height: 100%;
+      padding: px2rem(9px) px2rem(20px);
 
       @include respond(dsk) {
         padding: px2rem(10px) px2rem(20px);
@@ -77,4 +94,11 @@ nb-tabset {
       }
     }
   }
+}
+h4 {
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 30px;
+  letter-spacing: 0em;
+  text-align: left;
 }
