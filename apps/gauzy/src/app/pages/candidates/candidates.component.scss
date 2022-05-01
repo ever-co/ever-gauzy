@@ -1,84 +1,104 @@
+@import 'gauzy/gauzy-table';
+
 .manage-btn {
-	display: flex;
-	flex-direction: row;
-	align-items: center;
-	justify-content: space-between;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
 }
 .grid-scroll-container {
-	.flex-container {
-		display: flex;
-		flex-flow: row wrap;
-		justify-content: flex-start;
-		padding: 0;
-		margin: 0;
-		list-style: none;
-		.flex-item {
-			border: 0.0625rem solid #e4e9f2;
-			border-radius: 0.25rem;
-			width: 23%;
-			margin: 10px;
-			.fullName {
-				display: flex;
-				flex-direction: row;
-				justify-content: space-between;
-				padding: 1rem 1.5rem;
-				line-height: 40px;
-				font-size: 1.5em;
-			}
-			.avatar {
-				width: 60px;
-				height: 60px;
-				border-radius: 50%;
-			}
-			.email {
-				text-align: right;
-				padding-right: 1.5rem;
-				bottom: 36px;
-				position: relative;
-			}
-			.info-line {
-				display: flex;
-				flex-direction: row;
-				justify-content: space-between;
-				align-items: center;
-				font-size: 0.8em;
-				color: darkgray;
-				line-height: 0px;
-				padding: 0.7rem 1.5rem;
-				.info-meta {
-					margin-right: 10px;
-				}
-				.info-value {
-					display: flex;
-					justify-content: flex-end;
-					text-align: end;
-					color: black;
-					font-size: 1em;
-				}
-				.status-badge {
-					text-align: center;
-  					padding: 10px 30px;
-					border-radius: 0.25rem;
-					color: #fff;
-				}
-				/* Status */
-				.badge-danger {
-					background-color: #ff3d71;
-				}
-				.badge-success {
-					background-color: #00d68f;
-				}
-				.badge-primary {
-					background-color: #0095ff;
-				}
-				.badge-warning {
-					background-color: #fa0;
-				}
-			}
-			.card-footer {
-				justify-content: space-around;
-				display: flex;
-			}
-		}
-	}
+  .flex-container {
+    display: flex;
+    flex-flow: row wrap;
+    justify-content: flex-start;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+    .flex-item {
+      border: 0.0625rem solid #e4e9f2;
+      border-radius: 0.25rem;
+      width: 23%;
+      margin: 10px;
+      .fullName {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        padding: 1rem 1.5rem;
+        line-height: 40px;
+        font-size: 1.5em;
+      }
+      .avatar {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+      }
+      .email {
+        text-align: right;
+        padding-right: 1.5rem;
+        bottom: 36px;
+        position: relative;
+      }
+      .info-line {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.8em;
+        color: darkgray;
+        line-height: 0px;
+        padding: 0.7rem 1.5rem;
+        .info-meta {
+          margin-right: 10px;
+        }
+        .info-value {
+          display: flex;
+          justify-content: flex-end;
+          text-align: end;
+          color: black;
+          font-size: 1em;
+        }
+        .status-badge {
+          text-align: center;
+          padding: 10px 30px;
+          border-radius: 0.25rem;
+          color: #fff;
+        }
+        /* Status */
+        .badge-danger {
+          background-color: #ff3d71;
+        }
+        .badge-success {
+          background-color: #00d68f;
+        }
+        .badge-primary {
+          background-color: #0095ff;
+        }
+        .badge-warning {
+          background-color: #fa0;
+        }
+      }
+      .card-footer {
+        justify-content: space-around;
+        display: flex;
+      }
+    }
+  }
+}
+
+:host {
+  ::ng-deep {
+    .toggle-label {
+      margin-bottom: 0;
+    }
+    [nbButton].header.appearance-outline.status-primary {
+      border-width: 0px;
+    }
+  }
+  .custom-toggle {
+    ::ng-deep {
+      span.text {
+        color: nb-theme(text-primary-color);
+      }
+    }
+  }
 }
