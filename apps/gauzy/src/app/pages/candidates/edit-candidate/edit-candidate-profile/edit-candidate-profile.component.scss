@@ -35,18 +35,13 @@
   background-color: #f10;
 }
 
-// .tabset {
-//   padding: 30px 30px;
-// }
+.nb-card {
+  background-color: rgba(50, 50, 50, 0.03);
+}
 
 .org-settings {
   width: 100%;
 }
-
-// nb-tab,
-// nb-tabset {
-//   height: 100%;
-// }
 
 :host {
   nb-card {
