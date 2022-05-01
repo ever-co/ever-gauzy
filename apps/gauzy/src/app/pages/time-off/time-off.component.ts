@@ -130,6 +130,7 @@ export class TimeOffComponent
 					(componentLayout) =>
 						(this.dataLayoutStyle = componentLayout)
 				),
+				tap(() => this.timeoff$.next(true)),
 				filter(
 					(componentLayout) =>
 						componentLayout === ComponentLayoutStyleEnum.CARDS_GRID
@@ -381,7 +382,6 @@ export class TimeOffComponent
 				policyName: {
 					title: this.getTranslation('SM_TABLE.POLICY'),
 					type: 'custom',
-					class: 'text-center',
 					renderComponent: ApprovalPolicyComponent,
 					valuePrepareFunction: (cell, row) => {
 						return { name: cell };
@@ -391,27 +391,23 @@ export class TimeOffComponent
 					title: this.getTranslation('SM_TABLE.START'),
 					type: 'custom',
 					filter: false,
-					renderComponent: DateViewComponent,
-					class: 'text-center'
+					renderComponent: DateViewComponent
 				},
 				end: {
 					title: this.getTranslation('SM_TABLE.END'),
 					type: 'custom',
 					filter: false,
-					renderComponent: DateViewComponent,
-					class: 'text-center'
+					renderComponent: DateViewComponent
 				},
 				requestDate: {
 					title: this.getTranslation('SM_TABLE.REQUEST_DATE'),
 					type: 'custom',
 					filter: false,
-					renderComponent: DateViewComponent,
-					class: 'text-center'
+					renderComponent: DateViewComponent
 				},
 				status: {
 					title: this.getTranslation('SM_TABLE.STATUS'),
 					type: 'custom',
-					class: 'text-center',
 					width: '5%',
 					renderComponent: StatusBadgeComponent,
 					filter: false
