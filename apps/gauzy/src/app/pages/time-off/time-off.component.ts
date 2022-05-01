@@ -511,10 +511,17 @@ export class TimeOffComponent
 		});
 		this.timeOffs = this.rows;
 		this.sourceSmartTable.load(this.rows);
+		if (this.componentLayoutStyleEnum.CARDS_GRID === this.dataLayoutStyle) {
+			this._loadGridLayoutData();
+		}
 		this.setPagination({
 			...this.getPagination(),
 			totalItems: this.sourceSmartTable.count()
 		});
+	}
+
+	private async _loadGridLayoutData() {
+		this.timeOffs = await this.sourceSmartTable.getElements();
 	}
 
 	private _createRecord() {
