@@ -26,6 +26,7 @@ import {
 	CandidateActionConfirmationComponent
 } from '../../@shared/user/forms';
 import { ComponentEnum } from '../../@core/constants';
+import { TagsOnlyComponent } from '../../@shared/table-components/tags-only/tags-only.component';
 import {
 	CandidatesService,
 	ErrorHandlingService,
@@ -381,11 +382,18 @@ export class CandidatesComponent
 					renderComponent: DateViewComponent,
 					filter: false
 				},
+				tags: {
+					title: this.getTranslation('SM_TABLE.TAGS'),
+					type: 'custom',
+					width: '5%',
+					renderComponent: TagsOnlyComponent,
+					filter: false
+				},
 				status: {
 					title: this.getTranslation('SM_TABLE.STATUS'),
 					type: 'custom',
 					class: 'text-center',
-					width: '200px',
+					width: '5%',
 					renderComponent: CandidateStatusComponent,
 					filter: false
 				}
