@@ -332,11 +332,17 @@ export class CandidatesComponent
 		this.candidates = candidates;
 		this.sourceSmartTable.setPaging(activePage, itemsPerPage, false);
 		this.sourceSmartTable.load(candidates);
+		if (this.dataLayoutStyle === this.componentLayoutStyleEnum.CARDS_GRID)
+			this._loadCardLayoutData();
 		this.setPagination({
 			...this.getPagination(),
 			totalItems: this.sourceSmartTable.count()
 		});
 		this.loading = false;
+	}
+
+	private async _loadCardLayoutData() {
+		this.candidates = await this.sourceSmartTable.getElements();
 	}
 
 	private _loadSmartTableSettings() {

@@ -87,6 +87,21 @@
 }
 
 :host {
+  nb-card,
+  nb-card-body {
+    background-color: rgba(50, 50, 50, 0.03);
+    .custom-table {
+      max-height: calc(100vh - 24rem);
+      flex-grow: 10;
+    }
+    display: flex;
+    flex-direction: column;
+  }
+  @include nb-card-overrides(
+    unset,
+    calc($default-card-height - 1rem),
+    $default-radius
+  );
   ::ng-deep {
     .toggle-label {
       margin-bottom: 0;
@@ -94,21 +109,6 @@
     [nbButton].header.appearance-outline.status-primary {
       border-width: 0px;
     }
-    nb-card,
-    nb-card-body {
-      background-color: rgba(50, 50, 50, 0.03);
-      .custom-table {
-        max-height: calc(100vh - 24rem);
-        flex-grow: 10;
-      }
-      display: flex;
-      flex-direction: column;
-    }
-    @include nb-card-overrides(
-      unset,
-      calc($default-card-height - 1rem),
-      $default-radius
-    );
   }
   .custom-toggle {
     ::ng-deep {

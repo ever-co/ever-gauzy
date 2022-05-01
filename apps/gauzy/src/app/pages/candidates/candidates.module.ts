@@ -193,7 +193,8 @@ const COMPONENTS = [
 		HeaderTitleModule,
     GauzyButtonActionModule,
     NbToggleModule,
-    PaginationModule
+    PaginationModule,
+    CardGridModule
 	],
 	declarations: [...COMPONENTS],
 	providers: [
