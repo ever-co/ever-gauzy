@@ -414,23 +414,7 @@ export class TimeOffComponent
 					class: 'text-center',
 					width: '5%',
 					renderComponent: StatusBadgeComponent,
-					filter: false,
-					valuePrepareFunction: (cell, row) => {
-						let badgeClass;
-						if (cell) {
-							badgeClass = ['approved'].includes(
-								cell.toLowerCase()
-							)
-								? 'success'
-								: ['requested'].includes(cell.toLowerCase())
-								? 'warning'
-								: 'danger';
-						}
-						return {
-							text: cell,
-							class: badgeClass
-						};
-					}
+					filter: false
 				}
 			},
 			pager: {
@@ -509,6 +493,14 @@ export class TimeOffComponent
 				});
 			}
 		});
+		const bufferRows = [];
+		this.rows.map((row) => {
+			bufferRows.push({
+				...row,
+				status: this.statusMapper(row.status)
+			});
+		});
+		this.rows = bufferRows;
 		this.timeOffs = this.rows;
 		this.sourceSmartTable.load(this.rows);
 		if (this.componentLayoutStyleEnum.CARDS_GRID === this.dataLayoutStyle) {
@@ -623,6 +615,21 @@ export class TimeOffComponent
 				row.employees[0].id
 			]);
 		}
+	}
+
+	private statusMapper(value: any) {
+		let badgeClass;
+		if (value) {
+			badgeClass = ['approved'].includes(value.toLowerCase())
+				? 'success'
+				: ['requested'].includes(value.toLowerCase())
+				? 'warning'
+				: 'danger';
+		}
+		return {
+			text: value,
+			class: badgeClass
+		};
 	}
 
 	ngOnDestroy(): void {}
