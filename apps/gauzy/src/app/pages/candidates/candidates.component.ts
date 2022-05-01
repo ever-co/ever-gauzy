@@ -15,14 +15,31 @@ import { NbDialogService } from '@nebular/theme';
 import { Router, ActivatedRoute } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange } from '@gauzy/common-angular';
-import { TranslationBaseComponent } from '../../@shared/language-base';
 import { CandidateMutationComponent } from '../../@shared/candidate/candidate-mutation/candidate-mutation.component';
 import { InviteMutationComponent } from '../../@shared/invite/invite-mutation/invite-mutation.component';
-import { DateViewComponent, PictureNameTagsComponent } from '../../@shared/table-components';
-import { ArchiveConfirmationComponent, CandidateActionConfirmationComponent } from '../../@shared/user/forms';
+import {
+	DateViewComponent,
+	PictureNameTagsComponent
+} from '../../@shared/table-components';
+import {
+	ArchiveConfirmationComponent,
+	CandidateActionConfirmationComponent
+} from '../../@shared/user/forms';
 import { ComponentEnum } from '../../@core/constants';
-import { CandidatesService, ErrorHandlingService, Store, ToastrService } from '../../@core/services';
-import { CandidateStatusComponent, CandidateSourceComponent } from './table-components';
+import {
+	CandidatesService,
+	ErrorHandlingService,
+	Store,
+	ToastrService
+} from '../../@core/services';
+import {
+	CandidateStatusComponent,
+	CandidateSourceComponent
+} from './table-components';
+import {
+	PaginationFilterBaseComponent,
+	IPaginationBase
+} from '../../@shared/pagination/pagination-filter-base.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -30,9 +47,9 @@ import { CandidateStatusComponent, CandidateSourceComponent } from './table-comp
 	styleUrls: ['./candidates.component.scss']
 })
 export class CandidatesComponent
-	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
-
+	extends PaginationFilterBaseComponent
+	implements OnInit, OnDestroy
+{
 	settingsSmartTable: object;
 	sourceSmartTable = new LocalDataSource();
 	selectedCandidate: ICandidateViewModel;
@@ -77,9 +94,16 @@ export class CandidatesComponent
 		this.candidates$
 			.pipe(
 				debounceTime(100),
-				tap(() => this.loading = true),
+				tap(() => this.subject$.next(true)),
 				tap(() => this.getCandidates()),
 				tap(() => this.clearItem()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.pagination$
+			.pipe(
+				distinctUntilChange(),
+				tap(() => this.candidates$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -87,15 +111,24 @@ export class CandidatesComponent
 			.pipe(
 				filter((organization: IOrganization) => !!organization),
 				distinctUntilChange(),
-				tap((organization: IOrganization) => this.organization = organization),
-				tap(({ invitesAllowed }: IOrganization) => this.organizationInvitesAllowed = invitesAllowed),
+				tap(
+					(organization: IOrganization) =>
+						(this.organization = organization)
+				),
+				tap(
+					({ invitesAllowed }: IOrganization) =>
+						(this.organizationInvitesAllowed = invitesAllowed)
+				),
 				tap(() => this.candidates$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
 		this.route.queryParamMap
 			.pipe(
-				filter((params) => !!params && params.get('openAddDialog') === 'true'),
+				filter(
+					(params) =>
+						!!params && params.get('openAddDialog') === 'true'
+				),
 				debounceTime(1000),
 				tap(() => this.add()),
 				untilDestroyed(this)
@@ -113,7 +146,12 @@ export class CandidatesComponent
 			.componentLayout$(this.viewComponentName)
 			.pipe(
 				distinctUntilChange(),
-				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
+				tap(
+					(componentLayout) =>
+						(this.dataLayoutStyle = componentLayout)
+				),
+				tap(() => this.refreshPagination()),
+				tap(() => this.candidates$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -140,8 +178,10 @@ export class CandidatesComponent
 		try {
 			const { name } = this.organization;
 			const dialog = this.dialogService.open(CandidateMutationComponent);
-			const candidates: ICandidate[] = await firstValueFrom(dialog.onClose);
-	
+			const candidates: ICandidate[] = await firstValueFrom(
+				dialog.onClose
+			);
+
 			if (candidates) {
 				for await (const candidate of candidates) {
 					if (candidate.user) {
@@ -150,14 +190,17 @@ export class CandidatesComponent
 						if (firstName || lastName) {
 							fullName = `${firstName} ${lastName}`;
 						}
-						this.toastrService.success('TOASTR.MESSAGE.CANDIDATE_CREATED', {
-							name: fullName,
-							organization: name
-						});
+						this.toastrService.success(
+							'TOASTR.MESSAGE.CANDIDATE_CREATED',
+							{
+								name: fullName,
+								organization: name
+							}
+						);
 					}
 				}
 				this.candidates$.next(true);
-			}	
+			}
 		} catch (error) {
 			console.log('Error, while creating bulk candidate', error);
 		}
@@ -175,8 +218,8 @@ export class CandidatesComponent
 		}
 		this.router.navigate([
 			'/pages/employees/candidates/edit/' +
-			this.selectedCandidate.id +
-			'/profile'
+				this.selectedCandidate.id +
+				'/profile'
 		]);
 	}
 
@@ -198,8 +241,7 @@ export class CandidatesComponent
 						)
 				}
 			})
-			.onClose
-			.pipe(untilDestroyed(this))
+			.onClose.pipe(untilDestroyed(this))
 			.subscribe(async (result) => {
 				if (result) {
 					try {
@@ -207,14 +249,20 @@ export class CandidatesComponent
 						const { tenantId } = this.store.user;
 
 						const { id, fullName } = this.selectedCandidate;
-						await this.candidatesService.setCandidateAsArchived(id, {
-							organizationId,
-							tenantId
-						});
+						await this.candidatesService.setCandidateAsArchived(
+							id,
+							{
+								organizationId,
+								tenantId
+							}
+						);
 
-						this.toastrService.success('TOASTR.MESSAGE.CANDIDATE_ARCHIVED', {
-							name: fullName
-						});
+						this.toastrService.success(
+							'TOASTR.MESSAGE.CANDIDATE_ARCHIVED',
+							{
+								name: fullName
+							}
+						);
 					} catch (error) {
 						this.errorHandler.handleError(error);
 					} finally {
@@ -242,13 +290,16 @@ export class CandidatesComponent
 	}
 
 	private async getCandidates() {
+		this.loading = true;
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
-
-		const { items } = await firstValueFrom(this.candidatesService.getAll(['user', 'source', 'tags'], {
-			organizationId,
-			tenantId
-		}));
+		const { activePage, itemsPerPage } = this.getPagination();
+		const { items } = await firstValueFrom(
+			this.candidatesService.getAll(['user', 'source', 'tags'], {
+				organizationId,
+				tenantId
+			})
+		);
 
 		let candidates = [];
 		const result = [];
@@ -279,11 +330,17 @@ export class CandidatesComponent
 		}
 
 		this.candidates = candidates;
+		this.sourceSmartTable.setPaging(activePage, itemsPerPage, false);
 		this.sourceSmartTable.load(candidates);
+		this.setPagination({
+			...this.getPagination(),
+			totalItems: this.sourceSmartTable.count()
+		});
 		this.loading = false;
 	}
 
 	private _loadSmartTableSettings() {
+		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
 			actions: false,
 			columns: {
@@ -328,8 +385,8 @@ export class CandidatesComponent
 				}
 			},
 			pager: {
-				display: true,
-				perPage: 8
+				display: false,
+				perPage: pagination ? pagination : 10
 			}
 		};
 	}
@@ -353,17 +410,19 @@ export class CandidatesComponent
 					isReject: true
 				}
 			})
-			.onClose
-			.pipe(untilDestroyed(this))
+			.onClose.pipe(untilDestroyed(this))
 			.subscribe(async (result) => {
 				if (result) {
 					try {
 						const { id, fullName } = this.selectedCandidate;
 						await this.candidatesService.setCandidateAsRejected(id);
 
-						this.toastrService.success('TOASTR.MESSAGE.CANDIDATE_REJECTED', {
-							name: fullName
-						});
+						this.toastrService.success(
+							'TOASTR.MESSAGE.CANDIDATE_REJECTED',
+							{
+								name: fullName
+							}
+						);
 					} catch (error) {
 						this.errorHandler.handleError(error);
 					} finally {
@@ -387,17 +446,19 @@ export class CandidatesComponent
 					isReject: false
 				}
 			})
-			.onClose
-			.pipe(untilDestroyed(this))
+			.onClose.pipe(untilDestroyed(this))
 			.subscribe(async (result) => {
 				if (result) {
 					try {
 						const { id, fullName } = this.selectedCandidate;
 						await this.candidatesService.setCandidateAsHired(id);
 
-						this.toastrService.success('TOASTR.MESSAGE.CANDIDATE_HIRED', {
-							name: fullName
-						});
+						this.toastrService.success(
+							'TOASTR.MESSAGE.CANDIDATE_HIRED',
+							{
+								name: fullName
+							}
+						);
 					} catch (error) {
 						this.errorHandler.handleError(error);
 					} finally {
@@ -437,5 +498,5 @@ export class CandidatesComponent
 		}
 	}
 
-	ngOnDestroy() { }
+	ngOnDestroy() {}
 }

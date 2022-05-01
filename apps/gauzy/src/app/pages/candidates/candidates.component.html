@@ -4,7 +4,7 @@
 	nbSpinnerSize="large"
 	class="card-scroll"
 >
-	<nb-card-header class="d-flex flex-column">
+	<nb-card-header class="d-flex flex-column pb-0">
 		<div class="card-header-title">
 			<h4>
 				<ngx-header-title [allowEmployee]="false">
@@ -78,13 +78,32 @@
 			[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
 			[ngIfElse]="gridLayout"
 		>
-			<ng2-smart-table
-				style="cursor: pointer"
-				[settings]="settingsSmartTable"
-				[source]="sourceSmartTable"
-				(userRowSelect)="selectCandidate($event)"
-				#candidatesTable
-			></ng2-smart-table>
+    <div class="table-scroll-container custom-table">
+      <div>
+        <ng2-smart-table
+        style="cursor: pointer"
+        [settings]="settingsSmartTable"
+        [source]="sourceSmartTable"
+        (userRowSelect)="selectCandidate($event)"
+        #candidatesTable
+      ></ng2-smart-table>
+      </div>
+    </div>
+    <ng-container
+      *ngIf="pagination.totalItems > pagination.itemsPerPage"
+    >
+      <div class="pagination-container">
+        <ga-pagination
+          (selectedOption)="onUpdateOption($event)"
+          (selectedPage)="onPageChange($event)"
+          [doEmit]="false"
+          [totalItems]="pagination?.totalItems"
+          [itemsPerPage]="pagination?.itemsPerPage"
+          [activePage]="pagination?.activePage"
+        >
+        </ga-pagination>
+      </div>
+    </ng-container>
 		</ng-template>
 		<ng-template #gridLayout>
 			<div class="grid-scroll-container">
