@@ -49,6 +49,11 @@
   nb-card {
     background-color: nb-theme(gauzy-card-1);
   }
+  ::ng-deep {
+    ngx-timer-range-picker input.form-control {
+      background: nb-theme(input-basic-background-color) !important;
+    }
+  }
 }
 .subTitle {
   margin-top: 4px;
