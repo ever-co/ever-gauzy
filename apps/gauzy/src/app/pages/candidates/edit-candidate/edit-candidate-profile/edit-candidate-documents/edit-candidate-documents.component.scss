@@ -1,3 +1,6 @@
+@import 'gauzy/_gauzy-table';
+@import 'gauzy/_gauzy-dialogs';
+
 .documents-form {
   width: 100%;
   display: flex;
@@ -54,6 +57,29 @@ input {
 
 .header {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
+  border-color: 1px solid black;
+}
+
+.documents-card-container {
+  background-color: rgba(126, 126, 143, 0.05);
+  border-radius: nb-theme(border-radius);
+  padding: 1rem;
+}
+
+.custom-form {
+  background-color: rgba(50, 50, 50, 0.03);
+  border-radius: nb-theme(border-radius);
+  padding: 1rem;
+}
+
+:host {
+  nb-card {
+    background-color: rgba(50, 50, 50, 0.03);
+    &.document {
+      background-color: nb-theme(gauzy-card-1);
+      margin-bottom: 8px;
+    }
+  }
 }
