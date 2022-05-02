@@ -9,8 +9,12 @@
   border: unset;
 }
 
-.container{
+.container {
   padding: 1rem;
   border-radius: nb-theme(border-radius);
   background-color: nb-theme(card-background-color);
+}
+
+.entities {
+  margin-bottom: 0.5rem;
 }

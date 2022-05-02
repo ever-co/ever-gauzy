@@ -1,4 +1,4 @@
-<nb-card>
+<nb-card class="m-3">
 	<nb-card-body>
 		<form [formGroup]="form" (ngSubmit)="submitForm()" autocomplete-off>
 			<div class="row">
@@ -15,7 +15,9 @@
 							type="text"
 							nbInput
 							formControlName="linkedInUrl"
-							[placeholder]="'FORM.PLACEHOLDERS.LINKEDIN' | translate"
+							[placeholder]="
+								'FORM.PLACEHOLDERS.LINKEDIN' | translate
+							"
 						/>
 					</div>
 				</div>
@@ -32,7 +34,9 @@
 							type="text"
 							nbInput
 							formControlName="facebookUrl"
-							[placeholder]="'FORM.PLACEHOLDERS.FACEBOOK' | translate"
+							[placeholder]="
+								'FORM.PLACEHOLDERS.FACEBOOK' | translate
+							"
 						/>
 					</div>
 				</div>
@@ -51,7 +55,9 @@
 							type="text"
 							nbInput
 							formControlName="instagramUrl"
-							[placeholder]="'FORM.PLACEHOLDERS.INSTAGRAM' | translate"
+							[placeholder]="
+								'FORM.PLACEHOLDERS.INSTAGRAM' | translate
+							"
 						/>
 					</div>
 				</div>
@@ -68,7 +74,9 @@
 							type="text"
 							nbInput
 							formControlName="twitterUrl"
-							[placeholder]="'FORM.PLACEHOLDERS.TWITTER' | translate"
+							[placeholder]="
+								'FORM.PLACEHOLDERS.TWITTER' | translate
+							"
 						/>
 					</div>
 				</div>
@@ -87,7 +95,9 @@
 							type="text"
 							nbInput
 							formControlName="githubUrl"
-							[placeholder]="'FORM.PLACEHOLDERS.GITHUB' | translate"
+							[placeholder]="
+								'FORM.PLACEHOLDERS.GITHUB' | translate
+							"
 						/>
 					</div>
 				</div>
@@ -104,7 +114,9 @@
 							type="text"
 							nbInput
 							formControlName="gitlabUrl"
-							[placeholder]="'FORM.PLACEHOLDERS.GITLAB' | translate"
+							[placeholder]="
+								'FORM.PLACEHOLDERS.GITLAB' | translate
+							"
 						/>
 					</div>
 				</div>
@@ -123,7 +135,9 @@
 							type="text"
 							nbInput
 							formControlName="upworkUrl"
-							[placeholder]="'FORM.PLACEHOLDERS.UPWORK' | translate"
+							[placeholder]="
+								'FORM.PLACEHOLDERS.UPWORK' | translate
+							"
 						/>
 					</div>
 				</div>
@@ -132,7 +146,9 @@
 						<label
 							class="label"
 							for="stackoverflow"
-							[innerHtml]="'FORM.LABELS.STACK_OVERFLOW' | translate"
+							[innerHtml]="
+								'FORM.LABELS.STACK_OVERFLOW' | translate
+							"
 						></label>
 						<input
 							fullWidth
@@ -140,7 +156,9 @@
 							type="text"
 							nbInput
 							formControlName="stackoverflowUrl"
-							[placeholder]="'FORM.PLACEHOLDERS.STACK_OVERFLOW' | translate"
+							[placeholder]="
+								'FORM.PLACEHOLDERS.STACK_OVERFLOW' | translate
+							"
 						/>
 					</div>
 				</div>
