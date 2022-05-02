@@ -9,6 +9,7 @@ export interface ICandidateSkill {
 	template: `
 		<nb-tabset style="padding: 1rem;">
 			<nb-tab
+        class="custom-tab"
 				style="padding: 1rem;"
 				tabTitle="{{
 					'CANDIDATES_PAGE.EDIT_CANDIDATE.EDUCATION' | translate
