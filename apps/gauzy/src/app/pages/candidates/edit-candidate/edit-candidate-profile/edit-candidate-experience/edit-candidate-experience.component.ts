@@ -7,7 +7,7 @@ export interface ICandidateSkill {
 @Component({
 	selector: 'ga-edit-candidate-experience',
 	template: `
-		<nb-tabset style="padding-top: 1rem;">
+		<nb-tabset style="padding: 1rem;">
 			<nb-tab
 				style="padding: 1rem;"
 				tabTitle="{{

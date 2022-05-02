@@ -15,3 +15,7 @@
     }
   }
 }
+nb-tab.content-active {
+  max-height: calc(100vh - 30rem);
+  overflow-y: overlay;
+}
