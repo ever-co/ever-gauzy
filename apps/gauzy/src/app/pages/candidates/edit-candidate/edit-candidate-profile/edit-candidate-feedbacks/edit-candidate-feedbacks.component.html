@@ -412,14 +412,16 @@
 		nbSpinnerStatus="primary"
 		*ngIf="dataLayoutStyle === 'TABLE'"
 	>
-		<ng2-smart-table
-			style="cursor: pointer"
-			[settings]="settingsSmartTable"
-			[source]="sourceSmartTable"
-			(userRowSelect)="selectFeedback($event)"
-			#feedbackTable
-		>
-		</ng2-smart-table>
+		<div class="table-scroll-container">
+			<ng2-smart-table
+				style="cursor: pointer"
+				[settings]="settingsSmartTable"
+				[source]="sourceSmartTable"
+				(userRowSelect)="selectFeedback($event)"
+				#feedbackTable
+			>
+			</ng2-smart-table>
+		</div>
 	</nb-card-body>
 	<ng-template
 		#actionButtons

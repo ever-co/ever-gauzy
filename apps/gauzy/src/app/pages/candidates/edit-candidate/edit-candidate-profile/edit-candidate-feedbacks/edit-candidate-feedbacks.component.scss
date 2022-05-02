@@ -1,3 +1,5 @@
+@import 'gauzy/_gauzy-table';
+
 .form {
   padding: 0;
   display: flex;
@@ -12,12 +14,6 @@
   width: 15%;
 }
 
-::ng-deep {
-  .ng2-smart-actions,
-  .ng2-smart-actions-title {
-    display: none;
-  }
-}
 
 .filters {
   display: flex;
@@ -187,10 +183,6 @@
   width: 17rem;
 }
 
-.disabled {
-  color: rgba(143, 155, 179, 0.48);
-}
-
 .center {
   text-align: center;
 }
@@ -266,5 +258,11 @@
         }
       }
     }
+  }
+}
+:host {
+  nb-card,
+  nb-card-body {
+    background-color: rgba(50, 50, 50, 0.03);
   }
 }

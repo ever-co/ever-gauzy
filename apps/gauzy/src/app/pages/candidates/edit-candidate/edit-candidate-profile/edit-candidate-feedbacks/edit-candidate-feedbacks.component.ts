@@ -44,7 +44,8 @@ import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service'
 })
 export class EditCandidateFeedbacksComponent
 	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
+	implements OnInit, OnDestroy
+{
 	private _ngDestroy$ = new Subject<void>();
 	feedbackId = null;
 	showAddCard: boolean;
@@ -104,11 +105,10 @@ export class EditCandidateFeedbacksComponent
 					this._initializeForm();
 					this.loadInterviews();
 					this.getEmployees();
-					this.loadSmartTable();
 					this._applyTranslationOnSmartTable();
 				}
 			});
-
+		this.loadSmartTable();
 		this.selectInterview.setValue('all');
 	}
 	async getEmployees() {
@@ -242,7 +242,8 @@ export class EditCandidateFeedbacksComponent
 				(item) => item.id === feedback.interviewId
 			);
 			this.technologiesList = this.currentInterview.technologies;
-			this.personalQualitiesList = this.currentInterview.personalQualities;
+			this.personalQualitiesList =
+				this.currentInterview.personalQualities;
 			feedback.criterionsRating.forEach((item) => {
 				this.technologiesList.forEach((tech) =>
 					tech.id === item.technologyId
@@ -308,7 +309,7 @@ export class EditCandidateFeedbacksComponent
 	async loadInterviews() {
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.selectedOrganization;
-		
+
 		const result = await this.candidateInterviewService.getAll(
 			['feedbacks', 'interviewers', 'technologies', 'personalQualities'],
 			{ candidateId: this.candidateId, organizationId, tenantId }
