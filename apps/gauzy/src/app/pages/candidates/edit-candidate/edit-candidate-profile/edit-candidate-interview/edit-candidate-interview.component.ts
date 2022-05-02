@@ -42,7 +42,8 @@ import { isNotEmpty } from '@gauzy/common-angular';
 })
 export class EditCandidateInterviewComponent
 	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
+	implements OnInit, OnDestroy
+{
 	interviewList: ICandidateInterview[];
 	candidateId: string;
 	selectedCandidate: ICandidate;
@@ -63,6 +64,11 @@ export class EditCandidateInterviewComponent
 	candidates: ICandidate[];
 	allInterviews: ICandidateInterview[];
 	allFeedbacks: ICandidateFeedback[];
+	disabled: boolean = true;
+	selectedInterview = {
+		data: null,
+		isSelected: false
+	};
 	constructor(
 		private dialogService: NbDialogService,
 		private candidatesService: CandidatesService,
@@ -92,10 +98,8 @@ export class EditCandidateInterviewComponent
 					this.loadSmartTable();
 					this._applyTranslationOnSmartTable();
 
-					const {
-						id: organizationId,
-						tenantId
-					} = this.selectedOrganization;
+					const { id: organizationId, tenantId } =
+						this.selectedOrganization;
 					this.candidatesService
 						.getAll(['user'], { organizationId, tenantId })
 						.pipe(untilDestroyed(this))
@@ -232,16 +236,15 @@ export class EditCandidateInterviewComponent
 	private async loadInterview() {
 		this.loading = true;
 		const { id: organizationId, tenantId } = this.selectedOrganization;
-		const {
-			items: allFeedbacks = []
-		} = await this.candidateFeedbacksService.getAll(['interviewer'], {
-			organizationId,
-			tenantId
-		});
+		const { items: allFeedbacks = [] } =
+			await this.candidateFeedbacksService.getAll(['interviewer'], {
+				organizationId,
+				tenantId
+			});
 		this.allFeedbacks = allFeedbacks;
 
-		const { items } = await firstValueFrom(this.employeesService
-			.getAll(['user'], {
+		const { items } = await firstValueFrom(
+			this.employeesService.getAll(['user'], {
 				organizationId,
 				tenantId
 			})
@@ -271,7 +274,8 @@ export class EditCandidateInterviewComponent
 								if (interviewer.employeeId === employee.id) {
 									interviewer.employeeImageUrl =
 										employee.user.imageUrl;
-									interviewer.employeeName = employee.user.name;
+									interviewer.employeeName =
+										employee.user.name;
 									employees.push(employee);
 								}
 							});
@@ -439,7 +443,12 @@ export class EditCandidateInterviewComponent
 				this.loadSmartTable();
 			});
 	}
-	ngOnDestroy() { }
+	ngOnDestroy() {}
 
-	openEmployees(employeeId?: string) { }
+	openEmployees(employeeId?: string) {}
+
+	selectInterview(interview: any) {
+		this.disabled = !interview.isSelected;
+		this.selectedInterview = interview.data;
+	}
 }

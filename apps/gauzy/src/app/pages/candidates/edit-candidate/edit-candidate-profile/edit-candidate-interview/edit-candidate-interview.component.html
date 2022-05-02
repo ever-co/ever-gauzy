@@ -1,276 +1,331 @@
 <nb-card>
-	<nb-card-header>
-		<div class="header">
-			<button nbButton status="success" (click)="add()">
-				<nb-icon class="mr-1" icon="plus-outline"></nb-icon
-				>{{ 'BUTTONS.ADD' | translate }}
-			</button>
-			<div class="right-block" *ngIf="allInterviews?.length > 0">
-				<div class="checkboxes">
-					<nb-checkbox
-						(checkedChange)="changePast($event)"
-						status="warning"
-						[checked]="onlyPast"
-						>{{ 'FORM.CHECKBOXES.ONLY_PAST' | translate }}
-					</nb-checkbox>
-					<nb-checkbox
-						(checkedChange)="changeFuture($event)"
-						status="warning"
-						[checked]="onlyFuture"
-						class="mr-3 ml-3"
-						>{{ 'FORM.CHECKBOXES.ONLY_FUTURE' | translate }}
-					</nb-checkbox>
-				</div>
-				<ga-layout-selector
-					componentName="{{ viewComponentName }}"
-				></ga-layout-selector>
+	<nb-card-header class="pb-0">
+		<div class="d-flex flex-column">
+			<div
+				class="d-flex flex-column align-items-end"
+				*ngIf="allInterviews?.length > 0"
+			>
+				<ngx-gauzy-button-action
+					[buttonTemplate]="actions"
+					[buttonTemplateVisible]="visible"
+					[componentName]="viewComponentName"
+					[isDisable]="disabled"
+				></ngx-gauzy-button-action>
 			</div>
 		</div>
 	</nb-card-header>
-	<nb-card-body *ngIf="interviewList?.length > 0">
-		<div *ngIf="dataLayoutStyle === 'CARDS_GRID'" class="cards">
+	<nb-card-body>
+		<div *ngIf="allInterviews?.length > 0" class="checkboxes mb-3">
+			<nb-checkbox
+				(checkedChange)="changePast($event)"
+				status="basic"
+				[checked]="onlyPast"
+				class="mr-3 ml-3"
+				>{{ 'FORM.CHECKBOXES.ONLY_PAST' | translate }}
+			</nb-checkbox>
+			<nb-checkbox
+				(checkedChange)="changeFuture($event)"
+				status="basic"
+				[checked]="onlyFuture"
+				>{{ 'FORM.CHECKBOXES.ONLY_FUTURE' | translate }}
+			</nb-checkbox>
+		</div>
+		<ng-container *ngIf="interviewList?.length > 0">
+			<div *ngIf="dataLayoutStyle === 'CARDS_GRID'" class="cards">
+				<div
+					class="card-container"
+					[nbSpinner]="loading"
+					nbSpinnerSize="giant"
+					nbSpinnerStatus="primary"
+				>
+					<nb-card
+						style="padding: 0 !important"
+						class="card-body"
+						*ngFor="let interview of interviewList"
+					>
+						<nb-card-header class="card-header">
+							<div class="header-container">
+								{{ interview.title }}
+							</div>
+							<div class="card-header-badge">
+								<div
+									class="badge badge-primary"
+									*ngIf="isPastInterview(interview)"
+								>
+									{{
+										'CANDIDATES_PAGE.MANAGE_INTERVIEWS.PAST'
+											| translate
+									}}
+								</div>
+
+								<div
+									class="badge badge-warning"
+									*ngIf="interview.isArchived"
+								>
+									{{ 'CANDIDATES_PAGE.ARCHIVED' | translate }}
+								</div>
+							</div>
+						</nb-card-header>
+
+						<nb-card-body class="interview-card">
+							<nb-card>
+								<nb-card-header>
+									<div>
+										{{
+											'CANDIDATES_PAGE.MANAGE_INTERVIEWS.CANDIDATE'
+												| translate
+										}}
+									</div>
+								</nb-card-header>
+								<nb-card-body>
+									<div
+										class="name-container"
+										(click)="
+											goToCandidate(
+												interview.candidate.id
+											)
+										"
+									>
+										<div class="image-container">
+											<img
+												[src]="
+													interview.candidate.user
+														?.imageUrl
+												"
+											/>
+										</div>
+										<span
+											>{{
+												interview.candidate.user?.name
+											}}
+										</span>
+									</div>
+								</nb-card-body>
+							</nb-card>
+							<div class="client-info">
+								<div class="info-line">
+									<div class="info-meta">
+										{{
+											'CANDIDATES_PAGE.MANAGE_INTERVIEWS.START_DATE'
+												| translate
+										}}
+									</div>
+									<div class="info-value">
+										{{
+											interview?.startTime
+												| date: 'shortDate'
+										}}
+									</div>
+								</div>
+								<div class="info-line">
+									<div class="info-meta">
+										{{
+											'CANDIDATES_PAGE.MANAGE_INTERVIEWS.CRITERIONS'
+												| translate
+										}}
+									</div>
+									<div class="info-value criterions">
+										<span
+											*ngFor="
+												let tech of interview.technologies
+											"
+										>
+											<span> {{ tech.name }} </span>
+										</span>
+
+										<span
+											*ngFor="
+												let qual of interview.personalQualities
+											"
+										>
+											<span> {{ qual.name }} </span>
+										</span>
+									</div>
+								</div>
+								<div class="info-line">
+									<div class="info-meta">
+										{{
+											'CANDIDATES_PAGE.MANAGE_INTERVIEWS.LOCATION'
+												| translate
+										}}
+									</div>
+									<div class="info-value">
+										{{ interview.location }}
+									</div>
+								</div>
+								<div class="info-line">
+									<div class="info-meta">
+										{{
+											'CANDIDATES_PAGE.MANAGE_INTERVIEWS.NOTES'
+												| translate
+										}}
+									</div>
+									<div class="info-value">
+										{{ interview.note }}
+									</div>
+								</div>
+								<div class="info-line">
+									<div class="info-meta">
+										{{
+											'CANDIDATES_PAGE.MANAGE_INTERVIEWS.RATING'
+												| translate
+										}}
+									</div>
+									<div class="info-value">
+										<ga-star-rating-output
+											[rate]="interview.rating"
+											[isGridView]="true"
+										></ga-star-rating-output>
+									</div>
+								</div>
+							</div>
+							<nb-card *ngIf="interview.interviewers.length">
+								<nb-card-header>
+									<div>
+										{{
+											'CANDIDATES_PAGE.MANAGE_INTERVIEWS.INTERVIEWERS'
+												| translate
+										}}
+									</div>
+								</nb-card-header>
+								<nb-card-body>
+									<div
+										class="name-container"
+										*ngFor="
+											let interviewer of interview.interviewers
+										"
+										(click)="
+											openEmployees(
+												interviewer.employeeId
+											)
+										"
+									>
+										<div class="image-container">
+											<img
+												[src]="
+													interviewer.employeeImageUrl
+												"
+											/>
+										</div>
+										<span
+											>{{ interviewer.employeeName }}
+										</span>
+									</div>
+								</nb-card-body>
+							</nb-card>
+
+							<div class="button-container">
+								<button
+									nbButton
+									class="btn"
+									status="info"
+									[disabled]="isPastInterview(interview)"
+									(click)="editInterview(interview.id)"
+									size="tiny"
+								>
+									<nb-icon
+										class="mr-1"
+										icon="edit-outline"
+									></nb-icon
+									>{{ 'BUTTONS.EDIT' | translate }}
+								</button>
+								<button
+									class="btn"
+									size="tiny"
+									nbButton
+									[disabled]="isPastInterview(interview)"
+									(click)="removeInterview(interview.id)"
+									status="danger"
+								>
+									<nb-icon
+										class="mr-2"
+										icon="trash-2-outline"
+									></nb-icon
+									>{{ 'BUTTONS.DELETE' | translate }}
+								</button>
+								<button
+									class="btn"
+									nbButton
+									(click)="addInterviewFeedback(interview.id)"
+									status="success"
+									[disabled]="!isPastInterview(interview)"
+									size="tiny"
+								>
+									<nb-icon
+										class="mr-1"
+										icon="message-square-outline"
+									></nb-icon
+									>{{ 'BUTTONS.LEAVE_FEEDBACK' | translate }}
+									<span
+										*ngIf="isPastInterview(interview)"
+										class="ml-1"
+									>
+										({{ interview.feedbacks.length }}/{{
+											interview.interviewers.length
+										}})
+									</span>
+								</button>
+							</div>
+						</nb-card-body>
+					</nb-card>
+				</div>
+			</div>
 			<div
-				class="card-container"
+				*ngIf="dataLayoutStyle === 'TABLE'"
 				[nbSpinner]="loading"
 				nbSpinnerSize="giant"
 				nbSpinnerStatus="primary"
+				class="table-scroll-container"
 			>
-				<nb-card
-					style="padding: 0 !important"
-					class="card-body"
-					*ngFor="let interview of interviewList"
+				<ng2-smart-table
+					class="interviews-table"
+					style="cursor: pointer"
+					[settings]="settingsSmartTable"
+					[source]="sourceSmartTable"
+					(userRowSelect)="selectInterview($event)"
+					#interviewsTable
 				>
-					<nb-card-header class="card-header">
-						<div class="header-container">
-							{{ interview.title }}
-						</div>
-						<div class="card-header-badge">
-							<div
-								class="badge badge-primary"
-								*ngIf="isPastInterview(interview)"
-							>
-								{{
-									'CANDIDATES_PAGE.MANAGE_INTERVIEWS.PAST'
-										| translate
-								}}
-							</div>
-
-							<div
-								class="badge badge-warning"
-								*ngIf="interview.isArchived"
-							>
-								{{ 'CANDIDATES_PAGE.ARCHIVED' | translate }}
-							</div>
-						</div>
-					</nb-card-header>
-
-					<nb-card-body class="interview-card">
-						<nb-card>
-							<nb-card-header>
-								<div>
-									{{
-										'CANDIDATES_PAGE.MANAGE_INTERVIEWS.CANDIDATE'
-											| translate
-									}}
-								</div>
-							</nb-card-header>
-							<nb-card-body>
-								<div
-									class="name-container"
-									(click)="
-										goToCandidate(interview.candidate.id)
-									"
-								>
-									<div class="image-container">
-										<img
-											[src]="
-												interview.candidate.user
-													?.imageUrl
-											"
-										/>
-									</div>
-									<span
-										>{{ interview.candidate.user?.name }}
-									</span>
-								</div>
-							</nb-card-body>
-						</nb-card>
-						<div class="client-info">
-							<div class="info-line">
-								<div class="info-meta">
-									{{
-										'CANDIDATES_PAGE.MANAGE_INTERVIEWS.START_DATE'
-											| translate
-									}}
-								</div>
-								<div class="info-value">
-									{{
-										interview?.startTime | date: 'shortDate'
-									}}
-								</div>
-							</div>
-							<div class="info-line">
-								<div class="info-meta">
-									{{
-										'CANDIDATES_PAGE.MANAGE_INTERVIEWS.CRITERIONS'
-											| translate
-									}}
-								</div>
-								<div class="info-value criterions">
-									<span
-										*ngFor="
-											let tech of interview.technologies
-										"
-									>
-										<span> {{ tech.name }} </span>
-									</span>
-
-									<span
-										*ngFor="
-											let qual of interview.personalQualities
-										"
-									>
-										<span> {{ qual.name }} </span>
-									</span>
-								</div>
-							</div>
-							<div class="info-line">
-								<div class="info-meta">
-									{{
-										'CANDIDATES_PAGE.MANAGE_INTERVIEWS.LOCATION'
-											| translate
-									}}
-								</div>
-								<div class="info-value">
-									{{ interview.location }}
-								</div>
-							</div>
-							<div class="info-line">
-								<div class="info-meta">
-									{{
-										'CANDIDATES_PAGE.MANAGE_INTERVIEWS.NOTES'
-											| translate
-									}}
-								</div>
-								<div class="info-value">
-									{{ interview.note }}
-								</div>
-							</div>
-							<div class="info-line">
-								<div class="info-meta">
-									{{
-										'CANDIDATES_PAGE.MANAGE_INTERVIEWS.RATING'
-											| translate
-									}}
-								</div>
-								<div class="info-value">
-									<ga-star-rating-output
-										[rate]="interview.rating"
-										[isGridView]="true"
-									></ga-star-rating-output>
-								</div>
-							</div>
-						</div>
-						<nb-card *ngIf="interview.interviewers.length">
-							<nb-card-header>
-								<div>
-									{{
-										'CANDIDATES_PAGE.MANAGE_INTERVIEWS.INTERVIEWERS'
-											| translate
-									}}
-								</div>
-							</nb-card-header>
-							<nb-card-body>
-								<div
-									class="name-container"
-									*ngFor="
-										let interviewer of interview.interviewers
-									"
-									(click)="
-										openEmployees(interviewer.employeeId)
-									"
-								>
-									<div class="image-container">
-										<img
-											[src]="interviewer.employeeImageUrl"
-										/>
-									</div>
-									<span>{{ interviewer.employeeName }} </span>
-								</div>
-							</nb-card-body>
-						</nb-card>
-
-						<div class="button-container">
-							<button
-								nbButton
-								class="btn"
-								status="info"
-								[disabled]="isPastInterview(interview)"
-								(click)="editInterview(interview.id)"
-								size="tiny"
-							>
-								<nb-icon
-									class="mr-1"
-									icon="edit-outline"
-								></nb-icon
-								>{{ 'BUTTONS.EDIT' | translate }}
-							</button>
-							<button
-								class="btn"
-								size="tiny"
-								nbButton
-								[disabled]="isPastInterview(interview)"
-								(click)="removeInterview(interview.id)"
-								status="danger"
-							>
-								<nb-icon
-									class="mr-2"
-									icon="trash-2-outline"
-								></nb-icon
-								>{{ 'BUTTONS.DELETE' | translate }}
-							</button>
-							<button
-								class="btn"
-								nbButton
-								(click)="addInterviewFeedback(interview.id)"
-								status="success"
-								[disabled]="!isPastInterview(interview)"
-								size="tiny"
-							>
-								<nb-icon
-									class="mr-1"
-									icon="message-square-outline"
-								></nb-icon
-								>{{ 'BUTTONS.LEAVE_FEEDBACK' | translate }}
-								<span
-									*ngIf="isPastInterview(interview)"
-									class="ml-1"
-								>
-									({{ interview.feedbacks.length }}/{{
-										interview.interviewers.length
-									}})
-								</span>
-							</button>
-						</div>
-					</nb-card-body>
-				</nb-card>
+				</ng2-smart-table>
 			</div>
-		</div>
-		<div
-			*ngIf="dataLayoutStyle === 'TABLE'"
-			[nbSpinner]="loading"
-			nbSpinnerSize="giant"
-			nbSpinnerStatus="primary"
-			class="table-scroll-container"
-		>
-			<ng2-smart-table
-				class="interviews-table"
-				style="cursor: pointer"
-				[settings]="settingsSmartTable"
-				[source]="sourceSmartTable"
-				#interviewsTable
-			>
-			</ng2-smart-table>
-		</div>
+		</ng-container>
 	</nb-card-body>
 </nb-card>
+<ng-template #visible>
+	<button nbButton status="success" class="action" (click)="add()">
+		<nb-icon icon="plus-outline"></nb-icon>{{ 'BUTTONS.ADD' | translate }}
+	</button>
+</ng-template>
+<ng-template #actions>
+	<div class="btn-group actions">
+		<button
+			nbButton
+			status="basic"
+			size="small"
+			class="action secondary"
+			(click)="addInterviewFeedback(selectedInterview?.id)"
+		>
+			<nb-icon class="mr-1" icon="message-square-outline"></nb-icon>
+			{{ 'BUTTONS.FEEDBACK' | translate }}
+		</button>
+		<button
+			nbButton
+			status="basic"
+			size="small"
+			class="action primary"
+			(click)="editInterview(selectedInterview?.id)"
+		>
+			<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
+			{{ 'BUTTONS.EDIT' | translate }}
+		</button>
+		<button
+			nbButton
+			status="basic"
+			size="small"
+			class="action"
+			(click)="removeInterview(selectedInterview?.id)"
+			[nbTooltip]="'BUTTONS.DELETE' | translate"
+		>
+			<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
+		</button>
+	</div>
+</ng-template>
