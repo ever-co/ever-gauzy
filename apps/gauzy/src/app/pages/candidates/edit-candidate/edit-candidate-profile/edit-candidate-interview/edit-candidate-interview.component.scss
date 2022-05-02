@@ -141,3 +141,9 @@
 .badge-primary {
   background-color: #0095ff;
 }
+
+:host {
+  nb-card {
+    background-color: rgba(50, 50, 50, 0.03);
+  }
+}
