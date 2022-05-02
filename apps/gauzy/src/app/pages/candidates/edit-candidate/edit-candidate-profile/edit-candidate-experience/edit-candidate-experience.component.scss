@@ -1,0 +1,17 @@
+@import 'themes';
+:host {
+  border-radius: nb-theme(border-radius);
+  nb-tab {
+    background-color: rgba(50, 50, 50, 0.03);
+  }
+  background-color: rgba(50, 50, 50, 0.03);
+  ::ng-deep nb-tabset .tab .tab-link {
+    span.tab-text {
+      text-transform: lowercase;
+      display: block;
+      &:first-letter {
+        text-transform: uppercase;
+      }
+    }
+  }
+}
