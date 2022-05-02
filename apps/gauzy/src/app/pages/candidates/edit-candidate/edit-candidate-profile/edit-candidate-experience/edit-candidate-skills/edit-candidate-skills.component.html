@@ -1,17 +1,15 @@
 <nb-card>
 	<nb-card-header
-		style="
-			display: flex;
-			justify-content: space-between;
-			align-items: center;
-		"
+		style="display: flex; justify-content: flex-end; align-items: center"
+		class="pb-0"
 	>
 		<button
 			nbButton
 			status="success"
 			*ngIf="!showAddCard"
 			(click)="add()"
-			class="mr-2"
+			class="action mr-3"
+			size="small"
 		>
 			<nb-icon class="mr-1" icon="plus-outline"></nb-icon>
 			{{ 'BUTTONS.ADD' | translate }}
@@ -21,10 +19,9 @@
 			*ngIf="!showAddCard"
 			componentName="{{ viewComponentName }}"
 		></ga-layout-selector>
-
-		<div *ngIf="showAddCard" class="row m-0 w-100">
-			<form class="col-8" [formGroup]="form" *ngIf="form">
-				<div formArrayName="skills">
+		<div *ngIf="showAddCard" class="container">
+			<form class="row" [formGroup]="form" *ngIf="form">
+				<div class="col-10 pl-0" formArrayName="skills">
 					<div *ngFor="let skill of skills?.controls; let i = index">
 						<div [formGroupName]="i">
 							<input
@@ -40,65 +37,54 @@
 						</div>
 					</div>
 				</div>
+				<div class="col-2 pr-0">
+					<button (click)="submitForm()" nbButton status="success">
+						{{ 'BUTTONS.SAVE' | translate }}
+					</button>
+					<button
+						(click)="showAddCard = !showAddCard"
+						nbButton
+						outline
+						status="basic"
+					>
+						{{ 'BUTTONS.CANCEL' | translate }}
+					</button>
+				</div>
 			</form>
-			<span class="col-2 pl-2 pr-1"
-				><button
-					class="w-100"
-					(click)="submitForm()"
-					nbButton
-					status="success"
-				>
-					{{ 'BUTTONS.SAVE' | translate }}
-				</button></span
-			>
-			<span class="col-2 pl-1 pr-0"
-				><button
-					class="w-100"
-					(click)="showAddCard = !showAddCard"
-					nbButton
-					status="danger"
-				>
-					{{ 'BUTTONS.CANCEL' | translate }}
-				</button></span
-			>
 		</div>
 	</nb-card-header>
-	<nb-card-body
-		*ngIf="skillList?.length && dataLayoutStyle === 'TABLE'"
-		class="mt-3"
-	>
-		<nb-card *ngFor="let skill of skillList; let i = index">
+	<nb-card-body *ngIf="skillList?.length && dataLayoutStyle === 'TABLE'">
+		<nb-card class="skill" *ngFor="let skill of skillList; let i = index">
 			<nb-card-body>
 				<span *ngIf="!showEditDiv[i]"> {{ skill.name }}</span>
 				<div class="row m-0" *ngIf="showEditDiv[i]">
 					<input
 						#editInput
-						class="col-8"
+						class="col-10"
 						nbInput
 						type="text"
 						[value]="skill.name"
 						fullWidth
 					/>
-					<span class="col-2 pl-2 pr-1">
+					<div class="col-1">
 						<button
-							class="w-100"
+							(click)="cancel(i)"
+							outline
+							nbButton
+							status="basic"
+						>
+							{{ 'BUTTONS.CANCEL' | translate }}
+						</button>
+					</div>
+					<div class="col-1">
+						<button
 							(click)="editSkill(editInput.value, i)"
 							nbButton
 							status="success"
 						>
-							Update
-						</button></span
-					>
-					<span class="col-2 pl-1 pr-0">
-						<button
-							class="w-100"
-							(click)="cancel(i)"
-							nbButton
-							status="danger"
-						>
-							{{ 'BUTTONS.CANCEL' | translate }}
-						</button></span
-					>
+							{{ 'BUTTONS.UPDATE' | translate }}
+						</button>
+					</div>
 				</div>
 				<nb-actions
 					*ngIf="!showEditDiv[i]"

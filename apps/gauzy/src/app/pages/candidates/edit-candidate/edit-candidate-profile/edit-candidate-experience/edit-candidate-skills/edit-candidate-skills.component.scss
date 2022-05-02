@@ -1,0 +1,13 @@
+@import 'gauzy/_gauzy-table';
+@import 'gauzy/_gauzy-dialogs';
+
+form {
+  background-color: rgba(50, 50, 50, 0.03);
+  border-radius: nb-theme(border-radius);
+  padding: 1rem;
+}
+
+.skill {
+  background-color: nb-theme(background-basic-color-1);
+  margin-bottom: 8px;
+}
