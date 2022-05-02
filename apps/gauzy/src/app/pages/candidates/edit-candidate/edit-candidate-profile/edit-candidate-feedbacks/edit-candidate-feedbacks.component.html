@@ -1,25 +1,6 @@
 <nb-card>
 	<nb-card-header>
 		<div class="main-btn" *ngIf="!showAddCard">
-			<div class="action-btn">
-				<button
-					nbButton
-					status="success"
-					class="mr-2"
-					(click)="cancel()"
-				>
-					<nb-icon class="mr-1" icon="plus-outline"></nb-icon
-					>{{ 'BUTTONS.ADD' | translate }}
-				</button>
-				<ng-container
-					*ngIf="dataLayoutStyle === 'TABLE' && !showAddCard"
-				>
-					<ng-container
-						*ngTemplateOutlet="actionButtons"
-					></ng-container>
-				</ng-container>
-			</div>
-
 			<div class="filters" *ngIf="allFeedbacks?.length > 0">
 				<nb-select
 					[formControl]="selectInterview"
@@ -51,11 +32,13 @@
 					[reset]="isResetSelect"
 				>
 				</ga-employee-multi-select>
-
-				<ga-layout-selector
-					componentName="{{ viewComponentName }}"
-				></ga-layout-selector>
 			</div>
+			<ngx-gauzy-button-action
+				[buttonTemplate]="actionButtons"
+				[buttonTemplateVisible]="visible"
+				[componentName]="viewComponentName"
+				[isDisable]="disableButton"
+			></ngx-gauzy-button-action>
 		</div>
 
 		<div *ngIf="showAddCard" class="add-card">
@@ -423,18 +406,25 @@
 			</ng2-smart-table>
 		</div>
 	</nb-card-body>
-	<ng-template
-		#actionButtons
-		let-buttonSize="buttonSize"
-		let-selectedItem="selectedItem"
+</nb-card>
+<ng-template #visible>
+	<button nbButton status="success" class="action" (click)="cancel()">
+		<nb-icon class="mr-1" icon="plus-outline"></nb-icon
+		>{{ 'BUTTONS.ADD' | translate }}
+	</button>
+</ng-template>
+<ng-template #actionButtons let-selectedItem="selectedItem">
+	<div
+		class="btn-group actions"
+		*ngIf="dataLayoutStyle === 'TABLE' && !showAddCard"
 	>
 		<button
 			(click)="editFeedback()"
 			nbButton
-			status="info"
-			class="mr-2"
+			status="basic"
+			class="action primary"
 			[disabled]="!selectedItem && disableButton"
-			[size]="buttonSize || 'medium'"
+			size="small"
 		>
 			<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
 			{{ 'BUTTONS.EDIT' | translate }}
@@ -443,13 +433,13 @@
 		<button
 			(click)="removeFeedback()"
 			nbButton
-			status="danger"
-			class="mr-2"
+			status="basic"
+			class="action"
 			[disabled]="!selectedItem && disableButton"
-			[size]="buttonSize || 'medium'"
+			size="small"
+			[nbTooltip]="'BUTTONS.DELETE' | translate"
 		>
-			<nb-icon class="mr-1" icon="archive-outline"> </nb-icon>
-			{{ 'BUTTONS.DELETE' | translate }}
+			<nb-icon status="danger" icon="trash-2-outline"> </nb-icon>
 		</button>
-	</ng-template>
-</nb-card>
+	</div>
+</ng-template>
