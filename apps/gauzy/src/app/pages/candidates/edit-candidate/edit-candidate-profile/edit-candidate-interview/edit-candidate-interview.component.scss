@@ -145,7 +145,8 @@
 }
 
 :host {
-  nb-card {
+  nb-card,
+  .custom-card-body {
     background-color: rgba(50, 50, 50, 0.03);
   }
 }
