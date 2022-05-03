@@ -135,8 +135,7 @@ export class EditCandidateInterviewComponent
 					type: 'custom',
 					width: '120px',
 					renderComponent: InterviewDateTableComponent,
-					filter: false,
-					class: 'text-center'
+					filter: false
 				},
 				rating: {
 					title: this.getTranslation(
@@ -179,7 +178,7 @@ export class EditCandidateInterviewComponent
 				},
 				actions: {
 					title: this.getTranslation(
-						'CANDIDATES_PAGE.MANAGE_INTERVIEWS.ACTIONS'
+						'SM_TABLE.LAST_UPDATED'
 					),
 					width: '150px',
 					type: 'custom',
@@ -294,7 +293,8 @@ export class EditCandidateInterviewComponent
 						imageUrl: this.selectedCandidate.user.imageUrl,
 						showArchive: false,
 						employees: employees,
-						allFeedbacks: this.allFeedbacks
+						allFeedbacks: this.allFeedbacks,
+						hideActions: true
 					});
 				});
 			}

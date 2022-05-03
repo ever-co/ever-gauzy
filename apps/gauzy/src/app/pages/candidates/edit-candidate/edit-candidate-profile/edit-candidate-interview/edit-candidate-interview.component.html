@@ -52,7 +52,7 @@
 			<ga-card-grid
 				*ngIf="dataLayoutStyle === 'CARDS_GRID'"
 				[settings]="settingsSmartTable"
-				[source]="interviewList"
+				[source]="tableInterviewList"
 				(onSelectedItem)="selectInterview($event)"
 			></ga-card-grid>
 		</ng-container>
