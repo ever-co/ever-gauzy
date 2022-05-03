@@ -54,10 +54,10 @@ export class EmployeeWithLinksComponent implements ViewCell, OnInit {
 		this.store.selectedEmployee.firstName = firstName;
 		this.store.selectedEmployee.lastName = lastName;
 		this.store.selectedEmployee.imageUrl = imageUrl;
-		this.navigateToEmployeeStatistics();
+		this.navigateToEmployeeStatistics(employee?.id);
 	}
 
-	navigateToEmployeeStatistics() {
-		this.router.navigate(['/pages/dashboard/hr']);
+	navigateToEmployeeStatistics(id: string) {
+		this.router.navigate([`/pages/employees/edit/${id}/account`]);
 	}
 }
