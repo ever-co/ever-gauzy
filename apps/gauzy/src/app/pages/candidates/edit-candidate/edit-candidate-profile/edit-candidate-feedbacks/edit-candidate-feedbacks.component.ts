@@ -233,9 +233,16 @@ export class EditCandidateFeedbacksComponent
 				});
 			});
 			this.sourceSmartTable.load(feedbacksForTable);
+			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID)
+				this._loadGridLayoutData();
 			return this.feedbackList;
 		}
 	}
+
+	private async _loadGridLayoutData() {
+		this.feedbackList = await this.sourceSmartTable.getElements();
+	}
+
 	private async loadCriterions(feedback: ICandidateFeedback) {
 		if (feedback.interviewId) {
 			this.currentInterview = this.interviewList.find(
