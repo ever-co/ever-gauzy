@@ -12,7 +12,14 @@ import { Component, Input } from '@angular/core';
 				<span> {{ qual.name }} </span>
 			</li>
 		</ul>
-	`
+	`,
+	styles: [
+		`
+			ul {
+				list-style-type: '- ';
+			}
+		`
+	]
 })
 export class InterviewCriterionsTableComponent {
 	@Input()
