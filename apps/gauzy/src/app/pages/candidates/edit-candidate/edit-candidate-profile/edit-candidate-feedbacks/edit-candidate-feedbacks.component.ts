@@ -194,7 +194,7 @@ export class EditCandidateFeedbacksComponent
 						'CANDIDATES_PAGE.EDIT_CANDIDATE.FEEDBACK_STATUS'
 					),
 					type: 'custom',
-					width: '100px',
+					width: '5%',
 					renderComponent: FeedbackStatusTableComponent
 				}
 			},
