@@ -125,6 +125,7 @@ body {
   //Override header padding from 1.25rem to 0.5rem
   nb-layout .layout nb-layout-header nav {
     padding: 0rem !important;
+    height: auto !important;
   }
 
   // Override default min-width for nb-select
