@@ -152,10 +152,17 @@
 }
 
 :host {
-  height: 100%;
-  @include card-overrides(unset, $default-card-height, $default-radius);
+  @include card-overrides(
+    unset,
+    calc($default-card-height - 4.5rem),
+    $default-radius
+  );
   .custom-table {
-    max-height: calc($default-card-height - 1rem);
+    max-height: calc($default-card-height - 10rem);
+  }
+  .custom-grid {
+    max-height: calc($default-card-height - 6.5rem);
+    overflow-y: overlay;
   }
   ::ng-deep {
     @include nb-select-overrides(

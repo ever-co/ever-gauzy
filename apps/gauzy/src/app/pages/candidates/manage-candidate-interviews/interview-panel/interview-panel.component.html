@@ -51,41 +51,39 @@
 		nbSpinnerStatus="primary"
 		class="card-body"
 	>
-		<div class="d-flex flex-column justify-content-between h-100">
-			<ng-template
-				[ngIf]="dataLayoutStyle === 'TABLE'"
-				[ngIfElse]="gridLayout"
-			>
-				<div class="table-scroll-container custom-table">
-					<ng2-smart-table
-						class="interviews-table"
-						style="cursor: pointer"
-						[settings]="settingsSmartTable"
-						[source]="sourceSmartTable"
-						(userRowSelect)="selectInterview($event)"
-						#interviewsTable
+		<ng-template
+			[ngIf]="dataLayoutStyle === 'TABLE'"
+			[ngIfElse]="gridLayout"
+		>
+			<div class="table-scroll-container custom-table">
+				<ng2-smart-table
+					class="interviews-table"
+					style="cursor: pointer"
+					[settings]="settingsSmartTable"
+					[source]="sourceSmartTable"
+					(userRowSelect)="selectInterview($event)"
+					#interviewsTable
+				>
+				</ng2-smart-table>
+			</div>
+			<div class="pagination-container">
+				<ng-container
+					*ngIf="pagination.totalItems > pagination.itemsPerPage"
+				>
+					<ga-pagination
+						(selectedOption)="onUpdateOption($event)"
+						(selectedPage)="onPageChange($event)"
+						[doEmit]="false"
+						[totalItems]="pagination?.totalItems"
+						[itemsPerPage]="pagination?.itemsPerPage"
+						[activePage]="pagination?.activePage"
 					>
-					</ng2-smart-table>
-				</div>
-				<div class="pagination-container">
-					<ng-container
-						*ngIf="pagination.totalItems > pagination.itemsPerPage"
-					>
-						<ga-pagination
-							(selectedOption)="onUpdateOption($event)"
-							(selectedPage)="onPageChange($event)"
-							[doEmit]="false"
-							[totalItems]="pagination?.totalItems"
-							[itemsPerPage]="pagination?.itemsPerPage"
-							[activePage]="pagination?.activePage"
-						>
-						</ga-pagination>
-					</ng-container>
-				</div>
-			</ng-template>
-		</div>
+					</ga-pagination>
+				</ng-container>
+			</div>
+		</ng-template>
 		<ng-template #gridLayout>
-			<ng-container *ngIf="interviewList?.length">
+			<div class="custom-grid" *ngIf="interviewList?.length">
 				<ga-card-grid
 					[settings]="settingsSmartTable"
 					[source]="tableInterviewList"
@@ -97,7 +95,7 @@
 					[itemsPerPage]="pagination?.itemsPerPage"
 					[activePage]="pagination?.activePage"
 				></ga-card-grid>
-			</ng-container>
+			</div>
 		</ng-template>
 	</div>
 </nb-card-body>
