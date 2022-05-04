@@ -1,3 +1,6 @@
+@import 'gauzy/_gauzy-cards';
+@import 'gauzy/_gauzy-table';
+
 .card {
   display: flex;
   flex-direction: column;
@@ -6,7 +9,8 @@
   width: 100%;
   border: none;
   padding: 0;
-  margin-top: 2rem;
+  overflow: unset;
+  background-color: rgba(50, 50, 50, 0.03);
 
   &-filter {
     padding-bottom: 1.5rem;
@@ -18,13 +22,9 @@
   }
 }
 
-::ng-deep {
-  .ng2-smart-actions,
-  .ng2-smart-actions-title {
-    display: none;
-  }
+.card-header {
+  background: unset;
 }
-
 .header {
   display: flex;
   align-items: center;
@@ -47,7 +47,6 @@
   .card-body {
     width: 100%;
     max-width: 300px;
-    margin: 20px;
     .card-header {
       padding: 0.5rem;
       display: flex;
@@ -149,4 +148,21 @@
       text-align: end;
     }
   }
+}
+
+:host {
+  @include card-overrides(
+    unset,
+    calc($default-card-height - 8rem),
+    $default-radius
+  );
+  .custom-table {
+    max-height: calc($default-card-height - 10rem);
+  }
+}
+
+.gauzy-action {
+  position: absolute;
+  right: 1rem;
+  top: -4.5rem;
 }

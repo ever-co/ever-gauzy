@@ -1,62 +1,76 @@
 <nb-card-body class="card">
-	<div class="header">
-		<ga-employee-multi-select
-			*ngIf="allInterviews?.length > 0"
-			class="select"
-			[multiple]="true"
-			[label]="false"
-			[allEmployees]="employeeList"
-			(selectedChange)="onEmployeeSelected($event)"
-			[reset]="isResetSelect"
-		>
-		</ga-employee-multi-select>
-
-		<div class="btn" *ngIf="allInterviews?.length > 0">
-			<nb-checkbox
-				(checkedChange)="changePast($event)"
-				status="warning"
-				class="mr-3"
-				[checked]="onlyPast"
-				>{{ 'FORM.CHECKBOXES.ONLY_PAST' | translate }}
-			</nb-checkbox>
-			<nb-checkbox
-				(checkedChange)="changeFuture($event)"
-				status="warning"
-				[checked]="onlyFuture"
-				class="mr-3"
-				>{{ 'FORM.CHECKBOXES.ONLY_FUTURE' | translate }}
-			</nb-checkbox>
-			<nb-checkbox
-				(checkedChange)="changeIncludeArchived($event)"
-				status="warning"
-				class="mr-3"
-				>{{ 'FORM.CHECKBOXES.INCLUDE_ARCHIVED' | translate }}
-			</nb-checkbox>
-
-			<ga-layout-selector
-				componentName="{{ viewComponentName }}"
-			></ga-layout-selector>
+	<div class="card-header">
+		<div class="d-flex flex-column">
+			<div class="d-flex flex-column align-items-end gauzy-action">
+				<ngx-gauzy-button-action
+					[buttonTemplate]="actions"
+					[buttonTemplateVisible]="visible"
+					[componentName]="viewComponentName"
+					[isDisable]="disabled"
+				></ngx-gauzy-button-action>
+			</div>
+			<div class="header">
+				<ga-employee-multi-select
+					*ngIf="allInterviews?.length > 0"
+					class="select"
+					[multiple]="true"
+					[label]="false"
+					[allEmployees]="employeeList"
+					(selectedChange)="onEmployeeSelected($event)"
+					[reset]="isResetSelect"
+				>
+				</ga-employee-multi-select>
+				<div class="btn" *ngIf="allInterviews?.length > 0">
+					<nb-checkbox
+						(checkedChange)="changePast($event)"
+						status="basic"
+						class="mr-3"
+						[checked]="onlyPast"
+						>{{ 'FORM.CHECKBOXES.ONLY_PAST' | translate }}
+					</nb-checkbox>
+					<nb-checkbox
+						(checkedChange)="changeFuture($event)"
+						status="basic"
+						[checked]="onlyFuture"
+						class="mr-3"
+						>{{ 'FORM.CHECKBOXES.ONLY_FUTURE' | translate }}
+					</nb-checkbox>
+					<nb-checkbox
+						(checkedChange)="changeIncludeArchived($event)"
+						status="basic"
+						>{{ 'FORM.CHECKBOXES.INCLUDE_ARCHIVED' | translate }}
+					</nb-checkbox>
+				</div>
+			</div>
 		</div>
 	</div>
 
-	<div [nbSpinner]="loading" nbSpinnerSize="giant" nbSpinnerStatus="primary">
-		<ng2-smart-table
-			*ngIf="dataLayoutStyle === 'TABLE'"
-			class="interviews-table"
-			style="cursor: pointer;"
-			[settings]="settingsSmartTable"
-			[source]="sourceSmartTable"
-			#interviewsTable
-		>
-		</ng2-smart-table>
+	<div
+		[nbSpinner]="loading"
+		nbSpinnerSize="giant"
+		nbSpinnerStatus="primary"
+		class="card-body"
+	>
+		<div class="table-scroll-container custom-table">
+			<ng2-smart-table
+				*ngIf="dataLayoutStyle === 'TABLE'"
+				class="interviews-table"
+				style="cursor: pointer"
+				[settings]="settingsSmartTable"
+				[source]="sourceSmartTable"
+				(userRowSelect)="selectInterview($event)"
+				#interviewsTable
+			>
+			</ng2-smart-table>
+		</div>
 	</div>
 
 	<div
-		class="card-container"
+		class="card-container card-body"
 		*ngIf="interviewList?.length && dataLayoutStyle === 'CARDS_GRID'"
 	>
 		<nb-card
-			style="padding: 0 !important;"
+			style="padding: 0 !important"
 			class="card-body"
 			*ngFor="let interview of interviewList"
 		>
@@ -254,3 +268,62 @@
 		</nb-card>
 	</div>
 </nb-card-body>
+
+<ng-template #visible>
+	<button
+		nbButton
+		status="primary"
+		size="small"
+		class="action"
+		(click)="addInterview()"
+	>
+		<nb-icon icon="plus-outline"></nb-icon
+		>{{
+			'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.ADD_INTERVIEW' | translate
+		}}
+	</button>
+</ng-template>
+<ng-template #actions>
+	<div class="btn-group actions">
+		<button
+			nbButton
+			status="basic"
+			size="small"
+			class="action secondary"
+			(click)="addFeedback(selectedInterview)"
+		>
+			<nb-icon class="mr-1" icon="message-square-outline"></nb-icon>
+			{{ 'BUTTONS.FEEDBACK' | translate }}
+		</button>
+		<button
+			nbButton
+			status="basic"
+			size="small"
+			class="action primary"
+			(click)="editInterview(selectedInterview?.id)"
+		>
+			<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
+			{{ 'BUTTONS.EDIT' | translate }}
+		</button>
+		<button
+			nbButton
+			status="basic"
+			size="small"
+			class="action secondary"
+			(click)="archive(selectedInterview)"
+		>
+			<nb-icon class="mr-1" icon="archive-outline"></nb-icon>
+			{{ 'BUTTONS.ARCHIVE' | translate }}
+		</button>
+		<button
+			nbButton
+			status="basic"
+			size="small"
+			class="action"
+			(click)="removeInterview(selectedInterview?.id)"
+			[nbTooltip]="'BUTTONS.DELETE' | translate"
+		>
+			<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
+		</button>
+	</div>
+</ng-template>

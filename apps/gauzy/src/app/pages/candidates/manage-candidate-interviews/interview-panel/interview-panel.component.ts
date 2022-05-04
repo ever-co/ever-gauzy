@@ -42,7 +42,8 @@ import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service'
 })
 export class InterviewPanelComponent
 	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
+	implements OnInit, OnDestroy
+{
 	private _ngDestroy$ = new Subject<void>();
 	interviewList: ICandidateInterview[];
 	tableInterviewList = [];
@@ -65,6 +66,8 @@ export class InterviewPanelComponent
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	@ViewChild('interviewsTable') interviewsTable;
 	organization: IOrganization;
+	disabled: boolean = true;
+	selectedInterview: ICandidateInterview;
 	constructor(
 		private dialogService: NbDialogService,
 		readonly translateService: TranslateService,
@@ -105,6 +108,7 @@ export class InterviewPanelComponent
 						});
 				}
 			});
+		this.loadSmartTable();
 	}
 	onEmployeeSelected(empIds: string[]) {
 		this.selectedEmployees = empIds;
@@ -153,7 +157,7 @@ export class InterviewPanelComponent
 			})
 		);
 		this.employeeList = items;
-		
+
 		const interviews = await this.candidateInterviewService.getAll(
 			[
 				'feedbacks',
@@ -192,7 +196,8 @@ export class InterviewPanelComponent
 							imageUrl: item.user.imageUrl,
 							employees: employees,
 							showArchive: true,
-							allFeedbacks: this.allFeedbacks
+							allFeedbacks: this.allFeedbacks,
+							hideActions: true
 						});
 					}
 				});
@@ -325,7 +330,7 @@ export class InterviewPanelComponent
 					title: this.getTranslation(
 						'CANDIDATES_PAGE.MANAGE_INTERVIEWS.ACTIONS'
 					),
-					width: '150px',
+					width: '10%',
 					type: 'custom',
 					renderComponent: InterviewActionsTableComponent,
 					filter: false,
@@ -455,12 +460,13 @@ export class InterviewPanelComponent
 			this.toastrService.warning('TOASTR.MESSAGE.EDIT_PAST_INTERVIEW');
 		} else {
 			const { id: organizationId, tenantId } = this.organization;
-			const candidate = await firstValueFrom(this.candidatesService
-				.getAll(['user'], {
+			const candidate = await firstValueFrom(
+				this.candidatesService.getAll(['user'], {
 					id: currentInterview.candidate.id,
 					organizationId,
 					tenantId
-				}));
+				})
+			);
 			const dialog = this.dialogService.open(
 				CandidateInterviewMutationComponent,
 				{
@@ -532,5 +538,35 @@ export class InterviewPanelComponent
 			.subscribe(() => {
 				this.loadSmartTable();
 			});
+	}
+
+	selectInterview(interview: any) {
+		this.selectedInterview = interview.data;
+		this.disabled = !interview.isSelected;
+	}
+
+	async addInterview() {
+		const dialog = this.dialogService.open(
+			CandidateInterviewMutationComponent,
+			{
+				context: {
+					headerTitle: this.getTranslation(
+						'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.SCHEDULE_INTERVIEW'
+					),
+					isCalendar: true,
+					interviews: this.interviewList
+				}
+			}
+		);
+		const data = await firstValueFrom(dialog.onClose);
+		if (data) {
+			this.toastrService.success(
+				`TOASTR.MESSAGE.CANDIDATE_EDIT_CREATED`,
+				{
+					name: data.title
+				}
+			);
+		}
+		this.loadInterviews();
 	}
 }

@@ -23,3 +23,11 @@
     }
   }
 }
+.add-btn {
+  position: absolute;
+  right: 1rem;
+  top: -8px;
+  background-color: rgba(50, 50, 50, 0.03);
+  padding: 8px;
+  border-radius: nb-theme(button-rectangle-border-radius);
+}
