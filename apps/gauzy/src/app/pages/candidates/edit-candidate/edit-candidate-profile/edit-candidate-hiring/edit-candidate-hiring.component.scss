@@ -1,4 +1,6 @@
 :host {
+  overflow-y: overlay;
+  max-height: calc(100vh - 28rem);
   nb-card {
     background-color: rgba(50, 50, 50, 0.03);
   }

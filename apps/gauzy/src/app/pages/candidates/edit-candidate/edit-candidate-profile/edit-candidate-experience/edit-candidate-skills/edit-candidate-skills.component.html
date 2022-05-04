@@ -1,27 +1,28 @@
 <nb-card>
 	<nb-card-header
 		style="display: flex; justify-content: flex-end; align-items: center"
-		class="pb-0"
 	>
-		<button
-			nbButton
-			status="success"
-			*ngIf="!showAddCard"
-			(click)="add()"
-			class="action mr-3"
-			size="small"
-		>
-			<nb-icon class="mr-1" icon="plus-outline"></nb-icon>
-			{{ 'BUTTONS.ADD' | translate }}
-		</button>
-
+		<div class="btn-group actions mr-1">
+			<button
+				nbButton
+				status="success"
+				*ngIf="!showAddCard"
+				(click)="add()"
+				class="action"
+				size="small"
+			>
+				<nb-icon icon="plus-outline"></nb-icon>
+				{{ 'BUTTONS.ADD' | translate }}
+			</button>
+		</div>
 		<ga-layout-selector
+      class="ml-3"
 			*ngIf="!showAddCard"
 			componentName="{{ viewComponentName }}"
 		></ga-layout-selector>
 		<div *ngIf="showAddCard" class="container">
 			<form class="row" [formGroup]="form" *ngIf="form">
-				<div class="col-10 pl-0" formArrayName="skills">
+				<div class="col-11 pl-0" formArrayName="skills">
 					<div *ngFor="let skill of skills?.controls; let i = index">
 						<div [formGroupName]="i">
 							<input
@@ -37,8 +38,13 @@
 						</div>
 					</div>
 				</div>
-				<div class="col-2 pr-0">
-					<button (click)="submitForm()" nbButton status="success">
+				<div class="col-1 pr-0">
+					<button
+						(click)="submitForm()"
+						class="w-100"
+						nbButton
+						status="success"
+					>
 						{{ 'BUTTONS.SAVE' | translate }}
 					</button>
 					<button
@@ -46,6 +52,7 @@
 						nbButton
 						outline
 						status="basic"
+						class="w-100"
 					>
 						{{ 'BUTTONS.CANCEL' | translate }}
 					</button>

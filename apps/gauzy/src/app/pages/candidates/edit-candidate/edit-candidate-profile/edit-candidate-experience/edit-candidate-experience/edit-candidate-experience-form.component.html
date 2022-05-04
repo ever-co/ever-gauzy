@@ -1,5 +1,5 @@
 <nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
-	<nb-card-header class="pb-0">
+	<nb-card-header class="pb-0 pt-0">
 		<div class="d-flex justify-content-end">
 			<ngx-gauzy-button-action
 				[buttonTemplate]="actionButtons"
@@ -11,7 +11,7 @@
 			</ngx-gauzy-button-action>
 		</div>
 		<div *ngIf="showAddCard" class="row m-0 w-100">
-			<form class="col-10" [formGroup]="form" *ngIf="form">
+			<form class="col-11" [formGroup]="form" *ngIf="form">
 				<div formArrayName="experiences">
 					<div
 						*ngFor="let exp of experiences?.controls; let i = index"
@@ -70,7 +70,7 @@
 					</div>
 				</div>
 			</form>
-			<div class="col-2">
+			<div class="col-1">
 				<span class="col-2 pl-2 pr-0"
 					><button
 						class="w-100 form-btn"
@@ -160,7 +160,7 @@
 		class="action"
 		size="small"
 	>
-		<nb-icon class="mr-1" icon="plus-outline"></nb-icon>
+		<nb-icon icon="plus-outline"></nb-icon>
 		{{ 'BUTTONS.ADD' | translate }}
 	</button>
 </ng-template>

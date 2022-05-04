@@ -264,4 +264,6 @@
   .feedbacks-card-wrap {
     background-color: rgba(50, 50, 50, 0.03);
   }
+  overflow-y: overlay;
+  max-height: calc(100vh - 28rem);
 }

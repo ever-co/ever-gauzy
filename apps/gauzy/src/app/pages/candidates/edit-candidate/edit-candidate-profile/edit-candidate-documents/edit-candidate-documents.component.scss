@@ -75,6 +75,8 @@ input {
 }
 
 :host {
+  overflow-y: overlay;
+  max-height: calc(100vh - 27rem);
   nb-card {
     background-color: rgba(50, 50, 50, 0.03);
     &.document {
