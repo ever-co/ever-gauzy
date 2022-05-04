@@ -352,9 +352,7 @@ export class InterviewPanelComponent
 					filter: false
 				},
 				actions: {
-					title: this.getTranslation(
-						'CANDIDATES_PAGE.MANAGE_INTERVIEWS.ACTIONS'
-					),
+					title: this.getTranslation('SM_TABLE.LAST_UPDATED'),
 					width: '10%',
 					type: 'custom',
 					renderComponent: InterviewActionsTableComponent,
