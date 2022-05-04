@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { Subject, firstValueFrom } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { CandidateInterviewService } from 'apps/gauzy/src/app/@core/services/candidate-interview.service';
 import {
@@ -11,7 +11,7 @@ import {
 	ComponentLayoutStyleEnum,
 	IOrganization
 } from '@gauzy/contracts';
-import { takeUntil, tap } from 'rxjs/operators';
+import { tap, debounceTime } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
 import { CandidateInterviewMutationComponent } from 'apps/gauzy/src/app/@shared/candidate/candidate-interview-mutation/candidate-interview-mutation.component';
@@ -47,7 +47,6 @@ export class InterviewPanelComponent
 	extends PaginationFilterBaseComponent
 	implements OnInit, OnDestroy
 {
-	private _ngDestroy$ = new Subject<void>();
 	interviewList: ICandidateInterview[];
 	tableInterviewList = [];
 	candidates: ICandidate[];
@@ -90,8 +89,9 @@ export class InterviewPanelComponent
 	ngOnInit() {
 		this.subject$
 			.pipe(
+				debounceTime(300),
 				tap(() => this.loadInterviews()),
-				tap(() => untilDestroyed(this))
+				untilDestroyed(this)
 			)
 			.subscribe();
 		this.pagination$
@@ -102,7 +102,7 @@ export class InterviewPanelComponent
 			)
 			.subscribe();
 		this.store.selectedOrganization$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((organization: IOrganization) => {
 				if (organization) {
 					const { id: organizationId, tenantId } = organization;
@@ -112,16 +112,15 @@ export class InterviewPanelComponent
 							organizationId,
 							tenantId
 						})
-						.pipe(takeUntil(this._ngDestroy$))
+						.pipe(untilDestroyed(this))
 						.subscribe((candidates) => {
 							this.candidates = candidates.items;
 						});
 
 					this.candidateStore.interviewList$
-						.pipe(takeUntil(this._ngDestroy$))
-						.subscribe(() => {
-							this.subject$.next(true);
-						});
+						.pipe(untilDestroyed(this))
+						.subscribe();
+					this.subject$.next(true);
 				}
 			});
 		this.loadSmartTable();
@@ -247,12 +246,18 @@ export class InterviewPanelComponent
 				: this.tableInterviewList;
 			this.sourceSmartTable.setPaging(activePage, itemsPerPage, false);
 			this.sourceSmartTable.load(this.tableInterviewList);
+			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID)
+				this._loadGridLayoutData();
 			this.setPagination({
 				...this.getPagination(),
 				totalItems: this.sourceSmartTable.count()
 			});
 			this.loading = false;
 		}
+	}
+
+	private async _loadGridLayoutData() {
+		this.tableInterviewList = await this.sourceSmartTable.getElements();
 	}
 
 	filterInterviewByTime(list: ICandidateInterview[], isPast: boolean) {
@@ -384,7 +389,7 @@ export class InterviewPanelComponent
 		this.viewComponentName = ComponentEnum.TEAMS;
 		this.store
 			.componentLayout$(this.viewComponentName)
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((componentLayout) => {
 				this.dataLayoutStyle = componentLayout;
 			});
@@ -451,7 +456,7 @@ export class InterviewPanelComponent
 						recordType: `${interview.title}`
 					}
 				})
-				.onClose.pipe(takeUntil(this._ngDestroy$))
+				.onClose.pipe(untilDestroyed(this))
 				.subscribe(async (result) => {
 					if (result) {
 						try {
@@ -548,16 +553,14 @@ export class InterviewPanelComponent
 		this.router.navigate([`/pages/employees/edit/${id}`]);
 	}
 
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+	ngOnDestroy() {}
 	private _applyTranslationOnSmartTable() {
 		this.translateService.onLangChange
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe(() => {
-				this.loadSmartTable();
-			});
+			.pipe(
+				tap(() => this.subject$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	selectInterview(interview: any) {
