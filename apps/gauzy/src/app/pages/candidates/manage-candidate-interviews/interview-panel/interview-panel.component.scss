@@ -1,5 +1,6 @@
 @import 'gauzy/_gauzy-cards';
 @import 'gauzy/_gauzy-table';
+@import 'gauzy/_gauzy-overrides';
 
 .card {
   display: flex;
@@ -28,7 +29,7 @@
 .header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: end;
 
   .btn {
     display: flex;
@@ -158,6 +159,13 @@
   );
   .custom-table {
     max-height: calc($default-card-height - 10rem);
+  }
+  ::ng-deep {
+    @include nb-select-overrides(
+      2rem,
+      $default-button-radius,
+      $default-box-shadow
+    );
   }
 }
 
