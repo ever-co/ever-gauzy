@@ -7,6 +7,7 @@ import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslationBaseComponent } from '../../../@shared/language-base';
 import { CandidateInterviewMutationComponent } from '../../../@shared/candidate/candidate-interview-mutation/candidate-interview-mutation.component';
+import { ActivatedRoute } from '@angular/router';
 import {
 	CandidateInterviewService,
 	Store,
@@ -29,13 +30,15 @@ export class ManageCandidateInterviewsComponent
 	interviews: ICandidateInterview[] = [];
 	organization: IOrganization;
 	currentTab: string;
+	TAB_ID = 'ga-ak-97';
 
 	constructor(
 		public readonly translateService: TranslateService,
 		private readonly dialogService: NbDialogService,
 		private readonly toastrService: ToastrService,
 		public readonly candidateInterviewService: CandidateInterviewService,
-		private readonly store: Store
+		private readonly store: Store,
+		private readonly route: ActivatedRoute
 	) {
 		super(translateService);
 	}
@@ -43,6 +46,7 @@ export class ManageCandidateInterviewsComponent
 	ngOnInit() {
 		this._loadTabs();
 		this._applyTranslationOnTabs();
+		this._currentTabName();
 	}
 
 	ngAfterViewInit() {
@@ -66,7 +70,6 @@ export class ManageCandidateInterviewsComponent
 	}
 
 	getRoute(tab: string): string {
-		this.currentTab = tab === 'interview_panel' ? 'ga-ak-97' : null;
 		return `/pages/employees/candidates/interviews/${tab}`;
 	}
 
@@ -84,7 +87,7 @@ export class ManageCandidateInterviewsComponent
 					'CANDIDATES_PAGE.MANAGE_INTERVIEWS.INTERVIEWS'
 				),
 				responsive: true,
-				tabId: 'ga-ak-97',
+				tabId: this.TAB_ID,
 				route: this.getRoute('interview_panel')
 			},
 			{
@@ -95,6 +98,12 @@ export class ManageCandidateInterviewsComponent
 				route: this.getRoute('criterion')
 			}
 		];
+	}
+
+	_currentTabName() {
+		const arr = this.route.children[0].snapshot.url;
+		const last = arr.at(-1);
+		this.currentTab = last.path === 'interview_panel' ? this.TAB_ID : null;
 	}
 
 	async addInterview() {
