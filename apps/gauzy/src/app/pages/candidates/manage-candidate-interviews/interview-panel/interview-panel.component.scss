@@ -154,11 +154,11 @@
 :host {
   @include card-overrides(
     unset,
-    calc($default-card-height - 8rem),
+    calc($default-card-height - 4.5rem),
     $default-radius
   );
   .custom-table {
-    max-height: calc($default-card-height - 10rem);
+    max-height: calc($default-card-height - 5.5rem);
   }
   ::ng-deep {
     @include nb-select-overrides(

@@ -1,7 +1,6 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { Subject, firstValueFrom } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
-import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { CandidateInterviewService } from 'apps/gauzy/src/app/@core/services/candidate-interview.service';
 import {
 	ICandidateInterview,
@@ -12,7 +11,7 @@ import {
 	ComponentLayoutStyleEnum,
 	IOrganization
 } from '@gauzy/contracts';
-import { takeUntil } from 'rxjs/operators';
+import { takeUntil, tap } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
 import { CandidateInterviewMutationComponent } from 'apps/gauzy/src/app/@shared/candidate/candidate-interview-mutation/candidate-interview-mutation.component';
@@ -34,14 +33,18 @@ import { ArchiveConfirmationComponent } from 'apps/gauzy/src/app/@shared/user/fo
 import { ErrorHandlingService } from 'apps/gauzy/src/app/@core/services/error-handling.service';
 import { CandidateInterviewFeedbackComponent } from 'apps/gauzy/src/app/@shared/candidate/candidate-interview-feedback/candidate-interview-feedback.component';
 import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
-
+import { PaginationFilterBaseComponent } from 'apps/gauzy/src/app/@shared/pagination/pagination-filter-base.component';
+import { IPaginationBase } from '../../../../@shared/pagination/pagination-filter-base.component';
+import { untilDestroyed, UntilDestroy } from '@ngneat/until-destroy';
+import { distinctUntilChange } from '../../../../../../../../packages/common-angular/src/utils/shared-utils';
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-interview-panel',
 	templateUrl: './interview-panel.component.html',
 	styleUrls: ['./interview-panel.component.scss']
 })
 export class InterviewPanelComponent
-	extends TranslationBaseComponent
+	extends PaginationFilterBaseComponent
 	implements OnInit, OnDestroy
 {
 	private _ngDestroy$ = new Subject<void>();
@@ -85,6 +88,19 @@ export class InterviewPanelComponent
 		this.setView();
 	}
 	ngOnInit() {
+		this.subject$
+			.pipe(
+				tap(() => this.loadInterviews()),
+				tap(() => untilDestroyed(this))
+			)
+			.subscribe();
+		this.pagination$
+			.pipe(
+				distinctUntilChange(),
+				tap(() => this.subject$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this.store.selectedOrganization$
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((organization: IOrganization) => {
@@ -104,11 +120,12 @@ export class InterviewPanelComponent
 					this.candidateStore.interviewList$
 						.pipe(takeUntil(this._ngDestroy$))
 						.subscribe(() => {
-							this.loadInterviews();
+							this.subject$.next(true);
 						});
 				}
 			});
 		this.loadSmartTable();
+		this._applyTranslationOnSmartTable();
 	}
 	onEmployeeSelected(empIds: string[]) {
 		this.selectedEmployees = empIds;
@@ -138,9 +155,11 @@ export class InterviewPanelComponent
 		return this.interviewList;
 	}
 	async loadInterviews() {
+		if (!this.organization) return;
+		this.loading = true;
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
-
+		const { activePage, itemsPerPage } = this.getPagination();
 		const res = await this.candidateFeedbacksService.getAll(
 			['interviewer'],
 			{ organizationId, tenantId }
@@ -148,7 +167,6 @@ export class InterviewPanelComponent
 		if (res) {
 			this.allFeedbacks = res.items;
 		}
-		this.loading = true;
 
 		const { items } = await firstValueFrom(
 			this.employeesService.getAll(['user'], {
@@ -227,13 +245,16 @@ export class InterviewPanelComponent
 			this.tableInterviewList = this.onlyFuture
 				? this.filterInterviewByTime(this.tableInterviewList, false)
 				: this.tableInterviewList;
-
+			this.sourceSmartTable.setPaging(activePage, itemsPerPage, false);
 			this.sourceSmartTable.load(this.tableInterviewList);
+			this.setPagination({
+				...this.getPagination(),
+				totalItems: this.sourceSmartTable.count()
+			});
 			this.loading = false;
-			this.loadSmartTable();
-			this._applyTranslationOnSmartTable();
 		}
 	}
+
 	filterInterviewByTime(list: ICandidateInterview[], isPast: boolean) {
 		const now = new Date().getTime();
 		return list.filter((item) =>
@@ -259,7 +280,8 @@ export class InterviewPanelComponent
 		}
 		return res;
 	}
-	async loadSmartTable() {
+	loadSmartTable() {
+		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
 			actions: false,
 			columns: {
@@ -284,15 +306,13 @@ export class InterviewPanelComponent
 					type: 'custom',
 					width: '120px',
 					renderComponent: InterviewDateTableComponent,
-					filter: false,
-					class: 'text-center'
+					filter: false
 				},
 				rating: {
 					title: this.getTranslation(
 						'CANDIDATES_PAGE.MANAGE_INTERVIEWS.RATING'
 					),
 					type: 'custom',
-					width: '136px',
 					renderComponent: InterviewStarRatingComponent,
 					filter: false
 				},
@@ -355,8 +375,8 @@ export class InterviewPanelComponent
 				}
 			},
 			pager: {
-				display: true,
-				perPage: 8
+				display: false,
+				perPage: pagination ? pagination : 10
 			}
 		};
 	}
@@ -371,21 +391,21 @@ export class InterviewPanelComponent
 	}
 	changeIncludeArchived(checked: boolean) {
 		this.includeArchived = checked;
-		this.loadInterviews();
+		this.subject$.next(true);
 	}
 	changePast(checked: boolean) {
 		this.onlyPast = checked;
 		if (this.onlyFuture) {
 			this.onlyFuture = false;
 		}
-		this.loadInterviews();
+		this.subject$.next(true);
 	}
 	changeFuture(checked: boolean) {
 		this.onlyFuture = checked;
 		if (this.onlyPast) {
 			this.onlyPast = false;
 		}
-		this.loadInterviews();
+		this.subject$.next(true);
 	}
 	async addFeedback(interview: ICandidateInterview) {
 		if (!this.isPastInterview(interview)) {
@@ -406,7 +426,7 @@ export class InterviewPanelComponent
 				);
 				const data = await firstValueFrom(dialog.onClose);
 				if (data) {
-					this.loadInterviews();
+					this.subject$.next(true);
 					this.toastrService.success(
 						'TOASTR.MESSAGE.INTERVIEW_FEEDBACK_CREATED',
 						{
@@ -444,7 +464,7 @@ export class InterviewPanelComponent
 									name: interview.title
 								}
 							);
-							this.loadInterviews();
+							this.subject$.next(true);
 						} catch (error) {
 							this.errorHandler.handleError(error);
 						}
@@ -486,7 +506,7 @@ export class InterviewPanelComponent
 				this.toastrService.success('TOASTR.MESSAGE.INTERVIEW_UPDATED', {
 					name: data.title
 				});
-				this.loadInterviews();
+				this.subject$.next(true);
 			}
 		}
 	}
@@ -507,7 +527,7 @@ export class InterviewPanelComponent
 				this.toastrService.success('TOASTR.MESSAGE.INTERVIEW_DELETED', {
 					name: data.title
 				});
-				this.loadInterviews();
+				this.subject$.next(true);
 			}
 		}
 	}
@@ -567,6 +587,6 @@ export class InterviewPanelComponent
 				}
 			);
 		}
-		this.loadInterviews();
+		this.subject$.next(true);
 	}
 }
