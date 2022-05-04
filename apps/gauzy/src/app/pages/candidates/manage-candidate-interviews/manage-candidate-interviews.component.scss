@@ -1,5 +1,25 @@
+@import 'themes';
+
 ::ng-deep {
-    .nb-theme-default .tab-link:focus {
-        outline: none !important;
+  .nb-theme-default .tab-link:focus {
+    outline: none !important;
+  }
+}
+:host {
+  nb-card {
+    nb-card-body {
+      overflow: unset;
+      height: calc(100vh - 20rem);
     }
+  }
+  ::ng-deep .route-tabset .route-tab a.tab-link {
+    border-radius: nb-theme(border-radius) nb-theme(border-radius) 0 0;
+    span.tab-text {
+      text-transform: lowercase;
+      display: block;
+      &:first-letter {
+        text-transform: uppercase;
+      }
+    }
+  }
 }
