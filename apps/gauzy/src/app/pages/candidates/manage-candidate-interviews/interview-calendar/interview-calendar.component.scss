@@ -90,6 +90,19 @@ h5 {
           }
         }
       }
+      .fc-today-button {
+        border-color: rgba(126, 126, 143, 0.5);
+        border-width: 2px;
+        background-color: transparent;
+        color: rgba(126, 126, 143, 1);
+        padding: 8px 24px;
+        font-style: normal;
+        font-weight: 600;
+        font-size: 12px;
+        line-height: 11px;
+        border-radius: nb-theme(button-rectangle-border-radius);
+        text-transform: capitalize;
+      }
     }
   }
 }
