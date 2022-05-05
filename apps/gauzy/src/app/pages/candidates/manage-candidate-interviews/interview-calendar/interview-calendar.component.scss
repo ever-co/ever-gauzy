@@ -1,3 +1,5 @@
+@import 'gauzy/_gauzy-overrides';
+
 .main-header {
   display: flex;
   align-items: center;
@@ -19,4 +21,11 @@
 .navigation {
   height: 24px;
   margin-bottom: 5px;
+}
+::ng-deep {
+  @include nb-select-overrides(
+    2rem,
+    $default-button-radius,
+    $default-box-shadow
+  );
 }
