@@ -4,7 +4,6 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin: 2rem 0 1rem 0;
 }
 
 .multi-select {
@@ -28,4 +27,69 @@
     $default-button-radius,
     $default-box-shadow
   );
+}
+
+:host {
+  nb-card,
+  nb-card-body {
+    background-color: rgba(50, 50, 50, 0.03);
+  }
+}
+
+h5 {
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 22px;
+  letter-spacing: 0em;
+  text-align: left;
+}
+
+/* Overrides full-calendar */
+::ng-deep full-calendar {
+  /* Header */
+  div.fc-header-toolbar {
+    .fc-toolbar-chunk {
+      h2.fc-toolbar-title {
+        /* Override title typography*/
+        font-size: 18px;
+        font-weight: 600;
+        line-height: 30px;
+        letter-spacing: 0em;
+        text-align: left;
+      }
+      .btn-group {
+        padding: 6px 2px 4px 6px;
+        box-shadow: 0px 1px 1px 0px rgba(0, 0, 0, 0.1) inset;
+        background-color: nb-theme(background-basic-color-1);
+        border-radius: nb-theme(button-rectangle-border-radius);
+        .fc-prev-button {
+          border-radius: nb-theme(button-rectangle-border-radius);
+          font-size: 12px;
+          padding: 0;
+          background-color: nb-theme(background-primary-color-1);
+          border-color: nb-theme(background-primary-color-1);
+          span {
+            padding: 10px 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          }
+        }
+        .fc-next-button {
+          border-radius: nb-theme(button-rectangle-border-radius);
+          font-size: 12px;
+          margin: 0 5px;
+          padding: 0;
+          background-color: nb-theme(background-primary-color-1);
+          border-color: nb-theme(background-primary-color-1);
+          span {
+            padding: 10px 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          }
+        }
+      }
+    }
+  }
 }
