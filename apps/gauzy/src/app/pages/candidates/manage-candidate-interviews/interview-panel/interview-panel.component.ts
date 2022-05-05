@@ -387,7 +387,11 @@ export class InterviewPanelComponent
 		this.viewComponentName = ComponentEnum.TEAMS;
 		this.store
 			.componentLayout$(this.viewComponentName)
-			.pipe(untilDestroyed(this))
+			.pipe(
+				tap(() => this.refreshPagination()),
+				tap(() => this.subject$.next(true)),
+				untilDestroyed(this)
+			)
 			.subscribe((componentLayout) => {
 				this.dataLayoutStyle = componentLayout;
 			});
