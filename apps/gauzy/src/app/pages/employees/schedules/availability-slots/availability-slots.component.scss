@@ -28,6 +28,7 @@
     background-color: rgba(50, 50, 50, 0.03);
   }
   .time-range ::ng-deep ga-timer-picker {
+    text-transform: lowercase;
     @include ng-select-overrides(
       2rem,
       $default-button-radius,
