@@ -1,3 +1,5 @@
+@import 'gauzy/_gauzy-overrides';
+
 .custom-header {
   display: flex;
   justify-content: space-between;
@@ -24,6 +26,13 @@
 :host {
   nb-card {
     background-color: rgba(50, 50, 50, 0.03);
+  }
+  .time-range ::ng-deep ga-timer-picker {
+    @include ng-select-overrides(
+      2rem,
+      $default-button-radius,
+      $default-box-shadow
+    );
   }
 }
 .custom-calendar {
