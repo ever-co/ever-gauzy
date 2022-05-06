@@ -158,6 +158,7 @@ export class EventTypeComponent
 					(componentLayout) =>
 						(this.dataLayoutStyle = componentLayout)
 				),
+				tap(() => this.refreshPagination()),
 				tap(() => this.eventTypes$.next(true)),
 				untilDestroyed(this)
 			)
@@ -420,8 +421,7 @@ export class EventTypeComponent
 				this.componentLayoutStyleEnum.CARDS_GRID
 			) {
 				// Initiate GRID view pagination
-				await this.smartTableSource.getElements();
-				this.eventTypes = this.mapEventTypes();
+				this.eventTypes = await this.smartTableSource.getElements();
 			}
 		} catch (error) {
 			this.toastrService.danger(error);

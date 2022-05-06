@@ -57,22 +57,14 @@
 			<ga-card-grid
 				[settings]="smartTableSettings"
 				[source]="eventTypes"
-				[buttonTemplate]="actionButtons"
+				(selectedOption)="onUpdateOption($event)"
+				(selectedPage)="onPageChange($event)"
+				(onSelectedItem)="selectEventType($event)"
+				[doEmit]="false"
+				[totalItems]="pagination?.totalItems"
+				[itemsPerPage]="pagination?.itemsPerPage"
+				[activePage]="pagination?.activePage"
 			></ga-card-grid>
-			<div class="pagination-container">
-				<ng-container
-					*ngIf="pagination.totalItems > pagination.itemsPerPage"
-				>
-					<ga-pagination
-						(selectedPage)="onPageChange($event)"
-						[doEmit]="false"
-						[totalItems]="pagination?.totalItems"
-						[itemsPerPage]="pagination?.itemsPerPage"
-						[activePage]="pagination?.activePage"
-					>
-					</ga-pagination>
-				</ng-container>
-			</div>
 		</ng-template>
 	</nb-card-body>
 </nb-card>
