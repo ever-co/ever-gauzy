@@ -25,6 +25,7 @@ import { BackNavigationModule } from '../../../@shared/back-navigation/back-navi
 import { TranslateModule } from '../../../@shared/translate/translate.module';
 import { HeaderTitleModule } from '../../../@shared/components/header-title/header-title.module';
 import { GauzyButtonActionModule } from '../../../@shared/gauzy-button-action/gauzy-button-action.module';
+import { PaginationModule } from '../../../@shared/pagination/pagination.module';
 
 @NgModule({
 	imports: [
@@ -49,7 +50,8 @@ import { GauzyButtonActionModule } from '../../../@shared/gauzy-button-action/ga
 		NbDialogModule.forChild(),
 		TranslateModule,
 		HeaderTitleModule,
-		GauzyButtonActionModule
+		GauzyButtonActionModule,
+    PaginationModule
 	],
 	declarations: [EventTypeComponent],
 	providers: [EventTypeService]

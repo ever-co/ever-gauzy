@@ -1,4 +1,10 @@
-import { AfterViewInit, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import {
+	AfterViewInit,
+	Component,
+	OnDestroy,
+	OnInit,
+	ViewChild
+} from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { NbDialogService } from '@nebular/theme';
@@ -21,7 +27,10 @@ import {
 	Store,
 	ToastrService
 } from '../../../@core/services';
-import { PaginationFilterBaseComponent } from '../../../@shared/pagination/pagination-filter-base.component';
+import {
+	PaginationFilterBaseComponent,
+	IPaginationBase
+} from '../../../@shared/pagination/pagination-filter-base.component';
 import { EventTypeMutationComponent } from './event-type-mutation/event-type-mutation.component';
 import { DeleteConfirmationComponent } from '../../../@shared/user/forms';
 import { NotesWithTagsComponent } from '../../../@shared/table-components';
@@ -36,8 +45,8 @@ import { ServerDataSource } from '../../../@core/utils/smart-table/server.data-s
 })
 export class EventTypeComponent
 	extends PaginationFilterBaseComponent
-	implements AfterViewInit, OnInit, OnDestroy {
-
+	implements AfterViewInit, OnInit, OnDestroy
+{
 	smartTableSource: ServerDataSource;
 	smartTableSettings: object;
 	localDataSource = new LocalDataSource();
@@ -83,10 +92,19 @@ export class EventTypeComponent
 		this.eventTypes$
 			.pipe(
 				debounceTime(300),
-				tap(() => this.loading = true),
+				tap(() => (this.loading = true)),
 				tap(() => this.getEventTypes()),
 				tap(() => this._clearItem()),
-				tap(() => this.loading = false),
+				tap(() => this.subject$.next(true)),
+				tap(() => (this.loading = false)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+
+		this.pagination$
+			.pipe(
+				distinctUntilChange(),
+				tap(() => this.eventTypes$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -108,7 +126,10 @@ export class EventTypeComponent
 			.subscribe();
 		this.route.queryParamMap
 			.pipe(
-				filter((params) => !!params && params.get('openAddDialog') === 'true'),
+				filter(
+					(params) =>
+						!!params && params.get('openAddDialog') === 'true'
+				),
 				debounceTime(1000),
 				tap(() => this.openAddEventTypeDialog()),
 				untilDestroyed(this)
@@ -120,7 +141,10 @@ export class EventTypeComponent
 		const { employeeId } = this.store.user;
 		if (employeeId) {
 			delete this.smartTableSettings['columns']['employeeName'];
-			this.smartTableSettings = Object.assign({}, this.smartTableSettings);
+			this.smartTableSettings = Object.assign(
+				{},
+				this.smartTableSettings
+			);
 		}
 	}
 
@@ -130,7 +154,10 @@ export class EventTypeComponent
 			.componentLayout$(this.viewComponentName)
 			.pipe(
 				distinctUntilChange(),
-				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
+				tap(
+					(componentLayout) =>
+						(this.dataLayoutStyle = componentLayout)
+				),
 				tap(() => this.eventTypes$.next(true)),
 				untilDestroyed(this)
 			)
@@ -140,8 +167,7 @@ export class EventTypeComponent
 	openAddEventTypeDialog() {
 		this.dialogService
 			.open(EventTypeMutationComponent)
-			.onClose
-			.pipe(untilDestroyed(this))
+			.onClose.pipe(untilDestroyed(this))
 			.subscribe(async (data) => {
 				if (data) {
 					await this.addEventType(data);
@@ -184,8 +210,7 @@ export class EventTypeComponent
 					eventType: this.selectedEventType
 				}
 			})
-			.onClose
-			.pipe(untilDestroyed(this))
+			.onClose.pipe(untilDestroyed(this))
 			.subscribe(async (data) => {
 				try {
 					if (data) {
@@ -198,7 +223,7 @@ export class EventTypeComponent
 							employeeId,
 							organizationId,
 							tenantId
-						}
+						};
 
 						// For default event types
 						if (isEmpty(id)) {
@@ -206,9 +231,12 @@ export class EventTypeComponent
 						} else {
 							await this.eventTypeService.update(id, request);
 						}
-						this.toastrService.success('NOTES.EVENT_TYPES.EDIT_EVENT_TYPE', {
-							name: title
-						});
+						this.toastrService.success(
+							'NOTES.EVENT_TYPES.EDIT_EVENT_TYPE',
+							{
+								name: title
+							}
+						);
 					}
 				} catch (error) {
 					this.errorHandler.handleError(error);
@@ -241,23 +269,24 @@ export class EventTypeComponent
 					)
 				}
 			})
-			.onClose
-			.pipe(untilDestroyed(this))
+			.onClose.pipe(untilDestroyed(this))
 			.subscribe(async (result) => {
 				if (result) {
 					try {
 						const { title } = this.selectedEventType;
-						await this.eventTypeService.delete(
-							this.selectedEventType.id
-						)
-						.then(() => {
-							this.toastrService.success('NOTES.EVENT_TYPES.DELETE_EVENT_TYPE', {
-								name: title
+						await this.eventTypeService
+							.delete(this.selectedEventType.id)
+							.then(() => {
+								this.toastrService.success(
+									'NOTES.EVENT_TYPES.DELETE_EVENT_TYPE',
+									{
+										name: title
+									}
+								);
+							})
+							.finally(() => {
+								this.eventTypes$.next(true);
 							});
-						})
-						.finally(() => {
-							this.eventTypes$.next(true);
-						});
 					} catch (error) {
 						this.errorHandler.handleError(error);
 					} finally {
@@ -289,6 +318,7 @@ export class EventTypeComponent
 	}
 
 	private _loadSmartTableSettings() {
+		const pagination: IPaginationBase = this.getPagination();
 		this.smartTableSettings = {
 			actions: false,
 			columns: {
@@ -325,8 +355,8 @@ export class EventTypeComponent
 				}
 			},
 			pager: {
-				display: true,
-				perPage: 10
+				display: false,
+				perPage: pagination ? pagination : 10
 			}
 		};
 	}
@@ -345,11 +375,7 @@ export class EventTypeComponent
 
 		this.smartTableSource = new ServerDataSource(this.httpClient, {
 			endPoint: `${API_PREFIX}/event-type/pagination`,
-			relations: [
-				'employee',
-				'employee.user',
-				'tags'
-			],
+			relations: ['employee', 'employee.user', 'tags'],
 			where: {
 				...{ organizationId, tenantId },
 				...request,
@@ -357,7 +383,9 @@ export class EventTypeComponent
 			},
 			resultMap: (i: IEventType) => {
 				const durationFormat = `${i.duration} ${i.durationUnit}`;
-				const employeeName = i.employee? i.employee.fullName : 'default';
+				const employeeName = i.employee
+					? i.employee.fullName
+					: 'default';
 
 				return Object.assign({}, i, {
 					active: i.isActive
@@ -368,8 +396,12 @@ export class EventTypeComponent
 				});
 			},
 			finalize: () => {
-				this.loading = false;
 				this.localDataSource.load(this.mapEventTypes());
+				this.setPagination({
+					...this.pagination,
+					totalItems: this.smartTableSource.count()
+				});
+				this.loading = false;
 			}
 		});
 	}
@@ -378,17 +410,19 @@ export class EventTypeComponent
 	 * GET all event types
 	 */
 	private async getEventTypes() {
+		if (!this.organization) return;
 		try {
 			this.setSmartTableSource();
-
-			// Initiate GRID view pagination
-			const { activePage, itemsPerPage } = this.pagination;
+			const { activePage, itemsPerPage } = this.getPagination();
 			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
-
-			await this.smartTableSource.getElements();
-			this.eventTypes = this.mapEventTypes();
-
-			this.pagination['totalItems'] =  this.smartTableSource.count();
+			if (
+				this.dataLayoutStyle ===
+				this.componentLayoutStyleEnum.CARDS_GRID
+			) {
+				// Initiate GRID view pagination
+				await this.smartTableSource.getElements();
+				this.eventTypes = this.mapEventTypes();
+			}
 		} catch (error) {
 			this.toastrService.danger(error);
 		}

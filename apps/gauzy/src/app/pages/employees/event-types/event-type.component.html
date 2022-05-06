@@ -27,14 +27,29 @@
 			[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
 			[ngIfElse]="gridLayout"
 		>
-			<ng2-smart-table
-				style="cursor: pointer"
-				[settings]="smartTableSettings"
-				[source]="localDataSource"
-				(userRowSelect)="selectEventType($event)"
-				#eventTypesTable
-			>
-			</ng2-smart-table>
+			<div class="table-scroll-container custom-table">
+				<ng2-smart-table
+					style="cursor: pointer"
+					[settings]="smartTableSettings"
+					[source]="smartTableSource"
+					(userRowSelect)="selectEventType($event)"
+					#eventTypesTable
+				>
+				</ng2-smart-table>
+			</div>
+      <div class="pagination-container">
+				<ng-container *ngIf="pagination.totalItems > pagination.itemsPerPage">
+					<ga-pagination
+						(selectedOption)="onUpdateOption($event)"
+						(selectedPage)="onPageChange($event)"
+						[doEmit]="false"
+						[totalItems]="pagination?.totalItems"
+						[itemsPerPage]="pagination?.itemsPerPage"
+						[activePage]="pagination?.activePage"
+					>
+					</ga-pagination>
+				</ng-container>
+			</div>
 		</ng-template>
 		<ng-template #gridLayout>
 			<ga-card-grid
