@@ -164,7 +164,7 @@
     max-height: calc($default-card-height - 6.5rem);
     overflow-y: overlay;
   }
-  ::ng-deep {
+  ::ng-deep .header {
     @include nb-select-overrides(
       2rem,
       $default-button-radius,

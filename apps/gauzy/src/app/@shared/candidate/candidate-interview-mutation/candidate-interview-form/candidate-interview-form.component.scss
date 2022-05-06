@@ -36,7 +36,7 @@
   flex-direction: row;
   display: flex;
   justify-content: space-between;
-  align-items: flex-end;
+  align-items: center;
 }
 .input-title {
   width: 78%;
@@ -56,10 +56,13 @@
 
 .nameValidParent {
   position: relative;
+  display: flex;
+  flex-direction: column;
 
   .nameValid {
     position: absolute;
-    top: 66px;
+    bottom: -1.25rem;
+    left: 0;
     left: 0px;
     font-size: 11px;
     color: #ff3d71;

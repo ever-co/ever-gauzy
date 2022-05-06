@@ -14,7 +14,7 @@
   justify-content: flex-end;
 }
 
-::ng-deep {
+::ng-deep .buttons {
   @include nb-select-overrides(
     2rem,
     $default-button-radius,
