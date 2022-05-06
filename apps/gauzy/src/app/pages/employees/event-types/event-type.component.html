@@ -4,8 +4,8 @@
 	nbSpinnerSize="large"
 	class="card-scroll"
 >
-	<nb-card-header class="card-header-title">
-		<div class="card-header-title">
+	<nb-card-header class="d-flex flex-column pb-0">
+		<div class="d-flex">
 			<ngx-back-navigation></ngx-back-navigation>
 			<h4>
 				<ngx-header-title>
@@ -13,33 +13,22 @@
 				</ngx-header-title>
 			</h4>
 		</div>
-		<div>
-			<ga-layout-selector
+		<div class="align-self-end">
+			<ngx-gauzy-button-action
 				[componentName]="viewComponentName"
-			></ga-layout-selector>
-		</div>		
+				[buttonTemplateVisible]="visible"
+				[buttonTemplate]="actionButtons"
+				[isDisable]="disableButton"
+			></ngx-gauzy-button-action>
+		</div>
 	</nb-card-header>
 	<nb-card-body>
-		<div class="mb-3">
-			<button
-				nbButton
-				status="success"
-				(click)="openAddEventTypeDialog()"
-				class="mr-2"
-			>
-				<nb-icon class="mr-1" icon="plus-outline"></nb-icon
-				>{{ 'BUTTONS.ADD' | translate }}
-			</button>
-			<ng-container *ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE">
-				<ng-container *ngTemplateOutlet="actionButtons"></ng-container>
-			</ng-container>
-		</div>
 		<ng-template
 			[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
 			[ngIfElse]="gridLayout"
 		>
 			<ng2-smart-table
-				style="cursor: pointer;"
+				style="cursor: pointer"
 				[settings]="smartTableSettings"
 				[source]="localDataSource"
 				(userRowSelect)="selectEventType($event)"
@@ -54,44 +43,56 @@
 				[buttonTemplate]="actionButtons"
 			></ga-card-grid>
 			<div class="pagination-container">
-				<ng-container *ngIf="pagination.totalItems > pagination.itemsPerPage">
-					<ga-pagination 
+				<ng-container
+					*ngIf="pagination.totalItems > pagination.itemsPerPage"
+				>
+					<ga-pagination
 						(selectedPage)="onPageChange($event)"
 						[doEmit]="false"
-						[totalItems]="pagination?.totalItems" 
-						[itemsPerPage]="pagination?.itemsPerPage" 
-						[activePage]="pagination?.activePage">
+						[totalItems]="pagination?.totalItems"
+						[itemsPerPage]="pagination?.itemsPerPage"
+						[activePage]="pagination?.activePage"
+					>
 					</ga-pagination>
 				</ng-container>
 			</div>
 		</ng-template>
 	</nb-card-body>
 </nb-card>
-<ng-template
-	#actionButtons
-	let-buttonSize="buttonSize"
-	let-selectedItem="selectedItem"
->
+<ng-template #actionButtons let-selectedItem="selectedItem">
+	<div class="btn-group actions">
+		<button
+			nbButton
+			[disabled]="!selectedItem && disableButton"
+			(click)="openEditEventTypeDialog(selectedItem)"
+			status="basic"
+			class="action primary"
+			size="small"
+		>
+			<nb-icon class="mr-1" icon="edit-outline"></nb-icon
+			>{{ 'BUTTONS.EDIT' | translate }}
+		</button>
+		<button
+			nbButton
+			[disabled]="!selectedItem && disableButton"
+			(click)="deleteEventType(selectedItem)"
+			status="basic"
+			class="action"
+			size="small"
+		>
+			<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
+		</button>
+	</div>
+</ng-template>
+<ng-template #visible>
 	<button
 		nbButton
-		[disabled]="!selectedItem && disableButton"
-		[size]="buttonSize || 'medium'"
-		(click)="openEditEventTypeDialog(selectedItem)"
-		status="info"
-		class="mr-2"
+		status="success"
+		(click)="openAddEventTypeDialog()"
+		class="action"
+		size="small"
 	>
-		<nb-icon class="mr-1" icon="edit-outline"></nb-icon
-		>{{ 'BUTTONS.EDIT' | translate }}
-	</button>
-	<button
-		nbButton
-		[disabled]="!selectedItem && disableButton"
-		[size]="buttonSize || 'medium'"
-		(click)="deleteEventType(selectedItem)"
-		status="danger"
-		class="mr-2"
-	>
-		<nb-icon class="mr-1" icon="trash-2-outline"></nb-icon
-		>{{ 'BUTTONS.DELETE' | translate }}
+		<nb-icon class="mr-1" icon="plus-outline"></nb-icon
+		>{{ 'BUTTONS.ADD' | translate }}
 	</button>
 </ng-template>

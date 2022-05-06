@@ -1,0 +1,8 @@
+@import 'gauzy/gauzy-table';
+
+:host {
+  nb-card,
+  nb-card-body {
+    background-color: rgba(50, 50, 50, 0.03);
+  }
+}
