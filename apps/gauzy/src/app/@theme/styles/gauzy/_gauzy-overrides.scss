@@ -228,6 +228,15 @@ $default-box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.15);
         .fc .fc-timegrid-divider {
           padding: 0;
         }
+
+        td.fc-timegrid-slot-lane {
+          background-color: rgba($color: white, $alpha: 0.25);
+          border-radius: nb-theme(border-radius);
+        }
+        td[role='gridcell'].fc-timegrid-col {
+          background-color: rgba($color: white, $alpha: 0.25);
+          border-radius: nb-theme(border-radius);
+        }
       }
     }
     a {
@@ -240,10 +249,6 @@ $default-box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.15);
   table-bordered th,
   .table-bordered td {
     border: none;
-  }
-  td[role='gridcell'] {
-    background-color: rgba($color: white, $alpha: 0.5);
-    border-radius: nb-theme(border-radius);
   }
   .fc .fc-timegrid-divider {
     display: none;
@@ -281,5 +286,15 @@ $default-box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.15);
   }
   .fc-h-event {
     background-color: nb-theme(background-primary-color-1) !important;
+  }
+  .fc .fc-timegrid-slot-label,
+  .fc .fc-timegrid-axis-frame,
+  .fc .fc-daygrid-day-frame,
+  .fc fc-timegrid-col-bg > * {
+    background-color: rgba($color: white, $alpha: 0.5);
+    border-radius: nb-theme(border-radius);
+  }
+  .fc .fc-daygrid-day.fc-day-today {
+    border-radius: nb-theme(border-radius);
   }
 }
