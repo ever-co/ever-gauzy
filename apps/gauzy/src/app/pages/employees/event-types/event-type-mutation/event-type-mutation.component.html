@@ -75,24 +75,12 @@
 					</div>
 				</div>
 			</div>
-			<div class="row">
-				<div class="col">
-					<div class="form-group">
-						<ga-tags-color-input
-							[selectedTags]="form.get('tags').value"
-							(selectedTagsEvent)="selectedTagsEvent($event)"
-							[isOrgLevel]="true"
-						>
-						</ga-tags-color-input>
-					</div>
-				</div>
-			</div>
 			<div>
 				<label for="title" class="label">{{
 					'FORM.LABELS.DURATION' | translate
 				}}</label>
 				<div class="row">
-					<div class="col-6">
+					<div class="col-3">
 						<div class="form-group">
 							<input
 								[placeholder]="
@@ -107,7 +95,7 @@
 							/>
 						</div>
 					</div>
-					<div class="col-6">
+					<div class="col-3">
 						<nb-select
 							class="d-block"
 							formControlName="durationUnit"
@@ -124,20 +112,32 @@
 						</nb-select>
 					</div>
 				</div>
-				<div class="row">
-					<div class="col">
-						<div class="form-group">
-							<nb-checkbox formControlName="isActive">
-								<span
-									[nbTooltip]="
-										'EVENT_TYPE_PAGE.ACTIVE' | translate
-									"
-									[innerHtml]="
-										'EVENT_TYPE_PAGE.ACTIVE' | translate
-									"
-								></span>
-							</nb-checkbox>
-						</div>
+			</div>
+			<div class="row">
+				<div class="col">
+					<div class="form-group">
+						<ga-tags-color-input
+							[selectedTags]="form.get('tags').value"
+							(selectedTagsEvent)="selectedTagsEvent($event)"
+							[isOrgLevel]="true"
+						>
+						</ga-tags-color-input>
+					</div>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col">
+					<div class="form-group">
+						<nb-checkbox formControlName="isActive">
+							<span
+								[nbTooltip]="
+									'EVENT_TYPE_PAGE.ACTIVE' | translate
+								"
+								[innerHtml]="
+									'EVENT_TYPE_PAGE.ACTIVE' | translate
+								"
+							></span>
+						</nb-checkbox>
 					</div>
 				</div>
 			</div>
