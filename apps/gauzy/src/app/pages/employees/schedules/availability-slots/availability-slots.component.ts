@@ -36,7 +36,8 @@ import {
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-availability-slots',
-	templateUrl: './availability-slots.component.html'
+	templateUrl: './availability-slots.component.html',
+  styleUrls:['./availability-slots.component.scss']
 })
 export class AvailabilitySlotsComponent
 	extends TranslationBaseComponent

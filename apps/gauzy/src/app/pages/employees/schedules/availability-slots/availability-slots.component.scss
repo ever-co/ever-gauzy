@@ -1,0 +1,32 @@
+.custom-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  .title h5 {
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 22px;
+    letter-spacing: 0em;
+    text-align: left;
+  }
+}
+.time-range {
+  width: fit-content;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  .col {
+    white-space: nowrap;
+    padding-right: 0;
+  }
+}
+
+:host {
+  nb-card {
+    background-color: rgba(50, 50, 50, 0.03);
+  }
+}
+.custom-calendar {
+  height: calc(100vh - 24rem);
+  overflow-y: overlay;
+}
