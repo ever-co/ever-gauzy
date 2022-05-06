@@ -44,9 +44,10 @@ import { BaseSelectorFilterComponent } from './../../../../../@shared/timesheet/
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-calendar-timesheet',
-	templateUrl: './calendar.component.html'
+	templateUrl: './calendar.component.html',
+  styleUrls:['./calendar.component.scss']
 })
-export class CalendarComponent extends BaseSelectorFilterComponent 
+export class CalendarComponent extends BaseSelectorFilterComponent
 	implements OnInit, AfterViewInit, OnDestroy {
 
 	@ViewChild('calendar', { static: true }) calendar: FullCalendarComponent;

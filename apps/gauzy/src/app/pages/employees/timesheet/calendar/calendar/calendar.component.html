@@ -1,29 +1,34 @@
-<div class="filters row mb-3">
-	<div class="col-sm-3 text-left mb-3">
-		<button
-			nbButton
-			status="primary"
-			(click)="openDialog()"
-			*ngxPermissionsOnly="[
-				OrganizationPermissionsEnum.ALLOW_MANUAL_TIME
-			]"
-		>
-			<nb-icon icon="plus-outline"></nb-icon>
-			{{ 'TIMESHEET.ADD_TIME' | translate }}
-		</button>
-	</div>
-	<div class="col">
-		<ngx-gauzy-filters
-			[saveFilters]="(datePickerConfig$ | async).isSaveDatePicker"
-			(filtersChange)="filtersChange($event)"
-		></ngx-gauzy-filters>
-	</div>
-</div>
-
-<full-calendar
-	#calendar
-	[options]="calendarOptions"
-	[nbSpinner]="loading"
-	nbSpinnerSize="giant"
-	nbSpinnerStatus="primary"
-></full-calendar>
+<nb-card>
+	<nb-card-header class="p-0">
+		<div class="filters">
+			<div class="add-button">
+				<button
+					nbButton
+					status="success"
+					size="small"
+					(click)="openDialog()"
+					*ngxPermissionsOnly="[
+						OrganizationPermissionsEnum.ALLOW_MANUAL_TIME
+					]"
+				>
+					<nb-icon icon="plus-outline"></nb-icon>
+					{{ 'TIMESHEET.ADD_TIME' | translate }}
+				</button>
+			</div>
+			<ngx-gauzy-filters
+				[saveFilters]="(datePickerConfig$ | async).isSaveDatePicker"
+				(filtersChange)="filtersChange($event)"
+			></ngx-gauzy-filters>
+		</div>
+	</nb-card-header>
+	<nb-card-body>
+		<full-calendar
+			#calendar
+			class="custom-calendar"
+			[options]="calendarOptions"
+			[nbSpinner]="loading"
+			nbSpinnerSize="giant"
+			nbSpinnerStatus="primary"
+		></full-calendar>
+	</nb-card-body>
+</nb-card>
