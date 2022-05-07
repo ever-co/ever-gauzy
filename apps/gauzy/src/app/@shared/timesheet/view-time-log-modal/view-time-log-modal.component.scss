@@ -1,21 +1,65 @@
+@import 'gauzy/_gauzy-table';
+@import 'gauzy/_gauzy-dialogs';
+
 :host {
-    display: block;
-    position: relative;
-    width: 500px;
-    margin: auto;
-    .close-button {
-        position: absolute;
-        top: 3px;
-        right: 5px;
-        z-index: 9;
+  display: block;
+  position: relative;
+  width: 500px;
+  margin: auto;
+  .close-button {
+    position: absolute;
+    top: 3px;
+    right: 5px;
+    z-index: 9;
+  }
+  .description {
+    overflow-wrap: break-word;
+  }
+  nb-alert {
+    font-size: 14px !important;
+    padding: 8px !important;
+    height: 3.5rem !important;
+    line-height: unset !important;
+  }
+  nb-card {
+    background-color: nb-theme(gauzy-card-1);
+    width: 328px;
+  }
+  .title {
+    color: rgba(126, 126, 143, 1);
+  }
+  small.duration {
+    text-transform: lowercase;
+  }
+  ::ng-deep ngx-avatar {
+    .inner-wrapper {
+      background-color: nb-theme(color-primary-transparent-100);
+      border-radius: nb-theme(button-rectangle-border-radius);
+      padding: 3px 9px 3px 3px;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      width: fit-content;
+      font-size: 12px;
+      font-weight: 400;
+      line-height: 15px;
+      letter-spacing: 0em;
+      .image-container {
+        height: 20px;
+        width: 28px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        img[type='user'] {
+          height: 18px;
+          width: 18px;
+        }
+      }
+      .link-text {
+        color: nb-theme(text-primary-color);
+        font-weight: normal;
+      }
     }
-  	.description {
-		overflow-wrap: break-word;
-	}
-    nb-alert {
-        font-size: 14px !important;
-        padding: 8px !important;
-        height: 3.5rem !important;
-        line-height: unset !important;
-    }
+  }
 }

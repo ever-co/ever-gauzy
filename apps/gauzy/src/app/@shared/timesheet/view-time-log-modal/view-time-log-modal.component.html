@@ -1,23 +1,17 @@
 <nb-card>
-	<nb-card-header *ngxPermissionsOnly="[PermissionsEnum.CHANGE_SELECTED_EMPLOYEE]">
-		<div class="row">
+	<nb-card-header
+		*ngxPermissionsOnly="[PermissionsEnum.CHANGE_SELECTED_EMPLOYEE]"
+	>
+		<span class="cancel">
+			<i class="fas fa-times" (click)="close()"></i>
+		</span>
+		<h5 class="title">View Log</h5>
+		<div class="row mt-5">
 			<div class="col-10">
 				<ngx-avatar
 					[id]="timeLog?.employee?.id"
 					[name]="timeLog?.employee?.user?.name"
 					[src]="timeLog?.employee?.user?.imageUrl"
-					[caption]="
-						(timeLog?.startedAt | utcToLocal | timeFormat: true) +
-						' - ' +
-						(!timeLog?.isRunning
-							? (timeLog?.stoppedAt
-							  | utcToLocal
-							  | timeFormat: true)
-							: ('TIMESHEET.TILL_NOW' | translate)) +
-						' (' +
-						(timeLog?.duration | durationFormat) +
-						')'
-					"
 				></ngx-avatar>
 			</div>
 			<div class="col-1">
@@ -27,28 +21,35 @@
 				>
 				</ngx-label>
 			</div>
-			<div class="col-1 mt-2">
-				<button
-					size="small"
-					class="close-button"
-					nbButton
-					ghost
-					(click)="close()"
-					type="button"
-				>
-					<nb-icon icon="close-outline"></nb-icon>
-				</button>
-			</div>
 		</div>
+    <div class="row">
+      <div class="d-flex flex-column col-12">
+        <small>{{ timeLog?.startedAt | date }}</small>
+        <small class="duration">{{
+          (timeLog?.startedAt | utcToLocal | timeFormat: true) +
+            ' - ' +
+            (!timeLog?.isRunning
+              ? (timeLog?.stoppedAt
+                | utcToLocal
+                | timeFormat: true)
+              : ('TIMESHEET.TILL_NOW' | translate)) +
+            ' (' +
+            (timeLog?.duration | durationFormat) +
+            ')'
+        }}</small>
+      </div>
+    </div>
 	</nb-card-header>
 	<nb-card-body class="custom-scroll">
 		<div class="mt-3">
 			<div class="description">
-				<strong> {{ 'TIMESHEET.ORGANIZATION_CONTACT' | translate }} : </strong>
+				<strong>
+					{{ 'TIMESHEET.ORGANIZATION_CONTACT' | translate }} :
+				</strong>
 				{{
 					timeLog?.organizationContact
-					? timeLog?.organizationContact.name
-					: ('TIMESHEET.NO_ORGANIZATION_CONTACT' | translate)
+						? timeLog?.organizationContact.name
+						: ('TIMESHEET.NO_ORGANIZATION_CONTACT' | translate)
 				}}
 			</div>
 		</div>
@@ -87,7 +88,7 @@
 	</nb-card-body>
 	<nb-card-footer>
 		<ng-container *ngIf="timeLog?.isRunning">
-			<nb-alert status="warning" [size]="'tiny'"> 
+			<nb-alert status="warning" [size]="'tiny'">
 				{{ 'TIMESHEET.RUNNING_TIMER_WARNING' | translate }}
 			</nb-alert>
 		</ng-container>
