@@ -1,5 +1,8 @@
+@import 'gauzy/_gauzy-dialogs';
+
 :host {
-  display: block;
-  max-width: 605px;
-  min-width: 300px;
+  nb-card {
+    width: 645px;
+    background-color: nb-theme(gauzy-card-1);
+  }
 }
