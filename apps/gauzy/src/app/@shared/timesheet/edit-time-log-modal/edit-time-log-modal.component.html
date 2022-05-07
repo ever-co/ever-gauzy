@@ -218,7 +218,7 @@
 					<label>{{ 'TIMER_TRACKER.DESCRIPTION' | translate }}</label>
 					<textarea
 						nbInput
-            fullWidth
+						fullWidth
 						class="form-control"
 						rows="2"
 						[placeholder]="'TIMER_TRACKER.DESCRIPTION' | translate"
@@ -242,7 +242,7 @@
 					<textarea
 						nbInput
 						class="form-control"
-            fullWidth
+						fullWidth
 						[placeholder]="'TIMESHEET.REASON' | translate"
 						name="reason"
 						formControlName="reason"
@@ -281,16 +281,16 @@
 			<ng-template ngxPermissionsOnly="ALLOW_DELETE_TIME">
 				<button
 					type="button"
-					class="mr-2"
+					class="action ml-3"
 					nbButton
-					status="danger"
+          size="small"
+					status="basic"
 					ngxConfirmDialog
 					[message]="'TIMESHEET.DELETE_TIMELOG' | translate"
 					(confirm)="onDeleteConfirm(timeLog)"
 					*ngIf="mode == 'update'"
 				>
-					<nb-icon icon="trash-2-outline"></nb-icon>
-					{{ 'TIMESHEET.DELETE' | translate }}
+					<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
 				</button>
 			</ng-template>
 		</nb-card-footer>
