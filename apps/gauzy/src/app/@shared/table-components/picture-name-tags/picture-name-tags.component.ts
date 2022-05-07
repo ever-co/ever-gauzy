@@ -8,6 +8,7 @@ import { NotesWithTagsComponent } from '../notes-with-tags/notes-with-tags.compo
 		<ngx-avatar
 			[src]="rowData?.imageUrl"
 			[name]="rowData?.fullName ? rowData?.fullName : rowData?.name"
+      [id]="rowData?.id"
 		></ngx-avatar>
 		<ng-template [ngIf]="rowData?.isDefault">
 			<nb-badge

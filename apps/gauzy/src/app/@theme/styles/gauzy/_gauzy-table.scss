@@ -6,18 +6,22 @@
     background-color: #ffffff;
   }
   &.info {
-    background-color: #0088fe;
+    &[nbButton].appearance-filled.status-basic {
+      background-color: nb-theme(color-info-default);
+      color: white;
+      border-color: nb-theme(color-info-default);
+    }
   }
   &.info-text-1 {
     &[nbButton].appearance-filled.status-basic {
-      color: rgba(0, 136, 254, 1);
+      color: nb-theme(color-info-default);
     }
   }
   &.secondary {
     color: #7e7e8f;
   }
   &.success {
-    color: rgba(37, 184, 105, 1);
+    color: nb-theme(color-success-default);
   }
   &.warning {
     color: rgba(245, 109, 88, 1);
