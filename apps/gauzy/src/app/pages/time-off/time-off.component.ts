@@ -416,7 +416,7 @@ export class TimeOffComponent
 			},
 			pager: {
 				display: false,
-				perPage: pagination ? pagination : 10
+				perPage: pagination ? pagination.itemsPerPage : 10
 			}
 		};
 	}
