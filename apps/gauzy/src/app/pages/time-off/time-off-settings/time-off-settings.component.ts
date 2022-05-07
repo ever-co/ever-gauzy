@@ -5,28 +5,27 @@ import {
 	ErrorHandler,
 	ViewChild
 } from '@angular/core';
-import { AuthService } from '../../../@core/services/auth.service';
 import {
-	RolesEnum,
 	ComponentLayoutStyleEnum,
 	IOrganization,
+	ITimeOffPolicy,
 	ITimeOffPolicyVM
 } from '@gauzy/contracts';
-import { filter, first, tap } from 'rxjs/operators';
+import { filter, finalize, first, tap } from 'rxjs/operators';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { NbDialogService } from '@nebular/theme';
-import { TimeOffSettingsMutationComponent } from '../../../@shared/time-off/settings-mutation/time-off-settings-mutation.component';
 import { TranslateService } from '@ngx-translate/core';
-import { TimeOffService } from '../../../@core/services/time-off.service';
-import { Store } from '../../../@core/services/store.service';
-import { DeleteConfirmationComponent } from '../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
-import { RequestApprovalIcon } from '../table-components/request-approval-icon';
-import { PaidIcon } from '../table-components/paid-icon';
-import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ComponentEnum } from '../../../@core/constants/layout.constants';
-import { Router, RouterEvent, NavigationEnd } from '@angular/router';
-import { ToastrService } from '../../../@core/services/toastr.service';
+import { distinctUntilChange } from '@gauzy/common-angular';
+import { TimeOffSettingsMutationComponent } from '../../../@shared/time-off/settings-mutation/time-off-settings-mutation.component';
+import { DeleteConfirmationComponent } from '../../../@shared/user/forms';
+import { PaidIcon, RequestApprovalIcon } from '../table-components';
+import { ComponentEnum } from '../../../@core/constants';
+import { Store, TimeOffService, ToastrService } from '../../../@core/services';
+import {
+	PaginationFilterBaseComponent,
+	IPaginationBase
+} from '../../../@shared/pagination/pagination-filter-base.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -34,36 +33,30 @@ import { ToastrService } from '../../../@core/services/toastr.service';
 	templateUrl: './time-off-settings.component.html',
 	styleUrls: ['./time-off-settings.component.scss']
 })
-export class TimeOffSettingsComponent
-	extends TranslationBaseComponent
+export class TimeOffSettingsComponent extends PaginationFilterBaseComponent
 	implements OnInit, OnDestroy {
+
 	constructor(
-		private dialogService: NbDialogService,
-		private authService: AuthService,
-		private toastrService: ToastrService,
-		private timeOffService: TimeOffService,
-		private store: Store,
-		private errorHandler: ErrorHandler,
-		readonly translateService: TranslateService,
-		private router: Router
+		private readonly dialogService: NbDialogService,
+		private readonly toastrService: ToastrService,
+		private readonly timeOffService: TimeOffService,
+		private readonly store: Store,
+		private readonly errorHandler: ErrorHandler,
+		public readonly translateService: TranslateService,
 	) {
 		super(translateService);
 		this.setView();
 	}
 
-	private _selectedOrganizationId: string;
 	smartTableSettings: object;
-	hasRole: boolean;
 	selectedPolicy: ITimeOffPolicyVM;
 	smartTableSource = new LocalDataSource();
-	timeOffPolicyData: ITimeOffPolicyVM[];
-	selectedPolicyId: string;
-	showTable: boolean;
+	timeOffPolicies: ITimeOffPolicyVM[] = [];
 	loading = false;
-	hasEditPermission = false;
 	disableButton = true;
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
+	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
 	organization: IOrganization;
 
 	timeOffPolicySettingsTable: Ng2SmartTableComponent;
@@ -79,39 +72,44 @@ export class TimeOffSettingsComponent
 	ngOnInit() {
 		this._loadSettingsSmartTable();
 		this._applyTranslationOnSmartTable();
-		this.store.selectedOrganization$
+
+		this.subject$
 			.pipe(
-				filter((organization) => !!organization),
+				tap(() => this.clearItem()),
+				tap(() => this._getTimeOffSettings()),
 				untilDestroyed(this)
 			)
-			.subscribe((org) => {
-				if (org) {
-					this.organization = org;
-					this._selectedOrganizationId = org.id;
-					this._loadTableData(this._selectedOrganizationId);
-				}
-			});
-		this.authService
-			.hasRole([RolesEnum.ADMIN, RolesEnum.DATA_ENTRY])
-			.pipe(first())
-			.subscribe((res) => (this.hasRole = res));
-		this.router.events
-			.pipe(untilDestroyed(this))
-			.subscribe((event: RouterEvent) => {
-				if (event instanceof NavigationEnd) {
-					this.setView();
-				}
-			});
+			.subscribe();
+		this.pagination$
+			.pipe(
+				distinctUntilChange(),
+				tap(() => this.subject$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.store.selectedOrganization$
+			.pipe(
+				filter((organization: IOrganization) => !!organization),
+				tap((organization: IOrganization) => this.organization = organization),
+				tap(() => this.subject$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	setView() {
 		this.viewComponentName = ComponentEnum.TIME_OFF_SETTINGS;
 		this.store
 			.componentLayout$(this.viewComponentName)
-			.pipe(untilDestroyed(this))
-			.subscribe((componentLayout) => {
-				this.dataLayoutStyle = componentLayout;
-			});
+			.pipe(
+				tap(
+					(componentLayout: ComponentLayoutStyleEnum) => 
+					this.dataLayoutStyle = componentLayout
+				),
+				tap(() => this.subject$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	/*
@@ -127,6 +125,7 @@ export class TimeOffSettingsComponent
 	}
 
 	private _loadSettingsSmartTable() {
+		const pagination: IPaginationBase = this.getPagination();
 		this.smartTableSettings = {
 			actions: false,
 			editable: true,
@@ -155,8 +154,8 @@ export class TimeOffSettingsComponent
 				}
 			},
 			pager: {
-				display: true,
-				perPage: 8
+				display: false,
+				perPage: pagination ? pagination.itemsPerPage : 10
 			}
 		};
 	}
@@ -164,28 +163,34 @@ export class TimeOffSettingsComponent
 	openAddPolicyDialog() {
 		this.dialogService
 			.open(TimeOffSettingsMutationComponent)
-			.onClose.pipe(first(), untilDestroyed(this))
-			.subscribe((formData) => {
-				if (formData) {
-					this.addPolicy(formData);
-				}
-			});
+			.onClose
+			.pipe(
+				filter((policy: ITimeOffPolicy) => !!policy),
+				tap((policy: ITimeOffPolicy) => this.addPolicy(policy)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
-	addPolicy(formData) {
-		if (formData) {
+	addPolicy(policy: ITimeOffPolicy) {
+		if (policy) {
 			this.timeOffService
-				.createPolicy(formData)
-				.pipe(first(), untilDestroyed(this))
-				.subscribe(
-					() => {
+				.createPolicy(policy)
+				.pipe(
+					first(),
+					untilDestroyed(this)
+				)
+				.subscribe({
+					next: () => {
 						this.toastrService.success('NOTES.POLICY.ADD_POLICY', {
-							name: formData.name
+							name: policy.name
 						});
-						this._loadTableData(this._selectedOrganizationId);
+						this.subject$.next(true)
 					},
-					() => this.toastrService.danger('NOTES.POLICY.SAVE_ERROR')
-				);
+					error: () => {
+						this.toastrService.danger('NOTES.POLICY.SAVE_ERROR');
+					}
+				});
 		}
 	}
 
@@ -196,36 +201,38 @@ export class TimeOffSettingsComponent
 				data: selectedItem
 			});
 		}
-		this.selectedPolicyId = this.selectedPolicy.id;
-
 		this.dialogService
 			.open(TimeOffSettingsMutationComponent, {
 				context: {
 					policy: this.selectedPolicy
 				}
 			})
-			.onClose.pipe(untilDestroyed(this))
-			.subscribe((formData) => {
-				if (formData) {
-					this.editPolicy(formData);
-				}
-			});
+			.onClose
+			.pipe(
+				filter((policy: ITimeOffPolicy) => !!policy),
+				tap((policy: ITimeOffPolicy) => this.editPolicy(policy)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
-	editPolicy(formData) {
+	editPolicy(policy: ITimeOffPolicy) {
+		const selectedPolicyId = this.selectedPolicy.id;
 		this.timeOffService
-			.updatePolicy(this.selectedPolicyId, formData)
-			.pipe(first(), untilDestroyed(this))
-			.subscribe(
-				() => {
+			.updatePolicy(selectedPolicyId, policy)
+			.pipe(
+				first(),
+				untilDestroyed(this)
+			)
+			.subscribe({
+				next: () => {
 					this.toastrService.success('NOTES.POLICY.EDIT_POLICY', {
-						name: formData.name
+						name: policy.name
 					});
-
-					this._loadTableData(this._selectedOrganizationId);
+					this.subject$.next(true);
 				},
-				(error) => this.errorHandler.handleError(error)
-			);
+				error: (error) => this.errorHandler.handleError(error)
+			});
 	}
 
 	deletePolicy(selectedItem?: ITimeOffPolicyVM) {
@@ -244,8 +251,8 @@ export class TimeOffSettingsComponent
 				}
 			})
 			.onClose.pipe(untilDestroyed(this))
-			.subscribe(
-				(result) => {
+			.subscribe({
+				next: (result) => {
 					if (result) {
 						this.timeOffService
 							.deletePolicy(this.selectedPolicy.id)
@@ -255,15 +262,12 @@ export class TimeOffSettingsComponent
 									'NOTES.POLICY.DELETE_POLICY',
 									{ name: this.selectedPolicy.name }
 								);
-								this._loadTableData(
-									this._selectedOrganizationId
-								);
-								this.clearItem();
+								this.subject$.next(true);
 							});
 					}
 				},
-				(error) => this.errorHandler.handleError(error)
-			);
+				error: (error) => this.errorHandler.handleError(error)
+			});
 	}
 
 	selectTimeOffPolicy({ isSelected, data }) {
@@ -271,59 +275,79 @@ export class TimeOffSettingsComponent
 		this.selectedPolicy = isSelected ? data : null;
 	}
 
-	private async _loadTableData(orgId: string) {
-		this.loading = true;
-		this.showTable = false;
-		this.selectedPolicy = null;
-		let findObj: {};
-
-		if (orgId) {
-			findObj = {
-				organization: {
-					id: orgId
-				},
-				tenantId: this.organization.tenantId
-			};
-
-			this.timeOffService
-				.getAllPolicies(['employees'], findObj)
-				.pipe(first(), untilDestroyed(this))
-				.subscribe(
-					(res) => {
-						const items = res.items;
-						const policyVM: ITimeOffPolicyVM[] = items.map((i) => {
-							return {
-								id: i.id,
-								name: i.name,
-								requiresApproval: i.requiresApproval,
-								paid: i.paid,
-								employees: i.employees
-							};
-						});
-						this.timeOffPolicyData = policyVM;
-						this.smartTableSource.load(policyVM);
-						this.showTable = true;
-						this.clearItem();
-					},
-					(error) => {
-						this.toastrService.danger(
-							this.getTranslation('', {
-								error: error.error.message || error.message
-							}),
-							this.getTranslation('TOASTR.TITLE.ERROR')
-						);
-					}
-				);
+	private _getTimeOffSettings() {
+		if (!this.organization) {
+			return;
 		}
-		this.loading = false;
+
+		this.loading = true;
+		const { itemsPerPage, activePage } = this.getPagination();
+		const { id: organizationId } = this.organization;
+		const { tenantId } = this.store.user;
+
+		this.timeOffService
+			.getAllPolicies(['employees'], {
+				organizationId,
+				tenantId
+			})
+			.pipe(
+				first(),
+				finalize(() => this.loading = false),
+				untilDestroyed(this)
+			)
+			.subscribe({
+				next: (res) => {
+					const items = res.items;
+					const policyVM: ITimeOffPolicyVM[] = items.map((i) => {
+						return {
+							id: i.id,
+							name: i.name,
+							requiresApproval: i.requiresApproval,
+							paid: i.paid,
+							employees: i.employees
+						};
+					});
+					this.timeOffPolicies = policyVM;
+					this.smartTableSource.setPaging(
+						activePage,
+						itemsPerPage,
+						false
+					);
+					this.smartTableSource.load(policyVM);
+					if (
+						this.dataLayoutStyle ===
+						ComponentLayoutStyleEnum.CARDS_GRID
+					) {
+						this._loadGridLayoutData();
+					}
+					this.setPagination({
+						...this.getPagination(),
+						totalItems: this.smartTableSource.count()
+					});
+					this.clearItem();
+				},
+				error: (error) => {
+					this.toastrService.danger(
+						this.getTranslation('', {
+							error: error.error.message || error.message
+						}),
+						this.getTranslation('TOASTR.TITLE.ERROR')
+					);
+				}
+			});
 	}
 
-	_applyTranslationOnSmartTable() {
+	private async _loadGridLayoutData() {
+		this.timeOffPolicies = await this.smartTableSource.getElements();
+	}
+
+	private _applyTranslationOnSmartTable() {
 		this.translateService.onLangChange
-			.pipe(untilDestroyed(this))
-			.subscribe(() => {
-				this._loadSettingsSmartTable();
-			});
+			.pipe(
+				tap(() => this._loadSettingsSmartTable()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	/*
@@ -345,8 +369,7 @@ export class TimeOffSettingsComponent
 			this.timeOffPolicySettingsTable &&
 			this.timeOffPolicySettingsTable.grid
 		) {
-			this.timeOffPolicySettingsTable.grid.dataSet['willSelect'] =
-				'false';
+			this.timeOffPolicySettingsTable.grid.dataSet['willSelect'] = 'false';
 			this.timeOffPolicySettingsTable.grid.dataSet.deselectAll();
 		}
 	}

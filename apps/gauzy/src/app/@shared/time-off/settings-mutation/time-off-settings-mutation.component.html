@@ -1,14 +1,16 @@
 <nb-card class="main">
-	<nb-card-header>
-		<h5 *ngIf="!policy; else showEditHeader">
+	<nb-card-header class="d-flex flex-column">
+		<span class="cancel"
+			><i class="fas fa-times" (click)="close()"></i
+		></span>
+		<h5 class="title" *ngIf="!policy; else showEditHeader">
 			{{ 'TIME_OFF_PAGE.POLICY.ADD_POLICY' | translate }}
 		</h5>
 		<ng-template #showEditHeader>
-			<h5>
+			<h5 class="title">
 				{{ 'TIME_OFF_PAGE.POLICY.EDIT_POLICY' | translate }}
 			</h5>
 		</ng-template>
-		<nb-icon (click)="close()" icon="close-outline"></nb-icon>
 	</nb-card-header>
 	<nb-card-body>
 		<form class="row">
@@ -75,8 +77,8 @@
 			</div>
 		</form>
 	</nb-card-body>
-	<nb-card-footer class="text-right">
-		<button (click)="close()" status="danger" class="mr-3" nbButton>
+	<nb-card-footer class="text-left">
+		<button (click)="close()" status="basic" outline class="mr-3" nbButton>
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
 		<button (click)="addOrEditPolicy()" status="success" nbButton>

@@ -1,50 +1,68 @@
-<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
-	<nb-card-header class="card-header-title">
-		<div class="card-header-title">
+<nb-card 
+	[nbSpinner]="loading" 
+	nbSpinnerStatus="primary" 
+	nbSpinnerSize="large"
+>
+	<nb-card-header class="d-flex flex-column pb-0">
+		<div class="card-header-title d-flex justify-content-start">
 			<ngx-back-navigation></ngx-back-navigation>
-			<h4> <ngx-header-title [allowEmployee]="false"> {{ 'TIME_OFF_PAGE.POLICY.HEADER' | translate }} </ngx-header-title> </h4>
+			<h4>
+				<ngx-header-title [allowEmployee]="false">
+					{{ 'TIME_OFF_PAGE.POLICY.HEADER' | translate }}
+				</ngx-header-title>
+			</h4>
 		</div>
-		<div>
-			<ga-layout-selector
+		<div class="align-self-end">
+			<ngx-gauzy-button-action
+				[isDisable]="disableButton"
+				[buttonTemplate]="actionButtons"
+				[buttonTemplateVisible]="visibleButton"
 				[componentName]="viewComponentName"
-			></ga-layout-selector>
+			></ngx-gauzy-button-action>
 		</div>
 	</nb-card-header>
 	<nb-card-body>
-		<ng-template ngxPermissionsOnly="POLICY_EDIT">
-			<div class="btn-container mb-3">
-				<button
-					nbButton
-					status="success"
-					class="mr-2"
-					(click)="openAddPolicyDialog()"
-				>
-					<nb-icon class="mr-1" icon="plus-outline"></nb-icon
-					>{{ 'BUTTONS.ADD' | translate }}
-				</button>
-				<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
-					<ng-container
-						*ngTemplateOutlet="actionButtons"
-					></ng-container>
-				</ng-container>
-			</div>
-		</ng-template>
-		<ng2-smart-table
-			class="income-table"
-			[settings]="smartTableSettings"
-			*ngIf="dataLayoutStyle === 'TABLE'"
-			[source]="smartTableSource"
-			(userRowSelect)="selectTimeOffPolicy($event)"
-			style="cursor: pointer"
-			#timeOffPolicySettingsTable
+		<ng-template
+			[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
+			[ngIfElse]="gridLayout"
 		>
-		</ng2-smart-table>
-		<ga-card-grid
-			*ngIf="dataLayoutStyle === 'CARDS_GRID'"
-			[settings]="smartTableSettings"
-			[source]="timeOffPolicyData"
-			[buttonTemplate]="actionButtons"
-		></ga-card-grid>
+			<div class="table-scroll-container custom-table">
+				<ng2-smart-table
+					class="income-table"
+					[settings]="smartTableSettings"
+					[source]="smartTableSource"
+					(userRowSelect)="selectTimeOffPolicy($event)"
+					style="cursor: pointer"
+					#timeOffPolicySettingsTable
+				>
+				</ng2-smart-table>
+			</div>
+			<ng-container *ngIf="pagination.totalItems > pagination.itemsPerPage">
+				<div class="pagination-container">
+					<ga-pagination
+						(selectedOption)="onUpdateOption($event)"
+						(selectedPage)="onPageChange($event)"
+						[doEmit]="false"
+						[totalItems]="pagination?.totalItems"
+						[itemsPerPage]="pagination?.itemsPerPage"
+						[activePage]="pagination?.activePage"
+					></ga-pagination>
+				</div>
+			</ng-container>
+		</ng-template>
+		<ng-template #gridLayout>
+			<ga-card-grid
+				[settings]="smartTableSettings"
+				[source]="timeOffPolicies"
+				(onSelectedItem)="selectTimeOffPolicy($event)"
+				(selectedOption)="onUpdateOption($event)"
+				(selectedPage)="onPageChange($event)"
+				[doEmit]="false"
+				[totalItems]="pagination?.totalItems"
+				[itemsPerPage]="pagination?.itemsPerPage"
+				[activePage]="pagination?.activePage"
+			></ga-card-grid>
+		</ng-template>
 	</nb-card-body>
 </nb-card>
 <ng-template
@@ -52,28 +70,43 @@
 	let-buttonSize="buttonSize"
 	let-selectedItem="selectedItem"
 >
+	<div class="btn-group actions">
+		<ng-template ngxPermissionsOnly="POLICY_EDIT">
+			<button
+				nbButton
+				status="basic"
+				class="action primary"
+				[disabled]="!selectedItem && disableButton"
+				(click)="openEditPolicyDialog(selectedItem)"
+				size="small"
+			>
+				<nb-icon class="mr-1" icon="edit-outline"></nb-icon
+				>{{ 'BUTTONS.EDIT' | translate }}
+			</button>
+			<button
+				nbButton
+				status="basic"
+				class="action"
+				[disabled]="!selectedItem && disableButton"
+				(click)="deletePolicy(selectedItem)"
+				size="small"
+				[nbTooltip]="'BUTTONS.DELETE' | translate"
+			>
+				<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
+			</button>
+		</ng-template>
+	</div>
+</ng-template>
+<ng-template #visibleButton>
 	<ng-template ngxPermissionsOnly="POLICY_EDIT">
 		<button
 			nbButton
-			status="info"
-			class="mr-2"
-			[disabled]="!selectedItem && disableButton"
-			(click)="openEditPolicyDialog(selectedItem)"
-			[size]="buttonSize || 'medium'"
+			status="success"
+			size="small"
+			(click)="openAddPolicyDialog()"
 		>
-			<nb-icon class="mr-1" icon="edit-outline"></nb-icon
-			>{{ 'BUTTONS.EDIT' | translate }}
-		</button>
-		<button
-			nbButton
-			status="danger"
-			class="mr-2"
-			[disabled]="!selectedItem && disableButton"
-			(click)="deletePolicy(selectedItem)"
-			[size]="buttonSize || 'medium'"
-		>
-			<nb-icon class="mr-1" icon="archive-outline"></nb-icon
-			>{{ 'BUTTONS.DELETE' | translate }}
+			<nb-icon class="mr-1" icon="plus-outline"></nb-icon
+			>{{ 'BUTTONS.ADD' | translate }}
 		</button>
 	</ng-template>
 </ng-template>
