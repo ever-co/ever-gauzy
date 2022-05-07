@@ -1,4 +1,8 @@
-<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
+<nb-card 
+	[nbSpinner]="loading" 
+	nbSpinnerStatus="primary" 
+	nbSpinnerSize="large"
+>
 	<nb-card-header class="d-flex flex-column pb-0">
 		<div class="card-header-title d-flex justify-content-start">
 			<ngx-back-navigation></ngx-back-navigation>
@@ -14,12 +18,14 @@
 				[buttonTemplate]="actionButtons"
 				[buttonTemplateVisible]="visibleButton"
 				[componentName]="viewComponentName"
-			>
-			</ngx-gauzy-button-action>
+			></ngx-gauzy-button-action>
 		</div>
 	</nb-card-header>
 	<nb-card-body>
-		<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
+		<ng-template
+			[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
+			[ngIfElse]="gridLayout"
+		>
 			<div class="table-scroll-container custom-table">
 				<ng2-smart-table
 					class="income-table"
@@ -31,9 +37,7 @@
 				>
 				</ng2-smart-table>
 			</div>
-			<ng-container
-				*ngIf="pagination.totalItems > pagination.itemsPerPage"
-			>
+			<ng-container *ngIf="pagination.totalItems > pagination.itemsPerPage">
 				<div class="pagination-container">
 					<ga-pagination
 						(selectedOption)="onUpdateOption($event)"
@@ -42,23 +46,23 @@
 						[totalItems]="pagination?.totalItems"
 						[itemsPerPage]="pagination?.itemsPerPage"
 						[activePage]="pagination?.activePage"
-					>
-					</ga-pagination>
+					></ga-pagination>
 				</div>
 			</ng-container>
-		</ng-container>
-		<ga-card-grid
-			*ngIf="dataLayoutStyle === 'CARDS_GRID'"
-			[settings]="smartTableSettings"
-			[source]="timeOffPolicyData"
-			(onSelectedItem)="selectTimeOffPolicy($event)"
-			(selectedOption)="onUpdateOption($event)"
-			(selectedPage)="onPageChange($event)"
-			[doEmit]="false"
-			[totalItems]="pagination?.totalItems"
-			[itemsPerPage]="pagination?.itemsPerPage"
-			[activePage]="pagination?.activePage"
-		></ga-card-grid>
+		</ng-template>
+		<ng-template #gridLayout>
+			<ga-card-grid
+				[settings]="smartTableSettings"
+				[source]="timeOffPolicies"
+				(onSelectedItem)="selectTimeOffPolicy($event)"
+				(selectedOption)="onUpdateOption($event)"
+				(selectedPage)="onPageChange($event)"
+				[doEmit]="false"
+				[totalItems]="pagination?.totalItems"
+				[itemsPerPage]="pagination?.itemsPerPage"
+				[activePage]="pagination?.activePage"
+			></ga-card-grid>
+		</ng-template>
 	</nb-card-body>
 </nb-card>
 <ng-template
