@@ -8,21 +8,42 @@ import {
 	CandidateStatusEnum
 } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
-import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
+import { HttpClient } from '@angular/common/http';
+import { Ng2SmartTableComponent } from 'ng2-smart-table';
 import { filter, tap, debounceTime } from 'rxjs/operators';
 import { firstValueFrom, Subject } from 'rxjs';
 import { NbDialogService } from '@nebular/theme';
 import { Router, ActivatedRoute } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange } from '@gauzy/common-angular';
-import { TranslationBaseComponent } from '../../@shared/language-base';
 import { CandidateMutationComponent } from '../../@shared/candidate/candidate-mutation/candidate-mutation.component';
 import { InviteMutationComponent } from '../../@shared/invite/invite-mutation/invite-mutation.component';
-import { DateViewComponent, PictureNameTagsComponent } from '../../@shared/table-components';
-import { ArchiveConfirmationComponent, CandidateActionConfirmationComponent } from '../../@shared/user/forms';
+import {
+	DateViewComponent,
+	PictureNameTagsComponent
+} from '../../@shared/table-components';
+import {
+	ArchiveConfirmationComponent,
+	CandidateActionConfirmationComponent
+} from '../../@shared/user/forms';
 import { ComponentEnum } from '../../@core/constants';
-import { CandidatesService, ErrorHandlingService, Store, ToastrService } from '../../@core/services';
-import { CandidateStatusComponent, CandidateSourceComponent } from './table-components';
+import { TagsOnlyComponent } from '../../@shared/table-components/tags-only/tags-only.component';
+import { ServerDataSource } from '../../@core/utils/smart-table/server.data-source';
+import { API_PREFIX } from '../../@core/constants/app.constants';
+import {
+	CandidatesService,
+	ErrorHandlingService,
+	Store,
+	ToastrService
+} from '../../@core/services';
+import {
+	CandidateStatusComponent,
+	CandidateSourceComponent
+} from './table-components';
+import {
+	PaginationFilterBaseComponent,
+	IPaginationBase
+} from '../../@shared/pagination/pagination-filter-base.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -30,11 +51,11 @@ import { CandidateStatusComponent, CandidateSourceComponent } from './table-comp
 	styleUrls: ['./candidates.component.scss']
 })
 export class CandidatesComponent
-	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
-
+	extends PaginationFilterBaseComponent
+	implements OnInit, OnDestroy
+{
 	settingsSmartTable: object;
-	sourceSmartTable = new LocalDataSource();
+	sourceSmartTable: ServerDataSource;
 	selectedCandidate: ICandidateViewModel;
 	includeArchived: boolean = false;
 	loading: boolean;
@@ -65,7 +86,8 @@ export class CandidatesComponent
 		private readonly router: Router,
 		private readonly route: ActivatedRoute,
 		public readonly translateService: TranslateService,
-		private readonly errorHandler: ErrorHandlingService
+		private readonly errorHandler: ErrorHandlingService,
+		private readonly http: HttpClient
 	) {
 		super(translateService);
 		this.setView();
@@ -77,9 +99,17 @@ export class CandidatesComponent
 		this.candidates$
 			.pipe(
 				debounceTime(100),
-				tap(() => this.loading = true),
+				tap(() => this.subject$.next(true)),
+				tap(() => this.setSmartTableSource()),
 				tap(() => this.getCandidates()),
 				tap(() => this.clearItem()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.pagination$
+			.pipe(
+				distinctUntilChange(),
+				tap(() => this.candidates$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -87,15 +117,24 @@ export class CandidatesComponent
 			.pipe(
 				filter((organization: IOrganization) => !!organization),
 				distinctUntilChange(),
-				tap((organization: IOrganization) => this.organization = organization),
-				tap(({ invitesAllowed }: IOrganization) => this.organizationInvitesAllowed = invitesAllowed),
+				tap(
+					(organization: IOrganization) =>
+						(this.organization = organization)
+				),
+				tap(
+					({ invitesAllowed }: IOrganization) =>
+						(this.organizationInvitesAllowed = invitesAllowed)
+				),
 				tap(() => this.candidates$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
 		this.route.queryParamMap
 			.pipe(
-				filter((params) => !!params && params.get('openAddDialog') === 'true'),
+				filter(
+					(params) =>
+						!!params && params.get('openAddDialog') === 'true'
+				),
 				debounceTime(1000),
 				tap(() => this.add()),
 				untilDestroyed(this)
@@ -113,7 +152,11 @@ export class CandidatesComponent
 			.componentLayout$(this.viewComponentName)
 			.pipe(
 				distinctUntilChange(),
-				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
+				tap(
+					(componentLayout) =>
+						(this.dataLayoutStyle = componentLayout)
+				),
+				tap(() => this.refreshPagination()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -140,8 +183,10 @@ export class CandidatesComponent
 		try {
 			const { name } = this.organization;
 			const dialog = this.dialogService.open(CandidateMutationComponent);
-			const candidates: ICandidate[] = await firstValueFrom(dialog.onClose);
-	
+			const candidates: ICandidate[] = await firstValueFrom(
+				dialog.onClose
+			);
+
 			if (candidates) {
 				for await (const candidate of candidates) {
 					if (candidate.user) {
@@ -150,14 +195,17 @@ export class CandidatesComponent
 						if (firstName || lastName) {
 							fullName = `${firstName} ${lastName}`;
 						}
-						this.toastrService.success('TOASTR.MESSAGE.CANDIDATE_CREATED', {
-							name: fullName,
-							organization: name
-						});
+						this.toastrService.success(
+							'TOASTR.MESSAGE.CANDIDATE_CREATED',
+							{
+								name: fullName,
+								organization: name
+							}
+						);
 					}
 				}
 				this.candidates$.next(true);
-			}	
+			}
 		} catch (error) {
 			console.log('Error, while creating bulk candidate', error);
 		}
@@ -175,8 +223,8 @@ export class CandidatesComponent
 		}
 		this.router.navigate([
 			'/pages/employees/candidates/edit/' +
-			this.selectedCandidate.id +
-			'/profile'
+				this.selectedCandidate.id +
+				'/profile'
 		]);
 	}
 
@@ -198,8 +246,7 @@ export class CandidatesComponent
 						)
 				}
 			})
-			.onClose
-			.pipe(untilDestroyed(this))
+			.onClose.pipe(untilDestroyed(this))
 			.subscribe(async (result) => {
 				if (result) {
 					try {
@@ -207,14 +254,20 @@ export class CandidatesComponent
 						const { tenantId } = this.store.user;
 
 						const { id, fullName } = this.selectedCandidate;
-						await this.candidatesService.setCandidateAsArchived(id, {
-							organizationId,
-							tenantId
-						});
+						await this.candidatesService.setCandidateAsArchived(
+							id,
+							{
+								organizationId,
+								tenantId
+							}
+						);
 
-						this.toastrService.success('TOASTR.MESSAGE.CANDIDATE_ARCHIVED', {
-							name: fullName
-						});
+						this.toastrService.success(
+							'TOASTR.MESSAGE.CANDIDATE_ARCHIVED',
+							{
+								name: fullName
+							}
+						);
 					} catch (error) {
 						this.errorHandler.handleError(error);
 					} finally {
@@ -241,49 +294,65 @@ export class CandidatesComponent
 		this.router.navigate(['/pages/employees/candidates/interviews']);
 	}
 
-	private async getCandidates() {
+	private setSmartTableSource() {
+		if (!this.organization) {
+			return;
+		}
+		this.loading = true;
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
+		this.sourceSmartTable = new ServerDataSource(this.http, {
+			endPoint: API_PREFIX + '/candidate/pagination',
+			relations: ['user', 'source', 'tags'],
+			where: {
+				organizationId,
+				tenantId
+			},
+			resultMap: (candidate: any) => {
+				return Object.assign({}, candidate, {
+					fullName: candidate.user.name,
+					email: candidate.user.email,
+					id: candidate.id,
+					source: candidate.source,
+					rating: candidate.ratings,
+					status: candidate.status,
+					isArchived: candidate.isArchived,
+					imageUrl: candidate.user.imageUrl,
+					tags: candidate.tags,
+					hiredDate: candidate.hiredDate,
+					rejectDate: candidate.rejectDate
+				});
+			},
+			finalize: () => {
+				this.setPagination({
+					...this.getPagination(),
+					totalItems: this.sourceSmartTable.count()
+				});
+				this.loading = false;
+			}
+		});
+	}
 
-		const { items } = await firstValueFrom(this.candidatesService.getAll(['user', 'source', 'tags'], {
-			organizationId,
-			tenantId
-		}));
+	private async getCandidates() {
+		try {
+			const { activePage, itemsPerPage } = this.getPagination();
+			this.sourceSmartTable.setPaging(activePage, itemsPerPage, false);
+			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID)
+				this._loadCardLayoutData();
+		} catch (error) {}
+	}
 
-		let candidates = [];
-		const result = [];
-		for (const candidate of items) {
-			result.push({
-				fullName: candidate.user.name,
-				email: candidate.user.email,
-				id: candidate.id,
-				source: candidate.source,
-				rating: candidate.ratings,
-				status: candidate.status,
-				isArchived: candidate.isArchived,
-				imageUrl: candidate.user.imageUrl,
-				tags: candidate.tags,
-				hiredDate: candidate.hiredDate,
-				rejectDate: candidate.rejectDate
-			});
-		}
-
-		if (!this.includeArchived) {
-			result.forEach((candidate) => {
-				if (!candidate.isArchived) {
-					candidates.push(candidate);
-				}
-			});
-		} else {
-			candidates = result;
-		}
-
-		this.candidates = candidates;
-		this.sourceSmartTable.load(candidates);
-		this.loading = false;
+	private async _loadCardLayoutData() {
+		await this.sourceSmartTable.getElements();
+		this.candidates = this.sourceSmartTable.getData();
+		this.setPagination({
+			...this.getPagination(),
+			totalItems: this.sourceSmartTable.count()
+		});
 	}
 
 	private _loadSmartTableSettings() {
+		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
 			actions: false,
 			columns: {
@@ -318,18 +387,25 @@ export class CandidatesComponent
 					renderComponent: DateViewComponent,
 					filter: false
 				},
+				tags: {
+					title: this.getTranslation('SM_TABLE.TAGS'),
+					type: 'custom',
+					width: '5%',
+					renderComponent: TagsOnlyComponent,
+					filter: false
+				},
 				status: {
 					title: this.getTranslation('SM_TABLE.STATUS'),
 					type: 'custom',
 					class: 'text-center',
-					width: '200px',
+					width: '5%',
 					renderComponent: CandidateStatusComponent,
 					filter: false
 				}
 			},
 			pager: {
-				display: true,
-				perPage: 8
+				display: false,
+				perPage: pagination ? pagination.itemsPerPage : 10
 			}
 		};
 	}
@@ -353,17 +429,19 @@ export class CandidatesComponent
 					isReject: true
 				}
 			})
-			.onClose
-			.pipe(untilDestroyed(this))
+			.onClose.pipe(untilDestroyed(this))
 			.subscribe(async (result) => {
 				if (result) {
 					try {
 						const { id, fullName } = this.selectedCandidate;
 						await this.candidatesService.setCandidateAsRejected(id);
 
-						this.toastrService.success('TOASTR.MESSAGE.CANDIDATE_REJECTED', {
-							name: fullName
-						});
+						this.toastrService.success(
+							'TOASTR.MESSAGE.CANDIDATE_REJECTED',
+							{
+								name: fullName
+							}
+						);
 					} catch (error) {
 						this.errorHandler.handleError(error);
 					} finally {
@@ -387,17 +465,19 @@ export class CandidatesComponent
 					isReject: false
 				}
 			})
-			.onClose
-			.pipe(untilDestroyed(this))
+			.onClose.pipe(untilDestroyed(this))
 			.subscribe(async (result) => {
 				if (result) {
 					try {
 						const { id, fullName } = this.selectedCandidate;
 						await this.candidatesService.setCandidateAsHired(id);
 
-						this.toastrService.success('TOASTR.MESSAGE.CANDIDATE_HIRED', {
-							name: fullName
-						});
+						this.toastrService.success(
+							'TOASTR.MESSAGE.CANDIDATE_HIRED',
+							{
+								name: fullName
+							}
+						);
 					} catch (error) {
 						this.errorHandler.handleError(error);
 					} finally {
@@ -437,5 +517,5 @@ export class CandidatesComponent
 		}
 	}
 
-	ngOnDestroy() { }
+	ngOnDestroy() {}
 }

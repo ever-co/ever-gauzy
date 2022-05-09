@@ -1,110 +1,81 @@
 <nb-card>
-	<nb-card-body>
-		<form [formGroup]="form" *ngIf="form">
-			<div class="row">
-				<div class="col-md-6">
-					<div class="form-group">
-						<label for="employmentType" class="label">{{
+  <nb-card-body>
+    <form [formGroup]="form" *ngIf="form">
+      <div class="row">
+        <div class="col-md-6">
+          <div class="form-group">
+            <label for="employmentType" class="label">{{
 							'CANDIDATES_PAGE.EDIT_CANDIDATE.EMPLOYMENT_TYPE'
 								| translate
 						}}</label>
-						<ng-select
-							id="employmentType"
-							[items]="employmentTypes"
-							formControlName="organizationEmploymentTypes"
-							bindLabel="name"
-							[searchable]="false"
-							placeholder="{{
+            <ng-select id="employmentType" [items]="employmentTypes" formControlName="organizationEmploymentTypes"
+                bindLabel="name" [searchable]="false" placeholder="{{
 								'CANDIDATES_PAGE.EDIT_CANDIDATE.EMPLOYMENT_TYPE'
 									| translate
-							}}"
-							multiple="true"
-							appendTo="body"
-						>
-						</ng-select>
-					</div>
-				</div>
-				<div class="col-md-6">
-					<div class="form-group">
-						<label class="label" for="empLevelInput">
-							{{
+							}}" multiple="true" appendTo="body">
+            </ng-select>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="form-group">
+            <label class="label" for="empLevelInput">
+              {{
 								'CANDIDATES_PAGE.EDIT_CANDIDATE.CANDIDATES_LEVEL'
 									| translate
 							}}
-						</label>
-						<ng-select appendTo="body" formControlName="candidateLevel">							
-						</ng-select>						
-					</div>
-				</div>
-			</div>
-			<div class="row">
-				<div class="col">
-					<div class="form-group">
-						<label class="label">
-							{{
+            </label>
+            <ng-select [items]="candidateLevels" bindLabel="level" placeholder="{{
+              'CANDIDATES_PAGE.EDIT_CANDIDATE.CANDIDATES_LEVEL' | translate
+            }}" appendTo="body" formControlName="candidateLevel">
+            </ng-select>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col">
+          <div class="form-group">
+            <label class="label">
+              {{
 								'CANDIDATES_PAGE.EDIT_CANDIDATE.DEPARTMENT'
 									| translate
 							}}
-						</label>
-						<ng-select
-							id="departmentInput"
-							[items]="departments"
-							formControlName="organizationDepartments"
-							bindLabel="name"
-							[searchable]="false"
-							placeholder="{{
+            </label>
+            <ng-select id="departmentInput" [items]="departments" formControlName="organizationDepartments"
+                bindLabel="name" [searchable]="false" placeholder="{{
 								'FORM.PLACEHOLDERS.ALL_DEPARTMENTS' | translate
-							}}"
-							multiple="true"
-							appendTo="body"
-						>
-						</ng-select>
-					</div>
-				</div>
-				<div class="col">
-					<div class="form-group">
-						<label for="positionInput" class="label">{{
+							}}" multiple="true" appendTo="body">
+            </ng-select>
+          </div>
+        </div>
+        <div class="col">
+          <div class="form-group">
+            <label for="positionInput" class="label">{{
 							'CANDIDATES_PAGE.EDIT_CANDIDATE.POSITION'
 								| translate
 						}}</label>
-						<ng-select
-							id="positionInput"
-							[items]="positions"
-							formControlName="organizationPosition"
-							bindLabel="name"
-							[searchable]="false"
-							placeholder="{{
+            <ng-select id="positionInput" [items]="positions" formControlName="organizationPosition" bindLabel="name"
+                [searchable]="false" placeholder="{{
 								'FORM.PLACEHOLDERS.ALL_POSITIONS' | translate
-							}}"
-							appendTo="body"
-						>
-						</ng-select>
-					</div>
-				</div>
-			</div>
-			<div class="row">
-				<div class="col-md-6">
-					<div class="form-group">
-						<ga-tags-color-input
-							[selectedTags]="tags"
-							(selectedTagsEvent)="selectedTagsHandler($event)"
-							[isOrgLevel]="true"
-						>
-						</ga-tags-color-input>
-					</div>
-				</div>
-			</div>
+							}}" appendTo="body">
+            </ng-select>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-6">
+          <div class="form-group">
+            <ga-tags-color-input [selectedTags]="tags" (selectedTagsEvent)="selectedTagsHandler($event)"
+                [isOrgLevel]="true">
+            </ga-tags-color-input>
+          </div>
+        </div>
+      </div>
 
-			<div class="actions">
-				<button
-					[disabled]="form.invalid"
-					(click)="submitForm()"
-					nbButton
-					status="success"
-				>
-					{{ 'BUTTONS.SAVE' | translate }}
-				</button>
-			</div>
-		</form>
-	</nb-card-body>
+      <div class="actions">
+        <button [disabled]="form.invalid" (click)="submitForm()" nbButton status="success">
+          {{ 'BUTTONS.SAVE' | translate }}
+        </button>
+      </div>
+    </form>
+  </nb-card-body>
 </nb-card>
