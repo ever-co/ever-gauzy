@@ -15,7 +15,8 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-candidate-statistic',
-	templateUrl: './candidate-statistic.component.html'
+	templateUrl: './candidate-statistic.component.html',
+  styleUrls:['./candidate-statistic.component.scss']
 })
 export class CandidateStatisticComponent implements OnInit, OnDestroy {
 	candidateRating: number;
