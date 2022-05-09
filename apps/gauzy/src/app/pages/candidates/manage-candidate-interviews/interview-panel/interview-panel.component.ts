@@ -562,7 +562,7 @@ export class InterviewPanelComponent
 				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
-			.subscribe();
+			.subscribe(() => this.loadSmartTable());
 	}
 
 	selectInterview(interview: any) {
