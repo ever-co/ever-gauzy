@@ -14,7 +14,7 @@
 		<div class="appointment-form">
 			<form [formGroup]="form" *ngIf="form">
 				<div class="row">
-					<div class="col-9">
+					<div class="col-6">
 						<div class="form-group">
 							<label for="agenda" class="label">{{
 								'FORM.LABELS.MEETING_AGENDA' | translate
@@ -34,7 +34,7 @@
 					</div>
 				</div>
 				<div class="row">
-					<div class="col-9">
+					<div class="col-6">
 						<ngx-timer-range-picker
 							[timezoneOffset]="timezoneOffset"
 							[slotStartTime]="start"
@@ -52,7 +52,7 @@
 					</div>
 				</div>
 				<div class="row">
-					<div class="col-3">
+					<div class="col-2">
 						<div class="form-group">
 							<nb-checkbox formControlName="bufferTime">
 								{{
@@ -61,7 +61,7 @@
 							</nb-checkbox>
 						</div>
 					</div>
-					<div class="col-3" *ngIf="form.get('bufferTime').value">
+					<div class="col-2" *ngIf="form.get('bufferTime').value">
 						<div class="form-group">
 							<nb-checkbox formControlName="bufferTimeStart">
 								{{
@@ -71,7 +71,7 @@
 							</nb-checkbox>
 						</div>
 					</div>
-					<div class="col-3" *ngIf="form.get('bufferTime').value">
+					<div class="col-2" *ngIf="form.get('bufferTime').value">
 						<div class="form-group">
 							<nb-checkbox formControlName="bufferTimeEnd">
 								{{
@@ -141,7 +141,7 @@
 					</div>
 				</div>
 				<div class="row">
-					<div class="col-9">
+					<div class="col-6">
 						<div class="form-group">
 							<label for="location" class="label">{{
 								'FORM.LABELS.MEETING_LOCATION' | translate
@@ -161,12 +161,12 @@
 					</div>
 				</div>
 				<div class="row">
-					<div class="col-9">
+					<div class="col-6">
 						<div class="form-group">
 							<label for="description" class="label">{{
 								'FORM.LABELS.MEETING_DESCRIPTION' | translate
 							}}</label>
-							<input
+							<textarea
 								fullWidth
 								id="description"
 								type="text"
@@ -176,12 +176,12 @@
 									'FORM.PLACEHOLDERS.MEETING_DESCRIPTION'
 										| translate
 								}}"
-							/>
+							></textarea>
 						</div>
 					</div>
 				</div>
 				<div class="row" *ngIf="!hidePrivateFields">
-					<div class="col-9">
+					<div class="col-4">
 						<div class="form-group">
 							<label for="description" class="label">{{
 								'FORM.LABELS.MEETING_INVITEES' | translate
@@ -198,7 +198,7 @@
 					</div>
 				</div>
 				<div class="row" *ngIf="hidePrivateFields">
-					<div class="col-sm-12">
+					<div class="col-sm-6">
 						<div class="form-group">
 							<label for="emailsSelect" class="label">{{
 								'FORM.LABELS.EMAILS' | translate

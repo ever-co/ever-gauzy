@@ -1,9 +1,7 @@
-::ng-deep {
-  .route-tabset {
-    margin-bottom: 16px !important;
-  }
-  nb-card-body {
-    padding-top: 0 !important;
-    margin-top: 1rem;
+@import '../../activity/layout/layout.component.scss';
+
+:host {
+  nb-card {
+    background-color: rgba(50, 50, 50, 0.03);
   }
 }

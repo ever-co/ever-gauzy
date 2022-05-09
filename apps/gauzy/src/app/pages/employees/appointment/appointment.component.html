@@ -2,11 +2,15 @@
 	<nb-card-header>
 		<div class="main-header" *ngIf="showHeader">
 			<h4>
-				<ngx-header-title> {{ 'MENU.APPOINTMENTS' | translate }} </ngx-header-title>
+				<ngx-header-title>
+					{{ 'MENU.APPOINTMENTS' | translate }}
+				</ngx-header-title>
 			</h4>
 			<div style="float: right">
 				<button
-					status="success"
+					status="info"
+					size="small"
+					outline
 					nbButton
 					routerLink="/pages/employees/schedules/recurring-availability"
 				>
@@ -15,7 +19,9 @@
 				<ng-template ngxPermissionsOnly="EVENT_TYPES_VIEW">
 					<button
 						class="mr-2 ml-2"
-						status="success"
+						status="warning"
+						size="small"
+						outline
 						nbButton
 						(click)="openEventTypes()"
 					>
@@ -23,7 +29,9 @@
 					</button>
 				</ng-template>
 				<button
-					status="success"
+					status="primary"
+					outline
+					size="small"
 					nbButton
 					(click)="bookPublicAppointment()"
 				>
