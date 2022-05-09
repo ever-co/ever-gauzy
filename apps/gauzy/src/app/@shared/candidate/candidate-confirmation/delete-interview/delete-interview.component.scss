@@ -1,9 +1,8 @@
-.card {
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  align-items: center;
+@import 'gauzy/_gauzy-dialogs';
 
+.card {
+  border-radius: nb-theme(border-radius);
+  background-color: nb-theme(gauzy-card-1);
   &-body {
     min-width: 25rem;
 

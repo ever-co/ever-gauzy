@@ -1,10 +1,12 @@
 <nb-card>
-	<nb-card-header class="header">
+	<nb-card-header class="header pb-0">
 		<button
 			nbButton
 			status="success"
 			*ngIf="!showAddCard"
 			(click)="showCard()"
+			class="action mr-3"
+			size="small"
 		>
 			<nb-icon class="mr-1" icon="plus-outline"></nb-icon
 			>{{ 'BUTTONS.ADD' | translate }}
@@ -13,8 +15,8 @@
 			*ngIf="!showAddCard"
 			[componentName]="viewComponentName"
 		></ga-layout-selector>
-		<div *ngIf="showAddCard" class="row m-0">
-			<div class="col-8 documents-card">
+		<div *ngIf="showAddCard" class="row documents-card-container m-0">
+			<div class="col-10 documents-card custom-form">
 				<form class="col-5" [formGroup]="form" *ngIf="form">
 					<div formArrayName="documents">
 						<div
@@ -57,23 +59,20 @@
 					></ga-candidate-cv>
 				</div>
 			</div>
-
-			<span class="col-2 pl-2 pr-0 button"
+			<span class="col-2 d-flex flex-column"
 				><button
-					class="w-100 form-btn"
+					class="form-btn w-100"
 					(click)="submitForm()"
 					nbButton
 					status="success"
 				>
-					{{ 'BUTTONS.SAVE' | translate }}
-				</button></span
-			>
-			<span class="col-2 pl-2 pr-0 button"
+					{{ 'BUTTONS.SAVE' | translate }}</button
 				><button
-					class="w-100 form-btn"
+					class="form-btn w-100"
 					(click)="cancel()"
 					nbButton
-					status="danger"
+					outline
+					status="basic"
 				>
 					{{ 'BUTTONS.CANCEL' | translate }}
 				</button></span
@@ -81,10 +80,16 @@
 		</div>
 	</nb-card-header>
 	<nb-card-body
-		*ngIf="documentList?.length && dataLayoutStyle === componentLayoutStyleEnum.TABLE"
-		class="mt-3"
+		*ngIf="
+			documentList?.length &&
+			dataLayoutStyle === componentLayoutStyleEnum.TABLE
+		"
+		class="pb-0"
 	>
-		<nb-card *ngFor="let document of documentList; let i = index">
+		<nb-card
+			class="document"
+			*ngFor="let document of documentList; let i = index"
+		>
 			<nb-card-body class="documents-card">
 				<div class="documents-line">
 					<div>
@@ -118,7 +123,10 @@
 	</nb-card-body>
 	<nb-card-body>
 		<ga-card-grid
-			*ngIf="documentList?.length && dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID"
+			*ngIf="
+				documentList?.length &&
+				dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID
+			"
 			[settings]="settingsSmartTable"
 			[source]="documentList"
 			[buttonTemplate]="actionButtons"

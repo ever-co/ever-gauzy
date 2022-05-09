@@ -1,6 +1,9 @@
 <nb-card class="card-wrap">
-	<nb-card-header>
-		<h5>
+	<nb-card-header class="d-flex flex-column">
+		<span class="cancel"
+			><i class="fas fa-times" (click)="closeDialog()"></i
+		></span>
+		<h5 class="title">
 			{{ 'CANDIDATES_PAGE.EDIT_CANDIDATE.LEAVE_FEEDBACK' | translate }}
 			{{ currentInterview?.title }}
 		</h5>
@@ -145,24 +148,19 @@
 				</textarea>
 			</div>
 		</form>
-
-		<div class="buttons">
-			<button
-				class="form-btn"
-				(click)="closeDialog()"
-				nbButton
-				status="danger"
-			>
-				{{ 'BUTTONS.CANCEL' | translate }}
-			</button>
-			<button
-				class="form-btn"
-				(click)="createFeedback()"
-				nbButton
-				status="success"
-			>
-				{{ 'BUTTONS.SAVE' | translate }}
-			</button>
-		</div>
 	</nb-card-body>
+	<nb-card-footer>
+		<button (click)="closeDialog()" size="small" nbButton status="basic" outline>
+			{{ 'BUTTONS.CANCEL' | translate }}
+		</button>
+		<button
+			class="mr-3 ml-3"
+			(click)="createFeedback()"
+			nbButton
+			status="success"
+      size="small"
+		>
+			{{ 'BUTTONS.SAVE' | translate }}
+		</button>
+	</nb-card-footer>
 </nb-card>

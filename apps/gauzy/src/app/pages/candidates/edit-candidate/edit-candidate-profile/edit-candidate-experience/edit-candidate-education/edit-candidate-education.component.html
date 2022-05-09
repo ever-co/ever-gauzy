@@ -1,33 +1,17 @@
 <nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
-	<nb-card-header class="header">
-		<div class="btn">
-			<button
-				nbButton
-				status="success"
-				*ngIf="!showAddCard"
-				(click)="add()"
-				class="mr-2"
+	<nb-card-header class="pb-0 pt-0">
+		<div class="d-flex justify-content-end">
+			<ngx-gauzy-button-action
+				[buttonTemplate]="actionButtons"
+				[buttonTemplateVisible]="visibleButton"
+				[hasLayoutSelector]="!showAddCard"
+				[isDisable]="disableButton"
+				[componentName]="viewComponentName"
 			>
-				<nb-icon class="mr-1" icon="plus-outline"></nb-icon>
-				{{ 'BUTTONS.ADD' | translate }}
-			</button>
-			<ng-container
-				*ngIf="
-					dataLayoutStyle === 'TABLE' &&
-					!showAddCard &&
-					educationList?.length
-				"
-			>
-				<ng-container *ngTemplateOutlet="actionButtons"></ng-container>
-			</ng-container>
+			</ngx-gauzy-button-action>
 		</div>
-
-		<ga-layout-selector
-			*ngIf="!showAddCard"
-			componentName="{{ viewComponentName }}"
-		></ga-layout-selector>
 		<div *ngIf="showAddCard" class="row m-0">
-			<form class="col-10" [formGroup]="form" *ngIf="form">
+			<form class="col-11" [formGroup]="form" *ngIf="form">
 				<div formArrayName="educations">
 					<div
 						*ngFor="
@@ -101,7 +85,7 @@
 					</div>
 				</div>
 			</form>
-			<div class="col-2">
+			<div class="col-1">
 				<span class="col-2 pl-2 pr-0"
 					><button
 						class="w-100 form-btn"
@@ -116,8 +100,9 @@
 					><button
 						class="w-100 form-btn"
 						(click)="cancel()"
+						outline
 						nbButton
-						status="danger"
+						status="basic"
 					>
 						{{ 'BUTTONS.CANCEL' | translate }}
 					</button></span
@@ -125,52 +110,73 @@
 			</div>
 		</div>
 	</nb-card-header>
-	<nb-card-body *ngIf="educationList?.length" class="mt-3">
-		<ng2-smart-table
-			*ngIf="dataLayoutStyle === 'TABLE'"
-			style="cursor: pointer"
-			[settings]="settingsSmartTable"
-			[source]="sourceSmartTable"
-			(userRowSelect)="selectEducation($event)"
-			#educationTable
-		>
-		</ng2-smart-table>
+	<nb-card-body *ngIf="educationList?.length">
+		<div class="table-scroll-container">
+			<ng2-smart-table
+				*ngIf="dataLayoutStyle === 'TABLE'"
+				style="cursor: pointer"
+				[settings]="settingsSmartTable"
+				[source]="sourceSmartTable"
+				(userRowSelect)="selectEducation($event)"
+				#educationTable
+			>
+			</ng2-smart-table>
+		</div>
 	</nb-card-body>
 	<nb-card-body *ngIf="educationList?.length">
 		<ga-card-grid
 			*ngIf="dataLayoutStyle === 'CARDS_GRID'"
 			[settings]="settingsSmartTable"
 			[source]="educationList"
-			[buttonTemplate]="actionButtons"
+			(onSelectedItem)="selectEducation($event)"
 		></ga-card-grid>
 	</nb-card-body>
 
-	<ng-template
-		#actionButtons
-		let-buttonSize="buttonSize"
-		let-selectedItem="selectedItem"
-	>
-		<button
-			(click)="editEducation(selectedItem)"
-			nbButton
-			status="info"
-			class="mr-2"
-			[disabled]="!selectedItem && disableButton"
-			[size]="buttonSize || 'medium'"
+	<ng-template #actionButtons let-selectedItem="selectedItem">
+		<div
+			class="btn-group actions"
+			*ngIf="
+				dataLayoutStyle === 'TABLE' &&
+				!showAddCard &&
+				educationList?.length
+			"
 		>
-			<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
-			{{ 'BUTTONS.EDIT' | translate }}
-		</button>
-		<button
-			(click)="removeEducation(selectedItem)"
-			nbButton
-			status="danger"
-			class="mr-2"
-			[disabled]="!selectedItem && disableButton"
-			[size]="buttonSize || 'medium'"
-		>
-			<nb-icon class="mr-1" icon="archive-outline"> </nb-icon>
-			{{ 'BUTTONS.DELETE' | translate }}
-		</button>
+			<button
+				(click)="editEducation(selectedItem)"
+				nbButton
+				status="basic"
+				class="action primary"
+				size="small"
+				[disabled]="!selectedItem && disableButton"
+			>
+				<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
+				{{ 'BUTTONS.EDIT' | translate }}
+			</button>
+			<button
+				(click)="removeEducation(selectedItem)"
+				nbButton
+				status="basic"
+				class="action"
+				size="small"
+				[disabled]="!selectedItem && disableButton"
+				[nbTooltip]="'BUTTONS.DELETE' | translate"
+			>
+				<nb-icon status="danger" icon="trash-2-outline"> </nb-icon>
+			</button>
+		</div>
 	</ng-template>
 </nb-card>
+
+<ng-template #visibleButton>
+	<button
+		nbButton
+		status="success"
+		class="action"
+		size="small"
+		*ngIf="!showAddCard"
+		(click)="add()"
+	>
+		<nb-icon icon="plus-outline"></nb-icon>
+		{{ 'BUTTONS.ADD' | translate }}
+	</button>
+</ng-template>

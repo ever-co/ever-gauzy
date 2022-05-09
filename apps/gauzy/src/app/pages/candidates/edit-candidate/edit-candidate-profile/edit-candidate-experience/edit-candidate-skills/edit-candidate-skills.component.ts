@@ -18,7 +18,8 @@ import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service'
 
 @Component({
 	selector: 'ga-edit-candidate-skills',
-	templateUrl: './edit-candidate-skills.component.html'
+	templateUrl: './edit-candidate-skills.component.html',
+  styleUrls: ['edit-candidate-skills.component.scss']
 })
 export class EditCandidateSkillsComponent
 	extends TranslationBaseComponent

@@ -1,3 +1,6 @@
+@import 'gauzy/_gauzy-table';
+@import 'gauzy/_gauzy-dialogs';
+
 .experience-form {
   width: 100%;
   display: flex;
@@ -39,4 +42,9 @@ input {
     align-items: center;
     padding: 0px;
   }
+}
+form {
+  background-color: rgba(50, 50, 50, 0.03);
+  border-radius: nb-theme(border-radius);
+  padding: 1rem;
 }
