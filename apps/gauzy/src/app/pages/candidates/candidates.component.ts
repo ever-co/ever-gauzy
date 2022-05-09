@@ -291,6 +291,9 @@ export class CandidatesComponent
 	}
 
 	private async getCandidates() {
+		if (!this.organization) {
+			return;
+		}
 		this.loading = true;
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
