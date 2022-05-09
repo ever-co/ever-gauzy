@@ -9,7 +9,7 @@ import {
 } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpClient } from '@angular/common/http';
-import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
+import { Ng2SmartTableComponent } from 'ng2-smart-table';
 import { filter, tap, debounceTime } from 'rxjs/operators';
 import { firstValueFrom, Subject } from 'rxjs';
 import { NbDialogService } from '@nebular/theme';
