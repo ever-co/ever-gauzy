@@ -389,7 +389,6 @@ export class InterviewPanelComponent
 			.componentLayout$(this.viewComponentName)
 			.pipe(
 				tap(() => this.refreshPagination()),
-				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe((componentLayout) => {
