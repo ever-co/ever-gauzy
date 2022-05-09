@@ -43,10 +43,9 @@ import { ServerDataSource } from '../../../@core/utils/smart-table/server.data-s
 	templateUrl: './event-type.component.html',
 	styleUrls: ['event-type.component.scss']
 })
-export class EventTypeComponent
-	extends PaginationFilterBaseComponent
-	implements AfterViewInit, OnInit, OnDestroy
-{
+export class EventTypeComponent extends PaginationFilterBaseComponent 
+	implements AfterViewInit, OnInit, OnDestroy {
+
 	smartTableSource: ServerDataSource;
 	smartTableSettings: object;
 	localDataSource = new LocalDataSource();
@@ -58,6 +57,7 @@ export class EventTypeComponent
 	loading: boolean;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
+
 	public organization: IOrganization;
 	eventTypes$: Subject<any> = new Subject();
 
@@ -91,16 +91,11 @@ export class EventTypeComponent
 
 		this.eventTypes$
 			.pipe(
-				debounceTime(300),
-				tap(() => (this.loading = true)),
-				tap(() => this.getEventTypes()),
 				tap(() => this._clearItem()),
-				tap(() => this.subject$.next(true)),
-				tap(() => (this.loading = false)),
+				tap(() => this.getEventTypes()),
 				untilDestroyed(this)
 			)
 			.subscribe();
-
 		this.pagination$
 			.pipe(
 				distinctUntilChange(),
@@ -126,10 +121,7 @@ export class EventTypeComponent
 			.subscribe();
 		this.route.queryParamMap
 			.pipe(
-				filter(
-					(params) =>
-						!!params && params.get('openAddDialog') === 'true'
-				),
+				filter((params) => !!params && params.get('openAddDialog') === 'true'),
 				debounceTime(1000),
 				tap(() => this.openAddEventTypeDialog()),
 				untilDestroyed(this)
@@ -154,10 +146,7 @@ export class EventTypeComponent
 			.componentLayout$(this.viewComponentName)
 			.pipe(
 				distinctUntilChange(),
-				tap(
-					(componentLayout) =>
-						(this.dataLayoutStyle = componentLayout)
-				),
+				tap((componentLayout) => (this.dataLayoutStyle = componentLayout)),
 				tap(() => this.refreshPagination()),
 				tap(() => this.eventTypes$.next(true)),
 				untilDestroyed(this)
@@ -366,6 +355,12 @@ export class EventTypeComponent
 	 * Register Smart Table Source Config
 	 */
 	setSmartTableSource() {
+		if (!this.organization) {
+			return;
+		}
+
+		this.loading = true;
+
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 
@@ -411,17 +406,22 @@ export class EventTypeComponent
 	 * GET all event types
 	 */
 	private async getEventTypes() {
-		if (!this.organization) return;
+		if (!this.organization) {
+			return;
+		}
 		try {
 			this.setSmartTableSource();
+			
 			const { activePage, itemsPerPage } = this.getPagination();
 			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
+
 			if (
 				this.dataLayoutStyle ===
 				this.componentLayoutStyleEnum.CARDS_GRID
 			) {
 				// Initiate GRID view pagination
-				this.eventTypes = await this.smartTableSource.getElements();
+				await this.smartTableSource.getElements();
+				this.eventTypes = this.mapEventTypes();
 			}
 		} catch (error) {
 			this.toastrService.danger(error);
