@@ -2,3 +2,8 @@
 .center {
   width: 300px;
 }
+:host {
+  nb-card {
+    background-color: nb-theme(gauzy-card-1);
+  }
+}

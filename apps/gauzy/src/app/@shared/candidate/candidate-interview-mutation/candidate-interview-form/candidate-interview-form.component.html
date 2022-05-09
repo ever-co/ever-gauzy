@@ -5,7 +5,7 @@
 				'title-width': isCalendar,
 				'title-width-small': !isCalendar
 			}"
-			class="nameValidParent"
+			class="name-valid-parent"
 		>
 			<label for="inputTitle" class="label">{{
 				'FORM.LABELS.TITLE' | translate
@@ -24,7 +24,7 @@
 				}}"
 				formControlName="title"
 			/>
-			<div *ngIf="isTitleExisted" class="nameValid">
+			<div *ngIf="isTitleExisted" class="name-valid">
 				{{
 					'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.INTERVIEW_TITLE_EXIST'
 						| translate

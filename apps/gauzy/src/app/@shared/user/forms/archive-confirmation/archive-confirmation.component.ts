@@ -4,9 +4,12 @@ import { NbDialogRef } from '@nebular/theme';
 @Component({
 	selector: 'ga-archive-confirmation',
 	template: `
-		<nb-card class="center">
-			<nb-card-header>
-				<h6>{{ 'FORM.CONFIRM' | translate }}</h6>
+		<nb-card>
+			<nb-card-header class="d-flex flex-column">
+				<span class="cancel"
+					><i class="fas fa-times" (click)="close()"></i
+				></span>
+				<h6 class="title">{{ 'FORM.CONFIRM' | translate }}</h6>
 			</nb-card-header>
 			<nb-card-body>
 				<span>
@@ -16,32 +19,21 @@ import { NbDialogRef } from '@nebular/theme';
 				</span>
 			</nb-card-body>
 			<nb-card-footer>
+				<button (click)="close()" status="basic" outline nbButton>
+					{{ 'BUTTONS.CANCEL' | translate }}
+				</button>
 				<button
 					(click)="archive()"
-					class="mr-3"
+					class="mr-3 ml-3"
 					status="danger"
 					nbButton
 				>
 					{{ 'BUTTONS.OK' | translate }}
 				</button>
-				<button (click)="close()" status="info" nbButton>
-					{{ 'BUTTONS.CANCEL' | translate }}
-				</button>
 			</nb-card-footer>
 		</nb-card>
 	`,
-	styles: [
-		`
-			nb-card-body {
-				text-align: center;
-			}
-
-			.center {
-				align-items: center;
-				width: 300px;
-			}
-		`
-	]
+	styleUrls: ['../delete-confirmation/delete-confirmation.component.scss']
 })
 export class ArchiveConfirmationComponent {
 	recordType: string;
