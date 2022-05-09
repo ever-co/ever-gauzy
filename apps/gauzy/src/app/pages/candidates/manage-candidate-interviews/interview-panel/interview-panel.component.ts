@@ -36,7 +36,7 @@ import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service'
 import { PaginationFilterBaseComponent } from 'apps/gauzy/src/app/@shared/pagination/pagination-filter-base.component';
 import { IPaginationBase } from '../../../../@shared/pagination/pagination-filter-base.component';
 import { untilDestroyed, UntilDestroy } from '@ngneat/until-destroy';
-import { distinctUntilChange } from '../../../../../../../../packages/common-angular/src/utils/shared-utils';
+import { distinctUntilChange } from '@gauzy/common-angular';
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-interview-panel',
