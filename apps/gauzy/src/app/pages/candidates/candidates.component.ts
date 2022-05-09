@@ -152,7 +152,6 @@ export class CandidatesComponent
 						(this.dataLayoutStyle = componentLayout)
 				),
 				tap(() => this.refreshPagination()),
-				tap(() => this.candidates$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
