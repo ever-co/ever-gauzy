@@ -8,6 +8,7 @@ import {
 	CandidateStatusEnum
 } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
+import { HttpClient } from '@angular/common/http';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { filter, tap, debounceTime } from 'rxjs/operators';
 import { firstValueFrom, Subject } from 'rxjs';
@@ -27,6 +28,8 @@ import {
 } from '../../@shared/user/forms';
 import { ComponentEnum } from '../../@core/constants';
 import { TagsOnlyComponent } from '../../@shared/table-components/tags-only/tags-only.component';
+import { ServerDataSource } from '../../@core/utils/smart-table/server.data-source';
+import { API_PREFIX } from '../../@core/constants/app.constants';
 import {
 	CandidatesService,
 	ErrorHandlingService,
@@ -52,7 +55,7 @@ export class CandidatesComponent
 	implements OnInit, OnDestroy
 {
 	settingsSmartTable: object;
-	sourceSmartTable = new LocalDataSource();
+	sourceSmartTable: ServerDataSource;
 	selectedCandidate: ICandidateViewModel;
 	includeArchived: boolean = false;
 	loading: boolean;
@@ -83,7 +86,8 @@ export class CandidatesComponent
 		private readonly router: Router,
 		private readonly route: ActivatedRoute,
 		public readonly translateService: TranslateService,
-		private readonly errorHandler: ErrorHandlingService
+		private readonly errorHandler: ErrorHandlingService,
+		private readonly http: HttpClient
 	) {
 		super(translateService);
 		this.setView();
@@ -96,6 +100,7 @@ export class CandidatesComponent
 			.pipe(
 				debounceTime(100),
 				tap(() => this.subject$.next(true)),
+				tap(() => this.setSmartTableSource()),
 				tap(() => this.getCandidates()),
 				tap(() => this.clearItem()),
 				untilDestroyed(this)
@@ -289,63 +294,61 @@ export class CandidatesComponent
 		this.router.navigate(['/pages/employees/candidates/interviews']);
 	}
 
-	private async getCandidates() {
+	private setSmartTableSource() {
 		if (!this.organization) {
 			return;
 		}
 		this.loading = true;
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
-		const { activePage, itemsPerPage } = this.getPagination();
-		const { items } = await firstValueFrom(
-			this.candidatesService.getAll(['user', 'source', 'tags'], {
+		this.sourceSmartTable = new ServerDataSource(this.http, {
+			endPoint: API_PREFIX + '/candidate/pagination',
+			relations: ['user', 'source', 'tags'],
+			where: {
 				organizationId,
 				tenantId
-			})
-		);
+			},
+			resultMap: (candidate: any) => {
+				return Object.assign({}, candidate, {
+					fullName: candidate.user.name,
+					email: candidate.user.email,
+					id: candidate.id,
+					source: candidate.source,
+					rating: candidate.ratings,
+					status: candidate.status,
+					isArchived: candidate.isArchived,
+					imageUrl: candidate.user.imageUrl,
+					tags: candidate.tags,
+					hiredDate: candidate.hiredDate,
+					rejectDate: candidate.rejectDate
+				});
+			},
+			finalize: () => {
+				this.setPagination({
+					...this.getPagination(),
+					totalItems: this.sourceSmartTable.count()
+				});
+				this.loading = false;
+			}
+		});
+	}
 
-		let candidates = [];
-		const result = [];
-		for (const candidate of items) {
-			result.push({
-				fullName: candidate.user.name,
-				email: candidate.user.email,
-				id: candidate.id,
-				source: candidate.source,
-				rating: candidate.ratings,
-				status: candidate.status,
-				isArchived: candidate.isArchived,
-				imageUrl: candidate.user.imageUrl,
-				tags: candidate.tags,
-				hiredDate: candidate.hiredDate,
-				rejectDate: candidate.rejectDate
-			});
-		}
+	private async getCandidates() {
+		try {
+			const { activePage, itemsPerPage } = this.getPagination();
+			this.sourceSmartTable.setPaging(activePage, itemsPerPage, false);
+			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID)
+				this._loadCardLayoutData();
+		} catch (error) {}
+	}
 
-		if (!this.includeArchived) {
-			result.forEach((candidate) => {
-				if (!candidate.isArchived) {
-					candidates.push(candidate);
-				}
-			});
-		} else {
-			candidates = result;
-		}
-
-		this.candidates = candidates;
-		this.sourceSmartTable.setPaging(activePage, itemsPerPage, false);
-		this.sourceSmartTable.load(candidates);
-		if (this.dataLayoutStyle === this.componentLayoutStyleEnum.CARDS_GRID)
-			this._loadCardLayoutData();
+	private async _loadCardLayoutData() {
+		await this.sourceSmartTable.getElements();
+		this.candidates = this.sourceSmartTable.getData();
 		this.setPagination({
 			...this.getPagination(),
 			totalItems: this.sourceSmartTable.count()
 		});
-		this.loading = false;
-	}
-
-	private async _loadCardLayoutData() {
-		this.candidates = await this.sourceSmartTable.getElements();
 	}
 
 	private _loadSmartTableSettings() {
