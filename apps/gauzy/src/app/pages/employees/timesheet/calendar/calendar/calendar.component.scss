@@ -9,7 +9,7 @@
 }
 .custom-calendar {
   max-height: calc($default-card-height - 7.325rem);
-  overflow: overlay;
+  overflow: auto;
 }
 .add-button {
   position: absolute;
