@@ -54,4 +54,11 @@
   .card-header:first-child {
     border-radius: 0 $default-radius 0 0;
   }
+  background-color: rgba(50, 50, 50, 0.02);
+  .card {
+    background-color: rgba(50, 50, 50, 0.03);
+    .card-header {
+      background-color: unset;
+    }
+  }
 }

@@ -2,4 +2,11 @@
 
 :host {
   @include nb-card_overrides(auto, $default-card-height, $default-radius);
+  background-color: rgba(50, 50, 50, 0.02);
+  .card {
+    background-color: rgba(50, 50, 50, 0.03);
+    .card-header {
+      background-color: unset;
+    }
+  }
 }

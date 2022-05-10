@@ -245,7 +245,7 @@
 						<nb-card-header>{{
 							'TIMESHEET.RECENT_ACTIVITIES' | translate
 						}}</nb-card-header>
-						<nb-card-body>
+						<nb-card-body class="custom-card-body-inner">
 							<ng-template
 								[ngIf]="timeSlotEmployees?.length > 0"
 								[ngIfElse]="noScreenshot"
@@ -376,7 +376,7 @@
 							[ngIf]="tasks?.length > 0"
 							[ngIfElse]="noTasks"
 						>
-							<nb-list>
+							<nb-list class="custom-card-body-inner">
 								<nb-list-item *ngFor="let task of tasks">
 									<div class="w-100">
 										<div class="row align-items-center">
@@ -469,7 +469,7 @@
 							[ngIf]="manualTimes?.length > 0"
 							[ngIfElse]="noManualTimes"
 						>
-							<nb-list>
+							<nb-list class="custom-card-body-inner">
 								<nb-list-item>
 									<div class="w-100">
 										<div class="row py-2 font-weight-bold">
@@ -586,7 +586,7 @@
 							[ngIf]="projects?.length > 0"
 							[ngIfElse]="noProjects"
 						>
-							<nb-list>
+							<nb-list class="custom-card-body-inner">
 								<nb-list-item *ngFor="let project of projects">
 									<div class="w-100">
 										<div class="row align-items-center">
@@ -681,7 +681,7 @@
 							[ngIf]="activities?.length > 0"
 							[ngIfElse]="noActivities"
 						>
-							<nb-list>
+							<nb-list class="custom-card-body-inner">
 								<nb-list-item
 									*ngFor="let activity of activities"
 								>
@@ -744,7 +744,7 @@
 							[ngIf]="members?.length > 0"
 							[ngIfElse]="noMember"
 						>
-							<nb-list>
+							<nb-list class="custom-card-body-inner">
 								<nb-list-item>
 									<div class="w-100">
 										<div class="row font-weight-bold">
