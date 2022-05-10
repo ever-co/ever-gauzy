@@ -14,6 +14,16 @@
   }
   .description {
     overflow-wrap: break-word;
+    display: flex;
+    flex-direction: column;
+    flex-direction: flex-start;
+    > .subtitle {
+      font-size: 11px;
+      font-weight: 600;
+      line-height: 13px;
+      letter-spacing: -0.01em;
+      text-align: left;
+    }
   }
   nb-alert {
     font-size: 14px !important;
@@ -25,7 +35,8 @@
     background-color: nb-theme(gauzy-card-1);
     width: 328px;
   }
-  .title {
+  .title,
+  .subtitle {
     color: rgba(126, 126, 143, 1);
   }
   small.duration {

@@ -43,9 +43,9 @@
 	<nb-card-body class="custom-scroll">
 		<div class="mt-3">
 			<div class="description">
-				<strong>
+				<span class="subtitle">
 					{{ 'TIMESHEET.ORGANIZATION_CONTACT' | translate }} :
-				</strong>
+				</span>
 				{{
 					timeLog?.organizationContact
 						? timeLog?.organizationContact.name
@@ -55,7 +55,7 @@
 		</div>
 		<div class="mt-3">
 			<div class="description">
-				<strong>{{ 'TIMESHEET.PROJECT' | translate }} : </strong>
+				<span class="subtitle">{{ 'TIMESHEET.PROJECT' | translate }} : </span>
 				{{
 					timeLog?.project
 						? timeLog?.project.name
@@ -65,7 +65,7 @@
 		</div>
 		<div class="mt-3">
 			<div class="description">
-				<strong>{{ 'TIMESHEET.TODO' | translate }} : </strong>
+				<span class="subtitle">{{ 'TIMESHEET.TODO' | translate }} : </span>
 				{{
 					timeLog?.task
 						? timeLog?.task?.title
@@ -75,13 +75,13 @@
 		</div>
 		<div class="mt-3" *ngIf="timeLog?.description">
 			<div class="description">
-				<strong>{{ 'TIMESHEET.NOTES' | translate }} : </strong>
+				<span class="subtitle">{{ 'TIMESHEET.NOTES' | translate }} : </span>>
 				{{ timeLog?.description }}
 			</div>
 		</div>
 		<div class="mt-3" *ngIf="timeLog?.reason">
 			<div class="description">
-				<strong>{{ 'TIMESHEET.REASON' | translate }} : </strong>
+				<span class="subtitle">{{ 'TIMESHEET.REASON' | translate }} : </span>
 				{{ timeLog?.reason }}
 			</div>
 		</div>
