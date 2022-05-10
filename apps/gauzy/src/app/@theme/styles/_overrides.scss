@@ -19,7 +19,7 @@ body {
 }
 
 .cdk-global-scrollblock {
-  overflow-y: overlay;
+  overflow-y: auto;
 }
 
 .cdk-overlay-container {
@@ -54,7 +54,7 @@ body {
   }
 
   .cdk-global-scrollblock {
-    overflow-y: overlay;
+    overflow-y: auto;
   }
 
   .h1 {
@@ -107,7 +107,7 @@ body {
 
   nb-layout {
     .scrollable-container {
-      overflow-y: overlay !important;
+      overflow-y: auto !important;
     }
   }
 
@@ -350,7 +350,7 @@ nb-card-body {
 .table-scroll-container,
 .grid-scroll-container {
   border-radius: 8px;
-  overflow-y: overlay;
+  overflow-y: auto;
   max-height: calc(100vh - 28rem);
   @include respond(dsk) {
     max-height: calc(70vh - 132px);
