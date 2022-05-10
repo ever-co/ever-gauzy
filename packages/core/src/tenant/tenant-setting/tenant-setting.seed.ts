@@ -12,7 +12,7 @@ export const createDefaultTenantSetting = async (
 		for await (const tenant of tenants) {
 			const setting = new TenantSetting();
             setting.name = 'fileStorageProvider';
-            setting.value = environment.fileSystem.name || FileStorageProviderEnum.LOCAL;
+            setting.value = (environment.fileSystem.name).toUpperCase() || FileStorageProviderEnum.LOCAL;
             setting.tenant = tenant;
             settings.push(setting);
 		}
