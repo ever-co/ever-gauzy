@@ -46,7 +46,7 @@
     margin-bottom: 0;
   }
   @include card_overrides(
-    overlay,
+    auto,
     calc($default-card-height - 3rem),
     0 $default-radius $default-radius $default-radius
   );
