@@ -3,6 +3,7 @@
 
 /* Apply style on scrollbar for Firefox */
 * {
+  scrollbar-color: nb-theme(scrollbar-color) nb-theme(scrollbar-background-color);
   scrollbar-width: thin;
 }
 /*  Apply style on scrollbar for Chrome */
@@ -16,7 +17,7 @@
 
 ::-webkit-scrollbar-thumb {
   background: nb-theme(scrollbar-color);
-  border-radius: 0.15625rem;
+  border-radius: 1rem;
 }
 
 body {
