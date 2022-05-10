@@ -91,34 +91,43 @@ export class TimeReportsComponent extends BaseSelectorFilterComponent
 		this.timesheetService
 			.getDailyReportChart(request)
 			.then((logs: any[]) => {
+				const commonOptions = {
+					borderWidth: 1,
+					pointRadius: 2,
+					pointHoverRadius: 7,
+					pointHoverBorderWidth: 6,
+				}
 				const datasets = [
 					{
 						label: TimeLogType.MANUAL,
 						data: logs.map((log) => log.value[TimeLogType.MANUAL]),
 						borderColor: ChartUtil.CHART_COLORS.red,
 						backgroundColor: ChartUtil.transparentize(ChartUtil.CHART_COLORS.red, 1),
-						borderWidth: 2
+						...commonOptions,
 					},
 					{
 						label: TimeLogType.TRACKED,
 						data: logs.map((log) => log.value[TimeLogType.TRACKED]),
 						borderColor: ChartUtil.CHART_COLORS.blue,
 						backgroundColor: ChartUtil.transparentize(ChartUtil.CHART_COLORS.blue, 1),
-						borderWidth: 2
+						...commonOptions,
 					},
 					{
 						label: TimeLogType.IDEAL,
 						data: logs.map((log) => log.value[TimeLogType.IDEAL]),
 						borderColor: ChartUtil.CHART_COLORS.yellow,
 						backgroundColor: ChartUtil.transparentize(ChartUtil.CHART_COLORS.yellow, 1),
-						borderWidth: 2
+						...commonOptions,
 					},
 					{
 						label: TimeLogType.RESUMED,
 						data: logs.map((log) => log.value[TimeLogType.RESUMED]),
 						borderColor: ChartUtil.CHART_COLORS.green,
 						backgroundColor: ChartUtil.transparentize(ChartUtil.CHART_COLORS.green, 1),
-						borderWidth: 2
+						tooltip: {
+							titleFontColor: 'pink'
+						},
+						...commonOptions,
 					}
 				];
 				this.chartData = {

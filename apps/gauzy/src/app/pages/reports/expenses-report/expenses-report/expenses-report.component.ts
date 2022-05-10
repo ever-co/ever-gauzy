@@ -80,8 +80,11 @@ export class ExpensesReportComponent extends BaseSelectorFilterComponent
 					label: this.getTranslation('REPORT_PAGE.EXPENSE'),
 					data: logs.map((log) => log.value['expense']),
 					borderColor: ChartUtil.CHART_COLORS.red,
-					backgroundColor: ChartUtil.transparentize(ChartUtil.CHART_COLORS.red, 0.5),
-					borderWidth: 1
+					backgroundColor: ChartUtil.transparentize(ChartUtil.CHART_COLORS.red, 1),
+					borderWidth: 1,
+					pointRadius: 2,
+					pointHoverRadius: 7,
+					pointHoverBorderWidth: 6,
 				}];
 				this.chartData = {
 					labels: pluck(logs, 'date'),
