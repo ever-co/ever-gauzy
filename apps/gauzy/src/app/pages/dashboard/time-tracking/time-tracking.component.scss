@@ -80,6 +80,11 @@
       height: 5px !important;
     }
   }
+  ::ng-deep {
+    .toggle-label {
+      margin-bottom: 0;
+    }
+  }
 }
 
 .custom-container {
