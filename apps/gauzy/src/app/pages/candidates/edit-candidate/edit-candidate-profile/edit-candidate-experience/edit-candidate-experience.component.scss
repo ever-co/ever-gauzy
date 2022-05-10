@@ -17,7 +17,7 @@
 }
 nb-tab.content-active {
   max-height: calc(100vh - 30rem);
-  overflow-y: overlay;
+  overflow-y: auto;
   border-radius: nb-theme(border-radius);
 }
 nb-tab.content-active.custom-tab {

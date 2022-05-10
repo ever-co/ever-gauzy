@@ -7,7 +7,7 @@ import { Component } from '@angular/core';
 	styles: [
 		`
 			:host {
-				overflow-y: overlay;
+				overflow-y: auto;
 				max-height: calc(100vh - 28rem);
 			}
 		`
