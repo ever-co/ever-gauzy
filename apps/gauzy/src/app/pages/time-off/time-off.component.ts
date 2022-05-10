@@ -171,7 +171,6 @@ export class TimeOffComponent
 	}
 
 	detectStatusChange(status: StatusTypesEnum) {
-		console.log(status);
 		let filtered: ITimeOff[] = [];
 		switch (status) {
 			case StatusTypesEnum.REQUESTED:
