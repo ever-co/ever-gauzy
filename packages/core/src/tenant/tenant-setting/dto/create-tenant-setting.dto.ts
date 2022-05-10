@@ -1,4 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
+import { Transform, TransformFnParams } from "class-transformer";
 import { IsEnum, IsNotEmpty } from "class-validator";
 import { FileStorageProviderEnum } from "@gauzy/contracts";
 import { IntersectionType } from "@nestjs/mapped-types";
@@ -14,10 +15,11 @@ export class CreateTenantSettingDTO extends IntersectionType(
 ) {
 
 	/**
-	 * Local FileStorage Provider Configuration
+	 * FileStorage Provider Configuration
 	 */
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
 	@IsEnum(FileStorageProviderEnum)
+	@Transform((params: TransformFnParams) => params.value.trim().toUpperCase())
 	readonly fileStorageProvider: FileStorageProviderEnum;
 }

@@ -58,9 +58,6 @@ export const createDefaultOrganizationProjects = async (
 		tenant,
 		organization
 	);
-
-
-
 	return projects;
 };
 
@@ -79,10 +76,9 @@ export const createRandomOrganizationProjects = async (
 	}
 
 	for await (const tenant of tenants) {
-		const projects: OrganizationProject[] = [];
 		const projectsPerOrganization = Math.floor(Math.random() * (maxProjectsPerOrganization - 5)) + 5;
 		const organizations = tenantOrganizationsMap.get(tenant);
-
+		
 		for await (const organization of organizations) {
 			const organizationContacts = await connection.manager.find(OrganizationContact, {
 				where: { 
@@ -90,10 +86,9 @@ export const createRandomOrganizationProjects = async (
 					organization
 				}
 			});
-			const organizationContact = faker.random.arrayElement(
-				organizationContacts
-			);
-      
+			const organizationContact = faker.random.arrayElement(organizationContacts);
+
+			const projects: OrganizationProject[] = [];
 			for (let i = 0; i < projectsPerOrganization; i++) {
 				const project = new OrganizationProject();
 				project.tags = [tags[Math.floor(Math.random() * tags.length)]];
@@ -114,6 +109,7 @@ export const createRandomOrganizationProjects = async (
 				projects.push(project);
 			}
 			await connection.manager.save(projects);
+			
 			await assignOrganizationProjectToEmployee(
 				connection,
 				tenant,
@@ -121,7 +117,6 @@ export const createRandomOrganizationProjects = async (
 			);
 		}
 	}
-
 };
 
 /*

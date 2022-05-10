@@ -58,7 +58,7 @@ export class TenantService extends CrudService<Tenant> {
 		const fileSystem = this.configService.get('fileSystem') as IEnvironment['fileSystem'];
 		await this.commandBus.execute(
 			new TenantSettingSaveCommand({
-					fileStorageProvider: fileSystem.name || FileStorageProviderEnum.LOCAL,
+					fileStorageProvider: (fileSystem.name).toUpperCase() as FileStorageProviderEnum || FileStorageProviderEnum.LOCAL,
 				},
 				tenantId
 			)

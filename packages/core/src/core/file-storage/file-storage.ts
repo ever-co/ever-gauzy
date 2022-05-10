@@ -33,17 +33,23 @@ export class FileStorage {
 			const request = RequestContext.currentRequest();
 			if (request && isNotEmpty(request['tenantSettings'])) {
 				const provider = request['tenantSettings']['fileStorageProvider'] as FileStorageProviderEnum;
-				if (providers.includes(provider)) {
-					this.config.provider = provider;
+				if (isEmpty(provider) || !providers.includes(provider)) {
+					this.config.provider = (
+						environment.fileSystem.name.toUpperCase() as FileStorageProviderEnum ||
+						FileStorageProviderEnum.LOCAL
+					);
 				} else {
 					this.config.provider = provider.toUpperCase() as FileStorageProviderEnum;
 				}
 			} else {
-				this.config.provider = (environment.fileSystem.name as FileStorageProviderEnum || FileStorageProviderEnum.LOCAL);
+				this.config.provider = (
+					environment.fileSystem.name.toUpperCase() as FileStorageProviderEnum ||
+					FileStorageProviderEnum.LOCAL
+				);
 			}
 		} else {
 			if (providers.includes(providerName)) {
-				this.config.provider = providerName;
+				this.config.provider = providerName.toUpperCase() as FileStorageProviderEnum;
 			} else {
 				this.config.provider = FileStorageProviderEnum.LOCAL;
 			}
