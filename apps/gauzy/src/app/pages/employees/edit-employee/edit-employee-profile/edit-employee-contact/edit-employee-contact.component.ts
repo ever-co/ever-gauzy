@@ -20,7 +20,7 @@ import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service'
   styles: [
 		`
 			:host {
-        overflow-y: overlay;
+        overflow-y: auto;
 				max-height: calc(100vh - 28rem);
 			}
 		`
