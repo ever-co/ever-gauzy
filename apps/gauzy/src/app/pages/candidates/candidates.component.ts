@@ -11,7 +11,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { HttpClient } from '@angular/common/http';
 import { Ng2SmartTableComponent } from 'ng2-smart-table';
 import { filter, tap, debounceTime } from 'rxjs/operators';
-import { firstValueFrom, Subject } from 'rxjs';
+import { finalize, firstValueFrom, Subject } from 'rxjs';
 import { NbDialogService } from '@nebular/theme';
 import { Router, ActivatedRoute } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -20,14 +20,14 @@ import { CandidateMutationComponent } from '../../@shared/candidate/candidate-mu
 import { InviteMutationComponent } from '../../@shared/invite/invite-mutation/invite-mutation.component';
 import {
 	DateViewComponent,
-	PictureNameTagsComponent
+	PictureNameTagsComponent,
+	TagsOnlyComponent
 } from '../../@shared/table-components';
 import {
 	ArchiveConfirmationComponent,
 	CandidateActionConfirmationComponent
 } from '../../@shared/user/forms';
 import { ComponentEnum } from '../../@core/constants';
-import { TagsOnlyComponent } from '../../@shared/table-components/tags-only/tags-only.component';
 import { ServerDataSource } from '../../@core/utils/smart-table/server.data-source';
 import { API_PREFIX } from '../../@core/constants/app.constants';
 import {
@@ -50,10 +50,9 @@ import {
 	templateUrl: './candidates.component.html',
 	styleUrls: ['./candidates.component.scss']
 })
-export class CandidatesComponent
-	extends PaginationFilterBaseComponent
-	implements OnInit, OnDestroy
-{
+export class CandidatesComponent extends PaginationFilterBaseComponent 
+	implements OnInit, OnDestroy {
+
 	settingsSmartTable: object;
 	sourceSmartTable: ServerDataSource;
 	selectedCandidate: ICandidateViewModel;
@@ -99,10 +98,8 @@ export class CandidatesComponent
 		this.candidates$
 			.pipe(
 				debounceTime(100),
-				tap(() => this.subject$.next(true)),
-				tap(() => this.setSmartTableSource()),
+				tap(() => this._clearItem()),
 				tap(() => this.getCandidates()),
-				tap(() => this.clearItem()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -117,10 +114,7 @@ export class CandidatesComponent
 			.pipe(
 				filter((organization: IOrganization) => !!organization),
 				distinctUntilChange(),
-				tap(
-					(organization: IOrganization) =>
-						(this.organization = organization)
-				),
+				tap((organization: IOrganization) => (this.organization = organization)),
 				tap(
 					({ invitesAllowed }: IOrganization) =>
 						(this.organizationInvitesAllowed = invitesAllowed)
@@ -131,10 +125,7 @@ export class CandidatesComponent
 			.subscribe();
 		this.route.queryParamMap
 			.pipe(
-				filter(
-					(params) =>
-						!!params && params.get('openAddDialog') === 'true'
-				),
+				filter((params) => !!params && params.get('openAddDialog') === 'true'),
 				debounceTime(1000),
 				tap(() => this.add()),
 				untilDestroyed(this)
@@ -152,11 +143,10 @@ export class CandidatesComponent
 			.componentLayout$(this.viewComponentName)
 			.pipe(
 				distinctUntilChange(),
-				tap(
-					(componentLayout) =>
-						(this.dataLayoutStyle = componentLayout)
-				),
+				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
+				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => this.refreshPagination()),
+				tap(() => this.candidates$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -169,7 +159,7 @@ export class CandidatesComponent
 		this.candidatesTable.source.onChangedSource
 			.pipe(
 				untilDestroyed(this),
-				tap(() => this.clearItem())
+				tap(() => this._clearItem())
 			)
 			.subscribe();
 	}
@@ -246,7 +236,11 @@ export class CandidatesComponent
 						)
 				}
 			})
-			.onClose.pipe(untilDestroyed(this))
+			.onClose
+			.pipe(
+				finalize(() => this.candidates$.next(true)),
+				untilDestroyed(this)
+			)
 			.subscribe(async (result) => {
 				if (result) {
 					try {
@@ -270,8 +264,6 @@ export class CandidatesComponent
 						);
 					} catch (error) {
 						this.errorHandler.handleError(error);
-					} finally {
-						this.candidates$.next(true);
 					}
 				}
 			});
@@ -298,9 +290,11 @@ export class CandidatesComponent
 		if (!this.organization) {
 			return;
 		}
+
 		this.loading = true;
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
+		
 		this.sourceSmartTable = new ServerDataSource(this.http, {
 			endPoint: API_PREFIX + '/candidate/pagination',
 			relations: ['user', 'source', 'tags'],
@@ -333,28 +327,67 @@ export class CandidatesComponent
 		});
 	}
 
+	/**
+	 * GET all candidates lists
+	 * 
+	 * @returns 
+	 */
 	private async getCandidates() {
+		if (!this.organization) {
+			return;
+		}
 		try {
+			this.setSmartTableSource();
+
 			const { activePage, itemsPerPage } = this.getPagination();
-			this.sourceSmartTable.setPaging(activePage, itemsPerPage, false);
-			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID)
+			this.sourceSmartTable.setPaging(
+				activePage,
+				itemsPerPage,
+				false
+			);
+
+			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
 				this._loadCardLayoutData();
-		} catch (error) {}
+			}
+		} catch (error) {
+			this.toastrService.danger(
+				error,
+				this.getTranslation('TOASTR.TITLE.ERROR')
+			);
+		}
 	}
 
+	/**
+	 * GET CARD Layout candidates lists
+	 */
 	private async _loadCardLayoutData() {
-		await this.sourceSmartTable.getElements();
-		this.candidates = this.sourceSmartTable.getData();
-		this.setPagination({
-			...this.getPagination(),
-			totalItems: this.sourceSmartTable.count()
-		});
+		try {
+			await this.sourceSmartTable.getElements();
+			this.candidates = this.sourceSmartTable.getData();
+
+			this.setPagination({
+				...this.getPagination(),
+				totalItems: this.sourceSmartTable.count()
+			});
+		} catch (error) {
+			this.toastrService.danger(
+				error,
+				this.getTranslation('TOASTR.TITLE.ERROR')
+			);
+		}
 	}
 
+	/**
+	 * Load smart tables settings configurations
+	 */
 	private _loadSmartTableSettings() {
 		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
 			actions: false,
+			pager: {
+				display: false,
+				perPage: pagination ? pagination.itemsPerPage : 10
+			},
 			columns: {
 				fullName: {
 					title: this.getTranslation('SM_TABLE.FULL_NAME'),
@@ -402,10 +435,6 @@ export class CandidatesComponent
 					renderComponent: CandidateStatusComponent,
 					filter: false
 				}
-			},
-			pager: {
-				display: false,
-				perPage: pagination ? pagination.itemsPerPage : 10
 			}
 		};
 	}
@@ -429,23 +458,22 @@ export class CandidatesComponent
 					isReject: true
 				}
 			})
-			.onClose.pipe(untilDestroyed(this))
+			.onClose
+			.pipe(
+				finalize(() => this.candidates$.next(true)),
+				untilDestroyed(this)
+			)
 			.subscribe(async (result) => {
 				if (result) {
 					try {
 						const { id, fullName } = this.selectedCandidate;
 						await this.candidatesService.setCandidateAsRejected(id);
 
-						this.toastrService.success(
-							'TOASTR.MESSAGE.CANDIDATE_REJECTED',
-							{
-								name: fullName
-							}
-						);
+						this.toastrService.success('TOASTR.MESSAGE.CANDIDATE_REJECTED', {
+							name: fullName
+						});
 					} catch (error) {
 						this.errorHandler.handleError(error);
-					} finally {
-						this.candidates$.next(true);
 					}
 				}
 			});
@@ -465,7 +493,11 @@ export class CandidatesComponent
 					isReject: false
 				}
 			})
-			.onClose.pipe(untilDestroyed(this))
+			.onClose
+			.pipe(
+				finalize(() => this.candidates$.next(true)),
+				untilDestroyed(this)
+			)
 			.subscribe(async (result) => {
 				if (result) {
 					try {
@@ -480,8 +512,6 @@ export class CandidatesComponent
 						);
 					} catch (error) {
 						this.errorHandler.handleError(error);
-					} finally {
-						this.candidates$.next(true);
 					}
 				}
 			});
@@ -499,7 +529,7 @@ export class CandidatesComponent
 	/*
 	 * Clear selected item
 	 */
-	clearItem() {
+	private _clearItem() {
 		this.selectCandidate({
 			isSelected: false,
 			data: null
