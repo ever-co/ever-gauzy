@@ -85,6 +85,13 @@
       margin-bottom: 0;
     }
   }
+  .custom-toggle {
+    ::ng-deep {
+      span.text {
+        color: nb-theme(text-primary-color);
+      }
+    }
+  }
 }
 
 .custom-container {
