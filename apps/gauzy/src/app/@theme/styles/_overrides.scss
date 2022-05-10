@@ -141,6 +141,7 @@ body {
   nb-sidebar {
     nb-menu {
       .menu-items {
+        scrollbar-width: thin;
         &::-webkit-scrollbar {
           width: nb-theme(scrollbar-width);
         }
@@ -157,6 +158,7 @@ body {
 
   .ng-dropdown-panel {
     .scroll-host {
+      scrollbar-width: thin;
       &::-webkit-scrollbar {
         width: nb-theme(scrollbar-width);
       }
