@@ -75,7 +75,7 @@
       height: 5px !important;
     }
   }
-  ::ng-deep .custom-progress {
+  nb-progress-bar.custom-progress ::ng-deep {
     .progress-container {
       height: 5px !important;
     }
