@@ -2003,7 +2003,7 @@
 			"NAME": "Име",
 			"REQUIRES_APPROVAL": "Requires Approval",
 			"PAID": "Paid",
-			"NAME_IS_REQUIRED": "Name of Policy and selection of employees are required!"
+			"NAME_IS_REQUIRED": "Policy name is required!"
 		},
 		"NOTIFICATIONS": {
 			"NO_CHANGES": "No changes",
