@@ -150,8 +150,8 @@ export class TimeOffComponent
 		this.isRecordSelected = false;
 
 		if (this.displayHolidays) {
-			this.timeOffs = this.rows;
-			this.sourceSmartTable.load(this.rows);
+			this.timeOffs = this.rowsMapper(this.rows);
+			this.sourceSmartTable.load(this.timeOffs);
 		} else {
 			const filtered = [...this.rows].filter(
 				(record: ITimeOff) => !record.isHoliday
@@ -179,17 +179,17 @@ export class TimeOffComponent
 				filtered = [...this.rows].filter(
 					(record: ITimeOff) => record.status === status
 				);
-				this.timeOffs = filtered;
-				this.sourceSmartTable.load(filtered);
+				this.timeOffs = this.rowsMapper(filtered);
+				this.sourceSmartTable.load(this.timeOffs);
 				break;
 			default:
-				filtered = this.rows;
+				filtered = this.rowsMapper(this.rows);
 				break;
 		}
 
 		this.isRecordSelected = false;
 		this.timeOffs = filtered;
-		this.sourceSmartTable.load(filtered);
+		this.sourceSmartTable.load(this.timeOffs);
 	}
 
 	openTimeOffSettings() {
@@ -490,22 +490,22 @@ export class TimeOffComponent
 				});
 			}
 		});
-		const bufferRows = [];
-		this.rows.map((row) => {
-			bufferRows.push({
-				...row,
-				status: this.statusMapper(row.status)
-			});
-		});
-		this.rows = bufferRows;
-		this.timeOffs = this.rows;
-		this.sourceSmartTable.load(this.rows);
+		this.timeOffs = this.rowsMapper(this.rows);
+		this.sourceSmartTable.load(this.timeOffs);
 		if (this.componentLayoutStyleEnum.CARDS_GRID === this.dataLayoutStyle) {
 			this._loadGridLayoutData();
 		}
 		this.setPagination({
 			...this.getPagination(),
 			totalItems: this.sourceSmartTable.count()
+		});
+	}
+
+	private rowsMapper(rows: any[]): any[] {
+		return rows.map((row) => {
+			let buffer = {};
+			buffer = { ...row, status: this.statusMapper(row.status) };
+			return buffer;
 		});
 	}
 
