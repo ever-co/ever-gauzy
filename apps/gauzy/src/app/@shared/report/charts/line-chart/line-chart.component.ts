@@ -5,9 +5,8 @@ import {
 } from '@gauzy/contracts';
 import { NbThemeService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ChartComponent, ChartModule } from 'angular2-chartjs';
+import { ChartComponent } from 'angular2-chartjs';
 import { ChartUtil } from "./chart-utils";
-import { Chart, LineController } from "chart.js";
 
 export interface IChartData {
 	labels?: any[];
@@ -79,8 +78,7 @@ export class LineChartComponent implements OnInit, OnDestroy {
 
 	getTooltip(tooltipItem, data) {
 		let tooltip = tooltipItem.label;
-
-		if (tooltipItem && this.chart && this.chart.chart) {
+		if (this.chart && this.chart.chart) {
 			tooltip = this.chart.chart.data.datasets[tooltipItem.datasetIndex].label
 			tooltip = tooltip[0] + tooltip.slice(1).toLocaleLowerCase()
 			tooltip += ": " + tooltipItem.value
