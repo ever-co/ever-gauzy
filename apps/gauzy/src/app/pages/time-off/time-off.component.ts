@@ -36,10 +36,9 @@ import {
 	templateUrl: './time-off.component.html',
 	styleUrls: ['./time-off.component.scss']
 })
-export class TimeOffComponent
-	extends PaginationFilterBaseComponent
-	implements OnInit, OnDestroy
-{
+export class TimeOffComponent extends PaginationFilterBaseComponent 
+	implements OnInit, OnDestroy {
+
 	settingsSmartTable: object;
 	selectedEmployeeId: string | null;
 	selectedDateRange: IDateRangePicker;
@@ -57,10 +56,11 @@ export class TimeOffComponent
 	isRecordSelected: boolean = false;
 	displayHolidays: boolean = true;
 	showActions: boolean = false;
-	public organization: IOrganization;
-	timeoff$: Subject<any> = new Subject();
 	includeArchived: boolean = false;
 	showFilter: boolean = false;
+
+	public organization: IOrganization;
+	timeoff$: Subject<any> = new Subject();
 
 	timeOffTable: Ng2SmartTableComponent;
 	@ViewChild('timeOffTable') set content(content: Ng2SmartTableComponent) {
@@ -539,6 +539,9 @@ export class TimeOffComponent
 
 	private _updateRecord(id: string) {
 		try {
+			const { originalValue } = this.selectedTimeOffRecord.status as any;
+			this.timeOffRequest.status = originalValue;
+			
 			this.timeOffService.updateRequest(id, this.timeOffRequest).pipe(
 				untilDestroyed(this),
 				first(),
@@ -548,7 +551,7 @@ export class TimeOffComponent
 					)
 				),
 				finalize(() => this.timeoff$.next(true))
-			);
+			).subscribe();
 		} catch (error) {
 			this.toastrService.danger(
 				'TIME_OFF_PAGE.NOTIFICATIONS.ERR_UPDATE_RECORD'
@@ -624,6 +627,7 @@ export class TimeOffComponent
 				: 'danger';
 		}
 		return {
+			originalValue: value,
 			text: value,
 			class: badgeClass
 		};
