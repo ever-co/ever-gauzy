@@ -9,7 +9,7 @@
   padding: 1rem;
   border-radius: nb-theme(border-radius);
   height: calc(100vh - 20.75rem);
-  overflow-y: overlay;
+  overflow-y: auto;
   &-card {
     width: 49.5%;
   }
