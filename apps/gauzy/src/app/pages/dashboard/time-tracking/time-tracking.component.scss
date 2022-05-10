@@ -114,6 +114,6 @@
   column-gap: 1rem;
   grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
 }
-.custom-card-body-inner {
+.custom-card-body-inner, .custom-card-body-inner-list {
   background-color: rgba(251, 251, 251);
 }
