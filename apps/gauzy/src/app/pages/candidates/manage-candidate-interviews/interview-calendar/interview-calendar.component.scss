@@ -29,7 +29,7 @@
   }
   .custom-calendar {
     height: calc(100vh - 27rem);
-    overflow-y: overlay;
+    overflow-y: auto;
     &::-webkit-scrollbar {
       display: none;
     }

@@ -145,7 +145,7 @@
 }
 
 :host {
-  overflow-y: overlay;
+  overflow-y: auto;
   max-height: calc(100vh - 28rem);
   nb-card,
   .custom-card-body {
