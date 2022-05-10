@@ -66,7 +66,7 @@ export class FileStorageComponent
 			this.settings = Object.assign({}, this.defaultWasabiConfiguration(), settings);
 		} else {
 			this.settings = {
-				fileStorageProvider: environment.FILE_PROVIDER as FileStorageProviderEnum || FileStorageProviderEnum.LOCAL,
+				fileStorageProvider: (environment.FILE_PROVIDER).toUpperCase() as FileStorageProviderEnum || FileStorageProviderEnum.LOCAL,
 				...this.defaultWasabiConfiguration()
 			}
 		}
