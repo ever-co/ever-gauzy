@@ -70,6 +70,11 @@
     $default-card-height,
     0 $default-radius $default-radius $default-radius
   );
+  ngx-activity-item.tracking-progress ::ng-deep {
+    .progress-container {
+      height: 5px !important;
+    }
+  }
   ::ng-deep .custom-progress {
     .progress-container {
       height: 5px !important;
