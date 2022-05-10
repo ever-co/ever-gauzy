@@ -1,6 +1,11 @@
 @import './themes';
 @import 'var';
 
+/* Apply style on scrollbar for Firefox */
+* {
+  scrollbar-width: thin;
+}
+/*  Apply style on scrollbar for Chrome */
 ::-webkit-scrollbar {
   width: nb-theme(scrollbar-width);
 }
