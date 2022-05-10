@@ -18,9 +18,8 @@ import {
 	ICandidateSource,
 	IOrganization
 } from '@gauzy/contracts';
-import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
+import { distinctUntilChange } from '@gauzy/common-angular';
 import {
-	CandidateSourceService,
 	CandidatesService,
 	ErrorHandlingService,
 	RoleService,
@@ -55,7 +54,6 @@ export class CandidateMutationComponent implements OnInit, AfterViewInit {
 		private readonly dialogRef: NbDialogRef<CandidateMutationComponent>,
 		private readonly roleService: RoleService,
 		private readonly store: Store,
-		private readonly candidateSourceService: CandidateSourceService,
 		private readonly candidatesService: CandidatesService,
 		private readonly errorHandler: ErrorHandlingService
 	) {}
@@ -159,41 +157,9 @@ export class CandidateMutationComponent implements OnInit, AfterViewInit {
 			const candidates = await firstValueFrom(
 				this.candidatesService.createBulk(this.candidates)
 			);
-			await this.updateSource(candidates);
 			this.closeDialog(candidates);
 		} catch (error) {
 			this.errorHandler.handleError(error);
-		}
-	}
-
-	async updateSource(createdCandidates: ICandidate[]) {
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.organization;
-
-		const { items = [] } = await firstValueFrom(
-			this.candidatesService.getAll(['user', 'source'], {
-				tenantId,
-				organizationId
-			})
-		);
-
-		const sources = [];
-		items.forEach((item) => {
-			createdCandidates.forEach((cc) => {
-				if (cc.source) {
-					if (item.user.id === cc.userId) {
-						sources.push({
-							candidateId: item.id,
-							id: cc.source.id,
-							organizationId,
-							tenantId
-						});
-					}
-				}
-			});
-		});
-		if (isNotEmpty(sources)) {
-			await this.candidateSourceService.updateBulk(sources);
 		}
 	}
 

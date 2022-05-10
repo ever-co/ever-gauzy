@@ -89,9 +89,7 @@
 					></ng2-smart-table>
 				</div>
 			</div>
-			<ng-container
-				*ngIf="pagination.totalItems > pagination.itemsPerPage"
-			>
+			<ng-container *ngIf="pagination.totalItems > pagination.itemsPerPage">
 				<div class="pagination-container">
 					<ga-pagination
 						(selectedOption)="onUpdateOption($event)"
@@ -146,11 +144,7 @@
 				<nb-icon class="mr-1" icon="archive-outline"></nb-icon
 				>{{ 'BUTTONS.ARCHIVE' | translate }}
 			</button>
-			<ng-container
-				*ngIf="
-					selectedCandidate?.status === candidateStatusEnum.APPLIED
-				"
-			>
+			<ng-container *ngIf="selectedCandidate?.status === candidateStatusEnum.APPLIED">
 				<button
 					nbButton
 					[disabled]="!selectedItem && disableButton"
