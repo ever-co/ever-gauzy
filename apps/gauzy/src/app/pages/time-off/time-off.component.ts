@@ -171,6 +171,7 @@ export class TimeOffComponent
 	}
 
 	detectStatusChange(status: StatusTypesEnum) {
+		console.log(status);
 		let filtered: ITimeOff[] = [];
 		switch (status) {
 			case StatusTypesEnum.REQUESTED:
@@ -183,12 +184,12 @@ export class TimeOffComponent
 				this.sourceSmartTable.load(this.timeOffs);
 				break;
 			default:
-				filtered = this.rowsMapper(this.rows);
+				filtered = this.rows;
 				break;
 		}
 
 		this.isRecordSelected = false;
-		this.timeOffs = filtered;
+		this.timeOffs = this.rowsMapper(filtered);
 		this.sourceSmartTable.load(this.timeOffs);
 	}
 
