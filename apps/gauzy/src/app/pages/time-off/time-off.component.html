@@ -52,7 +52,8 @@
 						class="d-flex"
 						*ngFor="let status of timeOffStatuses"
 						[value]="status"
-						>{{ 'TIME_OFF_PAGE.STATUSES.' + status | translate }}
+					>
+						{{ 'TIME_OFF_PAGE.STATUSES.' + status | translate }}
 					</nb-radio>
 				</nb-radio-group>
 				<nb-toggle
@@ -116,41 +117,38 @@
 		<div class="btn-group actions">
 			<ng-container>
 				<button
-					(click)="approveDaysOff(selectedItem)"
+					(click)="updateTimeOffRecord()"
+					*ngIf="!selectedTimeOffRecord?.isHoliday"
+					#editButton
 					nbButton
-					status="success"
+					status="basic"
 					size="small"
-					class="action"
+					class="action primary"
 				>
-					<nb-icon
-						class="mr-1"
-						icon="checkmark-circle-outline"
-					></nb-icon>
-					{{ 'BUTTONS.APPROVE' | translate }}
+					<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
+					{{ 'BUTTONS.EDIT' | translate }}
 				</button>
 				<button
-					(click)="denyDaysOff(selectedItem)"
+					(click)="deleteRequest(selectedItem)"
+					#deleteButton
 					nbButton
-					status="warning"
+					status="basic"
 					size="small"
 					class="action"
+					[nbTooltip]="'BUTTONS.DELETE' | translate"
 				>
-					<nb-icon class="mr-1" icon="close-outline"></nb-icon>
-					{{ 'BUTTONS.DENY' | translate }}
+					<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
 				</button>
 				<button
 					nbButton
 					(click)="showAdditionalActions()"
+					*ngIf="!showActions"
 					status="basic"
 					size="small"
 					class="action"
 				>
 					<nb-icon
-						[icon]="
-							showActions
-								? 'close-outline'
-								: 'more-horizontal-outline'
-						"
+						icon="more-horizontal-outline"
 						cursor="pointer"
 					></nb-icon>
 				</button>
@@ -195,24 +193,32 @@
 </ng-template>
 <ng-template #additionalActions>
 	<button
-		(click)="updateTimeOffRecord()"
-		*ngIf="!selectedTimeOffRecord?.isHoliday"
-		#editButton
+		(click)="approveDaysOff(selectedItem)"
 		nbButton
-		status="basic"
+		status="success"
 		size="small"
-		class="action primary"
+		class="action"
 	>
-		<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
-		{{ 'BUTTONS.EDIT' | translate }}
+		<nb-icon class="mr-1" icon="checkmark-circle-outline"></nb-icon>
+		{{ 'BUTTONS.APPROVE' | translate }}
+	</button>
+	<button
+		(click)="denyDaysOff(selectedItem)"
+		nbButton
+		status="warning"
+		size="small"
+		class="action"
+	>
+		<nb-icon class="mr-1" icon="close-outline"></nb-icon>
+		{{ 'BUTTONS.DENY' | translate }}
 	</button>
 	<button
 		nbButton
 		(click)="archive()"
 		#archiveButton
-		status="primary"
+		status="basic"
 		size="small"
-		class="action"
+		class="action secondary"
 		[disabled]="
 			selectedTimeOffRecord ? selectedTimeOffRecord.isArchived : true
 		"
@@ -221,14 +227,12 @@
 		>{{ 'BUTTONS.ARCHIVE' | translate }}
 	</button>
 	<button
-		(click)="deleteRequest(selectedItem)"
-		#deleteButton
 		nbButton
+		(click)="showAdditionalActions()"
 		status="basic"
 		size="small"
 		class="action"
-		[nbTooltip]="'BUTTONS.DELETE' | translate"
 	>
-		<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
+		<nb-icon icon="close-outline" cursor="pointer"></nb-icon>
 	</button>
 </ng-template>

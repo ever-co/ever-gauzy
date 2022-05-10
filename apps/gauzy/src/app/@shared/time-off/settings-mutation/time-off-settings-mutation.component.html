@@ -12,9 +12,9 @@
 			</h5>
 		</ng-template>
 	</nb-card-header>
-	<nb-card-body>
+	<nb-card-body class="pb-0">
 		<form class="row">
-			<div class="form-group col-6">
+			<div class="form-group col-6 mb-2">
 				<input
 					type="text"
 					name="name"
@@ -26,17 +26,7 @@
 					}}"
 				/>
 			</div>
-			<nb-card accent="warning" class="p-3" *ngIf="showWarning">
-				<nb-icon
-					class="ml-auto close"
-					(click)="closeWarning()"
-					icon="close-outline"
-				></nb-icon>
-				<p>
-					{{ 'TIME_OFF_PAGE.POLICY.NAME_IS_REQUIRED' | translate }}
-				</p>
-			</nb-card>
-			<div class="form-group col-6">
+			<div class="form-group col-6 mb-2">
 				<nb-select
 					multiple
 					[selected]="selectedEmployees"
@@ -59,6 +49,15 @@
 					>
 				</nb-select>
 			</div>
+			<nb-card
+				class="col-12 mb-2"
+				accent="warning"
+				[ngStyle]="{ visibility: showWarning ? 'visible' : 'hidden' }"
+			>
+				<p style="color: red; font-size: 12px; margin: 0">
+					{{ 'TIME_OFF_PAGE.POLICY.NAME_IS_REQUIRED' | translate }}
+				</p>
+			</nb-card>
 			<div class="form-group col-6 checkboxes">
 				<nb-checkbox
 					(checkedChange)="changeRequiresApproval($event)"
