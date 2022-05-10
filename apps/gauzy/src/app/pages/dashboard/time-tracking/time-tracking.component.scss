@@ -60,21 +60,21 @@
   width: 100%;
 }
 
-::ng-deep .custom-progress {
-  .progress-container {
-    height: 5px !important;
-  }
-}
 :host {
   nb-card {
     background: var(--background-basic-color-1);
     box-shadow: 0px 6px 20px 0px rgb(0 0 0 / 5%);
   }
   @include card_overrides(
-    overlay,
+    auto,
     $default-card-height,
     0 $default-radius $default-radius $default-radius
   );
+  ::ng-deep .custom-progress {
+    .progress-container {
+      height: 5px !important;
+    }
+  }
 }
 
 .custom-container {
