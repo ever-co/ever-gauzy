@@ -16,13 +16,19 @@
 	<input
 		#shownInput="ngModel"
 		type="text"
-		class="form-control col-9"
-		[ngClass]="customClass"
+		class="form-control col-12"
 		placeholder="{{ placeholder }}"
 		(change)="imageUrlChanged()"
 		[(ngModel)]="fileUrl"
 	/>
-	<button nbButton status="primary" (click)="fileInput.click()" class="col-3">
-		{{ 'BROWSE' | translate }}
+	<button
+		nbButton
+		status="primary"
+		outline
+		size="tiny"
+		(click)="fileInput.click()"
+	>
+		<i class="far fa-folder mr-1"></i>
+		<span class="text">{{ 'BROWSE' | translate | titlecase }}</span>
 	</button>
 </div>

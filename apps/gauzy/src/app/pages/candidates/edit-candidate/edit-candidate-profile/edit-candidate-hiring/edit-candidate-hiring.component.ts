@@ -6,7 +6,8 @@ import { takeUntil } from 'rxjs/operators';
 import { CandidateStore } from 'apps/gauzy/src/app/@core/services/candidate-store.service';
 @Component({
 	selector: 'ga-edit-candidate-hiring',
-	templateUrl: './edit-candidate-hiring.component.html'
+	templateUrl: './edit-candidate-hiring.component.html',
+	styleUrls:['./edit-candidate-hiring.component.scss']
 })
 export class EditCandidateHiringComponent implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();

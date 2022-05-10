@@ -39,14 +39,25 @@ const routes: Routes = [
 			},
 			{
 				path: 'calendar',
-				loadChildren: () =>
-					import('./calendar/calendar.module').then(
-						(m) => m.CalendarModule
-					)
+				loadChildren: () => import('./calendar/calendar.module').then(
+					(m) => m.CalendarModule
+				),
+				data: {
+					selectors: {
+						date: false
+					},
+					datePicker: {
+						unitOfTime: 'week',
+						isLockDatePicker: true
+					}
+				}
 			},
 			{
 				path: 'approvals',
 				canActivate: [NgxPermissionsGuard],
+				loadChildren: () => import('./approvals/approvals.module').then(
+					(m) => m.ApprovalsModule
+				),
 				data: {
 					permissions: {
 						only: [PermissionsEnum.CAN_APPROVE_TIMESHEET],
@@ -58,8 +69,7 @@ const routes: Routes = [
 					datePicker: {
 						unitOfTime: 'month'
 					}
-				},
-				loadChildren: () => import('./approvals/approvals.module').then((m) => m.ApprovalsModule)
+				}
 			}
 		]
 	},

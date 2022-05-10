@@ -32,104 +32,109 @@
 			nbSpinnerSize="giant"
 			nbSpinnerStatus="primary"
 		>
-			<div class="px-4" *ngIf="clients?.length > 0">
-				<div class="row py-3 font-weight-bold align-items-center">
-					<div class="col-3">
-						{{ 'REPORT_PAGE.CLIENT' | translate }}
-					</div>
-					<div class="col text-center day-col">
-						{{ 'REPORT_PAGE.SPENT' | translate }}
-					</div>
-					<div class="col-4 text-center day-col">
-						{{ 'REPORT_PAGE.BUDGET' | translate }}
-					</div>
-					<div class="col text-center day-col">
-						{{ 'REPORT_PAGE.REMAINING' | translate }}
-					</div>
-				</div>
-			</div>
-
 			<ng-template [ngIf]="clients?.length > 0" [ngIfElse]="notFound">
 				<nb-card class="card">
-					<nb-card-body
-						class="cart-body client-row"
-						*ngFor="let client of clients"
-					>
-						<div class="row report-row py-1 mt-3 align-items-center">
-							<div class="col-3 client-name">
-								<ng-container
-									*ngTemplateOutlet="
-										clientEl;
-										context: {
-											$implicit:
-												client?.organizationContact
-										}
-									"
-								>
-								</ng-container>
+					<nb-card-body>
+						<div class="columns-header" *ngIf="clients?.length > 0">
+							<div class="table-inner-wrapper font-weight-bold align-items-center">
+								<div class="responsive-table-row contact-column">
+									{{ 'REPORT_PAGE.CLIENT' | translate }}
+								</div>
+								<div class="responsive-table-row project-column">
+									{{ 'REPORT_PAGE.PROJECT' | translate }}
+								</div>
+								<div class="responsive-table-row employees-column">
+									{{ 'REPORT_PAGE.EMPLOYEES/TEAMS' | translate }}
+								</div>
+								<div class="responsive-table-row spent-column">
+									{{ 'REPORT_PAGE.SPENT' | translate }}
+								</div>
+								<div class="responsive-table-row remaining-column">
+									{{ 'REPORT_PAGE.REMAINING' | translate }}
+								</div>
+								<div class="responsive-table-row budget-column">
+									{{ 'REPORT_PAGE.BUDGET' | translate }}
+								</div>
 							</div>
-							<div class="col text-center day-col">
-								<span
-									*ngIf="
-										client.budgetType ===
-										OrganizationContactBudgetTypeEnum.HOURS
-									"
-								>
-									{{ (client?.spent * 3600) | durationFormat }}
-									{{ 'REPORT_PAGE.HOURS' | translate }}
-								</span>
-								<span 
-									*ngIf="client.budgetType === OrganizationContactBudgetTypeEnum.COST"
-								>
-									{{
-										client?.spent
-											| currency: organization?.currency
-											| position
-												: organization?.currencyPosition
-									}}
-								</span>
-							</div>
-							<div class="col-4 text-center day-col">
-								<ngx-progress-status
-									[percentage]="client?.spentPercentage"
-								></ngx-progress-status>
-								<span
-									*ngIf="client.budgetType === OrganizationContactBudgetTypeEnum.HOURS"
-									class="ml-3"
-								>
-									{{ (client?.budget * 3600) | durationFormat }}
-									{{ 'REPORT_PAGE.HOURS' | translate }}
-								</span>
-								<span
-									*ngIf="
-										client.budgetType ===
-										OrganizationContactBudgetTypeEnum.COST
-									"
-									class="ml-3"
-								>
-									{{
-										client.budget
-											| currency : organization?.currency 
-											| position : organization?.currencyPosition
-									}}
-								</span>
-							</div>
-							<div class="col text-center day-col">
-								<span 
-									*ngIf="client.budgetType === OrganizationContactBudgetTypeEnum.HOURS"
-								>
-									{{ (client.reamingBudget * 3600) | durationFormat }}
-									{{ 'REPORT_PAGE.HOURS' | translate }}
-								</span>
-								<span
-									*ngIf="client.budgetType === OrganizationContactBudgetTypeEnum.COST"
-								>
-									{{ 
-										client.reamingBudget 
-											| currency : organization?.currency
-											| position : organization?.currencyPosition
-									}}
-								</span>
+						</div>
+						<div class="cart-body client-row" *ngFor="let client of clients">
+							<div class="table-row">
+								<div class="table-inner-wrapper">
+									<div class="responsive-table-row contact-column">
+										<div class="responsive-table-header">
+											{{ 'REPORT_PAGE.CONTACT' | translate }}
+										</div>
+										<div class="responsive-table-content project-name">
+											<ng-container
+													*ngTemplateOutlet="clientEl;context: { $implicit: client?.organizationContact}">
+											</ng-container>
+										</div>
+									</div>
+									<div class="responsive-table-row project-column">
+										<div class="responsive-table-header">{{ 'REPORT_PAGE.PROJECT' | translate }}</div>
+										<div class="responsive-table-content project-name"></div>
+									</div>
+									<div class="responsive-table-row employees-column">
+										<div class="responsive-table-header">{{ 'REPORT_PAGE.EMPLOYEES/TEAMS' | translate }}</div>
+										<div class="responsive-table-content day-col">
+										</div>
+									</div>
+									<div class="responsive-table-row spent-column">
+										<div class="responsive-table-header">
+											{{ 'REPORT_PAGE.SPENT' | translate }}
+										</div>
+										<div class="responsive-table-content day-col">
+											<span *ngIf="client.budgetType ===OrganizationContactBudgetTypeEnum.HOURS">
+												{{ (client?.spent * 3600) | durationFormat }}
+											</span>
+											<span *ngIf="client.budgetType === OrganizationContactBudgetTypeEnum.COST">
+												{{ client?.spent
+													| currency:organization?.currency
+													| position:organization?.currencyPosition
+												}}
+											</span>
+										</div>
+									</div>
+									<div class="responsive-table-row remaining-column">
+										<div class="responsive-table-header">
+											{{ 'REPORT_PAGE.REMAINING' | translate }}
+										</div>
+										<div class="responsive-table-content day-col">
+											<span *ngIf="client.budgetType === OrganizationContactBudgetTypeEnum.HOURS">
+												{{ (client.reamingBudget * 3600) | durationFormat }}
+											</span>
+											<span *ngIf="client.budgetType === OrganizationContactBudgetTypeEnum.COST">
+												{{ client.reamingBudget
+													| currency:organization?.currency
+													| position:organization?.currencyPosition
+												}}
+											</span>
+										</div>
+									</div>
+									<div class="responsive-table-row budget-column">
+										<div class="responsive-table-header">
+											{{ 'REPORT_PAGE.BUDGET' | translate }}
+										</div>
+										<div class="responsive-table-content day-col budget-row">
+											<span *ngIf="client.budgetType === OrganizationContactBudgetTypeEnum.HOURS" class="currency-span">
+												{{ (client?.budget * 3600) | durationFormat }}
+											</span>
+											<span *ngIf="client.budgetType ===OrganizationContactBudgetTypeEnum.COST " class="currency-span">
+												{{ client.budget
+													| currency : organization?.currency
+													| position : organization?.currencyPosition
+												}}
+											</span>
+											<div class="progress-wrapper">
+												<ngx-progress-status
+														class="report-progress"
+														[percentage]="client?.spentPercentage"
+														defaultStatus="success">
+												</ngx-progress-status>
+											</div>
+										</div>
+									</div>
+								</div>
 							</div>
 						</div>
 					</nb-card-body>

@@ -1,3 +1,5 @@
+@import 'gauzy/_gauzy-table';
+
 .right-block {
   display: flex;
   justify-content: space-between;
@@ -140,4 +142,13 @@
 
 .badge-primary {
   background-color: #0095ff;
+}
+
+:host {
+  overflow-y: overlay;
+  max-height: calc(100vh - 28rem);
+  nb-card,
+  .custom-card-body {
+    background-color: rgba(50, 50, 50, 0.03);
+  }
 }

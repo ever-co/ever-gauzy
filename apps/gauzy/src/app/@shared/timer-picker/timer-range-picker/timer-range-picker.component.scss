@@ -4,7 +4,7 @@
 :host input {
   display: flex;
   align-items: center;
-  background: rgba(126, 126, 143, 0.05);
+  background: nb-theme(input-basic-background-color);
   box-shadow: rgba(0, 0, 0, 0.1) 0px 1px 0px 0px inset;
   color: nb-theme(text-basic-color);
   border-color: nb-theme(background-basic-color-3);
@@ -29,7 +29,6 @@
 }
 
 input {
-  background: transparent;
   width: 100%;
 }
 

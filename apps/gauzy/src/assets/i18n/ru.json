@@ -118,7 +118,8 @@
 		"VIEW_REPORT": "Просмотр отчета",
 		"TIME_TRACKING_ENABLE": "Включить отслеживание времени",
 		"TIME_TRACKING_DISABLE": "Отключить отслеживание времени",
-		"PRINT": "Печать"
+		"PRINT": "Печать",
+		"FEEDBACK": "Отзыв"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "Тип",
@@ -972,6 +973,7 @@
 		"ACTIVITY": "Активность",
 		"TOTAL_HOURS": "Всего часов",
 		"EMPLOYEE": "Сотрудник",
+		"EMPLOYEES/TEAMS": "Сотрудники /Команды",
 		"NO_PROJECT": "Нет проекта",
 		"NO_EMPLOYEE": "Нет сотрудника",
 		"NO_TIMELOG": "Нет Timelog",
@@ -1943,7 +1945,8 @@
 		"APPROVED": "Одобрено",
 		"REFUSED": "Отклонено",
 		"REQUESTED": "Запрошено",
-		"ACTION": "Действие"
+		"ACTION": "Действие",
+		"CREATED_AT": "Создано в"
 	},
 	"APPROVAL_POLICY_PAGE": {
 		"EDIT_APPROVAL_POLICY": "Редактировать политику утверждения",
@@ -2308,7 +2311,13 @@
 			"JOB_STATUS": "Статус Вакансии",
 			"BUDGET": "Бюджет",
 			"LESS_THAN": "Менее чем"
-		}
+		},
+		"BROWSE": "Обзор",
+		"SEARCH": "Искать",
+		"HISTORY": "История",
+		"EMPLOYEES": "Сотрудники",
+		"MATCHINGS": "Совпадения",
+		"PROPOSALS_TEMPLATE": "Шаблон предложений"
 	},
 	"JOB_MATCHING": {
 		"CONFIGURE_EMPLOYEES_TO_JOBS_MATCHING": "Настройка соответствия заданий сотрудникам",
@@ -2331,7 +2340,10 @@
 		"EMPLOYEES": "Сотрудники",
 		"AVAILABLE_JOBS": "Доступные задания",
 		"APPLIED_JOBS": "Прикладные задания",
-		"JOB_SEARCH_STATUS": "Статус поиска Вакансии"
+		"JOB_SEARCH_STATUS": "Статус поиска Вакансии",
+		"BROWSE": "Обзор",
+		"SEARCH": "Искать",
+		"HISTORY": "История"
 	},
 	"PROPOSAL_TEMPLATE": {
 		"PROPOSAL_TEMPLATE": "Шаблон предложения",
@@ -2350,7 +2362,9 @@
 		"PROPOSAL_DELETE_MESSAGE": "Шаблон предложения '{{ name }}' ' был удален",
 		"PROPOSAL_MAKE_DEFAULT_MESSAGE": "Шаблон предложения '{{ name }}' ' установлено по умолчанию",
 		"YES": "Да",
-		"NO": "Нет"
+		"NO": "Нет",
+		"BROWSE": "Обзор",
+		"SEARCH": "Искать"
 	},
 	"SPRINTS_PAGE": {
 		"SPRINT_ADDED": "Спринт добавлен",
@@ -3526,7 +3540,7 @@
 	"ACTIVITY": {
 		"SCREENSHOTS": "Скриншот",
 		"PERCENT_USED": "Процент использованных",
-		"TIME_SPENT": "Прошло времени (в часах)",
+		"TIME_SPENT": "Проведенное время (в часах)",
 		"APPS": "Приложения",
 		"VISITED_SITES": "Посещенные сайты",
 		"NO_ACTIVITIES": "Нет активности",
@@ -3537,7 +3551,8 @@
 		"MINUTES": "Минут",
 		"NO_SCREENSHOTS": "Нет скриншотов",
 		"NO_EMPLOYEES_SELECTED": "Пожалуйста, выберите сотрудника",
-		"DELETE_CONFIRM": "Вы уверены, что хотите удалить эти скриншоты и активности?"
+		"DELETE_CONFIRM": "Вы уверены, что хотите удалить эти скриншоты и активности?",
+		"VISITED_DATES": "Дата посещения"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Давайте создадим вашу первую организацию",
@@ -3660,7 +3675,16 @@
 		"HEADER_FORM_CREATE": "Создать конвейер",
 		"RECORD_TYPE": "конвейер \"{{ name }}\"",
 		"ACTIVE": "Активный",
-		"INACTIVE": "Неактивный"
+		"INACTIVE": "Неактивный",
+		"BROWSE": "Обзор",
+		"SEARCH": "Искать",
+		"SEARCH_PIPELINE": "Конвейер поиска",
+		"NAME": "Имя",
+		"STAGE": "Этап",
+		"SEARCH_STAGE": "Стадия поиска",
+		"STATUS": "Статус",
+		"ALL_STATUS": "Весь статус",
+		"RESET": "Reset"
 	},
 	"PIPELINE_DEALS_PAGE": {
 		"HEADER": "Сделки Трубопровода",

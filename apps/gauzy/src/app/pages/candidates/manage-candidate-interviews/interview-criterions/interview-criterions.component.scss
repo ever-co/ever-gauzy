@@ -1,11 +1,16 @@
+@import 'themes';
+
 .add-criterion {
-  margin-top: 2rem;
   display: flex;
   flex-direction: row;
   justify-content: space-between;
   align-items: flex-start;
-
+  background-color: rgba(50, 50, 50, 0.03);
+  padding: 1rem;
+  border-radius: nb-theme(border-radius);
+  height: calc(100vh - 20.75rem);
+  overflow-y: overlay;
   &-card {
-    width: 48%;
+    width: 49.5%;
   }
 }

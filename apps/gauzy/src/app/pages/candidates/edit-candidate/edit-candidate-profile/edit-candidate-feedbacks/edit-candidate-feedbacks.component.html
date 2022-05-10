@@ -1,25 +1,13 @@
 <nb-card>
 	<nb-card-header>
-		<div class="main-btn" *ngIf="!showAddCard">
-			<div class="action-btn">
-				<button
-					nbButton
-					status="success"
-					class="mr-2"
-					(click)="cancel()"
-				>
-					<nb-icon class="mr-1" icon="plus-outline"></nb-icon
-					>{{ 'BUTTONS.ADD' | translate }}
-				</button>
-				<ng-container
-					*ngIf="dataLayoutStyle === 'TABLE' && !showAddCard"
-				>
-					<ng-container
-						*ngTemplateOutlet="actionButtons"
-					></ng-container>
-				</ng-container>
-			</div>
-
+		<div
+			[ngClass]="
+				allFeedbacks?.length > 0
+					? 'main-btn'
+					: 'main-btn justify-content-end'
+			"
+			*ngIf="!showAddCard"
+		>
 			<div class="filters" *ngIf="allFeedbacks?.length > 0">
 				<nb-select
 					[formControl]="selectInterview"
@@ -51,11 +39,13 @@
 					[reset]="isResetSelect"
 				>
 				</ga-employee-multi-select>
-
-				<ga-layout-selector
-					componentName="{{ viewComponentName }}"
-				></ga-layout-selector>
 			</div>
+			<ngx-gauzy-button-action
+				[buttonTemplate]="actionButtons"
+				[buttonTemplateVisible]="visible"
+				[componentName]="viewComponentName"
+				[isDisable]="disableButton"
+			></ngx-gauzy-button-action>
 		</div>
 
 		<div *ngIf="showAddCard" class="add-card">
@@ -275,7 +265,7 @@
 
 				<div class="buttons">
 					<button
-						class="form-btn"
+						class="w-100"
 						(click)="submitForm()"
 						nbButton
 						status="success"
@@ -283,10 +273,11 @@
 						{{ 'BUTTONS.SAVE' | translate }}
 					</button>
 					<button
-						class="form-btn"
+						class="w-100"
 						(click)="cancel()"
 						nbButton
-						status="danger"
+						status="basic"
+						outline
 					>
 						{{ 'BUTTONS.CANCEL' | translate }}
 					</button>
@@ -295,159 +286,60 @@
 		</div>
 	</nb-card-header>
 	<nb-card-body
-		*ngIf="feedbackList?.length && dataLayoutStyle === 'CARDS_GRID'"
-	>
-		<div
-			[nbSpinner]="loading"
-			nbSpinnerSize="giant"
-			nbSpinnerStatus="primary"
-			class="mt-3"
-		>
-			<nb-card *ngFor="let feedback of feedbackList; let i = index">
-				<nb-card-body class="feedbacks-card">
-					<div class="feedbacks-line">
-						<div class="top-blocks">
-							<div class="block" *ngIf="feedback?.interviewTitle">
-								<strong>
-									{{
-										'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.INTERVIEW'
-											| translate
-									}}</strong
-								>
-								<span class="center">
-									{{ feedback.interviewTitle }}
-								</span>
-							</div>
-							<div class="block" *ngIf="feedback?.interviewer">
-								<strong>
-									{{
-										'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEWER'
-											| translate
-									}}</strong
-								>
-								<img
-									nbTooltip=" {{
-										feedback?.interviewer?.employeeName
-									}}"
-									nbTooltipPlacement="top"
-									*ngIf="
-										feedback?.interviewer?.employeeImageUrl
-									"
-									class="image-small mr-2"
-									[src]="
-										feedback?.interviewer?.employeeImageUrl
-									"
-									alt="employee Avatar"
-								/>
-							</div>
-							<div class="block" *ngIf="feedback?.status">
-								<strong>{{
-									'CANDIDATES_PAGE.EDIT_CANDIDATE.FEEDBACK_STATUS'
-										| translate
-								}}</strong>
-								<p class="feedback-status">
-									<span *ngIf="feedback.status === 'HIRED'">
-										<nb-icon
-											class="mr-1 success"
-											icon="checkmark-square-2-outline"
-										></nb-icon>
-										{{
-											'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.HIRE'
-												| translate
-										}}</span
-									>
-									<span
-										*ngIf="feedback.status === 'REJECTED'"
-									>
-										<nb-icon
-											class="mr-1 error"
-											icon="close-square-outline"
-										></nb-icon>
-										{{
-											'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.REJECT'
-												| translate
-										}}</span
-									>
-								</p>
-							</div>
-							<div class="block">
-								<strong>{{
-									'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.RATING'
-										| translate
-								}}</strong>
-								<ga-star-rating-output
-									[rate]="feedback.rating"
-								></ga-star-rating-output>
-							</div>
-						</div>
-
-						<div class="bottom-block">
-							<strong>{{
-								'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.DESCRIPTION'
-									| translate
-							}}</strong>
-							{{ feedback.description }}
-						</div>
-					</div>
-
-					<nb-actions class="float-right" e="medium">
-						<nb-action
-							(click)="editFeedback(feedback)"
-							class="d-inline pr-2"
-							icon="edit"
-						></nb-action>
-						<nb-action
-							(click)="removeFeedback(feedback.id)"
-							class="d-inline pl-2"
-							icon="close"
-						></nb-action>
-					</nb-actions>
-				</nb-card-body>
-			</nb-card>
-		</div>
-	</nb-card-body>
-	<nb-card-body
 		[nbSpinner]="loading"
 		nbSpinnerSize="giant"
 		nbSpinnerStatus="primary"
-		*ngIf="dataLayoutStyle === 'TABLE'"
 	>
-		<ng2-smart-table
-			style="cursor: pointer"
+		<div *ngIf="dataLayoutStyle === 'TABLE'" class="table-scroll-container">
+			<ng2-smart-table
+				style="cursor: pointer"
+				[settings]="settingsSmartTable"
+				[source]="sourceSmartTable"
+				(userRowSelect)="selectFeedback($event)"
+				#feedbackTable
+			>
+			</ng2-smart-table>
+		</div>
+		<ga-card-grid
+			*ngIf="feedbackList?.length && dataLayoutStyle === 'CARDS_GRID'"
 			[settings]="settingsSmartTable"
-			[source]="sourceSmartTable"
-			(userRowSelect)="selectFeedback($event)"
-			#feedbackTable
-		>
-		</ng2-smart-table>
+			[source]="feedbackList"
+			(onSelectedItem)="selectFeedback($event)"
+		></ga-card-grid>
 	</nb-card-body>
-	<ng-template
-		#actionButtons
-		let-buttonSize="buttonSize"
-		let-selectedItem="selectedItem"
+</nb-card>
+<ng-template #visible>
+	<button nbButton status="success" class="action" (click)="cancel()">
+		<nb-icon class="mr-1" icon="plus-outline"></nb-icon
+		>{{ 'BUTTONS.ADD' | translate }}
+	</button>
+</ng-template>
+<ng-template #actionButtons let-selectedItem="selectedItem">
+	<div
+		class="btn-group actions"
+		*ngIf="dataLayoutStyle === 'TABLE' && !showAddCard"
 	>
 		<button
 			(click)="editFeedback()"
 			nbButton
-			status="info"
-			class="mr-2"
+			status="basic"
+			class="action primary"
 			[disabled]="!selectedItem && disableButton"
-			[size]="buttonSize || 'medium'"
+			size="small"
 		>
 			<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
 			{{ 'BUTTONS.EDIT' | translate }}
 		</button>
-		{{ selectedItem | json }}
 		<button
 			(click)="removeFeedback()"
 			nbButton
-			status="danger"
-			class="mr-2"
+			status="basic"
+			class="action"
 			[disabled]="!selectedItem && disableButton"
-			[size]="buttonSize || 'medium'"
+			size="small"
+			[nbTooltip]="'BUTTONS.DELETE' | translate"
 		>
-			<nb-icon class="mr-1" icon="archive-outline"> </nb-icon>
-			{{ 'BUTTONS.DELETE' | translate }}
+			<nb-icon status="danger" icon="trash-2-outline"> </nb-icon>
 		</button>
-	</ng-template>
-</nb-card>
+	</div>
+</ng-template>

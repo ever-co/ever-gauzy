@@ -17,6 +17,15 @@ import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service'
 	templateUrl: './edit-candidate-main.component.html',
 	styleUrls: [
 		'../../../../organizations/edit-organization/edit-organization-settings/edit-organization-main/edit-organization-main.component.scss'
+	],
+	styles: [
+		`
+			:host {
+				overflow-y: overlay;
+				max-height: calc(100vh - 24rem);
+        height: 100%;
+			}
+		`
 	]
 })
 export class EditCandidateMainComponent implements OnInit, OnDestroy {

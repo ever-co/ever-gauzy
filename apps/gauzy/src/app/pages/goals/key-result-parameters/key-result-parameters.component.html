@@ -1,18 +1,16 @@
-<nb-card size="medium" style="max-width: 40vw; min-width: 40vw;">
-	<nb-card-header
-		>Edit Key Result Parameters
-		<nb-icon
-			class="ml-auto mt-1 close"
-			icon="close-outline"
-			(click)="closeDialog(null)"
-		></nb-icon>
+<nb-card style="width: 645px; height: 390px">
+	<nb-card-header>
+		<span class="cancel"
+			><i class="fas fa-times" (click)="closeDialog(null)"></i
+		></span>
+		<h4 class="title">Edit Key Result Parameters</h4>
 	</nb-card-header>
-	<nb-card-body>
+	<nb-card-body class="p-0">
 		<nb-tabset>
 			<nb-tab tabTitle="Weight">
-				<nb-alert status="info">{{
-					'KEY_RESULT_PAGE.WEIGHT.MESSAGE' | translate
-				}}</nb-alert>
+				<p class="info">
+					{{ 'KEY_RESULT_PAGE.WEIGHT.MESSAGE' | translate }}
+				</p>
 				<form [formGroup]="weightForm">
 					<div class="row mt-2">
 						<div class="col-md-6">
@@ -52,13 +50,16 @@
 										| translate: { weight: keyResultWeight }
 								}}
 							</label>
-							<nb-progress-bar
-								id="goal-progress-comparison"
-								[value]="keyResultWeight"
-								status="primary"
-								size="small"
-								>{{ keyResultWeight }}%
-							</nb-progress-bar>
+							<span class="w-100 d-flex align-items-center">
+								<span class="mr-3">{{ keyResultWeight }}%</span>
+								<nb-progress-bar
+									id="goal-progress-comparison"
+									[value]="keyResultWeight"
+									status="primary"
+									size="small"
+								>
+								</nb-progress-bar>
+							</span>
 						</div>
 					</div>
 				</form>
@@ -77,8 +78,8 @@
 			</nb-tab>
 		</nb-tabset>
 	</nb-card-body>
-	<nb-card-footer class="text-right">
-		<button class="mr-3" nbButton (click)="closeDialog(null)">
+	<nb-card-footer class="text-left content">
+		<button class="mr-3" outline nbButton (click)="closeDialog(null)">
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
 		<button nbButton status="success" (click)="updateKeyResult()">

@@ -7,7 +7,12 @@ import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslationBaseComponent } from '../../../@shared/language-base';
 import { CandidateInterviewMutationComponent } from '../../../@shared/candidate/candidate-interview-mutation/candidate-interview-mutation.component';
-import { CandidateInterviewService, Store, ToastrService } from '../../../@core/services';
+import { ActivatedRoute } from '@angular/router';
+import {
+	CandidateInterviewService,
+	Store,
+	ToastrService
+} from '../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -17,27 +22,31 @@ import { CandidateInterviewService, Store, ToastrService } from '../../../@core/
 })
 export class ManageCandidateInterviewsComponent
 	extends TranslationBaseComponent
-	implements AfterViewInit, OnInit, OnDestroy {
-
+	implements AfterViewInit, OnInit, OnDestroy
+{
 	interviews$: Subject<any> = new Subject();
 	loading: boolean;
 	tabs: any[];
 	interviews: ICandidateInterview[] = [];
 	organization: IOrganization;
+	currentTab: string;
+	TAB_ID = 'ga-ak-97';
 
 	constructor(
 		public readonly translateService: TranslateService,
 		private readonly dialogService: NbDialogService,
 		private readonly toastrService: ToastrService,
 		public readonly candidateInterviewService: CandidateInterviewService,
-		private readonly store: Store
+		private readonly store: Store,
+		private readonly route: ActivatedRoute
 	) {
 		super(translateService);
 	}
-	
+
 	ngOnInit() {
 		this._loadTabs();
 		this._applyTranslationOnTabs();
+		this._currentTabName();
 	}
 
 	ngAfterViewInit() {
@@ -50,7 +59,10 @@ export class ManageCandidateInterviewsComponent
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization: IOrganization) => !!organization),
-				tap((organization: IOrganization) => this.organization = organization),
+				tap(
+					(organization: IOrganization) =>
+						(this.organization = organization)
+				),
 				tap(() => this.interviews$.next(true)),
 				untilDestroyed(this)
 			)
@@ -75,6 +87,7 @@ export class ManageCandidateInterviewsComponent
 					'CANDIDATES_PAGE.MANAGE_INTERVIEWS.INTERVIEWS'
 				),
 				responsive: true,
+				tabId: this.TAB_ID,
 				route: this.getRoute('interview_panel')
 			},
 			{
@@ -87,12 +100,20 @@ export class ManageCandidateInterviewsComponent
 		];
 	}
 
+	_currentTabName() {
+		const arr = this.route.children[0].snapshot.url;
+		const last = arr.at(-1);
+		this.currentTab = last.path === 'interview_panel' ? this.TAB_ID : null;
+	}
+
 	async addInterview() {
 		const dialog = this.dialogService.open(
 			CandidateInterviewMutationComponent,
 			{
 				context: {
-					headerTitle: this.getTranslation('CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.SCHEDULE_INTERVIEW'),
+					headerTitle: this.getTranslation(
+						'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.SCHEDULE_INTERVIEW'
+					),
 					isCalendar: true,
 					interviews: this.interviews
 				}
@@ -100,28 +121,34 @@ export class ManageCandidateInterviewsComponent
 		);
 		const data = await firstValueFrom(dialog.onClose);
 		if (data) {
-			this.toastrService.success( `TOASTR.MESSAGE.CANDIDATE_EDIT_CREATED`, {
-				name: data.title
-			});
+			this.toastrService.success(
+				`TOASTR.MESSAGE.CANDIDATE_EDIT_CREATED`,
+				{
+					name: data.title
+				}
+			);
 		}
 		this.interviews$.next(true);
 	}
-	
+
 	private async _getInterviews() {
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 
 		this.interviews = (
-			await this.candidateInterviewService.getAll([
-				'feedbacks',
-				'interviewers',
-				'technologies',
-				'personalQualities',
-				'candidate'
-			], {
-				organizationId,
-				tenantId
-			})
+			await this.candidateInterviewService.getAll(
+				[
+					'feedbacks',
+					'interviewers',
+					'technologies',
+					'personalQualities',
+					'candidate'
+				],
+				{
+					organizationId,
+					tenantId
+				}
+			)
 		).items;
 	}
 
@@ -134,5 +161,8 @@ export class ManageCandidateInterviewsComponent
 			.subscribe();
 	}
 
+	public onChangeTab(event: any) {
+		if (event) this.currentTab = event.tabId;
+	}
 	ngOnDestroy() {}
 }

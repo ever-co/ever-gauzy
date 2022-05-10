@@ -16,6 +16,7 @@
     border-radius: 0.5rem;
     background-color: nb-theme(background-basic-color-3);
     box-shadow: 0px 1px 1px 0px rgba(0, 0, 0, 0.15);
+    cursor: pointer;
     .card-body {
       background-color: nb-theme(background-basic-color-3);
       border-radius: 0.5rem;
@@ -91,6 +92,11 @@
               align-items: center;
               justify-content: center;
               font-size: nb-theme(text-button-tiny-font-size);
+              font-size: 12px;
+              font-weight: 600;
+              line-height: 15px;
+              letter-spacing: 0em;
+              text-align: left;
             }
           }
           .progress-bar-container {
@@ -104,6 +110,9 @@
               align-items: center;
               justify-content: center;
             }
+          }
+          li {
+            font-size: 1em;
           }
         }
       }

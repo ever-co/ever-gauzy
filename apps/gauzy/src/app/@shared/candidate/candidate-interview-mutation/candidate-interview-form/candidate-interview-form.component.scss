@@ -54,12 +54,15 @@
   height: 40px;
 }
 
-.nameValidParent {
+.name-valid-parent {
   position: relative;
+  display: flex;
+  flex-direction: column;
 
-  .nameValid {
+  .name-valid {
     position: absolute;
-    top: 66px;
+    bottom: -1.25rem;
+    left: 0;
     left: 0px;
     font-size: 11px;
     color: #ff3d71;

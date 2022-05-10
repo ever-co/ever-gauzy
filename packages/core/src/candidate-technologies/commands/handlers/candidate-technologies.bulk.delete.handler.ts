@@ -19,11 +19,9 @@ export class CandidateTechnologiesBulkDeleteHandler
 				technologies.map((item) => item.id)
 			);
 		} else {
-			const tech = await this.candidateTechnologiesService.getTechnologiesByInterviewId(
-				id['id']
-			);
+			const technologies = await this.candidateTechnologiesService.getTechnologiesByInterviewId(id);
 			await this.candidateTechnologiesService.deleteBulk(
-				tech.map((item) => item.id)
+				technologies.map((item) => item.id)
 			);
 		}
 		return;

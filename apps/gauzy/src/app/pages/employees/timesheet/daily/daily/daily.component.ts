@@ -1,5 +1,5 @@
 // tslint:disable: nx-enforce-module-boundaries
-import { Component, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, AfterViewInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { isEmpty } from '@gauzy/common-angular';
 import {
@@ -8,6 +8,7 @@ import {
 	NbMenuService
 } from '@nebular/theme';
 import { filter, map, debounceTime, tap } from 'rxjs/operators';
+import { Observable } from 'rxjs/internal/Observable';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import * as _ from 'underscore';
@@ -18,12 +19,13 @@ import {
 	ITimeLogFilters,
 	OrganizationPermissionsEnum
 } from '@gauzy/contracts';
-import { Store, ToastrService } from './../../../../../@core/services';
+import { DateRangePickerBuilderService, Store, ToastrService } from './../../../../../@core/services';
 import { TimesheetService, TimesheetFilterService } from './../../../../../@shared/timesheet';
 import { EditTimeLogModalComponent, ViewTimeLogModalComponent } from './../../../../../@shared/timesheet';
 import { ConfirmComponent } from './../../../../../@shared/dialogs';
 import { TimeTrackerService } from './../../../../../@shared/time-tracker/time-tracker.service';
 import { BaseSelectorFilterComponent } from './../../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
+import { GauzyFiltersComponent } from './../../../../../@shared/timesheet/gauzy-filters/gauzy-filters.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -46,6 +48,9 @@ export class DailyComponent  extends BaseSelectorFilterComponent
 	allChecked: boolean;
 	contextMenus: NbMenuItem[];
 
+	@ViewChild(GauzyFiltersComponent) gauzyFiltersComponent: GauzyFiltersComponent;
+	datePickerConfig$: Observable<any> = this._dateRangePickerBuilderService.datePickerConfig$;
+
 	constructor(
 		private readonly timesheetService: TimesheetService,
 		private readonly timeTrackerService: TimeTrackerService,
@@ -55,7 +60,8 @@ export class DailyComponent  extends BaseSelectorFilterComponent
 		private readonly timesheetFilterService: TimesheetFilterService,
 		public readonly translateService: TranslateService,
 		private readonly route: ActivatedRoute,
-		private readonly toastrService: ToastrService
+		private readonly toastrService: ToastrService,
+		public readonly _dateRangePickerBuilderService: DateRangePickerBuilderService
 	) {
 		super(store, translateService);
 	}
@@ -102,9 +108,11 @@ export class DailyComponent  extends BaseSelectorFilterComponent
 		this._createContextMenus();
 	}
 
-	async filtersChange(filters: ITimeLogFilters) {
+	filtersChange(filters: ITimeLogFilters) {
 		this.logRequest = filters;
-		this.timesheetFilterService.filter = filters;
+		if (this.gauzyFiltersComponent.saveFilters) {
+			this.timesheetFilterService.filter = filters;
+		}
 		this.subject$.next(true);
 	}
 

@@ -17,7 +17,8 @@ import { TranslationBaseComponent } from '../language-base';
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-approval-policy-mutation',
-	templateUrl: './approval-policy-mutation.component.html'
+	templateUrl: './approval-policy-mutation.component.html',
+  styleUrls:['./approval-policy-mutation.component.scss']
 })
 export class ApprovalPolicyMutationComponent
 	extends TranslationBaseComponent
@@ -94,7 +95,7 @@ export class ApprovalPolicyMutationComponent
 
 		const approvalPolicy: IApprovalPolicyCreateInput = {
 			...this.form.getRawValue(),
-			id, 
+			id,
 			tenantId,
 			organizationId
 		};

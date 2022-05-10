@@ -1,20 +1,22 @@
 <nb-card>
-	<nb-card-header class="d-flex">
-		<img
-			*ngIf="!isCalendar"
-			class="candidate-image"
-			[src]="selectedCandidate?.user.imageUrl"
-			alt="Candidate Avatar"
-		/>
-		<div>
-			<h5 [innerText]="headerTitle"></h5>
-			<span *ngIf="!isCalendar"> {{ selectedCandidate?.user?.name }} </span>
+	<nb-card-header class="d-flex flex-column pb-0">
+		<span class="cancel"
+			><i class="fas fa-times" (click)="closeDialog()"></i
+		></span>
+		<div class="d-flex flex-row p-0">
+			<img
+				*ngIf="!isCalendar"
+				class="candidate-image"
+				[src]="selectedCandidate?.user.imageUrl"
+				alt="Candidate Avatar"
+			/>
+			<div class="d-flex flex-column mr-3 ml-3">
+				<h5 class="title" [innerText]="headerTitle"></h5>
+				<span class="sub-title" *ngIf="!isCalendar">
+					{{ selectedCandidate?.user?.name }}
+				</span>
+			</div>
 		</div>
-		<nb-icon
-			class="ml-auto mt-1 close"
-			icon="close-outline"
-			(click)="closeDialog()"
-		></nb-icon>
 	</nb-card-header>
 	<nb-card-body class="stepper">
 		<nb-stepper #stepper disableStepNavigation>
@@ -29,7 +31,9 @@
 					}}</label>
 					<ga-candidate-select
 						[allCandidates]="candidates"
-						[placeholder]="'FORM.PLACEHOLDERS.ADD_REMOVE_CANDIDATE' | translate"
+						[placeholder]="
+							'FORM.PLACEHOLDERS.ADD_REMOVE_CANDIDATE' | translate
+						"
 						(selectedChange)="onCandidateSelected($event)"
 						[selectedCandidateId]="selectedCandidateId"
 					>
@@ -44,10 +48,12 @@
 					[editData]="editData"
 				></ga-candidate-interview-form>
 
-				<div class="text-right">
+				<div class="text-left">
 					<button
-						status="success"
-						class="btn"
+						status="basic"
+						outline
+						class="green"
+						size="small"
 						[disabled]="
 							candidateInterviewForm.form.invalid || isTitleExist
 						"
@@ -76,10 +82,12 @@
 				>
 				</ga-candidate-criterions-form>
 
-				<div class="button-container">
+				<div class="text-left">
 					<button
-						class="btn"
-						status="primary"
+						class="gray"
+						status="basic"
+						size="small"
+						outline
 						(click)="previous()"
 						nbButton
 						nbStepperPrevious
@@ -89,13 +97,26 @@
 								| translate
 						}}
 					</button>
-					<button status="warning" (click)="route()" nbButton>
+					<button
+						status="warning"
+						size="small"
+						class="mr-3 ml-2"
+						(click)="route()"
+						nbButton
+					>
 						{{
 							'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.CREATE_CRITERIONS'
 								| translate
 						}}
 					</button>
-					<button class="btn" status="success" nbButton nbStepperNext>
+					<button
+						class="green"
+						status="basic"
+						size="small"
+						outline
+						nbButton
+						nbStepperNext
+					>
 						{{
 							'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.NEXT'
 								| translate
@@ -118,10 +139,11 @@
 				>
 				</ga-candidate-notification-form>
 
-				<div class="button-container">
+				<div class="text-left">
 					<button
-						class="btn"
-						status="primary"
+						class="btn gray"
+						status="basic"
+            outline=""
 						(click)="previous()"
 						nbButton
 						nbStepperPrevious
@@ -132,7 +154,7 @@
 						}}
 					</button>
 					<button
-						class="btn"
+						class="btn mr-3 ml-3"
 						status="success"
 						nbButton
 						nbStepperSave

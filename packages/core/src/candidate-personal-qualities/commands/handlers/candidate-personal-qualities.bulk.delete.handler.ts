@@ -18,11 +18,9 @@ export class CandidatePersonalQualitiesBulkDeleteHandler
 				personalQualities.map((item) => item.id)
 			);
 		} else {
-			const qual = await this.candidatePersonalQualitiesService.getPersonalQualitiesByInterviewId(
-				id['id']
-			);
+			const qualities = await this.candidatePersonalQualitiesService.getPersonalQualitiesByInterviewId(id);
 			await this.candidatePersonalQualitiesService.deleteBulk(
-				qual.map((item) => item.id)
+				qualities.map((item) => item.id)
 			);
 		}
 

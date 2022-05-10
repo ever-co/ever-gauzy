@@ -1,5 +1,29 @@
+@import 'themes';
+
 .main-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
+}
+
+.block-info {
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 11px;
+  letter-spacing: 0em;
+  text-align: left;
+  margin: 1rem 0;
+}
+
+:host {
+  nb-card,
+  nb-card-body {
+    background-color: rgba(50, 50, 50, 0.03);
+  }
+  [nbButton].appearance-outline.status-info,
+  [nbButton].appearance-outline.status-warning,
+  [nbButton].appearance-outline.status-primary {
+    border-width: 0;
+    box-shadow: 0 1px 1px 0 rgba(0, 0, 0, 0.15);
+  }
 }

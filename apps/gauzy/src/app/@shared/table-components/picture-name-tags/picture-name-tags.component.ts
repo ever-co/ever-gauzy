@@ -5,42 +5,22 @@ import { NotesWithTagsComponent } from '../notes-with-tags/notes-with-tags.compo
 @Component({
 	selector: 'ga-picture-name-tags',
 	template: `
-		<div
-			style="display: flex; align-items: center;"
-			class="{{ layout === 'CARDS_GRID' ? 'tags-right' : '' }}"
-		>
-			<div *ngIf="rowData?.imageUrl" class="image-container">
-				<img [src]="rowData?.imageUrl" />
-			</div>
-			<div
-				*ngIf="rowData?.fullName"
-				class="d-block"
-				style="margin-left:15px;"
+		<ngx-avatar
+			[src]="rowData?.imageUrl"
+			[name]="rowData?.fullName ? rowData?.fullName : rowData?.name"
+      [id]="rowData?.id"
+		></ngx-avatar>
+		<ng-template [ngIf]="rowData?.isDefault">
+			<nb-badge
+				class="color"
+				position="centered"
+				[style.background]="rowData?.brandColor"
+				[style.color]="backgroundContrast(rowData?.brandColor)"
+				text="Default"
 			>
-				{{ rowData?.fullName }}
-			</div>
-			<div
-				*ngIf="rowData?.name"
-				class="d-block"
-				style="margin-left:15px;"
-			>
-				{{ rowData?.name }}
-				<ng-template [ngIf]="rowData?.isDefault">
-					<nb-badge
-						class="color"
-						position="centered"
-						[style.background]="rowData?.brandColor"
-						[style.color]="backgroundContrast(rowData?.brandColor)"
-						text="Default"
-					>
-					</nb-badge>
-				</ng-template>
-			</div>
-		</div>
-		<div
-			*ngIf="isTags"
-			class="tags {{ layout === 'CARDS_GRID' ? 'tags-right' : '' }} mt-2"
-		>
+			</nb-badge>
+		</ng-template>
+		<div class="badges-block" *ngIf="isTags">
 			<nb-badge
 				*ngFor="let tag of (data | async)?.tags"
 				class="color"
@@ -83,9 +63,13 @@ import { NotesWithTagsComponent } from '../notes-with-tags/notes-with-tags.compo
 				justify-content: flex-end;
 			}
 		`
-	]
+	],
+	styleUrls: ['./picture-name-tags.component.scss']
 })
-export class PictureNameTagsComponent extends NotesWithTagsComponent implements ViewCell {
+export class PictureNameTagsComponent
+	extends NotesWithTagsComponent
+	implements ViewCell
+{
 	@Input()
 	isTags = true;
 }

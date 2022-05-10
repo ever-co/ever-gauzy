@@ -118,7 +118,8 @@
 		"VIEW_REPORT": "crwdns10931:0crwdne10931:0",
 		"TIME_TRACKING_ENABLE": "crwdns10940:0crwdne10940:0",
 		"TIME_TRACKING_DISABLE": "crwdns10942:0crwdne10942:0",
-		"PRINT": "crwdns11070:0crwdne11070:0"
+		"PRINT": "crwdns11070:0crwdne11070:0",
+		"FEEDBACK": "crwdns11132:0crwdne11132:0"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "crwdns7534:0crwdne7534:0",
@@ -972,6 +973,7 @@
 		"ACTIVITY": "crwdns8246:0crwdne8246:0",
 		"TOTAL_HOURS": "crwdns8248:0crwdne8248:0",
 		"EMPLOYEE": "crwdns8250:0crwdne8250:0",
+		"EMPLOYEES/TEAMS": "crwdns11120:0crwdne11120:0",
 		"NO_PROJECT": "crwdns8252:0crwdne8252:0",
 		"NO_EMPLOYEE": "crwdns8254:0crwdne8254:0",
 		"NO_TIMELOG": "crwdns8256:0crwdne8256:0",
@@ -1943,7 +1945,8 @@
 		"APPROVED": "crwdns9608:0crwdne9608:0",
 		"REFUSED": "crwdns9610:0crwdne9610:0",
 		"REQUESTED": "crwdns9612:0crwdne9612:0",
-		"ACTION": "crwdns9614:0crwdne9614:0"
+		"ACTION": "crwdns9614:0crwdne9614:0",
+		"CREATED_AT": "crwdns11128:0crwdne11128:0"
 	},
 	"APPROVAL_POLICY_PAGE": {
 		"EDIT_APPROVAL_POLICY": "crwdns4846:0crwdne4846:0",
@@ -2308,7 +2311,13 @@
 			"JOB_STATUS": "crwdns8290:0crwdne8290:0",
 			"BUDGET": "crwdns8292:0crwdne8292:0",
 			"LESS_THAN": "crwdns8696:0crwdne8696:0"
-		}
+		},
+		"BROWSE": "crwdns11084:0crwdne11084:0",
+		"SEARCH": "crwdns11086:0crwdne11086:0",
+		"HISTORY": "crwdns11088:0crwdne11088:0",
+		"EMPLOYEES": "crwdns11090:0crwdne11090:0",
+		"MATCHINGS": "crwdns11092:0crwdne11092:0",
+		"PROPOSALS_TEMPLATE": "crwdns11094:0crwdne11094:0"
 	},
 	"JOB_MATCHING": {
 		"CONFIGURE_EMPLOYEES_TO_JOBS_MATCHING": "crwdns8200:0crwdne8200:0",
@@ -2331,7 +2340,10 @@
 		"EMPLOYEES": "crwdns8344:0crwdne8344:0",
 		"AVAILABLE_JOBS": "crwdns8346:0crwdne8346:0",
 		"APPLIED_JOBS": "crwdns8348:0crwdne8348:0",
-		"JOB_SEARCH_STATUS": "crwdns8350:0crwdne8350:0"
+		"JOB_SEARCH_STATUS": "crwdns8350:0crwdne8350:0",
+		"BROWSE": "crwdns11096:0crwdne11096:0",
+		"SEARCH": "crwdns11098:0crwdne11098:0",
+		"HISTORY": "crwdns11100:0crwdne11100:0"
 	},
 	"PROPOSAL_TEMPLATE": {
 		"PROPOSAL_TEMPLATE": "crwdns8308:0crwdne8308:0",
@@ -2350,7 +2362,9 @@
 		"PROPOSAL_DELETE_MESSAGE": "crwdns8834:0{{ name }}crwdne8834:0",
 		"PROPOSAL_MAKE_DEFAULT_MESSAGE": "crwdns8836:0{{ name }}crwdne8836:0",
 		"YES": "crwdns9664:0crwdne9664:0",
-		"NO": "crwdns9666:0crwdne9666:0"
+		"NO": "crwdns9666:0crwdne9666:0",
+		"BROWSE": "crwdns11122:0crwdne11122:0",
+		"SEARCH": "crwdns11124:0crwdne11124:0"
 	},
 	"SPRINTS_PAGE": {
 		"SPRINT_ADDED": "crwdns7424:0crwdne7424:0",
@@ -3526,7 +3540,7 @@
 	"ACTIVITY": {
 		"SCREENSHOTS": "crwdns4944:0crwdne4944:0",
 		"PERCENT_USED": "crwdns8372:0crwdne8372:0",
-		"TIME_SPENT": "crwdns8374:0crwdne8374:0",
+		"TIME_SPENT": "crwdns11126:0crwdne11126:0",
 		"APPS": "crwdns8376:0crwdne8376:0",
 		"VISITED_SITES": "crwdns8378:0crwdne8378:0",
 		"NO_ACTIVITIES": "crwdns8380:0crwdne8380:0",
@@ -3537,7 +3551,8 @@
 		"MINUTES": "crwdns8094:0crwdne8094:0",
 		"NO_SCREENSHOTS": "crwdns7152:0crwdne7152:0",
 		"NO_EMPLOYEES_SELECTED": "crwdns10256:0crwdne10256:0",
-		"DELETE_CONFIRM": "crwdns8096:0crwdne8096:0"
+		"DELETE_CONFIRM": "crwdns8096:0crwdne8096:0",
+		"VISITED_DATES": "crwdns11130:0crwdne11130:0"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "crwdns3476:0crwdne3476:0",
@@ -3660,7 +3675,16 @@
 		"HEADER_FORM_CREATE": "crwdns4744:0crwdne4744:0",
 		"RECORD_TYPE": "crwdns4746:0{{ name }}crwdne4746:0",
 		"ACTIVE": "crwdns9830:0crwdne9830:0",
-		"INACTIVE": "crwdns9832:0crwdne9832:0"
+		"INACTIVE": "crwdns9832:0crwdne9832:0",
+		"BROWSE": "crwdns11102:0crwdne11102:0",
+		"SEARCH": "crwdns11104:0crwdne11104:0",
+		"SEARCH_PIPELINE": "crwdns11106:0crwdne11106:0",
+		"NAME": "crwdns11108:0crwdne11108:0",
+		"STAGE": "crwdns11110:0crwdne11110:0",
+		"SEARCH_STAGE": "crwdns11112:0crwdne11112:0",
+		"STATUS": "crwdns11114:0crwdne11114:0",
+		"ALL_STATUS": "crwdns11116:0crwdne11116:0",
+		"RESET": "crwdns11118:0crwdne11118:0"
 	},
 	"PIPELINE_DEALS_PAGE": {
 		"HEADER": "crwdns7198:0crwdne7198:0",

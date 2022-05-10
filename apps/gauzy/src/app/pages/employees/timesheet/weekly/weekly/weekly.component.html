@@ -1,25 +1,28 @@
-<div class="header">
-	<div class="text-left mb-3">
+<div class="filters row mb-3">
+	<div class="col-sm-3 text-left mb-3">
 		<ng-template
 			[ngxPermissionsOnly]="[
 				OrganizationPermissionsEnum.ALLOW_MANUAL_TIME
 			]"
 		>
-			<button nbButton status="primary" (click)="openAddEdit()">
+			<button 
+				nbButton
+				status="primary"
+				(click)="openAddEdit()"
+			>
 				<nb-icon icon="plus-outline"></nb-icon>
 				{{ 'TIMESHEET.ADD_TIME' | translate }}
 			</button>
 		</ng-template>
 	</div>
-</div>
-
-<div class="filters row mb-3">
 	<div class="col">
 		<ngx-gauzy-filters
+			[saveFilters]="(datePickerConfig$ | async).isSaveDatePicker"
 			(filtersChange)="filtersChange($event)"
 		></ngx-gauzy-filters>
 	</div>
 </div>
+
 <div
 	class="weekly-logs row-table"
 	[nbSpinner]="loading"

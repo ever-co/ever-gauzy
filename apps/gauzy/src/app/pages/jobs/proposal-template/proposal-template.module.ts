@@ -23,6 +23,9 @@ import { DialogsModule } from '../../../@shared/dialogs';
 import { AddEditProposalTemplateComponent } from './add-edit-proposal-template/add-edit-proposal-template.component';
 import { CKEditorModule } from 'ng2-ckeditor';
 import { HeaderTitleModule } from '../../../@shared/components/header-title/header-title.module';
+import { NbTabsetModule } from '@nebular/theme';
+import { GauzyButtonActionModule } from '../../../@shared/gauzy-button-action/gauzy-button-action.module';
+import { PaginationModule } from '../../../@shared/pagination/pagination.module';
 
 @NgModule({
 	declarations: [ProposalTemplateComponent, AddEditProposalTemplateComponent],
@@ -47,7 +50,10 @@ import { HeaderTitleModule } from '../../../@shared/components/header-title/head
 		NbToggleModule,
 		DialogsModule,
 		CKEditorModule,
-		HeaderTitleModule
+		HeaderTitleModule,
+		NbTabsetModule,
+		GauzyButtonActionModule,
+		PaginationModule
 	]
 })
 export class ProposalTemplateModule {}

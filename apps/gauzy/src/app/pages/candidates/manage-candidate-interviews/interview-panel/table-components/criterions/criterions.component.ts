@@ -3,7 +3,7 @@ import { Component, Input } from '@angular/core';
 @Component({
 	selector: 'ga-interview-criterions',
 	template: `
-		<ul style="padding-left:18px; margin:0;">
+		<ul style="padding-left: 10px; margin:0;">
 			<li *ngFor="let tech of this.rowData.technologies">
 				<span> {{ tech.name }} </span>
 			</li>
@@ -12,7 +12,14 @@ import { Component, Input } from '@angular/core';
 				<span> {{ qual.name }} </span>
 			</li>
 		</ul>
-	`
+	`,
+	styles: [
+		`
+			ul {
+				list-style-type: '- ';
+			}
+		`
+	]
 })
 export class InterviewCriterionsTableComponent {
 	@Input()

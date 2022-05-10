@@ -5,13 +5,97 @@
 	nbSpinnerSize="large"
 >
 	<nb-card-header class="header">
-		<h4> <ngx-header-title [allowEmployee]="false"> {{ 'JOB_EMPLOYEE.EMPLOYEES' | translate }} </ngx-header-title> </h4>
+		<h4>
+			<ngx-header-title [allowEmployee]="false">
+				{{ 'JOB_EMPLOYEE.EMPLOYEES' | translate }}
+			</ngx-header-title>
+		</h4>
 	</nb-card-header>
-	<nb-card-body>
+	<nb-card-body p-0>
+		<div class="gauzy-button-container">
+			<ngx-gauzy-button-action
+				[buttonTemplateVisible]="visibleButton"
+				[isDisable]="true"
+				[buttonTemplate]="actionButtons"
+			>
+			</ngx-gauzy-button-action>
+		</div>
+		<nb-tabset>
+			<nb-tab tabTitle="{{ 'JOB_EMPLOYEE.BROWSE' | translate }}">
+				<ng-container>
+					<ng-template [ngTemplateOutlet]="tableLayout">
+					</ng-template>
+				</ng-container>
+			</nb-tab>
+			<nb-tab tabTitle="{{ 'JOB_EMPLOYEE.SEARCH' | translate }}">
+				<p>Soon</p>
+			</nb-tab>
+			<nb-tab tabTitle="{{ 'JOB_EMPLOYEE.HISTORY' | translate }}">
+				<p>Soon</p>
+			</nb-tab>
+		</nb-tabset>
+	</nb-card-body>
+</nb-card>
+<ng-template #tableLayout>
+	<div class="table-scroll-container">
 		<ng2-smart-table
 			[settings]="settingsSmartTable"
 			[source]="smartTableSource"
 			#jobEmployeesTable
 		></ng2-smart-table>
-	</nb-card-body>
-</nb-card>
+	</div>
+</ng-template>
+<ng-template
+	#actionButtons
+	let-buttonSize="buttonSize"
+	let-selectedItem="selectedItem"
+>
+	<div class="btn-group actions">
+		<ng-template ngxPermissionsOnly="">
+			<button
+				status="basic"
+				class="action secondary"
+				size="small"
+				nbButton
+			>
+				<nb-icon icon="eye-outline" pack="eva"></nb-icon>
+				<span> {{ 'BUTTONS.VIEW' | translate }} </span>
+			</button>
+		</ng-template>
+		<ng-template ngxPermissionsOnly="">
+			<button
+				size="small"
+				style="cursor: pointer"
+				status="basic"
+				class="action primary"
+				nbButton
+			>
+				<nb-icon icon="edit-outline" pack="eva"></nb-icon>
+				<span>{{ 'BUTTONS.EDIT' | translate }}</span>
+			</button>
+			<button
+				style="cursor: pointer"
+				status="basic"
+				class="action"
+				size="small"
+				[nbTooltip]="'BUTTONS.DELETE' | translate"
+				nbButton
+			>
+				<nb-icon
+					status="danger"
+					icon="trash-2-outline"
+					pack="eva"
+				></nb-icon>
+			</button>
+		</ng-template>
+	</div>
+</ng-template>
+
+<ng-template #visibleButton>
+	<ng-template ngxPermissionsOnly="">
+		<button nbButton status="success" size="small">
+			<nb-icon icon="plus-outline"> </nb-icon>
+			{{ 'BUTTONS.ADD' | translate }}
+		</button>
+	</ng-template>
+</ng-template>

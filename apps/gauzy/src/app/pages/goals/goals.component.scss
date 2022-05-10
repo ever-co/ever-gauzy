@@ -1,5 +1,57 @@
+@import 'gauzy/_gauzy-table.scss';
+
 .main-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
+}
+.gauzy-button-container {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  width: 100%;
+  padding-bottom: 0;
+  .custom-success {
+    height: 2rem;
+  }
+}
+
+:host {
+  nb-card,
+  nb-card-body {
+    background-color: rgba(50, 50, 50, 0.03);
+  }
+  nb-card-body {
+    overflow-y: overlay;
+  }
+  ::ng-deep {
+    nb-progress-bar {
+      width: 100%;
+      .progress-container {
+        height: 10px !important;
+      }
+      .progress-value {
+        span {
+          display: none;
+        }
+      }
+    }
+  }
+  nb-accordion-item-header ::ng-deep nb-icon {
+    border: 1px solid nb-theme(border-basic-color-4);
+    border-radius: nb-theme(border-radius);
+    width: 1.75rem;
+    height: 1.75rem;
+  }
+  nb-accordion {
+    box-shadow: unset;
+}
+}
+nb-accordion-item-body {
+  &:hover, &.item.selected {
+    background: rgba(50, 50, 50, 0.03);
+  }
+}
+.keyResult {
+  cursor: pointer;
 }

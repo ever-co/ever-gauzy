@@ -22,6 +22,10 @@ body {
   overflow-y: overlay;
 }
 
+.cdk-overlay-container {
+  z-index: 1050 !important;
+}
+
 .dashboard-card-scroll nb-card {
   background: nb-theme(background-basic-color-1);
   box-shadow: 0px 6px 20px 0px rgba(0, 0, 0, 0.05);
@@ -121,6 +125,7 @@ body {
   //Override header padding from 1.25rem to 0.5rem
   nb-layout .layout nb-layout-header nav {
     padding: 0rem !important;
+    height: auto !important;
   }
 
   // Override default min-width for nb-select
@@ -233,7 +238,6 @@ body {
 
   .ng-dropdown-panel {
     transform: translateY(10px);
-    width: auto !important;
     box-shadow: 0px 6px 30px rgba(0, 0, 0, 0.2);
     &.ng-select-bottom {
       border-radius: nb-theme(border-radius);

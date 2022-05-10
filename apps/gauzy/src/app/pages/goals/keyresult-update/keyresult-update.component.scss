@@ -1,3 +1,5 @@
+@import 'gauzy/_gauzy-dialogs';
+
 .max-width-30vw {
   width: 30vw;
 }
@@ -6,4 +8,10 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+}
+
+:host {
+  nb-card {
+    background: nb-theme(background-basic-color-1);
+  }
 }

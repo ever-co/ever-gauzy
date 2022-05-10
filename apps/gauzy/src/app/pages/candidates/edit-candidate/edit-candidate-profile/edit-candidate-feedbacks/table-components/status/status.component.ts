@@ -23,9 +23,16 @@ import { Component, Input } from '@angular/core';
 				background-color: #00d68f;
 			}
 			.badge {
-				width: 100%;
-				text-align: center;
-				padding: 5px 30px;
+				width: fit-content;
+				display: flex;
+				justify-content: center;
+				align-items: center;
+				padding: 5px 8px;
+				font-size: 12px;
+				font-weight: 600;
+				line-height: 15px;
+				letter-spacing: 0em;
+				text-align: left;
 			}
 		`
 	]

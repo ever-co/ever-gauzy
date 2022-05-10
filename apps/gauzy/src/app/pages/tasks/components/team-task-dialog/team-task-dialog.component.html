@@ -1,6 +1,9 @@
 <nb-card class="main">
-	<nb-card-header class="d-flex">
-		<h5>
+	<nb-card-header class="d-flex flex-column">
+		<div class="cancel">
+			<i class="fas fa-times" (click)="dialogRef.close()"></i>
+		</div>
+		<h5 class="title">
 			{{
 				(selectedTask
 					? 'TASKS_PAGE.EDIT_TASKS'
@@ -8,11 +11,6 @@
 				) | translate
 			}}
 		</h5>
-		<nb-icon
-			class="ml-auto mt-1 close"
-			icon="close-outline"
-			(click)="dialogRef.close()"
-		></nb-icon>
 	</nb-card-header>
 	<nb-card-body class="body">
 		<form [formGroup]="form">
@@ -39,7 +37,9 @@
 						}}</label>
 						<ga-task-status-select
 							formControlName="status"
-							[placeholder]="'TASKS_PAGE.TASKS_STATUS' | translate"
+							[placeholder]="
+								'TASKS_PAGE.TASKS_STATUS' | translate
+							"
 						></ga-task-status-select>
 					</div>
 				</div>
@@ -69,7 +69,7 @@
 						</nb-select>
 					</div>
 				</div>
-			</div>				
+			</div>
 			<div class="row">
 				<div class="col-sm-12">
 					<div class="form-group">
@@ -85,7 +85,7 @@
 								'FORM.PLACEHOLDERS.ADD_TITLE' | translate
 							}}"
 						/>
-					</div>					
+					</div>
 				</div>
 				<div class="col-sm-12">
 					<div class="form-group">
@@ -186,14 +186,15 @@
 						}}"
 					></textarea>
 				</div>
-			</div>			
+			</div>
 		</form>
 	</nb-card-body>
-	<nb-card-footer class="text-right">
+	<nb-card-footer class="text-left">
 		<button
 			(click)="dialogRef.close()"
-			status="danger"
+			status="basic"
 			class="mr-3"
+			outline
 			nbButton
 		>
 			{{ 'BUTTONS.CANCEL' | translate }}

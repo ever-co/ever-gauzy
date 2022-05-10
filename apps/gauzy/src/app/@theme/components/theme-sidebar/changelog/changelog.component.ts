@@ -32,7 +32,11 @@ export class ChangelogComponent
 	}
 
 	getLogs() {
-		this._changelogService.getAll().pipe(untilDestroyed(this)).subscribe();
+		this._changelogService.getAll({ isFeature: false })
+			.pipe(
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	ngOnDestroy(): void {}

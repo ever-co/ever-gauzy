@@ -118,7 +118,8 @@
 		"VIEW_REPORT": "View Report",
 		"TIME_TRACKING_ENABLE": "Enable Time Tracking",
 		"TIME_TRACKING_DISABLE": "Disable Time Tracking",
-    "PRINT": "Print"
+    "PRINT": "Print",
+    "FEEDBACK":"Feedback"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "Type",
@@ -972,6 +973,7 @@
 		"ACTIVITY": "Activity",
 		"TOTAL_HOURS": "Total Hours",
 		"EMPLOYEE": "Employee",
+		"EMPLOYEES/TEAMS": "Employees /Teams",
 		"NO_PROJECT": "No Project",
 		"NO_EMPLOYEE": "No Employee",
 		"NO_TIMELOG": "No Timelog",
@@ -1943,7 +1945,8 @@
 		"APPROVED": "Approved",
 		"REFUSED": "Refused",
 		"REQUESTED": "Requested",
-		"ACTION": "Action"
+		"ACTION": "Action",
+    "CREATED_AT": "Created At"
 	},
 	"APPROVAL_POLICY_PAGE": {
 		"EDIT_APPROVAL_POLICY": "Edit Approval Policy",
@@ -2308,7 +2311,13 @@
 			"JOB_STATUS": "Job Status",
 			"BUDGET": "Budget",
 			"LESS_THAN": "Less than"
-		}
+		},
+    "BROWSE":"Browse",
+    "SEARCH":"Search",
+    "HISTORY":"History",
+    "EMPLOYEES": "Employees",
+    "MATCHINGS":"Matchings",
+    "PROPOSALS_TEMPLATE":"Proposals Template"
 	},
 	"JOB_MATCHING": {
 		"CONFIGURE_EMPLOYEES_TO_JOBS_MATCHING": "Configure Employees to Jobs Matching",
@@ -2331,7 +2340,10 @@
 		"EMPLOYEES": "Employees",
 		"AVAILABLE_JOBS": "Available Jobs",
 		"APPLIED_JOBS": "Applied Jobs",
-		"JOB_SEARCH_STATUS": "Job Search Status"
+		"JOB_SEARCH_STATUS": "Job Search Status",
+    "BROWSE":"Browse",
+    "SEARCH":"Search",
+    "HISTORY":"History"
 	},
 	"PROPOSAL_TEMPLATE": {
 		"PROPOSAL_TEMPLATE": "Proposal Template",
@@ -2350,7 +2362,9 @@
 		"PROPOSAL_DELETE_MESSAGE": "Proposal template '{{ name }}' was removed",
 		"PROPOSAL_MAKE_DEFAULT_MESSAGE": "Proposal template '{{ name }}' set as default",
 		"YES": "Yes",
-		"NO": "No"
+		"NO": "No",
+    "BROWSE":"Browse",
+    "SEARCH":"Search"
 	},
 	"SPRINTS_PAGE": {
 		"SPRINT_ADDED": "Sprint added",
@@ -3526,7 +3540,7 @@
 	"ACTIVITY": {
 		"SCREENSHOTS": "Screenshots",
 		"PERCENT_USED": "Percent used",
-		"TIME_SPENT": "Time spent (hrs)",
+		"TIME_SPENT": "Time spent (hours)",
 		"APPS": "Apps",
 		"VISITED_SITES": "Visited Sites",
 		"NO_ACTIVITIES": "No activities",
@@ -3537,7 +3551,8 @@
 		"MINUTES": "Minutes",
 		"NO_SCREENSHOTS": "No Screenshots",
 		"NO_EMPLOYEES_SELECTED": "Please select Employee",
-		"DELETE_CONFIRM": "Are you sure you want to delete this screenshots and activities?"
+		"DELETE_CONFIRM": "Are you sure you want to delete this screenshots and activities?",
+    "VISITED_DATES":"Visited Dates"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Let's create your first organization",
@@ -3660,7 +3675,16 @@
 		"HEADER_FORM_CREATE": "Create Pipeline",
 		"RECORD_TYPE": "pipeline \"{{ name }}\"",
 		"ACTIVE": "Active",
-		"INACTIVE": "Inactive"
+		"INACTIVE": "Inactive",
+    "BROWSE":"Browse",
+    "SEARCH":"Search",
+    "SEARCH_PIPELINE":"Search Pipeline",
+    "NAME":"Name",
+    "STAGE":"Stage",
+    "SEARCH_STAGE":"Search Stage",
+    "STATUS":"Status",
+    "ALL_STATUS":"All Status",
+    "RESET":"Reset"
 	},
 	"PIPELINE_DEALS_PAGE": {
 		"HEADER": "Pipeline Deals",

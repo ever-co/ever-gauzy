@@ -10,12 +10,13 @@ import { Store } from './../../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	templateUrl: './event-type-mutation.component.html'
+	templateUrl: './event-type-mutation.component.html',
+  styleUrls:['./event-type-mutation.component.scss']
 })
 export class EventTypeMutationComponent
 	extends TranslationBaseComponent
 	implements OnInit {
-		
+
 	public organization: IOrganization;
 	eventType: IEventTypeViewModel;
 	durationUnits: string[] = ['Minute(s)', 'Hour(s)', 'Day(s)'];
@@ -56,7 +57,7 @@ export class EventTypeMutationComponent
 			.subscribe();
 	}
 
-	onEmployeeChange(event) { 
+	onEmployeeChange(event) {
 		this.form.patchValue({ employeeId: event });
 		this.form.updateValueAndValidity();
 	}

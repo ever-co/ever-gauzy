@@ -17,10 +17,11 @@ import { IDailyActivity } from '@gauzy/contracts';
 export class ActivityItemComponent implements OnInit, OnDestroy {
 	childOpen: boolean;
 	private _item: IDailyActivity;
+	private _visitedDate: string;
 
 	@Output() loadChild: EventEmitter<any> = new EventEmitter();
 	@Input() allowChild = false;
-	
+
 	public get item(): IDailyActivity {
 		return this._item;
 	}
@@ -29,6 +30,13 @@ export class ActivityItemComponent implements OnInit, OnDestroy {
 			parseInt(value.durationPercentage + '', 10).toFixed(1)
 		);
 		this._item = value;
+	}
+
+	public get visitedDate() {
+		return this._visitedDate;
+	}
+	@Input() public set visitedDate(value: string) {
+		this._visitedDate = value;
 	}
 
 	progressStatus = progressStatus;
@@ -43,6 +51,6 @@ export class ActivityItemComponent implements OnInit, OnDestroy {
 			this.loadChild.emit(this.item);
 		}
 	}
-	
+
 	ngOnDestroy(): void {}
 }

@@ -1,4 +1,10 @@
-import { Component, OnInit, ViewChild, OnDestroy, AfterViewInit } from '@angular/core';
+import {
+	Component,
+	OnInit,
+	ViewChild,
+	OnDestroy,
+	AfterViewInit
+} from '@angular/core';
 import { Router, RouterEvent, NavigationEnd } from '@angular/router';
 import { filter, tap, debounceTime } from 'rxjs/operators';
 import { Subject, firstValueFrom } from 'rxjs';
@@ -12,11 +18,19 @@ import {
 	IApprovalPolicyFindInput,
 	IOrganization
 } from '@gauzy/contracts';
-import { TranslationBaseComponent } from '../../@shared/language-base';
 import { ApprovalPolicyMutationComponent } from '../../@shared/approval-policy';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import { ComponentEnum } from '../../@core/constants';
-import { ApprovalPolicyService, Store, ToastrService } from '../../@core/services';
+import { distinctUntilChange } from '@gauzy/common-angular';
+import {
+	ApprovalPolicyService,
+	Store,
+	ToastrService
+} from '../../@core/services';
+import {
+	PaginationFilterBaseComponent,
+	IPaginationBase
+} from '../../@shared/pagination/pagination-filter-base.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -25,14 +39,14 @@ import { ApprovalPolicyService, Store, ToastrService } from '../../@core/service
 	styleUrls: ['./approval-policy.component.scss']
 })
 export class ApprovalPolicyComponent
-	extends TranslationBaseComponent
-	implements AfterViewInit, OnInit, OnDestroy {
-	
+	extends PaginationFilterBaseComponent
+	implements AfterViewInit, OnInit, OnDestroy
+{
 	public settingsSmartTable: object;
-	
+
 	public loading: boolean;
 	public disableButton = true;
-	
+
 	public selectedApprovalPolicy: IApprovalPolicy;
 	public smartTableSource = new LocalDataSource();
 	approvalPolicies: IApprovalPolicy[] = [];
@@ -40,7 +54,7 @@ export class ApprovalPolicyComponent
 	viewComponentName: ComponentEnum = ComponentEnum.APPROVAL_POLICY;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
-	
+
 	public organization: IOrganization;
 	policies$: Subject<any> = new Subject();
 
@@ -75,16 +89,27 @@ export class ApprovalPolicyComponent
 		this.policies$
 			.pipe(
 				debounceTime(300),
-				tap(() => this.loading = true),
 				tap(() => this.getApprovalPolicies()),
 				tap(() => this.clearItem()),
+				tap(() => this.subject$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.pagination$
+			.pipe(
+				debounceTime(100),
+				distinctUntilChange(),
+				tap(() => this.policies$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization: IOrganization) => !!organization),
-				tap((organization: IOrganization) => this.organization = organization),
+				tap(
+					(organization: IOrganization) =>
+						(this.organization = organization)
+				),
 				tap(() => this.policies$.next(true)),
 				untilDestroyed(this)
 			)
@@ -102,7 +127,17 @@ export class ApprovalPolicyComponent
 		this.store
 			.componentLayout$(this.viewComponentName)
 			.pipe(
-				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
+				tap(
+					(componentLayout) =>
+						(this.dataLayoutStyle = componentLayout)
+				),
+				tap(() => {
+					if (
+						this.componentLayoutStyleEnum.CARDS_GRID ===
+						this.dataLayoutStyle
+					)
+						this._loadGridLayoutData();
+				}),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -121,24 +156,46 @@ export class ApprovalPolicyComponent
 	}
 
 	async getApprovalPolicies() {
+		this.loading = true;
 		try {
 			const { tenantId } = this.store.user;
 			const { id: organizationId } = this.organization;
+			const { activePage, itemsPerPage } = this.getPagination();
 			const { items = [] } = await this.approvalPolicyService.getAll(
-				['organization'], { tenantId, organizationId } as IApprovalPolicyFindInput
+				['organization'],
+				{ tenantId, organizationId } as IApprovalPolicyFindInput
 			);
 			this.approvalPolicies = items;
+			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
 			this.smartTableSource.load(items);
+			if (
+				this.componentLayoutStyleEnum.CARDS_GRID ===
+				this.dataLayoutStyle
+			)
+				this._loadGridLayoutData();
 		} catch (error) {
 			console.log('Error while retrieving approval policies', error);
 		} finally {
+			this.setPagination({
+				...this.getPagination(),
+				totalItems: this.smartTableSource.count()
+			});
 			this.loading = false;
 		}
 	}
 
+	private async _loadGridLayoutData() {
+		this.approvalPolicies = await this.smartTableSource.getElements();
+	}
+
 	private _loadSmartTableSettings() {
+		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
 			actions: false,
+			pager: {
+				display: false,
+				perPage: pagination ? pagination : 10
+			},
 			columns: {
 				name: {
 					title: this.getTranslation(
@@ -174,16 +231,24 @@ export class ApprovalPolicyComponent
 					data: selectedItem
 				});
 			}
-			const dialog = this.dialogService.open(ApprovalPolicyMutationComponent, {
-				context: {
-					approvalPolicy: this.selectedApprovalPolicy
+			const dialog = this.dialogService.open(
+				ApprovalPolicyMutationComponent,
+				{
+					context: {
+						approvalPolicy: this.selectedApprovalPolicy
+					}
 				}
-			});
-			const result: IApprovalPolicy = await firstValueFrom(dialog.onClose);
+			);
+			const result: IApprovalPolicy = await firstValueFrom(
+				dialog.onClose
+			);
 			if (result) {
-				this.toastrService.success('TOASTR.MESSAGE.APPROVAL_POLICY_UPDATED', {
-					name: result.name
-				});
+				this.toastrService.success(
+					'TOASTR.MESSAGE.APPROVAL_POLICY_UPDATED',
+					{
+						name: result.name
+					}
+				);
 				this.policies$.next(true);
 			}
 		} catch (error) {
@@ -196,13 +261,17 @@ export class ApprovalPolicyComponent
 			const dialog = this.dialogService.open(
 				ApprovalPolicyMutationComponent
 			);
-			const result: IApprovalPolicy = await firstValueFrom(dialog.onClose);
+			const result: IApprovalPolicy = await firstValueFrom(
+				dialog.onClose
+			);
 			if (result) {
-				this.toastrService.success('TOASTR.MESSAGE.APPROVAL_POLICY_CREATED', {
-					name: result.name
-				});
+				this.toastrService.success(
+					'TOASTR.MESSAGE.APPROVAL_POLICY_CREATED',
+					{
+						name: result.name
+					}
+				);
 				this.policies$.next(true);
-
 			}
 		} catch (error) {
 			console.log('Error while creating approval policy', error);
@@ -221,18 +290,21 @@ export class ApprovalPolicyComponent
 				data: selectedItem
 			});
 		}
-		const result = await firstValueFrom(this.dialogService
-			.open(DeleteConfirmationComponent)
-			.onClose);
+		const result = await firstValueFrom(
+			this.dialogService.open(DeleteConfirmationComponent).onClose
+		);
 
 		if (result) {
 			await this.approvalPolicyService.delete(
 				this.selectedApprovalPolicy.id
 			);
 			const { name } = this.selectedApprovalPolicy;
-			this.toastrService.success( 'TOASTR.MESSAGE.APPROVAL_POLICY_DELETED', { 
-				name 
-			});
+			this.toastrService.success(
+				'TOASTR.MESSAGE.APPROVAL_POLICY_DELETED',
+				{
+					name
+				}
+			);
 		}
 		this.policies$.next(true);
 	}

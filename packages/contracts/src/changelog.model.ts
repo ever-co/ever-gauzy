@@ -5,7 +5,9 @@ export interface IChangelog extends IBaseEntityModel {
 	title?: string;
 	date?: Date;
 	content?: string;
+	isFeature?: boolean;
 	learnMoreUrl?: string;
+	imageUrl?: string;
 }
 
 export interface IChangelogCreateInput extends IBaseEntityModel {
@@ -13,11 +15,14 @@ export interface IChangelogCreateInput extends IBaseEntityModel {
 	title?: string;
 	date?: Date;
 	content?: string;
+	isFeature?: boolean;
 	learnMoreUrl?: string;
+	imageUrl?: string;
 }
 
 export interface IChangelogFindInput extends IBaseEntityModel {
 	date?: string;
+	isFeature?: boolean;
 }
 
 export interface IChangelogUpdateInput extends IChangelogCreateInput {

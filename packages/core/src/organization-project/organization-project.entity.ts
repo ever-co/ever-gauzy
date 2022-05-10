@@ -16,7 +16,8 @@ import {
 	IsOptional,
 	IsDate,
 	IsEnum,
-	IsBoolean
+	IsBoolean,
+	IsNumber
 } from 'class-validator';
 import {
 	IOrganizationProject,
@@ -163,6 +164,11 @@ export class OrganizationProject
 		default: OrganizationProjectBudgetTypeEnum.COST
 	})
 	budgetType?: OrganizationProjectBudgetTypeEnum;
+
+	@ApiProperty({ type: () => Number })
+	@IsNumber()
+	@Column({ nullable: true, default: 0 })
+	membersCount?: number;
 
 	/*
     |--------------------------------------------------------------------------

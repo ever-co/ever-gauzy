@@ -1,5 +1,11 @@
 import { HttpClient } from '@angular/common/http';
-import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import {
+	Component,
+	OnDestroy,
+	OnInit,
+	ViewChild,
+	AfterViewInit
+} from '@angular/core';
 import {
 	IApplyJobPostInput,
 	IEmployeeJobPost,
@@ -17,7 +23,6 @@ import { JobService } from 'apps/gauzy/src/app/@core/services/job.service';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
 import { AvatarComponent } from 'apps/gauzy/src/app/@shared/components/avatar/avatar.component';
-import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { Ng2SmartTableComponent, ServerDataSource } from 'ng2-smart-table';
 import {
 	Nl2BrPipe,
@@ -29,6 +34,9 @@ import { Subject, Subscription, timer } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { ProposalTemplateService } from '../../proposal-template/proposal-template.service';
 import { API_PREFIX } from 'apps/gauzy/src/app/@core/constants/app.constants';
+import { PaginationFilterBaseComponent } from '../../../../@shared/pagination/pagination-filter-base.component';
+import { distinctUntilChange } from '@gauzy/common-angular';
+import { ChangeDetectorRef } from '@angular/core';
 
 @UntilDestroy()
 @Component({
@@ -37,40 +45,18 @@ import { API_PREFIX } from 'apps/gauzy/src/app/@core/constants/app.constants';
 	styleUrls: ['./search.component.scss']
 })
 export class SearchComponent
-	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
+	extends PaginationFilterBaseComponent
+	implements OnInit, OnDestroy, AfterViewInit
+{
 	loading = false;
 	autoRefresh = false;
 	settingsSmartTable: any = {
 		editable: false,
 		hideSubHeader: true,
-		actions: {
-			columnTitle: this.getTranslation('JOBS.ACTIONS'),
-			add: false,
-			edit: false,
-			delete: false,
-			position: 'right',
-			mode: 'external',
-			custom: [
-				{
-					name: 'view',
-					title: `<span class="btn btn-primary">${this.getTranslation(
-						'JOBS.VIEW'
-					)}</span>`
-				},
-				{
-					name: 'apply',
-					title: `<span class="btn btn-success">${this.getTranslation(
-						'JOBS.APPLY'
-					)}</span>`
-				},
-				{
-					name: 'hide',
-					title: `<span class="btn btn-danger">${this.getTranslation(
-						'JOBS.HIDE'
-					)}</span>`
-				}
-			]
+		actions: false,
+		pager: {
+			display: false,
+			perPage: this.pagination.itemsPerPage
 		}
 	};
 	isOpenAdvancedFilter = false;
@@ -93,6 +79,13 @@ export class SearchComponent
 	smartTableSource: ServerDataSource;
 	autoRefreshTimer: Subscription;
 
+	selectedJob = {
+		data: null,
+		isSelected: false
+	};
+
+	selectedTab: any;
+
 	jobSearchTable: Ng2SmartTableComponent;
 	@ViewChild('jobSearchTable') set content(content: Ng2SmartTableComponent) {
 		if (content) {
@@ -109,21 +102,47 @@ export class SearchComponent
 		private toastrService: ToastrService,
 		private jobService: JobService,
 		private nl2BrPipe: Nl2BrPipe,
-		private truncatePipe: TruncatePipe
+		private truncatePipe: TruncatePipe,
+		private cd: ChangeDetectorRef
 	) {
 		super(translateService);
 	}
 
 	ngOnInit(): void {
 		this._applyTranslationOnSmartTable();
+		this.loadSmartTable();
+	}
+
+	ngAfterViewInit(): void {
+		this.subject$
+			.pipe(
+				debounceTime(100),
+				tap(() => this.cd.detectChanges()),
+				tap(() => this.loadSmartTable()),
+				tap(() => this.getEmployeesJob()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.pagination$
+			.pipe(
+				debounceTime(100),
+				distinctUntilChange(),
+				tap(() => this.subject$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this.updateJobs$
-			.pipe(untilDestroyed(this), debounceTime(500))
-			.subscribe(() => {
-				this.loadSmartTable();
-			});
+			.pipe(
+				tap(() => this.subject$.next(true)),
+				untilDestroyed(this),
+				debounceTime(500)
+			)
+			.subscribe();
 		this.store.selectedEmployee$
 			.pipe(
 				filter((employee) => !!employee),
+				tap(() => this.refreshPagination()),
+				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe((employee) => {
@@ -134,7 +153,6 @@ export class SearchComponent
 					this.selectedEmployee = null;
 					this.jobRequest.employeeIds = [];
 				}
-				this.updateJobs$.next(true);
 			});
 	}
 
@@ -145,7 +163,6 @@ export class SearchComponent
 	}
 
 	getEmployeeDefaultProposalTemplate(job: IJobMatchings) {
-		console.log({ job });
 		return this.proposalTemplateService
 			.getAll({
 				where: {
@@ -230,9 +247,10 @@ export class SearchComponent
 					this.smartTableSource.refresh();
 
 					if (resp.isRedirectRequired) {
-						const proposalTemplate = await this.getEmployeeDefaultProposalTemplate(
-							$event.data
-						);
+						const proposalTemplate =
+							await this.getEmployeeDefaultProposalTemplate(
+								$event.data
+							);
 						if (proposalTemplate) {
 							await this.copyTextToClipboard(
 								proposalTemplate.content
@@ -261,6 +279,59 @@ export class SearchComponent
 		}
 	}
 
+	onSelectJob(event: any) {
+		this.selectedJob = event;
+	}
+
+	public viewJob() {
+		if (this.selectedJob.data.jobPost) {
+			window.open(this.selectedJob.data.jobPost.url, '_blank');
+		}
+	}
+
+	public hideJob() {
+		if (!this.selectedJob) {
+			return;
+		}
+		const hideRequest: IVisibilityJobPostInput = {
+			hide: true,
+			employeeId: this.selectedJob.data.employeeId,
+			providerCode: this.selectedJob.data.jobPost.providerCode,
+			providerJobId: this.selectedJob.data.jobPost.providerJobId
+		};
+		this.jobService.hideJob(hideRequest).then(() => {
+			this.toastrService.success('TOASTR.MESSAGE.JOB_HIDDEN');
+			this.smartTableSource.refresh();
+		});
+	}
+
+	public applyToJob() {
+		if (!this.selectedJob) {
+			return;
+		}
+		const applyRequest: IApplyJobPostInput = {
+			applied: true,
+			employeeId: this.selectedJob.data.employeeId,
+			providerCode: this.selectedJob.data.jobPost.providerCode,
+			providerJobId: this.selectedJob.data.jobPost.providerJobId
+		};
+		this.jobService.applyJob(applyRequest).then(async (resp) => {
+			this.toastrService.success('TOASTR.MESSAGE.JOB_APPLIED');
+			this.smartTableSource.refresh();
+
+			if (resp.isRedirectRequired) {
+				const proposalTemplate =
+					await this.getEmployeeDefaultProposalTemplate(
+						this.selectedJob.data
+					);
+				if (proposalTemplate) {
+					await this.copyTextToClipboard(proposalTemplate.content);
+				}
+				window.open(this.selectedJob.data.jobPost.url, '_blank');
+			}
+		});
+	}
+
 	public getInstance(): ServerDataSource {
 		return new ServerDataSource(this.http, {
 			endPoint: `${API_PREFIX}/employee-job`,
@@ -274,10 +345,15 @@ export class SearchComponent
 		});
 	}
 
-	loadSmartTable() {
+	async loadSmartTable() {
 		//create ServerDataSource singleton instance
 		if (!this.smartTableSource) {
 			this.smartTableSource = this.getInstance();
+			await this.smartTableSource.getElements();
+			this.setPagination({
+				...this.getPagination(),
+				totalItems: this.smartTableSource.count()
+			});
 		}
 		this.smartTableSource.setSort(
 			[{ field: 'status', direction: 'asc' }],
@@ -319,9 +395,9 @@ export class SearchComponent
 											row.employee && row.employee.user
 												? row.employee.user.imageUrl
 												: null,
-										id: row.employee 
-												? row.employee.id 
-												: null
+										id: row.employee
+											? row.employee.id
+											: null
 									};
 								}
 							}
@@ -362,7 +438,7 @@ export class SearchComponent
 				},
 				jobStatus: {
 					title: this.getTranslation('JOBS.STATUS'),
-					width: '15%',
+					width: '5%',
 					filter: false,
 					type: 'custom',
 					sort: false,
@@ -446,6 +522,19 @@ export class SearchComponent
 			this.jobSearchTable.grid.dataSet['willSelect'] = 'false';
 			this.jobSearchTable.grid.dataSet.deselectAll();
 		}
+	}
+
+	private async getEmployeesJob() {
+		try {
+			const { activePage, itemsPerPage } = this.getPagination();
+			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
+		} catch (error) {
+			this.toastrService.danger(error);
+		}
+	}
+
+	onTabChange(event) {
+		this.selectedTab = event;
 	}
 
 	ngOnDestroy(): void {}

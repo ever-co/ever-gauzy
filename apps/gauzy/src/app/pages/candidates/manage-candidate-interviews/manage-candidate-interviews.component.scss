@@ -1,5 +1,33 @@
+@import 'themes';
+
 ::ng-deep {
-    .nb-theme-default .tab-link:focus {
-        outline: none !important;
+  .nb-theme-default .tab-link:focus {
+    outline: none !important;
+  }
+}
+:host {
+  nb-card {
+    nb-card-body {
+      overflow: unset;
+      height: calc(100vh - 20rem);
     }
+  }
+  ::ng-deep .route-tabset .route-tab a.tab-link {
+    border-radius: nb-theme(border-radius) nb-theme(border-radius) 0 0;
+    span.tab-text {
+      text-transform: lowercase;
+      display: block;
+      &:first-letter {
+        text-transform: uppercase;
+      }
+    }
+  }
+}
+.add-btn {
+  position: absolute;
+  right: 1rem;
+  top: -8px;
+  background-color: rgba(50, 50, 50, 0.03);
+  padding: 8px;
+  border-radius: nb-theme(button-rectangle-border-radius);
 }

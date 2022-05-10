@@ -1,1 +1,22 @@
 @import 'gauzy/_gauzy-table.scss';
+
+:host {
+  nb-tab.content-active {
+    padding: 1rem;
+  }
+  nb-card,
+  nb-tab {
+    background-color: rgba(50, 50, 50, 0.03);
+  }
+}
+.gauzy-button-container {
+  position: absolute;
+  right: 0;
+  top: 0;
+}
+nb-accordion-item-header ::ng-deep nb-icon {
+  border: 1px solid nb-theme(border-basic-color-4);
+  border-radius: nb-theme(input-rectangle-border-radius);
+  width: 1.75rem;
+  height: 1.75rem;
+}

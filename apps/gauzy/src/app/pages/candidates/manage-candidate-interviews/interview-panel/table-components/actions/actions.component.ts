@@ -32,14 +32,14 @@ import { TranslateService } from '@ngx-translate/core';
 			<span class="title">
 				{{ rowData?.updatedAt | date: 'short' }}
 			</span>
-			<div class="btn">
+			<div class="btn" *ngIf="!rowData.hideActions">
 				<nb-icon
 					*ngIf="isPastInterview(rowData)"
 					(click)="addFeedback()"
 					nbTooltip="{{
 						'CANDIDATES_PAGE.MANAGE_INTERVIEWS.ADD_FEEDBACK'
 							| translate
-					}} 
+					}}
 					({{ rowData.feedbacks.length }}/{{ rowData.interviewers.length }})"
 					nbTooltipPlacement="top"
 					icon="message-square-outline"
@@ -115,14 +115,18 @@ import { TranslateService } from '@ngx-translate/core';
 			}
 			.badge {
 				text-align: center;
-				padding: 5px;
-				margin: 0 3px;
+				padding: 4px 8px;
+				font-size: 12px;
+				font-weight: 600;
+				line-height: 15px;
+				letter-spacing: 0em;
+				text-align: left;
 			}
 			.update {
 				display: flex;
 				flex-direction: column;
 				justify-content: center;
-				align-items: center;
+				align-items: flex-start;
 			}
 			.title {
 				color: #8f9bb3;
@@ -152,7 +156,8 @@ import { TranslateService } from '@ngx-translate/core';
 })
 export class InterviewActionsTableComponent
 	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
+	implements OnInit, OnDestroy
+{
 	@Input() rowData: any;
 	@Output() updateResult = new EventEmitter<any>();
 	constructor(readonly translateService: TranslateService) {

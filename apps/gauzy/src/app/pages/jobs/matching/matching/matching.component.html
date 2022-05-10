@@ -10,12 +10,10 @@
 		<div class="row">
 			<div class="col-sm-6">
 				<div class="form-group row">
-					<label class="col-sm-4">{{
-						'JOB_MATCHING.SOURCE' | translate
-					}}</label>
+					<label>{{ 'JOB_MATCHING.SOURCE' | translate }}</label>
 					<nb-select
 						[placeholder]="'JOB_MATCHING.SOURCE' | translate"
-						class="w-100 col-sm-8"
+						fullWidth
 						(selectedChange)="onSourceSelected()"
 						[(ngModel)]="criterionForm.jobSource"
 					>
@@ -27,14 +25,17 @@
 						>
 					</nb-select>
 				</div>
-
-				<div class="row form-group">
-					<label class="d-block col-sm-4">{{
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-sm-6">
+				<div class="form-group row">
+					<label class="d-block">{{
 						'JOB_MATCHING.PRESET' | translate
 					}}</label>
-					<div class="w-100 col-sm-8">
+					<div class="w-100">
 						<div class="row">
-							<div class="col">
+							<div class="col-12">
 								<ng-select
 									[addTag]="
 										!selectedEmployeeId ? addPreset : null
@@ -52,7 +53,7 @@
 								>
 								</ng-select>
 							</div>
-							<div class="col-auto">
+							<div class="col-12">
 								<ng-template
 									[ngIf]="
 										criterionForm?.jobPresetId &&
@@ -81,7 +82,6 @@
 				</div>
 			</div>
 		</div>
-
 		<div
 			class="row align-items-center my-3"
 			*ngIf="selectedEmployeeId || criterionForm?.jobPresetId"

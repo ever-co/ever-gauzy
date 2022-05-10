@@ -1,4 +1,4 @@
-<nb-card>
+<nb-card class="m-3">
 	<nb-card-body>
 		<form [formGroup]="form">
 			<div class="row">
@@ -33,7 +33,9 @@
 							[placeholder]="'POP_UPS.PICK_DATE' | translate"
 							autocomplete="off"
 							[status]="
-								form.get('acceptDate').invalid ? 'danger' : 'basic'
+								form.get('acceptDate').invalid
+									? 'danger'
+									: 'basic'
 							"
 						/>
 						<nb-datepicker #acceptDatePicker></nb-datepicker>
@@ -55,7 +57,9 @@
 							[placeholder]="'POP_UPS.PICK_DATE' | translate"
 							autocomplete="off"
 							[status]="
-								form.get('rejectDate').invalid ? 'danger' : 'basic'
+								form.get('rejectDate').invalid
+									? 'danger'
+									: 'basic'
 							"
 						/>
 						<nb-datepicker #rejectDatePicker></nb-datepicker>

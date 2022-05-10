@@ -72,7 +72,7 @@ export class ServerDataSource extends LocalDataSource {
 
     /**
     * Extracts total rows count from the server response
-    * Looks for the count in the heders first, then in the response body
+    * Looks for the count in the headers first, then in the response body
     * @param res
     * @returns {any}
     */

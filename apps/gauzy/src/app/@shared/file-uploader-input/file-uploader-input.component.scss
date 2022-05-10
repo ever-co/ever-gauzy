@@ -1,18 +1,29 @@
+@import 'themes';
+
 .row.file-uploader-container {
-	padding-left: 14px;
-	padding-right: 16px;
+  padding-left: 14px;
+  padding-right: 16px;
+  position: relative;
 
-	button {
-		padding: 0 !important;
-		border-radius: 0px;
-		border-top-right-radius: 0.375rem;
-		border-bottom-right-radius: 0.375rem;
-		margin: 0;
-	}
+  button {
+    position: absolute;
+    right: 22px;
+    top: calc(50% - 24px / 2);
+    height: 24px;
+    border-width: 2px;
+    border-color: nb-theme(color-primary-transparent-default);
+  }
 
-	input {
-		border-radius: 0px !important;
-		border-top-left-radius: 0.375rem !important;
-		border-bottom-left-radius: 0.375rem !important;
-	}
+  input {
+    padding-right: 6rem;
+    border-radius: nb-theme(border-radius);
+  }
+
+  .text {
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 16px;
+    letter-spacing: -0.009em;
+    text-align: left;
+  }
 }

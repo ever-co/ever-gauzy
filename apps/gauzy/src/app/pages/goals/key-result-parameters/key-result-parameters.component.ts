@@ -20,7 +20,8 @@ import { Store } from '../../../@core/services/store.service';
 
 @Component({
 	selector: 'ga-key-result-parameters',
-	templateUrl: './key-result-parameters.component.html'
+	templateUrl: './key-result-parameters.component.html',
+	styleUrls: ['../edit-keyresults/edit-keyresults.component.scss']
 })
 export class KeyResultParametersComponent implements OnInit, OnDestroy {
 	weightForm: FormGroup;
@@ -132,8 +133,10 @@ export class KeyResultParametersComponent implements OnInit, OnDestroy {
 				});
 		}
 		this.data.selectedKeyResult.type = this.typeForm.value.type;
-		this.data.selectedKeyResult.targetValue = this.typeForm.value.targetValue;
-		this.data.selectedKeyResult.initialValue = this.typeForm.value.initialValue;
+		this.data.selectedKeyResult.targetValue =
+			this.typeForm.value.targetValue;
+		this.data.selectedKeyResult.initialValue =
+			this.typeForm.value.initialValue;
 		this.data.selectedKeyResult.weight = this.weightForm.value.weight;
 		this.keyResultService.update(this.data.selectedKeyResult.id, {
 			...this.data.selectedKeyResult
