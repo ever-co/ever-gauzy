@@ -313,7 +313,7 @@ export class PagesComponent
 				children: [
 					{
 						title: 'Dashboard',
-						icon: 'list-outline',
+						icon: 'fas fa-th',
 						link: '/pages/tasks/dashboard',
 						data: {
 							translationKey: 'MENU.DASHBOARD',
@@ -322,7 +322,7 @@ export class PagesComponent
 					},
 					{
 						title: 'My Tasks',
-						icon: 'person-outline',
+						icon: 'fas fa-user',
 						link: '/pages/tasks/me',
 						data: {
 							translationKey: 'MENU.MY_TASKS',
@@ -332,7 +332,7 @@ export class PagesComponent
 					},
 					{
 						title: "Team's Tasks",
-						icon: 'people-outline',
+						icon: 'fas fa-user-friends',
 						link: '/pages/tasks/team',
 						data: {
 							translationKey: 'MENU.TEAM_TASKS',
