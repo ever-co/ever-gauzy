@@ -40,27 +40,27 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 			const request = new TimeOffRequest();
 			Object.assign(request, entity);
 
-			const timeOffRequestSaved = await this.timeOffRequestRepository.save(
-				request
-			);
+			const tenantId = RequestContext.currentTenantId();
+			const currentUser = RequestContext.currentUser();
+
+			const timeOffRequest = await this.timeOffRequestRepository.save(request);
 
 			const requestApproval = new RequestApproval();
-			requestApproval.requestId = timeOffRequestSaved.id;
-			requestApproval.requestType =
-				ApprovalPolicyTypesStringEnum.TIME_OFF;
-			requestApproval.status = timeOffRequestSaved.status
-				? StatusTypesMapRequestApprovalEnum[timeOffRequestSaved.status]
+			requestApproval.requestId = timeOffRequest.id;
+			requestApproval.requestType = ApprovalPolicyTypesStringEnum.TIME_OFF;
+			requestApproval.status = timeOffRequest.status
+				? StatusTypesMapRequestApprovalEnum[timeOffRequest.status]
 				: RequestApprovalStatusTypesEnum.REQUESTED;
 
-			requestApproval.createdBy = RequestContext.currentUser().id;
-			requestApproval.createdByName = RequestContext.currentUser().name;
+			requestApproval.createdBy = currentUser.id;
+			requestApproval.createdByName = currentUser.name;
 			requestApproval.name = 'Request time off';
 			requestApproval.min_count = 1;
-			requestApproval.organizationId = timeOffRequestSaved.organizationId;
-			requestApproval.tenantId = timeOffRequestSaved.tenantId;
+			requestApproval.organizationId = timeOffRequest.organizationId;
+			requestApproval.tenantId = tenantId;
 
 			await this.requestApprovalRepository.save(requestApproval);
-			return timeOffRequestSaved;
+			return timeOffRequest;
 		} catch (err) {
 			throw new BadRequestException(err);
 		}
@@ -99,8 +99,6 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 				begin: start,
 				end: end
 			});
-			
-			console.log(query.getQueryAndParameters());
 			const items = await query.getMany();
 			return { items, total: items.length };
 		} catch (err) {
@@ -112,8 +110,14 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 		id: string,
 		timeOffRequest: ITimeOffCreateInput
 	) {
-		await this.timeOffRequestRepository.delete(id);
-		return await this.timeOffRequestRepository.save(timeOffRequest);
+		try {
+			return await this.timeOffRequestRepository.save({
+				id,
+				...timeOffRequest
+			});
+		} catch (error) {
+			throw new BadRequestException(error);
+		}
 	}
 
 	async updateStatusTimeOffByAdmin(
@@ -162,7 +166,6 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 				delete filter['where']['endDate'];
 			}
 		}
-		console.log({ filter });
 		return super.paginate(filter);
 	}
 }
