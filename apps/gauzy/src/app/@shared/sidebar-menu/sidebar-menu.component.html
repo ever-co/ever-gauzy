@@ -1,1 +1,19 @@
-<p>sidebar-menu works!</p>
+<div class="menu-container">
+	<nb-accordion class="mt-1" *ngFor="let item of menu">
+		<nb-accordion-item>
+			<nb-accordion-item-header>
+			    <i [class]="item?.icon"></i>{{ item.title }}
+			</nb-accordion-item-header>
+			<nb-accordion-item-body *ngIf="item?.children?.length > 0">
+				<div *ngFor="let subItem of item.children">
+					<ng-container
+						*ngxPermissionsOnly="subItem.data.permissionKeys"
+					>
+						{{ subItem.title }}
+						<hr class="custom-separator" *ngIf="item.children.at(-1) !== subItem" />
+					</ng-container>
+				</div>
+			</nb-accordion-item-body>
+		</nb-accordion-item>
+	</nb-accordion>
+</div>
