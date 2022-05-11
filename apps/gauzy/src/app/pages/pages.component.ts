@@ -230,7 +230,7 @@ export class PagesComponent
 				children: [
 					{
 						title: 'Proposals',
-						icon: 'paper-plane-outline',
+						icon: 'fas fa-paper-plane',
 						link: '/pages/sales/proposals',
 						data: {
 							translationKey: 'MENU.PROPOSALS',
@@ -242,7 +242,7 @@ export class PagesComponent
 					},
 					{
 						title: 'Estimates',
-						icon: 'file-outline',
+						icon: 'far fa-file',
 						link: '/pages/sales/invoices/estimates',
 						data: {
 							translationKey: 'MENU.ESTIMATES',
@@ -255,7 +255,7 @@ export class PagesComponent
 					},
 					{
 						title: 'Invoices',
-						icon: 'file-text-outline',
+						icon: 'far fa-file-alt',
 						link: '/pages/sales/invoices',
 						data: {
 							translationKey: 'MENU.INVOICES',
@@ -268,7 +268,7 @@ export class PagesComponent
 					},
 					{
 						title: 'Invoices Recurring',
-						icon: 'flip-outline',
+						icon: 'fas fa-repeat',
 						link: '/pages/sales/invoices/recurring',
 						data: {
 							translationKey: 'MENU.RECURRING_INVOICES',
@@ -281,7 +281,7 @@ export class PagesComponent
 					},
 					{
 						title: 'Payments',
-						icon: 'clipboard-outline',
+						icon: 'fas fa-cash-register',
 						link: '/pages/sales/payments',
 						data: {
 							translationKey: 'MENU.PAYMENTS',
@@ -291,7 +291,7 @@ export class PagesComponent
 					},
 					{
 						title: 'Pipelines',
-						icon: 'funnel-outline',
+						icon: 'fas fa-filter',
 						link: '/pages/sales/pipelines',
 						data: {
 							translationKey: 'MENU.PIPELINES',
