@@ -708,7 +708,7 @@ export class PagesComponent
 						title: 'Manage',
 						link: '/pages/goals',
 						pathMatch: 'full',
-						icon: 'list-outline',
+						icon: 'fas fa-list',
 						data: {
 							translationKey: 'MENU.MANAGE',
 							featureKey: FeatureEnum.FEATURE_GOAL
@@ -717,7 +717,7 @@ export class PagesComponent
 					{
 						title: 'Report',
 						link: '/pages/goals/reports',
-						icon: 'file-text-outline',
+						icon: 'far fa-file-alt',
 						data: {
 							translationKey: 'MENU.REPORTS',
 							featureKey: FeatureEnum.FEATURE_GOAL_REPORT
@@ -726,7 +726,7 @@ export class PagesComponent
 					{
 						title: 'Settings',
 						link: '/pages/goals/settings',
-						icon: 'settings-outline',
+						icon: 'fas fa-cog',
 						data: {
 							translationKey: 'MENU.SETTINGS',
 							featureKey: FeatureEnum.FEATURE_GOAL_SETTING
