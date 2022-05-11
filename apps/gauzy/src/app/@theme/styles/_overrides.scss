@@ -1,17 +1,23 @@
 @import './themes';
 @import 'var';
 
-::-webkit-scrollbar {
+/* Apply style on scrollbar for Firefox */
+* {
+  scrollbar-color: rgba(50, 50, 50, 0.1) transparent;
+  scrollbar-width: thin;
+}
+/*  Apply style on scrollbar for Chrome */
+*::-webkit-scrollbar {
   width: nb-theme(scrollbar-width);
 }
 
-::-webkit-scrollbar-track {
-  background: nb-theme(scrollbar-background-color);
+*::-webkit-scrollbar-track {
+  background: transparent;
 }
 
-::-webkit-scrollbar-thumb {
-  background: nb-theme(scrollbar-color);
-  border-radius: 0.15625rem;
+*::-webkit-scrollbar-thumb {
+  background: rgba(50, 50, 50, 0.1);
+  border-radius: 1rem;
 }
 
 body {
@@ -136,15 +142,16 @@ body {
   nb-sidebar {
     nb-menu {
       .menu-items {
+        scrollbar-width: thin;
         &::-webkit-scrollbar {
           width: nb-theme(scrollbar-width);
         }
         &::-webkit-scrollbar-track {
-          background: nb-theme(scrollbar-background-color);
+          background: transparent;
         }
         &::-webkit-scrollbar-thumb {
-          background: nb-theme(scrollbar-color);
-          border-radius: 0.15625rem;
+          background: rgba(50, 50, 50, 0.1);
+          border-radius: 1rem;
         }
       }
     }
@@ -152,15 +159,16 @@ body {
 
   .ng-dropdown-panel {
     .scroll-host {
+      scrollbar-width: thin;
       &::-webkit-scrollbar {
         width: nb-theme(scrollbar-width);
       }
       &::-webkit-scrollbar-track {
-        background: nb-theme(scrollbar-background-color);
+        background: transparent;
       }
       &::-webkit-scrollbar-thumb {
-        background: nb-theme(scrollbar-color);
-        border-radius: 0.15625rem;
+        background: rgba(50, 50, 50, 0.1);
+        border-radius: 1rem;
       }
     }
   }
@@ -194,15 +202,15 @@ body {
     }
   }
 
-  @media screen and (min-width: nb-theme(layout-window-mode-max-width) + 20px) {
+  @media screen and (min-width: calc(nb-theme(layout-window-mode-max-width) + 20px)) {
     @include f-window-mode(nb-theme(layout-window-mode-padding-top) / 4);
   }
 
-  @media screen and (min-width: nb-theme(layout-window-mode-max-width) + 150px) {
+  @media screen and (min-width: calc(nb-theme(layout-window-mode-max-width) + 150px)) {
     @include f-window-mode(nb-theme(layout-window-mode-padding-top) / 2);
   }
 
-  @media screen and (min-width: nb-theme(layout-window-mode-max-width) + 300px) {
+  @media screen and (min-width: calc(nb-theme(layout-window-mode-max-width) + 300px)) {
     @include f-window-mode(nb-theme(layout-window-mode-padding-top));
   }
 
