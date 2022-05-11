@@ -64,3 +64,19 @@ export function dayOfWeekAsString(weekDay: WeekDaysEnum): number {
         WeekDaysEnum.SATURDAY
     ].indexOf(weekDay);
 }
+
+/**
+ * GET date range picker raw values only
+ * 
+ * @param range 
+ * @returns 
+ */
+export function getRawValuesFromRangePicker(
+    range: IDateRangePicker
+): ISelectedDateRange {
+    let { startDate, endDate } = range;
+    return {
+        startDate: startDate,
+        endDate: endDate
+    }
+}
