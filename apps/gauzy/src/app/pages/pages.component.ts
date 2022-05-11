@@ -149,7 +149,7 @@ export class PagesComponent
 					},
 					{
 						title: 'Invoices Recurring',
-						icon: 'fas fa-repeat',
+						icon: 'fas fa-exchange-alt fa-rotate-90',
 						link: '/pages/accounting/invoices/recurring',
 						pathMatch: 'prefix',
 						data: {
@@ -197,7 +197,7 @@ export class PagesComponent
 					},
 					{
 						title: 'Expense Recurring',
-						icon: 'fas fa-repeat',
+						icon: 'fas fa-exchange-alt fa-rotate-90',
 						link: '/pages/accounting/expense-recurring',
 						data: {
 							translationKey:
@@ -268,7 +268,7 @@ export class PagesComponent
 					},
 					{
 						title: 'Invoices Recurring',
-						icon: 'fas fa-repeat',
+						icon: 'fas fa-exchange-alt fa-rotate-90',
 						link: '/pages/sales/invoices/recurring',
 						data: {
 							translationKey: 'MENU.RECURRING_INVOICES',
@@ -402,7 +402,7 @@ export class PagesComponent
 				children: [
 					{
 						title: 'Manage',
-						icon: 'list-outline',
+						icon: 'fas fa-list',
 						link: '/pages/employees',
 						pathMatch: 'full',
 						data: {
@@ -415,7 +415,7 @@ export class PagesComponent
 					},
 					{
 						title: 'Time & Activity',
-						icon: 'trending-up-outline',
+						icon: 'fas fa-chart-line',
 						link: '/pages/employees/activity',
 						pathMatch: 'prefix',
 						data: {
@@ -426,7 +426,7 @@ export class PagesComponent
 					},
 					{
 						title: 'Timesheets',
-						icon: 'clock-outline',
+						icon: 'far fa-clock',
 						link: '/pages/employees/timesheets',
 						pathMatch: 'prefix',
 						data: {
@@ -436,7 +436,7 @@ export class PagesComponent
 					},
 					{
 						title: 'Appointments',
-						icon: 'calendar-outline',
+						icon: 'fas fa-calendar-week',
 						link: '/pages/employees/appointments',
 						pathMatch: 'prefix',
 						data: {
@@ -446,7 +446,7 @@ export class PagesComponent
 					},
 					{
 						title: 'Approvals',
-						icon: 'flip-2-outline',
+						icon: 'fas fa-repeat',
 						link: '/pages/employees/approvals',
 						data: {
 							translationKey: 'MENU.APPROVALS',
@@ -455,7 +455,7 @@ export class PagesComponent
 					},
 					{
 						title: 'Employee Levels',
-						icon: 'bar-chart-outline',
+						icon: 'fas fa-chart-bar',
 						link: `/pages/employees/employee-level`,
 						data: {
 							translationKey: 'MENU.EMPLOYEE_LEVEL',
@@ -465,7 +465,7 @@ export class PagesComponent
 					},
 					{
 						title: 'Positions',
-						icon: 'award-outline',
+						icon: 'fas fa-award',
 						link: `/pages/employees/positions`,
 						data: {
 							translationKey: 'MENU.POSITIONS',
@@ -475,7 +475,7 @@ export class PagesComponent
 					},
 					{
 						title: 'Time Off',
-						icon: 'eye-off-2-outline',
+						icon: 'far fa-times-circle',
 						link: '/pages/employees/time-off',
 						data: {
 							translationKey: 'MENU.TIME_OFF',
@@ -485,7 +485,7 @@ export class PagesComponent
 					},
 					{
 						title: 'Recurring Expenses',
-						icon: 'flip-outline',
+						icon: 'fas fa-exchange-alt fa-rotate-90',
 						link: '/pages/employees/recurring-expenses',
 						data: {
 							translationKey: 'MENU.RECURRING_EXPENSE',
@@ -498,7 +498,7 @@ export class PagesComponent
 					},
 					{
 						title: 'Candidates',
-						icon: 'person-done-outline',
+						icon: 'fas fa-user-check',
 						link: '/pages/employees/candidates',
 						data: {
 							translationKey: 'MENU.CANDIDATES',
@@ -629,7 +629,7 @@ export class PagesComponent
 					},
 					{
 						title: 'Expense Recurring',
-						icon: 'fas fa-repeat',
+						icon: 'fas fa-exchange-alt fa-rotate-90',
 						link: '/pages/organization/expense-recurring',
 						data: {
 							translationKey:
