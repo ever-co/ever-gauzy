@@ -9,6 +9,7 @@ import { MiscellaneousModule } from './miscellaneous/miscellaneous.module';
 import { AuthService } from '../@core/services/auth.service';
 import { RoleGuard } from '../@core/guards';
 import { TranslateModule } from '../@shared/translate/translate.module';
+import { SidebarMenuModule } from '../@shared/sidebar-menu/sidebar-menu.module';
 
 @NgModule({
 	imports: [
@@ -20,7 +21,8 @@ import { TranslateModule } from '../@shared/translate/translate.module';
 		NgxFeatureToggleModule,
 		ThemeModule,
 		MiscellaneousModule,
-		TranslateModule
+		TranslateModule,
+		SidebarMenuModule
 	],
 	declarations: [PagesComponent],
 	providers: [AuthService, RoleGuard]
