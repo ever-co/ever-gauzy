@@ -1,6 +1,9 @@
 <nb-card class="main">
-	<nb-card-header>
-		<h5>
+	<nb-card-header class="d-flex flex-column">
+    <span class="cancel"
+			><i class="fas fa-times" (click)="close()"></i
+		></span>
+		<h5 class="title">
 			{{
 				(!isEditMode
 					? 'TIME_OFF_PAGE.REQUEST_TIME_OFF'
@@ -8,7 +11,6 @@
 				) | translate
 			}}
 		</h5>
-		<nb-icon (click)="close()" icon="close-outline"></nb-icon>
 	</nb-card-header>
 	<nb-card-body>
 		<form [formGroup]="form">
@@ -26,7 +28,7 @@
 							class="employees"
 						>
 						</ga-employee-selector>
-					</div>	
+					</div>
 				</div>
 				<div class="col-6">
 					<ga-time-off-policy-select
@@ -142,10 +144,11 @@
 			</div>
 		</form>
 	</nb-card-body>
-	<nb-card-footer class="text-right">
-		<button 
+	<nb-card-footer class="text-left">
+		<button
 			(click)="close()"
-			status="danger"
+			status="basic"
+      outline
 			class="mr-3"
 			nbButton
 		>

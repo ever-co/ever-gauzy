@@ -1,3 +1,5 @@
+@import 'gauzy/_gauzy-dialogs';
+
 .add-criterion {
   display: flex;
   flex-direction: row;
@@ -17,18 +19,19 @@
   flex-wrap: wrap;
 
   &-card {
-    width: 48%;
+    width: 49%;
   }
 }
 
 .quality {
-  border: 1px #e4e9f2 solid;
   margin: 0.2rem 0;
   padding: 1rem;
   display: flex;
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
+  background-color: nb-theme(gauzy-card-1);
+  border-radius: nb-theme(border-radius);
 
   &-text {
     font-weight: 500;
@@ -43,6 +46,7 @@
 
     &-icons {
       font-size: 1.4rem;
+      cursor: pointer;
     }
   }
 }
@@ -72,7 +76,19 @@
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
-    width: 48%;
+    width: 49%;
     font-weight: 500;
   }
+}
+:host {
+  nb-card {
+    background-color: rgba(50, 50, 50, 0.03);
+  }
+}
+h6 {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 17px;
+  letter-spacing: -0.01em;
+  text-align: left;
 }

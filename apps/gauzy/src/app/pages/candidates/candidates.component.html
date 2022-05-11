@@ -1,243 +1,200 @@
-<nb-card 
+<nb-card
 	[nbSpinner]="loading"
 	nbSpinnerStatus="primary"
 	nbSpinnerSize="large"
 	class="card-scroll"
 >
-	<nb-card-header class="card-header-title">
+	<nb-card-header class="d-flex flex-column pb-0">
 		<div class="card-header-title">
 			<h4>
 				<ngx-header-title [allowEmployee]="false">
 					{{ 'CANDIDATES_PAGE.HEADER' | translate }}
 				</ngx-header-title>
 			</h4>
+			<div class="float-right">
+				<ng-template ngxPermissionsOnly="ORG_CANDIDATES_INTERVIEW_EDIT">
+					<button
+						nbButton
+						status="primary"
+						(click)="goTo('interviews')"
+						size="small"
+						class="action header"
+						outline
+					>
+						<i class="fas fa-user-friends mr-1"></i>
+						{{ 'BUTTONS.MANAGE_INTERVIEWS' | translate }}
+					</button>
+				</ng-template>
+				<ng-template ngxPermissionsOnly="ORG_INVITE_EDIT">
+					<button
+						nbButton
+						status="primary"
+						(click)="goTo('invites')"
+						size="small"
+						class="action header"
+						outline
+					>
+						<i class="far fa-envelope mr-1"></i>
+						{{ 'BUTTONS.MANAGE_INVITES' | translate }}
+					</button>
+				</ng-template>
+				<ng-template ngxPermissionsOnly="ORG_CANDIDATES_VIEW">
+					<button
+						nbButton
+						status="primary"
+						(click)="goTo('statistic')"
+						size="small"
+						class="action header"
+						outline
+					>
+						<i class="far fa-chart-bar mr-1"></i>
+						{{ 'BUTTONS.CANDIDATE_STATISTIC' | translate }}
+					</button>
+				</ng-template>
+			</div>
 		</div>
-		<div>
+		<div class="align-self-end d-flex align-items-center">
+			<ngx-gauzy-button-action
+				[buttonTemplate]="actionButtons"
+				[buttonTemplateVisible]="visibleButton"
+				[isDisable]="disableButton"
+				[hasLayoutSelector]="false"
+			>
+			</ngx-gauzy-button-action>
+			<nb-toggle
+				(checkedChange)="changeIncludeArchived($event)"
+				status="primary"
+				class="custom-toggle ml-3 mr-3"
+			>
+				{{ 'FORM.CHECKBOXES.INCLUDE_ARCHIVED' | translate }}
+			</nb-toggle>
 			<ga-layout-selector
 				[componentName]="viewComponentName"
 			></ga-layout-selector>
 		</div>
 	</nb-card-header>
 	<nb-card-body>
-		<div class="row manage-btn mb-3">
-			<div class="col-6">
-				<div class="float-left">
-					<ng-template ngxPermissionsOnly="ORG_INVITE_EDIT">
-						<button
-							nbButton
-							*ngIf="organizationInvitesAllowed"
-							status="primary"
-							(click)="invite()"
-							class="mr-2"
-						>
-							<nb-icon class="mr-1" icon="email-outline"></nb-icon
-							>{{ 'BUTTONS.INVITE' | translate }}
-						</button>
-					</ng-template>
-					<ng-template ngxPermissionsOnly="ORG_CANDIDATES_EDIT">
-						<button
-							nbButton
-							status="success"
-							(click)="add()"
-							class="mr-2"
-						>
-							<nb-icon class="mr-1" icon="plus-outline"></nb-icon
-							>{{ 'BUTTONS.ADD' | translate }}
-						</button>
-						<ng-container *ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE">
-							<ng-container
-								*ngTemplateOutlet="actionButtons; context: {
-									selectedItem: selectedCandidate
-								}"
-							></ng-container>
-						</ng-container>
-					</ng-template>
-				</div>
-			</div>
-			<div class="col-6">
-				<div class="float-right">
-					<nb-checkbox
-						(checkedChange)="changeIncludeArchived($event)"
-						status="warning"
-						class="mr-3"
-					>
-						{{ 'FORM.CHECKBOXES.INCLUDE_ARCHIVED' | translate }}
-					</nb-checkbox>
-					<ng-template
-						ngxPermissionsOnly="ORG_CANDIDATES_INTERVIEW_EDIT"
-					>
-						<button
-							nbButton
-							status="primary"
-							(click)="goTo('interviews')"
-							class="mr-2"
-						>
-							<nb-icon class="mr-1" icon="people-outline" ></nb-icon>
-							{{ 'BUTTONS.MANAGE_INTERVIEWS' | translate }}
-						</button>
-					</ng-template>
-					<ng-template ngxPermissionsOnly="ORG_INVITE_EDIT">
-						<button
-							nbButton
-							status="primary"
-							(click)="goTo('invites')"
-							class="mr-2"
-						>
-							<nb-icon class="mr-1" icon="email-outline"></nb-icon>
-							{{ 'BUTTONS.MANAGE_INVITES' | translate }}
-						</button>
-					</ng-template>
-					<ng-template ngxPermissionsOnly="ORG_CANDIDATES_VIEW">
-						<button
-							nbButton
-							status="primary"
-							(click)="goTo('statistic')"
-							class="mr-2"
-						>
-							<nb-icon class="mr-1" icon="bar-chart-outline"></nb-icon>
-							{{ 'BUTTONS.CANDIDATE_STATISTIC' | translate }}
-						</button>
-					</ng-template>
-				</div>
-			</div>
-		</div>
-		<ng-template 
+		<ng-template
 			[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
 			[ngIfElse]="gridLayout"
 		>
-			<ng2-smart-table
-				style="cursor: pointer"
-				[settings]="settingsSmartTable"
-				[source]="sourceSmartTable"
-				(userRowSelect)="selectCandidate($event)"
-				#candidatesTable
-			></ng2-smart-table>
+			<div class="table-scroll-container custom-table">
+				<div>
+					<ng2-smart-table
+						style="cursor: pointer"
+						[settings]="settingsSmartTable"
+						[source]="sourceSmartTable"
+						(userRowSelect)="selectCandidate($event)"
+						#candidatesTable
+					></ng2-smart-table>
+				</div>
+			</div>
+			<ng-container *ngIf="pagination.totalItems > pagination.itemsPerPage">
+				<div class="pagination-container">
+					<ga-pagination
+						(selectedOption)="onUpdateOption($event)"
+						(selectedPage)="onPageChange($event)"
+						[doEmit]="false"
+						[totalItems]="pagination?.totalItems"
+						[itemsPerPage]="pagination?.itemsPerPage"
+						[activePage]="pagination?.activePage"
+					>
+					</ga-pagination>
+				</div>
+			</ng-container>
 		</ng-template>
 		<ng-template #gridLayout>
-			<div class="grid-scroll-container">
-				<ul class="flex-container">
-					<li class="flex-item" *ngFor="let x of candidates">
-						<div class="fullName">
-							<img [src]="x.imageUrl" alt="Avatar" class="avatar" />
-							<span>{{ x.fullName }}</span>
-						</div>
-						<div class="email">
-							<span class="info-value">
-								{{ x.email }}
-							</span>
-						</div>
-						<div class="info-line">
-							<span class="info-meta">{{
-								'CANDIDATES_PAGE.SOURCE' | translate
-							}}</span>
-							<span class="info-value">{{ x.source?.name }}</span>
-						</div>
-						<div class="info-line">
-							<span class="info-meta">
-								{{ 'CANDIDATES_PAGE.RATING' | translate }}
-							</span>
-							<ga-star-rating-output
-								[rate]="x.rating"
-								[isGridView]="true"
-							></ga-star-rating-output>
-						</div>
-						<div class="info-line">
-							<span class="info-meta">{{ 'CANDIDATES_PAGE.STATUS' | translate }}</span>
-							<div *ngIf="!x?.isArchived">
-								<div class="text-center d-block" *ngIf="x?.status === candidateStatusEnum.APPLIED">
-									<div class="status-badge badge-primary">
-										{{ 'CANDIDATES_PAGE.APPLIED' | translate }}
-									</div>
-								</div>
-								<div class="text-center d-block" *ngIf="x?.status === candidateStatusEnum.HIRED">
-									<div class="status-badge badge-success">
-										{{ 'CANDIDATES_PAGE.HIRED' | translate }}
-									</div>
-								</div>
-								<div class="text-center d-block" *ngIf="x?.status === candidateStatusEnum.REJECTED">
-									<div class="status-badge badge-danger">
-										{{ 'CANDIDATES_PAGE.REJECTED' | translate }}
-									</div>
-								</div>
-							</div>
-							<div class="text-center d-block" *ngIf="x?.isArchived">
-								<div class="status-badge badge-warning">
-									{{ 'CANDIDATES_PAGE.ARCHIVED' | translate }}
-								</div>
-							</div>
-						</div>
-						<nb-card-footer class="card-footer">
-							<ng-container
-								*ngTemplateOutlet="
-									actionButtons;
-									context: {
-										buttonSize: 'tiny',
-										selectedItem: x
-									}
-								"
-							>
-							</ng-container>
-						</nb-card-footer>
-					</li>
-				</ul>
-			</div>
+			<ga-card-grid
+				[settings]="settingsSmartTable"
+				[source]="candidates"
+				(onSelectedItem)="selectCandidate($event)"
+				(selectedOption)="onUpdateOption($event)"
+				(selectedPage)="onPageChange($event)"
+				[doEmit]="false"
+				[totalItems]="pagination?.totalItems"
+				[itemsPerPage]="pagination?.itemsPerPage"
+				[activePage]="pagination?.activePage"
+			></ga-card-grid>
 		</ng-template>
 	</nb-card-body>
 </nb-card>
-<ng-template
-	#actionButtons
-	let-buttonSize="buttonSize"
-	let-selectedItem="selectedItem"
->
+<ng-template #actionButtons let-selectedItem="selectedItem">
+	<div class="btn-group actions">
+		<ng-template ngxPermissionsOnly="ORG_CANDIDATES_EDIT">
+			<button
+				nbButton
+				[disabled]="!selectedItem && disableButton"
+				(click)="edit(selectedItem)"
+				size="small"
+				class="action primary"
+			>
+				<nb-icon class="mr-1" icon="edit-outline"></nb-icon
+				>{{ 'BUTTONS.EDIT' | translate }}
+				{{ selectedItem?.status }}
+			</button>
+			<button
+				nbButton
+				[disabled]="
+					(!selectedItem && disableButton) || selectedItem?.isArchived
+				"
+				(click)="archive(selectedItem)"
+				size="small"
+				class="action secondary"
+			>
+				<nb-icon class="mr-1" icon="archive-outline"></nb-icon
+				>{{ 'BUTTONS.ARCHIVE' | translate }}
+			</button>
+			<ng-container *ngIf="selectedCandidate?.status === candidateStatusEnum.APPLIED">
+				<button
+					nbButton
+					[disabled]="!selectedItem && disableButton"
+					(click)="hire(selectedItem)"
+					status="basic"
+					size="small"
+					class="action success"
+				>
+					<nb-icon class="mr-1" icon="person-done-outline"></nb-icon
+					>{{ 'BUTTONS.HIRE' | translate }}
+				</button>
+				<button
+					nbButton
+					[disabled]="!selectedItem && disableButton"
+					(click)="reject(selectedItem)"
+					status="basic"
+					size="small"
+					class="action warning"
+				>
+					<nb-icon class="mr-1" icon="person-remove-outline"></nb-icon
+					>{{ 'BUTTONS.REJECT' | translate }}
+				</button>
+			</ng-container>
+		</ng-template>
+	</div>
+</ng-template>
+<ng-template #visibleButton>
+	<ng-template ngxPermissionsOnly="ORG_INVITE_EDIT">
+		<button
+			nbButton
+			*ngIf="organizationInvitesAllowed"
+			status="primary"
+			(click)="invite()"
+			size="small"
+			class="action"
+		>
+			<nb-icon class="mr-1" icon="email-outline"></nb-icon
+			>{{ 'BUTTONS.INVITE' | translate }}
+		</button>
+	</ng-template>
 	<ng-template ngxPermissionsOnly="ORG_CANDIDATES_EDIT">
 		<button
 			nbButton
-			[disabled]="!selectedItem && disableButton"
-			(click)="edit(selectedItem)"
-			status="info"
-			class="mr-2"
-			[size]="buttonSize || 'medium'"
+			status="success"
+			(click)="add()"
+			size="small"
+			class="action"
 		>
-			<nb-icon class="mr-1" icon="edit-outline"></nb-icon
-			>{{ 'BUTTONS.EDIT' | translate }}
+			<nb-icon class="mr-1" icon="plus-outline"></nb-icon
+			>{{ 'BUTTONS.ADD' | translate }}
 		</button>
-		<button
-			nbButton
-			[disabled]="
-				(!selectedItem && disableButton) ||
-				(selectedItem?.isArchived)
-			"
-			(click)="archive(selectedItem)"
-			status="warning"
-			class="mr-2"
-			[size]="buttonSize || 'medium'"
-		>
-			<nb-icon class="mr-1" icon="archive-outline"></nb-icon
-			>{{ 'BUTTONS.ARCHIVE' | translate }}
-		</button>
-		<ng-container *ngIf="selectedItem?.status === candidateStatusEnum.APPLIED">
-			<button
-				nbButton
-				[disabled]="(!selectedItem && disableButton)"
-				(click)="hire(selectedItem)"
-				status="success"
-				class="mr-2"
-				[size]="buttonSize || 'medium'"
-			>
-				<nb-icon class="mr-1" icon="person-done-outline"></nb-icon
-				>{{ 'BUTTONS.HIRE' | translate }}
-			</button>
-			<button
-				nbButton
-				[disabled]="(!selectedItem && disableButton)"
-				(click)="reject(selectedItem)"
-				status="danger"
-				class="mr-2"
-				[size]="buttonSize || 'medium'"
-			>
-				<nb-icon class="mr-1" icon="person-remove-outline"></nb-icon
-				>{{ 'BUTTONS.REJECT' | translate }}
-			</button>
-		</ng-container>
 	</ng-template>
 </ng-template>

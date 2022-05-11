@@ -5,9 +5,8 @@ import {
 	ConflictException
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Brackets, Repository, WhereExpressionBuilder } from 'typeorm';
-import { TimeOffRequest } from './time-off-request.entity';
-import { TenantAwareCrudService } from './../core/crud';
+import { Between, Brackets, In, Repository, WhereExpressionBuilder } from 'typeorm';
+import * as moment from 'moment';
 import {
 	ITimeOffCreateInput,
 	RequestApprovalStatusTypesEnum,
@@ -17,15 +16,18 @@ import {
 	IPagination,
 	ITimeOffFindInput
 } from '@gauzy/contracts';
+import { isNotEmpty } from '@gauzy/common';
+import { TimeOffRequest } from './time-off-request.entity';
 import { RequestApproval } from '../request-approval/request-approval.entity';
-import { RequestContext } from '../core/context';
-import * as moment from 'moment';
+import { TenantAwareCrudService } from './../core/crud';
+import { RequestContext } from './../core/context';
 
 @Injectable()
 export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest> {
 	constructor(
 		@InjectRepository(TimeOffRequest)
 		private readonly timeOffRequestRepository: Repository<TimeOffRequest>,
+		
 		@InjectRepository(RequestApproval)
 		private readonly requestApprovalRepository: Repository<RequestApproval>
 	) {
@@ -37,27 +39,27 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 			const request = new TimeOffRequest();
 			Object.assign(request, entity);
 
-			const timeOffRequestSaved = await this.timeOffRequestRepository.save(
-				request
-			);
+			const tenantId = RequestContext.currentTenantId();
+			const currentUser = RequestContext.currentUser();
+
+			const timeOffRequest = await this.timeOffRequestRepository.save(request);
 
 			const requestApproval = new RequestApproval();
-			requestApproval.requestId = timeOffRequestSaved.id;
-			requestApproval.requestType =
-				ApprovalPolicyTypesStringEnum.TIME_OFF;
-			requestApproval.status = timeOffRequestSaved.status
-				? StatusTypesMapRequestApprovalEnum[timeOffRequestSaved.status]
+			requestApproval.requestId = timeOffRequest.id;
+			requestApproval.requestType = ApprovalPolicyTypesStringEnum.TIME_OFF;
+			requestApproval.status = timeOffRequest.status
+				? StatusTypesMapRequestApprovalEnum[timeOffRequest.status]
 				: RequestApprovalStatusTypesEnum.REQUESTED;
 
-			requestApproval.createdBy = RequestContext.currentUser().id;
-			requestApproval.createdByName = RequestContext.currentUser().name;
+			requestApproval.createdBy = currentUser.id;
+			requestApproval.createdByName = currentUser.name;
 			requestApproval.name = 'Request time off';
 			requestApproval.min_count = 1;
-			requestApproval.organizationId = timeOffRequestSaved.organizationId;
-			requestApproval.tenantId = timeOffRequestSaved.tenantId;
+			requestApproval.organizationId = timeOffRequest.organizationId;
+			requestApproval.tenantId = tenantId;
 
 			await this.requestApprovalRepository.save(requestApproval);
-			return timeOffRequestSaved;
+			return timeOffRequest;
 		} catch (err) {
 			throw new BadRequestException(err);
 		}
@@ -68,7 +70,7 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 		findInput: ITimeOffFindInput
 	): Promise<IPagination<TimeOffRequest>> {
 		try {
-			const { organizationId, employeeId } = findInput;
+			const { organizationId, employeeId, startDate, endDate } = findInput;
 			const tenantId = RequestContext.currentTenantId();
 			const query = this.timeOffRequestRepository.createQueryBuilder('timeoff');
 			query
@@ -89,11 +91,6 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 					employeeIds
 				});
 			}
-			const {
-				startDate = moment().startOf('month').toDate(),
-				endDate = moment().endOf('month').toDate(),
-			} = findInput;
-			
 			const start = moment(startDate).format('YYYY-MM-DD hh:mm:ss');
 			const end = moment(endDate).format('YYYY-MM-DD hh:mm:ss');
 
@@ -101,7 +98,6 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 				begin: start,
 				end: end
 			});
-			
 			const items = await query.getMany();
 			return { items, total: items.length };
 		} catch (err) {
@@ -113,8 +109,14 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 		id: string,
 		timeOffRequest: ITimeOffCreateInput
 	) {
-		await this.timeOffRequestRepository.delete(id);
-		return await this.timeOffRequestRepository.save(timeOffRequest);
+		try {
+			return await this.timeOffRequestRepository.save({
+				id,
+				...timeOffRequest
+			});
+		} catch (error) {
+			throw new BadRequestException(error);
+		}
 	}
 
 	async updateStatusTimeOffByAdmin(
@@ -138,5 +140,31 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 		} catch (err) {
 			throw new BadRequestException(err);
 		}
+	}
+
+	public pagination(filter?: any) {		
+		if ('where' in filter) {
+			const { where } = filter;
+			if (isNotEmpty(where.employeeIds)) {
+				filter.where.employees = {
+					id: In(where.employeeIds)
+				}
+				delete filter['where']['employeeIds'];
+			}
+			if (where.startDate && where.endDate) {
+				filter.where.start = Between(
+					moment.utc(where.startDate).format('YYYY-MM-DD HH:mm:ss'),
+					moment.utc(where.endDate).format('YYYY-MM-DD HH:mm:ss')
+				);
+				delete filter['where']['startDate'];
+				delete filter['where']['endDate'];
+			} else {
+				filter.where.start = Between(
+					moment().startOf('month').utc().format('YYYY-MM-DD HH:mm:ss'),
+					moment().endOf('month').utc().format('YYYY-MM-DD HH:mm:ss')
+				);
+			}
+		}
+		return super.paginate(filter);
 	}
 }

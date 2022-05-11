@@ -4,10 +4,9 @@ import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../../../../@shared/language-base/translation-base.component';
 import { CandidateInterviewMutationComponent } from '../../../../../@shared/candidate/candidate-interview-mutation/candidate-interview-mutation.component';
 import { filter } from 'rxjs/operators';
-import { firstValueFrom } from 'rxjs';
-import { CandidateInterviewService } from '../../../../../@core/services/candidate-interview.service';
-import { CandidateStore } from '../../../../../@core/services/candidate-store.service';
+import { firstValueFrom, tap } from 'rxjs';
 import { FormGroup } from '@angular/forms';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
 	ICandidate,
 	ICandidateInterview,
@@ -17,22 +16,25 @@ import {
 	ICandidateFeedback,
 	IOrganization
 } from '@gauzy/contracts';
-import { EmployeesService } from '../../../../../@core/services';
+import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
+import { LocalDataSource } from 'ng2-smart-table';
+import {
+	CandidateFeedbacksService,
+	CandidateInterviewService,
+	CandidatesService,
+	CandidateStore,
+	EmployeesService,
+	Store,
+	ToastrService
+} from '../../../../../@core/services';
 import { CandidateInterviewFeedbackComponent } from '../../../../../@shared/candidate/candidate-interview-feedback/candidate-interview-feedback.component';
 import { DeleteInterviewComponent } from '../../../../../@shared/candidate/candidate-confirmation/delete-interview/delete-interview.component';
 import { ComponentEnum } from '../../../../../@core/constants/layout.constants';
-import { LocalDataSource } from 'ng2-smart-table';
-import { Store } from '../../../../../@core/services/store.service';
 import { InterviewActionsTableComponent } from '../../../manage-candidate-interviews/interview-panel/table-components/actions/actions.component';
 import { InterviewDateTableComponent } from '../../../manage-candidate-interviews/interview-panel/table-components/date/date.component';
 import { InterviewStarRatingComponent } from '../../../manage-candidate-interviews/interview-panel/table-components/rating/rating.component';
 import { InterviewersTableComponent } from '../../../manage-candidate-interviews/interview-panel/table-components/interviewers/interviewers.component';
 import { InterviewCriterionsTableComponent } from '../../../manage-candidate-interviews/interview-panel/table-components/criterions/criterions.component';
-import { CandidateFeedbacksService } from '../../../../../@core/services/candidate-feedbacks.service';
-import { CandidatesService } from '../../../../../@core/services/candidates.service';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
-import { isNotEmpty } from '@gauzy/common-angular';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -40,9 +42,9 @@ import { isNotEmpty } from '@gauzy/common-angular';
 	templateUrl: './edit-candidate-interview.component.html',
 	styleUrls: ['./edit-candidate-interview.component.scss']
 })
-export class EditCandidateInterviewComponent
-	extends TranslationBaseComponent
+export class EditCandidateInterviewComponent extends TranslationBaseComponent 
 	implements OnInit, OnDestroy {
+
 	interviewList: ICandidateInterview[];
 	candidateId: string;
 	selectedCandidate: ICandidate;
@@ -63,39 +65,46 @@ export class EditCandidateInterviewComponent
 	candidates: ICandidate[];
 	allInterviews: ICandidateInterview[];
 	allFeedbacks: ICandidateFeedback[];
+	disabled: boolean = true;
+	selectedInterview = {
+		data: null,
+		isSelected: false
+	};
+
 	constructor(
-		private dialogService: NbDialogService,
-		private candidatesService: CandidatesService,
-		private employeesService: EmployeesService,
-		private candidateFeedbacksService: CandidateFeedbacksService,
+		private readonly dialogService: NbDialogService,
+		private readonly candidatesService: CandidatesService,
+		private readonly employeesService: EmployeesService,
+		private readonly candidateFeedbacksService: CandidateFeedbacksService,
 		private readonly candidateInterviewService: CandidateInterviewService,
 		readonly translateService: TranslateService,
-		private candidateStore: CandidateStore,
-		private store: Store,
-		private toastrService: ToastrService
+		private readonly candidateStore: CandidateStore,
+		private readonly store: Store,
+		private readonly toastrService: ToastrService
 	) {
 		super(translateService);
 		this.setView();
 	}
+
 	ngOnInit() {
+		this._loadSmartTableSettings();
+		this._applyTranslationOnSmartTable();
+
 		this.candidateStore.selectedCandidate$
 			.pipe(
-				filter((candidate) => !!candidate),
+				filter((candidate: ICandidate) => !!candidate),
+				tap((candidate: ICandidate) => this.selectedCandidate = candidate),
 				untilDestroyed(this)
 			)
 			.subscribe((candidate) => {
-				this.selectedCandidate = candidate;
 				if (candidate) {
 					this.selectedOrganization = this.store.selectedOrganization;
 					this.candidateId = candidate.id;
 					this.loadInterview();
-					this.loadSmartTable();
-					this._applyTranslationOnSmartTable();
+					
+					const { tenantId } = this.store.user;
+					const { id: organizationId } = this.selectedOrganization;
 
-					const {
-						id: organizationId,
-						tenantId
-					} = this.selectedOrganization;
 					this.candidatesService
 						.getAll(['user'], { organizationId, tenantId })
 						.pipe(untilDestroyed(this))
@@ -105,16 +114,20 @@ export class EditCandidateInterviewComponent
 				}
 			});
 	}
+
 	setView() {
 		this.viewComponentName = ComponentEnum.INTERVIEWS;
 		this.store
 			.componentLayout$(this.viewComponentName)
-			.pipe(untilDestroyed(this))
-			.subscribe((componentLayout) => {
-				this.dataLayoutStyle = componentLayout;
-			});
+			.pipe(
+				distinctUntilChange(),
+				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
-	async loadSmartTable() {
+
+	private _loadSmartTableSettings() {
 		this.settingsSmartTable = {
 			actions: false,
 			columns: {
@@ -131,8 +144,7 @@ export class EditCandidateInterviewComponent
 					type: 'custom',
 					width: '120px',
 					renderComponent: InterviewDateTableComponent,
-					filter: false,
-					class: 'text-center'
+					filter: false
 				},
 				rating: {
 					title: this.getTranslation(
@@ -175,7 +187,7 @@ export class EditCandidateInterviewComponent
 				},
 				actions: {
 					title: this.getTranslation(
-						'CANDIDATES_PAGE.MANAGE_INTERVIEWS.ACTIONS'
+						'SM_TABLE.LAST_UPDATED'
 					),
 					width: '150px',
 					type: 'custom',
@@ -204,6 +216,7 @@ export class EditCandidateInterviewComponent
 			}
 		};
 	}
+
 	async add() {
 		const dialog = this.dialogService.open(
 			CandidateInterviewMutationComponent,
@@ -230,23 +243,28 @@ export class EditCandidateInterviewComponent
 	}
 
 	private async loadInterview() {
+		if (!this.selectedOrganization) {
+			return;
+		}
 		this.loading = true;
-		const { id: organizationId, tenantId } = this.selectedOrganization;
-		const {
-			items: allFeedbacks = []
-		} = await this.candidateFeedbacksService.getAll(['interviewer'], {
+
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.selectedOrganization;
+
+		const { items: allFeedbacks = [] } = await this.candidateFeedbacksService.getAll(['interviewer'], {
 			organizationId,
 			tenantId
 		});
 		this.allFeedbacks = allFeedbacks;
 
-		const { items } = await firstValueFrom(this.employeesService
-			.getAll(['user'], {
+		const { items } = await firstValueFrom(
+			this.employeesService.getAll(['user'], {
 				organizationId,
 				tenantId
 			})
 		);
 		this.employeeList = items;
+
 		const interviews = await this.candidateInterviewService.getAll(
 			[
 				'feedbacks',
@@ -257,6 +275,7 @@ export class EditCandidateInterviewComponent
 			],
 			{ candidateId: this.candidateId, organizationId, tenantId }
 		);
+		
 		if (interviews) {
 			this.interviewList = interviews.items;
 			this.allInterviews = interviews.items;
@@ -271,7 +290,8 @@ export class EditCandidateInterviewComponent
 								if (interviewer.employeeId === employee.id) {
 									interviewer.employeeImageUrl =
 										employee.user.imageUrl;
-									interviewer.employeeName = employee.user.name;
+									interviewer.employeeName =
+										employee.user.name;
 									employees.push(employee);
 								}
 							});
@@ -290,7 +310,8 @@ export class EditCandidateInterviewComponent
 						imageUrl: this.selectedCandidate.user.imageUrl,
 						showArchive: false,
 						employees: employees,
-						allFeedbacks: this.allFeedbacks
+						allFeedbacks: this.allFeedbacks,
+						hideActions: true
 					});
 				});
 			}
@@ -432,14 +453,19 @@ export class EditCandidateInterviewComponent
 		}
 	}
 
-	_applyTranslationOnSmartTable() {
+	private _applyTranslationOnSmartTable() {
 		this.translateService.onLangChange
-			.pipe(untilDestroyed(this))
-			.subscribe(() => {
-				this.loadSmartTable();
-			});
+			.pipe(
+				tap(() => this._loadSmartTableSettings()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
-	ngOnDestroy() { }
 
-	openEmployees(employeeId?: string) { }
+	ngOnDestroy() {}
+
+	selectInterview(interview: any) {
+		this.disabled = !interview.isSelected;
+		this.selectedInterview = interview.data;
+	}
 }

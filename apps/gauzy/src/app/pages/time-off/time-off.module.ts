@@ -31,6 +31,9 @@ import { CardGridModule } from './../../@shared/card-grid/card-grid.module';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { TranslateModule } from '../../@shared/translate/translate.module';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
+import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
+import { PaginationModule } from '../../@shared/pagination/pagination.module';
+import { NbToggleModule } from '@nebular/theme';
 
 @NgModule({
 	imports: [
@@ -58,7 +61,10 @@ import { HeaderTitleModule } from '../../@shared/components/header-title/header-
 		NbSpinnerModule,
 		TimeOffMutationModule,
 		NgxPermissionsModule.forChild(),
-		HeaderTitleModule
+		HeaderTitleModule,
+		GauzyButtonActionModule,
+		PaginationModule,
+    NbToggleModule
 	],
 	declarations: [
 		TimeOffComponent,

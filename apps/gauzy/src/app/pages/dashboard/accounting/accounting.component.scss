@@ -46,12 +46,19 @@
     margin-bottom: 0;
   }
   @include card_overrides(
-    overlay,
+    auto,
     calc($default-card-height - 3rem),
     0 $default-radius $default-radius $default-radius
   );
   .card,
   .card-header:first-child {
     border-radius: 0 $default-radius 0 0;
+  }
+  background-color: rgba(50, 50, 50, 0.02);
+  .card {
+    background-color: rgba(50, 50, 50, 0.03);
+    .card-header {
+      background-color: unset;
+    }
   }
 }

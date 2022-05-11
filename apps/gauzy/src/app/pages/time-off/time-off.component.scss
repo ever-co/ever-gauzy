@@ -1,3 +1,24 @@
+@import 'gauzy/gauzy-table';
+@import 'gauzy/_gauzy-cards';
+
+:host {
+  nb-card,
+  nb-card-body {
+    background-color: rgba(50, 50, 50, 0.03);
+    .custom-table {
+      max-height: calc(100vh - 24rem);
+      flex-grow: 10;
+    }
+    display: flex;
+    flex-direction: column;
+  }
+  @include nb-card-overrides(
+    unset,
+    calc($default-card-height - 1rem),
+    $default-radius
+  );
+}
+
 nb-radio-group {
   display: flex;
   flex-direction: row;
@@ -116,4 +137,28 @@ nb-radio-group {
   background-color: #fa0;
   color: #fff;
   border-radius: 0.25rem;
+}
+
+::ng-deep {
+  .toggle-label {
+    margin-bottom: 0;
+  }
+}
+:host {
+  .custom-toggle {
+    ::ng-deep {
+      span.text {
+        color: nb-theme(text-primary-color);
+      }
+    }
+  }
+}
+
+.filter {
+  background-color: rgba(50, 50, 50, 0.03);
+  width: fit-content;
+  display: flex;
+  padding: 6px 12px;
+  margin-right: 16px;
+  border-radius: nb-theme(border-radius);
 }

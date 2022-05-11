@@ -1,29 +1,31 @@
 import { Component, OnDestroy, Input } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
-import { Subject } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
+import { UntilDestroy } from '@ngneat/until-destroy';
 import { TranslationBaseComponent } from '../../../language-base/translation-base.component';
-import { CandidateFeedbacksService } from 'apps/gauzy/src/app/@core/services/candidate-feedbacks.service';
-import { CandidateCriterionsRatingService } from 'apps/gauzy/src/app/@core/services/candidate-criterions-rating.service';
-import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
+import {
+	CandidateCriterionsRatingService,
+	CandidateFeedbacksService,
+	ToastrService
+} from './../../../../@core/services';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-delete-feedback',
 	templateUrl: 'delete-feedback.component.html',
 	styleUrls: ['delete-feedback.component.scss']
 })
-export class DeleteFeedbackComponent
-	extends TranslationBaseComponent
+export class DeleteFeedbackComponent extends TranslationBaseComponent 
 	implements OnDestroy {
+
 	@Input() feedbackId: string;
-	private _ngDestroy$ = new Subject<void>();
 
 	constructor(
-		protected dialogRef: NbDialogRef<DeleteFeedbackComponent>,
+		protected readonly dialogRef: NbDialogRef<DeleteFeedbackComponent>,
 		readonly translateService: TranslateService,
-		private toastrService: ToastrService,
-		private candidateCriterionsRatingService: CandidateCriterionsRatingService,
-		private candidateFeedbacksService: CandidateFeedbacksService
+		private readonly toastrService: ToastrService,
+		private readonly candidateCriterionsRatingService: CandidateCriterionsRatingService,
+		private readonly candidateFeedbacksService: CandidateFeedbacksService
 	) {
 		super(translateService);
 	}
@@ -50,6 +52,7 @@ export class DeleteFeedbackComponent
 			this.toastrError(error);
 		}
 	}
+
 	private toastrError(error) {
 		this.toastrService.danger(
 			'NOTES.CANDIDATE.EXPERIENCE.ERROR',
@@ -57,12 +60,10 @@ export class DeleteFeedbackComponent
 			error
 		);
 	}
+
 	closeDialog() {
 		this.dialogRef.close();
 	}
 
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+	ngOnDestroy() { }
 }

@@ -1,0 +1,16 @@
+@import 'gauzy/gauzy-table';
+@import 'gauzy/gauzy-cards';
+
+:host {
+  nb-card,
+  nb-card-body {
+    background-color: rgba(50, 50, 50, 0.03);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    .custom-table {
+      max-height: calc($default-card-height - 1rem);
+    }
+  }
+  @include nb-card-overrides(unset, $default-card-height, $default-radius);
+}

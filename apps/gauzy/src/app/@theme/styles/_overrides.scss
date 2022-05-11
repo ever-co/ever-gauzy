@@ -1,17 +1,23 @@
 @import './themes';
 @import 'var';
 
-::-webkit-scrollbar {
+/* Apply style on scrollbar for Firefox */
+* {
+  scrollbar-color: rgba(50, 50, 50, 0.1) transparent;
+  scrollbar-width: thin;
+}
+/*  Apply style on scrollbar for Chrome */
+*::-webkit-scrollbar {
   width: nb-theme(scrollbar-width);
 }
 
-::-webkit-scrollbar-track {
-  background: nb-theme(scrollbar-background-color);
+*::-webkit-scrollbar-track {
+  background: transparent;
 }
 
-::-webkit-scrollbar-thumb {
-  background: nb-theme(scrollbar-color);
-  border-radius: 0.15625rem;
+*::-webkit-scrollbar-thumb {
+  background: rgba(50, 50, 50, 0.1);
+  border-radius: 1rem;
 }
 
 body {
@@ -19,7 +25,7 @@ body {
 }
 
 .cdk-global-scrollblock {
-  overflow-y: overlay;
+  overflow-y: auto;
 }
 
 .cdk-overlay-container {
@@ -54,7 +60,7 @@ body {
   }
 
   .cdk-global-scrollblock {
-    overflow-y: overlay;
+    overflow-y: auto;
   }
 
   .h1 {
@@ -107,7 +113,7 @@ body {
 
   nb-layout {
     .scrollable-container {
-      overflow-y: overlay !important;
+      overflow-y: auto !important;
     }
   }
 
@@ -125,6 +131,7 @@ body {
   //Override header padding from 1.25rem to 0.5rem
   nb-layout .layout nb-layout-header nav {
     padding: 0rem !important;
+    height: auto !important;
   }
 
   // Override default min-width for nb-select
@@ -135,15 +142,16 @@ body {
   nb-sidebar {
     nb-menu {
       .menu-items {
+        scrollbar-width: thin;
         &::-webkit-scrollbar {
           width: nb-theme(scrollbar-width);
         }
         &::-webkit-scrollbar-track {
-          background: nb-theme(scrollbar-background-color);
+          background: transparent;
         }
         &::-webkit-scrollbar-thumb {
-          background: nb-theme(scrollbar-color);
-          border-radius: 0.15625rem;
+          background: rgba(50, 50, 50, 0.1);
+          border-radius: 1rem;
         }
       }
     }
@@ -151,15 +159,16 @@ body {
 
   .ng-dropdown-panel {
     .scroll-host {
+      scrollbar-width: thin;
       &::-webkit-scrollbar {
         width: nb-theme(scrollbar-width);
       }
       &::-webkit-scrollbar-track {
-        background: nb-theme(scrollbar-background-color);
+        background: transparent;
       }
       &::-webkit-scrollbar-thumb {
-        background: nb-theme(scrollbar-color);
-        border-radius: 0.15625rem;
+        background: rgba(50, 50, 50, 0.1);
+        border-radius: 1rem;
       }
     }
   }
@@ -193,15 +202,15 @@ body {
     }
   }
 
-  @media screen and (min-width: nb-theme(layout-window-mode-max-width) + 20px) {
+  @media screen and (min-width: calc(nb-theme(layout-window-mode-max-width) + 20px)) {
     @include f-window-mode(nb-theme(layout-window-mode-padding-top) / 4);
   }
 
-  @media screen and (min-width: nb-theme(layout-window-mode-max-width) + 150px) {
+  @media screen and (min-width: calc(nb-theme(layout-window-mode-max-width) + 150px)) {
     @include f-window-mode(nb-theme(layout-window-mode-padding-top) / 2);
   }
 
-  @media screen and (min-width: nb-theme(layout-window-mode-max-width) + 300px) {
+  @media screen and (min-width: calc(nb-theme(layout-window-mode-max-width) + 300px)) {
     @include f-window-mode(nb-theme(layout-window-mode-padding-top));
   }
 
@@ -349,7 +358,7 @@ nb-card-body {
 .table-scroll-container,
 .grid-scroll-container {
   border-radius: 8px;
-  overflow-y: overlay;
+  overflow-y: auto;
   max-height: calc(100vh - 28rem);
   @include respond(dsk) {
     max-height: calc(70vh - 132px);

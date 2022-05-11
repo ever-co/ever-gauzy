@@ -118,7 +118,8 @@
 		"VIEW_REPORT": "Просмотр отчета",
 		"TIME_TRACKING_ENABLE": "Включить отслеживание времени",
 		"TIME_TRACKING_DISABLE": "Отключить отслеживание времени",
-		"PRINT": "Печать"
+		"PRINT": "Печать",
+		"FEEDBACK": "Отзыв"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "Тип",
@@ -2002,7 +2003,7 @@
 			"NAME": "Имя",
 			"REQUIRES_APPROVAL": "Требует одобрения",
 			"PAID": "Оплачено",
-			"NAME_IS_REQUIRED": "Необходимо указать название политики и выбор сотрудников!"
+			"NAME_IS_REQUIRED": "Требуется название политики!"
 		},
 		"NOTIFICATIONS": {
 			"NO_CHANGES": "Нет изменений",

@@ -86,7 +86,7 @@
   );
   .table-search-scroll {
     height: calc(100vh - 43rem);
-    overflow-y: overlay;
+    overflow-y: auto;
   }
 }
 

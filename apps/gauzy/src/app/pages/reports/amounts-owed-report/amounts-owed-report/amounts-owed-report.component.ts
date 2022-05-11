@@ -81,8 +81,11 @@ export class AmountsOwedReportComponent extends BaseSelectorFilterComponent
 					label: this.getTranslation('REPORT_PAGE.AMOUNT'),
 					data: logs.map((log) => log.value),
 					borderColor: ChartUtil.CHART_COLORS.red,
-					backgroundColor: ChartUtil.transparentize(ChartUtil.CHART_COLORS.red, 0.5),
-					borderWidth: 1
+					backgroundColor: ChartUtil.transparentize(ChartUtil.CHART_COLORS.red, 1),
+					borderWidth: 1,
+					pointRadius: 2,
+					pointHoverRadius: 7,
+					pointHoverBorderWidth: 6,
 				}];
 				this.chartData = {
 					labels: pluck(logs, 'date'),

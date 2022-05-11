@@ -6,6 +6,7 @@ import {
 import { NbThemeService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ChartComponent } from 'angular2-chartjs';
+import { ChartUtil } from "./chart-utils";
 
 export interface IChartData {
 	labels?: any[];
@@ -14,13 +15,19 @@ export interface IChartData {
 		backgroundColor?: string;
 		borderColor?: string;
 		borderWidth?: number;
+		pointRadius?: number;
+		pointHoverRadius?: number;
+		pointBorderWidth?: number;
+		pointHoverBorderWidth?: number;
+		pointBorderColor?: string;
+		fill?: boolean;
 		data?: any[];
 	}[];
 }
 
 @UntilDestroy()
 @Component({
-	selector: 'ngx-line-chart',
+	selector: ' ngx-line-chart',
 	templateUrl: './line-chart.component.html',
 	styleUrls: ['./line-chart.component.scss']
 })
@@ -31,6 +38,20 @@ export class LineChartComponent implements OnInit, OnDestroy {
 	labels: string[] = [];
 	selectedDate: Date;
 	noData = false;
+	chartUpdated = false;
+	tooltipStyles = {
+		enabled: true,
+		mode: 'point',
+		position: 'average',
+		displayColors: false,
+		caretSize: 0,
+		titleFontStyle: 'bold',
+		bodyFontColor: 'rgba(0,0,0,0.5)',
+		borderWidth: 3,
+		titleFontColor: 'rgba(0,0,0,0.8)',
+		backgroundColor: 'white',
+		borderColor: "rgba(0,0,0,0.1)",
+	}
 
 	logRequest: ITimeLogFilters = {};
 
@@ -54,6 +75,17 @@ export class LineChartComponent implements OnInit, OnDestroy {
 	weekDayList: string[];
 
 	constructor(private themeService: NbThemeService) {}
+
+	getTooltip(tooltipItem, data) {
+		let tooltip = tooltipItem.label;
+		if (this.chart && this.chart.chart) {
+			tooltip = this.chart.chart.data.datasets[tooltipItem.datasetIndex].label
+			tooltip = tooltip[0] + tooltip.slice(1).toLocaleLowerCase()
+			tooltip += ": " + tooltipItem.value
+		}
+
+		return tooltip
+	}
 
 	ngOnInit() {
 		this.themeService
@@ -93,7 +125,7 @@ export class LineChartComponent implements OnInit, OnDestroy {
 						yAxes: [
 							{
 								gridLines: {
-									display: false,
+									display: true,
 									color: chartJs.axisLineColor
 								},
 								ticks: {
@@ -105,27 +137,63 @@ export class LineChartComponent implements OnInit, OnDestroy {
 					legend: {
 						position: 'bottom',
 						align: 'start',
+						usePointStyle: true,
 						labels: {
 							fontColor: chartJs.textColor,
 						}
 					},
+					hover: {
+						mode: 'point',
+						intersect: false,
+					},
+					onHover: (evt, activeElements) => {
+						if (!activeElements || !activeElements.length) {
+							if (this.data && this.data.datasets) {
+								this.data.datasets.forEach(x => {
+									x.borderWidth = 1
+									x.pointRadius = 2
+									x.pointBorderWidth = 1
+									x.pointBorderColor = x.borderColor
+									x.backgroundColor = ChartUtil.transparentize(x.backgroundColor, 1)
+									evt.target.style.cursor = 'default'
+								})
+								if (!this.chartUpdated) {
+									this.chart.chart.update()
+									this.chartUpdated = true
+								}
+							}
+						} else {
+							this.chartUpdated = false
+							evt.target.style.cursor = 'pointer'
+							const datasetIndex = activeElements[0]._datasetIndex
+							const activeDataset = this.data.datasets[datasetIndex]
+
+							activeDataset.borderWidth = 8
+							activeDataset.pointRadius = 7
+							activeDataset.pointBorderWidth = 6
+							activeDataset.pointBorderColor = 'rgb(255, 255, 255)'
+							activeDataset.backgroundColor = ChartUtil.transparentize(activeDataset.backgroundColor, 0.4)
+							activeDataset.fill = true
+							this.chart.chart.update()
+						}
+					},
+
 					tooltips: this.selectedDate
 						? {
-								enabled: true,
-								mode: 'dataset',
-								callbacks: {
-									label: function (tooltipItem, data) {
-										const label =
-											data.datasets[
-												tooltipItem.datasetIndex
-											].label || '';
-										return label;
-									}
-								}
-						  }
-						: {
-								enabled: true
-						  }
+						...this.tooltipStyles,
+						callbacks: {
+							title: this.getTooltip,
+							label: function (tooltipItem, data) {
+								const label = data.datasets[tooltipItem.datasetIndex].label || '';
+								return label;
+							},
+						}
+					} : {
+							...this.tooltipStyles,
+							callbacks: {
+								label: (tooltipItem, data) => this.getTooltip(tooltipItem, data),
+							}
+					},
 				};
 				if (this.chart && this.chart.chart) {
 					this.chart.chart.update();

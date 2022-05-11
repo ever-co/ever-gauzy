@@ -96,7 +96,7 @@ export class ScreenshotController {
 		try {
 			entity.file = file.key;
 			entity.thumb = thumb.key;
-			entity.storageProvider = provider.name as FileStorageProviderEnum;
+			entity.storageProvider = (provider.name).toUpperCase() as FileStorageProviderEnum;
 			entity.recordedAt = entity.recordedAt ? entity.recordedAt : new Date();
 
 			const screenshot = await this.screenshotService.create(entity);

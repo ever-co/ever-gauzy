@@ -12,7 +12,8 @@ import {
 	ComponentLayoutStyleEnum,
 	IOrganization,
 	IInviteViewModel,
-	InvitationExpirationEnum
+	InvitationExpirationEnum,
+	IInvite
 } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -21,11 +22,11 @@ import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { Subject, firstValueFrom } from 'rxjs';
 import * as moment from 'moment-timezone';
+import { distinctUntilChange } from '@gauzy/common-angular';
 import {
 	InviteService,
 	Store,
-	ToastrService,
-	RoleService
+	ToastrService
 } from '../../../@core/services';
 import { DeleteConfirmationComponent } from '../../user/forms';
 import { InviteMutationComponent } from '../invite-mutation/invite-mutation.component';
@@ -39,7 +40,6 @@ import {
 	PaginationFilterBaseComponent,
 	IPaginationBase
 } from '../../pagination/pagination-filter-base.component';
-import { distinctUntilChange } from '../../../../../../../packages/common-angular/src/utils/shared-utils';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -47,10 +47,9 @@ import { distinctUntilChange } from '../../../../../../../packages/common-angula
 	templateUrl: './invites.component.html',
 	styleUrls: ['invites.component.scss']
 })
-export class InvitesComponent
-	extends PaginationFilterBaseComponent
-	implements AfterViewInit, OnInit, OnDestroy
-{
+export class InvitesComponent extends PaginationFilterBaseComponent 
+	implements AfterViewInit, OnInit, OnDestroy {
+
 	@Input()
 	invitationType: InvitationTypeEnum;
 
@@ -58,7 +57,7 @@ export class InvitesComponent
 	sourceSmartTable = new LocalDataSource();
 	selectedInvite: IInviteViewModel;
 	viewComponentName: ComponentEnum;
-	disableButton = true;
+	disableButton: boolean = true;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
 	invites: IInviteViewModel[] = [];
@@ -80,8 +79,7 @@ export class InvitesComponent
 		private readonly store: Store,
 		private readonly toastrService: ToastrService,
 		private readonly translate: TranslateService,
-		private readonly inviteService: InviteService,
-		private readonly rolesService: RoleService
+		private readonly inviteService: InviteService
 	) {
 		super(translate);
 		this.setView();
@@ -93,9 +91,8 @@ export class InvitesComponent
 		this.invites$
 			.pipe(
 				debounceTime(200),
-				tap(() => this.loadInvites()),
 				tap(() => this.clearItem()),
-				tap(() => this.subject$.next(true)),
+				tap(() => this.loadInvites()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -130,10 +127,10 @@ export class InvitesComponent
 		this.store
 			.componentLayout$(this.viewComponentName)
 			.pipe(
-				tap(
-					(componentLayout) =>
-						(this.dataLayoutStyle = componentLayout)
-				),
+				distinctUntilChange(),
+				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
+				tap(() => this.refreshPagination()),
+				tap(() => this.invites$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -177,8 +174,7 @@ export class InvitesComponent
 			});
 		}
 		const textField = document.createElement('textarea');
-		textField.innerText =
-			location.origin + '/#/' + this.selectedInvite.inviteUrl;
+		textField.innerText = location.origin + '/#/' + this.selectedInvite.inviteUrl;
 		document.body.appendChild(textField);
 		textField.select();
 		document.execCommand('copy');
@@ -189,9 +185,14 @@ export class InvitesComponent
 	}
 
 	private async loadInvites() {
+		if (!this.organization) {
+			return;
+		}
+
 		let invites = [];
 		const { activePage, itemsPerPage } = this.getPagination();
 		this.loading = true;
+		
 		try {
 			const { tenantId } = this.store.user;
 			const { id: organizationId } = this.organization;
@@ -206,12 +207,10 @@ export class InvitesComponent
 				],
 				{ organizationId, tenantId }
 			);
-			invites = items.filter((invite) => {
+			invites = items.filter((invite: IInvite) => {
 				if (this.invitationType === InvitationTypeEnum.EMPLOYEE) {
 					return invite.role.name == RolesEnum.EMPLOYEE;
-				} else if (
-					this.invitationType === InvitationTypeEnum.CANDIDATE
-				) {
+				} else if (this.invitationType === InvitationTypeEnum.CANDIDATE) {
 					return invite.role.name === RolesEnum.CANDIDATE;
 				} else {
 					return invite.role.name !== RolesEnum.EMPLOYEE;

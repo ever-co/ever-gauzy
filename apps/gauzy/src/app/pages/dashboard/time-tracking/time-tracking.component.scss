@@ -1,5 +1,6 @@
 @import 'gauzy/_gauzy-cards.scss';
 :host {
+  background-color: rgba(50, 50, 50, 0.02);
   ::ng-deep {
     nb-progress-bar {
       .progress-value {
@@ -18,6 +19,13 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+  }
+
+  .card-header {
+    background-color: unset;
+  }
+  .card {
+    background-color: rgba(50, 50, 50, 0.03);
   }
 
   .view-all {
@@ -60,21 +68,41 @@
   width: 100%;
 }
 
-::ng-deep .custom-progress {
-  .progress-container {
-    height: 5px !important;
-  }
-}
 :host {
   nb-card {
-    background: var(--background-basic-color-1);
+    background-color: var(--background-basic-color-1);
     box-shadow: 0px 6px 20px 0px rgb(0 0 0 / 5%);
   }
   @include card_overrides(
-    overlay,
+    auto,
     $default-card-height,
     0 $default-radius $default-radius $default-radius
   );
+  ngx-activity-item.tracking-progress ::ng-deep {
+    .progress-container {
+      height: 5px !important;
+    }
+  }
+  nb-progress-bar.custom-progress ::ng-deep {
+    .progress-container {
+      height: 5px !important;
+    }
+  }
+  ::ng-deep {
+    .toggle-label {
+      margin-bottom: 0;
+    }
+  }
+  .custom-toggle {
+    ::ng-deep {
+      span.text {
+        color: nb-theme(text-primary-color);
+      }
+    }
+  }
+  .card-body {
+    background-color: rgba(50, 50, 50, 0.03);
+  }
 }
 
 .custom-container {
@@ -85,4 +113,7 @@
   justify-content: start;
   column-gap: 1rem;
   grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+}
+.custom-card-body-inner, .custom-card-body-inner-list {
+  background-color: nb-theme(gauzy-sidebar-background-2);
 }

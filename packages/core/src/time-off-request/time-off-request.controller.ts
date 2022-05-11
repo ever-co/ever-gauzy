@@ -8,7 +8,9 @@ import {
 	Query,
 	Put,
 	Param,
-	HttpCode
+	HttpCode,
+	UsePipes,
+	ValidationPipe
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
@@ -21,7 +23,7 @@ import {
 	RolesEnum,
 	StatusTypesEnum
 } from '@gauzy/contracts';
-import { CrudController } from './../core/crud';
+import { CrudController, PaginationParams } from './../core/crud';
 import { TimeOffRequest } from './time-off-request.entity';
 import { TimeOffRequestService } from './time-off-request.service';
 import { TimeOffStatusCommand } from './commands';
@@ -38,6 +40,16 @@ export class TimeOffRequestController extends CrudController<TimeOffRequest> {
 		private readonly commandBus: CommandBus
 	) {
 		super(timeOffRequestService);
+	}
+
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_TIME_OFF_VIEW)
+	@Get('pagination')
+	@UsePipes(new ValidationPipe({ transform: true }))
+	async pagination(
+		@Query() filter: PaginationParams<ITimeOffRequest>
+	): Promise<IPagination<ITimeOffRequest>> {
+		return this.timeOffRequestService.pagination(filter);
 	}
 
 	/**

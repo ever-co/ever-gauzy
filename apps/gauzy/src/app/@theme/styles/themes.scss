@@ -38,7 +38,8 @@ $nb-themes: nb-register-theme(
     gauzy-input-background: rgba(255, 255, 255, 1),
     gauzy-sidebar-background-1: #ebebeb,
     gauzy-sidebar-background-2: rgba(251, 251, 251, 1),
-    accordion-item-background-color: #fbfbfb
+    accordion-item-background-color: #fbfbfb,
+    gauzy-background-transparent: color-primary-transparent-default
   ),
   default,
   default
@@ -69,7 +70,8 @@ $nb-themes: nb-register-theme(
     header-shadow: none,
     gauzy-card-2: rgba(51, 51, 71, 1),
     gauzy-card-1: rgba(37, 37, 40, 1),
-    gauzy-input-background: rgba(255, 255, 255, 0.15)
+    gauzy-input-background: rgba(255, 255, 255, 0.15),
+    gauzy-background-transparent: color-primary-transparent-default
   ),
   cosmic,
   cosmic
@@ -99,7 +101,8 @@ $nb-themes: nb-register-theme(
     sidebar-padding: 0.625rem,
     gauzy-card-1: rgba(255, 255, 255, 1),
     gauzy-card-2: rgba(50, 50, 50, 0.03),
-    gauzy-input-background: rgba(255, 255, 255, 1)
+    gauzy-input-background: rgba(255, 255, 255, 1),
+    gauzy-background-transparent: color-primary-transparent-default
   ),
   corporate,
   corporate
@@ -134,7 +137,8 @@ $nb-themes: nb-register-theme(
     gauzy-input-background: rgba(255, 255, 255, 0.15),
     gauzy-sidebar-background-1: #181818,
     gauzy-sidebar-background-2: rgba(38, 38, 46, 1),
-    accordion-item-background-color: gauzy-sidebar-background-2
+    accordion-item-background-color: gauzy-sidebar-background-2,
+    gauzy-background-transparent: color-primary-transparent-default
   ),
   dark,
   dark
@@ -259,7 +263,8 @@ $nb-themes: nb-register-theme(
     color-success-default: rgba(37, 184, 105, 1),
     color-info-default: rgba(0, 136, 254, 1),
     color-danger-default: #ff0000,
-    color-warning-default: rgba(255, 171, 45, 1)
+    color-warning-default: rgba(255, 171, 45, 1),
+    gauzy-background-transparent: rgba(110, 73, 232, 0.5)
   ),
   gauzy-light,
   default

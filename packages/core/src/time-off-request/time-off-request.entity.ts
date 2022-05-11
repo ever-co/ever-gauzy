@@ -66,13 +66,13 @@ export class TimeOffRequest
 
 	@ApiProperty({ type: () => Boolean })
 	@IsBoolean()
-	@Column()
+	@Column({ nullable: true, default: false })
 	isHoliday?: boolean;
 
 	@ApiPropertyOptional({ type: () => Boolean })
 	@IsBoolean()
 	@IsOptional()
-	@Column({ nullable: true })
+	@Column({ nullable: true, default: false })
 	isArchived?: boolean;
 
 	/*

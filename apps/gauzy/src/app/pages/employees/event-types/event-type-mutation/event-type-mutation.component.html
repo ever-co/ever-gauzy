@@ -1,16 +1,14 @@
 <nb-card class="main">
-	<nb-card-header class="d-flex">
-		<h4 *ngIf="eventType; else headerAdd">
+	<nb-card-header class="d-flex flex-column">
+		<span class="cancel"
+			><i class="fas fa-times" (click)="dialogRef.close()"></i
+		></span>
+		<h4 class="title" *ngIf="eventType; else headerAdd">
 			{{ 'POP_UPS.EDIT_EVENT_TYPE' | translate }}
 		</h4>
 		<ng-template #headerAdd>
-			<h4>{{ 'POP_UPS.ADD_EVENT_TYPE' | translate }}</h4>
+			<h4 class="title">{{ 'POP_UPS.ADD_EVENT_TYPE' | translate }}</h4>
 		</ng-template>
-		<nb-icon
-			class="ml-auto mt-1 close"
-			(click)="dialogRef.close()"
-			icon="close-outline"
-		></nb-icon>
 	</nb-card-header>
 	<nb-card-body class="body">
 		<form [formGroup]="form">
@@ -24,7 +22,9 @@
 							id="employee"
 							[multiple]="false"
 							[label]="false"
-							[placeholder]="'FORM.PLACEHOLDERS.ALL_EMPLOYEES' | translate"
+							[placeholder]="
+								'FORM.PLACEHOLDERS.ALL_EMPLOYEES' | translate
+							"
 							[selectedEmployeeIds]="form.get('employeeId').value"
 							(selectedChange)="onEmployeeChange($event)"
 							formControlName="employeeId"
@@ -47,7 +47,9 @@
 							type="text"
 							nbInput
 							formControlName="title"
-							[placeholder]="'FORM.PLACEHOLDERS.TITLE' | translate"
+							[placeholder]="
+								'FORM.PLACEHOLDERS.TITLE' | translate
+							"
 						/>
 					</div>
 				</div>
@@ -66,20 +68,10 @@
 							type="text"
 							nbInput
 							formControlName="description"
-							[placeholder]="'FORM.PLACEHOLDERS.DESCRIPTION' | translate"
+							[placeholder]="
+								'FORM.PLACEHOLDERS.DESCRIPTION' | translate
+							"
 						/>
-					</div>
-				</div>
-			</div>
-			<div class="row">
-				<div class="col">
-					<div class="form-group">
-						<ga-tags-color-input
-							[selectedTags]="form.get('tags').value"
-							(selectedTagsEvent)="selectedTagsEvent($event)"
-							[isOrgLevel]="true"
-						>
-						</ga-tags-color-input>
 					</div>
 				</div>
 			</div>
@@ -88,10 +80,12 @@
 					'FORM.LABELS.DURATION' | translate
 				}}</label>
 				<div class="row">
-					<div class="col-6">
+					<div class="col-3">
 						<div class="form-group">
 							<input
-								[placeholder]="'FORM.PLACEHOLDERS.DURATION' | translate"
+								[placeholder]="
+									'FORM.PLACEHOLDERS.DURATION' | translate
+								"
 								fullWidth
 								id="durationInput"
 								type="number"
@@ -101,7 +95,7 @@
 							/>
 						</div>
 					</div>
-					<div class="col-6">
+					<div class="col-3">
 						<nb-select
 							class="d-block"
 							formControlName="durationUnit"
@@ -118,25 +112,42 @@
 						</nb-select>
 					</div>
 				</div>
-				<div class="row">
-					<div class="col">
-						<div class="form-group">
-							<nb-checkbox formControlName="isActive">
-								<span 
-									[nbTooltip]="'EVENT_TYPE_PAGE.ACTIVE' | translate"
-									[innerHtml]="'EVENT_TYPE_PAGE.ACTIVE' | translate"
-								></span>
-							</nb-checkbox>
-						</div>
+			</div>
+			<div class="row">
+				<div class="col">
+					<div class="form-group">
+						<ga-tags-color-input
+							[selectedTags]="form.get('tags').value"
+							(selectedTagsEvent)="selectedTagsEvent($event)"
+							[isOrgLevel]="true"
+						>
+						</ga-tags-color-input>
+					</div>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col">
+					<div class="form-group">
+						<nb-checkbox formControlName="isActive">
+							<span
+								[nbTooltip]="
+									'EVENT_TYPE_PAGE.ACTIVE' | translate
+								"
+								[innerHtml]="
+									'EVENT_TYPE_PAGE.ACTIVE' | translate
+								"
+							></span>
+						</nb-checkbox>
 					</div>
 				</div>
 			</div>
 		</form>
 	</nb-card-body>
-	<nb-card-footer class="text-right">
+	<nb-card-footer class="text-left">
 		<button
 			(click)="dialogRef.close()"
-			status="danger"
+			status="basic"
+			outline
 			class="mr-2"
 			nbButton
 		>

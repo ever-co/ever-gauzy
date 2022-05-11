@@ -21,7 +21,7 @@ import {
 import { ApprovalPolicyMutationComponent } from '../../@shared/approval-policy';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import { ComponentEnum } from '../../@core/constants';
-import { distinctUntilChange } from '../../../../../../packages/common-angular/src/utils/shared-utils';
+import { distinctUntilChange } from '@gauzy/common-angular';
 import {
 	ApprovalPolicyService,
 	Store,

@@ -1,9 +1,11 @@
 <nb-card class="main">
-	<nb-card-header>
-		<h5>
+	<nb-card-header class="dflex flex-column">
+		<span class="cancel"
+			><i class="fas fa-times" (click)="close()"></i
+		></span>
+		<h5 class="title">
 			{{ 'TIME_OFF_PAGE.ADD_HOLIDAYS' | translate }}
 		</h5>
-		<nb-icon (click)="close()" icon="close-outline"></nb-icon>
 	</nb-card-header>
 	<nb-card-body>
 		<form [formGroup]="form">
@@ -16,7 +18,9 @@
 						<nb-select
 							(selectedChange)="onHolidaySelected($event)"
 							fullWidth
-							[placeholder]="'TIME_OFF_PAGE.SELECT_HOLIDAY_NAME' | translate"
+							[placeholder]="
+								'TIME_OFF_PAGE.SELECT_HOLIDAY_NAME' | translate
+							"
 						>
 							<nb-option
 								*ngFor="let holiday of holidays"
@@ -38,7 +42,10 @@
 							(selectedChange)="onEmployeesSelected($event)"
 							fullWidth
 							required
-							[placeholder]="'TIME_OFF_PAGE.ADD_OR_REMOVE_EMPLOYEES' | translate"
+							[placeholder]="
+								'TIME_OFF_PAGE.ADD_OR_REMOVE_EMPLOYEES'
+									| translate
+							"
 						>
 							<nb-option
 								*ngFor="let employee of orgEmployees"
@@ -62,7 +69,9 @@
 					<ga-time-off-policy-select
 						[id]="'policy'"
 						[ctrl]="form.controls.policy"
-						[placeholder]="'TIME_OFF_PAGE.SELECT_TIME_OFF_POLICY' | translate"
+						[placeholder]="
+							'TIME_OFF_PAGE.SELECT_TIME_OFF_POLICY' | translate
+						"
 						(selectedChange)="onPolicySelected($event)"
 					></ga-time-off-policy-select>
 				</div>
@@ -86,7 +95,10 @@
 									: 'basic'
 							"
 						/>
-						<nb-datepicker [min]="minDate" #startDatePicker></nb-datepicker>
+						<nb-datepicker
+							[min]="minDate"
+							#startDatePicker
+						></nb-datepicker>
 					</div>
 				</div>
 				<div class="col-6">
@@ -106,18 +118,23 @@
 									: 'basic'
 							"
 						/>
-						<nb-datepicker [min]="minDate" #endDatePicker></nb-datepicker>
+						<nb-datepicker
+							[min]="minDate"
+							#endDatePicker
+						></nb-datepicker>
 					</div>
 				</div>
 			</div>
 		</form>
 	</nb-card-body>
-	<nb-card-footer class="text-right">
-		<button 
+	<nb-card-footer class="text-left">
+		<button
 			(click)="close()"
-			status="danger"
+			status="basic"
+			outline
 			class="mr-3"
 			nbButton
+			size="small"
 		>
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
@@ -126,6 +143,7 @@
 			status="success"
 			nbButton
 			[disabled]="form.invalid"
+			size="small"
 		>
 			{{ 'BUTTONS.SAVE' | translate }}
 		</button>

@@ -118,7 +118,7 @@ export class CandidateCriterionsRatingController extends CrudController<Candidat
 	@Roles(RolesEnum.CANDIDATE, RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN)
 	@Delete('feedback/:feedbackId')
 	async deleteBulkByFeedbackId(
-		@Param('id', UUIDValidationPipe) feedbackId: string,
+		@Param('feedbackId', UUIDValidationPipe) feedbackId: string,
 	): Promise<any> {
 		return this.commandBus.execute(
 			new CandidateCriterionsRatingBulkDeleteCommand(feedbackId)
