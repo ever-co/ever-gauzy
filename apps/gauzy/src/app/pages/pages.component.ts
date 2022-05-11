@@ -746,7 +746,7 @@ export class PagesComponent
 					{
 						title: 'All Reports',
 						link: '/pages/reports/all',
-						icon: 'bar-chart-outline',
+						icon: 'fas fa-chart-bar',
 						data: {
 							translationKey: 'MENU.ALL_REPORTS'
 						}
