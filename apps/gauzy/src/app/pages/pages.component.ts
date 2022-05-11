@@ -352,7 +352,7 @@ export class PagesComponent
 				children: [
 					{
 						title: 'Employee',
-						icon: 'people-outline',
+						icon: 'fas fa-user-friends',
 						link: '/pages/jobs/employee',
 						data: {
 							translationKey: 'MENU.EMPLOYEES',
@@ -363,7 +363,7 @@ export class PagesComponent
 					},
 					{
 						title: 'Browse',
-						icon: 'list-outline',
+						icon: 'fas fa-list',
 						link: '/pages/jobs/search',
 						data: {
 							translationKey: 'MENU.JOBS_SEARCH'
@@ -371,7 +371,7 @@ export class PagesComponent
 					},
 					{
 						title: 'Matching',
-						icon: 'person-outline',
+						icon: 'fas fa-user',
 						link: '/pages/jobs/matching',
 						data: {
 							translationKey: 'MENU.JOBS_MATCHING',
@@ -382,7 +382,7 @@ export class PagesComponent
 					},
 					{
 						title: 'Proposal Template',
-						icon: 'file-text-outline',
+						icon: 'far fa-file-alt',
 						link: '/pages/jobs/proposal-template',
 						data: {
 							translationKey: 'MENU.PROPOSAL_TEMPLATE',
