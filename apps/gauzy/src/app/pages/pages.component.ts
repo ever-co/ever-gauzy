@@ -665,7 +665,7 @@ export class PagesComponent
 				children: [
 					{
 						title: 'Visitors',
-						icon: 'book-open-outline',
+						icon: 'fas fa-id-badge',
 						link: `/pages/contacts/visitors`,
 						data: {
 							translationKey: 'CONTACTS_PAGE.VISITORS'
@@ -673,7 +673,7 @@ export class PagesComponent
 					},
 					{
 						title: 'Leads',
-						icon: 'book-open-outline',
+						icon: 'fas fa-id-badge',
 						link: `/pages/contacts/leads`,
 						data: {
 							translationKey: 'CONTACTS_PAGE.LEADS'
@@ -681,7 +681,7 @@ export class PagesComponent
 					},
 					{
 						title: 'Customers',
-						icon: 'book-open-outline',
+						icon: 'fas fa-id-badge',
 						link: `/pages/contacts/customers`,
 						data: {
 							translationKey: 'CONTACTS_PAGE.CUSTOMERS'
@@ -689,7 +689,7 @@ export class PagesComponent
 					},
 					{
 						title: 'Clients',
-						icon: 'book-open-outline',
+						icon: 'fas fa-id-badge',
 						link: `/pages/contacts/clients`,
 						data: {
 							translationKey: 'CONTACTS_PAGE.CLIENTS'
