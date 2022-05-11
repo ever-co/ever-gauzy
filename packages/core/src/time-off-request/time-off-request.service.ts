@@ -28,6 +28,7 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 	constructor(
 		@InjectRepository(TimeOffRequest)
 		private readonly timeOffRequestRepository: Repository<TimeOffRequest>,
+		
 		@InjectRepository(RequestApproval)
 		private readonly requestApprovalRepository: Repository<RequestApproval>
 	) {

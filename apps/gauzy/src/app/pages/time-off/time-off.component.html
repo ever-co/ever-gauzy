@@ -30,6 +30,7 @@
 				[isDisable]="!isRecordSelected"
 			></ngx-gauzy-button-action>
 			<nb-toggle
+				[(ngModel)]="displayHolidays"
 				(checkedChange)="changeDisplayHolidays($event)"
 				class="custom-toggle mr-3 ml-3"
 				status="primary"
@@ -59,6 +60,7 @@
 					</nb-radio>
 				</nb-radio-group>
 				<nb-toggle
+					[(ngModel)]="includeArchived"
 					(checkedChange)="changeIncludeArchived($event)"
 					status="warning"
 					class="my-auto align-center"
@@ -179,7 +181,7 @@
 		{{ 'TIME_OFF_PAGE.ADD_HOLIDAYS' | translate }}
 	</button>
 	<button
-		(click)="showHideFilter()"
+		(click)="showFilter = !showFilter"
 		nbButton
 		status="basic"
 		size="small"
