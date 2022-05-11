@@ -34,10 +34,12 @@
 				class="custom-toggle mr-3 ml-3"
 				status="primary"
 				checked
-				>{{ 'TIME_OFF_PAGE.DISPLAY_HOLIDAYS' | translate }}
+			>
+				{{ 'TIME_OFF_PAGE.DISPLAY_HOLIDAYS' | translate }}
 			</nb-toggle>
-			<ga-layout-selector [componentName]="viewComponentName">
-			</ga-layout-selector>
+			<ga-layout-selector 
+				[componentName]="viewComponentName"
+			></ga-layout-selector>
 		</div>
 	</nb-card-header>
 	<nb-card-body>
@@ -77,12 +79,9 @@
 					[source]="sourceSmartTable"
 					(userRowSelect)="selectRecord($event)"
 					#timeOffTable
-				>
-				</ng2-smart-table>
+				></ng2-smart-table>
 			</div>
-			<ng-container
-				*ngIf="pagination.totalItems > pagination.itemsPerPage"
-			>
+			<ng-container *ngIf="pagination.totalItems > pagination.itemsPerPage">
 				<div class="pagination-container">
 					<ga-pagination
 						(selectedOption)="onUpdateOption($event)"
@@ -91,8 +90,7 @@
 						[totalItems]="pagination?.totalItems"
 						[itemsPerPage]="pagination?.itemsPerPage"
 						[activePage]="pagination?.activePage"
-					>
-					</ga-pagination>
+					></ga-pagination>
 				</div>
 			</ng-container>
 		</ng-template>

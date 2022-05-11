@@ -1,4 +1,5 @@
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
 import {
@@ -10,11 +11,11 @@ import {
 } from '@gauzy/contracts';
 import { debounceTime, filter, first, tap, finalize } from 'rxjs/operators';
 import { combineLatest, Subject } from 'rxjs';
-import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
+import { Ng2SmartTableComponent } from 'ng2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange } from '@gauzy/common-angular';
-import { ComponentEnum } from '../../@core/constants';
+import { API_PREFIX, ComponentEnum } from '../../@core/constants';
 import { Store, TimeOffService, ToastrService } from '../../@core/services';
 import {
 	TimeOffHolidayMutationComponent,
@@ -22,13 +23,14 @@ import {
 } from '../../@shared/time-off';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import { StatusBadgeComponent } from '../../@shared/status-badge';
-import { DateViewComponent } from '../../@shared/table-components';
-import { PictureNameTagsComponent } from '../../@shared/table-components/picture-name-tags/picture-name-tags.component';
-import { ApprovalPolicyComponent } from '../approvals/table-components/approval-policy/approval-policy.component';
+import { DateViewComponent, PictureNameTagsComponent } from '../../@shared/table-components';
+import { ApprovalPolicyComponent } from '../approvals/table-components';
 import {
 	PaginationFilterBaseComponent,
 	IPaginationBase
 } from '../../@shared/pagination/pagination-filter-base.component';
+import { ServerDataSource } from '../../@core/utils/smart-table';
+import { getRawValuesFromRangePicker } from '../../@theme/components/header/selectors/date-range-picker';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -42,7 +44,7 @@ export class TimeOffComponent extends PaginationFilterBaseComponent
 	settingsSmartTable: object;
 	selectedEmployeeId: string | null;
 	selectedDateRange: IDateRangePicker;
-	sourceSmartTable = new LocalDataSource();
+	sourceSmartTable: ServerDataSource;
 	timeOffs: ITimeOff[] = [];
 	selectedTimeOffRecord: ITimeOff;
 	timeOffRequest: ITimeOff;
@@ -60,7 +62,7 @@ export class TimeOffComponent extends PaginationFilterBaseComponent
 	showFilter: boolean = false;
 
 	public organization: IOrganization;
-	timeoff$: Subject<any> = new Subject();
+	timeoff$: Subject<any> = this.subject$;
 
 	timeOffTable: Ng2SmartTableComponent;
 	@ViewChild('timeOffTable') set content(content: Ng2SmartTableComponent) {
@@ -76,7 +78,8 @@ export class TimeOffComponent extends PaginationFilterBaseComponent
 		private readonly timeOffService: TimeOffService,
 		private readonly toastrService: ToastrService,
 		private readonly store: Store,
-		private readonly translate: TranslateService
+		private readonly translate: TranslateService,
+		private readonly httpClient: HttpClient
 	) {
 		super(translate);
 		this.setView();
@@ -90,30 +93,29 @@ export class TimeOffComponent extends PaginationFilterBaseComponent
 				debounceTime(300),
 				tap(() => this.getTimeOffs()),
 				tap(() => this.clearItem()),
-				tap(() => this.subject$.next(true)),
-				untilDestroyed(this)
-			)
-			.subscribe();
-		const storeOrganization$ = this.store.selectedOrganization$;
-		const storeEmployee$ = this.store.selectedEmployee$;
-		const selectedDateRange$ = this.store.selectedDateRange$;
-		combineLatest([storeOrganization$, storeEmployee$, selectedDateRange$])
-			.pipe(
-				debounceTime(400),
-				filter(([organization]) => !!organization),
-				distinctUntilChange(),
-				tap(([organization, employee, dateRange]) => {
-					this.organization = organization;
-					this.selectedDateRange = dateRange;
-					this.selectedEmployeeId = employee ? employee.id : null;
-				}),
-				tap(() => this.timeoff$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
 		this.pagination$
 			.pipe(
 				distinctUntilChange(),
+				tap(() => this.timeoff$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		const storeOrganization$ = this.store.selectedOrganization$;
+		const selectedDateRange$ = this.store.selectedDateRange$;
+		const storeEmployee$ = this.store.selectedEmployee$;
+		combineLatest([storeOrganization$, selectedDateRange$, storeEmployee$])
+			.pipe(
+				debounceTime(300),
+				filter(([organization, dateRange]) => !!organization && !!dateRange),
+				distinctUntilChange(),
+				tap(([organization, dateRange, employee]) => {
+					this.organization = organization;
+					this.selectedDateRange = dateRange;
+					this.selectedEmployeeId = employee ? employee.id : null;
+				}),
 				tap(() => this.timeoff$.next(true)),
 				untilDestroyed(this)
 			)
@@ -367,26 +369,26 @@ export class TimeOffComponent extends PaginationFilterBaseComponent
 		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
 			actions: false,
+			pager: {
+				display: false,
+				perPage: pagination ? pagination.itemsPerPage : 10
+			},
 			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA'),
 			columns: {
 				fullName: {
 					title: this.getTranslation('SM_TABLE.EMPLOYEE'),
 					type: 'custom',
 					renderComponent: PictureNameTagsComponent,
-
 					class: 'align-row'
 				},
 				description: {
 					title: this.getTranslation('SM_TABLE.DESCRIPTION'),
 					type: 'html'
 				},
-				policyName: {
+				policy: {
 					title: this.getTranslation('SM_TABLE.POLICY'),
 					type: 'custom',
-					renderComponent: ApprovalPolicyComponent,
-					valuePrepareFunction: (cell, row) => {
-						return { name: cell };
-					}
+					renderComponent: ApprovalPolicyComponent
 				},
 				start: {
 					title: this.getTranslation('SM_TABLE.START'),
@@ -406,99 +408,122 @@ export class TimeOffComponent extends PaginationFilterBaseComponent
 					filter: false,
 					renderComponent: DateViewComponent
 				},
-				status: {
+				statusBadge: {
 					title: this.getTranslation('SM_TABLE.STATUS'),
 					type: 'custom',
 					width: '5%',
 					renderComponent: StatusBadgeComponent,
 					filter: false
 				}
-			},
-			pager: {
-				display: false,
-				perPage: pagination ? pagination.itemsPerPage : 10
 			}
 		};
 	}
 
-	private getTimeOffs() {
+	/*
+	* Register Smart Table Source Config
+	*/
+	setSmartTableSource() {
 		if (!this.organization) {
 			return;
 		}
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.organization;
-		const { itemsPerPage, activePage } = this.getPagination();
 		try {
-			this.loading = true;
-			const request = {
-				organizationId,
-				tenantId,
-				employeeId: this.selectedEmployeeId || null,
-				...this.selectedDateRange
-			};
-			this.sourceSmartTable.setPaging(activePage, itemsPerPage, false);
-			this.timeOffService
-				.getAllTimeOffRecords([], request)
-				.pipe(
-					first(),
-					tap(({ items }) => this.mapTimeOffRequests(items)),
-					finalize(() => (this.loading = false)),
-					untilDestroyed(this)
-				)
-				.subscribe();
+			const { tenantId } = this.store.user;
+			const { id: organizationId } = this.organization;
+		
+			this.sourceSmartTable = new ServerDataSource(this.httpClient, {
+				endPoint: `${API_PREFIX}/time-off-request/pagination`,
+				relations: ['policy', 'employees', 'employees.user'],
+				join: {
+					alias: "time-off",
+					leftJoin: {
+						policy: 'time-off.policy',
+						employees: 'time-off.employees'
+					},
+					...(this.filters.join) ? this.filters.join : {}
+				},
+				where: {
+					...{
+						organizationId,
+						tenantId,
+						...(this.selectedEmployeeId
+							? { employeeIds: [ this.selectedEmployeeId ] }
+							: {}),
+						...getRawValuesFromRangePicker(this.selectedDateRange)
+					},
+					...this.filters.where
+				},
+				resultMap: (timeOff: ITimeOff) => {
+					return Object.assign({}, timeOff, this.mapTimeOffRequest(timeOff));
+				},
+				finalize: () => {
+					this.setPagination({
+						...this.getPagination(),
+						totalItems: this.sourceSmartTable.count()
+					});
+					this.loading = false;
+				}
+			});
+		} finally {
+			this.loading = false;
+		}
+	}
+
+	private async getTimeOffs() {
+		if (!this.organization) {
+			return;
+		}
+		this.setSmartTableSource();
+		try {
+			const { activePage, itemsPerPage } = this.getPagination();
+			this.sourceSmartTable.setPaging(
+				activePage,
+				itemsPerPage,
+				false
+			);
+			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
+				await this._loadGridLayoutData();
+			}
 		} catch (error) {
 			this.toastrService.danger(
+				error,
 				'TIME_OFF_PAGE.NOTIFICATIONS.ERR_LOAD_RECORDS'
 			);
 		}
 	}
 
-	mapTimeOffRequests(items: ITimeOff[]) {
-		this.rows = [];
-		items.forEach((timeOff: ITimeOff) => {
-			let employeeName: string;
-			let employeeImage: string;
-			let extendedDescription = '';
+	/**
+	 * Mapped Time Off Requests
+	 * 
+	 * @param timeOff 
+	 * @returns 
+	 */
+	mapTimeOffRequest(timeOff: ITimeOff) {
+		let employeeName: string;
+		let employeeImage: string;
+		let extendedDescription = '';
 
-			if (timeOff.employees.length !== 1) {
-				employeeName = this.getTranslation(
-					'TIME_OFF_PAGE.MULTIPLE_EMPLOYEES'
-				);
-				employeeImage = 'assets/images/avatars/people-outline.svg';
-			} else {
-				employeeName = `${timeOff.employees[0].fullName}`;
-				employeeImage = timeOff.employees[0].user.imageUrl;
-			}
-
-			if (timeOff.documentUrl) {
-				extendedDescription = `<a href=${
-					timeOff.documentUrl
-				} target="_blank">${this.getTranslation(
-					'TIME_OFF_PAGE.VIEW_REQUEST_DOCUMENT'
-				)}</a><br>${timeOff.description}`;
-			} else {
-				extendedDescription = timeOff.description;
-			}
-
-			if (!timeOff.isArchived || this.includeArchived) {
-				this.rows.push({
-					...timeOff,
-					fullName: employeeName,
-					imageUrl: employeeImage,
-					policyName: timeOff.policy.name,
-					description: extendedDescription
-				});
-			}
-		});
-		this.timeOffs = this.rowsMapper(this.rows);
-		this.sourceSmartTable.load(this.timeOffs);
-		if (this.componentLayoutStyleEnum.CARDS_GRID === this.dataLayoutStyle) {
-			this._loadGridLayoutData();
+		if (timeOff.employees.length !== 1) {
+			employeeName = this.getTranslation('TIME_OFF_PAGE.MULTIPLE_EMPLOYEES');
+			employeeImage = 'assets/images/avatars/people-outline.svg';
+		} else {
+			employeeName = `${timeOff.employees[0].fullName}`;
+			employeeImage = timeOff.employees[0].user.imageUrl;
 		}
-		this.setPagination({
-			...this.getPagination(),
-			totalItems: this.sourceSmartTable.count()
-		});
+		if (timeOff.documentUrl) {
+			extendedDescription = `<a href=${
+				timeOff.documentUrl
+			} target="_blank">${this.getTranslation(
+				'TIME_OFF_PAGE.VIEW_REQUEST_DOCUMENT'
+			)}</a><br>${timeOff.description}`;
+		} else {
+			extendedDescription = timeOff.description;
+		}
+		return {
+			fullName: employeeName,
+			imageUrl: employeeImage,
+			description: extendedDescription,
+			statusBadge: this.statusMapper(timeOff.status)
+		}
 	}
 
 	private rowsMapper(rows: any[]): any[] {
@@ -511,6 +536,10 @@ export class TimeOffComponent extends PaginationFilterBaseComponent
 
 	private async _loadGridLayoutData() {
 		this.timeOffs = await this.sourceSmartTable.getElements();
+		this.setPagination({
+			...this.getPagination(),
+			totalItems: this.sourceSmartTable.count()
+		});
 	}
 
 	private _createRecord() {
@@ -539,9 +568,6 @@ export class TimeOffComponent extends PaginationFilterBaseComponent
 
 	private _updateRecord(id: string) {
 		try {
-			const { originalValue } = this.selectedTimeOffRecord.status as any;
-			this.timeOffRequest.status = originalValue;
-			
 			this.timeOffService.updateRequest(id, this.timeOffRequest).pipe(
 				untilDestroyed(this),
 				first(),
@@ -561,10 +587,9 @@ export class TimeOffComponent extends PaginationFilterBaseComponent
 
 	private _removeDocUrl() {
 		if (this.selectedTimeOffRecord.description) {
-			const index =
-				this.selectedTimeOffRecord.description.lastIndexOf('>');
+			const index = this.selectedTimeOffRecord.description.lastIndexOf('>');
 			const nativeDescription = this.selectedTimeOffRecord.description;
-			this.selectedTimeOffRecord.description = nativeDescription.substr(
+			this.selectedTimeOffRecord.description = nativeDescription.substring(
 				index + 1
 			);
 		}
@@ -610,24 +635,20 @@ export class TimeOffComponent extends PaginationFilterBaseComponent
 	 */
 	navigateToEmployee(row: ITimeOff) {
 		if (row?.employees.length > 0) {
-			this.router.navigate([
-				`/pages/employees/edit`,
-				row.employees[0].id
-			]);
+			this.router.navigate([`/pages/employees/edit`, row.employees[0].id]);
 		}
 	}
 
 	private statusMapper(value: any) {
 		let badgeClass;
 		if (value) {
-			badgeClass = ['approved'].includes(value.toLowerCase())
+			badgeClass = [StatusTypesEnum.APPROVED].includes(value.toUpperCase())
 				? 'success'
-				: ['requested'].includes(value.toLowerCase())
+				: [StatusTypesEnum.REQUESTED].includes(value.toUpperCase())
 				? 'warning'
 				: 'danger';
 		}
 		return {
-			originalValue: value,
 			text: value,
 			class: badgeClass
 		};
