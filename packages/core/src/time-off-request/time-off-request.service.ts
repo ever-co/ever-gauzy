@@ -5,9 +5,8 @@ import {
 	ConflictException
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Brackets, Repository, WhereExpressionBuilder } from 'typeorm';
-import { TimeOffRequest } from './time-off-request.entity';
-import { TenantAwareCrudService } from './../core/crud';
+import { Between, Brackets, In, Repository, WhereExpressionBuilder } from 'typeorm';
+import * as moment from 'moment';
 import {
 	ITimeOffCreateInput,
 	RequestApprovalStatusTypesEnum,
@@ -17,9 +16,12 @@ import {
 	IPagination,
 	ITimeOffFindInput
 } from '@gauzy/contracts';
+import { isNotEmpty } from '@gauzy/common';
+import { TimeOffRequest } from './time-off-request.entity';
 import { RequestApproval } from '../request-approval/request-approval.entity';
-import { RequestContext } from '../core/context';
-import * as moment from 'moment';
+import { TenantAwareCrudService } from './../core/crud';
+import { RequestContext } from './../core/context';
+import { getDateRangeFormat } from './../core/utils';
 
 @Injectable()
 export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest> {
@@ -68,7 +70,7 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 		findInput: ITimeOffFindInput
 	): Promise<IPagination<TimeOffRequest>> {
 		try {
-			const { organizationId, employeeId } = findInput;
+			const { organizationId, employeeId, startDate, endDate } = findInput;
 			const tenantId = RequestContext.currentTenantId();
 			const query = this.timeOffRequestRepository.createQueryBuilder('timeoff');
 			query
@@ -89,11 +91,6 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 					employeeIds
 				});
 			}
-			const {
-				startDate = moment().startOf('month').toDate(),
-				endDate = moment().endOf('month').toDate(),
-			} = findInput;
-			
 			const start = moment(startDate).format('YYYY-MM-DD hh:mm:ss');
 			const end = moment(endDate).format('YYYY-MM-DD hh:mm:ss');
 
@@ -102,6 +99,7 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 				end: end
 			});
 			
+			console.log(query.getQueryAndParameters());
 			const items = await query.getMany();
 			return { items, total: items.length };
 		} catch (err) {
@@ -138,5 +136,32 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 		} catch (err) {
 			throw new BadRequestException(err);
 		}
+	}
+
+	public pagination(filter?: any) {		
+		if ('where' in filter) {
+			const { where } = filter;
+			if (isNotEmpty(where.employeeIds)) {
+				filter.where.employees = {
+					id: In(where.employeeIds)
+				}
+			}
+				delete filter['where']['employeeIds'];
+			if (where.startDate && where.endDate) {
+				const { start: startDate, end: endDate } = getDateRangeFormat(
+					new Date(where.startDate),
+					new Date(where.endDate),
+					true
+				);
+				filter.where.start = Between(
+					startDate,
+					endDate
+				);
+				delete filter['where']['startDate'];
+				delete filter['where']['endDate'];
+			}
+		}
+		console.log({ filter });
+		return super.paginate(filter);
 	}
 }
