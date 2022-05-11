@@ -109,7 +109,7 @@ export class PagesComponent
 				children: [
 					{
 						title: 'Estimates',
-						icon: 'file-outline',
+						icon: 'far fa-file',
 						link: '/pages/accounting/invoices/estimates',
 						data: {
 							translationKey: 'MENU.ESTIMATES',
@@ -122,7 +122,7 @@ export class PagesComponent
 					},
 					{
 						title: 'Estimates Received',
-						icon: 'archive-outline',
+						icon: 'fas fa-file-invoice',
 						link: '/pages/accounting/invoices/received-estimates',
 						data: {
 							translationKey: 'MENU.ESTIMATES_RECEIVED',
@@ -135,7 +135,7 @@ export class PagesComponent
 					},
 					{
 						title: 'Invoices',
-						icon: 'file-text-outline',
+						icon: 'far fa-file-alt',
 						link: '/pages/accounting/invoices',
 						pathMatch: 'full',
 						data: {
@@ -149,7 +149,7 @@ export class PagesComponent
 					},
 					{
 						title: 'Invoices Recurring',
-						icon: 'flip-outline',
+						icon: 'fas fa-repeat',
 						link: '/pages/accounting/invoices/recurring',
 						pathMatch: 'prefix',
 						data: {
@@ -163,7 +163,7 @@ export class PagesComponent
 					},
 					{
 						title: 'Invoices Received',
-						icon: 'archive',
+						icon: 'fas fa-file-invoice-dollar',
 						link: '/pages/accounting/invoices/received-invoices',
 						pathMatch: 'prefix',
 						data: {
@@ -177,7 +177,7 @@ export class PagesComponent
 					},
 					{
 						title: 'Income',
-						icon: 'plus-circle-outline',
+						icon: 'fas fa-plus-circle',
 						link: '/pages/accounting/income',
 						data: {
 							translationKey: 'MENU.INCOME',
@@ -187,7 +187,7 @@ export class PagesComponent
 					},
 					{
 						title: 'Expenses',
-						icon: 'minus-circle-outline',
+						icon: 'fas fa-minus-circle',
 						link: '/pages/accounting/expenses',
 						data: {
 							translationKey: 'MENU.EXPENSES',
@@ -197,7 +197,7 @@ export class PagesComponent
 					},
 					{
 						title: 'Expense Recurring',
-						icon: 'flip-outline',
+						icon: 'fas fa-repeat',
 						link: '/pages/accounting/expense-recurring',
 						data: {
 							translationKey:
@@ -209,7 +209,7 @@ export class PagesComponent
 					},
 					{
 						title: 'Payments',
-						icon: 'clipboard-outline',
+						icon: 'fas fa-cash-register',
 						link: '/pages/accounting/payments',
 						data: {
 							translationKey: 'MENU.PAYMENTS',
