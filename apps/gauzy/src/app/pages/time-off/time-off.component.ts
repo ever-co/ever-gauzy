@@ -173,25 +173,14 @@ export class TimeOffComponent extends PaginationFilterBaseComponent
 	}
 
 	detectStatusChange(status: StatusTypesEnum) {
-		let filtered: ITimeOff[] = [];
+		this.isRecordSelected = false;
 		switch (status) {
 			case StatusTypesEnum.REQUESTED:
 			case StatusTypesEnum.APPROVED:
 			case StatusTypesEnum.DENIED:
-				filtered = [...this.rows].filter(
-					(record: ITimeOff) => record.status === status
-				);
-				this.timeOffs = this.rowsMapper(filtered);
-				this.sourceSmartTable.load(this.timeOffs);
-				break;
-			default:
-				filtered = this.rows;
+				this.setFilter({ field: 'status', search: status });
 				break;
 		}
-
-		this.isRecordSelected = false;
-		this.timeOffs = this.rowsMapper(filtered);
-		this.sourceSmartTable.load(this.timeOffs);
 	}
 
 	openTimeOffSettings() {
@@ -427,6 +416,8 @@ export class TimeOffComponent extends PaginationFilterBaseComponent
 			return;
 		}
 		try {
+			this.loading = true;
+
 			const { tenantId } = this.store.user;
 			const { id: organizationId } = this.organization;
 		
