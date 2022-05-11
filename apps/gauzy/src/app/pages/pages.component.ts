@@ -36,7 +36,7 @@ interface GaMenuItem extends NbMenuItem {
 	styleUrls: ['pages.component.scss'],
 	template: `
 		<ngx-one-column-layout *ngIf="!!menu && user">
-			<nb-menu [items]="menu"></nb-menu>
+			<gauzy-sidebar-menu [menu]="menu"></gauzy-sidebar-menu>
 			<router-outlet></router-outlet>
 		</ngx-one-column-layout>
 	`
