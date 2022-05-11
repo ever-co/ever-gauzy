@@ -41,8 +41,10 @@ interface GaMenuItem extends NbMenuItem {
 		</ngx-one-column-layout>
 	`
 })
-export class PagesComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
-
+export class PagesComponent
+	extends TranslationBaseComponent
+	implements OnInit, OnDestroy
+{
 	isEmployee: boolean;
 	organization: IOrganization;
 	user: IUser;
@@ -67,7 +69,7 @@ export class PagesComponent extends TranslationBaseComponent implements OnInit, 
 		return [
 			{
 				title: 'Dashboard',
-				icon: 'home-outline',
+				icon: 'fas fa-th',
 				link: '/pages/dashboard',
 				pathMatch: 'prefix',
 				home: true,
@@ -77,8 +79,30 @@ export class PagesComponent extends TranslationBaseComponent implements OnInit, 
 				}
 			},
 			{
+				title: 'Focus',
+				icon: 'fas fa-bullseye',
+				link: '/pages/dashboard',
+				pathMatch: 'prefix',
+				home: true,
+				data: {
+					translationKey: 'MENU.FOCUS',
+					featureKey: FeatureEnum.FEATURE_DASHBOARD
+				}
+			},
+			{
+				title: 'Applications',
+				icon: 'far fa-window-maximize',
+				link: '/pages/dashboard',
+				pathMatch: 'prefix',
+				home: true,
+				data: {
+					translationKey: 'MENU.APPLICATIONS',
+					featureKey: FeatureEnum.FEATURE_DASHBOARD
+				}
+			},
+			{
 				title: 'Accounting',
-				icon: 'credit-card-outline',
+				icon: 'far fa-address-card',
 				data: {
 					translationKey: 'MENU.ACCOUNTING'
 				},
@@ -197,7 +221,7 @@ export class PagesComponent extends TranslationBaseComponent implements OnInit, 
 			},
 			{
 				title: 'Sales',
-				icon: 'trending-up-outline',
+				icon: 'fas fa-chart-line',
 				link: '/pages/sales',
 				data: {
 					translationKey: 'MENU.SALES',
@@ -281,7 +305,7 @@ export class PagesComponent extends TranslationBaseComponent implements OnInit, 
 			},
 			{
 				title: 'Tasks',
-				icon: 'browser-outline',
+				icon: 'fas fa-tasks',
 				link: '/pages/tasks',
 				data: {
 					translationKey: 'MENU.TASKS'
@@ -319,7 +343,7 @@ export class PagesComponent extends TranslationBaseComponent implements OnInit, 
 			},
 			{
 				title: 'Jobs',
-				icon: 'briefcase-outline',
+				icon: 'fas fa-briefcase',
 				link: '/pages/jobs',
 				data: {
 					translationKey: 'MENU.JOBS',
@@ -371,7 +395,7 @@ export class PagesComponent extends TranslationBaseComponent implements OnInit, 
 			},
 			{
 				title: 'Employees',
-				icon: 'people-outline',
+				icon: 'fas fa-user-friends',
 				data: {
 					translationKey: 'MENU.EMPLOYEES'
 				},
@@ -488,7 +512,7 @@ export class PagesComponent extends TranslationBaseComponent implements OnInit, 
 			},
 			{
 				title: 'Organization',
-				icon: 'globe-2-outline',
+				icon: 'fas fa-globe-americas',
 				data: {
 					translationKey: 'MENU.ORGANIZATION',
 					withOrganizationShortcuts: true
@@ -496,7 +520,7 @@ export class PagesComponent extends TranslationBaseComponent implements OnInit, 
 				children: [
 					{
 						title: 'Manage',
-						icon: 'globe-2-outline',
+						icon: 'fas fa-globe-americas',
 						pathMatch: 'prefix',
 						data: {
 							organizationShortcut: true,
@@ -509,7 +533,7 @@ export class PagesComponent extends TranslationBaseComponent implements OnInit, 
 					},
 					{
 						title: 'Equipment',
-						icon: 'shopping-bag-outline',
+						icon: 'fas fa-border-all',
 						link: '/pages/organization/equipment',
 						data: {
 							permissionKeys: [PermissionsEnum.ALL_ORG_VIEW],
@@ -520,7 +544,7 @@ export class PagesComponent extends TranslationBaseComponent implements OnInit, 
 					},
 					{
 						title: 'Inventory',
-						icon: 'grid-outline',
+						icon: 'fas fa-grip-vertical',
 						link: '/pages/organization/inventory',
 						pathMatch: 'prefix',
 						data: {
@@ -532,7 +556,7 @@ export class PagesComponent extends TranslationBaseComponent implements OnInit, 
 					},
 					{
 						title: 'Tags',
-						icon: 'pricetags-outline',
+						icon: 'fas fa-tag',
 						link: '/pages/organization/tags',
 						data: {
 							translationKey: 'MENU.TAGS',
@@ -541,7 +565,7 @@ export class PagesComponent extends TranslationBaseComponent implements OnInit, 
 					},
 					{
 						title: 'Vendors',
-						icon: 'car-outline',
+						icon: 'fas fa-truck',
 						link: '/pages/organization/vendors',
 						data: {
 							translationKey: 'ORGANIZATIONS_PAGE.VENDORS',
@@ -551,7 +575,7 @@ export class PagesComponent extends TranslationBaseComponent implements OnInit, 
 					},
 					{
 						title: 'Projects',
-						icon: 'book-outline',
+						icon: 'fas fa-book',
 						link: `/pages/organization/projects`,
 						data: {
 							translationKey: 'ORGANIZATIONS_PAGE.PROJECTS',
@@ -561,7 +585,7 @@ export class PagesComponent extends TranslationBaseComponent implements OnInit, 
 					},
 					{
 						title: 'Departments',
-						icon: 'briefcase-outline',
+						icon: ' fas fa-briefcase',
 						link: `/pages/organization/departments`,
 						data: {
 							translationKey: 'ORGANIZATIONS_PAGE.DEPARTMENTS',
@@ -572,7 +596,7 @@ export class PagesComponent extends TranslationBaseComponent implements OnInit, 
 					},
 					{
 						title: 'Teams',
-						icon: 'people-outline',
+						icon: 'fas fa-user-friends',
 						link: `/pages/organization/teams`,
 						data: {
 							translationKey: 'ORGANIZATIONS_PAGE.EDIT.TEAMS',
@@ -582,7 +606,7 @@ export class PagesComponent extends TranslationBaseComponent implements OnInit, 
 					},
 					{
 						title: 'Documents',
-						icon: 'file-text-outline',
+						icon: 'far fa-file-alt',
 						link: `/pages/organization/documents`,
 						data: {
 							translationKey: 'ORGANIZATIONS_PAGE.DOCUMENTS',
@@ -593,7 +617,7 @@ export class PagesComponent extends TranslationBaseComponent implements OnInit, 
 					},
 					{
 						title: 'Employment Types',
-						icon: 'layers-outline',
+						icon: 'fas fa-layer-group',
 						link: `/pages/organization/employment-types`,
 						data: {
 							translationKey:
@@ -605,7 +629,7 @@ export class PagesComponent extends TranslationBaseComponent implements OnInit, 
 					},
 					{
 						title: 'Expense Recurring',
-						icon: 'flip-outline',
+						icon: 'fas fa-repeat',
 						link: '/pages/organization/expense-recurring',
 						data: {
 							translationKey:
@@ -617,7 +641,7 @@ export class PagesComponent extends TranslationBaseComponent implements OnInit, 
 					},
 					{
 						title: 'Help Center',
-						icon: 'question-mark-circle-outline',
+						icon: 'far fa-question-circle',
 						link: '/pages/organization/help-center',
 						data: {
 							translationKey: 'ORGANIZATIONS_PAGE.HELP_CENTER',
@@ -629,7 +653,7 @@ export class PagesComponent extends TranslationBaseComponent implements OnInit, 
 			},
 			{
 				title: 'Contacts',
-				icon: 'book-open-outline',
+				icon: 'far fa-address-book',
 				data: {
 					translationKey: 'MENU.CONTACTS',
 					permissionKeys: [
@@ -675,7 +699,7 @@ export class PagesComponent extends TranslationBaseComponent implements OnInit, 
 			},
 			{
 				title: 'Goals',
-				icon: 'flag-outline',
+				icon: 'fab fa-font-awesome-flag',
 				data: {
 					translationKey: 'MENU.GOALS'
 				},
@@ -712,7 +736,7 @@ export class PagesComponent extends TranslationBaseComponent implements OnInit, 
 			},
 			{
 				title: 'Reports',
-				icon: 'file-text-outline',
+				icon: 'fas fa-chart-pie',
 				link: '/pages/reports',
 				data: {
 					translationKey: 'MENU.REPORTS',
@@ -748,16 +772,25 @@ export class PagesComponent extends TranslationBaseComponent implements OnInit, 
 			.pipe(
 				filter((organization: IOrganization) => !!organization),
 				distinctUntilChange(),
-				tap((organization: IOrganization) => this.organization = organization),
+				tap(
+					(organization: IOrganization) =>
+						(this.organization = organization)
+				),
 				tap(() => this.getReportsMenus()),
 				untilDestroyed(this)
 			)
 			.subscribe();
 		this.store.userRolePermissions$
 			.pipe(
-				filter((permissions: IRolePermission[]) => isNotEmpty(permissions)),
-				map((permissions) => permissions.map(({ permission }) => permission)),
-				tap((permissions) => this.ngxPermissionsService.loadPermissions(permissions)),
+				filter((permissions: IRolePermission[]) =>
+					isNotEmpty(permissions)
+				),
+				map((permissions) =>
+					permissions.map(({ permission }) => permission)
+				),
+				tap((permissions) =>
+					this.ngxPermissionsService.loadPermissions(permissions)
+				),
 				untilDestroyed(this)
 			)
 			.subscribe(() => {
@@ -776,10 +809,7 @@ export class PagesComponent extends TranslationBaseComponent implements OnInit, 
 				);
 			});
 		this.reportService.menuItems$
-			.pipe(
-				distinctUntilChange(),
-				untilDestroyed(this)
-			)
+			.pipe(distinctUntilChange(), untilDestroyed(this))
 			.subscribe((menuItems) => {
 				if (menuItems) {
 					this.reportMenuItems = chain(menuItems)
@@ -890,11 +920,12 @@ export class PagesComponent extends TranslationBaseComponent implements OnInit, 
 		if (item.data.permissionKeys || item.data.hide) {
 			const anyPermission = item.data.permissionKeys
 				? item.data.permissionKeys.reduce((permission, key) => {
-					return this.store.hasPermission(key) || permission;
-				}, false)
+						return this.store.hasPermission(key) || permission;
+				  }, false)
 				: true;
 
-			item.hidden = !anyPermission || (item.data.hide && item.data.hide());
+			item.hidden =
+				!anyPermission || (item.data.hide && item.data.hide());
 
 			if (anyPermission && item.data.organizationShortcut) {
 				item.hidden = !withOrganizationShortcuts || !this.organization;
@@ -939,5 +970,5 @@ export class PagesComponent extends TranslationBaseComponent implements OnInit, 
 		});
 	}
 
-	ngOnDestroy() { }
+	ngOnDestroy() {}
 }

@@ -9,7 +9,7 @@
 					<ng-container
 						*ngxPermissionsOnly="subItem.data.permissionKeys"
 					>
-						{{ subItem.title }}
+                    <i [class]="subItem?.icon"></i>{{ subItem.title }}
 						<hr class="custom-separator" *ngIf="item.children.at(-1) !== subItem" />
 					</ng-container>
 				</div>
