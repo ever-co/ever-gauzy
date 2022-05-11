@@ -22,10 +22,12 @@ export class ServerSourceConf {
     relations: string[];
     resultMap: any;
     finalize: any;
+    filterMap: any;
 
     constructor({
         resultMap = null,
         finalize = null,
+        filterMap = null,
         endPoint = '',
         sortFieldKey = '',
         sortDirKey = '',
@@ -53,5 +55,6 @@ export class ServerSourceConf {
         this.relations = relations;
         this.resultMap = resultMap;
         this.finalize = finalize;
+        this.filterMap = filterMap;
     }
 }

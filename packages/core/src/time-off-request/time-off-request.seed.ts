@@ -80,6 +80,7 @@ const dataOperation = async (
 			.value();
 		request.description = 'Time off';
 		request.isHoliday = faker.random.arrayElement([true, false]);
+		request.isArchived = faker.random.arrayElement([true, false]);
 		request.start = faker.date.future(0.5);
 		request.end = addDays(request.start, faker.datatype.number(7));
 		request.policy = faker.random.arrayElement(policies);
