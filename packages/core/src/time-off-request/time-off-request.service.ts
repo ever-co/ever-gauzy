@@ -21,7 +21,6 @@ import { TimeOffRequest } from './time-off-request.entity';
 import { RequestApproval } from '../request-approval/request-approval.entity';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
-import { getDateRangeFormat } from './../core/utils';
 
 @Injectable()
 export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest> {
@@ -150,20 +149,20 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 				filter.where.employees = {
 					id: In(where.employeeIds)
 				}
-			}
 				delete filter['where']['employeeIds'];
+			}
 			if (where.startDate && where.endDate) {
-				const { start: startDate, end: endDate } = getDateRangeFormat(
-					new Date(where.startDate),
-					new Date(where.endDate),
-					true
-				);
 				filter.where.start = Between(
-					startDate,
-					endDate
+					moment.utc(where.startDate).format('YYYY-MM-DD HH:mm:ss'),
+					moment.utc(where.endDate).format('YYYY-MM-DD HH:mm:ss')
 				);
 				delete filter['where']['startDate'];
 				delete filter['where']['endDate'];
+			} else {
+				filter.where.start = Between(
+					moment().startOf('month').utc().format('YYYY-MM-DD HH:mm:ss'),
+					moment().endOf('month').utc().format('YYYY-MM-DD HH:mm:ss')
+				);
 			}
 		}
 		return super.paginate(filter);
