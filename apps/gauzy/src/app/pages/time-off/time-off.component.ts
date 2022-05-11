@@ -98,6 +98,7 @@ export class TimeOffComponent extends PaginationFilterBaseComponent
 			.subscribe();
 		this.pagination$
 			.pipe(
+				debounceTime(100),
 				distinctUntilChange(),
 				tap(() => this.timeoff$.next(true)),
 				untilDestroyed(this)
@@ -108,7 +109,7 @@ export class TimeOffComponent extends PaginationFilterBaseComponent
 		const storeEmployee$ = this.store.selectedEmployee$;
 		combineLatest([storeOrganization$, selectedDateRange$, storeEmployee$])
 			.pipe(
-				debounceTime(300),
+				debounceTime(100),
 				filter(([organization, dateRange]) => !!organization && !!dateRange),
 				distinctUntilChange(),
 				tap(([organization, dateRange, employee]) => {
@@ -434,6 +435,8 @@ export class TimeOffComponent extends PaginationFilterBaseComponent
 				},
 				where: {
 					...{
+						isHoliday: this.displayHolidays,
+						// isArchived: this.includeArchived,
 						organizationId,
 						tenantId,
 						...(this.selectedEmployeeId
