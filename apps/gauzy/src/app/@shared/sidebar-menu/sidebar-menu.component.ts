@@ -21,11 +21,18 @@ interface IMenuItem extends NbMenuItem {
 })
 export class SidebarMenuComponent implements OnInit {
 	@Input() menu: IMenuItem[];
+	isRedirected = true;
 	constructor(private readonly router: Router) {}
 
 	ngOnInit(): void {}
 
 	public redirectTo(link: string) {
+		this.isRedirected = true;
 		this.router.navigateByUrl(link);
 	}
+
+	public selectedRoute(item: IMenuItem): boolean {
+		this.isRedirected = !this.isRedirected;
+		const isSelected = this.router.url === item.link ? true : false;
+		return isSelected;	}
 }

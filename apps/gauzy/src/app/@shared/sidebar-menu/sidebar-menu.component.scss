@@ -5,16 +5,16 @@
       box-shadow: unset;
       border-bottom: 1px solid rgba(126, 126, 143, 0.1);
       margin-top: 6px;
-      //   nb-accordion-item.opened {
-      //     box-shadow: 0px 1px 1px 0px rgba(0, 0, 0, 0.1);
-      //     nb-accordion-item-header {
-      //       background-color: rgba(126, 126, 143, 0.1);
-      //       border-radius: 8px 8px 0 0;
-      //     }
-      //     nb-accordion-item-body {
-      //       background-color: rgba(126, 126, 143, 0.05);
-      //     }
-      //   }
+      nb-accordion-item.opened {
+        box-shadow: 0px 1px 1px 0px rgba(0, 0, 0, 0.1);
+        nb-accordion-item-header {
+          background-color: rgba(126, 126, 143, 0.1);
+          border-radius: 8px 8px 0 0;
+        }
+        nb-accordion-item-body {
+          background-color: rgba(126, 126, 143, 0.05);
+        }
+      }
       &.focus {
         box-shadow: 0px 1px 1px 0px rgba(0, 0, 0, 0.1);
         nb-accordion-item-header,
@@ -78,7 +78,8 @@
         &:first-child {
           border-top: none;
         }
-        &:hover {
+        &:hover,
+        &.selected {
           background-color: rgba(126, 126, 143, 0.1);
           border-radius: 8px;
           font-weight: 600;
