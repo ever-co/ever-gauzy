@@ -21,6 +21,7 @@ import { AuthStrategy } from '../@core/auth/auth-strategy.service';
 import { TranslationBaseComponent } from '../@shared/language-base';
 
 interface GaMenuItem extends NbMenuItem {
+	class?: string;
 	data: {
 		translationKey: string; //Translation key for the title, mandatory for all items
 		permissionKeys?: PermissionsEnum[]; //Check permissions and hide item if any given permission is not present
@@ -84,6 +85,7 @@ export class PagesComponent
 				link: '/pages/dashboard',
 				pathMatch: 'prefix',
 				home: true,
+				class: 'focus',
 				data: {
 					translationKey: 'MENU.FOCUS',
 					featureKey: FeatureEnum.FEATURE_DASHBOARD
@@ -94,6 +96,7 @@ export class PagesComponent
 				icon: 'far fa-window-maximize',
 				link: '/pages/dashboard',
 				pathMatch: 'prefix',
+				class: 'application',
 				home: true,
 				data: {
 					translationKey: 'MENU.APPLICATIONS',
