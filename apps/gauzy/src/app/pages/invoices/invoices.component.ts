@@ -704,11 +704,11 @@ export class InvoicesComponent
 				});
 			},
 			finalize: () => {
-				this.loading = false;
 				this.setPagination({
 					...this.getPagination(),
 					totalItems: this.smartTableSource.count()
 				});
+				this.loading = false;
 			}
 		});
 	}
