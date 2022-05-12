@@ -2,13 +2,16 @@
 	<ng-container *ngFor="let item of menu">
 		<nb-accordion
 			*ngxPermissionsOnly="item.data.permissionKeys"
-			[class]="item?.class"
+			[ngClass]="isExpand ? item?.class : item?.class + ' collapsed'"
 		>
 			<nb-accordion-item>
 				<nb-accordion-item-header>
-					<i [class]="item?.icon"></i>{{ item.title }}
+					<i [class]="item?.icon"></i
+					><span *ngIf="isExpand">{{ item.title }}</span>
 				</nb-accordion-item-header>
-				<nb-accordion-item-body *ngIf="item?.children?.length > 0">
+				<nb-accordion-item-body
+					*ngIf="item?.children?.length > 0 && isExpand"
+				>
 					<ng-container *ngFor="let subItem of item.children">
 						<div
 							[ngClass]="

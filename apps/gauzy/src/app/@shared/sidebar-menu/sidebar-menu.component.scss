@@ -22,7 +22,22 @@
           color: rgba(245, 109, 88, 1);
         }
       }
+      &.collapsed {
+        nb-accordion-item-header {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          i {
+            margin-right: unset;
+          }
+          ::ng-deep nb-icon {
+            display: none;
+          }
+        }
+      }
       &.application {
+        &.collapsed {
+        }
         nb-accordion-item {
           nb-accordion-item-header {
             border: 1px solid rgba(110, 73, 232, 1);
