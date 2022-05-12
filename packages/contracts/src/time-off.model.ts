@@ -88,10 +88,3 @@ export enum StatusTypesMapRequestApprovalEnum {
 	APPROVED = 2,
 	DENIED = 3
 }
-export interface ITimeOffPolicyVM {
-	id: string;
-	name: string;
-	requiresApproval: boolean;
-	paid: boolean;
-	employees: IEmployee[];
-}
