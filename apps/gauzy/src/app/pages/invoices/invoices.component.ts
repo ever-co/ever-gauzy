@@ -196,10 +196,17 @@ export class InvoicesComponent
 				tap(() => this.invoices$.next(true))
 			)
 			.subscribe();
+		this.pagination$
+			.pipe(
+				debounceTime(100),
+				distinctUntilChange(),
+				tap(() => this.invoices$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		const storeOrganization$ = this.store.selectedOrganization$;
 		const storeDateRange$ = this.store.selectedDateRange$;
-		const storePagination$ = this.pagination$;
-		combineLatest([storeOrganization$, storeDateRange$, storePagination$])
+		combineLatest([storeOrganization$, storeDateRange$])
 			.pipe(
 				debounceTime(300),
 				filter(([organization]) => !!organization),
