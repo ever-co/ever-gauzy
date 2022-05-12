@@ -9,17 +9,26 @@
 					<i [class]="item?.icon"></i>{{ item.title }}
 				</nb-accordion-item-header>
 				<nb-accordion-item-body *ngIf="item?.children?.length > 0">
-					<div
-						class="sub-item"
-						(click)="redirectTo(subItem.link)"
-						*ngFor="let subItem of item.children"
-					>
-						<ng-container
-							*ngxPermissionsOnly="subItem.data.permissionKeys"
+					<ng-container *ngFor="let subItem of item.children">
+						<div
+							[ngClass]="
+								selectedRoute(subItem)
+									? 'sub-item selected'
+									: 'sub-item'
+							"
+							*ngIf="!subItem.hidden"
+							(click)="redirectTo(subItem?.link)"
 						>
-							<i [class]="subItem?.icon"></i>{{ subItem.title }}
-						</ng-container>
-					</div>
+							<ng-container
+								*ngxPermissionsOnly="
+									subItem.data.permissionKeys
+								"
+							>
+								<i [class]="subItem?.icon"></i
+								>{{ subItem.title }}
+							</ng-container>
+						</div>
+					</ng-container>
 				</nb-accordion-item-body>
 			</nb-accordion-item>
 		</nb-accordion>
