@@ -1,9 +1,9 @@
 import { ICandidateUpdateInput } from "@gauzy/contracts";
 import { ApiProperty } from "@nestjs/swagger";
 import { IsOptional, IsString } from "class-validator";
-import { UpdateEmployeeDTO } from "employee/dto";
+import { UpdateProfileDTO } from "./../../employee/dto";
 
-export class UpdateCandidateDTO extends  UpdateEmployeeDTO implements ICandidateUpdateInput { 
+export class UpdateCandidateDTO extends UpdateProfileDTO implements ICandidateUpdateInput { 
 
     @ApiProperty({ type: () => Date })
     @IsOptional()
@@ -22,5 +22,4 @@ export class UpdateCandidateDTO extends  UpdateEmployeeDTO implements ICandidate
     @IsString()
     @IsOptional()
     readonly candidateLevel?: string;
-
 }
