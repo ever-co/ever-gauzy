@@ -1,4 +1,8 @@
-<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
+<nb-card 
+	[nbSpinner]="loading"
+	nbSpinnerStatus="primary"
+	nbSpinnerSize="large"
+>
 	<nb-card-header class="card-header-title">
 		<div class="card-header-title">
 			<h4>
@@ -75,7 +79,7 @@
 				[tabTitle]="'INVOICES_PAGE.BROWSE' | translate | titlecase"
 				[tabId]="invoiceTabsEnum.ACTIONS"
 			>
-				<ng-container>
+				<ng-container *ngIf="(nbTab$ | async) === invoiceTabsEnum.ACTIONS">
 					<ng-template
 						[ngTemplateOutlet]="
 							dataLayoutStyle === componentLayoutStyleEnum.TABLE
@@ -380,7 +384,7 @@
 						</nb-accordion-item-body>
 					</nb-accordion-item>
 				</nb-accordion>
-				<ng-container>
+				<ng-container *ngIf="(nbTab$ | async) === invoiceTabsEnum.SEARCH">
 					<ng-template
 						[ngTemplateOutlet]="
 							dataLayoutStyle === componentLayoutStyleEnum.TABLE
@@ -524,7 +528,7 @@
 						</nb-accordion-item-body>
 					</nb-accordion-item>
 				</nb-accordion>
-				<ng-container>
+				<ng-container *ngIf="(nbTab$ | async) === invoiceTabsEnum.HISTORY">
 					<ng-template
 						[ngTemplateOutlet]="
 							dataLayoutStyle === componentLayoutStyleEnum.TABLE

@@ -7,8 +7,7 @@ import {
 	QueryList,
 	ViewChildren,
 	TemplateRef,
-	AfterViewInit,
-	ChangeDetectorRef
+	AfterViewInit
 } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
@@ -18,7 +17,8 @@ import {
 	NbDialogService,
 	NbMenuItem,
 	NbMenuService,
-	NbPopoverDirective
+	NbPopoverDirective,
+	NbTabComponent
 } from '@nebular/theme';
 import {
 	IInvoice,
@@ -41,11 +41,11 @@ import {
 import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
 import { Router } from '@angular/router';
 import { first, map, filter, tap, debounceTime } from 'rxjs/operators';
-import { Subject, firstValueFrom, combineLatest } from 'rxjs';
+import { Subject, firstValueFrom, combineLatest, BehaviorSubject } from 'rxjs';
 import * as moment from 'moment';
 import { NgxPermissionsService } from 'ngx-permissions';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
+import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import { IPaginationBase, PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
 import { InvoiceSendMutationComponent } from './invoice-send/invoice-send-mutation.component';
 import { InvoiceEstimateTotalValueComponent, InvoicePaidComponent } from './table-components';
@@ -79,9 +79,9 @@ export class InvoicesComponent
 	settingsSmartTable: object;
 	smartTableSource: ServerDataSource;
 	selectedInvoice: IInvoice;
-	loading: boolean;
-	disableButton = true;
-	canBeSend = true;
+	loading: boolean = false;
+	disableButton: boolean = true;
+	canBeSend: boolean = true;
 	invoices: IInvoice[] = [];
 	organization: IOrganization;
 	selectedDateRange: IDateRangePicker;
@@ -92,12 +92,13 @@ export class InvoicesComponent
 	estimateStatusTypes = Object.values(EstimateStatusTypesEnum);
 	settingsContextMenu: NbMenuItem[];
 	contextMenus = [];
-	columns: any;
+	columns: string[] = [];
 	perPage: number = 10;
 	histories: IInvoiceEstimateHistory[] = [];
 	includeArchived = false;
-	subject$: Subject<any> = new Subject();
+	invoices$: Subject<any> = this.subject$;
 	invoiceTabsEnum = InvoiceTabsEnum;
+	nbTab$: Subject<string> = new BehaviorSubject(InvoiceTabsEnum.ACTIONS);
 
 	/*
 	* getter setter for check estimate or invoice
@@ -142,7 +143,6 @@ export class InvoicesComponent
 	* History Tab Form
 	*/
 	public historyForm: FormGroup = InvoicesComponent.historyBuildForm(this.fb);
-
 	static historyBuildForm(fb: FormBuilder): FormGroup {
 		return fb.group({
 			comment: ['', Validators.required]
@@ -166,10 +166,10 @@ export class InvoicesComponent
 		private readonly nbMenuService: NbMenuService,
 		private readonly invoiceEstimateHistoryService: InvoiceEstimateHistoryService,
 		private readonly ngxPermissionsService: NgxPermissionsService,
-		private readonly httpClient: HttpClient,
-		private readonly cdr: ChangeDetectorRef
+		private readonly httpClient: HttpClient
 	) {
 		super(translateService);
+		this.setView();
 	}
 
 	ngOnInit() {
@@ -177,31 +177,29 @@ export class InvoicesComponent
 		this._applyTranslationOnSmartTable();
 		this._loadSmartTableSettings();
 		this.loadMenu();
-		this.setView();
 	}
 
 	ngAfterViewInit() {
-		this.subject$
+		this.invoices$
 			.pipe(
 				debounceTime(100),
-				tap(() => this.cdr.detectChanges()),
-				tap(() => this.setSmartTableSource()),
+				tap(() => this._clearItem()),
 				tap(() => this.getInvoices()),
-				tap(() => this.clearItem()),
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.pagination$
+		this.nbTab$
 			.pipe(
-				debounceTime(100),
 				distinctUntilChange(),
-				tap(() => this.subject$.next(true)),
-				untilDestroyed(this)
+				debounceTime(100),
+				filter(() => this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID),
+				tap(() => this.invoices$.next(true))
 			)
 			.subscribe();
 		const storeOrganization$ = this.store.selectedOrganization$;
 		const storeDateRange$ = this.store.selectedDateRange$;
-		combineLatest([storeOrganization$, storeDateRange$])
+		const storePagination$ = this.pagination$;
+		combineLatest([storeOrganization$, storeDateRange$, storePagination$])
 			.pipe(
 				debounceTime(300),
 				filter(([organization]) => !!organization),
@@ -211,7 +209,7 @@ export class InvoicesComponent
 					this.selectedDateRange = dateRange as IDateRangePicker;
 				}),
 				tap(() => this.refreshPagination()),
-				tap(() => this.subject$.next(true)),
+				tap(() => this.invoices$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -224,7 +222,7 @@ export class InvoicesComponent
 		this.invoicesTable.source.onChangedSource
 			.pipe(
 				untilDestroyed(this),
-				tap(() => this.clearItem())
+				tap(() => this._clearItem())
 			)
 			.subscribe();
 	}
@@ -239,7 +237,7 @@ export class InvoicesComponent
 				tap(() => this.closeActionsPopover()),
 				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => this.refreshPagination()),
-				tap(() => this.subject$.next(true)),
+				tap(() => this.invoices$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -491,7 +489,7 @@ export class InvoicesComponent
 				})
 				.onClose
 				.pipe(
-					tap(() => this.subject$.next(true)),
+					tap(() => this.invoices$.next(true)),
 					untilDestroyed(this)
 				)
 				.subscribe();
@@ -518,7 +516,7 @@ export class InvoicesComponent
 		await this.createInvoiceHistory(action);
 
 		this.toastrService.success('INVOICES_PAGE.ESTIMATES.ESTIMATE_CONVERT');
-		this.subject$.next(true);
+		this.invoices$.next(true);
 	}
 
 	async delete(selectedItem?: IInvoice) {
@@ -541,7 +539,7 @@ export class InvoicesComponent
 			} else {
 				this.toastrService.success('INVOICES_PAGE.INVOICES_DELETE_INVOICE');
 			}
-			this.subject$.next(true);
+			this.invoices$.next(true);
 		}
 	}
 
@@ -570,7 +568,7 @@ export class InvoicesComponent
 			})
 			.onClose
 			.pipe(
-				tap(() => this.subject$.next(true)),
+				tap(() => this.invoices$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -590,7 +588,7 @@ export class InvoicesComponent
 			})
 			.onClose
 			.pipe(
-				tap(() => this.subject$.next(true)),
+				tap(() => this.invoices$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -713,13 +711,17 @@ export class InvoicesComponent
 			return;
 		}
 		try {
+			this.setSmartTableSource();
+
 			const { activePage, itemsPerPage } = this.getPagination();
 			this.smartTableSource.setPaging(
 				activePage,
 				itemsPerPage,
 				false
 			);
-			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
+			if (
+				this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID
+			) {
 				// Initiate GRID or TABLE view pagination
 				await this.smartTableSource.getElements();
 				this.invoices = this.smartTableSource.getData();
@@ -814,7 +816,7 @@ export class InvoicesComponent
 		await this.invoicesService.updateAction(this.selectedInvoice.id, {
 			isArchived: true
 		});
-		this.subject$.next(true);
+		this.invoices$.next(true);
 	}
 
 	async selectInvoice({ isSelected, data }) {
@@ -1062,19 +1064,19 @@ export class InvoicesComponent
 		}
 		if (isNotEmpty(this.filters)) {
 			this.refreshPagination();
-			this.subject$.next(true);
+			this.invoices$.next(true);
 		}
 	}
 
 	toggleIncludeArchived(event) {
 		this.includeArchived = event;
-		this.subject$.next(true);
+		this.invoices$.next(true);
 	}
 
 	reset() {
 		this.searchForm.reset();
 		this._filters = {};
-		this.subject$.next(true);
+		this.invoices$.next(true);
 	}
 
 	selectedTagsEvent(currentTagSelection: ITag[]) {
@@ -1087,7 +1089,7 @@ export class InvoicesComponent
 		await this.invoicesService.updateAction(this.selectedInvoice.id, {
 			status: $event
 		});
-		this.subject$.next(true);
+		this.invoices$.next(true);
 	}
 
 	selectColumn($event: string[]) {
@@ -1130,11 +1132,12 @@ export class InvoicesComponent
 			.subscribe();
 	}
 
- 	onChangeTab(event) {
+ 	onChangeTab(tab: NbTabComponent) {
+		this.nbTab$.next(tab.tabId);
 		this.closeActionsPopover();
 	}
 
-	clearItem() {
+	private _clearItem() {
 		this.selectInvoice({
 			isSelected: false,
 			data: null
