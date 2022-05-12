@@ -1,8 +1,10 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { NbMenuItem } from '@nebular/theme';
 import { FeatureEnum, PermissionsEnum } from '@gauzy/contracts';
+import { Router } from '@angular/router';
 
 interface IMenuItem extends NbMenuItem {
+	class?: string;
 	data: {
 		translationKey: string; //Translation key for the title, mandatory for all items
 		permissionKeys?: PermissionsEnum[]; //Check permissions and hide item if any given permission is not present
@@ -19,7 +21,11 @@ interface IMenuItem extends NbMenuItem {
 })
 export class SidebarMenuComponent implements OnInit {
 	@Input() menu: IMenuItem[];
-	constructor() {}
+	constructor(private readonly router: Router) {}
 
 	ngOnInit(): void {}
+
+	public redirectTo(link: string) {
+		this.router.navigateByUrl(link);
+	}
 }
