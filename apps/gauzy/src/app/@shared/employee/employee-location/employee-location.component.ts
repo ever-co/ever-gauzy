@@ -5,14 +5,14 @@ import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { LatLng } from 'leaflet';
 import { LocationFormComponent } from '../../forms/location';
-import { LeafletMapComponent } from '../../forms/maps/leaflet/leaflet.component';
+import { LeafletMapComponent } from '../../forms/maps';
 import { CandidateStore, EmployeeStore, Store } from '../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-employee-location',
-	templateUrl: 'employee-location.component.html',
-  styleUrls:['employee-location.component.scss']
+	templateUrl: './employee-location.component.html',
+  	styleUrls:['./employee-location.component.scss']
 })
 export class EmployeeLocationComponent implements OnInit, OnDestroy {
 	@Input() public isEmployee: boolean;
@@ -39,27 +39,32 @@ export class EmployeeLocationComponent implements OnInit, OnDestroy {
 	ngOnInit() {
 		this.employeeStore.selectedEmployee$
 			.pipe(
-				filter((employee) => !!employee),
-				tap((employee) => this.selectedEmployee = employee),
+				filter((employee: IEmployee) => !!employee),
+				tap((employee: IEmployee) => this.selectedEmployee = employee),
 				tap(() => this.setValidator()),
-				tap((employee) => this._initializeForm(employee)),
+				tap((employee: IEmployee) => this._syncLocation(employee)),
 				untilDestroyed(this)
 			)
 			.subscribe();
 		this.candidateStore.selectedCandidate$
 			.pipe(
-				filter((candidate) => !!candidate),
-				tap((candidate) => this.selectedCandidate = candidate),
+				filter((candidate: ICandidate) => !!candidate),
+				tap((candidate: ICandidate) => this.selectedCandidate = candidate),
 				tap(() => this.setValidator()),
-				tap((candidate) => this._initializeForm(candidate)),
+				tap((candidate: ICandidate) => this._syncLocation(candidate)),
 				untilDestroyed(this)
 			)
 			.subscribe();
 	}
 
-	ngOnDestroy() {}
+	submitForm() {
+		if (
+			!this.store.selectedOrganization ||
+			this.form.invalid
+		) {
+			return;
+		}
 
-	async submitForm() {
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.store.selectedOrganization;
 
@@ -74,13 +79,13 @@ export class EmployeeLocationComponent implements OnInit, OnDestroy {
 			...{ latitude, longitude }
 		};
 
-		if (this.form.valid && this.isCandidate) {
+		if (this.isCandidate) {
 			this.candidateStore.candidateForm = {
 				contact,
 				organizationId
 			};
 		}
-		if (this.form.valid && this.isEmployee) {
+		if (this.isEmployee) {
 			this.employeeStore.employeeForm = {
 				contact,
 				organizationId
@@ -89,7 +94,7 @@ export class EmployeeLocationComponent implements OnInit, OnDestroy {
 	}
 
 	//Initialize form
-	private _initializeForm(user: IEmployee | ICandidate) {
+	private _syncLocation(user: IEmployee | ICandidate) {
 		if (!user.contact) {
 			return;
 		}
@@ -157,4 +162,6 @@ export class EmployeeLocationComponent implements OnInit, OnDestroy {
 	 * Google Place Geometry Changed Event Emitter
 	 */
 	onGeometrySend(geometry: any) {}
+
+	ngOnDestroy() {}
 }
