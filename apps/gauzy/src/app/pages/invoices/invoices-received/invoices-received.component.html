@@ -23,8 +23,7 @@
 				[isDisable]="disableButton"
 				[buttonTemplate]="actionButtons"
 				[componentName]="viewComponentName"
-			>
-			</ngx-gauzy-button-action>
+			></ngx-gauzy-button-action>
 		</div>
 	</nb-card-header>
 	<nb-card-body>
@@ -34,14 +33,12 @@
 		>
 			<div class="table-scroll-container">
 				<ng2-smart-table
-					class="tags-table"
+					style="cursor: pointer"
 					[settings]="settingsSmartTable"
 					[source]="smartTableSource"
 					(userRowSelect)="selectInvoice($event)"
-					style="cursor: pointer"
 					#invoiceReceivedTable
-				>
-				</ng2-smart-table>
+				></ng2-smart-table>
 			</div>
 			<div class="pagination-container">
 				<ng-container
@@ -54,8 +51,7 @@
 						[totalItems]="pagination?.totalItems"
 						[itemsPerPage]="pagination?.itemsPerPage"
 						[activePage]="pagination?.activePage"
-					>
-					</ga-pagination>
+					></ga-pagination>
 				</ng-container>
 			</div>
 		</ng-template>
@@ -71,9 +67,7 @@
 				[totalItems]="pagination?.totalItems"
 				[itemsPerPage]="pagination?.itemsPerPage"
 				[activePage]="pagination?.activePage"
-			>
-				></ga-card-grid
-			>
+			></ga-card-grid>
 		</ng-template>
 	</nb-card-body>
 </nb-card>
@@ -163,14 +157,17 @@
 			size="small"
 			[nbTooltip]="'BUTTONS.DELETE' | translate"
 		>
-			<nb-icon status="danger" icon="trash-2-outline"> </nb-icon>
+			<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
 		</button>
 	</div>
 </ng-template>
 <ng-template #visibleButton>
-	<button nbButton status="success" size="small">
-		<nb-icon [icon]="isEstimate ? 'plus-outline' : 'credit-card-outline'">
-		</nb-icon>
+	<button 
+		nbButton
+		status="success"
+		size="small"
+	>
+		<nb-icon [icon]="isEstimate ? 'plus-outline' : 'credit-card-outline'"></nb-icon>
 		{{ (isEstimate ? 'BUTTONS.ADD' : 'BUTTONS.PAY') | translate }}
 	</button>
 </ng-template>

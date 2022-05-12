@@ -17,29 +17,26 @@ import {
 import * as moment from 'moment';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
-import { InvoicePaidComponent } from '../table-components/invoice-paid.component';
-import { ComponentEnum } from '../../../@core/constants/layout.constants';
-import { ServerDataSource } from '../../../@core/utils/smart-table/server.data-source';
-import { API_PREFIX } from '../../../@core/constants';
+import { NbDialogService } from '@nebular/theme';
+import { API_PREFIX, ComponentEnum } from '../../../@core/constants';
+import { ServerDataSource } from '../../../@core/utils/smart-table';
 import {
 	ErrorHandlingService,
 	InvoicesService,
 	Store,
 	ToastrService
 } from '../../../@core/services';
-import { InvoiceEstimateTotalValueComponent } from '../table-components/invoice-total-value.component';
-import { InputFilterComponent } from '../../../@shared/table-filters/input-filter.component';
+import { InvoiceEstimateTotalValueComponent, InvoicePaidComponent } from '../table-components';
 import {
 	ContactLinksComponent,
 	DateViewComponent,
 	NotesWithTagsComponent,
 	TagsOnlyComponent
 } from '../../../@shared/table-components';
-import { StatusBadgeComponent } from '../../../@shared/status-badge/status-badge.component';
-import { TagsColorFilterComponent } from '../../../@shared/table-filters';
+import { InputFilterComponent, TagsColorFilterComponent } from '../../../@shared/table-filters';
+import { StatusBadgeComponent } from '../../../@shared/status-badge';
+import { IPaginationBase, PaginationFilterBaseComponent } from '../../../@shared/pagination/pagination-filter-base.component';
 import { InvoiceDownloadMutationComponent } from '../invoice-download/invoice-download-mutation.component';
-import { NbDialogService } from '@nebular/theme';
-import { PaginationFilterBaseComponent } from '../../../@shared/pagination/pagination-filter-base.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -47,32 +44,25 @@ import { PaginationFilterBaseComponent } from '../../../@shared/pagination/pagin
 	templateUrl: './invoices-received.component.html',
 	styleUrls: ['./invoices-received.component.scss']
 })
-export class InvoicesReceivedComponent
-	extends PaginationFilterBaseComponent
-	implements OnInit, OnDestroy
-{
+export class InvoicesReceivedComponent extends PaginationFilterBaseComponent 
+	implements OnInit, OnDestroy {
+
 	loading: boolean = false;
+	disableButton: boolean = true;
 	settingsSmartTable: object;
 	smartTableSource: ServerDataSource;
 	selectedInvoice: IInvoice;
-	invoices: IInvoice[];
-	disableButton = true;
+	invoices: IInvoice[] = [];
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	organization: IOrganization;
 	selectedDateRange: IDateRangePicker;
-	subject$: Subject<any> = new Subject();
-	perPage: number = 10;
-	pagination: any = {
-		totalItems: 0,
-		activePage: 1,
-		itemsPerPage: this.perPage
-	};
+	invoices$: Subject<any> = this.subject$;
 	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
-	columns: any;
+	columns: string[] = [];
 
 	/*
-	 * getter setter for check esitmate or invoice
+	 * getter setter for check estimate or invoice
 	 */
 	private _isEstimate: boolean = false;
 	@Input() set isEstimate(val: boolean) {
@@ -110,12 +100,22 @@ export class InvoicesReceivedComponent
 		this.columns = this.getColumns();
 		this._loadSettingsSmartTable();
 		this._applyTranslationOnSmartTable();
+	}
 
-		this.subject$
+	ngAfterViewInit(): void {
+		this.invoices$
 			.pipe(
-				debounceTime(500),
+				debounceTime(100),
+				tap(() => this._clearItem()),
 				tap(() => this.getInvoices()),
-				tap(() => this.clearItem()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.pagination$
+			.pipe(
+				debounceTime(100),
+				distinctUntilChange(),
+				tap(() => this.invoices$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -123,22 +123,18 @@ export class InvoicesReceivedComponent
 		const storeDateRange$ = this.store.selectedDateRange$;
 		combineLatest([storeOrganization$, storeDateRange$])
 			.pipe(
-				filter(([organization]) => !!organization),
+				debounceTime(300),
+				filter(([organization, dateRange]) => !!organization && !!dateRange),
 				distinctUntilChange(),
 				tap(([organization, dateRange]) => {
 					this.organization = organization as IOrganization;
 					this.selectedDateRange = dateRange as IDateRangePicker;
 				}),
 				tap(() => this.refreshPagination()),
-				tap(() => this.subject$.next(true)),
+				tap(() => this.invoices$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
-	}
-
-	onPageChange(selectedPage: number) {
-		this.pagination['activePage'] = selectedPage;
-		this.subject$.next(true);
 	}
 
 	/*
@@ -148,7 +144,7 @@ export class InvoicesReceivedComponent
 		this.invoiceReceivedTable.source.onChangedSource
 			.pipe(
 				untilDestroyed(this),
-				tap(() => this.clearItem())
+				tap(() => this._clearItem())
 			)
 			.subscribe();
 	}
@@ -168,7 +164,7 @@ export class InvoicesReceivedComponent
 						componentLayout === ComponentLayoutStyleEnum.CARDS_GRID
 				),
 				tap(() => this.refreshPagination()),
-				tap(() => this.subject$.next(true)),
+				tap(() => this.invoices$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -221,31 +217,41 @@ export class InvoicesReceivedComponent
 				});
 			},
 			finalize: () => {
+				this.setPagination({
+					...this.getPagination(),
+					totalItems: this.smartTableSource.count()
+				});
 				this.loading = false;
 			}
 		});
 	}
 
 	async getInvoices() {
+		if (!this.organization) {
+			return;
+		}
 		try {
 			this.setSmartTableSource();
+
+			const { activePage, itemsPerPage } = this.getPagination();
+			this.smartTableSource.setPaging(
+				activePage,
+				itemsPerPage,
+				false
+			);
 			if (
-				this.dataLayoutStyle === ComponentLayoutStyleEnum.TABLE ||
 				this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID
 			) {
-				// Initiate TABLE and GRID view pagination
-				const { activePage, itemsPerPage } = this.pagination;
-				this.smartTableSource.setPaging(
-					activePage,
-					itemsPerPage,
-					false
-				);
-
+				// Initiate GRID view pagination
 				await this.smartTableSource.getElements();
 				this.invoices = this.smartTableSource.getData();
 
-				this.pagination['totalItems'] = this.smartTableSource.count();
+				this.setPagination({
+					...this.getPagination(),
+					totalItems: this.smartTableSource.count()
+				});
 			}
+
 		} catch (error) {
 			this._errorHandlingService.handleError(error);
 		}
@@ -282,7 +288,7 @@ export class InvoicesReceivedComponent
 					isAccepted: true
 				})
 				.then(() => {
-					this.subject$.next(true);
+					this.invoices$.next(true);
 					this.toastrService.success(
 						'INVOICES_PAGE.INVOICE_ACCEPTED'
 					);
@@ -305,7 +311,7 @@ export class InvoicesReceivedComponent
 					isAccepted: false
 				})
 				.then(() => {
-					this.subject$.next(true);
+					this.invoices$.next(true);
 					this.toastrService.success(
 						'INVOICES_PAGE.INVOICE_REJECTED'
 					);
@@ -316,11 +322,12 @@ export class InvoicesReceivedComponent
 	}
 
 	private _loadSettingsSmartTable() {
+		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
 			actions: false,
 			pager: {
 				display: false,
-				perPage: 10
+				perPage: pagination ? pagination.itemsPerPage : 10
 			},
 			mode: 'external',
 			editable: true,
@@ -351,6 +358,7 @@ export class InvoicesReceivedComponent
 						} else {
 							delete this.filters.where.invoiceNumber;
 						}
+						console.log('filter');
 						this.subject$.next(true);
 					}
 				},
@@ -390,6 +398,7 @@ export class InvoicesReceivedComponent
 						} else {
 							delete this.filters.where.totalValue;
 						}
+						console.log('filter');
 						this.subject$.next(true);
 					}
 				}
@@ -462,19 +471,12 @@ export class InvoicesReceivedComponent
 			.subscribe();
 	}
 
-	clearItem() {
+	private _clearItem() {
 		this.selectInvoice({
 			isSelected: false,
 			data: null
 		});
 		this.deselectAll();
-	}
-
-	/*
-	 * refresh pagination
-	 */
-	refreshPagination() {
-		this.pagination['activePage'] = 1;
 	}
 
 	/*
@@ -485,11 +487,6 @@ export class InvoicesReceivedComponent
 			this.invoiceReceivedTable.grid.dataSet['willSelect'] = 'false';
 			this.invoiceReceivedTable.grid.dataSet.deselectAll();
 		}
-	}
-
-	onUpdateOption($event: number) {
-		this.pagination.itemsPerPage = $event;
-		this.getInvoices();
 	}
 
 	getColumns(): string[] {
