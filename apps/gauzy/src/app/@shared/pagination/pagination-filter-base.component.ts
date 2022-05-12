@@ -24,12 +24,12 @@ export class PaginationFilterBaseComponent extends TranslationBaseComponent
 		activePage: 1,
 		itemsPerPage: 10
 	};
+	protected pagination$: BehaviorSubject<IPaginationBase> = new BehaviorSubject({
+		activePage: this.pagination.activePage,
+		itemsPerPage: this.pagination.itemsPerPage
+	});
 	protected subject$: Subject<any> = new Subject();
-	protected pagination$: BehaviorSubject<IPaginationBase> =
-		new BehaviorSubject({
-			activePage: this.pagination.activePage,
-			itemsPerPage: this.pagination.itemsPerPage
-		});
+
 
 	/*
 	 * getter setter for filters
@@ -81,7 +81,6 @@ export class PaginationFilterBaseComponent extends TranslationBaseComponent
 			...this.getPagination(),
 			activePage: selectedPage
 		});
-		this.subject$.next(true);
 	}
 
 	protected getPagination(): IPaginationBase {
@@ -95,12 +94,11 @@ export class PaginationFilterBaseComponent extends TranslationBaseComponent
 		this.pagination$.next({ activePage, itemsPerPage });
 	}
 
-	onUpdateOption($event: number) {
-		this.pagination.itemsPerPage = $event;
+	onUpdateOption(itemsPerPage: number) {
+		this.pagination.itemsPerPage = itemsPerPage;
 		this.setPagination({
 			...this.getPagination(),
 			itemsPerPage: this.pagination.itemsPerPage
 		});
-    	this.subject$.next(true);
 	}
 }

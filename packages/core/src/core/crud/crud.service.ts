@@ -79,7 +79,7 @@ export abstract class CrudService<T extends BaseEntity>
 				const tenantId = RequestContext.currentTenantId();
 				qb.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, { tenantId });
 			}
-			console.log(filter, moment().format('DD.MM.YYYY HH:mm:ss'));
+			console.log(filter, options, moment().format('DD.MM.YYYY HH:mm:ss'));
 			const [items, total] = await this.repository.findAndCount(options);
 			return { items, total };
 		} catch (error) {
