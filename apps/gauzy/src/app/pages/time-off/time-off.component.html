@@ -44,31 +44,33 @@
 		</div>
 	</nb-card-header>
 	<nb-card-body>
-		<div class="row mb-3 justify-content-end" *ngIf="showFilter">
-			<div class="filter">
-				<nb-radio-group
-					class="align-center radio-group mr-5"
-					[(ngModel)]="selectedStatus"
-					(ngModelChange)="detectStatusChange($event)"
-				>
-					<nb-radio
-						class="d-flex"
-						*ngFor="let status of timeOffStatuses"
-						[value]="status"
+		<ng-template [ngIf]="showFilter">
+			<div class="row mb-3 justify-content-end">
+				<div class="filter">
+					<nb-radio-group
+						class="align-center radio-group mr-5"
+						[(ngModel)]="selectedStatus"
+						(ngModelChange)="detectStatusChange($event)"
 					>
-						{{ 'TIME_OFF_PAGE.STATUSES.' + status | translate }}
-					</nb-radio>
-				</nb-radio-group>
-				<nb-toggle
-					[(ngModel)]="includeArchived"
-					(checkedChange)="changeIncludeArchived($event)"
-					status="warning"
-					class="my-auto align-center"
-				>
-					{{ 'FORM.CHECKBOXES.INCLUDE_ARCHIVED' | translate }}
-				</nb-toggle>
+						<nb-radio
+							class="d-flex"
+							*ngFor="let status of timeOffStatuses"
+							[value]="status"
+						>
+							{{ 'TIME_OFF_PAGE.STATUSES.' + status | translate }}
+						</nb-radio>
+					</nb-radio-group>
+					<nb-toggle
+						[(ngModel)]="includeArchived"
+						(checkedChange)="changeIncludeArchived($event)"
+						status="warning"
+						class="my-auto align-center"
+					>
+						{{ 'FORM.CHECKBOXES.INCLUDE_ARCHIVED' | translate }}
+					</nb-toggle>
+				</div>
 			</div>
-		</div>
+		</ng-template>
 		<ng-template
 			[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
 			[ngIfElse]="gridLayout"
@@ -155,9 +157,13 @@
 			</ng-container>
 		</div>
 	</ng-template>
-	<div *ngIf="showActions" class="btn-group actions ml-2">
-		<ng-container *ngTemplateOutlet="additionalActions"></ng-container>
-	</div>
+	<ng-template [ngIf]="showActions">
+		<div class="btn-group actions ml-2">
+			<ng-container 
+				*ngTemplateOutlet="additionalActions">
+			</ng-container>
+		</div>
+	</ng-template>
 </ng-template>
 <ng-template #visibleButton>
 	<button
