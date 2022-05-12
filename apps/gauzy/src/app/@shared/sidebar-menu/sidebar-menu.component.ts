@@ -22,11 +22,6 @@ interface IMenuItem extends NbMenuItem {
 	};
 }
 
-enum STATE {
-	compacted,
-	expanded
-}
-
 @Component({
 	selector: 'gauzy-sidebar-menu',
 	templateUrl: './sidebar-menu.component.html',
@@ -36,7 +31,7 @@ export class SidebarMenuComponent
 	implements OnInit, OnDestroy, AfterViewChecked
 {
 	@Input() menu: IMenuItem[];
-	state: string;
+	isExpand: boolean;
 	constructor(
 		private readonly router: Router,
 		private readonly sidebarService: NbSidebarService,
@@ -45,7 +40,12 @@ export class SidebarMenuComponent
 	ngAfterViewChecked(): void {
 		this.sidebarService
 			.getSidebarState('menu-sidebar')
-			.pipe(tap((state) => (this.state = state)))
+			.pipe(
+				tap(
+					(state) =>
+						(this.isExpand = state === 'expanded' ? true : false)
+				)
+			)
 			.subscribe();
 		this.cdr.detectChanges();
 	}
@@ -58,6 +58,10 @@ export class SidebarMenuComponent
 
 	public selectedRoute(item: IMenuItem): boolean {
 		return this.router.url === item.link;
+	}
+
+	public toggleSidebar() {
+		if (!this.isExpand) this.sidebarService.toggle(false, 'menu-sidebar');
 	}
 
 	ngOnDestroy(): void {}
