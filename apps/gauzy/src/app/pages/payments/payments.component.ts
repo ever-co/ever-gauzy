@@ -189,6 +189,7 @@ export class PaymentsComponent extends PaginationFilterBaseComponent
 			return;
 		}
 		this.loading = true;
+		
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 

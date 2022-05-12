@@ -27,36 +27,26 @@
 			<h6>{{ 'PROPOSALS_PAGE.STATISTICS' | translate }}</h6>
 			<div class="custom-container">
 				<div>
-					<span
-						>{{
-							'PROPOSALS_PAGE.ACCEPTED_PROPOSALS' | translate
-						}}: </span
-					><span>{{ countAccepted }}</span>
+					<span>{{ 'PROPOSALS_PAGE.ACCEPTED_PROPOSALS' | translate }}: </span>
+					<span>{{ countAccepted }}</span>
 				</div>
 				<div>
-					<span
-						>{{ 'PROPOSALS_PAGE.TOTAL_PROPOSALS' | translate }}:
-					</span>
+					<span>{{ 'PROPOSALS_PAGE.TOTAL_PROPOSALS' | translate }}: </span>
 					<span>{{ totalProposals }}</span>
 				</div>
 				<div>
-					<span
-						>{{ 'PROPOSALS_PAGE.SUCCESS_RATE' | translate }}:
-					</span>
-					<span>
-						{{ successRate }}
-					</span>
+					<span>{{ 'PROPOSALS_PAGE.SUCCESS_RATE' | translate }}: </span>
+					<span>{{ successRate }}</span>
 				</div>
 			</div>
 		</div>
 		<div class="gauzy-button-container">
 			<ngx-gauzy-button-action
-        [buttonTemplateVisible]="visibleButton"
+        		[buttonTemplateVisible]="visibleButton"
 				[isDisable]="disableButton"
 				[buttonTemplate]="actionButtons"
 				[componentName]="viewComponentName"
-			>
-			</ngx-gauzy-button-action>
+			></ngx-gauzy-button-action>
 		</div>
 	</nb-card-header>
 	<nb-card-body class="content">
@@ -72,13 +62,9 @@
 					(userRowSelect)="selectProposal($event)"
 					style="cursor: pointer"
 					#proposalsTable
-				>
-				</ng2-smart-table>
+				></ng2-smart-table>
 			</div>
-			<div
-				*ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
-				class="pagination-container"
-			>
+			<div class="pagination-container">
 				<ng-container *ngIf="pagination.totalItems > pagination.itemsPerPage">
 					<ga-pagination
 						(selectedOption)="onUpdateOption($event)"
@@ -116,7 +102,7 @@
 >
 	<div class="btn-group actions">
 		<ng-template ngxPermissionsOnly="ORG_PROPOSALS_EDIT">
-			<button
+			<!-- <button
 				nbButton
 				status="basic"
 				class="action secondary"
@@ -125,7 +111,7 @@
 			>
 				<nb-icon icon="eye-outline" pack="eva"></nb-icon>
 				{{ 'BUTTONS.VIEW' | translate }}
-			</button>
+			</button> -->
 			<button
 				nbButton
 				(click)="details(selectedItem)"
@@ -158,7 +144,11 @@
 	</div>
 </ng-template>
 
-<ng-template #statusButtonTemplate let-item="item" let-buttonSize="buttonSize">
+<ng-template 
+	#statusButtonTemplate 
+	let-item="item"
+	let-buttonSize="buttonSize"
+>
 	<button
 		*ngIf="item?.status"
 		nbButton
@@ -173,12 +163,12 @@
 		[disabled]="!item && disableButton"
 	>
 		<nb-icon icon="done-all-outline"></nb-icon>
-		<span *ngIf="item?.status == proposalStatusEnum.ACCEPTED">{{
-			'BUTTONS.MARK_AS_SENT' | translate
-		}}</span>
-		<span *ngIf="item?.status == proposalStatusEnum.SENT">{{
-			'BUTTONS.MARK_AS_ACCEPTED' | translate
-		}}</span>
+		<span *ngIf="item?.status == proposalStatusEnum.ACCEPTED">
+			{{ 'BUTTONS.MARK_AS_SENT' | translate }}
+		</span>
+		<span *ngIf="item?.status == proposalStatusEnum.SENT">
+			{{ 'BUTTONS.MARK_AS_ACCEPTED' | translate }}
+		</span>
 	</button>
 </ng-template>
 <ng-template #visibleButton>
