@@ -1,7 +1,15 @@
-import { Component, Input, OnInit } from '@angular/core';
-import { NbMenuItem } from '@nebular/theme';
+import {
+	AfterViewChecked,
+	ChangeDetectorRef,
+	Component,
+	Input,
+	OnDestroy,
+	OnInit
+} from '@angular/core';
+import { NbMenuItem, NbSidebarService } from '@nebular/theme';
 import { FeatureEnum, PermissionsEnum } from '@gauzy/contracts';
 import { Router } from '@angular/router';
+import { tap } from 'rxjs/operators';
 
 interface IMenuItem extends NbMenuItem {
 	class?: string;
@@ -14,25 +22,43 @@ interface IMenuItem extends NbMenuItem {
 	};
 }
 
+enum STATE {
+	compacted,
+	expanded
+}
+
 @Component({
 	selector: 'gauzy-sidebar-menu',
 	templateUrl: './sidebar-menu.component.html',
 	styleUrls: ['./sidebar-menu.component.scss']
 })
-export class SidebarMenuComponent implements OnInit {
+export class SidebarMenuComponent
+	implements OnInit, OnDestroy, AfterViewChecked
+{
 	@Input() menu: IMenuItem[];
-	isRedirected = true;
-	constructor(private readonly router: Router) {}
+	state: string;
+	constructor(
+		private readonly router: Router,
+		private readonly sidebarService: NbSidebarService,
+		private readonly cdr: ChangeDetectorRef
+	) {}
+	ngAfterViewChecked(): void {
+		this.sidebarService
+			.getSidebarState('menu-sidebar')
+			.pipe(tap((state) => (this.state = state)))
+			.subscribe();
+		this.cdr.detectChanges();
+	}
 
 	ngOnInit(): void {}
 
 	public redirectTo(link: string) {
-		this.isRedirected = true;
 		this.router.navigateByUrl(link);
 	}
 
 	public selectedRoute(item: IMenuItem): boolean {
-		this.isRedirected = !this.isRedirected;
-		const isSelected = this.router.url === item.link ? true : false;
-		return isSelected;	}
+		return this.router.url === item.link;
+	}
+
+	ngOnDestroy(): void {}
 }
