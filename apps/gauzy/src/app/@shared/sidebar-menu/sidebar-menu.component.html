@@ -5,7 +5,7 @@
 			[ngClass]="isExpand ? item?.class : item?.class + ' collapsed'"
 		>
 			<nb-accordion-item>
-				<nb-accordion-item-header>
+				<nb-accordion-item-header (click)="toggleSidebar()">
 					<i [class]="item?.icon"></i
 					><span *ngIf="isExpand">{{ item.title }}</span>
 				</nb-accordion-item-header>
