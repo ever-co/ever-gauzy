@@ -171,16 +171,19 @@ export class PaymentService extends TenantAwareCrudService<Payment> {
 			const { where } = filter;
 			if ('paymentDate' in where) {
 				const { paymentDate } = where;
-				const {
-					startDate = moment().startOf('month').format(),
-					endDate = moment().endOf('month').format()
-				} = paymentDate;
-				const { start, end } = getDateRangeFormat(
-					new Date(startDate),
-					new Date(endDate),
-					true
-				);
-				filter.where.paymentDate = Between(start, end); 
+				const { startDate, endDate } = paymentDate;
+
+				if (startDate && endDate) {
+					filter.where.paymentDate = Between(
+						moment.utc(startDate).format('YYYY-MM-DD HH:mm:ss'),
+						moment.utc(endDate).format('YYYY-MM-DD HH:mm:ss')
+					);
+				} else {
+					filter.where.paymentDate = Between(
+						moment().startOf('month').utc().format('YYYY-MM-DD HH:mm:ss'),
+						moment().endOf('month').utc().format('YYYY-MM-DD HH:mm:ss')
+					);
+				}
 			}
 			if ('tags' in where) {
 				const { tags } = where; 

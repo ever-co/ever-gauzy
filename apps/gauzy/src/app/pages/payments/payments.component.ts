@@ -7,7 +7,7 @@ import { HttpClient } from '@angular/common/http';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { combineLatest, Subject, firstValueFrom } from 'rxjs';
-import { distinctUntilChange } from '@gauzy/common-angular';
+import { distinctUntilChange, toUTC } from '@gauzy/common-angular';
 import * as moment from 'moment';
 import {
 	IPayment,
@@ -19,7 +19,7 @@ import {
 	IOrganizationContact,
 	IDateRangePicker
 } from '@gauzy/contracts';
-import { PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
+import { IPaginationBase, PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
 import { PaymentMutationComponent } from '../invoices/invoice-payments/payment-mutation/payment-mutation.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import {
@@ -30,7 +30,7 @@ import {
 } from '../../@shared/table-components';
 import { StatusBadgeComponent } from '../../@shared/status-badge';
 import { API_PREFIX, ComponentEnum } from '../../@core/constants';
-import { ServerDataSource } from '../../@core/utils/smart-table/server.data-source';
+import { ServerDataSource } from '../../@core/utils/smart-table';
 import {
 	ErrorHandlingService,
 	InvoiceEstimateHistoryService,
@@ -44,6 +44,7 @@ import {
 	TagsColorFilterComponent
 } from '../../@shared/table-filters';
 import { environment as ENV } from './../../../environments/environment';
+import { getAdjustDateRangeFutureAllowed } from '../../@theme/components/header/selectors/date-range-picker';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -51,10 +52,9 @@ import { environment as ENV } from './../../../environments/environment';
 	templateUrl: './payments.component.html',
 	styleUrls: ['./payments.component.scss']
 })
-export class PaymentsComponent
-	extends PaginationFilterBaseComponent
-	implements OnInit, OnDestroy
-{
+export class PaymentsComponent extends PaginationFilterBaseComponent 
+	implements OnInit, OnDestroy {
+
 	settingsSmartTable: object;
 	smartTableSource: ServerDataSource;
 	selectedPayment: IPayment;
@@ -63,12 +63,12 @@ export class PaymentsComponent
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
 	organization: IOrganization;
-	disableButton = true;
+	disableButton: boolean = true;
+	loading: boolean = false;
 	currency: string;
-	loading: boolean;
 	projectId: string | null;
 	selectedDateRange: IDateRangePicker;
-	subject$: Subject<any> = new Subject();
+	payments$: Subject<any> = this.subject$;
 
 	paymentsTable: Ng2SmartTableComponent;
 	@ViewChild('paymentsTable') set content(content: Ng2SmartTableComponent) {
@@ -96,11 +96,19 @@ export class PaymentsComponent
 	ngOnInit() {
 		this._loadSmartTableSettings();
 		this._applyTranslationOnSmartTable();
-		this.subject$
+		this.payments$
 			.pipe(
-				debounceTime(300),
+				debounceTime(100),
 				tap(() => this.clearItem()),
 				tap(() => this.getPayments()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.pagination$
+			.pipe(
+				debounceTime(100),
+				distinctUntilChange(),
+				tap(() => this.payments$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -111,23 +119,19 @@ export class PaymentsComponent
 			.pipe(
 				debounceTime(300),
 				filter(([organization]) => !!organization),
-				tap(([organization]) => (this.organization = organization)),
+				distinctUntilChange(),
 				tap(
 					([organization]) =>
 						(this.currency =
 							organization.currency || ENV.DEFAULT_CURRENCY)
 				),
-				distinctUntilChange(),
 				tap(([organization, dateRange, project]) => {
-					if (organization) {
-						this.organization = organization;
-						this.selectedDateRange = dateRange;
-						this.projectId = project ? project.id : null;
-
-						this.refreshPagination();
-						this.subject$.next(true);
-					}
+					this.organization = organization;
+					this.selectedDateRange = dateRange;
+					this.projectId = project ? project.id : null;
 				}),
+				tap(() => this.refreshPagination()),
+				tap(() => this.payments$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -159,7 +163,7 @@ export class PaymentsComponent
 						componentLayout === ComponentLayoutStyleEnum.CARDS_GRID
 				),
 				tap(() => this.refreshPagination()),
-				tap(() => this.subject$.next(true)),
+				tap(() => this.payments$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -184,29 +188,23 @@ export class PaymentsComponent
 		if (!this.organization) {
 			return;
 		}
+		this.loading = true;
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 
 		const request = {};
-		if (this.projectId) {
-			request['projectId'] = this.projectId;
-		}
-		const { startDate, endDate } = this.selectedDateRange;
+		if (this.projectId) { request['projectId'] = this.projectId; }
+
+		const { startDate, endDate } = getAdjustDateRangeFutureAllowed(this.selectedDateRange);
 		if (startDate && endDate) {
 			request['paymentDate'] = {};
 			if (moment(startDate).isValid()) {
-				request['paymentDate']['startDate'] = moment(startDate).format(
-					'YYYY-MM-DD HH:mm:ss'
-				);
+				request['paymentDate']['startDate'] = toUTC(startDate).format('YYYY-MM-DD HH:mm:ss');
 			}
 			if (moment(endDate).isValid()) {
-				request['paymentDate']['endDate'] = moment(endDate).format(
-					'YYYY-MM-DD HH:mm:ss'
-				);
+				request['paymentDate']['endDate'] = toUTC(endDate).format('YYYY-MM-DD HH:mm:ss');
 			}
 		}
-
-		this.loading = true;
 		this.smartTableSource = new ServerDataSource(this.httpClient, {
 			endPoint: `${API_PREFIX}/payments/pagination`,
 			relations: [
@@ -273,13 +271,23 @@ export class PaymentsComponent
 	}
 
 	async getPayments() {
+		if (!this.organization) {
+			return;
+		}
 		try {
 			this.setSmartTableSource();
-			const { activePage, itemsPerPage } = this.pagination;
-			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
-			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
-				// Initiate GRID view pagination
 
+			const { activePage, itemsPerPage } = this.getPagination();
+			this.smartTableSource.setPaging(
+				activePage,
+				itemsPerPage,
+				false
+			);
+
+			if (
+				this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID
+			) {
+				// Initiate GRID view pagination
 				await this.smartTableSource.getElements();
 				this.payments = this.smartTableSource.getData();
 
@@ -315,7 +323,7 @@ export class PaymentsComponent
 			}
 
 			this.toastrService.success('INVOICES_PAGE.PAYMENTS.PAYMENT_ADD');
-			this.subject$.next(true);
+			this.payments$.next(true);
 		}
 	}
 
@@ -351,7 +359,7 @@ export class PaymentsComponent
 			}
 
 			this.toastrService.success('INVOICES_PAGE.PAYMENTS.PAYMENT_EDIT');
-			this.subject$.next(true);
+			this.payments$.next(true);
 		}
 	}
 
@@ -382,7 +390,7 @@ export class PaymentsComponent
 			}
 
 			this.toastrService.success('INVOICES_PAGE.PAYMENTS.PAYMENT_DELETE');
-			this.subject$.next(true);
+			this.payments$.next(true);
 		}
 	}
 
@@ -402,11 +410,12 @@ export class PaymentsComponent
 	};
 
 	private _loadSmartTableSettings() {
+		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
 			actions: false,
 			pager: {
 				display: false,
-				perPage: this.pagination.itemsPerPage
+				perPage: pagination ? pagination.itemsPerPage : 10
 			},
 			columns: {
 				invoiceNumber: {
