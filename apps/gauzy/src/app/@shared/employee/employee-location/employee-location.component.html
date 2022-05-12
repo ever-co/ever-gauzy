@@ -1,6 +1,6 @@
 <nb-card>
 	<nb-card-body>
-		<form [formGroup]="form" *ngIf="form">
+		<form [formGroup]="form">
 			<div class="container">
 				<div class="row">
 					<div class="col-4">
@@ -8,26 +8,21 @@
 							#locationFormDirective
 							[form]="form"
 							[showAutocompleteSearch]="true"
-							(mapCoordinatesEmitter)="
-								onCoordinatesChanges($event)
-							"
+							(mapCoordinatesEmitter)="onCoordinatesChanges($event)"
 							(mapGeometryEmitter)="onGeometrySend($event)"
-						>
-						</ga-location-form>
+						></ga-location-form>
 					</div>
 					<div class="col-8">
 						<ga-leaflet-map
 							#leafletTemplate
 							(mapClicked)="onMapClicked($event)"
-						>
-						</ga-leaflet-map>
+						></ga-leaflet-map>
 					</div>
 				</div>
 			</div>
-
 			<div class="actions">
 				<button
-					[disabled]="this.form.invalid"
+					[disabled]="form.invalid"
 					(click)="submitForm()"
 					nbButton
 					status="success"

@@ -4,7 +4,7 @@ import {
 	IEmployee,
 	IOrganization,
 	IOrganizationTeam,
-	ITimeOffPolicyVM
+	ITimeOffPolicy
 } from '@gauzy/contracts';
 import { EmployeesService } from '../../../@core/services';
 import { takeUntil } from 'rxjs/operators';
@@ -28,7 +28,7 @@ export class TimeOffSettingsMutationComponent implements OnInit, OnDestroy {
 	@Input()
 	team?: IOrganizationTeam;
 
-	policy: ITimeOffPolicyVM;
+	policy: ITimeOffPolicy;
 	organizationId: string;
 	selectedEmployees: string[] = [];
 	employees: IEmployee[] = [];

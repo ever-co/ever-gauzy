@@ -1,7 +1,11 @@
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
+import { Router } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
+import { combineLatest, Subject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { Ng2SmartTableComponent } from 'ng2-smart-table';
 import { NbDialogService } from '@nebular/theme';
+import { TranslateService } from '@ngx-translate/core';
 import {
 	IProposal,
 	ComponentLayoutStyleEnum,
@@ -9,27 +13,36 @@ import {
 	IProposalViewModel,
 	ProposalStatusEnum,
 	IOrganizationContact,
-	IDateRangePicker
+	IDateRangePicker,
+	ITag
 } from '@gauzy/contracts';
-import { Router } from '@angular/router';
-import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { distinctUntilChange } from '@gauzy/common-angular';
-import { combineLatest, Subject } from 'rxjs';
-import { HttpClient } from '@angular/common/http';
+import { distinctUntilChange, toUTC } from '@gauzy/common-angular';
 import * as moment from 'moment';
-import { ContactLinksComponent, DateViewComponent, EmployeeLinksComponent, NotesWithTagsComponent } from '../../@shared/table-components';
+import {
+	ContactLinksComponent,
+	DateViewComponent,
+	EmployeeLinksComponent,
+	NotesWithTagsComponent,
+	TagsOnlyComponent
+} from '../../@shared/table-components';
 import { ActionConfirmationComponent, DeleteConfirmationComponent } from '../../@shared/user/forms';
-import { PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
+import { IPaginationBase, PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
 import { API_PREFIX, ComponentEnum } from '../../@core/constants';
-import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.component';
-import { ErrorHandlingService, ProposalsService, Store, ToastrService } from '../../@core/services';
-import { ServerDataSource } from '../../@core/utils/smart-table/server.data-source';
-import { InputFilterComponent } from '../../@shared/table-filters/input-filter.component';
-import { OrganizationContactFilterComponent } from '../../@shared/table-filters';
-import { TagsOnlyComponent } from '../../@shared/table-components/tags-only/tags-only.component';
-import { TagsColorFilterComponent } from '../../@shared/table-filters/tags-color-filter.component';
-import { ITag } from '@gauzy/contracts';
+import { StatusBadgeComponent } from '../../@shared/status-badge';
+import {
+	ErrorHandlingService,
+	ProposalsService,
+	Store,
+	ToastrService
+} from '../../@core/services';
+import { ServerDataSource } from '../../@core/utils/smart-table';
+import {
+	InputFilterComponent,
+	OrganizationContactFilterComponent,
+	TagsColorFilterComponent
+} from '../../@shared/table-filters';
+import { getAdjustDateRangeFutureAllowed } from '../../@theme/components/header/selectors/date-range-picker';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -37,17 +50,8 @@ import { ITag } from '@gauzy/contracts';
 	templateUrl: './proposals.component.html',
 	styleUrls: ['./proposals.component.scss']
 })
-export class ProposalsComponent
-	extends PaginationFilterBaseComponent
-	implements OnInit, OnDestroy
-{
-	proposalsTable: Ng2SmartTableComponent;
-	@ViewChild('proposalsTable') set content(content: Ng2SmartTableComponent) {
-		if (content) {
-			this.proposalsTable = content;
-			this.onChangedSource();
-		}
-	}
+export class ProposalsComponent extends PaginationFilterBaseComponent 
+	implements OnInit, OnDestroy {
 
 	smartTableSettings: object;
 	employeeId: string | null;
@@ -62,10 +66,18 @@ export class ProposalsComponent
 	successRate: string;
 	totalProposals: number;
 	countAccepted: number = 0;
-	loading: boolean;
-	disableButton = true;
+	loading: boolean = false;
+	disableButton: boolean = true;
 	organization: IOrganization;
-	subject$: Subject<any> = new Subject();
+	proposals$: Subject<any> = this.subject$;
+
+	proposalsTable: Ng2SmartTableComponent;
+	@ViewChild('proposalsTable') set content(content: Ng2SmartTableComponent) {
+		if (content) {
+			this.proposalsTable = content;
+			this.onChangedSource();
+		}
+	}
 
 	constructor(
 		private readonly store: Store,
@@ -82,14 +94,21 @@ export class ProposalsComponent
 	}
 
 	ngOnInit() {
-		this._loadSettingsSmartTable();
+		this._loadSmartTableSettings();
 		this._applyTranslationOnSmartTable();
-		this.subject$
+		this.proposals$
 			.pipe(
-				debounceTime(300),
-				tap(() => (this.loading = true)),
+				debounceTime(100),
 				tap(() => this.clearItem()),
 				tap(() => this.getProposals()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.pagination$
+			.pipe(
+				debounceTime(100),
+				distinctUntilChange(),
+				tap(() => this.proposals$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -100,16 +119,14 @@ export class ProposalsComponent
 			.pipe(
 				debounceTime(500),
 				filter(([organization]) => !!organization),
-				tap(([organization]) => (this.organization = organization)),
 				distinctUntilChange(),
 				tap(([organization, employee, dateRange]) => {
-					if (organization) {
-						this.selectedDateRange = dateRange;
-						this.employeeId = employee ? employee.id : null;
-						this.refreshPagination();
-						this.subject$.next(true);
-					}
+					this.organization = organization;
+					this.selectedDateRange = dateRange;
+					this.employeeId = employee ? employee.id : null;
 				}),
+				tap(() => this.refreshPagination()),
+				tap(() => this.proposals$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -140,7 +157,7 @@ export class ProposalsComponent
 						componentLayout === ComponentLayoutStyleEnum.CARDS_GRID
 				),
 				tap(() => this.refreshPagination()),
-				tap(() => this.subject$.next(true)),
+				tap(() => this.proposals$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -165,10 +182,9 @@ export class ProposalsComponent
 				data: selectedItem
 			});
 		}
-		this.router.navigate([
-			`/pages/sales/proposals/details`,
-			this.selectedProposal.id
-		]);
+		if (this.selectedProposal) {
+			this.router.navigate([`/pages/sales/proposals/details`, this.selectedProposal.id]);
+		}
 	}
 
 	delete(selectedItem?: IProposal) {
@@ -188,15 +204,15 @@ export class ProposalsComponent
 			.subscribe(async (result) => {
 				if (result) {
 					try {
-						await this.proposalsService.delete(
-							this.selectedProposal.id
-						);
-						this.subject$.next(true);
-						this.toastrService.success(
-							'NOTES.PROPOSALS.DELETE_PROPOSAL'
-						);
+						if (this.selectedProposal) {
+							await this.proposalsService.delete(this.selectedProposal.id).then(() => {
+								this.toastrService.success('NOTES.PROPOSALS.DELETE_PROPOSAL');
+							});
+						}
 					} catch (error) {
 						this.errorHandler.handleError(error);
+					} finally {
+						this.proposals$.next(true);
 					}
 				}
 			});
@@ -219,18 +235,20 @@ export class ProposalsComponent
 			.subscribe(async (result) => {
 				if (result) {
 					try {
-						const { tenantId } = this.store.user;
-						await this.proposalsService.updateAction(
-							this.selectedProposal.id,
-							{ status: ProposalStatusEnum.ACCEPTED, tenantId }
-						);
-						this.subject$.next(true);
-						// TODO translate
-						this.toastrService.success(
-							'NOTES.PROPOSALS.PROPOSAL_ACCEPTED'
-						);
+						if (this.selectedProposal) {
+							const { tenantId } = this.store.user;
+							await this.proposalsService.updateAction(this.selectedProposal.id, {
+								status: ProposalStatusEnum.ACCEPTED,
+								tenantId
+							}).then(() => {
+								// TODO translate
+								this.toastrService.success('NOTES.PROPOSALS.PROPOSAL_ACCEPTED');
+							});
+						}
 					} catch (error) {
 						this.errorHandler.handleError(error);
+					} finally {
+						this.proposals$.next(true);
 					}
 				}
 			});
@@ -253,17 +271,19 @@ export class ProposalsComponent
 			.subscribe(async (result) => {
 				if (result) {
 					try {
-						const { tenantId } = this.store.user;
-						await this.proposalsService.updateAction(
-							this.selectedProposal.id,
-							{ status: ProposalStatusEnum.SENT, tenantId }
-						);
-						this.subject$.next(true);
-						this.toastrService.success(
-							'NOTES.PROPOSALS.PROPOSAL_SENT'
-						);
+						if (this.selectedProposal) {
+							const { tenantId } = this.store.user;
+							await this.proposalsService.updateAction(this.selectedProposal.id, {
+								status: ProposalStatusEnum.SENT,
+								tenantId
+							}).then(() => {
+								this.toastrService.success('NOTES.PROPOSALS.PROPOSAL_SENT');
+							});
+						}
 					} catch (error) {
 						this.errorHandler.handleError(error);
+					} finally {
+						this.proposals$.next(true);
 					}
 				}
 			});
@@ -284,12 +304,14 @@ export class ProposalsComponent
 		};
 	};
 
-	private _loadSettingsSmartTable() {
+	private _loadSmartTableSettings() {
+		const pagination: IPaginationBase = this.getPagination();
 		this.smartTableSettings = {
 			actions: false,
 			editable: true,
 			pager: {
-				display: false
+				display: false,
+				perPage: pagination ? pagination.itemsPerPage : 10
 			},
 			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA_MESSAGE'),
 			columns: {
@@ -375,9 +397,7 @@ export class ProposalsComponent
 				},
 				filterFunction: (tags: ITag[]) => {
 					const tagIds = [];
-					for (const tag of tags) {
-						tagIds.push(tag.id);
-					}
+					for (const tag of tags) { tagIds.push(tag.id); }
 					this.setFilter({ field: 'tags', search: tagIds });
 				},
 				sort: false
@@ -394,6 +414,11 @@ export class ProposalsComponent
 	 * Register Smart Table Source Config
 	 */
 	setSmartTableSource() {
+		if (!this.organization) {
+			return;
+		}
+		this.loading = true;
+
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 
@@ -403,14 +428,14 @@ export class ProposalsComponent
 			delete this.smartTableSettings['columns']['author'];
 		}
 
-		const { startDate, endDate } = this.selectedDateRange;
+		const { startDate, endDate } = getAdjustDateRangeFutureAllowed(this.selectedDateRange);
 		if (startDate && endDate) {
 			request['valueDate'] = {};
 			if (moment(startDate).isValid()) {
-				request['valueDate']['startDate'] = moment(startDate).format('YYYY-MM-DD HH:mm:ss');
+				request['valueDate']['startDate'] = toUTC(startDate).format('YYYY-MM-DD HH:mm:ss');
 			}
 			if (moment(endDate).isValid()) {
-				request['valueDate']['endDate'] = moment(endDate).format('YYYY-MM-DD HH:mm:ss');
+				request['valueDate']['endDate'] = toUTC(endDate).format('YYYY-MM-DD HH:mm:ss');
 			}
 		}
 		this.smartTableSource = new ServerDataSource(this.httpClient, {
@@ -434,12 +459,12 @@ export class ProposalsComponent
 				return this.proposalMapper(proposal);
 			},
 			finalize: () => {
-				this.loading = false;
 				this.calculateStatistics();
-        this.setPagination({
+				this.setPagination({
 					...this.getPagination(),
 					totalItems: this.smartTableSource.count()
 				});
+				this.loading = false;
 			}
 		});
 	}
@@ -448,16 +473,12 @@ export class ProposalsComponent
 		this.countAccepted = 0;
 		const proposals = this.smartTableSource.getData();
 		for (const proposal of proposals) {
-			if (proposal.status === ProposalStatusEnum.ACCEPTED) {
-				this.countAccepted++;
-			}
+			if (proposal.status === ProposalStatusEnum.ACCEPTED) { this.countAccepted++; }
 		}
 
 		this.totalProposals = this.smartTableSource.count();
 		if (this.totalProposals) {
-			this.successRate =
-				((this.countAccepted / this.totalProposals) * 100).toFixed(0) +
-				' %';
+			this.successRate = ((this.countAccepted / this.totalProposals) * 100).toFixed(0) + ' %';
 		} else {
 			this.successRate = '0 %';
 		}
@@ -491,17 +512,31 @@ export class ProposalsComponent
 	};
 
 	private async getProposals() {
+		if (!this.organization) {
+			return;
+		}
 		try {
+
 			this.setSmartTableSource();
-			const { activePage, itemsPerPage } = this.pagination;
-			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
+
+			const { activePage, itemsPerPage } = this.getPagination();
+			this.smartTableSource.setPaging(
+				activePage,
+				itemsPerPage,
+				false
+			);
+			this.smartTableSource.setSort(
+				[
+					{
+						field: 'valueDate',
+						direction: 'desc'
+					}
+				],
+				false
+			);
+
 			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
 				// Initiate GRID view pagination
-				this.smartTableSource.setSort(
-					[{ field: 'valueDate', direction: 'desc' }],
-					false
-				);
-
 				await this.smartTableSource.getElements();
 				this.proposals = this.smartTableSource.getData();
 
@@ -518,7 +553,7 @@ export class ProposalsComponent
 	private _applyTranslationOnSmartTable() {
 		this.translateService.onLangChange
 			.pipe(
-				tap(() => this._loadSettingsSmartTable()),
+				tap(() => this._loadSmartTableSettings()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -527,7 +562,7 @@ export class ProposalsComponent
 	/*
 	 * Clear selected item
 	 */
-	clearItem() {
+	private clearItem() {
 		this.selectProposal({
 			isSelected: false,
 			data: null

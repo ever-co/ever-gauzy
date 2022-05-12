@@ -4,7 +4,6 @@ import { IPagination } from '@gauzy/contracts';
 import { Repository, FindManyOptions, Between, Like, In } from 'typeorm';
 import * as moment from 'moment';
 import { Income } from './income.entity';
-import { getDateRangeFormat } from './../core/utils';
 import { TenantAwareCrudService } from './../core/crud';
 
 @Injectable()
@@ -60,16 +59,19 @@ export class IncomeService extends TenantAwareCrudService<Income> {
 			const { where } = filter;
 			if ('valueDate' in where) {
 				const { valueDate } = where;
-				const {
-					startDate = moment().startOf('month').format(),
-					endDate = moment().endOf('month').format()
-				} = valueDate;
-				const { start, end } = getDateRangeFormat(
-					new Date(startDate),
-					new Date(endDate),
-					true
-				);
-				filter.where.valueDate = Between(start, end); 
+				const { startDate, endDate } = valueDate;
+
+				if (startDate && endDate) {
+					filter.where.valueDate = Between(
+						moment.utc(startDate).format('YYYY-MM-DD HH:mm:ss'),
+						moment.utc(endDate).format('YYYY-MM-DD HH:mm:ss')
+					);
+				} else {
+					filter.where.valueDate = Between(
+						moment().startOf('month').utc().format('YYYY-MM-DD HH:mm:ss'),
+						moment().endOf('month').utc().format('YYYY-MM-DD HH:mm:ss')
+					);
+				}
 			}
 			if ('tags' in where) {
 				const { tags } = where; 

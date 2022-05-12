@@ -11,12 +11,11 @@ import {
 	IExpenseCategory,
 	IDateRangePicker
 } from '@gauzy/contracts';
+import { combineLatest, Subject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { Subject } from 'rxjs';
-import { combineLatest } from 'rxjs';
-import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
+import { distinctUntilChange, isNotEmpty, toUTC } from '@gauzy/common-angular';
 import * as moment from 'moment';
 import { Ng2SmartTableComponent } from 'ng2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
@@ -27,15 +26,23 @@ import {
 	IncomeExpenseAmountComponent,
 	NotesWithTagsComponent
 } from '../../@shared/table-components';
-import { PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
-import { ComponentEnum } from '../../@core/constants/layout.constants';
+import {
+	ExpenseCategoryFilterComponent,
+	VendorFilterComponent
+} from '../../@shared/table-filters';
+import { IPaginationBase, PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
+import { API_PREFIX, ComponentEnum } from '../../@core/constants';
 import { StatusBadgeComponent } from '../../@shared/status-badge';
-import { API_PREFIX } from '../../@core/constants';
-import { ServerDataSource } from '../../@core/utils/smart-table/server.data-source';
+import { ServerDataSource } from '../../@core/utils/smart-table';
 import { ALL_EMPLOYEES_SELECTED } from '../../@theme/components/header/selectors/employee';
-import { ErrorHandlingService, ExpensesService, Store, ToastrService } from '../../@core/services';
-import { ExpenseCategoryFilterComponent, VendorFilterComponent } from '../../@shared/table-filters';
+import {
+	ErrorHandlingService,
+	ExpensesService,
+	Store,
+	ToastrService
+} from '../../@core/services';
 import { AvatarComponent } from '../../@shared/components/avatar/avatar.component';
+import { getAdjustDateRangeFutureAllowed } from '../../@theme/components/header/selectors/date-range-picker';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -51,16 +58,16 @@ export class ExpensesComponent
 	projectId: string | null;
 	selectedDateRange: IDateRangePicker;
 	smartTableSource: ServerDataSource;
-	expenses: IExpenseViewModel[];
+	expenses: IExpenseViewModel[] = [];
 	selectedExpense: IExpenseViewModel;
-	loading: boolean;
-	hasEditPermission = false;
+	loading: boolean = false;
+	disableButton: boolean = true;
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
-	disableButton = true;
+
 	organization: IOrganization;
-	subject$: Subject<any> = new Subject();
+	expenses$: Subject<any> = this.subject$;
 
 	expensesTable: Ng2SmartTableComponent;
 	@ViewChild('expensesTable') set content(content: Ng2SmartTableComponent) {
@@ -85,15 +92,22 @@ export class ExpensesComponent
 		this.setView();
 	}
 
-	async ngOnInit() {
+	ngOnInit() {
 		this._loadSettingsSmartTable();
 		this._applyTranslationOnSmartTable();
-		this.subject$
+		this.expenses$
 			.pipe(
-				tap(() => this.loading = true),
-				debounceTime(300),
-				tap(() => this.clearItem()),
+				debounceTime(100),
+				tap(() => this._clearItem()),
 				tap(() => this.getExpenses()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.pagination$
+			.pipe(
+				debounceTime(100),
+				distinctUntilChange(),
+				tap(() => this.expenses$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -108,15 +122,13 @@ export class ExpensesComponent
 				tap(([organization]) => (this.organization = organization)),
 				distinctUntilChange(),
 				tap(([organization, employee, dateRange, project]) => {
-					if (organization) {
-						this.selectedDateRange = dateRange;
-						this.employeeId = employee ? employee.id : null;
-						this.projectId = project ? project.id : null;
-
-						this.refreshPagination();
-						this.subject$.next(true);
-					}
+					this.organization = organization;
+					this.selectedDateRange = dateRange;
+					this.employeeId = employee ? employee.id : null;
+					this.projectId = project ? project.id : null;
 				}),
+				tap(() => this.refreshPagination()),
+				tap(() => this.expenses$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -147,7 +159,7 @@ export class ExpensesComponent
 				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
 				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => this.refreshPagination()),
-				tap(() => this.subject$.next(true)),
+				tap(() => this.expenses$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -160,13 +172,13 @@ export class ExpensesComponent
 		this.expensesTable.source.onChangedSource
 			.pipe(
 				untilDestroyed(this),
-				tap(() => this.clearItem())
+				tap(() => this._clearItem())
 			)
 			.subscribe();
 	}
 
 	private statusMapper = (value: string) => {
-		const badgeclass = value
+		const badgeClass = value
 			? ['paid'].includes(value.toLowerCase())
 				? 'success'
 				: ['invoiced'].includes(value.toLowerCase())
@@ -175,19 +187,20 @@ export class ExpensesComponent
 			: null;
 		return {
 			text: value,
-			class: badgeclass
+			class: badgeClass
 		};
 	}
 
-	_loadSettingsSmartTable() {
+	private _loadSettingsSmartTable() {
+		const pagination: IPaginationBase = this.getPagination();
 		this.smartTableSettings = {
 			actions: false,
 			editable: true,
-      pager: {
-				display: false,
-				perPage: this.pagination.itemsPerPage
-			},
 			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA'),
+			pager: {
+				display: false,
+				perPage: pagination ? pagination.itemsPerPage : 10
+			},
 			columns: {
 				valueDate: {
 					title: this.getTranslation('SM_TABLE.DATE'),
@@ -276,23 +289,11 @@ export class ExpensesComponent
 
 	getFormData(data) {
 		const {
-			amount,
-			category,
-			vendor,
-			typeOfExpense,
-			organizationContact = null,
-			project = null,
-			valueDate,
-			notes,
-			currency,
-			purpose,
-			taxType,
-			taxLabel,
-			rateValue,
-			receipt,
-			splitExpense,
-			tags,
-			status
+			amount, category, vendor,
+			typeOfExpense, organizationContact = null, project = null,
+			valueDate, notes, currency,
+			purpose, taxType, taxLabel, rateValue,
+			receipt, splitExpense, tags, status
 		} = data;
 		return {
 			amount,
@@ -327,7 +328,7 @@ export class ExpensesComponent
 				organizationId,
 				tenantId
 			}).then(() => {
-				this.subject$.next(true);
+				this.expenses$.next(true);
 				this.toastrService.success('NOTES.EXPENSES.ADD_EXPENSE', {
 					name: this.employeeName(employee)
 				});
@@ -379,7 +380,7 @@ export class ExpensesComponent
 							tenantId,
 							organizationId
 						}).then(() => {
-							this.subject$.next(true);
+							this.expenses$.next(true);
 							this.toastrService.success('NOTES.EXPENSES.OPEN_EDIT_EXPENSE_DIALOG', {
 								name: this.employeeName(employee)
 							});
@@ -445,7 +446,7 @@ export class ExpensesComponent
 							id,
 							isNotEmpty(employee) ? employee.id : null
 						).then(() => {
-							this.subject$.next(true);
+							this.expenses$.next(true);
 							this.toastrService.success('NOTES.EXPENSES.DELETE_EXPENSE', {
 								name: this.employeeName(employee)
 							});
@@ -466,6 +467,9 @@ export class ExpensesComponent
 	* Register Smart Table Source Config
 	*/
 	setSmartTableSource() {
+		if (!this.organization) {
+			return;
+		}
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 
@@ -473,14 +477,14 @@ export class ExpensesComponent
 		if (this.employeeId) { request['employeeId'] = this.employeeId; }
 		if (this.projectId) { request['projectId'] = this.projectId; }
 
-		const { startDate, endDate } = this.selectedDateRange;
+		const { startDate, endDate } = getAdjustDateRangeFutureAllowed(this.selectedDateRange);
 		if (startDate && endDate) {
 			request['valueDate'] = {};
 			if (moment(startDate).isValid()) {
-				request['valueDate']['startDate'] = moment(startDate).format('YYYY-MM-DD HH:mm:ss');
+				request['valueDate']['startDate'] = toUTC(startDate).format('YYYY-MM-DD HH:mm:ss');
 			}
 			if (moment(endDate).isValid()) {
-				request['valueDate']['endDate'] = moment(endDate).format('YYYY-MM-DD HH:mm:ss');
+				request['valueDate']['endDate'] = toUTC(endDate).format('YYYY-MM-DD HH:mm:ss');
 			}
 		}
 		
@@ -513,24 +517,37 @@ export class ExpensesComponent
 				});
 			},
 			finalize: () => {
+				this.setPagination({
+					...this.getPagination(),
+					totalItems: this.smartTableSource.count()
+				});
 				this.loading = false;
 			}
 		});
 	}
 
 	private async getExpenses() {
+		if (!this.organization) {
+			return;
+		}
 		try {
 			this.setSmartTableSource();
-			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID||this.dataLayoutStyle === ComponentLayoutStyleEnum.TABLE) {
 
-				// Initiate GRID view pagination
-				const { activePage, itemsPerPage } = this.pagination;
-				this.smartTableSource.setPaging(activePage, itemsPerPage, false);
+			const { activePage, itemsPerPage } = this.getPagination();
+			this.smartTableSource.setPaging(
+				activePage,
+				itemsPerPage,
+				false
+			);
 
+			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
 				await this.smartTableSource.getElements();
 				this.expenses = this.smartTableSource.getData();
 
-				this.pagination['totalItems'] =  this.smartTableSource.count();
+				this.setPagination({
+					...this.getPagination(),
+					totalItems: this.smartTableSource.count()
+				});
 			}
 		} catch (error) {
 			this.toastrService.danger('NOTES.EXPENSES.EXPENSES_ERROR', null, {
@@ -551,7 +568,7 @@ export class ExpensesComponent
 	/*
 	* Clear selected item
 	*/
-	clearItem() {
+	private _clearItem() {
 		this.selectExpense({
 			isSelected: false,
 			data: null
@@ -573,11 +590,6 @@ export class ExpensesComponent
 		return (
 			employee && employee.id
 		) ? (employee.fullName).trim() : ALL_EMPLOYEES_SELECTED.firstName;
-	}
-
-  onUpdateOption($event: number) {
-		this.pagination.itemsPerPage = $event;
-		this.getExpenses();
 	}
 
 	ngOnDestroy() {}

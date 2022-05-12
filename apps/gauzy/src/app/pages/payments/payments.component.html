@@ -34,16 +34,10 @@
 					style="cursor: pointer"
 					(userRowSelect)="selectPayment($event)"
 					#paymentsTable
-				>
-				</ng2-smart-table>
+				></ng2-smart-table>
 			</div>
-			<div
-				*ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
-				class="pagination-container"
-			>
-				<ng-container
-					*ngIf="pagination.totalItems > pagination.itemsPerPage"
-				>
+			<div class="pagination-container">
+				<ng-container *ngIf="pagination.totalItems > pagination.itemsPerPage">
 					<ga-pagination
 						(selectedOption)="onUpdateOption($event)"
 						(selectedPage)="onPageChange($event)"
@@ -51,8 +45,7 @@
 						[totalItems]="pagination?.totalItems"
 						[itemsPerPage]="pagination?.itemsPerPage"
 						[activePage]="pagination?.activePage"
-					>
-					</ga-pagination>
+					></ga-pagination>
 				</ng-container>
 			</div>
 		</ng-template>
