@@ -6,7 +6,7 @@ import * as moment from 'moment';
 import { ConfigService } from '@gauzy/config';
 import { IGetPaymentInput } from '@gauzy/contracts';
 import { Payment } from './payment.entity';
-import { getDateRangeFormat, getDaysBetweenDates,  } from '../core/utils';
+import { getDaysBetweenDates,  } from '../core/utils';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
 import { EmailService } from '../email';

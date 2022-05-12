@@ -6,7 +6,6 @@ import { chain } from 'underscore';
 import { ConfigService } from '@gauzy/config';
 import { IGetExpenseInput, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import { Expense } from './expense.entity';
-import { getDateRangeFormat } from '../core/utils';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
 
