@@ -29,6 +29,7 @@ import { ServerDataSource } from '../../@core/utils/smart-table';
 import { InputFilterComponent } from '../../@shared/table-filters';
 import { IPaginationBase, PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
 import { StageComponent } from './stage/stage.component';
+import { AtLeastOneFieldValidator } from '../../@core/validators';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -69,8 +70,10 @@ export class PipelinesComponent extends PaginationFilterBaseComponent
 	static searchBuildForm(fb: FormBuilder,): FormGroup {
 		return fb.group({
 			name: [],
-			stage: [],
+			stages: [],
 			status: []
+		}, {
+			validators: [AtLeastOneFieldValidator]
 		});
 	}
 
@@ -230,6 +233,13 @@ export class PipelinesComponent extends PaginationFilterBaseComponent
 		this.smartTableSource = new ServerDataSource(this.httpClient, {
 			endPoint: `${API_PREFIX}/pipelines/pagination`,
 			relations: [ 'stages' ],
+			join: {
+				alias: "pipeline",
+				leftJoin: {
+					stages: 'pipeline.stages'
+				},
+				...(this.filters.join) ? this.filters.join : {}
+			},
 			where: {
 				...{ organizationId, tenantId },
 				...this.filters.where
@@ -407,19 +417,16 @@ export class PipelinesComponent extends PaginationFilterBaseComponent
 		}
 	}
 
-  	onChangeStatus(event) {
-    	this.setFilter({ field: 'isActive', search: event });
-  	}
-
 	onChangeTab(tab: NbTabComponent) {
 		this.nbTab$.next(tab.tabId);
 	}
 
 	search() {
-		const { status, } = this.searchForm.getRawValue();
-		if (status) {
-			this.setFilter({ field: 'status', search: status }, false);
-		}
+		const { status, name, stages } = this.searchForm.getRawValue();
+
+		if (status) { this.setFilter({ field: 'isActive', search: status }, false); }
+		if (name) { this.setFilter({ field: 'name', search: name }, false); }
+		if (stages) { this.setFilter({ field: 'stages', search: stages }, false); }
 
 		if (isNotEmpty(this.filters)) {
 			this.refreshPagination();

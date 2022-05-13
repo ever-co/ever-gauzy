@@ -67,7 +67,7 @@
 										</div>
 									</div>
 									<div class="col-xl-2 col-lg-4 col-12">
-										<label for="stage">
+										<label for="stages">
 											{{ 'PIPELINES_PAGE.STAGE' | translate }}
 										</label>
 										<div class="w-100">
@@ -79,8 +79,8 @@
 												type="text"
 												nbInput
 												fullWidth
-												id="stage"
-												formControlName="stage"
+												id="stages"
+												formControlName="stages"
 											/>
 										</div>
 									</div>
@@ -92,16 +92,13 @@
 											<nb-select
 												fullWidth
 												[placeholder]="'PIPELINES_PAGE.ALL_STATUS' | translate"
-												(selectedChange)="
-													onChangeStatus($event)
-												"
 												id="status"
 												formControlName="status"
 											>
-												<nb-option [value]="1">
+												<nb-option [value]="'active'">
 													{{ 'PIPELINES_PAGE.ACTIVE' | translate }}
 												</nb-option>
-												<nb-option [value]="0">
+												<nb-option [value]="'inactive'">
 													{{ 'PIPELINES_PAGE.INACTIVE' | translate }}
 												</nb-option>
 											</nb-select>
@@ -111,10 +108,12 @@
 								<div class="row">
 									<div class="col-12 mt-3">
 										<button
-											nbButton
 											type="submit"
+											nbButton
 											size="small"
 											status="success"
+											outline
+											[disabled]="searchForm.invalid"
 										>
 											{{
 												'PIPELINES_PAGE.SEARCH' | translate
@@ -126,6 +125,7 @@
 											size="small"
 											status="basic"
 											outline
+											[disabled]="searchForm.invalid"
 											(click)="reset()"
 										>
 											{{ 'PIPELINES_PAGE.RESET' | translate }}
