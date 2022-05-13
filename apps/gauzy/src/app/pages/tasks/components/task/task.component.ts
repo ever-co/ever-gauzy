@@ -112,6 +112,14 @@ export class TaskComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
+		this.pagination$
+			.pipe(
+				debounceTime(100),
+				distinctUntilChange(),
+				tap(() => this.subject$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		const storeOrganization$ = this._store.selectedOrganization$;
 		const storeEmployee$ = this._store.selectedEmployee$;
 		const storeProject$ = this._store.selectedProject$;
