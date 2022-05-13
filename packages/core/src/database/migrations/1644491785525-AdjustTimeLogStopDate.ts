@@ -27,8 +27,7 @@ export class AdjustTimeLogStopDate1644491785525 implements MigrationInterface {
                     "duration" = $1,
                     "overall" = $2,
                     "keyboard" = $3,
-                    "mouse" = $4,
-                    "updatedAt" = CURRENT_TIMESTAMP
+                    "mouse" = $4
                 WHERE 
                     "id" IN($5)`,
                 [
@@ -74,8 +73,7 @@ export class AdjustTimeLogStopDate1644491785525 implements MigrationInterface {
             ) {
                 await queryRunner.connection.manager.query(`
                     UPDATE "time_log" SET 
-                        "stoppedAt" = $1, 
-                        "updatedAt" = CURRENT_TIMESTAMP 
+                        "stoppedAt" = $1
                     WHERE 
                         "id" IN($2)`, 
                     [
@@ -114,8 +112,7 @@ export class AdjustTimeLogStopDate1644491785525 implements MigrationInterface {
                 if (slotDifference > 10) {
                     await queryRunner.connection.manager.query(`
                         UPDATE "time_log" SET
-                            "stoppedAt" = $1,
-                            "updatedAt" = CURRENT_TIMESTAMP 
+                            "stoppedAt" = $1
                         WHERE 
                             "id" IN($2)`,
                         [

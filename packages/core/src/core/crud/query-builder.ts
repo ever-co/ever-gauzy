@@ -82,6 +82,11 @@ export const objectQueryMapper = (
                                 [column]: value
                             });
                             break;
+                        case 'like':
+                            bck.andWhere(`LOWER("${alias}"."${column}") ${type} LOWER(:${column})`, { 
+                                [column]: value
+                            });
+                            break;
                         case 'in':
                             bck.andWhere(`"${alias}"."${column}" ${type} (:...${column})`, { 
                                 [column]: value
