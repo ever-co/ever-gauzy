@@ -326,7 +326,7 @@ export class TaskComponent
 			},
 			columns: {
 				id: {
-					title: 'TaskID',
+					title: 'ID',
 					type: 'string',
 					width: '5%'
 				},
