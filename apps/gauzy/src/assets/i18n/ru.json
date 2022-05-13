@@ -208,7 +208,8 @@
 		"CREATED": "Создано",
 		"HIRED_DATE": "Дата истечения",
 		"REJECTED_DATE": "Дата отклонения",
-		"TIME_TRACKING": "Время отслеживания"
+		"TIME_TRACKING": "Время отслеживания",
+		"CREATED_AT": "Создано в"
 	},
 	"FORM": {
 		"USERNAME": "Имя пользователя",
