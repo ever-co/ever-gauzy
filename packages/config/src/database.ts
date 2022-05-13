@@ -9,8 +9,8 @@ let dbType:string;
 
 if (process.env.DB_TYPE)
 	dbType = process.env.DB_TYPE;
-else 
-	dbType = 'sqlite';	
+else
+	dbType = 'sqlite';
 
 console.log(`Selected DB Type (DB_TYPE env var): ${dbType}`);
 
@@ -20,7 +20,7 @@ switch (dbType) {
 
 	case 'mongodb':
 		throw "MongoDB not supported yet";
- 	   
+
 	case 'postgres':
 
 		const ssl = process.env.DB_SSL_MODE === 'true' ? true : undefined;
@@ -30,7 +30,7 @@ switch (dbType) {
 		if (ssl) {
 			const base64data = process.env.DB_CA_CERT;
 			const buff = Buffer.from(base64data, 'base64');
-			const sslCert = buff.toString('ascii');			
+			const sslCert = buff.toString('ascii');
 
 			sslParams = {
 				rejectUnauthorized: true,
@@ -41,21 +41,23 @@ switch (dbType) {
 		const postgresConnectionOptions: PostgresConnectionOptions = {
 			type: dbType,
 			ssl: ssl ? sslParams : undefined,
-			host: process.env.DB_HOST || 'localhost',		
+			host: process.env.DB_HOST || 'localhost',
 			username: process.env.DB_USER || 'postgres',
 			password: process.env.DB_PASS || 'root',
 			database: process.env.DB_NAME || 'postgres',
-			port: process.env.DB_PORT 
+			port: process.env.DB_PORT
 				? parseInt(process.env.DB_PORT, 10)
 				: 5432,
-			logging: true,
+			logging: 'all',
 			logger: 'file', // Removes console logging, instead logs all queries in a file ormlogs.log
 			synchronize: process.env.DB_SYNCHRONIZE === 'true' ? true : false, // We are using migrations, synchronize should be set to false.
-			uuidExtension: 'pgcrypto'
+			uuidExtension: 'pgcrypto',
+      migrations: ["src/modules/not-exists/*.migration{.ts,.js}"],
+      entities: ["src/modules/not-exists/*.entity{.ts,.js}"],
 		};
-		
+
 		connectionConfig = postgresConnectionOptions;
-		
+
 		break;
 
 	case 'sqlite':
@@ -69,13 +71,13 @@ switch (dbType) {
 		const sqliteConfig: ConnectionOptions = {
 			type: dbType,
 			database: dbPath,
-			logging: true,
+			logging: 'all',
 			logger: 'file', //Removes console logging, instead logs all queries in a file ormlogs.log
 			synchronize: process.env.DB_SYNCHRONIZE === 'true' ? true : false, // We are using migrations, synchronize should be set to false.
 		};
 
 		connectionConfig = sqliteConfig;
-		
+
 		break;
 }
 

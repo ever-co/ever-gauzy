@@ -72,8 +72,8 @@ function getDbConfig(): ConnectionOptions {
 
 	if (process.env.DB_TYPE)
 	  	dbType = process.env.DB_TYPE;
-	else 
-		dbType = 'sqlite';	
+	else
+		dbType = 'sqlite';
 
 	switch (dbType) {
 
@@ -85,12 +85,12 @@ function getDbConfig(): ConnectionOptions {
 
 			let sslParams: TlsOptions;
 
-			if (ssl) {				
+			if (ssl) {
 				const base64data = process.env.DB_CA_CERT;
 				const buff = Buffer.from(base64data, 'base64');
 				const sslCert = buff.toString('ascii');
-				
-				sslParams = {					
+
+				sslParams = {
 					rejectUnauthorized: true,
 					ca: sslCert
 				}
@@ -106,7 +106,7 @@ function getDbConfig(): ConnectionOptions {
 				username: process.env.DB_USER || 'postgres',
 				password: process.env.DB_PASS || 'root',
 				ssl: ssl ? sslParams : undefined,
-				logging: true,
+				logging: 'all',
 				logger: 'file', // Removes console logging, instead logs all queries in a file ormlogs.log
 				synchronize: process.env.DB_SYNCHRONIZE === 'true' ? true : false, // We are using migrations, synchronize should be set to false.
 				uuidExtension: 'pgcrypto'
@@ -125,7 +125,7 @@ function getDbConfig(): ConnectionOptions {
 			return {
 				type: dbType,
 				database: sqlitePath,
-				logging: true,
+				logging: 'all',
 				logger: 'file', // Removes console logging, instead logs all queries in a file ormlogs.log
 				synchronize: process.env.DB_SYNCHRONIZE === 'true' ? true : false, // We are using migrations, synchronize should be set to false.
 			};

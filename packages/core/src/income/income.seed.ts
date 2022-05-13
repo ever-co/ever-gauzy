@@ -13,8 +13,9 @@ import * as csv from 'csv-parser';
 import * as path from 'path';
 import * as moment from 'moment';
 import { environment as env } from '@gauzy/config';
-import { Income, OrganizationContact } from './../core/entities/internal';
+import { Income, OrganizationContact, Tag } from './../core/entities/internal';
 import { getDummyImage } from './../core/utils';
+import { chain } from 'underscore';
 
 export const createDefaultIncomes = async (
 	connection: Connection,
@@ -38,6 +39,11 @@ export const createDefaultIncomes = async (
 	let defaultIncomes = [];
 
 	for await (const organization of organizations) {
+		const tags = await connection.manager.find(Tag, {
+			where: {
+				organization
+			}
+		});
 		fs.createReadStream(filePath)
 			.pipe(csv())
 			.on('data', (data) => incomeFromFile.push(data))
@@ -79,6 +85,11 @@ export const createDefaultIncomes = async (
 							})
 						);
 					}
+					income.tags = chain(tags)
+						.shuffle()
+						.take(faker.datatype.number({ min: 1, max: 3 }))
+						.values()
+						.value();
 					incomes.push(income);
 				}
 				await insertIncome(connection, incomes);
@@ -109,6 +120,12 @@ export const createRandomIncomes = async (
 		});
 		const employees = tenantEmployeeMap.get(tenant);
 		for (const employee of employees || []) {
+			const tags = await connection.manager.find(Tag, {
+				where: {
+					tenant,
+					organization: employee.organization
+				}
+			});
 			for (let index = 0; index < 100; index++) {
 				const income = new Income();
 				const currentIndex = faker.datatype.number({
@@ -128,6 +145,11 @@ export const createRandomIncomes = async (
 					moment().add(10, 'days').calendar()
 				);
 				income.notes = notes[currentIndex];
+				income.tags = chain(tags)
+					.shuffle()
+					.take(faker.datatype.number({ min: 1, max: 3 }))
+					.values()
+					.value();
 				randomIncomes.push(income);
 			}
 		}

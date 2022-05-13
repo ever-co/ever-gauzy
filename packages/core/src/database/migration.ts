@@ -35,13 +35,13 @@ import { MigrationUtils } from './utils';
 /**
  * @description
  * Run pending database migrations. See [TypeORM migration docs](https://typeorm.io/#/migrations)
- * 
- * @param pluginConfig 
+ *
+ * @param pluginConfig
  */
 export async function runDatabaseMigrations(pluginConfig: Partial<IPluginConfig>) {
     const config = await registerPluginConfig(pluginConfig);
     const connection = await establishDatabaseConnection(config);
-    
+
     try {
         const migrations = await connection.runMigrations({ transaction: 'each' });
         if (isNotEmpty(migrations)) {
@@ -65,13 +65,13 @@ export async function runDatabaseMigrations(pluginConfig: Partial<IPluginConfig>
 /**
  * @description
  * Reverts last applied database migration. See [TypeORM migration docs](https://typeorm.io/#/migrations)
- * 
- * @param pluginConfig 
+ *
+ * @param pluginConfig
  */
  export async function revertLastDatabaseMigration(pluginConfig: Partial<IPluginConfig>) {
     const config = await registerPluginConfig(pluginConfig);
     const connection = await establishDatabaseConnection(config);
-    
+
     try {
         await connection.undoLastMigration({ transaction: 'each' });
         console.log(chalk.green(`Migration has been reverted successfully!`));
@@ -89,8 +89,8 @@ export async function runDatabaseMigrations(pluginConfig: Partial<IPluginConfig>
 /**
  * @description
  * Generates a new migration file with sql needs to be executed to update schema.
- * 
- * @param pluginConfig 
+ *
+ * @param pluginConfig
  */
 export async function generateMigration(pluginConfig: Partial<IPluginConfig>, options: IMigrationOptions) {
     if (!options.name) {
@@ -114,7 +114,7 @@ export async function generateMigration(pluginConfig: Partial<IPluginConfig>, op
         const sqlInMemory = await connection.driver.createSchemaBuilder().log();
         const upSqls: string[] = [];
         const downSqls: string[] = [];
-    
+
         sqlInMemory.upQueries.forEach(upQuery => {
             upSqls.push("await queryRunner.query(`" + upQuery.query.replace(new RegExp("`", "g"), "\\`") + "`" + queryParams(upQuery.parameters) + ");");
         });
@@ -161,8 +161,8 @@ export async function generateMigration(pluginConfig: Partial<IPluginConfig>, op
 /**
  * @description
  * Create a new blank migration file to be executed to create/update schema.
- * 
- * @param pluginConfig 
+ *
+ * @param pluginConfig
  */
  export async function createMigration(pluginConfig: Partial<IPluginConfig>, options: IMigrationOptions) {
     if (!options.name) {
@@ -182,7 +182,7 @@ export async function generateMigration(pluginConfig: Partial<IPluginConfig>, op
     }
 
     const connection = await establishDatabaseConnection(config);
-    try {        
+    try {
         const timestamp = new Date().getTime();
         /**
          *  Gets contents of the migration file.
@@ -218,8 +218,8 @@ export async function generateMigration(pluginConfig: Partial<IPluginConfig>, op
 /**
  * @description
  * Establish new database connection, if not found any connection. See [TypeORM migration docs](https://typeorm.io/#/connection)
- * 
- * @param config 
+ *
+ * @param config
  */
 export async function establishDatabaseConnection(config: Partial<IPluginConfig>): Promise<Connection> {
     const { dbConnectionOptions } = config;
@@ -228,7 +228,7 @@ export async function establishDatabaseConnection(config: Partial<IPluginConfig>
         synchronize: false,
         migrationsRun: false,
         dropSchema: false,
-        logging: ["query", "error", "schema"]
+        logging: ['all']
     };
 
     let connection: Connection|undefined = undefined;
@@ -255,8 +255,8 @@ export async function establishDatabaseConnection(config: Partial<IPluginConfig>
 /**
  * @description
  * Close database connection, after complete or failed process
- * 
- * @param connection 
+ *
+ * @param connection
  */
 async function closeConnection(connection: Connection) {
     try {
@@ -285,16 +285,16 @@ function queryParams(parameters: any[] | undefined): string {
  */
 function getTemplate(name: string, timestamp: number, upSqls: string[], downSqls: string[]): string {
     return `import { MigrationInterface, QueryRunner } from "typeorm";
-    
+
     export class ${camelCase(name, true)}${timestamp} implements MigrationInterface {
 
         name = '${camelCase(name, true)}${timestamp}';
-        
+
         public async up(queryRunner: QueryRunner): Promise<any> {
             ${upSqls.join(`
             `)}
         }
-        
+
         public async down(queryRunner: QueryRunner): Promise<any> {
             ${downSqls.join(`
             `)}
