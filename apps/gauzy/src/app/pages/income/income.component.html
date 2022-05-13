@@ -17,12 +17,11 @@
 				[isDisable]="disableButton"
 				[buttonTemplate]="actionButtons"
 				[componentName]="viewComponentName"
-       			[buttonTemplateVisible]="visibleButton"
-			>
-			</ngx-gauzy-button-action>
+				[buttonTemplateVisible]="visibleButton"
+			></ngx-gauzy-button-action>
 		</div>
 	</nb-card-header>
-	<nb-card-body>
+	<nb-card-body class="custom-card">
 		<ng-template
 			[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
 			[ngIfElse]="gridLayout"
@@ -35,8 +34,7 @@
 					[source]="smartTableSource"
 					style="cursor: pointer"
 					#incomeTable
-				>
-				</ng2-smart-table>
+				></ng2-smart-table>
 			</div>
 			<div class="pagination-container">
 				<ng-container *ngIf="pagination.totalItems > pagination.itemsPerPage">
@@ -47,8 +45,7 @@
 						[totalItems]="pagination?.totalItems"
 						[itemsPerPage]="pagination?.itemsPerPage"
 						[activePage]="pagination?.activePage"
-					>
-					</ga-pagination>
+					></ga-pagination>
 				</ng-container>
 			</div>
 		</ng-template>
@@ -64,8 +61,7 @@
 				[totalItems]="pagination?.totalItems"
 				[itemsPerPage]="pagination?.itemsPerPage"
 				[activePage]="pagination?.activePage"
-			>
-			</ga-card-grid>
+			></ga-card-grid>
 		</ng-template>
 	</nb-card-body>
 </nb-card>
@@ -114,14 +110,14 @@
 </ng-template>
 <ng-template #visibleButton>
 	<ng-template ngxPermissionsOnly="ORG_INCOMES_EDIT">
-		<button
+		<button 
 			nbButton
 			status="success"
 			size="small"
-      		(click)="addIncome()"
+			(click)="addIncome()"
 		>
 			<nb-icon icon="plus-outline"> </nb-icon>
-      		{{ 'BUTTONS.ADD' | translate }}
+			{{ 'BUTTONS.ADD' | translate }}
 		</button>
 	</ng-template>
 </ng-template>

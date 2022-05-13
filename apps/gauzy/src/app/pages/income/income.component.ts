@@ -27,12 +27,23 @@ import {
 	IncomeExpenseAmountComponent,
 	TagsOnlyComponent
 } from '../../@shared/table-components';
-import { OrganizationContactFilterComponent, TagsColorFilterComponent } from '../../@shared/table-filters';
+import {
+	OrganizationContactFilterComponent,
+	TagsColorFilterComponent
+} from '../../@shared/table-filters';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
-import { IPaginationBase, PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
+import {
+	IPaginationBase,
+	PaginationFilterBaseComponent
+} from '../../@shared/pagination/pagination-filter-base.component';
 import { API_PREFIX, ComponentEnum } from '../../@core/constants';
 import { ServerDataSource } from '../../@core/utils/smart-table/server.data-source';
-import { ErrorHandlingService, IncomeService, Store, ToastrService } from '../../@core/services';
+import {
+	ErrorHandlingService,
+	IncomeService,
+	Store,
+	ToastrService
+} from '../../@core/services';
 import { ALL_EMPLOYEES_SELECTED } from '../../@theme/components/header/selectors/employee';
 import { getAdjustDateRangeFutureAllowed } from '../../@theme/components/header/selectors/date-range-picker';
 
@@ -41,8 +52,7 @@ import { getAdjustDateRangeFutureAllowed } from '../../@theme/components/header/
 	templateUrl: './income.component.html',
 	styleUrls: ['./income.component.scss']
 })
-export class IncomeComponent
-	extends PaginationFilterBaseComponent
+export class IncomeComponent extends PaginationFilterBaseComponent 
 	implements AfterViewInit, OnInit, OnDestroy {
 
 	smartTableSettings: object;
@@ -69,9 +79,9 @@ export class IncomeComponent
 	}
 
 	/*
-	* Actions Buttons directive
-	*/
-	@ViewChild('actionButtons', { static : true }) actionButtons : TemplateRef<any>;
+	 * Actions Buttons directive
+	 */
+	@ViewChild('actionButtons', { static: true }) actionButtons: TemplateRef<any>;
 
 	constructor(
 		private readonly store: Store,
@@ -115,7 +125,7 @@ export class IncomeComponent
 				filter(([organization]) => !!organization),
 				distinctUntilChange(),
 				tap(([organization, employee, dateRange]) => {
-					this.organization = organization
+					this.organization = organization;
 					this.selectedDateRange = dateRange;
 					this.selectedEmployeeId = employee ? employee.id : null;
 				}),
@@ -137,7 +147,10 @@ export class IncomeComponent
 	ngAfterViewInit() {
 		const { employeeId } = this.store.user;
 		if (employeeId) {
-			this.smartTableSettings = Object.assign({}, this.smartTableSettings);
+			this.smartTableSettings = Object.assign(
+				{},
+				this.smartTableSettings
+			);
 		}
 	}
 
@@ -147,7 +160,7 @@ export class IncomeComponent
 			.componentLayout$(this.viewComponentName)
 			.pipe(
 				distinctUntilChange(),
-				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
+				tap((componentLayout) => (this.dataLayoutStyle = componentLayout)),
 				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => this.refreshPagination()),
 				tap(() => this.incomes$.next(true)),
@@ -195,8 +208,11 @@ export class IncomeComponent
 						type: 'custom',
 						component: OrganizationContactFilterComponent
 					},
-					filterFunction: (value: IOrganizationContact| null) => {
-						this.setFilter({ field: 'clientId', search: (value)?.id || null });
+					filterFunction: (value: IOrganizationContact | null) => {
+						this.setFilter({
+							field: 'clientId',
+							search: value?.id || null
+						});
 					}
 				},
 				employee: {
@@ -205,13 +221,17 @@ export class IncomeComponent
 					type: 'custom',
 					sort: false,
 					renderComponent: EmployeeLinksComponent,
-					valuePrepareFunction: (
-						cell,
-						row
-					) => {
+					valuePrepareFunction: (cell, row) => {
 						return {
-							name: row.employee && row.employee.user ? row.employee.fullName : null,
-							id: row.employee ? row.employee.id : null
+							name:
+								row.employee && row.employee.user
+									? row.employee.fullName
+									: null,
+							id: row.employee ? row.employee.id : null,
+							imageUrl:
+								row.employee && row.employee.user
+									? row.employee.user.imageUrl
+									: null
 						};
 					}
 				},
@@ -262,34 +282,46 @@ export class IncomeComponent
 	async addIncome() {
 		this.dialogService
 			.open(IncomeMutationComponent)
-			.onClose
-			.pipe(untilDestroyed(this))
+			.onClose.pipe(untilDestroyed(this))
 			.subscribe(async (result) => {
 				if (result) {
 					try {
 						const { tenantId } = this.store.user;
 						const { id: organizationId } = this.organization;
-						const { amount, organizationContact, valueDate, employee, notes, currency, isBonus, tags } = result;
-						await this.incomeService.create({
+						const {
 							amount,
-							clientId: organizationContact.id,
+							organizationContact,
 							valueDate,
-							employeeId: employee ? employee.id : null,
-							organizationId,
-							tenantId,
+							employee,
 							notes,
 							currency,
 							isBonus,
 							tags
-						})
-						.then(() => {
-							this.toastrService.success('NOTES.INCOME.ADD_INCOME', {
-								name: this.employeeName(employee)
+						} = result;
+						await this.incomeService
+							.create({
+								amount,
+								clientId: organizationContact.id,
+								valueDate,
+								employeeId: employee ? employee.id : null,
+								organizationId,
+								tenantId,
+								notes,
+								currency,
+								isBonus,
+								tags
+							})
+							.then(() => {
+								this.toastrService.success(
+									'NOTES.INCOME.ADD_INCOME',
+									{
+										name: this.employeeName(employee)
+									}
+								);
+							})
+							.finally(() => {
+								this.incomes$.next(true);
 							});
-						})
-						.finally(() => {
-							this.incomes$.next(true);
-						});
 					} catch (error) {
 						this.toastrService.danger(error);
 					}
@@ -319,31 +351,44 @@ export class IncomeComponent
 			.subscribe(async (result) => {
 				if (result) {
 					try {
-						const { amount, organizationContact, valueDate, notes, currency, isBonus, tags } = result;
+						const {
+							amount,
+							organizationContact,
+							valueDate,
+							notes,
+							currency,
+							isBonus,
+							tags
+						} = result;
 						const { employee } = this.selectedIncome;
 
 						const { tenantId } = this.store.user;
 						const { id: organizationId } = this.organization;
 
-						await this.incomeService.update(this.selectedIncome.id, {
-							amount,
-							clientId: organizationContact.id,
-							valueDate,
-							notes,
-							currency,
-							isBonus,
-							tags,
-							employeeId: employee ? employee.id : null,
-							tenantId,
-							organizationId
-						}).then(() => {
-							this.toastrService.success('NOTES.INCOME.EDIT_INCOME', {
-								name: this.employeeName(employee)
+						await this.incomeService
+							.update(this.selectedIncome.id, {
+								amount,
+								clientId: organizationContact.id,
+								valueDate,
+								notes,
+								currency,
+								isBonus,
+								tags,
+								employeeId: employee ? employee.id : null,
+								tenantId,
+								organizationId
+							})
+							.then(() => {
+								this.toastrService.success(
+									'NOTES.INCOME.EDIT_INCOME',
+									{
+										name: this.employeeName(employee)
+									}
+								);
+							})
+							.finally(() => {
+								this.incomes$.next(true);
 							});
-						})
-						.finally(() => {
-							this.incomes$.next(true);
-						});
 					} catch (error) {
 						this.errorHandler.handleError(error);
 					}
@@ -369,18 +414,19 @@ export class IncomeComponent
 				if (result) {
 					try {
 						const { id, employee } = this.selectedIncome;
-						await this.incomeService.delete(
-							id,
-							employee ? employee.id : null
-						)
-						.then(() => {
-							this.toastrService.success('NOTES.INCOME.DELETE_INCOME', {
-								name: this.employeeName(employee)
+						await this.incomeService
+							.delete(id, employee ? employee.id : null)
+							.then(() => {
+								this.toastrService.success(
+									'NOTES.INCOME.DELETE_INCOME',
+									{
+										name: this.employeeName(employee)
+									}
+								);
+							})
+							.finally(() => {
+								this.incomes$.next(true);
 							});
-						})
-						.finally(() => {
-							this.incomes$.next(true);
-						});
 					} catch (error) {
 						this.errorHandler.handleError(error);
 					}
@@ -389,20 +435,20 @@ export class IncomeComponent
 	}
 
 	/*
-	* Register Smart Table Source Config
-	*/
+	 * Register Smart Table Source Config
+	 */
 	setSmartTableSource() {
 		if (!this.organization) {
 			return;
 		}
 
 		this.loading = true;
-		
+
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 
 		const request = {};
-		if (this.selectedEmployeeId) request['employeeId'] = this.selectedEmployeeId
+		if (this.selectedEmployeeId) request['employeeId'] = this.selectedEmployeeId;
 
 		const { startDate, endDate } = getAdjustDateRangeFutureAllowed(this.selectedDateRange);
 		if (startDate && endDate) {
@@ -437,8 +483,10 @@ export class IncomeComponent
 			},
 			resultMap: (income: IIncome) => {
 				return Object.assign({}, income, {
-					employeeName: income.employee ? income.employee.fullName : null,
-					clientName: income.client ? income.client.name : null,
+					employeeName: income.employee
+						? income.employee.fullName
+						: null,
+					clientName: income.client ? income.client.name : null
 				});
 			},
 			finalize: () => {
@@ -459,15 +507,9 @@ export class IncomeComponent
 			this.setSmartTableSource();
 
 			const { activePage, itemsPerPage } = this.getPagination();
-			this.smartTableSource.setPaging(
-				activePage,
-				itemsPerPage,
-				false
-			);
+			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
 
-			if (
-				this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID
-			) {
+			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
 				await this.smartTableSource.getElements();
 				this.incomes = this.smartTableSource.getData();
 
@@ -503,10 +545,10 @@ export class IncomeComponent
 	}
 
 	employeeName(employee: IEmployee) {
-		return (
-			employee && employee.id
-		) ? (employee.fullName).trim() : ALL_EMPLOYEES_SELECTED.firstName;
+		return employee && employee.id
+			? employee.fullName.trim()
+			: ALL_EMPLOYEES_SELECTED.firstName;
 	}
 
-	ngOnDestroy() { }
+	ngOnDestroy() {}
 }
