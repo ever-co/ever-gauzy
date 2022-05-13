@@ -1,24 +1,35 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { IPipeline, ComponentLayoutStyleEnum, IOrganization } from '@gauzy/contracts';
+import { FormBuilder, FormGroup } from '@angular/forms';
+import { Router } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
+import {
+	IPipeline,
+	ComponentLayoutStyleEnum,
+	IOrganization,
+	PipelineTabsEnum
+} from '@gauzy/contracts';
 import { Ng2SmartTableComponent } from 'ng2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
-import { NbDialogService } from '@nebular/theme';
-import { debounceTime, distinctUntilChanged, filter, tap } from 'rxjs/operators';
-import { HttpClient } from '@angular/common/http';
-import { distinctUntilChange } from '@gauzy/common-angular';
-import { PipelineFormComponent } from './pipeline-form/pipeline-form.component';
-import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
-import { API_PREFIX, ComponentEnum } from '../../@core/constants';
-import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.component';
+import { NbDialogService, NbTabComponent } from '@nebular/theme';
+import { Subject, firstValueFrom, BehaviorSubject } from 'rxjs';
+import { debounceTime, filter, tap } from 'rxjs/operators';
+import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ErrorHandlingService, PipelinesService, Store, ToastrService } from '../../@core/services';
-import { ServerDataSource } from '../../@core/utils/smart-table/server.data-source';
-import { Subject, firstValueFrom } from 'rxjs';
-import { InputFilterComponent } from '../../@shared/table-filters/input-filter.component';
-import { PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
-import { FormControl } from '@angular/forms';
-import { Router } from '@angular/router';
+import { PipelineFormComponent } from './pipeline-form/pipeline-form.component';
+import { DeleteConfirmationComponent } from '../../@shared/user/forms';
+import { API_PREFIX, ComponentEnum } from '../../@core/constants';
+import { StatusBadgeComponent } from '../../@shared/status-badge';
+import {
+	ErrorHandlingService,
+	PipelinesService,
+	Store,
+	ToastrService
+} from '../../@core/services';
+import { ServerDataSource } from '../../@core/utils/smart-table';
+import { InputFilterComponent } from '../../@shared/table-filters';
+import { IPaginationBase, PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
 import { StageComponent } from './stage/stage.component';
+import { AtLeastOneFieldValidator } from '../../@core/validators';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -26,7 +37,8 @@ import { StageComponent } from './stage/stage.component';
 	selector: 'ga-pipelines',
 	styleUrls: ['./pipelines.component.scss']
 })
-export class PipelinesComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
+export class PipelinesComponent extends PaginationFilterBaseComponent 
+	implements OnInit, OnDestroy {
 
 	smartTableSettings: object;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
@@ -37,10 +49,11 @@ export class PipelinesComponent extends PaginationFilterBaseComponent implements
 	pipeline: IPipeline;
 	organization: IOrganization;
 	name: string;
-	disableButton = true;
-	loading: boolean;
-	subject$: Subject<any> = new Subject();
-    public inputControl = new FormControl();
+	disableButton: boolean = true;
+	loading: boolean = false;	
+	pipelineTabsEnum = PipelineTabsEnum;
+	pipelines$: Subject<any> = this.subject$;
+	nbTab$: Subject<string> = new BehaviorSubject(PipelineTabsEnum.ACTIONS);
 
 	pipelineTable: Ng2SmartTableComponent;
 	@ViewChild('pipelineTable') set content(content: Ng2SmartTableComponent) {
@@ -50,7 +63,22 @@ export class PipelinesComponent extends PaginationFilterBaseComponent implements
 		}
 	}
 
+	/*
+	* Search Tab Form
+	*/
+	public searchForm: FormGroup = PipelinesComponent.searchBuildForm(this.fb);
+	static searchBuildForm(fb: FormBuilder,): FormGroup {
+		return fb.group({
+			name: [],
+			stages: [],
+			status: []
+		}, {
+			validators: [AtLeastOneFieldValidator]
+		});
+	}
+
 	constructor(
+		private readonly fb: FormBuilder,
 		private readonly pipelinesService: PipelinesService,
 		private readonly toastrService: ToastrService,
 		private readonly dialogService: NbDialogService,
@@ -68,41 +96,43 @@ export class PipelinesComponent extends PaginationFilterBaseComponent implements
 		this._loadSmartTableSettings();
 		this._applyTranslationOnSmartTable();
 
-		this.subject$
+		this.pipelines$
 			.pipe(
-				debounceTime(300),
-				tap(() => this.loading = true),
+				debounceTime(100),
 				tap(() => this.clearItem()),
 				tap(() => this.getPipelines()),
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.store.selectedOrganization$
+		this.nbTab$
 			.pipe(
-				filter((organization) => !!organization),
-				tap((organization: IOrganization) => this.organization = organization),
-				tap(() => this.subject$.next(true)),
+				distinctUntilChange(),
+				debounceTime(100),
+				filter(() => this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID),
+				tap(() => this.pipelines$.next(true))
+			)
+			.subscribe();
+		this.pagination$
+			.pipe(
+				debounceTime(100),
+				distinctUntilChange(),
+				tap(() => this.pipelines$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.inputControl.valueChanges
-            .pipe(
-                debounceTime(500),
-                distinctUntilChanged(),
-				tap((value) => this.setFilter({ field: 'name', search: value })),
+		this.store.selectedOrganization$
+			.pipe(
+				filter((organization: IOrganization) => !!organization),
+				distinctUntilChange(),
+				tap((organization: IOrganization) => this.organization = organization),
+				tap(() => this.pipelines$.next(true)),
 				untilDestroyed(this)
-            )
-            .subscribe();
+			)
+			.subscribe();
 	}
 
 	setView() {
 		this.viewComponentName = ComponentEnum.PROPOSALS;
-		this.store
-			.componentLayout$(this.viewComponentName)
-			.pipe(untilDestroyed(this))
-			.subscribe((componentLayout) => {
-				this.dataLayoutStyle = componentLayout;
-			});
 		this.store
 			.componentLayout$(this.viewComponentName)
 			.pipe(
@@ -129,9 +159,11 @@ export class PipelinesComponent extends PaginationFilterBaseComponent implements
 	}
 
 	private _loadSmartTableSettings() {
+		const pagination: IPaginationBase = this.getPagination();
 		this.smartTableSettings = {
-      		pager: {
-				display: false
+			pager: {
+				display: false,
+				perPage: pagination ? pagination.itemsPerPage : 10
 			},
 			actions: false,
 			noDataMessage: this.getTranslation('SM_TABLE.NO_RESULT'),
@@ -189,16 +221,27 @@ export class PipelinesComponent extends PaginationFilterBaseComponent implements
 	* Register Smart Table Source Config
 	*/
 	setSmartTableSource() {
+		if (!this.organization) {
+			return;
+		}
+
+		this.loading = true;
+
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 
-		const request = {};
 		this.smartTableSource = new ServerDataSource(this.httpClient, {
 			endPoint: `${API_PREFIX}/pipelines/pagination`,
 			relations: [ 'stages' ],
+			join: {
+				alias: "pipeline",
+				leftJoin: {
+					stages: 'pipeline.stages'
+				},
+				...(this.filters.join) ? this.filters.join : {}
+			},
 			where: {
 				...{ organizationId, tenantId },
-				...request,
 				...this.filters.where
 			},
 			resultMap: (pipeline: IPipeline) => {
@@ -207,6 +250,10 @@ export class PipelinesComponent extends PaginationFilterBaseComponent implements
 				});
 			},
 			finalize: () => {
+				this.setPagination({
+					...this.getPagination(),
+					totalItems: this.smartTableSource.count()
+				});
 				this.loading = false;
 			}
 		});
@@ -224,8 +271,13 @@ export class PipelinesComponent extends PaginationFilterBaseComponent implements
 	}
 
 	async getPipelines() {
+		if (!this.organization) {
+			return;
+		}
+
 		try {
 			this.setSmartTableSource();
+
 			const { activePage, itemsPerPage } = this.getPagination();
 			this.smartTableSource.setPaging(
 				activePage,
@@ -273,11 +325,14 @@ export class PipelinesComponent extends PaginationFilterBaseComponent implements
 			this.toastrService.success('TOASTR.MESSAGE.PIPELINE_DELETED', {
 				name: this.pipeline.name
 			});
-			this.subject$.next(true);
+			this.pipelines$.next(true);
 		}
 	}
 
 	async createPipeline(): Promise<void> {
+		if (!this.organization) {
+			return;
+		}
 		const { name } = this;
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
@@ -322,7 +377,7 @@ export class PipelinesComponent extends PaginationFilterBaseComponent implements
 							name: data.name
 						}
 				  );
-			this.subject$.next(true);
+			this.pipelines$.next(true);
 		}
 	}
 
@@ -362,11 +417,28 @@ export class PipelinesComponent extends PaginationFilterBaseComponent implements
 		}
 	}
 
-  onChangeStatus(event){
-    this.setFilter({ field: 'isActive', search: event });
-  }
-
-	ngOnDestroy(): void {
-		clearTimeout();
+	onChangeTab(tab: NbTabComponent) {
+		this.nbTab$.next(tab.tabId);
 	}
+
+	search() {
+		const { status, name, stages } = this.searchForm.getRawValue();
+
+		if (status) { this.setFilter({ field: 'isActive', search: status }, false); }
+		if (name) { this.setFilter({ field: 'name', search: name }, false); }
+		if (stages) { this.setFilter({ field: 'stages', search: stages }, false); }
+
+		if (isNotEmpty(this.filters)) {
+			this.refreshPagination();
+			this.pipelines$.next(true);
+		}
+	}
+
+	reset() {
+		this.searchForm.reset();
+		this._filters = {};
+		this.pipelines$.next(true);
+	}
+
+	ngOnDestroy(): void {}
 }

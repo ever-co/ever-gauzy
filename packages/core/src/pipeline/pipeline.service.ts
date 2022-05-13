@@ -131,6 +131,21 @@ export class PipelineService extends TenantAwareCrudService<Pipeline> {
 				const { description } = where;
 				filter.where.description = Like(`%${description}%`)
 			}
+			if ('isActive' in where) {
+				const { isActive } = where;
+				if (isActive === 'active') {
+					filter.where.isActive = 1;
+				}
+				if (isActive === 'inactive') {
+					filter.where.isActive = 0;
+				}
+			}
+			if ('stages' in where) {
+				const { stages } = where;
+				filter.where.stages = {
+					name: Like(`%${stages}%`)
+				}
+			}
 		}
 		return super.paginate(filter);
 	}

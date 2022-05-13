@@ -20,119 +20,130 @@
 				[isDisable]="disableButton"
 				[buttonTemplate]="actionButtons"
 				[componentName]="viewComponentName"
-			>
-			</ngx-gauzy-button-action>
+			></ngx-gauzy-button-action>
 		</div>
-		<nb-tabset class="mt-4">
-			<nb-tab tabTitle="{{ 'PIPELINES_PAGE.BROWSE' | translate }}">
-				<ng-container>
+		<nb-tabset class="mt-4" (changeTab)="onChangeTab($event)">
+			<nb-tab 
+				[tabTitle]="'PIPELINES_PAGE.BROWSE' | translate"
+				[tabId]="pipelineTabsEnum.ACTIONS"
+			>
+				<ng-container *ngIf="(nbTab$ | async) === pipelineTabsEnum.ACTIONS">
 					<ng-template
 						[ngTemplateOutlet]="
 							dataLayoutStyle === componentLayoutStyleEnum.TABLE
 								? tableLayout
 								: gridLayout
 						"
-					>
-					</ng-template>
+					></ng-template>
 				</ng-container>
 			</nb-tab>
-			<nb-tab tabTitle="{{ 'PIPELINES_PAGE.SEARCH' | translate }}">
+			<nb-tab 
+				[tabTitle]="'PIPELINES_PAGE.SEARCH' | translate"
+				[tabId]="pipelineTabsEnum.SEARCH"
+			>
 				<nb-accordion class="mb-3">
-					<nb-accordion-item collapsed="false">
+					<nb-accordion-item [collapsed]="false">
 						<nb-accordion-item-header>
 							{{ 'PIPELINES_PAGE.SEARCH_PIPELINE' | translate }}
 						</nb-accordion-item-header>
 						<nb-accordion-item-body>
-							<div class="row">
-								<div class="col-xl-4 col-lg-12">
-									<label for="name">{{
-										'PIPELINES_PAGE.NAME' | translate
-									}}</label>
-									<div class="w-100">
-										<input
-											[placeholder]="
-												'PIPELINES_PAGE.NAME' | translate
-											"
-											[formControl]="inputControl"
-											type="text"
-											fullWidth
-											nbInput
-										/>
+							<form [formGroup]="searchForm" (ngSubmit)="search()">
+								<div class="row">
+									<div class="col-xl-4 col-lg-12">
+										<label for="name">
+											{{ 'PIPELINES_PAGE.NAME' | translate }}
+										</label>
+										<div class="w-100">
+											<input
+												[placeholder]="
+													'PIPELINES_PAGE.NAME' | translate
+												"
+												formControlName="name"
+												type="text"
+												fullWidth
+												nbInput
+												id="name"
+											/>
+										</div>
+									</div>
+									<div class="col-xl-2 col-lg-4 col-12">
+										<label for="stages">
+											{{ 'PIPELINES_PAGE.STAGE' | translate }}
+										</label>
+										<div class="w-100">
+											<input
+												[placeholder]="
+													'PIPELINES_PAGE.SEARCH_STAGE'
+														| translate
+												"
+												type="text"
+												nbInput
+												fullWidth
+												id="stages"
+												formControlName="stages"
+											/>
+										</div>
+									</div>
+									<div class="col-xl-2 col-lg-4 col-12">
+										<label for="status">
+											{{ 'PIPELINES_PAGE.STATUS' | translate }}
+										</label>
+										<div class="w-100">
+											<nb-select
+												fullWidth
+												[placeholder]="'PIPELINES_PAGE.ALL_STATUS' | translate"
+												id="status"
+												formControlName="status"
+											>
+												<nb-option [value]="'active'">
+													{{ 'PIPELINES_PAGE.ACTIVE' | translate }}
+												</nb-option>
+												<nb-option [value]="'inactive'">
+													{{ 'PIPELINES_PAGE.INACTIVE' | translate }}
+												</nb-option>
+											</nb-select>
+										</div>
 									</div>
 								</div>
-								<div class="col-xl-2 col-lg-4 col-12">
-									<label for="stage">{{
-										'PIPELINES_PAGE.STAGE' | translate
-									}}</label>
-									<div class="w-100">
-										<input
-											[placeholder]="
-												'PIPELINES_PAGE.SEARCH_STAGE'
-													| translate
-											"
-											type="text"
-											nbInput
-											fullWidth
-										/>
-									</div>
-								</div>
-								<div class="col-xl-2 col-lg-4 col-12">
-									<label for="status">{{
-										'PIPELINES_PAGE.STATUS' | translate
-									}}</label>
-									<div class="w-100">
-										<nb-select
-											fullWidth
-											[placeholder]="'PIPELINES_PAGE.ALL_STATUS' | translate"
-											(selectedChange)="
-												onChangeStatus($event)
-											"
+								<div class="row">
+									<div class="col-12 mt-3">
+										<button
+											type="submit"
+											nbButton
+											size="small"
+											status="success"
+											outline
+											[disabled]="searchForm.invalid"
 										>
-											<nb-option value="1">{{
-												'PIPELINES_PAGE.ACTIVE'
-													| translate
-											}}</nb-option>
-											<nb-option value="0">{{
-												'PIPELINES_PAGE.INACTIVE'
-													| translate
-											}}</nb-option>
-										</nb-select>
+											{{
+												'PIPELINES_PAGE.SEARCH' | translate
+											}}
+										</button>
+										<button
+											type="reset"
+											nbButton
+											size="small"
+											status="basic"
+											outline
+											[disabled]="searchForm.invalid"
+											(click)="reset()"
+										>
+											{{ 'PIPELINES_PAGE.RESET' | translate }}
+										</button>
 									</div>
 								</div>
-							</div>
-							<div class="row">
-								<div class="col-12 mt-3">
-									<button
-										nbButton
-										size="small"
-										status="success"
-									>
-										{{
-											'PIPELINES_PAGE.SEARCH' | translate
-										}}
-									</button>
-									<button
-										nbButton
-										size="small"
-										status="basic"
-										outline
-									>
-										{{ 'PIPELINES_PAGE.RESET' | translate }}
-									</button>
-								</div>
-							</div>
+							</form>
 						</nb-accordion-item-body>
 					</nb-accordion-item>
 				</nb-accordion>
-				<ng-container>
+				<ng-container *ngIf="(nbTab$ | async) === pipelineTabsEnum.SEARCH">
 					<ng-template
 						[ngTemplateOutlet]="
 							dataLayoutStyle === componentLayoutStyleEnum.TABLE
 								? tableLayout
 								: gridLayout
 						"
-					>
-					</ng-template>
+					></ng-template>
 				</ng-container>
 			</nb-tab>
 		</nb-tabset>
@@ -208,25 +219,23 @@
 <ng-template #tableLayout>
 	<div class="table-scroll-container">
 		<ng2-smart-table
-			class="tags-table"
+			style="cursor: pointer"
 			(userRowSelect)="selectPipeline($event)"
 			[settings]="smartTableSettings"
 			[source]="smartTableSource"
-			style="cursor: pointer"
 			#pipelineTable
-		>
-		</ng2-smart-table>
+		></ng2-smart-table>
 	</div>
 	<div class="pagination-container">
 		<ng-container *ngIf="pagination.totalItems > pagination.itemsPerPage">
 			<ga-pagination
+				(selectedOption)="onUpdateOption($event)"
 				(selectedPage)="onPageChange($event)"
 				[doEmit]="false"
 				[totalItems]="pagination?.totalItems"
 				[itemsPerPage]="pagination?.itemsPerPage"
 				[activePage]="pagination?.activePage"
-			>
-			</ga-pagination>
+			></ga-pagination>
 		</ng-container>
 	</div>
 </ng-template>
