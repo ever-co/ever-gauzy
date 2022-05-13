@@ -184,7 +184,7 @@ export async function seedProjectMembersCount(
 			`, [ projectId ]);
 
 			const counts = members['count'];
-			await connection.manager.query(`UPDATE "organization_project" SET "membersCount" = $1 WHERE "id" IN($2) `, [counts, projectId]);
+			await connection.manager.query(`UPDATE "organization_project" SET "membersCount" = $1 WHERE "id" IN($2)`, [counts, projectId]);
 		}
 	}
 }
