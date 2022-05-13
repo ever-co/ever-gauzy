@@ -355,6 +355,18 @@ export class TaskComponent
 						this.setFilter({ field: 'projectName', search: value });
 					}
 				},
+				createdAt: {
+					title: this.getTranslation('SM_TABLE.CREATED_AT'),
+					type: 'custom',
+					filter: {
+						type: 'custom',
+						component: InputFilterComponent
+					},
+					filterFunction: (value) => {
+						this.setFilter({ field: 'createdAt', search: value });
+					},
+					renderComponent: DateViewComponent
+				},
 				creator: {
 					title: this.getTranslation('TASKS_PAGE.TASKS_CREATOR'),
 					type: 'custom',
