@@ -22,3 +22,8 @@ export interface IPipelineCreateInput
 	name: string;
 	isActive: boolean;
 }
+
+export enum PipelineTabsEnum {
+	ACTIONS = "ACTIONS",
+	SEARCH = "SEARCH"
+}
