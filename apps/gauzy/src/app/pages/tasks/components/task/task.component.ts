@@ -45,6 +45,7 @@ import { InputFilterComponent } from './../../../../@shared/table-filters/input-
 import { CreateByComponent } from '../../../../@shared/table-components/create-by/create-by.component';
 import { ProjectComponent } from 'apps/gauzy/src/app/@shared/table-components/project/project.component';
 import { EmployeesMergedTeamsComponent } from '../../../../@shared/table-components/employees-merged-teams/employees-merged-teams.component';
+import { CreatedAtComponent } from 'apps/gauzy/src/app/@shared/table-components/created-at/created-at.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -365,7 +366,7 @@ export class TaskComponent
 					filterFunction: (value) => {
 						this.setFilter({ field: 'createdAt', search: value });
 					},
-					renderComponent: DateViewComponent
+					renderComponent: CreatedAtComponent
 				},
 				creator: {
 					title: this.getTranslation('TASKS_PAGE.TASKS_CREATOR'),
