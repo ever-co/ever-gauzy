@@ -1,0 +1,7 @@
+span {
+  display: inline-block;
+  text-transform: lowercase;
+  &:first-letter {
+    text-transform: uppercase;
+  }
+}
