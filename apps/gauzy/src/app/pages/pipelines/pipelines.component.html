@@ -47,85 +47,92 @@
 							{{ 'PIPELINES_PAGE.SEARCH_PIPELINE' | translate }}
 						</nb-accordion-item-header>
 						<nb-accordion-item-body>
-							<div class="row">
-								<div class="col-xl-4 col-lg-12">
-									<label for="name">
-										{{ 'PIPELINES_PAGE.NAME' | translate }}
-									</label>
-									<div class="w-100">
-										<input
-											[placeholder]="
-												'PIPELINES_PAGE.NAME' | translate
-											"
-											[formControl]="inputControl"
-											type="text"
-											fullWidth
-											nbInput
-											id="name"
-										/>
+							<form [formGroup]="searchForm" (ngSubmit)="search()">
+								<div class="row">
+									<div class="col-xl-4 col-lg-12">
+										<label for="name">
+											{{ 'PIPELINES_PAGE.NAME' | translate }}
+										</label>
+										<div class="w-100">
+											<input
+												[placeholder]="
+													'PIPELINES_PAGE.NAME' | translate
+												"
+												formControlName="name"
+												type="text"
+												fullWidth
+												nbInput
+												id="name"
+											/>
+										</div>
+									</div>
+									<div class="col-xl-2 col-lg-4 col-12">
+										<label for="stage">
+											{{ 'PIPELINES_PAGE.STAGE' | translate }}
+										</label>
+										<div class="w-100">
+											<input
+												[placeholder]="
+													'PIPELINES_PAGE.SEARCH_STAGE'
+														| translate
+												"
+												type="text"
+												nbInput
+												fullWidth
+												id="stage"
+												formControlName="stage"
+											/>
+										</div>
+									</div>
+									<div class="col-xl-2 col-lg-4 col-12">
+										<label for="status">
+											{{ 'PIPELINES_PAGE.STATUS' | translate }}
+										</label>
+										<div class="w-100">
+											<nb-select
+												fullWidth
+												[placeholder]="'PIPELINES_PAGE.ALL_STATUS' | translate"
+												(selectedChange)="
+													onChangeStatus($event)
+												"
+												id="status"
+												formControlName="status"
+											>
+												<nb-option [value]="1">
+													{{ 'PIPELINES_PAGE.ACTIVE' | translate }}
+												</nb-option>
+												<nb-option [value]="0">
+													{{ 'PIPELINES_PAGE.INACTIVE' | translate }}
+												</nb-option>
+											</nb-select>
+										</div>
 									</div>
 								</div>
-								<div class="col-xl-2 col-lg-4 col-12">
-									<label for="stage">
-										{{ 'PIPELINES_PAGE.STAGE' | translate }}
-									</label>
-									<div class="w-100">
-										<input
-											[placeholder]="
-												'PIPELINES_PAGE.SEARCH_STAGE'
-													| translate
-											"
-											type="text"
-											nbInput
-											fullWidth
-											id="stage"
-										/>
-									</div>
-								</div>
-								<div class="col-xl-2 col-lg-4 col-12">
-									<label for="status">
-										{{ 'PIPELINES_PAGE.STATUS' | translate }}
-									</label>
-									<div class="w-100">
-										<nb-select
-											fullWidth
-											[placeholder]="'PIPELINES_PAGE.ALL_STATUS' | translate"
-											(selectedChange)="
-												onChangeStatus($event)
-											"
-											id="status"
+								<div class="row">
+									<div class="col-12 mt-3">
+										<button
+											nbButton
+											type="submit"
+											size="small"
+											status="success"
 										>
-											<nb-option [value]="1">
-												{{ 'PIPELINES_PAGE.ACTIVE' | translate }}
-											</nb-option>
-											<nb-option [value]="0">
-												{{ 'PIPELINES_PAGE.INACTIVE' | translate }}
-											</nb-option>
-										</nb-select>
+											{{
+												'PIPELINES_PAGE.SEARCH' | translate
+											}}
+										</button>
+										<button
+											type="reset"
+											nbButton
+											size="small"
+											status="basic"
+											outline
+											(click)="reset()"
+										>
+											{{ 'PIPELINES_PAGE.RESET' | translate }}
+										</button>
 									</div>
 								</div>
-							</div>
-							<div class="row">
-								<div class="col-12 mt-3">
-									<button
-										nbButton
-										size="small"
-										status="success"
-									>
-										{{
-											'PIPELINES_PAGE.SEARCH' | translate
-										}}
-									</button>
-									<button
-										nbButton
-										size="small"
-										status="basic"
-										outline
-									>
-										{{ 'PIPELINES_PAGE.RESET' | translate }}
-									</button>
-								</div>
-							</div>
+							</form>
 						</nb-accordion-item-body>
 					</nb-accordion-item>
 				</nb-accordion>
@@ -222,6 +229,7 @@
 	<div class="pagination-container">
 		<ng-container *ngIf="pagination.totalItems > pagination.itemsPerPage">
 			<ga-pagination
+				(selectedOption)="onUpdateOption($event)"
 				(selectedPage)="onPageChange($event)"
 				[doEmit]="false"
 				[totalItems]="pagination?.totalItems"
