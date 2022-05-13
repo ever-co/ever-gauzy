@@ -52,17 +52,25 @@ export class SidebarMenuComponent
 
 	ngOnInit(): void {}
 
-	public redirectTo(link: string) {
-		this.router.navigateByUrl(link);
+	public redirectTo(item: IMenuItem) {
+		if (!item.children || item.home) this.router.navigateByUrl(item.link);
 	}
 
 	public selectedRoute(item: IMenuItem): boolean {
 		return this.router.url === item.link;
 	}
 
-	public toggleSidebar() {
-		if (!this.isExpand) this.sidebarService.toggle(false, 'menu-sidebar');
+	public toggleSidebar(item: IMenuItem) {
+		if (!this.isExpand && !item.home)
+			this.sidebarService.toggle(false, 'menu-sidebar');
 	}
+
+	public selectedItem(item: IMenuItem): boolean {
+		//console.log(item);
+		return false;
+	}
+
+	onCollapse(event) {}
 
 	ngOnDestroy(): void {}
 }

@@ -4,8 +4,10 @@
 			*ngxPermissionsOnly="item.data.permissionKeys"
 			[ngClass]="isExpand ? item?.class : item?.class + ' collapsed'"
 		>
-			<nb-accordion-item>
-				<nb-accordion-item-header (click)="toggleSidebar()">
+			<nb-accordion-item (collapsedChange)="onCollapse($event)" [ngClass]="selectedItem(item) ? 'opened' : ''">
+				<nb-accordion-item-header
+					(click)="toggleSidebar(item); redirectTo(item)"
+				>
 					<i [class]="item?.icon"></i
 					><span *ngIf="isExpand">{{ item.title }}</span>
 				</nb-accordion-item-header>
@@ -20,7 +22,7 @@
 									: 'sub-item'
 							"
 							*ngIf="!subItem.hidden"
-							(click)="redirectTo(subItem?.link)"
+							(click)="redirectTo(subItem)"
 						>
 							<ng-container
 								*ngxPermissionsOnly="
