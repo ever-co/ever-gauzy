@@ -418,7 +418,6 @@ export class TaskComponent
 						'/' +
 						this.getTranslation('TASKS_PAGE.TASK_TEAMS'),
 					type: 'custom',
-					width: '20%',
 					filter: true,
 					renderComponent: EmployeesMergedTeamsComponent
 				}
