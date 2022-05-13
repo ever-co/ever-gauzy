@@ -1,0 +1,21 @@
+@import 'themes';
+
+a {
+  background-color: nb-theme(color-primary-transparent-100);
+  border-radius: nb-theme(button-rectangle-border-radius);
+  padding: 3px 9px 3px 3px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  width: fit-content;
+  color: nb-theme(text-primary-color);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 15px;
+  letter-spacing: 0em;
+  text-align: left;
+  img {
+    border-radius: 18px;
+    margin-right: 5px;
+  }
+}
