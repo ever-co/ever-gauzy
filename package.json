@@ -320,7 +320,7 @@
 		"webpack-cli": "^4.9.0",
 		"webpack-merge": "^5.8.0",
 		"webpack-node-externals": "^3.0.0",
-		"yargs": "^17.3.0"
+		"yargs": "^17.5.0"
 	},
 	"engines": {
 		"node": ">=14.0.0",

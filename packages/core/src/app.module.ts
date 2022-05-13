@@ -5,7 +5,7 @@ import {
 	ServeStaticModule,
 	ServeStaticModuleOptions
 } from '@nestjs/serve-static';
-import { HeaderResolver, I18nJsonParser, I18nModule } from 'nestjs-i18n';
+import { HeaderResolver, I18nModule } from 'nestjs-i18n';
 import { Integrations as SentryIntegrations } from '@sentry/node';
 import { Integrations as TrackingIntegrations } from '@sentry/tracing';
 import { initialize as initializeUnleash } from 'unleash-client';
@@ -141,7 +141,7 @@ if (unleashConfig.url) {
 		metricsInterval: unleashConfig.metricsInterval
 	};
 
-	console.log(`Using Unleash Config: ${JSON.stringify(unleashInstanceConfig)}`);	
+	console.log(`Using Unleash Config: ${JSON.stringify(unleashInstanceConfig)}`);
 
 	const instance = initializeUnleash(unleashInstanceConfig);
 
@@ -175,8 +175,7 @@ if (process.env.DB_TYPE === 'postgres') {
 		MulterModule.register(),
 		I18nModule.forRoot({
 			fallbackLanguage: LanguagesEnum.ENGLISH,
-			parser: I18nJsonParser,
-			parserOptions: {
+			loaderOptions: {
 				path: path.resolve(__dirname, 'i18n/'),
 				watch: !environment.production
 			},

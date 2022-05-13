@@ -13,10 +13,12 @@ export class DBHelper<T> {
 	}
 
 	async sync(relation: string, new_values: any[]) {
-		const row: T = await this.repository.findOne(this.findBy, {
+
+    const row: T = await this.repository.findOne(this.findBy, {
 			relations: [relation]
 		});
-		const values: any[] = row[relation];
+
+    const values: any[] = row[relation];
 
 		const toRemove = _.difference(values, new_values);
 		const toAdd = _.difference(new_values, values);
@@ -24,7 +26,7 @@ export class DBHelper<T> {
 		row[relation] = values
 			.concat(toAdd)
 			.filter((value) => toRemove.indexOf(value) === -1);
-		const resp = await this.repository.save(row);
-		return resp;
+
+		return await this.repository.save(row as any);
 	}
 }
