@@ -10,6 +10,5 @@ export function AtLeastOneFieldValidator(group: FormGroup): {[key: string]: any}
 			}
 		}
 	}
-	console.log(isAtLeastOne, group);
 	return isAtLeastOne ? null : { requiredAtLeastOne: true };
 }
