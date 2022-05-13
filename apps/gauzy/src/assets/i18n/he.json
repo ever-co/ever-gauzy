@@ -208,7 +208,8 @@
 		"CREATED": "Created",
 		"HIRED_DATE": "Hired Date",
 		"REJECTED_DATE": "Rejected Date",
-		"TIME_TRACKING": "Time Tracking"
+		"TIME_TRACKING": "Time Tracking",
+		"CREATED_AT": "Created At"
 	},
 	"FORM": {
 		"USERNAME": "שם משתמש",
