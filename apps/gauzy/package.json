@@ -71,12 +71,12 @@
 		"@ngneat/until-destroy": "^9.0.0",
 		"@ngx-translate/core": "^14.0.0",
 		"@ngx-translate/http-loader": "^7.0.0",
-    "@sentry/hub": "^6.19.7",
-    "@sentry/utils": "^6.19.7",
 		"@sentry/angular": "^6.19.7",
 		"@sentry/browser": "^6.19.7",
+		"@sentry/hub": "^6.19.7",
 		"@sentry/tracing": "^6.19.7",
 		"@sentry/types": "^6.19.7",
+		"@sentry/utils": "^6.19.7",
 		"@swimlane/ngx-charts": "^19.1.0",
 		"angular2-chartjs": "^0.5.1",
 		"angular2-toaster": "^11.0.1",
@@ -132,7 +132,7 @@
 		"ngx-color-picker": "^11.0.0",
 		"ngx-cookie-service": "^13.1.2",
 		"ngx-countdown": "^12.0.1",
-		"ngx-daterangepicker-material": "^2.4.2",
+		"ngx-daterangepicker-material": "^5.0.2",
 		"ngx-draggable-dom": "^2.4.2",
 		"ngx-echarts": "^8.0.1",
 		"ngx-electron": "^2.2.0",
@@ -208,6 +208,6 @@
 		"webpack-cli": "^4.9.1",
 		"webpack-merge": "^5.8.0",
 		"webpack-node-externals": "^3.0.0",
-    "yargs": "^17.5.0"
+		"yargs": "^17.5.0"
 	}
 }
