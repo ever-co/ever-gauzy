@@ -21,6 +21,7 @@ import { EmployeeLinksComponent } from './employee-links/employee-links.componen
 import { CreateByComponent } from './create-by/create-by.component';
 import { ProjectComponent } from './project/project.component';
 import { EmployeesMergedTeamsComponent } from './employees-merged-teams/employees-merged-teams.component';
+import { CreatedAtComponent } from './created-at/created-at.component';
 
 @NgModule({
 	imports: [
@@ -47,9 +48,10 @@ import { EmployeesMergedTeamsComponent } from './employees-merged-teams/employee
 		TagsOnlyComponent,
 		ContactLinksComponent,
 		EmployeeLinksComponent,
-  CreateByComponent,
-  ProjectComponent,
-  EmployeesMergedTeamsComponent
+		CreateByComponent,
+		ProjectComponent,
+		EmployeesMergedTeamsComponent,
+		CreatedAtComponent
 	],
 	exports: [
 		NotesWithTagsComponent,
