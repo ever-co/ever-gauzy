@@ -1,11 +1,4 @@
-import {
-	AfterViewInit,
-	Component,
-	OnDestroy,
-	OnInit,
-	TemplateRef,
-	ViewChild
-} from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import {
@@ -59,10 +52,9 @@ import { getAdjustDateRangeFutureAllowed } from '../../@theme/components/header/
 	templateUrl: './income.component.html',
 	styleUrls: ['./income.component.scss']
 })
-export class IncomeComponent
-	extends PaginationFilterBaseComponent
-	implements AfterViewInit, OnInit, OnDestroy
-{
+export class IncomeComponent extends PaginationFilterBaseComponent 
+	implements AfterViewInit, OnInit, OnDestroy {
+
 	smartTableSettings: object;
 	selectedEmployeeId: string;
 	selectedDateRange: IDateRangePicker;
@@ -89,8 +81,7 @@ export class IncomeComponent
 	/*
 	 * Actions Buttons directive
 	 */
-	@ViewChild('actionButtons', { static: true })
-	actionButtons: TemplateRef<any>;
+	@ViewChild('actionButtons', { static: true }) actionButtons: TemplateRef<any>;
 
 	constructor(
 		private readonly store: Store,
@@ -145,10 +136,7 @@ export class IncomeComponent
 			.subscribe();
 		this.route.queryParamMap
 			.pipe(
-				filter(
-					(params) =>
-						!!params && params.get('openAddDialog') === 'true'
-				),
+				filter((params) => !!params && params.get('openAddDialog') === 'true'),
 				debounceTime(1000),
 				tap(() => this.addIncome()),
 				untilDestroyed(this)
@@ -172,14 +160,8 @@ export class IncomeComponent
 			.componentLayout$(this.viewComponentName)
 			.pipe(
 				distinctUntilChange(),
-				tap(
-					(componentLayout) =>
-						(this.dataLayoutStyle = componentLayout)
-				),
-				filter(
-					(componentLayout) =>
-						componentLayout === ComponentLayoutStyleEnum.CARDS_GRID
-				),
+				tap((componentLayout) => (this.dataLayoutStyle = componentLayout)),
+				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => this.refreshPagination()),
 				tap(() => this.incomes$.next(true)),
 				untilDestroyed(this)
@@ -239,7 +221,6 @@ export class IncomeComponent
 					type: 'custom',
 					sort: false,
 					renderComponent: EmployeeLinksComponent,
-
 					valuePrepareFunction: (cell, row) => {
 						return {
 							name:
@@ -467,23 +448,16 @@ export class IncomeComponent
 		const { id: organizationId } = this.organization;
 
 		const request = {};
-		if (this.selectedEmployeeId)
-			request['employeeId'] = this.selectedEmployeeId;
+		if (this.selectedEmployeeId) request['employeeId'] = this.selectedEmployeeId;
 
-		const { startDate, endDate } = getAdjustDateRangeFutureAllowed(
-			this.selectedDateRange
-		);
+		const { startDate, endDate } = getAdjustDateRangeFutureAllowed(this.selectedDateRange);
 		if (startDate && endDate) {
 			request['valueDate'] = {};
 			if (moment(startDate).isValid()) {
-				request['valueDate']['startDate'] = toUTC(startDate).format(
-					'YYYY-MM-DD HH:mm:ss'
-				);
+				request['valueDate']['startDate'] = toUTC(startDate).format('YYYY-MM-DD HH:mm:ss');
 			}
 			if (moment(endDate).isValid()) {
-				request['valueDate']['endDate'] = toUTC(endDate).format(
-					'YYYY-MM-DD HH:mm:ss'
-				);
+				request['valueDate']['endDate'] = toUTC(endDate).format('YYYY-MM-DD HH:mm:ss');
 			}
 		}
 
