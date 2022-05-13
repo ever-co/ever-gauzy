@@ -11,7 +11,7 @@ Ever® Gauzy™ - **Open-Source Business Management Platform** for On-Demand and
 - **Customer Relationship Management** (CRM) software
 - **Human Resource Management** (HRM) software with employee **Time and Activity Tracking** functionality
 
-![overview](https://gauzy.co/wp-content/themes/gauzy/assets/img/home/home-1.png)
+![overview](https://web.gauzy.co/_next/static/media/WeeklyActivity.04c2c941.webp)
 
 You are welcome to check more information about the platform at our official website - **<https://gauzy.co>**. 
 

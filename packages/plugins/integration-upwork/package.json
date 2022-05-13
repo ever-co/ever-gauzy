@@ -32,7 +32,7 @@
 		"@gauzy/contracts": "^0.1.0"
 	},
 	"devDependencies": {
-		"@types/node": "^14.14.22",
+		"@types/node": "^17.0.33",
 		"rimraf": "^3.0.2",
 		"typescript": "4.5.5"
 	}

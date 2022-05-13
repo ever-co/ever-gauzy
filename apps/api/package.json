@@ -42,8 +42,7 @@
 	"dependencies": {
 		"@gauzy/changelog": "^0.1.0",
 		"@gauzy/core": "^0.1.0",
-		"@gauzy/knowledge-base": "^0.1.0",
-		"yargs": "^17.3.0"
+		"@gauzy/knowledge-base": "^0.1.0"
 	},
 	"devDependencies": {
 		"@nestjs/schematics": "^8.0.6",
@@ -52,6 +51,7 @@
 		"nodemon": "^2.0.7",
 		"pm2": "^4.5.1",
 		"ts-node": "^9.1.1",
-		"typescript": "4.5.5"
+		"typescript": "4.5.5",
+    "yargs": "^17.5.0"
 	}
 }

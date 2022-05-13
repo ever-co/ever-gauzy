@@ -28,7 +28,7 @@
 	"devDependencies": {
 		"@electron/remote": "^2.0.1",
 		"@gauzy/desktop-window": "^0.1.0",
-		"@types/node": "^14.14.22"
+		"@types/node": "^17.0.33"
 	},
 	"peerDependencies": {
 		"@angular/animations": "13.2.2",
