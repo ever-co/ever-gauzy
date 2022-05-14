@@ -30,22 +30,22 @@ import {
 } from './../../../../@core/services';
 import {
 	AssignedToComponent,
+	CreateByComponent,
+	CreatedAtComponent,
 	DateViewComponent,
+	EmployeesMergedTeamsComponent,
 	NotesWithTagsComponent,
+	ProjectComponent,
 	StatusViewComponent
 } from './../../../../@shared/table-components';
 import { ALL_PROJECT_SELECTED } from './../../../../@shared/project-select/project/default-project';
-import { ServerDataSource } from './../../../../@core/utils/smart-table/server.data-source';
+import { ServerDataSource } from './../../../../@core/utils/smart-table';
 import {
 	OrganizationTeamFilterComponent,
 	TaskStatusFilterComponent
 } from './../../../../@shared/table-filters';
-import { PaginationFilterBaseComponent } from './../../../../@shared/pagination/pagination-filter-base.component';
-import { InputFilterComponent } from './../../../../@shared/table-filters/input-filter.component';
-import { CreateByComponent } from '../../../../@shared/table-components/create-by/create-by.component';
-import { ProjectComponent } from 'apps/gauzy/src/app/@shared/table-components/project/project.component';
-import { EmployeesMergedTeamsComponent } from '../../../../@shared/table-components/employees-merged-teams/employees-merged-teams.component';
-import { CreatedAtComponent } from 'apps/gauzy/src/app/@shared/table-components/created-at/created-at.component';
+import { InputFilterComponent } from './../../../../@shared/table-filters';
+import { IPaginationBase, PaginationFilterBaseComponent } from './../../../../@shared/pagination/pagination-filter-base.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -53,14 +53,13 @@ import { CreatedAtComponent } from 'apps/gauzy/src/app/@shared/table-components/
 	templateUrl: './task.component.html',
 	styleUrls: ['task.component.scss']
 })
-export class TaskComponent
-	extends PaginationFilterBaseComponent
-	implements OnInit, OnDestroy
-{
+export class TaskComponent extends PaginationFilterBaseComponent 
+	implements OnInit, OnDestroy {
+
 	settingsSmartTable: object;
-	loading: boolean;
+	loading: boolean = false;
+	disableButton: boolean = true;
 	smartTableSource: ServerDataSource;
-	disableButton: boolean;
 	availableTasks$: Observable<ITask[]>;
 	tasks$: Observable<ITask[]> = this._taskStore.tasks$;
 	myTasks$: Observable<ITask[]> = this._myTaskStore.myTasks$;
@@ -107,7 +106,6 @@ export class TaskComponent
 		this.subject$
 			.pipe(
 				debounceTime(400),
-				tap(() => (this.loading = true)),
 				tap(() => this.clearItem()),
 				tap(() => this.getTasks()),
 				untilDestroyed(this)
@@ -179,14 +177,8 @@ export class TaskComponent
 			.componentLayout$(this.viewComponentName)
 			.pipe(
 				distinctUntilChange(),
-				tap(
-					(componentLayout) =>
-						(this.dataLayoutStyle = componentLayout)
-				),
-				filter(
-					(componentLayout) =>
-						componentLayout === ComponentLayoutStyleEnum.CARDS_GRID
-				),
+				tap((componentLayout) => (this.dataLayoutStyle = componentLayout)),
+				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => this.refreshPagination()),
 				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
@@ -219,6 +211,12 @@ export class TaskComponent
 	 * Register Smart Table Source Config
 	 */
 	setSmartTableSource() {
+		if (!this.organization) {
+			return;
+		}
+
+		this.loading = true;
+
 		const { tenantId } = this._store.user;
 		const { id: organizationId } = this.organization;
 
@@ -290,40 +288,51 @@ export class TaskComponent
 			finalize: () => {
 				const tasks = this.smartTableSource.getData();
 				this.storeInstance.loadAllTasks(tasks);
+
+				this.setPagination({
+					...this.getPagination(),
+					totalItems: this.smartTableSource.count()
+				});
 				this.loading = false;
 			}
 		});
 	}
 
 	async getTasks() {
+		if (!this.organization) {
+			return;
+		}
 		try {
 			this.setSmartTableSource();
+			
 			const { activePage, itemsPerPage } = this.pagination;
-			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
-			await this.smartTableSource.getElements();
-			const tasks = this.smartTableSource.getData();
+			this.smartTableSource.setPaging(
+				activePage,
+				itemsPerPage,
+				false
+			);
 			if (
 				this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID ||
 				this.viewMode === TaskListTypeEnum.SPRINT
 			) {
-				// Initiate GRID view pagination
-				this.storeInstance.loadAllTasks(tasks);
-				this.loading = false;
+				await this.smartTableSource.getElements();
+				this.setPagination({
+					...this.getPagination(),
+					totalItems: this.smartTableSource.count()
+				});
 			}
-			this.setPagination({
-				...this.getPagination(),
-				totalItems: this.smartTableSource.count()
-			});
 		} catch (error) {
 			this._errorHandlingService.handleError(error);
 		}
 	}
 
 	private _loadTableSettings() {
+		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
 			actions: false,
 			pager: {
-				display: false
+				display: false,
+				perPage: pagination ? pagination.itemsPerPage : 10
 			},
 			columns: {
 				id: {
