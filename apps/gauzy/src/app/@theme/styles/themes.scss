@@ -39,7 +39,12 @@ $nb-themes: nb-register-theme(
     gauzy-sidebar-background-1: #ebebeb,
     gauzy-sidebar-background-2: rgba(251, 251, 251, 1),
     accordion-item-background-color: #fbfbfb,
-    gauzy-background-transparent: color-primary-transparent-default
+    gauzy-background-transparent: color-primary-transparent-default,
+    gauzy-border-default-color: rgba(126, 126, 143, 0.1),
+    gauzy-sidebar-background-3: rgba(126, 126, 143, 0.1),
+    gauzy-sidebar-background-4: rgba(126, 126, 143, 0.05),
+    gauzy-text-color-1: rgba(66, 66, 66, 1),
+    gauzy-text-color-2: rgba(126, 126, 143, 1)
   ),
   default,
   default
@@ -102,7 +107,13 @@ $nb-themes: nb-register-theme(
     gauzy-card-1: rgba(255, 255, 255, 1),
     gauzy-card-2: rgba(50, 50, 50, 0.03),
     gauzy-input-background: rgba(255, 255, 255, 1),
-    gauzy-background-transparent: color-primary-transparent-default
+    gauzy-background-transparent: color-primary-transparent-default,
+    gauzy-background-transparent: color-primary-transparent-default,
+    gauzy-border-default-color: rgba(126, 126, 143, 0.1),
+    gauzy-sidebar-background-3: rgba(126, 126, 143, 0.1),
+    gauzy-sidebar-background-4: rgba(126, 126, 143, 0.05),
+    gauzy-text-color-1: rgba(66, 66, 66, 1),
+    gauzy-text-color-2: rgba(126, 126, 143, 1)
   ),
   corporate,
   corporate
@@ -138,7 +149,12 @@ $nb-themes: nb-register-theme(
     gauzy-sidebar-background-1: #181818,
     gauzy-sidebar-background-2: rgba(38, 38, 46, 1),
     accordion-item-background-color: gauzy-sidebar-background-2,
-    gauzy-background-transparent: color-primary-transparent-default
+    gauzy-background-transparent: color-primary-transparent-default,
+    gauzy-border-default-color:rgba(255, 255, 255, 0.1),
+    gauzy-sidebar-background-3: rgba(126, 126, 143, 0.1),
+    gauzy-sidebar-background-4: rgba(126, 126, 143, 0.05),
+    gauzy-text-color-1: rgba(255, 255, 255, 1),
+    gauzy-text-color-2: rgba(255, 255, 255, 0.5)
   ),
   dark,
   dark
