@@ -37,8 +37,7 @@
 					[isDisable]="disableButton"
 					[buttonTemplate]="actionButtons"
 					[componentName]="viewComponentName"
-				>
-				</ngx-gauzy-button-action>
+				></ngx-gauzy-button-action>
 			</div>
 		</div>
 	</nb-card-header>
@@ -56,8 +55,7 @@
 							(userRowSelect)="selectTask($event)"
 							style="cursor: pointer"
 							#tasksTable
-						>
-						</ng2-smart-table>
+						></ng2-smart-table>
 					</div>
 					<ng-container
 						*ngTemplateOutlet="
@@ -66,8 +64,7 @@
 								pagination: pagination
 							}
 						"
-					>
-					</ng-container>
+					></ng-container>
 				</ng-template>
 				<ng-template #gridLayout>
 					<div>
@@ -100,8 +97,7 @@
 							pagination: pagination
 						}
 					"
-				>
-				</ng-container>
+				></ng-container>
 			</ng-template>
 		</ng-container>
 	</nb-card-body>
@@ -154,7 +150,10 @@
 	</div>
 </ng-template>
 
-<ng-template #paginationTemplate let-pagination="pagination">
+<ng-template 
+	#paginationTemplate
+	let-pagination="pagination"
+>
 	<div class="pagination-container">
 		<ng-container *ngIf="pagination.totalItems > pagination.itemsPerPage">
 			<ga-pagination
@@ -164,13 +163,18 @@
 				[totalItems]="pagination?.totalItems"
 				[itemsPerPage]="pagination?.itemsPerPage"
 				[activePage]="pagination?.activePage"
-			>
-			</ga-pagination>
+			></ga-pagination>
 		</ng-container>
 	</div>
 </ng-template>
 <ng-template #visibleButton>
-	<button nbButton status="success" (click)="createTaskDialog()" size="small">
-		<nb-icon icon="plus-outline"></nb-icon>{{ 'BUTTONS.ADD' | translate }}
+	<button 
+		nbButton
+		status="success"
+		(click)="createTaskDialog()"
+		size="small"
+	>
+		<nb-icon icon="plus-outline"></nb-icon>
+		{{ 'BUTTONS.ADD' | translate }}
 	</button>
 </ng-template>

@@ -46,7 +46,12 @@ export const createDefaultTask = async (
 	issues.forEach(async (issue) => { labels = labels.concat(issue.labels); });
 
 	labels = _.uniq(labels, (label) => label.name);
-	const tags: ITag[] = await createTags(connection, labels);
+	const tags: ITag[] = await createTags(
+		connection,
+		labels,
+		tenant,
+		organization
+	);
 
 	const defaultProjects = await connection.manager.find(OrganizationProject);
 	if (!defaultProjects) {
@@ -115,7 +120,6 @@ export const createRandomTask = async (
 	issues.forEach(async (issue) => { labels = labels.concat(issue.labels); });
 
 	labels = _.uniq(labels, (label) => label.name);
-	const tags: ITag[] = await createTags(connection, labels);
 
 	for await (const tenant of tenants || []) {
 		const projects = await connection.manager.find(OrganizationProject, {
@@ -145,6 +149,12 @@ export const createRandomTask = async (
 			}
 		});
 		for await (const organization of organizations) {
+			const tags: ITag[] = await createTags(
+				connection,
+				labels,
+				tenant,
+				organization
+			);
 			const employees = await connection.manager.find(Employee, {
 				tenant,
 				organization
@@ -185,7 +195,12 @@ export const createRandomTask = async (
 	await connection.manager.save(tasks);
 };
 
-export async function createTags(connection: Connection, labels) {
+export async function createTags(
+	connection: Connection,
+	labels,
+	tenant: ITenant,
+	organization: IOrganization
+) {
 	if (labels.length === 0) {
 		return [];
 	}
@@ -195,7 +210,9 @@ export async function createTags(connection: Connection, labels) {
 			new Tag({
 				name: label.name,
 				description: label.description,
-				color: label.color
+				color: label.color,
+				tenant,
+				organization
 			})
 	);
 
