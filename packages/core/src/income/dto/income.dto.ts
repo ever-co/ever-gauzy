@@ -3,7 +3,7 @@ import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { IsBoolean, IsEnum, IsNotEmpty, IsNumber, IsOptional } from "class-validator";
 import { TenantOrganizationBaseDTO } from "core/dto";
 
-export abstract class IncomeDTO extends TenantOrganizationBaseDTO {
+export class IncomeDTO extends TenantOrganizationBaseDTO {
 
 	@ApiProperty({ type: () => Number })
 	@IsNumber()
@@ -31,5 +31,4 @@ export abstract class IncomeDTO extends TenantOrganizationBaseDTO {
 	@ApiPropertyOptional({ type: () => String, maxLength: 256 })
 	@IsOptional()
 	readonly reference: string;
-
 }
