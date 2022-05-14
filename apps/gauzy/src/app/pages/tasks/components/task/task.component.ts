@@ -16,7 +16,7 @@ import {
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange } from '@gauzy/common-angular';
-import { DeleteConfirmationComponent } from '../../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
+import { DeleteConfirmationComponent } from '../../../../@shared/user/forms';
 import { MyTaskDialogComponent } from './../my-task-dialog/my-task-dialog.component';
 import { TeamTaskDialogComponent } from '../team-task-dialog/team-task-dialog.component';
 import { AddTaskDialogComponent } from '../../../../@shared/tasks/add-task-dialog/add-task-dialog.component';
@@ -30,22 +30,22 @@ import {
 } from './../../../../@core/services';
 import {
 	AssignedToComponent,
+	CreateByComponent,
+	CreatedAtComponent,
 	DateViewComponent,
+	EmployeesMergedTeamsComponent,
 	NotesWithTagsComponent,
+	ProjectComponent,
 	StatusViewComponent
 } from './../../../../@shared/table-components';
 import { ALL_PROJECT_SELECTED } from './../../../../@shared/project-select/project/default-project';
-import { ServerDataSource } from './../../../../@core/utils/smart-table/server.data-source';
+import { ServerDataSource } from './../../../../@core/utils/smart-table';
 import {
 	OrganizationTeamFilterComponent,
 	TaskStatusFilterComponent
 } from './../../../../@shared/table-filters';
-import { PaginationFilterBaseComponent } from './../../../../@shared/pagination/pagination-filter-base.component';
-import { InputFilterComponent } from './../../../../@shared/table-filters/input-filter.component';
-import { CreateByComponent } from '../../../../@shared/table-components/create-by/create-by.component';
-import { ProjectComponent } from 'apps/gauzy/src/app/@shared/table-components/project/project.component';
-import { EmployeesMergedTeamsComponent } from '../../../../@shared/table-components/employees-merged-teams/employees-merged-teams.component';
-import { CreatedAtComponent } from 'apps/gauzy/src/app/@shared/table-components/created-at/created-at.component';
+import { InputFilterComponent } from './../../../../@shared/table-filters';
+import { IPaginationBase, PaginationFilterBaseComponent } from './../../../../@shared/pagination/pagination-filter-base.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -53,14 +53,13 @@ import { CreatedAtComponent } from 'apps/gauzy/src/app/@shared/table-components/
 	templateUrl: './task.component.html',
 	styleUrls: ['task.component.scss']
 })
-export class TaskComponent
-	extends PaginationFilterBaseComponent
-	implements OnInit, OnDestroy
-{
+export class TaskComponent extends PaginationFilterBaseComponent 
+	implements OnInit, OnDestroy {
+
 	settingsSmartTable: object;
-	loading: boolean;
+	loading: boolean = false;
+	disableButton: boolean = true;
 	smartTableSource: ServerDataSource;
-	disableButton: boolean;
 	availableTasks$: Observable<ITask[]>;
 	tasks$: Observable<ITask[]> = this._taskStore.tasks$;
 	myTasks$: Observable<ITask[]> = this._myTaskStore.myTasks$;
@@ -91,13 +90,15 @@ export class TaskComponent
 		private readonly _myTaskStore: MyTasksStoreService,
 		private readonly _teamTaskStore: TeamTasksStoreService,
 		readonly translateService: TranslateService,
-		private readonly router: Router,
+		private readonly _router: Router, 
+		private readonly _activatedRoute: ActivatedRoute,
 		private readonly _store: Store,
 		private readonly route: ActivatedRoute,
 		private readonly httpClient: HttpClient,
 		private readonly _errorHandlingService: ErrorHandlingService
 	) {
 		super(translateService);
+		this.initTasks();
 		this.setView();
 	}
 
@@ -107,7 +108,6 @@ export class TaskComponent
 		this.subject$
 			.pipe(
 				debounceTime(400),
-				tap(() => (this.loading = true)),
 				tap(() => this.clearItem()),
 				tap(() => this.getTasks()),
 				untilDestroyed(this)
@@ -158,35 +158,29 @@ export class TaskComponent
 	}
 
 	private initTasks(): void {
-		const pathName = window.location.href;
-		if (pathName.indexOf('tasks/me') !== -1) {
+		const path = this._activatedRoute.snapshot.url[0].path;
+		if (path === 'me') {
 			this.viewComponentName = ComponentEnum.MY_TASKS;
 			this.availableTasks$ = this.myTasks$;
 			return;
 		}
-		if (pathName.indexOf('tasks/team') !== -1) {
+		if (path === 'team') {
 			this.viewComponentName = ComponentEnum.TEAM_TASKS;
 			this.availableTasks$ = this.teamTasks$;
 			return;
 		}
 		this.viewComponentName = ComponentEnum.ALL_TASKS;
 		this.availableTasks$ = this.tasks$;
+		return;
 	}
 
 	setView() {
-		this.initTasks();
 		this._store
 			.componentLayout$(this.viewComponentName)
 			.pipe(
 				distinctUntilChange(),
-				tap(
-					(componentLayout) =>
-						(this.dataLayoutStyle = componentLayout)
-				),
-				filter(
-					(componentLayout) =>
-						componentLayout === ComponentLayoutStyleEnum.CARDS_GRID
-				),
+				tap((componentLayout) => (this.dataLayoutStyle = componentLayout)),
+				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => this.refreshPagination()),
 				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
@@ -219,6 +213,12 @@ export class TaskComponent
 	 * Register Smart Table Source Config
 	 */
 	setSmartTableSource() {
+		if (!this.organization) {
+			return;
+		}
+
+		this.loading = true;
+
 		const { tenantId } = this._store.user;
 		const { id: organizationId } = this.organization;
 
@@ -290,40 +290,51 @@ export class TaskComponent
 			finalize: () => {
 				const tasks = this.smartTableSource.getData();
 				this.storeInstance.loadAllTasks(tasks);
+
+				this.setPagination({
+					...this.getPagination(),
+					totalItems: this.smartTableSource.count()
+				});
 				this.loading = false;
 			}
 		});
 	}
 
 	async getTasks() {
+		if (!this.organization) {
+			return;
+		}
 		try {
 			this.setSmartTableSource();
+			
 			const { activePage, itemsPerPage } = this.pagination;
-			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
-			await this.smartTableSource.getElements();
-			const tasks = this.smartTableSource.getData();
+			this.smartTableSource.setPaging(
+				activePage,
+				itemsPerPage,
+				false
+			);
 			if (
 				this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID ||
 				this.viewMode === TaskListTypeEnum.SPRINT
 			) {
-				// Initiate GRID view pagination
-				this.storeInstance.loadAllTasks(tasks);
-				this.loading = false;
+				await this.smartTableSource.getElements();
+				this.setPagination({
+					...this.getPagination(),
+					totalItems: this.smartTableSource.count()
+				});
 			}
-			this.setPagination({
-				...this.getPagination(),
-				totalItems: this.smartTableSource.count()
-			});
 		} catch (error) {
 			this._errorHandlingService.handleError(error);
 		}
 	}
 
 	private _loadTableSettings() {
+		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
 			actions: false,
 			pager: {
-				display: false
+				display: false,
+				perPage: pagination ? pagination.itemsPerPage : 10
 			},
 			columns: {
 				id: {
@@ -359,13 +370,7 @@ export class TaskComponent
 				createdAt: {
 					title: this.getTranslation('SM_TABLE.CREATED_AT'),
 					type: 'custom',
-					filter: {
-						type: 'custom',
-						component: InputFilterComponent
-					},
-					filterFunction: (value) => {
-						this.setFilter({ field: 'createdAt', search: value });
-					},
+					filter: false,
 					renderComponent: CreatedAtComponent
 				},
 				creator: {
@@ -666,8 +671,7 @@ export class TaskComponent
 		if (selectedProject.id == this.defaultProject.id) {
 			return;
 		}
-
-		this.router.navigate(['/pages/tasks/settings', selectedProject.id], {
+		this._router.navigate(['/pages/tasks/settings', selectedProject.id], {
 			state: selectedProject
 		});
 	}
