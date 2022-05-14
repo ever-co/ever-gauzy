@@ -1,16 +1,16 @@
 @import 'gauzy/_gauzy-table.scss';
 
 :host {
-  nb-tab.content-active {
-    padding: 1rem;
-  }
-  nb-card,
-  nb-tab {
-    background-color: rgba(50, 50, 50, 0.03);
-  }
+	nb-tab.content-active {
+		padding: 1rem;
+	}
+	nb-card,
+	nb-tab {
+		background-color: rgba(50, 50, 50, 0.03);
+	}
 }
 .gauzy-button-container {
-  position: absolute;
-  right: 0;
-  top: 0;
+	position: absolute;
+	right: 0;
+	top: 0;
 }
