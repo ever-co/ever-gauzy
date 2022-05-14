@@ -16,7 +16,7 @@ import {
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange } from '@gauzy/common-angular';
-import { DeleteConfirmationComponent } from '../../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
+import { DeleteConfirmationComponent } from '../../../../@shared/user/forms';
 import { MyTaskDialogComponent } from './../my-task-dialog/my-task-dialog.component';
 import { TeamTaskDialogComponent } from '../team-task-dialog/team-task-dialog.component';
 import { AddTaskDialogComponent } from '../../../../@shared/tasks/add-task-dialog/add-task-dialog.component';
@@ -90,13 +90,15 @@ export class TaskComponent extends PaginationFilterBaseComponent
 		private readonly _myTaskStore: MyTasksStoreService,
 		private readonly _teamTaskStore: TeamTasksStoreService,
 		readonly translateService: TranslateService,
-		private readonly router: Router,
+		private readonly _router: Router, 
+		private readonly _activatedRoute: ActivatedRoute,
 		private readonly _store: Store,
 		private readonly route: ActivatedRoute,
 		private readonly httpClient: HttpClient,
 		private readonly _errorHandlingService: ErrorHandlingService
 	) {
 		super(translateService);
+		this.initTasks();
 		this.setView();
 	}
 
@@ -156,23 +158,23 @@ export class TaskComponent extends PaginationFilterBaseComponent
 	}
 
 	private initTasks(): void {
-		const pathName = window.location.href;
-		if (pathName.indexOf('tasks/me') !== -1) {
+		const path = this._activatedRoute.snapshot.url[0].path;
+		if (path === 'me') {
 			this.viewComponentName = ComponentEnum.MY_TASKS;
 			this.availableTasks$ = this.myTasks$;
 			return;
 		}
-		if (pathName.indexOf('tasks/team') !== -1) {
+		if (path === 'team') {
 			this.viewComponentName = ComponentEnum.TEAM_TASKS;
 			this.availableTasks$ = this.teamTasks$;
 			return;
 		}
 		this.viewComponentName = ComponentEnum.ALL_TASKS;
 		this.availableTasks$ = this.tasks$;
+		return;
 	}
 
 	setView() {
-		this.initTasks();
 		this._store
 			.componentLayout$(this.viewComponentName)
 			.pipe(
@@ -675,8 +677,7 @@ export class TaskComponent extends PaginationFilterBaseComponent
 		if (selectedProject.id == this.defaultProject.id) {
 			return;
 		}
-
-		this.router.navigate(['/pages/tasks/settings', selectedProject.id], {
+		this._router.navigate(['/pages/tasks/settings', selectedProject.id], {
 			state: selectedProject
 		});
 	}
