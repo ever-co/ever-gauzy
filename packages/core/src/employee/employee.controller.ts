@@ -129,7 +129,7 @@ export class EmployeeController extends CrudController<Employee> {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
-	@Permissions(PermissionsEnum.ORG_EMPLOYEES_EDIT)
+	@Permissions(PermissionsEnum.ORG_JOB_EMPLOYEE_VIEW)
 	@Get('/job-statistics')
 	async getEmployeeJobsStatistics(@Query() request: FindManyOptions) {
 		return this.commandBus.execute(
