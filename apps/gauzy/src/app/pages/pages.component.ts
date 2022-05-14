@@ -84,7 +84,6 @@ export class PagesComponent
 				icon: 'fas fa-bullseye',
 				link: '/pages/dashboard',
 				pathMatch: 'prefix',
-				home: true,
 				class: 'focus',
 				data: {
 					translationKey: 'MENU.FOCUS',
@@ -97,7 +96,6 @@ export class PagesComponent
 				link: '/pages/dashboard',
 				pathMatch: 'prefix',
 				class: 'application',
-				home: true,
 				data: {
 					translationKey: 'MENU.APPLICATIONS',
 					featureKey: FeatureEnum.FEATURE_DASHBOARD
