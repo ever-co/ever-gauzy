@@ -1,10 +1,14 @@
-import { IIncomeCreateInput, ITag } from "@gauzy/contracts";
+import { IIncomeCreateInput } from "@gauzy/contracts";
+import { IntersectionType } from "@nestjs/mapped-types";
 import { ApiProperty } from "@nestjs/swagger";
 import { IsNotEmpty, IsOptional, IsString } from "class-validator";
+import { RelationalTagDTO } from "./../../tags/dto";
 import { IncomeDTO } from "./income.dto";
 
-export class CreateIncomeDTO extends IncomeDTO implements IIncomeCreateInput {
-
+export class CreateIncomeDTO extends IntersectionType(
+    IncomeDTO,
+    RelationalTagDTO
+) implements IIncomeCreateInput {
     @ApiProperty({ type: () => String })
     @IsString()
     @IsNotEmpty()
@@ -13,10 +17,6 @@ export class CreateIncomeDTO extends IncomeDTO implements IIncomeCreateInput {
     @ApiProperty({ type: () => String })
     @IsNotEmpty()
     @IsString()
-    readonly employeeId: string;
-
-    @ApiProperty({ type: () => Object, isArray : true })
     @IsOptional()
-    readonly tags: ITag[];
-
+    readonly employeeId: string;
 }
