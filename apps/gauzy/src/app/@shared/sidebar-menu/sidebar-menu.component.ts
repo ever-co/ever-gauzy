@@ -8,7 +8,7 @@ import {
 import { IMenuItem } from './menu-items/inteface/menu-item.interface';
 
 @Component({
-	selector: 'gauzy-sidebar-menu',
+	selector: 'ga-sidebar-menu',
 	templateUrl: './sidebar-menu.component.html',
 	styleUrls: ['./sidebar-menu.component.scss']
 })
