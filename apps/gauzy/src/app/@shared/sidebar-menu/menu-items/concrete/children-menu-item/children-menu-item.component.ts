@@ -11,6 +11,8 @@ export class ChildrenMenuItemComponent implements OnInit {
 	private _item: IMenuItem;
 	private _parent: IMenuItem;
 	private _selected = false;
+	private _collapse: boolean;
+	private _mouseHover: boolean;
 	@Output()
 	public focusItemChange: EventEmitter<any> = new EventEmitter();
 
@@ -50,6 +52,10 @@ export class ChildrenMenuItemComponent implements OnInit {
 	public set parent(value: IMenuItem) {
 		this._parent = value;
 	}
+	@Input()
+	public set collapse(value: boolean) {
+		this._collapse = value;
+	}
 	public get parent(): IMenuItem {
 		return this._parent;
 	}
@@ -62,7 +68,20 @@ export class ChildrenMenuItemComponent implements OnInit {
 	public set selected(value: boolean) {
 		this._selected = value;
 	}
+
+	public set mouseHover(value: boolean) {
+		this._mouseHover = value;
+	}
+
 	public get selected(): boolean {
 		return this._selected;
+	}
+
+	public get collapse() {
+		return this._collapse;
+	}
+
+	public get mouseHover() {
+		return this._mouseHover;
 	}
 }

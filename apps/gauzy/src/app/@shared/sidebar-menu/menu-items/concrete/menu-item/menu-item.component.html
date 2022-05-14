@@ -6,11 +6,17 @@
 		(collapsedChange)="onCollapse($event)"
 		[ngClass]="selected ? 'opened' : ''"
 	>
-		<nb-accordion-item-header [ngClass]="onCollapse ? 'collapsed': ''" (click)="toggleSidebar(); redirectTo()">
+		<nb-accordion-item-header
+			[ngClass]="onCollapse ? 'collapsed' : ''"
+			(click)="redirectTo()"
+		>
 			<i [class]="item?.icon"></i
 			><span *ngIf="state">{{ item?.title }}</span>
 		</nb-accordion-item-header>
-		<nb-accordion-item-body *ngIf="item?.children?.length > 0 && state">
+		<nb-accordion-item-body
+			[ngClass]="state ? '' : 'item-collapsed'"
+			*ngIf="item?.children?.length > 0"
+		>
 			<ng-container
 				*ngFor="let subItem of item.children; trackBy: subItem?.title"
 			>
@@ -18,6 +24,7 @@
 					*ngIf="!item?.hidden"
 					[item]="subItem"
 					[parent]="item"
+					[collapse]="state"
 					[selected]="subItem === selectedChildren && selected"
 					(focusItemChange)="focusOn($event)"
 				></ga-children-menu-item>
