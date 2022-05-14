@@ -370,13 +370,7 @@ export class TaskComponent extends PaginationFilterBaseComponent
 				createdAt: {
 					title: this.getTranslation('SM_TABLE.CREATED_AT'),
 					type: 'custom',
-					filter: {
-						type: 'custom',
-						component: InputFilterComponent
-					},
-					filterFunction: (value) => {
-						this.setFilter({ field: 'createdAt', search: value });
-					},
+					filter: false,
 					renderComponent: CreatedAtComponent
 				},
 				creator: {
