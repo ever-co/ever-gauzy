@@ -15,7 +15,7 @@ require('app-root-path').setPath(process.env.GAUZY_USER_PATH);
 				? `${process.env.GAUZY_USER_PATH}/gauzy.sqlite3`
 				: '',
 			keepConnectionAlive: true,
-			logging: true,
+			logging: 'all',
 			logger: 'file', //Removes console logging, instead logs all queries in a file ormlogs.log
 			synchronize: true,
 			entities: [Wakatime]

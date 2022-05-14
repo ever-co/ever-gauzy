@@ -78,10 +78,10 @@ export const createRandomOrganizationProjects = async (
 	for await (const tenant of tenants) {
 		const projectsPerOrganization = Math.floor(Math.random() * (maxProjectsPerOrganization - 5)) + 5;
 		const organizations = tenantOrganizationsMap.get(tenant);
-		
+
 		for await (const organization of organizations) {
 			const organizationContacts = await connection.manager.find(OrganizationContact, {
-				where: { 
+				where: {
 					tenant,
 					organization
 				}
@@ -109,7 +109,7 @@ export const createRandomOrganizationProjects = async (
 				projects.push(project);
 			}
 			await connection.manager.save(projects);
-			
+
 			await assignOrganizationProjectToEmployee(
 				connection,
 				tenant,
@@ -127,13 +127,13 @@ export const assignOrganizationProjectToEmployee = async (
 	tenant: ITenant,
 	organization: IOrganization
 ) => {
-	const organizationProjects = await connection.manager.find(OrganizationProject, { 
+	const organizationProjects = await connection.manager.find(OrganizationProject, {
 		where: {
 			tenant,
 			organization
 		}
 	});
-	const employees = await connection.manager.find(Employee, { 
+	const employees = await connection.manager.find(Employee, {
 		where: {
 			tenant,
 			organization
@@ -159,6 +159,9 @@ export async function seedProjectMembersCount(
 	 */
 	for await (const tenant of tenants) {
 		const tenantId = tenant.id;
+
+    console.log(`Processing tenant: ${tenantId}`);
+
 		/**
 		 * GET all tenant projects for specific tenant
 		 */
@@ -166,25 +169,36 @@ export async function seedProjectMembersCount(
 			tenantId
 		]);
 
+    console.log(`Find ${projects.length} projects in tenant ${tenantId}`);
+
 		for await (const project of projects) {
+
 			const projectId = project.id;
+
+      console.log(`Processing project ${projectId} in tenant ${tenantId}`);
+
 			/**
 			 * GET member counts for organization project
 			 */
 			const [ members ] = await connection.manager.query(`
-				SELECT 
+				SELECT
 					COUNT("organization_project_employee"."employeeId") AS count
-				FROM "organization_project_employee" 
-				INNER JOIN 
+				FROM "organization_project_employee"
+				INNER JOIN
 					"employee" ON "employee"."id"="organization_project_employee"."employeeId"
-				INNER JOIN 
+				INNER JOIN
 					"organization_project" ON "organization_project"."id"="organization_project_employee"."organizationProjectId"
-				WHERE 
+				WHERE
 					"organization_project_employee"."organizationProjectId" = $1
 			`, [ projectId ]);
 
-			const counts = members['count'];
-			await connection.manager.query(`UPDATE "organization_project" SET "membersCount" = $1 WHERE "id" = $2`, [counts, projectId]);
+			const count = members['count'];
+
+      console.log(`Members qty: ${count}`);
+
+			await connection.manager.query(`UPDATE "organization_project" SET "membersCount" = $1 WHERE "id" = $2`, [count, projectId]);
+
+      console.log('Updated Members qty');
 		}
 	}
 }

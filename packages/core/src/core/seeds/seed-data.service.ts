@@ -33,7 +33,7 @@ import {
 import { createRoles } from '../../role/role.seed';
 import { createDefaultSkills } from '../../skills/skill.seed';
 import { createLanguages } from '../../language/language.seed';
-import {	
+import {
 	createDefaultAdminUsers,
 	createDefaultEmployeesUsers,
 	createDefaultUsers,
@@ -47,7 +47,7 @@ import {
 import {
 	createDefaultOrganizations,
 	createRandomOrganizations,
-	DEFAULT_EVER_ORGANIZATIONS, 
+	DEFAULT_EVER_ORGANIZATIONS,
 	DEFAULT_ORGANIZATIONS
 } from '../../organization';
 import {
@@ -282,9 +282,9 @@ import {
 	createDefaultEquipmentSharingPolicyForOrg,
 	createRandomEquipmentSharingPolicyForOrg
 } from '../../equipment-sharing-policy/equipment-sharing-policy.seed';
-import { 
-	createRandomProductOption, 
-	createRandomProductOptionGroups 
+import {
+	createRandomProductOption,
+	createRandomProductOptionGroups
 } from '../../product-option/product-option.seed';
 import { createRandomProductVariantSettings } from '../../product-setting/product-setting.seed';
 import { createRandomProductVariant } from '../../product-variant/product-variant.seed';
@@ -332,7 +332,7 @@ export class SeedDataService {
 
 	organizations: IOrganization[] = [];
 	defaultOrganization: IOrganization;
-	defaultProjects: IOrganizationProject[] | void = []; 
+	defaultProjects: IOrganizationProject[] | void = [];
 	tenant: ITenant;
 	roles: IRole[] = [];
 	superAdminUsers: IUser[] = [];
@@ -352,7 +352,7 @@ export class SeedDataService {
 	 * that is when connection is created by this service itself.
 	 */
 	overrideDbConfig = {
-		logging: true,
+		logging: 'all',
 		logger: 'file' //Removes console logging, instead logs all queries in a file ormlogs.log
 		// dropSchema: !env.production //Drops the schema each time connection is being established in development mode.
 	};
@@ -383,7 +383,7 @@ export class SeedDataService {
 
 			// Seed data with mock / fake data for random tenants
 			await this.seedRandomData();
-			
+
 			// Seed jobs related data
 			await this.seedJobsData();
 
@@ -436,7 +436,7 @@ export class SeedDataService {
 	public async runEverSeed() {
 		try {
 			this.seedType = SeederTypeEnum.EVER;
-			
+
 			await this.cleanUpPreviousRuns();
 
 			// Connect to database
@@ -499,7 +499,7 @@ export class SeedDataService {
 
 			// Seed random data
 			await this.seedRandomData();
-			
+
 			// Seed jobs related data
 			await this.seedJobsData();
 
@@ -528,12 +528,12 @@ export class SeedDataService {
 			await this.tryExecute(
 				'Default Report Category & Report',
 				createDefaultReport(
-					this.connection, 
+					this.connection,
 					this.config,
 					this.tenant
 				)
 			);
-		
+
 			this.log(
 				chalk.green(
 					`✅ SEEDED ${
@@ -631,7 +631,7 @@ export class SeedDataService {
 		);
 
 		await this.tryExecute(
-			'Languages', 
+			'Languages',
 			createLanguages(this.connection)
 		);
 
@@ -642,22 +642,22 @@ export class SeedDataService {
 			createDefaultTenant(
 				this.connection,
 				tenantName
-			) 
+			)
 		) as ITenant;
 
 		this.roles = await createRoles(
-			this.connection, 
+			this.connection,
 			[this.tenant]
 		);
 
 		await createDefaultTenantSetting(
-			this.connection, 
+			this.connection,
 			[this.tenant]
 		);
 
 		const isDemo = this.configService.get('demo') as boolean;
 		await createRolePermissions(
-			this.connection, 
+			this.connection,
 			this.roles,
 			[this.tenant],
 			isDemo
@@ -711,31 +711,31 @@ export class SeedDataService {
 			defaultSuperAdminUsers,
 			defaultAdminUsers
 		} = await createDefaultAdminUsers(
-			this.connection, 
+			this.connection,
 			this.tenant
 		);
 		this.superAdminUsers.push(...defaultSuperAdminUsers as IUser[]);
 
-		const { 
-			defaultEmployeeUsers 
+		const {
+			defaultEmployeeUsers
 		} = await createDefaultEmployeesUsers(
-			this.connection, 
+			this.connection,
 			this.tenant
 		);
 
 		if (this.seedType !== SeederTypeEnum.DEFAULT) {
-			const { 
-				defaultEverEmployeeUsers, 
-				defaultCandidateUsers 
+			const {
+				defaultEverEmployeeUsers,
+				defaultCandidateUsers
 			} = await createDefaultUsers(
-				this.connection, 
+				this.connection,
 				this.tenant
 			);
 			this.defaultCandidateUsers.push(...defaultCandidateUsers);
 			defaultEmployeeUsers.push(...defaultEverEmployeeUsers);
 		}
 
-		const defaultUsers = [ 
+		const defaultUsers = [
 			...this.superAdminUsers,
 			...defaultAdminUsers,
 			...defaultEmployeeUsers
@@ -753,7 +753,7 @@ export class SeedDataService {
 		const allDefaultEmployees = DEFAULT_EMPLOYEES.concat(DEFAULT_EVER_EMPLOYEES);
 		//User level data that needs connection, tenant, organization, role, users
 		this.defaultEmployees = await createDefaultEmployees(
-			this.connection, 
+			this.connection,
 			this.tenant,
 			this.defaultOrganization,
 			defaultEmployeeUsers,
@@ -790,7 +790,7 @@ export class SeedDataService {
 		await this.tryExecute(
 			'Default Key Result Template',
 			createDefaultKeyResultTemplates(
-				this.connection, 
+				this.connection,
 				this.tenant
 			)
 		);
@@ -798,7 +798,7 @@ export class SeedDataService {
 		await this.tryExecute(
 			'Default Time Off Policy',
 			createDefaultTimeOffPolicy(
-				this.connection, 
+				this.connection,
 				this.tenant,
 				this.defaultOrganization,
 				this.defaultEmployees
@@ -866,8 +866,8 @@ export class SeedDataService {
 		await this.tryExecute(
 			'Default Tags',
 			createDefaultTags(
-				this.connection, 
-				this.tenant, 
+				this.connection,
+				this.tenant,
 				this.organizations
 			)
 		);
@@ -1014,7 +1014,7 @@ export class SeedDataService {
 		const organizationVendors = await this.tryExecute(
 			'Default Organization Vendors',
 			createOrganizationVendors(
-				this.connection, 
+				this.connection,
 				this.tenant,
 				this.organizations
 			)
@@ -1113,7 +1113,7 @@ export class SeedDataService {
 		await this.tryExecute(
 			'Default Expenses',
 			createDefaultExpenses(
-				this.connection, 
+				this.connection,
 				this.organizations,
 				this.tenant,
 				this.defaultEmployees,
@@ -1434,24 +1434,24 @@ export class SeedDataService {
 		await this.tryExecute(
 			'Random Feature Toggle',
 			createRandomFeatureToggle(
-				this.connection, 
+				this.connection,
 				tenants
 			)
 		);
 
 		await this.tryExecute(
-			'Tags', 
+			'Tags',
 			createTags(this.connection)
 		);
 
 		// Independent roles and role permissions for each tenant
 		const roles: IRole[] = await createRoles(
-			this.connection, 
+			this.connection,
 			tenants
 		);
 
 		await createDefaultTenantSetting(
-			this.connection, 
+			this.connection,
 			tenants
 		);
 
@@ -1508,7 +1508,7 @@ export class SeedDataService {
 		await this.tryExecute(
 			'Random Feature Reports',
 			createRandomTenantOrganizationsReport(
-				this.connection, 
+				this.connection,
 				tenants
 			)
 		);
@@ -1887,7 +1887,7 @@ export class SeedDataService {
 		await this.tryExecute(
 			'Random Tasks',
 			createRandomTask(
-				this.connection, 
+				this.connection,
 				tenants
 			)
 		);
@@ -2236,10 +2236,10 @@ export class SeedDataService {
 		if (!this.connection || !this.connection.isConnected) {
 			try {
 				this.log(chalk.green(`CONNECTING TO DATABASE...`));
-				this.connection = await createConnection({ 
-					name: SEEDER_DB_CONNECTION, 
-					...dbConnectionOptions, 
-					...this.overrideDbConfig 
+				this.connection = await createConnection({
+					name: SEEDER_DB_CONNECTION,
+					...dbConnectionOptions,
+					...this.overrideDbConfig
 				} as ConnectionOptions);
 				this.log(chalk.green(`✅ CONNECTED TO DATABASE!`));
 			} catch (error) {
