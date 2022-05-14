@@ -1,0 +1,24 @@
+<nb-accordion
+	*ngxPermissionsOnly="item?.data?.permissionKeys"
+	[ngClass]="state ? item?.class : item?.class + ' collapsed'"
+>
+	<nb-accordion-item [ngClass]="selected ? 'opened' : ''">
+		<nb-accordion-item-header (click)="toggleSidebar(); redirectTo()">
+			<i [class]="item?.icon"></i
+			><span *ngIf="state">{{ item?.title }}</span>
+		</nb-accordion-item-header>
+		<nb-accordion-item-body *ngIf="item?.children?.length > 0 && state">
+			<ng-container
+				*ngFor="let subItem of item.children; trackBy: subItem?.title"
+			>
+				<ga-children-menu-item
+					*ngIf="!item?.hidden"
+					[item]="subItem"
+					[parent]="item"
+					[selected]="subItem === selectedChildren && selected"
+					(focusItemChange)="focusOn($event)"
+				></ga-children-menu-item>
+			</ng-container>
+		</nb-accordion-item-body>
+	</nb-accordion-item>
+</nb-accordion>

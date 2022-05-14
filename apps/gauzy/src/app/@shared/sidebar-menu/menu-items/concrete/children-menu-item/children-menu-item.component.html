@@ -1,0 +1,9 @@
+<ng-container *ngxPermissionsOnly="item?.data?.permissionKeys">
+	<div
+		*ngIf="!item?.hidden"
+		[ngClass]="selected ? 'sub-item selected' : 'sub-item'"
+		(click)="select()"
+	>
+		<i [class]="item?.icon"></i>{{ item?.title }}
+	</div>
+</ng-container>

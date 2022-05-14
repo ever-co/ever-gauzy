@@ -1,41 +1,9 @@
 <div class="menu-container">
 	<ng-container *ngFor="let item of menu">
-		<nb-accordion
-			*ngxPermissionsOnly="item.data.permissionKeys"
-			[ngClass]="isExpand ? item?.class : item?.class + ' collapsed'"
-		>
-			<nb-accordion-item (collapsedChange)="onCollapse($event)" [ngClass]="selectedItem(item) ? 'opened' : ''">
-				<nb-accordion-item-header
-					(click)="toggleSidebar(item); redirectTo(item)"
-				>
-					<i [class]="item?.icon"></i
-					><span *ngIf="isExpand">{{ item.title }}</span>
-				</nb-accordion-item-header>
-				<nb-accordion-item-body
-					*ngIf="item?.children?.length > 0 && isExpand"
-				>
-					<ng-container *ngFor="let subItem of item.children">
-						<div
-							[ngClass]="
-								selectedRoute(subItem)
-									? 'sub-item selected'
-									: 'sub-item'
-							"
-							*ngIf="!subItem.hidden"
-							(click)="redirectTo(subItem)"
-						>
-							<ng-container
-								*ngxPermissionsOnly="
-									subItem.data.permissionKeys
-								"
-							>
-								<i [class]="subItem?.icon"></i
-								>{{ subItem.title }}
-							</ng-container>
-						</div>
-					</ng-container>
-				</nb-accordion-item-body>
-			</nb-accordion-item>
-		</nb-accordion>
+		<ga-menu-item
+			(selectedChange)="focusOn($event)"
+			[item]="item"
+			[selected]="item === selectedItem"
+		></ga-menu-item>
 	</ng-container>
 </div>
