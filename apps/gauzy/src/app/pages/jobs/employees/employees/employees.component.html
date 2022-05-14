@@ -11,39 +11,58 @@
 			</ngx-header-title>
 		</h4>
 	</nb-card-header>
-	<nb-card-body p-0>
+	<nb-card-body class="p-0">
 		<div class="gauzy-button-container">
 			<ngx-gauzy-button-action
 				[buttonTemplateVisible]="visibleButton"
 				[isDisable]="true"
 				[buttonTemplate]="actionButtons"
-			>
-			</ngx-gauzy-button-action>
+			></ngx-gauzy-button-action>
 		</div>
 		<nb-tabset>
-			<nb-tab tabTitle="{{ 'JOB_EMPLOYEE.BROWSE' | translate }}">
+			<nb-tab 
+				[tabTitle]="'JOB_EMPLOYEE.BROWSE' | translate"
+			>
 				<ng-container>
-					<ng-template [ngTemplateOutlet]="tableLayout">
-					</ng-template>
+					<ng-template [ngTemplateOutlet]="tableLayout"></ng-template>
 				</ng-container>
 			</nb-tab>
-			<nb-tab tabTitle="{{ 'JOB_EMPLOYEE.SEARCH' | translate }}">
-				<p>Soon</p>
+			<nb-tab 
+				[tabTitle]="'JOB_EMPLOYEE.SEARCH' | translate"
+			>
+				<p>This page is coming soon!</p>
 			</nb-tab>
-			<nb-tab tabTitle="{{ 'JOB_EMPLOYEE.HISTORY' | translate }}">
-				<p>Soon</p>
+			<nb-tab
+				[tabTitle]="'JOB_EMPLOYEE.HISTORY' | translate"
+			>
+				<p>This page is coming soon!</p>
 			</nb-tab>
 		</nb-tabset>
 	</nb-card-body>
 </nb-card>
 <ng-template #tableLayout>
-	<div class="table-scroll-container">
-		<ng2-smart-table
-			[settings]="settingsSmartTable"
-			[source]="smartTableSource"
-			#jobEmployeesTable
-		></ng2-smart-table>
-	</div>
+	<ng-template ngxPermissionsOnly="ORG_JOB_EMPLOYEE_VIEW">
+		<div class="table-scroll-container">
+			<ng2-smart-table
+				style="cursor: pointer"
+				[settings]="settingsSmartTable"
+				[source]="smartTableSource"
+				#jobEmployeesTable
+			></ng2-smart-table>
+		</div>
+		<div class="pagination-container">
+			<ng-container *ngIf="pagination.totalItems > pagination.itemsPerPage">
+				<ga-pagination
+					(selectedOption)="onUpdateOption($event)"
+					(selectedPage)="onPageChange($event)"
+					[doEmit]="false"
+					[totalItems]="pagination?.totalItems"
+					[itemsPerPage]="pagination?.itemsPerPage"
+					[activePage]="pagination?.activePage"
+				></ga-pagination>
+			</ng-container>
+		</div>
+	</ng-template>
 </ng-template>
 <ng-template
 	#actionButtons
@@ -92,7 +111,7 @@
 </ng-template>
 
 <ng-template #visibleButton>
-	<ng-template ngxPermissionsOnly="">
+	<ng-template>
 		<button nbButton status="success" size="small">
 			<nb-icon icon="plus-outline"> </nb-icon>
 			{{ 'BUTTONS.ADD' | translate }}
