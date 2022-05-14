@@ -1,9 +1,12 @@
 <nb-accordion
 	*ngxPermissionsOnly="item?.data?.permissionKeys"
-	[ngClass]="state ? item?.class : item?.class + ' collapsed'"
+	[ngClass]="state ? item?.class : item?.class + ' closed'"
 >
-	<nb-accordion-item [ngClass]="selected ? 'opened' : ''">
-		<nb-accordion-item-header (click)="toggleSidebar(); redirectTo()">
+	<nb-accordion-item
+		(collapsedChange)="onCollapse($event)"
+		[ngClass]="selected ? 'opened' : ''"
+	>
+		<nb-accordion-item-header [ngClass]="onCollapse ? 'collapsed': ''" (click)="toggleSidebar(); redirectTo()">
 			<i [class]="item?.icon"></i
 			><span *ngIf="state">{{ item?.title }}</span>
 		</nb-accordion-item-header>

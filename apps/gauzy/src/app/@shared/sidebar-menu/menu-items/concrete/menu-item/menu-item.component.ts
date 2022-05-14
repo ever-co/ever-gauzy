@@ -39,6 +39,10 @@ export class MenuItemComponent implements OnInit, AfterViewChecked {
 		if (this.item.home) this.selectedChange.emit(this.item);
 	}
 
+	public onCollapse(event: boolean) {
+		this.collapse = event;
+	}
+
 	public focusOn(event: any) {
 		this.selectedChildren = event.children;
 		this.selectedChange.emit(event.parent);
@@ -54,6 +58,7 @@ export class MenuItemComponent implements OnInit, AfterViewChecked {
 	public toggleSidebar() {
 		if (!this.state && !this.item.home)
 			this.sidebarService.toggle(false, 'menu-sidebar');
+		this.redirectTo();
 	}
 
 	ngAfterViewChecked(): void {
