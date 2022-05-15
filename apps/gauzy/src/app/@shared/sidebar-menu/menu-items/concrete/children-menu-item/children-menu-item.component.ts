@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { Router } from '@angular/router';
-import { IMenuItem } from '../../inteface/menu-item.interface';
+import { IMenuItem } from '../../interface/menu-item.interface';
 
 @Component({
 	selector: 'ga-children-menu-item',
@@ -13,10 +13,12 @@ export class ChildrenMenuItemComponent implements OnInit {
 	private _selected = false;
 	private _collapse: boolean;
 	private _mouseHover: boolean;
-	@Output()
-	public focusItemChange: EventEmitter<any> = new EventEmitter();
 
-	constructor(private readonly router: Router) {}
+	@Output() public focusItemChange: EventEmitter<any> = new EventEmitter();
+
+	constructor(
+		private readonly router: Router
+	) {}
 
 	ngOnInit(): void {
 		this.checkUrl();
@@ -43,27 +45,33 @@ export class ChildrenMenuItemComponent implements OnInit {
 		}
 	}
 
+	public get item(): IMenuItem {
+		return this._item;
+	}
 	@Input()
 	public set item(value: IMenuItem) {
 		this._item = value;
 	}
 
+	public get parent(): IMenuItem {
+		return this._parent;
+	}
 	@Input()
 	public set parent(value: IMenuItem) {
 		this._parent = value;
+	}
+
+	public get collapse() {
+		return this._collapse;
 	}
 	@Input()
 	public set collapse(value: boolean) {
 		this._collapse = value;
 	}
-	public get parent(): IMenuItem {
-		return this._parent;
-	}
 
-	public get item(): IMenuItem {
-		return this._item;
+	public get selected(): boolean {
+		return this._selected;
 	}
-
 	@Input()
 	public set selected(value: boolean) {
 		this._selected = value;
@@ -72,15 +80,6 @@ export class ChildrenMenuItemComponent implements OnInit {
 	public set mouseHover(value: boolean) {
 		this._mouseHover = value;
 	}
-
-	public get selected(): boolean {
-		return this._selected;
-	}
-
-	public get collapse() {
-		return this._collapse;
-	}
-
 	public get mouseHover() {
 		return this._mouseHover;
 	}

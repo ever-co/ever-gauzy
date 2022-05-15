@@ -5,7 +5,7 @@ import {
 	Input,
 	OnInit
 } from '@angular/core';
-import { IMenuItem } from './menu-items/inteface/menu-item.interface';
+import { IMenuItem } from './menu-items/interface/menu-item.interface';
 
 @Component({
 	selector: 'ga-sidebar-menu',
