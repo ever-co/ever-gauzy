@@ -4,17 +4,17 @@
 >
 	<nb-accordion-item
 		(collapsedChange)="onCollapse($event)"
-		[ngClass]="selected ? 'opened' : ''"
+		[ngClass]="{ 'opened' : selected }"
 	>
 		<nb-accordion-item-header
-			[ngClass]="onCollapse ? 'collapsed' : ''"
+			[ngClass]="{ 'collapsed' : onCollapse }"
 			(click)="redirectTo()"
 		>
 			<i [class]="item?.icon"></i
 			><span *ngIf="state">{{ item?.title }}</span>
 		</nb-accordion-item-header>
 		<nb-accordion-item-body
-			[ngClass]="state ? '' : 'item-collapsed'"
+			[ngClass]="{ 'item-collapsed' : state }"
 			*ngIf="item?.children?.length > 0"
 		>
 			<ng-container
