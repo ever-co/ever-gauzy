@@ -4,8 +4,7 @@ import {
 	OnDestroy,
 	OnInit,
 	ViewChild,
-	AfterViewInit,
-	ChangeDetectorRef
+	AfterViewInit
 } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Subject, Subscription, timer } from 'rxjs';
@@ -455,6 +454,8 @@ export class SearchComponent extends PaginationFilterBaseComponent
 		try {
 			this.smartTableSource = new ServerDataSource(this.http, {
 				endPoint: `${API_PREFIX}/employee-job`,
+				pagerPageKey: 'page',
+				pagerLimitKey: 'limit',
 				relations: [],
 				finalize: () => {
 					this.setPagination({
@@ -481,16 +482,6 @@ export class SearchComponent extends PaginationFilterBaseComponent
 						direction: 'asc'
 					}
 				],
-				false
-			);
-			this.smartTableSource.setFilter(
-				[
-					{
-						field: 'custom',
-						search: JSON.stringify(this.jobRequest)
-					}
-				],
-				true,
 				false
 			);
 			this.smartTableSource.setPaging(
