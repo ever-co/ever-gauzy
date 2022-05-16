@@ -6,6 +6,7 @@ import {
 	ViewChild,
 	AfterViewInit
 } from '@angular/core';
+import { FormBuilder, FormGroup } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Subject, Subscription, timer } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
@@ -38,6 +39,7 @@ import { IPaginationBase, PaginationFilterBaseComponent } from '../../../../@sha
 import { ProposalTemplateService } from '../../proposal-template/proposal-template.service';
 import { API_PREFIX } from './../../../../@core/constants';
 import { ServerDataSource } from './../../../../@core/utils/smart-table';
+import { AtLeastOneFieldValidator } from './../../../../@core/validators';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -86,8 +88,25 @@ export class SearchComponent extends PaginationFilterBaseComponent
 			this.onChangedSource();
 		}
 	}
+	
+	/*
+	* Search Tab Form
+	*/
+	public form: FormGroup = SearchComponent.buildForm(this.fb);
+	static buildForm(fb: FormBuilder): FormGroup {
+		return fb.group({
+			search: [],
+			jobSource: [],
+			jobType: [],
+			jobStatus: [],
+			budget: []
+		}, {
+			validators: [AtLeastOneFieldValidator]
+		});
+	}
 
 	constructor(
+		private readonly fb: FormBuilder,
 		private readonly http: HttpClient,
 		private readonly store: Store,
 		public readonly translateService: TranslateService,
@@ -544,6 +563,19 @@ export class SearchComponent extends PaginationFilterBaseComponent
 	
 	onTabChange(tab: NbTabComponent) {
 		this.nbTab$.next(tab.tabId);
+	}
+
+	searchJobs() {
+		if (this.form.invalid) {
+			return;
+		}
+		const { search, jobSource, jobType, jobStatus, budget } = this.form.getRawValue();
+	}
+
+	reset() {
+		this.form.reset();
+		this._filters = {};
+		this.jobs$.next(true);
 	}
 
 	ngOnDestroy(): void {}

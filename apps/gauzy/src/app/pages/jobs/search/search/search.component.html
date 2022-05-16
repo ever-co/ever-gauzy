@@ -92,155 +92,163 @@
 					<div class="advanced-filter">
 						<nb-card>
 							<nb-card-body class="body-filter">
-								<div class="row">
-									<div
-										class="col-xl-6 col-md-8 col-12 form-group m-0"
-									>
-										<input
-											type="text"
-											class="w-100"
-											[placeholder]="
-												'JOBS.JOB_SEARCH' | translate
-											"
-											nbInput
-											[(ngModel)]="jobRequest.search"
-											(input)="applyFilter()"
-										/>
-									</div>
-								</div>
-								<div class="row mt-3">
-									<div
-										class="col-xl-2 col-lg-3 col-md-6 form-group"
-									>
-										<label class="d-block">{{
-											'JOBS.FILTER.SOURCE' | translate
-										}}</label>
-										<nb-select
-											(selectedChange)="applyFilter()"
-											[placeholder]="
-												'JOBS.FILTER.SOURCE' | translate
-											"
-											fullWidth
-											multiple
-											[(ngModel)]="jobRequest.jobSource"
+								<form [formGroup]="form" (ngSubmit)="searchJobs()">
+									<div class="row">
+										<div
+											class="col-xl-6 col-md-8 col-12 form-group m-0"
 										>
-											<nb-option
-												*ngFor="
-													let source of JobPostSourceEnum
-														| keyvalue
+											<input
+												nbInput
+												type="text"
+												class="w-100"
+												[placeholder]="'JOBS.JOB_SEARCH' | translate"
+												formControlName="search"
+											/>
+										</div>
+									</div>
+									<div class="row mt-3">
+										<div
+											class="col-xl-2 col-lg-3 col-md-6 form-group"
+										>
+											<label class="d-block" for="jobSource">
+												{{ 'JOBS.FILTER.SOURCE' | translate }}
+											</label>
+											<nb-select
+												id="jobSource"
+												[placeholder]="
+													'JOBS.FILTER.SOURCE' | translate
 												"
-												[value]="source?.value"
-												>{{
-													'JOBS.' + source.value
-														| translate
-												}}</nb-option
+												fullWidth
+												multiple
+												formControlName="jobSource"
 											>
-										</nb-select>
-									</div>
-									<div
-										class="col-xl-2 col-lg-3 col-md-6 form-group"
-									>
-										<label class="d-block">{{
-											'JOBS.FILTER.JOB_TYPE' | translate
-										}}</label>
-										<nb-select
-											(selectedChange)="applyFilter()"
-											[placeholder]="
-												'JOBS.FILTER.JOB_TYPE'
-													| translate
-											"
-											fullWidth
-											multiple
-											[(ngModel)]="jobRequest.jobType"
+												<nb-option
+													*ngFor="
+														let source of JobPostSourceEnum
+															| keyvalue
+													"
+													[value]="source?.value"
+													>{{
+														'JOBS.' + source.value
+															| translate
+													}}</nb-option
+												>
+											</nb-select>
+										</div>
+										<div
+											class="col-xl-2 col-lg-3 col-md-6 form-group"
 										>
-											<nb-option
-												*ngFor="
-													let type of JobPostTypeEnum
-														| keyvalue
+											<label class="d-block" for="jobType">
+												{{ 'JOBS.FILTER.JOB_TYPE' | translate }}
+											</label>
+											<nb-select
+												id="jobType"
+												[placeholder]="
+													'JOBS.FILTER.JOB_TYPE'
+														| translate
 												"
-												[value]="type.value"
-												>{{
-													'JOBS.' + type.key
-														| translate
-												}}
-											</nb-option>
-										</nb-select>
-									</div>
-									<div
-										class="col-xl-2 col-lg-3 col-md-6 form-group"
-									>
-										<label class="d-block">{{
-											'JOBS.FILTER.JOB_STATUS' | translate
-										}}</label>
-										<nb-select
-											(selectedChange)="applyFilter()"
-											[placeholder]="
-												'JOBS.FILTER.JOB_STATUS'
-													| translate
-											"
-											fullWidth
-											[(ngModel)]="jobRequest.jobStatus"
+												fullWidth
+												multiple
+												formControlName="jobType"
+											>
+												<nb-option
+													*ngFor="
+														let type of JobPostTypeEnum
+															| keyvalue
+													"
+													[value]="type.value"
+													>{{
+														'JOBS.' + type.key
+															| translate
+													}}
+												</nb-option>
+											</nb-select>
+										</div>
+										<div
+											class="col-xl-2 col-lg-3 col-md-6 form-group"
 										>
-											<nb-option
-												*ngFor="
-													let type of JobPostStatusEnum
-														| keyvalue
+											<label class="d-block" for="jobStatus">
+												{{ 'JOBS.FILTER.JOB_STATUS' | translate }}
+											</label>
+											<nb-select
+												id="jobStatus"
+												[placeholder]="
+													'JOBS.FILTER.JOB_STATUS'
+														| translate
 												"
-												[value]="type.value"
-												>{{
-													'JOBS.STATUS_' + type.value
-														| translate
-												}}
-											</nb-option>
-										</nb-select>
-									</div>
-									<div
-										class="col-xl-2 col-lg-3 col-md-6 form-group"
-									>
-										<label class="d-block">{{
-											'JOBS.FILTER.BUDGET' | translate
-										}}</label>
-										<nb-select
-											(selectedChange)="applyFilter()"
-											[placeholder]="
-												'JOBS.FILTER.BUDGET' | translate
-											"
-											fullWidth
-											multiple
-											[(ngModel)]="jobRequest.budget"
+												fullWidth
+												formControlName="jobStatus"
+											>
+												<nb-option
+													*ngFor="
+														let type of JobPostStatusEnum
+															| keyvalue
+													"
+													[value]="type.value"
+													>{{
+														'JOBS.STATUS_' + type.value
+															| translate
+													}}
+												</nb-option>
+											</nb-select>
+										</div>
+										<div
+											class="col-xl-2 col-lg-3 col-md-6 form-group"
 										>
-											<nb-option [value]="[null, 100]"
-												>{{
-													'JOBS.FILTER.LESS_THAN'
-														| translate
-												}}
-												$100</nb-option
+											<label class="d-block" for="budget">
+												{{ 'JOBS.FILTER.BUDGET' | translate }}
+											</label>
+											<nb-select
+												id="budget"
+												[placeholder]="
+													'JOBS.FILTER.BUDGET' | translate
+												"
+												fullWidth
+												multiple
+												formControlName="budget"
 											>
-											<nb-option [value]="[100, 500]"
-												>$100 - $500</nb-option
-											>
-											<nb-option [value]="[500, 1000]"
-												>$500 - $1K</nb-option
-											>
-											<nb-option [value]="[1000, 5000]"
-												>$1K - $5K</nb-option
-											>
-											<nb-option [value]="[5000, null]"
-												>$5K+</nb-option
-											>
-										</nb-select>
+												<nb-option [value]="[null, 100]">
+													{{ 'JOBS.FILTER.LESS_THAN' | translate }} $100
+												</nb-option >
+												<nb-option [value]="[100, 500]">
+													$100 - $500
+												</nb-option>
+												<nb-option [value]="[500, 1000]">
+													$500 - $1K
+												</nb-option>
+												<nb-option [value]="[1000, 5000]">
+													$1K - $5K
+												</nb-option>
+												<nb-option [value]="[5000, null]">
+													$5K+
+												</nb-option>
+											</nb-select>
+										</div>
 									</div>
-								</div>
-								<div class="row">
-									<button
-										size="small"
-										status="success"
-										class="mr-3 ml-3"
-										nbButton
-									>
-										{{ 'BUTTONS.SEARCH' | translate }}
-									</button>
-								</div>
+									<div class="row">
+										<button
+											type="submit"
+											size="small"
+											status="success"
+											class="mr-3 ml-3"
+											nbButton
+											[disabled]="form.invalid"
+										>
+											{{ 'BUTTONS.SEARCH' | translate }}
+										</button>
+										<button
+											type="reset"
+											nbButton
+											size="small"
+											status="basic"
+											outline
+											[disabled]="form.invalid"
+											(click)="reset()"
+										>
+											{{ 'BUTTONS.RESET' | translate }}
+										</button>
+									</div>
+								</form>
 							</nb-card-body>
 						</nb-card>
 					</div>
