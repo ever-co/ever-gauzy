@@ -570,6 +570,21 @@ export class SearchComponent extends PaginationFilterBaseComponent
 			return;
 		}
 		const { search, jobSource, jobType, jobStatus, budget } = this.form.getRawValue();
+		if (search) {
+			this.setFilter({ field: 'search', search: search }, false);
+		}
+		if (jobSource) {
+			this.setFilter({ field: 'jobSource', search: jobSource }, false);
+		}
+		if (jobType) {
+			this.setFilter({ field: 'jobType', search: jobType }, false);
+		}
+		if (jobStatus) {
+			this.setFilter({ field: 'jobStatus', search: jobStatus }, false);
+		}
+		if (budget) {
+			this.setFilter({ field: 'budget', search: budget }, false);
+		}
 	}
 
 	reset() {
