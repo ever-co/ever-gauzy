@@ -193,7 +193,8 @@ export class InvoicesComponent
 				distinctUntilChange(),
 				debounceTime(100),
 				filter(() => this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID),
-				tap(() => this.invoices$.next(true))
+				tap(() => this.invoices$.next(true)),
+				untilDestroyed(this)
 			)
 			.subscribe();
 		this.pagination$
