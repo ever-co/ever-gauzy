@@ -109,7 +109,8 @@ export class PipelinesComponent extends PaginationFilterBaseComponent
 				distinctUntilChange(),
 				debounceTime(100),
 				filter(() => this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID),
-				tap(() => this.pipelines$.next(true))
+				tap(() => this.pipelines$.next(true)),
+				untilDestroyed(this)
 			)
 			.subscribe();
 		this.pagination$
