@@ -37,15 +37,14 @@ interface GaMenuItem extends NbMenuItem {
 	styleUrls: ['pages.component.scss'],
 	template: `
 		<ngx-one-column-layout *ngIf="!!menu && user">
-			<ga-sidebar-menu [menu]="menu"></ga-sidebar-menu>
+			<ga-sidebar-menu [items]="menu"></ga-sidebar-menu>
 			<router-outlet></router-outlet>
 		</ngx-one-column-layout>
 	`
 })
-export class PagesComponent
-	extends TranslationBaseComponent
-	implements OnInit, OnDestroy
-{
+export class PagesComponent extends TranslationBaseComponent 
+	implements OnInit, OnDestroy {
+		
 	isEmployee: boolean;
 	organization: IOrganization;
 	user: IUser;

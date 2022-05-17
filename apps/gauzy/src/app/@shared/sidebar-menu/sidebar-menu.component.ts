@@ -5,7 +5,7 @@ import {
 	Input,
 	OnInit
 } from '@angular/core';
-import { IMenuItem } from './menu-items/inteface/menu-item.interface';
+import { IMenuItem } from './menu-items/interface/menu-item.interface';
 
 @Component({
 	selector: 'ga-sidebar-menu',
@@ -14,17 +14,15 @@ import { IMenuItem } from './menu-items/inteface/menu-item.interface';
 })
 export class SidebarMenuComponent implements OnInit, AfterViewChecked {
 	private _selectedItem: IMenuItem;
-	@Input() menu: IMenuItem[];
-	constructor(private cdr: ChangeDetectorRef) {}
 
-	ngAfterViewChecked(): void {}
+	@Input() items: IMenuItem[] = [];
 
-	public focusOn(event: IMenuItem) {
-		this.selectedItem = event;
-		this.cdr.detectChanges();
-	}
-
+	constructor(
+		private readonly cdr: ChangeDetectorRef
+	) {}
+	
 	ngOnInit(): void {}
+	ngAfterViewChecked(): void { }
 
 	public get selectedItem() {
 		return this._selectedItem;
@@ -32,5 +30,10 @@ export class SidebarMenuComponent implements OnInit, AfterViewChecked {
 
 	public set selectedItem(value: IMenuItem) {
 		this._selectedItem = value;
+	}
+
+	public focusOn(event: IMenuItem) {
+		this.selectedItem = event;
+		this.cdr.detectChanges();
 	}
 }

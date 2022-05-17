@@ -10,7 +10,7 @@ import {
 import { Router } from '@angular/router';
 import { NbSidebarService } from '@nebular/theme';
 import { tap } from 'rxjs/operators';
-import { IMenuItem } from '../../inteface/menu-item.interface';
+import { IMenuItem } from '../../interface/menu-item.interface';
 
 @Component({
 	selector: 'ga-menu-item',
