@@ -7,6 +7,8 @@
 		[ngClass]="selected ? 'opened' : ''"
 	>
 		<nb-accordion-item-header
+			[nbTooltip]="item?.title"
+			nbTooltipPlacement="right"
 			[ngClass]="onCollapse ? 'collapsed' : ''"
 			(click)="redirectTo()"
 		>
