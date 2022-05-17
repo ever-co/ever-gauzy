@@ -53,7 +53,12 @@ export const createDefaultTask = async (
 		organization
 	);
 
-	const defaultProjects = await connection.manager.find(OrganizationProject);
+	const defaultProjects = await connection.manager.find(OrganizationProject, {
+		where: {
+			organization,
+			tenant
+		}
+	});
 	if (!defaultProjects) {
 		console.warn(
 			'Warning: projects not found, DefaultTasks will not be created'
@@ -65,12 +70,13 @@ export const createDefaultTask = async (
 	const employees = await connection.manager.find(Employee);
 
 	let count = 0;
-	for (const issue of issues) {
+	for await (const issue of issues) {
 		let status = TaskStatusEnum.TODO;
 		if (issue.state === 'open') {
 			status = TaskStatusEnum.IN_PROGRESS;
 		}
 		const project = faker.random.arrayElement(defaultProjects);
+
 		const task = new Task();
 		task.tags = _.filter(tags, (tag: ITag) => !!issue.labels.find((label: any) => label.name === tag.name));
 		task.tenant = tenant;
@@ -81,20 +87,19 @@ export const createDefaultTask = async (
 		task.estimate = null;
 		task.dueDate = faker.date.future(0.3);
 		task.project = project;
+		task.prefix = project.name.substring(0, 3);
+		task.creator = faker.random.arrayElement(users);
 
 		if (count % 2 === 0) {
 			task.members = faker.random.arrayElements(employees, 5);
 		} else {
 			task.teams = [faker.random.arrayElement(teams)];
 		}
+		await connection.manager.save(task);
 
-		task.creator = faker.random.arrayElement(users);
 		tasks.push(task);
-
 		count++;
 	}
-
-	await connection.manager.save(tasks);
 	return tasks;
 };
 
@@ -160,11 +165,14 @@ export const createRandomTask = async (
 				organization
 			});
 			let count = 0;
-			issues.forEach((issue) => {
+
+			for await (const issue of issues) {
 				let status = TaskStatusEnum.TODO;
 				if (issue.state === 'open') {
 					status = TaskStatusEnum.IN_PROGRESS;
 				}
+
+				const project = faker.random.arrayElement(projects);
 
 				const task = new Task();
 				task.tags = _.filter(tags, (tag: ITag) => !!issue.labels.find((label: any) => label.name === tag.name));
@@ -173,7 +181,12 @@ export const createRandomTask = async (
 				task.status = status;
 				task.estimate = null;
 				task.dueDate = null;
-				task.project = faker.random.arrayElement(projects);
+				task.project = project;
+				task.prefix = project.name.substring(0, 3);
+				task.teams = [faker.random.arrayElement(teams)];
+				task.creator = faker.random.arrayElement(users);
+				task.organization = organization,
+				task.tenant = tenant;
 
 				if (count % 2 === 0) {
 					task.members = faker.random.arrayElements(employees, 5);
@@ -181,18 +194,14 @@ export const createRandomTask = async (
 					task.teams = [faker.random.arrayElement(teams)];
 				}
 
-				task.teams = [faker.random.arrayElement(teams)];
-				task.creator = faker.random.arrayElement(users);
-				task.organization = organization,
-				task.tenant = tenant;
-				tasks.push(task);
+				await connection.manager.save(task);
 
+				tasks.push(task);
 				count++;
-			});
+			}
 		}
 	}
 
-	await connection.manager.save(tasks);
 };
 
 export async function createTags(

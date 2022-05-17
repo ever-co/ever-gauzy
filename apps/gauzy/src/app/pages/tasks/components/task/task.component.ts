@@ -103,7 +103,7 @@ export class TaskComponent extends PaginationFilterBaseComponent
 	}
 
 	ngOnInit() {
-		this._loadTableSettings();
+		this._loadSmartTableSettings();
 		this._applyTranslationOnSmartTable();
 		this.subject$
 			.pipe(
@@ -203,7 +203,7 @@ export class TaskComponent extends PaginationFilterBaseComponent
 	private _applyTranslationOnSmartTable() {
 		this.translateService.onLangChange
 			.pipe(
-				tap(() => this._loadTableSettings()),
+				tap(() => this._loadSmartTableSettings()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -328,7 +328,7 @@ export class TaskComponent extends PaginationFilterBaseComponent
 		}
 	}
 
-	private _loadTableSettings() {
+	private _loadSmartTableSettings() {
 		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
 			actions: false,
@@ -337,8 +337,8 @@ export class TaskComponent extends PaginationFilterBaseComponent
 				perPage: pagination ? pagination.itemsPerPage : 10
 			},
 			columns: {
-				id: {
-					title: 'ID',
+				taskNumber: {
+					title: this.getTranslation('TASKS_PAGE.TASK_ID'),
 					type: 'string',
 					width: '5%'
 				},

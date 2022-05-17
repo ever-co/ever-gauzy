@@ -13,10 +13,16 @@ import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
 import { filter, tap } from 'rxjs/operators';
-import { firstValueFrom } from 'rxjs';
-import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
-import { EmployeesService, OrganizationTeamsService, Store, TasksService } from '../../../@core/services';
+import { debounceTime, firstValueFrom, pipe, Subject } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
+import { 
+	EmployeesService,
+	OrganizationTeamsService,
+	Store,
+	TasksService
+} from '../../../@core/services';
+import { distinctUntilChange } from 'packages/common-angular/dist';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -24,9 +30,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 	templateUrl: './add-task-dialog.component.html',
 	styleUrls: ['./add-task-dialog.component.scss']
 })
-export class AddTaskDialogComponent
-	extends TranslationBaseComponent
-	implements OnInit {
+export class AddTaskDialogComponent extends TranslationBaseComponent implements OnInit {
 
 	employees: IEmployee[] = [];
 	teams: IOrganizationTeam[] = [];
@@ -36,6 +40,8 @@ export class AddTaskDialogComponent
 	organization: IOrganization;
 	taskParticipantEnum = TaskParticipantEnum;
 	participants = TaskParticipantEnum.EMPLOYEES;
+
+	taskNumber$: Subject<string> = new Subject();
 
 	@Input() createTask = false;
 
@@ -60,6 +66,7 @@ export class AddTaskDialogComponent
 		self: AddTaskDialogComponent
 	): FormGroup {
 		return fb.group({
+			taskNumber: [],
 			title: ['', Validators.required],
 			project: [],
 			projectId: [],
@@ -79,7 +86,7 @@ export class AddTaskDialogComponent
 		public readonly dialogRef: NbDialogRef<AddTaskDialogComponent>,
 		private readonly fb: FormBuilder,
 		private readonly store: Store,
-		readonly translateService: TranslateService,
+		public readonly translateService: TranslateService,
 		private readonly employeesService: EmployeesService,
 		private readonly tasksService: TasksService,
 		private readonly organizationTeamsService: OrganizationTeamsService
@@ -90,14 +97,24 @@ export class AddTaskDialogComponent
 	ngOnInit() {
 		this.store.selectedOrganization$
 			.pipe(
-				filter((organization) => !!organization),
+				distinctUntilChange(),
+				filter((organization: IOrganization) => !!organization),
 				tap((organization: IOrganization) => this.organization = organization),
+				tap(() => this.getOneMaximumTaskNumber()),
 				tap(() => this.loadEmployees()),
 				tap(() => this.loadTeams()),
 				tap(() => this.initializeForm()),
 				untilDestroyed(this)
 			)
 			.subscribe();
+		this.form.get("projectId").valueChanges
+			.pipe(
+				debounceTime(100),
+				filter((projectId) => !!projectId),
+				tap(() => this.getOneMaximumTaskNumber()),
+				untilDestroyed(this)
+			)
+			.subscribe()
 	}
 
 	initializeForm() {
@@ -170,11 +187,16 @@ export class AddTaskDialogComponent
 
 	selectedProject(project: IOrganizationProject) {
 		this.form.patchValue({ project });
+		this.form.updateValueAndValidity();
 	}
 
 	async loadEmployees() {
+		if (!this.organization) {
+			return;
+		}
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
+		
 		const { items = [] } = await firstValueFrom(
 			this.employeesService.getAll(['user'], {
 				organizationId,
@@ -188,8 +210,12 @@ export class AddTaskDialogComponent
 	}
 
 	async loadTeams() {
+		if (!this.organization) {
+			return;
+		}
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
+
 		const { items = [] } = await this.organizationTeamsService.getAll(
 			['members'],
 			{ organizationId, tenantId }
@@ -207,5 +233,31 @@ export class AddTaskDialogComponent
 
 	onTeamsSelected(teamsSelection: string[]) {
 		this.selectedTeams = teamsSelection;
+	}
+
+	private async getOneMaximumTaskNumber() {
+		if (!this.organization) {
+			return;
+		}
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
+		const { projectId } = this.form.getRawValue();
+
+		try {
+			this.tasksService
+				.getMaxTaskNumber({
+					tenantId,
+					organizationId,
+					projectId
+				}).
+				pipe(
+					tap((maxNumber: number) => this.form.patchValue({
+						taskNumber: maxNumber + 1
+					}))
+				)
+				.subscribe();
+		} catch (error) {
+			console.log('Error while getting max task number', error);
+		}
 	}
 }
