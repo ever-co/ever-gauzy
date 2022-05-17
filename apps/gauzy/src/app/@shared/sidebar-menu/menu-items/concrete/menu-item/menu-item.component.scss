@@ -1,6 +1,7 @@
 @import 'themes';
 
 :host {
+  position: relative;
   nb-accordion-item-body.item-collapsed ::ng-deep .item-body {
     padding: 4px;
   }
@@ -85,6 +86,13 @@
   }
 }
 
+.menu {
+  border-top: 1px solid nb-theme(gauzy-border-default-color);
+  &:first-child {
+    border-top: none;
+  }
+}
+
 .sub-item {
   padding: 11px 10px;
   display: flex;
@@ -97,16 +105,13 @@
   letter-spacing: 0em;
   text-align: left;
   cursor: pointer;
-  border-top: 1px solid nb-theme(gauzy-border-default-color);
-  &:first-child {
-    border-top: none;
-  }
   &:hover,
   &.selected {
     background-color: nb-theme(gauzy-sidebar-background-3);
     border-radius: nb-theme(border-radius);
     font-weight: 600;
     color: nb-theme(gauzy-text-color-1);
+    border: unset;
   }
 
   &:hover {
@@ -119,5 +124,14 @@
     i {
       margin-right: 0;
     }
+  }
+  &.mouse-hover {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: nowrap;
+    position: absolute;
+    top: 0;
+    left: 0;
   }
 }

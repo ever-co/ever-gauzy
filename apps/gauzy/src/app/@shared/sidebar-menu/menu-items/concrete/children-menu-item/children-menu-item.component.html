@@ -1,6 +1,8 @@
 <ng-container *ngxPermissionsOnly="item?.data?.permissionKeys">
 	<div
 		*ngIf="!item?.hidden"
+		[gaTooltip]="item?.title"
+		[icon]="item?.icon"
 		[ngClass]="
 			selected
 				? !collapse
@@ -12,7 +14,9 @@
 		"
 		(click)="select()"
 	>
-		<i [class]="item?.icon"></i
-		><span *ngIf="collapse || mouseHover">{{ item?.title }}</span>
+		<span class="info">
+			<i [class]="item?.icon"></i
+			><span *ngIf="collapse || mouseHover">{{ item?.title }}</span>
+		</span>
 	</div>
 </ng-container>

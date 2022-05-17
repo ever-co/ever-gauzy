@@ -19,7 +19,8 @@
 			[ngClass]="state ? '' : 'item-collapsed'"
 			*ngIf="item?.children?.length > 0"
 		>
-			<ng-container
+			<div
+				class="menu"
 				*ngFor="let subItem of item.children; trackBy: subItem?.title"
 			>
 				<ga-children-menu-item
@@ -30,7 +31,7 @@
 					[selected]="subItem === selectedChildren && selected"
 					(focusItemChange)="focusOn($event)"
 				></ga-children-menu-item>
-			</ng-container>
+			</div>
 		</nb-accordion-item-body>
 	</nb-accordion-item>
 </nb-accordion>

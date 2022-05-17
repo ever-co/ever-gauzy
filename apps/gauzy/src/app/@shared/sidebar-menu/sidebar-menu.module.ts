@@ -5,12 +5,14 @@ import { SharedModule } from '../shared.module';
 import { NbAccordionModule, NbTooltipModule } from '@nebular/theme';
 import { MenuItemComponent } from './menu-items/concrete/menu-item/menu-item.component';
 import { ChildrenMenuItemComponent } from './menu-items/concrete/children-menu-item/children-menu-item.component';
+import { TooltipDirective } from './tooltip.directive';
 
 @NgModule({
 	declarations: [
 		SidebarMenuComponent,
 		MenuItemComponent,
-		ChildrenMenuItemComponent
+		ChildrenMenuItemComponent,
+  TooltipDirective
 	],
 	imports: [CommonModule, SharedModule, NbAccordionModule, NbTooltipModule],
 	exports: [SidebarMenuComponent]
