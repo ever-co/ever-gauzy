@@ -68,6 +68,8 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	@Column({ nullable: true })
 	dueDate?: Date;
 
+	taskNumber?: string;
+
 	/*
     |--------------------------------------------------------------------------
     | @ManyToOne 

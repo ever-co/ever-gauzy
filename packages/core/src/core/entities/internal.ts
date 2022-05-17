@@ -147,6 +147,7 @@ export * from './../../organization-project/organization-project.subscriber';
 export * from './../../organization/organization.subscriber';
 export * from './../../reports/report.subscriber';
 export * from './../../tenant/tenant.subscriber';
+export * from './../../tasks/task.subscriber';
 export * from './../../time-tracking/activity/activity.subscriber';
 export * from './../../time-tracking/screenshot/screenshot.subscriber';
 export * from './../../time-tracking/time-slot/time-slot.subscriber';
