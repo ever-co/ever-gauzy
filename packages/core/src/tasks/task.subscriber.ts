@@ -1,4 +1,4 @@
-import { EntitySubscriberInterface, EventSubscriber, InsertEvent } from "typeorm";
+import { EntitySubscriberInterface, EventSubscriber } from "typeorm";
 import { Task } from "./task.entity";
 
 @EventSubscriber()
@@ -25,16 +25,6 @@ export class TaskSubscriber implements EntitySubscriberInterface<Task> {
             }
             list.push(entity.number || 0);
             entity.taskNumber = list.join('-');
-        }
-    }
-
-    /**
-     * Called before task insertion.
-     */
-    beforeInsert(event: InsertEvent<Task>) {
-        if (event) {
-            const { entity } = event;
-            console.log({ entity });
         }
     }
 }

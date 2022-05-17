@@ -45,7 +45,11 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	number?: number;
 
 	@ApiProperty({ type: () => String })
-	@Column({ nullable: true })
+	@Column({
+		nullable: true,
+		select: false,
+		update: false
+	})
 	prefix?: string;
 
 	@ApiProperty({ type: () => String })
