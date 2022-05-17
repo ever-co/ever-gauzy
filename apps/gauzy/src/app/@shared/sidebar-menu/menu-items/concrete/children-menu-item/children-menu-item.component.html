@@ -1,22 +1,46 @@
 <ng-container *ngxPermissionsOnly="item?.data?.permissionKeys">
-	<div
-		*ngIf="!item?.hidden"
-		[gaTooltip]="item?.title"
-		[icon]="item?.icon"
-		[ngClass]="
-			selected
-				? !collapse
-					? 'sub-item selected custom'
-					: 'sub-item selected'
-				: !collapse
-				? 'sub-item custom'
-				: 'sub-item'
-		"
-		(click)="select()"
-	>
-		<span class="info">
-			<i [class]="item?.icon"></i
-			><span *ngIf="collapse || mouseHover">{{ item?.title }}</span>
-		</span>
-	</div>
+	<ng-container *ngIf="!collapse; else withNbTooltip">
+		<div
+			*ngIf="!item?.hidden"
+			[gaTooltip]="item?.title"
+			[icon]="item?.icon"
+			[ngClass]="
+				selected
+					? !collapse
+						? 'sub-item selected custom'
+						: 'sub-item selected'
+					: !collapse
+					? 'sub-item custom'
+					: 'sub-item'
+			"
+			(click)="select()"
+		>
+			<span class="info">
+				<i [class]="item?.icon"></i
+				><span *ngIf="collapse || mouseHover">{{ item?.title }}</span>
+			</span>
+		</div>
+	</ng-container>
+	<ng-template #withNbTooltip>
+		<div
+			*ngIf="!item?.hidden"
+			[nbTooltip]="item?.title"
+			nbTooltipPlacement="right"
+			[ngClass]="
+				selected
+					? !collapse
+						? 'sub-item selected custom'
+						: 'sub-item selected'
+					: !collapse
+					? 'sub-item custom'
+					: 'sub-item'
+			"
+			(click)="select()"
+		>
+			<span class="info">
+				<i [class]="item?.icon"></i
+				><span *ngIf="collapse || mouseHover">{{ item?.title }}</span>
+			</span>
+		</div>
+	</ng-template>
 </ng-container>

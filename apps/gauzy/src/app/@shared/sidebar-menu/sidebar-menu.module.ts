@@ -12,7 +12,7 @@ import { TooltipDirective } from './tooltip.directive';
 		SidebarMenuComponent,
 		MenuItemComponent,
 		ChildrenMenuItemComponent,
-  TooltipDirective
+		TooltipDirective
 	],
 	imports: [CommonModule, SharedModule, NbAccordionModule, NbTooltipModule],
 	exports: [SidebarMenuComponent]

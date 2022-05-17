@@ -502,8 +502,8 @@ ng2-smart-table {
   background: #ededee;
   box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.15);
   border-radius: nb-theme(border-radius);
-  transform: translate(-17.5px, -119%);
-  animation: tooltip-slide 0.18s ease-out 0.5s;
+  transform: translate(-16.75px, -118.5%);
+  animation: tooltip-slide 0.1s ease-out 0.18s;
   animation-fill-mode: forwards;
   pointer-events: none;
   i {
@@ -514,10 +514,10 @@ ng2-smart-table {
 @keyframes tooltip-slide {
   0% {
     opacity: 0;
-    transform: translate(-17.5px, -119%);
+    transform: translate(-16.75px, -118.5%);
   }
   100% {
     opacity: 1;
-    transform: translate(-17.5px, -119%);
+    transform: translate(-16.75px, -118.5%);
   }
 }
