@@ -4,11 +4,22 @@
 >
 	<nb-accordion-item
 		(collapsedChange)="onCollapse($event)"
-		[ngClass]="{ 'opened' : selected }"
+		[ngClass]="{ opened: selected }"
 	>
+		<nb-accordion-item-header
+			[gaTooltip]="item?.title"
+			[icon]="item?.icon"
+			*ngIf="!state"
+			[ngClass]="onCollapse ? 'collapsed' : ''"
+			(click)="redirectTo()"
+		>
+			<i [class]="item?.icon"></i
+			><span *ngIf="state">{{ item?.title }}</span>
+		</nb-accordion-item-header>
 		<nb-accordion-item-header
 			[nbTooltip]="item?.title"
 			nbTooltipPlacement="right"
+			*ngIf="state"
 			[ngClass]="onCollapse ? 'collapsed' : ''"
 			(click)="redirectTo()"
 		>
@@ -16,7 +27,7 @@
 			><span *ngIf="state">{{ item?.title }}</span>
 		</nb-accordion-item-header>
 		<nb-accordion-item-body
-			[ngClass]="{ 'item-collapsed' : !state }"
+			[ngClass]="{ 'item-collapsed': !state }"
 			*ngIf="item?.children?.length > 0"
 		>
 			<div
