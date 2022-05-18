@@ -22,14 +22,35 @@
     overflow-y: overlay;
   }
 
-  p{
+  p {
     color: nb-theme(text-primary-color);
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 16px;
+    letter-spacing: 0em;
+    text-align: left;
+	padding: 0 1rem;
+  }
+
+  .cancel{
+	  align-self: flex-end;
+	  cursor: pointer;
+  }
+
+  .header{
+	  display: flex;
+	  flex-direction: column;
+	  align-items: flex-start;
   }
 
   nb-list-item{
     display: flex;
     align-items: center;
     justify-content: space-between;
+    border-bottom: 1px solid rgba(50, 50, 50, 0.05);
+    &:last-child{
+      border-bottom: unset;
+    }
     .theme{
       width: 100%;
     }

@@ -49,7 +49,6 @@ export class ThemeLanguageSelectorComponent implements OnInit, OnDestroy, AfterV
 				) {
 					this.currentLang = user.preferredLanguage;
 				}
-				this.switchLanguage();
 			});
 		this._store.preferredLanguage$
 			.pipe(

@@ -4,7 +4,8 @@ import {
 	DEFAULT_THEME,
 	DARK_THEME,
 	COSMIC_THEME,
-	CORPORATE_THEME
+	CORPORATE_THEME,
+	NbSidebarService
 } from '@nebular/theme';
 import { IUser, ComponentLayoutStyleEnum } from '@gauzy/contracts';
 import { filter, tap, map } from 'rxjs/operators';
@@ -51,7 +52,8 @@ export class ThemeSettingsComponent implements OnInit, OnDestroy {
 	constructor(
 		private readonly themeService: NbThemeService,
 		private readonly store: Store,
-		private readonly userService: UsersService
+		private readonly userService: UsersService,
+		private readonly sidebarService: NbSidebarService
 	) {}
 
 	async ngOnInit() {
@@ -130,6 +132,10 @@ export class ThemeSettingsComponent implements OnInit, OnDestroy {
 		} catch (error) {
 			console.error(`Failed to update user preferred component layout`);
 		}
+	}
+
+	public closeSidebar() {
+		this.sidebarService.toggle(false, 'settings_sidebar');
 	}
 
 	ngOnDestroy(): void {}

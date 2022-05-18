@@ -3,7 +3,7 @@
 		<ngx-header [expanded]="isExpanded"></ngx-header>
 	</nb-layout-header>
 
-	<nb-sidebar state="compacted" tag="user-workspace">
+	<nb-sidebar class="user-workspace" state="compacted" tag="user-workspace">
 		<div><gauzy-workspaces></gauzy-workspaces></div>
 		<gauzy-user [user]="user" (click)="isOpen = !isOpen"></gauzy-user>
 	</nb-sidebar>

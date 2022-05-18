@@ -11,7 +11,9 @@
   }
 
   .settings-sidebar.expanded {
-    width: 15rem !important;
+    width: 22.5rem !important;
+    height: fit-content;
+    z-index: 1042;
   }
 
   .changelog-sidebar.expanded {
@@ -31,21 +33,22 @@
     margin-right: -1.25rem;
     padding-left: 8px;
     z-index: 2;
-    //  background-color: nb-theme(background-basic-color-1);
   }
 
   .menu-sidebar-rtl {
     order: 2 !important;
   }
 
-  .menu-sidebar {
+  .menu-sidebar,
+  .user-workspace {
     order: 0 !important;
   }
 
   gauzy-user-menu {
     position: absolute;
     bottom: 0px;
-    left: 0px;
+    @include nb-ltr(left, 0px);
+    @include nb-rtl(right, 0px);
     z-index: 1041;
   }
 
@@ -59,7 +62,7 @@
       height: 1.625rem;
       width: 1.625rem;
       padding: 0;
-      margin: 0 .5rem;
+      margin: 0 0.5rem;
     }
     &.collapsed {
       justify-content: center;
@@ -90,7 +93,6 @@ nb-sidebar[tag='menu-sidebar'] {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  //width: calc(#{nb-theme(sidebar-width)} - #{nb-theme(header-padding)});
   max-width: nb-theme(sidebar-width);
   width: nb-theme(sidebar-width);
   padding: 0.75rem;
@@ -151,6 +153,24 @@ nb-sidebar[tag='menu-sidebar'] {
     height: 100vh;
     z-index: 1041;
   }
+  nb-layout
+    .layout
+    .layout-container
+    nb-sidebar.settings-sidebar.expanded
+    .main-container-fixed {
+    top: 10px;
+    height: fit-content;
+    max-height: 100vh;
+    width: 22.5rem !important;
+    box-shadow: 0px 6px 30px 0px rgba(0, 0, 0, 0.2);
+    z-index: 1041;
+    border-radius: nb-theme(border-radius);
+    .scrollable {
+      background-color: nb-theme(background-basic-color-1);
+      border-radius: nb-theme(border-radius);
+      overflow-y: unset;
+    }
+  }
 
   @media screen and (min-width: 1940px) {
     nb-layout.window-mode
@@ -195,4 +215,14 @@ nb-sidebar[tag='menu-sidebar'] {
 
 .custom-box .custom-row.button {
   flex: 0 1 auto;
+}
+:host
+  ::ng-deep
+  nb-layout
+  .layout
+  .layout-container
+  nb-sidebar.settings-sidebar.expanded
+  .main-container-fixed {
+  @include nb-ltr(right, 20px);
+  @include nb-rtl(left, 20px);
 }
