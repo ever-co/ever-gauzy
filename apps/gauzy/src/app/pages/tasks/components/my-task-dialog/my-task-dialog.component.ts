@@ -109,6 +109,7 @@ export class MyTaskDialogComponent
 			this.selectedMembers = [this.employeeId];
 		}
 		this.form = this.fb.group({
+			number: [],
 			title: [title, Validators.required],
 			project: [project],
 			projectId: (project) ? project.id : null,
