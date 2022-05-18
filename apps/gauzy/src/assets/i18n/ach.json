@@ -2261,6 +2261,8 @@
 		"TASK_MEMBERS": "crwdns4100:0crwdne4100:0",
 		"TASK_ASSIGNED_TO": "crwdns4190:0crwdne4190:0",
 		"TASK_TEAMS": "crwdns4166:0crwdne4166:0",
+		"TASK_ID": "crwdns11142:0crwdne11142:0",
+		"TASK_NUMBER": "crwdns11144:0crwdne11144:0",
 		"DUE_DATE": "crwdns3578:0crwdne3578:0",
 		"ESTIMATE": "crwdns3580:0crwdne3580:0",
 		"ESTIMATE_DAYS": "crwdns3582:0crwdne3582:0",

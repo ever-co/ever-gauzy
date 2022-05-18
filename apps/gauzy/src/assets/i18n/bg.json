@@ -2261,6 +2261,8 @@
 		"TASK_MEMBERS": "Служители",
 		"TASK_ASSIGNED_TO": "Assigned To",
 		"TASK_TEAMS": "Отбори",
+		"TASK_ID": "ID",
+		"TASK_NUMBER": "Task Number",
 		"DUE_DATE": "Due Date",
 		"ESTIMATE": "Estimate",
 		"ESTIMATE_DAYS": "Days",
