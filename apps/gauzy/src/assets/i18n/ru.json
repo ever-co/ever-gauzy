@@ -929,7 +929,9 @@
 		"SALES": "Продажи",
 		"PAYMENTS": "Платежи",
 		"FEATURES": "Возможности",
-		"ACCOUNTING_TEMPLATES": "Шаблоны счетов"
+		"ACCOUNTING_TEMPLATES": "Шаблоны счетов",
+		"FOCUS": "Фокус",
+		"APPLICATIONS": "Заявления"
 	},
 	"SETTINGS_MENU": {
 		"THEMES": "Темы",
