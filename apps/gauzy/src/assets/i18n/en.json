@@ -929,7 +929,9 @@
 		"SALES": "Sales",
 		"PAYMENTS": "Payments",
 		"FEATURES": "Features",
-		"ACCOUNTING_TEMPLATES": "Accounting Templates"
+		"ACCOUNTING_TEMPLATES": "Accounting Templates",
+		"FOCUS": "Focus",
+		"APPLICATIONS": "Applications"
 	},
 	"SETTINGS_MENU": {
 		"THEMES": "Themes",
