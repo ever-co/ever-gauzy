@@ -66,7 +66,7 @@ export class AddTaskDialogComponent extends TranslationBaseComponent implements 
 		self: AddTaskDialogComponent
 	): FormGroup {
 		return fb.group({
-			number: [],
+			number: [{ value: '', disabled: true }],
 			title: ['', Validators.required],
 			project: [],
 			projectId: [],
