@@ -3,6 +3,7 @@
   display: flex;
   align-items: center;
   cursor: pointer;
+  gap: 10px;
   .img-container{
     border: 3px solid nb-theme(text-primary-color);
     border-radius: 32px;
@@ -24,7 +25,6 @@
     }
   }
   .identity-container{
-    margin-left: 10px;
     .email{
       color: nb-theme(text-primary-color);
     }
