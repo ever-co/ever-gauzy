@@ -168,6 +168,7 @@ nb-sidebar[tag='menu-sidebar'] {
     .scrollable {
       background-color: nb-theme(background-basic-color-1);
       border-radius: nb-theme(border-radius);
+      overflow-y: unset;
     }
   }
 
