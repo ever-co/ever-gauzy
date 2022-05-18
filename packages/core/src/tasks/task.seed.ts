@@ -9,7 +9,6 @@ import {
 	IGetTaskOptions,
 	IOrganization,
 	ITag,
-	ITask,
 	ITenant,
 	TaskStatusEnum
 } from '@gauzy/contracts';
@@ -107,7 +106,6 @@ export const createRandomTask = async (
 	tenants: ITenant[]
 ) => {
 	const httpService = new HttpService();
-	const tasks: ITask[] = [];
 
 	console.log(`${GITHUB_API_URL}/repos/ever-co/gauzy/issues`);
 	const issues$ = httpService
@@ -202,8 +200,6 @@ export const createRandomTask = async (
 				}
 
 				await connection.manager.save(task);
-
-				tasks.push(task);
 				count++;
 			}
 		}

@@ -41,8 +41,6 @@ export class AddTaskDialogComponent extends TranslationBaseComponent implements 
 	taskParticipantEnum = TaskParticipantEnum;
 	participants = TaskParticipantEnum.EMPLOYEES;
 
-	taskNumber$: Subject<string> = new Subject();
-
 	@Input() createTask = false;
 
 	/*
