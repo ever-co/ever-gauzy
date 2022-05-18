@@ -5,7 +5,7 @@ import {
 	Input,
 	forwardRef,
 } from '@angular/core';
-import { NG_VALUE_ACCESSOR } from '@angular/forms';
+import { FormControl, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { filter, tap } from 'rxjs/operators';
@@ -29,6 +29,8 @@ import { Store, TasksService } from '../../../@core/services';
 })
 export class TaskNumberFieldComponent extends TranslationBaseComponent 
 	implements OnInit, OnDestroy {
+
+	@Input() formControl: FormControl = new FormControl();
 
 	/*
 	* Getter & Setter for dynamic placeholder
