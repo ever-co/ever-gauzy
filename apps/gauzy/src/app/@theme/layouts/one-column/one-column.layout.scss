@@ -38,14 +38,16 @@
     order: 2 !important;
   }
 
-  .menu-sidebar {
+  .menu-sidebar,
+  .user-workspace {
     order: 0 !important;
   }
 
   gauzy-user-menu {
     position: absolute;
     bottom: 0px;
-    left: 0px;
+    @include nb-ltr(left, 0px);
+    @include nb-rtl(right, 0px);
     z-index: 1041;
   }
 
@@ -90,7 +92,6 @@ nb-sidebar[tag='menu-sidebar'] {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  //width: calc(#{nb-theme(sidebar-width)} - #{nb-theme(header-padding)});
   max-width: nb-theme(sidebar-width);
   width: nb-theme(sidebar-width);
   padding: 0.75rem;
