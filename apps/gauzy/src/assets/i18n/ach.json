@@ -929,7 +929,9 @@
 		"SALES": "crwdns3536:0crwdne3536:0",
 		"PAYMENTS": "crwdns3538:0crwdne3538:0",
 		"FEATURES": "crwdns8764:0crwdne8764:0",
-		"ACCOUNTING_TEMPLATES": "crwdns10166:0crwdne10166:0"
+		"ACCOUNTING_TEMPLATES": "crwdns10166:0crwdne10166:0",
+		"FOCUS": "crwdns11138:0crwdne11138:0",
+		"APPLICATIONS": "crwdns11140:0crwdne11140:0"
 	},
 	"SETTINGS_MENU": {
 		"THEMES": "crwdns2106:0crwdne2106:0",
