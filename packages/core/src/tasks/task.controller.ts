@@ -20,7 +20,8 @@ import {
 	PermissionsEnum,
 	IGetTaskByEmployeeOptions,
 	ITask,
-	IPagination
+	IPagination,
+	IGetTaskOptions
 } from '@gauzy/contracts';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
@@ -50,6 +51,24 @@ export class TaskController extends CrudController<Task> {
 	): Promise<IPagination<ITask>> {
 		return this.taskService.pagination(filter);
 	}
+
+	@ApiOperation({ summary: 'Find maximum task number.' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found maximum task number',
+		type: Task
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Records not found'
+	})
+	@Get('max-number')
+	async getMaxTaskNumberByProject(
+		@Query() filter: IGetTaskOptions
+	): Promise<number> {
+		return await this.taskService.getMaxTaskNumberByProject(filter);
+	}
+
 
 	@ApiOperation({ summary: 'Find my tasks.' })
 	@ApiResponse({

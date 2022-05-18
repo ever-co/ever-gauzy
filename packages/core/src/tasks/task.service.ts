@@ -4,8 +4,8 @@ import {
 	HttpStatus
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Like, IsNull, Repository, SelectQueryBuilder } from 'typeorm';
-import { IEmployee, IGetTaskByEmployeeOptions, RolesEnum } from '@gauzy/contracts';
+import { Like, IsNull, Repository, SelectQueryBuilder, Brackets, WhereExpressionBuilder } from 'typeorm';
+import { IEmployee, IGetTaskByEmployeeOptions, IGetTaskOptions, RolesEnum } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
@@ -228,5 +228,33 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			}
 		}
 		return super.paginate(filter);
+	}
+
+	/**
+	 * GET maximum task number by project filter
+	 * 
+	 * @param options 
+	 */
+	public async getMaxTaskNumberByProject(options: IGetTaskOptions) {
+		const tenantId = RequestContext.currentTenantId();
+		const { organizationId, projectId } = options;
+		/**
+		 * GET maximum task number by project
+		 */
+		const query = this.taskRepository.createQueryBuilder('task');
+		query.select(`COALESCE(MAX("${query.alias}"."number"), 0)`, "maxTaskNumber");
+		query.andWhere(
+			new Brackets((qb: WhereExpressionBuilder) => {
+				qb.andWhere(`"${query.alias}"."organizationId" =:organizationId`, { organizationId });
+				qb.andWhere(`"${query.alias}"."tenantId" =:tenantId`, { tenantId });
+				if (isNotEmpty(projectId)) {
+					qb.andWhere(`"${query.alias}"."projectId" = :projectId`, { projectId });
+				} else {
+					qb.andWhere(`"${query.alias}"."projectId" IS NULL`);
+				}
+			})
+		);
+		const { maxTaskNumber } = await query.getRawOne();
+		return maxTaskNumber;
 	}
 }
