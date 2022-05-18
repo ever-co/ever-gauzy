@@ -1,0 +1,17 @@
+
+<div class="form-group">
+    <label for="taskNumber" class="label">
+        <span>
+            {{ 'TASKS_PAGE.TASK_NUMBER' | translate }}
+        </span>
+    </label>
+    <input
+        type="number"
+        [min]="0"
+        nbInput
+        [placeholder]="placeholder || 'TASKS_PAGE.TASK_NUMBER' | translate"
+        [id]="'taskNumber'"
+        [(ngModel)]="number"
+        fullWidth
+    />
+</div>
