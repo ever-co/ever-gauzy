@@ -1,9 +1,20 @@
-<div class="project-render">
-	<img src="{{ (organization | async)?.imageUrl }}" />
+<div *ngIf="project" class="project-render">
+	<img
+		*ngIf="project.organization | async"
+		src="{{ (project.organization | async)?.imageUrl }}"
+	/>
 	<span>
-		<div>{{ value?.name }}</div>
-		<div class="member" *ngIf="count">
-			Members count {{ count }}
+		<div>{{ project?.name }}</div>
+		<div class="member" *ngIf="project?.count">
+			Members count {{ project?.count }}
 		</div>
 	</span>
+</div>
+<div *ngIf="projects" class="project-render">
+	<ng-container *ngFor="let project of projects">
+		<img
+			*ngIf="project.organization | async"
+			src="{{ (project.organization | async)?.imageUrl }}"
+		/>
+	</ng-container>
 </div>

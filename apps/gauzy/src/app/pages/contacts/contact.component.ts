@@ -39,6 +39,7 @@ import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import {
 	EmployeeWithLinksComponent,
 	PictureNameTagsComponent,
+	ProjectComponent,
 	TaskTeamsComponent
 } from '../../@shared/table-components';
 import { ContactActionComponent } from './table-components';
@@ -242,7 +243,7 @@ export class ContactComponent
 				projects: {
 					title: this.getTranslation('CONTACTS_PAGE.PROJECTS'),
 					type: 'custom',
-					renderComponent: TaskTeamsComponent,
+					renderComponent: ProjectComponent,
 					filter: false
 				},
 				country: {

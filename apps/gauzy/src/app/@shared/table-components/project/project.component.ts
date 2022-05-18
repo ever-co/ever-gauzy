@@ -1,8 +1,14 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { ViewCell } from 'ng2-smart-table';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, tap } from 'rxjs';
 import { IOrganization } from '@gauzy/contracts';
+
+interface IProject {
+	name: string;
+	count: number;
+	organization: Promise<IOrganization> | null;
+}
 
 @Component({
 	selector: 'ngx-project',
@@ -16,28 +22,39 @@ export class ProjectComponent implements OnInit, ViewCell {
 	rowData: any;
 	organization: Promise<IOrganization> | null = null;
 	count: number;
+	project: IProject = {
+		name: null,
+		count: null,
+		organization: null
+	};
+
+	projects: IProject[] = [];
+
 	constructor(private readonly organizationService: OrganizationsService) {}
 
 	ngOnInit(): void {
 		this.init();
-		if (this.value.organizationId)
-			this.organization = firstValueFrom(
-				this.organizationService.getById(this.value.organizationId)
-			);
 	}
 
-	init() {
-		let count: number = 0;
-		if (this.rowData.employeesMergedTeams) {
-			const buffers = this.rowData.employeesMergedTeams[1];
-			if (buffers.length > 0) {
-				for (let buffer of buffers) {
-					count += buffer.members ? buffer.members.length : 0;
-				}
-			} else {
-				count = this.rowData.members.length;
-			}
+	public async init() {
+		if (this.rowData.project) {
+			this.project.name = this.rowData.project.name;
+			this.project.count = this.rowData.project.membersCount;
+			this.project.organization = firstValueFrom(
+				this.organizationService.getById(
+					this.rowData.project.organizationId
+				)
+			);
+		} else if (this.rowData.projects) {
+			this.projects = this.rowData.projects.map((project: any) => {
+				return {
+					name: project.name,
+					count: project.membersCount,
+					organization: firstValueFrom(
+						this.organizationService.getById(project.organizationId)
+					)
+				};
+			});
 		}
-		this.count = count;
 	}
 }
