@@ -40,6 +40,9 @@
         background: rgba(126, 126, 143, 0.05);
         padding: 10px;
         border-radius: nb-theme(border-radius);
+        align-items: flex-start;
+        display: flex;
+        flex-direction: column;
       }
       .button {
         padding: 10px;
@@ -68,5 +71,10 @@
     cursor: pointer;
     text-decoration: none;
     color: nb-theme(text-basic-color);
+  }
+  .links {
+    align-items: flex-start;
+    display: flex;
+    flex-direction: column;
   }
 }
