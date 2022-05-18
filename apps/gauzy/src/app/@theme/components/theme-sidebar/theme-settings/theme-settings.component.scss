@@ -33,9 +33,14 @@
   }
 
   .cancel{
-	  display: flex;
-	  justify-content: flex-end;
+	  align-self: flex-end;
 	  cursor: pointer;
+  }
+
+  .header{
+	  display: flex;
+	  flex-direction: column;
+	  align-items: flex-start;
   }
 
   nb-list-item{

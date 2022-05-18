@@ -1,5 +1,9 @@
-<span class="cancel"><i class="fas fa-times" (click)="closeSidebar()" ></i> </span>
-<p>{{ 'SETTINGS_MENU.QUICK_SETTINGS' | translate }}</p>
+<div class="header">
+	<span class="cancel"
+		><i class="fas fa-times" (click)="closeSidebar()"></i>
+	</span>
+	<p>{{ 'SETTINGS_MENU.QUICK_SETTINGS' | translate }}</p>
+</div>
 <nb-list>
 	<nb-list-item>
 		<gauzy-switch-theme class="theme"></gauzy-switch-theme>
