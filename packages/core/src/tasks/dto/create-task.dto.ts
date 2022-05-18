@@ -1,17 +1,9 @@
-import { IOrganization, ITaskCreateInput } from "@gauzy/contracts";
-import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { IsNotEmpty, IsOptional, IsString } from "class-validator";
+import { ITaskCreateInput } from "@gauzy/contracts";
+import { IntersectionType } from "@nestjs/mapped-types";
+import { RelationalTagDTO } from "./../../tags/dto";
 import { TaskDTO } from "./task.dto";
 
-export class CreateTaskDTO extends TaskDTO 
-    implements ITaskCreateInput {
-
-    @ApiProperty({ type: () => String })
-    @IsNotEmpty()
-    @IsString()
-    readonly organizationId: string;
-
-    @ApiPropertyOptional({ type: () => Object })
-    @IsOptional()
-    readonly organization: IOrganization;
-}
+export class CreateTaskDTO extends IntersectionType(
+    TaskDTO,
+    RelationalTagDTO,
+) implements ITaskCreateInput {}
