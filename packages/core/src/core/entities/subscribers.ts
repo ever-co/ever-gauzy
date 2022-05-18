@@ -9,6 +9,7 @@ import {
 	OrganizationSubscriber,
 	ReportSubscriber,
 	ScreenshotSubscriber,
+	TaskSubscriber,
 	TenantSubscriber,
 	TimeSlotSubscriber,
 	UserSubscriber
@@ -30,5 +31,6 @@ export const coreSubscribers = [
 	ScreenshotSubscriber,
 	TimeSlotSubscriber,
 	UserSubscriber,
-	TenantSubscriber
+	TenantSubscriber,
+	TaskSubscriber
 ];

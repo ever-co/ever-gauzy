@@ -1,6 +1,8 @@
 <nb-card class="main">
 	<nb-card-header class="d-flex flex-column">
-		<div class="cancel"><i class="fas fa-times" (click)="close()"></i></div>
+		<div class="cancel">
+			<i class="fas fa-times" (click)="close()"></i>
+		</div>
 		<h5 class="title">
 			{{
 				(income ? 'POP_UPS.EDIT_INCOME' : 'POP_UPS.ADD_INCOME')
@@ -11,15 +13,18 @@
 	<nb-card-body class="body">
 		<form
 			[formGroup]="form"
-			id="incomeMutationForm"
 			#formDirective="ngForm"
 			(ngSubmit)="addOrEditIncome()"
 		>
 			<div class="row employees">
-				<div *ngIf="!income" class="col-sm-7">
-					<label class="label" for="status" [hidden]="income">{{
-						'INCOME_PAGE.EMPLOYEES_GENERATE_INCOME' | translate
-					}}</label>
+				<div [hidden]="income" class="col-sm-7">
+					<label 
+						class="label"
+						for="employee"
+						[hidden]="income"
+					>
+						{{ 'INCOME_PAGE.EMPLOYEES_GENERATE_INCOME' | translate }}
+					</label>
 					<ga-employee-selector
 						#employeeSelector
 						[placeholder]="
@@ -29,9 +34,10 @@
 						[showAllEmployeesOption]="true"
 						[hidden]="income"
 						[skipGlobalChange]="true"
+						(selectionChanged)="selectionEmployee($event)"
 						class="employees"
-					>
-					</ga-employee-selector>
+						id="employee"
+					></ga-employee-selector>
 				</div>
 				<div [ngClass]="income ? 'col-sm-12' : 'col-sm-5'">
 					<div class="form-group">
@@ -60,7 +66,9 @@
 						[placeholder]="'POP_UPS.PICK_DATE' | translate"
 						[nbDatepicker]="valueDatePicker"
 						[status]="
-							isInvalidControl('valueDate') ? 'danger' : 'basic'
+							FormHelpers.isInvalidControl(form, 'valueDate')
+								? 'danger'
+								: 'basic'
 						"
 					/>
 					<nb-datepicker #valueDatePicker></nb-datepicker>
@@ -87,7 +95,9 @@
 							[placeholder]="'POP_UPS.AMOUNT' | translate"
 							formControlName="amount"
 							[status]="
-								isInvalidControl('amount') ? 'danger' : 'basic'
+								FormHelpers.isInvalidControl(form, 'amount')
+									? 'danger'
+									: 'basic'
 							"
 							autocomplete="off"
 						/>
@@ -101,8 +111,7 @@
 							[selectedTags]="form.get('tags').value"
 							(selectedTagsEvent)="selectedTagsHandler($event)"
 							[isOrgLevel]="true"
-						>
-						</ga-tags-color-input>
+						></ga-tags-color-input>
 					</div>
 				</div>
 			</div>
@@ -114,7 +123,6 @@
 								'DASHBOARD_PAGE.DEVELOPER.BONUS' | translate
 							}}</span>
 						</nb-checkbox>
-
 						<span
 							class="label info-font"
 							[nbTooltip]="'INCOME_PAGE.BONUS_HELP' | translate"

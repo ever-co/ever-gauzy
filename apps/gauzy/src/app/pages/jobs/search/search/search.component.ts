@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+
 import {
 	Component,
 	OnDestroy,
@@ -6,6 +6,12 @@ import {
 	ViewChild,
 	AfterViewInit
 } from '@angular/core';
+import { FormBuilder, FormGroup } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
+import { BehaviorSubject, Subject, Subscription, timer } from 'rxjs';
+import { debounceTime, filter, tap } from 'rxjs/operators';
+import * as moment from 'moment';
+import { Ng2SmartTableComponent } from 'ng2-smart-table';
 import {
 	IApplyJobPostInput,
 	IEmployeeJobPost,
@@ -15,51 +21,39 @@ import {
 	IVisibilityJobPostInput,
 	JobPostSourceEnum,
 	JobPostStatusEnum,
-	JobPostTypeEnum
+	JobPostTypeEnum,
+	JobSearchTabsEnum
 } from '@gauzy/contracts';
+import { distinctUntilChange } from '@gauzy/common-angular';
+import { NbTabComponent } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { JobService } from 'apps/gauzy/src/app/@core/services/job.service';
-import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
-import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
-import { AvatarComponent } from 'apps/gauzy/src/app/@shared/components/avatar/avatar.component';
-import { Ng2SmartTableComponent, ServerDataSource } from 'ng2-smart-table';
+import { JobService, Store, ToastrService } from './../../../../@core/services';
+import { AvatarComponent } from './../../../../@shared/components/avatar/avatar.component';
 import {
 	Nl2BrPipe,
 	TruncatePipe
-} from 'apps/gauzy/src/app/@shared/pipes/text.pipe';
-import { StatusBadgeComponent } from 'apps/gauzy/src/app/@shared/status-badge/status-badge.component';
-import * as moment from 'moment';
-import { Subject, Subscription, timer } from 'rxjs';
-import { debounceTime, filter, tap } from 'rxjs/operators';
+} from './../../../../@shared/pipes';
+import { StatusBadgeComponent } from './../../../../@shared/status-badge/status-badge.component';
+import { IPaginationBase, PaginationFilterBaseComponent } from '../../../../@shared/pagination/pagination-filter-base.component';
 import { ProposalTemplateService } from '../../proposal-template/proposal-template.service';
-import { API_PREFIX } from 'apps/gauzy/src/app/@core/constants/app.constants';
-import { PaginationFilterBaseComponent } from '../../../../@shared/pagination/pagination-filter-base.component';
-import { distinctUntilChange } from '@gauzy/common-angular';
-import { ChangeDetectorRef } from '@angular/core';
+import { API_PREFIX } from './../../../../@core/constants';
+import { ServerDataSource } from './../../../../@core/utils/smart-table';
+import { AtLeastOneFieldValidator } from './../../../../@core/validators';
 
-@UntilDestroy()
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-search',
 	templateUrl: './search.component.html',
 	styleUrls: ['./search.component.scss']
 })
-export class SearchComponent
-	extends PaginationFilterBaseComponent
-	implements OnInit, OnDestroy, AfterViewInit
-{
-	loading = false;
-	autoRefresh = false;
-	settingsSmartTable: any = {
-		editable: false,
-		hideSubHeader: true,
-		actions: false,
-		pager: {
-			display: false,
-			perPage: this.pagination.itemsPerPage
-		}
-	};
-	isOpenAdvancedFilter = false;
+export class SearchComponent extends PaginationFilterBaseComponent 
+	implements OnInit, OnDestroy, AfterViewInit {
+
+	loading: boolean = false;
+	autoRefresh: boolean = false;
+	settingsSmartTable: any;
+	isOpenAdvancedFilter: boolean = false;
 	jobs: IEmployeeJobPost[] = [];
 
 	JobPostSourceEnum = JobPostSourceEnum;
@@ -74,7 +68,7 @@ export class SearchComponent
 		budget: []
 	};
 
-	updateJobs$: Subject<any> = new Subject();
+	jobs$: Subject<any> = this.subject$;
 	selectedEmployee: ISelectedEmployee;
 	smartTableSource: ServerDataSource;
 	autoRefreshTimer: Subscription;
@@ -84,7 +78,8 @@ export class SearchComponent
 		isSelected: false
 	};
 
-	selectedTab: any;
+	jobSearchTabsEnum = JobSearchTabsEnum;
+	nbTab$: Subject<string> = new BehaviorSubject(JobSearchTabsEnum.ACTIONS);
 
 	jobSearchTable: Ng2SmartTableComponent;
 	@ViewChild('jobSearchTable') set content(content: Ng2SmartTableComponent) {
@@ -93,33 +88,55 @@ export class SearchComponent
 			this.onChangedSource();
 		}
 	}
+	
+	/*
+	* Search Tab Form
+	*/
+	public form: FormGroup = SearchComponent.buildForm(this.fb);
+	static buildForm(fb: FormBuilder): FormGroup {
+		return fb.group({
+			search: [],
+			jobSource: [],
+			jobType: [],
+			jobStatus: [],
+			budget: []
+		}, {
+			validators: [AtLeastOneFieldValidator]
+		});
+	}
 
 	constructor(
-		private http: HttpClient,
-		private store: Store,
-		public translateService: TranslateService,
-		public proposalTemplateService: ProposalTemplateService,
-		private toastrService: ToastrService,
-		private jobService: JobService,
-		private nl2BrPipe: Nl2BrPipe,
-		private truncatePipe: TruncatePipe,
-		private cd: ChangeDetectorRef
+		private readonly fb: FormBuilder,
+		private readonly http: HttpClient,
+		private readonly store: Store,
+		public readonly translateService: TranslateService,
+		public readonly proposalTemplateService: ProposalTemplateService,
+		private readonly toastrService: ToastrService,
+		private readonly jobService: JobService,
+		private readonly nl2BrPipe: Nl2BrPipe,
+		private readonly truncatePipe: TruncatePipe
 	) {
 		super(translateService);
 	}
 
 	ngOnInit(): void {
 		this._applyTranslationOnSmartTable();
-		this.loadSmartTable();
+		this._loadSmartTableSettings();
 	}
 
 	ngAfterViewInit(): void {
-		this.subject$
+		this.jobs$
 			.pipe(
 				debounceTime(100),
-				tap(() => this.cd.detectChanges()),
-				tap(() => this.loadSmartTable()),
 				tap(() => this.getEmployeesJob()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.nbTab$
+			.pipe(
+				debounceTime(100),
+				distinctUntilChange(),
+				tap(() => this.jobs$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -127,39 +144,33 @@ export class SearchComponent
 			.pipe(
 				debounceTime(100),
 				distinctUntilChange(),
-				tap(() => this.subject$.next(true)),
+				tap(() => this.jobs$.next(true)),
 				untilDestroyed(this)
-			)
-			.subscribe();
-		this.updateJobs$
-			.pipe(
-				tap(() => this.subject$.next(true)),
-				untilDestroyed(this),
-				debounceTime(500)
 			)
 			.subscribe();
 		this.store.selectedEmployee$
 			.pipe(
-				filter((employee) => !!employee),
+				filter((employee: ISelectedEmployee) => !!employee),
+				tap((employee: ISelectedEmployee) => {
+					if (employee && employee.id) {
+						this.selectedEmployee = employee;
+						this.jobRequest.employeeIds = [employee.id];
+					} else {
+						this.selectedEmployee = null;
+						this.jobRequest.employeeIds = [];
+					}
+				}),
 				tap(() => this.refreshPagination()),
-				tap(() => this.subject$.next(true)),
+				tap(() => this.jobs$.next(true)),
 				untilDestroyed(this)
 			)
-			.subscribe((employee) => {
-				if (employee && employee.id) {
-					this.selectedEmployee = employee;
-					this.jobRequest.employeeIds = [employee.id];
-				} else {
-					this.selectedEmployee = null;
-					this.jobRequest.employeeIds = [];
-				}
-			});
+			.subscribe();
 	}
 
 	redirectToView() {}
 
 	applyFilter() {
-		this.updateJobs$.next(true);
+		this.jobs$.next(true);
 	}
 
 	getEmployeeDefaultProposalTemplate(job: IJobMatchings) {
@@ -213,13 +224,14 @@ export class SearchComponent
 		);
 	}
 
-	setAutoRefresh(value) {
+	setAutoRefresh(value: boolean) {
 		if (value) {
 			this.autoRefreshTimer = timer(0, 60000)
-				.pipe(untilDestroyed(this))
-				.subscribe(() => {
-					this.updateJobs$.next(true);
-				});
+				.pipe(
+					tap(() => this.jobs$.next(true)),
+					untilDestroyed(this)
+				)
+				.subscribe();
 		} else {
 			if (this.autoRefreshTimer) {
 				this.autoRefreshTimer.unsubscribe();
@@ -284,6 +296,9 @@ export class SearchComponent
 	}
 
 	public viewJob() {
+		if (!this.selectedJob) {
+			return;
+		}
 		if (this.selectedJob.data.jobPost) {
 			window.open(this.selectedJob.data.jobPost.url, '_blank');
 		}
@@ -293,11 +308,12 @@ export class SearchComponent
 		if (!this.selectedJob) {
 			return;
 		}
+		const { employeeId, providerCode, providerJobId } = this.selectedJob.data;
 		const hideRequest: IVisibilityJobPostInput = {
 			hide: true,
-			employeeId: this.selectedJob.data.employeeId,
-			providerCode: this.selectedJob.data.jobPost.providerCode,
-			providerJobId: this.selectedJob.data.jobPost.providerJobId
+			employeeId: employeeId,
+			providerCode: providerCode,
+			providerJobId: providerJobId
 		};
 		this.jobService.hideJob(hideRequest).then(() => {
 			this.toastrService.success('TOASTR.MESSAGE.JOB_HIDDEN');
@@ -309,11 +325,12 @@ export class SearchComponent
 		if (!this.selectedJob) {
 			return;
 		}
+		const { employeeId, providerCode, providerJobId } = this.selectedJob.data;
 		const applyRequest: IApplyJobPostInput = {
 			applied: true,
-			employeeId: this.selectedJob.data.employeeId,
-			providerCode: this.selectedJob.data.jobPost.providerCode,
-			providerJobId: this.selectedJob.data.jobPost.providerJobId
+			employeeId: employeeId,
+			providerCode: providerCode,
+			providerJobId: providerJobId
 		};
 		this.jobService.applyJob(applyRequest).then(async (resp) => {
 			this.toastrService.success('TOASTR.MESSAGE.JOB_APPLIED');
@@ -332,45 +349,16 @@ export class SearchComponent
 		});
 	}
 
-	public getInstance(): ServerDataSource {
-		return new ServerDataSource(this.http, {
-			endPoint: `${API_PREFIX}/employee-job`,
-			sortFieldKey: 'orderBy',
-			sortDirKey: 'order',
-			filterFieldKey: 'filters',
-			totalKey: 'total',
-			dataKey: 'items',
-			pagerPageKey: 'page',
-			pagerLimitKey: 'limit'
-		});
-	}
-
-	async loadSmartTable() {
-		//create ServerDataSource singleton instance
-		if (!this.smartTableSource) {
-			this.smartTableSource = this.getInstance();
-			await this.smartTableSource.getElements();
-			this.setPagination({
-				...this.getPagination(),
-				totalItems: this.smartTableSource.count()
-			});
-		}
-		this.smartTableSource.setSort(
-			[{ field: 'status', direction: 'asc' }],
-			false
-		);
-		this.smartTableSource.setFilter(
-			[
-				{
-					field: 'custom',
-					search: JSON.stringify(this.jobRequest)
-				}
-			],
-			true,
-			false
-		);
+	private _loadSmartTableSettings() {
+		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
-			...this.settingsSmartTable,
+			editable: false,
+			hideSubHeader: true,
+			actions: false,
+			pager: {
+				display: false,
+				perPage: pagination ? pagination.itemsPerPage : 10
+			},
 			columns: {
 				...(!this.selectedEmployee
 					? {
@@ -478,12 +466,60 @@ export class SearchComponent
 		};
 	}
 
+	/*
+	* Register Smart Table Source Config
+	*/
+	setSmartTableSource() {
+		try {
+			this.smartTableSource = new ServerDataSource(this.http, {
+				endPoint: `${API_PREFIX}/employee-job`,
+				pagerPageKey: 'page',
+				pagerLimitKey: 'limit',
+				relations: [],
+				finalize: () => {
+					this.setPagination({
+						...this.getPagination(),
+						totalItems: this.smartTableSource.count()
+					});
+					this.loading = false;
+				}
+			});
+		} catch (error) {
+			console.log('Error while retriving employee Job searches', error);
+		}
+	}
+
+	private async getEmployeesJob() {
+		try {
+			this.setSmartTableSource();
+
+			const { activePage, itemsPerPage } = this.getPagination();
+			this.smartTableSource.setSort(
+				[
+					{
+						field: 'status',
+						direction: 'asc'
+					}
+				],
+				false
+			);
+			this.smartTableSource.setPaging(
+				activePage,
+				itemsPerPage,
+				false
+			);
+		} catch (error) {
+			this.toastrService.danger(error);
+		}
+	}
+
 	private _applyTranslationOnSmartTable() {
 		this.translateService.onLangChange
-			.pipe(untilDestroyed(this))
-			.subscribe(() => {
-				this.updateJobs$.next(true);
-			});
+			.pipe(
+				tap(() => this.jobs$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	/*
@@ -524,17 +560,37 @@ export class SearchComponent
 		}
 	}
 
-	private async getEmployeesJob() {
-		try {
-			const { activePage, itemsPerPage } = this.getPagination();
-			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
-		} catch (error) {
-			this.toastrService.danger(error);
+	
+	onTabChange(tab: NbTabComponent) {
+		this.nbTab$.next(tab.tabId);
+	}
+
+	searchJobs() {
+		if (this.form.invalid) {
+			return;
+		}
+		const { search, jobSource, jobType, jobStatus, budget } = this.form.getRawValue();
+		if (search) {
+			this.setFilter({ field: 'search', search: search }, false);
+		}
+		if (jobSource) {
+			this.setFilter({ field: 'jobSource', search: jobSource }, false);
+		}
+		if (jobType) {
+			this.setFilter({ field: 'jobType', search: jobType }, false);
+		}
+		if (jobStatus) {
+			this.setFilter({ field: 'jobStatus', search: jobStatus }, false);
+		}
+		if (budget) {
+			this.setFilter({ field: 'budget', search: budget }, false);
 		}
 	}
 
-	onTabChange(event) {
-		this.selectedTab = event;
+	reset() {
+		this.form.reset();
+		this._filters = {};
+		this.jobs$.next(true);
 	}
 
 	ngOnDestroy(): void {}

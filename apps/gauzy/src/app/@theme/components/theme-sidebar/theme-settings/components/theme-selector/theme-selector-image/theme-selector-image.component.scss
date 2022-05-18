@@ -12,6 +12,10 @@
   flex-wrap: wrap;
   width: 100%;
 }
+.themes{
+  max-height: calc(100vh - 25rem);
+  overflow-y: auto;
+}
 .card-container {
   background: nb-theme(gauzy-card-2);
   margin-top: 10px;

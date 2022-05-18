@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import {
 	Validators,
 	FormBuilder,
@@ -10,15 +10,15 @@ import {
 	ITag,
 	IOrganizationContact,
 	IOrganization,
-	ICurrency
+	ICurrency,
+	ISelectedEmployee
 } from '@gauzy/contracts';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '../../../@core/services';
-import { EmployeeSelectorComponent } from '../../../@theme/components/header/selectors/employee/employee.component';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
-
+import { FormHelpers } from '../../forms/helpers';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -30,8 +30,7 @@ export class IncomeMutationComponent
 	extends TranslationBaseComponent
 	implements OnInit {
 
-	@ViewChild('employeeSelector')
-	employeeSelector: EmployeeSelectorComponent;
+	FormHelpers: typeof FormHelpers = FormHelpers;
 
 	income?: IIncome;
 	organizationContact: IOrganizationContact;
@@ -63,7 +62,8 @@ export class IncomeMutationComponent
 			notes: [],
 			currency: [],
 			isBonus: false,
-			tags: []
+			tags: [],
+			employee: []
 		});
 	}
 
@@ -97,12 +97,7 @@ export class IncomeMutationComponent
 		if (this.form.invalid) {
 			return;
 		}
-		this.dialogRef.close(
-			Object.assign(
-				{ employee: this.employeeSelector.selectedEmployee },
-				this.form.value
-			)
-		);
+		this.dialogRef.close(Object.assign({}, this.form.getRawValue()));
 	}
 	
 	close() {
@@ -111,7 +106,7 @@ export class IncomeMutationComponent
 
 	private _initializeForm() {
 		if (this.income) {
-			const { valueDate, amount, client, notes, currency, isBonus, tags } = this.income;
+			const { valueDate, amount, client, notes, currency, isBonus, tags, employee } = this.income;
 			this.form.patchValue({
 				valueDate: new Date(valueDate),
 				amount: amount,
@@ -119,7 +114,8 @@ export class IncomeMutationComponent
 				notes: notes,
 				currency: currency,
 				isBonus: isBonus,
-				tags: tags
+				tags: tags,
+				employee
 			});
 		}
 	}
@@ -136,16 +132,19 @@ export class IncomeMutationComponent
 		this.form.patchValue({
 			tags: currentSelection
 		});
+		this.form.updateValueAndValidity();
 	}
 
-	isInvalidControl(control: string) {
-		if (!this.form.contains(control)) {
-			return true;
+	/**
+	 * Select Employee Selector
+	 * 
+	 * @param employee 
+	 */
+	selectionEmployee(employee: ISelectedEmployee) {
+		if (employee) {
+			this.form.patchValue({ employee: employee });
+			this.form.updateValueAndValidity();
 		}
-		return (
-			(this.form.get(control).touched || this.form.get(control).dirty) && 
-			this.form.get(control).invalid
-		);
 	}
 
 	/*

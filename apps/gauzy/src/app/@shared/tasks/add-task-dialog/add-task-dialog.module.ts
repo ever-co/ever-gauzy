@@ -19,6 +19,7 @@ import { TagsColorInputModule } from '../../tags/tags-color-input/tags-color-inp
 import { EmployeeMultiSelectModule } from '../../employee/employee-multi-select/employee-multi-select.module';
 import { ProjectSelectModule } from '../../project-select/project-select.module';
 import { TaskStatusSelectModule } from '../task-status-select/task-status-select.module';
+import { TaskNumberFieldModule } from '../task-number/task-number-field.module';
 
 @NgModule({
 	declarations: [AddTaskDialogComponent],
@@ -42,7 +43,8 @@ import { TaskStatusSelectModule } from '../task-status-select/task-status-select
 		NbInputModule,
 		NbButtonModule,
 		ProjectSelectModule,
-		TaskStatusSelectModule
+		TaskStatusSelectModule,
+		TaskNumberFieldModule
 	]
 })
 export class AddTaskDialogModule {}

@@ -10,7 +10,7 @@
 			[ngClass]="isOpen ? 'open' : ''"
 		></nb-select>
 	</div>
-	<ng-container *ngIf="isOpen">
+	<div class="themes" *ngIf="isOpen">
 		<div
 			*ngFor="let theme of themes"
 			[ngClass]="
@@ -28,5 +28,5 @@
 				<img [src]="theme.imageUrl" />
 			</div>
 		</div>
-	</ng-container>
+	</div>
 </div>

@@ -2,7 +2,6 @@ import {
     IEmployee,
     IOrganizationProject,
     IOrganizationTeam,
-    ITag,
     TaskStatusEnum
 } from "@gauzy/contracts";
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
@@ -15,8 +14,9 @@ import {
     IsOptional,
     IsString
 } from "class-validator";
+import { TenantOrganizationBaseDTO } from "./../../core/dto";
 
-export abstract class TaskDTO {
+export class TaskDTO extends TenantOrganizationBaseDTO {
 
     @ApiProperty({ type : () => String})
     @IsNotEmpty()
@@ -41,11 +41,6 @@ export abstract class TaskDTO {
     @IsOptional()
     @IsNumber()
     readonly estimate: number;
-
-    @ApiPropertyOptional({ type: () => Array, isArray: true })
-    @IsOptional()
-    @IsArray()
-    readonly tags: ITag[];
 
     @ApiPropertyOptional({ type: () => Array, isArray: true })
     @IsOptional()

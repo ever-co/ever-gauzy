@@ -16,7 +16,7 @@ import {
 	NbToggleModule
 } from '@nebular/theme';
 import { MomentModule } from 'ngx-moment';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { EmployeeMultiSelectModule } from '../../../@shared/employee/employee-multi-select/employee-multi-select.module';
 import { StatusBadgeModule } from '../../../@shared/status-badge/status-badge.module';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
@@ -41,6 +41,7 @@ import { PaginationModule } from '../../../@shared/pagination/pagination.module'
 		NbCardModule,
 		NbInputModule,
 		FormsModule,
+		ReactiveFormsModule,
 		NbSelectModule,
 		NbButtonModule,
 		EmployeeMultiSelectModule,

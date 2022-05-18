@@ -10,7 +10,6 @@ import {
 	Index
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString } from 'class-validator';
 import {
 	IActivity,
 	IEmployee,
@@ -38,8 +37,20 @@ import {
 } from '../core/entities/internal';
 
 @Entity('task')
+@Index('taskNumber', ['projectId', 'number'], { unique: true })
 export class Task extends TenantOrganizationBaseEntity implements ITask {
 	
+	@ApiProperty({ type: () => Number })
+	@Column({ nullable:  true })
+	number?: number;
+
+	@ApiProperty({ type: () => String })
+	@Column({
+		nullable: true,
+		select: false
+	})
+	prefix?: string;
+
 	@ApiProperty({ type: () => String })
 	@Column()
 	title: string;
@@ -54,20 +65,22 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 
 	@ApiProperty({ type: () => Number })
 	@Column({ nullable: true })
-	@IsOptional()
 	estimate?: number;
 
 	@ApiProperty({ type: () => Date })
 	@Column({ nullable: true })
-	@IsOptional()
 	dueDate?: Date;
+
+	taskNumber?: string;
 
 	/*
     |--------------------------------------------------------------------------
     | @ManyToOne 
     |--------------------------------------------------------------------------
     */
-	// Organization Project
+	/**
+	 * Organization Project
+	 */
 	@ApiProperty({ type: () => OrganizationProject })
 	@ManyToOne(() => OrganizationProject, (it) => it.tasks,  {
 		nullable: true,
@@ -77,13 +90,13 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 
 	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((it: Task) => it.project)
-	@IsString()
-	@IsOptional()
 	@Index()
 	@Column({ nullable: true })
 	readonly projectId?: string;
 
-   	// Creator
+	/**
+	* Creator
+	*/
 	@ApiProperty({ type: () => User })
 	@ManyToOne(() => User, {
 		nullable: true,
@@ -94,13 +107,13 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 
 	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((it: Task) => it.creator)
-	@IsString()
-	@IsOptional()
 	@Index()
 	@Column({ nullable: true })
 	readonly creatorId?: string;
 
-	// Organization Sprint
+	/**
+	 * Organization Sprint
+	 */
 	@ApiProperty({ type: () => OrganizationSprint })
 	@ManyToOne(() => OrganizationSprint, { onDelete: 'SET NULL' })
 	@JoinColumn()
@@ -108,8 +121,6 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 
 	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((it: Task) => it.organizationSprint)
-	@IsString()
-	@IsOptional()
 	@Index()
 	@Column({ nullable: true })
 	readonly organizationSprintId?: string;

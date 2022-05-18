@@ -1,38 +1,36 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import {
 	IEmployeeJobsStatisticsResponse,
 	IOrganization
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { distinctUntilChange } from '@gauzy/common-angular';
 import { TranslateService } from '@ngx-translate/core';
-import { Store } from './../../../../@core/services/store.service';
 import { AvatarComponent } from './../../../../@shared/components/avatar/avatar.component';
-import { TranslationBaseComponent } from './../../../../@shared/language-base/translation-base.component';
-import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
+import { IPaginationBase, PaginationFilterBaseComponent } from './../../../../@shared/pagination/pagination-filter-base.component';
+import { Ng2SmartTableComponent } from 'ng2-smart-table';
 import { Subject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
-import { EmployeesService } from './../../../../@core/services';
+import { EmployeesService, Store, ToastrService } from './../../../../@core/services';
 import { SmartTableToggleComponent } from './../../../../@shared/smart-table/smart-table-toggle/smart-table-toggle.component';
+import { ServerDataSource } from './../../../../@core/utils/smart-table';
+import { API_PREFIX } from './../../../../@core/constants';
 
-@UntilDestroy()
+@UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-employees',
+	selector: 'ga-job-employees',
 	templateUrl: './employees.component.html',
 	styleUrls: ['./employees.component.scss']
 })
-export class EmployeesComponent
-	extends TranslationBaseComponent
+export class EmployeesComponent extends PaginationFilterBaseComponent 
 	implements OnInit, OnDestroy {
-	loading: boolean;
 
-	settingsSmartTable: any = {
-		editable: false,
-		actions: false,
-		hideSubHeader: true
-	};
+	loading: boolean = false;
+	settingsSmartTable: any;
 
-	updateJobs$: Subject<any> = new Subject();
-	smartTableSource: LocalDataSource = new LocalDataSource();
+	employees$: Subject<any> = new Subject();
+	smartTableSource: ServerDataSource;
 	organization: IOrganization;
 
 	jobEmployeesTable: Ng2SmartTableComponent;
@@ -44,54 +42,90 @@ export class EmployeesComponent
 	}
 
 	constructor(
-		private store: Store,
-		public translateService: TranslateService,
-		private employeesService: EmployeesService
+		private readonly httpClient: HttpClient,
+		private readonly store: Store,
+		public readonly translateService: TranslateService,
+		private readonly employeesService: EmployeesService,
+		private readonly toastrService: ToastrService
 	) {
 		super(translateService);
 	}
 
 	ngOnInit(): void {
-		this.updateJobs$
+		this._applyTranslationOnSmartTable();
+		this._loadSmartTableSettings();
+		this.employees$
 			.pipe(
-				untilDestroyed(this), 
-				debounceTime(500)
-			)
-			.subscribe(() => {
-				this.getEmployees();
-			});
-		this.store.selectedOrganization$
-			.pipe(
-				filter((organization) => !!organization),
-				tap((organization) => this.organization = organization),
+				debounceTime(100),
+				tap(() => this._getEmployees()),
 				untilDestroyed(this)
 			)
-			.subscribe(() => {
-				this.loadSmartTable();
-				this.updateJobs$.next(true);
-			});
+			.subscribe();
+		this.pagination$
+			.pipe(
+				debounceTime(100),
+				distinctUntilChange(),
+				tap(() => this.employees$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.store.selectedOrganization$
+			.pipe(
+				distinctUntilChange(),
+				filter((organization: IOrganization) => !!organization),
+				tap((organization: IOrganization) => this.organization = organization),
+				tap(() => this.employees$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
-	getEmployees() {
-		this.loading = true;
-		this.employeesService
-			.getEmployeeJobsStatistics({
+	private _getEmployees() {
+		if (!this.organization) {
+			return;
+		}
+		try {
+			this.loading = true;
+
+			const { tenantId } = this.store.user;
+			const { id: organizationId } = this.organization;
+
+			this.smartTableSource = new ServerDataSource(this.httpClient, {
+				endPoint: `${API_PREFIX}/employee/job-statistics`,
 				relations: ['user'],
 				where: {
-					organizationId: this.organization.id,
-					isActive: true
+					tenantId,
+					organizationId,
+					isActive: true,
+					...this.filters.where
+				},
+				finalize: () => {
+					this.setPagination({
+						...this.getPagination(),
+						totalItems: this.smartTableSource.count()
+					});
+					this.loading = false;
 				}
-			})
-			.then((data) => {
-				this.smartTableSource.load(data.items);
-			}).finally(() => {
-				this.loading = false;
 			});
+
+			const { activePage, itemsPerPage } = this.getPagination();
+			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
+		} catch (error) {
+			this.toastrService.danger(error);
+		}
 	}
 
-	loadSmartTable() {
+	private _loadSmartTableSettings() {
+		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
-			...this.settingsSmartTable,
+			editable: false,
+			actions: false,
+			hideSubHeader: true,
+			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA'),
+			pager: {
+				display: false,
+				perPage: pagination ? pagination.itemsPerPage : 10
+			},
 			columns: {
 				employeeId: {
 					title: this.getTranslation('JOB_EMPLOYEE.EMPLOYEE'),
@@ -183,6 +217,15 @@ export class EmployeesComponent
 			this.jobEmployeesTable.grid.dataSet['willSelect'] = 'false';
 			this.jobEmployeesTable.grid.dataSet.deselectAll();
 		}
+	}
+
+	private _applyTranslationOnSmartTable() {
+		this.translateService.onLangChange
+			.pipe(
+				tap(() => this._loadSmartTableSettings()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	ngOnDestroy(): void {}

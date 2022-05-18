@@ -14,6 +14,18 @@
 	</nb-card-header>
 	<nb-card-body class="body">
 		<form [formGroup]="form">
+			<ng-template [ngIf]="!selectedTask">
+				<div class="row">
+					<div class="col-sm-12">
+						<ngx-task-number-field
+							formControlName="number"
+							[formControl]="form.get('number')"
+							[projectId]="form.get('projectId').value"
+							[placeholder]="'TASKS_PAGE.TASK_NUMBER' | translate"
+						></ngx-task-number-field>
+					</div>
+				</div>
+			</ng-template>
 			<div class="row">
 				<div class="col-sm-6">
 					<div class="form-group">
@@ -37,9 +49,7 @@
 						}}</label>
 						<ga-task-status-select
 							formControlName="status"
-							[placeholder]="
-								'TASKS_PAGE.TASKS_STATUS' | translate
-							"
+							[placeholder]="'TASKS_PAGE.TASKS_STATUS' | translate"
 						></ga-task-status-select>
 					</div>
 				</div>
@@ -88,9 +98,7 @@
 								[selected]="selectedTeams"
 								(selectedChange)="onTeamsSelected($event)"
 								fullWidth
-								[placeholder]="
-									'FORM.PLACEHOLDERS.CHOOSE_TEAMS' | translate
-								"
+								[placeholder]="'FORM.PLACEHOLDERS.CHOOSE_TEAMS' | translate"
 							>
 								<nb-option
 									*ngFor="let team of teams"
@@ -126,8 +134,7 @@
 							[selectedTags]="form.get('tags').value"
 							(selectedTagsEvent)="selectedTagsHandler($event)"
 							[isOrgLevel]="true"
-						>
-						</ga-tags-color-input>
+						></ga-tags-color-input>
 					</div>
 				</div>
 			</div>
@@ -211,9 +218,7 @@
 							nbInput
 							fullWidth
 							class="description"
-							[placeholder]="
-								'FORM.PLACEHOLDERS.DESCRIPTION' | translate
-							"
+							[placeholder]="'FORM.PLACEHOLDERS.DESCRIPTION' | translate"
 						></textarea>
 					</div>
 				</div>

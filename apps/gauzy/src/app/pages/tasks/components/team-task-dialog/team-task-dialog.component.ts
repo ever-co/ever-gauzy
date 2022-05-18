@@ -114,6 +114,7 @@ export class TeamTaskDialogComponent
 		// 	this.selectedTeams = [this.employeeId];
 		// }
 		this.form = this.fb.group({
+			number: [{ value: '', disabled: true }],
 			title: [title, Validators.required],
 			project: [project],
 			projectId: (project) ? project.id : null,

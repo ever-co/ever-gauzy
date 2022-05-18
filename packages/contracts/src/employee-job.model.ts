@@ -114,6 +114,11 @@ export enum JobPostTypeEnum {
 	FIX_PRICE = 'FIX_PRICE'
 }
 
+export enum JobSearchTabsEnum {
+    ACTIONS = "ACTIONS",
+    SEARCH = "SEARCH"
+}
+
 export interface IUpdateEmployeeJobPostAppliedResult {
 	isRedirectRequired: boolean;
 }
