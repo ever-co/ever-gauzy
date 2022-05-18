@@ -12,8 +12,9 @@ import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
+import { firstValueFrom, Subject } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
-import { debounceTime, firstValueFrom, pipe, Subject } from 'rxjs';
+import { distinctUntilChange } from '@gauzy/common-angular';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { 
@@ -22,7 +23,6 @@ import {
 	Store,
 	TasksService
 } from '../../../@core/services';
-import { distinctUntilChange } from 'packages/common-angular/dist';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -66,7 +66,7 @@ export class AddTaskDialogComponent extends TranslationBaseComponent implements 
 		self: AddTaskDialogComponent
 	): FormGroup {
 		return fb.group({
-			taskNumber: [],
+			number: [],
 			title: ['', Validators.required],
 			project: [],
 			projectId: [],
@@ -100,21 +100,12 @@ export class AddTaskDialogComponent extends TranslationBaseComponent implements 
 				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
 				tap((organization: IOrganization) => this.organization = organization),
-				tap(() => this.getOneMaximumTaskNumber()),
 				tap(() => this.loadEmployees()),
 				tap(() => this.loadTeams()),
 				tap(() => this.initializeForm()),
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.form.get("projectId").valueChanges
-			.pipe(
-				debounceTime(100),
-				filter((projectId) => !!projectId),
-				tap(() => this.getOneMaximumTaskNumber()),
-				untilDestroyed(this)
-			)
-			.subscribe()
 	}
 
 	initializeForm() {
@@ -233,31 +224,5 @@ export class AddTaskDialogComponent extends TranslationBaseComponent implements 
 
 	onTeamsSelected(teamsSelection: string[]) {
 		this.selectedTeams = teamsSelection;
-	}
-
-	private async getOneMaximumTaskNumber() {
-		if (!this.organization) {
-			return;
-		}
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.organization;
-		const { projectId } = this.form.getRawValue();
-
-		try {
-			this.tasksService
-				.getMaxTaskNumber({
-					tenantId,
-					organizationId,
-					projectId
-				}).
-				pipe(
-					tap((maxNumber: number) => this.form.patchValue({
-						taskNumber: maxNumber + 1
-					}))
-				)
-				.subscribe();
-		} catch (error) {
-			console.log('Error while getting max task number', error);
-		}
 	}
 }

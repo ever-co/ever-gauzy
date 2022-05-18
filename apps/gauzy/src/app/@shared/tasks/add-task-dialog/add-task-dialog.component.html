@@ -16,24 +16,11 @@
 		<form [formGroup]="form">
 			<div class="row">
 				<div class="col-sm-12">
-					<div class="form-group">
-						<label for="taskNumber" class="label">
-							<span>
-								{{
-									'TASKS_PAGE.TASK_NUMBER' | translate
-								}}
-							</span>
-						</label>
-						<input
-							type="number"
-							[min]="0"
-							nbInput
-							[placeholder]="'TASKS_PAGE.TASK_NUMBER' | translate"
-							formControlName="taskNumber"
-							id="taskNumber"
-							fullWidth
-						/>
-					</div>
+					<ngx-task-number-field
+						formControlName="number"
+						[projectId]="form.get('projectId').value"
+						[placeholder]="'TASKS_PAGE.TASK_NUMBER' | translate"
+					></ngx-task-number-field>
 				</div>
 			</div>
 			<div class="row">
@@ -59,9 +46,7 @@
 						}}</label>
 						<ga-task-status-select
 							formControlName="status"
-							[placeholder]="
-								'TASKS_PAGE.TASKS_STATUS' | translate
-							"
+							[placeholder]="'TASKS_PAGE.TASKS_STATUS' | translate"
 						></ga-task-status-select>
 					</div>
 				</div>
@@ -110,9 +95,7 @@
 								[selected]="selectedTeams"
 								(selectedChange)="onTeamsSelected($event)"
 								fullWidth
-								[placeholder]="
-									'FORM.PLACEHOLDERS.CHOOSE_TEAMS' | translate
-								"
+								[placeholder]="'FORM.PLACEHOLDERS.CHOOSE_TEAMS' | translate"
 							>
 								<nb-option
 									*ngFor="let team of teams"
@@ -148,8 +131,7 @@
 							[selectedTags]="form.get('tags').value"
 							(selectedTagsEvent)="selectedTagsHandler($event)"
 							[isOrgLevel]="true"
-						>
-						</ga-tags-color-input>
+						></ga-tags-color-input>
 					</div>
 				</div>
 			</div>
@@ -233,9 +215,7 @@
 							nbInput
 							fullWidth
 							class="description"
-							[placeholder]="
-								'FORM.PLACEHOLDERS.DESCRIPTION' | translate
-							"
+							[placeholder]="'FORM.PLACEHOLDERS.DESCRIPTION' | translate"
 						></textarea>
 					</div>
 				</div>
