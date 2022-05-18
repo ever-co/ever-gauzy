@@ -37,6 +37,7 @@ import { LocationFormModule } from '../../@shared/forms/location';
 import { LeafletMapModule } from '../../@shared/forms/maps/leaflet/leaflet.module';
 import { TranslateModule } from '../../@shared/translate/translate.module';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
+import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
 
 const COMPONENTS = [
 	ContactComponent,
@@ -78,7 +79,8 @@ const COMPONENTS = [
 		NbToggleModule,
 		LocationFormModule,
 		LeafletMapModule,
-		HeaderTitleModule
+		HeaderTitleModule,
+		GauzyButtonActionModule
 	],
 
 	declarations: [...COMPONENTS],
