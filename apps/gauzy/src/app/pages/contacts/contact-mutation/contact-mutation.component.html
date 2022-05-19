@@ -1,10 +1,18 @@
-<nb-card *ngIf="contMainForm" class="card-scroll">
-	<nb-card-header>{{
-		(organizationContact
-			? 'ORGANIZATIONS_PAGE.EDIT.EDIT_CONTACT'
-			: 'ORGANIZATIONS_PAGE.EDIT.ADD_NEW_CONTACT'
-		) | translate
-	}}</nb-card-header>
+<nb-card *ngIf="contMainForm">
+	<nb-card-header class="d-flex">
+		<ngx-back-navigation
+			[haveLink]="true"
+			(click)="cancel()"
+		></ngx-back-navigation>
+		<h4>
+			{{
+				(organizationContact
+					? 'ORGANIZATIONS_PAGE.EDIT.EDIT_CONTACT'
+					: 'ORGANIZATIONS_PAGE.EDIT.ADD_NEW_CONTACT'
+				) | translate
+			}}
+		</h4>
+	</nb-card-header>
 	<nb-card-body>
 		<nb-stepper #stepper disableStepNavigation>
 			<!-- Step 1 Contact Main Form -->
@@ -15,291 +23,316 @@
 				<ng-template #mainStep>
 					{{ 'CONTACTS_PAGE.MAIN' | translate }}
 				</ng-template>
-				<form
-					[formGroup]="contMainForm"
-					(ngSubmit)="contMainForm.markAsDirty()"
-					class="contact-form"
-				>
-					<div class="contact-container">
-						<div class="contact-photo">
-							<ngx-image-uploader
-								(changeHoverState)="hoverState = $event"
-								(uploadedImageUrl)="
-									contMainForm
-										.get('imageUrl')
-										.setValue($event)
-								"
-								(uploadImageError)="
-									handleImageUploadError($event)
-								"
-							></ngx-image-uploader>
-							<svg
-								xmlns="http://www.w3.org/2000/svg"
-								xmlns:xlink="http://www.w3.org/1999/xlink"
-								width="68"
-								height="68"
-								viewBox="0 0 68 68"
-								[ngStyle]="{
-									opacity: hoverState ? '1' : '0.3'
-								}"
-							>
-								<defs>
-									<path
-										id="a"
-										d="M28.667 31.333a2 2 0 1 0-.002-4.001 2 2 0 0 0 .002 4.001m13.333 12H26.748l9.34-7.793c.328-.279.923-.277 1.244-.001l6.001 5.12V42c0 .736-.597 1.333-1.333 1.333M26 24.667h16c.736 0 1.333.597 1.333 1.333v11.152l-4.27-3.643c-1.32-1.122-3.386-1.122-4.694-.008l-9.702 8.096V26c0-.736.597-1.333 1.333-1.333M42 22H26c-2.205 0-4 1.795-4 4v16c0 2.205 1.795 4 4 4h16c2.205 0 4-1.795 4-4V26c0-2.205-1.795-4-4-4"
-									/>
-								</defs>
-								<g fill="none" fill-rule="evenodd">
-									<circle
-										cx="34"
-										cy="34"
-										r="34"
-										fill="#0091FF"
-										opacity=".3"
-									/>
-									<circle
-										cx="34"
-										cy="34"
-										r="26"
-										fill="#0091FF"
-										opacity=".9"
-									/>
-									<use
-										fill="#FFF"
-										fill-rule="nonzero"
-										xlink:href="#a"
-									/>
-								</g>
-							</svg>
-							<div
-								class="image-overlay"
-								[ngStyle]="{
-									opacity: hoverState ? '0.2' : '0'
-								}"
-							></div>
+				<div class="custom-card">
+					<form
+						[formGroup]="contMainForm"
+						(ngSubmit)="contMainForm.markAsDirty()"
+						class="contact-form row"
+					>
+						<div class="contact-container col-3">
+							<div class="contact-photo">
+								<ngx-image-uploader
+									(changeHoverState)="hoverState = $event"
+									(uploadedImageUrl)="
+										contMainForm
+											.get('imageUrl')
+											.setValue($event)
+									"
+									(uploadImageError)="
+										handleImageUploadError($event)
+									"
+								></ngx-image-uploader>
+								<svg
+									xmlns="http://www.w3.org/2000/svg"
+									xmlns:xlink="http://www.w3.org/1999/xlink"
+									width="68"
+									height="68"
+									viewBox="0 0 68 68"
+									[ngStyle]="{
+										opacity: hoverState ? '1' : '0.3'
+									}"
+								>
+									<defs>
+										<path
+											id="a"
+											d="M28.667 31.333a2 2 0 1 0-.002-4.001 2 2 0 0 0 .002 4.001m13.333 12H26.748l9.34-7.793c.328-.279.923-.277 1.244-.001l6.001 5.12V42c0 .736-.597 1.333-1.333 1.333M26 24.667h16c.736 0 1.333.597 1.333 1.333v11.152l-4.27-3.643c-1.32-1.122-3.386-1.122-4.694-.008l-9.702 8.096V26c0-.736.597-1.333 1.333-1.333M42 22H26c-2.205 0-4 1.795-4 4v16c0 2.205 1.795 4 4 4h16c2.205 0 4-1.795 4-4V26c0-2.205-1.795-4-4-4"
+										/>
+									</defs>
+									<g fill="none" fill-rule="evenodd">
+										<circle
+											cx="34"
+											cy="34"
+											r="34"
+											fill="#0091FF"
+											opacity=".3"
+										/>
+										<circle
+											cx="34"
+											cy="34"
+											r="26"
+											fill="#0091FF"
+											opacity=".9"
+										/>
+										<use
+											fill="#FFF"
+											fill-rule="nonzero"
+											xlink:href="#a"
+										/>
+									</g>
+								</svg>
+								<div
+									class="image-overlay"
+									[ngStyle]="{
+										opacity: hoverState ? '0.2' : '0'
+									}"
+								></div>
 
-							<img
-								*ngIf="contMainForm"
-								[src]="contMainForm.get('imageUrl').value"
-								alt="Contact Photo"
-								(mouseenter)="hoverState = true"
-								(mouseleave)="hoverState = false"
-							/>
+								<img
+									*ngIf="contMainForm && contMainForm.get('imageUrl').value !== DUMMY_PROFILE_IMAGE"
+									[src]="contMainForm.get('imageUrl').value"
+									alt="Contact Photo"
+									(mouseenter)="hoverState = true"
+									(mouseleave)="hoverState = false"
+								/>
+								<img
+									*ngIf="contMainForm.get('imageUrl').value === DUMMY_PROFILE_IMAGE"
+									class="custom"
+								/>
+							</div>
 						</div>
-					</div>
-					<div class="fields">
-						<div class="row">
-							<div class="form-group col-4">
-								<label class="label">{{
-									'ORGANIZATIONS_PAGE.EDIT.NAME' | translate
-								}}</label>
-								<input
-									id="name"
-									type="text"
-									#name
-									nbInput
-									fullWidth
-									formControlName="name"
-									[placeholder]="
+						<div class="fields col-9">
+							<div class="row">
+								<div class="form-group col-7">
+									<label class="label">{{
 										'ORGANIZATIONS_PAGE.EDIT.NAME'
 											| translate
-									"
-									[status]="
-										isInvalidControl('name')
-											? 'danger'
-											: 'basic'
-									"
-								/>
-								<ng-container *ngIf="isInvalidControl('name')">
-									<p class="caption status-danger mt-1">
-										{{
-											'TOASTR.MESSAGE.NAME_REQUIRED'
+									}}</label>
+									<input
+										id="name"
+										type="text"
+										#name
+										nbInput
+										fullWidth
+										formControlName="name"
+										[placeholder]="
+											'ORGANIZATIONS_PAGE.EDIT.NAME'
 												| translate
-										}}
-									</p>
-								</ng-container>
+										"
+										[status]="
+											isInvalidControl('name')
+												? 'danger'
+												: 'basic'
+										"
+									/>
+									<ng-container
+										*ngIf="isInvalidControl('name')"
+									>
+										<p class="caption status-danger mt-1">
+											{{
+												'TOASTR.MESSAGE.NAME_REQUIRED'
+													| translate
+											}}
+										</p>
+									</ng-container>
+								</div>
 							</div>
-							<div class="form-group col-4">
-								<label class="label">{{
-									'ORGANIZATIONS_PAGE.EDIT.PRIMARY_EMAIL'
-										| translate
-								}}</label>
-								<input
-									id="email"
-									autofocus
-									pattern=".+@.+\..+"
-									type="email"
-									#email
-									nbInput
-									fullWidth
-									formControlName="primaryEmail"
-									[placeholder]="
+							<div class="row">
+								<div class="form-group col-7">
+									<label class="label">{{
 										'ORGANIZATIONS_PAGE.EDIT.PRIMARY_EMAIL'
 											| translate
-									"
-									[status]="
-										isInvalidControl('primaryEmail')
-											? 'danger'
-											: 'basic'
-									"
-								/>
-								<ng-container
-									*ngIf="isInvalidControl('primaryEmail')"
-								>
-									<p
-										class="caption status-danger mt-1"
-										*ngIf="
-											contMainForm.controls.primaryEmail
-												.errors?.pattern
-										"
-									>
-										{{
-											'TOASTR.MESSAGE.EMAIL_SHOULD_BE_REAL'
+									}}</label>
+									<input
+										id="email"
+										autofocus
+										pattern=".+@.+\..+"
+										type="email"
+										#email
+										nbInput
+										fullWidth
+										formControlName="primaryEmail"
+										[placeholder]="
+											'ORGANIZATIONS_PAGE.EDIT.PRIMARY_EMAIL'
 												| translate
-										}}
-									</p>
-								</ng-container>
-							</div>
-							<div class="form-group col-4">
-								<label class="label">{{
-									'ORGANIZATIONS_PAGE.EDIT.PHONE' | translate
-								}}</label>
-								<input
-									type="text"
-									#phone
-									nbInput
-									fullWidth
-									formControlName="primaryPhone"
-									[placeholder]="
+										"
+										[status]="
+											isInvalidControl('primaryEmail')
+												? 'danger'
+												: 'basic'
+										"
+									/>
+									<ng-container
+										*ngIf="isInvalidControl('primaryEmail')"
+									>
+										<p
+											class="caption status-danger mt-1"
+											*ngIf="
+												contMainForm.controls
+													.primaryEmail.errors
+													?.pattern
+											"
+										>
+											{{
+												'TOASTR.MESSAGE.EMAIL_SHOULD_BE_REAL'
+													| translate
+											}}
+										</p>
+									</ng-container>
+								</div>
+								<div class="form-group col-5">
+									<label class="label">{{
 										'ORGANIZATIONS_PAGE.EDIT.PHONE'
 											| translate
-									"
-								/>
+									}}</label>
+									<input
+										type="text"
+										#phone
+										nbInput
+										fullWidth
+										formControlName="primaryPhone"
+										[placeholder]="
+											'ORGANIZATIONS_PAGE.EDIT.PHONE'
+												| translate
+										"
+									/>
+								</div>
 							</div>
-							<div class="form-group col-4">
-								<label class="label">{{
-									'ORGANIZATIONS_PAGE.EDIT.PROJECTS'
-										| translate
-								}}</label>
-								<ng-select
-									[addTag]="addNewProject"
-									[items]="projects"
-									bindLabel="name"
-									[multiple]="true"
-									[searchable]="true"
-									formControlName="projects"
-									[placeholder]="
-										'ORGANIZATIONS_PAGE.EDIT.PROJECTS'
-											| translate
-									"
-									appendTo="body"
-								>
-								</ng-select>
-							</div>
-							<div class="form-group col-4">
-								<ga-tags-color-input
-									[selectedTags]="tags"
-									(selectedTagsEvent)="
-										selectedTagsEvent($event)
-									"
-									[isOrgLevel]="true"
-								>
-								</ga-tags-color-input>
-							</div>
-							<div class="form-group col-4">
-								<label class="label">{{
-									'CONTACTS_PAGE.CONTACT_TYPE' | translate
-								}}</label>
-								<ng-select
-									#contactType
-									formControlName="contactType"
-									[clearable]="false"
-									[searchable]="false"
-									[(ngModel)]="defaultSelectedType"
-									[placeholder]="
-										'CONTACTS_PAGE.CONTACT_TYPE' | translate
-									"
-									appendTo="body"
-								>
-									<ng-option
-										*ngFor="let type of contactTypes"
-										>{{ type }}</ng-option
-									>
-								</ng-select>
-							</div>
-							<div class="form-group col-4">
-								<label class="label">{{
-									'ORGANIZATIONS_PAGE.EDIT.FAX' | translate
-								}}</label>
-								<input
-									type="text"
-									#fax
-									nbInput
-									fullWidth
-									formControlName="fax"
-									[placeholder]="
-										'ORGANIZATIONS_PAGE.EDIT.FAX'
-											| translate
-									"
-								/>
-							</div>
-							<div class="form-group col-4">
-								<label class="label">{{
-									'ORGANIZATIONS_PAGE.EDIT.FISCAL_INFORMATION'
-										| translate
-								}}</label>
-								<input
-									type="text"
-									#fiscalInformation
-									nbInput
-									fullWidth
-									formControlName="fiscalInformation"
-									[placeholder]="
-										'ORGANIZATIONS_PAGE.EDIT.FISCAL_INFORMATION'
-											| translate
-									"
-								/>
-							</div>
-							<div class="form-group col-4">
-								<label class="label">{{
-									'ORGANIZATIONS_PAGE.EDIT.WEBSITE'
-										| translate
-								}}</label>
-								<input
-									type="text"
-									#website
-									nbInput
-									fullWidth
-									formControlName="website"
-									[placeholder]="
+							<div class="row">
+								<div class="form-group col-7">
+									<label class="label">{{
 										'ORGANIZATIONS_PAGE.EDIT.WEBSITE'
 											| translate
-									"
-								/>
+									}}</label>
+									<input
+										type="text"
+										#website
+										nbInput
+										fullWidth
+										formControlName="website"
+										[placeholder]="
+											'ORGANIZATIONS_PAGE.EDIT.WEBSITE'
+												| translate
+										"
+									/>
+								</div>
+								<div class="form-group col-5">
+									<label class="label">{{
+										'ORGANIZATIONS_PAGE.EDIT.FAX'
+											| translate
+									}}</label>
+									<input
+										type="text"
+										#fax
+										nbInput
+										fullWidth
+										formControlName="fax"
+										[placeholder]="
+											'ORGANIZATIONS_PAGE.EDIT.FAX'
+												| translate
+										"
+									/>
+								</div>
+							</div>
+							<div class="row">
+								<div class="form-group col-7">
+									<label class="label">{{
+										'ORGANIZATIONS_PAGE.EDIT.FISCAL_INFORMATION'
+											| translate
+									}}</label>
+									<input
+										type="text"
+										#fiscalInformation
+										nbInput
+										fullWidth
+										formControlName="fiscalInformation"
+										[placeholder]="
+											'ORGANIZATIONS_PAGE.EDIT.FISCAL_INFORMATION'
+												| translate
+										"
+									/>
+								</div>
+							</div>
+							<div class="row">
+								<div class="form-group col-7">
+									<label class="label">{{
+										'ORGANIZATIONS_PAGE.EDIT.PROJECTS'
+											| translate
+									}}</label>
+									<ng-select
+										[addTag]="addNewProject"
+										[items]="projects"
+										bindLabel="name"
+										[multiple]="true"
+										[searchable]="true"
+										formControlName="projects"
+										[placeholder]="
+											'ORGANIZATIONS_PAGE.EDIT.PROJECTS'
+												| translate
+										"
+										appendTo="body"
+									>
+									</ng-select>
+								</div>
+								<div class="form-group col-5">
+									<label class="label">{{
+										'CONTACTS_PAGE.CONTACT_TYPE' | translate
+									}}</label>
+									<ng-select
+										#contactType
+										formControlName="contactType"
+										[clearable]="false"
+										[searchable]="false"
+										[(ngModel)]="defaultSelectedType"
+										[placeholder]="
+											'CONTACTS_PAGE.CONTACT_TYPE'
+												| translate
+										"
+										appendTo="body"
+									>
+										<ng-option
+											*ngFor="let type of contactTypes"
+											>{{ type }}</ng-option
+										>
+									</ng-select>
+								</div>
+							</div>
+							<div class="row">
+								<div class="form-group col-12">
+									<ga-tags-color-input
+										[selectedTags]="tags"
+										(selectedTagsEvent)="
+											selectedTagsEvent($event)
+										"
+										[isOrgLevel]="true"
+									>
+									</ga-tags-color-input>
+								</div>
 							</div>
 						</div>
-						<div class="row">
-							<div class="form-group col-4">
+						<div class="buttons">
+							<div class="d-flex">
 								<button
 									[disabled]="contMainForm.invalid"
 									nbButton
 									(click)="nextStep()"
-									class="mr-2"
-									status="success"
+									class="green mr-2"
+									status="basic"
+									outline
 								>
 									{{ 'BUTTONS.NEXT' | translate }}
 								</button>
 								<button
 									nbButton
 									(click)="cancel()"
-									status="danger"
+									status="basic"
+									outline
 								>
 									{{ 'BUTTONS.CANCEL' | translate }}
 								</button>
 							</div>
 						</div>
-					</div>
-				</form>
+					</form>
+				</div>
 			</nb-step>
 			<!-- Step 1 Contact Main Form End -->
 
@@ -312,14 +345,16 @@
 					'CONTACTS_PAGE.ADDRESS' | translate
 				}}</ng-template>
 				<form
-					class="step-container"
+					class="step-container custom-card"
 					[formGroup]="locationForm"
 					*ngIf="locationForm"
 					(ngSubmit)="locationForm.markAsDirty()"
 				>
 					<div class="fields">
 						<div class="row">
-							<div class="col-12">
+							<div
+								class="col-5 d-flex flex-column justify-content-between"
+							>
 								<ga-location-form
 									#locationFormDirective
 									[form]="locationForm"
@@ -333,6 +368,8 @@
 									"
 								>
 								</ga-location-form>
+							</div>
+							<div class="col-7">
 								<ng-container
 									*ngIf="stepper._selectedIndex === 1"
 								>
@@ -344,23 +381,36 @@
 								</ng-container>
 							</div>
 						</div>
-						<div>
-							<button nbButton nbStepperPrevious class="mr-2">
-								{{ 'BUTTONS.PREVIOUS' | translate }}
-							</button>
-							<button
-								[disabled]="locationForm.invalid"
-								nbButton
-								status="success"
-								class="mr-2"
-								nbStepperNext
-							>
-								{{ 'BUTTONS.NEXT' | translate }}
-							</button>
-							<button nbButton (click)="cancel()" status="danger">
-								{{ 'BUTTONS.CANCEL' | translate }}
-							</button>
-						</div>
+					</div>
+					<div class="buttons">
+						<button
+							nbButton
+							nbStepperPrevious
+							class="gray mr-2"
+							status="basic"
+							outline
+						>
+							{{ 'BUTTONS.PREVIOUS' | translate }}
+						</button>
+						<button
+							[disabled]="locationForm.invalid"
+							nbButton
+							class="green mr-2"
+							status="basic"
+							outline
+							nbStepperNext
+						>
+							{{ 'BUTTONS.NEXT' | translate }}
+						</button>
+						<button
+							nbButton
+							(click)="cancel()"
+							class="mr-2"
+							status="basic"
+							outline
+						>
+							{{ 'BUTTONS.CANCEL' | translate }}
+						</button>
 					</div>
 				</form>
 			</nb-step>
@@ -373,28 +423,45 @@
 				[label]="'CONTACTS_PAGE.BUDGET' | translate"
 				(ngSubmit)="budgetForm.markAsDirty()"
 			>
-				<form [formGroup]="budgetForm">
+				<form class="custom-card" [formGroup]="budgetForm">
 					<div class="row">
 						<div class="form-group col-6">
-							<label class="label" [innerHtml]="'FORM.PLACEHOLDERS.BUDGET_TYPE' | translate"></label>
+							<label
+								class="label"
+								[innerHtml]="
+									'FORM.PLACEHOLDERS.BUDGET_TYPE' | translate
+								"
+							></label>
 							<nb-select
 								fullWidth
-								[placeholder]="'FORM.PLACEHOLDERS.BUDGET_TYPE' | translate"
+								[placeholder]="
+									'FORM.PLACEHOLDERS.BUDGET_TYPE' | translate
+								"
 								formControlName="budgetType"
 							>
 								<nb-option
-									*ngFor=" let budgetType of organizationContactBudgetTypeEnum | keyvalue "
+									*ngFor="
+										let budgetType of organizationContactBudgetTypeEnum
+											| keyvalue
+									"
 									[value]="budgetType.value"
 								>
 									{{ budgetType.value | titlecase }}
 								</nb-option>
 							</nb-select>
 						</div>
-						<ng-container *ngIf="budgetType === organizationContactBudgetTypeEnum.HOURS">
+						<ng-container
+							*ngIf="
+								budgetType ===
+								organizationContactBudgetTypeEnum.HOURS
+							"
+						>
 							<div class="form-group col-6">
 								<label
 									class="label"
-									[innerHtml]="'FORM.PLACEHOLDERS.HOURS' | translate"
+									[innerHtml]="
+										'FORM.PLACEHOLDERS.HOURS' | translate
+									"
 								></label>
 								<input
 									nbInput
@@ -402,15 +469,24 @@
 									[min]="0"
 									fullWidth
 									formControlName="budget"
-									[placeholder]="'FORM.PLACEHOLDERS.HOURS' | translate"
+									[placeholder]="
+										'FORM.PLACEHOLDERS.HOURS' | translate
+									"
 								/>
 							</div>
 						</ng-container>
-						<ng-container *ngIf="budgetType === organizationContactBudgetTypeEnum.COST">
+						<ng-container
+							*ngIf="
+								budgetType ===
+								organizationContactBudgetTypeEnum.COST
+							"
+						>
 							<div class="form-group col-6">
 								<label
 									class="label"
-									[innerHtml]="'FORM.PLACEHOLDERS.COST' | translate"
+									[innerHtml]="
+										'FORM.PLACEHOLDERS.COST' | translate
+									"
 								></label>
 								<input
 									nbInput
@@ -418,25 +494,40 @@
 									[min]="0"
 									fullWidth
 									formControlName="budget"
-									[placeholder]="'FORM.PLACEHOLDERS.COST' | translate"
+									[placeholder]="
+										'FORM.PLACEHOLDERS.COST' | translate
+									"
 								/>
 							</div>
 						</ng-container>
 					</div>
-					<div>
-						<button nbButton nbStepperPrevious class="mr-2">
+					<div class="buttons">
+						<button
+							nbButton
+							nbStepperPrevious
+							class="gray mr-2"
+							status="basic"
+							outline
+						>
 							{{ 'BUTTONS.PREVIOUS' | translate }}
 						</button>
 						<button
 							[disabled]="budgetForm.invalid"
 							nbButton
-							status="success"
-							class="mr-2"
+							class="green mr-2"
+							status="basic"
+							outline
 							nbStepperNext
 						>
 							{{ 'BUTTONS.NEXT' | translate }}
 						</button>
-						<button nbButton (click)="cancel()" status="danger">
+						<button
+							nbButton
+							(click)="cancel()"
+							class="mr-2"
+							status="basic"
+							outline
+						>
 							{{ 'BUTTONS.CANCEL' | translate }}
 						</button>
 					</div>
@@ -449,7 +540,7 @@
 				<ng-template #membersStep>{{
 					'CONTACTS_PAGE.MEMBERS' | translate
 				}}</ng-template>
-				<div class="fields">
+				<div class="fields custom-card">
 					<div class="row">
 						<div class="col-6">
 							<div class="form-group">
@@ -488,8 +579,14 @@
 							</div>
 						</div>
 					</div>
-					<div>
-						<button nbButton nbStepperPrevious>
+					<div class="buttons">
+						<button
+							class="gray mr-2"
+							status="basic"
+							outline
+							nbButton
+							nbStepperPrevious
+						>
 							{{ 'BUTTONS.PREVIOUS' | translate }}
 						</button>
 						<button

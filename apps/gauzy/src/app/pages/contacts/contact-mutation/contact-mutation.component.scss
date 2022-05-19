@@ -1,11 +1,10 @@
+@import 'gauzy/_gauzy-dialogs';
+
 .contact-container {
-  padding-right: 70px;
-  padding-top: 35px;
-  margin-right: 70px;
-  border-right: 1px solid rgba(0, 0, 0, 0.1);
   transition: transform 150ms ease-in-out;
   display: flex;
   flex-direction: column;
+  position: relative;
 
   .contact-photo {
     width: fit-content;
@@ -22,8 +21,9 @@
     }
 
     img {
-      width: 180px;
-      height: auto;
+      width: 299px;
+      height: 294px;
+      object-fit: cover;
       border-radius: 13px;
     }
 
@@ -70,5 +70,37 @@
     justify-content: space-between;
     margin-top: 15px;
     margin-left: 9px;
+  }
+}
+
+.buttons {
+  position: absolute;
+  left: 1.25rem;
+  bottom: 1.725rem;
+}
+
+h4 {
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 30px;
+  letter-spacing: 0em;
+  text-align: left;
+}
+
+:host {
+
+  nb-card,
+  nb-card-body,
+  nb-card-header {
+    background-color: unset;
+  }
+
+  nb-stepper ::ng-deep .step-content {
+    overflow-y: auto;
+  }
+
+  .custom-card {
+    height: calc(100vh - 29rem);
+    width: 100%;
   }
 }
