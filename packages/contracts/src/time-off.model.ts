@@ -40,6 +40,7 @@ export interface ITimeOff extends IBasePerTenantAndOrganizationEntityModel {
 	employees?: IEmployee[];
 	description?: string;
 	policy?: ITimeOffPolicy;
+	policyId?: ITimeOffPolicy['id'];
 	start: Date;
 	end: Date;
 	requestDate: Date;
