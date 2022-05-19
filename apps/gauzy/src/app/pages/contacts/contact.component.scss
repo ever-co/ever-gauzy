@@ -1,4 +1,5 @@
 @import 'gauzy/_gauzy-table';
+@import 'gauzy/_gauzy-cards';
 
 .contact-list {
   display: flex;
@@ -41,4 +42,25 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+}
+:host{
+  @include card-overrides(
+    unset,
+    $default-card-height,
+    $default-radius
+  );
+  nb-card{
+    background-color: nb-theme(gauzy-card-2);
+  }
+  nb-card-body{
+    display: flex;
+    flex-direction: column;
+    background-color: nb-theme(gauzy-card-2);
+    .custom-table{
+      flex-grow: 10;
+    }
+    .pagination-container{
+      align-self: flex-end;
+    }
+  }
 }
