@@ -945,7 +945,7 @@
 		"GAUZY_LIGHT": "Гаузивый свет",
 		"GAUZY_DARK": "Gauzy Dark",
 		"LANGUAGE": "Язык",
-		"ENGLISH": "Russian",
+		"ENGLISH": "Английский",
 		"BULGARIAN": "Болгарский",
 		"HEBREW": "Иврит",
 		"RUSSIAN": "Русский",
@@ -2399,13 +2399,7 @@
 			"HEADER": "Управление пользователем",
 			"EDIT_EXISTING_USER": "Изменить существующего пользователя",
 			"MAIN": "Главная",
-			"USER_ORGANIZATIONS": "Организации",
-			"PREFERRED_LANGUAGE": {
-				"en": "Russian",
-				"he": "Иврит",
-				"bg": "Болгарский",
-				"ru": "Русский"
-			}
+			"USER_ORGANIZATIONS": "Организации"
 		},
 		"REMOVE_USER": "'{{ name }}' был удален"
 	},
@@ -3665,12 +3659,6 @@
 			"interviewer-interview-schedule": "Расписание интервьюера",
 			"employee-join": "Прием сотрудников",
 			"TEMPLATE_NAMES": "Названия шаблонов"
-		},
-		"LANGUAGE_CODES": {
-			"en": "Russian",
-			"ru": "Русский",
-			"he": "Иврит",
-			"bg": "Болгарский"
 		}
 	},
 	"PIPELINES_PAGE": {
@@ -3797,12 +3785,6 @@
 	"LOADING": "Загрузка, пожалуйста удерживайте....",
 	"ACCOUNTING_TEMPLATES_PAGE": {
 		"HEADER": "Шаблоны счетов",
-		"LANGUAGE_CODES": {
-			"en": "Russian",
-			"ru": "Русский",
-			"he": "Иврит",
-			"bg": "Болгарский"
-		},
 		"TEMPLATE_NAMES": {
 			"invoice": "Счет",
 			"estimate": "Оценить",
