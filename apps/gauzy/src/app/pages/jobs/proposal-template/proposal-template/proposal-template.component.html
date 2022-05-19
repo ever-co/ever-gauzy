@@ -1,8 +1,8 @@
 <nb-card
-	class="card-scroll"
 	[nbSpinner]="loading"
 	nbSpinnerStatus="primary"
 	nbSpinnerSize="large"
+	class="card-scroll"
 >
 	<nb-card-header class="card-header-title">
 		<div class="card-header-title">
@@ -23,14 +23,24 @@
 				[isDisable]="!selectedItem && disableButton"
 			></ngx-gauzy-button-action>
 		</div>
-		<nb-tabset class="mt-4">
-			<nb-tab tabTitle="{{ 'PROPOSAL_TEMPLATE.BROWSE' | translate }}">
-				<ng-container>
+		<nb-tabset (changeTab)="onTabChange($event)" class="mt-4">
+			<nb-tab 
+				[tabTitle]="'PROPOSAL_TEMPLATE.BROWSE' | translate"
+				[tabId]="proposalTemplateTabsEnum.ACTIONS"
+			>
+				<ng-container 
+					*ngIf="(nbTab$ | async) === proposalTemplateTabsEnum.ACTIONS"
+				>
 					<ng-template [ngTemplateOutlet]="tableLayout"></ng-template>
 				</ng-container>
 			</nb-tab>
-			<nb-tab tabTitle="{{ 'PROPOSAL_TEMPLATE.SEARCH' | translate }}">
-				<ng-container>
+			<nb-tab 
+				[tabTitle]="'PROPOSAL_TEMPLATE.SEARCH' | translate"
+				[tabId]="proposalTemplateTabsEnum.SEARCH"
+			>
+				<ng-container 
+					*ngIf="(nbTab$ | async) === proposalTemplateTabsEnum.SEARCH"
+				>
 					<ng-template [ngTemplateOutlet]="tableLayout"></ng-template>
 				</ng-container>
 			</nb-tab>
@@ -107,8 +117,8 @@
 			size="small"
 			(click)="createProposal()"
 		>
-			<nb-icon class="mr-1" icon="plus-outline"></nb-icon
-			>{{ 'BUTTONS.ADD' | translate }}
+			<nb-icon class="mr-1" icon="plus-outline"></nb-icon>
+			{{ 'BUTTONS.ADD' | translate }}
 		</button>
 	</ng-template>
 </ng-template>
@@ -131,8 +141,7 @@
 				[totalItems]="pagination?.totalItems"
 				[itemsPerPage]="pagination?.itemsPerPage"
 				[activePage]="pagination?.activePage"
-			>
-			</ga-pagination>
+			></ga-pagination>
 		</ng-container>
 	</div>
 </ng-template>

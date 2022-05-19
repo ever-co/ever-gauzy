@@ -1,15 +1,16 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import {
 	IEmployeeProposalTemplate,
 	IOrganization,
 	ISelectedEmployee
 } from '@gauzy/contracts';
-import { NbDialogService } from '@nebular/theme';
+import { NbDialogService, NbTabComponent } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { Ng2SmartTableComponent } from 'ng2-smart-table';
 import { distinctUntilChange } from '@gauzy/common-angular';
-import { combineLatest, Subject, firstValueFrom } from 'rxjs';
+import { combineLatest, Subject, firstValueFrom, BehaviorSubject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { AvatarComponent } from './../../../../@shared/components/avatar/avatar.component';
 import { Nl2BrPipe, TruncatePipe } from './../../../../@shared/pipes';
@@ -18,11 +19,15 @@ import { Store, ToastrService } from './../../../../@core/services';
 import { ProposalTemplateService } from '../proposal-template.service';
 import { API_PREFIX } from './../../../../@core/constants';
 import { ServerDataSource } from './../../../../@core/utils/smart-table/server.data-source';
-import { HttpClient } from '@angular/common/http';
 import {
 	PaginationFilterBaseComponent,
 	IPaginationBase
 } from '../../../../@shared/pagination/pagination-filter-base.component';
+
+export enum ProposalTemplateTabsEnum {
+	ACTIONS = 'ACTIONS',
+	SEARCH = 'SEARCH'
+}
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -30,18 +35,20 @@ import {
 	templateUrl: './proposal-template.component.html',
 	styleUrls: ['./proposal-template.component.scss']
 })
-export class ProposalTemplateComponent
-	extends PaginationFilterBaseComponent
-	implements OnInit, OnDestroy
-{
+export class ProposalTemplateComponent extends PaginationFilterBaseComponent 
+	implements OnInit, OnDestroy {
+
 	smartTableSettings: object;
-	disableButton = true;
+	disableButton: boolean = true;
+	loading: boolean = false;
 	smartTableSource: ServerDataSource;
 	selectedEmployee: ISelectedEmployee;
-	subject$: Subject<any> = new Subject();
 	selectedItem: any;
-	loading: boolean;
-	organization: IOrganization;
+
+	proposalTemplateTabsEnum = ProposalTemplateTabsEnum;
+	templates$: Subject<any> = new Subject();
+	public organization: IOrganization;
+	nbTab$: Subject<string> = new BehaviorSubject(ProposalTemplateTabsEnum.ACTIONS);
 
 	proposalTemplateTable: Ng2SmartTableComponent;
 	@ViewChild('proposalTemplateTable') set content(
@@ -61,7 +68,7 @@ export class ProposalTemplateComponent
 		private readonly dialogService: NbDialogService,
 		private readonly nl2BrPipe: Nl2BrPipe,
 		private readonly truncatePipe: TruncatePipe,
-		private readonly httpClient: HttpClient
+		private readonly http: HttpClient
 	) {
 		super(translateService);
 	}
@@ -69,11 +76,19 @@ export class ProposalTemplateComponent
 	ngOnInit(): void {
 		this._applyTranslationOnSmartTable();
 		this._loadSmartTableSettings();
-		this.subject$
+		this.templates$
 			.pipe(
-				debounceTime(300),
+				debounceTime(100),
 				tap(() => this.clearItem()),
 				tap(() => this.getProposalTemplates()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.nbTab$
+			.pipe(
+				debounceTime(100),
+				distinctUntilChange(),
+				tap(() => this.templates$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -81,7 +96,7 @@ export class ProposalTemplateComponent
 			.pipe(
 				debounceTime(100),
 				distinctUntilChange(),
-				tap(() => this.subject$.next(true)),
+				tap(() => this.templates$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -89,17 +104,15 @@ export class ProposalTemplateComponent
 		const storeEmployee$ = this.store.selectedEmployee$;
 		combineLatest([storeOrganization$, storeEmployee$])
 			.pipe(
-				debounceTime(500),
-				filter(([organization]) => !!organization),
-				tap(([organization]) => (this.organization = organization)),
+				debounceTime(300),
 				distinctUntilChange(),
+				filter(([organization]) => !!organization),
 				tap(([organization, employee]) => {
-					if (organization) {
-						this.selectedEmployee =
-							employee && employee.id ? employee : null;
-						this.subject$.next(true);
-					}
+					this.organization = organization;
+					this.selectedEmployee = employee && employee.id ? employee : null;
 				}),
+				tap(() => this.refreshPagination()),
+				tap(() => this.templates$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -120,27 +133,27 @@ export class ProposalTemplateComponent
 	 * Register Smart Table Source Config
 	 */
 	setSmartTableSource() {
+		if (!this.organization) {
+			return;
+		}
 		this.loading = true;
+
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 
 		const request = {};
-		if (this.selectedEmployee) {
-			request['employeeId'] = this.selectedEmployee.id;
-		}
-		this.smartTableSource = new ServerDataSource(this.httpClient, {
+		if (this.selectedEmployee) request['employeeId'] = this.selectedEmployee.id;
+
+		this.smartTableSource = new ServerDataSource(this.http, {
 			endPoint: `${API_PREFIX}/employee-proposal-template/pagination`,
 			relations: ['employee', 'employee.user'],
 			where: {
 				...{ organizationId, tenantId },
-				...request
+				...request,
+				...this.filters.where
 			},
 			finalize: () => {
 				this.loading = false;
-				this.setPagination({
-					...this.getPagination(),
-					totalItems: this.smartTableSource.count()
-				});
 			}
 		});
 	}
@@ -151,8 +164,13 @@ export class ProposalTemplateComponent
 		}
 		try {
 			this.setSmartTableSource();
+
 			const { activePage, itemsPerPage } = this.getPagination();
-			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
+			this.smartTableSource.setPaging(
+				activePage,
+				itemsPerPage,
+				false
+			);
 		} catch (error) {
 			this.toastrService.danger(error);
 		}
@@ -163,16 +181,18 @@ export class ProposalTemplateComponent
 		this.selectedItem = isSelected ? data : null;
 	}
 
-	_loadSmartTableSettings() {
+	private _loadSmartTableSettings() {
 		const pagination: IPaginationBase = this.getPagination();
 		this.smartTableSettings = {
-			editable: false,
-			actions: false,
-			hideSubHeader: true,
 			pager: {
 				display: false,
 				perPage: pagination ? pagination.itemsPerPage : 10
 			},
+			hideSubHeader: true,
+			actions: false,
+			mode: 'external',
+			editable: true,
+			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA'),
 			columns: {
 				employeeId: {
 					title: this.getTranslation('PROPOSAL_TEMPLATE.EMPLOYEE'),
@@ -259,7 +279,7 @@ export class ProposalTemplateComponent
 
 		const data = await firstValueFrom(dialog.onClose);
 		if (data) {
-			this.subject$.next(true);
+			this.templates$.next(true);
 		}
 	}
 
@@ -276,7 +296,7 @@ export class ProposalTemplateComponent
 
 		const data = await firstValueFrom(dialog.onClose);
 		if (data) {
-			this.subject$.next(true);
+			this.templates$.next(true);
 		}
 	}
 
@@ -292,7 +312,7 @@ export class ProposalTemplateComponent
 				);
 			})
 			.finally(() => {
-				this.subject$.next(true);
+				this.templates$.next(true);
 			});
 	}
 
@@ -308,7 +328,7 @@ export class ProposalTemplateComponent
 				);
 			})
 			.finally(() => {
-				this.subject$.next(true);
+				this.templates$.next(true);
 			});
 	}
 
@@ -352,6 +372,10 @@ export class ProposalTemplateComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
+	}
+
+	onTabChange(tab: NbTabComponent) {
+		this.nbTab$.next(tab.tabId);
 	}
 
 	ngOnDestroy(): void {}
