@@ -23,9 +23,8 @@ import { Store, TimeOffService } from "../../../@core/services";
 })
 export class TimeOffPolicySelectComponent implements OnInit {
 	
-	private _policy: ITimeOffPolicy;
-
 	policies: ITimeOffPolicy[] = [];
+
 	public organization: IOrganization;
 	policies$: Subject<any> = new Subject();
 
@@ -35,21 +34,37 @@ export class TimeOffPolicySelectComponent implements OnInit {
 	@Output() selectedChange: EventEmitter<any> = new EventEmitter();
 
 	/*
+	* Getter & Setter for policyId
+	*/
+	private _policyId: string;
+	@Input() set policyId(value: string) {
+		if (value) {
+			this._policyId = value;
+			this.onChange(value);
+			this.onTouched();
+		}
+	}
+	get policyId(): string {
+		return this._policyId;
+	}
+
+	/*
 	* Getter & Setter for policy
 	*/
-	@Input() set policy(val: ITimeOffPolicy) {
-		this._policy = val;
-		this.onChange(val);
-		this.onTouched();
+	private _policy: ITimeOffPolicy;
+	@Input() set policy(value: ITimeOffPolicy) {
+		if (value) {
+			this._policy = value;
+		}
 	}
-	get policy() {
+	get policy(): ITimeOffPolicy {
 		return this._policy;
 	}
 
 	/*
 	* Getter & Setter accessor for dynamic form control
 	*/
-	_ctrl: FormControl = new FormControl(); 
+	private _ctrl: FormControl = new FormControl(); 
 	get ctrl(): FormControl {
 		return this._ctrl;
 	}
@@ -60,7 +75,7 @@ export class TimeOffPolicySelectComponent implements OnInit {
 	/*
 	* Getter & Setter for dynamic placeholder
 	*/
-	_placeholder: string;
+	private _placeholder: string;
 	get placeholder(): string {
 		return this._placeholder;
 	}
@@ -69,7 +84,7 @@ export class TimeOffPolicySelectComponent implements OnInit {
 	}
 
 	// ID attribute for the field and for attribute for the label
-	_id: string;
+	private _id: string;
 	get id(): string {
 		return this._id;
 	}
@@ -100,9 +115,9 @@ export class TimeOffPolicySelectComponent implements OnInit {
 			.subscribe();
 	}
 
-	writeValue(value: ITimeOffPolicy) {
-		if (value) {
-			this.policy = value;
+	writeValue(policyId: ITimeOffPolicy['id']) {
+		if (policyId) {
+			this.policyId = policyId;
 		}
 	}
 
@@ -119,8 +134,9 @@ export class TimeOffPolicySelectComponent implements OnInit {
 	 * 
 	 * @param selectedItem 
 	 */
-	onSelectedChange(policy: ITimeOffPolicy) {
-		this.selectedChange.emit(policy || null);
+	onSelectedChange(policyId: string) {
+		this.policy = this.getPolicyById(policyId);
+		this.selectedChange.emit(this.policy || null);
 	}
 
 	/**
@@ -145,5 +161,11 @@ export class TimeOffPolicySelectComponent implements OnInit {
 			tap(({ items }) => this.policies = items)
 		)
 		.subscribe();
+	}
+
+	getPolicyById(policyId: ITimeOffPolicy['id']) {
+		return this.policies.find(
+			(policy: ITimeOffPolicy) => policyId === policy.id
+		);
 	}
 }
