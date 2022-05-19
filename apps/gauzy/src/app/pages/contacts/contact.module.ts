@@ -82,7 +82,8 @@ const COMPONENTS = [
 		LeafletMapModule,
 		HeaderTitleModule,
 		GauzyButtonActionModule,
-		PaginationModule
+		PaginationModule,
+		CardGridModule
 	],
 
 	declarations: [...COMPONENTS],

@@ -38,11 +38,8 @@ import { ComponentEnum } from '../../@core/constants';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import {
 	EmployeeWithLinksComponent,
-	PictureNameTagsComponent,
-	ProjectComponent,
-	TaskTeamsComponent
+	ProjectComponent
 } from '../../@shared/table-components';
-import { ContactActionComponent } from './table-components';
 import {
 	IPaginationBase,
 	PaginationFilterBaseComponent
@@ -243,7 +240,7 @@ export class ContactComponent
 				projects: {
 					title: this.getTranslation('CONTACTS_PAGE.PROJECTS'),
 					type: 'custom',
-					renderComponent: ProjectComponent,
+					renderComponent: ProjectComponent
 				},
 				country: {
 					title: this.getTranslation('CONTACTS_PAGE.COUNTRY'),
@@ -265,7 +262,7 @@ export class ContactComponent
 	}
 
 	public onUpdateResult(params: any) {
-		if(params) this.invite(params);
+		if (params) this.invite(params);
 	}
 
 	selectContact({ isSelected, data }) {
@@ -306,7 +303,10 @@ export class ContactComponent
 		this.viewComponentName = ComponentEnum.CONTACTS;
 		this.store
 			.componentLayout$(this.viewComponentName)
-			.pipe(untilDestroyed(this))
+			.pipe(
+				tap(() => this.refreshPagination()),
+				untilDestroyed(this)
+			)
 			.subscribe((componentLayout) => {
 				this.dataLayoutStyle = componentLayout;
 				this.selectedOrganizationContact =
@@ -410,6 +410,7 @@ export class ContactComponent
 				);
 				this.organizationContacts = result;
 				this.smartTableSource.load(result);
+				this._loadGridLayoutData();
 				this.setPagination({
 					...this.getPagination(),
 					totalItems: this.smartTableSource.count()
@@ -424,6 +425,12 @@ export class ContactComponent
 				this.loading = false;
 				this.cd.detectChanges();
 			});
+	}
+
+	private async _loadGridLayoutData() {
+		if (this.componentLayoutStyleEnum.CARDS_GRID === this.dataLayoutStyle) {
+			this.organizationContacts = await this.smartTableSource.getElements();
+		}
 	}
 
 	private async loadProjectsWithoutOrganizationContacts() {
