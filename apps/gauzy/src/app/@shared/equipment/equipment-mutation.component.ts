@@ -1,17 +1,14 @@
 import { OnInit, Component } from '@angular/core';
-import { TranslationBaseComponent } from '../language-base/translation-base.component';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { IEquipment, ITag, IOrganization, IImageAsset } from '@gauzy/contracts';
-import { NbDialogRef } from '@nebular/theme';
-import { EquipmentService } from '../../@core/services/equipment.service';
+import { NbDialogRef, NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { Store } from '../../@core/services/store.service';
-import { environment as ENV } from 'apps/gauzy/src/environments/environment';
-import { NbDialogService } from '@nebular/theme';
-import { SelectAssetComponent } from 'apps/gauzy/src/app/@shared/select-asset-modal/select-asset.component';
-import { Subject, firstValueFrom } from 'rxjs';
+import { Subject, firstValueFrom, filter, tap } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ImageAssetService, ToastrService } from '../../@core';
+import { TranslationBaseComponent } from '../language-base/translation-base.component';
+import { EquipmentService, ImageAssetService, Store, ToastrService } from '../../@core/services';
+import { environment as ENV } from './../../../environments/environment';
+import { SelectAssetComponent } from './../../@shared/select-asset-modal/select-asset.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -19,16 +16,13 @@ import { ImageAssetService, ToastrService } from '../../@core';
 	templateUrl: './equipment-mutation.component.html',
 	styleUrls: ['./equipment-mutation.component.scss']
 })
-export class EquipmentMutationComponent
-	extends TranslationBaseComponent
+export class EquipmentMutationComponent extends TranslationBaseComponent 
 	implements OnInit {
+
 	form: FormGroup;
 	equipment: IEquipment;
 	image: IImageAsset;
 	selectedCurrency: string;
-	tags: ITag[] = [];
-	selectedTags: any;
-	selectedOrganization: IOrganization;
 	organization: IOrganization;
 	hoverState = false;
 
@@ -36,14 +30,14 @@ export class EquipmentMutationComponent
 	private newImageStoredEvent$ = new Subject<any>();
 
 	constructor(
-		public dialogRef: NbDialogRef<EquipmentMutationComponent>,
-		private dialogService: NbDialogService,
-		private equipmentService: EquipmentService,
-		private fb: FormBuilder,
+		public readonly dialogRef: NbDialogRef<EquipmentMutationComponent>,
+		private readonly dialogService: NbDialogService,
+		private readonly equipmentService: EquipmentService,
+		private readonly fb: FormBuilder,
 		readonly translationService: TranslateService,
 		readonly store: Store,
-		private imageAssetService: ImageAssetService,
-		private toastrService: ToastrService
+		private readonly imageAssetService: ImageAssetService,
+		private readonly toastrService: ToastrService
 	) {
 		super(translationService);
 	}
@@ -54,17 +48,14 @@ export class EquipmentMutationComponent
 			: ENV.DEFAULT_CURRENCY;
 
 		this.initializeForm();
-
 		this.image = this.equipment?.image || null;
-
 		this.store.selectedOrganization$
-			.pipe(untilDestroyed(this))
-			.subscribe((organization: IOrganization) => {
-				if (organization) {
-					this.organization = organization;
-				}
-			});
-
+			.pipe(
+				filter((organization: IOrganization) => !!organization),
+				tap((organization: IOrganization) => this.organization = organization),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this.newImageUploadedEvent$
 			.pipe(untilDestroyed(this))
 			.subscribe(async (resultData) => {
@@ -81,10 +72,8 @@ export class EquipmentMutationComponent
 				let result = await this.imageAssetService.createImageAsset(
 					newAsset
 				);
-
 				if (result) {
 					this.toastrService.success('INVENTORY_PAGE.IMAGE_SAVED');
-
 					this.newImageStoredEvent$.next(result);
 				}
 			});
@@ -121,7 +110,6 @@ export class EquipmentMutationComponent
 			],
 			id: [this.equipment ? this.equipment.id : null]
 		});
-		this.tags = this.form.get('tags').value || [];
 	}
 
 	async onAddImageClick() {
@@ -142,16 +130,20 @@ export class EquipmentMutationComponent
 	}
 
 	async saveEquipment() {
+		if (!this.organization) {
+			return;
+		}
 		if (!this.form.get('id').value) {
 			delete this.form.value['id'];
 		}
 		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
+
 		const equipment = await this.equipmentService.save({
 			...this.form.value,
-			tags: this.tags,
-			organizationId: this.selectedOrganization.id,
-			image: this.image,
-			tenantId
+			tenantId,
+			organizationId,
+			image: this.image
 		});
 		this.closeDialog(equipment);
 	}
@@ -160,7 +152,8 @@ export class EquipmentMutationComponent
 		this.dialogRef.close(equipment);
 	}
 
-	selectedTagsEvent(currentTagSelection: ITag[]) {
-		this.tags = currentTagSelection;
+	selectedTagsEvent(selectedTags: ITag[]) {
+		this.form.get('tags').setValue(selectedTags);
+		this.form.get('tags').updateValueAndValidity();
 	}
 }
