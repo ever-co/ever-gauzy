@@ -118,8 +118,9 @@
 		"VIEW_REPORT": "View Report",
 		"TIME_TRACKING_ENABLE": "Enable Time Tracking",
 		"TIME_TRACKING_DISABLE": "Disable Time Tracking",
-    "PRINT": "Print",
-    "FEEDBACK":"Feedback"
+		"PRINT": "Print",
+		"FEEDBACK":"Feedback",
+		"EQUIPMENT_SHARING": "Equipment Sharing"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "Type",
@@ -2398,13 +2399,7 @@
 			"HEADER": "Manage User",
 			"EDIT_EXISTING_USER": "Edit Existing User",
 			"MAIN": "Main",
-			"USER_ORGANIZATIONS": "Organizations",
-			"PREFERRED_LANGUAGE": {
-				"en": "English",
-				"he": "Hebrew",
-				"bg": "Bulgarian",
-				"ru": "Russian"
-			}
+			"USER_ORGANIZATIONS": "Organizations"
 		},
 		"REMOVE_USER": "'{{ name }}' was removed"
 	},
@@ -3664,12 +3659,6 @@
 			"interviewer-interview-schedule": "Interviewer Schedule",
 			"employee-join": "Employee Join",
 			"TEMPLATE_NAMES": "Template Names"
-		},
-		"LANGUAGE_CODES": {
-			"en": "English",
-			"ru": "Russian",
-			"he": "Hebrew",
-			"bg": "Bulgarian"
 		}
 	},
 	"PIPELINES_PAGE": {
@@ -3796,12 +3785,6 @@
 	"LOADING": "Loading, please hold....",
 	"ACCOUNTING_TEMPLATES_PAGE": {
 		"HEADER": "Accounting Templates",
-		"LANGUAGE_CODES": {
-			"en": "English",
-			"ru": "Russian",
-			"he": "Hebrew",
-			"bg": "Bulgarian"
-		},
 		"TEMPLATE_NAMES": {
 			"invoice": "Invoice",
 			"estimate": "Estimate",

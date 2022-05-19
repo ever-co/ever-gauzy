@@ -1,17 +1,14 @@
-import { CurrenciesEnum, IEquipmentSharing, IImageAsset, ITag } from "@gauzy/contracts";
+import { IEquipmentSharing, IImageAsset } from "@gauzy/contracts";
 import { ApiProperty } from "@nestjs/swagger";
-import { IsBoolean, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString } from "class-validator";
+import { IsBoolean, IsNotEmpty, IsNumber, IsOptional, IsString } from "class-validator";
+import { TenantOrganizationBaseDTO } from "./../../core/dto";
 
-export abstract class EquipmentDTO {
+export class EquipmentDTO extends TenantOrganizationBaseDTO {
 
     @ApiProperty({ type: () => String })
     @IsNotEmpty()
     @IsString()
     readonly name: string;
-
-    @ApiProperty({ type: () => String, enum: CurrenciesEnum })
-	@IsEnum(CurrenciesEnum)
-	readonly currency: CurrenciesEnum;
 
     @ApiProperty({ type: () => String })
     @IsOptional()
@@ -50,8 +47,4 @@ export abstract class EquipmentDTO {
     @ApiProperty({ type: () => Object })
     @IsOptional()
     readonly equipmentSharings: IEquipmentSharing[];
-
-    @ApiProperty({ type: () => Object })
-    @IsOptional()
-    readonly tags: ITag[];
 }

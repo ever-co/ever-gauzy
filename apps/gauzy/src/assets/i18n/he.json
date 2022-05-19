@@ -119,7 +119,8 @@
 		"TIME_TRACKING_ENABLE": "Enable Time Tracking",
 		"TIME_TRACKING_DISABLE": "Disable Time Tracking",
 		"PRINT": "Print",
-		"FEEDBACK": "Feedback"
+		"FEEDBACK": "Feedback",
+		"EQUIPMENT_SHARING": "Equipment Sharing"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "סוג",
@@ -2261,6 +2262,8 @@
 		"TASK_MEMBERS": "עובדים",
 		"TASK_ASSIGNED_TO": "Assigned To",
 		"TASK_TEAMS": "Teams",
+		"TASK_ID": "ID",
+		"TASK_NUMBER": "Task Number",
 		"DUE_DATE": "Due Date",
 		"ESTIMATE": "Estimate",
 		"ESTIMATE_DAYS": "Days",
@@ -2396,13 +2399,7 @@
 			"HEADER": "Manage User",
 			"EDIT_EXISTING_USER": "Edit Existing User",
 			"MAIN": "עיקרי",
-			"USER_ORGANIZATIONS": "ארגונים",
-			"PREFERRED_LANGUAGE": {
-				"en": "English",
-				"he": "Hebrew",
-				"bg": "Bulgarian",
-				"ru": "Russian"
-			}
+			"USER_ORGANIZATIONS": "ארגונים"
 		},
 		"REMOVE_USER": "'{{ name }}' was removed"
 	},
@@ -3662,12 +3659,6 @@
 			"interviewer-interview-schedule": "Interviewer Schedule",
 			"employee-join": "Employee Join",
 			"TEMPLATE_NAMES": "Template Names"
-		},
-		"LANGUAGE_CODES": {
-			"en": "English",
-			"ru": "Russian",
-			"he": "Hebrew",
-			"bg": "Bulgarian"
 		}
 	},
 	"PIPELINES_PAGE": {
@@ -3794,12 +3785,6 @@
 	"LOADING": "Loading, please hold....",
 	"ACCOUNTING_TEMPLATES_PAGE": {
 		"HEADER": "Accounting Templates",
-		"LANGUAGE_CODES": {
-			"en": "English",
-			"ru": "Russian",
-			"he": "Hebrew",
-			"bg": "Bulgarian"
-		},
 		"TEMPLATE_NAMES": {
 			"invoice": "Invoice",
 			"estimate": "Estimate",

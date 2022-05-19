@@ -1,5 +1,4 @@
-import { CrudController } from './../core/crud';
-import { Equipment } from './equipment.entity';
+import { CrudController, PaginationParams } from './../core/crud';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import {
 	Controller,
@@ -14,8 +13,9 @@ import {
 	UsePipes,
 	ValidationPipe
 } from '@nestjs/common';
-import { EquipmentService } from './equipment.service';
 import { IEquipment, IPagination } from '@gauzy/contracts';
+import { Equipment } from './equipment.entity';
+import { EquipmentService } from './equipment.service';
 import { TenantPermissionGuard } from './../shared/guards';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { CreateEquipmentDTO, UpdateEquipmentDTO } from './dto';
@@ -24,8 +24,30 @@ import { CreateEquipmentDTO, UpdateEquipmentDTO } from './dto';
 @UseGuards(TenantPermissionGuard)
 @Controller()
 export class EquipmentController extends CrudController<Equipment> {
-	constructor(private readonly equipmentService: EquipmentService) {
+	constructor(
+		private readonly equipmentService: EquipmentService
+	) {
 		super(equipmentService);
+	}
+
+	@ApiOperation({
+		summary: 'Find all equipment sharings by pagination'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found equipment sharings',
+		type: Equipment
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Get('pagination')
+	@UsePipes(new ValidationPipe({ transform: true }))
+	async pagination(
+		@Query() filter: PaginationParams<IEquipment>
+	): Promise<IPagination<IEquipment>> {
+		return this.equipmentService.paginate(filter);
 	}
 
 	@ApiOperation({
@@ -64,7 +86,7 @@ export class EquipmentController extends CrudController<Equipment> {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Post()
-	@UsePipes( new ValidationPipe({ transform : true }) )
+	@UsePipes(new ValidationPipe({ transform : true }))
 	async create(
 		@Body() entity: CreateEquipmentDTO,
 	): Promise<IEquipment> {
@@ -88,7 +110,7 @@ export class EquipmentController extends CrudController<Equipment> {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Put(':id')
-	@UsePipes( new ValidationPipe({ transform : true }))
+	@UsePipes(new ValidationPipe({ transform : true }))
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: UpdateEquipmentDTO,

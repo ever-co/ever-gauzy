@@ -119,7 +119,8 @@
 		"TIME_TRACKING_ENABLE": "Включить отслеживание времени",
 		"TIME_TRACKING_DISABLE": "Отключить отслеживание времени",
 		"PRINT": "Печать",
-		"FEEDBACK": "Отзыв"
+		"FEEDBACK": "Отзыв",
+		"EQUIPMENT_SHARING": "Совместное использование снаряжения"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "Тип",
@@ -2261,6 +2262,8 @@
 		"TASK_MEMBERS": "Сотрудники",
 		"TASK_ASSIGNED_TO": "Назначено",
 		"TASK_TEAMS": "Команды",
+		"TASK_ID": "ID",
+		"TASK_NUMBER": "Номер задачи",
 		"DUE_DATE": "Срок сдачи",
 		"ESTIMATE": "Оценить",
 		"ESTIMATE_DAYS": "Дней",
@@ -2396,13 +2399,7 @@
 			"HEADER": "Управление пользователем",
 			"EDIT_EXISTING_USER": "Изменить существующего пользователя",
 			"MAIN": "Главная",
-			"USER_ORGANIZATIONS": "Организации",
-			"PREFERRED_LANGUAGE": {
-				"en": "Russian",
-				"he": "Иврит",
-				"bg": "Болгарский",
-				"ru": "Русский"
-			}
+			"USER_ORGANIZATIONS": "Организации"
 		},
 		"REMOVE_USER": "'{{ name }}' был удален"
 	},
@@ -3662,12 +3659,6 @@
 			"interviewer-interview-schedule": "Расписание интервьюера",
 			"employee-join": "Прием сотрудников",
 			"TEMPLATE_NAMES": "Названия шаблонов"
-		},
-		"LANGUAGE_CODES": {
-			"en": "Russian",
-			"ru": "Русский",
-			"he": "Иврит",
-			"bg": "Болгарский"
 		}
 	},
 	"PIPELINES_PAGE": {
@@ -3794,12 +3785,6 @@
 	"LOADING": "Загрузка, пожалуйста удерживайте....",
 	"ACCOUNTING_TEMPLATES_PAGE": {
 		"HEADER": "Шаблоны счетов",
-		"LANGUAGE_CODES": {
-			"en": "Russian",
-			"ru": "Русский",
-			"he": "Иврит",
-			"bg": "Болгарский"
-		},
 		"TEMPLATE_NAMES": {
 			"invoice": "Счет",
 			"estimate": "Оценить",

@@ -119,7 +119,8 @@
 		"TIME_TRACKING_ENABLE": "Enable Time Tracking",
 		"TIME_TRACKING_DISABLE": "Disable Time Tracking",
 		"PRINT": "Print",
-		"FEEDBACK": "Feedback"
+		"FEEDBACK": "Feedback",
+		"EQUIPMENT_SHARING": "Equipment Sharing"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "Тип",
@@ -2261,6 +2262,8 @@
 		"TASK_MEMBERS": "Служители",
 		"TASK_ASSIGNED_TO": "Assigned To",
 		"TASK_TEAMS": "Отбори",
+		"TASK_ID": "ID",
+		"TASK_NUMBER": "Task Number",
 		"DUE_DATE": "Due Date",
 		"ESTIMATE": "Estimate",
 		"ESTIMATE_DAYS": "Days",
@@ -2396,13 +2399,7 @@
 			"HEADER": "Manage User",
 			"EDIT_EXISTING_USER": "Edit Existing User",
 			"MAIN": "Основни",
-			"USER_ORGANIZATIONS": "Организации",
-			"PREFERRED_LANGUAGE": {
-				"en": "English",
-				"he": "Иврит",
-				"bg": "Български",
-				"ru": "Руски"
-			}
+			"USER_ORGANIZATIONS": "Организации"
 		},
 		"REMOVE_USER": "'{{ name }}' was removed"
 	},
@@ -3662,12 +3659,6 @@
 			"interviewer-interview-schedule": "Interviewer Schedule",
 			"employee-join": "Employee Join",
 			"TEMPLATE_NAMES": "Template Names"
-		},
-		"LANGUAGE_CODES": {
-			"en": "English",
-			"ru": "Руски",
-			"he": "Иврит",
-			"bg": "Български"
 		}
 	},
 	"PIPELINES_PAGE": {
@@ -3794,12 +3785,6 @@
 	"LOADING": "Loading, please hold....",
 	"ACCOUNTING_TEMPLATES_PAGE": {
 		"HEADER": "Accounting Templates",
-		"LANGUAGE_CODES": {
-			"en": "English",
-			"ru": "Руски",
-			"he": "Иврит",
-			"bg": "Български"
-		},
 		"TEMPLATE_NAMES": {
 			"invoice": "Фактура",
 			"estimate": "Estimate",
