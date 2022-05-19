@@ -75,9 +75,9 @@
 		</ng-template>
 		<nb-tabset (changeTab)="onChangeTab($event)">
 			<nb-tab
-				class="remove-scroll"
 				[tabTitle]="'INVOICES_PAGE.BROWSE' | translate | titlecase"
 				[tabId]="invoiceTabsEnum.ACTIONS"
+				class="remove-scroll"
 			>
 				<ng-container *ngIf="(nbTab$ | async) === invoiceTabsEnum.ACTIONS">
 					<ng-template
@@ -91,10 +91,9 @@
 				</ng-container>
 			</nb-tab>
 			<nb-tab
-				class="remove-scroll"
 				[tabTitle]="'INVOICES_PAGE.SEARCH' | translate | titlecase"
-				tabId="search"
 				[tabId]="invoiceTabsEnum.SEARCH"
+				class="remove-scroll"
 			>
 				<nb-accordion class="mb-3">
 					<nb-accordion-item collapsed="false">
@@ -564,8 +563,7 @@
 						[totalItems]="pagination?.totalItems"
 						[itemsPerPage]="pagination?.itemsPerPage"
 						[activePage]="pagination?.activePage"
-					>
-					</ga-pagination>
+					></ga-pagination>
 				</ng-container>
 			</div>
 		</ng-template>
