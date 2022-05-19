@@ -1,11 +1,7 @@
 <nb-card>
-	<nb-card-header class="d-flex">
-		<h5>{{ 'ORGANIZATIONS_PAGE.INVITE_CONTACT' | translate }}</h5>
-		<nb-icon
-			class="ml-auto mt-1 close"
-			icon="close-outline"
-			(click)="closeDialog()"
-		></nb-icon>
+	<nb-card-header class="d-flex flex-column">
+		<span class="cancel"><i class="fas fa-times" (click)="closeDialog()"></i></span>
+		<h5 class="title">{{ 'ORGANIZATIONS_PAGE.INVITE_CONTACT' | translate }}</h5>
 	</nb-card-header>
 	<nb-card-body>
 		<form [formGroup]="form" *ngIf="form">
@@ -126,13 +122,14 @@
 			</div>
 		</form>
 	</nb-card-body>
-	<nb-card-footer class="text-right">
-		<button class="mr-2" status="danger" (click)="closeDialog()" nbButton>
+	<nb-card-footer class="text-left">
+		<button class="mr-2" status="basic" size="small" outline (click)="closeDialog()" nbButton>
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
 		<button
 			class="mr-2"
 			status="success"
+			size="small"
 			[disabled]="form.invalid"
 			(click)="inviteContact()"
 			nbButton
