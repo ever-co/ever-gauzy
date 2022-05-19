@@ -119,7 +119,8 @@
 		"TIME_TRACKING_ENABLE": "crwdns10940:0crwdne10940:0",
 		"TIME_TRACKING_DISABLE": "crwdns10942:0crwdne10942:0",
 		"PRINT": "crwdns11070:0crwdne11070:0",
-		"FEEDBACK": "crwdns11132:0crwdne11132:0"
+		"FEEDBACK": "crwdns11132:0crwdne11132:0",
+		"EQUIPMENT_SHARING": "crwdns11146:0crwdne11146:0"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "crwdns7534:0crwdne7534:0",
