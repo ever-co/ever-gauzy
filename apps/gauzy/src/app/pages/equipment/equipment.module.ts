@@ -20,6 +20,8 @@ import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
 import { AutoApproveComponent } from './auto-approve/auto-approve.component';
 import { TranslateModule } from '../../@shared/translate/translate.module';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
+import { PaginationModule } from '../../@shared/pagination/pagination.module';
+import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
 
 @NgModule({
 	imports: [
@@ -38,7 +40,9 @@ import { HeaderTitleModule } from '../../@shared/components/header-title/header-
 		CardGridModule,
 		TranslateModule,
 		NbSpinnerModule,
-		HeaderTitleModule
+		HeaderTitleModule,
+		PaginationModule,
+		GauzyButtonActionModule
 	],
 	providers: [EquipmentService],
 	declarations: [EquipmentComponent, AutoApproveComponent]

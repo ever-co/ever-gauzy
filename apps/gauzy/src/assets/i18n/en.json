@@ -118,8 +118,9 @@
 		"VIEW_REPORT": "View Report",
 		"TIME_TRACKING_ENABLE": "Enable Time Tracking",
 		"TIME_TRACKING_DISABLE": "Disable Time Tracking",
-    "PRINT": "Print",
-    "FEEDBACK":"Feedback"
+		"PRINT": "Print",
+		"FEEDBACK":"Feedback",
+		"EQUIPMENT_SHARING": "Equipment Sharing"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "Type",

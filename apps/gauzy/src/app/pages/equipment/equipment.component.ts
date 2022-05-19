@@ -1,47 +1,48 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
+import { HttpClient } from '@angular/common/http';
+import { Router } from '@angular/router';
 import {
 	IEquipment,
 	ComponentLayoutStyleEnum,
 	IOrganization
 } from '@gauzy/contracts';
-import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
-import { FormGroup } from '@angular/forms';
+import { Ng2SmartTableComponent } from 'ng2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService } from '@nebular/theme';
-import { EquipmentService } from '../../@core/services/equipment.service';
-import { EquipmentMutationComponent } from '../../@shared/equipment/equipment-mutation.component';
+import { debounceTime, firstValueFrom, Subject } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
-import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
-import { AutoApproveComponent } from './auto-approve/auto-approve.component';
-import { Router, RouterEvent, NavigationEnd } from '@angular/router';
-import { PictureNameTagsComponent } from '../../@shared/table-components/picture-name-tags/picture-name-tags.component';
-import { ComponentEnum } from '../../@core/constants/layout.constants';
-import { Store } from '../../@core/services/store.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ToastrService } from '../../@core/services/toastr.service';
-import { ImageRowComponent } from '../inventory/components/table-components/image-row.component';
-import { firstValueFrom } from 'rxjs';
+import { distinctUntilChange } from '@gauzy/common-angular';
+import { EquipmentMutationComponent } from '../../@shared/equipment/equipment-mutation.component';
+import { IPaginationBase, PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
+import { DeleteConfirmationComponent } from '../../@shared/user/forms';
+import { AutoApproveComponent } from './auto-approve/auto-approve.component';
+import { PictureNameTagsComponent } from '../../@shared/table-components';
+import { API_PREFIX, ComponentEnum } from '../../@core/constants';
+import { EquipmentService, Store, ToastrService } from '../../@core/services';
+import { ImageRowComponent } from '../inventory/components/table-components';
+import { ServerDataSource } from '../../@core/utils/smart-table';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
 	templateUrl: './equipment.component.html',
 	styleUrls: ['./equipment.component.scss']
 })
-export class EquipmentComponent
-	extends TranslationBaseComponent
+export class EquipmentComponent extends PaginationFilterBaseComponent 
 	implements OnInit, OnDestroy {
+
 	settingsSmartTable: object;
-	loading = true;
+	loading: boolean = true;
+	disableButton: boolean = true;
 	selectedEquipment: IEquipment;
-	smartTableSource = new LocalDataSource();
-	form: FormGroup;
-	tags: any;
-	selectedTags: any;
-	equipmentsData: IEquipment[];
-	disableButton = true;
+	smartTableSource: ServerDataSource;
+	equipments: IEquipment[] = [];
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
+	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
+
+	public organization: IOrganization;
+	equipments$: Subject<any> = this.subject$;
 
 	equipmentTable: Ng2SmartTableComponent;
 	@ViewChild('equipmentTable') set content(content: Ng2SmartTableComponent) {
@@ -50,53 +51,57 @@ export class EquipmentComponent
 			this.onChangedSource();
 		}
 	}
-	selectedOrganization: IOrganization;
 
 	constructor(
-		readonly translateService: TranslateService,
-		private dialogService: NbDialogService,
-		private equipmentService: EquipmentService,
-		private toastrService: ToastrService,
-		private router: Router,
-		private store: Store
+		public readonly translateService: TranslateService,
+		private readonly dialogService: NbDialogService,
+		private readonly equipmentService: EquipmentService,
+		private readonly toastrService: ToastrService,
+		private readonly router: Router,
+		private readonly store: Store,
+		private readonly http: HttpClient
 	) {
 		super(translateService);
 		this.setView();
 	}
 
 	ngOnInit(): void {
-		this.loadSmartTable();
+		this._loadSmartTableSettings();
 		this._applyTranslationOnSmartTable();
-		this.router.events
-			.pipe(untilDestroyed(this))
-			.subscribe((event: RouterEvent) => {
-				if (event instanceof NavigationEnd) {
-					this.setView();
-				}
-			});
-		this.store.selectedOrganization$
+		this.equipments$
 			.pipe(
-				filter((organization) => !!organization),
+				debounceTime(100),
+				tap(() => this.clearItem()),
+				tap(() => this.getEquipments()),
 				untilDestroyed(this)
 			)
-			.subscribe((organization) => {
-				if (organization) {
-					this.selectedOrganization = organization;
-					this.loadSettings();
-				}
-			});
+			.subscribe();
+		this.store.selectedOrganization$
+			.pipe(
+				distinctUntilChange(),
+				filter((organization: IOrganization) => !!organization),
+				tap((organization: IOrganization) => this.organization = organization),
+				tap(() => this.equipments$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
-	ngOnDestroy(): void { }
+	ngOnDestroy(): void {}
 
 	setView() {
 		this.viewComponentName = ComponentEnum.EQUIPMENT;
 		this.store
 			.componentLayout$(this.viewComponentName)
-			.pipe(untilDestroyed(this))
-			.subscribe((componentLayout) => {
-				this.dataLayoutStyle = componentLayout;
-			});
+			.pipe(
+				distinctUntilChange(),
+				tap((componentLayout) => (this.dataLayoutStyle = componentLayout)),
+				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
+				tap(() => this.refreshPagination()),
+				tap(() => this.equipments$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	/*
@@ -111,9 +116,14 @@ export class EquipmentComponent
 			.subscribe();
 	}
 
-	async loadSmartTable() {
+	private _loadSmartTableSettings() {
+		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
 			actions: false,
+			pager: {
+				display: false,
+				perPage: pagination ? pagination.itemsPerPage : 10
+			},
 			columns: {
 				image: {
 					title: this.getTranslation('INVENTORY_PAGE.IMAGE'),
@@ -175,10 +185,6 @@ export class EquipmentComponent
 		};
 	}
 
-	manageEquipmentSharing() {
-		this.router.navigate(['/pages/organization/equipment-sharing']);
-	}
-
 	async save(selectedItem?: IEquipment) {
 		if (selectedItem) {
 			this.selectEquipment({
@@ -186,26 +192,17 @@ export class EquipmentComponent
 				data: selectedItem
 			});
 		}
-		if (this.selectedEquipment) {
-			this.selectedTags = this.selectedEquipment.tags;
-		} else {
-			this.selectedTags = [];
-		}
 		const dialog = this.dialogService.open(EquipmentMutationComponent, {
 			context: {
-				equipment: this.selectedEquipment,
-				tags: this.selectedTags,
-				selectedOrganization: this.selectedOrganization
+				equipment: this.selectedEquipment
 			}
 		});
 		const equipment = await firstValueFrom(dialog.onClose);
-		this.clearItem();
-
 		if (equipment) {
 			this.toastrService.success('EQUIPMENT_PAGE.EQUIPMENT_SAVED', {
 				name: equipment.name
 			});
-			this.loadSettings();
+			this.equipments$.next(true);
 		}
 
 	}
@@ -223,27 +220,71 @@ export class EquipmentComponent
 
 		if (result) {
 			await this.equipmentService.delete(this.selectedEquipment.id);
-			this.loadSettings();
+			this.equipments$.next(true);
 			this.toastrService.success('EQUIPMENT_PAGE.EQUIPMENT_DELETED', {
 				name: this.selectedEquipment.name
 			});
 		}
-		this.clearItem();
 	}
 
-	async loadSettings() {
+	/*
+	 * Register Smart Table Source Config
+	 */
+	setSmartTableSource() {
+		if (!this.organization) {
+			return;
+		}
+		this.loading = true;
+
 		const { tenantId } = this.store.user;
-		const { items } = await this.equipmentService.getAll(
-			['equipmentSharings', 'tags', 'image'],
-			{ organizationId: this.selectedOrganization.id, tenantId }
-		);
+		const { id: organizationId } = this.organization;
 
-		this.loading = false;
-		this.equipmentsData = items;
-		this.smartTableSource.load(items);
+		this.smartTableSource = new ServerDataSource(this.http, {
+			endPoint: `${API_PREFIX}/equipment/pagination`,
+			relations: [
+				'equipmentSharings',
+				'tags',
+				'image'
+			],
+			where: {
+				...{ organizationId, tenantId },
+				...this.filters.where
+			},
+			finalize: () => {
+				this.setPagination({
+					...this.getPagination(),
+					totalItems: this.smartTableSource.count()
+				});
+				this.loading = false;
+			}
+		});
 	}
 
-	async selectEquipment({ isSelected, data }) {
+	async getEquipments() {
+		if (!this.organization) {
+			return;
+		}
+		try {
+			this.setSmartTableSource();
+
+			const { activePage, itemsPerPage } = this.getPagination();
+			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
+
+			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
+				await this.smartTableSource.getElements();
+				this.equipments = this.smartTableSource.getData();
+
+				this.setPagination({
+					...this.getPagination(),
+					totalItems: this.smartTableSource.count()
+				});
+			}
+		} catch (error) {
+			this.toastrService.danger(error);
+		}
+	}
+
+	selectEquipment({ isSelected, data }) {
 		this.disableButton = !isSelected;
 		this.selectedEquipment = isSelected ? data : null;
 	}
@@ -270,9 +311,10 @@ export class EquipmentComponent
 
 	_applyTranslationOnSmartTable() {
 		this.translateService.onLangChange
-			.pipe(untilDestroyed(this))
-			.subscribe(() => {
-				this.loadSmartTable();
-			});
+			.pipe(
+				tap(() => this._loadSmartTableSettings()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 }
