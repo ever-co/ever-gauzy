@@ -2399,13 +2399,7 @@
 			"HEADER": "crwdns2617:0crwdne2617:0",
 			"EDIT_EXISTING_USER": "crwdns3160:0crwdne3160:0",
 			"MAIN": "crwdns3322:0crwdne3322:0",
-			"USER_ORGANIZATIONS": "crwdns3324:0crwdne3324:0",
-			"PREFERRED_LANGUAGE": {
-				"en": "crwdns4068:0crwdne4068:0",
-				"he": "crwdns4070:0crwdne4070:0",
-				"bg": "crwdns4072:0crwdne4072:0",
-				"ru": "crwdns4074:0crwdne4074:0"
-			}
+			"USER_ORGANIZATIONS": "crwdns3324:0crwdne3324:0"
 		},
 		"REMOVE_USER": "crwdns9860:0{{ name }}crwdne9860:0"
 	},
@@ -3665,12 +3659,6 @@
 			"interviewer-interview-schedule": "crwdns7830:0crwdne7830:0",
 			"employee-join": "crwdns10529:0crwdne10529:0",
 			"TEMPLATE_NAMES": "crwdns9828:0crwdne9828:0"
-		},
-		"LANGUAGE_CODES": {
-			"en": "crwdns4552:0crwdne4552:0",
-			"ru": "crwdns4554:0crwdne4554:0",
-			"he": "crwdns4556:0crwdne4556:0",
-			"bg": "crwdns4558:0crwdne4558:0"
 		}
 	},
 	"PIPELINES_PAGE": {
@@ -3797,12 +3785,6 @@
 	"LOADING": "crwdns10002:0crwdne10002:0",
 	"ACCOUNTING_TEMPLATES_PAGE": {
 		"HEADER": "crwdns10168:0crwdne10168:0",
-		"LANGUAGE_CODES": {
-			"en": "crwdns10170:0crwdne10170:0",
-			"ru": "crwdns10172:0crwdne10172:0",
-			"he": "crwdns10174:0crwdne10174:0",
-			"bg": "crwdns10176:0crwdne10176:0"
-		},
 		"TEMPLATE_NAMES": {
 			"invoice": "crwdns10178:0crwdne10178:0",
 			"estimate": "crwdns10180:0crwdne10180:0",
