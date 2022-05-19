@@ -12,7 +12,7 @@
 				</ngx-header-title>
 			</h4>
 		</div>
-		<div class="align-self-end">
+		<div *ngIf="!showAddCard" class="align-self-end">
 			<ngx-gauzy-button-action
 				[componentName]="viewComponentName"
 				[isDisable]="disableButton"
@@ -55,7 +55,11 @@
 						></ng2-smart-table>
 					</div>
 					<div class="pagination-container">
-						<ng-container *ngIf="pagination.totalItems > pagination.itemsPerPage">
+						<ng-container
+							*ngIf="
+								pagination.totalItems > pagination.itemsPerPage
+							"
+						>
 							<ga-pagination
 								(selectedOption)="onUpdateOption($event)"
 								(selectedPage)="onPageChange($event)"
@@ -278,20 +282,16 @@
 	</nb-card-body>
 </nb-card>
 
-<ng-template
-	#actionButtons
-	let-buttonSize="buttonSize"
-	let-selectedItem="selectedItem"
->
+<ng-template #actionButtons>
 	<ng-template ngxPermissionsOnly="ORG_CONTACT_EDIT">
-		<div *ngIf="!showAddCard" class="btn-group actions">
+		<div class="btn-group actions">
 			<button
 				nbButton
 				class="action secondary"
 				status="basic"
 				size="small"
-				[disabled]="!selectedItem && disableButton"
-				(click)="navigateToContact(selectedItem)"
+				[disabled]="!selectedOrganizationContact && disableButton"
+				(click)="navigateToContact(selectedOrganizationContact)"
 			>
 				<nb-icon class="mr-1" icon="eye-outline"></nb-icon>
 				{{ 'BUTTONS.VIEW' | translate }}
@@ -301,8 +301,8 @@
 				class="action primary"
 				status="basic"
 				size="small"
-				[disabled]="!selectedItem && disableButton"
-				(click)="editOrganizationContact(selectedItem)"
+				[disabled]="!selectedOrganizationContact && disableButton"
+				(click)="editOrganizationContact(selectedOrganizationContact)"
 			>
 				<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
 				{{ 'BUTTONS.EDIT' | translate }}
@@ -312,11 +312,11 @@
 				class="action"
 				status="basic"
 				size="small"
-				[disabled]="!selectedItem && disableButton"
+				[disabled]="!selectedOrganizationContact && disableButton"
 				(click)="
 					removeOrganizationContact(
-						selectedItem?.id,
-						selectedItem?.name
+						selectedOrganizationContact?.id,
+						selectedOrganizationContact?.name
 					)
 				"
 				size="small"
@@ -328,28 +328,26 @@
 	</ng-template>
 </ng-template>
 <ng-template #visible>
-	<ng-container *ngIf="!showAddCard">
+	<button
+		(click)="invite()"
+		nbButton
+		class="action info"
+		size="small"
+		status="basic"
+	>
+		<nb-icon class="mr-1" icon="email-outline"></nb-icon>
+		{{ 'BUTTONS.INVITE' | translate }}
+	</button>
+	<ng-template ngxPermissionsOnly="ORG_CONTACT_EDIT">
 		<button
-			(click)="invite()"
+			(click)="add()"
 			nbButton
-			class="action info"
+			class="action"
 			size="small"
-			status="basic"
+			status="success"
 		>
-			<nb-icon class="mr-1" icon="email-outline"></nb-icon>
-			{{ 'BUTTONS.INVITE' | translate }}
+			<nb-icon class="mr-1" icon="plus-outline"></nb-icon>
+			{{ 'BUTTONS.ADD' | translate }}
 		</button>
-		<ng-template ngxPermissionsOnly="ORG_CONTACT_EDIT">
-			<button
-				(click)="add()"
-				nbButton
-				class="action"
-				size="small"
-				status="success"
-			>
-				<nb-icon class="mr-1" icon="plus-outline"></nb-icon>
-				{{ 'BUTTONS.ADD' | translate }}
-			</button>
-		</ng-template>
-	</ng-container>
+	</ng-template>
 </ng-template>
