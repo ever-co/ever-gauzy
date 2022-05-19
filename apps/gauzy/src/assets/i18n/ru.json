@@ -119,7 +119,8 @@
 		"TIME_TRACKING_ENABLE": "Включить отслеживание времени",
 		"TIME_TRACKING_DISABLE": "Отключить отслеживание времени",
 		"PRINT": "Печать",
-		"FEEDBACK": "Отзыв"
+		"FEEDBACK": "Отзыв",
+		"EQUIPMENT_SHARING": "Совместное использование снаряжения"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "Тип",
