@@ -244,12 +244,10 @@ export class ContactComponent
 					title: this.getTranslation('CONTACTS_PAGE.PROJECTS'),
 					type: 'custom',
 					renderComponent: ProjectComponent,
-					filter: false
 				},
 				country: {
 					title: this.getTranslation('CONTACTS_PAGE.COUNTRY'),
 					type: 'string',
-					filter: false,
 					valuePrepareFunction: (value, item) => {
 						return this.getCountry(item);
 					}
@@ -261,22 +259,13 @@ export class ContactComponent
 				street: {
 					title: this.getTranslation('CONTACTS_PAGE.STREET'),
 					type: 'string'
-				},
-				actions: {
-					title: this.getTranslation(
-						'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_ACTIONS'
-					),
-					type: 'custom',
-					renderComponent: ContactActionComponent,
-					onComponentInitFunction: (instance) => {
-						instance.updateResult.subscribe((params) => {
-							this.invite(params);
-						});
-					},
-					filter: false
 				}
 			}
 		};
+	}
+
+	public onUpdateResult(params: any) {
+		if(params) this.invite(params);
 	}
 
 	selectContact({ isSelected, data }) {

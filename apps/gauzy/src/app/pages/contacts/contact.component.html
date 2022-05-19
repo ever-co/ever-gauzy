@@ -281,6 +281,11 @@
 <ng-template #actionButtons>
 	<ng-template ngxPermissionsOnly="ORG_CONTACT_EDIT">
 		<div class="btn-group actions">
+			<ngx-contact-action
+			[rowData]="selectedOrganizationContact"
+			(updateResult)="onUpdateResult($event)"
+			>	
+			</ngx-contact-action>
 			<button
 				nbButton
 				class="action secondary"
