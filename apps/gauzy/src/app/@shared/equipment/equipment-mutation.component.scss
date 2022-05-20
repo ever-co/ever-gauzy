@@ -1,3 +1,5 @@
+@import 'gauzy/_gauzy-dialogs';
+
 .equipment-img {
   display: flex;
   justify-content: center;
@@ -9,5 +11,15 @@
 
   svg {
     position: absolute;
+  }
+
+  img{
+    border-radius: nb-theme(border-radius);
+  }
+}
+
+:host{
+  nb-card{
+    background-color: nb-theme(gauzy-card-1);
   }
 }
