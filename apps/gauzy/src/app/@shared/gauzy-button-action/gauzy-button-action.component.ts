@@ -1,4 +1,4 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, OnInit, Input, TemplateRef } from '@angular/core';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 
 @Component({
@@ -9,10 +9,11 @@ import { ComponentEnum } from '../../@core/constants/layout.constants';
 export class GauzyButtonActionComponent implements OnInit {
 
 	@Input() isDisable: boolean = true;
-	@Input() buttonTemplate: any;
+	@Input() hasLayoutSelector: boolean = true;
 	@Input() componentName: ComponentEnum;
- 	@Input() buttonTemplateVisible: any;
-  	@Input() hasLayoutSelector: boolean = true;
+	
+	@Input() buttonTemplate: TemplateRef<HTMLElement>;
+ 	@Input() buttonTemplateVisible: TemplateRef<HTMLElement>;
 
 	constructor() {}
 	/**
