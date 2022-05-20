@@ -130,6 +130,7 @@ export class ContactComponent
 			.subscribe();
 		this.pagination$
 			.pipe(
+				debounceTime(100),
 				distinctUntilChange(),
 				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
