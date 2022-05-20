@@ -109,7 +109,7 @@
 		"filepond-plugin-image-preview": "^4.6.4",
 		"filepond-plugin-image-resize": "^2.0.7",
 		"filepond-plugin-image-transform": "^3.7.4",
-		"formidable": "^1.2.2",
+		"formidable": "^3.2.4",
 		"fullcalendar": "^5.5.1",
 		"hammerjs": "^2.0.8",
 		"handlebars": "^4.7.6",
