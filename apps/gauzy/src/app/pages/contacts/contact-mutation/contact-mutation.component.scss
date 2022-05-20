@@ -5,6 +5,7 @@
   display: flex;
   flex-direction: column;
   position: relative;
+  margin-right: 3rem;
 
   .contact-photo {
     width: fit-content;
@@ -100,7 +101,7 @@
 .buttons {
   position: absolute;
   left: 1.25rem;
-  bottom: 1.725rem;
+  bottom: 0.725rem;
 }
 
 h4 {
@@ -122,14 +123,17 @@ h4 {
       flex-direction: row;
       align-items: center;
       font-size: 12px;
-      .image-container.md{
+
+      .image-container.md {
         width: 32px;
         padding-bottom: 3px;
-        img{
+
+        img {
           width: 28px;
           height: 28px;
         }
       }
+
       .link-text {
         color: nb-theme(text-primary-color);
         font-weight: normal;
@@ -141,6 +145,11 @@ h4 {
   nb-card-body,
   nb-card-header {
     background-color: unset;
+  }
+
+  nb-card {
+    margin: -1rem;
+    border: rgba(50, 50, 50, 0.03);
   }
 
   nb-stepper ::ng-deep .step-content {

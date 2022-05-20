@@ -27,9 +27,9 @@
 					<form
 						[formGroup]="contMainForm"
 						(ngSubmit)="contMainForm.markAsDirty()"
-						class="contact-form row"
+						class="contact-form d-flex flex-nowrap justify-content-between"
 					>
-						<div class="contact-container col-3">
+						<div class="contact-container">
 							<div class="contact-photo">
 								<ngx-image-uploader
 									(changeHoverState)="hoverState = $event"
@@ -115,7 +115,7 @@
 								</div>
 							</div>
 						</div>
-						<div class="fields col-9">
+						<div class="fields container">
 							<div class="row">
 								<div class="form-group col-7">
 									<label class="label">{{
