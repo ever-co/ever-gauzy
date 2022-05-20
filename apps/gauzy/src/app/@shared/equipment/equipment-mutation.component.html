@@ -63,20 +63,16 @@
 							class="featured-image"
 							[src]="image?.url"
 							alt="Feature image"
-							style="width: 120px"
+							style="width: 150px"
 						/>
-						<img
-							*ngIf="!image || !image?.url"
-							class="featured-image"
-							[src]="
-								'https://afostats.imagead.net/uploads/afo/no_img.png'
-							"
-							alt="Feature image"
-							style="width: 120px"
-						/>
+						<div
+							*ngIf="!image"
+							class="featured-image no-image"
+							style="width: 150px"
+						></div>
 					</div>
 				</div>
-				<div class="col-sm-9 mb-5">
+				<div class="col-sm-9 pl-4 mb-5">
 					<div class="form-group mb-3">
 						<label for="name" class="label">
 							{{ 'EQUIPMENT_PAGE.EQUIPMENT_NAME' | translate }}
@@ -229,7 +225,7 @@
 			<div class="row">
 				<div class="col-sm-12">
 					<ga-tags-color-input
-						[selectedTags]="form.get('tags').value"
+						[selectedTags]="form.get('tags')?.value"
 						(selectedTagsEvent)="selectedTagsEvent($event)"
 						[isOrgLevel]="true"
 					></ga-tags-color-input>
@@ -237,7 +233,7 @@
 			</div>
 
 			<div class="row mt-3">
-				<div class="col-sm-9 mb-5">
+				<div class="col-sm-9 mb-3">
 					<div class="form-group mb-3">
 						<nb-checkbox formControlName="autoApproveShare">
 							<span>{{
