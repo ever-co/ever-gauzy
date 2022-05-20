@@ -61,6 +61,8 @@
           width: 1.75rem;
           height: 1.75rem;
           margin-right: calc(-1.75rem / 4);
+          @include nb-ltr(margin-right, calc(-1.75rem / 4));
+          @include nb-rtl(margin-left, calc(-1.75rem / 4));
         }
       }
     }
@@ -72,7 +74,7 @@
     border-right: none;
   }
   i {
-    margin-right: 0.625rem;
+    @include nb-ltr(margin-right, 0.625rem);
     color: nb-theme(gauzy-text-color-1);
   }
 
