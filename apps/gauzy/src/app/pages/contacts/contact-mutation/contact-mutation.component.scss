@@ -17,14 +17,34 @@
       position: absolute;
       height: 100%;
       width: 100%;
-      border-radius: 13px;
+      border-radius: nb-theme(border-radius);
+      ;
     }
 
-    img {
+    img,
+    .image {
       width: 299px;
       height: 294px;
       object-fit: cover;
-      border-radius: 13px;
+      border-radius: nb-theme(border-radius);
+      ;
+    }
+
+    .image {
+      background-color: rgba(126, 126, 143, 0.1);
+
+      i {
+        margin: 5px;
+      }
+
+      >span {
+        color: rgba(126, 126, 143, 1);
+        z-index: 2;
+        transition: opacity 0.2s ease-in;
+        position: absolute;
+        top: calc(50% - 16px / 2);
+        left: calc(50% - 141px / 2);
+      }
     }
 
     svg {
@@ -34,6 +54,10 @@
       position: absolute;
       top: calc(50% - 68px / 2);
       left: calc(50% - 68px / 2);
+
+      g circle {
+        fill: nb-theme(text-primary-color);
+      }
     }
   }
 }
@@ -88,6 +112,30 @@ h4 {
 }
 
 :host {
+
+  ngx-avatar::ng-deep {
+    .inner-wrapper {
+      background-color: nb-theme(color-primary-transparent-100);
+      border-radius: nb-theme(button-rectangle-border-radius);
+      padding: 0px 9px 0px 3px;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      font-size: 12px;
+      .image-container.md{
+        width: 32px;
+        padding-bottom: 3px;
+        img{
+          width: 28px;
+          height: 28px;
+        }
+      }
+      .link-text {
+        color: nb-theme(text-primary-color);
+        font-weight: normal;
+      }
+    }
+  }
 
   nb-card,
   nb-card-body,

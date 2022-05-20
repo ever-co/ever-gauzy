@@ -43,6 +43,10 @@
 									"
 								></ngx-image-uploader>
 								<svg
+									*ngIf="
+										contMainForm &&
+										contMainForm.get('imageUrl').value
+									"
 									xmlns="http://www.w3.org/2000/svg"
 									xmlns:xlink="http://www.w3.org/1999/xlink"
 									width="68"
@@ -88,16 +92,27 @@
 								></div>
 
 								<img
-									*ngIf="contMainForm && contMainForm.get('imageUrl').value !== DUMMY_PROFILE_IMAGE"
+									*ngIf="
+										contMainForm &&
+										contMainForm.get('imageUrl').value
+									"
 									[src]="contMainForm.get('imageUrl').value"
 									alt="Contact Photo"
 									(mouseenter)="hoverState = true"
 									(mouseleave)="hoverState = false"
 								/>
-								<img
-									*ngIf="contMainForm.get('imageUrl').value === DUMMY_PROFILE_IMAGE"
-									class="custom"
-								/>
+								<div
+									*ngIf="
+										!contMainForm ||
+										!contMainForm.get('imageUrl').value
+									"
+									class="image"
+								>
+									<span
+										><i class="fas fa-image"></i>Add or Drop
+										Image</span
+									>
+								</div>
 							</div>
 						</div>
 						<div class="fields col-9">
@@ -425,7 +440,7 @@
 			>
 				<form class="custom-card" [formGroup]="budgetForm">
 					<div class="row">
-						<div class="form-group col-6">
+						<div class="form-group col-3">
 							<label
 								class="label"
 								[innerHtml]="
@@ -456,7 +471,7 @@
 								organizationContactBudgetTypeEnum.HOURS
 							"
 						>
-							<div class="form-group col-6">
+							<div class="form-group col-3">
 								<label
 									class="label"
 									[innerHtml]="
@@ -481,7 +496,7 @@
 								organizationContactBudgetTypeEnum.COST
 							"
 						>
-							<div class="form-group col-6">
+							<div class="form-group col-3">
 								<label
 									class="label"
 									[innerHtml]="
@@ -558,23 +573,15 @@
 									class="name-container"
 									*ngFor="let member of selectedMembers"
 								>
-									<div class="image-container">
-										<a
-											href="/pages/employees/edit/{{
-												member.id
-											}}/profile"
-											target="_blank"
-										>
-											<img
-												nbTooltip="{{
-													'ORGANIZATIONS_PAGE.EDIT.CLICK_EMPLOYEE'
-														| translate
-												}}"
-												[src]="member.user.imageUrl"
-											/>
-										</a>
-									</div>
-									<span>{{ member.user.name }}</span>
+									<ngx-avatar
+										[src]="member.user.imageUrl"
+										[name]="member.user.name"
+										[id]="member.id"
+										[nbTooltip]="
+											'ORGANIZATIONS_PAGE.EDIT.CLICK_EMPLOYEE'
+												| translate
+										"
+									></ngx-avatar>
 								</div>
 							</div>
 						</div>
