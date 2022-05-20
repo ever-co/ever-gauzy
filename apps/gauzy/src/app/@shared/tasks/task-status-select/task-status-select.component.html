@@ -5,6 +5,7 @@
 	(change)="selectStatus($event)"
 	[(ngModel)]="status"
 	[placeholder]="placeholder || 'TASKS_PAGE.TASKS_STATUS' | translate"
-	bindLabel="name"
+	bindLabel="label"
+	bindValue="value"
 	appendTo="body"
 ></ng-select>
