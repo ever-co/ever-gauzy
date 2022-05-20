@@ -1,7 +1,7 @@
 import { AfterViewInit, Component } from '@angular/core';
 import { UntilDestroy } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { isNotEmpty } from '@gauzy/common-angular';
+import { cleanKeys, isNotEmpty, mergeDeep } from '@gauzy/common-angular';
 import { Subject } from 'rxjs/internal/Subject';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import { TranslationBaseComponent } from '../language-base/translation-base.component';
@@ -59,17 +59,23 @@ export class PaginationFilterBaseComponent extends TranslationBaseComponent
 	}
 
 	protected setFilter(filter: any, doEmit: boolean = true) {
+		const fields = filter.field.split('.');
 		if (isNotEmpty(filter.search)) {
+			const search = filter.search;
+			const keys = fields.reduceRight(
+				(value: string, key: string) => ({[key]: value}),
+				search
+			);
 			this.filters = {
 				where: {
 					...this.filters.where,
-					[filter.field]: filter.search
+					...keys,
+					...mergeDeep(this.filters.where, keys)
 				}
 			};
 		} else {
-			if (`${filter.field}` in this.filters.where) {
-				delete this.filters.where[filter.field];
-			}
+			const [field] = fields.reverse();
+			cleanKeys(this.filters.where, field);
 		}
 		if (doEmit) {
 			this.subject$.next(true);

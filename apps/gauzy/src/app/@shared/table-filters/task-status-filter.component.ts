@@ -17,7 +17,7 @@ export class TaskStatusFilterComponent extends DefaultFilter implements OnChange
 
     ngOnChanges(changes: SimpleChanges) {}
 
-    onChange(event: string) {
-        this.column.filterFunction(event);
+    onChange(filter: string | null) {
+        this.column.filterFunction(filter);
     }
 }

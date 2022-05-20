@@ -39,6 +39,7 @@ import {
 	ToastrService
 } from '../../@core/services';
 import {
+	InputFilterComponent,
 	OrganizationContactFilterComponent,
 	PaymentMethodFilterComponent,
 	TagsColorFilterComponent
@@ -449,10 +450,7 @@ export class PaymentsComponent extends PaginationFilterBaseComponent
 						component: PaymentMethodFilterComponent
 					},
 					filterFunction: (value) => {
-						this.setFilter({
-							field: 'paymentMethod',
-							search: value
-						});
+						this.setFilter({ field: 'paymentMethod', search: value });
 					}
 				},
 				recordedByName: {
@@ -465,7 +463,14 @@ export class PaymentsComponent extends PaginationFilterBaseComponent
 				note: {
 					title: this.getTranslation('PAYMENTS_PAGE.NOTE'),
 					type: 'text',
-					width: '10%'
+					width: '10%',
+					filter: {
+						type: 'custom',
+						component: InputFilterComponent
+					},
+					filterFunction: (value: string) => {
+						this.setFilter({ field: 'note', search: value });
+					}
 				},
 				organizationContactName: {
 					title: this.getTranslation('PAYMENTS_PAGE.CONTACT'),
@@ -479,10 +484,7 @@ export class PaymentsComponent extends PaginationFilterBaseComponent
 						component: OrganizationContactFilterComponent
 					},
 					filterFunction: (value: IOrganizationContact | null) => {
-						this.setFilter({
-							field: 'organizationContactId',
-							search: value?.id || null
-						});
+						this.setFilter({ field: 'organizationContactId', search: value?.id || null });
 					},
 					sort: false
 				},

@@ -9,6 +9,9 @@
 					!isDisable ? 'transition show' : 'transition show-button'
 				"
 			>
+				<ng-content 
+					select="[buttonTemplateVisible]"
+				></ng-content>
 				<ng-container
 					*ngTemplateOutlet="buttonTemplateVisible"
 				></ng-container>
@@ -16,6 +19,9 @@
 			<ng-container 
 				*ngTemplateOutlet="buttonTemplate"
 			></ng-container>
+			<ng-content 
+				select="[buttonTemplate]"
+			></ng-content>
 		</div>
 	</div>
 	<ga-layout-selector

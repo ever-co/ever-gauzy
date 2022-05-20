@@ -296,7 +296,7 @@ export class EmployeeController extends CrudController<Employee> {
 	async pagination(
 		@Query() filter: PaginationParams<IEmployee>
 	): Promise<IPagination<IEmployee>> {
-		return this.employeeService.paginate(filter);
+		return this.employeeService.pagination(filter);
 	}
 
 	/**

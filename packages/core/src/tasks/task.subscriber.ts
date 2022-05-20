@@ -20,8 +20,10 @@ export class TaskSubscriber implements EntitySubscriberInterface<Task> {
             if (entity.prefix) {
                 list.push(entity.prefix.toUpperCase());
             } else if (!entity.prefix && entity.project) {
-                const prefix = entity.project.name;
-                list.push(prefix.substring(0, 3).toUpperCase());
+                if (entity.project.name) {
+                    const prefix = entity.project.name;
+                    list.push(prefix.substring(0, 3).toUpperCase());
+                }
             }
             list.push(entity.number || 0);
             entity.taskNumber = list.join('-');

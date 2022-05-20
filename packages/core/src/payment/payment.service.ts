@@ -158,15 +158,6 @@ export class PaymentService extends TenantAwareCrudService<Payment> {
 	}
 
 	public pagination(filter: any) {
-		if ('filters' in filter) {
-			const { filters } = filter;
-			if ('note' in filters) {
-				const { search } = filters.note;
-				filter.where.note = Like(`%${search}%`);
-			}
-			delete filter['filters'];
-		}
-
 		if ('where' in filter) {
 			const { where } = filter;
 			if ('paymentDate' in where) {
@@ -190,6 +181,10 @@ export class PaymentService extends TenantAwareCrudService<Payment> {
 				filter.where.tags = {
 					id: In(tags)
 				}
+			}
+			if ('note' in where) {
+				const { note } = where;
+				filter.where.note = Like(`%${note}%`);
 			}
 		}
 		return super.paginate(filter);
