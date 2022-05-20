@@ -86,7 +86,6 @@ export class TimeOffSettingsComponent
 				debounceTime(300),
 				tap(() => this._clearItem()),
 				tap(() => this._getTimeOffSettings()),
-				tap(() => this._loadSettingsSmartTableSettings()),
 				untilDestroyed(this)
 			)
 			.subscribe();
