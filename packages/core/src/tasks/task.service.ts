@@ -221,7 +221,11 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			const { where } = filter;
 			if ('title' in where) {
 				const { title } = where;
-				filter.where.title = Like(`%${title}%`)	
+				filter.where.title = Like(`%${title}%`);
+			}
+			if ('prefix' in where) {
+				const { prefix } = where;
+				filter.where.prefix = Like(`%${prefix}%`);
 			}
 			if ('organizationSprintId' in where) {
 				filter.where.organizationSprintId = IsNull();	
