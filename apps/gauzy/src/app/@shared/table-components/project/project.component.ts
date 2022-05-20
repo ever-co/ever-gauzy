@@ -1,7 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { ViewCell } from 'ng2-smart-table';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
-import { firstValueFrom, tap } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
 import { IOrganization } from '@gauzy/contracts';
 
 interface IProject {
