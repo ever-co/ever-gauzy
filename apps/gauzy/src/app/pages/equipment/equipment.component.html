@@ -1,21 +1,19 @@
-<nb-card 
+<nb-card
 	[nbSpinner]="loading"
 	nbSpinnerStatus="primary"
 	nbSpinnerSize="large"
 	class="card-scroll"
 >
-	<nb-card-header class="card-header-title">
+	<nb-card-header class="d-flex flex-column">
 		<div class="card-header-title">
 			<h4>
 				<ngx-header-title [allowEmployee]="false">
 					{{ 'EQUIPMENT_PAGE.HEADER' | translate }}
 				</ngx-header-title>
 			</h4>
-		</div>
-		<div class="card-header-title">
-			<div class="mr-2">
+			<div>
 				<button
-					class="float-right"
+					class="float-right action sharing"
 					nbButton
 					status="primary"
 					[routerLink]="'/pages/organization/equipment-sharing'"
@@ -24,7 +22,7 @@
 				</button>
 			</div>
 		</div>
-		<div class="gauzy-button-container">
+		<div class="align-self-end">
 			<ngx-gauzy-button-action
 				[isDisable]="disableButton"
 				[buttonTemplate]="actionButtons"
@@ -34,27 +32,13 @@
 		</div>
 	</nb-card-header>
 	<nb-card-body>
-		<div class="mb-3">
-			<button 
-				(click)="save()"
-				nbButton
-				status="success"
-				class="mr-2"
-			>
-				<nb-icon class="mr-1" icon="plus-outline"></nb-icon>
-				{{ 'BUTTONS.ADD' | translate }}
-			</button>
-			<ng-container *ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE">
-				<ng-container *ngTemplateOutlet="actionButtons"></ng-container>
-			</ng-container>
-		</div>
 		<ng-template
 			[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
 			[ngIfElse]="gridLayout"
 		>
 			<div class="table-scroll-container">
 				<ng2-smart-table
-					style="cursor: pointer;"
+					style="cursor: pointer"
 					(userRowSelect)="selectEquipment($event)"
 					[settings]="settingsSmartTable"
 					[source]="smartTableSource"
@@ -62,7 +46,9 @@
 				></ng2-smart-table>
 			</div>
 			<div class="pagination-container">
-				<ng-container *ngIf="pagination.totalItems > pagination.itemsPerPage">
+				<ng-container
+					*ngIf="pagination.totalItems > pagination.itemsPerPage"
+				>
 					<ga-pagination
 						(selectedOption)="onUpdateOption($event)"
 						(selectedPage)="onPageChange($event)"
@@ -95,35 +81,37 @@
 	let-buttonSize="buttonSize"
 	let-selectedItem="selectedItem"
 >
-	<button
-		(click)="save(selectedItem)"
-		nbButton
-		status="info"
-		class="mr-2"
-		[disabled]="!selectedItem && disableButton"
-		[size]="buttonSize || 'medium'"
-	>
-		<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
-		{{ 'BUTTONS.EDIT' | translate }}
-	</button>
-	<button
-		(click)="delete(selectedItem)"
-		nbButton
-		status="danger"
-		class="mr-2"
-		[disabled]="!selectedItem && disableButton"
-		[size]="buttonSize || 'medium'"
-	>
-		<nb-icon class="mr-1" icon="archive-outline"> </nb-icon>
-		{{ 'BUTTONS.DELETE' | translate }}
-	</button>
+	<div class="btn-group actions">
+		<button
+			(click)="save(selectedItem)"
+			nbButton
+			status="basic"
+			class="action primary"
+			[disabled]="!selectedItem && disableButton"
+			size="small"
+		>
+			<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
+			{{ 'BUTTONS.EDIT' | translate }}
+		</button>
+		<button
+			(click)="delete(selectedItem)"
+			nbButton
+			status="basic"
+			[disabled]="!selectedItem && disableButton"
+			class="action"
+			size="small"
+		>
+			<nb-icon status="danger" icon="trash-2-outline"> </nb-icon>
+		</button>
+	</div>
 </ng-template>
 <ng-template #visibleButton>
-	<button 
+	<button
 		(click)="save()"
 		nbButton
 		status="success"
-		class="mr-2"
+		class="action"
+		size="small"
 	>
 		<nb-icon class="mr-1" icon="plus-outline"></nb-icon>
 		{{ 'BUTTONS.ADD' | translate }}

@@ -1,0 +1,7 @@
+@import 'gauzy/_gauzy-table';
+
+[nbButton].sharing.appearance-filled.status-primary {
+    color: nb-theme(text-primary-color);
+    border: unset;
+    background-color: nb-theme(color-primary-transparent-default);
+}
