@@ -16,7 +16,7 @@ import {
 } from '@gauzy/contracts';
 import * as moment from 'moment';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
+import { distinctUntilChange } from '@gauzy/common-angular';
 import { NbDialogService } from '@nebular/theme';
 import { API_PREFIX, ComponentEnum } from '../../../@core/constants';
 import { ServerDataSource } from '../../../@core/utils/smart-table';
