@@ -347,19 +347,8 @@ export class InvoicesReceivedComponent extends PaginationFilterBaseComponent
 						type: 'custom',
 						component: InputFilterComponent
 					},
-					filterFunction: (value) => {
-						if (isNotEmpty(value)) {
-							this.filters = {
-								where: {
-									...this.filters.where,
-									invoiceNumber: value
-								}
-							};
-						} else {
-							delete this.filters.where.invoiceNumber;
-						}
-						console.log('filter');
-						this.subject$.next(true);
+					filterFunction: (invoiceNumber) => {
+						this.setFilter({ field: 'invoiceNumber', search: invoiceNumber });
 					}
 				},
 				invoiceDate: {
@@ -387,19 +376,8 @@ export class InvoicesReceivedComponent extends PaginationFilterBaseComponent
 						type: 'custom',
 						component: InputFilterComponent
 					},
-					filterFunction: (value) => {
-						if (isNotEmpty(value)) {
-							this.filters = {
-								where: {
-									...this.filters.where,
-									totalValue: value
-								}
-							};
-						} else {
-							delete this.filters.where.totalValue;
-						}
-						console.log('filter');
-						this.subject$.next(true);
+					filterFunction: (totalValue) => {
+						this.setFilter({ field: 'totalValue', search: totalValue });
 					}
 				}
 			}
