@@ -22,8 +22,8 @@ import { DEFAULT_SVG } from './../../../../@core/constants';
 				justify-content: center;
 			}
 			img {
-				width: 50px;
-				border-radius: 5px;
+				width: 74px;
+				border-radius: 8px;
 			}
 
 			.variant-table-img {
