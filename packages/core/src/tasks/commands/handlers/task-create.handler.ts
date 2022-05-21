@@ -7,7 +7,7 @@ import { TaskService } from '../../task.service';
 @CommandHandler(TaskCreateCommand)
 export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 	constructor(
-		private readonly taskService: TaskService
+		private readonly _taskService: TaskService
 	) {}
 
 	public async execute(command: TaskCreateCommand): Promise<ITask> {
@@ -19,12 +19,12 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 			const projectId = (project) ? project.id : null;
 			const taskPrefix = (project) ? project.name.substring(0, 3) : null;
 			
-			const maxNumber = await this.taskService.getMaxTaskNumberByProject({
+			const maxNumber = await this._taskService.getMaxTaskNumberByProject({
 				tenantId,
 				organizationId,
 				projectId
 			});
-			return await this.taskService.create({
+			return await this._taskService.create({
 				...input,
 				number: maxNumber + 1,
 				prefix: taskPrefix

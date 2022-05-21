@@ -68,11 +68,10 @@
 				<div class="col-12">
 					<ga-time-off-policy-select
 						[id]="'policy'"
-						[ctrl]="form.controls.policy"
-						[placeholder]="
-							'TIME_OFF_PAGE.SELECT_TIME_OFF_POLICY' | translate
-						"
+						[ctrl]="form.get('policyId')"
+						[placeholder]="'TIME_OFF_PAGE.SELECT_TIME_OFF_POLICY' | translate"
 						(selectedChange)="onPolicySelected($event)"
+						formControlName="policyId"
 					></ga-time-off-policy-select>
 				</div>
 			</div>

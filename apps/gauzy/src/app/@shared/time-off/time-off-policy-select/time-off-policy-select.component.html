@@ -1,24 +1,22 @@
 <div class="form-group">
-	<label
-		class="label"
-		[attr.for]="id"
-	>
+	<label class="label" [attr.for]="id">
 		{{ 'TIME_OFF_PAGE.POLICY.POLICY' | translate }}
 	</label>
 	<nb-select
 		[formControl]="ctrl"
-		(selectedChange)="onSelectedChange($event)"
 		fullWidth
 		[placeholder]="placeholder || 'TIME_OFF_PAGE.SELECT_TIME_OFF_POLICY' | translate"
 		[attr.id]="id"
+		(selectedChange)="onSelectedChange($event)"
+		[(ngModel)]="policyId"
 		[status]="
 			ctrl.invalid && (ctrl.touched || ctrl.dirty)
 				? 'danger' 
 				: 'basic'"
 	>
-		<nb-option
+		<nb-option 
 			*ngFor="let policy of policies"
-			[value]="policy"
+			[value]="policy.id"
 		>
 			{{ policy?.name }}
 		</nb-option>

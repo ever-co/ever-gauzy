@@ -12,6 +12,7 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { debounceTime, filter, first, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import * as moment from 'moment';
+import { distinctUntilChange } from '@gauzy/common-angular';
 import {
 	EmployeesService,
 	Store,
@@ -36,10 +37,10 @@ export class TimeOffHolidayMutationComponent implements OnInit {
 		private readonly toastrService: ToastrService,
 		private readonly employeesService: EmployeesService,
 		private readonly store: Store,
-    private dateService: NbDateService<Date>
+    	private readonly dateService: NbDateService<Date>
 	) {
-    this.minDate = this.dateService.addMonth(this.dateService.today(),0);
-  }
+    	this.minDate = this.dateService.addMonth(this.dateService.today(),0);
+  	}
 
 	orgEmployees: IEmployee[] = [];
 	employeesArr: IEmployee[] = [];
@@ -58,6 +59,7 @@ export class TimeOffHolidayMutationComponent implements OnInit {
 			start: ['', Validators.required],
 			end: ['', Validators.required],
 			policy: ['', Validators.required],
+			policyId: ['', Validators.required],
 			status: [],
 			description: []
 		}, {
@@ -82,8 +84,9 @@ export class TimeOffHolidayMutationComponent implements OnInit {
 			.subscribe();
 		this.store.selectedOrganization$
 			.pipe(
-				filter((organization: IOrganization) => !!organization),
 				debounceTime(200),
+				distinctUntilChange(),
+				filter((organization: IOrganization) => !!organization),
 				tap((organization) => this.organization = organization),
 				tap(({ contact } : IOrganization) => {
 					if (contact && contact.country) {
@@ -100,7 +103,6 @@ export class TimeOffHolidayMutationComponent implements OnInit {
 	private async _getAllHolidays() {
 		const holidays = new Holidays();
 		const countryCode = this.countryCode || ENV.DEFAULT_COUNTRY;
-
 		if (countryCode) {
 			holidays.init(countryCode);
 			this.holidays = holidays
@@ -164,15 +166,13 @@ export class TimeOffHolidayMutationComponent implements OnInit {
 	}
 
 	onPolicySelected(policy: ITimeOffPolicy) {
+		this.form.get('policy').setValue(policy);
 		if (policy.requiresApproval) {
-			this.form.patchValue({
-				status: StatusTypesEnum.REQUESTED
-			});
+			this.form.get('status').setValue(StatusTypesEnum.REQUESTED);
 		} else {
-			this.form.patchValue({
-				status: StatusTypesEnum.APPROVED
-			});
+			this.form.get('status').setValue(StatusTypesEnum.APPROVED);
 		}
+		this.form.updateValueAndValidity();
 	}
 
 	onEmployeesSelected(employees: string[]) {

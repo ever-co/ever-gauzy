@@ -1,8 +1,9 @@
 import { IDateRangePicker, IEmployee, IEmployeeCreateInput, IPagination } from '@gauzy/contracts';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { isNotEmpty } from '@gauzy/common';
 import * as moment from 'moment';
-import { Brackets, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
+import { Brackets, In, Like, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import { RequestContext } from '../core/context';
 import { TenantAwareCrudService } from './../core/crud';
 import { Employee } from './employee.entity';
@@ -121,5 +122,25 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 
 	async findWithoutTenant(id: string, relations?: any) {
 		return await this.repository.findOne(id, relations);
+	}
+
+	public pagination(filter: any) {
+		if ('where' in filter) {
+			const { where } = filter;
+			if ('tags' in where) {
+				const { tags } = where; 
+				filter.where.tags = {
+					id: In(tags)
+				}
+			}
+			if ('user' in where) {
+				const { user } = where;
+				const { email, firstName } = user;
+
+				if (isNotEmpty(email)) filter.where.user['email'] = Like(`%${email}%`);
+				if (isNotEmpty(firstName)) filter.where.user['firstName'] = Like(`%${firstName}%`);
+			}
+		}
+		return super.paginate(filter);
 	}
 }

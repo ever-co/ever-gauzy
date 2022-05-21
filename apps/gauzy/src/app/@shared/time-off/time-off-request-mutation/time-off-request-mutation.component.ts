@@ -10,7 +10,7 @@ import {
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { debounceTime, filter, first, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { isNotEmpty } from '@gauzy/common-angular';
+import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
 import { EmployeeSelectorComponent } from '../../../@theme/components/header/selectors/employee/employee.component';
 import {
 	OrganizationDocumentsService,
@@ -34,16 +34,16 @@ export class TimeOffRequestMutationComponent implements OnInit {
 		private readonly fb: FormBuilder,
 		private readonly documentsService: OrganizationDocumentsService,
 		private readonly store: Store,
-    private dateService: NbDateService<Date>
+    	private dateService: NbDateService<Date>
 	) {
-    this.minDate = this.dateService.addMonth(this.dateService.today(),0);
-  }
+    	this.minDate = this.dateService.addMonth(this.dateService.today(),0);
+  	}
 
 	/**
 	 * Employee Selector
 	 */
 	employeeSelector: EmployeeSelectorComponent;
-	@ViewChild('employeeSelector') set content(component: EmployeeSelectorComponent) {
+	@ViewChild('employeeSelector', { static: false }) set content(component: EmployeeSelectorComponent) {
 		if (component) {
 			this.employeeSelector = component;
 		}
@@ -77,6 +77,7 @@ export class TimeOffRequestMutationComponent implements OnInit {
 			start: ['', Validators.required],
 			end: ['', Validators.required],
 			policy: ['', Validators.required],
+			policyId: ['', Validators.required],
 			documentUrl: [],
 			status: [],
 			description: []
@@ -91,8 +92,9 @@ export class TimeOffRequestMutationComponent implements OnInit {
 	ngOnInit() {
 		this.store.selectedOrganization$
 			.pipe(
-				filter((organization: IOrganization) => !!organization),
 				debounceTime(200),
+				distinctUntilChange(),
+				filter((organization: IOrganization) => !!organization),
 				tap((organization) => this.organization = organization),
 				tap(() => this.patchFormValue()),
 				untilDestroyed(this)
@@ -105,12 +107,13 @@ export class TimeOffRequestMutationComponent implements OnInit {
 	 */
 	patchFormValue() {
 		// patch form value
-		if(this.timeOff) {
+		if (this.timeOff) {
 			this.form.patchValue({
 				start: this.timeOff.start,
 				end: this.timeOff.end,
 				description: this.timeOff.description,
 				policy: this.timeOff.policy,
+				policyId: this.timeOff.policyId,
 				status: this.timeOff.status,
 				documentUrl: this.timeOff.documentUrl
 			});
@@ -175,15 +178,13 @@ export class TimeOffRequestMutationComponent implements OnInit {
 	 * @param policy
 	 */
 	onPolicySelected(policy: ITimeOffPolicy) {
+		this.form.get('policy').setValue(policy);
 		if (policy.requiresApproval) {
-			this.form.patchValue({
-				status: StatusTypesEnum.REQUESTED
-			});
+			this.form.get('status').setValue(StatusTypesEnum.REQUESTED);
 		} else {
-			this.form.patchValue({
-				status: StatusTypesEnum.APPROVED
-			});
+			this.form.get('status').setValue(StatusTypesEnum.APPROVED);
 		}
+		this.form.updateValueAndValidity();
 	}
 
 	close() {
