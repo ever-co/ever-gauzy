@@ -1,7 +1,7 @@
 <div *ngIf="project" class="project-render">
 	<img
-		*ngIf="project.organization | async"
-		src="{{ (project.organization | async)?.imageUrl }}"
+		*ngIf="project.organization"
+		src="{{ project.organization.imageUrl }}"
 	/>
 	<span>
 		<div>{{ project?.name }}</div>
@@ -13,8 +13,8 @@
 <div *ngIf="projects" class="project-render">
 	<ng-container *ngFor="let project of projects">
 		<img
-			*ngIf="project.organization | async"
-			src="{{ (project.organization | async)?.imageUrl }}"
+			*ngIf="project.organization"
+			src="{{ project.organization.imageUrl }}"
 		/>
 	</ng-container>
 </div>

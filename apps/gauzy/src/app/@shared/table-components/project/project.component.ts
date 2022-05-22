@@ -1,7 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { ViewCell } from 'ng2-smart-table';
-import { OrganizationsService } from '../../../@core/services/organizations.service';
-import { firstValueFrom } from 'rxjs';
 import { IOrganization, IProject } from '@gauzy/contracts';
 
 @Component({
@@ -24,7 +22,7 @@ export class ProjectComponent implements OnInit, ViewCell {
 
 	projects: IProject[] = [];
 
-	constructor(private readonly organizationService: OrganizationsService) {}
+	constructor() {}
 
 	ngOnInit(): void {
 		this.init();
@@ -34,19 +32,13 @@ export class ProjectComponent implements OnInit, ViewCell {
 		if (this.rowData.project) {
 			this.project.name = this.rowData.project.name;
 			this.project.count = this.rowData.project.membersCount;
-			this.project.organization = firstValueFrom(
-				this.organizationService.getById(
-					this.rowData.project.organizationId
-				)
-			);
+			this.project.organization = this.rowData.project.organization
 		} else if (this.rowData.projects) {
 			this.projects = this.rowData.projects.map((project: any) => {
 				return {
 					name: project.name,
 					count: project.membersCount,
-					organization: firstValueFrom(
-						this.organizationService.getById(project.organizationId)
-					)
+					organization: project.organization
 				};
 			});
 		}
