@@ -2,13 +2,7 @@ import { Component, Input, OnInit } from '@angular/core';
 import { ViewCell } from 'ng2-smart-table';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
 import { firstValueFrom } from 'rxjs';
-import { IOrganization } from '@gauzy/contracts';
-
-interface IProject {
-	name: string;
-	count: number;
-	organization: Promise<IOrganization> | null;
-}
+import { IOrganization, IProject } from '@gauzy/contracts';
 
 @Component({
 	selector: 'ngx-project',
