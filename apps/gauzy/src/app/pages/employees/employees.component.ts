@@ -1,5 +1,6 @@
-import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
 import {
 	InvitationTypeEnum,
 	ComponentLayoutStyleEnum,
@@ -11,7 +12,7 @@ import {
 } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
+import { Ng2SmartTableComponent } from 'ng2-smart-table';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { Subject, firstValueFrom } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -23,10 +24,9 @@ import {
 } from '../../@shared/employee';
 import { InviteMutationComponent } from '../../@shared/invite/invite-mutation/invite-mutation.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
-import { PictureNameTagsComponent } from '../../@shared/table-components';
-import { ComponentEnum } from '../../@core/constants';
-import { TagsOnlyComponent } from '../../@shared/table-components/tags-only/tags-only.component';
-import { TagsColorFilterComponent } from '../../@shared/table-filters/tags-color-filter.component';
+import { PictureNameTagsComponent, TagsOnlyComponent } from '../../@shared/table-components';
+import { InputFilterComponent, TagsColorFilterComponent } from '../../@shared/table-filters';
+import { API_PREFIX, ComponentEnum } from '../../@core/constants';
 import {
 	PaginationFilterBaseComponent,
 	IPaginationBase
@@ -45,31 +45,28 @@ import {
 	EmployeeTimeTrackingStatusComponent,
 	EmployeeWorkStatusComponent
 } from './table-components';
+import { ServerDataSource } from '../../@core/utils/smart-table';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
 	templateUrl: './employees.component.html',
 	styleUrls: ['./employees.component.scss']
 })
-export class EmployeesComponent
-	extends PaginationFilterBaseComponent
-	implements OnInit, OnDestroy
-{
+export class EmployeesComponent extends PaginationFilterBaseComponent 
+	implements OnInit, OnDestroy {
+
 	settingsSmartTable: object;
-	sourceSmartTable = new LocalDataSource();
+	smartTableSource: ServerDataSource;
 	selectedEmployee: EmployeeViewModel;
-	employees: EmployeeViewModel[];
+	employees: EmployeeViewModel[] = [];
 	viewComponentName: ComponentEnum;
-	disableButton = true;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
 	bonusForSelectedMonth = 0;
-	includeDeleted = false;
-	loading: boolean;
-	organizationInvitesAllowed = false;
-	month: string;
-	year: number;
-	selectedItem: EmployeeViewModel;
+	disableButton: boolean = true;
+	includeDeleted: boolean = false;
+	loading: boolean = false;
+	organizationInvitesAllowed: boolean = false;
 
 	employeesTable: Ng2SmartTableComponent;
 	@ViewChild('employeesTable') set content(content: Ng2SmartTableComponent) {
@@ -79,8 +76,13 @@ export class EmployeesComponent
 		}
 	}
 
+	/*
+	* Actions Buttons directive 
+	*/
+	@ViewChild('actionButtons', { static: true }) actionButtons: TemplateRef<any>;
+
 	public organization: IOrganization;
-	subject$: Subject<any> = new Subject();
+	employees$: Subject<any> = this.subject$;
 
 	constructor(
 		private readonly employeesService: EmployeesService,
@@ -91,7 +93,8 @@ export class EmployeesComponent
 		private readonly route: ActivatedRoute,
 		public readonly translate: TranslateService,
 		private readonly errorHandler: ErrorHandlingService,
-		private readonly _employeeStore: EmployeeStore
+		private readonly _employeeStore: EmployeeStore,
+		private readonly http: HttpClient
 	) {
 		super(translate);
 		this.setView();
@@ -101,7 +104,7 @@ export class EmployeesComponent
 		this._loadSmartTableSettings();
 		this._applyTranslationOnSmartTable();
 
-		this.subject$
+		this.employees$
 			.pipe(
 				debounceTime(300),
 				tap(() => this.clearItem()),
@@ -113,7 +116,7 @@ export class EmployeesComponent
 			.pipe(
 				debounceTime(100),
 				distinctUntilChange(),
-				tap(() => this.subject$.next(true)),
+				tap(() => this.employees$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -127,7 +130,7 @@ export class EmployeesComponent
 					({ invitesAllowed }) =>
 						(this.organizationInvitesAllowed = invitesAllowed)
 				),
-				tap(() => this.subject$.next(true)),
+				tap(() => this.employees$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -153,6 +156,9 @@ export class EmployeesComponent
 					(componentLayout) =>
 						(this.dataLayoutStyle = componentLayout)
 				),
+				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
+				tap(() => this.refreshPagination()),
+				tap(() => this.employees$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -173,7 +179,6 @@ export class EmployeesComponent
 	selectEmployee({ isSelected, data }) {
 		this.disableButton = !isSelected;
 		this.selectedEmployee = isSelected ? data : null;
-		this.selectedItem = this.selectedEmployee;
 	}
 
 	async add() {
@@ -195,7 +200,7 @@ export class EmployeesComponent
 						}
 					);
 				});
-				this.subject$.next(true);
+				this.employees$.next(true);
 			}
 		} catch (error) {
 			this.errorHandler.handleError(error);
@@ -213,10 +218,6 @@ export class EmployeesComponent
 			'/pages/employees/edit/',
 			this.selectedEmployee.id
 		]);
-	}
-
-	manageInvites() {
-		this.router.navigate(['/pages/employees/invites']);
 	}
 
 	async invite() {
@@ -272,7 +273,7 @@ export class EmployeesComponent
 					} catch (error) {
 						this.errorHandler.handleError(error);
 					} finally {
-						this.subject$.next(true);
+						this.employees$.next(true);
 					}
 				}
 			});
@@ -312,7 +313,7 @@ export class EmployeesComponent
 		} catch (error) {
 			this.errorHandler.handleError(error);
 		} finally {
-			this.subject$.next(true);
+			this.employees$.next(true);
 		}
 	}
 
@@ -350,7 +351,7 @@ export class EmployeesComponent
 		} catch (error) {
 			this.errorHandler.handleError(error);
 		} finally {
-			this.subject$.next(true);
+			this.employees$.next(true);
 		}
 	}
 
@@ -388,7 +389,7 @@ export class EmployeesComponent
 		} catch (error) {
 			this.errorHandler.handleError(error);
 		} finally {
-			this.subject$.next(true);
+			this.employees$.next(true);
 		}
 	}
 
@@ -436,115 +437,161 @@ export class EmployeesComponent
 		} catch (error) {
 			this.errorHandler.handleError(error);
 		} finally {
-			this.subject$.next(true);
+			this.employees$.next(true);
 		}
+	}
+
+	/*
+	 * Register Smart Table Source Config
+	 */
+	setSmartTableSource() {
+		if (!this.organization) {
+			return;
+		}
+		this.loading = true;
+
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
+
+		this.smartTableSource = new ServerDataSource(this.http, {
+			endPoint: `${API_PREFIX}/employee/pagination`,
+			relations: ['user', 'tags'],
+			where: {
+				...{ organizationId, tenantId },
+				...this.filters.where
+			},
+			join: {
+				alias: 'employee',
+				leftJoin: {
+					user: 'employee.user',
+					tags: 'employee.tags'
+				}
+			},
+			filterMap: (employees: IEmployee[]) => {
+				if (!this.includeDeleted) {
+					employees = employees.filter((employee: IEmployee) => employee.isActive);
+				}
+				return employees;
+			},
+			resultMap: (employee: IEmployee) => {
+				return Object.assign({}, employee, this.employeeMapper(employee));
+			},
+			finalize: () => {
+				this.setPagination({
+					...this.getPagination(),
+					totalItems: this.smartTableSource.count()
+				});
+				this.loading = false;
+			}
+		});
 	}
 
 	private async getEmployees() {
 		if (!this.organization) {
 			return;
 		}
-		this.loading = true;
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.organization;
-		const { activePage, itemsPerPage } = this.getPagination();
-		const { items } = await firstValueFrom(
-			this.employeesService.getAll(['user', 'tags'], {
-				organizationId,
-				tenantId
-			})
-		);
+		try {
+			this.setSmartTableSource();
 
-		let employeesVm = [];
-		const result = [];
-		for (const employee of items) {
-			const {
-				id,
-				user,
-				isActive,
-				endWork,
-				tags,
-				averageIncome,
-				averageExpenses,
-				averageBonus,
-				startedWorkOn,
-				isTrackingEnabled
-			} = employee;
-			result.push({
-				fullName: `${user.name}`,
-				email: user.email,
-				id,
-				isActive,
-				endWork: endWork ? new Date(endWork) : '',
-				workStatus: endWork
-					? new Date(endWork).getDate() +
-					  ' ' +
-					  monthNames[new Date(endWork).getMonth()] +
-					  ' ' +
-					  new Date(endWork).getFullYear()
-					: '',
-				imageUrl: user.imageUrl,
-				tags,
-				// TODO: load real bonus and bonusDate
-				bonus: this.bonusForSelectedMonth,
-				averageIncome: Math.floor(averageIncome),
-				averageExpenses: Math.floor(averageExpenses),
-				averageBonus: Math.floor(averageBonus),
-				bonusDate: Date.now(),
-				startedWorkOn,
-				isTrackingEnabled
-			});
+			const { activePage, itemsPerPage } = this.getPagination();
+			this.smartTableSource.setPaging(
+				activePage,
+				itemsPerPage,
+				false
+			);
+
+			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
+				await this._loadGridLayoutData();
+			}
+		} catch (error) {
+			this.toastrService.danger(error);
 		}
-		if (!this.includeDeleted) {
-			result.forEach((employee) => {
-				if (employee.isActive) {
-					employeesVm.push(employee);
-				}
-			});
-		} else {
-			employeesVm = result;
+	}
+
+	private employeeMapper(employee: IEmployee) {
+		const {
+			id,
+			user,
+			isActive,
+			endWork,
+			tags,
+			averageIncome,
+			averageExpenses,
+			averageBonus,
+			startedWorkOn,
+			isTrackingEnabled
+		} = employee;
+		return {
+			fullName: `${user.name}`,
+			email: user.email,
+			id,
+			isActive,
+			endWork: endWork ? new Date(endWork) : '',
+			workStatus: endWork
+				? new Date(endWork).getDate() +
+					' ' +
+					monthNames[new Date(endWork).getMonth()] +
+					' ' +
+					new Date(endWork).getFullYear()
+				: '',
+			imageUrl: user.imageUrl,
+			tags,
+			// TODO: load real bonus and bonusDate
+			bonus: this.bonusForSelectedMonth,
+			averageIncome: Math.floor(averageIncome),
+			averageExpenses: Math.floor(averageExpenses),
+			averageBonus: Math.floor(averageBonus),
+			bonusDate: Date.now(),
+			startedWorkOn,
+			isTrackingEnabled
 		}
-		this.employees = employeesVm;
-		this.sourceSmartTable.setPaging(activePage, itemsPerPage, false);
-		this.sourceSmartTable.load(employeesVm);
-		if (this.dataLayoutStyle === this.componentLayoutStyleEnum.CARDS_GRID)
-			this._loadGridLayoutData();
-		this.setPagination({
-			...this.getPagination(),
-			totalItems: this.sourceSmartTable.count()
-		});
-		this.loading = false;
 	}
 
 	private async _loadGridLayoutData() {
-		this.employees = await this.sourceSmartTable.getElements();
+		await this.smartTableSource.getElements();
+		this.employees = this.smartTableSource.getData();
+
+		this.setPagination({
+			...this.getPagination(),
+			totalItems: this.smartTableSource.count()
+		});
 	}
 
 	private _loadSmartTableSettings() {
 		const pagination: IPaginationBase = this.getPagination();
-		const dateNow = new Date();
-		this.month =
-			monthNames[dateNow.getMonth() - 1] ||
-			monthNames[monthNames.length - 1];
-		this.year = monthNames[dateNow.getMonth() - 1]
-			? dateNow.getFullYear()
-			: dateNow.getFullYear() - 1;
-
 		this.settingsSmartTable = {
 			actions: false,
+			pager: {
+				display: false,
+				perPage: pagination ? pagination : 10
+			},
 			columns: {
 				fullName: {
 					title: this.getTranslation('SM_TABLE.FULL_NAME'),
 					type: 'custom',
 					class: 'align-row',
 					width: '20%',
-					renderComponent: PictureNameTagsComponent
+					renderComponent: PictureNameTagsComponent,
+					filter: {
+						type: 'custom',
+						component: InputFilterComponent
+					},
+					filterFunction: (firstName: string) => {
+						this.setFilter({ field: 'user.firstName', search: firstName });
+					},
 				},
 				email: {
 					title: this.getTranslation('SM_TABLE.EMAIL'),
 					type: 'email',
 					class: 'email-column',
-					width: '20%'
+					width: '20%',
+					filter: {
+						type: 'custom',
+						component: InputFilterComponent
+					},
+					filterFunction: (email: string) => {
+						this.setFilter({ field: 'user.email', search: email });
+					},
 				},
 				averageIncome: {
 					title: this.getTranslation('SM_TABLE.INCOME'),
@@ -602,17 +649,13 @@ export class EmployeesComponent
 					renderComponent: EmployeeWorkStatusComponent,
 					filter: false
 				}
-			},
-			pager: {
-				display: false,
-				perPage: pagination ? pagination : 10
 			}
 		};
 	}
 
 	changeIncludeDeleted(checked: boolean) {
 		this.includeDeleted = checked;
-		this.subject$.next(true);
+		this.employees$.next(true);
 	}
 
 	private _applyTranslationOnSmartTable() {
