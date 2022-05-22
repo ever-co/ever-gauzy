@@ -341,7 +341,14 @@ export class TaskComponent extends PaginationFilterBaseComponent
 				taskNumber: {
 					title: this.getTranslation('TASKS_PAGE.TASK_ID'),
 					type: 'string',
-					width: '5%'
+					width: '10%',
+					filter: {
+						type: 'custom',
+						component: InputFilterComponent
+					},
+					filterFunction: (prefix: string) => {
+						this.setFilter({ field: 'prefix', search: prefix });
+					}
 				},
 				description: {
 					title: this.getTranslation('TASKS_PAGE.TASKS_TITLE'),
@@ -360,13 +367,7 @@ export class TaskComponent extends PaginationFilterBaseComponent
 					title: this.getTranslation('TASKS_PAGE.TASKS_PROJECT'),
 					type: 'custom',
 					renderComponent: ProjectComponent,
-					filter: {
-						type: 'custom',
-						component: InputFilterComponent
-					},
-					filterFunction: (value) => {
-						this.setFilter({ field: 'projectName', search: value });
-					}
+					filter: false
 				},
 				createdAt: {
 					title: this.getTranslation('SM_TABLE.CREATED_AT'),

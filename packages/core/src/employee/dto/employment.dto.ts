@@ -2,9 +2,10 @@ import {
     IOrganizationDepartment,
     IOrganizationEmploymentType,
     IOrganizationPosition,
-    ISkill
+    ISkill,
+    ITag
 } from "@gauzy/contracts";
-import { ApiPropertyOptional } from "@nestjs/swagger";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { IsArray, IsBoolean, IsDateString, IsOptional, IsString, ValidateNested } from "class-validator";
 import { Type } from 'class-transformer';
 import { CreateOrganizationEmploymentTypeDTO } from "./../../organization-employment-type/dto";
@@ -66,4 +67,8 @@ export class EmploymentDTO extends TenantOrganizationBaseDTO {
     @IsOptional()
     @IsArray()
     readonly skills?: ISkill[];
+
+    @ApiProperty({ type: () => Array, isArray: true, readOnly: true })
+    @IsOptional()
+    readonly tags: ITag[];
 }

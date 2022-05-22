@@ -5,7 +5,9 @@ import { TaskUpdateCommand } from '../task-update.command';
 
 @CommandHandler(TaskUpdateCommand)
 export class TaskUpdateHandler implements ICommandHandler<TaskUpdateCommand> {
-	constructor(private readonly _taskService: TaskService) {}
+	constructor(
+		private readonly _taskService: TaskService
+	) {}
 
 	public async execute(command: TaskUpdateCommand): Promise<ITask> {
 		const { input } = command;
@@ -20,13 +22,13 @@ export class TaskUpdateHandler implements ICommandHandler<TaskUpdateCommand> {
 		id: string,
 		request: ITaskUpdateInput
 	): Promise<ITask> {
-		const task = await this._taskService.findOneByIdString(id);
-		if (task) {
-			delete request.id;
-			await this._taskService.update(id, request);
-			return await this._taskService.findOneByIdString(id);
+		try {
+			return await this._taskService.create({
+				id,
+				...request,
+			});
+		} catch (error) {
+			console.log('Error while updating task', error);
 		}
-
-		return task;
 	}
 }

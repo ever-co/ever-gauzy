@@ -212,3 +212,54 @@ export function splitCamelCase(word: string): string {
 	});
 	return output.join(' ');	
 }
+
+/**
+ * Deep Merge
+ * 
+ * @param target 
+ * @param sources 
+ * @returns 
+ */
+export function mergeDeep(target: any, ...sources: any) {
+	if (!sources.length) return target;
+	const source = sources.shift();
+
+	if (isJsObject(target) && isJsObject(source)) {
+		for (const key in source) {
+			if (isJsObject(source[key])) {
+				if (!target[key]) Object.assign(target, {
+					[key]: {}
+				});
+				mergeDeep(target[key], source[key]);
+			} else {
+				Object.assign(target, {
+					[key]: source[key]
+				});
+			}
+		}
+	}
+	return mergeDeep(target, ...sources);
+}
+
+/**
+ * Delete Keys from nested object
+ * 
+ * @param data 
+ * @param deleteKeys 
+ * @returns 
+ */
+export function cleanKeys(data, deleteKeys) {
+	// There is nothing to be done if `data` is not an object,
+	if (typeof data != "object") return;
+	if (!data) return; // null object
+	
+	for (const key in data) {
+		if (deleteKeys.includes(key)) {
+			delete data[key];
+		} else {
+			// If the key is not deleted from the current `data` object,
+			// the value should be check for black-listed keys.
+			cleanKeys(data[key], deleteKeys);
+		}
+	}
+}

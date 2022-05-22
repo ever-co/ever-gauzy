@@ -1,8 +1,9 @@
 import { ApiPropertyOptional } from "@nestjs/swagger";
 import { Transform, TransformFnParams } from "class-transformer";
 import { IsOptional, IsUrl } from "class-validator";
+import { TenantOrganizationBaseDTO } from "./../../core/dto";
 
-export class SocialNetworksDTO {
+export class SocialNetworksDTO extends TenantOrganizationBaseDTO {
     
     @ApiPropertyOptional({ type: () => String })
     @IsOptional()

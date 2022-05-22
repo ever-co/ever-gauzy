@@ -30,7 +30,7 @@ import { CrudController, PaginationParams } from './../core/crud';
 import { RequestContext } from '../core/context';
 import { Task } from './task.entity';
 import { TaskService } from './task.service';
-import { TaskCreateCommand } from './commands';
+import { TaskCreateCommand, TaskUpdateCommand } from './commands';
 import { CreateTaskDTO, UpdateTaskDTO } from './dto';
 
 @ApiTags('Tasks')
@@ -159,16 +159,20 @@ export class TaskController extends CrudController<Task> {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_TASK_EDIT)
 	@Post()
-	@UsePipes(new ValidationPipe({ transform : true }))
+	@UsePipes(new ValidationPipe({ transform : true, whitelist: true }))
 	async create(
 		@Body() entity: CreateTaskDTO
 	): Promise<ITask> {
-		return await this.commandBus.execute(
-			new TaskCreateCommand({
-				...entity,
-				creator: RequestContext.currentUser()
-			})
-		);
+		try {
+			return await this.commandBus.execute(
+				new TaskCreateCommand({
+					...entity,
+					creator: RequestContext.currentUser()
+				})
+			);
+		} catch (error) {
+			throw new BadRequestException(error);
+		}
 	}
 
 	@ApiOperation({ summary: 'Update an existing task' })
@@ -189,18 +193,18 @@ export class TaskController extends CrudController<Task> {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_TASK_EDIT)
 	@Put(':id')
-	@UsePipes(new ValidationPipe({ transform : true }))
+	@UsePipes(new ValidationPipe({ transform : true, whitelist: true }))
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: UpdateTaskDTO
 	): Promise<ITask> {
 		try {
-			//We are using create here because create calls the method save()
-			//We need save() to save ManyToMany relations
-			return await this.taskService.create({
-				id,
-				...entity
-			});
+			return await this.commandBus.execute(
+				new TaskUpdateCommand({
+					id,
+					...entity,
+				})
+			);
 		} catch (error) {
 			throw new BadRequestException(error);
 		}
