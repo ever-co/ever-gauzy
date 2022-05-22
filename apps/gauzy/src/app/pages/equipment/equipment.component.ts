@@ -199,6 +199,11 @@ export class EquipmentComponent extends PaginationFilterBaseComponent
 				isSelected: true,
 				data: selectedItem
 			});
+		}else{
+			this.selectEquipment({
+				isSelected: false,
+				data: null
+			});
 		}
 		const dialog = this.dialogService.open(EquipmentMutationComponent, {
 			context: {
@@ -222,9 +227,9 @@ export class EquipmentComponent extends PaginationFilterBaseComponent
 				data: selectedItem
 			});
 		}
-		const result = await firstValueFrom(this.dialogService
-			.open(DeleteConfirmationComponent)
-			.onClose);
+		const result = await firstValueFrom(
+			this.dialogService.open(DeleteConfirmationComponent).onClose
+		);
 
 		if (result) {
 			await this.equipmentService.delete(this.selectedEquipment.id);
