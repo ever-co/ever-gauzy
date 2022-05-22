@@ -168,7 +168,7 @@ nb-sidebar[tag='menu-sidebar'] {
     .scrollable {
       background-color: nb-theme(background-basic-color-1);
       border-radius: nb-theme(border-radius);
-      overflow-y: unset;
+      overflow: unset;
     }
   }
 
@@ -192,7 +192,7 @@ nb-sidebar[tag='menu-sidebar'] {
     nb-sidebar
     .main-container-fixed
     > .scrollable {
-    overflow-y: overlay;
+    overflow-y: auto;
   }
 }
 
