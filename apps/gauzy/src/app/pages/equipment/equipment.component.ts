@@ -17,11 +17,12 @@ import { EquipmentMutationComponent } from '../../@shared/equipment/equipment-mu
 import { IPaginationBase, PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import { AutoApproveComponent } from './auto-approve/auto-approve.component';
-import { PictureNameTagsComponent } from '../../@shared/table-components';
+import { PictureNameTagsComponent, TagsOnlyComponent } from '../../@shared/table-components';
 import { API_PREFIX, ComponentEnum } from '../../@core/constants';
 import { EquipmentService, Store, ToastrService } from '../../@core/services';
 import { ImageRowComponent } from '../inventory/components/table-components';
 import { ServerDataSource } from '../../@core/utils/smart-table';
+import { TagsColorComponent } from '../tags/tags-color/tags-color.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -188,6 +189,14 @@ export class EquipmentComponent extends PaginationFilterBaseComponent
 					type: 'custom',
 					filter: false,
 					renderComponent: AutoApproveComponent
+				},
+				tags: {
+					title: this.getTranslation(
+						'SM_TABLE.TAGS'
+					),
+					type: 'custom',
+					filter: false,
+					renderComponent: TagsOnlyComponent
 				}
 			}
 		};
