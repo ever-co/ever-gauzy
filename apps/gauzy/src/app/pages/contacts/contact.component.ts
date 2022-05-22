@@ -380,7 +380,14 @@ export class ContactComponent
 
 		this.organizationContactService
 			.getAll(
-				['projects', 'members', 'members.user', 'tags', 'contact'],
+				[
+					'projects',
+					'projects.organization',
+					'members',
+					'members.user',
+					'tags',
+					'contact'
+				],
 				findObj
 			)
 			.then(({ items = [] }) => {
@@ -416,6 +423,7 @@ export class ContactComponent
 					...this.getPagination(),
 					totalItems: this.smartTableSource.count()
 				});
+				console.log(this.smartTableSource);
 			})
 			.catch(() => {
 				this.toastrService.danger(
@@ -430,7 +438,8 @@ export class ContactComponent
 
 	private async _loadGridLayoutData() {
 		if (this.componentLayoutStyleEnum.CARDS_GRID === this.dataLayoutStyle) {
-			this.organizationContacts = await this.smartTableSource.getElements();
+			this.organizationContacts =
+				await this.smartTableSource.getElements();
 		}
 	}
 
