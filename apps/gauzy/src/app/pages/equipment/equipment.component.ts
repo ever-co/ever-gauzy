@@ -127,7 +127,7 @@ export class EquipmentComponent extends PaginationFilterBaseComponent
 			columns: {
 				image: {
 					title: this.getTranslation('INVENTORY_PAGE.IMAGE'),
-					width: '10%',
+					width: '79px',
 					filter: false,
 					type: 'custom',
 					renderComponent: ImageRowComponent

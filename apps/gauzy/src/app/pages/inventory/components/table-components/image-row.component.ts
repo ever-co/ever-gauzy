@@ -19,7 +19,7 @@ import { DEFAULT_SVG } from './../../../../@core/constants';
 			.img-container {
 				width: 100%;
 				display: flex;
-				justify-content: center;
+				justify-content: flex-start;
 			}
 			img {
 				width: 74px;
