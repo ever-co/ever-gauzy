@@ -423,7 +423,6 @@ export class ContactComponent
 					...this.getPagination(),
 					totalItems: this.smartTableSource.count()
 				});
-				console.log(this.smartTableSource);
 			})
 			.catch(() => {
 				this.toastrService.danger(
