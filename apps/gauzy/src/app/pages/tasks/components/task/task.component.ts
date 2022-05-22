@@ -239,6 +239,7 @@ export class TaskComponent extends PaginationFilterBaseComponent
 			relations.push(
 				...[
 					'project',
+					'project.organization',
 					'tags',
 					'teams',
 					'teams.members',
