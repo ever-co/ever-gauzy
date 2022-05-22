@@ -23,6 +23,8 @@ import { DEFAULT_SVG } from './../../../../@core/constants';
 			}
 			img {
 				width: 74px;
+				height: 64px;
+				object-fit: cover;
 				border-radius: 8px;
 			}
 
