@@ -1,5 +1,21 @@
+@import 'themes';
+
 .img-asset-preview {
   width: 100%;
+}
+
+.no-img-asset-preview {
+  position: relative;
+  background: rgba(123, 123, 143, 0.1);
+  height: 200px;
+  width: 100%;
+  border-radius: nb-theme(border-radius);
+
+  i {
+    position: absolute;
+    left: calc(50% - 15px);
+    top:  50%;
+  }
 }
 
 nb-card {
@@ -13,4 +29,30 @@ nb-card {
 .img-desc-text {
   font-weight: bold;
   margin-right: 5px;
+}
+
+img {
+  border-radius: nb-theme(border-radius);
+  height: 200px;
+  object-fit: cover;
+}
+
+.image-text {
+  background-color: nb-theme(color-primary-transparent-default);
+  width: 100%;
+  border-radius: nb-theme(border-radius);
+  padding: 3px 8px 4px 8px;
+  /* Les deux règles suivantes sont nécessaires pour text-overflow */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  &.dimension{
+    width: fit-content;
+  }
+  &:hover{
+    z-index: 2;
+    text-overflow: clip;
+    white-space: unset;
+    width: 100%;
+  }
 }

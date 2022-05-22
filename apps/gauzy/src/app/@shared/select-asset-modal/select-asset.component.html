@@ -1,13 +1,9 @@
 <nb-card class="main" size="large">
-	<nb-card-header class="d-flex">
-		<h5>
+	<nb-card-header class="d-flex flex-column">
+		<span class="cancel"> <i class="fas fa-times" (click)="dialogRef.close()"></i> </span>
+		<h5 class="title">
 			{{ 'INVENTORY_PAGE.SELECT_OR_UPLOAD_IMAGE' | translate }}
 		</h5>
-		<nb-icon
-			class="ml-auto mt-1 close"
-			icon="close-outline"
-			(click)="dialogRef.close()"
-		></nb-icon>
 	</nb-card-header>
 	<nb-card-body
 		[nbSpinner]="loading"
@@ -16,7 +12,7 @@
 	>
 		<div class="row">
 			<div class="col-md-8">
-				<div class="row mb-2" *ngIf="settings.uploadImageEnabled">
+				<div class="mb-3" *ngIf="settings.uploadImageEnabled">
 					<ngx-file-uploader-input
 						class="browse-image"
 						id="inputImageUrl"
@@ -61,7 +57,7 @@
 	</nb-card-body>
 	<nb-card-footer>
 		<button
-			class="button-home"
+			class="primary button-home"
 			status="primary"
 			nbButton
 			nbStepperNext
