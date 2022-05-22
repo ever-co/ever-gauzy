@@ -22,7 +22,6 @@ import { API_PREFIX, ComponentEnum } from '../../@core/constants';
 import { EquipmentService, Store, ToastrService } from '../../@core/services';
 import { ImageRowComponent } from '../inventory/components/table-components';
 import { ServerDataSource } from '../../@core/utils/smart-table';
-import { TagsColorComponent } from '../tags/tags-color/tags-color.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
