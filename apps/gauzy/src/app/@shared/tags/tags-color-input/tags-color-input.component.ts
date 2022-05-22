@@ -99,7 +99,7 @@ export class TagsColorInputComponent implements OnInit, OnDestroy {
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.selectedTagIds = this.selectedTags?.map((tag: ITag) => tag.id);
+		this.selectedTagIds = this.selectedTagIds? this.selectedTags?.map((tag: ITag) => tag.id): null;
 	}
 
 	async getAllTags() {
