@@ -1,3 +1,9 @@
+@import 'gauzy/_gauzy-dialogs';
+
+:host nb-card{
+	background-color: nb-theme(gauzy-card-1);
+}
+
 .description {
 	height: 198px;
 }

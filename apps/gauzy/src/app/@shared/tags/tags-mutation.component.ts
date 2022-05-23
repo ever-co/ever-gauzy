@@ -1,11 +1,11 @@
 import { Component, OnInit } from '@angular/core';
-import { NbDialogRef } from '@nebular/theme';
+import { NbDialogRef, NbThemeService } from '@nebular/theme';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { TagsService } from '../../@core/services/tags.service';
 import { ITag } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
-import { TranslationBaseComponent } from '../language-base/translation-base.component';
 import { Store } from '../../@core/services/store.service';
+import { NotesWithTagsComponent } from '../table-components';
 
 @Component({
 	selector: 'ngx-tags-mutation',
@@ -13,17 +13,17 @@ import { Store } from '../../@core/services/store.service';
 	styleUrls: ['./tags-mutation.component.scss']
 })
 export class TagsMutationComponent
-	extends TranslationBaseComponent
-	implements OnInit {
-	
+	extends NotesWithTagsComponent
+	implements OnInit
+{
 	tag: ITag;
-	
+
 	private isTenantLevelChecked = false;
 	public color = '';
 
 	/**
 	 * Build Form
-	 * 
+	 *
 	 */
 	public form: FormGroup = TagsMutationComponent.buildForm(this.fb);
 	static buildForm(fb: FormBuilder): FormGroup {
@@ -40,9 +40,10 @@ export class TagsMutationComponent
 		private readonly tagsService: TagsService,
 		private readonly fb: FormBuilder,
 		readonly translateService: TranslateService,
+		readonly themeService: NbThemeService,
 		private readonly store: Store
 	) {
-		super(translateService);
+		super(themeService, translateService);
 	}
 
 	ngOnInit() {
@@ -62,7 +63,7 @@ export class TagsMutationComponent
 					description,
 					color: this.color,
 					tenantId,
-					organization: null,
+					organization: null
 				})
 			);
 			this.closeDialog(tagWithTenantLevel);

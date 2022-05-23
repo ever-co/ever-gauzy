@@ -5,13 +5,18 @@ import { Color } from '@kurkle/color';
 import { NbThemeService } from '@nebular/theme';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { Rgba } from 'ngx-color-picker';
+import { TranslationBaseComponent } from '../../language-base';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
 	selector: 'ga-notes-with-tags',
 	templateUrl: './notes-with-tags.component.html',
 	styleUrls: ['./notes-with-tags.component.scss']
 })
-export class NotesWithTagsComponent implements ViewCell, OnInit {
+export class NotesWithTagsComponent
+	extends TranslationBaseComponent
+	implements ViewCell, OnInit
+{
 	@Input()
 	rowData: any;
 
@@ -25,7 +30,12 @@ export class NotesWithTagsComponent implements ViewCell, OnInit {
 	data$: BehaviorSubject<any> = new BehaviorSubject<any>(null);
 	data: Observable<any> = new Observable<any>(null);
 
-	constructor(protected themeService: NbThemeService) {}
+	constructor(
+		protected themeService: NbThemeService,
+		translateService: TranslateService
+	) {
+		super(translateService);
+	}
 
 	ngOnInit(): void {
 		this.themeService.getJsTheme().subscribe((theme) => {
