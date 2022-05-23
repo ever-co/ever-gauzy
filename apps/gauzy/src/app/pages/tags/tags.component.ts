@@ -196,7 +196,7 @@ export class TagsComponent
 				name: {
 					title: this.getTranslation('TAGS_PAGE.TAGS_NAME'),
 					type: 'custom',
-					width: '30%',
+					width: '15%',
 					class: 'text-center',
 					renderComponent: TagsColorComponent
 				},

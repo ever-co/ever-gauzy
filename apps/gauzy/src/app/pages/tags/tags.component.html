@@ -48,14 +48,16 @@
 					[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
 					[ngIfElse]="gridLayout"
 				>
-					<ng2-smart-table
-						[settings]="settingsSmartTable"
-						[source]="smartTableSource"
-						(userRowSelect)="selectTag($event)"
-						style="cursor: pointer"
-						#tagsTable
-					>
-					</ng2-smart-table>
+					<div class="table-scroll-container">
+						<ng2-smart-table
+							[settings]="settingsSmartTable"
+							[source]="smartTableSource"
+							(userRowSelect)="selectTag($event)"
+							style="cursor: pointer"
+							#tagsTable
+						>
+						</ng2-smart-table>
+					</div>
 				</ng-template>
 				<ng-template #gridLayout>
 					<ga-card-grid
@@ -71,28 +73,30 @@
 			let-buttonSize="buttonSize"
 			let-selectedItem="selectedItem"
 		>
-			<button
-				nbButton
-				status="basic"
-				(click)="edit(selectedItem)"
-				class="action primary"
-				[disabled]="!selectedItem && disableButton"
-				size="small"
-			>
-				<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
-				{{ 'BUTTONS.EDIT' | translate }}
-			</button>
-			<button
-				nbButton
-				status="basic"
-				(click)="delete(selectedItem)"
-				class="action"
-				[disabled]="!selectedItem && disableButton"
-				size="small"
-				[nbTooltip]="'BUTTONS.DELETE' | translate"
-			>
-				<nb-icon status="danger" icon="trash-2-outline"> </nb-icon>
-			</button>
+			<div class="actions">
+				<button
+					nbButton
+					status="basic"
+					(click)="edit(selectedItem)"
+					class="action primary"
+					[disabled]="!selectedItem && disableButton"
+					size="small"
+				>
+					<nb-icon icon="edit-outline"></nb-icon>
+					{{ 'BUTTONS.EDIT' | translate }}
+				</button>
+				<button
+					nbButton
+					status="basic"
+					(click)="delete(selectedItem)"
+					class="action"
+					[disabled]="!selectedItem && disableButton"
+					size="small"
+					[nbTooltip]="'BUTTONS.DELETE' | translate"
+				>
+					<nb-icon status="danger" icon="trash-2-outline"> </nb-icon>
+				</button>
+			</div>
 		</ng-template>
 	</div>
 </div>

@@ -63,8 +63,14 @@ nb-card.filter {
   height: 36px;
 }
 
-.gauzy-action{
+.gauzy-action {
   display: flex;
   justify-content: flex-end;
   align-items: center;
+}
+
+nb-card.tags-component {
+  nb-card-body {
+    background-color: nb-theme(gauzy-card-2);
+  }
 }
