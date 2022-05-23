@@ -3,6 +3,10 @@
 		<nb-card class="filter">
 			<nb-card-header>
 				{{ 'TAGS_PAGE.TAGS_TYPE' | translate }}
+				<ngx-search-input
+					(search)="search($event)"
+					class="search"
+				></ngx-search-input>
 			</nb-card-header>
 			<ng-container *ngIf="filterOptions.length">
 				<nb-list>
@@ -45,17 +49,17 @@
 						<nb-icon class="mr-1" icon="plus-outline"></nb-icon
 						>{{ 'BUTTONS.ADD' | translate }}
 					</button>
-					<ng-container *ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE">
+					<ng-container
+						*ngIf="
+							dataLayoutStyle === componentLayoutStyleEnum.TABLE
+						"
+					>
 						<ng-container
 							*ngTemplateOutlet="actionButtons"
 						></ng-container>
 					</ng-container>
-					<ngx-search-input
-						(search)="search($event)"
-						class="search"
-					></ngx-search-input>
 				</div>
-				<ng-template 
+				<ng-template
 					[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
 					[ngIfElse]="gridLayout"
 				>
@@ -63,7 +67,7 @@
 						[settings]="settingsSmartTable"
 						[source]="smartTableSource"
 						(userRowSelect)="selectTag($event)"
-						style="cursor: pointer;"
+						style="cursor: pointer"
 						#tagsTable
 					>
 					</ng2-smart-table>
