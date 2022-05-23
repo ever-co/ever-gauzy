@@ -25,7 +25,7 @@ import { CandidateCriterionsFormComponent } from './candidate-criterions-form/ca
 import { CandidateNotificationFormComponent } from './candidate-notification-form/candidate-notification-form.component';
 import { CandidateEmailComponent } from './candidate-notification-form/candidate-email/candidate-email.component';
 import { CandidateTechnologiesService } from '../../../@core/services/candidate-technologies.service';
-import { CKEditorModule } from 'ng2-ckeditor';
+import { CKEditorModule } from 'ckeditor4-angular';
 import { TranslateModule } from '../../translate/translate.module';
 
 @NgModule({

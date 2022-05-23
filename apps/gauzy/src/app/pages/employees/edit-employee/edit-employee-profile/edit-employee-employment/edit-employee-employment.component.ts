@@ -14,6 +14,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import { combineLatest } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
+import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
 import {
 	EmployeeLevelService,
 	EmployeeStore,
@@ -39,7 +40,7 @@ export class EditEmployeeEmploymentComponent implements OnInit, OnDestroy {
 	employeeLevels: IEmployeeLevel[] = [];
 	departments: IOrganizationDepartment[] = [];
 	positions: IOrganizationPosition[] = [];
-	ckConfig: any = {
+	ckConfig: CKEditor4.Config = {
 		...ckEditorConfig,
 		height: "200"
 	};

@@ -56,7 +56,7 @@ import { SkillsInputModule } from '../../@shared/skills/skills-input/skills-inpu
 import { EmployeeLocationModule } from '../../@shared/employee/employee-location/employee-location.module';
 import { EmployeeRatesModule } from '../../@shared/employee/employee-rates/employee-rates.module';
 import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
-import { CKEditorModule } from 'ng2-ckeditor';
+import { CKEditorModule } from 'ckeditor4-angular';
 import { EditEmployeeNetworksComponent } from './edit-employee/edit-employee-profile/edit-employee-networks/edit-employee-networks.component';
 import { TranslateModule } from '../../@shared/translate/translate.module';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';

@@ -18,6 +18,7 @@ import { Router } from '@angular/router';
 import { uniq } from 'underscore';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { distinctUntilChange } from '@gauzy/common-angular';
+import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { patterns } from '../../../@shared/regex/regex-patterns.const';
@@ -66,7 +67,7 @@ export class ProjectsMutationComponent
 	owners: ProjectOwnerEnum[] = Object.values(ProjectOwnerEnum);
 	taskViewModeTypes: TaskListTypeEnum[] = Object.values(TaskListTypeEnum);
 	showSprintManage = false;
-	ckConfig: any = ckEditorConfig;
+	ckConfig: CKEditor4.Config = ckEditorConfig;
 
 	public organization: IOrganization;
 	employees: IEmployee[] = [];
