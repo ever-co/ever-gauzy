@@ -1,3 +1,5 @@
+@import 'gauzy/_gauzy-table';
+
 :host .search {
   margin: 20px 0 0 0;
   align-items: center;
@@ -59,4 +61,10 @@ nb-card.filter {
   background: rgba(255, 255, 255, 0.5);
   border-radius: 20px;
   height: 36px;
+}
+
+.gauzy-action{
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
 }

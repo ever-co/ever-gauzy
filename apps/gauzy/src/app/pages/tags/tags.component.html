@@ -28,37 +28,22 @@
 			nbSpinnerStatus="primary"
 			nbSpinnerSize="large"
 		>
-			<nb-card-header class="card-header-title">
-				<h4>
+			<nb-card-header class="flex flex-column pb-0">
+				<h4 class="card-header-title">
 					<ngx-header-title>
 						{{ 'TAGS_PAGE.HEADER' | translate }}
 					</ngx-header-title>
 				</h4>
-				<ga-layout-selector
-					[componentName]="viewComponentName"
-				></ga-layout-selector>
+				<div class="gauzy-action">
+					<ngx-gauzy-button-action
+						[componentName]="viewComponentName"
+						[buttonTemplateVisible]="visible"
+						[buttonTemplate]="actionButtons"
+						[isDisable]="disableButton"
+					></ngx-gauzy-button-action>
+				</div>
 			</nb-card-header>
 			<nb-card-body>
-				<div class="mb-3">
-					<button
-						nbButton
-						status="success"
-						(click)="add()"
-						class="mr-2"
-					>
-						<nb-icon class="mr-1" icon="plus-outline"></nb-icon
-						>{{ 'BUTTONS.ADD' | translate }}
-					</button>
-					<ng-container
-						*ngIf="
-							dataLayoutStyle === componentLayoutStyleEnum.TABLE
-						"
-					>
-						<ng-container
-							*ngTemplateOutlet="actionButtons"
-						></ng-container>
-					</ng-container>
-				</div>
 				<ng-template
 					[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
 					[ngIfElse]="gridLayout"
@@ -88,26 +73,38 @@
 		>
 			<button
 				nbButton
-				status="info"
+				status="basic"
 				(click)="edit(selectedItem)"
-				class="mr-2"
+				class="action primary"
 				[disabled]="!selectedItem && disableButton"
-				[size]="buttonSize || 'medium'"
+				size="small"
 			>
 				<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
 				{{ 'BUTTONS.EDIT' | translate }}
 			</button>
 			<button
 				nbButton
-				status="danger"
+				status="basic"
 				(click)="delete(selectedItem)"
-				class="mr-2"
+				class="action"
 				[disabled]="!selectedItem && disableButton"
-				[size]="buttonSize || 'medium'"
+				size="small"
+				[nbTooltip]="'BUTTONS.DELETE' | translate"
 			>
-				<nb-icon class="mr-1" icon="archive-outline"> </nb-icon>
-				{{ 'BUTTONS.DELETE' | translate }}
+				<nb-icon status="danger" icon="trash-2-outline"> </nb-icon>
 			</button>
 		</ng-template>
 	</div>
 </div>
+
+<ng-template #visible>
+	<button
+		nbButton
+		class="action"
+		status="success"
+		size="small"
+		(click)="add()"
+	>
+		<nb-icon icon="plus-outline"></nb-icon>{{ 'BUTTONS.ADD' | translate }}
+	</button>
+</ng-template>

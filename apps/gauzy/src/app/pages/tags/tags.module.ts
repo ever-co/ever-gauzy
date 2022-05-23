@@ -27,6 +27,7 @@ import { TagsColorComponent } from './tags-color/tags-color.component';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { TranslateModule } from '../../@shared/translate/translate.module';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
+import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
 
 @NgModule({
 	imports: [
@@ -54,7 +55,8 @@ import { HeaderTitleModule } from '../../@shared/components/header-title/header-
 		CardGridModule,
 		TranslateModule,
 		NbSpinnerModule,
-		HeaderTitleModule
+		HeaderTitleModule,
+		GauzyButtonActionModule
 	],
 	declarations: [TagsComponent, TagsColorComponent]
 })
