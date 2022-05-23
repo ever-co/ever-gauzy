@@ -25,7 +25,7 @@ export class NotesWithTagsComponent implements ViewCell, OnInit {
 	data$: BehaviorSubject<any> = new BehaviorSubject<any>(null);
 	data: Observable<any> = new Observable<any>(null);
 
-	constructor(private themeService: NbThemeService) {}
+	constructor(protected themeService: NbThemeService) {}
 
 	ngOnInit(): void {
 		this.themeService.getJsTheme().subscribe((theme) => {

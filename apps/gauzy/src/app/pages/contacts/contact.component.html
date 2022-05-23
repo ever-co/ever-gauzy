@@ -1,278 +1,161 @@
-<nb-card 
+<nb-card
 	[nbSpinner]="loading"
 	nbSpinnerStatus="primary"
 	nbSpinnerSize="large"
 	class="card-scroll"
 >
-	<nb-card-header>
+	<nb-card-header class="d-flex flex-column">
 		<div class="main-header">
 			<h4>
 				<ngx-header-title>
-					{{ contactType + 's'| titlecase }}
+					{{ contactType + 's' | titlecase }}
 				</ngx-header-title>
 			</h4>
-			<ga-layout-selector
+		</div>
+		<div *ngIf="!showAddCard" class="align-self-end">
+			<ngx-gauzy-button-action
 				[componentName]="viewComponentName"
-			></ga-layout-selector>
+				[isDisable]="disableButton"
+				[buttonTemplate]="actionButtons"
+				[buttonTemplateVisible]="visible"
+			></ngx-gauzy-button-action>
 		</div>
 	</nb-card-header>
-	<nb-card-body>
-		<div class="mb-3" style="display: flex">
-			<ng-template [ngIf]="!showAddCard">
-				<ng-template ngxPermissionsOnly="ORG_CONTACT_EDIT">
-					<button
-						(click)="add()"
-						nbButton
-						class="mr-2"
-						status="success"
-					>
-						<nb-icon class="mr-1" icon="plus-outline"></nb-icon>
-						{{ 'BUTTONS.ADD' | translate }}
-					</button>
-				</ng-template>
-				<button
-					(click)="invite()"
-					nbButton
-					class="mr-2"
-					status="primary"
-				>
-					<nb-icon class="mr-1" icon="email-outline"></nb-icon>
-					{{ 'BUTTONS.INVITE' | translate }}
-				</button>
-				<ng-container
-					*ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
-				>
-					<ng-template ngxPermissionsOnly="ORG_CONTACT_EDIT">
-						<ng-container
-							*ngTemplateOutlet="actionButtons; context: {
-								selectedItem: selectedOrganizationContact
-							}"
-						></ng-container>
-					</ng-template>
-				</ng-container>
-			</ng-template>
+	<nb-card-body class="custom-card">
+		<div style="display: flex">
 			<ng-container *ngIf="showAddCard">
 				<ga-contact-mutation
 					class="w-100"
 					[contactType]="contactType"
 					[organizationContact]="selectedOrganizationContact"
-					[projectsWithoutOrganizationContacts]="projectsWithoutOrganizationContacts"
+					[projectsWithoutOrganizationContacts]="
+						projectsWithoutOrganizationContacts
+					"
 					(canceled)="cancel()"
-					(addOrEditOrganizationContact)="addOrEditOrganizationContact($event)"
+					(addOrEditOrganizationContact)="
+						addOrEditOrganizationContact($event)
+					"
 				></ga-contact-mutation>
 			</ng-container>
 		</div>
 		<ng-container *ngIf="!showAddCard">
 			<ng-template
-				[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE" 
+				[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
 				[ngIfElse]="gridLayout"
 			>
-				<div class="mt-4">
-					<div class="table-scroll-container">
-						<ng2-smart-table
-							class="w-100"
-							(userRowSelect)="selectContact($event)"
-							[settings]="settingsSmartTable"
-							[source]="smartTableSource"
-							style="cursor: pointer"
-							#contactsTable
-						></ng2-smart-table>
-					</div>
+				<div class="table-scroll-container">
+					<ng2-smart-table
+						class="w-100"
+						(userRowSelect)="selectContact($event)"
+						[settings]="settingsSmartTable"
+						[source]="smartTableSource"
+						style="cursor: pointer"
+						#contactsTable
+					></ng2-smart-table>
+				</div>
+				<div class="pagination-container align-self-end">
+					<ng-container
+						*ngIf="pagination.totalItems > pagination.itemsPerPage"
+					>
+						<ga-pagination
+							(selectedOption)="onUpdateOption($event)"
+							(selectedPage)="onPageChange($event)"
+							[doEmit]="false"
+							[totalItems]="pagination?.totalItems"
+							[itemsPerPage]="pagination?.itemsPerPage"
+							[activePage]="pagination?.activePage"
+						></ga-pagination>
+					</ng-container>
 				</div>
 			</ng-template>
 			<ng-template #gridLayout>
-				<div class="grid-scroll-container">
-					<div class="contact-list">
-						<ga-entity-with-members-card
-							*ngFor="let c of organizationContacts"
-							[entityWithMembers]="c"
-							[layout]="componentLayoutStyleEnum.CARDS_GRID"
-							(remove)="removeOrganizationContact(c.id, c.name)"
-							(edit)="editOrganizationContact(c)"
-							(view)="navigateToContact(c)"
-							[visibleViewButton]="true"
-							class="member-card"
-						>
-							<div class="contact-info">
-								<div>
-									<button
-										size="tiny"
-										class="ml-2 mb-2"
-										(click)="invite(c)"
-										*ngIf="
-											!c.inviteStatus ||
-											c.inviteStatus === contactOrganizationInviteStatus.NOT_INVITED
-										"
-										nbButton
-										status="success"
-									>
-										<nb-icon class="mr-1" icon="email-outline"></nb-icon
-										>{{ 'BUTTONS.INVITE' | translate }}
-									</button>
-									<button
-										size="tiny"
-										class="ml-2 mb-2"
-										(click)="invite(c)"
-										*ngIf="c.inviteStatus === contactOrganizationInviteStatus.INVITED"
-										nbButton
-									>
-										<nb-icon class="mr-1" icon="email-outline"></nb-icon
-										>{{ 'BUTTONS.INVITE_AGAIN' | translate }}
-									</button>
-								</div>
-								<div class="info-line">
-									<div class="info-meta">
-										{{
-											'ORGANIZATIONS_PAGE.EDIT.PRIMARY_EMAIL'
-												| translate
-										}}
-									</div>
-									<div class="info-value">{{ c.primaryEmail }}</div>
-								</div>
-								<div class="info-line">
-									<div class="info-meta">
-										{{ 'ORGANIZATIONS_PAGE.EDIT.PHONE' | translate }}
-									</div>
-									<div class="info-value">{{ c.primaryPhone }}</div>
-								</div>
-								<div class="info-line">
-									<div class="info-meta">
-										{{ 'ORGANIZATIONS_PAGE.EDIT.COUNTRY' | translate }}
-									</div>
-									<div class="info-value">
-										{{ c.contact ? getCountry(c.contact) : '' }}
-									</div>
-								</div>
-								<div class="info-line">
-									<div class="info-meta">
-										{{ 'ORGANIZATIONS_PAGE.EDIT.CITY' | translate }}
-									</div>
-									<div class="info-value">
-										{{ c.contact ? c.contact.city : '' }}
-									</div>
-								</div>
-								<div class="info-line">
-									<div class="info-meta">
-										{{ 'ORGANIZATIONS_PAGE.EDIT.STREET' | translate }}
-									</div>
-									<div class="info-value">
-										{{ c.contact ? c.contact.address : '' }}
-									</div>
-								</div>
-								<div class="info-line">
-									<div class="info-meta">
-										{{
-											'ORGANIZATIONS_PAGE.EDIT.SECOND_ADDRESS'
-												| translate
-										}}
-									</div>
-									<div class="info-value">
-										{{ c.contact ? c.contact.address2 : '' }}
-									</div>
-								</div>
-								<div class="info-line">
-									<div class="info-meta">
-										{{ 'ORGANIZATIONS_PAGE.EDIT.POSTCODE' | translate }}
-									</div>
-									<div class="info-value">
-										{{ c.contact ? c.contact.postcode : '' }}
-									</div>
-								</div>
-								<div class="info-line">
-									<div class="info-meta">
-										{{ 'ORGANIZATIONS_PAGE.EDIT.PROJECTS' | translate }}
-									</div>
-									<div class="info-value">
-										<div
-											class="info-list-item"
-											*ngFor="let p of c.projects"
-										>
-											{{ p.name }}
-										</div>
-									</div>
-								</div>
-								<div class="info-line">
-									<div class="info-meta">
-										{{ 'CONTACTS_PAGE.CONTACT_TYPE' | translate }}
-									</div>
-									<div class="info-value">
-										{{ c.contactType }}
-									</div>
-								</div>
-								<div class="info-line">
-									<div class="info-meta">
-										{{ 'ORGANIZATIONS_PAGE.EDIT.FAX' | translate }}
-									</div>
-									<div class="info-value">
-										{{ c.contact ? c.contact.fax : '' }}
-									</div>
-								</div>
-								<div class="info-line">
-									<div class="info-meta">
-										{{
-											'ORGANIZATIONS_PAGE.EDIT.FISCAL_INFORMATION'
-												| translate
-										}}
-									</div>
-									<div class="info-value">
-										{{ c.contact ? c.contact.fiscalInformation : '' }}
-									</div>
-								</div>
-								<div class="info-line">
-									<div class="info-meta">
-										{{ 'ORGANIZATIONS_PAGE.EDIT.WEBSITE' | translate }}
-									</div>
-									<div class="info-value">
-										{{ c.contact ? c.contact.website : '' }}
-									</div>
-								</div>
-							</div>
-						</ga-entity-with-members-card>
-					</div>
-				</div>
+				<ga-card-grid
+					(onSelectedItem)="selectContact($event)"
+					[settings]="settingsSmartTable"
+					[source]="organizationContacts"
+					(selectedOption)="onUpdateOption($event)"
+					(selectedPage)="onPageChange($event)"
+					[doEmit]="false"
+					[totalItems]="pagination?.totalItems"
+					[itemsPerPage]="pagination?.itemsPerPage"
+					[activePage]="pagination?.activePage"
+				></ga-card-grid>
 			</ng-template>
 		</ng-container>
 	</nb-card-body>
 </nb-card>
 
-<ng-template
-	#actionButtons
-	let-buttonSize="buttonSize"
-	let-selectedItem="selectedItem"
->
+<ng-template #actionButtons>
+	<ng-template ngxPermissionsOnly="ORG_CONTACT_EDIT">
+		<div class="btn-group actions">
+			<ngx-contact-action
+				[rowData]="selectedOrganizationContact"
+				(updateResult)="onUpdateResult($event)"
+			>
+			</ngx-contact-action>
+			<button
+				nbButton
+				class="action secondary"
+				status="basic"
+				size="small"
+				[disabled]="!selectedOrganizationContact && disableButton"
+				(click)="navigateToContact(selectedOrganizationContact)"
+			>
+				<nb-icon class="mr-1" icon="eye-outline"></nb-icon>
+				{{ 'BUTTONS.VIEW' | translate }}
+			</button>
+			<button
+				nbButton
+				class="action primary"
+				status="basic"
+				size="small"
+				[disabled]="!selectedOrganizationContact && disableButton"
+				(click)="editOrganizationContact(selectedOrganizationContact)"
+			>
+				<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
+				{{ 'BUTTONS.EDIT' | translate }}
+			</button>
+			<button
+				nbButton
+				class="action"
+				status="basic"
+				size="small"
+				[disabled]="!selectedOrganizationContact && disableButton"
+				(click)="
+					removeOrganizationContact(
+						selectedOrganizationContact?.id,
+						selectedOrganizationContact?.name
+					)
+				"
+				size="small"
+				[nbTooltip]="'BUTTONS.DELETE' | translate"
+			>
+				<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
+			</button>
+		</div>
+	</ng-template>
+</ng-template>
+<ng-template #visible>
+	<button
+		(click)="invite()"
+		nbButton
+		class="action info"
+		size="small"
+		status="basic"
+	>
+		<nb-icon class="mr-1" icon="email-outline"></nb-icon>
+		{{ 'BUTTONS.INVITE' | translate }}
+	</button>
 	<ng-template ngxPermissionsOnly="ORG_CONTACT_EDIT">
 		<button
+			(click)="add()"
 			nbButton
-			status="info"
-			class="mr-2"
-			[disabled]="!selectedItem && disableButton"
-			(click)="navigateToContact(selectedItem)"
-			[size]="buttonSize || 'medium'"
-		>
-			<nb-icon class="mr-1" icon="eye-outline"></nb-icon>
-			{{ 'BUTTONS.VIEW' | translate }}
-		</button>
-		<button
-			nbButton
+			class="action"
+			size="small"
 			status="success"
-			class="mr-2"
-			[disabled]="!selectedItem && disableButton"
-			(click)="editOrganizationContact(selectedItem)"
-			[size]="buttonSize || 'medium'"
 		>
-			<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
-			{{ 'BUTTONS.EDIT' | translate }}
-		</button>
-		<button
-			nbButton
-			status="danger"
-			class="mr-2"
-			[disabled]="!selectedItem && disableButton"
-			(click)="removeOrganizationContact(selectedItem?.id, selectedItem?.name)"
-			[size]="buttonSize || 'medium'"
-		>
-			<nb-icon class="mr-1" icon="archive-outline"></nb-icon>
-			{{ 'BUTTONS.DELETE' | translate }}
+			<nb-icon class="mr-1" icon="plus-outline"></nb-icon>
+			{{ 'BUTTONS.ADD' | translate }}
 		</button>
 	</ng-template>
 </ng-template>

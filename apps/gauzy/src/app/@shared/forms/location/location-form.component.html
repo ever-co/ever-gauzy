@@ -2,7 +2,7 @@
 	<div class="fields">
 		<ng-container *ngIf="showAutocompleteSearch">
 			<div class="row">
-				<div class="col-12">
+				<div class="col-11">
 					<div class="form-group">
 						<label class="label" for="findInput">{{
 							'FORM.LABELS.FIND_ADDRESS' | translate
@@ -13,7 +13,7 @@
 								nbPrefix
 								icon="search-outline"
 								pack="eva"
-							>
+							>å
 							</nb-icon>
 							<input
 								#autocomplete
@@ -33,14 +33,16 @@
 		</ng-container>
 		<ng-container>
 			<div class="row">
-				<div class="col-6">
+				<div class="col-8">
 					<ga-country
 						[(ngModel)]="country"
 						[formControl]="form.get('country')"
 						(selectChange)="onAddressChanges()"
 					></ga-country>
 				</div>
-				<div class="col-6">
+			</div>
+			<div class="row">
+				<div class="col-8">
 					<div class="form-group">
 						<label class="label" for="cityInput">{{
 							'FORM.LABELS.CITY' | translate
@@ -60,8 +62,8 @@
 					</div>
 				</div>
 			</div>
-      <div class="row">
-        <div class="col-12">
+			<div class="row">
+				<div class="col-6">
 					<div class="form-group">
 						<label class="label" for="postcodeInput">{{
 							'FORM.LABELS.POSTCODE' | translate
@@ -84,9 +86,9 @@
 						/>
 					</div>
 				</div>
-      </div>
+			</div>
 			<div class="row">
-				<div class="col-6">
+				<div class="col-11">
 					<div class="form-group">
 						<label class="label" for="addressInput">{{
 							'FORM.LABELS.ADDRESS' | translate
@@ -108,7 +110,9 @@
 						/>
 					</div>
 				</div>
-				<div class="col-6">
+			</div>
+			<div class="row">
+				<div class="col-11">
 					<div class="form-group">
 						<label class="label" for="address2Input">{{
 							'FORM.LABELS.ADDRESS_2' | translate
@@ -135,7 +139,7 @@
 			</div>
 			<ng-container *ngIf="showCoordinateInput">
 				<div class="row">
-					<div class="col-sm-12">
+					<div class="col-sm-11">
 						<nb-checkbox
 							(checkedChange)="toggleShowCoordinates()"
 							>{{
@@ -168,7 +172,7 @@
 							/>
 						</div>
 					</div>
-					<div class="col-sm-6">
+					<div class="col-sm-5">
 						<div class="form-group">
 							<label class="label" for="postcodeInput">{{
 								'FORM.LABELS.COORDINATE.LONGITUDE' | translate

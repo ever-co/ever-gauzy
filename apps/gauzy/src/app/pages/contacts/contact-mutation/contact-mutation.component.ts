@@ -228,7 +228,7 @@ export class ContactMutationComponent
 		this.contMainForm.patchValue({
 			imageUrl: this.organizationContact
 						? this.organizationContact.imageUrl
-						: DUMMY_PROFILE_IMAGE,
+						: null,
 			tags: this.organizationContact
 					? (this.organizationContact.tags)
 					: [],

@@ -22,16 +22,11 @@ import {
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { combineLatest, Subject, firstValueFrom } from 'rxjs';
-import {
-	debounceTime,
-	filter,
-	tap
-} from 'rxjs/operators';
+import { debounceTime, filter, tap } from 'rxjs/operators';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import { InviteContactComponent } from './invite-contact/invite-contact.component';
-import { TranslationBaseComponent } from '../../@shared/language-base';
 import {
 	CountryService,
 	OrganizationContactService,
@@ -41,8 +36,15 @@ import {
 } from '../../@core/services';
 import { ComponentEnum } from '../../@core/constants';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
-import { EmployeeWithLinksComponent, PictureNameTagsComponent, TaskTeamsComponent } from '../../@shared/table-components';
-import { ContactActionComponent } from './table-components';
+import {
+	EmployeeWithLinksComponent,
+	ProjectComponent
+} from '../../@shared/table-components';
+import {
+	IPaginationBase,
+	PaginationFilterBaseComponent
+} from '../../@shared/pagination/pagination-filter-base.component';
+import { ContactWithTagsComponent } from '../../@shared/table-components/contact-with-tags/contact-with-tags.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -51,9 +53,9 @@ import { ContactActionComponent } from './table-components';
 	styleUrls: ['./contact.component.scss']
 })
 export class ContactComponent
-	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
-
+	extends PaginationFilterBaseComponent
+	implements OnInit, OnDestroy
+{
 	showAddCard: boolean;
 	organizationContacts: IOrganizationContact[] = [];
 	projectsWithoutOrganizationContacts: IOrganizationProject[] = [];
@@ -73,8 +75,8 @@ export class ContactComponent
 	selectedEmployeeId: string;
 
 	/*
-	* Getter & Setter for contact type
-	*/
+	 * Getter & Setter for contact type
+	 */
 	_contactType: string = ContactType.CUSTOMER;
 	get contactType(): string {
 		return this._contactType;
@@ -92,9 +94,10 @@ export class ContactComponent
 	}
 
 	/*
-	* Actions Buttons directive 
-	*/
-	@ViewChild('actionButtons', { static: true }) actionButtons: TemplateRef<any>;
+	 * Actions Buttons directive
+	 */
+	@ViewChild('actionButtons', { static: true })
+	actionButtons: TemplateRef<any>;
 
 	constructor(
 		private readonly organizationContactService: OrganizationContactService,
@@ -118,10 +121,18 @@ export class ContactComponent
 		this.subject$
 			.pipe(
 				debounceTime(300),
-				tap(() => this.loading = true),
+				tap(() => (this.loading = true)),
 				tap(() => this.loadOrganizationContacts()),
 				tap(() => this.loadProjectsWithoutOrganizationContacts()),
 				tap(() => this.clearItem()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.pagination$
+			.pipe(
+				debounceTime(100),
+				distinctUntilChange(),
+				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -142,7 +153,10 @@ export class ContactComponent
 			.subscribe();
 		this.route.queryParamMap
 			.pipe(
-				filter((params) => !!params && params.get('openAddDialog') === 'true'),
+				filter(
+					(params) =>
+						!!params && params.get('openAddDialog') === 'true'
+				),
 				debounceTime(1000),
 				tap(() => this.add()),
 				untilDestroyed(this)
@@ -168,9 +182,13 @@ export class ContactComponent
 		if (id) {
 			const { tenantId } = this.store.user;
 			this.organizationContactService
-				.getById(id, 
-					tenantId, 
-					['projects', 'members', 'members.user', 'tags', 'contact'])
+				.getById(id, tenantId, [
+					'projects',
+					'members',
+					'members.user',
+					'tags',
+					'contact'
+				])
 				.then((items) => {
 					if (items) {
 						this.editOrganizationContact(items);
@@ -189,14 +207,20 @@ export class ContactComponent
 	}
 
 	async loadSmartTable() {
+		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
 			actions: false,
+			pager: {
+				display: false,
+				perPage: pagination ? pagination.itemsPerPage : 10
+			},
 			columns: {
 				name: {
 					title: this.getTranslation('ORGANIZATIONS_PAGE.NAME'),
 					type: 'custom',
 					class: 'align-row',
-					renderComponent: PictureNameTagsComponent
+					renderComponent: ContactWithTagsComponent,
+					width: '15%'
 				},
 				members: {
 					title: this.getTranslation(
@@ -217,13 +241,11 @@ export class ContactComponent
 				projects: {
 					title: this.getTranslation('CONTACTS_PAGE.PROJECTS'),
 					type: 'custom',
-					renderComponent: TaskTeamsComponent,
-					filter: false
+					renderComponent: ProjectComponent
 				},
 				country: {
 					title: this.getTranslation('CONTACTS_PAGE.COUNTRY'),
 					type: 'string',
-					filter: false,
 					valuePrepareFunction: (value, item) => {
 						return this.getCountry(item);
 					}
@@ -235,26 +257,13 @@ export class ContactComponent
 				street: {
 					title: this.getTranslation('CONTACTS_PAGE.STREET'),
 					type: 'string'
-				},
-				actions: {
-					title: this.getTranslation(
-						'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_ACTIONS'
-					),
-					type: 'custom',
-					renderComponent: ContactActionComponent,
-					onComponentInitFunction: (instance) => {
-						instance.updateResult.subscribe((params) => {
-							this.invite(params);
-						});
-					},
-					filter: false
 				}
-			},
-			pager: {
-				display: true,
-				perPage: 8
 			}
 		};
+	}
+
+	public onUpdateResult(params: any) {
+		if (params) this.invite(params);
 	}
 
 	selectContact({ isSelected, data }) {
@@ -263,17 +272,19 @@ export class ContactComponent
 	}
 
 	async removeOrganizationContact(id?: string, name?: string) {
-		const result = await firstValueFrom(this.dialogService
-			.open(DeleteConfirmationComponent, {
+		const result = await firstValueFrom(
+			this.dialogService.open(DeleteConfirmationComponent, {
 				context: {
 					recordType: 'Contact'
 				}
-			})
-			.onClose);
+			}).onClose
+		);
 
 		if (result) {
 			await this.organizationContactService.delete(
-				this.selectedOrganizationContact ? this.selectedOrganizationContact.id : id
+				this.selectedOrganizationContact
+					? this.selectedOrganizationContact.id
+					: id
 			);
 
 			this.toastrService.success(
@@ -293,7 +304,10 @@ export class ContactComponent
 		this.viewComponentName = ComponentEnum.CONTACTS;
 		this.store
 			.componentLayout$(this.viewComponentName)
-			.pipe(untilDestroyed(this))
+			.pipe(
+				tap(() => this.refreshPagination()),
+				untilDestroyed(this)
+			)
 			.subscribe((componentLayout) => {
 				this.dataLayoutStyle = componentLayout;
 				this.selectedOrganizationContact =
@@ -354,7 +368,7 @@ export class ContactComponent
 
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
-
+		const { activePage, itemsPerPage } = this.getPagination();
 		const findObj = {
 			organizationId,
 			tenantId,
@@ -366,7 +380,14 @@ export class ContactComponent
 
 		this.organizationContactService
 			.getAll(
-				['projects', 'members', 'members.user', 'tags', 'contact'],
+				[
+					'projects',
+					'projects.organization',
+					'members',
+					'members.user',
+					'tags',
+					'contact'
+				],
 				findObj
 			)
 			.then(({ items = [] }) => {
@@ -377,15 +398,31 @@ export class ContactComponent
 						country: contact.contact ? contact.contact.country : '',
 						city: contact.contact ? contact.contact.city : '',
 						street: contact.contact ? contact.contact.address : '',
-						street2: contact.contact ? contact.contact.address2 : '',
-						postcode: contact.contact ? contact.contact.postcode : null,
+						street2: contact.contact
+							? contact.contact.address2
+							: '',
+						postcode: contact.contact
+							? contact.contact.postcode
+							: null,
 						fax: contact.contact ? contact.contact.fax : '',
 						website: contact.contact ? contact.contact.website : '',
-						fiscalInformation: contact.contact ? contact.contact.fiscalInformation : ''
+						fiscalInformation: contact.contact
+							? contact.contact.fiscalInformation
+							: ''
 					});
 				});
+				this.smartTableSource.setPaging(
+					activePage,
+					itemsPerPage,
+					false
+				);
 				this.organizationContacts = result;
 				this.smartTableSource.load(result);
+				this._loadGridLayoutData();
+				this.setPagination({
+					...this.getPagination(),
+					totalItems: this.smartTableSource.count()
+				});
 			})
 			.catch(() => {
 				this.toastrService.danger(
@@ -396,6 +433,13 @@ export class ContactComponent
 				this.loading = false;
 				this.cd.detectChanges();
 			});
+	}
+
+	private async _loadGridLayoutData() {
+		if (this.componentLayoutStyleEnum.CARDS_GRID === this.dataLayoutStyle) {
+			this.organizationContacts =
+				await this.smartTableSource.getElements();
+		}
 	}
 
 	private async loadProjectsWithoutOrganizationContacts() {
@@ -444,8 +488,8 @@ export class ContactComponent
 
 	/**
 	 * Redirect contact/client/customer to view page
-	 * 
-	 * @returns 
+	 *
+	 * @returns
 	 */
 	navigateToContact(selectedItem?: IContact) {
 		if (selectedItem) {
@@ -539,5 +583,5 @@ export class ContactComponent
 		return find ? find.country : row.country;
 	}
 
-	ngOnDestroy(): void { }
+	ngOnDestroy(): void {}
 }

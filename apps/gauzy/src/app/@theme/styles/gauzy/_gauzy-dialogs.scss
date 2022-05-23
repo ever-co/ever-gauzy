@@ -17,6 +17,7 @@ $shadow: 0 0 0 nb-theme(button-outline-width)
     display: flex;
     justify-content: flex-end;
   }
+
   [nbButton].appearance-outline.status-basic {
     background-color: transparent;
     border-color: rgba($color: $orange, $alpha: 0.3);
@@ -66,8 +67,8 @@ $shadow: 0 0 0 nb-theme(button-outline-width)
   }
 
   [nbButton].green.appearance-outline.status-basic {
-    background-color: #ffffff;
-    border-color: rgba($color: $green, $alpha: 0.3);;
+    background-color: transparent;
+    border-color: rgba($color: $green, $alpha: 0.3);
     border-width: 2px;
     color: $green;
     &:hover {

@@ -1,6 +1,7 @@
+@import 'gauzy/_gauzy-dialogs';
 nb-card {
-  width: 600px;
-
+  width: 645px;
+  background-color: nb-theme(gauzy-card-1);
   nb-card-header {
     nb-icon.close {
       cursor: pointer;
