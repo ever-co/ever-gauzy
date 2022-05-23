@@ -37,10 +37,10 @@
 		"@angular/forms": "13.2.2",
 		"@angular/router": "13.2.2",
 		"@nebular/theme": "^9.0.0",
-		"moment": "^2.29.1",
+		"moment": "^2.29.3",
 		"ng2-smart-table": "^1.7.2",
 		"ngx-electron": "^2.2.0",
-		"underscore": "^1.13.2"
+		"underscore": "^1.13.3"
 	},
 	"dependencies": {
 		"@gauzy/contracts": "^0.1.0",
