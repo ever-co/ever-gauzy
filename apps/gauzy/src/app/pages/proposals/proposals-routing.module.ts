@@ -34,7 +34,13 @@ const routes: Routes = [
 		path: 'register',
 		component: ProposalRegisterComponent,
 		canActivate: [NgxPermissionsGuard],
-		data: PROPOSAL_EDIT_PERMISSION
+		data: {
+			...PROPOSAL_EDIT_PERMISSION,
+			selectors: {
+				project: false,
+				employee: false
+			}
+		}
 	},
 	{
 		path: 'details/:id',
@@ -46,7 +52,13 @@ const routes: Routes = [
 		path: 'edit/:id',
 		component: ProposalEditComponent,
 		canActivate: [NgxPermissionsGuard],
-		data: PROPOSAL_EDIT_PERMISSION
+		data: {
+			...PROPOSAL_EDIT_PERMISSION,
+			selectors: {
+				project: false,
+				employee: false
+			}
+		}
 	}
 ];
 

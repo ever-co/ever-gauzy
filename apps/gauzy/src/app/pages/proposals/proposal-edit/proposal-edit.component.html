@@ -34,31 +34,13 @@
 							<label class="label">{{
 								'POP_UPS.CONTACT' | translate
 							}}</label>
-							<ng-select
-								[addTag]="addNewOrganizationContact"
-								[items]="organizationContacts"
-								bindLabel="name"
+							<ga-contact-select
+								[addTag]="true"
+								[clearable]="true"
 								[searchable]="true"
+								[placeholder]="'POP_UPS.CONTACT' | translate"
 								formControlName="organizationContact"
-								(change)="selectOrganizationContact($event)"
-								placeholder="{{
-									'POP_UPS.CONTACT' | translate
-								}}"
-								appendTo="body"
-							>
-								<ng-template
-									ng-option-tmp
-									let-item="item"
-									let-index="index"
-								>
-									{{ item.name }}
-								</ng-template>
-								<ng-template ng-label-tmp let-item="item">
-									<div class="selector-template">
-										<span>{{ item.name }}</span>
-									</div>
-								</ng-template>
-							</ng-select>
+							></ga-contact-select>
 						</div>
 					</div>
 					<div class="col-sm-4">
@@ -67,8 +49,7 @@
 								[selectedTags]="tags"
 								(selectedTagsEvent)="selectedTagsEvent($event)"
 								[isOrgLevel]="true"
-							>
-							</ga-tags-color-input>
+							></ga-tags-color-input>
 						</div>
 					</div>
 					<div class="row text-editors">
@@ -81,8 +62,7 @@
 								<ckeditor
 									formControlName="jobPostContent"
 									[config]="ckConfig"
-								>
-								</ckeditor>
+								></ckeditor>
 							</div>
 						</div>
 						<div class="col-sm-6">
@@ -110,9 +90,7 @@
 			status="success"
 			nbButton
 		>
-			{{
-				'PROPOSALS_PAGE.EDIT_PROPOSAL.EDIT_PROPOSAL_BUTTON' | translate
-			}}
+			{{ 'PROPOSALS_PAGE.EDIT_PROPOSAL.EDIT_PROPOSAL_BUTTON' | translate }}
 		</button>
 	</nb-card-footer>
 </nb-card>
