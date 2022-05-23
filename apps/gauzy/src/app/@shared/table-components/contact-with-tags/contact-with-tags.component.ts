@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { NbThemeService } from '@nebular/theme';
+import { TranslateService } from '@ngx-translate/core';
 import { PictureNameTagsComponent } from '../picture-name-tags/picture-name-tags.component';
 
 @Component({
@@ -11,9 +12,10 @@ import { PictureNameTagsComponent } from '../picture-name-tags/picture-name-tags
 export class ContactWithTagsComponent extends PictureNameTagsComponent {
 	constructor(
 		private readonly _router: Router,
-		readonly themeService: NbThemeService
+		readonly themeService: NbThemeService,
+		readonly translateService: TranslateService
 	) {
-		super(themeService);
+		super(themeService, translateService);
 	}
 
 	navigateToContact() {
