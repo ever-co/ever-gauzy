@@ -89,4 +89,11 @@ $shadow: 0 0 0 nb-theme(button-outline-width)
     color: nb-theme(button-outline-basic-disabled-text-color);
     box-shadow: unset;
   }
+
+  [nbButton].primary.appearance-filled.status-primary {
+    color: nb-theme(text-primary-color);
+    border: unset;
+    background-color: nb-theme(color-primary-transparent-default);
+    box-shadow: 0 1px 1px 0 rgba(0, 0, 0, 0.15);
+  }
 }

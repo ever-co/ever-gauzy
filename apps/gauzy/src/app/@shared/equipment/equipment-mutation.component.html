@@ -1,6 +1,9 @@
 <nb-card class="main">
-	<nb-card-header class="d-flex">
-		<h5>
+	<nb-card-header class="d-flex flex-column">
+		<span class="cancel"
+			><i class="fas fa-times" (click)="closeDialog()"></i
+		></span>
+		<h5 class="title">
 			{{
 				(equipment
 					? 'EQUIPMENT_PAGE.EDIT_EQUIPMENT'
@@ -8,170 +11,9 @@
 				) | translate
 			}}
 		</h5>
-		<nb-icon
-			class="ml-auto mt-1 close"
-			icon="close-outline"
-			(click)="closeDialog()"
-		></nb-icon>
 	</nb-card-header>
 	<nb-card-body class="body">
 		<form [formGroup]="form" *ngIf="form">
-			<div class="row">
-				<div class="col-sm-6 mb-3">
-					<label for="name" class="label">
-						{{ 'EQUIPMENT_PAGE.EQUIPMENT_NAME' | translate }}
-					</label>
-					<input
-						nbInput
-						type="text"
-						formControlName="name"
-						fullWidth
-						placeholder="{{
-							'EQUIPMENT_PAGE.EQUIPMENT_NAME' | translate
-						}}"
-						[ngClass]="{
-							'status-danger':
-								form.controls['name'].invalid &&
-								form.controls['name'].dirty,
-							'status-success':
-								form.controls['name'].valid &&
-								form.controls['name'].dirty
-						}"
-					/>
-				</div>
-				<div class="col-sm-6 mb-3">
-					<label for="type" class="label">
-						{{ 'EQUIPMENT_PAGE.EQUIPMENT_TYPE' | translate }}
-					</label>
-					<input
-						nbInput
-						type="text"
-						formControlName="type"
-						fullWidth
-						placeholder="{{
-							'EQUIPMENT_PAGE.EQUIPMENT_TYPE' | translate
-						}}"
-						[ngClass]="{
-							'status-danger':
-								form.controls['type'].invalid &&
-								form.controls['type'].dirty,
-							'status-success':
-								form.controls['type'].valid &&
-								form.controls['type'].dirty
-						}"
-					/>
-				</div>
-			</div>
-
-			<div class="row">
-				<div class="col-sm-6 mb-3">
-					<label for="serialNumber" class="label">
-						{{ 'EQUIPMENT_PAGE.EQUIPMENT_SN' | translate }}
-					</label>
-					<input
-						nbInput
-						type="text"
-						formControlName="serialNumber"
-						fullWidth
-						placeholder="{{
-							'EQUIPMENT_PAGE.EQUIPMENT_SN' | translate
-						}}"
-					/>
-				</div>
-				<div class="col-sm-6 mb-3">
-					<label for="manufacturedYear" class="label">
-						{{
-							'EQUIPMENT_PAGE.EQUIPMENT_MANUFACTURED_YEAR'
-								| translate
-						}}
-					</label>
-					<input
-						nbInput
-						type="number"
-						formControlName="manufacturedYear"
-						fullWidth
-						placeholder="{{
-							'EQUIPMENT_PAGE.EQUIPMENT_MANUFACTURED_YEAR'
-								| translate
-						}}"
-						[ngClass]="{
-							'status-danger':
-								form.controls['manufacturedYear'].invalid &&
-								form.controls['manufacturedYear'].dirty,
-							'status-success':
-								form.controls['manufacturedYear'].valid &&
-								form.controls['manufacturedYear'].dirty
-						}"
-					/>
-				</div>
-			</div>
-
-			<div class="row">
-				<div class="col-sm-6 mb-3">
-					<label for="initialCost" class="label">
-						{{
-							'EQUIPMENT_PAGE.EQUIPMENT_INITIAL_COST' | translate
-						}}
-					</label>
-					<input
-						nbInput
-						type="number"
-						formControlName="initialCost"
-						fullWidth
-						placeholder="{{
-							'EQUIPMENT_PAGE.EQUIPMENT_INITIAL_COST' | translate
-						}}"
-						[ngClass]="{
-							'status-danger':
-								form.controls['initialCost'].invalid &&
-								form.controls['initialCost'].dirty,
-							'status-success':
-								form.controls['initialCost'].valid &&
-								form.controls['initialCost'].dirty
-						}"
-					/>
-				</div>
-				<div class="col-sm-6 mb-3">
-					<ga-currency formControlName="currency"></ga-currency>
-				</div>
-			</div>
-
-			<div class="row">
-				<div class="col-sm-6 mb-3">
-					<label for="name" class="label">
-						{{
-							'EQUIPMENT_PAGE.EQUIPMENT_MAX_SHARE_PERIOD'
-								| translate
-						}}
-					</label>
-					<input
-						nbInput
-						type="number"
-						formControlName="maxSharePeriod"
-						fullWidth
-						placeholder="{{
-							'EQUIPMENT_PAGE.EQUIPMENT_MAX_SHARE_PERIOD'
-								| translate
-						}}"
-						[ngClass]="{
-							'status-danger':
-								form.controls['maxSharePeriod'].invalid &&
-								form.controls['maxSharePeriod'].dirty,
-							'status-success':
-								form.controls['maxSharePeriod'].valid &&
-								form.controls['maxSharePeriod'].dirty
-						}"
-					/>
-				</div>
-				<div class="col-sm-6">
-					<ga-tags-color-input
-						[selectedTags]="form.get('tags').value"
-						(selectedTagsEvent)="selectedTagsEvent($event)"
-						[isOrgLevel]="true"
-					></ga-tags-color-input>
-				</div>
-			</div>
-
 			<div class="row mt-3">
 				<div class="col-sm-3 mb-5">
 					<div class="equipment-img" (click)="onAddImageClick()">
@@ -217,24 +59,181 @@
 						></div>
 
 						<img
-							*ngIf="image && image.url"
+							*ngIf="image && image?.url"
 							class="featured-image"
-							[src]="image.url"
+							[src]="image?.url"
 							alt="Feature image"
-							style="width: 120px"
+							style="width: 150px"
 						/>
-						<img
-							*ngIf="!image || !image.url"
-							class="featured-image"
-							[src]="
-								'https://afostats.imagead.net/uploads/afo/no_img.png'
-							"
-							alt="Feature image"
-							style="width: 120px"
+						<div
+							*ngIf="!image"
+							class="featured-image no-image"
+							style="width: 150px"
+						></div>
+					</div>
+				</div>
+				<div class="col-sm-9 pl-4 mb-5">
+					<div class="form-group mb-3">
+						<label for="name" class="label">
+							{{ 'EQUIPMENT_PAGE.EQUIPMENT_NAME' | translate }}
+						</label>
+						<input
+							nbInput
+							type="text"
+							formControlName="name"
+							fullWidth
+							placeholder="{{
+								'EQUIPMENT_PAGE.EQUIPMENT_NAME' | translate
+							}}"
+							[ngClass]="{
+								'status-danger':
+									form.controls['name'].invalid &&
+									form.controls['name'].dirty,
+								'status-success':
+									form.controls['name'].valid &&
+									form.controls['name'].dirty
+							}"
 						/>
 					</div>
 				</div>
-				<div class="col-sm-9 mb-5">
+			</div>
+
+			<div class="row">
+				<div class="col-sm-6 mb-3">
+					<label for="type" class="label">
+						{{ 'EQUIPMENT_PAGE.EQUIPMENT_TYPE' | translate }}
+					</label>
+					<input
+						nbInput
+						type="text"
+						formControlName="type"
+						fullWidth
+						placeholder="{{
+							'EQUIPMENT_PAGE.EQUIPMENT_TYPE' | translate
+						}}"
+						[ngClass]="{
+							'status-danger':
+								form.controls['type'].invalid &&
+								form.controls['type'].dirty,
+							'status-success':
+								form.controls['type'].valid &&
+								form.controls['type'].dirty
+						}"
+					/>
+				</div>
+				<div class="col-sm-6 mb-3">
+					<label for="manufacturedYear" class="label">
+						{{
+							'EQUIPMENT_PAGE.EQUIPMENT_MANUFACTURED_YEAR'
+								| translate
+						}}
+					</label>
+					<input
+						nbInput
+						type="number"
+						formControlName="manufacturedYear"
+						fullWidth
+						placeholder="{{
+							'EQUIPMENT_PAGE.EQUIPMENT_MANUFACTURED_YEAR'
+								| translate
+						}}"
+						[ngClass]="{
+							'status-danger':
+								form.controls['manufacturedYear'].invalid &&
+								form.controls['manufacturedYear'].dirty,
+							'status-success':
+								form.controls['manufacturedYear'].valid &&
+								form.controls['manufacturedYear'].dirty
+						}"
+					/>
+				</div>
+			</div>
+
+			<div class="row">
+				<div class="col-sm-6 mb-3">
+					<label for="serialNumber" class="label">
+						{{ 'EQUIPMENT_PAGE.EQUIPMENT_SN' | translate }}
+					</label>
+					<input
+						nbInput
+						type="text"
+						formControlName="serialNumber"
+						fullWidth
+						placeholder="{{
+							'EQUIPMENT_PAGE.EQUIPMENT_SN' | translate
+						}}"
+					/>
+				</div>
+				<div class="col-sm-6 mb-3">
+					<label for="name" class="label">
+						{{
+							'EQUIPMENT_PAGE.EQUIPMENT_MAX_SHARE_PERIOD'
+								| translate
+						}}
+					</label>
+					<input
+						nbInput
+						type="number"
+						formControlName="maxSharePeriod"
+						fullWidth
+						placeholder="{{
+							'EQUIPMENT_PAGE.EQUIPMENT_MAX_SHARE_PERIOD'
+								| translate
+						}}"
+						[ngClass]="{
+							'status-danger':
+								form.controls['maxSharePeriod'].invalid &&
+								form.controls['maxSharePeriod'].dirty,
+							'status-success':
+								form.controls['maxSharePeriod'].valid &&
+								form.controls['maxSharePeriod'].dirty
+						}"
+					/>
+				</div>
+			</div>
+
+			<div class="row">
+				<div class="col-sm-6 mb-3">
+					<label for="initialCost" class="label">
+						{{
+							'EQUIPMENT_PAGE.EQUIPMENT_INITIAL_COST' | translate
+						}}
+					</label>
+					<input
+						nbInput
+						type="number"
+						formControlName="initialCost"
+						fullWidth
+						placeholder="{{
+							'EQUIPMENT_PAGE.EQUIPMENT_INITIAL_COST' | translate
+						}}"
+						[ngClass]="{
+							'status-danger':
+								form.controls['initialCost'].invalid &&
+								form.controls['initialCost'].dirty,
+							'status-success':
+								form.controls['initialCost'].valid &&
+								form.controls['initialCost'].dirty
+						}"
+					/>
+				</div>
+				<div class="col-sm-6 mb-3">
+					<ga-currency formControlName="currency"></ga-currency>
+				</div>
+			</div>
+
+			<div class="row">
+				<div class="col-sm-12">
+					<ga-tags-color-input
+						[selectedTags]="form.get('tags')?.value"
+						(selectedTagsEvent)="selectedTagsEvent($event)"
+						[isOrgLevel]="true"
+					></ga-tags-color-input>
+				</div>
+			</div>
+
+			<div class="row mt-3">
+				<div class="col-sm-9 mb-3">
 					<div class="form-group mb-3">
 						<nb-checkbox formControlName="autoApproveShare">
 							<span>{{
@@ -250,11 +249,12 @@
 		</form>
 	</nb-card-body>
 
-	<nb-card-footer class="text-right">
+	<nb-card-footer class="text-left">
 		<button
 			(click)="dialogRef.close()"
-			status="danger"
+			status="basic"
 			class="mr-2"
+			outline
 			nbButton
 		>
 			{{ 'BUTTONS.CANCEL' | translate }}

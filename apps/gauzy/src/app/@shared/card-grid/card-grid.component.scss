@@ -58,6 +58,13 @@
         margin: 0px 0px 4px 2px;
         position: relative;
         .custom::ng-deep {
+          .img-container {
+            width: 100%;
+            img{
+              height: 132px;
+              width: 100%;
+            }
+          }
           ga-notes-with-tags,
           ga-only-tags {
             .tags-right {

@@ -1,0 +1,32 @@
+@import 'gauzy/_gauzy-table';
+@import 'gauzy/_gauzy-cards';
+
+[nbButton].sharing.appearance-filled.status-primary {
+	color: nb-theme(text-primary-color);
+	border: unset;
+	background-color: nb-theme(color-primary-transparent-default);
+}
+
+:host {
+	nb-card {
+		background-color: nb-theme(gauzy-card-2);
+	}
+
+	nb-card-body {
+		display: flex;
+		flex-direction: column;
+		background-color: nb-theme(gauzy-card-2);
+		overflow: unset;
+		height: calc(100vh - 27rem);
+		border-radius: 0 0 nb-theme(border-radius) nb-theme(border-radius);
+
+		.table-scroll-container {
+			flex-grow: 10;
+			max-height: unset;
+		}
+
+		.pagination-container {
+			align-self: flex-end;
+		}
+	}
+}

@@ -7,24 +7,39 @@
 	<nb-card
 		*ngFor="let item of source"
 		class="card-item"
-		[ngClass]="{ 'big': cardSize === 'big' }"
+		[ngClass]="{ big: cardSize === 'big' }"
 	>
 		<nb-card-body
-			[ngClass]="selected.isSelected && selected.data.id === item.id ? 'card-body active': 'card-body'"
+			[ngClass]="
+				selected.isSelected && selected.data.id === item.id
+					? 'card-body active'
+					: 'card-body'
+			"
 			(click)="selectedItem(item)"
 		>
 			<div class="info-line" *ngFor="let key of getKeys()">
-				<div class="info-meta">{{ settings.columns[key].title }}</div>
+				<div
+					class="info-meta"
+					[style.display]="
+						settings.columns[key].title === 'Image'
+							? 'none'
+							: 'inherit'
+					"
+				>
+					{{ settings.columns[key].title }}
+				</div>
 				<div class="info-value" [ngSwitch]="settings.columns[key].type">
 					<div *ngSwitchCase="'html'" [innerHTML]="item[key]"></div>
 					<div *ngSwitchCase="'date'">{{ item[key] | date }}</div>
 					<div *ngSwitchCase="'function'">{{ item[key].name }}</div>
 					<div *ngSwitchCase="'custom'">
 						<ga-custom-component
-							[renderComponent]="settings.columns[key].renderComponent"
+							[renderComponent]="
+								settings.columns[key].renderComponent
+							"
 							[value]="item[key]"
 							[rowData]="item"
-              				class="custom"
+							class="custom"
 						>
 						</ga-custom-component>
 					</div>
