@@ -17,6 +17,7 @@ $shadow: 0 0 0 nb-theme(button-outline-width)
     display: flex;
     justify-content: flex-end;
   }
+
   [nbButton].appearance-outline.status-basic {
     background-color: transparent;
     border-color: rgba($color: $orange, $alpha: 0.3);
@@ -66,8 +67,8 @@ $shadow: 0 0 0 nb-theme(button-outline-width)
   }
 
   [nbButton].green.appearance-outline.status-basic {
-    background-color: #ffffff;
-    border-color: rgba($color: $green, $alpha: 0.3);;
+    background-color: transparent;
+    border-color: rgba($color: $green, $alpha: 0.3);
     border-width: 2px;
     color: $green;
     &:hover {
@@ -87,5 +88,12 @@ $shadow: 0 0 0 nb-theme(button-outline-width)
     border-color: nb-theme(button-outline-basic-disabled-border-color);
     color: nb-theme(button-outline-basic-disabled-text-color);
     box-shadow: unset;
+  }
+
+  [nbButton].primary.appearance-filled.status-primary {
+    color: nb-theme(text-primary-color);
+    border: unset;
+    background-color: nb-theme(color-primary-transparent-default);
+    box-shadow: 0 1px 1px 0 rgba(0, 0, 0, 0.15);
   }
 }

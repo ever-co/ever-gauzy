@@ -3,6 +3,10 @@
 		<nb-card class="filter">
 			<nb-card-header>
 				{{ 'TAGS_PAGE.TAGS_TYPE' | translate }}
+				<ngx-search-input
+					(search)="search($event)"
+					class="search"
+				></ngx-search-input>
 			</nb-card-header>
 			<ng-container *ngIf="filterOptions.length">
 				<nb-list>
@@ -24,55 +28,62 @@
 			nbSpinnerStatus="primary"
 			nbSpinnerSize="large"
 		>
-			<nb-card-header class="card-header-title">
-				<h4>
+			<nb-card-header class="flex flex-column pb-0">
+				<h4 class="card-header-title">
 					<ngx-header-title>
 						{{ 'TAGS_PAGE.HEADER' | translate }}
 					</ngx-header-title>
 				</h4>
-				<ga-layout-selector
-					[componentName]="viewComponentName"
-				></ga-layout-selector>
+				<div class="gauzy-action">
+					<ngx-gauzy-button-action
+						[componentName]="viewComponentName"
+						[buttonTemplateVisible]="visible"
+						[buttonTemplate]="actionButtons"
+						[isDisable]="disableButton"
+					></ngx-gauzy-button-action>
+				</div>
 			</nb-card-header>
 			<nb-card-body>
-				<div class="mb-3">
-					<button
-						nbButton
-						status="success"
-						(click)="add()"
-						class="mr-2"
-					>
-						<nb-icon class="mr-1" icon="plus-outline"></nb-icon
-						>{{ 'BUTTONS.ADD' | translate }}
-					</button>
-					<ng-container *ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE">
-						<ng-container
-							*ngTemplateOutlet="actionButtons"
-						></ng-container>
-					</ng-container>
-					<ngx-search-input
-						(search)="search($event)"
-						class="search"
-					></ngx-search-input>
-				</div>
-				<ng-template 
+				<ng-template
 					[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
 					[ngIfElse]="gridLayout"
 				>
-					<ng2-smart-table
-						[settings]="settingsSmartTable"
-						[source]="smartTableSource"
-						(userRowSelect)="selectTag($event)"
-						style="cursor: pointer;"
-						#tagsTable
+					<div class="table-scroll-container">
+						<ng2-smart-table
+							[settings]="settingsSmartTable"
+							[source]="smartTableSource"
+							(userRowSelect)="selectTag($event)"
+							style="cursor: pointer"
+							#tagsTable
+						>
+						</ng2-smart-table>
+					</div>
+					<ng-container
+						*ngIf="pagination.totalItems > pagination.itemsPerPage"
 					>
-					</ng2-smart-table>
+						<div class="pagination-container">
+							<ga-pagination
+								(selectedOption)="onUpdateOption($event)"
+								(selectedPage)="onPageChange($event)"
+								[doEmit]="false"
+								[totalItems]="pagination?.totalItems"
+								[itemsPerPage]="pagination?.itemsPerPage"
+								[activePage]="pagination?.activePage"
+							></ga-pagination>
+						</div>
+					</ng-container>
 				</ng-template>
 				<ng-template #gridLayout>
 					<ga-card-grid
 						[settings]="settingsSmartTable"
 						[source]="tags"
-						[buttonTemplate]="actionButtons"
+						(selectedOption)="onUpdateOption($event)"
+						(onSelectedItem)="selectTag($event)"
+						(selectedPage)="onPageChange($event)"
+						[doEmit]="false"
+						[totalItems]="pagination?.totalItems"
+						[itemsPerPage]="pagination?.itemsPerPage"
+						[activePage]="pagination?.activePage"
 					></ga-card-grid>
 				</ng-template>
 			</nb-card-body>
@@ -82,28 +93,42 @@
 			let-buttonSize="buttonSize"
 			let-selectedItem="selectedItem"
 		>
-			<button
-				nbButton
-				status="info"
-				(click)="edit(selectedItem)"
-				class="mr-2"
-				[disabled]="!selectedItem && disableButton"
-				[size]="buttonSize || 'medium'"
-			>
-				<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
-				{{ 'BUTTONS.EDIT' | translate }}
-			</button>
-			<button
-				nbButton
-				status="danger"
-				(click)="delete(selectedItem)"
-				class="mr-2"
-				[disabled]="!selectedItem && disableButton"
-				[size]="buttonSize || 'medium'"
-			>
-				<nb-icon class="mr-1" icon="archive-outline"> </nb-icon>
-				{{ 'BUTTONS.DELETE' | translate }}
-			</button>
+			<div class="actions">
+				<button
+					nbButton
+					status="basic"
+					(click)="edit(selectedItem)"
+					class="action primary"
+					[disabled]="!selectedItem && disableButton"
+					size="small"
+				>
+					<nb-icon icon="edit-outline"></nb-icon>
+					{{ 'BUTTONS.EDIT' | translate }}
+				</button>
+				<button
+					nbButton
+					status="basic"
+					(click)="delete(selectedItem)"
+					class="action"
+					[disabled]="!selectedItem && disableButton"
+					size="small"
+					[nbTooltip]="'BUTTONS.DELETE' | translate"
+				>
+					<nb-icon status="danger" icon="trash-2-outline"> </nb-icon>
+				</button>
+			</div>
 		</ng-template>
 	</div>
 </div>
+
+<ng-template #visible>
+	<button
+		nbButton
+		class="action"
+		status="success"
+		size="small"
+		(click)="add()"
+	>
+		<nb-icon icon="plus-outline"></nb-icon>{{ 'BUTTONS.ADD' | translate }}
+	</button>
+</ng-template>

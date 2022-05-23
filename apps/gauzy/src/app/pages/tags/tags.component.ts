@@ -1,4 +1,10 @@
-import { Component, OnInit, OnDestroy, ViewChild, AfterViewInit } from '@angular/core';
+import {
+	Component,
+	OnInit,
+	OnDestroy,
+	ViewChild,
+	AfterViewInit
+} from '@angular/core';
 import { NbDialogService } from '@nebular/theme';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { debounceTime, filter, tap } from 'rxjs/operators';
@@ -14,9 +20,12 @@ import { distinctUntilChange, splitCamelCase } from '@gauzy/common-angular';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import { TagsColorComponent } from './tags-color/tags-color.component';
 import { TagsMutationComponent } from '../../@shared/tags/tags-mutation.component';
-import { TranslationBaseComponent } from '../../@shared/language-base';
 import { Store, TagsService, ToastrService } from '../../@core/services';
 import { ComponentEnum } from '../../@core/constants';
+import {
+	IPaginationBase,
+	PaginationFilterBaseComponent
+} from '../../@shared/pagination/pagination-filter-base.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -25,9 +34,9 @@ import { ComponentEnum } from '../../@core/constants';
 	styleUrls: ['./tags.component.scss']
 })
 export class TagsComponent
-	extends TranslationBaseComponent
-	implements AfterViewInit, OnInit, OnDestroy {
-
+	extends PaginationFilterBaseComponent
+	implements AfterViewInit, OnInit, OnDestroy
+{
 	settingsSmartTable: object;
 	loading: boolean;
 	smartTableSource = new LocalDataSource();
@@ -68,9 +77,17 @@ export class TagsComponent
 		this.tags$
 			.pipe(
 				debounceTime(300),
-				tap(() => this.loading = true),
+				tap(() => (this.loading = true)),
 				tap(() => this.getTags()),
 				tap(() => this.clearItem()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.pagination$
+			.pipe(
+				debounceTime(100),
+				distinctUntilChange(),
+				tap(() => this.tags$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -80,7 +97,7 @@ export class TagsComponent
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization) => !!organization),
-				tap((organization) => this.organization = organization),
+				tap((organization) => (this.organization = organization)),
 				distinctUntilChange(),
 				tap(() => this.tags$.next(true)),
 				untilDestroyed(this)
@@ -113,7 +130,11 @@ export class TagsComponent
 		this.store
 			.componentLayout$(this.viewComponentName)
 			.pipe(
-				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
+				tap(
+					(componentLayout) =>
+						(this.dataLayoutStyle = componentLayout)
+				),
+				tap(() => this.refreshPagination()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -146,17 +167,22 @@ export class TagsComponent
 		}
 
 		if (this.selectedTag) {
-			const result = await firstValueFrom(this.dialogService
-				.open(DeleteConfirmationComponent)
-				.onClose);
+			const result = await firstValueFrom(
+				this.dialogService.open(DeleteConfirmationComponent).onClose
+			);
 
 			if (result) {
 				const { id, name } = this.selectedTag;
-				await this.tagsService.delete(id).then(() => {
-					this.toastrService.success('TAGS_PAGE.TAGS_DELETE_TAG', {
-						name
-					});
-				})
+				await this.tagsService
+					.delete(id)
+					.then(() => {
+						this.toastrService.success(
+							'TAGS_PAGE.TAGS_DELETE_TAG',
+							{
+								name
+							}
+						);
+					})
 					.finally(() => {
 						this.tags$.next(true);
 					});
@@ -190,13 +216,18 @@ export class TagsComponent
 	}
 
 	private _loadSmartTableSettings() {
+		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
 			actions: false,
+			pager: {
+				display: false,
+				perPage: pagination ? pagination.itemsPerPage : 10
+			},
 			columns: {
 				name: {
 					title: this.getTranslation('TAGS_PAGE.TAGS_NAME'),
 					type: 'custom',
-					width: '30%',
+					width: '16%',
 					class: 'text-center',
 					renderComponent: TagsColorComponent
 				},
@@ -221,7 +252,7 @@ export class TagsComponent
 	 * GET tag usages counter
 	 */
 	getCounter = (item): number => {
-		const substring = "_counter";
+		const substring = '_counter';
 		let counter = 0;
 		for (const property in item) {
 			if (property.includes(substring)) {
@@ -229,36 +260,47 @@ export class TagsComponent
 			}
 		}
 		return counter;
-	}
+	};
 
 	async getTags() {
 		this.allTags = [];
-		this.filterOptions = [
-			{ property: 'all', displayName: 'All' }
-		];
+		this.filterOptions = [{ property: 'all', displayName: 'All' }];
 
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 
-		const { items } = await this.tagsService.getTags(
-			['organization'],
-			{ tenantId, organizationId }
-		);
+		const { items } = await this.tagsService.getTags(['organization'], {
+			tenantId,
+			organizationId
+		});
+
+		const { activePage, itemsPerPage } = this.getPagination();
 
 		this.allTags = items;
 		this.tags = this.allTags;
 
 		this._generateUniqueTags(this.allTags);
+		this.smartTableSource.setPaging(activePage, itemsPerPage, false);
 		this.smartTableSource.load(this.allTags);
-
+		this._loadDataLayoutCard();
+		this.setPagination({
+			...this.getPagination(),
+			totalItems: this.smartTableSource.count()
+		});
 		this.loading = false;
 	}
 
+	private async _loadDataLayoutCard(){
+		if(this.componentLayoutStyleEnum.CARDS_GRID === this.dataLayoutStyle){
+			this.tags = await this.smartTableSource.getElements();
+		}
+	}
+
 	/**
-	 * Select Filter 
-	 * 
-	 * @param value 
-	 * @returns 
+	 * Select Filter
+	 *
+	 * @param value
+	 * @returns
 	 */
 	selectedFilterOption(value: string) {
 		if (value === 'all') {
@@ -276,13 +318,13 @@ export class TagsComponent
 
 	/**
 	 * Generate Unique Tags
-	 * 
-	 * @param tags 
+	 *
+	 * @param tags
 	 */
 	private _generateUniqueTags(tags: any[]) {
 		tags.forEach((tag) => {
 			for (const property in tag) {
-				const substring = "_counter";
+				const substring = '_counter';
 				if (
 					property.includes(substring) &&
 					parseInt(tag[property]) > 0
@@ -293,7 +335,9 @@ export class TagsComponent
 					if (!options) {
 						this.filterOptions.push({
 							property,
-							displayName: splitCamelCase(property.replace(substring, ''))
+							displayName: splitCamelCase(
+								property.replace(substring, '')
+							)
 						});
 					}
 				}
@@ -343,5 +387,5 @@ export class TagsComponent
 		}
 	}
 
-	ngOnDestroy() { }
+	ngOnDestroy() {}
 }

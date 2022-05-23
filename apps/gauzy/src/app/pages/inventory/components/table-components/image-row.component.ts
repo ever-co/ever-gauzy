@@ -19,11 +19,13 @@ import { DEFAULT_SVG } from './../../../../@core/constants';
 			.img-container {
 				width: 100%;
 				display: flex;
-				justify-content: center;
+				justify-content: flex-start;
 			}
 			img {
-				width: 50px;
-				border-radius: 5px;
+				width: 74px;
+				height: 64px;
+				object-fit: cover;
+				border-radius: 8px;
 			}
 
 			.variant-table-img {

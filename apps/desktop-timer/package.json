@@ -32,7 +32,7 @@
 		"@electron/remote": "^2.0.1",
 		"@gauzy/contracts": "^0.1.0",
 		"@gauzy/desktop-ui-lib": "^0.1.0",
-		"@ngneat/until-destroy": "^9.0.0",
+		"@ngneat/until-destroy": "^9.2.0",
 		"@ngx-translate/core": "^14.0.0",
 		"@ngx-translate/http-loader": "^7.0.0",
 		"@sentry/electron": "^3.0.7",
@@ -40,10 +40,10 @@
 		"@sentry/tracing": "^6.19.7",
 		"@sentry/types": "^6.19.7",
 		"auto-launch": "5.0.5",
-		"moment": "^2.29.1",
+		"moment": "^2.29.3",
 		"rxjs": "^7.4.0",
 		"sound-play": "1.1.0",
-		"underscore": "^1.13.2",
+		"underscore": "^1.13.3",
 		"@angular/material": "13.2.2"
 	}
 }

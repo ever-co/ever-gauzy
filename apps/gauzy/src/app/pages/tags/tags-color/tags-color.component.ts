@@ -1,17 +1,17 @@
 import { Component, Input } from '@angular/core';
 import { ViewCell } from 'ng2-smart-table';
-import { getContrastColor } from '@gauzy/common-angular';
+import { NotesWithTagsComponent } from '../../../@shared';
 
 @Component({
 	selector: 'ngx-tags-color',
 	templateUrl: './tags-color.component.html',
 	styleUrls: ['./tags-color.component.scss']
 })
-export class TagsColorComponent implements ViewCell {
+export class TagsColorComponent
+	extends NotesWithTagsComponent
+	implements ViewCell
+{
 	@Input()
 	value: string | number;
 	rowData: any;
-	backgroundContrast(bgColor: string) {
-		return getContrastColor(bgColor);
-	}
 }

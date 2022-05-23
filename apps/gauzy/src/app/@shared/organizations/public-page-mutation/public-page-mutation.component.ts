@@ -12,12 +12,10 @@ import {
 	MinimumProjectSizeEnum
 } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
-import { OrganizationAwardsService } from '../../../@core/services/organization-awards.service';
-import { OrganizationLanguagesService } from '../../../@core/services/organization-languages.service';
-import { TranslationBaseComponent } from '../../language-base/translation-base.component';
+import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
 import * as moment from 'moment';
-import { Store } from '../../../@core/services/store.service';
-import { ToastrService } from '../../../@core/services/toastr.service';
+import { TranslationBaseComponent } from '../../language-base/translation-base.component';
+import { OrganizationAwardsService, OrganizationLanguagesService, Store, ToastrService } from '../../../@core/services';
 import { ckEditorConfig } from "../../ckeditor.config";
 
 @Component({
@@ -46,7 +44,7 @@ export class PublicPageMutationComponent
 	skills: ISkill[] = [];
 	languages: ILanguage[] = [];
 	moment = moment;
-	ckConfig: any = {
+	ckConfig: CKEditor4.Config = {
 		...ckEditorConfig,
 		height: "200"
 	};
@@ -79,8 +77,8 @@ export class PublicPageMutationComponent
 	selectedClientFocus: any;
 
 	constructor(
-		private fb: FormBuilder,
-		protected dialogRef: NbDialogRef<PublicPageMutationComponent>,
+		private readonly fb: FormBuilder,
+		protected readonly dialogRef: NbDialogRef<PublicPageMutationComponent>,
 		private readonly toastrService: ToastrService,
 		private readonly organizationAwardsService: OrganizationAwardsService,
 		private readonly organizationLanguagesService: OrganizationLanguagesService,

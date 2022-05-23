@@ -17,7 +17,7 @@ import { ProposalRegisterComponent } from './proposal-register/proposal-register
 import { EmployeeSelectorsModule } from '../../@theme/components/header/selectors/employee/employee.module';
 import { ProposalsService } from '../../@core/services/proposals.service';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
-import { CKEditorModule } from 'ng2-ckeditor';
+import { CKEditorModule } from 'ckeditor4-angular';
 import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
 import { ProposalStatusComponent } from './table-components/proposal-status/proposal-status.component';
 import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
@@ -71,7 +71,7 @@ import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy
 		PaginationModule,
 		ContactSelectModule,
 		TableFiltersModule,
-    GauzyButtonActionModule
+    	GauzyButtonActionModule
 	],
 	declarations: [
 		ProposalsComponent,

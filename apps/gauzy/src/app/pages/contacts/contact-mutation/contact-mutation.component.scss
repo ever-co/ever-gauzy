@@ -1,11 +1,11 @@
+@import 'gauzy/_gauzy-dialogs';
+
 .contact-container {
-  padding-right: 70px;
-  padding-top: 35px;
-  margin-right: 70px;
-  border-right: 1px solid rgba(0, 0, 0, 0.1);
   transition: transform 150ms ease-in-out;
   display: flex;
   flex-direction: column;
+  position: relative;
+  margin-right: 3rem;
 
   .contact-photo {
     width: fit-content;
@@ -18,13 +18,34 @@
       position: absolute;
       height: 100%;
       width: 100%;
-      border-radius: 13px;
+      border-radius: nb-theme(border-radius);
+      ;
     }
 
-    img {
-      width: 180px;
-      height: auto;
-      border-radius: 13px;
+    img,
+    .image {
+      width: 299px;
+      height: 294px;
+      object-fit: cover;
+      border-radius: nb-theme(border-radius);
+      ;
+    }
+
+    .image {
+      background-color: rgba(126, 126, 143, 0.1);
+
+      i {
+        margin: 5px;
+      }
+
+      >span {
+        color: rgba(126, 126, 143, 1);
+        z-index: 2;
+        transition: opacity 0.2s ease-in;
+        position: absolute;
+        top: calc(50% - 16px / 2);
+        left: calc(50% - 141px / 2);
+      }
     }
 
     svg {
@@ -34,6 +55,10 @@
       position: absolute;
       top: calc(50% - 68px / 2);
       left: calc(50% - 68px / 2);
+
+      g circle {
+        fill: nb-theme(text-primary-color);
+      }
     }
   }
 }
@@ -70,5 +95,69 @@
     justify-content: space-between;
     margin-top: 15px;
     margin-left: 9px;
+  }
+}
+
+.buttons {
+  position: absolute;
+  left: 1.25rem;
+  bottom: 0.725rem;
+}
+
+h4 {
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 30px;
+  letter-spacing: 0em;
+  text-align: left;
+}
+
+:host {
+
+  ngx-avatar::ng-deep {
+    .inner-wrapper {
+      background-color: nb-theme(color-primary-transparent-100);
+      border-radius: nb-theme(button-rectangle-border-radius);
+      padding: 0px 9px 0px 3px;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      font-size: 12px;
+
+      .image-container.md {
+        width: 32px;
+        padding-bottom: 3px;
+
+        img {
+          width: 28px;
+          height: 28px;
+        }
+      }
+
+      .link-text {
+        color: nb-theme(text-primary-color);
+        font-weight: normal;
+      }
+    }
+  }
+
+  nb-card,
+  nb-card-body,
+  nb-card-header {
+    background-color: unset;
+  }
+
+  nb-card {
+    margin: -1rem;
+    border: rgba(50, 50, 50, 0.03);
+  }
+
+  nb-stepper ::ng-deep .step-content {
+    overflow-y: auto;
+  }
+
+  .custom-card {
+    height: calc(100vh - 29rem);
+    width: 100%;
   }
 }

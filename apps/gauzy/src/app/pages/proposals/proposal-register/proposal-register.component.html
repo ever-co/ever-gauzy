@@ -13,18 +13,15 @@
 				<div class="col-sm-3">
 					<div class="form-group">
 						<label class="label">
-							{{
-								'PROPOSALS_PAGE.REGISTER.AUTHOR' | translate
-							}}</label
-						>
+							{{ 'PROPOSALS_PAGE.REGISTER.AUTHOR' | translate }}
+						</label>
 						<ga-employee-selector
 							#employeeSelector
 							[skipGlobalChange]="true"
 							id="authorInput"
 							class="employees"
 							(selectionChanged)="onEmployeeChange($event)"
-						>
-						</ga-employee-selector>
+						></ga-employee-selector>
 					</div>
 				</div>
 			</div>
@@ -41,8 +38,7 @@
 							[ngModelOptions]="{ standalone: true }"
 							[(ngModel)]="proposalTemplateId"
 							[employeeId]="selectedEmployee?.id"
-						>
-						</ngx-proposal-template-select>
+						></ngx-proposal-template-select>
 					</div>
 				</div>
 				<div class="col-sm-3">
@@ -105,8 +101,7 @@
 						[selectedTags]="form.get('tags').value"
 						(selectedTagsEvent)="selectedTagsEvent($event)"
 						[isOrgLevel]="true"
-					>
-					</ga-tags-color-input>
+					></ga-tags-color-input>
 				</div>
 			</div>
 			<div class="row">
@@ -122,8 +117,7 @@
 							<ckeditor
 								formControlName="jobPostContent"
 								[config]="ckConfig"
-							>
-							</ckeditor>
+							></ckeditor>
 						</nb-card-body>
 					</nb-card>
 				</div>

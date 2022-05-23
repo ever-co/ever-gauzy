@@ -9,6 +9,8 @@ import { NbDialogRef } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, tap } from 'rxjs/operators';
+import { distinctUntilChange } from '@gauzy/common-angular';
+import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
 import { Store, ToastrService } from './../../../../@core/services';
 import { TranslationBaseComponent } from './../../../../@shared/language-base/translation-base.component';
 import { ProposalTemplateService } from '../proposal-template.service';
@@ -29,7 +31,7 @@ export class AddEditProposalTemplateComponent
 	@Input() proposalTemplate: IEmployeeProposalTemplate = {};
 
 	organization: IOrganization;
-	public ckConfig: any = ckEditorConfig;
+	public ckConfig: CKEditor4.Config = ckEditorConfig;
 	public form: FormGroup = AddEditProposalTemplateComponent.buildForm(this.fb);
 	static buildForm(fb: FormBuilder): FormGroup {
 		return fb.group({
@@ -40,11 +42,11 @@ export class AddEditProposalTemplateComponent
 	}
 
 	constructor(
-		private dialogRef: NbDialogRef<AddEditProposalTemplateComponent>,
-		private fb: FormBuilder,
-		private proposalTemplateService: ProposalTemplateService,
-		private toastrService: ToastrService,
-		private store: Store,
+		private readonly dialogRef: NbDialogRef<AddEditProposalTemplateComponent>,
+		private readonly fb: FormBuilder,
+		private readonly proposalTemplateService: ProposalTemplateService,
+		private readonly toastrService: ToastrService,
+		private readonly store: Store,
 		readonly translate: TranslateService
 	) {
 		super(translate);
@@ -58,6 +60,7 @@ export class AddEditProposalTemplateComponent
 		}
 		this.store.selectedOrganization$
 			.pipe(
+				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
 				tap((organization: IOrganization) => this.organization = organization),
 				tap(() => this._initializeForm()),

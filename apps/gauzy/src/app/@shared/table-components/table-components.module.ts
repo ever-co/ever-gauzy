@@ -22,6 +22,7 @@ import { CreateByComponent } from './create-by/create-by.component';
 import { ProjectComponent } from './project/project.component';
 import { EmployeesMergedTeamsComponent } from './employees-merged-teams/employees-merged-teams.component';
 import { CreatedAtComponent } from './created-at/created-at.component';
+import { ContactWithTagsComponent } from './contact-with-tags/contact-with-tags.component';
 
 @NgModule({
 	imports: [
@@ -51,7 +52,8 @@ import { CreatedAtComponent } from './created-at/created-at.component';
 		CreateByComponent,
 		ProjectComponent,
 		EmployeesMergedTeamsComponent,
-		CreatedAtComponent
+		CreatedAtComponent,
+  ContactWithTagsComponent
 	],
 	exports: [
 		NotesWithTagsComponent,

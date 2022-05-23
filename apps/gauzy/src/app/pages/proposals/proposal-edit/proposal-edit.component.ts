@@ -4,23 +4,24 @@ import {
 	Component,
 	OnInit
 } from '@angular/core';
-import { Store } from '../../../@core/services/store.service';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { ProposalsService } from '../../../@core/services/proposals.service';
 import { TranslateService } from '@ngx-translate/core';
-import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
+import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
+import { distinctUntilChange } from '@gauzy/common-angular';
 import {
-	ContactType,
-	IOrganizationContact,
+	IOrganization,
 	IProposalViewModel,
 	ITag
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { filter, tap } from 'rxjs/operators';
-import { OrganizationContactService } from '../../../@core/services/organization-contact.service';
-import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
-import { ToastrService } from '../../../@core/services/toastr.service';
+import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
+import {
+	ProposalsService,
+	Store,
+	ToastrService
+} from '../../../@core/services';
 import { ckEditorConfig } from "../../../@shared/ckeditor.config";
 
 @UntilDestroy({ checkProperties: true })
@@ -29,31 +30,27 @@ import { ckEditorConfig } from "../../../@shared/ckeditor.config";
 	templateUrl: './proposal-edit.component.html',
 	styleUrls: ['./proposal-edit.component.scss']
 })
-export class ProposalEditComponent
-	extends TranslationBaseComponent
+export class ProposalEditComponent extends TranslationBaseComponent 
 	implements OnInit, AfterViewInit {
-	constructor(
-		private route: ActivatedRoute,
-		private store: Store,
-		private fb: FormBuilder,
-		private router: Router,
-		private toastrService: ToastrService,
-		private proposalsService: ProposalsService,
-		private translate: TranslateService,
-		private cdRef: ChangeDetectorRef,
-		private organizationContactService: OrganizationContactService,
-		private errorHandler: ErrorHandlingService
-	) {
-		super(translate);
-	}
 
 	proposalId: string;
 	proposal: IProposalViewModel;
 	tags: ITag[] = [];
 	form: FormGroup;
-	organizationContact: IOrganizationContact;
-	organizationContacts: Object[] = [];
-	ckConfig: any = ckEditorConfig;
+	ckConfig: CKEditor4.Config = ckEditorConfig;
+
+	constructor(
+		private readonly route: ActivatedRoute,
+		private readonly store: Store,
+		private readonly fb: FormBuilder,
+		private readonly router: Router,
+		private readonly toastrService: ToastrService,
+		private readonly proposalsService: ProposalsService,
+		private readonly translate: TranslateService,
+		private readonly cdRef: ChangeDetectorRef
+	) {
+		super(translate);
+	}
 
 	ngOnInit() {
 		this.route.params
@@ -64,9 +61,10 @@ export class ProposalEditComponent
 			.subscribe();
 		this.store.selectedOrganization$
 			.pipe(
-				filter((organization) => !!organization),
-				untilDestroyed(this),
-				tap(() => this.getProposalById())
+				distinctUntilChange(),
+				filter((organization: IOrganization) => !!organization),
+				tap(() => this.getProposalById()),
+				untilDestroyed(this)
 			)
 			.subscribe();
 	}
@@ -95,7 +93,6 @@ export class ProposalEditComponent
 				  proposal.employee.user.lastName
 				: ''
 		});
-		await this._getOrganizationContacts();
 		this._initializeForm();
 	}
 
@@ -149,40 +146,6 @@ export class ProposalEditComponent
 				this.toastrService.danger(error);
 			}
 		}
-	}
-
-	private async _getOrganizationContacts() {
-		const { items } = await this.organizationContactService.getAll([], {
-			organizationId: this.proposal.organizationId,
-			tenantId: this.proposal.organizationId
-		});
-
-		this.organizationContacts = items;
-	}
-
-	addNewOrganizationContact = (
-		name: string
-	): Promise<IOrganizationContact> => {
-		try {
-			this.toastrService.success(
-				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CONTACTS.ADD_CONTACT',
-				{
-					name: name
-				}
-			);
-			return this.organizationContactService.create({
-				name,
-				contactType: ContactType.CLIENT,
-				organizationId: this.proposal.organizationId,
-				tenantId: this.proposal.organizationId
-			});
-		} catch (error) {
-			this.errorHandler.handleError(error);
-		}
-	};
-
-	selectOrganizationContact($event) {
-		this.organizationContact = $event;
 	}
 
 	selectedTagsEvent(ev) {

@@ -1,15 +1,13 @@
 <nb-card class="main">
-	<nb-card-header class="d-flex">
-		<h5>
+	<nb-card-header class="d-flex flex-column">
+		<span class="cancel">
+			<i class="fas fa-times" (click)="closeDialog()"></i>
+		</span>
+		<h5 class="title">
 			{{
 				(tag ? 'TAGS_PAGE.EDIT_TAGS' : 'TAGS_PAGE.ADD_TAGS') | translate
 			}}
 		</h5>
-		<nb-icon
-			class="ml-auto mt-1 close"
-			icon="close-outline"
-			(click)="closeDialog()"
-		></nb-icon>
 	</nb-card-header>
 	<nb-card-body class="body">
 		<form [formGroup]="form">
@@ -24,7 +22,9 @@
 							class="select-name"
 							type="text"
 							nbInput
-							[placeholder]="'TAGS_PAGE.TAGS_SELECT_NAME' | translate"
+							[placeholder]="
+								'TAGS_PAGE.TAGS_SELECT_NAME' | translate
+							"
 							id="inputName"
 							fullWidth
 						/>
@@ -38,11 +38,14 @@
 						<input
 							class="select-color"
 							nbInput
-							[placeholder]="'TAGS_PAGE.TAGS_SELECT_COLOR' | translate"
+							[placeholder]="
+								'TAGS_PAGE.TAGS_SELECT_COLOR' | translate
+							"
 							formControlName="color"
 							[(colorPicker)]="color"
 							[value]="color"
 							[style.background]="color"
+							[style.color]="backgroundContrast(color)"
 							id="inputColor"
 							fullWidth
 						/>
@@ -72,7 +75,9 @@
 							nbInput
 							fullWidth
 							class="description"
-							[placeholder]="'TAGS_PAGE.TAGS_SELECT_DESCRIPTION' | translate"
+							[placeholder]="
+								'TAGS_PAGE.TAGS_SELECT_DESCRIPTION' | translate
+							"
 							id="inputDescription"
 							fullWidth
 						></textarea>
@@ -81,8 +86,14 @@
 			</div>
 		</form>
 	</nb-card-body>
-	<nb-card-footer class="text-right">
-		<button (click)="closeDialog()" status="danger" class="mr-3" nbButton>
+	<nb-card-footer class="text-left">
+		<button
+			(click)="closeDialog()"
+			status="basic"
+			class="mr-3"
+			outline
+			nbButton
+		>
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
 		<button

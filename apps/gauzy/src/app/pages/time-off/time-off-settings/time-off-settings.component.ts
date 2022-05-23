@@ -29,6 +29,7 @@ import {
 } from '../../../@shared/pagination/pagination-filter-base.component';
 import { Subject } from 'rxjs/internal/Subject';
 import { ServerDataSource } from '../../../@core/utils/smart-table';
+import { EmployeeWithLinksComponent } from '../../../@shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -36,9 +37,10 @@ import { ServerDataSource } from '../../../@core/utils/smart-table';
 	templateUrl: './time-off-settings.component.html',
 	styleUrls: ['./time-off-settings.component.scss']
 })
-export class TimeOffSettingsComponent extends PaginationFilterBaseComponent
-	implements OnInit, OnDestroy {
-
+export class TimeOffSettingsComponent
+	extends PaginationFilterBaseComponent
+	implements OnInit, OnDestroy
+{
 	constructor(
 		private readonly dialogService: NbDialogService,
 		private readonly toastrService: ToastrService,
@@ -94,7 +96,7 @@ export class TimeOffSettingsComponent extends PaginationFilterBaseComponent
 				debounceTime(100),
 				filter(([organization]) => !!organization),
 				distinctUntilChange(),
-				tap(([organization]) => this.organization = organization),
+				tap(([organization]) => (this.organization = organization)),
 				tap(() => this.timeOffPolicies$.next(true)),
 				untilDestroyed(this)
 			)
@@ -150,6 +152,12 @@ export class TimeOffSettingsComponent extends PaginationFilterBaseComponent
 					type: 'string',
 					filter: true
 				},
+				employees: {
+					title: this.getTranslation('SM_TABLE.EMPLOYEES'),
+					type: 'custom',
+					filter: false,
+					renderComponent: EmployeeWithLinksComponent
+				},
 				requiresApproval: {
 					title: this.getTranslation(
 						'TIME_OFF_PAGE.POLICY.REQUIRES_APPROVAL'
@@ -169,12 +177,10 @@ export class TimeOffSettingsComponent extends PaginationFilterBaseComponent
 			}
 		};
 	}
-
 	openAddPolicyDialog() {
 		this.dialogService
 			.open(TimeOffSettingsMutationComponent)
-			.onClose
-			.pipe(
+			.onClose.pipe(
 				filter((policy: ITimeOffPolicy) => !!policy),
 				tap((policy: ITimeOffPolicy) => this.addPolicy(policy)),
 				untilDestroyed(this)
@@ -186,16 +192,13 @@ export class TimeOffSettingsComponent extends PaginationFilterBaseComponent
 		if (policy) {
 			this.timeOffService
 				.createPolicy(policy)
-				.pipe(
-					first(),
-					untilDestroyed(this)
-				)
+				.pipe(first(), untilDestroyed(this))
 				.subscribe({
 					next: () => {
 						this.toastrService.success('NOTES.POLICY.ADD_POLICY', {
 							name: policy.name
 						});
-						this.timeOffPolicies$.next(true)
+						this.timeOffPolicies$.next(true);
 					},
 					error: () => {
 						this.toastrService.danger('NOTES.POLICY.SAVE_ERROR');
@@ -217,8 +220,7 @@ export class TimeOffSettingsComponent extends PaginationFilterBaseComponent
 					policy: this.selectedPolicy
 				}
 			})
-			.onClose
-			.pipe(
+			.onClose.pipe(
 				filter((policy: ITimeOffPolicy) => !!policy),
 				tap((policy: ITimeOffPolicy) => this.editPolicy(policy)),
 				untilDestroyed(this)
@@ -230,10 +232,7 @@ export class TimeOffSettingsComponent extends PaginationFilterBaseComponent
 		const selectedPolicyId = this.selectedPolicy.id;
 		this.timeOffService
 			.updatePolicy(selectedPolicyId, policy)
-			.pipe(
-				first(),
-				untilDestroyed(this)
-			)
+			.pipe(first(), untilDestroyed(this))
 			.subscribe({
 				next: () => {
 					this.toastrService.success('NOTES.POLICY.EDIT_POLICY', {
@@ -260,8 +259,7 @@ export class TimeOffSettingsComponent extends PaginationFilterBaseComponent
 					)
 				}
 			})
-			.onClose
-			.pipe(
+			.onClose.pipe(
 				filter((result) => !!result),
 				tap(() => this.deletePolicy()),
 				untilDestroyed(this)
@@ -275,10 +273,7 @@ export class TimeOffSettingsComponent extends PaginationFilterBaseComponent
 		}
 		this.timeOffService
 			.deletePolicy(this.selectedPolicy.id)
-			.pipe(
-				first(),
-				untilDestroyed(this)
-			)
+			.pipe(first(), untilDestroyed(this))
 			.subscribe({
 				next: () => {
 					this.toastrService.success('NOTES.POLICY.DELETE_POLICY', {
@@ -296,8 +291,8 @@ export class TimeOffSettingsComponent extends PaginationFilterBaseComponent
 	}
 
 	/*
-	* Register Smart Table Source Config
-	*/
+	 * Register Smart Table Source Config
+	 */
 	setSmartTableSource() {
 		if (!this.organization) {
 			return;
@@ -310,7 +305,7 @@ export class TimeOffSettingsComponent extends PaginationFilterBaseComponent
 
 			this.smartTableSource = new ServerDataSource(this.httpClient, {
 				endPoint: `${API_PREFIX}/time-off-policy/pagination`,
-				relations: ['employees'],
+				relations: ['employees', 'employees.user'],
 				where: {
 					...{
 						organizationId,
@@ -340,8 +335,8 @@ export class TimeOffSettingsComponent extends PaginationFilterBaseComponent
 
 	/**
 	 * GET all time off policies
-	 * 
-	 * @returns 
+	 *
+	 * @returns
 	 */
 	private async _getTimeOffSettings() {
 		if (!this.organization) {
@@ -350,11 +345,7 @@ export class TimeOffSettingsComponent extends PaginationFilterBaseComponent
 		this.setSmartTableSource();
 		try {
 			const { activePage, itemsPerPage } = this.getPagination();
-			this.smartTableSource.setPaging(
-				activePage,
-				itemsPerPage,
-				false
-			);
+			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
 			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
 				await this._loadGridLayoutData();
 			}
@@ -416,7 +407,8 @@ export class TimeOffSettingsComponent extends PaginationFilterBaseComponent
 			this.timeOffPolicySettingsTable &&
 			this.timeOffPolicySettingsTable.grid
 		) {
-			this.timeOffPolicySettingsTable.grid.dataSet['willSelect'] = 'false';
+			this.timeOffPolicySettingsTable.grid.dataSet['willSelect'] =
+				'false';
 			this.timeOffPolicySettingsTable.grid.dataSet.deselectAll();
 		}
 	}

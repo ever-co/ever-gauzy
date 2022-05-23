@@ -17,7 +17,7 @@ import { EquipmentMutationComponent } from '../../@shared/equipment/equipment-mu
 import { IPaginationBase, PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import { AutoApproveComponent } from './auto-approve/auto-approve.component';
-import { PictureNameTagsComponent } from '../../@shared/table-components';
+import { PictureNameTagsComponent, TagsOnlyComponent } from '../../@shared/table-components';
 import { API_PREFIX, ComponentEnum } from '../../@core/constants';
 import { EquipmentService, Store, ToastrService } from '../../@core/services';
 import { ImageRowComponent } from '../inventory/components/table-components';
@@ -76,6 +76,14 @@ export class EquipmentComponent extends PaginationFilterBaseComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
+		this.pagination$
+			.pipe(
+				debounceTime(100),
+				distinctUntilChange(),
+				tap(() => this.equipments$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this.store.selectedOrganization$
 			.pipe(
 				distinctUntilChange(),
@@ -127,7 +135,7 @@ export class EquipmentComponent extends PaginationFilterBaseComponent
 			columns: {
 				image: {
 					title: this.getTranslation('INVENTORY_PAGE.IMAGE'),
-					width: '10%',
+					width: '79px',
 					filter: false,
 					type: 'custom',
 					renderComponent: ImageRowComponent
@@ -180,6 +188,14 @@ export class EquipmentComponent extends PaginationFilterBaseComponent
 					type: 'custom',
 					filter: false,
 					renderComponent: AutoApproveComponent
+				},
+				tags: {
+					title: this.getTranslation(
+						'SM_TABLE.TAGS'
+					),
+					type: 'custom',
+					filter: false,
+					renderComponent: TagsOnlyComponent
 				}
 			}
 		};
@@ -190,6 +206,11 @@ export class EquipmentComponent extends PaginationFilterBaseComponent
 			this.selectEquipment({
 				isSelected: true,
 				data: selectedItem
+			});
+		}else{
+			this.selectEquipment({
+				isSelected: false,
+				data: null
 			});
 		}
 		const dialog = this.dialogService.open(EquipmentMutationComponent, {
@@ -214,9 +235,9 @@ export class EquipmentComponent extends PaginationFilterBaseComponent
 				data: selectedItem
 			});
 		}
-		const result = await firstValueFrom(this.dialogService
-			.open(DeleteConfirmationComponent)
-			.onClose);
+		const result = await firstValueFrom(
+			this.dialogService.open(DeleteConfirmationComponent).onClose
+		);
 
 		if (result) {
 			await this.equipmentService.delete(this.selectedEquipment.id);

@@ -60,7 +60,8 @@
           border-radius: nb-theme(border-radius);
           width: 1.75rem;
           height: 1.75rem;
-          margin-right: calc(-1.75rem / 4);
+          @include nb-ltr(margin-right, calc(-1.75rem / 4));
+          @include nb-rtl(margin-left, calc(-1.75rem / 4));
         }
       }
     }
@@ -72,7 +73,6 @@
     border-right: none;
   }
   i {
-    margin-right: 0.625rem;
     color: nb-theme(gauzy-text-color-1);
   }
 
@@ -83,6 +83,7 @@
     line-height: 18px;
     letter-spacing: 0em;
     text-align: left;
+    gap: 0.625rem;
   }
 }
 
@@ -93,7 +94,7 @@
   }
 }
 
-.sub-item {
+:host .sub-item {
   padding: 11px 10px;
   display: flex;
   align-items: center;
@@ -121,9 +122,6 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    i {
-      margin-right: 0;
-    }
   }
   &.mouse-hover {
     display: flex;
@@ -131,7 +129,11 @@
     align-items: center;
     flex-wrap: nowrap;
     position: absolute;
-    top: 0;
+    top: 0;     
     left: 0;
   }
+}
+
+.info span{
+  margin: 0 0.625rem;
 }
