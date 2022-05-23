@@ -134,6 +134,7 @@ export class TagsComponent
 					(componentLayout) =>
 						(this.dataLayoutStyle = componentLayout)
 				),
+				tap(() => this.refreshPagination()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -281,11 +282,18 @@ export class TagsComponent
 		this._generateUniqueTags(this.allTags);
 		this.smartTableSource.setPaging(activePage, itemsPerPage, false);
 		this.smartTableSource.load(this.allTags);
+		this._loadDataLayoutCard();
 		this.setPagination({
 			...this.getPagination(),
 			totalItems: this.smartTableSource.count()
 		});
 		this.loading = false;
+	}
+
+	private async _loadDataLayoutCard(){
+		if(this.componentLayoutStyleEnum.CARDS_GRID === this.dataLayoutStyle){
+			this.tags = await this.smartTableSource.getElements();
+		}
 	}
 
 	/**
