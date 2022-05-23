@@ -20,6 +20,8 @@ import {
 	catchError
 } from 'rxjs/operators';
 import { Observable, EMPTY } from 'rxjs';
+import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslationBaseComponent } from '../../language-base';
 import {
 	EmployeeAwardService,
@@ -29,7 +31,6 @@ import {
 	Store,
 	ToastrService
 } from '../../../@core/services';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ckEditorConfig } from "../../ckeditor.config";
 
 @UntilDestroy({ checkProperties: true })
@@ -52,7 +53,7 @@ export class PublicPageEmployeeMutationComponent
 	privacySettings: any[];
 	employeeAwards: IEmployeeAward[];
 	showAddAward: boolean;
-	ckConfig: any = {
+	ckConfig: CKEditor4.Config = {
 		...ckEditorConfig,
 		height: "200"
 	};

@@ -23,7 +23,7 @@ import { SkillsInputModule } from '../../skills/skills-input/skills-input.module
 import { LanguageSelectorModule } from '../../language/language-selector/language-selector.module';
 import { SkillsService } from '../../../@core/services/skills.service';
 import { LanguagesService } from '../../../@core/services/languages.service';
-import { CKEditorModule } from 'ng2-ckeditor';
+import { CKEditorModule } from 'ckeditor4-angular';
 import { TranslateModule } from '../../translate/translate.module';
 
 @NgModule({
