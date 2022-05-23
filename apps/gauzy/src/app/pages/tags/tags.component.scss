@@ -71,6 +71,20 @@ nb-card.filter {
 
 nb-card.tags-component {
   nb-card-body {
+    display: flex;
+    flex-direction: column;
     background-color: nb-theme(gauzy-card-2);
+    overflow: unset;
+    height: calc(100vh - 27rem);
+		border-radius: 0 0 nb-theme(border-radius) nb-theme(border-radius);
+
+		.table-scroll-container {
+			flex-grow: 10;
+			max-height: unset;
+		}
+
+		.pagination-container {
+			align-self: flex-end;
+		}
   }
 }
