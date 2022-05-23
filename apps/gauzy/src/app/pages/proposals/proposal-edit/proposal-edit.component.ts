@@ -11,7 +11,6 @@ import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import {
 	IOrganization,
-	IOrganizationContact,
 	IProposalViewModel,
 	ITag
 } from '@gauzy/contracts';
