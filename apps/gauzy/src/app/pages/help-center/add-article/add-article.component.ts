@@ -8,6 +8,7 @@ import { Component, OnDestroy, OnInit, Input } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { Subject } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
+import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { HelpCenterArticleService } from '../../../@core/services/help-center-article.service';
@@ -58,7 +59,7 @@ export class AddArticleComponent
 	selectedEmployeeIds = null;
 	employeeIds: string[] = [];
 	organization: IOrganization;
-	ckConfig : any = {
+	ckConfig : CKEditor4.Config = {
 		...ckEditorConfig,
 		height: "100"
 	};

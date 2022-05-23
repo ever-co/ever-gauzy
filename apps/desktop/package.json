@@ -54,7 +54,7 @@
 		"form-data": "^3.0.0",
 		"knex": "^0.21.6",
 		"mac-screen-capture-permissions": "^2.0.0",
-		"moment": "^2.29.1",
+		"moment": "^2.29.3",
 		"ngx-electron": "^2.2.0",
 		"node-fetch": "^2.6.7",
 		"node-notifier": "^8.0.0",

@@ -21,7 +21,7 @@ import { SharedModule } from '../../../@shared/shared.module';
 import { StatusBadgeModule } from '../../../@shared/status-badge/status-badge.module';
 import { DialogsModule } from '../../../@shared/dialogs';
 import { AddEditProposalTemplateComponent } from './add-edit-proposal-template/add-edit-proposal-template.component';
-import { CKEditorModule } from 'ng2-ckeditor';
+import { CKEditorModule } from 'ckeditor4-angular';
 import { HeaderTitleModule } from '../../../@shared/components/header-title/header-title.module';
 import { NbTabsetModule } from '@nebular/theme';
 import { GauzyButtonActionModule } from '../../../@shared/gauzy-button-action/gauzy-button-action.module';

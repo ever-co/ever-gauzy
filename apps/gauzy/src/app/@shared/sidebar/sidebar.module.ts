@@ -15,7 +15,7 @@ import {
 } from '@nebular/theme';
 import { SidebarComponent } from './sidebar.component';
 import { TreeModule } from '@circlon/angular-tree-component';
-import { CKEditorModule } from 'ng2-ckeditor';
+import { CKEditorModule } from 'ckeditor4-angular';
 import { HelpCenterService } from '../../@core/services/help-center.service';
 import { KnowledgeBaseModule } from './knowledeg-base/knowledeg-base.module';
 import { DeleteCategoryModule } from './delete-category/delete-category.module';

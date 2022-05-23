@@ -20,6 +20,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { Router } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
+import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
 import { EmployeeSelectorComponent } from '../../../@theme/components/header/selectors/employee/employee.component';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { ProposalsService, Store, ToastrService } from '../../../@core/services';
@@ -45,7 +46,7 @@ export class ProposalRegisterComponent
 	organization: IOrganization;
 	organizationContact: IOrganizationContact;
 	tags: ITag[] = [];
-	ckConfig: any = ckEditorConfig;
+	ckConfig: CKEditor4.Config = ckEditorConfig;
 	minDate : Date;
 	selectedEmployee: IEmployee;
 
