@@ -34,7 +34,8 @@
 		"asar": true,
 		"npmRebuild": true,
 		"asarUnpack": [
-			"node_modules/screenshot-desktop/lib/win32"
+			"node_modules/screenshot-desktop/lib/win32",
+      "node_modules/@sentry/electron"
 		],
 		"directories": {
 			"buildResources": "icons",
@@ -115,11 +116,13 @@
 		"pg-query-stream": "^4.2.3",
 		"sound-play": "1.1.0",
 		"auto-launch": "5.0.5",
+    "tslib": "^2.3.1",
 		"@sentry/types": "^6.19.7",
 		"@sentry/electron": "^3.0.7",
 		"@sentry/node": "^6.19.7",
 		"@sentry/tracing": "^6.19.7",
 		"underscore": "^1.13.3",
+    "htmlparser2": "^3.10.1",
 		"@gauzy/contracts": "^0.1.0",
 		"@gauzy/desktop-window": "^0.1.0",
 		"@gauzy/desktop-libs": "^0.1.0",

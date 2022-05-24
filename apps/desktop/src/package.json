@@ -43,6 +43,10 @@
 		"copyright": "Copyright © 2019-Present. Ever Co. LTD",
 		"asar": true,
 		"npmRebuild": true,
+    "asarUnpack": [
+			"node_modules/screenshot-desktop/lib/win32",
+      "node_modules/@sentry/electron"
+		],
 		"directories": {
 			"buildResources": "icons",
 			"output": "../desktop-packages"
@@ -120,20 +124,21 @@
 		"pg": "^8.7.3",
 		"pg-query-stream": "^4.2.3",
 		"@nestjs/platform-express": "^8.4.4",
-		"@gauzy/core": "^0.1.0",
-		"@gauzy/auth": "^0.1.0",
 		"sound-play": "1.1.0",
-		"underscore": "^1.13.3",
-		"@gauzy/knowledge-base": "^0.1.0",
-		"@gauzy/changelog": "^0.1.0",
+    "auto-launch": "5.0.5",
 		"tslib": "^2.3.1",
-		"@gauzy/desktop-window": "^0.1.0",
-		"@gauzy/desktop-libs": "^0.1.0",
 		"@sentry/types": "^6.19.7",
 		"@sentry/electron": "^3.0.7",
 		"@sentry/node": "^6.19.7",
 		"@sentry/tracing": "^6.19.7",
+    "underscore": "^1.13.3",
 		"htmlparser2": "^3.10.1",
+    "@gauzy/core": "^0.1.0",
+		"@gauzy/auth": "^0.1.0",
+		"@gauzy/desktop-window": "^0.1.0",
+		"@gauzy/desktop-libs": "^0.1.0",
+    "@gauzy/knowledge-base": "^0.1.0",
+		"@gauzy/changelog": "^0.1.0",
 		"@electron/remote": "^2.0.1",
 		"embedded-queue": "^0.0.11"
 	}
