@@ -10,7 +10,7 @@ import {
 	NbBadgeModule,
 	NbActionsModule
 } from '@nebular/theme';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ExpensesRoutingModule } from './expenses-routing.module';
 import { ExpensesComponent } from './expenses.component';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
@@ -27,6 +27,7 @@ import { TranslateModule } from '../../@shared/translate/translate.module';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { PaginationModule } from '../../@shared/pagination/pagination.module';
 import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
+import { ExpenseCategoryMutationComponent } from './expense-categories/expense-category-mutation/expense-category-mutation.component';
 
 @NgModule({
 	imports: [
@@ -36,6 +37,7 @@ import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy
 		SharedModule,
 		NbCardModule,
 		FormsModule,
+		ReactiveFormsModule,
 		NbButtonModule,
 		NbInputModule,
 		NbIconModule,
@@ -52,9 +54,13 @@ import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy
 		NgxPermissionsModule.forChild(),
 		HeaderTitleModule,
 		PaginationModule,
-    GauzyButtonActionModule
+    	GauzyButtonActionModule
 	],
-	declarations: [ExpensesComponent, ExpenseCategoriesComponent],
+	declarations: [
+		ExpensesComponent,
+		ExpenseCategoriesComponent,
+		ExpenseCategoryMutationComponent
+	],
 	providers: [
 		ExpenseCategoriesStoreService,
 		OrganizationExpenseCategoriesService
