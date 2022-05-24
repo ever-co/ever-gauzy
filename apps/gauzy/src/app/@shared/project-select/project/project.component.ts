@@ -18,9 +18,14 @@ import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { isNotEmpty } from '@gauzy/common-angular';
+import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
 import { ALL_PROJECT_SELECTED } from './default-project';
-import { OrganizationProjectsService, OrganizationProjectStore, Store, ToastrService } from '../../../@core/services';
+import {
+	OrganizationProjectsService,
+	OrganizationProjectStore,
+	Store,
+	ToastrService
+} from '../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -37,34 +42,43 @@ import { OrganizationProjectsService, OrganizationProjectStore, Store, ToastrSer
 })
 export class ProjectSelectorComponent
 	implements OnInit, OnDestroy, AfterViewInit {
-	private _projectId: string | string[];
-	private _employeeId: string;
-	private _organizationContactId: string;
+
 	projects: IOrganizationProject[] = [];
-	organization: IOrganization;
-
 	selectedProject: IOrganizationProject;
-
+	hasPermissionProjEdit: boolean;
+	
+	public organization: IOrganization;
+	subject$: Subject<any> = new Subject();
+	onChange: any = () => {};
+	onTouched: any = () => {};
+	
 	@Input() disabled = false;
 	@Input() multiple = false;
-	organizationId: string;
-	hasPermissionProjEdit: boolean;
 
-	@Input()
+	private _projectId: string | string[];
+	get projectId(): string | string[] {
+		return this._projectId;
+	}
+	set projectId(val: string | string[]) {
+		this._projectId = val;
+		this.onChange(val);
+		this.onTouched(val);
+	}
+	
+	private _employeeId: string;
 	public get employeeId() {
 		return this._employeeId;
 	}
-	public set employeeId(value) {
+	@Input() public set employeeId(value) {
 		this._employeeId = value;
 		this.subject$.next(true);
 	}
 
-	@Input()
+	private _organizationContactId: string;
 	public get organizationContactId(): string {
 		return this._organizationContactId;
 	}
-
-	public set organizationContactId(value: string) {
+	@Input() public set organizationContactId(value: string) {
 		this._organizationContactId = value;
 		this.subject$.next(true);
 	}
@@ -107,10 +121,6 @@ export class ProjectSelectorComponent
 		this._showAllOption = value;
 	}
 
-	subject$: Subject<any> = new Subject();
-	onChange: any = () => {};
-	onTouched: any = () => {};
-
 	@Output()
 	onChanged = new EventEmitter<IOrganizationProject>();
 
@@ -120,16 +130,6 @@ export class ProjectSelectorComponent
 		private readonly toastrService: ToastrService,
 		private readonly _organizationProjectStore: OrganizationProjectStore
 	) {}
-
-	set projectId(val: string | string[]) {
-		this._projectId = val;
-		this.onChange(val);
-		this.onTouched(val);
-	}
-
-	get projectId(): string | string[] {
-		return this._projectId;
-	}
 
 	ngOnInit() {
 		this.store.userRolePermissions$
@@ -149,8 +149,8 @@ export class ProjectSelectorComponent
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization: IOrganization) => !!organization),
+				distinctUntilChange(),
 				tap((organization) => (this.organization = organization)),
-				tap(({ id }) => (this.organizationId = id)),
 				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
@@ -182,20 +182,27 @@ export class ProjectSelectorComponent
 	}
 
 	async getProjects() {
+		if (!this.organization) {
+			return;
+		}
 		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.organization;		
+		const { id: organizationId } = this.organization;
+		const { organizationContactId } = this;
+
 		if (this.employeeId) {
 			this.projects = await this.organizationProjects.getAllByEmployee(
 				this.employeeId,
 				{
-					organizationContactId: this.organizationContactId,
-					...(this.organizationId ? { organizationId, tenantId } : {})
+					organizationContactId,
+					organizationId,
+					tenantId
 				}
 			);
 		} else {
 			const { items = [] } = await this.organizationProjects.getAll([], {
-				organizationContactId: this.organizationContactId,
-				...(this.organizationId ? { organizationId, tenantId } : {})
+				organizationContactId,
+				organizationId,
+				tenantId
 			});
 			this.projects = items;
 		}
@@ -228,29 +235,36 @@ export class ProjectSelectorComponent
 	}
 
 	createNew = async (name: string) => {
+		if (!this.organization) {
+			return;
+		}
 		try {
-			const member: any = {
-				id: this.employeeId || this.store.user.employeeId
-			};
-
+			const { tenantId } = this.store.user;
+			const { id: organizationId } = this.organization;
+			
 			const request = {
 				name,
-				organizationId: this.organizationId,
-				members: [member],
+				organizationId,
+				tenantId,
 				...(this.organizationContactId
 					? { contactId: this.organizationContactId }
 					: {})
 			};
+			if (this.employeeId || this.store.user.employeeId) {
+				const member: any = {
+					id: this.employeeId || this.store.user.employeeId
+				};
+				request['members'] = [member];
+			}
 
 			const project = await this.organizationProjects.create(request);
 
 			this.projects = this.projects.concat([project]);
 			this.projectId = project.id;
 
-			this.toastrService.success(
-				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.ADD_PROJECT',
-				{ name }
-			);
+			this.toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.ADD_PROJECT', {
+				name
+			});
 		} catch (error) {
 			this.toastrService.error(error);
 		}
