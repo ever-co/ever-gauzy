@@ -1,0 +1,65 @@
+<nb-card class="main">
+	<nb-card-header class="d-flex flex-column">
+		<div class="cancel">
+			<i class="fas fa-times" (click)="close()"></i>
+		</div>
+		<h5 class="title">
+			{{
+				(category ? 'POP_UPS.EDIT' : 'POP_UPS.ADD')
+					| translate
+			}}
+        </h5>
+	</nb-card-header>
+	<nb-card-body class="body">
+		<form [formGroup]="form" #formDirective="ngForm" (ngSubmit)="addOrEditCategory()">
+            <div class="row mb-3">
+				<div class="col-sm-12">
+					<label class="label">
+                        {{ 'ORGANIZATIONS_PAGE.EXPENSE_NAME' | translate }}
+                    </label>
+					<input
+						formControlName="name"
+						nbInput
+                        fullWidth
+						[placeholder]="'ORGANIZATIONS_PAGE.EXPENSE_NAME' | translate"
+						[status]="
+							FormHelpers.isInvalidControl(form, 'name')
+								? 'danger'
+								: 'basic'
+						"
+					/>
+				</div>
+			</div>
+            <div class="row">
+				<div class="col-sm-12">
+					<div class="form-group">
+						<ga-tags-color-input
+                            [selectedTags]="form.get('tags').value"
+							(selectedTagsEvent)="selectedTagsHandler($event)"
+							[isOrgLevel]="true"
+						></ga-tags-color-input>
+					</div>
+				</div>
+			</div>
+        </form>
+	</nb-card-body>
+	<nb-card-footer class="text-left">
+        <button
+            (click)="close()"
+            class="delete mr-3"
+            nbButton
+            status="basic"
+            outline
+        >
+            {{ 'BUTTONS.CANCEL' | translate }}
+        </button>
+        <button
+            [disabled]="form.invalid"
+            (click)="formDirective.ngSubmit.emit()"
+            nbButton
+            status="success"
+        >
+            {{ 'BUTTONS.SAVE' | translate }}
+        </button>
+    </nb-card-footer>
+</nb-card>
