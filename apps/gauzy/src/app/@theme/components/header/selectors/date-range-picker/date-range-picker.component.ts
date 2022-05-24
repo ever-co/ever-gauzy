@@ -155,7 +155,7 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 
 		combineLatest([storeOrganization$, storeDatePickerConfig$])
 			.pipe(
-				filter(([organization]) => !!organization),
+				filter(([organization, datePickerConfig]) => !!organization && !!datePickerConfig),
 				switchMap(([organization, datePickerConfig]) => combineLatest([
 					this.organizationService.getById(organization.id),
 					observableOf(datePickerConfig),
