@@ -393,12 +393,11 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 				tap((filters: ITimeLogFilters) => {
 					const {
 						startDate = range.startDate,
-						endDate = range.endDate,
 						isCustomDate = range.isCustomDate
 					} = filters;
 					this.selectedDateRange = this.rangePicker = {
-						startDate: moment(startDate).toDate(),
-						endDate: moment(endDate).toDate(),
+						startDate: moment(startDate).startOf(this.unitOfTime).toDate(),
+						endDate: moment(startDate).endOf(this.unitOfTime).toDate(),
 						isCustomDate: isCustomDate
 					};
 				}),
