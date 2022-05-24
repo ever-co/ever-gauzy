@@ -53,11 +53,23 @@ export const createDefaultOrganizationProjects = async (
 		projects.push(project);
 	}
  	await connection.manager.save(projects);
+
+	/**
+	* Seeder for assign organization project to the employee of the specific organization
+	*/
  	await assignOrganizationProjectToEmployee(
 		connection,
 		tenant,
 		organization
 	);
+
+	/**
+	* Seeder for update project member count for specific tenant
+	*/
+	await seedProjectMembersCount(
+		connection,
+		[tenant]
+	)
 	return projects;
 };
 
@@ -110,12 +122,23 @@ export const createRandomOrganizationProjects = async (
 			}
 			await connection.manager.save(projects);
 
+			/**
+			* Seeder for assign organization project to the employee of the specific organization
+			*/
 			await assignOrganizationProjectToEmployee(
 				connection,
 				tenant,
 				organization
 			);
 		}
+
+		/**
+		* Seeder for update project member count for specific tenant
+		*/
+		await seedProjectMembersCount(
+			connection,
+			[tenant]
+		)
 	}
 };
 
@@ -160,7 +183,7 @@ export async function seedProjectMembersCount(
 	for await (const tenant of tenants) {
 		const tenantId = tenant.id;
 
-    console.log(`Processing tenant: ${tenantId}`);
+    	console.log(`Processing tenant: ${tenantId}`);
 
 		/**
 		 * GET all tenant projects for specific tenant
@@ -169,13 +192,13 @@ export async function seedProjectMembersCount(
 			tenantId
 		]);
 
-    console.log(`Find ${projects.length} projects in tenant ${tenantId}`);
+    	console.log(`Find ${projects.length} projects in tenant ${tenantId}`);
 
 		for await (const project of projects) {
 
 			const projectId = project.id;
 
-      console.log(`Processing project ${projectId} in tenant ${tenantId}`);
+      		console.log(`Processing project ${projectId} in tenant ${tenantId}`);
 
 			/**
 			 * GET member counts for organization project
@@ -194,11 +217,11 @@ export async function seedProjectMembersCount(
 
 			const count = members['count'];
 
-      console.log(`Members qty: ${count}`);
+      		console.log(`Members qty: ${count}`);
 
 			await connection.manager.query(`UPDATE "organization_project" SET "membersCount" = $1 WHERE "id" = $2`, [count, projectId]);
 
-      console.log('Updated Members qty');
+      		console.log('Updated Members qty');
 		}
 	}
 }
