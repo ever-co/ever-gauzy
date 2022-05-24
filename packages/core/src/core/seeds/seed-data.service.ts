@@ -130,7 +130,6 @@ import {
 	createRandomTask
 } from '../../tasks/task.seed';
 import {
-	seedProjectMembersCount,
 	createDefaultOrganizationProjects,
 	createRandomOrganizationProjects
 } from '../../organization-project/organization-project.seed';
@@ -946,14 +945,6 @@ export class SeedDataService {
 				this.connection,
 				this.tenant,
 				this.defaultOrganization
-			)
-		);
-
-		await this.tryExecute(
-			'Default Tenant Organization Projects Members Count',
-			seedProjectMembersCount(
-				this.connection,
-				[this.tenant]
 			)
 		);
 
@@ -1841,14 +1832,6 @@ export class SeedDataService {
 				tenantOrganizationsMap,
 				tags,
 				randomSeedConfig.projectsPerOrganization || 10
-			)
-		);
-
-		await this.tryExecute(
-			'Random Tenant Organization Projects Members Count',
-			seedProjectMembersCount(
-				this.connection,
-				tenants
 			)
 		);
 

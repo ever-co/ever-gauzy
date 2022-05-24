@@ -53,9 +53,9 @@ export class BaseSelectorFilterComponent extends TranslationBaseComponent {
 						} else {
 							delete this.request.projectIds;
 						}
-						this.subject$.next(true);
 					}
 				}),
+				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();

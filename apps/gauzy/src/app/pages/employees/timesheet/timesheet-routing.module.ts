@@ -21,7 +21,8 @@ const routes: Routes = [
 				),
 				data: {
 					datePicker: {
-						unitOfTime: 'day'
+						unitOfTime: 'day',
+						isLockDatePicker: true
 					}
 				}
 			},
@@ -67,7 +68,8 @@ const routes: Routes = [
 						project: false
 					},
 					datePicker: {
-						unitOfTime: 'month'
+						unitOfTime: 'month',
+						isLockDatePicker: true
 					}
 				}
 			}
