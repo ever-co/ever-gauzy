@@ -216,13 +216,26 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 	 */
 	createDateRangeMenus() {
 		this.ranges = new Object();
-		if (!this.isLockDatePicker) {
-			this.ranges[DateRangeKeyEnum.TODAY] = [moment(), moment()];
-			this.ranges[DateRangeKeyEnum.YESTERDAY] = [moment().subtract(1, 'days'), moment().subtract(1, 'days')];
-			this.ranges[DateRangeKeyEnum.CURRENT_WEEK] = [moment().startOf('week'), moment().endOf('week')];
-			this.ranges[DateRangeKeyEnum.LAST_WEEK] = [moment().subtract(1, 'week').startOf('week'), moment().subtract(1, 'week').endOf('week')];
-			this.ranges[DateRangeKeyEnum.CURRENT_MONTH] = [moment().startOf('month'), moment().endOf('month')];
-			this.ranges[DateRangeKeyEnum.LAST_MONTH] = [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')];
+		this.ranges[DateRangeKeyEnum.TODAY] = [moment(), moment()];
+		this.ranges[DateRangeKeyEnum.YESTERDAY] = [moment().subtract(1, 'days'), moment().subtract(1, 'days')];
+		this.ranges[DateRangeKeyEnum.CURRENT_WEEK] = [moment().startOf('week'), moment().endOf('week')];
+		this.ranges[DateRangeKeyEnum.LAST_WEEK] = [moment().subtract(1, 'week').startOf('week'), moment().subtract(1, 'week').endOf('week')];
+		this.ranges[DateRangeKeyEnum.CURRENT_MONTH] = [moment().startOf('month'), moment().endOf('month')];
+		this.ranges[DateRangeKeyEnum.LAST_MONTH] = [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')];
+
+		if (this.isLockDatePicker && (this.unitOfTime !== 'day')) {
+			delete this.ranges[DateRangeKeyEnum.TODAY];
+			delete this.ranges[DateRangeKeyEnum.YESTERDAY];
+		}
+
+		if (this.isLockDatePicker && (this.unitOfTime !== 'week')) {
+			delete this.ranges[DateRangeKeyEnum.CURRENT_WEEK];
+			delete this.ranges[DateRangeKeyEnum.LAST_WEEK];
+		}
+
+		if (this.isLockDatePicker && (this.unitOfTime !== 'month')) {
+			delete this.ranges[DateRangeKeyEnum.CURRENT_MONTH];
+			delete this.ranges[DateRangeKeyEnum.LAST_MONTH];
 		}		
 	}
 
@@ -303,8 +316,8 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 					range['endDate'] = endDate.toDate();
 					range['isCustomDate'] = this.isCustomDate(event);
 				} else {
-					const start = moment(startDate).startOf(this.unitOfTime);
-					const end = moment(startDate).endOf(this.unitOfTime);
+					const start = moment(startDate.toDate()).startOf(this.unitOfTime);
+					const end = moment(startDate.toDate()).endOf(this.unitOfTime);
 					range['startDate'] = start.toDate();
 					range['endDate'] = end.toDate();
 					range['isCustomDate'] = this.isCustomDate({
@@ -380,12 +393,11 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 				tap((filters: ITimeLogFilters) => {
 					const {
 						startDate = range.startDate,
-						endDate = range.endDate,
 						isCustomDate = range.isCustomDate
 					} = filters;
 					this.selectedDateRange = this.rangePicker = {
-						startDate: moment(startDate).toDate(),
-						endDate: moment(endDate).toDate(),
+						startDate: moment(startDate).startOf(this.unitOfTime).toDate(),
+						endDate: moment(startDate).endOf(this.unitOfTime).toDate(),
 						isCustomDate: isCustomDate
 					};
 				}),
