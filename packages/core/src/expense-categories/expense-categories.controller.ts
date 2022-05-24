@@ -7,15 +7,18 @@ import {
 	Param,
 	Body,
 	UsePipes,
-	ValidationPipe
+	ValidationPipe,
+	Post
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { IExpenseCategory, IPagination } from '@gauzy/contracts';
+import { IExpenseCategory, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import { CrudController, PaginationParams } from './../core/crud';
 import { ExpenseCategoriesService } from './expense-categories.service';
 import { ExpenseCategory } from './expense-category.entity';
-import { TenantPermissionGuard } from './../shared/guards';
+import { Permissions } from './../shared/decorators';
+import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
+import { CreateExpenseCategoryDTO, UpdateExpenseCategoryDTO } from './dto';
 
 @ApiTags('ExpenseCategories')
 @UseGuards(TenantPermissionGuard)
@@ -33,6 +36,8 @@ export class ExpenseCategoriesController extends CrudController<ExpenseCategory>
 	 * @param filter 
 	 * @returns 
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_EXPENSES_VIEW)
 	@Get('pagination')
 	@UsePipes(new ValidationPipe({ transform: true }))
 	async pagination(
@@ -48,6 +53,8 @@ export class ExpenseCategoriesController extends CrudController<ExpenseCategory>
 	 * @param data 
 	 * @returns 
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_EXPENSES_VIEW)
 	@Get()
 	async findAll(
 		@Query('data', ParseJsonPipe) data: any
@@ -59,6 +66,18 @@ export class ExpenseCategoriesController extends CrudController<ExpenseCategory>
 		});
 	}
 
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_EXPENSES_EDIT)
+	@Post()
+	@UsePipes(new ValidationPipe({ transform : true, whitelist: true }))
+	async create(
+		@Body() entity: CreateExpenseCategoryDTO
+	): Promise<IExpenseCategory> {
+		return this.expenseCategoriesService.create({
+			...entity
+		});
+	}
+
 	/**
 	 * UPDATE expense category by id
 	 * 
@@ -67,11 +86,13 @@ export class ExpenseCategoriesController extends CrudController<ExpenseCategory>
 	 * @param options 
 	 * @returns 
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_EXPENSES_EDIT)
 	@Put(':id')
+	@UsePipes(new ValidationPipe({ transform : true, whitelist: true }))
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body() entity: ExpenseCategory,
-		...options: any[]
+		@Body() entity: UpdateExpenseCategoryDTO
 	): Promise<IExpenseCategory> {
 		return this.expenseCategoriesService.create({
 			id,

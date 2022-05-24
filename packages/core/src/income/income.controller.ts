@@ -118,7 +118,7 @@ export class IncomeController extends CrudController<Income> {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_INCOMES_EDIT)
 	@Post()
-	@UsePipes( new ValidationPipe({ transform : true }))
+	@UsePipes(new ValidationPipe({ transform : true }))
 	async create(
 		@Body() entity: CreateIncomeDTO,
 		...options: any[]
