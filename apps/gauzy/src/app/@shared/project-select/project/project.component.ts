@@ -15,7 +15,7 @@ import {
 	PermissionsEnum
 } from '@gauzy/contracts';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
-import { Subject } from 'rxjs';
+import { map, Observable, Subject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
@@ -45,7 +45,7 @@ export class ProjectSelectorComponent
 
 	projects: IOrganizationProject[] = [];
 	selectedProject: IOrganizationProject;
-	hasPermissionProjEdit: boolean;
+	hasEditProject$: Observable<boolean>;
 	
 	public organization: IOrganization;
 	subject$: Subject<any> = new Subject();
@@ -132,13 +132,12 @@ export class ProjectSelectorComponent
 	) {}
 
 	ngOnInit() {
-		this.store.userRolePermissions$
-			.pipe(untilDestroyed(this))
-			.subscribe(() => {
-				this.hasPermissionProjEdit = this.store.hasPermission(
-					PermissionsEnum.ORG_PROJECT_EDIT
-				);
-			});
+		this.hasEditProject$ = this.store.userRolePermissions$.pipe(
+			map(() =>
+				this.store.hasPermission(PermissionsEnum.ORG_PROJECT_EDIT)
+			),
+			untilDestroyed(this)
+		);
 		this.subject$
 			.pipe(
 				debounceTime(200),
@@ -148,9 +147,9 @@ export class ProjectSelectorComponent
 			.subscribe();
 		this.store.selectedOrganization$
 			.pipe(
-				filter((organization: IOrganization) => !!organization),
 				distinctUntilChange(),
-				tap((organization) => (this.organization = organization)),
+				filter((organization: IOrganization) => !!organization),
+				tap((organization: IOrganization) => (this.organization = organization)),
 				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
