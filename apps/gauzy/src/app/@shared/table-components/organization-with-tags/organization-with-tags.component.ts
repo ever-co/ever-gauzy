@@ -1,5 +1,4 @@
-import { Component, OnInit } from '@angular/core';
-import { IOrganization } from '@gauzy/contracts';
+import { Component } from '@angular/core';
 import { NotesWithTagsComponent } from '..';
 
 @Component({
