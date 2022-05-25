@@ -10,7 +10,7 @@
 			}}
         </h5>
 	</nb-card-header>
-	<nb-card-body class="body">
+	<nb-card-body class="body pb-0">
 		<form [formGroup]="form" #formDirective="ngForm" (ngSubmit)="addOrEditCategory()">
             <div class="row mb-3">
 				<div class="col-sm-12">
@@ -43,7 +43,7 @@
 			</div>
         </form>
 	</nb-card-body>
-	<nb-card-footer class="text-left">
+	<nb-card-footer class="text-left pt-0">
         <button
             (click)="close()"
             class="delete mr-3"
