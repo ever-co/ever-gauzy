@@ -307,6 +307,7 @@ export class OrganizationsComponent
 			}
 			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
 			this.smartTableSource.load(this.organizations);
+			this._loadDataGridLayout();
 			this.setPagination({
 				...this.getPagination(),
 				totalItems: this.smartTableSource.count()
@@ -316,6 +317,12 @@ export class OrganizationsComponent
 		}
 
 		this.loading = false;
+	}
+
+	private async _loadDataGridLayout() {
+		if (this.dataLayoutStyle === this.componentLayoutStyleEnum.CARDS_GRID) {
+			this.organizations = await this.smartTableSource.getElements();
+		}
 	}
 
 	/*

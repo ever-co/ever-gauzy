@@ -50,6 +50,13 @@
 			<ga-card-grid
 				[settings]="settingsSmartTable"
 				[source]="organizations"
+				(onSelectedItem)="selectOrganization($event)"
+				(selectedOption)="onUpdateOption($event)"
+				(selectedPage)="onPageChange($event)"
+				[doEmit]="false"
+				[totalItems]="pagination?.totalItems"
+				[itemsPerPage]="pagination?.itemsPerPage"
+				[activePage]="pagination?.activePage"
 			></ga-card-grid>
 		</ng-template>
 	</nb-card-body>
