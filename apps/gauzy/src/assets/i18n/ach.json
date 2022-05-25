@@ -530,7 +530,10 @@
 			"INVOICE_TEMPLATE": "crwdns10244:0crwdne10244:0",
 			"ESTIMATE_TEMPLATE": "crwdns10246:0crwdne10246:0",
 			"RECEIPT_TEMPLATE": "crwdns10248:0crwdne10248:0",
-			"INVITATION_EXPIRATION": "crwdns10563:0crwdne10563:0"
+			"INVITATION_EXPIRATION": "crwdns10563:0crwdne10563:0",
+			"ADD_PROJECT": "crwdns11148:0crwdne11148:0",
+			"ADD_EMPLOYEE": "crwdns11150:0crwdne11150:0",
+			"ADD_ORGANIZATION": "crwdns11152:0crwdne11152:0"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "crwdns2407:0crwdne2407:0",
