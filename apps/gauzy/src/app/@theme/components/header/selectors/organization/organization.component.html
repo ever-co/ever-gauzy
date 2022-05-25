@@ -9,6 +9,7 @@
 		(clear)="select.blur();"
 		[(ngModel)]="selectedOrganization"
 		[placeholder]="'FORM.PLACEHOLDERS.SELECT_COMPANY' | translate"
+		[addTagText]="'FORM.PLACEHOLDERS.ADD_ORGANIZATION' | translate"
 		appendTo="body"
 		[isOpen]="isOpen"
 		(change)="onChange()"
