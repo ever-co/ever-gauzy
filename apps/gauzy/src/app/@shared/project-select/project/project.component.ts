@@ -135,8 +135,7 @@ export class ProjectSelectorComponent
 		this.hasEditProject$ = this.store.userRolePermissions$.pipe(
 			map(() =>
 				this.store.hasPermission(PermissionsEnum.ORG_PROJECT_EDIT)
-			),
-			untilDestroyed(this)
+			)
 		);
 		this.subject$
 			.pipe(

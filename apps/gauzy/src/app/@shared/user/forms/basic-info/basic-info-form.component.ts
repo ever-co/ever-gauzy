@@ -7,6 +7,7 @@ import {
 	AfterViewInit
 } from '@angular/core';
 import { Validators, FormBuilder, FormGroup } from '@angular/forms';
+import { Location } from '@angular/common';
 import {
 	RolesEnum,
 	ITag,
@@ -122,7 +123,8 @@ export class BasicInfoFormComponent
 		private readonly employeesService: EmployeesService,
 		private readonly candidatesService: CandidatesService,
 		public readonly translateService: TranslateService,
-		private readonly store: Store
+		private readonly store: Store,
+		private readonly location: Location
 	) {
 		super(translateService);
 	}
@@ -134,6 +136,8 @@ export class BasicInfoFormComponent
 				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
 				tap((organization: IOrganization) => this.organization = organization),
+				filter(() => !!this.location.getState()),
+				tap(() => this.patchUsingLocationState(this.location.getState()))
 			)
 			.subscribe();
 	}
@@ -339,5 +343,19 @@ export class BasicInfoFormComponent
 		return await firstValueFrom(
 			this.candidatesService.create(candidate)
 		);
+	}
+
+	/**
+	 * GET location old state & patch form value
+	 * We are using such functionality for create new employee from header selector
+	 * 
+	 * @param state 
+	 */
+	patchUsingLocationState(state: any) {
+		if (!this.form) {
+			return;
+		}
+		this.form.patchValue({ ...state });
+		this.form.updateValueAndValidity();
 	}
 }

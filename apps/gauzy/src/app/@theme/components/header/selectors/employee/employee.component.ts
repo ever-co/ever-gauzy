@@ -16,14 +16,20 @@ import {
 	IDateRangePicker,
 	IEmployee,
 	IOrganization,
-	ISelectedEmployee
+	ISelectedEmployee,
+	PermissionsEnum
 } from '@gauzy/contracts';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { combineLatest, Subject } from 'rxjs';
+import { combineLatest, map, Observable, Subject } from 'rxjs';
 import { isNotEmpty } from '@gauzy/common-angular';
 import { ALL_EMPLOYEES_SELECTED } from './default-employee';
-import { EmployeesService, EmployeeStore, Store } from './../../../../../@core/services';
+import {
+	EmployeesService,
+	EmployeeStore,
+	Store,
+	ToastrService
+} from './../../../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -34,6 +40,17 @@ import { EmployeesService, EmployeeStore, Store } from './../../../../../@core/s
 })
 export class EmployeeSelectorComponent
 	implements OnInit, OnDestroy, AfterViewInit {
+
+	/*
+	* Getter & Setter for dynamic add tag option
+	*/
+	_addTag: boolean = true;
+	get addTag(): boolean {
+		return this._addTag;
+	}
+	@Input() set addTag(value: boolean) {
+		this._addTag = value;
+	}
 
 	private _skipGlobalChange: boolean = false;
 	get skipGlobalChange(): boolean {
@@ -79,7 +96,6 @@ export class EmployeeSelectorComponent
 	get selectedDateRange(): IDateRangePicker {
 		return this._selectedDateRange;
 	}
-
 	@Input() set selectedDateRange(range: IDateRangePicker) {
 		//This will set _selectedDateRange too
 		this.subject$.next([this.store.selectedOrganization, range]);
@@ -88,8 +104,10 @@ export class EmployeeSelectorComponent
 	@Output()
 	selectionChanged: EventEmitter<ISelectedEmployee> = new EventEmitter();
 
-	people: ISelectedEmployee[] = [];
+	public hasEditEmployee$: Observable<boolean>;
+	public organization: IOrganization;
 	selectedEmployee: ISelectedEmployee;
+	people: ISelectedEmployee[] = [];
 	subject$: Subject<any> = new Subject();
 
 	constructor(
@@ -97,11 +115,18 @@ export class EmployeeSelectorComponent
 		private readonly store: Store,
 		private readonly activatedRoute: ActivatedRoute,
 		private readonly cdRef: ChangeDetectorRef,
-		private readonly _employeeStore: EmployeeStore
+		private readonly _employeeStore: EmployeeStore,
+		private readonly toastrService: ToastrService,
+		private readonly router: Router
 	) {}
 
 	ngOnInit() {
 		this._selectedEmployee();
+		this.hasEditEmployee$ = this.store.userRolePermissions$.pipe(
+			map(() =>
+				this.store.hasPermission(PermissionsEnum.ORG_EMPLOYEES_EDIT)
+			)
+		);
 		this.subject$
 			.pipe(
 				debounceTime(200),
@@ -140,6 +165,7 @@ export class EmployeeSelectorComponent
 			.pipe(
 				filter(([organization]) => !!organization),
 				tap(([organization, dateRange]) => {
+					this.organization = organization;
 					this._selectedDateRange = dateRange;
 					this.subject$.next([organization, dateRange])
 				}),
@@ -346,4 +372,30 @@ export class EmployeeSelectorComponent
 		}
 		return true;
 	}
+
+	/**
+	 * Create new employee from ng-select tag
+	 * 
+	 * @param name 
+	 * @returns 
+	 */
+	createNew = async (name: string) => {
+		if (!this.organization || !name) {
+			return;
+		}
+		try {
+			const [firstName, lastName] = name.split(' ');
+			this.router.navigate(['/pages/employees/'], {
+				queryParams: {
+					openAddDialog: true
+				},
+				state: {
+					firstName,
+					lastName
+				}
+			});
+		} catch (error) {
+			this.toastrService.error(error);
+		}
+	};
 }
