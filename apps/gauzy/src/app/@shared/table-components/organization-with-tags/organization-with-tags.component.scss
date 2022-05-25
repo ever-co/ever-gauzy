@@ -1,0 +1,34 @@
+@import 'themes';
+
+.organization-render-container {
+    display: flex;
+    flex-direction: column;
+
+    .organization-render {
+        width: 100%;
+        display: flex;
+        justify-content: flex-start;
+
+        img {
+            width: 28px;
+            height: 28px;
+            border-radius: nb-theme(border-radius);
+            margin: 0 5px;
+        }
+
+        span .member {
+            font-size: 11px;
+        }
+    }
+
+    .tags {
+        margin: 10px 5px 0px 5px;
+
+        .color {
+            position: static;
+            margin-top: 5px;
+            margin-right: 5px;
+            display: inline-block;
+        }
+    }
+}
