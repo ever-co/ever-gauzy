@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, ViewChild, AfterViewInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import {
 	IExpense,
 	ComponentLayoutStyleEnum,
@@ -31,8 +31,9 @@ import {
 	VendorFilterComponent
 } from '../../@shared/table-filters';
 import { IPaginationBase, PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
-import { API_PREFIX, ComponentEnum } from '../../@core/constants';
 import { StatusBadgeComponent } from '../../@shared/status-badge';
+import { AvatarComponent } from '../../@shared/components/avatar/avatar.component';
+import { API_PREFIX, ComponentEnum } from '../../@core/constants';
 import { ServerDataSource } from '../../@core/utils/smart-table';
 import { ALL_EMPLOYEES_SELECTED } from '../../@theme/components/header/selectors/employee';
 import {
@@ -41,7 +42,6 @@ import {
 	Store,
 	ToastrService
 } from '../../@core/services';
-import { AvatarComponent } from '../../@shared/components/avatar/avatar.component';
 import { getAdjustDateRangeFutureAllowed } from '../../@theme/components/header/selectors/date-range-picker';
 
 @UntilDestroy({ checkProperties: true })
@@ -49,8 +49,7 @@ import { getAdjustDateRangeFutureAllowed } from '../../@theme/components/header/
 	templateUrl: './expenses.component.html',
 	styleUrls: ['./expenses.component.scss']
 })
-export class ExpensesComponent
-	extends PaginationFilterBaseComponent
+export class ExpensesComponent extends PaginationFilterBaseComponent
 	implements AfterViewInit, OnInit, OnDestroy {
 
 	smartTableSettings: object;
@@ -119,7 +118,6 @@ export class ExpensesComponent
 			.pipe(
 				debounceTime(300),
 				filter(([organization]) => !!organization),
-				tap(([organization]) => (this.organization = organization)),
 				distinctUntilChange(),
 				tap(([organization, employee, dateRange, project]) => {
 					this.organization = organization;
@@ -134,7 +132,8 @@ export class ExpensesComponent
 			.subscribe();
 		this.route.queryParamMap
 			.pipe(
-				filter((params) => !!params && params.get('openAddDialog') === 'true'),
+				filter((params: ParamMap) => !!params),
+				filter((params: ParamMap) => params.get('openAddDialog') === 'true'),
 				debounceTime(1000),
 				tap(() => this.openAddExpenseDialog()),
 				untilDestroyed(this)
