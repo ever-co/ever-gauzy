@@ -1,9 +1,9 @@
 import { NgModule } from '@angular/core';
-import { CurrencyComponent } from './currency.component';
-import { CurrencyService } from '../../@core/services/currency.service';
 import { ThemeModule } from '../../@theme/theme.module';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { NbSelectModule } from '@nebular/theme';
+import { NgSelectModule } from '@ng-select/ng-select';
+import { CurrencyService } from '../../@core/services';
+import { CurrencyComponent } from './currency.component';
 import { TranslateModule } from '../translate/translate.module';
 
 @NgModule({
@@ -12,7 +12,7 @@ import { TranslateModule } from '../translate/translate.module';
 		ThemeModule,
 		FormsModule,
 		ReactiveFormsModule,
-		NbSelectModule,
+		NgSelectModule,
 		TranslateModule
 	],
 	providers: [CurrencyService],
