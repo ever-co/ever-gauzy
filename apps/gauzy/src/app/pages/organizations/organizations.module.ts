@@ -32,6 +32,7 @@ import { RecurringExpenseBlockModule } from '../../@shared/expenses/recurring-ex
 import { TableComponentsModule } from '../../@shared/table-components';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { TranslateModule } from '../../@shared/translate/translate.module';
+import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
 
 @NgModule({
 	imports: [
@@ -62,7 +63,8 @@ import { TranslateModule } from '../../@shared/translate/translate.module';
 		NbActionsModule,
 		RecurringExpenseHistoryModule,
 		RecurringExpenseBlockModule,
-		NgxPermissionsModule.forChild()
+		NgxPermissionsModule.forChild(),
+		GauzyButtonActionModule
 	],
 	declarations: [
 		OrganizationsComponent,
