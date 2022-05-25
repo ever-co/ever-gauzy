@@ -384,7 +384,9 @@ export class EmployeeSelectorComponent
 			return;
 		}
 		try {
-			const [firstName, lastName] = name.split(' ');
+			const chunks = name.split(/\s+/);
+			const [firstName, lastName] = [chunks.shift(), chunks.join(' ')];
+
 			this.router.navigate(['/pages/employees/'], {
 				queryParams: {
 					openAddDialog: true
