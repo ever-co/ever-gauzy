@@ -4,7 +4,7 @@
 >
 	<ng-select
 		#select
-		[addTag]="hasPermissionProjEdit ? createNew : null"
+		[addTag]="(hasEditProject$ | async) ? createNew : null"
 		[multiple]="multiple"
 		[clearable]="isClearable()"
 		[disabled]="disabled"

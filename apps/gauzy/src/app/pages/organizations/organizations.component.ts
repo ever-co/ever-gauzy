@@ -1,5 +1,5 @@
-import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { Router, RouterEvent, NavigationEnd } from '@angular/router';
+import { AfterViewInit, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Router, ActivatedRoute, ParamMap } from '@angular/router';
 import {
 	IOrganization,
 	ComponentLayoutStyleEnum,
@@ -9,35 +9,46 @@ import {
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
+import { debounceTime, firstValueFrom } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ErrorHandlingService, OrganizationsService, OrganizationEditStore, Store, ToastrService, UsersOrganizationsService } from '../../@core/services';
+import { distinctUntilChange } from '@gauzy/common-angular';
+import {
+	ErrorHandlingService,
+	OrganizationsService,
+	OrganizationEditStore,
+	Store,
+	ToastrService,
+	UsersOrganizationsService
+} from '../../@core/services';
 import { OrganizationsMutationComponent } from '../../@shared/organizations/organizations-mutation/organizations-mutation.component';
-import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
-import { OrganizationsCurrencyComponent, OrganizationsEmployeesComponent, OrganizationsStatusComponent } from './table-components';
-import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
+import { DeleteConfirmationComponent } from '../../@shared/user/forms';
+import {
+	OrganizationsCurrencyComponent,
+	OrganizationsEmployeesComponent,
+	OrganizationsStatusComponent
+} from './table-components';
+import { TranslationBaseComponent } from '../../@shared/language-base';
 import { PictureNameTagsComponent } from '../../@shared/table-components';
 import { ComponentEnum } from '../../@core/constants';
-import { firstValueFrom } from 'rxjs';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
 	templateUrl: './organizations.component.html',
 	styleUrls: ['./organizations.component.scss']
 })
-export class OrganizationsComponent
-	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
+export class OrganizationsComponent extends TranslationBaseComponent 
+	implements AfterViewInit, OnInit, OnDestroy {
 	
 	settingsSmartTable: object;
 	selectedOrganization: IOrganization;
 	smartTableSource = new LocalDataSource();
 	organizations: IOrganization[] = [];
 	viewComponentName: ComponentEnum;
-	disableButton = true;
+	disableButton: boolean = true;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
-	loading = true;
+	loading: boolean = true;
 	user: IUser;
 
 	organizationsTable: Ng2SmartTableComponent;
@@ -53,6 +64,7 @@ export class OrganizationsComponent
 		private readonly toastrService: ToastrService,
 		private readonly dialogService: NbDialogService,
 		private readonly router: Router,
+		private readonly activatedRoute: ActivatedRoute,
 		public readonly translateService: TranslateService,
 		private readonly errorHandler: ErrorHandlingService,
 		private readonly store: Store,
@@ -63,7 +75,51 @@ export class OrganizationsComponent
 		this.setView();
 	}
 
-	loadSettingsSmartTable() {
+	
+	ngOnInit() {
+		this._loadSmartTableSettings();
+		this._applyTranslationOnSmartTable();
+	}
+
+	ngAfterViewInit() {
+		this.store.user$
+			.pipe(
+				filter((user: IUser) => !!user),
+				tap((user: IUser) => this.user = user),
+				tap(() => this._loadSmartTable()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.activatedRoute.queryParamMap
+			.pipe(
+				debounceTime(1000),
+				filter((params: ParamMap) => !!params),
+				filter((params: ParamMap) => params.get('openAddDialog') === 'true'),
+				tap(() => this.addOrganization()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
+
+	
+	setView() {
+		this.viewComponentName = ComponentEnum.ORGANIZATION;
+		this.store
+			.componentLayout$(this.viewComponentName)
+			.pipe(
+				distinctUntilChange(),
+				tap((componentLayout) => (this.dataLayoutStyle = componentLayout)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
+
+	selectOrganization({ isSelected, data }) {
+		this.disableButton = !isSelected;
+		this.selectedOrganization = isSelected ? data : null;
+	}
+
+	private _loadSmartTableSettings() {
 		this.settingsSmartTable = {
 			actions: false,
 			columns: {
@@ -102,48 +158,14 @@ export class OrganizationsComponent
 			}
 		};
 	}
-	ngOnInit() {
-		this.loadSettingsSmartTable();
-		this._applyTranslationOnSmartTable();
-		this.store.user$
+
+	private _applyTranslationOnSmartTable() {
+		this.translateService.onLangChange
 			.pipe(
-				filter((user) => !!user),
-				tap((user: IUser) => this.user = user),
+				tap(() => this._loadSmartTableSettings()),
 				untilDestroyed(this)
 			)
-			.subscribe(() => {
-				this._loadSmartTable();
-			});
-		this.router.events
-			.pipe(untilDestroyed(this))
-			.subscribe((event: RouterEvent) => {
-				if (event instanceof NavigationEnd) {
-					this.setView();
-				}
-			});
-	}
-
-	setView() {
-		this.viewComponentName = ComponentEnum.ORGANIZATION;
-		this.store
-			.componentLayout$(this.viewComponentName)
-			.pipe(untilDestroyed(this))
-			.subscribe((componentLayout) => {
-				this.dataLayoutStyle = componentLayout;
-			});
-	}
-
-	selectOrganization({ isSelected, data }) {
-		this.disableButton = !isSelected;
-		this.selectedOrganization = isSelected ? data : null;
-	}
-
-	_applyTranslationOnSmartTable() {
-		this.translateService.onLangChange
-			.pipe(untilDestroyed(this))
-			.subscribe(() => {
-				this.loadSettingsSmartTable();
-			});
+			.subscribe();
 	}
 
 	async addOrganization() {

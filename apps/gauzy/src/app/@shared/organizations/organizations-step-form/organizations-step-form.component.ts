@@ -1,7 +1,3 @@
-import * as moment from 'moment';
-import * as timezone from 'moment-timezone';
-import { ActivatedRoute } from '@angular/router';
-import { formatDate } from '@angular/common';
 import {
 	AfterViewInit,
 	ChangeDetectorRef,
@@ -13,6 +9,8 @@ import {
 	Output,
 	ViewChild
 } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { formatDate, Location } from '@angular/common';
 import {
 	FormBuilder,
 	FormControl,
@@ -35,6 +33,8 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { LatLng } from 'leaflet';
 import { filter, tap } from 'rxjs/operators';
 import { retrieveNameFromEmail } from '@gauzy/common-angular';
+import * as moment from 'moment';
+import * as timezone from 'moment-timezone';
 import { LocationFormComponent } from '../../forms/location';
 import { LeafletMapComponent } from '../../forms/maps';
 import { environment as ENV } from './../../../../environments/environment';
@@ -79,7 +79,7 @@ export class OrganizationsStepFormComponent
 	country: ICountry;
 	user: IUser;
 	retriveEmail: string;
-	dummyImage=DUMMY_PROFILE_IMAGE;
+	dummyImage = DUMMY_PROFILE_IMAGE;
 
 	@Input('onboarding') onboarding?: boolean;
 
@@ -91,7 +91,8 @@ export class OrganizationsStepFormComponent
 		private readonly toastrService: ToastrService,
 		private readonly cdr: ChangeDetectorRef,
 		private readonly store: Store,
-		private readonly _activatedRoute: ActivatedRoute
+		private readonly _activatedRoute: ActivatedRoute,
+		private readonly location: Location
 	) {}
 
 	ngOnInit() {
@@ -100,7 +101,9 @@ export class OrganizationsStepFormComponent
 				filter((user) => !!user),
 				tap((user: IUser) => (this.user = user)),
 				tap(({ email }) => this.retriveEmail = email),
-				tap(() => this._initializedForm())
+				tap(() => this._initializedForm()),
+				filter(() => !!this.location.getState()),
+				tap(() => this.patchUsingLocationState(this.location.getState()))
 			)
 			.subscribe();
 		this._activatedRoute
@@ -315,6 +318,20 @@ export class OrganizationsStepFormComponent
 			}
 		});
 		this.locationFormDirective.onCoordinatesChanged();
+	}
+
+	/**
+	 * GET location old state & patch form value
+	 * We are using such functionality for create new organization from header selector
+	 * 
+	 * @param state 
+	 */
+	patchUsingLocationState(state: any) {
+		if (!this.orgMainForm) {
+			return;
+		}
+		this.orgMainForm.patchValue({ ...state });
+		this.orgMainForm.updateValueAndValidity();
 	}
 
 	/*

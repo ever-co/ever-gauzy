@@ -1,14 +1,17 @@
-import { Component, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
-import { IOrganization, CrudActionEnum } from '@gauzy/contracts';
-import { filter, tap } from 'rxjs/operators';
+import { Component, OnInit, OnDestroy, AfterViewInit, Input } from '@angular/core';
+import { IOrganization, CrudActionEnum, PermissionsEnum } from '@gauzy/contracts';
+import { filter, map, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { isNotEmpty } from '@gauzy/common-angular';
+import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
 import { uniq } from 'underscore';
 import {
 	OrganizationEditStore,
 	Store,
+	ToastrService,
 	UsersOrganizationsService
 } from './../../../../../@core/services';
+import { Observable } from 'rxjs/internal/Observable';
+import { Router } from '@angular/router';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -16,20 +19,39 @@ import {
 	templateUrl: './organization.component.html',
 	styleUrls: ['./organization.component.scss']
 })
-export class OrganizationSelectorComponent
-	implements AfterViewInit, OnInit, OnDestroy
-{
+export class OrganizationSelectorComponent 
+	implements AfterViewInit, OnInit, OnDestroy {
+
 	organizations: IOrganization[] = [];
 	selectedOrganization: IOrganization;
 	isOpen: boolean = false;
+	public hasEditOrganization$: Observable<boolean>;
+
+	/*
+	* Getter & Setter for dynamic add tag option
+	*/
+	_addTag: boolean = true;
+	get addTag(): boolean {
+		return this._addTag;
+	}
+	@Input() set addTag(value: boolean) {
+		this._addTag = value;
+	}
 
 	constructor(
+		private readonly router: Router,
+		private readonly toastrService: ToastrService,
 		private readonly store: Store,
 		private readonly userOrganizationService: UsersOrganizationsService,
 		private readonly _organizationEditStore: OrganizationEditStore
 	) {}
 
 	ngOnInit() {
+		this.hasEditOrganization$ = this.store.userRolePermissions$.pipe(
+			map(() =>
+				this.store.hasPermission(PermissionsEnum.ALL_ORG_EDIT)
+			)
+		);
 		this.loadSelectedOrganization();
 		this.loadOrganizations();
 	}
@@ -83,11 +105,11 @@ export class OrganizationSelectorComponent
 	private loadSelectedOrganization() {
 		this.store.selectedOrganization$
 			.pipe(
-				filter((organization) => !!organization),
+				distinctUntilChange(),
+				filter((organization: IOrganization) => !!organization),
 				tap((organization: IOrganization) => {
 					this.selectedOrganization = organization;
-					this.store.featureOrganizations =
-						organization.featureOrganizations || [];
+					this.store.featureOrganizations = organization.featureOrganizations || [];
 				}),
 				untilDestroyed(this)
 			)
@@ -168,6 +190,31 @@ export class OrganizationSelectorComponent
 	onChange() {
 		this.isOpen = false;
 	}
+
+	/**
+	 * Create new employee from ng-select tag
+	 * 
+	 * @param name 
+	 * @returns 
+	 */
+	createNew = async (name: string) => {
+		if (!this.selectedOrganization || !name) {
+			return;
+		}
+		try {
+			this.router.navigate(['/pages/organizations/'], {
+				queryParams: {
+					openAddDialog: true
+				},
+				state: {
+					name: name,
+					officialName: name
+				}
+			});
+		} catch (error) {
+			this.toastrService.error(error);
+		}
+	};
 
 	ngOnDestroy() {}
 }
