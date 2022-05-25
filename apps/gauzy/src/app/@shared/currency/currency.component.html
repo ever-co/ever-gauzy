@@ -1,26 +1,38 @@
 <ng-container>
 	<div class="form-group currency-container">
-		<label class="label" for="currencySelect">{{
-			placeholder || 'FORM.LABELS.CURRENCY' | translate
-		}}</label>
-		<nb-select
-			class="d-block"
-			[size]="size"
-			[placeholder]=" placeholder || 'FORM.PLACEHOLDERS.ALL_CURRENCIES' | translate" 
-			fullWidth
-			id="currencySelect"
-			[status]="formControl.invalid && formControl.touched ? 'danger' : 'basic'"
+		<label class="label" for="currencySelect">
+			{{ placeholder || 'FORM.LABELS.CURRENCY' | translate }}
+		</label>
+		<ng-select
+			#select
+			[items]="(currencies$ | async)"
+			(clear)="select.blur();"
+			(change)="onOptionChange($event); select.blur();"
+			[placeholder]=" placeholder || 'FORM.PLACEHOLDERS.ALL_CURRENCIES' | translate"
 			[(ngModel)]="currency"
-			[formControl]="formControl"
-			(selectedChange)="onSelectChange($event)"
+			[searchFn]="searchCurrency"
+			[loading]="loading"
+			bindValue="isoCode"
+			appendTo="body"
+			[class]="
+				formControl.invalid && formControl.touched ? 
+					'danger' : 
+					'basic'
+			"
 		>
-			<nb-option
-				*ngFor="let item of currencies$ | async"
-				[value]="item.isoCode"
-				(click)="onOptionChange(item)"
+			<ng-template 
+				ng-option-tmp
+				let-item="item"
+				let-index="index"
 			>
 				{{ item.currency + ' (' + item.isoCode + ')' }}
-			</nb-option>
-		</nb-select>
+			</ng-template>
+			<ng-template 
+				ng-label-tmp 
+				let-item="item"
+			>
+				{{ item.currency + ' (' + item.isoCode + ')' }}
+			</ng-template>
+		</ng-select>
 	</div>
 </ng-container>
