@@ -14,7 +14,7 @@ import {
 	ITag,
 	IExpense,
 	ExpenseTypesEnum,
-	ExpenseStatusesEnum,
+	ExpenseBillableStatusesEnum,
 	InvoiceStatusTypesEnum,
 	IInvoiceItemCreateInput,
 	IProductTranslatable
@@ -840,7 +840,7 @@ export class InvoiceAddComponent
 			const { id: organizationId } = this.organization;
 			const expenses = await this.expensesService.getAll([], {
 				typeOfExpense: ExpenseTypesEnum.BILLABLE_TO_CONTACT,
-				status: ExpenseStatusesEnum.UNINVOICED,
+				status: ExpenseBillableStatusesEnum.UNINVOICED,
 				organizationId,
 				tenantId
 			});

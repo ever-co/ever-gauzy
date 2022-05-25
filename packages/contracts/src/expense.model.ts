@@ -131,10 +131,14 @@ export enum TaxTypesEnum {
 	VALUE = 'VALUE'
 }
 
-export enum ExpenseStatusesEnum {
+export enum ExpenseBillableStatusesEnum {
 	INVOICED = 'INVOICED',
 	UNINVOICED = 'UNINVOICED',
 	PAID = 'PAID'
+}
+
+export enum ExpenseNotBillableStatusesEnum {
+	NOT_BILLABLE = 'NOT_BILLABLE'
 }
 
 export interface IExpenseViewModel {
