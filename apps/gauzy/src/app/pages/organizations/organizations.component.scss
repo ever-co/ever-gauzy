@@ -14,4 +14,16 @@ h4 {
   nb-card-body {
     background-color: nb-theme(gauzy-card-2);
   }
+
+  nb-card-body {
+    display: flex;
+    flex-direction: column;
+    overflow: unset;
+    height: calc(100vh - 27rem);
+
+    .table-scroll-container {
+      flex-grow: 10;
+      max-height: unset;
+    }
+  }
 }
