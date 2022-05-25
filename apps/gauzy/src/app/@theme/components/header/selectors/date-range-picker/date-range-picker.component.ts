@@ -23,7 +23,7 @@ import { TimesheetFilterService } from './../../../../../@shared/timesheet/times
 export class DateRangePickerComponent extends TranslationBaseComponent 
 	implements AfterViewInit, OnInit, OnDestroy {
 
-	public maxDate: moment.Moment;
+	public maxDate: string;
 	public futureDateAllowed: boolean;
 
 	/**
@@ -247,7 +247,7 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 		if (this.futureDateAllowed) {
 			this.maxDate = null;
 		} else if (!this.futureDateAllowed && isSameOrAfter) {
-			this.maxDate = moment();
+			this.maxDate = moment().format();
 			this.selectedDateRange = {
 				...this.selectedDateRange,
 				endDate: moment().toDate()
