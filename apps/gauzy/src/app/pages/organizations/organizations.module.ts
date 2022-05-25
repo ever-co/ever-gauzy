@@ -33,6 +33,7 @@ import { TableComponentsModule } from '../../@shared/table-components';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { TranslateModule } from '../../@shared/translate/translate.module';
 import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
+import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 
 @NgModule({
 	imports: [
@@ -64,7 +65,8 @@ import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy
 		RecurringExpenseHistoryModule,
 		RecurringExpenseBlockModule,
 		NgxPermissionsModule.forChild(),
-		GauzyButtonActionModule
+		GauzyButtonActionModule,
+		CardGridModule
 	],
 	declarations: [
 		OrganizationsComponent,

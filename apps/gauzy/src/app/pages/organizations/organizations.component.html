@@ -34,72 +34,10 @@
 			</div>
 		</ng-template>
 		<ng-template #gridLayout>
-			<div class="grid-scroll-container">
-				<ul class="flex-container">
-					<li class="flex-item" *ngFor="let x of organizations">
-						<div class="fullName">
-							<img
-								[src]="x.imageUrl"
-								alt="Avatar"
-								class="avatar"
-							/>
-							<span>{{ x.name }}</span>
-						</div>
-						<div class="info-line">
-							<span class="info-meta">{{
-								'SM_TABLE.EMPLOYEES' | translate
-							}}</span>
-							<span class="info-value">{{
-								x.totalEmployees
-							}}</span>
-						</div>
-						<div class="info-line">
-							<span class="info-meta">{{
-								'SM_TABLE.CURRENCY' | translate
-							}}</span>
-							<span class="info-value">{{ x.currency }}</span>
-						</div>
-						<div class="info-line">
-							<span class="info-meta">{{
-								'SM_TABLE.STATUS' | translate
-							}}</span>
-							<div
-								class="text-center"
-								*ngIf="x.isActive; else archived"
-							>
-								<div class="text-center badge badge-success">
-									{{
-										'ORGANIZATIONS_PAGE.ACTIVE' | translate
-									}}
-								</div>
-							</div>
-							<ng-template #archived>
-								<div class="text-center">
-									<div class="badge badge-danger d-block">
-										{{
-											'ORGANIZATIONS_PAGE.ARCHIVED'
-												| translate
-										}}
-									</div>
-								</div>
-							</ng-template>
-						</div>
-
-						<nb-card-footer class="card-footer">
-							<ng-container
-								*ngTemplateOutlet="
-									actionButtons;
-									context: {
-										buttonSize: 'tiny',
-										selectedItem: x
-									}
-								"
-							>
-							</ng-container>
-						</nb-card-footer>
-					</li>
-				</ul>
-			</div>
+			<ga-card-grid
+				[settings]="settingsSmartTable"
+				[source]="organizations"
+			></ga-card-grid>
 		</ng-template>
 	</nb-card-body>
 </nb-card>
@@ -155,7 +93,13 @@
 </ng-template>
 <ng-template #visible>
 	<ng-template [ngxPermissionsOnly]="['ALL_ORG_EDIT']">
-		<button nbButton status="success" (click)="addOrganization()">
+		<button
+			nbButton
+			status="success"
+			class="action"
+			size="small"
+			(click)="addOrganization()"
+		>
 			<nb-icon class="mr-1" icon="plus-outline"></nb-icon
 			>{{ 'BUTTONS.ADD' | translate }}
 		</button>
