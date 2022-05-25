@@ -29,8 +29,8 @@ import {
 	OrganizationsStatusComponent
 } from './table-components';
 import { TranslationBaseComponent } from '../../@shared/language-base';
-import { PictureNameTagsComponent } from '../../@shared/table-components';
 import { ComponentEnum } from '../../@core/constants';
+import { OrganizationWithTagsComponent } from '../../@shared/table-components/organization-with-tags/organization-with-tags.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -126,7 +126,7 @@ export class OrganizationsComponent extends TranslationBaseComponent
 				name: {
 					title: this.getTranslation('SM_TABLE.CLIENT_NAME'),
 					type: 'custom',
-					renderComponent: PictureNameTagsComponent
+					renderComponent: OrganizationWithTagsComponent
 				},
 				totalEmployees: {
 					title: this.getTranslation('SM_TABLE.EMPLOYEES'),
@@ -146,8 +146,7 @@ export class OrganizationsComponent extends TranslationBaseComponent
 				status: {
 					title: this.getTranslation('SM_TABLE.STATUS'),
 					type: 'custom',
-					class: 'text-center',
-					width: '200px',
+					width: '5%',
 					filter: false,
 					renderComponent: OrganizationsStatusComponent
 				}
@@ -274,7 +273,6 @@ export class OrganizationsComponent extends TranslationBaseComponent
 				org.totalEmployees = activeEmployees.length;
 				delete org['employees'];
 			}
-
 			this.smartTableSource.load(this.organizations);
 		} catch (error) {
 			this.errorHandler.handleError(error);
