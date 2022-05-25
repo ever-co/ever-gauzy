@@ -1,5 +1,11 @@
 <nb-card>
-	<nb-card-body>
+	<nb-card-header>
+		<span class="cancel"><i class="fas fa-times"></i></span>
+		<h5 class="title">
+			{{ 'ORGANIZATIONS_PAGE.ORGANIZATION_ADD' | translate }}
+		</h5>
+	</nb-card-header>
+	<nb-card-body class="p-3">
 		<nb-stepper #stepper>
 			<!-- Step 1 Organization Main Form -->
 			<nb-step [stepControl]="orgMainForm" [label]="main">
@@ -21,12 +27,16 @@
 							<svg
 								xmlns="http://www.w3.org/2000/svg"
 								xmlns:xlink="http://www.w3.org/1999/xlink"
-								width="68"
-								height="68"
+								width="48"
+								height="48"
 								viewBox="0 0 68 68"
 								[ngStyle]="{
 									opacity: hoverState ? '1' : '0.3'
 								}"
+								*ngIf="
+									orgMainForm &&
+									orgMainForm.get('imageUrl').value
+								"
 							>
 								<defs>
 									<path
@@ -64,12 +74,25 @@
 							></div>
 
 							<img
-								*ngIf="orgMainForm"
-								[src]="!orgMainForm.get('imageUrl').value ? dummyImage : orgMainForm.get('imageUrl').value"
+								*ngIf="
+									orgMainForm &&
+									orgMainForm.get('imageUrl').value
+								"
+								[src]="
+									!orgMainForm.get('imageUrl').value
+										? dummyImage
+										: orgMainForm.get('imageUrl').value
+								"
 								alt="Organization Photo"
 								(mouseenter)="hoverState = true"
 								(mouseleave)="hoverState = false"
 							/>
+							<div
+								*ngIf="!orgMainForm.get('imageUrl').value"
+								class="no-image"
+							>
+								<i class="fas fa-image"></i>
+							</div>
 						</div>
 					</div>
 					<form
@@ -107,7 +130,9 @@
 								</div>
 								<div class="col">
 									<ga-currency
-										[formControl]="orgMainForm.get('currency')"
+										[formControl]="
+											orgMainForm.get('currency')
+										"
 										(optionChange)="currencyChanged($event)"
 									></ga-currency>
 								</div>
@@ -187,7 +212,9 @@
 								[disabled]="orgMainForm.invalid"
 								nbButton
 								nbStepperNext
-								status="success"
+								status="basic"
+								class="green"
+								outline
 							>
 								{{ 'BUTTONS.NEXT' | translate }}
 							</button>
@@ -203,29 +230,41 @@
 					'ORGANIZATIONS_PAGE.LOCATION' | translate
 				}}</ng-template>
 				<form
-					class="step-container"
+					class="step-container row location"
 					[formGroup]="locationForm"
 					*ngIf="locationForm"
 					(ngSubmit)="this.locationForm.markAsDirty()"
 				>
-					<ga-location-form
-						#locationFormDirective
-						[form]="locationForm"
-						[showAutocompleteSearch]="true"
-						(mapCoordinatesEmitter)="onCoordinatesChanges($event)"
-						(mapGeometryEmitter)="onGeometrySend($event)"
-					>
-					</ga-location-form>
-					<ng-container *ngIf="stepper._selectedIndex === 1">
-						<ga-leaflet-map
-							#leafletTemplate
-							(mapClicked)="onMapClicked($event)"
+					<div class="col-5">
+						<ga-location-form
+							#locationFormDirective
+							[form]="locationForm"
+							[showAutocompleteSearch]="true"
+							(mapCoordinatesEmitter)="
+								onCoordinatesChanges($event)
+							"
+							(mapGeometryEmitter)="onGeometrySend($event)"
 						>
-						</ga-leaflet-map>
-					</ng-container>
+						</ga-location-form>
+					</div>
+					<div class="leaflet col-7">
+						<ng-container *ngIf="stepper._selectedIndex === 1">
+							<ga-leaflet-map
+								#leafletTemplate
+								(mapClicked)="onMapClicked($event)"
+							>
+							</ga-leaflet-map>
+						</ng-container>
+					</div>
 
 					<div class="stepper-buttons">
-						<button nbButton nbStepperPrevious>
+						<button
+							nbButton
+							class="gray"
+							status="basic"
+							outline
+							nbStepperPrevious
+						>
 							{{ 'BUTTONS.PREVIOUS' | translate }}
 						</button>
 						<ng-container
@@ -237,12 +276,24 @@
 						>
 						</ng-container>
 						<ng-template #nextButton>
-							<button nbButton status="success" nbStepperNext>
+							<button
+								nbButton
+								class="green"
+								status="basic"
+								outline
+								nbStepperNext
+							>
 								{{ 'BUTTONS.NEXT' | translate }}
 							</button>
 						</ng-template>
 						<ng-template #skipButton>
-							<button nbButton status="success" nbStepperNext>
+							<button
+								nbButton
+								class="green"
+								status="basic"
+								outline
+								nbStepperNext
+							>
 								{{
 									'BUTTONS.SKIP_CONTINUE'
 										| translate: { label: 'address' }
@@ -331,13 +382,21 @@
 					</div>
 
 					<div class="stepper-buttons">
-						<button nbButton nbStepperPrevious>
+						<button
+							nbButton
+							class="gray"
+							status="basic"
+							outline
+							nbStepperPrevious
+						>
 							{{ 'BUTTONS.PREVIOUS' | translate }}
 						</button>
 						<button
 							[disabled]="this.orgBonusForm.invalid"
 							nbButton
-							status="success"
+							class="green"
+							status="basic"
+							outline
 							nbStepperNext
 						>
 							{{ 'BUTTONS.NEXT' | translate }}
@@ -617,9 +676,10 @@
 										fullWidth
 										class="d-block"
 										[ngClass]="{
-											'status-danger': this.orgSettingsForm.get(
-												'inviteExpiryPeriod'
-											).invalid
+											'status-danger':
+												this.orgSettingsForm.get(
+													'inviteExpiryPeriod'
+												).invalid
 										}"
 									/>
 								</div>
@@ -628,7 +688,13 @@
 					</div>
 
 					<div class="stepper-buttons">
-						<button nbButton nbStepperPrevious>
+						<button
+							nbButton
+							class="gray"
+							status="basic"
+							outline
+							nbStepperPrevious
+						>
 							{{ 'BUTTONS.PREVIOUS' | translate }}
 						</button>
 						<button
@@ -638,7 +704,7 @@
 							status="success"
 							nbStepperNext
 						>
-							{{ 'BUTTONS.NEXT' | translate }}
+							{{ 'BUTTONS.ADD' | translate }}
 						</button>
 					</div>
 				</form>
