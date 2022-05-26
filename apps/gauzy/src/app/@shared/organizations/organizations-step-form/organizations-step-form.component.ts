@@ -51,8 +51,8 @@ import { DUMMY_PROFILE_IMAGE } from '../../../@core/constants';
 	]
 })
 export class OrganizationsStepFormComponent
-	implements OnInit, OnDestroy, AfterViewInit {
-
+	implements OnInit, OnDestroy, AfterViewInit
+{
 	@ViewChild('locationFormDirective')
 	locationFormDirective: LocationFormComponent;
 
@@ -86,6 +86,8 @@ export class OrganizationsStepFormComponent
 	@Output()
 	createOrganization = new EventEmitter();
 
+	@Output() closeForm = new EventEmitter();
+
 	constructor(
 		private readonly fb: FormBuilder,
 		private readonly toastrService: ToastrService,
@@ -100,17 +102,18 @@ export class OrganizationsStepFormComponent
 			.pipe(
 				filter((user) => !!user),
 				tap((user: IUser) => (this.user = user)),
-				tap(({ email }) => this.retriveEmail = email),
+				tap(({ email }) => (this.retriveEmail = email)),
 				tap(() => this._initializedForm()),
 				filter(() => !!this.location.getState()),
-				tap(() => this.patchUsingLocationState(this.location.getState()))
+				tap(() =>
+					this.patchUsingLocationState(this.location.getState())
+				)
 			)
 			.subscribe();
-		this._activatedRoute
-			.queryParams
+		this._activatedRoute.queryParams
 			.pipe(
 				filter(({ email }) => !!email),
-				tap(({ email }) => this.retriveEmail = email),
+				tap(({ email }) => (this.retriveEmail = email)),
 				tap(() => this._initializedForm()),
 				untilDestroyed(this)
 			)
@@ -125,7 +128,10 @@ export class OrganizationsStepFormComponent
 		this.orgMainForm = this.fb.group({
 			imageUrl: [],
 			currency: [ENV.DEFAULT_CURRENCY || CurrenciesEnum.USD],
-			name: [retrieveNameFromEmail(this.user?.email || this.retriveEmail), Validators.required],
+			name: [
+				retrieveNameFromEmail(this.user?.email || this.retriveEmail),
+				Validators.required
+			],
 			officialName: [],
 			taxId: [],
 			tags: []
@@ -194,7 +200,9 @@ export class OrganizationsStepFormComponent
 	}
 
 	loadDefaultBonusPercentage(bonusType: BonusTypeEnum) {
-		const bonusPercentageControl = this.orgBonusForm.get('bonusPercentage') as FormControl;
+		const bonusPercentageControl = this.orgBonusForm.get(
+			'bonusPercentage'
+		) as FormControl;
 		switch (bonusType) {
 			case BonusTypeEnum.PROFIT_BASED_BONUS:
 				bonusPercentageControl.setValue(75);
@@ -213,7 +221,9 @@ export class OrganizationsStepFormComponent
 	}
 
 	toggleExpiry(checked) {
-		const inviteExpiryControl = this.orgSettingsForm.get('inviteExpiryPeriod') as FormControl;
+		const inviteExpiryControl = this.orgSettingsForm.get(
+			'inviteExpiryPeriod'
+		) as FormControl;
 		checked ? inviteExpiryControl.enable() : inviteExpiryControl.disable();
 	}
 
@@ -295,9 +305,11 @@ export class OrganizationsStepFormComponent
 	onCoordinatesChanges(
 		$event: google.maps.LatLng | google.maps.LatLngLiteral
 	) {
-		const { loc: { coordinates } } = this.locationFormDirective.getValue();
+		const {
+			loc: { coordinates }
+		} = this.locationFormDirective.getValue();
 		const [lat, lng] = coordinates;
-		
+
 		if (this.leafletTemplate) {
 			this.leafletTemplate.addMarker(new LatLng(lat, lng));
 		}
@@ -323,8 +335,8 @@ export class OrganizationsStepFormComponent
 	/**
 	 * GET location old state & patch form value
 	 * We are using such functionality for create new organization from header selector
-	 * 
-	 * @param state 
+	 *
+	 * @param state
 	 */
 	patchUsingLocationState(state: any) {
 		if (!this.orgMainForm) {
@@ -338,6 +350,10 @@ export class OrganizationsStepFormComponent
 	 * Google Place Geometry Changed Event Emitter
 	 */
 	onGeometrySend(geometry: any) {}
+
+	close() {
+		this.closeForm.emit();
+	}
 
 	ngOnDestroy() {}
 }

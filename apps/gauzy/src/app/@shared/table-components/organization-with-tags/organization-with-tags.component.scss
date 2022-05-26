@@ -1,0 +1,36 @@
+@import 'themes';
+
+.organization-render-container {
+    display: flex;
+    flex-direction: column;
+
+    .organization-render {
+        width: 100%;
+        display: flex;
+        justify-content: flex-start;
+
+        img {
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            margin: 0 5px;
+            box-shadow: 0px 1px 1px 0px rgba(0, 0, 0, 0.25);
+        }
+
+        span .member {
+            font-size: 11px;
+            color: rgba(126, 126, 143, 0.75);
+        }
+    }
+
+    .tags {
+        margin: 10px 5px 0px 5px;
+
+        .color {
+            position: static;
+            margin-top: 5px;
+            margin-right: 5px;
+            display: inline-block;
+        }
+    }
+}
