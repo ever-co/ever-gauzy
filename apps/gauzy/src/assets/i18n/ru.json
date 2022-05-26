@@ -1834,7 +1834,8 @@
 		},
 		"BILLING": "Биллинг",
 		"BUDGET": "Бюджет",
-		"OPEN_SOURCE": "Открытый код"
+		"OPEN_SOURCE": "Открытый код",
+		"ORGANIZATION_ADD": "Добавить организацию"
 	},
 	"CONTACTS_PAGE": {
 		"VISITORS": "Посетители",
