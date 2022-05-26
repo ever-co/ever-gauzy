@@ -27,7 +27,8 @@ import {
 	ITag,
 	IEmployee,
 	IOrganizationProject,
-	IOrganizationContact
+	IOrganizationContact,
+	ExpenseStatusesEnum
 } from '@gauzy/contracts';
 import {
 	Employee,
@@ -126,11 +127,13 @@ export class Expense extends TenantOrganizationBaseEntity implements IExpense {
 	@Column({ nullable: true })
 	reference?: string;
 
-	@ApiPropertyOptional({ type: () => String })
-	@IsOptional()
-	@Column({ nullable: true })
-	status?: string;
-
+	@ApiPropertyOptional({ type: () => String, enum: ExpenseStatusesEnum})
+	@Column({
+		type: 'simple-enum',
+		nullable: true,
+		enum: ExpenseStatusesEnum
+	})
+	status?: ExpenseStatusesEnum;
 	/*
     |--------------------------------------------------------------------------
     | @ManyToOne 
@@ -262,13 +265,4 @@ export class Expense extends TenantOrganizationBaseEntity implements IExpense {
 		name: 'tag_expense'
 	})
 	tags?: ITag[];
-
-	//IN SOME CASES THE EXPENSES ARE CRASHING BECAUSE ITS TRYING TO ADD EXPENSES AND THERE IS NO SUCH THING
-
-	// IF THIS HAPPENS AGAIN ADD THIS
-
-	// @ApiPropertyOptional({ type: () => String})
-	// @IsOptional()
-	// @Column({ nullable: true })
-	// expenseId?: string;
 }

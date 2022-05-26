@@ -1157,7 +1157,8 @@
 			"TAX_RATE": "Tax Rate",
 			"INVOICED": "Invoiced",
 			"UNINVOICED": "Uninvoiced",
-			"PAID": "Paid"
+			"PAID": "Paid",
+			"NOT_BILLABLE": "Not Billable"
 		},
 		"DEFAULT_CATEGORY": {
 			"SALARY": "Salary",
