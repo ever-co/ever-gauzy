@@ -1,29 +1,29 @@
-import { Component, OnInit, OnDestroy, TemplateRef } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
+import { combineLatest, Subject, firstValueFrom } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
-import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { distinctUntilChange } from '@gauzy/common-angular';
 import {
-	ITag,
 	IOrganizationExpenseCategory,
 	ComponentLayoutStyleEnum,
-	IOrganization
+	IOrganization,
+	IExpenseCategory
 } from '@gauzy/contracts';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { Subject, firstValueFrom } from 'rxjs';
-import { API_PREFIX, ComponentEnum } from '../../../@core/constants';
+import { IPaginationBase, PaginationFilterBaseComponent } from '../../../@shared/pagination/pagination-filter-base.component';
 import { NotesWithTagsComponent } from '../../../@shared/table-components';
-import { DeleteConfirmationComponent } from '../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
+import { DeleteConfirmationComponent } from '../../../@shared/user/forms';
+import { API_PREFIX, ComponentEnum } from '../../../@core/constants';
 import {
 	ErrorHandlingService,
 	OrganizationExpenseCategoriesService,
 	Store,
 	ToastrService
 } from '../../../@core/services';
-import { distinctUntilChange } from '@gauzy/common-angular';
 import { ServerDataSource } from '../../../@core/utils/smart-table/server.data-source';
-import { HttpClient } from '@angular/common/http';
-import { combineLatest } from 'rxjs';
+import { ExpenseCategoryMutationComponent } from './expense-category-mutation/expense-category-mutation.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -31,34 +31,27 @@ import { combineLatest } from 'rxjs';
 	templateUrl: './expense-categories.component.html',
 	styleUrls: ['expense-categories.component.scss']
 })
-export class ExpenseCategoriesComponent
-	extends TranslationBaseComponent
-	implements OnInit, OnDestroy
-{
+export class ExpenseCategoriesComponent extends PaginationFilterBaseComponent 
+	implements OnInit, OnDestroy {
+
+	loading: boolean = false;
+	disableButton: boolean = true;
 	smartTableSource: ServerDataSource;
-	organization: IOrganization;
-	showAddCard: boolean;
-	showEditDiv: boolean;
 	settingsSmartTable: object;
-	expenseCategories: IOrganizationExpenseCategory[];
+	
+	expenseCategories: IOrganizationExpenseCategory[] = [];
 	selected = {
 		expenseCategory: null,
 		state: false
 	};
-	tags: ITag[] = [];
-	isGridEdit: boolean;
+
 	viewComponentName: ComponentEnum = ComponentEnum.EXPENSES_CATEGORY;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
-	subject$: Subject<any> = new Subject();
-	pagination: any = {
-		totalItems: 0,
-		activePage: 1,
-		itemsPerPage: 8
-	};
-	loading: boolean;
-	disabled: boolean = true;
 
+	public organization: IOrganization;
+	categories$: Subject<any> = this.subject$;
+	
 	constructor(
 		private readonly organizationExpenseCategoryService: OrganizationExpenseCategoriesService,
 		private readonly toastrService: ToastrService,
@@ -72,60 +65,57 @@ export class ExpenseCategoriesComponent
 	}
 
 	ngOnInit(): void {
-		this._loadSettingsSmartTable();
-		this.subject$
+		this._loadSmartTableSettings();
+		this.categories$
 			.pipe(
-				tap(() => (this.loading = true)),
-				debounceTime(300),
+				debounceTime(100),
 				tap(() => this.cancel()),
 				tap(() => this.getCategories()),
 				untilDestroyed(this)
 			)
 			.subscribe();
-
+		this.pagination$
+			.pipe(
+				debounceTime(100),
+				distinctUntilChange(),
+				tap(() => this.categories$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		const storeOrganization$ = this.store.selectedOrganization$;
-		const componentLayout$ = this.store.componentLayout$(
-			this.viewComponentName
-		);
+		const componentLayout$ = this.store.componentLayout$(this.viewComponentName);
 		combineLatest([storeOrganization$, componentLayout$])
 			.pipe(
 				debounceTime(300),
-				filter(
-					([organization, componentLayout]) =>
-						!!organization && !!componentLayout
-				),
 				distinctUntilChange(),
+				filter(([organization, componentLayout]) => !!organization && !!componentLayout),
 				tap(([organization, componentLayout]) => {
 					this.organization = organization;
 					this.dataLayoutStyle = componentLayout;
-					this.refreshPagination();
-					this.subject$.next(true);
 				}),
+				tap(() => this.refreshPagination()),
+				tap(() => this.categories$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
 	}
-
-	ngOnDestroy(): void {}
-
-	showEditCard(expenseCategory: IOrganizationExpenseCategory) {
-		this.showEditDiv = true;
-		this.showAddCard = false;
-		this.selected.expenseCategory = expenseCategory;
-		this.tags = expenseCategory.tags;
-	}
-
+	
 	cancel() {
-		this.showEditDiv = false;
-		this.showAddCard = false;
-		this.selected.expenseCategory = null;
-		this.isGridEdit = false;
-		this.tags = [];
+		this.selected = {
+			expenseCategory: null,
+			state: false
+		}
+		this.disableButton = true;
 	}
 
-	async _loadSettingsSmartTable() {
+	private _loadSmartTableSettings() {
+		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
 			actions: false,
+			pager: {
+				display: false,
+				perPage: pagination ? pagination.itemsPerPage : 10
+			},
 			columns: {
 				name: {
 					title: this.getTranslation('ORGANIZATIONS_PAGE.NAME'),
@@ -149,63 +139,79 @@ export class ExpenseCategoriesComponent
 
 			if (result) {
 				await this.organizationExpenseCategoryService.delete(id);
-				this.subject$.next(true);
-				this.toastrService.success(
-					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EXPENSE_CATEGORIES.REMOVE_EXPENSE_CATEGORY',
-					{ name }
-				);
+				this.categories$.next(true);
+				this.toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EXPENSE_CATEGORIES.REMOVE_EXPENSE_CATEGORY', {
+					name
+				});
 			}
 		} catch (error) {
 			this.errorHandlingService.handleError(error);
 		}
 	}
 
-	save(name: string) {
-		if (this.isGridEdit) {
-			this.editCategory(this.selected.expenseCategory.id, name);
-		} else {
-			this.addCategory(name);
+	public async addCategory(category: IExpenseCategory) {
+		try {
+			const { name } = category;
+			if (name) {
+				const { id: organizationId } = this.organization;
+				const { tenantId } = this.store.user;
+
+				await this.organizationExpenseCategoryService.create({
+					organizationId,
+					tenantId,
+					...category
+				});
+				this.toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EXPENSE_CATEGORIES.ADD_EXPENSE_CATEGORY', {
+					name
+				});
+				this.categories$.next(true);
+			} else {
+				this.toastrService.danger(
+					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EXPENSE_CATEGORIES.INVALID_EXPENSE_CATEGORY_NAME',
+					'TOASTR.MESSAGE.NEW_ORGANIZATION_EXPENSE_CATEGORY_INVALID_NAME'
+				);
+			}
+		} catch (error) {
+			console.log('Error while creating expense category', error);
+			if (error instanceof HttpErrorResponse) {
+				const messages = error.error.message.join(' & ');
+				this.toastrService.error(messages);
+			}
 		}
 	}
 
-	public async editCategory(id: string, name: string) {
-		const expenseCategory = {
-			name: name,
-			tags: this.tags
-		};
-		await this.organizationExpenseCategoryService.update(
-			id,
-			expenseCategory
-		);
-		this.subject$.next(true);
-		this.toastrService.success(
-			'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EXPENSE_CATEGORIES.UPDATE_EXPENSE_CATEGORY',
-			{ name }
-		);
-	}
+	public async editCategory(category: IExpenseCategory) {
+		try {
+			const { name } = category;
+			if (name) {
+				const { id } = this.selected.expenseCategory;
+				const { id: organizationId } = this.organization;
+				const { tenantId } = this.store.user;
 
-	public async addCategory(name: string) {
-		if (name) {
-			const { id: organizationId } = this.organization;
-			const { tenantId } = this.store.user;
-
-			await this.organizationExpenseCategoryService.create({
-				name,
-				organizationId,
-				tenantId,
-				tags: this.tags
-			});
-			this.subject$.next(true);
-			this.toastrService.success(
-				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EXPENSE_CATEGORIES.ADD_EXPENSE_CATEGORY',
-				{ name }
-			);
-		} else {
-			// TODO translate
-			this.toastrService.danger(
-				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EXPENSE_CATEGORIES.INVALID_EXPENSE_CATEGORY_NAME',
-				'TOASTR.MESSAGE.NEW_ORGANIZATION_EXPENSE_CATEGORY_INVALID_NAME'
-			);
+				await this.organizationExpenseCategoryService.update(
+					id,
+					{
+						organizationId,
+						tenantId,
+						...category
+					}
+				);
+				this.toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EXPENSE_CATEGORIES.UPDATE_EXPENSE_CATEGORY', {
+					name
+				});
+				this.categories$.next(true);
+			} else {
+				this.toastrService.danger(
+					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EXPENSE_CATEGORIES.INVALID_EXPENSE_CATEGORY_NAME',
+					'TOASTR.MESSAGE.NEW_ORGANIZATION_EXPENSE_CATEGORY_INVALID_NAME'
+				);
+			}
+		} catch (error) {
+			console.log('Error while creating expense category', error);
+			if (error instanceof HttpErrorResponse) {
+				const messages = error.error.message.join(' & ');
+				this.toastrService.error(messages);
+			}
 		}
 	}
 
@@ -213,16 +219,32 @@ export class ExpenseCategoriesComponent
 	 * Register Smart Table Source Config
 	 */
 	setSmartTableSource() {
+		if (!this.organization) {
+			return;
+		}
+		this.loading = true;
+
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
+		
 		this.smartTableSource = new ServerDataSource(this.httpClient, {
 			endPoint: `${API_PREFIX}/expense-categories/pagination`,
 			relations: ['tags'],
+			join: {
+				alias: 'expense-category',
+				leftJoin: {
+					tags: 'expense-category.tags'
+				}
+			},
 			where: {
-				organizationId,
-				tenantId
+				...{ organizationId, tenantId },
+				...this.filters.where
 			},
 			finalize: () => {
+				this.setPagination({
+					...this.getPagination(),
+					totalItems: this.smartTableSource.count()
+				});
 				this.loading = false;
 			}
 		});
@@ -232,76 +254,73 @@ export class ExpenseCategoriesComponent
 		if (!this.organization) {
 			return;
 		}
-
 		try {
 			this.setSmartTableSource();
 
 			// Initiate GRID view pagination
-			const { activePage, itemsPerPage } = this.pagination;
-			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
+			const { activePage, itemsPerPage } = this.getPagination();
+			this.smartTableSource.setPaging(
+				activePage,
+				itemsPerPage,
+				false
+			);
 
 			await this.smartTableSource.getElements();
 			this.expenseCategories = this.smartTableSource.getData();
-
-			this.pagination['totalItems'] = this.smartTableSource.count();
-			this.emptyListInvoke();
 		} catch (error) {
 			this.errorHandlingService.handleError(error);
 		}
 	}
 
-	selectedTagsEvent(ev) {
-		this.tags = ev;
-	}
-
-	edit(expenseCategory: IOrganizationExpenseCategory) {
-		this.showAddCard = true;
-		this.isGridEdit = true;
-		this.selected.expenseCategory = expenseCategory;
-		this.tags = expenseCategory.tags;
-	}
-
 	selectExpenseCategory(expenseCategory: any) {
 		if (expenseCategory.data) expenseCategory = expenseCategory.data;
+
 		const res =
 			this.selected.expenseCategory &&
 			expenseCategory === this.selected.expenseCategory
 				? { state: !this.selected.state }
 				: { state: true };
 		this.selected.state = res.state;
-		this.disabled = !res.state;
-		this.selected.expenseCategory = expenseCategory;
+		this.disableButton = !res.state;
+		this.selected.expenseCategory = this.selected.state ? expenseCategory : null;
 	}
 
-	/*
-	 * if empty employment levels then displayed add button
+	/**
+	 * Add Expense Category Dialog
 	 */
-	private emptyListInvoke() {
-		if (this.expenseCategories.length === 0) {
-			this.cancel();
-		}
+	add() {
+		this.dialogService
+			.open(ExpenseCategoryMutationComponent)
+			.onClose
+			.pipe(
+				filter((category: IExpenseCategory) => !!category),
+				tap((category: IExpenseCategory) => this.addCategory(category)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
-	onPageChange(selectedPage: number) {
-		this.pagination['activePage'] = selectedPage;
-		this.subject$.next(true);
-	}
-
-	/*
-	 * refresh pagination
+	/**
+	 * Edit Expense Category Dialog
 	 */
-	refreshPagination() {
-		this.pagination['activePage'] = 1;
+	edit() {
+		if (!this.selected.expenseCategory) {
+			return;
+		}
+		this.dialogService
+			.open(ExpenseCategoryMutationComponent, {
+				context: {
+					category: this.selected.expenseCategory
+				}
+			})
+			.onClose
+			.pipe(
+				filter((category: IExpenseCategory) => !!category),
+				tap((category: IExpenseCategory) => this.editCategory(category)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
-	openDialog(template: TemplateRef<any>, isEditTemplate: boolean) {
-		try {
-			isEditTemplate
-				? this.edit(this.selected.expenseCategory)
-				: this.cancel();
-			this.dialogService.open(template);
-		} catch (error) {
-			console.log('An error occurred on open dialog');
-		}
-	}
+	ngOnDestroy(): void {}
 }

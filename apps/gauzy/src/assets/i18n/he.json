@@ -530,7 +530,10 @@
 			"INVOICE_TEMPLATE": "Invoice Template",
 			"ESTIMATE_TEMPLATE": "Estimate Template",
 			"RECEIPT_TEMPLATE": "Receipt Template",
-			"INVITATION_EXPIRATION": "Invitation Expiration"
+			"INVITATION_EXPIRATION": "Invitation Expiration",
+			"ADD_PROJECT": "Add project",
+			"ADD_EMPLOYEE": "Add employee",
+			"ADD_ORGANIZATION": "Add organization"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Default Rate",
@@ -1831,7 +1834,8 @@
 		},
 		"BILLING": "Billing",
 		"BUDGET": "Budget",
-		"OPEN_SOURCE": "Open-Source"
+		"OPEN_SOURCE": "Open-Source",
+		"ORGANIZATION_ADD": "Add Organization"
 	},
 	"CONTACTS_PAGE": {
 		"VISITORS": "Visitors",

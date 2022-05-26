@@ -1,7 +1,8 @@
 <div class="layout-switch">
 	<button
 		(click)="changeLayout(layoutStyles.CARDS_GRID)"
-		[status]="
+		status="basic"
+		[ngClass]="
 			componentLayoutStyle === layoutStyles.CARDS_GRID
 				? 'primary'
 				: 'basic'
@@ -15,7 +16,8 @@
 	</button>
 	<button
 		(click)="changeLayout(layoutStyles.TABLE)"
-		[status]="
+		status="basic"
+		[ngClass]="
 			componentLayoutStyle === layoutStyles.TABLE
 				? 'primary'
 				: 'basic'

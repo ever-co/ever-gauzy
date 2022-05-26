@@ -1,13 +1,31 @@
-@import 'var';
-nb-card-body {
-	padding: 50px 70px;
-	@include respond(dsk) {
-		padding: 30px 40px;
-	}
+@import 'gauzy/_gauzy-dialogs';
 
+:host nb-card {
+	//width: 1145px;
+	background-color: nb-theme(gauzy-card-1);
+
+	::ng-deep .step-content {
+		padding-bottom: 0px;
+	}
+}
+
+nb-card-body {
 	.stepper-buttons {
 		display: flex;
-		justify-content: space-evenly;
+		justify-content: flex-start;
+		gap: 10px;
+	}
+
+	.no-image {
+		background-color: rgba(126, 126, 143, 0.1);
+	}
+
+	.location {
+		width: 945px;
+	}
+
+	.leaflet {
+		padding: 0;
 	}
 
 	.organization-container {
@@ -31,10 +49,22 @@ nb-card-body {
 				border-radius: 13px;
 			}
 
-			img {
+			img,
+			.no-image {
 				width: 180px;
-				height: auto;
+				height: 180px;
 				border-radius: 13px;
+				position: relative;
+
+				i {
+					position: absolute;
+					top: calc(50% - 16px / 2);
+					left: calc(50% - 16px / 2);
+				}
+			}
+
+			img {
+				object-fit: cover;
 			}
 
 			svg {
@@ -42,8 +72,12 @@ nb-card-body {
 				transition: opacity 0.2s ease-in;
 				opacity: 0.3;
 				position: absolute;
-				top: calc(50% - 68px / 2);
-				left: calc(50% - 68px / 2);
+				top: calc(50% - 48px / 2);
+				left: calc(50% - 48px / 2);
+
+				g circle {
+					fill: nb-theme(text-primary-color);
+				}
 			}
 		}
 	}

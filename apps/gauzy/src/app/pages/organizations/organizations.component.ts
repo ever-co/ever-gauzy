@@ -1,5 +1,11 @@
-import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { Router, RouterEvent, NavigationEnd } from '@angular/router';
+import {
+	AfterViewInit,
+	Component,
+	OnDestroy,
+	OnInit,
+	ViewChild
+} from '@angular/core';
+import { Router, ActivatedRoute, ParamMap } from '@angular/router';
 import {
 	IOrganization,
 	ComponentLayoutStyleEnum,
@@ -9,16 +15,31 @@ import {
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
+import { debounceTime, firstValueFrom } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ErrorHandlingService, OrganizationsService, OrganizationEditStore, Store, ToastrService, UsersOrganizationsService } from '../../@core/services';
+import { distinctUntilChange } from '@gauzy/common-angular';
+import {
+	ErrorHandlingService,
+	OrganizationsService,
+	OrganizationEditStore,
+	Store,
+	ToastrService,
+	UsersOrganizationsService
+} from '../../@core/services';
 import { OrganizationsMutationComponent } from '../../@shared/organizations/organizations-mutation/organizations-mutation.component';
-import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
-import { OrganizationsCurrencyComponent, OrganizationsEmployeesComponent, OrganizationsStatusComponent } from './table-components';
-import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
-import { PictureNameTagsComponent } from '../../@shared/table-components';
+import { DeleteConfirmationComponent } from '../../@shared/user/forms';
+import {
+	OrganizationsCurrencyComponent,
+	OrganizationsEmployeesComponent,
+	OrganizationsStatusComponent
+} from './table-components';
 import { ComponentEnum } from '../../@core/constants';
-import { firstValueFrom } from 'rxjs';
+import { OrganizationWithTagsComponent } from '../../@shared/table-components/organization-with-tags/organization-with-tags.component';
+import {
+	IPaginationBase,
+	PaginationFilterBaseComponent
+} from '../../@shared/pagination/pagination-filter-base.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -26,33 +47,36 @@ import { firstValueFrom } from 'rxjs';
 	styleUrls: ['./organizations.component.scss']
 })
 export class OrganizationsComponent
-	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
-	
+	extends PaginationFilterBaseComponent
+	implements AfterViewInit, OnInit, OnDestroy
+{
 	settingsSmartTable: object;
 	selectedOrganization: IOrganization;
 	smartTableSource = new LocalDataSource();
 	organizations: IOrganization[] = [];
 	viewComponentName: ComponentEnum;
-	disableButton = true;
+	disableButton: boolean = true;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
-	loading = true;
+	loading: boolean = true;
 	user: IUser;
 
 	organizationsTable: Ng2SmartTableComponent;
-	@ViewChild('organizationsTable') set content(content: Ng2SmartTableComponent) {
+	@ViewChild('organizationsTable') set content(
+		content: Ng2SmartTableComponent
+	) {
 		if (content) {
 			this.organizationsTable = content;
 			this.onChangedSource();
 		}
 	}
-		
+
 	constructor(
 		private readonly organizationsService: OrganizationsService,
 		private readonly toastrService: ToastrService,
 		private readonly dialogService: NbDialogService,
 		private readonly router: Router,
+		private readonly activatedRoute: ActivatedRoute,
 		public readonly translateService: TranslateService,
 		private readonly errorHandler: ErrorHandlingService,
 		private readonly store: Store,
@@ -63,74 +87,62 @@ export class OrganizationsComponent
 		this.setView();
 	}
 
-	loadSettingsSmartTable() {
-		this.settingsSmartTable = {
-			actions: false,
-			columns: {
-				name: {
-					title: this.getTranslation('SM_TABLE.CLIENT_NAME'),
-					type: 'custom',
-					renderComponent: PictureNameTagsComponent
-				},
-				totalEmployees: {
-					title: this.getTranslation('SM_TABLE.EMPLOYEES'),
-					type: 'custom',
-					width: '200px',
-					class: 'text-center',
-					filter: false,
-					renderComponent: OrganizationsEmployeesComponent
-				},
-				currency: {
-					title: this.getTranslation('SM_TABLE.CURRENCY'),
-					type: 'custom',
-					class: 'text-center',
-					width: '200px',
-					renderComponent: OrganizationsCurrencyComponent
-				},
-				status: {
-					title: this.getTranslation('SM_TABLE.STATUS'),
-					type: 'custom',
-					class: 'text-center',
-					width: '200px',
-					filter: false,
-					renderComponent: OrganizationsStatusComponent
-				}
-			},
-			pager: {
-				display: true,
-				perPage: 8
-			}
-		};
-	}
 	ngOnInit() {
-		this.loadSettingsSmartTable();
+		this._loadSmartTableSettings();
 		this._applyTranslationOnSmartTable();
-		this.store.user$
+	}
+
+	ngAfterViewInit() {
+		this.subject$
 			.pipe(
-				filter((user) => !!user),
-				tap((user: IUser) => this.user = user),
+				debounceTime(300),
+				tap(() => this._loadSmartTable()),
 				untilDestroyed(this)
 			)
-			.subscribe(() => {
-				this._loadSmartTable();
-			});
-		this.router.events
-			.pipe(untilDestroyed(this))
-			.subscribe((event: RouterEvent) => {
-				if (event instanceof NavigationEnd) {
-					this.setView();
-				}
-			});
+			.subscribe();
+		this.store.user$
+			.pipe(
+				filter((user: IUser) => !!user),
+				tap((user: IUser) => (this.user = user)),
+				tap(() => this.subject$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.activatedRoute.queryParamMap
+			.pipe(
+				debounceTime(1000),
+				filter((params: ParamMap) => !!params),
+				filter(
+					(params: ParamMap) => params.get('openAddDialog') === 'true'
+				),
+				tap(() => this.addOrganization()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.pagination$
+			.pipe(
+				debounceTime(300),
+				distinctUntilChange(),
+				tap(() => this.subject$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	setView() {
 		this.viewComponentName = ComponentEnum.ORGANIZATION;
 		this.store
 			.componentLayout$(this.viewComponentName)
-			.pipe(untilDestroyed(this))
-			.subscribe((componentLayout) => {
-				this.dataLayoutStyle = componentLayout;
-			});
+			.pipe(
+				distinctUntilChange(),
+				tap(
+					(componentLayout) =>
+						(this.dataLayoutStyle = componentLayout)
+				),
+				tap(() => this.refreshPagination()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	selectOrganization({ isSelected, data }) {
@@ -138,18 +150,57 @@ export class OrganizationsComponent
 		this.selectedOrganization = isSelected ? data : null;
 	}
 
-	_applyTranslationOnSmartTable() {
+	private _loadSmartTableSettings() {
+		const pagination: IPaginationBase = this.getPagination();
+		this.settingsSmartTable = {
+			actions: false,
+			columns: {
+				name: {
+					title: this.getTranslation('SM_TABLE.CLIENT_NAME'),
+					type: 'custom',
+					renderComponent: OrganizationWithTagsComponent
+				},
+				totalEmployees: {
+					title: this.getTranslation('SM_TABLE.EMPLOYEES'),
+					type: 'custom',
+					width: '200px',
+					filter: false,
+					renderComponent: OrganizationsEmployeesComponent
+				},
+				currency: {
+					title: this.getTranslation('SM_TABLE.CURRENCY'),
+					type: 'custom',
+					width: '200px',
+					renderComponent: OrganizationsCurrencyComponent
+				},
+				status: {
+					title: this.getTranslation('SM_TABLE.STATUS'),
+					type: 'custom',
+					width: '5%',
+					filter: false,
+					renderComponent: OrganizationsStatusComponent
+				}
+			},
+			pager: {
+				display: false,
+				perPage: pagination ? pagination.itemsPerPage : 10
+			}
+		};
+	}
+
+	private _applyTranslationOnSmartTable() {
 		this.translateService.onLangChange
-			.pipe(untilDestroyed(this))
-			.subscribe(() => {
-				this.loadSettingsSmartTable();
-			});
+			.pipe(
+				tap(() => this._loadSmartTableSettings()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	async addOrganization() {
-		const result = await firstValueFrom(this.dialogService
-			.open(OrganizationsMutationComponent)
-			.onClose);
+		const result = await firstValueFrom(
+			this.dialogService.open(OrganizationsMutationComponent).onClose
+		);
 		if (result) {
 			try {
 				this.organizationsService
@@ -172,7 +223,7 @@ export class OrganizationsComponent
 						this.errorHandler.handleError(error);
 					})
 					.finally(() => {
-						this._loadSmartTable();
+						this.subject$.next(true);
 					});
 			} catch (error) {
 				this.errorHandler.handleError(error);
@@ -199,13 +250,13 @@ export class OrganizationsComponent
 				data: selectedItem
 			});
 		}
-		const result = await firstValueFrom(this.dialogService
-			.open(DeleteConfirmationComponent, {
+		const result = await firstValueFrom(
+			this.dialogService.open(DeleteConfirmationComponent, {
 				context: {
 					recordType: 'ORGANIZATIONS_PAGE.ORGANIZATION'
 				}
-			})
-			.onClose);
+			}).onClose
+		);
 
 		if (result) {
 			try {
@@ -228,7 +279,7 @@ export class OrganizationsComponent
 					})
 					.finally(() => {
 						this.clearItem();
-						this._loadSmartTable();
+						this.subject$.next(true);
 					});
 			} catch (error) {
 				this.errorHandler.handleError(error);
@@ -243,6 +294,8 @@ export class OrganizationsComponent
 				{ userId: this.store.userId, tenantId: this.user.tenantId }
 			);
 
+			const { itemsPerPage, activePage } = this.getPagination();
+
 			this.organizations = items.map(
 				(userOrganization) => userOrganization.organization
 			);
@@ -252,13 +305,24 @@ export class OrganizationsComponent
 				org.totalEmployees = activeEmployees.length;
 				delete org['employees'];
 			}
-
+			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
 			this.smartTableSource.load(this.organizations);
+			this._loadDataGridLayout();
+			this.setPagination({
+				...this.getPagination(),
+				totalItems: this.smartTableSource.count()
+			});
 		} catch (error) {
 			this.errorHandler.handleError(error);
 		}
 
 		this.loading = false;
+	}
+
+	private async _loadDataGridLayout() {
+		if (this.dataLayoutStyle === this.componentLayoutStyleEnum.CARDS_GRID) {
+			this.organizations = await this.smartTableSource.getElements();
+		}
 	}
 
 	/*
@@ -268,7 +332,8 @@ export class OrganizationsComponent
 		this.organizationsTable.source.onChangedSource
 			.pipe(
 				untilDestroyed(this),
-				tap(() => this.clearItem())
+				tap(() => this.clearItem()),
+				tap(() => this.subject$.next(true))
 			)
 			.subscribe();
 	}

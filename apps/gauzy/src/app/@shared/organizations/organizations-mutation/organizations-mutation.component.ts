@@ -14,4 +14,8 @@ export class OrganizationsMutationComponent implements OnInit {
 	addOrganization(consolidatedFormValues) {
 		this.dialogRef.close(consolidatedFormValues);
 	}
+
+	public close() {
+		this.dialogRef.close();
+	}
 }

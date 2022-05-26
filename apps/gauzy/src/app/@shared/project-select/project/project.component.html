@@ -4,7 +4,7 @@
 >
 	<ng-select
 		#select
-		[addTag]="hasPermissionProjEdit ? createNew : null"
+		[addTag]="(hasEditProject$ | async) ? createNew : null"
 		[multiple]="multiple"
 		[clearable]="isClearable()"
 		[disabled]="disabled"
@@ -15,6 +15,7 @@
 		[placeholder]="
 			placeholder || 'FORM.PLACEHOLDERS.ALL_PROJECTS' | translate
 		"
+		[addTagText]="'FORM.PLACEHOLDERS.ADD_PROJECT' | translate"
 		bindValue="id"
 		bindLabel="name"
 		appendTo="body"

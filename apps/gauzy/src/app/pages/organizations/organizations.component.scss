@@ -1,83 +1,29 @@
-//@import 'var';
+@import 'gauzy/_gauzy-table';
 
-// @include nb-install-component() {
-// }
-
-/* Card grid */
-
-.flex-container {
-  display: flex;
-  flex-flow: row wrap;
-  justify-content: flex-start;
-  padding: 0;
-  margin: 0;
-  list-style: none;
+h4 {
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 30px;
+  letter-spacing: 0em;
+  text-align: left;
 }
 
-.flex-item {
-  border: 0.0625rem solid #e4e9f2;
-  border-radius: 0.25rem;
-  width: 330px;
-  margin: 10px;
-}
+:host {
 
-.fullName {
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  padding: 1rem 1.5rem;
-  line-height: 40px;
-  font-size: 1.5em;
-}
-
-.avatar {
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-}
-
-.info-line {
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  font-size: 0.8em;
-  color: darkgray;
-  line-height: 0px;
-  padding: 1rem 1.5rem;
-
-  .info-meta {
-    margin-right: 10px;
+  nb-card,
+  nb-card-body {
+    background-color: nb-theme(gauzy-card-2);
   }
 
-  .info-value {
+  nb-card-body {
     display: flex;
-    justify-content: flex-end;
-    text-align: end;
-    color: black;
-    font-size: 1em;
+    flex-direction: column;
+    overflow: unset;
+    height: calc(100vh - 27rem);
+
+    .table-scroll-container {
+      flex-grow: 10;
+      max-height: unset;
+    }
   }
-}
-
-.card-footer {
-  justify-content: space-around;
-  display: flex;
-}
-
-.badge-danger {
-  text-align: center;
-  padding: 5px;
-  background-color: #ff3d71;
-  margin-bottom: 5px;
-}
-
-.badge-success {
-  text-align: center;
-  padding: 5px;
-  background-color: #00d68f;
-}
-
-.badge {
-  text-align: center;
-  padding: 5px 30px;
-  margin-bottom: 5px;
 }

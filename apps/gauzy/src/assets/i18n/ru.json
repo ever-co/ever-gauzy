@@ -530,7 +530,10 @@
 			"INVOICE_TEMPLATE": "Шаблон счета",
 			"ESTIMATE_TEMPLATE": "Расчет шаблона",
 			"RECEIPT_TEMPLATE": "Шаблон чека",
-			"INVITATION_EXPIRATION": "Срок приглашения истекает"
+			"INVITATION_EXPIRATION": "Срок приглашения истекает",
+			"ADD_PROJECT": "Добавить проект",
+			"ADD_EMPLOYEE": "Добавить сотрудника",
+			"ADD_ORGANIZATION": "Добавить организацию"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Стандартная ставка",
@@ -1831,7 +1834,8 @@
 		},
 		"BILLING": "Биллинг",
 		"BUDGET": "Бюджет",
-		"OPEN_SOURCE": "Открытый код"
+		"OPEN_SOURCE": "Открытый код",
+		"ORGANIZATION_ADD": "Добавить организацию"
 	},
 	"CONTACTS_PAGE": {
 		"VISITORS": "Посетители",

@@ -1,13 +1,15 @@
 <div *ngIf="organizations">
 	<ng-select
 		#select
+		[addTag]="((hasEditOrganization$ | async) && addTag) ? createNew : null"
 		[clearable]="false"
 		[items]="organizations"
 		bindLabel="name"
 		(change)="selectOrganization($event); select.blur();"
 		(clear)="select.blur();"
 		[(ngModel)]="selectedOrganization"
-		placeholder="{{ 'FORM.PLACEHOLDERS.SELECT_COMPANY' | translate }}"
+		[placeholder]="'FORM.PLACEHOLDERS.SELECT_COMPANY' | translate"
+		[addTagText]="'FORM.PLACEHOLDERS.ADD_ORGANIZATION' | translate"
 		appendTo="body"
 		[isOpen]="isOpen"
 		(change)="onChange()"

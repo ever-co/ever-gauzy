@@ -3,9 +3,8 @@ import { CommonModule } from '@angular/common';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { FormsModule } from '@angular/forms';
 import { EmployeeSelectorComponent } from './employee.component';
-import { EmployeesService } from 'apps/gauzy/src/app/@core/services/employees.service';
-import { EmployeeStore } from 'apps/gauzy/src/app/@core/services/employee-store.service';
-import { TranslateModule } from 'apps/gauzy/src/app/@shared/translate/translate.module';
+import { EmployeesService, EmployeeStore } from './../../../../../@core/services';
+import { TranslateModule } from './../../../../../@shared/translate/translate.module';
 
 const COMPONENTS = [EmployeeSelectorComponent];
 

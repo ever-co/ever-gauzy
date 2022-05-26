@@ -14,12 +14,11 @@ import {
 	NG_VALUE_ACCESSOR
 } from '@angular/forms';
 import { ICurrency } from '@gauzy/contracts';
-import { NbComponentSize } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
-import { CurrencyService } from '../../@core/services/currency.service';
+import { CurrencyService } from '../../@core/services';
 import { TranslationBaseComponent } from '../language-base/translation-base.component';
 
 @UntilDestroy({ checkProperties: true })
@@ -34,56 +33,49 @@ import { TranslationBaseComponent } from '../language-base/translation-base.comp
 		}
 	]
 })
-export class CurrencyComponent
-	extends TranslationBaseComponent
+export class CurrencyComponent extends TranslationBaseComponent 
 	implements OnInit, AfterViewInit, ControlValueAccessor {
-	private _currency: string;
-	private _placeholder: string;
 
 	@Input() formControl: FormControl = new FormControl();
 	@Output() selectChange = new EventEmitter<string>();
 	@Output() optionChange = new EventEmitter<ICurrency>();
 
+	loading: boolean = true;
 	currencies$: Observable<ICurrency[]> = this.currencyService.currencies$;
 	private _currencies: ICurrency[] = [];
 
 	onChange: any = () => {};
 	onTouched: any = () => {};
 
-	@Input()
-	set currency(val: string) {
+	/*
+	* Getter & Setter for dynamic selected currency
+	*/
+	private _currency: string;
+	get currency() {
+		return this._currency;
+	}
+	@Input() set currency(val: string) {
 		this._currency = val;
 		this.onChange(val);
 		this.onTouched();
 	}
-	get currency() {
-		return this._currency;
+	
+	/*
+	* Getter & Setter for dynamic placeholder
+	*/
+	private _placeholder: string;
+	get placeholder() {
+		return this._placeholder;
 	}
-
-	@Input()
-	set placeholder(val: string) {
+	@Input() set placeholder(val: string) {
 		if (val) {
 			this._placeholder = val;
 		}
 	}
-	get placeholder() {
-		return this._placeholder;
-	}
-
-	/*
-	* Getter & Setter for dynamic template
-	*/
-	_size: NbComponentSize = 'medium';
-	get size(): NbComponentSize {
-		return this._size;
-	}
-	@Input() set size(value: NbComponentSize) {
-		this._size = value;
-	}
 
 	constructor(
 		private readonly currencyService: CurrencyService,
-		public translateService: TranslateService,
+		public readonly translateService: TranslateService,
 		private readonly cdr: ChangeDetectorRef
 	) {
 		super(translateService);
@@ -96,6 +88,7 @@ export class CurrencyComponent
 				tap(
 					(currencies: ICurrency[]) => (this._currencies = currencies)
 				),
+				tap(() => this.loading = false),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -117,6 +110,13 @@ export class CurrencyComponent
 
 	onOptionChange($event: ICurrency) {
 		this.optionChange.emit($event);
+	}
+
+	searchCurrency(term: string, item: any) {
+		return (
+			item.isoCode.toLowerCase().includes(term.toLowerCase()) ||
+			item.currency.toLowerCase().includes(term.toLowerCase())
+		);
 	}
 
 	writeValue(value: any) {
