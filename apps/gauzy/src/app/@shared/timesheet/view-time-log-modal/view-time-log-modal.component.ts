@@ -13,6 +13,7 @@ import { TimesheetService } from '../timesheet.service';
 import { TimeTrackerService } from './../../time-tracker/time-tracker.service';
 import { TimeLogsLabel } from './../../../@core/constants';
 import { Store } from './../../../@core/services';
+import { Router } from '@angular/router';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -21,12 +22,11 @@ import { Store } from './../../../@core/services';
 	styleUrls: ['view-time-log-modal.component.scss']
 })
 export class ViewTimeLogModalComponent implements OnInit, OnDestroy {
-	
 	organization: IOrganization;
 	PermissionsEnum = PermissionsEnum;
 	OrganizationPermissionsEnum = OrganizationPermissionsEnum;
 	TimeLogsLabel = TimeLogsLabel;
-	
+
 	@Input() timeLog: ITimeLog;
 
 	constructor(
@@ -35,13 +35,17 @@ export class ViewTimeLogModalComponent implements OnInit, OnDestroy {
 		private readonly dialogRef: NbDialogRef<ViewTimeLogModalComponent>,
 		private readonly store: Store,
 		private readonly timeTrackerService: TimeTrackerService,
+		private readonly router: Router
 	) {}
 
 	ngOnInit(): void {
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization: IOrganization) => !!organization),
-				tap((organization: IOrganization) => (this.organization = organization)),
+				tap(
+					(organization: IOrganization) =>
+						(this.organization = organization)
+				),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -55,8 +59,7 @@ export class ViewTimeLogModalComponent implements OnInit, OnDestroy {
 			.open(EditTimeLogModalComponent, {
 				context: { timeLog: this.timeLog }
 			})
-			.onClose
-			.pipe(
+			.onClose.pipe(
 				tap((type) => this.dialogRef.close(type)),
 				untilDestroyed(this)
 			)
@@ -72,7 +75,7 @@ export class ViewTimeLogModalComponent implements OnInit, OnDestroy {
 		const request = {
 			logIds: [this.timeLog.id],
 			organizationId
-		}
+		};
 		this.timesheetService.deleteLogs(request).then((res) => {
 			this.dialogRef.close(res);
 			this.checkTimerStatus();
@@ -84,6 +87,13 @@ export class ViewTimeLogModalComponent implements OnInit, OnDestroy {
 		if (employee && employee.id) {
 			this.timeTrackerService.checkTimerStatus(tenantId);
 		}
+	}
+
+	redirectToClient() {
+		this.router.navigate([
+			'/pages/contacts/view/',
+			this.timeLog.organizationContact.id
+		]);
 	}
 
 	ngOnDestroy(): void {}

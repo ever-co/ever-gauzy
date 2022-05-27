@@ -22,7 +22,7 @@
 				</ngx-label>
 			</div>
 		</div>
-		<div class="row">
+		<div class="row date">
 			<div class="d-flex flex-column col-12">
 				<small>{{ timeLog?.startedAt | date }}</small>
 				<small class="duration">{{
@@ -46,7 +46,7 @@
 				<span class="subtitle">
 					{{ 'TIMESHEET.ORGANIZATION_CONTACT' | translate }} :
 				</span>
-				<span class="contact"
+				<span class="contact" (click)="redirectToClient()"
 					><span class="initial">{{
 						timeLog?.organizationContact.name.substr(0, 1)
 					}}</span>
@@ -64,11 +64,12 @@
 					>{{ 'TIMESHEET.PROJECT' | translate }} :
 				</span>
 				{{
-					timeLog?.project
-						? ''
-						: ('TIMESHEET.NO_PROJECT' | translate)
+					timeLog?.project ? '' : ('TIMESHEET.NO_PROJECT' | translate)
 				}}
-				<ngx-project *ngIf="timeLog?.project" [rowData]="timeLog"></ngx-project>
+				<ngx-project
+					*ngIf="timeLog?.project"
+					[rowData]="timeLog"
+				></ngx-project>
 			</div>
 		</div>
 		<div class="mt-3">
