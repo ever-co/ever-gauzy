@@ -46,14 +46,21 @@
 		padding-left: 12px;
 	}
 
-	.custom-body {
-		background: rgba(255, 255, 255, 0.99);
-		border-radius: nb-theme(border-radius);
-		margin-top: 6px;
-		padding-left: 12px;
+	nb-card-body {
+		height: calc(100vh - 27rem);
+		padding-bottom: 2.25rem;
 
-		[nbButton].appearance-outline.status-primary {
-			border: none;
+		.custom-body {
+			background: rgba(255, 255, 255, 0.99);
+			border-radius: nb-theme(border-radius);
+			margin-top: 6px;
+			padding-left: 12px;
+			overflow: auto;
+			max-height: calc(100vh - 29rem);
+
+			[nbButton].appearance-outline.status-primary {
+				border: none;
+			}
 		}
 	}
 
