@@ -7,7 +7,7 @@ import {
 	ChangeDetectorRef,
 	TemplateRef
 } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Data, NavigationEnd, Router } from '@angular/router';
 import {
 	IOrganizationContact,
 	IOrganizationContactCreateInput,
@@ -21,7 +21,7 @@ import {
 } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { combineLatest, Subject, firstValueFrom } from 'rxjs';
+import { combineLatest, Subject, firstValueFrom, map, switchMap, mergeMap } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -48,14 +48,13 @@ import { ContactWithTagsComponent } from '../../@shared/table-components/contact
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-contact',
-	templateUrl: './contact.component.html',
-	styleUrls: ['./contact.component.scss']
+	selector: 'ga-contacts',
+	templateUrl: './contacts.component.html',
+	styleUrls: ['./contacts.component.scss']
 })
-export class ContactComponent
-	extends PaginationFilterBaseComponent
-	implements OnInit, OnDestroy
-{
+export class ContactsComponent extends PaginationFilterBaseComponent 
+	implements OnInit, OnDestroy {
+	
 	showAddCard: boolean;
 	organizationContacts: IOrganizationContact[] = [];
 	projectsWithoutOrganizationContacts: IOrganizationProject[] = [];
@@ -109,7 +108,7 @@ export class ContactComponent
 		private readonly route: ActivatedRoute,
 		private readonly countryService: CountryService,
 		private readonly cd: ChangeDetectorRef,
-		private readonly _router: Router
+		private readonly _router: Router,
 	) {
 		super(translateService);
 		this.setView();
@@ -118,6 +117,12 @@ export class ContactComponent
 
 	ngOnInit(): void {
 		this._applyTranslationOnSmartTable();
+		this.route.data
+			.pipe(
+				tap((params: Data) => this.contactType = params.contactType),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this.subject$
 			.pipe(
 				debounceTime(300),
@@ -172,7 +177,7 @@ export class ContactComponent
 		this.countryService.countries$
 			.pipe(
 				tap((countries: ICountry[]) => (this.countries = countries)),
-				tap(() => this.loadSmartTable()),
+				tap(() => this._loadSmartTableSettings()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -206,7 +211,7 @@ export class ContactComponent
 		}
 	}
 
-	async loadSmartTable() {
+	private _loadSmartTableSettings() {
 		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
 			actions: false,
@@ -538,7 +543,7 @@ export class ContactComponent
 	public _applyTranslationOnSmartTable() {
 		this.translateService.onLangChange
 			.pipe(
-				tap(() => this.loadSmartTable()),
+				tap(() => this._loadSmartTableSettings()),
 				untilDestroyed(this)
 			)
 			.subscribe();
