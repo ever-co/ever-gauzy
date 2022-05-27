@@ -53,7 +53,7 @@ import { ContactWithTagsComponent } from './contact-with-tags/contact-with-tags.
 		ProjectComponent,
 		EmployeesMergedTeamsComponent,
 		CreatedAtComponent,
-  ContactWithTagsComponent
+  		ContactWithTagsComponent
 	],
 	exports: [
 		NotesWithTagsComponent,

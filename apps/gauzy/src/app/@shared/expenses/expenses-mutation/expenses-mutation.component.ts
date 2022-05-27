@@ -90,6 +90,7 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 			valueDate: [self.store.getDateFromOrganizationSettings(), Validators.required],
 			purpose: [],
 			organizationContact: [],
+			organizationContactId: [],
 			projectId: [],
 			project: [],
 			taxType: [TaxTypesEnum.PERCENTAGE],
@@ -108,8 +109,7 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 		private readonly dialogService: NbDialogService,
 		private readonly fb: FormBuilder,
 		private readonly store: Store,
-		readonly translateService: TranslateService,
-		private readonly cdr: ChangeDetectorRef
+		public readonly translateService: TranslateService
 	) {
 		super(translateService);
 	}
@@ -153,8 +153,10 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 	 * @param contact 
 	 */
 	selectedOrganizationContact(contact: IOrganizationContact) {
-		this.form.get('organizationContact').setValue(contact);
-		this.form.get('organizationContact').updateValueAndValidity();
+		if (contact) {
+			this.form.get('organizationContactId').setValue(contact.id);
+			this.form.get('organizationContactId').updateValueAndValidity();
+		}
 	}
 
 	/**
