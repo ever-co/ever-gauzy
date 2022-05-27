@@ -39,7 +39,7 @@ export function getAdjustDateRangeFutureAllowed(request: ITimeLogFilters | IDate
             moment(endDate).format('YYYY-MM-DD')
         )
     ) {
-        endDate = moment.utc().toDate();
+        endDate = moment().endOf('day').utc().toDate();
     }
     return {
         startDate: moment(startDate).toDate(),
