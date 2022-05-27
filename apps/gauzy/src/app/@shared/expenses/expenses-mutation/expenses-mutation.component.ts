@@ -1,4 +1,11 @@
-import { Component, OnInit, ViewChild, OnDestroy, AfterViewInit, Input, ChangeDetectorRef } from '@angular/core';
+import {
+	Component,
+	OnInit,
+	ViewChild,
+	OnDestroy,
+	AfterViewInit,
+	Input
+} from '@angular/core';
 import { NbDialogRef, NbDialogService } from '@nebular/theme';
 import {
 	FormBuilder,
