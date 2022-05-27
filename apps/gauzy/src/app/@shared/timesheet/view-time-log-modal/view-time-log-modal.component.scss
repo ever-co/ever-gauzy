@@ -6,42 +6,51 @@
   position: relative;
   width: 500px;
   margin: auto;
+
   .close-button {
     position: absolute;
     top: 3px;
     right: 5px;
     z-index: 9;
   }
+
   .description {
     overflow-wrap: break-word;
     display: flex;
     flex-direction: column;
     flex-direction: flex-start;
-    > .subtitle {
+
+    >.subtitle {
       font-size: 11px;
       font-weight: 600;
       line-height: 13px;
       letter-spacing: -0.01em;
       text-align: left;
+      margin-bottom: 10px;
     }
   }
+
   nb-alert {
     font-size: 14px !important;
     padding: 8px !important;
     height: 3.5rem !important;
     line-height: unset !important;
   }
+
   nb-card {
     background-color: nb-theme(gauzy-card-1);
     width: 328px;
   }
+
   .title,
   .subtitle {
     color: rgba(126, 126, 143, 1);
   }
+
   small.duration {
     text-transform: lowercase;
   }
+
   ::ng-deep ngx-avatar {
     .inner-wrapper {
       background-color: nb-theme(color-primary-transparent-100);
@@ -55,9 +64,11 @@
       font-weight: 400;
       line-height: 15px;
       letter-spacing: 0em;
+      gap: 8px;
+
       .image-container {
         height: 20px;
-        width: 28px;
+        width: 20px;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -67,10 +78,58 @@
           width: 18px;
         }
       }
+
       .link-text {
         color: nb-theme(text-primary-color);
         font-weight: normal;
       }
     }
   }
+
+  ngx-label {
+    display: flex;
+    position: relative;
+
+    ::ng-deep nb-badge {
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 600;
+      line-height: 15px;
+      letter-spacing: 0em;
+      text-align: left;
+      padding: 4px 8px;
+    }
+  }
+
+  .contact {
+    width: fit-content;
+    background: rgba(36, 189, 255, 0.1);
+    border-radius: nb-theme(button-rectangle-border-radius);
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding: 5px 14px 5px 7px;
+    gap: 8px;
+    color: nb-theme(text-primary-color);
+
+    .initial {
+      color: white;
+      background-color: rgba(126, 126, 143, 1);
+      border-radius: nb-theme(button-rectangle-border-radius);
+      padding: 4px 5px;
+      width: 18px;
+      height: 18px;
+      font-size: 8px;
+      font-weight: 600;
+      line-height: 10px;
+      letter-spacing: 0em;
+      text-align: center;
+
+    }
+  }
+
+}
+
+.actions {
+  width: fit-content;
 }

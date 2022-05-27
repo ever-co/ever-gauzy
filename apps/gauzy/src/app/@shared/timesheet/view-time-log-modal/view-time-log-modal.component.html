@@ -14,7 +14,7 @@
 					[src]="timeLog?.employee?.user?.imageUrl"
 				></ngx-avatar>
 			</div>
-			<div class="col-1">
+			<div class="col-2">
 				<ngx-label
 					[status]="TimeLogsLabel[timeLog?.logType].status"
 					[text]="TimeLogsLabel[timeLog?.logType].text"
@@ -46,11 +46,16 @@
 				<span class="subtitle">
 					{{ 'TIMESHEET.ORGANIZATION_CONTACT' | translate }} :
 				</span>
-				{{
-					timeLog?.organizationContact
-						? timeLog?.organizationContact.name
-						: ('TIMESHEET.NO_ORGANIZATION_CONTACT' | translate)
-				}}
+				<span class="contact"
+					><span class="initial">{{
+						timeLog?.organizationContact.name.substr(0, 1)
+					}}</span>
+					{{
+						timeLog?.organizationContact
+							? timeLog?.organizationContact.name
+							: ('TIMESHEET.NO_ORGANIZATION_CONTACT' | translate)
+					}}</span
+				>
 			</div>
 		</div>
 		<div class="mt-3">
@@ -60,9 +65,10 @@
 				</span>
 				{{
 					timeLog?.project
-						? timeLog?.project.name
+						? ''
 						: ('TIMESHEET.NO_PROJECT' | translate)
 				}}
+				<ngx-project *ngIf="timeLog?.project" [rowData]="timeLog"></ngx-project>
 			</div>
 		</div>
 		<div class="mt-3">
@@ -94,40 +100,42 @@
 			</div>
 		</div>
 	</nb-card-body>
-	<nb-card-footer>
+	<nb-card-footer class="d-flex justify-content-end">
 		<ng-container *ngIf="timeLog?.isRunning">
 			<nb-alert status="warning" [size]="'tiny'">
 				{{ 'TIMESHEET.RUNNING_TIMER_WARNING' | translate }}
 			</nb-alert>
 		</ng-container>
-		<button
-			[disabled]="timeLog.isRunning"
-			size="small"
-			class="mr-2"
-			nbButton
-			status="primary"
-			(click)="openDialog()"
-			*ngxPermissionsOnly="[
-				OrganizationPermissionsEnum.ALLOW_MODIFY_TIME
-			]"
-		>
-			<nb-icon icon="edit"></nb-icon> {{ 'TIMESHEET.EDIT' | translate }}
-		</button>
-		<button
-			[disabled]="timeLog.isRunning"
-			size="small"
-			class="mr-2"
-			nbButton
-			status="danger"
-			ngxConfirmDialog
-			[message]="'TIMESHEET.DELETE_TIMELOG' | translate"
-			(confirm)="onDeleteConfirm()"
-			*ngxPermissionsOnly="[
-				OrganizationPermissionsEnum.ALLOW_DELETE_TIME
-			]"
-		>
-			<nb-icon icon="trash-2-outline"></nb-icon>
-			{{ 'TIMESHEET.DELETE' | translate }}
-		</button>
+		<div class="actions">
+			<button
+				[disabled]="timeLog.isRunning"
+				size="small"
+				class="mr-2 action primary"
+				nbButton
+				status="basic"
+				(click)="openDialog()"
+				*ngxPermissionsOnly="[
+					OrganizationPermissionsEnum.ALLOW_MODIFY_TIME
+				]"
+			>
+				<nb-icon icon="edit"></nb-icon>
+				{{ 'TIMESHEET.EDIT' | translate }}
+			</button>
+			<button
+				[disabled]="timeLog.isRunning"
+				size="small"
+				class="mr-2 action"
+				nbButton
+				status="basic"
+				ngxConfirmDialog
+				[message]="'TIMESHEET.DELETE_TIMELOG' | translate"
+				(confirm)="onDeleteConfirm()"
+				*ngxPermissionsOnly="[
+					OrganizationPermissionsEnum.ALLOW_DELETE_TIME
+				]"
+			>
+				<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
+			</button>
+		</div>
 	</nb-card-footer>
 </nb-card>

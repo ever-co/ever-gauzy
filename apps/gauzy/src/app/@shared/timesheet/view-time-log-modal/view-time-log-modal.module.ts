@@ -13,6 +13,7 @@ import {
 import { EditTimeLogModalModule } from '../edit-time-log-modal/edit-time-log-modal.module';
 import { DialogsModule } from '../../dialogs';
 import { LabelModule } from '../../components/label/label.module';
+import { TableComponentsModule } from '../../table-components';
 
 @NgModule({
 	declarations: [ViewTimeLogModalComponent],
@@ -28,7 +29,8 @@ import { LabelModule } from '../../components/label/label.module';
 		NbIconModule,
 		DialogsModule,
 		LabelModule,
-		NbAlertModule
+		NbAlertModule,
+		TableComponentsModule
 	]
 })
 export class ViewTimeLogModalModule {}
