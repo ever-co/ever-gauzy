@@ -1,11 +1,15 @@
+@import '../../calendar/calendar/calendar.component.scss';
+
 :host {
 	.filters {
 		.form-control {
 			min-height: 40px;
 		}
 	}
+
 	.week-date-input {
 		position: relative;
+
 		input {
 			opacity: 0;
 			position: absolute;
@@ -15,13 +19,55 @@
 			bottom: 0;
 		}
 	}
+
 	.weekly-logs-table {
+
 		td,
 		th {
 			padding: 16px;
 		}
+
 		.day-col {
 			text-align: left;
 		}
+	}
+
+	.custom-header {
+		font-size: 12px;
+		font-weight: 600;
+		line-height: 15px;
+		letter-spacing: 0em;
+		text-align: left;
+		color: nb-theme(gauzy-text-color-2);
+		background: rgba(255, 255, 255, 0.75);
+		border-radius: nb-theme(border-radius);
+		padding: 3px;
+		height: 42px;
+		padding-left: 12px;
+	}
+
+	.custom-body {
+		background: rgba(255, 255, 255, 0.99);
+		border-radius: nb-theme(border-radius);
+		margin-top: 6px;
+		padding-left: 12px;
+
+		[nbButton].appearance-outline.status-primary {
+			border: none;
+		}
+	}
+
+	nb-checkbox ::ng-deep .custom-checkbox {
+		border-width: 2px;
+	}
+
+	[nbButton].appearance-ghost.status-basic {
+		background-color: nb-theme(gauzy-sidebar-background-4);
+		font-size: 12px;
+		font-weight: 600;
+		line-height: 15px;
+		letter-spacing: 0em;
+		text-align: left;
+		border: none;
 	}
 }

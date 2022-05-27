@@ -14,9 +14,18 @@ import {
 import { isEmpty } from '@gauzy/common-angular';
 import { TranslateService } from '@ngx-translate/core';
 import { moment } from './../../../../../@core/moment-extend';
-import { DateRangePickerBuilderService, Store } from './../../../../../@core/services';
-import { TimesheetService, TimesheetFilterService } from './../../../../../@shared/timesheet';
-import { EditTimeLogModalComponent, ViewTimeLogComponent } from './../../../../../@shared/timesheet';
+import {
+	DateRangePickerBuilderService,
+	Store
+} from './../../../../../@core/services';
+import {
+	TimesheetService,
+	TimesheetFilterService
+} from './../../../../../@shared/timesheet';
+import {
+	EditTimeLogModalComponent,
+	ViewTimeLogComponent
+} from './../../../../../@shared/timesheet';
 import { BaseSelectorFilterComponent } from './../../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
 import { GauzyFiltersComponent } from './../../../../../@shared/timesheet/gauzy-filters/gauzy-filters.component';
 
@@ -31,9 +40,10 @@ interface WeeklyDayData {
 	templateUrl: './weekly.component.html',
 	styleUrls: ['./weekly.component.scss']
 })
-export class WeeklyComponent extends BaseSelectorFilterComponent 
-	implements OnInit, OnDestroy {
-
+export class WeeklyComponent
+	extends BaseSelectorFilterComponent
+	implements OnInit, OnDestroy
+{
 	OrganizationPermissionsEnum = OrganizationPermissionsEnum;
 	logRequest: ITimeLogFilters = this.request;
 
@@ -44,8 +54,10 @@ export class WeeklyComponent extends BaseSelectorFilterComponent
 
 	futureDateAllowed: boolean;
 
-	@ViewChild(GauzyFiltersComponent) gauzyFiltersComponent: GauzyFiltersComponent;
-	datePickerConfig$: Observable<any> = this._dateRangePickerBuilderService.datePickerConfig$;
+	@ViewChild(GauzyFiltersComponent)
+	gauzyFiltersComponent: GauzyFiltersComponent;
+	datePickerConfig$: Observable<any> =
+		this._dateRangePickerBuilderService.datePickerConfig$;
 
 	constructor(
 		private readonly timesheetService: TimesheetService,
@@ -113,7 +125,7 @@ export class WeeklyComponent extends BaseSelectorFilterComponent
 		);
 		const request: IGetTimeLogInput = {
 			...appliedFilter,
-			...this.getFilterRequest(this.logRequest),
+			...this.getFilterRequest(this.logRequest)
 		};
 
 		this.loading = true;
@@ -208,6 +220,18 @@ export class WeeklyComponent extends BaseSelectorFilterComponent
 			? true
 			: moment(date).isSameOrBefore(moment());
 	}
-	
+
+	isIndeterminate() {
+		// TODO
+	}
+
+	checkedAll(event: any) {
+		// TODO
+	}
+
+	toggleCheckbox(event: any) {
+		// TODO
+	}
+
 	ngOnDestroy(): void {}
 }
