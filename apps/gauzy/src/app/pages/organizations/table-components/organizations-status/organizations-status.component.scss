@@ -1,12 +1,28 @@
+@import 'themes';
+
 .badge-danger {
-	text-align: center;
+	text-align: flex-start;
 	padding: 5px;
-	background-color: #ff3d71;
+	background-color: nb-theme(color-danger-default);
 	margin-bottom: 5px;
 }
 
 .badge-success {
-	text-align: center;
+	text-align: flex-start;
 	padding: 5px;
-	background-color: #00d68f;
+	background-color: nb-theme(color-success-default);
+}
+
+.badge {
+	width: fit-content;
+	font-size: 12px;
+	font-weight: 600;
+	line-height: 15px;
+	letter-spacing: 0em;
+	text-align: left;
+	padding: 4px 8px;
+
+	>div {
+		border-radius: 4px;
+	}
 }

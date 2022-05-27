@@ -1834,7 +1834,8 @@
 		},
 		"BILLING": "Billing",
 		"BUDGET": "Budget",
-		"OPEN_SOURCE": "Open-Source"
+		"OPEN_SOURCE": "Open-Source",
+		"ORGANIZATION_ADD": "Add Organization"
 	},
 	"CONTACTS_PAGE": {
 		"VISITORS": "Visitors",
