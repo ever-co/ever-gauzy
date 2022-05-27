@@ -1,53 +1,41 @@
 @import 'gauzy/_gauzy-dialogs';
 .main {
-  height: auto;
-  width: auto;
-
-  .body {
-    width: 605px;
-  }
-
-  nb-card-header {
-    .employees {
-      margin-left: 20px;
-      padding-left: 20px;
-      border-left: 1px solid #edf1f7;
-      width: 220px;
-    }
-    .help-text {
-      width: 40px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    nb-icon {
-      cursor: pointer;
-    }
-  }
+	height: auto;
+	width: auto;
+  	.body {
+    	width: 605px;
+  	}
+  	nb-card-header {
+		.help-text {
+			width: 40px;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+		}
+		nb-icon {
+			cursor: pointer;
+		}
+  	}
 }
-
 .categories {
-  width: 100%;
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: flex-end;
-  .form-group {
-    margin-bottom: 0;
-    width: 100%;
-  }
+	width: 100%;
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+	align-items: flex-end;
+	.form-group {
+		margin-bottom: 0;
+		width: 100%;
+	}
 }
-
 .datepicker {
-  width: 100%;
+  	width: 100%;
 }
-
 nb-radio-group {
-  display: flex;
-  flex-direction: row;
-  margin-bottom: 1em;
+	display: flex;
+	flex-direction: row;
+	margin-bottom: 1em;
 }
-
 .employees {
-  margin-bottom: 15px;
+  	margin-bottom: 15px;
 }

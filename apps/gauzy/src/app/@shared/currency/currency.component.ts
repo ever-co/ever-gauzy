@@ -13,13 +13,15 @@ import {
 	FormControl,
 	NG_VALUE_ACCESSOR
 } from '@angular/forms';
-import { ICurrency } from '@gauzy/contracts';
+import { ICurrency, IOrganization } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { Observable } from 'rxjs';
+import { filter, Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
-import { CurrencyService } from '../../@core/services';
+import { distinctUntilChange } from '@gauzy/common-angular';
+import { CurrencyService, Store } from '../../@core/services';
 import { TranslationBaseComponent } from '../language-base/translation-base.component';
+import { environment as ENV } from './../../../environments/environment';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -37,9 +39,9 @@ export class CurrencyComponent extends TranslationBaseComponent
 	implements OnInit, AfterViewInit, ControlValueAccessor {
 
 	@Input() formControl: FormControl = new FormControl();
-	@Output() selectChange = new EventEmitter<string>();
 	@Output() optionChange = new EventEmitter<ICurrency>();
 
+	public organization: IOrganization;
 	loading: boolean = true;
 	currencies$: Observable<ICurrency[]> = this.currencyService.currencies$;
 	private _currencies: ICurrency[] = [];
@@ -55,9 +57,11 @@ export class CurrencyComponent extends TranslationBaseComponent
 		return this._currency;
 	}
 	@Input() set currency(val: string) {
-		this._currency = val;
-		this.onChange(val);
-		this.onTouched();
+		if (val) {
+			this._currency = val;
+			this.onChange(val);
+			this.onTouched();
+		}
 	}
 	
 	/*
@@ -74,24 +78,37 @@ export class CurrencyComponent extends TranslationBaseComponent
 	}
 
 	constructor(
-		private readonly currencyService: CurrencyService,
 		public readonly translateService: TranslateService,
-		private readonly cdr: ChangeDetectorRef
+		private readonly cdr: ChangeDetectorRef,
+		private readonly currencyService: CurrencyService,
+		private readonly store: Store
 	) {
 		super(translateService);
 		this.currencyService.find$.next(true);
 	}
 
 	ngOnInit(): void {
+		this.store.selectedOrganization$
+			.pipe(
+				distinctUntilChange(),
+				filter((organization: IOrganization) => !!organization),
+				tap((organization: IOrganization) => this.organization = organization),
+				tap(({ currency }) => {
+					this.currency = currency || ENV.DEFAULT_CURRENCY;
+					this.formControl.updateValueAndValidity();
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this.currencies$
 			.pipe(
-				tap(
-					(currencies: ICurrency[]) => (this._currencies = currencies)
-				),
+				tap((currencies: ICurrency[]) => (this._currencies = currencies)),
+				tap(() => this.onSelectChange(this.currency)),
 				tap(() => this.loading = false),
 				untilDestroyed(this)
 			)
 			.subscribe();
+		
 	}
 
 	ngAfterViewInit() {
@@ -103,9 +120,9 @@ export class CurrencyComponent extends TranslationBaseComponent
 			const currency = this._currencies.find(
 				(currency: ICurrency) => currency.isoCode === value
 			);
+			this.currency = currency.isoCode;
 			this.onOptionChange(currency);
 		}
-		this.selectChange.emit(value);
 	}
 
 	onOptionChange($event: ICurrency) {

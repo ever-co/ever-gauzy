@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, ViewChild, AfterViewInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import {
 	IExpense,
 	ComponentLayoutStyleEnum,
@@ -9,7 +9,8 @@ import {
 	IEmployee,
 	IOrganizationVendor,
 	IExpenseCategory,
-	IDateRangePicker
+	IDateRangePicker,
+	ExpenseStatusesEnum
 } from '@gauzy/contracts';
 import { combineLatest, Subject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
@@ -23,6 +24,7 @@ import { ExpensesMutationComponent } from '../../@shared/expenses/expenses-mutat
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import {
 	DateViewComponent,
+	EmployeeLinksComponent,
 	IncomeExpenseAmountComponent,
 	NotesWithTagsComponent
 } from '../../@shared/table-components';
@@ -31,8 +33,8 @@ import {
 	VendorFilterComponent
 } from '../../@shared/table-filters';
 import { IPaginationBase, PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
-import { API_PREFIX, ComponentEnum } from '../../@core/constants';
 import { StatusBadgeComponent } from '../../@shared/status-badge';
+import { API_PREFIX, ComponentEnum } from '../../@core/constants';
 import { ServerDataSource } from '../../@core/utils/smart-table';
 import { ALL_EMPLOYEES_SELECTED } from '../../@theme/components/header/selectors/employee';
 import {
@@ -41,16 +43,15 @@ import {
 	Store,
 	ToastrService
 } from '../../@core/services';
-import { AvatarComponent } from '../../@shared/components/avatar/avatar.component';
 import { getAdjustDateRangeFutureAllowed } from '../../@theme/components/header/selectors/date-range-picker';
+import { ReplacePipe } from '../../@shared/pipes';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
 	templateUrl: './expenses.component.html',
 	styleUrls: ['./expenses.component.scss']
 })
-export class ExpensesComponent
-	extends PaginationFilterBaseComponent
+export class ExpensesComponent extends PaginationFilterBaseComponent
 	implements AfterViewInit, OnInit, OnDestroy {
 
 	smartTableSettings: object;
@@ -86,7 +87,8 @@ export class ExpensesComponent
 		private readonly errorHandler: ErrorHandlingService,
 		public readonly translateService: TranslateService,
 		private readonly router: Router,
-		private readonly httpClient: HttpClient
+		private readonly httpClient: HttpClient,
+		private readonly replacePipe: ReplacePipe
 	) {
 		super(translateService);
 		this.setView();
@@ -119,7 +121,6 @@ export class ExpensesComponent
 			.pipe(
 				debounceTime(300),
 				filter(([organization]) => !!organization),
-				tap(([organization]) => (this.organization = organization)),
 				distinctUntilChange(),
 				tap(([organization, employee, dateRange, project]) => {
 					this.organization = organization;
@@ -134,7 +135,8 @@ export class ExpensesComponent
 			.subscribe();
 		this.route.queryParamMap
 			.pipe(
-				filter((params) => !!params && params.get('openAddDialog') === 'true'),
+				filter((params: ParamMap) => !!params),
+				filter((params: ParamMap) => params.get('openAddDialog') === 'true'),
 				debounceTime(1000),
 				tap(() => this.openAddExpenseDialog()),
 				untilDestroyed(this)
@@ -177,16 +179,16 @@ export class ExpensesComponent
 			.subscribe();
 	}
 
-	private statusMapper = (value: string) => {
+	private statusMapper = (value: ExpenseStatusesEnum) => {
 		const badgeClass = value
-			? ['paid'].includes(value.toLowerCase())
+			? [ExpenseStatusesEnum.PAID].includes(value)
 				? 'success'
-				: ['invoiced'].includes(value.toLowerCase())
+				: [ExpenseStatusesEnum.INVOICED].includes(value)
 				? 'warning'
 				: 'danger'
 			: null;
 		return {
-			text: value,
+			text: this.replacePipe.transform(value, '_', ' '),
 			class: badgeClass
 		};
 	}
@@ -233,19 +235,23 @@ export class ExpensesComponent
 					},
 					sort: false
 				},
-				employeeName: {
+				employee: {
 					title: this.getTranslation('SM_TABLE.EMPLOYEE'),
-					type: 'custom',
 					filter: false,
+					type: 'custom',
 					sort: false,
-					renderComponent: AvatarComponent,
-					valuePrepareFunction: (
-						cell,
-						row
-					) => {
+					renderComponent: EmployeeLinksComponent,
+					valuePrepareFunction: (cell, row) => {
 						return {
-							name: row.employee && row.employee.user ? row.employee.fullName : null,
-							id: row.employee ? row.employee.id : null
+							name:
+								row.employee && row.employee.user
+									? row.employee.fullName
+									: null,
+							id: row.employee ? row.employee.id : null,
+							imageUrl:
+								row.employee && row.employee.user
+									? row.employee.user.imageUrl
+									: null
 						};
 					}
 				},
@@ -272,7 +278,7 @@ export class ExpensesComponent
 					class: 'align-row',
 					renderComponent: NotesWithTagsComponent
 				},
-				status: {
+				statuses: {
 					title: this.getTranslation('SM_TABLE.STATUS'),
 					type: 'custom',
 					width: '5%',
@@ -287,52 +293,22 @@ export class ExpensesComponent
 		this.router.navigate(['/pages/accounting/expenses/categories']);
 	}
 
-	getFormData(data) {
-		const {
-			amount, category, vendor,
-			typeOfExpense, organizationContact = null, project = null,
-			valueDate, notes, currency,
-			purpose, taxType, taxLabel, rateValue,
-			receipt, splitExpense, tags, status
-		} = data;
-		return {
-			amount,
-			category,
-			vendor,
-			typeOfExpense,
-			organizationContactId: (organizationContact) ? organizationContact.organizationContactId : null,
-			projectId: (project) ? project.projectId : null,
-			valueDate,
-			notes,
-			currency,
-			purpose,
-			taxType,
-			taxLabel,
-			rateValue,
-			receipt,
-			splitExpense,
-			tags,
-			status
-		};
-	}
-
-	async addExpense(completedForm, formData) {
+	async addExpense(expense: IExpense) {
 		try {
 			const { tenantId } = this.store.user;
 			const { id: organizationId } = this.organization;
-			const { employee } = formData;
+			const { employee } = expense;
 
 			await this.expenseService.create({
-				...completedForm,
+				...expense,
 				employeeId: employee ? employee.id : null,
 				organizationId,
 				tenantId
-			}).then(() => {
-				this.expenses$.next(true);
-				this.toastrService.success('NOTES.EXPENSES.ADD_EXPENSE', {
-					name: this.employeeName(employee)
-				});
 			});
+			this.toastrService.success('NOTES.EXPENSES.ADD_EXPENSE', {
+				name: this.employeeName(employee)
+			});
+			this.expenses$.next(true);
 		} catch (error) {
 			this.errorHandler.handleError(error);
 		}
@@ -341,11 +317,11 @@ export class ExpensesComponent
 	openAddExpenseDialog() {
 		this.dialogService
 			.open(ExpensesMutationComponent)
-			.onClose.pipe(untilDestroyed(this))
-			.subscribe(async (data) => {
-				if (data) {
-					const completedForm = this.getFormData(data);
-					await this.addExpense(completedForm, data);
+			.onClose
+			.pipe(untilDestroyed(this))
+			.subscribe(async (expense: IExpense) => {
+				if (expense) {
+					await this.addExpense(expense);
 				}
 			});
 	}
@@ -365,8 +341,8 @@ export class ExpensesComponent
 			})
 			.onClose
 			.pipe(untilDestroyed(this))
-			.subscribe(async (data) => {
-				if (data) {
+			.subscribe(async (expense: IExpense) => {
+				if (expense) {
 					try {
 						if (!this.selectedExpense) {
 							return;
@@ -374,17 +350,17 @@ export class ExpensesComponent
 						const { tenantId } = this.store.user;
 						const { id: organizationId } = this.organization;
 						const { id, employee } = this.selectedExpense;
+
 						await this.expenseService.update(id, {
-							...this.getFormData(data),
+							...expense,
 							employeeId: employee ? employee.id : null,
 							tenantId,
 							organizationId
-						}).then(() => {
-							this.expenses$.next(true);
-							this.toastrService.success('NOTES.EXPENSES.OPEN_EDIT_EXPENSE_DIALOG', {
-								name: this.employeeName(employee)
-							});
 						});
+						this.toastrService.success('NOTES.EXPENSES.OPEN_EDIT_EXPENSE_DIALOG', {
+							name: this.employeeName(employee)
+						});
+						this.expenses$.next(true);
 					} catch (error) {
 						this.errorHandler.handleError(error);
 					}
@@ -408,13 +384,12 @@ export class ExpensesComponent
 				}
 			})
 			.onClose.pipe(untilDestroyed(this))
-			.subscribe(async (formData) => {
-				if (formData) {
+			.subscribe(async (expense: IExpense) => {
+				if (expense) {
 					if (!this.selectedExpense) {
 						return;
 					}
-					const completedForm = this.getFormData(formData);
-					await this.addExpense(completedForm, formData);
+					await this.addExpense(expense);
 				}
 			});
 	}
@@ -445,12 +420,11 @@ export class ExpensesComponent
 						await this.expenseService.delete(
 							id,
 							isNotEmpty(employee) ? employee.id : null
-						).then(() => {
-							this.expenses$.next(true);
-							this.toastrService.success('NOTES.EXPENSES.DELETE_EXPENSE', {
-								name: this.employeeName(employee)
-							});
+						);
+						this.toastrService.success('NOTES.EXPENSES.DELETE_EXPENSE', {
+							name: this.employeeName(employee)
 						});
+						this.expenses$.next(true);
 					} catch (error) {
 						this.errorHandler.handleError(error);
 					}
@@ -509,11 +483,10 @@ export class ExpensesComponent
 			},
 			resultMap: (expense: IExpense) => {
 				return Object.assign({}, expense, {
-					employeeName: expense.employee ? expense.employee.fullName : null,
 					vendorName: expense.vendor ? expense.vendor.name : null,
 					categoryName: expense.category ? expense.category.name : null,
 					projectName: expense.project ? expense.project.name : null,
-					status: this.statusMapper(expense.status)
+					statuses: this.statusMapper(expense.status)
 				});
 			},
 			finalize: () => {

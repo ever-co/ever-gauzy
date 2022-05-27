@@ -30,7 +30,7 @@ export interface IExpense extends IBasePerTenantAndOrganizationEntityModel {
 	receipt?: string;
 	splitExpense: boolean;
 	tags?: ITag[];
-	status?: string;
+	status?: ExpenseStatusesEnum;
 }
 
 export interface IExpenseCreateInput
@@ -45,7 +45,7 @@ export interface IExpenseCreateInput
 	projectId?: string;
 	project?: IOrganizationProject;
 	notes?: string;
-	valueDate: Date;
+	valueDate?: Date;
 	currency?: string;
 	purpose?: string;
 	taxType?: string;
@@ -55,7 +55,7 @@ export interface IExpenseCreateInput
 	splitExpense?: boolean;
 	reference?: string;
 	tags?: ITag[];
-	status?: string;
+	status?: ExpenseStatusesEnum;
 }
 
 export interface IExpenseFindInput
@@ -81,7 +81,7 @@ export interface IExpenseFindInput
 	receipt?: string;
 	splitExpense?: boolean;
 	tags?: ITag[];
-	status?: string;
+	status?: ExpenseStatusesEnum;
 }
 
 export interface IExpenseUpdateInput extends IBasePerTenantAndOrganizationEntityModel {
@@ -106,7 +106,7 @@ export interface IExpenseUpdateInput extends IBasePerTenantAndOrganizationEntity
 	receipt?: string;
 	splitExpense?: boolean;
 	tags?: ITag[];
-	status?: string;
+	status?: ExpenseStatusesEnum;
 }
 
 export interface ISplitExpenseOutput extends IExpense {
@@ -134,7 +134,8 @@ export enum TaxTypesEnum {
 export enum ExpenseStatusesEnum {
 	INVOICED = 'INVOICED',
 	UNINVOICED = 'UNINVOICED',
-	PAID = 'PAID'
+	PAID = 'PAID',
+	NOT_BILLABLE = 'NOT_BILLABLE'
 }
 
 export interface IExpenseViewModel {
@@ -162,7 +163,7 @@ export interface IExpenseViewModel {
 	receipt: string;
 	splitExpense: boolean;
 	tags: ITag[];
-	status: string;
+	status: ExpenseStatusesEnum;
 }
 
 export interface IGetExpenseInput

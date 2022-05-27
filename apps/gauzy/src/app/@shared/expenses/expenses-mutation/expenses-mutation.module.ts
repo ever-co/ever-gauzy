@@ -24,6 +24,7 @@ import { TranslateModule } from '../../translate/translate.module';
 import { VendorSelectModule } from '../../vendor-select/vendor-select.module';
 import { ExpenseCategorySelectModule } from '../expense-category-select/expense-category-select.module';
 import { ContactSelectModule } from '../../contact-select/contact-select.module';
+import { ProjectSelectModule } from '../../project-select/project-select.module';
 
 @NgModule({
 	imports: [
@@ -47,7 +48,8 @@ import { ContactSelectModule } from '../../contact-select/contact-select.module'
 		CurrencyModule,
 		VendorSelectModule,
 		ExpenseCategorySelectModule,
-		ContactSelectModule
+		ContactSelectModule,
+		ProjectSelectModule
 	],
 	exports: [ExpensesMutationComponent],
 	declarations: [ExpensesMutationComponent, AttachReceiptComponent],

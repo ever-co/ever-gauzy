@@ -54,8 +54,8 @@ import { OrganizationWithTagsComponent } from './organization-with-tags/organiza
 		ProjectComponent,
 		EmployeesMergedTeamsComponent,
 		CreatedAtComponent,
-  ContactWithTagsComponent,
-  OrganizationWithTagsComponent
+    ContactWithTagsComponent,
+    OrganizationWithTagsComponent
 	],
 	exports: [
 		NotesWithTagsComponent,

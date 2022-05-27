@@ -11,36 +11,37 @@
 				}}
 			</h4>
 			<ng-template #headerAdd>
-				<h4 class="title">{{ 'POP_UPS.ADD_EXPENSE' | translate }}</h4>
+				<h4 class="title">
+					{{ 'POP_UPS.ADD_EXPENSE' | translate }}
+				</h4>
 			</ng-template>
-			<span
-				*ngIf="showTooltip"
-				class="help-text"
-				[nbTooltip]="'EXPENSES_PAGE.SPLIT_HELP' | translate"
-			>
-				<nb-icon
-					size="small"
-					status="primary"
-					icon="alert-triangle-outline"
-				></nb-icon>
-			</span>
+			<ng-container *ngIf="showTooltip">
+				<span
+					class="help-text"
+					[nbTooltip]="'EXPENSES_PAGE.SPLIT_HELP' | translate"
+				>
+					<nb-icon
+						size="small"
+						status="primary"
+						icon="alert-triangle-outline"
+					></nb-icon>
+				</span>
+			</ng-container>
 		</div>
 	</nb-card-header>
 	<nb-card-body class="body">
 		<form [formGroup]="form">
 			<div class="text-center">
 				<nb-radio-group formControlName="typeOfExpense">
-					<nb-radio
+					<nb-radio 
 						*ngFor="let expenseType of expenseTypes"
 						[value]="expenseType"
-						(valueChange)="changeExpenseType($event)"
-						>{{
-							'EXPENSES_PAGE.MUTATION.' + expenseType | translate
-						}}
+						(valueChange)="setExpenseStatuses($event)"
+					>
+						{{ 'EXPENSES_PAGE.MUTATION.' + expenseType | translate }}
 					</nb-radio>
 				</nb-radio-group>
 			</div>
-			<div class="row" *ngIf="selectedEmployee"></div>
 			<div class="row employees">
 				<div class="col-sm-6">
 					<label
@@ -80,8 +81,7 @@
 							formControlName="category"
 							[addTag]="true"
 							[placeholder]="'POP_UPS.ALL_CATEGORIES' | translate"
-						>
-						</ga-expense-category-select>
+						></ga-expense-category-select>
 					</div>
 				</div>
 			</div>
@@ -97,7 +97,10 @@
 						[placeholder]="'POP_UPS.PICK_DATE' | translate"
 						[nbDatepicker]="valueDatePicker"
 						[status]="
-							isInvalidControl('valueDate') ? 'danger' : 'basic'
+							FormHelpers.isInvalidControl(
+								form,
+								'valueDate'
+							) ? 'danger' : 'basic'
 						"
 					/>
 					<nb-datepicker #valueDatePicker></nb-datepicker>
@@ -113,8 +116,7 @@
 							[addTag]="true"
 							[placeholder]="'POP_UPS.ALL_VENDORS' | translate"
 							[clearable]="true"
-						>
-						</ga-vendor-select>
+						></ga-vendor-select>
 					</div>
 				</div>
 			</div>
@@ -133,7 +135,10 @@
 							[placeholder]="'POP_UPS.AMOUNT' | translate"
 							formControlName="amount"
 							[status]="
-								isInvalidControl('amount') ? 'danger' : 'basic'
+								FormHelpers.isInvalidControl(
+									form,
+									'amount'
+								) ? 'danger' : 'basic'
 							"
 							autocomplete="off"
 						/>
@@ -141,7 +146,7 @@
 				</div>
 				<div class="col-sm-6">
 					<ga-currency
-						[formControl]="form.get('currency')"
+						formControlName="currency"
 						(optionChange)="currencyChanged($event)"
 					></ga-currency>
 				</div>
@@ -179,76 +184,39 @@
 					}}
 				</p>
 			</nb-card>
-			<div *ngIf="organizationContacts.length || projects.length">
+			<div>
 				<h6 class="title mb-3">
 					{{ 'EXPENSES_PAGE.MUTATION.ASSIGN_TO' | translate }}
 				</h6>
 				<div class="row">
 					<div class="col-sm-6">
 						<div class="form-group">
-							<label class="label">{{
-								'CONTEXT_MENU.CONTACT' | translate
-							}}</label>
-							<ng-select
-								[isOpen]="showWarning ? true : null"
-								[addTag]="addNewOrganizationContact"
-								[items]="organizationContacts"
-								bindLabel="name"
+							<label class="label">
+								{{ 'CONTEXT_MENU.CONTACT' | translate }}
+							</label>
+							<ga-contact-select
+								[addTag]="true"
+								[clearable]="true"
 								[searchable]="true"
-								autocomplete="on"
-								appendTo="body"
+								[placeholder]="'CONTEXT_MENU.CONTACT' | translate"
 								formControlName="organizationContact"
-								(change)="selectOrganizationContact($event)"
-								[placeholder]="
-									'CONTEXT_MENU.CONTACT' | translate
-								"
-							>
-								<ng-template
-									ng-option-tmp
-									let-item="item"
-									let-index="index"
-								>
-									{{ item.name }}
-								</ng-template>
-								<ng-template ng-label-tmp let-item="item">
-									<div class="selector-template">
-										<span>{{ item.name }}</span>
-									</div>
-								</ng-template>
-							</ng-select>
+								(onChanged)="selectedOrganizationContact($event)"
+							></ga-contact-select>
 						</div>
 					</div>
-					<div class="col-sm-6" *ngIf="projects.length">
+					<div class="col-sm-6">
 						<div class="form-group">
 							<label class="label">{{
 								'CONTEXT_MENU.PROJECT' | translate
 							}}</label>
-							<ng-select
-								[items]="projects"
-								[addTag]="addNewProject"
-								bindLabel="name"
-								[searchable]="true"
-								autocomplete="on"
-								appendTo="body"
-								formControlName="project"
-								(change)="selectProject($event)"
-								[placeholder]="
-									'CONTEXT_MENU.PROJECT' | translate
-								"
-							>
-								<ng-template
-									ng-option-tmp
-									let-item="item"
-									let-index="index"
-								>
-									{{ item.name }}
-								</ng-template>
-								<ng-template ng-label-tmp let-item="item">
-									<div class="selector-template">
-										<span>{{ item.name }}</span>
-									</div>
-								</ng-template>
-							</ng-select>
+							<ga-project-selector
+								formControlName="projectId"
+								[placeholder]="'CONTEXT_MENU.PROJECT' | translate"
+								[skipGlobalChange]="true"
+								[defaultSelected]="false"
+								[showAllOption]="false"
+								(onChanged)="selectedProject($event)"
+							></ga-project-selector>
 						</div>
 					</div>
 				</div>
@@ -257,16 +225,15 @@
 				<div class="col-sm-12">
 					<div class="form-group">
 						<ga-tags-color-input
-							[selectedTags]="tags"
+							[selectedTags]="form.get('tags').value"
 							(selectedTagsEvent)="selectedTagsHandler($event)"
 							[isOrgLevel]="true"
-						>
-						</ga-tags-color-input>
+						></ga-tags-color-input>
 					</div>
 				</div>
 			</div>
 			<div class="row">
-				<div class="col-sm-4">
+				<div class="col-4">
 					<div class="form-group">
 						<label class="label" for="status">
 							{{ 'FORM.LABELS.STATUS' | translate }}
@@ -279,11 +246,10 @@
 										| translate
 								"
 								fullWidth
-								[disabled]="disableStatuses"
 								formControlName="status"
 							>
 								<nb-option
-									*ngFor="let status of expenseStatuses"
+									*ngFor="let status of statuses"
 									[value]="status"
 								>
 									{{
@@ -295,8 +261,8 @@
 						</div>
 					</div>
 				</div>
-				<div class="col-sm-8">
-					<div class="mt-3 text-right">
+				<div class="col-8">
+					<div class="mt-2 text-right">
 						<button
 							nbButton
 							size="tiny"
@@ -304,7 +270,7 @@
 							outline
 							(click)="showNotesInput()"
 							*ngIf="!showNotes"
-							class="gray mr-3 mt-3"
+							class="gray ml-2 mt-3"
 						>
 							<i class="fas fa-plus mr-1"></i>
 							{{ 'BUTTONS.ADD_NOTE' | translate }}
@@ -316,7 +282,7 @@
 							outline
 							(click)="includeTaxes()"
 							*ngIf="!showTaxesInput"
-							class="gray mr-3 mt-3"
+							class="gray ml-2 mt-3"
 						>
 							<i class="fas fa-percentage mr-1"></i>
 							{{
@@ -330,7 +296,7 @@
 							status="basic"
 							outline
 							(click)="attachReceipt()"
-							class="gray mr-3 mt-3"
+							class="gray ml-2 mt-3"
 						>
 							<i class="fas fa-paperclip mr-1"></i>
 							{{
@@ -354,9 +320,10 @@
 								[placeholder]="'POP_UPS.NOTES' | translate"
 								formControlName="notes"
 								[status]="
-									isInvalidControl('notes')
-										? 'danger'
-										: 'basic'
+									FormHelpers.isInvalidControl(
+										form,
+										'notes'
+									) ? 'danger' : 'basic'
 								"
 							>
 							</textarea>
@@ -382,17 +349,21 @@
 					</div>
 					<div class="col-sm-6">
 						<div class="form-group">
-							<ng-select
-								[items]="translatedTaxTypes"
-								bindLabel="label"
-								bindValue="value"
-								appendTo="body"
+							<nb-select
 								formControlName="taxType"
-								fullWidth
-								[clearable]="false"
 								[placeholder]="'POP_UPS.TAX_TYPE' | translate"
+								fullWidth
 							>
-							</ng-select>
+								<nb-option
+									*ngFor="let taxType of taxTypes"
+									[value]="taxType"
+								>
+									{{
+										'EXPENSES_PAGE.MUTATION.' +
+										taxType | translate
+									}}
+								</nb-option>
+							</nb-select>
 						</div>
 					</div>
 					<div class="col-sm-6">
@@ -422,7 +393,13 @@
 		</form>
 	</nb-card-body>
 	<nb-card-footer class="text-left">
-		<button (click)="close()" status="basic" outline class="mr-3" nbButton>
+		<button 
+			(click)="close()"
+			status="basic"
+			outline
+			class="mr-3"
+			nbButton
+		>
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
 		<button
