@@ -1,15 +1,21 @@
+@import '../../daily/daily/daily.component.scss';
+
 :host {
 	.filters {
 		.form-control {
 			min-height: 40px;
 		}
 	}
+
+	ga-status-badge ::ng-deep .badge {
+		width: fit-content;
+	}
 }
+
 .menu-item {
 	min-width: 150px;
+
 	button {
 		width: 100%;
 	}
 }
-
-
