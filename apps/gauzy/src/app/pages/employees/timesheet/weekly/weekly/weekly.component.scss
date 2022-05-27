@@ -58,8 +58,30 @@
 			overflow: auto;
 			max-height: calc(100vh - 29rem);
 
+			.border-bottom {
+				border-bottom: 1px solid rgba(126, 126, 143, 0.1) !important;
+			}
+
 			[nbButton].appearance-outline.status-primary {
 				border: none;
+			}
+
+			.item {
+				cursor: pointer;
+
+				&:hover {
+					background-color: rgba(126, 126, 143, 0.1);
+				}
+			}
+
+			.selected {
+				background-color: rgba(126, 126, 143, 0.1);
+				box-shadow: -6px 0 0 0 rgba(126, 126, 143, 0.2);
+				border-radius: 8px 0 0 8px;
+
+				&.border-bottom {
+					border-bottom: none;
+				}
 			}
 		}
 	}

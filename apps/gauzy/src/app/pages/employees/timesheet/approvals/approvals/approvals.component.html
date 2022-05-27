@@ -1,6 +1,12 @@
 <nb-card>
 	<nb-card-header class="p-0">
 		<div class="filters">
+			<div class="buttons">
+				<ngx-gauzy-button-action
+					[hasLayoutSelector]="false"
+					[isDisable]="disable"
+				></ngx-gauzy-button-action>
+			</div>
 			<ngx-gauzy-filters
 				[saveFilters]="(datePickerConfig$ | async).isSaveDatePicker"
 				[hasLogTypeFilter]="false"
@@ -59,11 +65,18 @@
 				<div class="custom-body">
 					<div
 						[class]="
-							timesheets.at(-1) == timesheet
-								? 'row m-0 py-3 align-items-center'
-								: 'row border-bottom m-0 py-3 align-items-center'
+							timesheets.at(-1) === timesheet
+								? 'row item m-0 py-3 align-items-center'
+								: 'row item border-bottom m-0 py-3 align-items-center'
 						"
+						[ngClass]="{
+							selected:
+								timesheet.checked ||
+								(selectedTimesheet.isSelected &&
+									selectedTimesheet.data.id === timesheet.id)
+						}"
 						*ngFor="let timesheet of timesheets"
+						(click)="selectTimesheet(timesheet)"
 					>
 						<div class="col-auto">
 							<nb-checkbox
@@ -111,108 +124,6 @@
 								>
 									{{ 'TIMESHEET.ACTION' | translate }}
 								</button>
-								<ng-template #templateRef>
-									<div class="menu-item">
-										<button
-											(click)="redirectToView(timesheet)"
-											class="m-1"
-											nbButton
-											ghost
-											size="small"
-											[innerHTML]="
-												'TIMESHEET.VIEW' | translate
-											"
-										></button>
-									</div>
-									<div
-										class="menu-item"
-										*ngIf="!timesheet.submittedAt"
-									>
-										<button
-											(click)="
-												submitTimesheet(
-													timesheet.id,
-													'submit'
-												)
-											"
-											class="m-1"
-											nbButton
-											ghost
-											size="small"
-											[innerHTML]="
-												'TIMESHEET.SUBMIT_TIMESHEET'
-													| translate
-											"
-										></button>
-									</div>
-									<div
-										class="menu-item"
-										*ngIf="timesheet.submittedAt"
-									>
-										<button
-											(click)="
-												submitTimesheet(
-													timesheet.id,
-													'unsubmit'
-												)
-											"
-											class="m-1"
-											nbButton
-											ghost
-											size="small"
-											[innerHTML]="
-												'TIMESHEET.UNSUBMIT_TIMESHEET'
-													| translate
-											"
-										></button>
-									</div>
-									<div
-										class="menu-item"
-										*ngIf="
-											timesheet.status !=
-											TimesheetStatus.APPROVED
-										"
-									>
-										<button
-											(click)="
-												updateStatus(
-													timesheet.id,
-													TimesheetStatus.APPROVED
-												)
-											"
-											class="m-1"
-											nbButton
-											ghost
-											size="small"
-											[innerHTML]="
-												'TIMESHEET.APPROVE' | translate
-											"
-										></button>
-									</div>
-									<div
-										class="menu-item"
-										*ngIf="
-											timesheet.status !=
-											TimesheetStatus.DENIED
-										"
-									>
-										<button
-											(click)="
-												updateStatus(
-													timesheet.id,
-													TimesheetStatus.DENIED
-												)
-											"
-											class="m-1"
-											nbButton
-											ghost
-											size="small"
-											[innerHTML]="
-												'TIMESHEET.DENY' | translate
-											"
-										></button>
-									</div>
-								</ng-template>
 							</div>
 						</div>
 					</div>
@@ -228,3 +139,55 @@
 		</div>
 	</nb-card-body>
 </nb-card>
+<!-- <ng-template #templateRef>
+	<div class="menu-item">
+		<button
+			(click)="redirectToView(timesheet)"
+			class="m-1"
+			nbButton
+			ghost
+			size="small"
+			[innerHTML]="'TIMESHEET.VIEW' | translate"
+		></button>
+	</div>
+	<div class="menu-item" *ngIf="!timesheet.submittedAt">
+		<button
+			(click)="submitTimesheet(timesheet.id, 'submit')"
+			class="m-1"
+			nbButton
+			ghost
+			size="small"
+			[innerHTML]="'TIMESHEET.SUBMIT_TIMESHEET' | translate"
+		></button>
+	</div>
+	<div class="menu-item" *ngIf="timesheet.submittedAt">
+		<button
+			(click)="submitTimesheet(timesheet.id, 'unsubmit')"
+			class="m-1"
+			nbButton
+			ghost
+			size="small"
+			[innerHTML]="'TIMESHEET.UNSUBMIT_TIMESHEET' | translate"
+		></button>
+	</div>
+	<div class="menu-item" *ngIf="timesheet.status != TimesheetStatus.APPROVED">
+		<button
+			(click)="updateStatus(timesheet.id, TimesheetStatus.APPROVED)"
+			class="m-1"
+			nbButton
+			ghost
+			size="small"
+			[innerHTML]="'TIMESHEET.APPROVE' | translate"
+		></button>
+	</div>
+	<div class="menu-item" *ngIf="timesheet.status != TimesheetStatus.DENIED">
+		<button
+			(click)="updateStatus(timesheet.id, TimesheetStatus.DENIED)"
+			class="m-1"
+			nbButton
+			ghost
+			size="small"
+			[innerHTML]="'TIMESHEET.DENY' | translate"
+		></button>
+	</div>
+</ng-template> -->

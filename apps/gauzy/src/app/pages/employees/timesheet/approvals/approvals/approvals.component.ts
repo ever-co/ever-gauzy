@@ -1,10 +1,12 @@
-import { AfterViewInit, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { Router } from '@angular/router';
 import {
-	ITimeLogFilters,
-	ITimesheet,
-	TimesheetStatus
-} from '@gauzy/contracts';
+	AfterViewInit,
+	Component,
+	OnDestroy,
+	OnInit,
+	ViewChild
+} from '@angular/core';
+import { Router } from '@angular/router';
+import { ITimeLogFilters, ITimesheet, TimesheetStatus } from '@gauzy/contracts';
 import { isEmpty } from '@gauzy/common-angular';
 import { NbMenuItem, NbMenuService } from '@nebular/theme';
 import { debounceTime, filter, map, tap } from 'rxjs/operators';
@@ -12,9 +14,16 @@ import { Subject } from 'rxjs/internal/Subject';
 import { Observable } from 'rxjs/internal/Observable';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { TimesheetService, TimesheetFilterService } from './../../../../../@shared/timesheet';
+import {
+	TimesheetService,
+	TimesheetFilterService
+} from './../../../../../@shared/timesheet';
 import { BaseSelectorFilterComponent } from './../../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
-import { DateRangePickerBuilderService, Store, ToastrService } from './../../../../../@core/services';
+import {
+	DateRangePickerBuilderService,
+	Store,
+	ToastrService
+} from './../../../../../@core/services';
 import { GauzyFiltersComponent } from './../../../../../@shared/timesheet/gauzy-filters/gauzy-filters.component';
 
 @UntilDestroy({ checkProperties: true })
@@ -23,9 +32,10 @@ import { GauzyFiltersComponent } from './../../../../../@shared/timesheet/gauzy-
 	templateUrl: './approvals.component.html',
 	styleUrls: ['./approvals.component.scss']
 })
-export class ApprovalsComponent extends BaseSelectorFilterComponent 
-	implements AfterViewInit, OnInit, OnDestroy {
-
+export class ApprovalsComponent
+	extends BaseSelectorFilterComponent
+	implements AfterViewInit, OnInit, OnDestroy
+{
 	logRequest: ITimeLogFilters = this.request;
 	timesheets: ITimesheet[] = [];
 
@@ -39,8 +49,16 @@ export class ApprovalsComponent extends BaseSelectorFilterComponent
 
 	allChecked: boolean;
 
-	@ViewChild(GauzyFiltersComponent) gauzyFiltersComponent: GauzyFiltersComponent;
-	datePickerConfig$: Observable<any> = this._dateRangePickerBuilderService.datePickerConfig$;
+	@ViewChild(GauzyFiltersComponent)
+	gauzyFiltersComponent: GauzyFiltersComponent;
+	datePickerConfig$: Observable<any> =
+		this._dateRangePickerBuilderService.datePickerConfig$;
+
+	selectedTimesheet = {
+		data: null,
+		isSelected: false
+	};
+	disable = true;
 
 	constructor(
 		private readonly timesheetService: TimesheetService,
@@ -61,7 +79,7 @@ export class ApprovalsComponent extends BaseSelectorFilterComponent
 			.pipe(
 				debounceTime(500),
 				tap(() => this.getTimeSheets()),
-				tap(() => this.allChecked = false),
+				tap(() => (this.allChecked = false)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -94,17 +112,21 @@ export class ApprovalsComponent extends BaseSelectorFilterComponent
 		}
 		this.loading = true;
 		try {
-			this.timesheets = await this.timesheetService.getTimeSheets({
-				...this.getFilterRequest(this.logRequest),
-			})
-			.finally(() => this.loading = false);
+			this.timesheets = await this.timesheetService
+				.getTimeSheets({
+					...this.getFilterRequest(this.logRequest)
+				})
+				.finally(() => (this.loading = false));
 		} catch (error) {
-			console.log('Error while getting timesheets for selected date range')
+			console.log(
+				'Error while getting timesheets for selected date range'
+			);
 		}
 	}
 
 	updateStatus(timesheetIds: string | string[], status: TimesheetStatus) {
-		this.timesheetService.updateStatus(timesheetIds, status)
+		this.timesheetService
+			.updateStatus(timesheetIds, status)
 			.then(() => {
 				if (status === TimesheetStatus.APPROVED) {
 					this.toastrService.success('TIMESHEET.APPROVE_SUCCESS');
@@ -121,7 +143,8 @@ export class ApprovalsComponent extends BaseSelectorFilterComponent
 		timesheetIds: string | string[],
 		status: 'submit' | 'unsubmit'
 	) {
-		this.timesheetService.submitTimesheet(timesheetIds, status)
+		this.timesheetService
+			.submitTimesheet(timesheetIds, status)
 			.then(() => {
 				if (status === 'submit') {
 					this.toastrService.success('TIMESHEET.SUBMIT_SUCCESS');
@@ -136,15 +159,13 @@ export class ApprovalsComponent extends BaseSelectorFilterComponent
 
 	/**
 	 * Bulk action for APPROVED/DENIED timesheet
-	 * 
-	 * @param status 
+	 *
+	 * @param status
 	 */
 	bulkAction(status: TimesheetStatus) {
-		const timeSheetIds = this.timesheets.filter(
-			(timesheet: ITimesheet) => timesheet['checked']
-		).map(
-			(timesheet: ITimesheet) => timesheet.id
-		);
+		const timeSheetIds = this.timesheets
+			.filter((timesheet: ITimesheet) => timesheet['checked'])
+			.map((timesheet: ITimesheet) => timesheet.id);
 		if (status === TimesheetStatus.APPROVED) {
 			this.updateStatus(timeSheetIds, TimesheetStatus.APPROVED);
 		}
@@ -155,46 +176,49 @@ export class ApprovalsComponent extends BaseSelectorFilterComponent
 
 	/**
 	 * Redirect to timesheet inner page
-	 * 
-	 * @param timesheet 
-	 * @returns 
+	 *
+	 * @param timesheet
+	 * @returns
 	 */
 	redirectToView(timesheet: ITimesheet) {
-		if (!timesheet) { return; }
+		if (!timesheet) {
+			return;
+		}
 
-		this.router.navigate([
-			'/pages/employees/timesheets', timesheet.id
-		]);
+		this.router.navigate(['/pages/employees/timesheets', timesheet.id]);
 	}
 
 	/**
 	 * Checked/Un-Checked Checkbox
-	 * 
-	 * @param checked 
+	 *
+	 * @param checked
 	 */
 	checkedAll(checked: boolean) {
 		this.allChecked = checked;
-		this.timesheets.forEach((timesheet: any) => timesheet.checked = checked);
+		this.timesheets.forEach(
+			(timesheet: any) => (timesheet.checked = checked)
+		);
 	}
 
 	/**
 	 * Is Indeterminate
-	 * 
-	 * @returns 
+	 *
+	 * @returns
 	 */
 	isIndeterminate() {
-		const c1 = (this.timesheets.filter((t: any) => t.checked).length > 0);
+		const c1 = this.timesheets.filter((t: any) => t.checked).length > 0;
 		return c1 && !this.allChecked;
 	}
 
 	/**
 	 * Checkbox Toggle For Every Timesheet
-	 * 
-	 * @param checked 
-	 * @param timesheet 
+	 *
+	 * @param checked
+	 * @param timesheet
 	 */
 	toggleCheckbox(checked: boolean, timesheet: ITimesheet) {
 		timesheet['checked'] = checked;
+		this.selectTimesheet(timesheet);
 		this.allChecked = this.timesheets.every((t: any) => t.checked);
 	}
 
@@ -213,7 +237,7 @@ export class ApprovalsComponent extends BaseSelectorFilterComponent
 	/**
 	 * Create bulk action context menus
 	 */
-	 private _createContextMenus() {
+	private _createContextMenus() {
 		this.contextMenus = [
 			{
 				title: this.getTranslation('TIMESHEET.APPROVE'),
@@ -251,7 +275,28 @@ export class ApprovalsComponent extends BaseSelectorFilterComponent
 				text: status,
 				class: badgeClass
 			};
-		}	
+		}
+	};
+
+	public selectTimesheet(timesheet: ITimesheet) {
+		if (
+			this.selectedTimesheet.data &&
+			this.selectedTimesheet.data.id === timesheet?.id
+		) {
+			this.clearData();
+		} else {
+			this.disable = true;
+			this.selectedTimesheet.isSelected = this.disable;
+			this.selectedTimesheet.data = timesheet;
+		}
+	}
+
+	public clearData() {
+		this.selectedTimesheet = {
+			data: null,
+			isSelected: false
+		};
+		this.disable = true;
 	}
 
 	ngOnDestroy(): void {}
