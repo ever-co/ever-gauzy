@@ -1,6 +1,6 @@
 import { Controller, Get, HttpStatus, Query, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { IPagination } from '@gauzy/contracts';
+import { IContact, IPagination } from '@gauzy/contracts';
 import { CrudController } from './../core/crud';
 import { Contact } from './contact.entity';
 import { ContactService } from './contact.service';
@@ -20,7 +20,7 @@ export class ContactController extends CrudController<Contact> {
 	})
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Found contact recurring expense',
+		description: 'Found contact',
 		type: Contact
 	})
 	@ApiResponse({
@@ -28,9 +28,9 @@ export class ContactController extends CrudController<Contact> {
 		description: 'Record not found'
 	})
 	@Get()
-	async getAllContact(
+	async findAll(
 		@Query('data', ParseJsonPipe) data: any
-	): Promise<IPagination<Contact>> {
+	): Promise<IPagination<IContact>> {
 		const { relations, findInput } = data;
 		return this.contactService.findAll({ where: findInput, relations });
 	}
