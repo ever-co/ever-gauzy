@@ -5,7 +5,7 @@ import { ComponentLayoutStyleEnum } from '@gauzy/contracts';
 @Component({
 	selector: 'ngx-contact-action',
 	templateUrl: './contact-action.component.html',
-	styleUrls:['../../contact.component.scss']
+	styleUrls:['../../contacts.component.scss']
 })
 export class ContactActionComponent implements ViewCell {
 	@Input()

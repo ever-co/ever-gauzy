@@ -7,7 +7,7 @@ import {
 	ChangeDetectorRef,
 	TemplateRef
 } from '@angular/core';
-import { ActivatedRoute, Data, NavigationEnd, Router } from '@angular/router';
+import { ActivatedRoute, Data, Router } from '@angular/router';
 import {
 	IOrganizationContact,
 	IOrganizationContactCreateInput,
@@ -21,7 +21,7 @@ import {
 } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { combineLatest, Subject, firstValueFrom, map, switchMap, mergeMap } from 'rxjs';
+import { combineLatest, Subject, firstValueFrom } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -64,9 +64,9 @@ export class ContactsComponent extends PaginationFilterBaseComponent
 	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
 	contactOrganizationInviteStatus = ContactOrganizationInviteStatus;
 	settingsSmartTable: object;
-	disableButton = true;
 	countries: ICountry[] = [];
-	loading: boolean;
+	disableButton: boolean = true;
+	loading: boolean = false;
 	smartTableSource = new LocalDataSource();
 
 	subject$: Subject<any> = new Subject();
@@ -111,7 +111,6 @@ export class ContactsComponent extends PaginationFilterBaseComponent
 		private readonly _router: Router,
 	) {
 		super(translateService);
-		this.setView();
 		this.countryService.find$.next(true);
 	}
 
@@ -120,6 +119,7 @@ export class ContactsComponent extends PaginationFilterBaseComponent
 		this.route.data
 			.pipe(
 				tap((params: Data) => this.contactType = params.contactType),
+				tap(() => this.setView()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -306,7 +306,20 @@ export class ContactsComponent extends PaginationFilterBaseComponent
 	}
 
 	setView() {
-		this.viewComponentName = ComponentEnum.CONTACTS;
+		switch (this.contactType) {
+			case ContactType.CUSTOMER:
+				this.viewComponentName = ComponentEnum.CUSTOMERS;
+				break;
+			case ContactType.CLIENT:
+				this.viewComponentName = ComponentEnum.CLIENTS;
+				break;
+			case ContactType.LEAD:
+				this.viewComponentName = ComponentEnum.LEADS;
+				break;
+			default:
+				this.viewComponentName = ComponentEnum.CUSTOMERS;
+				break;
+		}
 		this.store
 			.componentLayout$(this.viewComponentName)
 			.pipe(

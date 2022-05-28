@@ -22,23 +22,19 @@
 		</div>
 	</nb-card-header>
 	<nb-card-body class="custom-card">
-		<div style="display: flex">
-			<ng-container *ngIf="showAddCard">
+		<ng-container *ngIf="showAddCard; else layout">
+			<div style="display: flex">
 				<ga-contact-mutation
 					class="w-100"
 					[contactType]="contactType"
 					[organizationContact]="selectedOrganizationContact"
-					[projectsWithoutOrganizationContacts]="
-						projectsWithoutOrganizationContacts
-					"
+					[projectsWithoutOrganizationContacts]="projectsWithoutOrganizationContacts"
 					(canceled)="cancel()"
-					(addOrEditOrganizationContact)="
-						addOrEditOrganizationContact($event)
-					"
+					(addOrEditOrganizationContact)="addOrEditOrganizationContact($event)"
 				></ga-contact-mutation>
-			</ng-container>
-		</div>
-		<ng-container *ngIf="!showAddCard">
+			</div>
+		</ng-container>
+		<ng-template #layout>
 			<ng-template
 				[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
 				[ngIfElse]="gridLayout"
@@ -81,7 +77,7 @@
 					[activePage]="pagination?.activePage"
 				></ga-card-grid>
 			</ng-template>
-		</ng-container>
+		</ng-template>
 	</nb-card-body>
 </nb-card>
 
