@@ -5,9 +5,12 @@ import {
 	HttpCode,
 	HttpStatus,
 	Param,
+	Post,
 	Put,
 	Query,
-	UseGuards
+	UseGuards,
+	UsePipes,
+	ValidationPipe
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
@@ -17,13 +20,14 @@ import {
 	IPagination,
 	PermissionsEnum
 } from '@gauzy/contracts';
-import { CrudController } from './../core/crud';
-import { OrganizationContactEditByEmployeeCommand } from './commands';
+import { CrudController, PaginationParams } from './../core/crud';
+import { OrganizationContactCreateCommand, OrganizationContactEditByEmployeeCommand } from './commands';
 import { OrganizationContact } from './organization-contact.entity';
 import { OrganizationContactService } from './organization-contact.service';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
+import { CreateOrganizationContactDTO } from './dto';
 
 @ApiTags('OrganizationContact')
 @UseGuards(TenantPermissionGuard)
@@ -34,6 +38,50 @@ export class OrganizationContactController extends CrudController<OrganizationCo
 		private readonly commandBus: CommandBus
 	) {
 		super(organizationContactService);
+	}
+
+	/**
+	 * GET organization contact count
+	 * 
+	 * @param filter 
+	 * @returns 
+	 */
+	@ApiOperation({ summary: 'Find all organization contact counts in the same tenant' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found organization contact count'
+	})
+	@Get('count')
+	async getCount(
+		@Query() filter: PaginationParams<IOrganizationContact>
+	): Promise<number> {
+		return await this.organizationContactService.count(filter);
+	}
+
+	/**
+	 * GET all organization contact by Pagination
+	 * 
+	 * @param filter 
+	 * @returns 
+	 */
+	@ApiOperation({ summary: 'Find all organization contacts in the same tenant using pagination.' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found organization contacts in the tenant',
+		type: OrganizationContact
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_CONTACT_VIEW)
+	@Get('pagination')
+	@UsePipes(new ValidationPipe({ transform: true }))
+	async pagination(
+		@Query() filter: PaginationParams<IOrganizationContact>
+	): Promise<IPagination<IOrganizationContact>> {
+		return this.organizationContactService.paginate(filter);
 	}
 
 	/**
@@ -123,13 +171,31 @@ export class OrganizationContactController extends CrudController<OrganizationCo
 	}
 
 	/**
+	 * CREATE organization contact
+	 * 
+	 * @param body 
+	 * @returns 
+	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_CONTACT_EDIT)
+	@Post()
+	@UsePipes(new ValidationPipe({ transform: true }))
+	async create(
+		@Body() body: CreateOrganizationContactDTO
+	): Promise<IOrganizationContact> {
+		return this.commandBus.execute(
+			new OrganizationContactCreateCommand(body)
+		);
+	}
+
+	/**
 	 * GET organization contacts by id
 	 * 
 	 * @param id 
 	 * @param data 
 	 * @returns 
 	 */
-	 @ApiOperation({
+	@ApiOperation({
 		summary: 'Get organization contacts by id.'
 	})
 	@ApiResponse({
