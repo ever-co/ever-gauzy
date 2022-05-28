@@ -9,6 +9,7 @@ import {
 	IsEmail,
 	IsEnum,
 	IsNotEmpty,
+	IsNumber,
 	IsOptional,
 	IsString,
 	MaxLength
@@ -54,7 +55,7 @@ export class OrganizationContactDTO extends TenantOrganizationBaseDTO {
 
     @ApiPropertyOptional({ type: () => Number, readOnly: true })
 	@IsOptional()
-	@IsString()
+	@IsNumber()
 	readonly budget: number;
 
     @ApiPropertyOptional({ type: () => String, enum: OrganizationContactBudgetTypeEnum, readOnly: true })
