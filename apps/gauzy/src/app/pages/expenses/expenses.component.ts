@@ -16,7 +16,7 @@ import { combineLatest, Subject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { distinctUntilChange, isNotEmpty, toUTC } from '@gauzy/common-angular';
+import { distinctUntilChange, employeeMapper, isNotEmpty, toUTC } from '@gauzy/common-angular';
 import * as moment from 'moment';
 import { Ng2SmartTableComponent } from 'ng2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
@@ -280,20 +280,6 @@ export class ExpensesComponent extends PaginationFilterBaseComponent
 		this.router.navigate(['/pages/accounting/expenses/categories']);
 	}
 
-	private employeeMapper(row: any) {
-		return {
-			name:
-				row.employee && row.employee.user
-					? row.employee.fullName
-					: null,
-			id: row.employee ? row.employee.id : null,
-			imageUrl:
-				row.employee && row.employee.user
-					? row.employee.user.imageUrl
-					: null
-		};
-	}
-
 	async addExpense(expense: IExpense) {
 		try {
 			const { tenantId } = this.store.user;
@@ -488,7 +474,7 @@ export class ExpensesComponent extends PaginationFilterBaseComponent
 					categoryName: expense.category ? expense.category.name : null,
 					projectName: expense.project ? expense.project.name : null,
 					statuses: this.statusMapper(expense.status),
-					employee: { ...this.employeeMapper(expense) }
+					employee: { ... employeeMapper(expense) }
 				});
 			},
 			finalize: () => {

@@ -12,7 +12,7 @@ import {
 } from '@gauzy/contracts';
 import { Subject } from 'rxjs';
 import { combineLatest } from 'rxjs';
-import { distinctUntilChange, toUTC } from '@gauzy/common-angular';
+import { distinctUntilChange, employeeMapper, toUTC } from '@gauzy/common-angular';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { Ng2SmartTableComponent } from 'ng2-smart-table';
@@ -257,20 +257,6 @@ export class IncomeComponent extends PaginationFilterBaseComponent
 		};
 	}
 
-	private employeeMapper(row: any) {
-		return {
-			name:
-				row.employee && row.employee.user
-					? row.employee.fullName
-					: null,
-			id: row.employee ? row.employee.id : null,
-			imageUrl:
-				row.employee && row.employee.user
-					? row.employee.user.imageUrl
-					: null
-		};
-	}
-
 	private _applyTranslationOnSmartTable() {
 		this.translateService.onLangChange
 			.pipe(
@@ -488,7 +474,7 @@ export class IncomeComponent extends PaginationFilterBaseComponent
 						? income.employee.fullName
 						: null,
 					clientName: income.client ? income.client.name : null,
-					employee: { ...this.employeeMapper(income) }
+					employee: { ...employeeMapper(income) }
 				});
 			},
 			finalize: () => {
