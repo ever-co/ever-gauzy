@@ -1,10 +1,17 @@
-import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
+import {
+	Component,
+	OnInit,
+	ViewChild,
+	OnDestroy,
+	AfterViewInit,
+	Input
+} from '@angular/core';
 import { NbDialogRef, NbDialogService } from '@nebular/theme';
 import {
 	FormBuilder,
 	Validators,
 	FormGroup,
-	AbstractControl
+	FormControl
 } from '@angular/forms';
 import {
 	TaxTypesEnum,
@@ -12,30 +19,24 @@ import {
 	ITag,
 	IOrganizationContact,
 	IOrganizationProject,
-	ExpenseStatusesEnum,
-	ContactType,
-	IExpenseViewModel,
-	ICurrency,
 	ISelectedEmployee,
-	IOrganization
+	IOrganization,
+	IExpense,
+	ExpenseStatusesEnum,
+	ICurrency
 } from '@gauzy/contracts';
-import { isEmpty } from '@gauzy/common-angular';
+import { distinctUntilChange, isEmpty } from '@gauzy/common-angular';
+import { TranslateService } from '@ngx-translate/core';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { filter, tap } from 'rxjs/operators';
 import {
 	EmployeeSelectorComponent,
 	ALL_EMPLOYEES_SELECTED
 } from '../../../@theme/components/header/selectors/employee';
 import { AttachReceiptComponent } from './attach-receipt/attach-receipt.component';
-import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { filter, tap } from 'rxjs/operators';
-import { 
-	ErrorHandlingService,
-	OrganizationContactService,
-	OrganizationProjectsService,
-	Store,
-	ToastrService 
-} from '../../../@core/services';
+import { Store } from '../../../@core/services';
+import { FormHelpers } from '../../forms';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -43,54 +44,41 @@ import {
 	templateUrl: './expenses-mutation.component.html',
 	styleUrls: ['./expenses-mutation.component.scss']
 })
-export class ExpensesMutationComponent
-	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
+export class ExpensesMutationComponent extends TranslationBaseComponent 
+	implements AfterViewInit, OnInit, OnDestroy {
+
+	FormHelpers: typeof FormHelpers = FormHelpers;
 
 	@ViewChild('employeeSelector', { static: false })
 	employeeSelector: EmployeeSelectorComponent;
 
-	expense: IExpenseViewModel;
-	organizationId: string;
-	tenantId: string;
-	typeOfExpense: string;
+	/*
+	* Getter & Setter for expense
+	*/
+	_expense: IExpense;
+	get expense(): IExpense {
+		return this._expense;
+	}
+	@Input() set expense(expense: IExpense) {
+		if (expense) {
+			this._expense = expense;
+			this._initializeForm();
+		}
+	}
+
 	expenseTypes = Object.values(ExpenseTypesEnum);
+	expenseTypesEnum = ExpenseTypesEnum;
 	taxTypes = Object.values(TaxTypesEnum);
-	expenseStatuses = Object.values(ExpenseStatusesEnum);
-	organizationContact: IOrganizationContact;
-	organizationContacts: {
-		name: string;
-		organizationContactId: string;
-	}[] = [];
-	project: IOrganizationProject;
-	projects: { name: string; projectId: string }[] = [];
+	public statuses: string[] = [];
 	defaultImage = './assets/images/others/invoice-template.png';
 	calculatedValue = '0';
 	duplicate: boolean;
-	showNotes = false;
-	showWarning = false;
-	disable = true;
-	loading = false;
-	tags: ITag[] = [];
-	selectedTags: any;
-	valueDate: AbstractControl;
-	amount: AbstractControl;
-	notes: AbstractControl;
-	showTooltip = false;
-	disableStatuses = false;
-	averageExpense = 0;
-	translatedTaxTypes = [];
-	organization: IOrganization;
-	selectedEmployee: ISelectedEmployee
-
-	_showTaxesInput = false;
-	public get showTaxesInput(): boolean {
-		return this._showTaxesInput;
-	}
-	public set showTaxesInput(value: boolean) {
-		this._showTaxesInput = value;
-	}
-
+	showNotes: boolean = false;
+	showWarning: boolean = false;
+	showTooltip: boolean = false;
+	showTaxesInput: boolean = false;
+	
+	public organization: IOrganization;
 	/*
 	* Expense Mutation Form 
 	*/
@@ -101,21 +89,24 @@ export class ExpensesMutationComponent
 	): FormGroup {
 		return fb.group({
 			amount: ['', Validators.required],
-			vendor: [null],
-			typeOfExpense: [self.expenseTypes[0]],
-			category: [null],
-			notes: [''],
-			currency: [''],
-			valueDate: [ self.store.getDateFromOrganizationSettings(), Validators.required ],
-			purpose: [''],
-			organizationContact: [null],
-			project: [null],
+			vendor: [],
+			typeOfExpense: [ExpenseTypesEnum.TAX_DEDUCTIBLE],
+			category: [],
+			notes: [],
+			currency: ['', Validators.required],
+			valueDate: [self.store.getDateFromOrganizationSettings(), Validators.required],
+			purpose: [],
+			organizationContact: [],
+			organizationContactId: [],
+			projectId: [],
+			project: [],
 			taxType: [TaxTypesEnum.PERCENTAGE],
-			taxLabel: [''],
+			taxLabel: [],
 			rateValue: [0],
 			receipt: [self.defaultImage],
 			splitExpense: [false],
 			tags: [],
+			employee: [],
 			status: []
 		});
 	}
@@ -125,11 +116,7 @@ export class ExpensesMutationComponent
 		private readonly dialogService: NbDialogService,
 		private readonly fb: FormBuilder,
 		private readonly store: Store,
-		private readonly organizationContactService: OrganizationContactService,
-		private readonly organizationProjectsService: OrganizationProjectsService,
-		private readonly toastrService: ToastrService,
-		readonly translateService: TranslateService,
-		private readonly errorHandler: ErrorHandlingService
+		public readonly translateService: TranslateService
 	) {
 		super(translateService);
 	}
@@ -137,36 +124,70 @@ export class ExpensesMutationComponent
 	ngOnInit() {
 		this.store.selectedOrganization$
 			.pipe(
-				filter((organization) => !!organization),
-				tap((organization: IOrganization) => {
-					this.tenantId = this.store.user.tenantId;
-					this.organization = organization;
-					this.organizationId = organization.id;
+				distinctUntilChange(),
+				filter((organization: IOrganization) => !!organization),
+				tap((organization: IOrganization) => this.organization = organization),
+				tap(() => {
+					const typeOfExpense = <FormControl>this.form.get('typeOfExpense');
+					this.setExpenseStatuses(typeOfExpense.value);
 				}),
-				tap(() => this.getOrganizationContacts()),
-				tap(() => this.getProjects()),
 				untilDestroyed(this)
 			)
-			.subscribe(() => {
-				this.getTranslatedTaxTypes()
-				this._initializeForm();
-				this.changeExpenseType(this.form.value.typeOfExpense);
-			});
+			.subscribe();
 	}
 
-	get currency() {
-		return this.form.get('currency');
+	ngAfterViewInit() {}
+
+	/**
+	 * Added statuses dropdown selector
+	 */
+	setExpenseStatuses(typeOfExpense: ExpenseTypesEnum) {
+		const statuses = Object.values(ExpenseStatusesEnum);
+		if (typeOfExpense === ExpenseTypesEnum.BILLABLE_TO_CONTACT) {
+			this.statuses = statuses.filter(
+				(status: ExpenseStatusesEnum) => status != ExpenseStatusesEnum.NOT_BILLABLE
+			);
+		} else {
+			this.statuses = statuses.filter(
+				(status: ExpenseStatusesEnum) => status == ExpenseStatusesEnum.NOT_BILLABLE
+			);
+		}
 	}
 
-	selectOrganizationContact($event) {
-		this.organizationContact = $event;
+	/**
+	 * Selected Organization Contact
+	 * 
+	 * @param contact 
+	 */
+	selectedOrganizationContact(contact: IOrganizationContact) {
+		if (contact) {
+			this.form.get('organizationContactId').setValue(contact.id);
+			this.form.get('organizationContactId').updateValueAndValidity();
+		}
 	}
-	selectProject($event) {
-		this.project = $event;
+
+	/**
+	 * Selected Project
+	 * 
+	 * @param project 
+	 */
+	selectedProject(project: IOrganizationProject) {
+		this.form.get('project').setValue(project);
+		this.form.get('project').updateValueAndValidity();
+	}
+
+	/**
+	 * Selected Tags Handler
+	 * 
+	 * @param tags 
+	 */
+	 selectedTagsHandler(tags: ITag[]) {
+		this.form.get('tags').setValue(tags);
+		this.form.get('tags').updateValueAndValidity();
 	}
 
 	async addOrEditExpense() {
-		const { typeOfExpense, organizationContact, project } = this.form.value;
+		const { typeOfExpense, organizationContact } = this.form.getRawValue();		
 		if (typeOfExpense === ExpenseTypesEnum.BILLABLE_TO_CONTACT && !organizationContact) {
 			this.showWarning = true;
 			setTimeout(() => {
@@ -177,86 +198,27 @@ export class ExpensesMutationComponent
 			this.closeWarning();
 		}
 
-		if (organizationContact === null) {
-			this.form.patchValue({
-				organizationContactName: null,
-				organizationContactId: null
-			});
+		if (this.form.invalid) {
+			return;
 		}
-
-		if (project === null) {
-			this.form.patchValue({
-				projectName: null,
-				projectId: null
-			});
-		}
-
-		if ( typeOfExpense !== ExpenseTypesEnum.BILLABLE_TO_CONTACT) {
-			this.form.patchValue({
-				status: this.getTranslation('EXPENSES_PAGE.MUTATION.NOT_BILLABLE')
-			});
-		}
-
-		this.dialogRef.close(
-			Object.assign(
-				{ employee: this.employeeSelector.selectedEmployee },
-				this.form.value,
-				{ splitExpense: this.showTooltip }
-			)
-		);
+		this.dialogRef.close(Object.assign(this.form.getRawValue(), {
+			splitExpense: this.showTooltip
+		}));
 	}
-
-	addNewOrganizationContact = (
-		name: string
-	): Promise<IOrganizationContact> => {
-		try {
-			this.toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CONTACTS.ADD_CONTACT', {
-				name
-			});
-			const { tenantId, organizationId } = this;
-			return this.organizationContactService.create({
-				name,
-				contactType: ContactType.CLIENT,
-				organizationId,
-				tenantId
-			});
-		} catch (error) {
-			this.errorHandler.handleError(error);
-		}
-	};
-
-	addNewProject = (name: string): Promise<IOrganizationProject> => {
-		const { tenantId, organizationId } = this;
-		try {
-			this.toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.ADD_PROJECT', {
-				name
-			});
-			return this.organizationProjectsService.create({
-				name,
-				organizationId,
-				tenantId
-			});
-		} catch (error) {
-			this.errorHandler.handleError(error);
-		}
-	};
 
 	showNotesInput() {
 		return (this.showNotes = !this.showNotes);
 	}
 
 	includeTaxes() {
-		if (this.form.value.taxType) {
-			this.disable = false;
-		}
 		this.calculateTaxes();
 		return (this.showTaxesInput = !this.showTaxesInput);
 	}
 
 	private _initializeForm() {
 		if (this.expense) {
+			const { project, organizationContact } = this.expense;
 			this.form.patchValue({
-				id: this.expense.id,
 				amount: this.expense.amount,
 				vendor: this.expense.vendor,
 				typeOfExpense: this.expense.typeOfExpense,
@@ -265,15 +227,18 @@ export class ExpensesMutationComponent
 				currency: this.expense.currency,
 				valueDate: new Date(this.expense.valueDate),
 				purpose: this.expense.purpose,
-				organizationContact: this.expense.organizationContact,
-				project: this.expense.project,
+				organizationContact: organizationContact,
+				organizationContactId: (organizationContact) ? organizationContact.id : null,
+				project: project,
+				projectId: (project) ? project.id : null,
 				taxType: this.expense.taxType,
 				taxLabel: this.expense.taxLabel,
 				rateValue: this.expense.rateValue,
 				receipt: this.expense.receipt,
 				splitExpense: this.expense.splitExpense,
 				tags: this.expense.tags,
-				status: this.expense.status
+				status: this.expense.status,
+				employee: this.expense.employee
 			});
 			if (this.expense.taxLabel) {
 				this.includeTaxes();
@@ -281,17 +246,7 @@ export class ExpensesMutationComponent
 			if (this.expense.notes) {
 				this.showNotesInput();
 			}
-		} else {
-			const { currency } = this.organization;
-			if (this.currency && !this.currency.value) {
-				this.currency.setValue(currency);
-				this.currency.updateValueAndValidity();
-			}
 		}
-		this.valueDate = this.form.get('valueDate');
-		this.amount = this.form.get('amount');
-		this.notes = this.form.get('notes');
-		this.tags = this.form.get('tags').value || [];
 	}
 
 	private calculateTaxes() {
@@ -326,34 +281,6 @@ export class ExpensesMutationComponent
 		});
 	}
 
-	private async getOrganizationContacts() {
-		const { tenantId, organizationId } = this;
-		const { items = [] } = await this.organizationContactService.getAll(['projects'], {
-			organizationId,
-			tenantId
-		});
-		this.organizationContacts = items.map((organizationContact) => {
-			return {
-				name: organizationContact.name,
-				organizationContactId: organizationContact.id
-			}
-		});
-	}
-
-	private async getProjects() {
-		const { tenantId, organizationId } = this;
-		const { items = [] } = await this.organizationProjectsService.getAll(['organizationContact'], {
-			organizationId,
-			tenantId
-		});
-		this.projects = items.map((project) => {
-			return {
-				name: project.name,
-				projectId: project.id
-			}
-		});
-	}
-
 	closeWarning() {
 		this.showWarning = !this.showWarning;
 	}
@@ -367,61 +294,37 @@ export class ExpensesMutationComponent
 			})
 			.onClose
 			.pipe(
-				tap((newReceipt) => {
-					this.form.patchValue({
-						receipt: newReceipt
-					})
+				tap((receipt) => {
+					this.form.get('receipt').setValue(receipt);
+					this.form.get('receipt').updateValueAndValidity();
 				}),
 				untilDestroyed(this)
 			)
 			.subscribe();
 	}
 
-	selectedTagsHandler(currentSelection: ITag) {
-		this.form.patchValue({
-			tags: currentSelection
-		});
-	}
-
-	onEmployeeChange(selectedEmployee: ISelectedEmployee) {
-		this.selectedEmployee = selectedEmployee;
+	onEmployeeChange(employee: ISelectedEmployee) {
+		if (employee) {
+			this.form.patchValue({ employee: employee });
+			this.form.updateValueAndValidity();
+		}
 		this.showTooltip = (
 			isEmpty(this.employeeSelector) || 
 			this.employeeSelector.selectedEmployee === ALL_EMPLOYEES_SELECTED
 		);
 	}
 
-	changeExpenseType($event) {
-		this.disableStatuses = $event !== ExpenseTypesEnum.BILLABLE_TO_CONTACT;
-	}
-
-	getTranslatedTaxTypes() {
-		this.taxTypes.forEach((element) => {
-			this.translatedTaxTypes.push({
-				value: `${element}`,
-				label: this.getTranslation(`EXPENSES_PAGE.MUTATION.${element}`)
-			});
-		});
-	}
-
 	close() {
 		this.dialogRef.close();
-	}
-
-	isInvalidControl(control: string) {
-		if (!this.form.contains(control)) {
-			return true;
-		}
-		return (
-			(this.form.get(control).touched || this.form.get(control).dirty)
-			 && this.form.get(control).invalid
-		);
 	}
 
 	/*
 	 * On Changed Currency Event Emitter
 	 */
-	currencyChanged($event: ICurrency) {}
+	currencyChanged(currency: ICurrency) {
+		this.form.get('currency').setValue(currency.isoCode);
+		this.form.get('currency').updateValueAndValidity();
+	}
 
 	ngOnDestroy() {
 		clearTimeout();

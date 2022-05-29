@@ -1,7 +1,12 @@
-import { TenantOrganizationBaseDTO } from "core/dto";
-import { CurrenciesEnum, IOrganizationContact, IOrganizationProject, ITag } from "@gauzy/contracts";
+import {
+    CurrenciesEnum,
+    ExpenseStatusesEnum,
+    IOrganizationContact,
+    IOrganizationProject
+} from "@gauzy/contracts";
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { IsBoolean, IsEnum, IsNotEmpty, IsObject, IsOptional, IsString } from "class-validator";
+import { TenantOrganizationBaseDTO } from "./../../core/dto";
 
 export class ExpenseDTO extends TenantOrganizationBaseDTO {
 
@@ -62,14 +67,10 @@ export class ExpenseDTO extends TenantOrganizationBaseDTO {
     @IsBoolean()
     readonly splitExpense: boolean;
 
-    @ApiProperty({ type: () => String, readOnly: true })
+    @ApiProperty({ type: () => String, enum: ExpenseStatusesEnum, readOnly: true })
     @IsOptional()
-    @IsString()
-    readonly status: string;
-
-    @ApiPropertyOptional({ type: () => Object, isArray: true, readOnly: true  })
-    @IsOptional()
-    readonly tags: ITag[];
+    @IsEnum(ExpenseStatusesEnum)
+    readonly status: ExpenseStatusesEnum;
 
     @ApiProperty({ type: () => Object, readOnly: true })
     @IsOptional()
@@ -90,5 +91,4 @@ export class ExpenseDTO extends TenantOrganizationBaseDTO {
     @IsOptional()
     @IsObject()
     readonly organizationContact: IOrganizationContact;
-
 }

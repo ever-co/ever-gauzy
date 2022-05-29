@@ -1,46 +1,52 @@
 @import 'report';
+
 .card-layout {
   display: grid;
-  grid-template-columns: repeat(auto-fill, 336px);
-  grid-area: 346px;
-  grid-gap: 10px;
-  justify-content: space-evenly;
+  grid-template-columns: repeat(auto-fill, minmax(21rem, 1fr));
+  -webkit-box-align: center;
+  align-items: center;
+  -webkit-box-pack: start;
+  justify-content: start;
+  column-gap: 1rem;
+  grid-gap: 1rem;
   color: nb-theme(color-basic-default);
-  padding: 0;
-  margin: 0;
-  overflow-y: scroll;
+  overflow-y: auto;
+
   .card-item {
     display: flex;
     flex-direction: column;
-    width: 336px;
+    //width: 336px;
     border-radius: 0.5rem;
     background-color: nb-theme(background-basic-color-3);
     box-shadow: 0px 1px 1px 0px rgba(0, 0, 0, 0.15);
     cursor: pointer;
+
     .card-body {
       background-color: nb-theme(background-basic-color-3);
       border-radius: 0.5rem;
       padding: 12px 10px;
+
       &.active {
         box-shadow: nb-theme(color-primary-active-border) 0px 1px 2px 0px,
           nb-theme(color-primary-hover-border) 0px 1px 3px 1px;
       }
     }
+
     &:hover {
       border-color: nb-theme(color-primary-hover-border);
     }
+
     &:focus {
       border-color: nb-theme(color-primary-focus-border);
     }
-    &.big {
-      width: 336px;
-    }
+
     .info-line {
       display: flex;
       flex-direction: row;
       justify-content: space-between;
       font-size: 0.7em;
       width: 100%;
+
       .info-meta {
         background-color: nb-theme(background-basic-color-1);
         padding: 6px 10px;
@@ -48,6 +54,7 @@
         width: 88%;
         margin: 0px 2px 4px 0px;
       }
+
       .info-value {
         text-align: start;
         font-size: 1em;
@@ -57,28 +64,34 @@
         width: 100%;
         margin: 0px 0px 4px 2px;
         position: relative;
+
         .custom::ng-deep {
           .img-container {
             width: 100%;
-            img{
+
+            img {
               height: 132px;
               width: 100%;
             }
           }
+
           ga-notes-with-tags,
           ga-only-tags {
             .tags-right {
               justify-content: start;
             }
           }
-          ngx-tags-color{
-            div{
+
+          ngx-tags-color {
+            div {
               margin: 0;
-              .color{
+
+              .color {
                 width: 100%;
               }
             }
           }
+
           ngx-status-view {
             height: 2rem;
             width: 100%;
@@ -86,6 +99,7 @@
             left: 0;
             bottom: 0;
             margin: 0;
+
             .badge {
               position: absolute;
               height: 2rem;
@@ -95,12 +109,14 @@
               justify-content: center;
             }
           }
+
           ga-status-badge {
             width: 100%;
             position: absolute;
             left: 0;
             top: 0;
             margin: 0;
+
             .badge {
               height: 2rem;
               display: flex;
@@ -114,18 +130,21 @@
               text-align: left;
             }
           }
+
           .progress-bar-container {
             width: 100%;
             position: absolute;
             top: 0;
             left: 0;
             margin: 0;
+
             .paid-percent {
               display: flex;
               align-items: center;
               justify-content: center;
             }
           }
+
           li {
             font-size: 1em;
           }
@@ -133,6 +152,7 @@
       }
     }
   }
+
   .card-footer {
     justify-content: space-around;
     display: flex;

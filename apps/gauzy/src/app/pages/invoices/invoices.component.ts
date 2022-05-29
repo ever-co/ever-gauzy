@@ -38,7 +38,7 @@ import {
 	DiscountTaxTypeEnum,
 	IDateRangePicker
 } from '@gauzy/contracts';
-import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
+import { distinctUntilChange, isNotEmpty, toUTC } from '@gauzy/common-angular';
 import { Router } from '@angular/router';
 import { first, map, filter, tap, debounceTime } from 'rxjs/operators';
 import { Subject, firstValueFrom, combineLatest, BehaviorSubject } from 'rxjs';
@@ -65,6 +65,7 @@ import {
 	ToastrService
 } from '../../@core/services';
 import { ServerDataSource } from '../../@core/utils/smart-table/server.data-source';
+import { getAdjustDateRangeFutureAllowed } from '../../@theme/components/header/selectors/date-range-picker';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -656,7 +657,18 @@ export class InvoicesComponent
 
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
-		const { startDate, endDate } = this.selectedDateRange;
+
+		const { startDate, endDate } = getAdjustDateRangeFutureAllowed(this.selectedDateRange);
+		const request = {};
+		if (startDate && endDate) {
+			request['invoiceDate'] = {};
+			if (moment(startDate).isValid()) {
+				request['invoiceDate']['startDate'] = toUTC(startDate).format('YYYY-MM-DD HH:mm:ss');
+			}
+			if (moment(endDate).isValid()) {
+				request['invoiceDate']['endDate'] = toUTC(endDate).format('YYYY-MM-DD HH:mm:ss');
+			}
+		}
 
 		this.smartTableSource = new ServerDataSource(this.httpClient, {
 			endPoint: `${API_PREFIX}/invoices/pagination`,
@@ -689,10 +701,7 @@ export class InvoicesComponent
 				tenantId,
 				isEstimate: (this.isEstimate === true) ? 1 : 0,
 				isArchived: (this.includeArchived === true) ? 1 : 0,
-				invoiceDate: {
-					startDate: moment(startDate).format('YYYY-MM-DD HH:mm:ss'),
-					endDate: moment(endDate).format('YYYY-MM-DD HH:mm:ss')
-				},
+				...request,
 				...this.filters.where
 			},
 			resultMap: (invoice: IInvoice) => {
