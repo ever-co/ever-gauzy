@@ -1,13 +1,17 @@
 <div class="custom-card">
-	<div class="filters mt-0 mb-2">
+	<div class="filters mt-1 mb-3">
 		<ngx-gauzy-filters
 			[saveFilters]="(datePickerConfig$ | async).isSaveDatePicker"
 			(filtersChange)="filtersChange($event)"
 		></ngx-gauzy-filters>
+		<ga-daily-statistics
+			class="mt-3"
+			[filters]="filters"
+		></ga-daily-statistics>
 	</div>
 	<div class="custom-card-body">
 		<div
-      class="px-3"
+			class="px-3"
 			[nbSpinner]="loading"
 			nbSpinnerSize="giant"
 			nbSpinnerStatus="primary"
@@ -18,21 +22,15 @@
 					*ngFor="let hourSlot of timeSlots; let i = index"
 				>
 					<div class="col p-0">
-						<div
-							class="hour-lable mb-4"
-						>
+						<div class="hour-lable mb-4">
 							<h6 class="hour-label">
 								{{ hourSlot.startTime | timeFormat }} -
 								{{ hourSlot.endTime | timeFormat }}
 							</h6>
 						</div>
 
-						<div
-							class="row grid-container"
-						>
-							<div
-								*ngFor="let timeSlot of hourSlot.timeSlots"
-							>
+						<div class="row grid-container">
+							<div *ngFor="let timeSlot of hourSlot.timeSlots">
 								<ngx-screenshots-item
 									[timeSlot]="timeSlot"
 									[selectionMode]="selectedIdsCount > 0"

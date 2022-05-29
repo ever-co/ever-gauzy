@@ -19,6 +19,7 @@ import { ViewTimeLogModalModule } from './../../../../@shared/timesheet/view-tim
 import { ScreenshotsItemModule } from './../../../../@shared/timesheet/screenshots/screenshots-item/screenshots-item.module';
 import { GalleryModule } from './../../../../@shared/gallery/gallery.module';
 import { GauzyFiltersModule } from './../../../../@shared/timesheet/gauzy-filters/gauzy-filters.module';
+import { DailyStatisticsModule } from 'apps/gauzy/src/app/@shared/report/daily-statistics/daily-statistics.module';
 
 @NgModule({
 	declarations: [ScreenshotComponent],
@@ -38,7 +39,8 @@ import { GauzyFiltersModule } from './../../../../@shared/timesheet/gauzy-filter
 		ReactiveFormsModule,
 		ScreenshotsItemModule,
 		GalleryModule,
-		GauzyFiltersModule
+		GauzyFiltersModule,
+		DailyStatisticsModule
 	]
 })
 export class ScreenshotModule {}
