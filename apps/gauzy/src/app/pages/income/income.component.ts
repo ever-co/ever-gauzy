@@ -220,20 +220,7 @@ export class IncomeComponent extends PaginationFilterBaseComponent
 					filter: false,
 					type: 'custom',
 					sort: false,
-					renderComponent: EmployeeLinksComponent,
-					valuePrepareFunction: (cell, row) => {
-						return {
-							name:
-								row.employee && row.employee.user
-									? row.employee.fullName
-									: null,
-							id: row.employee ? row.employee.id : null,
-							imageUrl:
-								row.employee && row.employee.user
-									? row.employee.user.imageUrl
-									: null
-						};
-					}
+					renderComponent: EmployeeLinksComponent
 				},
 				amount: {
 					title: this.getTranslation('SM_TABLE.VALUE'),
@@ -267,6 +254,20 @@ export class IncomeComponent extends PaginationFilterBaseComponent
 					sort: false
 				}
 			}
+		};
+	}
+
+	private employeeMapper(row: any) {
+		return {
+			name:
+				row.employee && row.employee.user
+					? row.employee.fullName
+					: null,
+			id: row.employee ? row.employee.id : null,
+			imageUrl:
+				row.employee && row.employee.user
+					? row.employee.user.imageUrl
+					: null
 		};
 	}
 
@@ -486,7 +487,8 @@ export class IncomeComponent extends PaginationFilterBaseComponent
 					employeeName: income.employee
 						? income.employee.fullName
 						: null,
-					clientName: income.client ? income.client.name : null
+					clientName: income.client ? income.client.name : null,
+					employee: { ...this.employeeMapper(income) }
 				});
 			},
 			finalize: () => {
