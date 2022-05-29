@@ -240,20 +240,7 @@ export class ExpensesComponent extends PaginationFilterBaseComponent
 					filter: false,
 					type: 'custom',
 					sort: false,
-					renderComponent: EmployeeLinksComponent,
-					valuePrepareFunction: (cell, row) => {
-						return {
-							name:
-								row.employee && row.employee.user
-									? row.employee.fullName
-									: null,
-							id: row.employee ? row.employee.id : null,
-							imageUrl:
-								row.employee && row.employee.user
-									? row.employee.user.imageUrl
-									: null
-						};
-					}
+					renderComponent: EmployeeLinksComponent
 				},
 				projectName: {
 					title: this.getTranslation('SM_TABLE.PROJECT'),
@@ -291,6 +278,20 @@ export class ExpensesComponent extends PaginationFilterBaseComponent
 
 	manageCategories() {
 		this.router.navigate(['/pages/accounting/expenses/categories']);
+	}
+
+	private employeeMapper(row: any) {
+		return {
+			name:
+				row.employee && row.employee.user
+					? row.employee.fullName
+					: null,
+			id: row.employee ? row.employee.id : null,
+			imageUrl:
+				row.employee && row.employee.user
+					? row.employee.user.imageUrl
+					: null
+		};
 	}
 
 	async addExpense(expense: IExpense) {
@@ -486,7 +487,8 @@ export class ExpensesComponent extends PaginationFilterBaseComponent
 					vendorName: expense.vendor ? expense.vendor.name : null,
 					categoryName: expense.category ? expense.category.name : null,
 					projectName: expense.project ? expense.project.name : null,
-					statuses: this.statusMapper(expense.status)
+					statuses: this.statusMapper(expense.status),
+					employee: { ...this.employeeMapper(expense) }
 				});
 			},
 			finalize: () => {
