@@ -320,7 +320,7 @@ export class ApprovalsComponent
 			.onClose.pipe(untilDestroyed(this))
 			.subscribe((data) => {
 				if (data) {
-					this.subject$.next(true);
+					this.timesheets$.next(true);
 				}
 			});
 	}
