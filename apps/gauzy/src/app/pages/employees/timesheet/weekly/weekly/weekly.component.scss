@@ -86,6 +86,10 @@
 	nb-checkbox ::ng-deep .custom-checkbox {
 		border-width: 2px;
 	}
+	
+	[nbButton].appearance-outline.status-primary {
+		border-style: none;
+	}
 
 	[nbButton].appearance-ghost.status-basic {
 		background-color: nb-theme(gauzy-sidebar-background-4);
@@ -95,5 +99,15 @@
 		letter-spacing: 0em;
 		text-align: left;
 		border: none;
+	}
+}
+
+.gauzy-action {
+	position: absolute;
+	right: 1rem;
+	top: -0.75rem;
+
+	ngx-gauzy-button-action ::ng-deep .actions-container {
+		padding: 0;
 	}
 }
