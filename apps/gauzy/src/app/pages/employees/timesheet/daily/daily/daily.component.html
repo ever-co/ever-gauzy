@@ -1,17 +1,13 @@
 <nb-card>
 	<nb-card-header class="p-0">
 		<div class="filters">
-			<div class="add-button">
-				<ng-template
-					[ngxPermissionsOnly]="[
-						OrganizationPermissionsEnum.ALLOW_MANUAL_TIME
-					]"
-				>
-					<button nbButton status="primary" (click)="openAdd()">
-						<nb-icon icon="plus-outline"></nb-icon>
-						{{ 'TIMESHEET.ADD_TIME' | translate }}
-					</button>
-				</ng-template>
+			<div class="gauzy-action">
+				<ngx-gauzy-button-action
+					[hasLayoutSelector]="false"
+					[isDisable]="!(selectedLog?.isSelected || allChecked)"
+					[buttonTemplateVisible]="visible"
+					[buttonTemplate]="actionButtons"
+				></ngx-gauzy-button-action>
 			</div>
 			<ngx-gauzy-filters
 				[saveFilters]="(datePickerConfig$ | async).isSaveDatePicker"
@@ -20,25 +16,6 @@
 		</div>
 	</nb-card-header>
 	<nb-card-body class="pt-0">
-		<div class="row">
-			<ng-container
-				*ngIf="(isIndeterminate() || allChecked) && contextMenus"
-			>
-				<div class="mb-3 col d-flex align-items-center">
-					<button
-						outline
-						nbButton
-						status="primary"
-						[title]="'TIMESHEET.BULK_ACTION' | translate"
-						[nbContextMenu]="contextMenus"
-						nbContextMenuTag="time-logs-bulk-action"
-					>
-						{{ 'TIMESHEET.BULK_ACTION' | translate }}
-						<nb-icon icon="chevron-down-outline"></nb-icon>
-					</button>
-				</div>
-			</ng-container>
-		</div>
 		<div
 			class="log-container"
 			[nbSpinner]="loading"
@@ -60,7 +37,7 @@
 					>
 					</nb-checkbox>
 				</div>
-				<div class="col">
+				<div class="col-3">
 					{{ 'TIMESHEET.PROJECT' | translate }} /
 					{{ 'TIMESHEET.TODO' | translate }}
 				</div>
@@ -75,8 +52,7 @@
 				<div class="col">{{ 'TIMESHEET.LOG_TYPE' | translate }}</div>
 				<div class="col">{{ 'TIMESHEET.SOURCE' | translate }}</div>
 				<div class="col">{{ 'TIMESHEET.DURATION' | translate }}</div>
-				<div class="col">{{ 'TIMESHEET.TIME_SPAN' | translate }}</div>
-				<div class="col">{{ 'TIMESHEET.ACTION' | translate }}</div>
+				<div class="col-2">{{ 'TIMESHEET.TIME_SPAN' | translate }}</div>
 			</div>
 
 			<ng-template [ngIf]="timeLogs?.length > 0" [ngIfElse]="notFound">
@@ -102,7 +78,7 @@
 								[disabled]="log.isRunning"
 							></nb-checkbox>
 						</div>
-						<div class="col project-name">
+						<div class="col-3 project-name">
 							<ngx-project
 								*ngIf="log?.project; else noProject"
 								[rowData]="log"
@@ -140,14 +116,18 @@
 								></ngx-avatar>
 							</div>
 						</div>
-						<div class="col"><span class="log">{{ log.logType }}</span></div>
 						<div class="col">
-							<span class="log">{{ log.source | replace: '_':' ' }}</span>
+							<span class="log">{{ log.logType }}</span>
+						</div>
+						<div class="col">
+							<span class="log">{{
+								log.source | replace: '_':' '
+							}}</span>
 						</div>
 						<div class="col">
 							{{ log.duration | durationFormat }}
 						</div>
-						<div class="col">
+						<div class="col-2">
 							<span class="start-timer">
 								{{
 									log.startedAt
@@ -172,19 +152,6 @@
 								</span>
 							</ng-template>
 						</div>
-						<div class="col action">
-							<div class="action-button">
-								<ng-container
-									*ngTemplateOutlet="
-										actionButtons;
-										context: {
-											buttonSize: 'small',
-											timeLog: log
-										}
-									"
-								></ng-container>
-							</div>
-						</div>
 					</div>
 				</div>
 			</ng-template>
@@ -197,51 +164,83 @@
 				</div>
 			</div>
 		</ng-template>
-		<ng-template
-			#actionButtons
-			let-buttonSize="buttonSize"
-			let-timeLog="timeLog"
-		>
-			<button
-				class="m-1"
-				nbButton
-				status="primary"
-				[size]="buttonSize"
-				(click)="openView(timeLog)"
-				[nbTooltip]="'TIMESHEET.VIEW' | translate"
-			>
-				<nb-icon icon="eye-outline"></nb-icon>
-			</button>
-			<button
-				*ngxPermissionsOnly="[
-					OrganizationPermissionsEnum.ALLOW_MODIFY_TIME
-				]"
-				[disabled]="timeLog.isRunning"
-				class="m-1"
-				nbButton
-				status="success"
-				[size]="buttonSize"
-				(click)="openEdit(timeLog)"
-				[nbTooltip]="'TIMESHEET.EDIT' | translate"
-			>
-				<nb-icon icon="edit"></nb-icon>
-			</button>
-			<button
-				*ngxPermissionsOnly="[
-					OrganizationPermissionsEnum.ALLOW_DELETE_TIME
-				]"
-				[disabled]="timeLog.isRunning"
-				class="m-1"
-				nbButton
-				status="danger"
-				[size]="buttonSize"
-				ngxConfirmDialog
-				[message]="'TIMESHEET.DELETE_TIMELOG' | translate"
-				(confirm)="onDeleteConfirm(timeLog)"
-				[nbTooltip]="'TIMESHEET.DELETE' | translate"
-			>
-				<nb-icon icon="trash-2-outline"></nb-icon>
-			</button>
-		</ng-template>
 	</nb-card-body>
 </nb-card>
+<ng-template #actionButtons>
+	<div class="actions">
+		<ng-container *ngIf="(isIndeterminate() || allChecked) && contextMenus">
+			<button
+				outline
+				nbButton
+				status="primary"
+				class="action"
+				size="small"
+				[title]="'TIMESHEET.BULK_ACTION' | translate"
+				[nbContextMenu]="contextMenus"
+				nbContextMenuTag="time-logs-bulk-action"
+			>
+				{{ 'TIMESHEET.BULK_ACTION' | translate }}
+				<nb-icon icon="chevron-down-outline"></nb-icon>
+			</button>
+		</ng-container>
+		<button
+			nbButton
+			status="basic"
+			class="action secondary"
+			size="small"
+			[disabled]="allChecked"
+			(click)="openView(selectedLog?.data)"
+		>
+			<nb-icon icon="eye-outline"></nb-icon>
+			{{ 'TIMESHEET.VIEW' | translate }}
+		</button>
+		<button
+			*ngxPermissionsOnly="[
+				OrganizationPermissionsEnum.ALLOW_MODIFY_TIME
+			]"
+			[disabled]="selectedLog?.data?.isRunning"
+			nbButton
+			status="basic"
+			class="action primary"
+			[disabled]="allChecked"
+			size="small"
+			(click)="openEdit(selectedLog?.data)"
+		>
+			<nb-icon icon="edit"></nb-icon>
+			{{ 'TIMESHEET.EDIT' | translate }}
+		</button>
+		<button
+			*ngxPermissionsOnly="[
+				OrganizationPermissionsEnum.ALLOW_DELETE_TIME
+			]"
+			[disabled]="selectedLog?.data?.isRunning"
+			nbButton
+			status="basic"
+			size="small"
+			class="action"
+			[disabled]="allChecked"
+			ngxConfirmDialog
+			[message]="'TIMESHEET.DELETE_TIMELOG' | translate"
+			(confirm)="onDeleteConfirm(selectedLog?.data)"
+			[nbTooltip]="'TIMESHEET.DELETE' | translate"
+		>
+			<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
+		</button>
+	</div>
+</ng-template>
+<ng-template #visible>
+	<ng-template
+		[ngxPermissionsOnly]="[OrganizationPermissionsEnum.ALLOW_MANUAL_TIME]"
+	>
+		<button
+			class="action"
+			size="small"
+			nbButton
+			status="success"
+			(click)="openAdd()"
+		>
+			<nb-icon icon="plus-outline"></nb-icon>
+			{{ 'TIMESHEET.ADD_TIME' | translate }}
+		</button>
+	</ng-template>
+</ng-template>

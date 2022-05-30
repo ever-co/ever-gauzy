@@ -1,12 +1,14 @@
 // tslint:disable: nx-enforce-module-boundaries
-import { Component, OnInit, OnDestroy, AfterViewInit, ViewChild } from '@angular/core';
+import {
+	Component,
+	OnInit,
+	OnDestroy,
+	AfterViewInit,
+	ViewChild
+} from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { isEmpty } from '@gauzy/common-angular';
-import {
-	NbDialogService,
-	NbMenuItem,
-	NbMenuService
-} from '@nebular/theme';
+import { NbDialogService, NbMenuItem, NbMenuService } from '@nebular/theme';
 import { filter, map, debounceTime, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs/internal/Observable';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -19,9 +21,19 @@ import {
 	ITimeLogFilters,
 	OrganizationPermissionsEnum
 } from '@gauzy/contracts';
-import { DateRangePickerBuilderService, Store, ToastrService } from './../../../../../@core/services';
-import { TimesheetService, TimesheetFilterService } from './../../../../../@shared/timesheet';
-import { EditTimeLogModalComponent, ViewTimeLogModalComponent } from './../../../../../@shared/timesheet';
+import {
+	DateRangePickerBuilderService,
+	Store,
+	ToastrService
+} from './../../../../../@core/services';
+import {
+	TimesheetService,
+	TimesheetFilterService
+} from './../../../../../@shared/timesheet';
+import {
+	EditTimeLogModalComponent,
+	ViewTimeLogModalComponent
+} from './../../../../../@shared/timesheet';
 import { ConfirmComponent } from './../../../../../@shared/dialogs';
 import { TimeTrackerService } from './../../../../../@shared/time-tracker/time-tracker.service';
 import { BaseSelectorFilterComponent } from './../../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
@@ -33,23 +45,32 @@ import { GauzyFiltersComponent } from './../../../../../@shared/timesheet/gauzy-
 	templateUrl: './daily.component.html',
 	styleUrls: ['./daily.component.scss']
 })
-export class DailyComponent  extends BaseSelectorFilterComponent 
-	implements AfterViewInit, OnInit, OnDestroy {
-	
+export class DailyComponent
+	extends BaseSelectorFilterComponent
+	implements AfterViewInit, OnInit, OnDestroy
+{
 	OrganizationPermissionsEnum = OrganizationPermissionsEnum;
 	PermissionsEnum = PermissionsEnum;
 
 	loading: boolean;
 	showBulkAction: boolean;
-	
+
 	logRequest: ITimeLogFilters = this.request;
 	timeLogs: ITimeLog[] = [];
 
 	allChecked: boolean;
 	contextMenus: NbMenuItem[];
 
-	@ViewChild(GauzyFiltersComponent) gauzyFiltersComponent: GauzyFiltersComponent;
-	datePickerConfig$: Observable<any> = this._dateRangePickerBuilderService.datePickerConfig$;
+	@ViewChild(GauzyFiltersComponent)
+	gauzyFiltersComponent: GauzyFiltersComponent;
+	datePickerConfig$: Observable<any> =
+		this._dateRangePickerBuilderService.datePickerConfig$;
+
+	selectedLog = {
+		data: null,
+		isSelected: false
+	};
+	disable = true;
 
 	constructor(
 		private readonly timesheetService: TimesheetService,
@@ -72,7 +93,7 @@ export class DailyComponent  extends BaseSelectorFilterComponent
 			.pipe(
 				debounceTime(500),
 				tap(() => this.getLogs()),
-				tap(() => this.allChecked = false),
+				tap(() => (this.allChecked = false)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -129,7 +150,7 @@ export class DailyComponent  extends BaseSelectorFilterComponent
 		);
 		const request: IGetTimeLogInput = {
 			...appliedFilter,
-			...this.getFilterRequest(this.logRequest),
+			...this.getFilterRequest(this.logRequest)
 		};
 		try {
 			this.timeLogs = await this.timesheetService
@@ -205,16 +226,22 @@ export class DailyComponent  extends BaseSelectorFilterComponent
 			const request = {
 				logIds: [timeLog.id],
 				organizationId
-			}
-			this.timesheetService.deleteLogs(request).then(() => {
-				this.checkTimerStatus();
-				this.toastrService.success('TOASTR.MESSAGE.TIME_LOG_DELETED', {
-					name: employee.fullName,
-					organization: this.organization.name
+			};
+			this.timesheetService
+				.deleteLogs(request)
+				.then(() => {
+					this.checkTimerStatus();
+					this.toastrService.success(
+						'TOASTR.MESSAGE.TIME_LOG_DELETED',
+						{
+							name: employee.fullName,
+							organization: this.organization.name
+						}
+					);
+				})
+				.finally(() => {
+					this.subject$.next(true);
 				});
-			}).finally(() => {
-				this.subject$.next(true);
-			});
 		} catch (error) {
 			console.log('Error while delete TimeLog: ', error);
 			this.toastrService.danger(error);
@@ -226,36 +253,40 @@ export class DailyComponent  extends BaseSelectorFilterComponent
 			.open(ConfirmComponent, {
 				context: {
 					data: {
-						message: this.translateService.instant('TIMESHEET.DELETE_TIMELOG')
+						message: this.translateService.instant(
+							'TIMESHEET.DELETE_TIMELOG'
+						)
 					}
 				}
 			})
-			.onClose
-			.pipe(
-				filter(Boolean),
-				untilDestroyed(this)
-			)
+			.onClose.pipe(filter(Boolean), untilDestroyed(this))
 			.subscribe((type) => {
 				if (type === true) {
-					const logIds = this.timeLogs.filter(
-						(timeLog: ITimeLog) => timeLog['checked'] && !timeLog['isRunning']
-					).map(
-						(timeLog: ITimeLog) => timeLog.id
-					);
+					const logIds = this.timeLogs
+						.filter(
+							(timeLog: ITimeLog) =>
+								timeLog['checked'] && !timeLog['isRunning']
+						)
+						.map((timeLog: ITimeLog) => timeLog.id);
 					const { id: organizationId } = this.organization;
 					const request = {
 						logIds,
 						organizationId
-					}
-					this.timesheetService.deleteLogs(request).then(() => {
-						this.checkTimerStatus();
-						this.toastrService.success('TOASTR.MESSAGE.TIME_LOGS_DELETED', {
-							organization: this.organization.name
+					};
+					this.timesheetService
+						.deleteLogs(request)
+						.then(() => {
+							this.checkTimerStatus();
+							this.toastrService.success(
+								'TOASTR.MESSAGE.TIME_LOGS_DELETED',
+								{
+									organization: this.organization.name
+								}
+							);
+						})
+						.finally(() => {
+							this.subject$.next(true);
 						});
-					})
-					.finally(() => {
-						this.subject$.next(true);
-					});
 				}
 			});
 	}
@@ -269,35 +300,38 @@ export class DailyComponent  extends BaseSelectorFilterComponent
 
 	/**
 	 * Checked/Un-Checked Checkbox
-	 * 
-	 * @param checked 
+	 *
+	 * @param checked
 	 */
-	 public checkedAll(checked: boolean) {
+	public checkedAll(checked: boolean) {
 		this.allChecked = checked;
-		this.timeLogs.filter((timeLog: ITimeLog) => !timeLog.isRunning).forEach((timesheet: any) => timesheet.checked = checked);
+		this.timeLogs
+			.filter((timeLog: ITimeLog) => !timeLog.isRunning)
+			.forEach((timesheet: any) => (timesheet.checked = checked));
 	}
 
 	/**
 	 * Is Indeterminate
-	 * 
-	 * @returns 
+	 *
+	 * @returns
 	 */
 	public isIndeterminate() {
-		const c1 = (this.timeLogs.filter((t: any) => t.checked).length > 0);
+		const c1 = this.timeLogs.filter((t: any) => t.checked).length > 0;
 		return c1 && !this.allChecked;
 	}
 
 	/**
 	 * Checkbox Toggle For Every TimeLog
-	 * 
-	 * @param checked 
-	 * @param timesheet 
+	 *
+	 * @param checked
+	 * @param timesheet
 	 */
 	public toggleCheckbox(checked: boolean, timeLog: ITimeLog) {
 		if (timeLog.isRunning) {
 			return;
 		}
 		timeLog['checked'] = checked;
+		this.selectLog(timeLog, checked);
 		this.allChecked = this.timeLogs.every((t: any) => t.checked);
 	}
 
@@ -325,6 +359,28 @@ export class DailyComponent  extends BaseSelectorFilterComponent
 				}
 			}
 		];
+	}
+
+	public selectLog(log: ITimeLog, isChecked: boolean) {
+		if (
+			!isChecked &&
+			this.selectedLog.data &&
+			this.selectedLog.data.id === log?.id
+		) {
+			this.clearData();
+		} else {
+			this.disable = true;
+			this.selectedLog.isSelected = this.disable;
+			this.selectedLog.data = log;
+		}
+	}
+
+	public clearData() {
+		this.selectedLog = {
+			data: null,
+			isSelected: false
+		};
+		this.disable = true;
 	}
 
 	ngOnDestroy(): void {}
