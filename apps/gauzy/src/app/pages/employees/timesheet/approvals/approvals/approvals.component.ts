@@ -8,7 +8,7 @@ import {
 import { Router } from '@angular/router';
 import { ITimeLogFilters, ITimesheet, TimesheetStatus } from '@gauzy/contracts';
 import { isEmpty } from '@gauzy/common-angular';
-import { NbMenuItem, NbMenuService } from '@nebular/theme';
+import { NbDialogService, NbMenuItem, NbMenuService } from '@nebular/theme';
 import { debounceTime, filter, map, tap } from 'rxjs/operators';
 import { Subject } from 'rxjs/internal/Subject';
 import { Observable } from 'rxjs/internal/Observable';
@@ -16,7 +16,8 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import {
 	TimesheetService,
-	TimesheetFilterService
+	TimesheetFilterService,
+	EditTimeLogModalComponent
 } from './../../../../../@shared/timesheet';
 import { BaseSelectorFilterComponent } from './../../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
 import {
@@ -68,7 +69,8 @@ export class ApprovalsComponent
 		private readonly timesheetFilterService: TimesheetFilterService,
 		private readonly nbMenuService: NbMenuService,
 		public readonly translateService: TranslateService,
-		public readonly _dateRangePickerBuilderService: DateRangePickerBuilderService
+		public readonly _dateRangePickerBuilderService: DateRangePickerBuilderService,
+		private readonly dialogService: NbDialogService
 	) {
 		super(store, translateService);
 	}
@@ -280,7 +282,8 @@ export class ApprovalsComponent
 
 	public selectTimesheet(timesheet: ITimesheet, isChecked: boolean) {
 		if (
-			!isChecked && this.selectedTimesheet.data &&
+			!isChecked &&
+			this.selectedTimesheet.data &&
 			this.selectedTimesheet.data.id === timesheet?.id
 		) {
 			this.clearData();
@@ -297,6 +300,29 @@ export class ApprovalsComponent
 			isSelected: false
 		};
 		this.disable = true;
+	}
+
+	public openAdd() {
+		this.dialogService
+			.open(EditTimeLogModalComponent, {
+				context: {
+					timeLog: {
+						startedAt: new Date(this.logRequest.startDate),
+						employeeId: this.logRequest.employeeIds
+							? this.logRequest.employeeIds[0]
+							: null,
+						projectId: this.logRequest.projectIds
+							? this.logRequest.projectIds[0]
+							: null
+					}
+				}
+			})
+			.onClose.pipe(untilDestroyed(this))
+			.subscribe((data) => {
+				if (data) {
+					this.subject$.next(true);
+				}
+			});
 	}
 
 	ngOnDestroy(): void {}

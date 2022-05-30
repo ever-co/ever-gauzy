@@ -191,7 +191,7 @@
 	</div>
 </ng-template>
 <ng-template #visible>
-	<button nbButton status="success" size="small">
+	<button nbButton (click)="openAdd()" status="success" size="small">
 		<nb-icon icon="plus-outline"></nb-icon>
 		{{ 'TIMESHEET.ADD_TIME' | translate }}
 	</button>
