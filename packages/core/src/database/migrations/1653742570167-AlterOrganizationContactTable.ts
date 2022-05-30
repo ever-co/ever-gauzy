@@ -31,7 +31,7 @@ export class AlterOrganizationContactTable1653742570167 implements MigrationInte
         await queryRunner.query(`ALTER TABLE "organization_contact" ADD "inviteStatus" "public"."organization_contact_invitestatus_enum"`);
         await queryRunner.query(`ALTER TABLE "organization_contact" DROP COLUMN "contactType"`);
         await queryRunner.query(`CREATE TYPE "public"."organization_contact_contacttype_enum" AS ENUM('CLIENT', 'CUSTOMER', 'LEAD')`);
-        await queryRunner.query(`ALTER TABLE "organization_contact" ADD "contactType" "public"."organization_contact_contacttype_enum" NOT NULL`);
+        await queryRunner.query(`ALTER TABLE "organization_contact" ADD "contactType" "public"."organization_contact_contacttype_enum" NOT NULL DEFAULT 'CLIENT'`);
         await queryRunner.query(`ALTER TABLE "organization_contact" DROP COLUMN "budgetType"`);
         await queryRunner.query(`CREATE TYPE "public"."organization_contact_budgettype_enum" AS ENUM('hours', 'cost')`);
         await queryRunner.query(`ALTER TABLE "organization_contact" ADD "budgetType" "public"."organization_contact_budgettype_enum" DEFAULT 'cost'`);

@@ -76,7 +76,8 @@ export class OrganizationContact
 	@Column({
 		type: 'simple-enum',
 		nullable: false,
-		enum: ContactType
+		enum: ContactType,
+		default: ContactType.CLIENT
 	})
 	contactType: ContactType;
 
