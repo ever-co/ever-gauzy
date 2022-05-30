@@ -16,7 +16,7 @@ import { combineLatest, Subject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { distinctUntilChange, isNotEmpty, toUTC } from '@gauzy/common-angular';
+import { distinctUntilChange, employeeMapper, isNotEmpty, toUTC } from '@gauzy/common-angular';
 import * as moment from 'moment';
 import { Ng2SmartTableComponent } from 'ng2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
@@ -240,20 +240,7 @@ export class ExpensesComponent extends PaginationFilterBaseComponent
 					filter: false,
 					type: 'custom',
 					sort: false,
-					renderComponent: EmployeeLinksComponent,
-					valuePrepareFunction: (cell, row) => {
-						return {
-							name:
-								row.employee && row.employee.user
-									? row.employee.fullName
-									: null,
-							id: row.employee ? row.employee.id : null,
-							imageUrl:
-								row.employee && row.employee.user
-									? row.employee.user.imageUrl
-									: null
-						};
-					}
+					renderComponent: EmployeeLinksComponent
 				},
 				projectName: {
 					title: this.getTranslation('SM_TABLE.PROJECT'),
@@ -486,7 +473,8 @@ export class ExpensesComponent extends PaginationFilterBaseComponent
 					vendorName: expense.vendor ? expense.vendor.name : null,
 					categoryName: expense.category ? expense.category.name : null,
 					projectName: expense.project ? expense.project.name : null,
-					statuses: this.statusMapper(expense.status)
+					statuses: this.statusMapper(expense.status),
+					employee: { ... employeeMapper(expense) }
 				});
 			},
 			finalize: () => {

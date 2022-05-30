@@ -263,3 +263,20 @@ export function cleanKeys(data, deleteKeys) {
 		}
 	}
 }
+
+/**
+ * 
+ * @param row 
+ * @returns partial employee state 
+ */
+
+export function employeeMapper(row: any) {
+	return {
+		name: row.employee && row.employee.user ? row.employee.fullName : null,
+		id: row.employee ? row.employee.id : null,
+		imageUrl:
+			row.employee && row.employee.user
+				? row.employee.user.imageUrl
+				: null
+	};
+}

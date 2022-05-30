@@ -95,6 +95,11 @@
       }
     }
   }
+  .custom-card {
+    .custom-card-body {
+      height: calc(100vh - 35.7rem);
+    }
+  }
 }
 .hour-slot-group {
   margin-bottom: 1rem;
