@@ -27,6 +27,7 @@ import { LocationFormComponent } from '../../../@shared/forms/location';
 import { FilterArrayPipe } from '../../../@shared/pipes/filter-array.pipe';
 import { LeafletMapComponent } from '../../../@shared/forms/maps/leaflet/leaflet.component';
 import { ErrorHandlingService, OrganizationProjectsService, Store, ToastrService } from '../../../@core/services';
+import { FormHelpers } from '../../../@shared/forms';
 import { DUMMY_PROFILE_IMAGE } from '../../../@core/constants';
 
 @UntilDestroy({ checkProperties: true })
@@ -35,9 +36,10 @@ import { DUMMY_PROFILE_IMAGE } from '../../../@core/constants';
 	templateUrl: './contact-mutation.component.html',
 	styleUrls: ['./contact-mutation.component.scss']
 })
-export class ContactMutationComponent
-	extends TranslationBaseComponent
+export class ContactMutationComponent extends TranslationBaseComponent 
 	implements OnInit {
+
+	FormHelpers: typeof FormHelpers = FormHelpers;
 
 	/*
 	* Getter & Setter for organizationContact element
@@ -67,11 +69,11 @@ export class ContactMutationComponent
 	/*
 	* Getter & Setter for contactType element
 	*/
-	private _contactType: string;
-	get contactType(): string {
+	private _contactType: ContactType;
+	get contactType(): ContactType {
 		return this._contactType;
 	}
-	@Input() set contactType(value: string) {
+	@Input() set contactType(value: ContactType) {
 		this._contactType = value;
 	}
 
@@ -97,10 +99,10 @@ export class ContactMutationComponent
 	@ViewChild('stepper') stepper: NbStepperComponent;
 
 
-	members: string[];
-	selectedMembers: IEmployee[];
+	members: string[] = [];
+	selectedMembers: IEmployee[] = [];
 	selectedEmployeeIds: string[];
-	contactTypes: ContactType[] = Object.values(ContactType);
+	contactTypes: string[] = Object.values(ContactType);
 	hoverState: boolean;
 	country: string;
 	projects: IOrganizationProject[] = [];
@@ -115,16 +117,16 @@ export class ContactMutationComponent
 	public contMainForm: FormGroup = ContactMutationComponent.buildMainForm(this.fb);
 	static buildMainForm(formBuilder: FormBuilder): FormGroup {
 		const form = formBuilder.group({
-			imageUrl: [],
+			imageUrl: [null],
 			tags: [],
 			name: ['', [Validators.required]],
-			primaryEmail: ['', [Validators.email]],
-			primaryPhone: [],
+			primaryEmail: [null, [Validators.email]],
+			primaryPhone: [null],
 			projects: [],
 			contactType: [],
-			fax: [],
-			website: [],
-			fiscalInformation: []
+			fax: [null],
+			website: [null],
+			fiscalInformation: [null]
 		});
 		return form;
 	}
@@ -396,16 +398,6 @@ export class ContactMutationComponent
 	selectedTagsEvent(tags: ITag[]) {
 		this.contMainForm.patchValue({ tags });
 		this.contMainForm.updateValueAndValidity();
-	}
-
-	isInvalidControl(control: string) {
-		if (!this.contMainForm.contains(control)) {
-			return true;
-		}
-		return (
-			this.contMainForm.get(control).touched &&
-			this.contMainForm.get(control).invalid
-		);
 	}
 
 	nextStep() {
