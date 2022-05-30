@@ -1,4 +1,5 @@
 @import '../../calendar/calendar/calendar.component.scss';
+@import 'gauzy/_gauzy-table';
 
 :host {
 	.filters {
@@ -68,10 +69,6 @@
 
 			.item {
 				cursor: pointer;
-
-				&:hover {
-					background-color: rgba(126, 126, 143, 0.1);
-				}
 			}
 
 			.selected {

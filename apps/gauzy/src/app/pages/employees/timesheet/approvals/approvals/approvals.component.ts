@@ -218,7 +218,7 @@ export class ApprovalsComponent
 	 */
 	toggleCheckbox(checked: boolean, timesheet: ITimesheet) {
 		timesheet['checked'] = checked;
-		this.selectTimesheet(timesheet);
+		this.selectTimesheet(timesheet, checked);
 		this.allChecked = this.timesheets.every((t: any) => t.checked);
 	}
 
@@ -278,9 +278,9 @@ export class ApprovalsComponent
 		}
 	};
 
-	public selectTimesheet(timesheet: ITimesheet) {
+	public selectTimesheet(timesheet: ITimesheet, isChecked: boolean) {
 		if (
-			this.selectedTimesheet.data &&
+			!isChecked && this.selectedTimesheet.data &&
 			this.selectedTimesheet.data.id === timesheet?.id
 		) {
 			this.clearData();

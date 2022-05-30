@@ -10,6 +10,10 @@
 	ga-status-badge ::ng-deep .badge {
 		width: fit-content;
 	}
+
+	[nbButton].appearance-outline.status-primary {
+		border-style: none;
+	}
 }
 
 .menu-item {
@@ -17,5 +21,15 @@
 
 	button {
 		width: 100%;
+	}
+}
+
+.gauzy-action {
+	position: absolute;
+	right: 1rem;
+	top: -0.75rem;
+
+	ngx-gauzy-button-action ::ng-deep .actions-container {
+		padding: 0;
 	}
 }
