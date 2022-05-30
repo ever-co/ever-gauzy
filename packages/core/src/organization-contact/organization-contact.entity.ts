@@ -11,13 +11,6 @@ import {
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
-	IsNotEmpty,
-	IsString,
-	IsEmail,
-	IsOptional,
-	IsEnum
-} from 'class-validator';
-import {
 	IOrganizationContact,
 	ContactOrganizationInviteStatus,
 	ContactType,
@@ -52,15 +45,11 @@ export class OrganizationContact
 	implements IOrganizationContact {
 	
 	@ApiProperty({ type: () => String })
-	@IsString()
-	@IsNotEmpty()
 	@Index()
 	@Column()
 	name: string;
 
 	@ApiProperty({ type: () => String })
-	@IsEmail()
-	@IsNotEmpty()
 	@Column({ nullable: true })
 	primaryEmail: string;
 
@@ -68,52 +57,47 @@ export class OrganizationContact
 	emailAddresses?: string[];
 
 	@ApiProperty({ type: () => String })
-	@IsString()
-	@IsNotEmpty()
 	@Column({ nullable: true })
 	primaryPhone: string;
 
 	@ApiProperty({ type: () => String, enum: ContactOrganizationInviteStatus })
-	@IsEnum(ContactOrganizationInviteStatus)
-	@IsOptional()
-	@Column({ nullable: true })
-	inviteStatus?: string;
+	@Column({
+		type: 'simple-enum',
+		nullable: true,
+		enum: ContactOrganizationInviteStatus
+	})
+	inviteStatus?: ContactOrganizationInviteStatus;
 
 	@ApiPropertyOptional({ type: () => String })
-	@IsString()
-	@IsOptional()
 	@Column({ nullable: true })
 	notes?: string;
 
 	@ApiProperty({ type: () => String, enum: ContactType })
-	@IsEnum(ContactType)
-	@IsOptional()
-	@Column({ nullable: false })
-	contactType: string;
+	@Column({
+		type: 'simple-enum',
+		nullable: false,
+		enum: ContactType
+	})
+	contactType: ContactType;
 
 	@ApiPropertyOptional({ type: () => String, maxLength: 500 })
-	@IsOptional()
 	@Column({ length: 500, nullable: true })
 	imageUrl?: string;
 
-	@ApiPropertyOptional({ type: () => String })
-	@IsString()
-	@IsOptional()
+	@ApiPropertyOptional({ type: () => Number })
 	@Column({ nullable: true })
 	budget?: number;
 
 	@ApiPropertyOptional({ type: () => String })
-	@IsString()
-	@IsOptional()
 	@Column({
-		type: 'text',
+		type: 'simple-enum',
 		nullable: true,
+		enum: OrganizationContactBudgetTypeEnum,
 		default: OrganizationContactBudgetTypeEnum.COST
 	})
 	budgetType?: OrganizationContactBudgetTypeEnum;
 
 	@ApiProperty({ type: () => String })
-	@IsOptional()
 	@Column({ nullable: true })
 	createdBy?: string;
 
@@ -136,8 +120,6 @@ export class OrganizationContact
 
 	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((it: OrganizationContact) => it.contact)
-	@IsOptional()
-	@IsString()
 	@Index()
 	@Column({ nullable: true })
 	readonly contactId?: string;
