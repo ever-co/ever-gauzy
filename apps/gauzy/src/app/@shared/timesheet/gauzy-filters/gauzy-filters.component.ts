@@ -11,17 +11,13 @@ import {
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ChangeContext, Options } from 'ng5-slider';
 import {
-	IDateRangePicker,
-	IOrganization,
 	ITimeLogFilters,
 	PermissionsEnum,
 	TimeLogSourceEnum,
 	TimeLogType
 } from '@gauzy/contracts';
-import { combineLatest, Subject } from 'rxjs';
-import { debounceTime, filter, take, tap } from 'rxjs/operators';
-import { distinctUntilChange } from '@gauzy/common-angular';
-import { Store } from '../../../@core/services';
+import { Subject } from 'rxjs';
+import { debounceTime, take, tap } from 'rxjs/operators';
 import { ActivityLevel, TimesheetFilterService } from '../timesheet-filter.service';
 
 @UntilDestroy({ checkProperties: true })
@@ -51,33 +47,13 @@ export class GauzyFiltersComponent
 		ceil: 100,
 		step: 5
 	};
-	organization: IOrganization;
-
-	/*
-	* Getter & Setter for dynamic selected date range
-	*/
-	_selectedDateRange: IDateRangePicker;
-	get selectedDateRange(): IDateRangePicker {
-		return this._selectedDateRange;
-	}
-	@Input() set selectedDateRange(range: IDateRangePicker) {
-		this._selectedDateRange = range;
-		this.filters = {
-			...this.filters,
-			...this.selectedDateRange
-		}
-		this.triggerFilterChange();
-	}
-	
 	/*
 	* Getter & Setter for dynamic enabled/disabled element
 	*/
 	private filters$: Subject<any> = new Subject();
 	private _filters: ITimeLogFilters = {
-		employeeIds: [],
 		source: [],
 		logType: [],
-		projectIds: [],
 		activityLevel: ActivityLevel
 	};
 	get filters(): ITimeLogFilters {
@@ -100,26 +76,11 @@ export class GauzyFiltersComponent
    	* define constructor
    	*/
 	constructor(
-		private readonly store: Store,
 		private readonly timesheetFilterService: TimesheetFilterService,
 		private readonly cd: ChangeDetectorRef
 	) {}
 
   	ngOnInit() {
-		const storeOrganization$ = this.store.selectedOrganization$;
-		const storeDateRange$ = this.store.selectedDateRange$;
-		combineLatest([storeOrganization$, storeDateRange$])
-			.pipe(
-				filter(([organization]) => !!organization),
-				debounceTime(300),
-				distinctUntilChange(),
-				tap(([organization, selectedDateRange]) => {
-					this.organization = organization;
-					this.selectedDateRange = selectedDateRange;
-				}),
-				untilDestroyed(this)
-			)
-			.subscribe();
 		if (this.saveFilters) {
 			this.timesheetFilterService.filter$
 				.pipe(
@@ -135,19 +96,14 @@ export class GauzyFiltersComponent
 			.pipe(
 				debounceTime(400),
 				tap(() => this.hasFilterApplies = this.hasFilter()),
+				tap(() => this.filtersChange.emit(this.arrangedFilters())),
 				untilDestroyed(this)
 			)
-			.subscribe(() => {
-				Object.keys(this.filters).forEach((key) =>
-					this.filters[key] === undefined
-						? delete this.filters[key]
-						: {}
-				);
-				this.filtersChange.emit(this.filters);
-			});
+			.subscribe();
 	}
 
 	ngAfterViewInit() {
+		this.triggerFilterChange();
 		this.cd.detectChanges();
   	}
 
@@ -166,7 +122,7 @@ export class GauzyFiltersComponent
 
 	clearFilters(): void {
 		this.filters = this.timesheetFilterService.clear();
-		this.filters$.next(true);
+		this.triggerFilterChange();
 	}
 
 	hasFilter(): boolean {
@@ -176,6 +132,13 @@ export class GauzyFiltersComponent
 			(this.activityLevel && this.activityLevel.end < 100) ||
 			(this.activityLevel && this.activityLevel.start > 0)
 		);
+	}
+
+	arrangedFilters(): ITimeLogFilters {
+		Object.keys(this.filters).forEach((key) =>
+			this.filters[key] === undefined ? delete this.filters[key] : {}
+		);
+		return this.filters;
 	}
 
 	ngOnDestroy(): void {}
