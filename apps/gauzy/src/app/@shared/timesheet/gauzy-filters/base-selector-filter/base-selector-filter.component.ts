@@ -21,7 +21,7 @@ export class BaseSelectorFilterComponent extends TranslationBaseComponent {
 		projectIds: []
 	};
 	organization: IOrganization;
-	subject$: Subject<any> = new Subject();
+	subject$: Subject<boolean> = new Subject();
 
 	constructor(
 		protected readonly store: Store,
