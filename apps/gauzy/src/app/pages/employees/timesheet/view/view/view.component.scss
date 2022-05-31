@@ -2,6 +2,12 @@
     nb-card {
         height: calc(100vh - 13rem);
 
+        ::ng-deep {
+            .transition-container span {
+                background: unset;
+            }
+        }
+
         .custom-card-body {
             overflow: auto;
         }
