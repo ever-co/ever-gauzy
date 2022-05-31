@@ -24,7 +24,10 @@ import { TranslationBaseComponent } from './../../../../../@shared/language-base
 @Component({
 	selector: 'ngx-timesheet-view',
 	templateUrl: './view.component.html',
-	styleUrls: ['../../daily/daily/daily.component.scss']
+	styleUrls: [
+		'../../daily/daily/daily.component.scss',
+		'./view.component.scss'
+	]
 })
 export class ViewComponent
 	extends TranslationBaseComponent

@@ -1,0 +1,9 @@
+:host {
+    nb-card {
+        height: calc(100vh - 13rem);
+
+        .custom-card-body {
+            overflow: auto;
+        }
+    }
+}
