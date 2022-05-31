@@ -14,6 +14,7 @@
 	.custom-body {
 		&.approval {
 			height: calc(100vh - 25.7rem) !important;
+			max-height: unset !important;
 		}
 	}
 
