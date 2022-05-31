@@ -41,22 +41,24 @@ export class BaseSelectorFilterComponent extends TranslationBaseComponent {
 				debounceTime(300),
 				distinctUntilChange(),
 				filter(([organization, dateRange]) => !!organization && !!dateRange),
-				tap(([organization]) => (this.organization = organization)),
 				tap(([organization, dateRange, employee, project]) => {
-					if (employee && employee.id) {
-						this.request.employeeIds = [employee.id];
-					} else {
-						delete this.request.employeeIds;
-					}
-					if (project && project.id) {
-						this.request.projectIds = [project.id];
-					} else {
-						delete this.request.projectIds;
-					}
-					if (dateRange) {
-						this.request = {
-							...this.request,
-							...dateRange
+					if (organization) {
+						this.organization = organization;
+						if (employee && employee.id) {
+							this.request.employeeIds = [employee.id];
+						} else {
+							delete this.request.employeeIds;
+						}
+						if (project && project.id) {
+							this.request.projectIds = [project.id];
+						} else {
+							delete this.request.projectIds;
+						}
+						if (dateRange) {
+							this.request = {
+								...this.request,
+								...dateRange
+							}
 						}
 					}
 				}),

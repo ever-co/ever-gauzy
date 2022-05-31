@@ -32,6 +32,8 @@ import { GauzyFiltersComponent } from './../../../../../@shared/timesheet/gauzy-
 export class ScreenshotComponent extends BaseSelectorFilterComponent 
 	implements OnInit, OnDestroy {
 
+	payloads$: BehaviorSubject<ITimeLogFilters> = new BehaviorSubject(null);
+
 	filters: ITimeLogFilters = this.request;
 	loading: boolean;
 	timeSlots: IScreenshotMap[];
@@ -44,8 +46,6 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent
 	
 	@ViewChild(GauzyFiltersComponent) gauzyFiltersComponent: GauzyFiltersComponent;
 	datePickerConfig$: Observable<any> = this._dateRangePickerBuilderService.datePickerConfig$;
-
-	payloads$: BehaviorSubject<ITimeLogFilters> = new BehaviorSubject(null);
 
 	constructor(
 		public readonly translateService: TranslateService,
