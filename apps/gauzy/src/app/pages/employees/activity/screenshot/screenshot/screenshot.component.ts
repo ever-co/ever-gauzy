@@ -9,7 +9,7 @@ import {
 import { debounceTime, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs/internal/Observable';
 import { toLocal, isEmpty } from '@gauzy/common-angular';
-import { chain, indexBy, sortBy } from 'underscore';
+import { chain, indexBy, pick, sortBy } from 'underscore';
 import * as moment from 'moment';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NbDialogService } from '@nebular/theme';
@@ -75,23 +75,33 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent
 		this.subject$.next(true);
 	}
 
-	getLogs() {
+	async getLogs() {
 		if (!this.organization || isEmpty(this.filters)) {
 			return;
 		}
-		this.loading = true;
+		const appliedFilter = pick(
+			this.filters,
+			'source',
+			'activityLevel',
+			'logType'
+		);
 		const request: IGetTimeSlotInput = {
-			...this.getFilterRequest(this.filters),
+			...appliedFilter,
+			...this.getFilterRequest(this.request),
 			relations: ['screenshots', 'timeLogs']
 		};
-		this.screenshotsUrls = [];
-		this.timesheetService
-			.getTimeSlots(request)
-			.then((timeSlots) => {
-				this.originalTimeSlots = timeSlots;
-				this.timeSlots = this.groupTimeSlots(timeSlots);
-			})
-			.finally(() => (this.loading = false));
+		this.loading = true;
+		try {
+			this.screenshotsUrls = [];
+			const timeSlots = await this.timesheetService.getTimeSlots(request);
+
+			this.originalTimeSlots = timeSlots;
+			this.timeSlots = this.groupTimeSlots(timeSlots);
+		} catch (error) {
+			console.log('Error while retrieving screenshots for employee', error);
+		} finally {
+			this.loading = false;
+		}
 	}
 
 	toggleSelect(slotId?: string) {

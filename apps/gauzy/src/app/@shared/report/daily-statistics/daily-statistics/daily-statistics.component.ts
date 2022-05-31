@@ -16,6 +16,7 @@ import { pick } from 'underscore';
 import { debounceTime, tap } from 'rxjs/operators';
 import * as moment from 'moment';
 import { TranslateService } from '@ngx-translate/core';
+import { isEmpty } from '@gauzy/common-angular';
 import { EmployeesService, OrganizationProjectsService, Store } from './../../../../@core/services';
 import { TimesheetStatisticsService } from '../../../timesheet/timesheet-statistics.service';
 import { BaseSelectorFilterComponent } from '../../../timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
@@ -30,16 +31,21 @@ export class DailyStatisticsComponent extends BaseSelectorFilterComponent
 	implements OnInit, AfterViewInit {
 
 	PermissionsEnum = PermissionsEnum;
-	logRequest: ITimeLogFilters = this.request;
 	counts: ICountsStatistics;
 	loading: boolean;
 	employeesCount: number;
 	projectsCount: number;
 
-	@Input()
-	set filters(value: ITimeLogFilters) {
-		if (value) {
-			this.logRequest = value;
+	/*
+	* Getter & Setter for dynamic filters
+	*/
+	private _filters: ITimeLogFilters = this.request;
+	get filters(): ITimeLogFilters {
+		return this._filters;
+	}
+	@Input() set filters(filters: ITimeLogFilters) {
+		if (filters) {
+			this._filters = filters;
 			this.subject$.next(true);
 		}
 	}
@@ -58,7 +64,7 @@ export class DailyStatisticsComponent extends BaseSelectorFilterComponent
 	ngOnInit() {
 		this.subject$
 			.pipe(
-				debounceTime(500),
+				debounceTime(300),
 				tap(() => this.getCounts()),
 				untilDestroyed(this)
 			)
@@ -70,20 +76,20 @@ export class DailyStatisticsComponent extends BaseSelectorFilterComponent
 	}
 
 	async getCounts() {
-		if (!this.organization || !this.logRequest) {
+		if (!this.organization || isEmpty(this.filters)) {
 			return;
 		}
-		this.loading = true;
 		const appliedFilter = pick(
-			this.logRequest,
+			this.filters,
 			'source',
 			'activityLevel',
 			'logType'
 		);
 		const request: IGetCountsStatistics = {
 			...appliedFilter,
-			...this.getFilterRequest(this.logRequest),
+			...this.getFilterRequest(this.request),
 		};
+		this.loading = true;
 		try {
 			const counts = await this.timesheetStatisticsService.getCounts(request);
 			this.counts = counts;
@@ -118,8 +124,8 @@ export class DailyStatisticsComponent extends BaseSelectorFilterComponent
 	}
 
 	get period() {
-		if(this.logRequest){
-			const { startDate, endDate } = this.logRequest;
+		if (this.request) {
+			const { startDate, endDate } = this.request;
 			const start = moment(startDate);
 			const end = moment(endDate);
 			return end.diff(start, 'days') * 86400;
