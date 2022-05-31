@@ -15,21 +15,6 @@
 		nbSpinnerStatus="primary"
 	>
 		<div class="row custom-header m-0 align-items-center">
-			<div
-				class="col-auto"
-				*ngxPermissionsOnly="[
-					OrganizationPermissionsEnum.ALLOW_DELETE_TIME
-				]"
-			>
-				<nb-checkbox
-					[checked]="allChecked"
-					[indeterminate]="isIndeterminate()"
-					(checkedChange)="checkedAll($event)"
-					status="basic"
-					size="small"
-				>
-				</nb-checkbox>
-			</div>
 			<div class="col-sm-3 project-name">
 				{{ 'TIMESHEET.PROJECT' | translate }} /
 				{{ 'TIMESHEET.TODO' | translate }}
@@ -51,20 +36,6 @@
 					"
 					*ngFor="let day of weekData"
 				>
-					<div
-						class="col-auto"
-						*ngxPermissionsOnly="[
-							OrganizationPermissionsEnum.ALLOW_DELETE_TIME
-						]"
-					>
-						<nb-checkbox
-							[checked]=""
-							(checkedChange)="toggleCheckbox($event)"
-							status="basic"
-							[disabled]=""
-							size="small"
-						></nb-checkbox>
-					</div>
 					<div class="col-sm-3 project-name">
 						<ngx-project
 							*ngIf="day?.project; else noProject"
