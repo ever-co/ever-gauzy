@@ -150,9 +150,9 @@ export class LineChartComponent implements OnInit, OnDestroy {
 						if (!activeElements || !activeElements.length) {
 							if (this.data && this.data.datasets) {
 								this.data.datasets.forEach(x => {
-									x.borderWidth = 1
+									x.borderWidth = 2
 									x.pointRadius = 2
-									x.pointBorderWidth = 1
+									x.pointBorderWidth = 2
 									x.pointBorderColor = x.borderColor
 									x.backgroundColor = ChartUtil.transparentize(x.backgroundColor, 1)
 									evt.target.style.cursor = 'default'
@@ -168,9 +168,9 @@ export class LineChartComponent implements OnInit, OnDestroy {
 							const datasetIndex = activeElements[0]._datasetIndex
 							const activeDataset = this.data.datasets[datasetIndex]
 
-							activeDataset.borderWidth = 8
-							activeDataset.pointRadius = 7
-							activeDataset.pointBorderWidth = 6
+							activeDataset.borderWidth = 4
+							activeDataset.pointRadius = 4
+							activeDataset.pointBorderWidth = 4
 							activeDataset.pointBorderColor = 'rgb(255, 255, 255)'
 							activeDataset.backgroundColor = ChartUtil.transparentize(activeDataset.backgroundColor, 0.4)
 							activeDataset.fill = true
