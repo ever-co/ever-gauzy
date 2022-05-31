@@ -3,7 +3,7 @@
 :host {
   .time-log-view-contiainer {
     width: 450px;
-    box-shadow: 0px 0px 0px 2px rgba(110, 73, 232, 0.2);
+    box-shadow: 0px 0px 0px 2px nb-theme(color-primary-transparent-default);
     border-radius: nb-theme(border-radius);
   }
 
