@@ -1,13 +1,63 @@
+@import 'gauzy/_gauzy-table';
+
 :host {
   .time-log-view-contiainer {
-    min-width: 300px;
+    width: 450px;
+    box-shadow: 0px 0px 0px 2px rgba(110, 73, 232, 0.2);
+    border-radius: nb-theme(border-radius);
   }
+
+  .time-log-text {
+    color: nb-theme(gauzy-text-color-1);
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 15px;
+    letter-spacing: 0em;
+    text-align: left;
+  }
+
   nb-list {
     max-height: 220px;
     overflow-x: hidden;
     overflow-y: auto;
   }
+
   nb-list-item {
     cursor: pointer;
+  }
+
+  ::ng-deep ngx-avatar {
+    .inner-wrapper {
+      background-color: nb-theme(color-primary-transparent-100);
+      border-radius: nb-theme(button-rectangle-border-radius);
+      padding: 5px 14px 5px 7px;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      width: fit-content;
+      font-size: 12px;
+      font-weight: 400;
+      line-height: 15px;
+      letter-spacing: 0em;
+      gap: 8px;
+
+      .image-container {
+        height: 20px;
+        width: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        img[type='user'] {
+          height: 18px;
+          width: 18px;
+        }
+      }
+
+      .link-text {
+        color: nb-theme(text-primary-color);
+        font-weight: normal;
+      }
+    }
   }
 }

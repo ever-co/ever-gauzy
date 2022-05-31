@@ -221,17 +221,5 @@ export class WeeklyComponent
 			: moment(date).isSameOrBefore(moment());
 	}
 
-	isIndeterminate() {
-		// TODO
-	}
-
-	checkedAll(event: any) {
-		// TODO
-	}
-
-	toggleCheckbox(event: any) {
-		// TODO
-	}
-
 	ngOnDestroy(): void {}
 }
