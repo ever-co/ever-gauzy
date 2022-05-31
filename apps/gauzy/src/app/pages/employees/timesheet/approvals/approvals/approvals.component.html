@@ -43,7 +43,7 @@
 				<div class="col-1">{{ 'TIMESHEET.STATUS' | translate }}</div>
 			</div>
 			<ng-template [ngIf]="timesheets?.length > 0" [ngIfElse]="notFound">
-				<div class="custom-body">
+				<div class="custom-body approval">
 					<div
 						[class]="
 							timesheets.at(-1) === timesheet
