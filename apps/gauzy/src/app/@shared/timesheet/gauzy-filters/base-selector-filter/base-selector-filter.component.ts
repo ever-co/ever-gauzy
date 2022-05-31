@@ -33,25 +33,30 @@ export class BaseSelectorFilterComponent extends TranslationBaseComponent {
 
 	onInit() {
 		const storeOrganization$ = this.store.selectedOrganization$;
-		const storeEmployee$ = this.store.selectedEmployee$;
+		const storeDateRange$ = this.store.selectedDateRange$;
 		const storeProject$ = this.store.selectedProject$;
-		combineLatest([storeOrganization$, storeEmployee$, storeProject$])
+		const storeEmployee$ = this.store.selectedEmployee$;
+		combineLatest([storeOrganization$, storeDateRange$, storeEmployee$, storeProject$])
 			.pipe(
 				debounceTime(300),
 				distinctUntilChange(),
-				filter(([organization]) => !!organization),
+				filter(([organization, dateRange]) => !!organization && !!dateRange),
 				tap(([organization]) => (this.organization = organization)),
-				tap(([organization, employee, project]) => {
-					if (organization) {
-						if (employee && employee.id) {
-							this.request.employeeIds = [employee.id];
-						} else {
-							delete this.request.employeeIds;
-						}
-						if (project && project.id) {
-							this.request.projectIds = [project.id];
-						} else {
-							delete this.request.projectIds;
+				tap(([organization, dateRange, employee, project]) => {
+					if (employee && employee.id) {
+						this.request.employeeIds = [employee.id];
+					} else {
+						delete this.request.employeeIds;
+					}
+					if (project && project.id) {
+						this.request.projectIds = [project.id];
+					} else {
+						delete this.request.projectIds;
+					}
+					if (dateRange) {
+						this.request = {
+							...this.request,
+							...dateRange
 						}
 					}
 				}),
