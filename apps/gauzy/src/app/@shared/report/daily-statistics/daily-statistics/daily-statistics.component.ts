@@ -13,10 +13,11 @@ import {
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { pick } from 'underscore';
-import { debounceTime, tap } from 'rxjs/operators';
+import { debounceTime, filter, tap } from 'rxjs/operators';
+import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import * as moment from 'moment';
 import { TranslateService } from '@ngx-translate/core';
-import { isEmpty } from '@gauzy/common-angular';
+import { distinctUntilChange, isEmpty } from '@gauzy/common-angular';
 import { EmployeesService, OrganizationProjectsService, Store } from './../../../../@core/services';
 import { TimesheetStatisticsService } from '../../../timesheet/timesheet-statistics.service';
 import { BaseSelectorFilterComponent } from '../../../timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
@@ -29,6 +30,8 @@ import { BaseSelectorFilterComponent } from '../../../timesheet/gauzy-filters/ba
 })
 export class DailyStatisticsComponent extends BaseSelectorFilterComponent
 	implements OnInit, AfterViewInit {
+
+	payloads$: BehaviorSubject<ITimeLogFilters> = new BehaviorSubject(null);
 
 	PermissionsEnum = PermissionsEnum;
 	counts: ICountsStatistics;
@@ -64,18 +67,23 @@ export class DailyStatisticsComponent extends BaseSelectorFilterComponent
 	ngOnInit() {
 		this.subject$
 			.pipe(
-				debounceTime(300),
+				debounceTime(200),
+				tap(() => this.prepareRequest()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.payloads$
+			.pipe(
+				debounceTime(200),
+				distinctUntilChange(),
+				filter((payloads: ITimeLogFilters) => !!payloads),
 				tap(() => this.getCounts()),
 				untilDestroyed(this)
 			)
 			.subscribe();
 	}
 
-	ngAfterViewInit() {
-		this.cd.detectChanges();
-	}
-
-	async getCounts() {
+	prepareRequest() {
 		if (!this.organization || isEmpty(this.filters)) {
 			return;
 		}
@@ -89,9 +97,22 @@ export class DailyStatisticsComponent extends BaseSelectorFilterComponent
 			...appliedFilter,
 			...this.getFilterRequest(this.request),
 		};
+		this.payloads$.next(request);
+	}
+
+	ngAfterViewInit() {
+		this.cd.detectChanges();
+	}
+
+	async getCounts() {
+		if (!this.organization || isEmpty(this.filters)) {
+			return;
+		}
+		const payloads = this.payloads$.getValue();
+
 		this.loading = true;
 		try {
-			const counts = await this.timesheetStatisticsService.getCounts(request);
+			const counts = await this.timesheetStatisticsService.getCounts(payloads);
 			this.counts = counts;
 
 			this.loadEmployeesCount();
