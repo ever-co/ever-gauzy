@@ -5,6 +5,12 @@
         border-radius: 0 nb-theme(border-radius) nb-theme(border-radius) nb-theme(border-radius);
     }
 
+    .gauzy-button-action {
+        display: flex;
+        align-content: center;
+        justify-content: flex-end;
+    }
+
     .log {
         width: fit-content;
         font-size: 12px;

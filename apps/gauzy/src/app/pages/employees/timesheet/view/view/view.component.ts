@@ -23,18 +23,24 @@ import { TranslationBaseComponent } from './../../../../../@shared/language-base
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-timesheet-view',
-	templateUrl: './view.component.html'
+	templateUrl: './view.component.html',
+	styleUrls: ['../../daily/daily/daily.component.scss']
 })
-export class ViewComponent 
-	extends TranslationBaseComponent 
-	implements OnInit, OnDestroy {
-
+export class ViewComponent
+	extends TranslationBaseComponent
+	implements OnInit, OnDestroy
+{
 	OrganizationPermissionsEnum = OrganizationPermissionsEnum;
 	PermissionsEnum = PermissionsEnum;
 	TimesheetStatus = TimesheetStatus;
 	timeLogs: any;
 	logs$: Subject<any> = new Subject();
 	timesheet: ITimesheet;
+	selectedLog = {
+		data: null,
+		isSelected: false
+	};
+	disable = true;
 
 	constructor(
 		private readonly timesheetService: TimesheetService,
@@ -55,7 +61,7 @@ export class ViewComponent
 		this.activatedRoute.data
 			.pipe(
 				tap((data) => !!data && !!data.timesheet),
-				tap(({ timesheet }) => this.timesheet = timesheet),
+				tap(({ timesheet }) => (this.timesheet = timesheet)),
 				tap(() => this.logs$.next(true)),
 				untilDestroyed(this)
 			)
@@ -67,10 +73,12 @@ export class ViewComponent
 			const request: IGetTimeLogInput = {
 				timesheetId: this.timesheet.id
 			};
-			const logs: ITimeLog[] = await this.timesheetService.getTimeLogs(request);
-			this.timeLogs = chain(logs).groupBy(
-				(log) => moment(log.startedAt).format('YYYY-MM-DD')
-			).value();
+			const logs: ITimeLog[] = await this.timesheetService.getTimeLogs(
+				request
+			);
+			this.timeLogs = chain(logs)
+				.groupBy((log) => moment(log.startedAt).format('YYYY-MM-DD'))
+				.value();
 		} catch (error) {
 			console.error('Error while retrieving logs', error);
 		}
@@ -84,8 +92,7 @@ export class ViewComponent
 			.open(EditTimeLogModalComponent, {
 				context: { timeLog: timeLog }
 			})
-			.onClose
-			.pipe(
+			.onClose.pipe(
 				filter((data) => !!data),
 				tap(() => this.logs$.next(true)),
 				untilDestroyed(this)
@@ -101,12 +108,34 @@ export class ViewComponent
 			const request = {
 				logIds: [timeLog.id],
 				organizationId: timeLog.organizationId
-			}
+			};
 			await this.timesheetService.deleteLogs(request);
 			this.logs$.next(true);
 		} catch (error) {
 			console.error('Error while deleting TimeLog', error);
 		}
+	}
+
+	public selectLog(isChecked: boolean, log: ITimeLog) {
+		if (
+			(this.selectedLog.data && this.selectedLog.data.id === log?.id) ||
+			!isChecked
+		) {
+			this.clearData();
+		} else {
+			this.disable = true;
+			this.selectedLog.isSelected = this.disable;
+			this.selectedLog.data = log;
+		}
+		console.log(isChecked, log);
+	}
+
+	public clearData() {
+		this.selectedLog = {
+			data: null,
+			isSelected: false
+		};
+		this.disable = true;
 	}
 
 	ngOnDestroy() {}

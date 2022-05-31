@@ -50,6 +50,7 @@
 	nb-card-body {
 		height: calc(100vh - 27rem);
 		padding-bottom: 2.25rem;
+		background-color: rgba(50, 50, 50, 0.03);
 
 		.custom-body {
 			background: rgba(255, 255, 255, 0.99);
@@ -86,7 +87,7 @@
 	nb-checkbox ::ng-deep .custom-checkbox {
 		border-width: 2px;
 	}
-	
+
 	[nbButton].appearance-outline.status-primary {
 		border-style: none;
 	}
