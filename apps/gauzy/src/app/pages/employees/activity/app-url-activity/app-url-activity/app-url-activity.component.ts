@@ -1,10 +1,10 @@
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { Subject } from 'rxjs';
+import { BehaviorSubject, filter } from 'rxjs';
 import { debounceTime, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs/internal/Observable';
-import { chain, reduce } from 'underscore';
+import { chain, pick, reduce } from 'underscore';
 import * as moment from 'moment';
 import {
 	ITimeLogFilters,
@@ -15,7 +15,7 @@ import {
 	IURLMetaData
 } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
-import { toUTC, toLocal, isJsObject, isEmpty } from '@gauzy/common-angular';
+import { toUTC, toLocal, isJsObject, isEmpty, distinctUntilChange } from '@gauzy/common-angular';
 import { DateRangePickerBuilderService, Store } from './../../../../../@core/services';
 import { ActivityService, TimesheetFilterService } from './../../../../../@shared/timesheet';
 import { BaseSelectorFilterComponent } from './../../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
@@ -27,14 +27,17 @@ import { GauzyFiltersComponent } from './../../../../../@shared/timesheet/gauzy-
 	styleUrls: ['./app-url-activity.component.scss'],
 	templateUrl: './app-url-activity.component.html'
 })
-export class AppUrlActivityComponent extends BaseSelectorFilterComponent implements OnInit, OnDestroy {
+export class AppUrlActivityComponent extends BaseSelectorFilterComponent 
+	implements OnInit, OnDestroy {
+	
+	payloads$: BehaviorSubject<ITimeLogFilters> = new BehaviorSubject(null);
+
+	filters: ITimeLogFilters = this.request;
 	loading: boolean;
 	apps: {
 		hour: string;
 		activities: IDailyActivity[];
 	}[];
-	filters: ITimeLogFilters;
-	activities$: Subject<boolean> = this.subject$;
 	type: 'apps' | 'urls';
 
 	@ViewChild(GauzyFiltersComponent) gauzyFiltersComponent: GauzyFiltersComponent;
@@ -52,16 +55,25 @@ export class AppUrlActivityComponent extends BaseSelectorFilterComponent impleme
 	}
 
 	ngOnInit(): void {
-		this.activities$
-			.pipe(
-				debounceTime(300),
-				tap(() => this.getLogs()),
-				untilDestroyed(this)
-			)
-			.subscribe();
 		this.activatedRoute.data
 			.pipe(
 				tap((params) => this.type = params.type),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.subject$
+			.pipe(
+				debounceTime(200),
+				tap(() => this.prepareRequest()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.payloads$
+			.pipe(
+				debounceTime(200),
+				distinctUntilChange(),
+				filter((payloads: ITimeLogFilters) => !!payloads),
+				tap(() => this.getLogs()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -72,7 +84,24 @@ export class AppUrlActivityComponent extends BaseSelectorFilterComponent impleme
 			this.timesheetFilterService.filter = filters;
 		}
 		this.filters = Object.assign({}, filters);
-		this.activities$.next(true);
+		this.subject$.next(true);
+	}
+
+	prepareRequest() {
+		if (!this.organization || isEmpty(this.filters)) {
+			return;
+		}
+		const appliedFilter = pick(
+			this.filters,
+			'source',
+			'activityLevel'
+		);
+		const request: IGetActivitiesInput = {
+			...appliedFilter,
+			...this.getFilterRequest(this.request),
+			types: [this.type === 'apps' ? ActivityType.APP : ActivityType.URL]
+		};
+		this.payloads$.next(request);
 	}
 
 	loadChild(item: IDailyActivity) {
@@ -120,14 +149,11 @@ export class AppUrlActivityComponent extends BaseSelectorFilterComponent impleme
 		if (!this.organization || isEmpty(this.filters)) {
 			return;
 		}
-		const request: IGetActivitiesInput = {
-			...this.getFilterRequest(this.filters),
-			types: [this.type === 'apps' ? ActivityType.APP : ActivityType.URL]
-		};
+		const payloads = this.payloads$.getValue();
 
 		this.loading = true;
 		this.activityService
-			.getDailyActivities(request)
+			.getDailyActivities(payloads)
 			.then((activities) => {
 				this.apps = chain(activities)
 					.map((activity) => {

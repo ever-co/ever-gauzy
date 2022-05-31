@@ -6,10 +6,11 @@ import {
 	IScreenshotMap,
 	IScreenshot
 } from '@gauzy/contracts';
-import { debounceTime, tap } from 'rxjs/operators';
+import { debounceTime, filter, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs/internal/Observable';
-import { toLocal, isEmpty } from '@gauzy/common-angular';
-import { chain, indexBy, sortBy } from 'underscore';
+import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
+import { toLocal, isEmpty, distinctUntilChange } from '@gauzy/common-angular';
+import { chain, indexBy, pick, sortBy } from 'underscore';
 import * as moment from 'moment';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NbDialogService } from '@nebular/theme';
@@ -30,6 +31,8 @@ import { GauzyFiltersComponent } from './../../../../../@shared/timesheet/gauzy-
 })
 export class ScreenshotComponent extends BaseSelectorFilterComponent 
 	implements OnInit, OnDestroy {
+
+	payloads$: BehaviorSubject<ITimeLogFilters> = new BehaviorSubject(null);
 
 	filters: ITimeLogFilters = this.request;
 	loading: boolean;
@@ -59,8 +62,17 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent
 	ngOnInit(): void {
 		this.subject$
 			.pipe(
-				debounceTime(300),
+				debounceTime(200),
 				tap(() => this.galleryService.clearGallery()),
+				tap(() => this.prepareRequest()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.payloads$
+			.pipe(
+				debounceTime(200),
+				distinctUntilChange(),
+				filter((payloads: ITimeLogFilters) => !!payloads),
 				tap(() => this.getLogs()),
 				untilDestroyed(this)
 			)
@@ -75,23 +87,42 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent
 		this.subject$.next(true);
 	}
 
-	getLogs() {
+	prepareRequest() {
 		if (!this.organization || isEmpty(this.filters)) {
 			return;
 		}
-		this.loading = true;
+		const appliedFilter = pick(
+			this.filters,
+			'source',
+			'activityLevel',
+			'logType'
+		);
 		const request: IGetTimeSlotInput = {
-			...this.getFilterRequest(this.filters),
+			...appliedFilter,
+			...this.getFilterRequest(this.request),
 			relations: ['screenshots', 'timeLogs']
 		};
-		this.screenshotsUrls = [];
-		this.timesheetService
-			.getTimeSlots(request)
-			.then((timeSlots) => {
-				this.originalTimeSlots = timeSlots;
-				this.timeSlots = this.groupTimeSlots(timeSlots);
-			})
-			.finally(() => (this.loading = false));
+		this.payloads$.next(request);
+	}
+
+	async getLogs() {
+		if (!this.organization || isEmpty(this.filters)) {
+			return;
+		}
+		const payloads = this.payloads$.getValue();
+
+		this.loading = true;
+		try {
+			this.screenshotsUrls = [];
+			const timeSlots = await this.timesheetService.getTimeSlots(payloads);
+
+			this.originalTimeSlots = timeSlots;
+			this.timeSlots = this.groupTimeSlots(timeSlots);
+		} catch (error) {
+			console.log('Error while retrieving screenshots for employee', error);
+		} finally {
+			this.loading = false;
+		}
 	}
 
 	toggleSelect(slotId?: string) {
