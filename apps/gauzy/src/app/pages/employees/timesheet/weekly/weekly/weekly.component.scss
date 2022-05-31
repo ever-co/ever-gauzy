@@ -48,9 +48,6 @@
 	}
 
 	nb-card-body {
-		height: calc(100vh - 27rem);
-		padding-bottom: 2.25rem;
-		background-color: rgba(50, 50, 50, 0.03);
 
 		.custom-body {
 			background: rgba(255, 255, 255, 0.99);
@@ -74,7 +71,7 @@
 
 			.selected {
 				background-color: rgba(126, 126, 143, 0.1);
-				box-shadow: -6px 0 0 0 rgba(126, 126, 143, 0.2);
+				box-shadow: -6px 0 0 0 rgba(48, 48, 120, 0.2);
 				border-radius: 8px 0 0 8px;
 
 				&.border-bottom {
