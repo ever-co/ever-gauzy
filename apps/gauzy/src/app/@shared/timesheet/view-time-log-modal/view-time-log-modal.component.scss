@@ -48,10 +48,6 @@
     color: rgba(126, 126, 143, 1);
   }
 
-  small.duration {
-    text-transform: lowercase;
-  }
-
   ::ng-deep ngx-avatar {
     .inner-wrapper {
       background-color: nb-theme(color-primary-transparent-100);
