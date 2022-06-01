@@ -1,14 +1,10 @@
 <div class="p-1 time-log-view-contiainer">
-	<!-- <h6>{{ 'TIMESHEET.VIEW_TIME_LOGS' | translate }}</h6> -->
+	<h6 class="title p-3">{{ 'TIMESHEET.VIEW_TIME_LOGS' | translate }}</h6>
 
 	<nb-list class="time-span custom-scroll">
 		<nb-list-item
 			*ngFor="let timeLog of timeLogs"
-			[class]="
-				timeLogs.at(-1) !== timeLog || timeLogs[0] !== timeLog
-					? 'row border align-items-center'
-					: 'row align-items-center'
-			"
+			class="row border-top align-items-center"
 		>
 			<div class="time-log-content col pr-0">
 				<ngx-avatar
