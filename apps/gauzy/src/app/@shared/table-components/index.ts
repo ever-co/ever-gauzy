@@ -19,3 +19,4 @@ export * from './project/project.component';
 export * from './created-at/created-at.component';
 export * from './create-by/create-by.component';
 export * from './employees-merged-teams/employees-merged-teams.component';
+export * from './contact-with-tags/contact-with-tags.component';

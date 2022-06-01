@@ -7,7 +7,8 @@ import {
 	ChangeDetectorRef,
 	TemplateRef
 } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Data, ParamMap, Router } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
 import {
 	IOrganizationContact,
 	IOrganizationContactCreateInput,
@@ -23,7 +24,7 @@ import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { combineLatest, Subject, firstValueFrom } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
-import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
+import { Ng2SmartTableComponent } from 'ng2-smart-table';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import { InviteContactComponent } from './invite-contact/invite-contact.component';
@@ -34,9 +35,10 @@ import {
 	Store,
 	ToastrService
 } from '../../@core/services';
-import { ComponentEnum } from '../../@core/constants';
+import { API_PREFIX, ComponentEnum } from '../../@core/constants';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import {
+	ContactWithTagsComponent,
 	EmployeeWithLinksComponent,
 	ProjectComponent
 } from '../../@shared/table-components';
@@ -44,18 +46,17 @@ import {
 	IPaginationBase,
 	PaginationFilterBaseComponent
 } from '../../@shared/pagination/pagination-filter-base.component';
-import { ContactWithTagsComponent } from '../../@shared/table-components/contact-with-tags/contact-with-tags.component';
+import { ServerDataSource } from '../../@core/utils/smart-table';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-contact',
-	templateUrl: './contact.component.html',
-	styleUrls: ['./contact.component.scss']
+	selector: 'ga-contacts',
+	templateUrl: './contacts.component.html',
+	styleUrls: ['./contacts.component.scss']
 })
-export class ContactComponent
-	extends PaginationFilterBaseComponent
-	implements OnInit, OnDestroy
-{
+export class ContactsComponent extends PaginationFilterBaseComponent 
+	implements OnInit, OnDestroy {
+	
 	showAddCard: boolean;
 	organizationContacts: IOrganizationContact[] = [];
 	projectsWithoutOrganizationContacts: IOrganizationProject[] = [];
@@ -65,12 +66,12 @@ export class ContactComponent
 	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
 	contactOrganizationInviteStatus = ContactOrganizationInviteStatus;
 	settingsSmartTable: object;
-	disableButton = true;
 	countries: ICountry[] = [];
-	loading: boolean;
-	smartTableSource = new LocalDataSource();
+	disableButton: boolean = true;
+	loading: boolean = false;
+	smartTableSource: ServerDataSource;
 
-	subject$: Subject<any> = new Subject();
+	contacts$: Subject<any> = this.subject$;
 	public organization: IOrganization;
 	selectedEmployeeId: string;
 
@@ -109,22 +110,29 @@ export class ContactComponent
 		private readonly route: ActivatedRoute,
 		private readonly countryService: CountryService,
 		private readonly cd: ChangeDetectorRef,
-		private readonly _router: Router
+		private readonly _router: Router,
+		private readonly http: HttpClient
 	) {
 		super(translateService);
-		this.setView();
 		this.countryService.find$.next(true);
 	}
 
 	ngOnInit(): void {
 		this._applyTranslationOnSmartTable();
-		this.subject$
+		this._loadSmartTableSettings();
+		this.route.data
 			.pipe(
-				debounceTime(300),
-				tap(() => (this.loading = true)),
-				tap(() => this.loadOrganizationContacts()),
-				tap(() => this.loadProjectsWithoutOrganizationContacts()),
+				tap((params: Data) => this.contactType = params.contactType),
+				tap(() => this.setView()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.contacts$
+			.pipe(
+				debounceTime(100),
 				tap(() => this.clearItem()),
+				tap(() => this.getContacts()),
+				tap(() => this.loadProjectsWithoutOrganizationContacts()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -132,7 +140,7 @@ export class ContactComponent
 			.pipe(
 				debounceTime(100),
 				distinctUntilChange(),
-				tap(() => this.subject$.next(true)),
+				tap(() => this.contacts$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -146,33 +154,32 @@ export class ContactComponent
 				tap(([organization, employee]) => {
 					this.organization = organization;
 					this.selectedEmployeeId = employee ? employee.id : null;
-					this.subject$.next(true);
 				}),
+				tap(() => this.refreshPagination()),
+				tap(() => this.contacts$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
 		this.route.queryParamMap
 			.pipe(
-				filter(
-					(params) =>
-						!!params && params.get('openAddDialog') === 'true'
-				),
+				filter((params: ParamMap) => !!params),
+				filter((params: ParamMap) => params.get('openAddDialog') === 'true'),
 				debounceTime(1000),
 				tap(() => this.add()),
 				untilDestroyed(this)
 			)
 			.subscribe();
 		this.route.queryParamMap
-			.pipe(untilDestroyed(this))
-			.subscribe((params) => {
-				if (params.get('id')) {
-					this._initEditMethod(params.get('id'));
-				}
-			});
+			.pipe(
+				filter((params: ParamMap) => !!params),
+				filter((params: ParamMap) => !!params.get('id')),
+				tap((params: ParamMap) => this._initEditMethod(params.get('id'))),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this.countryService.countries$
 			.pipe(
 				tap((countries: ICountry[]) => (this.countries = countries)),
-				tap(() => this.loadSmartTable()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -206,7 +213,7 @@ export class ContactComponent
 		}
 	}
 
-	async loadSmartTable() {
+	private _loadSmartTableSettings() {
 		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
 			actions: false,
@@ -241,7 +248,8 @@ export class ContactComponent
 				projects: {
 					title: this.getTranslation('CONTACTS_PAGE.PROJECTS'),
 					type: 'custom',
-					renderComponent: ProjectComponent
+					renderComponent: ProjectComponent,
+					filter: false
 				},
 				country: {
 					title: this.getTranslation('CONTACTS_PAGE.COUNTRY'),
@@ -296,25 +304,33 @@ export class ContactComponent
 				}
 			);
 
-			this.loadOrganizationContacts();
+			this.contacts$.next(true);
 		}
 	}
 
 	setView() {
-		this.viewComponentName = ComponentEnum.CONTACTS;
+		switch (this.contactType) {
+			case ContactType.CLIENT:
+				this.viewComponentName = ComponentEnum.CLIENTS;
+				break;
+			case ContactType.LEAD:
+				this.viewComponentName = ComponentEnum.LEADS;
+				break;
+			default:
+				this.viewComponentName = ComponentEnum.CUSTOMERS;
+				break;
+		}
 		this.store
 			.componentLayout$(this.viewComponentName)
 			.pipe(
+				distinctUntilChange(),
+				tap((componentLayout) => (this.dataLayoutStyle = componentLayout)),
+				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => this.refreshPagination()),
+				tap(() => this.contacts$.next(true)),
 				untilDestroyed(this)
 			)
-			.subscribe((componentLayout) => {
-				this.dataLayoutStyle = componentLayout;
-				this.selectedOrganizationContact =
-					this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID
-						? null
-						: this.selectedOrganizationContact;
-			});
+			.subscribe();
 	}
 
 	public async addOrEditOrganizationContact(
@@ -353,7 +369,7 @@ export class ContactComponent
 				name: organizationContact.name
 			});
 
-			this.loadOrganizationContacts();
+			this.contacts$.next(true);
 		} else {
 			this.toastrService.danger(
 				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CONTACTS.INVALID_CONTACT_DATA'
@@ -361,26 +377,25 @@ export class ContactComponent
 		}
 	}
 
-	private async loadOrganizationContacts() {
+	/*
+	 * Register Smart Table Source Config
+	 */
+	setSmartTableSource() {
 		if (!this.organization) {
 			return;
 		}
+		this.loading = true;
 
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
-		const { activePage, itemsPerPage } = this.getPagination();
-		const findObj = {
-			organizationId,
-			tenantId,
-			contactType: this.contactType
-		};
-		if (this.selectedEmployeeId) {
-			findObj['employeeId'] = this.selectedEmployeeId;
-		}
 
-		this.organizationContactService
-			.getAll(
-				[
+		const request = {};
+		if (this.selectedEmployeeId) request['employeeId'] = this.selectedEmployeeId;
+
+		try {
+			this.smartTableSource = new ServerDataSource(this.http, {
+				endPoint: `${API_PREFIX}/organization-contact/pagination`,
+				relations: [
 					'projects',
 					'projects.organization',
 					'members',
@@ -388,13 +403,17 @@ export class ContactComponent
 					'tags',
 					'contact'
 				],
-				findObj
-			)
-			.then(({ items = [] }) => {
-				const result = [];
-				items.forEach((contact: IOrganizationContact) => {
-					result.push({
-						...contact,
+				where: {
+					...{
+						organizationId,
+						tenantId,
+						contactType: this.contactType,
+					},
+					...request,
+					...this.filters.where
+				},
+				resultMap: (contact: IOrganizationContact) => {
+					return Object.assign({}, contact, {
 						country: contact.contact ? contact.contact.country : '',
 						city: contact.contact ? contact.contact.city : '',
 						street: contact.contact ? contact.contact.address : '',
@@ -410,35 +429,41 @@ export class ContactComponent
 							? contact.contact.fiscalInformation
 							: ''
 					});
-				});
-				this.smartTableSource.setPaging(
-					activePage,
-					itemsPerPage,
-					false
-				);
-				this.organizationContacts = result;
-				this.smartTableSource.load(result);
-				this._loadGridLayoutData();
-				this.setPagination({
-					...this.getPagination(),
-					totalItems: this.smartTableSource.count()
-				});
-			})
-			.catch(() => {
-				this.toastrService.danger(
-					this.getTranslation('TOASTR.TITLE.ERROR')
-				);
-			})
-			.finally(() => {
-				this.loading = false;
-				this.cd.detectChanges();
+				},
+				finalize: () => {
+					this.setPagination({
+						...this.getPagination(),
+						totalItems: this.smartTableSource.count()
+					});
+					this.loading = false;
+				}
 			});
+		} catch (error) {
+			this.toastrService.danger(
+				this.getTranslation('TOASTR.TITLE.ERROR')
+			);
+		}
+	}
+
+	private async getContacts() {
+		if (!this.organization) {
+			return;
+		}
+		try {
+			this.setSmartTableSource();
+
+			const { activePage, itemsPerPage } = this.getPagination();
+			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
+
+			await this._loadGridLayoutData();
+		} catch (error) {
+			this.toastrService.danger(error);
+		}
 	}
 
 	private async _loadGridLayoutData() {
-		if (this.componentLayoutStyleEnum.CARDS_GRID === this.dataLayoutStyle) {
-			this.organizationContacts =
-				await this.smartTableSource.getElements();
+		if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
+			this.organizationContacts = await this.smartTableSource.getElements();
 		}
 	}
 
@@ -520,7 +545,7 @@ export class ContactComponent
 			const result = await firstValueFrom(dialog.onClose);
 
 			if (result) {
-				await this.loadOrganizationContacts();
+				this.contacts$.next(true);
 				this.toastrService.success(
 					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CONTACTS.INVITE_CONTACT',
 					{
@@ -538,7 +563,7 @@ export class ContactComponent
 	public _applyTranslationOnSmartTable() {
 		this.translateService.onLangChange
 			.pipe(
-				tap(() => this.loadSmartTable()),
+				tap(() => this._loadSmartTableSettings()),
 				untilDestroyed(this)
 			)
 			.subscribe();

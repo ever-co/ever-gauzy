@@ -10,7 +10,7 @@ import { ITimeLog } from './timesheet.model';
 
 export interface IOrganizationContact extends IBaseEntityWithMembers {
 	name: string;
-	contactType: string;
+	contactType: ContactType;
 	primaryEmail: string;
 	emailAddresses?: string[];
 	primaryPhone: string;
@@ -19,7 +19,7 @@ export interface IOrganizationContact extends IBaseEntityWithMembers {
 	notes?: string;
 	members?: IEmployee[];
 	imageUrl?: string;
-	inviteStatus?: string;
+	inviteStatus?: ContactOrganizationInviteStatus;
 	timeLogs?: ITimeLog[];
 	tags: ITag[];
 	contact?: IContact;
@@ -40,7 +40,7 @@ export interface IOrganizationContactFindInput
 	primaryPhone?: string;
 	notes?: string;
 	imageUrl?: string;
-	contactType?: string;
+	contactType?: ContactType;
 	createdBy?: string;
 }
 
@@ -56,7 +56,7 @@ export interface IOrganizationContactCreateInput extends IContact {
 	members?: IEmployee[];
 	notes?: string;
 	imageUrl?: string;
-	contactType?: string;
+	contactType?: ContactType;
 	createdBy?: string;
 }
 
