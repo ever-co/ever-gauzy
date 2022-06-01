@@ -6,7 +6,7 @@
 					nbButton
 					status="success"
 					size="small"
-					
+					(click)="openAddEdit()"
 					*ngxPermissionsOnly="[
 						OrganizationPermissionsEnum.ALLOW_MANUAL_TIME
 					]"
