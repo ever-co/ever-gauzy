@@ -18,7 +18,7 @@ import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { map, Observable, Subject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
+import { distinctUntilChange, isEmpty, isNotEmpty } from '@gauzy/common-angular';
 import { ALL_PROJECT_SELECTED } from './default-project';
 import {
 	OrganizationProjectsService,
@@ -53,6 +53,7 @@ export class ProjectSelectorComponent
 	onChange: any = () => {};
 	onTouched: any = () => {};
 	
+	@Input() shortened = false;
 	@Input() disabled = false;
 	@Input() multiple = false;
 
@@ -331,13 +332,32 @@ export class ProjectSelectorComponent
 		return true;
 	}
 
+	/**
+	 * GET Shortend Name
+	 * 
+	 * @param name 
+	 * @returns 
+	 */
 	getShortenedName(name: string) {
+		if (isEmpty(name)) {
+			return;
+		}
 		const chunks = name.split(/\s+/);
 		const [firstName, lastName] = [chunks.shift(), chunks.join(' ')];
 		if (firstName && lastName) {
 			return this._truncatePipe.transform(firstName, 10) + ' ' + this._truncatePipe.transform(lastName, 10);
 		} else {
 			return this._truncatePipe.transform(firstName, 20) || this._truncatePipe.transform(lastName, 20) || '[error: bad name]';
+		}
+	}
+
+	/**
+	 * Clear Selector Value
+	 * 
+	 */
+	clearSelection() {
+		if (!this.showAllOption) {
+			this.projectId = null;
 		}
 	}
 
