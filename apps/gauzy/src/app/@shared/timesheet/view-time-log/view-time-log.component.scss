@@ -3,7 +3,7 @@
 
 :host {
   .time-log-view-contiainer {
-    width: 450px;
+    width: 430px;
     box-shadow: 0px 0px 0px 2px nb-theme(color-primary-transparent-default);
     border-radius: nb-theme(border-radius);
   }
@@ -14,7 +14,17 @@
     font-weight: 400;
     line-height: 15px;
     letter-spacing: 0em;
-    text-align: left;
+    text-align: center;
+  }
+
+  .time-log-action {
+    background-color: nb-theme(gauzy-card-2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: nb-theme(button-rectangle-border-radius);
+    padding: 6px 8px;
+    width: fit-content;
   }
 
   nb-list {
