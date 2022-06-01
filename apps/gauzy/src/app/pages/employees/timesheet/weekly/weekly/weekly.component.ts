@@ -3,7 +3,8 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NbDialogService } from '@nebular/theme';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs/internal/Observable';
-import * as _ from 'underscore';
+import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
+import { chain, pick } from 'underscore';
 import {
 	IGetTimeLogInput,
 	ITimeLog,
@@ -11,7 +12,7 @@ import {
 	ITimeLogFilters,
 	OrganizationPermissionsEnum
 } from '@gauzy/contracts';
-import { isEmpty } from '@gauzy/common-angular';
+import { distinctUntilChange, isEmpty } from '@gauzy/common-angular';
 import { TranslateService } from '@ngx-translate/core';
 import { moment } from './../../../../../@core/moment-extend';
 import { DateRangePickerBuilderService, Store } from './../../../../../@core/services';
@@ -35,7 +36,7 @@ export class WeeklyComponent extends BaseSelectorFilterComponent
 	implements OnInit, OnDestroy {
 
 	OrganizationPermissionsEnum = OrganizationPermissionsEnum;
-	logRequest: ITimeLogFilters = this.request;
+	filters: ITimeLogFilters = this.request;
 
 	weekData: WeeklyDayData[] = [];
 	weekDayList: string[] = [];
@@ -46,6 +47,8 @@ export class WeeklyComponent extends BaseSelectorFilterComponent
 
 	@ViewChild(GauzyFiltersComponent) gauzyFiltersComponent: GauzyFiltersComponent;
 	datePickerConfig$: Observable<any> = this._dateRangePickerBuilderService.datePickerConfig$;
+
+	payloads$: BehaviorSubject<ITimeLogFilters> = new BehaviorSubject(null);
 
 	constructor(
 		private readonly timesheetService: TimesheetService,
@@ -61,7 +64,17 @@ export class WeeklyComponent extends BaseSelectorFilterComponent
 	ngOnInit() {
 		this.subject$
 			.pipe(
-				debounceTime(800),
+				debounceTime(200),
+				tap(() => this.updateWeekDayList()),
+				tap(() => this.prepareRequest()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.payloads$
+			.pipe(
+				debounceTime(200),
+				distinctUntilChange(),
+				filter((payloads: ITimeLogFilters) => !!payloads),
 				tap(() => this.getLogs()),
 				untilDestroyed(this)
 			)
@@ -76,7 +89,7 @@ export class WeeklyComponent extends BaseSelectorFilterComponent
 	}
 
 	updateWeekDayList() {
-		const { startDate, endDate } = this.logRequest;
+		const { startDate, endDate } = this.request;
 
 		const start = moment(moment(startDate).format('YYYY-MM-DD'));
 		const end = moment(moment(endDate).format('YYYY-MM-DD'));
@@ -93,37 +106,49 @@ export class WeeklyComponent extends BaseSelectorFilterComponent
 	}
 
 	filtersChange(filters: ITimeLogFilters) {
-		this.logRequest = filters;
-		this.updateWeekDayList();
 		if (this.gauzyFiltersComponent.saveFilters) {
 			this.timesheetFilterService.filter = filters;
 		}
-		this.subject$.next(true);
+		this.filters = Object.assign({}, filters);
+		this.subject$.next(true);		
 	}
 
-	async getLogs() {
-		if (!this.organization || isEmpty(this.logRequest)) {
+	/**
+	 * Prepare Unique Request Always
+	 * 
+	 * @returns 
+	 */
+	prepareRequest() {
+		if (!this.organization || isEmpty(this.filters)) {
 			return;
 		}
-		const appliedFilter = _.pick(
-			this.logRequest,
+		const appliedFilter = pick(
+			this.filters,
 			'source',
 			'activityLevel',
 			'logType'
 		);
 		const request: IGetTimeLogInput = {
 			...appliedFilter,
-			...this.getFilterRequest(this.logRequest),
+			...this.getFilterRequest(this.request),
 		};
+		this.payloads$.next(request);
+	}
+
+	async getLogs() {
+		if (!this.organization || isEmpty(this.filters)) {
+			return;
+		}
+		const payloads = this.payloads$.getValue();
 
 		this.loading = true;
 		this.timesheetService
-			.getTimeLogs(request)
+			.getTimeLogs(payloads)
 			.then((logs: ITimeLog[]) => {
-				this.weekData = _.chain(logs)
+				this.weekData = chain(logs)
 					.groupBy('projectId')
 					.map((innerLogs: ITimeLog[], _projectId) => {
-						const byDate = _.chain(innerLogs)
+						const byDate = chain(innerLogs)
 							.groupBy((log) =>
 								moment(log.startedAt).format('YYYY-MM-DD')
 							)
@@ -183,8 +208,8 @@ export class WeeklyComponent extends BaseSelectorFilterComponent
 							? project.organizationContactId
 							: null,
 						projectId: project ? project.id : null,
-						...(this.logRequest.employeeIds
-							? { employeeId: this.logRequest.employeeIds[0] }
+						...(this.request.employeeIds
+							? { employeeId: this.request.employeeIds[0] }
 							: {})
 					}
 				}
