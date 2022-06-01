@@ -10,7 +10,7 @@
 		[disabled]="disabled"
 		[items]="projects"
 		(change)="selectProject($event); select.blur();"
-		(clear)="select.blur();"
+		(clear)="select.blur(); clearSelection();"
 		[(ngModel)]="projectId"
 		[placeholder]="
 			placeholder || 'FORM.PLACEHOLDERS.ALL_PROJECTS' | translate
@@ -20,6 +20,18 @@
 		bindLabel="name"
 		appendTo="body"
 	>
+		<ng-container *ngIf="shortened">
+			<ng-template ng-option-tmp let-item="item" let-index="index">
+				<span>
+					{{ item?.name }}
+				</span>
+			</ng-template>
+			<ng-template ng-label-tmp let-item="item">
+				<span>
+					{{ getShortenedName(item?.name) }}
+				</span>
+			</ng-template>
+		</ng-container>
 	</ng-select>
 </ng-template>
 <ng-template #multipleSelect>

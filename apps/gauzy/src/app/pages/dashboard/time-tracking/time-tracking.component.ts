@@ -17,12 +17,12 @@ import {
 	ITasksStatistics,
 	IGetManualTimesStatistics,
 	IManualTimesStatistics,
-	IUser,
 	ISelectedEmployee,
 	IEmployee,
-	IDateRangePicker
+	IDateRangePicker,
+	ITimeLogFilters
 } from '@gauzy/contracts';
-import { combineLatest, Subject, Subscription, timer } from 'rxjs';
+import { BehaviorSubject, combineLatest, Subject, Subscription, timer } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { indexBy, range, reduce } from 'underscore';
 import { distinctUntilChange, isNotEmpty, progressStatus, toUTC } from '@gauzy/common-angular';
@@ -30,7 +30,7 @@ import * as moment from 'moment';
 import { NgxPermissionsService } from 'ngx-permissions';
 import { TranslateService } from '@ngx-translate/core';
 import { TimesheetStatisticsService } from '../../../@shared/timesheet/timesheet-statistics.service';
-import { EmployeesService, Store } from '../../../@core/services';
+import { EmployeesService, Store, ToastrService } from '../../../@core/services';
 import { GalleryService } from '../../../@shared/gallery';
 import { TranslationBaseComponent } from '../../../@shared/language-base';
 import { Router } from '@angular/router';
@@ -81,36 +81,21 @@ export class TimeTrackingComponent
 
 	employeeIds: string[] = [];
 	projectIds: string[] = [];
-	tenantId: string = null;
-	organizationId: string = null;
 
 	private autoRefresh$: Subscription;
 	autoRefresh: boolean = true;
 
-	private _selectedDateRange: IDateRangePicker = {
-		startDate: moment().startOf('week').toDate(),
-		endDate: moment().endOf('week').toDate(),
-		isCustomDate: false
-	};
+	private _selectedDateRange: IDateRangePicker;
 	get selectedDateRange(): IDateRangePicker {
 		return this._selectedDateRange;
 	}
 	set selectedDateRange(range: IDateRangePicker) {
 		if (isNotEmpty(range)) {
-			/**
-			 * Check, if start date is Greater Than end date
-			 */
-			if (moment(range.startDate).isAfter(range.endDate)) {
-				this._selectedDateRange = {
-					startDate: range.endDate,
-					endDate: range.startDate,
-					isCustomDate: range.isCustomDate
-				}
-			} else {
-				this._selectedDateRange = range;
-			}
+			this._selectedDateRange = range;
 		}
 	}
+
+	payloads$: BehaviorSubject<ITimeLogFilters> = new BehaviorSubject(null);
 
 	constructor(
 		private readonly timesheetStatisticsService: TimesheetStatisticsService,
@@ -121,25 +106,27 @@ export class TimeTrackingComponent
 		private readonly changeRef: ChangeDetectorRef,
 		private readonly _router: Router,
 		private readonly employeesService: EmployeesService,
-    	private readonly projectService: OrganizationProjectsService
+    	private readonly projectService: OrganizationProjectsService,
+		private readonly toastrService: ToastrService
 	) {
 		super(translateService);
 	}
 
 	ngOnInit() {
-		this.store.user$
+		this.logs$
 			.pipe(
-				filter((user: IUser) => !!user),
-				distinctUntilChange(),
-				tap((user: IUser) => (this.tenantId = user.tenantId)),
+				debounceTime(200),
+				tap(() => this.galleryService.clearGallery()),
+				tap(() => this.getStatistics()),
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.logs$
+		this.payloads$
 			.pipe(
-				debounceTime(500),
-				tap(() => this.galleryService.clearGallery()),
-				tap(() => this.getStatistics()),
+				debounceTime(200),
+				distinctUntilChange(),
+				filter((payloads: ITimeLogFilters) => !!payloads),
+				tap(() => this.logs$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -158,14 +145,12 @@ export class TimeTrackingComponent
 				filter(([organization, dateRange, employee]) => !!organization && !!dateRange && !!employee),
 				tap(([organization, dateRange, employee, project]) => {
 					this.organization = organization;
-					
-					this.organizationId = organization.id;
+	
 					this.employeeIds = employee ? [employee.id] : [];
 					this.projectIds = project ? [project.id] : [];
 					this.selectedDateRange = dateRange;
-					
-					this.logs$.next(true);
 				}),
+				tap(() => this.preparePayloads()),
 				tap(() => {
 					this.loadEmployeesCount();
 					this.loadProjectsCount();
@@ -193,6 +178,37 @@ export class TimeTrackingComponent
 		this.getMembers();
 	}
 
+	/**
+	 * Prepare Unique Payloads
+	 * 
+	 * @returns 
+	 */
+	preparePayloads() {
+		if (!this.organization) {
+			return;
+		}
+		const {
+			employeeIds,
+			projectIds,
+			selectedDateRange
+		} = this;
+		const { id: organizationId } = this.organization;
+		const { tenantId } = this.store.user;
+		const { startDate, endDate } = getAdjustDateRangeFutureAllowed(selectedDateRange);
+
+		const request: ITimeLogFilters = {
+			tenantId,
+			organizationId,
+			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm'),
+			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm')
+		};
+
+		if (isNotEmpty(employeeIds)) { request['employeeIds'] = employeeIds; }
+		if (isNotEmpty(projectIds)) { request['projectIds'] = projectIds; }
+
+		this.payloads$.next(request);
+	}
+
 	setAutoRefresh(value: boolean) {
 		if (this.autoRefresh$) {
 			this.autoRefresh$.unsubscribe();
@@ -208,198 +224,86 @@ export class TimeTrackingComponent
 		}
 	}
 
-	getTimeSlots() {
-		const {
-			tenantId,
-			organizationId,
-			employeeIds,
-			projectIds,
-			selectedDateRange
-		} = this;
-		const { startDate, endDate } = getAdjustDateRangeFutureAllowed(selectedDateRange);
-		const request: IGetTimeSlotStatistics = {
-			tenantId,
-			organizationId,
-			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm'),
-			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm')
-		};
-
-		if (isNotEmpty(employeeIds)) { request['employeeIds'] = employeeIds; }
-		if (isNotEmpty(projectIds)) { request['projectIds'] = projectIds; }
-
-		this.timeSlotLoading = true;
-		this.timesheetStatisticsService
-			.getTimeSlots(request)
-			.then((resp) => {
-				this.timeSlotEmployees = resp;
-			})
-			.finally(() => {
-				this.timeSlotLoading = false;
-			});
+	async getTimeSlots() {
+		const request: IGetTimeSlotStatistics = this.payloads$.getValue();
+		try {
+			this.timeSlotLoading = true;
+			this.timeSlotEmployees = await this.timesheetStatisticsService.getTimeSlots(request);
+		} catch (error) {
+			this.toastrService.error(error);
+		} finally {
+			this.timeSlotLoading = false;
+		}
 	}
 
-	onDelete() {
-		this.logs$.next(true);
+	async getCounts() {
+		const request: IGetCountsStatistics = this.payloads$.getValue();
+		try {
+			this.countsLoading = true;
+			this.counts = await this.timesheetStatisticsService.getCounts(request);
+		} catch (error) {
+			this.toastrService.error(error);
+		} finally {
+			this.countsLoading = false;
+		}
 	}
 
-	getCounts() {
-		const {
-			tenantId,
-			organizationId,
-			employeeIds,
-			projectIds,
-			selectedDateRange
-		} = this;
-		const { startDate, endDate } = getAdjustDateRangeFutureAllowed(selectedDateRange);
-		const request: IGetCountsStatistics = {
-			tenantId,
-			organizationId,
-			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm'),
-			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm')
-		};
-
-		if (isNotEmpty(employeeIds)) { request['employeeIds'] = employeeIds; }
-		if (isNotEmpty(projectIds)) { request['projectIds'] = projectIds; }
-
-		this.countsLoading = true;
-		this.timesheetStatisticsService
-			.getCounts(request)
-			.then((resp) => {
-				this.counts = resp;
-			})
-			.finally(() => {
-				this.countsLoading = false;
+	async getActivities() {
+		const request: IGetActivitiesStatistics = this.payloads$.getValue();
+		try {
+			this.activitiesLoading = true;
+			const activities = await this.timesheetStatisticsService.getActivities(request); 
+			const sum = reduce(
+				activities,
+				(memo, activity) =>
+					memo + parseInt(activity.duration + '', 10),
+				0
+			);
+			this.activities = activities.map((activity) => {
+				activity.durationPercentage = (activity.duration * 100) / sum;
+				return activity;
 			});
+		} catch (error) {
+			this.toastrService.error(error);
+		} finally {
+			this.activitiesLoading = false;
+		}
 	}
 
-	getActivities() {
-		const {
-			tenantId,
-			organizationId,
-			employeeIds,
-			projectIds,
-			selectedDateRange
-		} = this;
-		const { startDate, endDate } = getAdjustDateRangeFutureAllowed(selectedDateRange);
-		const request: IGetActivitiesStatistics = {
-			tenantId,
-			organizationId,
-			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm'),
-			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm')
-		};
-
-		if (isNotEmpty(employeeIds)) { request['employeeIds'] = employeeIds; }
-		if (isNotEmpty(projectIds)) { request['projectIds'] = projectIds; }
-
-		this.activitiesLoading = true;
-		this.timesheetStatisticsService
-			.getActivities(request)
-			.then((resp) => {
-				const sum = reduce(
-					resp,
-					(memo, activity) =>
-						memo + parseInt(activity.duration + '', 10),
-					0
-				);
-				this.activities = resp.map((activity) => {
-					activity.durationPercentage =
-						(activity.duration * 100) / sum;
-					return activity;
-				});
-			})
-			.finally(() => {
-				this.activitiesLoading = false;
-			});
+	async getProjects() {
+		const request: IGetProjectsStatistics = this.payloads$.getValue();
+		try {
+			this.projectsLoading = true;
+			this.projects = await this.timesheetStatisticsService.getProjects(request);
+		} catch (error) {
+			this.toastrService.error(error);
+		} finally {
+			this.projectsLoading = false;
+		}
 	}
 
-	getProjects() {
-		const {
-			tenantId,
-			organizationId,
-			employeeIds,
-			projectIds,
-			selectedDateRange
-		} = this;
-		const { startDate, endDate } = getAdjustDateRangeFutureAllowed(selectedDateRange);
-		const request: IGetProjectsStatistics = {
-			tenantId,
-			organizationId,
-			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm'),
-			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm')
-		};
-
-		if (isNotEmpty(employeeIds)) { request['employeeIds'] = employeeIds; }
-		if (isNotEmpty(projectIds)) { request['projectIds'] = projectIds; }
-
-		this.projectsLoading = true;
-		this.timesheetStatisticsService
-			.getProjects(request)
-			.then((resp) => {
-				this.projects = resp;
-			})
-			.finally(() => {
-				this.projectsLoading = false;
-			});
+	async getTasks() {
+		const request: IGetTasksStatistics = this.payloads$.getValue();
+		try {
+			this.tasksLoading = true;
+			this.tasks = await this.timesheetStatisticsService.getTasks(request);
+		} catch (error) {
+			this.toastrService.error(error);
+		} finally {
+			this.tasksLoading = false;
+		}
 	}
 
-	getTasks() {
-		const {
-			tenantId,
-			organizationId,
-			employeeIds,
-			projectIds,
-			selectedDateRange
-		} = this;
-		const { startDate, endDate } = getAdjustDateRangeFutureAllowed(selectedDateRange);
-		const request: IGetTasksStatistics = {
-			tenantId,
-			organizationId,
-			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm'),
-			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm')
-		};
-
-		if (isNotEmpty(employeeIds)) { request['employeeIds'] = employeeIds; }
-		if (isNotEmpty(projectIds)) { request['projectIds'] = projectIds; }
-
-		this.tasksLoading = true;
-		this.timesheetStatisticsService
-			.getTasks(request)
-			.then((resp) => {
-				this.tasks = resp;
-			})
-			.finally(() => {
-				this.tasksLoading = false;
-			});
-	}
-
-	getManualTimes() {
-		const {
-			tenantId,
-			organizationId,
-			employeeIds,
-			projectIds,
-			selectedDateRange
-		} = this;
-		const { startDate, endDate } = getAdjustDateRangeFutureAllowed(selectedDateRange);
-		const request: IGetManualTimesStatistics = {
-			tenantId,
-			organizationId,
-			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm'),
-			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm')
-		};
-
-		if (isNotEmpty(employeeIds)) { request['employeeIds'] = employeeIds; }
-		if (isNotEmpty(projectIds)) { request['projectIds'] = projectIds; }
-
-		this.manualTimeLoading = true;
-		this.timesheetStatisticsService
-			.getManualTimes(request)
-			.then((resp) => {
-				this.manualTimes = resp;
-			})
-			.finally(() => {
-				this.manualTimeLoading = false;
-			});
+	async getManualTimes() {
+		const request: IGetManualTimesStatistics = this.payloads$.getValue();
+		try {
+			this.manualTimeLoading = true;
+			this.manualTimes = await this.timesheetStatisticsService.getManualTimes(request);
+		} catch (error) {
+			this.toastrService.error(error);
+		} finally {
+			this.manualTimeLoading = false;
+		}
 	}
 
 	async getMembers() {
@@ -408,54 +312,37 @@ export class TimeTrackingComponent
 		) {
 			return;
 		}
-		const {
-			tenantId,
-			organizationId,
-			employeeIds,
-			projectIds,
-			selectedDateRange
-		} = this;
-		const { startDate, endDate } = getAdjustDateRangeFutureAllowed(selectedDateRange);
-		const request: IGetMembersStatistics = {
-			tenantId,
-			organizationId,
-			employeeIds,
-			projectIds,
-			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm'),
-			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm')
-		};
+		const request: IGetMembersStatistics = this.payloads$.getValue();
+		try {
+			this.memberLoading = true;
+			const members = await this.timesheetStatisticsService.getMembers(request);
 
-		if (isNotEmpty(employeeIds)) { request['employeeIds'] = employeeIds; }
-		if (isNotEmpty(projectIds)) { request['projectIds'] = projectIds; }
-
-		this.memberLoading = true;
-		this.timesheetStatisticsService
-			.getMembers(request)
-			.then((resp: any) => {
-				this.members = resp.map((member) => {
-					const week: any = indexBy(member.weekHours, 'day');
-
-					const sum = reduce(
-						member.weekHours,
-						(memo, day: any) =>
-							memo + parseInt(day.duration + '', 10),
-						0
-					);
-					member.weekHours = range(0, 7).map((day) => {
-						if (week[day]) {
-							week[day].duration =
-								(week[day].duration * 100) / sum;
-							return week[day];
-						} else {
-							return { day, duration: 0 };
-						}
-					});
-					return member;
+			this.members = members.map((member) => {
+				const week: any = indexBy(member.weekHours, 'day');
+				const sum = reduce(
+					member.weekHours,
+					(memo, day: any) => memo + parseInt(day.duration + '', 10),
+					0
+				);
+				member.weekHours = range(0, 7).map((day) => {
+					if (week[day]) {
+						week[day].duration = (week[day].duration * 100) / sum;
+						return week[day];
+					} else {
+						return { day, duration: 0 };
+					}
 				});
-			})
-			.finally(() => {
-				this.memberLoading = false;
+				return member;
 			});
+		} catch (error) {
+			this.toastrService.error(error);
+		} finally {
+			this.memberLoading = false;
+		}
+	}
+
+	onDelete() {
+		this.logs$.next(true);
 	}
 
 	ngOnDestroy() {
@@ -463,7 +350,10 @@ export class TimeTrackingComponent
 	}
 
 	get period() {
-		const { startDate, endDate } = this.selectedDateRange;
+		if (!this.selectedDateRange) {
+			return;
+		}
+		const { startDate, endDate } = this.selectedDateRange as IDateRangePicker;
 		if (startDate && endDate) {
 			const start = moment(startDate);
 			const end = moment(endDate);
@@ -475,7 +365,10 @@ export class TimeTrackingComponent
 	 * Get selected date range period
 	 */
 	get selectedPeriod(): RangePeriod {
-		const { startDate, endDate } = this.selectedDateRange;
+		if (!this.selectedDateRange) {
+			return;
+		}
+		const { startDate, endDate } = this.selectedDateRange as IDateRangePicker;
 
 		const start = moment(startDate);
 		const end = moment(endDate);
@@ -494,6 +387,9 @@ export class TimeTrackingComponent
 	 * GET header title accordingly selected date range
 	 */
 	get headerTitle() {
+		if (!this.selectedDateRange) {
+			return this.getTranslation('TIMESHEET.WEEKLY');
+		}
 		const { startDate, endDate, isCustomDate } = this.selectedDateRange as IDateRangePicker;
 		if (startDate && endDate) {
 			if (!isCustomDate) {
@@ -514,6 +410,9 @@ export class TimeTrackingComponent
 	 * @returns 
 	 */
 	isCurrentWeek() {
+		if (!this.selectedDateRange) {
+			return;
+		}
 		const { startDate, endDate } = this.selectedDateRange as IDateRangePicker;
 		return (
 			(
@@ -531,6 +430,9 @@ export class TimeTrackingComponent
 	 * If, selected date range are more than a days
 	 */
 	isMoreThanDays(): boolean {
+		if (!this.selectedDateRange) {
+			return;
+		}
 		const { startDate, endDate } = this.selectedDateRange as IDateRangePicker;
 		if (startDate && endDate) {
 			return moment(endDate).diff(moment(startDate), 'days') > 0;
@@ -542,6 +444,9 @@ export class TimeTrackingComponent
 	 * If, selected date range are more than a week
 	 */
 	isMoreThanWeek(): boolean {
+		if (!this.selectedDateRange) {
+			return;
+		}
 		const { startDate, endDate } = this.selectedDateRange as IDateRangePicker;
 		if (startDate && endDate) {
 			return moment(endDate).diff(moment(startDate), 'weeks') > 0;
