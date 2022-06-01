@@ -1,6 +1,20 @@
 <nb-card>
 	<nb-card-header class="p-0">
 		<div class="filters">
+			<div class="add-button">
+				<button
+					nbButton
+					status="success"
+					size="small"
+					
+					*ngxPermissionsOnly="[
+						OrganizationPermissionsEnum.ALLOW_MANUAL_TIME
+					]"
+				>
+					<nb-icon icon="plus-outline"></nb-icon>
+					{{ 'TIMESHEET.ADD_TIME' | translate }}
+				</button>
+			</div>
 			<ngx-gauzy-filters
 				[saveFilters]="(datePickerConfig$ | async).isSaveDatePicker"
 				(filtersChange)="filtersChange($event)"
