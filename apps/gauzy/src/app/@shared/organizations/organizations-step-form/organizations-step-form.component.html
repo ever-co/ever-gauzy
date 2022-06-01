@@ -1,6 +1,8 @@
 <nb-card>
 	<nb-card-header>
-		<span class="cancel"><i class="fas fa-times" (click)="close()"></i></span>
+		<span *ngIf="closable" class="cancel"
+			><i class="fas fa-times" (click)="close()"></i
+		></span>
 		<h5 class="title">
 			{{ 'ORGANIZATIONS_PAGE.ORGANIZATION_ADD' | translate }}
 		</h5>

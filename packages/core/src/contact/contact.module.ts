@@ -1,16 +1,24 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Contact } from './contact.entity';
 import { CqrsModule } from '@nestjs/cqrs';
-import { CommandHandlers } from './commands/handlers';
+import { RouterModule } from 'nest-router';
+import { Contact } from './contact.entity';
 import { ContactController } from './contact.controller';
 import { ContactService } from './contact.service';
+import { CommandHandlers } from './commands/handlers';
 import { TenantModule } from '../tenant/tenant.module';
 
 @Module({
-	imports: [TypeOrmModule.forFeature([Contact]), CqrsModule, TenantModule],
+	imports: [
+		RouterModule.forRoutes([
+			{ path: '/contact', module: ContactModule }
+		]),
+		TypeOrmModule.forFeature([Contact]),
+		TenantModule,
+		CqrsModule
+	],
 	controllers: [ContactController],
 	providers: [ContactService, ...CommandHandlers],
-	exports: [ContactService]
+	exports: [TypeOrmModule, ContactService]
 })
 export class ContactModule {}

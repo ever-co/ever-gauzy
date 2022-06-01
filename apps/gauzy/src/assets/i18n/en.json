@@ -3558,7 +3558,7 @@
 		"NO_EMPLOYEES_SELECTED": "Please select Employee",
 		"DELETE_CONFIRM": "Are you sure you want to delete this screenshots and activities?",
     	"VISITED_DATES":"Visited Dates",
-		"NO_RECORD_FOUND": "No Records Found. Please select Date Range, Employee Or Project"
+		"NO_RECORD_FOUND": "No records found. Please select date range, employee or project."
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Let's create your first organization",

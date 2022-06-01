@@ -1,0 +1,1 @@
+export { CreateOrganizationContactDTO } from './create-organization-contact.dto';

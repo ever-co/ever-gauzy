@@ -87,6 +87,7 @@ export class OrganizationsStepFormComponent
 	createOrganization = new EventEmitter();
 
 	@Output() closeForm = new EventEmitter();
+	@Input() closable = false;
 
 	constructor(
 		private readonly fb: FormBuilder,

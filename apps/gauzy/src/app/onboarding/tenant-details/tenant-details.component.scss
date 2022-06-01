@@ -5,3 +5,14 @@
 	align-items: center;
 	margin-bottom: 10px;
 }
+
+:host {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	flex-direction: column;
+
+	.step-form {
+		min-width: 60%;
+	}
+}
