@@ -97,6 +97,15 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 	}
 	@Input() set selectedDateRange(range: IDateRangePicker) {
 		if (isNotEmpty(range)) {
+			/**
+			 * IF current route has timesheet filter save state
+			 */
+			if (this.isSaveDatePicker) {
+				this.timesheetFilterService.filter = {
+					...this.timesheetFilterService.filter,
+					...range
+				}
+			}
 			this._selectedDateRange = range;
 			this.range$.next(range);
 		}		

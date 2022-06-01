@@ -14,8 +14,10 @@ import {
 	ReportGroupFilterEnum,
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { debounceTime, tap } from 'rxjs/operators';
+import { debounceTime, filter, tap } from 'rxjs/operators';
+import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import { pick } from 'underscore';
+import { distinctUntilChange, isEmpty } from '@gauzy/common-angular';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '../../../@core/services';
 import { TimesheetService } from '../../timesheet/timesheet.service';
@@ -30,16 +32,23 @@ import { BaseSelectorFilterComponent } from '../../timesheet/gauzy-filters/base-
 export class DailyGridComponent extends BaseSelectorFilterComponent
 	implements OnInit, AfterViewInit, OnDestroy {
 	
-	logRequest: ITimeLogFilters = this.request;
+	payloads$: BehaviorSubject<ITimeLogFilters> = new BehaviorSubject(null);
+
 	dailyLogs: IReportDayData[] = [];
 	loading: boolean;
 	groupBy: ReportGroupByFilter = ReportGroupFilterEnum.date;
 	ReportGroupFilterEnum = ReportGroupFilterEnum;
 
-	@Input()
-	set filters(value: ITimeLogFilters) {
-		if (value) {
-			this.logRequest = value;
+	/*
+	* Getter & Setter for dynamic filters
+	*/
+	private _filters: ITimeLogFilters = this.request;
+	get filters(): ITimeLogFilters {
+		return this._filters;
+	}
+	@Input() set filters(filters: ITimeLogFilters) {
+		if (filters) {
+			this._filters = filters;
 			this.subject$.next(true);
 		}
 	}
@@ -56,9 +65,18 @@ export class DailyGridComponent extends BaseSelectorFilterComponent
 	ngOnInit() {
 		this.subject$
 			.pipe(
-				debounceTime(500),
-				tap(() => this.getLogs()),
+				debounceTime(200),
+				tap(() => this.prepareRequest()),
 				untilDestroyed(this),
+			)
+			.subscribe();
+		this.payloads$
+			.pipe(
+				debounceTime(200),
+				distinctUntilChange(),
+				filter((payloads: ITimeLogFilters) => !!payloads),
+				tap(() => this.getLogs()),
+				untilDestroyed(this)
 			)
 			.subscribe();
 	}
@@ -71,28 +89,37 @@ export class DailyGridComponent extends BaseSelectorFilterComponent
 		this.subject$.next(true);
 	}
 
-	async getLogs() {
-		if (!this.organization || !this.logRequest) {
+	prepareRequest() {
+		if (!this.organization || isEmpty(this.filters)) {
 			return;
 		}
-		this.loading = true;
 		const appliedFilter = pick(
-			this.logRequest,
+			this.filters,
 			'source',
 			'activityLevel',
 			'logType'
 		);
 		const baseRequest: IGetTimeLogReportInput = {
 			...appliedFilter,
-			...this.getFilterRequest(this.logRequest),
+			...this.getFilterRequest(this.request),
 			groupBy: this.groupBy
 		}
 		const request = {
 			...baseRequest,
 			groupBy: this.groupBy
 		}
+		this.payloads$.next(request);
+	}
+
+	async getLogs() {
+		if (!this.organization || isEmpty(this.filters)) {
+			return;
+		}
+		const payloads = this.payloads$.getValue();
+
+		this.loading = true;
 		try {
-			this.dailyLogs = await this.timesheetService.getDailyReport(request);
+			this.dailyLogs = await this.timesheetService.getDailyReport(payloads);
 		} catch (error) {
 			console.log('Error while retrieving daily logs report', error);
 		} finally {

@@ -384,7 +384,38 @@
 									(mapGeometryEmitter)="
 										onGeometrySend($event)
 									"
-								></ga-location-form>
+								>
+								</ga-location-form>
+								<div>
+									<button
+										nbButton
+										nbStepperPrevious
+										class="gray mr-2"
+										status="basic"
+										outline
+									>
+										{{ 'BUTTONS.PREVIOUS' | translate }}
+									</button>
+									<button
+										[disabled]="locationForm.invalid"
+										nbButton
+										class="green mr-2"
+										status="basic"
+										outline
+										nbStepperNext
+									>
+										{{ 'BUTTONS.NEXT' | translate }}
+									</button>
+									<button
+										nbButton
+										(click)="cancel()"
+										class="mr-2"
+										status="basic"
+										outline
+									>
+										{{ 'BUTTONS.CANCEL' | translate }}
+									</button>
+								</div>
 							</div>
 							<div class="col-7">
 								<ng-container
@@ -398,36 +429,6 @@
 								</ng-container>
 							</div>
 						</div>
-					</div>
-					<div class="buttons">
-						<button
-							nbButton
-							nbStepperPrevious
-							class="gray mr-2"
-							status="basic"
-							outline
-						>
-							{{ 'BUTTONS.PREVIOUS' | translate }}
-						</button>
-						<button
-							[disabled]="locationForm.invalid"
-							nbButton
-							class="green mr-2"
-							status="basic"
-							outline
-							nbStepperNext
-						>
-							{{ 'BUTTONS.NEXT' | translate }}
-						</button>
-						<button
-							nbButton
-							(click)="cancel()"
-							class="mr-2"
-							status="basic"
-							outline
-						>
-							{{ 'BUTTONS.CANCEL' | translate }}
-						</button>
 					</div>
 				</form>
 			</nb-step>

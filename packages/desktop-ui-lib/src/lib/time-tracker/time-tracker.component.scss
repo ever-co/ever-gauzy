@@ -189,7 +189,7 @@
 }
 
 ::ng-deep .form-group {
-  margin-bottom: 5px;
+  margin-bottom: 4px;
 }
 
 ::ng-deep .nb-theme-default nb-card {
@@ -221,3 +221,36 @@
 ::ng-deep .nb-theme-default nb-layout .layout .layout-container .content nb-layout-footer nav {
   padding: 0px;
 }
+
+.footer-fixed {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+::ng-deep .ng2-smart-pagination .page-link-next,
+::ng-deep .ng2-smart-pagination .page-link-prev {
+	border-radius: 0px !important;
+}
+
+::ng-deep .nb-theme-default ng2-smart-table nav.ng2-smart-pagination-nav .pagination li a {
+  padding: 0 1.25rem !important;
+}
+
+::ng-deep .page-item {
+	margin: auto !important;
+}
+
+::ng-deep .page-link {
+	margin: auto !important;
+}
+
+::ng-deep .ng-select.ng-select-single .ng-select-container {
+  height: 30px;
+}
+
+::ng-deep textarea {
+  height: 90px;
+}
+
