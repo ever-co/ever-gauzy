@@ -188,7 +188,7 @@
 			status="basic"
 			class="action secondary"
 			size="small"
-			[disabled]="allChecked"
+			[disabled]="allChecked && timeLogs?.length !== 1"
 			(click)="openView(selectedLog?.data)"
 		>
 			<nb-icon icon="eye-outline"></nb-icon>
@@ -202,7 +202,7 @@
 			nbButton
 			status="basic"
 			class="action primary"
-			[disabled]="allChecked"
+			[disabled]="allChecked && timeLogs?.length !== 1"
 			size="small"
 			(click)="openEdit(selectedLog?.data)"
 		>
@@ -218,7 +218,7 @@
 			status="basic"
 			size="small"
 			class="action"
-			[disabled]="allChecked"
+			[disabled]="allChecked && timeLogs?.length !== 1"
 			ngxConfirmDialog
 			[message]="'TIMESHEET.DELETE_TIMELOG' | translate"
 			(confirm)="onDeleteConfirm(selectedLog?.data)"

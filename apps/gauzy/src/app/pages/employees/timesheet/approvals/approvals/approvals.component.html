@@ -121,7 +121,7 @@
 			(click)="redirectToView(selectedTimesheet?.data)"
 			class="action secondary"
 			status="basic"
-			[disabled]="allChecked"
+			[disabled]="allChecked && timesheets?.length !== 1"
 			nbButton
 			size="small"
 		>
@@ -133,7 +133,7 @@
 			(click)="submitTimesheet(selectedTimesheet?.data?.id, 'submit')"
 			class="action primary"
 			status="basic"
-			[disabled]="allChecked"
+			[disabled]="allChecked && timesheets?.length !== 1"
 			nbButton
 			size="small"
 		>
@@ -145,7 +145,7 @@
 			(click)="submitTimesheet(selectedTimesheet?.data?.id, 'unsubmit')"
 			class="action primary"
 			status="basic"
-			[disabled]="allChecked"
+			[disabled]="allChecked && timesheets?.length !== 1"
 			nbButton
 			size="small"
 		>
@@ -163,7 +163,7 @@
 			nbButton
 			class="action success"
 			status="basic"
-			[disabled]="allChecked"
+			[disabled]="allChecked && timesheets?.length !== 1"
 			nbButton
 			size="small"
 		>
@@ -179,7 +179,7 @@
 				)
 			"
 			nbButton
-			[disabled]="allChecked"
+			[disabled]="allChecked && timesheets?.length !== 1"
 			class="action warning"
 			status="basic"
 			nbButton
