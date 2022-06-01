@@ -26,6 +26,7 @@ import {
 	Store,
 	ToastrService
 } from '../../../@core/services';
+import { TruncatePipe } from '../../pipes';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -128,7 +129,8 @@ export class ProjectSelectorComponent
 		private readonly organizationProjects: OrganizationProjectsService,
 		private readonly store: Store,
 		private readonly toastrService: ToastrService,
-		private readonly _organizationProjectStore: OrganizationProjectStore
+		private readonly _organizationProjectStore: OrganizationProjectStore,
+		private readonly _truncatePipe: TruncatePipe
 	) {}
 
 	ngOnInit() {
@@ -322,11 +324,21 @@ export class ProjectSelectorComponent
 	 * 
 	 * @returns 
 	 */
-	 isClearable(): boolean {
+	isClearable(): boolean {
 		if (this.selectedProject === ALL_PROJECT_SELECTED) {
 			return false;
 		}
 		return true;
+	}
+
+	getShortenedName(name: string) {
+		const chunks = name.split(/\s+/);
+		const [firstName, lastName] = [chunks.shift(), chunks.join(' ')];
+		if (firstName && lastName) {
+			return this._truncatePipe.transform(firstName, 10) + ' ' + this._truncatePipe.transform(lastName, 10);
+		} else {
+			return this._truncatePipe.transform(firstName, 20) || this._truncatePipe.transform(lastName, 20) || '[error: bad name]';
+		}
 	}
 
 	ngOnDestroy() {}

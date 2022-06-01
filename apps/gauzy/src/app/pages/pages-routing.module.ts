@@ -475,7 +475,14 @@ const routes: Routes = [
 						path: 'projects',
 						loadChildren: () => import('./projects/projects.module').then(
 							(m) => m.ProjectsModule
-						)
+						),
+						data: {
+							selectors: {
+								project: false,
+								employee: false,
+								date: false
+							}
+						}
 					},
 					{
 						path: 'teams',
