@@ -1,11 +1,27 @@
 @import 'gauzy/_gauzy-dialogs';
 @import 'gauzy/_gauzy-table';
+@import 'apps/gauzy/src/app/pages/employees/timesheet/weekly/weekly/weekly.component.scss';
 
 :host {
   nb-card {
     width: 645px;
     background-color: nb-theme(gauzy-card-1);
   }
+
+  .col-12,
+  .col-6 {
+    padding: 0;
+  }
+
+  .custom-card {
+    background-color: nb-theme(gauzy-card-2);
+
+    .custom-card-body {
+      max-height: unset;
+      height: unset;
+    }
+  }
+
   ::ng-deep ngx-avatar {
     .inner-wrapper {
       background-color: nb-theme(color-primary-transparent-100);
@@ -20,6 +36,7 @@
       line-height: 15px;
       letter-spacing: 0em;
       text-align: left;
+
       .image-container {
         height: 20px;
         width: 28px;
@@ -32,6 +49,7 @@
           width: 18px;
         }
       }
+
       .link-text {
         color: nb-theme(text-primary-color);
         font-weight: normal;
