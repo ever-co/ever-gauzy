@@ -15,18 +15,9 @@ import {
 import { distinctUntilChange, isEmpty } from '@gauzy/common-angular';
 import { TranslateService } from '@ngx-translate/core';
 import { moment } from './../../../../../@core/moment-extend';
-import {
-	DateRangePickerBuilderService,
-	Store
-} from './../../../../../@core/services';
-import {
-	TimesheetService,
-	TimesheetFilterService
-} from './../../../../../@shared/timesheet';
-import {
-	EditTimeLogModalComponent,
-	ViewTimeLogComponent
-} from './../../../../../@shared/timesheet';
+import { DateRangePickerBuilderService, Store } from './../../../../../@core/services';
+import { TimesheetService, TimesheetFilterService } from './../../../../../@shared/timesheet';
+import { EditTimeLogModalComponent, ViewTimeLogComponent } from './../../../../../@shared/timesheet';
 import { BaseSelectorFilterComponent } from './../../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
 import { GauzyFiltersComponent } from './../../../../../@shared/timesheet/gauzy-filters/gauzy-filters.component';
 
@@ -242,6 +233,6 @@ export class WeeklyComponent extends BaseSelectorFilterComponent
 			? true
 			: moment(date).isSameOrBefore(moment());
 	}
-
+	
 	ngOnDestroy(): void {}
 }
