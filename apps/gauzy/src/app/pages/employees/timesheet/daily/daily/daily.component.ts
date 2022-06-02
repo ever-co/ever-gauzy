@@ -1,7 +1,7 @@
 // tslint:disable: nx-enforce-module-boundaries
 import { Component, OnInit, OnDestroy, AfterViewInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, ParamMap } from '@angular/router';
-import { distinctUntilChange, isEmpty } from '@gauzy/common-angular';
+import { isEmpty } from '@gauzy/common-angular';
 import {
 	NbDialogService,
 	NbMenuItem,
