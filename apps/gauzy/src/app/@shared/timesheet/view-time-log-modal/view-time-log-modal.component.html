@@ -46,16 +46,16 @@
 				<span class="subtitle">
 					{{ 'TIMESHEET.ORGANIZATION_CONTACT' | translate }} :
 				</span>
-				<span class="contact" (click)="redirectToClient()"
-					><span class="initial">{{
-						timeLog?.organizationContact.name.substr(0, 1)
-					}}</span>
+				<span class="contact" (click)="redirectToClient()">
+					<span class="initial">
+						{{ timeLog?.organizationContact?.name.substr(0, 1) }}
+					</span>
 					{{
 						timeLog?.organizationContact
-							? timeLog?.organizationContact.name
+							? timeLog?.organizationContact?.name
 							: ('TIMESHEET.NO_ORGANIZATION_CONTACT' | translate)
-					}}</span
-				>
+					}}
+				</span>
 			</div>
 		</div>
 		<div class="mt-3">

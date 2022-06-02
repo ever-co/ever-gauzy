@@ -66,7 +66,7 @@
 				<div class="custom-body" style="cursor: pointer">
 					<ng-container *ngFor="let log of timeLogs; let last = last;">
 						<div 
-							(click)="userRowSelect($event, log);"
+							(click)="userRowSelect(log);"
 							class="row m-0 py-3 align-items-center"
 							[ngClass]="{ 'border-bottom' : !last, 'selected' : log?.isSelected }"
 						>
@@ -193,7 +193,7 @@
 				status="basic"
 				class="action secondary"
 				size="small"
-				[disabled]="!selectedItem || disableButton"
+				[disabled]="disableButton"
 				(click)="openView(selectedItem)"
 			>
 				<nb-icon icon="eye-outline"></nb-icon>
@@ -207,7 +207,7 @@
 				nbButton
 				status="basic"
 				class="action primary"
-				[disabled]="!selectedItem || disableButton"
+				[disabled]="selectedItem?.isRunning || disableButton"
 				size="small"
 				(click)="openEdit(selectedItem)"
 			>
@@ -223,7 +223,7 @@
 				status="basic"
 				size="small"
 				class="action"
-				[disabled]="!selectedItem || disableButton"
+				[disabled]="selectedItem?.isRunning || disableButton"
 				ngxConfirmDialog
 				[message]="'TIMESHEET.DELETE_TIMELOG' | translate"
 				(confirm)="onDeleteConfirm(selectedItem)"

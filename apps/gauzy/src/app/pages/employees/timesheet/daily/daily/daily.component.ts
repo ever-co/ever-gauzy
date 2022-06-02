@@ -1,6 +1,6 @@
 // tslint:disable: nx-enforce-module-boundaries
 import { Component, OnInit, OnDestroy, AfterViewInit, ViewChild } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, ParamMap } from '@angular/router';
 import { distinctUntilChange, isEmpty } from '@gauzy/common-angular';
 import {
 	NbDialogService,
@@ -107,8 +107,8 @@ export class DailyComponent extends BaseSelectorFilterComponent implements
 		this.route.queryParamMap
 			.pipe(
 				debounceTime(1000),
-				filter((params) => !!params),
-				filter((params) => params.get('openAddDialog') === 'true'),
+				filter((params: ParamMap) => !!params),
+				filter((params: ParamMap) => params.get('openAddDialog') === 'true'),
 				tap(() => this.openAdd()),
 				untilDestroyed(this)
 			)
@@ -124,7 +124,7 @@ export class DailyComponent extends BaseSelectorFilterComponent implements
 			this.timesheetFilterService.filter = filters;
 		}
 		this.filters = Object.assign({}, filters);
-		this.subject$.next(true);	
+		this.subject$.next(true);
 	}
 
 	/**
@@ -385,7 +385,7 @@ export class DailyComponent extends BaseSelectorFilterComponent implements
 	 * 
 	 * @param log 
 	 */
-	userRowSelect(event, log: ITimeLog) {
+	userRowSelect(log: ITimeLog) {
 		// if row is already selected, deselect it.
 		if (log.isSelected) {
 			log.isSelected = false;
