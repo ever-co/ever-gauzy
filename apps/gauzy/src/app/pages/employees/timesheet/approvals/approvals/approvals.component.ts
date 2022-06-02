@@ -1,12 +1,10 @@
-import {
-	AfterViewInit,
-	Component,
-	OnDestroy,
-	OnInit,
-	ViewChild
-} from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
-import { ITimeLogFilters, ITimesheet, TimesheetStatus } from '@gauzy/contracts';
+import {
+	ITimeLogFilters,
+	ITimesheet,
+	TimesheetStatus
+} from '@gauzy/contracts';
 import { isEmpty } from '@gauzy/common-angular';
 import { NbDialogService, NbMenuItem, NbMenuService } from '@nebular/theme';
 import { debounceTime, filter, map, tap } from 'rxjs/operators';
@@ -14,17 +12,9 @@ import { Subject } from 'rxjs/internal/Subject';
 import { Observable } from 'rxjs/internal/Observable';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import {
-	TimesheetService,
-	TimesheetFilterService,
-	EditTimeLogModalComponent
-} from './../../../../../@shared/timesheet';
+import { TimesheetService, TimesheetFilterService } from './../../../../../@shared/timesheet';
 import { BaseSelectorFilterComponent } from './../../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
-import {
-	DateRangePickerBuilderService,
-	Store,
-	ToastrService
-} from './../../../../../@core/services';
+import { DateRangePickerBuilderService, Store, ToastrService } from './../../../../../@core/services';
 import { GauzyFiltersComponent } from './../../../../../@shared/timesheet/gauzy-filters/gauzy-filters.component';
 
 @UntilDestroy({ checkProperties: true })
@@ -33,10 +23,9 @@ import { GauzyFiltersComponent } from './../../../../../@shared/timesheet/gauzy-
 	templateUrl: './approvals.component.html',
 	styleUrls: ['./approvals.component.scss']
 })
-export class ApprovalsComponent
-	extends BaseSelectorFilterComponent
-	implements AfterViewInit, OnInit, OnDestroy
-{
+export class ApprovalsComponent extends BaseSelectorFilterComponent implements 
+	AfterViewInit, OnInit, OnDestroy {
+
 	logRequest: ITimeLogFilters = this.request;
 	timesheets: ITimesheet[] = [];
 
@@ -50,10 +39,8 @@ export class ApprovalsComponent
 
 	allChecked: boolean;
 
-	@ViewChild(GauzyFiltersComponent)
-	gauzyFiltersComponent: GauzyFiltersComponent;
-	datePickerConfig$: Observable<any> =
-		this._dateRangePickerBuilderService.datePickerConfig$;
+	@ViewChild(GauzyFiltersComponent) gauzyFiltersComponent: GauzyFiltersComponent;
+	datePickerConfig$: Observable<any> = this._dateRangePickerBuilderService.datePickerConfig$;
 
 	selectedTimesheet = {
 		data: null,
@@ -300,29 +287,6 @@ export class ApprovalsComponent
 			isSelected: false
 		};
 		this.disable = true;
-	}
-
-	public openAdd() {
-		this.dialogService
-			.open(EditTimeLogModalComponent, {
-				context: {
-					timeLog: {
-						startedAt: new Date(this.logRequest.startDate),
-						employeeId: this.logRequest.employeeIds
-							? this.logRequest.employeeIds[0]
-							: null,
-						projectId: this.logRequest.projectIds
-							? this.logRequest.projectIds[0]
-							: null
-					}
-				}
-			})
-			.onClose.pipe(untilDestroyed(this))
-			.subscribe((data) => {
-				if (data) {
-					this.timesheets$.next(true);
-				}
-			});
 	}
 
 	ngOnDestroy(): void {}

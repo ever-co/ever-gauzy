@@ -1,12 +1,6 @@
 <nb-card>
 	<nb-card-header class="p-0">
 		<div class="gauzy-action">
-			<ngx-gauzy-button-action
-				[hasLayoutSelector]="false"
-				[isDisable]="!selectedTimesheet?.isSelected && !allChecked"
-				[buttonTemplateVisible]="visible"
-				[buttonTemplate]="actionButtons"
-			></ngx-gauzy-button-action>
 			<ngx-gauzy-filters
 				[saveFilters]="(datePickerConfig$ | async).isSaveDatePicker"
 				[hasLogTypeFilter]="false"
@@ -189,10 +183,4 @@
 			{{ 'TIMESHEET.DENY' | translate }}
 		</button>
 	</div>
-</ng-template>
-<ng-template #visible>
-	<button nbButton (click)="openAdd()" status="success" size="small">
-		<nb-icon icon="plus-outline"></nb-icon>
-		{{ 'TIMESHEET.ADD_TIME' | translate }}
-	</button>
 </ng-template>
