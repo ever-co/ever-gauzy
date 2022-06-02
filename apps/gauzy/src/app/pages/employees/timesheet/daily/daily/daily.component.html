@@ -4,10 +4,27 @@
 			<div class="gauzy-action">
 				<ngx-gauzy-button-action
 					[hasLayoutSelector]="false"
-					[isDisable]="!(selectedLog?.isSelected || allChecked)"
-					[buttonTemplateVisible]="visible"
-					[buttonTemplate]="actionButtons"
-				></ngx-gauzy-button-action>
+					[isDisable]="isBulkActionsDisabled()"
+				>
+					<ng-container
+						buttonTemplate
+						[ngTemplateOutlet]="bulkActionButtons"
+					></ng-container>
+				</ngx-gauzy-button-action>
+				<ngx-gauzy-button-action
+					[hasLayoutSelector]="false"
+					[isDisable]="disableButton"
+				>
+					<ng-container
+						buttonTemplate
+						[ngTemplateOutlet]="actionButtons"
+						[ngTemplateOutletContext]="{ $implicit: selectedLog?.data }">
+					</ng-container>
+					<ng-container
+						buttonTemplateVisible
+						[ngTemplateOutlet]="visibleButtons"
+					></ng-container>
+				</ngx-gauzy-button-action>
 			</div>
 			<ngx-gauzy-filters
 				[saveFilters]="(datePickerConfig$ | async).isSaveDatePicker"
@@ -26,7 +43,7 @@
 				<div
 					class="col-auto"
 					*ngxPermissionsOnly="[
-						OrganizationPermissionsEnum.ALLOW_DELETE_TIME
+						PermissionsEnum.ALLOW_DELETE_TIME
 					]"
 				>
 					<nb-checkbox
@@ -54,109 +71,101 @@
 				<div class="col">{{ 'TIMESHEET.DURATION' | translate }}</div>
 				<div class="col-2">{{ 'TIMESHEET.TIME_SPAN' | translate }}</div>
 			</div>
-
 			<ng-template [ngIf]="timeLogs?.length > 0" [ngIfElse]="notFound">
-				<div class="custom-body">
-					<div
-						[class]="
-							timeLogs.at(-1) == log
-								? 'row m-0 py-3 align-items-center'
-								: 'row border-bottom m-0 py-3 align-items-center'
-						"
-						*ngFor="let log of timeLogs"
-					>
-						<div
-							class="col-auto"
-							*ngxPermissionsOnly="[
-								OrganizationPermissionsEnum.ALLOW_DELETE_TIME
-							]"
+				<div class="custom-body" style="cursor: pointer">
+					<ng-container *ngFor="let log of timeLogs; let last = last;">
+						<div 
+							(click)="userRowSelect($event, log);"
+							class="row m-0 py-3 align-items-center"
+							[ngClass]="{ 'border-bottom' : !last, 'selected' : log?.isSelected }"
 						>
-							<nb-checkbox
-								[checked]="log.checked"
-								(checkedChange)="toggleCheckbox($event, log)"
-								status="basic"
-								[disabled]="log.isRunning"
-							></nb-checkbox>
-						</div>
-						<div class="col-3 project-name">
-							<ngx-project
-								*ngIf="log?.project; else noProject"
-								[rowData]="log"
-							></ngx-project>
-							<ng-template #noProject>
-								<span>{{
-									'TIMESHEET.NO_PROJECT' | translate
-								}}</span>
-							</ng-template>
-							<div class="mt-2 small">
-								<span *ngIf="log?.task; else noToDo">
-									<strong
-										>{{ 'TIMESHEET.TODO' | translate }} :
-									</strong>
-									{{ log?.task?.title }}
-								</span>
-								<ng-template #noToDo>
+							<div
+								class="col"
+								*ngxPermissionsOnly="[
+									PermissionsEnum.ALLOW_DELETE_TIME
+								]"
+							>
+								<nb-checkbox
+									[checked]="log.checked"
+									(click)="$event.stopPropagation();"
+									(checkedChange)="toggleCheckbox($event, log);"
+									status="basic"
+									[disabled]="log.isRunning"
+								></nb-checkbox>
+							</div>
+							<div class="col-3 project-name">
+								<ngx-project
+									*ngIf="log?.project; else noProject"
+									[rowData]="log"
+								></ngx-project>
+								<ng-template #noProject>
 									<span>{{
-										'TIMESHEET.NO_TODO' | translate
+										'TIMESHEET.NO_PROJECT' | translate
 									}}</span>
+								</ng-template>
+								<div class="mt-2 small">
+									<span *ngIf="log?.task; else noToDo">
+										<strong
+											>{{ 'TIMESHEET.TODO' | translate }} :
+										</strong>
+										{{ log?.task?.title }}
+									</span>
+									<ng-template #noToDo>
+										<span>{{
+											'TIMESHEET.NO_TODO' | translate
+										}}</span>
+									</ng-template>
+								</div>
+							</div>
+							<div
+								class="col employee-name"
+								*ngxPermissionsOnly="[
+									PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+								]"
+							>
+								<div class="name-container">
+									<ngx-avatar
+										[name]="log?.employee?.user?.name"
+										[src]="log?.employee?.user?.imageUrl"
+										[id]="log?.employee?.id"
+									></ngx-avatar>
+								</div>
+							</div>
+							<div class="col">
+								<span class="log">
+									{{ log.logType }}
+								</span>
+							</div>
+							<div class="col">
+								<span class="log">
+									{{ log.source | replace: '_':' ' }}
+								</span>
+							</div>
+							<div class="col">
+								{{ log.duration | durationFormat }}
+							</div>
+							<div class="col-2">
+								<span class="start-timer">
+									{{ log.startedAt | utcToLocal | timeFormat: true }}
+								</span>
+								-
+								<span
+									class="end-timer"
+									*ngIf="!log.isRunning; else runningTimer"
+								>
+									{{ log.stoppedAt | utcToLocal | timeFormat: true }}
+								</span>
+								<ng-template #runningTimer>
+									<span class="running-timer">
+										{{ 'TIMESHEET.TILL_NOW' | translate }}
+									</span>
 								</ng-template>
 							</div>
 						</div>
-						<div
-							class="col employee-name"
-							*ngxPermissionsOnly="[
-								PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-							]"
-						>
-							<div class="name-container">
-								<ngx-avatar
-									[name]="log?.employee?.user?.name"
-									[src]="log?.employee?.user?.imageUrl"
-									[id]="log?.employee?.id"
-								></ngx-avatar>
-							</div>
-						</div>
-						<div class="col">
-							<span class="log">{{ log.logType }}</span>
-						</div>
-						<div class="col">
-							<span class="log">{{
-								log.source | replace: '_':' '
-							}}</span>
-						</div>
-						<div class="col">
-							{{ log.duration | durationFormat }}
-						</div>
-						<div class="col-2">
-							<span class="start-timer">
-								{{
-									log.startedAt
-										| utcToLocal
-										| timeFormat: true
-								}}
-							</span>
-							-
-							<span
-								class="end-timer"
-								*ngIf="!log.isRunning; else runningTimer"
-							>
-								{{
-									log.stoppedAt
-										| utcToLocal
-										| timeFormat: true
-								}}
-							</span>
-							<ng-template #runningTimer>
-								<span class="running-timer">
-									{{ 'TIMESHEET.TILL_NOW' | translate }}
-								</span>
-							</ng-template>
-						</div>
-					</div>
+					</ng-container>
 				</div>
 			</ng-template>
 		</div>
-
 		<ng-template #notFound>
 			<div class="row font-weight-bold py-3 align-items-center">
 				<div class="col text-center">
@@ -166,7 +175,8 @@
 		</ng-template>
 	</nb-card-body>
 </nb-card>
-<ng-template #actionButtons>
+
+<ng-template #bulkActionButtons>
 	<div class="actions">
 		<ng-container *ngIf="(isIndeterminate() || allChecked) && contextMenus">
 			<button
@@ -183,54 +193,64 @@
 				<nb-icon icon="chevron-down-outline"></nb-icon>
 			</button>
 		</ng-container>
+	</div>
+</ng-template>
+
+<ng-template 
+	#actionButtons
+	let-selectedItem
+>
+	<div class="actions">
 		<button
 			nbButton
 			status="basic"
 			class="action secondary"
 			size="small"
-			[disabled]="allChecked && timeLogs?.length !== 1"
-			(click)="openView(selectedLog?.data)"
+			[disabled]="!selectedItem || disableButton"
+			(click)="openView(selectedItem)"
 		>
 			<nb-icon icon="eye-outline"></nb-icon>
 			{{ 'TIMESHEET.VIEW' | translate }}
 		</button>
 		<button
 			*ngxPermissionsOnly="[
-				OrganizationPermissionsEnum.ALLOW_MODIFY_TIME
+				PermissionsEnum.ALLOW_MODIFY_TIME
 			]"
-			[disabled]="selectedLog?.data?.isRunning"
+			[disabled]="selectedItem?.isRunning"
 			nbButton
 			status="basic"
 			class="action primary"
-			[disabled]="allChecked && timeLogs?.length !== 1"
+			[disabled]="!selectedItem || disableButton"
 			size="small"
-			(click)="openEdit(selectedLog?.data)"
+			(click)="openEdit(selectedItem)"
 		>
 			<nb-icon icon="edit"></nb-icon>
 			{{ 'TIMESHEET.EDIT' | translate }}
 		</button>
 		<button
 			*ngxPermissionsOnly="[
-				OrganizationPermissionsEnum.ALLOW_DELETE_TIME
+				PermissionsEnum.ALLOW_DELETE_TIME
 			]"
-			[disabled]="selectedLog?.data?.isRunning"
+			[disabled]="selectedItem?.isRunning"
 			nbButton
 			status="basic"
 			size="small"
 			class="action"
-			[disabled]="allChecked && timeLogs?.length !== 1"
+			[disabled]="!selectedItem || disableButton"
 			ngxConfirmDialog
 			[message]="'TIMESHEET.DELETE_TIMELOG' | translate"
-			(confirm)="onDeleteConfirm(selectedLog?.data)"
+			(confirm)="onDeleteConfirm(selectedItem)"
 			[nbTooltip]="'TIMESHEET.DELETE' | translate"
 		>
 			<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
 		</button>
 	</div>
 </ng-template>
-<ng-template #visible>
+<ng-template #visibleButtons>
 	<ng-template
-		[ngxPermissionsOnly]="[OrganizationPermissionsEnum.ALLOW_MANUAL_TIME]"
+		[ngxPermissionsOnly]="[
+			PermissionsEnum.ALLOW_MANUAL_TIME
+		]"
 	>
 		<button
 			class="action"

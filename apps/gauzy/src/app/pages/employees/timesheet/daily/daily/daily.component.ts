@@ -1,39 +1,27 @@
 // tslint:disable: nx-enforce-module-boundaries
-import {
-	Component,
-	OnInit,
-	OnDestroy,
-	AfterViewInit,
-	ViewChild
-} from '@angular/core';
+import { Component, OnInit, OnDestroy, AfterViewInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { isEmpty } from '@gauzy/common-angular';
-import { NbDialogService, NbMenuItem, NbMenuService } from '@nebular/theme';
+import { distinctUntilChange, isEmpty } from '@gauzy/common-angular';
+import {
+	NbDialogService,
+	NbMenuItem,
+	NbMenuService
+} from '@nebular/theme';
 import { filter, map, debounceTime, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs/internal/Observable';
+import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import * as _ from 'underscore';
+import { pick } from 'underscore';
 import {
 	IGetTimeLogInput,
 	ITimeLog,
 	PermissionsEnum,
-	ITimeLogFilters,
-	OrganizationPermissionsEnum
+	ITimeLogFilters
 } from '@gauzy/contracts';
-import {
-	DateRangePickerBuilderService,
-	Store,
-	ToastrService
-} from './../../../../../@core/services';
-import {
-	TimesheetService,
-	TimesheetFilterService
-} from './../../../../../@shared/timesheet';
-import {
-	EditTimeLogModalComponent,
-	ViewTimeLogModalComponent
-} from './../../../../../@shared/timesheet';
+import { DateRangePickerBuilderService, Store, ToastrService } from './../../../../../@core/services';
+import { TimesheetService, TimesheetFilterService } from './../../../../../@shared/timesheet';
+import { EditTimeLogModalComponent, ViewTimeLogModalComponent } from './../../../../../@shared/timesheet';
 import { ConfirmComponent } from './../../../../../@shared/dialogs';
 import { TimeTrackerService } from './../../../../../@shared/time-tracker/time-tracker.service';
 import { BaseSelectorFilterComponent } from './../../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
@@ -45,32 +33,25 @@ import { GauzyFiltersComponent } from './../../../../../@shared/timesheet/gauzy-
 	templateUrl: './daily.component.html',
 	styleUrls: ['./daily.component.scss']
 })
-export class DailyComponent
-	extends BaseSelectorFilterComponent
-	implements AfterViewInit, OnInit, OnDestroy
-{
-	OrganizationPermissionsEnum = OrganizationPermissionsEnum;
+export class DailyComponent extends BaseSelectorFilterComponent implements 
+	AfterViewInit, OnInit, OnDestroy {
+
 	PermissionsEnum = PermissionsEnum;
-
-	loading: boolean;
-	showBulkAction: boolean;
-
-	logRequest: ITimeLogFilters = this.request;
+	loading: boolean = false;
+	allChecked: boolean = false;
+	disableButton: boolean = true;
+	filters: ITimeLogFilters = this.request;
 	timeLogs: ITimeLog[] = [];
+	contextMenus: NbMenuItem[] = [];
 
-	allChecked: boolean;
-	contextMenus: NbMenuItem[];
+	@ViewChild(GauzyFiltersComponent) gauzyFiltersComponent: GauzyFiltersComponent; 
+	datePickerConfig$: Observable<any> = this._dateRangePickerBuilderService.datePickerConfig$;
+	payloads$: BehaviorSubject<ITimeLogFilters> = new BehaviorSubject(null);
 
-	@ViewChild(GauzyFiltersComponent)
-	gauzyFiltersComponent: GauzyFiltersComponent;
-	datePickerConfig$: Observable<any> =
-		this._dateRangePickerBuilderService.datePickerConfig$;
-
-	selectedLog = {
-		data: null,
-		isSelected: false
+	selectedLog: {
+		data: ITimeLog,
+		isSelected: boolean
 	};
-	disable = true;
 
 	constructor(
 		private readonly timesheetService: TimesheetService,
@@ -91,16 +72,26 @@ export class DailyComponent
 		this._applyTranslationOnChange();
 		this.subject$
 			.pipe(
-				debounceTime(500),
-				tap(() => this.getLogs()),
+				debounceTime(200),
+				tap(() => this._clearItem()),
+				tap(() => this.prepareRequest()),
 				tap(() => (this.allChecked = false)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.payloads$
+			.pipe(
+				debounceTime(200),
+				distinctUntilChange(),
+				filter((payloads: ITimeLogFilters) => !!payloads),
+				tap(() => this.getLogs()),
 				untilDestroyed(this)
 			)
 			.subscribe();
 		this.timesheetService.updateLog$
 			.pipe(
 				filter((val) => val === true),
-				tap(() => this.getLogs()),
+				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -130,37 +121,49 @@ export class DailyComponent
 	}
 
 	filtersChange(filters: ITimeLogFilters) {
-		this.logRequest = filters;
 		if (this.gauzyFiltersComponent.saveFilters) {
 			this.timesheetFilterService.filter = filters;
 		}
-		this.subject$.next(true);
+		this.filters = Object.assign({}, filters);
+		this.subject$.next(true);	
 	}
 
-	async getLogs() {
-		if (!this.organization || isEmpty(this.logRequest)) {
+	/**
+	 * Prepare Unique Request Always
+	 * 
+	 * @returns 
+	 */
+	prepareRequest() {
+		if (!this.organization || isEmpty(this.filters)) {
 			return;
 		}
-		this.loading = true;
-		const appliedFilter = _.pick(
-			this.logRequest,
+		const appliedFilter = pick(
+			this.filters,
 			'source',
 			'activityLevel',
 			'logType'
 		);
 		const request: IGetTimeLogInput = {
 			...appliedFilter,
-			...this.getFilterRequest(this.logRequest)
+			...this.getFilterRequest(this.request),
 		};
+		this.payloads$.next(request);
+	}
+
+	async getLogs() {
+		if (!this.organization || isEmpty(this.filters)) {
+			return;
+		}
+		const payloads = this.payloads$.getValue();
+
+		this.loading = true;
 		try {
-			this.timeLogs = await this.timesheetService
-				.getTimeLogs(request)
-				.then((logs: ITimeLog[]) => {
-					return logs;
-				})
-				.finally(() => (this.loading = false));
+			this.timeLogs = await this.timesheetService.getTimeLogs(payloads);
 		} catch (error) {
 			console.log('Error while retriving daily time logs entries', error);
+			this.toastrService.error(error);
+		} finally {
+			this.loading = false;
 		}
 	}
 
@@ -169,12 +172,12 @@ export class DailyComponent
 			.open(EditTimeLogModalComponent, {
 				context: {
 					timeLog: {
-						startedAt: new Date(this.logRequest.startDate),
-						employeeId: this.logRequest.employeeIds
-							? this.logRequest.employeeIds[0]
+						startedAt: new Date(this.request.startDate),
+						employeeId: this.request.employeeIds
+							? this.request.employeeIds[0]
 							: null,
-						projectId: this.logRequest.projectIds
-							? this.logRequest.projectIds[0]
+						projectId: this.request.projectIds
+							? this.request.projectIds[0]
 							: null
 					}
 				}
@@ -186,6 +189,7 @@ export class DailyComponent
 				}
 			});
 	}
+
 	openEdit(timeLog: ITimeLog) {
 		if (timeLog.isRunning) {
 			return;
@@ -331,7 +335,6 @@ export class DailyComponent
 			return;
 		}
 		timeLog['checked'] = checked;
-		this.selectLog(timeLog, checked);
 		this.allChecked = this.timeLogs.every((t: any) => t.checked);
 	}
 
@@ -361,26 +364,55 @@ export class DailyComponent
 		];
 	}
 
-	public selectLog(log: ITimeLog, isChecked: boolean) {
-		if (
-			!isChecked &&
-			this.selectedLog.data &&
-			this.selectedLog.data.id === log?.id
-		) {
-			this.clearData();
-		} else {
-			this.disable = true;
-			this.selectedLog.isSelected = this.disable;
-			this.selectedLog.data = log;
+	selectTimeLog({ isSelected, data }) {
+		this.disableButton = !isSelected;
+		this.selectedLog = {
+			isSelected: isSelected,
+			data: isSelected ? data : null
 		}
 	}
 
-	public clearData() {
-		this.selectedLog = {
-			data: null,
-			isSelected: false
-		};
-		this.disable = true;
+	/*
+	 * Clear selected item
+	 */
+	private _clearItem() {
+		this.selectTimeLog({
+			isSelected: false,
+			data: null
+		});
+	}
+
+	/**
+	 * User Select Single Row
+	 * 
+	 * @param log 
+	 */
+	userRowSelect(event, log: ITimeLog) {
+		// if row is already selected, deselect it.
+		if (log.isSelected) {
+			log.isSelected = false;
+			this.selectTimeLog({
+				isSelected: log.isSelected,
+				data: null
+			});
+		} else {
+			// find the row which was previously selected.
+			const isRowSelected = this.timeLogs.find((item) => item.isSelected === true);
+			if (!!isRowSelected) {
+				// if row found successfully, mark that row as deselected
+				isRowSelected.isSelected = false;
+			}
+			// mark new row as selected
+			log.isSelected = true;
+			this.selectTimeLog({
+				isSelected: log.isSelected,
+				data: log
+			});
+		}
+	}
+
+	isBulkActionsDisabled() {
+		return !this.timeLogs.find((t: ITimeLog) => t.checked);
 	}
 
 	ngOnDestroy(): void {}
