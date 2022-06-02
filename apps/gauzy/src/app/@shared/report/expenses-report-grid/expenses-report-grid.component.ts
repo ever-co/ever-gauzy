@@ -3,7 +3,8 @@ import {
 	ChangeDetectorRef,
 	Component,
 	Input,
-	OnInit
+	OnInit,
+	ViewChild
 } from '@angular/core';
 import {
 	IExpenseReportData,
@@ -28,17 +29,17 @@ import { BaseSelectorFilterComponent } from '../../timesheet/gauzy-filters/base-
 export class ExpensesReportGridComponent extends BaseSelectorFilterComponent
 	implements OnInit, AfterViewInit {
 
-	logRequest: ITimeLogFilters = this.request;
-
 	dailyData: IExpenseReportData[] = [];
 	weekDayList: string[] = [];
 	loading: boolean;
-
 	groupBy: ReportGroupByFilter = ReportGroupFilterEnum.date;
 
-	@Input()
-	set filters(value: ITimeLogFilters) {
-		this.logRequest = value || {};
+	private _filters: ITimeLogFilters;
+	get filters(): ITimeLogFilters {
+		return this._filters;
+	}
+	@Input() set filters(value: ITimeLogFilters) {
+		this._filters = value || {};
 		this.subject$.next(true);
 	}
 
@@ -66,7 +67,7 @@ export class ExpensesReportGridComponent extends BaseSelectorFilterComponent
 	}
 
 	filtersChange(filters: ITimeLogFilters) {
-		this.logRequest = filters;
+		this.filters = Object.assign({}, filters);
 		this.subject$.next(true);
 	}
 
@@ -74,21 +75,21 @@ export class ExpensesReportGridComponent extends BaseSelectorFilterComponent
 		this.subject$.next(true);
 	}
 
-	getExpenses() {
-		if (!this.organization || isEmpty(this.logRequest)) {
+	async getExpenses() {
+		if (!this.organization || isEmpty(this.request)) {
 			return;
 		}
 		const request: IGetTimeLogReportInput = {
-			...this.getFilterRequest(this.logRequest),
+			...this.getFilterRequest(this.request),
 			groupBy: this.groupBy
 		};
 		this.loading = true;
-		this.expensesService
-			.getDailyExpensesReport(request)
-			.then((logs: IExpenseReportData[]) => {
-				this.dailyData = logs;
-			})
-			.catch(() => {})
-			.finally(() => (this.loading = false));
+		try {
+			this.dailyData = await this.expensesService .getDailyExpensesReport(request);
+		} catch (error) {
+			console.log('Error while retrieving expense reports', error);
+		} finally {
+			this.loading = false;
+		}
 	}
 }
