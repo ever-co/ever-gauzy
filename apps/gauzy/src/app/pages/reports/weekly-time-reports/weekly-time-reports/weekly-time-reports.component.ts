@@ -11,13 +11,12 @@ import {
 	ReportDayData
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { BehaviorSubject, Observable } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
-import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
-import { Observable } from 'rxjs/internal/Observable';
 import { pluck, pick } from 'underscore';
 import { TranslateService } from '@ngx-translate/core';
 import * as randomColor from 'randomcolor';
-import { distinctUntilChange } from '@gauzy/common-angular';
+import { distinctUntilChange, isEmpty } from '@gauzy/common-angular';
 import { moment } from './../../../../@core/moment-extend';
 import { DateRangePickerBuilderService, Store } from './../../../../@core/services';
 import { TimesheetService } from './../../../../@shared/timesheet/timesheet.service';
@@ -82,7 +81,7 @@ export class WeeklyTimeReportsComponent extends BaseSelectorFilterComponent
 	}
 
 	prepareRequest() {
-		if (!this.organization) {
+		if (!this.organization || isEmpty(this.request)) {
 			return;
 		}
 		const appliedFilter = pick(
