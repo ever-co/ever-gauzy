@@ -35,6 +35,7 @@ $nb-themes: nb-register-theme(
     header-shadow: none,
     gauzy-card-1: rgba(255, 255, 255, 1),
     gauzy-card-2: rgba(50, 50, 50, 0.03),
+    gauzy-card-3: rgba(255, 255, 255, 0.5),
     gauzy-input-background: rgba(255, 255, 255, 1),
     gauzy-sidebar-background-1: #ebebeb,
     gauzy-sidebar-background-2: rgba(251, 251, 251, 1),
@@ -75,6 +76,7 @@ $nb-themes: nb-register-theme(
     header-shadow: none,
     gauzy-card-2: rgba(51, 51, 71, 1),
     gauzy-card-1: rgba(37, 37, 40, 1),
+    gauzy-card-3: rgba(5, 5, 5, 0.5),
     gauzy-input-background: rgba(255, 255, 255, 0.15),
     gauzy-background-transparent: color-primary-transparent-default
   ),
@@ -112,7 +114,8 @@ $nb-themes: nb-register-theme(
     gauzy-sidebar-background-3: rgba(126, 126, 143, 0.1),
     gauzy-sidebar-background-4: rgba(126, 126, 143, 0.05),
     gauzy-text-color-1: rgba(66, 66, 66, 1),
-    gauzy-text-color-2: rgba(126, 126, 143, 1)
+    gauzy-text-color-2: rgba(126, 126, 143, 1),
+    gauzy-card-3: rgba(255, 255, 255, 0.5),
   ),
   corporate,
   corporate
@@ -153,7 +156,8 @@ $nb-themes: nb-register-theme(
     gauzy-sidebar-background-3: rgba(126, 126, 143, 0.1),
     gauzy-sidebar-background-4: rgba(126, 126, 143, 0.05),
     gauzy-text-color-1: rgba(255, 255, 255, 1),
-    gauzy-text-color-2: rgba(255, 255, 255, 0.5)
+    gauzy-text-color-2: rgba(255, 255, 255, 0.5),
+    gauzy-card-3: rgba(5, 5, 5, 0.5),
   ),
   dark,
   dark
