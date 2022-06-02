@@ -3,8 +3,7 @@ import {
 	ChangeDetectorRef,
 	Component,
 	Input,
-	OnInit,
-	ViewChild
+	OnInit
 } from '@angular/core';
 import {
 	IExpenseReportData,
