@@ -10,7 +10,8 @@ import {
 	ComponentLayoutStyleEnum,
 	IRolePermission,
 	IUserViewModel,
-	IUserOrganization
+	IUserOrganization,
+	ITag
 } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -23,9 +24,11 @@ import { Store, ToastrService, UsersOrganizationsService } from '../../@core/ser
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import { UserMutationComponent } from '../../@shared/user/user-mutation/user-mutation.component';
 import { InviteMutationComponent } from '../../@shared/invite/invite-mutation/invite-mutation.component';
-import { PictureNameTagsComponent } from '../../@shared/table-components';
+import { PictureNameTagsComponent, TagsOnlyComponent } from '../../@shared/table-components';
 import { ComponentEnum } from '../../@core/constants';
 import { IPaginationBase, PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
+import { StatusBadgeComponent } from '../../@shared/status-badge';
+import { TagsColorFilterComponent } from '../../@shared/table-filters';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -94,8 +97,14 @@ export class UsersComponent
 			.pipe(
 				filter((organization: IOrganization) => !!organization),
 				distinctUntilChange(),
-				tap((organization: IOrganization) => this.organization = organization),
-				tap(({ invitesAllowed }: IOrganization) => this.organizationInvitesAllowed = invitesAllowed),
+				tap(
+					(organization: IOrganization) =>
+						(this.organization = organization)
+				),
+				tap(
+					({ invitesAllowed }: IOrganization) =>
+						(this.organizationInvitesAllowed = invitesAllowed)
+				),
 				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
@@ -120,11 +129,13 @@ export class UsersComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.pagination$.pipe(
-			distinctUntilChange(),
-			tap(() => this.subject$.next(true)),
-			untilDestroyed(this)
-		).subscribe();
+		this.pagination$
+			.pipe(
+				distinctUntilChange(),
+				tap(() => this.subject$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	setView() {
@@ -301,7 +312,7 @@ export class UsersComponent
 	private async getUsers() {
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
-		const {activePage, itemsPerPage} = this.getPagination();
+		const { activePage, itemsPerPage } = this.getPagination();
 
 		const organizations: IUserOrganization[] = [];
 		observableOf((
@@ -330,7 +341,8 @@ export class UsersComponent
 				imageUrl: user.imageUrl,
 				role: user.role.name,
 				isActive: isActive,
-				userOrganizationId: userOrganizationId
+				userOrganizationId: userOrganizationId,
+				status: this.statusMapper(isActive)
 			});
 		}
 
@@ -344,7 +356,7 @@ export class UsersComponent
 		})
 	}
 
-	private async _loadDataGridLayout(){
+	private async _loadDataGridLayout() {
 		if (this.dataLayoutStyle === this.componentLayoutStyleEnum.CARDS_GRID) {
 			this.users = await this.sourceSmartTable.getElements();
 		}
@@ -355,7 +367,7 @@ export class UsersComponent
 		this.settingsSmartTable = {
 			pager: {
 				display: false,
-				perPage: pagination? pagination.itemsPerPage : 10
+				perPage: pagination ? pagination.itemsPerPage : 10
 			},
 			actions: false,
 			columns: {
@@ -372,6 +384,32 @@ export class UsersComponent
 				role: {
 					title: this.getTranslation('SM_TABLE.ROLE'),
 					type: 'text'
+				},
+				tags: {
+					title: this.getTranslation('SM_TABLE.TAGS'),
+					type: 'custom',
+					renderComponent: TagsOnlyComponent,
+					filter: {
+						type: 'custom',
+						component: TagsColorFilterComponent
+					},
+					filterFunction: (tags: ITag[]) => {
+						const tagIds = [];
+						for (const tag of tags) {
+							tagIds.push(tag.id);
+						}
+						this.setFilter({ field: 'tags', search: tagIds });
+					},
+					sort: false,
+					class: 'align-row',
+					width: '10%'
+				},
+				status: {
+					title: this.getTranslation('SM_TABLE.STATUS'),
+					type: 'custom',
+					renderComponent: StatusBadgeComponent,
+					class: 'align-row',
+					width: '5%'
 				}
 			}
 		};
@@ -419,5 +457,16 @@ export class UsersComponent
 		}
 	}
 
-	ngOnDestroy() { }
+	private statusMapper = (value: string | boolean) => {
+		const badgeClass = value ? 'success' : 'basic';
+		value = value
+			? this.getTranslation('USERS_PAGE.ACTIVE')
+			: this.getTranslation('USERS_PAGE.NOT_STARTED');
+		return {
+			text: value,
+			class: badgeClass
+		};
+	};
+
+	ngOnDestroy() {}
 }
