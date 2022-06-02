@@ -2,7 +2,8 @@ import {
 	AfterViewInit,
 	ChangeDetectorRef,
 	Component,
-	OnInit
+	OnInit,
+	ViewChild
 } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import {
@@ -15,11 +16,13 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
 import { debounceTime, filter, tap } from 'rxjs/operators';
+import { Observable } from 'rxjs/internal/Observable';
 import { chain, pick } from 'underscore';
-import { isEmpty } from '@gauzy/common-angular';
-import { Store } from './../../../../@core/services';
+import { DateRangePickerBuilderService, Store } from './../../../../@core/services';
 import { TimesheetService } from './../../../../@shared/timesheet/timesheet.service';
 import { BaseSelectorFilterComponent } from './../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
+import { GauzyFiltersComponent } from './../../../../@shared/timesheet/gauzy-filters/gauzy-filters.component';
+import { TimesheetFilterService } from './../../../../@shared/timesheet';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -30,16 +33,21 @@ import { BaseSelectorFilterComponent } from './../../../../@shared/timesheet/gau
 export class ManualTimeComponent extends BaseSelectorFilterComponent
 	implements OnInit, AfterViewInit {
 
-	logRequest: ITimeLogFilters = this.request;
+	filters: ITimeLogFilters;
 	loading: boolean;
 	dailyData: any;
+
+	@ViewChild(GauzyFiltersComponent) gauzyFiltersComponent: GauzyFiltersComponent;
+	datePickerConfig$: Observable<any> = this._dateRangePickerBuilderService.datePickerConfig$;
 
 	constructor(
 		private readonly cd: ChangeDetectorRef,
 		private readonly timesheetService: TimesheetService,
 		protected readonly store: Store,
 		public readonly translateService: TranslateService,
-    	private readonly activatedRoute: ActivatedRoute
+    	private readonly activatedRoute: ActivatedRoute,
+		private readonly timesheetFilterService: TimesheetFilterService,
+		public readonly _dateRangePickerBuilderService: DateRangePickerBuilderService
 	) {
 		super(store, translateService);
 	}
@@ -68,23 +76,26 @@ export class ManualTimeComponent extends BaseSelectorFilterComponent
 	}
 
 	filtersChange(filters: ITimeLogFilters) {
-		this.logRequest = filters;
+		if (this.gauzyFiltersComponent.saveFilters) {
+			this.timesheetFilterService.filter = filters;
+		}
+		this.filters = Object.assign({}, filters);
 		this.subject$.next(true);
 	}
 
 	getLogs() {
-		if (!this.organization || isEmpty(this.logRequest)) {
+		if (!this.organization) {
 			return;
 		}
 		const appliedFilter = pick(
-			this.logRequest,
+			this.filters,
 			'source',
 			'activityLevel',
 			'logType'
 		);
 		const request: IGetTimeLogReportInput = {
 			...appliedFilter,
-			...this.getFilterRequest(this.logRequest),
+			...this.getFilterRequest(this.request),
 			logType: [TimeLogType.MANUAL],
 			relations: ['task', 'project', 'employee', 'employee.user']
 		};

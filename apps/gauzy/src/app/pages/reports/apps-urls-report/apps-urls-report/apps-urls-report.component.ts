@@ -9,11 +9,13 @@ import {
 import { Observable } from 'rxjs/internal/Observable';
 import { IGetActivitiesInput, ITimeLogFilters } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
+import { UntilDestroy } from '@ngneat/until-destroy';
 import { DateRangePickerBuilderService, Store } from './../../../../@core/services';
 import { BaseSelectorFilterComponent } from './../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
 import { TimesheetFilterService } from './../../../../@shared/timesheet';
 import { GauzyFiltersComponent } from './../../../../@shared/timesheet/gauzy-filters/gauzy-filters.component';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-apps-urls-report',
 	templateUrl: './apps-urls-report.component.html',
