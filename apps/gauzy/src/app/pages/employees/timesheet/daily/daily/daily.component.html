@@ -4,16 +4,7 @@
 			<div class="gauzy-action">
 				<ngx-gauzy-button-action
 					[hasLayoutSelector]="false"
-					[isDisable]="isBulkActionsDisabled()"
-				>
-					<ng-container
-						buttonTemplate
-						[ngTemplateOutlet]="bulkActionButtons"
-					></ng-container>
-				</ngx-gauzy-button-action>
-				<ngx-gauzy-button-action
-					[hasLayoutSelector]="false"
-					[isDisable]="disableButton"
+					[isDisable]="isRowSelected() ? false : !isCheckboxSelected()"
 				>
 					<ng-container
 						buttonTemplate
@@ -176,9 +167,12 @@
 	</nb-card-body>
 </nb-card>
 
-<ng-template #bulkActionButtons>
+<ng-template 
+	#actionButtons
+	let-selectedItem
+>
 	<div class="actions">
-		<ng-container *ngIf="(isIndeterminate() || allChecked) && contextMenus">
+		<ng-container *ngIf="isCheckboxSelected()">
 			<button
 				outline
 				nbButton
@@ -193,57 +187,51 @@
 				<nb-icon icon="chevron-down-outline"></nb-icon>
 			</button>
 		</ng-container>
-	</div>
-</ng-template>
-
-<ng-template 
-	#actionButtons
-	let-selectedItem
->
-	<div class="actions">
-		<button
-			nbButton
-			status="basic"
-			class="action secondary"
-			size="small"
-			[disabled]="!selectedItem || disableButton"
-			(click)="openView(selectedItem)"
-		>
-			<nb-icon icon="eye-outline"></nb-icon>
-			{{ 'TIMESHEET.VIEW' | translate }}
-		</button>
-		<button
-			*ngxPermissionsOnly="[
-				PermissionsEnum.ALLOW_MODIFY_TIME
-			]"
-			[disabled]="selectedItem?.isRunning"
-			nbButton
-			status="basic"
-			class="action primary"
-			[disabled]="!selectedItem || disableButton"
-			size="small"
-			(click)="openEdit(selectedItem)"
-		>
-			<nb-icon icon="edit"></nb-icon>
-			{{ 'TIMESHEET.EDIT' | translate }}
-		</button>
-		<button
-			*ngxPermissionsOnly="[
-				PermissionsEnum.ALLOW_DELETE_TIME
-			]"
-			[disabled]="selectedItem?.isRunning"
-			nbButton
-			status="basic"
-			size="small"
-			class="action"
-			[disabled]="!selectedItem || disableButton"
-			ngxConfirmDialog
-			[message]="'TIMESHEET.DELETE_TIMELOG' | translate"
-			(confirm)="onDeleteConfirm(selectedItem)"
-			[nbTooltip]="'TIMESHEET.DELETE' | translate"
-		>
-			<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
-		</button>
+		<ng-container *ngIf="selectedItem">
+			<button
+				nbButton
+				status="basic"
+				class="action secondary"
+				size="small"
+				[disabled]="!selectedItem || disableButton"
+				(click)="openView(selectedItem)"
+			>
+				<nb-icon icon="eye-outline"></nb-icon>
+				{{ 'TIMESHEET.VIEW' | translate }}
+			</button>
+			<button
+				*ngxPermissionsOnly="[
+					PermissionsEnum.ALLOW_MODIFY_TIME
+				]"
+				[disabled]="selectedItem?.isRunning"
+				nbButton
+				status="basic"
+				class="action primary"
+				[disabled]="!selectedItem || disableButton"
+				size="small"
+				(click)="openEdit(selectedItem)"
+			>
+				<nb-icon icon="edit"></nb-icon>
+				{{ 'TIMESHEET.EDIT' | translate }}
+			</button>
+			<button
+				*ngxPermissionsOnly="[
+					PermissionsEnum.ALLOW_DELETE_TIME
+				]"
+				[disabled]="selectedItem?.isRunning"
+				nbButton
+				status="basic"
+				size="small"
+				class="action"
+				[disabled]="!selectedItem || disableButton"
+				ngxConfirmDialog
+				[message]="'TIMESHEET.DELETE_TIMELOG' | translate"
+				(confirm)="onDeleteConfirm(selectedItem)"
+				[nbTooltip]="'TIMESHEET.DELETE' | translate"
+			>
+				<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
+			</button>
+		</ng-container>
 	</div>
 </ng-template>
 <ng-template #visibleButtons>

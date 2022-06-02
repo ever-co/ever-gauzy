@@ -39,7 +39,6 @@ export class DailyComponent extends BaseSelectorFilterComponent implements
 	PermissionsEnum = PermissionsEnum;
 	loading: boolean = false;
 	allChecked: boolean = false;
-	disableButton: boolean = true;
 	filters: ITimeLogFilters = this.request;
 	timeLogs: ITimeLog[] = [];
 	contextMenus: NbMenuItem[] = [];
@@ -365,7 +364,6 @@ export class DailyComponent extends BaseSelectorFilterComponent implements
 	}
 
 	selectTimeLog({ isSelected, data }) {
-		this.disableButton = !isSelected;
 		this.selectedLog = {
 			isSelected: isSelected,
 			data: isSelected ? data : null
@@ -411,8 +409,12 @@ export class DailyComponent extends BaseSelectorFilterComponent implements
 		}
 	}
 
-	isBulkActionsDisabled() {
-		return !this.timeLogs.find((t: ITimeLog) => t.checked);
+	isRowSelected() {
+		return !!this.timeLogs.find((t: ITimeLog) => t.isSelected);	
+	}
+
+	isCheckboxSelected() {
+		return this.timeLogs.find((t: ITimeLog) => t.checked);
 	}
 
 	ngOnDestroy(): void {}
