@@ -37,12 +37,12 @@
 			</ng-template>
 		</div>
 	</nb-card-header>
-	<nb-card-body class="pt-0">
+	<nb-card-body>
 		<ng-template
 			[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
 			[ngIfElse]="gridLayout"
 		>
-			<div class="table-scroll-container">
+			<div class="table-scroll">
 				<ng2-smart-table
 					style="cursor: pointer"
 					[settings]="settingsSmartTable"
