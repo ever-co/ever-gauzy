@@ -38,6 +38,7 @@ export class DailyComponent extends BaseSelectorFilterComponent implements
 
 	PermissionsEnum = PermissionsEnum;
 	loading: boolean = false;
+	disableButton: boolean = true;
 	allChecked: boolean = false;
 	filters: ITimeLogFilters = this.request;
 	timeLogs: ITimeLog[] = [];
@@ -364,6 +365,7 @@ export class DailyComponent extends BaseSelectorFilterComponent implements
 	}
 
 	selectTimeLog({ isSelected, data }) {
+		this.disableButton = !isSelected;
 		this.selectedLog = {
 			isSelected: isSelected,
 			data: isSelected ? data : null

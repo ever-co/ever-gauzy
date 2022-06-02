@@ -110,7 +110,7 @@ export class WeeklyComponent extends BaseSelectorFilterComponent
 			this.timesheetFilterService.filter = filters;
 		}
 		this.filters = Object.assign({}, filters);
-		this.subject$.next(true);		
+		this.subject$.next(true);
 	}
 
 	/**

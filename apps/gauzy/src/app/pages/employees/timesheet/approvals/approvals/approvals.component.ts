@@ -1,18 +1,15 @@
 import { AfterViewInit, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import {
-	ITimeLogFilters,
 	ITimesheet,
 	TimesheetStatus
 } from '@gauzy/contracts';
-import { isEmpty } from '@gauzy/common-angular';
-import { NbDialogService, NbMenuItem, NbMenuService } from '@nebular/theme';
+import { NbMenuItem, NbMenuService } from '@nebular/theme';
 import { debounceTime, filter, map, tap } from 'rxjs/operators';
-import { Subject } from 'rxjs/internal/Subject';
 import { Observable } from 'rxjs/internal/Observable';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { TimesheetService, TimesheetFilterService } from './../../../../../@shared/timesheet';
+import { TimesheetService } from './../../../../../@shared/timesheet';
 import { BaseSelectorFilterComponent } from './../../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
 import { DateRangePickerBuilderService, Store, ToastrService } from './../../../../../@core/services';
 import { GauzyFiltersComponent } from './../../../../../@shared/timesheet/gauzy-filters/gauzy-filters.component';
@@ -26,47 +23,40 @@ import { GauzyFiltersComponent } from './../../../../../@shared/timesheet/gauzy-
 export class ApprovalsComponent extends BaseSelectorFilterComponent implements 
 	AfterViewInit, OnInit, OnDestroy {
 
-	logRequest: ITimeLogFilters = this.request;
 	timesheets: ITimesheet[] = [];
+	contextMenus: NbMenuItem[] = [];
 
-	showBulkAction: boolean;
 	loading: boolean;
+	allChecked: boolean;
 
 	TimesheetStatus = TimesheetStatus;
-	contextMenus: NbMenuItem[];
-
-	timesheets$: Subject<any> = this.subject$;
-
-	allChecked: boolean;
 
 	@ViewChild(GauzyFiltersComponent) gauzyFiltersComponent: GauzyFiltersComponent;
 	datePickerConfig$: Observable<any> = this._dateRangePickerBuilderService.datePickerConfig$;
 
-	selectedTimesheet = {
-		data: null,
-		isSelected: false
+	selectedTimesheet: {
+		data: ITimesheet,
+		isSelected: boolean
 	};
-	disable = true;
 
 	constructor(
 		private readonly timesheetService: TimesheetService,
 		protected readonly store: Store,
 		private readonly router: Router,
 		private readonly toastrService: ToastrService,
-		private readonly timesheetFilterService: TimesheetFilterService,
 		private readonly nbMenuService: NbMenuService,
 		public readonly translateService: TranslateService,
-		public readonly _dateRangePickerBuilderService: DateRangePickerBuilderService,
-		private readonly dialogService: NbDialogService
+		public readonly _dateRangePickerBuilderService: DateRangePickerBuilderService
 	) {
 		super(store, translateService);
 	}
 
 	ngOnInit() {
 		this._applyTranslationOnChange();
-		this.timesheets$
+		this.subject$
 			.pipe(
 				debounceTime(500),
+				tap(() => this._clearItem()),
 				tap(() => this.getTimeSheets()),
 				tap(() => (this.allChecked = false)),
 				untilDestroyed(this)
@@ -87,29 +77,21 @@ export class ApprovalsComponent extends BaseSelectorFilterComponent implements
 		this._createContextMenus();
 	}
 
-	filtersChange(filters: ITimeLogFilters) {
-		this.logRequest = filters;
-		if (this.gauzyFiltersComponent.saveFilters) {
-			this.timesheetFilterService.filter = filters;
-		}
-		this.timesheets$.next(true);
-	}
-
 	async getTimeSheets() {
-		if (!this.organization || isEmpty(this.logRequest)) {
+		if (!this.organization) {
 			return;
 		}
 		this.loading = true;
 		try {
-			this.timesheets = await this.timesheetService
-				.getTimeSheets({
-					...this.getFilterRequest(this.logRequest)
-				})
-				.finally(() => (this.loading = false));
+			this.timesheets = await this.timesheetService.getTimeSheets({
+				...this.getFilterRequest(this.request)
+			});
 		} catch (error) {
 			console.log(
 				'Error while getting timesheets for selected date range'
 			);
+		} finally {
+			this.loading = false;
 		}
 	}
 
@@ -124,7 +106,7 @@ export class ApprovalsComponent extends BaseSelectorFilterComponent implements
 				}
 			})
 			.finally(() => {
-				this.timesheets$.next(true);
+				this.subject$.next(true);
 			});
 	}
 
@@ -142,7 +124,7 @@ export class ApprovalsComponent extends BaseSelectorFilterComponent implements
 				}
 			})
 			.finally(() => {
-				this.timesheets$.next(true);
+				this.subject$.next(true);
 			});
 	}
 
@@ -207,7 +189,6 @@ export class ApprovalsComponent extends BaseSelectorFilterComponent implements
 	 */
 	toggleCheckbox(checked: boolean, timesheet: ITimesheet) {
 		timesheet['checked'] = checked;
-		this.selectTimesheet(timesheet, checked);
 		this.allChecked = this.timesheets.every((t: any) => t.checked);
 	}
 
@@ -267,26 +248,60 @@ export class ApprovalsComponent extends BaseSelectorFilterComponent implements
 		}
 	};
 
-	public selectTimesheet(timesheet: ITimesheet, isChecked: boolean) {
-		if (
-			!isChecked &&
-			this.selectedTimesheet.data &&
-			this.selectedTimesheet.data.id === timesheet?.id
-		) {
-			this.clearData();
-		} else {
-			this.disable = true;
-			this.selectedTimesheet.isSelected = this.disable;
-			this.selectedTimesheet.data = timesheet;
+	selectTimesheet({ isSelected, data }) {
+		this.selectedTimesheet = {
+			isSelected: isSelected,
+			data: isSelected ? data : null
 		}
 	}
 
-	public clearData() {
-		this.selectedTimesheet = {
-			data: null,
-			isSelected: false
-		};
-		this.disable = true;
+	/*
+	 * Clear selected item
+	 */
+	private _clearItem() {
+		this.selectTimesheet({
+			isSelected: false,
+			data: null
+		});
+	}
+
+	/**
+	 * User Select Single Row
+	 * 
+	 * @param log 
+	 */
+	userRowSelect(timesheet: ITimesheet) {
+		// if row is already selected, deselect it.
+		if (timesheet.isSelected) {
+			timesheet.isSelected = false;
+			this.selectTimesheet({
+				isSelected: timesheet.isSelected,
+				data: null
+			});
+		} else {
+			// find the row which was previously selected.
+			const isRowSelected = this.timesheets.find(
+				(item: ITimesheet) => item.isSelected === true
+			);
+			if (!!isRowSelected) {
+				// if row found successfully, mark that row as deselected
+				isRowSelected.isSelected = false;
+			}
+			// mark new row as selected
+			timesheet.isSelected = true;
+			this.selectTimesheet({
+				isSelected: timesheet.isSelected,
+				data: timesheet
+			});
+		}
+	}
+
+	isRowSelected() {
+		return !!this.timesheets.find((t: ITimesheet) => t.isSelected);	
+	}
+
+	isCheckboxSelected() {
+		return this.timesheets.find((t: ITimesheet) => t.checked);
 	}
 
 	ngOnDestroy(): void {}
