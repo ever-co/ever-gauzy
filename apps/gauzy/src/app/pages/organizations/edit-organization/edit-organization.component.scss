@@ -137,3 +137,9 @@
         margin-bottom: 10px;
     }
 }
+
+:host{
+    nb-card{
+        height: unset;
+    }
+}

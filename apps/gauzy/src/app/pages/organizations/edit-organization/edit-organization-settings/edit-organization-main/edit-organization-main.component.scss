@@ -12,6 +12,9 @@
   padding: 1rem;
   border-radius: 0 nb-theme(border-radius) nb-theme(border-radius)
     nb-theme(border-radius);
+    &.main{
+      height: calc(100vh - 22.5rem);
+    }
 }
 
 .organization-container {

@@ -15,6 +15,7 @@
     justify-content: space-between;
     padding: 20px;
     overflow: hidden;
+    height: calc(100vh - 22.5rem);
 }
 .aside-nav {
     width: 180px;
@@ -64,6 +65,9 @@
 }
 .fields-section {
     width: calc(100% - 230px);
+}
+.accordion-section{
+    overflow: auto;
 }
 // end of main sections.
 

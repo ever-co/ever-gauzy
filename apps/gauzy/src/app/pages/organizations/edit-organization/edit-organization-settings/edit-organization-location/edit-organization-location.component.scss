@@ -13,11 +13,11 @@
 
 .main-form {
     width: 100%;
-    height: 100%;
     display: flex;
     justify-content: space-between;
     padding: 20px;
     background-color: nb-theme(gauzy-card-2);
+    height: calc(100vh - 22.5rem);
 
     & .location-form-wrapper {
         width: 40%;
