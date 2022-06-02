@@ -20,7 +20,7 @@
     width: 180px;
     background-color: nb-theme(gauzy-card-3);
     padding: 13px 18px;
-    border-radius: 10px;
+    border-radius: nb-theme(border-radius);
     height: fit-content;
     & .settings-section-header {
         font-size: 14px;
@@ -48,7 +48,7 @@
             letter-spacing: 0em;
             text-align: left;
             background: nb-theme(gauzy-sidebar-background-3);
-            border-radius: 20px;
+            border-radius: nb-theme(button-rectangle-border-radius);
             list-style: none;
             cursor: pointer;
             box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.15);
@@ -254,13 +254,13 @@ nb-accordion {
     & ::ng-deep button {
         margin-right: 10px;
         background-color: nb-theme(background-basic-color-1) !important;
-        border-radius: 8px !important;
+        border-radius: nb-theme(border-radius) !important;
     }
 }
 :host ::ng-deep nb-toggle {
     padding: 10px;
     border: 1px solid nb-theme(gauzy-border-default-color);
-    border-radius: 8px;
+    border-radius: nb-theme(border-radius);
     & > label {
         margin-bottom: 0;
     }
