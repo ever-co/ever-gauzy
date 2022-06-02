@@ -1,16 +1,21 @@
-<div class="d-flex align-items-center" *ngIf="dailyData?.length > 0">
-	<div class="label">{{ 'REPORT_PAGE.GROUP_BY' | translate }}</div>
+<div class="d-flex align-items-center">
+	<div class="label">
+		{{ 'REPORT_PAGE.GROUP_BY' | translate }}
+	</div>
 	<div class="ml-3">
-		<nb-select [(ngModel)]="groupBy" (selectedChange)="groupByChange()">
-			<nb-option value="date">{{
-				'REPORT_PAGE.DATE' | translate
-			}}</nb-option>
-			<nb-option value="client">{{
-				'REPORT_PAGE.CLIENT' | translate
-			}}</nb-option>
-			<nb-option value="project">{{
-				'REPORT_PAGE.PROJECT' | translate
-			}}</nb-option>
+		<nb-select 
+			[(ngModel)]="groupBy" 
+			(selectedChange)="groupByChange()"
+		>
+			<nb-option value="date">
+				{{ 'REPORT_PAGE.DATE' | translate }}
+			</nb-option>
+			<nb-option value="client">
+				{{ 'REPORT_PAGE.CLIENT' | translate }}
+			</nb-option>
+			<nb-option value="project">
+				{{ 'REPORT_PAGE.PROJECT' | translate }}
+			</nb-option>
 		</nb-select>
 	</div>
 </div>
