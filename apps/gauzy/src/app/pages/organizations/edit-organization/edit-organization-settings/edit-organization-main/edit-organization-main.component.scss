@@ -1,7 +1,6 @@
 @import 'var';
 
 :host {
-  background-color: nb-theme(background-basic-color-3);
   height: 93%;
   border-radius: nb-theme(border-radius);
 }
@@ -9,7 +8,7 @@
 .content {
   display: flex;
   height: 100%;
-  background-color: rgba(50, 50, 50, 0.03);
+  background-color: nb-theme(gauzy-card-2);
   padding: 1rem;
   border-radius: 0 nb-theme(border-radius) nb-theme(border-radius)
     nb-theme(border-radius);
