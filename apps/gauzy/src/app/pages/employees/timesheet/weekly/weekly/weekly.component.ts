@@ -12,7 +12,7 @@ import {
 	ITimeLogFilters,
 	OrganizationPermissionsEnum
 } from '@gauzy/contracts';
-import { distinctUntilChange, isEmpty } from '@gauzy/common-angular';
+import { isEmpty } from '@gauzy/common-angular';
 import { TranslateService } from '@ngx-translate/core';
 import { moment } from './../../../../../@core/moment-extend';
 import { DateRangePickerBuilderService, Store } from './../../../../../@core/services';
@@ -73,7 +73,6 @@ export class WeeklyComponent extends BaseSelectorFilterComponent
 		this.payloads$
 			.pipe(
 				debounceTime(200),
-				distinctUntilChange(),
 				filter((payloads: ITimeLogFilters) => !!payloads),
 				tap(() => this.getLogs()),
 				untilDestroyed(this)

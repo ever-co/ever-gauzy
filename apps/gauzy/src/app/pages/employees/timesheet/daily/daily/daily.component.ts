@@ -8,8 +8,7 @@ import {
 	NbMenuService
 } from '@nebular/theme';
 import { filter, map, debounceTime, tap } from 'rxjs/operators';
-import { Observable } from 'rxjs/internal/Observable';
-import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
+import { BehaviorSubject, Observable } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { pick } from 'underscore';
@@ -81,8 +80,7 @@ export class DailyComponent extends BaseSelectorFilterComponent implements
 			.subscribe();
 		this.payloads$
 			.pipe(
-				debounceTime(200),
-				distinctUntilChange(),
+				debounceTime(400),
 				filter((payloads: ITimeLogFilters) => !!payloads),
 				tap(() => this.getLogs()),
 				untilDestroyed(this)
