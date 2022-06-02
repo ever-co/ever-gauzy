@@ -343,6 +343,9 @@
 											[colorPicker]="
 												form.get('brandColor').value
 											"
+											[style.color]="
+												backgroundContrast(form.get('brandColor').value)
+											"
 											[style.background]="
 												form.get('brandColor').value
 											"
