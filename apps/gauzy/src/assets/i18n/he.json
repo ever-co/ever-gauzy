@@ -3539,7 +3539,8 @@
 			"TIME_LOG": "TimeLog"
 		},
 		"RUNNING_TIMER_WARNING": "Warning. Timer is running, you can only remove screenshots if you stop timer or Inside Timer app",
-		"DELETE_CONFIRM": "Are you sure to delete this screenshots and time log?"
+		"DELETE_CONFIRM": "Are you sure to delete this screenshots and time log?",
+		"VIEW_LOG": "View Log"
 	},
 	"ACTIVITY": {
 		"SCREENSHOTS": "Screenshots",
