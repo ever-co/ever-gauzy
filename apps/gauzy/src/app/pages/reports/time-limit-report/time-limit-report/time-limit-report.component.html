@@ -7,20 +7,20 @@
 				</ngx-header-title>
 			</h4>
 			<ng-container
-					*ngIf="logRequest?.startDate && logRequest?.endDate"
+				*ngIf="request?.startDate && request?.endDate"
 			>
 				<ngx-date-range-title
-						[start]="logRequest?.startDate"
-						[end]="logRequest?.endDate"
-						[format]="'dddd, LL'"
+					[start]="request?.startDate"
+					[end]="request?.endDate"
+					[format]="'dddd, LL'"
 				></ngx-date-range-title>
 			</ng-container>
 		</div>
 		<div class="filters">
 			<ngx-gauzy-filters
-					[filters]="logRequest"
-					[saveFilters]="false"
-					(filtersChange)="filtersChange($event)">
+				[filters]="filters"
+				[saveFilters]="(datePickerConfig$ | async).isSaveDatePicker"
+				(filtersChange)="filtersChange($event)">
 			</ngx-gauzy-filters>
 		</div>
 	</nb-card-header>
@@ -29,11 +29,9 @@
 			<div
 				class="time-logs row-table"
 				[nbSpinner]="loading"
-				nbSpinnerSize="giant"
-				nbSpinnerStatus="primary"
-			>
-			</div>
-
+				[nbSpinnerSize]="'giant'"
+				[nbSpinnerStatus]="'primary'"
+			></div>
 			<ng-template [ngIf]="dailyData?.length > 0" [ngIfElse]="notFound">
 				<nb-card class="card" *ngFor="let day of dailyData">
 					<nb-card-header class="card-title">

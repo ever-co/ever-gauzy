@@ -22,11 +22,13 @@ import {
 import { filter, firstValueFrom, tap } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { distinctUntilChange } from '@gauzy/common-angular';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslationBaseComponent } from '../../../language-base/translation-base.component';
 import { AuthService, CandidatesService, EmployeesService, RoleService, Store } from './../../../../@core/services';
 import { CompareDateValidator, UrlPatternValidator } from './../../../../@core/validators';
 import { FormHelpers } from '../../../forms/helpers';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-user-basic-info-form',
 	templateUrl: 'basic-info-form.component.html',
@@ -137,7 +139,8 @@ export class BasicInfoFormComponent
 				filter((organization: IOrganization) => !!organization),
 				tap((organization: IOrganization) => this.organization = organization),
 				filter(() => !!this.location.getState()),
-				tap(() => this.patchUsingLocationState(this.location.getState()))
+				tap(() => this.patchUsingLocationState(this.location.getState())),
+				untilDestroyed(this)
 			)
 			.subscribe();
 	}

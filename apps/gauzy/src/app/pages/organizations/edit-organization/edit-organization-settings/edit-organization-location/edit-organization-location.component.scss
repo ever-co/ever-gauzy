@@ -13,11 +13,11 @@
 
 .main-form {
     width: 100%;
-    height: 100%;
     display: flex;
     justify-content: space-between;
     padding: 20px;
-    background-color: nb-theme(background-basic-color-3);
+    background-color: nb-theme(gauzy-card-2);
+    height: calc(100vh - 22.5rem);
 
     & .location-form-wrapper {
         width: 40%;
@@ -25,26 +25,6 @@
         flex-direction: column;
         justify-content: space-between;
 
-        ::ng-deep .row {
-            flex-direction: column;
-            &:last-child {
-                flex-direction: row;
-                margin-top: 0 !important;
-            }
-        }
-        ::ng-deep .col-4 {
-            max-width: 100%;
-            &:first-child, &:nth-child(2) {
-                width: 80%;
-            }
-            &:nth-child(3) {
-                width: 50%;
-            }
-        }
-        ::ng-deep & .col-6 {
-            width: 100%;
-            max-width: 100%;
-        }
         ::ng-deep nb-select.shape-rectangle .select-button {
             border-radius: 8px;
             background-color: nb-theme(background-basic-color-1);
@@ -54,7 +34,7 @@
         }
      }
     ga-leaflet-map {
-        width: 55%;
+        width: 60%;
         ::ng-deep & .row {
             height: 100%;
             margin: 0 !important;

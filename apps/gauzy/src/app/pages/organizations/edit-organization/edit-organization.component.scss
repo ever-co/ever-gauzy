@@ -2,14 +2,13 @@
 @import "var";
 
 .card-scroll {
-    background-color: nb-theme(background-basic-color-3);
+    background-color: nb-theme(gauzy-card-2);
 
     & .header {
         padding-left: 20px;
         padding-right: 20px;
         padding-top: 25px;
         border-bottom: none;
-        background: nb-theme(background-basic-color-2);
     }
 
     & .header-container {
@@ -25,7 +24,6 @@
         margin-right: 17px !important;
     }
     .org-name {
-        font-family: Inter;
         font-size: 14px !important;
         font-style: normal;
         font-weight: 600 !important;
@@ -35,7 +33,6 @@
         margin-bottom: 3px;
     }
     .org-position {
-        font-family: Inter;
         font-size: 12px !important;
         font-style: normal;
         font-weight: 400;
@@ -50,18 +47,16 @@
         justify-content: center;
         align-items: center;
         padding: 2px 12px 2px 12px;
-        border: 2px solid rgba(110, 73, 232, 0.2);
         box-sizing: border-box;
-        border-radius: 20px;
-        border: 2px solid #6E49E833;
-        font-family: Inter;
+        border-radius: nb-theme(button-rectangle-border-radius);
+        border: 2px solid nb-theme(color-primary-transparent-default);
         font-size: 12px;
         font-style: normal;
         font-weight: 600;
         line-height: 11px;
         letter-spacing: 0em;
         text-align: left;
-        color: #6E49E8;
+        color: nb-theme(text-primary-color);
         cursor: pointer;
     }
 
@@ -140,5 +135,11 @@
     }
     .org-image {
         margin-bottom: 10px;
+    }
+}
+
+:host{
+    nb-card{
+        height: unset;
     }
 }

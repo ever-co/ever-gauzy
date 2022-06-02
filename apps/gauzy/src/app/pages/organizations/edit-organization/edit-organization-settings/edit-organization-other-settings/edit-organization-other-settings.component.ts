@@ -23,9 +23,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { filter, switchMap, tap } from 'rxjs/operators';
 import { Router } from '@angular/router';
-import { NbAccordionComponent, NbAccordionItemComponent } from "@nebular/theme";
+import { NbAccordionComponent, NbAccordionItemComponent, NbThemeService } from "@nebular/theme";
 import { distinctUntilChange } from '@gauzy/common-angular';
-import { TranslationBaseComponent } from '../../../../../@shared/language-base';
 import {
 	AccountingTemplateService,
 	OrganizationEditStore,
@@ -33,6 +32,7 @@ import {
 	Store,
 	ToastrService
 } from './../../../../../@core/services';
+import { NotesWithTagsComponent } from 'apps/gauzy/src/app/@shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -40,7 +40,7 @@ import {
 	templateUrl: './edit-organization-other-settings.component.html',
 	styleUrls: ['./edit-organization-other-settings.component.scss']
 })
-export class EditOrganizationOtherSettingsComponent extends TranslationBaseComponent
+export class EditOrganizationOtherSettingsComponent extends NotesWithTagsComponent
 	implements OnInit, OnDestroy {
 
 	public organization: IOrganization;
@@ -104,9 +104,10 @@ export class EditOrganizationOtherSettingsComponent extends TranslationBaseCompo
 		private readonly organizationEditStore: OrganizationEditStore,
 		public readonly translateService: TranslateService,
 		private readonly store: Store,
-		private readonly accountingTemplateService: AccountingTemplateService
+		private readonly accountingTemplateService: AccountingTemplateService,
+		public readonly themeService: NbThemeService
 	) {
-		super(translateService);
+		super(themeService, translateService);
 	}
 
 	ngOnInit(): void {

@@ -1,7 +1,13 @@
-<div class="group-by-wrapper" *ngIf="dailyData?.length > 0">
-	<div class="label">{{ 'REPORT_PAGE.GROUP_BY' | translate }}</div>
+<div class="group-by-wrapper">
+	<div class="label">
+		{{ 'REPORT_PAGE.GROUP_BY' | translate }}
+	</div>
 	<div class="ml-3">
-		<nb-select [(ngModel)]="groupBy" (selectedChange)="groupByChange()" optionsListClass="nb-options">
+		<nb-select 
+			[(ngModel)]="groupBy"
+			(selectedChange)="groupByChange()"
+			optionsListClass="nb-options"
+		>
 			<nb-option value="date">{{
 				'REPORT_PAGE.DATE' | translate
 			}}</nb-option>
@@ -17,8 +23,9 @@
 <div
 	class="weekly-logs row-table"
 	[nbSpinner]="loading"
-	nbSpinnerSize="giant"
-	nbSpinnerStatus="primary">
+	[nbSpinnerSize]="'giant'"
+	[nbSpinnerStatus]="'primary'"
+>
 	<ng-template #columnsHeader>
 		<div class="columns-header" *ngIf="dailyData?.length > 0">
 			<div class="table-inner-wrapper font-weight-bold align-items-center">
