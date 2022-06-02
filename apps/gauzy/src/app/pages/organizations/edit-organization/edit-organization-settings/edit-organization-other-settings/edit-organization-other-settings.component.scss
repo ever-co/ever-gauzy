@@ -68,6 +68,7 @@
 }
 .accordion-section{
     overflow: auto;
+    max-height: calc(100vh - 27rem);
 }
 // end of main sections.
 
