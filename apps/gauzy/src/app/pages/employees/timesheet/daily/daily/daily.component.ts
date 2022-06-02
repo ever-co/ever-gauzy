@@ -385,14 +385,14 @@ export class DailyComponent extends BaseSelectorFilterComponent implements
 	/**
 	 * User Select Single Row
 	 * 
-	 * @param log 
+	 * @param timeLog 
 	 */
-	userRowSelect(log: ITimeLog) {
+	userRowSelect(timeLog: ITimeLog) {
 		// if row is already selected, deselect it.
-		if (log.isSelected) {
-			log.isSelected = false;
+		if (timeLog.isSelected) {
+			timeLog.isSelected = false;
 			this.selectTimeLog({
-				isSelected: log.isSelected,
+				isSelected: timeLog.isSelected,
 				data: null
 			});
 		} else {
@@ -403,10 +403,10 @@ export class DailyComponent extends BaseSelectorFilterComponent implements
 				isRowSelected.isSelected = false;
 			}
 			// mark new row as selected
-			log.isSelected = true;
+			timeLog.isSelected = true;
 			this.selectTimeLog({
-				isSelected: log.isSelected,
-				data: log
+				isSelected: timeLog.isSelected,
+				data: timeLog
 			});
 		}
 	}

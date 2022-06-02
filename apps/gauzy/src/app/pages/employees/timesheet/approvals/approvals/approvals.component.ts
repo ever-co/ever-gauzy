@@ -26,8 +26,9 @@ export class ApprovalsComponent extends BaseSelectorFilterComponent implements
 	timesheets: ITimesheet[] = [];
 	contextMenus: NbMenuItem[] = [];
 
-	loading: boolean;
-	allChecked: boolean;
+	loading: boolean = false;
+	allChecked: boolean = false;
+	disableButton: boolean = true
 
 	TimesheetStatus = TimesheetStatus;
 
@@ -249,6 +250,7 @@ export class ApprovalsComponent extends BaseSelectorFilterComponent implements
 	};
 
 	selectTimesheet({ isSelected, data }) {
+		this.disableButton = !isSelected;
 		this.selectedTimesheet = {
 			isSelected: isSelected,
 			data: isSelected ? data : null
@@ -268,7 +270,7 @@ export class ApprovalsComponent extends BaseSelectorFilterComponent implements
 	/**
 	 * User Select Single Row
 	 * 
-	 * @param log 
+	 * @param timesheet 
 	 */
 	userRowSelect(timesheet: ITimesheet) {
 		// if row is already selected, deselect it.

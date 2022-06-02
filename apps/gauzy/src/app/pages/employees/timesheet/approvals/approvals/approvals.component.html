@@ -121,6 +121,7 @@
 				status="basic"
 				nbButton
 				size="small"
+				[disabled]="disableButton"
 			>
 				<nb-icon icon="edit-outline"></nb-icon>
 				{{ 'TIMESHEET.VIEW' | translate }}
@@ -132,6 +133,7 @@
 					status="basic"
 					nbButton
 					size="small"
+					[disabled]="disableButton"
 				>
 					<nb-icon icon="email-outline"></nb-icon>
 					{{ 'TIMESHEET.SUBMIT_TIMESHEET' | translate }}
@@ -144,6 +146,7 @@
 					status="basic"
 					nbButton
 					size="small"
+					[disabled]="disableButton"
 				>
 					<nb-icon icon="email-outline"></nb-icon>
 					{{ 'TIMESHEET.UNSUBMIT_TIMESHEET' | translate }}
@@ -162,6 +165,7 @@
 					status="basic"
 					nbButton
 					size="small"
+					[disabled]="disableButton"
 				>
 					<nb-icon icon="checkmark-circle-2-outline"></nb-icon>
 					{{ 'TIMESHEET.APPROVE' | translate }}
@@ -180,6 +184,7 @@
 					status="basic"
 					nbButton
 					size="small"
+					[disabled]="disableButton"
 				>
 					<nb-icon icon="close-outline"></nb-icon>
 					{{ 'TIMESHEET.DENY' | translate }}
