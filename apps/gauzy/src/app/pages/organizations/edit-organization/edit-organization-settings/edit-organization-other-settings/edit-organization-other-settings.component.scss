@@ -2,7 +2,6 @@
 @import "../../../../../@theme/styles/var";
 
 :host {
-    background-color: nb-theme(background-basic-color-3);
     height: 92%;
 }
 
@@ -11,20 +10,20 @@
 // main sections
 .main-form {
     width: 100%;
-    background-color: nb-theme(background-basic-color-3);
+    background-color: nb-theme(gauzy-card-2);
     display: flex;
     justify-content: space-between;
     padding: 20px;
     overflow: hidden;
+    height: calc(100vh - 22.5rem);
 }
 .aside-nav {
     width: 180px;
-    background-color: nb-theme(background-basic-color-1);
+    background-color: nb-theme(gauzy-card-3);
     padding: 13px 18px;
-    border-radius: 10px;
+    border-radius: nb-theme(border-radius);
     height: fit-content;
     & .settings-section-header {
-        font-family: Inter;
         font-size: 14px;
         font-style: normal;
         font-weight: 600;
@@ -43,20 +42,20 @@
             display: inline-flex;
             padding: 10px 15px;
             margin-bottom: 10px;
-            font-family: Inter;
             font-size: 13px;
             font-style: normal;
             font-weight: 400;
             line-height: 16px;
             letter-spacing: 0em;
             text-align: left;
-            background: nb-theme(background-basic-color-4);
-            border-radius: 20px;
+            background: nb-theme(gauzy-sidebar-background-3);
+            border-radius: nb-theme(button-rectangle-border-radius);
             list-style: none;
             cursor: pointer;
             box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.15);
             &.active {
                 background: nb-theme(background-basic-color-1);
+                box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.15) inset;
             }
         }
     }
@@ -66,6 +65,10 @@
 }
 .fields-section {
     width: calc(100% - 230px);
+}
+.accordion-section{
+    overflow: auto;
+    max-height: calc(100vh - 27rem);
 }
 // end of main sections.
 
@@ -102,7 +105,7 @@ nb-accordion {
         }
     }
     & nb-accordion-item-header, nb-accordion-item-body, nb-accordion-item {
-        background-color: nb-theme(background-basic-color-2);
+        background-color: nb-theme(gauzy-card-3);
     }
     & nb-accordion-item-body {
         padding-left: 15px;
@@ -246,9 +249,6 @@ nb-accordion {
 //end of nb-overrides
 
 //start of ::ng-deep selectors for selecting nested nebular stuff.
-:host ::ng-deep input {
-    background-color: nb-theme(background-basic-color-1) !important;
-}
 :host ::ng-deep .ng-placeholder, ::ng-deep .ng-value {
     z-index: 2;
 }
@@ -256,13 +256,13 @@ nb-accordion {
     & ::ng-deep button {
         margin-right: 10px;
         background-color: nb-theme(background-basic-color-1) !important;
-        border-radius: 8px !important;
+        border-radius: nb-theme(border-radius) !important;
     }
 }
 :host ::ng-deep nb-toggle {
     padding: 10px;
-    border: 1px solid rgba(126, 126, 143, 0.2);
-    border-radius: 8px;
+    border: 1px solid nb-theme(gauzy-border-default-color);
+    border-radius: nb-theme(border-radius);
     & > label {
         margin-bottom: 0;
     }
@@ -271,10 +271,10 @@ nb-accordion {
     border: 1px solid #7E7E8F !important;
     background-color: #7E7E8F !important;
     &.checked {
-        background-color: #6E49E8 !important;
-        border: 1px solid #6E49E8 !important;
+        background-color: nb-theme(text-primary-color) !important;
+        border: 1px solid nb-theme(text-primary-color) !important;
         & + span {
-            color: #6E49E8;
+            color: nb-theme(text-primary-color);
         }
     }
 }

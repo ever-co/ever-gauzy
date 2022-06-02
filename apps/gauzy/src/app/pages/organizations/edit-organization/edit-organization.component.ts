@@ -58,6 +58,7 @@ export class EditOrganizationComponent
 			.subscribe((organization) => {
 				this.setSelectedOrg(organization);
 			});
+		this.loadEmployeesCount();
 	}
 
 	setSelectedOrg(selectedOrg) {

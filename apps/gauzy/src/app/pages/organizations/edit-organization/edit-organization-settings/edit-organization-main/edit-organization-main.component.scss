@@ -1,18 +1,20 @@
 @import 'var';
 
 :host {
-  background-color: nb-theme(background-basic-color-3);
   height: 93%;
-  border-radius: nb-theme(border-radius);
+  border-radius: 0 nb-theme(border-radius) nb-theme(border-radius) nb-theme(border-radius);
 }
 
 .content {
   display: flex;
   height: 100%;
-  background-color: rgba(50, 50, 50, 0.03);
+  background-color: nb-theme(gauzy-card-2);
   padding: 1rem;
   border-radius: 0 nb-theme(border-radius) nb-theme(border-radius)
     nb-theme(border-radius);
+    &.main{
+      height: calc(100vh - 22.5rem);
+    }
 }
 
 .organization-container {
@@ -23,7 +25,7 @@
   flex-direction: column;
   transition: transform 150ms ease-in-out;
   background-color: rgba(126, 126, 143, 0.1);
-  border-radius: 10px;
+  border-radius: nb-theme(border-radius);
   width: 563px;
   height: 100%;
 
@@ -39,13 +41,13 @@
       position: absolute;
       height: 100%;
       width: 100%;
-      border-radius: 13px;
+      border-radius: nb-theme(border-radius);
     }
 
     img {
       width: 100px;
       height: 100px;
-      border-radius: 8px;
+      border-radius: nb-theme(border-radius);
     }
 
     input {
@@ -67,7 +69,6 @@
     }
   }
   .employees-count-text {
-    font-family: Inter;
     font-size: 12px;
     font-style: normal;
     font-weight: 600;
@@ -115,7 +116,7 @@
 }
 
 ::ng-deep nb-select.shape-rectangle .select-button {
-  border-radius: 8px;
+  border-radius: nb-theme(border-radius);
 }
 
 @include respond(lg) {

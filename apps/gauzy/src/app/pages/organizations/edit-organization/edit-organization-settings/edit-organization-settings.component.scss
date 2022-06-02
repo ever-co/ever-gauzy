@@ -8,7 +8,7 @@
 .org-settings {
     width: 100%;
     height: 92%;
-    background-color: nb-theme(background-basic-color-3);
+    background-color: unset;
 }
 
 nb-tab,
@@ -37,7 +37,6 @@ nb-card-body {
         }
 
         li {
-            background: nb-theme(background-basic-color-2);
 
             &:last-of-type {
                 margin-left: auto;
@@ -50,22 +49,19 @@ nb-card-body {
             }
             &.active {
                 & .tab-link {
-                    background: nb-theme(background-basic-color-3);
+                    background: nb-theme(gauzy-card-2);
                     transition: background 0.5s ease-in-out;
                 }
             }
             &.active, &:hover {
                 svg {
-                    fill: #6E49E8 !important;
+                    fill: nb-theme(text-primary-color) !important;
                 }
             }
             & .tab-link {
-                padding: 18px 20px;
-                height: 100%;
                 display: flex !important;
                 justify-content: space-between;
                 align-items: center;
-                background: nb-theme(background-basic-color-2);
                 transition: background 0.5s ease-in-out;
 
                 &:before {
@@ -110,7 +106,6 @@ nb-card-body {
 ::ng-deep .full-width .route-tabset {
     display: flex;
     justify-content: flex-start !important;
-    background: nb-theme(background-basic-color-2);
     @include respond(sm) {
         justify-content: center !important;
     }

@@ -92,10 +92,10 @@ export class TimeReportsComponent extends BaseSelectorFilterComponent
 			.getDailyReportChart(request)
 			.then((logs: any[]) => {
 				const commonOptions = {
-					borderWidth: 1,
+					borderWidth: 2,
 					pointRadius: 2,
-					pointHoverRadius: 7,
-					pointHoverBorderWidth: 6,
+					pointHoverRadius: 4,
+					pointHoverBorderWidth: 4,
 				}
 				const datasets = [
 					{
