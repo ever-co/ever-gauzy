@@ -23,9 +23,9 @@ import { Store, ToastrService, UsersOrganizationsService } from '../../@core/ser
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import { UserMutationComponent } from '../../@shared/user/user-mutation/user-mutation.component';
 import { InviteMutationComponent } from '../../@shared/invite/invite-mutation/invite-mutation.component';
-import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { PictureNameTagsComponent } from '../../@shared/table-components';
 import { ComponentEnum } from '../../@core/constants';
+import { IPaginationBase, PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -33,7 +33,7 @@ import { ComponentEnum } from '../../@core/constants';
 	styleUrls: ['./users.component.scss']
 })
 export class UsersComponent
-	extends TranslationBaseComponent
+	extends PaginationFilterBaseComponent
 	implements OnInit, OnDestroy {
 
 	settingsSmartTable: object;
@@ -120,6 +120,11 @@ export class UsersComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
+		this.pagination$.pipe(
+			distinctUntilChange(),
+			tap(() => this.subject$.next(true)),
+			untilDestroyed(this)
+		).subscribe();
 	}
 
 	setView() {
@@ -292,6 +297,7 @@ export class UsersComponent
 	private async getUsers() {
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
+		const {activePage, itemsPerPage} = this.getPagination();
 
 		const organizations: IUserOrganization[] = [];
 		observableOf((
@@ -325,11 +331,21 @@ export class UsersComponent
 		}
 
 		this.users = users;
+		this.sourceSmartTable.setPaging(activePage, itemsPerPage, false);
 		this.sourceSmartTable.load(users);
+		this.setPagination({
+			...this.getPagination(),
+			totalItems: this.sourceSmartTable.count()
+		})
 	}
 
 	private _loadSmartTableSettings() {
+		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
+			pager: {
+				display: false,
+				perPage: pagination? pagination.itemsPerPage : 10
+			},
 			actions: false,
 			columns: {
 				fullName: {
@@ -346,10 +362,6 @@ export class UsersComponent
 					title: this.getTranslation('SM_TABLE.ROLE'),
 					type: 'text'
 				}
-			},
-			pager: {
-				display: true,
-				perPage: 8
 			}
 		};
 	}
