@@ -86,10 +86,12 @@
     overflow: unset;
     max-height: calc(100vh - 22.4rem);
     border-radius: 0 0 nb-theme(border-radius) nb-theme(border-radius);
+    padding: 1rem;
 
-    .table-scroll {
+    .table-scroll-container {
       flex-grow: 10;
       overflow: auto;
+      max-height: unset;
     }
   }
 }

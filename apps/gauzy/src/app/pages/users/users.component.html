@@ -42,7 +42,7 @@
 			[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
 			[ngIfElse]="gridLayout"
 		>
-			<div class="table-scroll">
+			<div class="table-scroll-container">
 				<ng2-smart-table
 					style="cursor: pointer"
 					[settings]="settingsSmartTable"
@@ -68,40 +68,17 @@
 			</div>
 		</ng-template>
 		<ng-template #gridLayout>
-			<div class="grid-scroll-container">
-				<ul class="flex-container">
-					<li class="flex-item" *ngFor="let user of users">
-						<div class="fullName">
-							<img
-								[src]="user.imageUrl"
-								alt="Avatar"
-								class="avatar"
-							/>
-							<span>{{ user.fullName }}</span>
-						</div>
-						<div class="email">
-							<span class="info-value">{{ user.email }}</span>
-						</div>
-						<div class="info-line">
-							<span class="info-meta">
-								{{ 'USERS_PAGE.ROLE.ROLE' | translate }}
-							</span>
-							<span class="info-value">{{ user.role }}</span>
-						</div>
-						<nb-card-footer class="card-footer">
-							<ng-container
-								*ngTemplateOutlet="
-									actionButtons;
-									context: {
-										buttonSize: 'tiny',
-										selectedItem: user
-									}
-								"
-							></ng-container>
-						</nb-card-footer>
-					</li>
-				</ul>
-			</div>
+			<ga-card-grid
+				[settings]="settingsSmartTable"
+				[source]="users"
+				(onSelectedItem)="selectUser($event)"
+				(selectedOption)="onUpdateOption($event)"
+				(selectedPage)="onPageChange($event)"
+				[doEmit]="false"
+				[totalItems]="pagination?.totalItems"
+				[itemsPerPage]="pagination?.itemsPerPage"
+				[activePage]="pagination?.activePage"
+			></ga-card-grid>
 		</ng-template>
 	</nb-card-body>
 </nb-card>

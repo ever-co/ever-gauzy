@@ -133,7 +133,11 @@ export class UsersComponent
 			.componentLayout$(this.viewComponentName)
 			.pipe(
 				distinctUntilChange(),
-				tap((componentLayout: ComponentLayoutStyleEnum) => this.dataLayoutStyle = componentLayout),
+				tap(
+					(componentLayout: ComponentLayoutStyleEnum) =>
+						(this.dataLayoutStyle = componentLayout)
+				),
+				tap(() => this.refreshPagination()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -333,10 +337,17 @@ export class UsersComponent
 		this.users = users;
 		this.sourceSmartTable.setPaging(activePage, itemsPerPage, false);
 		this.sourceSmartTable.load(users);
+		this._loadDataGridLayout();
 		this.setPagination({
 			...this.getPagination(),
 			totalItems: this.sourceSmartTable.count()
 		})
+	}
+
+	private async _loadDataGridLayout(){
+		if (this.dataLayoutStyle === this.componentLayoutStyleEnum.CARDS_GRID) {
+			this.users = await this.sourceSmartTable.getElements();
+		}
 	}
 
 	private _loadSmartTableSettings() {
