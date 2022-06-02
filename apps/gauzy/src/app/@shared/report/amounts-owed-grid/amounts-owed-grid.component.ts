@@ -29,14 +29,16 @@ import { BaseSelectorFilterComponent } from '../../timesheet/gauzy-filters/base-
 export class AmountsOwedGridComponent extends BaseSelectorFilterComponent
 	implements OnInit, AfterViewInit {
 
-	logRequest: ITimeLogFilters = this.request;
 	loading: boolean;
 	groupBy: ReportGroupByFilter = ReportGroupFilterEnum.date;
 	dailyData: IAmountOwedReport[];
 
-	@Input()
-	set filters(filters: ITimeLogFilters) {
-		this.logRequest = filters || {};
+	private _filters: ITimeLogFilters;
+	get filters(): ITimeLogFilters {
+		return this._filters;
+	}
+	@Input() set filters(value: ITimeLogFilters) {
+		this._filters = value || {};
 		this.subject$.next(true);
 	}
 
@@ -53,7 +55,7 @@ export class AmountsOwedGridComponent extends BaseSelectorFilterComponent
 		this.subject$
 			.pipe(
 				debounceTime(300),
-				tap(() => this.getExpenses()),
+				tap(() => this.getAmountsOwed()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -64,29 +66,26 @@ export class AmountsOwedGridComponent extends BaseSelectorFilterComponent
 	}
 
 	filtersChange(filters: ITimeLogFilters) {
-		this.logRequest = filters;
+		this.filters = Object.assign({}, filters);
 		this.subject$.next(true);
 	}
 
-	groupByChange() {
-		this.subject$.next(true);
-	}
-
-	getExpenses() {
-		if (!this.organization || isEmpty(this.logRequest)) {
+	async getAmountsOwed() {
+		if (!this.organization || isEmpty(this.request)) {
 			return;
 		}
-		this.loading = true;
 		const request: IGetTimeLogReportInput = {
-			...this.getFilterRequest(this.logRequest),
+			...this.getFilterRequest(this.request),
 			groupBy: this.groupBy
 		};
-		this.timesheetService
-			.getOwedAmountReport(request)
-			.then((logs) => {
-				this.dailyData = logs;
-			})
-			.catch(() => {})
-			.finally(() => (this.loading = false));
+
+		this.loading = true;
+		try {
+			this.dailyData = await this.timesheetService.getOwedAmountReport(request);
+		} catch (error) {
+			console.log('Error while retrieving amounts owed reports', error);
+		} finally {
+			this.loading = false;
+		}
 	}
 }

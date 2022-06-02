@@ -30,14 +30,16 @@ import { BaseSelectorFilterComponent } from '../../timesheet/gauzy-filters/base-
 export class ActivitiesReportGridComponent extends BaseSelectorFilterComponent 
 	implements OnInit, AfterViewInit {
 	
-	logRequest: ITimeLogFilters = this.request;
 	dailyData: IReportDayData[] = [];
 	loading: boolean;
 	groupBy: ReportGroupByFilter = ReportGroupFilterEnum.date;
 
-	@Input()
-	set filters(value: ITimeLogFilters) {
-		this.logRequest = value || {};
+	private _filters: ITimeLogFilters;
+	get filters(): ITimeLogFilters {
+		return this._filters;
+	}
+	@Input() set filters(value: ITimeLogFilters) {
+		this._filters = value || {};
 		this.subject$.next(true);
 	}
 
@@ -69,19 +71,19 @@ export class ActivitiesReportGridComponent extends BaseSelectorFilterComponent
 	}
 
 	getActivities() {
-		if (!this.organization || isEmpty(this.logRequest)) {
+		if (!this.organization || isEmpty(this.request)) {
 			return;
 		}
 		this.loading = true;
 		const appliedFilter = pick(
-			this.logRequest,
+			this.filters,
 			'source',
 			'activityLevel',
 			'logType'
 		);
 		const request: IGetTimeLogReportInput = {
 			...appliedFilter,
-			...this.getFilterRequest(this.logRequest),
+			...this.getFilterRequest(this.request),
 			groupBy: this.groupBy
 		};
 		this.activityService
