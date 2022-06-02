@@ -44,6 +44,7 @@ import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-c
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { TranslateModule } from '../../@shared/translate/translate.module';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
+import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
 
 const COMPONENTS = [
 	UsersComponent,
@@ -89,7 +90,8 @@ const COMPONENTS = [
 		InviteTableModule,
 		EditEmployeeMembershipFormModule,
 		NgxPermissionsModule.forChild(),
-		HeaderTitleModule
+		HeaderTitleModule,
+		GauzyButtonActionModule
 	],
 	declarations: [...COMPONENTS],
 	providers: [
