@@ -1,6 +1,6 @@
 // tslint:disable: nx-enforce-module-boundaries
 import { Component, OnInit, OnDestroy, AfterViewInit, ViewChild } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, ParamMap } from '@angular/router';
 import { isEmpty } from '@gauzy/common-angular';
 import {
 	NbDialogService,
@@ -8,16 +8,15 @@ import {
 	NbMenuService
 } from '@nebular/theme';
 import { filter, map, debounceTime, tap } from 'rxjs/operators';
-import { Observable } from 'rxjs/internal/Observable';
+import { BehaviorSubject, Observable } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import * as _ from 'underscore';
+import { pick } from 'underscore';
 import {
 	IGetTimeLogInput,
 	ITimeLog,
 	PermissionsEnum,
-	ITimeLogFilters,
-	OrganizationPermissionsEnum
+	ITimeLogFilters
 } from '@gauzy/contracts';
 import { DateRangePickerBuilderService, Store, ToastrService } from './../../../../../@core/services';
 import { TimesheetService, TimesheetFilterService } from './../../../../../@shared/timesheet';
@@ -33,23 +32,25 @@ import { GauzyFiltersComponent } from './../../../../../@shared/timesheet/gauzy-
 	templateUrl: './daily.component.html',
 	styleUrls: ['./daily.component.scss']
 })
-export class DailyComponent  extends BaseSelectorFilterComponent 
-	implements AfterViewInit, OnInit, OnDestroy {
-	
-	OrganizationPermissionsEnum = OrganizationPermissionsEnum;
+export class DailyComponent extends BaseSelectorFilterComponent implements 
+	AfterViewInit, OnInit, OnDestroy {
+
 	PermissionsEnum = PermissionsEnum;
-
-	loading: boolean;
-	showBulkAction: boolean;
-	
-	logRequest: ITimeLogFilters = this.request;
+	loading: boolean = false;
+	disableButton: boolean = true;
+	allChecked: boolean = false;
+	filters: ITimeLogFilters = this.request;
 	timeLogs: ITimeLog[] = [];
+	contextMenus: NbMenuItem[] = [];
 
-	allChecked: boolean;
-	contextMenus: NbMenuItem[];
-
-	@ViewChild(GauzyFiltersComponent) gauzyFiltersComponent: GauzyFiltersComponent;
+	@ViewChild(GauzyFiltersComponent) gauzyFiltersComponent: GauzyFiltersComponent; 
 	datePickerConfig$: Observable<any> = this._dateRangePickerBuilderService.datePickerConfig$;
+	payloads$: BehaviorSubject<ITimeLogFilters> = new BehaviorSubject(null);
+
+	selectedLog: {
+		data: ITimeLog,
+		isSelected: boolean
+	};
 
 	constructor(
 		private readonly timesheetService: TimesheetService,
@@ -70,16 +71,25 @@ export class DailyComponent  extends BaseSelectorFilterComponent
 		this._applyTranslationOnChange();
 		this.subject$
 			.pipe(
-				debounceTime(500),
+				debounceTime(200),
+				tap(() => this._clearItem()),
+				tap(() => this.prepareRequest()),
+				tap(() => (this.allChecked = false)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.payloads$
+			.pipe(
+				debounceTime(400),
+				filter((payloads: ITimeLogFilters) => !!payloads),
 				tap(() => this.getLogs()),
-				tap(() => this.allChecked = false),
 				untilDestroyed(this)
 			)
 			.subscribe();
 		this.timesheetService.updateLog$
 			.pipe(
 				filter((val) => val === true),
-				tap(() => this.getLogs()),
+				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -96,8 +106,8 @@ export class DailyComponent  extends BaseSelectorFilterComponent
 		this.route.queryParamMap
 			.pipe(
 				debounceTime(1000),
-				filter((params) => !!params),
-				filter((params) => params.get('openAddDialog') === 'true'),
+				filter((params: ParamMap) => !!params),
+				filter((params: ParamMap) => params.get('openAddDialog') === 'true'),
 				tap(() => this.openAdd()),
 				untilDestroyed(this)
 			)
@@ -109,37 +119,49 @@ export class DailyComponent  extends BaseSelectorFilterComponent
 	}
 
 	filtersChange(filters: ITimeLogFilters) {
-		this.logRequest = filters;
 		if (this.gauzyFiltersComponent.saveFilters) {
 			this.timesheetFilterService.filter = filters;
 		}
+		this.filters = Object.assign({}, filters);
 		this.subject$.next(true);
 	}
 
-	async getLogs() {
-		if (!this.organization || isEmpty(this.logRequest)) {
+	/**
+	 * Prepare Unique Request Always
+	 * 
+	 * @returns 
+	 */
+	prepareRequest() {
+		if (!this.organization || isEmpty(this.filters)) {
 			return;
 		}
-		this.loading = true;
-		const appliedFilter = _.pick(
-			this.logRequest,
+		const appliedFilter = pick(
+			this.filters,
 			'source',
 			'activityLevel',
 			'logType'
 		);
 		const request: IGetTimeLogInput = {
 			...appliedFilter,
-			...this.getFilterRequest(this.logRequest),
+			...this.getFilterRequest(this.request),
 		};
+		this.payloads$.next(request);
+	}
+
+	async getLogs() {
+		if (!this.organization || isEmpty(this.filters)) {
+			return;
+		}
+		const payloads = this.payloads$.getValue();
+
+		this.loading = true;
 		try {
-			this.timeLogs = await this.timesheetService
-				.getTimeLogs(request)
-				.then((logs: ITimeLog[]) => {
-					return logs;
-				})
-				.finally(() => (this.loading = false));
+			this.timeLogs = await this.timesheetService.getTimeLogs(payloads);
 		} catch (error) {
 			console.log('Error while retriving daily time logs entries', error);
+			this.toastrService.error(error);
+		} finally {
+			this.loading = false;
 		}
 	}
 
@@ -148,12 +170,12 @@ export class DailyComponent  extends BaseSelectorFilterComponent
 			.open(EditTimeLogModalComponent, {
 				context: {
 					timeLog: {
-						startedAt: new Date(this.logRequest.startDate),
-						employeeId: this.logRequest.employeeIds
-							? this.logRequest.employeeIds[0]
+						startedAt: new Date(this.request.startDate),
+						employeeId: this.request.employeeIds
+							? this.request.employeeIds[0]
 							: null,
-						projectId: this.logRequest.projectIds
-							? this.logRequest.projectIds[0]
+						projectId: this.request.projectIds
+							? this.request.projectIds[0]
 							: null
 					}
 				}
@@ -165,6 +187,7 @@ export class DailyComponent  extends BaseSelectorFilterComponent
 				}
 			});
 	}
+
 	openEdit(timeLog: ITimeLog) {
 		if (timeLog.isRunning) {
 			return;
@@ -205,16 +228,22 @@ export class DailyComponent  extends BaseSelectorFilterComponent
 			const request = {
 				logIds: [timeLog.id],
 				organizationId
-			}
-			this.timesheetService.deleteLogs(request).then(() => {
-				this.checkTimerStatus();
-				this.toastrService.success('TOASTR.MESSAGE.TIME_LOG_DELETED', {
-					name: employee.fullName,
-					organization: this.organization.name
+			};
+			this.timesheetService
+				.deleteLogs(request)
+				.then(() => {
+					this.checkTimerStatus();
+					this.toastrService.success(
+						'TOASTR.MESSAGE.TIME_LOG_DELETED',
+						{
+							name: employee.fullName,
+							organization: this.organization.name
+						}
+					);
+				})
+				.finally(() => {
+					this.subject$.next(true);
 				});
-			}).finally(() => {
-				this.subject$.next(true);
-			});
 		} catch (error) {
 			console.log('Error while delete TimeLog: ', error);
 			this.toastrService.danger(error);
@@ -226,36 +255,40 @@ export class DailyComponent  extends BaseSelectorFilterComponent
 			.open(ConfirmComponent, {
 				context: {
 					data: {
-						message: this.translateService.instant('TIMESHEET.DELETE_TIMELOG')
+						message: this.translateService.instant(
+							'TIMESHEET.DELETE_TIMELOG'
+						)
 					}
 				}
 			})
-			.onClose
-			.pipe(
-				filter(Boolean),
-				untilDestroyed(this)
-			)
+			.onClose.pipe(filter(Boolean), untilDestroyed(this))
 			.subscribe((type) => {
 				if (type === true) {
-					const logIds = this.timeLogs.filter(
-						(timeLog: ITimeLog) => timeLog['checked'] && !timeLog['isRunning']
-					).map(
-						(timeLog: ITimeLog) => timeLog.id
-					);
+					const logIds = this.timeLogs
+						.filter(
+							(timeLog: ITimeLog) =>
+								timeLog['checked'] && !timeLog['isRunning']
+						)
+						.map((timeLog: ITimeLog) => timeLog.id);
 					const { id: organizationId } = this.organization;
 					const request = {
 						logIds,
 						organizationId
-					}
-					this.timesheetService.deleteLogs(request).then(() => {
-						this.checkTimerStatus();
-						this.toastrService.success('TOASTR.MESSAGE.TIME_LOGS_DELETED', {
-							organization: this.organization.name
+					};
+					this.timesheetService
+						.deleteLogs(request)
+						.then(() => {
+							this.checkTimerStatus();
+							this.toastrService.success(
+								'TOASTR.MESSAGE.TIME_LOGS_DELETED',
+								{
+									organization: this.organization.name
+								}
+							);
+						})
+						.finally(() => {
+							this.subject$.next(true);
 						});
-					})
-					.finally(() => {
-						this.subject$.next(true);
-					});
 				}
 			});
 	}
@@ -269,29 +302,31 @@ export class DailyComponent  extends BaseSelectorFilterComponent
 
 	/**
 	 * Checked/Un-Checked Checkbox
-	 * 
-	 * @param checked 
+	 *
+	 * @param checked
 	 */
-	 public checkedAll(checked: boolean) {
+	public checkedAll(checked: boolean) {
 		this.allChecked = checked;
-		this.timeLogs.filter((timeLog: ITimeLog) => !timeLog.isRunning).forEach((timesheet: any) => timesheet.checked = checked);
+		this.timeLogs
+			.filter((timeLog: ITimeLog) => !timeLog.isRunning)
+			.forEach((timesheet: any) => (timesheet.checked = checked));
 	}
 
 	/**
 	 * Is Indeterminate
-	 * 
-	 * @returns 
+	 *
+	 * @returns
 	 */
 	public isIndeterminate() {
-		const c1 = (this.timeLogs.filter((t: any) => t.checked).length > 0);
+		const c1 = this.timeLogs.filter((t: any) => t.checked).length > 0;
 		return c1 && !this.allChecked;
 	}
 
 	/**
 	 * Checkbox Toggle For Every TimeLog
-	 * 
-	 * @param checked 
-	 * @param timesheet 
+	 *
+	 * @param checked
+	 * @param timesheet
 	 */
 	public toggleCheckbox(checked: boolean, timeLog: ITimeLog) {
 		if (timeLog.isRunning) {
@@ -325,6 +360,61 @@ export class DailyComponent  extends BaseSelectorFilterComponent
 				}
 			}
 		];
+	}
+
+	selectTimeLog({ isSelected, data }) {
+		this.disableButton = !isSelected;
+		this.selectedLog = {
+			isSelected: isSelected,
+			data: isSelected ? data : null
+		}
+	}
+
+	/*
+	 * Clear selected item
+	 */
+	private _clearItem() {
+		this.selectTimeLog({
+			isSelected: false,
+			data: null
+		});
+	}
+
+	/**
+	 * User Select Single Row
+	 * 
+	 * @param timeLog 
+	 */
+	userRowSelect(timeLog: ITimeLog) {
+		// if row is already selected, deselect it.
+		if (timeLog.isSelected) {
+			timeLog.isSelected = false;
+			this.selectTimeLog({
+				isSelected: timeLog.isSelected,
+				data: null
+			});
+		} else {
+			// find the row which was previously selected.
+			const isRowSelected = this.timeLogs.find((item) => item.isSelected === true);
+			if (!!isRowSelected) {
+				// if row found successfully, mark that row as deselected
+				isRowSelected.isSelected = false;
+			}
+			// mark new row as selected
+			timeLog.isSelected = true;
+			this.selectTimeLog({
+				isSelected: timeLog.isSelected,
+				data: timeLog
+			});
+		}
+	}
+
+	isRowSelected() {
+		return !!this.timeLogs.find((t: ITimeLog) => t.isSelected);	
+	}
+
+	isCheckboxSelected() {
+		return this.timeLogs.find((t: ITimeLog) => t.checked);
 	}
 
 	ngOnDestroy(): void {}

@@ -8,7 +8,9 @@ import {
 	NbButtonModule,
 	NbDialogModule,
 	NbSpinnerModule,
-	NbPopoverModule
+	NbPopoverModule,
+	NbCardModule,
+	NbCheckboxModule
 } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
 
@@ -20,6 +22,7 @@ import { EmployeeSelectorsModule } from './../../../../@theme/components/header/
 import { SharedModule } from './../../../../@shared/shared.module';
 import { GauzyFiltersModule } from './../../../../@shared/timesheet/gauzy-filters/gauzy-filters.module';
 import { EditTimeLogModalModule, ViewTimeLogModule } from 'apps/gauzy/src/app/@shared/timesheet';
+import { TableComponentsModule } from 'apps/gauzy/src/app/@shared';
 
 @NgModule({
 	declarations: [WeeklyComponent],
@@ -40,7 +43,10 @@ import { EditTimeLogModalModule, ViewTimeLogModule } from 'apps/gauzy/src/app/@s
 		NbSpinnerModule,
 		NbButtonModule,
 		NbPopoverModule,
-		ViewTimeLogModule
+		ViewTimeLogModule,
+		NbCardModule,
+		NbCheckboxModule,
+		TableComponentsModule
 	]
 })
 export class WeeklyModule {}

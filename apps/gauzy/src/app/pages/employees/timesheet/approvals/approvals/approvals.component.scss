@@ -1,15 +1,37 @@
+@import '../../daily/daily/daily.component.scss';
+
 :host {
 	.filters {
 		.form-control {
 			min-height: 40px;
 		}
 	}
+
+	ga-status-badge ::ng-deep .badge {
+		width: fit-content;
+	}
+
+	nb-card {
+		::ng-deep {
+			.transition-container span {
+				background: unset;
+			}
+		}
+	}
+
+	.custom-body {
+		&.approval {
+			height: calc(100vh - 25.7rem) !important;
+			max-height: unset !important;
+		}
+	}
+
 }
+
 .menu-item {
 	min-width: 150px;
+
 	button {
 		width: 100%;
 	}
 }
-
-

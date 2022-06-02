@@ -9,7 +9,7 @@ import {
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs/internal/Observable';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
-import { toLocal, isEmpty, distinctUntilChange } from '@gauzy/common-angular';
+import { toLocal, isEmpty } from '@gauzy/common-angular';
 import { chain, indexBy, pick, sortBy } from 'underscore';
 import * as moment from 'moment';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -71,7 +71,6 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent
 		this.payloads$
 			.pipe(
 				debounceTime(200),
-				distinctUntilChange(),
 				filter((payloads: ITimeLogFilters) => !!payloads),
 				tap(() => this.getLogs()),
 				untilDestroyed(this)

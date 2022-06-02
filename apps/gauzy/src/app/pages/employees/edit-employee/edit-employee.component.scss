@@ -14,7 +14,7 @@
   }
 }
 
-.employee-image {
+.employee-image img {
   width: 48px;
   height: 48px;
   object-fit: cover;
@@ -73,6 +73,7 @@
 
 .header-content {
   display: flex;
+
   .header-info {
     display: flex;
     justify-content: space-between;
@@ -86,10 +87,9 @@
 .icon-verified {
   margin-right: 5px;
 }
+
 :host {
-  @include nb-card_overrides(
-    unset,
+  @include nb-card_overrides(unset,
     $default-card-height,
-    $default-radius
-  );
+    $default-radius );
 }
