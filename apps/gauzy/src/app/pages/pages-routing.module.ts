@@ -103,23 +103,9 @@ const routes: Routes = [
 				path: 'contacts',
 				children: [
 					{
-						path: 'visitors',
-						loadChildren: () => import('./work-in-progress/work-in-progress.module').then(
-							(m) => m.WorkInProgressModule
-						),
-						data: {
-							selectors: {
-								project: false,
-								employee: false,
-								date: false,
-								organization: false
-							}
-						}
-					},
-					{
 						path: '',
-						loadChildren: () => import('./contacts/contact.module').then(
-							(m) => m.ContactModule
+						loadChildren: () => import('./contacts/contacts.module').then(
+							(m) => m.ContactsModule
 						)
 					}
 				]
@@ -489,7 +475,14 @@ const routes: Routes = [
 						path: 'projects',
 						loadChildren: () => import('./projects/projects.module').then(
 							(m) => m.ProjectsModule
-						)
+						),
+						data: {
+							selectors: {
+								project: false,
+								employee: false,
+								date: false
+							}
+						}
 					},
 					{
 						path: 'teams',

@@ -1,0 +1,21 @@
+@import 'gauzy/gauzy-cards';
+
+:host nb-card {
+  background-color: rgba(50, 50, 50, 0.03);
+  ngx-gauzy-filters {
+    margin: 0 -2rem;
+  }
+  @include nb-card-overrides(unset, $default-card-height, $default-radius);
+}
+.custom-calendar {
+  max-height: calc($default-card-height - 7.325rem);
+  overflow: auto;
+}
+.add-button {
+  position: absolute;
+  right: 1rem;
+  top: -0.75rem;
+  background-color: rgba(50, 50, 50, 0.03);
+  padding: 6px 8px;
+  border-radius: nb-theme(button-rectangle-border-radius);
+}

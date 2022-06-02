@@ -1,4 +1,4 @@
-<nb-card *ngIf="contMainForm">
+<nb-card>
 	<nb-card-header class="d-flex">
 		<ngx-back-navigation
 			[haveLink]="true"
@@ -134,13 +134,14 @@
 												| translate
 										"
 										[status]="
-											isInvalidControl('name')
-												? 'danger'
-												: 'basic'
+											FormHelpers.isInvalidControl(
+												contMainForm,
+												'name'
+											) ? 'danger' : 'basic'
 										"
 									/>
 									<ng-container
-										*ngIf="isInvalidControl('name')"
+										*ngIf="FormHelpers.isInvalidControl(contMainForm, 'name')"
 									>
 										<p class="caption status-danger mt-1">
 											{{
@@ -171,13 +172,17 @@
 												| translate
 										"
 										[status]="
-											isInvalidControl('primaryEmail')
-												? 'danger'
-												: 'basic'
+											FormHelpers.isInvalidControl(
+												contMainForm,
+												'primaryEmail'
+											) ? 'danger' : 'basic'
 										"
 									/>
 									<ng-container
-										*ngIf="isInvalidControl('primaryEmail')"
+										*ngIf="FormHelpers.isInvalidControl(
+											contMainForm,
+											'primaryEmail'
+										)"
 									>
 										<p
 											class="caption status-danger mt-1"
@@ -297,7 +302,6 @@
 										formControlName="contactType"
 										[clearable]="false"
 										[searchable]="false"
-										[(ngModel)]="defaultSelectedType"
 										[placeholder]="
 											'CONTACTS_PAGE.CONTACT_TYPE'
 												| translate
@@ -306,8 +310,7 @@
 									>
 										<ng-option
 											*ngFor="let type of contactTypes"
-											>{{ type }}</ng-option
-										>
+										>{{ type }}</ng-option>
 									</ng-select>
 								</div>
 							</div>
@@ -383,6 +386,36 @@
 									"
 								>
 								</ga-location-form>
+								<div>
+									<button
+										nbButton
+										nbStepperPrevious
+										class="gray mr-2"
+										status="basic"
+										outline
+									>
+										{{ 'BUTTONS.PREVIOUS' | translate }}
+									</button>
+									<button
+										[disabled]="locationForm.invalid"
+										nbButton
+										class="green mr-2"
+										status="basic"
+										outline
+										nbStepperNext
+									>
+										{{ 'BUTTONS.NEXT' | translate }}
+									</button>
+									<button
+										nbButton
+										(click)="cancel()"
+										class="mr-2"
+										status="basic"
+										outline
+									>
+										{{ 'BUTTONS.CANCEL' | translate }}
+									</button>
+								</div>
 							</div>
 							<div class="col-7">
 								<ng-container
@@ -396,36 +429,6 @@
 								</ng-container>
 							</div>
 						</div>
-					</div>
-					<div class="buttons">
-						<button
-							nbButton
-							nbStepperPrevious
-							class="gray mr-2"
-							status="basic"
-							outline
-						>
-							{{ 'BUTTONS.PREVIOUS' | translate }}
-						</button>
-						<button
-							[disabled]="locationForm.invalid"
-							nbButton
-							class="green mr-2"
-							status="basic"
-							outline
-							nbStepperNext
-						>
-							{{ 'BUTTONS.NEXT' | translate }}
-						</button>
-						<button
-							nbButton
-							(click)="cancel()"
-							class="mr-2"
-							status="basic"
-							outline
-						>
-							{{ 'BUTTONS.CANCEL' | translate }}
-						</button>
 					</div>
 				</form>
 			</nb-step>

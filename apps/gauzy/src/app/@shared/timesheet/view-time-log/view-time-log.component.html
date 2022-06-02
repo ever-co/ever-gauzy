@@ -1,19 +1,22 @@
-<div class="p-3 time-log-view-contiainer">
-	<h6>{{ 'TIMESHEET.VIEW_TIME_LOGS' | translate }}</h6>
+<div class="p-1 time-log-view-contiainer">
+	<h6 class="title p-3">{{ 'TIMESHEET.VIEW_TIME_LOGS' | translate }}</h6>
 
 	<nb-list class="time-span custom-scroll">
 		<nb-list-item
 			*ngFor="let timeLog of timeLogs"
-			class="row align-items-center"
+			class="row border-top align-items-center"
 		>
-			<div class="time-log-content col">
+			<div class="time-log-content col pr-0">
 				<ngx-avatar
 					[id]="timeLog?.employee?.id"
 					[name]="timeLog?.employee?.user?.name"
 					[src]="timeLog?.employee?.user?.imageUrl"
-					[caption]="
-						(timeLog?.startedAt | utcToLocal | timeFormat: true) +
-						' - ' +
+				></ngx-avatar>
+			</div>
+			<div class="time-log-text col-3 pl-0">
+				{{
+					(timeLog?.startedAt | utcToLocal | timeFormat: true) +
+						'  ' +
 						(!timeLog?.isRunning
 							? (timeLog?.stoppedAt
 							  | utcToLocal
@@ -22,54 +25,60 @@
 						' (' +
 						(timeLog?.duration | durationFormat) +
 						')'
-					"
-				></ngx-avatar>
+				}}
 			</div>
-			<div class="time-log-action col-auto">
-				<button
-					nbButton
-					status="primary"
-					(click)="viewLog(timeLog)"
-					class="mr-1"
-					size="small"
-					[nbTooltip]="'TIMESHEET.VIEW' | translate"
-				>
-					<nb-icon icon="eye-outline"></nb-icon>
-				</button>
-				<button
-					*ngxPermissionsOnly="[
-						OrganizationPermissionsEnum.ALLOW_MODIFY_TIME
-					]"
-					nbButton
-					status="success"
-					(click)="openEdit($event, timeLog)"
-					[disabled]="timeLog.isRunning"
-					class="mr-1"
-					size="small"
-				>
-					<nb-icon icon="edit"></nb-icon>
-				</button>
-				<button
-					*ngxPermissionsOnly="[
-						OrganizationPermissionsEnum.ALLOW_DELETE_TIME
-					]"
-					nbButton
-					status="danger"
-					ngxConfirmDialog
-					[message]="'TIMESHEET.DELETE_TIMELOG' | translate"
-					(click)="$event.stopPropagation()"
-					(confirm)="onDeleteConfirm(timeLog)"
-					[disabled]="timeLog.isRunning"
-					class="mr-1"
-					size="small"
-				>
-					<nb-icon icon="trash-2-outline"></nb-icon>
-				</button>
+			<div class="col p-0">
+				<div class="time-log-action">
+					<button
+						nbButton
+						status="basic"
+						(click)="viewLog(timeLog)"
+						class="action secondary"
+						size="small"
+						[nbTooltip]="'TIMESHEET.VIEW' | translate"
+					>
+						<nb-icon icon="eye-outline"></nb-icon>
+					</button>
+					<button
+						*ngxPermissionsOnly="[
+							OrganizationPermissionsEnum.ALLOW_MODIFY_TIME
+						]"
+						nbButton
+						status="basic"
+						(click)="openEdit($event, timeLog)"
+						[disabled]="timeLog.isRunning"
+						class="action primary"
+						size="small"
+						[nbTooltip]="'TIMESHEET.EDIT' | translate"
+					>
+						<nb-icon icon="edit"></nb-icon>
+					</button>
+					<button
+						*ngxPermissionsOnly="[
+							OrganizationPermissionsEnum.ALLOW_DELETE_TIME
+						]"
+						nbButton
+						status="basic"
+						ngxConfirmDialog
+						[message]="'TIMESHEET.DELETE_TIMELOG' | translate"
+						(click)="$event.stopPropagation()"
+						(confirm)="onDeleteConfirm(timeLog)"
+						[disabled]="timeLog.isRunning"
+						class="action"
+						size="small"
+						[nbTooltip]="'TIMESHEET.DELETE' | translate"
+					>
+						<nb-icon
+							status="danger"
+							icon="trash-2-outline"
+						></nb-icon>
+					</button>
+				</div>
 			</div>
 		</nb-list-item>
 	</nb-list>
 	<div class="text-center">
-		<ng-template 
+		<ng-template
 			*ngxPermissionsOnly="[
 				OrganizationPermissionsEnum.ALLOW_MANUAL_TIME
 			]"

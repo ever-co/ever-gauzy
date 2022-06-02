@@ -1,11 +1,8 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
-import { ContactComponent } from './contact.component';
-import { ClientsComponent } from './clients/clients.component';
-import { LeadsComponent } from './leads/leads.component';
-import { CustomersComponent } from './customers/customers.component';
-import { PermissionsEnum } from '@gauzy/contracts';
+import { ContactType, PermissionsEnum } from '@gauzy/contracts';
 import { NgxPermissionsGuard } from 'ngx-permissions';
+import { ContactsComponent } from './contacts.component';
 
 const CONTACT_VIEW_PERMISSION = {
 	permissions: {
@@ -20,42 +17,60 @@ const CONTACT_VIEW_PERMISSION = {
 const routes: Routes = [
 	{
 		path: '',
-		component: ContactComponent
+		redirectTo: 'customers',
+		pathMatch: 'full'
+	},
+	{
+		path: 'visitors',
+		loadChildren: () => import('./../work-in-progress/work-in-progress.module').then(
+			(m) => m.WorkInProgressModule
+		),
+		data: {
+			selectors: {
+				project: false,
+				employee: false,
+				date: false,
+				organization: false
+			}
+		}
 	},
 	{
 		path: 'clients',
-		component: ClientsComponent,
+		component: ContactsComponent,
 		canActivate: [NgxPermissionsGuard],
 		data: {
 			...CONTACT_VIEW_PERMISSION,
 			selectors: {
 				project: false,
 				date: false
-			}
+			},
+			contactType: ContactType.CLIENT
 		}
 	},
 	{
 		path: 'customers',
-		component: CustomersComponent,
+		component: ContactsComponent,
 		canActivate: [NgxPermissionsGuard],
 		data: {
 			...CONTACT_VIEW_PERMISSION,
 			selectors: {
 				project: false,
 				date: false
-			}
+			},
+			contactType: ContactType.CUSTOMER
 		}
 	},
 	{
 		path: 'leads',
-		component: LeadsComponent,
+		component: ContactsComponent,
 		canActivate: [NgxPermissionsGuard],
 		data: {
 			...CONTACT_VIEW_PERMISSION,
 			selectors: {
 				project: false,
 				date: false
-			}
+			},
+			contactType: ContactType.LEAD
 		}
 	},
 	{
@@ -78,4 +93,4 @@ const routes: Routes = [
 	imports: [RouterModule.forChild(routes)],
 	exports: [RouterModule]
 })
-export class ContactRoutingModule {}
+export class ContactsRoutingModule {}

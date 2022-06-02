@@ -1,4 +1,5 @@
 import {
+	ContactOrganizationInviteStatus,
 	IInvite,
 	InviteStatusEnum,
 	IOrganization,
@@ -112,7 +113,7 @@ export class InviteAcceptOrganizationContactHandler
 		await this.organizationContactService.update(organizationContactId, {
 			tenant,
 			organization,
-			inviteStatus: InviteStatusEnum.ACCEPTED
+			inviteStatus: ContactOrganizationInviteStatus.ACCEPTED
 		});
 
 		return this.inviteService.update(inviteId, {

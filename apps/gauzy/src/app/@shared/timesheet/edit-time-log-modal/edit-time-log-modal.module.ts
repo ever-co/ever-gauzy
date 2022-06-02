@@ -17,6 +17,7 @@ import { EmployeeMultiSelectModule } from '../../employee/employee-multi-select/
 import { ContactSelectorModule } from '../../contact-selector/contact-selector.module';
 import { TaskSelectModule } from '../../tasks/task-select/task-select.module';
 import { DialogsModule } from '../../dialogs';
+import { NbInputModule } from '@nebular/theme';
 
 @NgModule({
 	declarations: [EditTimeLogModalComponent],
@@ -37,7 +38,8 @@ import { DialogsModule } from '../../dialogs';
 		NbSpinnerModule,
 		NbIconModule,
 		ContactSelectorModule,
-		DialogsModule
+		DialogsModule,
+    NbInputModule
 	]
 })
 export class EditTimeLogModalModule {}

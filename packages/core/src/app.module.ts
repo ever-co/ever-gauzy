@@ -129,6 +129,7 @@ import { SeederModule } from './core/seeds/seeder.module';
 import { WarehouseModule } from './warehouse/warehouse.module';
 import { MerchantModule } from './merchant/merchant.module';
 import { GauzyCloudModule } from './gauzy-cloud/gauzy-cloud.module';
+import { ContactModule } from './contact/contact.module';
 
 const { unleashConfig } = environment;
 
@@ -309,7 +310,8 @@ if (process.env.DB_TYPE === 'postgres') {
 		SeederModule,
 		WarehouseModule,
 		MerchantModule,
-		GauzyCloudModule
+		GauzyCloudModule,
+		ContactModule
 	],
 	controllers: [AppController],
 	providers: [AppService],

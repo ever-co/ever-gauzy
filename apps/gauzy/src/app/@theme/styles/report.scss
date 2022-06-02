@@ -54,8 +54,8 @@
     }
 }
 
-nb-card, nb-card-header, nb-card-body, .card {
-    background-color: nb-theme(background-basic-color-1);
+nb-card, nb-card-body, .card {
+    background-color: nb-theme(gauzy-card-2);
     border-color: nb-theme(border-basic-color-3);
 }
 
@@ -129,23 +129,23 @@ nb-card, nb-card-header, nb-card-body, .card {
         background-color: nb-theme(gauzy-card-1);
         border-radius: nb-theme(border-radius);
         & nb-card-header {
-            background-color: nb-theme(gauzy-card-1);
+            background-color: unset;
             margin-bottom: 0;
             border-bottom: none;
         }
         & nb-card-body {
-            background-color: nb-theme(background-basic-color-2);
+            background-color: nb-theme(gauzy-card-2);
         }
     }
 
     & nb-card-header {
+        background-color: unset;
         padding: 20px;
         border-bottom: none;
-        background-color: nb-theme(background-basic-color-2);
     }
 
     nb-card-body {
-        background-color: nb-theme(background-basic-color-3);
+        background-color: nb-theme(gauzy-card-2);
         padding: 18px;
     }
 }
@@ -180,7 +180,7 @@ nb-card, nb-card-header, nb-card-body, .card {
 }
 
 .columns-header {
-    background-color: nb-theme(background-basic-color-3);
+    background-color: nb-theme(gauzy-card-2);
     border-radius: 8px;
     margin-bottom: 10px;
     padding-top: 12px;

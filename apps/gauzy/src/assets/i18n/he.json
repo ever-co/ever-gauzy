@@ -3539,7 +3539,8 @@
 			"TIME_LOG": "TimeLog"
 		},
 		"RUNNING_TIMER_WARNING": "Warning. Timer is running, you can only remove screenshots if you stop timer or Inside Timer app",
-		"DELETE_CONFIRM": "Are you sure to delete this screenshots and time log?"
+		"DELETE_CONFIRM": "Are you sure to delete this screenshots and time log?",
+		"VIEW_LOG": "View Log"
 	},
 	"ACTIVITY": {
 		"SCREENSHOTS": "Screenshots",
@@ -3557,7 +3558,7 @@
 		"NO_EMPLOYEES_SELECTED": "Please select Employee",
 		"DELETE_CONFIRM": "Are you sure you want to delete this screenshots and activities?",
 		"VISITED_DATES": "Visited Dates",
-		"NO_RECORD_FOUND": "No Records Found. Please select Date Range, Employee Or Project"
+		"NO_RECORD_FOUND": "No records found. Please select date range, employee or project."
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Let's create your first organization",

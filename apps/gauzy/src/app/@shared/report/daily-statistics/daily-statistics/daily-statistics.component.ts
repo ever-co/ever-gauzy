@@ -13,9 +13,11 @@ import {
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { pick } from 'underscore';
-import { debounceTime, tap } from 'rxjs/operators';
+import { debounceTime, filter, tap } from 'rxjs/operators';
+import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import * as moment from 'moment';
 import { TranslateService } from '@ngx-translate/core';
+import { distinctUntilChange, isEmpty } from '@gauzy/common-angular';
 import { EmployeesService, OrganizationProjectsService, Store } from './../../../../@core/services';
 import { TimesheetStatisticsService } from '../../../timesheet/timesheet-statistics.service';
 import { BaseSelectorFilterComponent } from '../../../timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
@@ -29,17 +31,24 @@ import { BaseSelectorFilterComponent } from '../../../timesheet/gauzy-filters/ba
 export class DailyStatisticsComponent extends BaseSelectorFilterComponent
 	implements OnInit, AfterViewInit {
 
+	payloads$: BehaviorSubject<ITimeLogFilters> = new BehaviorSubject(null);
+
 	PermissionsEnum = PermissionsEnum;
-	logRequest: ITimeLogFilters = this.request;
 	counts: ICountsStatistics;
 	loading: boolean;
 	employeesCount: number;
 	projectsCount: number;
 
-	@Input()
-	set filters(value: ITimeLogFilters) {
-		if (value) {
-			this.logRequest = value;
+	/*
+	* Getter & Setter for dynamic filters
+	*/
+	private _filters: ITimeLogFilters = this.request;
+	get filters(): ITimeLogFilters {
+		return this._filters;
+	}
+	@Input() set filters(filters: ITimeLogFilters) {
+		if (filters) {
+			this._filters = filters;
 			this.subject$.next(true);
 		}
 	}
@@ -58,11 +67,37 @@ export class DailyStatisticsComponent extends BaseSelectorFilterComponent
 	ngOnInit() {
 		this.subject$
 			.pipe(
-				debounceTime(500),
+				debounceTime(200),
+				tap(() => this.prepareRequest()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.payloads$
+			.pipe(
+				debounceTime(200),
+				distinctUntilChange(),
+				filter((payloads: ITimeLogFilters) => !!payloads),
 				tap(() => this.getCounts()),
 				untilDestroyed(this)
 			)
 			.subscribe();
+	}
+
+	prepareRequest() {
+		if (!this.organization || isEmpty(this.filters)) {
+			return;
+		}
+		const appliedFilter = pick(
+			this.filters,
+			'source',
+			'activityLevel',
+			'logType'
+		);
+		const request: IGetCountsStatistics = {
+			...appliedFilter,
+			...this.getFilterRequest(this.request),
+		};
+		this.payloads$.next(request);
 	}
 
 	ngAfterViewInit() {
@@ -70,22 +105,14 @@ export class DailyStatisticsComponent extends BaseSelectorFilterComponent
 	}
 
 	async getCounts() {
-		if (!this.organization || !this.logRequest) {
+		if (!this.organization || isEmpty(this.filters)) {
 			return;
 		}
+		const payloads = this.payloads$.getValue();
+
 		this.loading = true;
-		const appliedFilter = pick(
-			this.logRequest,
-			'source',
-			'activityLevel',
-			'logType'
-		);
-		const request: IGetCountsStatistics = {
-			...appliedFilter,
-			...this.getFilterRequest(this.logRequest),
-		};
 		try {
-			const counts = await this.timesheetStatisticsService.getCounts(request);
+			const counts = await this.timesheetStatisticsService.getCounts(payloads);
 			this.counts = counts;
 
 			this.loadEmployeesCount();
@@ -118,8 +145,8 @@ export class DailyStatisticsComponent extends BaseSelectorFilterComponent
 	}
 
 	get period() {
-		if(this.logRequest){
-			const { startDate, endDate } = this.logRequest;
+		if (this.request) {
+			const { startDate, endDate } = this.request;
 			const start = moment(startDate);
 			const end = moment(endDate);
 			return end.diff(start, 'days') * 86400;

@@ -10,10 +10,8 @@ export const ActivityLevel = {
 export function initialTimesheetFilterState(): ITimeLogFilters {
 	return {
 		activityLevel: ActivityLevel,
-		employeeIds: [],
 		source: [],
-		logType: [],
-		projectIds: []
+		logType: []
 	};
 }
 

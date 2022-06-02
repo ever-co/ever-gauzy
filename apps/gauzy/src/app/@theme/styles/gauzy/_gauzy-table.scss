@@ -30,10 +30,8 @@
     color: rgba(255, 171, 45, 1);
   }
   &.primary {
-    &[nbButton].appearance-filled.status-basic,
-    .appearance-filled.status-basic[nbButtonToggle] {
-      color: nb-theme(text-primary-color);
-    }
+    color: nb-theme(text-primary-color);
+
     &.soft {
       &[nbButton].appearance-filled.status-basic {
         background-color: rgba(110, 73, 232, 0.1);

@@ -1,12 +1,7 @@
+@import '../../activity/layout/layout.component.scss';
+
 :host {
-  ::ng-deep {
-    .route-tabset {
-      margin-bottom: 16px !important;
-    }
-  }
   nb-card {
-    nb-card-body {
-      height: 100%;
-    }
+    background-color: rgba(50, 50, 50, 0.03);
   }
 }

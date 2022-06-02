@@ -12,9 +12,9 @@ export class TruncatePipe implements PipeTransform {
 		ellipsis = '...'
 	) {
 		if (completeWords) {
-			limit = value.substr(0, limit).lastIndexOf(' ');
+			limit = value.substring(0, limit).lastIndexOf(' ');
 		}
-		return value.length > limit ? value.substr(0, limit) + ellipsis : value;
+		return value.length > limit ? value.substring(0, limit) + ellipsis : value;
 	}
 }
 @Pipe({

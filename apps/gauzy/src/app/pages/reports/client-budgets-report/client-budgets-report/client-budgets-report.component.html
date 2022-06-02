@@ -6,11 +6,11 @@
 			</ngx-header-title>
 		</h4>
 		<ng-container
-			*ngIf="logRequest?.startDate && logRequest?.endDate"
+			*ngIf="request?.startDate && request?.endDate"
 		>
 			<ngx-date-range-title
-				[start]="logRequest?.startDate"
-				[end]="logRequest?.endDate"
+				[start]="request?.startDate"
+				[end]="request?.endDate"
 				[format]="'dddd, LL'"
 			></ngx-date-range-title>
 		</ng-container>
@@ -21,8 +21,8 @@
 				[hasActivityLevelFilter]="false"
 				[hasSourceFilter]="false"
 				[hasLogTypeFilter]="false"
-				[saveFilters]="false"
-				[filters]="logRequest"
+				[filters]="filters"
+				[saveFilters]="(datePickerConfig$ | async).isSaveDatePicker"
 				(filtersChange)="filtersChange($event)"
 			></ngx-gauzy-filters>
 		</div>
@@ -66,26 +66,31 @@
 										</div>
 										<div class="responsive-table-content project-name">
 											<ng-container
-													*ngTemplateOutlet="clientEl;context: { $implicit: client?.organizationContact}">
+												*ngTemplateOutlet="clientEl;context: { $implicit: client?.organizationContact}">
 											</ng-container>
 										</div>
 									</div>
 									<div class="responsive-table-row project-column">
-										<div class="responsive-table-header">{{ 'REPORT_PAGE.PROJECT' | translate }}</div>
+										<div class="responsive-table-header">
+											{{ 'REPORT_PAGE.PROJECT' | translate }}
+										</div>
 										<div class="responsive-table-content project-name"></div>
 									</div>
 									<div class="responsive-table-row employees-column">
-										<div class="responsive-table-header">{{ 'REPORT_PAGE.EMPLOYEES/TEAMS' | translate }}</div>
-										<div class="responsive-table-content day-col">
+										<div class="responsive-table-header">
+											{{ 'REPORT_PAGE.EMPLOYEES/TEAMS' | translate }}
 										</div>
+										<div class="responsive-table-content day-col"></div>
 									</div>
 									<div class="responsive-table-row spent-column">
 										<div class="responsive-table-header">
 											{{ 'REPORT_PAGE.SPENT' | translate }}
 										</div>
 										<div class="responsive-table-content day-col">
-											<span *ngIf="client.budgetType ===OrganizationContactBudgetTypeEnum.HOURS">
-												{{ (client?.spent * 3600) | durationFormat }}
+											<span *ngIf="client.budgetType === OrganizationContactBudgetTypeEnum.HOURS">
+												{{ (client?.spent * 3600) 
+													| durationFormat 
+												}}
 											</span>
 											<span *ngIf="client.budgetType === OrganizationContactBudgetTypeEnum.COST">
 												{{ client?.spent
@@ -101,7 +106,9 @@
 										</div>
 										<div class="responsive-table-content day-col">
 											<span *ngIf="client.budgetType === OrganizationContactBudgetTypeEnum.HOURS">
-												{{ (client.reamingBudget * 3600) | durationFormat }}
+												{{ (client.reamingBudget * 3600) 
+													| durationFormat
+												}}
 											</span>
 											<span *ngIf="client.budgetType === OrganizationContactBudgetTypeEnum.COST">
 												{{ client.reamingBudget
@@ -117,9 +124,11 @@
 										</div>
 										<div class="responsive-table-content day-col budget-row">
 											<span *ngIf="client.budgetType === OrganizationContactBudgetTypeEnum.HOURS" class="currency-span">
-												{{ (client?.budget * 3600) | durationFormat }}
+												{{ (client?.budget * 3600) 
+													| durationFormat 
+												}}
 											</span>
-											<span *ngIf="client.budgetType ===OrganizationContactBudgetTypeEnum.COST " class="currency-span">
+											<span *ngIf="client.budgetType === OrganizationContactBudgetTypeEnum.COST " class="currency-span">
 												{{ client.budget
 													| currency : organization?.currency
 													| position : organization?.currencyPosition
@@ -127,9 +136,9 @@
 											</span>
 											<div class="progress-wrapper">
 												<ngx-progress-status
-														class="report-progress"
-														[percentage]="client?.spentPercentage"
-														defaultStatus="success">
+													class="report-progress"
+													[percentage]="client?.spentPercentage"
+													defaultStatus="success">
 												</ngx-progress-status>
 											</div>
 										</div>

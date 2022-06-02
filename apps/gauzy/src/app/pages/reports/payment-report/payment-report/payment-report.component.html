@@ -11,11 +11,11 @@
 			</ngx-header-title>
 		</h4>
 		<ng-container
-			*ngIf="logRequest?.startDate && logRequest?.endDate"
+			*ngIf="request?.startDate && request?.endDate"
 		>
 			<ngx-date-range-title
-				[start]="logRequest?.startDate"
-				[end]="logRequest?.endDate"
+				[start]="request?.startDate"
+				[end]="request?.endDate"
 				[format]="'dddd, LL'"
 			></ngx-date-range-title>
 		</ng-container>
@@ -23,11 +23,11 @@
 	<nb-card-body>
 		<div class="filters mt-4 mb-4">
 			<ngx-gauzy-filters
-				[filters]="logRequest"
+				[filters]="filters"
 				[hasActivityLevelFilter]="false"
 				[hasSourceFilter]="false"
 				[hasLogTypeFilter]="false"
-				[saveFilters]="false"
+				[saveFilters]="(datePickerConfig$ | async).isSaveDatePicker"
 				(filtersChange)="filtersChange($event)"
 			></ngx-gauzy-filters>
 			<nb-select placeholder="Contact" class="action-select contact-select">
@@ -40,11 +40,13 @@
 		<div class="daily-time-report">
 			<nb-card>
 				<nb-card-body>
-					<ngx-line-chart [data]="chartData"></ngx-line-chart>
+					<ngx-line-chart 
+						[data]="chartData"
+					></ngx-line-chart>
 				</nb-card-body>
 			</nb-card>
 		</div>
-		<ga-payment-report-grid 
+		<ga-payment-report-grid
 			[filters]="filters"
 		></ga-payment-report-grid>
 	</nb-card-body>

@@ -20,7 +20,7 @@ import { TranslateModule } from './../../../../@shared/translate/translate.modul
 import { ApprovalsRoutingModule } from './approvals-routing.module';
 import { ApprovalsComponent } from './approvals/approvals.component';
 import { StatusBadgeModule } from './../../../../@shared/status-badge';
-import { GauzyFiltersModule } from './../../../../@shared/timesheet/gauzy-filters/gauzy-filters.module';
+import { GauzyButtonActionModule } from './../../../../@shared/gauzy-button-action/gauzy-button-action.module';
 
 @NgModule({
 	declarations: [ApprovalsComponent],
@@ -40,9 +40,9 @@ import { GauzyFiltersModule } from './../../../../@shared/timesheet/gauzy-filter
 		TranslateModule,
 		MomentModule,
 		SharedModule,
-		GauzyFiltersModule,
 		ApprovalsRoutingModule,
-		StatusBadgeModule
+		StatusBadgeModule,
+		GauzyButtonActionModule
 	]
 })
 export class ApprovalsModule {}

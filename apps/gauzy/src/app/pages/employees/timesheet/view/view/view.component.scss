@@ -1,0 +1,16 @@
+:host {
+    nb-card {
+        height: calc(100vh - 13rem);
+
+        ::ng-deep {
+            .transition-container span {
+                background: unset;
+            }
+        }
+
+        .custom-card-body {
+            overflow: auto;
+            background-color: rgba(50, 50, 50, 0.03);
+        }
+    }
+}

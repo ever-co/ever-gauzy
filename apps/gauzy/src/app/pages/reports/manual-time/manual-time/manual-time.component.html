@@ -6,11 +6,11 @@
             </ngx-header-title>
         </h4>
         <ng-container
-			*ngIf="logRequest?.startDate && logRequest?.endDate"
+			*ngIf="request?.startDate && request?.endDate"
 		>
 			<ngx-date-range-title
-				[start]="logRequest?.startDate"
-				[end]="logRequest?.endDate"
+				[start]="request?.startDate"
+				[end]="request?.endDate"
                 [format]="'dddd, LL'"
 			></ngx-date-range-title>
 		</ng-container>
@@ -18,8 +18,8 @@
     <nb-card-body>
         <div class="filters">
             <ngx-gauzy-filters
-                [filters]="logRequest"
-                [saveFilters]="false"
+                [filters]="filters"
+                [saveFilters]="(datePickerConfig$ | async).isSaveDatePicker"
                 [hasLogTypeFilter]="false"
                 [hasSourceFilter]="false"
                 [hasActivityLevelFilter]="false"

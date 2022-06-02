@@ -28,6 +28,8 @@ import { ViewTimeLogModule } from './../../../../@shared/timesheet/view-time-log
 import { ViewTimeLogModalModule } from './../../../../@shared/timesheet/view-time-log-modal/view-time-log-modal.module';
 import { TaskSelectModule } from './../../../../@shared/tasks/task-select/task-select.module';
 import { DialogsModule } from './../../../../@shared/dialogs';
+import { TableComponentsModule } from 'apps/gauzy/src/app/@shared';
+import { GauzyButtonActionModule } from 'apps/gauzy/src/app/@shared/gauzy-button-action/gauzy-button-action.module';
 
 @NgModule({
 	declarations: [DailyComponent],
@@ -56,7 +58,9 @@ import { DialogsModule } from './../../../../@shared/dialogs';
 		EmployeeSelectorsModule,
 		GauzyFiltersModule,
 		ViewTimeLogModule,
-		DialogsModule
+		DialogsModule,
+		TableComponentsModule,
+		GauzyButtonActionModule
 	]
 })
 export class DailyModule {}

@@ -15,6 +15,7 @@ import { ReportGroupByFilter } from './report.model';
 import { FileStorageProviderEnum } from './file-provider';
 
 export interface ITimesheet extends IBasePerTenantAndOrganizationEntityModel {
+	[x: string]: any;
 	employee: IEmployee;
 	employeeId?: string;
 	approvedBy?: IEmployee;
