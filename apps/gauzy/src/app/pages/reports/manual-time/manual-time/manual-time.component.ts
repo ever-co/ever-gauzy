@@ -18,6 +18,7 @@ import * as moment from 'moment';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs/internal/Observable';
 import { chain, pick } from 'underscore';
+import { isEmpty } from '@gauzy/common-angular';
 import { DateRangePickerBuilderService, Store } from './../../../../@core/services';
 import { TimesheetService } from './../../../../@shared/timesheet/timesheet.service';
 import { BaseSelectorFilterComponent } from './../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
@@ -84,7 +85,7 @@ export class ManualTimeComponent extends BaseSelectorFilterComponent
 	}
 
 	getLogs() {
-		if (!this.organization) {
+		if (!this.organization || isEmpty(this.request)) {
 			return;
 		}
 		const appliedFilter = pick(
