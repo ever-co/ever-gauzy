@@ -47,6 +47,7 @@ import { HeaderTitleModule } from '../../@shared/components/header-title/header-
 import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
 import { PaginationModule } from '../../@shared/pagination/pagination.module';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
+import { SharedModule } from '../../@shared/shared.module';
 
 const COMPONENTS = [
 	UsersComponent,
@@ -95,7 +96,8 @@ const COMPONENTS = [
 		HeaderTitleModule,
 		GauzyButtonActionModule,
 		PaginationModule,
-		CardGridModule
+		CardGridModule,
+		SharedModule
 	],
 	declarations: [...COMPONENTS],
 	providers: [
