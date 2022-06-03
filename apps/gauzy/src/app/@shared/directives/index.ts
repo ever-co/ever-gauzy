@@ -1,3 +1,4 @@
+import { TimerAuthorizedDirective } from './timer-authorized-directive';
 import { AutocompleteOffDirective } from './autocomplete-off.directive';
 import { DebounceClickDirective } from './debounce-click.directive';
 import { ImgDirective } from './img.directive';
@@ -7,5 +8,6 @@ export const Directives = [
     AutocompleteOffDirective,
     DebounceClickDirective,
     ImgDirective,
-    ReadMoreDirective
+    ReadMoreDirective,
+    TimerAuthorizedDirective
 ];
