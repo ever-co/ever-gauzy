@@ -45,9 +45,10 @@ nb-card-body {
 			}
 
 			img {
-				width: 180px;
-				height: auto;
+				width: 200px;
+				height: 200px;
 				border-radius: 13px;
+				object-fit: cover;
 			}
 
 			input {
@@ -66,6 +67,9 @@ nb-card-body {
 				position: absolute;
 				top: calc(50% - 68px / 2);
 				left: calc(50% - 68px / 2);
+				g circle{
+					fill: nb-theme(text-primary-color);
+				}
 			}
 		}
 	}
