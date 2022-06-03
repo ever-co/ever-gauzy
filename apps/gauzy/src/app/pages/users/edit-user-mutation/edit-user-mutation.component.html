@@ -1,18 +1,20 @@
-<nb-card class="mt-4">
-	<nb-card-header>{{
-		'USERS_PAGE.ADD_EXISTING_USER' | translate
-	}} 
+<nb-card>
+	<nb-card-header
+		>{{ 'USERS_PAGE.ADD_EXISTING_USER' | translate }}
 		<span
-		class="label info-font"
-		[nbTooltip]="'USERS_PAGE.ADD_EXISTING_USER_TOOLTIP' | translate">
-		&nbsp;
+			class="label info-font"
+			[nbTooltip]="'USERS_PAGE.ADD_EXISTING_USER_TOOLTIP' | translate"
+		>
+			&nbsp;
 			<nb-icon icon="info-outline"></nb-icon>
 		</span>
 	</nb-card-header>
 	<nb-card-body>
-		<div class="form-group">
-			<div class="form-group d-flex flex-row bd-highlight mb-3">
-				<div class="form-group col-4">
+		<div class="form-group m-0">
+			<div
+				class="form-group d-flex flex-row justify-content-between align-items-center m-0"
+			>
+				<div class="form-group w-100 p-0">
 					<form [formGroup]="form" *ngIf="form">
 						<ga-user-multi-select
 							[selectedUserIds]="selectedUsersIds"
@@ -22,9 +24,9 @@
 						</ga-user-multi-select>
 					</form>
 				</div>
-				<div class="form-group">
+				<div class="form-group d-flex flex-row ml-3">
 					<button
-						class="mr-2"
+						class="mr-3"
 						nbButton
 						(click)="submitForm()"
 						status="success"
@@ -32,7 +34,7 @@
 					>
 						{{ 'BUTTONS.SAVE' | translate }}
 					</button>
-					<button (click)="cancel()" class="mr-2" nbButton status="danger">
+					<button (click)="cancel()" nbButton outline status="basic">
 						{{ 'BUTTONS.CANCEL' | translate }}
 					</button>
 				</div>
