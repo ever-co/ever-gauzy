@@ -27,15 +27,20 @@
 				<div class="form-group d-flex flex-row ml-3">
 					<button
 						class="mr-3"
+						(click)="cancel()"
+						nbButton
+						outline
+						status="basic"
+					>
+						{{ 'BUTTONS.CANCEL' | translate }}
+					</button>
+					<button
 						nbButton
 						(click)="submitForm()"
 						status="success"
 						[disabled]="disableButton"
 					>
 						{{ 'BUTTONS.SAVE' | translate }}
-					</button>
-					<button (click)="cancel()" nbButton outline status="basic">
-						{{ 'BUTTONS.CANCEL' | translate }}
 					</button>
 				</div>
 			</div>

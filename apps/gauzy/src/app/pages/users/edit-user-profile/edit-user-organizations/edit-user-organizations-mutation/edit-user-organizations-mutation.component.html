@@ -19,15 +19,16 @@
 				</div>
 				<div class="form-group d-flex flex-row ml-3">
 					<button
+						(click)="cancel()"
 						class="mr-3"
 						nbButton
-						(click)="submitForm()"
-						status="success"
+						outline
+						status="basic"
 					>
-						{{ 'BUTTONS.SAVE' | translate }}
-					</button>
-					<button (click)="cancel()" nbButton outline status="basic">
 						{{ 'BUTTONS.CANCEL' | translate }}
+					</button>
+					<button nbButton (click)="submitForm()" status="success">
+						{{ 'BUTTONS.SAVE' | translate }}
 					</button>
 				</div>
 			</div>
