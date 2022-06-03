@@ -1,6 +1,14 @@
 @import 'themes';
 
 :host {
+    header {
+        font-size: 18px;
+        font-weight: 600;
+        line-height: 30px;
+        letter-spacing: 0em;
+        text-align: left;
+    }
+
     nb-card {
         background-color: nb-theme(gauzy-card-2);
     }
