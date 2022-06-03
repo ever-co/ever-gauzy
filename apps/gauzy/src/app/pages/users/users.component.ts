@@ -133,6 +133,7 @@ export class UsersComponent
 			.subscribe();
 		this.pagination$
 			.pipe(
+				debounceTime(300),
 				distinctUntilChange(),
 				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
