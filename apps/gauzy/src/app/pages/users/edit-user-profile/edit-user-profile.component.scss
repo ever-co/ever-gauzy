@@ -3,7 +3,8 @@
 :host {
 	nb-card {
 		nb-card-body {
-			overflow: unset;
+			background-color: nb-theme(gauzy-card-2);
+			padding: 1rem;
 		}
 	}
 
