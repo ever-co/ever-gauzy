@@ -1,0 +1,26 @@
+@import 'themes';
+
+:host {
+    nb-card {
+        background-color: nb-theme(gauzy-card-2);
+    }
+
+    nb-card.card-feature {
+        height: calc(100vh - 20rem);
+        border-radius: 0 0 nb-theme(border-radius) nb-theme(border-radius);
+        padding: 0;
+        margin: 0;
+    }
+
+    nb-card-body.features {
+        overflow: auto;
+
+        nb-card {
+            background-color: unset;
+
+            nb-card-body {
+                border-radius: 0 0 nb-theme(border-radius) nb-theme(border-radius);
+            }
+        }
+    }
+}
