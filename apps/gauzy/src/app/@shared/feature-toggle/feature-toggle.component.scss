@@ -28,6 +28,21 @@
 
             nb-card-body {
                 border-radius: 0 0 nb-theme(border-radius) nb-theme(border-radius);
+                color: nb-theme(gauzy-text-color-2);
+
+                nb-list-item {
+                    nb-checkbox[ng-reflect-checked="true"] ::ng-deep {
+                        span.text {
+                            color: nb-theme(text-primary-color);
+                        }
+                    }
+
+                    nb-checkbox[ng-reflect-checked="false"] ::ng-deep {
+                        span.text {
+                            color: nb-theme(gauzy-text-color-2);
+                        }
+                    }
+                }
             }
         }
     }
