@@ -38,6 +38,18 @@
 		</div>
 	</nb-card-header>
 	<nb-card-body>
+		<ng-template ngxPermissionsOnly="ORG_USERS_EDIT">
+			<div *ngIf="showAddCard">
+				<ng-template ngxPermissionsOnly="TENANT_ADD_EXISTING_USER">
+					<ga-edit-user-mutation
+						[organization]="organization"
+						(addOrEditUser)="addOrEditUser($event)"
+						(canceled)="cancel()"
+					>
+					</ga-edit-user-mutation>
+				</ng-template>
+			</div>
+		</ng-template>
 		<ng-template
 			[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
 			[ngIfElse]="gridLayout"
