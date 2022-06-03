@@ -1,0 +1,12 @@
+@import 'themes';
+
+:host {
+    nb-card {
+        background-color: nb-theme(gauzy-card-2);
+
+        &.organization {
+            background-color: nb-theme(gauzy-card-3);
+            margin: 0 0 0.5rem 0;
+        }
+    }
+}
