@@ -7,6 +7,7 @@ $button-radius: nb-theme(button-rectangle-border-radius);
     button {
         margin-right: 5px;
         border-radius: nb-theme(button-rectangle-border-radius);
+        border: unset;
     }
 }
 
@@ -22,13 +23,19 @@ $button-radius: nb-theme(button-rectangle-border-radius);
     margin-right: 16px;
     input {
         height: 1.875rem;
-        width: 218px;
+        width: 190px;
         background-color: transparent;
         /* Tell the input to use all the available space */
         flex-grow: 2;
         /* And hide the input's outline, so the form looks like the outline */
         border: none;
         box-shadow: none;
+        font-size: 13px;
+        font-weight: 400;
+        line-height: 11px;
+        letter-spacing: 0em;
+        text-align: left;
+        color: nb-theme(gauzy-text-color-2);
     }
     input:focus {
         /* removing the input focus blue box. Put this on the form if you like. */
@@ -51,8 +58,8 @@ $button-radius: nb-theme(button-rectangle-border-radius);
             display: flex;
             flex-direction: row;
             flex-wrap: nowrap;
-            @include nb-ltr(margin-left, -118%);
-            @include nb-rtl(margin-right, -118%);
+            @include nb-ltr(margin-left, -146%);
+            @include nb-rtl(margin-right, -146%);
             .calendar-table {
                 background-color: nb-theme(background-basic-color-1);
                 border-color: nb-theme(border-basic-color-3);
@@ -115,6 +122,9 @@ $button-radius: nb-theme(button-rectangle-border-radius);
                             &.active {
                                 background-color: nb-theme(color-primary-active);
                             }
+                            &:hover{
+                                color: nb-theme(text-control-color);
+                            }
                         }
                     }
                     li:hover {
@@ -149,6 +159,12 @@ $button-radius: nb-theme(button-rectangle-border-radius);
 }
 
 :host i {
-    @include nb-ltr(margin-left, 10px);
+    font-size: 11px;
+    font-weight: 400;
+    line-height: 11px;
+    letter-spacing: 0em;
+    text-align: center;
+    color: nb-theme(gauzy-text-color-1);
+    @include nb-ltr(margin-left, 9px);
     @include nb-rtl(margin-right, 12px);
 }
