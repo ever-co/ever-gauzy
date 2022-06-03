@@ -11,7 +11,8 @@ import {
 	IRolePermission,
 	IUserViewModel,
 	IUserOrganization,
-	ITag
+	ITag,
+	IEmployee
 } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -27,8 +28,9 @@ import { InviteMutationComponent } from '../../@shared/invite/invite-mutation/in
 import { PictureNameTagsComponent, TagsOnlyComponent } from '../../@shared/table-components';
 import { ComponentEnum } from '../../@core/constants';
 import { IPaginationBase, PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
-import { StatusBadgeComponent } from '../../@shared/status-badge';
 import { TagsColorFilterComponent } from '../../@shared/table-filters';
+import { monthNames } from '../../@core/utils/date';
+import { EmployeeWorkStatusComponent } from '../employees/table-components';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -317,7 +319,7 @@ export class UsersComponent
 		const organizations: IUserOrganization[] = [];
 		observableOf((
 			await this.userOrganizationsService.getAll(
-				['user', 'user.role', 'user.tags'],
+				['user', 'user.role', 'user.tags', 'user.employee'],
 				{ organizationId, tenantId }
 			)).items
 		).pipe(
@@ -342,7 +344,7 @@ export class UsersComponent
 				role: user.role.name,
 				isActive: isActive,
 				userOrganizationId: userOrganizationId,
-				status: this.statusMapper(isActive)
+				...this.employeeMapper(user.employee)
 			});
 		}
 
@@ -407,8 +409,8 @@ export class UsersComponent
 				status: {
 					title: this.getTranslation('SM_TABLE.STATUS'),
 					type: 'custom',
-					renderComponent: StatusBadgeComponent,
-					class: 'align-row',
+					renderComponent: EmployeeWorkStatusComponent,
+					
 					width: '5%'
 				}
 			}
@@ -457,16 +459,25 @@ export class UsersComponent
 		}
 	}
 
-	private statusMapper = (value: string | boolean) => {
-		const badgeClass = value ? 'success' : 'basic';
-		value = value
-			? this.getTranslation('USERS_PAGE.ACTIVE')
-			: this.getTranslation('USERS_PAGE.NOT_STARTED');
-		return {
-			text: value,
-			class: badgeClass
-		};
-	};
+	private employeeMapper(employee: IEmployee) {
+		if (employee) {
+			const { endWork, startedWorkOn, isTrackingEnabled } = employee;
+			return {
+				endWork: endWork ? new Date(endWork) : '',
+				workStatus: endWork
+					? new Date(endWork).getDate() +
+					  ' ' +
+					  monthNames[new Date(endWork).getMonth()] +
+					  ' ' +
+					  new Date(endWork).getFullYear()
+					: '',
+				startedWorkOn,
+				isTrackingEnabled
+			};
+		} else {
+			return {};
+		}
+	}
 
 	ngOnDestroy() {}
 }
