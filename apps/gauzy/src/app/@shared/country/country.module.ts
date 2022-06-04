@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { NbSelectModule } from '@nebular/theme';
+import { NgSelectModule } from '@ng-select/ng-select';
 import { CountryService } from '../../@core/services/country.service';
 import { ThemeModule } from '../../@theme/theme.module';
 import { TranslateModule } from '../translate/translate.module';
@@ -12,7 +12,7 @@ import { CountryComponent } from './country.component';
 		ThemeModule,
 		FormsModule,
 		ReactiveFormsModule,
-		NbSelectModule,
+		NgSelectModule,
 		TranslateModule
 	],
 	providers: [CountryService],
