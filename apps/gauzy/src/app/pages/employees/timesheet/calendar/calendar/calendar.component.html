@@ -3,19 +3,15 @@
 		<div class="filters">
 			<div class="add-button">
 				<ng-template [ngxPermissionsOnly]="PermissionsEnum.ALLOW_MANUAL_TIME">
-					<ng-template 
-						[permission]="PermissionsEnum.ALLOW_MANUAL_TIME"
+					<button
+						nbButton
+						status="success"
+						size="small"
+						(click)="openDialog()"
 					>
-						<button
-							nbButton
-							status="success"
-							size="small"
-							(click)="openDialog()"
-						>
-							<nb-icon icon="plus-outline"></nb-icon>
-							{{ 'TIMESHEET.ADD_TIME' | translate }}
-						</button>
-					</ng-template>
+						<nb-icon icon="plus-outline"></nb-icon>
+						{{ 'TIMESHEET.ADD_TIME' | translate }}
+					</button>
 				</ng-template>
 			</div>
 			<ngx-gauzy-filters
