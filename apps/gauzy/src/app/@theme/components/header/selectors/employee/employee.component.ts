@@ -30,6 +30,7 @@ import {
 	Store,
 	ToastrService
 } from './../../../../../@core/services';
+import { TruncatePipe } from './../../../../../@shared/pipes';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -117,6 +118,7 @@ export class EmployeeSelectorComponent
 		private readonly cdRef: ChangeDetectorRef,
 		private readonly _employeeStore: EmployeeStore,
 		private readonly toastrService: ToastrService,
+		private readonly _truncatePipe: TruncatePipe,
 		private readonly router: Router
 	) {}
 
@@ -262,18 +264,20 @@ export class EmployeeSelectorComponent
 		}
 	}
 
-	getShortenedName(firstName: string, lastName: string) {
+	/**
+	 * GET Shortend Name
+	 * 
+	 * @param firstName
+	 * @param lastName
+	 * @param limit
+	 * @returns 
+	 */
+	getShortenedName(firstName: string, lastName: string, limit = 18) {
 		if (firstName && lastName) {
-			return firstName + ' ' + lastName[0] + '.';
+			return this._truncatePipe.transform(firstName, limit/2, false, '') + ' ' + this._truncatePipe.transform(lastName, limit/2, false, '.');
 		} else {
-			return firstName || lastName || '[error: bad name]';
+			return this._truncatePipe.transform(firstName, limit) || this._truncatePipe.transform(lastName, limit) || '[error: bad name]';
 		}
-	}
-
-	getFullName(firstName: string, lastName: string) {
-		return firstName && lastName
-			? firstName + ' ' + lastName
-			: firstName || lastName;
 	}
 
 	private _selectedEmployee() {
