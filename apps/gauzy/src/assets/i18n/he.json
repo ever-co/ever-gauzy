@@ -2405,7 +2405,9 @@
 			"MAIN": "עיקרי",
 			"USER_ORGANIZATIONS": "ארגונים"
 		},
-		"REMOVE_USER": "'{{ name }}' was removed"
+		"REMOVE_USER": "'{{ name }}' was removed",
+		"ACTIVE": "Active",
+		"NOT_STARTED": "Not Started"
 	},
 	"CONTEXT_MENU": {
 		"TIMER": "Стартирай Таймер",
