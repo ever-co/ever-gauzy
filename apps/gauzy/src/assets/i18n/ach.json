@@ -2405,7 +2405,9 @@
 			"MAIN": "crwdns3322:0crwdne3322:0",
 			"USER_ORGANIZATIONS": "crwdns3324:0crwdne3324:0"
 		},
-		"REMOVE_USER": "crwdns9860:0{{ name }}crwdne9860:0"
+		"REMOVE_USER": "crwdns9860:0{{ name }}crwdne9860:0",
+		"ACTIVE": "crwdns11162:0crwdne11162:0",
+		"NOT_STARTED": "crwdns11164:0crwdne11164:0"
 	},
 	"CONTEXT_MENU": {
 		"TIMER": "crwdns2074:0crwdne2074:0",
