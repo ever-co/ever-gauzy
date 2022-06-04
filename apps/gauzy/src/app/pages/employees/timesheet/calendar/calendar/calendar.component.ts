@@ -20,13 +20,13 @@ import { NgxPermissionsService } from 'ngx-permissions';
 import * as moment from 'moment';
 import { pick } from 'underscore';
 import { Observable, Subject } from 'rxjs';
-import { debounceTime, tap } from 'rxjs/operators';
+import { debounceTime, filter, tap } from 'rxjs/operators';
 import {
 	IGetTimeLogInput,
 	IOrganization,
 	ITimeLog,
 	ITimeLogFilters,
-	OrganizationPermissionsEnum
+	PermissionsEnum
 } from '@gauzy/contracts';
 import { toLocal, isEmpty } from '@gauzy/common-angular';
 import { TranslateService } from '@ngx-translate/core';
@@ -45,7 +45,7 @@ import { BaseSelectorFilterComponent } from './../../../../../@shared/timesheet/
 @Component({
 	selector: 'ngx-calendar-timesheet',
 	templateUrl: './calendar.component.html',
-  styleUrls:['./calendar.component.scss']
+  	styleUrls:['./calendar.component.scss']
 })
 export class CalendarComponent extends BaseSelectorFilterComponent
 	implements OnInit, AfterViewInit, OnDestroy {
@@ -56,17 +56,16 @@ export class CalendarComponent extends BaseSelectorFilterComponent
 	@ViewChild(GauzyFiltersComponent) gauzyFiltersComponent: GauzyFiltersComponent;
 	datePickerConfig$: Observable<any> = this._dateRangePickerBuilderService.datePickerConfig$;
 
-	OrganizationPermissionsEnum = OrganizationPermissionsEnum;
+	PermissionsEnum = PermissionsEnum;
 	calendarComponent: FullCalendarComponent; // the #calendar in the template
 	calendarOptions: CalendarOptions;
+
+	filters: ITimeLogFilters;
 	subject$: Subject<any> = new Subject();
 	organization: IOrganization;
-	employeeId: string;
+
 	loading: boolean;
 	futureDateAllowed: boolean;
-	logRequest: ITimeLogFilters = this.request;
-	selectedEmployeeId: string | null = null;
-	projectId: string | null = null;
 
 	constructor(
 		private readonly timesheetService: TimesheetService,
@@ -82,7 +81,7 @@ export class CalendarComponent extends BaseSelectorFilterComponent
 		this.calendarOptions = {
 			initialView: 'timeGridWeek',
 			headerToolbar: {
-				left: 'prev,next today',
+				left: '',
 				center: 'title',
 				right: 'dayGridMonth,timeGridWeek,timeGridDay'
 			},
@@ -120,7 +119,7 @@ export class CalendarComponent extends BaseSelectorFilterComponent
 					const calendar = this.calendar.getApi();
 					if (
 						await this.ngxPermissionsService.hasPermission(
-							OrganizationPermissionsEnum.ALLOW_MANUAL_TIME
+							PermissionsEnum.ALLOW_MANUAL_TIME
 						)
 					) {
 						calendar.setOption('selectable', true);
@@ -130,7 +129,7 @@ export class CalendarComponent extends BaseSelectorFilterComponent
 
 					if (
 						await this.ngxPermissionsService.hasPermission(
-							OrganizationPermissionsEnum.ALLOW_MODIFY_TIME
+							PermissionsEnum.ALLOW_MODIFY_TIME
 						)
 					) {
 						calendar.setOption('editable', true);
@@ -142,13 +141,10 @@ export class CalendarComponent extends BaseSelectorFilterComponent
 	}
 
 	filtersChange(filters: ITimeLogFilters) {
-		this.logRequest = filters;
-		if (this.logRequest.startDate && this.calendar.getApi()) {
-			this.calendar.getApi().gotoDate(this.logRequest.startDate);
-		}
 		if (this.gauzyFiltersComponent.saveFilters) {
 			this.timesheetFilterService.filter = filters;
 		}
+		this.filters = Object.assign({}, filters);
 		this.subject$.next(true);
 	}
 
@@ -157,11 +153,15 @@ export class CalendarComponent extends BaseSelectorFilterComponent
 		this.subject$
 			.pipe(
 				debounceTime(500),
+				filter(() => !!this.calendar.getApi()),
 				tap(() => {
 					this.futureDateAllowed = this.organization.futureDateAllowed;
 					this.calendar.getApi().setOption('firstDay', dayOfWeekAsString(this.organization.startWeekOn));
 				}),
 				tap(() => {
+					if (this.request.startDate && this.calendar.getApi()) {
+						this.calendar.getApi().gotoDate(this.request.startDate);
+					}
 					if (this.calendar.getApi()) {
 						this.calendar.getApi().refetchEvents();
 					}
@@ -172,14 +172,14 @@ export class CalendarComponent extends BaseSelectorFilterComponent
 	}
 
 	getEvents(arg: any, callback) {
-		if (!this.organization || isEmpty(this.logRequest)) {
-			return null;
+		if (!this.organization || isEmpty(this.request)) {
+			return;
 		}
 		const startDate = moment(arg.start).startOf('day').format('YYYY-MM-DD HH:mm:ss');
 		const endDate = moment(arg.end).subtract(1, 'days').endOf('day').format('YYYY-MM-DD HH:mm:ss');
 
 		const appliedFilter = pick(
-			this.logRequest,
+			this.filters,
 			'source',
 			'activityLevel',
 			'logType'
@@ -239,11 +239,11 @@ export class CalendarComponent extends BaseSelectorFilterComponent
 		this.openDialog({
 			startedAt: event.start,
 			stoppedAt: event.end,
-			employeeId: this.logRequest.employeeIds
-				? this.logRequest.employeeIds[0]
+			employeeId: this.request.employeeIds
+				? this.request.employeeIds[0]
 				: null,
-			projectId: this.logRequest.projectIds
-				? this.logRequest.projectIds[0]
+			projectId: this.request.projectIds
+				? this.request.projectIds[0]
 				: null
 		});
 	}
