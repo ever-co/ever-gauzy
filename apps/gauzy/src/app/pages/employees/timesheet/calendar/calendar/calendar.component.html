@@ -2,20 +2,25 @@
 	<nb-card-header class="p-0">
 		<div class="filters">
 			<div class="add-button">
-				<button
-					nbButton
-					status="success"
-					size="small"
-					(click)="openDialog()"
-					*ngxPermissionsOnly="[
-						OrganizationPermissionsEnum.ALLOW_MANUAL_TIME
-					]"
-				>
-					<nb-icon icon="plus-outline"></nb-icon>
-					{{ 'TIMESHEET.ADD_TIME' | translate }}
-				</button>
+				<ng-template [ngxPermissionsOnly]="PermissionsEnum.ALLOW_MANUAL_TIME">
+					<ng-template 
+						ngxTimerAuthorized
+						[permission]="PermissionsEnum.ALLOW_MANUAL_TIME"
+					>
+						<button
+							nbButton
+							status="success"
+							size="small"
+							(click)="openDialog()"
+						>
+							<nb-icon icon="plus-outline"></nb-icon>
+							{{ 'TIMESHEET.ADD_TIME' | translate }}
+						</button>
+					</ng-template>
+				</ng-template>
 			</div>
 			<ngx-gauzy-filters
+				[filters]="filters"
 				[saveFilters]="(datePickerConfig$ | async).isSaveDatePicker"
 				(filtersChange)="filtersChange($event)"
 			></ngx-gauzy-filters>
