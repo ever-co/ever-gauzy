@@ -411,7 +411,6 @@ export class UsersComponent
 					title: this.getTranslation('SM_TABLE.STATUS'),
 					type: 'custom',
 					renderComponent: EmployeeWorkStatusComponent,
-					
 					width: '5%'
 				}
 			}
