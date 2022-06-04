@@ -1,11 +1,18 @@
 <ng-content></ng-content>
 <ng-template [ngIf]="allowEmployee && employee?.id && !user?.employeeId">
     <span> {{ 'HEADER_TITLE.FOR' | translate }} </span>
-    <span> {{ employee?.fullName | truncate:20 }} </span>
+    <span> {{ employee?.fullName | truncate : 22 }} </span>
 </ng-template>
 
 <ng-template [ngIf]="organization?.id">
-    <span class="name"> {{ ((allowEmployee && employee?.id && !user?.employeeId) ? ('HEADER_TITLE.FROM' | translate) : ('HEADER_TITLE.FOR' | translate)) }}</span>
-    <span class="org-name"> {{ organization?.name }} </span>
+    <span class="name"> 
+        {{ 
+            ((allowEmployee && employee?.id && !user?.employeeId) ? 
+            ('HEADER_TITLE.FROM' | translate) : 
+            ('HEADER_TITLE.FOR' | translate)) 
+        }}
+    </span>
+    <span class="org-name">
+        {{ organization?.name }}
+    </span>
 </ng-template>
-
