@@ -46,12 +46,8 @@ const routes: Routes = [
 					(m) => m.CalendarModule
 				),
 				data: {
-					selectors: {
-						date: false
-					},
 					datePicker: {
-						unitOfTime: 'week',
-						isLockDatePicker: true
+						unitOfTime: 'week'
 					}
 				}
 			},

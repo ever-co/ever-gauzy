@@ -7,9 +7,9 @@
 				</div>
 				<ng-template [ngIf]="role">
 					<nb-badge
-						status="danger"
-						style="position: relative; margin-top: 20px;"
-						[text]="role?.name | replace : '_' : ' '"
+						status="primary"
+						class="badge"
+						[text]="role?.name | replace: '_':' '"
 						position="bottom-left"
 					></nb-badge>
 				</ng-template>

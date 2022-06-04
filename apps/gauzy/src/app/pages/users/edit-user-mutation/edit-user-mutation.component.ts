@@ -16,7 +16,8 @@ import { BasicInfoFormComponent } from '../../../@shared/user/forms/basic-info/b
 
 @Component({
 	selector: 'ga-edit-user-mutation',
-	templateUrl: './edit-user-mutation.component.html'
+	templateUrl: './edit-user-mutation.component.html',
+	styleUrls: ['./edit-user-mutation.component.scss']
 })
 export class EditUserMutationComponent
 	extends TranslationBaseComponent
