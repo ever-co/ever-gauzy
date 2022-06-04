@@ -26,8 +26,8 @@
 
 				<div class="employee-details">
 					<span class="employee-name"
-						>{{ selectedEmployee.firstName }}
-						{{ selectedEmployee.lastName }}
+						>
+						{{ selectedEmployee.fullName | truncate:20 }}						
 						<nb-icon
 							class="mr-1 edit-icon"
 							icon="edit-outline"

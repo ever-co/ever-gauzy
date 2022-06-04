@@ -1,7 +1,7 @@
 <ng-content></ng-content>
 <ng-template [ngIf]="allowEmployee && employee?.id && !user?.employeeId">
     <span> {{ 'HEADER_TITLE.FOR' | translate }} </span>
-    <span> {{ employee?.fullName }} </span>
+    <span> {{ employee?.fullName | truncate:20 }} </span>
 </ng-template>
 
 <ng-template [ngIf]="organization?.id">
