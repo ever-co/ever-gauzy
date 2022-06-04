@@ -28,9 +28,11 @@ import { DOCUMENT } from '@angular/common';
 	styleUrls: ['./location-form.component.scss'],
 	templateUrl: 'location-form.component.html'
 })
-export class LocationFormComponent
-	extends TranslationBaseComponent
+export class LocationFormComponent extends TranslationBaseComponent 
 	implements AfterViewInit {
+
+	FormHelpers: typeof FormHelpers = FormHelpers;
+
 	private _lastUsedAddressText: string;
 	private _lat: number;
 	private _lng: number;
@@ -87,8 +89,8 @@ export class LocationFormComponent
 	}
 
 	constructor(
-		public translateService: TranslateService,
-		public countryService: CountryService,
+		public readonly translateService: TranslateService,
+		public readonly countryService: CountryService,
 		private readonly cdr: ChangeDetectorRef,
 
 		@Inject(DOCUMENT) private _document: Document,
@@ -109,13 +111,6 @@ export class LocationFormComponent
 		this.cdr.detectChanges();
 		this._removeGoogleAutocompleteApi();
 		this._initGoogleAutocompleteApi();
-	}
-
-	isInvalidControl(control: string) {
-		if (!this.form.contains(control)) {
-			return true;
-		}
-		return this.form.get(control).touched && this.form.get(control).invalid;
 	}
 
 	get countryControl() {

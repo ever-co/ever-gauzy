@@ -35,7 +35,7 @@
 			<div class="row">
 				<div class="col-8">
 					<ga-country
-						[(ngModel)]="country"
+						formControlName="country"
 						[formControl]="form.get('country')"
 						(selectChange)="onAddressChanges()"
 					></ga-country>
@@ -55,7 +55,10 @@
 							nbInput
 							formControlName="city"
 							[status]="
-								isInvalidControl('city') ? 'danger' : 'basic'
+								FormHelpers.isInvalidControl(
+									form,
+									'city'
+								) ? 'danger' :'basic'
 							"
 							[placeholder]="'FORM.PLACEHOLDERS.CITY' | translate"
 						/>
@@ -75,9 +78,10 @@
 							type="text"
 							nbInput
 							[status]="
-								isInvalidControl('postcode')
-									? 'danger'
-									: 'basic'
+								FormHelpers.isInvalidControl(
+									form,
+									'postcode'
+								) ? 'danger' :'basic'
 							"
 							formControlName="postcode"
 							[placeholder]="
@@ -101,7 +105,10 @@
 							nbInput
 							fullWidth
 							[status]="
-								isInvalidControl('address') ? 'danger' : 'basic'
+								FormHelpers.isInvalidControl(
+									form,
+									'address'
+								) ? 'danger' :'basic'
 							"
 							formControlName="address"
 							[placeholder]="
@@ -125,9 +132,10 @@
 							nbInput
 							fullWidth
 							[status]="
-								isInvalidControl('address2')
-									? 'danger'
-									: 'basic'
+								FormHelpers.isInvalidControl(
+									form,
+									'address2'
+								) ? 'danger' :'basic'
 							"
 							formControlName="address2"
 							[placeholder]="
