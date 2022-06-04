@@ -1,0 +1,13 @@
+@import 'themes';
+
+.badge-container {
+    nb-badge {
+        position: relative;
+        border-radius: calc(nb-theme(border-radius) / 2);
+        font-size: 12px;
+        font-weight: 600;
+        line-height: 15px;
+        letter-spacing: 0em;
+        text-align: left;
+    }
+}

@@ -25,6 +25,7 @@ import { CreatedAtComponent } from './created-at/created-at.component';
 import { ContactWithTagsComponent } from './contact-with-tags/contact-with-tags.component';
 import { OrganizationWithTagsComponent } from './organization-with-tags/organization-with-tags.component';
 import { EmailComponent } from './email/email.component';
+import { RoleComponent } from './role/role.component';
 
 @NgModule({
 	imports: [
@@ -57,7 +58,8 @@ import { EmailComponent } from './email/email.component';
 		CreatedAtComponent,
 		ContactWithTagsComponent,
 		OrganizationWithTagsComponent,
-  EmailComponent
+  EmailComponent,
+  RoleComponent
 	],
 	exports: [
 		NotesWithTagsComponent,
