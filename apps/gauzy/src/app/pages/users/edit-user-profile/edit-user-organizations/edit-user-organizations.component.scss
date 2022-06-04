@@ -10,3 +10,13 @@
         }
     }
 }
+
+.edit-user-organizations {
+    width: 50%;
+}
+
+@media only screen and (max-width: 1200px) {
+    .edit-user-organizations {
+        width: 100%;
+    }
+}
