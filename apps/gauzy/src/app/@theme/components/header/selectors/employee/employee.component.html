@@ -21,7 +21,7 @@
 			width="40"
 			height="40"
 		/>
-		{{ getFullName(item.firstName, item.lastName) }}
+		{{ getFullName(item.firstName, item.lastName) | truncate:22 }}
 	</ng-template>
 	<ng-template ng-label-tmp let-item="item">
 		<div class="selector-template">
@@ -31,7 +31,7 @@
 				width="25"
 				[src]="item.imageUrl"
 			/>
-			<span>{{ getShortenedName(item.firstName, item.lastName) }}</span>
+			<span>{{ getFullName(item.firstName, item.lastName) | truncate:22 }}</span>
 		</div>
 	</ng-template>
 </ng-select>

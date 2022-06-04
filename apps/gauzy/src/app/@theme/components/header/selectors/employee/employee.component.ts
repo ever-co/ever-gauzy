@@ -262,14 +262,6 @@ export class EmployeeSelectorComponent
 		}
 	}
 
-	getShortenedName(firstName: string, lastName: string) {
-		if (firstName && lastName) {
-			return firstName + ' ' + lastName[0] + '.';
-		} else {
-			return firstName || lastName || '[error: bad name]';
-		}
-	}
-
 	getFullName(firstName: string, lastName: string) {
 		return firstName && lastName
 			? firstName + ' ' + lastName
