@@ -13,17 +13,21 @@ import {
 	FormControl,
 	NG_VALUE_ACCESSOR
 } from '@angular/forms';
-import { ICountry } from '@gauzy/contracts';
-import { UntilDestroy } from '@ngneat/until-destroy';
+import { ICountry, IOrganization } from '@gauzy/contracts';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { Observable } from 'rxjs';
-import { CountryService } from '../../@core/services/country.service';
+import { distinctUntilChange } from '@gauzy/common-angular';
+import { filter, Observable } from 'rxjs';
+import { tap } from 'rxjs/operators';
+import { CountryService, Store } from '../../@core/services';
 import { TranslationBaseComponent } from '../language-base/translation-base.component';
+import { environment as ENV } from './../../../environments/environment';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-country',
 	templateUrl: './country.component.html',
+	styleUrls: ['./country.component.scss'],
 	providers: [
 		{
 			provide: NG_VALUE_ACCESSOR,
@@ -32,49 +36,93 @@ import { TranslationBaseComponent } from '../language-base/translation-base.comp
 		}
 	]
 })
-export class CountryComponent
-	extends TranslationBaseComponent
+export class CountryComponent extends TranslationBaseComponent 
 	implements OnInit, AfterViewInit, ControlValueAccessor {
-	private _country: string;
 
 	@Input() formControl: FormControl = new FormControl();
-	@Output() selectChange = new EventEmitter<string>();
 	@Output() optionChange = new EventEmitter<ICountry>();
-
+	
+	public organization: IOrganization;
+	loading: boolean = true;
 	countries$: Observable<ICountry[]> = this.countryService.countries$;
+	private _countries: ICountry[] = [];
 
 	onChange: any = () => {};
 	onTouched: any = () => {};
 
-	@Input()
-	set country(val: string) {
+	/*
+	* Getter & Setter for dynamic selected country
+	*/
+	private _country: string;
+	get country() {
+		return this._country;
+	}
+	@Input() set country(val: string) {
 		if (val) {
 			this._country = val;
 			this.onChange(val);
 			this.onTouched();
 		}
 	}
-	get country() {
-		return this._country;
+
+	/*
+	* Getter & Setter for dynamic placeholder
+	*/
+	private _placeholder: string;
+	get placeholder() {
+		return this._placeholder;
+	}
+	@Input() set placeholder(val: string) {
+		if (val) {
+			this._placeholder = val;
+		}
 	}
 
 	constructor(
 		private readonly countryService: CountryService,
 		public translateService: TranslateService,
-		private readonly cdr: ChangeDetectorRef
+		private readonly cdr: ChangeDetectorRef,
+		private readonly store: Store
 	) {
 		super(translateService);
 		this.countryService.find$.next(true);
 	}
 
-	ngOnInit(): void {}
+	ngOnInit(): void {
+		this.store.selectedOrganization$
+			.pipe(
+				distinctUntilChange(),
+				filter((organization: IOrganization) => !!organization),
+				tap((organization: IOrganization) => this.organization = organization),
+				tap(({ contact } : IOrganization) => {
+					this.country = (contact) ? contact.country : ENV.DEFAULT_COUNTRY;
+					this.formControl.updateValueAndValidity();
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.countries$
+			.pipe(
+				tap((countries: ICountry[]) => (this._countries = countries)),
+				tap(() => this.onSelectChange(this.country)),
+				tap(() => this.loading = false),			
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
 
 	ngAfterViewInit() {
 		this.cdr.detectChanges();
 	}
-
-	onSelectChange($event: string) {
-		this.selectChange.emit($event);
+	
+	onSelectChange(value: string) {
+		if (value && this._countries.length > 0) {
+			const country = this._countries.find(
+				(country: ICountry) => country.isoCode === value
+			);
+			this.country = country.isoCode;
+			this.onOptionChange(country);
+		}
 	}
 
 	onOptionChange($event: ICountry) {
@@ -94,5 +142,12 @@ export class CountryComponent
 
 	registerOnTouched(fn: () => void): void {
 		this.onTouched = fn;
+	}
+
+	searchCountry(term: string, item: any) {
+		return (
+			item.isoCode.toLowerCase().includes(term.toLowerCase()) ||
+			item.country.toLowerCase().includes(term.toLowerCase())
+		);
 	}
 }

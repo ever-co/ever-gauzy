@@ -1,5 +1,6 @@
 <nb-card class="card-scroll">
-	<nb-card-header>
+	<nb-card-header class="d-flex">
+		<ngx-back-navigation></ngx-back-navigation>
 		<h4>
 			{{ 'USERS_PAGE.EDIT_USER.HEADER' | translate }}
 			<ng-container *ngIf="user?.name">
@@ -7,27 +8,15 @@
 			</ng-container>
 			<span *ngIf="user?.username">
 				<ng-container
-					*ngIf="
-						user?.username;
-						then withBraces;
-						else withQuotes
-					"
+					*ngIf="user?.username; then withBraces; else withQuotes"
 				>
 				</ng-container>
-				<ng-template #withBraces>
-					({{ user.username }})
-				</ng-template>
-				<ng-template #withQuotes>
-					'{{ user.username }}'
-				</ng-template>
+				<ng-template #withBraces> ({{ user.username }}) </ng-template>
+				<ng-template #withQuotes> '{{ user.username }}' </ng-template>
 			</span>
 		</h4>
 	</nb-card-header>
 	<nb-card-body>
-		<div class="navigate" (click)="goBack()">
-			<nb-icon icon="arrow-back-outline"></nb-icon>
-			<span>{{ 'BUTTONS.BACK' | translate }}</span>
-		</div>
-		<nb-route-tabset [tabs]="tabs" fullWidth></nb-route-tabset>
+		<nb-route-tabset [tabs]="tabs"></nb-route-tabset>
 	</nb-card-body>
 </nb-card>

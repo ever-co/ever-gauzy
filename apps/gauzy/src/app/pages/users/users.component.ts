@@ -10,7 +10,9 @@ import {
 	ComponentLayoutStyleEnum,
 	IRolePermission,
 	IUserViewModel,
-	IUserOrganization
+	IUserOrganization,
+	ITag,
+	IEmployee
 } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -23,9 +25,12 @@ import { Store, ToastrService, UsersOrganizationsService } from '../../@core/ser
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import { UserMutationComponent } from '../../@shared/user/user-mutation/user-mutation.component';
 import { InviteMutationComponent } from '../../@shared/invite/invite-mutation/invite-mutation.component';
-import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
-import { PictureNameTagsComponent } from '../../@shared/table-components';
+import { PictureNameTagsComponent, TagsOnlyComponent } from '../../@shared/table-components';
 import { ComponentEnum } from '../../@core/constants';
+import { IPaginationBase, PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
+import { TagsColorFilterComponent } from '../../@shared/table-filters';
+import { monthNames } from '../../@core/utils/date';
+import { EmployeeWorkStatusComponent } from '../employees/table-components';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -33,7 +38,7 @@ import { ComponentEnum } from '../../@core/constants';
 	styleUrls: ['./users.component.scss']
 })
 export class UsersComponent
-	extends TranslationBaseComponent
+	extends PaginationFilterBaseComponent
 	implements OnInit, OnDestroy {
 
 	settingsSmartTable: object;
@@ -94,8 +99,14 @@ export class UsersComponent
 			.pipe(
 				filter((organization: IOrganization) => !!organization),
 				distinctUntilChange(),
-				tap((organization: IOrganization) => this.organization = organization),
-				tap(({ invitesAllowed }: IOrganization) => this.organizationInvitesAllowed = invitesAllowed),
+				tap(
+					(organization: IOrganization) =>
+						(this.organization = organization)
+				),
+				tap(
+					({ invitesAllowed }: IOrganization) =>
+						(this.organizationInvitesAllowed = invitesAllowed)
+				),
 				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
@@ -120,6 +131,14 @@ export class UsersComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
+		this.pagination$
+			.pipe(
+				debounceTime(300),
+				distinctUntilChange(),
+				tap(() => this.subject$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	setView() {
@@ -128,7 +147,11 @@ export class UsersComponent
 			.componentLayout$(this.viewComponentName)
 			.pipe(
 				distinctUntilChange(),
-				tap((componentLayout: ComponentLayoutStyleEnum) => this.dataLayoutStyle = componentLayout),
+				tap(
+					(componentLayout: ComponentLayoutStyleEnum) =>
+						(this.dataLayoutStyle = componentLayout)
+				),
+				tap(() => this.refreshPagination()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -292,11 +315,12 @@ export class UsersComponent
 	private async getUsers() {
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
+		const { activePage, itemsPerPage } = this.getPagination();
 
 		const organizations: IUserOrganization[] = [];
 		observableOf((
 			await this.userOrganizationsService.getAll(
-				['user', 'user.role', 'user.tags'],
+				['user', 'user.role', 'user.tags', 'user.employee'],
 				{ organizationId, tenantId }
 			)).items
 		).pipe(
@@ -320,16 +344,34 @@ export class UsersComponent
 				imageUrl: user.imageUrl,
 				role: user.role.name,
 				isActive: isActive,
-				userOrganizationId: userOrganizationId
+				userOrganizationId: userOrganizationId,
+				...this.employeeMapper(user.employee)
 			});
 		}
 
 		this.users = users;
+		this.sourceSmartTable.setPaging(activePage, itemsPerPage, false);
 		this.sourceSmartTable.load(users);
+		this._loadDataGridLayout();
+		this.setPagination({
+			...this.getPagination(),
+			totalItems: this.sourceSmartTable.count()
+		})
+	}
+
+	private async _loadDataGridLayout() {
+		if (this.dataLayoutStyle === this.componentLayoutStyleEnum.CARDS_GRID) {
+			this.users = await this.sourceSmartTable.getElements();
+		}
 	}
 
 	private _loadSmartTableSettings() {
+		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
+			pager: {
+				display: false,
+				perPage: pagination ? pagination.itemsPerPage : 10
+			},
 			actions: false,
 			columns: {
 				fullName: {
@@ -345,11 +387,32 @@ export class UsersComponent
 				role: {
 					title: this.getTranslation('SM_TABLE.ROLE'),
 					type: 'text'
+				},
+				tags: {
+					title: this.getTranslation('SM_TABLE.TAGS'),
+					type: 'custom',
+					renderComponent: TagsOnlyComponent,
+					filter: {
+						type: 'custom',
+						component: TagsColorFilterComponent
+					},
+					filterFunction: (tags: ITag[]) => {
+						const tagIds = [];
+						for (const tag of tags) {
+							tagIds.push(tag.id);
+						}
+						this.setFilter({ field: 'tags', search: tagIds });
+					},
+					sort: false,
+					class: 'align-row',
+					width: '10%'
+				},
+				status: {
+					title: this.getTranslation('SM_TABLE.STATUS'),
+					type: 'custom',
+					renderComponent: EmployeeWorkStatusComponent,
+					width: '5%'
 				}
-			},
-			pager: {
-				display: true,
-				perPage: 8
 			}
 		};
 	}
@@ -396,5 +459,25 @@ export class UsersComponent
 		}
 	}
 
-	ngOnDestroy() { }
+	private employeeMapper(employee: IEmployee) {
+		if (employee) {
+			const { endWork, startedWorkOn, isTrackingEnabled } = employee;
+			return {
+				endWork: endWork ? new Date(endWork) : '',
+				workStatus: endWork
+					? new Date(endWork).getDate() +
+					  ' ' +
+					  monthNames[new Date(endWork).getMonth()] +
+					  ' ' +
+					  new Date(endWork).getFullYear()
+					: '',
+				startedWorkOn,
+				isTrackingEnabled
+			};
+		} else {
+			return {};
+		}
+	}
+
+	ngOnDestroy() {}
 }

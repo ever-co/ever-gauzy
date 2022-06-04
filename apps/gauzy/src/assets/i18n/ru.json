@@ -2405,7 +2405,9 @@
 			"MAIN": "Главная",
 			"USER_ORGANIZATIONS": "Организации"
 		},
-		"REMOVE_USER": "'{{ name }}' был удален"
+		"REMOVE_USER": "'{{ name }}' был удален",
+		"ACTIVE": "Active",
+		"NOT_STARTED": "Not Started"
 	},
 	"CONTEXT_MENU": {
 		"TIMER": "Запустить таймер",

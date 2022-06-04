@@ -15,7 +15,8 @@ import { AuthService, UsersService } from '../../../@core/services';
 	selector: 'ngx-edit-user-profile',
 	templateUrl: './edit-user-profile.component.html',
 	styleUrls: [
-		'../../../@shared/user/edit-profile-form/edit-profile-form.component.scss'
+		'../../../@shared/user/edit-profile-form/edit-profile-form.component.scss',
+		'./edit-user-profile.component.scss'
 	]
 })
 export class EditUserProfileComponent

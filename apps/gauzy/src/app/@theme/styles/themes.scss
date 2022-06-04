@@ -41,6 +41,7 @@ $nb-themes: nb-register-theme(
     gauzy-sidebar-background-2: rgba(251, 251, 251, 1),
     accordion-item-background-color: #fbfbfb,
     gauzy-background-transparent: color-primary-transparent-default,
+    gauzy-background-transparent-1: color-primary-transparent-default,
     gauzy-border-default-color: rgba(126, 126, 143, 0.1),
     gauzy-sidebar-background-3: rgba(126, 126, 143, 0.1),
     gauzy-sidebar-background-4: rgba(126, 126, 143, 0.05),
@@ -283,7 +284,8 @@ $nb-themes: nb-register-theme(
     color-info-default: rgba(0, 136, 254, 1),
     color-danger-default: #ff0000,
     color-warning-default: rgba(255, 171, 45, 1),
-    gauzy-background-transparent: rgba(110, 73, 232, 0.5)
+    gauzy-background-transparent: rgba(110, 73, 232, 0.5),
+    gauzy-background-transparent-1: rgba(110, 73, 232, 0.1)
   ),
   gauzy-light,
   default

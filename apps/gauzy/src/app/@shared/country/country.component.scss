@@ -1,0 +1,7 @@
+:host {
+    ::ng-deep {
+        .ng-select.ng-select-searchable .ng-select-container .ng-value-container .ng-input>input {
+            background: none transparent !important;
+        }
+    }
+}
