@@ -1,27 +1,39 @@
 <ng-container>
 	<div class="form-group">
-		<label class="label" for="countrySelect">{{
-			'FORM.LABELS.COUNTRY' | translate
-		}}</label>
-		<nb-select
-			class="d-block"
-			size="medium"
-			placeholder="{{ 'FORM.PLACEHOLDERS.COUNTRY' | translate }}"
-			fullWidth="true"
-			[status]="
-				formControl.invalid && formControl.touched ? 'danger' : 'basic'
-			"
-			[(ngModel)]="country"
-			[formControl]="formControl"
-			(selectedChange)="onSelectChange($event)"
-		>
-			<nb-option
-				*ngFor="let item of countries$ | async"
-				[value]="item.isoCode"
-				(click)="onOptionChange(item)"
+			<label class="label" for="countrySelect">
+				{{ 'FORM.LABELS.COUNTRY' | translate }}
+			</label>
+			<ng-select
+				#select
+				[items]="(countries$ | async)"
+				(clear)="select.blur();"
+				[clearable]="false"
+				(change)="onSelectChange($event); select.blur();"
+				size="medium"
+				placeholder="{{ 'FORM.PLACEHOLDERS.COUNTRY' | translate }}"
+				[(ngModel)]="country"
+				[searchFn]="searchCountry"
+				bindValue="isoCode"
+				appendTo="body"
+				[class]="
+					formControl.invalid && formControl.touched ? 
+						'danger' : 
+						'basic'
+				"
 			>
-				{{ item.country }}
-			</nb-option>
-		</nb-select>
+				<ng-template 
+					ng-option-tmp
+					let-item="item"
+					let-index="index"
+				>
+					{{ item?.country}}
+				</ng-template>
+				<ng-template 
+					ng-label-tmp 
+					let-item="item"
+				>
+					{{ item?.country}}
+				</ng-template>
+			</ng-select>
 	</div>
 </ng-container>
