@@ -58,8 +58,8 @@ import { RoleComponent } from './role/role.component';
 		CreatedAtComponent,
 		ContactWithTagsComponent,
 		OrganizationWithTagsComponent,
-  EmailComponent,
-  RoleComponent
+		EmailComponent,
+		RoleComponent
 	],
 	exports: [
 		NotesWithTagsComponent,
@@ -69,7 +69,8 @@ import { RoleComponent } from './role/role.component';
 		ValueWithUnitComponent,
 		ContactLinksComponent,
 		EmployeeLinksComponent,
-		ProjectComponent
+		ProjectComponent,
+		RoleComponent
 	],
 	providers: []
 })

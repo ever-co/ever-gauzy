@@ -15,11 +15,13 @@ export class RoleComponent implements OnInit, ViewCell {
 	rowData: any;
 
 	status: NbComponentStatus;
+	role: string;
 
 	constructor() {}
 
 	ngOnInit(): void {
-		switch (this.rowData?.role) {
+		this.role = this.rowData.role ? this.rowData.role : this.rowData.name;
+		switch (this.role) {
 			case RolesEnum.ADMIN:
 				this.status = 'primary';
 				break;

@@ -1,3 +1,8 @@
 <div class="badge-container">
-    <nb-badge position="left" [status]="status" [text]="rowData?.role"></nb-badge>
+	<nb-badge
+		*ngIf="role"
+		position="left"
+		[status]="status"
+		[text]="role | replace: '_':' '"
+	></nb-badge>
 </div>
