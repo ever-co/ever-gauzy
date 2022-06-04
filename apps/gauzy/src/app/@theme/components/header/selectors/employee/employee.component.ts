@@ -22,7 +22,7 @@ import {
 import { ActivatedRoute, Router } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { combineLatest, map, Observable, Subject } from 'rxjs';
-import { isEmpty, isNotEmpty } from '@gauzy/common-angular';
+import { isNotEmpty } from '@gauzy/common-angular';
 import { ALL_EMPLOYEES_SELECTED } from './default-employee';
 import {
 	EmployeesService,
