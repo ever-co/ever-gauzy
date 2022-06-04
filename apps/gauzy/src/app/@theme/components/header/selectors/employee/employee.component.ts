@@ -22,7 +22,7 @@ import {
 import { ActivatedRoute, Router } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { combineLatest, map, Observable, Subject } from 'rxjs';
-import { isNotEmpty } from '@gauzy/common-angular';
+import { isEmpty, isNotEmpty } from '@gauzy/common-angular';
 import { ALL_EMPLOYEES_SELECTED } from './default-employee';
 import {
 	EmployeesService,
@@ -30,6 +30,7 @@ import {
 	Store,
 	ToastrService
 } from './../../../../../@core/services';
+import { TruncatePipe } from './../../../../../@shared/pipes';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -117,6 +118,7 @@ export class EmployeeSelectorComponent
 		private readonly cdRef: ChangeDetectorRef,
 		private readonly _employeeStore: EmployeeStore,
 		private readonly toastrService: ToastrService,
+		private readonly _truncatePipe: TruncatePipe,
 		private readonly router: Router
 	) {}
 
@@ -262,10 +264,20 @@ export class EmployeeSelectorComponent
 		}
 	}
 
-	getFullName(firstName: string, lastName: string) {
-		return firstName && lastName
-			? firstName + ' ' + lastName
-			: firstName || lastName;
+	/**
+	 * GET Shortend Name
+	 * 
+	 * @param firstName
+	 * @param lastName
+	 * @param limit
+	 * @returns 
+	 */
+	getShortenedName(firstName: string, lastName: string, limit = 18) {
+		if (firstName && lastName) {
+			return this._truncatePipe.transform(firstName, limit/2, false, '') + ' ' + this._truncatePipe.transform(lastName, limit/2, false, '.');
+		} else {
+			return this._truncatePipe.transform(firstName, limit) || this._truncatePipe.transform(lastName, limit) || '[error: bad name]';
+		}
 	}
 
 	private _selectedEmployee() {
