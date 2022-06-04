@@ -10,7 +10,8 @@ import { Store } from '../../../../../@core/services/store.service';
 
 @Component({
 	selector: 'ga-edit-user-organizations-mutation',
-	templateUrl: './edit-user-organizations-mutation.component.html'
+	templateUrl: './edit-user-organizations-mutation.component.html',
+	styleUrls: ['../../../edit-user-mutation/edit-user-mutation.component.scss']
 })
 export class EditUserOrganizationsMutationComponent
 	extends TranslationBaseComponent

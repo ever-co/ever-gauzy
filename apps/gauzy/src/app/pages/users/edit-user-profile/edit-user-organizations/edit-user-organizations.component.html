@@ -9,8 +9,10 @@
 				(click)="showAddCard = !showAddCard"
 				nbButton
 				status="success"
+				class="float-right"
+				size="small"
 			>
-				<nb-icon class="mr-1" icon="plus-outline"></nb-icon
+				<nb-icon icon="plus-outline"></nb-icon
 				>{{ 'BUTTONS.ADD' | translate }}
 			</button>
 		</ng-container>
@@ -22,7 +24,7 @@
 		</ga-edit-user-organizations-mutation>
 	</nb-card-header>
 	<nb-card-body *ngIf="organizations?.length">
-		<div class="ml-3 mb-4">
+		<div class="mb-3">
 			<strong>
 				{{
 					'ORGANIZATIONS_PAGE.EDIT.USER_ORGANIZATIONS' | translate: {
@@ -32,7 +34,7 @@
 			</strong>
 		</div>
 		<ng-container *ngFor="let organization of organizations">
-			<nb-card>
+			<nb-card class="organization">
 				<nb-card-body>
 					<img
 						[src]="organization.imageUrl"
