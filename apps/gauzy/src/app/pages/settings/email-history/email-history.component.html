@@ -42,7 +42,11 @@
 						<div class="email-list-item">
 							<div class="image-container">
 								<ngx-avatar
-									[name]="'adkif'"
+									[name]="
+										email?.user?.fullname
+											? email?.user?.fullname
+											: '...'
+									"
 									[src]="getUrl(email?.email)"
 								></ngx-avatar>
 							</div>
