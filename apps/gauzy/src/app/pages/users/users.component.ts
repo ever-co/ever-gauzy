@@ -31,6 +31,8 @@ import { IPaginationBase, PaginationFilterBaseComponent } from '../../@shared/pa
 import { TagsColorFilterComponent } from '../../@shared/table-filters';
 import { monthNames } from '../../@core/utils/date';
 import { EmployeeWorkStatusComponent } from '../employees/table-components';
+import { EmailComponent } from '../../@shared/table-components/email/email.component';
+import { RoleComponent } from '../../@shared/table-components/role/role.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -382,11 +384,14 @@ export class UsersComponent
 				},
 				email: {
 					title: this.getTranslation('SM_TABLE.EMAIL'),
-					type: 'email'
+					type: 'custom',
+					renderComponent: EmailComponent
 				},
 				role: {
 					title: this.getTranslation('SM_TABLE.ROLE'),
-					type: 'text'
+					type: 'custom',
+					renderComponent: RoleComponent,
+					width: '5%'
 				},
 				tags: {
 					title: this.getTranslation('SM_TABLE.TAGS'),

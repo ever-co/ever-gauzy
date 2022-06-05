@@ -39,7 +39,7 @@
 	</nb-card-header>
 	<nb-card-body>
 		<ng-template ngxPermissionsOnly="ORG_USERS_EDIT">
-			<div *ngIf="showAddCard">
+			<div class="edit-user-mutation" *ngIf="showAddCard">
 				<ng-template ngxPermissionsOnly="TENANT_ADD_EXISTING_USER">
 					<ga-edit-user-mutation
 						[organization]="organization"
