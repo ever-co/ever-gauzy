@@ -1,8 +1,83 @@
 @import '../../../@theme/styles/themes.scss';
 
 @include nb-install-component {
+  nb-card {
+    background-color: nb-theme(gauzy-card-2);
+  }
+
   nb-card-body {
     padding: 0;
+    background-color: nb-theme(gauzy-card-2);
+
+    .email-list {
+      background-color: nb-theme(gauzy-card-3);
+      margin: 1rem;
+      padding: 14px 10px;
+      border-radius: nb-theme(border-radius);
+
+      nb-list-item {
+        padding: 5px 10px 5px 0;
+
+        .email-list-item {
+          background-color: nb-theme(gauzy-card-1);
+          width: fit-content;
+          border-radius: nb-theme(border-radius);
+          padding: 8px;
+
+          ::ng-deep ngx-avatar {
+            .inner-wrapper {
+                background-color: nb-theme(color-primary-transparent-100);
+                border-radius: nb-theme(button-rectangle-border-radius);
+                padding: 3px 9px 3px 3px;
+                display: flex;
+                flex-direction: row;
+                align-items: center;
+                width: fit-content;
+                font-size: 12px;
+                font-weight: 400;
+                line-height: 15px;
+                letter-spacing: 0em;
+                gap: 8px;
+    
+                .image-container {
+                    height: 20px;
+                    width: 20px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+    
+                    img[type='user'] {
+                        height: 18px;
+                        width: 18px;
+                    }
+                }
+    
+                .link-text {
+                    color: nb-theme(text-primary-color);
+                    font-weight: normal;
+                }
+            }
+        }
+
+          .email-details-item {
+            font-size: 12px;
+            font-weight: 600;
+            line-height: 15px;
+            letter-spacing: 0em;
+            text-align: left;
+          }
+
+          .date {
+            font-size: 9px;
+            font-weight: 400;
+            line-height: 11px;
+            letter-spacing: 0em;
+            text-align: left;
+            color: nb-theme(gauzy-text-color-2);
+          }
+        }
+      }
+    }
   }
 
   .image-container {
@@ -41,8 +116,8 @@
       overflow: hidden;
       min-width: 320px;
       flex: none;
-      overflow-y: scroll;
-      max-height: 560px;
+      overflow-y: auto;
+      max-height: calc(100vh - 22.5rem);
 
       nb-list-item {
         cursor: pointer;
@@ -65,7 +140,7 @@
             text-overflow: ellipsis;
             white-space: nowrap;
             display: block;
-            width: 280px;
+            width: fit-content;
           }
         }
       }
@@ -76,7 +151,10 @@
       width: 100%;
       display: flex;
       flex-direction: column;
-      padding: 2rem;
+      padding: 1rem;
+      margin: 1rem 1rem 1rem 0;
+      background-color: nb-theme(gauzy-sidebar-background-4);
+      border-radius: nb-theme(border-radius);
 
       .email-details {
         display: flex;
@@ -85,17 +163,18 @@
       }
     }
   }
+
   .filter-count {
     margin-top: -1.5rem;
   }
 }
 
-.custom-parent-email-content{
+.custom-parent-email-content {
   display: flex;
   justify-content: center;
   width: 100%;
 }
 
-.email-content{
+.email-content {
   width: fit-content;
 }

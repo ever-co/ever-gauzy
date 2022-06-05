@@ -2,7 +2,8 @@
 	<nb-card-header class="d-flex justify-content-between">
 		<h4 class="email-history-header">
 			<ngx-header-title>
-				{{ 'MENU.SETTINGS' | translate }} - {{ 'SETTINGS.EMAIL_HISTORY.HEADER' | translate }}
+				{{ 'MENU.SETTINGS' | translate }} -
+				{{ 'SETTINGS.EMAIL_HISTORY.HEADER' | translate }}
 			</ngx-header-title>
 		</h4>
 		<div class="filter">
@@ -27,51 +28,51 @@
 	</nb-card-header>
 	<nb-card-body>
 		<div class="content-container">
-			<nb-list
-				[nbSpinner]="loading"
-				nbInfiniteList
-				[threshold]="20"
-				(bottomThreshold)="loadNext()"
-			>
-				<nb-list-item
-					(click)="selectEmail(email)"
-					*ngFor="let email of emails"
+			<aside class="email-list">
+				<nb-list
+					[nbSpinner]="loading"
+					nbInfiniteList
+					[threshold]="20"
+					(bottomThreshold)="loadNext()"
 				>
-					<div class="email-list-item">
-						<div class="d-flex flex-row">
+					<nb-list-item
+						(click)="selectEmail(email)"
+						*ngFor="let email of emails"
+					>
+						<div class="email-list-item">
 							<div class="image-container">
-								<img
-									class="email-history-avatar"
+								<ngx-avatar
+									[name]="'adkif'"
 									[src]="getUrl(email?.email)"
-								/>
+								></ngx-avatar>
 							</div>
-							<div>
+							<div class="date" [title]="email?.email">
+								<b>{{
+									getEmailDate(email?.createdAt)
+										| dateTimeFormat
+								}}</b>
+							</div>
+							<div class="email-details-item">
+								{{ 'SETTINGS.EMAIL_HISTORY.FROM' | translate }}
+								<b>{{
+									email?.user
+										? email?.user?.email
+										: ('SETTINGS.EMAIL_HISTORY.SYSTEM'
+										  | translate)
+								}}</b>
+							</div>
+							<div class="email-details-item">
 								<span [title]="email?.email">
-									<b>{{ getEmailDate(email?.createdAt) }}</b>
-								</span>
-								<span>
 									{{
-										'SETTINGS.EMAIL_HISTORY.FROM'
-											| translate
+										'SETTINGS.EMAIL_HISTORY.TO' | translate
 									}}
-									<b>{{
-										email?.user
-											? email?.user?.email
-											: ('SETTINGS.EMAIL_HISTORY.SYSTEM'
-											  | translate)
-									}}</b>
+									<b>{{ email?.email }}</b>
 								</span>
 							</div>
 						</div>
-						<div class="email-history-to">
-							<span [title]="email?.email">
-								{{ 'SETTINGS.EMAIL_HISTORY.TO' | translate }}
-								<b>{{ email?.email }}</b>
-							</span>
-						</div>
-					</div>
-				</nb-list-item>
-			</nb-list>
+					</nb-list-item>
+				</nb-list>
+			</aside>
 			<div class="email-container">
 				<div class="email-details" *ngIf="selectedEmail">
 					<span>
@@ -115,17 +116,20 @@
 					{{ 'SETTINGS.EMAIL_HISTORY.ARCHIVE' | translate }}
 				</button>
 				<ng-container *ngIf="selectedEmail; else emailNotSelected">
-          <div class="custom-parent-email-content">
-           <div
-						*ngIf="selectedEmail?.content"
-						[innerHtml]="selectedEmail?.content | safeHtml"
-						class="email-content">
+					<div class="custom-parent-email-content">
+						<div
+							*ngIf="selectedEmail?.content"
+							[innerHtml]="selectedEmail?.content | safeHtml"
+							class="email-content"
+						></div>
 					</div>
-          </div>
-
 				</ng-container>
 				<ng-template #emailNotSelected>
-					<h2> {{ 'SETTINGS.EMAIL_HISTORY.NO_EMAILS_SENT' | translate }} </h2>
+					<h2>
+						{{
+							'SETTINGS.EMAIL_HISTORY.NO_EMAILS_SENT' | translate
+						}}
+					</h2>
 				</ng-template>
 			</div>
 		</div>
