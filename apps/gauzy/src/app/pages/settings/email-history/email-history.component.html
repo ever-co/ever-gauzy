@@ -39,7 +39,12 @@
 						(click)="selectEmail(email)"
 						*ngFor="let email of emails"
 					>
-						<div class="email-list-item">
+						<div
+							class="email-list-item"
+							[ngClass]="{
+								selected: selectedEmail.id === email.id
+							}"
+						>
 							<div class="image-container">
 								<ngx-avatar
 									[name]="

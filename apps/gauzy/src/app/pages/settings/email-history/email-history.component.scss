@@ -24,6 +24,10 @@
           border-radius: nb-theme(border-radius);
           padding: 8px;
 
+          &.selected {
+            background-color: nb-theme(gauzy-background-transparent-1);
+          }
+
           ::ng-deep ngx-avatar {
             .inner-wrapper {
               background-color: nb-theme(color-primary-transparent-100);
