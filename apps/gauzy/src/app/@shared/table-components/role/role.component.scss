@@ -1,9 +1,7 @@
-@import 'themes';
-
 .badge-container {
     nb-badge {
         position: relative;
-        border-radius: calc(nb-theme(border-radius) / 2);
+        border-radius: 4px;
         font-size: 12px;
         font-weight: 600;
         line-height: 15px;
