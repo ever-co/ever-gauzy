@@ -85,7 +85,9 @@
 			<div class="email-container">
 				<div class="email-details" *ngIf="selectedEmail">
 					<span>
-						{{ 'SETTINGS.EMAIL_HISTORY.FROM' | translate }}
+						<span class="col-fixed">{{
+							'SETTINGS.EMAIL_HISTORY.FROM' | translate
+						}}</span>
 						<b>{{
 							selectedEmail?.user
 								? selectedEmail?.user?.email
@@ -93,15 +95,24 @@
 						}}</b>
 					</span>
 					<span>
-						{{ 'SETTINGS.EMAIL_HISTORY.TO' | translate }}
+						<span class="col-fixed">{{
+							'SETTINGS.EMAIL_HISTORY.TO' | translate
+						}}</span>
+
 						<b>{{ selectedEmail?.email }}</b>
 					</span>
 					<span>
-						{{ 'SETTINGS.EMAIL_HISTORY.SUBJECT' | translate }}
+						<span class="col-fixed">{{
+							'SETTINGS.EMAIL_HISTORY.SUBJECT' | translate
+						}}</span>
+
 						<b>{{ selectedEmail?.name }}</b>
 					</span>
 					<span>
-						{{ 'SETTINGS.EMAIL_HISTORY.LANGUAGE' | translate }}
+						<span class="col-fixed">{{
+							'SETTINGS.EMAIL_HISTORY.LANGUAGE' | translate
+						}}</span>
+
 						<b>{{
 							getEmailLanguageFullName(
 								selectedEmail?.emailTemplate?.languageCode
@@ -109,7 +120,10 @@
 						}}</b>
 					</span>
 					<span>
-						{{ 'SETTINGS.EMAIL_HISTORY.TEMPLATE' | translate }}
+						<span class="col-fixed">{{
+							'SETTINGS.EMAIL_HISTORY.TEMPLATE' | translate
+						}}</span>
+
 						<b>{{
 							selectedEmail?.emailTemplate?.title | titlecase
 						}}</b>
@@ -117,9 +131,11 @@
 				</div>
 				<button
 					*ngIf="selectedEmail"
-					class="w-25 email-history-archive"
+					class="email-history-archive"
 					status="primary"
+					outline
 					nbButton
+					size="small"
 					(click)="archive()"
 				>
 					{{ 'SETTINGS.EMAIL_HISTORY.ARCHIVE' | translate }}

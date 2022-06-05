@@ -135,7 +135,7 @@
         }
 
         &:hover {
-          color: #3366ff;
+          color: nb-theme(text-primary-color);
         }
 
         .email-list-item {
@@ -148,26 +148,37 @@
             text-overflow: ellipsis;
             white-space: nowrap;
             display: block;
-            width: fit-content;
           }
         }
       }
     }
 
     .email-container {
-      border-left: 1px solid nb-theme(list-item-divider-color);
       width: 100%;
       display: flex;
       flex-direction: column;
       padding: 1rem;
       margin: 1rem 1rem 1rem 0;
-      background-color: nb-theme(gauzy-sidebar-background-4);
+      background-color: nb-theme(gauzy-card-1);
       border-radius: nb-theme(border-radius);
 
       .email-details {
         display: flex;
         justify-content: center;
         flex-direction: column;
+        background-color: nb-theme(gauzy-sidebar-background-4);
+        margin: -1rem;
+        padding: 1rem 1.5rem;
+        border-radius: nb-theme(border-radius) nb-theme(border-radius) 0 0;
+
+        >span {
+          display: flex;
+
+          .col-fixed {
+            width: 90px;
+            display: block;
+          }
+        }
       }
     }
   }
@@ -179,10 +190,26 @@
 
 .custom-parent-email-content {
   display: flex;
-  justify-content: center;
+  justify-content: flex-start;
   width: 100%;
+  margin-top: 1rem;
+  padding: 0.5rem;
+  overflow: auto;
+  max-height: calc(100vh - 30rem);
 }
 
 .email-content {
   width: fit-content;
+}
+
+:host .email-history-archive {
+  position: absolute;
+  top: 1rem;
+  right: 2rem;
+
+  &[nbButton].appearance-outline.status-primary {
+    background-color: transparent;
+    border-width: 2px;
+    border-color: nb-theme(gauzy-background-transparent);
+  }
 }
