@@ -24,6 +24,7 @@ import { LanguageSelectorModule } from '../../language/language-selector';
 import { SharedModule } from '../../shared.module';
 import { PasswordFormFieldModule } from '../forms/fields/password';
 import { RoleFormFieldModule } from '../forms/fields/role';
+import { TableComponentsModule } from '../../table-components';
 
 @NgModule({
 	imports: [
@@ -44,7 +45,8 @@ import { RoleFormFieldModule } from '../forms/fields/role';
 		LanguageSelectorModule,
 		SharedModule,
 		PasswordFormFieldModule,
-		RoleFormFieldModule
+		RoleFormFieldModule,
+		TableComponentsModule
 	],
 	exports: [EditProfileFormComponent],
 	declarations: [EditProfileFormComponent],

@@ -16,12 +16,13 @@
 				>{{ 'BUTTONS.ADD' | translate }}
 			</button>
 		</ng-container>
-		<ga-edit-user-organizations-mutation
+		<div class="edit-user-organizations">
+			<ga-edit-user-organizations-mutation
 			*ngIf="showAddCard"
 			(canceled)="cancel()"
 			(addOrg)="addOrg($event)"
-		>
-		</ga-edit-user-organizations-mutation>
+			></ga-edit-user-organizations-mutation>
+		</div>
 	</nb-card-header>
 	<nb-card-body *ngIf="organizations?.length">
 		<div class="mb-3">

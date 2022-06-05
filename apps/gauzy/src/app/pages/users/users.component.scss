@@ -95,3 +95,13 @@
     }
   }
 }
+
+.edit-user-mutation {
+  width: 50%;
+}
+
+@media only screen and (max-width: 1200px) {
+  .edit-user-mutation {
+    width: 100%;
+  }
+}

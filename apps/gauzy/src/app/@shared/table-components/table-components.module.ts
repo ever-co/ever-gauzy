@@ -24,6 +24,8 @@ import { EmployeesMergedTeamsComponent } from './employees-merged-teams/employee
 import { CreatedAtComponent } from './created-at/created-at.component';
 import { ContactWithTagsComponent } from './contact-with-tags/contact-with-tags.component';
 import { OrganizationWithTagsComponent } from './organization-with-tags/organization-with-tags.component';
+import { EmailComponent } from './email/email.component';
+import { RoleComponent } from './role/role.component';
 
 @NgModule({
 	imports: [
@@ -55,7 +57,9 @@ import { OrganizationWithTagsComponent } from './organization-with-tags/organiza
 		EmployeesMergedTeamsComponent,
 		CreatedAtComponent,
 		ContactWithTagsComponent,
-		OrganizationWithTagsComponent
+		OrganizationWithTagsComponent,
+		EmailComponent,
+		RoleComponent
 	],
 	exports: [
 		NotesWithTagsComponent,
@@ -65,7 +69,8 @@ import { OrganizationWithTagsComponent } from './organization-with-tags/organiza
 		ValueWithUnitComponent,
 		ContactLinksComponent,
 		EmployeeLinksComponent,
-		ProjectComponent
+		ProjectComponent,
+		RoleComponent
 	],
 	providers: []
 })
