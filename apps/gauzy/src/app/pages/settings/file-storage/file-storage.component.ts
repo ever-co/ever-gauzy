@@ -12,6 +12,7 @@ import { environment } from './../../../../environments/environment';
 @Component({
 	selector: 'ga-file-storage',
 	templateUrl: './file-storage.component.html',
+	styleUrls:['./file-storage.component.scss'],
 	providers: [FileStorageService, TenantService]
 })
 export class FileStorageComponent
