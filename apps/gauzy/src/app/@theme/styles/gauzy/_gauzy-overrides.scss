@@ -8,18 +8,24 @@ $default-box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.15);
 
 @mixin ng-select-overrides($height, $radius, $box-shadow) {
   .ng-select {
-    &.ng-select-single .ng-select-container {
-      height: $height;
-    }
-    .ng-select-container {
-      border-radius: $radius;
-      box-shadow: $box-shadow;
-      height: $height;
-      input {
-        height: unset;
+      &.ng-select-single .ng-select-container {
+        height: $height;
+      }
+  
+      &.ng-select-opened.ng-select-bottom>.ng-select-container {
+        border-radius: calc($height / 2);
+      }
+  
+      .ng-select-container {
+        border-radius: $radius;
+        box-shadow: $box-shadow;
+        height: $height;
+  
+        input {
+          height: unset;
+        }
       }
     }
-  }
 }
 
 @mixin text-inputs-overrides() {
