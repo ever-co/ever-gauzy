@@ -64,9 +64,17 @@
       }
 
       ace-editor {
+        border-radius: 4px;
+
         ::ng-deep {
           .ace_scrollbar.ace_scrollbar-h {
             height: 4px !important;
+          }
+
+          .ace_active-line {
+            background: rgba(231, 227, 218, 0.5) !important;
+            border-radius: 4px !important;
+            margin-left: 3px;
           }
 
           .ace_gutter {
