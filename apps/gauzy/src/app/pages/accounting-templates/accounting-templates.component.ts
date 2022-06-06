@@ -67,7 +67,6 @@ export class AccountingTemplatesComponent
 		combineLatest([storeOrganization$, preferredLanguage$])
 			.pipe(
 				distinctUntilChange(),
-				filter(([organization, language]) => !!organization && !!language),
 				tap(([organization, language]) => {
 					this.organization = organization;
 					this.organizationName = organization.name;
