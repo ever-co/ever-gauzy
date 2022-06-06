@@ -25,7 +25,6 @@ import { ComponentLayoutStyleEnum } from '@gauzy/contracts';
 import { map } from 'rxjs/operators';
 import { merge, Subject } from 'rxjs';
 import * as _ from 'underscore';
-import * as camelCase from 'camelcase';
 
 export interface AppState {
 	user: IUser;
