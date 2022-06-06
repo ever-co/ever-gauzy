@@ -19,7 +19,7 @@
   justify-content: flex-start;
   width: 100%;
   overflow: auto;
-  height: calc(100vh - 26.3rem);
+  height: calc(100vh - 27rem);
 }
 
 .email-content {
@@ -42,7 +42,10 @@
 
   nb-card-body {
     border-radius: 0 0 nb-theme(border-radius) nb-theme(border-radius);
-    padding: 10px;
+    padding: 1rem;
+    nb-card-body {
+      padding: 10px;
+    }
   }
 
   nb-card,
@@ -68,7 +71,7 @@
       }
 
       .ace-editor {
-        height: calc(100vh - 28rem);
+        height: calc(100vh - 28.7rem);
         font-size: medium;
       }
 
