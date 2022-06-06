@@ -8,9 +8,9 @@ import { Store } from "../../@core/services";
 
 @UntilDestroy({ checkProperties: true })
 @Directive({
-    selector: '[ngxTimerAuthorized]'
+    selector: '[ngxTimeTrackingAuthorized]'
 })
-export class TimerAuthorizedDirective implements OnInit {
+export class TimeTrackingAuthorizedDirective implements OnInit {
 
     /*
 	 * Getter & Setter for dynamic permission
