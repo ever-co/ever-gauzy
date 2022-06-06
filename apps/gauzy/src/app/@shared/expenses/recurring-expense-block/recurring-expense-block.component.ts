@@ -25,6 +25,9 @@ export class RecurringExpenseBlockComponent
 	splitExpense?: boolean;
 
 	@Input()
+	employeeName?: boolean = true;
+
+	@Input()
 	fetchedHistories: IRecurringExpenseModel[];
 
 	@Input()

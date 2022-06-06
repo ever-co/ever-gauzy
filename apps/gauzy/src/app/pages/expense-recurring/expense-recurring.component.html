@@ -12,12 +12,12 @@
 			</h4>
 		</div>
 	</nb-card-header>
-	<nb-card-body>
+	<nb-card-body class="settings-body">
 		<div class="d-flex justify-content-end">
 			<ng-template ngxPermissionsOnly="ORG_EXPENSES_EDIT">
 				<button
 					nbButton
-          size="small"
+          			size="small"
 					status="success"
 					(click)="addOrganizationRecurringExpense()"
 				>
@@ -26,35 +26,39 @@
 				</button>
 			</ng-template>
 		</div>
-		<div class="mt-4">
-			<ng-container
-				*ngIf="expenses.length > 0"
+		<div class="container">
+			<div
+				class="sub-header header-content mt-4"
+				*ngIf="expenses?.length"
 			>
-				<div class="sub-header block-content">
-					<div class="row block-info pl-4">
-						<div class="col-3">
-							{{ 'POP_UPS.CATEGORY_NAME' | translate }}
-						</div>
-						<div class="col-3">{{ 'POP_UPS.DATE' | translate }}</div>
-						<div class="col-3">
-							{{ 'POP_UPS.EXPENSE_VALUE' | translate }}
-						</div>
+				<div class="block header-info">
+					<div class="block-item-big">
+						{{ 'POP_UPS.CATEGORY_NAME' | translate }}
+					</div>
+					<div class="block-item">
+						{{ 'POP_UPS.DATE' | translate }}
+					</div>
+					<div class="block-item">
+						{{ 'POP_UPS.EXPENSE_VALUE' | translate }}
 					</div>
 				</div>
+			</div>
+			<ng-container *ngIf="expenses.length">
+				<ng-container
+					*ngFor="let expense of expenses; let i = index"
+				>
+					<ga-recurring-expense-block
+						(editRecurringExpense)="editOrganizationRecurringExpense(i)"
+						(deleteRecurringExpense)="deleteOrgRecurringExpense(i)"
+						(fetchRecurringExpenseHistory)="fetchHistory(i)"
+						[fetchedHistories]="fetchedHistories[i]"
+						[recurringExpense]="expense"
+						[splitExpense]="expense.splitExpense"
+						[employeeName]="false"
+						[selectedOrganization]="organization"
+					></ga-recurring-expense-block>
+				</ng-container>
 			</ng-container>
-		</div>
-		<ng-container
-			*ngFor="let expense of expenses; let i = index"
-		>
-			<ga-recurring-expense-block
-				(editRecurringExpense)="editOrganizationRecurringExpense(i)"
-				(deleteRecurringExpense)="deleteOrgRecurringExpense(i)"
-				(fetchRecurringExpenseHistory)="fetchHistory(i)"
-				[fetchedHistories]="fetchedHistories[i]"
-				[recurringExpense]="expense"
-				[splitExpense]="expense.splitExpense"
-				[selectedOrganization]="organization"
-			></ga-recurring-expense-block>
-		</ng-container>
+		</div>		
 	</nb-card-body>
 </nb-card>

@@ -29,11 +29,39 @@
 
 .header-content {
   display: flex;
+
   .header-info {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    width: 560px;
+    width: fit-content;
     padding-left: 30px;
   }
+  .block {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: fit-content;
+    .block-item {
+      width: 11rem;
+      display: flex;
+      justify-content: flex-start;
+      align-items: center;
+    }
+    .block-item-big {
+      width: 17.5rem;
+      display: flex;
+      justify-content: flex-start;
+      align-items: center;
+    }
+  }
+}
+
+.container{
+  padding: 0;
+  overflow-x: scroll;
+}
+
+.container::-webkit-scrollbar {
+  display: none;
 }
