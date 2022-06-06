@@ -19,7 +19,7 @@
   justify-content: flex-start;
   width: 100%;
   overflow: auto;
-  height: calc(100vh - 28.3rem);
+  height: calc(100vh - 26.3rem);
 }
 
 .email-content {
@@ -42,6 +42,7 @@
 
   nb-card-body {
     border-radius: 0 0 nb-theme(border-radius) nb-theme(border-radius);
+    padding: 10px;
   }
 
   nb-card,
@@ -67,7 +68,7 @@
       }
 
       .ace-editor {
-        height: calc(100vh - 30rem);
+        height: calc(100vh - 28rem);
         font-size: medium;
       }
 
@@ -129,7 +130,7 @@
       background-color: rgba(126, 126, 143, 0.05);
       padding: 13px;
       border-radius: 8px 8px 0 0;
-      margin: -1rem -1.5rem 0;
+      margin: -10px -10px 0;
     }
 
     .preview-subject {
@@ -165,7 +166,7 @@
     display: flex;
     flex-wrap: wrap;
     justify-content: space-between;
-    padding: 0 0 1rem 0;
+    padding: 0 0 10px 0;
   }
 
   h4 {
