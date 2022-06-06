@@ -4,7 +4,7 @@ import { SMSProviderEnum } from '@gauzy/contracts';
 @Component({
 	selector: 'ga-sms-gateway',
 	templateUrl: './sms-gateway.component.html',
-	styleUrls: ['./sms-gateway.component.css']
+	styleUrls: ['./sms-gateway.component.scss']
 })
 export class SmsGatewayComponent implements OnInit {
 	smsProviders: string[] = Object.values(SMSProviderEnum);
