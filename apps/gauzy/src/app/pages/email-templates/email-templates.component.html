@@ -1,5 +1,5 @@
 <form class="main-form" [formGroup]="form" *ngIf="form">
-	<nb-card class="card-scroll">
+	<nb-card>
 		<nb-card-header>
 			<h4>
 				<ngx-header-title [allowEmployee]="false"
@@ -10,10 +10,13 @@
 			</h4>
 		</nb-card-header>
 		<nb-card-body>
-			<nb-layout>
-				<nb-layout-column class="email-template-column">
+			<div class="row">
+				<div class="col-6 email-template-column">
 					<nb-card>
-						<nb-card-body>
+						<nb-card-header class="editor-header">
+							HTML Editor
+						</nb-card-header>
+						<nb-card-body class="editor">
 							<div class="form-group">
 								<label class="label" for="subject">
 									{{
@@ -42,7 +45,7 @@
 									#emailEditor
 									id="email"
 									[mode]="'handlebars'"
-									style="height: 80vh; font-size: medium"
+									class="ace-editor"
 									[durationBeforeCallback]="400"
 									(textChange)="onEmailChange($event)"
 								>
@@ -50,10 +53,10 @@
 							</div>
 						</nb-card-body>
 					</nb-card>
-				</nb-layout-column>
+				</div>
 				<!-- Live Preview column -->
-				<nb-layout-column class="email-template-column">
-					<nb-card>
+				<div class="col-6 email-template-column">
+					<nb-card class="email-template-right">
 						<nb-card-header class="email-column-header">
 							<div class="select-block">
 								<label class="label" for="languageCode">
@@ -116,25 +119,27 @@
 							</div>
 						</nb-card-header>
 						<nb-card-body>
-							<div class="form-group">
-								<label class="label" for="previewSubject"
-									>{{
-										'EMAIL_TEMPLATES_PAGE.LABELS.SUBJECT_PREVIEW'
-											| translate
-									}}
-								</label>
-								<div
-									id="previewSubject"
-									[innerHtml]="previewSubject"
-								></div>
-							</div>
-							<div class="form-group">
+							<div class="email-column-sub-header">
+								<div class="form-group preview-subject">
+									<label class="label" for="previewSubject"
+										>{{
+											'EMAIL_TEMPLATES_PAGE.LABELS.SUBJECT_PREVIEW'
+												| translate
+										}}:
+									</label>
+									<div
+										id="previewSubject"
+										[innerHtml]="previewSubject"
+									></div>
+								</div>
 								<label class="label" for="previewEmail"
 									>{{
 										'EMAIL_TEMPLATES_PAGE.LABELS.EMAIL_PREVIEW'
 											| translate
 									}}
 								</label>
+							</div>
+							<div class="form-group">
 								<div class="custom-parent-email-content">
 									<div
 										id="previewEmail"
@@ -145,8 +150,8 @@
 							</div>
 						</nb-card-body>
 					</nb-card>
-				</nb-layout-column>
-			</nb-layout>
+				</div>
+			</div>
 		</nb-card-body>
 	</nb-card>
 </form>
