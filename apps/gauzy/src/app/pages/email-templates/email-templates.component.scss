@@ -41,6 +41,7 @@
     background-color: nb-theme(gauzy-card-2);
     overflow: unset;
     margin: 0;
+    border-radius: 0 0 nb-theme(border-radius) nb-theme(border-radius);
 
     &.editor {
       background-color: nb-theme(gauzy-card-1);
