@@ -1,7 +1,17 @@
-@import 'var';
+@import '../email-templates/email-templates.component.scss';
 
-:host .custom-preview-template ::ng-deep {
-  * {
-    color: nb-theme(text-basic-color);
+:host {
+  .ace-editor {
+    height: calc(100vh - 24rem) !important;
+  }
+
+  .custom-parent-email-content {
+    height: calc(100vh - 26.3rem) !important;
+  }
+
+  .custom-preview-template ::ng-deep {
+    * {
+      color: nb-theme(text-basic-color);
+    }
   }
 }
