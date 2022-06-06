@@ -5,7 +5,6 @@ import {
 	IRolePermission,
 	IUser,
 	LanguagesEnum,
-	OrganizationPermissionsEnum,
 	IOrganizationProject,
 	ILanguage,
 	IProposalViewModel,

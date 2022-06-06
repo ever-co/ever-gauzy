@@ -7,7 +7,6 @@ import {
 	EventEmitter
 } from '@angular/core';
 import {
-	OrganizationPermissionsEnum,
 	ITimeSlot,
 	IScreenshot,
 	ITimeLog,
@@ -34,7 +33,6 @@ import { ErrorHandlingService, Store, ToastrService } from './../../../../@core/
 export class ScreenshotsItemComponent implements OnInit, OnDestroy {
 	
 	public organization: IOrganization;
-	OrganizationPermissionsEnum = OrganizationPermissionsEnum;
 	progressStatus = progressStatus;
 	fallbackSvg = DEFAULT_SVG;
 
