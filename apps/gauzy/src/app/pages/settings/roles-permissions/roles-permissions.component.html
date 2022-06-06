@@ -46,7 +46,16 @@
 				*ngxPermissionsOnly="['CHANGE_ROLES_PERMISSIONS']"
 			>
 				<ng-container *ngIf="isWantToCreate">
-					<button nbButton status="success" (click)="createRole()">
+					<div class="actions create">
+						<button
+							nbButton
+							status="success"
+							(click)="createRole()"
+							size="small"
+							[nbTooltip]="'BUTTONS.CREATE' | translate"
+						>
+							<nb-icon icon="plus-outline"></nb-icon>
+						</button>
 						{{
 							'BUTTONS.CREATE_NEW_ROLE'
 								| translate
@@ -54,12 +63,25 @@
 											name: input.value
 									  }
 						}}
-					</button>
+					</div>
 				</ng-container>
 				<ng-container
 					*ngIf="role && role.isSystem === false && !isWantToCreate"
 				>
-					<button nbButton status="danger" (click)="deleteRole()">
+					<div class="actions delete">
+						<button
+							nbButton
+							status="basic"
+							class="action"
+							(click)="deleteRole()"
+							size="small"
+							[nbTooltip]="'BUTTONS.DELETE' | translate"
+						>
+							<nb-icon
+								status="danger"
+								icon="trash-2-outline"
+							></nb-icon>
+						</button>
 						{{
 							'BUTTONS.DELETE_EXISTING_ROLE'
 								| translate
@@ -67,7 +89,7 @@
 											name: role.name
 									  }
 						}}
-					</button>
+					</div>
 				</ng-container>
 			</div>
 		</div>

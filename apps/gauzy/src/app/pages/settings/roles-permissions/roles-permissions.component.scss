@@ -1,7 +1,23 @@
-@import '../../../@theme/styles/themes.scss';
+@import '../../../@theme/styles/gauzy/gauzy-table';
 
 .main-form {
 	width: 100%;
+}
+
+.delete,
+.create {
+	width: fit-content;
+	color: nb-theme(color-danger-default);
+	padding-right: 10px;
+	font-weight: 600px;
+}
+
+.delete {
+	color: nb-theme(color-danger-default);
+}
+
+.create {
+	color: nb-theme(color-success-default);
 }
 
 .permission-items-col {
