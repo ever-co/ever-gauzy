@@ -235,11 +235,11 @@
 	</div>
 </ng-template>
 <ng-template #visibleButtons>
-	<ng-template
-		[ngxPermissionsOnly]="[
-			PermissionsEnum.ALLOW_MANUAL_TIME
-		]"
-	>
+	<ng-template [ngxPermissionsOnly]="PermissionsEnum.ALLOW_MANUAL_TIME">
+		<ng-template 
+			ngxTimeTrackingAuthorized
+			[permission]="PermissionsEnum.ALLOW_MANUAL_TIME"
+		>
 		<button
 			class="action"
 			size="small"
@@ -250,5 +250,6 @@
 			<nb-icon icon="plus-outline"></nb-icon>
 			{{ 'TIMESHEET.ADD_TIME' | translate }}
 		</button>
+		</ng-template>
 	</ng-template>
 </ng-template>
