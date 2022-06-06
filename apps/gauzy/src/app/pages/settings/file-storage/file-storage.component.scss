@@ -9,6 +9,10 @@
             $default-box-shadow );
     }
 
+    .d-block {
+        width: 10rem;
+    }
+
     nb-card-footer {
         background-color: nb-theme(gauzy-card-2);
         padding-top: 0;
