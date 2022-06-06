@@ -10,7 +10,7 @@ import {
 	ITimeLog,
 	IOrganizationProject,
 	ITimeLogFilters,
-	OrganizationPermissionsEnum
+	PermissionsEnum
 } from '@gauzy/contracts';
 import { isEmpty } from '@gauzy/common-angular';
 import { TranslateService } from '@ngx-translate/core';
@@ -35,7 +35,7 @@ interface WeeklyDayData {
 export class WeeklyComponent extends BaseSelectorFilterComponent 
 	implements OnInit, OnDestroy {
 
-	OrganizationPermissionsEnum = OrganizationPermissionsEnum;
+	PermissionsEnum = PermissionsEnum;
 	filters: ITimeLogFilters = this.request;
 
 	weekData: WeeklyDayData[] = [];

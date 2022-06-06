@@ -1,4 +1,4 @@
-import { Directive, Input, OnInit, TemplateRef, ViewContainerRef } from "@angular/core";
+import { ChangeDetectorRef, Directive, Input, OnInit, TemplateRef, ViewContainerRef } from "@angular/core";
 import { distinctUntilChange } from "@gauzy/common-angular";
 import { filter, tap } from "rxjs/operators";
 import { IOrganization } from "@gauzy/contracts";
@@ -25,10 +25,13 @@ export class TimeTrackingAuthorizedDirective implements OnInit {
         }
 		this._permission = permission;
 	}
-  
+
+	@Input() permissionElse: TemplateRef<any>;
+	
     constructor(
         private readonly _templateRef: TemplateRef<any>,
         private readonly _viewContainer: ViewContainerRef,
+        private readonly _cdr: ChangeDetectorRef,
         private readonly _store: Store,
     ) {}
   
@@ -44,11 +47,26 @@ export class TimeTrackingAuthorizedDirective implements OnInit {
                     if (organization[camelCase(this.permission)]) {
                         this._viewContainer.createEmbeddedView(this._templateRef);
                     } else {
-                        this._viewContainer.clear();
+                        this.showTemplateBlockInView(this.permissionElse);
                     }
 				}),
 				untilDestroyed(this)
 			)
 			.subscribe();
+    }
+
+    /**
+     * Show If/Else Render Template
+     * 
+     * @param template 
+     * @returns 
+     */
+    showTemplateBlockInView(template: TemplateRef<any>) {
+        this._viewContainer.clear();
+        if (!template) {
+            return;
+        }
+        this._viewContainer.createEmbeddedView(template);
+        this._cdr.markForCheck();
     }
 }
