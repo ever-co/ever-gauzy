@@ -1,6 +1,9 @@
 <nb-card class="card-scroll">
 	<nb-card-header>
-		<h4>{{ 'MENU.SETTINGS' | translate }} - {{ 'ORGANIZATIONS_PAGE.EDIT.ROLES_PERMISSIONS' | translate }}</h4>
+		<h4>
+			<span class="menu-setting">{{ 'MENU.SETTINGS' | translate }}/</span>
+			{{ 'ORGANIZATIONS_PAGE.EDIT.ROLES_PERMISSIONS' | translate }}
+		</h4>
 	</nb-card-header>
 	<nb-card-body>
 		<div class="row">
@@ -20,62 +23,87 @@
 							<nb-icon
 								[icon]="'close'"
 								pack="eva"
-								(click)="formControl.reset(rolesEnum.EMPLOYEE)">
+								(click)="formControl.reset(rolesEnum.EMPLOYEE)"
+							>
 							</nb-icon>
 						</button>
 					</nb-form-field>
-					<nb-autocomplete #autocomplete (selectedChange)="onSelectionChange($event)">
+					<nb-autocomplete
+						#autocomplete
+						(selectedChange)="onSelectionChange($event)"
+					>
 						<nb-option
 							*ngFor="let role of roles$ | async"
 							[value]="role.name"
-							[class]="(role.name === input.value) ? 'active' : ''"
-						>{{ role.name }}</nb-option>
+							[class]="role.name === input.value ? 'active' : ''"
+							>{{ role.name }}</nb-option
+						>
 					</nb-autocomplete>
 				</div>
 			</div>
-			<div class="col-6" *ngxPermissionsOnly="['CHANGE_ROLES_PERMISSIONS']">
+			<div
+				class="col-6"
+				*ngxPermissionsOnly="['CHANGE_ROLES_PERMISSIONS']"
+			>
 				<ng-container *ngIf="isWantToCreate">
 					<button nbButton status="success" (click)="createRole()">
 						{{
-							'BUTTONS.CREATE_NEW_ROLE' | translate : {
-								name: input.value
-							}
+							'BUTTONS.CREATE_NEW_ROLE'
+								| translate
+									: {
+											name: input.value
+									  }
 						}}
 					</button>
 				</ng-container>
-				<ng-container *ngIf="role && role.isSystem === false && !isWantToCreate">
+				<ng-container
+					*ngIf="role && role.isSystem === false && !isWantToCreate"
+				>
 					<button nbButton status="danger" (click)="deleteRole()">
 						{{
-							'BUTTONS.DELETE_EXISTING_ROLE' | translate : {
-								name: role.name
-							}
+							'BUTTONS.DELETE_EXISTING_ROLE'
+								| translate
+									: {
+											name: role.name
+									  }
 						}}
 					</button>
 				</ng-container>
 			</div>
 		</div>
-		<div class="row" [nbSpinner]="loading" nbSpinnerSize="large">
+		<div class="row content" [nbSpinner]="loading" nbSpinnerSize="large">
 			<div class="col-6">
 				<nb-card>
 					<nb-card-header>
-						{{ 'ORGANIZATIONS_PAGE.PERMISSIONS.GROUPS.GENERAL' | translate }}
+						{{
+							'ORGANIZATIONS_PAGE.PERMISSIONS.GROUPS.GENERAL'
+								| translate
+						}}
 					</nb-card-header>
 					<nb-card-body class="permission-items-col">
 						<nb-toggle
-							*ngFor="
-								let permission of permissionGroups.GENERAL
-							"
+							*ngFor="let permission of permissionGroups.GENERAL"
 							[(checked)]="enabledPermissions[permission]"
 							(checkedChange)="
-								permissionChanged(permission, $event, !isDisabledGeneralPermissions())
+								permissionChanged(
+									permission,
+									$event,
+									!isDisabledGeneralPermissions()
+								)
 							"
 							labelPosition="start"
 							status="basic"
 							[disabled]="isDisabledGeneralPermissions()"
 						>
 							<div class="custom-permission-view">
-								<strong>{{ 'ORGANIZATIONS_PAGE.PERMISSIONS.' + permission | translate }}</strong>
-								<small>{{'ORGANIZATIONS_PAGE.PERMISSIONS.' + permission | translate }}</small>
+								<strong>{{
+									'ORGANIZATIONS_PAGE.PERMISSIONS.' +
+										permission | translate
+								}}</strong>
+								<small>{{
+									'ORGANIZATIONS_PAGE.PERMISSIONS.' +
+										permission | translate
+								}}</small>
 							</div>
 						</nb-toggle>
 					</nb-card-body>
@@ -89,26 +117,41 @@
 								| translate
 						}}
 						<nb-icon
-							[nbTooltip]="'ORGANIZATIONS_PAGE.PERMISSIONS.ONLY_ADMIN' | translate"
-							class="mr-1"
+							[nbTooltip]="
+								'ORGANIZATIONS_PAGE.PERMISSIONS.ONLY_ADMIN'
+									| translate
+							"
 							icon="question-mark-circle-outline"
+							size="tiny"
 						>
 						</nb-icon>
 					</nb-card-header>
 					<nb-card-body class="permission-items-col">
 						<nb-toggle
-							*ngFor="let permission of getAdministrationPermissions()"
+							*ngFor="
+								let permission of getAdministrationPermissions()
+							"
 							[(checked)]="enabledPermissions[permission]"
 							(checkedChange)="
-								permissionChanged(permission, $event, !isDisabledAdministrationPermissions())
+								permissionChanged(
+									permission,
+									$event,
+									!isDisabledAdministrationPermissions()
+								)
 							"
 							labelPosition="start"
 							status="basic"
 							[disabled]="isDisabledAdministrationPermissions()"
 						>
 							<div class="custom-permission-view">
-								<strong>{{ 'ORGANIZATIONS_PAGE.PERMISSIONS.' + permission | translate }}</strong>
-								<small>{{'ORGANIZATIONS_PAGE.PERMISSIONS.' + permission | translate }}</small>
+								<strong>{{
+									'ORGANIZATIONS_PAGE.PERMISSIONS.' +
+										permission | translate
+								}}</strong>
+								<small>{{
+									'ORGANIZATIONS_PAGE.PERMISSIONS.' +
+										permission | translate
+								}}</small>
 							</div>
 						</nb-toggle>
 					</nb-card-body>
