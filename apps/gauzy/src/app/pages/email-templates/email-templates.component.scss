@@ -1,11 +1,12 @@
-@import 'var';
+@import 'gauzy/_gauzy-overrides';
 
 .main-form {
   .template-save {
     display: flex;
     justify-content: flex-end;
-    align-items: center;
+    align-items: flex-start;
   }
+
   nb-layout {
     nb-layout-column.email-template-column {
       padding: 0;
@@ -13,12 +14,51 @@
   }
 }
 
-.custom-parent-email-content{
+.custom-parent-email-content {
   display: flex;
   justify-content: center;
   width: 100%;
 }
 
-.email-content{
+.email-content {
   width: fit-content;
+}
+
+:host {
+  ::ng-deep {
+    @include nb-select-overrides ($default-height,
+      $default-button-radius,
+      $default-box-shadow );
+    @include ng-select-overrides ($default-height,
+      $default-button-radius,
+      $default-box-shadow );
+  }
+
+  nb-card,
+  nb-card-body {
+    background-color: nb-theme(gauzy-card-2);
+  }
+
+  .email-column-header {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  h4 {
+    font-size: 24px;
+    font-weight: 600;
+    line-height: 30px;
+    letter-spacing: 0em;
+    text-align: left;
+
+    .menu-setting {
+      font-weight: 400;
+    }
+  }
+
+  .select-block {
+    min-width: 130px;
+    max-width: 170px;
+  }
 }

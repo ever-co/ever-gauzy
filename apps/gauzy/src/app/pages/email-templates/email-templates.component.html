@@ -1,63 +1,13 @@
 <form class="main-form" [formGroup]="form" *ngIf="form">
 	<nb-card class="card-scroll">
 		<nb-card-header>
-			<div class="row align-items-center">
-				<div class="col-6">
-					<h4> <ngx-header-title [allowEmployee]="false">{{ 'MENU.SETTINGS' | translate }} - {{ 'EMAIL_TEMPLATES_PAGE.HEADER' | translate }} </ngx-header-title> </h4>
-				</div>
-				<div class="col-2 select-block">
-					<label class="label" for="languageCode">
-						{{ 'EMAIL_TEMPLATES_PAGE.LABELS.LANGUAGE' | translate }}
-					</label>
-					<ngx-language-selector
-						class="d-block"
-						size="small"
-						template="ng-select"
-						formControlName="languageCode"
-						(selectedLanguageEvent)="subject$.next(true)"
-					>
-					</ngx-language-selector>
-				</div>
-				<div class="col-2 select-block">
-					<label class="label" for="templateName">
-						{{
-							'EMAIL_TEMPLATES_PAGE.LABELS.TEMPLATE_NAME'
-								| translate
-						}}
-					</label>
-					<nb-select
-						id="templateName"
-						class="d-block"
-						size="small"
-						formControlName="name"
-						placeholder="{{
-							'EMAIL_TEMPLATES_PAGE.TEMPLATE_NAMES.TEMPLATE_NAMES'
-								| translate
-						}}"
-						(selectedChange)="subject$.next(true)"
-					>
-						<nb-option
-							*ngFor="let name of templateNames"
-							[value]="name"
-						>
-							{{
-								'EMAIL_TEMPLATES_PAGE.TEMPLATE_NAMES.' + name
-									| translate
-							}}
-						</nb-option>
-					</nb-select>
-				</div>
-				<div class="col-2 template-save">
-					<button
-						[disabled]="form.invalid"
-						(click)="submitForm()"
-						nbButton
-						status="success"
-					>
-						{{ 'EMAIL_TEMPLATES_PAGE.SAVE' | translate }}
-					</button>
-				</div>
-			</div>
+			<h4>
+				<ngx-header-title [allowEmployee]="false"
+					><span class="menu-setting"
+						>{{ 'MENU.SETTINGS' | translate }}/ </span
+					>{{ 'EMAIL_TEMPLATES_PAGE.HEADER' | translate }}
+				</ngx-header-title>
+			</h4>
 		</nb-card-header>
 		<nb-card-body>
 			<nb-layout>
@@ -104,6 +54,67 @@
 				<!-- Live Preview column -->
 				<nb-layout-column class="email-template-column">
 					<nb-card>
+						<nb-card-header class="email-column-header">
+							<div class="select-block">
+								<label class="label" for="languageCode">
+									{{
+										'EMAIL_TEMPLATES_PAGE.LABELS.LANGUAGE'
+											| translate
+									}}
+								</label>
+								<ngx-language-selector
+									class="d-block"
+									size="small"
+									template="ng-select"
+									formControlName="languageCode"
+									(selectedLanguageEvent)="
+										subject$.next(true)
+									"
+								>
+								</ngx-language-selector>
+							</div>
+							<div class="select-block">
+								<label class="label" for="templateName">
+									{{
+										'EMAIL_TEMPLATES_PAGE.LABELS.TEMPLATE_NAME'
+											| translate
+									}}
+								</label>
+								<nb-select
+									id="templateName"
+									class="d-block"
+									size="small"
+									formControlName="name"
+									placeholder="{{
+										'EMAIL_TEMPLATES_PAGE.TEMPLATE_NAMES.TEMPLATE_NAMES'
+											| translate
+									}}"
+									(selectedChange)="subject$.next(true)"
+								>
+									<nb-option
+										*ngFor="let name of templateNames"
+										[value]="name"
+									>
+										{{
+											'EMAIL_TEMPLATES_PAGE.TEMPLATE_NAMES.' +
+												name | translate
+										}}
+									</nb-option>
+								</nb-select>
+							</div>
+							<div class="template-save">
+								<button
+									[disabled]="form.invalid"
+									(click)="submitForm()"
+									nbButton
+									status="success"
+								>
+									{{
+										'EMAIL_TEMPLATES_PAGE.SAVE' | translate
+									}}
+								</button>
+							</div>
+						</nb-card-header>
 						<nb-card-body>
 							<div class="form-group">
 								<label class="label" for="previewSubject"
@@ -124,13 +135,13 @@
 											| translate
 									}}
 								</label>
-                <div class="custom-parent-email-content">
-								<div
-									id="previewEmail"
-									[innerHtml]="previewEmail"
-                  class="email-content"
-								></div>
-                </div>
+								<div class="custom-parent-email-content">
+									<div
+										id="previewEmail"
+										[innerHtml]="previewEmail"
+										class="email-content"
+									></div>
+								</div>
 							</div>
 						</nb-card-body>
 					</nb-card>
