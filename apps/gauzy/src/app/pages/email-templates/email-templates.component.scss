@@ -19,7 +19,7 @@
   justify-content: flex-start;
   width: 100%;
   overflow: auto;
-  height: calc(100vh - 32rem);
+  height: calc(100vh - 31rem);
 }
 
 .email-content {
@@ -107,6 +107,11 @@
   .email-template-right {
     background-color: unset;
 
+    .select {
+      display: flex;
+      gap: 1rem;
+    }
+
     nb-card-body {
       background-color: nb-theme(gauzy-card-1);
       border-radius: nb-theme(border-radius);
@@ -151,7 +156,8 @@
   .email-column-header {
     display: flex;
     flex-wrap: wrap;
-    gap: 1rem;
+    justify-content: space-between;
+    padding: 0 0 1rem 0;
   }
 
   h4 {
