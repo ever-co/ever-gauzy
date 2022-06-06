@@ -59,8 +59,26 @@
       }
 
       .ace-editor {
-        height: calc(100vh - 32.5rem);
-        font-size: medium
+        height: calc(100vh - 32.7rem);
+        font-size: medium;
+      }
+
+      ace-editor {
+        ::ng-deep {
+          .ace_scrollbar.ace_scrollbar-h {
+            height: 4px !important;
+          }
+
+          .ace_gutter {
+            background-color: rgba(231, 227, 218, 1);
+            border-radius: 4px;
+
+            .ace_fold-widget {
+              border-radius: 0;
+              background-color: rgba(231, 227, 218, 0.5);
+            }
+          }
+        }
       }
 
     }
