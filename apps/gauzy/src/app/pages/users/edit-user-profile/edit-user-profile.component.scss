@@ -1,0 +1,33 @@
+@import 'themes';
+
+:host {
+	nb-card {
+		nb-card-body {
+			background-color: nb-theme(gauzy-card-2);
+			padding: 1rem;
+		}
+	}
+
+	::ng-deep .route-tabset .route-tab {
+
+		&.active {
+			svg {
+				fill: nb-theme(text-primary-color);
+			}
+		}
+
+		a.tab-link {
+			border-radius: nb-theme(border-radius) nb-theme(border-radius) 0 0;
+			display: flex !important;
+
+			span.tab-text {
+				text-transform: lowercase;
+				display: block;
+
+				&:first-letter {
+					text-transform: uppercase;
+				}
+			}
+		}
+	}
+}

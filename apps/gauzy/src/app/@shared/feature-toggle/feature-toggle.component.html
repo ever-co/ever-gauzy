@@ -1,4 +1,9 @@
-<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
+<nb-card
+	class="card-feature"
+	[nbSpinner]="loading"
+	nbSpinnerStatus="primary"
+	nbSpinnerSize="large"
+>
 	<nb-card-header>
 		<ng-template [ngIf]="isOrganization" [ngIfElse]="tenantHeader">
 			<header>
@@ -17,13 +22,13 @@
 			</header>
 		</ng-template>
 	</nb-card-header>
-	<nb-card-body *ngIf="!loading">
+	<nb-card-body class="features" *ngIf="!loading">
 		<ng-container *ngFor="let block of blocks$ | async">
 			<div class="row centered">
 				<ng-container *ngFor="let row of block">
-					<div class="col-6">
+					<div class="col-xxl-5 col-lg-6 col-12">
 						<nb-card class="shortcut-card" [status]="row?.status">
-							<nb-card-header>
+							<nb-card-header class="p-3">
 								<div class="row">
 									<div class="col-6 loat-left text-left">
 										<nb-icon
@@ -42,7 +47,7 @@
 									</div>
 								</div>
 							</nb-card-header>
-							<nb-card-body>
+							<nb-card-body class="border border-top-0 p-3">
 								<div class="row">
 									<div class="col-10 float-left text-left">
 										{{ getTranslationFormat('SETTINGS_FEATURES_DESCRIPTION' + '.' + row?.name + '.' + row?.description) | translate }}
@@ -64,6 +69,7 @@
 								>
 									<nb-list>
 										<nb-list-item
+											class="border-top"
 											*ngFor="let child of row?.children"
 										>
 											<nb-checkbox

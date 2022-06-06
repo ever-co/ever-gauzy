@@ -1,4 +1,4 @@
-
+@import 'gauzy/_gauzy-table';
 
 /* Card grid */
 
@@ -65,4 +65,43 @@
 .card-footer {
   justify-content: space-around;
   display: flex;
+}
+
+:host {
+
+  nb-card,
+  nb-card-body {
+    background-color: nb-theme(gauzy-card-2);
+  }
+
+  nb-card {
+    height: calc(100vh - 13rem);
+  }
+
+
+  nb-card-body {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    overflow: unset;
+    max-height: calc(100vh - 22.4rem);
+    border-radius: 0 0 nb-theme(border-radius) nb-theme(border-radius);
+    padding: 1rem;
+
+    .table-scroll-container {
+      flex-grow: 10;
+      overflow: auto;
+      max-height: unset;
+    }
+  }
+}
+
+.edit-user-mutation {
+  width: 50%;
+}
+
+@media only screen and (max-width: 1200px) {
+  .edit-user-mutation {
+    width: 100%;
+  }
 }

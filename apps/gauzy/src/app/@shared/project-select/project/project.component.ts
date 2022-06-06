@@ -338,16 +338,17 @@ export class ProjectSelectorComponent
 	 * @param name 
 	 * @returns 
 	 */
-	getShortenedName(name: string) {
+	getShortenedName(name: string, limit = 20) {
 		if (isEmpty(name)) {
 			return;
 		}
 		const chunks = name.split(/\s+/);
 		const [firstName, lastName] = [chunks.shift(), chunks.join(' ')];
+
 		if (firstName && lastName) {
-			return this._truncatePipe.transform(firstName, 10) + ' ' + this._truncatePipe.transform(lastName, 10);
+			return this._truncatePipe.transform(firstName, limit/2, false, '') + ' ' + this._truncatePipe.transform(lastName, limit/2, false, '.');
 		} else {
-			return this._truncatePipe.transform(firstName, 20) || this._truncatePipe.transform(lastName, 20) || '[error: bad name]';
+			return this._truncatePipe.transform(firstName, limit) || this._truncatePipe.transform(lastName, limit) || '[error: bad name]';
 		}
 	}
 

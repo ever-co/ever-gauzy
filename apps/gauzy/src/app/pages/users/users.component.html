@@ -1,82 +1,47 @@
-<nb-card 
-	[nbSpinner]="loading"
-	nbSpinnerStatus="primary"
-	nbSpinnerSize="large"
-	class="card-scroll"
->
-	<nb-card-header class="card-header-title">
+<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
+	<nb-card-header class="d-flex flex-column pb-0">
 		<div class="card-header-title">
 			<h4>
 				<ngx-header-title [allowEmployee]="false">
 					{{ 'USERS_PAGE.HEADER' | translate }}
 				</ngx-header-title>
 			</h4>
-		</div>
-		<div class="card-header-title">
-			<div class="mr-2 ml-2">
-				<ng-template ngxPermissionsOnly="ORG_USERS_EDIT">
-					<ng-template
-						[ngxPermissionsOnly]="[
-							'ORG_INVITE_VIEW',
-							'ORG_INVITE_EDIT'
-						]"
+			<ng-template ngxPermissionsOnly="ORG_USERS_EDIT">
+				<ng-template
+					[ngxPermissionsOnly]="[
+						'ORG_INVITE_VIEW',
+						'ORG_INVITE_EDIT'
+					]"
+				>
+					<button
+						nbButton
+						class="action"
+						size="small"
+						*ngIf="organizationInvitesAllowed"
+						status="primary"
+						(click)="manageInvites()"
 					>
-						<button
-							nbButton
-							*ngIf="organizationInvitesAllowed"
-							status="primary"
-							(click)="manageInvites()"
-						>
-							{{ 'BUTTONS.MANAGE_INVITES' | translate }}
-						</button>
-					</ng-template>
+						{{ 'BUTTONS.MANAGE_INVITES' | translate }}
+					</button>
 				</ng-template>
-			</div>
-			<div>
-				<ga-layout-selector
+			</ng-template>
+		</div>
+		<div class="align-self-end mt-3">
+			<ng-template ngxPermissionsOnly="ORG_USERS_EDIT">
+				<ngx-gauzy-button-action
 					[componentName]="viewComponentName"
-				></ga-layout-selector>
-			</div>
+					[buttonTemplate]="actionButtons"
+					[buttonTemplateVisible]="visible"
+					[isDisable]="disableButton"
+				></ngx-gauzy-button-action>
+			</ng-template>
 		</div>
 	</nb-card-header>
 	<nb-card-body>
 		<ng-template ngxPermissionsOnly="ORG_USERS_EDIT">
-			<div class="mb-3">
-				<ng-template ngxPermissionsOnly="ORG_INVITE_EDIT">
-					<button
-						nbButton
-						*ngIf="organizationInvitesAllowed"
-						status="primary"
-						(click)="invite()"
-						class="mr-2"
-					>
-						<nb-icon class="mr-1" icon="email-outline"></nb-icon
-						>{{ 'BUTTONS.INVITE' | translate }}
-					</button>
-				</ng-template>
-				<button nbButton status="success" (click)="add()" class="mr-2">
-					<nb-icon class="mr-1" icon="plus-outline"></nb-icon
-					>{{ 'BUTTONS.ADD_NEW' | translate }}
-				</button>
-				<ng-template ngxPermissionsOnly="TENANT_ADD_EXISTING_USER">
-					<button
-						(click)="showAddCard = !showAddCard"
-						nbButton
-						status="warning"
-						class="mr-2"
-					>
-						<nb-icon class="mr-1" icon="plus-outline"></nb-icon
-						>{{ 'BUTTONS.ADD_EXISTING' | translate }}
-					</button>
-				</ng-template>
-				<ng-container *ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE">
-					<ng-container
-						*ngTemplateOutlet="actionButtons"
-					></ng-container>
-				</ng-container>
+			<div class="edit-user-mutation" *ngIf="showAddCard">
 				<ng-template ngxPermissionsOnly="TENANT_ADD_EXISTING_USER">
 					<ga-edit-user-mutation
-						*ngIf="showAddCard"
 						[organization]="organization"
 						(addOrEditUser)="addOrEditUser($event)"
 						(canceled)="cancel()"
@@ -86,7 +51,7 @@
 			</div>
 		</ng-template>
 		<ng-template
-			[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE" 
+			[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
 			[ngIfElse]="gridLayout"
 		>
 			<div class="table-scroll-container">
@@ -99,68 +64,108 @@
 				>
 				</ng2-smart-table>
 			</div>
+			<div class="pagination-container align-self-end">
+				<ng-container
+					*ngIf="pagination.totalItems > pagination.itemsPerPage"
+				>
+					<ga-pagination
+						(selectedOption)="onUpdateOption($event)"
+						(selectedPage)="onPageChange($event)"
+						[doEmit]="false"
+						[totalItems]="pagination?.totalItems"
+						[itemsPerPage]="pagination?.itemsPerPage"
+						[activePage]="pagination?.activePage"
+					></ga-pagination>
+				</ng-container>
+			</div>
 		</ng-template>
 		<ng-template #gridLayout>
-			<div class="grid-scroll-container">
-				<ul class="flex-container">
-					<li class="flex-item" *ngFor="let user of users">
-						<div class="fullName">
-							<img [src]="user.imageUrl" alt="Avatar" class="avatar" />
-							<span>{{ user.fullName }}</span>
-						</div>
-						<div class="email">
-							<span class="info-value">{{ user.email }}</span>
-						</div>
-						<div class="info-line">
-							<span class="info-meta">
-								{{ 'USERS_PAGE.ROLE.ROLE' | translate }}
-							</span>
-							<span class="info-value">{{ user.role }}</span>
-						</div>
-						<nb-card-footer class="card-footer">
-							<ng-container
-								*ngTemplateOutlet="
-									actionButtons;
-									context: {
-										buttonSize: 'tiny',
-										selectedItem: user
-									}
-								"
-							></ng-container>
-						</nb-card-footer>
-					</li>
-				</ul>
-			</div>
-		</ng-template>		
+			<ga-card-grid
+				[settings]="settingsSmartTable"
+				[source]="users"
+				(onSelectedItem)="selectUser($event)"
+				(selectedOption)="onUpdateOption($event)"
+				(selectedPage)="onPageChange($event)"
+				[doEmit]="false"
+				[totalItems]="pagination?.totalItems"
+				[itemsPerPage]="pagination?.itemsPerPage"
+				[activePage]="pagination?.activePage"
+			></ga-card-grid>
+		</ng-template>
 	</nb-card-body>
 </nb-card>
-<ng-template
-	#actionButtons
-	let-buttonSize="buttonSize"
-	let-selectedItem="selectedItem"
->
+<ng-template #actionButtons let-selectedItem="selectedItem">
 	<ng-template ngxPermissionsOnly="ORG_USERS_EDIT">
+		<div class="actions">
+			<button
+				nbButton
+				[disabled]="!selectedItem && disableButton"
+				status="basic"
+				class="action secondary"
+				size="small"
+			>
+				<nb-icon class="mr-1" icon="eye-outline"></nb-icon
+				>{{ 'BUTTONS.VIEW' | translate }}
+			</button>
+			<button
+				nbButton
+				[disabled]="!selectedItem && disableButton"
+				(click)="edit(selectedItem)"
+				status="basic"
+				class="action primary"
+				size="small"
+			>
+				<nb-icon class="mr-1" icon="edit-outline"></nb-icon
+				>{{ 'BUTTONS.EDIT' | translate }}
+			</button>
+			<button
+				nbButton
+				[disabled]="!selectedItem && disableButton"
+				(click)="remove(selectedUser, selectedItem)"
+				status="basic"
+				class="action"
+				size="small"
+				[nbTooltip]="'BUTTONS.REMOVE' | translate"
+			>
+				<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
+			</button>
+		</div>
+	</ng-template>
+</ng-template>
+<ng-template #visible>
+	<ng-template ngxPermissionsOnly="ORG_INVITE_EDIT">
 		<button
 			nbButton
-			[disabled]="!selectedItem && disableButton"
-			(click)="edit(selectedItem)"
-			status="info"
-			class="mr-2"
-			[size]="buttonSize || 'medium'"
+			*ngIf="organizationInvitesAllowed"
+			status="basic"
+			(click)="invite()"
+			class="action info"
+			size="small"
 		>
-			<nb-icon class="mr-1" icon="edit-outline"></nb-icon
-			>{{ 'BUTTONS.EDIT' | translate }}
+			<nb-icon icon="email-outline"></nb-icon
+			>{{ 'BUTTONS.INVITE' | translate }}
 		</button>
+	</ng-template>
+	<button
+		nbButton
+		status="success"
+		size="small"
+		(click)="add()"
+		class="action"
+	>
+		<nb-icon icon="plus-outline"></nb-icon
+		>{{ 'BUTTONS.ADD_NEW' | translate }}
+	</button>
+	<ng-template ngxPermissionsOnly="TENANT_ADD_EXISTING_USER">
 		<button
+			(click)="showAddCard = !showAddCard"
 			nbButton
-			[disabled]="!selectedItem && disableButton"
-			(click)="remove(selectedUser, selectedItem)"
-			status="danger"
-			class="mr-2"
-			[size]="buttonSize || 'medium'"
+			status="warning"
+			class="action"
+			size="small"
 		>
-			<nb-icon class="mr-1" icon="trash-2-outline"></nb-icon
-			>{{ 'BUTTONS.REMOVE' | translate }}
+			<nb-icon icon="plus-outline"></nb-icon
+			>{{ 'BUTTONS.ADD_EXISTING' | translate }}
 		</button>
 	</ng-template>
 </ng-template>

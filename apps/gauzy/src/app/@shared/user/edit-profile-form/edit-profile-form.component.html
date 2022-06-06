@@ -6,12 +6,7 @@
 					<ng-container *ngTemplateOutlet="imageUploaderTemplate"></ng-container>
 				</div>
 				<ng-template [ngIf]="role">
-					<nb-badge
-						status="danger"
-						style="position: relative; margin-top: 20px;"
-						[text]="role?.name | replace : '_' : ' '"
-						position="bottom-left"
-					></nb-badge>
+					<gauzy-role class="badge" [rowData]="role"></gauzy-role>
 				</ng-template>
 			</div>
 			<div class="employee-form">

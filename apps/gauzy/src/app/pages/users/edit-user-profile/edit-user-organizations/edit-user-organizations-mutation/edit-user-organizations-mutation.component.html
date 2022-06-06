@@ -1,11 +1,13 @@
-<nb-card>
+<nb-card class="m-0 pb-0">
 	<nb-card-header>
 		{{ 'USERS_PAGE.ADD_EXISTING_ORGANIZATION' | translate }}
 	</nb-card-header>
 	<nb-card-body>
 		<div class="form-group">
-			<div class="form-group d-flex flex-row bd-highlight mb-3">
-				<div class="form-group col-4">
+			<div
+				class="form-group d-flex flex-row justify-content-between align-items-center m-0"
+			>
+				<div class="form-group w-100 p-0">
 					<form [formGroup]="form" *ngIf="form">
 						<ga-user-organizations-multi-select
 							[selectedOrganizationsId]="selectedOrganizationsId"
@@ -15,17 +17,18 @@
 						</ga-user-organizations-multi-select>
 					</form>
 				</div>
-				<div class="form-group">
+				<div class="form-group d-flex flex-row ml-3">
 					<button
-						class="mr-2"
+						(click)="cancel()"
+						class="mr-3"
 						nbButton
-						(click)="submitForm()"
-						status="success"
+						outline
+						status="basic"
 					>
-						{{ 'BUTTONS.SAVE' | translate }}
-					</button>
-					<button (click)="cancel()" nbButton status="danger">
 						{{ 'BUTTONS.CANCEL' | translate }}
+					</button>
+					<button nbButton (click)="submitForm()" status="success">
+						{{ 'BUTTONS.SAVE' | translate }}
 					</button>
 				</div>
 			</div>

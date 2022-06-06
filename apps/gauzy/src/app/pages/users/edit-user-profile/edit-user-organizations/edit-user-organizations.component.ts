@@ -23,7 +23,8 @@ import { DeleteConfirmationComponent } from '../../../../@shared/user/forms';
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-edit-user-organization',
-	templateUrl: './edit-user-organizations.component.html'
+	templateUrl: './edit-user-organizations.component.html',
+	styleUrls: ['./edit-user-organizations.component.scss']
 })
 export class EditUserOrganizationsComponent
 	extends TranslationBaseComponent

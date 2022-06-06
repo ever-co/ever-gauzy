@@ -11,7 +11,8 @@ import { TranslationBaseComponent } from '../../../../@shared/language-base';
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-edit-user-data',
-	templateUrl: './edit-user-data.component.html'
+	templateUrl: './edit-user-data.component.html',
+	styleUrls: ['./edit-user-data.component.scss']
 })
 export class EditUserDataComponent
 	extends TranslationBaseComponent
