@@ -43,6 +43,7 @@ export class TimeTrackingAuthorizedDirective implements OnInit {
                 filter((organization: IOrganization) => (
                     camelCase(this.permission) in organization
                 )),
+                tap(() => this._viewContainer.clear()),
 				tap((organization: IOrganization) => {
                     if (organization[camelCase(this.permission)]) {
                         this._viewContainer.createEmbeddedView(this._templateRef);
