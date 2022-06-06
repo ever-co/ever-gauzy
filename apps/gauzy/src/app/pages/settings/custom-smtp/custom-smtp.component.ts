@@ -7,7 +7,7 @@ import { TranslationBaseComponent } from '../../../@shared/language-base/transla
 @Component({
 	selector: 'ga-tenant-custom-smtp',
 	templateUrl: './custom-smtp.component.html',
-	styleUrls: ['./custom-smtp.component.css']
+	styleUrls: ['./custom-smtp.component.scss']
 })
 export class CustomSmtpComponent
 	extends TranslationBaseComponent

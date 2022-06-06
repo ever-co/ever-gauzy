@@ -1,0 +1,20 @@
+@import '../feature/feature.component.scss';
+
+:host {
+
+    nb-card,
+    nb-card-body {
+        background-color: nb-theme(gauzy-card-2);
+
+        .content {
+            background-color: nb-theme(gauzy-card-4);
+            height: calc(100vh - 22rem);
+            width: 100%;
+            border-radius: nb-theme(border-radius);
+        }
+    }
+
+    nb-card-body {
+        border-radius: 0 0 nb-theme(border-radius) nb-theme(border-radius);
+    }
+}
