@@ -211,7 +211,6 @@ export class Store {
 		this.appStore.update({
 			selectedOrganization: organization
 		});
-		this.loadPermissions();
 	}
 
 	set selectedProject(project: IOrganizationProject) {
@@ -441,27 +440,16 @@ export class Store {
 	}
 
 	loadPermissions() {
-		const { selectedOrganization } = this.appQuery.getValue();
 		let permissions = [];
-
 		// User permissions load here
 		const userPermissions = Object.keys(PermissionsEnum)
-			.map((key) => PermissionsEnum[key])
-			.filter((permission) => this.hasPermission(permission));
-		permissions = permissions.concat(userPermissions);
-
-		// Organization time tracking permissions load here
-		if (selectedOrganization) {
-			const organizationPermissions = Object.keys(
-				OrganizationPermissionsEnum
+			.map(
+				(key) => PermissionsEnum[key]
 			)
-				.map((permission) => OrganizationPermissionsEnum[permission])
-				.filter(
-					(permission) => selectedOrganization[camelCase(permission)]
-				);
-			permissions = permissions.concat(organizationPermissions);
-		}
-
+			.filter(
+				(permission) => this.hasPermission(permission)
+			); 
+		permissions = permissions.concat(userPermissions);
 		this.permissionsService.flushPermissions();
 		this.permissionsService.loadPermissions(permissions);
 	}

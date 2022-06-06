@@ -1,5 +1,5 @@
 import { Component, OnInit, Input, OnDestroy } from '@angular/core';
-import { IOrganization, ITimeLog, OrganizationPermissionsEnum } from '@gauzy/contracts';
+import { IOrganization, ITimeLog, PermissionsEnum } from '@gauzy/contracts';
 import * as moment from 'moment';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -19,7 +19,7 @@ import { TimeTrackerService } from './../../time-tracker/time-tracker.service';
 export class ViewTimeLogComponent implements OnInit, OnDestroy {
 	
 	organization: IOrganization;
-	OrganizationPermissionsEnum = OrganizationPermissionsEnum;
+	PermissionsEnum = PermissionsEnum;
 	@Input() timeLogs: ITimeLog[] = [];
 	@Input() callback: CallableFunction;
 

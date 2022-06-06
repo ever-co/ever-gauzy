@@ -31,20 +31,23 @@
 			nbSpinnerStatus="primary"
 		>
 			<div class="row custom-header m-0 align-items-center">
-				<div
-					class="col-auto"
-					*ngxPermissionsOnly="[
-						PermissionsEnum.ALLOW_DELETE_TIME
-					]"
+				<ng-template
+					[ngxPermissionsOnly]="PermissionsEnum.ALLOW_DELETE_TIME"
 				>
-					<nb-checkbox
-						status="basic"
-						[checked]="allChecked"
-						[indeterminate]="isIndeterminate()"
-						(checkedChange)="checkedAll($event)"
+					<ng-template 
+						ngxTimeTrackingAuthorized
+						[permission]="PermissionsEnum.ALLOW_DELETE_TIME"
 					>
-					</nb-checkbox>
-				</div>
+						<div class="col-auto">
+							<nb-checkbox
+								status="basic"
+								[checked]="allChecked"
+								[indeterminate]="isIndeterminate()"
+								(checkedChange)="checkedAll($event)"
+							></nb-checkbox>
+						</div>
+					</ng-template>
+				</ng-template>
 				<div class="col-3">
 					{{ 'TIMESHEET.PROJECT' | translate }} /
 					{{ 'TIMESHEET.TODO' | translate }}
@@ -70,20 +73,24 @@
 							class="row m-0 py-3 align-items-center"
 							[ngClass]="{ 'border-bottom' : !last, 'selected' : log?.isSelected }"
 						>
-							<div
-								class="col-auto"
-								*ngxPermissionsOnly="[
-									PermissionsEnum.ALLOW_DELETE_TIME
-								]"
+							<ng-template
+								[ngxPermissionsOnly]="PermissionsEnum.ALLOW_DELETE_TIME"
 							>
-								<nb-checkbox
-									[checked]="log.checked"
-									(click)="$event.stopPropagation();"
-									(checkedChange)="toggleCheckbox($event, log);"
-									status="basic"
-									[disabled]="log.isRunning"
-								></nb-checkbox>
-							</div>
+								<ng-template 
+									ngxTimeTrackingAuthorized
+									[permission]="PermissionsEnum.ALLOW_DELETE_TIME"
+								>
+									<div class="col-auto">
+										<nb-checkbox
+											[checked]="log.checked"
+											(click)="$event.stopPropagation();"
+											(checkedChange)="toggleCheckbox($event, log);"
+											status="basic"
+											[disabled]="log.isRunning"
+										></nb-checkbox>
+									</div>
+								</ng-template>
+							</ng-template>
 							<div class="col-3 project-name">
 								<ngx-project
 									*ngIf="log?.project; else noProject"
@@ -199,43 +206,57 @@
 				<nb-icon icon="eye-outline"></nb-icon>
 				{{ 'TIMESHEET.VIEW' | translate }}
 			</button>
-			<button
-				*ngxPermissionsOnly="[
-					PermissionsEnum.ALLOW_MODIFY_TIME
-				]"
-				[disabled]="selectedItem?.isRunning"
-				nbButton
-				status="basic"
-				class="action primary"
-				[disabled]="selectedItem?.isRunning || disableButton"
-				size="small"
-				(click)="openEdit(selectedItem)"
+			<ng-template 
+				[ngxPermissionsOnly]="PermissionsEnum.ALLOW_MODIFY_TIME"
 			>
-				<nb-icon icon="edit"></nb-icon>
-				{{ 'TIMESHEET.EDIT' | translate }}
-			</button>
-			<button
-				*ngxPermissionsOnly="[
-					PermissionsEnum.ALLOW_DELETE_TIME
-				]"
-				[disabled]="selectedItem?.isRunning"
-				nbButton
-				status="basic"
-				size="small"
-				class="action"
-				[disabled]="selectedItem?.isRunning || disableButton"
-				ngxConfirmDialog
-				[message]="'TIMESHEET.DELETE_TIMELOG' | translate"
-				(confirm)="onDeleteConfirm(selectedItem)"
-				[nbTooltip]="'TIMESHEET.DELETE' | translate"
+				<ng-template 
+					ngxTimeTrackingAuthorized
+					[permission]="PermissionsEnum.ALLOW_MODIFY_TIME"
+				>
+					<button
+						[disabled]="selectedItem?.isRunning"
+						nbButton
+						status="basic"
+						class="action primary"
+						[disabled]="selectedItem?.isRunning || disableButton"
+						size="small"
+						(click)="openEdit(selectedItem)"
+					>
+						<nb-icon icon="edit"></nb-icon>
+						{{ 'TIMESHEET.EDIT' | translate }}
+					</button>
+				</ng-template>
+			</ng-template>
+			<ng-template 
+				[ngxPermissionsOnly]="PermissionsEnum.ALLOW_DELETE_TIME"
 			>
-				<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
-			</button>
+				<ng-template 
+					ngxTimeTrackingAuthorized
+					[permission]="PermissionsEnum.ALLOW_DELETE_TIME"
+				>
+					<button
+						[disabled]="selectedItem?.isRunning"
+						nbButton
+						status="basic"
+						size="small"
+						class="action"
+						[disabled]="selectedItem?.isRunning || disableButton"
+						ngxConfirmDialog
+						[message]="'TIMESHEET.DELETE_TIMELOG' | translate"
+						(confirm)="onDeleteConfirm(selectedItem)"
+						[nbTooltip]="'TIMESHEET.DELETE' | translate"
+					>
+						<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
+					</button>
+				</ng-template>
+			</ng-template>
 		</ng-container>
 	</div>
 </ng-template>
 <ng-template #visibleButtons>
-	<ng-template [ngxPermissionsOnly]="PermissionsEnum.ALLOW_MANUAL_TIME">
+	<ng-template 
+		[ngxPermissionsOnly]="PermissionsEnum.ALLOW_MANUAL_TIME"
+	>
 		<ng-template 
 			ngxTimeTrackingAuthorized
 			[permission]="PermissionsEnum.ALLOW_MANUAL_TIME"
