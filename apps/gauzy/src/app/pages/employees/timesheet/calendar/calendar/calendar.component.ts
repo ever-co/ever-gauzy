@@ -23,7 +23,6 @@ import { Observable, Subject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import {
 	IGetTimeLogInput,
-	IOrganization,
 	ITimeLog,
 	ITimeLogFilters,
 	PermissionsEnum
@@ -62,7 +61,6 @@ export class CalendarComponent extends BaseSelectorFilterComponent
 
 	filters: ITimeLogFilters;
 	subject$: Subject<any> = new Subject();
-	organization: IOrganization;
 
 	loading: boolean;
 	futureDateAllowed: boolean;
@@ -110,17 +108,21 @@ export class CalendarComponent extends BaseSelectorFilterComponent
 	}
 
 	ngOnInit() {
-		this.ngxPermissionsService.permissions$
+		this.subject$
 			.pipe(
-				untilDestroyed(this)
-			)
-			.subscribe(async () => {
-				if (this.calendar.getApi()) {
+				debounceTime(500),
+				filter(() => !!this.calendar.getApi()),
+				tap(async () => {
+					const {
+						allowManualTime,
+						allowModifyTime,
+						futureDateAllowed
+					} = this.organization;
 					const calendar = this.calendar.getApi();
 					if (
 						await this.ngxPermissionsService.hasPermission(
 							PermissionsEnum.ALLOW_MANUAL_TIME
-						)
+						) && allowManualTime
 					) {
 						calendar.setOption('selectable', true);
 					} else {
@@ -130,33 +132,15 @@ export class CalendarComponent extends BaseSelectorFilterComponent
 					if (
 						await this.ngxPermissionsService.hasPermission(
 							PermissionsEnum.ALLOW_MODIFY_TIME
-						)
+						) && allowModifyTime
 					) {
 						calendar.setOption('editable', true);
 					} else {
 						calendar.setOption('editable', false);
 					}
-				}
-			});
-	}
 
-	filtersChange(filters: ITimeLogFilters) {
-		if (this.gauzyFiltersComponent.saveFilters) {
-			this.timesheetFilterService.filter = filters;
-		}
-		this.filters = Object.assign({}, filters);
-		this.subject$.next(true);
-	}
-
-	ngAfterViewInit() {
-		this.cdr.detectChanges();
-		this.subject$
-			.pipe(
-				debounceTime(500),
-				filter(() => !!this.calendar.getApi()),
-				tap(() => {
-					this.futureDateAllowed = this.organization.futureDateAllowed;
-					this.calendar.getApi().setOption('firstDay', dayOfWeekAsString(this.organization.startWeekOn));
+					calendar.setOption('firstDay', dayOfWeekAsString(this.organization.startWeekOn));
+					this.futureDateAllowed = futureDateAllowed;
 				}),
 				tap(() => {
 					if (this.request.startDate && this.calendar.getApi()) {
@@ -169,6 +153,18 @@ export class CalendarComponent extends BaseSelectorFilterComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
+	}
+
+	filtersChange(filters: ITimeLogFilters) {
+		if (this.gauzyFiltersComponent.saveFilters) {
+			this.timesheetFilterService.filter = filters;
+		}
+		this.filters = Object.assign({}, filters);
+		this.subject$.next(true);
+	}
+
+	ngAfterViewInit() {
+		this.cdr.detectChanges();
 	}
 
 	getEvents(arg: any, callback) {
@@ -216,6 +212,7 @@ export class CalendarComponent extends BaseSelectorFilterComponent
 	}
 
 	selectAllow({ start, end }) {
+		console.log({ start, end });
 		const isOneDay = moment(start).isSame(moment(end), 'day');
 		return this.futureDateAllowed
 			? isOneDay

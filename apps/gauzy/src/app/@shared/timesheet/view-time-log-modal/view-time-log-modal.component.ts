@@ -4,7 +4,6 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
 	ITimeLog,
 	PermissionsEnum,
-	OrganizationPermissionsEnum,
 	IOrganization
 } from '@gauzy/contracts';
 import { filter, tap } from 'rxjs/operators';
@@ -24,7 +23,6 @@ import { Router } from '@angular/router';
 export class ViewTimeLogModalComponent implements OnInit, OnDestroy {
 	organization: IOrganization;
 	PermissionsEnum = PermissionsEnum;
-	OrganizationPermissionsEnum = OrganizationPermissionsEnum;
 	TimeLogsLabel = TimeLogsLabel;
 
 	@Input() timeLog: ITimeLog;

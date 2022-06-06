@@ -196,6 +196,9 @@ export const PermissionGroups = {
 		PermissionsEnum.ORG_PRODUCT_CATEGORIES_VIEW,
 		PermissionsEnum.ORG_PRODUCT_CATEGORIES_EDIT,
 		PermissionsEnum.VIEW_ALL_ACCOUNTING_TEMPLATES,
+		PermissionsEnum.ALLOW_DELETE_TIME,
+		PermissionsEnum.ALLOW_MODIFY_TIME,
+		PermissionsEnum.ALLOW_MANUAL_TIME,
 		PermissionsEnum.DELETE_SCREENSHOTS,
 	],
 
