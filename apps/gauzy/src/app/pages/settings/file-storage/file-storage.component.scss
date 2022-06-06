@@ -1,6 +1,14 @@
 @import '../sms-gateway/sms-gateway.component.scss';
+@import '../../../@theme/styles/gauzy/gauzy-overrides';
+
 
 :host {
+    ::ng-deep {
+        @include nb-select-overrides ($default-height,
+            $default-button-radius,
+            $default-box-shadow );
+    }
+
     nb-card-footer {
         background-color: nb-theme(gauzy-card-2);
         padding-top: 0;
