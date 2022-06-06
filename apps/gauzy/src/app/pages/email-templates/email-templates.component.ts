@@ -82,7 +82,6 @@ export class EmailTemplatesComponent
 		combineLatest([storeOrganization$, preferredLanguage$])
 			.pipe(
 				distinctUntilChange(),
-				filter(([organization, language]) => !!organization && !!language),
 				tap(([organization, language]) => {
 					this.organization = organization;
 					this.form.patchValue({ languageCode: language });
@@ -132,6 +131,8 @@ export class EmailTemplatesComponent
 	}
 
 	async getTemplate() {
+		if(!this.organization) return;
+
 		try {
 			const { tenantId } = this.store.user;
 			const { id: organizationId } = this.organization;
