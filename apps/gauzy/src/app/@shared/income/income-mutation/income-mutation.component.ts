@@ -61,7 +61,7 @@ export class IncomeMutationComponent
 			organizationContact: [null, Validators.required],
 			notes: [],
 			currency: [],
-			isBonus: false,
+			isBonus: [false],
 			tags: [],
 			employee: []
 		});
@@ -106,7 +106,7 @@ export class IncomeMutationComponent
 
 	private _initializeForm() {
 		if (this.income) {
-			const { valueDate, amount, client, notes, currency, isBonus, tags, employee } = this.income;
+			const { valueDate, amount, client, notes, currency, isBonus = false, tags, employee } = this.income;
 			this.form.patchValue({
 				valueDate: new Date(valueDate),
 				amount: amount,
@@ -115,7 +115,7 @@ export class IncomeMutationComponent
 				currency: currency,
 				isBonus: isBonus,
 				tags: tags,
-				employee
+				employee: employee
 			});
 		}
 	}
