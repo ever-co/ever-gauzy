@@ -57,6 +57,7 @@
 						[selected]="
 							selectedRecurringExpense?.data?.id === expense.id
 						"
+						[showHistory]="showHistory"
 					></ga-recurring-expense-block>
 				</ng-container>
 			</ng-container>
@@ -94,7 +95,7 @@
 			<nb-icon icon="edit-outline"></nb-icon>
 			{{ 'BUTTONS.EDIT' | translate }}
 		</button>
-		<button nbButton class="action secondary" size="small" status="basic">
+		<button nbButton class="action secondary" (click)="showHistory = !showHistory" size="small" status="basic">
 			<i class="fas fa-history mr-1"></i>
 			{{ 'BUTTONS.HISTORY' | translate }}
 		</button>
