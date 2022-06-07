@@ -6,7 +6,7 @@ import { Router } from '@angular/router';
 	template: `
 		<div class="contact-links-container">
 			<ng-container *ngIf="value">
-				<a *ngIf="value?.name" (click)="navigateToContact()" class="link-text">
+				<a *ngIf="value?.name" (click)="navigateToContact()" class="link-text" [nbTooltip]="value.name">
 					<span>{{ value.name.substr(0,2).toUpperCase() }}</span>{{ value.name }}
 				</a>
 			</ng-container>
