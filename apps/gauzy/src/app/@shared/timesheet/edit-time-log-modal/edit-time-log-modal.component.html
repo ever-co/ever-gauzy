@@ -311,20 +311,27 @@
 					) | translate
 				}}
 			</button>
-			<ng-template ngxPermissionsOnly="ALLOW_DELETE_TIME">
-				<button
-					type="button"
-					class="action ml-3"
-					nbButton
-					size="small"
-					status="basic"
-					ngxConfirmDialog
-					[message]="'TIMESHEET.DELETE_TIMELOG' | translate"
-					(confirm)="onDeleteConfirm(timeLog)"
-					*ngIf="mode == 'update'"
+			<ng-template 
+				[ngxPermissionsOnly]="PermissionsEnum.ALLOW_DELETE_TIME"
+			>
+				<ng-template 
+					ngxTimeTrackingAuthorized
+					[permission]="PermissionsEnum.ALLOW_DELETE_TIME"
 				>
-					<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
-				</button>
+					<button
+						type="button"
+						class="action ml-3"
+						nbButton
+						size="small"
+						status="basic"
+						ngxConfirmDialog
+						[message]="'TIMESHEET.DELETE_TIMELOG' | translate"
+						(confirm)="onDeleteConfirm(timeLog)"
+						*ngIf="mode == 'update'"
+					>
+						<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
+					</button>
+				</ng-template>
 			</ng-template>
 		</nb-card-footer>
 	</nb-card>

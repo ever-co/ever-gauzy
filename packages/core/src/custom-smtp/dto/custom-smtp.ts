@@ -31,4 +31,9 @@ export class CustomSmtpDTO implements ICustomSmtp {
 	@IsBoolean()
 	@IsOptional()
 	readonly isValidate: boolean;
+
+	@ApiProperty({ type: () => String, readOnly: true })
+	@IsOptional()
+	@IsString()
+	readonly organizationId: string;
 }

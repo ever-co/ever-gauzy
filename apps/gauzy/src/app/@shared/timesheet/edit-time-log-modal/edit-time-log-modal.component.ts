@@ -11,7 +11,6 @@ import {
 	ITimeLog,
 	IEmployee,
 	PermissionsEnum,
-	OrganizationPermissionsEnum,
 	IGetTimeLogConflictInput,
 	ISelectedEmployee,
 	TimeLogType,
@@ -38,7 +37,6 @@ export class EditTimeLogModalComponent
 	implements OnInit, AfterViewInit, OnDestroy {
 		
 	PermissionsEnum = PermissionsEnum;
-	OrganizationPermissionsEnum = OrganizationPermissionsEnum;
 	today: Date = new Date();
 	mode: 'create' | 'update' = 'create';
 	loading: boolean;

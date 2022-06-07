@@ -7,7 +7,6 @@ import {
 	ITimeLog,
 	ITimesheet,
 	TimesheetStatus,
-	OrganizationPermissionsEnum,
 	PermissionsEnum
 } from '@gauzy/contracts';
 import { chain } from 'underscore';
@@ -29,11 +28,9 @@ import { TranslationBaseComponent } from './../../../../../@shared/language-base
 		'./view.component.scss'
 	]
 })
-export class ViewComponent
-	extends TranslationBaseComponent
-	implements OnInit, OnDestroy
-{
-	OrganizationPermissionsEnum = OrganizationPermissionsEnum;
+export class ViewComponent extends TranslationBaseComponent 
+	implements OnInit, OnDestroy {
+
 	PermissionsEnum = PermissionsEnum;
 	TimesheetStatus = TimesheetStatus;
 	timeLogs: any;

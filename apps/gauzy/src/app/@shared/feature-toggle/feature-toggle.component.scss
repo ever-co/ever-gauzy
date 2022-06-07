@@ -31,14 +31,14 @@
                 color: nb-theme(gauzy-text-color-2);
 
                 nb-list-item {
-                    nb-checkbox[ng-reflect-checked="true"] ::ng-deep {
-                        span.text {
+                    nb-checkbox ::ng-deep {
+                        span.checked+span.text {
                             color: nb-theme(text-primary-color);
                         }
                     }
 
-                    nb-checkbox[ng-reflect-checked="false"] ::ng-deep {
-                        span.text {
+                    nb-checkbox ::ng-deep {
+                        span+span.text {
                             color: nb-theme(gauzy-text-color-2);
                         }
                     }
