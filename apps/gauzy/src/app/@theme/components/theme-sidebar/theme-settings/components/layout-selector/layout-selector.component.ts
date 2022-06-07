@@ -1,9 +1,9 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { ComponentLayoutStyleEnum, IUser } from '@gauzy/contracts';
-import { UsersService } from 'apps/gauzy/src/app/@core';
-import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
+import { ComponentLayoutStyleEnum, IUser, IUserUpdateInput } from '@gauzy/contracts';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { UsersService } from './../../../../../../@core';
+import { Store } from './../../../../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -12,9 +12,11 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 	styleUrls: ['./layout-selector.component.scss']
 })
 export class LayoutSelectorComponent implements OnInit, OnDestroy {
-	componentLayouts = Object.keys(ComponentLayoutStyleEnum);
-	currentLayout: string = ComponentLayoutStyleEnum.TABLE;
+	
 	user: IUser;
+	componentLayouts = Object.values(ComponentLayoutStyleEnum);
+	preferredComponentLayout: ComponentLayoutStyleEnum = ComponentLayoutStyleEnum.TABLE;
+
 	constructor(
 		private readonly store: Store,
 		private readonly userService: UsersService
@@ -25,36 +27,29 @@ export class LayoutSelectorComponent implements OnInit, OnDestroy {
 			.pipe(
 				filter((user: IUser) => !!user),
 				tap((user: IUser) => (this.user = user)),
+				tap(({ preferredComponentLayout }: IUser) => {
+					if (preferredComponentLayout) {
+						this.store.preferredComponentLayout = preferredComponentLayout;
+					} else {
+						this.store.preferredComponentLayout = ComponentLayoutStyleEnum.TABLE;
+					}
+				}),
 				untilDestroyed(this)
 			)
-			.subscribe((user) => {
-				if (user) {
-					if (
-						user.preferredComponentLayout &&
-						user.preferredComponentLayout !== this.currentLayout
-					) {
-						this.currentLayout = user.preferredComponentLayout;
-					}
-					this.switchComponentLayout();
-				}
-			});
+			.subscribe();
 		this.store.preferredComponentLayout$
 			.pipe(
-				filter((preferredLayout: string) => !!preferredLayout),
+				filter((preferredLayout: ComponentLayoutStyleEnum) => !!preferredLayout),
+				tap((preferredLayout: ComponentLayoutStyleEnum) => this.preferredComponentLayout = preferredLayout),
 				untilDestroyed(this)
 			)
-			.subscribe((preferredLayout) => {
-				if (preferredLayout && preferredLayout !== this.currentLayout) {
-					this.currentLayout = preferredLayout;
-				}
-			});
+			.subscribe();
 	}
-	switchComponentLayout(selectedStyle?: ComponentLayoutStyleEnum) {
-		this.store.preferredComponentLayout =
-			selectedStyle || this.currentLayout;
 
+	switchComponentLayout() {
+		this.store.preferredComponentLayout = this.preferredComponentLayout;
 		this.changePreferredComponentLayout({
-			preferredComponentLayout: selectedStyle || this.currentLayout
+			preferredComponentLayout: this.preferredComponentLayout
 		});
 	}
 
@@ -62,14 +57,20 @@ export class LayoutSelectorComponent implements OnInit, OnDestroy {
 		this.store.componentLayout = [];
 	}
 
-	private async changePreferredComponentLayout(request: any) {
+	/**
+	 * Changed User Selected Preferred Component Layout
+	 * 
+	 * @param payload 
+	 * @returns 
+	 */
+	private async changePreferredComponentLayout(payload: IUserUpdateInput) {
 		if (!this.user) {
 			return;
 		}
 		try {
 			await this.userService.updatePreferredComponentLayout(
 				this.user.id,
-				request
+				payload
 			);
 		} catch (error) {
 			console.error(`Failed to update user preferred component layout`);
