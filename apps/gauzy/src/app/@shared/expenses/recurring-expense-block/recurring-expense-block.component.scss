@@ -6,7 +6,7 @@
   margin-bottom: 8px;
   background-color: nb-theme(gauzy-card-1) !important;
 
-  &:hover {
+  &.block {
     box-shadow: -6px 0px 0px 0px rgba(0, 0, 0, 0.15);
   }
 
@@ -19,7 +19,8 @@
     border-radius: nb-theme(border-radius);
     padding: 0.75rem 0 0.75rem 0.75rem;
 
-    &:hover {
+    &:hover,
+    &.active {
       background-color: nb-theme(gauzy-sidebar-background-3);
     }
   }

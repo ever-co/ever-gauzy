@@ -1,4 +1,4 @@
-<nb-card 
+<nb-card
 	[nbSpinner]="loading"
 	nbSpinnerStatus="primary"
 	nbSpinnerSize="large"
@@ -13,11 +13,11 @@
 	</nb-card-header>
 	<nb-card-body class="settings-body">
 		<ng-template ngxPermissionsOnly="EMPLOYEE_EXPENSES_EDIT">
-				<button
-					(click)="addEmployeeRecurringExpense()"
-					nbButton
-					status="success"
-				>
+			<button
+				(click)="addEmployeeRecurringExpense()"
+				nbButton
+				status="success"
+			>
 				<nb-icon class="mr-1" icon="plus-outline"></nb-icon>
 				{{ 'BUTTONS.ADD' | translate }}
 			</button>
@@ -43,14 +43,22 @@
 				</div>
 			</div>
 			<ng-container *ngIf="recurringExpenses.length">
-				<ng-container *ngFor="let expense of recurringExpenses; let i = index">
+				<ng-container
+					*ngFor="let expense of recurringExpenses; let i = index"
+				>
 					<ga-recurring-expense-block
+						(click)="selectRecurringExpense(expense)"
 						(editRecurringExpense)="editEmployeeRecurringExpense(i)"
-						(deleteRecurringExpense)="deleteEmployeeRecurringExpense(i)"
+						(deleteRecurringExpense)="
+							deleteEmployeeRecurringExpense(i)
+						"
 						(fetchRecurringExpenseHistory)="fetchHistory(i)"
 						[fetchedHistories]="fetchedHistories[i]"
 						[recurringExpense]="expense"
 						[selectedOrganization]="organization"
+						[selected]="
+							selectedRecurringExpense?.data?.id === expense.id
+						"
 					></ga-recurring-expense-block>
 				</ng-container>
 			</ng-container>

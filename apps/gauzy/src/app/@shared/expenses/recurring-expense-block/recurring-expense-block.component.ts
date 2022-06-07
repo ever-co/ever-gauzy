@@ -28,6 +28,9 @@ export class RecurringExpenseBlockComponent
 	employeeName?: boolean = true;
 
 	@Input()
+	selected?: boolean = false;
+
+	@Input()
 	fetchedHistories: IRecurringExpenseModel[];
 
 	@Input()

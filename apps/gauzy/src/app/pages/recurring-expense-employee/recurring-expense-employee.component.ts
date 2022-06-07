@@ -34,9 +34,10 @@ import {
 	templateUrl: './recurring-expense-employee.component.html',
 	styleUrls: ['./recurring-expense-employee.component.scss']
 })
-export class RecurringExpensesEmployeeComponent extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
-
+export class RecurringExpensesEmployeeComponent
+	extends TranslationBaseComponent
+	implements OnInit, OnDestroy
+{
 	selectedEmployee: IEmployee;
 	selectedDateRange: IDateRangePicker;
 	recurringExpenses: IEmployeeRecurringExpense[] = [];
@@ -47,6 +48,11 @@ export class RecurringExpensesEmployeeComponent extends TranslationBaseComponent
 
 	loading: boolean;
 	expenses$: Subject<any> = new Subject();
+
+	selectedRecurringExpense = {
+		isSelected: false,
+		data: null
+	};
 
 	constructor(
 		private readonly route: ActivatedRoute,
@@ -66,14 +72,21 @@ export class RecurringExpensesEmployeeComponent extends TranslationBaseComponent
 				debounceTime(300),
 				tap(() => this._loadEmployeeRecurringExpense()),
 				untilDestroyed(this)
-			).subscribe();
+			)
+			.subscribe();
 		const selectedOrganization$ = this.store.selectedOrganization$;
 		const selectedEmployee$ = this.store.selectedEmployee$;
 		const selectedDateRange$ = this.store.selectedDateRange$;
-		combineLatest([selectedOrganization$, selectedEmployee$, selectedDateRange$])
+		combineLatest([
+			selectedOrganization$,
+			selectedEmployee$,
+			selectedDateRange$
+		])
 			.pipe(
 				debounceTime(300),
-				filter(([organization, employee]) => !!organization && !!employee),
+				filter(
+					([organization, employee]) => !!organization && !!employee
+				),
 				distinctUntilChange(),
 				tap(([organization, employee, dateRange]) => {
 					this.organization = organization;
@@ -94,13 +107,16 @@ export class RecurringExpensesEmployeeComponent extends TranslationBaseComponent
 	}
 
 	/**
-	 * 
+	 *
 	 */
 	async getSelectedEmployee(employeeId: string) {
 		const { items } = await firstValueFrom(
-			this.employeeService.getAll(['user', 'organizationPosition', 'tags', 'skills'], {
-				id: employeeId
-			})
+			this.employeeService.getAll(
+				['user', 'organizationPosition', 'tags', 'skills'],
+				{
+					id: employeeId
+				}
+			)
 		);
 		const [employee] = items;
 
@@ -115,7 +131,9 @@ export class RecurringExpensesEmployeeComponent extends TranslationBaseComponent
 		};
 
 		const checkUsername = this.selectedEmployee.user.username;
-		this.employeeName = checkUsername ? checkUsername : this.getTranslation('EMPLOYEES_PAGE.EMPLOYEE_NAME');
+		this.employeeName = checkUsername
+			? checkUsername
+			: this.getTranslation('EMPLOYEES_PAGE.EMPLOYEE_NAME');
 	}
 
 	getMonthString(month: number) {
@@ -125,26 +143,24 @@ export class RecurringExpensesEmployeeComponent extends TranslationBaseComponent
 	getCategoryName(categoryName: string) {
 		return categoryName in RecurringExpenseDefaultCategoriesEnum
 			? this.getTranslation(
-				`EXPENSES_PAGE.DEFAULT_CATEGORY.${categoryName}`
-			)
+					`EXPENSES_PAGE.DEFAULT_CATEGORY.${categoryName}`
+			  )
 			: categoryName;
 	}
 
 	async addEmployeeRecurringExpense() {
 		// TODO get currency from the page dropdown
 		const result = await firstValueFrom(
-			this.dialogService
-			.open(RecurringExpenseMutationComponent, {
+			this.dialogService.open(RecurringExpenseMutationComponent, {
 				context: {
 					componentType: COMPONENT_TYPE.EMPLOYEE
 				}
-			})
-			.onClose);
+			}).onClose
+		);
 		if (result) {
 			try {
-				const employeeRecurringExpense = this._recurringExpenseMutationResultTransform(
-					result
-				);
+				const employeeRecurringExpense =
+					this._recurringExpenseMutationResultTransform(result);
 				await this.employeeRecurringExpenseService
 					.create(employeeRecurringExpense)
 					.then(() => {
@@ -166,24 +182,21 @@ export class RecurringExpensesEmployeeComponent extends TranslationBaseComponent
 	}
 
 	async editEmployeeRecurringExpense(index: number) {
-		const result = await firstValueFrom(this.dialogService
-			.open(RecurringExpenseMutationComponent, {
+		const result = await firstValueFrom(
+			this.dialogService.open(RecurringExpenseMutationComponent, {
 				// TODO
 				context: {
-					recurringExpense: this.recurringExpenses[
-						index
-					],
+					recurringExpense: this.recurringExpenses[index],
 					componentType: COMPONENT_TYPE.EMPLOYEE
 				}
-			})
-			.onClose);
+			}).onClose
+		);
 
 		if (result) {
 			try {
 				const id = this.recurringExpenses[index].id;
-				const employeeRecurringExpense = this._recurringExpenseMutationResultTransform(
-					result
-				);
+				const employeeRecurringExpense =
+					this._recurringExpenseMutationResultTransform(result);
 				this.employeeRecurringExpenseService
 					.update(id, employeeRecurringExpense)
 					.then(() => {
@@ -207,21 +220,29 @@ export class RecurringExpensesEmployeeComponent extends TranslationBaseComponent
 	async deleteEmployeeRecurringExpense(index: number) {
 		const { startDate } = this.selectedDateRange;
 		const selectedExpense = this.recurringExpenses[index];
-		const result: RecurringExpenseDeletionEnum = await firstValueFrom(this.dialogService
-			.open(RecurringExpenseDeleteConfirmationComponent, {
-				context: {
-					recordType: this.getTranslation(
-						'EMPLOYEES_PAGE.RECURRING_EXPENSE'
-					),
-					start: `${this.getMonthString(selectedExpense.startMonth)}, ${selectedExpense.startYear}`,
-					current: `${this.getMonthString(startDate.getMonth())}, ${startDate.getFullYear()}`,
-					end: selectedExpense.endMonth
-						? `${this.getMonthString(selectedExpense.endMonth)}, ${selectedExpense.endYear
-						}`
-						: 'end'
+		const result: RecurringExpenseDeletionEnum = await firstValueFrom(
+			this.dialogService.open(
+				RecurringExpenseDeleteConfirmationComponent,
+				{
+					context: {
+						recordType: this.getTranslation(
+							'EMPLOYEES_PAGE.RECURRING_EXPENSE'
+						),
+						start: `${this.getMonthString(
+							selectedExpense.startMonth
+						)}, ${selectedExpense.startYear}`,
+						current: `${this.getMonthString(
+							startDate.getMonth()
+						)}, ${startDate.getFullYear()}`,
+						end: selectedExpense.endMonth
+							? `${this.getMonthString(
+									selectedExpense.endMonth
+							  )}, ${selectedExpense.endYear}`
+							: 'end'
+					}
 				}
-			})
-			.onClose);
+			).onClose
+		);
 		if (result) {
 			try {
 				const id = selectedExpense.id;
@@ -272,11 +293,7 @@ export class RecurringExpensesEmployeeComponent extends TranslationBaseComponent
 			startYear: result.startYear || startDate.getFullYear(),
 			startDate:
 				result.startDate ||
-				new Date(
-					startDate.getFullYear(),
-					startDate.getMonth(),
-					1
-				)
+				new Date(startDate.getFullYear(), startDate.getMonth(), 1)
 		};
 	}
 
@@ -325,13 +342,23 @@ export class RecurringExpensesEmployeeComponent extends TranslationBaseComponent
 			await this.employeeRecurringExpenseService.getAll(
 				[],
 				{
-					parentRecurringExpenseId: this
-						.recurringExpenses[i]
-						.parentRecurringExpenseId
+					parentRecurringExpenseId:
+						this.recurringExpenses[i].parentRecurringExpenseId
 				},
 				{ startDate: 'ASC' }
 			)
 		).items;
+	}
+
+	selectRecurringExpense(recurringExpense: IEmployeeRecurringExpense) {
+		this.selectedRecurringExpense =
+			this.selectedRecurringExpense.data &&
+			recurringExpense.id === this.selectedRecurringExpense.data.id
+				? {
+						isSelected: !this.selectedRecurringExpense.isSelected,
+						data: recurringExpense
+				  }
+				: { isSelected: true, data: recurringExpense };
 	}
 
 	ngOnDestroy() {}

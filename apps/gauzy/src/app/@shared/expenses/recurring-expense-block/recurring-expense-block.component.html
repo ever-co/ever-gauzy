@@ -1,19 +1,16 @@
-<div class="setting-block">
-	<div class="setting-row">
+<div [ngClass]="{ block: selected }" class="setting-block">
+	<div class="setting-row" [ngClass]="{ active: selected }">
 		<div class="block-content">
 			<div class="block-info">
 				<div class="expense">
-					<div 
-						class="block-item-big"
-						*ngIf="employeeName"
-					>
+					<div class="block-item-big" *ngIf="employeeName">
 						<ngx-avatar
 							*ngIf="currentEmployee"
 							[src]="currentEmployee?.user?.imageUrl"
 							[name]="currentEmployee?.user?.name"
 							[id]="currentEmployee?.id"
 						></ngx-avatar>
-          			</div>
+					</div>
 					<div class="block-item-big">
 						{{ getCategoryName(recurringExpense?.categoryName) }}
 					</div>
@@ -80,7 +77,7 @@
       </div>
 		</div>
 	</div>
-	<div class="setting-table" *ngIf="showHistory && showMenu">
+	<div class="setting-table" *ngIf="showHistory && showMenu && selected">
 		<ga-recurring-expense-history
 			[recordsData]="fetchedHistories"
 			(closeHistory)="this.showHistory = false"
