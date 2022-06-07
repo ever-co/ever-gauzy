@@ -2406,7 +2406,7 @@
 			"USER_ORGANIZATIONS": "ארגונים"
 		},
 		"REMOVE_USER": "'{{ name }}' was removed",
-		"ACTIVE": "Active",
+		"ACTIVE": "פעיל",
 		"NOT_STARTED": "Not Started"
 	},
 	"CONTEXT_MENU": {
@@ -3667,7 +3667,8 @@
 			"interviewer-interview-schedule": "Interviewer Schedule",
 			"employee-join": "Employee Join",
 			"TEMPLATE_NAMES": "Template Names"
-		}
+		},
+		"HTML_EDITOR": "HTML Editor"
 	},
 	"PIPELINES_PAGE": {
 		"HEADER": "Pipelines",
