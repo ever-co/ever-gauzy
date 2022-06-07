@@ -3667,7 +3667,8 @@
 			"interviewer-interview-schedule": "crwdns7830:0crwdne7830:0",
 			"employee-join": "crwdns10529:0crwdne10529:0",
 			"TEMPLATE_NAMES": "crwdns9828:0crwdne9828:0"
-		}
+		},
+		"HTML_EDITOR": "crwdns11166:0crwdne11166:0"
 	},
 	"PIPELINES_PAGE": {
 		"HEADER": "crwdns4740:0crwdne4740:0",
