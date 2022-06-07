@@ -1,7 +1,7 @@
 import { IOrganizationContact } from '@gauzy/contracts';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Brackets, Repository } from 'typeorm';
+import { Brackets, Like, Repository } from 'typeorm';
 import { RequestContext } from '../core/context';
 import { TenantAwareCrudService } from './../core/crud';
 import { OrganizationContact } from './organization-contact.entity';
@@ -106,4 +106,26 @@ export class OrganizationContactService extends TenantAwareCrudService<Organizat
 	): Promise<IOrganizationContact> {
         return await this.findOneByIdString(id, { relations });
     }
+
+	public pagination(filter?: any) {
+		/**
+		 * Custom Filters
+		 */
+		if ('where' in filter) {
+			const { where } = filter;
+			if ('name' in where) {
+				const { name } = where;
+				filter.where.name = Like(`%${name}%`);
+			}
+			if ('primaryPhone' in where) {
+				const { primaryPhone } = where;
+				filter.where.primaryPhone = Like(`%${primaryPhone}%`);
+			}
+			if ('primaryEmail' in where) {
+				const { primaryEmail } = where;
+				filter.where.primaryEmail = Like(`%${primaryEmail}%`);
+			}
+		}
+		return super.paginate(filter);
+	}
 }

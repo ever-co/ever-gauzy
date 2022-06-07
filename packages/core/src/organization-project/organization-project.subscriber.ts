@@ -26,7 +26,11 @@ export class OrganizationProjectSubscriber implements EntitySubscriberInterface<
     beforeUpdate(event: UpdateEvent<OrganizationProject>) {
         if (event) {
             const { entity, databaseEntity } = event;
-            entity.membersCount = (entity.members) ? entity.members.length : databaseEntity.members.length;
+            if (entity && entity.members) {
+                entity.membersCount = entity.members.length;
+            } else if (databaseEntity && databaseEntity.members) {
+                entity.membersCount = databaseEntity.members.length;
+            }
         }
     }
 }
