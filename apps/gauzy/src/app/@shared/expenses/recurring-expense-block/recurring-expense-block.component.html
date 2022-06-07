@@ -77,7 +77,7 @@
       </div>
 		</div>
 	</div>
-	<div class="setting-table" *ngIf="showHistory && showMenu && selected">
+	<div class="setting-table" *ngIf="showHistory && selected">
 		<ga-recurring-expense-history
 			[recordsData]="fetchedHistories"
 			(closeHistory)="this.showHistory = false"

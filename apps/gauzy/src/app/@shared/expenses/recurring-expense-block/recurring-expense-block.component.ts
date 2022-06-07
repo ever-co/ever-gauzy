@@ -46,6 +46,8 @@ export class RecurringExpenseBlockComponent
 	fetchRecurringExpenseHistory = new EventEmitter<void>();
 
 	showMenu = false;
+	
+	@Input()
 	showHistory = false;
 	currentEmployee: IEmployee;
 
