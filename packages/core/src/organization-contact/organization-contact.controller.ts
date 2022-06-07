@@ -81,7 +81,7 @@ export class OrganizationContactController extends CrudController<OrganizationCo
 	async pagination(
 		@Query() filter: PaginationParams<IOrganizationContact>
 	): Promise<IPagination<IOrganizationContact>> {
-		return this.organizationContactService.paginate(filter);
+		return this.organizationContactService.pagination(filter);
 	}
 
 	/**

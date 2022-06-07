@@ -47,6 +47,7 @@ import {
 	PaginationFilterBaseComponent
 } from '../../@shared/pagination/pagination-filter-base.component';
 import { ServerDataSource } from '../../@core/utils/smart-table';
+import { InputFilterComponent } from '../../@shared/table-filters';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -227,7 +228,14 @@ export class ContactsComponent extends PaginationFilterBaseComponent
 					type: 'custom',
 					class: 'align-row',
 					renderComponent: ContactWithTagsComponent,
-					width: '15%'
+					width: '15%',
+					filter: {
+						type: 'custom',
+						component: InputFilterComponent
+					},
+					filterFunction: (name: string) => {
+						this.setFilter({ field: 'name', search: name });
+					},
 				},
 				members: {
 					title: this.getTranslation(
@@ -239,11 +247,25 @@ export class ContactsComponent extends PaginationFilterBaseComponent
 				},
 				primaryPhone: {
 					title: this.getTranslation('CONTACTS_PAGE.PHONE'),
-					type: 'string'
+					type: 'string',
+					filter: {
+						type: 'custom',
+						component: InputFilterComponent
+					},
+					filterFunction: (primaryPhone: string) => {
+						this.setFilter({ field: 'primaryPhone', search: primaryPhone });
+					},
 				},
 				primaryEmail: {
 					title: this.getTranslation('CONTACTS_PAGE.EMAIL'),
-					type: 'string'
+					type: 'string',
+					filter: {
+						type: 'custom',
+						component: InputFilterComponent
+					},
+					filterFunction: (primaryEmail: string) => {
+						this.setFilter({ field: 'primaryEmail', search: primaryEmail });
+					},
 				},
 				projects: {
 					title: this.getTranslation('CONTACTS_PAGE.PROJECTS'),
@@ -256,15 +278,18 @@ export class ContactsComponent extends PaginationFilterBaseComponent
 					type: 'string',
 					valuePrepareFunction: (value, item) => {
 						return this.getCountry(item);
-					}
+					},
+					filter: false
 				},
 				city: {
 					title: this.getTranslation('CONTACTS_PAGE.CITY'),
-					type: 'string'
+					type: 'string',
+					filter: false
 				},
 				street: {
 					title: this.getTranslation('CONTACTS_PAGE.STREET'),
-					type: 'string'
+					type: 'string',
+					filter: false
 				}
 			}
 		};
