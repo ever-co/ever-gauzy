@@ -95,18 +95,20 @@
 
     span {
       color: #18213a;
-      font-size: 16px;
+      font-size: 14px;
     }
 
     .block-amount {
       text-align: center;
       width: 130px;
-      color: #0091ff;
-      font-weight: bold;
-      font-size: 16px;
       display: flex;
       align-items: center;
       padding-right: 24px;
+      font-size: 14px;
+      font-weight: 400;
+      line-height: 17px;
+      letter-spacing: 0em;
+      text-align: left;
       cursor: pointer;
     }
   }
@@ -117,6 +119,7 @@
     align-items: center;
     width: 240px;
     position: relative;
+    visibility: hidden;
 
     .block-value {
       display: flex;

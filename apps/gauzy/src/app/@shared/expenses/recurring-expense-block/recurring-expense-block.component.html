@@ -38,43 +38,48 @@
 				</div>
 			</div>
 			<div class="block-panel">
-        <div class="block-value">
-          <nb-icon
-            class="hide-menu"
-            icon="log-in"
-            *ngIf="showMenu"
-            (click)="showMenu = false"
-          ></nb-icon>
-          <small (click)="showMenu = false" [ngStyle]="{
-            visibility: showMenu ? 'visible' : 'hidden'
-          }">{{
-            'BUTTONS.CLOSE' | translate
-          }}</small>
-          <span *ngIf="!showMenu" class="block-actions open">
-            <nb-icon
-              icon="settings-2-outline"
-              (click)="showMenu = true"
-            >
-            </nb-icon>
-          </span>
-        </div>
-        <div class="block-settings" [ngStyle]="{
-                visibility: showMenu ? 'visible' : 'hidden'
-              }">
-          <div (click)="emitEdit()" class="single-setting">
-            <nb-icon icon="edit-outline"> </nb-icon>
-            <span>{{ 'BUTTONS.EDIT' | translate }}</span>
-          </div>
-          <div class="single-setting" (click)="emitFetchHistory()">
-            <nb-icon icon="link-2-outline"> </nb-icon>
-            <span>{{ 'BUTTONS.HISTORY' | translate }}</span>
-          </div>
-          <div (click)="emitDelete()" class="single-setting">
-            <nb-icon icon="close-outline"> </nb-icon>
-            <span>{{ 'BUTTONS.DELETE' | translate }}</span>
-          </div>
-        </div>
-      </div>
+				<div class="block-value">
+					<nb-icon
+						class="hide-menu"
+						icon="log-in"
+						*ngIf="showMenu"
+						(click)="showMenu = false"
+					></nb-icon>
+					<small
+						(click)="showMenu = false"
+						[ngStyle]="{
+							visibility: showMenu ? 'visible' : 'hidden'
+						}"
+						>{{ 'BUTTONS.CLOSE' | translate }}</small
+					>
+					<span *ngIf="!showMenu" class="block-actions open">
+						<nb-icon
+							icon="settings-2-outline"
+							(click)="showMenu = true"
+						>
+						</nb-icon>
+					</span>
+				</div>
+				<div
+					class="block-settings"
+					[ngStyle]="{
+						visibility: showMenu ? 'visible' : 'hidden'
+					}"
+				>
+					<div (click)="emitEdit()" class="single-setting">
+						<nb-icon icon="edit-outline"> </nb-icon>
+						<span>{{ 'BUTTONS.EDIT' | translate }}</span>
+					</div>
+					<div class="single-setting" (click)="emitFetchHistory()">
+						<nb-icon icon="link-2-outline"> </nb-icon>
+						<span>{{ 'BUTTONS.HISTORY' | translate }}</span>
+					</div>
+					<div (click)="emitDelete()" class="single-setting">
+						<nb-icon icon="close-outline"> </nb-icon>
+						<span>{{ 'BUTTONS.DELETE' | translate }}</span>
+					</div>
+				</div>
+			</div>
 		</div>
 	</div>
 	<div class="setting-table" *ngIf="showHistory && selected">
