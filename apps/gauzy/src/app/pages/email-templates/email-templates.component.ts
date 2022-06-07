@@ -132,6 +132,10 @@ export class EmailTemplatesComponent
 	}
 
 	async getTemplate() {
+		if (!this.organization) {
+			return
+		};
+		
 		try {
 			const { tenantId } = this.store.user;
 			const { id: organizationId } = this.organization;

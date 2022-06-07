@@ -114,6 +114,8 @@ export class ThemeLanguageSelectorComponent implements OnInit, OnDestroy, AfterV
 			preferredLanguage: this._store.preferredLanguage
 		});
 
+		this.switchLanguage();
+
 		this._translate.use(this.currentLang || LanguagesEnum.ENGLISH);
 	}
 

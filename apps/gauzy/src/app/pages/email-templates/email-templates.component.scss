@@ -1,11 +1,12 @@
-@import 'var';
+@import 'gauzy/_gauzy-overrides';
 
 .main-form {
   .template-save {
     display: flex;
     justify-content: flex-end;
-    align-items: center;
+    align-items: flex-start;
   }
+
   nb-layout {
     nb-layout-column.email-template-column {
       padding: 0;
@@ -13,12 +14,177 @@
   }
 }
 
-.custom-parent-email-content{
+.custom-parent-email-content {
   display: flex;
-  justify-content: center;
+  justify-content: flex-start;
   width: 100%;
+  overflow: auto;
+  height: calc(100vh - 27rem);
 }
 
-.email-content{
+.email-content {
   width: fit-content;
+}
+
+:host {
+  ::ng-deep {
+    @include nb-select-overrides (2.25rem,
+      $default-button-radius,
+      $default-box-shadow );
+    @include ng-select-overrides (2.25rem,
+      $default-button-radius,
+      $default-box-shadow );
+  }
+
+  nb-card {
+    border: nb-theme(border-radius);
+  }
+
+  nb-card-body {
+    border-radius: 0 0 nb-theme(border-radius) nb-theme(border-radius);
+    padding: 1rem;
+    nb-card-body {
+      padding: 10px;
+    }
+  }
+
+  nb-card,
+  nb-card-body {
+    background-color: nb-theme(gauzy-card-2);
+    overflow: unset;
+    margin: 0;
+
+    &.editor {
+      background-color: nb-theme(gauzy-card-1);
+      border-radius: 0 0 nb-theme(border-radius) nb-theme(border-radius);
+
+      .label {
+        background: rgba(231, 227, 218, 0.75);
+        padding: 5px;
+        border-radius: 4px;
+        color: nb-theme(gauzy-text-color-2);
+        font-size: 11px;
+        font-weight: 400;
+        line-height: 13px;
+        letter-spacing: 0em;
+        text-align: left;
+      }
+
+      .ace-editor {
+        height: calc(100vh - 28.7rem);
+        font-size: medium;
+      }
+
+      ace-editor {
+        border-radius: 4px;
+
+        ::ng-deep {
+          .ace_scrollbar.ace_scrollbar-h {
+            height: 4px !important;
+          }
+
+          .ace_active-line {
+            background: rgba(231, 227, 218, 0.5) !important;
+            border-radius: 4px !important;
+            margin-left: 3px;
+          }
+
+          .ace_gutter {
+            background-color: rgba(231, 227, 218, 1);
+            border-radius: 4px;
+
+            .ace_fold-widget {
+              border-radius: 0;
+              background-color: rgba(231, 227, 218, 0.5);
+            }
+          }
+        }
+      }
+
+    }
+  }
+
+  .editor-header {
+    padding: 10px 35px 10px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 15px;
+    letter-spacing: 0em;
+    text-align: left;
+    background: rgba(231, 227, 218, 0.75);
+    border-radius: 10px 10px 0px 0px;
+
+  }
+
+  .email-template-right {
+    background-color: unset;
+
+    .select {
+      display: flex;
+      gap: 1rem;
+    }
+
+    nb-card-body {
+      background-color: nb-theme(gauzy-card-1);
+      border-radius: nb-theme(border-radius);
+    }
+
+    .email-column-sub-header {
+      background-color: rgba(126, 126, 143, 0.05);
+      padding: 13px;
+      border-radius: 8px 8px 0 0;
+      margin: -10px -10px 0;
+    }
+
+    .preview-subject {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 0;
+
+      .label {
+        margin-bottom: 0;
+      }
+
+      label+div {
+        font-size: 11px;
+        font-weight: 600;
+        line-height: 13px;
+        letter-spacing: 0em;
+        text-align: left;
+      }
+    }
+
+    .label {
+      font-size: 11px;
+      font-weight: 400;
+      line-height: 13px;
+      letter-spacing: 0em;
+      text-align: left;
+      color: nb-theme(gauzy-text-color-2);
+    }
+  }
+
+  .email-column-header {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    padding: 0 0 10px 0;
+  }
+
+  h4 {
+    font-size: 24px;
+    font-weight: 600;
+    line-height: 30px;
+    letter-spacing: 0em;
+    text-align: left;
+
+    .menu-setting {
+      font-weight: 400;
+    }
+  }
+
+  .select-block {
+    min-width: 130px;
+  }
 }
