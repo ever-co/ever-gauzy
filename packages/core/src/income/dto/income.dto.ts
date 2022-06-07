@@ -1,7 +1,8 @@
 import { CurrenciesEnum } from "@gauzy/contracts";
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import { Transform, TransformFnParams } from "class-transformer";
 import { IsBoolean, IsEnum, IsNotEmpty, IsNumber, IsOptional } from "class-validator";
-import { TenantOrganizationBaseDTO } from "core/dto";
+import { TenantOrganizationBaseDTO } from "./../../core/dto";
 
 export class IncomeDTO extends TenantOrganizationBaseDTO {
 
@@ -25,7 +26,8 @@ export class IncomeDTO extends TenantOrganizationBaseDTO {
 
 	@ApiProperty({ type: () => Boolean })
 	@IsBoolean()
-	@IsNotEmpty()
+	@IsOptional()
+	@Transform((params: TransformFnParams) => ((params.value) || false))
 	readonly isBonus: boolean;
 
 	@ApiPropertyOptional({ type: () => String, maxLength: 256 })
