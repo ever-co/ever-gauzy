@@ -30,10 +30,7 @@
 			[ngClass]="{ 'item-collapsed': !state }"
 			*ngIf="item?.children?.length > 0"
 		>
-			<div
-				class="menu"
-				*ngFor="let subItem of item.children; trackBy: subItem?.title"
-			>
+			<div *ngFor="let subItem of item.children; trackBy: subItem?.title">
 				<ga-children-menu-item
 					*ngIf="!item?.hidden"
 					[item]="subItem"
