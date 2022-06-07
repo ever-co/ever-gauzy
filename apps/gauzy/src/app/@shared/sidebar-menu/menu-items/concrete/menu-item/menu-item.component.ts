@@ -50,6 +50,7 @@ export class MenuItemComponent implements OnInit, AfterViewChecked {
 	}
 
 	public redirectTo() {
+		if (!this.item.children) this.router.navigateByUrl(this.item.link);
 		if (this.item.home) this.router.navigateByUrl(this.item.url);
 		this.selectedChange.emit(this.item);
 		this.cdr.detectChanges();
