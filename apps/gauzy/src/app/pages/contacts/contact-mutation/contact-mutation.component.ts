@@ -311,11 +311,13 @@ export class ContactMutationComponent extends TranslationBaseComponent
 		try {
 			const { tenantId } = this.store.user;
 			const { id: organizationId } = this.organization;
+
 			return this.organizationProjectsService
 				.create({
 					name,
 					organizationId,
-					tenantId
+					tenantId,
+					members: []
 				})
 				.then((project) => {
 					this.toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.ADD_PROJECT', {
@@ -350,7 +352,7 @@ export class ContactMutationComponent extends TranslationBaseComponent
 		const { id: organizationId } = this.organization;
 
 		const { budget, budgetType } = this.budgetForm.getRawValue();
-		const { name, primaryEmail, primaryPhone, projects = [], fax, tags = [] } = this.contMainForm.getRawValue();
+		const { name, primaryEmail, primaryPhone, fax, tags = [] } = this.contMainForm.getRawValue();
 
 		let { imageUrl } = this.contMainForm.getRawValue();
 		if (imageUrl === DUMMY_PROFILE_IMAGE) {
@@ -371,6 +373,12 @@ export class ContactMutationComponent extends TranslationBaseComponent
 		const members = (this.members || this.selectedEmployeeIds || [])
 						.map((id) => this.employees.find((e) => e.id === id))
 						.filter((e) => !!e);
+
+		let { projects = [] } = this.contMainForm.getRawValue();		
+		projects.map((project: IOrganizationProject) => {
+			project.members.push(...members);
+			return project;
+		});
 
 		this.addOrEditOrganizationContact.emit({
 			id: this.organizationContact
