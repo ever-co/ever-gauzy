@@ -1,5 +1,9 @@
+@import 'var';
+
 .recurring-expense-history {
-  margin: 10px 30px 0px 30px;
+  background-color: transparent;
+  padding: 10px 30px 0px 30px;
+  border-radius: 0 0 nb-theme(border-radius) nb-theme(border-radius);
   display: flex;
   flex-direction: row;
   justify-content: space-between;
