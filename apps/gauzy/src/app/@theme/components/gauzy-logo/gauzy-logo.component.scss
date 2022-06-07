@@ -4,6 +4,7 @@
   width: 100%;
   max-width: nb-theme(sidebar-width);
   max-height: 2.625rem;
+  box-shadow: unset;
 
   .organization {
     display: flex;
@@ -89,6 +90,7 @@ nb-accordion-item-body.setting ::ng-deep {
     .border-bottom {
       border: unset !important;
     }
+
     .item-body {
       padding: 6px;
     }
@@ -106,11 +108,17 @@ ga-sidebar-menu ::ng-deep {
   }
 }
 
-nb-accordion-item:last-child.collapsed nb-accordion-item-header {
+nb-accordion-item:first-child.collapsed,
+nb-accordion-item:first-child.collapsed nb-accordion-item-header.principal {
   border-bottom: none;
   max-height: 42px;
-  background-color: rgba(255, 255, 255, .1);
+  background-color: unset;
   border-radius: nb-theme(border-radius);
+  box-shadow: unset;
+}
+
+nb-accordion-item:first-child.collapsed {
+  box-shadow: 0px 1px 1px 0px rgba(0, 0, 0, 0.25);
 }
 
 .white-svg {

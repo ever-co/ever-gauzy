@@ -3,7 +3,7 @@
 		[collapsed]="controlled"
 		(collapsedChange)="onCollapse($event)"
 	>
-		<nb-accordion-item-header>
+		<nb-accordion-item-header class="principal">
 			<ng-container *ngTemplateOutlet="logo"></ng-container>
 			<div class="organization" *ngIf="!isCollapse">
 				<img [src]="organization.imageUrl" alt="" />
