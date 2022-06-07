@@ -181,12 +181,12 @@ export class RecurringExpensesEmployeeComponent
 		}
 	}
 
-	async editEmployeeRecurringExpense(index: number) {
+	async editEmployeeRecurringExpense() {
 		const result = await firstValueFrom(
 			this.dialogService.open(RecurringExpenseMutationComponent, {
 				// TODO
 				context: {
-					recurringExpense: this.recurringExpenses[index],
+					recurringExpense: this.selectedRecurringExpense.data,
 					componentType: COMPONENT_TYPE.EMPLOYEE
 				}
 			}).onClose
@@ -194,7 +194,7 @@ export class RecurringExpensesEmployeeComponent
 
 		if (result) {
 			try {
-				const id = this.recurringExpenses[index].id;
+				const id = this.selectedRecurringExpense.data.id;
 				const employeeRecurringExpense =
 					this._recurringExpenseMutationResultTransform(result);
 				this.employeeRecurringExpenseService
@@ -217,9 +217,9 @@ export class RecurringExpensesEmployeeComponent
 		}
 	}
 
-	async deleteEmployeeRecurringExpense(index: number) {
-		const { startDate } = this.selectedDateRange;
-		const selectedExpense = this.recurringExpenses[index];
+	async deleteEmployeeRecurringExpense() {
+		const startDate = new Date(this.selectedDateRange.startDate);
+		const selectedExpense = this.selectedRecurringExpense.data;
 		const result: RecurringExpenseDeletionEnum = await firstValueFrom(
 			this.dialogService.open(
 				RecurringExpenseDeleteConfirmationComponent,
@@ -343,7 +343,7 @@ export class RecurringExpensesEmployeeComponent
 				[],
 				{
 					parentRecurringExpenseId:
-						this.recurringExpenses[i].parentRecurringExpenseId
+						this.selectedRecurringExpense.data.parentRecurringExpenseId
 				},
 				{ startDate: 'ASC' }
 			)

@@ -4,24 +4,22 @@
 	nbSpinnerSize="large"
 	class="card-scroll"
 >
-	<nb-card-header>
+	<nb-card-header class="flex flex-column">
 		<h4>
 			<ngx-header-title [allowEmployee]="false">
 				{{ 'DASHBOARD_PAGE.RECURRING_EXPENSES' | translate }}
 			</ngx-header-title>
 		</h4>
+		<div class="float-right">
+			<ngx-gauzy-button-action
+				[hasLayoutSelector]="false"
+				[buttonTemplateVisible]="visible"
+				[buttonTemplate]="actionButtons"
+				[isDisable]="!selectedRecurringExpense?.isSelected"
+			></ngx-gauzy-button-action>
+		</div>
 	</nb-card-header>
 	<nb-card-body class="settings-body">
-		<ng-template ngxPermissionsOnly="EMPLOYEE_EXPENSES_EDIT">
-			<button
-				(click)="addEmployeeRecurringExpense()"
-				nbButton
-				status="success"
-			>
-				<nb-icon class="mr-1" icon="plus-outline"></nb-icon>
-				{{ 'BUTTONS.ADD' | translate }}
-			</button>
-		</ng-template>
 		<div class="container">
 			<div
 				class="sub-header header-content mt-4"
@@ -65,3 +63,49 @@
 		</div>
 	</nb-card-body>
 </nb-card>
+<ng-template #visible>
+	<ng-template ngxPermissionsOnly="EMPLOYEE_EXPENSES_EDIT">
+		<button
+			(click)="addEmployeeRecurringExpense()"
+			nbButton
+			status="success"
+			class="action"
+			size="small"
+		>
+			<nb-icon class="mr-1" icon="plus-outline"></nb-icon>
+			{{ 'BUTTONS.ADD' | translate }}
+		</button>
+	</ng-template>
+</ng-template>
+
+<ng-template #actionButtons>
+	<div class="actions">
+		<button nbButton class="action secondary" size="small" status="basic">
+			<nb-icon icon="eye-outline"></nb-icon>
+			{{ 'BUTTONS.VIEW' | translate }}
+		</button>
+		<button
+			nbButton
+			(click)="editEmployeeRecurringExpense()"
+			class="action primary"
+			size="small"
+			status="basic"
+		>
+			<nb-icon icon="edit-outline"></nb-icon>
+			{{ 'BUTTONS.EDIT' | translate }}
+		</button>
+		<button nbButton class="action secondary" size="small" status="basic">
+			<i class="fas fa-history mr-1"></i>
+			{{ 'BUTTONS.HISTORY' | translate }}
+		</button>
+		<button
+			nbButton
+			(click)="deleteEmployeeRecurringExpense()"
+			class="action"
+			size="small"
+			status="basic"
+		>
+			<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
+		</button>
+	</div>
+</ng-template>
