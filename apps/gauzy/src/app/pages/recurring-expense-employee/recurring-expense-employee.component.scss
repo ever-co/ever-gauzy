@@ -55,8 +55,7 @@
 }
 
 .container {
-  padding: 1rem;
-  overflow-x: scroll;
+  padding: 0;
 }
 
 .container::-webkit-scrollbar {
@@ -68,5 +67,15 @@
   nb-card,
   nb-card-header {
     background-color: rgba(50, 50, 50, 0.03);
+  }
+
+  .settings-body {
+    padding: 8px;
+  }
+
+  .table-scroll {
+    height: calc(100vh - 30rem);
+    padding: 8px;
+    overflow: auto;
   }
 }

@@ -41,6 +41,7 @@
 				</div>
 			</div>
 			<ng-container *ngIf="recurringExpenses.length">
+				<div class="table-scroll">
 				<ng-container
 					*ngFor="let expense of recurringExpenses; let i = index"
 				>
@@ -59,7 +60,9 @@
 						"
 						[showHistory]="showHistory"
 					></ga-recurring-expense-block>
-				</ng-container>
+				</ng-container>	
+				</div>
+				
 			</ng-container>
 		</div>
 	</nb-card-body>
