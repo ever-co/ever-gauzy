@@ -1,5 +1,8 @@
 <nb-accordion *ngIf="isAccordion" class="accordion workspace">
-	<nb-accordion-item [collapsed]="controlled" (collapsedChange)="onCollapse($event)">
+	<nb-accordion-item
+		[collapsed]="controlled"
+		(collapsedChange)="onCollapse($event)"
+	>
 		<nb-accordion-item-header>
 			<ng-container *ngTemplateOutlet="logo"></ng-container>
 			<div class="organization" *ngIf="!isCollapse">
@@ -10,48 +13,11 @@
 				</div>
 			</div>
 		</nb-accordion-item-header>
-		<nb-accordion-item-body>
-			<div class="d-flex flex-column" *ngFor="let action of actions">
-				<ng-container *ngxPermissionsOnly="action.data.permissionKeys">
-					<span [routerLink]="action.link" class="link"
-						><i [class]="action.icon"></i
-						><span class="text">{{
-							action.data.translationKey | translate
-						}}</span></span
-					>
-				</ng-container>
-			</div>
+		<nb-accordion-item-body class="setting">
+			<ga-sidebar-menu [items]="actions"></ga-sidebar-menu>
 		</nb-accordion-item-body>
-		<nb-accordion-item-body>
-			<nb-accordion>
-				<nb-accordion-item>
-					<nb-accordion-item-header>
-						<i [class]="settings.icon"></i
-						><span class="text">{{
-							settings.data.translationKey | translate
-						}}</span>
-					</nb-accordion-item-header>
-					<nb-accordion-item-body>
-						<div
-							class="d-flex flex-column"
-							*ngFor="let setting of settings.children"
-						>
-							<ng-container
-								*ngxPermissionsOnly="
-									setting.data.permissionKeys
-								"
-							>
-								<span [routerLink]="setting.link" class="link">
-									<i [class]="setting.icon"></i
-									><span class="text">{{
-										setting.data.translationKey | translate
-									}}</span>
-								</span>
-							</ng-container>
-						</div>
-					</nb-accordion-item-body>
-				</nb-accordion-item>
-			</nb-accordion>
+		<nb-accordion-item-body class="setting">
+			<ga-sidebar-menu [items]="[settings]"></ga-sidebar-menu>
 		</nb-accordion-item-body>
 		<nb-accordion-item-body class="item footer">
 			<div class="content">
