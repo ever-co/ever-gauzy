@@ -23,7 +23,7 @@ import 'brace/theme/sqlserver';
 import 'brace/theme/tomorrow_night';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import { combineLatest, Subject } from 'rxjs';
-import { debounceTime, filter, tap } from 'rxjs/operators';
+import { debounceTime, tap } from 'rxjs/operators';
 import { EmailTemplateService, Store, ToastrService } from '../../@core/services';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 
