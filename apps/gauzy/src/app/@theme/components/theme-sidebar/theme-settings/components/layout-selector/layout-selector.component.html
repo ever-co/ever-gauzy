@@ -5,9 +5,10 @@
 	></span>
 	<div>
 		<nb-select
-			placeholder="{{ 'SETTINGS_MENU.PREFERRED_LAYOUT' | translate }}"
-			(selectedChange)="switchComponentLayout($event)"
-			[(selected)]="currentLayout"
+			[placeholder]="'SETTINGS_MENU.PREFERRED_LAYOUT' | translate"
+			(selectedChange)="switchComponentLayout()"
+			[(selected)]="preferredComponentLayout"
+			[(ngModel)]="preferredComponentLayout"
 			status="basic"
 			size="small"
 			outline
@@ -23,7 +24,7 @@
 </div>
 <div class="reset-button">
 	<button
-		nbTooltip="{{ 'SETTINGS_MENU.RESET_LAYOUT_TOOLTIP' | translate }}"
+		[nbTooltip]="'SETTINGS_MENU.RESET_LAYOUT_TOOLTIP' | translate"
 		status="danger"
 		nbButton
 		size="small"
