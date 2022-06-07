@@ -14,6 +14,7 @@ import { ExpenseRecurringComponent } from './expense-recurring.component';
 import { RecurringExpenseBlockModule } from '../../@shared/expenses/recurring-expense-block/recurring-expense-block.module';
 import { TranslateModule } from '../../@shared/translate/translate.module';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
+import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
 
 @NgModule({
 	imports: [
@@ -29,6 +30,7 @@ import { HeaderTitleModule } from '../../@shared/components/header-title/header-
 		RecurringExpenseBlockModule,
 		HeaderTitleModule,
 		NgxPermissionsModule.forChild(),
+		GauzyButtonActionModule
 	],
 	declarations: [ExpenseRecurringComponent]
 })
