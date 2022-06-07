@@ -8,7 +8,7 @@ import {
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { debounceTime, tap } from 'rxjs/operators';
-import { combineLatest, Subject } from 'rxjs';
+import { combineLatest, filter, Subject } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NbThemeService } from '@nebular/theme';
 import {
@@ -67,6 +67,7 @@ export class AccountingTemplatesComponent
 		combineLatest([storeOrganization$, preferredLanguage$])
 			.pipe(
 				distinctUntilChange(),
+				filter(([organization, language]) => !!organization && !!language),
 				tap(([organization, language]) => {
 					this.organization = organization;
 					this.organizationName = organization.name;

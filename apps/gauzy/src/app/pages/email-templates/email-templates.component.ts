@@ -22,7 +22,7 @@ import 'brace/mode/handlebars';
 import 'brace/theme/sqlserver';
 import 'brace/theme/tomorrow_night';
 import { distinctUntilChange } from '@gauzy/common-angular';
-import { combineLatest, Subject } from 'rxjs';
+import { combineLatest, filter, Subject } from 'rxjs';
 import { debounceTime, tap } from 'rxjs/operators';
 import { EmailTemplateService, Store, ToastrService } from '../../@core/services';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
@@ -82,6 +82,7 @@ export class EmailTemplatesComponent
 		combineLatest([storeOrganization$, preferredLanguage$])
 			.pipe(
 				distinctUntilChange(),
+				filter(([organization, language]) => !!organization && !!language),
 				tap(([organization, language]) => {
 					this.organization = organization;
 					this.form.patchValue({ languageCode: language });
