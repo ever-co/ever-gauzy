@@ -2406,8 +2406,8 @@
 			"USER_ORGANIZATIONS": "Организации"
 		},
 		"REMOVE_USER": "'{{ name }}' был удален",
-		"ACTIVE": "Active",
-		"NOT_STARTED": "Not Started"
+		"ACTIVE": "Активный",
+		"NOT_STARTED": "Не начато"
 	},
 	"CONTEXT_MENU": {
 		"TIMER": "Запустить таймер",
@@ -3667,7 +3667,8 @@
 			"interviewer-interview-schedule": "Расписание интервьюера",
 			"employee-join": "Прием сотрудников",
 			"TEMPLATE_NAMES": "Названия шаблонов"
-		}
+		},
+		"HTML_EDITOR": "HTML-редактор"
 	},
 	"PIPELINES_PAGE": {
 		"HEADER": "Трубопроводы",
