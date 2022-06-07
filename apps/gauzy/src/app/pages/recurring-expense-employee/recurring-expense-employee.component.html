@@ -45,7 +45,7 @@
 					*ngFor="let expense of recurringExpenses; let i = index"
 				>
 					<ga-recurring-expense-block
-						(click)="selectRecurringExpense(expense)"
+						(click)="selectRecurringExpense(expense, i)"
 						(editRecurringExpense)="editEmployeeRecurringExpense(i)"
 						(deleteRecurringExpense)="
 							deleteEmployeeRecurringExpense(i)
@@ -95,7 +95,13 @@
 			<nb-icon icon="edit-outline"></nb-icon>
 			{{ 'BUTTONS.EDIT' | translate }}
 		</button>
-		<button nbButton class="action secondary" (click)="showHistory = !showHistory" size="small" status="basic">
+		<button
+			nbButton
+			class="action secondary"
+			(click)="fetchHistory()"
+			size="small"
+			status="basic"
+		>
 			<i class="fas fa-history mr-1"></i>
 			{{ 'BUTTONS.HISTORY' | translate }}
 		</button>

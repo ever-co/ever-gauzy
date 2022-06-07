@@ -51,8 +51,11 @@ export class RecurringExpensesEmployeeComponent
 
 	selectedRecurringExpense = {
 		isSelected: false,
-		data: null
+		data: null,
+		index: null
 	};
+
+	showHistory: boolean = false;
 
 	constructor(
 		private readonly route: ActivatedRoute,
@@ -337,28 +340,35 @@ export class RecurringExpensesEmployeeComponent
 		}
 	}
 
-	public async fetchHistory(i: number) {
-		this.fetchedHistories[i] = (
+	public async fetchHistory() {
+		this.showHistory = !this.showHistory;
+		this.fetchedHistories[this.selectedRecurringExpense.index] = (
 			await this.employeeRecurringExpenseService.getAll(
 				[],
 				{
 					parentRecurringExpenseId:
-						this.selectedRecurringExpense.data.parentRecurringExpenseId
+						this.selectedRecurringExpense.data
+							.parentRecurringExpenseId
 				},
 				{ startDate: 'ASC' }
 			)
 		).items;
 	}
 
-	selectRecurringExpense(recurringExpense: IEmployeeRecurringExpense) {
+	selectRecurringExpense(
+		recurringExpense: IEmployeeRecurringExpense,
+		i: number
+	) {
+		this.showHistory = false;
 		this.selectedRecurringExpense =
 			this.selectedRecurringExpense.data &&
 			recurringExpense.id === this.selectedRecurringExpense.data.id
 				? {
 						isSelected: !this.selectedRecurringExpense.isSelected,
-						data: recurringExpense
+						data: null,
+						index: null
 				  }
-				: { isSelected: true, data: recurringExpense };
+				: { isSelected: true, data: recurringExpense, index: i };
 	}
 
 	ngOnDestroy() {}
