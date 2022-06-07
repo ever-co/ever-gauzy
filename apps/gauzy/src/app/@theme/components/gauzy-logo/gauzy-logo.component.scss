@@ -86,14 +86,22 @@ nb-accordion-item-body.setting ::ng-deep {
     padding-top: 0;
     padding-bottom: 0;
 
-    .menu {
-      &:last-child {
-        margin-bottom: 6px;
-      }
+    .border-bottom {
+      border: unset !important;
+    }
+    .item-body {
+      padding: 6px;
+    }
+  }
+}
 
-      &:first-child {
-        margin-top: 6px;
-      }
+ga-sidebar-menu ::ng-deep {
+  nb-accordion-item nb-accordion-item-header {
+    box-shadow: unset;
+    border-width: 0;
+
+    nb-icon {
+      display: none;
     }
   }
 }
