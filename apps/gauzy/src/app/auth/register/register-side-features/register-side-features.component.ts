@@ -21,7 +21,7 @@ export class NgxRegisterSideFeaturesComponent implements OnInit {
 	) {}
 
 	ngOnInit() {
-		this._changelogService.getAll({ isFeature: true })
+		this._changelogService.getAll({ isFeature: 1 })
 			.pipe(
 				untilDestroyed(this)
 			)
