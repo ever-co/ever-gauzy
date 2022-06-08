@@ -963,7 +963,8 @@
 	},
 	"CHANGELOG_MENU": {
 		"HEADER": "Что нового?",
-		"LEARN_MORE_URL": "Узнать больше"
+		"LEARN_MORE_URL": "Узнать больше",
+		"GAUZY_FEATURES": "Особенности Гаузи"
 	},
 	"REPORT_PAGE": {
 		"MEMBERS_WORKED": "Участники Раболи",

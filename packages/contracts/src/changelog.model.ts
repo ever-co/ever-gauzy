@@ -22,7 +22,7 @@ export interface IChangelogCreateInput extends IBaseEntityModel {
 
 export interface IChangelogFindInput extends IBaseEntityModel {
 	date?: string;
-	isFeature?: boolean;
+	isFeature?: boolean | number;
 }
 
 export interface IChangelogUpdateInput extends IChangelogCreateInput {
