@@ -14,6 +14,9 @@ nb-card-body {
 		display: flex;
 		justify-content: flex-start;
 		gap: 10px;
+		&.two{
+			margin-left: 15px;
+		}
 	}
 
 	.no-image {
