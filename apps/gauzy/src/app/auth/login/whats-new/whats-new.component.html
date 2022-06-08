@@ -1,6 +1,8 @@
 <section class="section-wrapper">
     <div class="whats-new-wrapper">
-        <h3 class="main-header">What's New?</h3>
+        <h3 class="main-header">
+            {{ 'CHANGELOG_MENU.HEADER' | translate }}
+        </h3>
         <div *ngFor="let item of items$ | async " class="entry">
             <div class="entry-headings-wrapper">
                 <nb-icon [icon]="item.icon" class="icon"></nb-icon>
@@ -10,8 +12,19 @@
                 </div>
             </div>
             <p class="paragraph">
-                {{ item.content }}</p>
+                {{ item.content }}
+            </p>
         </div>
     </div>
-    <a *ngIf="learnMore" nbButton outline status="primary" class="learn-more" [href]="learnMore">Learn more</a>
+    <ng-container *ngIf="learnMore">
+        <a 
+            nbButton
+            outline
+            status="primary"
+            class="learn-more"
+            [href]="learnMore"
+        >
+            {{ 'CHANGELOG_MENU.LEARN_MORE_URL' | translate }}
+        </a>
+    </ng-container>
 </section>

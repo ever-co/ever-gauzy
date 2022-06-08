@@ -21,7 +21,7 @@ export class NgxWhatsNewComponent {
 	) {}
 
 	ngOnInit () {
-		this._changelogService.getAll({ isFeature : false })
+		this._changelogService.getAll({ isFeature : 0 })
 			.pipe(
 				untilDestroyed(this)
 			).subscribe();
