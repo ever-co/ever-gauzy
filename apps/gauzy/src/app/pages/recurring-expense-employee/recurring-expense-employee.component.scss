@@ -1,3 +1,5 @@
+@import 'gauzy/_gauzy-table';
+
 .setting-name {
   font-size: 24px;
   font-weight: bold;
@@ -13,6 +15,10 @@
 .sub-header {
   margin-bottom: 20px;
   font-weight: bold;
+  background-color: nb-theme(gauzy-card-3);
+  padding: 0.75rem;
+  border-radius: nb-theme(border-radius);
+  color: nb-theme(gauzy-text-color-2);
 }
 
 .header-content {
@@ -25,17 +31,20 @@
     width: fit-content;
     padding-left: 30px;
   }
+
   .block {
     display: flex;
     justify-content: space-between;
     align-items: center;
     width: fit-content;
+
     .block-item {
       width: 11rem;
       display: flex;
       justify-content: flex-start;
       align-items: center;
     }
+
     .block-item-big {
       width: 17.5rem;
       display: flex;
@@ -45,11 +54,28 @@
   }
 }
 
-.container{
+.container {
   padding: 0;
-  overflow-x: scroll;
 }
 
 .container::-webkit-scrollbar {
   display: none;
+}
+
+:host {
+
+  nb-card,
+  nb-card-header {
+    background-color: rgba(50, 50, 50, 0.03);
+  }
+
+  .settings-body {
+    padding: 8px;
+  }
+
+  .table-scroll {
+    height: calc(100vh - 30rem);
+    padding: 8px;
+    overflow: auto;
+  }
 }

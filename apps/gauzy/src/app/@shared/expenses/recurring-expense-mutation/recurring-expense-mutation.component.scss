@@ -7,3 +7,11 @@ nb-card-header {
 nb-card-body {
   width: 500px;
 }
+
+:host {
+
+  nb-card,
+  nb-card-body {
+    background-color: nb-theme(gauzy-card-1);
+  }
+}
