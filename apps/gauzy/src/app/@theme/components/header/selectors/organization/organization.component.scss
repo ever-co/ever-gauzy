@@ -9,11 +9,17 @@ ng-select {
   img {
     margin-right: 0.25rem;
     margin-left: 0.25rem;
+    height: 28px;
+    width: 28px;
+    object-fit: cover;
     border-radius: $radius;
   }
 }
 
 ::ng-deep .organization {
+  &.close {
+    opacity: 1;
+  }
   &.ng-select {
     .ng-select-container {
       .ng-value-container {

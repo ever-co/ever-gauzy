@@ -20,7 +20,7 @@ import { IMenuItem } from '../../interface/menu-item.interface';
 export class MenuItemComponent implements OnInit, AfterViewChecked {
 	private _state: boolean;
 	private _item: IMenuItem;
-	private _collapse: boolean;
+	private _collapse: boolean = true;
 	private _selectedChildren: IMenuItem;
 	private _selected: boolean;
 
@@ -45,11 +45,13 @@ export class MenuItemComponent implements OnInit, AfterViewChecked {
 
 	public focusOn(event: any) {
 		this.selectedChildren = event.children;
+		if (this.collapse) this.collapse = !this.collapse;
 		this.selectedChange.emit(event.parent);
 		this.cdr.detectChanges();
 	}
 
 	public redirectTo() {
+		if (!this.item.children) this.router.navigateByUrl(this.item.link);
 		if (this.item.home) this.router.navigateByUrl(this.item.url);
 		this.selectedChange.emit(this.item);
 		this.cdr.detectChanges();

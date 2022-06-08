@@ -87,13 +87,6 @@
   }
 }
 
-.menu {
-  border-top: 1px solid nb-theme(gauzy-border-default-color);
-  &:first-child {
-    border-top: none;
-  }
-}
-
 :host .sub-item {
   padding: 11px 10px;
   display: flex;

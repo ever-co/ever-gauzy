@@ -3,6 +3,7 @@
 	[ngClass]="state ? item?.class : item?.class + ' closed'"
 >
 	<nb-accordion-item
+		[collapsed]="collapse"
 		(collapsedChange)="onCollapse($event)"
 		[ngClass]="{ opened: selected }"
 	>
@@ -30,10 +31,7 @@
 			[ngClass]="{ 'item-collapsed': !state }"
 			*ngIf="item?.children?.length > 0"
 		>
-			<div
-				class="menu"
-				*ngFor="let subItem of item.children; trackBy: subItem?.title"
-			>
+			<div *ngFor="let subItem of item.children; trackBy: subItem?.title">
 				<ga-children-menu-item
 					*ngIf="!item?.hidden"
 					[item]="subItem"
