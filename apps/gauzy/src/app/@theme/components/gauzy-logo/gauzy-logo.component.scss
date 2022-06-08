@@ -108,16 +108,12 @@ ga-sidebar-menu ::ng-deep {
   }
 }
 
-nb-accordion-item:first-child.collapsed,
 nb-accordion-item:first-child.collapsed nb-accordion-item-header.principal {
   border-bottom: none;
   max-height: 42px;
   background-color: unset;
   border-radius: nb-theme(border-radius);
   box-shadow: unset;
-}
-
-nb-accordion-item:first-child.collapsed {
   box-shadow: 0px 1px 1px 0px rgba(0, 0, 0, 0.25);
 }
 

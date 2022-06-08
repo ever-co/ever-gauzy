@@ -127,6 +127,9 @@ nb-sidebar[tag='menu-sidebar'] {
       }
       nb-accordion-item-header {
         padding: 0.75rem 0;
+        &.principal {
+          box-shadow: unset;
+        }
         nb-icon {
           left: 0rem;
         }
