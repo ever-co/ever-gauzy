@@ -3,17 +3,13 @@
 $default-box-shadow-inset: 0px 1px 1px 0px rgba(0, 0, 0, 0.15) inset;
 $default-height: 42px;
 $default-radius: nb-theme(border-radius);
-$default-button-radius: nb-theme(button-rectangle-border-radius);
+$default-button-radius: calc(nb-theme(button-rectangle-border-radius) / 2);
 $default-box-shadow: 0px 1px 1px 0px rgba(0, 0, 0, 0.15);
 
 @mixin ng-select-overrides($height, $radius, $box-shadow) {
   .ng-select {
       &.ng-select-single .ng-select-container {
         height: $height;
-      }
-  
-      &.ng-select-opened.ng-select-bottom>.ng-select-container {
-        border-radius: calc($height / 2);
       }
   
       .ng-select-container {
