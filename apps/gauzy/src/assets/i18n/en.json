@@ -963,7 +963,8 @@
 	},
 	"CHANGELOG_MENU": {
 		"HEADER": "What's new?",
-		"LEARN_MORE_URL": "Learn more"
+		"LEARN_MORE_URL": "Learn more",
+		"GAUZY_FEATURES": "Gauzy features"
 	},
 	"REPORT_PAGE": {
 		"MEMBERS_WORKED": "Members Worked",
