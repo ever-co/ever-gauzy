@@ -6,8 +6,13 @@ import { RecurringExpenseDeletionEnum } from '@gauzy/contracts';
 	selector: 'ga-delete-confirmation',
 	template: `
 		<nb-card class="center">
-			<nb-card-header>
-				<h6>{{ 'POP_UPS.DELETE_RECURRING_EXPENSE' | translate }}</h6>
+			<nb-card-header class="d-flex flex-column">
+				<span class="cancel"
+					><i class="fas fa-times" (click)="close()"></i
+				></span>
+				<h6 class="title">
+					{{ 'POP_UPS.DELETE_RECURRING_EXPENSE' | translate }}
+				</h6>
 			</nb-card-header>
 			<nb-card-body>
 				<nb-radio-group [(ngModel)]="selectedOption">
@@ -34,20 +39,26 @@ import { RecurringExpenseDeletionEnum } from '@gauzy/contracts';
 			</nb-card-body>
 			<nb-card-footer>
 				<button
-					(click)="delete()"
+					(click)="close()"
 					class="mr-3"
+					status="basic"
+					outline
+					nbButton
+				>
+					{{ 'BUTTONS.CANCEL' | translate }}
+				</button>
+				<button
+					(click)="delete()"
 					status="danger"
 					nbButton
 					[disabled]="!selectedOption"
 				>
 					{{ 'BUTTONS.OK' | translate }}
 				</button>
-				<button (click)="close()" status="info" nbButton>
-					{{ 'BUTTONS.CANCEL' | translate }}
-				</button>
 			</nb-card-footer>
 		</nb-card>
-	`
+	`,
+	styleUrls: ['./recurring-expense-delete-confirmation.component.scss']
 })
 export class RecurringExpenseDeleteConfirmationComponent {
 	recordType: string;
