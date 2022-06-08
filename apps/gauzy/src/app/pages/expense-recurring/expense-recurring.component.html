@@ -1,4 +1,9 @@
-<nb-card nbSpinnerStatus="primary" nbSpinnerSize="large" class="card-scroll">
+<nb-card 
+	[nbSpinner]="loading"
+	[nbSpinnerStatus]="'primary'"
+	[nbSpinnerSize]="'large'"
+	class="card-scroll"
+>
 	<nb-card-header class="flex flex-column">
 		<div class="card-header-title">
 			<h4>
@@ -79,41 +84,53 @@
 		</button>
 	</ng-template>
 </ng-template>
-
 <ng-template #actionButtons>
 	<div class="actions">
-		<button nbButton class="action secondary" size="small" status="basic">
-			<nb-icon icon="eye-outline"></nb-icon>
-			{{ 'BUTTONS.VIEW' | translate }}
-		</button>
-		<button
-			nbButton
-			(click)="editOrganizationRecurringExpense()"
-			class="action primary"
-			size="small"
-			status="basic"
-		>
-			<nb-icon icon="edit-outline"></nb-icon>
-			{{ 'BUTTONS.EDIT' | translate }}
-		</button>
-		<button
-			nbButton
-			class="action secondary"
-			(click)="fetchHistory()"
-			size="small"
-			status="basic"
-		>
-			<i class="fas fa-history mr-1"></i>
-			{{ 'BUTTONS.HISTORY' | translate }}
-		</button>
-		<button
-			nbButton
-			(click)="deleteOrgRecurringExpense()"
-			class="action"
-			size="small"
-			status="basic"
-		>
-			<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
-		</button>
+		<ng-template ngxPermissionsOnly="ORG_EXPENSES_VIEW">
+			<button 
+				nbButton
+				class="action secondary"
+				size="small"
+				status="basic"
+			>
+				<nb-icon icon="eye-outline"></nb-icon>
+				{{ 'BUTTONS.VIEW' | translate }}
+			</button>
+		</ng-template>
+		<ng-template ngxPermissionsOnly="ORG_EXPENSES_EDIT">
+			<button
+				nbButton
+				(click)="editOrganizationRecurringExpense()"
+				class="action primary"
+				size="small"
+				status="basic"
+			>
+				<nb-icon icon="edit-outline"></nb-icon>
+				{{ 'BUTTONS.EDIT' | translate }}
+			</button>
+		</ng-template>
+		<ng-template ngxPermissionsOnly="ORG_EXPENSES_VIEW">
+			<button
+				nbButton
+				class="action secondary"
+				(click)="fetchHistory()"
+				size="small"
+				status="basic"
+			>
+				<i class="fas fa-history mr-1"></i>
+				{{ 'BUTTONS.HISTORY' | translate }}
+			</button>
+		</ng-template>
+		<ng-template ngxPermissionsOnly="ORG_EXPENSES_EDIT">
+			<button
+				nbButton
+				(click)="deleteOrgRecurringExpense()"
+				class="action"
+				size="small"
+				status="basic"
+			>
+				<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
+			</button>
+		</ng-template>
 	</div>
 </ng-template>
