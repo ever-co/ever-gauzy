@@ -5,7 +5,8 @@ import {
 	NbButtonModule,
 	NbInputModule,
 	NbIconModule,
-	NbDialogModule
+	NbDialogModule,
+	NbSpinnerModule
 } from '@nebular/theme';
 import { FormsModule } from '@angular/forms';
 import { NgxPermissionsModule } from 'ngx-permissions';
@@ -25,6 +26,7 @@ import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy
 		NbButtonModule,
 		NbInputModule,
 		NbIconModule,
+		NbSpinnerModule,
 		NbDialogModule.forChild(),
 		TranslateModule,
 		RecurringExpenseBlockModule,

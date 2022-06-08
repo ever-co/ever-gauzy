@@ -73,7 +73,6 @@ export class ExpenseRecurringComponent
 		this.expenses$
 			.pipe(
 				debounceTime(300),
-				tap(() => (this.loading = true)),
 				tap(() => this._loadRecurringExpenses()),
 				untilDestroyed(this)
 			)
@@ -230,10 +229,13 @@ export class ExpenseRecurringComponent
 		if (!this.organization) {
 			return;
 		}
+
+		this.loading = true;
+		
 		const { id: organizationId } = this.organization;
 		const { tenantId } = this.store.user;
-
 		const { startDate, endDate } = this.selectedDateRange;
+
 		try {
 			this.fetchedHistories = {};
 			this.expenses = (
@@ -244,12 +246,13 @@ export class ExpenseRecurringComponent
 					endDate
 				})
 			).items;
-			this.loading = false;
 		} catch (error) {
 			console.log(
 				'Error while retriving organization recurring expenses',
 				error
 			);
+		} finally {
+			this.loading = false;
 		}
 	}
 
