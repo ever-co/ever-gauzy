@@ -3,6 +3,7 @@
 	[ngClass]="state ? item?.class : item?.class + ' closed'"
 >
 	<nb-accordion-item
+		[collapsed]="collapse"
 		(collapsedChange)="onCollapse($event)"
 		[ngClass]="{ opened: selected }"
 	>
