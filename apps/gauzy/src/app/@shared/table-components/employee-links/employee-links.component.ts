@@ -43,10 +43,11 @@ export class EmployeeLinksComponent {
 	constructor(private readonly _router: Router) {}
 
 	navigateToEmployee() {
+
 		if (!this.value) {
 			return;
 		}
 
-		this._router.navigate(['/pages/employees/edit/' + this.value.id]);
+		this._router.navigate([`/pages/employees/edit`, this.value.id]);
 	}
 }
