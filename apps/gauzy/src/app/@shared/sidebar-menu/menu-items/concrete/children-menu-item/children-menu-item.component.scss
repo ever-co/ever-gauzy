@@ -1,1 +1,10 @@
 @import '../menu-item/menu-item.component.scss';
+
+[nbButton].plus.appearance-outline.size-tiny {
+    padding: 1px 2px;
+
+    i.fa-plus {
+        margin: 0;
+        font-size: 16px;
+    }
+}
