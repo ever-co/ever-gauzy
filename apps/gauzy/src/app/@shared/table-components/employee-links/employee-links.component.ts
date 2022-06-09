@@ -50,6 +50,6 @@ export class EmployeeLinksComponent {
 		if (!this.value || !this.isNavigation) {
 			return;
 		}
-		this._router.navigate(['/pages/employees/edit/' + this.value.id]);
+		this._router.navigate([`/pages/employees/edit`, this.value.id]);
 	}
 }
