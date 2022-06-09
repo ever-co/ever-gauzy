@@ -1,10 +1,12 @@
 @import '../menu-item/menu-item.component.scss';
 
 [nbButton].plus.appearance-outline.size-tiny {
-    padding: 1px 2px;
+    padding: 2px 3px;
+    border: 2px solid nb-theme(gauzy-border-default-color);
+    color: nb-theme(gauzy-text-color-2);
 
     i.fa-plus {
         margin: 0;
-        font-size: 16px;
+        font-size: 14px;
     }
 }
