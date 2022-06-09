@@ -23,6 +23,7 @@
   }
   .curser-pointer {
     cursor: pointer;
+    border-radius: nb-theme(border-radius) nb-theme(border-radius) 0px 0px;
   }
   .activity {
     .image-container {
@@ -86,19 +87,18 @@
       .screenshot-count {
         padding: 8px;
         background: rgba($color: #000000, $alpha: 0.6);
-        color: #fff;
+        color: nb-theme(color-danger-default);
         position: absolute;
-        top: 20%;
-        left: 75%;
-        transform: translate(-50%, -50%);
-        border-radius: 5px;
+        top: 0.35rem;
+        right: 0.5rem;
+        border-radius: nb-theme(border-radius);
         text-align: center;
       }
 
       img {
         width: 100%;
         height: 130px;
-        border-radius: 8px 8px 0px 0px;
+        border-radius: nb-theme(border-radius) nb-theme(border-radius) 0px 0px;
         object-fit: cover;
         &.default-image {
           object-fit: contain;
