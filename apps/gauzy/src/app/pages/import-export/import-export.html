@@ -1,81 +1,95 @@
-<nb-card 
+<nb-card
 	[nbSpinner]="loading"
 	nbSpinnerStatus="primary"
 	nbSpinnerSize="large"
 	class="card-scroll"
 >
 	<nb-card-header>
-		<div class="h4">
-			{{ 'MENU.SETTINGS' | translate }} - {{ 'MENU.IMPORT_EXPORT.IMPORT_EXPORT_DATA' | translate }}
-		</div>
-		<div class="info">
-			{{ 'MENU.IMPORT_EXPORT.IMPORT_INFO' | translate }}
-		</div>
-		<div class="info">
-			{{ 'MENU.IMPORT_EXPORT.EXPORT_INFO' | translate }}
-		</div>
-		<div class="info">
-			{{ 'MENU.IMPORT_EXPORT.DOWNLOAD_TEMPLATES_INFO' | translate }}
-		</div>
-		<ng-container *ngIf="!environment.DEMO">
-			<div class="info">
-				{{ 'MENU.IMPORT_EXPORT.MIGRATE_TO_CLOUD_INFO' | translate }}
-			</div>
-		</ng-container>
+		<h4>
+			<span class="menu-setting">{{ 'MENU.SETTINGS' | translate }}/</span>
+			{{ 'MENU.IMPORT_EXPORT.IMPORT_EXPORT_DATA' | translate }}
+		</h4>
 	</nb-card-header>
 	<nb-card-body>
 		<div class="row">
-			<div class="col-sm-12 col-md-12 m-2">
-				<button
-					class="m-1"
-					nbButton
-					shape="round"
-					status="success"
-					size="large"
-					(click)="importPage()"
-				>
-					<nb-icon icon="upload-outline"></nb-icon>
-					{{ 'MENU.IMPORT_EXPORT.IMPORT' | translate }}
-				</button>
-				<button
-					class="m-1"
-					nbButton
-					shape="round"
-					status="info"
-					size="large"
-					(click)="exportPage()"
-				>
-					<nb-icon icon="download-outline"></nb-icon>
-					{{ 'MENU.IMPORT_EXPORT.EXPORT' | translate }}
-				</button>
-				<button
-					class="m-1"
-					nbButton
-					shape="round"
-					size="large"
-					(click)="onDownloadTemplates()"
-				>
-					<nb-icon icon="file-text-outline"></nb-icon>
-					{{ 'MENU.IMPORT_EXPORT.DOWNLOAD_TEMPLATES' | translate }}
-				</button>
-				<ng-container *ngIf="!environment.DEMO">
+			<div class="col-sm-12 button-imports">
+				<div class="button-import">
 					<button
-						*ngxPermissionsOnly="[permissionsEnum.MIGRATE_GAUZY_CLOUD]"
-						class="m-1"
+						class="action"
 						nbButton
 						shape="round"
-						size="large"
-						status="warning"
-						ngxPromptDialog
-						[inputType]="'password'"
-						[title]="'MENU.IMPORT_EXPORT.MIGRATE_TO_CLOUD' | translate"
-						[placeholder]="'FORM.PASSWORD' | translate"
-						[label]="'FORM.PASSWORD' | translate"
-						(callback)="onMigrateIntoCloud($event)"
+						status="success"
+						size="small"
+						(click)="importPage()"
 					>
 						<nb-icon icon="upload-outline"></nb-icon>
-						{{ 'MENU.IMPORT_EXPORT.MIGRATE_TO_CLOUD' | translate }}
+						{{ 'MENU.IMPORT_EXPORT.IMPORT' | translate }}
 					</button>
+				</div>
+				<div class="button-import">
+					<button
+						class="action"
+						nbButton
+						status="info"
+						size="small"
+						(click)="exportPage()"
+					>
+						<nb-icon icon="download-outline"></nb-icon>
+						{{ 'MENU.IMPORT_EXPORT.EXPORT' | translate }}
+					</button>
+				</div>
+				<div class="button-import">
+					<button
+						class="action"
+						nbButton
+						size="small"
+						(click)="onDownloadTemplates()"
+					>
+						<nb-icon icon="file-text-outline"></nb-icon>
+						{{ 'MENU.IMPORT_EXPORT.DOWNLOAD_TEMPLATES' | translate
+						}}
+					</button>
+				</div>
+				<ng-container *ngIf="!environment.DEMO">
+					<div class="button-import">
+						<button
+							*ngxPermissionsOnly="[permissionsEnum.MIGRATE_GAUZY_CLOUD]"
+							class="action"
+							nbButton
+							size="small"
+							status="warning"
+							ngxPromptDialog
+							[inputType]="'password'"
+							[title]="'MENU.IMPORT_EXPORT.MIGRATE_TO_CLOUD' | translate"
+							[placeholder]="'FORM.PASSWORD' | translate"
+							[label]="'FORM.PASSWORD' | translate"
+							(callback)="onMigrateIntoCloud($event)"
+						>
+							<nb-icon icon="upload-outline"></nb-icon>
+							{{ 'MENU.IMPORT_EXPORT.MIGRATE_TO_CLOUD' | translate
+							}}
+						</button>
+					</div>
+				</ng-container>
+			</div>
+		</div>
+		<div class="row mt-4">
+			<div class="col-sm-12">
+				<div class="info">
+					{{ 'MENU.IMPORT_EXPORT.IMPORT_INFO' | translate }}
+				</div>
+				<div class="info">
+					{{ 'MENU.IMPORT_EXPORT.EXPORT_INFO' | translate }}
+				</div>
+				<div class="info">
+					{{ 'MENU.IMPORT_EXPORT.DOWNLOAD_TEMPLATES_INFO' | translate
+					}}
+				</div>
+				<ng-container *ngIf="!environment.DEMO">
+					<div class="info">
+						{{ 'MENU.IMPORT_EXPORT.MIGRATE_TO_CLOUD_INFO' |
+						translate }}
+					</div>
 				</ng-container>
 			</div>
 		</div>
