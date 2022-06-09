@@ -6,7 +6,7 @@ import { Router } from '@angular/router';
 	template: `
 		<ng-container *ngIf="value">
 			<a
-				*ngIf="value?.name || value?.fullName"
+				*ngIf="value?.name"
 				(click)="navigateToEmployee()"
 				class="link-text"
 			>
@@ -16,7 +16,7 @@ import { Router } from '@angular/router';
 					height="18px"
 					[src]="value.imageUrl"
 				/>
-				{{ value.name || value.fullName }}
+				{{ value.name }}
 			</a>
 		</ng-container>
 	`,
@@ -46,6 +46,6 @@ export class EmployeeLinksComponent {
 			return;
 		}
 
-		this._router.navigate([`/pages/employees/edit/${this.value.id}/account`]);
+		this._router.navigate([`/pages/employees/edit`, this.value.id]);
 	}
 }

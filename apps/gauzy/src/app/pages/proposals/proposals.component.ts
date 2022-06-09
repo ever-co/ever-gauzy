@@ -374,11 +374,12 @@ export class ProposalsComponent extends PaginationFilterBaseComponent
 					filter: false,
 					renderComponent: EmployeeLinksComponent,
 					valuePrepareFunction: (value, item) => {
-						return Object.assign(
-							{},
-							item.author,
-							{ imageUrl: item.author?.user?.imageUrl }
-						)
+						return {
+							id: item.author?.id,
+							name: item.author?.user?.name,
+							fullName: item.author?.fullName,
+							imageUrl: item.author?.user?.imageUrl
+						}
 					},
 				},
 				statusBadge: {
