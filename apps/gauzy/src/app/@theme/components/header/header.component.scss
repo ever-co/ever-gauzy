@@ -242,10 +242,11 @@ $orange: #f56d58;
 }
 
 .actions{
+  margin: .625rem;
   padding: .625rem;
   border-radius: nb-theme(button-rectangle-border-radius);
-  background-color:rgba(50, 50, 50, 0.03);
+  background-color: nb-theme(gauzy-card-2);
   display: flex;
   align-items: center;
-  margin-right: 1.25rem;
+  margin-right: 2.275rem;
 }
