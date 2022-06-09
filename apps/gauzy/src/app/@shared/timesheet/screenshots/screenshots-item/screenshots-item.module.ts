@@ -7,8 +7,7 @@ import {
 	NbCheckboxModule,
 	NbProgressBarModule,
 	NbPopoverModule,
-	NbListModule,
-	NbCardModule
+	NbListModule
 } from '@nebular/theme';
 import { ScreenshotsItemComponent } from './screenshots-item.component';
 import { SharedModule } from '../../../shared.module';
@@ -30,7 +29,6 @@ import { TableComponentsModule } from '../../../table-components';
 		GalleryModule,
 		MomentModule,
 		NbButtonModule,
-		NbCardModule,
 		NbCheckboxModule,
 		NbDialogModule.forChild(),
 		NbIconModule,
