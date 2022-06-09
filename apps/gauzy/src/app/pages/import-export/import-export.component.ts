@@ -27,7 +27,8 @@ import { TranslationBaseComponent } from '../../@shared/language-base/translatio
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-import-export',
-	templateUrl: './import-export.html'
+	templateUrl: './import-export.html',
+	styleUrls: ['./import-export.component.scss']
 })
 export class ImportExportComponent extends TranslationBaseComponent implements OnInit {
 
