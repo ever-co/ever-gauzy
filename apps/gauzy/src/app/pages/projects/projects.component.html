@@ -155,9 +155,7 @@
 										| translate
 								}}
 							</div>
-							<div class="info-value">
-								{{ p.description | titlecase }}
-							</div>
+							<div class="info-value" [innerHTML]="p.description | truncate : 50"></div>
 						</div>
 					</div>
 				</ga-entity-with-members-card>
