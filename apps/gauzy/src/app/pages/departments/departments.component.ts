@@ -18,6 +18,7 @@ import { EmployeeWithLinksComponent, NotesWithTagsComponent } from '../../@share
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import { OrganizationDepartmentsService, Store, ToastrService } from '../../@core/services';
 import { distinctUntilChange } from '@gauzy/common-angular';
+import { ActivatedRoute } from '@angular/router';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -59,7 +60,8 @@ export class DepartmentsComponent
 		private readonly toastrService: ToastrService,
 		public readonly translateService: TranslateService,
 		private readonly dialogService: NbDialogService,
-		private readonly store: Store
+		private readonly store: Store,
+		private readonly route: ActivatedRoute
 	) {
 		super(translateService);
 		this.setView();
@@ -83,6 +85,14 @@ export class DepartmentsComponent
 				distinctUntilChange(),
 				tap((organization: IOrganization) => this.organization = organization),
 				tap(() => this.departments$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+			this.route.queryParamMap
+			.pipe(
+				filter((params) => !!params && params.get('openAddDialog') === 'true'),
+				debounceTime(1000),
+				tap(() => this.showAddCard = true),
 				untilDestroyed(this)
 			)
 			.subscribe();

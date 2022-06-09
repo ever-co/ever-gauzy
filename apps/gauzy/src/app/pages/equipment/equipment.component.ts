@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import {
 	IEquipment,
 	ComponentLayoutStyleEnum,
@@ -57,9 +57,9 @@ export class EquipmentComponent extends PaginationFilterBaseComponent
 		private readonly dialogService: NbDialogService,
 		private readonly equipmentService: EquipmentService,
 		private readonly toastrService: ToastrService,
-		private readonly router: Router,
 		private readonly store: Store,
-		private readonly http: HttpClient
+		private readonly http: HttpClient,
+		private readonly route: ActivatedRoute
 	) {
 		super(translateService);
 		this.setView();
@@ -90,6 +90,14 @@ export class EquipmentComponent extends PaginationFilterBaseComponent
 				filter((organization: IOrganization) => !!organization),
 				tap((organization: IOrganization) => this.organization = organization),
 				tap(() => this.equipments$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.route.queryParamMap
+			.pipe(
+				filter((params) => !!params && params.get('openAddDialog') === 'true'),
+				debounceTime(1000),
+				tap(() => this.save()),
 				untilDestroyed(this)
 			)
 			.subscribe();

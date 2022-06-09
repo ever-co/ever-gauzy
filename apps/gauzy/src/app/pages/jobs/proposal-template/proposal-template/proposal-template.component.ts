@@ -23,6 +23,7 @@ import {
 	PaginationFilterBaseComponent,
 	IPaginationBase
 } from '../../../../@shared/pagination/pagination-filter-base.component';
+import { ActivatedRoute } from '@angular/router';
 
 export enum ProposalTemplateTabsEnum {
 	ACTIONS = 'ACTIONS',
@@ -68,7 +69,8 @@ export class ProposalTemplateComponent extends PaginationFilterBaseComponent
 		private readonly dialogService: NbDialogService,
 		private readonly nl2BrPipe: Nl2BrPipe,
 		private readonly truncatePipe: TruncatePipe,
-		private readonly http: HttpClient
+		private readonly http: HttpClient,
+		private readonly route: ActivatedRoute
 	) {
 		super(translateService);
 	}
@@ -113,6 +115,14 @@ export class ProposalTemplateComponent extends PaginationFilterBaseComponent
 				}),
 				tap(() => this.refreshPagination()),
 				tap(() => this.templates$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.route.queryParamMap
+			.pipe(
+				filter((params) => !!params && params.get('openAddDialog') === 'true'),
+				debounceTime(1000),
+				tap(() => this.createProposal()),
 				untilDestroyed(this)
 			)
 			.subscribe();

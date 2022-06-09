@@ -17,9 +17,12 @@ import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { LocalDataSource } from 'ng2-smart-table';
 import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
-import { Subject, firstValueFrom } from 'rxjs';
+import { Subject, firstValueFrom, filter, debounceTime, tap } from 'rxjs';
 import { ToastrService } from '../../@core/services/toastr.service';
+import { ActivatedRoute } from '@angular/router';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-employment-types',
 	templateUrl: './employment-types.component.html',
@@ -47,13 +50,22 @@ export class EmploymentTypesComponent
 		private dialogService: NbDialogService,
 		private store: Store,
 		private organizationEmploymentTypesService: OrganizationEmploymentTypesService,
-		readonly translateService: TranslateService
+		readonly translateService: TranslateService,
+		private readonly route: ActivatedRoute
 	) {
 		super(translateService);
 		this.setView();
 	}
 
 	ngOnInit(): void {
+		this.route.queryParamMap
+			.pipe(
+				filter((params) => !!params && params.get('openAddDialog') === 'true'),
+				debounceTime(1000),
+				tap(() => this.add()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this._initializeForm();
 		this.loadSmartTable();
 		this._applyTranslationOnSmartTable();

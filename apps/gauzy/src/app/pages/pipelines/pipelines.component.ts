@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import {
 	IPipeline,
@@ -86,7 +86,8 @@ export class PipelinesComponent extends PaginationFilterBaseComponent
 		private readonly store: Store,
 		private readonly httpClient: HttpClient,
 		private readonly errorHandlingService: ErrorHandlingService,
-		private readonly router: Router
+		private readonly router: Router,
+		private readonly route: ActivatedRoute
 	) {
 		super(translateService);
 		this.setView();
@@ -142,6 +143,14 @@ export class PipelinesComponent extends PaginationFilterBaseComponent
 				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => this.refreshPagination()),
 				tap(() => this.subject$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.route.queryParamMap
+			.pipe(
+				filter((params) => !!params && params.get('openAddDialog') === 'true'),
+				debounceTime(1000),
+				tap(() => this.createPipeline()),
 				untilDestroyed(this)
 			)
 			.subscribe();

@@ -42,9 +42,10 @@ interface GaMenuItem extends NbMenuItem {
 		</ngx-one-column-layout>
 	`
 })
-export class PagesComponent extends TranslationBaseComponent 
-	implements OnInit, OnDestroy {
-		
+export class PagesComponent
+	extends TranslationBaseComponent
+	implements OnInit, OnDestroy
+{
 	isEmployee: boolean;
 	organization: IOrganization;
 	user: IUser;
@@ -195,7 +196,8 @@ export class PagesComponent extends TranslationBaseComponent
 						data: {
 							translationKey: 'MENU.EXPENSES',
 							permissionKeys: [PermissionsEnum.ORG_EXPENSES_VIEW],
-							featureKey: FeatureEnum.FEATURE_EXPENSE
+							featureKey: FeatureEnum.FEATURE_EXPENSE,
+							add: '/pages/accounting/expenses?openAddDialog=true'
 						}
 					},
 					{
@@ -208,7 +210,7 @@ export class PagesComponent extends TranslationBaseComponent
 							permissionKeys: [PermissionsEnum.ORG_EXPENSES_VIEW],
 							featureKey:
 								FeatureEnum.FEATURE_ORGANIZATION_RECURRING_EXPENSE,
-								add: '/pages/accounting/expense-recurring?openAddDialog=true'
+							add: '/pages/accounting/expense-recurring?openAddDialog=true'
 						}
 					},
 					{
@@ -257,7 +259,7 @@ export class PagesComponent extends TranslationBaseComponent
 								PermissionsEnum.ESTIMATES_VIEW
 							],
 							featureKey: FeatureEnum.FEATURE_PROPOSAL,
-							add:'/pages/sales/invoices/estimates/add'
+							add: '/pages/sales/invoices/estimates/add'
 						}
 					},
 					{
@@ -271,7 +273,7 @@ export class PagesComponent extends TranslationBaseComponent
 								PermissionsEnum.INVOICES_VIEW
 							],
 							featureKey: FeatureEnum.FEATURE_INVOICE,
-							add:'/pages/sales/invoices/add'
+							add: '/pages/sales/invoices/add'
 						}
 					},
 					{
@@ -295,7 +297,7 @@ export class PagesComponent extends TranslationBaseComponent
 							translationKey: 'MENU.PAYMENTS',
 							permissionKeys: [PermissionsEnum.ORG_PAYMENT_VIEW],
 							featureKey: FeatureEnum.FEATURE_PAYMENT,
-							add:'/pages/sales/payments?openAddDialog=true'
+							add: '/pages/sales/payments?openAddDialog=true'
 						}
 					},
 					{
@@ -307,7 +309,8 @@ export class PagesComponent extends TranslationBaseComponent
 							permissionKeys: [
 								PermissionsEnum.VIEW_SALES_PIPELINES
 							],
-							featureKey: FeatureEnum.FEATURE_PIPELINE
+							featureKey: FeatureEnum.FEATURE_PIPELINE,
+							add: '/pages/sales/pipelines?openAddDialog=true'
 						}
 					}
 				]
@@ -326,7 +329,8 @@ export class PagesComponent extends TranslationBaseComponent
 						link: '/pages/tasks/dashboard',
 						data: {
 							translationKey: 'MENU.DASHBOARD',
-							featureKey: FeatureEnum.FEATURE_DASHBOARD_TASK
+							featureKey: FeatureEnum.FEATURE_DASHBOARD_TASK,
+							add: '/pages/tasks/dashboard?openAddDialog=true'
 						}
 					},
 					{
@@ -336,7 +340,8 @@ export class PagesComponent extends TranslationBaseComponent
 						data: {
 							translationKey: 'MENU.MY_TASKS',
 							hide: () => !this.isEmployee,
-							featureKey: FeatureEnum.FEATURE_MY_TASK
+							featureKey: FeatureEnum.FEATURE_MY_TASK,
+							add: '/pages/tasks/me?openAddDialog=true'
 						}
 					},
 					{
@@ -345,7 +350,8 @@ export class PagesComponent extends TranslationBaseComponent
 						link: '/pages/tasks/team',
 						data: {
 							translationKey: 'MENU.TEAM_TASKS',
-							featureKey: FeatureEnum.FEATURE_TEAM_TASK
+							featureKey: FeatureEnum.FEATURE_TEAM_TASK,
+							add: '/pages/tasks/team?openAddDialog=true'
 						}
 					}
 				]
@@ -397,7 +403,8 @@ export class PagesComponent extends TranslationBaseComponent
 							translationKey: 'MENU.PROPOSAL_TEMPLATE',
 							permissionKeys: [
 								PermissionsEnum.ORG_PROPOSAL_TEMPLATES_VIEW
-							]
+							],
+							add: '/pages/jobs/proposal-template?openAddDialog=true'
 						}
 					}
 				]
@@ -459,7 +466,8 @@ export class PagesComponent extends TranslationBaseComponent
 						link: '/pages/employees/approvals',
 						data: {
 							translationKey: 'MENU.APPROVALS',
-							featureKey: FeatureEnum.FEATURE_EMPLOYEE_APPROVAL
+							featureKey: FeatureEnum.FEATURE_EMPLOYEE_APPROVAL,
+							add: '/pages/employees/approvals?openAddDialog=true'
 						}
 					},
 					{
@@ -489,7 +497,8 @@ export class PagesComponent extends TranslationBaseComponent
 						data: {
 							translationKey: 'MENU.TIME_OFF',
 							permissionKeys: [PermissionsEnum.ORG_TIME_OFF_VIEW],
-							featureKey: FeatureEnum.FEATURE_EMPLOYEE_TIMEOFF
+							featureKey: FeatureEnum.FEATURE_EMPLOYEE_TIMEOFF,
+							add: '/pages/employees/time-off?openAddDialog=true'
 						}
 					},
 					{
@@ -502,7 +511,8 @@ export class PagesComponent extends TranslationBaseComponent
 								PermissionsEnum.EMPLOYEE_EXPENSES_VIEW
 							],
 							featureKey:
-								FeatureEnum.FEATURE_EMPLOYEE_RECURRING_EXPENSE
+								FeatureEnum.FEATURE_EMPLOYEE_RECURRING_EXPENSE,
+							add: '/pages/employees/recurring-expenses?openAddDialog=true'
 						}
 					},
 					{
@@ -515,7 +525,7 @@ export class PagesComponent extends TranslationBaseComponent
 								PermissionsEnum.ORG_CANDIDATES_VIEW
 							],
 							featureKey: FeatureEnum.FEATURE_EMPLOYEE_CANDIDATE,
-							add:'/pages/employees/candidates?openAddDialog=true'
+							add: '/pages/employees/candidates?openAddDialog=true'
 						}
 					}
 				]
@@ -550,7 +560,7 @@ export class PagesComponent extends TranslationBaseComponent
 							translationKey: 'MENU.EQUIPMENT',
 							featureKey:
 								FeatureEnum.FEATURE_ORGANIZATION_EQUIPMENT,
-							add:'/pages/organization/equipment?openAddDialog=true'
+							add: '/pages/organization/equipment?openAddDialog=true'
 						}
 					},
 					{
@@ -563,7 +573,7 @@ export class PagesComponent extends TranslationBaseComponent
 							permissionKeys: [PermissionsEnum.ALL_ORG_VIEW],
 							featureKey:
 								FeatureEnum.FEATURE_ORGANIZATION_INVENTORY,
-								add:'/pages/organization/inventory/create'
+							add: '/pages/organization/inventory/create'
 						}
 					},
 					{
@@ -573,7 +583,7 @@ export class PagesComponent extends TranslationBaseComponent
 						data: {
 							translationKey: 'MENU.TAGS',
 							featureKey: FeatureEnum.FEATURE_ORGANIZATION_TAG,
-							add:'/pages/organization/tags?openAddDialog=true'
+							add: '/pages/organization/tags?openAddDialog=true'
 						}
 					},
 					{
@@ -584,7 +594,7 @@ export class PagesComponent extends TranslationBaseComponent
 							translationKey: 'ORGANIZATIONS_PAGE.VENDORS',
 							permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
 							featureKey: FeatureEnum.FEATURE_ORGANIZATION_VENDOR,
-							add:'/pages/organization/vendors?openAddDialog=true'
+							add: '/pages/organization/vendors?openAddDialog=true'
 						}
 					},
 					{
@@ -594,8 +604,9 @@ export class PagesComponent extends TranslationBaseComponent
 						data: {
 							translationKey: 'ORGANIZATIONS_PAGE.PROJECTS',
 							permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
-							featureKey: FeatureEnum.FEATURE_ORGANIZATION_PROJECT,
-							add:'/pages/organization/projects?openAddDialog=true'
+							featureKey:
+								FeatureEnum.FEATURE_ORGANIZATION_PROJECT,
+							add: '/pages/organization/projects?openAddDialog=true'
 						}
 					},
 					{
@@ -607,7 +618,7 @@ export class PagesComponent extends TranslationBaseComponent
 							permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
 							featureKey:
 								FeatureEnum.FEATURE_ORGANIZATION_DEPARTMENT,
-								add:'/pages/organization/departments?openAddDialog=true'
+							add: '/pages/organization/departments?openAddDialog=true'
 						}
 					},
 					{
@@ -618,7 +629,7 @@ export class PagesComponent extends TranslationBaseComponent
 							translationKey: 'ORGANIZATIONS_PAGE.EDIT.TEAMS',
 							permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
 							featureKey: FeatureEnum.FEATURE_ORGANIZATION_TEAM,
-							add:'/pages/organization/teams?openAddDialog=true'
+							add: '/pages/organization/teams?openAddDialog=true'
 						}
 					},
 					{
@@ -630,7 +641,7 @@ export class PagesComponent extends TranslationBaseComponent
 							permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
 							featureKey:
 								FeatureEnum.FEATURE_ORGANIZATION_DOCUMENT,
-								add:'/pages/organization/documents?openAddDialog=true'
+							add: '/pages/organization/documents?openAddDialog=true'
 						}
 					},
 					{
@@ -643,7 +654,7 @@ export class PagesComponent extends TranslationBaseComponent
 							permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
 							featureKey:
 								FeatureEnum.FEATURE_ORGANIZATION_EMPLOYMENT_TYPE,
-								add:'/pages/organization/employment-types?openAddDialog=true'
+							add: '/pages/organization/employment-types?openAddDialog=true'
 						}
 					},
 					{
@@ -656,7 +667,7 @@ export class PagesComponent extends TranslationBaseComponent
 							permissionKeys: [PermissionsEnum.ORG_EXPENSES_VIEW],
 							featureKey:
 								FeatureEnum.FEATURE_ORGANIZATION_RECURRING_EXPENSE,
-								add:'/pages/organization/expense-recurring?openAddDialog=true'
+							add: '/pages/organization/expense-recurring?openAddDialog=true'
 						}
 					},
 					{
@@ -666,8 +677,7 @@ export class PagesComponent extends TranslationBaseComponent
 						data: {
 							translationKey: 'ORGANIZATIONS_PAGE.HELP_CENTER',
 							featureKey:
-								FeatureEnum.FEATURE_ORGANIZATION_HELP_CENTER,
-								add:'/pages/organization/help-center?openAddDialog=true'
+								FeatureEnum.FEATURE_ORGANIZATION_HELP_CENTER
 						}
 					}
 				]
@@ -698,7 +708,7 @@ export class PagesComponent extends TranslationBaseComponent
 						link: `/pages/contacts/leads`,
 						data: {
 							translationKey: 'CONTACTS_PAGE.LEADS',
-							add:'/pages/contacts/leads?openAddDialog=true'
+							add: '/pages/contacts/leads?openAddDialog=true'
 						}
 					},
 					{
@@ -707,7 +717,7 @@ export class PagesComponent extends TranslationBaseComponent
 						link: `/pages/contacts/customers`,
 						data: {
 							translationKey: 'CONTACTS_PAGE.CUSTOMERS',
-							add:'/pages/contacts/customers?openAddDialog=true'
+							add: '/pages/contacts/customers?openAddDialog=true'
 						}
 					},
 					{
@@ -716,7 +726,7 @@ export class PagesComponent extends TranslationBaseComponent
 						link: `/pages/contacts/clients`,
 						data: {
 							translationKey: 'CONTACTS_PAGE.CLIENTS',
-							add:'/pages/contacts/clients?openAddDialog=true'
+							add: '/pages/contacts/clients?openAddDialog=true'
 						}
 					}
 				]
