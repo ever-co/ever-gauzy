@@ -34,11 +34,13 @@ import { Router } from '@angular/router';
 	styleUrls: ['./employee-links.component.scss']
 })
 export class EmployeeLinksComponent {
+	@Input()
+	rowData: any;
 
 	@Input()
 	value: any;
 
-	constructor(private readonly _router: Router) { }
+	constructor(private readonly _router: Router) {}
 
 	navigateToEmployee() {
 
