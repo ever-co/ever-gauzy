@@ -1,6 +1,6 @@
 <div>
 	<div *ngIf="rowData.notes">{{ rowData.notes }}</div>
-	<div *ngIf="rowData.description" [hidden]="rowData.title">
+	<div *ngIf="rowData.description" [hidden]="rowData.title || rowData.name">
 		{{ rowData.description }}
 	</div>
 	<div *ngIf="rowData.purpose">{{ rowData.purpose }}</div>
