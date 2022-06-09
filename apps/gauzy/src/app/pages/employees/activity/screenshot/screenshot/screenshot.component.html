@@ -32,6 +32,7 @@
 						<div class="row grid-container">
 							<div *ngFor="let timeSlot of hourSlot.timeSlots">
 								<ngx-screenshots-item
+									[employees]="timeSlot?.employees"
 									[timeSlot]="timeSlot"
 									[selectionMode]="selectedIdsCount > 0"
 									[isSelected]="selectedIds[timeSlot?.id]"
