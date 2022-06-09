@@ -9,15 +9,13 @@
 				[nbPopover]="workedEmployeeTemplate"
 				[nbPopoverTrigger]="'hover'"
 			>
-				<img
+				<img 
 					draggable="false"
-					[src]="fallbackSvg"
-					class="default-image"
+					[src]="lastScreenshot?.thumbUrl" 
 				/>
-				<span class="no-image p-3">
-					{{ 'ACTIVITY.EMPLOYEE_NO_SCREENSHOTS' | translate : {
-						count: employees.length
-					} }}
+				<span class="screenshot-count">
+					<nb-icon status="danger" icon="people-outline"></nb-icon>
+					{{ employees.length }}
 				</span>
 			</div>
 		</ng-template>

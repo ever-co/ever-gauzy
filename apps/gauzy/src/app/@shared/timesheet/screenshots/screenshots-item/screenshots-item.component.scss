@@ -83,6 +83,17 @@
         border-radius: 5px;
         text-align: center;
       }
+      .screenshot-count {
+        padding: 8px;
+        background: rgba($color: #000000, $alpha: 0.6);
+        color: #fff;
+        position: absolute;
+        top: 20%;
+        left: 75%;
+        transform: translate(-50%, -50%);
+        border-radius: 5px;
+        text-align: center;
+      }
 
       img {
         width: 100%;
