@@ -8,7 +8,7 @@ import { Router } from '@angular/router';
 			<a
 				*ngIf="value?.name"
 				(click)="navigateToEmployee()"
-				class="link-text"
+				[ngClass]="{ 'link-text' : isNavigation }"
 			>
 				<img
 					*ngIf="value.imageUrl"
@@ -40,13 +40,16 @@ export class EmployeeLinksComponent {
 	@Input()
 	value: any;
 
-	constructor(private readonly _router: Router) {}
+	@Input() isNavigation: boolean = true;
+
+	constructor(
+		private readonly _router: Router
+	) {}
 
 	navigateToEmployee() {
-		if (!this.value) {
+		if (!this.value || !this.isNavigation) {
 			return;
 		}
-
 		this._router.navigate(['/pages/employees/edit/' + this.value.id]);
 	}
 }

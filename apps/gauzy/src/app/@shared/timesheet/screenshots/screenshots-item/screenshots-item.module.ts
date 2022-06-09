@@ -5,7 +5,10 @@ import {
 	NbDialogModule,
 	NbIconModule,
 	NbCheckboxModule,
-	NbProgressBarModule
+	NbProgressBarModule,
+	NbPopoverModule,
+	NbListModule,
+	NbCardModule
 } from '@nebular/theme';
 import { ScreenshotsItemComponent } from './screenshots-item.component';
 import { SharedModule } from '../../../shared.module';
@@ -15,25 +18,30 @@ import { MomentModule } from 'ngx-moment';
 import { GalleryModule } from '../../../gallery/gallery.module';
 import { DialogsModule } from '../../../dialogs';
 import { ViewScreenshotsModalModule } from '../view-screenshots-modal/view-screenshots-modal.module';
+import { TableComponentsModule } from '../../../table-components';
 
 @NgModule({
 	declarations: [ScreenshotsItemComponent],
 	exports: [ScreenshotsItemComponent],
 	imports: [
 		CommonModule,
-		SharedModule,
+		DialogsModule,
+		FormsModule,
+		GalleryModule,
+		MomentModule,
 		NbButtonModule,
+		NbCardModule,
+		NbCheckboxModule,
 		NbDialogModule.forChild(),
 		NbIconModule,
-		NbCheckboxModule,
-		TranslateModule,
+		NbListModule,
+		NbPopoverModule,
 		NbProgressBarModule,
-		FormsModule,
 		ReactiveFormsModule,
-		MomentModule,
-		GalleryModule,
-		ViewScreenshotsModalModule,
-		DialogsModule
+		SharedModule,
+		TableComponentsModule,
+		TranslateModule,
+		ViewScreenshotsModalModule
 	]
 })
 export class ScreenshotsItemModule {}
