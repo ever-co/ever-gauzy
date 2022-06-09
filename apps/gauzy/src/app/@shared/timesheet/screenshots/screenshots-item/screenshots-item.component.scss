@@ -25,7 +25,7 @@
     cursor: pointer;
   }
   .activity {
-    .image-contaer {
+    .image-container {
       background: rgba($color: #000000, $alpha: 0.1);
       min-height: 130px;
       position: relative;
@@ -95,25 +95,6 @@
       }
     }
   }
-  .selecte-items-action {
-    max-width: 500px;
-    width: 90%;
-    position: fixed;
-    bottom: 0;
-    display: flex;
-    flex-direction: row;
-    left: 0;
-    right: 0;
-    margin: auto;
-    z-index: 99;
-  }
-  ::ng-deep {
-    .progress-value {
-      span {
-        display: none;
-      }
-    }
-  }
 }
 .hour-label {
   font-size: 14px;
@@ -122,4 +103,14 @@
   letter-spacing: 0em;
   text-align: left;
   text-transform: lowercase;
+}
+
+::ng-deep {
+	.cdk-overlay-container {
+		nb-overlay-container {
+			nb-list {
+				overflow: hidden !important;
+			}
+		}
+	}
 }
