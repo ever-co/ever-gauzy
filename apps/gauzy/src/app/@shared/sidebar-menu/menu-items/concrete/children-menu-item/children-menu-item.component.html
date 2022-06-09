@@ -37,25 +37,22 @@
 					? 'sub-item custom'
 					: 'sub-item'
 			"
-			(click)="select()"
 		>
-			<span class="info w-100">
+			<span (click)="select()" class="info w-100">
 				<i [class]="item?.icon"></i
-				><span *ngIf="collapse || mouseHover"
-					>{{ item?.title }}
-					<button
-						*ngIf="item?.data?.add"
-						class="float-right plus"
-						status="basic"
-						outline
-						size="tiny"
-						(click)="add()"
-						nbButton
-					>
-						<i class="fas fa-plus"></i>
-					</button>
-				</span>
+				><span *ngIf="collapse || mouseHover">{{ item?.title }} </span>
 			</span>
+			<button
+				*ngIf="item?.data?.add"
+				class="float-right plus"
+				status="basic"
+				outline
+				size="tiny"
+				(click)="add()"
+				nbButton
+			>
+				<i class="fas fa-plus"></i>
+			</button>
 		</div>
 	</ng-template>
 </ng-container>
