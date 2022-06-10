@@ -895,7 +895,8 @@
 			"CUSTOM_SMTP": "Custom SMTP",
 			"FEATURE": "Feature",
 			"FEATURE_ORGANIZATION": "Feature Organization",
-			"EXPORT_DATA": "Export Data"
+			"EXPORT_DATA": "Export Data",
+			"IMPORT_DATA": "Import Data"
 		},
 		"TAGS": "Tags",
 		"LANGUAGE": "Language",
