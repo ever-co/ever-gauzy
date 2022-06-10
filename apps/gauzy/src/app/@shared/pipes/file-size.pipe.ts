@@ -43,8 +43,8 @@ export class FileSizePipe implements PipeTransform {
 
 		let unitIndex = 0;
 
-		while (bytes >= 1024) {
-			bytes /= 1024;
+		while (bytes >= 1000) {
+			bytes /= 1000;
 			unitIndex++;
 		}
 
