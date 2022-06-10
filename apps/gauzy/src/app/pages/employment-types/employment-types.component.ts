@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, TemplateRef } from '@angular/core';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import {
@@ -11,7 +11,6 @@ import {
 import { takeUntil } from 'rxjs/operators';
 import { NbDialogService } from '@nebular/theme';
 import { Store } from '../../@core/services/store.service';
-import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { OrganizationEmploymentTypesService } from '../../@core/services/organization-employment-types.service';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { LocalDataSource } from 'ng2-smart-table';
@@ -21,6 +20,7 @@ import { Subject, firstValueFrom, filter, debounceTime, tap } from 'rxjs';
 import { ToastrService } from '../../@core/services/toastr.service';
 import { ActivatedRoute } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -29,7 +29,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 	styleUrls: ['./employment-types.component.scss']
 })
 export class EmploymentTypesComponent
-	extends TranslationBaseComponent
+	extends PaginationFilterBaseComponent
 	implements OnInit, OnDestroy {
 	form: FormGroup;
 	showAddCard: Boolean;
@@ -41,9 +41,16 @@ export class EmploymentTypesComponent
 	selectedOrgEmpType: IOrganizationEmploymentType;
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
+	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
 	settingsSmartTable: object;
 	smartTableSource = new LocalDataSource();
+	disabled: boolean = false;
+	selected = {
+		orgEmpType: null,
+		state: false
+	};
 	private _ngDestroy$ = new Subject<void>();
+
 	constructor(
 		private fb: FormBuilder,
 		private readonly toastrService: ToastrService,
@@ -259,5 +266,26 @@ export class EmploymentTypesComponent
 			this.showAddCard = false;
 			this.selectedOrgEmpType = null;
 		}
+	}
+
+	openDialog(template: TemplateRef<any>, isEditTemplate: boolean) {
+		try {
+			isEditTemplate ? this.showEditCard(this.selectedOrgEmpType) : this.cancel();
+			this.dialogService.open(template);
+		} catch (error) {
+			console.log('An error occurred on open dialog');
+		}
+	}
+	
+	selectOrganizationEmploymentType(orgEmpType: any) {
+		if (orgEmpType.data) orgEmpType = orgEmpType.data;
+		const res =
+			this.selected.orgEmpType && orgEmpType.id === this.selected.orgEmpType.id
+				? { state: !this.selected.state }
+				: { state: true };
+		this.disabled = !res.state;
+		this.selected.state = res.state;
+		this.selected.orgEmpType = orgEmpType;
+		this.selectedOrgEmpType = this.selected.orgEmpType;
 	}
 }

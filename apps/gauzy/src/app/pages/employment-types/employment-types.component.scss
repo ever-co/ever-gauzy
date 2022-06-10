@@ -1,8 +1,5 @@
-.header-wrapper {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
+@import 'apps/gauzy/src/app/pages/expenses/expense-categories/expense-categories.component.scss';
+
 
 /**
 * By setting min-height of the card to this value, we ensure the card will properly adjust it's height
