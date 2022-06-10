@@ -1,5 +1,4 @@
 @import "themes";
-@import "../../reusable";
 
 .faq {
   width: 260px;
@@ -62,6 +61,44 @@
 }
 
 // media queries
+@mixin tablet-screen {
+  @media screen and (max-width: 790px) {
+    @content
+  }
+}
+@mixin mobile-screen {
+  @media screen and (max-width: 490px) {
+    @content
+  }
+}
+@mixin hr-div-strong {
+  width: 416px;
+  height: 1px;
+  border-radius: 1px;
+  transform: matrix(1, 0, 0, -1, 0, 0);
+  background: nb-theme(border-alternative-color-4);
+  opacity: 0.15;
+  margin-bottom: 29px;
+  padding-left: 0;
+  padding-right: 0;
+  @include mobile-screen {
+    width: 100%;
+  }
+}
+@mixin hr-div-soft {
+  width: 416px;
+  height: 1px;
+  background: nb-theme(border-alternative-color-4);
+  opacity: 0.05;
+  border-radius: 1px;
+  transform: matrix(1, 0, 0, -1, 0, 0);
+  padding-left: 0;
+  padding-right: 0;
+  @include mobile-screen {
+    width: 100%;
+  }
+}
+
 @include tablet-screen { 
   .faq {
     width: 476px;
@@ -73,4 +110,3 @@
     display: none;
   }
 }
-@include input-fields-color;

@@ -3832,9 +3832,7 @@
 		"ALERT_TITLE": "Oh snap!",
 		"ALERT_SUCCESS_TITLE": "Hooray!",
 		"REQUEST_PASSWORD_TEXT" : "Request password",
-		"BACK_TO_LOGIN" : "Back to? Log In",
-		"LOGIN" : "Log In",
-		"REGISTER" : "Register",
+		"BACK_TO_LOGIN" : "Back to?",
 		"FAQ_TITLE" : "FAQ",
 		"FAQ_LEARN_MORE" : "Learn more",
 		"LABELS": {
