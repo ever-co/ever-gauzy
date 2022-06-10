@@ -729,9 +729,9 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			);
 		}
 
-		if (employeeIds) {
-			qb.andWhere(`"${qb.alias}"."employeeId" IN (:...employeeId)`, {
-				employeeId: employeeIds
+		if (isNotEmpty(employeeIds)) {
+			qb.andWhere(`"${qb.alias}"."employeeId" IN (:...employeeIds)`, {
+				employeeIds
 			});
 		}
 
