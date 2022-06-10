@@ -63,6 +63,7 @@
 	</nb-card-body>
 </nb-card>
 <ng-template #visibleButton>
+	<ng-template [ngxPermissionsOnly]="['ALL_ORG_EDIT']">
 		<button
 			*ngIf="!showAddCard"
 			(click)="showAddCard = !showAddCard"
@@ -74,6 +75,7 @@
 			<nb-icon icon="plus-outline"></nb-icon
 			>{{ 'BUTTONS.ADD' | translate }}
 		</button>	
+	</ng-template>
 </ng-template>
 <ng-template
 	#actionButtons
@@ -81,27 +83,31 @@
 	let-selectedItem="selectedItem"
 >
 	<div class="btn-group actions">
-		<button
-			nbButton
-			status="basic"
-			class="action secondary"
-			[disabled]="!selectedItem && disableButton"
-			(click)="editDepartment(selectedItem)"
-			size="small"		
-		>
-			<nb-icon icon="edit-outline"></nb-icon
-			>{{ 'BUTTONS.EDIT' | translate }}
-		</button>
-		<button
-			nbButton
-			status="basic"
-			class="action"
-			[disabled]="!selectedItem && disableButton"
-			(click)="removeDepartment(selectedItem?.id, selectedItem?.name)"
-			size="small"
-			[nbTooltip]="'BUTTONS.DELETE' | translate"
-		>
-			<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
-		</button>
+		<ng-template [ngxPermissionsOnly]="['ALL_ORG_EDIT']">
+			<button
+				nbButton
+				status="basic"
+				class="action secondary"
+				[disabled]="!selectedItem && disableButton"
+				(click)="editDepartment(selectedItem)"
+				size="small"		
+			>
+				<nb-icon icon="edit-outline"></nb-icon
+				>{{ 'BUTTONS.EDIT' | translate }}
+			</button>
+		</ng-template>
+		<ng-template [ngxPermissionsOnly]="['ALL_ORG_EDIT']">
+			<button
+				nbButton
+				status="basic"
+				class="action"
+				[disabled]="!selectedItem && disableButton"
+				(click)="removeDepartment(selectedItem?.id, selectedItem?.name)"
+				size="small"
+				[nbTooltip]="'BUTTONS.DELETE' | translate"
+			>
+				<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
+			</button>
+		</ng-template>
 	</div>
 </ng-template>
