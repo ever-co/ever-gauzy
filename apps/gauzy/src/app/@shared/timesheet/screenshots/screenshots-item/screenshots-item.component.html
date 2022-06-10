@@ -1,76 +1,97 @@
 <div class="card">
 	<div class="activity" *ngIf="timeSlot; else noActivity">
-		<div
-			class="image-contaer curser-pointer"
-			[ngClass]="{ 'select-mode': selectionMode }"
-			(click)="toggleSelect(timeSlot)"
+		<ng-template 
+			[ngIf]="employees && employees.length > 1"
+			[ngIfElse]="lastScreenshotTemplate"
 		>
-			<div class="hover">
-				<div class="actions d-flex align-items-center w-100">
-					<ng-container *ngIf="timeSlot?.isAllowDelete">
-						<ng-container *ngIf="multiple">
-							<nb-checkbox
-								[(ngModel)]="isSelected"
+			<div 
+				class="image-container curser-pointer" 
+				[nbPopover]="workedEmployeeTemplate"
+				[nbPopoverTrigger]="'hint'"
+			>
+				<img 
+					draggable="false"
+					[src]="lastScreenshot?.thumbUrl" 
+				/>
+				<span class="screenshot-count">
+					<i class="fas fa-users"></i>
+					{{ employees.length }}
+				</span>
+			</div>
+		</ng-template>
+		<ng-template #lastScreenshotTemplate>
+			<div
+				class="image-container curser-pointer"
+				[ngClass]="{ 'select-mode': selectionMode }"
+				(click)="toggleSelect(timeSlot)"
+			>
+				<div class="hover">
+					<div class="actions d-flex align-items-center w-100">
+						<ng-container *ngIf="timeSlot?.isAllowDelete">
+							<ng-container *ngIf="multiple">
+								<nb-checkbox
+									[(ngModel)]="isSelected"
+									(click)="$event.stopPropagation()"
+									(ngModelChange)="toggleSelect(timeSlot)"
+								></nb-checkbox>
+							</ng-container>
+							<button
+								class="ml-auto select-hidden"
+								status="basic"
+								nbButton
+								size="tiny"
 								(click)="$event.stopPropagation()"
-								(ngModelChange)="toggleSelect(timeSlot)"
-							></nb-checkbox>
+								ngxConfirmDialog
+								[message]="'ACTIVITY.DELETE_CONFIRM' | translate"
+								(confirm)="deleteSlot(timeSlot)"
+							>
+								<nb-icon
+									status="danger"
+									icon="trash-2-outline"
+								></nb-icon>
+							</button>
+						</ng-container>
+					</div>
+					<div class="view-button select-hidden">
+						<ng-container *ngIf="timeSlot?.screenshots?.length > 0">
+							<button
+								class="mr-1"
+								nbButton
+								size="small"
+								status="primary"
+								(click)="$event.stopPropagation()"
+								ngxGallery
+								[employeeId]="timeSlot?.employee?.id"
+								[item]="screenshots"
+							>
+								{{ 'ACTIVITY.VIEW_SCREEN' | translate }}
+							</button>
 						</ng-container>
 						<button
-							class="ml-auto select-hidden"
-							status="basic"
-							nbButton
-							size="tiny"
-							(click)="$event.stopPropagation()"
-							ngxConfirmDialog
-							[message]="'ACTIVITY.DELETE_CONFIRM' | translate"
-							(confirm)="deleteSlot(timeSlot)"
-						>
-							<nb-icon
-								status="danger"
-								icon="trash-2-outline"
-							></nb-icon>
-						</button>
-					</ng-container>
-				</div>
-				<div class="view-button select-hidden">
-					<ng-container *ngIf="timeSlot?.screenshots?.length > 0">
-						<button
-							class="mr-1"
 							nbButton
 							size="small"
-							status="primary"
-							(click)="$event.stopPropagation()"
-							ngxGallery
-							[employeeId]="timeSlot?.employee?.id"
-							[item]="screenshots"
+							status="secondary"
+							(click)="$event.stopPropagation(); viewInfo(timeSlot)"
 						>
-							{{ 'ACTIVITY.VIEW_SCREEN' | translate }}
+							{{ 'ACTIVITY.VIEW_INFO' | translate }}
 						</button>
-					</ng-container>
-					<button
-						nbButton
-						size="small"
-						status="secondary"
-						(click)="$event.stopPropagation(); viewInfo(timeSlot)"
-					>
-						{{ 'ACTIVITY.VIEW_INFO' | translate }}
-					</button>
+					</div>
 				</div>
+				<ng-template [ngIf]="lastScreenshot" [ngIfElse]="noImageEl">
+					<img draggable="false" [src]="lastScreenshot?.thumbUrl" />
+				</ng-template>
+				<ng-template #noImageEl>
+					<img
+						draggable="false"
+						[src]="fallbackSvg"
+						class="default-image"
+					/>
+					<span class="no-image p-3">
+						{{ 'ACTIVITY.NO_SCREENSHOTS' | translate }}
+					</span>
+				</ng-template>
 			</div>
-			<ng-template [ngIf]="lastScreenshot" [ngIfElse]="noImageEl">
-				<img draggable="false" [src]="lastScreenshot?.thumbUrl" />
-			</ng-template>
-			<ng-template #noImageEl>
-				<img
-					draggable="false"
-					[src]="fallbackSvg"
-					class="default-image"
-				/>
-				<span class="no-image p-3">
-					{{ 'ACTIVITY.NO_SCREENSHOTS' | translate }}
-				</span>
-			</ng-template>
-		</div>
+		</ng-template>
 		<div class="slot-info text-left p-3">
 			<div class="time-span mb-4 mt-1 hour-label">
 				{{ timeSlot.localStartedAt | timeFormat }} -
@@ -101,3 +122,16 @@
 		</div>
 	</ng-template>
 </div>
+<ng-template #workedEmployeeTemplate>
+	<nb-list>
+		<nb-list-item
+			*ngFor="let employee of employees"
+			class="row border-top align-items-center"
+		>
+			<ngx-employee-links 
+				[value]="employee?.user"
+				[isNavigation]="false"
+			></ngx-employee-links>
+		</nb-list-item>
+	</nb-list>
+</ng-template>

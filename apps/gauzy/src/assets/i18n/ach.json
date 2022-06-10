@@ -963,7 +963,8 @@
 	},
 	"CHANGELOG_MENU": {
 		"HEADER": "crwdns10190:0crwdne10190:0",
-		"LEARN_MORE_URL": "crwdns10192:0crwdne10192:0"
+		"LEARN_MORE_URL": "crwdns10192:0crwdne10192:0",
+		"GAUZY_FEATURES": "crwdns11168:0crwdne11168:0"
 	},
 	"REPORT_PAGE": {
 		"MEMBERS_WORKED": "crwdns8242:0crwdne8242:0",
@@ -3667,7 +3668,8 @@
 			"interviewer-interview-schedule": "crwdns7830:0crwdne7830:0",
 			"employee-join": "crwdns10529:0crwdne10529:0",
 			"TEMPLATE_NAMES": "crwdns9828:0crwdne9828:0"
-		}
+		},
+		"HTML_EDITOR": "crwdns11166:0crwdne11166:0"
 	},
 	"PIPELINES_PAGE": {
 		"HEADER": "crwdns4740:0crwdne4740:0",
@@ -3822,6 +3824,26 @@
 		"DEMO": {
 			"TITLE": "crwdns10851:0crwdne10851:0",
 			"SUB_TITLE": "crwdns10853:0crwdne10853:0"
+		}
+	},
+	"FORGOT_PASSWORD_PAGE": {
+		"TITLE": "crwdns11169:0crwdne11169:0",
+		"SUB_TITLE": "crwdns11171:0crwdne11171:0",
+		"ALERT_TITLE": "crwdns11173:0crwdne11173:0",
+		"ALERT_SUCCESS_TITLE": "crwdns11175:0crwdne11175:0",
+		"REQUEST_PASSWORD_TEXT": "crwdns11177:0crwdne11177:0",
+		"BACK_TO_LOGIN": "crwdns11179:0crwdne11179:0",
+		"FAQ_TITLE": "crwdns11181:0crwdne11181:0",
+		"FAQ_LEARN_MORE": "crwdns11183:0crwdne11183:0",
+		"LABELS": {
+			"EMAIL": "crwdns11185:0crwdne11185:0"
+		},
+		"PLACEHOLDERS": {
+			"EMAIL": "crwdns11187:0crwdne11187:0"
+		},
+		"VALIDATION": {
+			"EMAIL_REQUIRED": "crwdns11189:0crwdne11189:0",
+			"EMAIL_REAL_REQUIRED": "crwdns11191:0crwdne11191:0"
 		}
 	},
 	"PAGINATION": {

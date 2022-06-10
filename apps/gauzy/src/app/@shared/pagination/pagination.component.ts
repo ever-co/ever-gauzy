@@ -94,6 +94,19 @@ export class PaginationComponent implements OnInit {
 		return pages;
 	}
 
+	getStartPagesCount() {
+		return ((this.activePage - 1) * this.itemsPerPage) + 1;
+	}
+
+	getEndPagesCount() {
+		const entriesEndPage = ((this.activePage - 1) * this.itemsPerPage) + this.itemsPerPage;
+		
+		if(entriesEndPage > this.totalItems) {
+			return this.totalItems;
+		}
+		return entriesEndPage;
+	}
+
 	getPagesCount() {
 		return Math.ceil(this.totalItems / this.itemsPerPage);
 	}

@@ -14,5 +14,10 @@
 
 	.step-form {
 		min-width: 60%;
+		::ng-deep {
+			input{
+				background-color: nb-theme(select-outline-basic-background-color);
+			}
+		}
 	}
 }

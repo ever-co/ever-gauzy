@@ -58,8 +58,10 @@ export class ProductTypeService extends TenantAwareCrudService<ProductType> {
 		entity: ProductType
 	): Promise<ProductType> {
 		try {
-			await this.productTypeRepository.delete(id);
-			return this.productTypeRepository.save(entity);
+			return this.productTypeRepository.save({
+				id,
+				...entity
+			});
 		} catch (err) {
 			throw new BadRequestException(err);
 		}

@@ -25,6 +25,12 @@ export class RecurringExpenseBlockComponent
 	splitExpense?: boolean;
 
 	@Input()
+	employeeName?: boolean = true;
+
+	@Input()
+	selected?: boolean = false;
+
+	@Input()
 	fetchedHistories: IRecurringExpenseModel[];
 
 	@Input()
@@ -40,6 +46,8 @@ export class RecurringExpenseBlockComponent
 	fetchRecurringExpenseHistory = new EventEmitter<void>();
 
 	showMenu = false;
+	
+	@Input()
 	showHistory = false;
 	currentEmployee: IEmployee;
 

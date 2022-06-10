@@ -3,16 +3,20 @@
   	<div>
 		<ng-container *ngIf="languages.length">
 			<nb-select
-				[(selected)]="currentLang"
+				[(selected)]="preferredLanguage"
+				[(ngModel)]="preferredLanguage"
 				[placeholder]="'SETTINGS_MENU.ENGLISH' | translate"
 				(selectedChange)="switchLanguage()"
 				status="basic"
 				size="small"
 				outline
 			>
-				<nb-option *ngFor="let lang of languages" [value]="lang.value">
-					{{ lang.name | translate }}</nb-option
+				<nb-option 
+					*ngFor="let lang of languages"
+					[value]="lang.value"
 				>
+					{{ lang.name | translate }}
+				</nb-option>
 			</nb-select>
 		</ng-container>
 	</div>

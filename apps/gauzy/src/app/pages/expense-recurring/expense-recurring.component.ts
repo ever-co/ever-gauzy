@@ -8,7 +8,13 @@ import {
 } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { Subject, firstValueFrom, debounceTime, tap, combineLatest } from 'rxjs';
+import {
+	Subject,
+	firstValueFrom,
+	debounceTime,
+	tap,
+	combineLatest
+} from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange } from '@gauzy/common-angular';
@@ -24,6 +30,7 @@ import {
 	RecurringExpenseDeleteConfirmationComponent,
 	RecurringExpenseMutationComponent
 } from '../../@shared/expenses';
+import { ActivatedRoute } from '@angular/router';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -36,21 +43,30 @@ import {
 })
 export class ExpenseRecurringComponent
 	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
-
+	implements OnInit, OnDestroy
+{
 	selectedDateRange: IDateRangePicker;
-	expenses : IOrganizationRecurringExpense[] = [];
+	expenses: IOrganizationRecurringExpense[] = [];
 	fetchedHistories: any = {};
 	loading: boolean;
 	organization: IOrganization;
 	expenses$: Subject<any> = new Subject();
+
+	selectedRecurringExpense = {
+		isSelected: false,
+		data: null,
+		index: null
+	};
+
+	showHistory: boolean = false;
 
 	constructor(
 		private readonly organizationRecurringExpenseService: OrganizationRecurringExpenseService,
 		private readonly store: Store,
 		private readonly dialogService: NbDialogService,
 		private readonly toastrService: ToastrService,
-		public readonly translateService: TranslateService
+		public readonly translateService: TranslateService,
+		public readonly route: ActivatedRoute
 	) {
 		super(translateService);
 	}
@@ -59,7 +75,6 @@ export class ExpenseRecurringComponent
 		this.expenses$
 			.pipe(
 				debounceTime(300),
-				tap(() => this.loading = true),
 				tap(() => this._loadRecurringExpenses()),
 				untilDestroyed(this)
 			)
@@ -81,6 +96,14 @@ export class ExpenseRecurringComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
+			this.route.queryParamMap
+			.pipe(
+				filter((params) => !!params && params.get('openAddDialog') === 'true'),
+				debounceTime(1000),
+				tap(() => this.addOrganizationRecurringExpense()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	ngOnDestroy() {}
@@ -92,18 +115,18 @@ export class ExpenseRecurringComponent
 	getCategoryName(categoryName: string) {
 		return categoryName in RecurringExpenseDefaultCategoriesEnum
 			? this.getTranslation(
-				`EXPENSES_PAGE.DEFAULT_CATEGORY.${categoryName}`
-			)
+					`EXPENSES_PAGE.DEFAULT_CATEGORY.${categoryName}`
+			  )
 			: categoryName;
 	}
 
-	async deleteOrgRecurringExpense(index: number) {
-		const { startDate } = this.selectedDateRange;
-
-		const selectedExpense = this.expenses[index];
+	async deleteOrgRecurringExpense() {
+		const startDate = new Date(this.selectedDateRange.startDate);
+		const selectedExpense = this.selectedRecurringExpense.data;
 		const result: RecurringExpenseDeletionEnum = await firstValueFrom(
-			this.dialogService
-				.open(RecurringExpenseDeleteConfirmationComponent, {
+			this.dialogService.open(
+				RecurringExpenseDeleteConfirmationComponent,
+				{
 					context: {
 						recordType: 'Organization recurring expense',
 						start: `${this.getMonthString(
@@ -113,11 +136,13 @@ export class ExpenseRecurringComponent
 							startDate.getMonth()
 						)}, ${startDate.getFullYear()}`,
 						end: selectedExpense.endMonth
-							? `${this.getMonthString(selectedExpense.endMonth)}, ${selectedExpense.endYear
-							}`
+							? `${this.getMonthString(
+									selectedExpense.endMonth
+							  )}, ${selectedExpense.endYear}`
 							: 'end'
 					}
-				}).onClose
+				}
+			).onClose
 		);
 
 		if (result) {
@@ -147,12 +172,11 @@ export class ExpenseRecurringComponent
 
 	async addOrganizationRecurringExpense() {
 		const result = await firstValueFrom(
-			this.dialogService
-				.open(RecurringExpenseMutationComponent, {
-					context: {
-						componentType: COMPONENT_TYPE.ORGANIZATION
-					}
-				}).onClose
+			this.dialogService.open(RecurringExpenseMutationComponent, {
+				context: {
+					componentType: COMPONENT_TYPE.ORGANIZATION
+				}
+			}).onClose
 		);
 
 		if (result) {
@@ -178,20 +202,18 @@ export class ExpenseRecurringComponent
 		}
 	}
 
-	async editOrganizationRecurringExpense(index: number) {
+	async editOrganizationRecurringExpense() {
 		const result = await firstValueFrom(
-			this.dialogService
-				.open(RecurringExpenseMutationComponent, {
-					context: {
-						recurringExpense: this.expenses[index],
-						componentType: COMPONENT_TYPE.ORGANIZATION
-					}
-				})
-				.onClose
+			this.dialogService.open(RecurringExpenseMutationComponent, {
+				context: {
+					recurringExpense: this.selectedRecurringExpense.data,
+					componentType: COMPONENT_TYPE.ORGANIZATION
+				}
+			}).onClose
 		);
 		if (result) {
 			try {
-				const id = this.expenses[index].id;
+				const id = this.selectedRecurringExpense.data.id;
 				await this.organizationRecurringExpenseService.update(
 					id,
 					result
@@ -217,10 +239,13 @@ export class ExpenseRecurringComponent
 		if (!this.organization) {
 			return;
 		}
+
+		this.loading = true;
+		
 		const { id: organizationId } = this.organization;
 		const { tenantId } = this.store.user;
-		
 		const { startDate, endDate } = this.selectedDateRange;
+
 		try {
 			this.fetchedHistories = {};
 			this.expenses = (
@@ -231,25 +256,46 @@ export class ExpenseRecurringComponent
 					endDate
 				})
 			).items;
-			this.loading = false;
 		} catch (error) {
-			console.log('Error while retriving organization recurring expenses', error)
+			console.log(
+				'Error while retriving organization recurring expenses',
+				error
+			);
+		} finally {
+			this.loading = false;
 		}
 	}
 
-	public async fetchHistory(i: number) {
-		this.fetchedHistories[i] = (
+	public async fetchHistory() {
+		this.showHistory = !this.showHistory;
+		this.fetchedHistories[this.selectedRecurringExpense.index] = (
 			await this.organizationRecurringExpenseService.getAll(
 				[],
 				{
-					parentRecurringExpenseId: this.expenses[
-						i
-					].parentRecurringExpenseId
+					parentRecurringExpenseId:
+						this.selectedRecurringExpense.data
+							.parentRecurringExpenseId
 				},
 				{
 					startDate: 'ASC'
 				}
 			)
 		).items;
+	}
+
+	selectRecurringExpense(
+		recurringExpense: IOrganizationRecurringExpense,
+		i: number
+	) {
+		this.showHistory = false;
+		this.selectedRecurringExpense =
+			this.selectedRecurringExpense.data &&
+			recurringExpense.id === this.selectedRecurringExpense.data.id
+				? {
+						isSelected: !this.selectedRecurringExpense.isSelected,
+						data: null,
+						index: null
+				  }
+				: { isSelected: true, data: recurringExpense, index: i };
 	}
 }

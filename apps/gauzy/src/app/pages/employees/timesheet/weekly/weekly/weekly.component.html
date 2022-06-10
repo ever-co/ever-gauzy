@@ -2,18 +2,22 @@
 	<nb-card-header class="p-0">
 		<div class="filters">
 			<div class="add-button">
-				<button
-					nbButton
-					status="success"
-					size="small"
-					(click)="openAddEdit()"
-					*ngxPermissionsOnly="[
-						OrganizationPermissionsEnum.ALLOW_MANUAL_TIME
-					]"
-				>
-					<nb-icon icon="plus-outline"></nb-icon>
-					{{ 'TIMESHEET.ADD_TIME' | translate }}
-				</button>
+				<ng-template [ngxPermissionsOnly]="PermissionsEnum.ALLOW_MANUAL_TIME">
+					<ng-template 
+						ngxTimeTrackingAuthorized
+						[permission]="PermissionsEnum.ALLOW_MANUAL_TIME"
+					>
+						<button
+							nbButton
+							status="success"
+							size="small"
+							(click)="openAddEdit()"
+						>
+							<nb-icon icon="plus-outline"></nb-icon>
+							{{ 'TIMESHEET.ADD_TIME' | translate }}
+						</button>
+					</ng-template>
+				</ng-template>
 			</div>
 			<ngx-gauzy-filters
 				[saveFilters]="(datePickerConfig$ | async).isSaveDatePicker"
@@ -21,7 +25,6 @@
 			></ngx-gauzy-filters>
 		</div>
 	</nb-card-header>
-
 	<nb-card-body
 		class="weekly-logs row-table pt-0"
 		[nbSpinner]="loading"
@@ -79,27 +82,31 @@
 							{{ day.dates[date]?.sum | durationFormat }}
 						</button>
 						<ng-template #noLogsCol>
-							<ng-template
-								[ngxPermissionsOnly]="[
-									OrganizationPermissionsEnum.ALLOW_MANUAL_TIME
-								]"
+							<ng-template 
+								[ngxPermissionsOnly]="PermissionsEnum.ALLOW_MANUAL_TIME"
 								[ngxPermissionsOnlyElse]="notAllowAddTimeBlock"
 							>
-								<button
-									nbButton
-									outline
-									size="small"
-									status="primary"
-									(click)="
-										openAddByDateProject(date, day?.project)
-									"
-									*ngIf="
-										allowAdd(date);
-										else notAllowAddTimeBlock
-									"
+								<ng-template 
+									ngxTimeTrackingAuthorized
+									[permission]="PermissionsEnum.ALLOW_MANUAL_TIME"
+									[permissionElse]="notAllowAddTimeBlock"
 								>
-									<nb-icon icon="plus-outline"></nb-icon>
-								</button>
+									<button
+										nbButton
+										outline
+										size="small"
+										status="primary"
+										(click)="
+											openAddByDateProject(date, day?.project)
+										"
+										*ngIf="
+											allowAdd(date);
+											else notAllowAddTimeBlock
+										"
+									>
+										<nb-icon icon="plus-outline"></nb-icon>
+									</button>
+								</ng-template>
 							</ng-template>
 							<ng-template #notAllowAddTimeBlock> - </ng-template>
 						</ng-template>

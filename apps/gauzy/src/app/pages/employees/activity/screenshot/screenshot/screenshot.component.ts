@@ -9,7 +9,8 @@ import {
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs/internal/Observable';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
-import { toLocal, isEmpty } from '@gauzy/common-angular';
+import { Subject } from 'rxjs/internal/Subject';
+import { toLocal, isEmpty, distinctUntilChange } from '@gauzy/common-angular';
 import { chain, indexBy, pick, sortBy } from 'underscore';
 import * as moment from 'moment';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -33,6 +34,7 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent
 	implements OnInit, OnDestroy {
 
 	payloads$: BehaviorSubject<ITimeLogFilters> = new BehaviorSubject(null);
+	screenshots$: Subject<boolean> = new Subject();
 
 	filters: ITimeLogFilters = this.request;
 	loading: boolean;
@@ -43,7 +45,7 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent
 	selectedIdsCount = 0;
 	allSelected = false;
 	originalTimeSlots: ITimeSlot[] = [];
-	
+
 	@ViewChild(GauzyFiltersComponent) gauzyFiltersComponent: GauzyFiltersComponent;
 	datePickerConfig$: Observable<any> = this._dateRangePickerBuilderService.datePickerConfig$;
 
@@ -60,9 +62,16 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent
 	}
 
 	ngOnInit(): void {
+		this.screenshots$
+			.pipe(
+				debounceTime(100),
+				tap(() => this.getLogs()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this.subject$
 			.pipe(
-				debounceTime(200),
+				debounceTime(100),
 				tap(() => this.galleryService.clearGallery()),
 				tap(() => this.prepareRequest()),
 				untilDestroyed(this)
@@ -70,9 +79,10 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent
 			.subscribe();
 		this.payloads$
 			.pipe(
-				debounceTime(200),
+				debounceTime(100),
+				distinctUntilChange(),
 				filter((payloads: ITimeLogFilters) => !!payloads),
-				tap(() => this.getLogs()),
+				tap(() => this.screenshots$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -149,7 +159,7 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent
 	}
 
 	deleteSlot() {
-		this.subject$.next(true);
+		this.screenshots$.next(true);
 	}
 
 	deleteSlots() {
@@ -170,7 +180,7 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent
 					}
 					this.timesheetService.deleteTimeSlots(request).then(() => {
 						this._deleteScreenshotGallery(ids);
-						this.subject$.next(true);
+						this.screenshots$.next(true);
 					});
 				}
 			});
@@ -202,6 +212,9 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent
 			.groupBy((timeSlot) => moment(timeSlot.localStartedAt).format('HH'))
 			.mapObject(
 				(hourTimeSlots: ITimeSlot[], hour): IScreenshotMap => {
+					const groupByMinutes = chain(hourTimeSlots)
+						.groupBy((timeSlot) => moment(timeSlot.localStartedAt).format('mm'))
+						.value();
 					/**
 					 * First sort by screenshots then after index by of hoursTimeSlots
 					 * So, we can display screenshots in UI
@@ -209,8 +222,21 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent
 					const byMinutes = indexBy(sortBy(hourTimeSlots, 'screenshots'), (timeSlot) =>
 						moment(timeSlot.localStartedAt).format('mm')
 					);
-					timeSlots = ['00', '10', '20', '30', '40', '50'].map((key) => byMinutes[key] || null);
-					
+					timeSlots = ['00', '10', '20', '30', '40', '50'].map((key) => {
+						/**
+						 * Calculate employess work on same time slots by minutes
+						 */
+						if (key in byMinutes) {
+							byMinutes[key]['employees'] = chain(groupByMinutes[key])
+								.groupBy((timeSlot: ITimeSlot) => timeSlot.employeeId)
+								.values()
+								.flatten()
+								.map((timeSlot: ITimeSlot) => timeSlot.employee)
+								.value();
+						}
+						return byMinutes[key] || null;
+					});
+
 					const time = moment().set('hour', parseInt(hour, 0)).set('minute', 0);
 					const startTime = time.format('HH:mm');
 					const endTime = time.add(1, 'hour').format('HH:mm');

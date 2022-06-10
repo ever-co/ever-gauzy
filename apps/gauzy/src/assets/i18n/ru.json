@@ -963,7 +963,8 @@
 	},
 	"CHANGELOG_MENU": {
 		"HEADER": "Что нового?",
-		"LEARN_MORE_URL": "Узнать больше"
+		"LEARN_MORE_URL": "Узнать больше",
+		"GAUZY_FEATURES": "Функции Gauzy"
 	},
 	"REPORT_PAGE": {
 		"MEMBERS_WORKED": "Участники Раболи",
@@ -2406,8 +2407,8 @@
 			"USER_ORGANIZATIONS": "Организации"
 		},
 		"REMOVE_USER": "'{{ name }}' был удален",
-		"ACTIVE": "Active",
-		"NOT_STARTED": "Not Started"
+		"ACTIVE": "Активный",
+		"NOT_STARTED": "Не начато"
 	},
 	"CONTEXT_MENU": {
 		"TIMER": "Запустить таймер",
@@ -3667,7 +3668,8 @@
 			"interviewer-interview-schedule": "Расписание интервьюера",
 			"employee-join": "Прием сотрудников",
 			"TEMPLATE_NAMES": "Названия шаблонов"
-		}
+		},
+		"HTML_EDITOR": "HTML-редактор"
 	},
 	"PIPELINES_PAGE": {
 		"HEADER": "Трубопроводы",
@@ -3822,6 +3824,26 @@
 		"DEMO": {
 			"TITLE": "Автоматически входить в демо-аккаунты",
 			"SUB_TITLE": "Пожалуйста, выберите тип счета ниже."
+		}
+	},
+	"FORGOT_PASSWORD_PAGE": {
+		"TITLE": "Забыли пароль",
+		"SUB_TITLE": "Введите свой адрес электронной почты, и мы отправим ссылку для сброса пароля",
+		"ALERT_TITLE": "О сна!",
+		"ALERT_SUCCESS_TITLE": "Ура!",
+		"REQUEST_PASSWORD_TEXT": "Запросить пароль",
+		"BACK_TO_LOGIN": "Назад?",
+		"FAQ_TITLE": "ЧАВО",
+		"FAQ_LEARN_MORE": "Узнать больше",
+		"LABELS": {
+			"EMAIL": "Введите ваш адрес электронной почты:"
+		},
+		"PLACEHOLDERS": {
+			"EMAIL": "Email адрес"
+		},
+		"VALIDATION": {
+			"EMAIL_REQUIRED": "Требуется адрес электронной почты!",
+			"EMAIL_REAL_REQUIRED": "Email должен быть реальным!"
 		}
 	},
 	"PAGINATION": {

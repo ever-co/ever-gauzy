@@ -165,36 +165,63 @@ export class ProductCategoriesComponent
 			.subscribe();
 	}
 
-	async onAddEdit(selectedItem?: IProductCategoryTranslated) {
+	async onAdd() {
+		if (!this.organization) {
+			return;
+		}
+		try {
+			const dialog = this.dialogService.open(ProductCategoryMutationComponent);
+			const productCategory = await firstValueFrom(dialog.onClose);
+
+			if (productCategory) {
+				let productCategoryTranslation = productCategory.translations[0];
+				this.toastrService.success('INVENTORY_PAGE.PRODUCT_CATEGORY_SAVED', {
+					name: productCategoryTranslation?.name
+				});
+				this.categories$.next(true);
+			}
+		} catch (error) {
+			console.log('Error while creating product categories', error);
+		}
+	}
+
+	async onEdit(selectedItem?: IProductCategoryTranslated) {
 		if (selectedItem) {
 			this.selectProductCategory({
 				isSelected: true,
 				data: selectedItem
 			});
 		}
+		if (!this.organization) {
+			return;
+		}
 
-		const editProductCategory = this.selectedProductCategory
+		try {
+			const editProductCategory = this.selectedProductCategory
 			? await this.productCategoryService.getById(
 				this.selectedProductCategory.id
 			)
 			: null;
 
-		const dialog = this.dialogService.open(ProductCategoryMutationComponent, {
-			context: {
-				productCategory: editProductCategory
-			}
-		});
-
-		const productCategory = await firstValueFrom(dialog.onClose);
-		if (productCategory) {
-			let productCatTranslaction = productCategory.translations[0];
-			this.toastrService.success('INVENTORY_PAGE.PRODUCT_CATEGORY_SAVED', {
-				name: productCatTranslaction?.name
+			const dialog = this.dialogService.open(ProductCategoryMutationComponent, {
+				context: {
+					productCategory: editProductCategory
+				}
 			});
-			this.categories$.next(true);
+			const productCategory = await firstValueFrom(dialog.onClose);
+
+			if (productCategory) {
+				let productCategoryTranslation = productCategory.translations[0];
+				this.toastrService.success('INVENTORY_PAGE.PRODUCT_CATEGORY_SAVED', {
+					name: productCategoryTranslation?.name
+				});
+				this.categories$.next(true);
+			}
+		} catch (error) {
+			console.log('Error while updating product categories', error);
 		}
 	}
-
+	
 	async delete(selectedItem?: IProductCategoryTranslated) {
 		if (selectedItem) {
 			this.selectProductCategory({
@@ -231,12 +258,17 @@ export class ProductCategoriesComponent
 	 * Register Smart Table Source Config
 	 */
 	setSmartTableSource() {
+		if (!this.organization) {
+			return;
+		}
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 
 		this.smartTableSource = new ServerDataSource(this.http, {
 			endPoint: `${API_PREFIX}/product-categories/pagination`,
-			relations: [],
+			relations: [
+				'translations'
+			],
 			where: {
 				...{ organizationId, tenantId }
 			},

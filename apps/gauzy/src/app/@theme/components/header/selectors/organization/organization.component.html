@@ -1,7 +1,8 @@
 <div *ngIf="organizations">
 	<ng-select
 		#select
-		[addTag]="((hasEditOrganization$ | async) && addTag) ? createNew : null"
+		[addTag]="((hasEditOrganization$ | async) && addTag && isOpen) ? createNew : null"
+		[searchable]="isOpen"
 		[clearable]="false"
 		[items]="organizations"
 		bindLabel="name"

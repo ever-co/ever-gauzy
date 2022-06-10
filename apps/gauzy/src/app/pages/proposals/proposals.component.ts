@@ -50,7 +50,7 @@ import { getAdjustDateRangeFutureAllowed } from '../../@theme/components/header/
 	templateUrl: './proposals.component.html',
 	styleUrls: ['./proposals.component.scss']
 })
-export class ProposalsComponent extends PaginationFilterBaseComponent 
+export class ProposalsComponent extends PaginationFilterBaseComponent
 	implements OnInit, OnDestroy {
 
 	smartTableSettings: object;
@@ -372,7 +372,15 @@ export class ProposalsComponent extends PaginationFilterBaseComponent
 					type: 'custom',
 					width: '20%',
 					filter: false,
-					renderComponent: EmployeeLinksComponent
+					renderComponent: EmployeeLinksComponent,
+					valuePrepareFunction: (value, item) => {
+						return {
+							id: item.author?.id,
+							name: item.author?.user?.name,
+							fullName: item.author?.fullName,
+							imageUrl: item.author?.user?.imageUrl
+						}
+					},
 				},
 				statusBadge: {
 					title: this.getTranslation('SM_TABLE.STATUS'),
@@ -490,8 +498,8 @@ export class ProposalsComponent extends PaginationFilterBaseComponent
 			valueDate: i.valueDate,
 			jobPostUrl: i.jobPostUrl
 				? '<a href="' +
-				  i.jobPostUrl +
-				  `" target="_blank">${i.jobPostUrl}</a>`
+				i.jobPostUrl +
+				`" target="_blank">${i.jobPostUrl}</a>`
 				: '',
 			jobTitle: i.jobPostContent
 				.toString()
@@ -504,7 +512,7 @@ export class ProposalsComponent extends PaginationFilterBaseComponent
 			tags: i.tags,
 			status: i.status,
 			statusBadge: this.statusMapper(i.status),
-			author: i.employee ? (i.employee.user ? i.employee.user : '') : '',
+			author: i.employee,
 			organizationContact: i.organizationContact
 				? i.organizationContact
 				: null
@@ -581,5 +589,5 @@ export class ProposalsComponent extends PaginationFilterBaseComponent
 	}
 
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 }

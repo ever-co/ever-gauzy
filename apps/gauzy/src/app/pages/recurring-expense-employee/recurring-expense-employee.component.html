@@ -1,27 +1,25 @@
-<nb-card 
+<nb-card
 	[nbSpinner]="loading"
 	nbSpinnerStatus="primary"
 	nbSpinnerSize="large"
 	class="card-scroll"
 >
-	<nb-card-header>
+	<nb-card-header class="flex flex-column">
 		<h4>
 			<ngx-header-title [allowEmployee]="false">
 				{{ 'DASHBOARD_PAGE.RECURRING_EXPENSES' | translate }}
 			</ngx-header-title>
 		</h4>
+		<div class="float-right">
+			<ngx-gauzy-button-action
+				[hasLayoutSelector]="false"
+				[buttonTemplateVisible]="visible"
+				[buttonTemplate]="actionButtons"
+				[isDisable]="!selectedRecurringExpense?.isSelected"
+			></ngx-gauzy-button-action>
+		</div>
 	</nb-card-header>
 	<nb-card-body class="settings-body">
-		<ng-template ngxPermissionsOnly="EMPLOYEE_EXPENSES_EDIT">
-				<button
-					(click)="addEmployeeRecurringExpense()"
-					nbButton
-					status="success"
-				>
-				<nb-icon class="mr-1" icon="plus-outline"></nb-icon>
-				{{ 'BUTTONS.ADD' | translate }}
-			</button>
-		</ng-template>
 		<div class="container">
 			<div
 				class="sub-header header-content mt-4"
@@ -31,7 +29,7 @@
 					<div class="block-item-big">
 						{{ 'POP_UPS.EMPLOYEE' | translate }}
 					</div>
-					<div class="block-item">
+					<div class="block-item-big">
 						{{ 'POP_UPS.CATEGORY_NAME' | translate }}
 					</div>
 					<div class="block-item">
@@ -43,17 +41,93 @@
 				</div>
 			</div>
 			<ng-container *ngIf="recurringExpenses.length">
-				<ng-container *ngFor="let expense of recurringExpenses; let i = index">
+				<div class="table-scroll">
+				<ng-container
+					*ngFor="let expense of recurringExpenses; let i = index"
+				>
 					<ga-recurring-expense-block
+						(click)="selectRecurringExpense(expense, i)"
 						(editRecurringExpense)="editEmployeeRecurringExpense(i)"
-						(deleteRecurringExpense)="deleteEmployeeRecurringExpense(i)"
+						(deleteRecurringExpense)="
+							deleteEmployeeRecurringExpense(i)
+						"
 						(fetchRecurringExpenseHistory)="fetchHistory(i)"
 						[fetchedHistories]="fetchedHistories[i]"
 						[recurringExpense]="expense"
 						[selectedOrganization]="organization"
+						[selected]="
+							selectedRecurringExpense?.data?.id === expense.id
+						"
+						[showHistory]="showHistory"
 					></ga-recurring-expense-block>
-				</ng-container>
+				</ng-container>	
+				</div>
+				
 			</ng-container>
 		</div>
 	</nb-card-body>
 </nb-card>
+<ng-template #visible>
+	<ng-template ngxPermissionsOnly="EMPLOYEE_EXPENSES_EDIT">
+		<button
+			(click)="addEmployeeRecurringExpense()"
+			nbButton
+			status="success"
+			class="action"
+			size="small"
+		>
+			<nb-icon class="mr-1" icon="plus-outline"></nb-icon>
+			{{ 'BUTTONS.ADD' | translate }}
+		</button>
+	</ng-template>
+</ng-template>
+<ng-template #actionButtons>
+	<div class="actions">
+		<ng-template ngxPermissionsOnly="EMPLOYEE_EXPENSES_VIEW">
+			<button 
+				nbButton
+				class="action secondary"
+				size="small"
+				status="basic"
+			>
+				<nb-icon icon="eye-outline"></nb-icon>
+				{{ 'BUTTONS.VIEW' | translate }}
+			</button>
+		</ng-template>
+		<ng-template ngxPermissionsOnly="EMPLOYEE_EXPENSES_EDIT">
+			<button
+				nbButton
+				(click)="editEmployeeRecurringExpense()"
+				class="action primary"
+				size="small"
+				status="basic"
+			>
+				<nb-icon icon="edit-outline"></nb-icon>
+				{{ 'BUTTONS.EDIT' | translate }}
+			</button>
+		</ng-template>
+		<ng-template ngxPermissionsOnly="EMPLOYEE_EXPENSES_VIEW">
+			<button
+				nbButton
+				class="action secondary"
+				(click)="fetchHistory()"
+				size="small"
+				status="basic"
+			>
+				<i class="fas fa-history mr-1"></i>
+				{{ 'BUTTONS.HISTORY' | translate }}
+			</button>
+		</ng-template>
+		<ng-template ngxPermissionsOnly="EMPLOYEE_EXPENSES_EDIT">
+			<button
+				nbButton
+				(click)="deleteEmployeeRecurringExpense()"
+				class="action"
+				size="small"
+				status="basic"
+			>
+				<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
+			</button>
+		</ng-template>
+	</div>
+</ng-template>

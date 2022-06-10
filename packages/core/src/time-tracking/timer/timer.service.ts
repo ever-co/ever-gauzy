@@ -259,12 +259,6 @@ export class TimerService {
 				organizationId,
 				isRunning: true
 			},
-			join: {
-				alias: 'timeLog',
-				innerJoin: {
-					timeSlots: 'timeLog.timeSlots'
-				}
-			},
 			order: {
 				startedAt: 'DESC',
 				createdAt: 'DESC'

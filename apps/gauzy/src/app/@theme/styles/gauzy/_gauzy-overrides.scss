@@ -3,23 +3,25 @@
 $default-box-shadow-inset: 0px 1px 1px 0px rgba(0, 0, 0, 0.15) inset;
 $default-height: 42px;
 $default-radius: nb-theme(border-radius);
-$default-button-radius: nb-theme(button-rectangle-border-radius);
-$default-box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.15);
+$default-button-radius: calc(nb-theme(button-rectangle-border-radius) / 1.625);
+$default-box-shadow: 0px 1px 1px 0px rgba(0, 0, 0, 0.15);
 
 @mixin ng-select-overrides($height, $radius, $box-shadow) {
   .ng-select {
-    &.ng-select-single .ng-select-container {
-      height: $height;
-    }
-    .ng-select-container {
-      border-radius: $radius;
-      box-shadow: $box-shadow;
-      height: $height;
-      input {
-        height: unset;
+      &.ng-select-single .ng-select-container {
+        height: $height;
+      }
+  
+      .ng-select-container {
+        border-radius: $radius;
+        box-shadow: $box-shadow;
+        height: $height;
+  
+        input {
+          height: unset;
+        }
       }
     }
-  }
 }
 
 @mixin text-inputs-overrides() {
@@ -27,12 +29,14 @@ $default-box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.15);
     border-radius: $default-radius;
     box-shadow: $default-box-shadow-inset;
     height: $default-height;
+    background-color: nb-theme(select-outline-basic-background-color);
   }
   textarea {
     border-radius: $default-radius;
     box-shadow: $default-box-shadow-inset;
     resize: none;
     height: 102px;
+    background-color: nb-theme(select-outline-basic-background-color);
   }
 }
 

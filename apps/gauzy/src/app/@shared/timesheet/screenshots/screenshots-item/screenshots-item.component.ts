@@ -7,11 +7,11 @@ import {
 	EventEmitter
 } from '@angular/core';
 import {
-	OrganizationPermissionsEnum,
 	ITimeSlot,
 	IScreenshot,
 	ITimeLog,
-	IOrganization
+	IOrganization,
+	IEmployee
 } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { filter, take, tap } from 'rxjs/operators';
@@ -34,9 +34,19 @@ import { ErrorHandlingService, Store, ToastrService } from './../../../../@core/
 export class ScreenshotsItemComponent implements OnInit, OnDestroy {
 	
 	public organization: IOrganization;
-	OrganizationPermissionsEnum = OrganizationPermissionsEnum;
 	progressStatus = progressStatus;
 	fallbackSvg = DEFAULT_SVG;
+
+	/*
+	* Getter & Setter for dynamic enabled/disabled element
+	*/
+	_employees: IEmployee[] = [];
+	get employees(): IEmployee[] {
+		return this._employees;
+	}
+	@Input() set employees(employees: IEmployee[]) {
+		this._employees = employees;
+	}
 
 	@Input() multiple: boolean = true;
 	@Input() selectionMode = false;

@@ -1,24 +1,24 @@
-<div class="setting-block">
-	<div class="setting-row">
+<div [ngClass]="{ block: selected }" class="setting-block">
+	<div class="setting-row" [ngClass]="{ active: selected }">
 		<div class="block-content">
 			<div class="block-info">
 				<div class="expense">
-					<div class="block-item-big">
+					<div class="block-item-big" *ngIf="employeeName">
 						<ngx-avatar
 							*ngIf="currentEmployee"
 							[src]="currentEmployee?.user?.imageUrl"
 							[name]="currentEmployee?.user?.name"
 							[id]="currentEmployee?.id"
 						></ngx-avatar>
-          			</div>
-					<div class="block-item">
+					</div>
+					<div class="block-item-big">
 						{{ getCategoryName(recurringExpense?.categoryName) }}
 					</div>
 					<div class="block-item">
 						{{ getStartDate() }}
 					</div>
 					<div class="block-item">
-						<span class="block-amount" (click)="emitFetchHistory()"
+						<span class="block-amount"
 							>{{
 								recurringExpense?.value
 									| currency: recurringExpense?.currency
@@ -38,46 +38,51 @@
 				</div>
 			</div>
 			<div class="block-panel">
-        <div class="block-value">
-          <nb-icon
-            class="hide-menu"
-            icon="log-in"
-            *ngIf="showMenu"
-            (click)="showMenu = false"
-          ></nb-icon>
-          <small (click)="showMenu = false" [ngStyle]="{
-            visibility: showMenu ? 'visible' : 'hidden'
-          }">{{
-            'BUTTONS.CLOSE' | translate
-          }}</small>
-          <span *ngIf="!showMenu" class="block-actions open">
-            <nb-icon
-              icon="settings-2-outline"
-              (click)="showMenu = true"
-            >
-            </nb-icon>
-          </span>
-        </div>
-        <div class="block-settings" [ngStyle]="{
-                visibility: showMenu ? 'visible' : 'hidden'
-              }">
-          <div (click)="emitEdit()" class="single-setting">
-            <nb-icon icon="edit-outline"> </nb-icon>
-            <span>{{ 'BUTTONS.EDIT' | translate }}</span>
-          </div>
-          <div class="single-setting" (click)="emitFetchHistory()">
-            <nb-icon icon="link-2-outline"> </nb-icon>
-            <span>{{ 'BUTTONS.HISTORY' | translate }}</span>
-          </div>
-          <div (click)="emitDelete()" class="single-setting">
-            <nb-icon icon="close-outline"> </nb-icon>
-            <span>{{ 'BUTTONS.DELETE' | translate }}</span>
-          </div>
-        </div>
-      </div>
+				<div class="block-value">
+					<nb-icon
+						class="hide-menu"
+						icon="log-in"
+						*ngIf="showMenu"
+						(click)="showMenu = false"
+					></nb-icon>
+					<small
+						(click)="showMenu = false"
+						[ngStyle]="{
+							visibility: showMenu ? 'visible' : 'hidden'
+						}"
+						>{{ 'BUTTONS.CLOSE' | translate }}</small
+					>
+					<span *ngIf="!showMenu" class="block-actions open">
+						<nb-icon
+							icon="settings-2-outline"
+							(click)="showMenu = true"
+						>
+						</nb-icon>
+					</span>
+				</div>
+				<div
+					class="block-settings"
+					[ngStyle]="{
+						visibility: showMenu ? 'visible' : 'hidden'
+					}"
+				>
+					<div (click)="emitEdit()" class="single-setting">
+						<nb-icon icon="edit-outline"> </nb-icon>
+						<span>{{ 'BUTTONS.EDIT' | translate }}</span>
+					</div>
+					<div class="single-setting" (click)="emitFetchHistory()">
+						<nb-icon icon="link-2-outline"> </nb-icon>
+						<span>{{ 'BUTTONS.HISTORY' | translate }}</span>
+					</div>
+					<div (click)="emitDelete()" class="single-setting">
+						<nb-icon icon="close-outline"> </nb-icon>
+						<span>{{ 'BUTTONS.DELETE' | translate }}</span>
+					</div>
+				</div>
+			</div>
 		</div>
 	</div>
-	<div class="setting-table" *ngIf="showHistory && showMenu">
+	<div class="setting-table" *ngIf="showHistory && selected">
 		<ga-recurring-expense-history
 			[recordsData]="fetchedHistories"
 			(closeHistory)="this.showHistory = false"

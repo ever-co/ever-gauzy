@@ -200,12 +200,9 @@
 								<div class="col-6">
 									<ga-tags-color-input
 										[selectedTags]="tags"
-										(selectedTagsEvent)="
-											selectedTagsEvent($event)
-										"
+										(selectedTagsEvent)="selectedTagsEvent($event)"
 										[isTenantLevel]="true"
-									>
-									</ga-tags-color-input>
+									></ga-tags-color-input>
 								</div>
 							</div>
 						</ng-container>
@@ -259,7 +256,7 @@
 						</ng-container>
 					</div>
 
-					<div class="stepper-buttons">
+					<div class="stepper-buttons two">
 						<button
 							nbButton
 							class="gray"

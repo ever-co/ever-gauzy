@@ -3,6 +3,9 @@
 :host nb-card {
 	//width: 1145px;
 	background-color: nb-theme(gauzy-card-1);
+	input{
+		background-color: nb-theme(select-outline-basic-background-color);
+	}
 
 	::ng-deep .step-content {
 		padding-bottom: 0px;
@@ -14,6 +17,9 @@ nb-card-body {
 		display: flex;
 		justify-content: flex-start;
 		gap: 10px;
+		&.two{
+			margin-left: 15px;
+		}
 	}
 
 	.no-image {

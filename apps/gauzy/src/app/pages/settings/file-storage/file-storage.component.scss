@@ -1,0 +1,54 @@
+@import '../sms-gateway/sms-gateway.component.scss';
+@import '../../../@theme/styles/gauzy/gauzy-overrides';
+
+
+:host {
+    ::ng-deep {
+        @include nb-select-overrides ($default-height,
+            $default-button-radius,
+            $default-box-shadow );
+    }
+
+    .d-block {
+        width: 10rem;
+    }
+
+    nb-card-footer {
+        background-color: nb-theme(gauzy-card-2);
+        padding-top: 0;
+    }
+
+    .label {
+        font-size: 11px;
+        font-weight: 600;
+        line-height: 13px;
+        letter-spacing: -0.01em;
+        text-align: left;
+
+    }
+
+    nb-card {
+        nb-card-body {
+            nb-card {
+                background-color: nb-theme(gauzy-card-4);
+                height: calc(100vh - 28rem) !important;
+                margin: 0;
+
+                h6 {
+                    font-size: 18px;
+                    font-weight: 600;
+                    line-height: 19px;
+                    letter-spacing: 0em;
+                    text-align: left;
+
+                }
+
+                nb-card-body {
+                    background: unset;
+                    overflow: auto;
+                }
+            }
+
+        }
+    }
+}

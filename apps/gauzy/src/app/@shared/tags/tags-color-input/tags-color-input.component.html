@@ -8,7 +8,7 @@
 		bindLabel="name"
 		appendTo="body"
 		[loading]="loading"
-		[addTag]="addTag"
+		[addTag]="addTag.bind(this)"
 		(change)="selectedTagsEvent.emit(this.selectedTags)"
 		[(ngModel)]="selectedTags"
 		[closeOnSelect]="false"

@@ -69,6 +69,7 @@ import { DateRangePickerModule } from './components/header/selectors/date-range-
 import { WorkspacesModule } from '../@shared/workspaces/workspaces.module';
 import { OutsideDirective } from './directives/outside.directive';
 import { PopupComponent } from './components/popup/popup.component';
+import { SidebarMenuModule } from '../@shared/sidebar-menu/sidebar-menu.module';
 
 const NB_MODULES = [
 	NbLayoutModule,
@@ -100,7 +101,8 @@ const MODULES = [
 	ThemeLanguageSelectorModule,
 	ThemeSelectorModule,
 	WorkspacesModule,
-	NgxPermissionsModule.forChild()
+	NgxPermissionsModule.forChild(),
+	SidebarMenuModule
 ];
 
 const COMPONENTS = [

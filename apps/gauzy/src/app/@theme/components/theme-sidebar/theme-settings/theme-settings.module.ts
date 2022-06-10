@@ -12,7 +12,7 @@ import { ThemeLanguageSelectorModule } from './components/theme-language-selecto
 import { ThemeSelectorModule } from './components/theme-selector/theme-selector.module';
 import { NbCardModule, NbListModule } from '@nebular/theme';
 import { ThemeSelectorComponent } from './components/theme-selector/theme-selector.component';
-import { LayoutSelectorComponent } from './components/layout-selector/layout-selector.component';
+import { LayoutSelectorModule } from './components/layout-selector/layout-selector.module';
 
 @NgModule({
 	imports: [
@@ -23,18 +23,17 @@ import { LayoutSelectorComponent } from './components/layout-selector/layout-sel
 		NbTooltipModule,
 		TranslateModule,
 		ThemeLanguageSelectorModule,
-    ThemeSelectorModule,
-    NbCardModule,
-    NbListModule
+		LayoutSelectorModule,
+		ThemeSelectorModule,
+		NbCardModule,
+		NbListModule
 	],
 	exports: [
 		ThemeSettingsComponent,
-    ThemeSelectorComponent,
-    LayoutSelectorComponent
+		ThemeSelectorComponent
 	],
 	declarations: [
-		ThemeSettingsComponent,
-    LayoutSelectorComponent
+		ThemeSettingsComponent
 	],
 	providers: []
 })

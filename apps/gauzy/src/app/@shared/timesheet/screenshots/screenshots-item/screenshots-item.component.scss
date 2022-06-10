@@ -23,9 +23,10 @@
   }
   .curser-pointer {
     cursor: pointer;
+    border-radius: nb-theme(border-radius) nb-theme(border-radius) 0px 0px;
   }
   .activity {
-    .image-contaer {
+    .image-container {
       background: rgba($color: #000000, $alpha: 0.1);
       min-height: 130px;
       position: relative;
@@ -83,34 +84,25 @@
         border-radius: 5px;
         text-align: center;
       }
+      .screenshot-count {
+        padding: 8px;
+        background: rgba($color: #000000, $alpha: 0.6);
+        color: nb-theme(color-danger-default);
+        position: absolute;
+        top: 0.35rem;
+        right: 0.5rem;
+        border-radius: nb-theme(border-radius);
+        text-align: center;
+      }
 
       img {
         width: 100%;
         height: 130px;
-        border-radius: 8px 8px 0px 0px;
+        border-radius: nb-theme(border-radius) nb-theme(border-radius) 0px 0px;
         object-fit: cover;
         &.default-image {
           object-fit: contain;
         }
-      }
-    }
-  }
-  .selecte-items-action {
-    max-width: 500px;
-    width: 90%;
-    position: fixed;
-    bottom: 0;
-    display: flex;
-    flex-direction: row;
-    left: 0;
-    right: 0;
-    margin: auto;
-    z-index: 99;
-  }
-  ::ng-deep {
-    .progress-value {
-      span {
-        display: none;
       }
     }
   }
@@ -122,4 +114,14 @@
   letter-spacing: 0em;
   text-align: left;
   text-transform: lowercase;
+}
+
+::ng-deep {
+	.cdk-overlay-container {
+		nb-overlay-container {
+			nb-list {
+				overflow: hidden !important;
+			}
+		}
+	}
 }

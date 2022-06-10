@@ -117,6 +117,7 @@ export interface ITimeLog extends IBasePerTenantAndOrganizationEntityModel {
 	taskId?: string;
 	tags?: string[];
 	isRunning?: boolean;
+	isEdited?: boolean;
 }
 
 export interface ITimeLogCreateInput
@@ -150,6 +151,11 @@ export enum TimeLogType {
 	MANUAL = 'MANUAL',
 	IDEAL = 'IDEAL',
 	RESUMED = 'RESUMED'
+}
+
+export enum ManualTimeLogAction {
+	ADDED = 'ADDED',
+	EDITED = 'EDITED'
 }
 
 export enum TimeLogSourceEnum {

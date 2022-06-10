@@ -2,7 +2,7 @@
 	<nb-card class="card-scroll">
 		<nb-card-header class="d-flex justify-content-between">
 			<h4>
-				{{ 'MENU.SETTINGS' | translate }} - {{ 'MENU.FILE_STORAGE' | translate }}
+				<span class="menu-setting">{{ 'MENU.SETTINGS' | translate }}/ </span>{{ 'MENU.FILE_STORAGE' | translate }}
 			</h4>
 		</nb-card-header>
 		<nb-card-body>
@@ -31,7 +31,7 @@
 				<ng-container *ngSwitchCase="fileStorageProviderEnum.WASABI" [ngTemplateOutlet]="wasabiStorageFormTemplate"></ng-container>
 			</ng-container>
 		</nb-card-body>
-		<nb-card-footer class="text-right">
+		<nb-card-footer class="text-left">
 			<button
 				type="submit"
 				class="mr-2"
@@ -53,10 +53,10 @@
 		</nb-card-header>
 		<nb-card-body>
 			<div class="form-group row">
-				<label class="label col-sm-3" for="aws_access_key_id">{{
+				<label class="label col-xl-2 col-3" for="aws_access_key_id">{{
 					'SETTINGS_FILE_STORAGE.S3.LABELS.ACCESS_KEY_ID' | translate
 				}}</label>
-				<div class="col-sm-9">
+				<div class="col-9 col-xl-4">
 					<input
 						id="aws_access_key_id"
 						name="aws_access_key_id"
@@ -73,10 +73,10 @@
 				</div>
 			</div>
 			<div class="form-group row">
-				<label class="label col-sm-3" for="aws_secret_access_key">{{
+				<label class="label col-xl-2 col-3" for="aws_secret_access_key">{{
 					'SETTINGS_FILE_STORAGE.S3.LABELS.SECRET_ACCESS_KEY' | translate
 				}}</label>
-				<div class="col-sm-9">
+				<div class="col-9 col-xl-4">
 					<input
 						id="aws_secret_access_key"
 						name="aws_secret_access_key"
@@ -93,10 +93,10 @@
 				</div>
 			</div>
 			<div class="form-group row">
-				<label class="label col-sm-3" for="aws_default_region">{{
+				<label class="label col-3 col-xl-2" for="aws_default_region">{{
 					'SETTINGS_FILE_STORAGE.S3.LABELS.REGION' | translate
 				}}</label>
-				<div class="col-sm-9">
+				<div class="col-9 col-xl-4">
 					<input
 						id="aws_default_region"
 						name="aws_default_region"
@@ -112,10 +112,10 @@
 				</div>
 			</div>
 			<div class="form-group row">
-				<label class="label col-sm-3" for="aws_bucket">{{
+				<label class="label col-3 col-xl-2" for="aws_bucket">{{
 					'SETTINGS_FILE_STORAGE.S3.LABELS.BUCKET' | translate
 				}}</label>
-				<div class="col-sm-9">
+				<div class="col-9 col-xl-4">
 					<input
 						id="aws_bucket"
 						name="aws_bucket"
@@ -143,10 +143,10 @@
 		</nb-card-header>
 		<nb-card-body>
 			<div class="form-group row">
-				<label class="label col-sm-3" for="wasabi_aws_access_key_id">{{
+				<label class="label col-3 col-xl-2" for="wasabi_aws_access_key_id">{{
 					'SETTINGS_FILE_STORAGE.WASABI.LABELS.ACCESS_KEY_ID' | translate
 				}}</label>
-				<div class="col-sm-9">
+				<div class="col-9 col-xl-4">
 					<input
 						name="wasabi_aws_access_key_id"
 						[(ngModel)]="settings.wasabi_aws_access_key_id"
@@ -162,10 +162,10 @@
 				</div>
 			</div>
 			<div class="form-group row">
-				<label class="label col-sm-3" for="wasabi_aws_secret_access_key">{{
+				<label class="label col-3 col-xl-2" for="wasabi_aws_secret_access_key">{{
 					'SETTINGS_FILE_STORAGE.WASABI.LABELS.SECRET_ACCESS_KEY' | translate
 				}}</label>
-				<div class="col-sm-9">
+				<div class="col-9 col-xl-4">
 					<input
 						id="wasabi_aws_secret_access_key"
 						name="wasabi_aws_secret_access_key"
@@ -182,10 +182,10 @@
 				</div>
 			</div>
 			<div class="form-group row">
-				<label class="label col-sm-3" for="wasabi_aws_default_region">{{
+				<label class="label col-sm-3 col-xl-2" for="wasabi_aws_default_region">{{
 					'SETTINGS_FILE_STORAGE.WASABI.LABELS.REGION' | translate
 				}}</label>
-				<div class="col-sm-9">
+				<div class="col-sm-9 col-xl-4">
 					<input
 						id="wasabi_aws_default_region"
 						name="wasabi_aws_default_region"
@@ -201,10 +201,10 @@
 				</div>
 			</div>
 			<div class="form-group row">
-				<label class="label col-sm-3" for="wasabi_aws_service_url">{{
+				<label class="label col-3 col-xl-2" for="wasabi_aws_service_url">{{
 					'SETTINGS_FILE_STORAGE.WASABI.LABELS.SERVICE_URL' | translate
 				}}</label>
-				<div class="col-sm-9">
+				<div class="col-9 col-xl-4">
 					<input	
 						id="wasabi_aws_service_url"
 						name="wasabi_aws_service_url"
@@ -220,10 +220,10 @@
 				</div>
 			</div>
 			<div class="form-group row">
-				<label class="label col-sm-3" for="wasabi_aws_bucket">{{
+				<label class="label col-3 col-xl-2" for="wasabi_aws_bucket">{{
 					'SETTINGS_FILE_STORAGE.WASABI.LABELS.BUCKET' | translate
 				}}</label>
-				<div class="col-sm-9">
+				<div class="col-9 col-xl-4">
 					<input
 						id="wasabi_aws_bucket"
 						name="wasabi_aws_bucket"

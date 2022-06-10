@@ -26,15 +26,21 @@
 					{{ dayLogs.key | date }}
 				</h5>
 				<div class="row custom-header m-0 align-items-center">
-					<div
-						class="col-auto"
-						*ngxPermissionsOnly="[
-							OrganizationPermissionsEnum.ALLOW_DELETE_TIME
-						]"
+					<ng-template
+						[ngxPermissionsOnly]="PermissionsEnum.ALLOW_DELETE_TIME"
 					>
-						<nb-checkbox status="basic" style="visibility: hidden">
-						</nb-checkbox>
-					</div>
+						<ng-template 
+							ngxTimeTrackingAuthorized
+							[permission]="PermissionsEnum.ALLOW_DELETE_TIME"
+						>
+							<div class="col-auto">
+								<nb-checkbox 
+									status="basic" 
+									style="visibility: hidden"
+								></nb-checkbox>
+							</div>
+						</ng-template>
+					</ng-template>
 					<div class="col-4 project-name">
 						{{ 'TIMESHEET.PROJECT' | translate }} /
 						{{ 'TIMESHEET.TODO' | translate }}
@@ -70,19 +76,23 @@
 							"
 							*ngFor="let log of dayLogs.value"
 						>
-							<div
-								class="col-auto"
-								*ngxPermissionsOnly="[
-									OrganizationPermissionsEnum.ALLOW_DELETE_TIME
-								]"
+							<ng-template
+								[ngxPermissionsOnly]="PermissionsEnum.ALLOW_DELETE_TIME"
 							>
-								<nb-checkbox
-									[checked]="log.checked"
-									(checkedChange)="selectLog($event, log)"
-									status="basic"
-									[disabled]="log.isRunning"
-								></nb-checkbox>
-							</div>
+								<ng-template 
+									ngxTimeTrackingAuthorized
+									[permission]="PermissionsEnum.ALLOW_DELETE_TIME"
+								>
+									<div class="col-auto">
+										<nb-checkbox
+											[checked]="log.checked"
+											(checkedChange)="selectLog($event, log)"
+											status="basic"
+											[disabled]="log.isRunning"
+										></nb-checkbox>
+									</div>
+								</ng-template>
+							</ng-template>
 							<div class="col-4 project-name">
 								<span *ngIf="log?.task; else noProject">
 									{{ log?.project?.name }}
@@ -175,35 +185,47 @@
 				else noEditAction
 			"
 		>
-			<button
-				*ngxPermissionsOnly="[
-					OrganizationPermissionsEnum.ALLOW_MODIFY_TIME
-				]"
-				[disabled]="selectedLog?.data?.isRunning"
-				class="action primary"
-				nbButton
-				status="basic"
-				(click)="openEditDialog(selectedLog?.data)"
-				size="small"
+			<ng-template 
+				[ngxPermissionsOnly]="PermissionsEnum.ALLOW_MODIFY_TIME"
 			>
-				<nb-icon icon="edit"></nb-icon>
-				{{ 'TIMESHEET.EDIT' | translate }}
-			</button>
-			<button
-				*ngxPermissionsOnly="[
-					OrganizationPermissionsEnum.ALLOW_DELETE_TIME
-				]"
-				[disabled]="selectedLog?.data?.isRunning"
-				class="action"
-				nbButton
-				status="basic"
-				size="small"
-				ngxConfirmDialog
-				[message]="'TIMESHEET.DELETE_TIMELOG' | translate"
-				(confirm)="deleteTimeLog(selectedLog?.data)"
+				<ng-template 
+					ngxTimeTrackingAuthorized
+					[permission]="PermissionsEnum.ALLOW_MODIFY_TIME"
+				>
+					<button
+						[disabled]="selectedLog?.data?.isRunning"
+						class="action primary"
+						nbButton
+						status="basic"
+						(click)="openEditDialog(selectedLog?.data)"
+						size="small"
+					>
+						<nb-icon icon="edit"></nb-icon>
+						{{ 'TIMESHEET.EDIT' | translate }}
+					</button>
+				</ng-template>
+			</ng-template>
+			<ng-template 
+				[ngxPermissionsOnly]="PermissionsEnum.ALLOW_DELETE_TIME"
 			>
-				<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
-			</button>
+				<ng-template 
+					ngxTimeTrackingAuthorized
+					[permission]="PermissionsEnum.ALLOW_DELETE_TIME"
+				>
+				<button
+					[disabled]="selectedLog?.data?.isRunning"
+					class="action"
+					nbButton
+					status="basic"
+					size="small"
+					ngxConfirmDialog
+					[message]="'TIMESHEET.DELETE_TIMELOG' | translate"
+					(confirm)="deleteTimeLog(selectedLog?.data)"
+				>
+					<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
+				</button>
+				</ng-template>
+			</ng-template>
 		</div>
 		<ng-template #noEditAction>
 			<button

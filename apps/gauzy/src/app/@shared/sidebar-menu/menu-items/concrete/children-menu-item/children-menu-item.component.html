@@ -1,6 +1,7 @@
 <ng-container *ngxPermissionsOnly="item?.data?.permissionKeys">
 	<ng-container *ngIf="!collapse; else withNbTooltip">
 		<div
+			[class]="parent.children.at(-1) === item ? '' : 'border-bottom'"
 			*ngIf="!item?.hidden"
 			[gaTooltip]="item?.title"
 			[icon]="item?.icon"
@@ -23,6 +24,7 @@
 	</ng-container>
 	<ng-template #withNbTooltip>
 		<div
+			[class]="parent.children.at(-1) === item ? '' : 'border-bottom'"
 			*ngIf="!item?.hidden"
 			[nbTooltip]="item?.title"
 			nbTooltipPlacement="right"
@@ -35,12 +37,22 @@
 					? 'sub-item custom'
 					: 'sub-item'
 			"
-			(click)="select()"
 		>
-			<span class="info">
+			<span (click)="select()" class="info w-100">
 				<i [class]="item?.icon"></i
-				><span *ngIf="collapse || mouseHover">{{ item?.title }}</span>
+				><span *ngIf="collapse || mouseHover">{{ item?.title }} </span>
 			</span>
+			<button
+				*ngIf="item?.data?.add"
+				class="float-right plus"
+				status="basic"
+				outline
+				size="tiny"
+				(click)="add()"
+				nbButton
+			>
+				<i class="fas fa-plus"></i>
+			</button>
 		</div>
 	</ng-template>
 </ng-container>

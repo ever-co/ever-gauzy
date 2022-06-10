@@ -26,6 +26,7 @@ import {
 	IPaginationBase,
 	PaginationFilterBaseComponent
 } from '../../@shared/pagination/pagination-filter-base.component';
+import { ActivatedRoute } from '@angular/router';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -65,7 +66,8 @@ export class TagsComponent
 		private readonly tagsService: TagsService,
 		public readonly translateService: TranslateService,
 		private readonly toastrService: ToastrService,
-		private readonly store: Store
+		private readonly store: Store,
+		private readonly route: ActivatedRoute
 	) {
 		super(translateService);
 		this.setView();
@@ -88,6 +90,14 @@ export class TagsComponent
 				debounceTime(100),
 				distinctUntilChange(),
 				tap(() => this.tags$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.route.queryParamMap
+			.pipe(
+				filter((params) => !!params && params.get('openAddDialog') === 'true'),
+				debounceTime(1000),
+				tap(() => this.add()),
 				untilDestroyed(this)
 			)
 			.subscribe();

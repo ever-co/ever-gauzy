@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { Router } from '@angular/router';
+import { NavigationEnd, Router } from '@angular/router';
 import { IMenuItem } from '../../interface/menu-item.interface';
 
 @Component({
@@ -16,11 +16,14 @@ export class ChildrenMenuItemComponent implements OnInit {
 
 	@Output() public focusItemChange: EventEmitter<any> = new EventEmitter();
 
-	constructor(
-		private readonly router: Router
-	) {}
+	constructor(private readonly router: Router) {}
 
 	ngOnInit(): void {
+		this.router.events.subscribe((val) => {
+			if ((val as NavigationEnd).url) {
+				this.checkUrl();
+			}
+		});
 		this.checkUrl();
 	}
 
@@ -43,6 +46,14 @@ export class ChildrenMenuItemComponent implements OnInit {
 				parent: this.parent
 			});
 		}
+	}
+
+	public add(){
+		this.focusItemChange.emit({
+			children: this.item,
+			parent: this.parent
+		});
+		this.router.navigateByUrl(this.item.data.add);
 	}
 
 	public get item(): IMenuItem {
