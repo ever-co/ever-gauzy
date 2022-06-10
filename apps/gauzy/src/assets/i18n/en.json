@@ -894,7 +894,8 @@
 			"PRODUCT_IMAGE_ASSET": "Product Image Asset",
 			"CUSTOM_SMTP": "Custom SMTP",
 			"FEATURE": "Feature",
-			"FEATURE_ORGANIZATION": "Feature Organization"
+			"FEATURE_ORGANIZATION": "Feature Organization",
+			"EXPORT_DATA": "Export Data"
 		},
 		"TAGS": "Tags",
 		"LANGUAGE": "Language",
