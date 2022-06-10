@@ -1,8 +1,4 @@
-<nb-card 
-	[nbSpinner]="loading"
-	nbSpinnerStatus="primary"
-	nbSpinnerSize="large"
->
+<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
 	<nb-card-header>
 		<span class="info-text">{{
 			'MENU.IMPORT_EXPORT.EXPORT_MESSAGE' | translate
@@ -22,19 +18,20 @@
 				</div>
 			</div>
 			<div class="col-sm-12 col-md-6 text-right">
-				<button
-					class="m-1"
-					nbButton
-					shape="round"
-					status="info"
-					size="large"
-					type="submit"
-					value="Export"
-					(click)="onSubmit()"
-				>
-					<nb-icon icon="download-outline"></nb-icon>
-					{{ 'MENU.IMPORT_EXPORT.EXPORT' | translate }}
-				</button>
+				<div class="download">
+					<button
+						class="action"
+						nbButton
+						status="info"
+						size="small"
+						type="submit"
+						value="Export"
+						(click)="onSubmit()"
+					>
+						<nb-icon icon="download-outline"></nb-icon>
+						{{ 'MENU.IMPORT_EXPORT.EXPORT' | translate }}
+					</button>
+				</div>
 			</div>
 		</div>
 	</nb-card-header>
