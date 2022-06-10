@@ -9,7 +9,7 @@ import {
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, tap } from 'rxjs/operators';
-import { debounceTime, firstValueFrom, Subject } from 'rxjs';
+import { debounceTime, firstValueFrom, Subject, combineLatest } from 'rxjs';
 import { Ng2SmartTableComponent } from 'ng2-smart-table';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
@@ -80,11 +80,25 @@ export class DepartmentsComponent extends PaginationFilterBaseComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.store.selectedOrganization$
+		this.pagination$
 			.pipe(
-				filter((organization: IOrganization) => !!organization),
+				debounceTime(100),
 				distinctUntilChange(),
-				tap((organization: IOrganization) => this.organization = organization),
+				tap(() => this.departments$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+
+		const storeOrganization$ = this.store.selectedOrganization$;
+		combineLatest([storeOrganization$])
+			.pipe(
+				debounceTime(300),
+				filter(([organization]) => !!organization),
+				distinctUntilChange(),
+				tap(([organization]) => {
+					this.organization = organization;					
+				}),
+				tap(() => this.refreshPagination()),
 				tap(() => this.departments$.next(true)),
 				untilDestroyed(this)
 			)
