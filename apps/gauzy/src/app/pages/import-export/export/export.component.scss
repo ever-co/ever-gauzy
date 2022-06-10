@@ -54,12 +54,6 @@
 }
 
 .info-text {
-  font-size: 14px;
-  font-weight: 400;
-  line-height: 17px;
-  letter-spacing: 0em;
-  text-align: left;
-  color: var(--gauzy-text-color-2);
   display: flex;
   align-items: center;
   gap: 50px;
@@ -72,5 +66,15 @@
     letter-spacing: 0em;
     text-align: left;
     color: var(--gauzy-text-color-1);
+    white-space: nowrap;
+  }
+
+  .message {
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 17px;
+    letter-spacing: 0em;
+    text-align: left;
+    color: var(--gauzy-text-color-2);
   }
 }

@@ -1,17 +1,22 @@
-<nb-card class="import" style="padding: 1rem;">
+<nb-card class="import" style="padding: 1rem">
 	<nb-card-header>
 		<span class="info-text">
-			{{ 'MENU.IMPORT_EXPORT.IMPORT_MESSAGE' | translate }}</span
-		>
+			<span class="title">{{
+				'MENU.IMPORT_EXPORT.IMPORT_DATA' | translate
+			}}</span>
+			<span class="message">{{
+				'MENU.IMPORT_EXPORT.IMPORT_MESSAGE' | translate
+			}}</span>
+		</span>
 	</nb-card-header>
 	<div class="row">
 		<div class="col-md-3">
-			<h3 style="color: #3366ff;" *ngIf="uploader.queue.length == 0">
+			<h3 style="color: #3366ff" *ngIf="uploader.queue.length == 0">
 				{{ 'MENU.IMPORT_EXPORT.SELECT_FILE' | translate }}
 			</h3>
 			<div
 				ng2FileDrop
-				style="height: 30%;"
+				style="height: 30%"
 				[ngClass]="{ 'nv-file-over': hasBaseDropZoneOver }"
 				(onFileDrop)="dropFile($event)"
 				(fileOver)="fileOverBase($event)"
@@ -24,7 +29,7 @@
 			<br />
 			<input
 				#fileInput
-				style="display: none;"
+				style="display: none"
 				type="file"
 				accept="application/zip"
 				ng2FileSelect
@@ -59,7 +64,7 @@
 			<br /><br /><br />
 		</div>
 
-		<div class="col-md-9" style="margin-bottom: 40px;">
+		<div class="col-md-9" style="margin-bottom: 40px">
 			<table class="table">
 				<thead>
 					<tr>
@@ -88,13 +93,12 @@
 						</td>
 						<td
 							*ngIf="uploader.options.isHTML5"
-							style="white-space: nowrap;"
+							style="white-space: nowrap"
 						>
-							{{ item?.file?.size / 1024 / 1024 | number: '.2' }}
-							MB
+							{{ item?.file?.size | fileSize }}
 						</td>
 						<td *ngIf="uploader.options.isHTML5">
-							<div class="progress" style="margin-bottom: 0;">
+							<div class="progress" style="margin-bottom: 0">
 								<div
 									class="progress-bar"
 									role="progressbar"
@@ -107,19 +111,19 @@
 						<td class="text-center">
 							<span *ngIf="item.isUploaded"
 								><nb-icon
-									style="stroke: #00d68f;"
+									style="stroke: #00d68f"
 									icon="checkmark-circle-outline"
 								></nb-icon
 							></span>
 							<span *ngIf="item.isCancel"
 								><nb-icon
-									style="stroke: #ffaa00;"
+									style="stroke: #ffaa00"
 									icon="close-circle-outline"
 								></nb-icon
 							></span>
 							<span *ngIf="item.isError"
 								><nb-icon
-									style="stroke: #ff3d71;"
+									style="stroke: #ff3d71"
 									icon="alert-circle-outline"
 								></nb-icon
 							></span>
@@ -165,7 +169,7 @@
 
 			<div>
 				<div>
-					<span style="display: block;">{{
+					<span style="display: block">{{
 						'MENU.IMPORT_EXPORT.QUEUE_PROGRESS' | translate
 					}}</span
 					><br />
@@ -190,7 +194,7 @@
 					<span>{{ 'MENU.IMPORT_EXPORT.IMPORT' | translate }}</span>
 				</button>
 				<button
-					style="margin-left: 1%;"
+					style="margin-left: 1%"
 					type="button"
 					class="btn btn-warning btn-s"
 					(click)="uploader.cancelAll()"
@@ -199,7 +203,7 @@
 					<span>{{ 'MENU.IMPORT_EXPORT.CANCEL' | translate }}</span>
 				</button>
 				<button
-					style="margin-left: 1%;"
+					style="margin-left: 1%"
 					type="button"
 					class="btn btn-danger btn-s"
 					(click)="uploader.clearQueue()"
@@ -215,26 +219,43 @@
 <nb-card class="import-history p-1">
 	<nb-card-header>
 		<h4>{{ 'MENU.IMPORT_EXPORT.IMPORT_HISTORY' | translate }}</h4>
-		<span class="info-text">{{ 'MENU.IMPORT_EXPORT.IMPORT_HISTORY_MESSAGE' | translate }}</span>
+		<span class="info-text">{{
+			'MENU.IMPORT_EXPORT.IMPORT_HISTORY_MESSAGE' | translate
+		}}</span>
 	</nb-card-header>
 	<nb-card-body>
 		<div class="row border-bottom py-3 font-weight-bold">
 			<div class="col-3">{{ 'MENU.IMPORT_EXPORT.NAME' | translate }}</div>
 			<div class="col-3">{{ 'MENU.IMPORT_EXPORT.SIZE' | translate }}</div>
-			<div class="col-3">{{ 'MENU.IMPORT_EXPORT.IMPORT_DATE_TIME' | translate }}</div>
-			<div class="col-3">{{ 'MENU.IMPORT_EXPORT.STATUS' | translate }}</div>
+			<div class="col-3">
+				{{ 'MENU.IMPORT_EXPORT.IMPORT_DATE_TIME' | translate }}
+			</div>
+			<div class="col-3">
+				{{ 'MENU.IMPORT_EXPORT.STATUS' | translate }}
+			</div>
 		</div>
-		<div class="row border-bottom py-3" *ngFor="let history of (history$ | async)">
+		<div
+			class="row border-bottom py-3"
+			*ngFor="let history of history$ | async"
+		>
 			<div class="col-3">{{ history.file }}</div>
-			<div class="col-3">{{ history.size / 1024 / 1024 | number: '.2' }} MB</div>
+			<div class="col-3">{{ history.size | fileSize }}</div>
 			<div class="col-3">{{ history.importDate | dateTimeFormat }}</div>
 			<div class="col-3">
-				<span *ngIf="history.status === importHistoryStatusEnum.SUCCESS">
-					<nb-icon status="success" icon="checkmark-circle-outline"></nb-icon> 
+				<span
+					*ngIf="history.status === importHistoryStatusEnum.SUCCESS"
+				>
+					<nb-icon
+						status="success"
+						icon="checkmark-circle-outline"
+					></nb-icon>
 					{{ importHistoryStatusEnum.SUCCESS }}
 				</span>
-				<span *ngIf="history.status === importHistoryStatusEnum.FAILED" >
-					<nb-icon status="danger" icon="alert-circle-outline"></nb-icon > 
+				<span *ngIf="history.status === importHistoryStatusEnum.FAILED">
+					<nb-icon
+						status="danger"
+						icon="alert-circle-outline"
+					></nb-icon>
 					{{ importHistoryStatusEnum.FAILED }}
 				</span>
 			</div>
