@@ -77,6 +77,8 @@ $orange: #f56d58;
       display: flex;
       align-content: center;
       margin-right: 0.625rem;
+      @include nb-ltr(margin-right, 0.625rem);
+      @include nb-rtl(margin-left, 0.625rem);
 
       .header-selector {
         width: auto !important;
@@ -241,11 +243,13 @@ $orange: #f56d58;
   min-width: 12.5rem;
 }
 
-.actions{
+:host .actions{
+  margin: .625rem;
   padding: .625rem;
   border-radius: nb-theme(button-rectangle-border-radius);
-  background-color:rgba(50, 50, 50, 0.03);
+  background-color: nb-theme(gauzy-card-2);
   display: flex;
   align-items: center;
-  margin-right: 1.25rem;
+  @include nb-ltr(margin-right, 2.275rem);
+  @include nb-rtl(margin-left, 2.275rem);
 }

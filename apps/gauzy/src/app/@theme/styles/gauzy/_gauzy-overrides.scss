@@ -29,12 +29,14 @@ $default-box-shadow: 0px 1px 1px 0px rgba(0, 0, 0, 0.15);
     border-radius: $default-radius;
     box-shadow: $default-box-shadow-inset;
     height: $default-height;
+    background-color: nb-theme(select-outline-basic-background-color);
   }
   textarea {
     border-radius: $default-radius;
     box-shadow: $default-box-shadow-inset;
     resize: none;
     height: 102px;
+    background-color: nb-theme(select-outline-basic-background-color);
   }
 }
 

@@ -88,7 +88,7 @@
 }
 
 :host .sub-item {
-  padding: 11px 10px;
+  padding: 0px 10px;
   display: flex;
   align-items: center;
   justify-content: flex-start;
@@ -127,6 +127,9 @@
   }
 }
 
-.info span{
-  margin: 0 0.625rem;
+.info {
+  padding: 11px 0;
+  span{
+    margin: 0 0.625rem;
+  }
 }
