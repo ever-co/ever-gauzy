@@ -10,7 +10,8 @@ import {
 	Put,
 	Param,
 	UsePipes,
-	ValidationPipe
+	ValidationPipe,
+	Post
 } from '@nestjs/common';
 import {
 	LanguagesEnum,
@@ -24,6 +25,7 @@ import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { LanguageDecorator, Permissions } from './../shared/decorators';
 import { CrudController, PaginationParams } from './../core/crud';
 import { RequestContext } from './../core/context';
+import { ProductTypeDTO } from './dto';
 
 @ApiTags('ProductTypes')
 @UseGuards(TenantPermissionGuard)
@@ -127,6 +129,32 @@ export class ProductTypeController extends CrudController<ProductType> {
 	}
 
 	/**
+	 * CREATE product type
+	 * 
+	 * @param entity 
+	 * @returns 
+	 */
+	@ApiOperation({ summary: 'Create new record' })
+	@ApiResponse({
+		status: HttpStatus.CREATED,
+		description: 'The record has been successfully created.' /*, type: T*/
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description:
+			'Invalid input, The response body may contain clues as to what went wrong'
+	})
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_PRODUCT_TYPES_EDIT)
+	@Post()
+	@UsePipes(new ValidationPipe({ transform : true }))
+	async create(
+		@Body() entity: ProductTypeDTO
+	): Promise<ProductType> {
+		return this.productTypesService.create(entity);
+	}
+
+	/**
 	 * UPDATE product type by id
 	 * 
 	 * @param id 
@@ -150,10 +178,11 @@ export class ProductTypeController extends CrudController<ProductType> {
 	@HttpCode(HttpStatus.ACCEPTED)
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_PRODUCT_TYPES_EDIT)
+	@UsePipes(new ValidationPipe({ transform : true }))
 	@Put(':id')
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body() entity: ProductType
+		@Body() entity: ProductTypeDTO
 	): Promise<any> {
 		return this.productTypesService.updateProductType(id, entity);
 	}

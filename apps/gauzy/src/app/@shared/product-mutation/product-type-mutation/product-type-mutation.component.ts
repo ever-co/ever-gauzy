@@ -16,8 +16,10 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
 import {
 	ProductTypeService,
-	Store
+	Store,
+	ToastrService
 } from '../../../@core/services';
+import { HttpErrorResponse } from '@angular/common/http';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -35,7 +37,7 @@ export class ProductTypeMutationComponent
 	selectedLanguage: LanguagesEnum;
 	activeTranslation: IProductTypeTranslation;
 	translations: any = [];
-	organization: IOrganization;
+	public organization: IOrganization;
 
 	readonly form: FormGroup = ProductTypeMutationComponent.buildForm(this.fb);
 	static buildForm(fb: FormBuilder): FormGroup {
@@ -51,7 +53,8 @@ export class ProductTypeMutationComponent
 		public readonly translationService: TranslateService,
 		private readonly fb: FormBuilder,
 		private readonly productTypeService: ProductTypeService,
-		private readonly store: Store
+		private readonly store: Store,
+		private readonly toastrService: ToastrService
 	) {
 		super(translationService);
 	}
@@ -76,7 +79,7 @@ export class ProductTypeMutationComponent
 	ngOnDestroy(): void { }
 
 	async onSubmit() {
-		if (!this.organization) {
+		if (!this.organization || this.form.invalid) {
 			return;
 		}
 
@@ -107,8 +110,11 @@ export class ProductTypeMutationComponent
 					payload
 				);
 			}
-		} catch (err) {
-			console.log(err, typeof err);
+		} catch (error) {
+			if (error instanceof HttpErrorResponse) {
+				const messages = error.error.message.join(' & ');
+				this.toastrService.error(messages);
+			}
 		}
 
 		this.closeDialog(productType);
@@ -127,7 +133,6 @@ export class ProductTypeMutationComponent
 		if (!this.productType) {
 			return;
 		}
-
 		const { icon, translations = [] } = this.productType;
 
 		this.translations = translations;
@@ -156,6 +161,9 @@ export class ProductTypeMutationComponent
 	 * SET product category all translations
 	 */
 	private async _setTranslationsRawValue() {
+		if (!this.organization) {
+			return;
+		}
 		const { name, description } = this.form.getRawValue();
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
