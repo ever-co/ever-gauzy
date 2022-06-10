@@ -10,7 +10,8 @@ import {
 	Param,
 	Body,
 	ValidationPipe,
-	UsePipes
+	UsePipes,
+	Post
 } from '@nestjs/common';
 import {
 	LanguagesEnum,
@@ -24,6 +25,7 @@ import { RequestContext } from './../core/context';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { LanguageDecorator, Permissions } from './../shared/decorators';
+import { ProductCategoryDTO } from './dto';
 
 @ApiTags('ProductCategories')
 @UseGuards(TenantPermissionGuard)
@@ -129,6 +131,32 @@ export class ProductCategoryController extends CrudController<ProductCategory> {
 	}
 
 	/**
+	 * CREATE product category
+	 * 
+	 * @param entity 
+	 * @returns 
+	 */
+	@ApiOperation({ summary: 'Create new record' })
+	@ApiResponse({
+		status: HttpStatus.CREATED,
+		description: 'The record has been successfully created.' /*, type: T*/
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description:
+			'Invalid input, The response body may contain clues as to what went wrong'
+	})
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_PRODUCT_CATEGORIES_EDIT)
+	@Post()
+	@UsePipes(new ValidationPipe({ transform : true }))
+	async create(
+		@Body() entity: ProductCategoryDTO
+	): Promise<ProductCategory> {
+		return await this.productCategoriesService.create(entity);
+	}
+
+	/**
 	 * UPDATE product category by id
 	 * 
 	 * @param id 
@@ -155,8 +183,8 @@ export class ProductCategoryController extends CrudController<ProductCategory> {
 	@Put(':id')
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body() entity: ProductCategory
-	): Promise<any> {
-		return this.productCategoriesService.updateProductCategory(id, entity);
+		@Body() entity: ProductCategoryDTO
+	): Promise<ProductCategory> {
+		return await this.productCategoriesService.updateProductCategory(id, entity);
 	}
 }
