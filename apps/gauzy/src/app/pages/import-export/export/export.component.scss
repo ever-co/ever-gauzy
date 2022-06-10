@@ -1,50 +1,40 @@
-$center: center;
-
-.import_export_wrapper {
-  display: flex;
-  justify-content: flex-end;
-  align-items: $center;
-  padding: 1rem;
-  height: 100%;
-}
-
-.button-import {
-  margin-left: 20%;
-}
-
-.radio-buttons-group {
-  margin-left: 5%;
-}
-
-.info-text {
-  color: #3366ff;
-  font-weight: 600;
-}
-
-.export-checkbox {
-  padding-left: 10rem;
-}
-
-.checkbox {
-  width: 30%;
-  float: left;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.checkboxes {
-  width: 1rem;
-  height: 1rem;
-  padding: 2rem;
-  margin-top: 1rem;
-}
-
 :host {
 
   nb-card,
   nb-card-body {
     background-color: var(--gauzy-card-2);
+
+    &.card-body {
+      height: calc(100vh - 21rem);
+      overflow: auto;
+      padding: 1rem;
+    }
+  }
+
+  nb-card {
+    margin-bottom: 0;
+
+    nb-card {
+      margin-bottom: 0.625rem;
+    }
+  }
+
+  nb-checkbox {
+    ::ng-deep {
+
+      span.checked+span.text {
+        color: var(--text-primary-color);
+      }
+
+      span.text {
+        font-size: 11px;
+        font-weight: 400;
+        line-height: 13px;
+        letter-spacing: 0em;
+        text-align: left;
+        color: var(--gauzy-text-color-2);
+      }
+    }
   }
 }
 
@@ -56,5 +46,27 @@ $center: center;
 
   .action {
     box-shadow: 0 1px 1px 0 rgba(0, 0, 0, 0.15);
+  }
+}
+
+.info-text {
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 17px;
+  letter-spacing: 0em;
+  text-align: left;
+  color: var(--gauzy-text-color-2);
+  display: flex;
+  align-items: center;
+  gap: 50px;
+  margin-bottom: 50px;
+
+  .title {
+    font-size: 24px;
+    font-weight: 600;
+    line-height: 30px;
+    letter-spacing: 0em;
+    text-align: left;
+    color: var(--gauzy-text-color-1);
   }
 }
