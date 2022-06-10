@@ -422,6 +422,7 @@ export class ContactsComponent extends PaginationFilterBaseComponent
 				endPoint: `${API_PREFIX}/organization-contact/pagination`,
 				relations: [
 					'projects',
+					'projects.members',
 					'projects.organization',
 					'members',
 					'members.user',
