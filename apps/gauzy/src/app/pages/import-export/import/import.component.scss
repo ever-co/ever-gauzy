@@ -1,30 +1,93 @@
 @import '../export/export.component.scss';
 
-$center: center;
-
-.import_export_wrapper {
+.well {
+  height: 180px;
+  width: 180px;
   display: flex;
-  justify-content: $center;
-  align-items: $center;
-  height: 100%;
-}
-.radio-buttons-group {
-  margin-left: 5%;
-}
-.info-text {
-  color: #3366ff;
-  font-weight: 600;
+  align-items: center;
+  justify-content: center;
+  color: var(--gauzy-text-color-2);
 }
 
-.half-width {
-  width: 50%;
-}
 .my-drop-zone {
-  border: dotted 3px lightgray;
+  border: dashed 3px var(--gauzy-border-default-color);
+  border-radius: var(--border-radius);
 }
+
 .nv-file-over {
-  border: dotted 3px red;
-} /* Default class applied to drop zones on over */
+  border: dashed 3px red;
+  border-radius: var(--border-radius);
+}
+
+/* Default class applied to drop zones on over */
 .another-file-over-class {
-  border: dotted 3px green;
+  border: dashed 3px green;
+  border-radius: var(--border-radius);
+}
+
+.import-data {
+  display: flex;
+  gap: 1rem
+}
+
+.import-zone {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.table-zone {
+  width: 100%;
+
+  .queue-progress {
+    margin: 2rem 0;
+    width: 80%;
+
+    h6,
+    .progress-percent {
+      font-size: 14px;
+      font-weight: 600;
+      line-height: 17px;
+      letter-spacing: 0em;
+      text-align: left;
+    }
+
+    .progress-percent {
+      display: flex;
+      gap: 10px
+    }
+
+    .progress {
+      height: 1.25rem;
+    }
+  }
+
+  .progress {
+    background-color: var(--gauzy-card-2);
+    border-radius: var(--button-rectangle-border-radius);
+
+    .progress-bar {
+      background-color: var(--background-primary-color-1);
+      border-radius: var(--button-rectangle-border-radius);
+    }
+  }
+}
+
+:host ::ng-deep {
+  nb-radio[checked="true"] {
+    span.text {
+      color: var(--text-primary-color);
+    }
+  }
+
+  nb-radio {
+    span.text {
+      color: var(--gauzy-text-color-2);
+      font-size: 11px;
+      font-weight: 400;
+      line-height: 13px;
+      letter-spacing: 0em;
+      text-align: left;
+    }
+  }
 }
