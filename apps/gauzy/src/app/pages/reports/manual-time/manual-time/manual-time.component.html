@@ -25,9 +25,14 @@
                 [hasActivityLevelFilter]="false"
                 (filtersChange)="filtersChange($event)"
             ></ngx-gauzy-filters>
-            <nb-select placeholder="Action" class="action-select">
-                <nb-option value="0">Action</nb-option>
-            </nb-select>
+            <ng-select
+                [searchable]="false"
+                [clearable]="true"
+                [items]="actions"
+                [placeholder]="'REPORT_PAGE.ACTION' | translate"
+                [formControl]="control"
+                appendTo="body"
+            ></ng-select>
         </div>
         <div class="table">
             <div 
@@ -38,12 +43,12 @@
             >
                 <ng-template class="table-template" [ngIf]="dailyData?.length > 0" [ngIfElse]="notFound">
                     <nb-card class="card" *ngFor="let day of dailyData">
-                        <nb-card-header class="card-title">{{ day.date | dateFormat }}</nb-card-header>
+                        <nb-card-header class="card-title">
+                            {{ day.date | dateFormat }}
+                        </nb-card-header>
                         <nb-card-body>
                             <ng-container *ngTemplateOutlet="columnsHeader"></ng-container>
-                            <div class="cart-body project-row" *ngFor="
-                            let timeLogRow of day.timeLogs;
-                            let employeeIndex = index">
+                            <div class="cart-body project-row" *ngFor="let timeLogRow of day.timeLogs;">
                                 <div class="table-row">
                                     <div class="table-inner-wrapper">
                                         <div class="responsive-table-row employee-column">
@@ -102,12 +107,19 @@
                                         </div>
                                         <div class="responsive-table-row small-column action-column justify-end">
                                             <div class="responsive-table-header">{{ 'REPORT_PAGE.ACTION' | translate }}</div>
-                                            <div class="responsive-table-content day-col">
-                                                <nb-badge text="Add"></nb-badge>
+                                            <div class="responsive-table-content day-col" [ngSwitch]="timeLogRow.isEdited">
+                                                <nb-badge 
+                                                    *ngSwitchCase="true"
+                                                    [text]="ManualTimeLogAction.EDITED | titlecase"
+                                                ></nb-badge>
+                                                <nb-badge
+                                                    *ngSwitchCase="false"
+                                                    [text]="ManualTimeLogAction.ADDED | titlecase"
+                                                ></nb-badge>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
+                                </div> 
                             </div>
                         </nb-card-body>
                     </nb-card>
