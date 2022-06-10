@@ -4,12 +4,6 @@ import { NgxPermissionsGuard } from 'ngx-permissions';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { ProductCategoriesComponent } from './product-categories.component';
 
-const ORG_PERMISSIONS = [
-	PermissionsEnum.ALL_ORG_VIEW,
-	PermissionsEnum.ALL_ORG_EDIT
-];
-
-
 const routes: Routes = [
 	{
 		path: '',
@@ -18,7 +12,8 @@ const routes: Routes = [
 		data: {
 			permissions: {
 				only: [
-					...ORG_PERMISSIONS,
+					PermissionsEnum.ALL_ORG_VIEW,
+					PermissionsEnum.ALL_ORG_EDIT,
 					PermissionsEnum.ORG_PRODUCT_CATEGORIES_VIEW
 				],
 				redirectTo: '/pages/dashboard'
@@ -28,13 +23,7 @@ const routes: Routes = [
 				employee: false,
 				date: false
 			}
-		},
-		children: [
-			{
-				path: 'all',
-				component: ProductCategoriesComponent
-			}
-		]
+		}
 	}
 ];
 
