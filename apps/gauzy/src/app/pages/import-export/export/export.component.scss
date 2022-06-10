@@ -11,6 +11,10 @@
     }
   }
 
+  nb-card-body {
+    border-radius: 0 0 var(--border-radius) var(--border-radius);
+  }
+
   nb-card {
     margin-bottom: 0;
 
