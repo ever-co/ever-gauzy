@@ -18,6 +18,7 @@ import {
 	Store,
 	ToastrService
 } from '../../../@core/services';
+import { HttpErrorResponse } from '@angular/common/http';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -75,7 +76,7 @@ export class ProductCategoryMutationComponent
 	}
 
 	async onSubmit() {
-		if (!this.organization) {
+		if (!this.organization || this.form.invalid) {
 			return;
 		}
 		await this._setTranslationsRawValue();
@@ -94,15 +95,22 @@ export class ProductCategoryMutationComponent
 		};
 
 		let productCategory: IProductCategoryTranslatable;
-		if (!this.productCategory) {
-			productCategory = await this.productCategoryService.create(
-				payload
-			);
-		} else {
-			payload['id'] = this.productCategory.id;
-			productCategory = await this.productCategoryService.update(
-				payload
-			);
+		try {
+			if (!this.productCategory) {
+				productCategory = await this.productCategoryService.create(
+					payload
+				);
+			} else {
+				payload['id'] = this.productCategory.id;
+				productCategory = await this.productCategoryService.update(
+					payload
+				);
+			}
+		} catch (error) {
+			if (error instanceof HttpErrorResponse) {
+				const messages = error.error.message.join(' & ');
+				this.toastrService.error(messages);
+			}
 		}
 		this.closeDialog(productCategory);
 	}
@@ -149,6 +157,9 @@ export class ProductCategoryMutationComponent
 	 * SET product category all translations
 	 */
 	private async _setTranslationsRawValue() {
+		if (!this.organization) {
+			return;
+		}
 		const { name, description } = this.form.getRawValue();
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
