@@ -3826,6 +3826,26 @@
 			"SUB_TITLE": "Пожалуйста, выберите тип счета ниже."
 		}
 	},
+	"FORGOT_PASSWORD_PAGE": {
+		"TITLE": "Забыли пароль",
+		"SUB_TITLE": "Введите свой адрес электронной почты, и мы отправим ссылку для сброса пароля",
+		"ALERT_TITLE": "О сна!",
+		"ALERT_SUCCESS_TITLE": "Ура!",
+		"REQUEST_PASSWORD_TEXT": "Запросить пароль",
+		"BACK_TO_LOGIN": "Назад?",
+		"FAQ_TITLE": "ЧАВО",
+		"FAQ_LEARN_MORE": "Узнать больше",
+		"LABELS": {
+			"EMAIL": "Введите ваш адрес электронной почты:"
+		},
+		"PLACEHOLDERS": {
+			"EMAIL": "Email адрес"
+		},
+		"VALIDATION": {
+			"EMAIL_REQUIRED": "Требуется адрес электронной почты!",
+			"EMAIL_REAL_REQUIRED": "Email должен быть реальным!"
+		}
+	},
 	"PAGINATION": {
 		"ITEMS": "Предметы"
 	},
