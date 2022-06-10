@@ -2,10 +2,10 @@ import { NgModule } from '@angular/core';
 import { NbButtonModule, NbIconModule } from '@nebular/theme';
 import { ThemeModule } from '../../@theme/theme.module';
 import { TranslateModule } from '../translate/translate.module';
-import { FaqComponent } from './faq.component';
+import { NgxFaqComponent } from './faq.component';
 
 @NgModule({
-	declarations: [FaqComponent],
+	declarations: [NgxFaqComponent],
 	imports: [
 		ThemeModule,
 		TranslateModule,
@@ -13,6 +13,6 @@ import { FaqComponent } from './faq.component';
         NbIconModule
 	],
 	providers: [],
-	exports: [FaqComponent]
+	exports: [NgxFaqComponent]
 })
-export class FaqModule {}
+export class NgxFaqModule {}

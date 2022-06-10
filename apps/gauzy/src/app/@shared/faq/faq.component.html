@@ -3,7 +3,7 @@
 		<h5 class="faq-heading">
 			{{ 'FORGOT_PASSWORD_PAGE.FAQ_TITLE' | translate }}
 		</h5>
-		<div *ngFor="let item of items" class="single-faq">
+		<div *ngFor="let item of (faqs$ | async)" class="single-faq">
 			<div class="heading-wrapper">
 				<nb-icon [icon]="item.icon"></nb-icon>
 				<h6 class="side-small-heading">{{ item.title }}</h6>

@@ -26,9 +26,7 @@ import { NgxAuthComponent } from "./auth/auth.component";
 import { ThemeModule } from '../@theme/theme.module';
 import { ThemeSelectorModule } from '../@theme/components/theme-sidebar/theme-settings/components/theme-selector/theme-selector.module';
 import { NgxResetPasswordComponent } from "./reset-password/reset-password.component";
-import { FaqModule } from '../@shared/faq';
-
-
+import { NgxFaqModule } from '../@shared/faq';
 
 @NgModule({
 	imports: [
@@ -50,7 +48,7 @@ import { FaqModule } from '../@shared/faq';
 		NbLayoutModule,
         ThemeModule,
         ThemeSelectorModule,
-		FaqModule
+		NgxFaqModule
 	],
 	declarations: [
 		NgxLoginComponent,
