@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import {
 	IEmployee,
 	IOrganizationDepartment,
@@ -10,14 +10,17 @@ import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, tap } from 'rxjs/operators';
 import { debounceTime, firstValueFrom, Subject } from 'rxjs';
-import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
+import { Ng2SmartTableComponent } from 'ng2-smart-table';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { TranslationBaseComponent } from './../../@shared/language-base';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { EmployeeWithLinksComponent, NotesWithTagsComponent } from '../../@shared/table-components';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import { OrganizationDepartmentsService, Store, ToastrService } from '../../@core/services';
 import { distinctUntilChange } from '@gauzy/common-angular';
+import { IPaginationBase, PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
+import { HttpClient } from '@angular/common/http';
+import { ServerDataSource } from '../../@core/utils/smart-table';
+import { API_PREFIX } from '../../@core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -25,10 +28,10 @@ import { distinctUntilChange } from '@gauzy/common-angular';
 	templateUrl: './departments.component.html',
 	styleUrls: ['./departments.component.scss']
 })
-export class DepartmentsComponent
-	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
+export class DepartmentsComponent extends PaginationFilterBaseComponent
+	implements AfterViewInit, OnInit, OnDestroy {
 
+	smartTableSettings: object;
 	showAddCard: boolean;
 	departments: IOrganizationDepartment[];
 	employees: IEmployee[] = [];
@@ -38,8 +41,8 @@ export class DepartmentsComponent
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
 	settingsSmartTable: object;
-	smartTableSource = new LocalDataSource();
 	loading: boolean;
+	smartTableSource: ServerDataSource;
 
 	departmentsTable: Ng2SmartTableComponent;
 	@ViewChild('departmentsTable') set content(
@@ -59,21 +62,21 @@ export class DepartmentsComponent
 		private readonly toastrService: ToastrService,
 		public readonly translateService: TranslateService,
 		private readonly dialogService: NbDialogService,
-		private readonly store: Store
+		private readonly store: Store,
+		private readonly httpClient: HttpClient,
 	) {
 		super(translateService);
 		this.setView();
 	}
 
 	ngOnInit() {
+		this._loadSettingsSmartTable();
 		this._applyTranslationOnSmartTable();
-		this._loadSmartTableSettings();
 		this.departments$
 			.pipe(
 				debounceTime(100),
-				tap(() => this.loading = true),
-				tap(() => this._loadDepartments()),
-				tap(() => this.clearItem()),
+				tap(() => this.getDepartments()),
+				tap(() => this._clearItem()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -90,7 +93,16 @@ export class DepartmentsComponent
 
 	ngOnDestroy() { }
 	
+	ngAfterViewInit() {
+		const { employeeId } = this.store.user;
+		if (employeeId) {
+			delete this.smartTableSettings['columns']['employeeName'];
+			this.smartTableSettings = Object.assign({}, this.smartTableSettings);
+		}
+	}
+
 	selectDepartment({ isSelected, data }) {
+		
 		this.disableButton = !isSelected;
 		this.selectedDepartment = isSelected ? data : null;
 	}
@@ -98,9 +110,16 @@ export class DepartmentsComponent
 	/**
 	 * Load smart table columns settings
 	 */
-	private _loadSmartTableSettings() {
-		this.settingsSmartTable = {
+	private _loadSettingsSmartTable() {
+		const pagination: IPaginationBase = this.getPagination();
+		this.smartTableSettings = {
 			actions: false,
+			editable: true,
+			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA'),
+			pager: {
+				display: false,
+				perPage: pagination ? pagination.itemsPerPage : 10
+			},
 			columns: {
 				name: {
 					title: this.getTranslation('ORGANIZATIONS_PAGE.NAME'),
@@ -126,14 +145,15 @@ export class DepartmentsComponent
 		this.viewComponentName = ComponentEnum.DEPARTMENTS;
 		this.store
 			.componentLayout$(this.viewComponentName)
-			.pipe(untilDestroyed(this))
-			.subscribe((componentLayout) => {
-				this.dataLayoutStyle = componentLayout;
-				this.selectedDepartment =
-					this.dataLayoutStyle === 'CARDS_GRID'
-						? null
-						: this.selectedDepartment;
-			});
+			.pipe(
+				distinctUntilChange(),
+				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
+				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
+				tap(() => this.refreshPagination()),
+				tap(() => this.departments$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	async removeDepartment(id?: string, name?: string) {
@@ -162,13 +182,11 @@ export class DepartmentsComponent
 	}
 
 	async editDepartment(department: IOrganizationDepartment) {
-		if (department) {
-			this.selectDepartment({
-				isSelected: true,
-				data: department
-			});
-			this.showAddCard = true;
-		}
+		this.selectDepartment({
+			isSelected: true,
+			data: department ? department : this.selectedDepartment
+		});
+		this.showAddCard = true;		
 	}
 
 	public async addOrEditDepartment(input: IOrganizationDepartmentCreateInput) {
@@ -196,31 +214,80 @@ export class DepartmentsComponent
 		}
 	}
 
-	private async _loadDepartments() {
+	/*
+	* Register Smart Table Source Config
+	*/
+	setSmartTableSource() {
 		if (!this.organization) {
 			return;
 		}
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 
-		const { items = [] } = await this.organizationDepartmentsService.getAll(
-			['members', 'members.user', 'tags'],
-			{ organizationId, tenantId },
-			{ createdAt: 'DESC' }
-		).finally(() => {
-			this.loading = false;
+		this.smartTableSource = new ServerDataSource(this.httpClient, {
+			endPoint: `${API_PREFIX}/organization-department/pagination`,
+			relations: [
+				'members',
+				'members.user',
+				'tags'
+			],
+			join: {
+				...(this.filters.join) ? this.filters.join : {}
+			},
+			where: {
+				...{ organizationId, tenantId },
+				...this.filters.where
+			},
+			resultMap: (department: IOrganizationDepartment) => {
+				return department
+			},
+			finalize: () => {
+				this.setPagination({
+					...this.getPagination(),
+					totalItems: this.smartTableSource.count()
+				});
+				this.loading = false;
+			}
 		});
-		this.departments = items;
-		this.smartTableSource.load(items);
 	}
 	
+	private async getDepartments() {
+		if (!this.organization) {
+			return;
+		}
+		try {
+			this.setSmartTableSource();
+
+			const { activePage, itemsPerPage } = this.getPagination();
+			this.smartTableSource.setPaging(
+				activePage,
+				itemsPerPage,
+				false
+			);
+
+			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
+				await this.smartTableSource.getElements();
+				this.departments = this.smartTableSource.getData();
+
+				this.setPagination({
+					...this.getPagination(),
+					totalItems: this.smartTableSource.count()
+				});
+			}
+		} catch (error) {
+			this.toastrService.danger('NOTES.EXPENSES.EXPENSES_ERROR', null, {
+				error: error.error.message || error.message
+			});
+		}
+	}
+
 	/**
 	 * On language change load smart table settings again
 	 */
 	private _applyTranslationOnSmartTable() {
 		this.translateService.onLangChange
 			.pipe(
-				tap(() => this._loadSmartTableSettings()),
+				tap(() => this._loadSettingsSmartTable()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -233,7 +300,7 @@ export class DepartmentsComponent
 		this.departmentsTable.source.onChangedSource
 			.pipe(
 				untilDestroyed(this),
-				tap(() => this.clearItem())
+				tap(() => this._clearItem())
 			)
 			.subscribe();
 	}
@@ -241,7 +308,7 @@ export class DepartmentsComponent
 	/*
 	 * Clear selected item
 	 */
-	public clearItem() {
+	public _clearItem() {
 		this.showAddCard = false;
 		this.selectDepartment({
 			isSelected: false,
