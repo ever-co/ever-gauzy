@@ -26,6 +26,7 @@ import { NgxAuthComponent } from "./auth/auth.component";
 import { ThemeModule } from '../@theme/theme.module';
 import { ThemeSelectorModule } from '../@theme/components/theme-sidebar/theme-settings/components/theme-selector/theme-selector.module';
 import { NgxResetPasswordComponent } from "./reset-password/reset-password.component";
+import { NgxForgotPasswordWhatsNewComponent } from './forgot-password/whats-new/whats-new.component';
 
 
 
@@ -54,6 +55,7 @@ import { NgxResetPasswordComponent } from "./reset-password/reset-password.compo
 	declarations: [
 		NgxLoginComponent,
 		NgxWhatsNewComponent,
+		NgxForgotPasswordWhatsNewComponent,
 		NgxForgotPasswordComponent,
 		NgxRegisterSideFeaturesComponent,
 		NgxRegisterSideSingleFeatureComponent,
