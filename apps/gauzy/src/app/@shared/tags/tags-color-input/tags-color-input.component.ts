@@ -79,10 +79,12 @@ export class TagsColorInputComponent implements OnInit, OnDestroy {
 		const tag: ITag = {
 			name: tagName,
 			color: '#' + Math.floor(Math.random() * 16777215).toString(16),
-			description: '',
-			organizationId,
-			tenantId
+			description: ''		
 		};
+
+		if (this.isTenantLevel || this.isOrgLevel) { tag['tenantId'] = tenantId; }
+		if (this.isOrgLevel) { tag['organizationId'] = organizationId; }
+
 		this.loading = true;
 		return await this.tagsService.insertTag(tag)
 			.finally(() => {
