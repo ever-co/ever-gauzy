@@ -1,5 +1,5 @@
 import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
-import { Router, RouterEvent, NavigationEnd } from '@angular/router';
+import { Router, RouterEvent, NavigationEnd, ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import {
 	IRequestApproval,
@@ -76,7 +76,8 @@ export class ApprovalsComponent
 		private store: Store,
 		private dialogService: NbDialogService,
 		private toastrService: ToastrService,
-		private router: Router
+		private router: Router,
+		private readonly route: ActivatedRoute
 	) {
 		super(translateService);
 	}
@@ -127,6 +128,14 @@ export class ApprovalsComponent
 					this.setView();
 				}
 			});
+		this.route.queryParamMap
+			.pipe(
+				filter((params) => !!params && params.get('openAddDialog') === 'true'),
+				debounceTime(1000),
+				tap(() => this.save(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this._applyTranslationOnSmartTable();
 		this._loadSmartTableSettings();
 		this.setView();

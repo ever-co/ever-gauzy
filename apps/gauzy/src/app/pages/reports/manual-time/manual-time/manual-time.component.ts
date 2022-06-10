@@ -5,17 +5,18 @@ import {
 	OnInit,
 	ViewChild
 } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { FormControl } from '@angular/forms';
 import {
 	IGetTimeLogReportInput,
 	ITimeLog,
 	ITimeLogFilters,
-	TimeLogType
+	TimeLogType,
+	ManualTimeLogAction
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
-import { debounceTime, filter, tap } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs/internal/Observable';
 import { chain, pick } from 'underscore';
 import { isEmpty } from '@gauzy/common-angular';
@@ -34,9 +35,13 @@ import { TimesheetFilterService } from './../../../../@shared/timesheet';
 export class ManualTimeComponent extends BaseSelectorFilterComponent
 	implements OnInit, AfterViewInit {
 
+	public control = new FormControl();
+
 	filters: ITimeLogFilters;
 	loading: boolean;
 	dailyData: any;
+	ManualTimeLogAction: typeof ManualTimeLogAction = ManualTimeLogAction;
+	actions: string[] = Object.values(ManualTimeLogAction);
 
 	@ViewChild(GauzyFiltersComponent) gauzyFiltersComponent: GauzyFiltersComponent;
 	datePickerConfig$: Observable<any> = this._dateRangePickerBuilderService.datePickerConfig$;
@@ -46,7 +51,6 @@ export class ManualTimeComponent extends BaseSelectorFilterComponent
 		private readonly timesheetService: TimesheetService,
 		protected readonly store: Store,
 		public readonly translateService: TranslateService,
-    	private readonly activatedRoute: ActivatedRoute,
 		private readonly timesheetFilterService: TimesheetFilterService,
 		public readonly _dateRangePickerBuilderService: DateRangePickerBuilderService
 	) {
@@ -56,20 +60,19 @@ export class ManualTimeComponent extends BaseSelectorFilterComponent
 	ngOnInit(): void {
 		this.subject$
 			.pipe(
-				debounceTime(500),
+				debounceTime(100),
 				tap(() => this.getLogs()),
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.activatedRoute.queryParams
-			.pipe(
-				filter((params) => !!params && params.start),
-				tap((params) => this.filtersChange({
-					startDate: moment(params.start).startOf('week').toDate(),
-					endDate: moment(params.end).endOf('week').toDate()
-				}))
-			)
-			.subscribe();
+		this.control.valueChanges
+            .pipe(
+                debounceTime(100),
+                distinctUntilChanged(),
+                tap(() => this.subject$.next(true)),
+				untilDestroyed(this)
+            )
+            .subscribe();
 	}
 
 	ngAfterViewInit() {
@@ -105,6 +108,14 @@ export class ManualTimeComponent extends BaseSelectorFilterComponent
 		this.timesheetService
 			.getTimeLogs(request)
 			.then((logs: ITimeLog[]) => {
+				switch (this.control.value) {
+					case ManualTimeLogAction.ADDED:
+						logs = logs.filter((log: ITimeLog) => !log.isEdited);
+						break;
+					case ManualTimeLogAction.EDITED:
+						logs = logs.filter((log: ITimeLog) => log.isEdited);
+						break;
+				}
 				this.dailyData = chain(logs)
 					.groupBy((log: ITimeLog) => {
 						return moment(log.updatedAt).format('YYYY-MM-DD');

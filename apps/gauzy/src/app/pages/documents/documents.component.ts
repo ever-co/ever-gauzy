@@ -6,7 +6,7 @@ import {
 	IOrganization
 } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/common-angular';
-import { filter, first, tap } from 'rxjs/operators';
+import { debounceTime, filter, first, tap } from 'rxjs/operators';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource } from 'ng2-smart-table';
@@ -17,6 +17,7 @@ import { ComponentEnum } from '../../@core/constants';
 import { TranslationBaseComponent } from '../../@shared/language-base';
 import { DocumentDateTableComponent, DocumentUrlTableComponent } from '../../@shared/table-components';
 import { OrganizationDocumentsService, Store, ToastrService } from '../../@core/services';
+import { ActivatedRoute } from '@angular/router';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -65,7 +66,8 @@ export class DocumentsComponent extends TranslationBaseComponent
 		private readonly store: Store,
 		public readonly translateService: TranslateService,
 		private readonly organizationDocumentsService: OrganizationDocumentsService,
-		private readonly toastrService: ToastrService
+		private readonly toastrService: ToastrService,
+		private readonly route: ActivatedRoute
 	) {
 		super(translateService);
 		this.setView();
@@ -83,6 +85,15 @@ export class DocumentsComponent extends TranslationBaseComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
+		this.route.queryParamMap
+			.pipe(
+				filter((params) => !!params && params.get('openAddDialog') === 'true'),
+				debounceTime(1000),
+				tap(() => this.showCard()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		
 	}
 
 	documents(): FormArray {

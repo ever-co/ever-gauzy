@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
 import {
 	StatusTypesEnum,
@@ -79,7 +79,8 @@ export class TimeOffComponent extends PaginationFilterBaseComponent
 		private readonly toastrService: ToastrService,
 		private readonly store: Store,
 		private readonly translate: TranslateService,
-		private readonly httpClient: HttpClient
+		private readonly httpClient: HttpClient,
+		private readonly route: ActivatedRoute
 	) {
 		super(translate);
 		this.setView();
@@ -118,6 +119,14 @@ export class TimeOffComponent extends PaginationFilterBaseComponent
 					this.selectedEmployeeId = employee ? employee.id : null;
 				}),
 				tap(() => this.timeOff$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.route.queryParamMap
+			.pipe(
+				filter((params) => !!params && params.get('openAddDialog') === 'true'),
+				debounceTime(1000),
+				tap(() => this.requestDaysOff()),
 				untilDestroyed(this)
 			)
 			.subscribe();

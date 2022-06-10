@@ -48,6 +48,14 @@ export class ChildrenMenuItemComponent implements OnInit {
 		}
 	}
 
+	public add(){
+		this.focusItemChange.emit({
+			children: this.item,
+			parent: this.parent
+		});
+		this.router.navigateByUrl(this.item.data.add);
+	}
+
 	public get item(): IMenuItem {
 		return this._item;
 	}

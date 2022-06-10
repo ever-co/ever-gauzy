@@ -30,6 +30,7 @@ import {
 	RecurringExpenseDeleteConfirmationComponent,
 	RecurringExpenseMutationComponent
 } from '../../@shared/expenses';
+import { ActivatedRoute } from '@angular/router';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -64,7 +65,8 @@ export class ExpenseRecurringComponent
 		private readonly store: Store,
 		private readonly dialogService: NbDialogService,
 		private readonly toastrService: ToastrService,
-		public readonly translateService: TranslateService
+		public readonly translateService: TranslateService,
+		public readonly route: ActivatedRoute
 	) {
 		super(translateService);
 	}
@@ -91,6 +93,14 @@ export class ExpenseRecurringComponent
 						this.expenses$.next(true);
 					}
 				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
+			this.route.queryParamMap
+			.pipe(
+				filter((params) => !!params && params.get('openAddDialog') === 'true'),
+				debounceTime(1000),
+				tap(() => this.addOrganizationRecurringExpense()),
 				untilDestroyed(this)
 			)
 			.subscribe();

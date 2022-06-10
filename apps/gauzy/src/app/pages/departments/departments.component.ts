@@ -21,6 +21,7 @@ import { IPaginationBase, PaginationFilterBaseComponent } from '../../@shared/pa
 import { HttpClient } from '@angular/common/http';
 import { ServerDataSource } from '../../@core/utils/smart-table';
 import { API_PREFIX } from '../../@core';
+import { ActivatedRoute } from '@angular/router';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -64,6 +65,7 @@ export class DepartmentsComponent extends PaginationFilterBaseComponent
 		private readonly dialogService: NbDialogService,
 		private readonly store: Store,
 		private readonly httpClient: HttpClient,
+		private readonly route: ActivatedRoute
 	) {
 		super(translateService);
 		this.setView();
@@ -100,6 +102,14 @@ export class DepartmentsComponent extends PaginationFilterBaseComponent
 				}),
 				tap(() => this.refreshPagination()),
 				tap(() => this.departments$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+			this.route.queryParamMap
+			.pipe(
+				filter((params) => !!params && params.get('openAddDialog') === 'true'),
+				debounceTime(1000),
+				tap(() => this.showAddCard = true),
 				untilDestroyed(this)
 			)
 			.subscribe();

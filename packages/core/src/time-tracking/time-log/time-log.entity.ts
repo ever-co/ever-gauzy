@@ -83,6 +83,7 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	isRunning?: boolean;
 
 	duration: number;
+	isEdited?: boolean;
 	/*
     |--------------------------------------------------------------------------
     | @ManyToOne 
@@ -211,5 +212,12 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
         const startedAt = moment(this.startedAt, 'YYYY-MM-DD HH:mm:ss');
         const stoppedAt = moment(this.stoppedAt || new Date(), 'YYYY-MM-DD HH:mm:ss');
         this.duration = stoppedAt.diff(startedAt, 'seconds');
+
+		/**
+		 * Check If, TimeLog is edited or not
+		 */
+		const createdAt = moment(this.createdAt, 'YYYY-MM-DD HH:mm:ss');
+		const updatedAt = moment(this.updatedAt, 'YYYY-MM-DD HH:mm:ss');
+		this.isEdited = (updatedAt.diff(createdAt, 'seconds') > 0);
     }
 }

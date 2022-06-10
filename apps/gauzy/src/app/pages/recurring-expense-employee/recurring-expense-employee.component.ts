@@ -107,6 +107,14 @@ export class RecurringExpensesEmployeeComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
+		this.route.queryParamMap
+			.pipe(
+				filter((params) => !!params && params.get('openAddDialog') === 'true'),
+				debounceTime(1000),
+				tap(() => this.addEmployeeRecurringExpense()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	/**
