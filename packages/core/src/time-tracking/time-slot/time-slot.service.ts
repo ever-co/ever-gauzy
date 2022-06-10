@@ -80,7 +80,7 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 					});
 				}
 
-				// //check organization and tenant for timelogs
+				// check organization and tenant for timelogs
 				if (request.organizationId) {
 					qb.andWhere(
 						`"${qb.alias}"."organizationId" = :organizationId`,
