@@ -12,35 +12,33 @@
     .table-inner-wrapper {
         align-items: flex-start;
     }
-}
-
-.employee-column {
-    width: 15%;
-    min-width: 115px;
-    max-width: 185px;
-}
-.project-column {
-    width: 20%;
-    min-width: 15%;
-}
-.to-do-column{
-    width: 15%;
-    min-width: 9%;
-}
-.small-column {
-    width: 10%;
-    min-width: 5%;
-}
-.action-column{
-    width: 5%;
-}
-.filters {
-    text-align: right;
-    margin-bottom: 15px;
-}
-
-.justify-end {
-    text-align: right;
+    .employee-column {
+        width: 15%;
+        min-width: 115px;
+        max-width: 185px;
+    }
+    .project-column {
+        width: 20%;
+        min-width: 15%;
+    }
+    .to-do-column {
+        width: 15%;
+        min-width: 9%;
+    }
+    .small-column {
+        width: 10%;
+        min-width: 5%;
+    }
+    .filters {
+        text-align: right;
+        margin-bottom: 15px;
+        .ng-select {
+            width: 10%;
+        }
+    }
+    .justify-end {
+        text-align: right;
+    }
 }
 
 @include respond(ipad) {
