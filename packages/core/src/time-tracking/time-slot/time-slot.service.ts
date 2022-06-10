@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { CommandBus } from '@nestjs/cqrs';
 import { Repository, SelectQueryBuilder } from 'typeorm';
 import { PermissionsEnum, IGetTimeSlotInput, ITimeSlot } from '@gauzy/contracts';
+import { isNotEmpty } from '@gauzy/common';
 import { TenantAwareCrudService } from './../../core/crud';
 import { moment } from '../../core/moment-extend';
 import { RequestContext } from '../../core/context';
@@ -73,16 +74,13 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 						startDate, endDate
 					});
 				}
-				if (employeeIds) {
-					qb.andWhere(
-						`"${qb.alias}"."employeeId" IN (:...employeeId)`,
-						{
-							employeeId: employeeIds
-						}
-					);
+				if (isNotEmpty(employeeIds)) {
+					qb.andWhere(`"${qb.alias}"."employeeId" IN (:...employeeIds)`, {
+						employeeIds
+					});
 				}
 
-				//check organization and tenant for timelogs
+				// check organization and tenant for timelogs
 				if (request.organizationId) {
 					qb.andWhere(
 						`"${qb.alias}"."organizationId" = :organizationId`,
