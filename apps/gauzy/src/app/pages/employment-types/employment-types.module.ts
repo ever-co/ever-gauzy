@@ -20,6 +20,7 @@ import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { TranslateModule } from '../../@shared/translate/translate.module';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
+import { PaginationModule } from '../../@shared/pagination/pagination.module';
 
 @NgModule({
 	imports: [
@@ -33,7 +34,6 @@ import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy
 		NbInputModule,
 		NbIconModule,
 		TagsColorInputModule,
-		NbActionsModule,
 		TableComponentsModule,
 		CardGridModule,
 		NbDialogModule,
@@ -42,7 +42,8 @@ import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy
 		NbDialogModule.forChild(),
 		TranslateModule,
 		HeaderTitleModule,
-		GauzyButtonActionModule
+		GauzyButtonActionModule,
+		PaginationModule
 	],
 	declarations: [EmploymentTypesComponent],
 	providers: [OrganizationEmploymentTypesService]

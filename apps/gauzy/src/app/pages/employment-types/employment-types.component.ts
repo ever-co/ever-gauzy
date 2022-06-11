@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, TemplateRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, TemplateRef, ViewChild } from '@angular/core';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import {
@@ -20,7 +20,9 @@ import { Subject, firstValueFrom, filter, debounceTime, tap } from 'rxjs';
 import { ToastrService } from '../../@core/services/toastr.service';
 import { ActivatedRoute } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
+import { IPaginationBase, PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
+import { distinctUntilChange } from '@gauzy/common-angular';
+
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -31,13 +33,13 @@ import { PaginationFilterBaseComponent } from '../../@shared/pagination/paginati
 export class EmploymentTypesComponent
 	extends PaginationFilterBaseComponent
 	implements OnInit, OnDestroy {
+	
+	@ViewChild('editableTemplate') public editableTemplateRef: TemplateRef<any>;
 	form: FormGroup;
-	showAddCard: Boolean;
 	selectedEmployee: IEmployee;
 	organization: IOrganization;
 	organizationEmploymentTypes: IOrganizationEmploymentType[];
 	tags: ITag[] = [];
-	showEditDiv: Boolean = true;
 	selectedOrgEmpType: IOrganizationEmploymentType;
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
@@ -46,9 +48,11 @@ export class EmploymentTypesComponent
 	smartTableSource = new LocalDataSource();
 	disabled: boolean = false;
 	selected = {
-		orgEmpType: null,
+		employmentType: null,
 		state: false
 	};
+	employmentTypeExist: boolean;
+
 	private _ngDestroy$ = new Subject<void>();
 
 	constructor(
@@ -65,16 +69,40 @@ export class EmploymentTypesComponent
 	}
 
 	ngOnInit(): void {
+		this.subject$
+			.pipe(
+				tap(() => this.loadEmployeeTypes()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.pagination$
+			.pipe(
+				distinctUntilChange(),
+				tap(() => this.subject$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.store.selectedOrganization$
+			.pipe(
+				filter((organization: IOrganization) => !!organization),
+				tap(
+					(organization: IOrganization) =>
+						(this.organization = organization)
+				),
+				tap(() => this.subject$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this.route.queryParamMap
 			.pipe(
 				filter((params) => !!params && params.get('openAddDialog') === 'true'),
 				debounceTime(1000),
-				tap(() => this.add()),
+				tap(() => this.openDialog(this.editableTemplateRef, false)),
 				untilDestroyed(this)
 			)
 			.subscribe();
 		this._initializeForm();
-		this.loadSmartTable();
+		this._loadSmartTableSettings();
 		this._applyTranslationOnSmartTable();
 		this.cancel();
 	}
@@ -84,30 +112,61 @@ export class EmploymentTypesComponent
 		this._ngDestroy$.complete();
 	}
 
+	private async loadEmployeeTypes() {
+		if (!this.organization) {
+			return;
+		}
+		const { id: organizationId } = this.organization;
+		const { tenantId } = this.store.user;
+		const { activePage, itemsPerPage } = this.getPagination();
+
+		const res = await this.organizationEmploymentTypesService.getAllWithPagination(
+			{
+				organizationId,
+				tenantId
+			},
+			['tags']
+		);
+		if (res) {
+			this.organizationEmploymentTypes = res.items;
+			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
+			this.smartTableSource.load(res.items);
+			if (
+				this.componentLayoutStyleEnum.CARDS_GRID ===
+				this.dataLayoutStyle
+			)
+				this._loadGridLayoutData();
+
+			if (this.organizationEmploymentTypes.length <= 0) {
+				this.employmentTypeExist = false;
+			} else {
+				this.employmentTypeExist = true;
+			}
+
+			this.emptyListInvoke();
+		}
+	}
+
 	private _initializeForm() {
 		this.form = this.fb.group({
 			name: ['', Validators.required]
-		});
-		this.store.selectedOrganization$
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((data) => {
-				this.organization = data;
-				if (this.organization) {
-					this.organizationEmploymentTypesService
-						.getAll(['tags'], {
-							organizationId: this.organization.id,
-							tenantId: this.organization.tenantId
-						})
-						.pipe(takeUntil(this._ngDestroy$))
-						.subscribe((types) => {
-							this.organizationEmploymentTypes = types.items;
-							this.smartTableSource.load(types.items);
-						});
-				}
-			});
+		});		
 	}
-	async loadSmartTable() {
+
+	private async _loadGridLayoutData() {
+		this.organizationEmploymentTypes = await this.smartTableSource.getElements();
+		this.setPagination({
+			...this.getPagination(),
+			totalItems: this.smartTableSource.count()
+		});
+	}
+
+	async _loadSmartTableSettings() {
+		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
+			pager: {
+				perPage: pagination ? pagination : 10
+			},
 			actions: false,
 			columns: {
 				tags: {
@@ -120,23 +179,27 @@ export class EmploymentTypesComponent
 		};
 	}
 
-	public async onKeyEnter($event) {
-		if ($event.code === 'Enter') {
-			this.addEmploymentType();
-		}
-	}
-
 	setView() {
 		this.viewComponentName = ComponentEnum.EMPLOYMENT_TYPE;
+		
 		this.store
 			.componentLayout$(this.viewComponentName)
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(
+				distinctUntilChange(),
+				tap(
+					(componentLayout) =>
+						(this.dataLayoutStyle = componentLayout)
+				),
+				filter(
+					(componentLayout) =>
+						componentLayout === ComponentLayoutStyleEnum.CARDS_GRID
+				),
+				tap(() => this.subject$.next(true)),
+				untilDestroyed(this)
+			)
 			.subscribe((componentLayout) => {
 				this.dataLayoutStyle = componentLayout;
 				this.selectedOrgEmpType = null;
-
-				//when layout selector change then hide edit showcard
-				this.showAddCard = false;
 			});
 	}
 
@@ -151,16 +214,16 @@ export class EmploymentTypesComponent
 			this.organizationEmploymentTypesService
 				.addEmploymentType(newEmploymentType)
 				.pipe(takeUntil(this._ngDestroy$))
-				.subscribe((data) => {
-					this.organizationEmploymentTypes.push(data);
+				.subscribe(() => {
+					this.subject$.next(true);
+					this.cancel();					
 				});
 			this.toastrService.success(
 				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EMPLOYMENT_TYPES.ADD_EMPLOYMENT_TYPE',
 				{
 					name: this.form.get('name').value
 				}
-			);
-			this.showAddCard = !this.showAddCard;
+			);			
 		} else {
 			this.toastrService.success(
 				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EMPLOYMENT_TYPES.INVALID_EMPLOYMENT_TYPE',
@@ -207,29 +270,18 @@ export class EmploymentTypesComponent
 			this.emptyListInvoke();
 		}
 	}
+
 	selectedTagsEvent(ev) {
 		this.tags = ev;
 	}
-	gridEdit(empType: IOrganizationEmploymentType) {
-		this.showAddCard = true;
-		this.tags = empType.tags;
-		this.selectedOrgEmpType = empType;
-		this.form.patchValue(empType);
-	}
-	showEditCard(orgEmpType: IOrganizationEmploymentType) {
-		this.showEditDiv = true;
-		this.selectedOrgEmpType = orgEmpType;
-		this.tags = orgEmpType.tags;
-	}
-	add() {
-		this.showAddCard = true;
-		this.form.reset();
-		this.tags = [];
-	}
+	
 	cancel() {
-		this.showEditDiv = false;
-		this.showAddCard = false;
 		this.selectedOrgEmpType = null;
+		this.selected = {
+			employmentType: null,
+			state: false
+		};
+		this.disabled = true;
 		this.form.reset();
 		this.tags = [];
 	}
@@ -249,13 +301,14 @@ export class EmploymentTypesComponent
 				name: name
 			}
 		);
+		this.subject$.next(true);
 		this.cancel();
 	}
 	_applyTranslationOnSmartTable() {
 		this.translateService.onLangChange
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(() => {
-				this.loadSmartTable();
+				this._loadSmartTableSettings();
 			});
 	}
 	/*
@@ -263,14 +316,19 @@ export class EmploymentTypesComponent
 	 */
 	private emptyListInvoke() {
 		if (this.organizationEmploymentTypes.length === 0) {
-			this.showAddCard = false;
-			this.selectedOrgEmpType = null;
+			this.cancel();
 		}
+	}
+
+	edit(employmentType: IOrganizationEmploymentType) {
+		this.selectedOrgEmpType = employmentType;		
+		this.tags = employmentType.tags;
+		this.form.patchValue(employmentType);	
 	}
 
 	openDialog(template: TemplateRef<any>, isEditTemplate: boolean) {
 		try {
-			isEditTemplate ? this.showEditCard(this.selectedOrgEmpType) : this.cancel();
+			isEditTemplate ? this.edit(this.selectedOrgEmpType) : this.cancel();
 			this.dialogService.open(template);
 		} catch (error) {
 			console.log('An error occurred on open dialog');
@@ -280,12 +338,12 @@ export class EmploymentTypesComponent
 	selectOrganizationEmploymentType(orgEmpType: any) {
 		if (orgEmpType.data) orgEmpType = orgEmpType.data;
 		const res =
-			this.selected.orgEmpType && orgEmpType.id === this.selected.orgEmpType.id
+			this.selected.employmentType && orgEmpType.id === this.selected.employmentType.id
 				? { state: !this.selected.state }
-				: { state: true };
+				: { state: true };				
 		this.disabled = !res.state;
 		this.selected.state = res.state;
-		this.selected.orgEmpType = orgEmpType;
-		this.selectedOrgEmpType = this.selected.orgEmpType;
+		this.selected.employmentType = orgEmpType;
+		this.selectedOrgEmpType = this.selected.employmentType;		
 	}
 }
