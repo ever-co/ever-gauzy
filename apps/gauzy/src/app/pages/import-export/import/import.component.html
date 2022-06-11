@@ -37,8 +37,9 @@
 			</div>
 		</div>
 		<div class="table-zone">
-			<div class="d-flex align-items-center justify-content-between">
-				<div class="">
+			<div class="d-flex align-items-start justify-content-between">
+				<div class="uploader-zone">
+					{{ uploader?.queue?.at(-1)?.file?.name }}
 					<button
 						class="button-import"
 						outline
@@ -61,48 +62,13 @@
 						(change)="onFileClick($event)"
 					/>
 				</div>
-				<div class="actions">
-					<button
-						nbButton
-						type="button"
-						status="success"
-						size="small"
-						class="action"
-						(click)="uploader.uploadAll()"
-						[disabled]="!uploader.getNotUploadedItems().length"
-					>
-						<span>{{
-							'MENU.IMPORT_EXPORT.IMPORT' | translate
-						}}</span>
-					</button>
-					<button
-						nbButton
-						type="button"
-						status="warning"
-						class="action"
-						size="small"
-						(click)="uploader.cancelAll()"
-						[disabled]="!uploader.isUploading"
-					>
-						<span>{{
-							'MENU.IMPORT_EXPORT.CANCEL' | translate
-						}}</span>
-					</button>
-					<button
-						nbButton
-						type="button"
-						status="basic"
-						class="action"
-						size="small"
-						(click)="uploader.clearQueue()"
-						[disabled]="!uploader.queue.length"
-						[nbTooltip]="'MENU.IMPORT_EXPORT.REMOVE' | translate"
-					>
-						<nb-icon
-							status="danger"
-							icon="trash-2-outline"
-						></nb-icon>
-					</button>
+				<div *ngIf="uploader?.queue?.length > 0">
+					<ngx-gauzy-button-action
+						[hasLayoutSelector]="false"
+						[isDisable]="!selectedItem?.isSelected"
+						[buttonTemplate]="actionButtons"
+						[buttonTemplateVisible]="visibleButton"
+					></ngx-gauzy-button-action>
 				</div>
 			</div>
 			<div class="queue-progress">
@@ -151,7 +117,7 @@
 						(click)="selectItem(item)"
 					>
 						<div class="col-3">
-							<strong>{{ item?.file?.name }}</strong>
+							{{ item?.file?.name }}
 						</div>
 						<div
 							class="col-1"
@@ -161,17 +127,20 @@
 							{{ item?.file?.size | fileSize }}
 						</div>
 						<div class="col-3" *ngIf="uploader.options.isHTML5">
-							<div
-								class="progress"
-								style="margin-bottom: 0; height: 10px"
-							>
+							<div class="d-flex align-items-center">
 								<div
-									class="progress-bar"
-									role="progressbar"
-									[ngStyle]="{
-										width: item.progress + '%'
-									}"
-								></div>
+									class="progress w-100"
+									style="margin-bottom: 0; height: 10px"
+								>
+									<div
+										class="progress-bar"
+										role="progressbar"
+										[ngStyle]="{
+											width: item.progress + '%'
+										}"
+									></div>
+								</div>
+								{{ item?.progress }}%
 							</div>
 						</div>
 						<div class="col-2">
@@ -270,3 +239,80 @@
 		</div>
 	</nb-card-body>
 </nb-card>
+<ng-template #visibleButton>
+	<ng-container *ngIf="!selectedItem?.isSelected">
+		<button
+			nbButton
+			type="button"
+			status="success"
+			size="small"
+			class="action"
+			(click)="uploader.uploadAll()"
+			[disabled]="!uploader.getNotUploadedItems().length"
+		>
+			<span>{{ 'MENU.IMPORT_EXPORT.IMPORT_ALL' | translate }}</span>
+		</button>
+		<button
+			nbButton
+			type="button"
+			status="warning"
+			class="action"
+			size="small"
+			(click)="uploader.cancelAll()"
+			[disabled]="!uploader.isUploading"
+		>
+			<span>{{ 'MENU.IMPORT_EXPORT.CANCEL_ALL' | translate }}</span>
+		</button>
+		<button
+			nbButton
+			type="button"
+			status="basic"
+			class="action"
+			size="small"
+			(click)="uploader.clearQueue()"
+			[disabled]="!uploader.queue.length"
+			[nbTooltip]="'MENU.IMPORT_EXPORT.REMOVE_ALL' | translate"
+		>
+			<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
+		</button>
+	</ng-container>
+</ng-template>
+
+<ng-template #actionButtons>
+	<div class="actions">
+		<button
+			nbButton
+			type="button"
+			status="success"
+			size="small"
+			class="action"
+			(click)="uploadItem()"
+			[disabled]="!uploader.getNotUploadedItems().length"
+		>
+			<span>{{ 'MENU.IMPORT_EXPORT.IMPORT' | translate }}</span>
+		</button>
+		<button
+			nbButton
+			type="button"
+			status="warning"
+			class="action"
+			size="small"
+			(click)="cancelItem()"
+			[disabled]="!uploader.isUploading"
+		>
+			<span>{{ 'MENU.IMPORT_EXPORT.CANCEL' | translate }}</span>
+		</button>
+		<button
+			nbButton
+			type="button"
+			status="basic"
+			class="action"
+			size="small"
+			(click)="removeItemQueue()"
+			[disabled]="!uploader.queue.length"
+			[nbTooltip]="'MENU.IMPORT_EXPORT.REMOVE' | translate"
+		>
+			<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
+		</button>
+	</div>
+</ng-template>

@@ -99,6 +99,12 @@
       text-align: left;
     }
   }
+
+  ngx-gauzy-button-action {
+    .actions-container {
+      padding: 0 !important;
+    }
+  }
 }
 
 .custom-header {
@@ -115,12 +121,25 @@
   padding-left: 6px;
 }
 
+.uploader-zone {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 19px;
+  letter-spacing: 0em;
+  text-align: left;
+}
+
 .custom-body {
   background: var(--gauzy-card-4);
   border-radius: nb-theme(border-radius);
   margin-top: 6px;
   padding-left: 6px;
   overflow: auto;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 17px;
+  letter-spacing: 0em;
+  text-align: left;
 
   &.queue {
     max-height: calc((100vh - 48rem) / 2);
@@ -138,7 +157,8 @@
     border: none;
   }
 
-  .item, a {
+  .item,
+  a {
     cursor: pointer;
   }
 

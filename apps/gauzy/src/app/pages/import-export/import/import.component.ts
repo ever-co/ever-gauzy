@@ -1,10 +1,7 @@
 import { AfterViewInit, Component, OnInit } from '@angular/core';
 import { FileItem, FileUploader } from 'ng2-file-upload';
 import { saveAs } from 'file-saver';
-import {
-	NbToastrService,
-	NbGlobalPhysicalPosition
-} from '@nebular/theme';
+import { NbToastrService, NbGlobalPhysicalPosition } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -46,7 +43,7 @@ export class ImportComponent
 	selectedItem = {
 		isSelected: false,
 		data: null
-	}
+	};
 
 	constructor(
 		private readonly route: ActivatedRoute,
@@ -149,17 +146,56 @@ export class ImportComponent
 
 	getImportHistory() {
 		this.importService.getHistory().pipe(untilDestroyed(this)).subscribe();
-		console.log(this.uploader.queue)
+		console.log(this.uploader.queue);
 	}
 
-	public download(item: any){
-		saveAs(item.some, 'archive.zip')
+	public download(item: any) {
+		try {
+			saveAs(item.some, 'archive.zip');
+		} catch (error) {
+			this.toastrService.danger(error, {
+				position: NbGlobalPhysicalPosition.TOP_RIGHT
+			});
+		}
 	}
 
-	public selectItem(item: FileItem){
+	public selectItem(item: FileItem) {
 		this.selectedItem =
 			this.selectedItem.data && item === this.selectedItem.data
-				? { isSelected: !this.selectedItem.isSelected, data: item }
+				? { isSelected: !this.selectedItem.isSelected, data: null }
 				: { isSelected: true, data: item };
+	}
+
+	public removeItemQueue() {
+		try {
+			this.uploader.removeFromQueue(this.selectedItem.data);
+			this.subject$.next(true);
+		} catch (error) {
+			this.toastrService.danger(error, {
+				position: NbGlobalPhysicalPosition.TOP_RIGHT
+			});
+		}
+	}
+
+	public cancelItem() {
+		try {
+			this.uploader.cancelItem(this.selectedItem.data);
+			this.subject$.next(true);
+		} catch (error) {
+			this.toastrService.danger(error, {
+				position: NbGlobalPhysicalPosition.TOP_RIGHT
+			});
+		}
+	}
+
+	public uploadItem() {
+		try {
+			this.uploader.uploadItem(this.selectedItem.data);
+			this.subject$.next(true);
+		} catch (error) {
+			this.toastrService.danger(error, {
+				position: NbGlobalPhysicalPosition.TOP_RIGHT
+			});
+		}
 	}
 }
