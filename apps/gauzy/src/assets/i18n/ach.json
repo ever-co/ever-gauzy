@@ -3826,6 +3826,26 @@
 			"SUB_TITLE": "crwdns10853:0crwdne10853:0"
 		}
 	},
+	"FORGOT_PASSWORD_PAGE": {
+		"TITLE": "crwdns11169:0crwdne11169:0",
+		"SUB_TITLE": "crwdns11171:0crwdne11171:0",
+		"ALERT_TITLE": "crwdns11173:0crwdne11173:0",
+		"ALERT_SUCCESS_TITLE": "crwdns11175:0crwdne11175:0",
+		"REQUEST_PASSWORD_TEXT": "crwdns11177:0crwdne11177:0",
+		"BACK_TO_LOGIN": "crwdns11179:0crwdne11179:0",
+		"FAQ_TITLE": "crwdns11181:0crwdne11181:0",
+		"FAQ_LEARN_MORE": "crwdns11183:0crwdne11183:0",
+		"LABELS": {
+			"EMAIL": "crwdns11185:0crwdne11185:0"
+		},
+		"PLACEHOLDERS": {
+			"EMAIL": "crwdns11187:0crwdne11187:0"
+		},
+		"VALIDATION": {
+			"EMAIL_REQUIRED": "crwdns11189:0crwdne11189:0",
+			"EMAIL_REAL_REQUIRED": "crwdns11191:0crwdne11191:0"
+		}
+	},
 	"PAGINATION": {
 		"ITEMS": "crwdns11008:0crwdne11008:0"
 	},

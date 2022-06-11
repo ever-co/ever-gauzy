@@ -175,12 +175,35 @@ export class ProductTypesComponent
 			.subscribe();
 	}
 
-	async onAddEdit(selectedItem?: IProductTypeTranslated) {
+	async onAdd() {
+		if (!this.organization) {
+			return;
+		}
+		try {
+			const dialog = this.dialogService.open(ProductTypeMutationComponent);
+			const productType = await firstValueFrom(dialog.onClose);
+
+			if (productType) {
+				let translation = productType.translations[0];
+				this.toastrService.success('INVENTORY_PAGE.PRODUCT_TYPE_SAVED', {
+					name: translation.name
+				});
+				this.types$.next(true);
+			}
+		} catch (error) {
+			console.log('Error while creating product types', error);
+		}
+	}
+
+	async onEdit(selectedItem?: IProductTypeTranslated) {
 		if (selectedItem) {
 			this.selectProductType({
 				isSelected: true,
 				data: selectedItem
 			});
+		}
+		if (!this.organization) {
+			return;
 		}
 
 		try {
@@ -196,14 +219,14 @@ export class ProductTypesComponent
 
 			const productType = await firstValueFrom(dialog.onClose);
 			if (productType) {
-				let productTranslations = productType.translations[0];
+				let translation = productType.translations[0];
 				this.toastrService.success('INVENTORY_PAGE.PRODUCT_TYPE_SAVED', {
-					name: productTranslations.name
+					name: translation.name
 				});
 				this.types$.next(true);
 			}
 		} catch (error) {
-			this.types$.next(true);
+			console.log('Error while updating product types', error);
 		}
 	}
 

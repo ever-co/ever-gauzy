@@ -1,7 +1,7 @@
 <nb-card
 	[nbSpinner]="loading"
-	nbSpinnerStatus="primary"
-	nbSpinnerSize="large"
+	[nbSpinnerStatus]="'primary'"
+	[nbSpinnerSize]="'large'"
 	class="card-scroll"
 >
 	<nb-card-header class="card-header-title">
@@ -23,53 +23,54 @@
 		<div class="mb-3">
 			<ng-template ngxPermissionsOnly="ORG_PRODUCT_CATEGORIES_EDIT">
 				<button
-					(click)="onAddEdit()"
+					(click)="onAdd()"
 					nbButton
 					status="success"
 					class="mr-2"
 				>
-					<nb-icon class="mr-1" icon="plus-outline"></nb-icon
-					>{{ 'BUTTONS.ADD' | translate }}
+					<nb-icon class="mr-1" icon="plus-outline"></nb-icon>
+					{{ 'BUTTONS.ADD' | translate }}
 				</button>
 				<ng-container *ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE">
 					<ng-container *ngTemplateOutlet="actionButtons"></ng-container>
 				</ng-container>
 			</ng-template>
 		</div>
-		<ng-template
-			[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
-			[ngIfElse]="gridLayout"
-		>
-			<div class="table-scroll-container">
-				<ng2-smart-table
-					[settings]="settingsSmartTable"
-					(userRowSelect)="selectProductCategory($event)"
-					[source]="smartTableSource"
-					style="cursor: pointer"
-					#productCategoriesTable
-				>
-				</ng2-smart-table>
-			</div>
-		</ng-template>
-		<ng-template #gridLayout>
-			<div class="grid-scroll-container">
-				<ga-card-grid
-					[settings]="settingsSmartTable"
-					[source]="productCategories"
-					[buttonTemplate]="actionButtons"
-				></ga-card-grid>
-			</div>
-			<div class="pagination-container">
-				<ng-container *ngIf="pagination.totalItems > pagination.itemsPerPage">
-					<ga-pagination 
-						(selectedPage)="onPageChange($event)"
-						[doEmit]="false"
-						[totalItems]="pagination?.totalItems" 
-						[itemsPerPage]="pagination?.itemsPerPage" 
-						[activePage]="pagination?.activePage">
-					</ga-pagination>
-				</ng-container>
-			</div>
+		<ng-template ngxPermissionsOnly="ORG_PRODUCT_CATEGORIES_VIEW">
+			<ng-template
+				[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
+				[ngIfElse]="gridLayout"
+			>
+				<div class="table-scroll-container">
+					<ng2-smart-table
+						[settings]="settingsSmartTable"
+						(userRowSelect)="selectProductCategory($event)"
+						[source]="smartTableSource"
+						style="cursor: pointer"
+						#productCategoriesTable
+					></ng2-smart-table>
+				</div>
+			</ng-template>
+			<ng-template #gridLayout>
+				<div class="grid-scroll-container">
+					<ga-card-grid
+						[settings]="settingsSmartTable"
+						[source]="productCategories"
+						[buttonTemplate]="actionButtons"
+					></ga-card-grid>
+				</div>
+				<div class="pagination-container">
+					<ng-container *ngIf="pagination.totalItems > pagination.itemsPerPage">
+						<ga-pagination 
+							(selectedPage)="onPageChange($event)"
+							[doEmit]="false"
+							[totalItems]="pagination?.totalItems" 
+							[itemsPerPage]="pagination?.itemsPerPage" 
+							[activePage]="pagination?.activePage">
+						</ga-pagination>
+					</ng-container>
+				</div>
+			</ng-template>
 		</ng-template>
 	</nb-card-body>
 </nb-card>
@@ -80,7 +81,7 @@
 >
 	<ng-template ngxPermissionsOnly="ORG_PRODUCT_CATEGORIES_EDIT">
 		<button
-			(click)="onAddEdit(selectedItem)"
+			(click)="onEdit(selectedItem)"
 			nbButton
 			status="info"
 			class="mr-2"

@@ -374,9 +374,11 @@ export class ContactMutationComponent extends TranslationBaseComponent
 						.map((id) => this.employees.find((e) => e.id === id))
 						.filter((e) => !!e);
 
-		let { projects = [] } = this.contMainForm.getRawValue();		
+		let { projects = [] } = this.contMainForm.getRawValue();
 		projects.map((project: IOrganizationProject) => {
-			project.members.push(...members);
+			if ('members' in project) {
+				project.members.push(...members);
+			}
 			return project;
 		});
 
