@@ -169,6 +169,7 @@ export class ImportComponent
 	public removeItemQueue() {
 		try {
 			this.uploader.removeFromQueue(this.selectedItem.data);
+			this.clear();
 			this.subject$.next(true);
 		} catch (error) {
 			this.toastrService.danger(error, {
@@ -197,5 +198,12 @@ export class ImportComponent
 				position: NbGlobalPhysicalPosition.TOP_RIGHT
 			});
 		}
+	}
+
+	public clear() {
+		this.selectedItem = {
+			isSelected: false,
+			data: null
+		};
 	}
 }
