@@ -61,11 +61,12 @@
 						(change)="onFileClick($event)"
 					/>
 				</div>
-				<div class="d-flex">
+				<div class="actions">
 					<button
 						nbButton
 						type="button"
 						status="success"
+						size="small"
 						class="action"
 						(click)="uploader.uploadAll()"
 						[disabled]="!uploader.getNotUploadedItems().length"
@@ -75,11 +76,11 @@
 						}}</span>
 					</button>
 					<button
-						style="margin-left: 1%"
 						nbButton
 						type="button"
 						status="warning"
 						class="action"
+						size="small"
 						(click)="uploader.cancelAll()"
 						[disabled]="!uploader.isUploading"
 					>
@@ -88,17 +89,19 @@
 						}}</span>
 					</button>
 					<button
-						style="margin-left: 1%"
 						nbButton
 						type="button"
 						status="basic"
 						class="action"
+						size="small"
 						(click)="uploader.clearQueue()"
 						[disabled]="!uploader.queue.length"
+						[nbTooltip]="'MENU.IMPORT_EXPORT.REMOVE' | translate"
 					>
-						<span>{{
-							'MENU.IMPORT_EXPORT.REMOVE' | translate
-						}}</span>
+						<nb-icon
+							status="danger"
+							icon="trash-2-outline"
+						></nb-icon>
 					</button>
 				</div>
 			</div>
@@ -136,7 +139,7 @@
 					</div>
 				</div>
 
-				<div class="custom-body">
+				<div class="custom-body queue">
 					<div
 						[class]="
 							uploader.queue.at(-1) === item
@@ -144,6 +147,8 @@
 								: 'row border-bottom m-0 py-3 align-items-center'
 						"
 						*ngFor="let item of uploader.queue"
+						[ngClass]="{ selected: selectedItem?.data === item }"
+						(click)="selectItem(item)"
 					>
 						<div class="col-3">
 							<strong>{{ item?.file?.name }}</strong>
@@ -156,7 +161,10 @@
 							{{ item?.file?.size | fileSize }}
 						</div>
 						<div class="col-3" *ngIf="uploader.options.isHTML5">
-							<div class="progress" style="margin-bottom: 0; height: 10px">
+							<div
+								class="progress"
+								style="margin-bottom: 0; height: 10px"
+							>
 								<div
 									class="progress-bar"
 									role="progressbar"
@@ -167,60 +175,33 @@
 							</div>
 						</div>
 						<div class="col-2">
-							<span *ngIf="item.isUploaded"
-								><nb-icon
-									style="stroke: #00d68f"
-									icon="checkmark-circle-outline"
-								></nb-icon
-							></span>
-							<span *ngIf="item.isCancel"
-								><nb-icon
-									style="stroke: #ffaa00"
-									icon="close-circle-outline"
-								></nb-icon
-							></span>
-							<span *ngIf="item.isError"
-								><nb-icon
-									style="stroke: #ff3d71"
-									icon="alert-circle-outline"
-								></nb-icon
-							></span>
+							<span *ngIf="item.isUploaded && !item.isError">
+								<nb-badge
+									status="success"
+									[text]="importStatus.SUCCESS"
+								></nb-badge>
+							</span>
+							<span *ngIf="item.isCancel">
+								<nb-badge
+									status="warning"
+									[text]="importStatus.CANCELLED"
+								></nb-badge>
+							</span>
+							<span *ngIf="item.isUploading">
+								<nb-badge
+									status="info"
+									[text]="importStatus.IN_PROGRESS"
+								></nb-badge>
+							</span>
+							<span *ngIf="item.isError">
+								<nb-badge
+									status="danger"
+									[text]="importStatus.FAILED"
+								></nb-badge>
+							</span>
 						</div>
 						<div class="col-3" nowrap>
-							<button nbButton status="basic"  >Download</button>
-							<!-- <button
-								type="button"
-								class="btn btn-success btn-xs mr-1"
-								(click)="uploader.uploadAll()"
-								[disabled]="
-									item.isReady ||
-									item.isUploading ||
-									item.isSuccess
-								"
-							>
-								<span>{{
-									'MENU.IMPORT_EXPORT.IMPORT' | translate
-								}}</span>
-							</button>
-							<button
-								type="button"
-								class="btn btn-warning btn-xs mr-1"
-								(click)="item.cancel()"
-								[disabled]="!item.isUploading"
-							>
-								<span>{{
-									'MENU.IMPORT_EXPORT.CANCEL' | translate
-								}}</span>
-							</button>
-							<button
-								type="button"
-								class="btn btn-danger btn-xs mr-1"
-								(click)="uploader.clearQueue()"
-							>
-								<span>{{
-									'MENU.IMPORT_EXPORT.REMOVE' | translate
-								}}</span>
-							</button> -->
+							<a (click)="download(item)">Download</a>
 						</div>
 					</div>
 				</div>
@@ -269,22 +250,20 @@
 							history.status === importHistoryStatusEnum.SUCCESS
 						"
 					>
-						<nb-icon
+						<nb-badge
+							[text]="importHistoryStatusEnum.SUCCESS"
 							status="success"
-							icon="checkmark-circle-outline"
-						></nb-icon>
-						{{ importHistoryStatusEnum.SUCCESS }}
+						></nb-badge>
 					</span>
 					<span
 						*ngIf="
 							history.status === importHistoryStatusEnum.FAILED
 						"
 					>
-						<nb-icon
-							status="danger"
-							icon="alert-circle-outline"
-						></nb-icon>
-						{{ importHistoryStatusEnum.FAILED }}
+						<nb-badge
+							[text]="importHistoryStatusEnum.FAILED"
+							status="success"
+						></nb-badge>
 					</span>
 				</div>
 			</div>

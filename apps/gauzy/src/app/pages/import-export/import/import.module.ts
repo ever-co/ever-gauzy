@@ -6,7 +6,9 @@ import {
 	NbInputModule,
 	NbIconModule,
 	NbRadioModule,
-	NbToastrModule
+	NbToastrModule,
+	NbBadgeModule,
+	NbTooltipModule
 } from '@nebular/theme';
 import { FormsModule } from '@angular/forms';
 import { NgxPermissionsModule } from 'ngx-permissions';
@@ -35,7 +37,9 @@ import { SharedModule } from '../../../@shared/shared.module';
 		NbToastrModule.forRoot(),
 		TranslateModule,
 		NgxPermissionsModule.forChild(),
-		SharedModule
+		SharedModule,
+		NbBadgeModule,
+		NbTooltipModule
 	],
 	declarations: [ImportComponent],
 	exports: [ImportComponent],

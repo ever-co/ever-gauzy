@@ -1,11 +1,20 @@
 import { AfterViewInit, Component, OnInit } from '@angular/core';
-import { FileUploader } from 'ng2-file-upload';
-import { NbToastrService, NbGlobalPhysicalPosition } from '@nebular/theme';
+import { FileItem, FileUploader } from 'ng2-file-upload';
+import { saveAs } from 'file-saver';
+import {
+	NbToastrService,
+	NbGlobalPhysicalPosition
+} from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ActivatedRoute } from '@angular/router';
-import { IImportHistory, ImportTypeEnum, ImportHistoryStatusEnum } from '@gauzy/contracts';
+import {
+	IImportHistory,
+	ImportTypeEnum,
+	ImportHistoryStatusEnum,
+	ImportStatusEnum
+} from '@gauzy/contracts';
 import { Subject } from 'rxjs';
 import { Observable } from 'rxjs/internal/Observable';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
@@ -20,8 +29,8 @@ import { ImportService, Store } from '../../../@core/services';
 })
 export class ImportComponent
 	extends TranslationBaseComponent
-	implements AfterViewInit, OnInit {
-
+	implements AfterViewInit, OnInit
+{
 	history$: Observable<IImportHistory[]> = this.importService.history$;
 
 	uploader: FileUploader;
@@ -30,16 +39,21 @@ export class ImportComponent
 	importDT: Date = new Date();
 	importTypeEnum = ImportTypeEnum;
 	importType = ImportTypeEnum.MERGE;
+	importStatus = ImportStatusEnum;
 	subject$: Subject<any> = new Subject();
 	loading: boolean;
 	importHistoryStatusEnum = ImportHistoryStatusEnum;
-	
+	selectedItem = {
+		isSelected: false,
+		data: null
+	}
+
 	constructor(
 		private readonly route: ActivatedRoute,
 		private readonly toastrService: NbToastrService,
 		private readonly store: Store,
 		readonly translateService: TranslateService,
-		private readonly importService: ImportService,
+		private readonly importService: ImportService
 	) {
 		super(translateService);
 	}
@@ -55,7 +69,7 @@ export class ImportComponent
 			.subscribe();
 		this.subject$
 			.pipe(
-				tap(() => this.loading = true),
+				tap(() => (this.loading = true)),
 				tap(() => this.getImportHistory()),
 				untilDestroyed(this)
 			)
@@ -66,7 +80,12 @@ export class ImportComponent
 		this.route.queryParamMap
 			.pipe(
 				filter((params) => !!params && !!params.get('importType')),
-				tap((params) => this.importType = params.get('importType') as ImportTypeEnum),
+				tap(
+					(params) =>
+						(this.importType = params.get(
+							'importType'
+						) as ImportTypeEnum)
+				),
 				tap(() => this.initUploader()),
 				untilDestroyed(this)
 			)
@@ -80,10 +99,12 @@ export class ImportComponent
 			itemAlias: 'file',
 			authTokenHeader: 'Authorization',
 			authToken: `Bearer ${this.store.token}`,
-			headers: [{ 
-				name: "Tenant-Id", 
-				value: `${this.store.user.tenantId}` 
-			}]
+			headers: [
+				{
+					name: 'Tenant-Id',
+					value: `${this.store.user.tenantId}`
+				}
+			]
 		});
 		this.uploader.onBuildItemForm = (item, form) => {
 			form.append('importType', this.importType);
@@ -120,16 +141,25 @@ export class ImportComponent
 
 	alert() {
 		this.toastrService.danger(
-			this.getTranslation('MENU.IMPORT_EXPORT.CORRECT_FILE_NAME'), 
+			this.getTranslation('MENU.IMPORT_EXPORT.CORRECT_FILE_NAME'),
 			this.getTranslation('MENU.IMPORT_EXPORT.WRONG_FILE_NAME'),
 			{ position: NbGlobalPhysicalPosition.TOP_RIGHT }
 		);
 	}
 
 	getImportHistory() {
-		this.importService.getHistory()
-			.pipe(
-				untilDestroyed(this)
-			).subscribe();
+		this.importService.getHistory().pipe(untilDestroyed(this)).subscribe();
+		console.log(this.uploader.queue)
+	}
+
+	public download(item: any){
+		saveAs(item.some, 'archive.zip')
+	}
+
+	public selectItem(item: FileItem){
+		this.selectedItem =
+			this.selectedItem.data && item === this.selectedItem.data
+				? { isSelected: !this.selectedItem.isSelected, data: item }
+				: { isSelected: true, data: item };
 	}
 }

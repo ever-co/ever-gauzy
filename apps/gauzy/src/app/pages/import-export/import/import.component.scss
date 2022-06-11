@@ -112,16 +112,23 @@
   border-radius: var(--border-radius);
   padding: 3px;
   height: 42px;
-  padding-left: 12px;
+  padding-left: 6px;
 }
 
 .custom-body {
   background: var(--gauzy-card-4);
   border-radius: nb-theme(border-radius);
   margin-top: 6px;
-  padding-left: 12px;
+  padding-left: 6px;
   overflow: auto;
-  max-height: calc((100vh - 30rem) / 3);
+
+  &.queue {
+    max-height: calc((100vh - 48rem) / 2);
+  }
+
+  &.history {
+    max-height: calc((100vh - 34rem) / 2);
+  }
 
   .border-bottom {
     border-bottom: 1px solid rgba(126, 126, 143, 0.1) !important;
@@ -131,7 +138,7 @@
     border: none;
   }
 
-  .item {
+  .item, a {
     cursor: pointer;
   }
 
@@ -144,4 +151,16 @@
       border-bottom: none;
     }
   }
+}
+
+nb-badge {
+  position: relative;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 15px;
+  letter-spacing: 0em;
+  text-align: left;
+  padding: 4px 8px;
+
 }
