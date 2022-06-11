@@ -40,3 +40,10 @@ export enum ImportHistoryStatusEnum {
 	FAILED = 'Failed',
 	CANCELLED = 'Cancelled'
 }
+
+export enum ImportStatusEnum {
+    IN_PROGRESS = "In Progress",
+    SUCCESS = "Success",
+    FAILED = "Failed",
+    CANCELLED = "Cancelled"
+}
