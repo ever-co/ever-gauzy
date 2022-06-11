@@ -64,9 +64,12 @@
 								<div class="responsive-table-row day-column" *ngFor="let date of weekDays">
 									{{ date | dateFormat }}
 								</div>
+								<div class="responsive-table-row day-column">
+									Weekly Total
+								</div>
 							</div>
 						</div>
-						<div class="table-row" *ngFor="let day of weekLogs">
+						<div class="table-row" *ngFor="let log of weekLogs">
 							<div class="table-inner-wrapper">
 								<div class="responsive-table-row employee-column">
 									<div class="responsive-table-header">{{ 'REPORT_PAGE.EMPLOYEE' | translate }}</div>
@@ -74,9 +77,9 @@
 										<div class="avatar-wrapper">
 											<ngx-avatar
 												class="report-table"
-												[src]="day?.employee?.user?.imageUrl"
-												[name]="day?.employee?.user?.name"
-												[id]="day?.employee?.id">
+												[src]="log?.employee?.user?.imageUrl"
+												[name]="log?.employee?.user?.name"
+												[id]="log?.employee?.id">
 											</ngx-avatar>
 											<ng-template #noProjects>
 												<span>{{
@@ -88,10 +91,18 @@
 								<div class="responsive-table-row day-column" *ngFor="let date of weekDays">
 									<div class="responsive-table-header">{{ date | date:'E d MM, y' }}</div>
 									<div class="responsive-table-content mobile-padding">
-										<span *ngIf="day.dates[date]; else noLogsCol">
-											{{ day.dates[date]?.sum | durationFormat }}
+										<span *ngIf="log.dates[date]; else noLogsCol">
+											{{ log.dates[date]?.sum | durationFormat }}
 										</span>
 										<ng-template #noLogsCol> &#8212; </ng-template>
+									</div>
+								</div>
+								<div class="responsive-table-row day-column">
+									<div class="responsive-table-header">Weekly Total</div>
+									<div class="responsive-table-content mobile-padding">
+										<span>
+											{{ getWeeklyTotal(log)| durationFormat }}
+										</span>
 									</div>
 								</div>
 							</div>

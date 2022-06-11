@@ -166,7 +166,7 @@ export class WeeklyTimeReportsComponent extends BaseSelectorFilterComponent
 				borderWidth: 1,
 				pointRadius: 2,
 				pointHoverRadius: 7,
-				pointHoverBorderWidth: 6,
+				pointHoverBorderWidth: 6
 			});
 		});
 
@@ -174,5 +174,11 @@ export class WeeklyTimeReportsComponent extends BaseSelectorFilterComponent
 			labels: employees,
 			datasets: datasets
 		};
+	}
+
+	public getWeeklyTotal(log: ReportDayData) {
+		return pluck(log.dates, 'sum')
+			.filter((date) => date)
+			.reduce((partialSum, a) => partialSum + a, 0);
 	}
 }
