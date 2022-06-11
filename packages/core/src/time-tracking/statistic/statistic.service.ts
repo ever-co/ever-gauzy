@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In, Brackets, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
+import { Repository, Brackets, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import { reduce, pluck, pick, mapObject, groupBy, chain } from 'underscore';
 import * as moment from 'moment';
 import {
@@ -88,15 +88,17 @@ export class StatisticService {
 		 */
 		if (
 			(user.employeeId && request.onlyMe) ||
-			!RequestContext.hasPermission(
-				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+			(
+				!RequestContext.hasPermission(
+					PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+				) 
+				&& user.employeeId
 			)
 		) {
 			employeeIds = [user.employeeId];
 		} else {
 			employeeIds = await this.getEmployeesIds(
 				organizationId,
-				tenantId,
 				employeeIds
 			);
 		}
@@ -239,86 +241,89 @@ export class StatisticService {
 			overall: 0,
 			duration: 0
 		};
-		if (isNotEmpty(employeeIds)) {
-			const query = this.timeSlotRepository.createQueryBuilder();
-			const weekTimeStatistics = await query
-				.innerJoin(`${query.alias}.timeLogs`, 'timeLogs')
-				.select(
-					`${
-						this.configService.dbConnectionOptions.type === 'sqlite'
-							? `COALESCE(ROUND(SUM((julianday(COALESCE("timeLogs"."stoppedAt", datetime('now'))) - julianday("timeLogs"."startedAt")) * 86400) / COUNT("${query.alias}"."id")), 0)`
-							: `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("timeLogs"."stoppedAt", NOW()) - "timeLogs"."startedAt"))) / COUNT("${query.alias}"."id")), 0)`
-					}`,
-					`week_duration`
-				)
-				.addSelect(`COALESCE(SUM("${query.alias}"."overall"), 0)`, `overall`)
-				.addSelect(`COALESCE(SUM("${query.alias}"."duration"), 0)`, `duration`)
-				.addSelect(`COUNT("${query.alias}"."id")`, `time_slot_count`)
-				.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId })
-				.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId })
-				.andWhere(
-					new Brackets((qb: WhereExpressionBuilder) => {
-						qb.andWhere(`"timeLogs"."startedAt" BETWEEN :startDate AND :endDate`, {
-							startDate: start,
-							endDate: end
-						});
-						/**
-						 * If Employee Selected
-						 */
-						qb.andWhere(`"${query.alias}"."employeeId" IN (:...employeeIds)`, {
+		const weekQuery = this.timeSlotRepository.createQueryBuilder();
+		const weekTimeStatistics = await weekQuery
+			.innerJoin(`${weekQuery.alias}.timeLogs`, 'timeLogs')
+			.select(
+				`${
+					this.configService.dbConnectionOptions.type === 'sqlite'
+						? `COALESCE(ROUND(SUM((julianday(COALESCE("timeLogs"."stoppedAt", datetime('now'))) - julianday("timeLogs"."startedAt")) * 86400) / COUNT("${weekQuery.alias}"."id")), 0)`
+						: `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("timeLogs"."stoppedAt", NOW()) - "timeLogs"."startedAt"))) / COUNT("${weekQuery.alias}"."id")), 0)`
+				}`,
+				`week_duration`
+			)
+			.addSelect(`COALESCE(SUM("${weekQuery.alias}"."overall"), 0)`, `overall`)
+			.addSelect(`COALESCE(SUM("${weekQuery.alias}"."duration"), 0)`, `duration`)
+			.addSelect(`COUNT("${weekQuery.alias}"."id")`, `time_slot_count`)
+			.andWhere(`"${weekQuery.alias}"."tenantId" = :tenantId`, { tenantId })
+			.andWhere(`"${weekQuery.alias}"."organizationId" = :organizationId`, { organizationId })
+			.andWhere(
+				new Brackets((qb: WhereExpressionBuilder) => {
+					qb.andWhere(`"timeLogs"."startedAt" BETWEEN :startDate AND :endDate`, {
+						startDate: start,
+						endDate: end
+					});
+					/**
+					 * If Employee Selected
+					 */
+					if (isNotEmpty(employeeIds)) {
+						qb.andWhere(`"${weekQuery.alias}"."employeeId" IN (:...employeeIds)`, {
 							employeeIds
 						});
+						qb.andWhere(`"timeLogs"."employeeId" IN (:...employeeIds)`, {
+							employeeIds
+						});
+					}
+					/**
+					 * If Project Selected
+					 */
+					if (isNotEmpty(projectIds)) {
+						qb.andWhere(`"timeLogs"."projectId" IN (:...projectIds)`, {
+							projectIds
+						});
+					}
+					if (activityLevel) {
 						/**
-						 * If Project Selected
+						 * Activity Level should be 0-100%
+						 * So, we have convert it into 10 minutes TimeSlot by multiply by 6
 						 */
-						if (isNotEmpty(projectIds)) {
-							qb.andWhere(`"timeLogs"."projectId" IN (:...projectIds)`, {
-								projectIds
-							});
-						}
-						if (activityLevel) {
-							/**
-							 * Activity Level should be 0-100%
-							 * So, we have convert it into 10 minutes TimeSlot by multiply by 6
-							 */
-							const startLevel = (activityLevel.start * 6);
-							const endLevel = (activityLevel.end * 6);
-					
-							qb.andWhere(`"${query.alias}"."overall" BETWEEN :startLevel AND :endLevel`, {
-								startLevel,
-								endLevel
-							});
-						}
-						/**
-						 * If LogType Selected
-						 */
-						if (isNotEmpty(logType)) {
-							qb.andWhere(`"timeLogs"."logType" IN (:...logType)`, {
-								logType
-							});
-						}
-						/**
-						 * If Source Selected
-						 */
-						if (isNotEmpty(source)) {
-							qb.andWhere(`"timeLogs"."source" IN (:...source)`, {
-								source
-							});
-						}
-					})
-				)
-				.groupBy(`"timeLogs"."id"`)
-				.getRawMany();
+						const startLevel = (activityLevel.start * 6);
+						const endLevel = (activityLevel.end * 6);
+				
+						qb.andWhere(`"${weekQuery.alias}"."overall" BETWEEN :startLevel AND :endLevel`, {
+							startLevel,
+							endLevel
+						});
+					}
+					/**
+					 * If LogType Selected
+					 */
+					if (isNotEmpty(logType)) {
+						qb.andWhere(`"timeLogs"."logType" IN (:...logType)`, {
+							logType
+						});
+					}
+					/**
+					 * If Source Selected
+					 */
+					if (isNotEmpty(source)) {
+						qb.andWhere(`"timeLogs"."source" IN (:...source)`, {
+							source
+						});
+					}
+				})
+			)
+			.groupBy(`"timeLogs"."id"`)
+			.getRawMany();
 
-			const weekDuration = reduce(pluck(weekTimeStatistics, 'week_duration'), ArraySum, 0);
-			const weekPercentage = (
-				(reduce(pluck(weekTimeStatistics, 'overall'), ArraySum, 0) * 100) / 
-				(reduce(pluck(weekTimeStatistics, 'duration'), ArraySum, 0))
-			);
+		const weekDuration = reduce(pluck(weekTimeStatistics, 'week_duration'), ArraySum, 0);
+		const weekPercentage = (
+			(reduce(pluck(weekTimeStatistics, 'overall'), ArraySum, 0) * 100) / 
+			(reduce(pluck(weekTimeStatistics, 'duration'), ArraySum, 0))
+		);
 
-			weekActivities['duration'] = weekDuration;
-			weekActivities['overall'] = weekPercentage;
-		}
+		weekActivities['duration'] = weekDuration;
+		weekActivities['overall'] = weekPercentage;
 
 		/*
 		 * Get average activity and total duration of the work for today.
@@ -328,92 +333,95 @@ export class StatisticService {
 			duration: 0
 		};
 
-		if (isNotEmpty(employeeIds)) {
-			const { start: startToday, end: endToday } = getDateFormat(
-				moment().startOf('day').utc(),
-				moment().endOf('day').utc()
-			);
-			const query = this.timeSlotRepository.createQueryBuilder();
-			const todayTimeStatistics = await query
-				.innerJoin(`${query.alias}.timeLogs`, 'timeLogs')
-				.select(
-					`${
-						this.configService.dbConnectionOptions.type === 'sqlite'
-							? `COALESCE(ROUND(SUM((julianday(COALESCE("timeLogs"."stoppedAt", datetime('now'))) - julianday("timeLogs"."startedAt")) * 86400) / COUNT("${query.alias}"."id")), 0)`
-							: `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("timeLogs"."stoppedAt", NOW()) - "timeLogs"."startedAt"))) / COUNT("${query.alias}"."id")), 0)`
-					}`,
-					`today_duration`
-				)
-				.addSelect(`COALESCE(SUM("${query.alias}"."overall"), 0)`, `overall`)
-				.addSelect(`COALESCE(SUM("${query.alias}"."duration"), 0)`, `duration`)
-				.addSelect(`COUNT("${query.alias}"."id")`, `time_slot_count`)
-				.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId })
-				.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId })
-				.andWhere(
-					new Brackets((qb: WhereExpressionBuilder) => {
-						qb.andWhere(`"timeLogs"."startedAt" BETWEEN :startDate AND :endDate`, {
-							startDate: startToday,
-							endDate: endToday
+		const { start: startToday, end: endToday } = getDateFormat(
+			moment().startOf('day').utc(),
+			moment().endOf('day').utc()
+		);
+
+		const todayQuery = this.timeSlotRepository.createQueryBuilder();
+		const todayTimeStatistics = await todayQuery
+			.innerJoin(`${todayQuery.alias}.timeLogs`, 'timeLogs')
+			.select(
+				`${
+					this.configService.dbConnectionOptions.type === 'sqlite'
+						? `COALESCE(ROUND(SUM((julianday(COALESCE("timeLogs"."stoppedAt", datetime('now'))) - julianday("timeLogs"."startedAt")) * 86400) / COUNT("${todayQuery.alias}"."id")), 0)`
+						: `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("timeLogs"."stoppedAt", NOW()) - "timeLogs"."startedAt"))) / COUNT("${todayQuery.alias}"."id")), 0)`
+				}`,
+				`today_duration`
+			)
+			.addSelect(`COALESCE(SUM("${todayQuery.alias}"."overall"), 0)`, `overall`)
+			.addSelect(`COALESCE(SUM("${todayQuery.alias}"."duration"), 0)`, `duration`)
+			.addSelect(`COUNT("${todayQuery.alias}"."id")`, `time_slot_count`)
+			.andWhere(`"${todayQuery.alias}"."tenantId" = :tenantId`, { tenantId })
+			.andWhere(`"${todayQuery.alias}"."organizationId" = :organizationId`, { organizationId })
+			.andWhere(
+				new Brackets((qb: WhereExpressionBuilder) => {
+					qb.andWhere(`"timeLogs"."startedAt" BETWEEN :startDate AND :endDate`, {
+						startDate: startToday,
+						endDate: endToday
+					});
+					/**
+					 * If Employee Selected
+					 */
+					if (isNotEmpty(employeeIds)) {
+						qb.andWhere(`"timeLogs"."employeeId" IN (:...employeeIds)`, {
+							employeeIds
 						});
+						qb.andWhere(`"${todayQuery.alias}"."employeeId" IN (:...employeeIds)`, {
+							employeeIds
+						});
+					}
+					/**
+					 * If Project Selected
+					 */
+					if (isNotEmpty(projectIds)) {
+						qb.andWhere(`"timeLogs"."projectId" IN (:...projectIds)`, {
+							projectIds
+						});
+					}
+					if (activityLevel) {
 						/**
-						 * If Employee Selected
+						 * Activity Level should be 0-100%
+						 * So, we have convert it into 10 minutes TimeSlot by multiply by 6
 						 */
-						if (isNotEmpty(employeeIds)) {
-							qb.andWhere(`"${query.alias}"."employeeId" IN (:...employeeIds)`, {
-								employeeIds
-							});
-						}
-						/**
-						 * If Project Selected
-						 */
-						if (isNotEmpty(projectIds)) {
-							qb.andWhere(`"timeLogs"."projectId" IN (:...projectIds)`, {
-								projectIds
-							});
-						}
-						if (activityLevel) {
-							/**
-							 * Activity Level should be 0-100%
-							 * So, we have convert it into 10 minutes TimeSlot by multiply by 6
-							 */
-							const startLevel = (activityLevel.start * 6);
-							const endLevel = (activityLevel.end * 6);
-					
-							qb.andWhere(`"${query.alias}"."overall" BETWEEN :startLevel AND :endLevel`, {
-								startLevel,
-								endLevel
-							});
-						}
-						/**
-						 * If LogType Selected
-						 */
-						if (isNotEmpty(logType)) {
-							qb.andWhere(`"timeLogs"."logType" IN (:...logType)`, {
-								logType
-							});
-						}
-						/**
-						 * If Source Selected
-						 */
-						if (isNotEmpty(source)) {
-							qb.andWhere(`"timeLogs"."source" IN (:...source)`, {
-								source
-							});
-						}
-					})
-				)
-				.groupBy(`"timeLogs"."id"`)
-				.getRawMany();
+						const startLevel = (activityLevel.start * 6);
+						const endLevel = (activityLevel.end * 6);
+				
+						qb.andWhere(`"${todayQuery.alias}"."overall" BETWEEN :startLevel AND :endLevel`, {
+							startLevel,
+							endLevel
+						});
+					}
+					/**
+					 * If LogType Selected
+					 */
+					if (isNotEmpty(logType)) {
+						qb.andWhere(`"timeLogs"."logType" IN (:...logType)`, {
+							logType
+						});
+					}
+					/**
+					 * If Source Selected
+					 */
+					if (isNotEmpty(source)) {
+						qb.andWhere(`"timeLogs"."source" IN (:...source)`, {
+							source
+						});
+					}
+				})
+			)
+			.groupBy(`"timeLogs"."id"`)
+			.getRawMany();
 
-			const todayDuration = reduce(pluck(todayTimeStatistics, 'today_duration'), ArraySum, 0);
-			const todayPercentage = (
-				(reduce(pluck(todayTimeStatistics, 'overall'), ArraySum, 0) * 100) / 
-				(reduce(pluck(todayTimeStatistics, 'duration'), ArraySum, 0))
-			);
+		const todayDuration = reduce(pluck(todayTimeStatistics, 'today_duration'), ArraySum, 0);
+		const todayPercentage = (
+			(reduce(pluck(todayTimeStatistics, 'overall'), ArraySum, 0) * 100) / 
+			(reduce(pluck(todayTimeStatistics, 'duration'), ArraySum, 0))
+		);
 
-			todayActivities['duration'] = todayDuration;
-			todayActivities['overall'] = todayPercentage;
-		}
+		todayActivities['duration'] = todayDuration;
+		todayActivities['overall'] = todayPercentage;
+
 		return {
 			employeesCount,
 			projectsCount,
@@ -458,16 +466,18 @@ export class StatisticService {
 		 *  Get employees id of the organization or get current employee id
 		 */
 		if (
-			user.employeeId ||
-			!RequestContext.hasPermission(
-				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+			(user.employeeId) ||
+			(
+				!RequestContext.hasPermission(
+					PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+				) 
+				&& user.employeeId
 			)
 		) {
 			employeeIds = [user.employeeId];
 		} else {
 			employeeIds = await this.getEmployeesIds(
 				organizationId,
-				tenantId,
 				employeeIds
 			);
 		}
@@ -775,121 +785,119 @@ export class StatisticService {
 		*/
 		if (
 			(user.employeeId && request.onlyMe) ||
-			!RequestContext.hasPermission(
-				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+			(
+				!RequestContext.hasPermission(
+					PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+				) 
+				&& user.employeeId
 			)
 		) {
-			const employeeId = user.employeeId;
-			employeeIds = [employeeId];
+			employeeIds = [user.employeeId];
 		} else {
 			employeeIds = await this.getEmployeesIds(
 				organizationId,
-				tenantId,
 				employeeIds
 			);
 		}
 
-		if (isNotEmpty(employeeIds)) {
-			const query = this.timeLogRepository.createQueryBuilder();
-			query
-				.select(`"project"."name"`, "name")
-				.addSelect(
-					`${
-						this.configService.dbConnectionOptions.type === 'sqlite'
-							? `COALESCE(ROUND(SUM((julianday(COALESCE("${query.alias}"."stoppedAt", datetime('now'))) - julianday("${query.alias}"."startedAt")) * 86400)), 0)`
-							: `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("${query.alias}"."stoppedAt", NOW()) - "${query.alias}"."startedAt")))), 0)`
-					}`,
-					`duration`
-				)
-				.innerJoin(`${query.alias}.project`, 'project')
-				.andWhere(`"${query.alias}"."startedAt" BETWEEN :start AND :end`, {
-					start,
-					end
-				})
-				.andWhere(`"${query.alias}"."organizationId" = :organizationId`, {
-					organizationId
-				})
-				.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
-					tenantId
-				});
-			/**
-			 * If Employee Selected
-			 */
-			 if (isNotEmpty(employeeIds)) {
-				query.andWhere(`"${query.alias}"."employeeId" IN(:...employeeIds)`, {
-					employeeIds
-				});
-			}
-			/**
-			 * If Project Selected
-			 */
-			if (isNotEmpty(projectIds)) {
-				query
-					.andWhere(`"${query.alias}"."projectId" IN (:...projectIds)`, {
-						projectIds
-					});
-			}
-
-			let projects: IProjectsStatistics[] = await query
-				.groupBy(`"project"."id"`)
-				.orderBy('duration', 'DESC')
-				.limit(5)
-				.getRawMany();
-
-			const totalDurationQuery = this.timeLogRepository.createQueryBuilder();
-			totalDurationQuery
-				.select(
-					`${
-						this.configService.dbConnectionOptions.type === 'sqlite'
-							? `COALESCE(ROUND(SUM((julianday(COALESCE("${totalDurationQuery.alias}"."stoppedAt", datetime('now'))) - julianday("${totalDurationQuery.alias}"."startedAt")) * 86400)), 0)`
-							: `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("${totalDurationQuery.alias}"."stoppedAt", NOW()) - "${totalDurationQuery.alias}"."startedAt")))), 0)`
-					}`,
-					`duration`
-				)
-				.innerJoin(`${totalDurationQuery.alias}.project`, 'project')
-				.where(`"${totalDurationQuery.alias}"."organizationId" = :organizationId`, {
-					organizationId
-				})
-				.andWhere(`"${totalDurationQuery.alias}"."tenantId" = :tenantId`, {
-					tenantId
-				})
-				.andWhere(`"${totalDurationQuery.alias}"."startedAt" BETWEEN :start AND :end`, {
-					start,
-					end
-				});
-			/**
-			 * If Employee Selected
-			 */
-			if (isNotEmpty(employeeIds)) {
-				totalDurationQuery.andWhere(`"${totalDurationQuery.alias}"."employeeId" IN (:...employeeIds)`, {
-					employeeIds
-				});
-			}
-			/**
-			 * If Project Selected
-			 */
-			if (isNotEmpty(projectIds)) {
-				totalDurationQuery
-					.andWhere(`"${totalDurationQuery.alias}"."projectId" IN (:...projectIds)`, {
-						projectIds
-					})
-					.andWhere(`"project"."id" IN (:...projectIds)`, {
-						projectIds
-					});
-			}
-
-			const totalDuration = await totalDurationQuery.getRawOne();
-			projects = projects.map((project) => {
-				project.durationPercentage = parseFloat(
-					parseFloat(
-						(project.duration * 100) / totalDuration.duration + ''
-					).toFixed(2)
-				);
-				return project;
+		const query = this.timeLogRepository.createQueryBuilder();
+		query
+			.select(`"project"."name"`, "name")
+			.addSelect(
+				`${
+					this.configService.dbConnectionOptions.type === 'sqlite'
+						? `COALESCE(ROUND(SUM((julianday(COALESCE("${query.alias}"."stoppedAt", datetime('now'))) - julianday("${query.alias}"."startedAt")) * 86400)), 0)`
+						: `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("${query.alias}"."stoppedAt", NOW()) - "${query.alias}"."startedAt")))), 0)`
+				}`,
+				`duration`
+			)
+			.innerJoin(`${query.alias}.project`, 'project')
+			.andWhere(`"${query.alias}"."startedAt" BETWEEN :start AND :end`, {
+				start,
+				end
+			})
+			.andWhere(`"${query.alias}"."organizationId" = :organizationId`, {
+				organizationId
+			})
+			.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
+				tenantId
 			});
-			return projects;
+		/**
+		 * If Employee Selected
+		 */
+		if (isNotEmpty(employeeIds)) {
+			query.andWhere(`"${query.alias}"."employeeId" IN(:...employeeIds)`, {
+				employeeIds
+			});
 		}
-		return [];
+		/**
+		 * If Project Selected
+		 */
+		if (isNotEmpty(projectIds)) {
+			query
+				.andWhere(`"${query.alias}"."projectId" IN (:...projectIds)`, {
+					projectIds
+				});
+		}
+
+		let projects: IProjectsStatistics[] = await query
+			.groupBy(`"project"."id"`)
+			.orderBy('duration', 'DESC')
+			.limit(5)
+			.getRawMany();
+
+		const totalDurationQuery = this.timeLogRepository.createQueryBuilder();
+		totalDurationQuery
+			.select(
+				`${
+					this.configService.dbConnectionOptions.type === 'sqlite'
+						? `COALESCE(ROUND(SUM((julianday(COALESCE("${totalDurationQuery.alias}"."stoppedAt", datetime('now'))) - julianday("${totalDurationQuery.alias}"."startedAt")) * 86400)), 0)`
+						: `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("${totalDurationQuery.alias}"."stoppedAt", NOW()) - "${totalDurationQuery.alias}"."startedAt")))), 0)`
+				}`,
+				`duration`
+			)
+			.innerJoin(`${totalDurationQuery.alias}.project`, 'project')
+			.where(`"${totalDurationQuery.alias}"."organizationId" = :organizationId`, {
+				organizationId
+			})
+			.andWhere(`"${totalDurationQuery.alias}"."tenantId" = :tenantId`, {
+				tenantId
+			})
+			.andWhere(`"${totalDurationQuery.alias}"."startedAt" BETWEEN :start AND :end`, {
+				start,
+				end
+			});
+		/**
+		 * If Employee Selected
+		 */
+		if (isNotEmpty(employeeIds)) {
+			totalDurationQuery.andWhere(`"${totalDurationQuery.alias}"."employeeId" IN (:...employeeIds)`, {
+				employeeIds
+			});
+		}
+		/**
+		 * If Project Selected
+		 */
+		if (isNotEmpty(projectIds)) {
+			totalDurationQuery
+				.andWhere(`"${totalDurationQuery.alias}"."projectId" IN (:...projectIds)`, {
+					projectIds
+				})
+				.andWhere(`"project"."id" IN (:...projectIds)`, {
+					projectIds
+				});
+		}
+
+		const totalDuration = await totalDurationQuery.getRawOne();
+		projects = projects.map((project) => {
+			project.durationPercentage = parseFloat(
+				parseFloat(
+					(project.duration * 100) / totalDuration.duration + ''
+				).toFixed(2)
+			);
+			return project;
+		});
+		return projects || [];
 	}
 
 	/**
@@ -922,119 +930,116 @@ export class StatisticService {
 		 */
 		if (
 			(user.employeeId && request.onlyMe) ||
-			!RequestContext.hasPermission(
-				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+			(
+				!RequestContext.hasPermission(
+					PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+				) 
+				&& user.employeeId
 			)
 		) {
 			employeeIds = [user.employeeId];
 		} else {
 			employeeIds = await this.getEmployeesIds(
 				organizationId,
-				tenantId,
 				employeeIds
 			);
 		}
 
-		if (employeeIds.length > 0) {
-			const query = this.timeLogRepository.createQueryBuilder();
-			query
-				.select(`"task"."title"`, "title")
-				.addSelect(`"task"."description"`, "description")
-				.addSelect(`"task"."status"`, "status")
-				.addSelect(
-					`${
-						this.configService.dbConnectionOptions.type === 'sqlite'
-							? `COALESCE(ROUND(SUM((julianday(COALESCE("${query.alias}"."stoppedAt", datetime('now'))) - julianday("${query.alias}"."startedAt")) * 86400)), 0)`
-							: `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("${query.alias}"."stoppedAt", NOW()) - "${query.alias}"."startedAt")))), 0)`
-					}`,
-					`duration`
-				)
-				.innerJoin(`${query.alias}.task`, 'task')
-				.andWhere(`"${query.alias}"."startedAt" BETWEEN :start AND :end`, {
-					start,
-					end
-				})
-				.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
-					tenantId
-				})
-				.andWhere(`"${query.alias}"."organizationId" = :organizationId`, {
-					organizationId
-				});
-			/**
-			 * If Employee Selected
-			 */
-			if (isNotEmpty(employeeIds)) {
-				query.andWhere(`"${query.alias}"."employeeId" IN(:...employeeIds)`, {
-					employeeIds
-				});
-			}
-			/**
-			 * If Project Selected
-			 */
-			if (isNotEmpty(projectIds)) {
-				query.andWhere(`"${query.alias}"."projectId" IN (:...projectIds)`, {
-					projectIds
-				});
-			}
-
-			let tasks: ITask[] = await query
-				.groupBy(`"task"."id"`)
-				.orderBy('duration', 'DESC')
-				.limit(5)
-				.getRawMany();
-	
-			const totalDurationQuery = this.timeLogRepository.createQueryBuilder();
-			totalDurationQuery
-				.select(
-					`${
-						this.configService.dbConnectionOptions.type === 'sqlite'
-							? `COALESCE(ROUND(SUM((julianday(COALESCE("${totalDurationQuery.alias}"."stoppedAt", datetime('now'))) - julianday("${totalDurationQuery.alias}"."startedAt")) * 86400)), 0)`
-							: `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("${totalDurationQuery.alias}"."stoppedAt", NOW()) - "${totalDurationQuery.alias}"."startedAt")))), 0)`
-					}`,
-					`duration`
-				)
-				.innerJoin(`${totalDurationQuery.alias}.task`, 'task')
-				.andWhere(`"${totalDurationQuery.alias}"."startedAt" BETWEEN :start AND :end`, {
-					start,
-					end
-				})
-				.andWhere(`"${totalDurationQuery.alias}"."tenantId" = :tenantId`, {
-					tenantId
-				})
-				.andWhere(`"${totalDurationQuery.alias}"."organizationId" = :organizationId`, {
-					organizationId
-				});
-			/**
-			 * If Employee Selected
-			 */
-			if (isNotEmpty(employeeIds)) {
-				totalDurationQuery.andWhere(`"${totalDurationQuery.alias}"."employeeId" IN(:...employeeIds)`, {
-					employeeIds
-				});
-			}
-			/**
-			 * If Project Selected
-			 */
-			if (isNotEmpty(projectIds)) {
-				totalDurationQuery
-					.andWhere(`"${totalDurationQuery.alias}"."projectId" IN (:...projectIds)`, {
-						projectIds
-					});
-			}
-
-			const totalDuration = await totalDurationQuery.getRawOne();
-			tasks = tasks.map((task: any) => {
-				task.durationPercentage = parseFloat(
-					parseFloat(
-						(task.duration * 100) / totalDuration.duration + ''
-					).toFixed(2)
-				);
-				return task;
+		const query = this.timeLogRepository.createQueryBuilder();
+		query
+			.select(`"task"."title"`, "title")
+			.addSelect(`"task"."description"`, "description")
+			.addSelect(`"task"."status"`, "status")
+			.addSelect(
+				`${
+					this.configService.dbConnectionOptions.type === 'sqlite'
+						? `COALESCE(ROUND(SUM((julianday(COALESCE("${query.alias}"."stoppedAt", datetime('now'))) - julianday("${query.alias}"."startedAt")) * 86400)), 0)`
+						: `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("${query.alias}"."stoppedAt", NOW()) - "${query.alias}"."startedAt")))), 0)`
+				}`,
+				`duration`
+			)
+			.innerJoin(`${query.alias}.task`, 'task')
+			.andWhere(`"${query.alias}"."startedAt" BETWEEN :start AND :end`, {
+				start,
+				end
+			})
+			.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
+				tenantId
+			})
+			.andWhere(`"${query.alias}"."organizationId" = :organizationId`, {
+				organizationId
 			});
-			return tasks;
-		} else {
-			return [];
+		/**
+		 * If Employee Selected
+		 */
+		if (isNotEmpty(employeeIds)) {
+			query.andWhere(`"${query.alias}"."employeeId" IN(:...employeeIds)`, {
+				employeeIds
+			});
 		}
+		/**
+		 * If Project Selected
+		 */
+		if (isNotEmpty(projectIds)) {
+			query.andWhere(`"${query.alias}"."projectId" IN (:...projectIds)`, {
+				projectIds
+			});
+		}
+
+		let tasks: ITask[] = await query
+			.groupBy(`"task"."id"`)
+			.orderBy('duration', 'DESC')
+			.limit(5)
+			.getRawMany();
+
+		const totalDurationQuery = this.timeLogRepository.createQueryBuilder();
+		totalDurationQuery
+			.select(
+				`${
+					this.configService.dbConnectionOptions.type === 'sqlite'
+						? `COALESCE(ROUND(SUM((julianday(COALESCE("${totalDurationQuery.alias}"."stoppedAt", datetime('now'))) - julianday("${totalDurationQuery.alias}"."startedAt")) * 86400)), 0)`
+						: `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("${totalDurationQuery.alias}"."stoppedAt", NOW()) - "${totalDurationQuery.alias}"."startedAt")))), 0)`
+				}`,
+				`duration`
+			)
+			.innerJoin(`${totalDurationQuery.alias}.task`, 'task')
+			.andWhere(`"${totalDurationQuery.alias}"."startedAt" BETWEEN :start AND :end`, {
+				start,
+				end
+			})
+			.andWhere(`"${totalDurationQuery.alias}"."tenantId" = :tenantId`, {
+				tenantId
+			})
+			.andWhere(`"${totalDurationQuery.alias}"."organizationId" = :organizationId`, {
+				organizationId
+			});
+		/**
+		 * If Employee Selected
+		 */
+		if (isNotEmpty(employeeIds)) {
+			totalDurationQuery.andWhere(`"${totalDurationQuery.alias}"."employeeId" IN(:...employeeIds)`, {
+				employeeIds
+			});
+		}
+		/**
+		 * If Project Selected
+		 */
+		if (isNotEmpty(projectIds)) {
+			totalDurationQuery.andWhere(`"${totalDurationQuery.alias}"."projectId" IN (:...projectIds)`, {
+				projectIds
+			});
+		}
+
+		const totalDuration = await totalDurationQuery.getRawOne();
+		tasks = tasks.map((task: any) => {
+			task.durationPercentage = parseFloat(
+				parseFloat(
+					(task.duration * 100) / totalDuration.duration + ''
+				).toFixed(2)
+			);
+			return task;
+		});
+		return tasks || [];
 	}
 
 	/**
@@ -1067,82 +1072,84 @@ export class StatisticService {
 		 */
 		if (
 			(user.employeeId && request.onlyMe) ||
-			!RequestContext.hasPermission(
-				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+			(
+				!RequestContext.hasPermission(
+					PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+				) 
+				&& user.employeeId
 			)
 		) {
 			employeeIds = [user.employeeId];
 		} else {
 			employeeIds = await this.getEmployeesIds(
 				organizationId,
-				tenantId,
 				employeeIds
 			);
 		}
 
-		if (employeeIds.length > 0) {
-			const timeLogs = await this.timeLogRepository.find({
-				join: {
-					alias: 'time_log',
-					innerJoin: {
-						timeSlots: 'time_log.timeSlots'
-					}
-				},
-				relations: [
-					'project',
-					'employee',
-					'employee.user',
-					'timeSlots'
-				],
-				where: (qb: SelectQueryBuilder<TimeLog>) => {
-					qb.where({
-						employeeId: In(employeeIds),
-						logType: TimeLogType.MANUAL
-					});
-					qb.andWhere(
-						`"${qb.alias}"."startedAt" BETWEEN :start AND :end`,
-						{ start, end }
-					);
-					qb.andWhere(
-						`"${qb.alias}"."organizationId" = :organizationId`,
-						{ organizationId }
-					);
-					qb.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, {
-						tenantId
-					});
-
-					// project filter query
-					if (isNotEmpty(projectIds)) {
-						qb.andWhere(
-							`"${qb.alias}"."projectId" IN (:...projectIds)`,
-							{
-								projectIds
-							}
-						);
-					}
-				},
-				take: 5,
-				order: {
-					startedAt: 'DESC'
+		const timeLogs = await this.timeLogRepository.find({
+			join: {
+				alias: 'time_log',
+				innerJoin: {
+					timeSlots: 'time_log.timeSlots'
 				}
-			});
-
-			const mappedTimeLogs: IManualTimesStatistics[] = timeLogs.map(
-				(timeLog) => {
-					return {
-						id: timeLog.id,
-						startedAt: timeLog.startedAt,
-						duration: timeLog.duration,
-						user: pick(timeLog.employee.user, ['name', 'imageUrl']),
-						project: pick(timeLog.project, ['name']),
-						employeeId: timeLog.employee.id
-					} as IManualTimesStatistics;
+			},
+			relations: [
+				'project',
+				'employee',
+				'employee.user',
+				'timeSlots'
+			],
+			where: (qb: SelectQueryBuilder<TimeLog>) => {
+				qb.andWhere(`"${qb.alias}"."logType" = :logType`, {
+					logType: TimeLogType.MANUAL
+				});
+				qb.andWhere(`"${qb.alias}"."startedAt" BETWEEN :start AND :end`, {
+					start,
+					end
+				});
+				qb.andWhere(`"${qb.alias}"."organizationId" = :organizationId`, {
+					organizationId
+				});
+				qb.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, {
+					tenantId
+				});
+				/**
+				 * If Employee Selected
+				 */
+				if (isNotEmpty(employeeIds)) {
+					qb.andWhere(`"${qb.alias}"."employeeId" IN(:...employeeIds)`, {
+						employeeIds
+					});
 				}
-			);
-			return mappedTimeLogs;
-		} else {
-			return [];
-		}
+				/**
+				 * If Project Selected
+				 */
+				if (isNotEmpty(projectIds)) {
+					qb.andWhere(`"${qb.alias}"."projectId" IN (:...projectIds)`, {
+						projectIds
+					});
+				}
+			},
+			take: 5,
+			order: {
+				startedAt: 'DESC'
+			}
+		});
+
+		const mappedTimeLogs: IManualTimesStatistics[] = timeLogs.map(
+			(timeLog) => {
+				return {
+					id: timeLog.id,
+					startedAt: timeLog.startedAt,
+					duration: timeLog.duration,
+					user: pick(timeLog.employee.user, ['name', 'imageUrl']),
+					project: pick(timeLog.project, ['name']),
+					employeeId: timeLog.employee.id
+				} as IManualTimesStatistics;
+			}
+		);
+		return mappedTimeLogs || [];
 	}
 
 	/**
@@ -1175,133 +1182,138 @@ export class StatisticService {
 		 */
 		if (
 			(user.employeeId && request.onlyMe) ||
-			!RequestContext.hasPermission(
-				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+			(
+				!RequestContext.hasPermission(
+					PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+				) 
+				&& user.employeeId
 			)
 		) {
 			employeeIds = [user.employeeId];
 		} else {
 			employeeIds = await this.getEmployeesIds(
 				organizationId,
-				tenantId,
 				employeeIds
 			);
 		}
 
-		if (isNotEmpty(employeeIds)) {
-			const query = this.activityRepository.createQueryBuilder();
-			query
-				.select(`COUNT("${query.alias}"."id")`, `sessions`)
-				.addSelect(`SUM("${query.alias}"."duration")`, `duration`)
-				.addSelect(`"${query.alias}"."title"`, `title`)
-				.innerJoin(`${query.alias}.timeSlot`, 'timeSlot')
-				.innerJoin(`timeSlot.timeLogs`, 'timeLogs')
-				.addGroupBy(`"${query.alias}"."title"`)
-				.andWhere(
-					new Brackets((qb) => {
-						if (
-							this.configService.dbConnectionOptions.type ===
-							'sqlite'
-						) {
-							qb.andWhere(
-								`datetime("${query.alias}"."date" || ' ' || "${query.alias}"."time") Between :start AND :end`,
-								{ start, end }
-							);
-						} else {
-							qb.andWhere(
-								`concat("${query.alias}"."date", ' ', "${query.alias}"."time")::timestamp Between :start AND :end`,
-								{ start, end }
-							);
-						}
-					})
-				)
-				.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
-					tenantId
-				})
-				.andWhere(`"${query.alias}"."organizationId" = :organizationId`, {
-					organizationId
-				})
-				.orderBy(`"duration"`, 'DESC')
-				.limit(5);
-			/**
-			 * If Employee Selected
-			 */
-			if (isNotEmpty(employeeIds)) {
-				query.andWhere(`"${query.alias}"."employeeId" IN(:...employeeIds)`, {
-					employeeIds
-				});
-			}
-			/**
-			 * If Project Selected
-			 */
-			if (isNotEmpty(projectIds)) {
-				query.andWhere(`"${query.alias}"."projectId" IN (:...projectIds)`, {
-					projectIds
-				});
-			}
-
-			let activities: IActivitiesStatistics[] = await query.getRawMany();
-
-			/*
-			 * Fetch total duration of the week for calculate duration percentage
-			 */
-			const totalDurationQuery = this.activityRepository.createQueryBuilder();
-			totalDurationQuery
-				.select(
-					`SUM("${totalDurationQuery.alias}"."duration")`,
-					`duration`
-				)
-				.innerJoin(`${totalDurationQuery.alias}.timeSlot`, 'timeSlot')
-				.innerJoin(`timeSlot.timeLogs`, 'timeLogs')
-				.andWhere(
-					`"${totalDurationQuery.alias}"."employeeId" IN(:...employeeId)`,
-					{ employeeId: employeeIds }
-				)
-				.andWhere(
-					new Brackets((qb) => {
-						if (
-							this.configService.dbConnectionOptions.type ===
-							'sqlite'
-						) {
-							qb.andWhere(
-								`datetime("${totalDurationQuery.alias}"."date" || ' ' || "${totalDurationQuery.alias}"."time") Between :start AND :end`,
-								{ start, end }
-							);
-						} else {
-							qb.andWhere(
-								`concat("${totalDurationQuery.alias}"."date", ' ', "${totalDurationQuery.alias}"."time")::timestamp Between :start AND :end`,
-								{ start, end }
-							);
-						}
-					})
-				)
-				.andWhere(`"${totalDurationQuery.alias}"."tenantId" = :tenantId`, {
-					tenantId
-				})
-				.andWhere(`"${totalDurationQuery.alias}"."organizationId" = :organizationId`, {
-					organizationId
-				});
-
-			// project filter query
-			if (isNotEmpty(projectIds)) {
-				totalDurationQuery.andWhere(
-					`"${totalDurationQuery.alias}"."projectId" IN (:...projectIds)`,
-					{
-						projectIds
+		const query = this.activityRepository.createQueryBuilder();
+		query
+			.select(`COUNT("${query.alias}"."id")`, `sessions`)
+			.addSelect(`SUM("${query.alias}"."duration")`, `duration`)
+			.addSelect(`"${query.alias}"."title"`, `title`)
+			.innerJoin(`${query.alias}.timeSlot`, 'timeSlot')
+			.innerJoin(`timeSlot.timeLogs`, 'timeLogs')
+			.addGroupBy(`"${query.alias}"."title"`)
+			.andWhere(
+				new Brackets((qb) => {
+					if (
+						this.configService.dbConnectionOptions.type ===
+						'sqlite'
+					) {
+						qb.andWhere(
+							`datetime("${query.alias}"."date" || ' ' || "${query.alias}"."time") Between :start AND :end`,
+							{ start, end }
+						);
+					} else {
+						qb.andWhere(
+							`concat("${query.alias}"."date", ' ', "${query.alias}"."time")::timestamp Between :start AND :end`,
+							{ start, end }
+						);
 					}
-				);
-			}
+				})
+			)
+			.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
+				tenantId
+			})
+			.andWhere(`"${query.alias}"."organizationId" = :organizationId`, {
+				organizationId
+			})
+			.orderBy(`"duration"`, 'DESC')
+			.limit(5);
+		/**
+		 * If Employee Selected
+		 */
+		if (isNotEmpty(employeeIds)) {
+			query.andWhere(`"${query.alias}"."employeeId" IN(:...employeeIds)`, {
+				employeeIds
+			});
+		}
+		/**
+		 * If Project Selected
+		 */
+		if (isNotEmpty(projectIds)) {
+			query.andWhere(`"${query.alias}"."projectId" IN (:...projectIds)`, {
+				projectIds
+			});
+		}
 
-			const totalDuration = await totalDurationQuery.getRawOne();
-			activities = activities.map((activity) => {
-				activity.durationPercentage = (activity.duration * 100) / totalDuration.duration;
-				return activity;
+		let activities: IActivitiesStatistics[] = await query.getRawMany();
+
+		/*
+			* Fetch total duration of the week for calculate duration percentage
+			*/
+		const totalDurationQuery = this.activityRepository.createQueryBuilder();
+		totalDurationQuery
+			.select(
+				`SUM("${totalDurationQuery.alias}"."duration")`,
+				`duration`
+			)
+			.innerJoin(`${totalDurationQuery.alias}.timeSlot`, 'timeSlot')
+			.innerJoin(`timeSlot.timeLogs`, 'timeLogs')
+			.andWhere(
+				`"${totalDurationQuery.alias}"."employeeId" IN(:...employeeId)`,
+				{ employeeId: employeeIds }
+			)
+			.andWhere(
+				new Brackets((qb) => {
+					if (
+						this.configService.dbConnectionOptions.type ===
+						'sqlite'
+					) {
+						qb.andWhere(
+							`datetime("${totalDurationQuery.alias}"."date" || ' ' || "${totalDurationQuery.alias}"."time") Between :start AND :end`,
+							{ start, end }
+						);
+					} else {
+						qb.andWhere(
+							`concat("${totalDurationQuery.alias}"."date", ' ', "${totalDurationQuery.alias}"."time")::timestamp Between :start AND :end`,
+							{ start, end }
+						);
+					}
+				})
+			)
+			.andWhere(`"${totalDurationQuery.alias}"."tenantId" = :tenantId`, {
+				tenantId
+			})
+			.andWhere(`"${totalDurationQuery.alias}"."organizationId" = :organizationId`, {
+				organizationId
 			});
 
-			return activities;
-		} else {
-			return [];
+		/**
+		 * If Employee Selected
+		 */
+		if (isNotEmpty(employeeIds)) {
+			totalDurationQuery.andWhere(`"${totalDurationQuery.alias}"."employeeId" IN(:...employeeIds)`, {
+				employeeIds
+			});
 		}
+		/**
+		 * If Project Selected
+		 */
+		if (isNotEmpty(projectIds)) {
+			totalDurationQuery.andWhere(`"${totalDurationQuery.alias}"."projectId" IN (:...projectIds)`, {
+				projectIds
+			});
+		}
+
+		const totalDuration = await totalDurationQuery.getRawOne();
+		activities = activities.map((activity) => {
+			activity.durationPercentage = (activity.duration * 100) / totalDuration.duration;
+			return activity;
+		});
+
+		return activities || [];
 	}
 
 	/**
@@ -1335,15 +1347,17 @@ export class StatisticService {
 		 */
 		if (
 			(user.employeeId && request.onlyMe) ||
-			!RequestContext.hasPermission(
-				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+			(
+				!RequestContext.hasPermission(
+					PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+				) 
+				&& user.employeeId
 			)
 		) {
 			employeeIds = [user.employeeId];
 		} else {
 			employeeIds = await this.getEmployeesIds(
 				organizationId,
-				tenantId,
 				employeeIds
 			);
 		}
@@ -1445,24 +1459,20 @@ export class StatisticService {
 
 	private async getEmployeesIds(
 		organizationId: string,
-		tenantId: string,
 		employeeIds?: string[]
 	) {
+		const tenantId = RequestContext.currentTenantId();
 		const query = this.employeeRepository.createQueryBuilder('employee');
-		query.select(['id']);
+		query
+			.select(['id'])
+			.andWhere('"organizationId" = :organizationId', { organizationId })
+			.andWhere('"tenantId" = :tenantId', { tenantId });
 
 		if (isNotEmpty(employeeIds)) {
 			query.andWhere(`"${query.alias}"."id" IN (:...employeeIds)`, {
 				employeeIds
 			});
-		} else {
-			query
-				.andWhere('"organizationId" = :organizationId', {
-					organizationId
-				})
-				.andWhere('"tenantId" = :tenantId', { tenantId });
 		}
-
 		const employees = await query.getRawMany();
 		return pluck(employees, 'id');
 	}
