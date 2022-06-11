@@ -6,7 +6,8 @@ import {
 	IOrganizationDepartment,
 	IOrganizationDepartmentCreateInput,
 	ComponentLayoutStyleEnum,
-	IOrganization
+	IOrganization,
+	ITag
 } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -22,6 +23,7 @@ import { OrganizationDepartmentsService, Store, ToastrService } from '../../@cor
 import { IPaginationBase, PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
 import { ServerDataSource } from '../../@core/utils/smart-table';
 import { API_PREFIX } from '../../@core/constants';
+import { InputFilterComponent, TagsColorFilterComponent } from '../../@shared/table-filters';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -56,7 +58,7 @@ export class DepartmentsComponent extends PaginationFilterBaseComponent
 	}
 
 	public organization: IOrganization;
-	departments$: Subject<any> = new Subject();
+	departments$: Subject<boolean> = this.subject$;
 
 	constructor(
 		private readonly organizationDepartmentsService: OrganizationDepartmentsService,
@@ -135,7 +137,14 @@ export class DepartmentsComponent extends PaginationFilterBaseComponent
 			columns: {
 				name: {
 					title: this.getTranslation('ORGANIZATIONS_PAGE.NAME'),
-					type: 'string'
+					type: 'string',
+					filter: {
+						type: 'custom',
+						component: InputFilterComponent
+					},
+					filterFunction: (name: string) => {
+						this.setFilter({ field: 'name', search: name });
+					}
 				},
 				members: {
 					title: this.getTranslation('ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.MEMBERS'),
@@ -147,7 +156,18 @@ export class DepartmentsComponent extends PaginationFilterBaseComponent
 					title: this.getTranslation('MENU.TAGS'),
 					type: 'custom',
 					class: 'align-row',
-					renderComponent: NotesWithTagsComponent
+					renderComponent: NotesWithTagsComponent,
+					filter: {
+						type: 'custom',
+						component: TagsColorFilterComponent
+					},
+					filterFunction: (tags: ITag[]) => {
+						const tagIds = [];
+						for (const tag of tags) {
+							tagIds.push(tag.id);
+						}
+						this.setFilter({ field: 'tags', search: tagIds });
+					}
 				}
 			}
 		};
@@ -244,6 +264,10 @@ export class DepartmentsComponent extends PaginationFilterBaseComponent
 				'tags'
 			],
 			join: {
+				alias: 'organization-department',
+				leftJoin: {
+					tags: 'organization-department.tags'
+				},
 				...(this.filters.join) ? this.filters.join : {}
 			},
 			where: {

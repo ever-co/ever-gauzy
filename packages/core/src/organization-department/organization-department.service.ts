@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Like, Repository } from 'typeorm';
+import { In, Like, Repository } from 'typeorm';
 import { OrganizationDepartment } from './organization-department.entity';
 import { TenantAwareCrudService } from './../core/crud';
 
@@ -22,17 +22,18 @@ export class OrganizationDepartmentService extends TenantAwareCrudService<Organi
 	}
 
 	public pagination(filter?: any) {
-		if ('filters' in filter) {
-			const { filters } = filter;
-			if ('name' in filters) {
-				const { search } = filters.name;
-				filter.where.name = Like(`%${search}%`);
+		if ('where' in filter) {
+			const { where } = filter;
+			if ('name' in where) {
+				const { name } = where;
+				filter.where.name = Like(`%${name}%`);
 			}
-			if ('tags' in filters) {
-				const { search } = filters.tags;
-				filter.where.tags = Like(`%${search}%`);
+			if ('tags' in where) {
+				const { tags } = where; 
+				filter.where.tags = {
+					id: In(tags)
+				}
 			}
-			delete filter['filters'];
 		}		
 		return super.paginate(filter);
 	}
