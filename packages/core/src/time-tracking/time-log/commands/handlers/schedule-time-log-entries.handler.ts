@@ -4,9 +4,10 @@ import { Repository, SelectQueryBuilder } from 'typeorm';
 import * as moment from 'moment';
 import { isEmpty, isNotEmpty } from "@gauzy/common";
 import { getConfig } from '@gauzy/config';
+import { ITimeLog } from '@gauzy/contracts';
 import { TimeLog } from './../../time-log.entity';
 import { ScheduleTimeLogEntriesCommand } from '../schedule-time-log-entries.command';
-import { ITimeLog } from '@gauzy/contracts';
+import { RequestContext } from './../../../../core/context';
 
 @CommandHandler(ScheduleTimeLogEntriesCommand)
 export class ScheduleTimeLogEntriesHandler 
@@ -21,9 +22,23 @@ export class ScheduleTimeLogEntriesHandler
 		const { timeLog } = command;
 		let timeLogs: ITimeLog[] = [];
 		if (timeLog) {
+			const { organizationId, employeeId } = timeLog;
+			const tenantId = RequestContext.currentTenantId();
+
 			timeLogs = await this.timeLogRepository.find({
 				where: (query: SelectQueryBuilder<TimeLog>) => {
-					query.andWhere(`"${query.alias}"."id" = :id`, { id: timeLog.id });
+					query.andWhere(`"${query.alias}"."id" = :id`, {
+						id: timeLog.id
+					});
+					query.andWhere(`"${query.alias}"."employeeId" = :employeeId`, {
+						employeeId
+					});
+					query.andWhere(`"${query.alias}"."organizationId" = :organizationId`, {
+						organizationId
+					});
+					query.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
+						tenantId
+					});
 				},
 				relations: ['timeSlots']
 			});
@@ -44,10 +59,10 @@ export class ScheduleTimeLogEntriesHandler
 				isEmpty(timeLog.timeSlots) &&
 				logDifference > 10
 			) {
+				console.log('Schedule Time Log Entry Updated StoppedAt', timeLog.startedAt);
 				await this.timeLogRepository.save({
 					id: timeLog.id,
-					stoppedAt: timeLog.startedAt,
-					isRunning: false
+					stoppedAt: timeLog.startedAt
 				});
 			} else if (isNotEmpty(timeLog.timeSlots)) {
 				const [lastTimeSlot] = timeLog.timeSlots.reverse();
@@ -69,23 +84,22 @@ export class ScheduleTimeLogEntriesHandler
 					slotDifference = moment().diff(moment.utc(stoppedAt), 'minutes');
 				}
 
+				console.log('Schedule Time Log Entry Updated StoppedAt', stoppedAt);
 				if (slotDifference > 10) {
 					await this.timeLogRepository.save({
 						id: timeLog.id,
-						stoppedAt: stoppedAt,
-						isRunning: false
+						stoppedAt: stoppedAt
 					});
 				}
-			} else {
-				/**
-				 * Stop previous pending timer anyway.
-				 * If we have any pending TimeLog entry
-				 */
-				await this.timeLogRepository.save({
-					id: timeLog.id,
-					isRunning: false
-				});
 			}
+			/**
+			 * Stop previous pending timer anyway.
+			 * If we have any pending TimeLog entry
+			 */
+			await this.timeLogRepository.save({
+				id: timeLog.id,
+				isRunning: false
+			});
 		}
 	}
 }
