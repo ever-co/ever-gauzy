@@ -14,11 +14,13 @@ import {
 	Param,
 	Put,
 	Query,
-	UseGuards
+	UseGuards,
+	UsePipes,
+	ValidationPipe
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { CrudController } from './../core/crud';
+import { CrudController, PaginationParams } from './../core/crud';
 import {
 	OrganizationDepartmentEditByEmployeeCommand,
 	OrganizationDepartmentUpdateCommand
@@ -127,6 +129,23 @@ export class OrganizationDepartmentController extends CrudController<Organizatio
 		});
 	}
 
+	/**
+	 * Get pagination data of organization department
+	 * 
+	 * @param id 
+	 * @param entity 
+	 * @returns 
+	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_INCOMES_VIEW)
+	@Get('pagination')
+	@UsePipes(new ValidationPipe({ transform: true }))
+	async pagination(
+		@Query() filter: PaginationParams<IOrganizationDepartment>
+	): Promise<IPagination<IOrganizationDepartment>> {
+		return this.organizationDepartmentService.pagination(filter);
+	}
+	
 	/**
 	 * UPDATE organization department by id
 	 * 

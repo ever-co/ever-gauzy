@@ -1,16 +1,10 @@
+@import 'gauzy/_gauzy-table.scss';
+
 .card-container {
-  display: flex;
-  flex-wrap: wrap;
   .member-card {
     display: flex;
     flex-wrap: wrap;
     max-width: 340px;
     width: 100%;
   }
-}
-
-.main-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
 }
