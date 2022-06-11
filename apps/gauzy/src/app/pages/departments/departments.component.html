@@ -1,4 +1,9 @@
-<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large" class="card-scroll">
+<nb-card 
+	[nbSpinner]="loading"
+	nbSpinnerStatus="primary"
+	nbSpinnerSize="large"
+	class="card-scroll"
+>
 	<nb-card-header class="card-custom-header">
 		<div class="card-header-title">
 			<h4>
@@ -20,7 +25,6 @@
 		<ng-container *ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE && !showAddCard">
 			<div class="table-scroll-container">
 				<ng2-smart-table
-					class="expense-table"
 					[settings]="smartTableSettings"
 					[source]="smartTableSource"
 					(userRowSelect)="selectDepartment($event)"
@@ -92,8 +96,8 @@
 				(click)="editDepartment(selectedItem)"
 				size="small"		
 			>
-				<nb-icon icon="edit-outline"></nb-icon
-				>{{ 'BUTTONS.EDIT' | translate }}
+				<nb-icon icon="edit-outline"></nb-icon>
+				{{ 'BUTTONS.EDIT' | translate }}
 			</button>
 		</ng-template>
 		<ng-template [ngxPermissionsOnly]="['ALL_ORG_EDIT']">

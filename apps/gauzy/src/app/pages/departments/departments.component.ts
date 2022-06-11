@@ -1,4 +1,6 @@
 import { AfterViewInit, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
 import {
 	IEmployee,
 	IOrganizationDepartment,
@@ -9,19 +11,17 @@ import {
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, tap } from 'rxjs/operators';
-import { debounceTime, firstValueFrom, Subject, combineLatest } from 'rxjs';
+import { debounceTime, firstValueFrom, Subject } from 'rxjs';
 import { Ng2SmartTableComponent } from 'ng2-smart-table';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { distinctUntilChange } from '@gauzy/common-angular';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { EmployeeWithLinksComponent, NotesWithTagsComponent } from '../../@shared/table-components';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import { OrganizationDepartmentsService, Store, ToastrService } from '../../@core/services';
-import { distinctUntilChange } from '@gauzy/common-angular';
 import { IPaginationBase, PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
-import { HttpClient } from '@angular/common/http';
 import { ServerDataSource } from '../../@core/utils/smart-table';
-import { API_PREFIX } from '../../@core';
-import { ActivatedRoute } from '@angular/router';
+import { API_PREFIX } from '../../@core/constants';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -77,8 +77,8 @@ export class DepartmentsComponent extends PaginationFilterBaseComponent
 		this.departments$
 			.pipe(
 				debounceTime(100),
-				tap(() => this.getDepartments()),
 				tap(() => this._clearItem()),
+				tap(() => this.getDepartments()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -90,22 +90,17 @@ export class DepartmentsComponent extends PaginationFilterBaseComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
-
-		const storeOrganization$ = this.store.selectedOrganization$;
-		combineLatest([storeOrganization$])
+		this.store.selectedOrganization$
 			.pipe(
 				debounceTime(300),
-				filter(([organization]) => !!organization),
 				distinctUntilChange(),
-				tap(([organization]) => {
-					this.organization = organization;					
-				}),
+				filter((organization: IOrganization) => !!organization),
+				tap((organization: IOrganization) => this.organization = organization),
 				tap(() => this.refreshPagination()),
 				tap(() => this.departments$.next(true)),
 				untilDestroyed(this)
-			)
-			.subscribe();
-			this.route.queryParamMap
+			).subscribe();
+		this.route.queryParamMap
 			.pipe(
 				filter((params) => !!params && params.get('openAddDialog') === 'true'),
 				debounceTime(1000),
@@ -117,16 +112,9 @@ export class DepartmentsComponent extends PaginationFilterBaseComponent
 
 	ngOnDestroy() { }
 	
-	ngAfterViewInit() {
-		const { employeeId } = this.store.user;
-		if (employeeId) {
-			delete this.smartTableSettings['columns']['employeeName'];
-			this.smartTableSettings = Object.assign({}, this.smartTableSettings);
-		}
-	}
+	ngAfterViewInit() {}
 
 	selectDepartment({ isSelected, data }) {
-		
 		this.disableButton = !isSelected;
 		this.selectedDepartment = isSelected ? data : null;
 	}
@@ -299,9 +287,7 @@ export class DepartmentsComponent extends PaginationFilterBaseComponent
 				});
 			}
 		} catch (error) {
-			this.toastrService.danger('NOTES.EXPENSES.EXPENSES_ERROR', null, {
-				error: error.error.message || error.message
-			});
+			this.toastrService.danger(error);
 		}
 	}
 
