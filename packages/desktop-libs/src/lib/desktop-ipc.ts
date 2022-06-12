@@ -26,6 +26,7 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 	ipcMain.removeAllListeners('return_time_sheet');
 	ipcMain.removeAllListeners('return_toggle_api');
 	ipcMain.removeAllListeners('set_project_task');
+	const timerHandler = new TimerHandler();
 	ipcMain.on('start_server', (event, arg) => {
 		global.variableGlobal = {
 			API_BASE_URL: arg.serverUrl
@@ -45,18 +46,32 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 	});
 
 	ipcMain.on('return_time_sheet', async (event, arg) => {
-		await TimerData.updateTimerUpload(knex, {
-			id: arg.timerId,
-			timeSheetId: arg.timeSheetId,
-			timeLogId: arg.timeLogId
-		});
+		await timerHandler.createQueue(
+			'sqlite-queue',
+			{
+				type: 'update-timer-time-slot',
+				data: {
+					id: arg.timerId,
+					timeSheetId: arg.timeSheetId,
+					timeLogId: arg.timeLogId
+				}
+			},
+			knex
+		);
 	});
 
 	ipcMain.on('return_toggle_api', async (event, arg) => {
-		await TimerData.updateTimerUpload(knex, {
-			id: arg.timerId,
-			timeLogId: arg.result.id
-		});
+		await timerHandler.createQueue(
+			'sqlite-queue',
+			{
+				type: 'update-timer-time-slot',
+				data: {
+					id: arg.timerId,
+					timeLogId: arg.result.id
+				}
+			},
+			knex
+		);
 	});
 
 	ipcMain.on('set_project_task', (event, arg) => {
@@ -213,10 +228,14 @@ export function ipcTimer(
 		console.log(
 			`Return To Timeslot Last Timeslot ID: ${arg.timeSlotId} and Timer ID: ${arg.timerId}`
 		);
-		await TimerData.updateTimerUpload(knex, {
-			id: arg.timerId,
-			timeSlotId: arg.timeSlotId
-		});
+		timerHandler.createQueue('sqlite-queue', 
+		{
+			data: {
+				id: arg.timerId,
+				timeSlotId: arg.timeSlotId
+			},
+			type: 'update-timer-time-slot'
+		}, knex);
 
 		timeTrackerWindow.webContents.send(
 			'refresh_time_log',
