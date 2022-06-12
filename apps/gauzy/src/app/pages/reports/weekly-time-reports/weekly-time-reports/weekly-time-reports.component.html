@@ -65,7 +65,7 @@
 									{{ date | dateFormat }}
 								</div>
 								<div class="responsive-table-row day-column">
-									Weekly Total
+									{{ 'REPORT_PAGE.WEEKLY_TOTAL' | translate }}
 								</div>
 							</div>
 						</div>
@@ -98,7 +98,7 @@
 									</div>
 								</div>
 								<div class="responsive-table-row day-column">
-									<div class="responsive-table-header">Weekly Total</div>
+									<div class="responsive-table-header">{{ 'REPORT_PAGE.WEEKLY_TOTAL' | translate }}</div>
 									<div class="responsive-table-content mobile-padding">
 										<span>
 											{{ getWeeklyTotal(log)| durationFormat }}

@@ -178,7 +178,7 @@ export class WeeklyTimeReportsComponent extends BaseSelectorFilterComponent
 
 	public getWeeklyTotal(log: ReportDayData) {
 		return pluck(log.dates, 'sum')
-			.filter((date) => date)
-			.reduce((partialSum, a) => partialSum + a, 0);
+			.filter((sum) => sum)
+			.reduce((partialSum, sum) => partialSum + sum, 0);
 	}
 }
