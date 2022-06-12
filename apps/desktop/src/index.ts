@@ -107,8 +107,6 @@ const knex = require('knex')({
 const exeName = path.basename(process.execPath);
 
 const dataModel = new DataModel();
-dataModel.createNewTable(knex);
-
 const store = new Store();
 
 let serve: boolean;
@@ -148,7 +146,7 @@ try {
 	cancellationToken = new CancellationToken();
 } catch (error) {}
 
-function startServer(value, restart = false) {
+ function startServer(value, restart = false) {
 	process.env.IS_ELECTRON = 'true';
 	if (value.db === 'sqlite') {
 		process.env.DB_PATH = sqlite3filename;
@@ -330,6 +328,8 @@ const getApiBaseUrl = (configs) => {
 app.on('ready', async () => {
 	// require(path.join(__dirname, 'desktop-api/main.js'));
 	/* set menu */
+	await knex.raw(`pragma journal_mode = WAL;`).then((res) => console.log(res));
+	await dataModel.createNewTable(knex);
 	const configs: any = store.get('configs');
 	if (configs && typeof configs.autoLaunch === 'undefined') {
 		launchAtStartup(true, false);
