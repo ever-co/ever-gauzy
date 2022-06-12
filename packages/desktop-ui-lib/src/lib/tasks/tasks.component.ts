@@ -26,7 +26,7 @@ export class TasksComponent
     statusTaskSelect = null
     statuses = [
         {
-            id:'todo',
+            id:'Todo',
             name: 'Todo',
         },
         {
@@ -54,6 +54,16 @@ export class TasksComponent
     description = '';
 
     disableSave = true;
+
+    estimate: {
+        days: Number | null
+        hours: Number | null
+        minutes: Number | null
+    } = {
+        days: null,
+        hours: null,
+        minutes: null
+    }
 
 	constructor(
 		private fb: FormBuilder,
@@ -133,9 +143,9 @@ export class TasksComponent
             projectId: this.projectSelect,
             status: this.statusTaskSelect,
             members: this.employees.filter((i) => i.id === this.employeeSelect),
-            estimateDays: '',
-            estimateHours: '',
-            estimateMinutes: '',
+            estimateDays: this.estimate.days ? this.estimate.days : '',
+            estimateHours: this.estimate.hours ? this.estimate.hours : '',
+            estimateMinutes: this.estimate.minutes ? this.estimate.minutes : '',
             dueDate: this.dueDate,
             description: this.description,
             tags: this.selectedTags.map((i) => {
