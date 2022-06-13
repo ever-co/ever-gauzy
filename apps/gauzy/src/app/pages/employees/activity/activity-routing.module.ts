@@ -22,7 +22,8 @@ const routes: Routes = [
 					datePicker: {
 						unitOfTime: 'day',
 						isLockDatePicker: true,
-						isSaveDatePicker: true
+						isSaveDatePicker: true,
+						isSingleDatePicker: true
 					}
 				}
 			},
@@ -36,7 +37,8 @@ const routes: Routes = [
 					datePicker: {
 						unitOfTime: 'day',
 						isLockDatePicker: true,
-						isSaveDatePicker: true
+						isSaveDatePicker: true,
+						isSingleDatePicker: true
 					}
 				}
 			},
@@ -51,7 +53,8 @@ const routes: Routes = [
 					datePicker: {
 						unitOfTime: 'day',
 						isLockDatePicker: true,
-						isSaveDatePicker: true
+						isSaveDatePicker: true,
+						isSingleDatePicker: true
 					}
 				}
 			},
@@ -66,7 +69,8 @@ const routes: Routes = [
 					datePicker: {
 						unitOfTime: 'day',
 						isLockDatePicker: true,
-						isSaveDatePicker: true
+						isSaveDatePicker: true,
+						isSingleDatePicker: true
 					}
 				}
 			}
