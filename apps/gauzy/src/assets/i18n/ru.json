@@ -1072,7 +1072,9 @@
 		"SETTINGS": "Настройки",
 		"SELECT_GROUPS": "Выберите группы",
 		"FILTER_INTEGRATIONS": "Фильтровать интеграцию",
-		"SEARCH_INTEGRATIONS": "Интеграции поиска"
+		"SEARCH_INTEGRATIONS": "Интеграции поиска",
+		"PAID": "Оплачено",
+		"INTEGRATION": "Интеграция"
 	},
 	"DASHBOARD_PAGE": {
 		"ACCOUNTING": "Бухгалтер",
