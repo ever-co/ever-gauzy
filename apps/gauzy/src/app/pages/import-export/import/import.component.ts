@@ -146,7 +146,6 @@ export class ImportComponent
 
 	getImportHistory() {
 		this.importService.getHistory().pipe(untilDestroyed(this)).subscribe();
-		console.log(this.uploader.queue);
 	}
 
 	public download(item: any) {
