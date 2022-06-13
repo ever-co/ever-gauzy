@@ -899,7 +899,8 @@
 			"IMPORT_DATA": "Import Data",
 			"IMPORT_ALL": "Import All",
 			"CANCEL_ALL": "Cancel All",
-			"REMOVE_ALL": "Remove All"
+			"REMOVE_ALL": "Remove All",
+			"DOWNLOAD": "Download"
 		},
 		"TAGS": "Tags",
 		"LANGUAGE": "Language",
