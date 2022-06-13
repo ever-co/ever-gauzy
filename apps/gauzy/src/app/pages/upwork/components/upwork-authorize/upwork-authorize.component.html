@@ -5,6 +5,7 @@
 	</nb-card-header>
 	<nb-card-body>
 		<form
+			class="col-xl-6 col-12"
 			[formGroup]="form"
 			(ngSubmit)="authorizeUpwork(form.value)"
 		>
@@ -46,6 +47,8 @@
 				nbButton
 				status="primary"
 				[disabled]="form.invalid"
+				size="small"
+				outline
 			>
 				{{ 'BUTTONS.NEXT' | translate }}
 			</button>

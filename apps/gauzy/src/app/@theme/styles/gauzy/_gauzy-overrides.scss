@@ -16,6 +16,7 @@ $default-box-shadow: 0px 1px 1px 0px rgba(0, 0, 0, 0.15);
         border-radius: $radius;
         box-shadow: $box-shadow;
         height: $height;
+        border: none;
   
         input {
           height: unset;
@@ -47,6 +48,11 @@ $default-box-shadow: 0px 1px 1px 0px rgba(0, 0, 0, 0.15);
     height: $height;
     display: flex;
     align-items: center;
+    border: none;
+  }
+
+  nb-select.appearance-outline.size-medium .select-button{
+    border: none;
   }
 }
 

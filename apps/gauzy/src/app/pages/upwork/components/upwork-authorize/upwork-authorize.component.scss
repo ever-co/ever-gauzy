@@ -1,3 +1,16 @@
 .hint {
   margin-bottom: 20px;
 }
+
+button {
+  box-shadow: 0 1px 1px 0 rgba(0, 0, 0, 0.15);
+  border: none !important;
+}
+
+:host {
+
+  nb-card,
+  nb-card-body {
+    background-color: var(--gauzy-card-2);
+  }
+}
