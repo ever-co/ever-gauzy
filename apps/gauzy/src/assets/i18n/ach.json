@@ -1026,7 +1026,8 @@
 		"NO_CLIENTS": "crwdns9050:0crwdne9050:0",
 		"EXPENSE": "crwdns10517:0crwdne10517:0",
 		"PAYMENT": "crwdns10264:0crwdne10264:0",
-		"NO_EMPLOYEES_WORKED": "crwdns9496:0crwdne9496:0"
+		"NO_EMPLOYEES_WORKED": "crwdns9496:0crwdne9496:0",
+		"WEEKLY_TOTAL": "crwdns11193:0crwdne11193:0"
 	},
 	"INTEGRATIONS": {
 		"AVAILABLE_INTEGRATIONS": "crwdns8266:0crwdne8266:0",
