@@ -9,8 +9,7 @@ import { ActivatedRoute } from '@angular/router';
 import {
 	IImportHistory,
 	ImportTypeEnum,
-	ImportHistoryStatusEnum,
-	ImportStatusEnum
+	ImportHistoryStatusEnum
 } from '@gauzy/contracts';
 import { Subject } from 'rxjs';
 import { Observable } from 'rxjs/internal/Observable';
@@ -36,10 +35,9 @@ export class ImportComponent
 	importDT: Date = new Date();
 	importTypeEnum = ImportTypeEnum;
 	importType = ImportTypeEnum.MERGE;
-	importStatus = ImportStatusEnum;
+	importStatus = ImportHistoryStatusEnum;
 	subject$: Subject<any> = new Subject();
 	loading: boolean;
-	importHistoryStatusEnum = ImportHistoryStatusEnum;
 	selectedItem = {
 		isSelected: false,
 		data: null

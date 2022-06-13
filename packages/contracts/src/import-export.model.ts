@@ -38,12 +38,6 @@ export enum ImportTypeEnum {
 export enum ImportHistoryStatusEnum {
 	SUCCESS = 'Success',
 	FAILED = 'Failed',
-	CANCELLED = 'Cancelled'
-}
-
-export enum ImportStatusEnum {
-    IN_PROGRESS = "In Progress",
-    SUCCESS = "Success",
-    FAILED = "Failed",
-    CANCELLED = "Cancelled"
+	CANCELLED = 'Cancelled',
+	IN_PROGRESS = "In Progress"
 }

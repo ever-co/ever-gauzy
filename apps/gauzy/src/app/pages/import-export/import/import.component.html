@@ -216,21 +216,21 @@
 				<div class="col-3">
 					<span
 						*ngIf="
-							history.status === importHistoryStatusEnum.SUCCESS
+							history.status === importStatus.SUCCESS
 						"
 					>
 						<nb-badge
-							[text]="importHistoryStatusEnum.SUCCESS"
+							[text]="importStatus.SUCCESS"
 							status="success"
 						></nb-badge>
 					</span>
 					<span
 						*ngIf="
-							history.status === importHistoryStatusEnum.FAILED
+							history.status === importStatus.FAILED
 						"
 					>
 						<nb-badge
-							[text]="importHistoryStatusEnum.FAILED"
+							[text]="importStatus.FAILED"
 							status="success"
 						></nb-badge>
 					</span>
