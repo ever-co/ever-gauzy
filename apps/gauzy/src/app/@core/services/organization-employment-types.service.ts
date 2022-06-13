@@ -17,6 +17,23 @@ export class OrganizationEmploymentTypesService {
 
 	constructor(private http: HttpClient) {}
 
+	getAllWithPagination(
+		findInput?: IOrganizationEmploymentTypeFindInput,
+		relations?: string[]
+	): Promise<{ items: any[]; total: number }> {
+		const data = JSON.stringify({ relations, findInput });
+
+		return firstValueFrom(
+			this.http
+			.get<{ items: IOrganizationEmploymentType[]; total: number }>(
+				this.API_URL,
+				{
+					params: { data }
+				}
+			)
+		);
+	}
+	
 	getAll(
 		relations?: string[],
 		findInput?: IOrganizationEmploymentTypeFindInput

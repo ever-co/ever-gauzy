@@ -53,6 +53,7 @@
 							bindValue="id"
 							bindLabel="user.name"
 							(ngModelChange)="setEmployee($event)"
+							disabled="true"
 						>
 					</ng-select>
 				</div>
@@ -107,6 +108,37 @@
 						(ngModelChange)="validation()"
 					/>
 					<nb-datepicker #taskDueDatePicker></nb-datepicker>
+				</div>
+			</div>
+			<div class="col-sm-6">
+				<label for="estimate" class="label">Estimate</label>
+				<div class="estimate-inputs">
+					<input
+						[(ngModel)]="estimate.days"
+						type="number"
+						[min]="0"
+						nbInput
+						placeholder="Days"
+					/>
+
+					<input
+						[(ngModel)]="estimate.hours"
+						type="number"
+						min="0"
+						max="23"
+						nbInput
+						placeholder="Hours"
+					/>
+
+					<input
+						[(ngModel)]="estimate.minutes"
+						type="number"
+						[min]="0"
+						min="0"
+						max="59"
+						nbInput
+						placeholder="Minutes"
+					/>
 				</div>
 			</div>
 		</div>

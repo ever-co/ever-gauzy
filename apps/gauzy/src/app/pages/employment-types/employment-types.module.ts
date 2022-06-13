@@ -19,6 +19,8 @@ import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { TranslateModule } from '../../@shared/translate/translate.module';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
+import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
+import { PaginationModule } from '../../@shared/pagination/pagination.module';
 
 @NgModule({
 	imports: [
@@ -32,7 +34,6 @@ import { HeaderTitleModule } from '../../@shared/components/header-title/header-
 		NbInputModule,
 		NbIconModule,
 		TagsColorInputModule,
-		NbActionsModule,
 		TableComponentsModule,
 		CardGridModule,
 		NbDialogModule,
@@ -40,7 +41,9 @@ import { HeaderTitleModule } from '../../@shared/components/header-title/header-
 		NbActionsModule,
 		NbDialogModule.forChild(),
 		TranslateModule,
-		HeaderTitleModule
+		HeaderTitleModule,
+		GauzyButtonActionModule,
+		PaginationModule
 	],
 	declarations: [EmploymentTypesComponent],
 	providers: [OrganizationEmploymentTypesService]

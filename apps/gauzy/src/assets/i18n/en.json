@@ -1032,7 +1032,8 @@
 		"NO_CLIENTS": "No Clients",
 		"EXPENSE": "Expense",
 		"PAYMENT": "Payment",
-		"NO_EMPLOYEES_WORKED": "No employees worked"
+		"NO_EMPLOYEES_WORKED": "No employees worked",
+		"WEEKLY_TOTAL": "Weekly Total"
 	},
 	"INTEGRATIONS": {
 		"AVAILABLE_INTEGRATIONS": "Available Apps & Integrations",

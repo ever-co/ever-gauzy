@@ -565,6 +565,12 @@ export default class Timerhandler {
 								case 'save-failed-request':
 									await TimerData.saveFailedRequest(knex, job.data.data);
 									break;
+								case 'update-timer-time-slot':
+									await TimerData.updateTimerUpload(knex, {
+										id: job.data.data.id,
+										timeSlotId: job.data.data.timeSlotId
+									});
+									break;
 								default:
 									break;
 							}

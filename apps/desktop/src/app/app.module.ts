@@ -8,7 +8,8 @@ import {
 	NbThemeModule,
 	NbToastrModule,
 	NbDialogService,
-	NbLayoutModule
+	NbLayoutModule,
+	NbDatepickerModule
 } from '@nebular/theme';
 import { NgxElectronModule } from 'ngx-electron';
 import { AppService } from './app.service';
@@ -44,7 +45,8 @@ import { RouterModule } from '@angular/router';
 		ScreenCaptureModule,
 		SettingsModule,
 		UpdaterModule,
-		ImageViewerModule
+		ImageViewerModule,
+		NbDatepickerModule.forRoot()
 	],
 	providers: [AppService, HttpClientModule, NbDialogService],
 	bootstrap: [AppComponent]
