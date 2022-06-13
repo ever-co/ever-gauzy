@@ -1026,7 +1026,8 @@
 		"NO_CLIENTS": "Нет клиентов",
 		"EXPENSE": "Расходная",
 		"PAYMENT": "Оплата",
-		"NO_EMPLOYEES_WORKED": "Сотрудники не работали"
+		"NO_EMPLOYEES_WORKED": "Сотрудники не работали",
+		"WEEKLY_TOTAL": "Итого за неделю"
 	},
 	"INTEGRATIONS": {
 		"AVAILABLE_INTEGRATIONS": "Доступные приложения и интеграции",
