@@ -107,13 +107,16 @@
 
 				<div class="custom-body queue">
 					<div
-						[class]="
-							uploader.queue.at(-1) === item
-								? 'row m-0 py-3 align-items-center'
-								: 'row border-bottom m-0 py-3 align-items-center'
+						class="row border-bottom m-0 py-3 align-items-center"
+						*ngFor="
+							let item of uploader.queue;
+							let lastItem;
+							as: last
 						"
-						*ngFor="let item of uploader.queue"
-						[ngClass]="{ selected: selectedItem?.data === item }"
+						[ngClass]="{
+							selected: selectedItem?.data === item,
+							'border-bottom-none': lastItem
+						}"
 						(click)="selectItem(item)"
 					>
 						<div class="col-3">
@@ -201,12 +204,13 @@
 		</div>
 		<div class="custom-body history">
 			<div
-				[class]="
-					(history$ | async).at(-1) === history
-						? 'row m-0 py-3 align-items-center'
-						: 'row border-bottom m-0 py-3 align-items-center'
+				class="row border-bottom m-0 py-3 align-items-center"
+				*ngFor="
+					let history of history$ | async;
+					let lastHistory;
+					as: last
 				"
-				*ngFor="let history of history$ | async"
+				[ngClass]="{ 'border-bottom-none': lastHistory }"
 			>
 				<div class="col-3">{{ history.file }}</div>
 				<div class="col-3">{{ history.size | fileSize }}</div>
@@ -214,21 +218,13 @@
 					{{ history.importDate | dateTimeFormat }}
 				</div>
 				<div class="col-3">
-					<span
-						*ngIf="
-							history.status === importStatus.SUCCESS
-						"
-					>
+					<span *ngIf="history.status === importStatus.SUCCESS">
 						<nb-badge
 							[text]="importStatus.SUCCESS"
 							status="success"
 						></nb-badge>
 					</span>
-					<span
-						*ngIf="
-							history.status === importStatus.FAILED
-						"
-					>
+					<span *ngIf="history.status === importStatus.FAILED">
 						<nb-badge
 							[text]="importStatus.FAILED"
 							status="success"
