@@ -35,7 +35,7 @@ export enum ImportTypeEnum {
 	CLEAN = 'clean',
 }
 
-export enum ImportHistoryStatusEnum {
+export enum ImportStatusEnum {
 	SUCCESS = 'Success',
 	FAILED = 'Failed',
 	CANCELLED = 'Cancelled',
