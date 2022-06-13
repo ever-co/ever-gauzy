@@ -1072,7 +1072,9 @@
 		"SETTINGS": "crwdns8134:0crwdne8134:0",
 		"SELECT_GROUPS": "crwdns8268:0crwdne8268:0",
 		"FILTER_INTEGRATIONS": "crwdns8270:0crwdne8270:0",
-		"SEARCH_INTEGRATIONS": "crwdns8272:0crwdne8272:0"
+		"SEARCH_INTEGRATIONS": "crwdns8272:0crwdne8272:0",
+		"PAID": "crwdns11205:0crwdne11205:0",
+		"INTEGRATION": "crwdns11207:0crwdne11207:0"
 	},
 	"DASHBOARD_PAGE": {
 		"ACCOUNTING": "crwdns3190:0crwdne3190:0",

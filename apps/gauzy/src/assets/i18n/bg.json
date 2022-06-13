@@ -1072,7 +1072,9 @@
 		"SETTINGS": "Настройки",
 		"SELECT_GROUPS": "Select Groups",
 		"FILTER_INTEGRATIONS": "Filter integrations",
-		"SEARCH_INTEGRATIONS": "Search integrations"
+		"SEARCH_INTEGRATIONS": "Search integrations",
+		"PAID": "Paid",
+		"INTEGRATION": "Integration"
 	},
 	"DASHBOARD_PAGE": {
 		"ACCOUNTING": "Accounting",
