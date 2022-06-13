@@ -5,6 +5,7 @@
 	</nb-card-header>
 	<nb-card-body>
 		<form
+			class="col-xl-6 col-12"
 			[formGroup]="clientIdForm"
 			(ngSubmit)="authorizeHubstaff()"
 			*ngIf="!clientSecretForm.get('authorization_code').value; else clientSecretTemplate"
@@ -30,6 +31,8 @@
 				nbButton
 				type="submit"
 				status="primary"
+				size="small"
+				outline
 				[disabled]="clientIdForm.invalid"
 			>
 				{{ 'BUTTONS.NEXT' | translate }}
