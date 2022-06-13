@@ -29,6 +29,7 @@
 				size="small"
 				type="text"
 				ngxDaterangepickerMd
+				[singleDatePicker]="isSingleDatePicker"
 				[autoApply]="true"
 				[showCustomRangeLabel]="!isLockDatePicker"
 				[alwaysShowCalendars]="true"
@@ -40,6 +41,10 @@
 				[(ngModel)]="selectedDateRange"
 				(datesUpdated)="onDatesUpdated($event)"
 				(rangeClicked)="rangeClicked($event)"
+				[ngClass]="{ 
+					'double-range': !isSingleDatePicker,
+					'single-range': isSingleDatePicker
+				}"
 			/>
 		</div>
 	</div>
