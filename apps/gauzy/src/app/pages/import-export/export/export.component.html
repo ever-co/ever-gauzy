@@ -1,4 +1,8 @@
-<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
+<nb-card 
+	[nbSpinner]="loading" 
+	nbSpinnerStatus="primary"
+	nbSpinnerSize="large"
+>
 	<nb-card-header>
 		<div class="d-flex">
 			<ngx-back-navigation></ngx-back-navigation>
@@ -19,7 +23,7 @@
 						status="basic"
 						(checkedChange)="onCheckboxChangeAll($event)"
 					>
-						ALL Entities
+						{{ 'MENU.IMPORT_EXPORT.ALL_ENTITIES' | translate }}
 					</nb-checkbox>
 				</div>
 			</div>
@@ -30,8 +34,6 @@
 						nbButton
 						status="info"
 						size="small"
-						type="submit"
-						value="Export"
 						(click)="onSubmit()"
 					>
 						<nb-icon icon="download-outline"></nb-icon>
