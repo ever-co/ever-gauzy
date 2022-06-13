@@ -80,5 +80,5 @@
     font-weight: nb-theme(select-small-text-font-weight);
     line-height: nb-theme(select-small-text-line-height);
   }
-  @include nb-select-overrides(2rem, $default-button-radius, unset);
+  @include nb-select-overrides(2rem, $default-button-radius, $default-box-shadow);
 }

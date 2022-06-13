@@ -97,7 +97,7 @@ nb-accordion-item-body.setting ::ng-deep {
   }
 }
 
-ga-sidebar-menu ::ng-deep {
+.setting.action ga-sidebar-menu ::ng-deep {
   nb-accordion-item nb-accordion-item-header {
     box-shadow: unset;
     border-width: 0;

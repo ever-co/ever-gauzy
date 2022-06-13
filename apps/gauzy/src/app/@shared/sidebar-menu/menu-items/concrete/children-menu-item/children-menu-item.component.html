@@ -1,7 +1,7 @@
 <ng-container *ngxPermissionsOnly="item?.data?.permissionKeys">
 	<ng-container *ngIf="!collapse; else withNbTooltip">
 		<div
-			[class]="parent.children.at(-1) === item ? '' : 'border-bottom'"
+			[class]="parent?.children?.at(-1) === item ? '' : 'border-bottom'"
 			*ngIf="!item?.hidden"
 			[gaTooltip]="item?.title"
 			[icon]="item?.icon"
@@ -24,7 +24,7 @@
 	</ng-container>
 	<ng-template #withNbTooltip>
 		<div
-			[class]="parent.children.at(-1) === item ? '' : 'border-bottom'"
+			[class]="parent?.children?.at(-1) === item ? '' : 'border-bottom'"
 			*ngIf="!item?.hidden"
 			[nbTooltip]="item?.title"
 			nbTooltipPlacement="right"

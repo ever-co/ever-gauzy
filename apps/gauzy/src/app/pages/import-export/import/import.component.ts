@@ -5,7 +5,11 @@ import { TranslateService } from '@ngx-translate/core';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ActivatedRoute } from '@angular/router';
-import { IImportHistory, ImportTypeEnum, ImportHistoryStatusEnum } from '@gauzy/contracts';
+import {
+	IImportHistory,
+	ImportTypeEnum,
+	ImportStatusEnum
+} from '@gauzy/contracts';
 import { Subject } from 'rxjs';
 import { Observable } from 'rxjs/internal/Observable';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
@@ -18,10 +22,9 @@ import { ImportService, Store } from '../../../@core/services';
 	templateUrl: './import.component.html',
 	styleUrls: ['./import.component.scss']
 })
-export class ImportComponent
-	extends TranslationBaseComponent
+export class ImportComponent extends TranslationBaseComponent
 	implements AfterViewInit, OnInit {
-
+	
 	history$: Observable<IImportHistory[]> = this.importService.history$;
 
 	uploader: FileUploader;
@@ -30,16 +33,16 @@ export class ImportComponent
 	importDT: Date = new Date();
 	importTypeEnum = ImportTypeEnum;
 	importType = ImportTypeEnum.MERGE;
+	importStatus = ImportStatusEnum;
 	subject$: Subject<any> = new Subject();
 	loading: boolean;
-	importHistoryStatusEnum = ImportHistoryStatusEnum;
-	
+
 	constructor(
 		private readonly route: ActivatedRoute,
 		private readonly toastrService: NbToastrService,
 		private readonly store: Store,
 		readonly translateService: TranslateService,
-		private readonly importService: ImportService,
+		private readonly importService: ImportService
 	) {
 		super(translateService);
 	}
@@ -49,13 +52,12 @@ export class ImportComponent
 			.pipe(
 				filter((user) => !!user),
 				tap(() => this.initUploader()),
-				tap(() => this.uploader.clearQueue()),
 				untilDestroyed(this)
 			)
 			.subscribe();
 		this.subject$
 			.pipe(
-				tap(() => this.loading = true),
+				tap(() => (this.loading = true)),
 				tap(() => this.getImportHistory()),
 				untilDestroyed(this)
 			)
@@ -66,7 +68,12 @@ export class ImportComponent
 		this.route.queryParamMap
 			.pipe(
 				filter((params) => !!params && !!params.get('importType')),
-				tap((params) => this.importType = params.get('importType') as ImportTypeEnum),
+				tap(
+					(params) =>
+						(this.importType = params.get(
+							'importType'
+						) as ImportTypeEnum)
+				),
 				tap(() => this.initUploader()),
 				untilDestroyed(this)
 			)
@@ -80,16 +87,19 @@ export class ImportComponent
 			itemAlias: 'file',
 			authTokenHeader: 'Authorization',
 			authToken: `Bearer ${this.store.token}`,
-			headers: [{ 
-				name: "Tenant-Id", 
-				value: `${this.store.user.tenantId}` 
-			}]
+			headers: [
+				{
+					name: 'Tenant-Id',
+					value: `${this.store.user.tenantId}`
+				}
+			]
 		});
 		this.uploader.onBuildItemForm = (item, form) => {
 			form.append('importType', this.importType);
 		};
 		this.uploader.onCompleteItem = () => {
 			this.subject$.next(true);
+			this.initUploader();
 		};
 		this.hasBaseDropZoneOver = false;
 	}
@@ -120,16 +130,17 @@ export class ImportComponent
 
 	alert() {
 		this.toastrService.danger(
-			this.getTranslation('MENU.IMPORT_EXPORT.CORRECT_FILE_NAME'), 
+			this.getTranslation('MENU.IMPORT_EXPORT.CORRECT_FILE_NAME'),
 			this.getTranslation('MENU.IMPORT_EXPORT.WRONG_FILE_NAME'),
 			{ position: NbGlobalPhysicalPosition.TOP_RIGHT }
 		);
 	}
 
 	getImportHistory() {
-		this.importService.getHistory()
-			.pipe(
-				untilDestroyed(this)
-			).subscribe();
+		this.importService.getHistory().pipe(untilDestroyed(this)).subscribe();
+	}
+
+	public download(item: IImportHistory) {
+		//TODO: implement
 	}
 }

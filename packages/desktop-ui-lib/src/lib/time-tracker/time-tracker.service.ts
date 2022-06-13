@@ -126,10 +126,10 @@ export class TimeTrackerService {
 		});
 		return this.http
 			.get(
-				`${values.apiHost}/api/tags/level/`,
+				`${values.apiHost}/api/tags/level`,
 				{
 					headers: headers,
-					params: values.organizationContactId
+					params: values.organizationId
 						? this.toParams({
 								data: JSON.stringify({
 									relations: [

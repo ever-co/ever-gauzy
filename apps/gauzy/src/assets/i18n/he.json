@@ -712,6 +712,7 @@
 			"IMPORT_HISTORY_MESSAGE": "You can track your recently imported files here",
 			"SELECT_FILE": "Select File",
 			"DROP_FILE": "Drop the file here",
+			"NO_DROP_FILE": "Can't drop the file here",
 			"BROWSE": "BROWSE",
 			"NAME": "שם",
 			"SIZE": "Size",
@@ -894,7 +895,11 @@
 			"PRODUCT_IMAGE_ASSET": "Product Image Asset",
 			"CUSTOM_SMTP": "Custom SMTP",
 			"FEATURE": "Feature",
-			"FEATURE_ORGANIZATION": "Feature Organization"
+			"FEATURE_ORGANIZATION": "Feature Organization",
+			"EXPORT_DATA": "Export Data",
+			"IMPORT_DATA": "Import Data",
+			"DOWNLOAD": "Download",
+			"ALL_ENTITIES": "ALL Entities"
 		},
 		"TAGS": "Tags",
 		"LANGUAGE": "Language",
@@ -1026,7 +1031,8 @@
 		"NO_CLIENTS": "No Clients",
 		"EXPENSE": "הוצאה",
 		"PAYMENT": "Payment",
-		"NO_EMPLOYEES_WORKED": "No employees worked"
+		"NO_EMPLOYEES_WORKED": "No employees worked",
+		"WEEKLY_TOTAL": "Weekly Total"
 	},
 	"INTEGRATIONS": {
 		"AVAILABLE_INTEGRATIONS": "Available Apps & Integrations",
@@ -1066,7 +1072,9 @@
 		"SETTINGS": "הגדרות",
 		"SELECT_GROUPS": "Select Groups",
 		"FILTER_INTEGRATIONS": "Filter integrations",
-		"SEARCH_INTEGRATIONS": "Search integrations"
+		"SEARCH_INTEGRATIONS": "Search integrations",
+		"PAID": "Paid",
+		"INTEGRATION": "Integration"
 	},
 	"DASHBOARD_PAGE": {
 		"ACCOUNTING": "Accounting",

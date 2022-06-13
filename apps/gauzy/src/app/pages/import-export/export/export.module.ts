@@ -15,6 +15,7 @@ import { ExportRoutingModule } from './export-routing.module';
 import { ExportAllService } from '../../../@core/services/export-all.service';
 import { FileUploaderModule } from '../../../@shared/file-uploader-input/file-uploader-input.module';
 import { TranslateModule } from '../../../@shared/translate/translate.module';
+import { SharedModule } from '../../../@shared/shared.module';
 
 @NgModule({
 	imports: [
@@ -31,7 +32,8 @@ import { TranslateModule } from '../../../@shared/translate/translate.module';
 		NbSpinnerModule,
 		ReactiveFormsModule,
 		FormsModule,
-		TranslateModule
+		TranslateModule,
+		SharedModule
 	],
 	declarations: [ExportComponent],
 	exports: [ExportComponent],

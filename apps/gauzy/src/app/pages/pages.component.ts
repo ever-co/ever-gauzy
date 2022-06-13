@@ -85,6 +85,7 @@ export class PagesComponent
 				link: '/pages/dashboard',
 				pathMatch: 'prefix',
 				class: 'focus',
+				hidden: true,
 				data: {
 					translationKey: 'MENU.FOCUS',
 					featureKey: FeatureEnum.FEATURE_DASHBOARD
@@ -96,6 +97,7 @@ export class PagesComponent
 				link: '/pages/dashboard',
 				pathMatch: 'prefix',
 				class: 'application',
+				hidden: true,
 				data: {
 					translationKey: 'MENU.APPLICATIONS',
 					featureKey: FeatureEnum.FEATURE_DASHBOARD
