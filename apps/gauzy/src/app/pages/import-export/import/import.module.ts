@@ -6,7 +6,9 @@ import {
 	NbInputModule,
 	NbIconModule,
 	NbRadioModule,
-	NbToastrModule
+	NbToastrModule,
+	NbBadgeModule,
+	NbTooltipModule
 } from '@nebular/theme';
 import { FormsModule } from '@angular/forms';
 import { NgxPermissionsModule } from 'ngx-permissions';
@@ -18,6 +20,7 @@ import { ExportAllService } from '../../../@core/services/export-all.service';
 import { FileUploaderModule } from '../../../@shared/file-uploader-input/file-uploader-input.module';
 import { TranslateModule } from '../../../@shared/translate/translate.module';
 import { SharedModule } from '../../../@shared/shared.module';
+import { GauzyButtonActionModule } from '../../../@shared/gauzy-button-action/gauzy-button-action.module';
 
 @NgModule({
 	imports: [
@@ -35,6 +38,10 @@ import { SharedModule } from '../../../@shared/shared.module';
 		NbToastrModule.forRoot(),
 		TranslateModule,
 		NgxPermissionsModule.forChild(),
+		SharedModule,
+		NbBadgeModule,
+		NbTooltipModule,
+		GauzyButtonActionModule,
 		SharedModule
 	],
 	declarations: [ImportComponent],

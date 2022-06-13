@@ -8,6 +8,7 @@ import { DateTimeFormatPipe } from './datetime-format.pipe';
 import { DateFormatPipe } from './date-format.pipe';
 import { SafeHtmlPipe, SafeUrlPipe } from './safe/safe.pipe';
 import { CurrencyPositionPipe } from './currency-position.pipe';
+import { FileSizePipe } from './file-size.pipe';
 
 export * from './duration-format.pipe';
 export * from './filter-array.pipe';
@@ -19,6 +20,7 @@ export * from './date-format.pipe';
 export * from './utc-to-local.pipe';
 export * from './safe/safe.pipe';
 export * from './currency-position.pipe';
+export * from './file-size.pipe';
 
 export const Pipes = [
 	DurationFormatPipe,
@@ -31,6 +33,7 @@ export const Pipes = [
 	DateFormatPipe,
 	TruncatePipe,
 	UtcToLocalPipe,
-  	SafeUrlPipe,
-  	CurrencyPositionPipe
+	SafeUrlPipe,
+	CurrencyPositionPipe,
+	FileSizePipe
 ];
