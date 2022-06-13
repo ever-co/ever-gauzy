@@ -41,7 +41,8 @@ import { GauzyButtonActionModule } from '../../../@shared/gauzy-button-action/ga
 		SharedModule,
 		NbBadgeModule,
 		NbTooltipModule,
-		GauzyButtonActionModule
+		GauzyButtonActionModule,
+		SharedModule
 	],
 	declarations: [ImportComponent],
 	exports: [ImportComponent],
