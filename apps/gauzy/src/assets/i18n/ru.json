@@ -712,6 +712,7 @@
 			"IMPORT_HISTORY_MESSAGE": "Здесь вы можете отслеживать ваши недавно импортированные файлы",
 			"SELECT_FILE": "Выбрать файл",
 			"DROP_FILE": "Перетащите файл сюда",
+			"NO_DROP_FILE": "Не могу выбросить файл здесь",
 			"BROWSE": "ДРУЗЬЕ",
 			"NAME": "Имя",
 			"SIZE": "Размер",
@@ -894,7 +895,11 @@
 			"PRODUCT_IMAGE_ASSET": "Изображение товара",
 			"CUSTOM_SMTP": "Пользовательский SMTP",
 			"FEATURE": "Функция",
-			"FEATURE_ORGANIZATION": "Функциональная организация"
+			"FEATURE_ORGANIZATION": "Функциональная организация",
+			"EXPORT_DATA": "Экспорт данных",
+			"IMPORT_DATA": "Импорт данных",
+			"DOWNLOAD": "Скачать",
+			"ALL_ENTITIES": "ВСЕ сущности"
 		},
 		"TAGS": "Теги",
 		"LANGUAGE": "Язык",
