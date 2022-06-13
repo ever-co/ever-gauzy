@@ -20,6 +20,7 @@ export * from './date-format.pipe';
 export * from './utc-to-local.pipe';
 export * from './safe/safe.pipe';
 export * from './currency-position.pipe';
+export * from './file-size.pipe';
 
 export const Pipes = [
 	DurationFormatPipe,
