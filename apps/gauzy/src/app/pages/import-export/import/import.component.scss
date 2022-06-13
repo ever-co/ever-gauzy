@@ -141,12 +141,8 @@
   letter-spacing: 0em;
   text-align: left;
 
-  &.queue {
-    max-height: calc((100vh - 48rem) / 2);
-  }
-
   &.history {
-    max-height: calc((100vh - 34rem) / 2);
+    max-height: calc(100vh - 45rem);
   }
 
   .border-bottom {

@@ -12,16 +12,24 @@
 	</nb-card-header>
 	<nb-card-body class="import-data">
 		<div class="import-zone">
-			<div
-				ng2FileDrop
-				[ngClass]="{ 'nv-file-over': hasBaseDropZoneOver }"
-				(onFileDrop)="dropFile($event)"
-				(fileOver)="fileOverBase($event)"
-				[uploader]="uploader"
-				class="well my-drop-zone"
-			>
-				{{ 'MENU.IMPORT_EXPORT.DROP_FILE' | translate }}
-			</div>
+			<ng-container *ngIf="uploader?.queue?.length === 0; else noUpload">
+				<div
+					ng2FileDrop
+					[ngClass]="{ 'nv-file-over': hasBaseDropZoneOver }"
+					(onFileDrop)="dropFile($event)"
+					(fileOver)="fileOverBase($event)"
+					[uploader]="uploader"
+					class="well my-drop-zone"
+				>
+					{{ 'MENU.IMPORT_EXPORT.DROP_FILE' | translate }}
+				</div>
+			</ng-container>
+
+			<ng-template #noUpload>
+				<div class="well my-drop-zone">
+					{{ 'MENU.IMPORT_EXPORT.NO_DROP_FILE' | translate }}
+				</div>
+			</ng-template>
 			<div class="ilmport_export_wrapper">
 				<nb-radio-group
 					class="radio-buttons-group"
@@ -47,6 +55,7 @@
 						status="primary"
 						size="small"
 						nbButton
+						[disabled]="uploader?.queue?.length !== 0"
 						(click)="fileInput.click()"
 					>
 						<span class="btn-text">{{
@@ -243,7 +252,7 @@
 			(click)="uploader.uploadAll()"
 			[disabled]="!uploader.getNotUploadedItems().length"
 		>
-			<span>{{ 'MENU.IMPORT_EXPORT.IMPORT_ALL' | translate }}</span>
+			<span>{{ 'MENU.IMPORT_EXPORT.IMPORT' | translate }}</span>
 		</button>
 		<button
 			nbButton
@@ -254,7 +263,7 @@
 			(click)="uploader.cancelAll()"
 			[disabled]="!uploader.isUploading"
 		>
-			<span>{{ 'MENU.IMPORT_EXPORT.CANCEL_ALL' | translate }}</span>
+			<span>{{ 'MENU.IMPORT_EXPORT.CANCEL' | translate }}</span>
 		</button>
 		<button
 			nbButton
@@ -264,7 +273,7 @@
 			size="small"
 			(click)="uploader.clearQueue()"
 			[disabled]="!uploader.queue.length"
-			[nbTooltip]="'MENU.IMPORT_EXPORT.REMOVE_ALL' | translate"
+			[nbTooltip]="'MENU.IMPORT_EXPORT.REMOVE' | translate"
 		>
 			<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
 		</button>
