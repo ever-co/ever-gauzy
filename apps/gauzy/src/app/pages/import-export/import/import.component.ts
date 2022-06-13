@@ -1,6 +1,5 @@
 import { AfterViewInit, Component, OnInit } from '@angular/core';
 import { FileItem, FileUploader } from 'ng2-file-upload';
-import { saveAs } from 'file-saver';
 import { NbToastrService, NbGlobalPhysicalPosition } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, tap } from 'rxjs/operators';
@@ -147,13 +146,7 @@ export class ImportComponent
 	}
 
 	public download(item: any) {
-		try {
-			saveAs(item.some, 'archive.zip');
-		} catch (error) {
-			this.toastrService.danger(error, {
-				position: NbGlobalPhysicalPosition.TOP_RIGHT
-			});
-		}
+		//TODO: implement
 	}
 
 	public selectItem(item: FileItem) {

@@ -91,38 +91,31 @@
 			</div>
 			<div>
 				<div class="row custom-header m-0 align-items-center">
-					<div class="col-3">
+					<div class="col-4">
 						{{ 'MENU.IMPORT_EXPORT.NAME' | translate }}
 					</div>
 					<div class="col-1">
 						{{ 'MENU.IMPORT_EXPORT.SIZE' | translate }}
 					</div>
-					<div class="col-3">
+					<div class="col-5">
 						{{ 'MENU.IMPORT_EXPORT.PROGRESS' | translate }}
 					</div>
 					<div class="col-2">
 						{{ 'MENU.IMPORT_EXPORT.STATUS' | translate }}
-					</div>
-					<div class="col-3">
-						{{ 'MENU.IMPORT_EXPORT.ACTIONS' | translate }}
 					</div>
 				</div>
 
 				<div class="custom-body queue">
 					<div
 						class="row border-bottom m-0 py-3 align-items-center"
-						*ngFor="
-							let item of uploader.queue;
-							let lastItem;
-							as: last
-						"
+						*ngFor="let item of uploader.queue; let lastItem = last"
 						[ngClass]="{
 							selected: selectedItem?.data === item,
 							'border-bottom-none': lastItem
 						}"
 						(click)="selectItem(item)"
 					>
-						<div class="col-3">
+						<div class="col-4">
 							{{ item?.file?.name }}
 						</div>
 						<div
@@ -132,7 +125,7 @@
 						>
 							{{ item?.file?.size | fileSize }}
 						</div>
-						<div class="col-3" *ngIf="uploader.options.isHTML5">
+						<div class="col-5" *ngIf="uploader.options.isHTML5">
 							<div class="d-flex align-items-center">
 								<div
 									class="progress w-100 mr-1"
@@ -175,9 +168,6 @@
 								></nb-badge>
 							</span>
 						</div>
-						<div class="col-3" nowrap>
-							<a (click)="download(item)">Download</a>
-						</div>
 					</div>
 				</div>
 			</div>
@@ -197,30 +187,29 @@
 	<nb-card-body>
 		<div class="row custom-header m-0 align-items-center">
 			<div class="col-3">{{ 'MENU.IMPORT_EXPORT.NAME' | translate }}</div>
-			<div class="col-3">{{ 'MENU.IMPORT_EXPORT.SIZE' | translate }}</div>
+			<div class="col-2">{{ 'MENU.IMPORT_EXPORT.SIZE' | translate }}</div>
 			<div class="col-3">
 				{{ 'MENU.IMPORT_EXPORT.IMPORT_DATE_TIME' | translate }}
 			</div>
-			<div class="col-3">
+			<div class="col-1">
 				{{ 'MENU.IMPORT_EXPORT.STATUS' | translate }}
+			</div>
+			<div class="col-3">
+				{{ 'MENU.IMPORT_EXPORT.ACTIONS' | translate }}
 			</div>
 		</div>
 		<div class="custom-body history">
 			<div
 				class="row border-bottom m-0 py-3 align-items-center"
-				*ngFor="
-					let history of history$ | async;
-					let lastHistory;
-					as: last
-				"
+				*ngFor="let history of history$ | async; let lastHistory = last"
 				[ngClass]="{ 'border-bottom-none': lastHistory }"
 			>
 				<div class="col-3">{{ history.file }}</div>
-				<div class="col-3">{{ history.size | fileSize }}</div>
+				<div class="col-2">{{ history.size | fileSize }}</div>
 				<div class="col-3">
 					{{ history.importDate | dateTimeFormat }}
 				</div>
-				<div class="col-3">
+				<div class="col-1">
 					<span *ngIf="history.status === importStatus.SUCCESS">
 						<nb-badge
 							[text]="importStatus.SUCCESS"
@@ -233,6 +222,11 @@
 							status="success"
 						></nb-badge>
 					</span>
+				</div>
+				<div class="col-3" nowrap>
+					<a (click)="download(history)">{{
+						'MENU.IMPORT_EXPORT.DOWNLOAD' | translate
+					}}</a>
 				</div>
 			</div>
 		</div>
