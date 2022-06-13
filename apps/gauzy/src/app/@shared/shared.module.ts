@@ -7,12 +7,11 @@ import { RouterModule } from '@angular/router';
 import { AlertModalModule } from './alert-modal/alert-modal.module';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { Directives } from './directives';
-import { FileSizePipe } from './pipes/file-size.pipe';
 
 const Modules = [NgxPermissionsModule, BackNavigationModule];
 
 @NgModule({
-	declarations: [...Pipes, ...Components, ...Directives, FileSizePipe],
+	declarations: [...Pipes, ...Components, ...Directives],
 	imports: [CommonModule, RouterModule, ...Modules],
 	exports: [
 		AlertModalModule,
