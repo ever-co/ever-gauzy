@@ -712,6 +712,7 @@
 			"IMPORT_HISTORY_MESSAGE": "You can track your recently imported files here",
 			"SELECT_FILE": "Select File",
 			"DROP_FILE": "Drop the file here",
+			"NO_DROP_FILE": "Can't drop the file here",
 			"BROWSE": "BROWSE",
 			"NAME": "Name",
 			"SIZE": "Size",
