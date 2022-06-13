@@ -146,6 +146,17 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 		this._isSaveDatePicker = isSave;
 	}
 
+	/*
+	* Getter & Setter for single date picker
+	*/
+	_isSingleDatePicker: boolean = false;
+	get isSingleDatePicker(): boolean {
+		return this._isSingleDatePicker;
+	}
+	@Input() set isSingleDatePicker(isSingle: boolean) {
+		this._isSingleDatePicker = isSingle;
+	}
+
 	@ViewChild(DateRangePickerDirective, { static: false }) dateRangePickerDirective: DateRangePickerDirective;
 
 	constructor(
@@ -171,10 +182,11 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 				])),
 				tap(([organization, datePickerConfig]) => {
 					this.futureDateAllowed = organization.futureDateAllowed;
-					const { unitOfTime, isLockDatePicker, isSaveDatePicker } = datePickerConfig;
+					const { unitOfTime, isLockDatePicker, isSaveDatePicker, isSingleDatePicker } = datePickerConfig;
 
 					this.isLockDatePicker = isLockDatePicker;
 					this.isSaveDatePicker = isSaveDatePicker;
+					this.isSingleDatePicker = isSingleDatePicker;
 					this.unitOfTime = unitOfTime;
 				}),
 				tap(() => {

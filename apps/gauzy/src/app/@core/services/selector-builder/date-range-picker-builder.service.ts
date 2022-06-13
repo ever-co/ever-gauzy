@@ -7,12 +7,14 @@ export interface IDatePickerConfig {
 	readonly unitOfTime: moment.unitOfTime.Base,
 	readonly isLockDatePicker: boolean;
 	readonly isSaveDatePicker: boolean;
+	readonly isSingleDatePicker: boolean;
 }
 
 export const DEFAULT_DATE_PICKER_CONFIG: IDatePickerConfig = {
 	unitOfTime: 'month',
 	isLockDatePicker: false,
-	isSaveDatePicker: false
+	isSaveDatePicker: false,
+	isSingleDatePicker: false
 };
 
 @Injectable({
