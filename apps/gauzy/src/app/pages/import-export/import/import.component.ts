@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, OnInit } from '@angular/core';
-import { FileItem, FileUploader } from 'ng2-file-upload';
+import { FileUploader } from 'ng2-file-upload';
 import { NbToastrService, NbGlobalPhysicalPosition } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, tap } from 'rxjs/operators';
@@ -22,10 +22,9 @@ import { ImportService, Store } from '../../../@core/services';
 	templateUrl: './import.component.html',
 	styleUrls: ['./import.component.scss']
 })
-export class ImportComponent
-	extends TranslationBaseComponent
-	implements AfterViewInit, OnInit
-{
+export class ImportComponent extends TranslationBaseComponent
+	implements AfterViewInit, OnInit {
+	
 	history$: Observable<IImportHistory[]> = this.importService.history$;
 
 	uploader: FileUploader;
@@ -37,10 +36,6 @@ export class ImportComponent
 	importStatus = ImportStatusEnum;
 	subject$: Subject<any> = new Subject();
 	loading: boolean;
-	selectedItem = {
-		isSelected: false,
-		data: null
-	};
 
 	constructor(
 		private readonly route: ActivatedRoute,
@@ -57,7 +52,6 @@ export class ImportComponent
 			.pipe(
 				filter((user) => !!user),
 				tap(() => this.initUploader()),
-				tap(() => this.uploader.clearQueue()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -105,6 +99,7 @@ export class ImportComponent
 		};
 		this.uploader.onCompleteItem = () => {
 			this.subject$.next(true);
+			this.initUploader();
 		};
 		this.hasBaseDropZoneOver = false;
 	}
@@ -145,55 +140,7 @@ export class ImportComponent
 		this.importService.getHistory().pipe(untilDestroyed(this)).subscribe();
 	}
 
-	public download(item: any) {
+	public download(item: IImportHistory) {
 		//TODO: implement
-	}
-
-	public selectItem(item: FileItem) {
-		this.selectedItem =
-			this.selectedItem.data && item === this.selectedItem.data
-				? { isSelected: !this.selectedItem.isSelected, data: null }
-				: { isSelected: true, data: item };
-	}
-
-	public removeItemQueue() {
-		try {
-			this.uploader.removeFromQueue(this.selectedItem.data);
-			this.clear();
-			this.subject$.next(true);
-		} catch (error) {
-			this.toastrService.danger(error, {
-				position: NbGlobalPhysicalPosition.TOP_RIGHT
-			});
-		}
-	}
-
-	public cancelItem() {
-		try {
-			this.uploader.cancelItem(this.selectedItem.data);
-			this.subject$.next(true);
-		} catch (error) {
-			this.toastrService.danger(error, {
-				position: NbGlobalPhysicalPosition.TOP_RIGHT
-			});
-		}
-	}
-
-	public uploadItem() {
-		try {
-			this.uploader.uploadItem(this.selectedItem.data);
-			this.subject$.next(true);
-		} catch (error) {
-			this.toastrService.danger(error, {
-				position: NbGlobalPhysicalPosition.TOP_RIGHT
-			});
-		}
-	}
-
-	public clear() {
-		this.selectedItem = {
-			isSelected: false,
-			data: null
-		};
 	}
 }
