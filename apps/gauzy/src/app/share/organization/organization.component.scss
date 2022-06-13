@@ -443,3 +443,9 @@ p,
   font-size: 18px;
   font-weight: 700;
 }
+
+nb-card{
+  nb-card-body{
+    background-color: var(--gauzy-card-2);
+  }
+}
