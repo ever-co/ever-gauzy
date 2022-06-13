@@ -64,12 +64,14 @@
 					/>
 				</div>
 				<div *ngIf="uploader?.queue?.length > 0">
-					<ngx-gauzy-button-action
-						[hasLayoutSelector]="false"
-						[isDisable]="!selectedItem?.isSelected"
-						[buttonTemplate]="actionButtons"
-						[buttonTemplateVisible]="visibleButton"
-					></ngx-gauzy-button-action>
+					<ng-container *ngxPermissionsOnly="IMPORT_EXPORT_VIEW">
+						<ngx-gauzy-button-action
+							[hasLayoutSelector]="false"
+							[isDisable]="!selectedItem?.isSelected"
+							[buttonTemplate]="actionButtons"
+							[buttonTemplateVisible]="visibleButton"
+						></ngx-gauzy-button-action>
+					</ng-container>
 				</div>
 			</div>
 			<div class="queue-progress">
