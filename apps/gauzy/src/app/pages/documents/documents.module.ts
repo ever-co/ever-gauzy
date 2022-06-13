@@ -23,6 +23,8 @@ import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
 import { TranslateModule } from '../../@shared/translate/translate.module';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
+import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
+import { PaginationModule } from '../../@shared/pagination/pagination.module';
 
 const COMPONENTS = [DocumentsComponent, UploadDocumentComponent];
 
@@ -48,7 +50,9 @@ const COMPONENTS = [DocumentsComponent, UploadDocumentComponent];
 		NgSelectModule,
 		NbSpinnerModule,
 		TranslateModule,
-		HeaderTitleModule
+		HeaderTitleModule,
+		PaginationModule,
+		GauzyButtonActionModule
 	],
 	declarations: [...COMPONENTS],
 	providers: []

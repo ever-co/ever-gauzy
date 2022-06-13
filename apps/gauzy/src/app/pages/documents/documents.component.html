@@ -1,25 +1,72 @@
 <nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" class="card-scroll">
-	<nb-card-header class="card-header-title">
-		<div class="card-header-title">
-			<h4><ngx-header-title>{{ 'ORGANIZATIONS_PAGE.DOCUMENTS' | translate }}</ngx-header-title></h4>
+	<nb-card-header>
+		<div class="main-header">
+			<h4>
+				<ngx-header-title>
+					{{ 'ORGANIZATIONS_PAGE.DOCUMENTS' | translate }}
+				</ngx-header-title>
+			</h4>
 		</div>
-		<div>
-			<ga-layout-selector
+		<div class="gauzy-button-container">
+			<ngx-gauzy-button-action
+				[buttonTemplate]="actionButtons"
 				[componentName]="viewComponentName"
-			></ga-layout-selector>
+				[buttonTemplateVisible]="visibleButton"
+				[isDisable]="disabled"
+			>
+			</ngx-gauzy-button-action>
 		</div>
 	</nb-card-header>
 	<nb-card-body>
+		<ng-template
+			[ngIf]="
+				dataLayoutStyle === componentLayoutStyleEnum.TABLE &&
+				documentList?.length
+			"
+		>
+			<nb-card class="p-0" *ngFor="let document of documentList">
+				<nb-card-body
+					class="custom-table"
+					[ngClass]="
+						selected?.state && document === selected?.document
+							? 'custom-table selected'
+							: 'custom-table'
+					"
+					(click)="selectDocument(document)"
+				>					
+					<div>
+						<nb-icon icon="file-text-outline"></nb-icon>
+						<a [href]="document.documentUrl">
+							{{ document.name }}
+						</a>
+					</div>
+					<div>
+						{{ document.updatedAt | dateTimeFormat }}
+					</div>					
+				</nb-card-body>
+			</nb-card>
+		</ng-template>
+		<ng-template
+			[ngIf]="
+				dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID &&
+				documentList?.length
+			"
+		>
+			<ga-card-grid
+				[settings]="settingsSmartTable"
+				[source]="documentList"
+				[doEmit]="false"
+				[totalItems]="pagination?.totalItems"
+				[itemsPerPage]="pagination?.itemsPerPage"
+				[activePage]="pagination?.activePage"
+				(onSelectedItem)="selectPosition($event)"
+				(selectedOption)="onUpdateOption($event)"
+				(selectedPage)="onPageChange($event)"
+			></ga-card-grid>
+		</ng-template>
+	</nb-card-body>	
+	<!-- <nb-card-body>
 		<div class="pb-4">
-			<button
-				nbButton
-				status="success"
-				*ngIf="!showAddCard"
-				(click)="showCard()"
-			>
-				<nb-icon class="mr-1" icon="plus-outline"></nb-icon
-				>{{ 'BUTTONS.ADD' | translate }}
-			</button>
 			<div *ngIf="showAddCard" class="row m-0">
 				<form class="col-3 pl-0" [formGroup]="form" *ngIf="form">
 					<div formArrayName="documents">
@@ -136,33 +183,136 @@
 			[source]="documentList"
 			[buttonTemplate]="actionButtons"
 		></ga-card-grid>
-	</nb-card-body>
+	</nb-card-body> -->
 </nb-card>
+<ng-template #visibleButton>
+	<button
+		nbButton
+		status="success"
+		size="small"
+		(click)="openDialog(addEditTemplate, false)"
+	>
+		<nb-icon icon="plus-outline"> </nb-icon>
+		{{ 'BUTTONS.ADD' | translate }}
+	</button>
+</ng-template>
 <ng-template
 	#actionButtons
 	let-buttonSize="buttonSize"
 	let-selectedItem="selectedItem"
 >
-	<button
-		(click)="editDocument(selectedItem)"
-		nbButton
-		status="info"
-		class="mr-2"
-		[disabled]="!selectedItem"
-		[size]="buttonSize || 'medium'"
-	>
-		<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
-		{{ 'BUTTONS.EDIT' | translate }}
-	</button>
-	<button
-		(click)="removeDocument(selectedItem)"
-		nbButton
-		status="danger"
-		class="mr-2"
-		[disabled]="!selectedItem"
-		[size]="buttonSize || 'medium'"
-	>
-		<nb-icon class="mr-1" icon="archive-outline"> </nb-icon>
-		{{ 'BUTTONS.DELETE' | translate }}
-	</button>
+	<div class="actions">
+		<button
+			(click)="openDialog(addEditTemplate, true)"
+			nbButton
+			status="basic"
+			class="action primary"
+			[disabled]="disabled"
+			size="small"
+		>
+			<nb-icon icon="edit-outline"></nb-icon>
+			{{ 'BUTTONS.EDIT' | translate }}
+		</button>
+		<button
+			(click)="removeDocument(selectedItem)"
+			nbButton
+			status="basic"
+			class="action"
+			[disabled]="isDisabled"
+			size="small"
+		>
+			<nb-icon status="danger" icon="trash-2-outline"> </nb-icon>
+		</button>		
+	</div>
+</ng-template>
+
+<ng-template #addEditTemplate let-ref="dialogRef">
+	<div class="editable">
+		<div class="container">
+			<div class="row">
+				<div class="col-sm-12 d-flex justify-content-end">
+					<i
+						class="fas fa-times"
+						(click)="ref.close(); disabled = true"
+					></i>
+				</div>
+			</div>
+			<div class="row mb-3">
+				<h5 class="title mr-3 ml-3">{{ 'POP_UPS.ADD' | translate }}</h5>
+			</div>
+			<form [formGroup]="form" *ngIf="form">
+				<div formArrayName="documents">
+					<div
+						*ngFor="
+							let document of form.controls.documents[
+								'controls'
+							];
+							let i = index
+						"
+					>
+						<div [formGroupName]="i">
+							<div class="row mb-3">
+								<div class="col-sm-12 d-flex flex-column">
+									<label for="documentName" class="label">{{
+										'FORM.LABELS.DOCUMENT_NAME' | translate
+									}}</label>
+									<input
+										id="documentName"
+										#addInput
+										nbInput
+										formControlName="name"
+										type="text"
+										placeholder="{{
+											'FORM.PLACEHOLDERS.DOCUMENT_NAME'
+												| translate
+										}}"
+										fullWidth
+									/>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</form>		
+
+			<div class="row mb-3">
+				<div class="col-sm-12 d-flex flex-column">
+					<div class="label">
+						{{ 'FORM.LABELS.DOCUMENT_URL' | translate }}
+					</div>
+					<ga-upload-doc
+						#uploadDoc
+						[documentUrl]="documentUrl"
+						[isDocument]="true"
+						class="col-sm-12"
+					>
+					</ga-upload-doc>
+				</div>
+			</div>
+
+			<div class="row mb-3">
+				<div class="col-sm-12"></div>
+					<button
+						class="delete mr-3 ml-3"
+						(click)="ref.close(); disabled = true"
+						nbButton
+						status="basic"
+						outline
+					>
+						{{ 'BUTTONS.CANCEL' | translate }}
+					</button>
+					<button
+						(click)="
+							submitForm();
+							disabled = true;
+							ref.close();
+						"
+						nbButton
+						status="success"
+					>
+						{{ 'BUTTONS.SAVE' | translate }}
+					</button>
+				</div>			
+			</div>
+	</div>
 </ng-template>

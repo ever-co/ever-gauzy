@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
+import { Component, OnInit, ViewChild, OnDestroy, TemplateRef } from '@angular/core';
 import { FormGroup, FormBuilder, FormArray, Validators } from '@angular/forms';
 import {
 	IOrganizationDocument,
@@ -14,22 +14,24 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { DeleteConfirmationComponent } from './../../@shared/user/forms';
 import { UploadDocumentComponent } from './upload-document/upload-document.component';
 import { ComponentEnum } from '../../@core/constants';
-import { TranslationBaseComponent } from '../../@shared/language-base';
 import { DocumentDateTableComponent, DocumentUrlTableComponent } from '../../@shared/table-components';
 import { OrganizationDocumentsService, Store, ToastrService } from '../../@core/services';
 import { ActivatedRoute } from '@angular/router';
+import { IPaginationBase, PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-documents',
-	templateUrl: './documents.component.html'
+	templateUrl: './documents.component.html',
+	styleUrls: ['documents.component.scss']
 })
-export class DocumentsComponent extends TranslationBaseComponent 
+export class DocumentsComponent extends PaginationFilterBaseComponent 
 	implements OnInit, OnDestroy {
 
 	@ViewChild('uploadDoc')
 	uploadDoc: UploadDocumentComponent;
-
+	@ViewChild('addEditTemplate') 
+	addEditTemplate: TemplateRef<any>;
 	formDocument: FormGroup;
 	documentUrl = '';
 	documentId = null;
@@ -39,9 +41,15 @@ export class DocumentsComponent extends TranslationBaseComponent
 	settingsSmartTable: object;
 	smartTableSource = new LocalDataSource();
 	viewComponentName: ComponentEnum;
+	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	organization: IOrganization;
-
+	disabled: boolean = true;
+	selectedDocument: IOrganizationDocument;
+	selected = {
+		document: null,
+		state: false
+	};
 	/*
 	* Organization Document Mutation Form
 	*/
@@ -74,7 +82,21 @@ export class DocumentsComponent extends TranslationBaseComponent
 	}
 
 	ngOnInit() {
+		this.subject$
+			.pipe(
+				tap(() => this._loadDocuments()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.pagination$
+			.pipe(
+				distinctUntilChange(),
+				tap(() => this.subject$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this._applyTranslationOnSmartTable();
+
 		this.loadSmartTableSetting();
 		this.store.selectedOrganization$
 			.pipe(
@@ -89,7 +111,7 @@ export class DocumentsComponent extends TranslationBaseComponent
 			.pipe(
 				filter((params) => !!params && params.get('openAddDialog') === 'true'),
 				debounceTime(1000),
-				tap(() => this.showCard()),
+				tap(() => this.openDialog(this.addEditTemplate, false)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -113,7 +135,11 @@ export class DocumentsComponent extends TranslationBaseComponent
 	}
 	
 	loadSmartTableSetting() {
+		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
+			pager: {
+				perPage: pagination ? pagination : 10
+			},
 			actions: false,
 			columns: {
 				name: {
@@ -204,6 +230,7 @@ export class DocumentsComponent extends TranslationBaseComponent
 
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
+		const { activePage, itemsPerPage } = this.getPagination();
 
 		this.loading = true;
 		this.organizationDocumentsService
@@ -218,14 +245,31 @@ export class DocumentsComponent extends TranslationBaseComponent
 			.subscribe(
 				(data) => {
 					this.documentList = data.items;
-					this.smartTableSource.load(data.items);
+					//this.smartTableSource.load(data.items);
 					this.loading = false;
+
+					this.smartTableSource.setPaging(activePage, itemsPerPage, false);
+					this.smartTableSource.load(data.items);
+
+					if (
+						this.componentLayoutStyleEnum.CARDS_GRID ===
+						this.dataLayoutStyle
+					)
+					this._loadGridLayoutData();							
 				},
 				() =>
 					this.toastrService.error(
 						'NOTES.ORGANIZATIONS.EDIT_ORGANIZATION_DOCS.ERR_LOAD'
 					)
 			);
+	}
+
+	private async _loadGridLayoutData() {
+		this.documentList = await this.smartTableSource.getElements();
+		this.setPagination({
+			...this.getPagination(),
+			totalItems: this.smartTableSource.count()
+		});
 	}
 
 	private _updateDocument(formValue: IOrganizationDocument) {
@@ -304,6 +348,11 @@ export class DocumentsComponent extends TranslationBaseComponent
 		this.form.reset();
 		this.documentUrl = null;
 		this.documentId = null;
+		this.selected = {
+			document: null,
+			state: false
+		};
+		this.disabled = true;
 	}
 
 	private _applyTranslationOnSmartTable() {
@@ -313,6 +362,35 @@ export class DocumentsComponent extends TranslationBaseComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
+	}
+
+	edit(document: IOrganizationDocument) {
+		this.showAddCard = true;
+		this.selectedDocument = document;
+		this.form.controls.documents.patchValue([document]);
+		this.documentId = document.id;
+		this.documentUrl = document.documentUrl;		
+	}
+
+	openDialog(template: TemplateRef<any>, isEditTemplate: boolean) {
+		try {
+			isEditTemplate ? this.edit(this.selectedDocument) : this.cancel();
+			this.dialogService.open(template);
+		} catch (error) {
+			console.log('An error occurred on open dialog');
+		}
+	}
+	
+	selectDocument(position: any) {
+		if (position.data) position = position.data;
+		const res =
+			this.selected.document && position.id === this.selected.document.id
+				? { state: !this.selected.state }
+				: { state: true };
+		this.disabled = !res.state;
+		this.selected.state = res.state;
+		this.selected.document = position;
+		this.selectedDocument = this.selected.document;
 	}
 
 	ngOnDestroy(): void {}
