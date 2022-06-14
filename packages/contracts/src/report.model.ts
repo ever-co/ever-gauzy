@@ -52,7 +52,9 @@ export interface GetReportMenuItemsInput
 
 export interface ReportDayData {
 	employee?: IEmployee;
-	dates: any;
+    dates: any;
+    sum: number;
+    activity: number;
 }
 
 export enum ReportGroupFilterEnum {

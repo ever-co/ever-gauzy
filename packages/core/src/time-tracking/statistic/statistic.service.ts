@@ -426,11 +426,11 @@ export class StatisticService {
 			employeesCount,
 			projectsCount,
 			weekActivities: parseFloat(
-				parseFloat(weekActivities.overall + '').toFixed(1)
+				parseFloat(weekActivities.overall + '').toFixed(2)
 			),
 			weekDuration: weekActivities.duration,
 			todayActivities: parseFloat(
-				parseFloat(todayActivities.overall + '').toFixed(1)
+				parseFloat(todayActivities.overall + '').toFixed(2)
 			),
 			todayDuration: todayActivities.duration
 		};
