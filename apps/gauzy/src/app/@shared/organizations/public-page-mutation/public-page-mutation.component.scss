@@ -1,4 +1,8 @@
+@import 'gauzy/gauzy-dialogs';
+
 .main {
+  background-color: var(--gauzy-card-1);
+
   .body {
     width: 960px;
     max-width: 100%;
@@ -97,6 +101,7 @@
     display: block;
     padding-top: 5px;
   }
+
   .info-btn {
     margin: 5px 1px;
   }
