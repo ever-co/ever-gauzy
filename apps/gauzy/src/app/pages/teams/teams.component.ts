@@ -13,13 +13,18 @@ import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { firstValueFrom, Subject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
-import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
+import { Ng2SmartTableComponent } from 'ng2-smart-table';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { EmployeesService, OrganizationTeamsService, Store, ToastrService } from '../../@core/services';
-import { TranslationBaseComponent } from '../../@shared/language-base';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { EmployeeWithLinksComponent, NotesWithTagsComponent } from '../../@shared/table-components';
+import { IPaginationBase, PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
+import { ServerDataSource } from '../../@core/utils/smart-table';
+import { HttpClient } from '@angular/common/http';
+import { API_PREFIX } from '../../@core';
+import { distinctUntilChange } from '@gauzy/common-angular';
+
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -28,7 +33,7 @@ import { EmployeeWithLinksComponent, NotesWithTagsComponent } from '../../@share
 	styleUrls: ['./teams.component.scss']
 })
 export class TeamsComponent
-	extends TranslationBaseComponent
+	extends PaginationFilterBaseComponent
 	implements OnInit, OnDestroy {
 
 	selectedTeam: IOrganizationTeam;
@@ -45,8 +50,8 @@ export class TeamsComponent
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
 	
-	settingsSmartTable: object;
-	smartTableSource = new LocalDataSource();
+	smartTableSettings: object;
+	smartTableSource: ServerDataSource;
 	
 	public organization: IOrganization;
 	teams$: Subject<any> = new Subject();
@@ -68,7 +73,8 @@ export class TeamsComponent
 		private readonly store: Store,
 		public readonly translateService: TranslateService,
 		private readonly route: ActivatedRoute,
-		private readonly router: Router
+		private readonly router: Router,
+		private readonly httpClient: HttpClient,
 	) {
 		super(translateService);
 		this.setView();
@@ -83,6 +89,14 @@ export class TeamsComponent
 				tap(() => this.loading = true),
 				tap(() => this.loadTeams()),
 				tap(() => this.clearItem()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.pagination$
+			.pipe(
+				debounceTime(100),
+				distinctUntilChange(),
+				tap(() => this.teams$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -249,47 +263,120 @@ export class TeamsComponent
 		this.router.navigate([`/pages/employees/edit/${id}`]);
 	}
 
-	async loadTeams() {
+	/*
+	* Register Smart Table Source Config
+	*/
+	setSmartTableSource() {
 		if (!this.organization) {
 			return;
 		}
-
-		const { id: organizationId } = this.organization;
 		const { tenantId } = this.store.user;
-
-		const { items: teams } = await this.organizationTeamsService.getAll(
-			[
+		const { id: organizationId } = this.organization;
+		this.smartTableSource = new ServerDataSource(this.httpClient, {
+			endPoint: `${API_PREFIX}/organization-team/pagination`,
+			relations: [
 				'members',
 				'members.role',
 				'members.employee',
 				'members.employee.user',
 				'tags'
 			],
-			{ organizationId, tenantId }
-		);
-		if (teams) {
-			teams.forEach((team: IOrganizationTeam) => {
-				team.managers = team.members.filter(
-					(member) => member.role && member.role.name === RolesEnum.MANAGER
-				);
-				team.members = team.members.filter((member) => !member.role);
-			});
-
-			this.teams = [...teams].sort(
-				(a, b) => b.members.length - a.members.length
-			).map((team) =>{
-				return {
+			join: {
+				alias: 'organization-team',
+				leftJoin: {
+					tags: 'organization-team.tags'
+				},
+				...(this.filters.join) ? this.filters.join : {}
+			},
+			where: {
+				...{ organizationId, tenantId },
+				...this.filters.where
+			},
+			resultMap: (team: IOrganizationTeam) => {
+				return Object.assign({}, team, {
 					id: team.id,
 					name: team.name,
-					members: team.members.map((item) => item.employee),
-					managers: team.managers.map((item) => item.employee),
-					tags: team.tags
-				}
-			});
-			console.log(this.teams);
-			this.smartTableSource.load(this.teams);
+					tags: team.tags,
+					managers : team.members.filter(
+						(member) => member.role && member.role.name === RolesEnum.MANAGER
+					).map((item) => item.employee),
+					members : team.members.filter((member) => !member.role).map((item) => item.employee)
+				});
+			},
+			finalize: () => {
+				this.setPagination({
+					...this.getPagination(),
+					totalItems: this.smartTableSource.count()
+				});
+				this.loading = false;
+			}
+		});
+	}
+
+	async loadTeams() {
+		if (!this.organization) {
+			return;
 		}
-		this.loading = false;
+
+		try {
+			this.setSmartTableSource();
+
+			const { activePage, itemsPerPage } = this.getPagination();
+			this.smartTableSource.setPaging(
+				activePage,
+				itemsPerPage,
+				false
+			);
+
+			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
+				await this.smartTableSource.getElements();
+				this.teams = this.smartTableSource.getData();
+
+				this.setPagination({
+					...this.getPagination(),
+					totalItems: this.smartTableSource.count()
+				});
+			}
+		} catch (error) {
+			this.toastrService.danger(error);
+		}
+
+		// const { id: organizationId } = this.organization;
+		// const { tenantId } = this.store.user;
+
+		// const { items: teams } = await this.organizationTeamsService.getAll(
+		// 	[
+		// 		'members',
+		// 		'members.role',
+		// 		'members.employee',
+		// 		'members.employee.user',
+		// 		'tags'
+		// 	],
+		// 	{ organizationId, tenantId }
+		// );
+		// if (teams) {
+		// 	teams.forEach((team: IOrganizationTeam) => {
+		// 		team.managers = team.members.filter(
+		// 			(member) => member.role && member.role.name === RolesEnum.MANAGER
+		// 		);
+		// 		team.members = team.members.filter((member) => !member.role);
+		// 	});
+
+		// 	this.teams = [...teams].sort(
+		// 		(a, b) => b.members.length - a.members.length
+		// 	).map((team) =>{
+		// 		return {
+		// 			id: team.id,
+		// 			name: team.name,
+		// 			members: team.members.map((item) => item.employee),
+		// 			managers: team.managers.map((item) => item.employee),
+		// 			tags: team.tags
+		// 		}
+		// 	});
+		// 	console.log(this.teams);
+		// 	this.smartTableSource.load(this.teams);
+		// }
+		// this.loading = false;
 	}
 
 	selectTeam({ isSelected, data }) {
@@ -298,8 +385,15 @@ export class TeamsComponent
 	}
 
 	private _loadSmartTableSettings() {
-		this.settingsSmartTable = {
+		const pagination: IPaginationBase = this.getPagination();
+		this.smartTableSettings = {
 			actions: false,
+			editable: true,
+			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA'),
+			pager: {
+				display: false,
+				perPage: pagination ? pagination.itemsPerPage : 10
+			},
 			columns: {
 				name: {
 					title: this.getTranslation('ORGANIZATIONS_PAGE.NAME'),

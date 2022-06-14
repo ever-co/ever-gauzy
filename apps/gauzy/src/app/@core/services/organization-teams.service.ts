@@ -33,6 +33,22 @@ export class OrganizationTeamsService {
 		);
 	}
 
+	getAllWithPagination(
+		relations?: string[],
+		findInput?: IOrganizationTeamFindInput
+	): Promise<{ items: any[]; total: number }> {
+		const data = JSON.stringify({ relations, findInput });
+		return firstValueFrom(
+			this.http
+			.get<{ items: IOrganizationTeam[]; total: number }>(
+				`${API_PREFIX}/organization-team/pagination`,
+				{
+					params: { data }
+				}
+			)
+		);
+	}
+
 	getAll(
 		relations?: string[],
 		findInput?: IOrganizationTeamFindInput

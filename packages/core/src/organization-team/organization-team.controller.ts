@@ -13,7 +13,7 @@ import {
 	ValidationPipe
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { CrudController } from './../core/crud';
+import { CrudController, PaginationParams } from './../core/crud';
 import { OrganizationTeamService } from './organization-team.service';
 import {
 	IOrganizationTeam,
@@ -89,6 +89,21 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 	): Promise<OrganizationTeam> {
 		return this.organizationTeamService.createOrgTeam(body);
 	}
+
+	/**
+	 * Get pagination data of organization team
+	 * 
+	 * @param id 
+	 * @param entity 
+	 * @returns 
+	 */
+	 @Get('pagination')
+	 @UsePipes(new ValidationPipe({ transform: true }))
+	 async pagination(
+		 @Query() filter: PaginationParams<IOrganizationTeam>
+	 ): Promise<IPagination<IOrganizationTeam>> {
+		 return this.organizationTeamService.pagination(filter);
+	 }
 
 	/**
 	 * GET all organization teams

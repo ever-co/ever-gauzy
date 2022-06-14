@@ -5,7 +5,7 @@ import {
 	HttpStatus
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindManyOptions } from 'typeorm';
+import { Repository, FindManyOptions, Like, In } from 'typeorm';
 import { TenantAwareCrudService } from './../core/crud';
 import {
 	IOrganizationTeamCreateInput,
@@ -203,5 +203,22 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 				);
 			}
 		}
+	}
+
+	public pagination(filter?: any) {
+		if ('where' in filter) {
+			const { where } = filter;
+			if ('name' in where) {
+				const { name } = where;
+				filter.where.name = Like(`%${name}%`);
+			}
+			if ('tags' in where) {
+				const { tags } = where; 
+				filter.where.tags = {
+					id: In(tags)
+				}
+			}
+		}		
+		return super.paginate(filter);
 	}
 }
