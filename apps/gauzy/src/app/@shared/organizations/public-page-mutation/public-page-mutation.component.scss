@@ -156,12 +156,29 @@
 
     &:hover {
       color: var(--text-primary-color);
+
       nb-icon {
         svg {
           fill: var(--text-primary-color);
         }
       }
     }
+  }
+
+  ::ng-deep {
+
+    ng-select.ng-select.ng-select-opened>.ng-select-container,
+    ng-select.ng-select .ng-select-container {
+      background-color: var(--gauzy-card-1);
+    }
+  }
+
+  ::ng-deep nb-select.appearance-outline.status-basic .select-button {
+    background-color: var(--gauzy-card-1);
+  }
+
+  ::ng-deep [nbInput].status-basic {
+    background-color: var(--gauzy-card-1);
   }
 
   ::ng-deep {
