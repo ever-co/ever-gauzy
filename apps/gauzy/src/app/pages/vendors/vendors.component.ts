@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, TemplateRef, ViewChild } from '@angular/core';
 import {
 	IOrganizationVendor,
 	ITag,
@@ -7,17 +7,17 @@ import {
 } from '@gauzy/contracts';
 import { Router, RouterEvent, NavigationEnd, ActivatedRoute } from '@angular/router';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
-import { NbDialogService } from '@nebular/theme';
+import { NbDialogRef, NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, tap } from 'rxjs/operators';
 import { debounceTime, firstValueFrom } from 'rxjs';
 import { LocalDataSource } from 'ng2-smart-table';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { TranslationBaseComponent } from './../../@shared/language-base/translation-base.component';
 import { ComponentEnum } from './../../@core/constants';
 import { NotesWithTagsComponent } from './../../@shared/table-components';
 import { DeleteConfirmationComponent } from './../../@shared/user/forms';
 import { ErrorHandlingService, OrganizationVendorsService, Store, ToastrService } from '../../@core/services';
+import { PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -26,19 +26,27 @@ import { ErrorHandlingService, OrganizationVendorsService, Store, ToastrService 
 	styleUrls: ['vendors.component.scss']
 })
 export class VendorsComponent
-	extends TranslationBaseComponent
+	extends PaginationFilterBaseComponent
 	implements OnInit, OnDestroy {
 
+	@ViewChild('addEditTemplate') public addEditTemplateRef: TemplateRef<any>;
+	addEditdialogRef: NbDialogRef<any>;
 	organization: IOrganization;
 	showAddCard: boolean;
 	vendors: IOrganizationVendor[];
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
+	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
 	selectedVendor: IOrganizationVendor;
 	tags: ITag[] = [];
 	settingsSmartTable: object;
 	smartTableSource = new LocalDataSource();
 	form: FormGroup;
+	selected = {
+		vendor: null,
+		state: false
+	};
+	disabled: boolean = true;
 
 	constructor(
 		private readonly organizationVendorsService: OrganizationVendorsService,
@@ -78,7 +86,7 @@ export class VendorsComponent
 			.pipe(
 				filter((params) => !!params && params.get('openAddDialog') === 'true'),
 				debounceTime(1000),
-				tap(() => this.add()),
+				tap(() => this.openDialog(this.addEditTemplateRef, false)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -149,6 +157,7 @@ export class VendorsComponent
 	}
 
 	cancel() {
+		this.addEditdialogRef?.close()
 		this.form.reset();
 		this.selectedVendor = null;
 		this.tags = [];
@@ -285,5 +294,28 @@ export class VendorsComponent
 			return true;
 		}
 		return this.form.get(control).touched && this.form.get(control).invalid;
+	}
+
+	openDialog(template: TemplateRef<any>, isEditTemplate: boolean) {
+		try {
+			isEditTemplate ? this.edit(this.selectedVendor) : this.cancel();
+			this.addEditdialogRef = this.dialogService.open(template);
+		} catch (error) {
+			console.log(error, 'error');
+			
+			console.log('An error occurred on open dialog');
+		}
+	}
+
+	selectPosition(vendor: any) {
+		if (vendor.data) vendor = vendor.data;
+		const res =
+			this.selected.vendor && vendor.id === this.selected.vendor.id
+				? { state: !this.selected.state }
+				: { state: true };
+		this.disabled = !res.state;
+		this.selected.state = res.state;
+		this.selected.vendor = vendor;
+		this.selectedVendor = this.selected.vendor;
 	}
 }
