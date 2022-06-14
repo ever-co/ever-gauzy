@@ -17,7 +17,9 @@ import { ComponentEnum } from './../../@core/constants';
 import { NotesWithTagsComponent } from './../../@shared/table-components';
 import { DeleteConfirmationComponent } from './../../@shared/user/forms';
 import { ErrorHandlingService, OrganizationVendorsService, Store, ToastrService } from '../../@core/services';
-import { PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
+import { IPaginationBase, PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
+import { distinctUntilChange } from '@gauzy/common-angular';
+
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -32,7 +34,6 @@ export class VendorsComponent
 	@ViewChild('addEditTemplate') public addEditTemplateRef: TemplateRef<any>;
 	addEditdialogRef: NbDialogRef<any>;
 	organization: IOrganization;
-	showAddCard: boolean;
 	vendors: IOrganizationVendor[];
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
@@ -66,12 +67,26 @@ export class VendorsComponent
 	ngOnInit(): void {
 		this._initializeForm();
 		this.loadSmartTable();
+		this.subject$
+			.pipe(
+				tap(() => this.loadVendors()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this._applyTranslationOnSmartTable();
+		this.loadSmartTable()
+		this.pagination$
+			.pipe(
+				distinctUntilChange(),
+				tap(() => this.subject$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization: IOrganization) => !!organization),
 				tap((organization) => this.organization = organization),
-				tap(() => this.loadVendors()),
+				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -103,7 +118,7 @@ export class VendorsComponent
 			tags: ['']
 		});
 	}
-
+	
 	setView() {
 		this.viewComponentName = ComponentEnum.VENDORS;
 		this.store
@@ -111,16 +126,16 @@ export class VendorsComponent
 			.pipe(untilDestroyed(this))
 			.subscribe((componentLayout) => {
 				this.dataLayoutStyle = componentLayout;
-
 				this.selectedVendor = null;
-
-				//when layout selector change then hide edit showcard
-				this.showAddCard = false;
 			});
 	}
 
 	async loadSmartTable() {
+		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
+			pager: {
+				perPage: pagination ? pagination : 10
+			},
 			actions: false,
 			columns: {
 				tags: {
@@ -145,12 +160,7 @@ export class VendorsComponent
 		};
 	}
 
-	add() {
-		this.showAddCard = true;
-	}
-
 	edit(vendor: IOrganizationVendor) {
-		this.showAddCard = true;
 		this.tags = vendor.tags;
 		this.selectedVendor = vendor;
 		this.form.patchValue(vendor);
@@ -161,7 +171,11 @@ export class VendorsComponent
 		this.form.reset();
 		this.selectedVendor = null;
 		this.tags = [];
-		this.showAddCard = false;
+		this.selected = {
+			vendor: null,
+			state: false
+		};
+		this.disabled = true;
 	}
 
 	save() {
