@@ -239,27 +239,28 @@ export class DocumentsComponent extends PaginationFilterBaseComponent
 				organizationId,
 				tenantId
 			})
-			.pipe(
-				first(),
-				untilDestroyed(this)
-			)
-			.subscribe(
-				(data) => {
+			.pipe(first(), untilDestroyed(this))
+			.subscribe({
+				next: (data) => {
 					this.documentList = data.items;
 					this.loading = false;
-					this.smartTableSource.setPaging(activePage, itemsPerPage, false);
+					this.smartTableSource.setPaging(
+						activePage,
+						itemsPerPage,
+						false
+					);
 					this.smartTableSource.load(data.items);
 					if (
 						this.componentLayoutStyleEnum.CARDS_GRID ===
 						this.dataLayoutStyle
 					)
-					this._loadGridLayoutData();							
+						this._loadGridLayoutData();
 				},
-				() =>
+				error: () =>
 					this.toastrService.error(
 						'NOTES.ORGANIZATIONS.EDIT_ORGANIZATION_DOCS.ERR_LOAD'
 					)
-			);
+			});
 	}
 
 	private async _loadGridLayoutData() {
@@ -274,8 +275,8 @@ export class DocumentsComponent extends PaginationFilterBaseComponent
 		this.organizationDocumentsService
 			.update(this.documentId, { ...formValue })
 			.pipe(untilDestroyed(this), first())
-			.subscribe(
-				() => {
+			.subscribe({
+				next: () => {
 					this.toastrService.success(
 						this.getTranslation(
 							'NOTES.ORGANIZATIONS.EDIT_ORGANIZATION_DOCS.UPDATED',
@@ -284,15 +285,15 @@ export class DocumentsComponent extends PaginationFilterBaseComponent
 							}
 						)
 					);
-					this.addEditDialogRef.close()
+					this.addEditDialogRef.close();
 					this.cancel();
 					this.subject$.next(true);
 				},
-				() =>
+				error: () =>
 					this.toastrService.error(
 						'NOTES.ORGANIZATIONS.EDIT_ORGANIZATION_DOCS.ERR_UPDATED'
 					)
-			);
+			});
 	}
 
 	editDocument(document: IOrganizationDocument) {
@@ -318,8 +319,8 @@ export class DocumentsComponent extends PaginationFilterBaseComponent
 					this.organizationDocumentsService
 						.delete(document.id)
 						.pipe(first())
-						.subscribe(
-							() => {
+						.subscribe({
+							next: () => {
 								this.toastrService.success(
 									this.getTranslation(
 										'NOTES.ORGANIZATIONS.EDIT_ORGANIZATION_DOCS.DELETED',
@@ -330,9 +331,9 @@ export class DocumentsComponent extends PaginationFilterBaseComponent
 								);
 								this.subject$.next(true);
 							},
-							() =>
+							error: () =>
 								'NOTES.ORGANIZATIONS.EDIT_ORGANIZATION_DOCS.ERR_DELETED'
-						);
+						});
 				}
 			});
 	}
@@ -361,7 +362,7 @@ export class DocumentsComponent extends PaginationFilterBaseComponent
 		this.selectedDocument = document;
 		this.form.controls.documents.patchValue([document]);
 		this.documentId = document.id;
-		this.documentUrl = document.documentUrl;		
+		this.documentUrl = document.documentUrl;
 	}
 
 	openDialog(template: TemplateRef<any>, isEditTemplate: boolean) {
