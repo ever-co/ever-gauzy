@@ -66,7 +66,12 @@ export class TimeLogController {
 		description: 'Record not found'
 	})
 	@Get('/report/daily')
-	async getDailyReport(@Query() options: IGetTimeLogReportInput) {
+	async getDailyReport(
+		@Query(new ValidationPipe({
+			transform: true,
+			whitelist: true
+		})) options: TimeLogReportQueryDTO
+	) {
 		return await this.timeLogService.getDailyReport(options);
 	}
 

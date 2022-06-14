@@ -1,12 +1,6 @@
-import { Controller, UseGuards, HttpStatus, Get, Query, ValidationPipe, UsePipes, UseInterceptors } from '@nestjs/common';
+import { Controller, UseGuards, HttpStatus, Get, Query, ValidationPipe, UseInterceptors } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import {
-	IGetMembersStatistics,
-	IGetProjectsStatistics,
-	IGetTasksStatistics,
-	IGetTimeSlotStatistics,
-	IGetActivitiesStatistics,
-	IGetManualTimesStatistics,
 	ICountsStatistics,
 	IMembersStatistics,
 	IProjectsStatistics,
@@ -16,7 +10,7 @@ import {
 	IManualTimesStatistics
 } from '@gauzy/contracts';
 import { TenantPermissionGuard } from './../../shared/guards';
-import { StatisticCountsDTO } from './dto';
+import { StatisticCountsQueryDTO } from './dto';
 import { TransformInterceptor } from './../../core/interceptors';
 import { StatisticService } from './statistic.service';
 
@@ -40,9 +34,11 @@ export class StatisticController {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Get('/counts')
-	@UsePipes(new ValidationPipe({ transform: true }))
 	async getCountsStatistics(
-		@Query() request: StatisticCountsDTO
+		@Query(new ValidationPipe({
+			transform: true,
+			whitelist: true
+		})) request: StatisticCountsQueryDTO
 	): Promise<ICountsStatistics> {
 		return await this.statisticService.getCounts(request);
 	}
@@ -59,7 +55,10 @@ export class StatisticController {
 	})
 	@Get('/members')
 	async getMembersStatistics(
-		@Query() request: IGetMembersStatistics
+		@Query(new ValidationPipe({
+			transform: true,
+			whitelist: true
+		})) request: StatisticCountsQueryDTO
 	): Promise<IMembersStatistics[]> {
 		return await this.statisticService.getMembers(request);
 	}
@@ -76,7 +75,10 @@ export class StatisticController {
 	})
 	@Get('/projects')
 	async getProjectsStatistics(
-		@Query() request: IGetProjectsStatistics
+		@Query(new ValidationPipe({
+			transform: true,
+			whitelist: true
+		})) request: StatisticCountsQueryDTO
 	): Promise<IProjectsStatistics[]> {
 		return await this.statisticService.getProjects(request);
 	}
@@ -93,7 +95,10 @@ export class StatisticController {
 	})
 	@Get('/tasks')
 	async getTasksStatistics(
-		@Query() request: IGetTasksStatistics
+		@Query(new ValidationPipe({
+			transform: true,
+			whitelist: true
+		})) request: StatisticCountsQueryDTO
 	): Promise<ITask[]> {
 		return await this.statisticService.getTasks(request);
 	}
@@ -110,7 +115,10 @@ export class StatisticController {
 	})
 	@Get('/manual-times')
 	async getManualTimesStatistics(
-		@Query() request: IGetManualTimesStatistics
+		@Query(new ValidationPipe({
+			transform: true,
+			whitelist: true
+		})) request: StatisticCountsQueryDTO
 	): Promise<IManualTimesStatistics[]> {
 		return await this.statisticService.manualTimes(request);
 	}
@@ -127,7 +135,10 @@ export class StatisticController {
 	})
 	@Get('/time-slots')
 	async getEmployeeTimeSlotsStatistics(
-		@Query() request: IGetTimeSlotStatistics
+		@Query(new ValidationPipe({
+			transform: true,
+			whitelist: true
+		})) request: StatisticCountsQueryDTO
 	): Promise<ITimeSlotStatistics[]> {
 		return await this.statisticService.getEmployeeTimeSlots(request);
 	}
@@ -144,7 +155,10 @@ export class StatisticController {
 	})
 	@Get('/activities')
 	async getActivitiesStatistics(
-		@Query() request: IGetActivitiesStatistics
+		@Query(new ValidationPipe({
+			transform: true,
+			whitelist: true
+		})) request: StatisticCountsQueryDTO
 	): Promise<IActivitiesStatistics[]> {
 		return await this.statisticService.getActivities(request);
 	}
