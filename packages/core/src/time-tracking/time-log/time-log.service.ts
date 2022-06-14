@@ -24,12 +24,12 @@ import {
 	ReportGroupFilterEnum,
 	IOrganizationProject,
 	IDeleteTimeLog,
-	IOrganizationContact
+	IOrganizationContact,
+	ITimeSlot
 } from '@gauzy/contracts';
 import { CommandBus } from '@nestjs/cqrs';
-import * as _ from 'underscore';
-import { chain } from 'underscore';
-import { isEmpty, isNotEmpty } from '@gauzy/common';
+import { chain, pluck, reduce } from 'underscore';
+import { ArraySum, isEmpty, isNotEmpty } from '@gauzy/common';
 import { TenantAwareCrudService } from './../../core/crud';
 import {
 	Employee,
@@ -110,14 +110,14 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				}
 			},
 			relations: [
-				'project',
-				'task',
-				'organizationContact',
-				...(RequestContext.hasPermission(
-					PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+				'timeSlots',
+				...(
+					RequestContext.hasPermission(
+						PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+					)
+					? ['employee', 'employee.user']
+					: []
 				)
-					? ['employee', 'employee.organization', 'employee.user']
-					: [])
 			],
 			order: {
 				startedAt: 'ASC'
@@ -130,27 +130,47 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		const { startDate, endDate } = request;
 		const days: Array<string> = getDaysBetweenDates(startDate, endDate);
 
-		const weeklyLogs = _.chain(logs)
+		const weeklyLogs = chain(logs)
 			.groupBy('employeeId')
-			.map((innerLogs: ITimeLog[], _projectId) => {
-				const byDate = _.chain(innerLogs)
-					.groupBy((log) =>
+			.map((logs: ITimeLog[]) => {
+				/**
+				* calculate avarage weekly duration of the employee.
+				*/
+				const weeklyDuration = reduce(pluck(logs, 'duration'), ArraySum, 0);
+				/**
+				* calculate average weekly activity of the employee.
+				*/
+				const slots: ITimeSlot[] = chain(logs).pluck('timeSlots').flatten(true).value();
+				const weeklyActivity = (
+					(reduce(pluck(slots, 'overall'), ArraySum, 0) * 100) / 
+					(reduce(pluck(slots, 'duration'), ArraySum, 0))
+				);
+				
+				const byDate = chain(logs)
+					.groupBy((log: ITimeLog) =>
 						moment(log.startedAt).format('YYYY-MM-DD')
 					)
-					.mapObject((res: ITimeLog[]) => {
-						const sum = res.reduce((iteratee: any, log: any) => {
+					.mapObject((logs: ITimeLog[]) => {
+						const sum = logs.reduce((iteratee: any, log: ITimeLog) => {
 							return iteratee + log.duration;
 						}, 0);
-						return { sum, logs: res };
+						return { sum, logs: logs };
 					})
 					.value();
 
-				const employee = innerLogs.length > 0 ? innerLogs[0].employee : null;
+				const employee = logs.length > 0 ? logs[0].employee : null;
 				const dates: any = {};
 				days.forEach((date) => {
 					dates[date] = byDate[date] || 0;
 				});
-				return { employee, dates };
+				return {
+					employee,
+					dates,
+					sum: weeklyDuration || null,
+					activity: parseFloat(
+						parseFloat(weeklyActivity + '').toFixed(2)
+					)
+				};
 			})
 			.value();
 
