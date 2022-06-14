@@ -180,10 +180,8 @@ h5.org-title,
   color: var(--gauzy-text-color-1);
 }
 
-h5.org-title.org-key {
-  float: left;
-  display: block;
-  padding-right: 0.2rem;
+h5.org-title .org-key {
+  padding-right: 1rem;
 }
 
 .org-skills {
