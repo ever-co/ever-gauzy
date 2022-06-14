@@ -421,22 +421,45 @@
 				>
 					<div class="row">
 						<div class="col">
-							<span class="heading_title">{{
-								'POP_UPS.LANGUAGES' | translate
-							}}</span>
-							<button
+							<div class="row" *ngIf="languageExist">
+								<div class="col">
+									<nb-tag-list>
+										<nb-tag
+											*ngFor="
+												let lang of organization_languages
+											"
+											(remove)="removeLanguage(lang)"
+											[text]="
+												lang.name +
+												' (' +
+												lang.level +
+												')'
+											"
+											removable
+										></nb-tag>
+									</nb-tag-list>
+								</div>
+							</div>
+							<div
 								*ngIf="!showAddLanguage"
 								(click)="showAddLanguage = !showAddLanguage"
-								nbButton
-								status="success"
-								class="add_new"
+								class="button-add-language"
 							>
-								<nb-icon
-									class="mr-1"
-									icon="plus-outline"
-								></nb-icon>
-							</button>
-							<div class="row" *ngIf="showAddLanguage">
+								<button
+									nbButton
+									status="success"
+									outline
+									size="small"
+								>
+									<i class="fas fa-plus"></i>
+								</button>
+								<span class="heading_title">
+									{{
+										'POP_UPS.ADD_LANGUAGE' | translate
+									}}</span
+								>
+							</div>
+							<div class="row mt-3 show-add-language" *ngIf="showAddLanguage">
 								<div
 									class="col d-flex flex-column justify-content-end"
 								>
@@ -475,10 +498,8 @@
 										}}</nb-option>
 									</nb-select>
 								</div>
-
-								<span class="col" style="margin-top: 29px">
+								<span class="col d-flex align-items-end">
 									<button
-										class="w-100"
 										(click)="
 											addLanguage(
 												selectedLanguage,
@@ -489,47 +510,23 @@
 										"
 										nbButton
 										status="success"
+										size="small"
+										class="mr-3"
 									>
 										{{ 'BUTTONS.SAVE' | translate }}
 									</button>
-								</span>
-								<span class="col" style="margin-top: 29px">
 									<button
-										class="w-100"
 										(click)="
 											showAddLanguage = !showAddLanguage
 										"
 										nbButton
-										status="danger"
+										status="basic"
+										outline
+										size="small"
 									>
 										{{ 'BUTTONS.CANCEL' | translate }}
 									</button>
 								</span>
-							</div>
-							<div class="row" *ngIf="languageExist">
-								<div class="col">
-									<nb-card class="mt-3">
-										<nb-card-body>
-											<nb-tag-list>
-												<nb-tag
-													*ngFor="
-														let lang of organization_languages
-													"
-													(remove)="
-														removeLanguage(lang)
-													"
-													[text]="
-														lang.name +
-														' (' +
-														lang.level +
-														')'
-													"
-													removable
-												></nb-tag>
-											</nb-tag-list>
-										</nb-card-body>
-									</nb-card>
-								</div>
 							</div>
 						</div>
 					</div>
