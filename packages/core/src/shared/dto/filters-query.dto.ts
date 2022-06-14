@@ -1,6 +1,7 @@
 import { ITimeLogFilters, TimeLogSourceEnum, TimeLogType } from "@gauzy/contracts";
 import { ApiPropertyOptional } from "@nestjs/swagger";
-import { IsEnum, IsOptional, Max, Min } from "class-validator";
+import { IsEnum, IsOptional } from "class-validator";
+import { IsBetweenActivty } from "./../../shared/decorators/validations";
 
 /**
  * Get filters common request DTO validation
@@ -19,8 +20,7 @@ export class FiltersQueryDTO implements ITimeLogFilters {
 
     @ApiPropertyOptional({ type: () => String, enum: TimeLogType })
     @IsOptional()
-    @Min(0)
-    @Max(100)
+    @IsBetweenActivty(FiltersQueryDTO, (it) => it.activityLevel)
     readonly activityLevel: {
         start: number;
         end: number;
