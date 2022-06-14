@@ -111,6 +111,7 @@ export class TeamsComponent
 			.pipe(
 				filter((organization: IOrganization) => !!organization),
 				tap((organization) => this.organization = organization),
+				tap(() => this.refreshPagination()),
 				tap(() => this.teams$.next(true)),
 				tap(() => this.employees$.next(true)),
 				untilDestroyed(this)
