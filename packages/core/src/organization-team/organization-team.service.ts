@@ -5,7 +5,7 @@ import {
 	HttpStatus
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindManyOptions, Like, In } from 'typeorm';
+import { Repository, FindManyOptions, Like } from 'typeorm';
 import { TenantAwareCrudService } from './../core/crud';
 import {
 	IOrganizationTeamCreateInput,
