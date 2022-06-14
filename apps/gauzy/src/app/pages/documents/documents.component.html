@@ -25,15 +25,9 @@
 			"
 		>
 			<nb-card class="p-0" *ngFor="let document of documentList">
-				<nb-card-body
-					class="custom-table"
-					[ngClass]="
-						selected?.state && document === selected?.document
-							? 'custom-table selected'
-							: 'custom-table'
-					"
-					(click)="selectDocument(document)"
-				>					
+				<nb-card-body class="custom-table" 
+					[ngClass]="{ selected: selected?.state && document === selected?.document }"
+					(click)="selectDocument(document)">
 					<div>
 						<nb-icon icon="file-text-outline"></nb-icon>
 						<a [href]="document.documentUrl">
@@ -42,7 +36,7 @@
 					</div>
 					<div>
 						{{ document.updatedAt | dateTimeFormat }}
-					</div>					
+					</div>
 				</nb-card-body>
 			</nb-card>
 		</ng-template>
