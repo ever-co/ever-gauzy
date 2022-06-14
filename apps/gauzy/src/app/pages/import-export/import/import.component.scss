@@ -1,28 +1,182 @@
-$center: center;
+@import '../export/export.component.scss';
+@import '../../../@theme/styles/gauzy/gauzy-table';
 
-.import_export_wrapper {
+.well {
+  height: 180px;
+  width: 180px;
   display: flex;
-  justify-content: $center;
-  align-items: $center;
-  height: 100%;
-}
-.radio-buttons-group {
-  margin-left: 5%;
-}
-.info-text {
-  color: #3366ff;
-  font-weight: 600;
+  align-items: center;
+  justify-content: center;
+  color: var(--gauzy-text-color-2);
 }
 
-.half-width {
-  width: 50%;
-}
 .my-drop-zone {
-  border: dotted 3px lightgray;
+  border: dashed 3px var(--gauzy-border-default-color);
+  border-radius: var(--border-radius);
 }
+
 .nv-file-over {
-  border: dotted 3px red;
-} /* Default class applied to drop zones on over */
+  border: dashed 3px red;
+  border-radius: var(--border-radius);
+}
+
+/* Default class applied to drop zones on over */
 .another-file-over-class {
-  border: dotted 3px green;
+  border: dashed 3px green;
+  border-radius: var(--border-radius);
+}
+
+.import-data {
+  display: flex;
+  gap: 1rem
+}
+
+.import-zone {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.table-zone {
+  width: 100%;
+
+  .queue-progress {
+    margin: 2rem 0;
+    width: 80%;
+
+    h6,
+    .progress-percent {
+      font-size: 14px;
+      font-weight: 600;
+      line-height: 17px;
+      letter-spacing: 0em;
+      text-align: left;
+    }
+
+    .progress-percent {
+      display: flex;
+      gap: 10px
+    }
+
+    .progress {
+      height: 1.25rem;
+    }
+  }
+
+  .progress {
+    background-color: var(--gauzy-card-2);
+    border-radius: var(--button-rectangle-border-radius);
+
+    .progress-bar {
+      background-color: var(--background-primary-color-1);
+      border-radius: var(--button-rectangle-border-radius);
+    }
+  }
+}
+
+.button-import {
+  height: 24px;
+  border-width: 2px;
+  border-color: var(--color-primary-transparent-default) !important;
+}
+
+.btn-text {
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 16px;
+  letter-spacing: -0.009em;
+  text-align: left;
+}
+
+:host ::ng-deep {
+  nb-radio {
+    span.text {
+      color: var(--gauzy-text-color-2);
+      font-size: 11px;
+      font-weight: 400;
+      line-height: 13px;
+      letter-spacing: 0em;
+      text-align: left;
+    }
+  }
+
+  ngx-gauzy-button-action {
+    .actions-container {
+      padding: 0 !important;
+    }
+  }
+}
+
+.custom-header {
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 15px;
+  letter-spacing: 0em;
+  text-align: left;
+  color: var(--gauzy-text-color-2);
+  background: var(--gauzy-card-3);
+  border-radius: var(--border-radius);
+  padding: 3px;
+  height: 42px;
+  padding-left: 6px;
+}
+
+.uploader-zone {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 19px;
+  letter-spacing: 0em;
+  text-align: left;
+}
+
+.custom-body {
+  background: var(--gauzy-card-4);
+  border-radius: nb-theme(border-radius);
+  margin-top: 6px;
+  padding-left: 6px;
+  overflow: auto;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 17px;
+  letter-spacing: 0em;
+  text-align: left;
+
+  &.history {
+    max-height: calc(100vh - 45rem);
+  }
+
+  .border-bottom {
+    border-bottom: 1px solid rgba(126, 126, 143, 0.1) !important;
+  }
+
+  [nbButton].appearance-outline.status-primary {
+    border: none;
+  }
+
+  .item,
+  a {
+    cursor: pointer;
+  }
+
+  .selected {
+    background-color: rgba(126, 126, 143, 0.1);
+    box-shadow: -6px 0 0 0 rgba(0, 0, 0, .15);
+    border-radius: 8px 0 0 8px;
+
+    &.border-bottom {
+      border-bottom: none;
+    }
+  }
+}
+
+nb-badge {
+  position: relative;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 15px;
+  letter-spacing: 0em;
+  text-align: left;
+  padding: 4px 8px;
+
 }

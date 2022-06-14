@@ -1,243 +1,274 @@
-<nb-card class="import" style="padding: 1rem;">
-	<nb-card-header>
-		<span class="info-text">
-			{{ 'MENU.IMPORT_EXPORT.IMPORT_MESSAGE' | translate }}</span
-		>
+<nb-card>
+	<nb-card-header class="d-flex">
+		<ngx-back-navigation></ngx-back-navigation>
+		<span class="info-text m-0">
+			<span class="title">{{
+				'MENU.IMPORT_EXPORT.IMPORT_DATA' | translate
+			}}</span>
+			<span class="message">{{
+				'MENU.IMPORT_EXPORT.IMPORT_MESSAGE' | translate
+			}}</span>
+		</span>
 	</nb-card-header>
-	<div class="row">
-		<div class="col-md-3">
-			<h3 style="color: #3366ff;" *ngIf="uploader.queue.length == 0">
-				{{ 'MENU.IMPORT_EXPORT.SELECT_FILE' | translate }}
-			</h3>
-			<div
-				ng2FileDrop
-				style="height: 30%;"
-				[ngClass]="{ 'nv-file-over': hasBaseDropZoneOver }"
-				(onFileDrop)="dropFile($event)"
-				(fileOver)="fileOverBase($event)"
-				[uploader]="uploader"
-				class="well my-drop-zone"
-				*ngIf="uploader.queue.length == 0"
-			>
-				{{ 'MENU.IMPORT_EXPORT.DROP_FILE' | translate }}
-			</div>
-			<br />
-			<input
-				#fileInput
-				style="display: none;"
-				type="file"
-				accept="application/zip"
-				ng2FileSelect
-				[uploader]="uploader"
-				(change)="onFileClick($event)"
-			/><br />
-			<button
-				class="button-import"
-				outline
-				status="primary"
-				size="medium"
-				nbButton
-				(click)="fileInput.click()"
-				*ngIf="uploader.queue.length == 0"
-			>
-				{{ 'MENU.IMPORT_EXPORT.BROWSE' | translate }}
-			</button>
+	<nb-card-body class="import-data">
+		<div class="import-zone">
+			<ng-container *ngIf="uploader?.queue?.length === 0; else noUpload">
+				<div
+					ng2FileDrop
+					[ngClass]="{ 'nv-file-over': hasBaseDropZoneOver }"
+					(onFileDrop)="dropFile($event)"
+					(fileOver)="fileOverBase($event)"
+					[uploader]="uploader"
+					class="well my-drop-zone"
+				>
+					{{ 'MENU.IMPORT_EXPORT.DROP_FILE' | translate }}
+				</div>
+			</ng-container>
+			<ng-template #noUpload>
+				<div class="well my-drop-zone">
+					{{ 'MENU.IMPORT_EXPORT.NO_DROP_FILE' | translate }}
+				</div>
+			</ng-template>
 			<div class="ilmport_export_wrapper">
 				<nb-radio-group
 					class="radio-buttons-group"
 					[value]="importType"
 					(valueChange)="onImportTypeChange($event)"
 				>
-					<nb-radio [value]="importTypeEnum.MERGE" checked="true">{{
-						'MENU.IMPORT_EXPORT.MERGE' | translate
-					}}</nb-radio>
-					<nb-radio [value]="importTypeEnum.CLEAN">{{
-						'MENU.IMPORT_EXPORT.CLEAN_UP' | translate
-					}}</nb-radio>
+					<nb-radio [value]="importTypeEnum.MERGE" checked="true">
+						{{ 'MENU.IMPORT_EXPORT.MERGE' | translate }}
+					</nb-radio>
+					<nb-radio [value]="importTypeEnum.CLEAN">
+						{{ 'MENU.IMPORT_EXPORT.CLEAN_UP' | translate }}
+					</nb-radio>
 				</nb-radio-group>
 			</div>
-			<br /><br /><br />
 		</div>
-
-		<div class="col-md-9" style="margin-bottom: 40px;">
-			<table class="table">
-				<thead>
-					<tr>
-						<th class="half-width">
-							{{ 'MENU.IMPORT_EXPORT.NAME' | translate }}
-						</th>
-						<th>
-							{{ 'MENU.IMPORT_EXPORT.SIZE' | translate }}
-						</th>
-						<th>
-							{{ 'MENU.IMPORT_EXPORT.PROGRESS' | translate }}
-						</th>
-						<th>
-							{{ 'MENU.IMPORT_EXPORT.STATUS' | translate }}
-						</th>
-						<th>
-							{{ 'MENU.IMPORT_EXPORT.ACTIONS' | translate }}
-						</th>
-					</tr>
-				</thead>
-
-				<tbody>
-					<tr *ngFor="let item of uploader.queue">
-						<td>
-							<strong>{{ item?.file?.name }}</strong>
-						</td>
-						<td
-							*ngIf="uploader.options.isHTML5"
-							style="white-space: nowrap;"
-						>
-							{{ item?.file?.size / 1024 / 1024 | number: '.2' }}
-							MB
-						</td>
-						<td *ngIf="uploader.options.isHTML5">
-							<div class="progress" style="margin-bottom: 0;">
-								<div
-									class="progress-bar"
-									role="progressbar"
-									[ngStyle]="{
-										width: item.progress + '%'
-									}"
-								></div>
-							</div>
-						</td>
-						<td class="text-center">
-							<span *ngIf="item.isUploaded"
-								><nb-icon
-									style="stroke: #00d68f;"
-									icon="checkmark-circle-outline"
-								></nb-icon
-							></span>
-							<span *ngIf="item.isCancel"
-								><nb-icon
-									style="stroke: #ffaa00;"
-									icon="close-circle-outline"
-								></nb-icon
-							></span>
-							<span *ngIf="item.isError"
-								><nb-icon
-									style="stroke: #ff3d71;"
-									icon="alert-circle-outline"
-								></nb-icon
-							></span>
-						</td>
-						<td nowrap>
-							<button
-								type="button"
-								class="btn btn-success btn-xs mr-1"
-								(click)="uploader.uploadAll()"
-								[disabled]="
-									item.isReady ||
-									item.isUploading ||
-									item.isSuccess
-								"
-							>
-								<span>{{
-									'MENU.IMPORT_EXPORT.IMPORT' | translate
-								}}</span>
-							</button>
-							<button
-								type="button"
-								class="btn btn-warning btn-xs mr-1"
-								(click)="item.cancel()"
-								[disabled]="!item.isUploading"
-							>
-								<span>{{
-									'MENU.IMPORT_EXPORT.CANCEL' | translate
-								}}</span>
-							</button>
-							<button
-								type="button"
-								class="btn btn-danger btn-xs mr-1"
-								(click)="uploader.clearQueue()"
-							>
-								<span>{{
-									'MENU.IMPORT_EXPORT.REMOVE' | translate
-								}}</span>
-							</button>
-						</td>
-					</tr>
-				</tbody>
-			</table>
-
-			<div>
-				<div>
-					<span style="display: block;">{{
-						'MENU.IMPORT_EXPORT.QUEUE_PROGRESS' | translate
-					}}</span
-					><br />
-
-					<div class="progress">
+		<div class="table-zone">
+			<div class="d-flex align-items-start justify-content-between">
+				<div class="uploader-zone">
+					{{ uploader?.queue?.at(-1)?.file?.name }}
+					<button
+						class="button-import"
+						outline
+						status="primary"
+						size="small"
+						nbButton
+						[disabled]="uploader?.queue?.length !== 0"
+						(click)="fileInput.click()"
+					>
+						<span class="btn-text">{{
+							'MENU.IMPORT_EXPORT.BROWSE' | translate | titlecase
+						}}</span>
+					</button>
+					<input
+						#fileInput
+						style="display: none"
+						type="file"
+						accept="application/zip"
+						ng2FileSelect
+						[uploader]="uploader"
+						(change)="onFileClick($event)"
+					/>
+				</div>
+				<div *ngIf="uploader?.queue?.length > 0">
+					<ng-container *ngxPermissionsOnly="IMPORT_EXPORT_VIEW">
+						<ngx-gauzy-button-action
+							[hasLayoutSelector]="false"
+							[isDisable]="false"
+							[buttonTemplateVisible]="visibleButton"
+						></ngx-gauzy-button-action>
+					</ng-container>
+				</div>
+			</div>
+			<div class="queue-progress">
+				<h6>{{ 'MENU.IMPORT_EXPORT.QUEUE_PROGRESS' | translate }}</h6>
+				<span class="progress-percent">
+					<div class="progress w-100">
 						<div
 							class="progress-bar"
 							role="progressbar"
 							[ngStyle]="{
-								width: uploader.progress + '%'
+								width: uploader?.progress + '%'
 							}"
 						></div>
 					</div>
-				</div>
-				<br />
-				<button
-					type="button"
-					class="btn btn-success btn-s"
-					(click)="uploader.uploadAll()"
-					[disabled]="!uploader.getNotUploadedItems().length"
-				>
-					<span>{{ 'MENU.IMPORT_EXPORT.IMPORT' | translate }}</span>
-				</button>
-				<button
-					style="margin-left: 1%;"
-					type="button"
-					class="btn btn-warning btn-s"
-					(click)="uploader.cancelAll()"
-					[disabled]="!uploader.isUploading"
-				>
-					<span>{{ 'MENU.IMPORT_EXPORT.CANCEL' | translate }}</span>
-				</button>
-				<button
-					style="margin-left: 1%;"
-					type="button"
-					class="btn btn-danger btn-s"
-					(click)="uploader.clearQueue()"
-					[disabled]="!uploader.queue.length"
-				>
-					<span>{{ 'MENU.IMPORT_EXPORT.REMOVE' | translate }}</span>
-				</button>
+					{{ uploader?.progress }}%
+				</span>
 			</div>
-		</div>
-	</div>
-</nb-card>
+			<div>
+				<div class="row custom-header m-0 align-items-center">
+					<div class="col-4">
+						{{ 'MENU.IMPORT_EXPORT.NAME' | translate }}
+					</div>
+					<div class="col-1">
+						{{ 'MENU.IMPORT_EXPORT.SIZE' | translate }}
+					</div>
+					<div class="col-5">
+						{{ 'MENU.IMPORT_EXPORT.PROGRESS' | translate }}
+					</div>
+					<div class="col-2">
+						{{ 'MENU.IMPORT_EXPORT.STATUS' | translate }}
+					</div>
+				</div>
 
-<nb-card class="import-history p-1">
-	<nb-card-header>
-		<h4>{{ 'MENU.IMPORT_EXPORT.IMPORT_HISTORY' | translate }}</h4>
-		<span class="info-text">{{ 'MENU.IMPORT_EXPORT.IMPORT_HISTORY_MESSAGE' | translate }}</span>
-	</nb-card-header>
-	<nb-card-body>
-		<div class="row border-bottom py-3 font-weight-bold">
-			<div class="col-3">{{ 'MENU.IMPORT_EXPORT.NAME' | translate }}</div>
-			<div class="col-3">{{ 'MENU.IMPORT_EXPORT.SIZE' | translate }}</div>
-			<div class="col-3">{{ 'MENU.IMPORT_EXPORT.IMPORT_DATE_TIME' | translate }}</div>
-			<div class="col-3">{{ 'MENU.IMPORT_EXPORT.STATUS' | translate }}</div>
-		</div>
-		<div class="row border-bottom py-3" *ngFor="let history of (history$ | async)">
-			<div class="col-3">{{ history.file }}</div>
-			<div class="col-3">{{ history.size / 1024 / 1024 | number: '.2' }} MB</div>
-			<div class="col-3">{{ history.importDate | dateTimeFormat }}</div>
-			<div class="col-3">
-				<span *ngIf="history.status === importHistoryStatusEnum.SUCCESS">
-					<nb-icon status="success" icon="checkmark-circle-outline"></nb-icon> 
-					{{ importHistoryStatusEnum.SUCCESS }}
-				</span>
-				<span *ngIf="history.status === importHistoryStatusEnum.FAILED" >
-					<nb-icon status="danger" icon="alert-circle-outline"></nb-icon > 
-					{{ importHistoryStatusEnum.FAILED }}
-				</span>
+				<div class="custom-body queue">
+					<div
+						class="row border-bottom m-0 py-3 align-items-center"
+						*ngFor="let item of uploader.queue; let lastItem = last"
+						[ngClass]="{ 'border-bottom-none': lastItem }"
+						(click)="selectItem(item)"
+					>
+						<div class="col-4">
+							{{ item?.file?.name }}
+						</div>
+						<div
+							class="col-1"
+							*ngIf="uploader.options.isHTML5"
+							style="white-space: nowrap"
+						>
+							{{ item?.file?.size | fileSize }}
+						</div>
+						<div class="col-5" *ngIf="uploader.options.isHTML5">
+							<div class="d-flex align-items-center">
+								<div
+									class="progress w-100 mr-1"
+									style="margin-bottom: 0; height: 10px"
+								>
+									<div
+										class="progress-bar"
+										role="progressbar"
+										[ngStyle]="{
+											width: item.progress + '%'
+										}"
+									></div>
+								</div>
+								{{ item?.progress }}%
+							</div>
+						</div>
+						<div class="col-2">
+							<span *ngIf="item.isUploaded && !item.isError">
+								<nb-badge
+									status="success"
+									[text]="importStatus.SUCCESS"
+								></nb-badge>
+							</span>
+							<span *ngIf="item.isCancel">
+								<nb-badge
+									status="warning"
+									[text]="importStatus.CANCELLED"
+								></nb-badge>
+							</span>
+							<span *ngIf="item.isUploading">
+								<nb-badge
+									status="info"
+									[text]="importStatus.IN_PROGRESS"
+								></nb-badge>
+							</span>
+							<span *ngIf="item.isError">
+								<nb-badge
+									status="danger"
+									[text]="importStatus.FAILED"
+								></nb-badge>
+							</span>
+						</div>
+					</div>
+				</div>
 			</div>
 		</div>
 	</nb-card-body>
 </nb-card>
+
+<nb-card class="mt-3">
+	<nb-card-header>
+		<h4 class="title">
+			{{ 'MENU.IMPORT_EXPORT.IMPORT_HISTORY' | translate }}
+		</h4>
+		<span class="message">{{
+			'MENU.IMPORT_EXPORT.IMPORT_HISTORY_MESSAGE' | translate
+		}}</span>
+	</nb-card-header>
+	<nb-card-body>
+		<div class="row custom-header m-0 align-items-center">
+			<div class="col-3">{{ 'MENU.IMPORT_EXPORT.NAME' | translate }}</div>
+			<div class="col-2">{{ 'MENU.IMPORT_EXPORT.SIZE' | translate }}</div>
+			<div class="col-3">
+				{{ 'MENU.IMPORT_EXPORT.IMPORT_DATE_TIME' | translate }}
+			</div>
+			<div class="col-1">
+				{{ 'MENU.IMPORT_EXPORT.STATUS' | translate }}
+			</div>
+			<div class="col-3">
+				{{ 'MENU.IMPORT_EXPORT.ACTIONS' | translate }}
+			</div>
+		</div>
+		<div class="custom-body history">
+			<div
+				class="row border-bottom m-0 py-3 align-items-center"
+				*ngFor="let history of history$ | async; let lastHistory = last"
+				[ngClass]="{ 'border-bottom-none': lastHistory }"
+			>
+				<div class="col-3">{{ history.file }}</div>
+				<div class="col-2">{{ history.size | fileSize }}</div>
+				<div class="col-3">
+					{{ history.importDate | dateTimeFormat }}
+				</div>
+				<div class="col-1">
+					<span *ngIf="history.status === importStatus.SUCCESS">
+						<nb-badge
+							[text]="importStatus.SUCCESS"
+							status="success"
+						></nb-badge>
+					</span>
+					<span *ngIf="history.status === importStatus.FAILED">
+						<nb-badge
+							[text]="importStatus.FAILED"
+							status="success"
+						></nb-badge>
+					</span>
+				</div>
+				<div class="col-3" nowrap>
+					<a (click)="download(history)">{{
+						'MENU.IMPORT_EXPORT.DOWNLOAD' | translate
+					}}</a>
+				</div>
+			</div>
+		</div>
+	</nb-card-body>
+</nb-card>
+<ng-template #visibleButton>
+	<button
+		nbButton
+		type="button"
+		status="success"
+		size="small"
+		class="action"
+		(click)="uploader.uploadAll()"
+		[disabled]="!uploader.getNotUploadedItems().length"
+	>
+		<span>{{ 'MENU.IMPORT_EXPORT.IMPORT' | translate }}</span>
+	</button>
+	<button
+		nbButton
+		type="button"
+		status="warning"
+		class="action"
+		size="small"
+		(click)="uploader.cancelAll()"
+		[disabled]="!uploader.isUploading"
+	>
+		<span>{{ 'MENU.IMPORT_EXPORT.CANCEL' | translate }}</span>
+	</button>
+	<button
+		nbButton
+		type="button"
+		status="basic"
+		class="action"
+		size="small"
+		(click)="uploader.clearQueue()"
+		[disabled]="!uploader.queue.length"
+		[nbTooltip]="'MENU.IMPORT_EXPORT.REMOVE' | translate"
+	>
+		<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
+	</button>
+</ng-template>

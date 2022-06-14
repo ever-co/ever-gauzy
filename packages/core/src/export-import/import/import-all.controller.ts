@@ -10,7 +10,7 @@ import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import * as path from 'path';
 import { CommandBus } from '@nestjs/cqrs';
-import { IImportHistory, ImportHistoryStatusEnum, IPagination, UploadedFile } from '@gauzy/contracts';
+import { IImportHistory, ImportStatusEnum, IPagination, UploadedFile } from '@gauzy/contracts';
 import { ImportAllService } from './import-all.service';
 import { RequestContext } from './../../core/context';
 import { FileStorage, UploadedFileStorage } from '../../core/file-storage';
@@ -81,14 +81,14 @@ export class ImportAllController {
 			return await this.commandBus.execute(
 				new ImportHistoryCreateCommand({ 
 					...history, 
-					status: ImportHistoryStatusEnum.SUCCESS 
+					status: ImportStatusEnum.SUCCESS 
 				})
 			);
 		} catch (error) {
 			return await this.commandBus.execute(
 				new ImportHistoryCreateCommand({ 
 					...history, 
-					status: ImportHistoryStatusEnum.FAILED 
+					status: ImportStatusEnum.FAILED 
 				})
 			);
 		}

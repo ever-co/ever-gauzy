@@ -24,7 +24,6 @@ $button-radius: nb-theme(button-rectangle-border-radius);
     margin-right: 16px;
     input {
         height: 1.875rem;
-        width: 190px;
         background-color: transparent;
         /* Tell the input to use all the available space */
         flex-grow: 2;
@@ -37,6 +36,12 @@ $button-radius: nb-theme(button-rectangle-border-radius);
         letter-spacing: 0em;
         text-align: left;
         color: nb-theme(gauzy-text-color-2);
+    }
+    input.single-range {
+        width: 103px; 
+    }
+    input.double-range {
+        width: 190px;
     }
     input:focus {
         /* removing the input focus blue box. Put this on the form if you like. */
@@ -59,8 +64,12 @@ $button-radius: nb-theme(button-rectangle-border-radius);
             display: flex;
             flex-direction: row;
             flex-wrap: nowrap;
-            @include nb-ltr(margin-left, -146%);
-            @include nb-rtl(margin-right, -146%);
+            @include nb-ltr(margin-left, -130%);
+            @include nb-rtl(margin-right, -130%);
+            &.double {
+                @include nb-ltr(margin-left, -146%);
+                @include nb-rtl(margin-right, -146%);
+            }
             .calendar-table {
                 background-color: nb-theme(background-basic-color-1);
                 border-color: nb-theme(border-basic-color-3);

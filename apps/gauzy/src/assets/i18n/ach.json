@@ -712,6 +712,7 @@
 			"IMPORT_HISTORY_MESSAGE": "crwdns7944:0crwdne7944:0",
 			"SELECT_FILE": "crwdns3798:0crwdne3798:0",
 			"DROP_FILE": "crwdns3800:0crwdne3800:0",
+			"NO_DROP_FILE": "crwdns11195:0crwdne11195:0",
 			"BROWSE": "crwdns3802:0crwdne3802:0",
 			"NAME": "crwdns3804:0crwdne3804:0",
 			"SIZE": "crwdns3806:0crwdne3806:0",
@@ -894,7 +895,11 @@
 			"PRODUCT_IMAGE_ASSET": "crwdns10468:0crwdne10468:0",
 			"CUSTOM_SMTP": "crwdns10470:0crwdne10470:0",
 			"FEATURE": "crwdns10472:0crwdne10472:0",
-			"FEATURE_ORGANIZATION": "crwdns10474:0crwdne10474:0"
+			"FEATURE_ORGANIZATION": "crwdns10474:0crwdne10474:0",
+			"EXPORT_DATA": "crwdns11197:0crwdne11197:0",
+			"IMPORT_DATA": "crwdns11199:0crwdne11199:0",
+			"DOWNLOAD": "crwdns11201:0crwdne11201:0",
+			"ALL_ENTITIES": "crwdns11203:0crwdne11203:0"
 		},
 		"TAGS": "crwdns2861:0crwdne2861:0",
 		"LANGUAGE": "crwdns4646:0crwdne4646:0",
@@ -1026,7 +1031,8 @@
 		"NO_CLIENTS": "crwdns9050:0crwdne9050:0",
 		"EXPENSE": "crwdns10517:0crwdne10517:0",
 		"PAYMENT": "crwdns10264:0crwdne10264:0",
-		"NO_EMPLOYEES_WORKED": "crwdns9496:0crwdne9496:0"
+		"NO_EMPLOYEES_WORKED": "crwdns9496:0crwdne9496:0",
+		"WEEKLY_TOTAL": "crwdns11193:0crwdne11193:0"
 	},
 	"INTEGRATIONS": {
 		"AVAILABLE_INTEGRATIONS": "crwdns8266:0crwdne8266:0",
@@ -1066,7 +1072,9 @@
 		"SETTINGS": "crwdns8134:0crwdne8134:0",
 		"SELECT_GROUPS": "crwdns8268:0crwdne8268:0",
 		"FILTER_INTEGRATIONS": "crwdns8270:0crwdne8270:0",
-		"SEARCH_INTEGRATIONS": "crwdns8272:0crwdne8272:0"
+		"SEARCH_INTEGRATIONS": "crwdns8272:0crwdne8272:0",
+		"PAID": "crwdns11205:0crwdne11205:0",
+		"INTEGRATION": "crwdns11207:0crwdne11207:0"
 	},
 	"DASHBOARD_PAGE": {
 		"ACCOUNTING": "crwdns3190:0crwdne3190:0",

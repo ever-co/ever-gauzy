@@ -1,0 +1,42 @@
+@import 'gauzy/_gauzy-table';
+
+:host {
+
+    nb-card,
+    nb-card-body {
+        background-color: nb-theme(gauzy-card-2);
+        border-radius: nb-theme(border-radius);
+
+        .button-imports {
+            display: flex;
+            gap: 10px;
+        }
+
+        .button-import {
+            background-color: nb-theme(gauzy-card-2);
+            padding: 5px;
+            border-radius: 2rem;
+        }
+
+        .info {
+            font-size: 12px;
+            font-weight: 400;
+            line-height: 15px;
+            letter-spacing: 0em;
+            text-align: left;
+            color: nb-theme(gauzy-text-color-2);
+        }
+
+        h4 {
+            font-size: 24px;
+            font-weight: 600;
+            line-height: 30px;
+            letter-spacing: 0em;
+            text-align: left;
+
+            .menu-setting {
+                font-weight: 400;
+            }
+        }
+    }
+}

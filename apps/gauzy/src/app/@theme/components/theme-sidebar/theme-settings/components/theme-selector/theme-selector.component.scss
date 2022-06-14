@@ -14,5 +14,5 @@
     border-width: 2px;
     border-color: rgba($color: rgba(126, 126, 143), $alpha: .5);
   }
-  @include nb-select-overrides(2rem, $default-button-radius, unset);
+  @include nb-select-overrides(2rem, $default-button-radius, $default-box-shadow);
 }
