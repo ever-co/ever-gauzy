@@ -10,12 +10,12 @@ export class FiltersQueryDTO implements ITimeLogFilters {
 
     @ApiPropertyOptional({ type: () => String, enum: TimeLogSourceEnum })
     @IsOptional()
-    @IsEnum(TimeLogSourceEnum)
+    @IsEnum(TimeLogSourceEnum, { each: true })
     readonly source: TimeLogSourceEnum[];
 
     @ApiPropertyOptional({ type: () => String, enum: TimeLogType })
     @IsOptional()
-    @IsEnum(TimeLogType)
+    @IsEnum(TimeLogType, { each: true })
     readonly logType: TimeLogType[];
 
     @ApiPropertyOptional({ type: () => String, enum: TimeLogType })

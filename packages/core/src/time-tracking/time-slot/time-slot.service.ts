@@ -109,11 +109,11 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 					const { source } = request;
 					if (source instanceof Array) {
 						query.andWhere('"timeLog"."source" IN (:...source)', {
-							source: source
+							source
 						});
 					} else {
 						query.andWhere('"timeLog"."source" = :source', {
-							source: source
+							source
 						});
 					}
 				}
