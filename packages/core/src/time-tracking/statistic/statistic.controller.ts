@@ -40,7 +40,6 @@ export class StatisticController {
 			whitelist: true
 		})) request: StatisticCountsQueryDTO
 	): Promise<ICountsStatistics> {
-		console.log({ request });
 		return await this.statisticService.getCounts(request);
 	}
 
