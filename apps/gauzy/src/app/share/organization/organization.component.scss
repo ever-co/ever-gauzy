@@ -1,3 +1,5 @@
+@import 'gauzy/_gauzy-table';
+
 .org-info {
   .edit-icon {
     margin-left: 30px;
@@ -94,7 +96,17 @@
     }
 
     .org-head-right-sec {
-      border-left: 1px solid lightgray;
+      display: flex;
+      align-items: flex-start;
+      justify-content: flex-end;
+      gap: 17px;
+
+      .org-head-details {
+        background-color: var(--gauzy-card-2);
+        border-radius: var(--border-radius);
+        padding: 10px;
+        width: fit-content;
+      }
 
       .org-banner {
         color: var(--gauzy-text-color-2);
@@ -158,17 +170,19 @@
   }
 }
 
-h5.org-title {
-  font-size: 16px;
+h5.org-title,
+.org-title {
+  font-size: 12px;
   font-weight: 600;
-  margin: 0;
-  color: #222b45;
+  line-height: 15px;
+  letter-spacing: 0em;
+  text-align: left;
+  color: var(--gauzy-text-color-1);
 }
 
 h5.org-title.org-key {
   float: left;
   display: block;
-  line-height: 1.3rem;
   padding-right: 0.2rem;
 }
 
@@ -192,15 +206,13 @@ ul.org-value {
   padding: 0;
 }
 
+h5.org-title span.client-focus,
 span.org-value {
-  float: left;
-  line-height: 1.3rem;
-  padding-left: 10px;
-}
-
-h5.org-title span.client-focus {
-  font-size: 16px;
-  font-weight: 500;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 17px;
+  letter-spacing: 0em;
+  text-align: right;
 }
 
 .section_block {
@@ -233,11 +245,14 @@ h5.org-title span.client-focus {
 h5.org-title.title-employees {
   text-align: center;
   padding: 9px;
-  border-bottom: 1px solid #222b45;
   margin: 0 auto;
   max-width: 180px;
   margin-bottom: 25px;
-  line-height: 15px;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 17px;
+  letter-spacing: 0em;
+  text-align: left;
 }
 
 p,

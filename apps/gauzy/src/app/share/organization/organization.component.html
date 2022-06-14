@@ -1,31 +1,6 @@
 <nb-card>
 	<nb-card-body *ngIf="organization">
 		<div class="org-info">
-			<div *ngIf="hasEditPermission && belongsToOrganization">
-				<div class="edit-icon">
-					<svg
-						xmlns="http://www.w3.org/2000/svg"
-						width="36"
-						height="36"
-						viewBox="0 0 36 36"
-					>
-						<circle
-							cx="18"
-							cy="18"
-							r="18"
-							fill="#0091FF"
-							fill-rule="evenodd"
-						/>
-					</svg>
-					<nb-icon
-						class="ml-2 open"
-						icon="edit-outline"
-						(click)="editPage()"
-						[options]="{ color: 'white' }"
-					>
-					</nb-icon>
-				</div>
-			</div>
 			<div class="org-head">
 				<div class="row">
 					<div class="col-md-6 org-head-left-sec">
@@ -120,78 +95,122 @@
 						></span>
 					</div>
 					<div class="col-md-6 org-head-right-sec">
-						<div class="org-year-found">
-							<h5
-								*ngIf="organization.registrationDate"
-								class="org-title label-text"
-								[textContent]="
-									('PUBLIC_PAGE.YEAR_FOUNDED' | translate) +
-									': ' +
-									moment(
-										organization.registrationDate
-									).format('Y')
-								"
-							></h5>
-						</div>
-						<div class="org-size">
-							<h5
-								*ngIf="organization.totalEmployees"
-								class="org-title label-text"
-								[textContent]="
-									('PUBLIC_PAGE.COMPANY_SIZE' | translate) +
-									': ' +
-									organization.totalEmployees
-								"
-							></h5>
-						</div>
-						<div
-							class="org-size"
-							*ngIf="organization.show_clients_count"
-						>
-							<h5
-								class="org-title label-text"
-								[textContent]="
-									('PUBLIC_PAGE.TOTAL_CLIENTS' | translate) +
-									': ' +
-									totalClients
-								"
-							></h5>
-						</div>
-						<div
-							class="org-client-focus"
-							*ngIf="organization.client_focus"
-						>
-							<h5 class="org-title label-text">
-								{{ 'PUBLIC_PAGE.CLIENT_FOCUS' | translate }}:
-								<span
-									class="client-focus"
-									[textContent]="
-										organization.client_focus.replace(
-											',',
-											', '
-										)
-									"
-								></span>
-							</h5>
-						</div>
-						<div class="row" *ngIf="this.organization.show_profits">
-							<div class="col">
-								<div class="org-year-found">
-									<h5 class="org-title org-key label-text">
-										{{ 'PUBLIC_PAGE.PROFITS' | translate }}
-										:
-									</h5>
+						<div class="org-head-details">
+							<div class="org-year-found">
+								<h5
+									*ngIf="organization.registrationDate"
+									class="org-title label-text"
+								>
+									<span class="org-key"
+										>{{
+											'PUBLIC_PAGE.YEAR_FOUNDED'
+												| translate
+										}}:</span
+									>
+									<span class="org-value">{{
+										moment(
+											organization.registrationDate
+										).format('Y')
+									}}</span>
+								</h5>
+							</div>
+							<div class="org-size">
+								<h5
+									*ngIf="organization.totalEmployees"
+									class="org-title label-text"
+								>
+									<span class="org-key"
+										>{{
+											'PUBLIC_PAGE.COMPANY_SIZE'
+												| translate
+										}}:</span
+									>
+									<span class="org-value">{{
+										organization.totalEmployees
+									}}</span>
+								</h5>
+							</div>
+							<div
+								class="org-size"
+								*ngIf="organization.show_clients_count"
+							>
+								<h5 class="org-title label-text">
+									<span class="org-key"
+										>{{
+											'PUBLIC_PAGE.TOTAL_CLIENTS'
+												| translate
+										}}:</span
+									>
+									<span class="org-value">{{
+										totalClients
+									}}</span>
+								</h5>
+							</div>
+							<div
+								class="org-client-focus"
+								*ngIf="organization.client_focus"
+							>
+								<h5 class="org-title label-text">
+									<span class="org-key"
+										>{{
+											'PUBLIC_PAGE.CLIENT_FOCUS'
+												| translate
+										}}:</span
+									>
 									<span
-										class="org-value"
+										class="client-focus"
 										[textContent]="
-											organization.currency +
-											' ' +
-											profits
+											organization.client_focus.replace(
+												',',
+												', '
+											)
 										"
 									></span>
+								</h5>
+							</div>
+							<div
+								class="row"
+								*ngIf="this.organization.show_profits"
+							>
+								<div class="col">
+									<h5 class="org-title label-text">
+										<span class="org-key">
+											{{
+												'PUBLIC_PAGE.PROFITS'
+													| translate
+											}}
+											:
+										</span>
+										<span
+											class="org-value"
+											[textContent]="
+												profits || 0
+													| currency
+														: organization?.currency
+											"
+										></span>
+									</h5>
 								</div>
 							</div>
 						</div>
+						<ng-container
+							*ngIf="hasEditPermission && belongsToOrganization"
+						>
+							<button
+								class="action primary"
+								status="basic"
+								size="small"
+								nbButton
+							>
+								<nb-icon
+									class="open"
+									icon="edit-outline"
+									(click)="editPage()"
+								>
+								</nb-icon>
+								{{ 'BUTTONS.EDIT' | translate }}
+							</button>
+						</ng-container>
 					</div>
 				</div>
 			</div>
@@ -272,9 +291,13 @@
 									{{ 'PUBLIC_PAGE.LANGUAGES' | translate }}:
 								</h5>
 								<nb-tag-list class="mt-1">
-									<nb-tag 
-										*ngFor="let lang of organizationLanguages" 
-										[text]="lang.name + ' (' + lang.level +')'" 
+									<nb-tag
+										*ngFor="
+											let lang of organizationLanguages
+										"
+										[text]="
+											lang.name + ' (' + lang.level + ')'
+										"
 										[removable]="false"
 									></nb-tag>
 								</nb-tag-list>
@@ -288,9 +311,11 @@
 									{{ 'PUBLIC_PAGE.AWARDS' | translate }}:
 								</h5>
 								<nb-tag-list class="ml-1">
-									<nb-tag 
-										*ngFor="let award of awards" 
-										[text]="award.name + ' (' + award.year +')'" 
+									<nb-tag
+										*ngFor="let award of awards"
+										[text]="
+											award.name + ' (' + award.year + ')'
+										"
 										[removable]="false"
 									></nb-tag>
 								</nb-tag-list>
@@ -368,10 +393,13 @@
 									{{ 'PUBLIC_PAGE.SKILLS' | translate }}:
 								</p>
 								<nb-tag-list class="ml-1">
-									<nb-tag 
-										*ngFor="let skill of organization.skills" 
-										[text]="skill.name" 
-										[removable]="false">
+									<nb-tag
+										*ngFor="
+											let skill of organization.skills
+										"
+										[text]="skill.name"
+										[removable]="false"
+									>
 									</nb-tag>
 								</nb-tag-list>
 							</div>
@@ -419,7 +447,11 @@
 													<div class="col-auto">
 														<a
 															class="name margin-right-10"
-															routerLink="{{employee.profile_link}}/{{employee.id}}"															
+															routerLink="{{
+																employee.profile_link
+															}}/{{
+																employee.id
+															}}"
 														>
 															{{
 																employee.user
