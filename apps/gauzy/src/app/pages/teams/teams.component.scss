@@ -1,1 +1,13 @@
 @import 'gauzy/_gauzy-table.scss';
+
+:host {
+    .custom-card {
+        display: flex;
+        flex-direction: column;
+        overflow: unset;
+        height: calc(100vh - 27rem);
+        .table-scroll-container {
+            flex-grow: 10;
+        }
+    }
+}

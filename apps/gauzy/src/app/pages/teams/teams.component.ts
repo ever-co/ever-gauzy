@@ -81,14 +81,14 @@ export class TeamsComponent
 	}
 
 	async ngOnInit() {
-		this._applyTranslationOnSmartTable();
 		this._loadSmartTableSettings();
+		this._applyTranslationOnSmartTable();
 		this.teams$
 			.pipe(
 				debounceTime(300),
 				tap(() => this.loading = true),
-				tap(() => this.loadTeams()),
 				tap(() => this.clearItem()),
+				tap(() => this.loadTeams()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -135,11 +135,14 @@ export class TeamsComponent
 		this.store
 			.componentLayout$(this.viewComponentName)
 			.pipe(
+				distinctUntilChange(),
 				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
-				tap(() => this.clearItem()),
+				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
+				tap(() => this.refreshPagination()),
+				tap(() => this.teams$.next(true)),
 				untilDestroyed(this)
 			)
-			.subscribe();
+			.subscribe();		
 	}
 	
 	async addOrEditTeam(team: IOrganizationTeamCreateInput) {
@@ -332,8 +335,7 @@ export class TeamsComponent
 					...this.getPagination(),
 					totalItems: this.smartTableSource.count()
 				});
-			}
-			this.loading = false;
+			}			
 		} catch (error) {
 			this.toastrService.danger(error);
 		}
@@ -348,6 +350,7 @@ export class TeamsComponent
 		const pagination: IPaginationBase = this.getPagination();
 		this.smartTableSettings = {
 			actions: false,
+			mode: 'external',
 			editable: true,
 			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA'),
 			pager: {
