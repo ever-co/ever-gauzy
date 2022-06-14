@@ -143,17 +143,16 @@
 					<div class="row mb-3" *ngIf="this.organization.show_income">
 						<div class="col">
 							<div class="org-year-found row">
-								<h5 class="org-title org-key  col-xl-1 col-md-2 label-text">
+								<h5 class="org-title org-key col-xl-1 col-md-2 label-text">
 									{{
 										'PUBLIC_PAGE.TOTAL_INCOME' | translate
 									}}:
 								</h5>
 								<span class="org-value text-left col" [textContent]="
-										totalIncome|| 0
-										| currency
-											: organization?.currency
-										| position
-											: organization?.currencyPosition
+										totalIncome || 0
+											| currency: organization?.currency
+											| position
+												: organization?.currencyPosition
 									"></span>
 							</div>
 						</div>
@@ -168,11 +167,10 @@
 									}}:
 								</h5>
 								<span class="org-value col text-left" [textContent]="
-										bonusesPaid|| 0
-										| currency
-											: organization?.currency
-										| position
-											: organization?.currencyPosition
+										bonusesPaid || 0
+											| currency: organization?.currency
+											| position
+												: organization?.currencyPosition
 									"></span>
 							</div>
 						</div>
@@ -186,13 +184,15 @@
 								<div class="col org-value">
 									<nb-tag-list size="small" class="mt-1">
 										<nb-tag size="small" *ngFor="
-											let lang of organizationLanguages
-										" [text]="
-											lang.name + ' (' + lang.level + ')'
-										" [removable]="false"></nb-tag>
+												let lang of organizationLanguages
+											" [text]="
+												lang.name +
+												' (' +
+												lang.level +
+												')'
+											" [removable]="false"></nb-tag>
 									</nb-tag-list>
 								</div>
-
 							</div>
 						</div>
 					</div>
@@ -205,11 +205,13 @@
 								<div class="col org-value">
 									<nb-tag-list size="small" class="mt-1">
 										<nb-tag size="small" *ngFor="let award of awards" [text]="
-											award.name + ' (' + award.year + ')'
-										" [removable]="false"></nb-tag>
+												award.name +
+												' (' +
+												award.year +
+												')'
+											" [removable]="false"></nb-tag>
 									</nb-tag-list>
 								</div>
-
 							</div>
 						</div>
 					</div>
@@ -230,15 +232,16 @@
 								<h5 class="org-title org-key col-xl-1 col-md-2 label-text">
 									{{ 'PUBLIC_PAGE.DESCRIPTION' | translate }}:
 								</h5>
-								<div class="org-value col text-left " [textContent]="organization.short_description">
-								</div>
+								<div class="org-value col text-left" [textContent]="
+										organization.short_description
+									"></div>
 							</div>
 						</div>
 					</div>
 					<div class="row" *ngIf="organization.overview">
 						<div class="col">
 							<div class="row">
-								<h5 class="org-title org-key col-xl-1 col-md-2  label-text">
+								<h5 class="org-title org-key col-xl-1 col-md-2 label-text">
 									{{ 'PUBLIC_PAGE.OVERVIEW' | translate }}:
 								</h5>
 								<div class="org-value col text-left">
@@ -247,14 +250,14 @@
 							</div>
 						</div>
 					</div>
-
 					<div class="row mb-3" *ngIf="organization.show_minimum_project_size">
 						<div class="col">
 							<div class="row">
 								<h5 class="org-title org-key col-xl-1 col-md-2 label-text">
 									{{
-									'POP_UPS.MINIMUM_PROJECT_SIZE' | translate
-								}}:
+										'POP_UPS.MINIMUM_PROJECT_SIZE'
+											| translate
+									}}:
 								</h5>
 								<div class="col org-value text-left">
 									<div>
@@ -265,11 +268,10 @@
 							</div>
 						</div>
 					</div>
-
 					<div class="row mb-3" *ngIf="organization.skills.length > 0">
 						<div class="col">
 							<div class="org-skills col-xl-1 col-md-2 row">
-								<p class="org-title  org-key label-text">
+								<p class="org-title org-key label-text">
 									{{ 'PUBLIC_PAGE.SKILLS' | translate }}:
 								</p>
 								<nb-tag-list size="small" class="mt-1">
@@ -483,14 +485,15 @@
 				<nb-tab tabTitle="{{ 'ORGANIZATIONS_PAGE.PORTFOLIO' | translate }}" class="o__p__s__t" [active]="
 						tabTitle === 'ORGANIZATIONS_PAGE.PORTFOLIO' | translate
 					">
-					<p>Comming soon</p>
+					<p>⏱ Comming soon 🚀</p>
 				</nb-tab>
 				<nb-tab tabTitle="{{ 'ORGANIZATIONS_PAGE.CLIENTS' | translate }}" class="o__p__s__t"
 					*ngIf="organization.show_clients" [active]="
 						tabTitle === 'ORGANIZATIONS_PAGE.CLIENTS' | translate
 					">
 					<nb-list class="nb_list">
-						<nb-list-item *ngFor="let client of clients" class="search-result">
+						<nb-list-item *ngFor="let client of clients; let lastClient = last" class="search-result"
+							[ngClass]="{'border-bottom': !lastClient}">
 							<div class="avatar has-aura">
 								<img [src]="client?.imageUrl" />
 							</div>
@@ -498,7 +501,7 @@
 								{{ client?.name }}
 							</div>
 							<div class="speciality">
-								{{ client?.primaryEmail }}
+								<gauzy-email [rowData]="{ email: client?.primaryEmail }"></gauzy-email>
 							</div>
 						</nb-list-item>
 					</nb-list>

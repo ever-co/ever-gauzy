@@ -18,6 +18,7 @@ import { PublicPageMutationModule } from '../../@shared/organizations/public-pag
 import { ImageUploaderModule } from '../../@shared/image-uploader/image-uploader.module';
 import { TranslateModule } from '../../@shared/translate/translate.module';
 import { SharedModule } from '../../@shared/shared.module';
+import { TableComponentsModule } from '../../@shared';
 
 @NgModule({
 	imports: [
@@ -37,7 +38,8 @@ import { SharedModule } from '../../@shared/shared.module';
 		NbUserModule,
 		NbTabsetModule,
 		NbTagModule,
-		SharedModule
+		SharedModule,
+		TableComponentsModule
 	],
 	declarations: [OrganizationComponent],
 	providers: []

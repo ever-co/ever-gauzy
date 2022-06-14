@@ -1,6 +1,8 @@
 @import 'gauzy/_gauzy-table';
 
 .org-info {
+  border-radius: var(--border-radius);
+
   .edit-icon {
     margin-left: 30px;
     position: absolute;
@@ -23,6 +25,9 @@
   }
 
   .org-head {
+    padding: 1rem;
+    border-radius: var(--border-radius) var(--border-radius) 0 0;
+
     .org-head-left-sec {
       h4.org-name {
         font-size: 14px;
@@ -219,6 +224,10 @@ span.org-value {
   display: block;
 }
 
+.nb_list {
+  overflow: unset;
+}
+
 .nb_list.block_style {
   display: block;
 }
@@ -269,7 +278,6 @@ p,
 
 .search-result {
   display: block;
-  margin-bottom: 35px;
   color: #617083;
 
   a {
@@ -282,15 +290,16 @@ p,
     position: relative;
     float: left;
     margin: 0 13px 0 0;
-    width: 50px;
+    width: 36px;
 
     img {
       display: block;
-      width: 50px;
-      height: 50px;
+      width: 36px;
+      height: 36px;
+      object-fit: cover;
       border-radius: 50%;
-      -webkit-box-shadow: 0 2px 4px rgba(0, 0, 1, 0.2);
-      box-shadow: 0 2px 4px rgba(0, 0, 1, 0.2);
+      -webkit-box-shadow: 0 1px 1px 0 rgba(0, 0, 0, 0.25);
+      box-shadow: 0 1px 1px 0 rgba(0, 0, 0, 0.25);
     }
   }
 
@@ -458,8 +467,10 @@ p,
 }
 
 .o__p__s__t {
-  padding-left: 0;
-  padding-right: 0;
+  background-color: var(--gauzy-card-2);
+  border-radius: 0 var(--border-radius) var(--border-radius) var(--border-radius);
+  overflow: auto;
+  height: calc(100vh - 18rem);
 }
 
 .anonymous-avatar {
@@ -481,5 +492,8 @@ p,
 nb-card {
   nb-card-body {
     background-color: var(--gauzy-card-2);
+    border-radius: var(--border-radius);
+    margin: 0;
+    padding: 0;
   }
 }
