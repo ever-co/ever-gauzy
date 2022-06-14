@@ -7,11 +7,11 @@
 	<nb-card-header>
 		<div class="header-flex">
 			<div>
-				<h4>
+				<h5>
 					<ngx-header-title>
 						{{ 'REPORT_PAGE.WEEKLY_TIME_AND_ACTIVITY_REPORT' | translate }}
 					</ngx-header-title>
-				</h4>
+				</h5>
 				<ng-container
 					*ngIf="request?.startDate && request?.endDate"
 				>
@@ -40,7 +40,9 @@
 			<div class="daily-time-report">
 				<nb-card>
 					<nb-card-body>
-						<ngx-line-chart [data]="chartData"></ngx-line-chart>
+						<ngx-line-chart 
+							[data]="chartData"
+						></ngx-line-chart>
 					</nb-card-body>
 				</nb-card>
 			</div>
@@ -53,7 +55,7 @@
 				nbSpinnerStatus="primary">
 				<nb-card *ngIf="weekLogs?.length > 0; else notFound">
 					<nb-card-header>
-						Reports
+						{{ 'MENU.REPORTS' | translate }}
 					</nb-card-header>
 					<nb-card-body>
 						<div class="columns-header weekly-main-header">
@@ -66,6 +68,12 @@
 								</div>
 								<div class="responsive-table-row day-column">
 									{{ 'REPORT_PAGE.WEEKLY_TOTAL' | translate }}
+								</div>
+								<div class="responsive-table-row day-column">
+									{{ 'REPORT_PAGE.ACTIVITY' | translate }}
+								</div>
+								<div class="responsive-table-row day-column">
+									{{ 'REPORT_PAGE.SPENT' | translate }}
 								</div>
 							</div>
 						</div>
@@ -98,11 +106,31 @@
 									</div>
 								</div>
 								<div class="responsive-table-row day-column">
-									<div class="responsive-table-header">{{ 'REPORT_PAGE.WEEKLY_TOTAL' | translate }}</div>
+									<div class="responsive-table-header">
+										{{ 'REPORT_PAGE.WEEKLY_TOTAL' | translate }}
+									</div>
 									<div class="responsive-table-content mobile-padding">
 										<span>
-											{{ getWeeklyTotal(log)| durationFormat }}
+											{{ log?.sum | durationFormat }}
 										</span>
+									</div>
+								</div>
+								<div class="responsive-table-row day-column">
+									<div class="responsive-table-header">
+										{{ 'REPORT_PAGE.ACTIVITY' | translate }}
+									</div>
+									<div class="responsive-table-content mobile-padding">
+										<span>
+											{{ log?.activity || 0 }}%
+										</span>
+									</div>
+								</div>
+								<div class="responsive-table-row day-column">
+									<div class="responsive-table-header">
+										{{ 'REPORT_PAGE.SPENT' | translate }}
+									</div>
+									<div class="responsive-table-content mobile-padding">
+										<span> &#8212; </span>
 									</div>
 								</div>
 							</div>
