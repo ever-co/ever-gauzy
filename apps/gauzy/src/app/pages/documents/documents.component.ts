@@ -7,7 +7,7 @@ import {
 } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import { debounceTime, filter, first, tap } from 'rxjs/operators';
-import { NbDialogService } from '@nebular/theme';
+import { NbDialogRef, NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource } from 'ng2-smart-table';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -32,11 +32,11 @@ export class DocumentsComponent extends PaginationFilterBaseComponent
 	uploadDoc: UploadDocumentComponent;
 	@ViewChild('addEditTemplate') 
 	addEditTemplate: TemplateRef<any>;
+	addEditDialogRef: NbDialogRef<any>;
 	formDocument: FormGroup;
 	documentUrl = '';
 	documentId = null;
 	documentList: IOrganizationDocument[] = [];
-	showAddCard = false;
 	loading = false;
 	settingsSmartTable: object;
 	smartTableSource = new LocalDataSource();
@@ -213,8 +213,9 @@ export class DocumentsComponent extends PaginationFilterBaseComponent
 							name: formValue.name
 						}
 					);
+					this.addEditDialogRef.close()
 					this.cancel();
-					this._loadDocuments();
+					this.subject$.next(true);
 				},
 				() =>
 					this.toastrService.error(
@@ -245,12 +246,9 @@ export class DocumentsComponent extends PaginationFilterBaseComponent
 			.subscribe(
 				(data) => {
 					this.documentList = data.items;
-					//this.smartTableSource.load(data.items);
 					this.loading = false;
-
 					this.smartTableSource.setPaging(activePage, itemsPerPage, false);
 					this.smartTableSource.load(data.items);
-
 					if (
 						this.componentLayoutStyleEnum.CARDS_GRID ===
 						this.dataLayoutStyle
@@ -286,8 +284,9 @@ export class DocumentsComponent extends PaginationFilterBaseComponent
 							}
 						)
 					);
+					this.addEditDialogRef.close()
 					this.cancel();
-					this._loadDocuments();
+					this.subject$.next(true);
 				},
 				() =>
 					this.toastrService.error(
@@ -296,21 +295,16 @@ export class DocumentsComponent extends PaginationFilterBaseComponent
 			);
 	}
 
-	showCard() {
-		this.showAddCard = !this.showAddCard;
-		this.form.controls.documents.reset();
-		this.documentId = null;
-		this.documentUrl = null;
-	}
-
 	editDocument(document: IOrganizationDocument) {
-		this.showAddCard = !this.showAddCard;
 		this.form.controls.documents.patchValue([document]);
 		this.documentId = document.id;
 		this.documentUrl = document.documentUrl;
 	}
 
 	removeDocument(document: IOrganizationDocument) {
+		if(!document){
+			document = this.selectedDocument
+		}		
 		this.dialogService
 			.open(DeleteConfirmationComponent, {
 				context: {
@@ -334,7 +328,7 @@ export class DocumentsComponent extends PaginationFilterBaseComponent
 										}
 									)
 								);
-								this._loadDocuments();
+								this.subject$.next(true);
 							},
 							() =>
 								'NOTES.ORGANIZATIONS.EDIT_ORGANIZATION_DOCS.ERR_DELETED'
@@ -344,7 +338,6 @@ export class DocumentsComponent extends PaginationFilterBaseComponent
 	}
 
 	cancel() {
-		this.showAddCard = !this.showAddCard;
 		this.form.reset();
 		this.documentUrl = null;
 		this.documentId = null;
@@ -365,7 +358,6 @@ export class DocumentsComponent extends PaginationFilterBaseComponent
 	}
 
 	edit(document: IOrganizationDocument) {
-		this.showAddCard = true;
 		this.selectedDocument = document;
 		this.form.controls.documents.patchValue([document]);
 		this.documentId = document.id;
@@ -375,7 +367,7 @@ export class DocumentsComponent extends PaginationFilterBaseComponent
 	openDialog(template: TemplateRef<any>, isEditTemplate: boolean) {
 		try {
 			isEditTemplate ? this.edit(this.selectedDocument) : this.cancel();
-			this.dialogService.open(template);
+			this.addEditDialogRef = this.dialogService.open(template);
 		} catch (error) {
 			console.log('An error occurred on open dialog');
 		}
