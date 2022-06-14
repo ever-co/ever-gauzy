@@ -120,7 +120,7 @@ export class TeamsComponent
 		this.route.queryParamMap
 			.pipe(
 				filter((params) => !!params && params.get('openAddDialog') === 'true'),
-				tap(() => this.showAddCard = !this.showAddCard),
+				tap(() => this.showAddCard = true),
 				tap(() => this.teams$.next(true)),
 				tap(() => this.employees$.next(true)),
 				untilDestroyed(this)
@@ -228,12 +228,8 @@ export class TeamsComponent
 				data: selectedItem
 			});
 		}
-		console.log(this.selectedTeam);
+		
 		this.showAddCard = true;
-	}
-
-	cancel() {
-		this.showAddCard = !this.showAddCard;
 	}
 
 	private async loadEmployees() {
@@ -321,7 +317,6 @@ export class TeamsComponent
 
 		try {
 			this.setSmartTableSource();
-
 			const { activePage, itemsPerPage } = this.getPagination();
 			this.smartTableSource.setPaging(
 				activePage,
@@ -338,46 +333,10 @@ export class TeamsComponent
 					totalItems: this.smartTableSource.count()
 				});
 			}
+			this.loading = false;
 		} catch (error) {
 			this.toastrService.danger(error);
 		}
-
-		// const { id: organizationId } = this.organization;
-		// const { tenantId } = this.store.user;
-
-		// const { items: teams } = await this.organizationTeamsService.getAll(
-		// 	[
-		// 		'members',
-		// 		'members.role',
-		// 		'members.employee',
-		// 		'members.employee.user',
-		// 		'tags'
-		// 	],
-		// 	{ organizationId, tenantId }
-		// );
-		// if (teams) {
-		// 	teams.forEach((team: IOrganizationTeam) => {
-		// 		team.managers = team.members.filter(
-		// 			(member) => member.role && member.role.name === RolesEnum.MANAGER
-		// 		);
-		// 		team.members = team.members.filter((member) => !member.role);
-		// 	});
-
-		// 	this.teams = [...teams].sort(
-		// 		(a, b) => b.members.length - a.members.length
-		// 	).map((team) =>{
-		// 		return {
-		// 			id: team.id,
-		// 			name: team.name,
-		// 			members: team.members.map((item) => item.employee),
-		// 			managers: team.managers.map((item) => item.employee),
-		// 			tags: team.tags
-		// 		}
-		// 	});
-		// 	console.log(this.teams);
-		// 	this.smartTableSource.load(this.teams);
-		// }
-		// this.loading = false;
 	}
 
 	selectTeam({ isSelected, data }) {
@@ -447,11 +406,11 @@ export class TeamsComponent
 	 * Clear selected item
 	 */
 	clearItem() {
+		this.showAddCard = false;
 		this.selectTeam({
 			isSelected: false,
 			data: null
-		});
-		this.deselectAll();
+		});		
 	}
 
 	/*

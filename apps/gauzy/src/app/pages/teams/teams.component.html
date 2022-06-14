@@ -12,9 +12,9 @@
 				</ngx-header-title>
 			</h4>      		
 		</div>
-		<div class="gauzy-button-container">
+		<div class="gauzy-button-container" *ngIf="!showAddCard">
 			<ngx-gauzy-button-action
-				[isDisable]="disableButton || showAddCard"
+				[isDisable]="disableButton"
 				[buttonTemplate]="actionButtons"
 				[componentName]="viewComponentName"	
 				[buttonTemplateVisible]="visibleButton"			
@@ -51,7 +51,7 @@
 				[source]="teams"
 				(selectedOption)="onUpdateOption($event)"
 				(selectedPage)="onPageChange($event)"
-				(onSelectedItem)="selectDepartment($event)"
+				(onSelectedItem)="selectTeam($event)"
 				[doEmit]="false"
 				[totalItems]="pagination?.totalItems"
 				[itemsPerPage]="pagination?.itemsPerPage"
@@ -62,7 +62,7 @@
 				*ngIf="showAddCard"
 				[employees]="employees"
 				[team]="selectedTeam"
-				(canceled)="cancel()"
+				(canceled)="clearItem()"
 				(addOrEditTeam)="addOrEditTeam($event)"
 		></ga-teams-mutation>
 	</nb-card-body>
