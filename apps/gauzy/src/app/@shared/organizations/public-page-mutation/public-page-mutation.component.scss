@@ -139,12 +139,16 @@
     }
   }
 }
-.show-add-language{
+
+.show-add-language,
+.show-add-award {
   background-color: var(--gauzy-card-2);
   border-radius: var(--border-radius);
   padding: 1rem 0;
 }
-.button-add-language {
+
+.button-add-language,
+.button-add-award {
   background-color: var(--gauzy-card-2);
   border-radius: var(--button-rectangle-border-radius);
   width: fit-content;
