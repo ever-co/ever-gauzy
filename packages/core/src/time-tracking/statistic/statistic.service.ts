@@ -110,6 +110,7 @@ export class StatisticService {
 			...request,
 			employeeIds
 		});
+		
 		/*
 		 * Get average activity and total duration of the work for the week.
 		 */
@@ -158,11 +159,12 @@ export class StatisticService {
 							projectIds
 						});
 					}
-					if (activityLevel) {
+					if (isNotEmpty(request.activityLevel)) {
 						/**
 						 * Activity Level should be 0-100%
 						 * So, we have convert it into 10 minutes TimeSlot by multiply by 6
 						 */
+						const { activityLevel } = request;
 						const startLevel = (activityLevel.start * 6);
 						const endLevel = (activityLevel.end * 6);
 				
@@ -174,7 +176,8 @@ export class StatisticService {
 					/**
 					 * If LogType Selected
 					 */
-					if (isNotEmpty(logType)) {
+					if (isNotEmpty(request.logType)) {
+						const { logType } = request;
 						qb.andWhere(`"timeLogs"."logType" IN (:...logType)`, {
 							logType
 						});
@@ -182,11 +185,19 @@ export class StatisticService {
 					/**
 					 * If Source Selected
 					 */
-					if (isNotEmpty(source)) {
+					if (isNotEmpty(request.source)) {
+						const { source } = request;
 						qb.andWhere(`"timeLogs"."source" IN (:...source)`, {
 							source
 						});
 					}
+					qb.andWhere(
+						new Brackets((qb: WhereExpressionBuilder) => { 
+							qb.andWhere(`"timeLogs"."tenantId" = :tenantId`, { tenantId });
+							qb.andWhere(`"timeLogs"."organizationId" = :organizationId`, { organizationId });
+							qb.andWhere(`"timeLogs"."deletedAt" IS NULL`);
+						})
+					);
 				})
 			)
 			.groupBy(`"timeLogs"."id"`)
@@ -255,11 +266,12 @@ export class StatisticService {
 							projectIds
 						});
 					}
-					if (activityLevel) {
+					if (isNotEmpty(request.activityLevel)) {
 						/**
 						 * Activity Level should be 0-100%
 						 * So, we have convert it into 10 minutes TimeSlot by multiply by 6
 						 */
+						const { activityLevel } = request;
 						const startLevel = (activityLevel.start * 6);
 						const endLevel = (activityLevel.end * 6);
 				
@@ -271,7 +283,8 @@ export class StatisticService {
 					/**
 					 * If LogType Selected
 					 */
-					if (isNotEmpty(logType)) {
+					 if (isNotEmpty(request.logType)) {
+						const { logType } = request;
 						qb.andWhere(`"timeLogs"."logType" IN (:...logType)`, {
 							logType
 						});
@@ -279,11 +292,19 @@ export class StatisticService {
 					/**
 					 * If Source Selected
 					 */
-					if (isNotEmpty(source)) {
+					if (isNotEmpty(request.source)) {
+						const { source } = request;
 						qb.andWhere(`"timeLogs"."source" IN (:...source)`, {
 							source
 						});
 					}
+					qb.andWhere(
+						new Brackets((qb: WhereExpressionBuilder) => { 
+							qb.andWhere(`"timeLogs"."tenantId" = :tenantId`, { tenantId });
+							qb.andWhere(`"timeLogs"."organizationId" = :organizationId`, { organizationId });
+							qb.andWhere(`"timeLogs"."deletedAt" IS NULL`);
+						})
+					);
 				})
 			)
 			.groupBy(`"timeLogs"."id"`)
