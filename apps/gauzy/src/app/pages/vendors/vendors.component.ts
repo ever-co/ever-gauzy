@@ -311,24 +311,18 @@ export class VendorsComponent
 			.getAll({ organizationId, tenantId }, ['tags'], {
 				createdAt: 'DESC'
 			})
-			.then(({ items }) => {
-				this.vendors = items.map((item) => {
+			.then(async ({ items }) => {
+				const vendors = items.map((item) => {
 					return {
 						...item,
 						logo: item.name
 					};
 				});
 				this.smartTableSource.setPaging(activePage, itemsPerPage, false);
-				this.smartTableSource.load(this.vendors);
-				this._loadGridLayoutData();
+				this.smartTableSource.load(vendors);
+				this.vendors = await this.smartTableSource.getElements();
 				this.isLoading = false;
 			});
-	}
-
-	private async _loadGridLayoutData(){
-		if(this.componentLayoutStyleEnum.CARDS_GRID === this.dataLayoutStyle){
-			this.vendors = await this.smartTableSource.getElements();
-		}
 	}
 
 	selectedTagsEvent(ev) {
@@ -371,5 +365,12 @@ export class VendorsComponent
 		this.selected.state = res.state;
 		this.selected.vendor = vendor;
 		this.selectedVendor = this.selected.vendor;
+	}
+
+	public onScroll(){
+		this.setPagination({
+			...this.getPagination(),
+			itemsPerPage: this.pagination.itemsPerPage + 10
+		});
 	}
 }

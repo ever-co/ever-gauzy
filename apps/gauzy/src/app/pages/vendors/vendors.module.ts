@@ -22,6 +22,7 @@ import { SharedModule } from '../../@shared/shared.module';
 import { TranslateModule } from '../../@shared/translate/translate.module';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
+import { InfiniteScrollModule } from 'ngx-infinite-scroll';
 
 @NgModule({
 	imports: [
@@ -45,7 +46,8 @@ import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy
 		TranslateModule,
 		HeaderTitleModule,
 		GauzyButtonActionModule,
-		NbSpinnerModule
+		NbSpinnerModule,
+		InfiniteScrollModule
 	],
 	declarations: [VendorsComponent],
 	providers: [OrganizationVendorsService]

@@ -21,6 +21,9 @@
 		[nbSpinner]="isLoading"
 		nbSpinnerStatus="primary"
 		nbSpinnerSize="large"
+		infinite-scroll
+		[scrollWindow]="false"
+		(scrolled)="onScroll()"
 	>
 		<ng-template
 			[ngIf]="
