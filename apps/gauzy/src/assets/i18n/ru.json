@@ -665,7 +665,8 @@
 		"SOURCE": "Источник",
 		"DESCRIPTION": "Описание",
 		"MAIN": "Главная",
-		"CATEGORIES": "Категории"
+		"CATEGORIES": "Категории",
+		"ADD_LANGUAGE": "Добавить язык"
 	},
 	"MENU": {
 		"PIPELINES": "Трубопроводы",

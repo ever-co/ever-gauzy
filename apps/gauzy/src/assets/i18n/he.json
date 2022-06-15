@@ -665,7 +665,8 @@
 		"SOURCE": "Source",
 		"DESCRIPTION": "Description",
 		"MAIN": "עיקרי",
-		"CATEGORIES": "Categories"
+		"CATEGORIES": "Categories",
+		"ADD_LANGUAGE": "Add language"
 	},
 	"MENU": {
 		"PIPELINES": "Pipelines",
