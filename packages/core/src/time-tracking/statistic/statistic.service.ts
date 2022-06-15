@@ -110,70 +110,10 @@ export class StatisticService {
 			...request,
 			employeeIds
 		});
-		/*
-		 *  Get projects count who worked in this week.
-		 */
-		const projectsCountQuery = this.organizationProjectsRepository.createQueryBuilder();
-		const projectsCount = await projectsCountQuery
-			.innerJoin(`${projectsCountQuery.alias}.timeLogs`, 'timeLogs')
-			.innerJoin(`timeLogs.timeSlots`, 'timeSlots')
-			.andWhere(`"${projectsCountQuery.alias}"."tenantId" = :tenantId`, { tenantId })
-			.andWhere(`"${projectsCountQuery.alias}"."organizationId" = :organizationId`, { organizationId })
-			.andWhere(
-				new Brackets((qb: WhereExpressionBuilder) => {
-					qb.andWhere(`"timeLogs"."startedAt" BETWEEN :startDate AND :endDate`, {
-						startDate: start,
-						endDate: end
-					});
-					/**
-					 * If Employee Selected
-					 */
-					if (isNotEmpty(employeeIds)) {
-						qb.andWhere(`"timeLogs"."employeeId" IN (:...employeeIds)`, {
-							employeeIds
-						});
-					}
-					/**
-					 * If Project Selected
-					 */
-					if (isNotEmpty(projectIds)) {
-						qb.andWhere(`"timeLogs"."projectId" IN (:...projectIds)`, {
-							projectIds
-						});
-					}
-					if (activityLevel) {
-						/**
-						 * Activity Level should be 0-100%
-						 * So, we have convert it into 10 minutes TimeSlot by multiply by 6
-						 */
-						const startLevel = (activityLevel.start * 6);
-						const endLevel = (activityLevel.end * 6);
-				
-						qb.andWhere(`"timeSlots"."overall" BETWEEN :startLevel AND :endLevel`, {
-							startLevel,
-							endLevel
-						});
-					}
-					/**
-					 * If LogType Selected
-					 */
-					if (isNotEmpty(logType)) {
-						qb.andWhere(`"timeLogs"."logType" IN (:...logType)`, {
-							logType
-						});
-					}
-					/**
-					 * If Source Selected
-					 */
-					if (isNotEmpty(source)) {
-						qb.andWhere(`"timeLogs"."source" IN (:...source)`, {
-							source
-						});
-					}
-				})
-			)
-			.getCount();
-
+		const projectsCount = await this.getProjectWorkedCounts({
+			...request,
+			employeeIds
+		});
 		/*
 		 * Get average activity and total duration of the work for the week.
 		 */
@@ -1436,6 +1376,28 @@ export class StatisticService {
 		query.groupBy(`"${query.alias}"."employeeId"`);
 		const employees = await query.getRawMany();
 		return employees.length;
+	}
+
+	/**
+	 * Get projects count who worked in this week.
+	 * 
+	 * @param request 
+	 * @returns 
+	 */
+	private async getProjectWorkedCounts(request: IGetCountsStatistics) {
+		const query = this.timeLogRepository.createQueryBuilder('time_log');
+		query.select(`"${query.alias}"."projectId"`, 'projectId');
+		query.innerJoin(`${query.alias}.employee`, 'employee');
+		query.innerJoin(`${query.alias}.project`, 'project');
+		query.innerJoin(`${query.alias}.timeSlots`, 'timeSlots');
+		query.andWhere(
+			new Brackets((where: WhereExpressionBuilder) => {
+				this.getFilterQuery(query, where, request);
+			})
+		)
+		query.groupBy(`"${query.alias}"."projectId"`);
+		const projects = await query.getRawMany();
+		return projects.length;
 	}
 
 	/**
