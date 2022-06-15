@@ -67,68 +67,87 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 				...(request.relations ? request.relations : [])
 			],
 			where: (query: SelectQueryBuilder<TimeSlot>) => {
-				if (isNotEmpty(request.startDate) && isNotEmpty(request.endDate)) {
-					const { start: startDate, end: endDate } = getDateFormat(
-						moment.utc(request.startDate),
-						moment.utc(request.endDate)
-					);
-					query.andWhere(`"${query.alias}"."startedAt" >= :startDate AND "${query.alias}"."startedAt" < :endDate`, {
-						startDate,
-						endDate
-					});
-				}
-				if (isNotEmpty(employeeIds)) {
-					query.andWhere(`"${query.alias}"."employeeId" IN (:...employeeIds)`, {
-						employeeIds
-					});
-					query.andWhere(`"timeLog"."employeeId" IN (:...employeeIds)`, {
-						employeeIds
-					});
-				}
-				if (isNotEmpty(request.projectIds)) {
-					const { projectIds } = request;
-					query.andWhere('"timeLog"."projectId" IN (:...projectIds)', {
-						projectIds
-					});
-				}
-				if (isNotEmpty(request.activityLevel)) {
-					/**
-					 * Activity Level should be 0-100%
-					 * So, we have convert it into 10 minutes TimeSlot by multiply by 6
-					 */
-					const { activityLevel } = request;
-					const start = (activityLevel.start * 6);
-					const end = (activityLevel.end * 6);
-
-					query.andWhere(`"${query.alias}"."overall" BETWEEN :start AND :end`, {
-						start,
-						end
-					});
-				}
-				if (isNotEmpty(request.source)) {
-					const { source } = request;
-					if (source instanceof Array) {
-						query.andWhere('"timeLog"."source" IN (:...source)', {
-							source
-						});
-					} else {
-						query.andWhere('"timeLog"."source" = :source', {
-							source
-						});
-					}
-				}
-				if (isNotEmpty(request.logType)) {
-					const { logType } = request;
-					if (logType instanceof Array) {
-						query.andWhere('"timeLog"."logType" IN (:...logType)', {
-							logType
-						});
-					} else {
-						query.andWhere('"timeLog"."logType" = :logType', {
-							logType
-						});
-					}
-				}
+				query.andWhere(
+					new Brackets((qb: WhereExpressionBuilder) => {
+						if (isNotEmpty(request.startDate) && isNotEmpty(request.endDate)) {
+							const { start: startDate, end: endDate } = getDateFormat(
+								moment.utc(request.startDate),
+								moment.utc(request.endDate)
+							);
+							qb.andWhere(`"${query.alias}"."startedAt" >= :startDate AND "${query.alias}"."startedAt" < :endDate`, {
+								startDate,
+								endDate
+							});
+						}
+					})
+				);
+				query.andWhere(
+					new Brackets((qb: WhereExpressionBuilder) => {
+						if (isNotEmpty(employeeIds)) {
+							qb.andWhere(`"${query.alias}"."employeeId" IN (:...employeeIds)`, {
+								employeeIds
+							});
+							qb.andWhere(`"timeLog"."employeeId" IN (:...employeeIds)`, {
+								employeeIds
+							});
+						}
+						if (isNotEmpty(request.projectIds)) {
+							const { projectIds } = request;
+							qb.andWhere('"timeLog"."projectId" IN (:...projectIds)', {
+								projectIds
+							});
+						}
+					})
+				);
+				query.andWhere(
+					new Brackets((qb: WhereExpressionBuilder) => { 
+						if (isNotEmpty(request.activityLevel)) {
+							/**
+							 * Activity Level should be 0-100%
+							 * So, we have convert it into 10 minutes TimeSlot by multiply by 6
+							 */
+							const { activityLevel } = request;
+							const start = (activityLevel.start * 6);
+							const end = (activityLevel.end * 6);
+		
+							qb.andWhere(`"${query.alias}"."overall" BETWEEN :start AND :end`, {
+								start,
+								end
+							});
+						}
+						if (isNotEmpty(request.source)) {
+							const { source } = request;
+							if (source instanceof Array) {
+								qb.andWhere('"timeLog"."source" IN (:...source)', {
+									source
+								});
+							} else {
+								qb.andWhere('"timeLog"."source" = :source', {
+									source
+								});
+							}
+						}
+						if (isNotEmpty(request.logType)) {
+							const { logType } = request;
+							if (logType instanceof Array) {
+								qb.andWhere('"timeLog"."logType" IN (:...logType)', {
+									logType
+								});
+							} else {
+								qb.andWhere('"timeLog"."logType" = :logType', {
+									logType
+								});
+							}
+						}
+					})
+				);
+				query.andWhere(
+					new Brackets((qb: WhereExpressionBuilder) => {
+						qb.andWhere(`"timeLog"."tenantId" = :tenantId`, { tenantId });
+						qb.andWhere(`"timeLog"."organizationId" = :organizationId`, { organizationId });
+						qb.andWhere(`"timeLog"."deletedAt" IS NULL`);
+					})
+				);
 				query.andWhere(
 					new Brackets((qb: WhereExpressionBuilder) => { 
 						qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
