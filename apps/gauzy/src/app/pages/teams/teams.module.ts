@@ -25,6 +25,9 @@ import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { TranslateModule } from '../../@shared/translate/translate.module';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { EmployeeMultiSelectModule } from '../../@shared/employee/employee-multi-select/employee-multi-select.module';
+import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
+import { PaginationModule } from '../../@shared/pagination/pagination.module';
+import { CommonModule } from '@angular/common';
 
 @NgModule({
 	imports: [
@@ -49,7 +52,10 @@ import { EmployeeMultiSelectModule } from '../../@shared/employee/employee-multi
 		NbDialogModule.forChild(),
 		TranslateModule,
 		HeaderTitleModule,
-		EmployeeMultiSelectModule
+		EmployeeMultiSelectModule,
+		PaginationModule,
+		GauzyButtonActionModule,
+		CommonModule
 	],
 	declarations: [TeamsComponent, TeamsMutationComponent],
 	providers: [OrganizationTeamsService]

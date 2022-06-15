@@ -13,16 +13,18 @@ import {
 	ValidationPipe
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { CrudController } from './../core/crud';
+import { CrudController, PaginationParams } from './../core/crud';
 import { OrganizationTeamService } from './organization-team.service';
 import {
 	IOrganizationTeam,
-	IPagination
+	IPagination,
+	PermissionsEnum
 } from '@gauzy/contracts';
 import { OrganizationTeam } from './organization-team.entity';
-import { TenantPermissionGuard } from './../shared/guards';
-import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { CreateOrganizationTeamDTO, UpdateOrganizationTeamDTO } from './dto';
+import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
+import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
+import { Permissions } from './../shared/decorators';
 
 @ApiTags('OrganizationTeam')
 @UseGuards(TenantPermissionGuard)
@@ -91,6 +93,23 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 	}
 
 	/**
+	 * Get pagination data of organization team
+	 * 
+	 * @param id 
+	 * @param entity 
+	 * @returns 
+	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ALL_ORG_VIEW)
+	@Get('pagination')
+	@UsePipes(new ValidationPipe({ transform: true }))
+	async pagination(
+		@Query() filter: PaginationParams<IOrganizationTeam>
+	): Promise<IPagination<IOrganizationTeam>> {
+		return this.organizationTeamService.pagination(filter);
+	}
+
+	/**
 	 * GET all organization teams
 	 * 
 	 * @param data 
@@ -108,6 +127,8 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ALL_ORG_VIEW)
 	@Get()
 	async findAll(
 		@Query('data', ParseJsonPipe) data: any

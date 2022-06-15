@@ -1,5 +1,6 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
 import {
 	IEmployee,
 	IOrganization,
@@ -13,13 +14,16 @@ import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { firstValueFrom, Subject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
-import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
+import { Ng2SmartTableComponent } from 'ng2-smart-table';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { EmployeesService, OrganizationTeamsService, Store, ToastrService } from '../../@core/services';
-import { TranslationBaseComponent } from '../../@shared/language-base';
+import { distinctUntilChange } from '@gauzy/common-angular';
+import { PaginationFilterBaseComponent, IPaginationBase } from '../../@shared/pagination/pagination-filter-base.component';
+import { InputFilterComponent, TagsColorFilterComponent } from '../../@shared/table-filters';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
-import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { EmployeeWithLinksComponent, NotesWithTagsComponent } from '../../@shared/table-components';
+import { EmployeesService, OrganizationTeamsService, Store, ToastrService } from '../../@core/services';
+import { API_PREFIX, ComponentEnum } from '../../@core/constants';
+import { ServerDataSource } from '../../@core/utils/smart-table';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -27,8 +31,7 @@ import { EmployeeWithLinksComponent, NotesWithTagsComponent } from '../../@share
 	templateUrl: './teams.component.html',
 	styleUrls: ['./teams.component.scss']
 })
-export class TeamsComponent
-	extends TranslationBaseComponent
+export class TeamsComponent extends PaginationFilterBaseComponent
 	implements OnInit, OnDestroy {
 
 	selectedTeam: IOrganizationTeam;
@@ -45,11 +48,11 @@ export class TeamsComponent
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
 	
-	settingsSmartTable: object;
-	smartTableSource = new LocalDataSource();
+	smartTableSettings: object;
+	smartTableSource: ServerDataSource;
 	
 	public organization: IOrganization;
-	teams$: Subject<any> = new Subject();
+	teams$: Subject<any> = this.subject$;
 	employees$: Subject<any> = new Subject();
 
 	teamTable: Ng2SmartTableComponent;
@@ -68,21 +71,29 @@ export class TeamsComponent
 		private readonly store: Store,
 		public readonly translateService: TranslateService,
 		private readonly route: ActivatedRoute,
-		private readonly router: Router
+		private readonly router: Router,
+		private readonly httpClient: HttpClient,
 	) {
 		super(translateService);
 		this.setView();
 	}
 
-	async ngOnInit() {
-		this._applyTranslationOnSmartTable();
+	ngOnInit() {
 		this._loadSmartTableSettings();
+		this._applyTranslationOnSmartTable();
 		this.teams$
 			.pipe(
 				debounceTime(300),
-				tap(() => this.loading = true),
-				tap(() => this.loadTeams()),
 				tap(() => this.clearItem()),
+				tap(() => this.loadTeams()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.pagination$
+			.pipe(
+				debounceTime(100),
+				distinctUntilChange(),
+				tap(() => this.teams$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -97,6 +108,7 @@ export class TeamsComponent
 			.pipe(
 				filter((organization: IOrganization) => !!organization),
 				tap((organization) => this.organization = organization),
+				tap(() => this.refreshPagination()),
 				tap(() => this.teams$.next(true)),
 				tap(() => this.employees$.next(true)),
 				untilDestroyed(this)
@@ -105,7 +117,7 @@ export class TeamsComponent
 		this.route.queryParamMap
 			.pipe(
 				filter((params) => !!params && params.get('openAddDialog') === 'true'),
-				tap(() => this.showAddCard = !this.showAddCard),
+				tap(() => this.showAddCard = true),
 				tap(() => this.teams$.next(true)),
 				tap(() => this.employees$.next(true)),
 				untilDestroyed(this)
@@ -120,11 +132,14 @@ export class TeamsComponent
 		this.store
 			.componentLayout$(this.viewComponentName)
 			.pipe(
+				distinctUntilChange(),
 				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
-				tap(() => this.clearItem()),
+				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
+				tap(() => this.refreshPagination()),
+				tap(() => this.teams$.next(true)),
 				untilDestroyed(this)
 			)
-			.subscribe();
+			.subscribe();		
 	}
 	
 	async addOrEditTeam(team: IOrganizationTeamCreateInput) {
@@ -213,12 +228,8 @@ export class TeamsComponent
 				data: selectedItem
 			});
 		}
-		console.log(this.selectedTeam);
+		
 		this.showAddCard = true;
-	}
-
-	cancel() {
-		this.showAddCard = !this.showAddCard;
 	}
 
 	private async loadEmployees() {
@@ -249,47 +260,85 @@ export class TeamsComponent
 		this.router.navigate([`/pages/employees/edit/${id}`]);
 	}
 
-	async loadTeams() {
+	/*
+	* Register Smart Table Source Config
+	*/
+	setSmartTableSource() {
 		if (!this.organization) {
 			return;
 		}
-
-		const { id: organizationId } = this.organization;
 		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
 
-		const { items: teams } = await this.organizationTeamsService.getAll(
-			[
+		this.smartTableSource = new ServerDataSource(this.httpClient, {
+			endPoint: `${API_PREFIX}/organization-team/pagination`,
+			relations: [
 				'members',
 				'members.role',
 				'members.employee',
 				'members.employee.user',
 				'tags'
 			],
-			{ organizationId, tenantId }
-		);
-		if (teams) {
-			teams.forEach((team: IOrganizationTeam) => {
-				team.managers = team.members.filter(
-					(member) => member.role && member.role.name === RolesEnum.MANAGER
-				);
-				team.members = team.members.filter((member) => !member.role);
-			});
-
-			this.teams = [...teams].sort(
-				(a, b) => b.members.length - a.members.length
-			).map((team) =>{
-				return {
+			where: {
+				...{ organizationId, tenantId },
+				...this.filters.where
+			},
+			join: {
+				alias: 'teams',
+				leftJoin: {
+					tags: 'teams.tags'
+				}
+			},			
+			resultMap: (team: IOrganizationTeam) => {
+				return Object.assign({}, team, {
 					id: team.id,
 					name: team.name,
-					members: team.members.map((item) => item.employee),
-					managers: team.managers.map((item) => item.employee),
-					tags: team.tags
-				}
-			});
-			console.log(this.teams);
-			this.smartTableSource.load(this.teams);
+					tags: team.tags,
+					managers : team.members.filter(
+						(member) => member.role && member.role.name === RolesEnum.MANAGER
+					).map((item) => item.employee),
+					members : team.members.filter((member) => !member.role).map((item) => item.employee)
+				});
+			},
+			finalize: () => {
+				this.setPagination({
+					...this.getPagination(),
+					totalItems: this.smartTableSource.count()
+				});
+				this.loading = false;
+			}
+		});
+	}
+
+	async loadTeams() {
+		if (!this.organization) {
+			return;
 		}
-		this.loading = false;
+		this.loading = true;
+		try {
+			this.setSmartTableSource();
+			const { activePage, itemsPerPage } = this.getPagination();
+			this.smartTableSource.setPaging(
+				activePage,
+				itemsPerPage,
+				false
+			);
+			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
+				await this._loadGridLayoutData();
+			}			
+		} catch (error) {
+			this.toastrService.danger(error);
+		}
+	}
+
+	private async _loadGridLayoutData() {
+		await this.smartTableSource.getElements();
+		this.teams = this.smartTableSource.getData();
+
+		this.setPagination({
+			...this.getPagination(),
+			totalItems: this.smartTableSource.count()
+		});
 	}
 
 	selectTeam({ isSelected, data }) {
@@ -298,12 +347,25 @@ export class TeamsComponent
 	}
 
 	private _loadSmartTableSettings() {
-		this.settingsSmartTable = {
+		const pagination: IPaginationBase = this.getPagination();
+		this.smartTableSettings = {
 			actions: false,
+			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA'),
+			pager: {
+				display: false,
+				perPage: pagination ? pagination.itemsPerPage : 10
+			},
 			columns: {
 				name: {
 					title: this.getTranslation('ORGANIZATIONS_PAGE.NAME'),
-					type: 'string'
+					type: 'string',
+					filter: {
+						type: 'custom',
+						component: InputFilterComponent
+					},
+					filterFunction: (firstName: string) => {
+						this.setFilter({ field: 'name', search: firstName });
+					},
 				},
 				managers: {
 					title: this.getTranslation('ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.MANAGERS'),
@@ -321,7 +383,18 @@ export class TeamsComponent
 					title: this.getTranslation('MENU.TAGS'),
 					type: 'custom',
 					class: 'align-row',
-					renderComponent: NotesWithTagsComponent
+					renderComponent: NotesWithTagsComponent,
+					filter: {
+						type: 'custom',
+						component: TagsColorFilterComponent
+					},
+					filterFunction: (tags: ITag[]) => {
+						const tagIds = [];
+						for (const tag of tags) {
+							tagIds.push(tag.id);
+						}
+						this.setFilter({ field: 'tags', search: tagIds });
+					},
 				}
 			}
 		};
@@ -352,11 +425,12 @@ export class TeamsComponent
 	 * Clear selected item
 	 */
 	clearItem() {
+		this.showAddCard = false;
 		this.selectTeam({
 			isSelected: false,
 			data: null
 		});
-		this.deselectAll();
+		this.deselectAll();	
 	}
 
 	/*
