@@ -27,6 +27,7 @@ import { OrganizationWithTagsComponent } from './organization-with-tags/organiza
 import { EmailComponent } from './email/email.component';
 import { RoleComponent } from './role/role.component';
 import { ExternalLinkComponent } from './external-link/external-link.component';
+import { CompanyLogoComponent } from './company-logo/company-logo.component';
 
 @NgModule({
 	imports: [
@@ -61,7 +62,8 @@ import { ExternalLinkComponent } from './external-link/external-link.component';
 		OrganizationWithTagsComponent,
 		EmailComponent,
 		RoleComponent,
-		ExternalLinkComponent
+		ExternalLinkComponent,
+		CompanyLogoComponent
 	],
 	exports: [
 		NotesWithTagsComponent,
@@ -75,7 +77,8 @@ import { ExternalLinkComponent } from './external-link/external-link.component';
 		RoleComponent,
 		EmailComponent,
 		ExternalLinkComponent,
-		TagsOnlyComponent
+		TagsOnlyComponent,
+		CompanyLogoComponent
 	],
 	providers: []
 })

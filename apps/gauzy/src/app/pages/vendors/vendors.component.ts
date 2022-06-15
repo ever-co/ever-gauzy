@@ -14,13 +14,12 @@ import { debounceTime, firstValueFrom } from 'rxjs';
 import { LocalDataSource } from 'ng2-smart-table';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ComponentEnum } from './../../@core/constants';
-import { EmailComponent, TagsOnlyComponent } from './../../@shared/table-components';
+import { EmailComponent, TagsOnlyComponent, CompanyLogoComponent } from './../../@shared/table-components';
 import { DeleteConfirmationComponent } from './../../@shared/user/forms';
 import { ErrorHandlingService, OrganizationVendorsService, Store, ToastrService } from '../../@core/services';
 import { IPaginationBase, PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import { ExternalLinkComponent } from '../../@shared/table-components/external-link/external-link.component';
-
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -75,7 +74,7 @@ export class VendorsComponent
 			)
 			.subscribe();
 		this._applyTranslationOnSmartTable();
-		this.loadSmartTable()
+		this.loadSmartTable();
 		this.pagination$
 			.pipe(
 				distinctUntilChange(),
@@ -86,7 +85,7 @@ export class VendorsComponent
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization: IOrganization) => !!organization),
-				tap((organization) => this.organization = organization),
+				tap((organization) => (this.organization = organization)),
 				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
@@ -100,7 +99,10 @@ export class VendorsComponent
 			});
 		this.route.queryParamMap
 			.pipe(
-				filter((params) => !!params && params.get('openAddDialog') === 'true'),
+				filter(
+					(params) =>
+						!!params && params.get('openAddDialog') === 'true'
+				),
 				debounceTime(1000),
 				tap(() => this.openDialog(this.addEditTemplateRef, false)),
 				untilDestroyed(this)
@@ -108,7 +110,7 @@ export class VendorsComponent
 			.subscribe();
 	}
 
-	ngOnDestroy(): void { }
+	ngOnDestroy(): void {}
 
 	private _initializeForm() {
 		this.form = this.fb.group({
@@ -151,6 +153,11 @@ export class VendorsComponent
 			},
 			actions: false,
 			columns: {
+				logo:{
+					title: this.getTranslation('ORGANIZATIONS_PAGE.IMAGE'),
+					type: 'custom',
+					renderComponent: CompanyLogoComponent
+				},
 				name: {
 					title: this.getTranslation('ORGANIZATIONS_PAGE.NAME'),
 					type: 'string'
@@ -175,7 +182,7 @@ export class VendorsComponent
 					type: 'custom',
 					class: 'align-row',
 					renderComponent: TagsOnlyComponent
-				},
+				}
 			}
 		};
 	}
@@ -187,7 +194,7 @@ export class VendorsComponent
 	}
 
 	cancel() {
-		this.addEditdialogRef?.close()
+		this.addEditdialogRef?.close();
 		this.form.reset();
 		this.selectedVendor = null;
 		this.tags = [];
@@ -227,7 +234,8 @@ export class VendorsComponent
 						'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_VENDOR.ADD_VENDOR',
 						{ name }
 					);
-				}).finally(() => {
+				})
+				.finally(() => {
 					this.loadVendors();
 					this.cancel();
 				});
@@ -243,13 +251,13 @@ export class VendorsComponent
 	}
 
 	async removeVendor(id: string, name: string) {
-		const result = await firstValueFrom(this.dialogService
-			.open(DeleteConfirmationComponent, {
+		const result = await firstValueFrom(
+			this.dialogService.open(DeleteConfirmationComponent, {
 				context: {
 					recordType: this.getTranslation('ORGANIZATIONS_PAGE.VENDOR')
 				}
-			})
-			.onClose);
+			}).onClose
+		);
 
 		if (result) {
 			try {
@@ -300,13 +308,16 @@ export class VendorsComponent
 		const { id: organizationId } = this.organization;
 
 		this.organizationVendorsService
-			.getAll(
-				{ organizationId, tenantId },
-				['tags'],
-				{ createdAt: 'DESC' }
-			)
+			.getAll({ organizationId, tenantId }, ['tags'], {
+				createdAt: 'DESC'
+			})
 			.then(({ items }) => {
-				this.vendors = items;
+				this.vendors = items.map((item) => {
+					return {
+						...item,
+						logo: item.name
+					};
+				});
 				this.smartTableSource.load(this.vendors);
 			});
 	}
@@ -336,7 +347,7 @@ export class VendorsComponent
 			this.addEditdialogRef = this.dialogService.open(template);
 		} catch (error) {
 			console.log(error, 'error');
-			
+
 			console.log('An error occurred on open dialog');
 		}
 	}
