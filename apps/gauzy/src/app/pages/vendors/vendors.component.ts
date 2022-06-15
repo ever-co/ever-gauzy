@@ -1,25 +1,49 @@
-import { Component, OnInit, OnDestroy, TemplateRef, ViewChild } from '@angular/core';
+import {
+	Component,
+	OnInit,
+	OnDestroy,
+	TemplateRef,
+	ViewChild
+} from '@angular/core';
 import {
 	IOrganizationVendor,
 	ITag,
 	ComponentLayoutStyleEnum,
 	IOrganization
 } from '@gauzy/contracts';
-import { Router, RouterEvent, NavigationEnd, ActivatedRoute } from '@angular/router';
+import {
+	Router,
+	RouterEvent,
+	NavigationEnd,
+	ActivatedRoute
+} from '@angular/router';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { NbDialogRef, NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, tap } from 'rxjs/operators';
 import { debounceTime, firstValueFrom } from 'rxjs';
-import { LocalDataSource } from 'ng2-smart-table';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ComponentEnum } from './../../@core/constants';
-import { EmailComponent, TagsOnlyComponent, CompanyLogoComponent } from './../../@shared/table-components';
+import { API_PREFIX, ComponentEnum } from './../../@core/constants';
+import {
+	EmailComponent,
+	TagsOnlyComponent,
+	CompanyLogoComponent
+} from './../../@shared/table-components';
 import { DeleteConfirmationComponent } from './../../@shared/user/forms';
-import { ErrorHandlingService, OrganizationVendorsService, Store, ToastrService } from '../../@core/services';
-import { IPaginationBase, PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
+import {
+	ErrorHandlingService,
+	OrganizationVendorsService,
+	Store,
+	ToastrService
+} from '../../@core/services';
+import {
+	IPaginationBase,
+	PaginationFilterBaseComponent
+} from '../../@shared/pagination/pagination-filter-base.component';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import { ExternalLinkComponent } from '../../@shared/table-components/external-link/external-link.component';
+import { HttpClient } from '@angular/common/http';
+import { ServerDataSource } from '../../@core/utils/smart-table';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -29,8 +53,8 @@ import { ExternalLinkComponent } from '../../@shared/table-components/external-l
 })
 export class VendorsComponent
 	extends PaginationFilterBaseComponent
-	implements OnInit, OnDestroy {
-
+	implements OnInit, OnDestroy
+{
 	@ViewChild('addEditTemplate') public addEditTemplateRef: TemplateRef<any>;
 	addEditdialogRef: NbDialogRef<any>;
 	organization: IOrganization;
@@ -41,7 +65,7 @@ export class VendorsComponent
 	selectedVendor: IOrganizationVendor;
 	tags: ITag[] = [];
 	settingsSmartTable: object;
-	smartTableSource = new LocalDataSource();
+	smartTableSource: ServerDataSource;
 	form: FormGroup;
 	selected = {
 		vendor: null,
@@ -59,7 +83,8 @@ export class VendorsComponent
 		private readonly errorHandlingService: ErrorHandlingService,
 		private readonly store: Store,
 		private readonly router: Router,
-		private readonly route: ActivatedRoute
+		private readonly route: ActivatedRoute,
+		private readonly httpClient: HttpClient
 	) {
 		super(translateService);
 		this.setView();
@@ -122,7 +147,7 @@ export class VendorsComponent
 			tags: ['']
 		});
 	}
-	
+
 	setView() {
 		this.viewComponentName = ComponentEnum.VENDORS;
 		this.store
@@ -133,14 +158,10 @@ export class VendorsComponent
 					(componentLayout) =>
 						(this.dataLayoutStyle = componentLayout)
 				),
-				filter(
-					(componentLayout) =>
-						componentLayout === ComponentLayoutStyleEnum.CARDS_GRID
-				),
-				tap(() => this.subject$.next(true)),
+				tap(() => this.refreshPagination()),
 				untilDestroyed(this)
 			)
-			.subscribe();		
+			.subscribe();
 	}
 
 	async loadSmartTable() {
@@ -151,7 +172,7 @@ export class VendorsComponent
 			},
 			actions: false,
 			columns: {
-				logo:{
+				logo: {
 					title: this.getTranslation('ORGANIZATIONS_PAGE.IMAGE'),
 					type: 'custom',
 					renderComponent: CompanyLogoComponent
@@ -234,7 +255,7 @@ export class VendorsComponent
 					);
 				})
 				.finally(() => {
-					this.loadVendors();
+					this.subject$.next(true);
 					this.cancel();
 				});
 		} else {
@@ -264,7 +285,7 @@ export class VendorsComponent
 					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_VENDOR.REMOVE_VENDOR',
 					{ name }
 				);
-				this.loadVendors();
+				this.subject$.next(true);
 			} catch (error) {
 				this.errorHandlingService.handleError(error);
 			}
@@ -293,36 +314,44 @@ export class VendorsComponent
 				);
 			})
 			.finally(() => {
-				this.loadVendors();
+				this.subject$.next(true);
 				this.cancel();
 			});
 	}
 
-	private loadVendors() {
+	private async loadVendors() {
 		if (!this.organization) {
 			return;
 		}
+		try {
+			const { activePage, itemsPerPage } = this.getPagination();
+			this.isLoading = true;
+			this.setSmartTableSource();
+			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
+			await this.smartTableSource.getElements();
+			this.vendors = this.smartTableSource.getData();
+			this.isLoading = false;
+		} catch (error) {
+			console.log(error, 'error');
+		}
+	}
+
+	setSmartTableSource() {
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
-		const { activePage, itemsPerPage} = this.getPagination();
-
-		this.isLoading = true;
-		this.organizationVendorsService
-			.getAll({ organizationId, tenantId }, ['tags'], {
-				createdAt: 'DESC'
-			})
-			.then(async ({ items }) => {
-				const vendors = items.map((item) => {
-					return {
-						...item,
-						logo: item.name
-					};
+		this.smartTableSource = new ServerDataSource(this.httpClient, {
+			endPoint: `${API_PREFIX}/organization-vendors/pagination`,
+			relations: ['tags'],
+			where: {
+				organizationId,
+				tenantId
+			},
+			resultMap: (item: IOrganizationVendor) => {
+				return Object.assign({}, item, {
+					logo: item.name
 				});
-				this.smartTableSource.setPaging(activePage, itemsPerPage, false);
-				this.smartTableSource.load(vendors);
-				this.vendors = await this.smartTableSource.getElements();
-				this.isLoading = false;
-			});
+			}
+		});
 	}
 
 	selectedTagsEvent(ev) {
@@ -349,9 +378,7 @@ export class VendorsComponent
 			isEditTemplate ? this.edit(this.selectedVendor) : this.cancel();
 			this.addEditdialogRef = this.dialogService.open(template);
 		} catch (error) {
-			console.log(error, 'error');
-
-			console.log('An error occurred on open dialog');
+			console.log('An error occurred on open dialog: ' + error);
 		}
 	}
 
@@ -367,7 +394,7 @@ export class VendorsComponent
 		this.selectedVendor = this.selected.vendor;
 	}
 
-	public onScroll(){
+	public onScroll() {
 		this.setPagination({
 			...this.getPagination(),
 			itemsPerPage: this.pagination.itemsPerPage + 10
