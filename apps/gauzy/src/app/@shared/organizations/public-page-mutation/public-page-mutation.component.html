@@ -1,14 +1,11 @@
 <nb-card class="main" xmlns="http://www.w3.org/1999/html">
-	<nb-card-header class="d-flex">
-		<h5>
+	<nb-card-header class="d-flex flex-column">
+		<span class="cancel">
+			<i class="fas fa-times" (click)="close()"></i>
+		</span>
+		<h5 class="title">
 			{{ 'POP_UPS.EDIT_PAGE' | translate }}
 		</h5>
-
-		<nb-icon
-			class="ml-auto mt-1 close"
-			(click)="close()"
-			icon="close-outline"
-		></nb-icon>
 	</nb-card-header>
 	<nb-card-body class="body">
 		<form [formGroup]="form" *ngIf="form">
@@ -165,8 +162,8 @@
 										"
 										value="{{ minimumProjectSize }}"
 										>{{ organization.currency }}
-										{{ minimumProjectSize }}</nb-option
-									>
+										{{ minimumProjectSize }}
+									</nb-option>
 								</nb-select>
 							</div>
 						</div>
@@ -287,23 +284,45 @@
 					responsive
 				>
 					<div class="row">
-						<div class="col-sm-12">
-							<span class="heading_title">{{
-								'POP_UPS.AWARDS' | translate
-							}}</span>
-							<button
+						<div class="col">
+							<div class="row" *ngIf="awardExist">
+								<div class="col">
+									<nb-tag-list>
+										<nb-tag
+											*ngFor="let award of awards"
+											(remove)="removeAward(award)"
+											[text]="
+												award.name +
+												' (' +
+												award.year +
+												')'
+											"
+											removable
+										></nb-tag>
+									</nb-tag-list>
+								</div>
+							</div>
+							<div
 								*ngIf="!showAddAward"
 								(click)="showAddAward = !showAddAward"
-								nbButton
-								status="success"
-								class="add_new"
+								class="button-add-award"
 							>
-								<nb-icon
-									class="mr-1"
-									icon="plus-outline"
-								></nb-icon>
-							</button>
-							<div class="row" *ngIf="showAddAward">
+								<button
+									nbButton
+									status="success"
+									outline
+									size="small"
+								>
+									<i class="fas fa-plus"></i>
+								</button>
+								<span class="heading_title">{{
+									'POP_UPS.AWARDS' | translate
+								}}</span>
+							</div>
+							<div
+								class="row mt-3 show-add-award"
+								*ngIf="showAddAward"
+							>
 								<div
 									class="col-sm-4 d-flex flex-column justify-content-end"
 								>
@@ -340,9 +359,8 @@
 									/>
 								</div>
 
-								<span class="col" style="margin-top: 29px">
+								<span class="col d-flex align-items-end">
 									<button
-										class="w-100"
 										(click)="
 											addAward(
 												addInputName.value,
@@ -351,31 +369,20 @@
 										"
 										nbButton
 										status="success"
+										size="small"
+										class="mr-3"
 									>
-										{{ 'BUTTONS.SAVE' | translate }}
-									</button></span
-								>
-								<span class="col" style="margin-top: 29px"
+										{{ 'BUTTONS.SAVE' | translate }}</button
 									><button
-										class="w-100"
 										(click)="showAddAward = !showAddAward"
 										nbButton
-										status="danger"
+										status="basic"
+										size="small"
+										outline
 									>
 										{{ 'BUTTONS.CANCEL' | translate }}
-									</button></span
-								>
-							</div>
-							<div class="row" *ngIf="awardExist">
-								<div class="col">
-									<nb-card class="mt-3">
-										<nb-card-body>
-											<nb-tag-list>
-												<nb-tag *ngFor="let award of awards" (remove)="removeAward(award)" [text]="award.name + ' (' + award.year + ')'" removable></nb-tag>
-											</nb-tag-list>
-										</nb-card-body>
-									</nb-card>
-								</div>
+									</button>
+								</span>
 							</div>
 						</div>
 					</div>
@@ -412,22 +419,48 @@
 				>
 					<div class="row">
 						<div class="col">
-							<span class="heading_title">{{
-								'POP_UPS.LANGUAGES' | translate
-							}}</span>
-							<button
+							<div class="row" *ngIf="languageExist">
+								<div class="col">
+									<nb-tag-list>
+										<nb-tag
+											*ngFor="
+												let lang of organization_languages
+											"
+											(remove)="removeLanguage(lang)"
+											[text]="
+												lang.name +
+												' (' +
+												lang.level +
+												')'
+											"
+											removable
+										></nb-tag>
+									</nb-tag-list>
+								</div>
+							</div>
+							<div
 								*ngIf="!showAddLanguage"
 								(click)="showAddLanguage = !showAddLanguage"
-								nbButton
-								status="success"
-								class="add_new"
+								class="button-add-language"
 							>
-								<nb-icon
-									class="mr-1"
-									icon="plus-outline"
-								></nb-icon>
-							</button>
-							<div class="row" *ngIf="showAddLanguage">
+								<button
+									nbButton
+									status="success"
+									outline
+									size="small"
+								>
+									<i class="fas fa-plus"></i>
+								</button>
+								<span class="heading_title">
+									{{
+										'POP_UPS.ADD_LANGUAGE' | translate
+									}}</span
+								>
+							</div>
+							<div
+								class="row mt-3 show-add-language"
+								*ngIf="showAddLanguage"
+							>
 								<div
 									class="col d-flex flex-column justify-content-end"
 								>
@@ -466,10 +499,8 @@
 										}}</nb-option>
 									</nb-select>
 								</div>
-
-								<span class="col" style="margin-top: 29px">
+								<span class="col d-flex align-items-end">
 									<button
-										class="w-100"
 										(click)="
 											addLanguage(
 												selectedLanguage,
@@ -480,33 +511,23 @@
 										"
 										nbButton
 										status="success"
+										size="small"
+										class="mr-3"
 									>
 										{{ 'BUTTONS.SAVE' | translate }}
 									</button>
-								</span>
-								<span class="col" style="margin-top: 29px">
 									<button
-										class="w-100"
 										(click)="
 											showAddLanguage = !showAddLanguage
 										"
 										nbButton
-										status="danger"
+										status="basic"
+										outline
+										size="small"
 									>
 										{{ 'BUTTONS.CANCEL' | translate }}
 									</button>
 								</span>
-							</div>
-							<div class="row" *ngIf="languageExist">
-								<div class="col">
-									<nb-card class="mt-3">
-										<nb-card-body>
-											<nb-tag-list>
-												<nb-tag *ngFor="let lang of organization_languages" (remove)="removeLanguage(lang)" [text]="lang.name + ' (' + lang.level + ')'" removable></nb-tag>
-											</nb-tag-list>
-										</nb-card-body>
-									</nb-card>
-								</div>
 							</div>
 						</div>
 					</div>
@@ -524,38 +545,34 @@
 					<div class="row">
 						<div class="col-sm-6">
 							<div class="form-group extra_padding">
-								<label class="check" for="showIncome">{{
-									'POP_UPS.TOTAL_INCOME_OR_MONTHLY_INCOME'
-										| translate
-								}}</label>
 								<nb-toggle
 									class="nb_toggle"
 									id="showIncome"
 									[(checked)]="organization.show_income"
 									(change)="changeShowAction('show_income')"
 								>
+									<label class="check" for="showIncome">{{
+										'POP_UPS.TOTAL_INCOME_OR_MONTHLY_INCOME'
+											| translate
+									}}</label>
 								</nb-toggle>
 							</div>
 						</div>
 						<div class="col-sm-6">
 							<div class="form-group extra_padding">
-								<label class="check" for="showProfits">{{
-									'POP_UPS.PROFITS' | translate
-								}}</label>
 								<nb-toggle
 									class="nb_toggle"
 									id="showProfits"
 									[(checked)]="organization.show_profits"
 									(change)="changeShowAction('show_profits')"
-								>
+									><label class="check" for="showProfits">{{
+										'POP_UPS.PROFITS' | translate
+									}}</label>
 								</nb-toggle>
 							</div>
 						</div>
 						<div class="col-sm-6">
 							<div class="form-group extra_padding">
-								<label class="check" for="showBusinessPaid">{{
-									'POP_UPS.BONUSES_PAID' | translate
-								}}</label>
 								<nb-toggle
 									class="nb_toggle"
 									id="showBusinessPaid"
@@ -563,16 +580,18 @@
 									(change)="
 										changeShowAction('show_bonuses_paid')
 									"
-								>
+									><label
+										class="check"
+										for="showBusinessPaid"
+										>{{
+											'POP_UPS.BONUSES_PAID' | translate
+										}}</label
+									>
 								</nb-toggle>
 							</div>
 						</div>
 						<div class="col-sm-6">
 							<div class="form-group extra_padding">
-								<label class="check" for="showTotalHours">{{
-									'POP_UPS.TOTAL_HOURS_WORKED_OVER_GAUZY'
-										| translate
-								}}</label>
 								<nb-toggle
 									class="nb_toggle"
 									id="showTotalHours"
@@ -580,20 +599,19 @@
 									(change)="
 										changeShowAction('show_total_hours')
 									"
-								>
+									><label
+										class="check"
+										for="showTotalHours"
+										>{{
+											'POP_UPS.TOTAL_HOURS_WORKED_OVER_GAUZY'
+												| translate
+										}}</label
+									>
 								</nb-toggle>
 							</div>
 						</div>
 						<div class="col-sm-6">
 							<div class="form-group extra_padding">
-								<label
-									class="check"
-									for="showMinimumProjectSize"
-									>{{
-										'POP_UPS.MINIMUM_PROJECT_SIZE'
-											| translate
-									}}</label
-								>
 								<nb-toggle
 									class="nb_toggle"
 									id="showMinimumProjectSize"
@@ -605,15 +623,19 @@
 											'show_minimum_project_size'
 										)
 									"
-								>
+									><label
+										class="check"
+										for="showMinimumProjectSize"
+										>{{
+											'POP_UPS.MINIMUM_PROJECT_SIZE'
+												| translate
+										}}</label
+									>
 								</nb-toggle>
 							</div>
 						</div>
 						<div class="col-sm-6">
 							<div class="form-group extra_padding">
-								<label class="check" for="showProjectsCount">{{
-									'POP_UPS.PROJECTS_COUNT' | translate
-								}}</label>
 								<nb-toggle
 									class="nb_toggle"
 									id="showProjectsCount"
@@ -623,15 +645,18 @@
 									(change)="
 										changeShowAction('show_projects_count')
 									"
-								>
+									><label
+										class="check"
+										for="showProjectsCount"
+										>{{
+											'POP_UPS.PROJECTS_COUNT' | translate
+										}}</label
+									>
 								</nb-toggle>
 							</div>
 						</div>
 						<div class="col-sm-6">
 							<div class="form-group extra_padding">
-								<label class="check" for="showClientsCount">{{
-									'POP_UPS.CLIENTS_COUNT' | translate
-								}}</label>
 								<nb-toggle
 									class="nb_toggle"
 									id="showClientsCount"
@@ -641,31 +666,33 @@
 									(change)="
 										changeShowAction('show_clients_count')
 									"
-								>
+									><label
+										class="check"
+										for="showClientsCount"
+										>{{
+											'POP_UPS.CLIENTS_COUNT' | translate
+										}}</label
+									>
 								</nb-toggle>
 							</div>
 						</div>
 
 						<div class="col-sm-6">
 							<div class="form-group extra_padding">
-								<label class="check" for="show_clients">{{
-									'POP_UPS.SHOW_CLIENTS' | translate
-								}}</label>
 								<nb-toggle
 									class="nb_toggle"
 									id="show_clients"
 									[(checked)]="organization.show_clients"
 									(change)="changeShowAction('show_clients')"
-								>
+									><label class="check" for="show_clients">{{
+										'POP_UPS.SHOW_CLIENTS' | translate
+									}}</label>
 								</nb-toggle>
 							</div>
 						</div>
 
 						<div class="col-sm-6">
 							<div class="form-group extra_padding">
-								<label class="check" for="showEmployeesCount">{{
-									'POP_UPS.EMPLOYEES_COUNT' | translate
-								}}</label>
 								<nb-toggle
 									class="nb_toggle"
 									id="showEmployeesCount"
@@ -675,7 +702,14 @@
 									(change)="
 										changeShowAction('show_employees_count')
 									"
-								>
+									><label
+										class="check"
+										for="showEmployeesCount"
+										>{{
+											'POP_UPS.EMPLOYEES_COUNT'
+												| translate
+										}}</label
+									>
 								</nb-toggle>
 							</div>
 						</div>
@@ -684,8 +718,13 @@
 			</nb-tabset>
 		</form>
 	</nb-card-body>
-	<nb-card-footer class="text-right">
-		<button (click)="editPublicPage()" status="success" nbButton>
+	<nb-card-footer class="text-left">
+		<button
+			(click)="editPublicPage()"
+			status="success"
+			size="small"
+			nbButton
+		>
 			{{ 'BUTTONS.UPDATE' | translate }}
 		</button>
 	</nb-card-footer>
