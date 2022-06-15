@@ -465,9 +465,13 @@
 									<nb-list-item
 										*ngFor="
 											let employee of employees;
-											let i = index
+											let i = index;
+											let lastEmployee = last
 										"
 										class="search-result"
+										[ngClass]="{
+											'border-bottom': !lastEmployee
+										}"
 									>
 										<ng-container
 											*ngIf="
