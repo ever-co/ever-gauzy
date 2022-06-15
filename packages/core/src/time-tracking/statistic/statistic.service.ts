@@ -103,73 +103,13 @@ export class StatisticService {
 			);
 		}
 
-		/*
-		 *  Get employees count who worked in this week.
+		/**
+		 * GET statistics counts
 		 */
-		const employeesCountQuery = this.employeeRepository.createQueryBuilder();
-		const employeesCount = await employeesCountQuery
-			.innerJoin(`${employeesCountQuery.alias}.timeLogs`, 'timeLogs')
-			.innerJoin(`timeLogs.timeSlots`, 'timeSlots')
-			.andWhere(`"${employeesCountQuery.alias}"."tenantId" = :tenantId`, { tenantId })
-			.andWhere(`"${employeesCountQuery.alias}"."organizationId" = :organizationId`, { organizationId })
-			.andWhere(
-				new Brackets((qb: WhereExpressionBuilder) => {
-					qb.andWhere(`"timeLogs"."startedAt" BETWEEN :startDate AND :endDate`, {
-						startDate: start,
-						endDate: end
-					});
-					/**
-					 * If Employee Selected
-					 */
-					if (isNotEmpty(employeeIds)) {
-						qb.andWhere(`"timeLogs"."employeeId" IN (:...employeeIds)`, {
-							employeeIds
-						});
-						qb.andWhere(`"timeSlots"."employeeId" IN (:...employeeIds)`, {
-							employeeIds
-						});
-					}
-					/**
-					 * If Project Selected
-					 */
-					if (isNotEmpty(projectIds)) {
-						qb.andWhere(`"timeLogs"."projectId" IN (:...projectIds)`, {
-							projectIds
-						});
-					}
-					if (activityLevel) {
-						/**
-						 * Activity Level should be 0-100%
-						 * So, we have convert it into 10 minutes TimeSlot by multiply by 6
-						 */
-						const startLevel = (activityLevel.start * 6);
-						const endLevel = (activityLevel.end * 6);
-				
-						qb.andWhere(`"timeSlots"."overall" BETWEEN :startLevel AND :endLevel`, {
-							startLevel,
-							endLevel
-						});
-					}
-					/**
-					 * If LogType Selected
-					 */
-					if (isNotEmpty(logType)) {
-						qb.andWhere(`"timeLogs"."logType" IN (:...logType)`, {
-							logType
-						});
-					}
-					/**
-					 * If Source Selected
-					 */
-					if (isNotEmpty(source)) {
-						qb.andWhere(`"timeLogs"."source" IN (:...source)`, {
-							source
-						});
-					}
-				})
-			)
-			.getCount();
-
+		const employeesCount = await this.getEmployeeWorkedCounts({
+			...request,
+			employeeIds
+		});
 		/*
 		 *  Get projects count who worked in this week.
 		 */
@@ -1475,5 +1415,119 @@ export class StatisticService {
 		}
 		const employees = await query.getRawMany();
 		return pluck(employees, 'id');
+	}
+
+	/**
+	 * Get employees count who worked in this week.
+	 * 
+	 * @param request 
+	 * @returns 
+	 */
+	private async getEmployeeWorkedCounts(request: IGetCountsStatistics) {
+		const query = this.timeLogRepository.createQueryBuilder('time_log');
+		query.select(`"${query.alias}"."employeeId"`, 'employeeId');
+		query.innerJoin(`${query.alias}.employee`, 'employee');
+		query.innerJoin(`${query.alias}.timeSlots`, 'timeSlots');
+		query.andWhere(
+			new Brackets((where: WhereExpressionBuilder) => {
+				this.getFilterQuery(query, where, request);
+			})
+		)
+		query.groupBy(`"${query.alias}"."employeeId"`);
+		const employees = await query.getRawMany();
+		return employees.length;
+	}
+
+	/**
+	 * GET filter common query request
+	 * 
+	 * @param query 
+	 * @param qb 
+	 * @param request 
+	 * @returns 
+	 */
+	private getFilterQuery(
+		query: SelectQueryBuilder<TimeLog>,
+		qb: WhereExpressionBuilder,
+		request: IGetCountsStatistics
+	) {
+		const tenantId = RequestContext.currentTenantId();
+		const {
+			organizationId,
+			startDate,
+			endDate,
+			employeeIds = [],
+			projectIds = []
+		} = request;
+
+		const { start, end } = (startDate && endDate) ?
+								getDateFormat(
+									moment.utc(startDate),
+									moment.utc(endDate)
+								) : 
+								getDateFormat(
+									moment().startOf('week').utc(),
+									moment().endOf('week').utc()
+								);
+		qb.andWhere(
+			new Brackets((qb: WhereExpressionBuilder) => {
+				qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
+				qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
+				qb.andWhere(`"${query.alias}"."deletedAt" IS NULL`);
+			})
+		);
+		qb.andWhere(
+			new Brackets((qb: WhereExpressionBuilder) => {
+				qb.andWhere(`"${query.alias}"."startedAt" BETWEEN :startDate AND :endDate`, {
+					startDate: start,
+					endDate: end
+				});
+			})
+		);
+		qb.andWhere(
+			new Brackets((qb: WhereExpressionBuilder) => { 
+				if (isNotEmpty(request.activityLevel)) {
+					/**
+					 * Activity Level should be 0-100%
+					 * So, we have convert it into 10 minutes TimeSlot by multiply by 6
+					 */
+					const { activityLevel } = request;
+					const startLevel = (activityLevel.start * 6);
+					const endLevel = (activityLevel.end * 6);
+			
+					qb.andWhere(`"timeSlots"."overall" BETWEEN :startLevel AND :endLevel`, {
+						startLevel,
+						endLevel
+					});
+				}
+				if (isNotEmpty(request.logType)) {
+					const { logType } = request;
+					qb.andWhere(`"${query.alias}"."logType" IN (:...logType)`, {
+						logType
+					});
+				}
+				if (isNotEmpty(request.source)) {
+					const { source } = request;
+					qb.andWhere(`"${query.alias}"."source" IN (:...source)`, {
+						source
+					});
+				}
+			})
+		);
+		qb.andWhere(
+			new Brackets((qb: WhereExpressionBuilder) => {
+				if (isNotEmpty(employeeIds)) {
+					qb.andWhere(`"${query.alias}"."employeeId" IN (:...employeeIds)`, {
+						employeeIds
+					});
+				}
+				if (isNotEmpty(projectIds)) {
+					qb.andWhere(`"${query.alias}"."projectId" IN (:...projectIds)`, {
+						projectIds
+					});
+				}
+			})
+		);
+		return qb;
 	}
 }
