@@ -1,1 +1,1 @@
-export { StatisticCountsDTO } from './statistic-counts.dto';
+export { StatisticCountsQueryDTO } from './statistic-counts-query.dto';

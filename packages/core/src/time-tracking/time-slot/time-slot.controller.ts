@@ -16,7 +16,7 @@ import {
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
 import { FindOneOptions } from 'typeorm';
-import { IGetTimeSlotInput, ITimeSlot, PermissionsEnum } from '@gauzy/contracts';
+import { ITimeSlot, PermissionsEnum } from '@gauzy/contracts';
 import { TimeSlotService } from './time-slot.service';
 import { TimeSlot } from './time-slot.entity';
 import { OrganizationPermissionGuard, PermissionGuard, TenantPermissionGuard } from '../../shared/guards';
@@ -25,6 +25,7 @@ import { Permissions } from './../../shared/decorators';
 import { DeleteTimeSlotDTO } from './dto';
 import { DeleteTimeSlotCommand } from './commands';
 import { TransformInterceptor } from './../../core/interceptors';
+import { TimeSlotQueryDTO } from './dto/query';
 
 @ApiTags('TimeSlot')
 @UseGuards(TenantPermissionGuard)
@@ -43,8 +44,13 @@ export class TimeSlotController {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Get('/')
-	async getAll(@Query() entity: IGetTimeSlotInput): Promise<ITimeSlot[]> {
-		return await this.timeSlotService.getTimeSlots(entity);
+	async getAll(
+		@Query(new ValidationPipe({
+			transform: true,
+			whitelist: true
+		})) options: TimeSlotQueryDTO
+	): Promise<ITimeSlot[]> {
+		return await this.timeSlotService.getTimeSlots(options);
 	}
 
 	@ApiOperation({ summary: 'Get Time Slot By Id' })
