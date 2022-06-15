@@ -57,14 +57,7 @@ export class StatisticService {
 	 * @returns 
 	 */
 	async getCounts(request: IGetCountsStatistics): Promise<ICountsStatistics> {
-		const {
-			organizationId,
-			startDate,
-			endDate,
-			logType = [],
-			source = [],
-			activityLevel
-		} = request;
+		const { organizationId, startDate, endDate } = request;
 		let { employeeIds = [], projectIds = [] } = request;
 
 		const user = RequestContext.currentUser();
@@ -76,8 +69,8 @@ export class StatisticService {
 									moment.utc(endDate)
 								) : 
 								getDateFormat(
-									moment().startOf('day').utc(),
-									moment().endOf('day').utc()
+									moment().startOf('week').utc(),
+									moment().endOf('week').utc()
 								);
 		/*
 		 *  Get employees id of the organization or get current employee id
@@ -1399,7 +1392,7 @@ export class StatisticService {
 
 	private async getEmployeesIds(
 		organizationId: string,
-		employeeIds?: string[]
+		employeeIds: string[]
 	) {
 		const tenantId = RequestContext.currentTenantId();
 		const query = this.employeeRepository.createQueryBuilder('employee');
