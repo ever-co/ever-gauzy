@@ -16,8 +16,12 @@
 			>
 			</ngx-gauzy-button-action>
 		</div>
-	</nb-card-header>	
-	<nb-card-body>
+	</nb-card-header>
+	<nb-card-body
+		[nbSpinner]="isLoading"
+		nbSpinnerStatus="primary"
+		nbSpinnerSize="large"
+	>
 		<ng-template
 			[ngIf]="
 				dataLayoutStyle === componentLayoutStyleEnum.TABLE &&
@@ -36,23 +40,26 @@
 				>
 					<div class="row align-items-center">
 						<div class="col-md-2 p-0 float-left text-truncate">
-							<ga-company-logo [rowData]="vendor"></ga-company-logo>
+							<ga-company-logo
+								[rowData]="vendor"
+							></ga-company-logo>
 							{{ vendor.name }}
 						</div>
 						<div class="col-md-2 p-0 text-center text-truncate">
 							{{ vendor.phone }}
 						</div>
 						<div class="col-md-2 p-0 text-center text-truncate">
-							<gauzy-email [rowData]="vendor"></gauzy-email>					
+							<gauzy-email [rowData]="vendor"></gauzy-email>
 						</div>
 						<div class="col-md-3 p-0 float-left text-truncate">
-							<gauzy-external-link [rowData]="vendor"></gauzy-external-link>
+							<gauzy-external-link
+								[rowData]="vendor"
+							></gauzy-external-link>
 						</div>
 						<div class="col-md-3 text-center p-0 text-truncate">
-							<ga-only-tags [rowData]="vendor">
-							</ga-only-tags>
+							<ga-only-tags [rowData]="vendor"> </ga-only-tags>
 						</div>
-					</div>					
+					</div>
 				</nb-card-body>
 			</nb-card>
 		</ng-template>
@@ -81,34 +88,32 @@
 	let-buttonSize="buttonSize"
 	let-selectedItem="selectedItem"
 >
-<ng-container *ngxPermissionsOnly="ALL_ORG_VIEW">
-	<div class="actions">
-		<button
-			(click)="openDialog(addEditTemplate, true)"
-			nbButton
-			status="basic"
-			class="action primary"
-			[disabled]="disabled"
-			size="small"
-		>
-			<nb-icon icon="edit-outline"></nb-icon>
-			{{ 'BUTTONS.EDIT' | translate }}
-		</button>
-		<button
-			(click)="
-				removeVendor(selected.vendor.id, selected.vendor.name)
-			"
-			nbButton
-			status="basic"
-			class="action"
-			[disabled]="isDisabled"
-			size="small"
-			[nbTooltip]="'BUTTONS.DELETE' | translate"
-		>
-			<nb-icon status="danger" icon="trash-2-outline"> </nb-icon>
-		</button>
-	</div>		
-</ng-container>				
+	<ng-container *ngxPermissionsOnly="ALL_ORG_VIEW">
+		<div class="actions">
+			<button
+				(click)="openDialog(addEditTemplate, true)"
+				nbButton
+				status="basic"
+				class="action primary"
+				[disabled]="disabled"
+				size="small"
+			>
+				<nb-icon icon="edit-outline"></nb-icon>
+				{{ 'BUTTONS.EDIT' | translate }}
+			</button>
+			<button
+				(click)="removeVendor(selected.vendor.id, selected.vendor.name)"
+				nbButton
+				status="basic"
+				class="action"
+				[disabled]="isDisabled"
+				size="small"
+				[nbTooltip]="'BUTTONS.DELETE' | translate"
+			>
+				<nb-icon status="danger" icon="trash-2-outline"> </nb-icon>
+			</button>
+		</div>
+	</ng-container>
 </ng-template>
 <ng-template #visibleButton>
 	<ng-container *ngxPermissionsOnly="ALL_ORG_VIEW">
@@ -120,7 +125,7 @@
 		>
 			<nb-icon icon="plus-outline"> </nb-icon>
 			{{ 'BUTTONS.ADD' | translate }}
-		</button>	
+		</button>
 	</ng-container>
 </ng-template>
 <ng-template #addEditTemplate let-ref="dialogRef" class="add-edit-dialog">
@@ -136,10 +141,10 @@
 			</div>
 			<div class="row mb-3">
 				<h5 class="title mr-3 ml-3">
-					{{ selectedVendor && 
-						selectedVendor?.id  ? 
-						('POP_UPS.EDIT' | translate) :
-						('POP_UPS.ADD' | translate)
+					{{
+						selectedVendor && selectedVendor?.id
+							? ('POP_UPS.EDIT' | translate)
+							: ('POP_UPS.ADD' | translate)
 					}}
 				</h5>
 			</div>
@@ -159,9 +164,7 @@
 							id="name"
 							formControlName="name"
 							[status]="
-								isInvalidControl('name')
-									? 'danger'
-									: 'basic'
+								isInvalidControl('name') ? 'danger' : 'basic'
 							"
 						/>
 					</div>
@@ -198,9 +201,7 @@
 							id="email"
 							formControlName="email"
 							[status]="
-								isInvalidControl('email')
-									? 'danger'
-									: 'basic'
+								isInvalidControl('email') ? 'danger' : 'basic'
 							"
 						/>
 					</div>
@@ -226,16 +227,14 @@
 					<div class="col-sm-12 d-flex flex-column">
 						<ga-tags-color-input
 							[selectedTags]="tags"
-							(selectedTagsEvent)="
-								selectedTagsEvent($event)
-							"
+							(selectedTagsEvent)="selectedTagsEvent($event)"
 							class="add-tags"
 							[isOrgLevel]="true"
 						>
 						</ga-tags-color-input>
 					</div>
 				</div>
-			</form>	
+			</form>
 			<div class="row mb-3">
 				<div class="d-flex">
 					<button
@@ -256,8 +255,7 @@
 						{{ 'BUTTONS.SAVE' | translate }}
 					</button>
 				</div>
-			</div>			
+			</div>
 		</div>
 	</div>
 </ng-template>
-

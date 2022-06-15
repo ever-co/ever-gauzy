@@ -7,7 +7,8 @@ import {
 	NbIconModule,
 	NbDialogModule,
 	NbActionsModule,
-	NbBadgeModule
+	NbBadgeModule,
+	NbSpinnerModule
 } from '@nebular/theme';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { VendorsComponent } from './vendors.component';
@@ -43,7 +44,8 @@ import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy
 		NbDialogModule.forChild(),
 		TranslateModule,
 		HeaderTitleModule,
-		GauzyButtonActionModule
+		GauzyButtonActionModule,
+		NbSpinnerModule
 	],
 	declarations: [VendorsComponent],
 	providers: [OrganizationVendorsService]

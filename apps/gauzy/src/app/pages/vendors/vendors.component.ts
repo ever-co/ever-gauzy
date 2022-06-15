@@ -48,6 +48,7 @@ export class VendorsComponent
 		state: false
 	};
 	disabled: boolean = true;
+	isLoading: boolean = false;
 
 	constructor(
 		private readonly organizationVendorsService: OrganizationVendorsService,
@@ -305,6 +306,7 @@ export class VendorsComponent
 		const { id: organizationId } = this.organization;
 		const { activePage, itemsPerPage} = this.getPagination();
 
+		this.isLoading = true;
 		this.organizationVendorsService
 			.getAll({ organizationId, tenantId }, ['tags'], {
 				createdAt: 'DESC'
@@ -319,6 +321,7 @@ export class VendorsComponent
 				this.smartTableSource.setPaging(activePage, itemsPerPage, false);
 				this.smartTableSource.load(this.vendors);
 				this._loadGridLayoutData();
+				this.isLoading = false;
 			});
 	}
 
