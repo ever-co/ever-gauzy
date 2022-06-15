@@ -81,6 +81,7 @@
 	let-buttonSize="buttonSize"
 	let-selectedItem="selectedItem"
 >
+<ng-container *ngxPermissionsOnly="ALL_ORG_VIEW">
 	<div class="actions">
 		<button
 			(click)="openDialog(addEditTemplate, true)"
@@ -106,18 +107,21 @@
 		>
 			<nb-icon status="danger" icon="trash-2-outline"> </nb-icon>
 		</button>
-	</div>			
+	</div>		
+</ng-container>				
 </ng-template>
 <ng-template #visibleButton>
-	<button
-		nbButton
-		status="success"
-		size="small"
-		(click)="openDialog(addEditTemplate, false)"
-	>
-		<nb-icon icon="plus-outline"> </nb-icon>
-		{{ 'BUTTONS.ADD' | translate }}
-	</button>
+	<ng-container *ngxPermissionsOnly="ALL_ORG_VIEW">
+		<button
+			nbButton
+			status="success"
+			size="small"
+			(click)="openDialog(addEditTemplate, false)"
+		>
+			<nb-icon icon="plus-outline"> </nb-icon>
+			{{ 'BUTTONS.ADD' | translate }}
+		</button>	
+	</ng-container>
 </ng-template>
 <ng-template #addEditTemplate let-ref="dialogRef" class="add-edit-dialog">
 	<div class="editable">
