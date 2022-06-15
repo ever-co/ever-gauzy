@@ -317,7 +317,7 @@ p,
   .name {
     font-size: 16px;
     font-weight: 500;
-    color: #3c495a;
+    color: var(--gauzy-text-color-1);
   }
 
   .margin-right-10 {
@@ -338,36 +338,63 @@ p,
   }
 
   .label-hourly {
-    background-color: #56d48f;
+    background-color: var(--color-success-transparent-200);
+    color: var(--color-success-default);
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 15px;
+    letter-spacing: 0em;
   }
 
-  /*.pay-rate {
-    float: right;
-    color: #3c495a;
-    font-size: 16px;
-    font-weight: 500;
-  }*/
+  .location {
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 15px;
+    letter-spacing: 0em;
+    text-align: left;
+  }
 
   .pay-rate {
-    color: #3c495a;
-    font-size: 15px;
+    color: var(--gauzy-text-color-1);
+    font-size: 16px;
     font-weight: 600;
-    padding: 5px;
+    line-height: 19px;
+    letter-spacing: 0em;
+  }
+
+  .pay-label{
+    width: fit-content;
+    text-align: left;
   }
 
   .speciality {
-    color: #7f92a9;
-    margin-top: 10px;
+    color: var(--gauzy-text-color-2);
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 15px;
+    letter-spacing: 0em;
+    text-align: left;
   }
 
   .average-bonus {
-    color: #7f92a9;
+    color: var(--gauzy-text-color-2);
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 15px;
+    letter-spacing: 0em;
+    text-align: left;
   }
 
   .works-at {
     margin-top: 10px;
     display: inline-block;
     margin-right: 10px;
+    color: var(--gauzy-text-color-1);
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 15px;
+    letter-spacing: 0em;
+    text-align: left;
   }
 
   .text-success {
@@ -380,6 +407,12 @@ p,
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
+    color: var(--gauzy-text-color-1);
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 15px;
+    letter-spacing: 0em;
+    text-align: left;
   }
 
   .push-bottom-10 {

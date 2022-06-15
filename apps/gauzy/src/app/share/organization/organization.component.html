@@ -524,7 +524,7 @@
 															Developer
 														</div>
 													</div>
-													<div class="col-1">
+													<div class="col">
 														<div
 															class="label label-hourly margin-right-10"
 														>
@@ -544,9 +544,10 @@
 																}}"
 															>
 																<nb-icon
+																	size="tiny"
 																	icon="globe-2-outline"
 																	[options]="{
-																		color: '#55a8fd'
+																		color: 'var(--gauzy-text-color-2)'
 																	}"
 																>
 																</nb-icon>
@@ -559,12 +560,13 @@
 														</div>
 														<div>
 															<span
-																class="location text-success"
+																class="location text-secondary"
 															>
 																<nb-icon
-																	icon="navigation-2-outline"
+																	size="tiny"
+																	icon="pin-outline"
 																	[options]="{
-																		color: '#28a745'
+																		color: 'var(--gauzy-text-color-2)'
 																	}"
 																>
 																</nb-icon>
@@ -581,7 +583,7 @@
 																}}:</span
 															>
 															<span
-																class="text-success"
+																class="text-secondary"
 															>
 																{{
 																	employee.billRateCurrency
@@ -596,7 +598,9 @@
 														</div>
 													</div>
 													<div class="col-3">
-														<div class="profil-bio">
+														<div
+															class="profil-bio text"
+														>
 															I am Full-stack Web
 															Developer with
 															experience in the
@@ -625,105 +629,155 @@
 															</li>
 														</div>
 													</div>
-													<div class="col-2 text-right">
-														<div class="pay-rate">
-															{{
-																employee.billRateValue
-																	| currency
-																		: employee.billRateCurrency
-																		: 'symbol'
-															}}/hr
-														</div>
-														<div
-															class="caption label-total-hours mt-2 margin-right-10"
-														>
-															{{
-																employee.totalWorkHours
-															}}
-															{{
-																'ORGANIZATIONS_PAGE.HOURS_WORKED'
-																	| translate
-															}}
+													<div
+														class="col-2 text-right"
+													>
+														<div class="pay-label">
+															<div
+																class="pay-rate"
+															>
+																{{
+																	employee.billRateValue
+																		| currency
+																			: employee.billRateCurrency
+																			: 'symbol'
+																		| position
+																			: organization?.currencyPosition
+																}}/hr
+															</div>
+															<div
+																class="caption label-total-hours mt-2"
+															>
+																{{
+																	employee.totalWorkHours
+																}}
+																{{
+																	'ORGANIZATIONS_PAGE.HOURS_WORKED'
+																		| translate
+																}}
+															</div>
 														</div>
 													</div>
 												</div>
 											</div>
 										</ng-container>
 										<ng-template #anonymousTemp>
-											<div class="anonymous-avatar">
-												A
-											</div>
 											<div class="main-details">
 												<div
 													class="row align-items-center"
 												>
-													<div class="col-auto">
-														{{
-															'PUBLIC_PAGE.ANONYMOUS'
-																| translate
-														}}
-													</div>
-												</div>
-												<div class="clearfix"></div>
-												<div class="speciality">
-													Full Stack Web Developer
-												</div>
-												<a
-													class="works-at"
-													href="#/share/organization/{{
-														organization.profile_link
-													}}"
-												>
-													<nb-icon
-														icon="globe-2-outline"
-														[options]="{
-															color: '#55a8fd'
-														}"
-													>
-													</nb-icon>
-													{{
-														employee.organization
-															.name
-													}}
-												</a>
-
-												<div
-													class="profil-bio push-bottom-10"
-												>
-													<span class="average-bonus"
-														>{{
-															'PUBLIC_PAGE.AVERAGE_BONUS'
-																| translate
-														}}:</span
-													>
-													<span class="text-success">
-														{{
-															employee.billRateCurrency
-														}}
-														{{
-															employee.averageBonus ===
-															null
-																? 0
-																: employee.averageBonus
-														}}</span
-													>
-												</div>
-
-												<div
-													class="list-inline push-bottom-20"
-												>
-													<li
-														*ngFor="
-															let skill of employee.skills
-														"
-													>
-														<span
-															class="tag tag-sm"
-															>{{
-																skill.name
-															}}</span
+													<div>
+														<div
+															class="anonymous-avatar"
 														>
-													</li>
+															A
+														</div>
+													</div>
+													<div class="col-2">
+														<div
+															class="align-items-center"
+														>
+															{{
+																'PUBLIC_PAGE.ANONYMOUS'
+																	| translate
+															}}
+														</div>
+														<div class="speciality">
+															Full Stack Web
+															Developer
+														</div>
+													</div>
+													<div class="col-2">
+														<div
+															class="label label-hourly margin-right-10"
+														>
+															{{
+																'SM_TABLE.' +
+																	employee.payPeriod
+																	| translate
+															}}
+														</div>
+													</div>
+													<div class="col-2">
+														<div>
+															<a
+																class="works-at"
+																href="#/share/organization/{{
+																	organization.profile_link
+																}}"
+															>
+																<nb-icon
+																	size="tiny"
+																	icon="globe-2-outline"
+																	[options]="{
+																		color: 'var(--gauzy-text-color-2)'
+																	}"
+																>
+																</nb-icon>
+																{{
+																	employee
+																		.organization
+																		.name
+																}}
+															</a>
+														</div>
+														<div>
+															<span
+																class="location text-secondary"
+															>
+																<nb-icon
+																	size="tiny"
+																	icon="pin-outline"
+																	[options]="{
+																		color: 'var(--gauzy-text-color-2)'
+																	}"
+																>
+																</nb-icon>
+																Sofia, Sofia,
+																Bulgaria
+															</span>
+														</div>
+														<div class="profil-bio">
+															<span
+																class="average-bonus"
+																>{{
+																	'PUBLIC_PAGE.AVERAGE_BONUS'
+																		| translate
+																}}:</span
+															>
+															<span
+																class="text-secondary"
+															>
+																{{
+																	employee.billRateCurrency
+																}}
+																{{
+																	employee.averageBonus ===
+																	null
+																		? 0
+																		: employee.averageBonus
+																}}</span
+															>
+														</div>
+													</div>
+													<div class="col-1">
+														<div
+															class="list-inline"
+														>
+															<li
+																*ngFor="
+																	let skill of employee.skills
+																"
+															>
+																<span
+																	class="tag tag-sm"
+																	>{{
+																		skill.name
+																	}}</span
+																>
+															</li>
+														</div>
+													</div>
 												</div>
 											</div>
 										</ng-template>
