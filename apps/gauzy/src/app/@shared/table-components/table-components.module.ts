@@ -74,7 +74,8 @@ import { ExternalLinkComponent } from './external-link/external-link.component';
 		ProjectComponent,
 		RoleComponent,
 		EmailComponent,
-		ExternalLinkComponent
+		ExternalLinkComponent,
+		TagsOnlyComponent
 	],
 	providers: []
 })
