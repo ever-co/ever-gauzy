@@ -1,5 +1,7 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
+import { distinctUntilChange } from '@gauzy/common-angular';
 import {
 	IEmployee,
 	IOrganization,
@@ -19,11 +21,10 @@ import { EmployeesService, OrganizationTeamsService, Store, ToastrService } from
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { EmployeeWithLinksComponent, NotesWithTagsComponent } from '../../@shared/table-components';
+import { InputFilterComponent, TagsColorFilterComponent } from '../../@shared/table-filters';
 import { IPaginationBase, PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
 import { ServerDataSource } from '../../@core/utils/smart-table';
-import { HttpClient } from '@angular/common/http';
 import { API_PREFIX } from '../../@core';
-import { distinctUntilChange } from '@gauzy/common-angular';
 
 
 @UntilDestroy({ checkProperties: true })
@@ -281,17 +282,16 @@ export class TeamsComponent
 				'members.employee.user',
 				'tags'
 			],
-			join: {
-				alias: 'organization-team',
-				leftJoin: {
-					tags: 'organization-team.tags'
-				},
-				...(this.filters.join) ? this.filters.join : {}
-			},
 			where: {
 				...{ organizationId, tenantId },
 				...this.filters.where
 			},
+			join: {
+				alias: 'teams',
+				leftJoin: {
+					tags: 'teams.tags'
+				}
+			},			
 			resultMap: (team: IOrganizationTeam) => {
 				return Object.assign({}, team, {
 					id: team.id,
@@ -328,17 +328,21 @@ export class TeamsComponent
 			);
 
 			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
-				await this.smartTableSource.getElements();
-				this.teams = this.smartTableSource.getData();
-
-				this.setPagination({
-					...this.getPagination(),
-					totalItems: this.smartTableSource.count()
-				});
+				await this._loadGridLayoutData();
 			}			
 		} catch (error) {
 			this.toastrService.danger(error);
 		}
+	}
+
+	private async _loadGridLayoutData() {
+		await this.smartTableSource.getElements();
+		this.teams = this.smartTableSource.getData();
+
+		this.setPagination({
+			...this.getPagination(),
+			totalItems: this.smartTableSource.count()
+		});
 	}
 
 	selectTeam({ isSelected, data }) {
@@ -350,8 +354,6 @@ export class TeamsComponent
 		const pagination: IPaginationBase = this.getPagination();
 		this.smartTableSettings = {
 			actions: false,
-			mode: 'external',
-			editable: true,
 			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA'),
 			pager: {
 				display: false,
@@ -360,7 +362,14 @@ export class TeamsComponent
 			columns: {
 				name: {
 					title: this.getTranslation('ORGANIZATIONS_PAGE.NAME'),
-					type: 'string'
+					type: 'string',
+					filter: {
+						type: 'custom',
+						component: InputFilterComponent
+					},
+					filterFunction: (firstName: string) => {
+						this.setFilter({ field: 'name', search: firstName });
+					},
 				},
 				managers: {
 					title: this.getTranslation('ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.MANAGERS'),
@@ -378,7 +387,18 @@ export class TeamsComponent
 					title: this.getTranslation('MENU.TAGS'),
 					type: 'custom',
 					class: 'align-row',
-					renderComponent: NotesWithTagsComponent
+					renderComponent: NotesWithTagsComponent,
+					filter: {
+						type: 'custom',
+						component: TagsColorFilterComponent
+					},
+					filterFunction: (tags: ITag[]) => {
+						const tagIds = [];
+						for (const tag of tags) {
+							tagIds.push(tag.id);
+						}
+						this.setFilter({ field: 'tags', search: tagIds });
+					},
 				}
 			}
 		};

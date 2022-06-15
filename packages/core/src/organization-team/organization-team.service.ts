@@ -5,7 +5,7 @@ import {
 	HttpStatus
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindManyOptions, Like } from 'typeorm';
+import { Repository, FindManyOptions, Like, In } from 'typeorm';
 import { TenantAwareCrudService } from './../core/crud';
 import {
 	IOrganizationTeamCreateInput,
@@ -206,17 +206,14 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 	}
 
 	public pagination(filter?: any) {
-		if ('filters' in filter) {
-			const { filters } = filter;
-			if ('name' in filters) {
-				const { search } = filters.name;
-				filter.where.name = Like(`%${search}%`)
-			}
-			if ('tags' in filters) {
-				const { search } = filters.tags;
-				filter.where.tags = Like(`%${search}%`);
-			}
-			delete filter['filters'];
+		if ('where' in filter) {
+			const { where } = filter;
+			if ('tags' in where) {
+				const { tags } = where; 
+				filter.where.tags = {
+					id: In(tags)
+				}
+			}			
 		}
 		return super.paginate(filter);
 	}

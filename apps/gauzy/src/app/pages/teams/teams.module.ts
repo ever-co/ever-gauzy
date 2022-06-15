@@ -27,6 +27,7 @@ import { HeaderTitleModule } from '../../@shared/components/header-title/header-
 import { EmployeeMultiSelectModule } from '../../@shared/employee/employee-multi-select/employee-multi-select.module';
 import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
 import { PaginationModule } from '../../@shared/pagination/pagination.module';
+import { CommonModule } from '@angular/common';
 
 @NgModule({
 	imports: [
@@ -54,6 +55,7 @@ import { PaginationModule } from '../../@shared/pagination/pagination.module';
 		EmployeeMultiSelectModule,
 		PaginationModule,
 		GauzyButtonActionModule,
+		CommonModule
 	],
 	declarations: [TeamsComponent, TeamsMutationComponent],
 	providers: [OrganizationTeamsService]

@@ -17,12 +17,15 @@ import { CrudController, PaginationParams } from './../core/crud';
 import { OrganizationTeamService } from './organization-team.service';
 import {
 	IOrganizationTeam,
-	IPagination
+	IPagination,
+	PermissionsEnum
 } from '@gauzy/contracts';
 import { OrganizationTeam } from './organization-team.entity';
-import { TenantPermissionGuard } from './../shared/guards';
+import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { CreateOrganizationTeamDTO, UpdateOrganizationTeamDTO } from './dto';
+import { Permissions } from './../shared/decorators';
+
 
 @ApiTags('OrganizationTeam')
 @UseGuards(TenantPermissionGuard)
@@ -97,6 +100,8 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 	 * @param entity 
 	 * @returns 
 	 */
+	 @UseGuards(PermissionGuard)
+	 @Permissions(PermissionsEnum.ALL_ORG_VIEW)
 	 @Get('pagination')
 	 @UsePipes(new ValidationPipe({ transform: true }))
 	 async pagination(
