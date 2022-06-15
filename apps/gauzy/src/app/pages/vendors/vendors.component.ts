@@ -14,11 +14,12 @@ import { debounceTime, firstValueFrom } from 'rxjs';
 import { LocalDataSource } from 'ng2-smart-table';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ComponentEnum } from './../../@core/constants';
-import { NotesWithTagsComponent } from './../../@shared/table-components';
+import { EmailComponent, TagsOnlyComponent } from './../../@shared/table-components';
 import { DeleteConfirmationComponent } from './../../@shared/user/forms';
 import { ErrorHandlingService, OrganizationVendorsService, Store, ToastrService } from '../../@core/services';
 import { IPaginationBase, PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
 import { distinctUntilChange } from '@gauzy/common-angular';
+import { ExternalLinkComponent } from '../../@shared/table-components/external-link/external-link.component';
 
 
 @UntilDestroy({ checkProperties: true })
@@ -150,11 +151,9 @@ export class VendorsComponent
 			},
 			actions: false,
 			columns: {
-				tags: {
+				name: {
 					title: this.getTranslation('ORGANIZATIONS_PAGE.NAME'),
-					type: 'custom',
-					class: 'align-row',
-					renderComponent: NotesWithTagsComponent
+					type: 'string'
 				},
 				phone: {
 					title: this.getTranslation('ORGANIZATIONS_PAGE.PHONE'),
@@ -162,12 +161,21 @@ export class VendorsComponent
 				},
 				email: {
 					title: this.getTranslation('ORGANIZATIONS_PAGE.EMAIL'),
-					type: 'string'
+					type: 'custom',
+					renderComponent: EmailComponent
 				},
 				website: {
 					title: this.getTranslation('ORGANIZATIONS_PAGE.WEBSITE'),
-					type: 'string'
-				}
+					type: 'custom',
+					class: 'align-row',
+					renderComponent: ExternalLinkComponent
+				},
+				tags: {
+					title: this.getTranslation('SM_TABLE.TAGS'),
+					type: 'custom',
+					class: 'align-row',
+					renderComponent: TagsOnlyComponent
+				},
 			}
 		};
 	}
