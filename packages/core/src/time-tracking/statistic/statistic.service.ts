@@ -339,6 +339,12 @@ export class StatisticService {
 	 * @param request 
 	 * @returns 
 	 */
+	/**
+	 * GET Time Tracking Dashboard Worked Members Statistics
+	 * 
+	 * @param request 
+	 * @returns 
+	 */
 	async getMembers(request: IGetMembersStatistics): Promise<IMembersStatistics[]> {
 		const {
 			organizationId,
@@ -356,8 +362,8 @@ export class StatisticService {
 										moment.utc(endDate)
 									) :
 									getDateFormat(
-										moment().startOf('day').utc(),
-										moment().endOf('day').utc()
+										moment().startOf('week').utc(),
+										moment().endOf('week').utc()
 									);
 		/*
 		 *  Get employees id of the organization or get current employee id
@@ -422,6 +428,13 @@ export class StatisticService {
 							projectIds
 						});
 					}
+					qb.andWhere(
+						new Brackets((qb: WhereExpressionBuilder) => { 
+							qb.andWhere(`"timeLogs"."tenantId" = :tenantId`, { tenantId });
+							qb.andWhere(`"timeLogs"."organizationId" = :organizationId`, { organizationId });
+							qb.andWhere(`"timeLogs"."deletedAt" IS NULL`);
+						})
+					);
 				})
 			)
 			.addGroupBy(`"${query.alias}"."id"`)
@@ -465,6 +478,9 @@ export class StatisticService {
 							qb.andWhere(`"${weekTimeQuery.alias}"."employeeId" IN(:...employeeIds)`, {
 								employeeIds
 							});
+							qb.andWhere(`"timeLogs"."employeeId" IN(:...employeeIds)`, {
+								employeeIds
+							});
 						}
 						/**
 						 * If Project Selected
@@ -474,6 +490,13 @@ export class StatisticService {
 								projectIds
 							});
 						}
+						qb.andWhere(
+							new Brackets((qb: WhereExpressionBuilder) => { 
+								qb.andWhere(`"timeLogs"."tenantId" = :tenantId`, { tenantId });
+								qb.andWhere(`"timeLogs"."organizationId" = :organizationId`, { organizationId });
+								qb.andWhere(`"timeLogs"."deletedAt" IS NULL`);
+							})
+						);
 					})
 				)
 				.groupBy(`timeLogs.id`)
@@ -543,6 +566,9 @@ export class StatisticService {
 							qb.andWhere(`"${dayTimeQuery.alias}"."employeeId" IN(:...employeeIds)`, {
 								employeeIds
 							});
+							qb.andWhere(`"timeLogs"."employeeId" IN(:...employeeIds)`, {
+								employeeIds
+							});
 						}
 						/**
 						 * If Project Selected
@@ -552,6 +578,13 @@ export class StatisticService {
 								projectIds
 							});
 						}
+						qb.andWhere(
+							new Brackets((qb: WhereExpressionBuilder) => { 
+								qb.andWhere(`"timeLogs"."tenantId" = :tenantId`, { tenantId });
+								qb.andWhere(`"timeLogs"."organizationId" = :organizationId`, { organizationId });
+								qb.andWhere(`"timeLogs"."deletedAt" IS NULL`);
+							})
+						);
 					})
 				)
 				.groupBy(`timeLogs.id`)
@@ -622,20 +655,33 @@ export class StatisticService {
 						'day'
 					)
 					.andWhere(`"${weekHoursQuery.alias}"."id" = :memberId`, { memberId: member.id })
-					.andWhere(`"timeLogs"."startedAt" BETWEEN :weeklyStart AND :weeklyEnd`, {
-						weeklyStart,
-						weeklyEnd
-					})
 					.andWhere(`"${weekHoursQuery.alias}"."tenantId" = :tenantId`, { tenantId })
 					.andWhere(`"${weekHoursQuery.alias}"."organizationId" = :organizationId`, { organizationId })
-
-				// project filter query
-				if (isNotEmpty(projectIds)) {
-					weekHoursQuery.andWhere(`"timeLogs"."projectId" IN (:...projectIds)`, {
-						projectIds
-					});
-				}
-
+					.andWhere(
+						new Brackets((qb: WhereExpressionBuilder) => {
+							qb.andWhere(`"timeLogs"."startedAt" BETWEEN :weeklyStart AND :weeklyEnd`, {
+								weeklyStart,
+								weeklyEnd
+							})
+							qb.andWhere(`"timeLogs"."tenantId" = :tenantId`, { tenantId });
+							qb.andWhere(`"timeLogs"."organizationId" = :organizationId`, { organizationId });
+							qb.andWhere(`"timeLogs"."deletedAt" IS NULL`);
+						})
+					)
+					.andWhere(
+						new Brackets((qb: WhereExpressionBuilder) => { 			
+							if (isNotEmpty(employeeIds)) {
+								qb.andWhere(`"timeLogs"."employeeId" IN (:...employeeIds)`, {
+									employeeIds
+								});
+							}
+							if (isNotEmpty(projectIds)) {
+								qb.andWhere(`"timeLogs"."projectId" IN (:...projectIds)`, {
+									projectIds
+								});
+							}
+						})
+					);
 				member.weekHours = await weekHoursQuery
 					.addGroupBy(
 						`${
