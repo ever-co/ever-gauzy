@@ -306,6 +306,7 @@ export class VendorsComponent
 		}
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
+		const { activePage, itemsPerPage} = this.getPagination();
 
 		this.organizationVendorsService
 			.getAll({ organizationId, tenantId }, ['tags'], {
@@ -318,8 +319,16 @@ export class VendorsComponent
 						logo: item.name
 					};
 				});
+				this.smartTableSource.setPaging(activePage, itemsPerPage, false);
 				this.smartTableSource.load(this.vendors);
+				this._loadGridLayoutData();
 			});
+	}
+
+	private async _loadGridLayoutData(){
+		if(this.componentLayoutStyleEnum.CARDS_GRID === this.dataLayoutStyle){
+			this.vendors = await this.smartTableSource.getElements();
+		}
 	}
 
 	selectedTagsEvent(ev) {
