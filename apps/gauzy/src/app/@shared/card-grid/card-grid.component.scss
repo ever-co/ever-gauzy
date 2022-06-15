@@ -53,6 +53,10 @@
         border-radius: 4px;
         width: 88%;
         margin: 0px 2px 4px 0px;
+
+        &.image-logo {
+          display: none;
+        }
       }
 
       .info-value {
@@ -64,6 +68,10 @@
         width: 100%;
         margin: 0px 0px 4px 2px;
         position: relative;
+
+        &.image-logo {
+          background-color: unset;
+        }
 
         .custom::ng-deep {
           .img-container {
