@@ -751,6 +751,7 @@ export class StatisticService {
 				`duration`
 			)
 			.innerJoin(`${query.alias}.project`, 'project')
+			.innerJoin(`${query.alias}.timeSlots`, 'timeSlots')
 			.andWhere(`"${query.alias}"."startedAt" BETWEEN :start AND :end`, {
 				start,
 				end
@@ -793,6 +794,7 @@ export class StatisticService {
 				`duration`
 			)
 			.innerJoin(`${totalDurationQuery.alias}.project`, 'project')
+			.innerJoin(`${query.alias}.timeSlots`, 'timeSlots')
 			.andWhere(`"${totalDurationQuery.alias}"."startedAt" BETWEEN :start AND :end`, {
 				start,
 				end
@@ -840,11 +842,7 @@ export class StatisticService {
 	 * @returns 
 	 */
 	async getTasks(request: IGetTasksStatistics) {
-		const {
-			organizationId,
-			startDate,
-			endDate
-		} = request;
+		const { organizationId, startDate, endDate } = request;
 		let { employeeIds = [], projectIds = [] } = request;
 
 		const user = RequestContext.currentUser();
@@ -855,8 +853,8 @@ export class StatisticService {
 									moment.utc(endDate)
 								) :
 								getDateFormat(
-									moment().startOf('day').utc(),
-									moment().endOf('day').utc()
+									moment().startOf('week').utc(),
+									moment().endOf('week').utc()
 								);
 		/*
 		 *  Get employees id of the organization or get current employee id
@@ -892,33 +890,36 @@ export class StatisticService {
 				`duration`
 			)
 			.innerJoin(`${query.alias}.task`, 'task')
-			.andWhere(`"${query.alias}"."startedAt" BETWEEN :start AND :end`, {
-				start,
-				end
-			})
-			.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
-				tenantId
-			})
-			.andWhere(`"${query.alias}"."organizationId" = :organizationId`, {
-				organizationId
-			});
-		/**
-		 * If Employee Selected
-		 */
-		if (isNotEmpty(employeeIds)) {
-			query.andWhere(`"${query.alias}"."employeeId" IN(:...employeeIds)`, {
-				employeeIds
-			});
-		}
-		/**
-		 * If Project Selected
-		 */
-		if (isNotEmpty(projectIds)) {
-			query.andWhere(`"${query.alias}"."projectId" IN (:...projectIds)`, {
-				projectIds
-			});
-		}
-
+			.innerJoin(`${query.alias}.timeSlots`, 'timeSlots')
+			.andWhere(
+				new Brackets((qb: WhereExpressionBuilder) => { 
+					qb.andWhere(`"${query.alias}"."startedAt" BETWEEN :start AND :end`, {
+						start,
+						end
+					});
+				})
+			)
+			.andWhere(
+				new Brackets((qb: WhereExpressionBuilder) => { 
+					qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
+					qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
+					qb.andWhere(`"${query.alias}"."deletedAt" IS NULL`);
+				})
+			)
+			.andWhere(
+				new Brackets((qb: WhereExpressionBuilder) => { 			
+					if (isNotEmpty(employeeIds)) {
+						qb.andWhere(`"${query.alias}"."employeeId" IN (:...employeeIds)`, {
+							employeeIds
+						});
+					}
+					if (isNotEmpty(projectIds)) {
+						qb.andWhere(`"${query.alias}"."projectId" IN (:...projectIds)`, {
+							projectIds
+						});
+					}
+				})
+			);
 		let tasks: ITask[] = await query
 			.groupBy(`"task"."id"`)
 			.orderBy('duration', 'DESC')
@@ -936,33 +937,36 @@ export class StatisticService {
 				`duration`
 			)
 			.innerJoin(`${totalDurationQuery.alias}.task`, 'task')
-			.andWhere(`"${totalDurationQuery.alias}"."startedAt" BETWEEN :start AND :end`, {
-				start,
-				end
-			})
-			.andWhere(`"${totalDurationQuery.alias}"."tenantId" = :tenantId`, {
-				tenantId
-			})
-			.andWhere(`"${totalDurationQuery.alias}"."organizationId" = :organizationId`, {
-				organizationId
-			});
-		/**
-		 * If Employee Selected
-		 */
-		if (isNotEmpty(employeeIds)) {
-			totalDurationQuery.andWhere(`"${totalDurationQuery.alias}"."employeeId" IN(:...employeeIds)`, {
-				employeeIds
-			});
-		}
-		/**
-		 * If Project Selected
-		 */
-		if (isNotEmpty(projectIds)) {
-			totalDurationQuery.andWhere(`"${totalDurationQuery.alias}"."projectId" IN (:...projectIds)`, {
-				projectIds
-			});
-		}
-
+			.innerJoin(`${query.alias}.timeSlots`, 'timeSlots')
+			.andWhere(
+				new Brackets((qb: WhereExpressionBuilder) => { 
+					qb.andWhere(`"${totalDurationQuery.alias}"."startedAt" BETWEEN :start AND :end`, {
+						start,
+						end
+					});
+				})
+			)
+			.andWhere(
+				new Brackets((qb: WhereExpressionBuilder) => { 
+					qb.andWhere(`"${totalDurationQuery.alias}"."tenantId" = :tenantId`, { tenantId });
+					qb.andWhere(`"${totalDurationQuery.alias}"."organizationId" = :organizationId`, { organizationId });
+					qb.andWhere(`"${totalDurationQuery.alias}"."deletedAt" IS NULL`);
+				})
+			)
+			.andWhere(
+				new Brackets((qb: WhereExpressionBuilder) => { 			
+					if (isNotEmpty(employeeIds)) {
+						qb.andWhere(`"${totalDurationQuery.alias}"."employeeId" IN (:...employeeIds)`, {
+							employeeIds
+						});
+					}
+					if (isNotEmpty(projectIds)) {
+						qb.andWhere(`"${totalDurationQuery.alias}"."projectId" IN (:...projectIds)`, {
+							projectIds
+						});
+					}
+				})
+			);
 		const totalDuration = await totalDurationQuery.getRawOne();
 		tasks = tasks.map((task: any) => {
 			task.durationPercentage = parseFloat(
