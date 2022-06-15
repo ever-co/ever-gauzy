@@ -27,7 +27,6 @@ import { ConfigService } from '@gauzy/config';
 import {
 	Activity,
 	Employee,
-	OrganizationProject,
 	TimeLog,
 	TimeSlot
 } from './../../core/entities/internal';
@@ -36,9 +35,6 @@ import { getDateFormat } from './../../core/utils';
 @Injectable()
 export class StatisticService {
 	constructor(
-		@InjectRepository(OrganizationProject)
-		private readonly organizationProjectsRepository: Repository<OrganizationProject>,
-
 		@InjectRepository(TimeSlot)
 		private readonly timeSlotRepository: Repository<TimeSlot>,
 
@@ -61,14 +57,7 @@ export class StatisticService {
 	 * @returns 
 	 */
 	async getCounts(request: IGetCountsStatistics): Promise<ICountsStatistics> {
-		const {
-			organizationId,
-			startDate,
-			endDate,
-			logType = [],
-			source = [],
-			activityLevel
-		} = request;
+		const { organizationId, startDate, endDate } = request;
 		let { employeeIds = [], projectIds = [] } = request;
 
 		const user = RequestContext.currentUser();
@@ -80,8 +69,8 @@ export class StatisticService {
 									moment.utc(endDate)
 								) : 
 								getDateFormat(
-									moment().startOf('day').utc(),
-									moment().endOf('day').utc()
+									moment().startOf('week').utc(),
+									moment().endOf('week').utc()
 								);
 		/*
 		 *  Get employees id of the organization or get current employee id
@@ -103,137 +92,18 @@ export class StatisticService {
 			);
 		}
 
-		/*
-		 *  Get employees count who worked in this week.
+		/**
+		 * GET statistics counts
 		 */
-		const employeesCountQuery = this.employeeRepository.createQueryBuilder();
-		const employeesCount = await employeesCountQuery
-			.innerJoin(`${employeesCountQuery.alias}.timeLogs`, 'timeLogs')
-			.innerJoin(`timeLogs.timeSlots`, 'timeSlots')
-			.andWhere(`"${employeesCountQuery.alias}"."tenantId" = :tenantId`, { tenantId })
-			.andWhere(`"${employeesCountQuery.alias}"."organizationId" = :organizationId`, { organizationId })
-			.andWhere(
-				new Brackets((qb: WhereExpressionBuilder) => {
-					qb.andWhere(`"timeLogs"."startedAt" BETWEEN :startDate AND :endDate`, {
-						startDate: start,
-						endDate: end
-					});
-					/**
-					 * If Employee Selected
-					 */
-					if (isNotEmpty(employeeIds)) {
-						qb.andWhere(`"timeLogs"."employeeId" IN (:...employeeIds)`, {
-							employeeIds
-						});
-						qb.andWhere(`"timeSlots"."employeeId" IN (:...employeeIds)`, {
-							employeeIds
-						});
-					}
-					/**
-					 * If Project Selected
-					 */
-					if (isNotEmpty(projectIds)) {
-						qb.andWhere(`"timeLogs"."projectId" IN (:...projectIds)`, {
-							projectIds
-						});
-					}
-					if (activityLevel) {
-						/**
-						 * Activity Level should be 0-100%
-						 * So, we have convert it into 10 minutes TimeSlot by multiply by 6
-						 */
-						const startLevel = (activityLevel.start * 6);
-						const endLevel = (activityLevel.end * 6);
-				
-						qb.andWhere(`"timeSlots"."overall" BETWEEN :startLevel AND :endLevel`, {
-							startLevel,
-							endLevel
-						});
-					}
-					/**
-					 * If LogType Selected
-					 */
-					if (isNotEmpty(logType)) {
-						qb.andWhere(`"timeLogs"."logType" IN (:...logType)`, {
-							logType
-						});
-					}
-					/**
-					 * If Source Selected
-					 */
-					if (isNotEmpty(source)) {
-						qb.andWhere(`"timeLogs"."source" IN (:...source)`, {
-							source
-						});
-					}
-				})
-			)
-			.getCount();
-
-		/*
-		 *  Get projects count who worked in this week.
-		 */
-		const projectsCountQuery = this.organizationProjectsRepository.createQueryBuilder();
-		const projectsCount = await projectsCountQuery
-			.innerJoin(`${projectsCountQuery.alias}.timeLogs`, 'timeLogs')
-			.innerJoin(`timeLogs.timeSlots`, 'timeSlots')
-			.andWhere(`"${projectsCountQuery.alias}"."tenantId" = :tenantId`, { tenantId })
-			.andWhere(`"${projectsCountQuery.alias}"."organizationId" = :organizationId`, { organizationId })
-			.andWhere(
-				new Brackets((qb: WhereExpressionBuilder) => {
-					qb.andWhere(`"timeLogs"."startedAt" BETWEEN :startDate AND :endDate`, {
-						startDate: start,
-						endDate: end
-					});
-					/**
-					 * If Employee Selected
-					 */
-					if (isNotEmpty(employeeIds)) {
-						qb.andWhere(`"timeLogs"."employeeId" IN (:...employeeIds)`, {
-							employeeIds
-						});
-					}
-					/**
-					 * If Project Selected
-					 */
-					if (isNotEmpty(projectIds)) {
-						qb.andWhere(`"timeLogs"."projectId" IN (:...projectIds)`, {
-							projectIds
-						});
-					}
-					if (activityLevel) {
-						/**
-						 * Activity Level should be 0-100%
-						 * So, we have convert it into 10 minutes TimeSlot by multiply by 6
-						 */
-						const startLevel = (activityLevel.start * 6);
-						const endLevel = (activityLevel.end * 6);
-				
-						qb.andWhere(`"timeSlots"."overall" BETWEEN :startLevel AND :endLevel`, {
-							startLevel,
-							endLevel
-						});
-					}
-					/**
-					 * If LogType Selected
-					 */
-					if (isNotEmpty(logType)) {
-						qb.andWhere(`"timeLogs"."logType" IN (:...logType)`, {
-							logType
-						});
-					}
-					/**
-					 * If Source Selected
-					 */
-					if (isNotEmpty(source)) {
-						qb.andWhere(`"timeLogs"."source" IN (:...source)`, {
-							source
-						});
-					}
-				})
-			)
-			.getCount();
-
+		const employeesCount = await this.getEmployeeWorkedCounts({
+			...request,
+			employeeIds
+		});
+		const projectsCount = await this.getProjectWorkedCounts({
+			...request,
+			employeeIds
+		});
+		
 		/*
 		 * Get average activity and total duration of the work for the week.
 		 */
@@ -282,11 +152,12 @@ export class StatisticService {
 							projectIds
 						});
 					}
-					if (activityLevel) {
+					if (isNotEmpty(request.activityLevel)) {
 						/**
 						 * Activity Level should be 0-100%
 						 * So, we have convert it into 10 minutes TimeSlot by multiply by 6
 						 */
+						const { activityLevel } = request;
 						const startLevel = (activityLevel.start * 6);
 						const endLevel = (activityLevel.end * 6);
 				
@@ -298,7 +169,8 @@ export class StatisticService {
 					/**
 					 * If LogType Selected
 					 */
-					if (isNotEmpty(logType)) {
+					if (isNotEmpty(request.logType)) {
+						const { logType } = request;
 						qb.andWhere(`"timeLogs"."logType" IN (:...logType)`, {
 							logType
 						});
@@ -306,11 +178,19 @@ export class StatisticService {
 					/**
 					 * If Source Selected
 					 */
-					if (isNotEmpty(source)) {
+					if (isNotEmpty(request.source)) {
+						const { source } = request;
 						qb.andWhere(`"timeLogs"."source" IN (:...source)`, {
 							source
 						});
 					}
+					qb.andWhere(
+						new Brackets((qb: WhereExpressionBuilder) => { 
+							qb.andWhere(`"timeLogs"."tenantId" = :tenantId`, { tenantId });
+							qb.andWhere(`"timeLogs"."organizationId" = :organizationId`, { organizationId });
+							qb.andWhere(`"timeLogs"."deletedAt" IS NULL`);
+						})
+					);
 				})
 			)
 			.groupBy(`"timeLogs"."id"`)
@@ -379,11 +259,12 @@ export class StatisticService {
 							projectIds
 						});
 					}
-					if (activityLevel) {
+					if (isNotEmpty(request.activityLevel)) {
 						/**
 						 * Activity Level should be 0-100%
 						 * So, we have convert it into 10 minutes TimeSlot by multiply by 6
 						 */
+						const { activityLevel } = request;
 						const startLevel = (activityLevel.start * 6);
 						const endLevel = (activityLevel.end * 6);
 				
@@ -395,7 +276,8 @@ export class StatisticService {
 					/**
 					 * If LogType Selected
 					 */
-					if (isNotEmpty(logType)) {
+					 if (isNotEmpty(request.logType)) {
+						const { logType } = request;
 						qb.andWhere(`"timeLogs"."logType" IN (:...logType)`, {
 							logType
 						});
@@ -403,11 +285,19 @@ export class StatisticService {
 					/**
 					 * If Source Selected
 					 */
-					if (isNotEmpty(source)) {
+					if (isNotEmpty(request.source)) {
+						const { source } = request;
 						qb.andWhere(`"timeLogs"."source" IN (:...source)`, {
 							source
 						});
 					}
+					qb.andWhere(
+						new Brackets((qb: WhereExpressionBuilder) => { 
+							qb.andWhere(`"timeLogs"."tenantId" = :tenantId`, { tenantId });
+							qb.andWhere(`"timeLogs"."organizationId" = :organizationId`, { organizationId });
+							qb.andWhere(`"timeLogs"."deletedAt" IS NULL`);
+						})
+					);
 				})
 			)
 			.groupBy(`"timeLogs"."id"`)
@@ -442,6 +332,12 @@ export class StatisticService {
 	 * @param request 
 	 * @returns 
 	 */
+	/**
+	 * GET Time Tracking Dashboard Worked Members Statistics
+	 * 
+	 * @param request 
+	 * @returns 
+	 */
 	async getMembers(request: IGetMembersStatistics): Promise<IMembersStatistics[]> {
 		const {
 			organizationId,
@@ -459,8 +355,8 @@ export class StatisticService {
 										moment.utc(endDate)
 									) :
 									getDateFormat(
-										moment().startOf('day').utc(),
-										moment().endOf('day').utc()
+										moment().startOf('week').utc(),
+										moment().endOf('week').utc()
 									);
 		/*
 		 *  Get employees id of the organization or get current employee id
@@ -525,6 +421,13 @@ export class StatisticService {
 							projectIds
 						});
 					}
+					qb.andWhere(
+						new Brackets((qb: WhereExpressionBuilder) => { 
+							qb.andWhere(`"timeLogs"."tenantId" = :tenantId`, { tenantId });
+							qb.andWhere(`"timeLogs"."organizationId" = :organizationId`, { organizationId });
+							qb.andWhere(`"timeLogs"."deletedAt" IS NULL`);
+						})
+					);
 				})
 			)
 			.addGroupBy(`"${query.alias}"."id"`)
@@ -568,6 +471,9 @@ export class StatisticService {
 							qb.andWhere(`"${weekTimeQuery.alias}"."employeeId" IN(:...employeeIds)`, {
 								employeeIds
 							});
+							qb.andWhere(`"timeLogs"."employeeId" IN(:...employeeIds)`, {
+								employeeIds
+							});
 						}
 						/**
 						 * If Project Selected
@@ -577,6 +483,13 @@ export class StatisticService {
 								projectIds
 							});
 						}
+						qb.andWhere(
+							new Brackets((qb: WhereExpressionBuilder) => { 
+								qb.andWhere(`"timeLogs"."tenantId" = :tenantId`, { tenantId });
+								qb.andWhere(`"timeLogs"."organizationId" = :organizationId`, { organizationId });
+								qb.andWhere(`"timeLogs"."deletedAt" IS NULL`);
+							})
+						);
 					})
 				)
 				.groupBy(`timeLogs.id`)
@@ -646,6 +559,9 @@ export class StatisticService {
 							qb.andWhere(`"${dayTimeQuery.alias}"."employeeId" IN(:...employeeIds)`, {
 								employeeIds
 							});
+							qb.andWhere(`"timeLogs"."employeeId" IN(:...employeeIds)`, {
+								employeeIds
+							});
 						}
 						/**
 						 * If Project Selected
@@ -655,6 +571,13 @@ export class StatisticService {
 								projectIds
 							});
 						}
+						qb.andWhere(
+							new Brackets((qb: WhereExpressionBuilder) => { 
+								qb.andWhere(`"timeLogs"."tenantId" = :tenantId`, { tenantId });
+								qb.andWhere(`"timeLogs"."organizationId" = :organizationId`, { organizationId });
+								qb.andWhere(`"timeLogs"."deletedAt" IS NULL`);
+							})
+						);
 					})
 				)
 				.groupBy(`timeLogs.id`)
@@ -725,20 +648,33 @@ export class StatisticService {
 						'day'
 					)
 					.andWhere(`"${weekHoursQuery.alias}"."id" = :memberId`, { memberId: member.id })
-					.andWhere(`"timeLogs"."startedAt" BETWEEN :weeklyStart AND :weeklyEnd`, {
-						weeklyStart,
-						weeklyEnd
-					})
 					.andWhere(`"${weekHoursQuery.alias}"."tenantId" = :tenantId`, { tenantId })
 					.andWhere(`"${weekHoursQuery.alias}"."organizationId" = :organizationId`, { organizationId })
-
-				// project filter query
-				if (isNotEmpty(projectIds)) {
-					weekHoursQuery.andWhere(`"timeLogs"."projectId" IN (:...projectIds)`, {
-						projectIds
-					});
-				}
-
+					.andWhere(
+						new Brackets((qb: WhereExpressionBuilder) => {
+							qb.andWhere(`"timeLogs"."startedAt" BETWEEN :weeklyStart AND :weeklyEnd`, {
+								weeklyStart,
+								weeklyEnd
+							})
+							qb.andWhere(`"timeLogs"."tenantId" = :tenantId`, { tenantId });
+							qb.andWhere(`"timeLogs"."organizationId" = :organizationId`, { organizationId });
+							qb.andWhere(`"timeLogs"."deletedAt" IS NULL`);
+						})
+					)
+					.andWhere(
+						new Brackets((qb: WhereExpressionBuilder) => { 			
+							if (isNotEmpty(employeeIds)) {
+								qb.andWhere(`"timeLogs"."employeeId" IN (:...employeeIds)`, {
+									employeeIds
+								});
+							}
+							if (isNotEmpty(projectIds)) {
+								qb.andWhere(`"timeLogs"."projectId" IN (:...projectIds)`, {
+									projectIds
+								});
+							}
+						})
+					);
 				member.weekHours = await weekHoursQuery
 					.addGroupBy(
 						`${
@@ -761,11 +697,7 @@ export class StatisticService {
 	 * @returns 
 	 */
 	async getProjects(request: IGetProjectsStatistics): Promise<IProjectsStatistics[]> {
-		const {
-			organizationId,
-			startDate,
-			endDate
-		} = request;
+		const { organizationId, startDate, endDate } = request;
 		let { employeeIds = [], projectIds = [] } = request;
 		
 		const user = RequestContext.currentUser();
@@ -776,8 +708,8 @@ export class StatisticService {
 									moment.utc(endDate)
 								) :
 								getDateFormat(
-									moment().startOf('day').utc(),
-									moment().endOf('day').utc()
+									moment().startOf('week').utc(),
+									moment().endOf('week').utc()
 								);
 
 		/*
@@ -812,34 +744,32 @@ export class StatisticService {
 				`duration`
 			)
 			.innerJoin(`${query.alias}.project`, 'project')
+			.innerJoin(`${query.alias}.timeSlots`, 'timeSlots')
 			.andWhere(`"${query.alias}"."startedAt" BETWEEN :start AND :end`, {
 				start,
 				end
 			})
-			.andWhere(`"${query.alias}"."organizationId" = :organizationId`, {
-				organizationId
-			})
-			.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
-				tenantId
-			});
-		/**
-		 * If Employee Selected
-		 */
-		if (isNotEmpty(employeeIds)) {
-			query.andWhere(`"${query.alias}"."employeeId" IN(:...employeeIds)`, {
-				employeeIds
-			});
-		}
-		/**
-		 * If Project Selected
-		 */
-		if (isNotEmpty(projectIds)) {
-			query
-				.andWhere(`"${query.alias}"."projectId" IN (:...projectIds)`, {
-					projectIds
-				});
-		}
-
+			.andWhere(
+				new Brackets((qb: WhereExpressionBuilder) => { 
+					qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
+					qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
+					qb.andWhere(`"${query.alias}"."deletedAt" IS NULL`);
+				})
+			)
+			.andWhere(
+				new Brackets((qb: WhereExpressionBuilder) => { 			
+					if (isNotEmpty(employeeIds)) {
+						qb.andWhere(`"${query.alias}"."employeeId" IN (:...employeeIds)`, {
+							employeeIds
+						});
+					}
+					if (isNotEmpty(projectIds)) {
+						qb.andWhere(`"${query.alias}"."projectId" IN (:...projectIds)`, {
+							projectIds
+						});
+					}
+				})
+			);
 		let projects: IProjectsStatistics[] = await query
 			.groupBy(`"project"."id"`)
 			.orderBy('duration', 'DESC')
@@ -857,37 +787,35 @@ export class StatisticService {
 				`duration`
 			)
 			.innerJoin(`${totalDurationQuery.alias}.project`, 'project')
-			.where(`"${totalDurationQuery.alias}"."organizationId" = :organizationId`, {
-				organizationId
-			})
-			.andWhere(`"${totalDurationQuery.alias}"."tenantId" = :tenantId`, {
-				tenantId
-			})
+			.innerJoin(`${query.alias}.timeSlots`, 'timeSlots')
 			.andWhere(`"${totalDurationQuery.alias}"."startedAt" BETWEEN :start AND :end`, {
 				start,
 				end
-			});
-		/**
-		 * If Employee Selected
-		 */
-		if (isNotEmpty(employeeIds)) {
-			totalDurationQuery.andWhere(`"${totalDurationQuery.alias}"."employeeId" IN (:...employeeIds)`, {
-				employeeIds
-			});
-		}
-		/**
-		 * If Project Selected
-		 */
-		if (isNotEmpty(projectIds)) {
-			totalDurationQuery
-				.andWhere(`"${totalDurationQuery.alias}"."projectId" IN (:...projectIds)`, {
-					projectIds
+			})
+			.andWhere(
+				new Brackets((qb: WhereExpressionBuilder) => { 
+					qb.andWhere(`"${totalDurationQuery.alias}"."tenantId" = :tenantId`, { tenantId });
+					qb.andWhere(`"${totalDurationQuery.alias}"."organizationId" = :organizationId`, { organizationId });
+					qb.andWhere(`"${totalDurationQuery.alias}"."deletedAt" IS NULL`);
 				})
-				.andWhere(`"project"."id" IN (:...projectIds)`, {
-					projectIds
-				});
-		}
-
+			)
+			.andWhere(
+				new Brackets((qb: WhereExpressionBuilder) => { 			
+					if (isNotEmpty(employeeIds)) {
+						qb.andWhere(`"${totalDurationQuery.alias}"."employeeId" IN (:...employeeIds)`, {
+							employeeIds
+						});
+					}
+					if (isNotEmpty(projectIds)) {
+						qb.andWhere(`"${totalDurationQuery.alias}"."projectId" IN (:...projectIds)`, {
+							projectIds
+						});
+						qb.andWhere(`"project"."id" IN (:...projectIds)`, {
+							projectIds
+						});
+					}
+				})
+			);
 		const totalDuration = await totalDurationQuery.getRawOne();
 		projects = projects.map((project) => {
 			project.durationPercentage = parseFloat(
@@ -907,11 +835,7 @@ export class StatisticService {
 	 * @returns 
 	 */
 	async getTasks(request: IGetTasksStatistics) {
-		const {
-			organizationId,
-			startDate,
-			endDate
-		} = request;
+		const { organizationId, startDate, endDate } = request;
 		let { employeeIds = [], projectIds = [] } = request;
 
 		const user = RequestContext.currentUser();
@@ -922,8 +846,8 @@ export class StatisticService {
 									moment.utc(endDate)
 								) :
 								getDateFormat(
-									moment().startOf('day').utc(),
-									moment().endOf('day').utc()
+									moment().startOf('week').utc(),
+									moment().endOf('week').utc()
 								);
 		/*
 		 *  Get employees id of the organization or get current employee id
@@ -959,33 +883,36 @@ export class StatisticService {
 				`duration`
 			)
 			.innerJoin(`${query.alias}.task`, 'task')
-			.andWhere(`"${query.alias}"."startedAt" BETWEEN :start AND :end`, {
-				start,
-				end
-			})
-			.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
-				tenantId
-			})
-			.andWhere(`"${query.alias}"."organizationId" = :organizationId`, {
-				organizationId
-			});
-		/**
-		 * If Employee Selected
-		 */
-		if (isNotEmpty(employeeIds)) {
-			query.andWhere(`"${query.alias}"."employeeId" IN(:...employeeIds)`, {
-				employeeIds
-			});
-		}
-		/**
-		 * If Project Selected
-		 */
-		if (isNotEmpty(projectIds)) {
-			query.andWhere(`"${query.alias}"."projectId" IN (:...projectIds)`, {
-				projectIds
-			});
-		}
-
+			.innerJoin(`${query.alias}.timeSlots`, 'timeSlots')
+			.andWhere(
+				new Brackets((qb: WhereExpressionBuilder) => { 
+					qb.andWhere(`"${query.alias}"."startedAt" BETWEEN :start AND :end`, {
+						start,
+						end
+					});
+				})
+			)
+			.andWhere(
+				new Brackets((qb: WhereExpressionBuilder) => { 
+					qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
+					qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
+					qb.andWhere(`"${query.alias}"."deletedAt" IS NULL`);
+				})
+			)
+			.andWhere(
+				new Brackets((qb: WhereExpressionBuilder) => { 			
+					if (isNotEmpty(employeeIds)) {
+						qb.andWhere(`"${query.alias}"."employeeId" IN (:...employeeIds)`, {
+							employeeIds
+						});
+					}
+					if (isNotEmpty(projectIds)) {
+						qb.andWhere(`"${query.alias}"."projectId" IN (:...projectIds)`, {
+							projectIds
+						});
+					}
+				})
+			);
 		let tasks: ITask[] = await query
 			.groupBy(`"task"."id"`)
 			.orderBy('duration', 'DESC')
@@ -1003,33 +930,36 @@ export class StatisticService {
 				`duration`
 			)
 			.innerJoin(`${totalDurationQuery.alias}.task`, 'task')
-			.andWhere(`"${totalDurationQuery.alias}"."startedAt" BETWEEN :start AND :end`, {
-				start,
-				end
-			})
-			.andWhere(`"${totalDurationQuery.alias}"."tenantId" = :tenantId`, {
-				tenantId
-			})
-			.andWhere(`"${totalDurationQuery.alias}"."organizationId" = :organizationId`, {
-				organizationId
-			});
-		/**
-		 * If Employee Selected
-		 */
-		if (isNotEmpty(employeeIds)) {
-			totalDurationQuery.andWhere(`"${totalDurationQuery.alias}"."employeeId" IN(:...employeeIds)`, {
-				employeeIds
-			});
-		}
-		/**
-		 * If Project Selected
-		 */
-		if (isNotEmpty(projectIds)) {
-			totalDurationQuery.andWhere(`"${totalDurationQuery.alias}"."projectId" IN (:...projectIds)`, {
-				projectIds
-			});
-		}
-
+			.innerJoin(`${query.alias}.timeSlots`, 'timeSlots')
+			.andWhere(
+				new Brackets((qb: WhereExpressionBuilder) => { 
+					qb.andWhere(`"${totalDurationQuery.alias}"."startedAt" BETWEEN :start AND :end`, {
+						start,
+						end
+					});
+				})
+			)
+			.andWhere(
+				new Brackets((qb: WhereExpressionBuilder) => { 
+					qb.andWhere(`"${totalDurationQuery.alias}"."tenantId" = :tenantId`, { tenantId });
+					qb.andWhere(`"${totalDurationQuery.alias}"."organizationId" = :organizationId`, { organizationId });
+					qb.andWhere(`"${totalDurationQuery.alias}"."deletedAt" IS NULL`);
+				})
+			)
+			.andWhere(
+				new Brackets((qb: WhereExpressionBuilder) => { 			
+					if (isNotEmpty(employeeIds)) {
+						qb.andWhere(`"${totalDurationQuery.alias}"."employeeId" IN (:...employeeIds)`, {
+							employeeIds
+						});
+					}
+					if (isNotEmpty(projectIds)) {
+						qb.andWhere(`"${totalDurationQuery.alias}"."projectId" IN (:...projectIds)`, {
+							projectIds
+						});
+					}
+				})
+			);
 		const totalDuration = await totalDurationQuery.getRawOne();
 		tasks = tasks.map((task: any) => {
 			task.durationPercentage = parseFloat(
@@ -1049,11 +979,7 @@ export class StatisticService {
 	 * @returns 
 	 */
 	async manualTimes(request: IGetManualTimesStatistics): Promise<IManualTimesStatistics[]> {
-		const {
-			organizationId,
-			startDate,
-			endDate
-		} = request;
+		const { organizationId, startDate, endDate } = request;
 		let { employeeIds = [], projectIds = [] } = request;
 
 		const user = RequestContext.currentUser();
@@ -1064,8 +990,8 @@ export class StatisticService {
 									moment.utc(endDate)
 								) :
 								getDateFormat(
-									moment().startOf('day').utc(),
-									moment().endOf('day').utc()
+									moment().startOf('week').utc(),
+									moment().endOf('week').utc()
 								);
 		/*
 		 *  Get employees id of the organization or get current employee id
@@ -1100,36 +1026,39 @@ export class StatisticService {
 				'employee.user',
 				'timeSlots'
 			],
-			where: (qb: SelectQueryBuilder<TimeLog>) => {
-				qb.andWhere(`"${qb.alias}"."logType" = :logType`, {
-					logType: TimeLogType.MANUAL
-				});
-				qb.andWhere(`"${qb.alias}"."startedAt" BETWEEN :start AND :end`, {
-					start,
-					end
-				});
-				qb.andWhere(`"${qb.alias}"."organizationId" = :organizationId`, {
-					organizationId
-				});
-				qb.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, {
-					tenantId
-				});
-				/**
-				 * If Employee Selected
-				 */
-				if (isNotEmpty(employeeIds)) {
-					qb.andWhere(`"${qb.alias}"."employeeId" IN(:...employeeIds)`, {
-						employeeIds
-					});
-				}
-				/**
-				 * If Project Selected
-				 */
-				if (isNotEmpty(projectIds)) {
-					qb.andWhere(`"${qb.alias}"."projectId" IN (:...projectIds)`, {
-						projectIds
-					});
-				}
+			where: (query: SelectQueryBuilder<TimeLog>) => {
+				query.andWhere(
+					new Brackets((qb: WhereExpressionBuilder) => { 
+						qb.andWhere(`"${query.alias}"."logType" = :logType`, {
+							logType: TimeLogType.MANUAL
+						});
+						qb.andWhere(`"${query.alias}"."startedAt" BETWEEN :start AND :end`, {
+							start,
+							end
+						});
+					})
+				);
+				query.andWhere(
+					new Brackets((qb: WhereExpressionBuilder) => { 
+						qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
+						qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
+						qb.andWhere(`"${query.alias}"."deletedAt" IS NULL`);
+					})
+				);
+				query.andWhere(
+					new Brackets((qb: WhereExpressionBuilder) => { 			
+						if (isNotEmpty(employeeIds)) {
+							qb.andWhere(`"${query.alias}"."employeeId" IN (:...employeeIds)`, {
+								employeeIds
+							});
+						}
+						if (isNotEmpty(projectIds)) {
+							qb.andWhere(`"${query.alias}"."projectId" IN (:...projectIds)`, {
+								projectIds
+							});
+						}
+					})
+				);
 			},
 			take: 5,
 			order: {
@@ -1159,11 +1088,7 @@ export class StatisticService {
 	 * @returns 
 	 */
 	async getActivities(request: IGetActivitiesStatistics): Promise<IActivitiesStatistics[]> {
-		const {
-			organizationId,
-			startDate,
-			endDate
-		} = request;
+		const { organizationId, startDate, endDate } = request;
 		let { employeeIds = [], projectIds = [] } = request;
 
 		const user = RequestContext.currentUser();
@@ -1174,8 +1099,8 @@ export class StatisticService {
 									moment.utc(endDate)
 								) :
 								getDateFormat(
-									moment().startOf('day').utc(),
-									moment().endOf('day').utc()
+									moment().startOf('week').utc(),
+									moment().endOf('week').utc()
 								);
 		/*
 		 *  Get employees id of the organization or get current employee id
@@ -1223,90 +1148,90 @@ export class StatisticService {
 					}
 				})
 			)
-			.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
-				tenantId
-			})
-			.andWhere(`"${query.alias}"."organizationId" = :organizationId`, {
-				organizationId
-			})
+			.andWhere(
+				new Brackets((qb: WhereExpressionBuilder) => { 
+					qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
+					qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
+				})
+			)
+			.andWhere(
+				new Brackets((qb: WhereExpressionBuilder) => { 
+					qb.andWhere(`"timeLogs"."tenantId" = :tenantId`, { tenantId });
+					qb.andWhere(`"timeLogs"."organizationId" = :organizationId`, { organizationId });
+					qb.andWhere(`"timeLogs"."deletedAt" IS NULL`);
+				})
+			)
+			.andWhere(
+				new Brackets((qb: WhereExpressionBuilder) => { 			
+					if (isNotEmpty(employeeIds)) {
+						qb.andWhere(`"${query.alias}"."employeeId" IN (:...employeeIds)`, {
+							employeeIds
+						});
+					}
+					if (isNotEmpty(projectIds)) {
+						qb.andWhere(`"${query.alias}"."projectId" IN (:...projectIds)`, {
+							projectIds
+						});
+					}
+				})
+			)
 			.orderBy(`"duration"`, 'DESC')
 			.limit(5);
-		/**
-		 * If Employee Selected
-		 */
-		if (isNotEmpty(employeeIds)) {
-			query.andWhere(`"${query.alias}"."employeeId" IN(:...employeeIds)`, {
-				employeeIds
-			});
-		}
-		/**
-		 * If Project Selected
-		 */
-		if (isNotEmpty(projectIds)) {
-			query.andWhere(`"${query.alias}"."projectId" IN (:...projectIds)`, {
-				projectIds
-			});
-		}
-
 		let activities: IActivitiesStatistics[] = await query.getRawMany();
 
 		/*
-			* Fetch total duration of the week for calculate duration percentage
-			*/
+		* Fetch total duration of the week for calculate duration percentage
+		*/
 		const totalDurationQuery = this.activityRepository.createQueryBuilder();
 		totalDurationQuery
-			.select(
-				`SUM("${totalDurationQuery.alias}"."duration")`,
-				`duration`
-			)
+			.select(`SUM("${totalDurationQuery.alias}"."duration")`, `duration`)
 			.innerJoin(`${totalDurationQuery.alias}.timeSlot`, 'timeSlot')
 			.innerJoin(`timeSlot.timeLogs`, 'timeLogs')
-			.andWhere(
-				`"${totalDurationQuery.alias}"."employeeId" IN(:...employeeId)`,
-				{ employeeId: employeeIds }
-			)
 			.andWhere(
 				new Brackets((qb) => {
 					if (
 						this.configService.dbConnectionOptions.type ===
 						'sqlite'
 					) {
-						qb.andWhere(
-							`datetime("${totalDurationQuery.alias}"."date" || ' ' || "${totalDurationQuery.alias}"."time") Between :start AND :end`,
-							{ start, end }
-						);
+						qb.andWhere(`datetime("${totalDurationQuery.alias}"."date" || ' ' || "${totalDurationQuery.alias}"."time") Between :start AND :end`, {
+							start,
+							end
+						});
 					} else {
-						qb.andWhere(
-							`concat("${totalDurationQuery.alias}"."date", ' ', "${totalDurationQuery.alias}"."time")::timestamp Between :start AND :end`,
-							{ start, end }
-						);
+						qb.andWhere(`concat("${totalDurationQuery.alias}"."date", ' ', "${totalDurationQuery.alias}"."time")::timestamp Between :start AND :end`, {
+							start,
+							end
+						});
 					}
 				})
 			)
-			.andWhere(`"${totalDurationQuery.alias}"."tenantId" = :tenantId`, {
-				tenantId
-			})
-			.andWhere(`"${totalDurationQuery.alias}"."organizationId" = :organizationId`, {
-				organizationId
-			});
-
-		/**
-		 * If Employee Selected
-		 */
-		if (isNotEmpty(employeeIds)) {
-			totalDurationQuery.andWhere(`"${totalDurationQuery.alias}"."employeeId" IN(:...employeeIds)`, {
-				employeeIds
-			});
-		}
-		/**
-		 * If Project Selected
-		 */
-		if (isNotEmpty(projectIds)) {
-			totalDurationQuery.andWhere(`"${totalDurationQuery.alias}"."projectId" IN (:...projectIds)`, {
-				projectIds
-			});
-		}
-
+			.andWhere(
+				new Brackets((qb: WhereExpressionBuilder) => { 
+					qb.andWhere(`"${totalDurationQuery.alias}"."tenantId" = :tenantId`, { tenantId });
+					qb.andWhere(`"${totalDurationQuery.alias}"."organizationId" = :organizationId`, { organizationId });
+				})
+			)
+			.andWhere(
+				new Brackets((qb: WhereExpressionBuilder) => { 
+					qb.andWhere(`"timeLogs"."tenantId" = :tenantId`, { tenantId });
+					qb.andWhere(`"timeLogs"."organizationId" = :organizationId`, { organizationId });
+					qb.andWhere(`"timeLogs"."deletedAt" IS NULL`);
+				})
+			)
+			.andWhere(
+				new Brackets((qb: WhereExpressionBuilder) => { 			
+					if (isNotEmpty(employeeIds)) {
+						qb.andWhere(`"${totalDurationQuery.alias}"."employeeId" IN (:...employeeIds)`, {
+							employeeIds
+						});
+					}
+					if (isNotEmpty(projectIds)) {
+						qb.andWhere(`"${totalDurationQuery.alias}"."projectId" IN (:...projectIds)`, {
+							projectIds
+						});
+					}
+				})
+			);
 		const totalDuration = await totalDurationQuery.getRawOne();
 		activities = activities.map((activity) => {
 			activity.durationPercentage = (activity.duration * 100) / totalDuration.duration;
@@ -1323,11 +1248,7 @@ export class StatisticService {
 	 * @returns 
 	 */
 	async getEmployeeTimeSlots(request: IGetTimeSlotStatistics): Promise<ITimeSlotStatistics[]> {
-		const {
-			organizationId,
-			startDate,
-			endDate
-		} = request;
+		const { organizationId, startDate, endDate } = request;
 		let { employeeIds = [], projectIds = [] } = request;
 
 		const user = RequestContext.currentUser();
@@ -1338,8 +1259,8 @@ export class StatisticService {
 									moment.utc(endDate)
 								) :
 								getDateFormat(
-									moment().startOf('day').utc(),
-									moment().endOf('day').utc()
+									moment().startOf('week').utc(),
+									moment().endOf('week').utc()
 								);
 
 		/*
@@ -1368,19 +1289,21 @@ export class StatisticService {
 		query.addSelect(`"user"."imageUrl"`, "user_image_url");
 		query.addSelect(`("user"."firstName" || ' ' ||  "user"."lastName")`, "user_name");
 		query.innerJoin(`${query.alias}.employee`, 'employee');
+		query.innerJoin(`${query.alias}.timeSlots`, 'timeSlots');
 		query.innerJoin(`employee.user`, "user");
+		query.andWhere(
+			new Brackets((qb: WhereExpressionBuilder) => { 
+				qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
+				qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
+				qb.andWhere(`"${query.alias}"."deletedAt" IS NULL`);
+			})
+		);
 		query.andWhere(
 			new Brackets((qb: WhereExpressionBuilder) => { 
 				qb.andWhere(`"${query.alias}"."startedAt" BETWEEN :start AND :end`, {
 					start,
 					end
 				});
-				qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, {
-					organizationId
-				})
-				qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
-					tenantId
-				})
 			})
 		);
 		query.andWhere(
@@ -1424,29 +1347,39 @@ export class StatisticService {
 					}
 				},
 				relations: [
-					'employee', 'employee.user', 'screenshots'
+					'employee',
+					'employee.user',
+					'screenshots'
 				],
-				where: (qb: SelectQueryBuilder<TimeSlot>) => {
-					const { id: employeeId } = employee;
-					qb.andWhere(`"${qb.alias}"."employeeId" = :employeeId`, {
-						employeeId
-					});
-					qb.andWhere(`"${qb.alias}"."organizationId" = :organizationId`, {
-						organizationId
-					});
-					qb.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, {
-						tenantId
-					});
-					qb.andWhere(`"timeLogs"."startedAt" BETWEEN :start AND :end`, {
-						start,
-						end
-					});
-					// project filter query
-					if (isNotEmpty(projectIds)) {
-						qb.andWhere(`"timeLogs"."projectId" IN (:...projectIds)`, {
-							projectIds
-						});
-					}
+				where: (query: SelectQueryBuilder<TimeSlot>) => {
+					query.andWhere(
+						new Brackets((qb: WhereExpressionBuilder) => { 
+							const { id: employeeId } = employee;
+							qb.andWhere(`"${query.alias}"."employeeId" = :employeeId`, { employeeId });
+							qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
+							qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
+						})
+					);
+					query.andWhere(
+						new Brackets((qb: WhereExpressionBuilder) => { 
+							qb.andWhere(`"timeLogs"."startedAt" BETWEEN :start AND :end`, {
+								start,
+								end
+							});
+							qb.andWhere(`"timeLogs"."tenantId" = :tenantId`, { tenantId });
+							qb.andWhere(`"timeLogs"."organizationId" = :organizationId`, { organizationId });
+							qb.andWhere(`"timeLogs"."deletedAt" IS NULL`);
+						})
+					);
+					query.andWhere(
+						new Brackets((qb: WhereExpressionBuilder) => { 
+							if (isNotEmpty(projectIds)) {
+								qb.andWhere(`"timeLogs"."projectId" IN (:...projectIds)`, {
+									projectIds
+								});
+							}
+						})
+					);
 				},
 				take: 3,
 				order: {
@@ -1459,7 +1392,7 @@ export class StatisticService {
 
 	private async getEmployeesIds(
 		organizationId: string,
-		employeeIds?: string[]
+		employeeIds: string[]
 	) {
 		const tenantId = RequestContext.currentTenantId();
 		const query = this.employeeRepository.createQueryBuilder('employee');
@@ -1475,5 +1408,141 @@ export class StatisticService {
 		}
 		const employees = await query.getRawMany();
 		return pluck(employees, 'id');
+	}
+
+	/**
+	 * Get employees count who worked in this week.
+	 * 
+	 * @param request 
+	 * @returns 
+	 */
+	private async getEmployeeWorkedCounts(request: IGetCountsStatistics) {
+		const query = this.timeLogRepository.createQueryBuilder('time_log');
+		query.select(`"${query.alias}"."employeeId"`, 'employeeId');
+		query.innerJoin(`${query.alias}.employee`, 'employee');
+		query.innerJoin(`${query.alias}.timeSlots`, 'timeSlots');
+		query.andWhere(
+			new Brackets((where: WhereExpressionBuilder) => {
+				this.getFilterQuery(query, where, request);
+			})
+		)
+		query.groupBy(`"${query.alias}"."employeeId"`);
+		const employees = await query.getRawMany();
+		return employees.length;
+	}
+
+	/**
+	 * Get projects count who worked in this week.
+	 * 
+	 * @param request 
+	 * @returns 
+	 */
+	private async getProjectWorkedCounts(request: IGetCountsStatistics) {
+		const query = this.timeLogRepository.createQueryBuilder('time_log');
+		query.select(`"${query.alias}"."projectId"`, 'projectId');
+		query.innerJoin(`${query.alias}.employee`, 'employee');
+		query.innerJoin(`${query.alias}.project`, 'project');
+		query.innerJoin(`${query.alias}.timeSlots`, 'timeSlots');
+		query.andWhere(
+			new Brackets((where: WhereExpressionBuilder) => {
+				this.getFilterQuery(query, where, request);
+			})
+		)
+		query.groupBy(`"${query.alias}"."projectId"`);
+		const projects = await query.getRawMany();
+		return projects.length;
+	}
+
+	/**
+	 * GET filter common query request
+	 * 
+	 * @param query 
+	 * @param qb 
+	 * @param request 
+	 * @returns 
+	 */
+	private getFilterQuery(
+		query: SelectQueryBuilder<TimeLog>,
+		qb: WhereExpressionBuilder,
+		request: IGetCountsStatistics
+	) {
+		const tenantId = RequestContext.currentTenantId();
+		const {
+			organizationId,
+			startDate,
+			endDate,
+			employeeIds = [],
+			projectIds = []
+		} = request;
+
+		const { start, end } = (startDate && endDate) ?
+								getDateFormat(
+									moment.utc(startDate),
+									moment.utc(endDate)
+								) : 
+								getDateFormat(
+									moment().startOf('week').utc(),
+									moment().endOf('week').utc()
+								);
+		qb.andWhere(
+			new Brackets((qb: WhereExpressionBuilder) => {
+				qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
+				qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
+				qb.andWhere(`"${query.alias}"."deletedAt" IS NULL`);
+			})
+		);
+		qb.andWhere(
+			new Brackets((qb: WhereExpressionBuilder) => {
+				qb.andWhere(`"${query.alias}"."startedAt" BETWEEN :startDate AND :endDate`, {
+					startDate: start,
+					endDate: end
+				});
+			})
+		);
+		qb.andWhere(
+			new Brackets((qb: WhereExpressionBuilder) => { 
+				if (isNotEmpty(request.activityLevel)) {
+					/**
+					 * Activity Level should be 0-100%
+					 * So, we have convert it into 10 minutes TimeSlot by multiply by 6
+					 */
+					const { activityLevel } = request;
+					const startLevel = (activityLevel.start * 6);
+					const endLevel = (activityLevel.end * 6);
+			
+					qb.andWhere(`"timeSlots"."overall" BETWEEN :startLevel AND :endLevel`, {
+						startLevel,
+						endLevel
+					});
+				}
+				if (isNotEmpty(request.logType)) {
+					const { logType } = request;
+					qb.andWhere(`"${query.alias}"."logType" IN (:...logType)`, {
+						logType
+					});
+				}
+				if (isNotEmpty(request.source)) {
+					const { source } = request;
+					qb.andWhere(`"${query.alias}"."source" IN (:...source)`, {
+						source
+					});
+				}
+			})
+		);
+		qb.andWhere(
+			new Brackets((qb: WhereExpressionBuilder) => {
+				if (isNotEmpty(employeeIds)) {
+					qb.andWhere(`"${query.alias}"."employeeId" IN (:...employeeIds)`, {
+						employeeIds
+					});
+				}
+				if (isNotEmpty(projectIds)) {
+					qb.andWhere(`"${query.alias}"."projectId" IN (:...projectIds)`, {
+						projectIds
+					});
+				}
+			})
+		);
+		return qb;
 	}
 }
