@@ -352,9 +352,7 @@ p,
     color: #3c495a;
     font-size: 15px;
     font-weight: 600;
-    border: 1px solid #3c495aba;
     padding: 5px;
-    border-radius: 5px;
   }
 
   .speciality {
@@ -378,6 +376,10 @@ p,
 
   .profil-bio {
     line-height: 24px;
+    width: 100%;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
   }
 
   .push-bottom-10 {
@@ -470,7 +472,7 @@ p,
   background-color: var(--gauzy-card-2);
   border-radius: 0 var(--border-radius) var(--border-radius) var(--border-radius);
   overflow: auto;
-  height: calc(100vh - 18rem);
+  height: calc(100vh - 19rem);
 }
 
 .anonymous-avatar {

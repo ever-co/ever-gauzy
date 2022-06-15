@@ -475,40 +475,56 @@
 												else anonymousTemp
 											"
 										>
-											<div class="avatar has-aura">
-												<a [routerLink]="[employee.id]">
-													<img
-														src="{{
-															employee.user
-																.imageUrl
-														}}"
-													/>
-												</a>
-											</div>
 											<div class="main-details">
 												<div
 													class="row align-items-center"
 												>
-													<div class="col-auto">
-														<a
-															class="name margin-right-10"
-															routerLink="{{
-																employee.profile_link
-															}}/{{
-																employee.id
-															}}"
+													<div>
+														<div
+															class="avatar has-aura"
 														>
-															{{
-																employee.user
-																	.firstName +
-																	' ' +
+															<a
+																[routerLink]="[
+																	employee.id
+																]"
+															>
+																<img
+																	src="{{
+																		employee
+																			.user
+																			.imageUrl
+																	}}"
+																/>
+															</a>
+														</div>
+													</div>
+													<div class="col-2">
+														<div>
+															<a
+																class="name margin-right-10"
+																routerLink="{{
+																	employee.profile_link
+																}}/{{
+																	employee.id
+																}}"
+															>
+																{{
 																	employee
 																		.user
-																		.lastName
-															}}
-														</a>
+																		.firstName +
+																		' ' +
+																		employee
+																			.user
+																			.lastName
+																}}
+															</a>
+														</div>
+														<div class="speciality">
+															Full Stack Web
+															Developer
+														</div>
 													</div>
-													<div class="col-auto p-0">
+													<div class="col-1">
 														<div
 															class="label label-hourly margin-right-10"
 														>
@@ -519,9 +535,97 @@
 															}}
 														</div>
 													</div>
-
-													<div class="col"></div>
-													<div class="col-auto">
+													<div class="col-2">
+														<div>
+															<a
+																class="works-at"
+																href="#/share/organization/{{
+																	organization.profile_link
+																}}"
+															>
+																<nb-icon
+																	icon="globe-2-outline"
+																	[options]="{
+																		color: '#55a8fd'
+																	}"
+																>
+																</nb-icon>
+																{{
+																	employee
+																		.organization
+																		.name
+																}}
+															</a>
+														</div>
+														<div>
+															<span
+																class="location text-success"
+															>
+																<nb-icon
+																	icon="navigation-2-outline"
+																	[options]="{
+																		color: '#28a745'
+																	}"
+																>
+																</nb-icon>
+																Sofia, Sofia,
+																Bulgaria
+															</span>
+														</div>
+														<div class="profil-bio">
+															<span
+																class="average-bonus"
+																>{{
+																	'PUBLIC_PAGE.AVERAGE_BONUS'
+																		| translate
+																}}:</span
+															>
+															<span
+																class="text-success"
+															>
+																{{
+																	employee.billRateCurrency
+																}}
+																{{
+																	employee.averageBonus ===
+																	null
+																		? 0
+																		: employee.averageBonus
+																}}</span
+															>
+														</div>
+													</div>
+													<div class="col-3">
+														<div class="profil-bio">
+															I am Full-stack Web
+															Developer with
+															experience in the
+															following languages
+															&amp;amp; platforms
+															TypeScript and
+															JavaScript React.js,
+															G...
+														</div>
+													</div>
+													<div class="col-1">
+														<div
+															class="list-inline"
+														>
+															<li
+																*ngFor="
+																	let skill of employee.skills
+																"
+															>
+																<span
+																	class="tag tag-sm"
+																	>{{
+																		skill.name
+																	}}</span
+																>
+															</li>
+														</div>
+													</div>
+													<div class="col-2 text-right">
 														<div class="pay-rate">
 															{{
 																employee.billRateValue
@@ -531,7 +635,7 @@
 															}}/hr
 														</div>
 														<div
-															class="caption label-total-hours mt-2 text-center margin-right-10"
+															class="caption label-total-hours mt-2 margin-right-10"
 														>
 															{{
 																employee.totalWorkHours
@@ -542,89 +646,6 @@
 															}}
 														</div>
 													</div>
-												</div>
-												<div class="clearfix"></div>
-												<div class="speciality">
-													Full Stack Web Developer
-												</div>
-												<a
-													class="works-at"
-													href="#/share/organization/{{
-														organization.profile_link
-													}}"
-												>
-													<nb-icon
-														icon="globe-2-outline"
-														[options]="{
-															color: '#55a8fd'
-														}"
-													>
-													</nb-icon>
-													{{
-														employee.organization
-															.name
-													}}
-												</a>
-												<span
-													class="location text-success"
-												>
-													<nb-icon
-														icon="navigation-2-outline"
-														[options]="{
-															color: '#28a745'
-														}"
-													>
-													</nb-icon>
-													Sofia, Sofia, Bulgaria
-												</span>
-
-												<div
-													class="profil-bio push-bottom-10"
-												>
-													<span class="average-bonus"
-														>{{
-															'PUBLIC_PAGE.AVERAGE_BONUS'
-																| translate
-														}}:</span
-													>
-													<span class="text-success">
-														{{
-															employee.billRateCurrency
-														}}
-														{{
-															employee.averageBonus ===
-															null
-																? 0
-																: employee.averageBonus
-														}}</span
-													>
-												</div>
-
-												<div
-													class="profil-bio push-bottom-10"
-												>
-													I am Full-stack Web
-													Developer with experience in
-													the following languages
-													&amp;amp; platforms
-													TypeScript and JavaScript
-													React.js, G...
-												</div>
-												<div
-													class="list-inline push-bottom-20"
-												>
-													<li
-														*ngFor="
-															let skill of employee.skills
-														"
-													>
-														<span
-															class="tag tag-sm"
-															>{{
-																skill.name
-															}}</span
-														>
-													</li>
 												</div>
 											</div>
 										</ng-container>
