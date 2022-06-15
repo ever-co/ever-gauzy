@@ -1255,11 +1255,7 @@ export class StatisticService {
 	 * @returns 
 	 */
 	async getEmployeeTimeSlots(request: IGetTimeSlotStatistics): Promise<ITimeSlotStatistics[]> {
-		const {
-			organizationId,
-			startDate,
-			endDate
-		} = request;
+		const { organizationId, startDate, endDate } = request;
 		let { employeeIds = [], projectIds = [] } = request;
 
 		const user = RequestContext.currentUser();
@@ -1270,8 +1266,8 @@ export class StatisticService {
 									moment.utc(endDate)
 								) :
 								getDateFormat(
-									moment().startOf('day').utc(),
-									moment().endOf('day').utc()
+									moment().startOf('week').utc(),
+									moment().endOf('week').utc()
 								);
 
 		/*
@@ -1300,19 +1296,21 @@ export class StatisticService {
 		query.addSelect(`"user"."imageUrl"`, "user_image_url");
 		query.addSelect(`("user"."firstName" || ' ' ||  "user"."lastName")`, "user_name");
 		query.innerJoin(`${query.alias}.employee`, 'employee');
+		query.innerJoin(`${query.alias}.timeSlots`, 'timeSlots');
 		query.innerJoin(`employee.user`, "user");
+		query.andWhere(
+			new Brackets((qb: WhereExpressionBuilder) => { 
+				qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
+				qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
+				qb.andWhere(`"${query.alias}"."deletedAt" IS NULL`);
+			})
+		);
 		query.andWhere(
 			new Brackets((qb: WhereExpressionBuilder) => { 
 				qb.andWhere(`"${query.alias}"."startedAt" BETWEEN :start AND :end`, {
 					start,
 					end
 				});
-				qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, {
-					organizationId
-				})
-				qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
-					tenantId
-				})
 			})
 		);
 		query.andWhere(
@@ -1356,29 +1354,39 @@ export class StatisticService {
 					}
 				},
 				relations: [
-					'employee', 'employee.user', 'screenshots'
+					'employee',
+					'employee.user',
+					'screenshots'
 				],
-				where: (qb: SelectQueryBuilder<TimeSlot>) => {
-					const { id: employeeId } = employee;
-					qb.andWhere(`"${qb.alias}"."employeeId" = :employeeId`, {
-						employeeId
-					});
-					qb.andWhere(`"${qb.alias}"."organizationId" = :organizationId`, {
-						organizationId
-					});
-					qb.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, {
-						tenantId
-					});
-					qb.andWhere(`"timeLogs"."startedAt" BETWEEN :start AND :end`, {
-						start,
-						end
-					});
-					// project filter query
-					if (isNotEmpty(projectIds)) {
-						qb.andWhere(`"timeLogs"."projectId" IN (:...projectIds)`, {
-							projectIds
-						});
-					}
+				where: (query: SelectQueryBuilder<TimeSlot>) => {
+					query.andWhere(
+						new Brackets((qb: WhereExpressionBuilder) => { 
+							const { id: employeeId } = employee;
+							qb.andWhere(`"${query.alias}"."employeeId" = :employeeId`, { employeeId });
+							qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
+							qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
+						})
+					);
+					query.andWhere(
+						new Brackets((qb: WhereExpressionBuilder) => { 
+							qb.andWhere(`"timeLogs"."startedAt" BETWEEN :start AND :end`, {
+								start,
+								end
+							});
+							qb.andWhere(`"timeLogs"."tenantId" = :tenantId`, { tenantId });
+							qb.andWhere(`"timeLogs"."organizationId" = :organizationId`, { organizationId });
+							qb.andWhere(`"timeLogs"."deletedAt" IS NULL`);
+						})
+					);
+					query.andWhere(
+						new Brackets((qb: WhereExpressionBuilder) => { 
+							if (isNotEmpty(projectIds)) {
+								qb.andWhere(`"timeLogs"."projectId" IN (:...projectIds)`, {
+									projectIds
+								});
+							}
+						})
+					);
 				},
 				take: 3,
 				order: {
