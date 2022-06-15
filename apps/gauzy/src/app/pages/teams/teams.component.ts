@@ -1,7 +1,6 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
-import { distinctUntilChange } from '@gauzy/common-angular';
 import {
 	IEmployee,
 	IOrganization,
@@ -17,15 +16,14 @@ import { firstValueFrom, Subject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { Ng2SmartTableComponent } from 'ng2-smart-table';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { EmployeesService, OrganizationTeamsService, Store, ToastrService } from '../../@core/services';
-import { DeleteConfirmationComponent } from '../../@shared/user/forms';
-import { ComponentEnum } from '../../@core/constants/layout.constants';
-import { EmployeeWithLinksComponent, NotesWithTagsComponent } from '../../@shared/table-components';
+import { distinctUntilChange } from '@gauzy/common-angular';
+import { PaginationFilterBaseComponent, IPaginationBase } from '../../@shared/pagination/pagination-filter-base.component';
 import { InputFilterComponent, TagsColorFilterComponent } from '../../@shared/table-filters';
-import { IPaginationBase, PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
+import { DeleteConfirmationComponent } from '../../@shared/user/forms';
+import { EmployeeWithLinksComponent, NotesWithTagsComponent } from '../../@shared/table-components';
+import { EmployeesService, OrganizationTeamsService, Store, ToastrService } from '../../@core/services';
+import { API_PREFIX, ComponentEnum } from '../../@core/constants';
 import { ServerDataSource } from '../../@core/utils/smart-table';
-import { API_PREFIX } from '../../@core';
-
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -33,8 +31,7 @@ import { API_PREFIX } from '../../@core';
 	templateUrl: './teams.component.html',
 	styleUrls: ['./teams.component.scss']
 })
-export class TeamsComponent
-	extends PaginationFilterBaseComponent
+export class TeamsComponent extends PaginationFilterBaseComponent
 	implements OnInit, OnDestroy {
 
 	selectedTeam: IOrganizationTeam;
@@ -55,7 +52,7 @@ export class TeamsComponent
 	smartTableSource: ServerDataSource;
 	
 	public organization: IOrganization;
-	teams$: Subject<any> = new Subject();
+	teams$: Subject<any> = this.subject$;
 	employees$: Subject<any> = new Subject();
 
 	teamTable: Ng2SmartTableComponent;
@@ -81,13 +78,12 @@ export class TeamsComponent
 		this.setView();
 	}
 
-	async ngOnInit() {
+	ngOnInit() {
 		this._loadSmartTableSettings();
 		this._applyTranslationOnSmartTable();
 		this.teams$
 			.pipe(
 				debounceTime(300),
-				tap(() => this.loading = true),
 				tap(() => this.clearItem()),
 				tap(() => this.loadTeams()),
 				untilDestroyed(this)
@@ -273,6 +269,7 @@ export class TeamsComponent
 		}
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
+
 		this.smartTableSource = new ServerDataSource(this.httpClient, {
 			endPoint: `${API_PREFIX}/organization-team/pagination`,
 			relations: [
@@ -317,7 +314,7 @@ export class TeamsComponent
 		if (!this.organization) {
 			return;
 		}
-
+		this.loading = true;
 		try {
 			this.setSmartTableSource();
 			const { activePage, itemsPerPage } = this.getPagination();
@@ -326,7 +323,6 @@ export class TeamsComponent
 				itemsPerPage,
 				false
 			);
-
 			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
 				await this._loadGridLayoutData();
 			}			
@@ -433,7 +429,8 @@ export class TeamsComponent
 		this.selectTeam({
 			isSelected: false,
 			data: null
-		});		
+		});
+		this.deselectAll();	
 	}
 
 	/*

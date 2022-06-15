@@ -208,6 +208,10 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 	public pagination(filter?: any) {
 		if ('where' in filter) {
 			const { where } = filter;
+			if ('name' in where) {
+				const { name } = where;
+				filter.where.name = Like(`%${name}%`);
+			}
 			if ('tags' in where) {
 				const { tags } = where; 
 				filter.where.tags = {

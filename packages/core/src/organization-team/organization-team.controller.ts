@@ -21,11 +21,10 @@ import {
 	PermissionsEnum
 } from '@gauzy/contracts';
 import { OrganizationTeam } from './organization-team.entity';
+import { CreateOrganizationTeamDTO, UpdateOrganizationTeamDTO } from './dto';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
-import { CreateOrganizationTeamDTO, UpdateOrganizationTeamDTO } from './dto';
 import { Permissions } from './../shared/decorators';
-
 
 @ApiTags('OrganizationTeam')
 @UseGuards(TenantPermissionGuard)
@@ -100,15 +99,15 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 	 * @param entity 
 	 * @returns 
 	 */
-	 @UseGuards(PermissionGuard)
-	 @Permissions(PermissionsEnum.ALL_ORG_VIEW)
-	 @Get('pagination')
-	 @UsePipes(new ValidationPipe({ transform: true }))
-	 async pagination(
-		 @Query() filter: PaginationParams<IOrganizationTeam>
-	 ): Promise<IPagination<IOrganizationTeam>> {
-		 return this.organizationTeamService.pagination(filter);
-	 }
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ALL_ORG_VIEW)
+	@Get('pagination')
+	@UsePipes(new ValidationPipe({ transform: true }))
+	async pagination(
+		@Query() filter: PaginationParams<IOrganizationTeam>
+	): Promise<IPagination<IOrganizationTeam>> {
+		return this.organizationTeamService.pagination(filter);
+	}
 
 	/**
 	 * GET all organization teams
@@ -128,6 +127,8 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ALL_ORG_VIEW)
 	@Get()
 	async findAll(
 		@Query('data', ParseJsonPipe) data: any
