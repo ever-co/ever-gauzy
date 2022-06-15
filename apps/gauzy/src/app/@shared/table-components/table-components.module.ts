@@ -70,7 +70,8 @@ import { RoleComponent } from './role/role.component';
 		ContactLinksComponent,
 		EmployeeLinksComponent,
 		ProjectComponent,
-		RoleComponent
+		RoleComponent,
+		EmailComponent
 	],
 	providers: []
 })

@@ -17,6 +17,8 @@ import { OrganizationRoutingModule } from './organization-routing.module';
 import { PublicPageMutationModule } from '../../@shared/organizations/public-page-mutation/public-page-mutation.module';
 import { ImageUploaderModule } from '../../@shared/image-uploader/image-uploader.module';
 import { TranslateModule } from '../../@shared/translate/translate.module';
+import { SharedModule } from '../../@shared/shared.module';
+import { TableComponentsModule } from '../../@shared';
 
 @NgModule({
 	imports: [
@@ -35,7 +37,9 @@ import { TranslateModule } from '../../@shared/translate/translate.module';
 		NbListModule,
 		NbUserModule,
 		NbTabsetModule,
-		NbTagModule
+		NbTagModule,
+		SharedModule,
+		TableComponentsModule
 	],
 	declarations: [OrganizationComponent],
 	providers: []

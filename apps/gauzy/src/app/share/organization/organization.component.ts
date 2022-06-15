@@ -107,6 +107,8 @@ export class OrganizationComponent
 				])
 			);
 
+			console.log(this.organization)
+
 			this.tenantId = this.store.user.tenantId;
 			if (this.store.userId) {
 				const { total } = await this.userOrganizationService.getAll(

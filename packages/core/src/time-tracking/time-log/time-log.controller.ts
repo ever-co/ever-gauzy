@@ -32,6 +32,7 @@ import { UUIDValidationPipe } from './../../shared/pipes';
 import { TransformInterceptor } from './../../core/interceptors';
 import { CreateManualTimeLogDTO, DeleteTimeLogDTO, UpdateManualTimeLogDTO } from './dto';
 import { TimeLogBodyTransformPipe } from './pipes';
+import { TimeLogReportQueryDTO } from './dto/query';
 
 @ApiTags('TimeLog')
 @UseGuards(TenantBaseGuard)
@@ -65,7 +66,12 @@ export class TimeLogController {
 		description: 'Record not found'
 	})
 	@Get('/report/daily')
-	async getDailyReport(@Query() options: IGetTimeLogReportInput) {
+	async getDailyReport(
+		@Query(new ValidationPipe({
+			transform: true,
+			whitelist: true
+		})) options: TimeLogReportQueryDTO
+	) {
 		return await this.timeLogService.getDailyReport(options);
 	}
 
@@ -129,7 +135,12 @@ export class TimeLogController {
 		description: 'Record not found'
 	})
 	@Get('/report/weekly')
-	async getWeeklyReport(@Query() options: IGetTimeLogReportInput) {
+	async getWeeklyReport(
+		@Query(new ValidationPipe({
+			transform: true,
+			whitelist: true
+		})) options: TimeLogReportQueryDTO
+	) {
 		return await this.timeLogService.getWeeklyReport(options);
 	}
 

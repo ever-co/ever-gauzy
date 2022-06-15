@@ -175,10 +175,4 @@ export class WeeklyTimeReportsComponent extends BaseSelectorFilterComponent
 			datasets: datasets
 		};
 	}
-
-	public getWeeklyTotal(log: ReportDayData) {
-		return pluck(log.dates, 'sum')
-			.filter((sum) => sum)
-			.reduce((partialSum, sum) => partialSum + sum, 0);
-	}
 }
