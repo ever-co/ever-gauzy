@@ -27,7 +27,6 @@ import { ConfigService } from '@gauzy/config';
 import {
 	Activity,
 	Employee,
-	OrganizationProject,
 	TimeLog,
 	TimeSlot
 } from './../../core/entities/internal';
@@ -36,9 +35,6 @@ import { getDateFormat } from './../../core/utils';
 @Injectable()
 export class StatisticService {
 	constructor(
-		@InjectRepository(OrganizationProject)
-		private readonly organizationProjectsRepository: Repository<OrganizationProject>,
-
 		@InjectRepository(TimeSlot)
 		private readonly timeSlotRepository: Repository<TimeSlot>,
 
