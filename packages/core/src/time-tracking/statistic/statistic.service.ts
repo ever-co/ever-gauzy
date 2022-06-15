@@ -986,11 +986,7 @@ export class StatisticService {
 	 * @returns 
 	 */
 	async manualTimes(request: IGetManualTimesStatistics): Promise<IManualTimesStatistics[]> {
-		const {
-			organizationId,
-			startDate,
-			endDate
-		} = request;
+		const { organizationId, startDate, endDate } = request;
 		let { employeeIds = [], projectIds = [] } = request;
 
 		const user = RequestContext.currentUser();
@@ -1001,8 +997,8 @@ export class StatisticService {
 									moment.utc(endDate)
 								) :
 								getDateFormat(
-									moment().startOf('day').utc(),
-									moment().endOf('day').utc()
+									moment().startOf('week').utc(),
+									moment().endOf('week').utc()
 								);
 		/*
 		 *  Get employees id of the organization or get current employee id
@@ -1037,36 +1033,39 @@ export class StatisticService {
 				'employee.user',
 				'timeSlots'
 			],
-			where: (qb: SelectQueryBuilder<TimeLog>) => {
-				qb.andWhere(`"${qb.alias}"."logType" = :logType`, {
-					logType: TimeLogType.MANUAL
-				});
-				qb.andWhere(`"${qb.alias}"."startedAt" BETWEEN :start AND :end`, {
-					start,
-					end
-				});
-				qb.andWhere(`"${qb.alias}"."organizationId" = :organizationId`, {
-					organizationId
-				});
-				qb.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, {
-					tenantId
-				});
-				/**
-				 * If Employee Selected
-				 */
-				if (isNotEmpty(employeeIds)) {
-					qb.andWhere(`"${qb.alias}"."employeeId" IN(:...employeeIds)`, {
-						employeeIds
-					});
-				}
-				/**
-				 * If Project Selected
-				 */
-				if (isNotEmpty(projectIds)) {
-					qb.andWhere(`"${qb.alias}"."projectId" IN (:...projectIds)`, {
-						projectIds
-					});
-				}
+			where: (query: SelectQueryBuilder<TimeLog>) => {
+				query.andWhere(
+					new Brackets((qb: WhereExpressionBuilder) => { 
+						qb.andWhere(`"${query.alias}"."logType" = :logType`, {
+							logType: TimeLogType.MANUAL
+						});
+						qb.andWhere(`"${query.alias}"."startedAt" BETWEEN :start AND :end`, {
+							start,
+							end
+						});
+					})
+				);
+				query.andWhere(
+					new Brackets((qb: WhereExpressionBuilder) => { 
+						qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
+						qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
+						qb.andWhere(`"${query.alias}"."deletedAt" IS NULL`);
+					})
+				);
+				query.andWhere(
+					new Brackets((qb: WhereExpressionBuilder) => { 			
+						if (isNotEmpty(employeeIds)) {
+							qb.andWhere(`"${query.alias}"."employeeId" IN (:...employeeIds)`, {
+								employeeIds
+							});
+						}
+						if (isNotEmpty(projectIds)) {
+							qb.andWhere(`"${query.alias}"."projectId" IN (:...projectIds)`, {
+								projectIds
+							});
+						}
+					})
+				);
 			},
 			take: 5,
 			order: {
