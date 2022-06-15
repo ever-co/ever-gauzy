@@ -139,10 +139,7 @@ export class VendorsComponent
 				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
-			.subscribe((componentLayout) => {
-				this.dataLayoutStyle = componentLayout;
-				this.selectedVendor = null;
-			});		
+			.subscribe();		
 	}
 
 	async loadSmartTable() {
