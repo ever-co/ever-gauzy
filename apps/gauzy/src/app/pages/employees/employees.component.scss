@@ -1,9 +1,8 @@
-@import 'gauzy/_gauzy-table.scss';
 @import 'gauzy/_gauzy-overrides';
-@import 'gauzy/_gauzy-cards.scss';
+@import '../payments/payments.component.scss';
 
 nb-card {
-  background-color: rgba(50, 50, 50, 0.03);
+  background-color: var(--gauzy-card-2);
 }
 .btn-group.actions {
   padding: 0;
@@ -30,12 +29,4 @@ nb-card {
       }
     }
   }
-  .custom-table {
-    height: calc(100vh - 27.5rem);
-  }
-  @include nb-card-overrides(
-    unset,
-    calc($default-card-height),
-    $default-radius
-  );
 }
