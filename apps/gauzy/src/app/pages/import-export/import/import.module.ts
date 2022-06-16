@@ -8,7 +8,8 @@ import {
 	NbRadioModule,
 	NbToastrModule,
 	NbBadgeModule,
-	NbTooltipModule
+	NbTooltipModule,
+	NbSpinnerModule
 } from '@nebular/theme';
 import { FormsModule } from '@angular/forms';
 import { NgxPermissionsModule } from 'ngx-permissions';
@@ -42,7 +43,8 @@ import { GauzyButtonActionModule } from '../../../@shared/gauzy-button-action/ga
 		NbBadgeModule,
 		NbTooltipModule,
 		GauzyButtonActionModule,
-		SharedModule
+		SharedModule,
+		NbSpinnerModule
 	],
 	declarations: [ImportComponent],
 	exports: [ImportComponent],
