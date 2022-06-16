@@ -91,7 +91,7 @@
 	let-buttonSize="buttonSize"
 	let-selectedItem="selectedItem"
 >
-	<ng-container *ngxPermissionsOnly="['ALL_ORG_VIEW', 'ALL_ORG_EDIT']">
+	<ng-container *ngxPermissionsOnly="['ALL_ORG_EDIT']">
 		<div class="actions">
 			<button
 				(click)="openDialog(addEditTemplate, true)"
@@ -119,7 +119,7 @@
 	</ng-container>
 </ng-template>
 <ng-template #visibleButton>
-	<ng-container *ngxPermissionsOnly="['ALL_ORG_VIEW', 'ALL_ORG_EDIT']">
+	<ng-container *ngxPermissionsOnly="['ALL_ORG_EDIT']">
 		<button
 			nbButton
 			status="success"
