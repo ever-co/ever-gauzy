@@ -37,7 +37,7 @@
 				>
 				</ng2-smart-table>
 			</div>
-			<ng-container *ngIf="pagination.totalItems > pagination.itemsPerPage">
+			<ng-container *ngIf="pagination.totalItems > minItemPerPage">
 				<div class="pagination-container">
 					<ga-pagination
 						(selectedOption)="onUpdateOption($event)"
