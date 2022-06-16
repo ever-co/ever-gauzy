@@ -16,14 +16,14 @@ import { Store } from './../../../@core';
 	templateUrl: './header-title.component.html',
 	styles: [
 		`
-			.name {
+			.name, .org-name {
 				font-size: 24px;
-				font-weight: 500;
+				font-weight: 400;
 				line-height: 30px;
 				letter-spacing: 0em;
 				text-align: left;
 			}
-			.org-name {
+			:host {
 				font-size: 24px;
 				font-weight: 600;
 				line-height: 30px;
