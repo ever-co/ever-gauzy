@@ -19,6 +19,7 @@ import {
 import { Subject } from 'rxjs';
 import { debounceTime, take, tap } from 'rxjs/operators';
 import { ActivityLevel, TimesheetFilterService } from '../timesheet-filter.service';
+import { pick } from 'underscore';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -85,7 +86,13 @@ export class GauzyFiltersComponent
 			this.timesheetFilterService.filter$
 				.pipe(
 					tap((filters: ITimeLogFilters) => {
-						this.filters = Object.assign({}, filters)
+						const appliedFilter = pick(
+							filters,
+							'source',
+							'activityLevel',
+							'logType'
+						);
+						this.filters = Object.assign({}, appliedFilter)
 					}),
 					take(1),
 					untilDestroyed(this)
