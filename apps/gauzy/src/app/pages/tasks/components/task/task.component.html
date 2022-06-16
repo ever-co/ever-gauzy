@@ -1,5 +1,4 @@
 <nb-card
-	class="card-scroll"
 	[nbSpinner]="loading"
 	nbSpinnerStatus="primary"
 	nbSpinnerSize="large"
@@ -155,7 +154,7 @@
 	let-pagination="pagination"
 >
 	<div class="pagination-container">
-		<ng-container *ngIf="pagination.totalItems > pagination.itemsPerPage">
+		<ng-container *ngIf="pagination.totalItems > minItemPerPage">
 			<ga-pagination
 				(selectedOption)="onUpdateOption($event)"
 				(selectedPage)="onPageChange($event)"

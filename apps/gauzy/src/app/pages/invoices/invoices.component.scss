@@ -7,10 +7,10 @@
   flex-direction: column;
   justify-items: flex-start;
   align-items: flex-start;
-  border: solid 1px nb-theme(border-basic-color-3);
   padding: 12.5px 14px 12.5px 18px;
   border-radius: $default-radius;
   width: 411px;
+
   .title {
     color: nb-theme(text-primary-color);
     font-family: Inter;
@@ -20,6 +20,7 @@
     letter-spacing: 0em;
     text-align: left;
   }
+
   i {
     cursor: pointer;
   }
@@ -57,6 +58,7 @@
   flex-direction: column;
   width: 100%;
   margin-top: 2rem;
+
   .show-columns-select.size-medium:not(.full-width) {
     max-width: unset;
     margin-right: 9px;
@@ -73,9 +75,8 @@
   flex-wrap: wrap;
   position: absolute;
   align-items: center;
-  @include nb-rtl(left, 0);
-  @include nb-ltr(right, 0);
-  padding: 1rem;
+  @include nb-rtl(left, 1rem);
+  @include nb-ltr(right, 1rem);
 }
 
 .show-columns-select {
@@ -130,13 +131,9 @@ button {
 .icon-text {
   margin-right: 0.5rem;
 }
-.remove-scroll {
-  overflow: unset;
-  width: 100%;
-  padding: 1rem;
-}
+
 .actions {
-  background: rgba(50, 50, 50, 0.03);
+  background: var(--gauzy-card-2);
   border-radius: nb-theme(button-rectangle-border-radius);
   padding: 0px 1px 0px 1px;
   margin-right: 20px;
@@ -145,8 +142,9 @@ button {
 .transition-container {
   overflow-x: hidden;
   border-radius: nb-theme(button-rectangle-border-radius);
+
   span {
-    background: rgba(50, 50, 50, 0.03);
+    background: var(--gauzy-card-2);
     border-radius: nb-theme(button-rectangle-border-radius);
     padding: 0px 1px 0px 1px;
     margin-right: 10px;
@@ -155,16 +153,19 @@ button {
 
 :host .transition {
   display: flex;
+
   &.hide {
     @include nb-rtl(transform, translateX(-100%));
     @include nb-ltr(transform, translateX(100%));
     transition: all 0.15s ease-in;
   }
+
   &.show {
     opacity: 1;
     transform: translateX(0%);
     transition: all 0.25s ease-out;
   }
+
   &.show-button {
     @include nb-rtl(transform, translateX(110%));
     @include nb-ltr(transform, translateX(-110%));
@@ -176,6 +177,10 @@ nb-accordion-item-header ::ng-deep nb-icon {
   border-radius: nb-theme(input-rectangle-border-radius);
   width: 1.75rem;
   height: 1.75rem;
+}
+
+nb-accordion-item {
+  background-color: var(--gauzy-card-3);
 }
 
 ga-currency::ng-deep nb-select {
@@ -190,7 +195,7 @@ ga-currency::ng-deep nb-select {
   }
 }
 
-:host ngx-avatar::ng-deep {
+:host ::ng-deep ngx-avatar {
   .inner-wrapper {
     background-color: nb-theme(color-primary-transparent-100);
     border-radius: nb-theme(button-rectangle-border-radius);
@@ -198,6 +203,26 @@ ga-currency::ng-deep nb-select {
     display: flex;
     flex-direction: row;
     align-items: center;
+    width: fit-content;
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 15px;
+    letter-spacing: 0em;
+    gap: 8px;
+
+    .image-container {
+      height: 20px;
+      width: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      img[type='user'] {
+        height: 18px;
+        width: 18px;
+      }
+    }
+
     .link-text {
       color: nb-theme(text-primary-color);
       font-weight: normal;
@@ -223,26 +248,34 @@ textarea {
 
 .action {
   box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.15);
+
   &[nbButton].appearance-filled.status-basic {
     background-color: #ffffff;
   }
+
   &.info {
     background-color: #0088fe;
   }
+
   &.danger {
     color: nb-theme(color-danger-default);
   }
+
   &.secondary {
     color: #7e7e8f;
   }
+
   &.primary {
+
     &[nbButton].appearance-filled.status-basic,
     .appearance-filled.status-basic[nbButtonToggle] {
       color: nb-theme(text-primary-color);
     }
   }
+
   &.select-nb ::ng-deep {
     box-shadow: none;
+
     .select-button {
       box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.15);
       background: rgba(245, 245, 245);
@@ -254,8 +287,7 @@ textarea {
 
 :host nb-select ::ng-deep {
   .select-button {
-    box-shadow: rgba(0, 0, 0, 0.1) 0px 1px 0px 0px inset;
-    background-color: rgba(126, 126, 143, 0.05);
+    box-shadow: rgba(0, 0, 0, 0.1) 0px 1px 1px 0px inset;
   }
 }
 
@@ -264,20 +296,23 @@ textarea {
   display: flex;
   align-items: center;
   color: nb-theme(text-basic-color);
-  border-color: nb-theme(background-basic-color-3);
   border-radius: 0.5rem;
   height: 42px;
   position: relative;
+
   &:hover {
     border-color: nb-theme(color-primary-hover);
     color: nb-theme(text-basic-color);
+
     &:focus {
       background: rgba(126, 126, 143, 0.05);
     }
   }
+
   &:active {
     background: rgba(126, 126, 143, 0.05);
   }
+
   .icon {
     position: absolute;
     @include nb-ltr(right, 14px);
@@ -293,22 +328,54 @@ input {
 :host nb-card-body {
   overflow: unset;
   padding: 0;
+  background-color: unset;
 }
 
 nb-tab {
   background-color: rgba(50, 50, 50, 0.03);
   border: 0 0 $default-radius $default-radius;
 }
-:host ::ng-deep {
-  @include card_overrides(overlay, $default-card-height, $default-radius);
-  @include ng-select-overrides(
-    $default-height,
-    $default-radius,
-    $default-box-shadow-inset
-  );
-  nb-tabset .tab.active .tab-link {
-    background-color: rgba(50, 50, 50, 0.03);
-    border: unset;
-    text-decoration: none;
+
+:host {
+  nb-card {
+    margin: 0;
+  }
+
+  .remove-scroll {
+    overflow: unset;
+    width: 100%;
+    border: 0 0 $default-radius $default-radius;
+
+    .custom-content-body {
+      height: calc(100vh - 22rem);
+      display: flex;
+      flex-direction: column;
+
+      .table-scroll-container {
+        flex-grow: 10;
+        max-height: unset;
+      }
+    }
+
+    padding: 1rem;
+  }
+
+  ::ng-deep {
+    @include card_overrides(auto, $default-card-height, $default-radius);
+    @include ng-select-overrides($default-height,
+      $default-radius,
+      $default-box-shadow-inset );
+
+    nb-tabset .tab.active .tab-link {
+      background-color: rgba(50, 50, 50, 0.03);
+      border: unset;
+      text-decoration: none;
+    }
+
+    [nbInput].status-basic,
+    nb-select.appearance-outline.status-basic .select-button,
+    .ng-select .ng-select-container {
+      background-color: var(--background-basic-color-1);
+    }
   }
 }

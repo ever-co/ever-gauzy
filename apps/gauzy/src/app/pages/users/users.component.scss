@@ -1,98 +1,10 @@
-@import 'gauzy/_gauzy-table';
-
-/* Card grid */
-
-.flex-container {
-  display: flex;
-  flex-flow: row wrap;
-  justify-content: space-around;
-  padding: 0;
-  margin: 0;
-  list-style: none;
-}
-
-.flex-item {
-  border: 0.0625rem solid #e4e9f2;
-  border-radius: 0.25rem;
-  width: 386px;
-  margin-top: 10px;
-}
-
-.fullName {
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  padding: 1rem 1.5rem;
-  line-height: 40px;
-  font-size: 1.5em;
-}
-
-.avatar {
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-}
-
-.email {
-  text-align: right;
-  padding-right: 1.5rem;
-  bottom: 36px;
-  position: relative;
-}
-
-.info-line {
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  font-size: 0.8em;
-  color: darkgray;
-  line-height: 0px;
-  padding: 1rem 1.5rem;
-
-  .info-meta {
-    margin-right: 10px;
-  }
-
-  .info-value {
-    display: flex;
-    justify-content: flex-end;
-    text-align: end;
-    color: black;
-    font-size: 1em;
-  }
-}
-
-.card-footer {
-  justify-content: space-around;
-  display: flex;
-}
+@import '../payments/payments.component.scss';
 
 :host {
 
   nb-card,
   nb-card-body {
     background-color: nb-theme(gauzy-card-2);
-  }
-
-  nb-card {
-    height: calc(100vh - 13rem);
-  }
-
-
-  nb-card-body {
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-    overflow: unset;
-    max-height: calc(100vh - 22.4rem);
-    border-radius: 0 0 nb-theme(border-radius) nb-theme(border-radius);
-    padding: 1rem;
-
-    .table-scroll-container {
-      flex-grow: 10;
-      overflow: auto;
-      max-height: unset;
-    }
   }
 }
 

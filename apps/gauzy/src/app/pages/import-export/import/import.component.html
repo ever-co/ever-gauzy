@@ -188,7 +188,7 @@
 			'MENU.IMPORT_EXPORT.IMPORT_HISTORY_MESSAGE' | translate
 		}}</span>
 	</nb-card-header>
-	<nb-card-body>
+	<nb-card-body [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large" >
 		<div class="row custom-header m-0 align-items-center">
 			<div class="col-3">{{ 'MENU.IMPORT_EXPORT.NAME' | translate }}</div>
 			<div class="col-2">{{ 'MENU.IMPORT_EXPORT.SIZE' | translate }}</div>

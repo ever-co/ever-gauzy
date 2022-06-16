@@ -120,6 +120,9 @@ img {
 
   ::ng-deep {
     nb-select {
+      &.integration-selector{
+          min-width: 10rem;
+      }
       span {
         color: var(--gauzy-text-color-2);
         font-size: 14px;

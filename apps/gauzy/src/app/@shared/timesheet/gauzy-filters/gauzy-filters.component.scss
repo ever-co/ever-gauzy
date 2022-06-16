@@ -15,6 +15,10 @@ $button-radius : nb-theme(button-rectangle-border-radius);
     }
 }
 
+nb-select{
+    min-width: 150px;
+}
+
 .custom-input{
     height: inherit;
     display: flex;

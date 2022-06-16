@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnInit } from '@angular/core';
+import { AfterViewInit, Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { FileUploader } from 'ng2-file-upload';
 import { NbToastrService, NbGlobalPhysicalPosition } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -42,7 +42,8 @@ export class ImportComponent extends TranslationBaseComponent
 		private readonly toastrService: NbToastrService,
 		private readonly store: Store,
 		readonly translateService: TranslateService,
-		private readonly importService: ImportService
+		private readonly importService: ImportService,
+		private readonly cdr: ChangeDetectorRef
 	) {
 		super(translateService);
 	}
@@ -57,7 +58,6 @@ export class ImportComponent extends TranslationBaseComponent
 			.subscribe();
 		this.subject$
 			.pipe(
-				tap(() => (this.loading = true)),
 				tap(() => this.getImportHistory()),
 				untilDestroyed(this)
 			)
@@ -79,6 +79,7 @@ export class ImportComponent extends TranslationBaseComponent
 			)
 			.subscribe();
 		this.subject$.next(true);
+		this.cdr.detectChanges();
 	}
 
 	initUploader() {
@@ -137,7 +138,15 @@ export class ImportComponent extends TranslationBaseComponent
 	}
 
 	getImportHistory() {
-		this.importService.getHistory().pipe(untilDestroyed(this)).subscribe();
+		this.loading = true;
+		this.importService
+			.getHistory()
+			.pipe(
+				tap(() => (this.loading = false)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.cdr.detectChanges();
 	}
 
 	public download(item: IImportHistory) {

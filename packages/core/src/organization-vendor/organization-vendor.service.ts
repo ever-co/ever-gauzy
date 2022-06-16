@@ -1,6 +1,6 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { OrganizationVendor } from './organization-vendor.entity';
 import { Expense } from '../expense/expense.entity';
 import { TenantAwareCrudService } from './../core/crud';
@@ -28,5 +28,17 @@ export class OrganizationVendorService extends TenantAwareCrudService<Organizati
 		}
 
 		return await this.delete(vendorId);
+	}
+
+	public pagination(filter?: any) {		
+		if ('where' in filter) {
+			const { where } = filter;
+			if (where.tags) {
+				filter.where.tags = {
+					id: In(where.tags)
+				}
+			}
+		}
+		return super.paginate(filter);
 	}
 }

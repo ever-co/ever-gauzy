@@ -19,6 +19,15 @@ export interface IPaginationBase {
 export class PaginationFilterBaseComponent extends TranslationBaseComponent
 	implements AfterViewInit {
 
+	/**
+	 * Getter for minimum items per page
+	 * Can't be modified outside the class
+	 */
+	private _minItemPerPage: number = 10;
+	protected get minItemPerPage() {
+		return this._minItemPerPage;
+	}
+
 	protected pagination: IPaginationBase = {
 		totalItems: 0,
 		activePage: 1,

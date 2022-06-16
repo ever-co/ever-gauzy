@@ -2,9 +2,25 @@
 @import 'gauzy/_gauzy-cards.scss';
 
 :host {
-  @include nb-card-overrides(
-    unset,
-    calc($default-card-height),
-    $default-radius
-  );
+
+  nb-card,
+  nb-card-body {
+    background-color: var(--gauzy-card-2);
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+
+    .table-scroll-container {
+      flex-grow: 10;
+      max-height: unset;
+    }
+  }
+
+  nb-card-body{
+    border-radius: 0 0 $default-radius $default-radius;
+  }
+
+  @include nb-card-overrides(unset,
+    calc(100vh - 22rem),
+    $default-radius );
 }
