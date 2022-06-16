@@ -38,7 +38,8 @@ const routes: Routes = [
 						unitOfTime: 'day',
 						isLockDatePicker: true,
 						isSaveDatePicker: true,
-						isSingleDatePicker: true
+						isSingleDatePicker: true,
+						isDisableFutureDate: true
 					}
 				}
 			},
