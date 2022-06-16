@@ -4,10 +4,15 @@ import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { DaterangepickerDirective as DateRangePickerDirective, LocaleConfig } from 'ngx-daterangepicker-material';
 import * as moment from 'moment';
-import { IDateRangePicker, ITimeLogFilters, WeekDaysEnum } from '@gauzy/contracts';
+import { IDateRangePicker, IOrganization, ITimeLogFilters, WeekDaysEnum } from '@gauzy/contracts';
 import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
 import { TranslateService } from '@ngx-translate/core';
-import { DateRangePickerBuilderService, OrganizationsService, Store } from './../../../../../@core/services';
+import {
+	DateRangePickerBuilderService,
+	DEFAULT_DATE_PICKER_CONFIG,
+	OrganizationsService,
+	Store
+} from './../../../../../@core/services';
 import { Arrow } from './arrow/context/arrow.class';
 import { Next, Previous } from './arrow/strategies';
 import { TranslationBaseComponent } from './../../../../../@shared/language-base';
@@ -23,6 +28,7 @@ import { TimesheetFilterService } from './../../../../../@shared/timesheet/times
 export class DateRangePickerComponent extends TranslationBaseComponent 
 	implements AfterViewInit, OnInit, OnDestroy {
 
+	public organization: IOrganization; 
 	public maxDate: string;
 	public futureDateAllowed: boolean;
 
@@ -68,7 +74,7 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 	/*
 	* Getter & Setter for dynamic unitOfTime
 	*/
-	_unitOfTime: moment.unitOfTime.Base = 'month';
+	_unitOfTime: moment.unitOfTime.Base = DEFAULT_DATE_PICKER_CONFIG.unitOfTime;
 	get unitOfTime(): moment.unitOfTime.Base {
 		return this._unitOfTime;
 	}
@@ -76,10 +82,15 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 		if (value) {
 			this._unitOfTime = value;
 		}
+		const start = moment().startOf(this.unitOfTime);
+		const end = moment().endOf(this.unitOfTime);
 		const range = {
-			startDate: moment().startOf(this.unitOfTime).toDate(),
-			endDate: moment().endOf(this.unitOfTime).toDate(),
-			isCustomDate: false
+			startDate: start.toDate(),
+			endDate: end.toDate(),
+			isCustomDate: this.isCustomDate({
+				startDate: start,
+				endDate: end
+			})
 		}
 		if (this.isSaveDatePicker) {
 			this.onSavingFilter(range);
@@ -157,6 +168,17 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 		this._isSingleDatePicker = isSingle;
 	}
 
+	/*
+	* Getter & Setter for disabled future dates
+	*/
+	_isDisableFutureDatePicker: boolean = false;
+	get isDisableFutureDatePicker(): boolean {
+		return this._isDisableFutureDatePicker;
+	}
+	@Input() set isDisableFutureDatePicker(isDisable: boolean) {
+		this._isDisableFutureDatePicker = isDisable;
+	}
+
 	@ViewChild(DateRangePickerDirective, { static: false }) dateRangePickerDirective: DateRangePickerDirective;
 
 	constructor(
@@ -181,9 +203,13 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 					observableOf(datePickerConfig),
 				])),
 				tap(([organization, datePickerConfig]) => {
+					this.organization = organization;
 					this.futureDateAllowed = organization.futureDateAllowed;
-					const { unitOfTime, isLockDatePicker, isSaveDatePicker, isSingleDatePicker } = datePickerConfig;
 
+					const { unitOfTime, isLockDatePicker, isSaveDatePicker } = datePickerConfig;
+					const { isSingleDatePicker, isDisableFutureDate } = datePickerConfig;
+
+					this.isDisableFutureDatePicker = isDisableFutureDate;
 					this.isLockDatePicker = isLockDatePicker;
 					this.isSaveDatePicker = isSaveDatePicker;
 					this.isSingleDatePicker = isSingleDatePicker;
@@ -217,6 +243,13 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
+		this.dateRangePickerBuilderService.datePickerRange$
+			.pipe(
+				debounceTime(100),
+				distinctUntilChange(),
+				untilDestroyed(this)
+			)
+			.subscribe()
 	}
 
 	ngAfterViewInit() {
@@ -264,14 +297,17 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 	 * Allowed/Disallowed future max date strategy.
 	 */
 	setFutureStrategy() {
-		const isSameOrAfter = moment(this.selectedDateRange.endDate).isSameOrAfter(moment());
-		if (this.futureDateAllowed) {
+		if (this.hasFutureStrategy()) {
 			this.maxDate = null;
-		} else if (!this.futureDateAllowed && isSameOrAfter) {
+		} else {
 			this.maxDate = moment().format();
-			this.selectedDateRange = {
-				...this.selectedDateRange,
-				endDate: moment().toDate()
+			if (
+				this.isSameOrAfterDay(this.selectedDateRange.endDate)
+			) {
+				this.selectedDateRange = {
+					...this.selectedDateRange,
+					endDate: moment().toDate()
+				}
 			}
 		}
 	}
@@ -315,9 +351,9 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 		}
 		const { startDate, endDate } = this.selectedDateRange;
 		if (startDate && endDate) {
-			return this.futureDateAllowed
+			return this.hasFutureStrategy()
 				? false
-				: moment(this.selectedDateRange.endDate).isSameOrAfter(moment(), 'day');
+				: this.isSameOrAfterDay(endDate);
 		} else {
 			return true;
 		}
@@ -412,19 +448,51 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 				take(1),
 				filter(() => !!this.isSaveDatePicker),
 				tap((filters: ITimeLogFilters) => {
-					const {
-						startDate = range.startDate,
-						isCustomDate = range.isCustomDate
-					} = filters;
+					const { startDate = range.startDate } = filters;
+					const date = (!this.hasFutureStrategy() && this.isSameOrAfterDay(startDate)) ? 
+							moment() :
+							moment(startDate);
+
+					const start = moment(date).startOf(this.unitOfTime);
+					const end = moment(date).endOf(this.unitOfTime);
+
 					this.selectedDateRange = this.rangePicker = {
-						startDate: moment(startDate).startOf(this.unitOfTime).toDate(),
-						endDate: moment(startDate).endOf(this.unitOfTime).toDate(),
-						isCustomDate: isCustomDate
+						startDate: start.toDate(),
+						endDate: end.toDate(),
+						isCustomDate: this.isCustomDate({
+							startDate: start,
+							endDate: end
+						})
 					};
 				}),
 				untilDestroyed(this)
 			)
 			.subscribe();
+	}
+
+	/**
+	 * Is same or after today
+	 * 
+	 * @param date 
+	 * @returns {Boolean}
+	 */
+	isSameOrAfterDay(date: string | Date): boolean {
+		return moment(moment(date)).isSameOrAfter(moment(), 'day');
+	}
+
+	/**
+	 * If has future strategy or not
+	 * 
+	 * @param date
+	 * @returns {Boolean}
+	 */
+	hasFutureStrategy(): boolean {
+		const { isDisableFutureDatePicker, futureDateAllowed } = this;
+		if (isDisableFutureDatePicker) {
+			return !isDisableFutureDatePicker;
+		} else {
+			return futureDateAllowed;
+		}
 	}
 
 	/**
