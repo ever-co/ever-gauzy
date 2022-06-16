@@ -20,15 +20,19 @@
 			<div class="info-line" *ngFor="let key of getKeys()">
 				<div
 					class="info-meta"
-					[style.display]="
-						settings.columns[key].title === 'Image'
-							? 'none'
-							: 'inherit'
-					"
+					[ngClass]="{
+						'image-logo': settings.columns[key].title === 'Image'
+					}"
 				>
 					{{ settings.columns[key].title }}
 				</div>
-				<div class="info-value" [ngSwitch]="settings.columns[key].type">
+				<div
+					class="info-value"
+					[ngClass]="{
+						'image-logo': settings.columns[key].title === 'Image'
+					}"
+					[ngSwitch]="settings.columns[key].type"
+				>
 					<div *ngSwitchCase="'html'" [innerHTML]="item[key]"></div>
 					<div *ngSwitchCase="'date'">{{ item[key] | date }}</div>
 					<div *ngSwitchCase="'function'">{{ item[key].name }}</div>

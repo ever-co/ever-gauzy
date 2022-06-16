@@ -1,254 +1,264 @@
 <nb-card class="card-scroll">
-	<nb-card-header class="card-header-title">
+	<nb-card-header class="d-flex flex-column pb-0">
 		<div class="card-header-title">
 			<h4>
-				<ngx-header-title>
+				<ngx-header-title [allowEmployee]="false">
 					{{ 'ORGANIZATIONS_PAGE.VENDORS' | translate }}
 				</ngx-header-title>
 			</h4>
 		</div>
-		<div>
-			<ga-layout-selector
+		<div class="gauzy-button-container">
+			<ngx-gauzy-button-action
+				[buttonTemplate]="actionButtons"
 				[componentName]="viewComponentName"
-			></ga-layout-selector>
+				[buttonTemplateVisible]="visibleButton"
+				[isDisable]="disabled"
+			>
+			</ngx-gauzy-button-action>
 		</div>
 	</nb-card-header>
-	<nb-card-body>
-		<div class="mb-3">
-			<ng-container
-				*ngIf="showAddCard; then editableTemplate; else buttonTemplate"
-			>
-			</ng-container>
-			<ng-template #editableTemplate>
-				<div>
-					<form [formGroup]="form" *ngIf="form" class="form">
-						<div class="row">
-							<div class="col-sm-12 col-md-4">
-								<label class="label" for="name">{{
-									'ORGANIZATIONS_PAGE.NAME' | translate
-								}}</label>
-								<input
-									nbInput
-									type="text"
-									fullWidth
-									placeholder="{{
-										'ORGANIZATIONS_PAGE.NAME' | translate
-									}}"
-									id="name"
-									formControlName="name"
-									[status]="
-										isInvalidControl('name')
-											? 'danger'
-											: 'basic'
-									"
-								/>
-							</div>
-							<div class="col-sm-12 col-md-4">
-								<label class="label" for="phone">{{
-									'ORGANIZATIONS_PAGE.PHONE' | translate
-								}}</label>
-								<input
-									nbInput
-									type="text"
-									fullWidth
-									placeholder="{{
-										'ORGANIZATIONS_PAGE.PHONE' | translate
-									}}"
-									id="phone"
-									formControlName="phone"
-								/>
-							</div>
-							<div class="col-sm-12 col-md-4">
-								<label class="label" for="email">{{
-									'ORGANIZATIONS_PAGE.EMAIL' | translate
-								}}</label>
-								<input
-									nbInput
-									type="text"
-									fullWidth
-									placeholder="{{
-										'ORGANIZATIONS_PAGE.EMAIL' | translate
-									}}"
-									id="email"
-									formControlName="email"
-									[status]="
-										isInvalidControl('email')
-											? 'danger'
-											: 'basic'
-									"
-								/>
-							</div>
-							<div class="col-sm-12 col-md-6">
-								<label class="label" for="website">{{
-									'ORGANIZATIONS_PAGE.WEBSITE' | translate
-								}}</label>
-								<input
-									nbInput
-									type="text"
-									fullWidth
-									placeholder="{{
-										'ORGANIZATIONS_PAGE.WEBSITE' | translate
-									}}"
-									id="website"
-									formControlName="website"
-								/>
-							</div>
-							<div class="col-sm-12 col-md-6">
-								<ga-tags-color-input
-									[selectedTags]="tags"
-									(selectedTagsEvent)="
-										selectedTagsEvent($event)
-									"
-									class="add-tags"
-									[isOrgLevel]="true"
-								>
-								</ga-tags-color-input>
-							</div>
+	<nb-card-body
+		[nbSpinner]="isLoading"
+		nbSpinnerStatus="primary"
+		nbSpinnerSize="large"
+		infinite-scroll
+		[scrollWindow]="false"
+		(scrolled)="onScroll()"
+	>
+		<ng-template
+			[ngIf]="
+				dataLayoutStyle === componentLayoutStyleEnum.TABLE &&
+				vendors?.length
+			"
+		>
+			<nb-card class="p-0" *ngFor="let vendor of vendors">
+				<nb-card-body
+					class="custom-table"
+					[ngClass]="
+						selected?.state && vendor === selected?.vendor
+							? 'custom-table selected'
+							: 'custom-table'
+					"
+					(click)="selectPosition(vendor)"
+				>
+					<div class="row align-items-center">
+						<div class="col-md-2 p-0 float-left text-truncate">
+							<ga-company-logo
+								[rowData]="vendor"
+							></ga-company-logo>
+							{{ vendor.name }}
 						</div>
-					</form>
-				</div>
-			</ng-template>
-			<ng-template #buttonTemplate>
-				<button (click)="add()" nbButton status="success">
-					<nb-icon class="mr-1" icon="plus-outline"></nb-icon
-					>{{ 'BUTTONS.ADD' | translate }}
-				</button>
-			</ng-template>
-		</div>
-
-		<div *ngIf="dataLayoutStyle === 'TABLE' && !showAddCard">
-			<nb-card *ngFor="let v of vendors">
-				<nb-card-body class="table">
-					<div class="row">
-						<div class="col-sm-12 col-md-3 float-left p-0">
-							<div class="col-12" *ngIf="v.name">
-								<span class="mb-1">
-									<span class="label">
-										{{
-											'ORGANIZATIONS_PAGE.NAME'
-												| translate
-										}}: </span
-									>{{ v.name }}</span
-								>
-							</div>
-							<div class="col-12" *ngIf="v.phone">
-								<span>
-									<span class="label">
-										{{
-											'ORGANIZATIONS_PAGE.PHONE'
-												| translate
-										}}: </span
-									>{{ v.phone }}</span
-								>
-							</div>
+						<div class="col-md-2 p-0 text-center text-truncate">
+							{{ vendor.phone }}
 						</div>
-						<div class="col-sm-12 col-md-3 float-left p-0">
-							<div class="col-12" *ngIf="v.email">
-								<span class="mb-1">
-									<span class="label">
-										{{
-											'ORGANIZATIONS_PAGE.EMAIL'
-												| translate
-										}}: </span
-									>{{ v.email }}</span
-								>
-							</div>
-							<div class="col-12" *ngIf="v.website">
-								<span>
-									<span class="label">
-										{{
-											'ORGANIZATIONS_PAGE.WEBSITE'
-												| translate
-										}}: </span
-									>{{ v.website }}</span
-								>
-							</div>
+						<div class="col-md-2 p-0 text-center text-truncate">
+							<gauzy-email [rowData]="vendor"></gauzy-email>
 						</div>
-						<div class="col-sm-12 col-md-5 p-2">
-							<div class="tags float-right">
-								<nb-badge
-									*ngFor="let tag of v?.tags"
-									class="color"
-									position="centered"
-									[style.background]="tag.color"
-									text="{{ tag.name }}"
-								>
-								</nb-badge>
-							</div>
+						<div class="col-md-3 p-0 float-left text-truncate">
+							<gauzy-external-link
+								[rowData]="vendor"
+							></gauzy-external-link>
 						</div>
-						<div class="col-sm-12 col-md-1 p-2">
-							<nb-actions
-								*ngIf="v !== selectedVendor"
-								class="float-right"
-								e="medium"
-							>
-								<nb-action
-									(click)="edit(v)"
-									class="d-inline pr-2"
-									icon="edit"
-								></nb-action>
-								<nb-action
-									(click)="removeVendor(v.id, v.name)"
-									class="d-inline pr-0 pl-2"
-									icon="close"
-								></nb-action>
-							</nb-actions>
+						<div class="col-md-3 text-center p-0 text-truncate">
+							<ga-only-tags [rowData]="vendor"> </ga-only-tags>
 						</div>
 					</div>
 				</nb-card-body>
 			</nb-card>
-		</div>
-
-		<ga-card-grid
-			*ngIf="dataLayoutStyle === 'CARDS_GRID' && !showAddCard"
-			[settings]="settingsSmartTable"
-			[source]="vendors"
-			[buttonTemplate]="actionButtons"
-		></ga-card-grid>
-
+		</ng-template>
 		<ng-template
-			#actionButtons
-			let-buttonSize="buttonSize"
-			let-selectedItem="selectedItem"
+			[ngIf]="
+				dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID &&
+				vendors?.length
+			"
 		>
+			<ga-card-grid
+				[settings]="settingsSmartTable"
+				[source]="vendors"
+				[doEmit]="false"
+				[totalItems]="pagination?.totalItems"
+				[itemsPerPage]="pagination?.itemsPerPage"
+				[activePage]="pagination?.activePage"
+				(onSelectedItem)="selectPosition($event)"
+				(selectedOption)="onUpdateOption($event)"
+				(selectedPage)="onPageChange($event)"
+			></ga-card-grid>
+		</ng-template>
+	</nb-card-body>
+</nb-card>
+<ng-template
+	#actionButtons
+	let-buttonSize="buttonSize"
+	let-selectedItem="selectedItem"
+>
+	<ng-container *ngxPermissionsOnly="['ALL_ORG_EDIT']">
+		<div class="actions">
 			<button
-				(click)="edit(selectedItem)"
+				(click)="openDialog(addEditTemplate, true)"
 				nbButton
-				status="info"
-				class="mr-2"
-				[disabled]="!selectedItem"
-				[size]="buttonSize || 'medium'"
+				status="basic"
+				class="action primary"
+				[disabled]="disabled"
+				size="small"
 			>
-				<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
+				<nb-icon icon="edit-outline"></nb-icon>
 				{{ 'BUTTONS.EDIT' | translate }}
 			</button>
 			<button
-				(click)="removeVendor(selectedItem.id, selectedItem.name)"
+				(click)="removeVendor(selected.vendor.id, selected.vendor.name)"
 				nbButton
-				status="danger"
-				class="mr-2"
-				[disabled]="!selectedItem"
-				[size]="buttonSize || 'medium'"
+				status="basic"
+				class="action"
+				[disabled]="isDisabled"
+				size="small"
+				[nbTooltip]="'BUTTONS.DELETE' | translate"
 			>
-				<nb-icon class="mr-1" icon="archive-outline"> </nb-icon>
-				{{ 'BUTTONS.DELETE' | translate }}
+				<nb-icon status="danger" icon="trash-2-outline"> </nb-icon>
 			</button>
-		</ng-template>
-	</nb-card-body>
-
-	<ng-container *ngIf="showAddCard" ;>
-		<nb-card-footer class="text-right">
-			<button (click)="cancel()" nbButton status="danger" class="mr-2">
-				{{ 'BUTTONS.CANCEL' | translate }}
-			</button>
-			<button
-				(click)="save()"
-				nbButton
-				status="success"
-				[disabled]="form.invalid"
-			>
-				{{ 'BUTTONS.SAVE' | translate }}
-			</button>
-		</nb-card-footer>
+		</div>
 	</ng-container>
-</nb-card>
+</ng-template>
+<ng-template #visibleButton>
+	<ng-container *ngxPermissionsOnly="['ALL_ORG_EDIT']">
+		<button
+			nbButton
+			status="success"
+			size="small"
+			(click)="openDialog(addEditTemplate, false)"
+		>
+			<nb-icon icon="plus-outline"> </nb-icon>
+			{{ 'BUTTONS.ADD' | translate }}
+		</button>
+	</ng-container>
+</ng-template>
+<ng-template #addEditTemplate let-ref="dialogRef" class="add-edit-dialog">
+	<div class="editable">
+		<div class="container">
+			<div class="row">
+				<div class="col-sm-12 d-flex justify-content-end">
+					<i
+						class="fas fa-times"
+						(click)="ref.close(); disabled = true"
+					></i>
+				</div>
+			</div>
+			<div class="row mb-3">
+				<h5 class="title mr-3 ml-3">
+					{{
+						selectedVendor && selectedVendor?.id
+							? ('POP_UPS.EDIT' | translate)
+							: ('POP_UPS.ADD' | translate)
+					}}
+				</h5>
+			</div>
+			<form [formGroup]="form" *ngIf="form" class="form">
+				<div class="row mb-3">
+					<div class="col-sm-12 d-flex flex-column">
+						<label class="label" for="name">{{
+							'ORGANIZATIONS_PAGE.NAME' | translate
+						}}</label>
+						<input
+							nbInput
+							type="text"
+							fullWidth
+							placeholder="{{
+								'ORGANIZATIONS_PAGE.NAME' | translate
+							}}"
+							id="name"
+							formControlName="name"
+							[status]="
+								isInvalidControl('name') ? 'danger' : 'basic'
+							"
+						/>
+					</div>
+				</div>
+				<div class="row mb-3">
+					<div class="col-sm-12 d-flex flex-column">
+						<label class="label" for="phone">{{
+							'ORGANIZATIONS_PAGE.PHONE' | translate
+						}}</label>
+						<input
+							nbInput
+							type="text"
+							fullWidth
+							placeholder="{{
+								'ORGANIZATIONS_PAGE.PHONE' | translate
+							}}"
+							id="phone"
+							formControlName="phone"
+						/>
+					</div>
+				</div>
+				<div class="row mb-3">
+					<div class="col-sm-12 d-flex flex-column">
+						<label class="label" for="email">{{
+							'ORGANIZATIONS_PAGE.EMAIL' | translate
+						}}</label>
+						<input
+							nbInput
+							type="text"
+							fullWidth
+							placeholder="{{
+								'ORGANIZATIONS_PAGE.EMAIL' | translate
+							}}"
+							id="email"
+							formControlName="email"
+							[status]="
+								isInvalidControl('email') ? 'danger' : 'basic'
+							"
+						/>
+					</div>
+				</div>
+				<div class="row mb-3">
+					<div class="col-sm-12 d-flex flex-column">
+						<label class="label" for="website">{{
+							'ORGANIZATIONS_PAGE.WEBSITE' | translate
+						}}</label>
+						<input
+							nbInput
+							type="text"
+							fullWidth
+							placeholder="{{
+								'ORGANIZATIONS_PAGE.WEBSITE' | translate
+							}}"
+							id="website"
+							formControlName="website"
+						/>
+					</div>
+				</div>
+				<div class="row mb-3">
+					<div class="col-sm-12 d-flex flex-column">
+						<ga-tags-color-input
+							[selectedTags]="tags"
+							(selectedTagsEvent)="selectedTagsEvent($event)"
+							class="add-tags"
+							[isOrgLevel]="true"
+						>
+						</ga-tags-color-input>
+					</div>
+				</div>
+			</form>
+			<div class="row mb-3">
+				<div class="d-flex">
+					<button
+						class="delete mr-3 ml-3"
+						outline
+						(click)="cancel(); ref.close(); disabled = true"
+						nbButton
+						status="basic"
+					>
+						{{ 'BUTTONS.CANCEL' | translate }}
+					</button>
+					<button
+						(click)="save()"
+						nbButton
+						status="success"
+						[disabled]="form.invalid"
+					>
+						{{ 'BUTTONS.SAVE' | translate }}
+					</button>
+				</div>
+			</div>
+		</div>
+	</div>
+</ng-template>

@@ -1,23 +1,49 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import {
+	Component,
+	OnInit,
+	OnDestroy,
+	TemplateRef,
+	ViewChild
+} from '@angular/core';
 import {
 	IOrganizationVendor,
 	ITag,
 	ComponentLayoutStyleEnum,
 	IOrganization
 } from '@gauzy/contracts';
-import { Router, RouterEvent, NavigationEnd, ActivatedRoute } from '@angular/router';
+import {
+	Router,
+	RouterEvent,
+	NavigationEnd,
+	ActivatedRoute
+} from '@angular/router';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
-import { NbDialogService } from '@nebular/theme';
+import { NbDialogRef, NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, tap } from 'rxjs/operators';
 import { debounceTime, firstValueFrom } from 'rxjs';
-import { LocalDataSource } from 'ng2-smart-table';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { TranslationBaseComponent } from './../../@shared/language-base/translation-base.component';
-import { ComponentEnum } from './../../@core/constants';
-import { NotesWithTagsComponent } from './../../@shared/table-components';
+import { API_PREFIX, ComponentEnum } from './../../@core/constants';
+import {
+	EmailComponent,
+	TagsOnlyComponent,
+	CompanyLogoComponent
+} from './../../@shared/table-components';
 import { DeleteConfirmationComponent } from './../../@shared/user/forms';
-import { ErrorHandlingService, OrganizationVendorsService, Store, ToastrService } from '../../@core/services';
+import {
+	ErrorHandlingService,
+	OrganizationVendorsService,
+	Store,
+	ToastrService
+} from '../../@core/services';
+import {
+	IPaginationBase,
+	PaginationFilterBaseComponent
+} from '../../@shared/pagination/pagination-filter-base.component';
+import { distinctUntilChange } from '@gauzy/common-angular';
+import { ExternalLinkComponent } from '../../@shared/table-components/external-link/external-link.component';
+import { HttpClient } from '@angular/common/http';
+import { ServerDataSource } from '../../@core/utils/smart-table';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -26,19 +52,27 @@ import { ErrorHandlingService, OrganizationVendorsService, Store, ToastrService 
 	styleUrls: ['vendors.component.scss']
 })
 export class VendorsComponent
-	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
-
+	extends PaginationFilterBaseComponent
+	implements OnInit, OnDestroy
+{
+	@ViewChild('addEditTemplate') public addEditTemplateRef: TemplateRef<any>;
+	addEditdialogRef: NbDialogRef<any>;
 	organization: IOrganization;
-	showAddCard: boolean;
 	vendors: IOrganizationVendor[];
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
+	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
 	selectedVendor: IOrganizationVendor;
 	tags: ITag[] = [];
 	settingsSmartTable: object;
-	smartTableSource = new LocalDataSource();
+	smartTableSource: ServerDataSource;
 	form: FormGroup;
+	selected = {
+		vendor: null,
+		state: false
+	};
+	disabled: boolean = true;
+	isLoading: boolean = false;
 
 	constructor(
 		private readonly organizationVendorsService: OrganizationVendorsService,
@@ -49,7 +83,8 @@ export class VendorsComponent
 		private readonly errorHandlingService: ErrorHandlingService,
 		private readonly store: Store,
 		private readonly router: Router,
-		private readonly route: ActivatedRoute
+		private readonly route: ActivatedRoute,
+		private readonly httpClient: HttpClient
 	) {
 		super(translateService);
 		this.setView();
@@ -58,12 +93,26 @@ export class VendorsComponent
 	ngOnInit(): void {
 		this._initializeForm();
 		this.loadSmartTable();
+		this.subject$
+			.pipe(
+				tap(() => this.loadVendors()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this._applyTranslationOnSmartTable();
+		this.loadSmartTable();
+		this.pagination$
+			.pipe(
+				distinctUntilChange(),
+				tap(() => this.subject$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization: IOrganization) => !!organization),
-				tap((organization) => this.organization = organization),
-				tap(() => this.loadVendors()),
+				tap((organization) => (this.organization = organization)),
+				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -76,15 +125,18 @@ export class VendorsComponent
 			});
 		this.route.queryParamMap
 			.pipe(
-				filter((params) => !!params && params.get('openAddDialog') === 'true'),
+				filter(
+					(params) =>
+						!!params && params.get('openAddDialog') === 'true'
+				),
 				debounceTime(1000),
-				tap(() => this.add()),
+				tap(() => this.openDialog(this.addEditTemplateRef, false)),
 				untilDestroyed(this)
 			)
 			.subscribe();
 	}
 
-	ngOnDestroy(): void { }
+	ngOnDestroy(): void {}
 
 	private _initializeForm() {
 		this.form = this.fb.group({
@@ -100,26 +152,34 @@ export class VendorsComponent
 		this.viewComponentName = ComponentEnum.VENDORS;
 		this.store
 			.componentLayout$(this.viewComponentName)
-			.pipe(untilDestroyed(this))
-			.subscribe((componentLayout) => {
-				this.dataLayoutStyle = componentLayout;
-
-				this.selectedVendor = null;
-
-				//when layout selector change then hide edit showcard
-				this.showAddCard = false;
-			});
+			.pipe(
+				distinctUntilChange(),
+				tap(
+					(componentLayout) =>
+						(this.dataLayoutStyle = componentLayout)
+				),
+				tap(() => this.refreshPagination()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	async loadSmartTable() {
+		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
+			pager: {
+				perPage: pagination ? pagination : 10
+			},
 			actions: false,
 			columns: {
-				tags: {
-					title: this.getTranslation('ORGANIZATIONS_PAGE.NAME'),
+				logo: {
+					title: this.getTranslation('ORGANIZATIONS_PAGE.IMAGE'),
 					type: 'custom',
-					class: 'align-row',
-					renderComponent: NotesWithTagsComponent
+					renderComponent: CompanyLogoComponent
+				},
+				name: {
+					title: this.getTranslation('ORGANIZATIONS_PAGE.NAME'),
+					type: 'string'
 				},
 				phone: {
 					title: this.getTranslation('ORGANIZATIONS_PAGE.PHONE'),
@@ -127,32 +187,41 @@ export class VendorsComponent
 				},
 				email: {
 					title: this.getTranslation('ORGANIZATIONS_PAGE.EMAIL'),
-					type: 'string'
+					type: 'custom',
+					renderComponent: EmailComponent
 				},
 				website: {
 					title: this.getTranslation('ORGANIZATIONS_PAGE.WEBSITE'),
-					type: 'string'
+					type: 'custom',
+					class: 'align-row',
+					renderComponent: ExternalLinkComponent
+				},
+				tags: {
+					title: this.getTranslation('SM_TABLE.TAGS'),
+					type: 'custom',
+					class: 'align-row',
+					renderComponent: TagsOnlyComponent
 				}
 			}
 		};
 	}
 
-	add() {
-		this.showAddCard = true;
-	}
-
 	edit(vendor: IOrganizationVendor) {
-		this.showAddCard = true;
 		this.tags = vendor.tags;
 		this.selectedVendor = vendor;
 		this.form.patchValue(vendor);
 	}
 
 	cancel() {
+		this.addEditdialogRef?.close();
 		this.form.reset();
 		this.selectedVendor = null;
 		this.tags = [];
-		this.showAddCard = false;
+		this.selected = {
+			vendor: null,
+			state: false
+		};
+		this.disabled = true;
 	}
 
 	save() {
@@ -184,8 +253,9 @@ export class VendorsComponent
 						'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_VENDOR.ADD_VENDOR',
 						{ name }
 					);
-				}).finally(() => {
-					this.loadVendors();
+				})
+				.finally(() => {
+					this.subject$.next(true);
 					this.cancel();
 				});
 		} else {
@@ -200,13 +270,13 @@ export class VendorsComponent
 	}
 
 	async removeVendor(id: string, name: string) {
-		const result = await firstValueFrom(this.dialogService
-			.open(DeleteConfirmationComponent, {
+		const result = await firstValueFrom(
+			this.dialogService.open(DeleteConfirmationComponent, {
 				context: {
 					recordType: this.getTranslation('ORGANIZATIONS_PAGE.VENDOR')
 				}
-			})
-			.onClose);
+			}).onClose
+		);
 
 		if (result) {
 			try {
@@ -215,7 +285,7 @@ export class VendorsComponent
 					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_VENDOR.REMOVE_VENDOR',
 					{ name }
 				);
-				this.loadVendors();
+				this.subject$.next(true);
 			} catch (error) {
 				this.errorHandlingService.handleError(error);
 			}
@@ -244,28 +314,44 @@ export class VendorsComponent
 				);
 			})
 			.finally(() => {
-				this.loadVendors();
+				this.subject$.next(true);
 				this.cancel();
 			});
 	}
 
-	private loadVendors() {
+	private async loadVendors() {
 		if (!this.organization) {
 			return;
 		}
+		try {
+			const { activePage, itemsPerPage } = this.getPagination();
+			this.isLoading = true;
+			this.setSmartTableSource();
+			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
+			await this.smartTableSource.getElements();
+			this.vendors = this.smartTableSource.getData();
+			this.isLoading = false;
+		} catch (error) {
+			console.log(error, 'error');
+		}
+	}
+
+	setSmartTableSource() {
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
-
-		this.organizationVendorsService
-			.getAll(
-				{ organizationId, tenantId },
-				['tags'],
-				{ createdAt: 'DESC' }
-			)
-			.then(({ items }) => {
-				this.vendors = items;
-				this.smartTableSource.load(this.vendors);
-			});
+		this.smartTableSource = new ServerDataSource(this.httpClient, {
+			endPoint: `${API_PREFIX}/organization-vendors/pagination`,
+			relations: ['tags'],
+			where: {
+				organizationId,
+				tenantId
+			},
+			resultMap: (item: IOrganizationVendor) => {
+				return Object.assign({}, item, {
+					logo: item.name
+				});
+			}
+		});
 	}
 
 	selectedTagsEvent(ev) {
@@ -285,5 +371,33 @@ export class VendorsComponent
 			return true;
 		}
 		return this.form.get(control).touched && this.form.get(control).invalid;
+	}
+
+	openDialog(template: TemplateRef<any>, isEditTemplate: boolean) {
+		try {
+			isEditTemplate ? this.edit(this.selectedVendor) : this.cancel();
+			this.addEditdialogRef = this.dialogService.open(template);
+		} catch (error) {
+			console.log('An error occurred on open dialog: ' + error);
+		}
+	}
+
+	selectPosition(vendor: any) {
+		if (vendor.data) vendor = vendor.data;
+		const res =
+			this.selected.vendor && vendor.id === this.selected.vendor.id
+				? { state: !this.selected.state }
+				: { state: true };
+		this.disabled = !res.state;
+		this.selected.state = res.state;
+		this.selected.vendor = vendor;
+		this.selectedVendor = this.selected.vendor;
+	}
+
+	public onScroll() {
+		this.setPagination({
+			...this.getPagination(),
+			itemsPerPage: this.pagination.itemsPerPage + 10
+		});
 	}
 }
