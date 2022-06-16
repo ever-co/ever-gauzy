@@ -8,13 +8,15 @@ export interface IDatePickerConfig {
 	readonly isLockDatePicker: boolean;
 	readonly isSaveDatePicker: boolean;
 	readonly isSingleDatePicker: boolean;
+	readonly isDisableFutureDate: boolean;
 }
 
 export const DEFAULT_DATE_PICKER_CONFIG: IDatePickerConfig = {
 	unitOfTime: 'month',
 	isLockDatePicker: false,
 	isSaveDatePicker: false,
-	isSingleDatePicker: false
+	isSingleDatePicker: false,
+	isDisableFutureDate: false
 };
 
 @Injectable({
