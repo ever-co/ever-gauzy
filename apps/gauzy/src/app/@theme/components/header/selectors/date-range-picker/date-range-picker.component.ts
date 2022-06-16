@@ -7,7 +7,12 @@ import * as moment from 'moment';
 import { IDateRangePicker, IOrganization, ITimeLogFilters, WeekDaysEnum } from '@gauzy/contracts';
 import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
 import { TranslateService } from '@ngx-translate/core';
-import { DateRangePickerBuilderService, DEFAULT_DATE_PICKER_CONFIG, OrganizationsService, Store } from './../../../../../@core/services';
+import {
+	DateRangePickerBuilderService,
+	DEFAULT_DATE_PICKER_CONFIG,
+	OrganizationsService,
+	Store
+} from './../../../../../@core/services';
 import { Arrow } from './arrow/context/arrow.class';
 import { Next, Previous } from './arrow/strategies';
 import { TranslationBaseComponent } from './../../../../../@shared/language-base';
@@ -192,7 +197,6 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 
 		combineLatest([storeOrganization$, storeDatePickerConfig$])
 			.pipe(
-				debounceTime(100),
 				filter(([organization, datePickerConfig]) => !!organization && !!datePickerConfig),
 				switchMap(([organization, datePickerConfig]) => combineLatest([
 					this.organizationService.getById(organization.id),
