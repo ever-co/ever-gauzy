@@ -8,11 +8,13 @@ import {
 	Delete,
 	Param,
 	Put,
-	Body
+	Body,
+	ValidationPipe,
+	UsePipes
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { IOrganizationVendor, IPagination } from '@gauzy/contracts';
-import { CrudController } from './../core/crud';
+import { CrudController, PaginationParams } from './../core/crud';
 import { OrganizationVendorService } from './organization-vendor.service';
 import { OrganizationVendor } from './organization-vendor.entity';
 import { TenantPermissionGuard } from './../shared/guards';
@@ -56,6 +58,14 @@ export class OrganizationVendorController extends CrudController<OrganizationVen
 			order,
 			relations
 		});
+	}
+
+	@Get('pagination')
+	@UsePipes(new ValidationPipe({ transform: true }))
+	async pagination(
+		@Query() filter: PaginationParams<IOrganizationVendor>
+	): Promise<IPagination<IOrganizationVendor>> {
+		return this.organizationVendorService.pagination(filter);
 	}
 
 	/**
