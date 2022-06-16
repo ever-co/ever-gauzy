@@ -554,7 +554,7 @@
 				class="pagination-container"
 			>
 				<ng-container
-					*ngIf="pagination.totalItems >= pagination.itemsPerPage"
+					*ngIf="pagination.totalItems > minItemPerPage"
 				>
 					<ga-pagination
 						(selectedOption)="onUpdateOption($event)"
