@@ -1,5 +1,4 @@
-@import 'gauzy/_gauzy-table.scss';
-@import 'gauzy/_gauzy-cards';
+@import '../payments/payments.component.scss';
 
 .statistics {
   display: flex;
@@ -23,12 +22,7 @@
 }
 
 :host {
-  .custom-table {
-    height: calc(100vh - 31.5rem);
+  nb-card-body{
+    height: calc(100vh - 24.5rem) !important;
   }
-  @include nb-card-overrides(
-    unset,
-    calc($default-card-height - 5rem),
-    $default-radius
-  );
 }
