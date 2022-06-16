@@ -1845,7 +1845,8 @@
 		"BILLING": "crwdns10521:0crwdne10521:0",
 		"BUDGET": "crwdns10523:0crwdne10523:0",
 		"OPEN_SOURCE": "crwdns10525:0crwdne10525:0",
-		"ORGANIZATION_ADD": "crwdns11154:0crwdne11154:0"
+		"ORGANIZATION_ADD": "crwdns11154:0crwdne11154:0",
+		"IMAGE": "crwdns11211:0crwdne11211:0"
 	},
 	"CONTACTS_PAGE": {
 		"VISITORS": "crwdns7864:0crwdne7864:0",
