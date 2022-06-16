@@ -320,7 +320,7 @@ ng2-smart-table tbody tr {
     background: rgba(126, 126, 143, 0.05);
   }
   &.selected {
-    box-shadow: 12.5px 0px 0px -5px rgba(126, 126, 143, 0.1) inset !important;
+    box-shadow: 12.5px 0px 0px -5px rgba(126, 126, 143, 0.05) inset !important;
     &:first-child {
       border-top-left-radius: 10px;
       border-top-right-radius: 10px;
