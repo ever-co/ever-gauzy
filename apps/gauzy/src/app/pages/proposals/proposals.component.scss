@@ -22,7 +22,11 @@
 }
 
 :host {
-  nb-card-body{
+  nb-card-body {
     height: calc(100vh - 24.5rem) !important;
+  }
+
+  ::ng-deep .grid-scroll-container {
+    max-height: calc(100vh - 27rem);
   }
 }
