@@ -17,7 +17,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
-import { pick, pluck } from 'underscore';
+import { pluck } from 'underscore';
 import { distinctUntilChange, isEmpty } from '@gauzy/common-angular';
 import { DateRangePickerBuilderService, Store } from './../../../../@core/services';
 import { TimesheetService } from './../../../../@shared/timesheet/timesheet.service';
@@ -91,75 +91,71 @@ export class TimeReportsComponent extends BaseSelectorFilterComponent
 		if (!this.organization || isEmpty(this.request)) {
 			return;
 		}
-		const appliedFilter = pick(
-			this.filters,
-			'source',
-			'activityLevel',
-			'logType'
-		);
 		const request: IGetTimeLogReportInput = {
-			...appliedFilter,
+			...this.filters,
 			...this.getFilterRequest(this.request),
 			groupBy: this.groupBy
 		};
 		this.payloads$.next(request);
 	}
 
-	updateChart() {
+	async updateChart() {
 		if (!this.organization) {
 			return;
 		}
 		const payloads = this.payloads$.getValue();
 
 		this.loading = true;
-		this.timesheetService
-			.getDailyReportChart(payloads)
-			.then((logs: any[]) => {
-				const commonOptions = {
-					borderWidth: 2,
-					pointRadius: 2,
-					pointHoverRadius: 4,
-					pointHoverBorderWidth: 4,
+		try {
+			const logs: any = await this.timesheetService.getDailyReportChart(payloads);
+			const commonOptions = {
+				borderWidth: 2,
+				pointRadius: 2,
+				pointHoverRadius: 4,
+				pointHoverBorderWidth: 4,
+			}
+			const datasets = [
+				{
+					label: TimeLogType.MANUAL,
+					data: logs.map((log) => log.value[TimeLogType.MANUAL]),
+					borderColor: ChartUtil.CHART_COLORS.red,
+					backgroundColor: ChartUtil.transparentize(ChartUtil.CHART_COLORS.red, 1),
+					...commonOptions,
+				},
+				{
+					label: TimeLogType.TRACKED,
+					data: logs.map((log) => log.value[TimeLogType.TRACKED]),
+					borderColor: ChartUtil.CHART_COLORS.blue,
+					backgroundColor: ChartUtil.transparentize(ChartUtil.CHART_COLORS.blue, 1),
+					...commonOptions,
+				},
+				{
+					label: TimeLogType.IDEAL,
+					data: logs.map((log) => log.value[TimeLogType.IDEAL]),
+					borderColor: ChartUtil.CHART_COLORS.yellow,
+					backgroundColor: ChartUtil.transparentize(ChartUtil.CHART_COLORS.yellow, 1),
+					...commonOptions,
+				},
+				{
+					label: TimeLogType.RESUMED,
+					data: logs.map((log) => log.value[TimeLogType.RESUMED]),
+					borderColor: ChartUtil.CHART_COLORS.green,
+					backgroundColor: ChartUtil.transparentize(ChartUtil.CHART_COLORS.green, 1),
+					tooltip: {
+						titleFontColor: 'pink'
+					},
+					...commonOptions,
 				}
-				const datasets = [
-					{
-						label: TimeLogType.MANUAL,
-						data: logs.map((log) => log.value[TimeLogType.MANUAL]),
-						borderColor: ChartUtil.CHART_COLORS.red,
-						backgroundColor: ChartUtil.transparentize(ChartUtil.CHART_COLORS.red, 1),
-						...commonOptions,
-					},
-					{
-						label: TimeLogType.TRACKED,
-						data: logs.map((log) => log.value[TimeLogType.TRACKED]),
-						borderColor: ChartUtil.CHART_COLORS.blue,
-						backgroundColor: ChartUtil.transparentize(ChartUtil.CHART_COLORS.blue, 1),
-						...commonOptions,
-					},
-					{
-						label: TimeLogType.IDEAL,
-						data: logs.map((log) => log.value[TimeLogType.IDEAL]),
-						borderColor: ChartUtil.CHART_COLORS.yellow,
-						backgroundColor: ChartUtil.transparentize(ChartUtil.CHART_COLORS.yellow, 1),
-						...commonOptions,
-					},
-					{
-						label: TimeLogType.RESUMED,
-						data: logs.map((log) => log.value[TimeLogType.RESUMED]),
-						borderColor: ChartUtil.CHART_COLORS.green,
-						backgroundColor: ChartUtil.transparentize(ChartUtil.CHART_COLORS.green, 1),
-						tooltip: {
-							titleFontColor: 'pink'
-						},
-						...commonOptions,
-					}
-				];
-				this.chartData = {
-					labels: pluck(logs, 'date'),
-					datasets
-				};
-			})
-			.finally(() => (this.loading = false));
+			];
+			this.chartData = {
+				labels: pluck(logs, 'date'),
+				datasets
+			};
+		} catch (error) {
+			console.log('Error while retrieving time & activity charts data', error);
+		} finally {
+			this.loading = false;
+		}
 	}
 
 	ngOnDestroy(): void {}

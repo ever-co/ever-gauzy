@@ -36,7 +36,15 @@ export class GetTimeLogGroupByProjectHandler
 				) || 0;
 
 				const project =
-					byProjectLogs.length > 0 ? byProjectLogs[0].project : null;
+					byProjectLogs.length > 0 
+						? byProjectLogs[0].project 
+							: null;
+
+				const client = 
+						byProjectLogs.length > 0
+							? byProjectLogs[0].organizationContact
+								: (project) 
+									? project.organizationContact : null;
 
 				const byDate = chain(byProjectLogs)
 					.groupBy((log) =>
@@ -91,6 +99,7 @@ export class GetTimeLogGroupByProjectHandler
 					.value();
 				return {
 					project,
+					client,
 					logs: byDate,
 					sum: avgDuration || null,
 					activity: parseFloat(
