@@ -26,8 +26,8 @@
 <div
 	class="row-table tables-wrapper"
 	[nbSpinner]="loading"
-	nbSpinnerSize="giant"
-	nbSpinnerStatus="primary"
+	[nbSpinnerSize]="'giant'"
+	[nbSpinnerStatus]="'primary'"
 >
 	<ng-template [ngIf]="dailyLogs?.length > 0" [ngIfElse]="notFound">
 		<nb-accordion [multi]="true">
@@ -63,7 +63,14 @@
 						></ng-container>
 					</ng-container>
 					<ng-container *ngSwitchDefault>
-						{{ day.date | dateFormat }}
+						<ng-container
+							*ngTemplateOutlet="
+								dateEl; 
+								context: {
+									$implicit: day
+								}
+							"
+						></ng-container>
 					</ng-container>
 				</nb-accordion-item-header>
 				<nb-accordion-item-body>
@@ -401,6 +408,12 @@
 	<ng-template #noEmployee>
 		<span>{{ 'REPORT_PAGE.NO_EMPLOYEE' | translate }}</span>
 	</ng-template>
+</ng-template>
+
+<ng-template let-day #dateEl>
+	<span>{{ day?.date | dateFormat }}</span>
+	<span class="ml-5">{{ day?.sum | durationFormat }}</span>
+	<span class="ml-5">{{ day?.activity || 0 }}%</span>
 </ng-template>
 
 <ng-template #columnsHeader>

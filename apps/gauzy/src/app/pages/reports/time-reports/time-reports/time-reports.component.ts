@@ -97,7 +97,6 @@ export class TimeReportsComponent extends BaseSelectorFilterComponent
 			'activityLevel',
 			'logType'
 		);
-		this.loading = true;
 		const request: IGetTimeLogReportInput = {
 			...appliedFilter,
 			...this.getFilterRequest(this.request),
