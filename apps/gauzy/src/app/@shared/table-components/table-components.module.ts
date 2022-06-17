@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
-import { NbIconModule, NbTooltipModule, NbBadgeModule } from '@nebular/theme';
+import { NbIconModule, NbTooltipModule, NbBadgeModule, NbToggleModule } from '@nebular/theme';
 import { DateViewComponent } from './date-view/date-view.component';
 import { IncomeExpenseAmountComponent } from './income-amount/income-amount.component';
 import { NotesWithTagsComponent } from './notes-with-tags/notes-with-tags.component';
@@ -29,6 +29,7 @@ import { RoleComponent } from './role/role.component';
 import { ExternalLinkComponent } from './external-link/external-link.component';
 import { CompanyLogoComponent } from './company-logo/company-logo.component';
 import { ProjectOrganizationComponent } from './project-organization/project-organization.component';
+import { VisibilityComponent } from './visibility/visibility.component';
 
 @NgModule({
 	imports: [
@@ -37,7 +38,8 @@ import { ProjectOrganizationComponent } from './project-organization/project-org
 		NbTooltipModule,
 		NbBadgeModule,
 		TranslateModule,
-		SharedModule
+		SharedModule,
+		NbToggleModule
 	],
 	declarations: [
 		DateViewComponent,
@@ -65,7 +67,8 @@ import { ProjectOrganizationComponent } from './project-organization/project-org
 		RoleComponent,
 		ExternalLinkComponent,
 		CompanyLogoComponent,
-		ProjectOrganizationComponent
+		ProjectOrganizationComponent,
+		VisibilityComponent
 	],
 	exports: [
 		NotesWithTagsComponent,
