@@ -39,6 +39,12 @@ export class GetTimeLogGroupByDateHandler
 								? byProjectLogs[0].project
 								: null;
 
+						const client = 
+							byProjectLogs.length > 0
+								? byProjectLogs[0].organizationContact
+									: (project) 
+										? project.organizationContact : null;
+
 						const byEmployee = chain(byProjectLogs)
 							.groupBy('employeeId')
 							.map((byEmployeeLogs: ITimeLog[]) => {
@@ -84,6 +90,7 @@ export class GetTimeLogGroupByDateHandler
 
 						return {
 							project,
+							client,
 							employeeLogs: byEmployee
 						};
 					})
