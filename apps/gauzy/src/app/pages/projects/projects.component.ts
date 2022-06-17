@@ -64,7 +64,7 @@ export class ProjectsComponent
 	disableButton = true;
 	selectedProject: IOrganizationProject;
 	smartTableSource: ServerDataSource;
-	project$: Subject<boolean>;
+	project$: Subject<boolean> = new Subject();
 
 	projectsTable: Ng2SmartTableComponent;
 	@ViewChild('projectsTable') set content(content: Ng2SmartTableComponent) {
@@ -88,7 +88,6 @@ export class ProjectsComponent
 	) {
 		super(translateService);
 		this.setView();
-		this.project$ = new Subject();
 	}
 
 	ngOnInit(): void {
