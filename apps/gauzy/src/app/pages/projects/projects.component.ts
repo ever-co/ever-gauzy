@@ -347,7 +347,33 @@ export class ProjectsComponent
 						'ORGANIZATIONS_PAGE.EDIT.VISIBILITY'
 					),
 					type: 'custom',
-					renderComponent: VisibilityComponent
+					filter: false,
+					renderComponent: VisibilityComponent,
+					onComponentInitFunction: (instance: any) => {
+						instance.visibilityChange.subscribe({
+							next: async (visibility: any) => {
+								await this.organizationProjectsService
+									.edit({
+										public: visibility,
+										id: instance.rowData.id
+									})
+									.then(() => {
+										this.toastrService.success(
+											'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.VISIBILITY',
+											{
+												name: visibility
+													? this.getTranslation('BUTTONS.VISIBLE')
+													: this.getTranslation('BUTTONS.PUBLIC')
+											}
+										);
+									})
+									.finally(() => this.project$.next(true));
+							},
+							error: (err: any) => {
+								console.warn(err);
+							}
+						});
+					}
 				},
 				organizationContact: {
 					title: this.getTranslation(
@@ -376,7 +402,9 @@ export class ProjectsComponent
 					class: 'text-center'
 				},
 				employeesMergedTeams: {
-					title: this.getTranslation('ORGANIZATIONS_PAGE.EDIT.MEMBERS'),
+					title: this.getTranslation(
+						'ORGANIZATIONS_PAGE.EDIT.MEMBERS'
+					),
 					type: 'custom',
 					renderComponent: EmployeesMergedTeamsComponent
 				},
