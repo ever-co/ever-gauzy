@@ -64,6 +64,7 @@ export class TimeSlotMergeHandler
 			},
 			relations: ['timeLogs', 'screenshots', 'activities']
 		});
+		console.log({ timerSlots }, 'Time Slot Merging Dates');
 		const createdTimeSlots: any = [];
 		if (timerSlots.length > 0) {
 			const savePromises = _.chain(timerSlots)

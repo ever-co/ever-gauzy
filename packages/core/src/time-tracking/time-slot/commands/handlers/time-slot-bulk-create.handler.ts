@@ -86,6 +86,10 @@ export class TimeSlotBulkCreateHandler
 			return slot;
 		});
 
+		console.log('Time Slots Bulk Create Handler Request', {
+			slots
+		});
+
 		if (slots.length > 0) {
 			await this.timeSlotRepository.save(slots);
 		}
