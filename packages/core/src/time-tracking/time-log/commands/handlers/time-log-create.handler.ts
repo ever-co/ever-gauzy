@@ -124,6 +124,10 @@ export class TimeLogCreateHandler
 			new UpdateEmployeeTotalWorkedHoursCommand(employeeId)
 		);
 		
+		console.log('Newly created time log & request', {
+			timeLog,
+			input
+		});
 		return await this.timeLogRepository.findOne(timeLog.id);
 	}
 }

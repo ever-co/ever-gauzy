@@ -36,6 +36,10 @@ export class CreateTimeSlotHandler
 		const { input } = command;
 		let { organizationId, activities = [] } = input;
 
+		console.log('Time Slot Interval Request', {
+			input
+		});
+
 		const user = RequestContext.currentUser();
 		const tenantId = RequestContext.currentTenantId();
 
@@ -78,6 +82,7 @@ export class CreateTimeSlotHandler
 				startedAt: input.startedAt
 			}
 		});
+		console.log({ timeSlot }, `Find Time Slot For Time: ${input.startedAt}`);
 
 		if (!timeSlot) {
 			timeSlot = new TimeSlot(omit(input, ['timeLogId']));
@@ -94,6 +99,12 @@ export class CreateTimeSlotHandler
 			}
 			timeSlot.timeLogs = await this.timeLogRepository.find({
 				id: In(timeLogIds),
+				tenantId,
+				organizationId,
+				employeeId
+			});
+			console.log('Found TimeLogs for TimeSlots Range', {
+				timeLogIds,
 				tenantId,
 				organizationId,
 				employeeId
@@ -122,16 +133,19 @@ export class CreateTimeSlotHandler
 					}
 				});
 				timeSlot.timeLogs = timeLogs;
-				console.log('Found TimeLogs for TimeSlots Range', { timeLogs })
+				console.log('Found TimeLogs for TimeSlots Range', { timeLogs });
 			} catch (error) {
 				throw new BadRequestException('Can\'t find TimeLog for TimeSlot');
 			}
 		}
 
+		console.log('Found TimeLogs for TimeSlots Range', { timeLogs: timeSlot.timeLogs });
+
 		/**
 		 * Update TimeLog Entry Every TimeSlot Request From Desktop Timer
 		 */
 		for await (const timeLog of timeSlot.timeLogs) {
+			console.log({ timeLog }, 'Update Running Time Log');
 			if (timeLog.isRunning) {
 				await this.timeLogRepository.update(timeLog.id, {
 					stoppedAt: moment.utc().toDate()
@@ -168,6 +182,8 @@ export class CreateTimeSlotHandler
 		if (mergedTimeSlot) {
 			timeSlot = mergedTimeSlot;
 		}
+
+		console.log({ timeSlot }, 'Final Merged TimeSlot');
 		return await this.timeSlotRepository.findOne(timeSlot.id, {
 			relations: ['timeLogs', 'screenshots']
 		});

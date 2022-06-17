@@ -64,6 +64,10 @@ export class TimeLogUpdateHandler
 			);
 		}
 
+		console.log('Stopped Timer Request Updated TimeLog Request', {
+			input
+		});
+
 		await this.timeLogRepository.update(timeLog.id, {
 			...input,
 			...(timesheet ? { timesheetId: timesheet.id } : {})
@@ -136,6 +140,10 @@ export class TimeLogUpdateHandler
 					organizationId
 				);
 			}
+
+			console.log('Last Updated Timer Time Log', {
+				timeLog
+			});
 
 			/**
 			 * Update TimeLog Entry
