@@ -32,6 +32,7 @@ import { API_PREFIX, ComponentEnum } from '../../@core/constants';
 import {
 	ContactLinksComponent,
 	DateViewComponent,
+	EmployeesMergedTeamsComponent,
 	ProjectOrganizationComponent,
 	TagsOnlyComponent
 } from '../../@shared/table-components';
@@ -40,6 +41,7 @@ import { ServerDataSource } from '../../@core/utils/smart-table';
 import { HttpClient } from '@angular/common/http';
 import { PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
 import { distinctUntilChange } from 'packages/common-angular/dist';
+import { VisibilityComponent } from '../../@shared/table-components/visibility/visibility.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -280,7 +282,8 @@ export class ProjectsComponent
 			where: { organizationId, tenantId },
 			resultMap: (project: IOrganizationProject) => {
 				return Object.assign({}, project, {
-					...this.privatePublicProjectMapper(project)
+					...this.privatePublicProjectMapper(project),
+					employeesMergedTeams: [project.members]
 				});
 			},
 			finalize: () => {
@@ -339,11 +342,12 @@ export class ProjectsComponent
 					type: 'custom',
 					renderComponent: ProjectOrganizationComponent
 				},
-				projectUrl: {
+				public: {
 					title: this.getTranslation(
-						'ORGANIZATIONS_PAGE.EDIT.PROJECT_URL'
+						'ORGANIZATIONS_PAGE.EDIT.VISIBILITY'
 					),
-					type: 'text'
+					type: 'custom',
+					renderComponent: VisibilityComponent
 				},
 				organizationContact: {
 					title: this.getTranslation(
@@ -371,24 +375,10 @@ export class ProjectsComponent
 					renderComponent: DateViewComponent,
 					class: 'text-center'
 				},
-				billing: {
-					title: this.getTranslation(
-						'ORGANIZATIONS_PAGE.EDIT.BILLING'
-					),
-					type: 'string',
-					filter: false
-				},
-				currency: {
-					title: this.getTranslation(
-						'ORGANIZATIONS_PAGE.EDIT.CURRENCY'
-					),
-					type: 'string',
-					filter: false
-				},
-				owner: {
-					title: this.getTranslation('ORGANIZATIONS_PAGE.EDIT.OWNER'),
-					type: 'string',
-					filter: false
+				employeesMergedTeams: {
+					title: this.getTranslation('ORGANIZATIONS_PAGE.EDIT.MEMBERS'),
+					type: 'custom',
+					renderComponent: EmployeesMergedTeamsComponent
 				},
 				tags: {
 					title: this.getTranslation('SM_TABLE.TAGS'),
