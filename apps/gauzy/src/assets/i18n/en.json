@@ -120,7 +120,9 @@
 		"TIME_TRACKING_DISABLE": "Disable Time Tracking",
 		"PRINT": "Print",
 		"FEEDBACK":"Feedback",
-		"EQUIPMENT_SHARING": "Equipment Sharing"
+		"EQUIPMENT_SHARING": "Equipment Sharing",
+		"PRIVATE": "Private",
+		"PUBLIC": "Public"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "Type",
@@ -1715,6 +1717,8 @@
 			"USER_WAS_REMOVED": "'{{ name }}' was removed from organization.",
 			"EMPLOYEE_POSITION": "Employee Position",
 			"PROJECT_URL": "Project Url",
+			"VISIBILITY": "Visibility",
+			"MEMBERS":"Employee/Teams",
 			"SETTINGS": {
 				"TIMER_SETTINGS": "Timer Settings",
 				"ALLOW_MODIFY_TIME": "Allow Modify Time",
