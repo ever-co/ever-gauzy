@@ -11,7 +11,8 @@ import {
 	NbSelectModule,
 	NbDatepickerModule,
 	NbSpinnerModule,
-	NbTabsetModule
+	NbTabsetModule,
+	NbTooltipModule
 } from '@nebular/theme';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ProjectsRoutingModule } from './projects-routing.module';
@@ -39,6 +40,7 @@ import { CKEditorModule } from 'ckeditor4-angular';
 import { CurrencyModule } from '../../@shared/currency/currency.module';
 import { TranslateModule } from '../../@shared/translate/translate.module';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
+import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
 
 @NgModule({
 	imports: [
@@ -77,7 +79,9 @@ import { HeaderTitleModule } from '../../@shared/components/header-title/header-
 		NbTabsetModule,
 		CKEditorModule,
 		CurrencyModule,
-		HeaderTitleModule
+		HeaderTitleModule,
+		GauzyButtonActionModule,
+		NbTooltipModule
 	],
 	declarations: [ProjectsComponent, ProjectsMutationComponent],
 	providers: [OrganizationProjectsService, OrganizationContactService]

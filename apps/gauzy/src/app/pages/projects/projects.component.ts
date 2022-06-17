@@ -52,7 +52,8 @@ export class ProjectsComponent
 	loading: boolean;
 	settingsSmartTable: object;
 	viewComponentName: ComponentEnum;
-	dataLayoutStyle = ComponentLayoutStyleEnum.CARDS_GRID;
+	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
+	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
 	organization: IOrganization;
 	showAddCard: boolean;
 	projects: IOrganizationProject[] = [];
@@ -280,7 +281,7 @@ export class ProjectsComponent
 		}
 	}
 
-	public privatePublicProjectMapper(project: IOrganizationProject) {
+	private privatePublicProjectMapper(project: IOrganizationProject) {
 		return this.viewPrivateProjects
 			? project
 			: project.public
