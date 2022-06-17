@@ -8,7 +8,7 @@ import {
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, tap } from 'rxjs/operators';
-import { firstValueFrom } from 'rxjs';
+import { debounceTime, firstValueFrom, Subject } from 'rxjs';
 import { Ng2SmartTableComponent } from 'ng2-smart-table';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
@@ -21,7 +21,6 @@ import {
 	CrudActionEnum,
 	IEmployee
 } from '@gauzy/contracts';
-import { TranslationBaseComponent } from '../../@shared/language-base';
 import {
 	OrganizationContactService,
 	OrganizationProjectsService,
@@ -38,6 +37,8 @@ import {
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import { ServerDataSource } from '../../@core/utils/smart-table';
 import { HttpClient } from '@angular/common/http';
+import { PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
+import { distinctUntilChange } from 'packages/common-angular/dist';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -46,7 +47,7 @@ import { HttpClient } from '@angular/common/http';
 	styleUrls: ['./projects.component.scss']
 })
 export class ProjectsComponent
-	extends TranslationBaseComponent
+	extends PaginationFilterBaseComponent
 	implements OnInit, OnDestroy
 {
 	loading: boolean;
@@ -63,6 +64,7 @@ export class ProjectsComponent
 	disableButton = true;
 	selectedProject: IOrganizationProject;
 	smartTableSource: ServerDataSource;
+	project$: Subject<boolean>;
 
 	projectsTable: Ng2SmartTableComponent;
 	@ViewChild('projectsTable') set content(content: Ng2SmartTableComponent) {
@@ -86,11 +88,18 @@ export class ProjectsComponent
 	) {
 		super(translateService);
 		this.setView();
+		this.project$ = new Subject();
 	}
 
 	ngOnInit(): void {
-		this.loadSmartTable();
-		this._applyTranslationOnSmartTable();
+		this.project$
+			.pipe(
+				debounceTime(300),
+				tap(() => this.loadProjects()),
+				tap(() => this.loadOrganizationContacts()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization) => !!organization),
@@ -98,7 +107,7 @@ export class ProjectsComponent
 					(organization: IOrganization) =>
 						(this.organization = organization)
 				),
-				tap(() => this._initMethod()),
+				tap(() => this.project$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -122,34 +131,37 @@ export class ProjectsComponent
 				if (params.get('openAddDialog')) {
 					this.showAddCard =
 						params.get('openAddDialog') === 'true' ? true : false;
-					this._initMethod();
+					this.project$.next(true);
 				}
 			});
+		this.pagination$
+			.pipe(
+				debounceTime(300),
+				distinctUntilChange(),
+				tap(() => this.project$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.loadSmartTable();
+		this._applyTranslationOnSmartTable();
 	}
 
 	ngOnDestroy() {}
-
-	private _initMethod() {
-		if (!this.organization) {
-			return;
-		}
-
-		this.loadProjects();
-		this.loadOrganizationContacts();
-	}
 
 	setView() {
 		this.viewComponentName = ComponentEnum.PROJECTS;
 		this.store
 			.componentLayout$(this.viewComponentName)
-			.pipe(untilDestroyed(this))
-			.subscribe((componentLayout) => {
-				this.dataLayoutStyle = componentLayout;
-				this.selectedProject =
-					this.dataLayoutStyle === 'CARDS_GRID'
-						? null
-						: this.selectedProject;
-			});
+			.pipe(
+				distinctUntilChange(),
+				tap(
+					(componentLayout) =>
+						(this.dataLayoutStyle = componentLayout)
+				),
+				tap(() => this.refreshPagination()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	async removeProject(id?: string, name?: string) {
@@ -267,6 +279,10 @@ export class ProjectsComponent
 				});
 			},
 			finalize: () => {
+				this.setPagination({
+					...this.getPagination(),
+					totalItems: this.smartTableSource.count()
+				});
 				this.loading = false;
 			}
 		});
@@ -274,8 +290,10 @@ export class ProjectsComponent
 
 	async loadProjects() {
 		if (!this.organization) return;
+		const { activePage, itemsPerPage } = this.getPagination();
 		try {
 			this.setSmartTable();
+			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
 		} catch (error) {
 			console.log(error);
 		}
@@ -292,9 +310,16 @@ export class ProjectsComponent
 	}
 
 	loadSmartTable() {
+		const pagination = this.getPagination();
 		this.settingsSmartTable = {
 			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA'),
 			actions: false,
+			pager: {
+				display: false,
+				perPage: pagination
+					? this.pagination.itemsPerPage
+					: this.minItemPerPage
+			},
 			columns: {
 				name: {
 					title: this.getTranslation('ORGANIZATIONS_PAGE.NAME'),
