@@ -63,6 +63,10 @@ export class ScreenshotController {
 		@Body() entity: Screenshot,
 		@UploadedFileStorage() file
 	) {
+		console.log('Screenshot Http Request', {
+			entity
+		});
+
 		const provider = new FileStorage().getProvider();
 		let thumb;
 		try {

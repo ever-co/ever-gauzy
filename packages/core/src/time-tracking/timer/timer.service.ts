@@ -115,7 +115,6 @@ export class TimerService {
 	}
 
 	async startTimer(request: ITimerToggleInput): Promise<ITimeLog> {
-		console.log('Start Timer Request', request);
 		const userId = RequestContext.currentUserId();
 		const tenantId = RequestContext.currentTenantId();
 
@@ -129,6 +128,12 @@ export class TimerService {
 
 		const { organizationId, id: employeeId } = employee;
 		const lastLog = await this.getLastRunningLog();
+
+		console.log('Start Timer Request', {
+			request,
+			lastLog
+		});
+		
 		if (lastLog) {
 			/**
 			 * If you want to start timer, but employee timer is already started.
@@ -166,7 +171,6 @@ export class TimerService {
 	}
 
 	async stopTimer(request: ITimerToggleInput): Promise<ITimeLog> {
-		console.log('Stop Timer Request', request);
 		const { organizationId } = request;
 		const tenantId = RequestContext.currentTenantId();
 
@@ -181,6 +185,10 @@ export class TimerService {
 			lastLog = await this.getLastRunningLog();
 		}
 
+		console.log('Stop Timer Request', {
+			request,
+			lastLog
+		});
 		const stoppedAt = moment.utc().toDate();
 		lastLog = await this.commandBus.execute(
 			new TimeLogUpdateCommand(
@@ -189,6 +197,10 @@ export class TimerService {
 				request.manualTimeSlot
 			)
 		);
+
+		console.log('Stop Timer Updated Time Log', {
+			lastLog
+		});
 
 		const conflicts = await this.commandBus.execute(
 			new IGetConflictTimeLogCommand({
@@ -200,8 +212,8 @@ export class TimerService {
 				tenantId
 			} as IGetTimeLogConflictInput)
 		);
+		console.log('Get Conflicts Time Logs', conflicts);
 		if (isNotEmpty(conflicts)) {
-			console.log('Get Conflicts Time Logs', conflicts);
 			const times: IDateRange = {
 				start: new Date(lastLog.startedAt),
 				end: new Date(lastLog.stoppedAt)

@@ -10,6 +10,7 @@
     .columns-header {
         display: none;
     }
+    .card nb-accordion-item-body,
     .card nb-card-body {
         padding-left: 0;
         padding-right: 0;
@@ -128,30 +129,30 @@ nb-card, nb-card-body, .card {
     .card {
         background-color: nb-theme(gauzy-card-1);
         border-radius: nb-theme(border-radius);
-        & nb-card-header {
+        & nb-card-header, nb-accordion-item-header {
             background-color: unset;
             margin-bottom: 0;
             border-bottom: none;
         }
-        & nb-card-body {
+        & nb-card-body, nb-accordion-item-body {
             background-color: nb-theme(gauzy-card-2);
         }
     }
 
-    & nb-card-header {
+    & nb-card-header, nb-accordion-item-header {
         background-color: unset;
         padding: 20px;
         border-bottom: none;
     }
 
-    nb-card-body {
+    nb-card-body, nb-accordion-item-body {
         background-color: nb-theme(gauzy-card-2);
         padding: 18px;
     }
 }
 
 .daily-time-report {
-    nb-card-body {
+    nb-card-body, nb-accordion-item-body {
         background-color: nb-theme(gauzy-card-1);
     }
 }

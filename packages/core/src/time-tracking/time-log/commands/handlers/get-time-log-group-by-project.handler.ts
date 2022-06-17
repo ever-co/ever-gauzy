@@ -1,5 +1,5 @@
 import { ICommandHandler, CommandHandler } from '@nestjs/cqrs';
-import { chain } from 'underscore';
+import { chain, pluck, reduce } from 'underscore';
 import * as moment from 'moment';
 import {
 	IReportDayGroupByProject,
@@ -7,6 +7,7 @@ import {
 	ITimeSlot
 } from '@gauzy/contracts';
 import { GetTimeLogGroupByProjectCommand } from '../get-time-log-group-by-project.command';
+import { ArraySum } from '@gauzy/common';
 
 @CommandHandler(GetTimeLogGroupByProjectCommand)
 export class GetTimeLogGroupByProjectHandler
@@ -21,8 +22,29 @@ export class GetTimeLogGroupByProjectHandler
 		const dailyLogs: any = chain(timeLogs)
 			.groupBy((log) => log.projectId)
 			.map((byProjectLogs: ITimeLog[]) => {
+				/**
+				* calculate avarage duration for specific project.
+				*/
+				const avgDuration = reduce(pluck(byProjectLogs, 'duration'), ArraySum, 0);
+				/**
+				* calculate average activity for specific project.
+				*/
+				const slots: ITimeSlot[] = chain(byProjectLogs).pluck('timeSlots').flatten(true).value();
+				const avgActivity = (
+					(reduce(pluck(slots, 'overall'), ArraySum, 0) * 100) / 
+					(reduce(pluck(slots, 'duration'), ArraySum, 0))
+				) || 0;
+
 				const project =
-					byProjectLogs.length > 0 ? byProjectLogs[0].project : null;
+					byProjectLogs.length > 0 
+						? byProjectLogs[0].project 
+							: null;
+
+				const client = 
+						byProjectLogs.length > 0
+							? byProjectLogs[0].organizationContact
+								: (project) 
+									? project.organizationContact : null;
 
 				const byDate = chain(byProjectLogs)
 					.groupBy((log) =>
@@ -32,48 +54,22 @@ export class GetTimeLogGroupByProjectHandler
 						const byEmployee = chain(byDateLogs)
 							.groupBy('employeeId')
 							.map((byEmployeeLogs: ITimeLog[]) => {
-								const sum = byEmployeeLogs.reduce(
-									(iteratee: any, log: any) => {
-										return iteratee + log.duration;
-									},
-									0
-								);
-
-								const timeSlots: ITimeSlot[] = chain(
-									byEmployeeLogs
-								)
-								.pluck('timeSlots')
-								.flatten(true)
-								.value();
-
+								/**
+								* calculate avarage duration of the employee
+								*/
+								const sum = reduce(pluck(byEmployeeLogs, 'duration'), ArraySum, 0);
+								/**
+								* calculate average activity of the employee
+								*/
+								const slots: ITimeSlot[] = chain(byEmployeeLogs).pluck('timeSlots').flatten(true).value();
 								/**
 								* Calculate Average activity of the employee
 								*/
-								const overallSum = timeSlots.reduce(
-									(
-										iteratee: any,
-										timeSlot: ITimeSlot
-									) => {
-										return (
-											iteratee +
-											timeSlot.overall
-										);
-									},
-									0
+								const avgActivity = (
+									(reduce(pluck(slots, 'overall'), ArraySum, 0) * 100) / 
+									(reduce(pluck(slots, 'duration'), ArraySum, 0))
 								) || 0;
-								const durationSum = timeSlots.reduce(
-									(
-										iteratee: any,
-										timeSlot: ITimeSlot
-									) => {
-										return (
-											iteratee +
-											timeSlot.duration
-										);
-									},
-									0
-								) || 0;
-								const avgActivity = ((overallSum * 100) / (durationSum)) || 0;
+
 								const task =
 									byEmployeeLogs.length > 0
 										? byEmployeeLogs[0].task
@@ -83,12 +79,14 @@ export class GetTimeLogGroupByProjectHandler
 									byEmployeeLogs.length > 0
 										? byEmployeeLogs[0].employee
 										: null;
-
+										
 								return {
 									task,
 									employee,
 									sum,
-									activity: avgActivity.toFixed(2)
+									activity: parseFloat(
+										parseFloat(avgActivity + '').toFixed(2)
+									)
 								};
 							})
 							.value();
@@ -99,8 +97,15 @@ export class GetTimeLogGroupByProjectHandler
 						};
 					})
 					.value();
-
-				return { project, logs: byDate };
+				return {
+					project,
+					client,
+					logs: byDate,
+					sum: avgDuration || null,
+					activity: parseFloat(
+						parseFloat(avgActivity + '').toFixed(2)
+					)
+				};
 			})
 			.value();
 

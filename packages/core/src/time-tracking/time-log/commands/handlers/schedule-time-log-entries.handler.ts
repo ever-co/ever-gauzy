@@ -83,7 +83,7 @@ export class ScheduleTimeLogEntriesHandler
 				console.log('Schedule Time Log Entry Updated StoppedAt', timeLog.startedAt);
 				await this.timeLogRepository.save({
 					id: timeLog.id,
-					stoppedAt: timeLog.startedAt
+					stoppedAt: moment(timeLog.startedAt).add(10, 'seconds').toDate()
 				});
 			} else if (isNotEmpty(timeLog.timeSlots)) {
 				const [lastTimeSlot] = timeLog.timeSlots.reverse();
@@ -121,6 +121,7 @@ export class ScheduleTimeLogEntriesHandler
 				id: timeLog.id,
 				isRunning: false
 			});
+			console.log('Schedule Time Log Entry Updated Entry', timeLog);
 		}
 	}
 }
