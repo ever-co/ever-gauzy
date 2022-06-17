@@ -74,9 +74,16 @@ export class GetTimeLogGroupByEmployeeHandler
 										? byProjectLogs[0].task
 										: null;
 
+								const client = 
+									byProjectLogs.length > 0
+										? byProjectLogs[0].organizationContact
+											: (project) 
+												? project.organizationContact : null;
+
 								return {
 									task,
 									project,
+									client,
 									sum,
 									activity: parseFloat(
 										parseFloat(avgActivity + '').toFixed(2)
