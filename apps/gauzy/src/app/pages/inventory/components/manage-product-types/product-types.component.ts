@@ -22,8 +22,9 @@ import { ProductTypeMutationComponent } from '../../../../@shared/product-mutati
 import { DeleteConfirmationComponent } from '../../../../@shared/user/forms';
 import { IconRowComponent } from './../table-components';
 import { API_PREFIX, ComponentEnum } from '../../../../@core/constants';
-import { PaginationFilterBaseComponent } from './../../../../@shared/pagination/pagination-filter-base.component';
+import { IPaginationBase, PaginationFilterBaseComponent } from './../../../../@shared/pagination/pagination-filter-base.component';
 import { ServerDataSource } from './../../../../@core/utils/smart-table/server.data-source';
+import { InputFilterComponent } from 'apps/gauzy/src/app/@shared/table-filters';
 
 
 @UntilDestroy({ checkProperties: true })
@@ -36,10 +37,10 @@ export class ProductTypesComponent
 	extends PaginationFilterBaseComponent
 	implements AfterViewInit, OnInit, OnDestroy {
 
-	pagination: any = {
-		...this.pagination,
-		itemsPerPage: 8
-	};
+	// pagination: any = {
+	// 	...this.pagination,
+	// 	itemsPerPage: 8
+	// };
 	smartTableSource: ServerDataSource;
 	settingsSmartTable: object;
 	loading: boolean;
@@ -83,32 +84,62 @@ export class ProductTypesComponent
 	ngOnInit(): void {
 		this._applyTranslationOnSmartTable();
 		this._loadSmartTableSettings();
-	}
-
-	ngAfterViewInit() {
 		this.types$
 			.pipe(
-				debounceTime(300),
-				tap(() => this.loading = true),
-				tap(() => this.getTranslatedProductTypes()),
+				debounceTime(100),
 				tap(() => this.clearItem()),
+				tap(() => this.getTranslatedProductTypes()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.pagination$
+			.pipe(
+				debounceTime(100),
+				distinctUntilChange(),
+				tap(() => this.types$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
 
 		const storeOrganization$ = this.store.selectedOrganization$;
 		const preferredLanguage$ = this.store.preferredLanguage$
+	
+			combineLatest([storeOrganization$, preferredLanguage$])
+				.pipe(
+					debounceTime(300),
+					filter(([organization, language]) => !!organization && !!language),
+					tap(([organization]) => this.organization = organization),
+					distinctUntilChange(),
+					tap(() => this.types$.next(true)),
+					untilDestroyed(this)
+				)
+				.subscribe();
+	}
 
-		combineLatest([storeOrganization$, preferredLanguage$])
-			.pipe(
-				debounceTime(300),
-				filter(([organization, language]) => !!organization && !!language),
-				tap(([organization]) => this.organization = organization),
-				distinctUntilChange(),
-				tap(() => this.types$.next(true)),
-				untilDestroyed(this)
-			)
-			.subscribe();
+	ngAfterViewInit() {
+		// this.types$
+		// 	.pipe(
+		// 		debounceTime(300),
+		// 		tap(() => this.loading = true),
+		// 		tap(() => this.getTranslatedProductTypes()),
+		// 		tap(() => this.clearItem()),
+		// 		untilDestroyed(this)
+		// 	)
+		// 	.subscribe();
+
+		// const storeOrganization$ = this.store.selectedOrganization$;
+		// const preferredLanguage$ = this.store.preferredLanguage$
+
+		// combineLatest([storeOrganization$, preferredLanguage$])
+		// 	.pipe(
+		// 		debounceTime(300),
+		// 		filter(([organization, language]) => !!organization && !!language),
+		// 		tap(([organization]) => this.organization = organization),
+		// 		distinctUntilChange(),
+		// 		tap(() => this.types$.next(true)),
+		// 		untilDestroyed(this)
+		// 	)
+		// 	.subscribe();
 	}
 
 	setView() {
@@ -139,10 +170,14 @@ export class ProductTypesComponent
 	}
 
 	async _loadSmartTableSettings() {
+		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
 			actions: false,
+			editable: true,
+			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA'),
 			pager: {
-				perPage: this.pagination.itemsPerPage
+				display: false,
+				perPage: pagination ? pagination.itemsPerPage : 10
 			},
 			columns: {
 				icon: {
@@ -155,7 +190,14 @@ export class ProductTypesComponent
 				name: {
 					title: this.getTranslation('INVENTORY_PAGE.NAME'),
 					type: 'string',
-					width: '40%'
+					width: '40%',
+					filter: {
+						type: 'custom',
+						component: InputFilterComponent
+					},
+					filterFunction: (name: string) => {
+						this.setFilter({ field: 'name', search: name });
+					}
 				},
 				description: {
 					title: this.getTranslation('INVENTORY_PAGE.DESCRIPTION'),
@@ -278,12 +320,17 @@ export class ProductTypesComponent
 			endPoint: `${API_PREFIX}/product-types/pagination`,
 			relations: [],
 			where: {
-				...{ organizationId, tenantId }
+				...{ organizationId, tenantId },
+				...this.filters.where
 			},
 			resultMap: (item: IProductTypeTranslated) => {
 				return Object.assign({}, item);
 			},
 			finalize: () => {
+				this.setPagination({
+					...this.getPagination(),
+					totalItems: this.smartTableSource.count()
+				});
 				this.loading = false;
 			}
 		});
@@ -295,16 +342,23 @@ export class ProductTypesComponent
 	private async getTranslatedProductTypes() {
 		try {
 			this.setSmartTableSource();
+
+			const { activePage, itemsPerPage } = this.getPagination();
+
+			this.smartTableSource.setPaging(
+				activePage,
+				itemsPerPage,
+				false
+			);
+
 			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
-
-				// Initiate GRID view pagination
-				const { activePage, itemsPerPage } = this.pagination;
-				this.smartTableSource.setPaging(activePage, itemsPerPage, false);
-
 				await this.smartTableSource.getElements();
 				this.productTypes = this.smartTableSource.getData();
 
-				this.pagination['totalItems'] = this.smartTableSource.count();
+				this.setPagination({
+					...this.getPagination(),
+					totalItems: this.smartTableSource.count()
+				});
 			}
 		} catch (error) {
 			this.toastrService.danger(error);

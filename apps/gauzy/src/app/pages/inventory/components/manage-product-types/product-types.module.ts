@@ -19,6 +19,8 @@ import { ProductTypesRoutingModule } from './product-types-routing.module';
 import { CardGridModule } from './../../../../@shared/card-grid/card-grid.module';
 import { ProductMutationModule } from './../../../../@shared/product-mutation/product-mutation.module';
 import { PaginationModule } from 'apps/gauzy/src/app/@shared/pagination/pagination.module';
+import { GauzyButtonActionModule } from 'apps/gauzy/src/app/@shared/gauzy-button-action/gauzy-button-action.module';
+import { TableComponentsModule } from 'apps/gauzy/src/app/@shared';
 
 
 const NB_MODULES = [
@@ -44,7 +46,9 @@ const NB_MODULES = [
         ThemeModule,
         CardGridModule,
         ProductMutationModule,
-        PaginationModule
+        PaginationModule,
+        GauzyButtonActionModule,
+        TableComponentsModule
     ],
     providers: [ProductTypeService]
 })

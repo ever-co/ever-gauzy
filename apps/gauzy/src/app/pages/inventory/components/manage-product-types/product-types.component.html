@@ -4,38 +4,26 @@
 	nbSpinnerSize="large"
 	class="card-scroll"
 >
-	<nb-card-header class="card-header-title">
+	<nb-card-header class="card-custom-header">
 		<div class="card-header-title">
-			<ngx-back-navigation></ngx-back-navigation>
 			<h4>
+				<ngx-back-navigation></ngx-back-navigation>
 				<ngx-header-title>
 					{{ 'INVENTORY_PAGE.PRODUCT_TYPES' | translate }}
 				</ngx-header-title>
 			</h4>
 		</div>
-		<div>
-			<ga-layout-selector
+		<div class="gauzy-button-container">
+			<ngx-gauzy-button-action
+				[buttonTemplate]="actionButtons"
 				[componentName]="viewComponentName"
-			></ga-layout-selector>
-		</div>
+				[buttonTemplateVisible]="visibleButton"
+				[isDisable]="disableButton"
+			>
+			</ngx-gauzy-button-action>
+		</div>		
 	</nb-card-header>
-	<nb-card-body>
-		<div class="mb-3">
-			<ng-template ngxPermissionsOnly="ORG_PRODUCT_TYPES_EDIT">
-				<button
-					(click)="onAdd()"
-					nbButton
-					status="success"
-					class="mr-2"
-				>
-					<nb-icon class="mr-1" icon="plus-outline"></nb-icon
-					>{{ 'BUTTONS.ADD' | translate }}
-				</button>
-			</ng-template>
-			<ng-container *ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE">
-				<ng-container *ngTemplateOutlet="actionButtons"></ng-container>
-			</ng-container>
-		</div>
+	<nb-card-body>		
 		<ng-template ngxPermissionsOnly="ORG_PRODUCT_TYPES_VIEW">
 			<ng-template
 				[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
@@ -50,57 +38,81 @@
 						#productTypesTable
 					></ng2-smart-table>
 				</div>
+				<div class="pagination-container">
+					<ng-container *ngIf="pagination.totalItems > minItemPerPage">
+						<ga-pagination
+							(selectedOption)="onUpdateOption($event)"
+							(selectedPage)="onPageChange($event)"
+							[doEmit]="false"
+							[totalItems]="pagination?.totalItems"
+							[itemsPerPage]="pagination?.itemsPerPage"
+							[activePage]="pagination?.activePage"
+						></ga-pagination>
+					</ng-container>
+				</div>
 			</ng-template>
 			<ng-template #gridLayout>
 				<div class="grid-scroll-container">
 					<ga-card-grid
 						[settings]="settingsSmartTable"
 						[source]="productTypes"
-						[buttonTemplate]="actionButtons"
-					></ga-card-grid>
-				</div>
-				<div class="pagination-container">
-					<ng-container *ngIf="pagination.totalItems > pagination.itemsPerPage">
-						<ga-pagination 
-							(selectedPage)="onPageChange($event)"
-							[doEmit]="false"
-							[totalItems]="pagination?.totalItems" 
-							[itemsPerPage]="pagination?.itemsPerPage" 
-							[activePage]="pagination?.activePage">
-						</ga-pagination>
-					</ng-container>
-				</div>
+						(selectedOption)="onUpdateOption($event)"
+						(selectedPage)="onPageChange($event)"
+						(onSelectedItem)="selectProductType($event)"
+						[doEmit]="false"
+						[totalItems]="pagination?.totalItems"
+						[itemsPerPage]="pagination?.itemsPerPage"
+						[activePage]="pagination?.activePage"
+					></ga-card-grid>					
+				</div>				
 			</ng-template>
 		</ng-template>
 	</nb-card-body>
 </nb-card>
+<ng-template #visibleButton>
+	<ng-template ngxPermissionsOnly="ORG_PRODUCT_TYPES_EDIT">
+		<button
+			*ngIf="!showAddCard"
+			(click)="onAdd()"
+			nbButton
+			status="success"
+			class="action"
+			size="small"
+		>
+			<nb-icon icon="plus-outline"></nb-icon
+			>{{ 'BUTTONS.ADD' | translate }}
+		</button>	
+	</ng-template>
+</ng-template>
 <ng-template
 	#actionButtons
 	let-buttonSize="buttonSize"
 	let-selectedItem="selectedItem"
 >
 	<ng-template ngxPermissionsOnly="ORG_PRODUCT_TYPES_EDIT">
-		<button
-			(click)="onEdit(selectedItem)"
-			nbButton
-			status="info"
-			class="mr-2"
-			[disabled]="!selectedItem && disableButton"
-			[size]="buttonSize || 'medium'"
-		>
-			<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
-			{{ 'BUTTONS.EDIT' | translate }}
-		</button>
-		<button
-			(click)="delete(selectedItem)"
-			nbButton
-			status="danger"
-			class="mr-2"
-			[disabled]="!selectedItem && disableButton"
-			[size]="buttonSize || 'medium'"
-		>
-			<nb-icon class="mr-1" icon="archive-outline"> </nb-icon>
-			{{ 'BUTTONS.DELETE' | translate }}
-		</button>
+		<div class="btn-group actions">
+			<button
+				(click)="onEdit(selectedItem)"
+				nbButton
+				status="basic"
+				class="action secondary"
+				size="small"	
+				[disabled]="!selectedItem && disableButton"				
+			>
+				<nb-icon icon="edit-outline"></nb-icon>
+				{{ 'BUTTONS.EDIT' | translate }}
+			</button>
+			<button
+				(click)="delete(selectedItem)"
+				nbButton
+				status="basic"
+				class="action"
+				[disabled]="!selectedItem && disableButton"
+				size="small"
+				[nbTooltip]="'BUTTONS.DELETE' | translate"
+			>
+				<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
+			</button>
+		</div>
 	</ng-template>
 </ng-template>

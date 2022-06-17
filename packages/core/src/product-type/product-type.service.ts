@@ -30,15 +30,15 @@ export class ProductTypeService extends TenantAwareCrudService<ProductType> {
 		filter: any,
 		language: LanguagesEnum
 	) {
-		if ('where' in filter) {
-			const { where } = filter;
-			if ('languageCode' in where) {
-				const { languageCode } = where;
-				language = languageCode;
+		// if ('where' in filter) {
+		// 	const { where } = filter;
+		// 	if ('languageCode' in where) {
+		// 		const { languageCode } = where;
+		// 		language = languageCode;
 
-				delete where['languageCode'];
-			}
-		}
+		// 		delete where['languageCode'];
+		// 	}
+		// }
 
 		const { items, total } = await super.paginate(filter);
 		return await this.mapTranslatedProductTypes(items as any, language).then((items) => {
