@@ -35,7 +35,7 @@ export class DailyGridComponent extends BaseSelectorFilterComponent
 	payloads$: BehaviorSubject<ITimeLogFilters> = new BehaviorSubject(null);
 
 	dailyLogs: IReportDayData[] = [];
-	loading: boolean = false;
+	loading: boolean;
 	groupBy: ReportGroupByFilter = ReportGroupFilterEnum.date;
 	ReportGroupFilterEnum = ReportGroupFilterEnum;
 
