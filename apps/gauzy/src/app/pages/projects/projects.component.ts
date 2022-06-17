@@ -9,7 +9,7 @@ import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, tap } from 'rxjs/operators';
 import { firstValueFrom } from 'rxjs';
-import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
+import { Ng2SmartTableComponent } from 'ng2-smart-table';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
 	IOrganization,
@@ -18,7 +18,8 @@ import {
 	IOrganizationProjectsCreateInput,
 	PermissionsEnum,
 	ComponentLayoutStyleEnum,
-	CrudActionEnum
+	CrudActionEnum,
+	IEmployee
 } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '../../@shared/language-base';
 import {
@@ -28,9 +29,15 @@ import {
 	Store,
 	ToastrService
 } from '../../@core/services';
-import { ComponentEnum } from '../../@core/constants';
-import { ContactLinksComponent, DateViewComponent, PictureNameTagsComponent } from '../../@shared/table-components';
+import { API_PREFIX, ComponentEnum } from '../../@core/constants';
+import {
+	ContactLinksComponent,
+	DateViewComponent,
+	PictureNameTagsComponent
+} from '../../@shared/table-components';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
+import { ServerDataSource } from '../../@core/utils/smart-table';
+import { HttpClient } from '@angular/common/http';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -40,8 +47,8 @@ import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 })
 export class ProjectsComponent
 	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
-
+	implements OnInit, OnDestroy
+{
 	loading: boolean;
 	settingsSmartTable: object;
 	viewComponentName: ComponentEnum;
@@ -54,7 +61,7 @@ export class ProjectsComponent
 	viewPrivateProjects: boolean;
 	disableButton = true;
 	selectedProject: IOrganizationProject;
-	smartTableSource = new LocalDataSource();
+	smartTableSource: ServerDataSource;
 
 	projectsTable: Ng2SmartTableComponent;
 	@ViewChild('projectsTable') set content(content: Ng2SmartTableComponent) {
@@ -73,7 +80,8 @@ export class ProjectsComponent
 		private readonly route: ActivatedRoute,
 		private readonly router: Router,
 		private readonly dialogService: NbDialogService,
-		private readonly organizationProjectStore: OrganizationProjectStore
+		private readonly organizationProjectStore: OrganizationProjectStore,
+		private readonly httpClient: HttpClient
 	) {
 		super(translateService);
 		this.setView();
@@ -118,7 +126,7 @@ export class ProjectsComponent
 			});
 	}
 
-	ngOnDestroy() { }
+	ngOnDestroy() {}
 
 	private _initMethod() {
 		if (!this.organization) {
@@ -145,13 +153,12 @@ export class ProjectsComponent
 
 	async removeProject(id?: string, name?: string) {
 		const result = await firstValueFrom(
-			this.dialogService
-				.open(DeleteConfirmationComponent, {
-					context: {
-						recordType: 'Project'
-					}
-				})
-				.onClose);
+			this.dialogService.open(DeleteConfirmationComponent, {
+				context: {
+					recordType: 'Project'
+				}
+			}).onClose
+		);
 
 		if (result) {
 			await this.organizationProjectsService
@@ -199,10 +206,11 @@ export class ProjectsComponent
 					await this.organizationProjectsService
 						.create(project)
 						.then((project: IOrganizationProject) => {
-							this.organizationProjectStore.organizationProjectAction = {
-								project,
-								action: CrudActionEnum.CREATED
-							};
+							this.organizationProjectStore.organizationProjectAction =
+								{
+									project,
+									action: CrudActionEnum.CREATED
+								};
 						});
 				} else {
 					this.toastrService.danger(
@@ -220,10 +228,11 @@ export class ProjectsComponent
 				await this.organizationProjectsService
 					.edit(project)
 					.then((project: IOrganizationProject) => {
-						this.organizationProjectStore.organizationProjectAction = {
-							project,
-							action: CrudActionEnum.UPDATED
-						};
+						this.organizationProjectStore.organizationProjectAction =
+							{
+								project,
+								action: CrudActionEnum.UPDATED
+							};
 					});
 				break;
 		}
@@ -238,38 +247,47 @@ export class ProjectsComponent
 		this.loadProjects();
 	}
 
-	async loadProjects() {
-		this.loading = true;
+	public setSmartTable() {
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
-		this.organizationProjectsService
-			.getAll(
-				['organizationContact', 'members', 'members.user', 'tags'],
-				{ organizationId, tenantId }
-			)
-			.then(({ items }) => {
-				const canView = [];
-				if (this.viewPrivateProjects) {
-					this.projects = items;
-					this.smartTableSource.load(items);
-				} else {
-					items.forEach((item) => {
-						if (item.public) {
-							canView.push(item);
-						} else {
-							item.members.forEach((member) => {
-								if (member.id === this.store.userId) {
-									canView.push(item);
-								}
-							});
-						}
-					});
-					this.projects = canView;
-				}
-			})
-			.finally(() => {
+		this.loading = true;
+		this.smartTableSource = new ServerDataSource(this.httpClient, {
+			endPoint: `${API_PREFIX}/organization-projects/pagination`,
+			relations: [
+				'organizationContact',
+				'members',
+				'members.user',
+				'tags'
+			],
+			where: { organizationId, tenantId },
+			resultMap: (project: IOrganizationProject) => {
+				return Object.assign({}, project, {
+					...this.privatePublicProjectMapper(project)
+				});
+			},
+			finalize: () => {
 				this.loading = false;
-			});
+			}
+		});
+	}
+
+	async loadProjects() {
+		if (!this.organization) return;
+		try {
+			this.setSmartTable();
+		} catch (error) {
+			console.log(error);
+		}
+	}
+
+	public privatePublicProjectMapper(project: IOrganizationProject) {
+		return this.viewPrivateProjects
+			? project
+			: project.public
+			? project
+			: project.members.map(
+					(member: IEmployee) => member.id === this.store.userId
+			  );
 	}
 
 	loadSmartTable() {
@@ -294,17 +312,21 @@ export class ProjectsComponent
 					),
 					type: 'custom',
 					class: 'text-center',
-					renderComponent: ContactLinksComponent,
+					renderComponent: ContactLinksComponent
 				},
 				startDate: {
-					title: this.getTranslation('ORGANIZATIONS_PAGE.EDIT.START_DATE'),
+					title: this.getTranslation(
+						'ORGANIZATIONS_PAGE.EDIT.START_DATE'
+					),
 					type: 'custom',
 					filter: false,
 					renderComponent: DateViewComponent,
 					class: 'text-center'
 				},
 				endDate: {
-					title: this.getTranslation('ORGANIZATIONS_PAGE.EDIT.END_DATE'),
+					title: this.getTranslation(
+						'ORGANIZATIONS_PAGE.EDIT.END_DATE'
+					),
 					type: 'custom',
 					filter: false,
 					renderComponent: DateViewComponent,
