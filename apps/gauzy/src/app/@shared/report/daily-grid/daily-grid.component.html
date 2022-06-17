@@ -305,6 +305,18 @@
 						</ng-container>
 					</div>
 				</div>
+				<div class="responsive-table-row project-column">
+					<div class="responsive-table-header">
+						{{ 'REPORT_PAGE.CLIENT' | translate }}
+					</div>
+					<div class="responsive-table-content project-name">
+						<ng-container
+							*ngTemplateOutlet="
+							clientEl;
+							context: { $implicit: project?.client }">
+						</ng-container>
+					</div>
+				</div>
 				<div class="responsive-table-row todo-column">
 					<div class="responsive-table-header">
 						{{ 'REPORT_PAGE.TO_DO' | translate }}
