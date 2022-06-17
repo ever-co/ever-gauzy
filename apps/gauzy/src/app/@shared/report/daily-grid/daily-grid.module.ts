@@ -6,7 +6,8 @@ import {
 	NbIconModule,
 	NbSpinnerModule,
 	NbCardModule,
-	NbSelectModule
+	NbSelectModule,
+	NbAccordionModule
 } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
 import { SharedModule } from '../../shared.module';
@@ -20,13 +21,14 @@ import { ProjectColumnViewModule } from '../project-column-view/project-column-v
 		CommonModule,
 		SharedModule,
 		TranslateModule,
-		NbIconModule,
-		NbSpinnerModule,
+		NbAccordionModule,
 		NbCardModule,
-		FiltersModule,
+		NbIconModule,
 		NbSelectModule,
+		NbSpinnerModule,
+		FiltersModule,
 		FormsModule,
-		ProjectColumnViewModule,
+		ProjectColumnViewModule
 	]
 })
 export class DailyGridModule {}
