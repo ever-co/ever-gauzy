@@ -45,33 +45,37 @@
 		</ng-container>
 	</nb-card-body>
 </nb-card>
-<ng-template #actionButtons let-buttonSize="buttonSize">
-	<div class="actions">
-		<button
-			(click)="editProject(selectedProject)"
-			nbButton
-			status="basic"
-			*ngIf="!showAddCard"
-			class="action primary"
-			[disabled]="disableButton"
-			size="small"
-		>
-			<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
-			{{ 'BUTTONS.EDIT' | translate }}
-		</button>
-		<button
-			(click)="removeProject(selectedProject.id, selectedProject.name)"
-			nbButton
-			*ngIf="!showAddCard"
-			status="basic"
-			class="action"
-			[disabled]="disableButton"
-			size="small"
-			[nbTootip]="'BUTTONS.DELETE' | translate"
-		>
-			<nb-icon status="danger" icon="trash-2-outline"> </nb-icon>
-		</button>
-	</div>
+<ng-template #actionButtons>
+	<ng-container *ngxPermissionsOnly="['ALL_ORG_EDIT', 'ALL_ORG_VIEW']">
+		<div class="actions">
+			<button
+				(click)="editProject(selectedProject)"
+				nbButton
+				status="basic"
+				*ngIf="!showAddCard"
+				class="action primary"
+				[disabled]="disableButton"
+				size="small"
+			>
+				<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
+				{{ 'BUTTONS.EDIT' | translate }}
+			</button>
+			<button
+				(click)="
+					removeProject(selectedProject.id, selectedProject.name)
+				"
+				nbButton
+				*ngIf="!showAddCard"
+				status="basic"
+				class="action"
+				[disabled]="disableButton"
+				size="small"
+				[nbTootip]="'BUTTONS.DELETE' | translate"
+			>
+				<nb-icon status="danger" icon="trash-2-outline"> </nb-icon>
+			</button>
+		</div>
+	</ng-container>
 </ng-template>
 <ng-template #visibleButton>
 	<ng-container *ngxPermissionsOnly="['ALL_ORG_EDIT', 'ALL_ORG_VIEW']"
