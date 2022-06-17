@@ -1,8 +1,29 @@
+@import 'gauzy/_gauzy-dialogs';
+
 .project-toggle {
- 	margin-top: 20px;
+	margin-top: 20px;
 }
 
 .action-buttons {
 	display: flex;
-	justify-content: flex-end
+	justify-content: flex-start;
+}
+
+:host ::ng-deep {
+	nb-toggle {
+		div.checked+span.text {
+			color: var(--text-primary-color);
+		}
+		div+span.text {
+			color: var(--gauzy-text-color-2);
+		}
+	}
+	label {
+		font-size: 14px;
+		font-weight: 600;
+		line-height: 11px;
+		letter-spacing: 0em;
+		text-align: left;
+		color: var(--gauzy-text-color-2);
+	}
 }

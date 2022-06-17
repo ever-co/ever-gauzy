@@ -1,10 +1,4 @@
 <nb-card>
-	<nb-card-header>{{
-		(project
-			? 'ORGANIZATIONS_PAGE.EDIT.EDIT_PROJECT'
-			: 'ORGANIZATIONS_PAGE.EDIT.NEW_PROJECT'
-		) | translate
-	}}</nb-card-header>
 	<nb-card-body>
 		<form [formGroup]="form" (ngSubmit)="onSubmit()">
 			<nb-tabset>
@@ -20,12 +14,15 @@
 								nbInput
 								fullWidth
 								formControlName="name"
-								[placeholder]="'FORM.PLACEHOLDERS.NAME' | translate"
+								[placeholder]="
+									'FORM.PLACEHOLDERS.NAME' | translate
+								"
 								id="name"
 								[status]="
-									FormHelpers.isInvalidControl(form, 'name') 
-										? 'danger' 
-										: 'basic'"
+									FormHelpers.isInvalidControl(form, 'name')
+										? 'danger'
+										: 'basic'
+								"
 							/>
 						</div>
 						<div class="form-group col-4">
@@ -38,13 +35,15 @@
 								nbInput
 								fullWidth
 								formControlName="code"
-								[placeholder]="'FORM.PLACEHOLDERS.CODE' | translate"
+								[placeholder]="
+									'FORM.PLACEHOLDERS.CODE' | translate
+								"
 								id="code"
 							/>
 						</div>
 					</div>
 					<div class="row">
-						<div class="form-group col-4">
+						<div class="form-group col-8">
 							<label for="projectUrl" class="label">
 								{{ 'FORM.LABELS.PROJECT_URL' | translate }}
 							</label>
@@ -58,9 +57,13 @@
 								id="projectUrl"
 								formControlName="projectUrl"
 								[status]="
-									FormHelpers.isInvalidControl(form, 'projectUrl') 
-										? 'danger' 
-										: 'basic'"
+									FormHelpers.isInvalidControl(
+										form,
+										'projectUrl'
+									)
+										? 'danger'
+										: 'basic'
+								"
 							/>
 						</div>
 					</div>
@@ -115,63 +118,83 @@
 					</div>
 					<div class="row">
 						<div class="form-group col-4">
-							<label for="start-date-project" class="label">{{
-								'FORM.PLACEHOLDERS.START_DATE_PROJECT'
-									| translate
-							}}</label>
-							<input
-								[nbDatepicker]="startDate"
-								nbInput
-								fullWidth
-								formControlName="startDate"
-								placeholder="{{
+							<div class="w-75">
+								<label for="start-date-project" class="label">{{
 									'FORM.PLACEHOLDERS.START_DATE_PROJECT'
 										| translate
-								}}"
-								id="start-date-project"
-								[status]="
-									FormHelpers.isInvalidControl(form, 'startDate')
-										? 'danger'
-										: 'basic'
-								"
-							/>
-							<nb-datepicker #startDate></nb-datepicker>
+								}}</label>
+								<input
+									[nbDatepicker]="startDate"
+									nbInput
+									fullWidth
+									formControlName="startDate"
+									placeholder="{{
+										'FORM.PLACEHOLDERS.START_DATE_PROJECT'
+											| translate
+									}}"
+									id="start-date-project"
+									[status]="
+										FormHelpers.isInvalidControl(
+											form,
+											'startDate'
+										)
+											? 'danger'
+											: 'basic'
+									"
+								/>
+								<nb-datepicker #startDate></nb-datepicker>
+							</div>
 						</div>
 						<div class="form-group col-4">
-							<label for="end-date-project" class="label">{{
-								'FORM.PLACEHOLDERS.END_DATE_PROJECT' | translate
-							}}</label>
-							<input
-								[nbDatepicker]="endDate"
-								nbInput
-								fullWidth
-								formControlName="endDate"
-								placeholder="{{
+							<div class="w-75">
+								<label for="end-date-project" class="label">{{
 									'FORM.PLACEHOLDERS.END_DATE_PROJECT'
 										| translate
-								}}"
-								id="end-date-project"
-								[status]="
-									FormHelpers.isInvalidControl(form, 'endDate')
-										? 'danger'
-										: 'basic'
-								"
-							/>
-							<nb-datepicker #endDate></nb-datepicker>
+								}}</label>
+								<input
+									[nbDatepicker]="endDate"
+									nbInput
+									fullWidth
+									formControlName="endDate"
+									placeholder="{{
+										'FORM.PLACEHOLDERS.END_DATE_PROJECT'
+											| translate
+									}}"
+									id="end-date-project"
+									[status]="
+										FormHelpers.isInvalidControl(
+											form,
+											'endDate'
+										)
+											? 'danger'
+											: 'basic'
+									"
+								/>
+								<nb-datepicker #endDate></nb-datepicker>
+							</div>
 						</div>
 					</div>
 				</nb-tab>
-				<nb-tab [tabTitle]="'ORGANIZATIONS_PAGE.DESCRIPTION' | translate">
+				<nb-tab
+					[tabTitle]="'ORGANIZATIONS_PAGE.DESCRIPTION' | translate"
+				>
 					<div class="row">
 						<div class="col-8">
 							<label
 								for="description"
 								class="label"
-								[innerHtml]="'FORM.PLACEHOLDERS.DESCRIPTION' | translate"
+								[innerHtml]="
+									'FORM.PLACEHOLDERS.DESCRIPTION' | translate
+								"
 							></label>
-							<ckeditor formControlName="description" [config]="ckConfig"></ckeditor>
+							<ckeditor
+								formControlName="description"
+								[config]="ckConfig"
+							></ckeditor>
 						</div>
-						<div class="col-4">
+					</div>
+					<div class="row mt-3">
+						<div class="col-8">
 							<ga-tags-color-input
 								[selectedTags]="form.get('tags').value"
 								(selectedTagsEvent)="selectedTagsEvent($event)"
@@ -280,7 +303,9 @@
 						</div>
 					</div>
 				</nb-tab>
-				<nb-tab [tabTitle]="'ORGANIZATIONS_PAGE.OPEN_SOURCE' | translate">
+				<nb-tab
+					[tabTitle]="'ORGANIZATIONS_PAGE.OPEN_SOURCE' | translate"
+				>
 					<div class="row">
 						<div class="col-4 d-flex align-items-center">
 							<nb-toggle
@@ -297,7 +322,10 @@
 								}}
 							</nb-toggle>
 						</div>
-						<div *ngIf="form.get('openSource').value" class="form-group col-4">
+						<div
+							*ngIf="form.get('openSource').value"
+							class="form-group col-4"
+						>
 							<label for="openSourceProjectUrl" class="label">
 								{{
 									'FORM.LABELS.OPEN_SOURCE_PROJECT_URL'
@@ -312,14 +340,21 @@
 								id="openSourceProjectUrl"
 								formControlName="openSourceProjectUrl"
 								[status]="
-									FormHelpers.isInvalidControl(form, 'openSourceProjectUrl') 
-										? 'danger' 
-										: 'basic'"
+									FormHelpers.isInvalidControl(
+										form,
+										'openSourceProjectUrl'
+									)
+										? 'danger'
+										: 'basic'
+								"
 							/>
 						</div>
 					</div>
 				</nb-tab>
-				<nb-tab [tabTitle]="'ORGANIZATIONS_PAGE.SETTINGS' | translate" [style.minHeight]="'330px'">
+				<nb-tab
+					[tabTitle]="'ORGANIZATIONS_PAGE.SETTINGS' | translate"
+					[style.minHeight]="'330px'"
+				>
 					<div class="row">
 						<div class="form-group col-3">
 							<label for="color" class="label">{{
@@ -336,7 +371,9 @@
 								}}"
 								id="color"
 								[colorPicker]="form.get('color').value"
-								[style.background]="form.get('color').value"
+								[style.background-color]="
+									form.get('color').value + ' !important'
+								"
 								[style.color]="'#fff'"
 								autocomplete-off
 								[value]="form.get('color').value"
@@ -398,16 +435,17 @@
 				</nb-tab>
 			</nb-tabset>
 			<div class="form-group action-buttons">
-				<button 
-					class="mr-2"
+				<button
+					class="mr-3"
 					(click)="cancel()"
 					nbButton
-					status="danger"
+					status="basic"
+					outline
 				>
 					{{ 'BUTTONS.CANCEL' | translate }}
 				</button>
 				<button
-					class="mr-2"
+					class="mr-3"
 					type="submit"
 					nbButton
 					status="success"
@@ -416,7 +454,10 @@
 					{{ 'BUTTONS.SAVE' | translate }}
 				</button>
 				<button
-					*ngIf="form.get('taskViewMode').value === TaskListTypeEnum.SPRINT && project"
+					*ngIf="
+						form.get('taskViewMode').value ===
+							TaskListTypeEnum.SPRINT && project
+					"
 					nbButton
 					class="float-right"
 					status="success"
@@ -429,7 +470,9 @@
 	</nb-card-body>
 </nb-card>
 
-<div *ngIf="form.get('taskViewMode').value == TaskListTypeEnum.SPRINT && project">
+<div
+	*ngIf="form.get('taskViewMode').value == TaskListTypeEnum.SPRINT && project"
+>
 	<ngx-tasks-sprint-settings-view
 		[project]="project"
 	></ngx-tasks-sprint-settings-view>

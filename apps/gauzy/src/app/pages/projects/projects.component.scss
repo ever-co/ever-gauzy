@@ -1,1 +1,55 @@
 @import '../payments/payments.component.scss';
+
+h4 {
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 30px;
+  letter-spacing: 0em;
+  text-align: left;
+}
+
+:host {
+  .custom-body-content {
+    background-color: unset;
+    padding-bottom: 0;
+  }
+
+  ::ng-deep ga-projects-mutation {
+
+    input,
+    nb-select.appearance-outline.status-basic .select-button,
+    .ng-select .ng-select-container {
+      background-color: var(--background-basic-color-1) !important;
+    }
+
+    .ng-select .ng-select-container {
+      input {
+        background-color: unset !important;
+      }
+    }
+
+    nb-card {
+      margin: -16px -24px;
+    }
+
+    nb-card-body {
+      padding: 0;
+
+
+      nb-tab.content-active,
+      .action-buttons {
+        background-color: var(--gauzy-card-2);
+        margin: 0;
+      }
+
+      nb-tab.content-active {
+        height: calc(100vh - 29rem);
+      }
+
+      .action-buttons {
+        padding: 1rem 2rem;
+        border-radius: 0 0 var(--border-radius) var(--border-radius);
+      }
+    }
+  }
+}
