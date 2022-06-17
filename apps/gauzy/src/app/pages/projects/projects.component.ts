@@ -32,7 +32,8 @@ import { API_PREFIX, ComponentEnum } from '../../@core/constants';
 import {
 	ContactLinksComponent,
 	DateViewComponent,
-	PictureNameTagsComponent
+	ProjectComponent,
+	TagsOnlyComponent
 } from '../../@shared/table-components';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import { ServerDataSource } from '../../@core/utils/smart-table';
@@ -153,8 +154,14 @@ export class ProjectsComponent
 		this.store
 			.componentLayout$(this.viewComponentName)
 			.pipe(
-				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
-				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
+				tap(
+					(componentLayout) =>
+						(this.dataLayoutStyle = componentLayout)
+				),
+				filter(
+					(componentLayout) =>
+						componentLayout === ComponentLayoutStyleEnum.CARDS_GRID
+				),
 				tap(() => this.refreshPagination()),
 				tap(() => this.project$.next(true)),
 				untilDestroyed(this)
@@ -265,6 +272,7 @@ export class ProjectsComponent
 			endPoint: `${API_PREFIX}/organization-projects/pagination`,
 			relations: [
 				'organizationContact',
+				'organization',
 				'members',
 				'members.user',
 				'tags'
@@ -272,7 +280,8 @@ export class ProjectsComponent
 			where: { organizationId, tenantId },
 			resultMap: (project: IOrganizationProject) => {
 				return Object.assign({}, project, {
-					...this.privatePublicProjectMapper(project)
+					...this.privatePublicProjectMapper(project),
+					project: { ...this.privatePublicProjectMapper(project) }
 				});
 			},
 			finalize: () => {
@@ -326,10 +335,10 @@ export class ProjectsComponent
 					: this.minItemPerPage
 			},
 			columns: {
-				name: {
+				project: {
 					title: this.getTranslation('ORGANIZATIONS_PAGE.NAME'),
 					type: 'custom',
-					renderComponent: PictureNameTagsComponent
+					renderComponent: ProjectComponent
 				},
 				projectUrl: {
 					title: this.getTranslation(
@@ -381,6 +390,11 @@ export class ProjectsComponent
 					title: this.getTranslation('ORGANIZATIONS_PAGE.EDIT.OWNER'),
 					type: 'string',
 					filter: false
+				},
+				tags: {
+					title: this.getTranslation('SM_TABLE.TAGS'),
+					type: 'custom',
+					renderComponent: TagsOnlyComponent
 				}
 			}
 		};
