@@ -149,7 +149,7 @@
 				</div>
 				<div class="responsive-table-row employee-column">
 					<div class="responsive-table-header">
-						{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
+						{{ 'REPORT_PAGE.CLIENT' | translate }}
 					</div>
 					<div class="responsive-table-content project-name">
 						<ng-container
@@ -213,12 +213,28 @@
 						{{ 'REPORT_PAGE.DATE' | translate }}
 					</div>
 					<div class="responsive-table-content">
-						{{ day.date | dateFormat }}
+						<ng-container
+							*ngTemplateOutlet="
+								dateEl; 
+								context: { $implicit: day?.date }"
+						></ng-container>
 					</div>
 				</div>
 				<div class="responsive-table-row project-column">
 					<div class="responsive-table-header">
-						{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
+						{{ 'REPORT_PAGE.CLIENT' | translate }}
+					</div>
+					<div class="responsive-table-content">
+						<ng-container
+							*ngTemplateOutlet="
+							clientEl;
+							context: { $implicit: projectLog?.client }"
+						></ng-container>
+					</div>
+				</div>
+				<div class="responsive-table-row project-column">
+					<div class="responsive-table-header">
+						{{ 'REPORT_PAGE.PROJECT' | translate }}
 					</div>
 					<div class="responsive-table-content">
 						<ng-container
@@ -270,7 +286,11 @@
 						{{ 'REPORT_PAGE.DATE' | translate }}
 					</div>
 					<div class="responsive-table-content project-name">
-						{{ day.date | dateFormat }}
+						<ng-container
+							*ngTemplateOutlet="
+								dateEl; 
+								context: { $implicit: day?.date }"
+						></ng-container>
 					</div>
 				</div>
 				<div class="responsive-table-row project-column">
@@ -329,7 +349,11 @@
 								{{ 'REPORT_PAGE.DATE' | translate }}
 							</div>
 							<div class="responsive-table-content project-name">
-								{{ day.date | dateFormat }}
+								<ng-container
+									*ngTemplateOutlet="
+										dateEl; 
+										context: { $implicit: day?.date }"
+								></ng-container>
 							</div>
 						</div>
 						<div class="responsive-table-row employee-column">
