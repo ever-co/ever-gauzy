@@ -63,14 +63,17 @@ export class GetTimeLogGroupByEmployeeHandler
 									(reduce(pluck(slots, 'overall'), ArraySum, 0) * 100) / 
 									(reduce(pluck(slots, 'duration'), ArraySum, 0))
 								) || 0;
+
 								const project =
 									byProjectLogs.length > 0
 										? byProjectLogs[0].project
 										: null;
+
 								const task =
 									byProjectLogs.length > 0
 										? byProjectLogs[0].task
 										: null;
+
 								return {
 									task,
 									project,
@@ -79,8 +82,10 @@ export class GetTimeLogGroupByEmployeeHandler
 										parseFloat(avgActivity + '').toFixed(2)
 									)
 								};
+
 							})
 							.value();
+							
 						return {
 							date,
 							projectLogs: byProject

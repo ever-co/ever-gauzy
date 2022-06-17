@@ -64,10 +64,12 @@ export class GetTimeLogGroupByDateHandler
 									byEmployeeLogs.length > 0
 										? byEmployeeLogs[0].employee
 										: null;
+
 								const task =
 									byEmployeeLogs.length > 0
 										? byEmployeeLogs[0].task
 										: null;
+
 								return {
 									employee,
 									sum: sum,
@@ -76,14 +78,17 @@ export class GetTimeLogGroupByDateHandler
 										parseFloat(avgActivity + '').toFixed(2)
 									)
 								};
+
 							})
 							.value();
+
 						return {
 							project,
 							employeeLogs: byEmployee
 						};
 					})
 					.value();
+					
 				return {
 					date,
 					logs: byProject,
