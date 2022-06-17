@@ -50,7 +50,7 @@ export class ProjectsComponent
 	extends PaginationFilterBaseComponent
 	implements OnInit, OnDestroy
 {
-	loading: boolean;
+	loading: boolean = false;
 	settingsSmartTable: object;
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
@@ -64,7 +64,7 @@ export class ProjectsComponent
 	disableButton = true;
 	selectedProject: IOrganizationProject;
 	smartTableSource: ServerDataSource;
-	project$: Subject<boolean> = new Subject();
+	project$: Subject<any> = new Subject();
 
 	projectsTable: Ng2SmartTableComponent;
 	@ViewChild('projectsTable') set content(content: Ng2SmartTableComponent) {
@@ -93,7 +93,8 @@ export class ProjectsComponent
 	ngOnInit(): void {
 		this.project$
 			.pipe(
-				debounceTime(300),
+				debounceTime(100),
+				tap(() => (this.loading = true)),
 				tap(() => this.loadProjects()),
 				tap(() => this.loadOrganizationContacts()),
 				untilDestroyed(this)
@@ -135,7 +136,7 @@ export class ProjectsComponent
 			});
 		this.pagination$
 			.pipe(
-				debounceTime(300),
+				debounceTime(100),
 				distinctUntilChange(),
 				tap(() => this.project$.next(true)),
 				untilDestroyed(this)
@@ -152,7 +153,6 @@ export class ProjectsComponent
 		this.store
 			.componentLayout$(this.viewComponentName)
 			.pipe(
-				distinctUntilChange(),
 				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
 				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => this.refreshPagination()),
@@ -190,7 +190,7 @@ export class ProjectsComponent
 				}
 			);
 
-			this.loadProjects();
+			this.project$.next(true);
 		}
 	}
 
@@ -255,13 +255,12 @@ export class ProjectsComponent
 			}
 		);
 		this.cancel();
-		this.loadProjects();
+		this.project$.next(true);
 	}
 
 	public setSmartTable() {
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
-		this.loading = true;
 		this.smartTableSource = new ServerDataSource(this.httpClient, {
 			endPoint: `${API_PREFIX}/organization-projects/pagination`,
 			relations: [
@@ -287,8 +286,8 @@ export class ProjectsComponent
 	}
 
 	async loadProjects() {
-		if (!this.organization) return;
 		const { activePage, itemsPerPage } = this.getPagination();
+		if (!this.organization) return;
 		try {
 			this.setSmartTable();
 			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
@@ -302,10 +301,6 @@ export class ProjectsComponent
 		if (this.dataLayoutStyle === this.componentLayoutStyleEnum.CARDS_GRID) {
 			await this.smartTableSource.getElements();
 			this.projects = this.smartTableSource.getData();
-			this.setPagination({
-				...this.getPagination(),
-				totalItems: this.smartTableSource.count()
-			});
 		}
 	}
 
