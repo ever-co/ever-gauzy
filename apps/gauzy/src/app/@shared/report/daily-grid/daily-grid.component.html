@@ -45,6 +45,8 @@
 								context: { $implicit: day?.employee }
 							"
 						></ng-container>
+						<span class="ml-5">{{ day?.sum | durationFormat }}</span>
+						<span class="ml-5">{{ day?.activity || 0 }}%</span>
 					</ng-container>
 					<ng-container *ngSwitchCase="ReportGroupFilterEnum.project">
 						<ng-container
