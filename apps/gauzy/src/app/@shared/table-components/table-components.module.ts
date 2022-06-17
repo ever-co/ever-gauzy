@@ -28,6 +28,7 @@ import { EmailComponent } from './email/email.component';
 import { RoleComponent } from './role/role.component';
 import { ExternalLinkComponent } from './external-link/external-link.component';
 import { CompanyLogoComponent } from './company-logo/company-logo.component';
+import { ProjectOrganizationComponent } from './project-organization/project-organization.component';
 
 @NgModule({
 	imports: [
@@ -63,7 +64,8 @@ import { CompanyLogoComponent } from './company-logo/company-logo.component';
 		EmailComponent,
 		RoleComponent,
 		ExternalLinkComponent,
-		CompanyLogoComponent
+		CompanyLogoComponent,
+		ProjectOrganizationComponent
 	],
 	exports: [
 		NotesWithTagsComponent,
@@ -78,7 +80,8 @@ import { CompanyLogoComponent } from './company-logo/company-logo.component';
 		EmailComponent,
 		ExternalLinkComponent,
 		TagsOnlyComponent,
-		CompanyLogoComponent
+		CompanyLogoComponent,
+		ProjectOrganizationComponent
 	],
 	providers: []
 })

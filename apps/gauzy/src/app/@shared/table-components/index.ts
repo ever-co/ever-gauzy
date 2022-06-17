@@ -23,3 +23,4 @@ export * from './contact-with-tags/contact-with-tags.component';
 export * from './email/email.component';
 export * from './company-logo/company-logo.component';
 export * from './external-link/external-link.component';
+export * from './project-organization/project-organization.component';

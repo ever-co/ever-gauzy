@@ -8,13 +8,14 @@
 		<div class="member" *ngIf="project?.count">
 			Members count {{ project?.count }}
 		</div>
+		<div *ngIf="rowData?.projectUrl">
+			<a [href]="rowData.projectUrl">{{ this.rowData.projectUrl }}</a>
+		</div>
+		<div *ngIf="rowData?.owner">
+			<nb-badge
+				[status]="rowData?.owner === 'INTERNAL' ? 'primary' : 'danger'"
+				[text]="rowData?.owner | titlecase"
+			></nb-badge>
+		</div>
 	</span>
-</div>
-<div *ngIf="projects" class="project-render">
-	<ng-container *ngFor="let project of projects">
-		<img
-			*ngIf="project.organization"
-			src="{{ project.organization.imageUrl }}"
-		/>
-	</ng-container>
 </div>

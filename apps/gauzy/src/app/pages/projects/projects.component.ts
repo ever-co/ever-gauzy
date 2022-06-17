@@ -32,7 +32,7 @@ import { API_PREFIX, ComponentEnum } from '../../@core/constants';
 import {
 	ContactLinksComponent,
 	DateViewComponent,
-	ProjectComponent,
+	ProjectOrganizationComponent,
 	TagsOnlyComponent
 } from '../../@shared/table-components';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
@@ -280,8 +280,7 @@ export class ProjectsComponent
 			where: { organizationId, tenantId },
 			resultMap: (project: IOrganizationProject) => {
 				return Object.assign({}, project, {
-					...this.privatePublicProjectMapper(project),
-					project: { ...this.privatePublicProjectMapper(project) }
+					...this.privatePublicProjectMapper(project)
 				});
 			},
 			finalize: () => {
@@ -338,7 +337,7 @@ export class ProjectsComponent
 				project: {
 					title: this.getTranslation('ORGANIZATIONS_PAGE.NAME'),
 					type: 'custom',
-					renderComponent: ProjectComponent
+					renderComponent: ProjectOrganizationComponent
 				},
 				projectUrl: {
 					title: this.getTranslation(
