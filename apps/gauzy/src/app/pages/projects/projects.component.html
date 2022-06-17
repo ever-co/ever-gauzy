@@ -78,7 +78,7 @@
 	</ng-container>
 </ng-template>
 <ng-template #visibleButton>
-	<ng-container *ngxPermissionsOnly="['ALL_ORG_EDIT', 'ALL_ORG_VIEW']"
+	<ng-container *ngxPermissionsOnly="ALL_ORG_VIEW"
 		><button
 			*ngIf="!showAddCard"
 			class="action"
