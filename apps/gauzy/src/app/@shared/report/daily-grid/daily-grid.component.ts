@@ -35,7 +35,7 @@ export class DailyGridComponent extends BaseSelectorFilterComponent
 	payloads$: BehaviorSubject<ITimeLogFilters> = new BehaviorSubject(null);
 
 	dailyLogs: IReportDayData[] = [];
-	loading: boolean;
+	loading: boolean = false;
 	groupBy: ReportGroupByFilter = ReportGroupFilterEnum.date;
 	ReportGroupFilterEnum = ReportGroupFilterEnum;
 
@@ -99,13 +99,9 @@ export class DailyGridComponent extends BaseSelectorFilterComponent
 			'activityLevel',
 			'logType'
 		);
-		const baseRequest: IGetTimeLogReportInput = {
+		const request: IGetTimeLogReportInput = {
 			...appliedFilter,
 			...this.getFilterRequest(this.request),
-			groupBy: this.groupBy
-		}
-		const request = {
-			...baseRequest,
 			groupBy: this.groupBy
 		}
 		this.payloads$.next(request);
