@@ -9,7 +9,7 @@
 			Members count {{ project?.count }}
 		</div>
 		<div *ngIf="rowData?.projectUrl">
-			<a [href]="rowData.projectUrl">{{ this.rowData.projectUrl }}</a>
+			<a [href]="rowData?.projectUrl"  rel="noopener" target="_blank" >{{ this.rowData.projectUrl }}</a>
 		</div>
 		<div *ngIf="rowData?.owner">
 			<nb-badge
