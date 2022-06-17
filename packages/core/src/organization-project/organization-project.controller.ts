@@ -15,11 +15,13 @@ import {
 	Param,
 	Put,
 	Query,
-	UseGuards
+	UseGuards,
+	UsePipes,
+	ValidationPipe
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { CrudController } from './../core/crud';
+import { CrudController, PaginationParams } from './../core/crud';
 import { OrganizationProjectEditByEmployeeCommand } from './commands';
 import { OrganizationProject } from './organization-project.entity';
 import { OrganizationProjectService } from './organization-project.service';
@@ -40,10 +42,10 @@ export class OrganizationProjectController extends CrudController<OrganizationPr
 
 	/**
 	 * GET organization project by employee
-	 * 
-	 * @param id 
-	 * @param data 
-	 * @returns 
+	 *
+	 * @param id
+	 * @param data
+	 * @returns
 	 */
 	@ApiOperation({
 		summary: 'Find all organization projects by Employee.'
@@ -68,9 +70,9 @@ export class OrganizationProjectController extends CrudController<OrganizationPr
 
 	/**
 	 * UPDATE organization project by employee
-	 * 
-	 * @param body 
-	 * @returns 
+	 *
+	 * @param body
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'Update an existing record' })
 	@ApiResponse({
@@ -100,10 +102,10 @@ export class OrganizationProjectController extends CrudController<OrganizationPr
 
 	/**
 	 * UPDATE organization project task view mode
-	 * 
-	 * @param id 
-	 * @param body 
-	 * @returns 
+	 *
+	 * @param id
+	 * @param body
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'Update an existing record' })
 	@ApiResponse({
@@ -135,9 +137,9 @@ export class OrganizationProjectController extends CrudController<OrganizationPr
 
 	/**
 	 * GET organization project count
-	 * 
-	 * @param data 
-	 * @returns 
+	 *
+	 * @param data
+	 * @returns
 	 */
 	@ApiOperation({
 		summary: 'Find organization projects count.'
@@ -152,9 +154,7 @@ export class OrganizationProjectController extends CrudController<OrganizationPr
 		description: 'Record not found'
 	})
 	@Get('count')
-	async getCount(
-		@Query('data', ParseJsonPipe) data: any
-	): Promise<any> {
+	async getCount(@Query('data', ParseJsonPipe) data: any): Promise<any> {
 		const { relations, findInput } = data;
 		return this.organizationProjectService.count({
 			where: findInput,
@@ -164,9 +164,9 @@ export class OrganizationProjectController extends CrudController<OrganizationPr
 
 	/**
 	 * GET all organization project
-	 * 
-	 * @param data 
-	 * @returns 
+	 *
+	 * @param data
+	 * @returns
 	 */
 	@ApiOperation({
 		summary: 'Find all organization projects.'
@@ -182,7 +182,7 @@ export class OrganizationProjectController extends CrudController<OrganizationPr
 	})
 	@Get()
 	async findAll(
-		@Query('data', ParseJsonPipe) data: any,
+		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<IOrganizationProject>> {
 		const { relations, findInput } = data;
 		return this.organizationProjectService.findAll({
@@ -192,11 +192,38 @@ export class OrganizationProjectController extends CrudController<OrganizationPr
 	}
 
 	/**
+	 * GET all organization project by Pagination
+	 *
+	 * @param filter
+	 * @returns
+	 */
+	@ApiOperation({
+		summary:
+			'Find all organization project in the same tenant using pagination.'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found organization project in the tenant',
+		type: OrganizationProject
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Get('pagination')
+	@UsePipes(new ValidationPipe({ transform: true }))
+	async pagination(
+		@Query() filter: PaginationParams<IOrganizationProject>
+	): Promise<IPagination<IOrganizationProject>> {
+		return this.organizationProjectService.pagination(filter);
+	}
+
+	/**
 	 * UPDATE organization project by id
-	 * 
-	 * @param id 
-	 * @param body 
-	 * @returns 
+	 *
+	 * @param id
+	 * @param body
+	 * @returns
 	 */
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
