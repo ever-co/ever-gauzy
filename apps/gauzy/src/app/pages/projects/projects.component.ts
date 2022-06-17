@@ -294,8 +294,20 @@ export class ProjectsComponent
 		try {
 			this.setSmartTable();
 			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
+			this.loadGridLayoutData();
 		} catch (error) {
 			console.log(error);
+		}
+	}
+
+	private async loadGridLayoutData() {
+		if (this.dataLayoutStyle === this.componentLayoutStyleEnum.CARDS_GRID) {
+			await this.smartTableSource.getElements();
+			this.projects = this.smartTableSource.getData();
+			this.setPagination({
+				...this.getPagination(),
+				totalItems: this.smartTableSource.count()
+			});
 		}
 	}
 

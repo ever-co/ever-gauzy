@@ -42,6 +42,7 @@ import { TranslateModule } from '../../@shared/translate/translate.module';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
 import { PaginationModule } from '../../@shared/pagination/pagination.module';
+import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 
 @NgModule({
 	imports: [
@@ -83,7 +84,8 @@ import { PaginationModule } from '../../@shared/pagination/pagination.module';
 		HeaderTitleModule,
 		GauzyButtonActionModule,
 		NbTooltipModule,
-		PaginationModule
+		PaginationModule,
+		CardGridModule
 	],
 	declarations: [ProjectsComponent, ProjectsMutationComponent],
 	providers: [OrganizationProjectsService, OrganizationContactService]
