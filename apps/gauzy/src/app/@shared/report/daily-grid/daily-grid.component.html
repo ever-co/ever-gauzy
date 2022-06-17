@@ -65,16 +65,20 @@
 								context: { $implicit: day?.client }
 							"
 						></ng-container>
+						<span class="ml-5 mr-5">{{ day?.sum | durationFormat }}</span>
+						<span class="ml-5 mr-5">{{ day?.activity || 0 }}%</span>
 					</ng-container>
 					<ng-container *ngSwitchDefault>
 						<ng-container
 							*ngTemplateOutlet="
 								dateEl; 
 								context: {
-									$implicit: day
+									$implicit: day?.date
 								}
 							"
 						></ng-container>
+						<span class="ml-5 mr-5">{{ day?.sum | durationFormat }}</span>
+						<span class="ml-5 mr-5">{{ day?.activity || 0 }}%</span>
 					</ng-container>
 				</nb-accordion-item-header>
 				<nb-accordion-item-body>
@@ -414,10 +418,8 @@
 	</ng-template>
 </ng-template>
 
-<ng-template let-day #dateEl>
-	<span>{{ day?.date | dateFormat }}</span>
-	<span class="ml-5">{{ day?.sum | durationFormat }}</span>
-	<span class="ml-5">{{ day?.activity || 0 }}%</span>
+<ng-template let-date #dateEl>
+	<span>{{ date | dateFormat }}</span>
 </ng-template>
 
 <ng-template #columnsHeader>
