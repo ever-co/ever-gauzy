@@ -362,8 +362,12 @@ export class ProjectsComponent
 											'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.VISIBILITY',
 											{
 												name: visibility
-													? this.getTranslation('BUTTONS.VISIBLE')
-													: this.getTranslation('BUTTONS.PUBLIC')
+													? this.getTranslation(
+															'BUTTONS.PRIVATE'
+													  )
+													: this.getTranslation(
+															'BUTTONS.PUBLIC'
+													  )
 											}
 										);
 									})

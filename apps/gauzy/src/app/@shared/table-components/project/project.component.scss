@@ -4,12 +4,12 @@
   width: 100%;
   display: flex;
   justify-content: flex-start;
+  gap: 10px;
 
   img {
     width: 28px;
     height: 28px;
     border-radius: nb-theme(border-radius);
-    margin: 0 10px;
     box-shadow: 0 1px 1px 0 rgba(0, 0, 0, 0.25);
   }
 
