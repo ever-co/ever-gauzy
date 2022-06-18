@@ -27,6 +27,8 @@ import { LocationFormModule, LeafletMapModule } from '../../../../@shared/forms'
 import { CurrencyModule } from '../../../../@shared/currency/currency.module';
 import { PaginationModule } from '../../../../@shared/pagination/pagination.module';
 import { TagsColorInputModule } from '../../../../@shared/tags/tags-color-input/tags-color-input.module';
+import { GauzyButtonActionModule } from 'apps/gauzy/src/app/@shared/gauzy-button-action/gauzy-button-action.module';
+import { CardGridModule } from 'apps/gauzy/src/app/@shared/card-grid/card-grid.module';
 
 const NB_MODULES = [
 	NbCardModule,
@@ -63,7 +65,9 @@ const NB_MODULES = [
         LocationFormModule,
         LeafletMapModule,
         PaginationModule,
-        TagsColorInputModule
+        TagsColorInputModule,
+        GauzyButtonActionModule,
+        CardGridModule
     ],
     providers: [MerchantService]
 })

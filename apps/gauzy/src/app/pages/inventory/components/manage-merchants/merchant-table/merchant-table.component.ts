@@ -18,7 +18,7 @@ import {
 import { API_PREFIX, ComponentEnum } from './../../../../../@core/constants';
 import { MerchantService, Store, ToastrService } from '../../../../../@core/services';
 import { EnabledStatusComponent, ItemImgTagsComponent } from '../../table-components';
-import { PaginationFilterBaseComponent } from './../../../../../@shared/pagination/pagination-filter-base.component';
+import { IPaginationBase, PaginationFilterBaseComponent } from './../../../../../@shared/pagination/pagination-filter-base.component';
 import { ServerDataSource } from './../../../../../@core/utils/smart-table/server.data-source';
 import { DeleteConfirmationComponent } from './../../../../../@shared/user/forms';
 
@@ -74,9 +74,14 @@ export class MerchantTableComponent
 	ngOnInit(): void {
 		this._applyTranslationOnSmartTable();
 		this._loadSmartTableSettings();
-	}
-
-	ngAfterViewInit(): void {
+		this.pagination$
+			.pipe(
+				debounceTime(100),
+				distinctUntilChange(),
+				tap(() => this.merchants$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this.merchants$
 			.pipe(
 				debounceTime(300),
@@ -100,6 +105,10 @@ export class MerchantTableComponent
 			.subscribe();
 	}
 
+	ngAfterViewInit(): void {
+		
+	}
+
 	setView() {
 		this.viewComponentName = ComponentEnum.MERCHANTS;
 		this.store
@@ -116,10 +125,13 @@ export class MerchantTableComponent
 	}
 
 	async _loadSmartTableSettings() {
+		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
 			actions: false,
+			editable: true,
 			pager: {
-				perPage: this.pagination.itemsPerPage
+				display: false,
+				perPage: pagination ? pagination.itemsPerPage : 10
 			},
 			columns: {
 				name: {
@@ -261,6 +273,10 @@ export class MerchantTableComponent
 				return Object.assign({}, warehouse);
 			},
 			finalize: () => {
+				this.setPagination({
+					...this.getPagination(),
+					totalItems: this.smartTableSource.count()
+				});
 				this.loading = false;
 			}
 		});
@@ -272,16 +288,20 @@ export class MerchantTableComponent
 	private async getMerchants() {
 		try {
 			this.setSmartTableSource();
+			const { activePage, itemsPerPage } = this.getPagination();
+			this.smartTableSource.setPaging(
+				activePage,
+				itemsPerPage,
+				false
+			);
 			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
-
-				// Initiate GRID view pagination
-				const { activePage, itemsPerPage } = this.pagination;
-				this.smartTableSource.setPaging(activePage, itemsPerPage, false);
-
 				await this.smartTableSource.getElements();
 				this.merchants = this.smartTableSource.getData();
 
-				this.pagination['totalItems'] = this.smartTableSource.count();
+				this.setPagination({
+					...this.getPagination(),
+					totalItems: this.smartTableSource.count()
+				});
 			}
 		} catch (error) {
 			this.toastrService.danger(error);
