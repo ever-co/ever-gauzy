@@ -59,7 +59,7 @@ export class ProjectsComponent
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
 	organization: IOrganization;
-	showAddCard: boolean;
+	showAddCard: boolean = false;
 	projects: IOrganizationProject[] = [];
 	organizationContacts: IOrganizationContact[] = [];
 	projectToEdit: IOrganizationProject;
@@ -97,7 +97,7 @@ export class ProjectsComponent
 		this.project$
 			.pipe(
 				debounceTime(100),
-				tap(() => (this.loading = true)),
+				tap(() => (this.loading = !this.showAddCard)),
 				tap(() => this.loadProjects()),
 				tap(() => this.loadOrganizationContacts()),
 				untilDestroyed(this)
@@ -134,7 +134,6 @@ export class ProjectsComponent
 				if (params.get('openAddDialog')) {
 					this.showAddCard =
 						params.get('openAddDialog') === 'true' ? true : false;
-					this.project$.next(true);
 				}
 			});
 		this.pagination$
