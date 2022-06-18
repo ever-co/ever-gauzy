@@ -14,7 +14,7 @@ import { DeleteConfirmationComponent } from './../../../../../@shared/user/forms
 import { API_PREFIX, ComponentEnum } from './../../../../../@core/constants';
 import { Store, ToastrService, WarehouseService } from './../../../../../@core/services';
 import { ContactRowComponent, EnabledStatusComponent, ItemImgTagsComponent } from '../../table-components';
-import { PaginationFilterBaseComponent } from './../../../../../@shared/pagination/pagination-filter-base.component';
+import { IPaginationBase, PaginationFilterBaseComponent } from './../../../../../@shared/pagination/pagination-filter-base.component';
 import { ServerDataSource } from './../../../../../@core/utils/smart-table/server.data-source';
 
 @UntilDestroy({ checkProperties: true })
@@ -38,7 +38,7 @@ export class WarehousesTableComponent
 	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
 
 	public organization: IOrganization;
-	warhouses$: Subject<any> = this.subject$;
+	warehouses$: Subject<any> = this.subject$;
 
 	warehousesTable: Ng2SmartTableComponent;
 	@ViewChild('warehousesTable') set content(content: Ng2SmartTableComponent) {
@@ -72,7 +72,16 @@ export class WarehousesTableComponent
 	}
 
 	ngAfterViewInit(): void {
-		this.warhouses$
+		this.pagination$
+			.pipe(
+				debounceTime(100),
+				distinctUntilChange(),
+				tap(() => this.warehouses$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+
+		this.warehouses$
 			.pipe(
 				debounceTime(300),
 				tap(() => this.loading = true),
@@ -89,7 +98,7 @@ export class WarehousesTableComponent
 				filter(([organization]) => !!organization),
 				tap(([organization]) => (this.organization = organization)),
 				distinctUntilChange(),
-				tap(() => this.warhouses$.next(true)),
+				tap(() => this.warehouses$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -104,7 +113,7 @@ export class WarehousesTableComponent
 				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
 				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => this.refreshPagination()),
-				tap(() => this.warhouses$.next(true)),
+				tap(() => this.warehouses$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -123,10 +132,13 @@ export class WarehousesTableComponent
 	}
 
 	async _loadSmartTableSettings() {
+		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
 			actions: false,
+			editable: true,
 			pager: {
-				perPage: this.pagination.itemsPerPage
+				display: false,
+				perPage: pagination ? pagination.itemsPerPage : 10
 			},
 			columns: {
 				name: {
@@ -211,7 +223,7 @@ export class WarehousesTableComponent
 					}
 				})
 				.finally(() => {
-					this.warhouses$.next(true);
+					this.warehouses$.next(true);
 				});
 		}
 	}
@@ -234,6 +246,10 @@ export class WarehousesTableComponent
 				return Object.assign({}, warehouse);
 			},
 			finalize: () => {
+				this.setPagination({
+					...this.getPagination(),
+					totalItems: this.smartTableSource.count()
+				});
 				this.loading = false;
 			}
 		});
@@ -245,16 +261,22 @@ export class WarehousesTableComponent
 	private async getWarehouses() {
 		try {
 			this.setSmartTableSource();
+			const { activePage, itemsPerPage } = this.getPagination();
+
+			this.smartTableSource.setPaging(
+				activePage,
+				itemsPerPage,
+				false
+			);
+			
 			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
-
-				// Initiate GRID view pagination
-				const { activePage, itemsPerPage } = this.pagination;
-				this.smartTableSource.setPaging(activePage, itemsPerPage, false);
-
 				await this.smartTableSource.getElements();
 				this.warehouses = this.smartTableSource.getData();
 
-				this.pagination['totalItems'] = this.smartTableSource.count();
+				this.setPagination({
+					...this.getPagination(),
+					totalItems: this.smartTableSource.count()
+				});
 			}
 		} catch (error) {
 			this.toastrService.danger(error);

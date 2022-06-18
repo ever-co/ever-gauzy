@@ -32,6 +32,7 @@ import { LeafletMapModule, LocationFormModule } from './../../../../@shared/form
 import { TagsColorInputModule } from './../../../../@shared/tags/tags-color-input/tags-color-input.module';
 import { PaginationModule } from '../../../../@shared/pagination/pagination.module';
 import { CardGridModule } from '../../../../@shared/card-grid/card-grid.module';
+import { GauzyButtonActionModule } from 'apps/gauzy/src/app/@shared/gauzy-button-action/gauzy-button-action.module';
 
 
 const NB_MODULES = [
@@ -75,6 +76,8 @@ const NB_MODULES = [
         LeafletMapModule,
         TagsColorInputModule,
         PaginationModule,
+        CardGridModule,
+        GauzyButtonActionModule,
         CardGridModule
     ],
     providers: [WarehouseService]
