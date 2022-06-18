@@ -39,7 +39,7 @@
 		<div class="daily-time-report mt-4">
 			<div class="daily-time-report">
 				<nb-card>
-					<nb-card-body>
+					<nb-card-body class="chart">
 						<ngx-line-chart 
 							[data]="chartData"
 						></ngx-line-chart>
@@ -53,7 +53,7 @@
 				[nbSpinner]="loading"
 				nbSpinnerSize="giant"
 				nbSpinnerStatus="primary">
-				<nb-card *ngIf="weekLogs?.length > 0; else notFound">
+				<nb-card class="m-0" *ngIf="weekLogs?.length > 0; else notFound">
 					<nb-card-header>
 						{{ 'MENU.REPORTS' | translate }}
 					</nb-card-header>
