@@ -17,7 +17,7 @@ import { ProductCategoryMutationComponent } from '../../../../@shared/product-mu
 import { DeleteConfirmationComponent } from '../../../../@shared/user/forms';
 import { API_PREFIX, ComponentEnum } from '../../../../@core/constants';
 import { ProductCategoryService, Store, ToastrService } from './../../../../@core/services';
-import { PaginationFilterBaseComponent } from './../../../../@shared/pagination/pagination-filter-base.component';
+import { IPaginationBase, PaginationFilterBaseComponent } from './../../../../@shared/pagination/pagination-filter-base.component';
 import { ServerDataSource } from './../../../../@core/utils/smart-table/server.data-source';
 
 @UntilDestroy({ checkProperties: true })
@@ -30,10 +30,6 @@ export class ProductCategoriesComponent
 	extends PaginationFilterBaseComponent
 	implements AfterViewInit, OnInit {
 
-	pagination: any = {
-		...this.pagination,
-		itemsPerPage: 8
-	};
 	smartTableSource: ServerDataSource;
 	settingsSmartTable: object;
 	loading: boolean;
@@ -70,18 +66,22 @@ export class ProductCategoriesComponent
 		this.setView();
 	}
 
-	ngOnInit(): void {
-		this._applyTranslationOnSmartTable();
+	ngOnInit() {
 		this._loadSmartTableSettings();
-	}
-
-	ngAfterViewInit() {
+		this._applyTranslationOnSmartTable();
 		this.categories$
 			.pipe(
-				debounceTime(300),
-				tap(() => this.loading = true),
-				tap(() => this.getTranslatedProductCategories()),
+				debounceTime(100),
 				tap(() => this.clearItem()),
+				tap(() => this.getTranslatedProductCategories()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.pagination$
+			.pipe(
+				debounceTime(100),
+				distinctUntilChange(),
+				tap(() => this.categories$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -90,15 +90,19 @@ export class ProductCategoriesComponent
 		const preferredLanguage$ = this.store.preferredLanguage$
 
 		combineLatest([storeOrganization$, preferredLanguage$])
-			.pipe(
-				debounceTime(300),
-				filter(([organization, language]) => !!organization && !!language),
-				tap(([organization]) => this.organization = organization),
-				distinctUntilChange(),
-				tap(() => this.categories$.next(true)),
-				untilDestroyed(this)
-			)
-			.subscribe();
+				.pipe(
+					debounceTime(300),
+					filter(([organization, language]) => !!organization && !!language),
+					tap(([organization]) => this.organization = organization),
+					distinctUntilChange(),
+					tap(() => this.categories$.next(true)),
+					untilDestroyed(this)
+				)
+				.subscribe();
+	}
+
+	ngAfterViewInit() {
+		
 	}
 
 	/*
@@ -129,10 +133,13 @@ export class ProductCategoriesComponent
 	}
 
 	async _loadSmartTableSettings() {
+		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
 			actions: false,
+			editable: true,
 			pager: {
-				perPage: this.pagination.itemsPerPage
+				display: false,
+				perPage: pagination ? pagination.itemsPerPage : 10
 			},
 			columns: {
 				imageUrl: {
@@ -270,12 +277,17 @@ export class ProductCategoriesComponent
 				'translations'
 			],
 			where: {
-				...{ organizationId, tenantId }
+				...{ organizationId, tenantId },
+				...this.filters.where
 			},
 			resultMap: (item: IProductCategoryTranslated) => {
 				return Object.assign({}, item);
 			},
 			finalize: () => {
+				this.setPagination({
+					...this.getPagination(),
+					totalItems: this.smartTableSource.count()
+				});
 				this.loading = false;
 			}
 		});
@@ -287,16 +299,21 @@ export class ProductCategoriesComponent
 	private async getTranslatedProductCategories() {
 		try {
 			this.setSmartTableSource();
+
+			const { activePage, itemsPerPage } = this.getPagination();
+			this.smartTableSource.setPaging(
+				activePage,
+				itemsPerPage,
+				false
+			);
 			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
-
-				// Initiate GRID view pagination
-				const { activePage, itemsPerPage } = this.pagination;
-				this.smartTableSource.setPaging(activePage, itemsPerPage, false);
-
 				await this.smartTableSource.getElements();
 				this.productCategories = this.smartTableSource.getData();
 
-				this.pagination['totalItems'] = this.smartTableSource.count();
+				this.setPagination({
+					...this.getPagination(),
+					totalItems: this.smartTableSource.count()
+				});
 			}
 		} catch (error) {
 			this.toastrService.danger(error);
