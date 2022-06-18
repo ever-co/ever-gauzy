@@ -147,6 +147,16 @@ nb-card, nb-card-body, .card {
         border-bottom: none;
     }
 
+    nb-accordion-item-header{
+        display: flex;
+        justify-content: space-between;
+        .stats{
+            display: flex;
+            gap: 1rem;
+            margin: 0 2rem;
+        }
+    }
+
     nb-accordion-item-body {
         background-color: var(--gauzy-sidebar-background-2);
         border-radius:  0 0 var(--border-radius) var(--border-radius);
