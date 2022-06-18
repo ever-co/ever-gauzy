@@ -1,11 +1,11 @@
 <ng-container *ngxPermissionsOnly="item?.data?.permissionKeys">
 	<ng-container *ngIf="!collapse; else withNbTooltip">
 		<div
-			[class]="parent?.children?.at(-1) === item ? '' : 'border-bottom'"
+			[ngClass]="{ 'border-bottom': !isLast() }"
 			*ngIf="!item?.hidden"
 			[gaTooltip]="item?.title"
 			[icon]="item?.icon"
-			[ngClass]="
+			[class]="
 				selected
 					? !collapse
 						? 'sub-item selected custom'
@@ -24,11 +24,11 @@
 	</ng-container>
 	<ng-template #withNbTooltip>
 		<div
-			[class]="parent?.children?.at(-1) === item ? '' : 'border-bottom'"
+			[ngClass]="{ 'border-bottom': !isLast() }"
 			*ngIf="!item?.hidden"
 			[nbTooltip]="item?.title"
 			nbTooltipPlacement="right"
-			[ngClass]="
+			[class]="
 				selected
 					? !collapse
 						? 'sub-item selected custom'
