@@ -56,3 +56,13 @@
         }
     }
 }
+
+:host {
+    nb-badge{
+        position: relative;
+        font-size: 14px;
+        font-weight: 600;
+        padding: 4px;
+        border-radius: calc(var(--border-radius) / 2);
+    }
+}

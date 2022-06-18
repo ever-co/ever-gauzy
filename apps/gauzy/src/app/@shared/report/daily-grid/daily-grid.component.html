@@ -41,28 +41,38 @@
 					<ng-container
 						*ngSwitchCase="ReportGroupFilterEnum.employee"
 					>
-							<ng-container
-								*ngTemplateOutlet="
-									employeeEl;
-									context: { $implicit: day?.employee }
-								"
-							></ng-container>
-							<div class="stats">
-								<span>{{ day?.sum | durationFormat }}</span>
-								<span>{{ day?.activity || 0 }}%</span>
-							</div>
+						<ng-container
+							*ngTemplateOutlet="
+								employeeEl;
+								context: { $implicit: day?.employee }
+							"
+						></ng-container>
+						<div class="stats">
+							<span>{{ day?.sum | durationFormat }}</span>
+							<span
+								><nb-badge
+									[status]="getStatus(day?.activity || 0)"
+									[text]="(day?.activity || 0)+'%'"
+								></nb-badge
+							></span>
+						</div>
 					</ng-container>
 					<ng-container *ngSwitchCase="ReportGroupFilterEnum.project">
-							<ng-container
-								*ngTemplateOutlet="
-									projectEl;
-									context: { $implicit: day?.project }
-								"
-							></ng-container>
-							<div class="stats">
-								<span>{{ day?.sum | durationFormat }}</span>
-								<span>{{ day?.activity || 0 }}%</span>
-							</div>
+						<ng-container
+							*ngTemplateOutlet="
+								projectEl;
+								context: { $implicit: day?.project }
+							"
+						></ng-container>
+						<div class="stats">
+							<span>{{ day?.sum | durationFormat }}</span>
+							<span
+								><nb-badge
+									[status]="getStatus(day?.activity || 0)"
+									[text]="(day?.activity || 0)+'%'"
+								></nb-badge
+							></span>
+						</div>
 					</ng-container>
 					<ng-container *ngSwitchCase="ReportGroupFilterEnum.client">
 						<ng-container
@@ -73,7 +83,12 @@
 						></ng-container>
 						<div class="stats">
 							<span>{{ day?.sum | durationFormat }}</span>
-							<span>{{ day?.activity || 0 }}%</span>
+							<span
+								><nb-badge
+									[status]="getStatus(day?.activity || 0)"
+									[text]="(day?.activity || 0)+'%'"
+								></nb-badge
+							></span>
 						</div>
 					</ng-container>
 					<ng-container *ngSwitchDefault>
@@ -87,7 +102,12 @@
 						></ng-container>
 						<div class="stats">
 							<span>{{ day?.sum | durationFormat }}</span>
-							<span>{{ day?.activity || 0 }}%</span>
+							<span
+								><nb-badge
+									[status]="getStatus(day?.activity || 0)"
+									[text]="(day?.activity || 0)+'%'"
+								></nb-badge
+							></span>
 						</div>
 					</ng-container>
 				</nb-accordion-item-header>
