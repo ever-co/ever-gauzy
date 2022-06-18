@@ -14,10 +14,12 @@
 		div.checked+span.text {
 			color: var(--text-primary-color);
 		}
+
 		div+span.text {
 			color: var(--gauzy-text-color-2);
 		}
 	}
+
 	label {
 		font-size: 14px;
 		font-weight: 600;
