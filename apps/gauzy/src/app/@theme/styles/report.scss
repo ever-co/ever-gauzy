@@ -1,5 +1,6 @@
 @import 'themes';
 @import 'var';
+@import './gauzy/gauzy-overrides';
 
 @mixin mobile-table-styles {
     ::ng-deep {
@@ -33,7 +34,6 @@
     }
     .responsive-table-header {
         display: block;
-        font-family: Inter;
         font-size: 16px;
         font-style: normal;
         font-weight: 600;
@@ -70,7 +70,6 @@ nb-card, nb-card-body, .card {
         margin-bottom: 10px;
 
         & .label {
-            font-family: Inter;
             font-size: 12px;
             font-style: normal;
             font-weight: 600;
@@ -83,7 +82,6 @@ nb-card, nb-card-body, .card {
             padding: 5px 12px !important;
             border-radius: nb-theme(select-rectangle-border-radius);
             height: 30px;
-            font-family: Inter;
             font-size: 12px;
             font-style: normal;
             font-weight: 400;
@@ -93,6 +91,11 @@ nb-card, nb-card-body, .card {
             min-width: auto;
             display: flex;
             align-items: center;
+            @include nb-select-overrides(
+                $default-height,
+                $default-radius,
+                $default-box-shadow
+              );
 
             & > span {
                 margin-right: 25px;
@@ -114,7 +117,6 @@ nb-card, nb-card-body, .card {
             display: flex;
             align-items: center;
             padding-left: 12px !important;
-
             & nb-icon {
                 color: nb-theme(text-basic-color) !important;
             }
@@ -134,7 +136,7 @@ nb-card, nb-card-body, .card {
             margin-bottom: 0;
             border-bottom: none;
         }
-        & nb-card-body, nb-accordion-item-body {
+        & nb-card-body {
             background-color: nb-theme(gauzy-card-2);
         }
     }
@@ -145,9 +147,33 @@ nb-card, nb-card-body, .card {
         border-bottom: none;
     }
 
-    nb-card-body, nb-accordion-item-body {
-        background-color: nb-theme(gauzy-card-2);
-        padding: 18px;
+    nb-accordion-item-body {
+        background-color: var(--gauzy-sidebar-background-2);
+        border-radius:  0 0 var(--border-radius) var(--border-radius);
+    }
+
+    nb-card-body{
+        background-color: var(--gauzy-card-2);
+    }
+
+    ::ng-deep {
+        @include nb-select-overrides(
+                2rem,
+                $default-button-radius,
+                $default-box-shadow
+              );
+    }
+}
+
+:host nb-accordion{
+    display: flex;
+    flex-direction: column;
+    row-gap: 1rem;
+    box-shadow: unset;
+    ::ng-deep{
+        .item-body {
+            border-radius:  0 0 var(--border-radius) var(--border-radius);
+        }
     }
 }
 
@@ -186,7 +212,6 @@ nb-card, nb-card-body, .card {
     margin-bottom: 10px;
     padding-top: 12px;
     padding-bottom: 12px;
-    font-family: Inter;
     font-size: 12px;
     font-style: normal;
     font-weight: 600;
