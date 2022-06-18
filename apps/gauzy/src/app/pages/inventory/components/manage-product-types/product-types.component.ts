@@ -35,12 +35,8 @@ import { InputFilterComponent } from 'apps/gauzy/src/app/@shared/table-filters';
 })
 export class ProductTypesComponent
 	extends PaginationFilterBaseComponent
-	implements AfterViewInit, OnInit, OnDestroy {
+	implements OnInit, OnDestroy {
 
-	// pagination: any = {
-	// 	...this.pagination,
-	// 	itemsPerPage: 8
-	// };
 	smartTableSource: ServerDataSource;
 	settingsSmartTable: object;
 	loading: boolean;
@@ -114,32 +110,6 @@ export class ProductTypesComponent
 					untilDestroyed(this)
 				)
 				.subscribe();
-	}
-
-	ngAfterViewInit() {
-		// this.types$
-		// 	.pipe(
-		// 		debounceTime(300),
-		// 		tap(() => this.loading = true),
-		// 		tap(() => this.getTranslatedProductTypes()),
-		// 		tap(() => this.clearItem()),
-		// 		untilDestroyed(this)
-		// 	)
-		// 	.subscribe();
-
-		// const storeOrganization$ = this.store.selectedOrganization$;
-		// const preferredLanguage$ = this.store.preferredLanguage$
-
-		// combineLatest([storeOrganization$, preferredLanguage$])
-		// 	.pipe(
-		// 		debounceTime(300),
-		// 		filter(([organization, language]) => !!organization && !!language),
-		// 		tap(([organization]) => this.organization = organization),
-		// 		distinctUntilChange(),
-		// 		tap(() => this.types$.next(true)),
-		// 		untilDestroyed(this)
-		// 	)
-		// 	.subscribe();
 	}
 
 	setView() {
