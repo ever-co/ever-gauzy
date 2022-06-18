@@ -154,8 +154,8 @@ export class MerchantTableComponent
 						type: 'custom',
 						component: InputFilterComponent
 					},
-					filterFunction: (name: string) => {
-						this.setFilter({ field: 'name', search: name });
+					filterFunction: (code: string) => {
+						this.setFilter({ field: 'code', search: code });
 					}
 				},
 				contact: {
@@ -189,7 +189,8 @@ export class MerchantTableComponent
 				active: {
 					title: this.getTranslation('INVENTORY_PAGE.ACTIVE'),
 					type: 'custom',
-					renderComponent: EnabledStatusComponent
+					renderComponent: EnabledStatusComponent,
+					filter: false,
 				}
 			}
 		}

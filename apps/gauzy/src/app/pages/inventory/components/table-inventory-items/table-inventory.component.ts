@@ -16,12 +16,13 @@ import {
 	IProductTranslated,
 	PermissionsEnum
 } from '@gauzy/contracts';
-import { PaginationFilterBaseComponent } from './../../../../@shared/pagination/pagination-filter-base.component';
+import { IPaginationBase, PaginationFilterBaseComponent } from './../../../../@shared/pagination/pagination-filter-base.component';
 import { DeleteConfirmationComponent } from '../../../../@shared/user/forms';
 import { API_PREFIX, ComponentEnum } from '../../../../@core/constants';
 import { ProductService, Store, ToastrService } from '../../../../@core/services';
 import { ServerDataSource } from './../../../../@core/utils/smart-table/server.data-source';
 import { ItemImgTagsComponent } from '../table-components';
+import { InputFilterComponent } from 'apps/gauzy/src/app/@shared/table-filters';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -79,6 +80,14 @@ export class TableInventoryComponent
 	}
 
 	ngAfterViewInit() {
+		this.pagination$
+			.pipe(
+				debounceTime(100),
+				distinctUntilChange(),
+				tap(() => this.products$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this.products$
 			.pipe(
 				debounceTime(300),
@@ -132,10 +141,13 @@ export class TableInventoryComponent
 	}
 
 	private _loadSmartTableSettings() {
+		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
 			actions: false,
+			editable: true,
 			pager: {
-				perPage: this.pagination.itemsPerPage
+				display: false,
+				perPage: pagination ? pagination.itemsPerPage : 10
 			},
 			columns: {
 				name: {
@@ -144,11 +156,25 @@ export class TableInventoryComponent
 					renderComponent: ItemImgTagsComponent,
 					valuePrepareFunction: (name: string) => {
 						return name || '-';
+					},
+					filter: {
+						type: 'custom',
+						component: InputFilterComponent
+					},
+					filterFunction: (name: string) => {
+						this.setFilter({ field: 'name', search: name });
 					}
 				},
 				code: {
 					title: this.getTranslation('INVENTORY_PAGE.CODE'),
-					type: 'string'
+					type: 'string',
+					filter: {
+						type: 'custom',
+						component: InputFilterComponent
+					},
+					filterFunction: (code: string) => {
+						this.setFilter({ field: 'code', search: code });
+					}
 				},
 				productType: {
 					title: this.getTranslation('INVENTORY_PAGE.PRODUCT_TYPE'),
@@ -287,6 +313,10 @@ export class TableInventoryComponent
 				return Object.assign({}, product);
 			},
 			finalize: () => {
+				this.setPagination({
+					...this.getPagination(),
+					totalItems: this.smartTableSource.count()
+				});
 				this.loading = false;
 			}
 		});
@@ -298,16 +328,22 @@ export class TableInventoryComponent
 	private async getTranslatedProducts() {
 		try {
 			this.setSmartTableSource();
+			const { activePage, itemsPerPage } = this.getPagination();
+
+			this.smartTableSource.setPaging(
+				activePage,
+				itemsPerPage,
+				false
+			);
+
 			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
-
-				// Initiate GRID view pagination
-				const { activePage, itemsPerPage } = this.pagination;
-				this.smartTableSource.setPaging(activePage, itemsPerPage, false);
-
 				await this.smartTableSource.getElements();
 				this.products = this.smartTableSource.getData();
 
-				this.pagination['totalItems'] = this.smartTableSource.count();
+				this.setPagination({
+					...this.getPagination(),
+					totalItems: this.smartTableSource.count()
+				});
 			}
 		} catch (error) {
 			this.toastrService.danger(error);
