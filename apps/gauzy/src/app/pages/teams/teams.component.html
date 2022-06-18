@@ -2,7 +2,6 @@
 	[nbSpinner]="loading"
 	nbSpinnerStatus="primary"
 	nbSpinnerSize="large"
-	class="card-scroll"
 >
 	<nb-card-header class="card-custom-header">
 		<div class="card-header-title">
@@ -92,7 +91,7 @@
 			<button
 				nbButton
 				status="basic"
-				class="action secondary"
+				class="action primary"
 				[disabled]="!selectedItem && disableButton"
 				(click)="editTeam(selectedItem)"
 				size="small"		
