@@ -1,10 +1,5 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import {
-	ActivatedRoute,
-	Router,
-	RouterEvent,
-	NavigationEnd
-} from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, tap } from 'rxjs/operators';
@@ -42,6 +37,8 @@ import { HttpClient } from '@angular/common/http';
 import { PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
 import { distinctUntilChange } from 'packages/common-angular/dist';
 import { VisibilityComponent } from '../../@shared/table-components/visibility/visibility.component';
+import { ProjectOrganizationGridComponent } from '../../@shared/table-components/project-organization-grid/project-organization-grid.component';
+import { ProjectOrganizationGridDetailsComponent } from '../../@shared/table-components/project-organization-grid-details/project-organization-grid-details.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -54,7 +51,7 @@ export class ProjectsComponent
 	implements OnInit, OnDestroy
 {
 	loading: boolean = false;
-	settingsSmartTable: object;
+	settingsSmartTable: any;
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
@@ -96,7 +93,7 @@ export class ProjectsComponent
 	ngOnInit(): void {
 		this.project$
 			.pipe(
-				debounceTime(100),
+				debounceTime(300),
 				tap(() => (this.loading = !this.showAddCard)),
 				tap(() => this.loadProjects()),
 				tap(() => this.loadOrganizationContacts()),
@@ -120,13 +117,6 @@ export class ProjectsComponent
 				this.viewPrivateProjects = this.store.hasPermission(
 					PermissionsEnum.ACCESS_PRIVATE_PROJECTS
 				);
-			});
-		this.router.events
-			.pipe(untilDestroyed(this))
-			.subscribe((event: RouterEvent) => {
-				if (event instanceof NavigationEnd) {
-					this.setView();
-				}
 			});
 		this.route.queryParamMap
 			.pipe(untilDestroyed(this))
@@ -155,15 +145,18 @@ export class ProjectsComponent
 		this.store
 			.componentLayout$(this.viewComponentName)
 			.pipe(
+				debounceTime(300),
 				tap(
 					(componentLayout) =>
 						(this.dataLayoutStyle = componentLayout)
 				),
+				tap(() => this.loadSmartTable()),
+				tap(() => this.refreshPagination()),
 				filter(
 					(componentLayout) =>
-						componentLayout === ComponentLayoutStyleEnum.CARDS_GRID
+						componentLayout ===
+						this.componentLayoutStyleEnum.CARDS_GRID
 				),
-				tap(() => this.refreshPagination()),
 				tap(() => this.project$.next(true)),
 				untilDestroyed(this)
 			)
@@ -335,89 +328,109 @@ export class ProjectsComponent
 					? this.pagination.itemsPerPage
 					: this.minItemPerPage
 			},
-			columns: {
-				project: {
-					title: this.getTranslation('ORGANIZATIONS_PAGE.NAME'),
-					type: 'custom',
-					renderComponent: ProjectOrganizationComponent
-				},
-				public: {
-					title: this.getTranslation(
-						'ORGANIZATIONS_PAGE.EDIT.VISIBILITY'
-					),
-					type: 'custom',
-					filter: false,
-					renderComponent: VisibilityComponent,
-					onComponentInitFunction: (instance: any) => {
-						instance.visibilityChange.subscribe({
-							next: async (visibility: any) => {
-								await this.organizationProjectsService
-									.edit({
-										public: visibility,
-										id: instance.rowData.id
-									})
-									.then(() => {
-										this.toastrService.success(
-											'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.VISIBILITY',
-											{
-												name: visibility
-													? this.getTranslation(
-															'BUTTONS.PRIVATE'
-													  )
-													: this.getTranslation(
-															'BUTTONS.PUBLIC'
-													  )
-											}
-										);
-									})
-									.finally(() => this.project$.next(true));
-							},
-							error: (err: any) => {
-								console.warn(err);
-							}
-						});
-					}
-				},
-				organizationContact: {
-					title: this.getTranslation(
-						'ORGANIZATIONS_PAGE.EDIT.CONTACT'
-					),
-					type: 'custom',
-					class: 'text-center',
-					renderComponent: ContactLinksComponent
-				},
-				startDate: {
-					title: this.getTranslation(
-						'ORGANIZATIONS_PAGE.EDIT.START_DATE'
-					),
-					type: 'custom',
-					filter: false,
-					renderComponent: DateViewComponent,
-					class: 'text-center'
-				},
-				endDate: {
-					title: this.getTranslation(
-						'ORGANIZATIONS_PAGE.EDIT.END_DATE'
-					),
-					type: 'custom',
-					filter: false,
-					renderComponent: DateViewComponent,
-					class: 'text-center'
-				},
-				employeesMergedTeams: {
-					title: this.getTranslation(
-						'ORGANIZATIONS_PAGE.EDIT.MEMBERS'
-					),
-					type: 'custom',
-					renderComponent: EmployeesMergedTeamsComponent
-				},
-				tags: {
-					title: this.getTranslation('SM_TABLE.TAGS'),
-					type: 'custom',
-					renderComponent: TagsOnlyComponent
-				}
-			}
+			columns: { ...this.columnsSmartTableMapper() }
 		};
+	}
+
+	private columnsSmartTableMapper() {
+		let columns: any;
+
+		switch (this.dataLayoutStyle) {
+			case this.componentLayoutStyleEnum.TABLE:
+				columns = {
+					project: {
+						title: this.getTranslation('ORGANIZATIONS_PAGE.NAME'),
+						type: 'custom',
+						renderComponent: ProjectOrganizationComponent
+					},
+					public: {
+						title: this.getTranslation(
+							'ORGANIZATIONS_PAGE.EDIT.VISIBILITY'
+						),
+						type: 'custom',
+						filter: false,
+						renderComponent: VisibilityComponent,
+						onComponentInitFunction: (instance: any) => {
+							instance.visibilityChange.subscribe({
+								next: (visibility: boolean) => {
+									this.updateProjectVisiblility(
+										instance.rowData.id,
+										visibility
+									);
+								},
+								error: (err: any) => {
+									console.warn(err);
+								}
+							});
+						}
+					},
+					organizationContact: {
+						title: this.getTranslation(
+							'ORGANIZATIONS_PAGE.EDIT.CONTACT'
+						),
+						type: 'custom',
+						class: 'text-center',
+						renderComponent: ContactLinksComponent
+					},
+					startDate: {
+						title: this.getTranslation(
+							'ORGANIZATIONS_PAGE.EDIT.START_DATE'
+						),
+						type: 'custom',
+						filter: false,
+						renderComponent: DateViewComponent,
+						class: 'text-center'
+					},
+					endDate: {
+						title: this.getTranslation(
+							'ORGANIZATIONS_PAGE.EDIT.END_DATE'
+						),
+						type: 'custom',
+						filter: false,
+						renderComponent: DateViewComponent,
+						class: 'text-center'
+					},
+					employeesMergedTeams: {
+						title: this.getTranslation(
+							'ORGANIZATIONS_PAGE.EDIT.MEMBERS'
+						),
+						type: 'custom',
+						renderComponent: EmployeesMergedTeamsComponent
+					},
+					tags: {
+						title: this.getTranslation('SM_TABLE.TAGS'),
+						type: 'custom',
+						renderComponent: TagsOnlyComponent
+					}
+				};
+				break;
+			case this.componentLayoutStyleEnum.CARDS_GRID:
+				columns = {
+					project: {
+						title: 'Image',
+						type: 'custom',
+						renderComponent: ProjectOrganizationGridComponent
+					},
+					organizationContact: {
+						title: 'Image',
+						type: 'custom',
+						class: 'text-center',
+						renderComponent: ProjectOrganizationGridDetailsComponent
+					},
+					employeesMergedTeams: {
+						title: this.getTranslation(
+							'ORGANIZATIONS_PAGE.EDIT.MEMBERS'
+						),
+						type: 'custom',
+						renderComponent: EmployeesMergedTeamsComponent
+					}
+				};
+				break;
+			default:
+				console.log('Problem with a Layout view');
+				break;
+		}
+		return columns;
 	}
 
 	async selectProject({ isSelected, data }) {
@@ -431,6 +444,28 @@ export class ProjectsComponent
 			.subscribe(() => {
 				this.loadSmartTable();
 			});
+	}
+
+	private async updateProjectVisiblility(
+		projectId: string,
+		visibility: boolean
+	) {
+		await this.organizationProjectsService
+			.edit({
+				public: visibility,
+				id: projectId
+			})
+			.then(() => {
+				this.toastrService.success(
+					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.VISIBILITY',
+					{
+						name: visibility
+							? this.getTranslation('BUTTONS.PRIVATE')
+							: this.getTranslation('BUTTONS.PUBLIC')
+					}
+				);
+			})
+			.finally(() => this.project$.next(true));
 	}
 
 	private loadOrganizationContacts() {
