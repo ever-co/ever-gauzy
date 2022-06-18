@@ -16,7 +16,8 @@ import {
 	NbSelectModule,
 	NbTabsetModule,
 	NbInputModule,
-    NbStepperModule
+    NbStepperModule,
+    NbTooltipModule
 } from '@nebular/theme';
 import { CommonModule } from '@angular/common';
 import { HeaderTitleModule } from '../../../../@shared/components/header-title/header-title.module';
@@ -29,6 +30,7 @@ import { PaginationModule } from '../../../../@shared/pagination/pagination.modu
 import { TagsColorInputModule } from '../../../../@shared/tags/tags-color-input/tags-color-input.module';
 import { GauzyButtonActionModule } from 'apps/gauzy/src/app/@shared/gauzy-button-action/gauzy-button-action.module';
 import { CardGridModule } from 'apps/gauzy/src/app/@shared/card-grid/card-grid.module';
+import { TableComponentsModule } from 'apps/gauzy/src/app/@shared';
 
 const NB_MODULES = [
 	NbCardModule,
@@ -40,7 +42,8 @@ const NB_MODULES = [
 	NbSelectModule,
 	NbTabsetModule,
 	NbInputModule,
-	NbStepperModule
+	NbStepperModule,
+    NbTooltipModule
 ];
 
 @NgModule({
@@ -67,7 +70,8 @@ const NB_MODULES = [
         PaginationModule,
         TagsColorInputModule,
         GauzyButtonActionModule,
-        CardGridModule
+        CardGridModule,
+        TableComponentsModule
     ],
     providers: [MerchantService]
 })

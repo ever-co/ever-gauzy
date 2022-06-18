@@ -16,6 +16,7 @@ import { Store, ToastrService, WarehouseService } from './../../../../../@core/s
 import { ContactRowComponent, EnabledStatusComponent, ItemImgTagsComponent } from '../../table-components';
 import { IPaginationBase, PaginationFilterBaseComponent } from './../../../../../@shared/pagination/pagination-filter-base.component';
 import { ServerDataSource } from './../../../../../@core/utils/smart-table/server.data-source';
+import { InputFilterComponent } from 'apps/gauzy/src/app/@shared/table-filters';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -144,25 +145,42 @@ export class WarehousesTableComponent
 				name: {
 					title: this.getTranslation('INVENTORY_PAGE.LOGO'),
 					type: 'custom',
-					renderComponent: ItemImgTagsComponent
+					renderComponent: ItemImgTagsComponent,
+					filter: {
+						type: 'custom',
+						component: InputFilterComponent
+					},
+					filterFunction: (name: string) => {
+						this.setFilter({ field: 'name', search: name });
+					}
 				},
 				email: {
 					title: this.getTranslation('INVENTORY_PAGE.EMAIL'),
-					type: 'string'
+					type: 'string',
+					filter: {
+						type: 'custom',
+						component: InputFilterComponent
+					},
+					filterFunction: (email: string) => {
+						this.setFilter({ field: 'email', search: email });
+					},
 				},
 				contact: {
 					title: this.getTranslation('INVENTORY_PAGE.CONTACT'),
 					type: 'custom',
-					renderComponent: ContactRowComponent
+					renderComponent: ContactRowComponent,
+					filter: false
 				},
 				description: {
 					title: this.getTranslation('INVENTORY_PAGE.DESCRIPTION'),
-					type: 'string'
+					type: 'string',
+					filter: false
 				},
 				active: {
 					title: this.getTranslation('INVENTORY_PAGE.ACTIVE'),
 					type: 'custom',
-					renderComponent: EnabledStatusComponent
+					renderComponent: EnabledStatusComponent,
+					filter: false
 				}
 			}
 		};
@@ -268,7 +286,7 @@ export class WarehousesTableComponent
 				itemsPerPage,
 				false
 			);
-			
+
 			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
 				await this.smartTableSource.getElements();
 				this.warehouses = this.smartTableSource.getData();

@@ -21,6 +21,7 @@ import { EnabledStatusComponent, ItemImgTagsComponent } from '../../table-compon
 import { IPaginationBase, PaginationFilterBaseComponent } from './../../../../../@shared/pagination/pagination-filter-base.component';
 import { ServerDataSource } from './../../../../../@core/utils/smart-table/server.data-source';
 import { DeleteConfirmationComponent } from './../../../../../@shared/user/forms';
+import { InputFilterComponent } from 'apps/gauzy/src/app/@shared/table-filters';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -137,11 +138,25 @@ export class MerchantTableComponent
 				name: {
 					title: this.getTranslation('INVENTORY_PAGE.NAME'),
 					type: 'custom',
-					renderComponent: ItemImgTagsComponent
+					renderComponent: ItemImgTagsComponent,
+					filter: {
+						type: 'custom',
+						component: InputFilterComponent
+					},
+					filterFunction: (name: string) => {
+						this.setFilter({ field: 'name', search: name });
+					}
 				},
 				code: {
 					title: this.getTranslation('INVENTORY_PAGE.CODE'),
 					type: 'string',
+					filter: {
+						type: 'custom',
+						component: InputFilterComponent
+					},
+					filterFunction: (name: string) => {
+						this.setFilter({ field: 'name', search: name });
+					}
 				},
 				contact: {
 					title: this.getTranslation('INVENTORY_PAGE.CONTACT'),

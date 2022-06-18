@@ -9,6 +9,7 @@ import {
     NbButtonModule,
     NbIconModule,
     NbSpinnerModule,
+    NbTooltipModule,
 
 } from '@nebular/theme';
 import { CommonModule } from '@angular/common';
@@ -28,6 +29,7 @@ const NB_MODULES = [
     NbButtonModule,
     NbIconModule,
     NbSpinnerModule,
+    NbTooltipModule
 ];
 
 
