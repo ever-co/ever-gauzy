@@ -30,6 +30,8 @@ import { ExternalLinkComponent } from './external-link/external-link.component';
 import { CompanyLogoComponent } from './company-logo/company-logo.component';
 import { ProjectOrganizationComponent } from './project-organization/project-organization.component';
 import { VisibilityComponent } from './visibility/visibility.component';
+import { ProjectOrganizationGridComponent } from './project-organization-grid/project-organization-grid.component';
+import { ProjectOrganizationGridDetailsComponent } from './project-organization-grid-details/project-organization-grid-details.component';
 
 @NgModule({
 	imports: [
@@ -68,7 +70,9 @@ import { VisibilityComponent } from './visibility/visibility.component';
 		ExternalLinkComponent,
 		CompanyLogoComponent,
 		ProjectOrganizationComponent,
-		VisibilityComponent
+		VisibilityComponent,
+  ProjectOrganizationGridComponent,
+  ProjectOrganizationGridDetailsComponent
 	],
 	exports: [
 		NotesWithTagsComponent,
