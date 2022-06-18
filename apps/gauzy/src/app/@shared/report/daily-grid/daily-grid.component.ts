@@ -11,7 +11,7 @@ import {
 	IReportDayData,
 	ITimeLogFilters,
 	ReportGroupByFilter,
-	ReportGroupFilterEnum,
+	ReportGroupFilterEnum
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { debounceTime, filter, tap } from 'rxjs/operators';
@@ -67,7 +67,7 @@ export class DailyGridComponent extends BaseSelectorFilterComponent
 			.pipe(
 				debounceTime(200),
 				tap(() => this.prepareRequest()),
-				untilDestroyed(this),
+				untilDestroyed(this)
 			)
 			.subscribe();
 		this.payloads$
@@ -103,7 +103,7 @@ export class DailyGridComponent extends BaseSelectorFilterComponent
 			...appliedFilter,
 			...this.getFilterRequest(this.request),
 			groupBy: this.groupBy
-		}
+		};
 		this.payloads$.next(request);
 	}
 
@@ -121,6 +121,16 @@ export class DailyGridComponent extends BaseSelectorFilterComponent
 		} finally {
 			this.loading = false;
 		}
+	}
+
+	public getStatus(value: number) {
+		return value < 25
+			? 'danger'
+			: value < 50
+			? 'warning'
+			: value < 75
+			? 'info'
+			: 'success';
 	}
 
 	ngOnDestroy() {}
