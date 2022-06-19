@@ -1,10 +1,11 @@
 import { LanguagesEnum, TranslatePropertyInput } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsEnum, IsNotEmpty, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { TenantOrganizationBaseDTO } from './tenant-organization-base.dto';
 
 export abstract class TranslationBaseDTO extends TenantOrganizationBaseDTO {
+	
 	@ApiProperty({ type: () => String })
     @IsNotEmpty()
 	@IsString()
@@ -14,10 +15,10 @@ export abstract class TranslationBaseDTO extends TenantOrganizationBaseDTO {
     @IsOptional()
     readonly description: string;
 
-    @ApiProperty({ type: () => String, enum: LanguagesEnum })
+    @ApiProperty({ type: () => String })
 	@IsNotEmpty()
-	@IsEnum(LanguagesEnum)
-	readonly languageCode: LanguagesEnum;
+	@IsString()
+	readonly languageCode: string;
 }
 
 export abstract class TranslatableBaseDTO<T> extends TenantOrganizationBaseDTO {
