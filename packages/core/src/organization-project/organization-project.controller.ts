@@ -163,6 +163,33 @@ export class OrganizationProjectController extends CrudController<OrganizationPr
 	}
 
 	/**
+	 * GET all organization project by Pagination
+	 *
+	 * @param filter
+	 * @returns
+	 */
+	 @ApiOperation({
+		summary:
+			'Find all organization project in the same tenant using pagination.'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found organization project in the tenant',
+		type: OrganizationProject
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Get('pagination')
+	@UsePipes(new ValidationPipe({ transform: true }))
+	async pagination(
+		@Query() filter: PaginationParams<IOrganizationProject>
+	): Promise<IPagination<IOrganizationProject>> {
+		return this.organizationProjectService.pagination(filter);
+	}
+
+	/**
 	 * GET all organization project
 	 *
 	 * @param data
@@ -189,33 +216,6 @@ export class OrganizationProjectController extends CrudController<OrganizationPr
 			where: findInput,
 			relations
 		});
-	}
-
-	/**
-	 * GET all organization project by Pagination
-	 *
-	 * @param filter
-	 * @returns
-	 */
-	@ApiOperation({
-		summary:
-			'Find all organization project in the same tenant using pagination.'
-	})
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Found organization project in the tenant',
-		type: OrganizationProject
-	})
-	@ApiResponse({
-		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
-	})
-	@Get('pagination')
-	@UsePipes(new ValidationPipe({ transform: true }))
-	async pagination(
-		@Query() filter: PaginationParams<IOrganizationProject>
-	): Promise<IPagination<IOrganizationProject>> {
-		return this.organizationProjectService.pagination(filter);
 	}
 
 	/**
