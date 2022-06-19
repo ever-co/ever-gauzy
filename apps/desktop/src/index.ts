@@ -7,6 +7,7 @@ Object.assign(console, log.functions);
 
 import { app, dialog, BrowserWindow, ipcMain, shell, Menu } from 'electron';
 import { environment } from './environments/environment';
+import fetch from 'node-fetch';
 
 // setup logger to catch all unhandled errors and submit as bug reports to our repo
 log.catchErrors({
