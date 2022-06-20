@@ -1420,7 +1420,7 @@ export class StatisticService {
 		const query = this.timeLogRepository.createQueryBuilder('time_log');
 		query.select(`"${query.alias}"."employeeId"`, 'employeeId');
 		query.innerJoin(`${query.alias}.employee`, 'employee');
-		query.innerJoin(`${query.alias}.timeSlots`, 'timeSlots');
+		query.innerJoin(`${query.alias}.timeSlots`, 'time_slot');
 		query.andWhere(
 			new Brackets((where: WhereExpressionBuilder) => {
 				this.getFilterQuery(query, where, request);
@@ -1442,7 +1442,7 @@ export class StatisticService {
 		query.select(`"${query.alias}"."projectId"`, 'projectId');
 		query.innerJoin(`${query.alias}.employee`, 'employee');
 		query.innerJoin(`${query.alias}.project`, 'project');
-		query.innerJoin(`${query.alias}.timeSlots`, 'timeSlots');
+		query.innerJoin(`${query.alias}.timeSlots`, 'time_slot');
 		query.andWhere(
 			new Brackets((where: WhereExpressionBuilder) => {
 				this.getFilterQuery(query, where, request);
@@ -1497,6 +1497,10 @@ export class StatisticService {
 					startDate: start,
 					endDate: end
 				});
+				qb.andWhere(`"time_slot"."startedAt" BETWEEN :startDate AND :endDate`, {
+					startDate: start,
+					endDate: end
+				});
 			})
 		);
 		qb.andWhere(
@@ -1510,7 +1514,7 @@ export class StatisticService {
 					const startLevel = (activityLevel.start * 6);
 					const endLevel = (activityLevel.end * 6);
 			
-					qb.andWhere(`"timeSlots"."overall" BETWEEN :startLevel AND :endLevel`, {
+					qb.andWhere(`"time_slot"."overall" BETWEEN :startLevel AND :endLevel`, {
 						startLevel,
 						endLevel
 					});
@@ -1533,6 +1537,9 @@ export class StatisticService {
 			new Brackets((qb: WhereExpressionBuilder) => {
 				if (isNotEmpty(employeeIds)) {
 					qb.andWhere(`"${query.alias}"."employeeId" IN (:...employeeIds)`, {
+						employeeIds
+					});
+					qb.andWhere(`"time_slot"."employeeId" IN (:...employeeIds)`, {
 						employeeIds
 					});
 				}
