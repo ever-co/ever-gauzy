@@ -26,6 +26,12 @@
 }
 .todo-column {
     width: 30%;
+    &.header{
+        width: 28%;
+        &.client{
+            width: 22%;
+        }
+    }
 }
 .time-column {
     width: 15%;
