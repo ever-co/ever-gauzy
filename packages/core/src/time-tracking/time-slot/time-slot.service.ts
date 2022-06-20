@@ -74,7 +74,7 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 								moment.utc(request.startDate),
 								moment.utc(request.endDate)
 							);
-							qb.andWhere(`"${query.alias}"."startedAt" BETWEEN :startDate AND :endDate`, {
+							qb.andWhere(`"${query.alias}"."startedAt" >= :startDate AND "${query.alias}"."startedAt" < :endDate`, {
 								startDate,
 								endDate
 							});
