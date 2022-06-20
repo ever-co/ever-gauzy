@@ -1,79 +1,68 @@
-<nb-card>
-	<nb-card-header>
-		<span>
-			{{
-				(!team
-					? 'FORM.LABELS.ADD_TEAM'
-					: 'FORM.LABELS.EDIT_TEAM'
-				) | translate
-			}}
-		</span>
-	</nb-card-header>
-	<nb-card-body>
-		<form [formGroup]="form">
-			<div class="row">
-				<div class="col-6">
-					<div class="form-group">
-						<label class="label">{{
-							'FORM.PLACEHOLDERS.TEAM_NAME' | translate
-						}}</label>
-						<input
-							formControlName="name"
-							type="text"
-							nbInput
-							fullWidth
-							[placeholder]="'FORM.PLACEHOLDERS.TEAM_NAME' | translate"
-						/>
-					</div>
-				</div>
-				<div class="col-6">
-					<div class="form-group">
-						<ga-tags-color-input
-							[selectedTags]="form.get('tags').value"
-							(selectedTagsEvent)="selectedTagsEvent($event)"
-							[isOrgLevel]="true"
-						></ga-tags-color-input>
-					</div>
-				</div>
+<form [formGroup]="form">
+	<div class="row mb-3">
+		<div class="col-sm-12 d-flex flex-column">
+			<div class="form-group">
+				<label class="label">{{
+					'FORM.PLACEHOLDERS.TEAM_NAME' | translate
+				}}</label>
+				<input
+					formControlName="name"
+					type="text"
+					nbInput
+					fullWidth
+					[placeholder]="'FORM.PLACEHOLDERS.TEAM_NAME' | translate"
+				/>
 			</div>
-			<div class="row">
-				<div class="form-group col-6">
-					<ga-employee-multi-select
-						[label]="'FORM.LABELS.ADD_REMOVE_MEMBERS' | translate"
-						[placeholder]="'FORM.PLACEHOLDERS.ADD_REMOVE_MEMBERS' | translate"
-						[selectedEmployeeIds]="form.get('members').value"
-						[allEmployees]="employees"
-						(selectedChange)="onMembersSelected($event)"
-					></ga-employee-multi-select>
-				</div>
-				<div class="form-group col-6">
-					<ga-employee-multi-select
-						[label]="'FORM.LABELS.ADD_REMOVE_MANAGERS' | translate"
-						[placeholder]="'FORM.PLACEHOLDERS.ADD_REMOVE_MANAGERS' | translate"
-						[selectedEmployeeIds]="form.get('managers').value"
-						[allEmployees]="employees"
-						(selectedChange)="onManagersSelected($event)"
-					></ga-employee-multi-select>
-				</div>
+		</div>
+	</div>
+	<div class="row mb-3">
+		<div class="col-sm-12 d-flex flex-column">
+			<div class="form-group">
+				<ga-tags-color-input
+					[selectedTags]="form.get('tags').value"
+					(selectedTagsEvent)="selectedTagsEvent($event)"
+					[isOrgLevel]="true"
+				></ga-tags-color-input>
 			</div>
-		</form>
-	</nb-card-body>
-	<nb-card-footer class="text-right">
-		<button
-			(click)="cancel()"
-			nbButton
-			status="danger"
-			class="mr-2"
-		>
-			{{ 'BUTTONS.CANCEL' | translate }}
-		</button>
-		<button
-			[disabled]="form.invalid"
-			(click)="addOrEditTeams()"
-			nbButton
-			status="success"
-		>
-			{{ 'BUTTONS.SAVE' | translate }}
-		</button>
-	</nb-card-footer>
-</nb-card>
+		</div>							
+	</div>
+	<div class="row mb-3">
+		<div class="form-group col-12">
+			<ga-employee-multi-select
+				[label]="'FORM.LABELS.ADD_REMOVE_MEMBERS' | translate"
+				[placeholder]="'FORM.PLACEHOLDERS.ADD_REMOVE_MEMBERS' | translate"
+				[selectedEmployeeIds]="form.get('members').value"
+				[allEmployees]="employees"
+				(selectedChange)="onMembersSelected($event)"
+			></ga-employee-multi-select>
+		</div>
+		<div class="form-group col-12">
+			<ga-employee-multi-select
+				[label]="'FORM.LABELS.ADD_REMOVE_MANAGERS' | translate"
+				[placeholder]="'FORM.PLACEHOLDERS.ADD_REMOVE_MANAGERS' | translate"
+				[selectedEmployeeIds]="form.get('managers').value"
+				[allEmployees]="employees"
+				(selectedChange)="onManagersSelected($event)"
+			></ga-employee-multi-select>
+		</div>
+	</div>
+</form>
+<div class="row mb-3">
+	<div class="col-sm-12"></div>
+	<button
+		(click)="cancel()"
+		nbButton
+		status="danger"
+		class="delete mr-3 ml-3"
+	>
+		{{ 'BUTTONS.CANCEL' | translate }}
+	</button>
+	<button
+		[disabled]="form.invalid"
+		(click)="addOrEditTeams()"
+		nbButton
+		status="success"
+	>
+		{{ 'BUTTONS.SAVE' | translate }}
+	</button>
+</div>
