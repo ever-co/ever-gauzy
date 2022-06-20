@@ -1289,7 +1289,7 @@ export class StatisticService {
 		query.addSelect(`"user"."imageUrl"`, "user_image_url");
 		query.addSelect(`("user"."firstName" || ' ' ||  "user"."lastName")`, "user_name");
 		query.innerJoin(`${query.alias}.employee`, 'employee');
-		query.innerJoin(`${query.alias}.timeSlots`, 'timeSlots');
+		query.innerJoin(`${query.alias}.timeSlots`, 'time_slot');
 		query.innerJoin(`employee.user`, "user");
 		query.andWhere(
 			new Brackets((qb: WhereExpressionBuilder) => { 
@@ -1301,6 +1301,10 @@ export class StatisticService {
 		query.andWhere(
 			new Brackets((qb: WhereExpressionBuilder) => { 
 				qb.andWhere(`"${query.alias}"."startedAt" BETWEEN :start AND :end`, {
+					start,
+					end
+				});
+				qb.andWhere(`"time_slot"."startedAt" BETWEEN :start AND :end`, {
 					start,
 					end
 				});
