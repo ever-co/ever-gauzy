@@ -768,11 +768,19 @@ export class StatisticService {
 				`duration`
 			)
 			.innerJoin(`${query.alias}.project`, 'project')
-			.innerJoin(`${query.alias}.timeSlots`, 'timeSlots')
-			.andWhere(`"${query.alias}"."startedAt" BETWEEN :start AND :end`, {
-				start,
-				end
-			})
+			.innerJoin(`${query.alias}.timeSlots`, 'time_slot')
+			.andWhere(
+				new Brackets((qb: WhereExpressionBuilder) => { 
+					qb.andWhere(`"${query.alias}"."startedAt" BETWEEN :start AND :end`, {
+						start,
+						end
+					});
+					qb.andWhere(`"time_slot"."startedAt" BETWEEN :start AND :end`, {
+						start,
+						end
+					})
+				})
+			)
 			.andWhere(
 				new Brackets((qb: WhereExpressionBuilder) => { 
 					qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
@@ -811,11 +819,19 @@ export class StatisticService {
 				`duration`
 			)
 			.innerJoin(`${totalDurationQuery.alias}.project`, 'project')
-			.innerJoin(`${query.alias}.timeSlots`, 'timeSlots')
-			.andWhere(`"${totalDurationQuery.alias}"."startedAt" BETWEEN :start AND :end`, {
-				start,
-				end
-			})
+			.innerJoin(`${query.alias}.timeSlots`, 'time_slot')
+			.andWhere(
+				new Brackets((qb: WhereExpressionBuilder) => { 
+					qb.andWhere(`"${totalDurationQuery.alias}"."startedAt" BETWEEN :start AND :end`, {
+						start,
+						end
+					});
+					qb.andWhere(`"time_slot"."startedAt" BETWEEN :start AND :end`, {
+						start,
+						end
+					})
+				})
+			)
 			.andWhere(
 				new Brackets((qb: WhereExpressionBuilder) => { 
 					qb.andWhere(`"${totalDurationQuery.alias}"."tenantId" = :tenantId`, { tenantId });
@@ -907,10 +923,14 @@ export class StatisticService {
 				`duration`
 			)
 			.innerJoin(`${query.alias}.task`, 'task')
-			.innerJoin(`${query.alias}.timeSlots`, 'timeSlots')
+			.innerJoin(`${query.alias}.timeSlots`, 'time_slot')
 			.andWhere(
 				new Brackets((qb: WhereExpressionBuilder) => { 
 					qb.andWhere(`"${query.alias}"."startedAt" BETWEEN :start AND :end`, {
+						start,
+						end
+					});
+					qb.andWhere(`"time_slot"."startedAt" BETWEEN :start AND :end`, {
 						start,
 						end
 					});
@@ -954,10 +974,14 @@ export class StatisticService {
 				`duration`
 			)
 			.innerJoin(`${totalDurationQuery.alias}.task`, 'task')
-			.innerJoin(`${query.alias}.timeSlots`, 'timeSlots')
+			.innerJoin(`${query.alias}.timeSlots`, 'time_slot')
 			.andWhere(
 				new Brackets((qb: WhereExpressionBuilder) => { 
 					qb.andWhere(`"${totalDurationQuery.alias}"."startedAt" BETWEEN :start AND :end`, {
+						start,
+						end
+					});
+					qb.andWhere(`"time_slot"."startedAt" BETWEEN :start AND :end`, {
 						start,
 						end
 					});
@@ -1041,7 +1065,7 @@ export class StatisticService {
 			join: {
 				alias: 'time_log',
 				innerJoin: {
-					timeSlots: 'time_log.timeSlots'
+					time_slot: 'time_log.timeSlots'
 				}
 			},
 			relations: [
@@ -1057,6 +1081,10 @@ export class StatisticService {
 							logType: TimeLogType.MANUAL
 						});
 						qb.andWhere(`"${query.alias}"."startedAt" BETWEEN :start AND :end`, {
+							start,
+							end
+						});
+						qb.andWhere(`"time_slot"."startedAt" BETWEEN :start AND :end`, {
 							start,
 							end
 						});
