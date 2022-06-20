@@ -56,6 +56,11 @@ export class ChildrenMenuItemComponent implements OnInit {
 		this.router.navigateByUrl(this.item.data.add);
 	}
 
+	public isLast(): boolean{
+		const last = this.parent.children.slice(-1)[0];
+		return this.item === last;
+	}
+
 	public get item(): IMenuItem {
 		return this._item;
 	}

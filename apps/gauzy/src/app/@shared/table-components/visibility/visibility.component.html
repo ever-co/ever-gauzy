@@ -1,0 +1,8 @@
+<nb-toggle
+	status="primary"
+	[checked]="rowData?.public"
+	(checkedChange)="onCheckedChange($event)"
+	>{{
+		(rowData?.public ? 'BUTTONS.PRIVATE' : 'BUTTONS.PUBLIC') | translate
+	}}</nb-toggle
+>

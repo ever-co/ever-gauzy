@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
-import { NbIconModule, NbTooltipModule, NbBadgeModule } from '@nebular/theme';
+import { NbIconModule, NbTooltipModule, NbBadgeModule, NbToggleModule } from '@nebular/theme';
 import { DateViewComponent } from './date-view/date-view.component';
 import { IncomeExpenseAmountComponent } from './income-amount/income-amount.component';
 import { NotesWithTagsComponent } from './notes-with-tags/notes-with-tags.component';
@@ -28,6 +28,10 @@ import { EmailComponent } from './email/email.component';
 import { RoleComponent } from './role/role.component';
 import { ExternalLinkComponent } from './external-link/external-link.component';
 import { CompanyLogoComponent } from './company-logo/company-logo.component';
+import { ProjectOrganizationComponent } from './project-organization/project-organization.component';
+import { VisibilityComponent } from './visibility/visibility.component';
+import { ProjectOrganizationGridComponent } from './project-organization-grid/project-organization-grid.component';
+import { ProjectOrganizationGridDetailsComponent } from './project-organization-grid-details/project-organization-grid-details.component';
 
 @NgModule({
 	imports: [
@@ -36,7 +40,8 @@ import { CompanyLogoComponent } from './company-logo/company-logo.component';
 		NbTooltipModule,
 		NbBadgeModule,
 		TranslateModule,
-		SharedModule
+		SharedModule,
+		NbToggleModule
 	],
 	declarations: [
 		DateViewComponent,
@@ -63,7 +68,11 @@ import { CompanyLogoComponent } from './company-logo/company-logo.component';
 		EmailComponent,
 		RoleComponent,
 		ExternalLinkComponent,
-		CompanyLogoComponent
+		CompanyLogoComponent,
+		ProjectOrganizationComponent,
+		VisibilityComponent,
+  ProjectOrganizationGridComponent,
+  ProjectOrganizationGridDetailsComponent
 	],
 	exports: [
 		NotesWithTagsComponent,
@@ -78,7 +87,8 @@ import { CompanyLogoComponent } from './company-logo/company-logo.component';
 		EmailComponent,
 		ExternalLinkComponent,
 		TagsOnlyComponent,
-		CompanyLogoComponent
+		CompanyLogoComponent,
+		ProjectOrganizationComponent
 	],
 	providers: []
 })
