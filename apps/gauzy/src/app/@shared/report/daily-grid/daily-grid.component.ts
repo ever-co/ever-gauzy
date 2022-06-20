@@ -17,7 +17,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import { pick } from 'underscore';
-import { distinctUntilChange, isEmpty } from '@gauzy/common-angular';
+import { distinctUntilChange, isEmpty, progressStatus } from '@gauzy/common-angular';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '../../../@core/services';
 import { TimesheetService } from '../../timesheet/timesheet.service';
@@ -124,13 +124,7 @@ export class DailyGridComponent extends BaseSelectorFilterComponent
 	}
 
 	public getStatus(value: number) {
-		return value < 25
-			? 'danger'
-			: value < 50
-			? 'warning'
-			: value < 75
-			? 'info'
-			: 'success';
+		return progressStatus(value)
 	}
 
 	ngOnDestroy() {}

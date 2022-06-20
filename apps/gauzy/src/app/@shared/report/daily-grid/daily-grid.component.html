@@ -266,7 +266,10 @@
 						{{ 'REPORT_PAGE.ACTIVITY' | translate }}
 					</div>
 					<div class="responsive-table-content day-col">
-						{{ employeeLog.activity || 0 }}%
+						<nb-badge
+							[status]="getStatus(employeeLog?.activity || 0)"
+							[text]="(employeeLog?.activity || 0) + '%'"
+						></nb-badge>
 					</div>
 				</div>
 			</div>
@@ -343,7 +346,10 @@
 						{{ 'REPORT_PAGE.ACTIVITY' | translate }}
 					</div>
 					<div class="responsive-table-content day-col">
-						{{ projectLog.activity || 0 }}%
+						<nb-badge
+							[status]="getStatus(projectLog?.activity || 0)"
+							[text]="(projectLog?.activity || 0) + '%'"
+						></nb-badge>
 					</div>
 				</div>
 			</div>
@@ -422,7 +428,10 @@
 						{{ 'REPORT_PAGE.ACTIVITY' | translate }}
 					</div>
 					<div class="responsive-table-content day-col">
-						{{ employeeLog.activity || 0 }}%
+						<nb-badge
+							[status]="getStatus(employeeLog?.activity || 0)"
+							[text]="(employeeLog?.activity || 0) + '%'"
+						></nb-badge>
 					</div>
 				</div>
 			</div>
@@ -510,7 +519,12 @@
 								{{ 'REPORT_PAGE.ACTIVITY' | translate }}
 							</div>
 							<div class="responsive-table-content day-col">
-								{{ projectLog.activity || 0 }}%
+								<nb-badge
+									[status]="
+										getStatus(projectLog?.activity || 0)
+									"
+									[text]="(projectLog?.activity || 0) + '%'"
+								></nb-badge>
 							</div>
 						</div>
 					</div>
