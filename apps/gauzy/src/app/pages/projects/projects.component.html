@@ -74,7 +74,7 @@
 	</nb-card-body>
 </nb-card>
 <ng-template #actionButtons>
-	<ng-container *ngxPermissionsOnly="['ALL_ORG_EDIT', 'ALL_ORG_VIEW']">
+	<ng-container *ngxPermissionsOnly="ALL_ORG_EDIT">
 		<div class="actions">
 			<button
 				(click)="editProject(selectedProject)"
