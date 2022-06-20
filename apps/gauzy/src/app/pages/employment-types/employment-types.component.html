@@ -1,12 +1,14 @@
 <nb-card class="card-scroll">
-	<nb-card-header class="d-flex flex-column pb-0">
+	<nb-card-header class="card-custom-header">
 		<div class="card-header-title">
 			<h4>
 				<ngx-header-title [allowEmployee]="false">
 					{{ 'ORGANIZATIONS_PAGE.EMPLOYMENT_TYPES' | translate }}
 				</ngx-header-title>
 			</h4>
-		</div>
+		</div>		
+	</nb-card-header>	
+	<nb-card-body class="p-0">
 		<div class="gauzy-button-container">
 			<ngx-gauzy-button-action
 				[buttonTemplate]="actionButtons"
@@ -16,53 +18,71 @@
 			>
 			</ngx-gauzy-button-action>
 		</div>
-	</nb-card-header>	
-	<nb-card-body>
-		<ng-template
-			[ngIf]="
-				dataLayoutStyle === componentLayoutStyleEnum.TABLE &&
-				organizationEmploymentTypes?.length
-			"
-		>
-			<nb-card class="p-0" *ngFor="let employmentType of organizationEmploymentTypes">
-				<nb-card-body
-					class="custom-table"
-					[ngClass]="
-						selected?.state && employmentType === selected?.employmentType
-							? 'custom-table selected'
-							: 'custom-table'
+		<nb-tabset class="mt-4" (changeTab)="onChangeTab($event)">
+			<nb-tab 
+				[tabTitle]="'ORGANIZATIONS_PAGE.BROWSE' | translate"
+				[tabId]="employmentTypeTabsEnum.ACTIONS"
+			>	
+				<ng-template
+					[ngIf]="
+						dataLayoutStyle === componentLayoutStyleEnum.TABLE &&
+						organizationEmploymentTypes?.length
 					"
-					(click)="selectOrganizationEmploymentType(employmentType)"
 				>
-					<ga-notes-with-tags
-						[rowData]="employmentType"
-					>
-					</ga-notes-with-tags>					
-				</nb-card-body>
-			</nb-card>
-		</ng-template>
-		<ng-template
-			[ngIf]="
-				dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID &&
-				organizationEmploymentTypes?.length
-			"
-		>
-			<ga-card-grid
-				[settings]="settingsSmartTable"
-				[source]="organizationEmploymentTypes"
-				[doEmit]="false"
-				[totalItems]="pagination?.totalItems"
-				[itemsPerPage]="pagination?.itemsPerPage"
-				[activePage]="pagination?.activePage"
-				(onSelectedItem)="selectOrganizationEmploymentType($event)"
-				(selectedOption)="onUpdateOption($event)"
-				(selectedPage)="onPageChange($event)"
-			></ga-card-grid>
-		</ng-template>
-	</nb-card-body>
-	
+					<nb-card class="p-0" *ngFor="let employmentType of organizationEmploymentTypes">
+						<nb-card-body
+							class="custom-table"
+							[ngClass]="
+								selected?.state && employmentType === selected?.employmentType
+									? 'custom-table selected'
+									: 'custom-table'
+							"
+							(click)="selectOrganizationEmploymentType(employmentType)"
+						>
+							<ga-notes-with-tags
+								[rowData]="employmentType"
+							>
+							</ga-notes-with-tags>					
+						</nb-card-body>
+					</nb-card>
+				</ng-template>
+				<ng-template [ngIf]="organizationEmploymentTypes?.length == 0">
+					<nb-card class="p-0">
+						<nb-card-body class="custom-table">
+							<div>
+								{{ 'SM_TABLE.NO_RESULT' | translate }}
+							</div>
+						</nb-card-body>
+					</nb-card>
+				</ng-template>
+				<ng-template
+					[ngIf]="
+						dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID &&
+						organizationEmploymentTypes?.length
+					"
+				>
+					<ga-card-grid
+						[settings]="settingsSmartTable"
+						[source]="organizationEmploymentTypes"
+						[doEmit]="false"
+						[totalItems]="pagination?.totalItems"
+						[itemsPerPage]="pagination?.itemsPerPage"
+						[activePage]="pagination?.activePage"
+						(onSelectedItem)="selectOrganizationEmploymentType($event)"
+						(selectedOption)="onUpdateOption($event)"
+						(selectedPage)="onPageChange($event)"
+					></ga-card-grid>
+				</ng-template>
+			</nb-tab>
+			<nb-tab 
+				[tabTitle]="'ORGANIZATIONS_PAGE.SEARCH' | translate"
+				[tabId]="employmentTypeTabsEnum.SEARCH"
+			>
+				<p>This page is coming soon!</p>
+			</nb-tab>
+		</nb-tabset>
+	</nb-card-body>	
 </nb-card>
-
 <ng-template #visibleButton>
 	<button 
 		(click)="openDialog(editableTemplate, false)" 
@@ -74,7 +94,6 @@
 		{{ 'BUTTONS.ADD' | translate }}
 	</button>
 </ng-template>
-
 <ng-template #actionButtons>
 	<div class="actions">
 		<button		
