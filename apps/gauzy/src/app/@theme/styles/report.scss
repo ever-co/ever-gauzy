@@ -274,3 +274,13 @@ nb-card, nb-card-body, .card {
 .chart{
     border-radius: var(--border-radius);
 }
+
+:host {
+    nb-badge{
+        position: relative;
+        font-size: 14px;
+        font-weight: 600;
+        padding: 2px 4px;
+        border-radius: calc(var(--border-radius) / 2);
+    }
+}
