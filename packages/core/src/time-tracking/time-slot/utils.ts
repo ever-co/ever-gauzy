@@ -1,4 +1,5 @@
 import * as moment from 'moment';
+import { getDateFormat } from './../../core/utils';
 
 export function generateTimeSlots(start: Date, end: Date) {
 	let mStart = moment(start);
@@ -46,4 +47,42 @@ export function generateTimeSlots(start: Date, end: Date) {
 		mStart = tempEnd.clone();
 	}
 	return slots;
+}
+
+/**
+ * GET start and end point of 10 minutes interval
+ * 
+ * @param start 
+ * @param end 
+ * @returns 
+ */
+export function getStartEndIntervals(
+	start: moment.Moment,
+	end: moment.Moment
+): {
+	start: string | Date,
+	end: string | Date
+} {
+	let startMinute = moment(start).utc().get('minute');
+	startMinute = startMinute - (startMinute % 10);
+
+	let startDate: any = moment(start)
+		.utc()
+		.set('minute', startMinute)
+		.set('second', 0)
+		.set('millisecond', 0);
+
+	let endMinute = moment(end).utc().get('minute');
+	endMinute = endMinute - (endMinute % 10);
+
+	let endDate: any = moment(end)
+		.utc()
+		.set('minute', endMinute + 10)
+		.set('second', 0)
+		.set('millisecond', 0);
+
+	return {
+		start: startDate,
+		end: endDate
+	}
 }
