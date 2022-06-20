@@ -52,7 +52,7 @@
 							<span
 								><nb-badge
 									[status]="getStatus(day?.activity || 0)"
-									[text]="(day?.activity || 0)+'%'"
+									[text]="(day?.activity || 0) + '%'"
 								></nb-badge
 							></span>
 						</div>
@@ -69,7 +69,7 @@
 							<span
 								><nb-badge
 									[status]="getStatus(day?.activity || 0)"
-									[text]="(day?.activity || 0)+'%'"
+									[text]="(day?.activity || 0) + '%'"
 								></nb-badge
 							></span>
 						</div>
@@ -86,7 +86,7 @@
 							<span
 								><nb-badge
 									[status]="getStatus(day?.activity || 0)"
-									[text]="(day?.activity || 0)+'%'"
+									[text]="(day?.activity || 0) + '%'"
 								></nb-badge
 							></span>
 						</div>
@@ -105,7 +105,7 @@
 							<span
 								><nb-badge
 									[status]="getStatus(day?.activity || 0)"
-									[text]="(day?.activity || 0)+'%'"
+									[text]="(day?.activity || 0) + '%'"
 								></nb-badge
 							></span>
 						</div>
@@ -173,7 +173,7 @@
 					<div class="responsive-table-header">
 						{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
 					</div>
-					<div class="responsive-table-content project-name">
+					<div class="responsive-table-content employee-column">
 						<ng-container
 							*ngTemplateOutlet="
 								employeeEl;
@@ -183,7 +183,7 @@
 						</ng-container>
 					</div>
 				</div>
-				<div class="responsive-table-row employee-column">
+				<div class="responsive-table-row project-column">
 					<div class="responsive-table-header">
 						{{ 'REPORT_PAGE.CLIENT' | translate }}
 					</div>
