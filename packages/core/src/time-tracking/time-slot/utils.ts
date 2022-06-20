@@ -1,5 +1,4 @@
 import * as moment from 'moment';
-import { getDateFormat } from './../../core/utils';
 
 export function generateTimeSlots(start: Date, end: Date) {
 	let mStart = moment(start);
