@@ -123,7 +123,7 @@
 		<ng-template ngxPermissionsOnly="ORG_INVENTORY_PRODUCT_EDIT">
 			<button
 				nbButton
-				[disabled]="disableButton || !selectedItem?.isActive"
+				[disabled]="!selectedItem && disableButton"		
 				size="small"
 				(click)="delete(selectedItem)"
 				status="basic"

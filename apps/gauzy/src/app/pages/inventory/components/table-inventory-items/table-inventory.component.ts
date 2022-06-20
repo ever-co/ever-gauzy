@@ -22,7 +22,6 @@ import { API_PREFIX, ComponentEnum } from '../../../../@core/constants';
 import { ProductService, Store, ToastrService } from '../../../../@core/services';
 import { ServerDataSource } from './../../../../@core/utils/smart-table/server.data-source';
 import { ItemImgTagsComponent } from '../table-components';
-import { InputFilterComponent } from 'apps/gauzy/src/app/@shared/table-filters';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

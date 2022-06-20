@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, OnDestroy, TemplateRef, AfterViewInit } from '@angular/core';
+import { Component, OnInit, ViewChild, OnDestroy, TemplateRef } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import {
 	IOrganization,
