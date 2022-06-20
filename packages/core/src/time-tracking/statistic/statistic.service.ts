@@ -1366,6 +1366,10 @@ export class StatisticService {
 								start,
 								end
 							});
+							qb.andWhere(`"${query.alias}"."startedAt" BETWEEN :start AND :end`, {
+								start,
+								end
+							});
 							qb.andWhere(`"timeLogs"."tenantId" = :tenantId`, { tenantId });
 							qb.andWhere(`"timeLogs"."organizationId" = :organizationId`, { organizationId });
 							qb.andWhere(`"timeLogs"."deletedAt" IS NULL`);
