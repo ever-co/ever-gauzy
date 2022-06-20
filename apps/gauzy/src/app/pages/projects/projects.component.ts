@@ -14,7 +14,8 @@ import {
 	PermissionsEnum,
 	ComponentLayoutStyleEnum,
 	CrudActionEnum,
-	IEmployee
+	IEmployee,
+	ITag
 } from '@gauzy/contracts';
 import {
 	OrganizationContactService,
@@ -39,6 +40,7 @@ import { distinctUntilChange } from 'packages/common-angular/dist';
 import { VisibilityComponent } from '../../@shared/table-components/visibility/visibility.component';
 import { ProjectOrganizationGridComponent } from '../../@shared/table-components/project-organization-grid/project-organization-grid.component';
 import { ProjectOrganizationGridDetailsComponent } from '../../@shared/table-components/project-organization-grid-details/project-organization-grid-details.component';
+import { TagsColorFilterComponent } from '../../@shared/table-filters';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -271,7 +273,13 @@ export class ProjectsComponent
 				'members.user',
 				'tags'
 			],
-			where: { organizationId, tenantId },
+			join: {
+				alias: 'project',
+				leftJoin: {
+					tags: 'project.tags'
+				}
+			},
+			where: { organizationId, tenantId, ...this.filters.where },
 			resultMap: (project: IOrganizationProject) => {
 				return Object.assign({}, project, {
 					...this.privatePublicProjectMapper(project),
@@ -400,7 +408,21 @@ export class ProjectsComponent
 					tags: {
 						title: this.getTranslation('SM_TABLE.TAGS'),
 						type: 'custom',
-						renderComponent: TagsOnlyComponent
+						renderComponent: TagsOnlyComponent,
+						width: '10%',
+						filter: {
+							type: 'custom',
+							component: TagsColorFilterComponent
+						},
+						filterFunction: (tags: ITag[]) => {
+							const tagIds = [];
+							for (const tag of tags) {
+								tagIds.push(tag.id);
+							}
+							this.setFilter({ field: 'tags', search: tagIds });
+							this.project$.next(true);
+						},
+						sort: false
 					}
 				};
 				break;
