@@ -7,6 +7,7 @@ import { SelectedRowComponent } from './selected-row.component';
 import { NbCheckboxModule, NbBadgeModule, NbIconModule } from '@nebular/theme';
 import { CommonModule } from '@angular/common';
 import { ContactRowComponent } from './contact-row.component';
+import { TranslateModule } from 'apps/gauzy/src/app/@shared/translate/translate.module';
  
 @NgModule({
     declarations: [
@@ -21,7 +22,8 @@ import { ContactRowComponent } from './contact-row.component';
         NbCheckboxModule,
         NbBadgeModule,
         NbIconModule,
-        CommonModule
+        CommonModule,
+        TranslateModule
     ]
 })
 export class TableComponentsModule { }

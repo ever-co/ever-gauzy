@@ -104,34 +104,40 @@
 								formControlName="activeOptionCode"
 							/>
 						</div>
-						<div class="col-md-2 d-flex">
-							<button
-								class="mr-1"
-								nbButton
-								status="success"
-								(click)="
-									onTranslateOptionClick(optionGroupData)
-								"
-							>
-								<nb-icon icon="globe-outline"></nb-icon>
-							</button>
-							<button
-								class="mr-1"
-								nbButton
-								status="success"
-								(click)="onCreateOptionClick()"
-							>
-								<nb-icon icon="plus-circle-outline"></nb-icon>
-							</button>
-							<button
-								nbButton
-								status="danger"
-								(click)="
-									onDeleteOptinGroupClick(optionGroupData)
-								"
-							>
-								<nb-icon icon="trash-outline"></nb-icon>
-							</button>
+						<div class="col-md-3">
+							<div class="btn-group actions">
+								<button
+									nbButton
+									status="success"
+									outline
+									size="small"
+									(click)="
+										onTranslateOptionClick(optionGroupData)
+									"
+								>
+									<nb-icon icon="globe-outline"></nb-icon>
+								</button>
+								<button
+									nbButton
+									status="success"
+									outline
+									size="small"
+									(click)="onCreateOptionClick()"
+								>
+									<nb-icon icon="plus-circle-outline"></nb-icon>
+								</button>
+								<button
+									nbButton
+									status="danger"
+									outline
+									size="small"
+									(click)="
+										onDeleteOptinGroupClick(optionGroupData)
+									"
+								>
+									<nb-icon icon="trash-outline"></nb-icon>
+								</button>
+							</div>							
 						</div>
 					</div>
 

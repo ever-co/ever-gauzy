@@ -557,10 +557,10 @@
 			</div>
 		</div>
 	</nb-layout-column>
-	<nb-layout-footer fixed>
-		<span *ngIf="currentUser && appName === 'gauzy-desktop-timer'">
+	<nb-layout-footer fixed *ngIf="currentUser && appName === 'gauzy-desktop-timer'">
+		<span>
 			<p>
-				Signed in as {{ currentUser?.name }} -
+				Signed in as {{ currentUser?.name }} ({{currentUser?.email}}) -
 				<a href="javascript:void(0);" (click)="logout()"> Sign Out </a>
 			</p>
 		</span>

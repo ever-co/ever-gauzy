@@ -70,7 +70,7 @@ export class AppMenu {
 					{
 						id: 'window-setting',
 						label: 'Setting',
-						enabled: false,
+						enabled: true,
 						click() {
 							if (!settingsWindow) {
 								settingsWindow = createSettingsWindow(
