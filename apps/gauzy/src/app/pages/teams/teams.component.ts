@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import {
@@ -10,7 +10,7 @@ import {
 	RolesEnum,
 	ComponentLayoutStyleEnum
 } from '@gauzy/contracts';
-import { NbDialogService } from '@nebular/theme';
+import { NbDialogRef, NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { firstValueFrom, Subject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
@@ -33,10 +33,11 @@ import { ServerDataSource } from '../../@core/utils/smart-table';
 })
 export class TeamsComponent extends PaginationFilterBaseComponent
 	implements OnInit, OnDestroy {
-
-	selectedTeam: IOrganizationTeam;
 	
-	showAddCard: boolean;
+	@ViewChild('addEditTemplate') 
+	addEditTemplate: TemplateRef<any>;
+	addEditDialogRef: NbDialogRef<any>;
+	selectedTeam: IOrganizationTeam;	
 	disableButton: boolean = true;
 	loading: boolean;
 	
@@ -54,6 +55,10 @@ export class TeamsComponent extends PaginationFilterBaseComponent
 	public organization: IOrganization;
 	teams$: Subject<any> = this.subject$;
 	employees$: Subject<any> = new Subject();
+	selected = {
+		team: null,
+		state: false
+	};
 
 	teamTable: Ng2SmartTableComponent;
 	@ViewChild('teamTable') set content(content: Ng2SmartTableComponent) {
@@ -117,9 +122,10 @@ export class TeamsComponent extends PaginationFilterBaseComponent
 		this.route.queryParamMap
 			.pipe(
 				filter((params) => !!params && params.get('openAddDialog') === 'true'),
-				tap(() => this.showAddCard = true),
 				tap(() => this.teams$.next(true)),
 				tap(() => this.employees$.next(true)),
+				debounceTime(1000),
+				tap(() => this.openDialog(this.addEditTemplate, false)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -156,13 +162,12 @@ export class TeamsComponent extends PaginationFilterBaseComponent
 							name: team.name
 						}
 					);
-
+					this.clearItem();
 					this.teams$.next(true);
 				} catch (error) {
 					console.error(error);
 				}
-
-				this.showAddCard = false;
+				
 			} else {
 				try {
 					await this.organizationTeamsService.create(team);
@@ -173,13 +178,13 @@ export class TeamsComponent extends PaginationFilterBaseComponent
 							name: team.name
 						}
 					);
+					this.clearItem();
 					this.teams$.next(true);
 				} catch (error) {
 					console.error(error);
 				}
 			}
 		} else {
-			// TODO translate
 			this.toastrService.danger(
 				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_TEAM.INVALID_TEAM_NAME',
 				this.getTranslation(
@@ -187,8 +192,6 @@ export class TeamsComponent extends PaginationFilterBaseComponent
 				)
 			);
 		}
-
-		this.showAddCard = false;
 	}
 
 	async removeTeam(id?: string, name?: string) {
@@ -223,13 +226,13 @@ export class TeamsComponent extends PaginationFilterBaseComponent
 
 	editTeam(selectedItem: IOrganizationTeam) {
 		if (selectedItem) {
-			this.selectTeam({
-				isSelected: true,
-				data: selectedItem
-			});
+			this.selected = {
+				team: selectedItem,
+				state: true
+			};
+		} else {
+			this.selectedTeam = this.selected.team;
 		}
-		
-		this.showAddCard = true;
 	}
 
 	private async loadEmployees() {
@@ -341,9 +344,16 @@ export class TeamsComponent extends PaginationFilterBaseComponent
 		});
 	}
 
-	selectTeam({ isSelected, data }) {
-		this.disableButton = !isSelected;
-		this.selectedTeam = isSelected ? data : null;
+	selectTeam(team: any) {
+		if (team.data) team = team.data;
+		const res =
+			this.selected.team && team.id === this.selected.team.id
+				? { state: !this.selected.state }
+				: { state: true };
+		this.disableButton = !res.state;
+		this.selected.state = res.state;
+		this.selected.team = team;
+		this.selectedTeam = this.selected.team;
 	}
 
 	private _loadSmartTableSettings() {
@@ -425,12 +435,14 @@ export class TeamsComponent extends PaginationFilterBaseComponent
 	 * Clear selected item
 	 */
 	clearItem() {
-		this.showAddCard = false;
-		this.selectTeam({
-			isSelected: false,
-			data: null
-		});
+		this.selected = {
+			team: null,
+			state: false
+		};
+		this.selectedTeam = null;
+		this.disableButton = true;
 		this.deselectAll();	
+		this.addEditDialogRef?.close()
 	}
 
 	/*
@@ -440,6 +452,15 @@ export class TeamsComponent extends PaginationFilterBaseComponent
 		if (this.teamTable && this.teamTable.grid) {
 			this.teamTable.grid.dataSet['willSelect'] = 'false';
 			this.teamTable.grid.dataSet.deselectAll();
+		}
+	}
+	
+	openDialog(template: TemplateRef<any>, isEditTemplate: boolean) {
+		try {
+			isEditTemplate ? this.editTeam(this.selectedTeam) : this.clearItem();
+			this.addEditDialogRef = this.dialogService.open(template);
+		} catch (error) {
+			console.log('An error occurred on open dialog');
 		}
 	}
 }
