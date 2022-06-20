@@ -1179,8 +1179,8 @@ export class StatisticService {
 			.select(`COUNT("${query.alias}"."id")`, `sessions`)
 			.addSelect(`SUM("${query.alias}"."duration")`, `duration`)
 			.addSelect(`"${query.alias}"."title"`, `title`)
-			.innerJoin(`${query.alias}.timeSlot`, 'timeSlot')
-			.innerJoin(`timeSlot.timeLogs`, 'timeLogs')
+			.innerJoin(`${query.alias}.timeSlot`, 'time_slot')
+			.innerJoin(`time_slot.timeLogs`, 'time_log')
 			.addGroupBy(`"${query.alias}"."title"`)
 			.andWhere(
 				new Brackets((qb) => {
@@ -1202,15 +1202,27 @@ export class StatisticService {
 			)
 			.andWhere(
 				new Brackets((qb: WhereExpressionBuilder) => { 
+					qb.andWhere(`"time_log"."startedAt" BETWEEN :startDate AND :endDate`, {
+						startDate: start,
+						endDate: end
+					});
+					qb.andWhere(`"time_slot"."startedAt" BETWEEN :startDate AND :endDate`, {
+						startDate: start,
+						endDate: end
+					});
+				})
+			)
+			.andWhere(
+				new Brackets((qb: WhereExpressionBuilder) => { 
 					qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
 					qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
 				})
 			)
 			.andWhere(
 				new Brackets((qb: WhereExpressionBuilder) => { 
-					qb.andWhere(`"timeLogs"."tenantId" = :tenantId`, { tenantId });
-					qb.andWhere(`"timeLogs"."organizationId" = :organizationId`, { organizationId });
-					qb.andWhere(`"timeLogs"."deletedAt" IS NULL`);
+					qb.andWhere(`"time_log"."tenantId" = :tenantId`, { tenantId });
+					qb.andWhere(`"time_log"."organizationId" = :organizationId`, { organizationId });
+					qb.andWhere(`"time_log"."deletedAt" IS NULL`);
 				})
 			)
 			.andWhere(
@@ -1237,8 +1249,8 @@ export class StatisticService {
 		const totalDurationQuery = this.activityRepository.createQueryBuilder();
 		totalDurationQuery
 			.select(`SUM("${totalDurationQuery.alias}"."duration")`, `duration`)
-			.innerJoin(`${totalDurationQuery.alias}.timeSlot`, 'timeSlot')
-			.innerJoin(`timeSlot.timeLogs`, 'timeLogs')
+			.innerJoin(`${totalDurationQuery.alias}.timeSlot`, 'time_slot')
+			.innerJoin(`time_slot.timeLogs`, 'time_log')
 			.andWhere(
 				new Brackets((qb) => {
 					if (
@@ -1259,15 +1271,27 @@ export class StatisticService {
 			)
 			.andWhere(
 				new Brackets((qb: WhereExpressionBuilder) => { 
+					qb.andWhere(`"time_log"."startedAt" BETWEEN :startDate AND :endDate`, {
+						startDate: start,
+						endDate: end
+					});
+					qb.andWhere(`"time_slot"."startedAt" BETWEEN :startDate AND :endDate`, {
+						startDate: start,
+						endDate: end
+					});
+				})
+			)
+			.andWhere(
+				new Brackets((qb: WhereExpressionBuilder) => { 
 					qb.andWhere(`"${totalDurationQuery.alias}"."tenantId" = :tenantId`, { tenantId });
 					qb.andWhere(`"${totalDurationQuery.alias}"."organizationId" = :organizationId`, { organizationId });
 				})
 			)
 			.andWhere(
 				new Brackets((qb: WhereExpressionBuilder) => { 
-					qb.andWhere(`"timeLogs"."tenantId" = :tenantId`, { tenantId });
-					qb.andWhere(`"timeLogs"."organizationId" = :organizationId`, { organizationId });
-					qb.andWhere(`"timeLogs"."deletedAt" IS NULL`);
+					qb.andWhere(`"time_log"."tenantId" = :tenantId`, { tenantId });
+					qb.andWhere(`"time_log"."organizationId" = :organizationId`, { organizationId });
+					qb.andWhere(`"time_log"."deletedAt" IS NULL`);
 				})
 			)
 			.andWhere(
