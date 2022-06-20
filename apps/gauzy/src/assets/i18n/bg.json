@@ -2216,6 +2216,7 @@
 		"WAREHOUSES": "Warehouses",
 		"EMAIL": "Eлектронна поща",
 		"ACTIVE": "Активен",
+		"INACTIVE": "Inactive",
 		"LOCATION": "Локация",
 		"ADDRESS": "Address",
 		"CREATE_WAREHOUSE": "Create Warehouse",
