@@ -20,7 +20,7 @@ import { ProductCategoriesRoutingModule } from './product-categories-routing.mod
 import { ProductMutationModule } from '../../../../@shared/product-mutation/product-mutation.module';
 import { CardGridModule } from '../../../../@shared/card-grid/card-grid.module';
 import { PaginationModule } from '../../../../@shared/pagination/pagination.module';
-import { GauzyButtonActionModule } from 'apps/gauzy/src/app/@shared/gauzy-button-action/gauzy-button-action.module';
+import { GauzyButtonActionModule } from './../../../../@shared/gauzy-button-action/gauzy-button-action.module';
 
 
 const NB_MODULES = [

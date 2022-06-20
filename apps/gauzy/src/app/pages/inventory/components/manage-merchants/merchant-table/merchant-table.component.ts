@@ -29,12 +29,11 @@ import { InputFilterComponent } from 'apps/gauzy/src/app/@shared/table-filters';
 	templateUrl: './merchant-table.component.html',
 	styleUrls: ['./merchant-table.component.scss']
 })
-export class MerchantTableComponent
-	extends PaginationFilterBaseComponent
+export class MerchantTableComponent extends PaginationFilterBaseComponent
 	implements OnInit {
 
 	settingsSmartTable: object;
-	loading: boolean;
+	loading: boolean = false;
 	selectedMerchant: IMerchant;
 	smartTableSource: ServerDataSource;
 	merchants: IMerchant[] = [];
@@ -75,6 +74,17 @@ export class MerchantTableComponent
 	ngOnInit(): void {
 		this._applyTranslationOnSmartTable();
 		this._loadSmartTableSettings();
+	}
+
+	ngAfterViewInit(): void {
+		this.merchants$
+			.pipe(
+				debounceTime(300),
+				tap(() => this.clearItem()),
+				tap(() => this.getMerchants()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this.pagination$
 			.pipe(
 				debounceTime(100),
@@ -83,31 +93,17 @@ export class MerchantTableComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.merchants$
-			.pipe(
-				debounceTime(300),
-				tap(() => this.loading = true),
-				tap(() => this.getMerchants()),
-				tap(() => this.clearItem()),
-				untilDestroyed(this)
-			)
-			.subscribe();
-
 		const storeOrganization$ = this.store.selectedOrganization$;
-		combineLatest([storeOrganization$])
+		storeOrganization$
 			.pipe(
 				debounceTime(300),
-				filter(([organization]) => !!organization),
-				tap(([organization]) => (this.organization = organization)),
 				distinctUntilChange(),
+				filter((organization: IOrganization) => !!organization),
+				tap((organization: IOrganization) => (this.organization = organization)),
 				tap(() => this.merchants$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
-	}
-
-	ngAfterViewInit(): void {
-		
 	}
 
 	setView() {
@@ -117,8 +113,8 @@ export class MerchantTableComponent
 			.pipe(
 				distinctUntilChange(),
 				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
-				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => this.refreshPagination()),
+				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => this.merchants$.next(true)),
 				untilDestroyed(this)
 			)
@@ -275,49 +271,66 @@ export class MerchantTableComponent
 	* Register Smart Table Source Config 
 	*/
 	setSmartTableSource() {
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.organization;
+		if (!this.organization) {
+			return;
+		}
+		try {
+			this.loading = true;
 
-		this.smartTableSource = new ServerDataSource(this.http, {
-			endPoint: `${API_PREFIX}/merchants/pagination`,
-			relations: ['logo', 'contact', 'tags', 'warehouses'],
-			where: {
-				...{ organizationId, tenantId },
-				...this.filters.where
-			},
-			resultMap: (warehouse: IWarehouse) => {
-				return Object.assign({}, warehouse);
-			},
-			finalize: () => {
-				this.setPagination({
-					...this.getPagination(),
-					totalItems: this.smartTableSource.count()
-				});
-				this.loading = false;
-			}
-		});
+			const { tenantId } = this.store.user;
+			const { id: organizationId } = this.organization;
+
+			this.smartTableSource = new ServerDataSource(this.http, {
+				endPoint: `${API_PREFIX}/merchants/pagination`,
+				relations: [
+					'logo',
+					'contact',
+					'tags',
+					'warehouses'
+				],
+				where: {
+					...{
+						organizationId,
+						tenantId
+					},
+					...this.filters.where
+				},
+				resultMap: (warehouse: IWarehouse) => {
+					return Object.assign({}, warehouse);
+				},
+				finalize: () => {
+					this.loading = false;
+					this.setPagination({
+						...this.getPagination(),
+						totalItems: this.smartTableSource.count()
+					});
+				}
+			});
+		} catch (error) {
+			this.toastrService.danger(error);
+		}
 	}
 
 	/**
 	 * GET merchants smart table source
 	 */
 	private async getMerchants() {
+		if (!this.organization) {
+			return;
+		}
+		this.setSmartTableSource();
+
 		try {
-			this.setSmartTableSource();
 			const { activePage, itemsPerPage } = this.getPagination();
 			this.smartTableSource.setPaging(
 				activePage,
 				itemsPerPage,
 				false
 			);
+
 			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
 				await this.smartTableSource.getElements();
 				this.merchants = this.smartTableSource.getData();
-
-				this.setPagination({
-					...this.getPagination(),
-					totalItems: this.smartTableSource.count()
-				});
 			}
 		} catch (error) {
 			this.toastrService.danger(error);

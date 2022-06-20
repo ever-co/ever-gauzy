@@ -32,11 +32,11 @@ export class ProductCategoriesComponent
 
 	smartTableSource: ServerDataSource;
 	settingsSmartTable: object;
-	loading: boolean;
+	loading: boolean = false;
+	disableButton: boolean = true;
 	selectedProductCategory: IProductCategoryTranslated;
 	productCategories: IProductCategoryTranslated[] = [];
 	selectedOrganization: IOrganization;
-	disableButton: boolean;
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
@@ -85,10 +85,11 @@ export class ProductCategoriesComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
+	}
 
+	ngAfterViewInit() {
 		const storeOrganization$ = this.store.selectedOrganization$;
 		const preferredLanguage$ = this.store.preferredLanguage$
-
 		combineLatest([storeOrganization$, preferredLanguage$])
 				.pipe(
 					debounceTime(300),
@@ -99,10 +100,6 @@ export class ProductCategoriesComponent
 					untilDestroyed(this)
 				)
 				.subscribe();
-	}
-
-	ngAfterViewInit() {
-		
 	}
 
 	/*
@@ -124,8 +121,8 @@ export class ProductCategoriesComponent
 			.pipe(
 				distinctUntilChange(),
 				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
-				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => this.refreshPagination()),
+				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => this.categories$.next(true)),
 				untilDestroyed(this)
 			)
@@ -268,52 +265,56 @@ export class ProductCategoriesComponent
 		if (!this.organization) {
 			return;
 		}
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.organization;
+		try {
+			this.loading = true;
 
-		this.smartTableSource = new ServerDataSource(this.http, {
-			endPoint: `${API_PREFIX}/product-categories/pagination`,
-			relations: [
-				'translations'
-			],
-			where: {
-				...{ organizationId, tenantId },
-				...this.filters.where
-			},
-			resultMap: (item: IProductCategoryTranslated) => {
-				return Object.assign({}, item);
-			},
-			finalize: () => {
-				this.setPagination({
-					...this.getPagination(),
-					totalItems: this.smartTableSource.count()
-				});
-				this.loading = false;
-			}
-		});
+			const { tenantId } = this.store.user;
+			const { id: organizationId } = this.organization;
+	
+			this.smartTableSource = new ServerDataSource(this.http, {
+				endPoint: `${API_PREFIX}/product-categories/pagination`,
+				relations: [
+					'translations'
+				],
+				where: {
+					...{ organizationId, tenantId },
+					...this.filters.where
+				},
+				resultMap: (item: IProductCategoryTranslated) => {
+					return Object.assign({}, item);
+				},
+				finalize: () => {
+					this.setPagination({
+						...this.getPagination(),
+						totalItems: this.smartTableSource.count()
+					});
+					this.loading = false;
+				}
+			});	
+		} catch (error) {
+			this.toastrService.danger(error);
+		}
 	}
 
 	/**
 	 * GET product categories smart table source
 	 */
 	private async getTranslatedProductCategories() {
+		if (!this.organization) {
+			return;
+		}
+		this.setSmartTableSource();
 		try {
-			this.setSmartTableSource();
-
 			const { activePage, itemsPerPage } = this.getPagination();
 			this.smartTableSource.setPaging(
 				activePage,
 				itemsPerPage,
 				false
 			);
+
 			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
 				await this.smartTableSource.getElements();
 				this.productCategories = this.smartTableSource.getData();
-
-				this.setPagination({
-					...this.getPagination(),
-					totalItems: this.smartTableSource.count()
-				});
 			}
 		} catch (error) {
 			this.toastrService.danger(error);
@@ -342,5 +343,5 @@ export class ProductCategoriesComponent
 		}
 	}
 
-	ngOnDestroy() { }
+	ngOnDestroy() {}
 }
