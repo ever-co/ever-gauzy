@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { ViewCell } from 'ng2-smart-table';
 
 @Component({
@@ -7,6 +7,8 @@ import { ViewCell } from 'ng2-smart-table';
 	styleUrls: ['./project-organization-grid.component.scss']
 })
 export class ProjectOrganizationGridComponent implements ViewCell {
+	@Input()
 	value: string | number;
+	@Input()
 	rowData: any;
 }
