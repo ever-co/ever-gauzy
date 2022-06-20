@@ -1,3 +1,6 @@
+@import 'gauzy/_gauzy-overrides';
+@import 'gauzy/_gauzy-cards';
+
 .d-bottom {
   display: flex;
   align-items: flex-end;
@@ -112,4 +115,9 @@ nb-card-footer {
     top: calc(50% - 68px / 2);
     left: calc(50% - 68px / 2);
   }
+}
+
+nb-tab {
+  background-color: rgba(50, 50, 50, 0.03);
+  border: 0 0 $default-radius $default-radius;
 }

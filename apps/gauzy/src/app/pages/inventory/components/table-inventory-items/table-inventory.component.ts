@@ -156,25 +156,11 @@ export class TableInventoryComponent
 					renderComponent: ItemImgTagsComponent,
 					valuePrepareFunction: (name: string) => {
 						return name || '-';
-					},
-					filter: {
-						type: 'custom',
-						component: InputFilterComponent
-					},
-					filterFunction: (name: string) => {
-						this.setFilter({ field: 'name', search: name });
-					}
+					},					
 				},
 				code: {
 					title: this.getTranslation('INVENTORY_PAGE.CODE'),
-					type: 'string',
-					filter: {
-						type: 'custom',
-						component: InputFilterComponent
-					},
-					filterFunction: (code: string) => {
-						this.setFilter({ field: 'code', search: code });
-					}
+					type: 'string',					
 				},
 				productType: {
 					title: this.getTranslation('INVENTORY_PAGE.PRODUCT_TYPE'),
