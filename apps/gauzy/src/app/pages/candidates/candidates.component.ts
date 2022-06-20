@@ -68,7 +68,7 @@ export class CandidatesComponent extends PaginationFilterBaseComponent
 	candidates: ICandidateViewModel[] = [];
 
 	public organization: IOrganization;
-	candidates$: Subject<any> = new Subject();
+	candidates$: Subject<any> = this.subject$;
 
 	candidatesTable: Ng2SmartTableComponent;
 	@ViewChild('candidatesTable') set content(content: Ng2SmartTableComponent) {
@@ -299,9 +299,17 @@ export class CandidatesComponent extends PaginationFilterBaseComponent
 		this.sourceSmartTable = new ServerDataSource(this.http, {
 			endPoint: API_PREFIX + '/candidate/pagination',
 			relations: ['user', 'source', 'tags'],
+			join: {
+				alias: "candidate",
+				leftJoin: {
+					user: 'candidate.user'
+				},
+				...(this.filters.join) ? this.filters.join : {}
+			},
 			where: {
 				organizationId,
-				tenantId
+				tenantId,
+				...this.filters.where
 			},
 			resultMap: (candidate: any) => {
 				return Object.assign({}, candidate, {
@@ -395,19 +403,19 @@ export class CandidatesComponent extends PaginationFilterBaseComponent
 					type: 'custom',
 					renderComponent: PictureNameTagsComponent,
 					class: 'align-row',
-          filter: {
+          			filter: {
 						type: 'custom',
 						component: InputFilterComponent
 					},
 					filterFunction: (value) => {
-						this.setFilter({ field: 'user.name', search: value });
+						this.setFilter({ field: 'user.firstName', search: value });
 					}
 				},
 				email: {
 					title: this.getTranslation('SM_TABLE.EMAIL'),
 					type: 'email',
 					class: 'email-column',
-          filter: {
+          			filter: {
 						type: 'custom',
 						component: InputFilterComponent
 					},
