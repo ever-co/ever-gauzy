@@ -376,18 +376,18 @@ export class TimeOffComponent extends PaginationFilterBaseComponent
 					type: 'custom',
 					renderComponent: PictureNameTagsComponent,
 					class: 'align-row',
-          filter: {
+          			filter: {
 						type: 'custom',
 						component: InputFilterComponent
 					},
 					filterFunction: (value) => {
-						this.setFilter({ field: 'fullName', search: value });
+						this.setFilter({ field: 'user.firstName', search: value });
 					}
 				},
 				extendedDescription: {
 					title: this.getTranslation('SM_TABLE.DESCRIPTION'),
 					type: 'html',
-          filter: {
+          			filter: {
 						type: 'custom',
 						component: InputFilterComponent
 					},
@@ -399,7 +399,7 @@ export class TimeOffComponent extends PaginationFilterBaseComponent
 					title: this.getTranslation('SM_TABLE.POLICY'),
 					type: 'custom',
 					renderComponent: ApprovalPolicyComponent,
-          filter: {
+          			filter: {
 						type: 'custom',
 						component: InputFilterComponent
 					},
@@ -458,7 +458,8 @@ export class TimeOffComponent extends PaginationFilterBaseComponent
 					alias: "time-off",
 					leftJoin: {
 						policy: 'time-off.policy',
-						employees: 'time-off.employees'
+						employees: 'time-off.employees',
+						user: 'employees.user'
 					},
 					...(this.filters.join) ? this.filters.join : {}
 				},
