@@ -41,73 +41,101 @@
 					<ng-container
 						*ngSwitchCase="ReportGroupFilterEnum.employee"
 					>
-						<ng-container
-							*ngTemplateOutlet="
-								employeeEl;
-								context: { $implicit: day?.employee }
-							"
-						></ng-container>
-						<div class="stats">
+						<div class="responsive-table-row employee-column">
+							<ng-container
+								*ngTemplateOutlet="
+									employeeEl;
+									context: { $implicit: day?.employee }
+								"
+							></ng-container>
+						</div>
+						<div class="responsive-table-row project-column"></div>
+						<div class="responsive-table-row project-column"></div>
+						<div
+							class="responsive-table-row todo-column header"
+						></div>
+						<div class="responsive-table-row time-column">
 							<span>{{ day?.sum | durationFormat }}</span>
-							<span
-								><nb-badge
-									[status]="getStatus(day?.activity || 0)"
-									[text]="(day?.activity || 0) + '%'"
-								></nb-badge
-							></span>
+						</div>
+						<div class="responsive-table-row activity-column">
+							<nb-badge
+								[status]="getStatus(day?.activity || 0)"
+								[text]="(day?.activity || 0) + '%'"
+							></nb-badge>
 						</div>
 					</ng-container>
 					<ng-container *ngSwitchCase="ReportGroupFilterEnum.project">
-						<ng-container
-							*ngTemplateOutlet="
-								projectEl;
-								context: { $implicit: day?.project }
-							"
-						></ng-container>
-						<div class="stats">
+						<div class="responsive-table-row employee-column">
+							<ng-container
+								*ngTemplateOutlet="
+									projectEl;
+									context: { $implicit: day?.project }
+								"
+							></ng-container>
+						</div>
+						<div class="responsive-table-row project-column"></div>
+						<div class="responsive-table-row project-column"></div>
+						<div
+							class="responsive-table-row todo-column header"
+						></div>
+						<div class="responsive-table-row time-column">
 							<span>{{ day?.sum | durationFormat }}</span>
-							<span
-								><nb-badge
-									[status]="getStatus(day?.activity || 0)"
-									[text]="(day?.activity || 0) + '%'"
-								></nb-badge
-							></span>
+						</div>
+						<div class="responsive-table-row activity-column">
+							<nb-badge
+								[status]="getStatus(day?.activity || 0)"
+								[text]="(day?.activity || 0) + '%'"
+							></nb-badge>
 						</div>
 					</ng-container>
 					<ng-container *ngSwitchCase="ReportGroupFilterEnum.client">
-						<ng-container
-							*ngTemplateOutlet="
-								clientEl;
-								context: { $implicit: day?.client }
-							"
-						></ng-container>
-						<div class="stats">
+						<div class="responsive-table-row employee-column">
+							<ng-container
+								*ngTemplateOutlet="
+									clientEl;
+									context: { $implicit: day?.client }
+								"
+							></ng-container>
+						</div>
+						<div class="responsive-table-row project-column"></div>
+						<div class="responsive-table-row project-column"></div>
+						<div
+							class="responsive-table-row todo-column header client"
+						></div>
+						<div class="responsive-table-row time-column">
 							<span>{{ day?.sum | durationFormat }}</span>
-							<span
-								><nb-badge
-									[status]="getStatus(day?.activity || 0)"
-									[text]="(day?.activity || 0) + '%'"
-								></nb-badge
-							></span>
+						</div>
+						<div class="responsive-table-row activity-column">
+							<nb-badge
+								[status]="getStatus(day?.activity || 0)"
+								[text]="(day?.activity || 0) + '%'"
+							></nb-badge>
 						</div>
 					</ng-container>
 					<ng-container *ngSwitchDefault>
-						<ng-container
-							*ngTemplateOutlet="
-								dateEl;
-								context: {
-									$implicit: day?.date
-								}
-							"
-						></ng-container>
-						<div class="stats">
+						<div class="responsive-table-row employee-column">
+							<ng-container
+								*ngTemplateOutlet="
+									dateEl;
+									context: {
+										$implicit: day?.date
+									}
+								"
+							></ng-container>
+						</div>
+						<div class="responsive-table-row project-column"></div>
+						<div class="responsive-table-row project-column"></div>
+						<div
+							class="responsive-table-row todo-column header"
+						></div>
+						<div class="responsive-table-row time-column">
 							<span>{{ day?.sum | durationFormat }}</span>
-							<span
-								><nb-badge
-									[status]="getStatus(day?.activity || 0)"
-									[text]="(day?.activity || 0) + '%'"
-								></nb-badge
-							></span>
+						</div>
+						<div class="responsive-table-row activity-column">
+							<nb-badge
+								[status]="getStatus(day?.activity || 0)"
+								[text]="(day?.activity || 0) + '%'"
+							></nb-badge>
 						</div>
 					</ng-container>
 				</nb-accordion-item-header>
