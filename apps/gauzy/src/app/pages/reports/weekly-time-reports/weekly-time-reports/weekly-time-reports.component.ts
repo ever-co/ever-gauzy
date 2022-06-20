@@ -16,7 +16,7 @@ import { debounceTime, filter, tap } from 'rxjs/operators';
 import { pluck, pick } from 'underscore';
 import { TranslateService } from '@ngx-translate/core';
 import * as randomColor from 'randomcolor';
-import { distinctUntilChange, isEmpty } from '@gauzy/common-angular';
+import { distinctUntilChange, isEmpty, progressStatus } from '@gauzy/common-angular';
 import { moment } from './../../../../@core/moment-extend';
 import { DateRangePickerBuilderService, Store } from './../../../../@core/services';
 import { TimesheetService } from './../../../../@shared/timesheet/timesheet.service';
@@ -174,5 +174,8 @@ export class WeeklyTimeReportsComponent extends BaseSelectorFilterComponent
 			labels: employees,
 			datasets: datasets
 		};
+	}
+	public getStatus(value: number){
+		return progressStatus(value);
 	}
 }

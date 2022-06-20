@@ -7,12 +7,14 @@ import {
 	NbSpinnerModule,
 	NbCardModule,
 	NbSelectModule,
-	NbAccordionModule
+	NbAccordionModule,
+	NbBadgeModule
 } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
 import { SharedModule } from '../../shared.module';
 import { FiltersModule } from '../../timesheet/filters/filters.module';
 import { ProjectColumnViewModule } from '../project-column-view/project-column-view.module';
+import { TableComponentsModule } from '../../table-components';
 
 @NgModule({
 	declarations: [DailyGridComponent],
@@ -28,7 +30,9 @@ import { ProjectColumnViewModule } from '../project-column-view/project-column-v
 		NbSpinnerModule,
 		FiltersModule,
 		FormsModule,
-		ProjectColumnViewModule
+		ProjectColumnViewModule,
+		NbBadgeModule,
+		TableComponentsModule
 	]
 })
 export class DailyGridModule {}

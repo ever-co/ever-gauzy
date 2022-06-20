@@ -11,13 +11,13 @@ import {
 	IReportDayData,
 	ITimeLogFilters,
 	ReportGroupByFilter,
-	ReportGroupFilterEnum,
+	ReportGroupFilterEnum
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import { pick } from 'underscore';
-import { distinctUntilChange, isEmpty } from '@gauzy/common-angular';
+import { distinctUntilChange, isEmpty, progressStatus } from '@gauzy/common-angular';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '../../../@core/services';
 import { TimesheetService } from '../../timesheet/timesheet.service';
@@ -67,7 +67,7 @@ export class DailyGridComponent extends BaseSelectorFilterComponent
 			.pipe(
 				debounceTime(200),
 				tap(() => this.prepareRequest()),
-				untilDestroyed(this),
+				untilDestroyed(this)
 			)
 			.subscribe();
 		this.payloads$
@@ -103,7 +103,7 @@ export class DailyGridComponent extends BaseSelectorFilterComponent
 			...appliedFilter,
 			...this.getFilterRequest(this.request),
 			groupBy: this.groupBy
-		}
+		};
 		this.payloads$.next(request);
 	}
 
@@ -121,6 +121,10 @@ export class DailyGridComponent extends BaseSelectorFilterComponent
 		} finally {
 			this.loading = false;
 		}
+	}
+
+	public getStatus(value: number) {
+		return progressStatus(value)
 	}
 
 	ngOnDestroy() {}
