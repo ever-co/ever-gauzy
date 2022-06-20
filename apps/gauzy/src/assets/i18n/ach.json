@@ -2216,6 +2216,7 @@
 		"WAREHOUSES": "crwdns10194:0crwdne10194:0",
 		"EMAIL": "crwdns10196:0crwdne10196:0",
 		"ACTIVE": "crwdns10198:0crwdne10198:0",
+		"INACTIVE": "crwdns11215:0crwdne11215:0",
 		"LOCATION": "crwdns10200:0crwdne10200:0",
 		"ADDRESS": "crwdns10202:0crwdne10202:0",
 		"CREATE_WAREHOUSE": "crwdns10204:0crwdne10204:0",

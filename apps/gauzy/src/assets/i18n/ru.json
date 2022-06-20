@@ -2216,6 +2216,7 @@
 		"WAREHOUSES": "Склады",
 		"EMAIL": "Электронная почта",
 		"ACTIVE": "Активный",
+		"INACTIVE": "Неактивный",
 		"LOCATION": "Местоположение",
 		"ADDRESS": "Адрес",
 		"CREATE_WAREHOUSE": "Создать склад",

@@ -4,7 +4,7 @@ import { HttpClient } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { debounceTime, filter, tap } from 'rxjs/operators';
-import { Subject, firstValueFrom, combineLatest } from 'rxjs';
+import { Subject, firstValueFrom } from 'rxjs';
 import { Ng2SmartTableComponent } from 'ng2-smart-table';
 import { NbDialogService } from '@nebular/theme';
 import { distinctUntilChange } from '@gauzy/common-angular';
@@ -18,9 +18,10 @@ import {
 import { API_PREFIX, ComponentEnum } from './../../../../../@core/constants';
 import { MerchantService, Store, ToastrService } from '../../../../../@core/services';
 import { EnabledStatusComponent, ItemImgTagsComponent } from '../../table-components';
-import { PaginationFilterBaseComponent } from './../../../../../@shared/pagination/pagination-filter-base.component';
+import { IPaginationBase, PaginationFilterBaseComponent } from './../../../../../@shared/pagination/pagination-filter-base.component';
 import { ServerDataSource } from './../../../../../@core/utils/smart-table/server.data-source';
 import { DeleteConfirmationComponent } from './../../../../../@shared/user/forms';
+import { InputFilterComponent } from 'apps/gauzy/src/app/@shared/table-filters';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -28,12 +29,11 @@ import { DeleteConfirmationComponent } from './../../../../../@shared/user/forms
 	templateUrl: './merchant-table.component.html',
 	styleUrls: ['./merchant-table.component.scss']
 })
-export class MerchantTableComponent
-	extends PaginationFilterBaseComponent
+export class MerchantTableComponent extends PaginationFilterBaseComponent
 	implements OnInit {
 
 	settingsSmartTable: object;
-	loading: boolean;
+	loading: boolean = false;
 	selectedMerchant: IMerchant;
 	smartTableSource: ServerDataSource;
 	merchants: IMerchant[] = [];
@@ -80,20 +80,26 @@ export class MerchantTableComponent
 		this.merchants$
 			.pipe(
 				debounceTime(300),
-				tap(() => this.loading = true),
-				tap(() => this.getMerchants()),
 				tap(() => this.clearItem()),
+				tap(() => this.getMerchants()),
 				untilDestroyed(this)
 			)
 			.subscribe();
-
+		this.pagination$
+			.pipe(
+				debounceTime(100),
+				distinctUntilChange(),
+				tap(() => this.merchants$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		const storeOrganization$ = this.store.selectedOrganization$;
-		combineLatest([storeOrganization$])
+		storeOrganization$
 			.pipe(
 				debounceTime(300),
-				filter(([organization]) => !!organization),
-				tap(([organization]) => (this.organization = organization)),
 				distinctUntilChange(),
+				filter((organization: IOrganization) => !!organization),
+				tap((organization: IOrganization) => (this.organization = organization)),
 				tap(() => this.merchants$.next(true)),
 				untilDestroyed(this)
 			)
@@ -107,8 +113,8 @@ export class MerchantTableComponent
 			.pipe(
 				distinctUntilChange(),
 				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
-				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => this.refreshPagination()),
+				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => this.merchants$.next(true)),
 				untilDestroyed(this)
 			)
@@ -116,20 +122,37 @@ export class MerchantTableComponent
 	}
 
 	async _loadSmartTableSettings() {
+		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
 			actions: false,
+			editable: true,
 			pager: {
-				perPage: this.pagination.itemsPerPage
+				display: false,
+				perPage: pagination ? pagination.itemsPerPage : 10
 			},
 			columns: {
 				name: {
 					title: this.getTranslation('INVENTORY_PAGE.NAME'),
 					type: 'custom',
-					renderComponent: ItemImgTagsComponent
+					renderComponent: ItemImgTagsComponent,
+					filter: {
+						type: 'custom',
+						component: InputFilterComponent
+					},
+					filterFunction: (name: string) => {
+						this.setFilter({ field: 'name', search: name });
+					}
 				},
 				code: {
 					title: this.getTranslation('INVENTORY_PAGE.CODE'),
 					type: 'string',
+					filter: {
+						type: 'custom',
+						component: InputFilterComponent
+					},
+					filterFunction: (code: string) => {
+						this.setFilter({ field: 'code', search: code });
+					}
 				},
 				contact: {
 					title: this.getTranslation('INVENTORY_PAGE.CONTACT'),
@@ -162,7 +185,8 @@ export class MerchantTableComponent
 				active: {
 					title: this.getTranslation('INVENTORY_PAGE.ACTIVE'),
 					type: 'custom',
-					renderComponent: EnabledStatusComponent
+					renderComponent: EnabledStatusComponent,
+					filter: false,
 				}
 			}
 		}
@@ -247,41 +271,66 @@ export class MerchantTableComponent
 	* Register Smart Table Source Config 
 	*/
 	setSmartTableSource() {
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.organization;
+		if (!this.organization) {
+			return;
+		}
+		try {
+			this.loading = true;
 
-		this.smartTableSource = new ServerDataSource(this.http, {
-			endPoint: `${API_PREFIX}/merchants/pagination`,
-			relations: ['logo', 'contact', 'tags', 'warehouses'],
-			where: {
-				...{ organizationId, tenantId },
-				...this.filters.where
-			},
-			resultMap: (warehouse: IWarehouse) => {
-				return Object.assign({}, warehouse);
-			},
-			finalize: () => {
-				this.loading = false;
-			}
-		});
+			const { tenantId } = this.store.user;
+			const { id: organizationId } = this.organization;
+
+			this.smartTableSource = new ServerDataSource(this.http, {
+				endPoint: `${API_PREFIX}/merchants/pagination`,
+				relations: [
+					'logo',
+					'contact',
+					'tags',
+					'warehouses'
+				],
+				where: {
+					...{
+						organizationId,
+						tenantId
+					},
+					...this.filters.where
+				},
+				resultMap: (warehouse: IWarehouse) => {
+					return Object.assign({}, warehouse);
+				},
+				finalize: () => {
+					this.loading = false;
+					this.setPagination({
+						...this.getPagination(),
+						totalItems: this.smartTableSource.count()
+					});
+				}
+			});
+		} catch (error) {
+			this.toastrService.danger(error);
+		}
 	}
 
 	/**
 	 * GET merchants smart table source
 	 */
 	private async getMerchants() {
+		if (!this.organization) {
+			return;
+		}
+		this.setSmartTableSource();
+
 		try {
-			this.setSmartTableSource();
+			const { activePage, itemsPerPage } = this.getPagination();
+			this.smartTableSource.setPaging(
+				activePage,
+				itemsPerPage,
+				false
+			);
+
 			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
-
-				// Initiate GRID view pagination
-				const { activePage, itemsPerPage } = this.pagination;
-				this.smartTableSource.setPaging(activePage, itemsPerPage, false);
-
 				await this.smartTableSource.getElements();
 				this.merchants = this.smartTableSource.getData();
-
-				this.pagination['totalItems'] = this.smartTableSource.count();
 			}
 		} catch (error) {
 			this.toastrService.danger(error);

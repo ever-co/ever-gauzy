@@ -1,11 +1,7 @@
 <nb-card class="main card-scroll">
 	<nb-card-header class="d-flex">
-		<div class="navigate">
-			<button (click)="onCancel()" nbButton status="primary" class="mr-4">
-				<nb-icon icon="arrow-back-outline"></nb-icon>
-			</button>
-		</div>
 		<h5>
+			<ngx-back-navigation></ngx-back-navigation>
 			{{
 				(inventoryItem
 					? 'INVENTORY_PAGE.EDIT_INVENTORY_ITEM'
@@ -20,11 +16,34 @@
 		></nb-icon>
 	</nb-card-header>
 		<nb-card-body>
-			<div class="row">
-				<div class="col-md-3">
-					<div class="product-container">
-						<ngx-product-gallery></ngx-product-gallery>
+			<div class="row h-100">
+				<div class="col-md-3">	
+					<div class="d-flex align-self-start">
+						<div class="product-container">
+							<ngx-product-gallery></ngx-product-gallery>
+						</div>						
 					</div>
+					<div class="d-flex align-self-end footer-action">
+						<nb-card-footer>
+							<button 
+								(click)="onCancel()" 
+								status="danger" 
+								outline 
+								nbButton
+								class="mr-2"
+							>
+								{{ 'BUTTONS.CANCEL' | translate }}
+							</button>
+							<button
+								status="success"
+								[disabled]="form && form.invalid"
+								nbButton
+								(click)="onSaveRequest()"
+							>
+								{{ 'BUTTONS.SAVE' | translate }}
+							</button>
+						</nb-card-footer>						
+					</div>	
 				</div>
 				<div class="col-md-9">
 					<nb-tabset
@@ -385,18 +404,5 @@
 					</nb-tabset>
 				</div>
 			</div>
-		</nb-card-body>
-		<nb-card-footer class="text-right">
-			<button (click)="onCancel()" status="danger" class="mr-2" nbButton>
-				{{ 'BUTTONS.CANCEL' | translate }}
-			</button>
-			<button
-				status="success"
-				[disabled]="form && form.invalid"
-				nbButton
-				(click)="onSaveRequest()"
-			>
-				{{ 'BUTTONS.SAVE' | translate }}
-			</button>
-		</nb-card-footer>
+		</nb-card-body>		
 </nb-card>

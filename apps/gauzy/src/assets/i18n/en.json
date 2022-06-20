@@ -2220,6 +2220,7 @@
 		"WAREHOUSES": "Warehouses",
 		"EMAIL": "Email",
 		"ACTIVE": "Active",
+		"INACTIVE": "Inactive",
 		"LOCATION": "Location",
 		"ADDRESS": "Address",
 		"CREATE_WAREHOUSE": "Create Warehouse",
@@ -2260,7 +2261,7 @@
 		"SELECTED": "Selected",
 		"SUCCESSFULLY_ADDED_PRODUCTS": "Products were added successfully!",
 		"MAIN": "Main",
-		"INVENTORY": "Inventory"
+		"INVENTORY": "Inventory"		
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Tasks",
