@@ -14,6 +14,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { SharedModule } from '../../shared.module';
 import { FiltersModule } from '../../timesheet/filters/filters.module';
 import { ProjectColumnViewModule } from '../project-column-view/project-column-view.module';
+import { TableComponentsModule } from '../../table-components';
 
 @NgModule({
 	declarations: [DailyGridComponent],
@@ -30,7 +31,8 @@ import { ProjectColumnViewModule } from '../project-column-view/project-column-v
 		FiltersModule,
 		FormsModule,
 		ProjectColumnViewModule,
-		NbBadgeModule
+		NbBadgeModule,
+		TableComponentsModule
 	]
 })
 export class DailyGridModule {}

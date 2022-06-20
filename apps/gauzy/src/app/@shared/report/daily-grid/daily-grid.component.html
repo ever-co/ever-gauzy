@@ -549,7 +549,7 @@
 
 <ng-template let-client #clientEl>
 	<span *ngIf="client; else noClient">
-		{{ client?.name }}
+		<ngx-contact-links [value]="client"></ngx-contact-links>
 	</span>
 	<ng-template #noClient>
 		<span>{{ 'REPORT_PAGE.NO_CLIENT' | translate }}</span>
