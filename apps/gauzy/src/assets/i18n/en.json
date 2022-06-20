@@ -120,7 +120,9 @@
 		"TIME_TRACKING_DISABLE": "Disable Time Tracking",
 		"PRINT": "Print",
 		"FEEDBACK":"Feedback",
-		"EQUIPMENT_SHARING": "Equipment Sharing"
+		"EQUIPMENT_SHARING": "Equipment Sharing",
+		"PRIVATE": "Private",
+		"PUBLIC": "Public"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "Type",
@@ -1715,6 +1717,8 @@
 			"USER_WAS_REMOVED": "'{{ name }}' was removed from organization.",
 			"EMPLOYEE_POSITION": "Employee Position",
 			"PROJECT_URL": "Project Url",
+			"VISIBILITY": "Visibility",
+			"MEMBERS":"Employee/Teams",
 			"SETTINGS": {
 				"TIMER_SETTINGS": "Timer Settings",
 				"ALLOW_MODIFY_TIME": "Allow Modify Time",
@@ -2216,6 +2220,7 @@
 		"WAREHOUSES": "Warehouses",
 		"EMAIL": "Email",
 		"ACTIVE": "Active",
+		"INACTIVE": "Inactive",
 		"LOCATION": "Location",
 		"ADDRESS": "Address",
 		"CREATE_WAREHOUSE": "Create Warehouse",
@@ -2256,7 +2261,7 @@
 		"SELECTED": "Selected",
 		"SUCCESSFULLY_ADDED_PRODUCTS": "Products were added successfully!",
 		"MAIN": "Main",
-		"INVENTORY": "Inventory"
+		"INVENTORY": "Inventory"		
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Tasks",
@@ -3308,7 +3313,8 @@
 			"EDIT_ORGANIZATIONS_PROJECTS": {
 				"ADD_PROJECT": "Project '{{ name }}' was saved",
 				"REMOVE_PROJECT": "Project '{{ name }}' was removed",
-				"INVALID_PROJECT_NAME": "Please fill in the name of your project"
+				"INVALID_PROJECT_NAME": "Please fill in the name of your project",
+				"VISIBILITY": "Now project is {{ name }} "
 			},
 			"EDIT_ORGANIZATIONS_TEAM": {
 				"ADD_NEW_TEAM": "Team '{{ name }}' was added",

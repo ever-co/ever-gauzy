@@ -4,7 +4,6 @@ import { HttpClient } from '@angular/common/http';
 import { Ng2SmartTableComponent } from 'ng2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService } from '@nebular/theme';
-import { combineLatest } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { Subject, firstValueFrom } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -14,8 +13,9 @@ import { DeleteConfirmationComponent } from './../../../../../@shared/user/forms
 import { API_PREFIX, ComponentEnum } from './../../../../../@core/constants';
 import { Store, ToastrService, WarehouseService } from './../../../../../@core/services';
 import { ContactRowComponent, EnabledStatusComponent, ItemImgTagsComponent } from '../../table-components';
-import { PaginationFilterBaseComponent } from './../../../../../@shared/pagination/pagination-filter-base.component';
+import { IPaginationBase, PaginationFilterBaseComponent } from './../../../../../@shared/pagination/pagination-filter-base.component';
 import { ServerDataSource } from './../../../../../@core/utils/smart-table/server.data-source';
+import { InputFilterComponent } from './../../../../../@shared/table-filters';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -28,17 +28,17 @@ export class WarehousesTableComponent
 	implements AfterViewInit, OnInit, OnDestroy {
 
 	settingsSmartTable: object;
-	loading: boolean;
+	loading: boolean = false;
+	disableButton: boolean = true;
 	selectedWarehouse: IWarehouse;
 	smartTableSource: ServerDataSource;
 	warehouses: IWarehouse[] = [];
-	disableButton: boolean = true;
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
 
 	public organization: IOrganization;
-	warhouses$: Subject<any> = this.subject$;
+	warehouses$: Subject<any> = this.subject$;
 
 	warehousesTable: Ng2SmartTableComponent;
 	@ViewChild('warehousesTable') set content(content: Ng2SmartTableComponent) {
@@ -72,7 +72,7 @@ export class WarehousesTableComponent
 	}
 
 	ngAfterViewInit(): void {
-		this.warhouses$
+		this.warehouses$
 			.pipe(
 				debounceTime(300),
 				tap(() => this.loading = true),
@@ -81,15 +81,22 @@ export class WarehousesTableComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
-
+		this.pagination$
+			.pipe(
+				debounceTime(100),
+				distinctUntilChange(),
+				tap(() => this.warehouses$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		const storeOrganization$ = this.store.selectedOrganization$;
-		combineLatest([storeOrganization$])
+		storeOrganization$
 			.pipe(
 				debounceTime(300),
-				filter(([organization]) => !!organization),
-				tap(([organization]) => (this.organization = organization)),
 				distinctUntilChange(),
-				tap(() => this.warhouses$.next(true)),
+				filter((organization: IOrganization) => !!organization),
+				tap((organization: IOrganization) => (this.organization = organization)),
+				tap(() => this.warehouses$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -102,9 +109,9 @@ export class WarehousesTableComponent
 			.pipe(
 				distinctUntilChange(),
 				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
-				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => this.refreshPagination()),
-				tap(() => this.warhouses$.next(true)),
+				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
+				tap(() => this.warehouses$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -123,34 +130,54 @@ export class WarehousesTableComponent
 	}
 
 	async _loadSmartTableSettings() {
+		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
 			actions: false,
+			editable: true,
 			pager: {
-				perPage: this.pagination.itemsPerPage
+				display: false,
+				perPage: pagination ? pagination.itemsPerPage : 10
 			},
 			columns: {
 				name: {
 					title: this.getTranslation('INVENTORY_PAGE.LOGO'),
 					type: 'custom',
-					renderComponent: ItemImgTagsComponent
+					renderComponent: ItemImgTagsComponent,
+					filter: {
+						type: 'custom',
+						component: InputFilterComponent
+					},
+					filterFunction: (name: string) => {
+						this.setFilter({ field: 'name', search: name });
+					}
 				},
 				email: {
 					title: this.getTranslation('INVENTORY_PAGE.EMAIL'),
-					type: 'string'
+					type: 'string',
+					filter: {
+						type: 'custom',
+						component: InputFilterComponent
+					},
+					filterFunction: (email: string) => {
+						this.setFilter({ field: 'email', search: email });
+					},
 				},
 				contact: {
 					title: this.getTranslation('INVENTORY_PAGE.CONTACT'),
 					type: 'custom',
-					renderComponent: ContactRowComponent
+					renderComponent: ContactRowComponent,
+					filter: false
 				},
 				description: {
 					title: this.getTranslation('INVENTORY_PAGE.DESCRIPTION'),
-					type: 'string'
+					type: 'string',
+					filter: false
 				},
 				active: {
 					title: this.getTranslation('INVENTORY_PAGE.ACTIVE'),
 					type: 'custom',
-					renderComponent: EnabledStatusComponent
+					renderComponent: EnabledStatusComponent,
+					filter: false
 				}
 			}
 		};
@@ -211,7 +238,7 @@ export class WarehousesTableComponent
 					}
 				})
 				.finally(() => {
-					this.warhouses$.next(true);
+					this.warehouses$.next(true);
 				});
 		}
 	}
@@ -220,41 +247,56 @@ export class WarehousesTableComponent
 	* Register Smart Table Source Config 
 	*/
 	setSmartTableSource() {
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.organization;
+		if (!this.organization) {
+			return;
+		}
+		try {
+			this.loading = true;
 
-		this.smartTableSource = new ServerDataSource(this.http, {
-			endPoint: `${API_PREFIX}/warehouses/pagination`,
-			relations: ['logo', 'contact'],
-			where: {
-				...{ organizationId, tenantId },
-				...this.filters.where
-			},
-			resultMap: (warehouse: IWarehouse) => {
-				return Object.assign({}, warehouse);
-			},
-			finalize: () => {
-				this.loading = false;
-			}
-		});
+			const { tenantId } = this.store.user;
+			const { id: organizationId } = this.organization;
+
+			this.smartTableSource = new ServerDataSource(this.http, {
+				endPoint: `${API_PREFIX}/warehouses/pagination`,
+				relations: ['logo', 'contact'],
+				where: {
+					...{ organizationId, tenantId },
+					...this.filters.where
+				},
+				resultMap: (warehouse: IWarehouse) => {
+					return Object.assign({}, warehouse);
+				},
+				finalize: () => {
+					this.setPagination({
+						...this.getPagination(),
+						totalItems: this.smartTableSource.count()
+					});
+					this.loading = false;
+				}
+			});
+		} catch (error) {
+			this.toastrService.danger(error);
+		}
 	}
 
 	/**
 	 * GET warehouse smart table source
 	 */
 	private async getWarehouses() {
+		if (!this.organization) {
+			return;
+		}
+		this.setSmartTableSource();
 		try {
-			this.setSmartTableSource();
+			const { activePage, itemsPerPage } = this.getPagination();
+			this.smartTableSource.setPaging(
+				activePage,
+				itemsPerPage,
+				false
+			);
 			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
-
-				// Initiate GRID view pagination
-				const { activePage, itemsPerPage } = this.pagination;
-				this.smartTableSource.setPaging(activePage, itemsPerPage, false);
-
 				await this.smartTableSource.getElements();
 				this.warehouses = this.smartTableSource.getData();
-
-				this.pagination['totalItems'] = this.smartTableSource.count();
 			}
 		} catch (error) {
 			this.toastrService.danger(error);

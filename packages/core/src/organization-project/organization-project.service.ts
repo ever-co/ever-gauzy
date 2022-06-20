@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { IOrganizationProjectsFindInput } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
@@ -51,5 +51,17 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 		const project = await this.organizationProjectRepository.findOne(id);
 		project.taskListType = taskViewMode;
 		return await this.organizationProjectRepository.save(project);
+	}
+
+	public pagination(filter?: any) {		
+		if ('where' in filter) {
+			const { where } = filter;
+			if (where.tags) {
+				filter.where.tags = {
+					id: In(where.tags)
+				}
+			}
+		}
+		return super.paginate(filter);
 	}
 }

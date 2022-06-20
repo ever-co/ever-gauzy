@@ -1,0 +1,16 @@
+:host ::ng-deep {
+    nb-toggle {
+        div.checked+span.text {
+            color: var(--text-primary-color);
+        }
+
+        div+span.text {
+            color: var(--gauzy-text-color-2);
+        }
+    }
+}
+
+::ng-deep nb-toggle.status-primary .toggle:not(.checked) {
+    background-color: rgb(126, 126, 143);
+    border-color: rgb(126, 126, 143);
+}

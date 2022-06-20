@@ -3,8 +3,8 @@
 .card-layout {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(21rem, 1fr));
-  -webkit-box-align: center;
-  align-items: center;
+  -webkit-box-align: start;
+  align-items: flex-start;
   -webkit-box-pack: start;
   justify-content: flex-start;
   column-gap: 1rem;
@@ -15,7 +15,7 @@
   .card-item {
     display: flex;
     flex-direction: column;
-    //width: 336px;
+    margin-bottom: 0;
     border-radius: 0.5rem;
     background-color: nb-theme(background-basic-color-3);
     box-shadow: 0px 1px 1px 0px rgba(0, 0, 0, 0.15);

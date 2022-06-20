@@ -370,7 +370,6 @@ export class TrayIcon {
 
 		ipcMain.on('logout', () => {
 			this.tray.setContextMenu(Menu.buildFromTemplate(unAuthMenu));
-			menuWindowSetting.enabled = false;
 			menuWindowTime.enabled = false;
 
 			const appSetting = store.get('appSetting');

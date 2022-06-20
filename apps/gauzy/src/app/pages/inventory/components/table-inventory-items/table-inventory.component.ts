@@ -16,7 +16,7 @@ import {
 	IProductTranslated,
 	PermissionsEnum
 } from '@gauzy/contracts';
-import { PaginationFilterBaseComponent } from './../../../../@shared/pagination/pagination-filter-base.component';
+import { IPaginationBase, PaginationFilterBaseComponent } from './../../../../@shared/pagination/pagination-filter-base.component';
 import { DeleteConfirmationComponent } from '../../../../@shared/user/forms';
 import { API_PREFIX, ComponentEnum } from '../../../../@core/constants';
 import { ProductService, Store, ToastrService } from '../../../../@core/services';
@@ -29,16 +29,15 @@ import { ItemImgTagsComponent } from '../table-components';
 	templateUrl: './table-inventory.component.html',
 	styleUrls: ['./table-inventory.component.scss']
 })
-export class TableInventoryComponent
-	extends PaginationFilterBaseComponent
+export class TableInventoryComponent extends PaginationFilterBaseComponent
 	implements AfterViewInit, OnInit, OnDestroy {
 
 	settingsSmartTable: object;
-	loading: boolean;
+	loading: boolean = false;
+	disableButton: boolean = true;
 	selectedProduct: IProduct;
 	smartTableSource: ServerDataSource;
 	products: IProductTranslated[] = [];
-	disableButton: boolean = true;
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
@@ -73,7 +72,7 @@ export class TableInventoryComponent
 		this.setView();
 	}
 
-	async ngOnInit() {
+	ngOnInit() {
 		this._applyTranslationOnSmartTable();
 		this._loadSmartTableSettings();
 	}
@@ -82,22 +81,28 @@ export class TableInventoryComponent
 		this.products$
 			.pipe(
 				debounceTime(300),
-				tap(() => this.loading = true),
-				tap(() => this.getTranslatedProducts()),
 				tap(() => this.clearItem()),
+				tap(() => this.getTranslatedProducts()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.pagination$
+			.pipe(
+				debounceTime(100),
+				distinctUntilChange(),
+				tap(() => this.products$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
 
 		const storeOrganization$ = this.store.selectedOrganization$;
 		const preferredLanguage$ = this.store.preferredLanguage$
-
 		combineLatest([storeOrganization$, preferredLanguage$])
 			.pipe(
 				debounceTime(300),
+				distinctUntilChange(),
 				filter(([organization, language]) => !!organization && !!language),
 				tap(([organization]) => this.organization = organization),
-				distinctUntilChange(),
 				tap(() => this.products$.next(true)),
 				untilDestroyed(this)
 			)
@@ -111,8 +116,8 @@ export class TableInventoryComponent
 			.pipe(
 				distinctUntilChange(),
 				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
-				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => this.refreshPagination()),
+				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => this.products$.next(true)),
 				untilDestroyed(this)
 			)
@@ -132,10 +137,13 @@ export class TableInventoryComponent
 	}
 
 	private _loadSmartTableSettings() {
+		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
 			actions: false,
+			editable: true,
 			pager: {
-				perPage: this.pagination.itemsPerPage
+				display: false,
+				perPage: pagination ? pagination.itemsPerPage : 10
 			},
 			columns: {
 				name: {
@@ -144,11 +152,11 @@ export class TableInventoryComponent
 					renderComponent: ItemImgTagsComponent,
 					valuePrepareFunction: (name: string) => {
 						return name || '-';
-					}
+					},					
 				},
 				code: {
 					title: this.getTranslation('INVENTORY_PAGE.CODE'),
-					type: 'string'
+					type: 'string',					
 				},
 				productType: {
 					title: this.getTranslation('INVENTORY_PAGE.PRODUCT_TYPE'),
@@ -269,45 +277,67 @@ export class TableInventoryComponent
 	* Register Smart Table Source Config 
 	*/
 	setSmartTableSource() {
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.organization;
+		if (!this.organization) {
+			return;
+		}
+		try {
+			this.loading = true;
 
-		this.smartTableSource = new ServerDataSource(this.http, {
-			endPoint: `${API_PREFIX}/products/pagination`,
-			relations: [
-				'productType',
-				'productCategory',
-				'tags',
-				'featuredImage'
-			],
-			where: {
-				...{ organizationId, tenantId }
-			},
-			resultMap: (product: IProductTranslated) => {
-				return Object.assign({}, product);
-			},
-			finalize: () => {
-				this.loading = false;
-			}
-		});
+			const { tenantId } = this.store.user;
+			const { id: organizationId } = this.organization;
+
+			this.smartTableSource = new ServerDataSource(this.http, {
+				endPoint: `${API_PREFIX}/products/pagination`,
+				relations: [
+					'productType',
+					'productCategory',
+					'tags',
+					'featuredImage'
+				],
+				where: {
+					...{
+						organizationId,
+						tenantId,
+						...this.filters.where
+					}
+				},
+				resultMap: (product: IProductTranslated) => {
+					return Object.assign({}, product);
+				},
+				finalize: () => {
+					this.loading = false;
+					this.setPagination({
+						...this.getPagination(),
+						totalItems: this.smartTableSource.count()
+					});
+				}
+			});
+		} catch (error) {
+			this.toastrService.danger(error);
+		} finally {
+			this.loading = true;
+		}
 	}
 
 	/**
 	 * GET product inventory smart table source
 	 */
 	private async getTranslatedProducts() {
+		if (!this.organization) {
+			return;
+		}
+		this.setSmartTableSource();
 		try {
-			this.setSmartTableSource();
+			const { activePage, itemsPerPage } = this.getPagination();
+			this.smartTableSource.setPaging(
+				activePage,
+				itemsPerPage,
+				false
+			);
+
 			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
-
-				// Initiate GRID view pagination
-				const { activePage, itemsPerPage } = this.pagination;
-				this.smartTableSource.setPaging(activePage, itemsPerPage, false);
-
 				await this.smartTableSource.getElements();
 				this.products = this.smartTableSource.getData();
-
-				this.pagination['totalItems'] = this.smartTableSource.count();
 			}
 		} catch (error) {
 			this.toastrService.danger(error);
@@ -349,5 +379,5 @@ export class TableInventoryComponent
 		}
 	}
 
-	ngOnDestroy() { }
+	ngOnDestroy() {}
 }

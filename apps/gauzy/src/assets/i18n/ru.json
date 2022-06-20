@@ -120,7 +120,9 @@
 		"TIME_TRACKING_DISABLE": "Отключить отслеживание времени",
 		"PRINT": "Печать",
 		"FEEDBACK": "Отзыв",
-		"EQUIPMENT_SHARING": "Совместное использование снаряжения"
+		"EQUIPMENT_SHARING": "Совместное использование снаряжения",
+		"PRIVATE": "Приватный",
+		"PUBLIC": "Публичный"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "Тип",
@@ -1715,6 +1717,8 @@
 			"USER_WAS_REMOVED": "'{{ name }}' был удален из организации.",
 			"EMPLOYEE_POSITION": "Должность сотрудника",
 			"PROJECT_URL": "Адрес проекта",
+			"VISIBILITY": "Видимость",
+			"MEMBERS": "Сотрудник/Команды",
 			"SETTINGS": {
 				"TIMER_SETTINGS": "Настройки таймера",
 				"ALLOW_MODIFY_TIME": "Разрешить изменять время",
@@ -2216,6 +2220,7 @@
 		"WAREHOUSES": "Склады",
 		"EMAIL": "Электронная почта",
 		"ACTIVE": "Активный",
+		"INACTIVE": "Неактивный",
 		"LOCATION": "Местоположение",
 		"ADDRESS": "Адрес",
 		"CREATE_WAREHOUSE": "Создать склад",
@@ -3308,7 +3313,8 @@
 			"EDIT_ORGANIZATIONS_PROJECTS": {
 				"ADD_PROJECT": "Проект '{{ name }}' был сохранен",
 				"REMOVE_PROJECT": "Проект '{{ name }}' ' был удален",
-				"INVALID_PROJECT_NAME": "Пожалуйста, введите название вашего проекта"
+				"INVALID_PROJECT_NAME": "Пожалуйста, введите название вашего проекта",
+				"VISIBILITY": "Сейчас проект {{ name }} "
 			},
 			"EDIT_ORGANIZATIONS_TEAM": {
 				"ADD_NEW_TEAM": "Команда '{{ name }}' была добавлена",

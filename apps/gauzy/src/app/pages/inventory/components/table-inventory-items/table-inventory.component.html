@@ -4,228 +4,182 @@
 	nbSpinnerSize="large"
 	class="card-scroll"
 >
-	<nb-card-header class="card-header-title">
+	<nb-card-header class="d-flex flex-column pb-0">
 		<div class="card-header-title">
-			<h4>
-				<ngx-header-title>
-					{{ 'INVENTORY_PAGE.HEADER' | translate }}
-				</ngx-header-title>
-			</h4>
+			<div class="card-header-title">
+				<h4>
+					<ngx-header-title [allowEmployee]="false">
+						{{ 'INVENTORY_PAGE.HEADER' | translate }}
+					</ngx-header-title>
+				</h4>
+			</div>
+			<div class="card-header-title">
+				<div class="mr-2">
+					<ng-container *ngTemplateOutlet="subActionButtons"></ng-container>
+				</div>
+			</div>
 		</div>
-		<div>
-			<ga-layout-selector
+		<div class="gauzy-button-container">
+			<ngx-gauzy-button-action
+				[buttonTemplate]="actionButtons"
 				[componentName]="viewComponentName"
-			></ga-layout-selector>
+				[buttonTemplateVisible]="visibleButton"
+				[isDisable]="disableButton"
+			>
+			</ngx-gauzy-button-action>
 		</div>
 	</nb-card-header>
+
 	<nb-card-body>
-		<div class="mb-3">
-			<ng-template ngxPermissionsOnly="ORG_INVENTORY_PRODUCT_EDIT">
-				<button
-					(click)="onAddInventoryItem()"
-					nbButton
-					status="success"
-					class="mr-2"
-				>
-					<nb-icon class="mr-1" icon="plus-outline"></nb-icon>
-					{{ 'BUTTONS.ADD' | translate }}
-				</button>
-			</ng-template>
-			<ng-container
-				*ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
-			>
-				<ng-container *ngTemplateOutlet="actionButtons"></ng-container>
-			</ng-container>
-			<ng-container *ngTemplateOutlet="subActionButtons"></ng-container>
-		</div>
 		<ng-template
 			[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
 			[ngIfElse]="gridLayout"
 		>
-			<ng2-smart-table
-				[settings]="settingsSmartTable"
-				(userRowSelect)="selectProduct($event)"
-				[source]="smartTableSource"
-				style="cursor: pointer"
-				#inventoryTable
-			></ng2-smart-table>
-		</ng-template>
-		<ng-template #gridLayout>
-			<ng-container *ngTemplateOutlet="gridViewTemplate"></ng-container>
+			<div class="table-scroll-container">
+				<ng2-smart-table
+					[settings]="settingsSmartTable"
+					(userRowSelect)="selectProduct($event)"
+					[source]="smartTableSource"
+					style="cursor: pointer"
+					#inventoryTable
+				></ng2-smart-table>
+			</div>
 			<div class="pagination-container">
-				<ng-container *ngIf="pagination.totalItems > pagination.itemsPerPage">
+				<ng-container *ngIf="pagination.totalItems > minItemPerPage">
 					<ga-pagination
+						(selectedOption)="onUpdateOption($event)"
 						(selectedPage)="onPageChange($event)"
 						[doEmit]="false"
 						[totalItems]="pagination?.totalItems"
 						[itemsPerPage]="pagination?.itemsPerPage"
-						[activePage]="pagination?.activePage">
-					</ga-pagination>
+						[activePage]="pagination?.activePage"
+					></ga-pagination>
 				</ng-container>
-			</div>
+			</div>			
+		</ng-template>
+		<ng-template #gridLayout>
+			<div class="grid-scroll-container">
+				<ga-card-grid
+					[settings]="settingsSmartTable"
+					[source]="products"
+					(selectedOption)="onUpdateOption($event)"
+					(selectedPage)="onPageChange($event)"
+					(onSelectedItem)="selectProduct($event)"
+					[doEmit]="false"
+					[totalItems]="pagination?.totalItems"
+					[itemsPerPage]="pagination?.itemsPerPage"
+					[activePage]="pagination?.activePage"
+				></ga-card-grid>					
+			</div>			
 		</ng-template>
 	</nb-card-body>
 </nb-card>
 
-<ng-template #gridViewTemplate>
-	<ul class="flex-container">
-		<li class="flex-item" *ngFor="let x of products">
-			<div class="info-line">
-				<span class="info-meta" [innerHtml]="'INVENTORY_PAGE.IMAGE' | translate"></span>
-				<div class="card-image">
-					<div
-						class="card-image"
-						*ngIf="!x.featuredImage || !x.featuredImage.url"
-						[ngStyle]="{
-							backgroundImage: 'url(/assets/images/others/no-image-placeholder.svg)'
-						}"
-						alt="Product Item Photo">
-					</div>
-					<div
-						class="card-image"
-						*ngIf="x.featuredImage && x.featuredImage.url"
-						[ngStyle]="{
-							backgroundImage: 'url(' + x.featuredImage.url + ')'
-						}"
-						alt="Product Item Photo">
-					</div>
-				</div>
-			</div>
-			<div class="info-line">
-				<span class="info-meta">{{
-					'INVENTORY_PAGE.NAME' | translate
-				}}</span>
-				<span class="info-value">{{ x.name }}</span>
-			</div>
-			<div class="info-line">
-				<span class="info-meta">{{
-					'INVENTORY_PAGE.CODE' | translate
-				}}</span>
-				<span class="info-value">{{ x.code }}</span>
-			</div>
-			<div class="info-line">
-				<span class="info-meta">{{
-					'INVENTORY_PAGE.PRODUCT_TYPE' | translate
-				}}</span>
-				<span class="info-value">{{ x.type?.name }}</span>
-			</div>
-			<div class="info-line">
-				<span class="info-meta">{{
-					'INVENTORY_PAGE.PRODUCT_CATEGORY' | translate
-				}}</span>
-				<span class="info-value">{{ x.category?.name }}</span>
-			</div>
-			<div class="info-line">
-				<span class="info-meta">{{
-					'INVENTORY_PAGE.DESCRIPTION' | translate
-				}}</span>
-				<span class="info-value">{{ x.description }}</span>
-			</div>
-			<nb-card-footer class="card-footer">
-				<ng-container *ngTemplateOutlet="
-						actionButtons;
-						context: {
-							buttonSize: 'tiny',
-							selectedItem: x
-						}
-					">
-				</ng-container>
-			</nb-card-footer>
-		</li>
-	</ul>
+<ng-template #visibleButton>
+	<ng-template ngxPermissionsOnly="ORG_INVENTORY_PRODUCT_EDIT">
+		<button
+			(click)="onAddInventoryItem()"
+			nbButton
+			status="success"
+			class="action"
+			size="small"
+		>
+			<nb-icon icon="plus-outline"></nb-icon
+			>{{ 'BUTTONS.ADD' | translate }}
+		</button>	
+	</ng-template>
 </ng-template>
-
 <ng-template
 	#actionButtons
 	let-buttonSize="buttonSize"
 	let-selectedItem="selectedItem"
 >
-	<ng-template ngxPermissionsOnly="ORG_INVENTORY_PRODUCT_EDIT">
-		<button
-			(click)="onEditInventoryItem(selectedItem)"
-			nbButton
-			status="info"
-			class="mr-2"
-			[disabled]="!selectedItem && disableButton"
-			[size]="buttonSize || 'medium'"
-		>
-			<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
-			{{ 'BUTTONS.EDIT' | translate }}
-		</button>
-	</ng-template>
-	<ng-template ngxPermissionsOnly="ORG_INVENTORY_VIEW">
-		<button
-			(click)="onViewInventoryItem(selectedItem)"
-			nbButton
-			status="warning"
-			class="mr-2"
-			[disabled]="!selectedItem && disableButton"
-			[size]="buttonSize || 'medium'"
-		>
-			<nb-icon class="mr-1" icon="eye-outline"></nb-icon>
-			{{ 'BUTTONS.VIEW' | translate }}
-		</button>
-	</ng-template>
-	<ng-template ngxPermissionsOnly="ORG_INVENTORY_PRODUCT_EDIT">
-		<button
-			(click)="delete(selectedItem)"
-			nbButton
-			status="danger"
-			class="mr-2"
-			[disabled]="!selectedItem && disableButton"
-			[size]="buttonSize || 'medium'"
-		>
-			<nb-icon class="mr-1" icon="archive-outline"> </nb-icon>
-			{{ 'BUTTONS.DELETE' | translate }}
-		</button>
-	</ng-template>
-</ng-template>
-
-<ng-template #subActionButtons>
-	<ng-template ngxPermissionsOnly="ORG_PRODUCT_TYPES_VIEW">
-		<button
-			(click)="manageProductTypes()"
-			nbButton
-			status="primary"
-			class="float-right mr-2"
-			[size]="'medium'"
+	<div class="btn-group actions">
+		<ng-template ngxPermissionsOnly="ORG_INVENTORY_VIEW">
+			<button
+				(click)="onViewInventoryItem(selectedItem)"
+				status="basic"
+				class="action secondary"
+				size="small"
+				nbButton
 			>
-			<nb-icon icon="edit-outline"></nb-icon>
-			{{ 'INVENTORY_PAGE.PRODUCT_TYPES' | translate }}
+				<nb-icon icon="eye-outline"></nb-icon>
+				{{ 'BUTTONS.VIEW' | translate }}
+			</button>
+		</ng-template>
+		<ng-template ngxPermissionsOnly="ORG_INVENTORY_PRODUCT_EDIT">
+			<button
+				(click)="onEditInventoryItem(selectedItem)"
+				nbButton
+				status="basic"
+				class="action secondary"
+				size="small"	
+				[disabled]="!selectedItem && disableButton"				
+			>
+				<nb-icon icon="edit-outline"></nb-icon>
+				{{ 'BUTTONS.EDIT' | translate }}
+			</button>
+		</ng-template>		
+		<ng-template ngxPermissionsOnly="ORG_INVENTORY_PRODUCT_EDIT">
+			<button
+				nbButton
+				[disabled]="!selectedItem && disableButton"		
+				size="small"
+				(click)="delete(selectedItem)"
+				status="basic"
+				class="action"
+				[nbTooltip]="'BUTTONS.DELETE' | translate"
+			>
+				<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
+			</button>			
+		</ng-template>
+	</div>
+</ng-template>
+<ng-template #subActionButtons>
+	<ng-template ngxPermissionsOnly="ORG_INVENTORY_PRODUCT_EDIT">
+		<button
+			(click)="manageStores()"
+			status="warning"
+			outline
+			size="small"
+			nbButton
+		>
+			<nb-icon icon="home-outline"></nb-icon>
+			{{ 'INVENTORY_PAGE.MERCHANTS' | translate }}
 		</button>
+		<button
+			(click)="manageWarehouses()"
+			status="warning"
+			outline
+			size="small"
+			nbButton
+		>
+			<nb-icon icon="home-outline"></nb-icon>
+			{{ 'INVENTORY_PAGE.WAREHOUSES' | translate }}
+		</button>		
 	</ng-template>
 	<ng-template ngxPermissionsOnly="ORG_PRODUCT_CATEGORIES_VIEW">
 		<button
 			(click)="manageProductCategories()"
-			nbButton
 			status="primary"
-			class="float-right mr-2"
-			[size]="'medium'"
+			outline
+			size="small"
+			nbButton
 		>
 			<nb-icon icon="edit-outline"></nb-icon>
 			{{ 'INVENTORY_PAGE.PRODUCT_CATEGORIES' | translate }}
 		</button>
-	</ng-template>
-	<ng-template ngxPermissionsOnly="ORG_INVENTORY_PRODUCT_EDIT">
+	</ng-template>	
+	<ng-template ngxPermissionsOnly="ORG_PRODUCT_TYPES_VIEW">
 		<button
-			(click)="manageWarehouses()"
+			(click)="manageProductTypes()"
+			status="primary"
+			outline
+			size="small"
 			nbButton
-			status="warning"
-			class="float-right mr-2"
-			[size]="'medium'"
-		>
-			<nb-icon icon="home-outline"></nb-icon>
-			{{ 'INVENTORY_PAGE.WAREHOUSES' | translate }}
-		</button>
-		<button
-			(click)="manageStores()"
-			nbButton
-			status="warning"
-			class="float-right mr-2"
-			[size]="'medium'"
-		>
-			<nb-icon icon="home-outline"></nb-icon>
-			{{ 'INVENTORY_PAGE.MERCHANTS' | translate }}
+			>
+			<nb-icon icon="edit-outline"></nb-icon>
+			{{ 'INVENTORY_PAGE.PRODUCT_TYPES' | translate }}
 		</button>
 	</ng-template>
 </ng-template>

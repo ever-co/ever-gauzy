@@ -1,0 +1,74 @@
+<div class="project-container">
+	<div class="detail-row">
+		<div class="detail-left">
+			{{ 'ORGANIZATIONS_PAGE.BILLING' | translate }}
+		</div>
+		<div class="detail-right">
+			{{
+				rowData?.billable
+					? ('BUTTONS.YES' | translate)
+					: ('BUTTONS.NO' | translate)
+			}}
+		</div>
+	</div>
+	<div class="detail-row">
+		<div class="detail-left">
+			{{ 'FORM.PLACEHOLDERS.OWNER' | translate }}
+		</div>
+		<div class="detail-right">
+			{{ rowData?.owner ? (rowData?.owner | titlecase) : '&mdash;' }}
+		</div>
+	</div>
+	<div class="detail-row">
+		<div class="detail-left">
+			{{ 'ORGANIZATIONS_PAGE.EDIT.CONTACT' | translate }}
+		</div>
+		<div class="detail-right">
+			<span *ngIf="!rowData?.organizationContact">&mdash;</span>
+			<ngx-contact-links
+				*ngIf="rowData?.organizationContact"
+				[value]="rowData?.organizationContact"
+			></ngx-contact-links>
+		</div>
+	</div>
+	<div class="detail-row">
+		<div class="detail-left">
+			{{ 'ORGANIZATIONS_PAGE.EDIT.END_DATE' | translate }}
+		</div>
+		<div class="detail-right">
+			{{ rowData?.endDate ? (rowData?.endDate | dateFormat) : '&mdash;' }}
+		</div>
+	</div>
+	<div class="detail-row">
+		<div class="detail-left">
+			{{ 'ORGANIZATIONS_PAGE.EDIT.CURRENCY' | translate }}
+		</div>
+		<div class="detail-right">
+			{{ rowData?.currency ? rowData?.currency : '&mdash;' }}
+		</div>
+	</div>
+	<div class="detail-row">
+		<div class="detail-left">
+			{{ 'ORGANIZATIONS_PAGE.EDIT.START_DATE' | translate }}
+		</div>
+		<div class="detail-right">
+			{{
+				rowData?.startDate
+					? (rowData?.startDate | dateFormat)
+					: '&mdash;'
+			}}
+		</div>
+	</div>
+	<div class="detail-row">
+		<div class="detail-left">
+			{{ 'FORM.LABELS.PROJECT_URL' | translate }}
+		</div>
+		<div class="detail-right">
+			<gauzy-external-link
+				*ngIf="rowData?.projectUrl"
+				[rowData]="{ website: rowData?.projectUrl }"
+			></gauzy-external-link>
+			<span *ngIf="!rowData?.projectUrl">&mdash;</span>
+		</div>
+	</div>
+</div>

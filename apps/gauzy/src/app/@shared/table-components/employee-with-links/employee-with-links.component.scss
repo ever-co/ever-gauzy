@@ -30,6 +30,7 @@ $radius: 18px;
         width: $radius;
         height: $radius;
         border-radius: $radius;
+        margin-right: 8px;
       }
       &:hover {
         text-overflow: clip;

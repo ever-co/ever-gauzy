@@ -22,25 +22,27 @@ import { ComponentLayoutStyleEnum } from '@gauzy/contracts';
 					(mouseleave)="hoverState = false"
 				/>
 			</div>
-
-			<div class="d-block" style="margin-left:15px;">
-				{{ value || '-' }}
+			<div class="row">
+				<div class="col-12 text-truncate" style="margin-left:15px;">
+					{{ value || '-' }}
+				</div>
+				<div
+					*ngIf="isTags"
+					style="margin-left:15px;"
+					class="col-12 mt-2 {{ layout === 'CARDS_GRID' ? 'tags-right' : '' }}"
+				>
+					<nb-badge
+						*ngFor="let tag of rowData?.tags"
+						class="color"
+						position="centered"
+						[style.background]="tag?.color"
+						[style.color]="backgroundContrast(tag?.color)"
+						text="{{ tag?.name }}"
+					>
+					</nb-badge>
+				</div>
 			</div>
-		</div>
-		<div
-			*ngIf="isTags"
-			class="tags {{ layout === 'CARDS_GRID' ? 'tags-right' : '' }}"
-		>
-			<nb-badge
-				*ngFor="let tag of rowData?.tags"
-				class="color"
-				position="centered"
-				[style.background]="tag?.color"
-				[style.color]="backgroundContrast(tag?.color)"
-				text="{{ tag?.name }}"
-			>
-			</nb-badge>
-		</div>
+		</div>		
 	`,
 	styles: [
 		`

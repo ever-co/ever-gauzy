@@ -2,7 +2,6 @@
 	[nbSpinner]="loading"
 	nbSpinnerStatus="primary"
 	nbSpinnerSize="large"
-	class="card-scroll"
 >
 	<nb-card-header class="card-custom-header">
 		<div class="card-header-title">
@@ -12,7 +11,7 @@
 				</ngx-header-title>
 			</h4>      		
 		</div>
-		<div class="gauzy-button-container" *ngIf="!showAddCard">
+		<div class="gauzy-button-container">
 			<ngx-gauzy-button-action
 				[isDisable]="disableButton"
 				[buttonTemplate]="actionButtons"
@@ -21,8 +20,8 @@
 			></ngx-gauzy-button-action>
 		</div>
 	</nb-card-header>	
-	<nb-card-body class="custom-card">
-		<ng-container *ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE && !showAddCard">
+	<nb-card-body>
+		<ng-container *ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE">
 			<div class="table-scroll-container">
 				<ng2-smart-table
 					[settings]="smartTableSettings"
@@ -45,7 +44,7 @@
 				</ng-container>
 			</div>
 		</ng-container>
-		<ng-container *ngIf="dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID && !showAddCard">
+		<ng-container *ngIf="dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID">
 			<ga-card-grid
 				[settings]="smartTableSettings"
 				[source]="teams"
@@ -57,21 +56,14 @@
 				[itemsPerPage]="pagination?.itemsPerPage"
 				[activePage]="pagination?.activePage"
         	></ga-card-grid>
-		</ng-container>
-		<ga-teams-mutation
-				*ngIf="showAddCard"
-				[employees]="employees"
-				[team]="selectedTeam"
-				(canceled)="clearItem()"
-				(addOrEditTeam)="addOrEditTeam($event)"
-		></ga-teams-mutation>
+		</ng-container>	
 	</nb-card-body>
 </nb-card>
 <ng-template #visibleButton>
 	<ng-template [ngxPermissionsOnly]="['ALL_ORG_EDIT']">
 		<button
 			*ngIf="!showAddCard"
-			(click)="showAddCard = !showAddCard"
+			(click)="openDialog(addEditTemplate, false)"
 			nbButton
 			status="success"
 			class="action"
@@ -92,7 +84,7 @@
 			<button
 				nbButton
 				status="basic"
-				class="action secondary"
+				class="action primary"
 				[disabled]="!selectedItem && disableButton"
 				(click)="editTeam(selectedItem)"
 				size="small"		
@@ -106,7 +98,7 @@
 				nbButton
 				status="basic"
 				class="action"
-				[disabled]="!selectedItem && disableButton"
+				[disabled]="disableButton"
 				(click)="removeTeam(selectedItem?.id, selectedItem?.name)"
 				size="small"
 				[nbTooltip]="'BUTTONS.DELETE' | translate"
@@ -114,5 +106,28 @@
 				<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
 			</button>
 		</ng-template>
+	</div>
+</ng-template>
+<ng-template #addEditTemplate let-ref="dialogRef">
+	<div class="editable">
+		<div class="container">
+			<div class="row">
+				<div class="col-sm-12 d-flex justify-content-end">
+					<i
+						class="fas fa-times"
+						(click)="ref.close(); disabled = true"
+					></i>
+				</div>
+			</div>
+			<div class="row mb-3">
+				<h5 class="title mr-3 ml-3">{{ this.selected.team ? ('POP_UPS.EDIT' | translate) : ('POP_UPS.ADD' | translate) }}</h5>
+			</div>
+			<ga-teams-mutation
+					[employees]="employees"
+					[team]="selectedTeam"
+					(canceled)="clearItem()"
+					(addOrEditTeam)="addOrEditTeam($event)"
+			></ga-teams-mutation>
+		</div>
 	</div>
 </ng-template>

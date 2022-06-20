@@ -2,202 +2,143 @@
 	[nbSpinner]="loading"
 	nbSpinnerStatus="primary"
 	nbSpinnerSize="large"
-	class="card-scroll"
 >
 	<nb-card-header class="main-header">
-		<div class="main-header">
-			<h4>
-				<ngx-header-title>
-					{{ 'ORGANIZATIONS_PAGE.PROJECTS' | translate }}
-				</ngx-header-title>
-			</h4>
-		</div>
-		<div class="main-header">
-			<div class="main-header" *ngIf="!showAddCard">
-				<ga-layout-selector
+		<ng-container *ngIf="!showAddCard"
+			><div class="main-header">
+				<h4>
+					<ngx-header-title>
+						{{ 'ORGANIZATIONS_PAGE.PROJECTS' | translate }}
+					</ngx-header-title>
+				</h4>
+			</div>
+			<div class="d-flex justify-content-end">
+				<ngx-gauzy-button-action
+					[buttonTemplateVisible]="visibleButton"
+					[isDisable]="disableButton"
+					[buttonTemplate]="actionButtons"
 					[componentName]="viewComponentName"
-				></ga-layout-selector>
-			</div>
-		</div>
-	</nb-card-header>
-	<nb-card-body class="project-list">
-		<div class="w-100">
-			<div class="mb-3">
-				<button
-					*ngIf="!showAddCard"
-					class="mr-2"
-					(click)="showAddCard = !showAddCard"
-					nbButton
-					status="success"
-				>
-					<nb-icon class="mr-1" icon="plus-outline"></nb-icon
-					>{{ 'BUTTONS.ADD' | translate }}
-				</button>
-				<ga-projects-mutation
-					*ngIf="showAddCard && organization"
-					[project]="projectToEdit"
-					[organizationContacts]="organizationContacts"
-					(canceled)="cancel()"
-					(addOrEditProject)="addOrEditProject($event)"
-				></ga-projects-mutation>
-				<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
-					<ng-container
-						*ngTemplateOutlet="actionButtons"
-					></ng-container>
-				</ng-container>
-			</div>
-		</div>
-		<ng-container *ngIf="dataLayoutStyle === 'CARDS_GRID' && !showAddCard">
-			<div class="member-card-wrap">
-				<ga-entity-with-members-card
-					*ngFor="let p of projects"
-					[entityWithMembers]="p"
-					(remove)="removeProject(p.id, p.name)"
-					(edit)="editProject(p)"
-					class="member-card"
-				>
-					<div class="public-icon">
-						<div *ngIf="p.public; else notPublic">
-							<nb-icon
-								class="ml-auto mt-1 close float-left"
-								icon="eye-outline"
-							></nb-icon>
-						</div>
-						<ng-template #notPublic>
-							<nb-icon
-								class="ml-auto mt-1 close float-left"
-								icon="eye-off-outline"
-							></nb-icon>
-						</ng-template>
-					</div>
-					<div class="client-info">
-						<div class="info-line">
-							<div class="info-meta">
-								{{
-									'ORGANIZATIONS_PAGE.EDIT.CONTACT'
-										| translate
-								}}
-							</div>
-							<div class="info-value">
-								{{ p.organizationContact?.name }}
-							</div>
-						</div>
-						<div class="info-line">
-							<div class="info-meta">
-								{{
-									'ORGANIZATIONS_PAGE.EDIT.START_DATE'
-										| translate
-								}}
-							</div>
-							<div class="info-value">
-								{{ p.startDate | dateFormat }}
-							</div>
-						</div>
-						<div class="info-line">
-							<div class="info-meta">
-								{{
-									'ORGANIZATIONS_PAGE.EDIT.END_DATE'
-										| translate
-								}}
-							</div>
-							<div class="info-value">{{ p.endDate | dateFormat }}</div>
-						</div>
-						<div class="info-line">
-							<div class="info-meta">
-								{{
-									'ORGANIZATIONS_PAGE.EDIT.BILLING'
-										| translate
-								}}
-							</div>
-							<div class="info-value">
-								{{ p.billing | removeLodash | titlecase }}
-							</div>
-						</div>
-						<div class="info-line">
-							<div class="info-meta">
-								{{
-									'ORGANIZATIONS_PAGE.EDIT.CURRENCY'
-										| translate
-								}}
-							</div>
-							<div class="info-value">{{ p.currency }}</div>
-						</div>
-						<div class="info-line">
-							<div class="info-meta">
-								{{
-									'ORGANIZATIONS_PAGE.EDIT.OWNER' | translate
-								}}
-							</div>
-							<div class="info-value">
-								{{ p.owner | titlecase }}
-							</div>
-						</div>
-						<div class="info-line">
-							<div class="info-meta">
-								{{ 'FORM.PLACEHOLDERS.CODE' | translate }}
-							</div>
-							<div class="info-value">
-								{{ p.code | titlecase }}
-							</div>
-						</div>
-						<div class="info-line">
-							<div class="info-meta">
-								{{ 'FORM.PLACEHOLDERS.COLOR' | translate }}
-							</div>
-							<div class="info-value">
-								{{ p.color | titlecase }}
-							</div>
-						</div>
-						<div class="info-line">
-							<div class="info-meta">
-								{{
-									'APPROVAL_POLICY_PAGE.APPROVAL_POLICY_DESCRIPTION'
-										| translate
-								}}
-							</div>
-							<div class="info-value" [innerHTML]="p.description | truncate : 50"></div>
-						</div>
-					</div>
-				</ga-entity-with-members-card>
+				></ngx-gauzy-button-action></div
+		></ng-container>
+		<ng-container *ngIf="showAddCard">
+			<div class="d-flex mb-5">
+				<ngx-back-navigation
+					[haveLink]="true"
+					(click)="cancel()"
+				></ngx-back-navigation>
+				<h4>
+					{{
+						(projectToEdit
+							? 'ORGANIZATIONS_PAGE.EDIT.EDIT_PROJECT'
+							: 'ORGANIZATIONS_PAGE.EDIT.NEW_PROJECT'
+						) | translate
+					}}
+				</h4>
 			</div>
 		</ng-container>
-		<ng2-smart-table
-			*ngIf="
-				dataLayoutStyle === 'TABLE' && !showAddCard
-			"
-			class="tags-table w-100"
-			(userRowSelect)="selectProject($event)"
-			[settings]="settingsSmartTable"
-			[source]="smartTableSource"
-			style="cursor: pointer"
-			#projectsTable
-		>
-		</ng2-smart-table>
+	</nb-card-header>
+	<nb-card-body [ngClass]="{ 'custom-body-content': showAddCard }">
+		<ng-container *ngIf="!showAddCard; else editLayout">
+			<ng-container
+				*ngIf="
+					dataLayoutStyle === componentLayoutStyleEnum.TABLE;
+					else gridLayout
+				"
+			>
+				<div class="table-scroll-container">
+					<ng2-smart-table
+						(userRowSelect)="selectProject($event)"
+						[settings]="settingsSmartTable"
+						[source]="smartTableSource"
+						style="cursor: pointer"
+						#projectsTable
+					>
+					</ng2-smart-table>
+				</div>
+				<div class="pagination-container">
+					<ng-container
+						*ngIf="pagination.totalItems > minItemPerPage"
+					>
+						<ga-pagination
+							(selectedOption)="onUpdateOption($event)"
+							(selectedPage)="onPageChange($event)"
+							[doEmit]="false"
+							[totalItems]="pagination?.totalItems"
+							[itemsPerPage]="pagination?.itemsPerPage"
+							[activePage]="pagination?.activePage"
+						></ga-pagination>
+					</ng-container>
+				</div>
+			</ng-container>
+		</ng-container>
 	</nb-card-body>
 </nb-card>
-<ng-template #actionButtons let-buttonSize="buttonSize">
-	<button
-		(click)="editProject(selectedProject)"
-		nbButton
-		status="info"
-		*ngIf="!showAddCard"
-		class="mr-2"
-		[disabled]="disableButton"
-		[size]="buttonSize || 'medium'"
-	>
-		<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
-		{{ 'BUTTONS.EDIT' | translate }}
-	</button>
-	<button
-		(click)="removeProject(selectedProject.id, selectedProject.name)"
-		nbButton
-		*ngIf="!showAddCard"
-		status="danger"
-		class="mr-2"
-		[disabled]="disableButton"
-		[size]="buttonSize || 'medium'"
-	>
-		<nb-icon class="mr-1" icon="archive-outline"> </nb-icon>
-		{{ 'BUTTONS.DELETE' | translate }}
-	</button>
+<ng-template #actionButtons>
+	<ng-container *ngxPermissionsOnly="ALL_ORG_EDIT">
+		<div class="actions">
+			<button
+				(click)="editProject(selectedProject)"
+				nbButton
+				status="basic"
+				*ngIf="!showAddCard"
+				class="action primary"
+				[disabled]="disableButton"
+				size="small"
+			>
+				<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
+				{{ 'BUTTONS.EDIT' | translate }}
+			</button>
+			<button
+				(click)="
+					removeProject(selectedProject.id, selectedProject.name)
+				"
+				nbButton
+				*ngIf="!showAddCard"
+				status="basic"
+				class="action"
+				[disabled]="disableButton"
+				size="small"
+				[nbTooltip]="'BUTTONS.DELETE' | translate"
+			>
+				<nb-icon status="danger" icon="trash-2-outline"> </nb-icon>
+			</button>
+		</div>
+	</ng-container>
+</ng-template>
+<ng-template #visibleButton>
+	<ng-container *ngxPermissionsOnly="ALL_ORG_EDIT"
+		><button
+			*ngIf="!showAddCard"
+			class="action"
+			(click)="showAddCard = !showAddCard"
+			nbButton
+			status="success"
+			size="small"
+		>
+			<nb-icon icon="plus-outline"></nb-icon
+			>{{ 'BUTTONS.ADD' | translate }}
+		</button>
+	</ng-container>
+</ng-template>
+<ng-template #gridLayout>
+	<ga-card-grid
+		(selectedOption)="onUpdateOption($event)"
+		(selectedPage)="onPageChange($event)"
+		(onSelectedItem)="selectProject($event)"
+		[settings]="settingsSmartTable"
+		[source]="projects"
+		[doEmit]="false"
+		[totalItems]="pagination?.totalItems"
+		[itemsPerPage]="pagination?.itemsPerPage"
+		[activePage]="pagination?.activePage"
+	></ga-card-grid>
+</ng-template>
+<ng-template #editLayout>
+	<ga-projects-mutation
+		*ngIf="showAddCard && organization"
+		[project]="projectToEdit"
+		[organizationContacts]="organizationContacts"
+		(canceled)="cancel()"
+		(addOrEditProject)="addOrEditProject($event)"
+	></ga-projects-mutation>
 </ng-template>
