@@ -9,6 +9,7 @@ import {
     NbButtonModule,
     NbIconModule,
     NbSpinnerModule,
+    NbTooltipModule,
 
 } from '@nebular/theme';
 import { CommonModule } from '@angular/common';
@@ -18,7 +19,9 @@ import { ProductTypesComponent } from './product-types.component';
 import { ProductTypesRoutingModule } from './product-types-routing.module';
 import { CardGridModule } from './../../../../@shared/card-grid/card-grid.module';
 import { ProductMutationModule } from './../../../../@shared/product-mutation/product-mutation.module';
-import { PaginationModule } from 'apps/gauzy/src/app/@shared/pagination/pagination.module';
+import { PaginationModule } from './../../../../@shared/pagination/pagination.module';
+import { GauzyButtonActionModule } from './../../../../@shared/gauzy-button-action/gauzy-button-action.module';
+import { TableComponentsModule } from './../../../../@shared/table-components/table-components.module';
 
 
 const NB_MODULES = [
@@ -26,6 +29,7 @@ const NB_MODULES = [
     NbButtonModule,
     NbIconModule,
     NbSpinnerModule,
+    NbTooltipModule
 ];
 
 
@@ -34,7 +38,6 @@ const NB_MODULES = [
     imports: [
         ProductTypesRoutingModule,
         ReactiveFormsModule,
-        TranslateModule,
         Ng2SmartTableModule,
         CommonModule,
         TranslateModule,
@@ -44,7 +47,9 @@ const NB_MODULES = [
         ThemeModule,
         CardGridModule,
         ProductMutationModule,
-        PaginationModule
+        PaginationModule,
+        GauzyButtonActionModule,
+        TableComponentsModule
     ],
     providers: [ProductTypeService]
 })

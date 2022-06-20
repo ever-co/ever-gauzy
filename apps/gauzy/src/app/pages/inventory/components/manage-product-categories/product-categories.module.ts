@@ -9,7 +9,8 @@ import {
 	NbButtonModule,
 	NbIconModule,
     NbSpinnerModule,
-    NbInputModule
+    NbInputModule,
+    NbTooltipModule
 } from '@nebular/theme';
 import { CommonModule } from '@angular/common';
 import { HeaderTitleModule } from '../../../../@shared/components/header-title/header-title.module';
@@ -19,6 +20,7 @@ import { ProductCategoriesRoutingModule } from './product-categories-routing.mod
 import { ProductMutationModule } from '../../../../@shared/product-mutation/product-mutation.module';
 import { CardGridModule } from '../../../../@shared/card-grid/card-grid.module';
 import { PaginationModule } from '../../../../@shared/pagination/pagination.module';
+import { GauzyButtonActionModule } from './../../../../@shared/gauzy-button-action/gauzy-button-action.module';
 
 
 const NB_MODULES = [
@@ -26,7 +28,8 @@ const NB_MODULES = [
 	NbButtonModule,
 	NbIconModule,
     NbSpinnerModule,
-    NbInputModule
+    NbInputModule,
+    NbTooltipModule
 ];
 
 
@@ -46,7 +49,8 @@ const NB_MODULES = [
         ThemeModule,
         ProductMutationModule,
         CardGridModule,
-        PaginationModule
+        PaginationModule,
+        GauzyButtonActionModule
     ],
     providers: [ProductCategoryService]
 })

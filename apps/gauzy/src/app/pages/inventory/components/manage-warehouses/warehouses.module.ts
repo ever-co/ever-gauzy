@@ -15,6 +15,7 @@ import {
     NbTabsetModule,
     NbInputModule,
     NbStepperModule,
+    NbTooltipModule,
 } from '@nebular/theme';
 import { CommonModule } from '@angular/common';
 import { HeaderTitleModule } from './../../../../@shared/components/header-title/header-title.module';
@@ -32,6 +33,8 @@ import { LeafletMapModule, LocationFormModule } from './../../../../@shared/form
 import { TagsColorInputModule } from './../../../../@shared/tags/tags-color-input/tags-color-input.module';
 import { PaginationModule } from '../../../../@shared/pagination/pagination.module';
 import { CardGridModule } from '../../../../@shared/card-grid/card-grid.module';
+import { GauzyButtonActionModule } from './../../../../@shared/gauzy-button-action/gauzy-button-action.module';
+import { TableComponentsModule } from './../../../../@shared/table-components/table-components.module';
 
 
 const NB_MODULES = [
@@ -44,7 +47,8 @@ const NB_MODULES = [
     NbSelectModule,
     NbTabsetModule,
     NbInputModule,
-    NbStepperModule
+    NbStepperModule,
+    NbTooltipModule
 ];
 
 
@@ -63,7 +67,6 @@ const NB_MODULES = [
         WarehousesRoutingModule,
         FormsModule,
         ReactiveFormsModule,
-        TranslateModule,
         Ng2SmartTableModule,
         CommonModule,
         TranslateModule,
@@ -75,7 +78,10 @@ const NB_MODULES = [
         LeafletMapModule,
         TagsColorInputModule,
         PaginationModule,
-        CardGridModule
+        CardGridModule,
+        GauzyButtonActionModule,
+        CardGridModule,
+        TableComponentsModule        
     ],
     providers: [WarehouseService]
 })

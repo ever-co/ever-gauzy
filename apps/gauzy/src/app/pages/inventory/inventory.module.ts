@@ -53,6 +53,7 @@ import { TableComponentsModule } from './components/table-components/table-compo
 import { SelectAssetModule } from '../../@shared/select-asset-modal/select-asset.module';
 import { ImageAssetModule } from '../../@shared/image-asset/image-asset.module';
 import { PaginationModule } from '../../@shared/pagination/pagination.module';
+import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
 
 const NB_MODULES = [
 	NbCardModule,
@@ -67,7 +68,7 @@ const NB_MODULES = [
 	NbStepperModule,
 	NbTooltipModule,
 	NbBadgeModule,
-	NbDialogModule.forChild(),
+	NbDialogModule.forChild()
 ];
 
 @NgModule({
@@ -105,7 +106,8 @@ const NB_MODULES = [
 		ThemeModule,
 		TranslateModule,
 		WarehousesModule,
-		LanguageSelectorModule
+		LanguageSelectorModule,
+		GauzyButtonActionModule
 	],
 	providers: [
 		ProductService,
