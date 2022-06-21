@@ -12,11 +12,10 @@ import {
 } from '@gauzy/contracts';
 import { Subject } from 'rxjs';
 import { Observable } from 'rxjs/internal/Observable';
+import { saveAs } from 'file-saver';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { API_PREFIX } from '../../../@core/constants';
 import { ImportService, Store } from '../../../@core/services';
-import { saveAs } from 'file-saver';
-
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -151,9 +150,14 @@ export class ImportComponent extends TranslationBaseComponent
 		this.cdr.detectChanges();
 	}
 
+	/**
+	 * Download Import History Files
+	 * 
+	 * @param item 
+	 */
 	public download(item: IImportHistory) {
 		if(item) {
-			saveAs(item.path, item.file);
+			saveAs(item.fullUrl, item.file);
 		}
 	}
 }
