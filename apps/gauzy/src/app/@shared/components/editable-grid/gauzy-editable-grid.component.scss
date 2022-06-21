@@ -16,4 +16,12 @@
 	nb-card {
 		background-color: unset;
 	}
+
+	nb-card.size-medium {
+		height: calc(100vh - 30rem);
+	}
+
+	ngx-gauzy-button-action ::ng-deep .actions-container {
+		padding-top: 0;
+	}
 }

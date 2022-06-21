@@ -1,6 +1,6 @@
 <nb-card>
 	<nb-card-body>
-		<form [formGroup]="form" (ngSubmit)="onSubmit()">
+		<form [formGroup]="form">
 			<nb-tabset>
 				<nb-tab [tabTitle]="'ORGANIZATIONS_PAGE.MAIN' | translate">
 					<div class="row">
@@ -457,10 +457,10 @@
 				</button>
 				<button
 					class="mr-3"
-					type="submit"
 					nbButton
 					status="success"
 					[disabled]="form.invalid"
+					(click)="onSubmit()"
 				>
 					{{ 'BUTTONS.SAVE' | translate }}
 				</button>

@@ -4,12 +4,13 @@
     }
 
     .sprints {
-        padding: 1.5rem 1rem 0 1rem;
+        padding: 0rem 1rem;
     }
 
-    nb-card.card{
-        background-color:unset;
+    nb-card.card {
+        background-color: unset;
         border: none;
         border-radius: var(--border-radius);
+        padding-top: 0;
     }
 }

@@ -1,8 +1,11 @@
 .settings {
+  gap: 8px;
+  padding: 1rem 2.5rem 0 1rem;
+
   &__name {
     display: flex;
     align-items: center;
   }
-  &__value {
-  }
+
+  &__value {}
 }

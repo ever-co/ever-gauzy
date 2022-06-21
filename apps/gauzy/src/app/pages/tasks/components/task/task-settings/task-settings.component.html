@@ -1,8 +1,8 @@
 <nb-card class="h-100 task-settings" *ngIf="project$ | async as project">
 	<nb-card-header class="header align-items-center task-settings__title">
 		<ngx-back-navigation></ngx-back-navigation>
-		<span class="font-weight-bold"
-			>{{ 'TASKS_PAGE.PROJECT' | translate }}:</span
+		<span class="bold"
+			>{{ 'TASKS_PAGE.PROJECT' | translate }}: </span
 		>
 		{{ project.name }} {{ 'TASKS_PAGE.SETTINGS' | translate }}
 	</nb-card-header>

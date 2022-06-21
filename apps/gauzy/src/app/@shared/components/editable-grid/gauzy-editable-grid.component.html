@@ -44,7 +44,7 @@
 
 <ng-container>
 	<nb-card size="medium">
-		<nb-card-header class="p-0">
+		<nb-card-header class="pb-0">
 			<div class="d-flex justify-content-end">
 				<ngx-gauzy-button-action
 					[hasLayoutSelector]="false"
@@ -53,40 +53,6 @@
 					[isDisable]="!selectedItem"
 				></ngx-gauzy-button-action>
 			</div>
-			<!-- <div>
-				<button
-					nbButton
-					status="info"
-					(click)="openDialog('create', dialog)"
-					class="mr-2"
-					size="medium"
-				>
-					<nb-icon class="mr-1" icon="plus-outline"></nb-icon>
-					{{ 'BUTTONS.CREATE' | translate }}
-				</button>
-				<button
-					nbButton
-					status="info"
-					[disabled]="!selectedItem"
-					(click)="openDialog('edit', dialog)"
-					class="mr-2"
-					size="medium"
-				>
-					<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
-					{{ 'BUTTONS.EDIT' | translate }}
-				</button>
-				<button
-					nbButton
-					status="danger"
-					[disabled]="!selectedItem"
-					(click)="openDialog('delete', dialog)"
-					class="mr-2"
-					size="medium"
-				>
-					<nb-icon class="mr-1" icon="trash"></nb-icon>
-					{{ 'BUTTONS.DELETE' | translate }}
-				</button>
-			</div> -->
 		</nb-card-header>
 		<nb-list>
 			<nb-list-item
