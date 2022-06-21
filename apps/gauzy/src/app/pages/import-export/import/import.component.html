@@ -228,9 +228,16 @@
 					</span>
 				</div>
 				<div class="col-3" nowrap>
-					<a (click)="download(history)">{{
-						'MENU.IMPORT_EXPORT.DOWNLOAD' | translate
-					}}</a>
+					<button
+						nbButton
+						status="basic"
+						(click)="download(history)"
+						class="action primary"
+						size="small"
+					>
+						<nb-icon icon="download-outline"></nb-icon>
+						{{ 'BUTTONS.DOWNLOAD' | translate }}
+					</button>
 				</div>
 			</div>
 		</div>

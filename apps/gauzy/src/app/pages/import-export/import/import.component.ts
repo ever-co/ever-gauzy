@@ -12,6 +12,7 @@ import {
 } from '@gauzy/contracts';
 import { Subject } from 'rxjs';
 import { Observable } from 'rxjs/internal/Observable';
+import { saveAs } from 'file-saver';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { API_PREFIX } from '../../../@core/constants';
 import { ImportService, Store } from '../../../@core/services';
@@ -149,7 +150,14 @@ export class ImportComponent extends TranslationBaseComponent
 		this.cdr.detectChanges();
 	}
 
+	/**
+	 * Download Import History Files
+	 * 
+	 * @param item 
+	 */
 	public download(item: IImportHistory) {
-		//TODO: implement
+		if(item) {
+			saveAs(item.fullUrl, item.file);
+		}
 	}
 }
