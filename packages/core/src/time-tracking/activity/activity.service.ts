@@ -161,7 +161,7 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 	}
 
 	private filterQuery(request: IGetActivitiesInput) {
-		const { organizationId } = request;
+		const { organizationId, startDate, endDate } = request;
 		const tenantId = RequestContext.currentTenantId();
 
 		const query = this.activityRepository.createQueryBuilder();
@@ -185,12 +185,16 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 		}
 
 		query.innerJoin(`${query.alias}.employee`, 'employee');
-		query.innerJoin(`${query.alias}.timeSlot`, 'timeSlot');
-		query.innerJoin(`timeSlot.timeLogs`, 'timeLogs');
+		query.innerJoin(`${query.alias}.timeSlot`, 'time_slot');
+		query.innerJoin(`time_slot.timeLogs`, 'time_log');
 		query.andWhere(
 			new Brackets((qb: WhereExpressionBuilder) => {
 				qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
 				qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
+				qb.andWhere(`"time_slot"."tenantId" = :tenantId`, { tenantId });
+				qb.andWhere(`"time_slot"."organizationId" = :organizationId`, { organizationId });
+				qb.andWhere(`"time_log"."tenantId" = :tenantId`, { tenantId });
+				qb.andWhere(`"time_log"."organizationId" = :organizationId`, { organizationId });
 			})
 		);
 		query.andWhere(
@@ -210,7 +214,6 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 		);
 		query.andWhere(
 			new Brackets((qb: WhereExpressionBuilder) => {
-				const { startDate, endDate } = request;
 				if (config.dbConnectionOptions.type === 'sqlite') {
 					qb.andWhere(`datetime("${query.alias}"."date" || ' ' || "${query.alias}"."time") Between :startDate AND :endDate`, {
 						startDate,
@@ -222,6 +225,18 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 						endDate
 					});
 				}
+			})
+		);
+		query.andWhere(
+			new Brackets((qb: WhereExpressionBuilder) => { 
+				qb.andWhere(`"time_log"."startedAt" BETWEEN :startedAt AND :stoppedAt`, {
+					startedAt: startDate,
+					stoppedAt: endDate
+				});
+				qb.andWhere(`"time_slot"."startedAt" BETWEEN :startedAt AND :stoppedAt`, {
+					startedAt: startDate,
+					stoppedAt: endDate
+				});
 			})
 		);
 		query.andWhere(
@@ -250,29 +265,29 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 					const start = (activityLevel.start * 6);
 					const end = (activityLevel.end * 6);
 	
-					qb.andWhere(`"timeSlot"."overall" BETWEEN :start AND :end`, {
+					qb.andWhere(`"time_slot"."overall" BETWEEN :start AND :end`, {
 						start,
 						end
 					});
 				}
 				if (isNotEmpty(source)) {
 					if (source instanceof Array) {
-						qb.andWhere(`"timeLogs"."source" IN (:...source)`, {
+						qb.andWhere(`"time_log"."source" IN (:...source)`, {
 							source
 						});
 					} else {
-						qb.andWhere(`"timeLogs"."source" = :source`, {
+						qb.andWhere(`"time_log"."source" = :source`, {
 							source
 						});
 					}
 				}
 				if (isNotEmpty(logType)) {
 					if (logType instanceof Array) {
-						qb.andWhere(`"timeLogs"."logType" IN (:...logType)`, {
+						qb.andWhere(`"time_log"."logType" IN (:...logType)`, {
 							logType
 						});
 					} else {
-						qb.andWhere(`"timeLogs"."logType" = :logType`, {
+						qb.andWhere(`"time_log"."logType" = :logType`, {
 							logType
 						});
 					}

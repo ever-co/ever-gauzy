@@ -1,10 +1,9 @@
-import { BadRequestException } from '@nestjs/common';
 import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Brackets, In, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
+import { Brackets, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import * as moment from 'moment';
 import { omit } from 'underscore';
-import { PermissionsEnum } from '@gauzy/contracts';
+import { ITimeSlot, PermissionsEnum, TimeLogSourceEnum, TimeLogType } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
 import { RequestContext } from '../../../../core/context';
 import {
@@ -15,6 +14,8 @@ import { TimeSlot } from './../../time-slot.entity';
 import { CreateTimeSlotCommand } from '../create-time-slot.command';
 import { BulkActivitiesSaveCommand } from '../../../activity/commands';
 import { TimeSlotMergeCommand } from './../time-slot-merge.command';
+import { getStartEndIntervals } from './../../utils';
+import { getDateFormat } from './../../../../core/utils';
 
 @CommandHandler(CreateTimeSlotCommand)
 export class CreateTimeSlotHandler
@@ -70,47 +71,74 @@ export class CreateTimeSlotHandler
 			organizationId = employee ? employee.organizationId : null;
 		}
 
-		input.startedAt = moment(input.startedAt)
-			.utc()
-			.set('millisecond', 0)
-			.toDate();
-		let timeSlot = await this.timeSlotRepository.findOne({
-			where: {
-				organizationId,
-				tenantId,
-				employeeId,
-				startedAt: input.startedAt
-			}
-		});
-		console.log({ timeSlot }, `Find Time Slot For Time: ${input.startedAt}`);
+		const minDate = input.startedAt;
+		const maxDate = input.startedAt;
 
-		if (!timeSlot) {
-			timeSlot = new TimeSlot(omit(input, ['timeLogId']));
-			timeSlot.tenantId = tenantId;
-			timeSlot.organizationId = organizationId;
+		let timeSlot: ITimeSlot;
+		try {
+			timeSlot = await this.timeSlotRepository.findOneOrFail({
+				where: (query: SelectQueryBuilder<TimeSlot>) => {
+					const { start, end } = getStartEndIntervals(
+						moment(minDate),
+						moment(maxDate)
+					);
+					const { start: startDate, end: endDate } = getDateFormat(
+						moment.utc(start),
+						moment.utc(end)
+					);
+					query.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
+					query.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
+					query.andWhere(`"${query.alias}"."employeeId" = :employeeId`, { employeeId });
+					query.andWhere(`"${query.alias}"."startedAt" BETWEEN :startDate AND :endDate`, {
+						startDate,
+						endDate
+					});
+					query.addOrderBy(`"${query.alias}"."createdAt"`, 'ASC');
+					console.log('Get Time Slot Query & Parameters', query.getQueryAndParameters());
+				},
+				relations: ['timeLogs']
+			});
+		} catch (error) {
+			if (!timeSlot) {
+				timeSlot = new TimeSlot(omit(input, ['timeLogId']));
+				timeSlot.tenantId = tenantId;
+				timeSlot.organizationId = organizationId;
+				timeSlot.timeLogs = [];
+			}
 		}
-
-		if (input.timeLogId) {
-			let timeLogIds = [];
-			if (input.timeLogId instanceof Array) {
-				timeLogIds = input.timeLogId;
-			} else {
-				timeLogIds.push(input.timeLogId);
-			}
-			timeSlot.timeLogs = await this.timeLogRepository.find({
-				id: In(timeLogIds),
-				tenantId,
-				organizationId,
-				employeeId
+		console.log({ timeSlot }, `Find Time Slot For Time: ${input.startedAt}`);
+		try {
+			/**
+			 * Find TimeLog for TimeSlot Range 
+			 */
+			const timeLog = await this.timeLogRepository.findOneOrFail({
+				where: (query: SelectQueryBuilder<TimeLog>) => {
+					console.log({ input });
+					query.andWhere(
+						new Brackets((qb: WhereExpressionBuilder) => {
+							qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
+							qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
+							qb.andWhere(`"${query.alias}"."employeeId" = :employeeId`, { employeeId });
+							qb.andWhere(`"${query.alias}"."source" = :source`, { source: TimeLogSourceEnum.DESKTOP });
+							qb.andWhere(`"${query.alias}"."logType" = :logType`, { logType: TimeLogType.TRACKED });
+							qb.andWhere(`"${query.alias}"."stoppedAt" IS NOT NULL`);
+							qb.andWhere(`"${query.alias}"."deletedAt" IS NULL`);
+						})
+					);
+					query.addOrderBy(`"${query.alias}"."createdAt"`, 'DESC');
+					console.log(query.getQueryAndParameters());
+				}
 			});
-			console.log('Found TimeLogs for TimeSlots Range', {
-				timeLogIds,
-				tenantId,
-				organizationId,
-				employeeId
-			});
-		} else {
-			try {
+			console.log(timeLog, 'Found latest Worked Time Log!');
+			timeSlot.timeLogs.push(timeLog);
+		} catch (error) {
+			if (input.timeLogId) {
+				let timeLogIds = [];
+				if (input.timeLogId instanceof Array) {
+					timeLogIds = input.timeLogId;
+				} else {
+					timeLogIds.push(input.timeLogId);
+				}
 				/**
 				 * Find TimeLog for TimeSlot Range 
 				 */
@@ -120,32 +148,29 @@ export class CreateTimeSlotHandler
 							new Brackets((qb: WhereExpressionBuilder) => { 
 								qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
 								qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
+								qb.andWhere(`"${query.alias}"."source" = :source`, { source: TimeLogSourceEnum.DESKTOP });
+								qb.andWhere(`"${query.alias}"."logType" = :logType`, { logType: TimeLogType.TRACKED });
 								qb.andWhere(`"${query.alias}"."employeeId" = :employeeId`, { employeeId });
+								qb.andWhere(`"${query.alias}"."stoppedAt" IS NOT NULL`);
+								qb.andWhere(`"${query.alias}"."deletedAt" IS NULL`);
 							})
 						);
-						query.andWhere(
-							new Brackets((qb: WhereExpressionBuilder) => {
-								const { startedAt } = timeSlot;
-								qb.andWhere(`"${query.alias}"."startedAt" <= :startedAt AND "${query.alias}"."stoppedAt" > :startedAt`, { startedAt });
-							})
-						);
-						console.log(query.getQueryAndParameters(), 'Find TimeLog for TimeSlot Range');
+						query.andWhere(`"${query.alias}"."id" IN (:...timeLogIds)`, {
+							timeLogIds
+						});
+						console.log(query.getQueryAndParameters(), 'Time Log Query For TimeLog IDs');
 					}
 				});
-				timeSlot.timeLogs = timeLogs;
-				console.log('Found TimeLogs for TimeSlots Range', { timeLogs });
-			} catch (error) {
-				throw new BadRequestException('Can\'t find TimeLog for TimeSlot');
+				console.log(timeLogs, 'Found recent time logs using timelog ids');
+				timeSlot.timeLogs.push(...timeLogs);
 			}
 		}
 
 		console.log('Found TimeLogs for TimeSlots Range', { timeLogs: timeSlot.timeLogs });
-
 		/**
 		 * Update TimeLog Entry Every TimeSlot Request From Desktop Timer
 		 */
 		for await (const timeLog of timeSlot.timeLogs) {
-			console.log({ timeLog }, 'Update Running Time Log');
 			if (timeLog.isRunning) {
 				await this.timeLogRepository.update(timeLog.id, {
 					stoppedAt: moment.utc().toDate()
@@ -165,10 +190,6 @@ export class CreateTimeSlotHandler
 		}
 
 		await this.timeSlotRepository.save(timeSlot);
-
-		const minDate = input.startedAt;
-		const maxDate = input.startedAt;
-
 		/*
 		* Merge timeSlots into 10 minutes slots
 		*/
