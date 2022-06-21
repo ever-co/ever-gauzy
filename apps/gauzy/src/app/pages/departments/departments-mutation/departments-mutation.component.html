@@ -1,64 +1,59 @@
-<nb-card>
-	<nb-card-header>{{
-		(department
-			? 'FORM.LABELS.EDIT_DEPARTMENT'
-			: 'FORM.LABELS.ADD_NEW_DEPARTMENT'
-		) | translate
-	}}</nb-card-header>
-	<nb-card-body>
-		<form [formGroup]="form" (ngSubmit)="onSubmit()">
-			<div class="row">
-				<div class="col-4">
-					<div class="form-group">
-						<label class="label">{{
-							'SM_TABLE.DEPARTMENTS' | translate
-						}}</label>
-						<input
-							type="text"
-							nbInput
-							fullWidth
-							[placeholder]="'ORGANIZATIONS_PAGE.EDIT.DEPARTMENT_NAME' | translate"
-							formControlName="name"
-						/>
-					</div>
-				</div>
-				<div class="col-4">
-					<div class="form-group">
-						<ga-employee-multi-select
-							[selectedEmployeeIds]="form.get('members').value"
-							(selectedChange)="onMembersSelected($event)"
-							(onLoadEmployees)="onLoadEmployees($event)"
-						></ga-employee-multi-select>
-					</div>
-				</div>
-				<div class="col-4">
-					<div class="form-group">
-						<ga-tags-color-input
-							[selectedTags]="form.get('tags').value"
-							(selectedTagsEvent)="selectedTagsEvent($event)"
-							[isOrgLevel]="true"
-						></ga-tags-color-input>
-					</div>
-				</div>
+<form [formGroup]="form" (ngSubmit)="onSubmit()">
+	<div class="row mb-3">
+		<div class="col-sm-12 d-flex flex-column">
+			<div class="form-group">
+				<label class="label">{{
+					'SM_TABLE.DEPARTMENTS' | translate
+				}}</label>
+				<input
+					type="text"
+					nbInput
+					fullWidth
+					[placeholder]="'ORGANIZATIONS_PAGE.EDIT.DEPARTMENT_NAME' | translate"
+					formControlName="name"
+				/>
 			</div>
-			<div class="form-group btn-wrap">
-				<button
-					(click)="cancel()"
-					nbButton
-					status="danger"
-					class="mr-2"
-				>
-					{{ 'BUTTONS.CANCEL' | translate }}
-				</button>
-				<button
-					nbButton
-					type="submit"
-					status="success"
-					[disabled]="form.invalid"
-				>
-					{{ 'BUTTONS.SAVE' | translate }}
-				</button>
+		</div>
+	</div>
+	<div class="row mb-3">
+		<div class="col-sm-12 d-flex flex-column">
+			<div class="form-group">
+				<ga-employee-multi-select
+					[selectedEmployeeIds]="form.get('members').value"
+					(selectedChange)="onMembersSelected($event)"
+					(onLoadEmployees)="onLoadEmployees($event)"
+				></ga-employee-multi-select>
 			</div>
-		</form>
-	</nb-card-body>
-</nb-card>
+		</div>
+	</div>
+	<div class="row mb-3">
+		<div class="col-sm-12 d-flex flex-column">
+			<div class="form-group">
+				<ga-tags-color-input
+					[selectedTags]="form.get('tags').value"
+					(selectedTagsEvent)="selectedTagsEvent($event)"
+					[isOrgLevel]="true"
+				></ga-tags-color-input>
+			</div>
+		</div>
+	</div>
+	<div class="row mb-3">
+		<div class="col-sm-12"></div>
+		<button
+			(click)="cancel()"
+			nbButton
+			status="danger"
+			class="delete mr-3 ml-3"
+		>
+			{{ 'BUTTONS.CANCEL' | translate }}
+		</button>
+		<button
+			nbButton
+			type="submit"
+			status="success"
+			[disabled]="form.invalid"
+		>
+			{{ 'BUTTONS.SAVE' | translate }}
+		</button>
+	</div>
+</form>

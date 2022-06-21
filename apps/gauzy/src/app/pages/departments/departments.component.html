@@ -21,7 +21,7 @@
 		</div>
 	</nb-card-header>
 	<nb-card-body>
-		<ng-container *ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE && !showAddCard">
+		<ng-container *ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE">
 			<div class="table-scroll-container">
 				<ng2-smart-table
 					[settings]="smartTableSettings"
@@ -44,7 +44,7 @@
 				</ng-container>
 			</div>
 		</ng-container>
-		<ng-container *ngIf="dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID && !showAddCard">
+		<ng-container *ngIf="dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID">
 			<ga-card-grid
 				[settings]="smartTableSettings"
 				[source]="departments"
@@ -56,20 +56,13 @@
 				[itemsPerPage]="pagination?.itemsPerPage"
 				[activePage]="pagination?.activePage"
         	></ga-card-grid>
-		</ng-container>
-		<ga-departments-mutation
-			*ngIf="showAddCard"
-			[department]="selectedDepartment"
-			(canceled)="_clearItem()"
-			(addOrEditDepartment)="addOrEditDepartment($event)"
-		></ga-departments-mutation>
+		</ng-container>		
 	</nb-card-body>
 </nb-card>
 <ng-template #visibleButton>
 	<ng-template [ngxPermissionsOnly]="['ALL_ORG_EDIT']">
 		<button
-			*ngIf="!showAddCard"
-			(click)="showAddCard = !showAddCard"
+			(click)="openDialog(addEditTemplate, false)"
 			nbButton
 			status="success"
 			class="action"
@@ -92,7 +85,7 @@
 				status="basic"
 				class="action primary"
 				[disabled]="!selectedItem && disableButton"
-				(click)="editDepartment(selectedItem)"
+				(click)="openDialog(addEditTemplate, true)"
 				size="small"		
 			>
 				<nb-icon icon="edit-outline"></nb-icon>
@@ -112,5 +105,27 @@
 				<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
 			</button>
 		</ng-template>
+	</div>
+</ng-template>
+<ng-template #addEditTemplate let-ref="dialogRef">
+	<div class="editable">
+		<div class="container">
+			<div class="row">
+				<div class="col-sm-12 d-flex justify-content-end">
+					<i
+						class="fas fa-times"
+						(click)="ref.close(); disabled = true"
+					></i>
+				</div>
+			</div>
+			<div class="row mb-3">
+				<h5 class="title mr-3 ml-3">{{ this.selected.department ? ('POP_UPS.EDIT' | translate) : ('POP_UPS.ADD' | translate) }}</h5>
+			</div>
+			<ga-departments-mutation
+				[department]="selectedDepartment"
+				(canceled)="_clearItem()"
+				(addOrEditDepartment)="addOrEditDepartment($event)"
+			></ga-departments-mutation>
+		</div>
 	</div>
 </ng-template>

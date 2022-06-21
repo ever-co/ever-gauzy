@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import {
@@ -9,7 +9,7 @@ import {
 	IOrganization,
 	ITag
 } from '@gauzy/contracts';
-import { NbDialogService } from '@nebular/theme';
+import { NbDialogRef, NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, tap } from 'rxjs/operators';
 import { debounceTime, firstValueFrom, Subject } from 'rxjs';
@@ -33,9 +33,11 @@ import { InputFilterComponent, TagsColorFilterComponent } from '../../@shared/ta
 })
 export class DepartmentsComponent extends PaginationFilterBaseComponent
 	implements AfterViewInit, OnInit, OnDestroy {
-
+	
+	@ViewChild('addEditTemplate') 
+	addEditTemplate: TemplateRef<any>;
+	addEditDialogRef: NbDialogRef<any>;
 	smartTableSettings: object;
-	showAddCard: boolean;
 	departments: IOrganizationDepartment[];
 	employees: IEmployee[] = [];
 	selectedDepartment: IOrganizationDepartment;
@@ -46,7 +48,10 @@ export class DepartmentsComponent extends PaginationFilterBaseComponent
 	settingsSmartTable: object;
 	loading: boolean;
 	smartTableSource: ServerDataSource;
-
+	selected = {
+		department: null,
+		state: false
+	};
 	departmentsTable: Ng2SmartTableComponent;
 	@ViewChild('departmentsTable') set content(
 		content: Ng2SmartTableComponent
@@ -106,7 +111,7 @@ export class DepartmentsComponent extends PaginationFilterBaseComponent
 			.pipe(
 				filter((params) => !!params && params.get('openAddDialog') === 'true'),
 				debounceTime(1000),
-				tap(() => this.showAddCard = true),
+				tap(() => this.openDialog(this.addEditTemplate, false)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -116,9 +121,16 @@ export class DepartmentsComponent extends PaginationFilterBaseComponent
 	
 	ngAfterViewInit() {}
 
-	selectDepartment({ isSelected, data }) {
-		this.disableButton = !isSelected;
-		this.selectedDepartment = isSelected ? data : null;
+	selectDepartment(department: any) {
+		if (department.data) department = department.data;
+		const res =
+			this.selected.department && department.id === this.selected.department.id
+				? { state: !this.selected.state }
+				: { state: true };
+		this.disableButton = !res.state;
+		this.selected.state = res.state;
+		this.selected.department = department;
+		this.selectedDepartment = this.selected.department;
 	}
 	
 	/**
@@ -213,12 +225,15 @@ export class DepartmentsComponent extends PaginationFilterBaseComponent
 		}
 	}
 
-	async editDepartment(department: IOrganizationDepartment) {
-		this.selectDepartment({
-			isSelected: true,
-			data: department ? department : this.selectedDepartment
-		});
-		this.showAddCard = true;		
+	async editDepartment(selectedItem: IOrganizationDepartment) {
+		if (selectedItem) {
+			this.selected = {
+				department: selectedItem,
+				state: true
+			};
+		} else {
+			this.selectedDepartment = this.selected.department;
+		}			
 	}
 
 	public async addOrEditDepartment(input: IOrganizationDepartmentCreateInput) {
@@ -343,11 +358,13 @@ export class DepartmentsComponent extends PaginationFilterBaseComponent
 	 * Clear selected item
 	 */
 	public _clearItem() {
-		this.showAddCard = false;
-		this.selectDepartment({
-			isSelected: false,
-			data: null
-		});
+		this.selected = {
+			department: null,
+			state: false
+		};
+		this.selectedDepartment = null;
+		this.disableButton = true;
+		this.addEditDialogRef?.close()
 		this._deselectAll();
 	}
 
@@ -358,6 +375,15 @@ export class DepartmentsComponent extends PaginationFilterBaseComponent
 		if (this.departmentsTable && this.departmentsTable.grid) {
 			this.departmentsTable.grid.dataSet['willSelect'] = 'false';
 			this.departmentsTable.grid.dataSet.deselectAll();
+		}
+	}
+
+	openDialog(template: TemplateRef<any>, isEditTemplate: boolean) {
+		try {
+			isEditTemplate ? this.editDepartment(this.selectedDepartment) : this._clearItem();
+			this.addEditDialogRef = this.dialogService.open(template);
+		} catch (error) {
+			console.log('An error occurred on open dialog');
 		}
 	}
 }
