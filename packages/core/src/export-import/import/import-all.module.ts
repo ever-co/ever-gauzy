@@ -11,6 +11,7 @@ import { coreEntities } from './../../core/entities';
 import { CommandHandlers } from './commands/handlers';
 import { ImportRecordModule } from './../import-record';
 import { ImportHistoryModule } from './../import-history';
+import { UserModule } from './../../user/user.module';
 
 @Module({
 	imports: [
@@ -28,6 +29,7 @@ import { ImportHistoryModule } from './../import-history';
 			...coreEntities,
 			...getEntitiesFromPlugins(getConfig().plugins)
 		]),
+		UserModule,
 		ImportRecordModule,
 		ImportHistoryModule
 	],

@@ -4,19 +4,24 @@ import {
 	Get,
 	Post,
 	UseInterceptors,
-	Body
+	Body,
+	UseGuards
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import * as path from 'path';
 import { CommandBus } from '@nestjs/cqrs';
-import { IImportHistory, ImportStatusEnum, IPagination, UploadedFile } from '@gauzy/contracts';
+import { IImportHistory, ImportStatusEnum, IPagination, PermissionsEnum, UploadedFile } from '@gauzy/contracts';
 import { ImportAllService } from './import-all.service';
 import { RequestContext } from './../../core/context';
 import { FileStorage, UploadedFileStorage } from '../../core/file-storage';
 import { ImportHistoryCreateCommand, ImportHistoryService } from './../import-history';
+import { PermissionGuard } from './../../shared/guards';
+import { Permissions } from './../../shared/decorators';
+import { TransformInterceptor } from './../../core/interceptors';
 
 @ApiTags('Import')
+@UseInterceptors(TransformInterceptor)
 @Controller()
 export class ImportAllController {
 	constructor(
@@ -34,6 +39,8 @@ export class ImportAllController {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.IMPORT_EXPORT_VIEW)
 	@Get()
 	async importAll(): Promise<IPagination<IImportHistory>> {
 		return this.importHistoryService.findAll({
@@ -68,10 +75,10 @@ export class ImportAllController {
 		@Body() { importType }, 
 		@UploadedFileStorage() file: UploadedFile
 	) {
-		const { key, originalname, size, url } = file;
+		const { key, originalname, size } = file;
 		const history = {
 			file: originalname,
-			path: url,
+			path: key,
 			size: size,
 			tenantId: RequestContext.currentTenantId()
 		}
