@@ -29,12 +29,6 @@ export class CandidateService extends TenantAwareCrudService<Candidate> {
   public pagination(filter: any) {
 		if ('where' in filter) {
 			const { where } = filter;
-			if ('tags' in where) {
-				const { tags } = where;
-				filter.where.tags = {
-					id: In(tags)
-				}
-			}
 			if ('user' in where) {
 				const { user } = where;
 				const { email, firstName } = user;
