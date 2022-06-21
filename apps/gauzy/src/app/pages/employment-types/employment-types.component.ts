@@ -10,14 +10,14 @@ import {
 	EmploymentTypeTabsEnum	
 } from '@gauzy/contracts';
 import { takeUntil } from 'rxjs/operators';
-import { NbDialogService, NbTabComponent } from '@nebular/theme';
+import { NbDialogService } from '@nebular/theme';
 import { Store } from '../../@core/services/store.service';
 import { OrganizationEmploymentTypesService } from '../../@core/services/organization-employment-types.service';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { LocalDataSource } from 'ng2-smart-table';
 import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
-import { Subject, firstValueFrom, filter, debounceTime, tap, BehaviorSubject } from 'rxjs';
+import { Subject, firstValueFrom, filter, debounceTime, tap } from 'rxjs';
 import { ToastrService } from '../../@core/services/toastr.service';
 import { ActivatedRoute } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -53,8 +53,7 @@ export class EmploymentTypesComponent
 		state: false
 	};
 	employmentTypeExist: boolean;
-	employmentTypeTabsEnum = EmploymentTypeTabsEnum;
-	nbTab$: Subject<string> = new BehaviorSubject(EmploymentTypeTabsEnum.BROWSE);
+	employmentTypeTabsEnum = EmploymentTypeTabsEnum;	
 	private _ngDestroy$ = new Subject<void>();
 
 	constructor(
@@ -347,9 +346,5 @@ export class EmploymentTypesComponent
 		this.selected.state = res.state;
 		this.selected.employmentType = orgEmpType;
 		this.selectedOrgEmpType = this.selected.employmentType;		
-	}
-
-	onChangeTab(tab: NbTabComponent) {
-		this.nbTab$.next(tab.tabId);
 	}
 }
