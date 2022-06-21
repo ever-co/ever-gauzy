@@ -132,7 +132,7 @@ export class OrganizationContact
     */
 	// Organization Projects
 	@ApiPropertyOptional({ type: () => OrganizationProject, isArray: true })
-	@OneToMany(() => OrganizationProject, (it) => it.organizationContact)
+	@OneToMany(() => OrganizationProject, (it) => it.organizationContact, { cascade: true })
 	projects?: IOrganizationProject[];
 
 	// Organization Invoices
