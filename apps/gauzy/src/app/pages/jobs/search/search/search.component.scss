@@ -66,7 +66,7 @@
   }
   nb-card,
   nb-tab {
-    background-color: rgba(50, 50, 50, 0.03);
+    background-color: var(--gauzy-card-2);
   }
 
   nb-card-body.body-filter {
@@ -99,4 +99,11 @@
 .advanced-filter {
   background: nb-theme(background-basic-color-1);
   border-radius: nb-theme(border-radius);
+}
+
+.job-filters{
+  nb-card, nb-card-body{
+    background-color: var(--gauzy-card-3);
+    border-radius: var(--border-radius);
+  }
 }

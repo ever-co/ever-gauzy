@@ -1,15 +1,10 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import {
-	ActivatedRoute,
-	Router,
-	RouterEvent,
-	NavigationEnd
-} from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, tap } from 'rxjs/operators';
-import { firstValueFrom } from 'rxjs';
-import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
+import { debounceTime, firstValueFrom, Subject } from 'rxjs';
+import { Ng2SmartTableComponent } from 'ng2-smart-table';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
 	IOrganization,
@@ -18,9 +13,10 @@ import {
 	IOrganizationProjectsCreateInput,
 	PermissionsEnum,
 	ComponentLayoutStyleEnum,
-	CrudActionEnum
+	CrudActionEnum,
+	IEmployee,
+	ITag
 } from '@gauzy/contracts';
-import { TranslationBaseComponent } from '../../@shared/language-base';
 import {
 	OrganizationContactService,
 	OrganizationProjectsService,
@@ -28,9 +24,23 @@ import {
 	Store,
 	ToastrService
 } from '../../@core/services';
-import { ComponentEnum } from '../../@core/constants';
-import { ContactLinksComponent, DateViewComponent, PictureNameTagsComponent } from '../../@shared/table-components';
+import { API_PREFIX, ComponentEnum } from '../../@core/constants';
+import {
+	ContactLinksComponent,
+	DateViewComponent,
+	EmployeesMergedTeamsComponent,
+	ProjectOrganizationComponent,
+	TagsOnlyComponent
+} from '../../@shared/table-components';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
+import { ServerDataSource } from '../../@core/utils/smart-table';
+import { HttpClient } from '@angular/common/http';
+import { PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
+import { distinctUntilChange } from 'packages/common-angular/dist';
+import { VisibilityComponent } from '../../@shared/table-components/visibility/visibility.component';
+import { ProjectOrganizationGridComponent } from '../../@shared/table-components/project-organization-grid/project-organization-grid.component';
+import { ProjectOrganizationGridDetailsComponent } from '../../@shared/table-components/project-organization-grid-details/project-organization-grid-details.component';
+import { TagsColorFilterComponent } from '../../@shared/table-filters';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -39,22 +49,24 @@ import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 	styleUrls: ['./projects.component.scss']
 })
 export class ProjectsComponent
-	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
-
-	loading: boolean;
-	settingsSmartTable: object;
+	extends PaginationFilterBaseComponent
+	implements OnInit, OnDestroy
+{
+	loading: boolean = false;
+	settingsSmartTable: any;
 	viewComponentName: ComponentEnum;
-	dataLayoutStyle = ComponentLayoutStyleEnum.CARDS_GRID;
+	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
+	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
 	organization: IOrganization;
-	showAddCard: boolean;
+	showAddCard: boolean = false;
 	projects: IOrganizationProject[] = [];
 	organizationContacts: IOrganizationContact[] = [];
 	projectToEdit: IOrganizationProject;
 	viewPrivateProjects: boolean;
 	disableButton = true;
 	selectedProject: IOrganizationProject;
-	smartTableSource = new LocalDataSource();
+	smartTableSource: ServerDataSource;
+	project$: Subject<any> = new Subject();
 
 	projectsTable: Ng2SmartTableComponent;
 	@ViewChild('projectsTable') set content(content: Ng2SmartTableComponent) {
@@ -73,15 +85,23 @@ export class ProjectsComponent
 		private readonly route: ActivatedRoute,
 		private readonly router: Router,
 		private readonly dialogService: NbDialogService,
-		private readonly organizationProjectStore: OrganizationProjectStore
+		private readonly organizationProjectStore: OrganizationProjectStore,
+		private readonly httpClient: HttpClient
 	) {
 		super(translateService);
 		this.setView();
 	}
 
 	ngOnInit(): void {
-		this.loadSmartTable();
-		this._applyTranslationOnSmartTable();
+		this.project$
+			.pipe(
+				debounceTime(300),
+				tap(() => (this.loading = !this.showAddCard)),
+				tap(() => this.loadProjects()),
+				tap(() => this.loadOrganizationContacts()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization) => !!organization),
@@ -89,7 +109,7 @@ export class ProjectsComponent
 					(organization: IOrganization) =>
 						(this.organization = organization)
 				),
-				tap(() => this._initMethod()),
+				tap(() => this.project$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -100,58 +120,59 @@ export class ProjectsComponent
 					PermissionsEnum.ACCESS_PRIVATE_PROJECTS
 				);
 			});
-		this.router.events
-			.pipe(untilDestroyed(this))
-			.subscribe((event: RouterEvent) => {
-				if (event instanceof NavigationEnd) {
-					this.setView();
-				}
-			});
 		this.route.queryParamMap
 			.pipe(untilDestroyed(this))
 			.subscribe((params) => {
 				if (params.get('openAddDialog')) {
 					this.showAddCard =
 						params.get('openAddDialog') === 'true' ? true : false;
-					this._initMethod();
 				}
 			});
+		this.pagination$
+			.pipe(
+				debounceTime(100),
+				distinctUntilChange(),
+				tap(() => this.project$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.loadSmartTable();
+		this._applyTranslationOnSmartTable();
 	}
 
-	ngOnDestroy() { }
-
-	private _initMethod() {
-		if (!this.organization) {
-			return;
-		}
-
-		this.loadProjects();
-		this.loadOrganizationContacts();
-	}
+	ngOnDestroy() {}
 
 	setView() {
 		this.viewComponentName = ComponentEnum.PROJECTS;
 		this.store
 			.componentLayout$(this.viewComponentName)
-			.pipe(untilDestroyed(this))
-			.subscribe((componentLayout) => {
-				this.dataLayoutStyle = componentLayout;
-				this.selectedProject =
-					this.dataLayoutStyle === 'CARDS_GRID'
-						? null
-						: this.selectedProject;
-			});
+			.pipe(
+				debounceTime(300),
+				tap(
+					(componentLayout) =>
+						(this.dataLayoutStyle = componentLayout)
+				),
+				tap(() => this.loadSmartTable()),
+				tap(() => this.refreshPagination()),
+				filter(
+					(componentLayout) =>
+						componentLayout ===
+						this.componentLayoutStyleEnum.CARDS_GRID
+				),
+				tap(() => this.project$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	async removeProject(id?: string, name?: string) {
 		const result = await firstValueFrom(
-			this.dialogService
-				.open(DeleteConfirmationComponent, {
-					context: {
-						recordType: 'Project'
-					}
-				})
-				.onClose);
+			this.dialogService.open(DeleteConfirmationComponent, {
+				context: {
+					recordType: 'Project'
+				}
+			}).onClose
+		);
 
 		if (result) {
 			await this.organizationProjectsService
@@ -172,7 +193,7 @@ export class ProjectsComponent
 				}
 			);
 
-			this.loadProjects();
+			this.project$.next(true);
 		}
 	}
 
@@ -199,10 +220,11 @@ export class ProjectsComponent
 					await this.organizationProjectsService
 						.create(project)
 						.then((project: IOrganizationProject) => {
-							this.organizationProjectStore.organizationProjectAction = {
-								project,
-								action: CrudActionEnum.CREATED
-							};
+							this.organizationProjectStore.organizationProjectAction =
+								{
+									project,
+									action: CrudActionEnum.CREATED
+								};
 						});
 				} else {
 					this.toastrService.danger(
@@ -220,10 +242,11 @@ export class ProjectsComponent
 				await this.organizationProjectsService
 					.edit(project)
 					.then((project: IOrganizationProject) => {
-						this.organizationProjectStore.organizationProjectAction = {
-							project,
-							action: CrudActionEnum.UPDATED
-						};
+						this.organizationProjectStore.organizationProjectAction =
+							{
+								project,
+								action: CrudActionEnum.UPDATED
+							};
 					});
 				break;
 		}
@@ -235,102 +258,201 @@ export class ProjectsComponent
 			}
 		);
 		this.cancel();
-		this.loadProjects();
+		this.project$.next(true);
+	}
+
+	public setSmartTable() {
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
+		this.smartTableSource = new ServerDataSource(this.httpClient, {
+			endPoint: `${API_PREFIX}/organization-projects/pagination`,
+			relations: [
+				'organizationContact',
+				'organization',
+				'members',
+				'members.user',
+				'tags'
+			],
+			join: {
+				alias: 'project',
+				leftJoin: {
+					tags: 'project.tags'
+				}
+			},
+			where: { organizationId, tenantId, ...this.filters.where },
+			resultMap: (project: IOrganizationProject) => {
+				return Object.assign({}, project, {
+					...this.privatePublicProjectMapper(project),
+					employeesMergedTeams: [project.members]
+				});
+			},
+			finalize: () => {
+				this.setPagination({
+					...this.getPagination(),
+					totalItems: this.smartTableSource.count()
+				});
+				this.loading = false;
+			}
+		});
 	}
 
 	async loadProjects() {
-		this.loading = true;
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.organization;
-		this.organizationProjectsService
-			.getAll(
-				['organizationContact', 'members', 'members.user', 'tags'],
-				{ organizationId, tenantId }
-			)
-			.then(({ items }) => {
-				const canView = [];
-				if (this.viewPrivateProjects) {
-					this.projects = items;
-					this.smartTableSource.load(items);
-				} else {
-					items.forEach((item) => {
-						if (item.public) {
-							canView.push(item);
-						} else {
-							item.members.forEach((member) => {
-								if (member.id === this.store.userId) {
-									canView.push(item);
-								}
-							});
-						}
-					});
-					this.projects = canView;
-				}
-			})
-			.finally(() => {
-				this.loading = false;
-			});
+		const { activePage, itemsPerPage } = this.getPagination();
+		if (!this.organization) return;
+		try {
+			this.setSmartTable();
+			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
+			this.loadGridLayoutData();
+		} catch (error) {
+			console.log(error);
+		}
+	}
+
+	private async loadGridLayoutData() {
+		if (this.dataLayoutStyle === this.componentLayoutStyleEnum.CARDS_GRID) {
+			await this.smartTableSource.getElements();
+			this.projects = this.smartTableSource.getData();
+		}
+	}
+
+	private privatePublicProjectMapper(project: IOrganizationProject) {
+		return this.viewPrivateProjects
+			? project
+			: project.public
+			? project
+			: project.members.map(
+					(member: IEmployee) => member.id === this.store.userId
+			  );
 	}
 
 	loadSmartTable() {
+		const pagination = this.getPagination();
 		this.settingsSmartTable = {
 			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA'),
 			actions: false,
-			columns: {
-				name: {
-					title: this.getTranslation('ORGANIZATIONS_PAGE.NAME'),
-					type: 'custom',
-					renderComponent: PictureNameTagsComponent
-				},
-				projectUrl: {
-					title: this.getTranslation(
-						'ORGANIZATIONS_PAGE.EDIT.PROJECT_URL'
-					),
-					type: 'text'
-				},
-				organizationContact: {
-					title: this.getTranslation(
-						'ORGANIZATIONS_PAGE.EDIT.CONTACT'
-					),
-					type: 'custom',
-					class: 'text-center',
-					renderComponent: ContactLinksComponent,
-				},
-				startDate: {
-					title: this.getTranslation('ORGANIZATIONS_PAGE.EDIT.START_DATE'),
-					type: 'custom',
-					filter: false,
-					renderComponent: DateViewComponent,
-					class: 'text-center'
-				},
-				endDate: {
-					title: this.getTranslation('ORGANIZATIONS_PAGE.EDIT.END_DATE'),
-					type: 'custom',
-					filter: false,
-					renderComponent: DateViewComponent,
-					class: 'text-center'
-				},
-				billing: {
-					title: this.getTranslation(
-						'ORGANIZATIONS_PAGE.EDIT.BILLING'
-					),
-					type: 'string',
-					filter: false
-				},
-				currency: {
-					title: this.getTranslation(
-						'ORGANIZATIONS_PAGE.EDIT.CURRENCY'
-					),
-					type: 'string',
-					filter: false
-				},
-				owner: {
-					title: this.getTranslation('ORGANIZATIONS_PAGE.EDIT.OWNER'),
-					type: 'string',
-					filter: false
-				}
-			}
+			pager: {
+				display: false,
+				perPage: pagination
+					? this.pagination.itemsPerPage
+					: this.minItemPerPage
+			},
+			columns: { ...this.columnsSmartTableMapper() }
 		};
+	}
+
+	private columnsSmartTableMapper() {
+		let columns: any;
+
+		switch (this.dataLayoutStyle) {
+			case this.componentLayoutStyleEnum.TABLE:
+				columns = {
+					project: {
+						title: this.getTranslation('ORGANIZATIONS_PAGE.NAME'),
+						type: 'custom',
+						renderComponent: ProjectOrganizationComponent
+					},
+					public: {
+						title: this.getTranslation(
+							'ORGANIZATIONS_PAGE.EDIT.VISIBILITY'
+						),
+						type: 'custom',
+						filter: false,
+						renderComponent: VisibilityComponent,
+						onComponentInitFunction: (instance: any) => {
+							instance.visibilityChange.subscribe({
+								next: (visibility: boolean) => {
+									this.updateProjectVisiblility(
+										instance.rowData.id,
+										visibility
+									);
+								},
+								error: (err: any) => {
+									console.warn(err);
+								}
+							});
+						}
+					},
+					organizationContact: {
+						title: this.getTranslation(
+							'ORGANIZATIONS_PAGE.EDIT.CONTACT'
+						),
+						type: 'custom',
+						class: 'text-center',
+						renderComponent: ContactLinksComponent
+					},
+					startDate: {
+						title: this.getTranslation(
+							'ORGANIZATIONS_PAGE.EDIT.START_DATE'
+						),
+						type: 'custom',
+						filter: false,
+						renderComponent: DateViewComponent,
+						class: 'text-center'
+					},
+					endDate: {
+						title: this.getTranslation(
+							'ORGANIZATIONS_PAGE.EDIT.END_DATE'
+						),
+						type: 'custom',
+						filter: false,
+						renderComponent: DateViewComponent,
+						class: 'text-center'
+					},
+					employeesMergedTeams: {
+						title: this.getTranslation(
+							'ORGANIZATIONS_PAGE.EDIT.MEMBERS'
+						),
+						type: 'custom',
+						renderComponent: EmployeesMergedTeamsComponent
+					},
+					tags: {
+						title: this.getTranslation('SM_TABLE.TAGS'),
+						type: 'custom',
+						renderComponent: TagsOnlyComponent,
+						width: '10%',
+						filter: {
+							type: 'custom',
+							component: TagsColorFilterComponent
+						},
+						filterFunction: (tags: ITag[]) => {
+							const tagIds = [];
+							for (const tag of tags) {
+								tagIds.push(tag.id);
+							}
+							this.setFilter({ field: 'tags', search: tagIds });
+							this.project$.next(true);
+						},
+						sort: false
+					}
+				};
+				break;
+			case this.componentLayoutStyleEnum.CARDS_GRID:
+				columns = {
+					project: {
+						title: 'Image',
+						type: 'custom',
+						renderComponent: ProjectOrganizationGridComponent
+					},
+					organizationContact: {
+						title: 'Image',
+						type: 'custom',
+						class: 'text-center',
+						renderComponent: ProjectOrganizationGridDetailsComponent
+					},
+					employeesMergedTeams: {
+						title: this.getTranslation(
+							'ORGANIZATIONS_PAGE.EDIT.MEMBERS'
+						),
+						type: 'custom',
+						renderComponent: EmployeesMergedTeamsComponent
+					}
+				};
+				break;
+			default:
+				console.log('Problem with a Layout view');
+				break;
+		}
+		return columns;
 	}
 
 	async selectProject({ isSelected, data }) {
@@ -344,6 +466,28 @@ export class ProjectsComponent
 			.subscribe(() => {
 				this.loadSmartTable();
 			});
+	}
+
+	private async updateProjectVisiblility(
+		projectId: string,
+		visibility: boolean
+	) {
+		await this.organizationProjectsService
+			.edit({
+				public: visibility,
+				id: projectId
+			})
+			.then(() => {
+				this.toastrService.success(
+					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.VISIBILITY',
+					{
+						name: visibility
+							? this.getTranslation('BUTTONS.PRIVATE')
+							: this.getTranslation('BUTTONS.PUBLIC')
+					}
+				);
+			})
+			.finally(() => this.project$.next(true));
 	}
 
 	private loadOrganizationContacts() {

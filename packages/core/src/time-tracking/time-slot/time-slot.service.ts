@@ -74,7 +74,11 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 								moment.utc(request.startDate),
 								moment.utc(request.endDate)
 							);
-							qb.andWhere(`"${query.alias}"."startedAt" >= :startDate AND "${query.alias}"."startedAt" < :endDate`, {
+							qb.andWhere(`"${query.alias}"."startedAt" BETWEEN :startDate AND :endDate`, {
+								startDate,
+								endDate
+							});
+							qb.andWhere(`"timeLog"."startedAt" BETWEEN :startDate AND :endDate`, {
 								startDate,
 								endDate
 							});
@@ -155,6 +159,7 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 					})
 				);
 				query.addOrderBy(`"${query.alias}"."createdAt"`, 'ASC');
+				console.log('Get Screenshots Query And Parameters', query.getQueryAndParameters());
 			}
 		});
 		return slots;

@@ -9,12 +9,13 @@
 			<div>
 				<h5>
 					<ngx-header-title>
-						{{ 'REPORT_PAGE.WEEKLY_TIME_AND_ACTIVITY_REPORT' | translate }}
+						{{
+							'REPORT_PAGE.WEEKLY_TIME_AND_ACTIVITY_REPORT'
+								| translate
+						}}
 					</ngx-header-title>
 				</h5>
-				<ng-container
-					*ngIf="request?.startDate && request?.endDate"
-				>
+				<ng-container *ngIf="request?.startDate && request?.endDate">
 					<ngx-date-range-title
 						[start]="request?.startDate"
 						[end]="request?.endDate"
@@ -39,10 +40,8 @@
 		<div class="daily-time-report mt-4">
 			<div class="daily-time-report">
 				<nb-card>
-					<nb-card-body>
-						<ngx-line-chart 
-							[data]="chartData"
-						></ngx-line-chart>
+					<nb-card-body class="chart">
+						<ngx-line-chart [data]="chartData"></ngx-line-chart>
 					</nb-card-body>
 				</nb-card>
 			</div>
@@ -52,18 +51,27 @@
 				class="weekly-logs row-table"
 				[nbSpinner]="loading"
 				nbSpinnerSize="giant"
-				nbSpinnerStatus="primary">
-				<nb-card *ngIf="weekLogs?.length > 0; else notFound">
+				nbSpinnerStatus="primary"
+			>
+				<nb-card
+					class="m-0"
+					*ngIf="weekLogs?.length > 0; else notFound"
+				>
 					<nb-card-header>
 						{{ 'MENU.REPORTS' | translate }}
 					</nb-card-header>
 					<nb-card-body>
 						<div class="columns-header weekly-main-header">
 							<div class="table-inner-wrapper">
-								<div class="responsive-table-row employee-column">
+								<div
+									class="responsive-table-row employee-column"
+								>
 									{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
 								</div>
-								<div class="responsive-table-row day-column" *ngFor="let date of weekDays">
+								<div
+									class="responsive-table-row day-column"
+									*ngFor="let date of weekDays"
+								>
 									{{ date | dateFormat }}
 								</div>
 								<div class="responsive-table-row day-column">
@@ -79,37 +87,73 @@
 						</div>
 						<div class="table-row" *ngFor="let log of weekLogs">
 							<div class="table-inner-wrapper">
-								<div class="responsive-table-row employee-column">
-									<div class="responsive-table-header">{{ 'REPORT_PAGE.EMPLOYEE' | translate }}</div>
-									<div class="responsive-table-content mobile-padding">
+								<div
+									class="responsive-table-row employee-column"
+								>
+									<div class="responsive-table-header">
+										{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
+									</div>
+									<div
+										class="responsive-table-content mobile-padding"
+									>
 										<div class="avatar-wrapper">
 											<ngx-avatar
 												class="report-table"
-												[src]="log?.employee?.user?.imageUrl"
-												[name]="log?.employee?.user?.name"
-												[id]="log?.employee?.id">
+												[src]="
+													log?.employee?.user
+														?.imageUrl
+												"
+												[name]="
+													log?.employee?.user?.name
+												"
+												[id]="log?.employee?.id"
+											>
 											</ngx-avatar>
 											<ng-template #noProjects>
 												<span>{{
-													'REPORT_PAGE.NO_EMPLOYEE'| translate}}</span>
+													'REPORT_PAGE.NO_EMPLOYEE'
+														| translate
+												}}</span>
 											</ng-template>
 										</div>
 									</div>
 								</div>
-								<div class="responsive-table-row day-column" *ngFor="let date of weekDays">
-									<div class="responsive-table-header">{{ date | date:'E d MM, y' }}</div>
-									<div class="responsive-table-content mobile-padding">
-										<span *ngIf="log.dates[date]; else noLogsCol">
-											{{ log.dates[date]?.sum | durationFormat }}
+								<div
+									class="responsive-table-row day-column"
+									*ngFor="let date of weekDays"
+								>
+									<div class="responsive-table-header">
+										{{ date | date: 'E d MM, y' }}
+									</div>
+									<div
+										class="responsive-table-content mobile-padding"
+									>
+										<span
+											*ngIf="
+												log.dates[date];
+												else noLogsCol
+											"
+										>
+											{{
+												log.dates[date]?.sum
+													| durationFormat
+											}}
 										</span>
-										<ng-template #noLogsCol> &#8212; </ng-template>
+										<ng-template #noLogsCol>
+											&#8212;
+										</ng-template>
 									</div>
 								</div>
 								<div class="responsive-table-row day-column">
 									<div class="responsive-table-header">
-										{{ 'REPORT_PAGE.WEEKLY_TOTAL' | translate }}
+										{{
+											'REPORT_PAGE.WEEKLY_TOTAL'
+												| translate
+										}}
 									</div>
-									<div class="responsive-table-content mobile-padding">
+									<div
+										class="responsive-table-content mobile-padding"
+									>
 										<span>
 											{{ log?.sum | durationFormat }}
 										</span>
@@ -119,9 +163,20 @@
 									<div class="responsive-table-header">
 										{{ 'REPORT_PAGE.ACTIVITY' | translate }}
 									</div>
-									<div class="responsive-table-content mobile-padding">
+									<div
+										class="responsive-table-content mobile-padding"
+									>
 										<span>
-											{{ log?.activity || 0 }}%
+											<nb-badge
+												[status]="
+													getStatus(
+														log?.activity || 0
+													)
+												"
+												[text]="
+													(log?.activity || 0) + '%'
+												"
+											></nb-badge>
 										</span>
 									</div>
 								</div>
@@ -129,7 +184,9 @@
 									<div class="responsive-table-header">
 										{{ 'REPORT_PAGE.SPENT' | translate }}
 									</div>
-									<div class="responsive-table-content mobile-padding">
+									<div
+										class="responsive-table-content mobile-padding"
+									>
 										<span> &#8212; </span>
 									</div>
 								</div>

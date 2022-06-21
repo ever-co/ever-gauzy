@@ -2,7 +2,6 @@
 	[nbSpinner]="loading"
 	nbSpinnerStatus="primary"
 	nbSpinnerSize="large"
-	class="card-scroll"
 >
 	<nb-card-header class="card-custom-header">
 		<div class="card-header-title">
@@ -85,9 +84,9 @@
 			<button
 				nbButton
 				status="basic"
-				class="action secondary"
-				[disabled]="disableButton"
-				(click)="openDialog(addEditTemplate, true)"
+				class="action primary"
+				[disabled]="!selectedItem && disableButton"
+				(click)="editTeam(selectedItem)"
 				size="small"		
 			>
 				<nb-icon icon="edit-outline"></nb-icon>

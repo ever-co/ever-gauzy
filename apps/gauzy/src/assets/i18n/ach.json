@@ -120,7 +120,9 @@
 		"TIME_TRACKING_DISABLE": "crwdns10942:0crwdne10942:0",
 		"PRINT": "crwdns11070:0crwdne11070:0",
 		"FEEDBACK": "crwdns11132:0crwdne11132:0",
-		"EQUIPMENT_SHARING": "crwdns11146:0crwdne11146:0"
+		"EQUIPMENT_SHARING": "crwdns11146:0crwdne11146:0",
+		"PRIVATE": "crwdns11217:0crwdne11217:0",
+		"PUBLIC": "crwdns11219:0crwdne11219:0"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "crwdns7534:0crwdne7534:0",
@@ -1715,6 +1717,8 @@
 			"USER_WAS_REMOVED": "crwdns9858:0{{ name }}crwdne9858:0",
 			"EMPLOYEE_POSITION": "crwdns9602:0crwdne9602:0",
 			"PROJECT_URL": "crwdns9604:0crwdne9604:0",
+			"VISIBILITY": "crwdns11221:0crwdne11221:0",
+			"MEMBERS": "crwdns11223:0crwdne11223:0",
 			"SETTINGS": {
 				"TIMER_SETTINGS": "crwdns3254:0crwdne3254:0",
 				"ALLOW_MODIFY_TIME": "crwdns3256:0crwdne3256:0",
@@ -3309,7 +3313,8 @@
 			"EDIT_ORGANIZATIONS_PROJECTS": {
 				"ADD_PROJECT": "crwdns8940:0{{ name }}crwdne8940:0",
 				"REMOVE_PROJECT": "crwdns8942:0{{ name }}crwdne8942:0",
-				"INVALID_PROJECT_NAME": "crwdns2805:0crwdne2805:0"
+				"INVALID_PROJECT_NAME": "crwdns2805:0crwdne2805:0",
+				"VISIBILITY": "crwdns11225:0{{ name }}crwdne11225:0"
 			},
 			"EDIT_ORGANIZATIONS_TEAM": {
 				"ADD_NEW_TEAM": "crwdns8944:0{{ name }}crwdne8944:0",
