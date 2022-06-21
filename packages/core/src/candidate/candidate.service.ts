@@ -1,9 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, In, Like,  } from 'typeorm';
 import { Candidate } from './candidate.entity';
 import { ICandidateCreateInput } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
+import { isNotEmpty } from '@gauzy/common';
 
 @Injectable()
 export class CandidateService extends TenantAwareCrudService<Candidate> {
@@ -23,5 +24,25 @@ export class CandidateService extends TenantAwareCrudService<Candidate> {
 				return this.create(candidate);
 			})
 		);
+	}
+
+  public pagination(filter: any) {
+		if ('where' in filter) {
+			const { where } = filter;
+			if ('tags' in where) {
+				const { tags } = where;
+				filter.where.tags = {
+					id: In(tags)
+				}
+			}
+			if ('user' in where) {
+				const { user } = where;
+				const { email, firstName } = user;
+
+				if (isNotEmpty(email)) filter.where.user['email'] = Like(`%${email}%`);
+				if (isNotEmpty(firstName)) filter.where.user['firstName'] = Like(`%${firstName}%`);
+			}
+		}
+		return super.paginate(filter);
 	}
 }

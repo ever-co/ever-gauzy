@@ -52,11 +52,11 @@ export class CandidateController extends CrudController<Candidate> {
 
 	/**
 	 * CREATE bulk candidate
-	 * 
-	 * @param body 
-	 * @param languageCode 
-	 * @param options 
-	 * @returns 
+	 *
+	 * @param body
+	 * @param languageCode
+	 * @param options
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'Create records in Bulk' })
 	@ApiResponse({
@@ -82,9 +82,9 @@ export class CandidateController extends CrudController<Candidate> {
 
 	/**
 	 * GET candidate counts
-	 * 
+	 *
 	 * @param filter
-	 * @returns 
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'Find all candidates counts in the same tenant' })
 	@ApiResponse({
@@ -99,10 +99,10 @@ export class CandidateController extends CrudController<Candidate> {
     }
 
 	/**
-	 * GET candidates by pagination  
-	 * 
-	 * @param filter 
-	 * @returns 
+	 * GET candidates by pagination
+	 *
+	 * @param filter
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'Find all candidates in the same tenant using pagination.' })
 	@ApiResponse({
@@ -121,14 +121,14 @@ export class CandidateController extends CrudController<Candidate> {
 	async pagination(
 		@Query() filter: PaginationParams<ICandidate>
 	): Promise<IPagination<ICandidate>> {
-		return this.candidateService.paginate(filter);
+		return this.candidateService.pagination(filter);
 	}
 
 	/**
 	 * GET all candidates
-	 * 
-	 * @param data 
-	 * @returns 
+	 *
+	 * @param data
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'Find all candidates in the same tenant.' })
 	@ApiResponse({
@@ -155,9 +155,9 @@ export class CandidateController extends CrudController<Candidate> {
 
 	/**
 	 * GET candidate by id
-	 * @param id 
-	 * @param data 
-	 * @returns 
+	 * @param id
+	 * @param data
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'Find Candidate by id ' })
 	@ApiResponse({
@@ -184,10 +184,10 @@ export class CandidateController extends CrudController<Candidate> {
 
 	/**
 	 * CREATE new candidate
-	 * 
-	 * @param body 
-	 * @param options 
-	 * @returns 
+	 *
+	 * @param body
+	 * @param options
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'Create new record' })
 	@ApiResponse({
@@ -213,10 +213,10 @@ export class CandidateController extends CrudController<Candidate> {
 
 	/**
 	 * UPDATE Candidate By Id
-	 * 
-	 * @param id 
-	 * @param entity 
-	 * @returns 
+	 *
+	 * @param id
+	 * @param entity
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'Update an existing record' })
 	@ApiResponse({
@@ -248,10 +248,10 @@ export class CandidateController extends CrudController<Candidate> {
 
 	/**
 	 * Hired candidate user and migrate to employee user
-	 * UPDATE Candidate By Id 
-	 * 
-	 * @param id 
-	 * @returns 
+	 * UPDATE Candidate By Id
+	 *
+	 * @param id
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'Update an existing record and migrate candidate to employee user' })
 	@ApiResponse({
@@ -281,10 +281,10 @@ export class CandidateController extends CrudController<Candidate> {
 
 	/**
 	 * Rejected candidate user
-	 * UPDATE Candidate By Id 
-	 * 
-	 * @param id 
-	 * @returns 
+	 * UPDATE Candidate By Id
+	 *
+	 * @param id
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'Update candidate status as Rejected' })
 	@ApiResponse({
