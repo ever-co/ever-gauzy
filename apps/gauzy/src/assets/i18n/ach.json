@@ -1670,6 +1670,8 @@
 		"CLIENTS": "crwdns9596:0crwdne9596:0",
 		"PROFILE": "crwdns9598:0crwdne9598:0",
 		"PORTFOLIO": "crwdns9600:0crwdne9600:0",
+		"BROWSE": "crwdns11227:0crwdne11227:0",
+		"SEARCH": "crwdns11229:0crwdne11229:0",
 		"EDIT": {
 			"SETTINGS_SECTION": "crwdns11052:0crwdne11052:0",
 			"ALL": "crwdns11054:0crwdne11054:0",
