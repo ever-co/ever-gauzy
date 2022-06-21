@@ -26,10 +26,7 @@
 		(scrolled)="onScroll()"
 	>
 		<ng-template
-			[ngIf]="
-				dataLayoutStyle === componentLayoutStyleEnum.TABLE &&
-				vendors?.length
-			"
+			[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
 		>
 			<nb-card class="p-0" *ngFor="let vendor of vendors">
 				<nb-card-body
@@ -65,7 +62,17 @@
 					</div>
 				</nb-card-body>
 			</nb-card>
+			<ng-template [ngIf]="!isLoading && vendors?.length == 0">
+				<nb-card class="p-0">
+					<nb-card-body class="custom-table">
+						<div>
+							{{ 'SM_TABLE.NO_RESULT' | translate }}
+						</div>
+					</nb-card-body>
+				</nb-card>
+			</ng-template>
 		</ng-template>
+
 		<ng-template
 			[ngIf]="
 				dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID &&
