@@ -68,10 +68,10 @@ export class ImportAllController {
 		@Body() { importType }, 
 		@UploadedFileStorage() file: UploadedFile
 	) {
-		const { key, originalname, size } = file;
+		const { key, originalname, size, url } = file;
 		const history = {
 			file: originalname,
-			path: key,
+			path: url,
 			size: size,
 			tenantId: RequestContext.currentTenantId()
 		}

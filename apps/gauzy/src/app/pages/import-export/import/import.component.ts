@@ -15,6 +15,8 @@ import { Observable } from 'rxjs/internal/Observable';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { API_PREFIX } from '../../../@core/constants';
 import { ImportService, Store } from '../../../@core/services';
+import { saveAs } from 'file-saver';
+
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -150,6 +152,8 @@ export class ImportComponent extends TranslationBaseComponent
 	}
 
 	public download(item: IImportHistory) {
-		//TODO: implement
+		if(item) {
+			saveAs(item.path, item.file);
+		}
 	}
 }
