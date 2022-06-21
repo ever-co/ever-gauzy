@@ -20,6 +20,7 @@ export interface IImportHistory extends IBasePerTenantEntityModel {
 	size: number;
 	status: string;
 	importDate?: Date;
+	fullUrl?: string;
 }
 
 export interface IEntityModel {

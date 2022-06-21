@@ -152,3 +152,4 @@ export * from './../../time-tracking/activity/activity.subscriber';
 export * from './../../time-tracking/screenshot/screenshot.subscriber';
 export * from './../../time-tracking/time-slot/time-slot.subscriber';
 export * from './../../user/user.subscriber';
+export * from './../../export-import/import-history/import-history.subscriber';

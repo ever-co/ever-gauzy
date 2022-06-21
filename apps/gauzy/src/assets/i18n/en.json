@@ -901,7 +901,6 @@
 			"FEATURE_ORGANIZATION": "Feature Organization",
 			"EXPORT_DATA": "Export Data",
 			"IMPORT_DATA": "Import Data",
-			"DOWNLOAD": "Download",
 			"ALL_ENTITIES": "ALL Entities"
 		},
 		"TAGS": "Tags",
@@ -1670,6 +1669,8 @@
 		"CLIENTS": "Clients",
 		"PROFILE": "Profile",
 		"PORTFOLIO": "Portfolio",
+		"BROWSE":"Browse",
+    	"SEARCH":"Search",
 		"EDIT": {
 			"SETTINGS_SECTION": "Settings Section",
 			"ALL": "All",

@@ -901,7 +901,6 @@
 			"FEATURE_ORGANIZATION": "Функциональная организация",
 			"EXPORT_DATA": "Экспорт данных",
 			"IMPORT_DATA": "Импорт данных",
-			"DOWNLOAD": "Скачать",
 			"ALL_ENTITIES": "ВСЕ сущности"
 		},
 		"TAGS": "Теги",
@@ -1670,6 +1669,8 @@
 		"CLIENTS": "Клиенты",
 		"PROFILE": "Профиль",
 		"PORTFOLIO": "Портфолио",
+		"BROWSE": "Обзор",
+		"SEARCH": "Искать",
 		"EDIT": {
 			"SETTINGS_SECTION": "Раздел настроек",
 			"ALL": "Все",

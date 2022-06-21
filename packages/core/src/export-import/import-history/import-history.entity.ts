@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Entity, Column } from 'typeorm';
 import { IsDate } from 'class-validator';
+import { Exclude } from 'class-transformer';
 import { IImportHistory } from '@gauzy/contracts';
 import { TenantBaseEntity } from '../../core/entities/internal';
 
@@ -11,6 +12,7 @@ export class ImportHistory extends TenantBaseEntity implements IImportHistory {
 	@Column({ nullable: false })
 	file: string;
 
+	@Exclude()
 	@ApiProperty({ type: () => String })
 	@Column({ nullable: false })
 	path: string;
@@ -27,4 +29,6 @@ export class ImportHistory extends TenantBaseEntity implements IImportHistory {
     @IsDate()
 	@Column({ nullable: false, default: () => 'CURRENT_TIMESTAMP'})
 	importDate?: Date;
+
+	fullUrl?: string;
 }

@@ -901,7 +901,6 @@
 			"FEATURE_ORGANIZATION": "crwdns10474:0crwdne10474:0",
 			"EXPORT_DATA": "crwdns11197:0crwdne11197:0",
 			"IMPORT_DATA": "crwdns11199:0crwdne11199:0",
-			"DOWNLOAD": "crwdns11201:0crwdne11201:0",
 			"ALL_ENTITIES": "crwdns11203:0crwdne11203:0"
 		},
 		"TAGS": "crwdns2861:0crwdne2861:0",
@@ -1670,6 +1669,8 @@
 		"CLIENTS": "crwdns9596:0crwdne9596:0",
 		"PROFILE": "crwdns9598:0crwdne9598:0",
 		"PORTFOLIO": "crwdns9600:0crwdne9600:0",
+		"BROWSE": "crwdns11227:0crwdne11227:0",
+		"SEARCH": "crwdns11229:0crwdne11229:0",
 		"EDIT": {
 			"SETTINGS_SECTION": "crwdns11052:0crwdne11052:0",
 			"ALL": "crwdns11054:0crwdne11054:0",
