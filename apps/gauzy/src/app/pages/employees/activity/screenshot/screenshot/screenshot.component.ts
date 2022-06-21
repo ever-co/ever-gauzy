@@ -7,12 +7,12 @@ import {
 	IScreenshot,
 	PermissionsEnum
 } from '@gauzy/contracts';
-import { debounceTime, filter, map, tap } from 'rxjs/operators';
+import { debounceTime, filter, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs/internal/Observable';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import { Subject } from 'rxjs/internal/Subject';
 import { toLocal, isEmpty, distinctUntilChange } from '@gauzy/common-angular';
-import { chain, indexBy, pick, sortBy } from 'underscore';
+import { chain, indexBy, sortBy } from 'underscore';
 import * as moment from 'moment';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NbDialogService } from '@nebular/theme';
@@ -116,7 +116,6 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent
 				'timeLogs'
 			]
 		};
-		console.log({ request });
 		this.payloads$.next(request);
 	}
 
