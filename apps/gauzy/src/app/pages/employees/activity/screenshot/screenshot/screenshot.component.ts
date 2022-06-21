@@ -4,9 +4,10 @@ import {
 	ITimeSlot,
 	IGetTimeSlotInput,
 	IScreenshotMap,
-	IScreenshot
+	IScreenshot,
+	PermissionsEnum
 } from '@gauzy/contracts';
-import { debounceTime, filter, tap } from 'rxjs/operators';
+import { debounceTime, filter, map, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs/internal/Observable';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import { Subject } from 'rxjs/internal/Subject';
@@ -100,17 +101,22 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent
 		if (!this.organization || isEmpty(this.filters)) {
 			return;
 		}
-		const appliedFilter = pick(
-			this.filters,
-			'source',
-			'activityLevel',
-			'logType'
-		);
 		const request: IGetTimeSlotInput = {
-			...appliedFilter,
+			...this.filters,
 			...this.getFilterRequest(this.request),
-			relations: ['screenshots', 'timeLogs']
+			relations: [
+				...(
+					this.store.hasPermission(
+						PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+					)
+					? ['employee', 'employee.user']
+					: []
+				),
+				'screenshots',
+				'timeLogs'
+			]
 		};
+		console.log({ request });
 		this.payloads$.next(request);
 	}
 
