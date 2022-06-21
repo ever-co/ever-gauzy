@@ -59,11 +59,6 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 				}
 			},
 			relations: [
-				...(RequestContext.hasPermission(
-					PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-				)
-					? ['employee', 'employee.user']
-					: []),
 				...(request.relations ? request.relations : [])
 			],
 			where: (query: SelectQueryBuilder<TimeSlot>) => {
