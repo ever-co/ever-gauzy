@@ -8,9 +8,11 @@ import {
 	Put,
 	Param,
 	Body,
-	Query
+	Query,
+	UsePipes,
+	ValidationPipe
 } from '@nestjs/common';
-import { CrudController } from './../core/crud';
+import { CrudController, PaginationParams } from './../core/crud';
 import { EquipmentSharing } from './equipment-sharing.entity';
 import { EquipmentSharingService } from './equipment-sharing.service';
 import { IEquipmentSharing, IPagination, RequestApprovalStatusTypesEnum } from '@gauzy/contracts';
@@ -21,7 +23,7 @@ import {
 	EquipmentSharingCreateCommand,
 	EquipmentSharingUpdateCommand
 } from './commands';
-import { TenantPermissionGuard } from './../shared/guards';
+import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 
 @ApiTags('EquipmentSharing')
@@ -242,4 +244,19 @@ export class EquipmentSharingController extends CrudController<EquipmentSharing>
 			new EquipmentSharingUpdateCommand(id, equipmentSharing)
 		);
 	}
+
+	/**
+	 * GET equipment sharing by pagination
+	 * 
+	 * @param filter 
+	 * @returns 
+	 */
+	 @Get('pagination')
+	 @UseGuards(PermissionGuard)
+	 @UsePipes(new ValidationPipe({ transform: true }))
+	 async pagination(
+		 @Query() filter: PaginationParams<EquipmentSharing>
+	 ): Promise<IPagination<IEquipmentSharing>> {
+		 return this.equipmentSharingService.paginate(filter);
+	 }
 }

@@ -6,10 +6,8 @@ import {
 	IEquipmentSharing,
 	ComponentLayoutStyleEnum,
 	IEquipmentSharingPolicy,
-	IOrganization,
-	IEquipmentSharingPolicyFindInput
-} from '@gauzy/contracts';
-import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
+	IOrganization} from '@gauzy/contracts';
+import { Ng2SmartTableComponent } from 'ng2-smart-table';
 import { FormGroup } from '@angular/forms';
 import { NbDialogService } from '@nebular/theme';
 import { filter, tap } from 'rxjs/operators';
@@ -22,6 +20,7 @@ import { EquipmentSharingPolicyMutationComponent } from '../../@shared/equipment
 import { IPaginationBase, PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
 import { ServerDataSource } from '../../@core/utils/smart-table';
 import { distinctUntilChange } from '@gauzy/common-angular';
+import { InputFilterComponent } from '../../@shared/table-filters';
 
 
 @UntilDestroy({ checkProperties: true })
@@ -88,20 +87,16 @@ export class EquipmentSharingPolicyComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
-
 		this.store.selectedOrganization$
 			.pipe(
-				filter((organization) => !!organization),
-				tap(
-					(organization) => (this.selectedOrganization = organization)
-				),
+				debounceTime(300),
+				distinctUntilChange(),
+				filter((organization: IOrganization) => !!organization),
+				tap((organization: IOrganization) => this.selectedOrganization = organization),
+				tap(() => this.refreshPagination()),
+				tap(() => this.equipmentSharingPolicy$.next(true)),
 				untilDestroyed(this)
-			)
-			.subscribe((organization) => {
-				if (organization) {
-					this.loadSettings();
-				}
-			});
+			).subscribe();
 		this.router.events
 			.pipe(untilDestroyed(this))
 			.subscribe((event: RouterEvent) => {
@@ -153,7 +148,14 @@ export class EquipmentSharingPolicyComponent
 					title: this.getTranslation(
 						'EQUIPMENT_SHARING_POLICY_PAGE.EQUIPMENT_SHARING_POLICY_NAME'
 					),
-					type: 'string'
+					type: 'string',
+					filter: {
+						type: 'custom',
+						component: InputFilterComponent
+					},
+					filterFunction: (name: string) => {
+						this.setFilter({ field: 'name', search: name });
+					}
 				},
 				description: {
 					title: this.getTranslation(
@@ -193,7 +195,7 @@ export class EquipmentSharingPolicyComponent
 					name: equipmentSharingPolicy.name
 				}
 			);
-			this.loadSettings();
+			this.equipmentSharingPolicy$.next(true);
 		}
 
 		this.clearItem();
@@ -215,7 +217,7 @@ export class EquipmentSharingPolicyComponent
 				this.selectedEquipmentSharingPolicy.id
 			);
 
-			this.loadSettings();
+			this.equipmentSharingPolicy$.next(true);
 			this.clearItem();
 			this.toastrService.success(
 				'EQUIPMENT_SHARING_POLICY_PAGE.MESSAGES.EQUIPMENT_REQUEST_DELETED',
@@ -287,7 +289,7 @@ export class EquipmentSharingPolicyComponent
 			this.toastrService.danger(error);
 		}
 	}
-	
+
 	_applyTranslationOnSmartTable() {
 		this.translateService.onLangChange
 			.pipe(untilDestroyed(this))

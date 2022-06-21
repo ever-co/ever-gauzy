@@ -13,7 +13,6 @@ import { FormGroup } from '@angular/forms';
 import { NbDialogService } from '@nebular/theme';
 import { switchMap, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { TranslationBaseComponent } from '../../@shared/language-base';
 import { EquipmentSharingMutationComponent } from '../../@shared/equipment-sharing';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import {
@@ -24,6 +23,7 @@ import {
 import { EmployeesService, EquipmentSharingService, Store, ToastrService } from '../../@core/services';
 import { combineLatest, Subject, firstValueFrom } from 'rxjs';
 import { ComponentEnum } from '../../@core/constants';
+import { PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -31,7 +31,7 @@ import { ComponentEnum } from '../../@core/constants';
 	styleUrls: ['./equipment-sharing.component.scss']
 })
 export class EquipmentSharingComponent
-	extends TranslationBaseComponent
+	extends PaginationFilterBaseComponent
 	implements OnInit, OnDestroy {
 
 	settingsSmartTable: object;

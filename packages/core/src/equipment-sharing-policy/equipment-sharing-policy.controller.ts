@@ -9,10 +9,12 @@ import {
 	Param,
 	Body,
 	Query,
-	Post
+	Post,
+	UsePipes,
+	ValidationPipe
 } from '@nestjs/common';
 import { IEquipmentSharingPolicy, IPagination } from '@gauzy/contracts';
-import { CrudController } from './../core/crud';
+import { CrudController, PaginationParams } from './../core/crud';
 import { EquipmentSharingPolicy } from './equipment-sharing-policy.entity';
 import { EquipmentSharingPolicyService } from './equipment-sharing-policy.service';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
@@ -91,4 +93,19 @@ export class EquipmentSharingPolicyController extends CrudController<EquipmentSh
 	): Promise<IEquipmentSharingPolicy> {
 		return this.equipmentSharingPolicyService.update(id, entity);
 	}
+
+	/**
+	 * GET equipment sharing policy by pagination
+	 * 
+	 * @param filter 
+	 * @returns 
+	 */
+	 @Get('pagination')
+	 @UseGuards(PermissionGuard)
+	 @UsePipes(new ValidationPipe({ transform: true }))
+	 async pagination(
+		 @Query() filter: PaginationParams<EquipmentSharingPolicy>
+	 ): Promise<IPagination<IEquipmentSharingPolicy>> {
+		 return this.equipmentSharingPolicyService.paginate(filter);
+	 }
 }
