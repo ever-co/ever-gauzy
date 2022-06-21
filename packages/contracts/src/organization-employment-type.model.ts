@@ -28,3 +28,8 @@ export interface IOrganizationEmploymentTypeCreateInput
 	name: string;
 	tags?: ITag[];
 }
+
+export enum EmploymentTypeTabsEnum {
+    BROWSE = "BROWSE",
+    SEARCH = "SEARCH"
+}

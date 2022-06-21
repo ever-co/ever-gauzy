@@ -6,7 +6,8 @@ import {
 	IOrganization,
 	IOrganizationEmploymentType,
 	ITag,
-	ComponentLayoutStyleEnum
+	ComponentLayoutStyleEnum,
+	EmploymentTypeTabsEnum	
 } from '@gauzy/contracts';
 import { takeUntil } from 'rxjs/operators';
 import { NbDialogService } from '@nebular/theme';
@@ -52,7 +53,7 @@ export class EmploymentTypesComponent
 		state: false
 	};
 	employmentTypeExist: boolean;
-
+	employmentTypeTabsEnum = EmploymentTypeTabsEnum;	
 	private _ngDestroy$ = new Subject<void>();
 
 	constructor(
