@@ -44,8 +44,9 @@
 
 <ng-container>
 	<nb-card size="medium">
-		<nb-card-header class="pb-0">
-			<div class="d-flex justify-content-end">
+		<nb-card-header class="pb-0 pr-0 pl-0">
+			<div class="d-flex align-items-center justify-content-between">
+				<span>{{ 'TASKS_PAGE.SPRINTS_SETTINGS' | translate }}</span>
 				<ngx-gauzy-button-action
 					[hasLayoutSelector]="false"
 					[buttonTemplate]="actionButtons"

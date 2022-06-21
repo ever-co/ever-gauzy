@@ -48,7 +48,6 @@ export class GauzyEditableGridComponent<T extends { id?: string }>
 	ngOnInit(): void {}
 
 	toggleItemSelection(item: T): void {
-		console.log(7, item);
 		if (!this.selectedItem || this.selectedItem.id !== item.id) {
 			this.selectedItem = item;
 			return;
