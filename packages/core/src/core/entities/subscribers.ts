@@ -4,6 +4,7 @@ import {
 	EmailTemplateSubscriber,
 	EmployeeSubscriber,
 	FeatureSubscriber,
+	ImportHistorySubscriber,
 	OrganizationContactSubscriber,
 	OrganizationProjectSubscriber,
 	OrganizationSubscriber,
@@ -24,13 +25,14 @@ export const coreSubscribers = [
 	EmailTemplateSubscriber,
 	EmployeeSubscriber,
 	FeatureSubscriber,
+	ImportHistorySubscriber,
 	OrganizationContactSubscriber,
 	OrganizationProjectSubscriber,
 	OrganizationSubscriber,
 	ReportSubscriber,
 	ScreenshotSubscriber,
-	TimeSlotSubscriber,
-	UserSubscriber,
+	TaskSubscriber,
 	TenantSubscriber,
-	TaskSubscriber
+	TimeSlotSubscriber,
+	UserSubscriber
 ];
