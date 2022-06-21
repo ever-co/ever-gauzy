@@ -1670,6 +1670,8 @@
 		"CLIENTS": "Clients",
 		"PROFILE": "Profile",
 		"PORTFOLIO": "Portfolio",
+		"BROWSE":"Browse",
+    	"SEARCH":"Search",
 		"EDIT": {
 			"SETTINGS_SECTION": "Settings Section",
 			"ALL": "All",
