@@ -30,9 +30,13 @@
 	}
 }
 
-.main-container {
+.project-tab-container {
 	display: flex;
 	gap: 1rem;
+
+	.project-form-container {
+		width: 65%;
+	}
 }
 
 .project-image-container {
