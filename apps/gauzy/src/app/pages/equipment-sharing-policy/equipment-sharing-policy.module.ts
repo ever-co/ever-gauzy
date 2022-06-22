@@ -1,5 +1,6 @@
 import { CardGridModule } from './../../@shared/card-grid/card-grid.module';
 import { NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import {
 	NbBadgeModule,
 	NbButtonModule,
@@ -28,8 +29,10 @@ import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy
 import { PaginationModule } from '../../@shared/pagination/pagination.module';
 import { TableComponentsModule } from '../../@shared';
 
+
 @NgModule({
 	imports: [
+		CommonModule,
 		SharedModule,
 		ThemeModule,
 		NbBadgeModule,

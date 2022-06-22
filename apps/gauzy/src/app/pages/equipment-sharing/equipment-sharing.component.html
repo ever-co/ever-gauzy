@@ -76,44 +76,48 @@
 	</nb-card-body>
 </nb-card>
 <ng-template #visibleButton>
-	<button
-		(click)="save(true)"
-		nbButton
-		status="success"
-		class="action"
-		size="small"
-	>
-		<nb-icon icon="plus-outline"></nb-icon
-		>{{ 'BUTTONS.ADD' | translate }}
-	</button>	
+	<ng-container *ngxPermissionsOnly="ALL_ORG_EDIT">
+		<button
+			(click)="save(true)"
+			nbButton
+			status="success"
+			class="action"
+			size="small"
+		>
+			<nb-icon icon="plus-outline"></nb-icon
+			>{{ 'BUTTONS.ADD' | translate }}
+		</button>	
+	</ng-container>
 </ng-template>
 <ng-template
 	#actionButtons
 	let-buttonSize="buttonSize"
 	let-selectedItem="selectedItem"
 >
-	<div class="btn-group actions">		
-		<button
-			(click)="save(false, selectedItem)"	
-			nbButton
-			status="basic"
-			class="action secondary"
-			size="small"	
-			[disabled]="!selectedItem && disableButton"				
-		>
-			<nb-icon icon="edit-outline"></nb-icon>
-			{{ 'BUTTONS.EDIT' | translate }}
-		</button>	
-		<button
-			nbButton
-			[disabled]="!selectedItem && disableButton"		
-			size="small"
-			(click)="delete(selectedItem)"
-			status="basic"
-			class="action"
-			[nbTooltip]="'BUTTONS.DELETE' | translate"
-		>
-			<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
-		</button>					
-	</div>
+	<ng-container *ngxPermissionsOnly="ALL_ORG_EDIT">	
+		<div class="btn-group actions">
+			<button
+				(click)="save(false, selectedItem)"	
+				nbButton
+				status="basic"
+				class="action secondary"
+				size="small"	
+				[disabled]="!selectedItem && disableButton"				
+			>
+				<nb-icon icon="edit-outline"></nb-icon>
+				{{ 'BUTTONS.EDIT' | translate }}
+			</button>	
+			<button
+				nbButton
+				[disabled]="!selectedItem && disableButton"		
+				size="small"
+				(click)="delete(selectedItem)"
+				status="basic"
+				class="action"
+				[nbTooltip]="'BUTTONS.DELETE' | translate"
+			>
+				<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
+			</button>		
+		</div>
+	</ng-container>
 </ng-template>
