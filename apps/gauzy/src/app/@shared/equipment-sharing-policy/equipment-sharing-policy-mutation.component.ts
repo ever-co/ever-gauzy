@@ -8,7 +8,8 @@ import { EquipmentSharingPolicyService } from '../../@core/services/equipment-sh
 
 @Component({
 	selector: 'ngx-equipment-sharing-policy-mutation',
-	templateUrl: './equipment-sharing-policy-mutation.component.html'
+	templateUrl: './equipment-sharing-policy-mutation.component.html',
+	styleUrls: ['./equipment-sharing-policy-mutation.component.scss']
 })
 export class EquipmentSharingPolicyMutationComponent
 	extends TranslationBaseComponent

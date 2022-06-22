@@ -1,3 +1,26 @@
+@import 'gauzy/_gauzy-cards';
+
+$orange: rgba(245, 109, 88, 1);
+[nbButton].delete.appearance-outline.status-basic {
+  background-color: transparent;
+  border-color: rgba($color: $orange, $alpha: 0.3);
+  border-width: 2px;
+  color: $orange;
+
+  &:hover {
+    border-color: $orange;
+  }
+}
+
+[nbButton].delete.appearance-outline:hover {
+  box-shadow: 0 0 0 nb-theme(button-outline-width) rgba($color: $orange, $alpha: 0.05),
+    inset nb-theme(button-outline-focus-inset-shadow-length) transparent;
+}
+
+[nbButton].delete.appearance-outline:focus:not(:hover):not(:active) {
+  box-shadow: unset;
+}
+
 .col-sm-3 {
   padding-left: 0;
 }
