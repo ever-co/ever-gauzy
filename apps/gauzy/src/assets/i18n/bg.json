@@ -1851,7 +1851,8 @@
 		"BUDGET": "Budget",
 		"OPEN_SOURCE": "Open-Source",
 		"ORGANIZATION_ADD": "Add Organization",
-		"IMAGE": "Снимка"
+		"IMAGE": "Снимка",
+		"SPRINTS": "Sprints"
 	},
 	"CONTACTS_PAGE": {
 		"VISITORS": "Visitors",
