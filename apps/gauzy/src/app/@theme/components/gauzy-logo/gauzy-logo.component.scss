@@ -38,36 +38,6 @@
     border-radius: 0 0 nb-theme(border-radius) nb-theme(border-radius);
     box-shadow: 0px 1px 1px 0px rgb(0 0 0 / 15%);
     margin-top: 6px;
-
-    .content {
-      display: flex;
-      align-items: center;
-      color: #7e7e8f;
-      font-size: 12px;
-      font-weight: 500;
-      line-height: 13px;
-      letter-spacing: 0em;
-      text-align: left;
-      padding: 6px;
-
-      a {
-        margin: 0 0.2rem;
-        color: #7e7e8f;
-        transition: 0.2s;
-
-        i {
-          padding: 0;
-          margin: 0;
-        }
-
-        &:hover {
-          color: nb-theme(text-primary-color);
-          border: 1px solid nb-theme(text-primary-color);
-          border-radius: calc(nb-theme(border-radius) - 4px);
-          padding: 0.1rem 0.2rem;
-        }
-      }
-    }
   }
 }
 
