@@ -46,6 +46,7 @@ export interface IOrganizationProject extends IBaseEntityWithMembers {
 	budget?: number;
 	budgetType?: OrganizationProjectBudgetTypeEnum;
 	membersCount?: number;
+	imageUrl?: string;
 }
 
 export enum TaskListTypeEnum {

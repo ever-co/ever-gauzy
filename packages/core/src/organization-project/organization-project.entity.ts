@@ -170,6 +170,10 @@ export class OrganizationProject
 	@Column({ nullable: true, default: 0 })
 	membersCount?: number;
 
+	@ApiPropertyOptional({ type: () => String, maxLength: 500 })
+	@Column({ length: 500, nullable: true })
+	imageUrl?: string;
+
 	/*
     |--------------------------------------------------------------------------
     | @ManyToOne 
