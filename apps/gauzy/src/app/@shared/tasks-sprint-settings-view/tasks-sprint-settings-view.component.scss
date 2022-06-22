@@ -1,0 +1,16 @@
+:host {
+    ga-editable-grid ::ng-deep nb-card {
+        margin: 0;
+    }
+
+    .sprints {
+        padding: 0rem 1rem;
+    }
+
+    nb-card.card {
+        background-color: unset;
+        border: none;
+        border-radius: var(--border-radius);
+        padding-top: 0;
+    }
+}

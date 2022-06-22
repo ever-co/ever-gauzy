@@ -1,8 +1,8 @@
-<div class="d-flex my-2 settings">
-	<div class="col-10 settings__name">
+<div class="d-flex settings">
+	<div class="settings__name">
 		<span>{{ 'TASKS_PAGE.TASK_VIEW_MODE' | translate }}:</span>
 	</div>
-	<div class="col-2 settings__value">
+	<div class="settings__value">
 		<ng-select
 			[items]="taskViewModeList"
 			bindLabel="type"
@@ -33,7 +33,7 @@
 		</ng-select>
 	</div>
 </div>
-<hr />
+<hr/>
 <ng-container *ngIf="selectedTaskViewMode.type === taskViewModeType.SPRINT">
 	<ngx-tasks-sprint-settings-view
 		[project]="project"

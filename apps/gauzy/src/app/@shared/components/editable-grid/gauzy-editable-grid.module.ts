@@ -10,6 +10,7 @@ import { Store } from '../../../@core/services/store.service';
 import { ThemeModule } from '../../../@theme/theme.module';
 import { GauzyEditableGridComponent } from './gauzy-editable-grid.component';
 import { TranslateModule } from '../../translate/translate.module';
+import { GauzyButtonActionModule } from '../../gauzy-button-action/gauzy-button-action.module';
 
 const NbModules = [
 	NbButtonModule,
@@ -19,8 +20,12 @@ const NbModules = [
 	NbDialogModule.forChild()
 ];
 
+const OtherModules = [
+	GauzyButtonActionModule
+]
+
 @NgModule({
-	imports: [ThemeModule, ...NbModules, TranslateModule],
+	imports: [ThemeModule, ...NbModules, ...OtherModules, TranslateModule],
 	declarations: [GauzyEditableGridComponent],
 	exports: [GauzyEditableGridComponent],
 	providers: [Store]

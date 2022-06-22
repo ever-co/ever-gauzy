@@ -20,7 +20,7 @@ export type ItemActionType = 'create' | 'edit' | 'delete';
 @Component({
 	selector: 'ga-editable-grid',
 	templateUrl: './gauzy-editable-grid.component.html',
-	styleUrls: ['./gauzy-editable-grid.component.css']
+	styleUrls: ['./gauzy-editable-grid.component.scss']
 })
 export class GauzyEditableGridComponent<T extends { id?: string }>
 	extends TranslationBaseComponent
@@ -48,7 +48,6 @@ export class GauzyEditableGridComponent<T extends { id?: string }>
 	ngOnInit(): void {}
 
 	toggleItemSelection(item: T): void {
-		console.log(7, item);
 		if (!this.selectedItem || this.selectedItem.id !== item.id) {
 			this.selectedItem = item;
 			return;

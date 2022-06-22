@@ -1,0 +1,19 @@
+@import 'gauzy/_gauzy-dialogs';
+
+.form-group {
+	display: flex;
+	flex-direction: column;
+}
+
+.main {
+	width: 645px;
+	background-color: var(--gauzy-card-1);
+}
+
+label {
+	font-size: 11px;
+	font-weight: 600;
+	line-height: 13px;
+	letter-spacing: -0.01em;
+	text-align: left;
+}

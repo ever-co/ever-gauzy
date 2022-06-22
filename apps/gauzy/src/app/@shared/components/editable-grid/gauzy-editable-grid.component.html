@@ -44,40 +44,15 @@
 
 <ng-container>
 	<nb-card size="medium">
-		<nb-card-header>
-			<div>
-				<button
-					nbButton
-					status="info"
-					(click)="openDialog('create', dialog)"
-					class="mr-2"
-					size="medium"
-				>
-					<nb-icon class="mr-1" icon="plus-outline"></nb-icon>
-					{{ 'BUTTONS.CREATE' | translate }}
-				</button>
-				<button
-					nbButton
-					status="info"
-					[disabled]="!selectedItem"
-					(click)="openDialog('edit', dialog)"
-					class="mr-2"
-					size="medium"
-				>
-					<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
-					{{ 'BUTTONS.EDIT' | translate }}
-				</button>
-				<button
-					nbButton
-					status="danger"
-					[disabled]="!selectedItem"
-					(click)="openDialog('delete', dialog)"
-					class="mr-2"
-					size="medium"
-				>
-					<nb-icon class="mr-1" icon="trash"></nb-icon>
-					{{ 'BUTTONS.DELETE' | translate }}
-				</button>
+		<nb-card-header class="pb-0 pr-0 pl-0">
+			<div class="d-flex align-items-center justify-content-between">
+				<span>{{ 'TASKS_PAGE.SPRINTS_SETTINGS' | translate }}</span>
+				<ngx-gauzy-button-action
+					[hasLayoutSelector]="false"
+					[buttonTemplate]="actionButtons"
+					[buttonTemplateVisible]="visible"
+					[isDisable]="!selectedItem"
+				></ngx-gauzy-button-action>
 			</div>
 		</nb-card-header>
 		<nb-list>
@@ -93,3 +68,42 @@
 		</nb-list>
 	</nb-card>
 </ng-container>
+
+<ng-template #actionButtons>
+	<div class="actions">
+		<button
+			nbButton
+			status="basic"
+			[disabled]="!selectedItem"
+			(click)="openDialog('edit', dialog)"
+			class="action primary"
+			size="small"
+		>
+			<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
+			{{ 'BUTTONS.EDIT' | translate }}
+		</button>
+		<button
+			nbButton
+			status="basic"
+			[disabled]="!selectedItem"
+			(click)="openDialog('delete', dialog)"
+			class="action"
+			size="small"
+		>
+			<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
+			<!-- {{ 'BUTTONS.DELETE' | translate }} -->
+		</button>
+	</div>
+</ng-template>
+<ng-template #visible>
+	<button
+		nbButton
+		status="info"
+		(click)="openDialog('create', dialog)"
+		class="action"
+		size="small"
+	>
+		<nb-icon icon="plus-outline"></nb-icon>
+		{{ 'BUTTONS.CREATE' | translate }}
+	</button>
+</ng-template>

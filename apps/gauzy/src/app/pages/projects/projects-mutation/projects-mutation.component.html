@@ -1,6 +1,6 @@
 <nb-card>
 	<nb-card-body>
-		<form [formGroup]="form" (ngSubmit)="onSubmit()">
+		<form [formGroup]="form">
 			<nb-tabset>
 				<nb-tab [tabTitle]="'ORGANIZATIONS_PAGE.MAIN' | translate">
 					<div class="row">
@@ -352,6 +352,17 @@
 					</div>
 				</nb-tab>
 				<nb-tab
+					*ngIf="
+						form.get('taskViewMode').value ==
+							TaskListTypeEnum.SPRINT && project
+					"
+					[tabTitle]="'ORGANIZATIONS_PAGE.SPRINTS' | translate"
+				>
+					<ngx-tasks-sprint-settings-view
+						[project]="project"
+					></ngx-tasks-sprint-settings-view>
+				</nb-tab>
+				<nb-tab
 					[tabTitle]="'ORGANIZATIONS_PAGE.SETTINGS' | translate"
 					[style.minHeight]="'330px'"
 				>
@@ -446,10 +457,10 @@
 				</button>
 				<button
 					class="mr-3"
-					type="submit"
 					nbButton
 					status="success"
 					[disabled]="form.invalid"
+					(click)="onSubmit()"
 				>
 					{{ 'BUTTONS.SAVE' | translate }}
 				</button>
