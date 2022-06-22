@@ -47,7 +47,7 @@ export class EquipmentController extends CrudController<Equipment> {
 	async pagination(
 		@Query() filter: PaginationParams<IEquipment>
 	): Promise<IPagination<IEquipment>> {
-		return this.equipmentService.paginate(filter);
+		return this.equipmentService.pagination(filter);
 	}
 
 	@ApiOperation({
