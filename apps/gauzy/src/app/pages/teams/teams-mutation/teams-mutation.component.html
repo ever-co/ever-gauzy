@@ -1,68 +1,84 @@
-<form [formGroup]="form">
-	<div class="row mb-3">
-		<div class="col-sm-12 d-flex flex-column">
-			<div class="form-group">
-				<label class="label">{{
-					'FORM.PLACEHOLDERS.TEAM_NAME' | translate
-				}}</label>
-				<input
-					formControlName="name"
-					type="text"
-					nbInput
-					fullWidth
-					[placeholder]="'FORM.PLACEHOLDERS.TEAM_NAME' | translate"
-				/>
+<div class="editable">
+	<div class="container">
+		<div class="row">
+			<div class="col-sm-12 d-flex justify-content-end">
+				<i
+					class="fas fa-times"
+					(click)="cancel()"
+				></i>
 			</div>
 		</div>
-	</div>
-	<div class="row mb-3">
-		<div class="col-sm-12 d-flex flex-column">
-			<div class="form-group">
-				<ga-tags-color-input
-					[selectedTags]="form.get('tags').value"
-					(selectedTagsEvent)="selectedTagsEvent($event)"
-					[isOrgLevel]="true"
-				></ga-tags-color-input>
+		<div class="row mb-3">
+			<h5 class="title mr-3 ml-3">{{ this.team ? ('POP_UPS.EDIT' | translate) : ('POP_UPS.ADD' | translate) }}</h5>
+		</div>
+		<form [formGroup]="form">
+			<div class="row mb-3">
+				<div class="col-sm-12 d-flex flex-column">
+					<div class="form-group">
+						<label class="label">{{
+							'FORM.PLACEHOLDERS.TEAM_NAME' | translate
+						}}</label>
+						<input
+							formControlName="name"
+							type="text"
+							nbInput
+							fullWidth
+							[placeholder]="'FORM.PLACEHOLDERS.TEAM_NAME' | translate"
+						/>
+					</div>
+				</div>
+			</div>			
+			<div class="row mb-3">
+				<div class="form-group col-12">
+					<ga-employee-multi-select
+						[label]="'FORM.LABELS.ADD_REMOVE_MEMBERS' | translate"
+						[placeholder]="'FORM.PLACEHOLDERS.ADD_REMOVE_MEMBERS' | translate"
+						[selectedEmployeeIds]="form.get('members').value"
+						[allEmployees]="employees"
+						(selectedChange)="onMembersSelected($event)"
+					></ga-employee-multi-select>
+				</div>
+				<div class="form-group col-12">
+					<ga-employee-multi-select
+						[label]="'FORM.LABELS.ADD_REMOVE_MANAGERS' | translate"
+						[placeholder]="'FORM.PLACEHOLDERS.ADD_REMOVE_MANAGERS' | translate"
+						[selectedEmployeeIds]="form.get('managers').value"
+						[allEmployees]="employees"
+						(selectedChange)="onManagersSelected($event)"
+					></ga-employee-multi-select>
+				</div>
 			</div>
-		</div>							
-	</div>
-	<div class="row mb-3">
-		<div class="form-group col-12">
-			<ga-employee-multi-select
-				[label]="'FORM.LABELS.ADD_REMOVE_MEMBERS' | translate"
-				[placeholder]="'FORM.PLACEHOLDERS.ADD_REMOVE_MEMBERS' | translate"
-				[selectedEmployeeIds]="form.get('members').value"
-				[allEmployees]="employees"
-				(selectedChange)="onMembersSelected($event)"
-			></ga-employee-multi-select>
+			<div class="row mb-3">
+				<div class="col-sm-12 d-flex flex-column">
+					<div class="form-group">
+						<ga-tags-color-input
+							[selectedTags]="form.get('tags').value"
+							(selectedTagsEvent)="selectedTagsEvent($event)"
+							[isOrgLevel]="true"
+						></ga-tags-color-input>
+					</div>
+				</div>							
+			</div>
+		</form>
+		<div class="row mb-3">
+			<div class="col-sm-12"></div>
+			<button
+				(click)="cancel()"
+				nbButton
+				status="basic"
+				outline
+				class="delete mr-3 ml-3"
+			>
+				{{ 'BUTTONS.CANCEL' | translate }}
+			</button>
+			<button
+				[disabled]="form.invalid"
+				(click)="addOrEditTeams()"
+				nbButton
+				status="success"
+			>
+				{{ 'BUTTONS.SAVE' | translate }}
+			</button>
 		</div>
-		<div class="form-group col-12">
-			<ga-employee-multi-select
-				[label]="'FORM.LABELS.ADD_REMOVE_MANAGERS' | translate"
-				[placeholder]="'FORM.PLACEHOLDERS.ADD_REMOVE_MANAGERS' | translate"
-				[selectedEmployeeIds]="form.get('managers').value"
-				[allEmployees]="employees"
-				(selectedChange)="onManagersSelected($event)"
-			></ga-employee-multi-select>
-		</div>
 	</div>
-</form>
-<div class="row mb-3">
-	<div class="col-sm-12"></div>
-	<button
-		(click)="cancel()"
-		nbButton
-		status="danger"
-		class="delete mr-3 ml-3"
-	>
-		{{ 'BUTTONS.CANCEL' | translate }}
-	</button>
-	<button
-		[disabled]="form.invalid"
-		(click)="addOrEditTeams()"
-		nbButton
-		status="success"
-	>
-		{{ 'BUTTONS.SAVE' | translate }}
-	</button>
 </div>

@@ -8,7 +8,8 @@ import { Store } from '../../../@core/services';
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-teams-mutation',
-	templateUrl: './teams-mutation.component.html'	
+	templateUrl: './teams-mutation.component.html',
+	styleUrls: ['./teams-mutation.component.scss']	
 })
 export class TeamsMutationComponent implements OnInit {
 	@Input()
