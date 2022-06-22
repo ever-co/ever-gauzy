@@ -107,25 +107,10 @@
 		</ng-template>
 	</div>
 </ng-template>
-<ng-template #addEditTemplate let-ref="dialogRef">
-	<div class="editable">
-		<div class="container">
-			<div class="row">
-				<div class="col-sm-12 d-flex justify-content-end">
-					<i
-						class="fas fa-times"
-						(click)="ref.close(); disabled = true"
-					></i>
-				</div>
-			</div>
-			<div class="row mb-3">
-				<h5 class="title mr-3 ml-3">{{ this.selected.department ? ('POP_UPS.EDIT' | translate) : ('POP_UPS.ADD' | translate) }}</h5>
-			</div>
-			<ga-departments-mutation
-				[department]="selectedDepartment"
-				(canceled)="_clearItem()"
-				(addOrEditDepartment)="addOrEditDepartment($event)"
-			></ga-departments-mutation>
-		</div>
-	</div>
+<ng-template #addEditTemplate let-ref="dialogRef">	
+	<ga-departments-mutation
+		[department]="selectedDepartment"
+		(canceled)="_clearItem()"
+		(addOrEditDepartment)="addOrEditDepartment($event)"
+	></ga-departments-mutation>	
 </ng-template>
