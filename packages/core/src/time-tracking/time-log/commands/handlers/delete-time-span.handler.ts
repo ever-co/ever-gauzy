@@ -4,15 +4,16 @@ import { Repository } from 'typeorm';
 import * as _ from 'underscore';
 import { ITimeLog } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/common';
+import { moment } from '../../../../core/moment-extend';
+import { TimeSlot } from './../../../../core/entities/internal';
+import { TimesheetRecalculateCommand } from './../../../timesheet/commands';
 import { TimeLog } from './../../time-log.entity';
-import { TimeSlotService } from '../../../time-slot/time-slot.service';
 import { DeleteTimeSpanCommand } from '../delete-time-span.command';
 import { TimeLogUpdateCommand } from '../time-log-update.command';
 import { TimeLogDeleteCommand } from '../time-log-delete.command';
-import { moment } from '../../../../core/moment-extend';
-import { TimeSlot } from './../../../../core/entities/internal';
+import { TimeSlotService } from '../../../time-slot/time-slot.service';
 import { TimeSlotBulkDeleteCommand } from './../../../time-slot/commands';
-import { TimesheetRecalculateCommand } from './../../../timesheet/commands';
+import { getStartEndIntervals } from './../../../time-slot/utils';
 
 @CommandHandler(DeleteTimeSpanCommand)
 export class DeleteTimeSpanHandler
@@ -298,6 +299,7 @@ export class DeleteTimeSpanHandler
 
 					try {
 						const timeSlots = await this.syncTimeSlots(newLog);
+						console.log('Sync TimeSlots for new log', { timeSlots }, { newLog });
 						if (isNotEmpty(timeSlots)) {
 							let timeLogs: ITimeLog[] = [];
 							timeLogs = timeLogs.concat(newLog);
@@ -322,30 +324,17 @@ export class DeleteTimeSpanHandler
 	}
 
 	private async syncTimeSlots(timeLog: ITimeLog) {
-		const {
-			startedAt,
-			stoppedAt,
-			employeeId,
-			organizationId
-		} = timeLog;
-
-		let startDate: any = moment(startedAt);
-		startDate
-			.set('minute', startDate.get('minute') - (startDate.get('minute') % 10))
-			.set('second', 0)
-			.set('millisecond', 0);
-
-		let endDate: any = moment(stoppedAt);
-		endDate
-			.set('minute', endDate.get('minute') + (endDate.get('minute') % 10) - 1)
-			.set('second', 59)
-			.set('millisecond', 0);
-	
+		const { startedAt, stoppedAt, employeeId, organizationId } = timeLog;
+		const { start, end } = getStartEndIntervals(
+			moment(startedAt),
+			moment(stoppedAt)
+		);
 		return await this.timeSlotService.getTimeSlots({
-			startDate: moment(startDate).toDate(),
-			endDate: moment(endDate).toDate(),
+			startDate: moment(start).toDate(),
+			endDate: moment(end).toDate(),
 			organizationId,
-			employeeIds: [employeeId]
+			employeeIds: [employeeId],
+			syncSlots: true
 		});
 	}
 }
