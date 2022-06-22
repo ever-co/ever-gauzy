@@ -1851,7 +1851,8 @@
 		"BUDGET": "Бюджет",
 		"OPEN_SOURCE": "Открытый код",
 		"ORGANIZATION_ADD": "Добавить организацию",
-		"IMAGE": "Изображение"
+		"IMAGE": "Изображение",
+		"SPRINTS": "Спринты"
 	},
 	"CONTACTS_PAGE": {
 		"VISITORS": "Посетители",
