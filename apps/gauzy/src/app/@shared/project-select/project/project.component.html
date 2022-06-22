@@ -22,14 +22,28 @@
 	>
 		<ng-container *ngIf="shortened">
 			<ng-template ng-option-tmp let-item="item" let-index="index">
+				<img
+					*ngIf="item.imageUrl"
+					[src]="item.imageUrl"
+					width="40"
+					height="40"
+				/>
 				<span>
 					{{ item?.name }}
 				</span>
 			</ng-template>
 			<ng-template ng-label-tmp let-item="item">
-				<span>
-					{{ getShortenedName(item?.name) }}
-				</span>
+				<div class="selector-template">
+					<img
+						*ngIf="item.imageUrl"
+						[src]="item.imageUrl"
+						width="40"
+						height="40"
+					/>
+					<span>
+						{{ getShortenedName(item?.name) }}
+					</span>
+				</div>
 			</ng-template>
 		</ng-container>
 	</ng-select>
