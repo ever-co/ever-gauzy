@@ -17,7 +17,7 @@ export class ProjectComponent implements OnInit, ViewCell {
 	project: IProject = {
 		name: null,
 		count: null,
-		organization: null
+		imageUrl: null
 	};
 
 	projects: IProject[] = [];
@@ -32,13 +32,13 @@ export class ProjectComponent implements OnInit, ViewCell {
 		if (this.rowData.project) {
 			this.project.name = this.rowData.project.name;
 			this.project.count = this.rowData.project.membersCount;
-			this.project.organization = this.rowData.project.organization
+			this.project.imageUrl = this.rowData.project.imageUrl;
 		} else if (this.rowData.projects) {
 			this.projects = this.rowData.projects.map((project: any) => {
 				return {
 					name: project.name,
 					count: project.membersCount,
-					organization: project.organization
+					imageUrl: project.imageUrl
 				};
 			});
 		}
