@@ -164,21 +164,18 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 					moment().endOf('month').utc().format('YYYY-MM-DD HH:mm:ss')
 				);
 			}
-
-      if ('user' in where) {
+			if ('user' in where) {
 				const { firstName } = where.user;
 				if (isNotEmpty(firstName)) filter.where.user['firstName'] = Like(`%${firstName}%`);
 			}
-
-      if ('policy' in where) {
+      		if ('policy' in where) {
 				const { name } = where.policy;
 				if (isNotEmpty(name)) filter.where.policy['name'] = Like(`%${name}%`);
 			}
-
-      if ('description' in where) {
-        const { description } = where;
-        if (isNotEmpty(description)) filter.where['description'] = Like(`%${description}%`);
-      }
+			if ('description' in where) {
+				const { description } = where;
+				if (isNotEmpty(description)) filter.where['description'] = Like(`%${description}%`);
+			}
 		}
 		return super.paginate(filter);
 	}
