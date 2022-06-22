@@ -1,6 +1,42 @@
 <nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
-	
-	<nb-card-header class="main-header">
+	<nb-card-header class="d-flex flex-column pb-0">
+		<div class="card-header-title">
+			<div class="card-header-title">
+				<h4>
+					<ngx-back-navigation></ngx-back-navigation>
+					<ngx-header-title [allowEmployee]="false">
+						{{ 'EQUIPMENT_SHARING_PAGE.HEADER' | translate }}
+					</ngx-header-title>
+				</h4>
+			</div>
+			<div class="card-header-title">
+				<div class="mr-2">
+					<button
+						nbButton
+						outline
+						status="primary"
+						(click)="manageApprovalPolicy()"
+					>
+						{{
+							'EQUIPMENT_SHARING_PAGE.EQUIPMENT_SHARING_POLICY'
+								| translate
+						}}
+					</button>
+				</div>
+			</div>
+		</div>
+		<div class="gauzy-button-container">
+			<ngx-gauzy-button-action
+				[buttonTemplate]="actionButtons"
+				[componentName]="viewComponentName"
+				[buttonTemplateVisible]="visibleButton"
+				[isDisable]="disableButton"
+			>
+			</ngx-gauzy-button-action>
+		</div>
+	</nb-card-header>
+
+	<!-- <nb-card-header class="main-header">
 		<div class="main-header">
 			<ngx-back-navigation></ngx-back-navigation>
 			<h4> <ngx-header-title [allowEmployee]="false"> {{ 'EQUIPMENT_SHARING_PAGE.HEADER' | translate }} </ngx-header-title> </h4>
@@ -21,10 +57,10 @@
 				[componentName]="viewComponentName"
 			></ga-layout-selector>
 		</div>
-	</nb-card-header>
+	</nb-card-header> -->
 
 	<nb-card-body>
-		<div class="mb-3">
+		<!-- <div class="mb-3">
 			<button nbButton status="success" class="mr-2" (click)="save(true)">
 				<nb-icon class="mr-1" icon="plus-outline"></nb-icon
 				>{{ 'BUTTONS.ADD' | translate }}
@@ -32,7 +68,7 @@
 			<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
 				<ng-container *ngTemplateOutlet="actionButtons"></ng-container>
 			</ng-container>
-		</div>
+		</div> -->
 
 		<ng2-smart-table
 			class="tags-table"
@@ -140,31 +176,45 @@
 		</ul>
 	</nb-card-body>
 </nb-card>
+<ng-template #visibleButton>
+	<button
+		(click)="save(true)"
+		nbButton
+		status="success"
+		class="action"
+		size="small"
+	>
+		<nb-icon icon="plus-outline"></nb-icon
+		>{{ 'BUTTONS.ADD' | translate }}
+	</button>	
+</ng-template>
 <ng-template
 	#actionButtons
 	let-buttonSize="buttonSize"
 	let-selectedItem="selectedItem"
 >
-	<button
-		nbButton
-		status="info"
-		class="mr-2"
-		[disabled]="!selectedItem && disableButton"
-		(click)="save(false, selectedItem)"
-		[size]="buttonSize || 'medium'"
-	>
-		<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
-		{{ 'BUTTONS.EDIT' | translate }}
-	</button>
-	<button
-		nbButton
-		status="danger"
-		class="mr-2"
-		[disabled]="!selectedItem && disableButton"
-		(click)="delete(selectedItem)"
-		[size]="buttonSize || 'medium'"
-	>
-		<nb-icon class="mr-1" icon="archive-outline"> </nb-icon>
-		{{ 'BUTTONS.DELETE' | translate }}
-	</button>
+	<div class="btn-group actions">		
+		<button
+			(click)="save(false, selectedItem)"	
+			nbButton
+			status="basic"
+			class="action secondary"
+			size="small"	
+			[disabled]="!selectedItem && disableButton"				
+		>
+			<nb-icon icon="edit-outline"></nb-icon>
+			{{ 'BUTTONS.EDIT' | translate }}
+		</button>	
+		<button
+			nbButton
+			[disabled]="!selectedItem && disableButton"		
+			size="small"
+			(click)="delete(selectedItem)"
+			status="basic"
+			class="action"
+			[nbTooltip]="'BUTTONS.DELETE' | translate"
+		>
+			<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
+		</button>					
+	</div>
 </ng-template>
