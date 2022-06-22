@@ -5,7 +5,7 @@ import {
 	ConflictException
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Between, Brackets, In, Repository, WhereExpressionBuilder } from 'typeorm';
+import { Between, Brackets, In, Like, Repository, WhereExpressionBuilder } from 'typeorm';
 import * as moment from 'moment';
 import {
 	ITimeOffCreateInput,
@@ -163,6 +163,18 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 					moment().startOf('month').utc().format('YYYY-MM-DD HH:mm:ss'),
 					moment().endOf('month').utc().format('YYYY-MM-DD HH:mm:ss')
 				);
+			}
+			if ('user' in where) {
+				const { firstName } = where.user;
+				if (isNotEmpty(firstName)) filter.where.user['firstName'] = Like(`%${firstName}%`);
+			}
+      		if ('policy' in where) {
+				const { name } = where.policy;
+				if (isNotEmpty(name)) filter.where.policy['name'] = Like(`%${name}%`);
+			}
+			if ('description' in where) {
+				const { description } = where;
+				if (isNotEmpty(description)) filter.where['description'] = Like(`%${description}%`);
 			}
 		}
 		return super.paginate(filter);

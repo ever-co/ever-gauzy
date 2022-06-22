@@ -22,13 +22,14 @@ import { API_PREFIX, ComponentEnum } from '../../@core/constants';
 import { EquipmentService, Store, ToastrService } from '../../@core/services';
 import { ImageRowComponent } from '../inventory/components/table-components';
 import { ServerDataSource } from '../../@core/utils/smart-table';
+import { InputFilterComponent } from '../../@shared/table-filters';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
 	templateUrl: './equipment.component.html',
 	styleUrls: ['./equipment.component.scss']
 })
-export class EquipmentComponent extends PaginationFilterBaseComponent 
+export class EquipmentComponent extends PaginationFilterBaseComponent
 	implements OnInit, OnDestroy {
 
 	settingsSmartTable: object;
@@ -151,15 +152,36 @@ export class EquipmentComponent extends PaginationFilterBaseComponent
 				name: {
 					title: this.getTranslation('EQUIPMENT_PAGE.EQUIPMENT_NAME'),
 					type: 'custom',
-					renderComponent: PictureNameTagsComponent
+					renderComponent: PictureNameTagsComponent,
+          filter: {
+						type: 'custom',
+						component: InputFilterComponent
+					},
+          filterFunction: (value) => {
+						this.setFilter({ field: 'name', search: value });
+					}
 				},
 				type: {
 					title: this.getTranslation('EQUIPMENT_PAGE.EQUIPMENT_TYPE'),
-					type: 'string'
+					type: 'string',
+          filter: {
+						type: 'custom',
+						component: InputFilterComponent
+					},
+          filterFunction: (value) => {
+						this.setFilter({ field: 'type', search: value });
+					}
 				},
 				serialNumber: {
 					title: this.getTranslation('EQUIPMENT_PAGE.EQUIPMENT_SN'),
-					type: 'string'
+					type: 'string',
+          filter: {
+						type: 'custom',
+						component: InputFilterComponent
+					},
+          filterFunction: (value) => {
+						this.setFilter({ field: 'serialNumber', search: value });
+					}
 				},
 				manufacturedYear: {
 					title: this.getTranslation(

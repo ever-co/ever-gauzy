@@ -31,6 +31,7 @@ import {
 } from '../../@shared/pagination/pagination-filter-base.component';
 import { ServerDataSource } from '../../@core/utils/smart-table';
 import { getAdjustDateRangeFutureAllowed } from '../../@theme/components/header/selectors/date-range-picker';
+import { InputFilterComponent } from '../../@shared/table-filters';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -38,7 +39,7 @@ import { getAdjustDateRangeFutureAllowed } from '../../@theme/components/header/
 	templateUrl: './time-off.component.html',
 	styleUrls: ['./time-off.component.scss']
 })
-export class TimeOffComponent extends PaginationFilterBaseComponent 
+export class TimeOffComponent extends PaginationFilterBaseComponent
 	implements OnInit, OnDestroy {
 
 	settingsSmartTable: object;
@@ -173,8 +174,8 @@ export class TimeOffComponent extends PaginationFilterBaseComponent
 
 	/**
 	 * On status change filter
-	 * 
-	 * @param status 
+	 *
+	 * @param status
 	 */
 	detectStatusChange(status: StatusTypesEnum) {
 		this.isRecordSelected = false;
@@ -358,7 +359,7 @@ export class TimeOffComponent extends PaginationFilterBaseComponent
 
 	/**
 	 * Load smart table settings configuration
-	 * 
+	 *
 	 */
 	private _loadSmartTableSettings() {
 		const pagination: IPaginationBase = this.getPagination();
@@ -374,16 +375,37 @@ export class TimeOffComponent extends PaginationFilterBaseComponent
 					title: this.getTranslation('SM_TABLE.EMPLOYEE'),
 					type: 'custom',
 					renderComponent: PictureNameTagsComponent,
-					class: 'align-row'
+					class: 'align-row',
+          			filter: {
+						type: 'custom',
+						component: InputFilterComponent
+					},
+					filterFunction: (value) => {
+						this.setFilter({ field: 'user.firstName', search: value });
+					}
 				},
 				extendedDescription: {
 					title: this.getTranslation('SM_TABLE.DESCRIPTION'),
-					type: 'html'
+					type: 'html',
+          			filter: {
+						type: 'custom',
+						component: InputFilterComponent
+					},
+					filterFunction: (value) => {
+						this.setFilter({ field: 'description', search: value });
+					}
 				},
 				policy: {
 					title: this.getTranslation('SM_TABLE.POLICY'),
 					type: 'custom',
-					renderComponent: ApprovalPolicyComponent
+					renderComponent: ApprovalPolicyComponent,
+          			filter: {
+						type: 'custom',
+						component: InputFilterComponent
+					},
+					filterFunction: (value) => {
+						this.setFilter({ field: 'policy.name', search: value });
+					}
 				},
 				start: {
 					title: this.getTranslation('SM_TABLE.START'),
@@ -428,7 +450,7 @@ export class TimeOffComponent extends PaginationFilterBaseComponent
 			const { id: organizationId } = this.organization;
 
 			const { startDate, endDate } = getAdjustDateRangeFutureAllowed(this.selectedDateRange);
-		
+
 			this.sourceSmartTable = new ServerDataSource(this.httpClient, {
 				endPoint: `${API_PREFIX}/time-off-request/pagination`,
 				relations: ['policy', 'employees', 'employees.user'],
@@ -436,7 +458,8 @@ export class TimeOffComponent extends PaginationFilterBaseComponent
 					alias: "time-off",
 					leftJoin: {
 						policy: 'time-off.policy',
-						employees: 'time-off.employees'
+						employees: 'time-off.employees',
+						user: 'employees.user'
 					},
 					...(this.filters.join) ? this.filters.join : {}
 				},
@@ -479,8 +502,8 @@ export class TimeOffComponent extends PaginationFilterBaseComponent
 
 	/**
 	 * GET time off requests
-	 * 
-	 * @returns 
+	 *
+	 * @returns
 	 */
 	private async getTimeOffs() {
 		if (!this.organization) {
@@ -507,9 +530,9 @@ export class TimeOffComponent extends PaginationFilterBaseComponent
 
 	/**
 	 * Mapped Time Off Requests
-	 * 
-	 * @param timeOff 
-	 * @returns 
+	 *
+	 * @param timeOff
+	 * @returns
 	 */
 	mapTimeOffRequest(timeOff: ITimeOff) {
 		let employeeName: string;
