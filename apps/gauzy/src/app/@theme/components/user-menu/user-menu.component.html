@@ -52,7 +52,7 @@
     <div class="download-apps-content">
       <span class="download-apps-label">Download Apps:</span>
       <span class="download-apps-icons">
-        <a *ngFor="let app of download_apps" target="_blank" [href]="app.link">
+        <a *ngFor="let app of downloadApps" target="_blank" [href]="app.link" rel="noopener">
           <i [class]="app.icon"></i>
         </a>
       </span>

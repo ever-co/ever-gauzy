@@ -20,7 +20,7 @@ export class UserMenuComponent implements OnInit {
 
 	clicks: boolean[] = [];
 
-	download_apps = [
+	downloadApps = [
 		{
 			link: 'https://web.gauzy.co/downloads#desktop/apple',
 			icon: 'fab fa-apple'
