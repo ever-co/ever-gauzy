@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In, Like,  } from 'typeorm';
+import { Repository, Like,  } from 'typeorm';
 import { Candidate } from './candidate.entity';
 import { ICandidateCreateInput } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
