@@ -8,7 +8,8 @@ import {
 	NbIconModule,
 	NbDialogModule,
 	NbSpinnerModule,
-	NbDatepickerModule
+	NbDatepickerModule,
+	NbTooltipModule
 } from '@nebular/theme';
 import { FormsModule } from '@angular/forms';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
@@ -49,7 +50,8 @@ import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy
 		NbSpinnerModule,
 		HeaderTitleModule,
 		PaginationModule,
-		GauzyButtonActionModule
+		GauzyButtonActionModule,
+		NbTooltipModule
 	],
 	providers: [
 		EquipmentSharingService,

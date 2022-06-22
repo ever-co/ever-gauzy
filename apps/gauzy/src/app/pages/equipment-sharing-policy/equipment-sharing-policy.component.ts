@@ -2,6 +2,7 @@ import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Router, NavigationEnd, RouterEvent } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
+import { distinctUntilChange } from '@gauzy/common-angular';
 import {
 	IEquipmentSharing,
 	ComponentLayoutStyleEnum,
@@ -19,7 +20,6 @@ import { API_PREFIX, ComponentEnum } from '../../@core/constants';
 import { EquipmentSharingPolicyMutationComponent } from '../../@shared/equipment-sharing-policy';
 import { IPaginationBase, PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
 import { ServerDataSource } from '../../@core/utils/smart-table';
-import { distinctUntilChange } from '@gauzy/common-angular';
 import { InputFilterComponent } from '../../@shared/table-filters';
 
 

@@ -46,6 +46,8 @@ export class EquipmentSharingComponent
 	equipmentsData: IEquipmentSharing[];
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
+	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
+	equipmentSharing$: Subject<boolean> = this.subject$;
 
 	equipmentSharingTable: Ng2SmartTableComponent;
 	@ViewChild('equipmentSharingTable') set content(
