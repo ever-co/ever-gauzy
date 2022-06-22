@@ -11,6 +11,7 @@
 			[(ngModel)]="selectedTaskViewMode"
 			placeholder="{{ 'TASKS_PAGE.TASK_VIEW_MODE' | translate }}"
 			appendTo="body"
+			[clearable]="false"
 		>
 			<ng-template ng-option-tmp let-item="item" let-index="index">
 				<nb-icon
