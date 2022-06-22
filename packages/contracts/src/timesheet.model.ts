@@ -388,6 +388,7 @@ export interface IGetTimeLogConflictInput
 
 export interface IGetTimeSlotInput extends ITimeLogFilters {
 	relations?: string[];
+	[x: string]: any;
 }
 
 export interface IGetActivitiesInput extends ITimeLogFilters, IPaginationInput {
