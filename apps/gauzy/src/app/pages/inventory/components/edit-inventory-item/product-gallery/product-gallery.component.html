@@ -16,80 +16,85 @@
 <div class="actions-container mt-2">
 	<button
 		nbButton
-		ghost
-		status="primary"
+		size="small"
+		status="success"
+		class="action"
 		(click)="onAddImageClick()"
 		[nbTooltip]="'INVENTORY_PAGE.ADD_GALLERY_IMAGE' | translate"
 		nbTooltipPlacement="top"
-		nbTooltipStatus="primary"
+		nbTooltipStatus="success"
 	>
 		<nb-icon icon="plus-circle-outline"></nb-icon>
 	</button>
-	<button
-		nbButton
-		ghost
-		status="primary"
-		[disabled]="!gallery.length || !selectedImage"
-		(click)="onSetFeaturedClick()"
-		[nbTooltip]="'INVENTORY_PAGE.SET_FEATURED_IMAGE' | translate"
-		nbTooltipPlacement="top"
-		nbTooltipStatus="primary"
-	>
-		<nb-icon icon="image-outline"></nb-icon>
-	</button>
-	<button
-		nbButton
-		ghost
-		status="primary"
-		[nbTooltip]="'INVENTORY_PAGE.VIEW_GALLERY' | translate"
-		nbTooltipPlacement="top"
-		nbTooltipStatus="primary"
-		[disabled]="!gallery.length"
-		(click)="onViewGalleryClick()"
-	>
-		<nb-icon icon="eye-outline"></nb-icon>
-	</button>
-	<button
-		nbButton
-		ghost
-		status="primary"
-		[nbTooltip]="'INVENTORY_PAGE.EDIT_IMAGE' | translate"
-		nbTooltipPlacement="top"
-		nbTooltipStatus="primary"
-		[disabled]="!selectedImage"
-		(click)="onEditImageClick()"
-	>
-		<nb-icon icon="edit-outline"></nb-icon>
-	</button>
-	<button
-		nbButton
-		ghost
-		status="danger"
-		class="ml-3"
-		[nbTooltip]="'INVENTORY_PAGE.DELETE_IMAGE' | translate"
-		nbTooltipPlacement="top"
-		nbTooltipStatus="danger"
-		[disabled]="!gallery.length || !selectedImage"
-		(click)="onDeleteImageClick()"
-	>
-		<nb-icon icon="trash-outline"></nb-icon>
-	</button>
+	<div class="actions">
+		<button
+			nbButton
+			status="primary"
+			[disabled]="!gallery?.length || !selectedImage"
+			(click)="onSetFeaturedClick()"
+			[nbTooltip]="'INVENTORY_PAGE.SET_FEATURED_IMAGE' | translate"
+			nbTooltipPlacement="top"
+			nbTooltipStatus="primary"
+			class="action"
+			size="small"
+		>
+			<nb-icon icon="image-outline"></nb-icon>
+		</button>
+		<button
+			nbButton
+			size="small"
+			[nbTooltip]="'INVENTORY_PAGE.VIEW_GALLERY' | translate"
+			nbTooltipPlacement="top"
+			nbTooltipStatus="basic"
+			status="basic"
+			class="action secondary"
+			[disabled]="!gallery?.length"
+			(click)="onViewGalleryClick()"
+		>
+			<nb-icon icon="eye-outline"></nb-icon>
+			{{ 'BUTTONS.VIEW' | translate }}
+		</button>
+		<button
+			nbButton
+			nbTooltipPlacement="top"
+			nbTooltipStatus="primary"
+			[disabled]="!selectedImage"
+			status="basic"
+			class="action primary"
+			(click)="onEditImageClick()"
+			size="small"
+		>
+			<nb-icon icon="edit-outline"></nb-icon>
+			{{ 'BUTTONS.EDIT' | translate }}
+		</button>
+		<button
+			nbButton
+			[nbTooltip]="'INVENTORY_PAGE.DELETE_IMAGE' | translate"
+			nbTooltipPlacement="top"
+			nbTooltipStatus="danger"
+			status="basic"
+			class="action primary"
+			[disabled]="!gallery?.length || !selectedImage"
+			(click)="onDeleteImageClick()"
+			size="small"
+		>
+			<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
+		</button>
+	</div>
 </div>
 
 <div class="gallery-preview-items mt-3">
-	<div *ngIf="gallery.length" class="row">
+	<div *ngIf="gallery?.length" class="row">
 		<div
-			[ngClass]="{ selected: isSelected(galleryItem) }"
 			class="col-sm-3 col-md-4 gallery-sm-preview"
 			*ngFor="let galleryItem of gallery"
 			(click)="onSmallImgPreviewClick(galleryItem)"
 		>
-			<div
+			<img
 				class="gallery-sm-preview-item"
-				[ngStyle]="{
-					backgroundImage: 'url(' + galleryItem.url + ')'
-				}"
-			></div>
+				[src]="galleryItem?.url"
+				[ngClass]="{ selected: isSelected(galleryItem) }"
+			/>
 			<div class="featured-icon" *ngIf="isFeaturedImage(galleryItem)">
 				<div class="interview-info">
 					<nb-icon

@@ -71,6 +71,7 @@ nb-card-body {
 
 nb-card {
   overflow-y: visible;
+  margin-bottom: 0px;
 }
 
 nb-card-footer {
@@ -85,6 +86,7 @@ nb-card-footer {
 .product-container {
   width: 100%;
 }
+
 .product-photo {
   width: 100%;
   background-color: white;
@@ -125,5 +127,11 @@ nb-card-footer {
 
 nb-tab {
   background-color: rgba(50, 50, 50, 0.03);
-  border: 0 0 $default-radius $default-radius;  
+  border: 0 0 $default-radius $default-radius;
+
+  &.content-active {
+    margin: 0 -1.5rem -1rem 0;
+    height: calc(100vh - 22rem);
+    border-radius: 0 0 $default-radius 0;
+  }
 }

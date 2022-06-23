@@ -114,7 +114,7 @@ export class ProductGalleryComponent
 
 		let selectedImages = await firstValueFrom(dialog.onClose);
 
-		selectedImages = selectedImages.length
+		selectedImages =  selectedImages.length
 			? selectedImages.filter((image) => {
 					return !this.inventoryStore.gallery.find((galleryImg) => {
 						return (
