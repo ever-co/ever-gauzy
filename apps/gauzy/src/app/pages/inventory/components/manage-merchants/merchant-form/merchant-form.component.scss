@@ -1,5 +1,14 @@
 .store-image {
-    width: 100%;
+  width: 100%;
+  height: 330px;
+}
+
+h4 {
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 30px;
+  letter-spacing: 0em;
+  text-align: left;
 }
 
 .text-danger {
@@ -7,57 +16,76 @@
   margin-top: 5px;
 }
 
-.image-container {
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    padding-right: 3%;
-    border-right: 1px solid rgba(0, 0, 0, 0.1);
+.top-nav {
+  display: flex;
+  align-items: flex-start;
+}
 
-    img {
-        // width: 180px;
-        
-    }
+.image-container {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+
+  img {
+    object-fit: cover;
+  }
 }
 
 .product-store-photo {
-    width: 70%;
-    background-color: white;
-    overflow: hidden;
-    position: relative;
-    border-right: 1px solid rgba(0, 0, 0, 0.1);
-    height: auto;
-    border-radius: 13px;
+  width: 90%;
+  overflow: hidden;
+  position: relative;
+  height: auto;
+  border-radius: 13px;
 
-  
-    div {
-      pointer-events: none;
-      background: black;
-      position: absolute;
-      height: 100%;
-      width: 100%;
-    }
-  
-    // img {
-    //   width: 100%;
-    //   height: auto;
-    // }
-  
-    input {
-      width: 100%;
-      height: 100%;
-      opacity: 0;
-      position: absolute;
-      z-index: 3;
-      cursor: pointer;
-    }
-  
-    svg {
-      z-index: 2;
-      transition: opacity 0.2s ease-in;
-      opacity: 0.3;
-      position: absolute;
-      top: calc(50% - 68px / 2);
-      left: calc(50% - 68px / 2);
+
+  div {
+    pointer-events: none;
+    background: black;
+    position: absolute;
+    height: 100%;
+    width: 100%;
+  }
+
+  input {
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    position: absolute;
+    z-index: 3;
+    cursor: pointer;
+  }
+
+  svg {
+    z-index: 2;
+    transition: opacity 0.2s ease-in;
+    opacity: 0.3;
+    position: absolute;
+    top: calc(50% - 68px / 2);
+    left: calc(50% - 68px / 2);
+
+    g circle {
+      fill: var(--text-primary-color)
     }
   }
+}
+
+:host {
+  nb-card {
+    background-color: var(--gauzy-card-2);
+    margin: 0;
+  }
+
+  nb-stepper ::ng-deep .step-content {
+    padding: 1rem;
+    height: calc(100vh - 19rem);
+  }
+
+  input,
+  textarea,
+  ::ng-deep .ng-select .ng-select-container,
+  ::ng-deep nb-select.appearance-outline.status-basic .select-button,
+  ga-location-form ::ng-deep input {
+    background-color: var(--gauzy-card-1);
+  }
+}
