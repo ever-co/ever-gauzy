@@ -8,6 +8,8 @@ import { NbCheckboxModule, NbBadgeModule, NbIconModule } from '@nebular/theme';
 import { CommonModule } from '@angular/common';
 import { ContactRowComponent } from './contact-row.component';
 import { TranslateModule } from 'apps/gauzy/src/app/@shared/translate/translate.module';
+import { NameWithDescriptionComponent } from './name-with-description/name-with-description.component';
+import { SharedModule } from 'apps/gauzy/src/app/@shared/shared.module';
  
 @NgModule({
     declarations: [
@@ -16,14 +18,16 @@ import { TranslateModule } from 'apps/gauzy/src/app/@shared/translate/translate.
         ImageRowComponent,
         ItemImgTagsComponent,
         SelectedRowComponent,
-        ContactRowComponent
+        ContactRowComponent,
+        NameWithDescriptionComponent
     ],
     imports: [
         NbCheckboxModule,
         NbBadgeModule,
         NbIconModule,
         CommonModule,
-        TranslateModule
+        TranslateModule,
+        SharedModule
     ]
 })
 export class TableComponentsModule { }

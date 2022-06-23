@@ -21,7 +21,8 @@ import { DeleteConfirmationComponent } from '../../../../@shared/user/forms';
 import { API_PREFIX, ComponentEnum } from '../../../../@core/constants';
 import { ProductService, Store, ToastrService } from '../../../../@core/services';
 import { ServerDataSource } from './../../../../@core/utils/smart-table/server.data-source';
-import { ItemImgTagsComponent } from '../table-components';
+import { ImageRowComponent } from '../table-components';
+import { NameWithDescriptionComponent } from '../table-components/name-with-description/name-with-description.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -146,13 +147,17 @@ export class TableInventoryComponent extends PaginationFilterBaseComponent
 				perPage: pagination ? pagination.itemsPerPage : 10
 			},
 			columns: {
+				image: {
+					title: this.getTranslation('INVENTORY_PAGE.IMAGE'),
+					width: '79px',
+					filter: false,
+					type: 'custom',
+					renderComponent: ImageRowComponent
+				},
 				name: {
 					title: this.getTranslation('INVENTORY_PAGE.NAME'),
 					type: 'custom',
-					renderComponent: ItemImgTagsComponent,
-					valuePrepareFunction: (name: string) => {
-						return name || '-';
-					},					
+					renderComponent: NameWithDescriptionComponent
 				},
 				code: {
 					title: this.getTranslation('INVENTORY_PAGE.CODE'),
@@ -302,6 +307,7 @@ export class TableInventoryComponent extends PaginationFilterBaseComponent
 					}
 				},
 				resultMap: (product: IProductTranslated) => {
+					console.log(product);
 					return Object.assign({}, product);
 				},
 				finalize: () => {
@@ -334,7 +340,6 @@ export class TableInventoryComponent extends PaginationFilterBaseComponent
 				itemsPerPage,
 				false
 			);
-
 			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
 				await this.smartTableSource.getElements();
 				this.products = this.smartTableSource.getData();
