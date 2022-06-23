@@ -1,15 +1,11 @@
-<nb-card 
-	[nbSpinner]="loading" 
-	nbSpinnerStatus="primary"
-	nbSpinnerSize="large"
->
+<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
 	<nb-card-header class="d-flex flex-column pb-0">
 		<div class="card-header-title">
-			<h4> 
+			<h4>
 				<ngx-back-navigation></ngx-back-navigation>
 				<ngx-header-title>
 					{{ 'INVENTORY_PAGE.WAREHOUSES' | translate }}
-				</ngx-header-title> 
+				</ngx-header-title>
 			</h4>
 		</div>
 		<div class="gauzy-button-container">
@@ -23,8 +19,8 @@
 		</div>
 	</nb-card-header>
 	<nb-card-body>
-		<ng-template 
-			[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE" 
+		<ng-template
+			[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
 			[ngIfElse]="gridLayout"
 		>
 			<div class="table-scroll-container">
@@ -47,22 +43,20 @@
 						[activePage]="pagination?.activePage"
 					></ga-pagination>
 				</ng-container>
-			</div>			
+			</div>
 		</ng-template>
 		<ng-template #gridLayout>
-			<div class="grid-scroll-container">
-				<ga-card-grid
-					[settings]="settingsSmartTable"
-					[source]="warehouses"
-					(selectedOption)="onUpdateOption($event)"
-					(selectedPage)="onPageChange($event)"
-					(onSelectedItem)="selectWarehouse($event)"
-					[doEmit]="false"
-					[totalItems]="pagination?.totalItems"
-					[itemsPerPage]="pagination?.itemsPerPage"
-					[activePage]="pagination?.activePage"
-				></ga-card-grid>					
-			</div>			
+			<ga-card-grid
+				[settings]="settingsSmartTable"
+				[source]="warehouses"
+				(selectedOption)="onUpdateOption($event)"
+				(selectedPage)="onPageChange($event)"
+				(onSelectedItem)="selectWarehouse($event)"
+				[doEmit]="false"
+				[totalItems]="pagination?.totalItems"
+				[itemsPerPage]="pagination?.itemsPerPage"
+				[activePage]="pagination?.activePage"
+			></ga-card-grid>
 		</ng-template>
 	</nb-card-body>
 </nb-card>
@@ -77,7 +71,7 @@
 		>
 			<nb-icon icon="plus-outline"></nb-icon
 			>{{ 'BUTTONS.ADD' | translate }}
-		</button>	
+		</button>
 	</ng-template>
 </ng-template>
 <ng-template
@@ -86,27 +80,29 @@
 	let-selectedItem="selectedItem"
 >
 	<div class="btn-group actions">
-		<button
-			(click)="onUpdateWarehouse(selectedItem)"
-			nbButton
-			status="basic"
-			class="action secondary"
-			size="small"	
-			[disabled]="!selectedItem && disableButton"				
-		>
-			<nb-icon icon="edit-outline"></nb-icon>
-			{{ 'BUTTONS.EDIT' | translate }}
-		</button>
-		<button
-			(click)="onDelete(selectedItem)"
-			nbButton
-			status="basic"
-			class="action"
-			[disabled]="!selectedItem && disableButton"
-			size="small"
-			[nbTooltip]="'BUTTONS.DELETE' | translate"
-		>
-			<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
-		</button>
+		<ng-template ngxPermissionsOnly="ORG_PRODUCT_TYPES_EDIT">
+			<button
+				(click)="onUpdateWarehouse(selectedItem)"
+				nbButton
+				status="basic"
+				class="action primary"
+				size="small"
+				[disabled]="!selectedItem && disableButton"
+			>
+				<nb-icon icon="edit-outline"></nb-icon>
+				{{ 'BUTTONS.EDIT' | translate }}
+			</button>
+			<button
+				(click)="onDelete(selectedItem)"
+				nbButton
+				status="basic"
+				class="action"
+				[disabled]="!selectedItem && disableButton"
+				size="small"
+				[nbTooltip]="'BUTTONS.DELETE' | translate"
+			>
+				<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
+			</button>
+		</ng-template>
 	</div>
 </ng-template>
