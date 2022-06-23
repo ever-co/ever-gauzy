@@ -72,7 +72,7 @@ import { ComponentLayoutStyleEnum } from '@gauzy/contracts';
 			img {
 				height: 100%;
 				width: 100%;
-				border-radius: 50%;
+				border-radius: 4px;
 				object-fit: cover;
 			}
 
@@ -83,7 +83,7 @@ import { ComponentLayoutStyleEnum } from '@gauzy/contracts';
 				display: flex;
 				align-items: center;
 				justify-content: center;
-				border-radius: var(--border-radius);
+				border-radius: 4px;
 				font-size: 9px;
 				font-weight: 400;
 				line-height: 11px;
