@@ -15,7 +15,9 @@
 			</div>
 			<div class="card-header-title">
 				<div class="mr-2">
-					<ng-container *ngTemplateOutlet="subActionButtons"></ng-container>
+					<ng-container
+						*ngTemplateOutlet="subActionButtons"
+					></ng-container>
 				</div>
 			</div>
 		</div>
@@ -55,22 +57,20 @@
 						[activePage]="pagination?.activePage"
 					></ga-pagination>
 				</ng-container>
-			</div>			
+			</div>
 		</ng-template>
 		<ng-template #gridLayout>
-			<div class="grid-scroll-container">
-				<ga-card-grid
-					[settings]="settingsSmartTable"
-					[source]="products"
-					(selectedOption)="onUpdateOption($event)"
-					(selectedPage)="onPageChange($event)"
-					(onSelectedItem)="selectProduct($event)"
-					[doEmit]="false"
-					[totalItems]="pagination?.totalItems"
-					[itemsPerPage]="pagination?.itemsPerPage"
-					[activePage]="pagination?.activePage"
-				></ga-card-grid>					
-			</div>			
+			<ga-card-grid
+				[settings]="settingsSmartTable"
+				[source]="products"
+				(selectedOption)="onUpdateOption($event)"
+				(selectedPage)="onPageChange($event)"
+				(onSelectedItem)="selectProduct($event)"
+				[doEmit]="false"
+				[totalItems]="pagination?.totalItems"
+				[itemsPerPage]="pagination?.itemsPerPage"
+				[activePage]="pagination?.activePage"
+			></ga-card-grid>
 		</ng-template>
 	</nb-card-body>
 </nb-card>
@@ -86,7 +86,7 @@
 		>
 			<nb-icon icon="plus-outline"></nb-icon
 			>{{ 'BUTTONS.ADD' | translate }}
-		</button>	
+		</button>
 	</ng-template>
 </ng-template>
 <ng-template
@@ -113,17 +113,17 @@
 				nbButton
 				status="basic"
 				class="action primary"
-				size="small"	
-				[disabled]="!selectedItem && disableButton"				
+				size="small"
+				[disabled]="!selectedItem && disableButton"
 			>
 				<nb-icon icon="edit-outline"></nb-icon>
 				{{ 'BUTTONS.EDIT' | translate }}
 			</button>
-		</ng-template>		
+		</ng-template>
 		<ng-template ngxPermissionsOnly="ORG_INVENTORY_PRODUCT_EDIT">
 			<button
 				nbButton
-				[disabled]="!selectedItem && disableButton"		
+				[disabled]="!selectedItem && disableButton"
 				size="small"
 				(click)="delete(selectedItem)"
 				status="basic"
@@ -131,7 +131,7 @@
 				[nbTooltip]="'BUTTONS.DELETE' | translate"
 			>
 				<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
-			</button>			
+			</button>
 		</ng-template>
 	</div>
 </ng-template>
@@ -158,7 +158,7 @@
 		>
 			<nb-icon icon="home-outline"></nb-icon>
 			{{ 'INVENTORY_PAGE.WAREHOUSES' | translate }}
-		</button>		
+		</button>
 	</ng-template>
 	<ng-template ngxPermissionsOnly="ORG_PRODUCT_CATEGORIES_VIEW">
 		<button
@@ -172,7 +172,7 @@
 			<nb-icon icon="edit-outline"></nb-icon>
 			{{ 'INVENTORY_PAGE.PRODUCT_CATEGORIES' | translate }}
 		</button>
-	</ng-template>	
+	</ng-template>
 	<ng-template ngxPermissionsOnly="ORG_PRODUCT_TYPES_VIEW">
 		<button
 			(click)="manageProductTypes()"
@@ -181,7 +181,7 @@
 			outline
 			size="small"
 			nbButton
-			>
+		>
 			<nb-icon icon="edit-outline"></nb-icon>
 			{{ 'INVENTORY_PAGE.PRODUCT_TYPES' | translate }}
 		</button>
