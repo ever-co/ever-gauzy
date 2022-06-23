@@ -97,6 +97,28 @@
 	<ng-container *ngxPermissionsOnly="ALL_ORG_EDIT">	
 		<div class="btn-group actions">
 			<button
+				nbButton
+				outline
+				status="success"
+				(click)="approval(selectedEquipmentSharing)"
+				[disabled]="showStatusActions(selectedEquipmentSharing)"
+				class="action"
+				size="small"
+			>
+				{{ 'EQUIPMENT_SHARING_PAGE.APPROVE' | translate }}
+			</button>
+			<button
+				nbButton
+				outline
+				status="danger"
+				(click)="refuse(selectedEquipmentSharing)"
+				[disabled]="showStatusActions(selectedEquipmentSharing)"
+				size="small"
+				class="action"
+			>
+				{{ 'EQUIPMENT_SHARING_PAGE.REFUSE' | translate }}
+			</button>
+			<button
 				(click)="save(false, selectedItem)"	
 				nbButton
 				status="basic"

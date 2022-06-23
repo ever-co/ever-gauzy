@@ -6,7 +6,8 @@ import {
 	IEquipmentSharing,
 	ComponentLayoutStyleEnum,
 	ISelectedEquipmentSharing,
-	PermissionsEnum
+	PermissionsEnum,
+	RequestApprovalStatusTypesEnum
 } from '@gauzy/contracts';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { FormGroup } from '@angular/forms';
@@ -48,7 +49,6 @@ export class EquipmentSharingComponent
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
 	equipmentSharing$: Subject<boolean> = this.subject$;
-
 	equipmentSharingTable: Ng2SmartTableComponent;
 	@ViewChild('equipmentSharingTable') set content(
 		content: Ng2SmartTableComponent
@@ -183,24 +183,26 @@ export class EquipmentSharingComponent
 					type: 'custom',
 					renderComponent: EquipmentSharingStatusComponent,
 					filter: false
-				},
-				actions: {
-					title: this.getTranslation(
-						'EQUIPMENT_SHARING_PAGE.ACTIONS'
-					),
-					type: 'custom',
-					renderComponent: EquipmentSharingActionComponent,
-					onComponentInitFunction: (instance) => {
-						instance.updateResult
-							.pipe(untilDestroyed(this))
-							.subscribe((eventUpdate) => {
-								this.handleEvent(eventUpdate);
-							});
-					},
-					filter: false
-				}
+				}				
 			}
 		};
+	}
+
+	showStatusActions(rowData) {
+		let isDisabled = true;
+		if(rowData){
+			switch (rowData.status) {
+				case RequestApprovalStatusTypesEnum.APPROVED:
+				case RequestApprovalStatusTypesEnum.REFUSED:
+					isDisabled = true
+					break;
+				default:
+					isDisabled = false
+					break;
+			}
+		}
+		
+		return isDisabled;
 	}
 
 	approval(rowData) {
@@ -210,6 +212,7 @@ export class EquipmentSharingComponent
 		};
 		this.handleEvent(params);
 	}
+
 	refuse(rowData) {
 		const params = {
 			isApproval: false,
