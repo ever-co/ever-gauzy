@@ -1,3 +1,5 @@
+@import 'gauzy/_gauzy-dialogs';
+
 .d-bottom {
   display: flex;
   align-items: flex-end;
@@ -63,10 +65,18 @@ form {
     position: absolute;
     top: calc(50% - 68px / 2);
     left: calc(50% - 68px / 2);
+
+    g circle {
+      fill: var(--text-primary-color)
+    }
   }
 
   .uploadimage {
     min-width: 150px;
     min-height: 150px;
   }
+}
+
+:host nb-card {
+  background-color: var(--gauzy-card-1);
 }
