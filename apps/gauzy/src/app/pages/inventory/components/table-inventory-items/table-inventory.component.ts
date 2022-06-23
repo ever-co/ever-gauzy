@@ -23,6 +23,7 @@ import { ProductService, Store, ToastrService } from '../../../../@core/services
 import { ServerDataSource } from './../../../../@core/utils/smart-table/server.data-source';
 import { ImageRowComponent } from '../table-components';
 import { NameWithDescriptionComponent } from '../table-components/name-with-description/name-with-description.component';
+import { TagsOnlyComponent } from 'apps/gauzy/src/app/@shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -180,14 +181,10 @@ export class TableInventoryComponent extends PaginationFilterBaseComponent
 					}
 				},
 				description: {
-					title: this.getTranslation('INVENTORY_PAGE.DESCRIPTION'),
-					type: 'string',
+					title: this.getTranslation('INVENTORY_PAGE.TAGS'),
+					type: 'custom',
 					filter: false,
-					valuePrepareFunction: (description: string) => {
-						return description
-							? description.slice(0, 15) + '...'
-							: '';
-					}
+					renderComponent: TagsOnlyComponent
 				}
 			}
 		};

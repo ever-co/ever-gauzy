@@ -18,7 +18,6 @@ import { DEFAULT_SVG } from './../../../../@core/constants';
 		`
 			.img-container {
 				width: 74px;
-				height: 64px;
 				display: flex;
 				justify-content: flex-start;
 			}
@@ -26,7 +25,7 @@ import { DEFAULT_SVG } from './../../../../@core/constants';
 				width: 100%;
 				height: 100%;
 				object-fit: cover;
-				border-radius: 8px;
+				border-radius: 4px;
 			}
 
 			.variant-table-img {
@@ -34,12 +33,12 @@ import { DEFAULT_SVG } from './../../../../@core/constants';
 			}
 			.no-image {
 				width: 100%;
-				height: 100%;
+				height: 60px;
 				background-color: var(--gauzy-sidebar-background-3);
 				display: flex;
 				align-items: center;
 				justify-content: center;
-				border-radius: var(--border-radius);
+				border-radius: 4px;
 				font-size: 9px;
 				font-weight: 400;
 				line-height: 11px;
