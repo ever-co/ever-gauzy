@@ -17,7 +17,6 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { EquipmentSharingMutationComponent } from '../../@shared/equipment-sharing';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import {
-	EquipmentSharingActionComponent,
 	EquipmentSharingStatusComponent,
 	EquipmentSharingPolicyComponent
 } from './table-components';
