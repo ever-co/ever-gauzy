@@ -1852,7 +1852,8 @@
 		"OPEN_SOURCE": "Open-Source",
 		"ORGANIZATION_ADD": "Add Organization",
 		"IMAGE": "Image",
-		"SPRINTS": "Sprints"
+		"SPRINTS": "Sprints",
+		"NO_IMAGE": "Image no available"
 	},
 	"CONTACTS_PAGE": {
 		"VISITORS": "Visitors",
