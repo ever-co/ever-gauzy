@@ -13,14 +13,16 @@ import { ComponentLayoutStyleEnum } from '@gauzy/contracts';
 				<img [src]="imageUrl" />
 			</div>
 			<div *ngIf="!imageUrl" class="image-container">
-				<img
-					[src]="
-            '/assets/images/others/no-image-placeholder.svg'
-					"
-					alt="Product Item Photo"
+				<div
+					class="no-image"
 					(mouseenter)="hoverState = true"
 					(mouseleave)="hoverState = false"
-				/>
+				>
+					<div class="content">
+						<i class="fas fa-image"></i>
+						<div>{{'ORGANIZATIONS_PAGE.NO_IMAGE' | translate }}</div>
+					</div>
+				</div>
 			</div>
 			<div class="row">
 				<div class="col-12 text-truncate" style="margin-left:15px;">
@@ -29,7 +31,9 @@ import { ComponentLayoutStyleEnum } from '@gauzy/contracts';
 				<div
 					*ngIf="isTags"
 					style="margin-left:15px;"
-					class="col-12 mt-2 {{ layout === 'CARDS_GRID' ? 'tags-right' : '' }}"
+					class="col-12 mt-2 {{
+						layout === 'CARDS_GRID' ? 'tags-right' : ''
+					}}"
 				>
 					<nb-badge
 						*ngFor="let tag of rowData?.tags"
@@ -42,16 +46,15 @@ import { ComponentLayoutStyleEnum } from '@gauzy/contracts';
 					</nb-badge>
 				</div>
 			</div>
-		</div>		
+		</div>
 	`,
 	styles: [
 		`
 			.image-container {
 				width: 70px;
-				height: 63px;
+				height: 64px;
 				display: flex;
 				justify-content: center;
-        object-fit:cover;
 			}
 
 			.color {
@@ -70,6 +73,30 @@ import { ComponentLayoutStyleEnum } from '@gauzy/contracts';
 				height: 100%;
 				width: 100%;
 				border-radius: 50%;
+				object-fit: cover;
+			}
+
+			.no-image {
+				width: 100%;
+				height: 100%;
+				background-color: var(--gauzy-sidebar-background-3);
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				border-radius: var(--border-radius);
+				font-size: 9px;
+				font-weight: 400;
+				line-height: 11px;
+				letter-spacing: 0em;
+				text-align: left;
+				color: var(--gauzy-text-color-2);
+			}
+
+			.content {
+				display: flex;
+				align-items: baseline;
+				padding: 8px;
+				gap: 5px;
 			}
 
 			.tags-right {
