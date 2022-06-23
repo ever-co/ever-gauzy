@@ -334,7 +334,9 @@
 									[disabled]="form.invalid"
 									nbStepperNext
 									nbButton
-									status="primary"
+									class="green"
+									status="basic"
+									outline
 								>
 									{{ 'BUTTONS.NEXT' | translate }}
 								</button>
@@ -368,16 +370,18 @@
 							<div class="col-4">
 								<button
 									nbButton
-									class="mr-2"
-									status="primary"
+									class="gray mr-2"
+									status="basic"
+									outline
 									nbStepperPrevious
 								>
 									{{ 'BUTTONS.PREVIOUS' | translate }}
 								</button>
 								<button
 									nbButton
-									class="mr-2"
-									status="primary"
+									class="green mr-2"
+									status="basic"
+									outline
 									nbStepperNext
 								>
 									{{ 'BUTTONS.NEXT' | translate }}
@@ -432,9 +436,10 @@
 						<div class="row mt-5">
 							<div class="col-4">
 								<button
-									status="primary"
-									class="mr-2"
+									status="basic"
+									class="mr-2 gray"
 									nbButton
+									outline
 									nbStepperPrevious
 								>
 									{{ 'BUTTONS.PREVIOUS' | translate }}
