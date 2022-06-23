@@ -1,8 +1,24 @@
 .settings {
+  gap: 8px;
+  padding: 1rem 2.5rem 0 2.5rem;
+  flex-direction: column;
+
   &__name {
     display: flex;
     align-items: center;
+    color: var(--gauzy-text-color-2);
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 16px;
+    letter-spacing: 0em;
+    text-align: center;
   }
+
   &__value {
+    width: 10rem;
   }
+}
+
+hr {
+  margin-bottom: 0;
 }

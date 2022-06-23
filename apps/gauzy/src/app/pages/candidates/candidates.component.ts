@@ -44,13 +44,14 @@ import {
 	PaginationFilterBaseComponent,
 	IPaginationBase
 } from '../../@shared/pagination/pagination-filter-base.component';
+import { InputFilterComponent } from '../../@shared/table-filters';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
 	templateUrl: './candidates.component.html',
 	styleUrls: ['./candidates.component.scss']
 })
-export class CandidatesComponent extends PaginationFilterBaseComponent 
+export class CandidatesComponent extends PaginationFilterBaseComponent
 	implements OnInit, OnDestroy {
 
 	settingsSmartTable: object;
@@ -67,7 +68,7 @@ export class CandidatesComponent extends PaginationFilterBaseComponent
 	candidates: ICandidateViewModel[] = [];
 
 	public organization: IOrganization;
-	candidates$: Subject<any> = new Subject();
+	candidates$: Subject<any> = this.subject$;
 
 	candidatesTable: Ng2SmartTableComponent;
 	@ViewChild('candidatesTable') set content(content: Ng2SmartTableComponent) {
@@ -294,13 +295,21 @@ export class CandidatesComponent extends PaginationFilterBaseComponent
 		this.loading = true;
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
-		
+
 		this.sourceSmartTable = new ServerDataSource(this.http, {
 			endPoint: API_PREFIX + '/candidate/pagination',
 			relations: ['user', 'source', 'tags'],
+			join: {
+				alias: "candidate",
+				leftJoin: {
+					user: 'candidate.user'
+				},
+				...(this.filters.join) ? this.filters.join : {}
+			},
 			where: {
 				organizationId,
-				tenantId
+				tenantId,
+				...this.filters.where
 			},
 			resultMap: (candidate: any) => {
 				return Object.assign({}, candidate, {
@@ -329,8 +338,8 @@ export class CandidatesComponent extends PaginationFilterBaseComponent
 
 	/**
 	 * GET all candidates lists
-	 * 
-	 * @returns 
+	 *
+	 * @returns
 	 */
 	private async getCandidates() {
 		if (!this.organization) {
@@ -393,12 +402,26 @@ export class CandidatesComponent extends PaginationFilterBaseComponent
 					title: this.getTranslation('SM_TABLE.FULL_NAME'),
 					type: 'custom',
 					renderComponent: PictureNameTagsComponent,
-					class: 'align-row'
+					class: 'align-row',
+          			filter: {
+						type: 'custom',
+						component: InputFilterComponent
+					},
+					filterFunction: (value) => {
+						this.setFilter({ field: 'user.firstName', search: value });
+					}
 				},
 				email: {
 					title: this.getTranslation('SM_TABLE.EMAIL'),
 					type: 'email',
-					class: 'email-column'
+					class: 'email-column',
+          			filter: {
+						type: 'custom',
+						component: InputFilterComponent
+					},
+					filterFunction: (value) => {
+						this.setFilter({ field: 'user.email', search: value });
+					}
 				},
 				source: {
 					title: this.getTranslation('SM_TABLE.SOURCE'),

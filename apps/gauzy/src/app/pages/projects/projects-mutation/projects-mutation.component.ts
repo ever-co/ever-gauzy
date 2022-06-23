@@ -74,12 +74,15 @@ export class ProjectsMutationComponent
 		
 	FormHelpers: typeof FormHelpers = FormHelpers;
 
+	hoverState: boolean;
+
 	/*
 	* Project Mutation Form
 	*/
 	public form: FormGroup = ProjectsMutationComponent.buildForm(this.fb);
 	static buildForm(fb: FormBuilder): FormGroup {
 		return fb.group({
+			imageUrl: [null],
 			tags: [],
 			public: [],
 			billable: [],
@@ -90,7 +93,7 @@ export class ProjectsMutationComponent
 			startDate: [],
 			endDate: [],
 			owner: [ProjectOwnerEnum.CLIENT],
-			taskViewMode: [TaskListTypeEnum.GRID],
+			taskListType: [TaskListTypeEnum.GRID],
 			description: [],
 			code: [],
 			color: [],
@@ -192,6 +195,7 @@ export class ProjectsMutationComponent
 		);
 		this.members = this.selectedEmployeeIds;
 		this.form.patchValue({
+			imageUrl: project.imageUrl || null,
 			tags: project.tags || [],
 			public: project.public || false,
 			billable: project.billable || false,
@@ -202,7 +206,7 @@ export class ProjectsMutationComponent
 			startDate: project.startDate ? new Date(project.startDate) : null,
 			endDate: project.endDate ? new Date(project.endDate) : null,
 			owner: project.owner || ProjectOwnerEnum.CLIENT,
-			taskViewMode: project.taskListType || TaskListTypeEnum.GRID,
+			taskListType: project.taskListType || TaskListTypeEnum.GRID,
 			description: project.description || null,
 			code:  project.code || null,
 			color:  project.color || null,
@@ -268,6 +272,10 @@ export class ProjectsMutationComponent
 		const { budget, budgetType } = this.form.getRawValue();
 		const { openSource, openSourceProjectUrl } = this.form.getRawValue();
 		const { color, taskListType, public: isPublic, billable } = this.form.getRawValue();
+		let { imageUrl } = this.form.getRawValue();
+		if (imageUrl === DUMMY_PROFILE_IMAGE) {
+			imageUrl = null;
+		}
 
 		this.addOrEditProject.emit({
 			action: !this.project ? 'add' : 'edit',
@@ -308,7 +316,8 @@ export class ProjectsMutationComponent
 				billable: billable,
 
 				organizationId,
-				tenantId
+				tenantId,
+				imageUrl
 			}
 		});
 	}
@@ -361,5 +370,9 @@ export class ProjectsMutationComponent
 	 */
 	public onLoadEmployees(employees: IEmployee[]) {
 		this.employees = employees;
+	}
+
+	handleImageUploadError(error) {
+		this.toastrService.danger(error);
 	}
 }

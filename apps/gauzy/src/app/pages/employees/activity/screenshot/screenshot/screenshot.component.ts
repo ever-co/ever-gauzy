@@ -4,14 +4,15 @@ import {
 	ITimeSlot,
 	IGetTimeSlotInput,
 	IScreenshotMap,
-	IScreenshot
+	IScreenshot,
+	PermissionsEnum
 } from '@gauzy/contracts';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs/internal/Observable';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import { Subject } from 'rxjs/internal/Subject';
 import { toLocal, isEmpty, distinctUntilChange } from '@gauzy/common-angular';
-import { chain, indexBy, pick, sortBy } from 'underscore';
+import { chain, indexBy, sortBy } from 'underscore';
 import * as moment from 'moment';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NbDialogService } from '@nebular/theme';
@@ -100,16 +101,20 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent
 		if (!this.organization || isEmpty(this.filters)) {
 			return;
 		}
-		const appliedFilter = pick(
-			this.filters,
-			'source',
-			'activityLevel',
-			'logType'
-		);
 		const request: IGetTimeSlotInput = {
-			...appliedFilter,
+			...this.filters,
 			...this.getFilterRequest(this.request),
-			relations: ['screenshots', 'timeLogs']
+			relations: [
+				...(
+					this.store.hasPermission(
+						PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+					)
+					? ['employee', 'employee.user']
+					: []
+				),
+				'screenshots',
+				'timeLogs'
+			]
 		};
 		this.payloads$.next(request);
 	}

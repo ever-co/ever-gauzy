@@ -86,7 +86,7 @@
 				status="basic"
 				class="action primary"
 				[disabled]="!selectedItem && disableButton"
-				(click)="editTeam(selectedItem)"
+				(click)="openDialog(addEditTemplate, true)"
 				size="small"		
 			>
 				<nb-icon icon="edit-outline"></nb-icon>
@@ -109,25 +109,10 @@
 	</div>
 </ng-template>
 <ng-template #addEditTemplate let-ref="dialogRef">
-	<div class="editable">
-		<div class="container">
-			<div class="row">
-				<div class="col-sm-12 d-flex justify-content-end">
-					<i
-						class="fas fa-times"
-						(click)="ref.close(); disabled = true"
-					></i>
-				</div>
-			</div>
-			<div class="row mb-3">
-				<h5 class="title mr-3 ml-3">{{ this.selected.team ? ('POP_UPS.EDIT' | translate) : ('POP_UPS.ADD' | translate) }}</h5>
-			</div>
-			<ga-teams-mutation
-					[employees]="employees"
-					[team]="selectedTeam"
-					(canceled)="clearItem()"
-					(addOrEditTeam)="addOrEditTeam($event)"
-			></ga-teams-mutation>
-		</div>
-	</div>
+	<ga-teams-mutation
+			[employees]="employees"
+			[team]="selectedTeam"
+			(canceled)="clearItem()"
+			(addOrEditTeam)="addOrEditTeam($event)"
+	></ga-teams-mutation>	
 </ng-template>

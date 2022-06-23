@@ -77,4 +77,46 @@
     display: flex;
     flex-direction: column;
   }
+
+  .right-menu {
+    .download-apps-content {
+      display: flex;
+      align-items: center;
+      font-size: 12px;
+      font-weight: 500;
+      line-height: 15px;
+      letter-spacing: 0em;
+      text-align: left;
+      min-height: 20px;
+      margin-top: 0.5rem;
+      margin-bottom: 1rem;
+
+      .download-apps-label {
+        color: #7e7e8f;
+      }
+
+      .download-apps-icons {
+        margin-left: 0.3rem;
+        a {
+          margin: 0 0.2rem;
+          transition: 0.2s;
+          padding: 0.1rem 0.2rem;
+          border: 1px solid transparent;
+
+          i {
+            padding: 0;
+            margin: 0;
+            color: #7e7e8f;
+          }
+
+          &:hover {
+            color: nb-theme(text-primary-color);
+            border: 1px solid nb-theme(text-primary-color);
+            border-radius: calc(nb-theme(border-radius) - 4px);
+            transform: scale(1.5);
+          }
+        }
+      }
+    }
+  }
 }

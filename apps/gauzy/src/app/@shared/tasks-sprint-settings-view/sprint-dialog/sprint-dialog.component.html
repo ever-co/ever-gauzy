@@ -1,13 +1,11 @@
 <nb-card class="main">
-	<nb-card-header class="d-flex">
-		<h5>
+	<nb-card-header class="d-flex flex-column">
+		<span class="cancel"
+			><i class="fas fa-times" (click)="dialogRef.close()"></i
+		></span>
+		<h5 class="title">
 			{{ action | titlecase }} {{ 'SPRINTS_PAGE.SPRINT' | translate }}
 		</h5>
-		<nb-icon
-			class="ml-auto mt-1 close"
-			icon="close-outline"
-			(click)="dialogRef.close()"
-		></nb-icon>
 	</nb-card-header>
 	<nb-card-body class="body">
 		<form [formGroup]="form">
@@ -35,23 +33,6 @@
 				</div>
 
 				<div class="row">
-					<div class="col">
-						<div class="form-group">
-							<label class="label">{{
-								'FORM.LABELS.LENGTH' | translate
-							}}</label>
-							<input
-								nbInput
-								class="sprint__length"
-								placeholder="{{
-									'FORM.PLACEHOLDERS.SPRINT_LENGTH'
-										| translate
-								}}"
-								formControlName="length"
-							/>
-							<nb-datepicker #startDate></nb-datepicker>
-						</div>
-					</div>
 					<div class="col">
 						<div class="form-group">
 							<label class="label">{{
@@ -91,6 +72,26 @@
 				</div>
 
 				<div class="row">
+					<div class="col-6">
+						<div class="form-group">
+							<label class="label">{{
+								'FORM.LABELS.LENGTH' | translate
+							}}</label>
+							<input
+								nbInput
+								class="sprint__length"
+								placeholder="{{
+									'FORM.PLACEHOLDERS.SPRINT_LENGTH'
+										| translate
+								}}"
+								formControlName="length"
+							/>
+							<nb-datepicker #startDate></nb-datepicker>
+						</div>
+					</div>
+				</div>
+
+				<div class="row">
 					<div class="col-sm-12">
 						<div class="form-group">
 							<label class="label">{{
@@ -111,10 +112,11 @@
 			</div>
 		</form>
 	</nb-card-body>
-	<nb-card-footer class="text-right">
+	<nb-card-footer class="text-left">
 		<button
-			status="danger"
+			status="basic"
 			class="mr-3"
+			outline
 			nbButton
 			(click)="dialogRef.close()"
 		>

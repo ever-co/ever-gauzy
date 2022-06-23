@@ -39,7 +39,7 @@
 					</div>
 				</div>
 			</div>
-			<ng-container *ngIf="expenses.length">
+			<ng-container>
 				<div class="table-scroll">
 					<ng-container
 						*ngFor="let expense of expenses; let i = index"
@@ -65,8 +65,17 @@
 							[showHistory]="showHistory"
 						></ga-recurring-expense-block>
 					</ng-container>
+					<ng-template [ngIf]="!loading && expenses?.length == 0">
+						<nb-card class="p-0">
+							<nb-card-body class="custom-table">
+								<div>
+									{{ 'SM_TABLE.NO_RESULT' | translate }}
+								</div>
+							</nb-card-body>
+						</nb-card>
+					</ng-template>
 				</div>
-			</ng-container>
+			</ng-container>			
 		</div>
 	</nb-card-body>
 </nb-card>

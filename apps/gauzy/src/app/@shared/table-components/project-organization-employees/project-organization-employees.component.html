@@ -1,0 +1,33 @@
+<div *ngIf="this.rowData?.members?.length > 0" class="container">
+	<div class="row header">
+		<div class="col">
+			{{ 'ORGANIZATIONS_PAGE.EDIT.MEMBERS' | translate }}
+		</div>
+	</div>
+	<div class="row employee-row">
+		<div class="col employee-column">
+			<ng-container *ngFor="let employee of employeesFirstHalf">
+				<a class="avatar" (click)="edit(employee?.id)">
+					<img
+						class="img"
+						type="creator"
+						[src]="employee?.user?.imageUrl"
+					/>
+					<span> {{ employee?.fullName }}</span>
+				</a>
+			</ng-container>
+		</div>
+		<div class="col employee-column">
+			<ng-container *ngFor="let employee of employeesLastHalf">
+				<a class="avatar" (click)="edit(employee?.id)">
+					<img
+						class="img"
+						type="creator"
+						[src]="employee?.user?.imageUrl"
+					/>
+					<span> {{ employee?.fullName }}</span>
+				</a>
+			</ng-container>
+		</div>
+	</div>
+</div>

@@ -1,7 +1,7 @@
 <div *ngIf="project; else noProject" class="single-project-template">
     <div class="logo-wrapper">
-        <ng-template [ngIf]="project?.organizationContact?.imageUrl" [ngIfElse]="noImageEl">
-            <img draggable="false" [src]="project?.organizationContact?.imageUrl" />
+        <ng-template [ngIf]="project?.imageUrl" [ngIfElse]="noImageEl">
+            <img draggable="false" [src]="project?.imageUrl" />
         </ng-template>
         <ng-template #noImageEl>
             <img

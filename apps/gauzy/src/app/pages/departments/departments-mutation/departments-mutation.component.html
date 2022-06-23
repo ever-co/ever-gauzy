@@ -1,14 +1,19 @@
-<nb-card>
-	<nb-card-header>{{
-		(department
-			? 'FORM.LABELS.EDIT_DEPARTMENT'
-			: 'FORM.LABELS.ADD_NEW_DEPARTMENT'
-		) | translate
-	}}</nb-card-header>
-	<nb-card-body>
+<div class="editable">
+	<div class="container">
+		<div class="row">
+			<div class="col-sm-12 d-flex justify-content-end">
+				<i
+					class="fas fa-times"
+					(click)="cancel()"
+				></i>
+			</div>
+		</div>
+		<div class="row mb-3">
+			<h5 class="title mr-3 ml-3">{{ this.department ? ('POP_UPS.EDIT' | translate) : ('POP_UPS.ADD' | translate) }}</h5>
+		</div>
 		<form [formGroup]="form" (ngSubmit)="onSubmit()">
-			<div class="row">
-				<div class="col-4">
+			<div class="row mb-3">
+				<div class="col-sm-12 d-flex flex-column">
 					<div class="form-group">
 						<label class="label">{{
 							'SM_TABLE.DEPARTMENTS' | translate
@@ -22,7 +27,9 @@
 						/>
 					</div>
 				</div>
-				<div class="col-4">
+			</div>
+			<div class="row mb-3">
+				<div class="col-sm-12 d-flex flex-column">
 					<div class="form-group">
 						<ga-employee-multi-select
 							[selectedEmployeeIds]="form.get('members').value"
@@ -31,7 +38,9 @@
 						></ga-employee-multi-select>
 					</div>
 				</div>
-				<div class="col-4">
+			</div>
+			<div class="row mb-3">
+				<div class="col-sm-12 d-flex flex-column">
 					<div class="form-group">
 						<ga-tags-color-input
 							[selectedTags]="form.get('tags').value"
@@ -41,12 +50,14 @@
 					</div>
 				</div>
 			</div>
-			<div class="form-group btn-wrap">
+			<div class="row mb-3">
+				<div class="col-sm-12"></div>
 				<button
 					(click)="cancel()"
 					nbButton
-					status="danger"
-					class="mr-2"
+					status="basic"
+					outline
+					class="delete mr-3 ml-3"
 				>
 					{{ 'BUTTONS.CANCEL' | translate }}
 				</button>
@@ -60,5 +71,5 @@
 				</button>
 			</div>
 		</form>
-	</nb-card-body>
-</nb-card>
+</div>
+</div>

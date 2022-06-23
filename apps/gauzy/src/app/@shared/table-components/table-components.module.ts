@@ -1,6 +1,11 @@
 import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
-import { NbIconModule, NbTooltipModule, NbBadgeModule, NbToggleModule } from '@nebular/theme';
+import {
+	NbIconModule,
+	NbTooltipModule,
+	NbBadgeModule,
+	NbToggleModule
+} from '@nebular/theme';
 import { DateViewComponent } from './date-view/date-view.component';
 import { IncomeExpenseAmountComponent } from './income-amount/income-amount.component';
 import { NotesWithTagsComponent } from './notes-with-tags/notes-with-tags.component';
@@ -32,6 +37,7 @@ import { ProjectOrganizationComponent } from './project-organization/project-org
 import { VisibilityComponent } from './visibility/visibility.component';
 import { ProjectOrganizationGridComponent } from './project-organization-grid/project-organization-grid.component';
 import { ProjectOrganizationGridDetailsComponent } from './project-organization-grid-details/project-organization-grid-details.component';
+import { ProjectOrganizationEmployeesComponent } from './project-organization-employees/project-organization-employees.component';
 
 @NgModule({
 	imports: [
@@ -71,8 +77,9 @@ import { ProjectOrganizationGridDetailsComponent } from './project-organization-
 		CompanyLogoComponent,
 		ProjectOrganizationComponent,
 		VisibilityComponent,
-  ProjectOrganizationGridComponent,
-  ProjectOrganizationGridDetailsComponent
+		ProjectOrganizationGridComponent,
+		ProjectOrganizationGridDetailsComponent,
+		ProjectOrganizationEmployeesComponent
 	],
 	exports: [
 		NotesWithTagsComponent,

@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { CommandBus } from '@nestjs/cqrs';
 import { Brackets, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import { PermissionsEnum, IGetTimeSlotInput, ITimeSlot } from '@gauzy/contracts';
-import { isNotEmpty } from '@gauzy/common';
+import { isEmpty, isNotEmpty } from '@gauzy/common';
 import { TenantAwareCrudService } from './../../core/crud';
 import { moment } from '../../core/moment-extend';
 import { RequestContext } from '../../core/context';
@@ -31,7 +31,7 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 	}
 
 	async getTimeSlots(request: IGetTimeSlotInput) {
-		const { organizationId } = request;
+		const { organizationId, startDate, endDate, syncSlots = false } = request;
 		const tenantId = RequestContext.currentTenantId();
 
 		let employeeIds: string[];
@@ -48,6 +48,16 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 			employeeIds = [user.employeeId];
 		}
 
+		const { start, end } = (startDate && endDate) ?
+								getDateFormat(
+									moment.utc(startDate),
+									moment.utc(endDate)
+								) :
+								getDateFormat(
+									moment().startOf('day').utc(),
+									moment().endOf('day').utc()
+								);
+
 		const slots = await this.timeSlotRepository.find({
 			join: {
 				alias: 'time_slot',
@@ -59,28 +69,19 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 				}
 			},
 			relations: [
-				...(RequestContext.hasPermission(
-					PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-				)
-					? ['employee', 'employee.user']
-					: []),
 				...(request.relations ? request.relations : [])
 			],
 			where: (query: SelectQueryBuilder<TimeSlot>) => {
 				query.andWhere(
 					new Brackets((qb: WhereExpressionBuilder) => {
-						if (isNotEmpty(request.startDate) && isNotEmpty(request.endDate)) {
-							const { start: startDate, end: endDate } = getDateFormat(
-								moment.utc(request.startDate),
-								moment.utc(request.endDate)
-							);
-							qb.andWhere(`"${query.alias}"."startedAt" BETWEEN :startDate AND :endDate`, {
-								startDate,
-								endDate
-							});
+						qb.andWhere(`"${query.alias}"."startedAt" BETWEEN :startDate AND :endDate`, {
+							startDate: start,
+							endDate: end
+						});
+						if (isEmpty(syncSlots)) {
 							qb.andWhere(`"timeLog"."startedAt" BETWEEN :startDate AND :endDate`, {
-								startDate,
-								endDate
+								startDate: start,
+								endDate: end
 							});
 						}
 					})
