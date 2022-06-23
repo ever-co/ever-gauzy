@@ -304,7 +304,6 @@ export class TableInventoryComponent extends PaginationFilterBaseComponent
 					}
 				},
 				resultMap: (product: IProductTranslated) => {
-					console.log(product);
 					return Object.assign({}, product);
 				},
 				finalize: () => {
