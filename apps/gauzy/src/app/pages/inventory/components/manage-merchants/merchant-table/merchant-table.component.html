@@ -1,15 +1,11 @@
-<nb-card 
-	[nbSpinner]="loading"
-	nbSpinnerStatus="primary" 
-	nbSpinnerSize="large"	
->
+<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
 	<nb-card-header class="d-flex flex-column pb-0">
 		<div class="card-header-title">
-			<h4> 
+			<h4>
 				<ngx-back-navigation></ngx-back-navigation>
 				<ngx-header-title>
 					{{ 'INVENTORY_PAGE.MERCHANTS' | translate }}
-				</ngx-header-title> 
+				</ngx-header-title>
 			</h4>
 		</div>
 		<div class="gauzy-button-container">
@@ -22,8 +18,8 @@
 		</div>
 	</nb-card-header>
 	<nb-card-body>
-		<ng-template 
-			[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE" 
+		<ng-template
+			[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
 			[ngIfElse]="gridLayout"
 		>
 			<div class="table-scroll-container">
@@ -46,22 +42,20 @@
 						[activePage]="pagination?.activePage"
 					></ga-pagination>
 				</ng-container>
-			</div>			
+			</div>
 		</ng-template>
 		<ng-template #gridLayout>
-			<div class="grid-scroll-container">
-				<ga-card-grid
-					[settings]="settingsSmartTable"
-					[source]="merchants"
-					(selectedOption)="onUpdateOption($event)"
-					(selectedPage)="onPageChange($event)"
-					(onSelectedItem)="selectStore($event)"
-					[doEmit]="false"
-					[totalItems]="pagination?.totalItems"
-					[itemsPerPage]="pagination?.itemsPerPage"
-					[activePage]="pagination?.activePage"
-				></ga-card-grid>					
-			</div>		
+			<ga-card-grid
+				[settings]="settingsSmartTable"
+				[source]="merchants"
+				(selectedOption)="onUpdateOption($event)"
+				(selectedPage)="onPageChange($event)"
+				(onSelectedItem)="selectStore($event)"
+				[doEmit]="false"
+				[totalItems]="pagination?.totalItems"
+				[itemsPerPage]="pagination?.itemsPerPage"
+				[activePage]="pagination?.activePage"
+			></ga-card-grid>
 		</ng-template>
 	</nb-card-body>
 </nb-card>
@@ -76,36 +70,48 @@
 		>
 			<nb-icon icon="plus-outline"></nb-icon>
 			{{ 'BUTTONS.ADD' | translate }}
-		</button>	
+		</button>
 	</ng-template>
 </ng-template>
-<ng-template 
-	#actionButtons 
-	let-buttonSize="buttonSize" 
+<ng-template
+	#actionButtons
+	let-buttonSize="buttonSize"
 	let-selectedItem="selectedItem"
 >
-	<div class="btn-group actions">
-		<button
-			(click)="onEditStore(selectedItem)"
-			nbButton
-			status="basic"
-			class="action secondary"
-			size="small"	
-			[disabled]="!selectedItem && disableButton"				
-		>
-			<nb-icon icon="edit-outline"></nb-icon>
-			{{ 'BUTTONS.EDIT' | translate }}
-		</button>
-		<button
-			(click)="onDelete(selectedItem)"
-			nbButton
-			status="basic"
-			class="action"
-			[disabled]="!selectedItem && disableButton"
-			size="small"
-			[nbTooltip]="'BUTTONS.DELETE' | translate"
-		>
-			<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
-		</button>
-	</div>	
+	<ng-container *ngxPermissionsOnly="ORG_PRODUCT_TYPES_EDIT">
+		<div class="btn-group actions">
+			<button
+				nbButton
+				status="basic"
+				class="action secondary"
+				size="small"
+				[disabled]="!selectedItem && disableButton"
+			>
+				<nb-icon icon="eye-outline"></nb-icon>
+				{{ 'BUTTONS.VIEW' | translate }}
+			</button>
+			<button
+				(click)="onEditStore(selectedItem)"
+				nbButton
+				status="basic"
+				class="action primary"
+				size="small"
+				[disabled]="!selectedItem && disableButton"
+			>
+				<nb-icon icon="edit-outline"></nb-icon>
+				{{ 'BUTTONS.EDIT' | translate }}
+			</button>
+			<button
+				(click)="onDelete(selectedItem)"
+				nbButton
+				status="basic"
+				class="action"
+				[disabled]="!selectedItem && disableButton"
+				size="small"
+				[nbTooltip]="'BUTTONS.DELETE' | translate"
+			>
+				<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
+			</button>
+		</div>
+	</ng-container>
 </ng-template>

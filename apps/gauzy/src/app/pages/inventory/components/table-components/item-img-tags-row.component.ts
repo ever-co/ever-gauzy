@@ -5,10 +5,7 @@ import { ComponentLayoutStyleEnum } from '@gauzy/contracts';
 
 @Component({
 	template: `
-		<div
-			style="display: flex; align-items: center;"
-			class="{{ layout === 'CARDS_GRID' ? 'tags-right' : '' }}"
-		>
+		<div class="img-tags-container">
 			<div *ngIf="imageUrl" class="image-container">
 				<img [src]="imageUrl" />
 			</div>
@@ -20,17 +17,18 @@ import { ComponentLayoutStyleEnum } from '@gauzy/contracts';
 				>
 					<div class="content">
 						<i class="fas fa-image"></i>
-						<div>{{'ORGANIZATIONS_PAGE.NO_IMAGE' | translate }}</div>
+						<div>
+							{{ 'ORGANIZATIONS_PAGE.NO_IMAGE' | translate }}
+						</div>
 					</div>
 				</div>
 			</div>
 			<div class="row">
-				<div class="col-12 text-truncate" style="margin-left:15px;">
+				<div class="col-12 text-truncate name">
 					{{ value || '-' }}
 				</div>
 				<div
 					*ngIf="isTags"
-					style="margin-left:15px;"
 					class="col-12 mt-2 {{
 						layout === 'CARDS_GRID' ? 'tags-right' : ''
 					}}"
@@ -50,6 +48,11 @@ import { ComponentLayoutStyleEnum } from '@gauzy/contracts';
 	`,
 	styles: [
 		`
+			.img-tags-container {
+				display: flex;
+				gap: 10px;
+			}
+
 			.image-container {
 				width: 70px;
 				height: 64px;
@@ -70,10 +73,11 @@ import { ComponentLayoutStyleEnum } from '@gauzy/contracts';
 			}
 
 			img {
-				height: 100%;
-				width: 100%;
+				width: 70px;
+				height: 64px;
 				border-radius: 4px;
 				object-fit: cover;
+				box-shadow: 0 1px 1px 0 rgba(0 0 0 / 15%);
 			}
 
 			.no-image {
@@ -101,6 +105,16 @@ import { ComponentLayoutStyleEnum } from '@gauzy/contracts';
 
 			.tags-right {
 				justify-content: flex-end;
+			}
+
+			.name {
+				font-size: 14px;
+				font-weight: 600;
+				line-height: 17px;
+				letter-spacing: 0em;
+				text-align: left;
+				color: var(--gauzy-color-text-1);
+				margin-bottom: 4px;
 			}
 		`
 	]

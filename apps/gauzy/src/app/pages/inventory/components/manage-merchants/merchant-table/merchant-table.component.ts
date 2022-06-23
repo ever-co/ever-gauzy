@@ -185,6 +185,7 @@ export class MerchantTableComponent extends PaginationFilterBaseComponent
 				active: {
 					title: this.getTranslation('INVENTORY_PAGE.ACTIVE'),
 					type: 'custom',
+					width: '5%',
 					renderComponent: EnabledStatusComponent,
 					filter: false,
 				}
