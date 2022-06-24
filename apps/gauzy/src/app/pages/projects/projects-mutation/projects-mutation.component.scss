@@ -29,3 +29,75 @@
 		color: var(--gauzy-text-color-2);
 	}
 }
+
+.project-tab-container {
+	display: flex;
+	gap: 1rem;
+
+	.project-form-container {
+		width: 65%;
+	}
+}
+
+.project-image-container {
+	transition: transform 150ms ease-in-out;
+	display: flex;
+	flex-direction: column;
+	position: relative;
+	margin-right: 3rem;
+
+	.project-image-photo {
+		width: fit-content;
+		height: fit-content;
+		position: relative;
+
+		.image-overlay {
+			pointer-events: none;
+			background: black;
+			position: absolute;
+			height: 100%;
+			width: 100%;
+			border-radius: nb-theme(border-radius);
+			;
+		}
+
+		img,
+		.image {
+			width: 299px;
+			height: 294px;
+			object-fit: cover;
+			border-radius: nb-theme(border-radius);
+			;
+		}
+
+		.image {
+			background-color: rgba(126, 126, 143, 0.1);
+
+			i {
+				margin: 5px;
+			}
+
+			>span {
+				color: rgba(126, 126, 143, 1);
+				z-index: 2;
+				transition: opacity 0.2s ease-in;
+				position: absolute;
+				top: calc(50% - 16px / 2);
+				left: calc(50% - 141px / 2);
+			}
+		}
+
+		svg {
+			z-index: 2;
+			transition: opacity 0.2s ease-in;
+			opacity: 0.3;
+			position: absolute;
+			top: calc(50% - 68px / 2);
+			left: calc(50% - 68px / 2);
+
+			g circle {
+				fill: var(--text-primary-color);
+			}
+		}
+	}
+}

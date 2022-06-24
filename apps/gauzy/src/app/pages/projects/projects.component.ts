@@ -41,6 +41,7 @@ import { VisibilityComponent } from '../../@shared/table-components/visibility/v
 import { ProjectOrganizationGridComponent } from '../../@shared/table-components/project-organization-grid/project-organization-grid.component';
 import { ProjectOrganizationGridDetailsComponent } from '../../@shared/table-components/project-organization-grid-details/project-organization-grid-details.component';
 import { TagsColorFilterComponent } from '../../@shared/table-filters';
+import { ProjectOrganizationEmployeesComponent } from '../../@shared/table-components/project-organization-employees/project-organization-employees.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -440,11 +441,9 @@ export class ProjectsComponent
 						renderComponent: ProjectOrganizationGridDetailsComponent
 					},
 					employeesMergedTeams: {
-						title: this.getTranslation(
-							'ORGANIZATIONS_PAGE.EDIT.MEMBERS'
-						),
+						title: 'Image',
 						type: 'custom',
-						renderComponent: EmployeesMergedTeamsComponent
+						renderComponent: ProjectOrganizationEmployeesComponent
 					}
 				};
 				break;

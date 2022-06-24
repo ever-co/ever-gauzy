@@ -20,10 +20,32 @@ export class UserMenuComponent implements OnInit {
 
 	clicks: boolean[] = [];
 
+	downloadApps = [
+		{
+			link: 'https://web.gauzy.co/downloads#desktop/apple',
+			icon: 'fab fa-apple'
+		},
+		{
+			link: 'https://web.gauzy.co/downloads#desktop/windows',
+			icon: 'fa-brands fa-windows'
+		},
+		{
+			link: 'https://web.gauzy.co/downloads#desktop/linux',
+			icon: 'fa-brands fa-linux'
+		},
+		{
+			link: 'https://web.gauzy.co/downloads#mobile',
+			icon: 'fas fa-mobile'
+		},
+		{
+			link: 'https://web.gauzy.co/downloads#extensions',
+			icon: 'fa-brands fa-chrome'
+		}
+	];
+
 	constructor(private dialogService: NbDialogService) {}
 
-	ngOnInit(): void {
-  }
+	ngOnInit(): void {}
 
 	onClick() {
 		this.close.emit();
