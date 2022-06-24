@@ -2264,7 +2264,8 @@
 		"SELECTED": "Selected",
 		"SUCCESSFULLY_ADDED_PRODUCTS": "Products were added successfully!",
 		"MAIN": "Main",
-		"INVENTORY": "Inventory"		
+		"INVENTORY": "Inventory",
+		"IMAGE_WAS_DELETED": "Image was deleted"		
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Tasks",
