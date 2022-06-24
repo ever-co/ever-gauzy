@@ -5,8 +5,25 @@
   align-items: flex-end;
 }
 
-.width-100 {
-  width: 100%;
+.add-variant {
+  background-color: var(--color-success-transparent-100);
+  padding: 6px;
+  border-radius: var(--button-rectangle-border-radius);
+  width: fit-content;
+
+  button {
+    &[nbButton].green.appearance-filled.status-success {
+      background-color: var(--gauzy-card-1);
+      color: var(--color-success-default);
+      border: unset;
+      box-shadow: 0 1px 1px 0 rgba(0 0 0 / 15%);
+      font-size: 12px;
+      font-weight: 600;
+      line-height: 11px;
+      letter-spacing: 0em;
+      text-align: left;
+    }
+  }
 }
 
 .variants-container {
