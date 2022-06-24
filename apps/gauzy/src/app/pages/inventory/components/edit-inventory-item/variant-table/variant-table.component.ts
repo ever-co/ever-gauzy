@@ -23,7 +23,8 @@ export interface SelectedProductVariant {
 @UntilDestroy()
 @Component({
 	selector: 'ngx-variant-table',
-	templateUrl: './variant-table.component.html'
+	templateUrl: './variant-table.component.html',
+	styleUrls: ['./variant-table.component.scss']
 })
 export class VariantTableComponent
 	extends TranslationBaseComponent
