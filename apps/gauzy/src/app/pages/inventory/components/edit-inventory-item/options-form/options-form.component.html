@@ -4,14 +4,16 @@
 	</label>
 	<div class="row mb-3">
 		<div class="col-md-12">
-			<button
-				status="primary"
-				nbButton
-				(click)="onCreateOptionGroupClick()"
-				class=""
-			>
-				{{ 'INVENTORY_PAGE.NEW_OPTION_GROUP' | translate }}
-			</button>
+			<div class="button-new">
+				<button
+					status="basic"
+					nbButton
+					(click)="onCreateOptionGroupClick()"
+					class=""
+				>
+					{{ 'INVENTORY_PAGE.NEW_OPTION_GROUP' | translate }}
+				</button>
+			</div>
 		</div>
 	</div>
 
@@ -30,9 +32,11 @@
 		<!-- // template for option row -->
 		<ng-template #optionRowTemplate let-optionData="option">
 			<div
-				class="row mb-2 p-2 text-option option-row"
+				class="row mb-2 p-2 option-row"
 				(click)="setActiveOption(optionData)"
-				[ngClass]="{ active: isActiveOption(optionData) }"
+				[ngClass]="{
+					active: isActiveOption(optionData)
+				}"
 			>
 				<div class="col-md-2 d-flex pr-1">
 					<span>
@@ -124,7 +128,7 @@
 									size="small"
 									(click)="onCreateOptionClick()"
 								>
-									<nb-icon icon="plus-circle-outline"></nb-icon>
+									<i class="fas fa-plus"></i>
 								</button>
 								<button
 									nbButton
@@ -135,9 +139,9 @@
 										onDeleteOptinGroupClick(optionGroupData)
 									"
 								>
-									<nb-icon icon="trash-outline"></nb-icon>
+									<nb-icon icon="trash-2-outline"></nb-icon>
 								</button>
-							</div>							
+							</div>
 						</div>
 					</div>
 
@@ -162,7 +166,7 @@
 				<div class="col-md-3 col-sm-12">
 					{{ optionGroupData.name }}
 				</div>
-				<div class="col-md-9 col-sm-12">
+				<div class="col-md-9 option col-sm-12">
 					<div class="row mb-2"></div>
 
 					<ng-container
