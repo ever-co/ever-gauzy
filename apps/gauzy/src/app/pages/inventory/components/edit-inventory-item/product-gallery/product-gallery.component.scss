@@ -48,7 +48,51 @@ button {
   position: absolute;
   top: -3px;
   left: 0px;
-  border-radius: 50%;
+  border-radius: 4px;
   background: white;
   color: nb-theme(text-success-color);
+}
+
+.actions-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  button {
+    border-width: 2px;
+    background-color: unset;
+
+    &[nbButton].appearance-outline.status-basic {
+      border-color: var(--color-basic-transparent-300);
+    }
+
+    &[nbButton].appearance-outline.status-primary {
+      border-color: var(--gauzy-background-transparent-1);
+    }
+
+    &[nbButton].appearance-outline.status-danger {
+      border-color: var(--color-danger-transparent-300);
+    }
+
+    &[nbButton].appearance-outline.status-success {
+      border-color: var(--color-success-transparent-300);
+      padding: 4px 5px;
+    }
+  }
+
+  .gallery-plus {
+    border-radius: var(--button-rectangle-border-radius);
+    padding: 4px 6px;
+    background-color: var(--gauzy-card-2);
+
+    i {
+      font-size: 18px;
+    }
+  }
+
+  .gallery-actions {
+    background-color: var(--gauzy-card-2);
+    border-radius: var(--button-rectangle-border-radius);
+    padding: 3px 5px;
+  }
 }

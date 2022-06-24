@@ -14,19 +14,21 @@
 </div>
 
 <div class="actions-container mt-2">
-	<button
-		nbButton
-		size="small"
-		status="success"
-		class="action"
-		(click)="onAddImageClick()"
-		[nbTooltip]="'INVENTORY_PAGE.ADD_GALLERY_IMAGE' | translate"
-		nbTooltipPlacement="top"
-		nbTooltipStatus="success"
-	>
-		<nb-icon icon="plus-circle-outline"></nb-icon>
-	</button>
-	<div class="actions">
+	<div class="gallery-plus">
+		<button
+			nbButton
+			size="small"
+			status="success"
+			(click)="onAddImageClick()"
+			[nbTooltip]="'INVENTORY_PAGE.ADD_GALLERY_IMAGE' | translate"
+			nbTooltipPlacement="top"
+			nbTooltipStatus="success"
+			outline
+		>
+			<i class="fas fa-plus"></i>
+		</button>
+	</div>
+	<div class="gallery-actions">
 		<button
 			nbButton
 			status="primary"
@@ -35,7 +37,7 @@
 			[nbTooltip]="'INVENTORY_PAGE.SET_FEATURED_IMAGE' | translate"
 			nbTooltipPlacement="top"
 			nbTooltipStatus="primary"
-			class="action"
+			outline
 			size="small"
 		>
 			<nb-icon icon="image-outline"></nb-icon>
@@ -47,7 +49,7 @@
 			nbTooltipPlacement="top"
 			nbTooltipStatus="basic"
 			status="basic"
-			class="action secondary"
+			outline
 			[disabled]="!gallery?.length"
 			(click)="onViewGalleryClick()"
 		>
@@ -59,8 +61,8 @@
 			nbTooltipPlacement="top"
 			nbTooltipStatus="primary"
 			[disabled]="!selectedImage"
-			status="basic"
-			class="action primary"
+			status="primary"
+			outline
 			(click)="onEditImageClick()"
 			size="small"
 		>
@@ -72,8 +74,8 @@
 			[nbTooltip]="'INVENTORY_PAGE.DELETE_IMAGE' | translate"
 			nbTooltipPlacement="top"
 			nbTooltipStatus="danger"
-			status="basic"
-			class="action primary"
+			status="danger"
+			outline
 			[disabled]="!gallery?.length || !selectedImage"
 			(click)="onDeleteImageClick()"
 			size="small"
