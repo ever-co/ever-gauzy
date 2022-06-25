@@ -7,7 +7,6 @@ import { LocalStore } from './desktop-store';
 import Form from 'form-data';
 import { BrowserWindow, screen } from 'electron';
 import screenshot from 'screenshot-desktop';
-const sound = require('sound-play');
 import * as remoteMain from '@electron/remote/main';
 
 // Import logging for electron and override default console logging
