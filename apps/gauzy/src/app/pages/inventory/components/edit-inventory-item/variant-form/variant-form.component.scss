@@ -1,5 +1,3 @@
-@import 'themes';
-
 .d-bottom {
   display: flex;
   align-items: flex-end;
@@ -26,17 +24,9 @@
   }
 }
 
-.variants-container {
-  min-height: 100px;
-}
-
-.btn-variant {
-  margin-bottom: 10px;
-}
-
 .btn-variant-icon {
   background: transparent !important;
-  border-radius: 50%;
+  border-radius: var(--button-rectangle-border-radius);
   width: 30px;
   height: 30px;
   display: flex;
@@ -47,7 +37,7 @@
 }
 
 .variant-stored-btn {
-  background: nb-theme(color-success-default) !important;
+  background: var(--color-success-default) !important;
   color: white;
   cursor: pointer;
 
