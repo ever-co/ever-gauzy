@@ -1,11 +1,16 @@
+@import 'gauzy/_gauzy-dialogs';
+
 .product-variant-container {
   width: 100%;
+  border-radius: var(--border-radius);
 }
+
 .product-variant-photo {
   width: 100%;
   background-color: white;
   overflow: hidden;
   position: relative;
+  border-radius: var(--border-radius);
 
   div {
     pointer-events: none;
@@ -13,11 +18,14 @@
     position: absolute;
     height: 100%;
     width: 100%;
+    border-radius: var(--border-radius);
   }
 
   img {
     width: 100%;
-    height: auto;
+    height: 15rem;
+    object-fit: cover;
+    border-radius: var(--border-radius);
   }
 
   input {
@@ -36,6 +44,10 @@
     position: absolute;
     top: calc(50% - 68px / 2);
     left: calc(50% - 68px / 2);
+
+    g circle {
+      fill: var(--text-primary-color);
+    }
   }
 }
 
@@ -48,4 +60,47 @@
   max-width: 100%;
   font-size: 12px;
   margin-top: 5px;
+}
+
+:host {
+
+  .main {
+    height: calc(100vh - 12rem);
+    margin: 0;
+  }
+
+  nb-card,
+  nb-card-body,
+  nb-card-footer {
+    background-color: var(--gauzy-card-2);
+  }
+
+  nb-card-body {
+    border-radius: 0 0 var(--border-radius) var(--border-radius);
+  }
+
+  input,
+  textarea,
+  ::ng-deep .ng-select .ng-select-container,
+  ::ng-deep nb-select.appearance-outline.status-basic .select-button {
+    background-color: var(--gauzy-card-1);
+  }
+}
+
+.main-product-variant-container {
+  position: relative;
+
+  button {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+  }
+}
+
+h5 {
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 30px;
+  letter-spacing: 0em;
+  text-align: left;
 }
