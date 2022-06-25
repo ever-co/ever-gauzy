@@ -22,8 +22,8 @@ import { DEFAULT_SVG } from './../../../../@core/constants';
 				justify-content: flex-start;
 			}
 			img {
-				width: 100%;
-				height: 100%;
+				width: 74px;
+				height: 60px;
 				object-fit: cover;
 				border-radius: 4px;
 			}
