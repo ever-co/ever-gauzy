@@ -133,6 +133,7 @@ export class InventoryItemViewComponent
 	async loadSmartTable() {
 		this.settingsSmartTable = {
 			actions: false,
+			hideSubHeader: true,
 			columns: {
 				image: {
 					title: this.getTranslation('INVENTORY_PAGE.IMAGE'),
