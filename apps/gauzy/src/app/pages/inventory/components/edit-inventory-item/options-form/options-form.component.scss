@@ -43,14 +43,20 @@
 }
 
 .option-row {
+  background-color: var(--gauzy-sidebar-background-3);
+  border-radius: 4px;
+  margin-right: 0;
+  color: var(--gauzy-text-color-2);
+
   .option-row-icon {
+    cursor: pointer;
     transition: 0.1s all ease-in-out;
   }
 
   &:hover,
   &.active {
     .option-row-icon.edit {
-      color: nb-theme(color-success-600);
+      color: nb-theme(color-primary-600);
     }
 
     .option-row-icon.delete {
@@ -64,6 +70,13 @@
   border-radius: var(--button-rectangle-border-radius);
   padding: 6px 8px;
   gap: 10px;
+}
+
+.option-name {
+  background-color: var(--gauzy-sidebar-background-3);
+  border-radius: 4px;
+  padding: 4px 8px;
+  color: var(--gauzy-text-color-2);
 }
 
 button {

@@ -45,7 +45,7 @@
 							icon="edit-outline"
 						></nb-icon>
 					</span>
-					<span>
+					<span class="mr-3 ml-3">
 						<nb-icon
 							(click)="onDeleteOption(optionData)"
 							class="option-row-icon delete"
@@ -108,7 +108,7 @@
 								formControlName="activeOptionCode"
 							/>
 						</div>
-						<div class="col-md-3">
+						<div class="col-md-3 d-flex justify-content-end">
 							<div class="btn-group actions">
 								<button
 									nbButton
@@ -164,7 +164,7 @@
 				(click)="setActiveOptionGroup($event, optionGroupData)"
 			>
 				<div class="col-md-3 col-sm-12">
-					{{ optionGroupData.name }}
+					<span class="option-name">{{ optionGroupData.name }}</span>
 				</div>
 				<div class="col-md-9 option col-sm-12">
 					<div class="row mb-2"></div>
