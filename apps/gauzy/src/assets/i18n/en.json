@@ -3891,5 +3891,9 @@
 			"CREATE_NEW_WORKSPACE": "Create a new workspace",
 			"FIND_WORKSPACE": "Find workspace"
 		}
+	},
+	"NO_IMAGE": {
+		"ADD_DROP": "Add or Drop Image",
+		"AVAILABLE": "Image no available"
 	}
 }
