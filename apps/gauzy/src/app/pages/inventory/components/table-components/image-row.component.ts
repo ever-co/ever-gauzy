@@ -66,13 +66,20 @@ export class ImageRowComponent implements ViewCell {
 	get imageUrl() {
 		if (this.rowData.imageUrl) {
 			return this.rowData.imageUrl;
-		} else if (
-			this.rowData.featuredImage &&
-			this.rowData.featuredImage.url
-		) {
+		}
+		if (this.rowData.featuredImage && this.rowData.featuredImage.url) {
 			return this.rowData.featuredImage.url;
-		} else if (this.rowData.url) {
+		}
+		if (this.rowData.url) {
 			return this.rowData.url;
 		}
+
+		if (!this.value) return false;
+
+		if (this.value.imageUrl) return this.value.imageUrl;
+
+		if (this.value.url) return this.value.url;
+
+		if (typeof this.value == 'string') return this.value;
 	}
 }
