@@ -34,6 +34,7 @@
 								width="68"
 								height="68"
 								viewBox="0 0 68 68"
+								*ngIf="image && image.url"
 								[ngStyle]="{
 									opacity: hoverState ? '1' : '0.3'
 								}"
@@ -72,15 +73,11 @@
 									opacity: hoverState ? '0.2' : '0'
 								}"
 							></div>
-
-							<img
-								*ngIf="!image || !image.url"
-								[src]="
-									'https://afostats.imagead.net/uploads/afo/no_img.png'
-								"
-								alt="Product Item Photo"
-							/>
-
+							<ga-no-image
+								*ngIf="!image && !image?.url"
+								[fontSize]="14"
+								[placeholder]="'NO_IMAGE.ADD_DROP'"
+							></ga-no-image>
 							<img
 								*ngIf="image && image.url"
 								[src]="image.url"

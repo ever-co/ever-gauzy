@@ -7,6 +7,7 @@
 
 .product-variant-photo {
   width: 100%;
+  height: 15rem;
   background-color: white;
   overflow: hidden;
   position: relative;
@@ -27,6 +28,7 @@
     object-fit: cover;
     border-radius: var(--border-radius);
   }
+  
 
   input {
     width: 100%;

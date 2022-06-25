@@ -1,16 +1,15 @@
-<div>
+<div class="image-container">
 	<img
 		*ngIf="displayImageUrl"
 		class="featured-image"
 		[src]="displayImageUrl"
 		alt="Feature image"
 	/>
-	<img
+	<ga-no-image
+		[fontSize]="14"
 		*ngIf="!displayImageUrl"
-		class="featured-image"
-		[src]="'https://afostats.imagead.net/uploads/afo/no_img.png'"
-		alt="Feature image"
-	/>
+	>
+	</ga-no-image>
 </div>
 
 <div class="actions-container mt-2">

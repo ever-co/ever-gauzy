@@ -13,6 +13,10 @@
   border-radius: var(--border-radius);
 }
 
+.image-container {
+  height: 300px;
+}
+
 .gallery-sm-preview-item {
   width: 100%;
   object-fit: cover;

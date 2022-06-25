@@ -14,7 +14,7 @@
 		<div class="row" *ngIf="inventoryItem">
 			<div class="col-md-3">
 				<div class="product-container">
-					<div>
+					<div class="product-container-inner">
 						<img
 							*ngIf="
 								inventoryItem.featuredImage &&
@@ -24,17 +24,14 @@
 							[src]="inventoryItem.featuredImage.url"
 							alt="Feature image"
 						/>
-						<img
+						<ga-no-image
 							*ngIf="
-								inventoryItem.featuredImage &&
-								!inventoryItem.featuredImage.url
+								!inventoryItem?.featuredImage &&
+								!inventoryItem?.featuredImage?.url
 							"
-							class="featured-image"
-							[src]="
-								'https://afostats.imagead.net/uploads/afo/no_img.png'
-							"
-							alt="Feature image"
-						/>
+							class="no-image"
+							[fontSize]="16"
+						></ga-no-image>
 					</div>
 					<div
 						*ngIf="inventoryItem.gallery"

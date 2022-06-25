@@ -10,18 +10,12 @@ import { ComponentLayoutStyleEnum } from '@gauzy/contracts';
 				<img [src]="imageUrl" />
 			</div>
 			<div *ngIf="!imageUrl" class="image-container">
-				<div
+				<ga-no-image
 					class="no-image"
 					(mouseenter)="hoverState = true"
 					(mouseleave)="hoverState = false"
 				>
-					<div class="content">
-						<i class="fas fa-image"></i>
-						<div>
-							{{ 'ORGANIZATIONS_PAGE.NO_IMAGE' | translate }}
-						</div>
-					</div>
-				</div>
+				</ga-no-image>
 			</div>
 			<div class="row">
 				<div class="col-12 text-truncate name">
@@ -83,17 +77,6 @@ import { ComponentLayoutStyleEnum } from '@gauzy/contracts';
 			.no-image {
 				width: 100%;
 				height: 100%;
-				background-color: var(--gauzy-sidebar-background-3);
-				display: flex;
-				align-items: center;
-				justify-content: center;
-				border-radius: 4px;
-				font-size: 9px;
-				font-weight: 400;
-				line-height: 11px;
-				letter-spacing: 0em;
-				text-align: left;
-				color: var(--gauzy-text-color-2);
 			}
 
 			.content {

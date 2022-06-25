@@ -475,6 +475,7 @@
 			height="68"
 			viewBox="0 0 68 68"
 			[ngStyle]="{ opacity: hoverState ? '1' : '0.3' }"
+			*ngIf="image && image.url"
 		>
 			<defs>
 				<path
@@ -492,12 +493,12 @@
 			class="image-overlay"
 			[ngStyle]="{ opacity: hoverState ? '0.2' : '0' }"
 		></div>
-		<img
-			class="store-image"
+		<ga-no-image
 			*ngIf="!image || !image.url"
-			[src]="'https://afostats.imagead.net/uploads/afo/no_img.png'"
-			alt="Product Item Photo"
-		/>
+			[fontSize]="14"
+			[placeholder]="'NO_IMAGE.ADD_DROP'"
+			class="store-image"
+		></ga-no-image>
 		<img
 			class="store-image"
 			*ngIf="image && image.url"

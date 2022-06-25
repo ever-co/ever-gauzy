@@ -18,7 +18,7 @@
 		<nb-stepper #stepper linear="false" (click)="stepClick()">
 			<nb-step [label]="'INVENTORY_PAGE.MAIN' | translate">
 				<form [formGroup]="form">
-					<div class="row h-100">
+					<div class="row">
 						<div class="col-md-3 col-sm-12 image-container">
 							<ng-container
 								*ngTemplateOutlet="warehouseImage"
@@ -260,6 +260,7 @@
 			height="68"
 			viewBox="0 0 68 68"
 			[ngStyle]="{ opacity: hoverState ? '1' : '0.3' }"
+			*ngIf="logo && logo.url"
 		>
 			<defs>
 				<path
@@ -277,12 +278,12 @@
 			class="image-overlay"
 			[ngStyle]="{ opacity: hoverState ? '0.2' : '0' }"
 		></div>
-		<img
-			class="store-image"
+		<ga-no-image
 			*ngIf="!logo || !logo.url"
-			[src]="'https://afostats.imagead.net/uploads/afo/no_img.png'"
-			alt="Warehouse Photo"
-		/>
+			[fontSize]="14"
+			[placeholder]="'NO_IMAGE.ADD_DROP'"
+			class="store-image"
+		></ga-no-image>
 		<img
 			class="store-image"
 			*ngIf="logo && logo.url"
