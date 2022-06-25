@@ -10,6 +10,7 @@ import { ContactRowComponent } from './contact-row.component';
 import { TranslateModule } from 'apps/gauzy/src/app/@shared/translate/translate.module';
 import { NameWithDescriptionComponent } from './name-with-description/name-with-description.component';
 import { SharedModule } from 'apps/gauzy/src/app/@shared/shared.module';
+import { NoImageComponent } from './no-image/no-image.component';
  
 @NgModule({
     declarations: [
@@ -19,7 +20,8 @@ import { SharedModule } from 'apps/gauzy/src/app/@shared/shared.module';
         ItemImgTagsComponent,
         SelectedRowComponent,
         ContactRowComponent,
-        NameWithDescriptionComponent
+        NameWithDescriptionComponent,
+        NoImageComponent
     ],
     imports: [
         NbCheckboxModule,
@@ -28,6 +30,7 @@ import { SharedModule } from 'apps/gauzy/src/app/@shared/shared.module';
         CommonModule,
         TranslateModule,
         SharedModule
-    ]
+    ],
+    exports: [ NoImageComponent ]
 })
 export class TableComponentsModule { }
