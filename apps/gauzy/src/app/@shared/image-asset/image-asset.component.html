@@ -1,10 +1,15 @@
 <nb-card class="main">
-	<nb-card-header class="d-flex">
-		<h4>{{ 'INVENTORY_PAGE.EDIT_IMAGE_ASSET' | translate }}</h4>
+	<nb-card-header class="d-flex flex-column">
+		<span class="cancel"
+			><i class="fas fa-times" (click)="onCancel()"></i>
+		</span>
+		<h4 class="title">
+			{{ 'INVENTORY_PAGE.EDIT_IMAGE_ASSET' | translate }}
+		</h4>
 	</nb-card-header>
 	<nb-card-body class="body">
 		<div class="row">
-			<div class="col-md-4 col-sm-12">
+			<div class="col-sm-4">
 				<img
 					*ngIf="imageAsset && imageAsset.url"
 					[src]="imageAsset.url"
@@ -14,8 +19,8 @@
 					src="/assets/images/others/no-image-placeholder.svg"
 				/>
 			</div>
-			<div class="col md-8 col-sm-12">
-				<form [formGroup]="form" *ngIf="form">
+			<div class="col-sm-8">
+				<form [formGroup]="form" >
 					<div class="form-group">
 						<label class="label" for="nameInput">
 							{{ 'INVENTORY_PAGE.NAME' | translate }}
@@ -75,8 +80,14 @@
 			</div>
 		</div>
 	</nb-card-body>
-	<nb-card-footer class="text-right">
-		<button (click)="onCancel()" status="danger" class="mr-3" nbButton>
+	<nb-card-footer class="text-left">
+		<button
+			(click)="onCancel()"
+			outline
+			status="basic"
+			class="mr-3"
+			nbButton
+		>
 			{{ 'INVENTORY_PAGE.CANCEL' | translate }}
 		</button>
 		<button

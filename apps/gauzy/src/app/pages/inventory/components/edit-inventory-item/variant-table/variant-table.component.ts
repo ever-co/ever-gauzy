@@ -9,9 +9,9 @@ import { Router } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
 import { DeleteConfirmationComponent } from 'apps/gauzy/src/app/@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { ProductVariantService } from 'apps/gauzy/src/app/@core/services/product-variant.service';
-import { EnabledStatusComponent } from '../../table-components/enabled-row.component';
+import { EnabledStatusComponent } from '../../inventory-table-components/enabled-row.component';
 import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
-import { ImageRowComponent } from '../../table-components/image-row.component';
+import { ImageRowComponent } from '../../inventory-table-components/image-row.component';
 import { InventoryStore } from 'apps/gauzy/src/app/@core/services/inventory-store.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
@@ -23,7 +23,8 @@ export interface SelectedProductVariant {
 @UntilDestroy()
 @Component({
 	selector: 'ngx-variant-table',
-	templateUrl: './variant-table.component.html'
+	templateUrl: './variant-table.component.html',
+	styleUrls: ['./variant-table.component.scss']
 })
 export class VariantTableComponent
 	extends TranslationBaseComponent

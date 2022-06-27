@@ -1,8 +1,4 @@
-<nb-card
-	[nbSpinner]="loading"
-	nbSpinnerStatus="primary"
-	nbSpinnerSize="large"	
->
+<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
 	<nb-card-header class="d-flex flex-column pb-0">
 		<div class="card-header-title">
 			<h4>
@@ -20,9 +16,9 @@
 				[isDisable]="disableButton"
 			>
 			</ngx-gauzy-button-action>
-		</div>		
+		</div>
 	</nb-card-header>
-	<nb-card-body>		
+	<nb-card-body>
 		<ng-template ngxPermissionsOnly="ORG_PRODUCT_TYPES_VIEW">
 			<ng-template
 				[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
@@ -38,7 +34,9 @@
 					></ng2-smart-table>
 				</div>
 				<div class="pagination-container">
-					<ng-container *ngIf="pagination.totalItems > minItemPerPage">
+					<ng-container
+						*ngIf="pagination.totalItems > minItemPerPage"
+					>
 						<ga-pagination
 							(selectedOption)="onUpdateOption($event)"
 							(selectedPage)="onPageChange($event)"
@@ -51,19 +49,17 @@
 				</div>
 			</ng-template>
 			<ng-template #gridLayout>
-				<div class="grid-scroll-container">
-					<ga-card-grid
-						[settings]="settingsSmartTable"
-						[source]="productTypes"
-						(selectedOption)="onUpdateOption($event)"
-						(selectedPage)="onPageChange($event)"
-						(onSelectedItem)="selectProductType($event)"
-						[doEmit]="false"
-						[totalItems]="pagination?.totalItems"
-						[itemsPerPage]="pagination?.itemsPerPage"
-						[activePage]="pagination?.activePage"
-					></ga-card-grid>					
-				</div>				
+				<ga-card-grid
+					[settings]="settingsSmartTable"
+					[source]="productTypes"
+					(selectedOption)="onUpdateOption($event)"
+					(selectedPage)="onPageChange($event)"
+					(onSelectedItem)="selectProductType($event)"
+					[doEmit]="false"
+					[totalItems]="pagination?.totalItems"
+					[itemsPerPage]="pagination?.itemsPerPage"
+					[activePage]="pagination?.activePage"
+				></ga-card-grid>
 			</ng-template>
 		</ng-template>
 	</nb-card-body>
@@ -80,7 +76,7 @@
 		>
 			<nb-icon icon="plus-outline"></nb-icon
 			>{{ 'BUTTONS.ADD' | translate }}
-		</button>	
+		</button>
 	</ng-template>
 </ng-template>
 <ng-template
@@ -94,9 +90,9 @@
 				(click)="onEdit(selectedItem)"
 				nbButton
 				status="basic"
-				class="action secondary"
-				size="small"	
-				[disabled]="!selectedItem && disableButton"				
+				class="action primary"
+				size="small"
+				[disabled]="!selectedItem && disableButton"
 			>
 				<nb-icon icon="edit-outline"></nb-icon>
 				{{ 'BUTTONS.EDIT' | translate }}

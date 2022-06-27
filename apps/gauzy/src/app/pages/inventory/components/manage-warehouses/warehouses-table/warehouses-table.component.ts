@@ -12,7 +12,7 @@ import { distinctUntilChange } from '@gauzy/common-angular';
 import { DeleteConfirmationComponent } from './../../../../../@shared/user/forms';
 import { API_PREFIX, ComponentEnum } from './../../../../../@core/constants';
 import { Store, ToastrService, WarehouseService } from './../../../../../@core/services';
-import { ContactRowComponent, EnabledStatusComponent, ItemImgTagsComponent } from '../../table-components';
+import { ContactRowComponent, EnabledStatusComponent, ItemImgTagsComponent } from '../../inventory-table-components';
 import { IPaginationBase, PaginationFilterBaseComponent } from './../../../../../@shared/pagination/pagination-filter-base.component';
 import { ServerDataSource } from './../../../../../@core/utils/smart-table/server.data-source';
 import { InputFilterComponent } from './../../../../../@shared/table-filters';
