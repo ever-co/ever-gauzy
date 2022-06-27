@@ -62,6 +62,7 @@ export class ContactViewComponent
 				.then((items) => {
 					if (items) {
 						this.selectedContact = items;
+						console.log(items)
 						if (this.selectedContact.contact.latitude && this.selectedContact.contact.longitude) {
 							setTimeout(() => {
 								this.leafletTemplate

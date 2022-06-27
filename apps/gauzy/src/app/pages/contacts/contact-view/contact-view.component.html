@@ -334,37 +334,41 @@
 						<nb-tab
 							[tabTitle]="'CONTACTS_PAGE.ADDRESS' | translate"
 						>
-							<div class="row">
-								<div class="col-md-9">
-									<ga-leaflet-map #leafletTemplate>
-									</ga-leaflet-map>
-								</div>
-								<div class="col-md-3">
-									<div class="address-details">
+							<div class="row map">
+								<div class="col-md-12">
+									<div
+										class="address-details d-flex flex-column"
+									>
 										<label class="label">
-											<h6>
-												{{
-													selectedContact?.contact
-														?.address
-												}}
-											</h6>
+											Country
 										</label>
-										<label class="label">
-											{{
-												selectedContact?.contact
-													?.address2
-											}}
-										</label>
-										<label class="label mt-2">
-											{{ selectedContact?.contact?.city }}
-										</label>
-										<label class="label mt-2">
+										<div class="text-caption caption mb-3">
 											{{
 												selectedContact?.contact
 													?.country
 											}}
-										</label>
+										</div>
+										<label class="label"> City </label>
+										<div class="text-caption caption mb-3">
+											{{ selectedContact?.contact?.city }}
+										</div>
+										<label class="label"> Address 1 </label>
+										<div class="text-caption caption mb-3">
+											{{
+												selectedContact?.contact
+													?.address
+											}}
+										</div>
+										<label class="label"> Address 2 </label>
+										<div class="text-caption caption mb-3">
+											{{
+												selectedContact?.contact
+													?.address2
+											}}
+										</div>
 									</div>
+									<ga-leaflet-map #leafletTemplate>
+									</ga-leaflet-map>
 								</div>
 							</div>
 						</nb-tab>
