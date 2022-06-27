@@ -61,9 +61,17 @@
 						[showHistory]="showHistory"
 					></ga-recurring-expense-block>
 				</ng-container>	
-				</div>
-				
+				</div>				
 			</ng-container>
+			<ng-template [ngIf]="!loading && recurringExpenses?.length == 0">
+				<nb-card class="p-0">
+					<nb-card-body class="custom-table">
+						<div>
+							{{ 'SM_TABLE.NO_RESULT' | translate }}
+						</div>
+					</nb-card-body>
+				</nb-card>
+			</ng-template>
 		</div>
 	</nb-card-body>
 </nb-card>
@@ -125,6 +133,7 @@
 				class="action"
 				size="small"
 				status="basic"
+				[nbTooltip]="'BUTTONS.DELETE' | translate"
 			>
 				<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
 			</button>

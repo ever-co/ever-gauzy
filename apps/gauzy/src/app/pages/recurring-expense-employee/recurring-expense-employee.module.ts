@@ -6,7 +6,8 @@ import {
 	NbInputModule,
 	NbIconModule,
 	NbDialogModule,
-	NbSpinnerModule
+	NbSpinnerModule,
+	NbTooltipModule
 } from '@nebular/theme';
 import { FormsModule } from '@angular/forms';
 import { RecurringExpensesEmployeeRoutingModule } from './recurring-expense-employee-routing.module';
@@ -27,6 +28,7 @@ import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy
 		NbInputModule,
 		NbIconModule,
 		NbSpinnerModule,
+		NbTooltipModule,
 		RecurringExpenseBlockModule,
 		NbDialogModule.forChild(),
 		TranslateModule,
