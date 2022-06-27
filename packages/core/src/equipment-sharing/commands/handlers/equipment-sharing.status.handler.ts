@@ -1,8 +1,7 @@
 import { ICommandHandler, CommandHandler } from '@nestjs/cqrs';
 import { EquipmentSharingStatusCommand } from '../equipment-sharing.status.command';
 import { EquipmentSharing } from '../../equipment-sharing.entity';
-import { NotFoundException, ConflictException } from '@nestjs/common';
-import { RequestApprovalStatusTypesEnum } from '@gauzy/contracts';
+import { NotFoundException } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { RequestApproval } from '../../../request-approval/request-approval.entity';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -15,7 +14,7 @@ export class EquipmentSharingStatusHandler
 		private readonly equipmentSharingRepository: Repository<EquipmentSharing>,
 		@InjectRepository(RequestApproval)
 		private readonly requestApprovalRepository: Repository<RequestApproval>
-	) {}
+	) { }
 
 	public async execute(
 		command?: EquipmentSharingStatusCommand
@@ -32,17 +31,14 @@ export class EquipmentSharingStatusHandler
 		if (!equipmentSharing) {
 			throw new NotFoundException('Equiment Sharing not found');
 		}
-		if (
-			equipmentSharing.status === RequestApprovalStatusTypesEnum.REQUESTED
-		) {
-			equipmentSharing.status = status;
-			if (requestApproval) {
-				requestApproval.status = status;
-				await this.requestApprovalRepository.save(requestApproval);
-			}
-		} else {
-			throw new ConflictException('Equiment Sharing is Conflict');
+
+		equipmentSharing.status = status;
+
+		if (requestApproval) {
+			requestApproval.status = status;
+			await this.requestApprovalRepository.save(requestApproval);
 		}
+		
 		return await this.equipmentSharingRepository.save(equipmentSharing);
 	}
 }

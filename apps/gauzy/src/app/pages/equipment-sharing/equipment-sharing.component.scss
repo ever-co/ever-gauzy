@@ -1,16 +1,4 @@
-.main-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-::ng-deep {
-  ga-delete-confirmation {
-    .center {
-      width: 400px !important;
-    }
-  }
-}
+@import '../payments/payments.component.scss';
 
 /* Card grid */
 

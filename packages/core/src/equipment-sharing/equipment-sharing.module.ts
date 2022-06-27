@@ -8,6 +8,7 @@ import { EquipmentSharingService } from './equipment-sharing.service';
 import { RequestApproval } from '../request-approval/request-approval.entity';
 import { CommandHandlers } from './commands/handlers';
 import { TenantModule } from '../tenant/tenant.module';
+import { UserModule } from './../user/user.module';
 
 @Module({
 	imports: [
@@ -16,7 +17,8 @@ import { TenantModule } from '../tenant/tenant.module';
 		]),
 		TypeOrmModule.forFeature([RequestApproval, EquipmentSharing]),
 		CqrsModule,
-		TenantModule
+		TenantModule,
+		UserModule
 	],
 	controllers: [EquipmentSharingController],
 	providers: [EquipmentSharingService, ...CommandHandlers],

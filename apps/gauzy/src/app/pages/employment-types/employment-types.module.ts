@@ -7,7 +7,8 @@ import {
 	NbIconModule,
 	NbDialogModule,
 	NbActionsModule,
-	NbTabsetModule
+	NbTabsetModule,
+	NbTooltipModule
 } from '@nebular/theme';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-color-input.module';
@@ -45,7 +46,8 @@ import { PaginationModule } from '../../@shared/pagination/pagination.module';
 		HeaderTitleModule,
 		GauzyButtonActionModule,
 		PaginationModule,
-		NbTabsetModule
+		NbTabsetModule,
+		NbTooltipModule
 	],
 	declarations: [EmploymentTypesComponent],
 	providers: [OrganizationEmploymentTypesService]
