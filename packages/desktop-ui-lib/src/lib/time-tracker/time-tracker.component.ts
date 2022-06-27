@@ -136,6 +136,7 @@ export class TimeTrackerComponent implements AfterViewInit {
 	isTrackingEnabled = true;
 
 	isAddTask = false;
+	sound:any = null;
 
 	constructor(
 		private electronService: ElectronService,
@@ -306,6 +307,19 @@ export class TimeTrackerComponent implements AfterViewInit {
 
 		this.electronService.ipcRenderer.on('prepare_activities_screenshot', (event, arg) => {
 			this.sendActivities(arg);
+		})
+		
+		this.electronService.ipcRenderer.on('play_sound', (event, arg) =>{
+			try {
+				if (!this.sound && arg.soundFile) {
+					this.sound = new Audio(arg.soundFile);
+					this.sound.play();
+				} else {
+					this.sound.play();
+				}
+			} catch (error) {
+				console.log('error play sound', error);
+			}
 		})
 	}
 
@@ -640,37 +654,25 @@ export class TimeTrackerComponent implements AfterViewInit {
 
 	getTodayTime(arg) {
 		this.timeTrackerService.getTimeLogs(arg).then((res: any) => {
-			if (res && res.length > 0) {
+			if (res && res.todayDuration) {
 				this.countDurationToday(res);
 			}
 		});
 	}
 
-	countDurationToday(items) {
-		const workToday = {
-			hours: 0,
-			seconds: 0
-		};
-		items.forEach((item) => {
-			const stopItem = item.stoppedAt ? item.stoppedAt : new Date();
-			const itemDurationHours = moment(stopItem).diff(
-				moment(item.startedAt),
-				'hours'
-			);
-			const itemDurationSeconds = moment(stopItem).diff(
-				moment(item.startedAt),
-				'seconds'
-			);
-			workToday.hours += itemDurationHours;
-			workToday.seconds += itemDurationSeconds;
-		});
-		this.todayDuration = {
-			hours: this.formatingDuration('hours', workToday.hours),
-			minutes: this.formatingDuration(
-				'minutes',
-				Math.floor(workToday.seconds / 60)
-			)
-		};
+	countDurationToday(countTodayTime) {
+		if (countTodayTime) {
+			const minutes = Math.floor((countTodayTime.todayDuration/60));
+			const hours = Math.floor((minutes/60));
+			const minuteDuration = minutes % 60;
+			this.todayDuration = {
+				hours: this.formatingDuration('hours', hours),
+				minutes: this.formatingDuration(
+					'minutes',
+					minuteDuration
+				)
+			};
+		}
 		this._cdr.detectChanges();
 	}
 
