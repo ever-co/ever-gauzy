@@ -43,7 +43,7 @@
 			<div class="col-md-9">
 				<nb-tabset #inventoryTabset (changeTab)="onChangeTab($event)">
 					<nb-tab
-						tabTitle="Main"
+						[tabTitle]="'ORGANIZATIONS_PAGE.MAIN' | translate"
 						#mainTab
 						[active]="isActive(mainTab)"
 					>
@@ -357,7 +357,7 @@
 						</div>
 					</nb-tab>
 					<nb-tab
-						tabTitle="Tags & Options"
+						[tabTitle]="'ORGANIZATIONS_PAGE.TAGS_OPTIONS' | translate"
 						#optionsTab
 						[active]="isActive(optionsTab)"
 					>
@@ -377,7 +377,7 @@
 						</div>
 					</nb-tab>
 					<nb-tab
-						tabTitle="Variants"
+						[tabTitle]="'ORGANIZATIONS_PAGE.VARIANTS' | translate"
 						#variantsTab
 						[active]="isActive(variantsTab)"
 					>
