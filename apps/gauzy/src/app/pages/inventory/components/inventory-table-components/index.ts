@@ -5,4 +5,4 @@ export * from './image-row.component';
 export * from './item-img-tags-row.component';
 export * from './selected-row.component';
 
-export * from './table-components.module';
+export * from './inventory-table-components.module';

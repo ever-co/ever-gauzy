@@ -33,4 +33,4 @@ import { NoImageComponent } from './no-image/no-image.component';
     ],
     exports: [ NoImageComponent ]
 })
-export class TableComponentsModule { }
+export class InventoryTableComponentsModule { }

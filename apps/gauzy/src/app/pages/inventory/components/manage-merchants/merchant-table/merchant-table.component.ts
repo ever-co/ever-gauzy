@@ -17,7 +17,7 @@ import {
 } from '@gauzy/contracts';
 import { API_PREFIX, ComponentEnum } from './../../../../../@core/constants';
 import { MerchantService, Store, ToastrService } from '../../../../../@core/services';
-import { EnabledStatusComponent, ItemImgTagsComponent } from '../../table-components';
+import { EnabledStatusComponent, ItemImgTagsComponent } from '../../inventory-table-components';
 import { IPaginationBase, PaginationFilterBaseComponent } from './../../../../../@shared/pagination/pagination-filter-base.component';
 import { ServerDataSource } from './../../../../../@core/utils/smart-table/server.data-source';
 import { DeleteConfirmationComponent } from './../../../../../@shared/user/forms';

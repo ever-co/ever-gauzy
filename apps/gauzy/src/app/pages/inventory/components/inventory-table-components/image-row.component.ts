@@ -1,6 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { ViewCell } from 'ng2-smart-table';
-import { DEFAULT_SVG } from './../../../../@core/constants';
+import { DEFAULT_SVG } from '../../../../@core/constants';
 
 @Component({
 	template: `

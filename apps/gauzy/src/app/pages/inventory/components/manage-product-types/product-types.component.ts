@@ -20,7 +20,7 @@ import {
 } from '../../../../@core/services';
 import { ProductTypeMutationComponent } from '../../../../@shared/product-mutation';
 import { DeleteConfirmationComponent } from '../../../../@shared/user/forms';
-import { IconRowComponent } from './../table-components';
+import { IconRowComponent } from '../inventory-table-components';
 import { API_PREFIX, ComponentEnum } from '../../../../@core/constants';
 import { IPaginationBase, PaginationFilterBaseComponent } from './../../../../@shared/pagination/pagination-filter-base.component';
 import { ServerDataSource } from './../../../../@core/utils/smart-table/server.data-source';

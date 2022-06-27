@@ -19,7 +19,7 @@ import { InventoryStore } from 'apps/gauzy/src/app/@core';
 import { NbDialogService } from '@nebular/theme';
 import { SelectProductComponent } from '../select-product-form/select-product-form.component';
 import { firstValueFrom } from 'rxjs';
-import { ImageRowComponent } from '../../table-components/image-row.component';
+import { ImageRowComponent } from '../../inventory-table-components/image-row.component';
 import { ManageQuantityComponent } from '../manage-quantity/manage-quantity.component';
 import { ManageVariantsQuantityComponent } from '../manage-variants-quantity/manage-variants-quantity.component';
 

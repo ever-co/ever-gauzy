@@ -4,7 +4,7 @@ import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-ba
 import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { IWarehouseProductVariant } from '@gauzy/contracts';
-import { ImageRowComponent } from '../../table-components/image-row.component';
+import { ImageRowComponent } from '../../inventory-table-components/image-row.component';
 import { ManageQuantityComponent } from '../manage-quantity/manage-quantity.component';
 
 @Component({

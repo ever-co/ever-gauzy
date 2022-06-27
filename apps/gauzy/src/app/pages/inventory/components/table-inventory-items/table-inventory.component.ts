@@ -21,8 +21,8 @@ import { DeleteConfirmationComponent } from '../../../../@shared/user/forms';
 import { API_PREFIX, ComponentEnum } from '../../../../@core/constants';
 import { ProductService, Store, ToastrService } from '../../../../@core/services';
 import { ServerDataSource } from './../../../../@core/utils/smart-table/server.data-source';
-import { ImageRowComponent } from '../table-components';
-import { NameWithDescriptionComponent } from '../table-components/name-with-description/name-with-description.component';
+import { ImageRowComponent } from '../inventory-table-components';
+import { NameWithDescriptionComponent } from '../inventory-table-components/name-with-description/name-with-description.component';
 import { TagsOnlyComponent } from 'apps/gauzy/src/app/@shared';
 
 @UntilDestroy({ checkProperties: true })
