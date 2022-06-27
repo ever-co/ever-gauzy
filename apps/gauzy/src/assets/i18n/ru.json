@@ -1631,6 +1631,8 @@
 		"EDIT_PUBLIC_PAGE": "Изменить публичную страницу",
 		"SELECT_ORGANIZATION": "Пожалуйста, выберите организации из меню выше",
 		"MAIN": "Главная",
+		"TAGS_OPTIONS": "Теги & Опции",
+		"VARIANTS": "Варианты",
 		"DESCRIPTION": "Описание",
 		"DEPARTMENTS": "Департаменты",
 		"VENDORS": "Вендоры",
@@ -1852,7 +1854,8 @@
 		"OPEN_SOURCE": "Открытый код",
 		"ORGANIZATION_ADD": "Добавить организацию",
 		"IMAGE": "Изображение",
-		"SPRINTS": "Спринты"
+		"SPRINTS": "Спринты",
+		"NO_IMAGE": "Изображение недоступно"
 	},
 	"CONTACTS_PAGE": {
 		"VISITORS": "Посетители",
@@ -2263,7 +2266,8 @@
 		"SELECTED": "Выбрано",
 		"SUCCESSFULLY_ADDED_PRODUCTS": "Товары успешно добавлены!",
 		"MAIN": "Главная",
-		"INVENTORY": "Инвентаризация"
+		"INVENTORY": "Инвентаризация",
+		"IMAGE_WAS_DELETED": "Изображение было удалено"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Задачи",
@@ -3889,5 +3893,9 @@
 			"CREATE_NEW_WORKSPACE": "Создать новую рабочую область",
 			"FIND_WORKSPACE": "Найти рабочую область"
 		}
+	},
+	"NO_IMAGE": {
+		"ADD_DROP": "Добавить или выложить изображение",
+		"AVAILABLE": "Изображение недоступно"
 	}
 }
