@@ -179,13 +179,16 @@
 								type="user"
 								[src]="selectedContact?.imageUrl"
 							/>
-						</div>
-						<div class="profile-usertitle">
-							<div class="profile-usertitle-name">
-								{{ selectedContact?.name }}
-							</div>
-							<div class="profile-usertitle-type">
-								{{ selectedContact?.contactType }}
+							<div class="profile-usertitle">
+								<div class="profile-usertitle-name">
+									{{ selectedContact?.name }}
+								</div>
+								<div class="profile-usertitle-tags">
+									<ga-only-tags
+										*ngIf="selectedContact?.tags?.length"
+										[rowData]="selectedContact"
+									></ga-only-tags>
+								</div>
 							</div>
 						</div>
 						<nb-accordion>
@@ -272,21 +275,12 @@
 										{{ 'MENU.TAGS' | translate }}
 									</label>
 									<div class="text-caption caption">
-										<nb-tag-list
+										<ga-only-tags
 											*ngIf="
 												selectedContact?.tags?.length
 											"
-										>
-											<nb-tag
-												size="tiny"
-												[removable]="false"
-												*ngFor="
-													let tag of selectedContact?.tags
-												"
-												[text]="tag.name"
-											>
-											</nb-tag>
-										</nb-tag-list>
+											[rowData]="selectedContact"
+										></ga-only-tags>
 									</div>
 								</nb-accordion-item-body>
 							</nb-accordion-item>
@@ -298,26 +292,11 @@
 									}}
 								</nb-accordion-item-header>
 								<nb-accordion-item-body>
-									<!-- <nb-tag-list
-										*ngIf="
-											selectedContact?.projects?.length
-										"
-									>
-										<nb-tag
-											size="tiny"
-											[removable]="false"
-											*ngFor="
-												let project of selectedContact?.projects
-											"
-											[text]="project.name"
-										>
-										</nb-tag>
-									</nb-tag-list> -->
 									<ngx-project
 										*ngIf="
 											selectedContact?.projects?.length
 										"
-										[rowData]="selectedContact?.projects"
+										[rowData]="selectedContact"
 									></ngx-project>
 								</nb-accordion-item-body>
 							</nb-accordion-item>

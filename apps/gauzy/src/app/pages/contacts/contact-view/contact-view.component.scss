@@ -96,4 +96,51 @@ nb-accordion {
 
 nb-card {
     background-color: var(--gauzy-card-2);
+    margin: 0;
+}
+
+.profile-userpic {
+    display: flex;
+    align-items: center;
+
+    img {
+        width: 100px;
+        height: 100px;
+        object-fit: cover;
+    }
+}
+
+.profile-userpic {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+}
+
+.profile-sidebar {
+    display: flex;
+    flex-direction: column;
+    row-gap: 2.25rem;
+}
+
+.profile-usertitle {
+    display: flex;
+    flex-direction: column;
+    row-gap: 10px;
+
+    .profile-usertitle-name {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+        padding: 5px 14px 5px 7px;
+        width: fit-content;
+        background: rgba(110, 73, 232, 0.05);
+        border-radius: 20px;
+        color: rgba(110, 73, 232, 1);
+        font-size: 16px;
+        font-weight: 400;
+        line-height: 19px;
+        letter-spacing: 0em;
+        text-align: left;
+    }
 }
