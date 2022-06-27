@@ -6,7 +6,8 @@ import {
 	NbInputModule,
 	NbIconModule,
 	NbDialogModule,
-	NbActionsModule
+	NbActionsModule,
+	NbTooltipModule
 } from '@nebular/theme';
 import { FormsModule } from '@angular/forms';
 import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-color-input.module';
@@ -38,10 +39,11 @@ import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy
 		PositionsRoutingModule,
 		TagsColorInputModule,
 		NbActionsModule,
+		NbTooltipModule,
 		NbDialogModule.forChild(),
 		TranslateModule,
-		HeaderTitleModule,
-    GauzyButtonActionModule
+		HeaderTitleModule,		
+    	GauzyButtonActionModule
 	],
 	declarations: [PositionsComponent],
 	providers: [OrganizationPositionsService]

@@ -49,6 +49,7 @@ export class EmployeeLevelComponent
 	settingsSmartTable: object;
 	smartTableSource = new LocalDataSource();
 	disabled: boolean = true;
+	loading: boolean = false;
 	selected = {
 		employeeLevel: null,
 		state: false
@@ -100,6 +101,7 @@ export class EmployeeLevelComponent
 		if (!this.organization) {
 			return;
 		}
+		this.loading = true;
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 		const { activePage, itemsPerPage } = this.getPagination();
@@ -108,7 +110,7 @@ export class EmployeeLevelComponent
 			tenantId,
 			organizationId
 		});
-
+		this.loading = false;
 		if (items) {
 			this.employeeLevels = items;
 			this.smartTableSource.setPaging(activePage, itemsPerPage, false);

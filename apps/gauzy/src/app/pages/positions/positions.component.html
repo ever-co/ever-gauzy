@@ -57,6 +57,15 @@
 				(selectedPage)="onPageChange($event)"
 			></ga-card-grid>
 		</ng-template>
+		<ng-template [ngIf]="!loading && positions?.length == 0">
+			<nb-card class="p-0">
+				<nb-card-body class="custom-table">
+					<div>
+						{{ 'SM_TABLE.NO_RESULT' | translate }}
+					</div>
+				</nb-card-body>
+			</nb-card>
+		</ng-template>
 	</nb-card-body>
 </nb-card>
 <ng-template #actionButtons>
@@ -81,6 +90,7 @@
 			class="action"
 			[disabled]="isDisabled"
 			size="small"
+			[nbTooltip]="'BUTTONS.DELETE' | translate"
 		>
 			<nb-icon status="danger" icon="trash-2-outline"> </nb-icon>
 		</button>

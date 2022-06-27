@@ -6,7 +6,8 @@ import {
 	NbInputModule,
 	NbIconModule,
 	NbDialogModule,
-	NbActionsModule
+	NbActionsModule,
+	NbTooltipModule
 } from '@nebular/theme';
 import { FormsModule } from '@angular/forms';
 import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-color-input.module';
@@ -41,7 +42,8 @@ import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy
 		NbDialogModule.forChild(),
 		TranslateModule,
 		HeaderTitleModule,
-    GauzyButtonActionModule
+		NbTooltipModule,
+    	GauzyButtonActionModule
 	],
 	declarations: [EmployeeLevelComponent],
 	providers: []
