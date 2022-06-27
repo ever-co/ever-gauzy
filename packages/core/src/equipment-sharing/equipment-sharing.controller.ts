@@ -15,7 +15,7 @@ import {
 import { CrudController, PaginationParams } from './../core/crud';
 import { EquipmentSharing } from './equipment-sharing.entity';
 import { EquipmentSharingService } from './equipment-sharing.service';
-import { IEquipmentSharing, IPagination, RequestApprovalStatusTypesEnum } from '@gauzy/contracts';
+import { IEquipmentSharing, IPagination, PermissionsEnum, RequestApprovalStatusTypesEnum } from '@gauzy/contracts';
 import { Post } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import {
@@ -25,6 +25,7 @@ import {
 } from './commands';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
+import { Permissions } from './../shared/decorators';
 
 @ApiTags('EquipmentSharing')
 @UseGuards(TenantPermissionGuard)
@@ -185,6 +186,22 @@ export class EquipmentSharingController extends CrudController<EquipmentSharing>
 	}
 
 	/**
+	 * GET equipment sharing by pagination
+	 * 
+	 * @param filter 
+	 * @returns 
+	 */
+	@Get('pagination')
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_EQUIPMENT_SHARING_VIEW)
+	@UsePipes(new ValidationPipe({ transform: true }))
+	async pagination(
+		@Query() filter: PaginationParams<EquipmentSharing>
+	): Promise<IPagination<IEquipmentSharing>> {
+		return this.equipmentSharingService.paginate(filter);
+	}
+
+	/**
 	 * GET all equipment sharings
 	 * 
 	 * @param data 
@@ -243,20 +260,5 @@ export class EquipmentSharingController extends CrudController<EquipmentSharing>
 		return await this.commandBus.execute(
 			new EquipmentSharingUpdateCommand(id, equipmentSharing)
 		);
-	}
-
-	/**
-	 * GET equipment sharing by pagination
-	 * 
-	 * @param filter 
-	 * @returns 
-	 */
-	 @Get('pagination')
-	 @UseGuards(PermissionGuard)
-	 @UsePipes(new ValidationPipe({ transform: true }))
-	 async pagination(
-		 @Query() filter: PaginationParams<EquipmentSharing>
-	 ): Promise<IPagination<IEquipmentSharing>> {
-		 return this.equipmentSharingService.paginate(filter);
-	 }
+	}	
 }

@@ -8,20 +8,20 @@ import { EquipmentSharingService } from './equipment-sharing.service';
 import { RequestApproval } from '../request-approval/request-approval.entity';
 import { CommandHandlers } from './commands/handlers';
 import { TenantModule } from '../tenant/tenant.module';
-import { UserService } from '../user/user.service';
-import { User } from '../user/user.entity';
+import { UserModule } from './../user/user.module';
 
 @Module({
 	imports: [
 		RouterModule.forRoutes([
 			{ path: '/equipment-sharing', module: EquipmentSharingModule }
 		]),
-		TypeOrmModule.forFeature([RequestApproval, EquipmentSharing, User]),
+		TypeOrmModule.forFeature([RequestApproval, EquipmentSharing]),
 		CqrsModule,
-		TenantModule
+		TenantModule,
+		UserModule
 	],
 	controllers: [EquipmentSharingController],
-	providers: [EquipmentSharingService, ...CommandHandlers, UserService],
+	providers: [EquipmentSharingService, ...CommandHandlers],
 	exports: [EquipmentSharingService]
 })
 export class EquipmentSharingModule {}
