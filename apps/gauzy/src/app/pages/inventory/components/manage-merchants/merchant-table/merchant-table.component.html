@@ -80,16 +80,18 @@
 >
 	<ng-container *ngxPermissionsOnly="ORG_PRODUCT_TYPES_EDIT">
 		<div class="btn-group actions">
-			<button
-				nbButton
-				status="basic"
-				class="action secondary"
-				size="small"
-				[disabled]="!selectedItem && disableButton"
-			>
-				<nb-icon icon="eye-outline"></nb-icon>
-				{{ 'BUTTONS.VIEW' | translate }}
-			</button>
+			<ng-container *ngxPermissionsOnly="ORG_PRODUCT_TYPES_VIEW">
+				<button
+					nbButton
+					status="basic"
+					class="action secondary"
+					size="small"
+					[disabled]="!selectedItem && disableButton"
+				>
+					<nb-icon icon="eye-outline"></nb-icon>
+					{{ 'BUTTONS.VIEW' | translate }}
+				</button>
+			</ng-container>
 			<button
 				(click)="onEditStore(selectedItem)"
 				nbButton
