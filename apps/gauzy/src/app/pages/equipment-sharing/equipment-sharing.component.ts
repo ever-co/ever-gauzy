@@ -16,14 +16,12 @@ import { switchMap, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { EquipmentSharingMutationComponent } from '../../@shared/equipment-sharing';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
-import {
-	EquipmentSharingStatusComponent,
-	EquipmentSharingPolicyComponent
-} from './table-components';
+import { EquipmentSharingPolicyComponent } from './table-components';
 import { EmployeesService, EquipmentSharingService, Store, ToastrService } from '../../@core/services';
 import { combineLatest, Subject, firstValueFrom } from 'rxjs';
 import { ComponentEnum } from '../../@core/constants';
 import { PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
+import { StatusBadgeComponent } from '../../@shared/status-badge';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -180,7 +178,8 @@ export class EquipmentSharingComponent
 				status: {
 					title: this.getTranslation('EQUIPMENT_SHARING_PAGE.STATUS'),
 					type: 'custom',
-					renderComponent: EquipmentSharingStatusComponent,
+					width: '5%',
+					renderComponent: StatusBadgeComponent,
 					filter: false
 				}				
 			}
@@ -189,8 +188,8 @@ export class EquipmentSharingComponent
 
 	showApprovedButton(rowData) {
 		if(rowData){
-			return (rowData.status === RequestApprovalStatusTypesEnum.REFUSED ||
-				rowData.status === RequestApprovalStatusTypesEnum.REQUESTED
+			return (rowData.status.value === RequestApprovalStatusTypesEnum.REFUSED ||
+				rowData.status.value === RequestApprovalStatusTypesEnum.REQUESTED
 				) ? true : false
 		} else {
 			return false
@@ -199,8 +198,8 @@ export class EquipmentSharingComponent
 
 	showRefuseButton(rowData) {
 		if(rowData){
-			return (rowData.status === RequestApprovalStatusTypesEnum.APPROVED ||
-				rowData.status === RequestApprovalStatusTypesEnum.REQUESTED
+			return (rowData.status.value === RequestApprovalStatusTypesEnum.APPROVED ||
+				rowData.status.value === RequestApprovalStatusTypesEnum.REQUESTED
 				) ? true : false
 		} else {
 			return false
@@ -330,6 +329,7 @@ export class EquipmentSharingComponent
 		this.equipmentsData = equipmentItems.map((equipmentSharing) => {
 			return {
 				...equipmentSharing,
+				status: this.statusMapper(equipmentSharing),
 				name: equipmentSharing.equipment
 					? equipmentSharing.equipment.name
 					: ''
@@ -402,5 +402,30 @@ export class EquipmentSharingComponent
 			.catch((err) => {
 				this.toastrService.danger('Could not load employee');
 			});
+	}
+
+	statusMapper(row: any) {
+		let value : string
+		switch (row.status) {
+			case RequestApprovalStatusTypesEnum.APPROVED:
+				value = this.getTranslation('APPROVAL_REQUEST_PAGE.APPROVED');
+				break;
+			case RequestApprovalStatusTypesEnum.REFUSED:
+				value = this.getTranslation('APPROVAL_REQUEST_PAGE.REFUSED');
+				break;
+			default:
+				value = this.getTranslation('APPROVAL_REQUEST_PAGE.REQUESTED');
+				break;
+		}
+		const badgeClass = ['approved'].includes(value.toLowerCase())
+			? 'success'
+			: ['requested'].includes(value.toLowerCase())
+			? 'warning'
+			: 'danger';
+		return {
+			text: value,
+			value: row.status,
+			class: badgeClass
+		};
 	}
 }
