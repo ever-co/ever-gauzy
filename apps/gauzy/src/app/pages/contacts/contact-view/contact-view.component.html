@@ -339,9 +339,7 @@
 									<div
 										class="address-details d-flex flex-column"
 									>
-										<label class="label">
-											Country
-										</label>
+										<label class="label"> Country </label>
 										<div class="text-caption caption mb-3">
 											{{
 												selectedContact?.contact
@@ -376,7 +374,7 @@
 							[tabTitle]="'CONTACTS_PAGE.MEMBERS' | translate"
 						>
 							<div class="row">
-								<div class="col-6">
+								<div class="col-12">
 									<div class="form-group">
 										<ga-employee-multi-select
 											[selectedEmployeeIds]="
@@ -393,17 +391,16 @@
 										</ga-employee-multi-select>
 									</div>
 								</div>
-
-								<div class="col-md-6">
-									<nb-card
-										class="card-scroll"
-										*ngIf="selectedMembers?.length > 0"
-									>
+							</div>
+							<div class="row">
+								<div class="col-12">
+									<div *ngIf="selectedMembers?.length > 0">
 										<nb-list>
 											<nb-list-item
 												*ngFor="
 													let member of selectedMembers
 												"
+												class="p-1"
 											>
 												<ngx-avatar
 													[name]="member?.user?.name"
@@ -414,7 +411,7 @@
 												></ngx-avatar>
 											</nb-list-item>
 										</nb-list>
-									</nb-card>
+									</div>
 								</div>
 							</div>
 						</nb-tab>
