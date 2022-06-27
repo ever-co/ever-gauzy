@@ -151,15 +151,9 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 
 			if (!equipmentSharing) {
 				throw new NotFoundException('Equiment Sharing not found');
-			}
-			if (
-				equipmentSharing.status ===
-				RequestApprovalStatusTypesEnum.REQUESTED
-			) {
-				equipmentSharing.status = status;
-			} else {
-				throw new ConflictException('Equiment Sharing is Conflict');
-			}
+			}			
+			equipmentSharing.status = status;			
+			
 			return await this.equipmentSharingRepository.save(equipmentSharing);
 		} catch (err) {
 			throw new BadRequestException(err);
