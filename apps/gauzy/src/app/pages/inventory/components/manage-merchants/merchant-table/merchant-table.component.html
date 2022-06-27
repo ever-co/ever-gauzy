@@ -78,7 +78,7 @@
 	let-buttonSize="buttonSize"
 	let-selectedItem="selectedItem"
 >
-	<ng-container *ngxPermissionsOnly="ORG_PRODUCT_TYPES_EDIT">
+	<ng-container *ngxPermissionsOnly="['ORG_PRODUCT_TYPES_EDIT', 'ORG_PRODUCT_TYPES_VIEW']">
 		<div class="btn-group actions">
 			<ng-container *ngxPermissionsOnly="ORG_PRODUCT_TYPES_VIEW">
 				<button
