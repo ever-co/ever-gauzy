@@ -1,8 +1,7 @@
 import { ICommandHandler, CommandHandler } from '@nestjs/cqrs';
 import { EquipmentSharingStatusCommand } from '../equipment-sharing.status.command';
 import { EquipmentSharing } from '../../equipment-sharing.entity';
-import { NotFoundException, ConflictException } from '@nestjs/common';
-import { RequestApprovalStatusTypesEnum } from '@gauzy/contracts';
+import { NotFoundException } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { RequestApproval } from '../../../request-approval/request-approval.entity';
 import { InjectRepository } from '@nestjs/typeorm';

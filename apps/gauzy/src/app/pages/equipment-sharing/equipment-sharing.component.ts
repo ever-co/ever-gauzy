@@ -194,8 +194,7 @@ export class EquipmentSharingComponent
 				) ? true : false
 		} else {
 			return false
-		}
-		
+		}		
 	}
 
 	showRefuseButton(rowData) {
