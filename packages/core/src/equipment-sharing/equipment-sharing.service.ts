@@ -1,13 +1,12 @@
 import {
 	Injectable,
 	BadRequestException,
-	NotFoundException,
-	ConflictException
+	NotFoundException
 } from '@nestjs/common';
 import { EquipmentSharing } from './equipment-sharing.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Brackets, Repository, WhereExpressionBuilder } from 'typeorm';
-import { IEquipmentSharing, IPagination, RequestApprovalStatusTypesEnum } from '@gauzy/contracts';
+import { IEquipmentSharing, IPagination } from '@gauzy/contracts';
 import { ConfigService } from '@gauzy/config';
 import { RequestContext } from '../core/context';
 import { TenantAwareCrudService } from './../core/crud';
