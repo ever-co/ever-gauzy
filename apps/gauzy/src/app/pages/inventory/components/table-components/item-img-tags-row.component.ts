@@ -23,9 +23,10 @@ import { ComponentLayoutStyleEnum } from '@gauzy/contracts';
 				</div>
 				<div
 					*ngIf="isTags"
-					class="col-12 mt-2 {{
-						layout === 'CARDS_GRID' ? 'tags-right' : ''
-					}}"
+					class="col-12 mt-2"
+					[ngClass]="{
+						'tags-right': layout === componentLayoutEnum.CARDS_GRID
+					}"
 				>
 					<nb-badge
 						*ngFor="let tag of rowData?.tags"
@@ -114,6 +115,8 @@ export class ItemImgTagsComponent implements ViewCell {
 
 	@Input()
 	layout?: ComponentLayoutStyleEnum | undefined;
+
+	componentLayoutEnum = ComponentLayoutStyleEnum;
 
 	get imageUrl() {
 		if (this.rowData.logo) {
