@@ -3,9 +3,7 @@ import { ViewCell } from 'ng2-smart-table';
 
 @Component({
 	template: `<div>
-		<div
-			*ngIf="!value"			
-		>
+		<div *ngIf="!value">
 			<div class="badge badge-disabled">
 				{{ 'INVENTORY_PAGE.INACTIVE' | translate }}
 			</div>
@@ -15,8 +13,7 @@ import { ViewCell } from 'ng2-smart-table';
 				{{ 'INVENTORY_PAGE.ACTIVE' | translate }}
 			</div>
 		</div>
-	</div>
-	`,
+	</div> `,
 	styles: [
 		`
 			.badge-disabled {
@@ -25,7 +22,13 @@ import { ViewCell } from 'ng2-smart-table';
 
 			.badge {
 				text-align: center;
-				padding: 6px 8px 4px;
+				border-radius: 4px;
+				padding: 4px 8px;
+				font-size: 12px;
+				font-weight: 600;
+				line-height: 15px;
+				letter-spacing: 0em;
+				text-align: left;
 			}
 		`
 	]

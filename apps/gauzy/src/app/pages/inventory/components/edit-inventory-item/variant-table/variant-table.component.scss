@@ -1,0 +1,11 @@
+@import 'gauzy/_gauzy-table';
+
+:host ngx-gauzy-button-action ::ng-deep {
+    .transition-container span {
+        background-color: unset;
+    }
+
+    .actions-container {
+        padding-top: 0;
+    }
+}

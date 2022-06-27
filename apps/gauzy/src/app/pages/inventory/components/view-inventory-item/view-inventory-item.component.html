@@ -1,8 +1,6 @@
 <nb-card class="main card-scroll">
 	<nb-card-header class="d-flex">
-		<div class="navigate">
-			<ngx-back-navigation></ngx-back-navigation>
-		</div>
+		<ngx-back-navigation></ngx-back-navigation>
 		<h5>
 			{{ 'INVENTORY_PAGE.VIEW_INVENTORY_ITEM' | translate }}
 		</h5>
@@ -16,7 +14,7 @@
 		<div class="row" *ngIf="inventoryItem">
 			<div class="col-md-3">
 				<div class="product-container">
-					<div>
+					<div class="product-container-inner">
 						<img
 							*ngIf="
 								inventoryItem.featuredImage &&
@@ -26,17 +24,14 @@
 							[src]="inventoryItem.featuredImage.url"
 							alt="Feature image"
 						/>
-						<img
+						<ga-no-image
 							*ngIf="
-								inventoryItem.featuredImage &&
-								!inventoryItem.featuredImage.url
+								!inventoryItem?.featuredImage &&
+								!inventoryItem?.featuredImage?.url
 							"
-							class="featured-image"
-							[src]="
-								'https://afostats.imagead.net/uploads/afo/no_img.png'
-							"
-							alt="Feature image"
-						/>
+							class="no-image"
+							[fontSize]="16"
+						></ga-no-image>
 					</div>
 					<div
 						*ngIf="inventoryItem.gallery"
@@ -50,31 +45,28 @@
 								"
 								(click)="onGalleryItemClick(galleryItem)"
 							>
-								<div
+								<img
 									class="gallery-sm-preview-item"
-									[ngStyle]="{
-										backgroundImage:
-											'url(' + galleryItem.url + ')'
-									}"
-								></div>
+									[src]="galleryItem.url"
+								/>
 							</div>
 						</div>
 					</div>
 				</div>
 			</div>
-			<div class="col-md-9">
+			<div class="col-md-9 right-content">
 				<div class="container">
 					<div class="row mb-1">
 						<div class="col-md-6 col-sm-12">
 							<p>
-								<span class="key-description mr-2"
+								<span class="key-description"
 									>{{
 										'INVENTORY_PAGE.NAME' | translate
 									}}:</span
 								>{{ getTranslatedProp(inventoryItem, 'name') }}
 							</p>
 							<p>
-								<span class="key-description mr-2"
+								<span class="key-description"
 									>{{
 										'INVENTORY_PAGE.DESCRIPTION'
 											| translate
@@ -87,7 +79,7 @@
 								}}
 							</p>
 							<p>
-								<span class="key-description mr-2"
+								<span class="key-description"
 									>{{
 										'INVENTORY_PAGE.TYPE' | translate
 									}}:</span
@@ -99,7 +91,7 @@
 								}}
 							</p>
 							<p>
-								<span class="key-description mr-2"
+								<span class="key-description"
 									>{{
 										'INVENTORY_PAGE.CATEGORY' | translate
 									}}:</span
@@ -111,7 +103,7 @@
 								}}
 							</p>
 							<p>
-								<span class="key-description mr-2"
+								<span class="key-description"
 									>{{
 										'INVENTORY_PAGE.ENABLED' | translate
 									}}:</span
@@ -119,14 +111,16 @@
 								<nb-icon
 									*ngIf="inventoryItem.enabled"
 									icon="checkmark"
+									status="success"
 								></nb-icon>
 								<nb-icon
 									*ngIf="!inventoryItem.enabled"
 									icon="close"
+									status="danger"
 								></nb-icon>
 							</p>
 							<div class="d-flex">
-								<div class="key-description mr-2">
+								<div class="key-description">
 									{{ 'INVENTORY_PAGE.OPTIONS' | translate }}:
 								</div>
 								<div class="options" *ngIf="inventoryItem">
@@ -143,28 +137,31 @@
 							class="col-md-6 col-sm-12"
 							*ngIf="inventoryItem.tags"
 						>
-							<span class="key-description mr-2 mb-1"
+							<span class="key-description mb-2"
 								>{{ 'INVENTORY_PAGE.TAGS' | translate }}:</span
 							>
-							<div
-								*ngFor="let tag of inventoryItem.tags"
-								class="tag-item"
-								[ngStyle]="{
-									background: tag.color
-								}"
-							>
-								{{ tag.name }}
+							<div class="inventory-item-tags">
+								<div
+									*ngFor="let tag of inventoryItem.tags"
+									class="tag-item"
+									[ngStyle]="{
+										background: tag.color
+									}"
+								>
+									{{ tag.name }}
+								</div>
 							</div>
 						</div>
 					</div>
 					<div class="row mt-5">
-						<ng2-smart-table
-							class="tags-table"
-							[settings]="settingsSmartTable"
-							[source]="smartTableSource"
-							#variantTable
-						>
-						</ng2-smart-table>
+						<div class="table-scroll-container">
+							<ng2-smart-table
+								[settings]="settingsSmartTable"
+								[source]="smartTableSource"
+								#variantTable
+							>
+							</ng2-smart-table>
+						</div>
 					</div>
 				</div>
 			</div>

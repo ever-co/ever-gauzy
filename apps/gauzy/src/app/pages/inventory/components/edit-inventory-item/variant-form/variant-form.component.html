@@ -1,4 +1,4 @@
-<div class="row d-bottom mb-5">
+<div class="row d-bottom mb-3">
 	<div class="col-sm-9">
 		<label class="label" for="addVariant">
 			{{ 'INVENTORY_PAGE.ADD_VARIANT' | translate }}
@@ -19,18 +19,23 @@
 			}}</ng-option>
 		</ng-select>
 	</div>
-	<div class="col-sm-3">
-		<button
-			class="width-100"
-			status="success"
-			nbButton
-			(click)="onSaveVariant()"
-		>
-			{{ 'INVENTORY_PAGE.ADD_VARIANT' | translate }}
-		</button>
+	<div class="col-sm-3 align-self-end">
+		<ng-container *ngxPermissionsOnly="'ALL_ORG_EDIT'">
+			<div class="add-variant">
+				<button
+					class="green"
+					status="success"
+					nbButton
+					(click)="onSaveVariant()"
+					size="small"
+				>
+					{{ 'INVENTORY_PAGE.ADD_VARIANT' | translate }}
+				</button>
+			</div>
+		</ng-container>
 	</div>
 </div>
-<div class="row">
+<div class="row mb-3">
 	<div class="col-sm-12 variants-container">
 		<button
 			class="mr-2 btn-variant"

@@ -24,7 +24,8 @@ import { take } from 'rxjs/operators';
 })
 export class ProductGalleryComponent
 	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
+	implements OnInit, OnDestroy
+{
 	selectedImage: IImageAsset;
 	gallery: IImageAsset[] = [];
 	featuredImage: IImageAsset;
@@ -113,7 +114,7 @@ export class ProductGalleryComponent
 		});
 
 		let selectedImages = await firstValueFrom(dialog.onClose);
-
+		if (!selectedImages) return;
 		selectedImages = selectedImages.length
 			? selectedImages.filter((image) => {
 					return !this.inventoryStore.gallery.find((galleryImg) => {
@@ -244,9 +245,7 @@ export class ProductGalleryComponent
 			activeProduct.featuredImage &&
 			activeProduct.featuredImage.id == this.selectedImage.id
 		) {
-			let result = await this.productService.deleteFeaturedImage(
-				activeProduct.id
-			);
+			await this.productService.deleteFeaturedImage(activeProduct.id);
 		}
 	}
 

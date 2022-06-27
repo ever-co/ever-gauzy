@@ -17,7 +17,8 @@ import { TranslationBaseComponent } from '../language-base/translation-base.comp
 })
 export class ImageAssetComponent
 	extends TranslationBaseComponent
-	implements OnInit {
+	implements OnInit
+{
 	form: FormGroup;
 	@Input() imageAsset: IImageAsset;
 
@@ -33,14 +34,19 @@ export class ImageAssetComponent
 
 	ngOnInit(): void {
 		this.form = this.fb.group({
-			name: [
-				this.imageAsset ? this.imageAsset.name : null,
-				Validators.required
-			],
-			url: [this.imageAsset ? this.imageAsset.url : null],
-			width: [this.imageAsset ? this.imageAsset.width : null],
-			height: [this.imageAsset ? this.imageAsset.height : null]
+			name: [null, Validators.required],
+			url: [null],
+			width: [null],
+			height: [null]
 		});
+
+		if (this.imageAsset)
+			this.form.patchValue({
+				name: this.imageAsset.name,
+				url: this.imageAsset.url,
+				width: this.imageAsset.width,
+				height: this.imageAsset.height
+			});
 	}
 
 	async onSaveRequest() {

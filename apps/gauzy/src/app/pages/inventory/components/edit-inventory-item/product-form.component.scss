@@ -71,6 +71,7 @@ nb-card-body {
 
 nb-card {
   overflow-y: visible;
+  margin-bottom: 0px;
 }
 
 nb-card-footer {
@@ -85,6 +86,7 @@ nb-card-footer {
 .product-container {
   width: 100%;
 }
+
 .product-photo {
   width: 100%;
   background-color: white;
@@ -123,7 +125,37 @@ nb-card-footer {
   }
 }
 
+h5 {
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 30px;
+  letter-spacing: 0em;
+  text-align: left;
+}
+
 nb-tab {
   background-color: rgba(50, 50, 50, 0.03);
-  border: 0 0 $default-radius $default-radius;  
+  border: 0 0 $default-radius $default-radius;
+
+  &.content-active {
+    margin: 0 -1.5rem -1rem 0;
+    height: calc(100vh - 22rem);
+    border-radius: 0 0 $default-radius 0;
+  }
+
+  input,
+  textarea,
+  ::ng-deep .ng-select .ng-select-container,
+  ::ng-deep nb-select.appearance-outline.status-basic .select-button,
+  ga-location-form ::ng-deep input {
+    background-color: var(--gauzy-card-1);
+  }
+}
+
+label {
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 13px;
+  letter-spacing: -0.01em;
+  text-align: left;
 }

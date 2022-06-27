@@ -5,9 +5,9 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Store, ProductService, API_PREFIX } from 'apps/gauzy/src/app/@core';
 import { TranslateService } from '@ngx-translate/core';
 import { Ng2SmartTableComponent, ServerDataSource } from 'ng2-smart-table';
-import { ImageRowComponent } from '../../table-components/image-row.component';
+import { ImageRowComponent } from '../../inventory-table-components/image-row.component';
 import { NbDialogRef } from '@nebular/theme';
-import { SelectedRowComponent } from '../../table-components/selected-row.component';
+import { SelectedRowComponent } from '../../inventory-table-components/selected-row.component';
 import { HttpClient } from '@angular/common/http';
 
 export interface SelectedRowEvent {

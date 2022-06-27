@@ -21,7 +21,9 @@ import { DeleteConfirmationComponent } from '../../../../@shared/user/forms';
 import { API_PREFIX, ComponentEnum } from '../../../../@core/constants';
 import { ProductService, Store, ToastrService } from '../../../../@core/services';
 import { ServerDataSource } from './../../../../@core/utils/smart-table/server.data-source';
-import { ItemImgTagsComponent } from '../table-components';
+import { ImageRowComponent } from '../inventory-table-components';
+import { NameWithDescriptionComponent } from '../inventory-table-components/name-with-description/name-with-description.component';
+import { TagsOnlyComponent } from 'apps/gauzy/src/app/@shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -146,13 +148,17 @@ export class TableInventoryComponent extends PaginationFilterBaseComponent
 				perPage: pagination ? pagination.itemsPerPage : 10
 			},
 			columns: {
+				image: {
+					title: this.getTranslation('INVENTORY_PAGE.IMAGE'),
+					width: '79px',
+					filter: false,
+					type: 'custom',
+					renderComponent: ImageRowComponent
+				},
 				name: {
 					title: this.getTranslation('INVENTORY_PAGE.NAME'),
 					type: 'custom',
-					renderComponent: ItemImgTagsComponent,
-					valuePrepareFunction: (name: string) => {
-						return name || '-';
-					},					
+					renderComponent: NameWithDescriptionComponent
 				},
 				code: {
 					title: this.getTranslation('INVENTORY_PAGE.CODE'),
@@ -175,14 +181,10 @@ export class TableInventoryComponent extends PaginationFilterBaseComponent
 					}
 				},
 				description: {
-					title: this.getTranslation('INVENTORY_PAGE.DESCRIPTION'),
-					type: 'string',
+					title: this.getTranslation('INVENTORY_PAGE.TAGS'),
+					type: 'custom',
 					filter: false,
-					valuePrepareFunction: (description: string) => {
-						return description
-							? description.slice(0, 15) + '...'
-							: '';
-					}
+					renderComponent: TagsOnlyComponent
 				}
 			}
 		};
@@ -334,7 +336,6 @@ export class TableInventoryComponent extends PaginationFilterBaseComponent
 				itemsPerPage,
 				false
 			);
-
 			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
 				await this.smartTableSource.getElements();
 				this.products = this.smartTableSource.getData();
