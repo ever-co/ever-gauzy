@@ -756,26 +756,26 @@ export class StatisticService {
 			);
 		}
 
-		const query = this.timeLogRepository.createQueryBuilder();
-		query
+		const query = this.timeSlotRepository.createQueryBuilder('time_slot');
+		let projects: IProjectsStatistics[] = await query
 			.select(`"project"."name"`, "name")
 			.addSelect(
 				`${
 					this.configService.dbConnectionOptions.type === 'sqlite'
-						? `COALESCE(ROUND(SUM((julianday(COALESCE("${query.alias}"."stoppedAt", datetime('now'))) - julianday("${query.alias}"."startedAt")) * 86400)), 0)`
-						: `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("${query.alias}"."stoppedAt", NOW()) - "${query.alias}"."startedAt")))), 0)`
+						? `COALESCE(ROUND(SUM((julianday(COALESCE("time_log"."stoppedAt", datetime('now'))) - julianday("time_log"."startedAt")) * 86400) / COUNT("time_log"."id")), 0)`
+						: `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("time_log"."stoppedAt", NOW()) - "time_log"."startedAt"))) / COUNT("time_log"."id")), 0)`
 				}`,
 				`duration`
 			)
-			.innerJoin(`${query.alias}.project`, 'project')
-			.innerJoin(`${query.alias}.timeSlots`, 'time_slot')
+			.innerJoin(`${query.alias}.timeLogs`, 'time_log')
+			.innerJoin(`time_log.project`, 'project')
 			.andWhere(
 				new Brackets((qb: WhereExpressionBuilder) => { 
 					qb.andWhere(`"${query.alias}"."startedAt" BETWEEN :start AND :end`, {
 						start,
 						end
 					});
-					qb.andWhere(`"time_slot"."startedAt" BETWEEN :start AND :end`, {
+					qb.andWhere(`"time_log"."startedAt" BETWEEN :start AND :end`, {
 						start,
 						end
 					})
@@ -785,25 +785,43 @@ export class StatisticService {
 				new Brackets((qb: WhereExpressionBuilder) => { 
 					qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
 					qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
-					qb.andWhere(`"${query.alias}"."deletedAt" IS NULL`);
 				})
 			)
 			.andWhere(
-				new Brackets((qb: WhereExpressionBuilder) => { 			
+				new Brackets((qb: WhereExpressionBuilder) => { 
+					qb.andWhere(`"time_log"."tenantId" = :tenantId`, { tenantId });
+					qb.andWhere(`"time_log"."organizationId" = :organizationId`, { organizationId });
+					qb.andWhere(`"time_log"."deletedAt" IS NULL`);
+				})
+			)
+			.andWhere(
+				new Brackets((qb: WhereExpressionBuilder) => {
+					/**
+					 * If Employee Selected
+					 */
 					if (isNotEmpty(employeeIds)) {
 						qb.andWhere(`"${query.alias}"."employeeId" IN (:...employeeIds)`, {
 							employeeIds
 						});
+						qb.andWhere(`"time_log"."employeeId" IN (:...employeeIds)`, {
+							employeeIds
+						});
 					}
+					/**
+					 * If Project Selected
+					 */
 					if (isNotEmpty(projectIds)) {
-						qb.andWhere(`"${query.alias}"."projectId" IN (:...projectIds)`, {
+						qb.andWhere(`"time_log"."projectId" IN (:...projectIds)`, {
+							projectIds
+						});
+						qb.andWhere(`"project"."id" IN (:...projectIds)`, {
 							projectIds
 						});
 					}
 				})
-			);
-		let projects: IProjectsStatistics[] = await query
-			.groupBy(`"project"."id"`)
+			)
+			.groupBy(`"time_log"."id"`)
+			.addGroupBy(`"project"."id"`)
 			.orderBy('duration', 'DESC')
 			.limit(5)
 			.getRawMany();
@@ -819,7 +837,7 @@ export class StatisticService {
 				`duration`
 			)
 			.innerJoin(`${totalDurationQuery.alias}.project`, 'project')
-			.innerJoin(`${query.alias}.timeSlots`, 'time_slot')
+			.innerJoin(`${totalDurationQuery.alias}.timeSlots`, 'time_slot')
 			.andWhere(
 				new Brackets((qb: WhereExpressionBuilder) => { 
 					qb.andWhere(`"${totalDurationQuery.alias}"."startedAt" BETWEEN :start AND :end`, {
