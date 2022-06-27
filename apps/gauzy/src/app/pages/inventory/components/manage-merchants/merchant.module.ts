@@ -30,7 +30,8 @@ import { PaginationModule } from '../../../../@shared/pagination/pagination.modu
 import { TagsColorInputModule } from '../../../../@shared/tags/tags-color-input/tags-color-input.module';
 import { GauzyButtonActionModule } from './../../../../@shared/gauzy-button-action/gauzy-button-action.module';
 import { CardGridModule } from './../../../../@shared/card-grid/card-grid.module';
-import { TableComponentsModule } from './../../../../@shared/table-components/table-components.module';
+import { NgxPermissionsModule } from 'ngx-permissions';
+import { InventoryTableComponentsModule } from '../inventory-table-components';
 
 const NB_MODULES = [
 	NbCardModule,
@@ -70,7 +71,8 @@ const NB_MODULES = [
         TagsColorInputModule,
         GauzyButtonActionModule,
         CardGridModule,
-        TableComponentsModule
+        InventoryTableComponentsModule,
+        NgxPermissionsModule.forChild()
     ],
     providers: [MerchantService]
 })

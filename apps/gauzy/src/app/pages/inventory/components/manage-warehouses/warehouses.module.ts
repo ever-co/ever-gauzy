@@ -34,7 +34,7 @@ import { TagsColorInputModule } from './../../../../@shared/tags/tags-color-inpu
 import { PaginationModule } from '../../../../@shared/pagination/pagination.module';
 import { CardGridModule } from '../../../../@shared/card-grid/card-grid.module';
 import { GauzyButtonActionModule } from './../../../../@shared/gauzy-button-action/gauzy-button-action.module';
-import { TableComponentsModule } from './../../../../@shared/table-components/table-components.module';
+import { InventoryTableComponentsModule } from '../inventory-table-components';
 
 
 const NB_MODULES = [
@@ -81,7 +81,7 @@ const NB_MODULES = [
         CardGridModule,
         GauzyButtonActionModule,
         CardGridModule,
-        TableComponentsModule        
+        InventoryTableComponentsModule       
     ],
     providers: [WarehouseService]
 })

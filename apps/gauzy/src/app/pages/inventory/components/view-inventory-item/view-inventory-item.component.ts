@@ -14,7 +14,7 @@ import {
 import { ProductService, Store, TranslatableService } from './../../../../@core/services';
 import { GalleryComponent, GalleryService } from './../../../../@shared/gallery';
 import { TranslationBaseComponent } from './../../../../@shared/language-base';
-import { EnabledStatusComponent, ImageRowComponent } from './../table-components';
+import { EnabledStatusComponent, ImageRowComponent } from '../inventory-table-components';
 
 @UntilDestroy()
 @Component({
@@ -133,6 +133,7 @@ export class InventoryItemViewComponent
 	async loadSmartTable() {
 		this.settingsSmartTable = {
 			actions: false,
+			hideSubHeader: true,
 			columns: {
 				image: {
 					title: this.getTranslation('INVENTORY_PAGE.IMAGE'),

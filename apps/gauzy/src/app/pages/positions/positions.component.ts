@@ -52,6 +52,7 @@ export class PositionsComponent
 		state: false
 	};
 	disabled: boolean = true;
+	loading: boolean = false;
 
 	constructor(
 		private readonly organizationPositionsService: OrganizationPositionsService,
@@ -256,6 +257,7 @@ export class PositionsComponent
 		if (!this.organization) {
 			return;
 		}
+		this.loading = true;
 		const { id: organizationId } = this.organization;
 		const { tenantId } = this.store.user;
 		const { activePage, itemsPerPage } = this.getPagination();
@@ -267,6 +269,7 @@ export class PositionsComponent
 			},
 			['tags']
 		);
+		this.loading = false;
 		if (res) {
 			this.positions = res.items;
 			this.smartTableSource.setPaging(activePage, itemsPerPage, false);

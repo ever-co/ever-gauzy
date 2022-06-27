@@ -5,31 +5,28 @@ import { ComponentLayoutStyleEnum } from '@gauzy/contracts';
 
 @Component({
 	template: `
-		<div
-			style="display: flex; align-items: center;"
-			class="{{ layout === 'CARDS_GRID' ? 'tags-right' : '' }}"
-		>
+		<div class="img-tags-container">
 			<div *ngIf="imageUrl" class="image-container">
 				<img [src]="imageUrl" />
 			</div>
 			<div *ngIf="!imageUrl" class="image-container">
-				<img
-					[src]="
-            '/assets/images/others/no-image-placeholder.svg'
-					"
-					alt="Product Item Photo"
+				<ga-no-image
+					class="no-image"
 					(mouseenter)="hoverState = true"
 					(mouseleave)="hoverState = false"
-				/>
+				>
+				</ga-no-image>
 			</div>
 			<div class="row">
-				<div class="col-12 text-truncate" style="margin-left:15px;">
+				<div class="col-12 text-truncate name">
 					{{ value || '-' }}
 				</div>
 				<div
 					*ngIf="isTags"
-					style="margin-left:15px;"
-					class="col-12 mt-2 {{ layout === 'CARDS_GRID' ? 'tags-right' : '' }}"
+					class="col-12 mt-2"
+					[ngClass]="{
+						'tags-right': layout === componentLayoutEnum.CARDS_GRID
+					}"
 				>
 					<nb-badge
 						*ngFor="let tag of rowData?.tags"
@@ -42,16 +39,20 @@ import { ComponentLayoutStyleEnum } from '@gauzy/contracts';
 					</nb-badge>
 				</div>
 			</div>
-		</div>		
+		</div>
 	`,
 	styles: [
 		`
+			.img-tags-container {
+				display: flex;
+				gap: 10px;
+			}
+
 			.image-container {
 				width: 70px;
-				height: 63px;
+				height: 64px;
 				display: flex;
 				justify-content: center;
-        object-fit:cover;
 			}
 
 			.color {
@@ -67,13 +68,37 @@ import { ComponentLayoutStyleEnum } from '@gauzy/contracts';
 			}
 
 			img {
-				height: 100%;
+				width: 70px;
+				height: 64px;
+				border-radius: 4px;
+				object-fit: cover;
+				box-shadow: 0 1px 1px 0 rgba(0 0 0 / 15%);
+			}
+
+			.no-image {
 				width: 100%;
-				border-radius: 50%;
+				height: 100%;
+			}
+
+			.content {
+				display: flex;
+				align-items: baseline;
+				padding: 8px;
+				gap: 5px;
 			}
 
 			.tags-right {
 				justify-content: flex-end;
+			}
+
+			.name {
+				font-size: 14px;
+				font-weight: 600;
+				line-height: 17px;
+				letter-spacing: 0em;
+				text-align: left;
+				color: var(--gauzy-color-text-1);
+				margin-bottom: 4px;
 			}
 		`
 	]
@@ -90,6 +115,8 @@ export class ItemImgTagsComponent implements ViewCell {
 
 	@Input()
 	layout?: ComponentLayoutStyleEnum | undefined;
+
+	componentLayoutEnum = ComponentLayoutStyleEnum;
 
 	get imageUrl() {
 		if (this.rowData.logo) {

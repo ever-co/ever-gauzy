@@ -8,21 +8,21 @@ $default-box-shadow: 0px 1px 1px 0px rgba(0, 0, 0, 0.15);
 
 @mixin ng-select-overrides($height, $radius, $box-shadow) {
   .ng-select {
-      &.ng-select-single .ng-select-container {
-        height: $height;
-      }
-  
-      .ng-select-container {
-        border-radius: $radius;
-        box-shadow: $box-shadow;
-        height: $height;
-        border: none;
-  
-        input {
-          height: unset;
-        }
+    &.ng-select-single .ng-select-container {
+      height: $height;
+    }
+
+    .ng-select-container {
+      border-radius: $radius;
+      box-shadow: $box-shadow;
+      height: $height;
+      border: none;
+
+      input {
+        height: unset;
       }
     }
+  }
 }
 
 @mixin text-inputs-overrides() {
@@ -32,6 +32,7 @@ $default-box-shadow: 0px 1px 1px 0px rgba(0, 0, 0, 0.15);
     height: $default-height;
     background-color: nb-theme(select-outline-basic-background-color);
   }
+
   textarea {
     border-radius: $default-radius;
     box-shadow: $default-box-shadow-inset;
@@ -51,7 +52,7 @@ $default-box-shadow: 0px 1px 1px 0px rgba(0, 0, 0, 0.15);
     border: none;
   }
 
-  nb-select.appearance-outline.size-medium .select-button{
+  nb-select.appearance-outline.size-medium .select-button {
     border: none;
   }
 }
@@ -78,6 +79,7 @@ $default-box-shadow: 0px 1px 1px 0px rgba(0, 0, 0, 0.15);
   nb-stepper .header .step .label {
     display: none;
   }
+
   nb-stepper.horizontal .header .step {
     margin: 0;
     display: flex;
@@ -85,11 +87,11 @@ $default-box-shadow: 0px 1px 1px 0px rgba(0, 0, 0, 0.15);
     justify-content: center;
   }
 
-  nb-stepper .header .step.selected + .connector,
-  nb-stepper .header .step.completed + .connector {
+  nb-stepper .header .step.selected+.connector,
+  nb-stepper .header .step.completed+.connector {
     background-color: nb-theme(background-primary-color-1);
     height: 10px !important;
-    margin: 0px 10px 0 -10px !important;
+    margin: 0px 10px 0 -5px !important;
     border-radius: 0 nb-theme(border-radius) nb-theme(border-radius) 0;
   }
 
@@ -97,27 +99,41 @@ $default-box-shadow: 0px 1px 1px 0px rgba(0, 0, 0, 0.15);
     align-items: center !important;
     margin-bottom: 0px !important;
   }
+
+  nb-stepper .header .label-index {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: var(--gauzy-sidebar-background-3);
+    border: none;
+  }
+
+  nb-stepper .header .connector {
+    flex: auto;
+    background-color: var(--gauzy-sidebar-background-3);
+    height: 10px !important;
+    margin: 0px 10px 0 -5px !important;
+    border-radius: 0 var(--border-radius) var(--border-radius) 0;
+  }
 }
 
 @mixin gauzy-overrides() {
-  @include nb-select-overrides(
-    $default-height,
+  @include nb-select-overrides($default-height,
     $default-radius,
-    $default-box-shadow-inset
-  );
+    $default-box-shadow-inset );
   @include text-inputs-overrides;
-  @include ng-select-overrides(
-    $default-height,
+  @include ng-select-overrides($default-height,
     $default-radius,
-    $default-box-shadow-inset
-  );
+    $default-box-shadow-inset );
   @include nb-stepper;
   @include full-calendar();
 }
 
 @mixin full-calendar() {
+
   /* Overrides full-calendar */
   full-calendar {
+
     /* Header */
     div.fc-header-toolbar {
       .fc-toolbar-chunk {
@@ -129,11 +145,13 @@ $default-box-shadow: 0px 1px 1px 0px rgba(0, 0, 0, 0.15);
           letter-spacing: 0em;
           text-align: left;
         }
+
         .btn-group {
           padding: 4px 0px 3px 0px;
           box-shadow: 0px 1px 1px 0px rgba(0, 0, 0, 0.1) inset;
           background-color: nb-theme(background-basic-color-1);
           border-radius: nb-theme(button-rectangle-border-radius);
+
           .fc-next-button,
           .fc-prev-button {
             border-radius: nb-theme(button-rectangle-border-radius);
@@ -142,6 +160,7 @@ $default-box-shadow: 0px 1px 1px 0px rgba(0, 0, 0, 0.15);
             background-color: nb-theme(background-primary-color-1);
             border-color: nb-theme(background-primary-color-1);
             margin: 0 4px;
+
             span {
               padding: 8px 10px;
               display: flex;
@@ -149,6 +168,7 @@ $default-box-shadow: 0px 1px 1px 0px rgba(0, 0, 0, 0.15);
               justify-content: center;
             }
           }
+
           .fc-timeGridDay-button,
           .fc-timeGridWeek-button,
           .fc-dayGridMonth-button {
@@ -164,6 +184,7 @@ $default-box-shadow: 0px 1px 1px 0px rgba(0, 0, 0, 0.15);
             border-radius: nb-theme(button-rectangle-border-radius);
             text-transform: capitalize;
             margin: 0 4px;
+
             &.active {
               background-color: nb-theme(background-primary-color-1);
               border-color: nb-theme(background-primary-color-1);
@@ -171,6 +192,7 @@ $default-box-shadow: 0px 1px 1px 0px rgba(0, 0, 0, 0.15);
             }
           }
         }
+
         .fc-next-button,
         .fc-prev-button {
           border-radius: nb-theme(button-rectangle-border-radius);
@@ -179,6 +201,7 @@ $default-box-shadow: 0px 1px 1px 0px rgba(0, 0, 0, 0.15);
           background-color: nb-theme(background-primary-color-1);
           border-color: nb-theme(background-primary-color-1);
           margin: 0 4px;
+
           span {
             padding: 8px 10px;
             display: flex;
@@ -186,6 +209,7 @@ $default-box-shadow: 0px 1px 1px 0px rgba(0, 0, 0, 0.15);
             justify-content: center;
           }
         }
+
         .fc-today-button {
           border-color: rgba(126, 126, 143, 0.5);
           border-width: 2px;
@@ -201,9 +225,11 @@ $default-box-shadow: 0px 1px 1px 0px rgba(0, 0, 0, 0.15);
         }
       }
     }
+
     .btn-primary:focus {
       box-shadow: 0 0 0 0.2rem nb-theme(color-primary-transparent-default) !important;
     }
+
     /*table*/
 
     thead .fc-col-header-cell-cushion {
@@ -215,26 +241,32 @@ $default-box-shadow: 0px 1px 1px 0px rgba(0, 0, 0, 0.15);
       text-decoration: none;
       padding: 4px 10px;
     }
+
     table {
       border-spacing: 4px !important;
       border-collapse: separate !important;
       border: none !important;
+
       table {
         border-spacing: 4px !important;
         border-collapse: separate !important;
         border: none !important;
+
         .fc-col-header {
           background-color: transparent;
         }
+
         th.fc-col-header-cell {
           border: none;
           border-radius: nb-theme(border-radius);
           background-color: rgba($color: white, $alpha: 0.75);
           padding: 11px 15px 11px 10px;
         }
+
         th.fc-timegrid-axis {
           border: none;
         }
+
         .fc .fc-timegrid-divider {
           padding: 0;
         }
@@ -243,30 +275,35 @@ $default-box-shadow: 0px 1px 1px 0px rgba(0, 0, 0, 0.15);
           background-color: rgba($color: white, $alpha: 0.25);
           border-radius: nb-theme(border-radius);
         }
+
         td[role='gridcell'].fc-timegrid-col {
           background-color: rgba($color: white, $alpha: 0.25);
           border-radius: nb-theme(border-radius);
         }
       }
     }
+
     a {
       text-decoration: none;
     }
   }
-  .fc .fc-scrollgrid-section-sticky > * {
+
+  .fc .fc-scrollgrid-section-sticky>* {
     background: unset !important;
   }
+
   table-bordered th,
   .table-bordered td {
     border: none;
   }
+
   .fc .fc-timegrid-divider {
     display: none;
   }
 
   .fc-daygrid-event-dot {
     width: 7px !important;
-    height: 7px !important ;
+    height: 7px !important;
     border-radius: 32px !important;
     border-width: 2px !important;
     border-color: nb-theme(background-primary-color-1) !important;
@@ -291,11 +328,13 @@ $default-box-shadow: 0px 1px 1px 0px rgba(0, 0, 0, 0.15);
   .fc-event {
     background-color: rgba(126, 126, 143, 0.1);
     border-radius: nb-theme(border-radius);
+
     &.fc-v-event {
       background-color: nb-theme(gauzy-background-transparent) !important;
       border-color: nb-theme(gauzy-background-transparent) !important;
     }
   }
+
   .fc-day-today .fc-daygrid-day-number {
     background-color: nb-theme(background-primary-color-1) !important;
     color: white !important;
@@ -306,19 +345,23 @@ $default-box-shadow: 0px 1px 1px 0px rgba(0, 0, 0, 0.15);
     align-items: center;
     justify-content: center;
   }
+
   .fc .fc-timegrid-slot-minor {
     border: unset !important;
   }
+
   .fc-h-event {
     background-color: nb-theme(background-primary-color-1) !important;
   }
+
   .fc .fc-timegrid-slot-label,
   .fc .fc-timegrid-axis-frame,
   .fc .fc-daygrid-day-frame,
-  .fc fc-timegrid-col-bg > * {
+  .fc fc-timegrid-col-bg>* {
     background-color: rgba($color: white, $alpha: 0.5);
     border-radius: nb-theme(border-radius);
   }
+
   .fc .fc-daygrid-day.fc-day-today {
     border-radius: nb-theme(border-radius);
   }

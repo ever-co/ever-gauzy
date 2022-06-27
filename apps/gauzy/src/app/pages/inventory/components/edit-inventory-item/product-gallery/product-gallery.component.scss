@@ -1,4 +1,4 @@
-@import './themes';
+@import 'gauzy/_gauzy-table';
 
 .actions-container {
   display: flex;
@@ -8,28 +8,37 @@
 
 .featured-image {
   width: 100%;
+  height: 300px;
+  object-fit: cover;
+  border-radius: var(--border-radius);
+}
+
+.image-container {
+  height: 300px;
 }
 
 .gallery-sm-preview-item {
   width: 100%;
-  padding-bottom: 100%;
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
+  object-fit: cover;
+  box-shadow: rgba(0 0 0 / 15%) 0 1px 1px 0;
+  height: 70px;
+  border-radius: 4px;
+
+  &.selected {
+    box-shadow: nb-theme(color-primary-active-border) 0px 1px 2px 0px,
+      nb-theme(color-primary-hover-border) 0px 1px 3px 1px;
+  }
+
+  &:hover {
+    box-shadow: nb-theme(color-primary-active-border) 0px 1px 2px 0px,
+      nb-theme(color-primary-hover-border) 0px 1px 3px 1px;
+  }
 }
 
 .gallery-sm-preview {
   transition: 0.1s all ease-in-out;
   cursor: pointer;
   margin-bottom: 10px;
-
-  &.selected {
-    box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
-  }
-
-  &:hover {
-    box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
-  }
 }
 
 button {
@@ -43,7 +52,51 @@ button {
   position: absolute;
   top: -3px;
   left: 0px;
-  border-radius: 50%;
+  border-radius: 4px;
   background: white;
   color: nb-theme(text-success-color);
+}
+
+.actions-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  button {
+    border-width: 2px;
+    background-color: unset;
+
+    &[nbButton].appearance-outline.status-basic {
+      border-color: var(--color-basic-transparent-300);
+    }
+
+    &[nbButton].appearance-outline.status-primary {
+      border-color: var(--gauzy-background-transparent-1);
+    }
+
+    &[nbButton].appearance-outline.status-danger {
+      border-color: var(--color-danger-transparent-300);
+    }
+
+    &[nbButton].appearance-outline.status-success {
+      border-color: var(--color-success-transparent-300);
+      padding: 4px 5px;
+    }
+  }
+
+  .gallery-plus {
+    border-radius: var(--button-rectangle-border-radius);
+    padding: 4px 6px;
+    background-color: var(--gauzy-card-2);
+
+    i {
+      font-size: 18px;
+    }
+  }
+
+  .gallery-actions {
+    background-color: var(--gauzy-card-2);
+    border-radius: var(--button-rectangle-border-radius);
+    padding: 3px 5px;
+  }
 }

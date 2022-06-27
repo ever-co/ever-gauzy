@@ -1,6 +1,9 @@
 <nb-card class="main">
-	<nb-card-header class="d-flex">
-		<h5>
+	<nb-card-header class="d-flex flex-column">
+		<span class="cancel"
+			><i class="fas fa-times" (click)="dialogRef.close()" s></i
+		></span>
+		<h5 class="title">
 			{{
 				(productType
 					? 'INVENTORY_PAGE.EDIT_PRODUCT_TYPE'
@@ -8,11 +11,6 @@
 				) | translate
 			}}
 		</h5>
-		<nb-icon
-			class="ml-auto mt-1 close"
-			icon="close-outline"
-			(click)="dialogRef.close()"
-		></nb-icon>
 	</nb-card-header>
 	<nb-card-body>
 		<form
@@ -28,7 +26,9 @@
 						</label>
 						<ngx-language-selector
 							id="language"
-							[placeholder]="'INVENTORY_PAGE.LANGUAGE'| translate"
+							[placeholder]="
+								'INVENTORY_PAGE.LANGUAGE' | translate
+							"
 							class="d-block"
 							size="medium"
 							[template]="'ng-select'"
@@ -52,7 +52,6 @@
 						id="icon"
 						formControlName="icon"
 						appendTo="body"
-
 					>
 						<ng-template
 							ng-option-tmp
@@ -100,11 +99,12 @@
 			</div>
 		</form>
 	</nb-card-body>
-	<nb-card-footer class="text-right">
+	<nb-card-footer class="text-left">
 		<button
 			(click)="dialogRef.close()"
-			status="danger"
+			status="basic"
 			class="mr-2"
+			outline
 			nbButton
 		>
 			{{ 'BUTTONS.CANCEL' | translate }}

@@ -20,7 +20,7 @@ import { AutoApproveComponent } from './auto-approve/auto-approve.component';
 import { PictureNameTagsComponent, TagsOnlyComponent } from '../../@shared/table-components';
 import { API_PREFIX, ComponentEnum } from '../../@core/constants';
 import { EquipmentService, Store, ToastrService } from '../../@core/services';
-import { ImageRowComponent } from '../inventory/components/table-components';
+import { ImageRowComponent } from '../inventory/components/inventory-table-components';
 import { ServerDataSource } from '../../@core/utils/smart-table';
 import { InputFilterComponent } from '../../@shared/table-filters';
 

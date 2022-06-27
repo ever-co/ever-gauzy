@@ -217,15 +217,16 @@
 		</form>
 	</nb-card-body>
 
-	<nb-card-footer class="text-right">
+	<nb-card-footer class="text-left">
 		<button
+			class="delete mr-3"
 			(click)="dialogRef.close()"
-			status="danger"
-			class="mr-2"
 			nbButton
+			status="basic"
+			outline
 		>
 			{{ 'BUTTONS.CANCEL' | translate }}
-		</button>
+		</button>		
 		<button
 			[disabled]="form.invalid"
 			status="success"

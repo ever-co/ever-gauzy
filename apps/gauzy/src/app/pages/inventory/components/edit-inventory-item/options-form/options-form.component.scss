@@ -36,18 +36,27 @@
 }
 
 .active-group {
-  box-shadow: rgba(17, 17, 26, 0.1) 0px 0px 16px;
+  background-color: var(--gauzy-card-2);
+  border-radius: var(--border-radius);
+  margin: 0;
+  padding: 10px 0 0 0;
 }
 
 .option-row {
+  background-color: var(--gauzy-sidebar-background-3);
+  border-radius: 4px;
+  margin-right: 0;
+  color: var(--gauzy-text-color-2);
+
   .option-row-icon {
+    cursor: pointer;
     transition: 0.1s all ease-in-out;
   }
 
   &:hover,
   &.active {
     .option-row-icon.edit {
-      color: nb-theme(color-success-600);
+      color: nb-theme(color-primary-600);
     }
 
     .option-row-icon.delete {
@@ -55,9 +64,60 @@
     }
   }
 }
-.btn-group.actions{
-  background: rgba(255, 255, 255, 0.5);
-  border-radius: 20px;
+
+.btn-group.actions {
+  background: var(--gauzy-card-3);
+  border-radius: var(--button-rectangle-border-radius);
   padding: 6px 8px;
   gap: 10px;
+}
+
+.option-name {
+  background-color: var(--gauzy-sidebar-background-3);
+  border-radius: 4px;
+  padding: 4px 8px;
+  color: var(--gauzy-text-color-2);
+}
+
+button {
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 11px;
+  letter-spacing: 0em;
+  text-align: left;
+
+  &[nbButton].appearance-filled.status-basic {
+    background-color: var(--gauzy-card-1);
+    color: var(--gauzy-text-color-2);
+    border: unset;
+    box-shadow: 0 1px 1px 0 rgba(0 0 0 / 15%);
+  }
+
+  border-width: 2px;
+  background-color: unset;
+
+  &[nbButton].appearance-outline.status-danger {
+    border-color: var(--color-danger-transparent-300);
+    background-color: unset;
+    padding: 7px 8px;
+    border-width: 2px;
+  }
+
+  &[nbButton].appearance-outline.status-success {
+    border-color: var(--color-success-transparent-300);
+    background-color: unset;
+    padding: 7px 8px;
+    border-width: 2px;
+  }
+}
+
+i {
+  font-size: 16px;
+}
+
+.button-new {
+  background-color: var(--gauzy-card-2);
+  padding: 6px;
+  border-radius: var(--button-rectangle-border-radius);
+  width: fit-content;
 }

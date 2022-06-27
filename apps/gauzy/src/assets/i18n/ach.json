@@ -1631,6 +1631,8 @@
 		"EDIT_PUBLIC_PAGE": "crwdns3572:0crwdne3572:0",
 		"SELECT_ORGANIZATION": "crwdns8334:0crwdne8334:0",
 		"MAIN": "crwdns244:0crwdne244:0",
+		"TAGS_OPTIONS": "crwdns11233:0crwdne11233:0",
+		"VARIANTS": "crwdns11235:0crwdne11235:0",
 		"DESCRIPTION": "crwdns10519:0crwdne10519:0",
 		"DEPARTMENTS": "crwdns246:0crwdne246:0",
 		"VENDORS": "crwdns252:0crwdne252:0",
@@ -1852,7 +1854,8 @@
 		"OPEN_SOURCE": "crwdns10525:0crwdne10525:0",
 		"ORGANIZATION_ADD": "crwdns11154:0crwdne11154:0",
 		"IMAGE": "crwdns11211:0crwdne11211:0",
-		"SPRINTS": "crwdns11231:0crwdne11231:0"
+		"SPRINTS": "crwdns11231:0crwdne11231:0",
+		"NO_IMAGE": "crwdns11237:0crwdne11237:0"
 	},
 	"CONTACTS_PAGE": {
 		"VISITORS": "crwdns7864:0crwdne7864:0",
@@ -2263,7 +2266,8 @@
 		"SELECTED": "crwdns10374:0crwdne10374:0",
 		"SUCCESSFULLY_ADDED_PRODUCTS": "crwdns10486:0crwdne10486:0",
 		"MAIN": "crwdns10398:0crwdne10398:0",
-		"INVENTORY": "crwdns10400:0crwdne10400:0"
+		"INVENTORY": "crwdns10400:0crwdne10400:0",
+		"IMAGE_WAS_DELETED": "crwdns11239:0crwdne11239:0"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "crwdns3029:0crwdne3029:0",
@@ -3889,5 +3893,9 @@
 			"CREATE_NEW_WORKSPACE": "crwdns11060:0crwdne11060:0",
 			"FIND_WORKSPACE": "crwdns11062:0crwdne11062:0"
 		}
+	},
+	"NO_IMAGE": {
+		"ADD_DROP": "crwdns11241:0crwdne11241:0",
+		"AVAILABLE": "crwdns11243:0crwdne11243:0"
 	}
 }

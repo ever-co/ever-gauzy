@@ -1,13 +1,11 @@
 <nb-card class="main">
-	<nb-card-header class="d-flex">
-		<h5>
+	<nb-card-header class="d-flex flex-column">
+		<span class="cancel"
+			><i class="fas fa-times" (click)="dialogRef.close()"></i
+		></span>
+		<h5 class="title">
 			{{ 'INVENTORY_PAGE.OPTION_TRANSLATIONS' | translate }}
 		</h5>
-		<nb-icon
-			class="ml-auto mt-1 close"
-			icon="close-outline"
-			(click)="dialogRef.close()"
-		></nb-icon>
 	</nb-card-header>
 	<nb-card-body>
 		<form [formGroup]="form" *ngIf="form">
@@ -57,10 +55,11 @@
 			</div>
 		</form>
 	</nb-card-body>
-	<nb-card-footer class="text-right">
+	<nb-card-footer class="text-left">
 		<button
 			(click)="dialogRef.close()"
-			status="danger"
+			status="basic"
+			outline
 			class="mr-2"
 			nbButton
 		>

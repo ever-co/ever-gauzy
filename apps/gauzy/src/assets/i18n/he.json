@@ -1631,6 +1631,8 @@
 		"EDIT_PUBLIC_PAGE": "Edit Public Page",
 		"SELECT_ORGANIZATION": "אנא בחר ארגונים מהתפריט שלמעלה",
 		"MAIN": "עיקרי",
+		"TAGS_OPTIONS": "Tags & Options",
+		"VARIANTS": "Variants",
 		"DESCRIPTION": "Description",
 		"DEPARTMENTS": "מחלקות",
 		"VENDORS": "ספקים",
@@ -1852,7 +1854,8 @@
 		"OPEN_SOURCE": "Open-Source",
 		"ORGANIZATION_ADD": "Add Organization",
 		"IMAGE": "תמונה",
-		"SPRINTS": "Sprints"
+		"SPRINTS": "Sprints",
+		"NO_IMAGE": "Image no available"
 	},
 	"CONTACTS_PAGE": {
 		"VISITORS": "Visitors",
@@ -2263,7 +2266,8 @@
 		"SELECTED": "Selected",
 		"SUCCESSFULLY_ADDED_PRODUCTS": "Products were added successfully!",
 		"MAIN": "עיקרי",
-		"INVENTORY": "Inventory"
+		"INVENTORY": "Inventory",
+		"IMAGE_WAS_DELETED": "Image was deleted"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Tasks",
@@ -3889,5 +3893,9 @@
 			"CREATE_NEW_WORKSPACE": "Create a new workspace",
 			"FIND_WORKSPACE": "Find workspace"
 		}
+	},
+	"NO_IMAGE": {
+		"ADD_DROP": "Add or Drop Image",
+		"AVAILABLE": "Image no available"
 	}
 }

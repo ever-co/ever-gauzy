@@ -1,3 +1,5 @@
+@import 'gauzy/_gauzy-dialogs';
+
 .d-bottom {
   display: flex;
   align-items: flex-end;
@@ -28,4 +30,8 @@ nb-card-body {
 
 ng-select {
   border-radius: 0.25rem;
+}
+
+:host nb-card {
+  background-color: var(--gauzy-card-1);
 }

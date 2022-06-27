@@ -1,4 +1,5 @@
 import { NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { EquipmentSharingRoutingModule } from './equipment-sharing-routing.module';
 import { ThemeModule } from '../../@theme/theme.module';
 import {
@@ -8,7 +9,8 @@ import {
 	NbIconModule,
 	NbDialogModule,
 	NbSpinnerModule,
-	NbDatepickerModule
+	NbDatepickerModule,
+	NbTooltipModule
 } from '@nebular/theme';
 import { FormsModule } from '@angular/forms';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
@@ -25,9 +27,14 @@ import { BackNavigationModule } from '../../@shared/back-navigation/back-navigat
 import { TranslateModule } from '../../@shared/translate/translate.module';
 import { EmployeesService } from '../../@core/services';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
+import { PaginationModule } from '../../@shared/pagination/pagination.module';
+import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
+import { SharedModule } from '../../@shared/shared.module';
 
 @NgModule({
 	imports: [
+		CommonModule,
+		SharedModule,
 		EquipmentSharingRoutingModule,
 		ThemeModule,
 		UserFormsModule,
@@ -45,7 +52,10 @@ import { HeaderTitleModule } from '../../@shared/components/header-title/header-
 		BackNavigationModule,
 		TranslateModule,
 		NbSpinnerModule,
-		HeaderTitleModule
+		HeaderTitleModule,
+		PaginationModule,
+		GauzyButtonActionModule,
+		NbTooltipModule
 	],
 	providers: [
 		EquipmentSharingService,
