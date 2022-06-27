@@ -13,12 +13,13 @@ import {
 	UsePipes,
 	ValidationPipe
 } from '@nestjs/common';
-import { IEquipmentSharingPolicy, IPagination } from '@gauzy/contracts';
+import { IEquipmentSharingPolicy, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import { CrudController, PaginationParams } from './../core/crud';
 import { EquipmentSharingPolicy } from './equipment-sharing-policy.entity';
 import { EquipmentSharingPolicyService } from './equipment-sharing-policy.service';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
+import { Permissions } from './../shared/decorators';
 
 @ApiTags('EquipmentSharingPolicy')
 @UseGuards(TenantPermissionGuard)
@@ -28,6 +29,22 @@ export class EquipmentSharingPolicyController extends CrudController<EquipmentSh
 		private readonly equipmentSharingPolicyService: EquipmentSharingPolicyService
 	) {
 		super(equipmentSharingPolicyService);
+	}
+
+	/**
+	 * GET equipment sharing policy by pagination
+	 * 
+	 * @param filter 
+	 * @returns 
+	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_EQUIPMENT_SHARING_VIEW)
+	@Get('pagination')
+	@UsePipes(new ValidationPipe({ transform: true }))
+	async pagination(
+		@Query() filter: PaginationParams<EquipmentSharingPolicy>
+	): Promise<IPagination<IEquipmentSharingPolicy>> {
+		return this.equipmentSharingPolicyService.paginate(filter);
 	}
 
 	@ApiOperation({ summary: 'Find all policies.' })
@@ -93,19 +110,4 @@ export class EquipmentSharingPolicyController extends CrudController<EquipmentSh
 	): Promise<IEquipmentSharingPolicy> {
 		return this.equipmentSharingPolicyService.update(id, entity);
 	}
-
-	/**
-	 * GET equipment sharing policy by pagination
-	 * 
-	 * @param filter 
-	 * @returns 
-	 */
-	 @Get('pagination')
-	 @UseGuards(PermissionGuard)
-	 @UsePipes(new ValidationPipe({ transform: true }))
-	 async pagination(
-		 @Query() filter: PaginationParams<EquipmentSharingPolicy>
-	 ): Promise<IPagination<IEquipmentSharingPolicy>> {
-		 return this.equipmentSharingPolicyService.paginate(filter);
-	 }
 }
