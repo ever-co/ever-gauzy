@@ -339,25 +339,39 @@
 									<div
 										class="address-details d-flex flex-column"
 									>
-										<label class="label"> Country </label>
+										<label class="label">
+											{{
+												'CONTACTS_PAGE.COUNTRY'
+													| translate
+											}}
+										</label>
 										<div class="text-caption caption mb-3">
 											{{
 												selectedContact?.contact
 													?.country
 											}}
 										</div>
-										<label class="label"> City </label>
+										<label class="label">{{
+											'CONTACTS_PAGE.CITY'
+												| translate
+										}}</label>
 										<div class="text-caption caption mb-3">
 											{{ selectedContact?.contact?.city }}
 										</div>
-										<label class="label"> Address 1 </label>
+										<label class="label"> {{
+											'CONTACTS_PAGE.ADDRESS'
+												| translate
+										}} </label>
 										<div class="text-caption caption mb-3">
 											{{
 												selectedContact?.contact
 													?.address
 											}}
 										</div>
-										<label class="label"> Address 2 </label>
+										<label class="label"> {{
+											'CONTACTS_PAGE.ADDRESS_2'
+												| translate
+										}} </label>
 										<div class="text-caption caption mb-3">
 											{{
 												selectedContact?.contact
