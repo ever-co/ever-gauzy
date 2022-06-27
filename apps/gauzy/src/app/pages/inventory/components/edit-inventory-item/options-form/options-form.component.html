@@ -4,16 +4,18 @@
 	</label>
 	<div class="row mb-3">
 		<div class="col-md-12">
-			<div class="button-new">
-				<button
-					status="basic"
-					nbButton
-					(click)="onCreateOptionGroupClick()"
-					class=""
-				>
-					{{ 'INVENTORY_PAGE.NEW_OPTION_GROUP' | translate }}
-				</button>
-			</div>
+			<ng-container ngxPermissionsOnly="ORG_INVENTORY_PRODUCT_EDIT">
+				<div class="button-new">
+					<button
+						status="basic"
+						nbButton
+						(click)="onCreateOptionGroupClick()"
+						class=""
+					>
+						{{ 'INVENTORY_PAGE.NEW_OPTION_GROUP' | translate }}
+					</button>
+				</div>
+			</ng-container>
 		</div>
 	</div>
 

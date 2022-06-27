@@ -54,6 +54,7 @@ import { SelectAssetModule } from '../../@shared/select-asset-modal/select-asset
 import { ImageAssetModule } from '../../@shared/image-asset/image-asset.module';
 import { PaginationModule } from '../../@shared/pagination/pagination.module';
 import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
+import { NgxPermissionsModule } from 'ngx-permissions';
 
 const NB_MODULES = [
 	NbCardModule,
@@ -81,7 +82,7 @@ const NB_MODULES = [
 		ProductFormComponent,
 		TableInventoryComponent,
 		VariantFormComponent,
-		VariantTableComponent,
+		VariantTableComponent
 	],
 	imports: [
 		CardGridModule,
@@ -107,7 +108,8 @@ const NB_MODULES = [
 		TranslateModule,
 		WarehousesModule,
 		LanguageSelectorModule,
-		GauzyButtonActionModule
+		GauzyButtonActionModule,
+		NgxPermissionsModule.forChild()
 	],
 	providers: [
 		ProductService,
@@ -120,4 +122,4 @@ const NB_MODULES = [
 		TranslatableService
 	]
 })
-export class InventoryModule { }
+export class InventoryModule {}
