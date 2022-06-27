@@ -37,7 +37,7 @@
 					<ga-notes-with-tags [rowData]="employee">
 					</ga-notes-with-tags>
 				</nb-card-body>
-			</nb-card>
+			</nb-card>			
 		</ng-template>
 		<ng-template
 			[ngIf]="
@@ -56,6 +56,15 @@
 				(selectedOption)="onUpdateOption($event)"
 				(selectedPage)="onPageChange($event)"
 			></ga-card-grid>
+		</ng-template>
+		<ng-template [ngIf]="!loading && employeeLevels?.length == 0">
+			<nb-card class="p-0">
+				<nb-card-body class="custom-table">
+					<div>
+						{{ 'SM_TABLE.NO_RESULT' | translate }}
+					</div>
+				</nb-card-body>
+			</nb-card>
 		</ng-template>
 	</nb-card-body>
 </nb-card>
