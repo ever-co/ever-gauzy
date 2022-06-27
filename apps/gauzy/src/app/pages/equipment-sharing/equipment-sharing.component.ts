@@ -187,21 +187,25 @@ export class EquipmentSharingComponent
 		};
 	}
 
-	showStatusActions(rowData) {
-		let isDisabled = true;
+	showApprovedButton(rowData) {
 		if(rowData){
-			switch (rowData.status) {
-				case RequestApprovalStatusTypesEnum.APPROVED:
-				case RequestApprovalStatusTypesEnum.REFUSED:
-					isDisabled = true
-					break;
-				default:
-					isDisabled = false
-					break;
-			}
+			return (rowData.status === RequestApprovalStatusTypesEnum.REFUSED ||
+				rowData.status === RequestApprovalStatusTypesEnum.REQUESTED
+				) ? true : false
+		} else {
+			return false
 		}
 		
-		return isDisabled;
+	}
+
+	showRefuseButton(rowData) {
+		if(rowData){
+			return (rowData.status === RequestApprovalStatusTypesEnum.APPROVED ||
+				rowData.status === RequestApprovalStatusTypesEnum.REQUESTED
+				) ? true : false
+		} else {
+			return false
+		}
 	}
 
 	approval(rowData) {

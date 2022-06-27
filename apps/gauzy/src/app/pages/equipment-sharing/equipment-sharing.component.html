@@ -101,7 +101,7 @@
 				outline
 				status="success"
 				(click)="approval(selectedEquipmentSharing)"
-				[disabled]="showStatusActions(selectedEquipmentSharing)"
+				*ngIf="showApprovedButton(selectedEquipmentSharing)"
 				class="action"
 				size="small"
 			>
@@ -112,7 +112,7 @@
 				outline
 				status="danger"
 				(click)="refuse(selectedEquipmentSharing)"
-				[disabled]="showStatusActions(selectedEquipmentSharing)"
+				*ngIf="showRefuseButton(selectedEquipmentSharing)"
 				size="small"
 				class="action"
 			>
