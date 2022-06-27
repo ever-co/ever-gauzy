@@ -38,6 +38,7 @@ import { VisibilityComponent } from './visibility/visibility.component';
 import { ProjectOrganizationGridComponent } from './project-organization-grid/project-organization-grid.component';
 import { ProjectOrganizationGridDetailsComponent } from './project-organization-grid-details/project-organization-grid-details.component';
 import { ProjectOrganizationEmployeesComponent } from './project-organization-employees/project-organization-employees.component';
+import { PhoneUrlComponent } from './phone-url/phone-url.component';
 
 @NgModule({
 	imports: [
@@ -79,7 +80,8 @@ import { ProjectOrganizationEmployeesComponent } from './project-organization-em
 		VisibilityComponent,
 		ProjectOrganizationGridComponent,
 		ProjectOrganizationGridDetailsComponent,
-		ProjectOrganizationEmployeesComponent
+		ProjectOrganizationEmployeesComponent,
+		PhoneUrlComponent
 	],
 	exports: [
 		NotesWithTagsComponent,
@@ -95,7 +97,8 @@ import { ProjectOrganizationEmployeesComponent } from './project-organization-em
 		ExternalLinkComponent,
 		TagsOnlyComponent,
 		CompanyLogoComponent,
-		ProjectOrganizationComponent
+		ProjectOrganizationComponent,
+		PhoneUrlComponent
 	],
 	providers: []
 })
