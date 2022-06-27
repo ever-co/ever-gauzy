@@ -7,7 +7,6 @@ import { LocalStore } from './desktop-store';
 import Form from 'form-data';
 import { BrowserWindow, screen } from 'electron';
 import screenshot from 'screenshot-desktop';
-const sound = require('sound-play');
 import * as remoteMain from '@electron/remote/main';
 
 // Import logging for electron and override default console logging
@@ -172,7 +171,8 @@ const uploadScreenShot = async (
 				screenshot.thumbUrl,
 				quitApp,
 				windowPath,
-				soundPath
+				soundPath,
+				timeTrackerWindow
 			);
 		}
 
@@ -261,7 +261,7 @@ const showCapture = (timeTrackerWindow, url) => {
 	timeTrackerWindow.webContents.send('last_capture_local', { fullUrl: url });
 };
 
-const showCapturedToRenderer = (notificationWindow, thumbUrl, quitApp, windowPath, soundPath) => {
+const showCapturedToRenderer = (notificationWindow, thumbUrl, quitApp, windowPath, soundPath, timeTrackerWindow) => {
 	const soundCamera = soundPath;
 	const sizes = screen.getPrimaryDisplay().size;
 	// preparing window screenshot
@@ -304,7 +304,7 @@ const showCapturedToRenderer = (notificationWindow, thumbUrl, quitApp, windowPat
 		});
 		try {
 			if (existsSync(soundCamera)) {
-				sound.play(soundCamera, 0.4);
+				timeTrackerWindow.webContents.send('play_sound', { soundFile: soundCamera })
 			}
 		} catch (err) {
 			console.error('sound camera not found');
@@ -523,7 +523,7 @@ export function notifyScreenshot(notificationWindow: BrowserWindow, thumb, windo
 		timeTrackerWindow.webContents.send('last_capture_local', { fullUrl: `data:image/png;base64, ${thumb.img}` });
 		try {
 			if (existsSync(soundCamera)) {
-				sound.play(soundCamera, 0.4);
+				timeTrackerWindow.webContents.send('play_sound', { soundFile: soundCamera })
 			}
 		} catch (err) {
 			console.error('sound camera not found');

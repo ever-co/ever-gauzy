@@ -275,11 +275,14 @@ export class TimeTrackerService {
 		});
 
 		return this.http
-			.get(`${values.apiHost}/api/timesheet/time-log/`, {
+			.get(`${values.apiHost}/api/timesheet/statistics/counts`, {
 				headers: headers,
 				params: {
 					startDate: moment().startOf('day').utc().format(),
-					endDate: moment().endOf('day').utc().format()
+					endDate: moment().endOf('day').utc().format(),
+					tenantId: values.tenantId,
+					organizationId: values.organizationId,
+					employeeIds: [values.employeeId]
 				}
 			})
 			.pipe()
