@@ -4,7 +4,7 @@
 	</label>
 	<div class="row mb-3">
 		<div class="col-md-12">
-			<ng-container ngxPermissionsOnly="ORG_INVENTORY_PRODUCT_EDIT">
+			<ng-container *ngxPermissionsOnly="'ORG_INVENTORY_PRODUCT_EDIT'">
 				<div class="button-new">
 					<button
 						status="basic"
