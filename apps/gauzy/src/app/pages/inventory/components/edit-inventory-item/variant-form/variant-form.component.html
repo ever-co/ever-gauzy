@@ -20,17 +20,19 @@
 		</ng-select>
 	</div>
 	<div class="col-sm-3 align-self-end">
-		<div class="add-variant">
-			<button
-				class="green"
-				status="success"
-				nbButton
-				(click)="onSaveVariant()"
-				size="small"
-			>
-				{{ 'INVENTORY_PAGE.ADD_VARIANT' | translate }}
-			</button>
-		</div>
+		<ng-container *ngxPermissionsOnly="'ALL_ORG_EDIT'">
+			<div class="add-variant">
+				<button
+					class="green"
+					status="success"
+					nbButton
+					(click)="onSaveVariant()"
+					size="small"
+				>
+					{{ 'INVENTORY_PAGE.ADD_VARIANT' | translate }}
+				</button>
+			</div>
+		</ng-container>
 	</div>
 </div>
 <div class="row mb-3">
