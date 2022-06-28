@@ -2,7 +2,7 @@
 	nbButton
 	status="success"
 	(click)="approval()"
-	*ngIf="isRefuse"
+	*ngIf="isApproval"
 	size="small"
   class="req-green"
 >
@@ -12,7 +12,7 @@
 	nbButton
 	status="danger"
 	(click)="refuse()"
-	*ngIf="isApproval"
+	*ngIf="isRefuse"
 	size="small"
 	class="req-red ml-2"
 >
