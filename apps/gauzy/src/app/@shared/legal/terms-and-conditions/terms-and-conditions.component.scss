@@ -1,6 +1,14 @@
 @import 'themes';
 
 ::ng-deep {
+    .term-container {
+        & nb-auth-block {
+            max-width: 90%;
+        }
+    }
+}
+
+::ng-deep {
     .term_and_condition {
         background-color: var(--gauzy-card-2);
         border-radius: var(--border-radius);
