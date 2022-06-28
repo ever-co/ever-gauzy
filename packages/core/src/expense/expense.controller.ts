@@ -1,7 +1,6 @@
 import {
 	PermissionsEnum,
 	ISplitExpenseOutput,
-	IGetExpenseInput,
 	IExpenseReportData,
 	ReportGroupFilterEnum,
 	IExpense,
