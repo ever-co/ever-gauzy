@@ -1,7 +1,6 @@
 import {
 	PermissionsEnum,
 	ISplitExpenseOutput,
-	IGetExpenseInput,
 	IExpenseReportData,
 	ReportGroupFilterEnum,
 	IExpense,
@@ -41,6 +40,7 @@ import { FindSplitExpenseQuery } from './queries';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { ExpenseMapService } from './expense.map.service';
 import { CreateExpenseDTO, UpdateExpenseDTO } from './dto';
+import { ExpenseReportQueryDTO } from './dto/query';
 
 @ApiTags('Expense')
 @UseGuards(TenantPermissionGuard)
@@ -140,15 +140,18 @@ export class ExpenseController extends CrudController<Expense> {
 	@Permissions(PermissionsEnum.ORG_EXPENSES_VIEW)
 	@Get('report')
 	async getExpenseReport(
-		@Query() request: IGetExpenseInput
+		@Query(new ValidationPipe({
+			transform: true,
+			whitelist: true
+		})) options: ExpenseReportQueryDTO
 	): Promise<IExpenseReportData[]> {
-		const expenses = await this.expenseService.getExpense(request);
+		const expenses = await this.expenseService.getExpense(options);
 		let response: IExpenseReportData[] = [];
-		if (request.groupBy === ReportGroupFilterEnum.date) {
+		if (options.groupBy === ReportGroupFilterEnum.date) {
 			response = this.expenseMapService.mapByDate(expenses);
-		} else if (request.groupBy === ReportGroupFilterEnum.employee) {
+		} else if (options.groupBy === ReportGroupFilterEnum.employee) {
 			response = this.expenseMapService.mapByEmployee(expenses);
-		} else if (request.groupBy === ReportGroupFilterEnum.project) {
+		} else if (options.groupBy === ReportGroupFilterEnum.project) {
 			response = this.expenseMapService.mapByProject(expenses);
 		}
 		return response;
@@ -163,8 +166,15 @@ export class ExpenseController extends CrudController<Expense> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_EXPENSES_VIEW)
 	@Get('report/daily-chart')
-	async getDailyReportChartData(@Query() options: IGetExpenseInput) {
+	async getDailyReportChartData(
+		@Query(new ValidationPipe({
+			transform: true,
+			whitelist: true
+		})) options: ExpenseReportQueryDTO
+	) {
 		return this.expenseService.getDailyReportChartData(options);
 	}
 

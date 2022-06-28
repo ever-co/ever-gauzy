@@ -5,7 +5,12 @@ import {
 	OnInit,
 	ViewChild
 } from '@angular/core';
-import { IGetExpenseInput, ITimeLogFilters, ReportGroupByFilter, ReportGroupFilterEnum } from '@gauzy/contracts';
+import {
+	IGetExpenseInput,
+	ITimeLogFilters,
+	ReportGroupByFilter,
+	ReportGroupFilterEnum
+} from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { debounceTime, tap } from 'rxjs/operators';
@@ -28,10 +33,10 @@ import { GauzyFiltersComponent } from './../../../../@shared/timesheet/gauzy-fil
 export class ExpensesReportComponent extends BaseSelectorFilterComponent 
 	implements OnInit, AfterViewInit {
 		
+	filters: ITimeLogFilters;
 	loading: boolean = false;
 	chartData: IChartData;
 	groupBy: ReportGroupByFilter = ReportGroupFilterEnum.date;
-	filters: IGetExpenseInput;
 
 	@ViewChild(GauzyFiltersComponent) gauzyFiltersComponent: GauzyFiltersComponent;
 	datePickerConfig$: Observable<any> = this._dateRangePickerBuilderService.datePickerConfig$;
