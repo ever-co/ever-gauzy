@@ -2,6 +2,7 @@ import { AfterViewInit, Component, OnDestroy, OnInit, ViewChild } from '@angular
 import { Router } from '@angular/router';
 import {
 	ITimesheet,
+	PermissionsEnum,
 	TimesheetStatus
 } from '@gauzy/contracts';
 import { NbMenuItem, NbMenuService } from '@nebular/theme';
@@ -85,7 +86,16 @@ export class ApprovalsComponent extends BaseSelectorFilterComponent implements
 		this.loading = true;
 		try {
 			this.timesheets = await this.timesheetService.getTimeSheets({
-				...this.getFilterRequest(this.request)
+				...this.getFilterRequest(this.request),
+				relations: [
+					...(
+						this.store.hasPermission(
+							PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+						)
+						? ['employee', 'employee.user']
+						: []
+					)
+				]
 			});
 		} catch (error) {
 			console.log(
