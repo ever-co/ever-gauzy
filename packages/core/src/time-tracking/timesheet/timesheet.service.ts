@@ -10,10 +10,9 @@ import {
 	PermissionsEnum,
 	ITimesheet
 } from '@gauzy/contracts';
-import { isNotEmpty } from '@gauzy/common';
 import { RequestContext } from './../../core/context';
 import { TenantAwareCrudService } from './../../core/crud';
-import { getDateRangeFormat } from './../../core/utils';
+import { getDateFormat } from './../../core/utils';
 import { Timesheet } from './timesheet.entity';
 import {
 	TimesheetFirstOrCreateCommand,
@@ -94,11 +93,7 @@ export class TimeSheetService extends TenantAwareCrudService<Timesheet> {
 				}
 			},
 			relations: [
-				...(RequestContext.hasPermission(
-					PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-				)
-					? ['employee', 'employee.organization', 'employee.user']
-					: [])
+				...(request.relations ? request.relations : [])
 			],
 			where: (query: SelectQueryBuilder<Timesheet>) => {
 				this.getFilterTimesheetQuery(query, request);
@@ -117,19 +112,22 @@ export class TimeSheetService extends TenantAwareCrudService<Timesheet> {
 		qb: SelectQueryBuilder<Timesheet>,
 		request: IGetTimesheetInput
 	) {
-		// use current start of the month if startDate not found
-		const startDate: any = (request.startDate) ?
-							moment.utc(request.startDate) :
-							moment.utc().startOf('month').utc();
-
-		// use current end of the month if endDate not found
-		const endDate: any = (request.endDate) ?
-							moment.utc(request.endDate) :
-							moment.utc().endOf('month').utc();
-
-		const { start, end } = getDateRangeFormat(startDate, endDate);
+		const user = RequestContext.currentUser();
 		const tenantId = RequestContext.currentTenantId();
 		
+		const { organizationId, startDate, endDate } = request;
+		const { start, end } = (startDate && endDate) ?
+								getDateFormat(
+									moment.utc(startDate),
+									moment.utc(endDate)
+								) :
+								// use current start of the month if startDate not found
+								// use current end of the month if endDate not found
+								getDateFormat(
+									moment().startOf('month').utc(),
+									moment().endOf('month').utc()
+								);
+
 		const employeeIds: string[] = [];
 		if (
 			RequestContext.hasPermission(
@@ -140,27 +138,21 @@ export class TimeSheetService extends TenantAwareCrudService<Timesheet> {
 				employeeIds.push(...request.employeeIds);
 			}
 		} else {
-			const { employeeId } = RequestContext.currentUser();
-			employeeIds.push(employeeId);
+			employeeIds.push(user.employeeId);
 		}
 
 		qb.andWhere(
 			new Brackets((qb: WhereExpressionBuilder) => { 
 				qb.where(						{
-					startedAt: Between( start, end ),
+					startedAt: Between(start, end),
 					...(employeeIds.length > 0 ? { employeeId: In(employeeIds) } : {})
 				});
 			})
 		);
 
 		qb.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, { tenantId });
+		qb.andWhere(`"${qb.alias}"."organizationId" = :organizationId`, { organizationId });
 		qb.andWhere(`"${qb.alias}"."deletedAt" IS NULL`);
-
-		if (isNotEmpty(request.organizationId)) {
-			qb.andWhere( `"${qb.alias}"."organizationId" = :organizationId`, {
-				organizationId: request.organizationId
-			});
-		}
 		return qb;
 	}
 }

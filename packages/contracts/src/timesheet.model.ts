@@ -89,6 +89,7 @@ export interface IGetTimesheetInput
 	projectIds?: string[];
 	clientId?: string[];
 	employeeIds?: string[];
+	relations?: string[];
 }
 
 export interface IDateRange {

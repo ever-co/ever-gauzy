@@ -17,13 +17,8 @@ import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { DeleteResult, FindOneOptions, UpdateResult } from 'typeorm';
 import {
 	ITimeLog,
-	IGetTimeLogInput,
 	PermissionsEnum,
-	IGetTimeLogConflictInput,
-	IGetTimeLogReportInput,
-	IGetTimeLimitReportInput,
-	IProjectBudgetLimitReportInput,
-	IClientBudgetLimitReportInput
+	IGetTimeLogConflictInput
 } from '@gauzy/contracts';
 import { TimeLogService } from './time-log.service';
 import { Permissions } from './../../shared/decorators';
@@ -31,8 +26,8 @@ import { OrganizationPermissionGuard, PermissionGuard, TenantBaseGuard } from '.
 import { UUIDValidationPipe } from './../../shared/pipes';
 import { TransformInterceptor } from './../../core/interceptors';
 import { CreateManualTimeLogDTO, DeleteTimeLogDTO, UpdateManualTimeLogDTO } from './dto';
+import { TimeLogLimitQueryDTO, TimeLogQueryDTO } from './dto/query';
 import { TimeLogBodyTransformPipe } from './pipes';
-import { TimeLogReportQueryDTO } from './dto/query';
 
 @ApiTags('TimeLog')
 @UseGuards(TenantBaseGuard)
@@ -70,7 +65,7 @@ export class TimeLogController {
 		@Query(new ValidationPipe({
 			transform: true,
 			whitelist: true
-		})) options: TimeLogReportQueryDTO
+		})) options: TimeLogQueryDTO
 	) {
 		return await this.timeLogService.getDailyReport(options);
 	}
@@ -86,7 +81,10 @@ export class TimeLogController {
 	})
 	@Get('/report/daily-chart')
 	async getDailyReportChartData(
-		@Query() options: IGetTimeLogReportInput
+		@Query(new ValidationPipe({
+			transform: true,
+			whitelist: true
+		})) options: TimeLogQueryDTO
 	): Promise<any> {
 		return await this.timeLogService.getDailyReportChartData(options);
 	}
@@ -103,9 +101,12 @@ export class TimeLogController {
 	})
 	@Get('/report/owed-report')
 	async getOwedAmountReport(
-		@Query() entity: IGetTimeLogReportInput
+		@Query(new ValidationPipe({
+			transform: true,
+			whitelist: true
+		})) options: TimeLogQueryDTO
 	): Promise<any> {
-		return await this.timeLogService.getOwedAmountReport(entity);
+		return await this.timeLogService.getOwedAmountReport(options);
 	}
 
 	@ApiOperation({ summary: 'Get Owed Amount Report Chart Data' })
@@ -120,9 +121,12 @@ export class TimeLogController {
 	})
 	@Get('/report/owed-chart-data')
 	async getOwedAmountReportChartData(
-		@Query() entity: IGetTimeLogReportInput
+		@Query(new ValidationPipe({
+			transform: true,
+			whitelist: true
+		})) options: TimeLogQueryDTO
 	): Promise<any> {
-		return await this.timeLogService.getOwedAmountReportChartData(entity);
+		return await this.timeLogService.getOwedAmountReportChartData(options);
 	}
 
 	@ApiOperation({ summary: 'Find Timer Log by id' })
@@ -139,7 +143,7 @@ export class TimeLogController {
 		@Query(new ValidationPipe({
 			transform: true,
 			whitelist: true
-		})) options: TimeLogReportQueryDTO
+		})) options: TimeLogQueryDTO
 	) {
 		return await this.timeLogService.getWeeklyReport(options);
 	}
@@ -160,9 +164,12 @@ export class TimeLogController {
 	})
 	@Get('/time-limit')
 	async getTimeLimitReport(
-		@Query() request: IGetTimeLimitReportInput
+		@Query(new ValidationPipe({
+			transform: true,
+			whitelist: true
+		})) options: TimeLogLimitQueryDTO
 	) {
-		return await this.timeLogService.getTimeLimit(request);
+		return await this.timeLogService.getTimeLimit(options);
 	}
 
 	@ApiOperation({ summary: 'Budget limit' })
@@ -181,9 +188,12 @@ export class TimeLogController {
 	})
 	@Get('/project-budget-limit')
 	async projectBudgetLimit(
-		@Query() request?: IProjectBudgetLimitReportInput
+		@Query(new ValidationPipe({
+			transform: true,
+			whitelist: true
+		})) options: TimeLogQueryDTO
 	) {
-		return await this.timeLogService.projectBudgetLimit(request);
+		return await this.timeLogService.projectBudgetLimit(options);
 	}
 
 	@ApiOperation({ summary: 'Budget limit' })
@@ -202,9 +212,12 @@ export class TimeLogController {
 	})
 	@Get('/client-budget-limit')
 	async clientBudgetLimit(
-		@Query() request: IClientBudgetLimitReportInput
+		@Query(new ValidationPipe({
+			transform: true,
+			whitelist: true
+		})) options: TimeLogQueryDTO
 	) {
-		return await this.timeLogService.clientBudgetLimit(request);
+		return await this.timeLogService.clientBudgetLimit(options);
 	}
 
 	@ApiOperation({ summary: 'Get Timer Logs' })
@@ -215,9 +228,12 @@ export class TimeLogController {
 	})
 	@Get('/')
 	async getLogs(
-		@Query() entity: IGetTimeLogInput
+		@Query(new ValidationPipe({
+			transform: true,
+			whitelist: true
+		})) options: TimeLogQueryDTO
 	): Promise<ITimeLog[]> {
-		return await this.timeLogService.getTimeLogs(entity);
+		return await this.timeLogService.getTimeLogs(options);
 	}
 
 	@Get('/:id')
