@@ -43,11 +43,6 @@ export interface IGetProjectsStatistics
 }
 
 export interface IProjectsStatistics extends IOrganizationProject {
-	//base per tenant organization
-	organizationId?: string;
-	organization?: IOrganization;
-	tenantId?: string;
-	tenant?: ITenant;
 	duration?: number;
 	durationPercentage?: number;
 }
