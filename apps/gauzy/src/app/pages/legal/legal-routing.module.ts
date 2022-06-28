@@ -1,6 +1,5 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import { NbAuthComponent } from '@nebular/auth';
 import { ISelectorVisibility } from '../../@core/services';
 import { PrivacyPolicyComponent, TermsAndConditionsComponent } from '../../@shared/legal';
 
@@ -17,7 +16,6 @@ const selectors: ISelectorVisibility = {
 export const routes: Routes = [
 	{
 		path: '',
-		component: NbAuthComponent,
 		children: [
 			{
 				path: 'terms',
