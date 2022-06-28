@@ -30,9 +30,11 @@
 				[saveFilters]="(datePickerConfig$ | async).isSaveDatePicker"
 				(filtersChange)="filtersChange($event)"
 			></ngx-gauzy-filters>
-			<nb-select placeholder="Category" class="action-select">
-				<nb-option value="0">Category</nb-option>
-			</nb-select>
+			<ga-expense-category-select
+				class="action-select"
+				[clearable]="true"
+				[placeholder]="'POP_UPS.ALL_CATEGORIES' | translate"
+			></ga-expense-category-select>
 		</div>
 		<div class="daily-time-report">
 			<nb-card>
