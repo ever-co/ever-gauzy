@@ -3,8 +3,6 @@ import { IEmployee } from './employee.model';
 import { ITask } from './task-entity.model';
 import { ITimeSlot, ITimeLog, ITimeLogFilters } from './timesheet.model';
 import { IOrganizationProject } from './organization-projects.model';
-import { IOrganization } from './organization.model';
-import { ITenant } from './tenant.model';
 
 export interface IGetTimeSlotStatistics 
 	extends ITimeLogFilters {
@@ -43,11 +41,6 @@ export interface IGetProjectsStatistics
 }
 
 export interface IProjectsStatistics extends IOrganizationProject {
-	//base per tenant organization
-	organizationId?: string;
-	organization?: IOrganization;
-	tenantId?: string;
-	tenant?: ITenant;
 	duration?: number;
 	durationPercentage?: number;
 }
