@@ -148,7 +148,7 @@ export class ExpenseMapService {
 
 	private groupByDate(expenses: IExpense[]) {
 		return chain(expenses).groupBy((expanse) => {
-			return moment.utc(expanse.valueDate).format('YYYY-MM-DD');
+			return moment.utc(expanse.valueDate).add(1, 'day').format('YYYY-MM-DD');
 		});
 	}
 
