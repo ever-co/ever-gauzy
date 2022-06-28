@@ -6,12 +6,13 @@ import {
 	Body,
 	Get,
 	Query,
-	Param
+	Param,
+	UseInterceptors,
+	ValidationPipe
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import {
 	IUpdateTimesheetStatusInput,
-	IGetTimesheetInput,
 	ISubmitTimesheetInput,
 	ITimesheet,
 	PermissionsEnum
@@ -20,9 +21,12 @@ import { TimeSheetService } from './timesheet.service';
 import { PermissionGuard, TenantPermissionGuard } from './../../shared/guards';
 import { UUIDValidationPipe } from './../../shared/pipes';
 import { Permissions } from './../../shared/decorators';
+import { TransformInterceptor } from './../../core/interceptors';
+import { TimesheetQueryDTO } from './dto/query';
 
 @ApiTags('TimeSheet')
 @UseGuards(TenantPermissionGuard)
+@UseInterceptors(TransformInterceptor)
 @Controller()
 export class TimeSheetController {
 	constructor(
@@ -47,9 +51,12 @@ export class TimeSheetController {
 	})
 	@Get('/count')
 	async getTimesheetCount(
-		@Query() entity: IGetTimesheetInput
+		@Query(new ValidationPipe({
+			transform: true,
+			whitelist: true
+		})) options: TimesheetQueryDTO
 	): Promise<number> {
-		return await this.timeSheetService.getTimeSheetCount(entity);
+		return await this.timeSheetService.getTimeSheetCount(options);
 	}
 
 	/**
@@ -122,9 +129,12 @@ export class TimeSheetController {
 	@Permissions(PermissionsEnum.CAN_APPROVE_TIMESHEET)
 	@Get('/')
 	async get(
-		@Query() entity: IGetTimesheetInput
+		@Query(new ValidationPipe({
+			transform: true,
+			whitelist: true
+		})) options: TimesheetQueryDTO
 	): Promise<ITimesheet[]> {
-		return await this.timeSheetService.getTimeSheets(entity);
+		return await this.timeSheetService.getTimeSheets(options);
 	}
 
 	@ApiOperation({ summary: 'Find timesheet by id' })
