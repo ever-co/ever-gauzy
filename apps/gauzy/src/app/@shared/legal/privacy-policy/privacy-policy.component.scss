@@ -1,5 +1,20 @@
 @import 'themes';
 
+:host {
+  background-color: var(--gauzy-card-2);
+  border-radius: var(--border-radius);
+  height: calc(100vh - 11rem);
+  overflow: auto;
+  font-family: inherit !important;
+
+  ::ng-deep h1 {
+    background: var(--gauzy-card-2);
+    border-radius: var(--border-radius) var(--border-radius) 0 0;
+    padding: 10px 30px;
+    margin: -10px -30px 10px;
+  }
+}
+
 .privacy__policy {
   .legal_pp {
     h2 {
@@ -7,6 +22,7 @@
     }
   }
 }
+
 ::ng-deep {
   .privacy-container {
     & nb-auth-block {
@@ -16,6 +32,37 @@
 }
 
 ::ng-deep {
+
+  h1 {
+    color: var(--gauzy-text-color-1) !important;
+    font-size: 24px !important;
+    font-weight: 400 !important;
+  }
+
+  h2 {
+    color: var(--gauzy-text-color-2) !important;
+    font-size: 18px !important;
+    font-weight: 600 !important;
+  }
+
+  h3 {
+    color: var(--gauzy-text-color-1) !important;
+    font-size: 16px !important;
+    font-weight: 600 !important;
+  }
+
+  h4 {
+    color: var(--gauzy-text-color-2) !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+  }
+
+  p,
+  li {
+    font-size: 12px;
+    font-weight: 400 !important;
+  }
+
   .iubenda_fluid_policy h2 {
     font-size: 17px;
     font-weight: bold;
@@ -37,7 +84,7 @@
   }
 
   .iubenda_policy .simple_pp>ul>li>ul .iconed {
-    padding-left: 40px;
+    padding-left: 40px !important;
     background-repeat: no-repeat;
     background-color: transparent;
     background-position-x: 2px;
@@ -194,7 +241,7 @@
   .iubenda_policy blockquote {
     margin-bottom: 18px;
     border-left: 5px solid #eee;
-    padding-left: 15px
+    padding-left: 15px !important;
   }
 
   .iubenda_policy blockquote p {
@@ -289,13 +336,11 @@
   }
 
   .box_primary {
-    border: 1px solid #C0C1C1;
-    border-bottom-color: #A8AAAB;
-    -webkit-box-shadow: 0 1px 0 #ebebec;
-    box-shadow: 0 1px 0 #ebebec;
-    -webkit-box-shadow: 0 1px 0 rgba(0, 0, 0, 0.1);
-    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.1);
-    background: #FFF
+    -webkit-box-shadow: 0 1px 1px 0 rgba(0 0 0 / 15%) !important;
+    box-shadow: 0 1px 1px 0 rgba(0 0 0 / 15%) !important;
+    border: unset !important;
+    border-radius: var(--border-radius) !important;
+    background: var(--gauzy-card-4) !important;
   }
 
   .box_content {
@@ -341,7 +386,7 @@
   .box_10.expand>.w_icon,
   .box_10>.w_icon.expand-click,
   .box_10.expand>.w_icon.expand-click {
-    padding-left: 45px;
+    padding-left: 45px !important;
     background-repeat: no-repeat;
     background-color: transparent;
     background-position-x: 10px;
@@ -353,7 +398,7 @@
   .box_10.expand>.w_icon_16,
   .box_10>.w_icon_16.expand-click,
   .box_10.expand>.w_icon_16.expand-click {
-    padding-left: 40px;
+    padding-left: 40px !important;
     background-repeat: no-repeat;
     background-color: transparent;
     background-position-x: 11px;
@@ -365,7 +410,7 @@
   .box_10.expand>.w_icon_24,
   .box_10>.w_icon_24.expand-click,
   .box_10.expand>.w_icon_24.expand-click {
-    padding-left: 45px;
+    padding-left: 45px !important;
     background-repeat: no-repeat;
     background-color: transparent;
     background-position-x: 10px;
@@ -388,7 +433,7 @@
   }
 
   .box_5.w_icon_16 {
-    padding-left: 30px;
+    padding-left: 30px !important;
     background-repeat: no-repeat;
     background-position-x: 8px;
     background-position-y: 6px;
@@ -397,7 +442,7 @@
 
   .box_5.w_icon_16 hr {
     width: 100%;
-    padding-left: 30px;
+    padding-left: 30px !important;
     padding-right: 5px;
     margin-left: -30px;
     margin-right: -5px
@@ -580,7 +625,7 @@
   .iub_container-fluid {
     position: relative;
     min-width: 940px;
-    padding-left: 20px;
+    padding-left: 20px !important;
     padding-right: 20px;
     zoom: 1
   }
@@ -974,7 +1019,7 @@
   }
 
   .simple_pp>ul>li>ul .iconed {
-    padding-left: 40px;
+    padding-left: 40px !important;
     background-repeat: no-repeat;
     background-color: transparent;
     background-position-x: 2px;
@@ -1333,18 +1378,15 @@
   }
 
   .iubenda_vip_policy .box_10.expand .expand-click.w_icon_24 {
-    padding-left: 10px
+    padding-left: 10px !important;
   }
 
   .iubenda_vip_policy .box_primary {
-    border-color: #E0E0E0;
-    border-bottom-color: #D3D3D3;
-    -webkit-box-shadow: none;
-    box-shadow: none
-  }
-
-  .iubenda_vip_policy .box_primary h3 {
-    color: #333
+    -webkit-box-shadow: 0 1px 1px 0 rgba(0 0 0 / 15%) !important;
+    box-shadow: 0 1px 1px 0 rgba(0 0 0 / 15%) !important;
+    border: unset !important;
+    border-radius: var(--border-radius) !important;
+    background: var(--gauzy-card-4) !important;
   }
 
   .iubenda_vip_policy .tc-deactivated h1 {
