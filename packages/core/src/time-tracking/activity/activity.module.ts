@@ -10,6 +10,7 @@ import { ActivityService } from './activity.service';
 import { Activity } from './activity.entity';
 import { ActivityMapService } from './activity.map.service';
 import { TimeSlotModule } from './../time-slot/time-slot.module';
+import { UserModule } from './../../user/user.module';
 
 @Module({
 	controllers: [
@@ -18,6 +19,7 @@ import { TimeSlotModule } from './../time-slot/time-slot.module';
 	imports: [
 		TypeOrmModule.forFeature([ Activity ]),
 		TenantModule,
+		UserModule,
 		EmployeeModule,
 		OrganizationProjectModule,
 		forwardRef(() => TimeSlotModule),
