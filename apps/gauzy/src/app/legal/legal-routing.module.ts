@@ -6,7 +6,7 @@ import { TermsAndConditionsComponent } from '../@shared/legal/terms-and-conditio
 
 export const routes: Routes = [
 	{
-		path: '',
+		path: 'legal',
 		component: NbAuthComponent,
 		children: [
 			{
