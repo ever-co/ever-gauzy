@@ -44,7 +44,6 @@ export class ActivityController {
 			limit: 30
 		};
 		options = Object.assign({}, defaultParams, options);
-		console.log({ options });
 		return this.activityService.getActivities(options);
 	}
 
