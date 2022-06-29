@@ -827,7 +827,11 @@
 </ng-template>
 
 <ng-template #actionsPopover>
-	<div class="popover-container-action d-flex flex-column">
+	<div
+		gauzyOutside
+		(clickOutside)="onClickOutside($event)"
+		class="popover-container-action d-flex flex-column"
+	>
 		<ng-container>
 			<button
 				nbButton
