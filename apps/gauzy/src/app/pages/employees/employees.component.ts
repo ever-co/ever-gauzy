@@ -150,11 +150,15 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 		this.store
 			.componentLayout$(this.viewComponentName)
 			.pipe(
+				distinctUntilChange(),
 				tap(
 					(componentLayout) =>
 						(this.dataLayoutStyle = componentLayout)
 				),
-				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
+				filter(
+					(componentLayout) => 
+						componentLayout === ComponentLayoutStyleEnum.CARDS_GRID
+				),
 				tap(() => this.refreshPagination()),
 				tap(() => this.employees$.next(true)),
 				untilDestroyed(this)
@@ -561,7 +565,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 			actions: false,
 			pager: {
 				display: false,
-				perPage: pagination ? pagination : 10
+				perPage: pagination ? pagination.itemsPerPage : 10
 			},
 			columns: {
 				fullName: {
