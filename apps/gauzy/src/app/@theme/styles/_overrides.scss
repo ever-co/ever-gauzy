@@ -499,7 +499,7 @@ ng2-smart-table {
 
   position: absolute;
 
-  background: #ededee;
+  background: var(--gauzy-siderbar-background-5);
   box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.15);
   border-radius: nb-theme(border-radius);
   transform: translate(-16.75px, -118.5%);
