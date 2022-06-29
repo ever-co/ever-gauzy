@@ -4,7 +4,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { BehaviorSubject, filter } from 'rxjs';
 import { debounceTime, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs/internal/Observable';
-import { chain, pick, reduce } from 'underscore';
+import { chain, reduce } from 'underscore';
 import * as moment from 'moment';
 import {
 	ITimeLogFilters,
@@ -91,13 +91,8 @@ export class AppUrlActivityComponent extends BaseSelectorFilterComponent
 		if (!this.organization || isEmpty(this.filters)) {
 			return;
 		}
-		const appliedFilter = pick(
-			this.filters,
-			'source',
-			'activityLevel'
-		);
 		const request: IGetActivitiesInput = {
-			...appliedFilter,
+			...this.filters,
 			...this.getFilterRequest(this.request),
 			types: [this.type === 'apps' ? ActivityType.APP : ActivityType.URL]
 		};

@@ -15,7 +15,7 @@ export class PermissionGuard implements CanActivate {
 
 	async canActivate(context: ExecutionContext): Promise<boolean> {
 		/*
-		* Permissions decorator method level 
+		* GET metadata permissions class method level 
 		*/
 		const methodPermissions = this._reflector.get<string[]>(
 			'permissions',
@@ -23,7 +23,7 @@ export class PermissionGuard implements CanActivate {
 		) || [];
 
 		/*
-		* Permissions class method level 
+		* GET metadata permissions class level 
 		*/
 		const classPermissions = this._reflector.get<string[]>(
 			'permissions', 
