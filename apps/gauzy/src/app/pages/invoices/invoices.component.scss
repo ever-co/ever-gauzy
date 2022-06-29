@@ -355,6 +355,16 @@ nb-tab {
         flex-grow: 10;
         max-height: unset;
       }
+
+      .grid {
+        overflow: auto;
+      }
+
+      ga-card-grid {
+        ::ng-deep .grid-scroll-container {
+          max-height: 100%;
+        }
+      }
     }
 
     padding: 1rem;
