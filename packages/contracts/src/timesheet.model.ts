@@ -89,6 +89,7 @@ export interface IGetTimesheetInput
 	projectIds?: string[];
 	clientId?: string[];
 	employeeIds?: string[];
+	relations?: string[];
 }
 
 export interface IDateRange {
@@ -508,14 +509,6 @@ export interface ITimeLimitReport {
 	}[];
 }
 
-export interface IProjectBudgetLimitReportInput 
-	extends IBasePerTenantAndOrganizationEntityModel {
-	startDate?: string | Date;
-	endDate?: string | Date;
-	employeeIds?: string[];
-	employeeId?: string;
-}
-
 export interface IProjectBudgetLimitReport {
 	project?: IOrganizationProject;
 	budgetType?: OrganizationProjectBudgetTypeEnum;
@@ -524,8 +517,6 @@ export interface IProjectBudgetLimitReport {
 	spentPercentage?: number;
 	reamingBudget?: number;
 }
-
-export interface IClientBudgetLimitReportInput extends IProjectBudgetLimitReportInput {}
 
 export interface IClientBudgetLimitReport {
 	organizationContact?: IOrganizationContact;

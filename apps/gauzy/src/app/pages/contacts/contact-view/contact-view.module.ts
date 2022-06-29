@@ -7,6 +7,7 @@ import { ContactViewRoutingModule } from './contact-view-routing.module';
 import { LeafletMapModule } from '../../../@shared/forms';
 import { SharedModule } from '../../../@shared/shared.module';
 import { EmployeeMultiSelectModule } from '../../../@shared/employee/employee-multi-select/employee-multi-select.module';
+import { TableComponentsModule } from '../../../@shared';
 
 @NgModule({
 	imports: [
@@ -25,6 +26,7 @@ import { EmployeeMultiSelectModule } from '../../../@shared/employee/employee-mu
 		NbListModule,
 		SharedModule,
 		EmployeeMultiSelectModule,
+		TableComponentsModule
 	],
 	declarations: [ContactViewComponent],
 	providers: []

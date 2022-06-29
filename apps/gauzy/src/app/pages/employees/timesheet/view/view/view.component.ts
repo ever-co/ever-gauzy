@@ -69,13 +69,16 @@ export class ViewComponent extends TranslationBaseComponent
 	}
 
 	async getLogs() {
+		if (!this.timesheet) {
+			return;
+		}
 		try {
+			const { organizationId, id: timesheetId } = this.timesheet;
 			const request: IGetTimeLogInput = {
-				timesheetId: this.timesheet.id
+				timesheetId,
+				organizationId
 			};
-			const logs: ITimeLog[] = await this.timesheetService.getTimeLogs(
-				request
-			);
+			const logs: ITimeLog[] = await this.timesheetService.getTimeLogs(request);
 			this.timeLogs = chain(logs)
 				.groupBy((log) => moment(log.startedAt).format('YYYY-MM-DD'))
 				.value();

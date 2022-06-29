@@ -44,7 +44,7 @@ export class TenantPermissionGuard
 		}
 
 		/*
-		* Permissions decorator method level 
+		* GET metadata permissions class method level 
 		*/
 		const methodPermissions = this.reflector.get<string[]>(
 			'permissions',
@@ -52,7 +52,7 @@ export class TenantPermissionGuard
 		) || [];
 
 		/*
-		* Permissions class method level 
+		* GET metadata permissions class level 
 		*/
 		const classPermissions = this.reflector.get<string[]>(
 			'permissions', 

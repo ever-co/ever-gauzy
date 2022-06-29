@@ -35,10 +35,9 @@ export class RequestApprovalActionComponent implements ViewCell, OnInit {
 		if(role && role.name === RolesEnum.SUPER_ADMIN) {
 			this.isSuperAdmin = true
 		}
-
 		if (this.rowData && this.rowData.status) {
 			if(this.isSuperAdmin) {
-				switch (this.rowData.status) {
+				switch (this.rowData.status.value) {
 					case RequestApprovalStatusTypesEnum.APPROVED:
 						this.isApproval = false;
 						this.isRefuse = true;
@@ -53,7 +52,7 @@ export class RequestApprovalActionComponent implements ViewCell, OnInit {
 						break;
 				}
 			} else {
-				switch (this.rowData.status) {
+				switch (this.rowData.status.value) {
 					case RequestApprovalStatusTypesEnum.APPROVED:
 					case RequestApprovalStatusTypesEnum.REFUSED:
 						this.isApproval = false;

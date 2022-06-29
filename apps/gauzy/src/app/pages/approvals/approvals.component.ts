@@ -168,8 +168,11 @@ export class ApprovalsComponent
 	}
 
 	async selectRequestApproval({ isSelected, data }) {
+		this.selectedRequestApproval = null
 		this.disableButton = !isSelected;
-		this.selectedRequestApproval = isSelected ? data : null;
+		setTimeout(() => {
+			this.selectedRequestApproval = isSelected ? data : null;
+		}, 50);				
 	}
 
 	async getApprovals() {
@@ -216,7 +219,7 @@ export class ApprovalsComponent
 		items.map((item: any) => {
 			buffersItems.push({
 				...item,
-				status: this.statusMapper(item.status)
+				status: this.statusMapper(item)
 			});
 		});
 		this.smartTableSource.setPaging(activePage, itemsPerPage, false);
@@ -307,8 +310,9 @@ export class ApprovalsComponent
 		};
 	}
 
-	statusMapper(value: any) {
-		switch (value) {
+	statusMapper(row: any) {
+		let value;
+		switch (row.status) {
 			case RequestApprovalStatusTypesEnum.APPROVED:
 				value = this.getTranslation('APPROVAL_REQUEST_PAGE.APPROVED');
 				break;
@@ -326,6 +330,7 @@ export class ApprovalsComponent
 			: 'danger';
 		return {
 			text: value,
+			value: row.status,
 			class: badgeClass
 		};
 	}
@@ -341,6 +346,7 @@ export class ApprovalsComponent
 		};
 		this.handleEvent(params);
 	}
+
 	refuse(rowData) {
 		const params = {
 			isApproval: false,

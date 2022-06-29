@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Brackets, In, Repository, WhereExpressionBuilder } from 'typeorm';
+import { Brackets, In, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import { TenantAwareCrudService } from './../../core/crud';
 import { Activity } from './activity.entity';
 import { RequestContext } from '../../core/context';
@@ -8,7 +8,8 @@ import {
 	PermissionsEnum,
 	IGetActivitiesInput,
 	IDailyActivity,
-	IBulkActivitiesInput
+	IBulkActivitiesInput,
+	IActivity
 } from '@gauzy/contracts';
 import { CommandBus } from '@nestjs/cqrs';
 import { BulkActivitiesSaveCommand } from './commands/bulk-activities-save.command';
@@ -53,7 +54,7 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 			);
 		}
 		query.addSelect(`"${query.alias}"."title"`, `title`);
-		query.addGroupBy(`"${query.alias}"."date"`);
+		query.groupBy(`"${query.alias}"."date"`);
 
 		if (config.dbConnectionOptions.type === 'sqlite') {
 			query.addGroupBy(`time("${query.alias}"."time")`);
@@ -74,7 +75,7 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 
 	async getDailyActivitiesReport(
 		request: IGetActivitiesInput
-	): Promise<Activity[]> {
+	): Promise<IActivity[]> {
 		const query = this.filterQuery(request);
 
 		query.select(`COUNT("${query.alias}"."id")`, `sessions`);
@@ -83,17 +84,17 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 		query.addSelect(`"${query.alias}"."projectId"`, `projectId`);
 		query.addSelect(`"${query.alias}"."date"`, `date`);
 		query.addSelect(`"${query.alias}"."title"`, `title`);
-		query.addGroupBy(`"${query.alias}"."date"`);
+		query.groupBy(`"${query.alias}"."date"`);
 		query.addGroupBy(`"${query.alias}"."title"`);
 		query.addGroupBy(`"${query.alias}"."employeeId"`);
 		query.addGroupBy(`"${query.alias}"."projectId"`);
 		query.orderBy(`"duration"`, 'DESC');
 
 		query.limit(200);
-		let activitiesData = await query.getRawMany();
+		let activities = await query.getRawMany();
 
-		const projectIds = pluck(activitiesData, 'projectId');
-		const employeeIds = pluck(activitiesData, 'employeeId');
+		const projectIds = pluck(activities, 'projectId');
+		const employeeIds = pluck(activities, 'employeeId');
 
 		let employeeById: any = {};
 		if (employeeIds.length > 0) {
@@ -115,23 +116,15 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 			});
 			projectById = indexBy(projects, 'id');
 		}
-
-		activitiesData = activitiesData.map((activity) => {
+		activities = activities.map((activity) => {
 			activity.employee = employeeById[activity.employeeId];
 			activity.project = projectById[activity.projectId];
 			return activity;
 		});
-
-		return activitiesData;
+		return activities;
 	}
 
-	async getAllActivities(request: IGetActivitiesInput) {
-		const query = this.filterQuery(request);
-
-		return await query.getMany();
-	}
-
-	async getActivities(request: IGetActivitiesInput) {
+	async getActivities(request: IGetActivitiesInput): Promise<IActivity[]> {
 		const query = this.filterQuery(request);
 		if (
 			RequestContext.hasPermission(
@@ -150,7 +143,6 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 		}
 
 		query.orderBy(`${query.alias}.duration`, 'DESC');
-
 		return await query.getMany();
 	}
 
@@ -160,15 +152,9 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 		);
 	}
 
-	private filterQuery(request: IGetActivitiesInput) {
+	private filterQuery(request: IGetActivitiesInput): SelectQueryBuilder<Activity> {
 		const { organizationId, startDate, endDate } = request;
 		const tenantId = RequestContext.currentTenantId();
-
-		const query = this.activityRepository.createQueryBuilder();
-		if (request.limit > 0) {
-			query.take(request.limit);
-			query.skip((request.page || 0) * request.limit);
-		}
 
 		let employeeIds: string[];
 		if (
@@ -182,6 +168,12 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 		} else {
 			const user = RequestContext.currentUser();
 			employeeIds = [user.employeeId];
+		}
+
+		const query = this.activityRepository.createQueryBuilder();
+		if (request.limit > 0) {
+			query.take(request.limit);
+			query.skip((request.page || 0) * request.limit);
 		}
 
 		query.innerJoin(`${query.alias}.employee`, 'employee');
@@ -225,18 +217,6 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 						endDate
 					});
 				}
-			})
-		);
-		query.andWhere(
-			new Brackets((qb: WhereExpressionBuilder) => { 
-				qb.andWhere(`"time_log"."startedAt" BETWEEN :startedAt AND :stoppedAt`, {
-					startedAt: startDate,
-					stoppedAt: endDate
-				});
-				qb.andWhere(`"time_slot"."startedAt" BETWEEN :startedAt AND :stoppedAt`, {
-					startedAt: startDate,
-					stoppedAt: endDate
-				});
 			})
 		);
 		query.andWhere(

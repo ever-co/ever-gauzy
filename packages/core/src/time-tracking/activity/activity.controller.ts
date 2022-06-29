@@ -5,16 +5,19 @@ import {
 	Get,
 	Query,
 	Post,
-	Body
+	Body,
+	ValidationPipe
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { IGetActivitiesInput, IBulkActivitiesInput, ReportGroupFilterEnum } from '@gauzy/contracts';
-import { TenantPermissionGuard } from './../../shared/guards';
+import { IGetActivitiesInput, IBulkActivitiesInput, ReportGroupFilterEnum, PermissionsEnum } from '@gauzy/contracts';
+import { PermissionGuard, TenantPermissionGuard } from './../../shared/guards';
+import { Permissions } from './../../shared/decorators';
 import { ActivityService } from './activity.service';
 import { ActivityMapService } from './activity.map.service';
+import { ActivityQueryDTO } from './dto/query';
 
 @ApiTags('Activity')
-@UseGuards(TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard)
 @Controller()
 export class ActivityController {
 	constructor(
@@ -28,14 +31,20 @@ export class ActivityController {
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
+	@Permissions(PermissionsEnum.TIME_TRACKER, PermissionsEnum.TIMESHEET_EDIT_TIME)
 	@Get('/')
-	async getActivities(@Query() request: IGetActivitiesInput) {
+	async getActivities(
+		@Query(new ValidationPipe({
+			transform: true,
+			whitelist: true
+		})) options: ActivityQueryDTO
+	) {
 		const defaultParams: Partial<IGetActivitiesInput> = {
 			page: 0,
 			limit: 30
 		};
-		request = Object.assign({}, defaultParams, request);
-		return this.activityService.getActivities(request);
+		options = Object.assign({}, defaultParams, options);
+		return this.activityService.getActivities(options);
 	}
 
 	@ApiOperation({ summary: 'Get Daily Activities' })
@@ -44,9 +53,15 @@ export class ActivityController {
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
+	@Permissions(PermissionsEnum.TIME_TRACKER, PermissionsEnum.TIMESHEET_EDIT_TIME)
 	@Get('/daily')
-	async getDailyActivities(@Query() request: IGetActivitiesInput) {
-		return this.activityService.getDailyActivities(request);
+	async getDailyActivities(
+		@Query(new ValidationPipe({
+			transform: true,
+			whitelist: true
+		})) options: ActivityQueryDTO
+	) {
+		return this.activityService.getDailyActivities(options);
 	}
 
 	@ApiOperation({ summary: 'Get Daily Activities' })
@@ -55,20 +70,22 @@ export class ActivityController {
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
+	@Permissions(PermissionsEnum.TIME_TRACKER, PermissionsEnum.TIMESHEET_EDIT_TIME)
 	@Get('/report')
 	async getDailyActivitiesReport(
-		@Query() request: IGetActivitiesInput
+		@Query(new ValidationPipe({
+			transform: true,
+			whitelist: true
+		})) options: ActivityQueryDTO
 	) {
-		let activities = await this.activityService.getDailyActivitiesReport(request);
-
-		if (request.groupBy === ReportGroupFilterEnum.date) {
+		let activities = await this.activityService.getDailyActivitiesReport(options);
+		if (options.groupBy === ReportGroupFilterEnum.date) {
 			activities = this.activityMapService.mapByDate(activities);
-		} else if (request.groupBy === ReportGroupFilterEnum.employee) {
+		} else if (options.groupBy === ReportGroupFilterEnum.employee) {
 			activities = this.activityMapService.mapByEmployee(activities);
-		} else if (request.groupBy === ReportGroupFilterEnum.project) {
+		} else if (options.groupBy === ReportGroupFilterEnum.project) {
 			activities = this.activityMapService.mapByProject(activities);
 		}
-
 		return activities;
 	}
 

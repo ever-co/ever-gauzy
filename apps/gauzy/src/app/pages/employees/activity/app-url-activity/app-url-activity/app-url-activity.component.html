@@ -1,7 +1,6 @@
 <div class="custom-card">
 	<div class="filters mb-2 mt-0">
 		<ngx-gauzy-filters
-			[hasLogTypeFilter]="false"
 			[saveFilters]="(datePickerConfig$ | async).isSaveDatePicker"
 			(filtersChange)="filtersChange($event)"
 		></ngx-gauzy-filters>
@@ -23,7 +22,9 @@
 							) | translate
 						}}
 					</div>
-					<div class="col-sm-3 py-2">	{{ 'ACTIVITY.VISITED_DATES' | translate }}</div>
+					<div class="col-sm-3 py-2">
+						{{ 'ACTIVITY.VISITED_DATES' | translate }}
+					</div>
 					<div class="col-sm-5 py-2">
 						{{ 'ACTIVITY.PERCENT_USED' | translate }}
 					</div>

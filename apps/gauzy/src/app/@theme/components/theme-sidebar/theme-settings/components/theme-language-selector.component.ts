@@ -41,10 +41,8 @@ export class ThemeLanguageSelectorComponent implements OnInit, OnDestroy, AfterV
 				filter((user: IUser) => !!user),
 				tap((user: IUser) => (this.user = user)),
 				tap(({ preferredLanguage }: IUser) => {
-					if (preferredLanguage) {
-						this._store.preferredLanguage = preferredLanguage;
-					} else {
-						this._store.preferredLanguage = LanguagesEnum.ENGLISH;
+					if (!this._store.preferredLanguage) {
+						this._store.preferredLanguage = preferredLanguage || LanguagesEnum.ENGLISH;
 					}
 				}),
 				untilDestroyed(this)

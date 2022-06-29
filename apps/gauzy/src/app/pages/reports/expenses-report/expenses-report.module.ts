@@ -16,6 +16,7 @@ import { HeaderTitleModule } from '../../../@shared/components/header-title/head
 import { SharedModule } from '../../../@shared/shared.module';
 import { DateRangeTitleModule } from '../../../@shared/components/date-range-title/date-range-title.module';
 import { GauzyFiltersModule } from '../../../@shared/timesheet/gauzy-filters/gauzy-filters.module';
+import { ExpenseCategorySelectModule } from '../../../@shared/expenses/expense-category-select/expense-category-select.module';
 
 @NgModule({
 	declarations: [ExpensesReportComponent],
@@ -33,7 +34,8 @@ import { GauzyFiltersModule } from '../../../@shared/timesheet/gauzy-filters/gau
 		LineChartModule,
 		HeaderTitleModule,
 		DateRangeTitleModule,
-    	GauzyFiltersModule
+    	GauzyFiltersModule,
+		ExpenseCategorySelectModule
 	]
 })
 export class ExpensesReportModule {}

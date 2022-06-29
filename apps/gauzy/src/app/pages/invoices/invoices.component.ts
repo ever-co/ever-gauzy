@@ -1215,6 +1215,15 @@ export class InvoicesComponent
 			itemsPerPage: this.perPage
 		});
 	}
-	
-	ngOnDestroy() { }
+
+	/**
+	 * Handle event when user click outside tag
+	 * @param event is a boolean
+	 */
+	onClickOutside(event: boolean) {
+		// Close popover after click any button inside
+		if (event) this.toggleActionsPopover();
+	}
+
+	ngOnDestroy() {}
 }

@@ -29,7 +29,6 @@ export class ExpensesReportGridComponent extends BaseSelectorFilterComponent
 	implements OnInit, AfterViewInit {
 
 	dailyData: IExpenseReportData[] = [];
-	weekDayList: string[] = [];
 	loading: boolean;
 	groupBy: ReportGroupByFilter = ReportGroupFilterEnum.date;
 
@@ -65,11 +64,6 @@ export class ExpensesReportGridComponent extends BaseSelectorFilterComponent
 		this.cd.detectChanges();
 	}
 
-	filtersChange(filters: ITimeLogFilters) {
-		this.filters = Object.assign({}, filters);
-		this.subject$.next(true);
-	}
-
 	groupByChange() {
 		this.subject$.next(true);
 	}
@@ -84,7 +78,7 @@ export class ExpensesReportGridComponent extends BaseSelectorFilterComponent
 		};
 		this.loading = true;
 		try {
-			this.dailyData = await this.expensesService .getDailyExpensesReport(request);
+			this.dailyData = await this.expensesService.getDailyExpensesReport(request);
 		} catch (error) {
 			console.log('Error while retrieving expense reports', error);
 		} finally {

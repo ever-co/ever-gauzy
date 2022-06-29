@@ -1,20 +1,20 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindManyOptions, Between, Like } from 'typeorm';
+import { Repository, FindManyOptions, Between, Like, Brackets, WhereExpressionBuilder } from 'typeorm';
 import * as moment from 'moment';
 import { chain } from 'underscore';
-import { ConfigService } from '@gauzy/config';
-import { IGetExpenseInput, IPagination, PermissionsEnum } from '@gauzy/contracts';
+import { IExpense, IGetExpenseInput, IPagination, PermissionsEnum } from '@gauzy/contracts';
+import { isNotEmpty } from '@gauzy/common';
 import { Expense } from './expense.entity';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
+import { getDateFormat, getDaysBetweenDates } from './../core/utils';
 
 @Injectable()
 export class ExpenseService extends TenantAwareCrudService<Expense> {
 	constructor(
 		@InjectRepository(Expense)
-		private readonly expenseRepository: Repository<Expense>,
-		private readonly configService: ConfigService
+		private readonly expenseRepository: Repository<Expense>
 	) {
 		super(expenseRepository);
 	}
@@ -83,24 +83,15 @@ export class ExpenseService extends TenantAwareCrudService<Expense> {
 		const query = this.filterQuery(request);
 		query.orderBy(`"${query.alias}"."valueDate"`, 'ASC');
 
-		let dayList = [];
-		const range = {};
-		let i = 0;
-		const start = moment(request.startDate);
-		while (start.isSameOrBefore(request.endDate) && i < 31) {
-			const date = start.format('YYYY-MM-DD');
-			range[date] = null;
-			start.add(1, 'day');
-			i++;
-		}
-		dayList = Object.keys(range);
-		const expenses = await query.getMany();
+		const { startDate, endDate } = request;
+		const days: Array<string> = getDaysBetweenDates(startDate, endDate);
 
+		const expenses = await query.getMany();
 		const byDate = chain(expenses)
 			.groupBy((expense) =>
 				moment(expense.valueDate).format('YYYY-MM-DD')
 			)
-			.mapObject((expenses: Expense[], date) => {
+			.mapObject((expenses: IExpense[], date) => {
 				const sum = expenses.reduce((iteratee: any, expense: any) => {
 					return iteratee + parseFloat(expense.amount);
 				}, 0);
@@ -113,7 +104,7 @@ export class ExpenseService extends TenantAwareCrudService<Expense> {
 			})
 			.value();
 
-		const dates = dayList.map((date) => {
+		const dates = days.map((date) => {
 			if (byDate[date]) {
 				return byDate[date];
 			} else {
@@ -130,12 +121,20 @@ export class ExpenseService extends TenantAwareCrudService<Expense> {
 	}
 
 	private filterQuery(request: IGetExpenseInput) {
-		let employeeIds: string[];
-		const query = this.expenseRepository.createQueryBuilder();
-		if (request && request.limit > 0) {
-			query.take(request.limit);
-			query.skip((request.page || 0) * request.limit);
-		}
+		const { organizationId, startDate, endDate } = request;
+		let { employeeIds = [], projectIds = [] } = request;
+
+		const { start, end } = (startDate && endDate) ?
+								getDateFormat(
+									moment.utc(startDate),
+									moment.utc(endDate)
+								) :
+								getDateFormat(
+									moment().startOf('week').utc(),
+									moment().endOf('week').utc()
+								);
+		
+		const tenantId = RequestContext.currentTenantId();
 		if (
 			RequestContext.hasPermission(
 				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
@@ -149,50 +148,39 @@ export class ExpenseService extends TenantAwareCrudService<Expense> {
 			employeeIds = [user.employeeId];
 		}
 
+		const query = this.expenseRepository.createQueryBuilder();
+		if (request.limit > 0) {
+			query.take(request.limit);
+			query.skip((request.page || 0) * request.limit);
+		}
 		query.innerJoin(`${query.alias}.employee`, 'employee');
-		query.where((qb) => {
-			if (request.startDate && request.endDate) {
-				let startDate: any = moment.utc(request.startDate);
-				let endDate: any = moment.utc(request.endDate);
-
-				if (this.configService.dbConnectionOptions.type === 'sqlite') {
-					startDate = startDate.format('YYYY-MM-DD HH:mm:ss');
-					endDate = endDate.format('YYYY-MM-DD HH:mm:ss');
-				} else {
-					startDate = startDate.toDate();
-					endDate = endDate.toDate();
+		query.andWhere(
+			new Brackets((qb: WhereExpressionBuilder) => { 
+				qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
+				qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
+			})
+		)
+		query.andWhere(
+			new Brackets((qb: WhereExpressionBuilder) => { 
+				qb.where(						{
+					valueDate: Between(start, end)
+				});
+			})
+		);
+		query.andWhere(
+			new Brackets((qb: WhereExpressionBuilder) => { 			
+				if (isNotEmpty(employeeIds)) {
+					qb.andWhere(`"${query.alias}"."employeeId" IN (:...employeeIds)`, {
+						employeeIds
+					});
 				}
-
-				qb.where({
-					valueDate: Between(startDate, endDate)
-				});
-			}
-			if (employeeIds) {
-				qb.andWhere(
-					`"${query.alias}"."employeeId" IN (:...employeeId)`,
-					{
-						employeeId: employeeIds
-					}
-				);
-			}
-			if (request.projectIds) {
-				qb.andWhere(`"${query.alias}"."projectId" IN (:...projectId)`, {
-					projectId: request.projectIds
-				});
-			}
-			if (request.organizationId) {
-				qb.andWhere(
-					`"${query.alias}"."organizationId" = :organizationId`,
-					{
-						organizationId: request.organizationId
-					}
-				);
-			}
-			qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
-				tenantId: RequestContext.currentTenantId()
-			});
-		});
-
+				if (isNotEmpty(projectIds)) {
+					qb.andWhere(`"${query.alias}"."projectId" IN (:...projectIds)`, {
+						projectIds
+					});
+				}
+			})
+		);
 		return query;
 	}
 

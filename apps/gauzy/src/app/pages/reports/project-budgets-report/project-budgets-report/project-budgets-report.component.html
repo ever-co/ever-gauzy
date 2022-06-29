@@ -46,11 +46,11 @@
 								<div class="responsive-table-row spent-column">
 									{{ 'REPORT_PAGE.SPENT' | translate }}
 								</div>
-								<div class="responsive-table-row budget-column">
-									{{ 'REPORT_PAGE.BUDGET' | translate }}
-								</div>
 								<div class="responsive-table-row remaining-column">
 									{{ 'REPORT_PAGE.REMAINING' | translate }}
+								</div>
+								<div class="responsive-table-row budget-column">
+									{{ 'REPORT_PAGE.BUDGET' | translate }}
 								</div>
 							</div>
 						</div>
@@ -58,7 +58,9 @@
 							<div class="table-row">
 								<div class="table-inner-wrapper">
 									<div class="responsive-table-row project-column">
-										<div class="responsive-table-header">{{ 'REPORT_PAGE.PROJECT' | translate }}</div>
+										<div class="responsive-table-header">
+											{{ 'REPORT_PAGE.PROJECT' | translate }}
+										</div>
 										<div class="responsive-table-content day-col project-cell">
 											<ng-container
 													*ngTemplateOutlet="
@@ -68,7 +70,9 @@
 										</div>
 									</div>
 									<div class="responsive-table-row employees-column">
-										<div class="responsive-table-header employees-header" title="Employees/Teams">{{ 'REPORT_PAGE.EMPLOYEES/TEAMS' | translate }}</div>
+										<div class="responsive-table-header employees-header" title="Employees/Teams">
+											{{ 'REPORT_PAGE.EMPLOYEES/TEAMS' | translate }}
+										</div>
 										<div class="responsive-table-content day-col">
 											No data yet....
 										</div>
@@ -90,30 +94,10 @@
 											</span>
 										</div>
 									</div>
-									<div class="responsive-table-row budget-column">
-										<div class="responsive-table-header">{{ 'REPORT_PAGE.BUDGET' | translate }}</div>
-										<div class="responsive-table-content day-col budget-row">
-											<div class="progress-wrapper">
-												<ngx-progress-status
-														class="report-progress"
-														[percentage]="project?.spentPercentage"
-														defaultStatus="success">
-												</ngx-progress-status>
-											</div>
-											<span *ngIf="project.budgetType ===OrganizationProjectBudgetTypeEnum.HOURS" class="currency-span">
-												{{ (project?.budget * 3600) | durationFormat }}
-												{{ 'REPORT_PAGE.HOURS' | translate }}
-											</span>
-											<span *ngIf="project.budgetType ===OrganizationProjectBudgetTypeEnum.COST" class="currency-span">
-												{{ project.budget
-														| currency : organization?.currency:'symbol'
-														| position : organization?.currencyPosition
-												}}
-											</span>
-										</div>
-									</div>
 									<div class="responsive-table-row remaining-column">
-										<div class="responsive-table-header">{{ 'REPORT_PAGE.REMAINING' | translate }}</div>
+										<div class="responsive-table-header">
+											{{ 'REPORT_PAGE.REMAINING' | translate }}
+										</div>
 										<div class="responsive-table-content day-col">
 											<span *ngIf="project.budgetType === OrganizationProjectBudgetTypeEnum.HOURS">
 												{{ (project.reamingBudget * 3600) | durationFormat }}
@@ -125,6 +109,30 @@
 														| position : organization?.currencyPosition
 												}}
 											</span>
+										</div>
+									</div>
+									<div class="responsive-table-row budget-column">
+										<div class="responsive-table-header">
+											{{ 'REPORT_PAGE.BUDGET' | translate }}
+										</div>
+										<div class="responsive-table-content day-col budget-row">
+											<span *ngIf="project.budgetType ===OrganizationProjectBudgetTypeEnum.HOURS" class="currency-span">
+												{{ (project?.budget * 3600) | durationFormat }}
+												{{ 'REPORT_PAGE.HOURS' | translate }}
+											</span>
+											<span *ngIf="project.budgetType ===OrganizationProjectBudgetTypeEnum.COST" class="currency-span">
+												{{ project.budget
+														| currency : organization?.currency:'symbol'
+														| position : organization?.currencyPosition
+												}}
+											</span>
+											<div class="progress-wrapper">
+												<ngx-progress-status
+														class="report-progress"
+														[percentage]="project?.spentPercentage"
+														defaultStatus="success">
+												</ngx-progress-status>
+											</div>
 										</div>
 									</div>
 								</div>
