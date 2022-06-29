@@ -128,7 +128,7 @@ const DIRECTIVES = [OutsideDirective];
 
 @NgModule({
 	imports: [RouterModule, ...EXPORT_IMPORT, ...NB_MODULES, ...MODULES],
-	exports: [...EXPORT_IMPORT, ...PIPES, ...COMPONENTS],
+	exports: [...EXPORT_IMPORT, ...PIPES, ...COMPONENTS, ...DIRECTIVES],
 	declarations: [...COMPONENTS, ...PIPES, ...DIRECTIVES],
 	providers: [
 		UsersService,

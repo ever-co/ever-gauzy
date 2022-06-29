@@ -612,7 +612,7 @@
 			</div>
 		</ng-template>
 		<ng-template #gridLayout>
-			<div *ngIf="pagination.totalItems">
+			<div class="grid" *ngIf="pagination.totalItems">
 				<ga-card-grid
 					(selectedOption)="onUpdateOption($event)"
 					(selectedPage)="onPageChange($event)"
@@ -827,7 +827,11 @@
 </ng-template>
 
 <ng-template #actionsPopover>
-	<div class="popover-container-action d-flex flex-column">
+	<div
+		gauzyOutside
+		(clickOutside)="onClickOutside($event)"
+		class="popover-container-action d-flex flex-column"
+	>
 		<ng-container>
 			<button
 				nbButton
