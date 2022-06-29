@@ -17,8 +17,6 @@ import {
 	ITimeLimitReport,
 	IProjectBudgetLimitReport,
 	OrganizationProjectBudgetTypeEnum,
-	IProjectBudgetLimitReportInput,
-	IClientBudgetLimitReportInput,
 	OrganizationContactBudgetTypeEnum,
 	IClientBudgetLimitReport,
 	ReportGroupFilterEnum,
@@ -527,7 +525,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		return dates as ITimeLimitReport[];
 	}
 
-	async projectBudgetLimit(request: IProjectBudgetLimitReportInput) {
+	async projectBudgetLimit(request: IGetTimeLogReportInput) {
 		const { organizationId, employeeIds, startDate, endDate } = request;
 		const tenantId = RequestContext.currentTenantId();
 
@@ -575,16 +573,14 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		const organizationProjects = await query.getMany();
 		const projects = organizationProjects.map(
 			(organizationProject: IOrganizationProject): IProjectBudgetLimitReport => {
-				const { budgetType, budget = 0, timeLogs = [] } = organizationProject;
+				const { budgetType, timeLogs = [] } = organizationProject;
+				const budget = organizationProject.budget || 0;
 
 				let spent = 0;
 				let spentPercentage = 0;
 				let reamingBudget = 0;
 
-				if (
-					organizationProject.budgetType ==
-					OrganizationProjectBudgetTypeEnum.HOURS
-				) {
+				if (budgetType == OrganizationProjectBudgetTypeEnum.HOURS) {
 					spent = timeLogs.reduce(
 						(iteratee: any, log: ITimeLog) => {
 							return iteratee + (log.duration / 3600);
@@ -606,22 +602,22 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				
 				spentPercentage = (spent * 100) / budget;
 				reamingBudget = Math.max(budget - spent, 0);
-				
+
 				delete organizationProject['timeLogs'];
 				return {
 					project: organizationProject,
 					budgetType,
 					budget,
 					spent: parseFloat(spent.toFixed(2)),
-					reamingBudget: parseFloat(reamingBudget.toFixed(2)),
-					spentPercentage: parseFloat(spentPercentage.toFixed(2))
+					reamingBudget: Number.isFinite(reamingBudget) ? parseFloat(reamingBudget.toFixed(2)) : 0,
+					spentPercentage: Number.isFinite(spentPercentage) ? parseFloat(spentPercentage.toFixed(2)) : 0
 				};
 			}
 		);
 		return projects;
 	}
 
-	async clientBudgetLimit(request: IClientBudgetLimitReportInput) {
+	async clientBudgetLimit(request: IGetTimeLogReportInput) {
 		const { organizationId, employeeIds, startDate, endDate } = request;
 		const tenantId = RequestContext.currentTenantId();
 	
@@ -669,7 +665,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		const organizationContacts = await query.getMany();		
 		return organizationContacts.map(
 			(organizationContact: IOrganizationContact): IClientBudgetLimitReport => {
-				const { budgetType, budget, timeLogs } = organizationContact;
+				const { budgetType, timeLogs = [] } = organizationContact;
+				const budget = organizationContact.budget || 0;
 
 				let spent = 0;
 				let spentPercentage = 0;
@@ -704,8 +701,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 					budgetType,
 					budget,
 					spent: parseFloat(spent.toFixed(2)),
-					reamingBudget: parseFloat(reamingBudget.toFixed(2)),
-					spentPercentage: parseFloat(spentPercentage.toFixed(2))
+					reamingBudget: Number.isFinite(reamingBudget) ? parseFloat(reamingBudget.toFixed(2)) : 0,
+					spentPercentage: Number.isFinite(spentPercentage) ? parseFloat(spentPercentage.toFixed(2)) : 0
 				};
 			}
 		);

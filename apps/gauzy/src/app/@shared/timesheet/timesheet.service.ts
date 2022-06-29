@@ -16,8 +16,6 @@ import {
 	ITimeLimitReport,
 	IClientBudgetLimitReport,
 	IProjectBudgetLimitReport,
-	IProjectBudgetLimitReportInput,
-	IClientBudgetLimitReportInput,
 	IReportDayData,
 	ReportDayData
 } from '@gauzy/contracts';
@@ -174,7 +172,7 @@ export class TimesheetService {
 		);
 	}
 
-	getProjectBudgetLimit(request: IProjectBudgetLimitReportInput) {
+	getProjectBudgetLimit(request: IGetTimeLogReportInput) {
 		return firstValueFrom(
 			this.http
 			.get<IProjectBudgetLimitReport[]>(
@@ -186,7 +184,7 @@ export class TimesheetService {
 		);
 	}
 
-	getClientBudgetLimit(request: IClientBudgetLimitReportInput) {
+	getClientBudgetLimit(request: IGetTimeLogReportInput) {
 		return firstValueFrom(
 			this.http
 			.get<IClientBudgetLimitReport[]>(

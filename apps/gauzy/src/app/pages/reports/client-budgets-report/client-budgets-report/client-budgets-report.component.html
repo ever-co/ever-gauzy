@@ -40,9 +40,6 @@
 								<div class="responsive-table-row contact-column">
 									{{ 'REPORT_PAGE.CLIENT' | translate }}
 								</div>
-								<div class="responsive-table-row project-column">
-									{{ 'REPORT_PAGE.PROJECT' | translate }}
-								</div>
 								<div class="responsive-table-row employees-column">
 									{{ 'REPORT_PAGE.EMPLOYEES/TEAMS' | translate }}
 								</div>
@@ -70,17 +67,13 @@
 											</ng-container>
 										</div>
 									</div>
-									<div class="responsive-table-row project-column">
-										<div class="responsive-table-header">
-											{{ 'REPORT_PAGE.PROJECT' | translate }}
-										</div>
-										<div class="responsive-table-content project-name"></div>
-									</div>
 									<div class="responsive-table-row employees-column">
-										<div class="responsive-table-header">
+										<div class="responsive-table-header employees-header" title="Employees/Teams">
 											{{ 'REPORT_PAGE.EMPLOYEES/TEAMS' | translate }}
 										</div>
-										<div class="responsive-table-content day-col"></div>
+										<div class="responsive-table-content day-col">
+											No data yet....
+										</div>
 									</div>
 									<div class="responsive-table-row spent-column">
 										<div class="responsive-table-header">
@@ -165,7 +158,9 @@
 </nb-card>
 
 <ng-template let-client #clientEl>
-	<span *ngIf="client; else noClient">{{ client?.name }} </span>
+	<span *ngIf="client; else noClient">
+		<ngx-contact-links [value]="client"></ngx-contact-links>
+	</span>
 	<ng-template #noClient>
 		<span>{{ 'REPORT_PAGE.NO_CLIENT' | translate }}</span>
 	</ng-template>
