@@ -58,10 +58,8 @@ export class ProductCategoryService extends TenantAwareCrudService<ProductCatego
 		entity: ProductCategory
 	): Promise<ProductCategory> {
 		try {
-			return this.productCategoryRepository.save({
-				id,
-				...entity
-			});
+			await this.productCategoryRepository.delete(id);
+			return this.productCategoryRepository.save(entity);
 		} catch (err) {
 			throw new BadRequestException(err);
 		}
