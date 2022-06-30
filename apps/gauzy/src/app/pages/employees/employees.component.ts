@@ -459,21 +459,8 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 			endPoint: `${API_PREFIX}/employee/pagination`,
 			relations: ['user', 'tags'],
 			where: {
-				...{ organizationId, tenantId },
+				...{ organizationId, tenantId, isActive: !this.includeDeleted },
 				...this.filters.where
-			},
-			join: {
-				alias: 'employee',
-				leftJoin: {
-					user: 'employee.user',
-					tags: 'employee.tags'
-				}
-			},
-			filterMap: (employees: IEmployee[]) => {
-				if (!this.includeDeleted) {
-					employees = employees.filter((employee: IEmployee) => employee.isActive);
-				}
-				return employees;
 			},
 			resultMap: (employee: IEmployee) => {
 				return Object.assign({}, employee, this.employeeMapper(employee));
@@ -578,8 +565,8 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 						type: 'custom',
 						component: InputFilterComponent
 					},
-					filterFunction: (firstName: string) => {
-						this.setFilter({ field: 'user.firstName', search: firstName });
+					filterFunction: (name: string) => {
+						this.setFilter({ field: 'user.name', search: name });
 					},
 				},
 				email: {
