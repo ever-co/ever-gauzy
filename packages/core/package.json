@@ -120,7 +120,7 @@
 		"node-fetch": "^2.6.7",
 		"nodemailer": "^6.4.11",
 		"nodemailer-handlebars": "^1.0.1",
-		"passport": "^0.4.1",
+		"passport": "^0.6.0",
 		"passport-jwt": "^4.0.0",
 		"pdfmake": "^0.2.0",
 		"pg": "^8.7.3",
