@@ -1286,6 +1286,8 @@
 		"TIME_FRAME": "Временные кадры",
 		"CREATE_NEW": "+ создать новый",
 		"GOAL_TEMPLATES": "Шаблоны целей",
+		"CREATE_NEW_MENU": "Создать новый",
+		"CREATE_FROM_PRESET": "Создать из пресета",
 		"OWNERSHIP": {
 			"EMPLOYEES": "Сотрудники",
 			"TEAMS": "Команды",
@@ -1387,6 +1389,7 @@
 	"KEY_RESULT_PAGE": {
 		"UPDATE_KEY_RESULT": "Обновить результат ключа",
 		"EDIT_KEY_RESULT": "Изменить результат ключа",
+		"EDIT_KEY_RESULT_PARAMETERS": "Изменить параметры результата ключа",
 		"ADD_KEY_RESULT": "Добавить результат ключа",
 		"UPDATE": {
 			"STATUS": {
@@ -1439,6 +1442,7 @@
 				"MARK_COMPLETE": "Отметить как завершенное",
 				"STATUS": "Статус",
 				"WEIGHT": "Вес",
+				"TYPE": "Тип",
 				"SELECT_PROJECT": "Выбрать проект",
 				"SELECT_TASK": "Выберите задачу",
 				"SELECT_KPI": "Выберите KPI",
