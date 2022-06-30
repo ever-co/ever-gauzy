@@ -245,8 +245,8 @@ export class StatisticService {
 						endDate: endToday
 					});
 					qb.andWhere(`"${todayQuery.alias}"."startedAt" BETWEEN :startDate AND :endDate`, {
-						startDate: start,
-						endDate: end
+						startDate: startToday,
+						endDate: endToday
 					});
 					/**
 					 * If Employee Selected
