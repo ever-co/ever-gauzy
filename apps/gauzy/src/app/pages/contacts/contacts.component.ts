@@ -26,7 +26,7 @@ import { combineLatest, Subject, firstValueFrom } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { Ng2SmartTableComponent } from 'ng2-smart-table';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { distinctUntilChange } from '@gauzy/common-angular';
+import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
 import { InviteContactComponent } from './invite-contact/invite-contact.component';
 import {
 	CountryService,
@@ -415,7 +415,7 @@ export class ContactsComponent extends PaginationFilterBaseComponent
 		const { id: organizationId } = this.organization;
 
 		const request = {};
-		if (this.selectedEmployeeId) request['employeeId'] = this.selectedEmployeeId;
+		if (isNotEmpty(this.selectedEmployeeId)) { request['members'] = [this.selectedEmployeeId]; };
 
 		try {
 			this.smartTableSource = new ServerDataSource(this.http, {
@@ -429,6 +429,12 @@ export class ContactsComponent extends PaginationFilterBaseComponent
 					'tags',
 					'contact'
 				],
+				join: {
+					alias: 'organization-contact',
+					leftJoin: {
+						members: 'organization-contact.members'
+					}
+				},
 				where: {
 					...{
 						organizationId,
