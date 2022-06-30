@@ -1,6 +1,6 @@
-<div class="sidemenu-wrap ">
-	<nb-card class="sidemenu card-scroll">
-		<nb-card-body class="sidebar h-100">
+<div class="sidemenu-wrap">
+	<nb-card class="sidemenu">
+		<nb-card-body class="sidebar">
 			<div class="add-icon-field">
 				<button
 					status="success"
@@ -31,8 +31,8 @@
 					>
 						<div
 							class="base"
-							[ngStyle]="{ color: node.data.color }"
 							[ngClass]="setClasses(node)"
+							[ngStyle]="{ color: node.data.color }"
 							(click)="onNodeClicked(node.data)"
 						>
 							<div>
@@ -60,7 +60,12 @@
 									[ngStyle]="{ color: 'black' }"
 									class="edit-icons"
 									icon="edit-outline"
-									(click)="addEditCategory(actionEnum.EDIT, node.data)"
+									(click)="
+										addEditCategory(
+											actionEnum.EDIT,
+											node.data
+										)
+									"
 								></nb-icon>
 								<nb-icon
 									*ngIf="node.data.flag === 'category'"
