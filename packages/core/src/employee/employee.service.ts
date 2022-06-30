@@ -1,12 +1,13 @@
 import { IDateRangePicker, IEmployee, IEmployeeCreateInput, IPagination } from '@gauzy/contracts';
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { isNotEmpty } from '@gauzy/common';
 import * as moment from 'moment';
-import { Brackets, In, Like, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
+import { Brackets, FindManyOptions, In, Like, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import { RequestContext } from '../core/context';
 import { TenantAwareCrudService } from './../core/crud';
 import { Employee } from './employee.entity';
+import { filterQuery } from './../core/crud/query-builder';
 
 @Injectable()
 export class EmployeeService extends TenantAwareCrudService<Employee> {
@@ -124,23 +125,86 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 		return await this.repository.findOne(id, relations);
 	}
 
-	public pagination(filter: any) {
-		if ('where' in filter) {
-			const { where } = filter;
-			if ('tags' in where) {
-				const { tags } = where; 
-				filter.where.tags = {
-					id: In(tags)
-				}
-			}
-			if ('user' in where) {
-				const { user } = where;
-				const { email, firstName } = user;
+	public async pagination(filter: any) {
+		try {
+			const [items, total] = await this.repository.findAndCount({
+				skip: filter && filter.skip ? (filter.take * (filter.skip - 1)) : 0,
+				take: filter && filter.take ? (filter.take) : 10,
+				join: {
+					alias: 'employee',
+					leftJoin: {
+						user: 'employee.user',
+						tags: 'employee.tags'
+					}
+				},
+				relations: [
+					...(filter && filter.relations) ? filter.relations : []
+				],
+				where: (query: SelectQueryBuilder<Employee>) => {
+					const tenantId = RequestContext.currentTenantId();
+					query.andWhere(
+						new Brackets((qb: WhereExpressionBuilder) => {
+							qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
+							if (filter.where) {
+								const { where } = filter;
+								const { tenantId, organizationId } = where;
 
-				if (isNotEmpty(email)) filter.where.user['email'] = Like(`%${email}%`);
-				if (isNotEmpty(firstName)) filter.where.user['firstName'] = Like(`%${firstName}%`);
-			}
+								qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
+								qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
+							}
+						})
+					);
+					if (filter.where) {
+						query.andWhere(
+							new Brackets((qb: WhereExpressionBuilder) => {
+								const { where } = filter;
+								if (isNotEmpty(Boolean(JSON.parse(where.isActive)))) {
+									qb.andWhere(`"${query.alias}"."isActive" = :isActive`, {
+										isActive: true
+									});
+								}
+							})
+						);
+						query.andWhere(
+							new Brackets((qb: WhereExpressionBuilder) => {
+								const { where } = filter;
+								if (isNotEmpty(where.tags)) {
+									const { tags } = where;
+									qb.andWhere(`"tags"."id" IN (:...tags)`, { tags });
+								}
+							})
+						);
+						query.andWhere(
+							new Brackets((qb: WhereExpressionBuilder) => {
+								const { where } = filter;
+								if (isNotEmpty(where.user)) {
+									if (isNotEmpty(where.user.name)) {
+										const keywords: string[] = where.user.name.split(' ');
+										keywords.forEach((keyword: string, index: number) => {
+											qb.orWhere(`LOWER("user"."firstName") like LOWER(:keyword_${index})`, { 
+												[`keyword_${index}`]:`%${keyword}%`
+											});
+											qb.orWhere(`LOWER("user"."lastName") like LOWER(:${index}_keyword)`, { 
+												[`${index}_keyword`]:`%${keyword}%`
+											});
+										});
+									}
+									if (isNotEmpty(where.user.email)) {
+										const { email } = where.user;
+										qb.orWhere(`LOWER("user"."email") like LOWER(:email)`, { 
+											email:`%${email}%`
+										});
+									}
+								}
+							})
+						);
+					}
+				}
+			});
+			return { items, total };
+		} catch (error) {
+			console.log(error);
+			throw new BadRequestException(error);
 		}
-		return super.paginate(filter);
 	}
 }
