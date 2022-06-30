@@ -17,7 +17,6 @@ import {
 } from '@nestjs/common';
 import { I18nLang } from 'nestjs-i18n';
 import {
-	IGetPaymentInput,
 	IPagination,
 	IPayment,
 	IPaymentReportData,
@@ -33,6 +32,7 @@ import { Payment } from './payment.entity';
 import { PaymentService } from './payment.service';
 import { PaymentMapService } from './payment.map.service';
 import { CreatePaymentDTO, UpdatePaymentDTO } from './dto';
+import { PaymentReportQueryDTO } from './dto/query';
 
 @ApiTags('Payment')
 @UseGuards(TenantPermissionGuard)
@@ -57,19 +57,21 @@ export class PaymentController extends CrudController<Payment> {
 		description: 'Record not found'
 	})
 	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.ORG_EXPENSES_VIEW)
+	@Permissions(PermissionsEnum.ORG_PAYMENT_VIEW)
 	@Get('report')
 	async getPaymentReport(
-		@Query() request: IGetPaymentInput
+		@Query(new ValidationPipe({
+			transform: true,
+			whitelist: true
+		})) options: PaymentReportQueryDTO
 	): Promise<IPaymentReportData[]> {
-		const reports = await this.paymentService.getPayments(request);
-
+		const reports = await this.paymentService.getPayments(options);
 		let response: IPaymentReportData[] = [];
-		if (request.groupBy === ReportGroupFilterEnum.date) {
+		if (options.groupBy === ReportGroupFilterEnum.date) {
 			response = this.paymentMapService.mapByDate(reports);
-		} else if (request.groupBy === ReportGroupFilterEnum.client) {
+		} else if (options.groupBy === ReportGroupFilterEnum.client) {
 			response = this.paymentMapService.mapByClient(reports);
-		} else if (request.groupBy === ReportGroupFilterEnum.project) {
+		} else if (options.groupBy === ReportGroupFilterEnum.project) {
 			response = this.paymentMapService.mapByProject(reports);
 		}
 		return response;
@@ -84,8 +86,15 @@ export class PaymentController extends CrudController<Payment> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_PAYMENT_VIEW)
 	@Get('report/chart-data')
-	async getDailyReportChartData(@Query() options: IGetPaymentInput) {
+	async getDailyReportChartData(
+		@Query(new ValidationPipe({
+			transform: true,
+			whitelist: true
+		})) options: PaymentReportQueryDTO
+	) {
 		return this.paymentService.getDailyReportChartData(options);
 	}
 
@@ -104,7 +113,7 @@ export class PaymentController extends CrudController<Payment> {
 		);
 	}
 
-	@UseGuards(TenantPermissionGuard, PermissionGuard)
+	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_PAYMENT_VIEW)
 	@Get('pagination')
 	@UsePipes(new ValidationPipe({ transform: true }))
@@ -132,8 +141,10 @@ export class PaymentController extends CrudController<Payment> {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_PAYMENT_ADD_EDIT)
 	@Post()
-	@UsePipes( new ValidationPipe({ transform : true }))
-	async create(@Body() entity: CreatePaymentDTO): Promise<IPayment> {
+	@UsePipes(new ValidationPipe({ transform : true }))
+	async create(
+		@Body() entity: CreatePaymentDTO
+	): Promise<IPayment> {
 		return this.paymentService.create(entity);
 	}
 
@@ -156,7 +167,9 @@ export class PaymentController extends CrudController<Payment> {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_PAYMENT_ADD_EDIT)
 	@Delete(':id')
-	async delete(@Param('id', UUIDValidationPipe) id: string): Promise<any> {
+	async delete(
+		@Param('id', UUIDValidationPipe) id: string
+	): Promise<any> {
 		return this.paymentService.delete(id);
 	}
 }
