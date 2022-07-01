@@ -21,12 +21,13 @@ import { Router } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
 import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
+import { NbDateService } from '@nebular/theme';
+import * as moment from 'moment';
 import { EmployeeSelectorComponent } from '../../../@theme/components/header/selectors/employee/employee.component';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { ProposalsService, Store, ToastrService } from '../../../@core/services';
 import { ckEditorConfig } from "../../../@shared/ckeditor.config";
 import { UrlPatternValidator } from '../../../@core/validators';
-import { NbDateService } from '@nebular/theme';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -44,7 +45,6 @@ export class ProposalRegisterComponent
 	proposalTemplate: IEmployeeProposalTemplate;
 	proposalTemplateId: string;
 	organization: IOrganization;
-	organizationContact: IOrganizationContact;
 	tags: ITag[] = [];
 	ckConfig: CKEditor4.Config = ckEditorConfig;
 	minDate : Date;
@@ -53,11 +53,17 @@ export class ProposalRegisterComponent
 	/*
 	* Payment Mutation Form
 	*/
-	public form: FormGroup = ProposalRegisterComponent.buildForm(this.fb);
-	static buildForm( fb: FormBuilder): FormGroup {
+	public form: FormGroup = ProposalRegisterComponent.buildForm(this.fb, this);
+	static buildForm(
+		fb: FormBuilder,
+		self: ProposalRegisterComponent
+	): FormGroup {
 		return fb.group({
 			jobPostUrl: [],
-			valueDate: [new Date(), Validators.required],
+			valueDate: [
+				self.store.getDateFromOrganizationSettings(),
+				Validators.required
+			],
 			jobPostContent: ['', Validators.required],
 			proposalContent: ['', Validators.required],
 			tags: [],
@@ -77,10 +83,10 @@ export class ProposalRegisterComponent
 		private readonly toastrService: ToastrService,
 		readonly translateService: TranslateService,
 		private readonly cdRef: ChangeDetectorRef,
-    private dateService: NbDateService<Date>
+    	private readonly dateService: NbDateService<Date>
 	) {
 		super(translateService);
-    this.minDate =  this.dateService.addMonth(this.dateService.today(), 0);
+    	this.minDate =  this.dateService.addMonth(this.dateService.today(), 0);
 	}
 
 	ngOnInit() {
@@ -118,7 +124,7 @@ export class ProposalRegisterComponent
 			return;
 		}
 
-		const { jobPostUrl, valueDate, jobPostContent, proposalContent, organizationContact, tags } = this.form.value;
+		const { jobPostUrl, valueDate, jobPostContent, proposalContent, organizationContact, tags } = this.form.getRawValue();
 		const selectedEmployee = this.employeeSelector.selectedEmployee;
 
 		try {
@@ -130,7 +136,7 @@ export class ProposalRegisterComponent
 					organizationId,
 					tenantId,
 					jobPostUrl,
-					valueDate,
+					valueDate: moment(valueDate).startOf('day').toDate(),
 					jobPostContent,
 					proposalContent,
 					status: ProposalStatusEnum.SENT,
@@ -156,13 +162,13 @@ export class ProposalRegisterComponent
 		}
 	}
 
-	selectOrganizationContact($event) {
-		this.organizationContact = $event;
+	selectOrganizationContact(organizationContact: IOrganizationContact) {
+		this.form.get('organizationContact').setValue(organizationContact);
+		this.form.get('organizationContact').updateValueAndValidity();
 	}
 
-	selectedTagsEvent(ev) {
-		this.form.patchValue({
-			tags: ev
-		});
+	selectedTagsEvent(tags: ITag[]) {
+		this.form.get('tags').setValue(tags);
+		this.form.get('tags').updateValueAndValidity();
 	}
 }
