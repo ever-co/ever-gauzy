@@ -1,6 +1,7 @@
 import { Connection } from 'typeorm';
 import { Proposal } from './proposal.entity';
 import { faker } from '@ever-co/faker';
+import * as moment from 'moment';
 import { Tag } from '../tags/tag.entity';
 import { IEmployee, IOrganization, ITenant, ProposalStatusEnum } from '@gauzy/contracts';
 import { OrganizationContact } from './../core/entities/internal';
@@ -31,7 +32,7 @@ export const createDefaultProposals = async (
 			proposal.organization = organization;
 			proposal.status = faker.random.arrayElement(Object.values(ProposalStatusEnum));
 			proposal.tags = [faker.random.arrayElement(tags)];
-			proposal.valueDate = faker.date.recent(0.5);
+			proposal.valueDate = moment(faker.date.recent(0.5)) .startOf('day').toDate();
 			proposal.proposalContent = faker.name.jobDescriptor();
 			proposal.tenant = tenant;
 			if (organizationContacts.length) {
@@ -73,7 +74,7 @@ export const createRandomProposals = async (
 				proposal.organization = organization;
 				proposal.status = faker.random.arrayElement(Object.values(ProposalStatusEnum));
 				proposal.tags = [faker.random.arrayElement(tags)];
-				proposal.valueDate = faker.date.recent(0.5);
+				proposal.valueDate = moment(faker.date.recent(0.5)) .startOf('day').toDate();
 				proposal.proposalContent = faker.name.jobDescriptor();
 				proposal.tenant = tenant;
 				if (organizationContacts.length) {
