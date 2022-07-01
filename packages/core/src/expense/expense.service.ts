@@ -153,7 +153,7 @@ export class ExpenseService extends TenantAwareCrudService<Expense> {
 			query.take(request.limit);
 			query.skip((request.page || 0) * request.limit);
 		}
-		query.innerJoin(`${query.alias}.employee`, 'employee');
+		query.leftJoin(`${query.alias}.employee`, 'employee');
 		query.andWhere(
 			new Brackets((qb: WhereExpressionBuilder) => { 
 				qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
