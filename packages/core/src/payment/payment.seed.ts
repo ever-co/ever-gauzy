@@ -42,11 +42,15 @@ export const createDefaultPayment = async (
 		});
 		for (const invoice of invoices) {
 			const payment = new Payment();
-			payment.invoiceId = invoice.id;
-			payment.paymentDate = faker.date.between(
-				new Date(),
-				moment(new Date()).add(1, 'month').toDate()
-			);
+			payment.invoice = invoice;
+			payment.paymentDate = moment(
+				faker.date.between(
+					new Date(),
+					moment(new Date()).add(1, 'month').toDate()
+				)
+			)
+			.startOf('day')
+			.toDate();
 			payment.amount = faker.datatype.number({
 				min: 500,
 				max: 5000
@@ -126,10 +130,14 @@ export const createRandomPayment = async (
 			for (const invoice of invoices) {
 				const payment = new Payment();
 				payment.invoice = invoice;
-				payment.paymentDate = faker.date.between(
-					new Date(),
-					faker.date.recent()
-				);
+				payment.paymentDate = moment(
+					faker.date.between(
+						new Date(),
+						moment(new Date()).add(1, 'month').toDate()
+					)
+				)
+				.startOf('day')
+				.toDate();
 				payment.amount = faker.datatype.number({
 					min: 500,
 					max: 5000

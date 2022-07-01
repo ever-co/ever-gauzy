@@ -1286,6 +1286,8 @@
 		"TIME_FRAME": "crwdns9572:0crwdne9572:0",
 		"CREATE_NEW": "crwdns9574:0crwdne9574:0",
 		"GOAL_TEMPLATES": "crwdns9576:0crwdne9576:0",
+		"CREATE_NEW_MENU": "crwdns11247:0crwdne11247:0",
+		"CREATE_FROM_PRESET": "crwdns11249:0crwdne11249:0",
 		"OWNERSHIP": {
 			"EMPLOYEES": "crwdns7500:0crwdne7500:0",
 			"TEAMS": "crwdns7502:0crwdne7502:0",
@@ -1387,6 +1389,7 @@
 	"KEY_RESULT_PAGE": {
 		"UPDATE_KEY_RESULT": "crwdns5030:0crwdne5030:0",
 		"EDIT_KEY_RESULT": "crwdns7398:0crwdne7398:0",
+		"EDIT_KEY_RESULT_PARAMETERS": "crwdns11251:0crwdne11251:0",
 		"ADD_KEY_RESULT": "crwdns7400:0crwdne7400:0",
 		"UPDATE": {
 			"STATUS": {
@@ -1439,6 +1442,7 @@
 				"MARK_COMPLETE": "crwdns5064:0crwdne5064:0",
 				"STATUS": "crwdns5066:0crwdne5066:0",
 				"WEIGHT": "crwdns7160:0crwdne7160:0",
+				"TYPE": "crwdns11253:0crwdne11253:0",
 				"SELECT_PROJECT": "crwdns7214:0crwdne7214:0",
 				"SELECT_TASK": "crwdns7216:0crwdne7216:0",
 				"SELECT_KPI": "crwdns7478:0crwdne7478:0",

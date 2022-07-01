@@ -7,7 +7,7 @@ import { IActivity, IScreenshot, ITimeLog } from '@gauzy/contracts';
 import { TimeSlotMergeCommand } from '../time-slot-merge.command';
 import { Activity, Screenshot, TimeSlot } from './../../../../core/entities/internal';
 import { RequestContext } from './../../../../core/context';
-import { getDateFormat } from './../../../../core/utils';
+import { getDateRangeFormat } from './../../../../core/utils';
 import { TimesheetRecalculateCommand } from './../../../timesheet/commands';
 import { UpdateEmployeeTotalWorkedHoursCommand } from './../../../../employee/commands';
 
@@ -43,7 +43,7 @@ export class TimeSlotMergeHandler
 			.set('second', 0)
 			.set('millisecond', 0);
 
-		const { start: startedAt, end: stoppedAt } = getDateFormat(
+		const { start: startedAt, end: stoppedAt } = getDateRangeFormat(
 			startDate,
 			endDate
 		);

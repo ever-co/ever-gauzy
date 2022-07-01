@@ -1,15 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Between, Like, In, Repository } from 'typeorm';
+import { Between, Like, In, Repository, Brackets, WhereExpressionBuilder } from 'typeorm';
 import { chain } from 'underscore';
 import * as moment from 'moment';
-import { ConfigService } from '@gauzy/config';
 import { IGetPaymentInput } from '@gauzy/contracts';
+import { isNotEmpty } from '@gauzy/common';
 import { Payment } from './payment.entity';
-import { getDaysBetweenDates,  } from '../core/utils';
+import { getDateRangeFormat, getDaysBetweenDates,  } from '../core/utils';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
-import { EmailService } from '../email';
+import { EmailService } from '../email/email.service';
 
 @Injectable()
 export class PaymentService extends TenantAwareCrudService<Payment> {
@@ -17,8 +17,7 @@ export class PaymentService extends TenantAwareCrudService<Payment> {
 		@InjectRepository(Payment)
 		private readonly paymentRepository: Repository<Payment>,
 
-		private readonly emailService: EmailService,
-		private readonly configService: ConfigService
+		private readonly emailService: EmailService
 	) {
 		super(paymentRepository);
 	}
@@ -27,7 +26,6 @@ export class PaymentService extends TenantAwareCrudService<Payment> {
 		const query = this.filterQuery(request);
 		query.leftJoinAndSelect(`${query.alias}.project`, 'project');
 		query.orderBy(`"${query.alias}"."paymentDate"`, 'ASC');
-		
 		return await query.getMany();
 	}
 
@@ -73,72 +71,52 @@ export class PaymentService extends TenantAwareCrudService<Payment> {
 	}
 
 	private filterQuery(request: IGetPaymentInput) {
-		// let employeeIds: string[];
+		const { organizationId, startDate, endDate } = request;
+		let { projectIds = [], contactIds = [] } = request;
+		const tenantId = RequestContext.currentTenantId();
+
+		const { start, end } = (startDate && endDate) ?
+								getDateRangeFormat(
+									moment.utc(startDate),
+									moment.utc(endDate)
+								) :
+								getDateRangeFormat(
+									moment().startOf('week').utc(),
+									moment().endOf('week').utc()
+								);
+
 		const query = this.paymentRepository.createQueryBuilder();
-		if (request && request.limit > 0) {
+		if (request.limit > 0) {
 			query.take(request.limit);
 			query.skip((request.page || 0) * request.limit);
 		}
-		// if (
-		// 	RequestContext.hasPermission(
-		// 		PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-		// 	)
-		// ) {
-		// 	if (request.employeeIds) {
-		// 		employeeIds = request.employeeIds;
-		// 	}
-		// } else {
-		// 	const user = RequestContext.currentUser();
-		// 	employeeIds = [user.employeeId];
-		// }
-
-		// query.innerJoin(`${query.alias}.employee`, 'employee');
-		query.where((qb) => {
-			if (request.startDate && request.endDate) {
-				let startDate: any = moment.utc(request.startDate);
-				let endDate: any = moment.utc(request.endDate);
-
-				if (this.configService.dbConnectionOptions.type === 'sqlite') {
-					startDate = startDate.format('YYYY-MM-DD HH:mm:ss');
-					endDate = endDate.format('YYYY-MM-DD HH:mm:ss');
-				} else {
-					startDate = startDate.toDate();
-					endDate = endDate.toDate();
+		query.andWhere(
+			new Brackets((qb: WhereExpressionBuilder) => { 
+				qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
+				qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
+			})
+		);
+		query.andWhere(
+			new Brackets((qb: WhereExpressionBuilder) => { 
+				qb.where(						{
+					paymentDate: Between(start, end)
+				});
+			})
+		);
+		query.andWhere(
+			new Brackets((qb: WhereExpressionBuilder) => { 			
+				if (isNotEmpty(projectIds)) {
+					qb.andWhere(`"${query.alias}"."projectId" IN (:...projectIds)`, {
+						projectIds
+					});
 				}
-
-				qb.where({
-					paymentDate: Between(startDate, endDate)
-				});
-			}
-			// if (employeeIds) {
-			// 	qb.andWhere(
-			// 		`"${query.alias}"."employeeId" IN (:...employeeId)`,
-			// 		{
-			// 			employeeId: employeeIds
-			// 		}
-			// 	);
-			// }
-
-			if (request.projectIds) {
-				qb.andWhere(`"${query.alias}"."projectId" IN (:...projectId)`, {
-					projectId: request.projectIds
-				});
-			}
-
-			if (request.organizationId) {
-				qb.andWhere(
-					`"${query.alias}"."organizationId" = :organizationId`,
-					{
-						organizationId: request.organizationId
-					}
-				);
-			}
-
-			qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
-				tenantId: RequestContext.currentTenantId()
-			});
-		});
-
+				if (isNotEmpty(contactIds)) {
+					qb.andWhere(`"${query.alias}"."organizationContactId" IN (:...contactIds)`, {
+						contactIds
+					});
+				}
+			})
+		);
 		return query;
 	}
 

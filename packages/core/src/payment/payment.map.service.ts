@@ -148,7 +148,7 @@ export class PaymentMapService {
 
 	private groupByDate(payments: IPayment[]) {
 		return chain(payments).groupBy((payment) => {
-			return moment.utc(payment.paymentDate).format('YYYY-MM-DD');
+			return moment.utc(payment.paymentDate).add(1, 'day').format('YYYY-MM-DD');
 		});
 	}
 

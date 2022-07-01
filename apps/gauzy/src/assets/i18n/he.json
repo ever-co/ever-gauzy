@@ -1286,6 +1286,8 @@
 		"TIME_FRAME": "Time Frames",
 		"CREATE_NEW": "+ create new",
 		"GOAL_TEMPLATES": "Goal Templates",
+		"CREATE_NEW_MENU": "Create New",
+		"CREATE_FROM_PRESET": "Create from Preset",
 		"OWNERSHIP": {
 			"EMPLOYEES": "עובדים",
 			"TEAMS": "Teams",
@@ -1387,6 +1389,7 @@
 	"KEY_RESULT_PAGE": {
 		"UPDATE_KEY_RESULT": "Update Key Result",
 		"EDIT_KEY_RESULT": "Edit Key Result",
+		"EDIT_KEY_RESULT_PARAMETERS": "Edit Key Result Parameters",
 		"ADD_KEY_RESULT": "Add Key Result",
 		"UPDATE": {
 			"STATUS": {
@@ -1439,6 +1442,7 @@
 				"MARK_COMPLETE": "Mark as Complete",
 				"STATUS": "עבודה",
 				"WEIGHT": "Weight",
+				"TYPE": "סוג",
 				"SELECT_PROJECT": "Select Project",
 				"SELECT_TASK": "Select Task",
 				"SELECT_KPI": "Select KPI",

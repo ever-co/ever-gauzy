@@ -15,7 +15,7 @@ import { IPluginConfig, isEmpty } from '@gauzy/common';
 import { createRandomScreenshot } from '../screenshot/screenshot.seed';
 import { createTimeSlots } from '../time-slot/time-slot.seed';
 import { OrganizationProject, Screenshot, TimeLog, Timesheet, TimeSlot } from './../../core/entities/internal';
-import { getDateFormat } from './../../core/utils';
+import { getDateRangeFormat } from './../../core/utils';
 import { BadRequestException } from '@nestjs/common';
 
 export const createRandomTimeLogs = async (
@@ -175,7 +175,7 @@ export const recalculateTimesheetActivity = async (
 ) => {
 	for await (const timesheet of timesheets) {
 		const { id, startedAt, stoppedAt, employeeId, organizationId, tenantId } = timesheet;
-		const { start, end } = getDateFormat(
+		const { start, end } = getDateRangeFormat(
 			moment.utc(startedAt),
 			moment.utc(stoppedAt)
 		);

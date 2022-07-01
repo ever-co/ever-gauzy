@@ -288,6 +288,7 @@ export class ExpensesComponent extends PaginationFilterBaseComponent
 
 			await this.expenseService.create({
 				...expense,
+				valueDate: moment(expense.valueDate).startOf('day').toDate(),
 				employeeId: employee ? employee.id : null,
 				organizationId,
 				tenantId
@@ -340,6 +341,7 @@ export class ExpensesComponent extends PaginationFilterBaseComponent
 
 						await this.expenseService.update(id, {
 							...expense,
+							valueDate: moment(expense.valueDate).startOf('day').toDate(),
 							employeeId: employee ? employee.id : null,
 							tenantId,
 							organizationId
@@ -504,11 +506,6 @@ export class ExpensesComponent extends PaginationFilterBaseComponent
 			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
 				await this.smartTableSource.getElements();
 				this.expenses = this.smartTableSource.getData();
-
-				this.setPagination({
-					...this.getPagination(),
-					totalItems: this.smartTableSource.count()
-				});
 			}
 		} catch (error) {
 			this.toastrService.danger('NOTES.EXPENSES.EXPENSES_ERROR', null, {

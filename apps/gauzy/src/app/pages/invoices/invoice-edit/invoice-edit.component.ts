@@ -19,6 +19,7 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { compareDate, distinctUntilChange } from '@gauzy/common-angular';
+import * as moment from 'moment';
 import { InvoiceEmailMutationComponent } from '../invoice-email/invoice-email-mutation.component';
 import { 
 	InvoiceEstimateHistoryService,
@@ -174,7 +175,10 @@ export class InvoiceEditComponent
 	initializeForm() {
 		this.form = this.fb.group({
 			id: ['', Validators.required],
-			invoiceDate: ['', Validators.required],
+			invoiceDate: [
+				this.store.getDateFromOrganizationSettings(),
+				Validators.required
+			],
 			invoiceNumber: [
 				'',
 				Validators.compose([Validators.required, Validators.min(1)])
@@ -497,8 +501,8 @@ export class InvoiceEditComponent
 
 			await this.invoicesService.update(this.invoice.id, {
 				invoiceNumber: invoiceData.invoiceNumber,
-				invoiceDate: invoiceData.invoiceDate,
-				dueDate: invoiceData.dueDate,
+				invoiceDate: moment(invoiceData.invoiceDate).startOf('day').toDate(),
+				dueDate: moment(invoiceData.dueDate).endOf('day').toDate(),
 				currency: this.currency.value,
 				discountValue: invoiceData.discountValue,
 				discountType: invoiceData.discountType,

@@ -30,12 +30,18 @@
 				[saveFilters]="(datePickerConfig$ | async).isSaveDatePicker"
 				(filtersChange)="filtersChange($event)"
 			></ngx-gauzy-filters>
-			<nb-select placeholder="Contact" class="action-select contact-select">
-				<nb-option value="0">Contact</nb-option>
-			</nb-select>
-			<nb-select placeholder="Currency" class="action-select currency-select">
-				<nb-option value="0">Currency</nb-option>
-			</nb-select>
+			<ga-contact-select
+				[attr.class]="'action-select contact-select'"
+				[addTag]="false"
+				[clearable]="true"
+				[placeholder]="'CONTEXT_MENU.CONTACT' | translate"
+				(onChanged)="contactChanged($event)"
+			></ga-contact-select>
+			<ga-currency 
+				[attr.class]="'action-select currency-select'"
+				[label]="false"
+				(optionChange)="currencyChanged($event)"
+			></ga-currency>
 		</div>
 		<div class="daily-time-report">
 			<nb-card>

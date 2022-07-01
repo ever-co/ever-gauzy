@@ -3,11 +3,14 @@
 		<span class="cancel"
 			><i class="fas fa-times" (click)="closeDialog(null)"></i
 		></span>
-		<h4 class="title">Edit Key Result Parameters</h4>
+		<h4 class="title">{{
+			'KEY_RESULT_PAGE.EDIT_KEY_RESULT_PARAMETERS'
+				| translate
+		}}</h4>
 	</nb-card-header>
 	<nb-card-body class="p-0">
 		<nb-tabset>
-			<nb-tab tabTitle="Weight">
+			<nb-tab tabTitle="{{ 'KEY_RESULT_PAGE.FORM.LABELS.WEIGHT' | translate }}">
 				<p class="info">
 					{{ 'KEY_RESULT_PAGE.WEIGHT.MESSAGE' | translate }}
 				</p>
@@ -64,7 +67,7 @@
 					</div>
 				</form>
 			</nb-tab>
-			<nb-tab tabTitle="Type">
+			<nb-tab tabTitle="{{ 'KEY_RESULT_PAGE.FORM.LABELS.TYPE' | translate }}">
 				<form [formGroup]="typeForm">
 					<ga-keyresult-type-select
 						[enableHelperText]="false"
