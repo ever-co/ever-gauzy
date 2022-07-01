@@ -44,15 +44,18 @@ export class PaymentMutationComponent
 	/*
 	* Payment Mutation Form 
 	*/
-	public form: FormGroup = PaymentMutationComponent.buildForm(this.fb);
-	static buildForm( fb: FormBuilder): FormGroup {
+	public form: FormGroup = PaymentMutationComponent.buildForm(this.fb, this);
+	static buildForm(
+		fb: FormBuilder,
+		self: PaymentMutationComponent
+	): FormGroup {
 		return fb.group({
 			amount: ['', Validators.compose([ 
 				Validators.required, 
 				Validators.min(1)
 			])],
 			currency: [],
-			paymentDate: [new Date(), Validators.required],
+			paymentDate: [self.store.getDateFromOrganizationSettings(), Validators.required],
 			note: [],
 			paymentMethod: ['', Validators.required],
 			invoice: [],
