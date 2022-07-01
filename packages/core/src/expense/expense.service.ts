@@ -8,7 +8,7 @@ import { isNotEmpty } from '@gauzy/common';
 import { Expense } from './expense.entity';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
-import { getDateFormat, getDaysBetweenDates } from './../core/utils';
+import { getDateRangeFormat, getDaysBetweenDates } from './../core/utils';
 
 @Injectable()
 export class ExpenseService extends TenantAwareCrudService<Expense> {
@@ -125,11 +125,11 @@ export class ExpenseService extends TenantAwareCrudService<Expense> {
 		let { employeeIds = [], projectIds = [] } = request;
 
 		const { start, end } = (startDate && endDate) ?
-								getDateFormat(
+								getDateRangeFormat(
 									moment.utc(startDate),
 									moment.utc(endDate)
 								) :
-								getDateFormat(
+								getDateRangeFormat(
 									moment().startOf('week').utc(),
 									moment().endOf('week').utc()
 								);

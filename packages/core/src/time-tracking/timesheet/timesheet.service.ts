@@ -12,7 +12,7 @@ import {
 } from '@gauzy/contracts';
 import { RequestContext } from './../../core/context';
 import { TenantAwareCrudService } from './../../core/crud';
-import { getDateFormat } from './../../core/utils';
+import { getDateRangeFormat } from './../../core/utils';
 import { Timesheet } from './timesheet.entity';
 import {
 	TimesheetFirstOrCreateCommand,
@@ -117,13 +117,13 @@ export class TimeSheetService extends TenantAwareCrudService<Timesheet> {
 		
 		const { organizationId, startDate, endDate } = request;
 		const { start, end } = (startDate && endDate) ?
-								getDateFormat(
+								getDateRangeFormat(
 									moment.utc(startDate),
 									moment.utc(endDate)
 								) :
 								// use current start of the month if startDate not found
 								// use current end of the month if endDate not found
-								getDateFormat(
+								getDateRangeFormat(
 									moment().startOf('month').utc(),
 									moment().endOf('month').utc()
 								);

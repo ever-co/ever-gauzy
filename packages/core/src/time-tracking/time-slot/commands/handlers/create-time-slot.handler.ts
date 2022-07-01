@@ -15,7 +15,7 @@ import { CreateTimeSlotCommand } from '../create-time-slot.command';
 import { BulkActivitiesSaveCommand } from '../../../activity/commands';
 import { TimeSlotMergeCommand } from './../time-slot-merge.command';
 import { getStartEndIntervals } from './../../utils';
-import { getDateFormat } from './../../../../core/utils';
+import { getDateRangeFormat } from './../../../../core/utils';
 
 @CommandHandler(CreateTimeSlotCommand)
 export class CreateTimeSlotHandler
@@ -82,7 +82,7 @@ export class CreateTimeSlotHandler
 						moment(minDate),
 						moment(maxDate)
 					);
-					const { start: startDate, end: endDate } = getDateFormat(
+					const { start: startDate, end: endDate } = getDateRangeFormat(
 						moment.utc(start),
 						moment.utc(end)
 					);

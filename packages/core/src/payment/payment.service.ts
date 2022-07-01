@@ -6,7 +6,7 @@ import * as moment from 'moment';
 import { IGetPaymentInput } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
 import { Payment } from './payment.entity';
-import { getDateFormat, getDaysBetweenDates,  } from '../core/utils';
+import { getDateRangeFormat, getDaysBetweenDates,  } from '../core/utils';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
 import { EmailService } from '../email/email.service';
@@ -76,11 +76,11 @@ export class PaymentService extends TenantAwareCrudService<Payment> {
 		const tenantId = RequestContext.currentTenantId();
 
 		const { start, end } = (startDate && endDate) ?
-								getDateFormat(
+								getDateRangeFormat(
 									moment.utc(startDate),
 									moment.utc(endDate)
 								) :
-								getDateFormat(
+								getDateRangeFormat(
 									moment().startOf('week').utc(),
 									moment().endOf('week').utc()
 								);

@@ -46,7 +46,7 @@ import {
 	TimeLogDeleteCommand,
 	TimeLogUpdateCommand
 } from './commands';
-import { getDateFormat, getDaysBetweenDates } from './../../core/utils';
+import { getDateRangeFormat, getDaysBetweenDates } from './../../core/utils';
 import { moment } from './../../core/moment-extend';
 
 @Injectable()
@@ -554,7 +554,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				qb.andWhere(`"timeLogs"."organizationId" =:organizationId`, { organizationId });
 				qb.andWhere(`"timeLogs"."tenantId" =:tenantId`, { tenantId });
 
-				const { start, end } = getDateFormat(
+				const { start, end } = getDateRangeFormat(
 					moment.utc(startDate),
 					moment.utc(endDate)
 				);
@@ -646,7 +646,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				qb.andWhere(`"timeLogs"."organizationId" =:organizationId`, { organizationId });
 				qb.andWhere(`"timeLogs"."tenantId" =:tenantId`, { tenantId });
 
-				const { start, end } = getDateFormat(
+				const { start, end } = getDateRangeFormat(
 					moment.utc(startDate),
 					moment.utc(endDate)
 				);
@@ -736,7 +736,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			});
 		}
 		if (isNotEmpty(request.startDate) && isNotEmpty(request.endDate)) {
-			const { start: startDate, end: endDate } = getDateFormat(
+			const { start: startDate, end: endDate } = getDateRangeFormat(
 				moment.utc(request.startDate),
 				moment.utc(request.endDate)
 			);
