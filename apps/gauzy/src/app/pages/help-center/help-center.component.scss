@@ -1,3 +1,5 @@
+@import 'gauzy/_gauzy-table';
+
 .global {
   display: flex;
 }
@@ -7,22 +9,22 @@
   flex-direction: column;
   justify-content: flex-start;
   width: 85%;
-  margin-left: 5px;
+  margin-left: 12px;
 }
+
 .overflow {
   overflow: auto;
 }
+
 .head {
-  margin-bottom: 0.5rem;
+  padding-bottom: 0;
 }
 
 .header {
   display: flex;
   flex-direction: row;
   justify-content: space-between;
-  padding: 1rem;
   height: auto;
-  background-color: #fafafa;
 }
 
 .base-button {
@@ -57,9 +59,8 @@
 }
 
 .articles {
-  margin-left: 10px;
-  margin-right: 10px;
-  color: gray;
+  margin: 0 10px;
+  color: var(--gauzy-text-color-2);
 }
 
 .header-article {
@@ -138,7 +139,10 @@
 }
 
 .row-search {
-  width: 98%;
+  width: 80%;
+  padding: 10px;
+  border-radius: var(--border-radius);
+  background-color: var(--gauzy-card-2);
 }
 
 .clear-button {
@@ -147,4 +151,22 @@
 
 .search-input {
   max-width: 100% !important;
+}
+
+h6 {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 19px;
+  letter-spacing: 0em;
+  text-align: left;
+
+  &.articles {
+    font-weight: 400;
+  }
+}
+
+:host {
+  nb-card nb-card-body {
+    background-color: var(--gauzy-card-2);
+  }
 }

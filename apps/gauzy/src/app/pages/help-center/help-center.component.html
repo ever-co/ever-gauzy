@@ -3,9 +3,9 @@
 		(clickedNode)="clickedNode($event)"
 		(deletedNode)="deletedNode()"
 	></ga-sidebar>
-	<div class="main card-scroll">
-		<div class="overflow">
-			<nb-card class="head">
+	<div class="main">
+		<nb-card>
+			<nb-card-header class="head">
 				<div class="header">
 					<div class="header-article">
 						<h6 *ngIf="!categoryName">
@@ -19,33 +19,47 @@
 					</div>
 					<button
 						[disabled]="!categoryName"
-						status="success"
-						class="base-button"
+						status="primary"
+						class="action"
 						(click)="addNode()"
+						size="small"
+						outline
 						nbButton
 					>
 						{{ 'HELP_PAGE.ADD_ARTICLE' | translate }}
-						<nb-icon class="mr-1" icon="plus-outline"></nb-icon>
+						<nb-icon icon="plus-outline"></nb-icon>
 					</button>
 				</div>
-				<div *ngIf="categoryName" class="row row-search ml-1 align-items-end">
-					<div class="col-lg-5">
-						<div class="form-group">
-							<label for="employee" class="label">{{
-								'HELP_PAGE.SEARCH_BY_NAME' | translate
-							}}</label>
-							<input
-								fullWidth
-								[formControl]="search"
-								placeholder="Search"
-								value="inputValue"
-								type="text"
-								nbInput
-							/>
+				<div class="gauzy-button-container mt-4" *ngIf="categoryName">
+					<ngx-gauzy-button-action
+						[hasLayoutSelector]="false"
+						[buttonTemplate]="actionButtons"
+						[buttonTemplateVisible]="visible"
+						[isDisable]="isDisable"
+					></ngx-gauzy-button-action>
+				</div>
+				<ng-template [ngIf]="showFilters">
+					<div
+						*ngIf="categoryName"
+						class="row row-search ml-1 mb-3 align-items-end"
+					>
+						<div class="col-lg-5">
+							<div class="form-group">
+								<label for="employee" class="label">{{
+									'HELP_PAGE.SEARCH_BY_NAME' | translate
+								}}</label>
+								<input
+									fullWidth
+									[formControl]="search"
+									placeholder="Search"
+									value="inputValue"
+									type="text"
+									nbInput
+								/>
+							</div>
 						</div>
-					</div>
-					<div class="col-lg-5">
-						<div class="form-group">
+						<div class="col-lg-5">
+							<div class="form-group">
 								<label for="employee" class="label">{{
 									'HELP_PAGE.FILTER_BY_AUTHOR' | translate
 								}}</label>
@@ -53,32 +67,37 @@
 									[multiple]="false"
 									[label]="false"
 									[allEmployees]="employees"
-									(selectedChange)="onEmployeeSelected($event)"
+									(selectedChange)="
+										onEmployeeSelected($event)
+									"
 									[reset]="isResetSelect"
 								>
 								</ga-employee-multi-select>
+							</div>
+						</div>
+						<div class="col-lg-2">
+							<button
+								status="danger"
+								class="action clear-button"
+								(click)="clearFilters()"
+								outline
+								nbButton
+							>
+								{{ 'HELP_PAGE.CLEAR' | translate }}
+							</button>
 						</div>
 					</div>
-					<div class="col-lg-2">
-						<button
-							status="danger"
-							class="clear-button"
-							(click)="clearFilters()"
-							nbButton
-						>
-							{{ 'HELP_PAGE.CLEAR' | translate }}
-						</button>
-					</div>					
-				</div>
-			</nb-card>
-			<div
+				</ng-template>
+			</nb-card-header>
+			<nb-card-body
 				[nbSpinner]="loading"
 				nbSpinnerStatus="primary"
 				nbSpinnerSize="giant"
 			>
-				<nb-card
+				<div
 					class="cards"
 					*ngFor="let article of this.filteredArticles; let i = index"
+					(click)="selectItem(i)"
 				>
 					<div class="main-article" (click)="openArticle(i)">
 						<div class="row-name">
@@ -140,8 +159,57 @@
 							(click)="deleteNode(i)"
 						></nb-icon>
 					</div>
-				</nb-card>
-			</div>
-		</div>
+				</div>
+			</nb-card-body>
+		</nb-card>
 	</div>
 </div>
+
+<ng-template #visible>
+	<button
+		status="success"
+		class="action"
+		(click)="addNode()"
+		size="small"
+		nbButton
+	>
+		<nb-icon icon="plus-outline"></nb-icon>
+		{{ 'BUTTONS.ADD' | translate }}
+	</button>
+	<button
+		status="basic"
+		class="action info-text-1"
+		(click)="showFilters = !showFilters"
+		size="small"
+		nbButton
+	>
+		<nb-icon icon="funnel-outline"></nb-icon>
+		{{ 'BUTTONS.FILTER' | translate }}
+	</button>
+</ng-template>
+<ng-template #actionButtons>
+	<ng-container>
+		<div class="actions">
+			<button
+				size="small"
+				class="action primary"
+				(click)="editNode(selectedItem?.index)"
+				status="basic"
+				nbButton
+			>
+				<nb-icon icon="edit-outline"></nb-icon>
+				{{ 'BUTTONS.EDIT' | translate }}
+			</button>
+			<button
+				class="action primary"
+				status="basic"
+				size="small"
+				[nbTooltip]="'BUTTONS.DELETE' | translate"
+				(click)="deleteNode(selectedItem?.index)"
+				nbButton
+			>
+				<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
+			</button>
+		</div>
+	</ng-container>
+</ng-template>

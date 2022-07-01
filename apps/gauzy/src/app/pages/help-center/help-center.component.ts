@@ -20,7 +20,7 @@ import { FormControl } from '@angular/forms';
 import { Store } from '../../@core/services/store.service';
 import { ToastrService } from '../../@core/services/toastr.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { firstValueFrom } from "rxjs";
+import { firstValueFrom } from 'rxjs';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -30,7 +30,8 @@ import { firstValueFrom } from "rxjs";
 })
 export class HelpCenterComponent
 	extends TranslationBaseComponent
-	implements OnDestroy, OnInit {
+	implements OnDestroy, OnInit
+{
 	constructor(
 		private dialogService: NbDialogService,
 		readonly translateService: TranslateService,
@@ -57,6 +58,13 @@ export class HelpCenterComponent
 	filterParams = { name: '', authorId: '' };
 	loading: boolean;
 	organization: IOrganization;
+	selectedItem = {
+		index: null,
+		isSelected: false
+	};
+	isDisable: boolean = true;
+
+	public showFilters: boolean = false;
 
 	ngOnInit() {
 		this.store.selectedOrganization$
@@ -246,6 +254,20 @@ export class HelpCenterComponent
 			});
 			this.loadArticles(this.categoryId);
 		}
+	}
+
+	selectItem(index: number) {
+		this.selectedItem =
+			this.selectedItem.isSelected && this.selectedItem.index === index
+				? {
+						index: null,
+						isSelected: !this.selectedItem.isSelected
+				  }
+				: {
+						index: index,
+						isSelected: true
+				  };
+		this.isDisable = !this.selectedItem.isSelected;
 	}
 
 	ngOnDestroy() {}
