@@ -31,18 +31,7 @@
   max-height: 40px;
 }
 
-.cards {
-  padding: 0.5rem 0.5rem 0 1rem;
-  margin-bottom: 0.5rem;
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-  background-color: var(--gauzy-card-2);
-}
-
 .user-info {
-  padding: 0 0.5rem 0.5rem 0;
   display: flex;
   flex-direction: row;
 }
@@ -70,19 +59,9 @@
   flex-direction: row;
 }
 
-.cards:hover .edit-icon {
-  display: inline-block;
-}
-
-.edit-icon {
-  font-size: 24px;
-  display: none;
-}
-
 .row-name {
   display: flex;
   flex-direction: row;
-  margin-top: 0.5rem;
 }
 
 .draft {
@@ -100,7 +79,7 @@
 .privacy {
   padding: 0 0.4rem;
   color: #fff;
-  background-color: blueviolet;
+  background-color: var(--color-primary-default);
   margin-left: 10px;
   border-radius: 12px;
   font-size: 14px;
@@ -110,17 +89,16 @@
 }
 
 .name {
-  font-weight: 600;
-  font-size: 16px;
   padding-bottom: 0.1rem;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 19px;
+  letter-spacing: 0em;
+  text-align: left;
 }
 
 .data {
   padding-bottom: 0.5rem;
-}
-
-.main-article {
-  width: 90%;
 }
 
 .image-wrap {
@@ -180,14 +158,19 @@ h6 {
   .custom-table {
     background-color: var(--gauzy-card-1);
     border-radius: var(--border-radius);
-    padding: 8px;
+    padding: 1rem 0.75rem 0;
     max-height: 100%;
     flex-grow: 10;
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 17px;
+    letter-spacing: 0em;
+    text-align: left;
     cursor: pointer;
 
     &.selected {
       box-shadow: -8px 0px 0px 0px rgba(50, 50, 50, 0.1);
-      background: var(--gauzy-card-2);
+      background: rgba(50, 50, 50, 0.03);
     }
 
     &:hover {
@@ -211,6 +194,13 @@ h6 {
 
     &.filter {
       height: calc(100vh - 30.2rem);
+    }
+  }
+
+  ::ng-deep ngx-avatar {
+    img {
+      height: 24px !important;
+      width: 24px !important;
     }
   }
 }

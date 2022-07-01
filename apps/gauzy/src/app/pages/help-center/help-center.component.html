@@ -94,10 +94,7 @@
 				nbSpinnerStatus="primary"
 				nbSpinnerSize="giant"
 			>
-				<div
-					class="table-scroll"
-					[ngClass]="{ 'filter': showFilters }"
-				>
+				<div class="table-scroll" [ngClass]="{ filter: showFilters }">
 					<div
 						class="custom-table"
 						[ngClass]="{
@@ -111,61 +108,50 @@
 						"
 						(click)="selectItem(i)"
 					>
-						<div class="main-article">
-							<div class="row-name">
-								<p class="name">
-									{{ article.name }}
-								</p>
-								<p class="draft" *ngIf="article.draft === true">
-									{{ 'HELP_PAGE.DRAFT' | translate }}
-								</p>
-								<p
-									class="privacy"
-									*ngIf="article.privacy === true"
-								>
-									{{ 'HELP_PAGE.EMPLOYEES' | translate }}
-								</p>
-							</div>
-							<p>{{ article.description }}</p>
-							<div
-								class="data"
-								*ngIf="showData[i]"
-								[innerHtml]="dataArray[i]"
-							></div>
-							<div class="user-info">
-								<p>
-									{{ 'HELP_PAGE.WRITTEN_BY' | translate }}
-								</p>
-								<div class="image-wrap">
-									<span
-										*ngFor="
-											let employee of article.employees
-										"
-										nbTooltip=" {{
-											employee?.user?.firstName
-										}}
+						<div class="row-name">
+							<p class="name">
+								{{ article.name }}
+							</p>
+							<p class="draft" *ngIf="article.draft === true">
+								{{ 'HELP_PAGE.DRAFT' | translate }}
+							</p>
+							<p class="privacy" *ngIf="article.privacy === true">
+								{{ 'HELP_PAGE.EMPLOYEES' | translate }}
+							</p>
+						</div>
+						<p>{{ article.description }}</p>
+						<div
+							class="data"
+							*ngIf="showData[i]"
+							[innerHtml]="dataArray[i]"
+						></div>
+						<div class="user-info">
+							<p>
+								{{ 'HELP_PAGE.WRITTEN_BY' | translate }}
+							</p>
+							<div class="image-wrap">
+								<span
+									*ngFor="let employee of article.employees"
+									nbTooltip=" {{ employee?.user?.firstName }}
 									{{ employee?.user?.lastName }}"
-										nbTooltipPlacement="top"
-									>
-										<img
-											class="author-image-small"
-											[src]="employee?.user?.imageUrl"
-											alt="employee Avatar"
-										/>
-									</span>
-								</div>
-								<div class="create-at">
-									<nb-icon
-										class="icon"
-										icon="clock-outline"
-									></nb-icon>
-									<p>
-										{{
-											'HELP_PAGE.CREATED_AT' | translate
-										}}:
-										{{ article.createdAt | date: 'short' }}
-									</p>
-								</div>
+									nbTooltipPlacement="top"
+								>
+									<ngx-avatar
+										[src]="employee?.user?.imageUrl"
+										[size]="sm"
+										[id]="employee?.id"
+									></ngx-avatar>
+								</span>
+							</div>
+							<div class="create-at">
+								<nb-icon
+									class="icon"
+									icon="clock-outline"
+								></nb-icon>
+								<p>
+									{{ 'HELP_PAGE.CREATED_AT' | translate }}:
+									{{ article.createdAt | date: 'short' }}
+								</p>
 							</div>
 						</div>
 					</div>

@@ -18,6 +18,7 @@ import { HelpCenterRoutingModule } from './help-center-routing.module';
 import { DeleteArticleModule } from './delete-article/delete-article.module';
 import { TranslateModule } from '../../@shared/translate/translate.module';
 import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
+import { SharedModule } from '../../@shared/shared.module';
 
 @NgModule({
 	imports: [
@@ -37,7 +38,8 @@ import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy
 		EmployeeMultiSelectModule,
 		SidebarModule,
 		TranslateModule,
-		GauzyButtonActionModule
+		GauzyButtonActionModule,
+		SharedModule
 	],
 	declarations: [HelpCenterComponent]
 })
