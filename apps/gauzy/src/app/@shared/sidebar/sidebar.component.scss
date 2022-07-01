@@ -78,11 +78,20 @@
   line-height: 14px;
   letter-spacing: 0em;
   text-align: center;
+
+  &.privacy-base {
+    margin-right: 2.25rem;
+  }
+
+  &.privacy-category {
+    margin-right: 0.5rem;
+  }
 }
 
 .edit-icons {
   display: none;
   font-size: 1.1rem;
+  margin-right: 8px;
 }
 
 .base:hover .edit-icons {
@@ -120,14 +129,15 @@
   .toggle-children-wrapper {
     .toggle-children {
       position: relative;
-      top: 11px;
-      left: 210px;
-      border: solid var(--gauzy-text-color-1);;
+      top: 10px;
+      left: 220px;
+      border: solid var(--gauzy-text-color-1);
+      ;
       border-width: 0 2px 2px 0;
       display: inline-block;
       width: 8px;
       background-image: none;
-      
+
     }
   }
 

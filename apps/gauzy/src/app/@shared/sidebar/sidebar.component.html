@@ -42,22 +42,32 @@
 									(click)="addIcon(node)"
 								></nb-icon>
 								<span class="text">{{ node.data.name }}</span>
-								<nb-icon
-									class="icons"
-									icon="{{ node.data.privacy }}"
-									(click)="changePrivacy(node.data)"
-								></nb-icon>
 							</div>
-							<div>
-								<nb-action
-									*ngIf="node.data.flag === 'base'"
-									icon="settings-2-outline"
-									class="icons"
-									[nbContextMenu]="settingsContextMenu"
-								></nb-action>
+							<div class="d-flex">
+								<div class="d-flex">
+									<nb-icon
+										class="icons privacy"
+										icon="{{ node.data.privacy }}"
+										(click)="changePrivacy(node.data)"
+										[ngClass]="{
+											'privacy-base':
+												node.data.flag === 'base',
+											'privacy-category':
+												node.data.flag === 'category'
+										}"
+									></nb-icon>
+									<nb-action
+										*ngIf="node.data.flag === 'base'"
+										icon="settings-2-outline"
+										class="icons"
+										[nbContextMenu]="settingsContextMenu"
+									></nb-action>
+								</div>
 								<nb-icon
 									*ngIf="node.data.flag === 'category'"
-									[ngStyle]="{ color: 'black' }"
+									[ngStyle]="{
+										color: 'var(--text-primary-color)'
+									}"
 									class="edit-icons"
 									icon="edit-outline"
 									(click)="
@@ -69,7 +79,9 @@
 								></nb-icon>
 								<nb-icon
 									*ngIf="node.data.flag === 'category'"
-									[ngStyle]="{ color: 'black' }"
+									[ngStyle]="{
+										color: 'var(--color-danger-default)'
+									}"
 									class="edit-icons"
 									icon="trash-2-outline"
 									(click)="deleteCategory(node.data)"

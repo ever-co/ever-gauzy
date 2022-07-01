@@ -1,25 +1,46 @@
 <nb-card class="card">
-	<nb-card-header class="card-header-title">
-		<h6> 
-			<ng-template [ngIf]="flag === flagEnum.BASE" [ngIfElse]="categoryTitle">
-				{{ ((editType === actionEnum.EDIT) ? 'HELP_PAGE.MANAGE_BASE' : 'HELP_PAGE.ADD_BASE') | translate }} 
+	<nb-card-header class="d-flex flex-column">
+		<span class="cancel"
+			><i class="fas fa-times" (click)="closeDialog()"></i
+		></span>
+		<h6 class="title">
+			<ng-template
+				[ngIf]="flag === flagEnum.BASE"
+				[ngIfElse]="categoryTitle"
+			>
+				{{
+					(editType === actionEnum.EDIT
+						? 'HELP_PAGE.MANAGE_BASE'
+						: 'HELP_PAGE.ADD_BASE'
+					) | translate
+				}}
 			</ng-template>
 			<ng-template #categoryTitle>
-				{{ ((editType === actionEnum.EDIT) ? 'HELP_PAGE.MANAGE_CATEGORY' : 'HELP_PAGE.ADD_CATEGORY') | translate }} 
+				{{
+					(editType === actionEnum.EDIT
+						? 'HELP_PAGE.MANAGE_CATEGORY'
+						: 'HELP_PAGE.ADD_CATEGORY'
+					) | translate
+				}}
 			</ng-template>
 		</h6>
-		<nb-icon icon="close-outline" (click)="closeDialog()"></nb-icon>
 	</nb-card-header>
 	<nb-card-body class="card-body">
-		<form [formGroup]="form" (ngSubmit)="submit()" #knowledgeBaseForm="ngForm">
+		<form
+			[formGroup]="form"
+			(ngSubmit)="submit()"
+			#knowledgeBaseForm="ngForm"
+		>
 			<div class="row">
 				<div class="col-12">
 					<div class="form-group">
-						<label id="language" class="label">{{ 
-							'HELP_PAGE.LANGUAGE' | translate 
+						<label id="language" class="label">{{
+							'HELP_PAGE.LANGUAGE' | translate
 						}}</label>
 						<ngx-language-selector
-							[placeholder]="'FORM.PLACEHOLDERS.SELECT' | translate"
+							[placeholder]="
+								'FORM.PLACEHOLDERS.SELECT' | translate
+							"
 							[clearable]="false"
 							[addTag]="false"
 							[selectedLanguageCode]="language"
@@ -37,17 +58,21 @@
 							[checked]="privacy"
 							(checkedChange)="togglePrivacy($event)"
 						>
-							<span> {{ 'HELP_PAGE.PUBLISH_STATUS' | translate }} </span>
+							<span>
+								{{ 'HELP_PAGE.PUBLISH_STATUS' | translate }}
+							</span>
 						</nb-toggle>
 					</div>
 				</div>
 				<div class="col-12">
 					<div class="form-group">
-						<label id="icon" class="label">{{ 
-							'HELP_PAGE.CHOSE_ICON' | translate 
+						<label id="icon" class="label">{{
+							'HELP_PAGE.CHOSE_ICON' | translate
 						}}</label>
 						<nb-select
-							[placeholder]="'FORM.PLACEHOLDERS.SELECT_ICON' | translate"
+							[placeholder]="
+								'FORM.PLACEHOLDERS.SELECT_ICON' | translate
+							"
 							formControlName="icon"
 							fullWidth
 							id="icon"
@@ -63,8 +88,14 @@
 								></nb-icon
 								>{{ icon.label }}
 							</nb-select-label>
-							<nb-option *ngFor="let icon of icons" [value]="icon">
-								<nb-icon class="mr-1" [icon]="icon.value"></nb-icon>
+							<nb-option
+								*ngFor="let icon of icons"
+								[value]="icon"
+							>
+								<nb-icon
+									class="mr-1"
+									[icon]="icon.value"
+								></nb-icon>
 								{{ icon.label }}
 							</nb-option>
 						</nb-select>
@@ -72,8 +103,8 @@
 				</div>
 				<div class="col-12">
 					<div class="form-group">
-						<label id="color" class="label">{{ 
-							'HELP_PAGE.COLOR' | translate 
+						<label id="color" class="label">{{
+							'HELP_PAGE.COLOR' | translate
 						}}</label>
 						<input
 							formControlName="color"
@@ -81,7 +112,7 @@
 							[colorPicker]="color"
 							[value]="color"
 							(colorPickerChange)="selectedColor($event)"
-							[style.background]="color"
+							[style.background]="color + ' !important'"
 							fullWidth
 							nbInput
 							id="color"
@@ -90,14 +121,21 @@
 				</div>
 				<div class="col-12">
 					<div class="form-group">
-						<label id="name" class="label">{{ 
-							((flag === 'base') ? 'HELP_PAGE.NAME_OF_THE_BASE' : 'HELP_PAGE.NAME_CATEGORY') | translate 
-						}}
+						<label id="name" class="label"
+							>{{
+								(flag === 'base'
+									? 'HELP_PAGE.NAME_OF_THE_BASE'
+									: 'HELP_PAGE.NAME_CATEGORY'
+								) | translate
+							}}
 						</label>
 						<input
 							formControlName="name"
 							[placeholder]="
-								((flag === 'base') ? 'HELP_PAGE.NAME_OF_THE_BASE' : 'HELP_PAGE.NAME_CATEGORY') | translate
+								(flag === 'base'
+									? 'HELP_PAGE.NAME_OF_THE_BASE'
+									: 'HELP_PAGE.NAME_CATEGORY'
+								) | translate
 							"
 							type="text"
 							size="24"
@@ -131,7 +169,7 @@
 			</div>
 		</form>
 	</nb-card-body>
-	<nb-card-footer class="text-right">
+	<nb-card-footer class="text-left">
 		<button
 			status="success"
 			(click)="knowledgeBaseForm.ngSubmit.emit()"
