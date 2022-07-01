@@ -1653,6 +1653,7 @@
 		"ROLES": "Roles",
 		"HELP_CENTER": "Help Center",
 		"DOCUMENTS": "Documents",
+		"DOCUMENTS_NO_DATA_MESSAGE": "You have not created or received any departments etc.",
 		"EXPENSE_RECURRING": "Recurring Expenses",
 		"RECURRING_EXPENSE": "Organization Recurring Expense",
 		"EMPLOYMENT_TYPES": "Employment Types",
