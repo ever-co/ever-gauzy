@@ -71,28 +71,14 @@
 										| translate
 								}}
 							</label>
-							<ng-select
-								[(items)]="projects"
-								bindName="name"
+							<ga-project-selector
+								formControlName="projectId"
 								[placeholder]="'INVOICES_PAGE.INVOICE_TYPE.SELECT_PROJECTS' | translate"
-								formControlName="project"
-								id="inputProject"
-								(change)="selectProject($event)"
-								appendTo="body"
-							>
-								<ng-template
-									ng-option-tmp
-									let-item="item"
-									let-index="index"
-								>
-									{{ item.name }}
-								</ng-template>
-								<ng-template ng-label-tmp let-item="item">
-									<div class="selector-template">
-										<span>{{ item.name }}</span>
-									</div>
-								</ng-template>
-							</ng-select>
+								[skipGlobalChange]="true"
+								[defaultSelected]="false"
+								[showAllOption]="false"
+								(onChanged)="selectProject($event)"
+							></ga-project-selector>
 						</div>
 					</div>
 				</div>
