@@ -5,7 +5,15 @@ import {
 	OnInit,
 	ViewChild
 } from '@angular/core';
-import { IGetPaymentInput, IPaymentReportChartData, ITimeLogFilters, ReportGroupByFilter, ReportGroupFilterEnum } from '@gauzy/contracts';
+import {
+	ICurrency,
+	IGetPaymentInput,
+	IOrganizationContact,
+	IPaymentReportChartData,
+	ITimeLogFilters,
+	ReportGroupByFilter,
+	ReportGroupFilterEnum
+} from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { debounceTime, tap } from 'rxjs/operators';
@@ -97,4 +105,14 @@ export class PaymentReportComponent extends BaseSelectorFilterComponent
 			this.loading = false;
 		}
 	}
+
+	/*
+	 * On Changed Contact Event Emitter
+	 */
+	contactChanged(contact: IOrganizationContact) {}
+
+	/*
+	 * On Changed Currency Event Emitter
+	 */
+	currencyChanged(currency: ICurrency) {}
 }
