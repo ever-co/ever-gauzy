@@ -8,7 +8,7 @@ import { TimeSheetService } from '../../timesheet.service';
 import { TimesheetRecalculateCommand } from '../timesheet-recalculate.command';
 import { TimeSlot } from './../../../../core/entities/internal';
 import { RequestContext } from './../../../../core/context';
-import { getDateFormat } from './../../../../core/utils';
+import { getDateRangeFormat } from './../../../../core/utils';
 
 @CommandHandler(TimesheetRecalculateCommand)
 export class TimesheetRecalculateHandler
@@ -29,7 +29,7 @@ export class TimesheetRecalculateHandler
 		const tenantId = RequestContext.currentTenantId();
 		const { employeeId, organizationId } = timesheet;
 
-		const { start: startedAt, end: stoppedAt } = getDateFormat(
+		const { start: startedAt, end: stoppedAt } = getDateRangeFormat(
 			moment.utc(timesheet.startedAt),
 			moment.utc(timesheet.stoppedAt)
 		);

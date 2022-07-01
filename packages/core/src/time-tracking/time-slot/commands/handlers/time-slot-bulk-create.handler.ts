@@ -8,7 +8,7 @@ import { TimeLog } from './../../../time-log/time-log.entity';
 import { TimeSlotBulkCreateCommand } from './../time-slot-bulk-create.command';
 import { TimeSlotMergeCommand } from './../time-slot-merge.command';
 import { RequestContext } from '../../../../core/context';
-import { getDateFormat } from './../../../../core/utils';
+import { getDateRangeFormat } from './../../../../core/utils';
 
 @CommandHandler(TimeSlotBulkCreateCommand)
 export class TimeSlotBulkCreateHandler
@@ -32,7 +32,7 @@ export class TimeSlotBulkCreateHandler
 		}
 
 		slots = slots.map((slot) => {
-			const { start } = getDateFormat(
+			const { start } = getDateRangeFormat(
 				moment.utc(slot.startedAt),
 				moment.utc(slot.startedAt)
 			);
