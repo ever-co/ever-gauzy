@@ -56,11 +56,15 @@ export const createDefaultIncomes = async (
 					income.tenant = tenant;
 					income.amount = seedIncome.amount;
 					income.currency = seedIncome.currency || env.defaultCurrency;
-					income.valueDate = faker.date.between(
-						moment().subtract(3, 'months').calendar(),
-						moment().add(10, 'days').calendar()
-					);
 					income.notes = seedIncome.notes;
+					income.valueDate = moment(
+						faker.date.between(
+							moment().subtract(3, 'months').calendar(),
+							moment().add(10, 'days').calendar()
+						)
+					)
+					.startOf('day')
+					.toDate();
 
 					const payload = {
 						name: `Client ${seedIncome.clientName}`,
@@ -140,10 +144,14 @@ export const createRandomIncomes = async (
 					income.client = faker.random.arrayElement(organizationContacts);
 				}
 				income.currency = employee.organization.currency || env.defaultCurrency;
-				income.valueDate = faker.date.between(
-					moment().subtract(3, 'months').calendar(),
-					moment().add(10, 'days').calendar()
-				);
+				income.valueDate = moment(
+					faker.date.between(
+						moment().subtract(3, 'months').calendar(),
+						moment().add(10, 'days').calendar()
+					)
+				)
+				.startOf('day')
+				.toDate();
 				income.notes = notes[currentIndex];
 				income.tags = chain(tags)
 					.shuffle()
