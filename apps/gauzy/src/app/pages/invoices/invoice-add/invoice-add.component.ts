@@ -25,6 +25,7 @@ import { Observable, firstValueFrom } from 'rxjs';
 import { Router } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import * as moment from 'moment';
 import { TranslationBaseComponent } from '../../../@shared/language-base';
 import {
 	ExpensesService,
@@ -165,7 +166,10 @@ export class InvoiceAddComponent
 
 	initializeForm() {
 		this.form = this.fb.group({
-			invoiceDate: [new Date(), Validators.required],
+			invoiceDate: [
+				this.store.getDateFromOrganizationSettings(),
+				Validators.required
+			],
 			invoiceNumber: [
 				this.formInvoiceNumber,
 				Validators.compose([Validators.required, Validators.min(1)])
@@ -446,8 +450,8 @@ export class InvoiceAddComponent
 		try {
 			const createdInvoice = await this.invoicesService.add({
 				invoiceNumber,
-				invoiceDate,
-				dueDate,
+				invoiceDate: moment(invoiceDate).startOf('day').toDate(),
+				dueDate: moment(dueDate).endOf('day').toDate(),
 				currency,
 				discountValue,
 				discountType,
