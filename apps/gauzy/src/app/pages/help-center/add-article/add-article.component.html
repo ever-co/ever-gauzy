@@ -84,7 +84,22 @@
 				</div>
 			</div>
 			<div class="save-button">
-				<button status="success" [disabled]="form.invalid" nbButton>
+				<button
+					status="basic"
+					outline
+					size="small"
+					(click)="closeDialog()"
+					nbButton
+				>
+					{{ 'BUTTONS.CANCEL' | translate }}
+				</button>
+				<button
+					status="success"
+					size="small"
+					class="mr-3 ml-3"
+					[disabled]="form.invalid"
+					nbButton
+				>
 					{{ 'BUTTONS.SAVE' | translate }}
 				</button>
 			</div>
