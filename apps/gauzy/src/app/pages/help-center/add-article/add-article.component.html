@@ -1,13 +1,15 @@
 <nb-card class="main">
 	<nb-card-header>
 		<div class="header">
-			<h5 *ngIf="editType === 'add'">
+			<span class="cancel"
+				><i class="fas fa-times" (click)="closeDialog()"></i
+			></span>
+			<h5 class="title" *ngIf="editType === 'add'">
 				{{ 'HELP_PAGE.ADD_ARTICLE' | translate }}
 			</h5>
-			<h5 *ngIf="editType === 'edit'">
+			<h5 class="title" *ngIf="editType === 'edit'">
 				{{ 'HELP_PAGE.EDIT_ARTICLE' | translate }}
 			</h5>
-			<nb-icon icon="close-outline" (click)="closeDialog()"></nb-icon>
 		</div>
 	</nb-card-header>
 	<nb-card-body>

@@ -1,8 +1,11 @@
+@import 'gauzy/_gauzy-dialogs';
+
 .main {
   display: flex;
   flex-direction: column;
   padding-bottom: 10px;
-  width: 50rem;
+  width: 645px;
+  background-color: var(--gauzy-card-1);
 }
 
 .select {
@@ -25,8 +28,7 @@
 
 .header {
   display: flex;
-  flex-direction: row;
-  justify-content: space-between;
+  flex-direction: column;
 }
 
 .main-buttons {
@@ -67,5 +69,35 @@
   .nb-theme-default [nbInput].size-medium:not(.input-full-width) {
     max-width: 23rem !important;
     width: 23rem !important;
+  }
+}
+
+:host {
+
+  input,
+  ::ng-deep nb-select.appearance-outline.status-basic .select-button,
+  ::ng-deep .ng-select .ng-select-container {
+    background-color: var(--gauzy-sidebar-background-4) !important;
+    border: unset;
+  }
+
+  ::ng-deep .ng-select .ng-select-container {
+    input {
+      background-color: unset !important;
+    }
+  }
+
+  ::ng-deep .toggle {
+    border: 1px solid #7E7E8F !important;
+    background-color: #7E7E8F !important;
+
+    &.checked {
+      background-color: var(--text-primary-color) !important;
+      border: 1px solid var(--text-primary-color) !important;
+
+      &+span {
+        color: var(--text-primary-color);
+      }
+    }
   }
 }
