@@ -7,7 +7,7 @@ import { isEmpty, isNotEmpty } from '@gauzy/common';
 import { TenantAwareCrudService } from './../../core/crud';
 import { moment } from '../../core/moment-extend';
 import { RequestContext } from '../../core/context';
-import { getDateFormat } from './../../core/utils';
+import { getDateRangeFormat } from './../../core/utils';
 import { generateTimeSlots } from './utils';
 import { TimeSlot } from './time-slot.entity';
 import { TimeSlotMinute } from './time-slot-minute.entity';
@@ -49,11 +49,11 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 		}
 
 		const { start, end } = (startDate && endDate) ?
-								getDateFormat(
+								getDateRangeFormat(
 									moment.utc(startDate),
 									moment.utc(endDate)
 								) :
-								getDateFormat(
+								getDateRangeFormat(
 									moment().startOf('day').utc(),
 									moment().endOf('day').utc()
 								);

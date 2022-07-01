@@ -1,6 +1,8 @@
 import { Connection } from 'typeorm';
 import { Invoice } from './invoice.entity';
 import { faker } from '@ever-co/faker';
+import * as moment from 'moment';
+import { chain } from 'underscore';
 import {
 	DiscountTaxTypeEnum,
 	EstimateStatusTypesEnum,
@@ -13,7 +15,6 @@ import {
 	ITag,
 	ITenant
 } from '@gauzy/contracts';
-import * as _ from 'underscore';
 import { InvoiceEstimateHistory, OrganizationContact, Tag, User } from './../core/entities/internal';
 import { randomSeedConfig } from './../core/seeds/random-seed-config';
 
@@ -87,14 +88,29 @@ const generateInvoice = async (
 ): Promise<IInvoice> => {
 	
 	const invoice = new Invoice();
-	invoice.tags = _.chain(tags)
+	invoice.tags = chain(tags)
 		.shuffle()
 		.take(faker.datatype.number({ min: 1, max: 3 }))
 		.values()
 		.value();
 	invoice.invoiceNumber = faker.datatype.number({ min: 111111111111, max: 999999999999 });
-	invoice.invoiceDate = faker.date.past(0.3);
-	invoice.dueDate = faker.date.future(0.3);
+	
+	invoice.invoiceDate = moment(
+		faker.date.between(
+			new Date(),
+			faker.date.past(0.3)
+		)
+	)
+	.startOf('day')
+	.toDate();
+	invoice.dueDate = moment(
+		faker.date.between(
+			new Date(),
+			faker.date.future(0.3)
+		)
+	)
+	.startOf('day')
+	.toDate();
 	
 	if (organizationContacts.length) {
 		invoice.organizationContactId = faker.random.arrayElement(organizationContacts).id; 
@@ -165,7 +181,10 @@ const generateInvoiceHistory = async (
 		})
 	);
 
-	for (let i = 0; i < faker.datatype.number({ min: 2, max: randomSeedConfig.numberOfInvoiceHistoryPerInvoice }); i++) {
+	for (let i = 0; i < faker.datatype.number({
+		min: 2,
+		max: randomSeedConfig.numberOfInvoiceHistoryPerInvoice
+	}); i++) {
 		historyRecords.push(
 			new InvoiceEstimateHistory({
 				user: faker.random.arrayElement(users),

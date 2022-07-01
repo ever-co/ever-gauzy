@@ -30,7 +30,7 @@ import {
 	TimeLog,
 	TimeSlot
 } from './../../core/entities/internal';
-import { getDateFormat } from './../../core/utils';
+import { getDateRangeFormat } from './../../core/utils';
 
 @Injectable()
 export class StatisticService {
@@ -64,11 +64,11 @@ export class StatisticService {
 		const tenantId = RequestContext.currentTenantId();
 
 		const { start, end } = (startDate && endDate) ?
-								getDateFormat(
+								getDateRangeFormat(
 									moment.utc(startDate),
 									moment.utc(endDate)
 								) : 
-								getDateFormat(
+								getDateRangeFormat(
 									moment().startOf('week').utc(),
 									moment().endOf('week').utc()
 								);
@@ -217,7 +217,7 @@ export class StatisticService {
 			duration: 0
 		};
 
-		const { start: startToday, end: endToday } = getDateFormat(
+		const { start: startToday, end: endToday } = getDateRangeFormat(
 			moment().startOf('day').utc(),
 			moment().endOf('day').utc()
 		);
@@ -358,11 +358,11 @@ export class StatisticService {
 		const tenantId = RequestContext.currentTenantId();
 
 		const { start: weeklyStart, end: weeklyEnd } = (startDate && endDate) ?
-									getDateFormat(
+									getDateRangeFormat(
 										moment.utc(startDate),
 										moment.utc(endDate)
 									) :
-									getDateFormat(
+									getDateRangeFormat(
 										moment().startOf('week').utc(),
 										moment().endOf('week').utc()
 									);
@@ -559,7 +559,7 @@ export class StatisticService {
 				.andWhere(`"${dayTimeQuery.alias}"."organizationId" = :organizationId`, { organizationId })
 				.andWhere(
 					new Brackets((qb: WhereExpressionBuilder) => {
-						const { start: startToday, end: endToday } = getDateFormat(
+						const { start: startToday, end: endToday } = getDateRangeFormat(
 							moment().startOf('day').utc(),
 							moment().endOf('day').utc()
 						);
@@ -727,11 +727,11 @@ export class StatisticService {
 		const user = RequestContext.currentUser();
 		const tenantId = RequestContext.currentTenantId();
 		const { start, end } = (startDate && endDate) ?
-								getDateFormat(
+								getDateRangeFormat(
 									moment.utc(startDate),
 									moment.utc(endDate)
 								) :
-								getDateFormat(
+								getDateRangeFormat(
 									moment().startOf('week').utc(),
 									moment().endOf('week').utc()
 								);
@@ -902,11 +902,11 @@ export class StatisticService {
 		const user = RequestContext.currentUser();
 		const tenantId = RequestContext.currentTenantId();
 		const { start, end } = (startDate && endDate) ?
-								getDateFormat(
+								getDateRangeFormat(
 									moment.utc(startDate),
 									moment.utc(endDate)
 								) :
-								getDateFormat(
+								getDateRangeFormat(
 									moment().startOf('week').utc(),
 									moment().endOf('week').utc()
 								);
@@ -1069,11 +1069,11 @@ export class StatisticService {
 		const user = RequestContext.currentUser();
 		const tenantId = RequestContext.currentTenantId();
 		const { start, end } = (startDate && endDate) ?
-								getDateFormat(
+								getDateRangeFormat(
 									moment.utc(startDate),
 									moment.utc(endDate)
 								) :
-								getDateFormat(
+								getDateRangeFormat(
 									moment().startOf('week').utc(),
 									moment().endOf('week').utc()
 								);
@@ -1182,11 +1182,11 @@ export class StatisticService {
 		const user = RequestContext.currentUser();
 		const tenantId = RequestContext.currentTenantId();
 		const { start, end } = (startDate && endDate) ?
-								getDateFormat(
+								getDateRangeFormat(
 									moment.utc(startDate),
 									moment.utc(endDate)
 								) :
-								getDateFormat(
+								getDateRangeFormat(
 									moment().startOf('week').utc(),
 									moment().endOf('week').utc()
 								);
@@ -1366,11 +1366,11 @@ export class StatisticService {
 		const user = RequestContext.currentUser();
 		const tenantId = RequestContext.currentTenantId();
 		const { start, end } = (startDate && endDate) ?
-								getDateFormat(
+								getDateRangeFormat(
 									moment.utc(startDate),
 									moment.utc(endDate)
 								) :
-								getDateFormat(
+								getDateRangeFormat(
 									moment().startOf('week').utc(),
 									moment().endOf('week').utc()
 								);
@@ -1596,11 +1596,11 @@ export class StatisticService {
 		} = request;
 
 		const { start, end } = (startDate && endDate) ?
-								getDateFormat(
+								getDateRangeFormat(
 									moment.utc(startDate),
 									moment.utc(endDate)
 								) : 
-								getDateFormat(
+								getDateRangeFormat(
 									moment().startOf('week').utc(),
 									moment().endOf('week').utc()
 								);

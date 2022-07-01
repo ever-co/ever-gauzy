@@ -1,4 +1,3 @@
-import { getDateRangeFormat } from '../core';
 import { TenantAwareCrudService } from './../core/crud';
 import { Invoice } from './invoice.entity';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -9,9 +8,10 @@ import { IInvoice, IOrganization, LanguagesEnum } from '@gauzy/contracts';
 import { sign } from 'jsonwebtoken';
 import { ConfigService, IEnvironment } from '@gauzy/config';
 import { I18nService } from 'nestjs-i18n';
+import * as moment from 'moment';
 import { EstimateEmailService } from '../estimate-email/estimate-email.service';
-import { PdfmakerService } from './pdfmaker.service';
 import { Readable } from 'stream';
+import { PdfmakerService } from './pdfmaker.service';
 import {
 	generateInvoicePdfDefinition,
 	generateInvoicePaymentPdfDefinition
@@ -323,34 +323,37 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 					id: In(where.toContact)
 				}
 			}
+			if ('invoiceDate' in where) {
+				const { invoiceDate } = where;
+				const { startDate, endDate } = invoiceDate;
 
-			if (where.invoiceDate && typeof where.invoiceDate === 'object') {
-				const { startDate, endDate } = where.invoiceDate;
-				const { start, end } = getDateRangeFormat(
-					new Date(startDate), 
-					new Date(endDate),
-					true
-				);
-				filter.where.invoiceDate = Between(start, end);
-			} else if (where.invoiceDate) {
-				const { start, end } = getDateRangeFormat(
-					new Date(where.invoiceDate), 
-					new Date(where.invoiceDate),
-					true
-				);
-				filter.where.invoiceDate = Between(start, end);
+				if (startDate && endDate) {
+					filter.where.invoiceDate = Between(
+						moment.utc(startDate).format('YYYY-MM-DD HH:mm:ss'),
+						moment.utc(endDate).format('YYYY-MM-DD HH:mm:ss')
+					);
+				} else {
+					filter.where.invoiceDate = Between(
+						moment().startOf('month').utc().format('YYYY-MM-DD HH:mm:ss'),
+						moment().endOf('month').utc().format('YYYY-MM-DD HH:mm:ss')
+					);
+				}
 			}
+			if ('dueDate' in where) {
+				const { dueDate } = where;
+				const { startDate, endDate } = dueDate;
 
-			if (where.dueDate) {
-				const { start, end } = getDateRangeFormat(
-					new Date(where.dueDate), 
-					new Date(where.dueDate),
-					true
-				);
-				filter.where.dueDate = Between(
-					start,
-					end
-				);
+				if (startDate && endDate) {
+					filter.where.dueDate = Between(
+						moment.utc(startDate).format('YYYY-MM-DD HH:mm:ss'),
+						moment.utc(endDate).format('YYYY-MM-DD HH:mm:ss')
+					);
+				} else {
+					filter.where.dueDate = Between(
+						moment().startOf('month').utc().format('YYYY-MM-DD HH:mm:ss'),
+						moment().endOf('month').utc().format('YYYY-MM-DD HH:mm:ss')
+					);
+				}
 			}
 		}
 		return super.paginate(filter);
