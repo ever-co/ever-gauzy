@@ -289,7 +289,7 @@ export class IncomeComponent extends PaginationFilterBaseComponent
 							.create({
 								amount,
 								clientId: organizationContact.id,
-								valueDate,
+								valueDate: moment(valueDate).startOf('day').toDate(),
 								employeeId: employee ? employee.id : null,
 								organizationId,
 								tenantId,
@@ -356,7 +356,7 @@ export class IncomeComponent extends PaginationFilterBaseComponent
 							.update(this.selectedIncome.id, {
 								amount,
 								clientId: organizationContact.id,
-								valueDate,
+								valueDate: moment(valueDate).startOf('day').toDate(),
 								notes,
 								currency,
 								isBonus,
@@ -500,11 +500,6 @@ export class IncomeComponent extends PaginationFilterBaseComponent
 			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
 				await this.smartTableSource.getElements();
 				this.incomes = this.smartTableSource.getData();
-
-				this.setPagination({
-					...this.getPagination(),
-					totalItems: this.smartTableSource.count()
-				});
 			}
 		} catch (error) {
 			this.toastrService.danger(error);

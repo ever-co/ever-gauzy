@@ -146,7 +146,7 @@ export class PaymentMutationComponent
 		const { amount, paymentDate, note, paymentMethod, organizationContact, project, tags, invoice } = this.form.value;
 		const payment = {
 			amount,
-			paymentDate: moment(paymentDate).startOf('day').format(),
+			paymentDate: moment(paymentDate).startOf('day').toDate(),
 			note,
 			currency: this.currency.value,
 			invoice,
