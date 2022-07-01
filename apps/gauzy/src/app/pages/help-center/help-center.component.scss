@@ -2,14 +2,14 @@
 
 .global {
   display: flex;
+  gap: 12px;
 }
 
 .main {
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  width: 85%;
-  margin-left: 12px;
+  width: 100%;
 }
 
 .overflow {
@@ -38,6 +38,7 @@
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
+  background-color: var(--gauzy-card-2);
 }
 
 .user-info {
@@ -166,7 +167,50 @@ h6 {
 }
 
 :host {
-  nb-card nb-card-body {
+
+  nb-card,
+  nb-card-body {
     background-color: var(--gauzy-card-2);
+  }
+
+  nb-card {
+    margin: 0;
+  }
+
+  .custom-table {
+    background-color: var(--gauzy-card-1);
+    border-radius: var(--border-radius);
+    padding: 8px;
+    max-height: 100%;
+    flex-grow: 10;
+    cursor: pointer;
+
+    &.selected {
+      box-shadow: -8px 0px 0px 0px rgba(50, 50, 50, 0.1);
+      background: var(--gauzy-card-2);
+    }
+
+    &:hover {
+      background: var(--gauzy-card-2);
+    }
+  }
+
+  nb-card-body {
+    padding: 1rem 0.5rem;
+    border-radius: 0 0 var(--border-radius) var(--border-radius);
+  }
+
+  .table-scroll {
+    height: calc(100vh - 22.5rem);
+    padding: .5rem;
+    overflow: auto;
+    display: flex;
+    flex-direction: column;
+    row-gap: 8px;
+    border-radius: var(--border-radius);
+
+    &.filter {
+      height: calc(100vh - 30.2rem);
+    }
   }
 }
