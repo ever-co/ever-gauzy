@@ -15,10 +15,10 @@ import {
 } from '@gauzy/contracts';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
+import * as moment from 'moment';
 import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
 import {
 	InvoicesService,
-	OrganizationContactService,
 	OrganizationProjectsService,
 	Store
 } from './../../../../@core/services';
@@ -35,13 +35,11 @@ export class PaymentMutationComponent
 	implements OnInit, AfterViewInit {
 
 	invoice: IInvoice;
-	invoices: IInvoice[];
-	organization: IOrganization;
+	invoices: IInvoice[] = [];
+	public organization: IOrganization;
 	payment: IPayment;
 	paymentMethods = Object.values(PaymentMethodEnum);
 	currencyString: string;
-	organizationContact: IOrganizationContact;
-	organizationContacts: IOrganizationContact[];
 	project: IOrganizationProject;
 	projects: IOrganizationProject[];
 
@@ -76,7 +74,6 @@ export class PaymentMutationComponent
 		protected readonly dialogRef: NbDialogRef<PaymentMutationComponent>,
 		private readonly store: Store,
 		private readonly organizationProjectsService: OrganizationProjectsService,
-		private readonly organizationContactService: OrganizationContactService,
 		private readonly invoicesService: InvoicesService
 	) {
 		super(translateService);
@@ -85,7 +82,7 @@ export class PaymentMutationComponent
 	ngOnInit() {
 		this.store.selectedOrganization$
 			.pipe(
-				filter((organization) => !!organization),
+				filter((organization: IOrganization) => !!organization),
 				tap((organization: IOrganization) => this.organization = organization),
 				tap(({ currency }) => this.currencyString = currency || ENV.DEFAULT_CURRENCY),
 				tap(() => this.initializeForm()),
@@ -104,6 +101,9 @@ export class PaymentMutationComponent
 	}
 
 	ngAfterViewInit() {
+		if (!this.organization) {
+			return;
+		}
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 
@@ -116,11 +116,6 @@ export class PaymentMutationComponent
 			.getAll([], { organizationId, tenantId })
 			.then(({ items }) => {
 				this.projects = items;
-			});
-		this.organizationContactService
-			.getAll([], { organizationId, tenantId })
-			.then(({ items }) => {
-				this.organizationContacts = items;
 			});
 	}
 
@@ -156,7 +151,7 @@ export class PaymentMutationComponent
 		const { amount, paymentDate, note, paymentMethod, organizationContact, project, tags, invoice } = this.form.value;
 		const payment = {
 			amount,
-			paymentDate,
+			paymentDate: moment(paymentDate).startOf('day').format(),
 			note,
 			currency: this.currency.value,
 			invoice,
@@ -188,19 +183,13 @@ export class PaymentMutationComponent
 	}
 
 	selectedTagsEvent(currentTagSelection: ITag[]) {
-		this.form.patchValue({
-			tags: currentTagSelection
-		});
+		this.form.get('tags').setValue(currentTagSelection);
+		this.form.get('tags').updateValueAndValidity();
 	}
 
-	searchOrganizationContact(term: string, item: any) {
-		if (item.name) {
-			return item.name.toLowerCase().includes(term.toLowerCase());
-		}
-	}
-
-	selectOrganizationContact($event: IOrganizationContact) {
-		this.organizationContact = $event;
+	selectOrganizationContact(organizationContact: IOrganizationContact) {
+		this.form.get('organizationContact').setValue(organizationContact);
+		this.form.get('organizationContact').updateValueAndValidity();
 	}
 
 	selectProject($event: IOrganizationProject) {
