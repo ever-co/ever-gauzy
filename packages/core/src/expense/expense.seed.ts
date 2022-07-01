@@ -72,11 +72,15 @@ export const createDefaultExpenses = async (
 					expense.vendor = foundVendor;
 					expense.category = foundCategory;
 					expense.currency = seedExpense.currency || env.defaultCurrency;
-					expense.valueDate = faker.date.between(
-						moment().subtract(3, 'months').calendar(),
-						moment().add(10, 'days').calendar()
-					);
 					expense.notes = seedExpense.notes;
+					expense.valueDate = moment(
+						faker.date.between(
+							moment().subtract(3, 'months').calendar(),
+							moment().add(10, 'days').calendar()
+						)
+					)
+					.startOf('day')
+					.toDate();
 					return expense;
 				});
 				await insertExpense(connection, defaultExpenses);
@@ -135,11 +139,15 @@ export const createRandomExpenses = async (
 					];
 				expense.category = categories[currentIndex % categories.length];
 				expense.currency = employee.organization.currency || env.defaultCurrency;
-				expense.valueDate = faker.date.between(
-          moment().subtract(3, 'months').calendar(),
-          moment().add(10, 'days').calendar()
-				);
 				expense.notes = notesArray[currentIndex];
+				expense.valueDate = moment(
+					faker.date.between(
+						moment().subtract(3, 'months').calendar(),
+						moment().add(10, 'days').calendar()
+					)
+				)
+				.startOf('day')
+				.toDate();
 				randomExpenses.push(expense);
 			}
 			await insertExpense(connection, randomExpenses);
