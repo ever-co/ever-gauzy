@@ -69,6 +69,7 @@ export interface IGetPaymentInput
 	endDate?: Date | string;
 	projectIds?: string[];
 	employeeIds?: string[];
+	contactIds?: string[];
 }
 
 export interface IPaymentReportGroupByDate {

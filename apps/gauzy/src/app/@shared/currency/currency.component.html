@@ -1,8 +1,10 @@
 <ng-container>
 	<div class="form-group currency-container">
-		<label class="label" for="currencySelect">
-			{{ placeholder || 'FORM.LABELS.CURRENCY' | translate }}
-		</label>
+		<ng-container *ngIf="label">
+			<label class="label" for="currencySelect">
+				{{ placeholder || 'FORM.LABELS.CURRENCY' | translate }}
+			</label>
+		</ng-container>
 		<ng-select
 			#select
 			[items]="(currencies$ | async)"

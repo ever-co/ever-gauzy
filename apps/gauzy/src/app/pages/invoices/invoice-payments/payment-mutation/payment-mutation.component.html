@@ -1,6 +1,8 @@
 <nb-card class="main">
 	<nb-card-header>
-    <span class="cancel"><i class="fas fa-times" (click)="cancel()"></i></span>
+    	<span class="cancel">
+			<i class="fas fa-times" (click)="cancel()"></i>
+		</span>
 		<h5 class="title">
 			{{
 				(payment
@@ -43,8 +45,7 @@
 							[selectedTags]="form.get('tags').value"
 							(selectedTagsEvent)="selectedTagsEvent($event)"
 							[isOrgLevel]="true"
-						>
-						</ga-tags-color-input>
+						></ga-tags-color-input>
 					</div>
 				</div>
 				<div class="row">
@@ -53,29 +54,13 @@
 							<label for="inputOrganizationContact" class="label">
 								{{ 'INVOICES_PAGE.CONTACT' | translate }}
 							</label>
-							<ng-select
-								[items]="organizationContacts"
-								bindName="name"
+							<ga-contact-select
+								[addTag]="true"
+								[clearable]="true"
 								[placeholder]="'POP_UPS.ALL_CONTACTS' | translate"
 								formControlName="organizationContact"
-								id="inputOrganizationContact"
-								(change)="selectOrganizationContact($event)"
-								[searchFn]="searchOrganizationContact"
-								appendTo="body"
-							>
-								<ng-template
-									ng-option-tmp
-									let-item="item"
-									let-index="index"
-								>
-									{{ item.name }}
-								</ng-template>
-								<ng-template ng-label-tmp let-item="item">
-									<div class="selector-template">
-										<span>{{ item.name }}</span>
-									</div>
-								</ng-template>
-							</ng-select>
+								(onChanged)="selectOrganizationContact($event)"
+							></ga-contact-select>
 						</div>
 					</div>
 					<div class="col-sm-6">
@@ -86,28 +71,14 @@
 										| translate
 								}}
 							</label>
-							<ng-select
-								[(items)]="projects"
-								bindName="name"
+							<ga-project-selector
+								formControlName="projectId"
 								[placeholder]="'INVOICES_PAGE.INVOICE_TYPE.SELECT_PROJECTS' | translate"
-								formControlName="project"
-								id="inputProject"
-								(change)="selectProject($event)"
-								appendTo="body"
-							>
-								<ng-template
-									ng-option-tmp
-									let-item="item"
-									let-index="index"
-								>
-									{{ item.name }}
-								</ng-template>
-								<ng-template ng-label-tmp let-item="item">
-									<div class="selector-template">
-										<span>{{ item.name }}</span>
-									</div>
-								</ng-template>
-							</ng-select>
+								[skipGlobalChange]="true"
+								[defaultSelected]="false"
+								[showAllOption]="false"
+								(onChanged)="selectProject($event)"
+							></ga-project-selector>
 						</div>
 					</div>
 				</div>
@@ -134,13 +105,14 @@
 				</div>
 				<div class="col-sm-6">
 					<div class="form-group">
-						<label for="inputPaymentDate" class="label">
+						<label for="inputPaymentMethod" class="label">
 							{{
 								'INVOICES_PAGE.PAYMENTS.PAYMENT_METHOD'
 									| translate
 							}}
 						</label>
 						<nb-select
+							id="inputPaymentMethod"
 							class="d-block"
 							formControlName="paymentMethod"
 							[placeholder]="'INVOICES_PAGE.PAYMENTS.PAYMENT_METHOD' | translate"
@@ -171,9 +143,9 @@
 				<div class="col-sm-12">
 					<div class="form-group">
 						<label for="inputAmount" class="label">
-							<span>{{
-								'INVOICES_PAGE.PAYMENTS.AMOUNT' | translate
-							}}</span>
+							<span>
+								{{ 'INVOICES_PAGE.PAYMENTS.AMOUNT' | translate }}
+							</span>
 						</label>
 						<input
 							type="number"
@@ -198,22 +170,28 @@
 							formControlName="note"
 							id="inputNote"
 							fullWidth
-						>
-						</textarea>
+						></textarea>
 					</div>
 				</div>
 			</div>
 		</form>
 	</nb-card-body>
 	<nb-card-footer class="text-left">
-		<button status="basic" outline size="small" class="mr-3" nbButton (click)="cancel()">
+		<button 
+			status="basic"
+			outline
+			size="small"
+			class="mr-3"
+			nbButton
+			(click)="cancel()"
+		>
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
 		<button
 			(click)="addEditPayment()"
 			status="success"
 			[disabled]="form.invalid"
-      size="small"
+      		size="small"
 			nbButton
 		>
 			{{ 'BUTTONS.SAVE' | translate }}

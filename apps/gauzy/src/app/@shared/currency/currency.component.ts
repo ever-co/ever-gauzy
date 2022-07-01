@@ -77,6 +77,17 @@ export class CurrencyComponent extends TranslationBaseComponent
 		}
 	}
 
+	/*
+	* Getter & Setter for dynamic label display
+	*/
+	private _label: boolean = true;
+	get label() {
+		return this._label;
+	}
+	@Input() set label(val: boolean) {
+		this._label = val;
+	}
+
 	constructor(
 		public readonly translateService: TranslateService,
 		private readonly cdr: ChangeDetectorRef,
