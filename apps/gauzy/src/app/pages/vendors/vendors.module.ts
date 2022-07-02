@@ -8,7 +8,8 @@ import {
 	NbDialogModule,
 	NbActionsModule,
 	NbBadgeModule,
-	NbSpinnerModule
+	NbSpinnerModule,
+	NbTooltipModule
 } from '@nebular/theme';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { VendorsComponent } from './vendors.component';
@@ -23,6 +24,7 @@ import { TranslateModule } from '../../@shared/translate/translate.module';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
 import { InfiniteScrollModule } from 'ngx-infinite-scroll';
+import { NodataModule } from '../../@shared/no-data/no-data.module';
 
 @NgModule({
 	imports: [
@@ -33,6 +35,7 @@ import { InfiniteScrollModule } from 'ngx-infinite-scroll';
 		NbButtonModule,
 		NbInputModule,
 		NbIconModule,
+		NbTooltipModule,
 		TagsColorInputModule,
 		NbActionsModule,
 		TableComponentsModule,
@@ -47,7 +50,8 @@ import { InfiniteScrollModule } from 'ngx-infinite-scroll';
 		HeaderTitleModule,
 		GauzyButtonActionModule,
 		NbSpinnerModule,
-		InfiniteScrollModule
+		InfiniteScrollModule,
+		NodataModule
 	],
 	declarations: [VendorsComponent],
 	providers: [OrganizationVendorsService]

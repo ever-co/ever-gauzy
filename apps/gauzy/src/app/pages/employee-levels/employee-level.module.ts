@@ -20,6 +20,7 @@ import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { TranslateModule } from '../../@shared/translate/translate.module';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
+import { NodataModule } from '../../@shared/no-data/no-data.module';
 
 @NgModule({
 	imports: [
@@ -43,7 +44,8 @@ import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy
 		TranslateModule,
 		HeaderTitleModule,
 		NbTooltipModule,
-    	GauzyButtonActionModule
+    	GauzyButtonActionModule,
+		NodataModule
 	],
 	declarations: [EmployeeLevelComponent],
 	providers: []

@@ -11,7 +11,8 @@ import {
 	NbInputModule,
 	NbSelectModule,
 	NbButtonModule,
-	NbToggleModule
+	NbToggleModule,
+	NbTooltipModule
 } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
@@ -43,6 +44,7 @@ import { PaginationModule } from '../../../@shared/pagination/pagination.module'
 		NbInputModule,
 		FormsModule,
 		NbSelectModule,
+		NbTooltipModule,
 		NbButtonModule,
 		EmployeeMultiSelectModule,
 		Ng2SmartTableModule,
