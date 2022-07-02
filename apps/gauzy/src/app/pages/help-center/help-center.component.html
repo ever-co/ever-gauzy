@@ -98,15 +98,13 @@
 					<div
 						class="custom-table"
 						[ngClass]="{
-							selected:
-								selectedItem?.isSelected &&
-								selectedItem?.index === i
+							selected: isSelected(i, article)
 						}"
 						*ngFor="
 							let article of this.filteredArticles;
 							let i = index
 						"
-						(click)="selectItem(i)"
+						(click)="selectItem(i, article)"
 					>
 						<div class="row-name">
 							<p class="name">

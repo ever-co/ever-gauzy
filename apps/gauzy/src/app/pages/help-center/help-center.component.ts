@@ -60,7 +60,8 @@ export class HelpCenterComponent
 	organization: IOrganization;
 	selectedItem = {
 		index: null,
-		isSelected: false
+		isSelected: false,
+		article: null
 	};
 	isDisable: boolean = true;
 
@@ -256,18 +257,27 @@ export class HelpCenterComponent
 		}
 	}
 
-	selectItem(index: number) {
-		this.selectedItem =
-			this.selectedItem.isSelected && this.selectedItem.index === index
-				? {
-						index: null,
-						isSelected: !this.selectedItem.isSelected
-				  }
-				: {
-						index: index,
-						isSelected: true
-				  };
+	selectItem(index: number, article: IHelpCenterArticle) {
+		this.selectedItem = this.isSelected(index, article)
+			? {
+					index: null,
+					isSelected: !this.selectedItem.isSelected,
+					article: null
+			  }
+			: {
+					index: index,
+					isSelected: true,
+					article: article
+			  };
 		this.isDisable = !this.selectedItem.isSelected;
+	}
+
+	isSelected(index: number, article: IHelpCenterArticle) {
+		return (
+			this.selectedItem.isSelected &&
+			this.selectedItem.index === index &&
+			article.id === this.selectedItem.article.id
+		);
 	}
 
 	ngOnDestroy() {}
