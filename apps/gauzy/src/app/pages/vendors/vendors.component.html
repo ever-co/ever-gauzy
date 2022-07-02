@@ -63,13 +63,9 @@
 				</nb-card-body>
 			</nb-card>
 			<ng-template [ngIf]="!isLoading && vendors?.length == 0">
-				<nb-card class="p-0">
-					<nb-card-body class="custom-table">
-						<div>
-							{{ 'SM_TABLE.NO_RESULT' | translate }}
-						</div>
-					</nb-card-body>
-				</nb-card>
+				<gauzy-no-data-found 
+					[message]="'ORGANIZATIONS_PAGE.VENDORS_NO_DATA_MESSAGE'"
+				></gauzy-no-data-found>
 			</ng-template>
 		</ng-template>
 

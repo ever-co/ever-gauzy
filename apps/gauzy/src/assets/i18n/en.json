@@ -1670,6 +1670,7 @@
 		"EXPENSE_NAME": "Expense name",
 		"EMPLOYMENT_TYPE_NAME": "Employment type name",
 		"EMPLOYMENT_TYPE_NO_DATA_MESSAGE":"You have not created any employment types.",
+		"VENDORS_NO_DATA_MESSAGE":"You have not created any vendors.",
 		"CONTACTS": "Contacts",
 		"LEVEL": "Level",
 		"ORGANIZATION": "ORGANIZATION",
