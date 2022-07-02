@@ -25,7 +25,7 @@
     background-color: unset;
   }
   .card {
-    background-color: rgba(50, 50, 50, 0.03);
+    background-color: var(--gauzy-card-2);
   }
 
   .view-all {
@@ -101,7 +101,7 @@
     }
   }
   .card-body {
-    background-color: rgba(50, 50, 50, 0.03);
+    background-color: var(--gauzy-card-2);
   }
 }
 

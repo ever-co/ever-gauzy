@@ -72,12 +72,12 @@ h4 {
     $default-radius
   );
   nb-card {
-    background: rgba(50, 50, 50, 0.03);
+    background: var(--gauzy-card-2);
   }
 }
 
 .main-content {
-  background: rgba(50, 50, 50, 0.03);
+  background: var(--gauzy-card-2);
 }
 .image-container {
   object-fit: cover;

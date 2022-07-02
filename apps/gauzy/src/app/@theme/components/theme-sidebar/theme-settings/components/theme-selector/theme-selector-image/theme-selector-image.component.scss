@@ -64,7 +64,7 @@
     height: 1rem;
     background-color: white;
     border-radius: 50%;
-    box-shadow: 0 0.5px 0.5px 0.5px rgba(0, 0, 0, 0.2) inset;
+    box-shadow: var(--gauzy-shadow) inset;
   }
 }
 :host .theme-card ::ng-deep {

@@ -14,7 +14,7 @@
   overflow-x: hidden;
   border-radius: nb-theme(button-rectangle-border-radius);
   span {
-    background: rgba(50, 50, 50, 0.03);
+    background: var(--gauzy-card-2);
     border-radius: nb-theme(button-rectangle-border-radius);
     padding: 2px 4px;
     margin-right: 10px;

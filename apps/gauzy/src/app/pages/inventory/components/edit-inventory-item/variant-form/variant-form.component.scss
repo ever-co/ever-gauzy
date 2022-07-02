@@ -14,7 +14,7 @@
       background-color: var(--gauzy-card-1);
       color: var(--color-success-default);
       border: unset;
-      box-shadow: 0 1px 1px 0 rgba(0 0 0 / 15%);
+      box-shadow: var(--gauzy-shadow)(0 0 0 / 15%);
       font-size: 12px;
       font-weight: 600;
       line-height: 11px;

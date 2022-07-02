@@ -72,7 +72,7 @@ import { ComponentLayoutStyleEnum } from '@gauzy/contracts';
 				height: 64px;
 				border-radius: 4px;
 				object-fit: cover;
-				box-shadow: 0 1px 1px 0 rgba(0 0 0 / 15%);
+				box-shadow: var(--gauzy-shadow)(0 0 0 / 15%);
 			}
 
 			.no-image {

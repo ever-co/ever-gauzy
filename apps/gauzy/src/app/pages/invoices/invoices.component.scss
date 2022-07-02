@@ -332,7 +332,7 @@ input {
 }
 
 nb-tab {
-  background-color: rgba(50, 50, 50, 0.03);
+  background-color: var(--gauzy-card-2);
   border: 0 0 $default-radius $default-radius;
 }
 
@@ -377,7 +377,7 @@ nb-tab {
       $default-box-shadow-inset );
 
     nb-tabset .tab.active .tab-link {
-      background-color: rgba(50, 50, 50, 0.03);
+      background-color: var(--gauzy-card-2);
       border: unset;
       text-decoration: none;
     }

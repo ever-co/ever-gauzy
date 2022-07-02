@@ -4,7 +4,7 @@
 :host {
   nb-card,
   nb-card-body {
-    background-color: rgba(50, 50, 50, 0.03);
+    background-color: var(--gauzy-card-2);
     .custom-table {
       max-height: calc(100vh - 24rem);
       flex-grow: 10;
@@ -155,7 +155,7 @@ nb-radio-group {
 }
 
 .filter {
-  background-color: rgba(50, 50, 50, 0.03);
+  background-color: var(--gauzy-card-2);
   width: fit-content;
   display: flex;
   padding: 6px 12px;

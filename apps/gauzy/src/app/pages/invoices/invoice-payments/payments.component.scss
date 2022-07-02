@@ -39,7 +39,7 @@
 
 .custom-container {
   margin-top: 32px;
-  background-color: rgba(50, 50, 50, 0.03);
+  background-color: var(--gauzy-card-2);
   padding: 0 12px 12px 12px;
   border-radius: 8px;
   .gauzy-button-container{
@@ -48,6 +48,6 @@
   }
 }
 .body{
-  background-color: rgba(50, 50, 50, 0.03);
+  background-color: var(--gauzy-card-2);
   border-radius: 0 0 8px 8px;
 }

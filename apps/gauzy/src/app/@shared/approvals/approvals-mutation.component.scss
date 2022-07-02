@@ -11,6 +11,6 @@ nb-radio-group {
 
 :host {
   nb-card {
-    background-color: nb-theme(background-basic-color-1);
+    background-color: var(--gauzy-card-2);
   }
 }

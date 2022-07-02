@@ -39,12 +39,12 @@ body {
 
 @mixin nb-overrides() {
   nb-route-tabset .route-tab.active .tab-link {
-    background: rgba(50, 50, 50, 0.03);
+    background: var(--gauzy-card-2);
     margin-bottom: 1px;
   }
 
   nb-tabset .tab.active .tab-link {
-    background-color: rgba(50, 50, 50, 0.03);
+    background-color: var(--gauzy-card-2);
     margin-bottom: 1px;
   }
 
@@ -421,7 +421,7 @@ nb-card-body {
 }
 
 nb-tabset .tab.active .tab-link {
-  background-color: rgba(50, 50, 50, 0.03);
+  background-color: var(--gauzy-card-2);
   border-radius: 8px 8px 0 0;
 }
 ng2-smart-table {
@@ -519,5 +519,11 @@ ng2-smart-table {
   100% {
     opacity: 1;
     transform: translate(-16.75px, -118.5%);
+  }
+}
+
+.nb-theme-material-light{
+  a > nb-icon {
+    color: #ffffff !important;
   }
 }

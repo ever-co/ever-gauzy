@@ -35,7 +35,7 @@
 }
 
 nb-card.filter {
-  background-color: rgba(50, 50, 50, 0.03);
+  background-color: var(--gauzy-card-2);
 
   nb-card-header {
     font-size: 14px;
