@@ -69,7 +69,7 @@ input {
 }
 
 .custom-form {
-  background-color: rgba(50, 50, 50, 0.03);
+  background-color: var(--gauzy-card-2);
   border-radius: nb-theme(border-radius);
   padding: 1rem;
 }
@@ -78,7 +78,7 @@ input {
   overflow-y: auto;
   max-height: calc(100vh - 27rem);
   nb-card {
-    background-color: rgba(50, 50, 50, 0.03);
+    background-color: var(--gauzy-card-2);
     &.document {
       background-color: nb-theme(gauzy-card-1);
       margin-bottom: 8px;

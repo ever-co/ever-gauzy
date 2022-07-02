@@ -19,7 +19,7 @@ $radius: nb-theme(border-radius);
 }
 
 .content {
-  background-color: rgba(50, 50, 50, 0.03);
+  background-color: var(--gauzy-card-2);
   padding: 20px;
   border-radius: 0 $radius $radius $radius;
 }

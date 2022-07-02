@@ -1,6 +1,6 @@
 @import 'themes';
 
-$radius: 18px;
+$radius: var(--button-rectangle-border-radius);
 
 .avatar-container {
   position: relative;
@@ -9,11 +9,13 @@ $radius: 18px;
   justify-content: center;
   flex-direction: column;
   height: 2.5rem;
+
   .avatar-group {
     position: absolute;
     display: flex;
     align-items: center;
     justify-content: center;
+
     .avatar {
       background-color: var(--gauzy-sidebar-background-2);
       object-fit: cover;
@@ -26,12 +28,14 @@ $radius: 18px;
       width: 5rem;
       display: inline-block;
       cursor: pointer;
+
       img {
-        width: $radius;
-        height: $radius;
-        border-radius: $radius;
+        width: 18px;
+        height: 18px;
+        border-radius: var(--border-radius);
         margin-right: 8px;
       }
+
       &:hover {
         text-overflow: clip;
         width: fit-content;
@@ -50,7 +54,7 @@ $radius: 18px;
   z-index: 3;
 }
 
-.avatar-group .avatar + .avatar {
+.avatar-group .avatar+.avatar {
   margin-left: -4rem;
 }
 

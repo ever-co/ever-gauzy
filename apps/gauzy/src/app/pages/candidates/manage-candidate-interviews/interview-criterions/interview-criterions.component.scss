@@ -5,7 +5,7 @@
   flex-direction: row;
   justify-content: space-between;
   align-items: flex-start;
-  background-color: rgba(50, 50, 50, 0.03);
+  background-color: var(--gauzy-card-2);
   padding: 1rem;
   border-radius: nb-theme(border-radius);
   height: calc(100vh - 20.75rem);

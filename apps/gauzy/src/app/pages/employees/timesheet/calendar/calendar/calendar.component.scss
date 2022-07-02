@@ -1,7 +1,7 @@
 @import 'gauzy/gauzy-cards';
 
 :host nb-card {
-  background-color: rgba(50, 50, 50, 0.03);
+  background-color: var(--gauzy-card-2);
   ngx-gauzy-filters {
     margin: 0 -2rem;
   }
@@ -15,7 +15,7 @@
   position: absolute;
   right: 1rem;
   top: -0.75rem;
-  background-color: rgba(50, 50, 50, 0.03);
+  background-color: var(--gauzy-card-2);
   padding: 6px 8px;
   border-radius: nb-theme(button-rectangle-border-radius);
 }

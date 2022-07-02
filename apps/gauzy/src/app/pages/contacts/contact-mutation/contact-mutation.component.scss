@@ -149,7 +149,7 @@ h4 {
 
   nb-card {
     margin: -1rem;
-    border: rgba(50, 50, 50, 0.03);
+    border: var(--gauzy-card-2);
   }
 
   nb-stepper ::ng-deep .step-content {

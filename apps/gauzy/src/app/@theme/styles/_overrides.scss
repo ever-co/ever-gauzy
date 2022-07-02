@@ -34,7 +34,7 @@ body {
 
 .dashboard-card-scroll nb-card {
   background: nb-theme(background-basic-color-1);
-  box-shadow: 0px 6px 20px 0px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--gauzy-shadow);
 }
 
 @mixin nb-overrides() {
@@ -246,7 +246,7 @@ body {
 
   .ng-dropdown-panel {
     transform: translateY(10px);
-    box-shadow: 0px 6px 30px rgba(0, 0, 0, 0.2);
+    box-shadow: var(--gauzy-shadow);
     &.ng-select-bottom {
       border-radius: nb-theme(border-radius);
     }
@@ -283,11 +283,11 @@ body {
     color: nb-theme(text-basic-color) !important;
   }
   .records {
-    box-shadow: 0px 0px 16px 9px nb-theme(shadow) !important;
+    box-shadow: var(--gauzy-shadow) !important;
     background: nb-theme(background-basic-color-1) !important;
   }
   .profit-history {
-    box-shadow: 0px 0px 16px 9px nb-theme(shadow) !important;
+    box-shadow: var(--gauzy-shadow) !important;
     background: nb-theme(background-basic-color-1) !important;
   }
   tr {

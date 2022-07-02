@@ -19,7 +19,7 @@
 :host {
   nb-card,
   nb-card-body {
-    background-color: rgba(50, 50, 50, 0.03);
+    background-color: var(--gauzy-card-2);
   }
   nb-card-body {
     overflow-y: overlay;
@@ -49,7 +49,7 @@
 }
 nb-accordion-item-body {
   &:hover, &.item.selected {
-    background: rgba(50, 50, 50, 0.03);
+    background: var(--gauzy-card-2);
   }
 }
 .keyResult {

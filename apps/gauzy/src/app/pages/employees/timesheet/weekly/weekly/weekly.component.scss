@@ -40,7 +40,7 @@
 		letter-spacing: 0em;
 		text-align: left;
 		color: nb-theme(gauzy-text-color-2);
-		background: rgba(255, 255, 255, 0.75);
+		background: var(--gauzy-card-4);
 		border-radius: nb-theme(border-radius);
 		padding: 3px;
 		height: 42px;
