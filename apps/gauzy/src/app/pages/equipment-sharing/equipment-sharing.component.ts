@@ -8,7 +8,6 @@ import {
 	PermissionsEnum,
 	RequestApprovalStatusTypesEnum,
 	IOrganization,
-	IUser,
 	EquipmentSharingStatusEnum
 } from '@gauzy/contracts';
 import { Ng2SmartTableComponent } from 'ng2-smart-table';
@@ -22,7 +21,7 @@ import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import { IPaginationBase, PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
 import { StatusBadgeComponent } from '../../@shared/status-badge';
 import { EquipmentSharingPolicyComponent } from './table-components';
-import { EmployeesService, EquipmentSharingService, Store, ToastrService } from '../../@core/services';
+import { EquipmentSharingService, Store, ToastrService } from '../../@core/services';
 import { API_PREFIX, ComponentEnum } from '../../@core/constants';
 import { ServerDataSource } from '../../@core/utils/smart-table';
 import { DateViewComponent } from '../../@shared/table-components';
@@ -35,13 +34,12 @@ import { DateViewComponent } from '../../@shared/table-components';
 export class EquipmentSharingComponent extends PaginationFilterBaseComponent
 	implements OnInit, OnDestroy {
 
-	settingsSmartTable: object;
 	loading: boolean = false;
-	selectedEquipmentSharing: IEquipmentSharing;
+	disableButton: boolean = true;
+
+	settingsSmartTable: object;
 	smartTableSource: ServerDataSource;
-	disableButton = true;
-	selectedEmployeeId: string;
-	selectedOrgId: string;
+	selectedEquipmentSharing: IEquipmentSharing;
 	equipments: IEquipmentSharing[] = [];
 
 	PermissionsEnum = PermissionsEnum;
@@ -52,7 +50,7 @@ export class EquipmentSharingComponent extends PaginationFilterBaseComponent
 
 	equipmentSharing$: Subject<boolean> = this.subject$;
 	public organization: IOrganization;
-	protected user: IUser;
+	public selectedEmployeeId: string;
 
 	equipmentSharingTable: Ng2SmartTableComponent;
 	@ViewChild('equipmentSharingTable') set content(content: Ng2SmartTableComponent) {
@@ -68,7 +66,6 @@ export class EquipmentSharingComponent extends PaginationFilterBaseComponent
 		private readonly dialogService: NbDialogService,
 		private readonly http: HttpClient,
 		private readonly toastrService: ToastrService,
-		private readonly employeesService: EmployeesService,
 		private readonly store: Store
 	) {
 		super(translateService);
@@ -98,9 +95,10 @@ export class EquipmentSharingComponent extends PaginationFilterBaseComponent
 				filter(([user, organization]) => !!user && !!organization),
 				distinctUntilChange(),
 				tap(([user, organization, employee]) => {
-					this.user = user;
 					this.organization = organization;
-					this.selectedEmployeeId = employee ? employee.id : null;
+					this.selectedEmployeeId = (user.employee) ?
+													user.employee.id :
+														(employee) ? employee.id : null;
 				}),
 				tap(() => this.refreshPagination()),
 				tap(() => this.equipmentSharing$.next(true)),
@@ -208,13 +206,13 @@ export class EquipmentSharingComponent extends PaginationFilterBaseComponent
 	 * @param equipement
 	 * @returns
 	 */
-	showApprovedButton(equipement: IEquipmentSharing) {
-		if (equipement) {
+	showApprovedButton(equipementSharing: IEquipmentSharing) {
+		if (equipementSharing) {
 			const statues: RequestApprovalStatusTypesEnum[] = [
 				RequestApprovalStatusTypesEnum.REFUSED,
 				RequestApprovalStatusTypesEnum.REQUESTED
 			]
-			return statues.includes(equipement.status);
+			return statues.includes(equipementSharing.status);
 		}
 		return false;
 	}
@@ -225,88 +223,91 @@ export class EquipmentSharingComponent extends PaginationFilterBaseComponent
 	 * @param equipement
 	 * @returns
 	 */
-	showRefuseButton(equipement: IEquipmentSharing) {
-		if (equipement) {
+	showRefuseButton(equipementSharing: IEquipmentSharing) {
+		if (equipementSharing) {
 			const statues: RequestApprovalStatusTypesEnum[] = [
 				RequestApprovalStatusTypesEnum.APPROVED,
 				RequestApprovalStatusTypesEnum.REQUESTED
 			]
-			return statues.includes(equipement.status);
+			return statues.includes(equipementSharing.status);
 		}
 		return false;
 	}
 
-	approval(rowData) {
-		const params = {
-			isApproval: true,
-			data: rowData
-		};
-		this.handleEvent(params);
-	}
-
-	refuse(rowData) {
-		const params = {
-			isApproval: false,
-			data: rowData
-		};
-		this.handleEvent(params);
-	}
-
-	async handleEvent(params) {
-		if (params.isApproval) {
-			const request = await this.equipmentSharingService.approval(
-				params.data.id
-			);
-			if (request) {
-				this.toastrService.success(
-					'EQUIPMENT_SHARING_PAGE.APPROVAL_SUCCESS',
-					{
-						name: params.data.name
-					}
-				);
-			}
-		} else {
-			const request = await this.equipmentSharingService.refuse(
-				params.data.id
-			);
-			if (request) {
-				this.toastrService.success(
-					'EQUIPMENT_SHARING_PAGE.REFUSE_SUCCESS',
-					{
-						name: params.data.name
-					}
-				);
-			}
+	async approval(equipementSharing: IEquipmentSharing) {
+		if (!this.organization) {
+			return;
 		}
-		this.equipmentSharing$.next(true);
-		this.clearItem();
+		try {
+			if (this.showApprovedButton(equipementSharing)) {
+				const request = await this.equipmentSharingService.approval(
+					equipementSharing.id
+				);
+				if (request) {
+					this.toastrService.success('EQUIPMENT_SHARING_PAGE.APPROVAL_SUCCESS', {
+						name: equipementSharing.name
+					});
+				}
+			}
+		} catch (error) {
+
+		} finally {
+			this.equipmentSharing$.next(true);
+		}
 	}
 
-	async save(isCreate: boolean, selectedItem?: IEquipmentSharing) {
-		let dialog;
+	async refuse(equipementSharing: IEquipmentSharing) {
+		if (!this.organization) {
+			return;
+		}
+		try {
+			if (this.showRefuseButton(equipementSharing)) {
+				const request = await this.equipmentSharingService.refuse(
+					equipementSharing.id
+				);
+				if (request) {
+					this.toastrService.success('EQUIPMENT_SHARING_PAGE.APPROVAL_SUCCESS', {
+						name: equipementSharing.name
+					});
+				}
+			}
+		} catch (error) {
+
+		} finally {
+			this.equipmentSharing$.next(true);
+		}
+	}
+
+	async save(
+		isCreate: boolean,
+		selectedItem?: IEquipmentSharing
+	) {
 		if (selectedItem) {
 			this.selectEquipmentSharing({
 				isSelected: true,
 				data: selectedItem
 			});
 		}
-		if (!isCreate) {
-			dialog = this.dialogService.open(
-				EquipmentSharingMutationComponent,
-				{
-					context: { equipmentSharing: this.selectedEquipmentSharing }
-				}
-			);
-		} else {
-			dialog = this.dialogService.open(EquipmentSharingMutationComponent);
-		}
+		try {
+			let dialog;
+			if (!isCreate) {
+				dialog = this.dialogService.open(EquipmentSharingMutationComponent, {
+					context: {
+						equipmentSharing: this.selectedEquipmentSharing
+					}
+				});
+			} else {
+				dialog = this.dialogService.open(EquipmentSharingMutationComponent);
+			}
+			const equipmentSharing = await firstValueFrom(dialog.onClose);
+			if (equipmentSharing) {
+				this.toastrService.success('EQUIPMENT_SHARING_PAGE.REQUEST_SAVED');
+			}
+		} catch (error) {
 
-		const equipmentSharing = await firstValueFrom(dialog.onClose);
-		if (equipmentSharing) {
-			this.toastrService.success('EQUIPMENT_SHARING_PAGE.REQUEST_SAVED');
+		} finally {
 			this.equipmentSharing$.next(true);
 		}
-		this.clearItem();
 	}
 
 	async delete(selectedItem?: IEquipmentSharing) {
@@ -316,20 +317,18 @@ export class EquipmentSharingComponent extends PaginationFilterBaseComponent
 				data: selectedItem
 			});
 		}
-		const result = await firstValueFrom(
-			this.dialogService
-				.open(DeleteConfirmationComponent)
-				.onClose);
+		try {
+			const result = await firstValueFrom(
+				this.dialogService.open(DeleteConfirmationComponent).onClose
+			);
+			if (result) {
+				await this.equipmentSharingService.delete(this.selectedEquipmentSharing.id);
+				this.toastrService.success('EQUIPMENT_SHARING_PAGE.REQUEST_DELETED');
+			}
+		} catch (error) {
 
-		if (result) {
-			await this.equipmentSharingService.delete(
-				this.selectedEquipmentSharing.id
-			);
+		} finally {
 			this.equipmentSharing$.next(true);
-			this.clearItem();
-			this.toastrService.success(
-				'EQUIPMENT_SHARING_PAGE.REQUEST_DELETED'
-			);
 		}
 	}
 
@@ -353,10 +352,14 @@ export class EquipmentSharingComponent extends PaginationFilterBaseComponent
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 
+		const request = {};
+		if (this.selectedEmployeeId) request['employeeId'] = this.selectedEmployeeId;
+
 		this.smartTableSource = new ServerDataSource(this.http, {
 			endPoint: `${API_PREFIX}/equipment-sharing/pagination`,
 			where: {
 				...{ organizationId, tenantId },
+				... (this.selectedEmployeeId) ? { employeeIds: [this.selectedEmployeeId] } : {},
 				...this.filters.where
 			},
 			resultMap: (sharing: IEquipmentSharing) => {
@@ -415,6 +418,7 @@ export class EquipmentSharingComponent extends PaginationFilterBaseComponent
 		});
 		this.deselectAll();
 	}
+
 	/*
 	 * Deselect all table rows
 	 */
@@ -423,12 +427,6 @@ export class EquipmentSharingComponent extends PaginationFilterBaseComponent
 			this.equipmentSharingTable.grid.dataSet['willSelect'] = 'false';
 			this.equipmentSharingTable.grid.dataSet.deselectAll();
 		}
-	}
-
-	hasPermission() {
-		return this.store.hasPermission(
-			PermissionsEnum.ORG_EQUIPMENT_SHARING_VIEW
-		);
 	}
 
 	statusMapper(row: IEquipmentSharing) {
