@@ -65,6 +65,7 @@ const dataOperation = async (
 ) => {
 	for (let i = 0; i < noOfEquipmentSharingPerTenant; i++) {
 		const sharing = new EquipmentSharing();
+		sharing.name = faker.company.companyName();
 		sharing.equipment = faker.random.arrayElement(equipments);
 		sharing.equipmentId = sharing.equipment.id;
 		sharing.shareRequestDay = faker.date.recent(30);

@@ -305,7 +305,7 @@ const routes: Routes = [
 						path: 'recurring-expenses',
 						loadChildren: () => import('./recurring-expense-employee/recurring-expense-employee.module').then(
 							(m) => m.RecurringExpensesEmployeeModule
-						), 
+						),
 						data: {
 							selectors: {
 								project: false
@@ -347,7 +347,7 @@ const routes: Routes = [
 						data: {
 							selectors: {
 								project: false,
-								employee: false,
+								employee: true,
 								date: false
 							}
 						}

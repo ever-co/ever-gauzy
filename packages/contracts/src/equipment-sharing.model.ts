@@ -21,7 +21,7 @@ export interface IEquipmentSharing
 	teams?: IOrganizationTeam[];
 }
 
-export interface IEquipmentSharingRequest 
+export interface IEquipmentSharingRequest
 	extends IBasePerTenantAndOrganizationEntityModel {
 	equipment?: IEquipment;
 	equipmentId?: string;
@@ -36,9 +36,9 @@ export interface IEquipmentSharingRequest
 }
 
 export enum EquipmentSharingStatusEnum {
-	ACTIVE = 'Active',
-	REQUESTED = 'Requested',
-	APPROVED = 'Approved'
+	REQUESTED = 'REQUESTED',
+	APPROVED = 'APPROVED',
+	REFUSED = 'REFUSED'
 }
 
 export interface ISelectedEquipmentSharing {
