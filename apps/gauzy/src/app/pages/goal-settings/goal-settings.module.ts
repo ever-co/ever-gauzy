@@ -15,7 +15,8 @@ import {
 	NbCheckboxModule,
 	NbToggleModule,
 	NbFormFieldModule,
-	NbSpinnerModule
+	NbSpinnerModule,
+	NbTooltipModule
 } from '@nebular/theme';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { EditTimeFrameComponent } from './edit-time-frame/edit-time-frame.component';
@@ -48,6 +49,7 @@ import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy
 		NbDatepickerModule,
 		NbInputModule,
 		NbDatepickerModule,
+		NbTooltipModule,
 		GoalSettingsRoutingModule,
 		NbListModule,
 		EmployeeMultiSelectModule,
