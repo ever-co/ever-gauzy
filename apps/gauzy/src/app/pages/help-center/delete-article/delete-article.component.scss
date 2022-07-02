@@ -1,3 +1,5 @@
+@import 'gauzy/_gauzy-dialogs';
+
 .main {
   display: flex;
   flex-direction: column;
@@ -7,8 +9,7 @@
 
 .header {
   display: flex;
-  flex-direction: row;
-  justify-content: space-between;
+  flex-direction: column;
 }
 
 .main-buttons {
@@ -20,5 +21,5 @@
   margin-top: 10px;
   display: flex;
   flex-direction: row;
-  justify-content: flex-end;
+  justify-content: flex-start;
 }

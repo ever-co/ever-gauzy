@@ -64,13 +64,9 @@
 				</div>				
 			</ng-container>
 			<ng-template [ngIf]="!loading && recurringExpenses?.length == 0">
-				<nb-card class="p-0">
-					<nb-card-body class="custom-table">
-						<div>
-							{{ 'SM_TABLE.NO_RESULT' | translate }}
-						</div>
-					</nb-card-body>
-				</nb-card>
+				<gauzy-no-data 
+					[message]="'ORGANIZATIONS_PAGE.EXPENSE_NO_DATA_MESSAGE'"
+				></gauzy-no-data>
 			</ng-template>
 		</div>
 	</nb-card-body>

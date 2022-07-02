@@ -8,7 +8,8 @@ import {
 	NbSpinnerModule,
 	NbDatepickerModule,
 	NbDialogModule,
-	NbBadgeModule
+	NbBadgeModule,
+	NbTooltipModule
 } from '@nebular/theme';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ProposalsComponent } from './proposals.component';
@@ -57,6 +58,7 @@ import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy
 		NbSpinnerModule,
 		NbDatepickerModule,
 		NbBadgeModule,
+		NbTooltipModule,
 		EmployeeSelectorsModule,
 		NgSelectModule,
 		Ng2SmartTableModule,

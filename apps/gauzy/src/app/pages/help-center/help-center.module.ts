@@ -17,6 +17,8 @@ import { HelpCenterComponent } from './help-center.component';
 import { HelpCenterRoutingModule } from './help-center-routing.module';
 import { DeleteArticleModule } from './delete-article/delete-article.module';
 import { TranslateModule } from '../../@shared/translate/translate.module';
+import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
+import { SharedModule } from '../../@shared/shared.module';
 
 @NgModule({
 	imports: [
@@ -35,7 +37,9 @@ import { TranslateModule } from '../../@shared/translate/translate.module';
 		ReactiveFormsModule,
 		EmployeeMultiSelectModule,
 		SidebarModule,
-		TranslateModule
+		TranslateModule,
+		GauzyButtonActionModule,
+		SharedModule
 	],
 	declarations: [HelpCenterComponent]
 })

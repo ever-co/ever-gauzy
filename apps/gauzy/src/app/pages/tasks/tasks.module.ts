@@ -20,7 +20,8 @@ import {
 	NbListModule,
 	NbTabsetModule,
 	NbActionsModule,
-	NbContextMenuModule
+	NbContextMenuModule,
+	NbTooltipModule
 } from '@nebular/theme';
 import { ThemeModule } from '../../@theme/theme.module';
 import { NgSelectModule } from '@ng-select/ng-select';
@@ -59,6 +60,7 @@ import { TaskNumberFieldModule } from '../../@shared/tasks/task-number/task-numb
 		SprintTaskComponent
 	],
 	imports: [
+		NbTooltipModule,
 		NbBadgeModule,
 		TableComponentsModule,
 		TagsColorInputModule,
