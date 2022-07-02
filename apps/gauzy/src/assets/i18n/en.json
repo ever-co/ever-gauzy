@@ -1661,6 +1661,8 @@
 		"EMAIL_INVITE": "Email Invite",
 		"ADD_LEVEL_OF_EMPLOYEE": "Add level of employee",
 		"LEVEL_OF_EMPLOYEE": "Employee Levels",
+		"EMPLOYEE_LEVEL_NO_DATA_MESSAGE": "You have not created any employee level.",
+		"POSITION_NO_DATA_MESSAGE": "You have not created any position.",
 		"PHONE": "Phone",
 		"EMAIL": "Email",
 		"WEBSITE": "Website",
