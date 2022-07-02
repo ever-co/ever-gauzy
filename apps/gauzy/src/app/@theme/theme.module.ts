@@ -67,7 +67,6 @@ import { ThemeLanguageSelectorModule } from './components/theme-sidebar/theme-se
 import { ThemeSelectorModule } from './components/theme-sidebar/theme-settings/components/theme-selector/theme-selector.module';
 import { DateRangePickerModule } from './components/header/selectors/date-range-picker';
 import { WorkspacesModule } from '../@shared/workspaces/workspaces.module';
-import { OutsideDirective } from './directives/outside.directive';
 import { PopupComponent } from './components/popup/popup.component';
 import { SidebarMenuModule } from '../@shared/sidebar-menu/sidebar-menu.module';
 
@@ -124,12 +123,10 @@ const PIPES = [...Pipes];
 
 const EXPORT_IMPORT = [CommonModule, ThemeSidebarModule, MatRippleModule];
 
-const DIRECTIVES = [OutsideDirective];
-
 @NgModule({
 	imports: [RouterModule, ...EXPORT_IMPORT, ...NB_MODULES, ...MODULES],
-	exports: [...EXPORT_IMPORT, ...PIPES, ...COMPONENTS, ...DIRECTIVES],
-	declarations: [...COMPONENTS, ...PIPES, ...DIRECTIVES],
+	exports: [...EXPORT_IMPORT, ...PIPES, ...COMPONENTS],
+	declarations: [...COMPONENTS, ...PIPES],
 	providers: [
 		UsersService,
 		SelectorService,
