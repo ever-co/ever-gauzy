@@ -1,17 +1,17 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NbCardModule, NbIconModule } from '@nebular/theme';
-import { NodataFoundComponent } from './no-data-found.component';
+import { NodataComponent } from './no-data.component';
 import { NbEvaIconsModule } from '@nebular/eva-icons';
 import { TranslateModule } from '../translate/translate.module';
 
 
 @NgModule({
   declarations: [
-    NodataFoundComponent
+    NodataComponent
   ],
   exports:[
-    NodataFoundComponent
+    NodataComponent
   ],
   imports: [
     TranslateModule,
@@ -21,4 +21,4 @@ import { TranslateModule } from '../translate/translate.module';
     NbEvaIconsModule
   ]
 })
-export class NodataFoundModule { }
+export class NodataModule { }

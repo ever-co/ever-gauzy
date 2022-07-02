@@ -39,7 +39,7 @@
 					</div>
 				</div>
 			</div>
-			<ng-container>
+			<ng-container *ngIf="expenses?.length">
 				<div class="table-scroll">
 					<ng-container
 						*ngFor="let expense of expenses; let i = index"
@@ -64,18 +64,14 @@
 							"
 							[showHistory]="showHistory"
 						></ga-recurring-expense-block>
-					</ng-container>
-					<ng-template [ngIf]="!loading && expenses?.length == 0">
-						<nb-card class="p-0">
-							<nb-card-body class="custom-table">
-								<div>
-									{{ 'SM_TABLE.NO_RESULT' | translate }}
-								</div>
-							</nb-card-body>
-						</nb-card>
-					</ng-template>
+					</ng-container>					
 				</div>
-			</ng-container>			
+			</ng-container>	
+			<ng-template [ngIf]="!loading && expenses?.length == 0">
+				<gauzy-no-data 
+					[message]="'ORGANIZATIONS_PAGE.EXPENSE_NO_DATA_MESSAGE'"
+				></gauzy-no-data>
+			</ng-template>		
 		</div>
 	</nb-card-body>
 </nb-card>
@@ -137,6 +133,7 @@
 				class="action"
 				size="small"
 				status="basic"
+				[nbTooltip]="'BUTTONS.DELETE' | translate"
 			>
 				<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
 			</button>
