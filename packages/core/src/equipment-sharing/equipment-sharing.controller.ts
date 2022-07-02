@@ -40,9 +40,9 @@ export class EquipmentSharingController extends CrudController<EquipmentSharing>
 
 	/**
 	 * GET equipment sharings by orgization id
-	 * 
-	 * @param orgId 
-	 * @returns 
+	 *
+	 * @param orgId
+	 * @returns
 	 */
 	@ApiOperation({
 		summary: 'Find equipment sharings By Orgization Id'
@@ -67,9 +67,9 @@ export class EquipmentSharingController extends CrudController<EquipmentSharing>
 
 	/**
 	 * GET equipment sharings by employee id
-	 * 
-	 * @param employeeId 
-	 * @returns 
+	 *
+	 * @param employeeId
+	 * @returns
 	 */
 	@ApiOperation({
 		summary: 'Find equipment sharings By Employee Id'
@@ -94,10 +94,10 @@ export class EquipmentSharingController extends CrudController<EquipmentSharing>
 
 	/**
 	 * CREATE equipment sharing
-	 * 
-	 * @param organizationId 
-	 * @param equipmentSharing 
-	 * @returns 
+	 *
+	 * @param organizationId
+	 * @param equipmentSharing
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'Create an new record' })
 	@ApiResponse({
@@ -129,9 +129,9 @@ export class EquipmentSharingController extends CrudController<EquipmentSharing>
 
 	/**
 	 * UPDATE equipment sharings request approval
-	 * 
-	 * @param id 
-	 * @returns 
+	 *
+	 * @param id
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'equipment sharings request approval' })
 	@ApiResponse({
@@ -158,9 +158,9 @@ export class EquipmentSharingController extends CrudController<EquipmentSharing>
 
 	/**
 	 * UPDATE equipment sharings request refuse
-	 * 
-	 * @param id 
-	 * @returns 
+	 *
+	 * @param id
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'equipment sharings request refuse' })
 	@ApiResponse({
@@ -187,9 +187,9 @@ export class EquipmentSharingController extends CrudController<EquipmentSharing>
 
 	/**
 	 * GET equipment sharing by pagination
-	 * 
-	 * @param filter 
-	 * @returns 
+	 *
+	 * @param filter
+	 * @returns
 	 */
 	@Get('pagination')
 	@UseGuards(PermissionGuard)
@@ -198,14 +198,14 @@ export class EquipmentSharingController extends CrudController<EquipmentSharing>
 	async pagination(
 		@Query() filter: PaginationParams<EquipmentSharing>
 	): Promise<IPagination<IEquipmentSharing>> {
-		return this.equipmentSharingService.paginate(filter);
+		return this.equipmentSharingService.pagination(filter);
 	}
 
 	/**
 	 * GET all equipment sharings
-	 * 
-	 * @param data 
-	 * @returns 
+	 *
+	 * @param data
+	 * @returns
 	 */
 	@ApiOperation({
 		summary: 'Find all equipment sharings'
@@ -232,10 +232,10 @@ export class EquipmentSharingController extends CrudController<EquipmentSharing>
 
 	/**
 	 * UPDATE equipment sharing by id
-	 * 
-	 * @param id 
-	 * @param equipmentSharing 
-	 * @returns 
+	 *
+	 * @param id
+	 * @param equipmentSharing
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'Update an existing record' })
 	@ApiResponse({
@@ -260,5 +260,5 @@ export class EquipmentSharingController extends CrudController<EquipmentSharing>
 		return await this.commandBus.execute(
 			new EquipmentSharingUpdateCommand(id, equipmentSharing)
 		);
-	}	
+	}
 }
