@@ -3,11 +3,12 @@ import {
 	BadRequestException,
 	NotFoundException
 } from '@nestjs/common';
-import { EquipmentSharing } from './equipment-sharing.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Brackets, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
-import { IEquipmentSharing, IPagination } from '@gauzy/contracts';
+import { Brackets, Repository, WhereExpressionBuilder } from 'typeorm';
+import { IEquipmentSharing, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import { ConfigService } from '@gauzy/config';
+import { isNotEmpty } from '@gauzy/common';
+import { EquipmentSharing } from './equipment-sharing.entity';
 import { RequestContext } from '../core/context';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestApproval } from '../request-approval/request-approval.entity';
@@ -207,6 +208,37 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 
 						qb.andWhere(`"equipment"."tenantId" = :tenantId`, { tenantId });
 						qb.andWhere(`"equipment"."organizationId" = :organizationId`, { organizationId });
+					}
+				})
+			);
+			query.andWhere(
+				new Brackets((qb: WhereExpressionBuilder) => {
+					if (
+						isNotEmpty(filter.where) &&
+						isNotEmpty(filter.where.employeeIds)
+					) {
+						let { employeeIds = [], organizationId } = filter.where;
+						const user = RequestContext.currentUser();
+						if (
+							!RequestContext.hasPermission(
+								PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+							)
+							&& user.employeeId
+						) {
+							employeeIds = [user.employeeId];
+						}
+						qb.andWhere(
+							new Brackets((qb: WhereExpressionBuilder) => {
+								qb.andWhere(`"employees"."id" IN (:...employeeIds)`, {
+									employeeIds
+								});
+								qb.orWhere(`"${query.alias}"."createdBy" IN (:...employeeIds)`, {
+									employeeIds
+								});
+							})
+						);
+						qb.andWhere(`"employees"."tenantId" = :tenantId`, { tenantId });
+						qb.andWhere(`"employees"."organizationId" = :organizationId`, { organizationId });
 					}
 				})
 			);
