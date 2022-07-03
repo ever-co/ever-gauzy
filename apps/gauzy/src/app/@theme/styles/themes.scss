@@ -50,7 +50,8 @@ $nb-themes: nb-register-theme(
     gauzy-text-color-1: rgba(66, 66, 66, 1),
     gauzy-text-color-2: rgba(126, 126, 143, 1),
     gauzy-siderbar-background-5: rgb(237, 237, 238),
-    gauzy-shadow: 0px 1px 1px 0px rgb(0 0 0 / 15%)
+    gauzy-shadow: 0px 1px 1px 0px rgb(0 0 0 / 15%),
+    gauzy-scrollbar: rgba(126, 126, 143, 0.1)
   ),
   default,
   default
@@ -92,7 +93,8 @@ $nb-themes: nb-register-theme(
     gauzy-border-default-color: rgba(255, 255, 255, 0.1),
     gauzy-sidebar-background-3: rgba(134, 126, 143, 0.1),
     gauzy-sidebar-background-4: rgba(125, 114, 140, 0.05),
-    gauzy-shadow: 0px 1px 1px 0px rgb(0 0 0 / 35%)
+    gauzy-shadow: 0px 1px 1px 0px rgb(0 0 0 / 35%),
+    gauzy-scrollbar: rgba(137, 126, 143, 0.25)
   ),
   cosmic,
   cosmic
@@ -135,7 +137,8 @@ $nb-themes: nb-register-theme(
     gauzy-card-3: rgba(255, 255, 255, 0.5),
     gauzy-card-4: rgba(255, 255, 255, 0.75),
     gauzy-siderbar-background-5: rgb(237, 237, 238),
-    gauzy-shadow: 0px 1px 1px 0px rgb(0 0 0 / 15%)
+    gauzy-shadow: 0px 1px 1px 0px rgb(0 0 0 / 15%),
+    gauzy-scrollbar: rgba(126, 126, 143, 0.1)
   ),
   corporate,
   corporate
@@ -181,7 +184,8 @@ $nb-themes: nb-register-theme(
     gauzy-card-4: rgba(5, 5, 5, 0.25),
     gauzy-card-5: rgba(7, 9, 1, 1),
     gauzy-siderbar-background-5: rgb(18, 18, 17),
-    gauzy-shadow: 0px 1px 1px 0px rgb(0 0 0 / 35%)
+    gauzy-shadow: 0px 1px 1px 0px rgb(0 0 0 / 35%),
+    gauzy-scrollbar: rgba(126, 126, 143, 0.25)
   ),
   dark,
   dark
@@ -378,7 +382,9 @@ $nb-themes: nb-register-theme(
     route-tabset-tab-text-font-size: 1rem,
     background-basic-color-1: gauzy-card-1,
     input-basic-background-color: rgba(32, 32, 35, 1),
-    background-basic-color-2: rgba(32, 32, 35, 1)
+    background-basic-color-2: rgba(32, 32, 35, 1),
+    smart-table-bg-active: rgba(126, 126, 143, 0.05),
+    background-basic-color-3: gauzy-card-3
   ),
   gauzy-dark,
   dark

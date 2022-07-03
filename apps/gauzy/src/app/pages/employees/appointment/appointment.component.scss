@@ -24,6 +24,6 @@
   [nbButton].appearance-outline.status-warning,
   [nbButton].appearance-outline.status-primary {
     border-width: 0;
-    box-shadow: var(--gauzy-shadow)(0, 0, 0, 0.15);
+    box-shadow: var(--gauzy-shadow);
   }
 }

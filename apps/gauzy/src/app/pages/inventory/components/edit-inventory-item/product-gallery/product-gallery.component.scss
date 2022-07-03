@@ -20,7 +20,7 @@
 .gallery-sm-preview-item {
   width: 100%;
   object-fit: cover;
-  box-shadow: rgba(0 0 0 / 15%) 0 1px 1px 0;
+  box-shadow: var(--gauzy-shadow);
   height: 70px;
   border-radius: 4px;
 

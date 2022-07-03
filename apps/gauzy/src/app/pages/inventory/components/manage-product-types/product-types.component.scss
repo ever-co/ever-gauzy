@@ -25,7 +25,7 @@
 }
 
 .action {
-    box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.15);
+    box-shadow: var(--gauzy-shadow);
     &[nbButton].appearance-filled.status-basic {
       background-color: #ffffff;
     }

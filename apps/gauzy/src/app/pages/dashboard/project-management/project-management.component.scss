@@ -2,11 +2,14 @@
 
 :host {
   @include nb-card_overrides(auto, $default-card-height, $default-radius);
-  background-color: var(--gauzy-card-2);
   .card {
     background-color: var(--gauzy-card-2);
     .card-header {
       background-color: unset;
     }
+  }
+
+  nb-card{
+    background-color: var(--gauzy-card-2);
   }
 }

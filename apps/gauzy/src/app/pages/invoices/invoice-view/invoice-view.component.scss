@@ -25,7 +25,7 @@
 }
 
 .button-container{
-  background: rgba(50, 50, 50, 0.03);
+  background: var(--gauzy-card-2);
   border-radius: nb-theme(button-rectangle-border-radius);
   padding: 6px 8px;
 }
@@ -34,7 +34,6 @@
   display: flex;
   align-items: center;
   .title {
-    font-family: Inter;
     font-size: 24px;
     font-weight: 600;
     line-height: 30px;

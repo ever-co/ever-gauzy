@@ -134,7 +134,7 @@ h5 {
 }
 
 nb-tab {
-  background-color: rgba(50, 50, 50, 0.03);
+  background-color: var(--gauzy-card-2);
   border: 0 0 $default-radius $default-radius;
 
   &.content-active {
