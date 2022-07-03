@@ -51,7 +51,8 @@ $nb-themes: nb-register-theme(
     gauzy-text-color-2: rgba(126, 126, 143, 1),
     gauzy-siderbar-background-5: rgb(237, 237, 238),
     gauzy-shadow: 0px 1px 1px 0px rgb(0 0 0 / 15%),
-    gauzy-scrollbar: rgba(126, 126, 143, 0.1)
+    gauzy-scrollbar: rgba(126, 126, 143, 0.1),
+    gauzy-primary-background: rgb(246, 250, 254)
   ),
   default,
   default
@@ -94,7 +95,8 @@ $nb-themes: nb-register-theme(
     gauzy-sidebar-background-3: rgba(134, 126, 143, 0.1),
     gauzy-sidebar-background-4: rgba(125, 114, 140, 0.05),
     gauzy-shadow: 0px 1px 1px 0px rgb(0 0 0 / 35%),
-    gauzy-scrollbar: rgba(137, 126, 143, 0.25)
+    gauzy-scrollbar: rgba(137, 126, 143, 0.25),
+    gauzy-primary-background: rgb(214, 200, 255)
   ),
   cosmic,
   cosmic
@@ -138,7 +140,8 @@ $nb-themes: nb-register-theme(
     gauzy-card-4: rgba(255, 255, 255, 0.75),
     gauzy-siderbar-background-5: rgb(237, 237, 238),
     gauzy-shadow: 0px 1px 1px 0px rgb(0 0 0 / 15%),
-    gauzy-scrollbar: rgba(126, 126, 143, 0.1)
+    gauzy-scrollbar: rgba(126, 126, 143, 0.1),
+    gauzy-primary-background: rgb(246, 247, 254)
   ),
   corporate,
   corporate
@@ -185,7 +188,8 @@ $nb-themes: nb-register-theme(
     gauzy-card-5: rgba(7, 9, 1, 1),
     gauzy-siderbar-background-5: rgb(18, 18, 17),
     gauzy-shadow: 0px 1px 1px 0px rgb(0 0 0 / 35%),
-    gauzy-scrollbar: rgba(126, 126, 143, 0.25)
+    gauzy-scrollbar: rgba(126, 126, 143, 0.25),
+    gauzy-primary-background: rgb(58, 62, 75)
   ),
   dark,
   dark
@@ -210,7 +214,8 @@ $nb-themes: nb-register-theme(
     slide-out-shadow-color-rtl: 0 4px 14px 0 #ebebeb,
     accordion-padding: 0.625rem,
     button-filled-medium-padding: 0.4375rem 0.875rem,
-    button-outline-medium-padding: 0.4375rem 0.875rem
+    button-outline-medium-padding: 0.4375rem 0.875rem,
+    gauzy-primary-background: rgb(240, 235, 246)
   ),
   material-light,
   material-light
@@ -235,7 +240,8 @@ $nb-themes: nb-register-theme(
     slide-out-shadow-color-rtl: 0 4px 14px 0 #292929,
     accordion-padding: 0.625rem,
     button-filled-medium-padding: 0.4375rem 0.875rem,
-    button-outline-medium-padding: 0.4375rem 0.875rem
+    button-outline-medium-padding: 0.4375rem 0.875rem,
+    gauzy-primary-background: rgba(40, 10, 10, 1)
   ),
   material-dark,
   material-dark
@@ -315,7 +321,8 @@ $nb-themes: nb-register-theme(
     gauzy-background-transparent-1: rgba(110, 73, 232, 0.1),
     tag-filled-basic-background-color: rgba(126, 126, 143, 0.1),
     toggle-basic-background-color: rgba(126, 126, 143, 1),
-    background-basic-color-1: gauzy-card-1
+    background-basic-color-1: gauzy-card-1,
+    gauzy-primary-background: rgba(248, 246, 254, 1),
   ),
   gauzy-light,
   default
@@ -384,7 +391,8 @@ $nb-themes: nb-register-theme(
     input-basic-background-color: rgba(32, 32, 35, 1),
     background-basic-color-2: rgba(32, 32, 35, 1),
     smart-table-bg-active: rgba(126, 126, 143, 0.05),
-    background-basic-color-3: gauzy-card-3
+    background-basic-color-3: gauzy-card-3,
+    gauzy-primary-background: rgb(86, 82, 99)
   ),
   gauzy-dark,
   dark
