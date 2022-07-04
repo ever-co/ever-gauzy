@@ -43,7 +43,8 @@
 :host {
     ::ng-deep {
         .progress-percentage {
-            padding-right: 0;
+            @include nb-rtl(padding-left, 0);
+            @include nb-ltr(padding-right, 0);
             width: auto;
         }
     }
