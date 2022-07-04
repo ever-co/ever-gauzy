@@ -138,7 +138,6 @@ export class TaskSelectorComponent
 			const member: any = {
 				id: this.employeeId || this.store.user.employeeId
 			};
-			console.log(this.projectId, 'this.projectId');
 			
 			const task = await firstValueFrom(this.tasksService
 				.createTask({
