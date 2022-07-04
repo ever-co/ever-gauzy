@@ -71,14 +71,13 @@
 
     .avatar-wrapper {
         width: 100%;
-        border-radius: 20px;
+        border-radius: var(--button-rectangle-border-radius);
     }
 
     .names-wrapper {
         overflow: hidden;
         white-space: nowrap;
         text-overflow: ellipsis;
-        margin-bottom: 1px;
     }
 
     .link-text {

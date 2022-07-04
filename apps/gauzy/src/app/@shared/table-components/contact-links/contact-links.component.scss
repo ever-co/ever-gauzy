@@ -1,47 +1,81 @@
 @import 'var';
 
-.contact-links-container {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 7.8rem;
-  height: 42px;
+:host .contact-links-container {
+  width: 100%;
 
-  .link-text {
-    cursor: pointer;
-    text-decoration: none;
-    color: #1e6bb8;
+  .inner-wrapper {
+    display: flex;
+    align-items: center;
+    @include nb-ltr(padding, 5px 14px 5px 7px);
+    @include nb-rtl(padding, 5px 7px 5px 14px);
+    gap: 8px;
+    background: rgba(36, 189, 255, 0.1);
+    border-radius: var(--button-rectangle-border-radius);
     overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    width: 7.8rem;
-    display: inline-block;
-    vertical-align: middle;
-    object-fit: cover;
-    position: absolute;
-  }
+    width: fit-content;
 
-  .link-text:hover {
-    text-decoration: underline;
-    // text-overflow: clip;
-    // width: fit-content;
-    // z-index: 3;
-  }
+    .names-wrapper {
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      max-width: 110px;
+    }
 
-  span {
-    background: nb-theme(color-basic-transparent-600);
-    border-radius: 20px;
-    color: #FFFFFF;
-    padding: 4px 5px;
-    margin-right: 8px;
-    height: 18px;
-    width: 18px;
-  }
+    .link-text {
+      cursor: pointer;
+      text-decoration: none;
+      font-size: 12px;
+      font-style: normal;
+      font-weight: 400;
+      line-height: 15px;
+      letter-spacing: 0em;
+      white-space: nowrap;
+      width: 100%;
+      text-overflow: ellipsis;
+      color: var(--text-primary-color);
+    }
 
-  a {
-    background-color: nb-theme(background-basic-color-3);
-    border-radius: 20px;
-    padding: 7px 14px 7px 3px;
+    .link-text:hover {
+      text-decoration: underline;
+    }
+
+    .avatar {
+      img {
+        width: 18px;
+        height: 18px;
+        object-fit: cover;
+        border-radius: var(--button-rectangle-border-radius);
+      }
+    }
+
+    .prefix {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 4px 5px;
+      gap: 10px;
+
+      width: 18px;
+      height: 18px;
+
+      background: #7E7E8F;
+      border-radius: var(--button-rectangle-border-radius);
+
+      /* Inside auto layout */
+
+      flex: none;
+      order: 0;
+      flex-grow: 0;
+
+      /* typography */
+
+      font-size: 8px;
+      font-weight: 600;
+      line-height: 10px;
+      letter-spacing: 0em;
+      text-align: center;
+      color: white;
+    }
   }
 }
