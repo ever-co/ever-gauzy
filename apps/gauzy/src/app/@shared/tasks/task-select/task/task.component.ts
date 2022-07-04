@@ -142,7 +142,7 @@ export class TaskSelectorComponent
 				.createTask({
 					title,
 					organizationId: organizationId,
-					members: [member],
+					...(member.id && {members: [member]}),
 					status: TaskStatusEnum.IN_PROGRESS,
 					...(this.projectId ? { projectId: this.projectId } : {})
 				}));
