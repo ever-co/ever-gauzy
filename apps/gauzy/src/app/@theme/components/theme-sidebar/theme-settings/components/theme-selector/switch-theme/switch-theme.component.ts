@@ -17,13 +17,11 @@ export class SwitchThemeComponent extends ThemeSelectorComponent {
 		window
 			.matchMedia('(prefers-color-scheme: dark)')
 			.addEventListener('change', (event) => {
-				event.matches
-					? this.isDark.state
-						? null
-						: this.switchTheme()
-					: !this.isDark.state
-					? null
-					: this.switchTheme();
+				if (event.matches) {
+					if (!this.isDark.state) this.switchTheme();
+				} else {
+					if (this.isDark.state) this.switchTheme();
+				}
 			});
 		this.ngOnInit();
 		this.getPreferColorOsScheme();
@@ -37,11 +35,11 @@ export class SwitchThemeComponent extends ThemeSelectorComponent {
 	 */
 	public getPreferColorOsScheme() {
 		if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-			this.isDark.state ? null : this.switchTheme();
+			if (!this.isDark.state) this.switchTheme();
 		}
 
 		if (window.matchMedia('(prefers-color-scheme: light)').matches) {
-			this.isDark.state ? this.switchTheme() : null;
+			if (this.isDark.state) this.switchTheme();
 		}
 	}
 }
