@@ -11,7 +11,6 @@
         font-weight: 600;
         line-height: 16px;
         letter-spacing: 0em;
-        text-align: left;
     }
 
     .caption {
@@ -19,7 +18,6 @@
         font-weight: 400;
         line-height: 11px;
         letter-spacing: 0em;
-        text-align: left;
         color: var(--gauzy-text-color-2);
     }
 
@@ -61,12 +59,14 @@
     width: 100%;
 
     .inner-wrapper {
-        background: rgba(110, 73, 232, 0.1);
+        background-color: var(--color-primary-transparent-100);
+        border-radius: var(--button-rectangle-border-radius);
         display: flex;
         align-items: center;
-        border-radius: 20px;
         overflow: hidden;
-        padding: 5px 10px 5px 7px;
+        @include nb-ltr(padding, 3px 9px 3px 3px);
+        @include nb-rtl(padding, 3px 3px 3px 9px);
+        gap: 8px;
     }
 
     .avatar-wrapper {
@@ -84,30 +84,25 @@
     .link-text {
         cursor: pointer;
         text-decoration: none;
-        color: var(--text-color-primary);
         font-size: 12px;
         font-style: normal;
         font-weight: 400;
         line-height: 15px;
         letter-spacing: 0em;
-        text-align: left;
         white-space: nowrap;
         width: 100%;
         text-overflow: ellipsis;
+        color: var(--text-primary-color) !important;
     }
 
     .link-text:hover {
         text-decoration: underline;
     }
 
-    .image-outer-wrapper {
-        margin-right: 8px;
-    }
-
     .image-container {
         width: 20px;
         cursor: pointer;
-        border-radius: 30px;
+        border-radius: var(--button-rectangle-border-radius);
 
         img {
             width: 20px;
