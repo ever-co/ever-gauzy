@@ -2,6 +2,7 @@
 	[src]="rowData?.imageUrl"
 	[name]="rowData?.fullName ? rowData?.fullName : rowData?.name"
     (click)="navigateToContact()"
+	class="report-table"
 ></ngx-avatar>
 <ng-template [ngIf]="rowData?.isDefault">
 	<nb-badge
