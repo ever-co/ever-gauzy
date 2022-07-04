@@ -17,7 +17,7 @@
   ::ng-deep {
     .select-button {
       background-color: nb-theme(gauzy-card-1) !important;
-      box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.15);
+      box-shadow: var(--gauzy-shadow);
     }
     .names-wrapper {
       max-width: 110px;
@@ -59,12 +59,10 @@
   background: #00D68F1A;
   border-radius: 20px;
   padding: 3px 8px;
-  font-family: Inter;
   font-size: 12px;
   font-weight: 600;
   line-height: 15px;
   letter-spacing: 0em;
-  text-align: left;
   color: nb-theme(background-alternative-color-4);
 }
 
