@@ -65,6 +65,7 @@ export interface IUserLoginInput {
 export interface IAuthResponse {
 	user: IUser;
 	token: string;
+	refresh_token?: string;
 }
 export interface IUserCreateInput {
 	firstName?: string;
