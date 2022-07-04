@@ -63,7 +63,10 @@ export interface IEnvironment {
 
 	EXPRESS_SESSION_SECRET: string;
 	USER_PASSWORD_BCRYPT_SALT_ROUNDS?: number;
+
 	JWT_SECRET?: string;
+	JWT_REFRESH_TOKEN_SECRET?: string;
+    JWT_REFRESH_TOKEN_EXPIRATION_TIME?: string;
 
 	fileSystem: FileSystem;
 	awsConfig?: IAWSConfig;
@@ -84,10 +87,10 @@ export interface IEnvironment {
 	};
 
 	/**
-	 * Default Integrated User Password 
+	 * Default Integrated User Password
 	 */
 	defaultIntegratedUserPass?: string;
-	
+
 	upworkConfig?: IUpworkConfig;
 	isElectron?: boolean;
 	gauzyUserPath?: string;
@@ -103,7 +106,7 @@ export interface IEnvironment {
 	defaultCurrency: string;
 
 	unleashConfig?: IUnleashConfig;
-	
+
 	demo: boolean;
 	demoCredentialConfig?: IDemoCredential;
 }
