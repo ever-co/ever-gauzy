@@ -2,13 +2,16 @@
 // MIT License, see https://github.com/xmlking/ngx-starter-kit/blob/develop/LICENSE
 // Copyright (c) 2018 Sumanth Chinthagunta
 
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, InsertResult, SelectQueryBuilder } from 'typeorm';
+import { Repository, InsertResult, SelectQueryBuilder, Brackets, WhereExpressionBuilder } from 'typeorm';
+import * as bcrypt from 'bcrypt';
+import { JwtPayload } from 'jsonwebtoken';
+import { ComponentLayoutStyleEnum, IUser, LanguagesEnum, PermissionsEnum, RolesEnum } from '@gauzy/contracts';
 import { User } from './user.entity';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
-import { ComponentLayoutStyleEnum, IUser, LanguagesEnum, PermissionsEnum, RolesEnum } from '@gauzy/contracts';
+import { isNotEmpty } from '@gauzy/common';
 
 @Injectable()
 export class UserService extends TenantAwareCrudService<User> {
@@ -134,7 +137,7 @@ export class UserService extends TenantAwareCrudService<User> {
 	}
 
 	async getAdminUsers(tenantId: string): Promise<User[]> {
-		const roleNames =[RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN];		
+		const roleNames =[RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN];
 		return await this.repository.find({
 			join: {
 				alias: 'user',
@@ -150,7 +153,7 @@ export class UserService extends TenantAwareCrudService<User> {
 						roleNames
 					});
 				}
-			});		
+			});
 	}
 
 	/*
@@ -170,7 +173,7 @@ export class UserService extends TenantAwareCrudService<User> {
 			if (typeof(id) == 'number') {
 				user = await this.findOneByIdNumber(id);
 			}
-			
+
 			if (!user) {
 				throw new NotFoundException(`The user was not found`);
 			}
@@ -199,7 +202,7 @@ export class UserService extends TenantAwareCrudService<User> {
 			if (typeof(id) == 'number') {
 				user = await this.findOneByIdNumber(id);
 			}
-			
+
 			if (!user) {
 				throw new NotFoundException(`The user was not found`);
 			}
@@ -209,6 +212,92 @@ export class UserService extends TenantAwareCrudService<User> {
 			return await this.repository.save(user);
 		} catch (err) {
 			throw new NotFoundException(`The record was not found`, err);
+		}
+	}
+
+	/**
+	 * Set Current Refresh Token
+	 *
+	 * @param refreshToken
+	 * @param userId
+	 */
+	async setCurrentRefreshToken(refreshToken: string, userId: string) {
+		try {
+			if (refreshToken) {
+				refreshToken = await bcrypt.hash(refreshToken, 10)
+			}
+			return await this.repository.update(userId, {
+				refreshToken: refreshToken
+			});
+		} catch (error) {
+			console.log('Error while set current refresh token', error);
+		}
+	}
+
+	/**
+	 * Removes the refresh token from the database.
+	 * Logout Device
+	 *
+	 * @param userId
+	 * @returns
+	 */
+	async removeRefreshToken() {
+		try {
+			const userId = RequestContext.currentUserId();
+			const tenantId = RequestContext.currentTenantId();
+
+			return await this.repository.update({ id: userId, tenantId }, {
+				refreshToken: null
+			});
+		} catch (error) {
+			console.log('Error while logout device', error);
+		}
+	}
+
+	/**
+	 * Get user if refresh token matches
+	 *
+	 * @param refreshToken
+	 * @param userId
+	 * @returns
+	 */
+	async getUserIfRefreshTokenMatches(refreshToken: string, payload: JwtPayload) {
+		try {
+			const { id, email, tenantId, role } = payload;
+			const user = await this.repository.findOneOrFail({
+				join: {
+					alias: 'user',
+					leftJoin: {
+						role: 'user.role'
+					}
+				},
+				where: (query: SelectQueryBuilder<User>) => {
+					query.andWhere(
+						new Brackets((qb: WhereExpressionBuilder) => {
+							qb.andWhere(`"${query.alias}"."id" = :id`, { id });
+							qb.andWhere(`"${query.alias}"."email" = :email`, { email });
+						})
+					);
+					query.andWhere(
+						new Brackets((qb: WhereExpressionBuilder) => {
+							if (isNotEmpty(tenantId)) {
+								qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
+							}
+							if (isNotEmpty(role)) {
+								qb.andWhere(`"role"."name" = :role`, { role });
+							}
+						})
+					);
+				}
+			});
+			const isRefreshTokenMatching = await bcrypt.compare(refreshToken, user.refreshToken);
+			if (isRefreshTokenMatching) {
+				return user;
+			} else {
+				throw new UnauthorizedException()
+			}
+		} catch (error) {
+			throw new UnauthorizedException();
 		}
 	}
 }
