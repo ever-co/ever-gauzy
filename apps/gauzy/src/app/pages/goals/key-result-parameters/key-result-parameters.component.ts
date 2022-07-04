@@ -72,6 +72,7 @@ export class KeyResultParametersComponent implements OnInit, OnDestroy {
 			) {
 				this.numberUnitsEnum.push(this.data.selectedKeyResult.unit);
 			}
+			console.log(this.data.selectedKeyResult, 'this.data.selectedKeyResult');			
 			this.typeForm.patchValue({
 				type: this.data.selectedKeyResult.type,
 				targetValue: this.data.selectedKeyResult.targetValue,
@@ -120,6 +121,7 @@ export class KeyResultParametersComponent implements OnInit, OnDestroy {
 	}
 
 	async updateKeyResult() {
+		console.log(this.typeForm.value, 'this.typeForm.value update here');		
 		if (this.typeForm.value.type === this.keyResultTypeEnum.TASK) {
 			await this.taskService
 				.getById(this.typeForm.value.taskId)
@@ -131,6 +133,9 @@ export class KeyResultParametersComponent implements OnInit, OnDestroy {
 						});
 					}
 				});
+		}
+		if (this.typeForm.value.type === this.keyResultTypeEnum.KPI) {
+			this.data.selectedKeyResult.kpiId = this.typeForm.value.kpiId;
 		}
 		this.data.selectedKeyResult.type = this.typeForm.value.type;
 		this.data.selectedKeyResult.targetValue =
