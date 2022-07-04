@@ -66,7 +66,7 @@ export interface IEnvironment {
 
 	JWT_SECRET?: string;
 	JWT_REFRESH_TOKEN_SECRET?: string;
-    JWT_REFRESH_TOKEN_EXPIRATION_TIME?: string;
+    JWT_REFRESH_TOKEN_EXPIRATION_TIME?: number;
 
 	fileSystem: FileSystem;
 	awsConfig?: IAWSConfig;

@@ -23,7 +23,7 @@ export const environment: IEnvironment = {
 	USER_PASSWORD_BCRYPT_SALT_ROUNDS: 12,
 	JWT_SECRET: process.env.JWT_SECRET || 'secretKey',
 	JWT_REFRESH_TOKEN_SECRET: process.env.JWT_REFRESH_TOKEN_SECRET || 'refreshSecretKey',
-    JWT_REFRESH_TOKEN_EXPIRATION_TIME: process.env.JWT_REFRESH_TOKEN_EXPIRATION_TIME,
+    JWT_REFRESH_TOKEN_EXPIRATION_TIME: parseInt(process.env.JWT_REFRESH_TOKEN_EXPIRATION_TIME) || 60 * 60 * 24,
 
 	fileSystem: {
 		name:
