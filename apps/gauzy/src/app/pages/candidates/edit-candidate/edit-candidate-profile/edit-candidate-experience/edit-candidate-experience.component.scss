@@ -2,9 +2,9 @@
 :host {
   border-radius: nb-theme(border-radius);
   nb-tab {
-    background-color: rgba(50, 50, 50, 0.03);
+    background-color: var(--gauzy-card-2);
   }
-  background-color: rgba(50, 50, 50, 0.03);
+  background-color: var(--gauzy-card-2);
   ::ng-deep nb-tabset .tab .tab-link {
     span.tab-text {
       text-transform: lowercase;

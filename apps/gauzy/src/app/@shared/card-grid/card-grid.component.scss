@@ -18,7 +18,7 @@
     margin-bottom: 0;
     border-radius: 0.5rem;
     background-color: nb-theme(background-basic-color-3);
-    box-shadow: 0px 1px 1px 0px rgba(0, 0, 0, 0.15);
+    box-shadow: var(--gauzy-shadow);
     cursor: pointer;
 
     .card-body {
@@ -48,7 +48,7 @@
       width: 100%;
 
       .info-meta {
-        background-color: nb-theme(background-basic-color-1);
+        background-color: var(--gauzy-card-1);
         padding: 6px 10px;
         border-radius: 4px;
         width: 88%;
@@ -62,7 +62,7 @@
       .info-value {
         text-align: start;
         font-size: 1em;
-        background-color: nb-theme(background-basic-color-1);
+        background-color: var(--gauzy-card-1);
         padding: 6px 10px;
         border-radius: 4px;
         width: 100%;

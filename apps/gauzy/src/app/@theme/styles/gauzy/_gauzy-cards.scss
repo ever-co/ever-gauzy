@@ -38,7 +38,7 @@ $default-radius: nb-theme(border-radius);
       flex: 1 1 auto;
       overflow: $overflow;
       height: $height;
-      background-color: rgba(50, 50, 50, 0.03);
+      background-color: var(--gauzy-card-2);;
     }
     .card-footer {
       border: unset;

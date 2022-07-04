@@ -589,29 +589,29 @@
 								<nb-list-item *ngFor="let project of projects">
 									<div class="w-100">
 										<div class="row align-items-center">
-											<div class="col text-left">
+											<div class="col-5 project-name text-left">
 												{{ project.name }}
 											</div>
-											<div class="col text-center">
-												{{
-													project.durationPercentage
-												}}%
-											</div>
-											<div class="col text-center">
-												<nb-progress-bar
-													class="mb-1 custom-progress"
-													[value]="
+											<div class="col-4 text-center">
+												<div class="d-flex align-items-center">
+													{{
 														project.durationPercentage
-													"
-													[status]="
-														progressStatus(
+													}}%
+													<nb-progress-bar
+														class="mb-1 ml-3 w-100 custom-progress"
+														[value]="
 															project.durationPercentage
-														)
-													"
-													[displayValue]="true"
-													size="tiny"
-												>
-												</nb-progress-bar>
+														"
+														[status]="
+															progressStatus(
+																project.durationPercentage
+															)
+														"
+														[displayValue]="true"
+														size="tiny"
+													>
+													</nb-progress-bar>
+												</div>
 											</div>
 											<div class="col text-right">
 												{{

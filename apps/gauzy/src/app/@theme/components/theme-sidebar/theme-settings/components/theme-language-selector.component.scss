@@ -12,7 +12,7 @@
 	nb-select.appearance-outline ::ng-deep {
 		.select-button {
 			text-overflow: inherit;
-      box-shadow: 0px 1px 1px 0px rgba(0, 0, 0, 0.15);
+      box-shadow: var(--gauzy-shadow);
       border-width: 0;
       border-radius: nb-theme(button-rectangle-border-radius);
       outline: none;

@@ -2,7 +2,7 @@
 
 
 .action {
-  box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--gauzy-shadow);
   &[nbButton].appearance-filled.status-basic {
     background-color: #ffffff;
   }
@@ -32,7 +32,7 @@
   &.select-nb ::ng-deep {
     box-shadow: none;
     .select-button {
-      box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.15);
+      box-shadow: var(--gauzy-shadow);
       background: rgba(245, 245, 245);
     }
   }
@@ -43,7 +43,7 @@ button {
 }
 
 .actions {
-  background: rgba(50, 50, 50, 0.03);
+  background: var(--gauzy-card-2);
   border-radius: nb-theme(button-rectangle-border-radius);
   padding: 0 1px;
   margin-right: 20px;

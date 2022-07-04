@@ -9,13 +9,14 @@
   }
   .card {
     border-radius: nb-theme(border-radius);
-    background: rgba(66, 66, 66, 0.03);
-    box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.15);
+    background: var(gauzy-sidebar-background-4);
+    box-shadow: var(--gauzy-shadow);
     min-width: 189px;
     max-width: 270px;
     display: flex;
     flex-direction: column;
     justify-content: center;
+    border: unset;
     &:hover {
       box-shadow: 0px 36px 18px -24px rgba(0, 0, 0, 0.15);
     }
@@ -54,6 +55,13 @@
         flex-direction: column;
         align-items: flex-start;
         justify-content: space-around;
+        button {
+          font-size: 12px;
+          font-weight: 400;
+          line-height: 16px;
+          letter-spacing: -0.009em;
+          text-align: left;
+        }
       }
 
       &.select-mode {
@@ -123,4 +131,12 @@
 			}
 		}
 	}
+}
+
+.slot-info {
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 11px;
+  letter-spacing: 0em;
+  text-align: left;
 }

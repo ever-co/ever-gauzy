@@ -4,7 +4,7 @@
 
 :host {
   nb-tab {
-    background-color: rgba(50, 50, 50, 0.03);
+    background-color: var(--gauzy-card-2);
     &.content-active {
       padding: 1rem;
     }

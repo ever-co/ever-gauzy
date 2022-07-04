@@ -1,16 +1,19 @@
 @import 'var';
+
 ng-select {
 	.selector-template {
 		display: flex;
 		align-items: center;
 		height: 100%;
 	}
+
 	img {
 		margin-right: 5px;
 		margin-left: 5px;
-    border-radius: nb-theme(button-rectangle-border-radius);
+		border-radius: nb-theme(button-rectangle-border-radius);
 	}
 }
-::ng-deep .employee.ng-select .ng-select-container .ng-value-container{
-  padding-left: 0;
+
+::ng-deep .employee.ng-select .ng-select-container .ng-value-container {
+	padding-left: 0;
 }

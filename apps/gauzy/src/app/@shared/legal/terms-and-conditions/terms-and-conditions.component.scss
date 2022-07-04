@@ -697,8 +697,8 @@
     }
 
     .iubenda_vip_policy .box_primary {
-        -webkit-box-shadow: 0 1px 1px 0 rgba(0 0 0 / 15%) !important;
-        box-shadow: 0 1px 1px 0 rgba(0 0 0 / 15%) !important;
+        -webkit-box-shadow: var(--gauzy-shadow)(0 0 0 / 15%) !important;
+        box-shadow: var(--gauzy-shadow)(0 0 0 / 15%) !important;
         border: unset !important;
         border-radius: var(--border-radius) !important;
         background: var(--gauzy-card-4) !important;

@@ -4,22 +4,23 @@
 
 $button-radius : nb-theme(button-rectangle-border-radius);
 
-.filter-input{
+.filter-input {
     width: fit-content;
     display: flex;
     align-items: center;
     margin-bottom: 5px;
-    button{
+
+    button {
         margin-right: 5px;
         border-radius: nb-theme(button-rectangle-border-radius);
     }
 }
 
-nb-select{
+nb-select {
     min-width: 150px;
 }
 
-.custom-input{
+.custom-input {
     height: inherit;
     display: flex;
     align-items: center;
@@ -29,42 +30,49 @@ nb-select{
     /* I've used padding so you can see the edges of the elements. */
     padding: 2px 0px 2px 5px;
     margin-right: 16px;
-    input{
+
+    input {
         height: 1.875rem;
         margin-right: 5px;
         width: 240px;
         background-color: transparent;
         /* Tell the input to use all the available space */
-        flex-grow:2;
+        flex-grow: 2;
         /* And hide the input's outline, so the form looks like the outline */
-        border:none;
+        border: none;
         box-shadow: none;
     }
+
     input:focus {
         /* removing the input focus blue box. Put this on the form if you like. */
         outline: none;
     }
-    &:hover, &:focus{
+
+    &:hover,
+    &:focus {
         background: nb-theme(background-basic-color-3);
         transition: ease-in-out .3s;
     }
 }
 
-:host{
+:host {
     ::ng-deep {
         &.md-drppicker {
             background-color: nb-theme(background-basic-color-1);
             color: nb-theme(text-basic-color);
             border-radius: nb-theme(border-radius);
-            .calendar-table{
+
+            .calendar-table {
                 background-color: nb-theme(background-basic-color-1);
                 border-color: nb-theme(border-basic-color-3);
                 box-shadow: nb-theme(border-basic-color-1) 0px 1px 3px, nb-theme(border-basic-color-3) 0px 1px 2px;
                 border-radius: nb-theme(border-radius);
             }
+
             .calendar-time select.disabled {
                 color: nb-theme(text-basic-color);
             }
+
             .label-input {
                 color: nb-theme(text-basic-color);
             }
@@ -79,20 +87,27 @@ nb-select{
                 color: nb-theme(text-basic-color);
             }
 
-            td, th {
+            td,
+            th {
                 &.available {
                     &.prev {
                         filter: invert(0.65);
                     }
+
                     &.next {
-                        filter: invert(0.65);;
+                        filter: invert(0.65);
+                        ;
                     }
                 }
             }
 
             td {
                 &.off {
-                    &, &.in-range, &.start-date, &.end-date {
+
+                    &,
+                    &.in-range,
+                    &.start-date,
+                    &.end-date {
                         background-color: nb-theme(background-basic-color-3);
                         border-color: nb-theme(border-basic-color-1);
                         color: nb-theme(text-basic-color);
@@ -100,7 +115,9 @@ nb-select{
                 }
 
                 &.active {
-                    &, &:hover {
+
+                    &,
+                    &:hover {
                         background-color: nb-theme(color-primary-default);
                         border-color: nb-theme(border-basic-color-3);
                         color: nb-theme(text-control-color);
@@ -114,17 +131,20 @@ nb-select{
                         button {
                             border-radius: $button-radius;
                             color: nb-theme(text-basic-color);
+
                             &.active {
                                 background-color: nb-theme(color-primary-active);
                             }
                         }
                     }
+
                     li:hover {
                         background-color: nb-theme(color-primary-hover);
                         border-radius: $button-radius;
                     }
                 }
             }
+
             .btn {
                 border-radius: $button-radius;
                 box-shadow: 0 1px 4px rgba(0, 0, 0, .6);
@@ -132,7 +152,9 @@ nb-select{
                 color: nb-theme(text-control-color);
                 padding: 0 .75rem;
                 height: 2rem;
-                &:hover, &:focus {
+
+                &:hover,
+                &:focus {
                     background-color: nb-theme(color-primary-focus);
                 }
 
@@ -142,6 +164,10 @@ nb-select{
                     background-color: nb-theme(color-primary-default);
                 }
             }
+        }
+
+        &.md-drppicker td.available:hover {
+            background-color: var(gauzy-card-1);
         }
 
         .select-button {
@@ -154,7 +180,8 @@ nb-select{
             border: 1px solid nb-theme(select-outline-basic-border-color) !important;
         }
 
-        .activity-level-filter, .select-button {
+        .activity-level-filter,
+        .select-button {
             box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.15);
             background-color: nb-theme(gauzy-card-1) !important;
             color: nb-theme(select-outline-basic-text-color) !important;
@@ -171,6 +198,6 @@ nb-select{
     padding-right: 0 !important;
 }
 
-:host ::ng-deep{
-  @include nb-select-overrides(2rem, $default-button-radius, $default-box-shadow);
+:host ::ng-deep {
+    @include nb-select-overrides(2rem, $default-button-radius, $default-box-shadow);
 }

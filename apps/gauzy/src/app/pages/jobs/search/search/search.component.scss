@@ -16,24 +16,6 @@
       margin-bottom: 0;
     }
   }
-  ::ng-deep {
-    ng2-smart-table {
-      table tr td {
-        vertical-align: top;
-      }
-      .ng2-smart-actions {
-        padding: 0.875rem 1.25rem !important;
-        height: auto;
-        ng2-st-tbody-custom {
-          display: flex;
-          a.ng2-smart-action {
-            font-size: 1rem !important;
-            margin: 0 5px;
-          }
-        }
-      }
-    }
-  }
   ::ng-deep ngx-avatar {
     .inner-wrapper {
       background-color: nb-theme(color-primary-transparent-100);

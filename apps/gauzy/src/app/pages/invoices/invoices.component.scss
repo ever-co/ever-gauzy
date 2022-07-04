@@ -13,7 +13,6 @@
 
   .title {
     color: nb-theme(text-primary-color);
-    font-family: Inter;
     font-size: 16px;
     font-weight: 600;
     line-height: 16px;
@@ -332,7 +331,7 @@ input {
 }
 
 nb-tab {
-  background-color: rgba(50, 50, 50, 0.03);
+  background-color: var(--gauzy-card-2);
   border: 0 0 $default-radius $default-radius;
 }
 
@@ -377,7 +376,7 @@ nb-tab {
       $default-box-shadow-inset );
 
     nb-tabset .tab.active .tab-link {
-      background-color: rgba(50, 50, 50, 0.03);
+      background-color: var(--gauzy-card-2);
       border: unset;
       text-decoration: none;
     }

@@ -40,7 +40,7 @@
   justify-content: space-between;
   position: relative;
   border: nb-theme(border-radius);
-  box-shadow: 0px 1px 1px 0px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--gauzy-shadow);
   border-radius: nb-theme(border-radius);
   & .custom-button {
     height: 40px;

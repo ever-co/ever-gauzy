@@ -1,6 +1,8 @@
 @import 'gauzy/_gauzy-cards.scss';
+
 :host {
   background-color: rgba(50, 50, 50, 0.02);
+
   ::ng-deep {
     nb-progress-bar {
       .progress-value {
@@ -10,6 +12,7 @@
       }
     }
   }
+
   nb-card.member-list {
     max-height: 65vh;
     overflow-y: hidden;
@@ -24,8 +27,9 @@
   .card-header {
     background-color: unset;
   }
+
   .card {
-    background-color: rgba(50, 50, 50, 0.03);
+    background-color: var(--gauzy-card-2);
   }
 
   .view-all {
@@ -33,35 +37,48 @@
     right: 20px;
   }
 
-  .hour-label {
-    display: flex;
+  [nbButton].appearance-outline.status-primary {
+    background-color: unset;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 15px;
+    letter-spacing: 0em;
+    text-align: left;
+    border-color: var(--gauzy-background-transparent);
+    color: var(--button-outline-primary-text-color);
+    border-width: 2px;
   }
+}
 
-  .link-text {
-    cursor: pointer;
-    text-decoration: none;
-    color: #1e6bb8;
-    font-size: small;
-  }
+.hour-label {
+  display: flex;
+}
 
-  .member-weekly-activity-graph {
-    display: flex;
-    align-items: flex-end;
-    margin-left: 15px;
-    min-height: 30px;
-    .bar-graph-entry {
-      width: 7px;
-      margin-right: 3px;
-      background-color: #0095ff;
-      min-height: 1px;
-    }
-  }
+.link-text {
+  cursor: pointer;
+  text-decoration: none;
+  color: #1e6bb8;
+  font-size: small;
+}
 
-  nb-badge {
-    position: unset;
-    display: table;
-    margin: 10px auto 0;
+.member-weekly-activity-graph {
+  display: flex;
+  align-items: flex-end;
+  margin-left: 15px;
+  min-height: 30px;
+
+  .bar-graph-entry {
+    width: 7px;
+    margin-right: 3px;
+    background-color: #0095ff;
+    min-height: 1px;
   }
+}
+
+nb-badge {
+  position: unset;
+  display: table;
+  margin: 10px auto 0;
 }
 
 .filter {
@@ -72,27 +89,36 @@
   nb-card {
     background-color: var(--background-basic-color-1);
     box-shadow: 0px 6px 20px 0px rgb(0 0 0 / 5%);
+    border-radius: var(--border-radius);
   }
-  @include card_overrides(
-    auto,
+
+  nb-card-body,
+  nb-list {
+    border-radius: 0 0 var(--border-radius) var(--border-radius);
+  }
+
+  @include card_overrides(auto,
     $default-card-height,
-    0 $default-radius $default-radius $default-radius
-  );
+    0 $default-radius $default-radius $default-radius );
+
   ngx-activity-item.tracking-progress ::ng-deep {
     .progress-container {
       height: 5px !important;
     }
   }
+
   nb-progress-bar.custom-progress ::ng-deep {
     .progress-container {
       height: 5px !important;
     }
   }
+
   ::ng-deep {
     .toggle-label {
       margin-bottom: 0;
     }
   }
+
   .custom-toggle {
     ::ng-deep {
       span.text {
@@ -100,8 +126,22 @@
       }
     }
   }
+
   .card-body {
-    background-color: rgba(50, 50, 50, 0.03);
+    background-color: var(--gauzy-card-2);
+  }
+
+  ngx-avatar {
+    margin-bottom: 1.5rem;
+  }
+
+  .project-name {
+    color: var(--gauzy-text-color-1);
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 11px;
+    letter-spacing: 0em;
+    text-align: left;
   }
 }
 
@@ -114,6 +154,17 @@
   column-gap: 1rem;
   grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
 }
-.custom-card-body-inner, .custom-card-body-inner-list {
-  background-color: nb-theme(gauzy-sidebar-background-2);
+
+.custom-card-body-inner,
+.custom-card-body-inner-list {
+  background-color: nb-theme(gauzy-card-2);
+}
+
+nb-card-body>p {
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 16px;
+  letter-spacing: -0.009em;
+  text-align: left;
+  color: var(--gauzy-text-color-2);
 }

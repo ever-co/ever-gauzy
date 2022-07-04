@@ -13,7 +13,7 @@ $radius: nb-theme(border-radius);
   font-weight: 700;
 }
 .card{
-  background-color: rgba(50, 50, 50, 0.03);
+  background-color: var(--gauzy-card-2);
   border: unset;
 }
 :host {

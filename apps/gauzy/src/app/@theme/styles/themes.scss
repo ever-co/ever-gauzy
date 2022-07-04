@@ -37,6 +37,8 @@ $nb-themes: nb-register-theme(
     gauzy-card-2: rgba(50, 50, 50, 0.03),
     gauzy-card-3: rgba(255, 255, 255, 0.5),
     gauzy-card-4: rgba(255, 255, 255, 0.75),
+    gauzy-card-5: rgba(248, 246, 254, 1),
+    gauzy-card-6: rgba(249, 249, 249, 1),
     gauzy-input-background: rgba(255, 255, 255, 1),
     gauzy-sidebar-background-1: #ebebeb,
     gauzy-sidebar-background-2: rgba(251, 251, 251, 1),
@@ -48,7 +50,10 @@ $nb-themes: nb-register-theme(
     gauzy-sidebar-background-4: rgba(126, 126, 143, 0.05),
     gauzy-text-color-1: rgba(66, 66, 66, 1),
     gauzy-text-color-2: rgba(126, 126, 143, 1),
-    gauzy-siderbar-background-5: rgb(237, 237, 238)
+    gauzy-siderbar-background-5: rgb(237, 237, 238),
+    gauzy-shadow: 0px 1px 1px 0px rgb(0 0 0 / 15%),
+    gauzy-scrollbar: rgba(126, 126, 143, 0.1),
+    gauzy-primary-background: rgb(246, 250, 254)
   ),
   default,
   default
@@ -77,13 +82,23 @@ $nb-themes: nb-register-theme(
     button-outline-medium-padding: 0.4375rem 0.875rem,
     sidebar-padding: 0.625rem,
     header-shadow: none,
-    gauzy-card-2: rgba(51, 51, 71, 1),
+    gauzy-card-2: rgba(39, 39, 78, 0.5),
     gauzy-card-1: rgba(37, 37, 40, 1),
     gauzy-card-3: rgba(5, 5, 5, 0.5),
     gauzy-card-4: rgba(5, 5, 5, 0.25),
+    gauzy-card-5: rgb(4, 1, 9),
     gauzy-input-background: rgba(230, 225, 254, 0.25),
     gauzy-background-transparent: color-primary-transparent-default,
-    gauzy-siderbar-background-5: rgb(18, 18, 17)
+    gauzy-siderbar-background-5: rgb(18, 18, 17),
+    gauzy-sidebar-background-1: #181818,
+    gauzy-sidebar-background-2: rgb(40, 38, 46),
+    gauzy-border-default-color: rgba(255, 255, 255, 0.1),
+    gauzy-sidebar-background-3: rgba(134, 126, 143, 0.1),
+    gauzy-sidebar-background-4: rgba(125, 114, 140, 0.05),
+    gauzy-shadow: 0px 1px 1px 0px rgb(0 0 0 / 35%),
+    gauzy-scrollbar: rgba(137, 126, 143, 0.25),
+    gauzy-primary-background: rgb(214, 200, 255),
+    gauzy-card-6: rgb(57, 52, 62)
   ),
   cosmic,
   cosmic
@@ -116,13 +131,20 @@ $nb-themes: nb-register-theme(
     gauzy-input-background: rgba(255, 255, 255, 1),
     gauzy-background-transparent: color-primary-transparent-default,
     gauzy-border-default-color: rgba(126, 126, 143, 0.1),
+    gauzy-sidebar-background-1: #ebebeb,
+    gauzy-sidebar-background-2: rgba(251, 251, 251, 1),
     gauzy-sidebar-background-3: rgba(126, 126, 143, 0.1),
     gauzy-sidebar-background-4: rgba(126, 126, 143, 0.05),
+    gauzy-card-5: rgba(248, 246, 254, 1),
     gauzy-text-color-1: rgba(66, 66, 66, 1),
     gauzy-text-color-2: rgba(126, 126, 143, 1),
     gauzy-card-3: rgba(255, 255, 255, 0.5),
     gauzy-card-4: rgba(255, 255, 255, 0.75),
-    gauzy-siderbar-background-5: rgb(237, 237, 238)
+    gauzy-siderbar-background-5: rgb(237, 237, 238),
+    gauzy-shadow: 0px 1px 1px 0px rgb(0 0 0 / 15%),
+    gauzy-scrollbar: rgba(126, 126, 143, 0.1),
+    gauzy-primary-background: rgb(246, 247, 254),
+    gauzy-card-6: rgba(249, 249, 249, 1)
   ),
   corporate,
   corporate
@@ -152,7 +174,7 @@ $nb-themes: nb-register-theme(
     button-filled-medium-padding: 0.4375rem 0.875rem,
     button-outline-medium-padding: 0.4375rem 0.875rem,
     sidebar-padding: 0.625rem,
-    gauzy-card-2: rgba(41, 41, 51, 1),
+    gauzy-card-2: rgba(16, 16, 20, 0.3),
     gauzy-card-1: rgba(32, 32, 35, 1),
     gauzy-input-background: rgba(255, 255, 255, 0.15),
     gauzy-sidebar-background-1: #181818,
@@ -161,12 +183,17 @@ $nb-themes: nb-register-theme(
     gauzy-background-transparent: color-primary-transparent-default,
     gauzy-border-default-color: rgba(255, 255, 255, 0.1),
     gauzy-sidebar-background-3: rgba(126, 126, 143, 0.1),
-    gauzy-sidebar-background-4: rgba(0, 0, 0, 0.85),
+    gauzy-sidebar-background-4: rgba(126, 126, 143, 0.05),
     gauzy-text-color-1: rgba(255, 255, 255, 1),
     gauzy-text-color-2: rgba(255, 255, 255, 0.5),
     gauzy-card-3: rgba(5, 5, 5, 0.5),
     gauzy-card-4: rgba(5, 5, 5, 0.25),
-    gauzy-siderbar-background-5: rgb(18, 18, 17)
+    gauzy-card-5: rgba(7, 9, 1, 1),
+    gauzy-siderbar-background-5: rgb(18, 18, 17),
+    gauzy-shadow: 0px 1px 1px 0px rgb(0 0 0 / 35%),
+    gauzy-scrollbar: rgba(126, 126, 143, 0.25),
+    gauzy-primary-background: rgb(58, 62, 75),
+    gauzy-card-6: rgba(52, 52, 62, 1)
   ),
   dark,
   dark
@@ -191,7 +218,8 @@ $nb-themes: nb-register-theme(
     slide-out-shadow-color-rtl: 0 4px 14px 0 #ebebeb,
     accordion-padding: 0.625rem,
     button-filled-medium-padding: 0.4375rem 0.875rem,
-    button-outline-medium-padding: 0.4375rem 0.875rem
+    button-outline-medium-padding: 0.4375rem 0.875rem,
+    gauzy-primary-background: rgb(240, 235, 246)
   ),
   material-light,
   material-light
@@ -216,7 +244,8 @@ $nb-themes: nb-register-theme(
     slide-out-shadow-color-rtl: 0 4px 14px 0 #292929,
     accordion-padding: 0.625rem,
     button-filled-medium-padding: 0.4375rem 0.875rem,
-    button-outline-medium-padding: 0.4375rem 0.875rem
+    button-outline-medium-padding: 0.4375rem 0.875rem,
+    gauzy-primary-background: rgba(40, 10, 10, 1)
   ),
   material-dark,
   material-dark
@@ -295,7 +324,9 @@ $nb-themes: nb-register-theme(
     gauzy-background-transparent: rgba(110, 73, 232, 0.5),
     gauzy-background-transparent-1: rgba(110, 73, 232, 0.1),
     tag-filled-basic-background-color: rgba(126, 126, 143, 0.1),
-    toggle-basic-background-color: rgba(126, 126, 143, 1)
+    toggle-basic-background-color: rgba(126, 126, 143, 1),
+    background-basic-color-1: gauzy-card-1,
+    gauzy-primary-background: rgba(248, 246, 254, 1),
   ),
   gauzy-light,
   default
@@ -359,7 +390,13 @@ $nb-themes: nb-register-theme(
     header-background-color: gauzy-card-1,
     tabset-tab-underline-width: 0,
     tabset-tab-text-font-size: 1rem,
-    route-tabset-tab-text-font-size: 1rem
+    route-tabset-tab-text-font-size: 1rem,
+    background-basic-color-1: gauzy-card-1,
+    input-basic-background-color: rgba(32, 32, 35, 1),
+    background-basic-color-2: rgba(32, 32, 35, 1),
+    smart-table-bg-active: rgba(126, 126, 143, 0.05),
+    background-basic-color-3: gauzy-card-3,
+    gauzy-primary-background: rgb(86, 82, 99)
   ),
   gauzy-dark,
   dark
