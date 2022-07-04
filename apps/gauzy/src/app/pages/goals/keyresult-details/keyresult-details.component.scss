@@ -41,7 +41,7 @@
 }
 
 .button-container {
-  background: rgba(50, 50, 50, 0.03);
+  background: var(--gauzy-card-2);
   padding: 5px;
   border-radius: nb-theme(button-rectangle-border-radius);
 }
