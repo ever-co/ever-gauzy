@@ -2,10 +2,13 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { IOrganizationCreateInput, ITenant } from '@gauzy/contracts';
 import { User } from '@sentry/browser';
-import { UsersService } from '../../@core/services/users.service';
-import { OrganizationsService } from '../../@core/services/organizations.service';
-import { TenantService } from '../../@core/services/tenant.service';
-import { Store } from '../../@core/services/store.service';
+import {
+	AuthService,
+	OrganizationsService,
+	Store,
+	TenantService,
+	UsersService
+} from '../../@core/services';
 
 @Component({
 	selector: 'ga-tenant-details',
@@ -17,16 +20,19 @@ export class TenantDetailsComponent implements OnInit, OnDestroy {
 	user: User = {};
 
 	constructor(
-		private router: Router,
-		private organizationsService: OrganizationsService,
-		private tenantService: TenantService,
-		private usersService: UsersService,
-		private readonly store: Store
+		private readonly router: Router,
+		private readonly organizationsService: OrganizationsService,
+		private readonly tenantService: TenantService,
+		private readonly usersService: UsersService,
+		private readonly store: Store,
+		private readonly authService: AuthService
 	) {}
 
 	ngOnInit() {
 		this.isOnboardingRequired();
 	}
+
+
 
 	async isOnboardingRequired() {
 		this.user = await this.usersService.getMe();
@@ -47,11 +53,24 @@ export class TenantDetailsComponent implements OnInit, OnDestroy {
 				this.organizationsService
 					.create({ ...formData, tenant, isDefault: true })
 					.then(() => {
+						this.getAccessTokenFromRefreshToken();
 						this.router.navigate(['/onboarding/complete']);
 					})
 					.catch((error) => {});
 			})
 			.catch((error) => {});
+	}
+
+	/**
+	 * Get new generated access token using refresh token
+	 */
+	async getAccessTokenFromRefreshToken() {
+		if (this.store.refresh_token) {
+			const { token } = await this.authService.refreshToken(this.store.refresh_token);
+			if (token) {
+				this.store.token  = token;
+			}
+		}
 	}
 
 	ngOnDestroy() {}
