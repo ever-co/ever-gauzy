@@ -3,21 +3,32 @@
 :host a {
   background-color: nb-theme(color-primary-transparent-100);
   border-radius: nb-theme(button-rectangle-border-radius);
-  @include nb-rtl(padding, 3px 9px 3px 3px);
-  @include nb-ltr(padding, 3px 3px 3px 9px);
+  @include nb-rtl(padding, 5px 7px 5px 14px);
+  @include nb-ltr(padding, 5px 14px 5px 7px);
   display: flex;
   flex-direction: row;
   align-items: center;
   width: fit-content;
   color: nb-theme(text-primary-color);
-  font-size: 12px;
-  font-weight: 400;
-  line-height: 15px;
-  letter-spacing: 0em;
+
+  .names-wrapper {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    max-width: 110px;
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 15px;
+    letter-spacing: 0em;
+  }
 
   img {
-    border-radius: 18px;
+    border-radius: nb-theme(button-rectangle-border-radius);
     @include nb-rtl(margin-left, 8px);
     @include nb-ltr(margin-right, 8px);
   }
+}
+
+:host {
+  width: 100%;
 }
