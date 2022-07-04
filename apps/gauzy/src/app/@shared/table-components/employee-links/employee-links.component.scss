@@ -1,9 +1,10 @@
 @import 'themes';
 
-a {
+:host a {
   background-color: nb-theme(color-primary-transparent-100);
   border-radius: nb-theme(button-rectangle-border-radius);
-  padding: 3px 9px 3px 3px;
+  @include nb-rtl(padding, 3px 9px 3px 3px);
+  @include nb-ltr(padding, 3px 3px 3px 9px);
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -13,9 +14,10 @@ a {
   font-weight: 400;
   line-height: 15px;
   letter-spacing: 0em;
-  text-align: left;
+
   img {
     border-radius: 18px;
-    margin-right: 8px;
+    @include nb-rtl(margin-left, 8px);
+    @include nb-ltr(margin-right, 8px);
   }
 }
