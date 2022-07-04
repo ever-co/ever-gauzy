@@ -15,10 +15,11 @@
 			</div>
 			<ng-template [ngxPermissionsOnly]="PermissionsEnum.POLICY_VIEW">
 				<div class="card-header-title">
-					<div class="mr-2">
+					<div>
 						<button
 							nbButton
 							outline
+							class="action"
 							status="primary"
 							[routerLink]="'/pages/organization/equipment-sharing-policy'"
 						>

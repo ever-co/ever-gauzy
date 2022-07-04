@@ -105,6 +105,12 @@ export class EquipmentSharingComponent extends PaginationFilterBaseComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
+
+			this.pagination$.pipe(
+				distinctUntilChange(),
+				tap(() => this.equipmentSharing$.next(true)),
+				untilDestroyed(this)
+			).subscribe()
 	}
 
 	ngOnDestroy() {}
