@@ -2,9 +2,9 @@ import { environment as env } from '@gauzy/config';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
-import { AuthService } from './../auth.service';
-import { IUser } from '@gauzy/contracts';
 import { JwtPayload } from 'jsonwebtoken';
+import { IUser } from '@gauzy/contracts';
+import { AuthService } from './../auth.service';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
@@ -26,7 +26,6 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
 				id,
 				thirdPartyId
 			);
-
 			if (!user) {
 				return done(new UnauthorizedException('unauthorized'), false);
 			} else {

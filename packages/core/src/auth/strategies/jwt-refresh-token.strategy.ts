@@ -22,16 +22,19 @@ export class JwtRefreshTokenStrategy extends PassportStrategy(Strategy, 'jwt-ref
 	async validate(request: Request, payload: JwtPayload, done: Function) {
 		try {
 			const { body } = request;
-			const refreshToken = body.refresh_token;
+			const refresh_token = body.refresh_token;
 
-			const user = await this.userService.getUserIfRefreshTokenMatches(refreshToken, payload);
+			const user = await this.userService.getUserIfRefreshTokenMatches(refresh_token, payload);
 			if (!user) {
 				return done(new UnauthorizedException('unauthorized'), false);
 			} else {
 				done(null, user);
 			}
 		} catch (err) {
-			return done(new UnauthorizedException('unauthorized', err.message), false);
+			return done(
+				new UnauthorizedException('unauthorized', err.message),
+				false
+			);
 		}
 	}
 }
