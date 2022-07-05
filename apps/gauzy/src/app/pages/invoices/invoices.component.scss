@@ -388,3 +388,12 @@ nb-tab {
     }
   }
 }
+
+::ng-deep {
+  .search-tab .no-data-found{
+    max-height: calc(100vh - 42rem)!important;
+  }
+  .history-tab .no-data-found{
+    max-height: calc(100vh - 32rem)!important;
+  }
+}

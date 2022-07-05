@@ -1,4 +1,5 @@
 <div
+	*ngIf="source.length; else noDataGridLayout"
 	class="card-layout grid-scroll-container p-1"
 	infinite-scroll
 	[scrollWindow]="false"
@@ -52,4 +53,10 @@
 			</div>
 		</nb-card-body>
 	</nb-card>
-</div>
+</div>	
+<ng-template #noDataGridLayout>
+	<gauzy-no-data 
+		[message]="getNoDataMessage()"
+	></gauzy-no-data>
+</ng-template>				
+

@@ -125,6 +125,8 @@
 		"PUBLIC": "Public"
 	},
 	"SM_TABLE": {
+		"RECEIVE_ESTIMATE_NO_DATA": "You have not received any estimate.",
+		"INCOME_NO_DATA": "You have not created any income.",
 		"TRANSACTION_TYPE": "Type",
 		"AMOUNT": "Amount",
 		"DATE": "Date",
@@ -2509,6 +2511,8 @@
 	},
 	"INVOICES_PAGE": {
 		"SENDER": "Sender",
+		"INVOICES_NO_DATA_MESSAGE": "You have not created any invoice.",
+		"ESTIMATE_NO_DATA_MESSAGE": "You have not created any estimate.",
 		"BROWSE": "Browse",
 		"COMMENT": "Comment",
 		"COMMENTS": "Comments",

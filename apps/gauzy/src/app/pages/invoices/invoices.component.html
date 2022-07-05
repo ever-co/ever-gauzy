@@ -92,7 +92,7 @@
 			<nb-tab
 				[tabTitle]="'INVOICES_PAGE.SEARCH' | translate | titlecase"
 				[tabId]="invoiceTabsEnum.SEARCH"
-				class="remove-scroll"
+				class="remove-scroll search-tab"
 			>
 				<ng-container
 					*ngIf="(nbTab$ | async) === invoiceTabsEnum.SEARCH"
@@ -418,7 +418,7 @@
 			<nb-tab
 				[tabTitle]="'INVOICES_PAGE.HISTORY' | translate | titlecase"
 				[tabId]="invoiceTabsEnum.HISTORY"
-				class="remove-scroll"
+				class="remove-scroll history-tab"
 			>
 				<ng-container
 					*ngIf="(nbTab$ | async) === invoiceTabsEnum.HISTORY"
@@ -612,7 +612,7 @@
 			</div>
 		</ng-template>
 		<ng-template #gridLayout>
-			<div class="grid" *ngIf="pagination.totalItems">
+			<div class="grid">
 				<ga-card-grid
 					(selectedOption)="onUpdateOption($event)"
 					(selectedPage)="onPageChange($event)"
@@ -626,7 +626,7 @@
 					[cardSize]="'big'"
 					(onSelectedItem)="selectInvoice($event)"
 				></ga-card-grid>
-			</div>
+			</div>			
 		</ng-template>
 	</nb-card-body>
 </nb-card>

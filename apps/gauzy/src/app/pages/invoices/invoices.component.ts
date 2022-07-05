@@ -907,7 +907,9 @@ export class InvoicesComponent
 			actions: false,
 			mode: 'external',
 			editable: true,
-			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA'),
+			noDataMessage: this.getTranslation(this.isEstimate 
+				? 'INVOICES_PAGE.ESTIMATE_NO_DATA_MESSAGE' 
+				: 'INVOICES_PAGE.INVOICES_NO_DATA_MESSAGE'),
 			columns: {
 				invoiceNumber: {
 					title: this.isEstimate
