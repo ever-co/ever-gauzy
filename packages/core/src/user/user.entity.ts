@@ -103,13 +103,22 @@ export class User extends TenantBaseEntity implements IUser {
 
 	@ApiProperty({ type: () => String, enum: LanguagesEnum })
 	@IsEnum(LanguagesEnum)
-	@Column({ nullable: true })
+	@Column({ nullable: true, default: LanguagesEnum.ENGLISH })
 	preferredLanguage?: string;
 
 	@ApiProperty({ type: () => String, enum: ComponentLayoutStyleEnum })
 	@IsEnum(ComponentLayoutStyleEnum)
-	@Column({ nullable: true })
+	@Column({
+		type: 'simple-enum',
+		nullable: true,
+		default: ComponentLayoutStyleEnum.TABLE,
+		enum: ComponentLayoutStyleEnum
+	})
 	preferredComponentLayout?: string;
+
+	@ApiPropertyOptional({ type: () => Boolean, default: true })
+	@Column({ nullable: true, default: true })
+	isActive?: boolean;
 
 	name?: string;
 	employeeId?: string;
