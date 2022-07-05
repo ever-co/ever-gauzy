@@ -5,7 +5,7 @@ import { IEmployee, IEmployeeFindInput } from './employee.model';
 export interface IGoalTimeFrame
 	extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
-	status: string;
+	status: any;
 	startDate: Date;
 	endDate: Date;
 }

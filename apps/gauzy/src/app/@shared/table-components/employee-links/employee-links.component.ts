@@ -8,7 +8,7 @@ import { Router } from '@angular/router';
 			<a
 				*ngIf="value?.name"
 				(click)="navigateToEmployee()"
-				[ngClass]="{ 'link-text' : isNavigation }"
+				[ngClass]="{ 'link-text': isNavigation }"
 			>
 				<img
 					*ngIf="value.imageUrl"
@@ -16,7 +16,9 @@ import { Router } from '@angular/router';
 					height="18px"
 					[src]="value.imageUrl"
 				/>
-				{{ value.name }}
+				<div class="names-wrapper">
+					{{ value.name }}
+				</div>
 			</a>
 		</ng-container>
 	`,
@@ -42,9 +44,7 @@ export class EmployeeLinksComponent {
 
 	@Input() isNavigation: boolean = true;
 
-	constructor(
-		private readonly _router: Router
-	) {}
+	constructor(private readonly _router: Router) {}
 
 	navigateToEmployee() {
 		if (!this.value || !this.isNavigation) {

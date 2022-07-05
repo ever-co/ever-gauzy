@@ -3,7 +3,7 @@
 
 /* Apply style on scrollbar for Firefox */
 * {
-  scrollbar-color: rgba(50, 50, 50, 0.1) transparent;
+  scrollbar-color: var(--gauzy-scrollbar) transparent;
   scrollbar-width: thin;
 }
 /*  Apply style on scrollbar for Chrome */
@@ -16,7 +16,7 @@
 }
 
 *::-webkit-scrollbar-thumb {
-  background: rgba(50, 50, 50, 0.1);
+  background: var(--gauzy-scrollbar);
   border-radius: 1rem;
 }
 
@@ -34,17 +34,17 @@ body {
 
 .dashboard-card-scroll nb-card {
   background: nb-theme(background-basic-color-1);
-  box-shadow: 0px 6px 20px 0px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--gauzy-shadow);
 }
 
 @mixin nb-overrides() {
   nb-route-tabset .route-tab.active .tab-link {
-    background: rgba(50, 50, 50, 0.03);
+    background: var(--gauzy-card-2);
     margin-bottom: 1px;
   }
 
   nb-tabset .tab.active .tab-link {
-    background-color: rgba(50, 50, 50, 0.03);
+    background-color: var(--gauzy-card-2);
     margin-bottom: 1px;
   }
 
@@ -64,8 +64,11 @@ body {
   }
 
   .h1 {
-    font-size: 44px;
+    color: var(--gauzy-text-color-1);
+    font-size: 36px;
     font-weight: 400;
+    line-height: 44px;
+    letter-spacing: 0em;
   }
 
   // overrides bootstrap svg style
@@ -150,7 +153,7 @@ body {
           background: transparent;
         }
         &::-webkit-scrollbar-thumb {
-          background: rgba(50, 50, 50, 0.1);
+          background: var(--gauzy-scrollbar);
           border-radius: 1rem;
         }
       }
@@ -167,7 +170,7 @@ body {
         background: transparent;
       }
       &::-webkit-scrollbar-thumb {
-        background: rgba(50, 50, 50, 0.1);
+        background: var(--gauzy-scrollbar);
         border-radius: 1rem;
       }
     }
@@ -246,7 +249,7 @@ body {
 
   .ng-dropdown-panel {
     transform: translateY(10px);
-    box-shadow: 0px 6px 30px rgba(0, 0, 0, 0.2);
+    box-shadow: var(--gauzy-shadow);
     &.ng-select-bottom {
       border-radius: nb-theme(border-radius);
     }
@@ -283,11 +286,11 @@ body {
     color: nb-theme(text-basic-color) !important;
   }
   .records {
-    box-shadow: 0px 0px 16px 9px nb-theme(shadow) !important;
+    box-shadow: var(--gauzy-shadow) !important;
     background: nb-theme(background-basic-color-1) !important;
   }
   .profit-history {
-    box-shadow: 0px 0px 16px 9px nb-theme(shadow) !important;
+    box-shadow: var(--gauzy-shadow) !important;
     background: nb-theme(background-basic-color-1) !important;
   }
   tr {
@@ -322,12 +325,12 @@ ng2-smart-table tbody tr {
   &.selected {
     box-shadow: 12.5px 0px 0px -5px rgba(126, 126, 143, 0.05) inset !important;
     &:first-child {
-      border-top-left-radius: 10px;
-      border-top-right-radius: 10px;
+      border-top-left-radius: var(--border-radius);
+      border-top-right-radius: var(--border-radius);
     }
     &:last-child {
-      border-bottom-left-radius: 10px;
-      border-bottom-right-radius: 10px;
+      border-bottom-left-radius: var(--border-radius);
+      border-bottom-right-radius: var(--border-radius);
     }
   }
 }
@@ -357,7 +360,7 @@ nb-card-body {
 // ng smart table scroll container
 .table-scroll-container,
 .grid-scroll-container {
-  border-radius: 8px;
+  border-radius: var(--border-radius);
   overflow-y: auto;
   max-height: calc(100vh - 28rem);
   @include respond(dsk) {
@@ -381,11 +384,11 @@ nb-card-body {
     border-right: none;
     &:first-child {
       border-left: 1px solid nb-theme(smart-table-separator);
-      border-radius: 8px 0 0 8px;
+      border-radius: var(--border-radius) 0 0 var(--border-radius);
     }
     &:last-child {
       border-right: 1px solid nb-theme(smart-table-separator);
-      border-radius: 0 8px 8px 0;
+      border-radius: 0 var(--border-radius) var(--border-radius) 0;
     }
   }
 
@@ -396,16 +399,16 @@ nb-card-body {
   }
 
   tr:first-child td:first-child {
-    border-top-left-radius: 10px;
+    border-top-left-radius: var(--border-radius);
   }
   tr:first-child td:last-child {
-    border-top-right-radius: 10px;
+    border-top-right-radius: var(--border-radius);
   }
   tr:last-child td:first-child {
-    border-bottom-left-radius: 10px;
+    border-bottom-left-radius: var(--border-radius);
   }
   tr:last-child td:last-child {
-    border-bottom-right-radius: 10px;
+    border-bottom-right-radius: var(--border-radius);
   }
 
   tbody:before {
@@ -421,8 +424,8 @@ nb-card-body {
 }
 
 nb-tabset .tab.active .tab-link {
-  background-color: rgba(50, 50, 50, 0.03);
-  border-radius: 8px 8px 0 0;
+  background-color: var(--gauzy-card-2);
+  border-radius: var(--border-radius) var(--border-radius) 0 0;
 }
 ng2-smart-table {
   ng2-smart-table-pager {
@@ -519,5 +522,11 @@ ng2-smart-table {
   100% {
     opacity: 1;
     transform: translate(-16.75px, -118.5%);
+  }
+}
+
+.nb-theme-material-light{
+  a > nb-icon {
+    color: #ffffff !important;
   }
 }

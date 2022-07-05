@@ -65,7 +65,7 @@ export class EditTimeFrameComponent
 		if (!!this.timeFrame) {
 			this.timeFrameForm.patchValue({
 				name: this.timeFrame.name,
-				status: this.timeFrame.status,
+				status: this.timeFrame.status.text,
 				startDate: new Date(this.timeFrame.startDate),
 				endDate: new Date(this.timeFrame.endDate)
 			});

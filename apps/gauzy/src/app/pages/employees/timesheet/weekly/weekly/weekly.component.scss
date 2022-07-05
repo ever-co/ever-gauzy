@@ -40,7 +40,7 @@
 		letter-spacing: 0em;
 		text-align: left;
 		color: nb-theme(gauzy-text-color-2);
-		background: rgba(255, 255, 255, 0.75);
+		background: var(--gauzy-card-4);
 		border-radius: nb-theme(border-radius);
 		padding: 3px;
 		height: 42px;
@@ -50,7 +50,7 @@
 	nb-card-body {
 
 		.custom-body {
-			background: rgba(255, 255, 255, 0.99);
+			background: var(--gauzy-card-3);
 			border-radius: nb-theme(border-radius);
 			margin-top: 6px;
 			padding-left: 12px;
@@ -70,9 +70,9 @@
 			}
 
 			.selected {
-				background-color: rgba(126, 126, 143, 0.1);
+				background-color: var(--gauzy-sidebar-background-3);
 				box-shadow: -6px 0 0 0 rgba(48, 48, 120, 0.2);
-				border-radius: 8px 0 0 8px;
+				border-radius: var(--border-radius) 0 0 var(--border-radius);
 
 				&.border-bottom {
 					border-bottom: none;

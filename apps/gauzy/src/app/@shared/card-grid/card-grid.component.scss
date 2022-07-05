@@ -1,6 +1,6 @@
-@import 'report';
+@import 'themes';
 
-.card-layout {
+:host .card-layout {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(21rem, 1fr));
   -webkit-box-align: start;
@@ -18,7 +18,7 @@
     margin-bottom: 0;
     border-radius: 0.5rem;
     background-color: nb-theme(background-basic-color-3);
-    box-shadow: 0px 1px 1px 0px rgba(0, 0, 0, 0.15);
+    box-shadow: var(--gauzy-shadow);
     cursor: pointer;
 
     .card-body {
@@ -48,11 +48,12 @@
       width: 100%;
 
       .info-meta {
-        background-color: nb-theme(background-basic-color-1);
+        background-color: var(--gauzy-card-1);
         padding: 6px 10px;
         border-radius: 4px;
         width: 88%;
-        margin: 0px 2px 4px 0px;
+        @include nb-ltr(margin, 0px 2px 4px 0px);
+        @include nb-rtl(margin, 0px 0px 4px 2px);
 
         &.image-logo {
           display: none;
@@ -62,11 +63,13 @@
       .info-value {
         text-align: start;
         font-size: 1em;
-        background-color: nb-theme(background-basic-color-1);
+        background-color: var(--gauzy-card-1);
         padding: 6px 10px;
         border-radius: 4px;
         width: 100%;
         margin: 0px 0px 4px 2px;
+        @include nb-ltr(margin, 0px 0px 4px 2px);
+        @include nb-rtl(margin, 0px 2px 4px 0px);
         position: relative;
 
         &.image-logo {

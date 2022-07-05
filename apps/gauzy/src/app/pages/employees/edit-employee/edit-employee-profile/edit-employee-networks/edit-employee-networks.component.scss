@@ -1,7 +1,7 @@
 @import 'themes';
 $radius: nb-theme(border-radius);
 :host {
-  background-color: rgba(50, 50, 50, 0.03);
+  background-color: var(--gauzy-card-2);
   border-radius: $radius;
   overflow-y: auto;
   max-height: calc(100vh - 28rem);

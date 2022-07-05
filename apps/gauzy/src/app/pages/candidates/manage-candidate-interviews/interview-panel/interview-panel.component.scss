@@ -11,7 +11,7 @@
   border: none;
   padding: 0;
   overflow: unset;
-  background-color: rgba(50, 50, 50, 0.03);
+  background-color: var(--gauzy-card-2);
 
   &-filter {
     padding-bottom: 1.5rem;

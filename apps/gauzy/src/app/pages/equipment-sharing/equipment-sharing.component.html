@@ -1,4 +1,8 @@
-<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
+<nb-card
+	[nbSpinner]="loading"
+	nbSpinnerStatus="primary"
+	nbSpinnerSize="large"
+>
 	<nb-card-header class="d-flex flex-column pb-0">
 		<div class="card-header-title">
 			<div class="card-header-title">
@@ -9,21 +13,21 @@
 					</ngx-header-title>
 				</h4>
 			</div>
-			<div class="card-header-title">
-				<div class="mr-2">
-					<button
-						nbButton
-						outline
-						status="primary"
-						(click)="manageApprovalPolicy()"
-					>
-						{{
-							'EQUIPMENT_SHARING_PAGE.EQUIPMENT_SHARING_POLICY'
-								| translate
-						}}
-					</button>
+			<ng-template [ngxPermissionsOnly]="PermissionsEnum.POLICY_VIEW">
+				<div class="card-header-title">
+					<div>
+						<button
+							nbButton
+							outline
+							class="action"
+							status="primary"
+							[routerLink]="'/pages/organization/equipment-sharing-policy'"
+						>
+							{{ 'EQUIPMENT_SHARING_PAGE.EQUIPMENT_SHARING_POLICY' | translate }}
+						</button>
+					</div>
 				</div>
-			</div>
+			</ng-template>
 		</div>
 		<div class="gauzy-button-container">
 			<ngx-gauzy-button-action
@@ -35,46 +39,48 @@
 		</div>
 	</nb-card-header>
 	<nb-card-body>
-		<ng-container *ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE">
-			<div class="table-scroll-container">
-				<ng2-smart-table
+		<ng-template [ngxPermissionsOnly]="PermissionsEnum.ORG_EQUIPMENT_SHARING_VIEW">
+			<ng-container *ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE">
+				<div class="table-scroll-container">
+					<ng2-smart-table
+						[settings]="settingsSmartTable"
+						[source]="smartTableSource"
+						(userRowSelect)="selectEquipmentSharing($event)"
+						style="cursor: pointer"
+						#equipmentSharingTable
+					></ng2-smart-table>
+				</div>
+				<div class="pagination-container">
+					<ng-container *ngIf="pagination.totalItems > minItemPerPage">
+						<ga-pagination
+							(selectedOption)="onUpdateOption($event)"
+							(selectedPage)="onPageChange($event)"
+							[doEmit]="false"
+							[totalItems]="pagination?.totalItems"
+							[itemsPerPage]="pagination?.itemsPerPage"
+							[activePage]="pagination?.activePage"
+						></ga-pagination>
+					</ng-container>
+				</div>
+			</ng-container>
+			<ng-container *ngIf="dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID">
+				<ga-card-grid
 					[settings]="settingsSmartTable"
-					[source]="smartTableSource"
-					(userRowSelect)="selectEquipmentSharing($event)"
-					style="cursor: pointer"
-					#equipmentSharingTable
-				></ng2-smart-table>
-			</div>
-			<div class="pagination-container">
-				<ng-container *ngIf="pagination.totalItems > minItemPerPage">
-					<ga-pagination
-						(selectedOption)="onUpdateOption($event)"
-						(selectedPage)="onPageChange($event)"
-						[doEmit]="false"
-						[totalItems]="pagination?.totalItems"
-						[itemsPerPage]="pagination?.itemsPerPage"
-						[activePage]="pagination?.activePage"
-					></ga-pagination>
-				</ng-container>
-			</div>
-		</ng-container>
-		<ng-container *ngIf="dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID">
-			<ga-card-grid
-				[settings]="settingsSmartTable"
-				[source]="equipmentsData"
-				(selectedOption)="onUpdateOption($event)"
-				(selectedPage)="onPageChange($event)"
-				(onSelectedItem)="selectEquipmentSharing($event)"
-				[doEmit]="false"
-				[totalItems]="pagination?.totalItems"
-				[itemsPerPage]="pagination?.itemsPerPage"
-				[activePage]="pagination?.activePage"
-        	></ga-card-grid>
-		</ng-container>
+					[source]="equipments"
+					(selectedOption)="onUpdateOption($event)"
+					(selectedPage)="onPageChange($event)"
+					(onSelectedItem)="selectEquipmentSharing($event)"
+					[doEmit]="false"
+					[totalItems]="pagination?.totalItems"
+					[itemsPerPage]="pagination?.itemsPerPage"
+					[activePage]="pagination?.activePage"
+				></ga-card-grid>
+			</ng-container>
+		</ng-template>
 	</nb-card-body>
 </nb-card>
 <ng-template #visibleButton>
-	<ng-container *ngxPermissionsOnly="ALL_ORG_EDIT">
+	<ng-template [ngxPermissionsOnly]="PermissionsEnum.EQUIPMENT_MAKE_REQUEST">
 		<button
 			(click)="save(true)"
 			nbButton
@@ -82,54 +88,58 @@
 			class="action"
 			size="small"
 		>
-			<nb-icon icon="plus-outline"></nb-icon
-			>{{ 'BUTTONS.ADD' | translate }}
-		</button>	
-	</ng-container>
+			<nb-icon icon="plus-outline"></nb-icon>
+			{{ 'BUTTONS.ADD' | translate }}
+		</button>
+	</ng-template>
 </ng-template>
 <ng-template
 	#actionButtons
 	let-buttonSize="buttonSize"
 	let-selectedItem="selectedItem"
 >
-	<ng-container *ngxPermissionsOnly="ALL_ORG_EDIT">	
-		<div class="btn-group actions">
+	<div class="btn-group actions">
+		<ng-template [ngxPermissionsOnly]="PermissionsEnum.EQUIPMENT_APPROVE_REQUEST">
+			<ng-container *ngIf="showApprovedButton(selectedEquipmentSharing)">
+				<button
+					nbButton
+					outline
+					status="success"
+					(click)="approval(selectedEquipmentSharing)"
+					class="action"
+					size="small"
+				>
+					{{ 'EQUIPMENT_SHARING_PAGE.APPROVE' | translate }}
+				</button>
+			</ng-container>
+			<ng-container *ngIf="showRefuseButton(selectedEquipmentSharing)">
+				<button
+					nbButton
+					outline
+					status="danger"
+					(click)="refuse(selectedEquipmentSharing)"
+					size="small"
+					class="action"
+				>
+					{{ 'EQUIPMENT_SHARING_PAGE.REFUSE' | translate }}
+				</button>
+			</ng-container>
+		</ng-template>
+		<ng-template [ngxPermissionsOnly]="PermissionsEnum.ORG_EQUIPMENT_SHARING_EDIT">
 			<button
-				nbButton
-				outline
-				status="success"
-				(click)="approval(selectedEquipmentSharing)"
-				*ngIf="showApprovedButton(selectedEquipmentSharing)"
-				class="action"
-				size="small"
-			>
-				{{ 'EQUIPMENT_SHARING_PAGE.APPROVE' | translate }}
-			</button>
-			<button
-				nbButton
-				outline
-				status="danger"
-				(click)="refuse(selectedEquipmentSharing)"
-				*ngIf="showRefuseButton(selectedEquipmentSharing)"
-				size="small"
-				class="action"
-			>
-				{{ 'EQUIPMENT_SHARING_PAGE.REFUSE' | translate }}
-			</button>
-			<button
-				(click)="save(false, selectedItem)"	
+				(click)="save(false, selectedItem)"
 				nbButton
 				status="basic"
 				class="action primary"
-				size="small"	
-				[disabled]="!selectedItem && disableButton"				
+				size="small"
+				[disabled]="!selectedItem && disableButton"
 			>
 				<nb-icon icon="edit-outline"></nb-icon>
 				{{ 'BUTTONS.EDIT' | translate }}
-			</button>	
+			</button>
 			<button
 				nbButton
-				[disabled]="!selectedItem && disableButton"		
+				[disabled]="!selectedItem && disableButton"
 				size="small"
 				(click)="delete(selectedItem)"
 				status="basic"
@@ -137,7 +147,7 @@
 				[nbTooltip]="'BUTTONS.DELETE' | translate"
 			>
 				<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
-			</button>		
-		</div>
-	</ng-container>
+			</button>
+		</ng-template>
+	</div>
 </ng-template>

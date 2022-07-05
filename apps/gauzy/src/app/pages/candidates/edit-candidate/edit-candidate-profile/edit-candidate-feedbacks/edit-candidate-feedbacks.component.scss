@@ -201,7 +201,7 @@
   justify-content: flex-start;
   align-items: center;
   width: 100%;
-  background-color: rgba(255, 255, 255, 0.5);
+  background-color: var(--gauzy-card-4);
   padding: 1rem 0;
   margin-bottom: 0.5rem;
   border-radius: nb-theme(border-radius);
@@ -262,7 +262,7 @@
   nb-card,
   nb-card-body,
   .feedbacks-card-wrap {
-    background-color: rgba(50, 50, 50, 0.03);
+    background-color: var(--gauzy-card-2);
   }
   overflow-y: auto;
   max-height: calc(100vh - 28rem);

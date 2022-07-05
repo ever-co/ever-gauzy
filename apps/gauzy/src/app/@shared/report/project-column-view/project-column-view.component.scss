@@ -1,52 +1,53 @@
+@import 'themes';
+
 :host {
     width: 100%;
-}
 
-.single-project-template {
-    display: flex;
-    align-items: center;
-    padding-top: 5px;
-
-    .logo-wrapper {
-        min-width: 28px;
-        min-height: 28px;
-        width: 28px;
-        height: 28px;
-        margin-right: 10px;
-
-        img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            border-radius: var(--border-radius);
-            box-shadow: 0 1px 1px 0 rgba(0, 0, 0, 0.15);
-        }
-    }
-    .headers-wrapper {
+    .single-project-template {
         display: flex;
-        flex-direction: column;
-        overflow: hidden;
+        align-items: center;
+        padding-top: 5px;
 
-        .main-header {
-            font-family: Inter;
-            font-size: 14px;
-            font-style: normal;
-            font-weight: 600;
-            line-height: 17px;
-            letter-spacing: 0em;
-            text-align: left;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+        .logo-wrapper {
+            min-width: 28px;
+            min-height: 28px;
+            width: 28px;
+            height: 28px;
+            @include nb-rtl(margin-left, 10px);
+            @include nb-ltr(margin-right, 10px);
+
+            img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                border-radius: var(--border-radius);
+                box-shadow: var(--gauzy-shadow)(0, 0, 0, 0.15);
+            }
         }
-        .employees-count {
-            font-family: Inter;
-            font-size: 11px;
-            font-style: normal;
-            font-weight: 400;
-            line-height: 13px;
-            letter-spacing: 0em;
-            text-align: left;
+
+        .headers-wrapper {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+
+            .main-header {
+                font-size: 14px;
+                font-style: normal;
+                font-weight: 600;
+                line-height: 17px;
+                letter-spacing: 0em;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            .employees-count {
+                font-size: 11px;
+                font-style: normal;
+                font-weight: 400;
+                line-height: 13px;
+                letter-spacing: 0em;
+            }
         }
     }
 }

@@ -91,6 +91,11 @@ export class User extends TenantBaseEntity implements IUser {
 	@Column({ nullable: true })
 	hash?: string;
 
+	@ApiProperty({ type: () => String })
+	@Exclude()
+	@Column({ nullable: true })
+	public refreshToken?: string;
+
 	@ApiPropertyOptional({ type: () => String, maxLength: 500 })
 	@IsOptional()
 	@Column({ length: 500, nullable: true })
@@ -98,27 +103,36 @@ export class User extends TenantBaseEntity implements IUser {
 
 	@ApiProperty({ type: () => String, enum: LanguagesEnum })
 	@IsEnum(LanguagesEnum)
-	@Column({ nullable: true })
+	@Column({ nullable: true, default: LanguagesEnum.ENGLISH })
 	preferredLanguage?: string;
 
 	@ApiProperty({ type: () => String, enum: ComponentLayoutStyleEnum })
 	@IsEnum(ComponentLayoutStyleEnum)
-	@Column({ nullable: true })
-	preferredComponentLayout?: string;
+	@Column({
+		type: 'simple-enum',
+		nullable: true,
+		default: ComponentLayoutStyleEnum.TABLE,
+		enum: ComponentLayoutStyleEnum
+	})
+	preferredComponentLayout?: ComponentLayoutStyleEnum;
+
+	@ApiPropertyOptional({ type: () => Boolean, default: true })
+	@Column({ nullable: true, default: true })
+	isActive?: boolean;
 
 	name?: string;
 	employeeId?: string;
 
 	/*
     |--------------------------------------------------------------------------
-    | @ManyToOne 
+    | @ManyToOne
     |--------------------------------------------------------------------------
     */
     // Role
 	@ApiPropertyOptional({ type: () => Role })
-	@ManyToOne(() => Role, (role) => role.users, { 
-		nullable: true, 
-		onDelete: 'CASCADE' 
+	@ManyToOne(() => Role, (role) => role.users, {
+		nullable: true,
+		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
 	role?: IRole;
@@ -133,10 +147,10 @@ export class User extends TenantBaseEntity implements IUser {
 
 	/*
     |--------------------------------------------------------------------------
-    | @OneToOne 
+    | @OneToOne
     |--------------------------------------------------------------------------
     */
-   	
+
 	/**
 	 * Employee
 	 */
@@ -146,7 +160,7 @@ export class User extends TenantBaseEntity implements IUser {
 
 	/*
     |--------------------------------------------------------------------------
-    | @ManyToMany 
+    | @ManyToMany
     |--------------------------------------------------------------------------
     */
     // Tags
@@ -161,7 +175,7 @@ export class User extends TenantBaseEntity implements IUser {
 
 	/*
     |--------------------------------------------------------------------------
-    | @OneToMany 
+    | @OneToMany
     |--------------------------------------------------------------------------
     */
 

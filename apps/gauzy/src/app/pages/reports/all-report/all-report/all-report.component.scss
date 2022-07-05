@@ -40,7 +40,7 @@
   justify-content: space-between;
   position: relative;
   border: nb-theme(border-radius);
-  box-shadow: 0px 1px 1px 0px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--gauzy-shadow);
   border-radius: nb-theme(border-radius);
   & .custom-button {
     height: 40px;
@@ -84,12 +84,10 @@ nb-card-body {
   font-weight: 600;
   line-height: 16px;
   letter-spacing: 0em;
-  text-align: left;
 }
 .report-name {
   font-size: 14px;
   font-weight: 600;
   line-height: 17px;
   letter-spacing: 0em;
-  text-align: left;
 }

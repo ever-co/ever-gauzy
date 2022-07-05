@@ -132,6 +132,9 @@ export class KeyResultParametersComponent implements OnInit, OnDestroy {
 					}
 				});
 		}
+		if (this.typeForm.value.type === this.keyResultTypeEnum.KPI) {
+			this.data.selectedKeyResult.kpiId = this.typeForm.value.kpiId;
+		}
 		this.data.selectedKeyResult.type = this.typeForm.value.type;
 		this.data.selectedKeyResult.targetValue =
 			this.typeForm.value.targetValue;

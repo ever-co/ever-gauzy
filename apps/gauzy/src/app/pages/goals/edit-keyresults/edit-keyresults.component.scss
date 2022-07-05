@@ -18,11 +18,11 @@
 
 :host {
   nb-card {
-    background: nb-theme(background-basic-color-1);
+    background: var(--gauzy-card-1);
   }
   nb-tab,
   .content {
-    background-color: rgba(50, 50, 50, 0.03);
+    background-color: var(--gauzy-card-2);
   }
   nb-tab {
     height: 20.75vh;

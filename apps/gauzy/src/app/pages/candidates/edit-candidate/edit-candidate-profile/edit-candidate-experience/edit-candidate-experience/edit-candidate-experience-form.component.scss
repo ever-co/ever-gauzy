@@ -44,7 +44,7 @@ input {
   }
 }
 form {
-  background-color: rgba(50, 50, 50, 0.03);
+  background-color: var(--gauzy-card-2);
   border-radius: nb-theme(border-radius);
   padding: 1rem;
 }

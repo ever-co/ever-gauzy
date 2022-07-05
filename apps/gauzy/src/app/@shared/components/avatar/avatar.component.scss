@@ -2,32 +2,51 @@
 
 :host {
     display: block;
+
     .link-text {
         cursor: pointer;
         text-decoration: none;
         color: nb-theme(gauzy-text-contact);
-        font-weight: bold;
+        font-size: 14px;
+        font-weight: 600;
+        line-height: 16px;
+        letter-spacing: 0em;
     }
+
+    .caption {
+        font-size: 11px;
+        font-weight: 400;
+        line-height: 11px;
+        letter-spacing: 0em;
+        color: var(--gauzy-text-color-2);
+    }
+
     .link-text:hover {
         text-decoration: underline;
     }
+
     .image-container {
         width: 48px;
         cursor: pointer;
+
         img {
             width: 48px;
             height: 48px;
             object-fit: cover;
         }
+
         &.lg {
             width: 64px;
+
             img {
                 width: 64px;
                 height: 64px;
             }
         }
+
         &.sm {
             width: 32px;
+
             img {
                 width: 32px;
                 height: 32px;
@@ -40,51 +59,51 @@
     width: 100%;
 
     .inner-wrapper {
-        background: rgba(110, 73, 232, 0.1);
+        background-color: var(--color-primary-transparent-100);
+        border-radius: var(--button-rectangle-border-radius);
         display: flex;
         align-items: center;
-        border-radius: 20px;
         overflow: hidden;
-        padding: 5px 10px 5px 7px;
+        @include nb-ltr(padding, 3px 9px 3px 3px);
+        @include nb-rtl(padding, 3px 3px 3px 9px);
+        gap: 8px;
+        width: fit-content;
     }
 
     .avatar-wrapper {
         width: 100%;
-        border-radius: 20px;
+        border-radius: var(--button-rectangle-border-radius);
     }
 
     .names-wrapper {
         overflow: hidden;
         white-space: nowrap;
         text-overflow: ellipsis;
-        margin-bottom: 1px;
     }
 
     .link-text {
         cursor: pointer;
         text-decoration: none;
-        color: #6E49E8;
-        font-family: Inter;
         font-size: 12px;
         font-style: normal;
         font-weight: 400;
         line-height: 15px;
         letter-spacing: 0em;
-        text-align: left;
         white-space: nowrap;
         width: 100%;
         text-overflow: ellipsis;
+        color: var(--text-primary-color) !important;
     }
+
     .link-text:hover {
         text-decoration: underline;
     }
-    .image-outer-wrapper {
-        margin-right: 8px;
-    }
+
     .image-container {
         width: 20px;
         cursor: pointer;
-        border-radius: 30px;
+        border-radius: var(--button-rectangle-border-radius);
+        display: flex;
 
         img {
             width: 20px;

@@ -6,14 +6,14 @@
   }
   nb-card,
   nb-tab {
-    background-color: rgba(50, 50, 50, 0.03);
+    background-color: var(--gauzy-card-2);
   }
   nb-tab {
     height: calc(100vh - 22.5rem);
   }
 }
 .card-general {
-  background: rgba(255, 255, 255, 0.5);
+  background: var(--gauzy-card-3);
   border-radius: nb-theme(border-radius);
 }
 .gauzy-button-container {

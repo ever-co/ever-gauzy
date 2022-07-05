@@ -558,10 +558,12 @@ export class PagesComponent
 						icon: 'fas fa-border-all',
 						link: '/pages/organization/equipment',
 						data: {
-							permissionKeys: [PermissionsEnum.ALL_ORG_VIEW],
+							permissionKeys: [
+								PermissionsEnum.ALL_ORG_VIEW,
+								PermissionsEnum.ORG_EQUIPMENT_VIEW
+							],
 							translationKey: 'MENU.EQUIPMENT',
-							featureKey:
-								FeatureEnum.FEATURE_ORGANIZATION_EQUIPMENT,
+							featureKey: FeatureEnum.FEATURE_ORGANIZATION_EQUIPMENT,
 							add: '/pages/organization/equipment?openAddDialog=true'
 						}
 					},

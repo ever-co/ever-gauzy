@@ -59,6 +59,8 @@ jobs:
                 WASABI_S3_BUCKET: '${{ secrets.WASABI_S3_BUCKET }}'
                 EXPRESS_SESSION_SECRET: '${{ secrets.EXPRESS_SESSION_SECRET }}'
                 JWT_SECRET: '${{ secrets.JWT_SECRET }}'
+                JWT_REFRESH_TOKEN_SECRET: '${{ secrets.JWT_REFRESH_TOKEN_SECRET }}'
+                JWT_REFRESH_TOKEN_EXPIRATION_TIME: '${{ secrets.JWT_REFRESH_TOKEN_EXPIRATION_TIME }}'
                 CLOUDINARY_API_KEY: '${{ secrets.CLOUDINARY_API_KEY }}'
                 CLOUDINARY_API_SECRET: '${{ secrets.CLOUDINARY_API_SECRET }}'
                 CLOUDINARY_CLOUD_NAME: '${{ secrets.CLOUDINARY_CLOUD_NAME }}'

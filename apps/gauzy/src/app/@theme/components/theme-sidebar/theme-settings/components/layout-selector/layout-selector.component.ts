@@ -12,7 +12,7 @@ import { Store } from './../../../../../../@core/services';
 	styleUrls: ['./layout-selector.component.scss']
 })
 export class LayoutSelectorComponent implements OnInit, OnDestroy {
-	
+
 	user: IUser;
 	componentLayouts = Object.values(ComponentLayoutStyleEnum);
 	preferredComponentLayout: ComponentLayoutStyleEnum = ComponentLayoutStyleEnum.TABLE;
@@ -59,9 +59,9 @@ export class LayoutSelectorComponent implements OnInit, OnDestroy {
 
 	/**
 	 * Changed User Selected Preferred Component Layout
-	 * 
-	 * @param payload 
-	 * @returns 
+	 *
+	 * @param payload
+	 * @returns
 	 */
 	private async changePreferredComponentLayout(payload: IUserUpdateInput) {
 		if (!this.user) {

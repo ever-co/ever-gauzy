@@ -4,7 +4,7 @@
   margin: 20px 0 0 0;
   align-items: center;
   display: flex;
-  background-color: rgba(123, 123, 143, 0.1);
+  background-color: var(--gauzy-sidebar-background-3);
   border-radius: 8px;
   height: 32px;
   padding: 0 10px;
@@ -35,7 +35,7 @@
 }
 
 nb-card.filter {
-  background-color: rgba(50, 50, 50, 0.03);
+  background-color: var(--gauzy-card-2);
 
   nb-card-header {
     font-size: 14px;
@@ -57,8 +57,8 @@ nb-card.filter {
 
 .filter-item {
   padding: 10px 15px;
-  box-shadow: 0px 1px 1px 0px rgba(0, 0, 0, 0.15);
-  background: rgba(255, 255, 255, 0.5);
+  box-shadow: var(--gauzy-shadow);
+  background: var(--gauzy-card-3);
   border-radius: 20px;
   height: 36px;
 }
@@ -70,10 +70,11 @@ nb-card.filter {
 }
 
 nb-card.tags-component {
+  background-color: var(--gauzy-card-2);
   nb-card-body {
     display: flex;
     flex-direction: column;
-    background-color: nb-theme(gauzy-card-2);
+    background-color: var(--gauzy-card-2);
     overflow: unset;
     height: calc(100vh - 27rem);
 		border-radius: 0 0 nb-theme(border-radius) nb-theme(border-radius);

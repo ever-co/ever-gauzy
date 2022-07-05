@@ -3,12 +3,12 @@
 :host {
   nb-card,
   nb-card-body {
-    background-color: rgba(50, 50, 50, 0.03);
+    background-color: var(--gauzy-card-2);
   }
   .form-group.row {
     display: flex;
     flex-direction: column;
-    background: rgba(255, 255, 255, 0.5);
+    background: var(--gauzy-card-3);
     padding: 10px 20px 18px 12px;
     border-radius: nb-theme(border-radius);
     width: 100%;

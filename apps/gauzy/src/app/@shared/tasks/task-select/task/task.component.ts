@@ -138,13 +138,14 @@ export class TaskSelectorComponent
 			const member: any = {
 				id: this.employeeId || this.store.user.employeeId
 			};
+			
 			const task = await firstValueFrom(this.tasksService
 				.createTask({
 					title,
 					organizationId: organizationId,
-					members: [member],
+					...(member.id && {members: [member]}),
 					status: TaskStatusEnum.IN_PROGRESS,
-					...(this.projectId ? { projectId: this.projectId } : {})
+					...(this.projectId && { projectId: this.projectId }),					
 				}));
 			this.tasks = this.tasks.concat(task);
 			this.taskId = task.id;
