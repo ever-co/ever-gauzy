@@ -6,15 +6,22 @@ import { Router } from '@angular/router';
 	template: `
 		<div class="contact-links-container">
 			<ng-container *ngIf="value">
-				<a 
-					*ngIf="value?.name" 
-					(click)="navigateToContact()" 
-					class="link-text" 
+				<div
+					*ngIf="value?.name"
+					(click)="navigateToContact()"
+					class="inner-wrapper"
 					[nbTooltip]="value.name"
 				>
-					<span>{{ value.name.substr(0,2).toUpperCase() }}</span>
-					{{ value.name }}
-				</a>
+					<div *ngIf="!value.imageUrl" class="prefix">
+						{{ value.name.substr(0, 1).toUpperCase() }}
+					</div>
+					<div *ngIf="value.imageUrl" class="avatar">
+						<img [src]="value?.imageUrl">
+					</div>
+					<div class="names-wrapper">
+						<a class="link-text">{{ value.name }}</a>
+					</div>
+				</div>
 			</ng-container>
 		</div>
 	`,
@@ -27,9 +34,7 @@ export class ContactLinksComponent {
 	@Input()
 	value: any;
 
-	constructor(
-		private readonly _router: Router
-	) {}
+	constructor(private readonly _router: Router) {}
 
 	navigateToContact() {
 		if (!this.value) {

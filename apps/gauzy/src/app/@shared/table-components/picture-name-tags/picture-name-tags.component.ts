@@ -9,6 +9,7 @@ import { NotesWithTagsComponent } from '../notes-with-tags/notes-with-tags.compo
 			[src]="rowData?.imageUrl"
 			[name]="rowData?.fullName ? rowData?.fullName : rowData?.name"
       		[id]="rowData?.id"
+			class="report-table"
 		></ngx-avatar>
 		<ng-template [ngIf]="rowData?.isDefault">
 			<nb-badge

@@ -23,7 +23,8 @@
 }
 
 .budget-row {
-    padding-right: 5%;
+    @include nb-ltr(padding-right, 5%);
+    @include nb-rtl(padding-left, 5%);
     display: flex;
     flex-wrap: wrap;
     justify-content: space-between;
@@ -35,7 +36,8 @@
 
     .currency-span {
         white-space: nowrap;
-        text-align: right;
+        @include nb-ltr(text-align, right);
+        @include nb-rtl(text-align, left);
     }
 }
 

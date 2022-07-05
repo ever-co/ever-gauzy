@@ -2,7 +2,7 @@
 
 $radius: var(--button-rectangle-border-radius);
 
-.avatar-container {
+:host .avatar-container {
   position: relative;
   display: flex;
   align-items: flex-start;
@@ -20,7 +20,8 @@ $radius: var(--button-rectangle-border-radius);
       background-color: var(--gauzy-primary-background);
       object-fit: cover;
       color: nb-theme(text-primary-color);
-      padding: 5px 14px 5px 7px;
+      @include nb-ltr(padding, 5px 14px 5px 7px);
+      @include nb-rtl(padding, 5px 7px 5px 14px);
       border-radius: $radius;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -33,7 +34,8 @@ $radius: var(--button-rectangle-border-radius);
         width: 18px;
         height: 18px;
         border-radius: var(--border-radius);
-        margin-right: 8px;
+        @include nb-ltr(margin-right, 8px);
+        @include nb-rtl(margin-left, 8px);
       }
 
       &:hover {
@@ -54,8 +56,11 @@ $radius: var(--button-rectangle-border-radius);
   z-index: 3;
 }
 
-.avatar-group .avatar+.avatar {
-  margin-left: -4rem;
+:host {
+  .avatar-group .avatar+.avatar {
+    @include nb-ltr(margin-left, -4rem);
+    @include nb-rtl(margin-right, -4rem);
+  }
 }
 
 .main {

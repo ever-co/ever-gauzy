@@ -10,7 +10,7 @@
     width: 28px;
     height: 28px;
     border-radius: nb-theme(border-radius);
-    box-shadow: var(--gauzy-shadow)(0, 0, 0, 0.25);
+    box-shadow: var(--gauzy-shadow);
     object-fit: cover;
   }
 
@@ -20,7 +20,6 @@
     font-weight: 400;
     line-height: 13px;
     letter-spacing: 0em;
-    text-align: left;
   }
 
   .name {
@@ -29,6 +28,5 @@
     font-weight: 600;
     line-height: 17px;
     letter-spacing: 0em;
-    text-align: left;
   }
 }

@@ -1,3 +1,5 @@
+@import 'themes';
+
 .container {
     background-color: var(--gauzy-card-1);
     border-radius: 4px;
@@ -16,10 +18,9 @@ img {
     row-gap: 8px;
 }
 
-a {
+:host a {
     background-color: var(--color-primary-transparent-100);
     border-radius: var(--button-rectangle-border-radius);
-    padding: 3px 9px 3px 3px;
     display: inline-block;
     flex-direction: row;
     align-items: center;
@@ -30,12 +31,13 @@ a {
     font-weight: 400;
     line-height: 15px;
     letter-spacing: 0em;
-    text-align: left;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
     gap: 8px;
     text-decoration: none;
+    @include nb-ltr(padding, 3px 9px 3px 3px);
+    @include nb-rtl(padding, 3px 3px 3px 9px);
 
     img {
         border-radius: var(--button-rectangle-border-radius);
@@ -58,7 +60,6 @@ a {
         font-weight: 600;
         line-height: 15px;
         letter-spacing: 0em;
-        text-align: left;
         color: var(--gauzy-text-color-2);
     }
 }

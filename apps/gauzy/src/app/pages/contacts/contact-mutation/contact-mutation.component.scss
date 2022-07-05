@@ -114,33 +114,6 @@ h4 {
 
 :host {
 
-  ngx-avatar::ng-deep {
-    .inner-wrapper {
-      background-color: nb-theme(color-primary-transparent-100);
-      border-radius: nb-theme(button-rectangle-border-radius);
-      padding: 0px 9px 0px 3px;
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-      font-size: 12px;
-
-      .image-container.md {
-        width: 32px;
-        padding-bottom: 3px;
-
-        img {
-          width: 28px;
-          height: 28px;
-        }
-      }
-
-      .link-text {
-        color: nb-theme(text-primary-color);
-        font-weight: normal;
-      }
-    }
-  }
-
   nb-card,
   nb-card-body,
   nb-card-header {
