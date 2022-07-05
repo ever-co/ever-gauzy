@@ -127,6 +127,8 @@
 	"SM_TABLE": {
 		"RECEIVE_ESTIMATE_NO_DATA": "You have not received any estimate.",
 		"INCOME_NO_DATA": "You have not created any income.",
+		"EXPENSE_NO_DATA": "You have not created any expense.",
+		"PAYMENT_NO_DATA": "You have not received any payment.",
 		"TRANSACTION_TYPE": "Type",
 		"AMOUNT": "Amount",
 		"DATE": "Date",

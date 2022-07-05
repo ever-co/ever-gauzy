@@ -1,5 +1,5 @@
 <div
-	*ngIf="source.length; else noDataGridLayout"
+	*ngIf="source && source.length > 0; else noDataGridLayout"
 	class="card-layout grid-scroll-container p-1"
 	infinite-scroll
 	[scrollWindow]="false"
