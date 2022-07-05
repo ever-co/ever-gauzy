@@ -32,7 +32,8 @@ export class SwitchThemeComponent extends ThemeSelectorComponent {
 			});
 		if (!this.switchService.isAlreadyLoaded) {
 			this.ngOnInit();
-			this.getPreferColorOsScheme();
+			if (!this.switchService.hasAlreadyPreferedTheme)
+				this.getPreferColorOsScheme();
 			this.switchService.isAlreadyLoaded = true;
 		}
 	}
