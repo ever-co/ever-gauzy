@@ -12,9 +12,10 @@
     }
 }
 
-.gauzy-button-container {
+:host .gauzy-button-container {
     position: absolute;
-    right: 0;
+    @include nb-ltr(right, 16px);
+    @include nb-rtl(left, 16px);
     top: 0;
 }
 
@@ -27,4 +28,9 @@ nb-accordion-item-header ::ng-deep nb-icon {
 
 nb-card-body {
     background: none;
+}
+
+:host .custom-table.selected {
+    box-shadow: -6px 0px 0px 0px rgb(50 50 50 / 25%);
+    background: rgba(50, 50, 50, 0.03);
 }
