@@ -64,9 +64,9 @@ export class UserController extends CrudController<User> {
 
 	/**
 	 * GET current login user
-	 * 
-	 * @param data 
-	 * @returns 
+	 *
+	 * @param data
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'Find current user.' })
 	@ApiResponse({
@@ -91,9 +91,9 @@ export class UserController extends CrudController<User> {
 
 	/**
 	 * GET user by email
-	 * 
-	 * @param email 
-	 * @returns 
+	 *
+	 * @param email
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'Find user by email address.' })
 	@ApiResponse({
@@ -112,11 +112,11 @@ export class UserController extends CrudController<User> {
 
 	/**
 	 * UPDATE user preferred language
-	 * 
-	 * @param id 
-	 * @param entity 
-	 * @param options 
-	 * @returns 
+	 *
+	 * @param id
+	 * @param entity
+	 * @param options
+	 * @returns
 	 */
 	@HttpCode(HttpStatus.ACCEPTED)
 	@UseGuards(TenantPermissionGuard)
@@ -143,11 +143,11 @@ export class UserController extends CrudController<User> {
 
 	/**
 	 * UPDATE user preferred component layout
-	 * 
-	 * @param id 
-	 * @param entity 
-	 * @param options 
-	 * @returns 
+	 *
+	 * @param id
+	 * @param entity
+	 * @param options
+	 * @returns
 	 */
 	@HttpCode(HttpStatus.ACCEPTED)
 	@UseGuards(TenantPermissionGuard)
@@ -164,10 +164,10 @@ export class UserController extends CrudController<User> {
 		if (userId !== id) {
 			throw new ForbiddenException();
 		}
-		
+
 		const { preferredComponentLayout } = entity;
 		return this.userService.updatePreferredComponentLayout(
-			id, 
+			id,
 			preferredComponentLayout
 		);
 	}
@@ -175,9 +175,9 @@ export class UserController extends CrudController<User> {
 
 	/**
 	 * GET user count
-	 * 
-	 * @param data 
-	 * @returns 
+	 *
+	 * @param data
+	 * @returns
 	 */
 	@Get('count')
 	async getCount(
@@ -192,9 +192,9 @@ export class UserController extends CrudController<User> {
 
 	/**
 	 * GET user list by pagination
-	 * 
-	 * @param filter 
-	 * @returns 
+	 *
+	 * @param filter
+	 * @returns
 	 */
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_USERS_VIEW)
@@ -208,9 +208,9 @@ export class UserController extends CrudController<User> {
 
 	/**
 	 * GET all users
-	 * 
-	 * @param data 
-	 * @returns 
+	 *
+	 * @param data
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'Find all users.' })
 	@ApiResponse({
@@ -237,10 +237,10 @@ export class UserController extends CrudController<User> {
 
 	/**
 	 * GET user by id
-	 * 
-	 * @param id 
-	 * @param data 
-	 * @returns 
+	 *
+	 * @param id
+	 * @param data
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'Find User by id.' })
 	@ApiResponse({
@@ -263,10 +263,10 @@ export class UserController extends CrudController<User> {
 
 	/**
 	 * CREATE new user
-	 * 
-	 * @param entity 
-	 * @param options 
-	 * @returns 
+	 *
+	 * @param entity
+	 * @param options
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'Create new record' })
 	@ApiResponse({
@@ -294,11 +294,11 @@ export class UserController extends CrudController<User> {
 
 	/**
 	 * UPDATE user by id
-	 * 
-	 * @param id 
-	 * @param entity 
-	 * @param options 
-	 * @returns 
+	 *
+	 * @param id
+	 * @param entity
+	 * @param options
+	 * @returns
 	 */
 	@HttpCode(HttpStatus.ACCEPTED)
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -317,9 +317,9 @@ export class UserController extends CrudController<User> {
 
 	/**
 	 * DELTE user account
-	 * 
-	 * @param userId 
-	 * @returns 
+	 *
+	 * @param userId
+	 * @returns
 	 */
 	@ApiOperation({
 		summary: 'Delete record'
@@ -345,9 +345,9 @@ export class UserController extends CrudController<User> {
 
 	/**
 	 * DELETE all user data from all tables
-	 * 
-	 * @param id 
-	 * @returns 
+	 *
+	 * @param id
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'Delete all user data.' })
 	@ApiResponse({

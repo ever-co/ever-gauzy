@@ -31,6 +31,7 @@ export interface IUser extends IBasePerTenantEntityModel {
 	organizations?: IOrganization[];
 	isImporting?: boolean;
 	sourceId?: string;
+	isActive?: boolean;
 }
 
 export interface IUserFindInput extends IBasePerTenantEntityModel {
