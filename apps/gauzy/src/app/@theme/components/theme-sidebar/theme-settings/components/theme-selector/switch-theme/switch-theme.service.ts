@@ -6,10 +6,10 @@ import { Store } from 'apps/gauzy/src/app/@core';
 })
 export class SwitchThemeService {
 	private _isAlreadyLoaded: boolean = false;
-	private _hasAlreadyPreferedTheme: boolean = false;
+	private _hasAlreadyPreferredTheme: boolean = false;
 
 	constructor(private readonly store: Store) {
-		this._hasAlreadyPreferedTheme = this.store.currentTheme ? true : false;
+		this._hasAlreadyPreferredTheme = this.store.currentTheme ? true : false;
 	}
 
 	public get isAlreadyLoaded() {
@@ -20,7 +20,7 @@ export class SwitchThemeService {
 		this._isAlreadyLoaded = value;
 	}
 
-	public get hasAlreadyPreferedTheme() {
-		return this._hasAlreadyPreferedTheme;
+	public get hasAlreadyPreferredTheme() {
+		return this._hasAlreadyPreferredTheme;
 	}
 }
