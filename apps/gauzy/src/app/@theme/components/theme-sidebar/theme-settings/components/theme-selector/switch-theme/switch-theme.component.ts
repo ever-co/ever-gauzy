@@ -2,6 +2,7 @@ import { Component, Input } from '@angular/core';
 import { ThemeSelectorComponent } from '../theme-selector.component';
 import { NbThemeService } from '@nebular/theme';
 import { Store } from '../../../../../../../@core/services/store.service';
+import { SwitchThemeService } from './switch-theme.service';
 
 @Component({
 	selector: 'gauzy-switch-theme',
@@ -9,13 +10,19 @@ import { Store } from '../../../../../../../@core/services/store.service';
 	styleUrls: ['./switch-theme.component.scss']
 })
 export class SwitchThemeComponent extends ThemeSelectorComponent {
+	private DARK_OS_SCHEME = '(prefers-color-scheme: dark)';
+	private LIGHT_OS_SCHEME = '(prefers-color-scheme: light)';
 	@Input() hasText: boolean = true;
 
-	constructor(readonly themeService: NbThemeService, readonly store: Store) {
+	constructor(
+		private readonly switchService: SwitchThemeService,
+		readonly themeService: NbThemeService,
+		readonly store: Store
+	) {
 		super(themeService, store);
 		// Listerning event and switching to current OS color theme
 		window
-			.matchMedia('(prefers-color-scheme: dark)')
+			.matchMedia(this.DARK_OS_SCHEME)
 			.addEventListener('change', (event) => {
 				if (event.matches) {
 					if (!this.isDark.state) this.switchTheme();
@@ -23,8 +30,11 @@ export class SwitchThemeComponent extends ThemeSelectorComponent {
 					if (this.isDark.state) this.switchTheme();
 				}
 			});
-		this.ngOnInit();
-		this.getPreferColorOsScheme();
+		if (!this.switchService.isAlreadyLoaded) {
+			this.ngOnInit();
+			this.getPreferColorOsScheme();
+			this.switchService.isAlreadyLoaded = true;
+		}
 	}
 
 	switchTheme() {
@@ -34,11 +44,11 @@ export class SwitchThemeComponent extends ThemeSelectorComponent {
 	 * get current OS color and switching to it.
 	 */
 	public getPreferColorOsScheme() {
-		if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+		if (window.matchMedia(this.DARK_OS_SCHEME).matches) {
 			if (!this.isDark.state) this.switchTheme();
 		}
 
-		if (window.matchMedia('(prefers-color-scheme: light)').matches) {
+		if (window.matchMedia(this.LIGHT_OS_SCHEME).matches) {
 			if (this.isDark.state) this.switchTheme();
 		}
 	}
