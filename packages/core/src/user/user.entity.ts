@@ -114,7 +114,7 @@ export class User extends TenantBaseEntity implements IUser {
 		default: ComponentLayoutStyleEnum.TABLE,
 		enum: ComponentLayoutStyleEnum
 	})
-	preferredComponentLayout?: string;
+	preferredComponentLayout?: ComponentLayoutStyleEnum;
 
 	@ApiPropertyOptional({ type: () => Boolean, default: true })
 	@Column({ nullable: true, default: true })

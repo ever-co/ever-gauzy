@@ -26,7 +26,7 @@ export interface IUser extends IBasePerTenantEntityModel {
 	preferredLanguage?: string;
 	payments?: IPayment[];
 	paymentsId?: string;
-	preferredComponentLayout?: string;
+	preferredComponentLayout?: ComponentLayoutStyleEnum;
 	fullName?: string;
 	organizations?: IOrganization[];
 	isImporting?: boolean;
