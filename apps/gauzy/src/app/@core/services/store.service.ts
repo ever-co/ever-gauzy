@@ -44,6 +44,7 @@ export interface PersistState {
 	organizationId?: string;
 	clientId?: string;
 	token: string;
+	refresh_token: string;
 	userId: string;
 	serverConnection: number;
 	preferredLanguage: LanguagesEnum;
@@ -63,6 +64,7 @@ export function createInitialAppState(): AppState {
 
 export function createInitialPersistState(): PersistState {
 	const token = localStorage.getItem('token') || null;
+	const refresh_token = localStorage.getItem('refresh_token') || null;
 	const userId = localStorage.getItem('_userId') || null;
 	const organizationId = localStorage.getItem('_organizationId') || null;
 	const serverConnection = parseInt(localStorage.getItem('serverConnection')) || null;
@@ -72,6 +74,7 @@ export function createInitialPersistState(): PersistState {
 
 	return {
 		token,
+		refresh_token,
 		userId,
 		organizationId,
 		serverConnection,
@@ -226,6 +229,17 @@ export class Store {
 	get systemLanguages(): ILanguage[] {
 		const { systemLanguages } = this.appQuery.getValue();
 		return systemLanguages;
+	}
+
+	get refresh_token(): string | null {
+		const { refresh_token } = this.persistQuery.getValue();
+		return refresh_token;
+	}
+
+	set refresh_token(refresh_token: string) {
+		this.persistStore.update({
+			refresh_token: refresh_token
+		});
 	}
 
 	get token(): string | null {
@@ -446,7 +460,7 @@ export class Store {
 			)
 			.filter(
 				(permission) => this.hasPermission(permission)
-			); 
+			);
 		permissions = permissions.concat(userPermissions);
 		this.permissionsService.flushPermissions();
 		this.permissionsService.loadPermissions(permissions);

@@ -8,7 +8,7 @@ import { EmailModule } from './../email/email.module';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { CommandHandlers } from './commands/handlers';
-import { JwtStrategy } from './jwt.strategy';
+import { JwtRefreshTokenStrategy, JwtStrategy } from './strategies';
 import { UserOrganizationService } from '../user-organization/user-organization.services';
 import { UserModule } from './../user/user.module';
 import { PasswordResetModule } from './../password-reset/password-reset.module';
@@ -17,6 +17,12 @@ const providers = [
 	AuthService,
 	UserOrganizationService
 ];
+
+const strategies = [
+	JwtStrategy,
+	JwtRefreshTokenStrategy
+];
+
 @Module({
 	imports: [
 		RouterModule.forRoutes([
@@ -43,7 +49,7 @@ const providers = [
 		CqrsModule
 	],
 	controllers: [AuthController],
-	providers: [...providers, ...CommandHandlers, JwtStrategy],
+	providers: [...providers, ...CommandHandlers, ...strategies],
 	exports: [...providers]
 })
 export class AuthModule {}

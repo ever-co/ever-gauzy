@@ -64,4 +64,18 @@ export class AuthService {
 			params: { permission }
 		});
 	}
+
+	/**
+	 * GET access token from refresh token
+	 *
+	 * @param refresh_token
+	 * @returns
+	 */
+	refreshToken(refresh_token: string): Promise<any> {
+		return firstValueFrom(
+			this.http.post<any>(`${API_PREFIX}/auth/refresh-token`, {
+				refresh_token: refresh_token
+			})
+		);
+	}
 }

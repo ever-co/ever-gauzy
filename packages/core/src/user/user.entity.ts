@@ -91,6 +91,11 @@ export class User extends TenantBaseEntity implements IUser {
 	@Column({ nullable: true })
 	hash?: string;
 
+	@ApiProperty({ type: () => String })
+	@Exclude()
+	@Column({ nullable: true })
+	public refreshToken?: string;
+
 	@ApiPropertyOptional({ type: () => String, maxLength: 500 })
 	@IsOptional()
 	@Column({ length: 500, nullable: true })
@@ -111,14 +116,14 @@ export class User extends TenantBaseEntity implements IUser {
 
 	/*
     |--------------------------------------------------------------------------
-    | @ManyToOne 
+    | @ManyToOne
     |--------------------------------------------------------------------------
     */
     // Role
 	@ApiPropertyOptional({ type: () => Role })
-	@ManyToOne(() => Role, (role) => role.users, { 
-		nullable: true, 
-		onDelete: 'CASCADE' 
+	@ManyToOne(() => Role, (role) => role.users, {
+		nullable: true,
+		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
 	role?: IRole;
@@ -133,10 +138,10 @@ export class User extends TenantBaseEntity implements IUser {
 
 	/*
     |--------------------------------------------------------------------------
-    | @OneToOne 
+    | @OneToOne
     |--------------------------------------------------------------------------
     */
-   	
+
 	/**
 	 * Employee
 	 */
@@ -146,7 +151,7 @@ export class User extends TenantBaseEntity implements IUser {
 
 	/*
     |--------------------------------------------------------------------------
-    | @ManyToMany 
+    | @ManyToMany
     |--------------------------------------------------------------------------
     */
     // Tags
@@ -161,7 +166,7 @@ export class User extends TenantBaseEntity implements IUser {
 
 	/*
     |--------------------------------------------------------------------------
-    | @OneToMany 
+    | @OneToMany
     |--------------------------------------------------------------------------
     */
 
