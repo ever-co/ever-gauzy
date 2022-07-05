@@ -1,4 +1,16 @@
+@import 'gauzy/_gauzy-cards';
+
 :host {
+  .header-title-with-back {
+    display: flex; 
+    align-items: center;
+    @include nb-rtl(gap, 24px);
+    margin-bottom: 50px;
+  }
+
+  ::ng-deep ngx-back-navigation button {
+    @include nb-rtl(margin-right, 0px !important);    
+  }
 
   nb-card,
   nb-card-body {
@@ -42,22 +54,25 @@
   }
 }
 
-.download {
-  padding: 0.5rem;
-  background-color: var(--gauzy-card-2);
-  border-radius: var(--button-rectangle-border-radius);
-  float: right;
-
-  .action {
-    box-shadow: var(--gauzy-shadow)(0, 0, 0, 0.15);
+:host {
+  ::ng-deep {
+      .download {
+          padding: 0.5rem;
+          background-color: var(--gauzy-card-2);
+          border-radius: var(--button-rectangle-border-radius);
+          @include nb-ltr(float, right);
+          @include nb-rtl(float, left);
+          .action {
+            box-shadow: var(--gauzy-shadow)(0, 0, 0, 0.15);
+          }
+      }
   }
 }
 
 .info-text {
   display: flex;
   align-items: center;
-  gap: 50px;
-  margin-bottom: 50px;
+  gap: 50px;  
 }
 
 .title {
