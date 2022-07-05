@@ -5,13 +5,14 @@ import {
 	IRolePermission,
 	IAuthResponse,
 	IUser,
-	IChangePasswordRequest
+	IChangePasswordRequest,
+	IPasswordReset
 } from '@gauzy/contracts';
 import { CommandBus } from '@nestjs/cqrs';
-import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { getManager } from 'typeorm';
 import { SocialAuthService } from '@gauzy/auth';
-import { IPasswordReset } from '@gauzy/contracts';
+import { isNotEmpty } from '@gauzy/common';
 import * as bcrypt from 'bcrypt';
 import { JsonWebTokenError, JwtPayload, sign, verify } from 'jsonwebtoken';
 import { EmailService } from '../email/email.service';
@@ -47,8 +48,17 @@ export class AuthService extends SocialAuthService {
 				createdAt: 'DESC'
 			}
 		});
-		if (!user || !(await bcrypt.compare(password, user.hash))) {
-			return null;
+
+		if (!user || user.isActive === false) {
+			throw new UnauthorizedException();
+		}
+		// If employees are inactive
+		if (isNotEmpty(user.employee) && user.employee.isActive === false) {
+			throw new UnauthorizedException();
+		}
+		// If password is not matching with any user
+		if (!(await bcrypt.compare(password, user.hash))) {
+			throw new UnauthorizedException();
 		}
 
 		const access_token = await this.getJwtAccessToken(user);
