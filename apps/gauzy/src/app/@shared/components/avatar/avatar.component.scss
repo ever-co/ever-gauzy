@@ -67,6 +67,7 @@
         @include nb-ltr(padding, 3px 9px 3px 3px);
         @include nb-rtl(padding, 3px 3px 3px 9px);
         gap: 8px;
+        width: fit-content;
     }
 
     .avatar-wrapper {
@@ -102,6 +103,7 @@
         width: 20px;
         cursor: pointer;
         border-radius: var(--button-rectangle-border-radius);
+        display: flex;
 
         img {
             width: 20px;

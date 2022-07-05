@@ -10,14 +10,15 @@
   padding: 1rem 0;
 }
 
-.transition-container {
+:host .transition-container {
   overflow-x: hidden;
   border-radius: nb-theme(button-rectangle-border-radius);
   span {
     background: var(--gauzy-card-2);
     border-radius: nb-theme(button-rectangle-border-radius);
     padding: 2px 4px;
-    margin-right: 10px;
+    @include nb-ltr(margin-right, 10px);
+    @include nb-rtl(margin-left, 10px);
   }
 }
 
@@ -39,6 +40,7 @@
     transition: all 0.15s ease-out;
   }
 }
-ga-layout-selector{
-  margin-left: 20px;
+:host ga-layout-selector{
+  @include nb-ltr(margin-left, 20px);
+  @include nb-rtl(margin-right, 20px);
 }

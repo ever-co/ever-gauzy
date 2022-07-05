@@ -10,8 +10,9 @@
 .color {
     position: static;
     margin-top: 5px;
-    margin-right: 5px;
     display: inline-block;
+    @include nb-rtl(margin-left, 5px);
+    @include nb-ltr(margin-right, 5px);
 }
 
 .tags {
