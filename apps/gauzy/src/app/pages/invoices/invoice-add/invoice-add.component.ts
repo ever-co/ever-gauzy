@@ -607,13 +607,21 @@ export class InvoiceAddComponent
 				this.getTranslation('INVOICES_PAGE.INVOICES_ADD_ESTIMATE'),
 				this.getTranslation('TOASTR.TITLE.SUCCESS')
 			);
-			this.router.navigate(['/pages/accounting/invoices/estimates']);
+			this.router.navigate(['/pages/accounting/invoices/estimates'], {
+				queryParams: {
+					date: moment(invoiceDate).format("MM-DD-YYYY")
+				}
+			});
 		} else {
 			this.toastrService.success(
 				this.getTranslation('INVOICES_PAGE.INVOICES_ADD_INVOICE'),
 				this.getTranslation('TOASTR.TITLE.SUCCESS')
 			);
-			this.router.navigate(['/pages/accounting/invoices']);
+			this.router.navigate(['/pages/accounting/invoices'], {
+				queryParams: {
+					date: moment(invoiceDate).format("MM-DD-YYYY")
+				}
+			});
 		}
 	}
 
@@ -708,13 +716,21 @@ export class InvoiceAddComponent
 				this.getTranslation('INVOICES_PAGE.INVOICES_ADD_ESTIMATE'),
 				this.getTranslation('TOASTR.TITLE.SUCCESS')
 			);
-			this.router.navigate(['/pages/accounting/invoices/estimates']);
+			this.router.navigate(['/pages/accounting/invoices/estimates'], {
+				queryParams: {
+					date: moment(invoiceDate).format("MM-DD-YYYY")
+				}
+			});
 		} else {
 			this.toastrService.success(
 				this.getTranslation('INVOICES_PAGE.INVOICES_ADD_INVOICE'),
 				this.getTranslation('TOASTR.TITLE.SUCCESS')
 			);
-			this.router.navigate(['/pages/accounting/invoices']);
+			this.router.navigate(['/pages/accounting/invoices'], {
+				queryParams: {
+					date: moment(invoiceDate).format("MM-DD-YYYY")
+				}
+			});
 		}
 	}
 
