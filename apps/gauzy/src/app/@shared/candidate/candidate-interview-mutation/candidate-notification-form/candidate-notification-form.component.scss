@@ -1,3 +1,5 @@
+@import 'themes';
+
 .summary {
   min-width: 45rem;
 }
@@ -17,8 +19,9 @@
   align-items: center;
 }
 
-.summary-content-text {
-  margin-right: 5rem;
+:host .summary-content-text {
+  @include nb-ltr(margin-right, 5rem);
+  @include nb-rtl(margin-left, 5rem);
 }
 
 .notify-checkboxes-card {
@@ -26,10 +29,11 @@
   margin-bottom: 1rem;
 }
 
-.notification-title {
+:host .notification-title {
   color: #8f9bb3;
   font-size: 15px;
-  padding: 0 0 5px 5px;
+  @include nb-ltr(padding, 0 0 5px 5px);
+  @include nb-rtl(padding, 0 5px 5px 0);
 }
 
 .candidate-image-small {
