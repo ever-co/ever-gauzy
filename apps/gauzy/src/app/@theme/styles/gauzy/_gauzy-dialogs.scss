@@ -16,6 +16,7 @@ $shadow: 0 0 0 nb-theme(button-outline-width)
     width: 100%;
     display: flex;
     justify-content: flex-end;
+    @include nb-rtl(justify-content, flex-start);
   }
 
   [nbButton].appearance-outline.status-basic {
@@ -44,6 +45,7 @@ $shadow: 0 0 0 nb-theme(button-outline-width)
     line-height: 16px;
     letter-spacing: 0em;
     text-align: left;
+    @include nb-rtl(text-align, right);
   }
 
   [nbButton].gray.appearance-outline.status-basic {
