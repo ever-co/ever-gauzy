@@ -34,7 +34,10 @@
 
   .view-all {
     position: absolute;
-    right: 20px;
+    ::ng-deep {
+      @include nb-ltr(right, 20px);
+      @include nb-rtl(left, 20px);
+    }
   }
 
   [nbButton].appearance-outline.status-primary {

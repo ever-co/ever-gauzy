@@ -187,12 +187,12 @@
 								</nb-radio-group>
 							</div>
 
-							<div class="col-auto">
+							<div class="col-auto footer-buttons">
 								<button
 									type="submit"
-									class="mr-1"
 									nbButton
 									status="success"
+									size="small"
 								>
 									<nb-icon icon="save-outline"></nb-icon>
 									{{ 'JOB_MATCHING.SAVE' | translate }}
@@ -201,6 +201,7 @@
 									nbButton
 									status="danger"
 									type="button"
+									size="small"
 									ngxConfirmDialog
 									[message]="
 										'JOB_MATCHING.DELETE_CRITERION_MESSAGE'
