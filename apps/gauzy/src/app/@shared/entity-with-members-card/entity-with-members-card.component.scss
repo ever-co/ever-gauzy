@@ -1,9 +1,12 @@
-.card-body {
+@import 'themes';
+
+:host .card-body {
   margin: 10px;
 
   .header-container {
     text-align: center;
     position: relative;
+
     .members-count {
       font-size: 0.7em;
       color: darkgray;
@@ -37,7 +40,8 @@
       width: 160px;
       justify-content: space-between;
       margin-top: 15px;
-      margin-left: 9px;
+      @include nb-ltr(margin-left, 9px);
+      @include nb-rtl(margin-right, 9px);
     }
   }
 }
@@ -45,7 +49,8 @@
 .color {
   position: static;
   margin-top: 5px;
-  margin-right: 5px;
+  @include nb-ltr(margin-right, 5px);
+  @include nb-rtl(margin-left, 5px);
   display: inline-block;
 }
 

@@ -1,7 +1,7 @@
 @import "themes";
 @import "var";
 
-.card-scroll {
+:host .card-scroll {
     background-color: nb-theme(gauzy-card-2);
 
     & .header {
@@ -17,12 +17,13 @@
         align-items: center;
     }
 
-    :host .org-image {
-        margin-left: 0 !important;
+    .org-image {
         width: 48px;
         height: 48px;
+        @include nb-ltr(margin-right, 17px !important);
+        @include nb-ltr(margin-left, 0px !important);
+        @include nb-rtl(margin-right, 0px !important);
         @include nb-rtl(margin-left, 17px !important);
-        @include nb-ltr(margin-right, 17px !important);        
     }
     .org-name {
         font-size: 14px !important;
@@ -30,7 +31,6 @@
         font-weight: 600 !important;
         line-height: 17px;
         letter-spacing: 0em;
-        text-align: left;
         margin-bottom: 3px;
     }
     .org-position {
@@ -39,7 +39,6 @@
         font-weight: 400;
         line-height: 15px;
         letter-spacing: 0em;
-        text-align: left;
     }
 
     & .edit-public-page {
@@ -47,7 +46,7 @@
         flex-direction: row;
         justify-content: center;
         align-items: center;
-        padding: 2px 12px 2px 12px;
+        padding: 2px 12px;
         box-sizing: border-box;
         border-radius: nb-theme(button-rectangle-border-radius);
         border: 2px solid nb-theme(color-primary-transparent-default);
