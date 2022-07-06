@@ -1,3 +1,5 @@
+@import 'themes';
+
 .card-wrap {
   min-width: 40rem;
 }
@@ -20,12 +22,13 @@
   padding: 0 5px;
 }
 
-.pages {
+:host .pages {
   display: flex;
   flex-direction: row;
   justify-content: flex-end;
   align-items: center;
-  padding: 0 15px 10px 0px;
+  @include nb-ltr(padding, 0 15px 10px 0px);
+  @include nb-rtl(padding, 0 0px 10px 15px);
 }
 
 .disable {
@@ -63,9 +66,10 @@
   min-width: 500px;
 }
 
-.interview-data {
+:host .interview-data {
   color: black;
-  padding-left: 30px;
+  @include nb-ltr(padding-left, 30px);
+  @include nb-rtl(padding-right, 30px);
   margin-top: -15px;
   font-size: 18px;
   font-weight: 600;

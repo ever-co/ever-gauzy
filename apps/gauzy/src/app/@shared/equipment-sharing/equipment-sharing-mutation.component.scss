@@ -6,8 +6,9 @@
   }
 }
 
-.col-sm-3 {
-  padding-left: 0;
+:host .col-sm-3 {
+  @include nb-ltr(padding-left, 0);
+  @include nb-rtl(padding-right, 0);
 }
 
 .status-label {

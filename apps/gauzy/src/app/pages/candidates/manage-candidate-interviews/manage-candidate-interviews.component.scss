@@ -23,9 +23,10 @@
     }
   }
 }
-.add-btn {
+:host .add-btn {
   position: absolute;
-  right: 1rem;
+  @include nb-ltr(right, 1rem);
+  @include nb-rtl(left, 1rem);
   top: -8px;
   background-color: var(--gauzy-card-2);
   padding: 8px;

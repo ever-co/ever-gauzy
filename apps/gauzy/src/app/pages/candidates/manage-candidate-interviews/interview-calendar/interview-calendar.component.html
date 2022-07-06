@@ -8,14 +8,14 @@
 		</h5>
 		<div class="buttons">
 			<ga-employee-multi-select
-				class="multi-select ml-4"
+				class="multi-select"
 				[allEmployees]="employees"
 				[label]="false"
 				(selectedChange)="onEmployeeSelected($event)"
 			>
 			</ga-employee-multi-select>
 			<ga-candidate-multi-select
-				class="multi-select ml-4"
+				class="multi-select"
 				[allCandidates]="candidates"
 				(selectedChange)="onCandidateSelected($event)"
 			>

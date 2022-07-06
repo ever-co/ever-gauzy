@@ -1,7 +1,11 @@
-.notification {
+@import 'themes';
+
+:host .notification {
   margin-top: 18px;
-  margin-right: -20px;
-  margin-left: 20px;
+  @include nb-ltr(margin-left, 20px);
+  @include nb-rtl(margin-right, 20px);
+  @include nb-ltr(margin-right, -20px);
+  @include nb-rtl(margin-left, -20px);
   position: relative;
   display: inline-block;
   width: 36px;
@@ -14,27 +18,30 @@
   cursor: pointer;
 }
 
-.exist {
+:host .exist {
   position: absolute;
   font-size: 8px;
   top: 9px;
-  right: 8px;
+  @include nb-ltr(right, 8px);
+  @include nb-rtl(left, 8px);
   width: 8px;
   height: 8px;
   border-radius: 50%;
   background-color: #f10;
 }
 
-.bell {
+:host .bell {
   color: white !important;
   font-size: 18px;
   position: absolute;
   margin-top: 9px;
-  margin-left: 9px;
+  @include nb-ltr(margin-left, 9px);
+  @include nb-rtl(margin-right, 9px);
 }
 
-.edit-icon {
-  margin-left: 30px;
+:host .edit-icon {
+  @include nb-ltr(margin-left, 30px);
+  @include nb-rtl(margin-right, 30px);
   position: relative;
   width: 36px;
 
@@ -53,20 +60,6 @@
   justify-content: flex-start;
   align-items: stretch;
   padding: 1rem;
-}
-
-.edit-icon {
-  margin-left: 30px;
-  position: relative;
-  width: 36px;
-
-  svg {
-    position: absolute;
-  }
-
-  nb-icon {
-    position: absolute;
-  }
 }
 
 .org-details {
@@ -106,13 +99,14 @@
   font-weight: bold;
 }
 
-.header-content {
+:host .header-content {
   display: flex;
   .header-info {
     display: flex;
     justify-content: space-between;
     align-items: center;
     width: 560px;
-    padding-left: 30px;
+    @include nb-ltr(padding-left, 30px);
+    @include nb-rtl(padding-right, 30px);
   }
 }

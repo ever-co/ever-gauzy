@@ -50,8 +50,9 @@
   align-items: center;
 }
 
-.fas {
-  padding-left: 3px;
+:host .fas {
+  @include nb-ltr(padding-left, 3px);
+  @include nb-rtl(padding-right, 3px);
   font-size: 15px;
 }
 
@@ -79,15 +80,18 @@
   flex-wrap: wrap;
 }
 
-.form-title {
+:host .form-title {
   color: #8f9bb3;
   font-size: 15px;
   padding: 0 0 5px 5px;
+  @include nb-ltr(padding, 0 0px 5px 5px);
+  @include nb-rtl(padding, 0 5px 5px 0px);
 }
 
-.criterion {
+:host .criterion {
   border: 1px #e4e9f2 solid;
-  margin: 0.25rem 0.25rem 0.25rem 0;
+  @include nb-ltr(margin, 0.25rem 0.25rem 0.25rem 0);
+  @include nb-rtl(margin, 0.25rem 0 0.25rem 0.25rem);
   display: flex;
   flex-direction: row;
   justify-content: space-between;

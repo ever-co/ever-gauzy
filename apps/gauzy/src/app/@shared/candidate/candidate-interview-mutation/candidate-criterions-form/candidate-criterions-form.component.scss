@@ -1,4 +1,6 @@
-.form {
+@import 'themes';
+
+:host .form {
   width: 45rem;
   display: flex;
   flex-direction: column;
@@ -31,6 +33,7 @@
   &-title {
     color: #8f9bb3;
     font-size: 15px;
-    padding: 0 0 5px 5px;
+    @include nb-ltr(padding, 0 0 5px 5px);
+    @include nb-rtl(padding, 0 5px 5px 0);
   }
 }

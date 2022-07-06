@@ -2,22 +2,24 @@
 
 :host {
   height: 93%;
-  border-radius: 0 nb-theme(border-radius) nb-theme(border-radius) nb-theme(border-radius);
+  @include nb-ltr(border-radius, 0 nb-theme(border-radius) nb-theme(border-radius) nb-theme(border-radius));
+  @include nb-rtl(border-radius, nb-theme(border-radius) 0 nb-theme(border-radius) nb-theme(border-radius));
 }
 
-.content {
+:host .content {
   display: flex;
   height: 100%;
   background-color: nb-theme(gauzy-card-2);
   padding: 1rem;
-  border-radius: 0 nb-theme(border-radius) nb-theme(border-radius)
-    nb-theme(border-radius);
-    &.main{
-      height: calc(100vh - 22.5rem);
-    }
+  @include nb-ltr(border-radius, 0 nb-theme(border-radius) nb-theme(border-radius) nb-theme(border-radius));
+  @include nb-rtl(border-radius, nb-theme(border-radius) 0 nb-theme(border-radius) nb-theme(border-radius));
+
+  &.main {
+    height: calc(100vh - 22.5rem);
+  }
 }
 
-.organization-container {
+:host .organization-container {
   padding: 15px;
   position: relative;
   display: flex;
@@ -68,16 +70,18 @@
       left: calc(50% - 68px / 2);
     }
   }
+
   .employees-count-text {
     font-size: 12px;
     font-style: normal;
     font-weight: 600;
     line-height: 15px;
     letter-spacing: 0em;
-    text-align: left;
-    margin-left: 1px;
+    @include nb-ltr(margin-left, 1px);
+    @include nb-rtl(margin-right, 1px);
   }
 }
+
 .main-form {
   width: 100%;
   padding-left: 20px;
@@ -87,6 +91,7 @@
     margin-top: 60px;
   }
 }
+
 .row {
   & .col {
     max-width: 50%;
@@ -102,6 +107,7 @@
 .tax-form-group {
   display: flex;
   flex-direction: column;
+
   & #taxIdInput {
     width: 80%;
   }
@@ -110,6 +116,7 @@
 .registration-form-group {
   display: inline-flex;
   flex-direction: column;
+
   & #registrationDate {
     width: 175px;
   }
@@ -123,12 +130,15 @@
   .organization-container {
     width: 350px;
   }
+
   .registration-form-group #registrationDate {
     width: 100%;
   }
+
   .tax-form-group #taxIdInput {
     width: 100%;
   }
+
   ::ng-deep ga-currency .form-group {
     display: flex;
     flex-direction: column;
@@ -140,60 +150,58 @@
   :host {
     height: auto;
   }
+
   .content {
     flex-direction: column;
   }
+
   .organization-container,
   .main-form {
     width: 100%;
   }
+
   .main-form {
     padding: 0;
     margin-top: 20px;
   }
+
   .row {
     flex-direction: column;
     max-width: 100%;
     margin-left: 0;
+
     & .col {
       max-width: 100%;
       padding: 0;
     }
   }
+
   .form-group {
     width: 100% !important;
   }
+
   .tax-form-group {
     & #taxIdInput {
       width: 100%;
     }
   }
+
   .registration-form-group {
     & #registrationDate {
       width: 100%;
     }
   }
+
   ::ng-deep ga-currency .form-group {
     display: flex;
   }
+
   .col-6 {
     max-width: 100%;
     padding: 0 !important;
   }
+
   .main-form .actions {
     margin-top: 20px;
   }
 }
-
-// .color {
-// 	position: static;
-// 	margin-top: 5px;
-// 	margin-right: 5px;
-// 	display: inline-block;
-// }
-
-// .tags {
-// 	display: flex;
-// 	width: 200px;
-// 	flex-wrap: wrap;
-// }

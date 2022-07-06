@@ -12,7 +12,11 @@
   .custom-table {
     height: calc(100vh - 27.5rem);
   }
-
+  ::ng-deep {
+    .card-header-title {
+      @include nb-rtl(gap, 24px);
+    }
+  }  
   @include nb-card-overrides(
     unset,
     calc($default-card-height),
