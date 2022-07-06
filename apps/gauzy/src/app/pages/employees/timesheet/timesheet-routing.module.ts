@@ -3,6 +3,7 @@ import { Routes, RouterModule } from '@angular/router';
 import { LayoutComponent } from './layout/layout.component';
 import { NgxPermissionsGuard } from 'ngx-permissions';
 import { PermissionsEnum } from '@gauzy/contracts';
+import { DateRangePickerResolver } from '../../../@theme/components/header/selectors/date-range-picker';
 
 const routes: Routes = [
 	{
@@ -26,6 +27,9 @@ const routes: Routes = [
 						isSaveDatePicker: true,
 						isSingleDatePicker: true
 					}
+				},
+				resolve: {
+					dates: DateRangePickerResolver
 				}
 			},
 			{
@@ -39,6 +43,9 @@ const routes: Routes = [
 						isLockDatePicker: true,
 						isSaveDatePicker: true
 					}
+				},
+				resolve: {
+					dates: DateRangePickerResolver
 				}
 			},
 			{
@@ -50,6 +57,9 @@ const routes: Routes = [
 					datePicker: {
 						unitOfTime: 'week'
 					}
+				},
+				resolve: {
+					dates: DateRangePickerResolver
 				}
 			},
 			{
@@ -71,6 +81,9 @@ const routes: Routes = [
 						isLockDatePicker: true,
 						isSaveDatePicker: true
 					}
+				},
+				resolve: {
+					dates: DateRangePickerResolver
 				}
 			}
 		]

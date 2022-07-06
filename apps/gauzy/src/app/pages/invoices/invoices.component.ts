@@ -1133,7 +1133,7 @@ export class InvoicesComponent
 			if (settingsPopup.isShown) {
 				settingsPopup.hide();
 			}
-	
+
 			if (actionsPopup.isShown) {
 				actionsPopup.hide();
 			}

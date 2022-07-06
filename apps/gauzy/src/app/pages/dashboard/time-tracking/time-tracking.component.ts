@@ -1,4 +1,5 @@
 import { AfterViewInit, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
 	IOrganization,
@@ -30,12 +31,15 @@ import * as moment from 'moment';
 import { NgxPermissionsService } from 'ngx-permissions';
 import { TranslateService } from '@ngx-translate/core';
 import { TimesheetStatisticsService } from '../../../@shared/timesheet/timesheet-statistics.service';
-import { EmployeesService, Store, ToastrService } from '../../../@core/services';
+import {
+	EmployeesService,
+	OrganizationProjectsService,
+	Store,
+	ToastrService
+} from '../../../@core/services';
 import { GalleryService } from '../../../@shared/gallery';
 import { TranslationBaseComponent } from '../../../@shared/language-base';
-import { Router } from '@angular/router';
 import { ALL_EMPLOYEES_SELECTED } from '../../../@theme/components/header/selectors/employee';
-import { OrganizationProjectsService } from '../../../@core/services/organization-projects.service';
 import { getAdjustDateRangeFutureAllowed } from '../../../@theme/components/header/selectors/date-range-picker';
 
 export enum RangePeriod {
@@ -145,7 +149,7 @@ export class TimeTrackingComponent
 				filter(([organization, dateRange, employee]) => !!organization && !!dateRange && !!employee),
 				tap(([organization, dateRange, employee, project]) => {
 					this.organization = organization;
-	
+
 					this.employeeIds = employee ? [employee.id] : [];
 					this.projectIds = project ? [project.id] : [];
 					this.selectedDateRange = dateRange;
@@ -180,8 +184,8 @@ export class TimeTrackingComponent
 
 	/**
 	 * Prepare Unique Payloads
-	 * 
-	 * @returns 
+	 *
+	 * @returns
 	 */
 	preparePayloads() {
 		if (!this.organization) {
@@ -252,7 +256,7 @@ export class TimeTrackingComponent
 		const request: IGetActivitiesStatistics = this.payloads$.getValue();
 		try {
 			this.activitiesLoading = true;
-			const activities = await this.timesheetStatisticsService.getActivities(request); 
+			const activities = await this.timesheetStatisticsService.getActivities(request);
 			const sum = reduce(
 				activities,
 				(memo, activity) =>
@@ -406,8 +410,8 @@ export class TimeTrackingComponent
 
 	/**
 	 * If, selected date range are in current week
-	 * 
-	 * @returns 
+	 *
+	 * @returns
 	 */
 	isCurrentWeek() {
 		if (!this.selectedDateRange) {
@@ -416,11 +420,11 @@ export class TimeTrackingComponent
 		const { startDate, endDate } = this.selectedDateRange as IDateRangePicker;
 		return (
 			(
-				moment(startDate).format('YYYY-MM-DD') === 
+				moment(startDate).format('YYYY-MM-DD') ===
 				moment().startOf('week').format('YYYY-MM-DD')
-			) && 
+			) &&
 			(
-				moment(endDate).format('YYYY-MM-DD') === 
+				moment(endDate).format('YYYY-MM-DD') ===
 				moment().endOf('week').format('YYYY-MM-DD')
 			)
 		);
@@ -504,8 +508,8 @@ export class TimeTrackingComponent
 			const { startDate, endDate } = this.selectedDateRange as IDateRangePicker;
 			this._router.navigate(['/pages/reports/manual-time-edits'], {
 				queryParams: {
-					start: moment(startDate).format("MM-DD-YYYY"),
-					end: moment(endDate).format("MM-DD-YYYY")
+					date: moment(startDate).format("MM-DD-YYYY"),
+					date_end: moment(endDate).format("MM-DD-YYYY")
 				}
 			});
 		} catch (error) {
@@ -521,8 +525,8 @@ export class TimeTrackingComponent
 			const { startDate, endDate } = this.selectedDateRange as IDateRangePicker;
 			this._router.navigate(['/pages/reports/apps-urls'], {
 				queryParams: {
-					start: moment(startDate).format("MM-DD-YYYY"),
-					end: moment(endDate).format("MM-DD-YYYY")
+					date: moment(startDate).format("MM-DD-YYYY"),
+					date_end: moment(endDate).format("MM-DD-YYYY")
 				}
 			});
 		} catch (error) {
