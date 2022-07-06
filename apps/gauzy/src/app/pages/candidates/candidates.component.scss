@@ -7,7 +7,8 @@
   align-items: center;
   justify-content: space-between;
 }
-.grid-scroll-container {
+
+:host .grid-scroll-container {
   .flex-container {
     display: flex;
     flex-flow: row wrap;
@@ -15,11 +16,13 @@
     padding: 0;
     margin: 0;
     list-style: none;
+
     .flex-item {
       border: 0.0625rem solid #e4e9f2;
       border-radius: 0.25rem;
       width: 23%;
       margin: 10px;
+
       .fullName {
         display: flex;
         flex-direction: row;
@@ -28,17 +31,21 @@
         line-height: 40px;
         font-size: 1.5em;
       }
+
       .avatar {
         width: 60px;
         height: 60px;
         border-radius: 50%;
       }
+
       .email {
-        text-align: right;
+        @include nb-ltr(text-align, right);
+        @include nb-rtl(text-align, left);
         padding-right: 1.5rem;
         bottom: 36px;
         position: relative;
       }
+
       .info-line {
         display: flex;
         flex-direction: row;
@@ -48,9 +55,13 @@
         color: darkgray;
         line-height: 0px;
         padding: 0.7rem 1.5rem;
+
         .info-meta {
           margin-right: 10px;
+          @include nb-ltr(margin-right, 10px);
+          @include nb-rtl(margin-left, 10px);
         }
+
         .info-value {
           display: flex;
           justify-content: flex-end;
@@ -58,26 +69,32 @@
           color: black;
           font-size: 1em;
         }
+
         .status-badge {
           text-align: center;
           padding: 10px 30px;
           border-radius: 0.25rem;
           color: #fff;
         }
+
         /* Status */
         .badge-danger {
           background-color: #ff3d71;
         }
+
         .badge-success {
           background-color: #00d68f;
         }
+
         .badge-primary {
           background-color: #0095ff;
         }
+
         .badge-warning {
           background-color: #fa0;
         }
       }
+
       .card-footer {
         justify-content: space-around;
         display: flex;
@@ -87,29 +104,36 @@
 }
 
 :host {
+
   nb-card,
   nb-card-body {
     background-color: var(--gauzy-card-2);
+
     .custom-table {
       max-height: calc(100vh - 24rem);
       flex-grow: 10;
     }
+
     display: flex;
     flex-direction: column;
   }
-  @include nb-card-overrides(
-    unset,
+
+  @include nb-card-overrides(unset,
     calc($default-card-height - 1rem),
-    $default-radius
-  );
+    $default-radius );
+
   ::ng-deep {
     .toggle-label {
       margin-bottom: 0;
     }
+
     [nbButton].header.appearance-outline.status-primary {
       border-width: 0px;
+      align-items: center;
+      gap: 6px;
     }
   }
+
   .custom-toggle {
     ::ng-deep {
       span.text {

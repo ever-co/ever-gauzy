@@ -1,4 +1,5 @@
 @import 'var';
+
 .form-group input {
   width: 100%;
 }
@@ -16,19 +17,21 @@
   cursor: pointer;
 }
 
-.bell {
+:host .bell {
   color: white !important;
   font-size: 18px;
   position: absolute;
   margin-top: 9px;
-  margin-left: 9px;
+  @include nb-ltr(margin-left, 9px);
+  @include nb-rtl(margin-right, 9px);
 }
 
-.exist {
+:host .exist {
   position: absolute;
   font-size: 8px;
   top: 9px;
-  right: 8px;
+  @include nb-ltr(right, 8px);
+  @include nb-rtl(left, 8px);
   width: 8px;
   height: 8px;
   border-radius: 50%;
@@ -50,11 +53,14 @@
       height: calc(100vh - 20rem);
     }
   }
+
   ::ng-deep .route-tabset .route-tab a.tab-link {
     border-radius: nb-theme(border-radius) nb-theme(border-radius) 0 0;
+
     span.tab-text {
       text-transform: lowercase;
       display: block;
+
       &:first-letter {
         text-transform: uppercase;
       }
@@ -66,6 +72,7 @@
   nb-route-tabset {
     ul.route-tabset {
       padding: 0;
+
       @include respond(dsk) {
         flex-wrap: wrap;
       }
@@ -77,12 +84,15 @@
       @include respond(dsk) {
         padding: px2rem(10px) px2rem(20px);
       }
+
       @include respond(1440px) {
         padding: px2rem(10px) px2rem(25px);
       }
+
       @include respond(xxl) {
         padding: px2rem(10px) px2rem(20px);
       }
+
       nb-icon {
         display: block;
         margin: auto;
@@ -91,10 +101,10 @@
     }
   }
 }
+
 h4 {
   font-size: 24px;
   font-weight: 600;
   line-height: 30px;
   letter-spacing: 0em;
-  text-align: left;
 }

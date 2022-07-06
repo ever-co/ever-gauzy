@@ -6,20 +6,13 @@
   align-items: center;
 }
 
-::ng-deep {
-  .ng2-smart-actions,
-  .ng2-smart-actions-title {
-    display: none;
-  }
-}
-
 .checkboxes {
   display: flex;
   justify-content: flex-end;
   align-items: center;
 }
 
-.card-container {
+:host .card-container {
   display: flex;
   flex-wrap: wrap;
 
@@ -27,6 +20,7 @@
     width: 100%;
     max-width: 300px;
     margin: 20px;
+
     .card-header {
       padding: 0.5rem;
       display: flex;
@@ -38,6 +32,7 @@
         align-items: center;
         justify-content: flex-end;
       }
+
       .header-container {
         text-align: center;
       }
@@ -64,6 +59,8 @@
           display: flex;
           justify-content: center;
           margin-right: 10px;
+          @include nb-ltr(margin-right, 10px);
+          @include nb-rtl(margin-left, 10px);
 
           img {
             height: 100%;
@@ -71,6 +68,7 @@
           }
         }
       }
+
       .team-members {
         margin-bottom: 0.5rem;
       }
@@ -98,31 +96,37 @@
   }
 }
 
-.badge {
+:host .badge {
   text-align: center;
   padding: 5px;
-  margin-left: 0.2rem;
+  @include nb-ltr(margin-left, 0.2rem);
+  @include nb-rtl(margin-right, 0.2rem);
 }
 
-.client-info {
+:host .client-info {
   padding: 0px 12px;
   display: flex;
   flex-direction: column;
+
   .info-line {
     display: flex;
     flex-direction: row;
     justify-content: space-between;
     font-size: 0.7em;
     color: darkgray;
+
     .info-value {
       display: flex;
       justify-content: flex-end;
       text-align: end;
+
       .info-list-item:not(:last-child)::after {
         content: ',';
-        margin-right: 5px;
+        @include nb-ltr(margin-right, 5px);
+        @include nb-rtl(margin-left, 5px);
       }
     }
+
     .criterions {
       display: flex;
       flex-direction: column;
@@ -147,6 +151,7 @@
 :host {
   overflow-y: auto;
   max-height: calc(100vh - 28rem);
+
   nb-card,
   .custom-card-body {
     background-color: var(--gauzy-card-2);

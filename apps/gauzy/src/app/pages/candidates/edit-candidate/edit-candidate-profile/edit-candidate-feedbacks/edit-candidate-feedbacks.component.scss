@@ -62,12 +62,13 @@
   justify-content: space-between;
 }
 
-.buttons {
+:host .buttons {
   display: flex;
   flex-direction: column;
   align-items: center;
   width: fit-content;
-  margin-left: 1rem;
+  @include nb-ltr(margin-left, 1rem);
+  @include nb-rtl(margin-right, 1rem);
   align-self: flex-start;
 }
 
@@ -113,16 +114,18 @@
   width: 100%;
 }
 
-.radio-group {
+:host .radio-group {
   flex-direction: row;
   display: flex;
   justify-content: space-around;
   align-items: center;
-  margin-left: 1rem;
+  @include nb-ltr(margin-left, 1rem);
+  @include nb-rtl(margin-right, 1rem);
 }
 
-.fas {
-  padding-left: 3px;
+:host .fas {
+  @include nb-ltr(padding-left, 3px);
+  @include nb-rtl(padding-right, 3px);
   font-size: 15px;
 }
 
@@ -148,8 +151,9 @@
   margin-bottom: 0.5rem;
 }
 
-.rating {
-  padding-left: 1rem;
+:host .rating {
+  @include nb-ltr(padding-left, 1rem);
+  @include nb-rtl(padding-right, 1rem);
 }
 
 .feedback-status {
@@ -188,14 +192,17 @@
   align-items: center;
 }
 
-.stars-optional {
-  margin: 0 0 0.5rem 1rem;
+:host .stars-optional {
+  @include nb-ltr(margin, 0 0 0.5rem 1rem);
+  @include nb-rtl(margin, 0 1rem 0.5rem 0);
 }
 
-.stars-output {
-  padding-left: 1rem;
+:host .stars-output {
+  @include nb-ltr(padding-left, 1rem);
+  @include nb-rtl(padding-right, 1rem);
 }
-.criterions-rating {
+
+:host .criterions-rating {
   flex-direction: column;
   display: flex;
   justify-content: flex-start;
@@ -241,7 +248,8 @@
           font-size: 12px;
           font-weight: 600;
           line-height: 1.5rem;
-          margin-right: 0.15rem;
+          @include nb-ltr(margin-right, 0.15rem);
+          @include nb-rtl(margin-left, 0.15rem);
         }
 
         &-item {
@@ -250,7 +258,8 @@
           justify-content: space-between;
           align-items: center;
           border: 1px #e4e9f2 solid;
-          margin: 0.15rem 0.15rem 0.15rem 0;
+          @include nb-ltr(margin, 0.15rem 0.15rem 0.15rem 0);
+          @include nb-rtl(margin, 0.15rem 0 0.15rem 0.15rem);
           padding: 0.2rem 0.5rem;
           border-radius: 0.2rem;
         }
@@ -258,12 +267,15 @@
     }
   }
 }
+
 :host {
+
   nb-card,
   nb-card-body,
   .feedbacks-card-wrap {
     background-color: var(--gauzy-card-2);
   }
+
   overflow-y: auto;
   max-height: calc(100vh - 28rem);
 }
