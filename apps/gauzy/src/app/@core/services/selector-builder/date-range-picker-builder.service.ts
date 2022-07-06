@@ -42,12 +42,6 @@ export class DateRangePickerBuilderService {
 	 */
 	setDatePickerConfig(options: IDatePickerConfig) {
 		if (isNotEmpty(options)) {
-
-			const { unitOfTime } = options;
-			const startDate = moment().startOf(unitOfTime).toDate();
-			const endDate = moment().endOf(unitOfTime).toDate();
-			this.setDateRangePicker({ startDate, endDate });
-
 			this._datePickerConfig$.next(options);
 		}
 	}
