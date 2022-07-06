@@ -21,15 +21,18 @@ nb-card-body {
 		display: flex;
 	}
 
-	.employee-container {
-		padding-right: 70px;
-		margin-right: 70px;
-		border-right: 1px solid rgba(0, 0, 0, 0.1);
+	:host .employee-container {
 		position: relative;
 		display: flex;
 		flex-direction: column;
 		transition: transform 150ms ease-in-out;
-
+		@include nb-rtl(padding-left, 70px);
+        @include nb-ltr(padding-right, 70px);
+		@include nb-rtl(margin-left, 70px);
+        @include nb-ltr(margin-right, 70px); 
+		@include nb-rtl(border-left, 1px solid rgba(0, 0, 0, 0.1));
+        @include nb-ltr(border-right, 1px solid rgba(0, 0, 0, 0.1));        
+		
 		.employee-photo {
 			width: fit-content;
 			height: fit-content;

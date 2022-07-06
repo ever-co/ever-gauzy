@@ -205,7 +205,8 @@
 :host .email-history-archive {
   position: absolute;
   top: 1rem;
-  right: 2rem;
+  @include nb-ltr(right, 2rem);
+  @include nb-rtl(left, 2rem);
 
   &[nbButton].appearance-outline.status-primary {
     background-color: transparent;

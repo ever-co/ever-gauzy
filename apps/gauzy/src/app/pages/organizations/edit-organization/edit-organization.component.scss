@@ -17,11 +17,12 @@
         align-items: center;
     }
 
-    .org-image {
+    :host .org-image {
         margin-left: 0 !important;
         width: 48px;
         height: 48px;
-        margin-right: 17px !important;
+        @include nb-rtl(margin-left, 17px !important);
+        @include nb-ltr(margin-right, 17px !important);        
     }
     .org-name {
         font-size: 14px !important;
