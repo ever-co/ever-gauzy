@@ -24,9 +24,14 @@
   margin-right: 20px;
 }
 
-#integrationSearch {
-  flex: 1 1 70%;
-  margin-right: 20px;
+:host {
+  ::ng-deep {
+    #integrationSearch {
+      flex: 1 1 70%;
+      @include nb-ltr(margin-right, 20px);
+      @include nb-rtl(margin-right, 0px);
+    }
+  }
 }
 
 a.disabled {
@@ -138,22 +143,23 @@ img {
       $default-button-radius,
       $default-box-shadow );
   }
+
+  h4 {
+    color: var(--gauzy-text-color-1);
+    font-size: 24px;
+    font-weight: 600;
+    line-height: 30px;
+    letter-spacing: 0em;
+    text-align: left;
+    @include nb-ltr(text-align, left);
+    @include nb-rtl(text-align, right);
+  }
 }
 
 .selectors {
   display: flex;
   align-items: center;
   gap: 17px;
-}
-
-h4 {
-  color: var(--gauzy-text-color-1);
-  font-size: 24px;
-  font-weight: 600;
-  line-height: 30px;
-  letter-spacing: 0em;
-  text-align: left;
-
 }
 
 label {

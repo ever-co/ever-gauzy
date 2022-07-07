@@ -15,6 +15,7 @@
   display: flex;
 }
 
-.currency-per-hour {
-  margin-left: 1rem;
+:host .currency-per-hour {
+  @include nb-ltr(margin-left, 1rem);
+  @include nb-rtl(margin-right, 1rem);
 }

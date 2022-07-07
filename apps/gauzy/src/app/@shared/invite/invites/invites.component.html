@@ -4,7 +4,7 @@
 	nbSpinnerSize="large"
 >
 	<nb-card-header class="d-flex flex-column pb-0">
-		<div class="d-flex">
+		<div class="header-title-with-back">
 			<ngx-back-navigation></ngx-back-navigation>
 			<h4>
 				<ngx-header-title [allowEmployee]="false">
@@ -119,6 +119,7 @@
 			status="success"
 			(click)="invite()"
 			size="small"
+			class="invite-button"
 		>
 			<i class="fas fa-envelope mr-1"></i>
 			{{ 'BUTTONS.INVITE' | translate }}

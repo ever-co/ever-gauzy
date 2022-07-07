@@ -1,3 +1,5 @@
+@import 'themes';
+
 .form {
   width: 35rem;
 }
@@ -20,12 +22,13 @@
   margin-bottom: 0;
 }
 
-.radio-group {
+:host .radio-group {
   display: flex;
   flex-direction: row;
   align-items: center;
   justify-content: space-around;
-  margin-left: 1rem;
+  @include nb-ltr(margin-left, 1rem);
+  @include nb-rtl(margin-right, 1rem);
 }
 
 .location {
@@ -38,6 +41,7 @@
   justify-content: space-between;
   align-items: flex-end;
 }
+
 .input-title {
   width: 78%;
 }

@@ -5,23 +5,25 @@
  */
 import { AfterViewInit, Component, OnInit } from '@angular/core';
 import { Router, ActivatedRoute, NavigationEnd } from '@angular/router';
-import { AnalyticsService } from './@core/utils/analytics.service';
 import { SeoService } from './@core/utils/seo.service';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ILanguage, LanguagesEnum } from '@gauzy/contracts';
+import { IDateRangePicker, ILanguage, LanguagesEnum } from '@gauzy/contracts';
+import { isNotEmpty } from '@gauzy/common-angular';
 import { filter, map, mergeMap, tap } from 'rxjs/operators';
+import { AnalyticsService } from './@core/utils/analytics.service';
+import * as _ from 'underscore';
 import {
 	DateRangePickerBuilderService,
 	DEFAULT_DATE_PICKER_CONFIG,
 	DEFAULT_SELECTOR_VISIBILITY,
+	IDatePickerConfig,
 	ISelectorVisibility,
 	LanguagesService,
 	SelectorBuilderService,
 	Store
 } from './@core/services';
 import { environment } from '../environments/environment';
-import * as _ from 'underscore';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -31,7 +33,6 @@ import * as _ from 'underscore';
 export class AppComponent implements OnInit, AfterViewInit {
 
 	loading: boolean = true;
-	headerSelectors: ISelectorVisibility;
 
 	constructor(
 		private readonly analytics: AnalyticsService,
@@ -126,25 +127,31 @@ export class AppComponent implements OnInit, AfterViewInit {
 				/**
 				 * Set Date Range Picker Default Unit
 				 */
-				tap(({ datePicker }: any) => {
+				tap(({ datePicker, dates, selectors }: {
+					datePicker: IDatePickerConfig,
+					dates: IDateRangePicker,
+					selectors: ISelectorVisibility
+				}) => {
 					const datePickerConfig = Object.assign(
 						{},
 						DEFAULT_DATE_PICKER_CONFIG,
 						datePicker
 					);
+					if (isNotEmpty(dates)) {
+						this.dateRangePickerBuilderService.setDateRangePicker(dates);
+					}
 					this.dateRangePickerBuilderService.setDatePickerConfig(datePickerConfig);
-				})
+				}),
+				tap(({ selectors }: {
+					selectors: ISelectorVisibility
+				}) => {
+					Object.entries(Object.assign( {}, DEFAULT_SELECTOR_VISIBILITY, selectors)).forEach(([id, value]) => {
+						this.selectorBuilderService.setSelectorsVisibility(id, value as boolean);
+					});
+					this.selectorBuilderService.getSelectorsVisibility();
+				}),
+				untilDestroyed(this)
 			)
-			.subscribe(({ selectors }: any) => {
-				this.headerSelectors = Object.assign(
-					{},
-					DEFAULT_SELECTOR_VISIBILITY,
-					selectors
-				);
-				Object.entries(this.headerSelectors).forEach(([id, value]) => {
-					this.selectorBuilderService.setSelectorsVisibility(id, value as boolean);
-				});
-				this.selectorBuilderService.getSelectorsVisibility();
-			});
+			.subscribe();
 	}
 }

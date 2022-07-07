@@ -2,9 +2,11 @@
 
 $border-primary: nb-theme(text-primary-color);
 
-.main {
+:host .main {
   display: inline;
   button {
+    @include nb-ltr(margin-right, 1.5rem);
+    @include nb-rtl(margin-left, 1.5rem);
     width: 1.5rem;
     height: 1.5rem;
     &.appearance-outline.status-primary {

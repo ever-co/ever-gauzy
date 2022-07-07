@@ -22,10 +22,11 @@
   }
 }
 
-.button-container {
+:host .button-container {
   display: flex;
   justify-content: flex-start;
   button {
-    margin: 0 0 0 1rem;
+    @include nb-ltr(margin, 0 0 0 1rem);
+    @include nb-rtl(margin-left, 0 1rem 0 0);
   }
 }

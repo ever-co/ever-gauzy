@@ -16,8 +16,9 @@
   background: var(--gauzy-card-3);
   border-radius: nb-theme(border-radius);
 }
-.gauzy-button-container {
+:host .gauzy-button-container {
   position: absolute;
-  right: 1rem;
+  @include nb-ltr(right, 1rem);
+  @include nb-rtl(left, 1rem);
   top: 0;
 }

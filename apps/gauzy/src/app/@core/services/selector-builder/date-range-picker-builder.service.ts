@@ -24,22 +24,21 @@ export const DEFAULT_DATE_PICKER_CONFIG: IDatePickerConfig = {
 	providedIn: 'root'
 })
 export class DateRangePickerBuilderService {
-	
-	private _datePickerConfig$: BehaviorSubject<IDatePickerConfig> = new BehaviorSubject(DEFAULT_DATE_PICKER_CONFIG);
+
+	public _datePickerConfig$: BehaviorSubject<IDatePickerConfig> = new BehaviorSubject(DEFAULT_DATE_PICKER_CONFIG);
 	public datePickerConfig$: Observable<IDatePickerConfig> = this._datePickerConfig$.asObservable();
 
-	public _datePickerRange$: BehaviorSubject<IDateRangePicker> = new BehaviorSubject({
+	public dates$: BehaviorSubject<IDateRangePicker> = new BehaviorSubject({
 		startDate: moment().startOf(DEFAULT_DATE_PICKER_CONFIG.unitOfTime).toDate(),
 		endDate: moment().endOf(DEFAULT_DATE_PICKER_CONFIG.unitOfTime).toDate()
 	});
-	public datePickerRange$: Observable<IDateRangePicker> = this._datePickerRange$.asObservable();
 
 	constructor() {}
 
 	/**
 	 * Override date range picker default configuration
-	 * 
-	 * @param options 
+	 *
+	 * @param options
 	 */
 	setDatePickerConfig(options: IDatePickerConfig) {
 		if (isNotEmpty(options)) {
@@ -49,12 +48,30 @@ export class DateRangePickerBuilderService {
 
 	/**
 	 * Override date range picker default values
-	 * 
-	 * @param options 
+	 *
+	 * @param options
 	 */
 	setDateRangePicker(options: IDateRangePicker) {
 		if (isNotEmpty(options)) {
-			this._datePickerRange$.next(options);
+			this.dates$.next(options);
 		}
+	}
+
+	/**
+	 * Refresh date range picker for specific dates
+	 *
+	 * @param date
+	 */
+	refreshDateRangePicker(date: moment.Moment) {
+		const { unitOfTime } = this._datePickerConfig$.getValue();
+
+		const startDate = moment(date).startOf(unitOfTime);
+		const endDate = moment(date).endOf(unitOfTime);
+
+		this.setDateRangePicker({
+			startDate: startDate.toDate(),
+			endDate: endDate.toDate()
+		});
+		this.setDatePickerConfig(this._datePickerConfig$.getValue());
 	}
 }

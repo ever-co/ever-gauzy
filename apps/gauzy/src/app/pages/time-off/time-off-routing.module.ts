@@ -4,6 +4,7 @@ import { TimeOffComponent } from './time-off.component';
 import { TimeOffSettingsComponent } from './time-off-settings/time-off-settings.component';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { NgxPermissionsGuard } from 'ngx-permissions';
+import { DateRangePickerResolver } from '../../@theme/components/header/selectors/date-range-picker';
 
 const routes: Routes = [
 	{
@@ -21,6 +22,9 @@ const routes: Routes = [
 			datePicker: {
 				unitOfTime: 'month'
 			}
+		},
+		resolve: {
+			dates: DateRangePickerResolver
 		}
 	},
 	{

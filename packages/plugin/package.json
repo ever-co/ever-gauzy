@@ -32,7 +32,7 @@
 		"@gauzy/common": "^0.1.0",
 		"@gauzy/config": "^0.1.0",
 		"@nestjs/common": "^8.4.4",
-		"@nestjs/core": "^8.3.1"
+		"@nestjs/core": "^8.4.4"
 	},
 	"devDependencies": {
 		"@types/node": "^17.0.33",

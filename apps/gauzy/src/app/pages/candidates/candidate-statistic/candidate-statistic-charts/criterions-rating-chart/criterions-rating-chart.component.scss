@@ -1,3 +1,5 @@
+@import 'themes';
+
 .title {
   margin-top: 2rem;
 }
@@ -14,9 +16,10 @@
   margin: 0 0 1.25rem 0;
 }
 
-.select-interviewer {
+:host .select-interviewer {
   width: 20rem;
-  padding-left: 1rem;
+  @include nb-ltr(padding-left, 1rem);
+  @include nb-rtl(padding-right, 1rem);
 }
 
 .no-data {
