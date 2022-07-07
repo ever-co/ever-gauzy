@@ -91,9 +91,6 @@ const routes: Routes = [
 							datePicker: {
 								unitOfTime: 'month'
 							}
-						},
-						resolve: {
-							dates: DateRangePickerResolver
 						}
 					},
 					{
