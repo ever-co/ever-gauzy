@@ -1,5 +1,7 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
+import { NgxPermissionsGuard } from 'ngx-permissions';
+import { PermissionsEnum } from '@gauzy/contracts';
 import { InvoicesComponent } from './invoices.component';
 import { InvoiceAddComponent } from './invoice-add/invoice-add.component';
 import { InvoiceEditComponent } from './invoice-edit/invoice-edit.component';
@@ -11,8 +13,7 @@ import { EstimateEditComponent } from './invoice-estimates/estimate-edit/estimat
 import { EstimatesReceivedComponent } from './invoice-estimates/estimates-received/estimates-received.component';
 import { EstimateViewComponent } from './invoice-estimates/estimate-view/estimate-view.component';
 import { InvoicePaymentsComponent } from './invoice-payments/payments.component';
-import { NgxPermissionsGuard } from 'ngx-permissions';
-import { PermissionsEnum } from '@gauzy/contracts';
+import { DateRangePickerResolver } from '../../@theme/components/header/selectors/date-range-picker';
 
 export function redirectTo() {
 	return '/pages/dashboard';
@@ -51,7 +52,10 @@ const routes: Routes = [
 		path: '',
 		component: InvoicesComponent,
 		canActivate: [NgxPermissionsGuard],
-		data: INVOICES_VIEW_PERMISSION
+		data: INVOICES_VIEW_PERMISSION,
+		resolve: {
+			dates: DateRangePickerResolver
+		}
 	},
 	{
 		path: 'add',
@@ -84,7 +88,10 @@ const routes: Routes = [
 			{
 				path: '',
 				component: EstimatesComponent,
-				data: ESTIMATES_VIEW_PERMISSION
+				data: ESTIMATES_VIEW_PERMISSION,
+				resolve: {
+					dates: DateRangePickerResolver
+				}
 			},
 			{
 				path: 'add',
