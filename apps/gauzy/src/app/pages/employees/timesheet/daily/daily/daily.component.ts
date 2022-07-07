@@ -12,6 +12,7 @@ import { BehaviorSubject, Observable } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { pick } from 'underscore';
+import * as moment from 'moment';
 import {
 	IGetTimeLogInput,
 	ITimeLog,
@@ -32,7 +33,7 @@ import { GauzyFiltersComponent } from './../../../../../@shared/timesheet/gauzy-
 	templateUrl: './daily.component.html',
 	styleUrls: ['./daily.component.scss']
 })
-export class DailyComponent extends BaseSelectorFilterComponent implements 
+export class DailyComponent extends BaseSelectorFilterComponent implements
 	AfterViewInit, OnInit, OnDestroy {
 
 	PermissionsEnum = PermissionsEnum;
@@ -43,7 +44,7 @@ export class DailyComponent extends BaseSelectorFilterComponent implements
 	timeLogs: ITimeLog[] = [];
 	contextMenus: NbMenuItem[] = [];
 
-	@ViewChild(GauzyFiltersComponent) gauzyFiltersComponent: GauzyFiltersComponent; 
+	@ViewChild(GauzyFiltersComponent) gauzyFiltersComponent: GauzyFiltersComponent;
 	datePickerConfig$: Observable<any> = this._dateRangePickerBuilderService.datePickerConfig$;
 	payloads$: BehaviorSubject<ITimeLogFilters> = new BehaviorSubject(null);
 
@@ -128,8 +129,8 @@ export class DailyComponent extends BaseSelectorFilterComponent implements
 
 	/**
 	 * Prepare Unique Request Always
-	 * 
-	 * @returns 
+	 *
+	 * @returns
 	 */
 	prepareRequest() {
 		if (!this.organization || isEmpty(this.filters)) {
@@ -180,12 +181,16 @@ export class DailyComponent extends BaseSelectorFilterComponent implements
 					}
 				}
 			})
-			.onClose.pipe(untilDestroyed(this))
-			.subscribe((data) => {
-				if (data) {
-					this.subject$.next(true);
-				}
-			});
+			.onClose
+			.pipe(
+				filter((timeLog: ITimeLog) => !!timeLog),
+				tap((timeLog: ITimeLog) => this._dateRangePickerBuilderService.refreshDateRangePicker(
+					moment(timeLog.startedAt)
+				)),
+				tap(() => this.subject$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	openEdit(timeLog: ITimeLog) {
@@ -194,12 +199,16 @@ export class DailyComponent extends BaseSelectorFilterComponent implements
 		}
 		this.dialogService
 			.open(EditTimeLogModalComponent, { context: { timeLog } })
-			.onClose.pipe(untilDestroyed(this))
-			.subscribe((data) => {
-				if (data) {
-					this.subject$.next(true);
-				}
-			});
+			.onClose
+			.pipe(
+				filter((timeLog: ITimeLog) => !!timeLog),
+				tap((timeLog: ITimeLog) => this._dateRangePickerBuilderService.refreshDateRangePicker(
+					moment(timeLog.startedAt)
+				)),
+				tap(() => this.subject$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	openView(timeLog: ITimeLog) {
@@ -382,8 +391,8 @@ export class DailyComponent extends BaseSelectorFilterComponent implements
 
 	/**
 	 * User Select Single Row
-	 * 
-	 * @param timeLog 
+	 *
+	 * @param timeLog
 	 */
 	userRowSelect(timeLog: ITimeLog) {
 		// if row is already selected, deselect it.
@@ -410,7 +419,7 @@ export class DailyComponent extends BaseSelectorFilterComponent implements
 	}
 
 	isRowSelected() {
-		return !!this.timeLogs.find((t: ITimeLog) => t.isSelected);	
+		return !!this.timeLogs.find((t: ITimeLog) => t.isSelected);
 	}
 
 	isCheckboxSelected() {

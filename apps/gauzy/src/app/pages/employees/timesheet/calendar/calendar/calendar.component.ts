@@ -291,9 +291,16 @@ export class CalendarComponent extends BaseSelectorFilterComponent
 	openDialog(timeLog?: ITimeLog | Partial<ITimeLog>) {
 		this.nbDialogService
 			.open(EditTimeLogModalComponent, { context: { timeLog } })
-			.onClose.subscribe(() => {
-				this.subject$.next(true);
-			});
+			.onClose
+			.pipe(
+				filter((timeLog: ITimeLog) => !!timeLog),
+				tap((timeLog: ITimeLog) => this._dateRangePickerBuilderService.refreshDateRangePicker(
+					moment(timeLog.startedAt)
+				)),
+				tap(() => this.subject$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	updateTimeLog(id: string, timeLog: ITimeLog | Partial<ITimeLog>) {

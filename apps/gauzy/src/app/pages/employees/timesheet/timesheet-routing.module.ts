@@ -24,7 +24,6 @@ const routes: Routes = [
 					datePicker: {
 						unitOfTime: 'day',
 						isLockDatePicker: true,
-						isSaveDatePicker: true,
 						isSingleDatePicker: true
 					}
 				},
@@ -40,8 +39,7 @@ const routes: Routes = [
 				data: {
 					datePicker: {
 						unitOfTime: 'week',
-						isLockDatePicker: true,
-						isSaveDatePicker: true
+						isLockDatePicker: true
 					}
 				},
 				resolve: {
