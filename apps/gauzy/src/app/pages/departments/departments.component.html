@@ -21,7 +21,7 @@
 		</div>
 	</nb-card-header>
 	<nb-card-body>
-		<ng-container *ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE">
+		<ng-container *ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE && !loading">
 			<div class="table-scroll-container">
 				<ng2-smart-table
 					[settings]="smartTableSettings"
@@ -44,7 +44,7 @@
 				</ng-container>
 			</div>
 		</ng-container>
-		<ng-container *ngIf="dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID">
+		<ng-container *ngIf="dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID && !loading">
 			<ga-card-grid
 				[settings]="smartTableSettings"
 				[source]="departments"

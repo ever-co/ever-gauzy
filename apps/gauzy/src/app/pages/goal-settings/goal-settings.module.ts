@@ -66,7 +66,7 @@ import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy
 		NbDialogModule.forChild(),
 		TranslateModule,
 		HeaderTitleModule,
-    GauzyButtonActionModule
+    	GauzyButtonActionModule
 	]
 })
 export class GoalSettingsModule {}
