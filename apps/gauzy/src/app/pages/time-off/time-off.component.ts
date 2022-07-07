@@ -369,7 +369,7 @@ export class TimeOffComponent extends PaginationFilterBaseComponent
 				display: false,
 				perPage: pagination ? pagination.itemsPerPage : 10
 			},
-			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA'),
+			noDataMessage: this.getTranslation('SM_TABLE.TIME_OFF_NO_DATA'),
 			columns: {
 				fullName: {
 					title: this.getTranslation('SM_TABLE.EMPLOYEE'),

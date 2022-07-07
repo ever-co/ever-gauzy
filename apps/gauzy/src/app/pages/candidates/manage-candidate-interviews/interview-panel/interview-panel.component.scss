@@ -178,3 +178,8 @@
   right: 1rem;
   top: -4.5rem;
 }
+::ng-deep {
+  .no-data-found {
+    max-height: calc(100vh - 29rem);
+  }
+}

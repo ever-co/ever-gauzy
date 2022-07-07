@@ -246,6 +246,7 @@ export class ApprovalsComponent
 				display: false,
 				perPage: pagination ? pagination : 10
 			},
+			noDataMessage: this.getTranslation('SM_TABLE.APPROVAL_REQUEST_NO_DATA'),
 			columns: {
 				name: {
 					title: this.getTranslation(

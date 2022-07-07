@@ -83,7 +83,7 @@
 			</div>
 		</ng-template>
 		<ng-template #gridLayout>
-			<div class="custom-grid" *ngIf="interviewList?.length">
+			<div class="custom-grid" *ngIf="!loading">
 				<ga-card-grid
 					[settings]="settingsSmartTable"
 					[source]="tableInterviewList"

@@ -554,6 +554,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 				display: false,
 				perPage: pagination ? pagination.itemsPerPage : 10
 			},
+			noDataMessage: this.getTranslation('SM_TABLE.EMPLOYEE_NO_DATA'),
 			columns: {
 				fullName: {
 					title: this.getTranslation('SM_TABLE.FULL_NAME'),

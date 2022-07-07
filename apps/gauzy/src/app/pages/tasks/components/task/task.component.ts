@@ -337,6 +337,7 @@ export class TaskComponent extends PaginationFilterBaseComponent
 				display: false,
 				perPage: pagination ? pagination.itemsPerPage : 10
 			},
+			noDataMessage: this.getTranslation('SM_TABLE.TASK_NO_DATA'),
 			columns: {
 				taskNumber: {
 					title: this.getTranslation('TASKS_PAGE.TASK_ID'),
