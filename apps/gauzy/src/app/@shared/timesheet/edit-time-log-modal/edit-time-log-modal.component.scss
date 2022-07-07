@@ -22,3 +22,16 @@
     }
   }
 }
+
+.range-picker-row {
+  margin-left: 0;
+  .show-time {
+    display: flex;
+    align-items: flex-end;
+  }
+
+  .show-time div {
+    padding-bottom: 30px;
+    padding-left: 27px;
+  }
+}
