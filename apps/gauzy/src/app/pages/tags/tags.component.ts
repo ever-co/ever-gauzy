@@ -233,6 +233,7 @@ export class TagsComponent
 				display: false,
 				perPage: pagination ? pagination.itemsPerPage : 10
 			},
+			noDataMessage: this.getTranslation('SM_TABLE.TAGS_NO_DATA'),
 			columns: {
 				name: {
 					title: this.getTranslation('TAGS_PAGE.TAGS_NAME'),
