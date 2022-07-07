@@ -31406,7 +31406,7 @@ typeorm-aurora-data-api-driver@^2.3.3:
   version "1.5.1"
   resolved "https://github.com/ever-co/typeorm-express-query-builder.git#b6b20e53f44b8f6639af1d2c124e9968b4b5d6a8"
 
-typeorm@^0.2.38:
+typeorm@^0.2.45:
   version "0.2.45"
   resolved "https://registry.yarnpkg.com/typeorm/-/typeorm-0.2.45.tgz#e5bbb3af822dc4646bad96cfa48cd22fa4687cea"
   integrity sha512-c0rCO8VMJ3ER7JQ73xfk0zDnVv0WDjpsP6Q1m6CVKul7DB9iVdWLRjPzc8v2eaeBuomsbZ2+gTaYr8k1gm3bYA==
