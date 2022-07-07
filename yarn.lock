@@ -4016,6 +4016,13 @@
   dependencies:
     uuid "8.3.2"
 
+"@nestjs/typeorm@^8.1.4":
+  version "8.1.4"
+  resolved "https://registry.yarnpkg.com/@nestjs/typeorm/-/typeorm-8.1.4.tgz#ab2286b39b69d1ce74e039d1847708d56c2c3e60"
+  integrity sha512-hKv0Y9PG7YkHQfjsrNqM1s/VajlT7Mla8gaoblmuLzgMKsOQFsZXSHlXNxXZ8CA4aCPeDUiXtvqc4zocadGiIQ==
+  dependencies:
+    uuid "8.3.2"
+
 "@nestjs/websockets@^8.4.4":
   version "8.4.4"
   resolved "https://registry.yarnpkg.com/@nestjs/websockets/-/websockets-8.4.4.tgz#11d6384a3bde5f97ac8a401032cf5c011901b53b"

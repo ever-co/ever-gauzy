@@ -37,7 +37,7 @@
 		"@nestjs/cqrs": "^8.0.4",
 		"@nestjs/passport": "^8.2.1",
 		"@nestjs/swagger": "^5.2.1",
-		"@nestjs/typeorm": "^8.0.3",
+		"@nestjs/typeorm": "^8.1.4",
 		"class-validator": "^0.13.2",
 		"nest-router": "^1.0.9",
 		"typeorm": "^0.3.7",
