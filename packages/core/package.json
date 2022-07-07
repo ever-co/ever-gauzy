@@ -63,7 +63,7 @@
 		"@nestjs/serve-static": "^2.2.2",
 		"@nestjs/swagger": "^5.2.1",
 		"@nestjs/terminus": "^8.0.6",
-		"@nestjs/typeorm": "^8.0.3",
+		"@nestjs/typeorm": "^8.1.4",
 		"@nestjs/websockets": "^8.4.4",
 		"@nestjsx/crud": "^5.0.0-alpha.3",
 		"@nestjsx/crud-typeorm": "^5.0.0-alpha.3",

@@ -4009,13 +4009,6 @@
     optional "0.1.4"
     tslib "2.3.1"
 
-"@nestjs/typeorm@^8.0.3":
-  version "8.0.3"
-  resolved "https://registry.yarnpkg.com/@nestjs/typeorm/-/typeorm-8.0.3.tgz#e62feb1f3ec7fa0d1353f774f3f6915594c34a4e"
-  integrity sha512-tf9rTXP6LeFInkwd+tktQhtLRsKp4RRYImprqT8gcHcJDx+xMP1IygnXELOKwF5vo2/mnhrGtBlRQ/iiS6170g==
-  dependencies:
-    uuid "8.3.2"
-
 "@nestjs/typeorm@^8.1.4":
   version "8.1.4"
   resolved "https://registry.yarnpkg.com/@nestjs/typeorm/-/typeorm-8.1.4.tgz#ab2286b39b69d1ce74e039d1847708d56c2c3e60"

@@ -28,7 +28,7 @@
 	"dependencies": {
 		"@nestjs/core": "^8.4.4",
 		"@nestjs/common": "^8.4.4",
-		"@nestjs/typeorm": "^8.0.3",
+		"@nestjs/typeorm": "^8.1.4",
 		"@nestjs/testing": "^8.4.4",
 		"nest-router": "^1.0.9",
 		"@grpc/grpc-js": "^1.6.7"
