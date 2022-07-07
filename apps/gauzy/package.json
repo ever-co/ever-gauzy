@@ -120,7 +120,7 @@
 		"ionicons": "^4.6.3",
 		"keycloak-js": "^11.0.2",
 		"leaflet": "^1.7.1",
-		"moment": "^2.29.3",
+		"moment": "^2.29.4",
 		"moment-range": "^4.0.2",
 		"moment-timezone": "^0.5.34",
 		"nebular-icons": "^1.1.0",

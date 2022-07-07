@@ -108,7 +108,7 @@
 		"jsonwebtoken": "^8.5.1",
 		"kafkajs": "^1.14.0",
 		"mjml": "^4.7.0",
-		"moment": "^2.29.3",
+		"moment": "^2.29.4",
 		"moment-range": "^4.0.2",
 		"moment-timezone": "^0.5.34",
 		"mqtt": "^4.3.7",
