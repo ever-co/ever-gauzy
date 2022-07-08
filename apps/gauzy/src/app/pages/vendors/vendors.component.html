@@ -61,19 +61,10 @@
 						</div>
 					</div>
 				</nb-card-body>
-			</nb-card>
-			<ng-template [ngIf]="!isLoading && vendors?.length == 0">
-				<gauzy-no-data 
-					[message]="'ORGANIZATIONS_PAGE.VENDORS_NO_DATA_MESSAGE'"
-				></gauzy-no-data>
-			</ng-template>
+			</nb-card>			
 		</ng-template>
-
 		<ng-template
-			[ngIf]="
-				dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID &&
-				vendors?.length
-			"
+			[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID && vendors.length > 0"
 		>
 			<ga-card-grid
 				[settings]="settingsSmartTable"
@@ -86,6 +77,11 @@
 				(selectedOption)="onUpdateOption($event)"
 				(selectedPage)="onPageChange($event)"
 			></ga-card-grid>
+		</ng-template>
+		<ng-template [ngIf]="!isLoading && vendors?.length == 0">
+			<ngx-no-data-message 
+				[message]="'ORGANIZATIONS_PAGE.VENDORS_NO_DATA_MESSAGE'"
+			></ngx-no-data-message>
 		</ng-template>
 	</nb-card-body>
 </nb-card>

@@ -10,7 +10,7 @@
 				{{ 'DASHBOARD_PAGE.RECURRING_EXPENSES' | translate }}
 			</ngx-header-title>
 		</h4>
-		<div class="float-right">
+		<div class="gauzy-button-container">
 			<ngx-gauzy-button-action
 				[hasLayoutSelector]="false"
 				[buttonTemplateVisible]="visible"
@@ -64,9 +64,9 @@
 				</div>				
 			</ng-container>
 			<ng-template [ngIf]="!loading && recurringExpenses?.length == 0">
-				<gauzy-no-data 
+				<ngx-no-data-message 
 					[message]="'ORGANIZATIONS_PAGE.EXPENSE_NO_DATA_MESSAGE'"
-				></gauzy-no-data>
+				></ngx-no-data-message>
 			</ng-template>
 		</div>
 	</nb-card-body>
@@ -113,12 +113,12 @@
 		<ng-template ngxPermissionsOnly="EMPLOYEE_EXPENSES_VIEW">
 			<button
 				nbButton
-				class="action secondary"
+				class="history action secondary"
 				(click)="fetchHistory()"
 				size="small"
 				status="basic"
 			>
-				<i class="fas fa-history mr-1"></i>
+				<i class="fas fa-history"></i>
 				{{ 'BUTTONS.HISTORY' | translate }}
 			</button>
 		</ng-template>

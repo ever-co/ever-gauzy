@@ -397,6 +397,7 @@ export class CandidatesComponent extends PaginationFilterBaseComponent
 				display: false,
 				perPage: pagination ? pagination.itemsPerPage : 10
 			},
+			noDataMessage: this.getTranslation('SM_TABLE.CANDIDATE_NO_DATA'),
 			columns: {
 				fullName: {
 					title: this.getTranslation('SM_TABLE.FULL_NAME'),

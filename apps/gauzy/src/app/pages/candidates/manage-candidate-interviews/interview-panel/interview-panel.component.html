@@ -24,7 +24,6 @@
 					<nb-checkbox
 						(checkedChange)="changePast($event)"
 						status="basic"
-						class="mr-3"
 						[checked]="onlyPast"
 						>{{ 'FORM.CHECKBOXES.ONLY_PAST' | translate }}
 					</nb-checkbox>
@@ -32,7 +31,6 @@
 						(checkedChange)="changeFuture($event)"
 						status="basic"
 						[checked]="onlyFuture"
-						class="mr-3"
 						>{{ 'FORM.CHECKBOXES.ONLY_FUTURE' | translate }}
 					</nb-checkbox>
 					<nb-checkbox
@@ -49,7 +47,7 @@
 		[nbSpinner]="loading"
 		nbSpinnerSize="giant"
 		nbSpinnerStatus="primary"
-		class="card-body d-flex flex-column justify-content-between"
+		class="card-body d-flex flex-column justify-content-between interview-panel"
 	>
 		<ng-template
 			[ngIf]="dataLayoutStyle === 'TABLE'"
@@ -83,7 +81,7 @@
 			</div>
 		</ng-template>
 		<ng-template #gridLayout>
-			<div class="custom-grid" *ngIf="interviewList?.length">
+			<div class="custom-grid" *ngIf="!loading">
 				<ga-card-grid
 					[settings]="settingsSmartTable"
 					[source]="tableInterviewList"

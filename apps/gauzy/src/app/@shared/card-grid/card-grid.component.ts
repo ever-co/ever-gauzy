@@ -46,6 +46,10 @@ export class CardGridComponent extends PaginationComponent
 
 	ngOnInit(): void {}
 
+	getNoDataMessage() {
+		return this.settings.noDataMessage;
+	}
+
 	getKeys() {
 		return Object.keys(this.settings.columns);
 	}

@@ -1,3 +1,5 @@
+@import 'themes';
+
 .body {
   width: 890px;
   max-width: 100%;
@@ -20,32 +22,37 @@ form .tab_sections nb-tab {
   }
 }
 
-.card-footer {
-  text-align: right;
+:host .card-footer {
+  @include nb-ltr(text-align, right);
+  @include nb-rtl(text-align, left);
 }
 
-span.heading_title {
+:host span.heading_title {
   color: #222b45;
   font-family: Open Sans, sans-serif;
   font-size: 15px;
   font-weight: 700;
   line-height: 1rem;
-  margin-right: 10px;
+  @include nb-ltr(margin-right, 10px);
+  @include nb-rtl(margin-left, 10px);
 }
 
-button.add_new {
+:host button.add_new {
   border-radius: 50% !important;
   width: 40px;
   height: 40px;
   text-align: center;
-  padding-right: 4px !important;
   margin: 0 !important;
+  @include nb-ltr(padding-right, 4px !important);
+  @include nb-rtl(padding-left, 4px !important);
 }
 
-.nb_list_item.item {
+:host .nb_list_item.item {
   border: none !important;
-  float: left;
-  padding-left: 0;
+  @include nb-ltr(float, left);
+  @include nb-rtl(float, right);
+  @include nb-ltr(padding-left, 0);
+  @include nb-rtl(padding-right, 0);
 }
 
 .close {

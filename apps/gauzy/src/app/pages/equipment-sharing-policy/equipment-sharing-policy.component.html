@@ -41,7 +41,7 @@
 				</ng-container>
 			</div>
 		</ng-container>
-		<ng-container *ngIf="dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID">
+		<ng-container *ngIf="dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID && !loading">
 			<ga-card-grid
 				[settings]="settingsSmartTable"
 				[source]="equipmentSharingPolicyData"

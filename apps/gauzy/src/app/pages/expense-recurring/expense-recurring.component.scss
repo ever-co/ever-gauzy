@@ -29,7 +29,7 @@
   font-weight: bold;
 }
 
-.header-content {
+:host .header-content {
   display: flex;
 
   .header-info {
@@ -37,7 +37,8 @@
     justify-content: space-between;
     align-items: center;
     width: fit-content;
-    padding-left: 30px;
+    @include nb-ltr(padding-left, 42px);
+    @include nb-rtl(padding-right, 42px);
   }
   .block {
     display: flex;
@@ -66,4 +67,9 @@
 
 .container::-webkit-scrollbar {
   display: none;
+}
+
+button.history {
+  align-items: center;
+  gap: 6px;
 }

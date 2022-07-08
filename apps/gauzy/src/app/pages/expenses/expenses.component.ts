@@ -38,6 +38,7 @@ import { API_PREFIX, ComponentEnum } from '../../@core/constants';
 import { ServerDataSource } from '../../@core/utils/smart-table';
 import { ALL_EMPLOYEES_SELECTED } from '../../@theme/components/header/selectors/employee';
 import {
+	DateRangePickerBuilderService,
 	ErrorHandlingService,
 	ExpensesService,
 	Store,
@@ -88,7 +89,8 @@ export class ExpensesComponent extends PaginationFilterBaseComponent
 		public readonly translateService: TranslateService,
 		private readonly router: Router,
 		private readonly httpClient: HttpClient,
-		private readonly replacePipe: ReplacePipe
+		private readonly replacePipe: ReplacePipe,
+		private readonly dateRangePickerBuilderService: DateRangePickerBuilderService
 	) {
 		super(translateService);
 		this.setView();
@@ -198,7 +200,7 @@ export class ExpensesComponent extends PaginationFilterBaseComponent
 		this.smartTableSettings = {
 			actions: false,
 			editable: true,
-			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA'),
+			noDataMessage: this.getTranslation('SM_TABLE.EXPENSE_NO_DATA'),
 			pager: {
 				display: false,
 				perPage: pagination ? pagination.itemsPerPage : 10
@@ -296,6 +298,10 @@ export class ExpensesComponent extends PaginationFilterBaseComponent
 			this.toastrService.success('NOTES.EXPENSES.ADD_EXPENSE', {
 				name: this.employeeName(employee)
 			});
+
+			this.dateRangePickerBuilderService.refreshDateRangePicker(
+				moment(expense.valueDate)
+			);
 			this.expenses$.next(true);
 		} catch (error) {
 			this.errorHandler.handleError(error);
@@ -346,6 +352,10 @@ export class ExpensesComponent extends PaginationFilterBaseComponent
 							tenantId,
 							organizationId
 						});
+
+						this.dateRangePickerBuilderService.refreshDateRangePicker(
+							moment(expense.valueDate)
+						);
 						this.toastrService.success('NOTES.EXPENSES.OPEN_EDIT_EXPENSE_DIALOG', {
 							name: this.employeeName(employee)
 						});
@@ -364,7 +374,7 @@ export class ExpensesComponent extends PaginationFilterBaseComponent
 				data: selectedItem
 			});
 		}
-	
+
 		this.dialogService
 			.open(ExpensesMutationComponent, {
 				context: {
@@ -450,7 +460,7 @@ export class ExpensesComponent extends PaginationFilterBaseComponent
 				request['valueDate']['endDate'] = toUTC(endDate).format('YYYY-MM-DD HH:mm:ss');
 			}
 		}
-		
+
 		this.smartTableSource = new ServerDataSource(this.httpClient, {
 			endPoint: `${API_PREFIX}/expense/pagination`,
 			relations: [

@@ -20,3 +20,9 @@ nb-accordion-item-header ::ng-deep nb-icon {
   width: 1.75rem;
   height: 1.75rem;
 }
+
+::ng-deep {
+  .search-tab .no-data-found {
+    max-height: calc(100vh - 36.2rem);
+  }
+}

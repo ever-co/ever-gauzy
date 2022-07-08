@@ -1,3 +1,5 @@
+@import 'themes';
+
 .email-wrap {
   max-width: 45rem;
 }
@@ -8,13 +10,14 @@
   border-right: 1px #d1d1d1 solid;
 }
 
-.email {
+:host .email {
   border: 1px #d1d1d1 solid;
-  padding: 3px 6px;
-  margin-left: 15px;
+  @include nb-ltr(margin-left, 15px);
+  @include nb-rtl(margin-right, 15px);
   border-radius: 5px;
 }
 
-.editor {
-  padding: 0 2px 0 0px;
+:host .editor {
+  @include nb-ltr(padding, 0 2px 0 0);
+  @include nb-rtl(padding, 0 0px 0 2px);
 }

@@ -13,4 +13,8 @@
     border-radius: nb-theme(border-radius);
     width: 100%;
   }
+  .footer-buttons {
+    display: flex;
+    gap: 4px;
+  }
 }

@@ -1,13 +1,13 @@
 @import 'themes';
 
 .row.file-uploader-container {
-  padding-left: 14px;
-  padding-right: 16px;
+  padding: 0;
   position: relative;
+  border-radius: nb-theme(border-radius);
 
   button {
     position: absolute;
-    right: 22px;
+    right: 8px;
     top: calc(50% - 24px / 2);
     height: 24px;
     border-width: 2px;
@@ -15,7 +15,7 @@
   }
 
   input {
-    padding-right: 6rem;
+    padding-right: 6.25rem;
     border-radius: nb-theme(border-radius);
   }
 
@@ -24,6 +24,5 @@
     font-weight: 400;
     line-height: 16px;
     letter-spacing: -0.009em;
-    text-align: left;
   }
 }

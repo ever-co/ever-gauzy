@@ -35,13 +35,14 @@
     display: flex;
     align-items: center;
     justify-content: flex-end;
+    gap: 1rem;
   }
 }
 
 .select {
   width: 18rem;
 }
-.card-container {
+:host .card-container {
   display: flex;
   flex-wrap: wrap;
 
@@ -84,7 +85,8 @@
           height: 50px;
           display: flex;
           justify-content: center;
-          margin-right: 10px;
+          @include nb-ltr(margin-right, 10px);
+          @include nb-rtl(margin-left, 10px);
 
           img {
             height: 100%;
@@ -139,7 +141,8 @@
       text-align: end;
       .info-list-item:not(:last-child)::after {
         content: ',';
-        margin-right: 5px;
+        @include nb-ltr(margin-right, 5px);
+        @include nb-rtl(margin-left, 5px);
       }
     }
     .criterions {
@@ -173,8 +176,14 @@
   }
 }
 
-.gauzy-action {
+:host .gauzy-action {
   position: absolute;
-  right: 1rem;
+  @include nb-ltr(right, 1rem);
+  @include nb-rtl(left, 1rem);
   top: -4.5rem;
+}
+::ng-deep {
+  .interview-panel .no-data-found {
+    max-height: calc(100vh - 29rem);
+  }
 }

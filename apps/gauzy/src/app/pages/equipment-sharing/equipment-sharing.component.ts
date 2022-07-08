@@ -150,6 +150,7 @@ export class EquipmentSharingComponent extends PaginationFilterBaseComponent
 				display: false,
 				perPage: pagination ? pagination.itemsPerPage : 10
 			},
+			noDataMessage: this.getTranslation('SM_TABLE.EQUIPMENT_SHARING_NO_DATA'),
 			columns: {
 				name: {
 					title: this.getTranslation(

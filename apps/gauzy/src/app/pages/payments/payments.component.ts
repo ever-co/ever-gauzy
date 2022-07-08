@@ -32,6 +32,7 @@ import { StatusBadgeComponent } from '../../@shared/status-badge';
 import { API_PREFIX, ComponentEnum } from '../../@core/constants';
 import { ServerDataSource } from '../../@core/utils/smart-table';
 import {
+	DateRangePickerBuilderService,
 	ErrorHandlingService,
 	InvoiceEstimateHistoryService,
 	PaymentService,
@@ -53,7 +54,7 @@ import { getAdjustDateRangeFutureAllowed } from '../../@theme/components/header/
 	templateUrl: './payments.component.html',
 	styleUrls: ['./payments.component.scss']
 })
-export class PaymentsComponent extends PaginationFilterBaseComponent 
+export class PaymentsComponent extends PaginationFilterBaseComponent
 	implements OnInit, OnDestroy {
 
 	settingsSmartTable: object;
@@ -88,7 +89,8 @@ export class PaymentsComponent extends PaginationFilterBaseComponent
 		private readonly invoiceEstimateHistoryService: InvoiceEstimateHistoryService,
 		private readonly _errorHandlingService: ErrorHandlingService,
 		private readonly route: ActivatedRoute,
-		private readonly httpClient: HttpClient
+		private readonly httpClient: HttpClient,
+		private readonly dateRangePickerBuilderService: DateRangePickerBuilderService
 	) {
 		super(translateService);
 		this.setView();
@@ -190,7 +192,7 @@ export class PaymentsComponent extends PaginationFilterBaseComponent
 			return;
 		}
 		this.loading = true;
-		
+
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 
@@ -313,18 +315,18 @@ export class PaymentsComponent extends PaginationFilterBaseComponent
 		);
 
 		if (result) {
-			await this.paymentService.add(result);
-
-			if (result.invoice) {
-				const { invoice, amount, currency } = result;
-				const action = this.getTranslation(
-					'INVOICES_PAGE.PAYMENTS.PAYMENT_AMOUNT_ADDED',
-					{ amount, currency }
-				);
+			const payment = await this.paymentService.add(result);
+			if (payment.invoice) {
+				const { invoice, amount, currency } = payment;
+				const action = this.getTranslation( 'INVOICES_PAGE.PAYMENTS.PAYMENT_AMOUNT_ADDED', {
+					amount,
+					currency
+				});
 				await this.createInvoiceHistory(action, invoice);
 			}
 
 			this.toastrService.success('INVOICES_PAGE.PAYMENTS.PAYMENT_ADD');
+			this.dateRangePickerBuilderService.refreshDateRangePicker(moment(payment.paymentDate));
 			this.payments$.next(true);
 		}
 	}
@@ -349,18 +351,15 @@ export class PaymentsComponent extends PaginationFilterBaseComponent
 			if (!this.selectedPayment) {
 				return;
 			}
-			await this.paymentService.update(this.selectedPayment.id, result);
-
-			if (result.invoice) {
+			const payment = await this.paymentService.update(this.selectedPayment.id, result);
+			if (payment.invoice) {
 				const { invoice } = result;
-				const action = this.getTranslation(
-					'INVOICES_PAGE.PAYMENTS.PAYMENT_EDIT'
-				);
-
+				const action = this.getTranslation('INVOICES_PAGE.PAYMENTS.PAYMENT_EDIT');
 				await this.createInvoiceHistory(action, invoice);
 			}
 
 			this.toastrService.success('INVOICES_PAGE.PAYMENTS.PAYMENT_EDIT');
+			this.dateRangePickerBuilderService.refreshDateRangePicker(moment(payment.paymentDate));
 			this.payments$.next(true);
 		}
 	}
@@ -415,6 +414,7 @@ export class PaymentsComponent extends PaginationFilterBaseComponent
 		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
 			actions: false,
+			noDataMessage: this.getTranslation('SM_TABLE.PAYMENT_NO_DATA'),
 			pager: {
 				display: false,
 				perPage: pagination ? pagination.itemsPerPage : 10

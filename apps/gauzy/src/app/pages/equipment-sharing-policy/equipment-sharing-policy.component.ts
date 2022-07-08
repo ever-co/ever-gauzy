@@ -138,7 +138,7 @@ export class EquipmentSharingPolicyComponent
 		this.settingsSmartTable = {
 			actions: false,
 			editable: true,
-			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA'),
+			noDataMessage: this.getTranslation('SM_TABLE.EQUIPMENT_SHARING_POLICY_NO_DATA'),
 			pager: {
 				display: false,
 				perPage: pagination ? pagination.itemsPerPage : 10
@@ -239,7 +239,7 @@ export class EquipmentSharingPolicyComponent
 		}
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.selectedOrganization;
-
+		this.loading = true;
 		this.smartTableSource = new ServerDataSource(this.httpClient, {
 			endPoint: `${API_PREFIX}/equipment-sharing-policy/pagination`,
 			relations: [

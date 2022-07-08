@@ -15,8 +15,9 @@ import { Ng2SmartTableComponent } from 'ng2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange, toUTC } from '@gauzy/common-angular';
+import * as moment from 'moment';
 import { API_PREFIX, ComponentEnum } from '../../@core/constants';
-import { Store, TimeOffService, ToastrService } from '../../@core/services';
+import { DateRangePickerBuilderService, Store, TimeOffService, ToastrService } from '../../@core/services';
 import {
 	TimeOffHolidayMutationComponent,
 	TimeOffRequestMutationComponent
@@ -81,7 +82,8 @@ export class TimeOffComponent extends PaginationFilterBaseComponent
 		private readonly store: Store,
 		private readonly translate: TranslateService,
 		private readonly httpClient: HttpClient,
-		private readonly route: ActivatedRoute
+		private readonly route: ActivatedRoute,
+		private readonly _dateRangePickerBuilderService: DateRangePickerBuilderService
 	) {
 		super(translate);
 		this.setView();
@@ -369,7 +371,7 @@ export class TimeOffComponent extends PaginationFilterBaseComponent
 				display: false,
 				perPage: pagination ? pagination.itemsPerPage : 10
 			},
-			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA'),
+			noDataMessage: this.getTranslation('SM_TABLE.TIME_OFF_NO_DATA'),
 			columns: {
 				fullName: {
 					title: this.getTranslation('SM_TABLE.EMPLOYEE'),
@@ -584,6 +586,9 @@ export class TimeOffComponent extends PaginationFilterBaseComponent
 								'TIME_OFF_PAGE.NOTIFICATIONS.RECORD_CREATED'
 							)
 						),
+						tap(() => this._dateRangePickerBuilderService.refreshDateRangePicker(
+							moment(this.timeOffRequest.start)
+						)),
 						finalize(() => this.timeOff$.next(true))
 					)
 					.subscribe();
@@ -605,6 +610,9 @@ export class TimeOffComponent extends PaginationFilterBaseComponent
 						'TIME_OFF_PAGE.NOTIFICATIONS.REQUEST_UPDATED'
 					)
 				),
+				tap(() => this._dateRangePickerBuilderService.refreshDateRangePicker(
+					moment(this.timeOffRequest.start)
+				)),
 				finalize(() => this.timeOff$.next(true))
 			).subscribe();
 		} catch (error) {

@@ -47,6 +47,11 @@
             @include nb-ltr(padding-right, 0);
             width: auto;
         }
+
+        .group-by-wrapper{
+            display: flex;
+            gap: 1rem;
+        }
     }
 }
 
