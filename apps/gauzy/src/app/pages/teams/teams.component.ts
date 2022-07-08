@@ -360,7 +360,7 @@ export class TeamsComponent extends PaginationFilterBaseComponent
 		const pagination: IPaginationBase = this.getPagination();
 		this.smartTableSettings = {
 			actions: false,
-			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA'),
+			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.TEAM'),
 			pager: {
 				display: false,
 				perPage: pagination ? pagination.itemsPerPage : 10

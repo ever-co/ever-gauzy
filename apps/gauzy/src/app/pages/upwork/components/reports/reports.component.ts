@@ -95,7 +95,7 @@ export class ReportsComponent
 		this.settingsSmartTable = {
 			actions: false,
 			mode: 'external',
-			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA'),
+			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.REPORT'),
 			columns: {
 				valueDate: {
 					title: this.getTranslation('SM_TABLE.DATE'),

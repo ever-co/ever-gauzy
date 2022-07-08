@@ -222,7 +222,7 @@ export class ContactsComponent extends PaginationFilterBaseComponent
 				display: false,
 				perPage: pagination ? pagination.itemsPerPage : 10
 			},
-			noDataMessage: this.getTranslation('SM_TABLE.CONTACT_NO_DATA'),
+			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.CONTACT'),
 			columns: {
 				name: {
 					title: this.getTranslation('ORGANIZATIONS_PAGE.NAME'),

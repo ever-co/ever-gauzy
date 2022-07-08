@@ -121,7 +121,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 			editable: false,
 			actions: false,
 			hideSubHeader: true,
-			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA'),
+			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.EMPLOYEE'),
 			pager: {
 				display: false,
 				perPage: pagination ? pagination.itemsPerPage : 10

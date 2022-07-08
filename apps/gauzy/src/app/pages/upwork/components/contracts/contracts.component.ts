@@ -89,7 +89,7 @@ export class ContractsComponent
 				select: true
 			},
 			mode: 'external',
-			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA'),
+			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.CONTRACT'),
 			columns: {
 				engagement_start_date: {
 					title: this.getTranslation('SM_TABLE.START_DATE'),

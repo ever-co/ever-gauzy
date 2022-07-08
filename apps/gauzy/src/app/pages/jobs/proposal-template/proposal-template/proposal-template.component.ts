@@ -202,7 +202,7 @@ export class ProposalTemplateComponent extends PaginationFilterBaseComponent
 			actions: false,
 			mode: 'external',
 			editable: true,
-			noDataMessage: this.getTranslation('SM_TABLE.PROPOSAL_TEMPLATE_NO_DATA'),
+			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.PROPOSAL_TEMPLATE'),
 			columns: {
 				employeeId: {
 					title: this.getTranslation('PROPOSAL_TEMPLATE.EMPLOYEE'),

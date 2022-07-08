@@ -189,7 +189,7 @@ export class IncomeComponent extends PaginationFilterBaseComponent
 			actions: false,
 			mode: 'external',
 			editable: true,
-			noDataMessage: this.getTranslation('SM_TABLE.INCOME_NO_DATA'),
+			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.INCOME'),
 			pager: {
 				display: false,
 				perPage: pagination ? pagination.itemsPerPage : 10
