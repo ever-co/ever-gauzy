@@ -1,4 +1,4 @@
-<nb-card 
+<nb-card
 	[nbSpinner]="loading"
 	[nbSpinnerStatus]="'primary'"
 	[nbSpinnerSize]="'large'"
@@ -12,7 +12,7 @@
 				</ngx-header-title>
 			</h4>
 		</div>
-		<div class="float-right">
+		<div class="gauzy-button-container">
 			<ngx-gauzy-button-action
 				[hasLayoutSelector]="false"
 				[buttonTemplateVisible]="visible"
@@ -64,9 +64,9 @@
 							"
 							[showHistory]="showHistory"
 						></ga-recurring-expense-block>
-					</ng-container>					
+					</ng-container>
 				</div>
-			</ng-container>	
+			</ng-container>
 			<ng-template [ngIf]="!loading && expenses?.length == 0">
 				<ngx-no-data-message 
 					[message]="'ORGANIZATIONS_PAGE.EXPENSE_NO_DATA_MESSAGE'"
@@ -92,7 +92,7 @@
 <ng-template #actionButtons>
 	<div class="actions">
 		<ng-template ngxPermissionsOnly="ORG_EXPENSES_VIEW">
-			<button 
+			<button
 				nbButton
 				class="action secondary"
 				size="small"
@@ -117,12 +117,12 @@
 		<ng-template ngxPermissionsOnly="ORG_EXPENSES_VIEW">
 			<button
 				nbButton
-				class="action secondary"
+				class="history action secondary"
 				(click)="fetchHistory()"
 				size="small"
 				status="basic"
 			>
-				<i class="fas fa-history mr-1"></i>
+				<i class="fas fa-history"></i>
 				{{ 'BUTTONS.HISTORY' | translate }}
 			</button>
 		</ng-template>

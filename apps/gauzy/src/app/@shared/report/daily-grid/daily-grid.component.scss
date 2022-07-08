@@ -1,5 +1,11 @@
 @import 'report';
 
+.group-by-wrapper {
+    display: flex; 
+    align-items: center;
+    gap: 18px;
+}
+
 :host {
     display: block;
 

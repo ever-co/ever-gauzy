@@ -26,11 +26,12 @@ export interface IUser extends IBasePerTenantEntityModel {
 	preferredLanguage?: string;
 	payments?: IPayment[];
 	paymentsId?: string;
-	preferredComponentLayout?: string;
+	preferredComponentLayout?: ComponentLayoutStyleEnum;
 	fullName?: string;
 	organizations?: IOrganization[];
 	isImporting?: boolean;
 	sourceId?: string;
+	isActive?: boolean;
 }
 
 export interface IUserFindInput extends IBasePerTenantEntityModel {
@@ -65,6 +66,7 @@ export interface IUserLoginInput {
 export interface IAuthResponse {
 	user: IUser;
 	token: string;
+	refresh_token?: string;
 }
 export interface IUserCreateInput {
 	firstName?: string;

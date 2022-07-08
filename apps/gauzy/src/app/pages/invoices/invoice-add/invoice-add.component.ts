@@ -495,11 +495,11 @@ export class InvoiceAddComponent
 		const invoiceItems: IInvoiceItemCreateInput[] = [];
 
 		for (const invoiceItem of tableSources) {
-			const { id } = invoiceItem.selectedItem;
+			const id = invoiceItem.selectedItem ? invoiceItem.selectedItem.id : null;
 			const itemToAdd = {
 				description: invoiceItem.description,
-				price: invoiceItem.price,
-				quantity: invoiceItem.quantity,
+				price: Number(invoiceItem.price),
+				quantity: Number(invoiceItem.quantity),
 				totalValue: invoiceItem.totalValue,
 				invoiceId: createdInvoice.id,
 				applyTax: invoiceItem.applyTax,
@@ -607,13 +607,21 @@ export class InvoiceAddComponent
 				this.getTranslation('INVOICES_PAGE.INVOICES_ADD_ESTIMATE'),
 				this.getTranslation('TOASTR.TITLE.SUCCESS')
 			);
-			this.router.navigate(['/pages/accounting/invoices/estimates']);
+			this.router.navigate(['/pages/accounting/invoices/estimates'], {
+				queryParams: {
+					date: moment(invoiceDate).format("MM-DD-YYYY")
+				}
+			});
 		} else {
 			this.toastrService.success(
 				this.getTranslation('INVOICES_PAGE.INVOICES_ADD_INVOICE'),
 				this.getTranslation('TOASTR.TITLE.SUCCESS')
 			);
-			this.router.navigate(['/pages/accounting/invoices']);
+			this.router.navigate(['/pages/accounting/invoices'], {
+				queryParams: {
+					date: moment(invoiceDate).format("MM-DD-YYYY")
+				}
+			});
 		}
 	}
 
@@ -630,22 +638,26 @@ export class InvoiceAddComponent
 				InvoiceStatusTypesEnum.SENT,
 				organizationContact.id
 			);
-			await this.invoiceEstimateHistoryService.add({
-				action: this.isEstimate
-					? this.getTranslation('INVOICES_PAGE.ESTIMATE_SENT_TO', {
-							name: organizationContact.name
-					  })
-					: this.getTranslation('INVOICES_PAGE.INVOICE_SENT_TO', {
-							name: organizationContact.name
-					  }),
-				invoice: this.createdInvoice,
-				invoiceId: this.createdInvoice.id,
-				user: this.store.user,
-				userId: this.store.userId,
-				organization: this.organization,
-				organizationId: this.organization.id,
-				tenantId
-			});
+			try {		
+				await this.invoiceEstimateHistoryService.add({
+					action: this.isEstimate
+						? this.getTranslation('INVOICES_PAGE.ESTIMATE_SENT_TO', {
+								name: organizationContact.name
+						})
+						: this.getTranslation('INVOICES_PAGE.INVOICE_SENT_TO', {
+								name: organizationContact.name
+						}),
+					invoice: this.createdInvoice,
+					invoiceId: this.createdInvoice.id,
+					user: this.store.user,
+					userId: this.store.userId,
+					organization: this.organization,
+					organizationId: this.organization.id,
+					tenantId
+				});
+			} catch (error) {
+				console.log(error, "error")
+			}
 		} else {
 			this.toastrService.danger(
 				this.getTranslation('INVOICES_PAGE.SEND.NOT_LINKED'),
@@ -708,13 +720,21 @@ export class InvoiceAddComponent
 				this.getTranslation('INVOICES_PAGE.INVOICES_ADD_ESTIMATE'),
 				this.getTranslation('TOASTR.TITLE.SUCCESS')
 			);
-			this.router.navigate(['/pages/accounting/invoices/estimates']);
+			this.router.navigate(['/pages/accounting/invoices/estimates'], {
+				queryParams: {
+					date: moment(invoiceDate).format("MM-DD-YYYY")
+				}
+			});
 		} else {
 			this.toastrService.success(
 				this.getTranslation('INVOICES_PAGE.INVOICES_ADD_INVOICE'),
 				this.getTranslation('TOASTR.TITLE.SUCCESS')
 			);
-			this.router.navigate(['/pages/accounting/invoices']);
+			this.router.navigate(['/pages/accounting/invoices'], {
+				queryParams: {
+					date: moment(invoiceDate).format("MM-DD-YYYY")
+				}
+			});
 		}
 	}
 

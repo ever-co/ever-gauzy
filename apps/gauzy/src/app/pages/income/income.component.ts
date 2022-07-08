@@ -39,6 +39,7 @@ import {
 import { API_PREFIX, ComponentEnum } from '../../@core/constants';
 import { ServerDataSource } from '../../@core/utils/smart-table/server.data-source';
 import {
+	DateRangePickerBuilderService,
 	ErrorHandlingService,
 	IncomeService,
 	Store,
@@ -52,7 +53,7 @@ import { getAdjustDateRangeFutureAllowed } from '../../@theme/components/header/
 	templateUrl: './income.component.html',
 	styleUrls: ['./income.component.scss']
 })
-export class IncomeComponent extends PaginationFilterBaseComponent 
+export class IncomeComponent extends PaginationFilterBaseComponent
 	implements AfterViewInit, OnInit, OnDestroy {
 
 	smartTableSettings: object;
@@ -91,7 +92,8 @@ export class IncomeComponent extends PaginationFilterBaseComponent
 		private readonly route: ActivatedRoute,
 		private readonly errorHandler: ErrorHandlingService,
 		public readonly translateService: TranslateService,
-		private readonly httpClient: HttpClient
+		private readonly httpClient: HttpClient,
+		private readonly dateRangePickerBuilderService: DateRangePickerBuilderService
 	) {
 		super(translateService);
 		this.setView();
@@ -307,6 +309,9 @@ export class IncomeComponent extends PaginationFilterBaseComponent
 								);
 							})
 							.finally(() => {
+								this.dateRangePickerBuilderService.refreshDateRangePicker(
+									moment(valueDate)
+								);
 								this.incomes$.next(true);
 							});
 					} catch (error) {
@@ -374,6 +379,9 @@ export class IncomeComponent extends PaginationFilterBaseComponent
 								);
 							})
 							.finally(() => {
+								this.dateRangePickerBuilderService.refreshDateRangePicker(
+									moment(valueDate)
+								);
 								this.incomes$.next(true);
 							});
 					} catch (error) {

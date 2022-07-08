@@ -1,6 +1,6 @@
 @import 'var';
 
-.setting-block {
+:host .setting-block {
 
   border-radius: nb-theme(border-radius);
   margin-bottom: 8px;
@@ -17,7 +17,8 @@
     height: 84px;
     background-color: nb-theme(gauzy-card-1);
     border-radius: nb-theme(border-radius);
-    padding: 0.75rem 0 0.75rem 0.75rem;
+    @include nb-ltr(padding, 0.75rem 0 0.75rem 0.75rem);
+    @include nb-rtl(padding, 0.75rem 0.75rem 0.75rem 0);
 
     &:hover,
     &.active {
@@ -60,7 +61,7 @@
   }
 }
 
-.block-content {
+:host .block-content {
   display: flex;
   justify-content: space-between;
   width: 100%;
@@ -70,7 +71,8 @@
     justify-content: space-between;
     align-items: center;
     width: fit-content;
-    padding-left: 30px;
+    @include nb-ltr(padding-left, 42px);
+    @include nb-rtl(padding-right, 42px);
 
     .expense {
       display: flex;
@@ -99,16 +101,15 @@
     }
 
     .block-amount {
-      text-align: center;
       width: 130px;
       display: flex;
       align-items: center;
-      padding-right: 24px;
+      @include nb-ltr(padding-right, 24px);
+      @include nb-rtl(padding-left, 24px);
       font-size: 14px;
       font-weight: 400;
       line-height: 17px;
       letter-spacing: 0em;
-      text-align: left;
       cursor: pointer;
     }
   }
@@ -124,9 +125,9 @@
 
     .block-value {
       display: flex;
-
       align-items: center;
-      padding-right: 30px;
+      @include nb-ltr(right, 30px);
+      @include nb-rtl(left, 30px);
 
       .hide-menu {
         cursor: pointer;
@@ -135,7 +136,8 @@
       .block-actions.open {
         cursor: pointer;
         position: absolute;
-        right: 35px;
+        @include nb-ltr(right, 35px);
+        @include nb-rtl(left, 35px);
       }
 
       small {

@@ -81,6 +81,10 @@ spec:
                         value: 'gauzy'
                       - name: JWT_SECRET
                         value: 'secretKey'
+                      - name: JWT_REFRESH_TOKEN_SECRET
+                        value: 'refreshSecretKey'
+                      - name: JWT_REFRESH_TOKEN_EXPIRATION_TIME
+                        value: '86400'
                   ports:
                       - containerPort: 3000
                         protocol: TCP

@@ -21,13 +21,13 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { compareDate, distinctUntilChange } from '@gauzy/common-angular';
 import * as moment from 'moment';
 import { InvoiceEmailMutationComponent } from '../invoice-email/invoice-email-mutation.component';
-import { 
+import {
 	InvoiceEstimateHistoryService,
 	InvoiceItemService,
 	InvoicesService,
 	Store,
 	ToastrService,
-	TranslatableService 
+	TranslatableService
 } from '../../../@core/services';
 import {
 	InvoiceApplyTaxDiscountComponent,
@@ -499,6 +499,7 @@ export class InvoiceEditComponent
 				return;
 			}
 
+			const { invoiceDate } = this.form.getRawValue();
 			await this.invoicesService.update(this.invoice.id, {
 				invoiceNumber: invoiceData.invoiceNumber,
 				invoiceDate: moment(invoiceData.invoiceDate).startOf('day').toDate(),
@@ -531,11 +532,11 @@ export class InvoiceEditComponent
 
 			const invoiceItems: IInvoiceItemCreateInput[] = [];
 			for (const invoiceItem of tableData) {
-				const { id } = invoiceItem.selectedItem;
+				const id = invoiceItem.selectedItem ? invoiceItem.selectedItem.id : null;
 				const itemToAdd = {
 					description: invoiceItem.description,
-					price: invoiceItem.price,
-					quantity: invoiceItem.quantity,
+					price: Number(invoiceItem.price),
+					quantity: Number(invoiceItem.quantity),
 					totalValue: invoiceItem.totalValue,
 					invoiceId: this.invoice.id,
 					applyTax: invoiceItem.applyTax,
@@ -606,12 +607,20 @@ export class InvoiceEditComponent
 				this.toastrService.success(
 					'INVOICES_PAGE.INVOICES_EDIT_ESTIMATE'
 				);
-				this.router.navigate(['/pages/accounting/invoices/estimates']);
+				this.router.navigate(['/pages/accounting/invoices/estimates'], {
+					queryParams: {
+						date: moment(invoiceDate).format("MM-DD-YYYY")
+					}
+				});
 			} else {
 				this.toastrService.success(
 					'INVOICES_PAGE.INVOICES_EDIT_INVOICE'
 				);
-				this.router.navigate(['/pages/accounting/invoices']);
+				this.router.navigate(['/pages/accounting/invoices'], {
+					queryParams: {
+						date: moment(invoiceDate).format("MM-DD-YYYY")
+					}
+				});
 			}
 		} else {
 			this.toastrService.warning('INVOICES_PAGE.INVOICE_ITEM.NO_ITEMS');

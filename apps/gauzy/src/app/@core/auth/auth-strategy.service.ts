@@ -96,11 +96,11 @@ export class AuthStrategy extends NbAuthStrategy {
 	rememberMe(data?: any) {
 		const rememberMe = !!data.rememberMe;
 		if (rememberMe) {
-			this.cookieService.set('email', data.email);  
+			this.cookieService.set('email', data.email);
 			this.cookieService.set('rememberMe', 'true');
 		} else {
 			this.cookieService.delete('rememberMe');
-			this.cookieService.delete('email');  
+			this.cookieService.delete('email');
 		}
 	}
 
@@ -296,10 +296,11 @@ export class AuthStrategy extends NbAuthStrategy {
 
 		return this.authService.login(loginInput).pipe(
 			map((res: IAuthResponse) => {
-				let user, token;
+				let user, token, refresh_token;
 				if (res) {
 					user = res.user;
 					token = res.token;
+					refresh_token = res.refresh_token;
 				}
 
 				if (!user) {
@@ -313,6 +314,7 @@ export class AuthStrategy extends NbAuthStrategy {
 
 				this.store.userId = user.id;
 				this.store.token = token;
+				this.store.refresh_token = refresh_token;
 
 				this.electronAuthentication({ user, token });
 

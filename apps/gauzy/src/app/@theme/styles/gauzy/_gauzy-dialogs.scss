@@ -2,20 +2,20 @@
 $orange: rgba(245, 109, 88, 1);
 $gray: rgba(126, 126, 143, 1);
 $green: rgba(37, 184, 105, 1);
-$shadow: 0 0 0 nb-theme(button-outline-width)
-    rgba(
-      $color: $green,
-      $alpha: 0.05
-    ),
+$shadow: 0 0 0 nb-theme(button-outline-width) rgba($color: $green,
+    $alpha: 0.05),
   inset nb-theme(button-outline-focus-inset-shadow-length) transparent;
+
 :host {
   i {
     cursor: pointer;
   }
+
   .cancel {
     width: 100%;
     display: flex;
-    justify-content: flex-end;
+    @include nb-ltr(justify-content, flex-end);
+    @include nb-rtl(justify-content, flex-start);
   }
 
   [nbButton].appearance-outline.status-basic {
@@ -23,16 +23,17 @@ $shadow: 0 0 0 nb-theme(button-outline-width)
     border-color: rgba($color: $orange, $alpha: 0.3);
     border-width: 2px;
     color: $orange;
+
     &:hover {
       border-color: $orange;
     }
   }
 
   [nbButton].appearance-outline:hover {
-    box-shadow: 0 0 0 nb-theme(button-outline-width)
-        rgba($color: $orange, $alpha: 0.05),
+    box-shadow: 0 0 0 nb-theme(button-outline-width) rgba($color: $orange, $alpha: 0.05),
       inset nb-theme(button-outline-focus-inset-shadow-length) transparent;
   }
+
   [nbButton].appearance-outline:focus:not(:hover):not(:active) {
     box-shadow: unset;
   }
@@ -43,7 +44,6 @@ $shadow: 0 0 0 nb-theme(button-outline-width)
     font-weight: 600;
     line-height: 16px;
     letter-spacing: 0em;
-    text-align: left;
   }
 
   [nbButton].gray.appearance-outline.status-basic {
@@ -51,16 +51,17 @@ $shadow: 0 0 0 nb-theme(button-outline-width)
     border-color: rgba($color: $gray, $alpha: 0.3);
     border-width: 2px;
     color: $gray;
+
     &:hover {
       border-color: $gray;
     }
   }
 
   [nbButton].gray.appearance-outline:hover {
-    box-shadow: 0 0 0 nb-theme(button-outline-width)
-        rgba($color: $gray, $alpha: 0.05),
+    box-shadow: 0 0 0 nb-theme(button-outline-width) rgba($color: $gray, $alpha: 0.05),
       inset nb-theme(button-outline-focus-inset-shadow-length) transparent;
   }
+
   [nbButton].gray.appearance-outline:focus:not(:hover):not(:active) {
     box-shadow: unset;
   }
@@ -70,13 +71,16 @@ $shadow: 0 0 0 nb-theme(button-outline-width)
     border-color: rgba($color: $green, $alpha: 0.3);
     border-width: 2px;
     color: $green;
+
     &:hover {
       border-color: $green;
     }
   }
+
   [nbButton].green.appearance-outline:hover {
     box-shadow: $shadow;
   }
+
   [nbButton].green.appearance-outline:focus:not(:hover):not(:active) {
     box-shadow: unset;
   }
@@ -94,5 +98,14 @@ $shadow: 0 0 0 nb-theme(button-outline-width)
     border: unset;
     background-color: nb-theme(color-primary-transparent-default);
     box-shadow: var(--gauzy-shadow)(0, 0, 0, 0.15);
+  }
+
+  ::ng-deep {
+
+    input,
+    textarea {
+      @include nb-ltr(text-align, start);
+      @include nb-rtl(text-align, end);
+    }
   }
 }

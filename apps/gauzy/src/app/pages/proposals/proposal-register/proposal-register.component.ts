@@ -120,7 +120,7 @@ export class ProposalRegisterComponent
 	}
 
 	public async registerProposal() {
-		if (this.form.invalid) {
+		if (!this.organization || this.form.invalid) {
 			return;
 		}
 
@@ -131,6 +131,7 @@ export class ProposalRegisterComponent
 			if (selectedEmployee) {
 				const { tenantId } = this.store.user;
 				const { id: organizationId } = this.organization;
+
 				await this.proposalsService.create({
 					employeeId: selectedEmployee.id,
 					organizationId,
@@ -149,7 +150,11 @@ export class ProposalRegisterComponent
 					'NOTES.PROPOSALS.REGISTER_PROPOSAL'
 				);
 
-				this.router.navigate(['/pages/sales/proposals']);
+				this.router.navigate(['/pages/sales/proposals'], {
+					queryParams: {
+						date: moment(valueDate).format("MM-DD-YYYY")
+					}
+				});
 			} else {
 				this.toastrService.success(
 					'NOTES.PROPOSALS.REGISTER_PROPOSAL_NO_EMPLOYEE_SELECTED',

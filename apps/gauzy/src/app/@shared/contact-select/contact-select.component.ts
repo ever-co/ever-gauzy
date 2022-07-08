@@ -10,9 +10,10 @@ import {
 	ContactType,
 	IOrganization,
 	IOrganizationContact,
+	PermissionsEnum,
 } from '@gauzy/contracts';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
-import { Subject } from 'rxjs';
+import { map, Observable, Subject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
@@ -33,7 +34,8 @@ import { TranslationBaseComponent } from '../language-base/translation-base.comp
 })
 export class ContactSelectComponent extends TranslationBaseComponent 
 	implements OnInit, OnDestroy {
-
+		
+	public hasEditEmployee$: Observable<boolean>;
 	contacts: IOrganizationContact[] = [];
 	organization: IOrganization;
 	subject$: Subject<any> = new Subject();
@@ -135,6 +137,11 @@ export class ContactSelectComponent extends TranslationBaseComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
+		this.hasEditEmployee$ = this.store.userRolePermissions$.pipe(
+			map(() =>
+				this.store.hasPermission(PermissionsEnum.ORG_EMPLOYEES_EDIT)
+			)
+		);
 	}
 
 	async getContacts() {

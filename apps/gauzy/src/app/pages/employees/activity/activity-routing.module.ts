@@ -1,5 +1,6 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
+import { DateRangePickerResolver } from '../../../@theme/components/header/selectors/date-range-picker';
 import { LayoutComponent } from './layout/layout.component';
 
 const routes: Routes = [
@@ -25,6 +26,9 @@ const routes: Routes = [
 						isSaveDatePicker: true,
 						isSingleDatePicker: true
 					}
+				},
+				resolve: {
+					dates: DateRangePickerResolver
 				}
 			},
 			{
@@ -41,6 +45,9 @@ const routes: Routes = [
 						isSingleDatePicker: true,
 						isDisableFutureDate: true
 					}
+				},
+				resolve: {
+					dates: DateRangePickerResolver
 				}
 			},
 			{
@@ -58,6 +65,9 @@ const routes: Routes = [
 						isSingleDatePicker: true,
 						isDisableFutureDate: true
 					}
+				},
+				resolve: {
+					dates: DateRangePickerResolver
 				}
 			},
 			{
@@ -75,6 +85,9 @@ const routes: Routes = [
 						isSingleDatePicker: true,
 						isDisableFutureDate: true
 					}
+				},
+				resolve: {
+					dates: DateRangePickerResolver
 				}
 			}
 		]

@@ -10,7 +10,7 @@ import { ScheduleTimeLogEntriesCommand } from '../schedule-time-log-entries.comm
 import { RequestContext } from './../../../../core/context';
 
 @CommandHandler(ScheduleTimeLogEntriesCommand)
-export class ScheduleTimeLogEntriesHandler 
+export class ScheduleTimeLogEntriesHandler
 	implements ICommandHandler<ScheduleTimeLogEntriesCommand> {
 
 	constructor(
@@ -72,7 +72,7 @@ export class ScheduleTimeLogEntriesHandler
 				relations: ['timeSlots']
 			});
 		}
-		
+
 		for await (const timeLog of timeLogs) {
 			console.log('Schedule Time Log Entry', timeLog);
 			const logDifference = moment().diff(moment.utc(timeLog.startedAt), 'minutes');
@@ -80,14 +80,12 @@ export class ScheduleTimeLogEntriesHandler
 				isEmpty(timeLog.timeSlots) &&
 				logDifference > 10
 			) {
-				console.log('Schedule Time Log Entry Updated StoppedAt', timeLog.startedAt);
+				console.log('Schedule Time Log Entry Updated StoppedAt Using StartedAt', timeLog.startedAt);
 				await this.timeLogRepository.save({
 					id: timeLog.id,
 					stoppedAt: moment(timeLog.startedAt).add(10, 'seconds').toDate()
 				});
 			} else if (isNotEmpty(timeLog.timeSlots)) {
-				const [lastTimeSlot] = timeLog.timeSlots.reverse();
-
 				let stoppedAt: any;
 				let slotDifference: any;
 
@@ -98,14 +96,14 @@ export class ScheduleTimeLogEntriesHandler
 				 * Adjust stopped date as per database selection
 				 */
 				if (getConfig().dbConnectionOptions.type === 'sqlite') {
-					stoppedAt = moment.utc(lastTimeSlot.startedAt).add(duration, 'seconds').format('YYYY-MM-DD HH:mm:ss.SSS');
+					stoppedAt = moment.utc(timeLog.startedAt).add(duration, 'seconds').format('YYYY-MM-DD HH:mm:ss.SSS');
 					slotDifference = moment.utc(moment()).diff(stoppedAt, 'minutes');
 				} else {
-					stoppedAt = moment(lastTimeSlot.startedAt).add(duration, 'seconds').toDate();
+					stoppedAt = moment(timeLog.startedAt).add(duration, 'seconds').toDate();
 					slotDifference = moment().diff(moment.utc(stoppedAt), 'minutes');
 				}
 
-				console.log('Schedule Time Log Entry Updated StoppedAt', stoppedAt);
+				console.log('Schedule Time Log Entry Updated StoppedAt Using StoppedAt', stoppedAt);
 				if (slotDifference > 10) {
 					await this.timeLogRepository.save({
 						id: timeLog.id,
