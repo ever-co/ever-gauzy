@@ -34,6 +34,7 @@
 .sprints {
   height: calc(100vh - 24rem);
   overflow: auto;
+  border-radius: var(--border-radius);
 }
 
 .date {
