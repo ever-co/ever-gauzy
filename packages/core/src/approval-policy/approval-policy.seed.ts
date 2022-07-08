@@ -18,7 +18,7 @@ export const createDefaultApprovalPolicyForOrg = async (
 		defaultApprovalPolicy.tenant = org.tenant;
 		defaultApprovalPolicy.description = 'Default approval policy';
 		defaultApprovalPolicy.approvalType = 'DEFAULT_APPROVAL_POLICY';
-		promises.push(insertDefaultPolicy(connection, defaultApprovalPolicy));
+		promises.push(insertDefaultPolicy(dataSource, defaultApprovalPolicy));
 	});
 
 	await Promise.all(promises);
@@ -28,7 +28,7 @@ const insertDefaultPolicy = async (
 	dataSource: DataSource,
 	defaultPolicy: ApprovalPolicy
 ): Promise<void> => {
-	await connection
+	await dataSource
 		.createQueryBuilder()
 		.insert()
 		.into(ApprovalPolicy)
@@ -56,7 +56,7 @@ export const createRandomApprovalPolicyForOrg = async (
 			});
 		});
 	}
-	await connection
+	await dataSource
 		.createQueryBuilder()
 		.insert()
 		.into(ApprovalPolicy)

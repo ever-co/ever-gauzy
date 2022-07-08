@@ -8,7 +8,7 @@ export const getDefaultTenant = async (
 	dataSource: DataSource,
 	tenantName: string = DEFAULT_EVER_TENANT
 ): Promise<Tenant> => {
-	const repo = connection.getRepository(Tenant);
+	const repo = dataSource.getRepository(Tenant);
 	const existedTenant = await repo.findOne({ where: { name: tenantName } });
 	return existedTenant;
 };
@@ -20,7 +20,7 @@ export const createDefaultTenant = async (
 	const tenant: ITenant = {
 		name: tenantName
 	};
-	await insertTenant(connection, tenant);
+	await insertTenant(dataSource, tenant);
 	return tenant;
 };
 
@@ -35,20 +35,20 @@ export const createRandomTenants = async (
 		randomTenants.push(tenant);
 	}
 
-	return await insertTenants(connection, randomTenants);
+	return await insertTenants(dataSource, randomTenants);
 };
 
 const insertTenant = async (
 	dataSource: DataSource,
 	tenant: Tenant
 ): Promise<Tenant> => {
-	const repo = connection.getRepository(Tenant);
+	const repo = dataSource.getRepository(Tenant);
 
 	const existedTenant = await repo.findOne({ where: { name: tenant.name } });
 
 	if (existedTenant) return existedTenant;
 	else {
-		await connection
+		await dataSource
 			.createQueryBuilder()
 			.insert()
 			.into(Tenant)
@@ -63,5 +63,5 @@ const insertTenants = async (
 	dataSource: DataSource,
 	tenants: Tenant[]
 ): Promise<Tenant[]> => {
-	return await connection.manager.save(tenants);
+	return await dataSource.manager.save(tenants);
 };

@@ -30,7 +30,7 @@ export const createDefaultAccountingTemplates = async (
 
 		findInDir(FOLDER_PATH, files);
 		console.log(files);
-		await fileToTemplate(connection, files);
+		await fileToTemplate(dataSource, files);
 	} catch (error) {
 		console.error(error);
 	}
@@ -64,7 +64,7 @@ const insertTemplate = async (
 	dataSource: DataSource,
 	accountingTemplate: AccountingTemplate
 ): Promise<void> => {
-	await connection
+	await dataSource
 		.createQueryBuilder()
 		.insert()
 		.into(AccountingTemplate)

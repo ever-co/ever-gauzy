@@ -10,7 +10,7 @@ export const createDefaultEquipments = async (
 	tenant: ITenant,
 	organization: IOrganization
 ): Promise<Equipment[]> => {
-	const tags = await connection
+	const tags = await dataSource
 		.getRepository(Tag)
 		.createQueryBuilder()
 		.getMany();
@@ -30,7 +30,7 @@ export const createDefaultEquipments = async (
 	equipment.autoApproveShare = true;
 	equipments.push(equipment);
 
-	await insertEquipment(connection, equipments);
+	await insertEquipment(dataSource, equipments);
 	return equipments;
 };
 
@@ -38,7 +38,7 @@ const insertEquipment = async (
 	dataSource: DataSource,
 	equipment: Equipment[]
 ): Promise<void> => {
-	await connection.manager.save(equipment);
+	await dataSource.manager.save(equipment);
 };
 
 export const createRandomEquipments = async (
@@ -47,13 +47,13 @@ export const createRandomEquipments = async (
 	noOfEquipmentsPerTenant: number
 ): Promise<Equipment[]> => {
 	const equipments: Equipment[] = [];
-	const tags = await connection
+	const tags = await dataSource
 		.getRepository(Tag)
 		.createQueryBuilder()
 		.getMany();
 
 	for await (const tenant of tenants || []) {
-		const organizations = await connection.manager.find(Organization, {
+		const organizations = await dataSource.manager.find(Organization, {
 			where: [{ tenant: tenant }]
 		});
 
@@ -84,6 +84,6 @@ export const createRandomEquipments = async (
 		}
 	}
 
-	await insertEquipment(connection, equipments);
+	await insertEquipment(dataSource, equipments);
 	return equipments;
 };

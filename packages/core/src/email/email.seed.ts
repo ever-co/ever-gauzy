@@ -1,4 +1,4 @@
-import { Connection, ILike, Not } from 'typeorm';
+import { DataSource, ILike, Not } from 'typeorm';
 import { Email } from './email.entity';
 import { faker } from '@ever-co/faker';
 import { IEmail, IEmailTemplate, IOrganization, ITenant, IUser } from '@gauzy/contracts';
@@ -10,16 +10,16 @@ export const createDefaultEmailSent = async (
 	organization: IOrganization,
 	noOfEmailsPerOrganization: number
 ): Promise<any> => {
-	const emailTemplates: IEmailTemplate[] = await connection.getRepository(EmailTemplate).find({
+	const emailTemplates: IEmailTemplate[] = await dataSource.getRepository(EmailTemplate).find({
 		where: {
 			name: Not(ILike(`%subject%`))
 		}
 	});
-	const users: IUser[] = await connection.getRepository(User).find();
+	const users: IUser[] = await dataSource.getRepository(User).find();
 
 	let sentEmails: IEmail[] = [];
 	sentEmails = await dataOperation(
-		connection,
+		dataSource,
 		sentEmails,
 		noOfEmailsPerOrganization,
 		organization,
@@ -36,7 +36,7 @@ export const createRandomEmailSent = async (
 	tenantOrganizationsMap: Map<ITenant, IOrganization[]>,
 	noOfEmailsPerOrganization: number
 ): Promise<any> => {
-	const emailTemplates: IEmailTemplate[] = await connection.getRepository(EmailTemplate).find({
+	const emailTemplates: IEmailTemplate[] = await dataSource.getRepository(EmailTemplate).find({
 		where: {
 			name: Not(ILike(`%subject%`))
 		}
@@ -44,7 +44,7 @@ export const createRandomEmailSent = async (
 
 	let sentEmails: IEmail[] = [];
 	for (const tenant of tenants) {
-		const users = await connection.getRepository(User).find({
+		const users = await dataSource.getRepository(User).find({
 			where: {
 				tenant
 			}
@@ -52,7 +52,7 @@ export const createRandomEmailSent = async (
 		const orgs = tenantOrganizationsMap.get(tenant);
 		for (const org of orgs) {
 			sentEmails = await dataOperation(
-				connection,
+				dataSource,
 				sentEmails,
 				noOfEmailsPerOrganization,
 				org,
@@ -85,6 +85,6 @@ const dataOperation = async (
 		sentEmail.user = faker.random.arrayElement(users);
 		sentEmails.push(sentEmail);
 	}
-	await connection.manager.save(sentEmails);
+	await dataSource.manager.save(sentEmails);
 	return sentEmails;
 };

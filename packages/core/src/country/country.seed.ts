@@ -19,7 +19,7 @@ export const createCountries = async (
 					countries.push(country);
 				}
 			}
-			await insertCountry(connection, countries);
+			await insertCountry(dataSource, countries);
 			resolve(countries);
 		} catch (err) {
 			console.log('Error parsing country:', err);
@@ -33,7 +33,7 @@ const insertCountry = async (
 	dataSource: DataSource,
 	countries: ICountry[]
 ): Promise<void> => {
-	await connection
+	await dataSource
 		.createQueryBuilder()
 		.insert()
 		.into(Country)

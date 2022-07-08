@@ -34,7 +34,7 @@ export const createDefaultEmailTemplates = async (
 
 		findInDir(FOLDER_PATH, files);
 
-		await fileToTemplate(connection, files);
+		await fileToTemplate(dataSource, files);
 	} catch (error) {
 		// it's not a big issue for now if we can't create email templates
 		console.error(error);
@@ -56,11 +56,11 @@ function findInDir(dir, fileList = []) {
 	});
 }
 
-const fileToTemplate = async (connection, files) => {
+const fileToTemplate = async (dataSource, files) => {
 	for (const file of files) {
 		const template = await pathToEmailTemplate(file);
 		if (template && template.hbs) {
-			await insertTemplate(connection, template);
+			await insertTemplate(dataSource, template);
 		}
 	}
 };
@@ -69,7 +69,7 @@ const insertTemplate = async (
 	dataSource: DataSource,
 	emailTemplate: EmailTemplate
 ): Promise<void> => {
-	await connection
+	await dataSource
 		.createQueryBuilder()
 		.insert()
 		.into(EmailTemplate)

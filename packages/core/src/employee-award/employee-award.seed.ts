@@ -17,10 +17,9 @@ export const createDefaultEmployeeAwards = async (
 			award.employeeId = employee.id;
 			award.tenant = tenant;
 			award.organization = employee.organization;
-
 			return award;
 		}
 	);
 
-	return await connection.manager.save(awards);
+	return await dataSource.manager.save(awards);
 };

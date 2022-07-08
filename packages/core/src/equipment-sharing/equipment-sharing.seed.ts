@@ -12,12 +12,15 @@ export const createDefaultEquipmentSharing = async (
 	defaultEmployees,
 	noOfEquipmentSharingPerTenant: number
 ): Promise<EquipmentSharing[]> => {
+	const { id: tenantId } = tenant;
 	let equipmentSharings: EquipmentSharing[] = [];
-	const equipments = await connection.manager.find(Equipment, {
-		where: [{ tenant: tenant }]
+	const equipments = await dataSource.manager.find(Equipment, {
+		where: {
+			tenantId: tenantId
+		}
 	});
 	equipmentSharings = await dataOperation(
-		connection,
+		dataSource,
 		equipmentSharings,
 		noOfEquipmentSharingPerTenant,
 		equipments,
@@ -26,7 +29,7 @@ export const createDefaultEquipmentSharing = async (
 		organization
 	);
 
-	return await connection.manager.save(equipmentSharings);
+	return await dataSource.manager.save(equipmentSharings);
 };
 
 export const createRandomEquipmentSharing = async (
@@ -37,12 +40,15 @@ export const createRandomEquipmentSharing = async (
 ): Promise<EquipmentSharing[]> => {
 	let equipmentSharings: EquipmentSharing[] = [];
 	for (const tenant of tenants) {
-		const equipments = await connection.manager.find(Equipment, {
-			where: [{ tenant: tenant }]
+		const { id: tenantId } = tenant;
+		const equipments = await dataSource.manager.find(Equipment, {
+			where: {
+				tenantId: tenantId
+			}
 		});
 		const employees = tenantEmployeeMap.get(tenant);
 		equipmentSharings = await dataOperation(
-			connection,
+			dataSource,
 			equipmentSharings,
 			noOfEquipmentSharingPerTenant,
 			equipments,
@@ -81,6 +87,6 @@ const dataOperation = async (
 		sharing.tenant = tenant;
 		equipmentSharings.push(sharing);
 	}
-	await connection.manager.save(equipmentSharings);
+	await dataSource.manager.save(equipmentSharings);
 	return equipmentSharings;
 };

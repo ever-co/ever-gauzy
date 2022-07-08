@@ -38,7 +38,7 @@ export const createRandomAvailabilitySlots = async (
 		const employees = tenantEmployeeMap.get(tenant);
 		for (const organization of organizations) {
 			slots = await dataOperation(
-				connection,
+				dataSource,
 				slots,
 				noOfAvailabilitySlotsPerOrganization,
 				employees,
@@ -80,6 +80,6 @@ const dataOperation = async (
 		);
 		slots.push(slot);
 	}
-	await connection.manager.save(slots);
+	await dataSource.manager.save(slots);
 	return slots;
 };

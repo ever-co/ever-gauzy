@@ -22,12 +22,12 @@ export const createDefaultGoalKpiTemplate = async (
 		goalKpi.tenant = tenant;
 		goalKpiTemplates.push(goalKpi);
 	});
-	return await insertRandomGoalKpi(connection, goalKpiTemplates);
+	return await insertRandomGoalKpi(dataSource, goalKpiTemplates);
 };
 
 const insertRandomGoalKpi = async (
 	dataSource: DataSource,
 	goalKpiTemplates: GoalKPITemplate[]
 ): Promise<GoalKPITemplate[]> => {
-	return await connection.manager.save(goalKpiTemplates);
+	return await dataSource.manager.save(goalKpiTemplates);
 };

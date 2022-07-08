@@ -18,7 +18,7 @@ export const createDefaultEquipmentSharingPolicyForOrg = async (
 		defaultEquipmentSharingPolicy.tenant = org.tenant;
 		defaultEquipmentSharingPolicy.description = 'Default approval policy';
 		promises.push(
-			insertDefaultPolicy(connection, defaultEquipmentSharingPolicy)
+			insertDefaultPolicy(dataSource, defaultEquipmentSharingPolicy)
 		);
 	});
 
@@ -29,7 +29,7 @@ const insertDefaultPolicy = async (
 	dataSource: DataSource,
 	defaultPolicy: EquipmentSharingPolicy
 ): Promise<void> => {
-	await connection
+	await dataSource
 		.createQueryBuilder()
 		.insert()
 		.into(EquipmentSharingPolicy)
@@ -57,7 +57,7 @@ export const createRandomEquipmentSharingPolicyForOrg = async (
 			});
 		});
 	}
-	await connection
+	await dataSource
 		.createQueryBuilder()
 		.insert()
 		.into(EquipmentSharingPolicy)

@@ -22,7 +22,7 @@ export const createDefaultGeneralGoalSetting = async (
 		});
 	}
 	await insertDefaultGeneralGoalSetting(
-		connection,
+		dataSource,
 		defaultGeneralGoalSetting
 	);
 	return defaultGeneralGoalSetting;
@@ -32,7 +32,7 @@ const insertDefaultGeneralGoalSetting = async (
 	dataSource: DataSource,
 	defaultGeneralGoalSetting: GoalGeneralSetting[]
 ) => {
-	await connection
+	await dataSource
 		.createQueryBuilder()
 		.insert()
 		.into(GoalGeneralSetting)

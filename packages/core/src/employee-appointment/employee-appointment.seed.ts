@@ -28,14 +28,14 @@ export const createDefaultEmployeeAppointment = async (
 	let employeesAppointments: EmployeeAppointment[] = [];
 	for (const employee of employees) {
 		employeesAppointments = await dataOperation(
-			connection,
+			dataSource,
 			employeesAppointments,
 			employee,
 			[organizations],
 			tenant
 		);
 	}
-	await connection.manager.save(employeesAppointments);
+	await dataSource.manager.save(employeesAppointments);
 };
 
 export const createRandomEmployeeAppointment = async (
@@ -65,7 +65,7 @@ export const createRandomEmployeeAppointment = async (
 
 		for (const tenantEmployee of tenantEmployees) {
 			employeesAppointments = await dataOperation(
-				connection,
+				dataSource,
 				employeesAppointments,
 				tenantEmployee,
 				tenantOrgs,
@@ -85,7 +85,7 @@ const dataOperation = async (
 	for (const organization of organizations) {
 		const employeesAppointment = new EmployeeAppointment();
 
-		const invitees = await connection.manager.find(AppointmentEmployee, {
+		const invitees = await dataSource.manager.find(AppointmentEmployee, {
 			where: [{ employeeId: tenantEmployee.id }]
 		});
 
@@ -108,6 +108,6 @@ const dataOperation = async (
 		employeesAppointments.push(employeesAppointment);
 	}
 
-	await connection.manager.save(employeesAppointments);
+	await dataSource.manager.save(employeesAppointments);
 	return employeesAppointments;
 };

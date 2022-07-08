@@ -1,4 +1,4 @@
-import { Brackets, Connection, WhereExpressionBuilder } from 'typeorm';
+import { Brackets, DataSource, WhereExpressionBuilder } from 'typeorm';
 import { faker } from '@ever-co/faker';
 import * as _ from 'underscore';
 import {
@@ -24,7 +24,7 @@ export const createRandomTimeLogs = async (
 	tenant: ITenant,
 	timeSheets: ITimesheet[]
 ) => {
-	const query = connection.getRepository(OrganizationProject).createQueryBuilder('organization_project');
+	const query = dataSource.getRepository(OrganizationProject).createQueryBuilder('organization_project');
 	const projects: IOrganizationProject[] = await query
 		.leftJoinAndSelect(`${query.alias}.tasks`, 'tasks')
 		.leftJoinAndSelect(`${query.alias}.organizationContact`, 'organizationContact')
@@ -111,7 +111,7 @@ export const createRandomTimeLogs = async (
 				}
 			}
 		}
-		const savedTimeLogs = await connection.getRepository(TimeLog).save(timeLogs);
+		const savedTimeLogs = await dataSource.getRepository(TimeLog).save(timeLogs);
 
 		const trackedTimeSlots: ITimeSlot[] = [];
 		for await (const timeLog of savedTimeLogs) {
@@ -144,14 +144,14 @@ export const createRandomTimeLogs = async (
 			const screenshots = randomScreenshots.map(
 				(item) => new Screenshot(_.omit(item, ['timeSlotId']))
 			);
-			const savedScreenshots = await connection.getRepository(Screenshot).save(screenshots);
+			const savedScreenshots = await dataSource.getRepository(Screenshot).save(screenshots);
 			const newTimeSlot = new TimeSlot({
 				..._.omit(timeSlot),
 				screenshots: savedScreenshots
 			});
 			newTrackedTimeSlots.push(newTimeSlot);
 		}
-		await connection.getRepository(TimeSlot).save(newTrackedTimeSlots);
+		await dataSource.getRepository(TimeSlot).save(newTrackedTimeSlots);
 
 		allTimeSlots.push(...newTrackedTimeSlots);
 	}
@@ -179,7 +179,7 @@ export const recalculateTimesheetActivity = async (
 			moment.utc(startedAt),
 			moment.utc(stoppedAt)
 		);
-		const query = connection.getRepository(TimeSlot).createQueryBuilder();
+		const query = dataSource.getRepository(TimeSlot).createQueryBuilder();
 		const timeSlot = await query
 			.select('SUM(duration)', 'duration')
 			.addSelect('AVG(keyboard)', 'keyboard')
@@ -204,7 +204,7 @@ export const recalculateTimesheetActivity = async (
 			)
 			.getRawOne();
 		try {
-			await connection.getRepository(Timesheet).update(id, {
+			await dataSource.getRepository(Timesheet).update(id, {
 				duration: Math.round(timeSlot.duration),
 				keyboard: Math.round(timeSlot.keyboard),
 				mouse: Math.round(timeSlot.mouse),

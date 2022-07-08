@@ -31,11 +31,11 @@ export const createRandomDeal = async (
 
 		for (const tenantEmployee of tenantEmployees) {
 			for (const tenantOrg of tenantOrgs) {
-				const pipelines = await connection.manager.find(Pipeline, {
+				const pipelines = await dataSource.manager.find(Pipeline, {
 					where: [{ organization: tenantOrg }]
 				});
 				for (const pipeline of pipelines) {
-					const pipelineStages = await connection.manager.find(
+					const pipelineStages = await dataSource.manager.find(
 						PipelineStage,
 						{
 							where: [{ pipeline: pipeline }]
@@ -60,5 +60,5 @@ export const createRandomDeal = async (
 		}
 	}
 
-	await connection.manager.save(deals);
+	await dataSource.manager.save(deals);
 };

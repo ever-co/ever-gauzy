@@ -39,7 +39,7 @@ export const createDefaultIncomes = async (
 	let defaultIncomes = [];
 
 	for await (const organization of organizations) {
-		const tags = await connection.manager.find(Tag, {
+		const tags = await dataSource.manager.find(Tag, {
 			where: {
 				organization
 			}
@@ -73,7 +73,7 @@ export const createDefaultIncomes = async (
 						contactType: ContactType.CLIENT,
 						budgetType: OrganizationContactBudgetTypeEnum.HOURS
 					}
-					income.client = await connection.manager.findOne(OrganizationContact, {
+					income.client = await dataSource.manager.findOne(OrganizationContact, {
 						where: {
 							...payload
 						}
@@ -82,7 +82,7 @@ export const createDefaultIncomes = async (
 						/**
 						 * Create income related client
 						 */
-						income.client = await connection.manager.save(
+						income.client = await dataSource.manager.save(
 							new OrganizationContact({
 								...payload,
 								imageUrl: getDummyImage(330, 300, (seedIncome.clientName).charAt(0).toUpperCase())
@@ -96,7 +96,7 @@ export const createDefaultIncomes = async (
 						.value();
 					incomes.push(income);
 				}
-				await insertIncome(connection, incomes);
+				await insertIncome(dataSource, incomes);
 			});
 	}
 
@@ -117,14 +117,14 @@ export const createRandomIncomes = async (
 	];
 	const randomIncomes: Income[] = []
 	for (const tenant of tenants || []) {
-		const organizationContacts = await connection.manager.find(OrganizationContact, {
+		const organizationContacts = await dataSource.manager.find(OrganizationContact, {
 			where: {
 				tenant
 			}
 		});
 		const employees = tenantEmployeeMap.get(tenant);
 		for (const employee of employees || []) {
-			const tags = await connection.manager.find(Tag, {
+			const tags = await dataSource.manager.find(Tag, {
 				where: {
 					tenant,
 					organization: employee.organization
@@ -162,7 +162,7 @@ export const createRandomIncomes = async (
 			}
 		}
 	}
-	await insertIncome(connection, randomIncomes);
+	await insertIncome(dataSource, randomIncomes);
 	return;
 };
 
@@ -171,7 +171,7 @@ const insertIncome = async (
 	incomes: Income[]
 ): Promise<void> => {
 	try {
-		await connection.manager.save(incomes);
+		await dataSource.manager.save(incomes);
 	} catch (error) {
 		console.log(error);
 	}

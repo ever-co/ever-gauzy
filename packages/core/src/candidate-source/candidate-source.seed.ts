@@ -28,7 +28,7 @@ export const createCandidateSources = async (
 		};
 		defaultCandidateSources = [...defaultCandidateSources, sources];
 	}
-	await insertCandidateSources(connection, defaultCandidateSources);
+	await insertCandidateSources(dataSource, defaultCandidateSources);
 	return defaultCandidateSources;
 };
 
@@ -59,7 +59,7 @@ export const createRandomCandidateSources = async (
 			candidateSources = [...candidateSources, sources];
 		}
 	}
-	await insertCandidateSources(connection, candidateSources);
+	await insertCandidateSources(dataSource, candidateSources);
 	return candidateSourcesMap;
 };
 
@@ -67,7 +67,7 @@ const insertCandidateSources = async (
 	dataSource: DataSource,
 	candidateSources: CandidateSource[]
 ) => {
-	await connection
+	await dataSource
 		.createQueryBuilder()
 		.insert()
 		.into(CandidateSource)

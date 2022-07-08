@@ -28,8 +28,11 @@ export const createRandomEventType = async (
 		for (const tenantEmployee of tenantEmployees) {
 			const eventTypes: EventType[] = [];
 			for (const organization of organizations) {
-				const tags = await connection.manager.find(Tag, {
-					where: [{ organization: organization }]
+				const { id: organizationId } = organization;
+				const tags = await dataSource.manager.find(Tag, {
+					where: {
+						organizationId: organizationId
+					}
 				});
 				const event = new EventType();
 				event.isActive = faker.datatype.boolean();
@@ -43,7 +46,7 @@ export const createRandomEventType = async (
 				event.tenant = tenant;
 				eventTypes.push(event);
 			}
-			await connection.manager.save(eventTypes);
+			await dataSource.manager.save(eventTypes);
 		}
 	}
 };
@@ -86,12 +89,12 @@ export const createDefaultEventTypes = async (
 		eventTypes.push(eventTypeTwo);
 	});
 
-	return await insertEventTypes(connection, eventTypes);
+	return await insertEventTypes(dataSource, eventTypes);
 };
 
 const insertEventTypes = async (
 	dataSource: DataSource,
 	eventTypes: EventType[]
 ): Promise<EventType[]> => {
-	return await connection.manager.save(eventTypes);
+	return await dataSource.manager.save(eventTypes);
 };

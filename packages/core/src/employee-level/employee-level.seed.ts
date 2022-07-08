@@ -18,10 +18,10 @@ export const createEmployeeLevels = async (
 			employeeLevels.push(entity);
 		}
 	});
-	return insertLevels(connection, employeeLevels);
+	return insertLevels(dataSource, employeeLevels);
 };
 
 const insertLevels = async (
 	dataSource: DataSource,
 	employeeLevels: EmployeeLevel[]
-) => await connection.manager.save(employeeLevels);
+) => await dataSource.manager.save(employeeLevels);

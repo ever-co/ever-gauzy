@@ -18,7 +18,7 @@ export const createExpenseCategories = async (
 		});
 		defaultExpenseCategories = [...defaultExpenseCategories, ...categories];
 	}
-	return insertExpenseCategories(connection, defaultExpenseCategories);
+	return insertExpenseCategories(dataSource, defaultExpenseCategories);
 };
 
 export const createRandomExpenseCategories = async (
@@ -44,7 +44,7 @@ export const createRandomExpenseCategories = async (
 			expenseCategories = [...expenseCategories, ...categories];
 		});
 	}
-	await insertExpenseCategories(connection, expenseCategories);
+	await insertExpenseCategories(dataSource, expenseCategories);
 	return expenseCategoryMap;
 };
 
@@ -52,5 +52,5 @@ const insertExpenseCategories = async (
 	dataSource: DataSource,
 	expenseCategories: ExpenseCategory[]
 ): Promise<ExpenseCategory[]> => {
-	return await connection.manager.save(expenseCategories);
+	return await dataSource.manager.save(expenseCategories);
 };

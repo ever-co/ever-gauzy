@@ -25,7 +25,7 @@ export const createDefaultUsersOrganizations = async (
 			usersOrganizations.push(userOrganization);
 		}
 	}
-	return await insertUserOrganization(connection, usersOrganizations);
+	return await insertUserOrganization(dataSource, usersOrganizations);
 };
 
 export const createRandomUsersOrganizations = async (
@@ -70,12 +70,12 @@ export const createRandomUsersOrganizations = async (
 		});
 	}
 
-	return await insertUserOrganization(connection, usersOrganizations);
+	return await insertUserOrganization(dataSource, usersOrganizations);
 };
 
 const insertUserOrganization = async (
 	dataSource: DataSource,
 	userOrganizations: IUserOrganization[]
 ): Promise<IUserOrganization[]> => {
-	return await connection.manager.save(userOrganizations);
+	return await dataSource.manager.save(userOrganizations);
 };

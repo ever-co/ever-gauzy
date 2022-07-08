@@ -31,7 +31,7 @@ export const createDefaultJobSearchCategories = async (
 		categories.push(cat);
 	});
 
-	await insertCategories(connection, categories);
+	await insertCategories(dataSource, categories);
 	return categories;
 };
 
@@ -39,5 +39,5 @@ const insertCategories = async (
 	dataSource: DataSource,
 	categories: JobSearchCategory[]
 ): Promise<void> => {
-	await connection.manager.save(categories);
+	await dataSource.manager.save(categories);
 };

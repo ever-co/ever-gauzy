@@ -21,8 +21,11 @@ export const createRandomEmployeeSetting = async (
 	const setting = ['Normal', 'Custom'];
 
 	for (const tenant of tenants) {
-		const organizations = await connection.manager.find(Organization, {
-			where: [{ tenant: tenant }]
+		const { id: tenantId } = tenant;
+		const organizations = await dataSource.manager.find(Organization, {
+			where: {
+				tenantId: tenantId
+			}
 		});
 		const tenantEmployees = tenantEmployeeMap.get(tenant);
 		for (const tenantEmployee of tenantEmployees) {
@@ -41,7 +44,7 @@ export const createRandomEmployeeSetting = async (
 			employees.push(employee);
 		}
 	}
-	await insertRandomEmployeeSetting(connection, employees);
+	await insertRandomEmployeeSetting(dataSource, employees);
 	return employees;
 };
 
@@ -49,7 +52,7 @@ const insertRandomEmployeeSetting = async (
 	dataSource: DataSource,
 	Employees: EmployeeSetting[]
 ) => {
-	await connection
+	await dataSource
 		.createQueryBuilder()
 		.insert()
 		.into(EmployeeSetting)

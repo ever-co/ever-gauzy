@@ -122,7 +122,7 @@ export const createRandomActivities = async (
 					activities.push(activity);
 				}
 			}
-			await connection.manager.save(activities);
+			await dataSource.manager.save(activities);
 			allActivities.push(...allActivities);
 		}
 	}

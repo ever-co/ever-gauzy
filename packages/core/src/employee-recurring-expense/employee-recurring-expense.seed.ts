@@ -25,8 +25,11 @@ export const createRandomEmployeeRecurringExpense = async (
 	const employees: EmployeeRecurringExpense[] = [];
 
 	for (const tenant of tenants) {
-		const organizations = await connection.manager.find(Organization, {
-			where: [{ tenant: tenant }]
+		const { id: tenantId } = tenant;
+		const organizations = await dataSource.manager.find(Organization, {
+			where: {
+				tenantId: tenantId
+			}
 		});
 		const tenantEmployees = tenantEmployeeMap.get(tenant);
 
@@ -69,7 +72,7 @@ export const createRandomEmployeeRecurringExpense = async (
 		}
 	}
 
-	await insertRandomEmployeeRecurringExpense(connection, employees);
+	await insertRandomEmployeeRecurringExpense(dataSource, employees);
 
 	return employees;
 };
@@ -78,7 +81,7 @@ const insertRandomEmployeeRecurringExpense = async (
 	dataSource: DataSource,
 	Employees: EmployeeRecurringExpense[]
 ) => {
-	await connection
+	await dataSource
 		.createQueryBuilder()
 		.insert()
 		.into(EmployeeRecurringExpense)

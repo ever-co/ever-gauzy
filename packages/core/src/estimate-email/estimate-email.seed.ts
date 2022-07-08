@@ -42,7 +42,7 @@ export const createRandomEstimateEmail = async (
 		}
 	}
 
-	await connection.manager.save(estimateEmails);
+	await dataSource.manager.save(estimateEmails);
 };
 
 function createToken(email): string {

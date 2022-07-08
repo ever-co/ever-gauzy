@@ -19,17 +19,17 @@ export const createRandomIntegrationEntitySettingTied = async (
 	const randomIntegrationEntitySettingsTiedEntity: IIntegrationEntitySettingTied[] = [];
 
 	for (const tenant of tenants) {
-		const organizations = await connection.manager.find(Organization, {
+		const organizations = await dataSource.manager.find(Organization, {
 			where: [{ tenant: tenant }]
 		});
-		const integrationTenants = await connection.manager.find(
+		const integrationTenants = await dataSource.manager.find(
 			IntegrationTenant,
 			{
 				where: [{ tenant: tenant }]
 			}
 		);
 		for (const integrationTenant of integrationTenants) {
-			const integrationEntitySettings = await connection.manager.find(
+			const integrationEntitySettings = await dataSource.manager.find(
 				IntegrationEntitySetting,
 				{
 					where: [{ integration: integrationTenant }]
@@ -64,5 +64,5 @@ export const createRandomIntegrationEntitySettingTied = async (
 		}
 	}
 
-	await connection.manager.save(randomIntegrationEntitySettingsTiedEntity);
+	await dataSource.manager.save(randomIntegrationEntitySettingsTiedEntity);
 };

@@ -19,11 +19,11 @@ export const createDefaultFeatureToggle = async (
 	config: IPluginConfig,
 	tenant: ITenant
 ) => {
-	await cleanFeature(connection, config);
+	await cleanFeature(dataSource, config);
 
 	for await (const item of DEFAULT_FEATURES) {
 		const feature: IFeature = await createFeature(item, tenant, config);
-		const parent = await connection.manager.save(feature);
+		const parent = await dataSource.manager.save(feature);
 
 		const { children = [] } = item;
 		if (children.length > 0) {
@@ -39,17 +39,17 @@ export const createDefaultFeatureToggle = async (
 				featureChildren.push(childFeature);
 			}
 
-			await connection.manager.save(featureChildren);
+			await dataSource.manager.save(featureChildren);
 		}
 	}
-	return await connection.getRepository(Feature).find();
+	return await dataSource.getRepository(Feature).find();
 };
 
 export const createRandomFeatureToggle = async (
 	dataSource: DataSource,
 	tenants: ITenant[]
 ) => {
-	const features: IFeature[] = await connection.getRepository(Feature).find();
+	const features: IFeature[] = await dataSource.getRepository(Feature).find();
 	const featureOrganizations: IFeatureOrganization[] = [];
 
 	for await (const feature of features) {
@@ -66,7 +66,7 @@ export const createRandomFeatureToggle = async (
 		}
 	}
 
-	await connection.manager.save(featureOrganizations);
+	await dataSource.manager.save(featureOrganizations);
 	return features;
 };
 
@@ -103,15 +103,15 @@ async function createFeature(
 	return feature;
 }
 
-async function cleanFeature(connection, config) {
-	if (config.dbConnectionOptions.type === 'sqlite') {
-		await connection.query('DELETE FROM feature');
-		await connection.query('DELETE FROM feature_organization');
+async function cleanFeature(dataSource, config) {
+	if (config.dbdataSourceOptions.type === 'sqlite') {
+		await dataSource.query('DELETE FROM feature');
+		await dataSource.query('DELETE FROM feature_organization');
 	} else {
-		await connection.query(
+		await dataSource.query(
 			'TRUNCATE TABLE feature RESTART IDENTITY CASCADE'
 		);
-		await connection.query(
+		await dataSource.query(
 			'TRUNCATE TABLE feature_organization RESTART IDENTITY CASCADE'
 		);
 	}

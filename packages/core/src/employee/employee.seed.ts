@@ -47,7 +47,7 @@ export const createDefaultEmployees = async (
 		employees.push(employee);
 	}
 
-	await insertEmployees(connection, employees);
+	await insertEmployees(dataSource, employees);
 	return employees;
 };
 
@@ -92,7 +92,7 @@ export const createRandomEmployees = async (
 			}
 		}
 		employeeMap.set(tenant, employees);
-		await insertEmployees(connection, employees);
+		await insertEmployees(dataSource, employees);
 	}
 
 	return employeeMap;
@@ -102,7 +102,7 @@ const insertEmployees = async (
 	dataSource: DataSource,
 	employees: IEmployee[]
 ): Promise<IEmployee[]> => {
-	return await connection.manager.save(employees);
+	return await dataSource.manager.save(employees);
 };
 
 const getDate = (dateString: string): Date => {
@@ -121,10 +121,10 @@ export const getDefaultEmployees = async (
 	tenant: ITenant
 ): Promise<IEmployee[]> => {
 	const organization = await getDefaultOrganization(
-		connection,
+		dataSource,
 		tenant
 	);
-	const employees = await connection.getRepository(Employee).find({
+	const employees = await dataSource.getRepository(Employee).find({
 		where: {
 			tenantId: tenant.id,
 			organizationId: organization.id

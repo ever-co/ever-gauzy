@@ -83,7 +83,7 @@ export const createDefaultExpenses = async (
 					.toDate();
 					return expense;
 				});
-				await insertExpense(connection, defaultExpenses);
+				await insertExpense(dataSource, defaultExpenses);
 			});
 	}
 	return expensesFromFile;
@@ -150,7 +150,7 @@ export const createRandomExpenses = async (
 				.toDate();
 				randomExpenses.push(expense);
 			}
-			await insertExpense(connection, randomExpenses);
+			await insertExpense(dataSource, randomExpenses);
 		}
 	}
 	return;
@@ -160,5 +160,5 @@ const insertExpense = async (
 	dataSource: DataSource,
 	expenses: Expense[]
 ): Promise<void> => {
-	await connection.manager.save(expenses);
+	await dataSource.manager.save(expenses);
 };

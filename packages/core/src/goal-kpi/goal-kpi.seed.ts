@@ -27,12 +27,12 @@ export const createDefaultGoalKpi = async (
 			goalKpis.push(goalKpi);
 		});
 	});
-	return await insertRandomGoalKpi(connection, goalKpis);
+	return await insertRandomGoalKpi(dataSource, goalKpis);
 };
 
 const insertRandomGoalKpi = async (
 	dataSource: DataSource,
 	goalKpis: GoalKPI[]
 ): Promise<GoalKPI[]> => {
-	return await connection.manager.save(goalKpis);
+	return await dataSource.manager.save(goalKpis);
 };

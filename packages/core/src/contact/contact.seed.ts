@@ -19,12 +19,12 @@ export const createRandomContacts = async (
 
 			// organization primary contact location
 			organization.contact = contact;
-			await connection.manager.save(organization);
+			await dataSource.manager.save(organization);
 
 			contacts.push(contact);
 		}
 	}
-	return await connection.manager.save(contacts);
+	return await dataSource.manager.save(contacts);
 };
 
 export const getRandomContact = (

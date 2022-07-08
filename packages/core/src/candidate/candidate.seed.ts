@@ -17,7 +17,7 @@ export const createDefaultCandidates = async (
 		candidate.tenant = tenant;
 		candidates.push(candidate);
 	}
-	return await insertCandidates(connection, candidates);
+	return await insertCandidates(dataSource, candidates);
 };
 
 export const createRandomCandidates = async (
@@ -46,7 +46,7 @@ export const createRandomCandidates = async (
 					candidates.push(candidate);
 				}
 			}
-			await insertCandidates(connection, candidates);
+			await insertCandidates(dataSource, candidates);
 		};
 		for await (const org of randomOrgs) {
 			if (randomUsers.length) {
@@ -65,5 +65,5 @@ const insertCandidates = async (
 	dataSource: DataSource,
 	candidates: Candidate[]
 ): Promise<Candidate[]> => {
-	return await connection.manager.save(candidates);
+	return await dataSource.manager.save(candidates);
 };

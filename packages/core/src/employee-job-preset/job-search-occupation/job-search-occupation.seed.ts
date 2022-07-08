@@ -32,7 +32,7 @@ export const createDefaultJobSearchOccupations = async (
 		occupations.push(occ);
 	});
 
-	await insertOccupations(connection, occupations);
+	await insertOccupations(dataSource, occupations);
 	return occupations;
 };
 
@@ -40,5 +40,5 @@ const insertOccupations = async (
 	dataSource: DataSource,
 	occupations: JobSearchOccupation[]
 ): Promise<void> => {
-	await connection.manager.save(occupations);
+	await dataSource.manager.save(occupations);
 };

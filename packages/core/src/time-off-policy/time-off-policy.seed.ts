@@ -24,7 +24,7 @@ export const createDefaultTimeOffPolicy = async (
 	defaultTimeOffPolicy.paid = true;
 	defaultTimeOffPolicy.employees = employees;
 
-	await insertDefaultPolicy(connection, defaultTimeOffPolicy);
+	await insertDefaultPolicy(dataSource, defaultTimeOffPolicy);
 	return defaultTimeOffPolicy;
 };
 
@@ -32,7 +32,7 @@ const insertDefaultPolicy = async (
 	dataSource: DataSource,
 	defaultPolicy: TimeOffPolicy
 ): Promise<void> => {
-	await connection
+	await dataSource
 		.createQueryBuilder()
 		.insert()
 		.into(TimeOffPolicy)
@@ -64,5 +64,5 @@ export const createRandomTimeOffPolicies = async (
 		});
 	});
 
-	return await connection.manager.save(policies);
+	return await dataSource.manager.save(policies);
 };

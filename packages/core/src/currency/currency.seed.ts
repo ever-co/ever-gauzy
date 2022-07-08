@@ -18,7 +18,7 @@ export const createCurrencies = async (
 					currencies.push(currency);
 				}
 			}
-			await insertCurrency(connection, currencies);
+			await insertCurrency(dataSource, currencies);
 			resolve(currencies);
 		} catch (err) {
 			console.log('Error parsing currency:', err);
@@ -32,7 +32,7 @@ const insertCurrency = async (
 	dataSource: DataSource,
 	currencies: ICurrency[]
 ): Promise<void> => {
-	await connection
+	await dataSource
 		.createQueryBuilder()
 		.insert()
 		.into(Currency)

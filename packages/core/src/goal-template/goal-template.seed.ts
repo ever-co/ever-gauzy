@@ -19,12 +19,12 @@ export const createDefaultGoalTemplates = async (
 		defaultGoalTemplates.push(goalTemplate);
 	});
 
-	return await insertDefaultGoalTemplates(connection, defaultGoalTemplates);
+	return await insertDefaultGoalTemplates(dataSource, defaultGoalTemplates);
 };
 
 const insertDefaultGoalTemplates = async (
 	dataSource: DataSource,
 	defaultGoalTemplates: GoalTemplate[]
 ): Promise<GoalTemplate[]> => {
-	return await connection.manager.save(defaultGoalTemplates);
+	return await dataSource.manager.save(defaultGoalTemplates);
 };

@@ -13,10 +13,10 @@ export const createDefaultGoals = async (
 	employees: IEmployee[]
 ): Promise<Goal[]> => {
 	const defaultGoals = [];
-	const goalTimeFrames: GoalTimeFrame[] = await connection.manager.find(
+	const goalTimeFrames: GoalTimeFrame[] = await dataSource.manager.find(
 		GoalTimeFrame
 	);
-	const orgTeams: OrganizationTeam[] = await connection.manager.find(
+	const orgTeams: OrganizationTeam[] = await dataSource.manager.find(
 		OrganizationTeam
 	);
 
@@ -42,14 +42,14 @@ export const createDefaultGoals = async (
 		});
 	}
 
-	await insertDefaultGoals(connection, defaultGoals);
+	await insertDefaultGoals(dataSource, defaultGoals);
 	return defaultGoals;
 };
 
 export const updateDefaultGoalProgress = async (
 	dataSource: DataSource
 ): Promise<Goal[]> => {
-	const goals: Goal[] = await connection.manager.find(Goal, {
+	const goals: Goal[] = await dataSource.manager.find(Goal, {
 		relations: ['keyResults']
 	});
 	if (goals && goals.length > 0) {
@@ -64,7 +64,7 @@ export const updateDefaultGoalProgress = async (
 					0
 				);
 				const goalProgress = Math.round(progressTotal / weightTotal);
-				await connection.manager.update(
+				await dataSource.manager.update(
 					Goal,
 					{ id: goal.id },
 					{
@@ -81,7 +81,7 @@ const insertDefaultGoals = async (
 	dataSource: DataSource,
 	defaultGoals: Goal[]
 ) => {
-	await connection
+	await dataSource
 		.createQueryBuilder()
 		.insert()
 		.into(Goal)
@@ -108,7 +108,7 @@ export const createRandomGoal = async (
 		return;
 	}
 
-	const goalTimeFrames: GoalTimeFrame[] = await connection.manager.find(
+	const goalTimeFrames: GoalTimeFrame[] = await dataSource.manager.find(
 		GoalTimeFrame
 	);
 
@@ -118,7 +118,7 @@ export const createRandomGoal = async (
 		const tenantOrgs = tenantOrganizationsMap.get(tenant);
 		const tenantEmployees = tenantEmployeeMap.get(tenant);
 		for await (const organization of tenantOrgs) {
-			const organizationTeams = await connection.manager.find(OrganizationTeam, {
+			const organizationTeams = await dataSource.manager.find(OrganizationTeam, {
 				where: [
 					{ organizationId: organization.id }
 				]
@@ -144,6 +144,6 @@ export const createRandomGoal = async (
 		}
 	}
 
-	await connection.manager.save(goals);
+	await dataSource.manager.save(goals);
 	return goals;
 };
