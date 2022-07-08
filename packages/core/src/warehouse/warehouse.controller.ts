@@ -1,5 +1,4 @@
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { CrudController, PaginationParams } from './../core/crud';
 import {
 	Body,
 	Controller,
@@ -14,6 +13,7 @@ import {
 	UsePipes,
 	ValidationPipe
 } from '@nestjs/common';
+import { FindManyOptions } from 'typeorm';
 import {
 	IPagination,
 	PermissionsEnum,
@@ -29,6 +29,7 @@ import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { RequestContext } from './../core/context';
+import { CrudController, PaginationParams } from './../core/crud';
 
 @ApiTags('Warehouses')
 @UseGuards(TenantPermissionGuard)
@@ -43,9 +44,9 @@ export class WarehouseController extends CrudController<Warehouse> {
 
 	/**
 	 * GET all warehouse products
-	 * 
-	 * @param warehouseId 
-	 * @returns 
+	 *
+	 * @param warehouseId
+	 * @returns
 	 */
 	@ApiOperation({
 		summary: 'Find all warehouse products.'
@@ -70,10 +71,10 @@ export class WarehouseController extends CrudController<Warehouse> {
 
 	/**
 	 * CREATE warehouse products
-	 * 
-	 * @param entity 
-	 * @param warehouseId 
-	 * @returns 
+	 *
+	 * @param entity
+	 * @param warehouseId
+	 * @returns
 	 */
 
 	@ApiOperation({ summary: 'Create warehouse products' })
@@ -99,10 +100,10 @@ export class WarehouseController extends CrudController<Warehouse> {
 
 	/**
 	 * UPDATE warehouse product quantity
-	 * 
-	 * @param warehouseProductId 
-	 * @param value 
-	 * @returns 
+	 *
+	 * @param warehouseProductId
+	 * @param value
+	 * @returns
 	 */
 	@ApiOperation({
 		summary: 'Update warehouse product quantity.'
@@ -129,10 +130,10 @@ export class WarehouseController extends CrudController<Warehouse> {
 
 	/**
 	 * UPDATE warehouse product variant quantity
-	 * 
-	 * @param warehouseProductVariantId 
-	 * @param value 
-	 * @returns 
+	 *
+	 * @param warehouseProductVariantId
+	 * @param value
+	 * @returns
 	 */
 	@ApiOperation({
 		summary: 'Update warehouse product variant count.'
@@ -159,9 +160,9 @@ export class WarehouseController extends CrudController<Warehouse> {
 
 	/**
 	 * GET warehouse count
-	 * 
-	 * @param filter 
-	 * @returns 
+	 *
+	 * @param filter
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'Find all warehouse count in the same tenant' })
 	@ApiResponse({
@@ -170,21 +171,23 @@ export class WarehouseController extends CrudController<Warehouse> {
 	})
 	@Get('count')
 	async getCount(
-		@Query() filter: PaginationParams<Warehouse>
+		@Query(new ValidationPipe({
+			transform: true
+		})) options: PaginationParams<Warehouse>
 	): Promise<number> {
 		return await this.warehouseService.count({
 			where: {
 				tenantId: RequestContext.currentTenantId()
 			},
-			...filter
+			...options as FindManyOptions<Warehouse>
 		});
 	}
 
 	/**
 	 * GET warehouses by pagination
-	 * 
-	 * @param filter 
-	 * @returns 
+	 *
+	 * @param filter
+	 * @returns
 	 */
 	@Get('pagination')
 	@UsePipes(new ValidationPipe({ transform: true }))
@@ -196,9 +199,9 @@ export class WarehouseController extends CrudController<Warehouse> {
 
 	/**
 	 * GET all warehouses
-	 * 
-	 * @param data 
-	 * @returns 
+	 *
+	 * @param data
+	 * @returns
 	 */
 	@ApiOperation({
 		summary: 'Find all warehouses.'
@@ -222,10 +225,10 @@ export class WarehouseController extends CrudController<Warehouse> {
 
 	/**
 	 * GET warehouse with relations by id
-	 * 
-	 * @param id 
-	 * @param data 
-	 * @returns 
+	 *
+	 * @param id
+	 * @param data
+	 * @returns
 	 */
 	@Get(':id')
 	async findById(
@@ -243,9 +246,9 @@ export class WarehouseController extends CrudController<Warehouse> {
 
 	/**
 	 * CREATE new warehouse record
-	 * 
-	 * @param entity 
-	 * @returns 
+	 *
+	 * @param entity
+	 * @returns
 	 */
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT)
@@ -259,10 +262,10 @@ export class WarehouseController extends CrudController<Warehouse> {
 
 	/**
 	 * UPDATE an existing warehouse
-	 * 
-	 * @param id 
-	 * @param entity 
-	 * @returns 
+	 *
+	 * @param id
+	 * @param entity
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'Update an existing warehouse' })
 	@ApiResponse({
