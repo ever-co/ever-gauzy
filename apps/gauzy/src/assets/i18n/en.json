@@ -153,6 +153,8 @@
 		"CONTACT_NO_DATA": "You have not created any contact.",
 		"TIME_FRAME_NO_DATA": "You have not created any time frame.",
 		"KPI_NO_DATA": "You have not created any KPI.",
+		"INVOICES_NO_DATA_MESSAGE": "You have not created any invoice.",
+		"ESTIMATE_NO_DATA_MESSAGE": "You have not created any estimate.",
 		"TRANSACTION_TYPE": "Type",
 		"AMOUNT": "Amount",
 		"DATE": "Date",
@@ -2537,8 +2539,6 @@
 	},
 	"INVOICES_PAGE": {
 		"SENDER": "Sender",
-		"INVOICES_NO_DATA_MESSAGE": "You have not created any invoice.",
-		"ESTIMATE_NO_DATA_MESSAGE": "You have not created any estimate.",
 		"BROWSE": "Browse",
 		"COMMENT": "Comment",
 		"COMMENTS": "Comments",
