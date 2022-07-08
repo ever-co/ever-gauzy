@@ -68,10 +68,10 @@
 				</div>
 			</ng-container>
 			<ng-template [ngIf]="!loading && expenses?.length == 0">
-				<gauzy-no-data
+				<ngx-no-data-message 
 					[message]="'ORGANIZATIONS_PAGE.EXPENSE_NO_DATA_MESSAGE'"
-				></gauzy-no-data>
-			</ng-template>
+				></ngx-no-data-message>
+			</ng-template>		
 		</div>
 	</nb-card-body>
 </nb-card>

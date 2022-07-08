@@ -41,9 +41,9 @@
 			</nb-card>
 		</ng-template>
 		<ng-template [ngIf]="!loading && documentList?.length == 0">
-			<gauzy-no-data 
+			<ngx-no-data-message 
 				[message]="'ORGANIZATIONS_PAGE.DOCUMENTS_NO_DATA_MESSAGE'"
-			></gauzy-no-data>
+			></ngx-no-data-message>
 		</ng-template>
 		<ng-template
 			[ngIf]="

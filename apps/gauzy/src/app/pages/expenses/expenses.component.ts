@@ -200,7 +200,7 @@ export class ExpensesComponent extends PaginationFilterBaseComponent
 		this.smartTableSettings = {
 			actions: false,
 			editable: true,
-			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA'),
+			noDataMessage: this.getTranslation('SM_TABLE.EXPENSE_NO_DATA'),
 			pager: {
 				display: false,
 				perPage: pagination ? pagination.itemsPerPage : 10

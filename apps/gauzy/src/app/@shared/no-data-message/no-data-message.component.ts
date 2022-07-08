@@ -6,11 +6,11 @@ import { TranslationBaseComponent } from '../language-base';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'gauzy-no-data',
-	templateUrl: './no-data.component.html',
-	styleUrls: ['./no-data.component.scss']
+	selector: 'ngx-no-data-message',
+	templateUrl: './no-data-message.component.html',
+	styleUrls: ['./no-data-message.component.scss']
 })
-export class NodataComponent extends TranslationBaseComponent implements 
+export class NoDataMessageComponent extends TranslationBaseComponent implements 
 	OnInit {
 	
 	@Input()

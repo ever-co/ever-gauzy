@@ -218,6 +218,7 @@ export class GoalSettingsComponent
 		if (tab === 'kpi') {
 			this.smartTableSettings = {
 				...this.smartTableSettings,
+				noDataMessage: this.getTranslation('SM_TABLE.KPI_NO_DATA'),
 				columns: {
 					name: {
 						title: this.getTranslation('SM_TABLE.NAME'),
@@ -246,6 +247,7 @@ export class GoalSettingsComponent
 		} else if (tab === 'timeframe') {
 			this.smartTableSettings = {
 				...this.smartTableSettings,
+				noDataMessage: this.getTranslation('SM_TABLE.TIME_FRAME_NO_DATA'),
 				columns: {
 					name: {
 						title: this.getTranslation('SM_TABLE.NAME'),

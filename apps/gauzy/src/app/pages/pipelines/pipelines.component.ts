@@ -176,7 +176,7 @@ export class PipelinesComponent extends PaginationFilterBaseComponent
 				perPage: pagination ? pagination.itemsPerPage : 10
 			},
 			actions: false,
-			noDataMessage: this.getTranslation('SM_TABLE.NO_RESULT'),
+			noDataMessage: this.getTranslation('SM_TABLE.PIPELINE_NO_DATA'),
 			columns: {
 				name: {
 					type: 'string',

@@ -130,6 +130,7 @@ export class MerchantTableComponent extends PaginationFilterBaseComponent
 				display: false,
 				perPage: pagination ? pagination.itemsPerPage : 10
 			},
+			noDataMessage: this.getTranslation('SM_TABLE.MERCHANT_NO_DATA'),
 			columns: {
 				name: {
 					title: this.getTranslation('INVENTORY_PAGE.NAME'),

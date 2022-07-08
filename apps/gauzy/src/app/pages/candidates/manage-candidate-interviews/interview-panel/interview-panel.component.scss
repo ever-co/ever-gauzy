@@ -182,3 +182,8 @@
   @include nb-rtl(left, 1rem);
   top: -4.5rem;
 }
+::ng-deep {
+  .interview-panel .no-data-found {
+    max-height: calc(100vh - 29rem);
+  }
+}

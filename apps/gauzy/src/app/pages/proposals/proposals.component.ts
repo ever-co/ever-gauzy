@@ -313,7 +313,7 @@ export class ProposalsComponent extends PaginationFilterBaseComponent
 				display: false,
 				perPage: pagination ? pagination.itemsPerPage : 10
 			},
-			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA_MESSAGE'),
+			noDataMessage: this.getTranslation('SM_TABLE.PROPOSAL_NO_DATA'),
 			columns: {
 				valueDate: {
 					title: this.getTranslation('SM_TABLE.DATE'),

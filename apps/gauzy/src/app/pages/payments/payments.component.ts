@@ -414,6 +414,7 @@ export class PaymentsComponent extends PaginationFilterBaseComponent
 		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
 			actions: false,
+			noDataMessage: this.getTranslation('SM_TABLE.PAYMENT_NO_DATA'),
 			pager: {
 				display: false,
 				perPage: pagination ? pagination.itemsPerPage : 10

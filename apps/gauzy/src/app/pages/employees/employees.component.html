@@ -211,7 +211,7 @@
 	</div>
 </ng-template>
 <ng-template #gridLayout>
-	<div *ngIf="pagination.totalItems">
+	<div *ngIf="!loading">
 		<ga-card-grid
 			(selectedOption)="onUpdateOption($event)"
 			(selectedPage)="onPageChange($event)"

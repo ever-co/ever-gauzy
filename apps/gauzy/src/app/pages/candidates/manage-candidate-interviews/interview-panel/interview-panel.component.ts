@@ -302,6 +302,7 @@ export class InterviewPanelComponent extends PaginationFilterBaseComponent
 		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
 			actions: false,
+			noDataMessage: this.getTranslation('SM_TABLE.INTERVIEW_NO_DATA'),
 			columns: {
 				fullName: {
 					title: this.getTranslation(
