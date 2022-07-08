@@ -391,7 +391,8 @@
 			"DEFAULT_ESTIMATE_TEMPLATE": "crwdns10378:0crwdne10378:0",
 			"DEFAULT_RECEIPT_TEMPLATE": "crwdns10380:0crwdne10380:0",
 			"DEFAULT": "crwdns10382:0crwdne10382:0",
-			"INVITATION_EXPIRATION": "crwdns10561:0crwdne10561:0"
+			"INVITATION_EXPIRATION": "crwdns10561:0crwdne10561:0",
+			"PERIOD": "crwdns11327:0crwdne11327:0"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "crwdns90:0crwdne90:0",
