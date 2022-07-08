@@ -284,7 +284,6 @@ export class TaskComponent extends PaginationFilterBaseComponent
 					projectName: task.project ? task.project : undefined,
 					employees: task.members ? task.members : undefined,
 					assignTo: this._teamTaskStore._getTeamNames(task),
-					creator: task.creator ? task.creator : undefined,
 					employeesMergedTeams: [task.members, task.teams]
 				});
 			},
