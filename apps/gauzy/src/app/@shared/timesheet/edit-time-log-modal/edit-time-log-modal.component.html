@@ -65,7 +65,7 @@
 					</ngx-timer-range-picker>
 				</div>
 				<div class="col-6 show-time" *ngIf="timeDiff">
-					<label>{{ 'FORM.LABELS.PERIOD'|translate }}</label>
+					<label>{{ 'FORM.LABELS.PERIOD' | translate }}</label>
 					<div>{{ timeDiff | durationFormat }}</div>
 				</div>
 			</div>
@@ -329,16 +329,13 @@
 						nbButton
 						size="small"
 						status="basic"
+						outline
 						ngxConfirmDialog
 						[message]="'TIMESHEET.DELETE_TIMELOG' | translate"
 						(confirm)="onDeleteConfirm(timeLog)"
-						*ngIf="mode == 'update'"
-					>
-						<nb-icon
-							status="danger"
-							icon="trash-2-outline"
-						></nb-icon>
-					</button>
+						*ngIf="mode === 'update'"
+						[nbTooltip]="'BUTTONS.DELETE' | translate"
+					></button>
 				</ng-template>
 			</ng-template>
 		</nb-card-footer>
