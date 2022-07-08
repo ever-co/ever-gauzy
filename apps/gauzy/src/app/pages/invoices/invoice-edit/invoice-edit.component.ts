@@ -532,11 +532,11 @@ export class InvoiceEditComponent
 
 			const invoiceItems: IInvoiceItemCreateInput[] = [];
 			for (const invoiceItem of tableData) {
-				const { id } = invoiceItem.selectedItem;
+				const id = invoiceItem.selectedItem ? invoiceItem.selectedItem.id : null;
 				const itemToAdd = {
 					description: invoiceItem.description,
-					price: invoiceItem.price,
-					quantity: invoiceItem.quantity,
+					price: Number(invoiceItem.price),
+					quantity: Number(invoiceItem.quantity),
 					totalValue: invoiceItem.totalValue,
 					invoiceId: this.invoice.id,
 					applyTax: invoiceItem.applyTax,
