@@ -1,0 +1,9 @@
+nb-card-body {
+	box-shadow: var(--gauzy-shadow);
+	border-radius: var(--border-radius);
+	background-color: var(--gauzy-card-1);
+}
+
+nb-card{
+    margin-bottom: 8px;
+}
