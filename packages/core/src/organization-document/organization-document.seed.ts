@@ -25,7 +25,7 @@ export const createOrganizationDocuments = async (
 		documents.push(requestPaidDaysOff);
 		documents.push(requestUnpaidDaysOff);
 	}
-	return await connection.manager.save(documents);
+	return await dataSource.manager.save(documents);
 };
 
 export const createRandomOrganizationDocuments = async (
@@ -64,5 +64,5 @@ export const createRandomOrganizationDocuments = async (
 		}
 	}
 
-	await connection.manager.save(organizationDocuments);
+	await dataSource.manager.save(organizationDocuments);
 };

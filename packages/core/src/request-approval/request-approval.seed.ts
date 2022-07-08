@@ -32,15 +32,16 @@ export const createRandomRequestApproval = async (
 ): Promise<any> => {
 	const requestApprovals: RequestApproval[] = [];
 	for await (const tenant of tenants || []) {
-		const policies: ApprovalPolicy[] = await connection.manager.find(ApprovalPolicy, {
+		const { id: tenantId } = tenant;
+		const policies: ApprovalPolicy[] = await dataSource.manager.find(ApprovalPolicy, {
 				where: {
-					tenant
+					tenantId
 				}
 			}
 		);
-		const organizations = await connection.manager.find(Organization, {
+		const organizations = await dataSource.manager.find(Organization, {
 			where: {
-				tenant
+				tenantId
 			}
 		});
 
@@ -77,7 +78,7 @@ export const createRandomRequestApproval = async (
 		}
 	}
 
-	await connection
+	await dataSource
 		.createQueryBuilder()
 		.insert()
 		.into(RequestApproval)

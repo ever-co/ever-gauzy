@@ -27,7 +27,7 @@ export const createDefaultOrganizationRecurringExpense = async (
 	);
 
 	mapOrganizationRecurringExpense = await dataOperation(
-		connection,
+		dataSource,
 		tenant,
 		mapOrganizationRecurringExpense,
 		expenseCategories,
@@ -57,7 +57,7 @@ export const createRandomOrganizationRecurringExpense = async (
 		const tenantOrganization = tenantOrganizationsMap.get(tenant);
 		for (const tenantOrg of tenantOrganization) {
 			mapOrganizationRecurringExpense = await dataOperation(
-				connection,
+				dataSource,
 				tenant,
 				mapOrganizationRecurringExpense,
 				expenseCategories,
@@ -103,6 +103,6 @@ const dataOperation = async (
 
 		mapOrganizationRecurringExpense.push(organization);
 	}
-	await connection.manager.save(mapOrganizationRecurringExpense);
+	await dataSource.manager.save(mapOrganizationRecurringExpense);
 	return mapOrganizationRecurringExpense;
 };

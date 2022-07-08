@@ -1,4 +1,4 @@
-import { Connection, In } from 'typeorm';
+import { DataSource, In } from 'typeorm';
 import { BillingInvoicingPolicyEnum, IOrganization, ITenant } from '@gauzy/contracts';
 import { faker } from '@ever-co/faker';
 import * as _ from 'underscore';
@@ -27,25 +27,31 @@ export const createRandomProductVariant = async (
 
 	const productVariants: ProductVariant[] = [];
 	for (const tenant of tenants) {
+		const { id: tenantId } = tenant;
 		const tenantOrgs = tenantOrganizationsMap.get(tenant);
 		for (const tenantOrg of tenantOrgs) {
-			const productCategories = await connection.manager.find(
-				ProductCategory,
-				{
-					where: { organization: tenantOrg }
+			const { id: organizationId } = tenantOrg;
+			const productCategories = await dataSource.manager.find(ProductCategory, {
+				where: {
+					organizationId,
+					tenantId
 				}
-			);
+			});
 			for (const productCategory of productCategories) {
-				const products = await connection.manager.find(Product, {
-					where: { productCategory: productCategory }
+				const products = await dataSource.manager.find(Product, {
+					where: {
+						productCategoryId: productCategory.id
+					}
 				});
 				for (const product of products) {
-					const productOptionGroups = await connection.manager.find(ProductOptionGroup, {
-							where: { product: product }
+					const productOptionGroups = await dataSource.manager.find(ProductOptionGroup, {
+							where: {
+								productId: product.id
+							}
 						}
 					);
 					const productOptionGroupsIds = _.pluck(productOptionGroups, 'id');
-					const productOptions = await connection.manager.find(ProductOption, {
+					const productOptions = await dataSource.manager.find(ProductOption, {
 							where: {
 								group: In(productOptionGroupsIds),
 							}
@@ -74,5 +80,5 @@ export const createRandomProductVariant = async (
 		}
 	}
 
-	return await connection.manager.save(productVariants);
+	return await dataSource.manager.save(productVariants);
 };

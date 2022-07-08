@@ -10,7 +10,7 @@ export const createDefaultOrganizationDepartments = async (
 	tenant: ITenant,
 	organizations: IOrganization[]
 ) => {
-	const tag = connection.getRepository(Tag).create({
+	const tag = dataSource.getRepository(Tag).create({
 		name: 'API',
 		description: '',
 		color: faker.commerce.color()
@@ -26,7 +26,7 @@ export const createDefaultOrganizationDepartments = async (
 			departments.push(department);
 		});
 	}
-	return await connection.manager.save(departments);
+	return await dataSource.manager.save(departments);
 };
 
 export const seedRandomOrganizationDepartments = async (
@@ -49,7 +49,7 @@ export const seedRandomOrganizationDepartments = async (
 			);
 			departments = [...departments, ...organizationDepartments];
 		});
-		await insertEmploymentDepartment(connection, departments);
+		await insertEmploymentDepartment(dataSource, departments);
 	}
 };
 
@@ -57,5 +57,5 @@ const insertEmploymentDepartment = async (
 	dataSource: DataSource,
 	employmentDepartment: OrganizationDepartment[]
 ): Promise<void> => {
-	await connection.manager.save(employmentDepartment);
+	await dataSource.manager.save(employmentDepartment);
 };

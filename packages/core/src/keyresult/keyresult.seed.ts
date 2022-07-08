@@ -21,7 +21,7 @@ export const createDefaultKeyResults = async (
 	goals
 ): Promise<KeyResult[]> => {
 	const defaultKeyResults = [];
-	const goalKPIs: GoalKPI[] = await connection.manager.find(GoalKPI);
+	const goalKPIs: GoalKPI[] = await dataSource.manager.find(GoalKPI);
 	if (goals && goals.length > 0) {
 		goals.forEach((goal) => {
 			const keyResultsOfGoal = DEFAULT_KEY_RESULTS.find(
@@ -80,7 +80,7 @@ export const createDefaultKeyResults = async (
 			});
 		});
 
-		await insertDefaultKeyResults(connection, defaultKeyResults);
+		await insertDefaultKeyResults(dataSource, defaultKeyResults);
 
 		return defaultKeyResults;
 	}
@@ -89,7 +89,7 @@ export const createDefaultKeyResults = async (
 export const updateDefaultKeyResultProgress = async (
 	dataSource: DataSource
 ): Promise<KeyResult[]> => {
-	const keyResults: KeyResult[] = await connection.manager.find(KeyResult, {
+	const keyResults: KeyResult[] = await dataSource.manager.find(KeyResult, {
 		relations: ['updates']
 	});
 	keyResults.forEach(async (keyResult) => {
@@ -100,7 +100,7 @@ export const updateDefaultKeyResultProgress = async (
 		);
 		const recentUpdate = sortedUpdates[sortedUpdates.length - 1];
 		if (recentUpdate) {
-			await connection.manager.update(
+			await dataSource.manager.update(
 				KeyResult,
 				{ id: keyResult.id },
 				{
@@ -117,7 +117,7 @@ const insertDefaultKeyResults = async (
 	dataSource: DataSource,
 	defaultKeyResults: KeyResult[]
 ) => {
-	await connection
+	await dataSource
 		.createQueryBuilder()
 		.insert()
 		.into(KeyResult)
@@ -208,5 +208,5 @@ export const createRandomKeyResult = async (
 			keyResults.push(keyResult);
 		}
 	}
-	await connection.manager.save(keyResults);
+	await dataSource.manager.save(keyResults);
 };

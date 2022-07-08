@@ -18,10 +18,15 @@ export const createRandomPipelineStage = async (
 
 	const pipelineStages: PipelineStage[] = [];
 	for (const tenant of tenants) {
+		const { id: tenantId } = tenant;
 		const tenantOrganization = tenantOrganizationsMap.get(tenant);
 		for (const tenantOrg of tenantOrganization) {
-			const organizationPipeline = await connection.manager.find(Pipeline, {
-				where: { organization: tenantOrg }
+			const { id: organizationId } = tenantOrg;
+			const organizationPipeline = await dataSource.manager.find(Pipeline, {
+				where: {
+					organizationId,
+					tenantId
+				}
 			});
 			for (const pipeline of organizationPipeline) {
 				for (let i = 0; i <= faker.datatype.number(10); i++) {
@@ -40,10 +45,10 @@ export const createRandomPipelineStage = async (
 		}
 	}
 
-	return await insertRandomPipelineStage(connection, pipelineStages);
+	return await insertRandomPipelineStage(dataSource, pipelineStages);
 };
 
 const insertRandomPipelineStage = async (
 	dataSource: DataSource,
 	pipelineStages: PipelineStage[]
-) => await connection.manager.save(pipelineStages);
+) => await dataSource.manager.save(pipelineStages);

@@ -34,5 +34,5 @@ export const createRandomAppointmentEmployees = async (
 		}
 	}
 
-	await connection.manager.save(appointEmployees);
+	await dataSource.manager.save(appointEmployees);
 };

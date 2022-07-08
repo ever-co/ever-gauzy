@@ -7,8 +7,8 @@ export const createDefaultCandidateInterviewers = async (
 	dataSource: DataSource,
 	tenant: ITenant,
 	organization: IOrganization,
-	defaultEmployees: IEmployee[],
-	defaultCandidates: ICandidate[]
+	defaultEmployees,
+	defaultCandidates
 ): Promise<CandidateInterviewers[]> => {
 	if (!defaultEmployees) {
 		console.warn(

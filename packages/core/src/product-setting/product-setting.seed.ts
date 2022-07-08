@@ -22,18 +22,22 @@ export const createRandomProductVariantSettings = async (
 	for (const tenant of tenants) {
 		const tenantOrgs = tenantOrganizationsMap.get(tenant);
 		for (const tenantOrg of tenantOrgs) {
-			const productCategories = await connection.manager.find(
+			const productCategories = await dataSource.manager.find(
 				ProductCategory,
 				{
-					where: [{ organization: tenantOrg }]
+					where: {
+						organizationId: tenantOrg.id
+					}
 				}
 			);
 			for (const productCategory of productCategories) {
-				const products = await connection.manager.find(Product, {
-					where: [{ productCategory: productCategory }]
+				const products = await dataSource.manager.find(Product, {
+					where: {
+						productCategoryId: productCategory.id
+					}
 				});
 				for (const product of products) {
-					const productVariants = await connection.manager.find(
+					const productVariants = await dataSource.manager.find(
 						ProductVariant,
 						{
 							where: [{ productId: product.id }]
@@ -60,5 +64,5 @@ export const createRandomProductVariantSettings = async (
 		}
 	}
 
-	await connection.manager.save(productVariantSettings);
+	await dataSource.manager.save(productVariantSettings);
 };

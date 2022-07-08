@@ -19,7 +19,7 @@ export const seedDefaultOrganizationPosition = async (
 		}
 	);
 	positions = [...positions, ...organizationPositions];
-	await insertEmploymentPosition(connection, positions);
+	await insertEmploymentPosition(dataSource, positions);
 };
 
 export const seedRandomOrganizationPosition = async (
@@ -42,7 +42,7 @@ export const seedRandomOrganizationPosition = async (
 			);
 			positions = [...positions, ...organizationPositions];
 		});
-		await insertEmploymentPosition(connection, positions);
+		await insertEmploymentPosition(dataSource, positions);
 	}
 };
 
@@ -50,5 +50,5 @@ const insertEmploymentPosition = async (
 	dataSource: DataSource,
 	organizationPosition: IOrganizationPosition[]
 ): Promise<void> => {
-	await connection.manager.save(organizationPosition);
+	await dataSource.manager.save(organizationPosition);
 };

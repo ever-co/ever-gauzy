@@ -19,7 +19,7 @@ export const createDefaultKeyResultUpdates = async (
 	keyResults: KeyResult[] | void
 ): Promise<KeyResultUpdate[]> => {
 	const defaultKeyResultUpdates = [];
-	const goalTimeFrames: GoalTimeFrame[] = await connection.manager.find(
+	const goalTimeFrames: GoalTimeFrame[] = await dataSource.manager.find(
 		GoalTimeFrame
 	);
 
@@ -85,7 +85,7 @@ export const createDefaultKeyResultUpdates = async (
 	});
 
 	return await insertDefaultKeyResultUpdates(
-		connection,
+		dataSource,
 		defaultKeyResultUpdates
 	);
 };
@@ -94,5 +94,5 @@ const insertDefaultKeyResultUpdates = async (
 	dataSource: DataSource,
 	defaultKeyResultUpdates: KeyResultUpdate[]
 ): Promise<KeyResultUpdate[]> => {
-	return await connection.manager.save(defaultKeyResultUpdates);
+	return await dataSource.manager.save(defaultKeyResultUpdates);
 };

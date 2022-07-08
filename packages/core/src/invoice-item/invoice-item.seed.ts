@@ -30,12 +30,12 @@ export const createDefaultInvoiceItem = async (
 ) => {
 	for await (const organization of organizations) {
 		const invoiceItems = await invoiceItemForInvoiceType(
-			connection,
+			dataSource,
 			tenant,
 			organization,
 			numberOfInvoiceItemPerInvoice
 		);
-		await connection.manager.save(invoiceItems);
+		await dataSource.manager.save(invoiceItems);
 	}
 };
 
@@ -49,12 +49,12 @@ export const createRandomInvoiceItem = async (
 		const organizations = tenantOrganizationsMap.get(tenant);
 		for await (const organization of organizations) {
 			const invoiceItems = await invoiceItemForInvoiceType(
-				connection,
+				dataSource,
 				tenant,
 				organization,
 				numberOfInvoiceItemPerInvoice
 			);
-			await connection.manager.save(invoiceItems);
+			await dataSource.manager.save(invoiceItems);
 		}
 	}
 };
@@ -65,16 +65,20 @@ async function invoiceItemForInvoiceType(
 	organization: IOrganization,
 	numberOfInvoiceItemPerInvoice: number
 ) {
+
+	const { id: tenantId } = tenant;
+	const { id: organizationId } = organization;
+
 	const where = {
-		tenant,
-		organization
+		tenantId: tenantId,
+		organizationId: organizationId
 	};
-	const employees: IEmployee[] = await connection.manager.find(Employee, { where });
-	const projects: IOrganizationProject[] = await connection.manager.find(OrganizationProject, { where });
-	const tasks: ITask[] = await connection.manager.find(Task, { where });
-	const products: Product[] = await connection.manager.find(Product, { where });
-	const expenses: IExpense[] = await connection.manager.find(Expense, { where });
-	const invoices: IInvoice[] = await connection.manager.find(Invoice, { where });
+	const employees: IEmployee[] = await dataSource.manager.find(Employee, { where });
+	const projects: IOrganizationProject[] = await dataSource.manager.find(OrganizationProject, { where });
+	const tasks: ITask[] = await dataSource.manager.find(Task, { where });
+	const products: Product[] = await dataSource.manager.find(Product, { where });
+	const expenses: IExpense[] = await dataSource.manager.find(Expense, { where });
+	const invoices: IInvoice[] = await dataSource.manager.find(Invoice, { where });
 
 	const invoiceItems: IInvoiceItem[] = [];
 	for await (const invoice of invoices) {
@@ -113,7 +117,7 @@ async function invoiceItemForInvoiceType(
 			invoiceItems.push(invoiceItem);
 		}
 		invoice.totalValue = totalValue;
-		await connection.manager.save(invoice);
+		await dataSource.manager.save(invoice);
 	}
 	return invoiceItems;
 }

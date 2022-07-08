@@ -44,9 +44,10 @@ export const createRandomEmailSent = async (
 
 	let sentEmails: IEmail[] = [];
 	for (const tenant of tenants) {
+		const { id: tenantId } = tenant;
 		const users = await dataSource.getRepository(User).find({
 			where: {
-				tenant
+				tenantId: tenantId
 			}
 		});
 		const orgs = tenantOrganizationsMap.get(tenant);

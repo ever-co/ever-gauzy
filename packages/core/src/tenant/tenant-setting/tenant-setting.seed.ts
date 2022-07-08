@@ -1,6 +1,6 @@
 import { FileStorageProviderEnum, ITenant } from "@gauzy/contracts";
 import { TenantSetting } from "core";
-import { Connection } from "typeorm";
+import { DataSource } from "typeorm";
 import { environment } from "@gauzy/config";
 
 export const createDefaultTenantSetting = async (
@@ -16,7 +16,7 @@ export const createDefaultTenantSetting = async (
             setting.tenant = tenant;
             settings.push(setting);
 		}
-		return await connection.manager.save(settings);
+		return await dataSource.manager.save(settings);
 	} catch (error) {
 		console.log({error})
 	}

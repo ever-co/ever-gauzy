@@ -124,21 +124,23 @@ export const createRandomTask = async (
 	labels = uniq(labels, (label) => label.name);
 
 	for await (const tenant of tenants || []) {
+		const { id: tenantId } = tenant;
 		const users = await dataSource.manager.find(User, {
 			where: {
-				tenant
+				tenantId
 			}
 		});
 		const organizations = await dataSource.manager.find(Organization, {
 			where: {
-				tenant
+				tenantId
 			}
 		});
 		for await (const organization of organizations) {
+			const { id: organizationId } = organization;
 			const projects = await dataSource.manager.find(OrganizationProject, {
 				where: {
-					tenant,
-					organization
+					tenantId,
+					organizationId
 				}
 			});
 			if (!projects) {
@@ -149,8 +151,8 @@ export const createRandomTask = async (
 			}
 			const teams = await dataSource.manager.find(OrganizationTeam, {
 				where: {
-					tenant,
-					organization
+					tenantId,
+					organizationId
 				}
 			});
 
@@ -161,8 +163,10 @@ export const createRandomTask = async (
 				organization
 			);
 			const employees = await dataSource.manager.find(Employee, {
-				tenant,
-				organization
+				where: {
+					tenantId,
+					organizationId
+				}
 			});
 			let count = 0;
 

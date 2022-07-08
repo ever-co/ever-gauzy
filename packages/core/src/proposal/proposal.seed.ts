@@ -13,15 +13,19 @@ export const createDefaultProposals = async (
 	organizations: IOrganization[],
 	noOfProposalsPerOrganization: number
 ): Promise<Proposal[]> => {
+	const { id: tenantId } = tenant;
 	const proposals: Proposal[] = [];
 	for (const organization of organizations) {
-		const tags = await connection.manager.find(Tag, {
-			where: [{ organization: organization }]
-		});
-		const organizationContacts = await connection.manager.find(OrganizationContact, {
+		const { id: organizationId } = organization;
+		const tags = await dataSource.manager.find(Tag, {
 			where: {
-				organization,
-				tenant
+				organizationId
+			}
+		});
+		const organizationContacts = await dataSource.manager.find(OrganizationContact, {
+			where: {
+				organizationId,
+				tenantId
 			}
 		});
 		for (let i = 0; i < noOfProposalsPerOrganization; i++) {
@@ -42,7 +46,7 @@ export const createDefaultProposals = async (
 		}
 	}
 
-	return await connection.manager.save(proposals);
+	return await dataSource.manager.save(proposals);
 };
 
 export const createRandomProposals = async (
@@ -54,16 +58,20 @@ export const createRandomProposals = async (
 ): Promise<Proposal[]> => {
 	const proposals: Proposal[] = [];
 	for (const tenant of tenants) {
+		const { id: tenantId } = tenant;
 		const organizations = tenantOrganizationsMap.get(tenant);
 		const employees = tenantEmployeeMap.get(tenant);
 		for (const organization of organizations) {
-			const tags = await connection.manager.find(Tag, {
-				where: [{ organization: organization }]
-			});
-			const organizationContacts = await connection.manager.find(OrganizationContact, {
+			const { id: organizationId } = organization;
+			const tags = await dataSource.manager.find(Tag, {
 				where: {
-					organization,
-					tenant
+					organizationId
+				}
+			});
+			const organizationContacts = await dataSource.manager.find(OrganizationContact, {
+				where: {
+					organizationId,
+					tenantId
 				}
 			});
 			for (let i = 0; i < noOfProposalsPerOrganization; i++) {
@@ -85,5 +93,5 @@ export const createRandomProposals = async (
 		}
 	}
 
-	return await connection.manager.save(proposals);
+	return await dataSource.manager.save(proposals);
 };

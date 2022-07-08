@@ -25,16 +25,19 @@ export const createRandomOrganizationTeamEmployee = async (
 
 	const orgTeamEmployees: OrganizationTeamEmployee[] = [];
 	for (const tenant of tenants) {
-		const orgs = tenantOrganizationsMap.get(tenant);
+		const { id: tenantId } = tenant;
+		const organizations = tenantOrganizationsMap.get(tenant);
 		const tenantEmployees = tenantEmployeeMap.get(tenant);
-		for (const org of orgs) {
-			const organizationTeams = await connection.manager.find(
-				OrganizationTeam,
-				{
-					where: [{ organizationId: org.id }]
+
+		for (const organization of organizations) {
+			const { id: organizationId } = organization;
+			const organizationTeams = await dataSource.manager.find(OrganizationTeam, {
+				where: {
+					organizationId,
+					tenantId
 				}
-			);
-			const roles = await connection.manager.find(Role, {});
+			});
+			const roles = await dataSource.manager.find(Role, {});
 			const team = faker.random.arrayElement(organizationTeams);
 			const employee = faker.random.arrayElement(tenantEmployees);
 
@@ -44,12 +47,12 @@ export const createRandomOrganizationTeamEmployee = async (
 			orgTeamEmployee.employeeId = employee.id;
 			orgTeamEmployee.organizationTeam = team;
 			orgTeamEmployee.employee = employee;
-			orgTeamEmployee.organization = org;
-			orgTeamEmployee.tenant = tenant;
+			orgTeamEmployee.organizationId = organizationId;
+			orgTeamEmployee.tenantId = tenantId;
 			orgTeamEmployee.role = faker.random.arrayElement(roles);
 
 			orgTeamEmployees.push(orgTeamEmployee);
 		}
 	}
-	await connection.manager.save(orgTeamEmployees);
+	await dataSource.manager.save(orgTeamEmployees);
 };

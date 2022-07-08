@@ -55,11 +55,11 @@ export const createDefaultIntegrationTypes = async (
 			return entity;
 		}
 	);
-	return await insertIntegrationTypes(connection, integrationTypes);
+	return await insertIntegrationTypes(dataSource, integrationTypes);
 };
 
 const insertIntegrationTypes = async (
 	dataSource: DataSource,
 	integrationTypes: IntegrationType[]
 ): Promise<IntegrationType[]> =>
-	await connection.manager.save(integrationTypes);
+	await dataSource.manager.save(integrationTypes);

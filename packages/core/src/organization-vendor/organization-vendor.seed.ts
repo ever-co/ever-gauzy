@@ -21,7 +21,7 @@ export const createOrganizationVendors = async (
 			...vendors
 		];
 	}
-	await insertOrganizationVendors(connection, defaultOrganizationVendors);
+	await insertOrganizationVendors(dataSource, defaultOrganizationVendors);
 	return defaultOrganizationVendors;
 };
 
@@ -50,7 +50,7 @@ export const createRandomOrganizationVendors = async (
 			organizationVendors = [...organizationVendors, ...vendors];
 		}
 	}
-	await insertOrganizationVendors(connection, organizationVendors);
+	await insertOrganizationVendors(dataSource, organizationVendors);
 	return organizationVendorsMap;
 };
 
@@ -58,7 +58,7 @@ const insertOrganizationVendors = async (
 	dataSource: DataSource,
 	organizationVendors: OrganizationVendor[]
 ) => {
-	await connection
+	await dataSource
 		.createQueryBuilder()
 		.insert()
 		.into(OrganizationVendor)

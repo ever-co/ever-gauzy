@@ -14,29 +14,31 @@ export const createDefaultPayment = async (
 	organizations: IOrganization[]
 ): Promise<Payment[]> => {
 	const payments: Payment[] = [];
-	const users = await connection.manager.find(User, {
+	const { id: tenantId } = tenant;
+	const users = await dataSource.manager.find(User, {
 		where: {
-			tenant
+			tenantId
 		}
 	});
-
 	for (const organization of organizations) {
-		const projects = await connection.manager.find(OrganizationProject, {
+		const { id: organizationId } = organization;
+		const projects = await dataSource.manager.find(OrganizationProject, {
 			where: {
-				organization,
-				tenant
+				tenantId,
+				organizationId
 			}
 		});
-		const tags = await connection.manager.find(Tag, {
+		const tags = await dataSource.manager.find(Tag, {
 			where: {
-				organization
+				tenantId,
+				organizationId
 			}
 		});
-		const invoices = await connection.manager.find(Invoice, {
+		const invoices = await dataSource.manager.find(Invoice, {
 			where: {
-				organization,
-				tenant,
-				isEstimate: 0
+				tenantId,
+				organizationId,
+				isEstimate: false
 			},
 			relations: ['toContact']
 		});
@@ -79,7 +81,7 @@ export const createDefaultPayment = async (
 			payments.push(payment);
 		}
 	}
-	await connection.manager.save(payments);
+	await dataSource.manager.save(payments);
 	return payments;
 };
 
@@ -97,32 +99,35 @@ export const createRandomPayment = async (
 	}
 
 	for (const tenant of tenants) {
+		const { id: tenantId } = tenant;
 		const tenantOrgs = tenantOrganizationsMap.get(tenant);
 		const tenantEmployees = tenantEmployeeMap.get(tenant);
-		const users = await connection.manager.find(User, {
+		const users = await dataSource.manager.find(User, {
 			where: {
-				tenant
+				tenantId
 			}
 		});
 		const payments1: Payment[] = [];
 		const payments2: Payment[] = [];
 		for (const organization of tenantOrgs) {
-			const projects = await connection.manager.find(OrganizationProject, {
+			const { id: organizationId } = organization;
+			const projects = await dataSource.manager.find(OrganizationProject, {
 				where: {
-					organization,
-					tenant
+					organizationId,
+					tenantId
 				}
 			});
-			const tags = await connection.manager.find(Tag, {
+			const tags = await dataSource.manager.find(Tag, {
 				where: {
-					organization
+					organizationId,
+					tenantId
 				}
 			});
-			const invoices = await connection.manager.find(Invoice, {
+			const invoices = await dataSource.manager.find(Invoice, {
 				where: {
-					organization,
-					tenant,
-					isEstimate: 0
+					organizationId,
+					tenantId,
+					isEstimate: false
 				},
 				relations: ['toContact']
 			});
@@ -172,7 +177,7 @@ export const createRandomPayment = async (
 				count++;
 			}
 		}
-		await connection.manager.save(payments1);
-		await connection.manager.save(payments2);
+		await dataSource.manager.save(payments1);
+		await dataSource.manager.save(payments2);
 	}
 };

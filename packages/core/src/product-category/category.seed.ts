@@ -32,14 +32,14 @@ export const createCategories = async (
 			seedProductCategories.push(newCategory);
 		}
 	}
-	return await insertProductCategories(connection, seedProductCategories);
+	return await insertProductCategories(dataSource, seedProductCategories);
 };
 
 const insertProductCategories = async (
 	dataSource: DataSource,
 	categories: ProductCategory[]
 ): Promise<ProductCategory[]> => {
-	return await connection.manager.save(categories);
+	return await dataSource.manager.save(categories);
 };
 
 export const createRandomCategories = async (
@@ -75,6 +75,6 @@ export const createRandomCategories = async (
 			}
 		}
 	}
-	await insertProductCategories(connection, seedProductCategories);
+	await insertProductCategories(dataSource, seedProductCategories);
 	return seedProductCategories;
 };

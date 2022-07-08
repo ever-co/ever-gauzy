@@ -24,20 +24,22 @@ export const createRandomRequestApprovalEmployee = async (
 	}
 
 	for (const tenant of tenants) {
+		const { id: tenantId } = tenant;
 		const tenantOrgs = tenantOrganizationsMap.get(tenant);
 		const tenantEmployees = tenantEmployeeMap.get(tenant);
 		for (const tenantEmployee of tenantEmployees) {
 			for (const tenantOrg of tenantOrgs) {
+				const { id: organizationId } = tenantOrg;
 				const requestApprovalEmployees: RequestApprovalEmployee[] = [];
-				const approvalPolicies = await connection.manager.find(
+				const approvalPolicies = await dataSource.manager.find(
 					ApprovalPolicy,
-					{ where: { organization: tenantOrg } }
+					{ where: { tenantId, organizationId } }
 				);
 				for (const approvalPolicy of approvalPolicies) {
-					const requestApprovals = await connection.manager.find(
+					const requestApprovals = await dataSource.manager.find(
 						RequestApproval,
 						{
-							where: { approvalPolicy: approvalPolicy }
+							where: { approvalPolicyId: approvalPolicy.id }
 						}
 					);
 					for (const requestApproval of requestApprovals) {
@@ -57,7 +59,7 @@ export const createRandomRequestApprovalEmployee = async (
 						requestApprovalEmployees.push(requestApprovalEmployee);
 					}
 				}
-				await connection.manager.save(requestApprovalEmployees);
+				await dataSource.manager.save(requestApprovalEmployees);
 			}
 		}
 	}

@@ -22,25 +22,28 @@ export const createRandomProductVariantPrice = async (
 	const productVariantPrices: IProductVariantPrice[] = [];
 
 	for (const tenant of tenants) {
+		const { id: tenantId } = tenant;
 		const tenantOrgs = tenantOrganizationsMap.get(tenant);
 		for (const tenantOrg of tenantOrgs) {
-			const productCategories = await connection.manager.find(
-				ProductCategory,
-				{
-					where: [{ organization: tenantOrg }]
+			const { id: organizationId } = tenantOrg;
+			const productCategories = await dataSource.manager.find(ProductCategory, {
+				where: {
+					organizationId,
+					tenantId
 				}
-			);
+			});
 			for (const productCategory of productCategories) {
-				const products = await connection.manager.find(Product, {
-					where: [{ productCategory: productCategory }]
+				const products = await dataSource.manager.find(Product, {
+					where: {
+						productCategoryId: productCategory.id
+					}
 				});
 				for (const product of products) {
-					const productVariants = await connection.manager.find(
-						ProductVariant,
-						{
-							where: [{ productId: product.id }]
+					const productVariants = await dataSource.manager.find(ProductVariant, {
+						where: {
+							productId: product.id
 						}
-					);
+					});
 					for (const productVariant of productVariants) {
 						const productVariantPrice: IProductVariantPrice = new ProductVariantPrice();
 
@@ -65,5 +68,5 @@ export const createRandomProductVariantPrice = async (
 		}
 	}
 
-	await connection.manager.save(productVariantPrices);
+	await dataSource.manager.save(productVariantPrices);
 };

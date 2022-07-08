@@ -14,7 +14,7 @@ export const createDefaultAvailabilitySlots = async (
 	let slots: AvailabilitySlot[] = [];
 	for (const tenant of tenants) {
 		slots = await dataOperation(
-			connection,
+			dataSource,
 			slots,
 			noOfAvailabilitySlotsPerOrganization,
 			employees,

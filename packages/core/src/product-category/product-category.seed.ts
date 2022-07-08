@@ -32,7 +32,7 @@ export const createDefaultProductCategories = async (
 		});
 	});
 
-	await insertProductCategories(connection, seedProductCategories);
+	await insertProductCategories(dataSource, seedProductCategories);
 
 	return seedProductCategories;
 };
@@ -41,5 +41,5 @@ const insertProductCategories = async (
 	dataSource: DataSource,
 	categories: ProductCategory[]
 ): Promise<void> => {
-	await connection.manager.save(categories);
+	await dataSource.manager.save(categories);
 };

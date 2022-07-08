@@ -43,11 +43,11 @@ export const createRandomEmployeeTimeOff = async (
 		const employees = tenantEmployeeMap.get(tenant);
 		const organizations = tenantOrganizationsMap.get(tenant);
 		for (const organization of organizations) {
-			const policies = await connection.manager.find(TimeOffPolicy, {
+			const policies = await dataSource.manager.find(TimeOffPolicy, {
 				where: [{ organizationId: organization.id }]
 			});
 			requests = await dataOperation(
-				connection,
+				dataSource,
 				tenant,
 				requests,
 				noOfEmployeeTimeOffRequest,
@@ -89,6 +89,6 @@ const dataOperation = async (
 		request.documentUrl = '';
 		requests.push(request);
 	}
-	await connection.manager.save(requests);
+	await dataSource.manager.save(requests);
 	return requests;
 };

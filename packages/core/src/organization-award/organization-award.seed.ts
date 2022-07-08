@@ -21,7 +21,7 @@ export const createDefaultAwards = async (
 			awards.push(award);
 		}
 	}
-	return await connection.manager.save(awards);
+	return await dataSource.manager.save(awards);
 };
 
 export const createRandomAwards = async (
@@ -52,5 +52,5 @@ export const createRandomAwards = async (
 			}
 		}
 	}
-	return await connection.manager.save(awards);
+	return await dataSource.manager.save(awards);
 };

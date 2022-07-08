@@ -23,13 +23,14 @@ export const createRandomActivities = async (
 	tenant: ITenant,
 	timeSlots: ITimeSlot[]
 ): Promise<Activity[]> => {
-	const employees = await connection.getRepository(Employee).find({
+	const { id: tenantId } = tenant;
+	const employees = await dataSource.getRepository(Employee).find({
 		where: {
-			tenant
+			tenantId
 		}
 	});
 
-	let query = connection
+	let query = dataSource
 		.getRepository(OrganizationProject)
 		.createQueryBuilder();
 	query.leftJoinAndSelect(`${query.alias}.tasks`, 'tasks');

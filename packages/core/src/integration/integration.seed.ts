@@ -29,10 +29,10 @@ export const createDefaultIntegrations = async (
 		}
 	);
 
-	return insertIntegrations(connection, integrations);
+	return insertIntegrations(dataSource, integrations);
 };
 
 const insertIntegrations = async (
 	dataSource: DataSource,
 	integrations: IIntegration[]
-) => await connection.manager.save(integrations);
+) => await dataSource.manager.save(integrations);

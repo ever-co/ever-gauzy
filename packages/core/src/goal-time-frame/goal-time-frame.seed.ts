@@ -34,7 +34,7 @@ export const createDefaultTimeFrames = async (
 		}
 	}
 
-	await insertDefaultTimeFrames(connection, defaultTimeFrames);
+	await insertDefaultTimeFrames(dataSource, defaultTimeFrames);
 	return defaultTimeFrames;
 };
 
@@ -42,7 +42,7 @@ const insertDefaultTimeFrames = async (
 	dataSource: DataSource,
 	defaultTimeFrames: GoalTimeFrame[]
 ) => {
-	await connection
+	await dataSource
 		.createQueryBuilder()
 		.insert()
 		.into(GoalTimeFrame)

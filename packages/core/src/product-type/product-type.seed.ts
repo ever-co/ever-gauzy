@@ -32,7 +32,7 @@ export const createDefaultProductTypes = async (
 		});
 	});
 
-	await insertProductTypes(connection, seedProductTypes);
+	await insertProductTypes(dataSource, seedProductTypes);
 
 	return seedProductTypes;
 };
@@ -41,7 +41,7 @@ const insertProductTypes = async (
 	dataSource: DataSource,
 	productTypes: ProductType[]
 ): Promise<void> => {
-	await connection.manager.save(productTypes);
+	await dataSource.manager.save(productTypes);
 };
 
 export const createRandomProductType = async (
@@ -63,14 +63,14 @@ export const createRandomProductType = async (
 	for (const tenant of tenants) {
 		const tenantOrgs = tenantOrganizationsMap.get(tenant);
 		for (const tenantOrg of tenantOrgs) {
-			const productCategories = await connection.manager.find(
+			const productCategories = await dataSource.manager.find(
 				ProductCategory,
 				{
 					where: [{ organization: tenantOrg }]
 				}
 			);
 			for (const productCategory of productCategories) {
-				const products = await connection.manager.find(Product, {
+				const products = await dataSource.manager.find(Product, {
 					where: [{ category: productCategory }]
 				});
 
@@ -90,5 +90,5 @@ export const createRandomProductType = async (
 		}
 	}
 
-	await connection.manager.save(productTypes);
+	await dataSource.manager.save(productTypes);
 };

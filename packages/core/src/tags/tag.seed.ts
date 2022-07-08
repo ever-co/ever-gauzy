@@ -27,7 +27,7 @@ export const createDefaultTags = async (
 		);
 		tags = [...tags, ...organizationTags];
 	}
-	return await connection.manager.save(tags);
+	return await dataSource.manager.save(tags);
 };
 
 export const createTags = async (dataSource: DataSource): Promise<Tag[]> => {
@@ -43,7 +43,7 @@ export const createTags = async (dataSource: DataSource): Promise<Tag[]> => {
 		tags.push(tag);
 	}
 
-	await connection
+	await dataSource
 		.createQueryBuilder()
 		.insert()
 		.into(Tag)
@@ -80,5 +80,5 @@ export const createRandomOrganizationTags = async (
 			tags = [...tags, ...organizationTags];
 		});
 	}
-	return await connection.manager.save(tags);
+	return await dataSource.manager.save(tags);
 };

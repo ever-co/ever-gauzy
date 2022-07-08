@@ -22,7 +22,7 @@ export const createLanguages = async (
 		}
 	}
 	try {
-		await connection.getRepository(Language).save(languages)
+		await dataSource.getRepository(Language).save(languages)
 	} catch (error) {
 		console.log({error})
 	}

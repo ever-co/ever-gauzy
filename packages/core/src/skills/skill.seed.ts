@@ -20,7 +20,7 @@ export const createDefaultSkills = async (
 			skill.color = faker.internet.color();
 			skills.push(skill);
 		}
-		return await connection.manager.save(skills);
+		return await dataSource.manager.save(skills);
 	} catch (error) {
 		console.log({error})
 	}

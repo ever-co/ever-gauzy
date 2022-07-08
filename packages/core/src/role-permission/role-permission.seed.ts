@@ -43,7 +43,7 @@ export const createRolePermissions = async (
 			}
 		});
 	}
-	return await connection.manager.save(rolePermissions);
+	return await dataSource.manager.save(rolePermissions);
 };
 
 
@@ -60,13 +60,13 @@ export const reloadRolePermissions = async (
 	/**
 	 * GET all tenants in the system
 	 */
-	const tenants = await connection.manager.query(`SELECT * FROM tenant`);
+	const tenants = await dataSource.manager.query(`SELECT * FROM tenant`);
 	for await (const tenant of tenants) {
 		const tenantId = tenant.id;
 		/**
 		 * GET all roles for specific tenant
 		 */
-		const roles = await connection.manager.query(`SELECT * FROM "role" WHERE "role"."tenantId" = $1`, [tenantId]);
+		const roles = await dataSource.manager.query(`SELECT * FROM "role" WHERE "role"."tenantId" = $1`, [tenantId]);
 
 		for await (const { role: roleEnum, defaultEnabledPermissions } of DEFAULT_ROLE_PERMISSIONS) {
 			const permissions = defaultEnabledPermissions.filter(
@@ -75,7 +75,7 @@ export const reloadRolePermissions = async (
 			const role = roles.find((dbRole) => dbRole.name === roleEnum);
 			if (isNotEmpty(permissions)) {
 				for await (const permission of permissions) {
-					const existPermission = await connection.manager.query(
+					const existPermission = await dataSource.manager.query(
 						`SELECT DISTINCT
 							"distinctAlias"."role_permission_id"
 						FROM (
@@ -113,15 +113,15 @@ export const reloadRolePermissions = async (
 							true,
 							role.id
 						];
-						if (connection.options.type === 'sqlite') {
+						if (dataSource.options.type === 'sqlite') {
 							payload.push(uuidV4());
-							await connection.manager.query(`
+							await dataSource.manager.query(`
 								INSERT INTO "role_permission" ("tenantId", "permission", "enabled", "roleId", "id")
 								VALUES($1, $2, $3, $4, $5)`,
 								payload
 							);
 						} else {
-							await connection.manager.query(`
+							await dataSource.manager.query(`
 								INSERT INTO "role_permission" ("tenantId", "permission", "enabled", "roleId")
 								VALUES($1, $2, $3, $4)`,
 								payload

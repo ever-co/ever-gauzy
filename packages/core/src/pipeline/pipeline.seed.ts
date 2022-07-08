@@ -17,7 +17,7 @@ export const createDefaultPipeline = async (
 
 	let pipelines: IPipeline[] = [];
 	pipelines = await dataOperation(
-		connection,
+		dataSource,
 		tenant,
 		pipelines,
 		tenantOrganizations
@@ -41,7 +41,7 @@ export const createRandomPipeline = async (
 		const tenantOrganization = tenantOrganizationsMap.get(tenant);
 		for (const tenantOrg of tenantOrganization) {
 			pipelines = await dataOperation(
-				connection,
+				dataSource,
 				tenant,
 				pipelines,
 				tenantOrg
@@ -69,6 +69,6 @@ const dataOperation = async (
 
 		pipelines.push(pipeline);
 	}
-	await connection.manager.save(pipelines);
+	await dataSource.manager.save(pipelines);
 	return pipelines;
 };

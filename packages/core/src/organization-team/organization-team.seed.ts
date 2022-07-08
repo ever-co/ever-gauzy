@@ -51,7 +51,7 @@ export const createDefaultTeams = async (
 		organizationTeams.push(team);
 	}
 
-	await insertOrganizationTeam(connection, organizationTeams);
+	await insertOrganizationTeam(dataSource, organizationTeams);
 
 	return organizationTeams;
 };
@@ -114,7 +114,7 @@ export const createRandomTeam = async (
 		return index === self.indexOf(elem);
 	});
 
-	await insertOrganizationTeam(connection, uniqueTeams);
+	await insertOrganizationTeam(dataSource, uniqueTeams);
 
 	return uniqueTeams;
 };
@@ -123,5 +123,5 @@ const insertOrganizationTeam = async (
 	dataSource: DataSource,
 	teams: OrganizationTeam[]
 ): Promise<void> => {
-	await connection.manager.save(teams);
+	await dataSource.manager.save(teams);
 };

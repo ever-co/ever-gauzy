@@ -53,10 +53,12 @@ export const createRandomEquipments = async (
 		.getMany();
 
 	for await (const tenant of tenants || []) {
+		const { id: tenantId } = tenant;
 		const organizations = await dataSource.manager.find(Organization, {
-			where: [{ tenant: tenant }]
+			where: {
+				tenantId: tenantId
+			}
 		});
-
 		for (let i = 0; i < noOfEquipmentsPerTenant; i++) {
 			const equipment = new Equipment();
 			const randomElement = faker.random.arrayElement(

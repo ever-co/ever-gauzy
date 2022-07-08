@@ -38,10 +38,12 @@ export const createDefaultIncomes = async (
 	const incomeFromFile = [];
 	let defaultIncomes = [];
 
+	const { id: tenantId } = tenant;
 	for await (const organization of organizations) {
+		const { id: organizationId } = organization;
 		const tags = await dataSource.manager.find(Tag, {
 			where: {
-				organization
+				organizationId: organizationId
 			}
 		});
 		fs.createReadStream(filePath)
@@ -68,8 +70,8 @@ export const createDefaultIncomes = async (
 
 					const payload = {
 						name: `Client ${seedIncome.clientName}`,
-						tenant: tenant,
-						organization: organization,
+						tenantId: tenantId,
+						organizationId: organizationId,
 						contactType: ContactType.CLIENT,
 						budgetType: OrganizationContactBudgetTypeEnum.HOURS
 					}
@@ -117,17 +119,19 @@ export const createRandomIncomes = async (
 	];
 	const randomIncomes: Income[] = []
 	for (const tenant of tenants || []) {
+		const { id: tenantId } = tenant;
 		const organizationContacts = await dataSource.manager.find(OrganizationContact, {
 			where: {
-				tenant
+				tenantId: tenantId
 			}
 		});
 		const employees = tenantEmployeeMap.get(tenant);
 		for (const employee of employees || []) {
+			const { id: organizationId } = employee.organization;
 			const tags = await dataSource.manager.find(Tag, {
 				where: {
-					tenant,
-					organization: employee.organization
+					tenantId: tenantId,
+					organizationId: organizationId
 				}
 			});
 			for (let index = 0; index < 100; index++) {

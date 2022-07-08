@@ -22,7 +22,7 @@ export const createRoles = async (
 				roles.push(role);
 			}
 		}
-		return await connection.manager.save(roles);
+		return await dataSource.manager.save(roles);
 	} catch (error) {
 		console.log({error})
 	}

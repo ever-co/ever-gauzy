@@ -17,14 +17,15 @@ export const createRandomIntegrationMap = async (
 	}
 	const integrationMaps: IIntegrationMap[] = [];
 	for (const tenant of tenants) {
-		const integrationTenants = await connection.manager.find(IntegrationTenant, {
+		const { id: tenantId } = tenant;
+		const integrationTenants = await dataSource.manager.find(IntegrationTenant, {
 			where: {
-				tenant: tenant
+				tenantId: tenantId
 			}
 		});
-		const organizations = await connection.manager.find(Organization, {
+		const organizations = await dataSource.manager.find(Organization, {
 			where: {
-				tenant: tenant
+				tenantId: tenantId
 			}
 		});
 		for (const integrationTenant of integrationTenants) {
@@ -43,5 +44,5 @@ export const createRandomIntegrationMap = async (
 			integrationMaps.push(integrationMap);
 		}
 	}
-	return await connection.manager.save(integrationMaps);
+	return await dataSource.manager.save(integrationMaps);
 };

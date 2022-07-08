@@ -35,7 +35,7 @@ export const seedDefaultEmploymentTypes = async (
 		return employmentType;
 	});
 	for await (const employmentType of employmentTypes) {
-		await insertEmploymentType(connection, [employmentType]);
+		await insertEmploymentType(dataSource, [employmentType]);
 	}
 };
 
@@ -62,7 +62,7 @@ export const seedRandomEmploymentTypes = async (
 				...organizationEmploymentTypes
 			];
 		}
-		await insertEmploymentType(connection, employmentTypes);
+		await insertEmploymentType(dataSource, employmentTypes);
 	}
 };
 
@@ -70,5 +70,5 @@ const insertEmploymentType = async (
 	dataSource: DataSource,
 	employmentType: OrganizationEmploymentType[]
 ): Promise<void> => {
-	await connection.manager.save(employmentType);
+	await dataSource.manager.save(employmentType);
 };

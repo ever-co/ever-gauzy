@@ -18,7 +18,10 @@ export const createDefaultOrganizationProjects = async (
 	tenant: ITenant,
 	organization: IOrganization
 ): Promise<IOrganizationProject[]> => {
-	const tag = await connection.getRepository(Tag).save({
+	const { id: tenantId } = tenant;
+	const { id: organizationId } = organization;
+
+	const tag = await dataSource.getRepository(Tag).save({
 		name: 'Web',
 		description: '',
 		color: faker.commerce.color()
@@ -27,10 +30,10 @@ export const createDefaultOrganizationProjects = async (
 	const projects: IOrganizationProject[] = [];
 	for (let index = 0; index < DEFAULT_ORGANIZATION_PROJECTS.length; index++) {
 		const name = DEFAULT_ORGANIZATION_PROJECTS[index];
-		const organizationContacts = await connection.manager.find(OrganizationContact, {
+		const organizationContacts = await dataSource.manager.find(OrganizationContact, {
 			where: {
-				organization,
-				tenant
+				tenantId: tenantId,
+				organizationId: organizationId
 			}
 		});
 		const project = new OrganizationProject();
@@ -52,13 +55,13 @@ export const createDefaultOrganizationProjects = async (
 		// TODO: this seed creates default projects without tenantId.
 		projects.push(project);
 	}
- 	await connection.manager.save(projects);
+ 	await dataSource.manager.save(projects);
 
 	/**
 	* Seeder for assign organization project to the employee of the specific organization
 	*/
  	await assignOrganizationProjectToEmployee(
-		connection,
+		dataSource,
 		tenant,
 		organization
 	);
@@ -67,7 +70,7 @@ export const createDefaultOrganizationProjects = async (
 	* Seeder for update project member count for specific tenant
 	*/
 	await seedProjectMembersCount(
-		connection,
+		dataSource,
 		[tenant]
 	)
 	return projects;
@@ -88,14 +91,17 @@ export const createRandomOrganizationProjects = async (
 	}
 
 	for await (const tenant of tenants) {
+		const { id: tenantId } = tenant;
+
 		const projectsPerOrganization = Math.floor(Math.random() * (maxProjectsPerOrganization - 5)) + 5;
 		const organizations = tenantOrganizationsMap.get(tenant);
 
 		for await (const organization of organizations) {
-			const organizationContacts = await connection.manager.find(OrganizationContact, {
+			const { id: organizationId } = organization;
+			const organizationContacts = await dataSource.manager.find(OrganizationContact, {
 				where: {
-					tenant,
-					organization
+					tenantId: tenantId,
+					organizationId: organizationId
 				}
 			});
 			const organizationContact = faker.random.arrayElement(organizationContacts);
@@ -120,13 +126,13 @@ export const createRandomOrganizationProjects = async (
 				project.endDate = faker.date.past(2);
 				projects.push(project);
 			}
-			await connection.manager.save(projects);
+			await dataSource.manager.save(projects);
 
 			/**
 			* Seeder for assign organization project to the employee of the specific organization
 			*/
 			await assignOrganizationProjectToEmployee(
-				connection,
+				dataSource,
 				tenant,
 				organization
 			);
@@ -136,7 +142,7 @@ export const createRandomOrganizationProjects = async (
 		* Seeder for update project member count for specific tenant
 		*/
 		await seedProjectMembersCount(
-			connection,
+			dataSource,
 			[tenant]
 		)
 	}
@@ -150,16 +156,20 @@ export const assignOrganizationProjectToEmployee = async (
 	tenant: ITenant,
 	organization: IOrganization
 ) => {
-	const organizationProjects = await connection.manager.find(OrganizationProject, {
+
+	const { id: tenantId } = tenant;
+	const { id: organizationId } = organization;
+
+	const organizationProjects = await dataSource.manager.find(OrganizationProject, {
 		where: {
-			tenant,
-			organization
+			tenantId,
+			organizationId
 		}
 	});
-	const employees = await connection.manager.find(Employee, {
+	const employees = await dataSource.manager.find(Employee, {
 		where: {
-			tenant,
-			organization
+			tenantId,
+			organizationId
 		}
 	});
 	for await (const employee of employees) {
@@ -170,7 +180,7 @@ export const assignOrganizationProjectToEmployee = async (
 			.values()
 			.value();
 	}
-	await connection.manager.save(employees);
+	await dataSource.manager.save(employees);
 };
 
 export async function seedProjectMembersCount(
@@ -188,7 +198,7 @@ export async function seedProjectMembersCount(
 		/**
 		 * GET all tenant projects for specific tenant
 		 */
-		const projects = await connection.manager.query(`SELECT * FROM "organization_project" WHERE "organization_project"."tenantId" = $1`, [
+		const projects = await dataSource.manager.query(`SELECT * FROM "organization_project" WHERE "organization_project"."tenantId" = $1`, [
 			tenantId
 		]);
 
@@ -203,7 +213,7 @@ export async function seedProjectMembersCount(
 			/**
 			 * GET member counts for organization project
 			 */
-			const [ members ] = await connection.manager.query(`
+			const [ members ] = await dataSource.manager.query(`
 				SELECT
 					COUNT("organization_project_employee"."employeeId") AS count
 				FROM "organization_project_employee"
@@ -219,7 +229,7 @@ export async function seedProjectMembersCount(
 
       		console.log(`Members qty: ${count}`);
 
-			await connection.manager.query(`UPDATE "organization_project" SET "membersCount" = $1 WHERE "id" = $2`, [count, projectId]);
+			await dataSource.manager.query(`UPDATE "organization_project" SET "membersCount" = $1 WHERE "id" = $2`, [count, projectId]);
 
       		console.log('Updated Members qty');
 		}

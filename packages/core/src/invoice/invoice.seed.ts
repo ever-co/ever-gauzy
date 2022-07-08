@@ -24,22 +24,24 @@ export const createDefaultInvoice = async (
 	organizations: IOrganization[],
 	noOfInvoicePerOrganization: number
 ) => {
+	const { id: tenantId } = tenant;
 	const invoices: IInvoice[] = [];
 	for (const organization of organizations) {
-		const tags = await connection.manager.find(Tag, {
+		const { id: organizationId } = organization;
+		const tags = await dataSource.manager.find(Tag, {
 			where: {
-				organization
+				organizationId
 			}
 		});
-		const organizationContacts = await connection.manager.find(OrganizationContact, {
+		const organizationContacts = await dataSource.manager.find(OrganizationContact, {
 			where: {
-				tenant,
-				organization
+				tenantId,
+				organizationId
 			}
 		});
 		for (let i = 0; i < noOfInvoicePerOrganization; i++) {
 			const invoice = await generateInvoice(
-				connection,
+				dataSource,
 				tenant,
 				organization,
 				tags,
@@ -48,7 +50,7 @@ export const createDefaultInvoice = async (
 			invoices.push(invoice);
 		}
 	}
-	await connection.manager.save(invoices);
+	await dataSource.manager.save(invoices);
 };
 
 export const createRandomInvoice = async (
@@ -58,24 +60,28 @@ export const createRandomInvoice = async (
 	noOfInvoicePerOrganization: number
 ) => {
 	for (const tenant of tenants) {
+		const { id: tenantId } = tenant;
 		const organizations = tenantOrganizationsMap.get(tenant);
 		const invoices: IInvoice[] = [];
 		for (const organization of organizations) {
-			const tags = await connection.manager.find(Tag, {
-				where: { organization }
-			});
-			const organizationContacts = await connection.manager.find(OrganizationContact, {
+			const { id: organizationId } = organization;
+			const tags = await dataSource.manager.find(Tag, {
 				where: {
-					organization,
-					tenant
+					organizationId
+				}
+			});
+			const organizationContacts = await dataSource.manager.find(OrganizationContact, {
+				where: {
+					organizationId,
+					tenantId
 				}
 			});
 			for (let i = 0; i < noOfInvoicePerOrganization; i++) {
-				const invoice = await generateInvoice(connection, tenant, organization, tags, organizationContacts)
+				const invoice = await generateInvoice(dataSource, tenant, organization, tags, organizationContacts)
 				invoices.push(invoice);
 			}
 		}
-		await connection.manager.save(invoices);
+		await dataSource.manager.save(invoices);
 	}
 };
 
@@ -144,7 +150,7 @@ const generateInvoice = async (
 	invoice.isArchived = false;
 
 	invoice.historyRecords = await generateInvoiceHistory(
-		connection,
+		dataSource,
 		tenant,
 		organization,
 		invoice
@@ -154,7 +160,7 @@ const generateInvoice = async (
 
 /**
 * Updates invoice estimate records history
-* @param connection
+* @param dataSource
 * @param tenant
 * @param organization
 * @param invoice
@@ -166,9 +172,10 @@ const generateInvoiceHistory = async (
 	invoice: IInvoice
 ): Promise<IInvoiceEstimateHistory[]> => {
 	const historyRecords: IInvoiceEstimateHistory[] = [];
-	const users = await connection.manager.find(User, {
+	const { id: tenantId } = tenant;
+	const users = await dataSource.manager.find(User, {
 		where: {
-			tenant
+			tenantId
 		}
 	});
 

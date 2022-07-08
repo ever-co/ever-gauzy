@@ -31,16 +31,19 @@ export const createRandomDeal = async (
 
 		for (const tenantEmployee of tenantEmployees) {
 			for (const tenantOrg of tenantOrgs) {
+				const { id: organizationId } = tenantOrg;
 				const pipelines = await dataSource.manager.find(Pipeline, {
-					where: [{ organization: tenantOrg }]
+					where: {
+						organizationId: organizationId
+					}
 				});
 				for (const pipeline of pipelines) {
-					const pipelineStages = await dataSource.manager.find(
-						PipelineStage,
-						{
-							where: [{ pipeline: pipeline }]
+					const { id: pipelineId } = pipeline;
+					const pipelineStages = await dataSource.manager.find(PipelineStage, {
+						where: {
+							pipelineId: pipelineId
 						}
-					);
+					});
 					for (const pipelineStage of pipelineStages) {
 						const deal = new Deal();
 

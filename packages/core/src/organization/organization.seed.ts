@@ -25,7 +25,7 @@ export const getDefaultOrganization = async (
 	dataSource: DataSource,
 	tenant: ITenant
 ): Promise<IOrganization> => {
-	const repo = connection.getRepository(Organization);
+	const repo = dataSource.getRepository(Organization);
 	const existedOrganization = await repo.findOne({
 		where: { tenantId: tenant.id, isDefault: true }
 	});
@@ -36,7 +36,7 @@ export const getDefaultOrganizations = async (
 	dataSource: DataSource,
 	tenant: ITenant
 ): Promise<IOrganization[]> => {
-	const repo = connection.getRepository(Organization);
+	const repo = dataSource.getRepository(Organization);
 	const organizations = await repo.find({
 		where: { tenantId: tenant.id }
 	});
@@ -51,8 +51,8 @@ export const createDefaultOrganizations = async (
 	organizations: any
 ): Promise<Organization[]> => {
 	const defaultOrganizations: IOrganization[] = [];
-	const skills = await getSkills(connection);
-	const contacts = await getContacts(connection);
+	const skills = await getSkills(dataSource);
+	const contacts = await getContacts(dataSource);
 
 	organizations.forEach((organization: IOrganizationCreateInput) => {
 		const organizationSkills = _.chain(skills)
@@ -128,7 +128,7 @@ export const createDefaultOrganizations = async (
 		defaultOrganizations.push(defaultOrganization);
 	});
 
-	await connection.manager.save(defaultOrganizations);
+	await dataSource.manager.save(defaultOrganizations);
 	defaultOrganizationsInserted = [...defaultOrganizations];
 	return defaultOrganizationsInserted;
 };
@@ -139,8 +139,8 @@ export const createRandomOrganizations = async (
 	noOfOrganizations: number
 ): Promise<Map<ITenant, IOrganization[]>> => {
 	const defaultDateTypes = Object.values(DefaultValueDateTypeEnum);
-	const skills = await getSkills(connection);
-	const contacts = await getContacts(connection);
+	const skills = await getSkills(dataSource);
+	const contacts = await getContacts(dataSource);
 	const tenantOrganizations: Map<ITenant, IOrganization[]> = new Map();
 	let allOrganizations: IOrganization[] = [];
 
@@ -241,7 +241,7 @@ export const createRandomOrganizations = async (
 		allOrganizations = allOrganizations.concat(randomOrganizations);
 	});
 
-	await insertOrganizations(connection, allOrganizations);
+	await insertOrganizations(dataSource, allOrganizations);
 	return tenantOrganizations;
 };
 
@@ -249,7 +249,7 @@ const insertOrganizations = async (
 	dataSource: DataSource,
 	organizations: IOrganization[]
 ): Promise<void> => {
-	await connection.manager.save(organizations);
+	await dataSource.manager.save(organizations);
 };
 
 const _extractLogoAbbreviation = (companyName: string) => {
@@ -292,9 +292,9 @@ const generateLink = (name) => {
 };
 
 const getSkills = async (dataSource: DataSource): Promise<any> => {
-	return await connection.manager.find(Skill, {});
+	return await dataSource.manager.find(Skill, {});
 };
 
 const getContacts = async (dataSource: DataSource): Promise<Contact[]> => {
-	return await connection.manager.find(Contact, {});
+	return await dataSource.manager.find(Contact, {});
 };

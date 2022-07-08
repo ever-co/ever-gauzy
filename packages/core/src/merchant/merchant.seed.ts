@@ -15,7 +15,7 @@ export const createRandomMerchants = async (
         return;
     }
 
-    const countries: ICountry[] = await connection.manager.find(Country);
+    const countries: ICountry[] = await dataSource.manager.find(Country);
     const merchants: IMerchant[] = [];
 
     for await (const tenant of tenants) {
@@ -29,7 +29,7 @@ export const createRandomMerchants = async (
             }
         }
     }
-    await connection.manager.save(merchants);
+    await dataSource.manager.save(merchants);
 }
 
 
@@ -37,7 +37,7 @@ export const createDefaultMerchants = async (dataSource: DataSource,
     tenant: ITenant,
     organizations: IOrganization[]
 ) => {
-    const countries: ICountry[] = await connection.manager.find(Country);
+    const countries: ICountry[] = await dataSource.manager.find(Country);
     let merchants: IMerchant[] = [];
     for (const organization of organizations) {
         const merchant = applyRandomProperties(tenant, organization, countries);
@@ -45,7 +45,7 @@ export const createDefaultMerchants = async (dataSource: DataSource,
         merchant.tenant = tenant;
         merchants.push(merchant);
     }
-    await connection.manager.save(merchants);
+    await dataSource.manager.save(merchants);
 }
 
 const applyRandomProperties = (
