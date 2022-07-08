@@ -1,10 +1,15 @@
-import { Connection } from 'typeorm';
-import { ICandidate, IOrganization, ITenant } from '@gauzy/contracts';
+import { DataSource } from 'typeorm';
+import { ICandidate, ICandidateCriterionsRating, ICandidateFeedback, ICandidatePersonalQualities, ICandidateTechnologies, IOrganization, ITenant } from '@gauzy/contracts';
 import { CandidateCriterionsRating } from './candidate-criterion-rating.entity';
-import { CandidateFeedback, CandidateInterview, CandidatePersonalQualities, CandidateTechnologies } from './../core/entities/internal';
+import {
+	CandidateFeedback,
+	CandidateInterview,
+	CandidatePersonalQualities,
+	CandidateTechnologies
+} from './../core/entities/internal';
 
 export const createDefaultCandidateCriterionRating = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	organization: IOrganization,
 	defaultCandidates
@@ -17,40 +22,36 @@ export const createDefaultCandidateCriterionRating = async (
 	}
 
 	let candidates: CandidateCriterionsRating[] = [];
-
 	for (const defaultCandidate of defaultCandidates) {
-		const candidateInterviews = await connection.manager.find(
-			CandidateInterview,
-			{
-				where: [{ candidate: defaultCandidate }]
+		const { id: candidateId } = defaultCandidate;
+		const candidateInterviews = await dataSource.manager.find(CandidateInterview, {
+			where: {
+				candidateId: candidateId
 			}
-		);
+		});
 		for (const interview of candidateInterviews) {
-			const candidatesFeedback = await connection.manager.find(
-				CandidateFeedback,
-				{
-					where: [{ candidate: defaultCandidate }]
+			const { id: interviewId } = interview;
+			const candidatesFeedbacks = await dataSource.manager.find(CandidateFeedback, {
+				where: {
+					candidateId: candidateId
 				}
-			);
-			const candidatesPersonalQualities = await connection.manager.find(
-				CandidatePersonalQualities,
-				{
-					where: [{ interview: interview }]
+			});
+			const candidatesPersonalQualities = await dataSource.manager.find(CandidatePersonalQualities, {
+				where: {
+					interviewId: interviewId
 				}
-			);
-			const candidatesTechnologies = await connection.manager.find(
-				CandidateTechnologies,
-				{
-					where: [{ interview: interview }]
+			});
+			const candidatesTechnologies = await dataSource.manager.find(CandidateTechnologies,{
+				where: {
+					interviewId: interviewId
 				}
-			);
-
+			});
 			candidates = await dataOperation(
-				connection,
+				dataSource,
 				tenant,
 				organization,
 				candidates,
-				candidatesFeedback,
+				candidatesFeedbacks,
 				candidatesTechnologies,
 				candidatesPersonalQualities
 			);
@@ -61,7 +62,7 @@ export const createDefaultCandidateCriterionRating = async (
 };
 
 export const createRandomCandidateCriterionRating = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	tenantCandidatesMap: Map<ITenant, ICandidate[]> | void
 ): Promise<CandidateCriterionsRating[]> => {
@@ -77,39 +78,35 @@ export const createRandomCandidateCriterionRating = async (
 	for (const tenant of tenants) {
 		const tenantCandidates = tenantCandidatesMap.get(tenant);
 		for (const tenantCandidate of tenantCandidates) {
-			const candidateInterviews = await connection.manager.find(
-				CandidateInterview,
-				{
-					where: [{ candidate: tenantCandidate }]
+			const { id: candidateId } = tenantCandidate;
+			const candidateInterviews = await dataSource.manager.find(CandidateInterview, {
+				where: {
+					candidateId: candidateId
 				}
-			);
-
+			});
 			for (const interview of candidateInterviews) {
-				const candidatesFeedback = await connection.manager.find(
-					CandidateFeedback,
-					{
-						where: [{ candidate: tenantCandidate }]
+				const { id: interviewId } = interview;
+				const candidatesFeedbacks = await dataSource.manager.find(CandidateFeedback, {
+					where: {
+						candidateId: candidateId
 					}
-				);
-				const candidatesPersonalQualities = await connection.manager.find(
-					CandidatePersonalQualities,
-					{
-						where: [{ interview: interview }]
+				});
+				const candidatesPersonalQualities = await dataSource.manager.find(CandidatePersonalQualities, {
+					where: {
+						interviewId: interviewId
 					}
-				);
-				const candidatesTechnologies = await connection.manager.find(
-					CandidateTechnologies,
-					{
-						where: [{ interview: interview }]
+				});
+				const candidatesTechnologies = await dataSource.manager.find(CandidateTechnologies, {
+					where: {
+						interviewId: interviewId
 					}
-				);
-
+				});
 				candidates = await dataOperation(
-					connection,
+					dataSource,
 					tenant,
 					interview.organization,
 					candidates,
-					candidatesFeedback,
+					candidatesFeedbacks,
 					candidatesTechnologies,
 					candidatesPersonalQualities
 				);
@@ -120,25 +117,24 @@ export const createRandomCandidateCriterionRating = async (
 };
 
 const dataOperation = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	organization: IOrganization,
-	candidates,
-	candidatesFeedback,
-	candidatesTechnologies,
-	candidatesPersonalQualities
+	candidates: ICandidateCriterionsRating[],
+	candidatesFeedbacks: ICandidateFeedback[],
+	candidatesTechnologies: ICandidateTechnologies[],
+	candidatesPersonalQualities: ICandidatePersonalQualities[]
 ) => {
-	for (const feedback of candidatesFeedback) {
+	for (const feedback of candidatesFeedbacks) {
 		const candidate = new CandidateCriterionsRating();
 		candidate.rating = Math.floor(Math.random() * 5) + 1;
 		candidate.technologyId = candidatesTechnologies[0].id;
 		candidate.personalQualityId = candidatesPersonalQualities[0].id;
-		candidate.feedbackId = feedback.id;
 		candidate.feedback = feedback;
 		candidate.tenant = tenant;
 		candidate.organization = organization;
 		candidates.push(candidate);
 	}
-	await connection.manager.save(candidates);
+	await dataSource.manager.save(candidates);
 	return candidates;
 };
