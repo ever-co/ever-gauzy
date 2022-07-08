@@ -1,11 +1,3 @@
-<!-- <div class="sprints" cdkDropListGroup> -->
-<div class="mb-3">
-	<button nbButton status="success" class="mr-2" (click)="createTask()">
-		<nb-icon class="mr-1" icon="plus-outline"></nb-icon
-		>{{ 'BUTTONS.ADD' | translate }}
-	</button>
-	<ng-container *ngTemplateOutlet="actionButtons"></ng-container>
-</div>
 <div class="sprints">
 	<nb-accordion multi>
 		<nb-accordion-item [expanded]="true" *ngFor="let sprint of sprints">
@@ -25,28 +17,29 @@
 						>
 							{{ 'TASKS_PAGE.COMPLETE_SPRINT' | translate }}
 						</button>
-						<!-- <button
-							nbButton
-							size="tiny"
-							[nbContextMenu]="sprintActions"
-							[nbContextMenuTag]="sprint.id"
-							(click)="preventExpand($event)"
-						>
-							...
-						</button> -->
 					</div>
 				</div>
 
-				<div class="sprint__details">
-					<span class="col">Tasks: {{ sprint.tasks?.length }}</span>
-					<span class="col" *ngIf="sprint.startDate"
-						>{{ 'TASKS_PAGE.DATE_START' | translate }}:
-						{{ sprint.startDate | date: 'short' }}</span
-					>
-					<span class="col" *ngIf="sprint.endDate"
-						>{{ 'TASKS_PAGE.DATE_END' | translate }}:
-						{{ sprint.endDate | date: 'short' }}</span
-					>
+				<div class="sprint__details row">
+					<div class="col">Tasks: {{ sprint.tasks?.length }}</div>
+					<div class="col" *ngIf="sprint.startDate">
+						<div class="d-flex flex-column">
+							<span class="date"
+								>{{
+									'TASKS_PAGE.DATE_START' | translate
+								}}:</span
+							>
+							{{ sprint.startDate | date: 'short' }}
+						</div>
+					</div>
+					<div class="col" *ngIf="sprint.endDate">
+						<div class="d-flex flex-column">
+							<span class="date"
+								>{{ 'TASKS_PAGE.DATE_END' | translate }}:</span
+							>
+							{{ sprint.endDate | date: 'short' }}
+						</div>
+					</div>
 				</div>
 			</nb-accordion-item-header>
 			<nb-accordion-item-body
@@ -85,35 +78,3 @@
 		</nb-accordion-item>
 	</nb-accordion>
 </div>
-
-<ng-template
-	#actionButtons
-	let-buttonSize="buttonSize"
-	let-selectedItem="selectedItem"
->
-	<button nbButton status="info" class="mr-2" [size]="buttonSize || 'medium'">
-		<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
-		{{ 'BUTTONS.DUPLICATE' | translate }}
-	</button>
-	<button
-		nbButton
-		status="info"
-		class="mr-2"
-		[size]="buttonSize || 'medium'"
-		(click)="editTask()"
-	>
-		<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
-		{{ 'BUTTONS.EDIT' | translate }}
-	</button>
-	<button
-		nbButton
-		status="danger"
-		class="mr-2"
-		[size]="buttonSize || 'medium'"
-		[disabled]="!selectedItem"
-		(click)="deleteTask()"
-	>
-		<nb-icon class="mr-1" icon="archive-outline"> </nb-icon>
-		{{ 'BUTTONS.DELETE' | translate }}
-	</button>
-</ng-template>
