@@ -638,22 +638,26 @@ export class InvoiceAddComponent
 				InvoiceStatusTypesEnum.SENT,
 				organizationContact.id
 			);
-			await this.invoiceEstimateHistoryService.add({
-				action: this.isEstimate
-					? this.getTranslation('INVOICES_PAGE.ESTIMATE_SENT_TO', {
-							name: organizationContact.name
-					  })
-					: this.getTranslation('INVOICES_PAGE.INVOICE_SENT_TO', {
-							name: organizationContact.name
-					  }),
-				invoice: this.createdInvoice,
-				invoiceId: this.createdInvoice.id,
-				user: this.store.user,
-				userId: this.store.userId,
-				organization: this.organization,
-				organizationId: this.organization.id,
-				tenantId
-			});
+			try {		
+				await this.invoiceEstimateHistoryService.add({
+					action: this.isEstimate
+						? this.getTranslation('INVOICES_PAGE.ESTIMATE_SENT_TO', {
+								name: organizationContact.name
+						})
+						: this.getTranslation('INVOICES_PAGE.INVOICE_SENT_TO', {
+								name: organizationContact.name
+						}),
+					invoice: this.createdInvoice,
+					invoiceId: this.createdInvoice.id,
+					user: this.store.user,
+					userId: this.store.userId,
+					organization: this.organization,
+					organizationId: this.organization.id,
+					tenantId
+				});
+			} catch (error) {
+				console.log(error, "error")
+			}
 		} else {
 			this.toastrService.danger(
 				this.getTranslation('INVOICES_PAGE.SEND.NOT_LINKED'),
