@@ -19,6 +19,7 @@ import {
 	ApiTags
 } from '@nestjs/swagger';
 import { QueryBus } from '@nestjs/cqrs';
+import { FindManyOptions } from 'typeorm';
 import {
 	IAccountingTemplate,
 	IAccountingTemplateUpdateInput,
@@ -48,13 +49,15 @@ export class AccountingTemplateController extends CrudController<AccountingTempl
 	@Get('count')
 	@UsePipes(new ValidationPipe({ transform: true }))
 	async getCount(
-		@Query() filter: PaginationParams<IAccountingTemplate>
+		@Query(new ValidationPipe({
+			transform: true
+		})) options: PaginationParams<AccountingTemplate>
 	): Promise<number> {
 		return this.accountingTemplateService.count({
 			where: {
 				tenantId: RequestContext.currentTenantId()
 			},
-			...filter
+			...options as FindManyOptions<AccountingTemplate>
 		});
 	}
 
@@ -163,7 +166,7 @@ export class AccountingTemplateController extends CrudController<AccountingTempl
 			throw new ForbiddenException();
 		}
 		return this.accountingTemplateService.create({
-			id, 
+			id,
 			...{ tenantId, ...input }
 		});
 	}
