@@ -39,3 +39,16 @@
 .date {
   color: var(--gauzy-text-color-2);
 }
+
+nb-accordion-item-header.backlog-header {
+  background-color: var(--gauzy-sidebar-background-3);
+  color: var(--gauzy-text-color-2);
+
+  &.accordion-item-header-collapsed {
+    border-radius: 0 0 var(--border-radius) var(--border-radius);
+  }
+}
+
+nb-accordion {
+  box-shadow: none;
+}
