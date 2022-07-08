@@ -64,7 +64,7 @@
 		"pg-query-stream": "^4.2.3",
 		"squirrelly": "^8.0.8",
 		"twing": "^5.0.2",
-		"typeorm": "^0.2.45",
+		"typeorm": "^0.3.7",
 		"typeorm-aurora-data-api-driver": "^2.3.3",
 		"typeorm-express-query-builder": "https://github.com/ever-co/typeorm-express-query-builder.git"
 	}
