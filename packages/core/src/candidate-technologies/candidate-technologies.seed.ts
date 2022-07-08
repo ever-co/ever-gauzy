@@ -1,11 +1,11 @@
-import { Connection } from 'typeorm';
-import { ICandidate, IOrganization, ITenant } from '@gauzy/contracts';
+import { DataSource } from 'typeorm';
+import { ICandidate, ICandidateInterview, ICandidateTechnologies, IOrganization, ITenant } from '@gauzy/contracts';
 import { faker } from '@ever-co/faker';
 import { CandidateTechnologies } from './candidate-technologies.entity';
 import { CandidateInterview } from './../core/entities/internal';
 
 export const createDefaultCandidateTechnologies = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	organization: IOrganization,
 	defaultCandidates
@@ -19,26 +19,25 @@ export const createDefaultCandidateTechnologies = async (
 
 	let candidates: CandidateTechnologies[] = [];
 	for (const tenantCandidate of defaultCandidates) {
-		const candidateInterviews = await connection.manager.find(
-			CandidateInterview,
-			{
-				where: [{ candidate: tenantCandidate }]
+		const { id: candidateId } = tenantCandidate;
+		const candidateInterviews = await dataSource.manager.find(CandidateInterview, {
+			where: {
+				candidateId: candidateId
 			}
-		);
+		});
 		candidates = await dataOperation(
-			connection,
+			dataSource,
 			tenant,
 			organization,
 			candidates,
 			candidateInterviews
 		);
 	}
-
 	return candidates;
 };
 
 export const createRandomCandidateTechnologies = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	tenantCandidatesMap: Map<ITenant, ICandidate[]> | void
 ): Promise<CandidateTechnologies[]> => {
@@ -53,14 +52,14 @@ export const createRandomCandidateTechnologies = async (
 	for (const tenant of tenants) {
 		const tenantCandidates = tenantCandidatesMap.get(tenant);
 		for (const tenantCandidate of tenantCandidates) {
-			const candidateInterviews = await connection.manager.find(
-				CandidateInterview,
-				{
-					where: [{ candidate: tenantCandidate }]
+			const { id: candidateId } = tenantCandidate;
+			const candidateInterviews = await dataSource.manager.find(CandidateInterview, {
+				where: {
+					candidateId: candidateId
 				}
-			);
+			});
 			candidates = await dataOperation(
-				connection,
+				dataSource,
 				tenant,
 				tenantCandidate.organization,
 				candidates,
@@ -72,24 +71,23 @@ export const createRandomCandidateTechnologies = async (
 };
 
 const dataOperation = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	organization: IOrganization,
-	candidates,
-	CandidateInterviews
+	candidates: ICandidateTechnologies[],
+	candidateInterviews: ICandidateInterview[]
 ) => {
-	for (const interview of CandidateInterviews) {
+	for (const interview of candidateInterviews) {
 		const candidate = new CandidateTechnologies();
 
 		candidate.name = faker.name.jobArea();
 		candidate.interviewId = interview.id;
 		candidate.rating = Math.floor(Math.random() * 5) + 1;
-		candidate.interview = interview;
 		candidate.tenant = tenant;
 		candidate.organization = organization;
 
 		candidates.push(candidate);
 	}
-	await connection.manager.save(candidates);
+	await dataSource.manager.save(candidates);
 	return candidates;
 };

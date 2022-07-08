@@ -1,11 +1,11 @@
+import { DataSource } from 'typeorm';
 import { ICandidate, CandidateStatusEnum, ICandidateFeedback, IOrganization, ITenant } from '@gauzy/contracts';
-import { Connection } from 'typeorm';
 import { faker } from '@ever-co/faker';
 import { DEFAULT_CANDIDATE_FEEDBACKS } from './default-candidate-feedbacks';
 import { CandidateFeedback, CandidateInterview, Organization } from './../core/entities/internal';
 
 export const createCandidateFeedbacks = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	organization: IOrganization,
 	candidates: ICandidate[] | void
@@ -18,7 +18,7 @@ export const createCandidateFeedbacks = async (
 		return;
 	}
 	candidateFeedbacksMap = await dataOperation(
-		connection,
+		dataSource,
 		tenant,
 		organization,
 		[],
@@ -29,7 +29,7 @@ export const createCandidateFeedbacks = async (
 };
 
 export const createRandomCandidateFeedbacks = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	tenantCandidatesMap: Map<ITenant, ICandidate[]> | void
 ): Promise<Map<ICandidate, ICandidateFeedback[]>> => {
@@ -42,15 +42,16 @@ export const createRandomCandidateFeedbacks = async (
 	const candidateFeedbacks = [];
 	let candidateFeedbacksMap: Map<ICandidate, any[]> = new Map();
 	for (const tenant of tenants) {
-		const organizations = await connection.manager.find(Organization, {
-			where: { 
-				tenant: tenant 
+		const { id: tenantId } = tenant;
+		const organizations = await dataSource.manager.find(Organization, {
+			where: {
+				tenantId: tenantId
 			}
 		});
 		const organization = faker.random.arrayElement(organizations);
 		const candidates = tenantCandidatesMap.get(tenant);
 		candidateFeedbacksMap = await dataOperation(
-			connection,
+			dataSource,
 			tenant,
 			organization,
 			candidateFeedbacks,
@@ -62,10 +63,10 @@ export const createRandomCandidateFeedbacks = async (
 };
 
 const insertCandidateFeedbacks = async (
-	connection: Connection,
+	dataSource: DataSource,
 	candidateFeedbacks: CandidateFeedback[]
 ) => {
-	await connection
+	await dataSource
 		.createQueryBuilder()
 		.insert()
 		.into(CandidateFeedback)
@@ -74,7 +75,7 @@ const insertCandidateFeedbacks = async (
 };
 
 const dataOperation = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	organization: IOrganization,
 	candidateFeedbacks,
@@ -82,9 +83,10 @@ const dataOperation = async (
 	candidates
 ) => {
 	for (const candidate of candidates) {
-		const candidateInterviews = await connection.manager.find(CandidateInterview, { 
-			where: { 
-				candidate: candidate 
+		const { id: candidateId } = candidate;
+		const candidateInterviews = await dataSource.manager.find(CandidateInterview, {
+			where: {
+				candidateId: candidateId
 			}
 		});
 		const interview = faker.random.arrayElement(candidateInterviews);
@@ -100,6 +102,6 @@ const dataOperation = async (
 		candidateFeedbacksMap.set(candidate, feedbacks);
 		candidateFeedbacks = [...candidateFeedbacks, ...feedbacks];
 	}
-	await insertCandidateFeedbacks(connection, candidateFeedbacks);
+	await insertCandidateFeedbacks(dataSource, candidateFeedbacks);
 	return candidateFeedbacksMap;
 };
