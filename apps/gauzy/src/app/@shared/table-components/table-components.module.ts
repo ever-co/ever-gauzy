@@ -98,7 +98,9 @@ import { PhoneUrlComponent } from './phone-url/phone-url.component';
 		TagsOnlyComponent,
 		CompanyLogoComponent,
 		ProjectOrganizationComponent,
-		PhoneUrlComponent
+		PhoneUrlComponent,
+		CreateByComponent,
+		CreatedAtComponent
 	],
 	providers: []
 })
