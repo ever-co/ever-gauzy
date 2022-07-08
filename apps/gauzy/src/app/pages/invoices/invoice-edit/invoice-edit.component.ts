@@ -535,8 +535,8 @@ export class InvoiceEditComponent
 				const { id } = invoiceItem.selectedItem;
 				const itemToAdd = {
 					description: invoiceItem.description,
-					price: invoiceItem.price,
-					quantity: invoiceItem.quantity,
+					price: Number(invoiceItem.price),
+					quantity: Number(invoiceItem.quantity),
 					totalValue: invoiceItem.totalValue,
 					invoiceId: this.invoice.id,
 					applyTax: invoiceItem.applyTax,
