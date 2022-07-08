@@ -1,19 +1,19 @@
 import { Injectable } from '@nestjs/common';
-import { TenantAwareCrudService } from './../core/crud';
-import {
-	WarehouseProduct,
-	WarehouseProductVariant,
-	Product,
-	Warehouse
-} from 'core';
-import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Repository, In } from 'typeorm';
 import {
 	IPagination,
 	IWarehouseProduct,
 	IWarehouseProductCreateInput,
 	IWarehouseProductVariant
 } from '@gauzy/contracts';
+import { TenantAwareCrudService } from './../core/crud';
+import {
+	WarehouseProduct,
+	WarehouseProductVariant,
+	Product,
+	Warehouse
+} from './../core/entities/internal';
 
 @Injectable()
 export class WarehouseProductService extends TenantAwareCrudService<WarehouseProduct> {
@@ -33,26 +33,38 @@ export class WarehouseProductService extends TenantAwareCrudService<WarehousePro
 		super(warehouseProductRepository);
 	}
 
-	async getAllWarehouseProducts(warehouseId: String): Promise<IWarehouseProduct[]> {
+	async getAllWarehouseProducts(warehouseId: string): Promise<IWarehouseProduct[]> {
 		return await this.warehouseProductRepository.find({
-			where: { warehouse: { id: warehouseId } },
-			relations: ['product', 'variants', 'variants.variant']
+			where: {
+				warehouse: {
+					id: warehouseId
+				}
+			},
+			relations: {
+				product: true,
+				variants: {
+					variant: true
+				}
+			}
 		});
 	}
 
 	async createWarehouseProductBulk(
 		warehouseProductCreateInput: IWarehouseProductCreateInput[],
-		warehouseId: String
+		warehouseId: string
 	): Promise<IPagination<IWarehouseProduct[]>> {
 		let productIds = warehouseProductCreateInput.map((pr) => pr.productId);
-		let warehouse = await this.warehouseRepository.findOne(
-			warehouseId as any
-		);
-
-		let products = await this.productRespository.findByIds(productIds, {
-			relations: ['variants']
+		let warehouse = await this.warehouseRepository.findOneBy({
+			id: warehouseId
 		});
-
+		let products = await this.productRespository.find({
+			where: {
+				id: In(productIds)
+			},
+			relations: {
+				variants: true
+			}
+		});
 		let warehouseProductArr = await Promise.all(
 			products.map(async (product) => {
 				let newWarehouseProduct = new WarehouseProduct();
@@ -95,27 +107,32 @@ export class WarehouseProductService extends TenantAwareCrudService<WarehousePro
 	}
 
 	async updateWarehouseProductVariantQuantity(
-		warehouseProductVariantId: String,
+		warehouseProductVariantId: string,
 		quantity: number
 	): Promise<IWarehouseProductVariant> {
-		let warehouseProductVariant = await this.warehouseProductVariantRepository.findOne(
-			warehouseProductVariantId as any,
-			{ relations: ['warehouseProduct'] }
-		);
-
+		let [warehouseProductVariant] = await this.warehouseProductVariantRepository.find({
+			where: {
+				id: warehouseProductVariantId
+			},
+			relations: {
+				warehouseProduct: true
+			}
+		});
 		warehouseProductVariant.quantity = quantity;
 
 		let updatedVariant = await this.warehouseProductVariantRepository.save(
 			warehouseProductVariant
 		);
 
-		let warehouseProduct = await this.warehouseProductRepository.findOne(
-			warehouseProductVariant.warehouseProduct.id,
-			{
-				relations: ['variants']
-			}
-		);
 
+		let [warehouseProduct] = await this.warehouseProductRepository.find({
+			where: {
+				id: warehouseProductVariant.warehouseProduct.id
+			},
+			relations: {
+				variants: true
+			}
+		});
 		let sumQuantity = warehouseProduct.variants
 			.map((v) => +v.quantity)
 			.reduce((prev, current) => prev + current);
@@ -128,7 +145,6 @@ export class WarehouseProductService extends TenantAwareCrudService<WarehousePro
 		}
 
 		await this.warehouseProductRepository.save(warehouseProduct);
-
 		return updatedVariant;
 	}
 }
