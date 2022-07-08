@@ -43,7 +43,7 @@ export class EditTimeLogModalComponent
 	overlaps: ITimeLog[] = [];
 
 	selectedRange: IDateRange = { start: null, end: null };
-	timeDiff: string = null;
+	timeDiff: Date = null;
 	organization: IOrganization;
 
 	employee: ISelectedEmployee;
@@ -152,12 +152,9 @@ export class EditTimeLogModalComponent
 					const { start, end } = selectedRange;
 					const startMoment = moment(start);
 					const endMoment = moment(end);
-
-					this.timeDiff = moment
-						.duration({
-							seconds: endMoment.diff(startMoment, 'seconds')
-						})
-						.humanize();
+					this.timeDiff = new Date(
+						endMoment.diff(startMoment, 'seconds')
+					);
 				}),
 				filter(
 					([employeeId, selectedRange]) =>

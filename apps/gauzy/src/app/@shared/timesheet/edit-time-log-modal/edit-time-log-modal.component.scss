@@ -8,6 +8,14 @@
     background-color: nb-theme(gauzy-card-1);
   }
 
+  ::ng-deep label {
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 15px;
+    letter-spacing: 0em;
+    color: var(--gauzy-text-color-2);
+  }
+
   .col-12,
   .col-6 {
     padding: 0;
@@ -24,14 +32,20 @@
 }
 
 .range-picker-row {
-  margin-left: 0;
   .show-time {
     display: flex;
-    align-items: flex-end;
+    justify-content: flex-end;
+    flex-direction: column;
+    padding: 1.5rem 2rem;
   }
 
   .show-time div {
-    padding-bottom: 30px;
-    padding-left: 27px;
+    background: var(--color-primary-transparent-300);
+    width: fit-content;
+    padding: 4px 6px;
+    border-radius: var(--border-radius);
+    margin-top: 6px;
+    font-weight: 600;
+    color: var(--text-primary-color);
   }
 }

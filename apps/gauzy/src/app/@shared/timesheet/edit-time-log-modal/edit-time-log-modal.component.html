@@ -64,11 +64,10 @@
 					>
 					</ngx-timer-range-picker>
 				</div>
-        <div class="col-6 show-time" *ngIf="timeDiff">
-         <div>
-          {{ timeDiff }}
-         </div>
-        </div>
+				<div class="col-6 show-time" *ngIf="timeDiff">
+					<label>Period</label>
+					<div>{{ timeDiff | durationFormat }}</div>
+				</div>
 			</div>
 			<div class="form-group">
 				<div class="col-12">
@@ -335,7 +334,10 @@
 						(confirm)="onDeleteConfirm(timeLog)"
 						*ngIf="mode == 'update'"
 					>
-						<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
+						<nb-icon
+							status="danger"
+							icon="trash-2-outline"
+						></nb-icon>
 					</button>
 				</ng-template>
 			</ng-template>
