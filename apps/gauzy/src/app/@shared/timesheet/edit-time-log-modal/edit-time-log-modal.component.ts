@@ -34,8 +34,8 @@ import { Store, ToastrService } from '../../../@core/services';
 	styleUrls: ['./edit-time-log-modal.component.scss']
 })
 export class EditTimeLogModalComponent
-	implements OnInit, AfterViewInit, OnDestroy {
-		
+	implements OnInit, AfterViewInit, OnDestroy
+{
 	PermissionsEnum = PermissionsEnum;
 	today: Date = new Date();
 	mode: 'create' | 'update' = 'create';
@@ -43,6 +43,7 @@ export class EditTimeLogModalComponent
 	overlaps: ITimeLog[] = [];
 
 	selectedRange: IDateRange = { start: null, end: null };
+	timeDiff: Date = null;
 	organization: IOrganization;
 
 	employee: ISelectedEmployee;
@@ -62,8 +63,8 @@ export class EditTimeLogModalComponent
 	}
 
 	/*
-	* TimeLog Mutation Form
-	*/
+	 * TimeLog Mutation Form
+	 */
 	public form: FormGroup = EditTimeLogModalComponent.buildForm(this.fb, this);
 	static buildForm(
 		fb: FormBuilder,
@@ -86,7 +87,7 @@ export class EditTimeLogModalComponent
 		private readonly timesheetService: TimesheetService,
 		private readonly toastrService: ToastrService,
 		private readonly store: Store,
-		private readonly dialogRef: NbDialogRef<EditTimeLogModalComponent>,
+		private readonly dialogRef: NbDialogRef<EditTimeLogModalComponent>
 	) {
 		const minutes = moment().get('minutes');
 		const roundTime = moment().subtract(minutes - (minutes % 10));
@@ -131,7 +132,10 @@ export class EditTimeLogModalComponent
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization: IOrganization) => !!organization),
-				tap((organization: IOrganization) => (this.organization = organization)),
+				tap(
+					(organization: IOrganization) =>
+						(this.organization = organization)
+				),
 				tap((organization: IOrganization) => {
 					this.futureDateAllowed = organization.futureDateAllowed;
 				}),
@@ -144,7 +148,18 @@ export class EditTimeLogModalComponent
 			.pipe(
 				debounceTime(300),
 				distinctUntilChange(),
-				filter(([employeeId, selectedRange]) => !!employeeId && !!selectedRange),
+				tap(([employeeId, selectedRange]) => {
+					const { start, end } = selectedRange;
+					const startMoment = moment(start);
+					const endMoment = moment(end);
+					this.timeDiff = new Date(
+						endMoment.diff(startMoment, 'seconds')
+					);
+				}),
+				filter(
+					([employeeId, selectedRange]) =>
+						!!employeeId && !!selectedRange
+				),
 				tap(([employeeId, selectedRange]) => {
 					this.employee = employeeId;
 					this.selectedRange = selectedRange;
@@ -186,7 +201,9 @@ export class EditTimeLogModalComponent
 				relations: ['project', 'task']
 			};
 			try {
-				const timeLogs = await this.timesheetService.checkOverlaps(request);
+				const timeLogs = await this.timesheetService.checkOverlaps(
+					request
+				);
 				if (!timeLogs) {
 					return;
 				}
@@ -238,7 +255,10 @@ export class EditTimeLogModalComponent
 					return timeLog;
 				});
 			} catch (error) {
-				console.log('Error while checking overlapping time log entries for employee', error);
+				console.log(
+					'Error while checking overlapping time log entries for employee',
+					error
+				);
 				this.toastrService.danger(error);
 			}
 		}
@@ -273,7 +293,10 @@ export class EditTimeLogModalComponent
 				const timeLog = await this.timesheetService.addTime(payload);
 				this.dialogRef.close(timeLog);
 			} else {
-				const timeLog = await this.timesheetService.updateTime(this.timeLog.id, payload);
+				const timeLog = await this.timesheetService.updateTime(
+					this.timeLog.id,
+					payload
+				);
 				this.dialogRef.close(timeLog);
 			}
 			this.form.reset();
@@ -295,7 +318,7 @@ export class EditTimeLogModalComponent
 		const request = {
 			logIds: [timeLog.id],
 			organizationId
-		}
+		};
 		this.timesheetService.deleteLogs(request).then((res) => {
 			this.toastrService.success('TOASTR.MESSAGE.TIME_LOG_DELETED', {
 				name: employee.fullName,

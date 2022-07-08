@@ -55,7 +55,7 @@
 					</div>
 				</ng-template>
 			</div>
-			<div class="form-group">
+			<div class="row range-picker-row">
 				<div class="col-6">
 					<ngx-timer-range-picker
 						name="selectedRange"
@@ -63,6 +63,10 @@
 						formControlName="selectedRange"
 					>
 					</ngx-timer-range-picker>
+				</div>
+				<div class="col-6 show-time" *ngIf="timeDiff">
+					<label>{{ 'FORM.LABELS.PERIOD'|translate }}</label>
+					<div>{{ timeDiff | durationFormat }}</div>
 				</div>
 			</div>
 			<div class="form-group">
@@ -312,10 +316,10 @@
 					) | translate
 				}}
 			</button>
-			<ng-template 
+			<ng-template
 				[ngxPermissionsOnly]="PermissionsEnum.ALLOW_DELETE_TIME"
 			>
-				<ng-template 
+				<ng-template
 					ngxTimeTrackingAuthorized
 					[permission]="PermissionsEnum.ALLOW_DELETE_TIME"
 				>
@@ -325,12 +329,17 @@
 						nbButton
 						size="small"
 						status="basic"
+						outline
 						ngxConfirmDialog
 						[message]="'TIMESHEET.DELETE_TIMELOG' | translate"
 						(confirm)="onDeleteConfirm(timeLog)"
-						*ngIf="mode == 'update'"
+						*ngIf="mode === 'update'"
+						[nbTooltip]="'BUTTONS.DELETE' | translate"
 					>
-						<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
+						<nb-icon
+							status="danger"
+							icon="trash-2-outline"
+						></nb-icon>
 					</button>
 				</ng-template>
 			</ng-template>

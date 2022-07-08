@@ -391,7 +391,8 @@
 			"DEFAULT_ESTIMATE_TEMPLATE": "Default Estimate Template",
 			"DEFAULT_RECEIPT_TEMPLATE": "Default Receipt Template",
 			"DEFAULT": "Default Organization",
-			"INVITATION_EXPIRATION": "Invitation Expiration"
+			"INVITATION_EXPIRATION": "Invitation Expiration",
+			"PERIOD": "Period"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Name",
