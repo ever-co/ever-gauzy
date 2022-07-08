@@ -1,10 +1,10 @@
 import { GenericEmploymentTypes, IEmployee, IOrganization, ITenant } from '@gauzy/contracts';
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { OrganizationEmploymentType } from './organization-employment-type.entity';
 import { DEFAULT_ORGANIZATION_TEAMS } from '../organization-team/default-organization-teams';
 
 export const seedDefaultEmploymentTypes = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	employees: IEmployee[],
 	defaultOrganization: IOrganization
@@ -40,7 +40,7 @@ export const seedDefaultEmploymentTypes = async (
 };
 
 export const seedRandomEmploymentTypes = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	tenantOrganizationsMap: Map<ITenant, IOrganization[]>
 ): Promise<void> => {
@@ -67,7 +67,7 @@ export const seedRandomEmploymentTypes = async (
 };
 
 const insertEmploymentType = async (
-	connection: Connection,
+	dataSource: DataSource,
 	employmentType: OrganizationEmploymentType[]
 ): Promise<void> => {
 	await connection.manager.save(employmentType);

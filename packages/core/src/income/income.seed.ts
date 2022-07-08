@@ -1,4 +1,4 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { faker } from '@ever-co/faker';
 import {
 	IOrganization,
@@ -18,7 +18,7 @@ import { getDummyImage } from './../core/utils';
 import { chain } from 'underscore';
 
 export const createDefaultIncomes = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	organizations: IOrganization[],
 	employees: IEmployee[]
@@ -104,7 +104,7 @@ export const createDefaultIncomes = async (
 };
 
 export const createRandomIncomes = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	tenantEmployeeMap: Map<ITenant, IEmployee[]>
 ): Promise<void> => {
@@ -167,7 +167,7 @@ export const createRandomIncomes = async (
 };
 
 const insertIncome = async (
-	connection: Connection,
+	dataSource: DataSource,
 	incomes: Income[]
 ): Promise<void> => {
 	try {

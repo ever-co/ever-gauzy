@@ -1,4 +1,4 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { faker } from '@ever-co/faker';
 import {
 	ContactOrganizationInviteStatus,
@@ -16,7 +16,7 @@ import { Organization, OrganizationContact, Tag } from './../core/entities/inter
 import { getRandomContact } from 'contact/contact.seed';
 
 export const createDefaultOrganizationContact = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	noOfContactsPerOrganization: number
 ): Promise<IOrganizationContact[]> => {
@@ -28,7 +28,7 @@ export const createDefaultOrganizationContact = async (
 };
 
 export const createRandomOrganizationContact = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	noOfContactsPerOrganization: number
 ) => {
@@ -42,21 +42,21 @@ export const createRandomOrganizationContact = async (
 };
 
 const createOrganizationContact = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	noOfContactsPerOrganization: number
 ) => {
-	const organizations = await connection.manager.find(Organization, { 
-		where: { 
+	const organizations = await connection.manager.find(Organization, {
+		where: {
 			tenant
-		}, 
-		relations: ['employees'] 
+		},
+		relations: ['employees']
 	});
 	const allCrganizationContacts: IOrganizationContact[] = [];
 	for await (const organization of organizations) {
 		const { employees } = organization;
 		const organizationContacts: IOrganizationContact[] = [];
-		const tags = await connection.manager.find(Tag, { 
+		const tags = await connection.manager.find(Tag, {
 			where: { tenant, organization }
 		});
 		for (let i = 0; i < noOfContactsPerOrganization; i++) {
@@ -120,16 +120,16 @@ const generateOrganizationContact = async (
 * Assign Organization Contact To Respective Employees
 */
 export const assignOrganizationContactToEmployee = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	organization: IOrganization,
 	employees: IEmployee[]
 ) => {
-	const organizationContacts = await connection.manager.find(OrganizationContact, { 
+	const organizationContacts = await connection.manager.find(OrganizationContact, {
 		where: {
 			tenant,
 			organization
-		} 
+		}
 	});
 	for await (const employee of employees) {
 		employee.organizationContacts = _.chain(organizationContacts)

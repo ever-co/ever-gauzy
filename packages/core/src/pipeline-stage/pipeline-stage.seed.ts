@@ -1,11 +1,11 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { faker } from '@ever-co/faker';
 import { IOrganization, ITenant } from '@gauzy/contracts';
 import { PipelineStage } from './pipeline-stage.entity';
 import { Pipeline } from './../core/entities/internal';
 
 export const createRandomPipelineStage = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	tenantOrganizationsMap: Map<ITenant, IOrganization[]>
 ): Promise<PipelineStage[]> => {
@@ -44,6 +44,6 @@ export const createRandomPipelineStage = async (
 };
 
 const insertRandomPipelineStage = async (
-	connection: Connection,
+	dataSource: DataSource,
 	pipelineStages: PipelineStage[]
 ) => await connection.manager.save(pipelineStages);

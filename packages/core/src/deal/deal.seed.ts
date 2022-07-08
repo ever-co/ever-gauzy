@@ -1,11 +1,11 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { IEmployee, IOrganization, ITenant } from '@gauzy/contracts';
 import { Deal } from './deal.entity';
 import { faker } from '@ever-co/faker';
 import { Pipeline, PipelineStage } from './../core/entities/internal';
 
 export const createRandomDeal = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	tenantEmployeeMap: Map<ITenant, IEmployee[]>,
 	tenantOrganizationsMap: Map<ITenant, IOrganization[]>

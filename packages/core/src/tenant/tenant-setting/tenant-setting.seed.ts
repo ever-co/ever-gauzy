@@ -4,7 +4,7 @@ import { Connection } from "typeorm";
 import { environment } from "@gauzy/config";
 
 export const createDefaultTenantSetting = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[]
 ): Promise<TenantSetting[]> => {
 	try {

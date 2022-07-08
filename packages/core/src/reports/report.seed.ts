@@ -1,4 +1,4 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { Report } from './report.entity';
 import { ReportCategory } from './report-category.entity';
 import { indexBy } from 'underscore';
@@ -14,7 +14,7 @@ import { ReportOrganization } from './report-organization.entity';
 import { Organization } from './../core/entities/internal';
 
 export const createDefaultReport = async (
-	connection: Connection,
+	dataSource: DataSource,
 	config: IPluginConfig,
 	tenant: ITenant
 ): Promise<IReport[]> => {
@@ -145,7 +145,7 @@ export const createDefaultReport = async (
 
 	await connection.manager.save(reports);
 	await createDefaultOrganizationsReport(
-		connection, 
+		connection,
 		reports,
 		tenant
 	);
@@ -153,7 +153,7 @@ export const createDefaultReport = async (
 };
 
 async function cleanReport(
-	connection: Connection,
+	dataSource: DataSource,
 	config: IPluginConfig
 ) {
 	const report = connection.getRepository(Report).metadata.tableName;
@@ -228,7 +228,7 @@ function copyImage(fileName: string, config: IPluginConfig) {
 }
 
 async function createDefaultOrganizationsReport(
-	connection: Connection,
+	dataSource: DataSource,
 	reports: IReport[],
 	tenant: ITenant
 ) {
@@ -252,7 +252,7 @@ async function createDefaultOrganizationsReport(
 }
 
 export async function createRandomTenantOrganizationsReport(
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[]
 ) {
 	try {

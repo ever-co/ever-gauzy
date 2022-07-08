@@ -23,7 +23,7 @@ import { SEEDER_DB_CONNECTION } from '@gauzy/common';
  */
 @Injectable()
 export class HelpCenterSeederService {
-	connection: Connection;
+	dataSource: DataSource;
 	tenant: ITenant;
 
 	/**
@@ -44,7 +44,7 @@ export class HelpCenterSeederService {
 		this.tenant = this.seeder.tenant;
 
 		const organizations = await getDefaultOrganizations(
-			this.connection, 
+			this.connection,
 			this.tenant
 		);
 		const tenantOrganizationsMap: Map<ITenant, IOrganization[]> = new Map();
@@ -71,7 +71,7 @@ export class HelpCenterSeederService {
 		);
 
 		const defaultEmployees = await getDefaultEmployees(
-			this.connection, 
+			this.connection,
 			this.tenant
 		);
 		await this.seeder.tryExecute(
@@ -104,9 +104,9 @@ export class HelpCenterSeederService {
 			const { organizations } = tenant;
 			tenantOrganizationsMap.set(tenant, organizations);
 
-			const employees: Employee[] = await this.connection.getRepository(Employee).find({ 
-				where: { 
-					tenantId: tenant.id 
+			const employees: Employee[] = await this.connection.getRepository(Employee).find({
+				where: {
+					tenantId: tenant.id
 				}
 			});
 			employeeMap.set(tenant, employees);

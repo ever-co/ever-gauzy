@@ -1,11 +1,11 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { IEmployee, IOrganization, ITenant } from '@gauzy/contracts';
 import { GoalKPI } from './goal-kpi.entity';
 import { faker } from '@ever-co/faker';
 import { DEFAULT_GOAL_KPIS } from './default-goal-kpis';
 
 export const createDefaultGoalKpi = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	organizations: IOrganization[],
 	employees: IEmployee[]
@@ -31,7 +31,7 @@ export const createDefaultGoalKpi = async (
 };
 
 const insertRandomGoalKpi = async (
-	connection: Connection,
+	dataSource: DataSource,
 	goalKpis: GoalKPI[]
 ): Promise<GoalKPI[]> => {
 	return await connection.manager.save(goalKpis);

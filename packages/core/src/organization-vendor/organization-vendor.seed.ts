@@ -1,9 +1,9 @@
 import { OrganizationVendorEnum, IOrganization, IOrganizationVendor, ITenant } from '@gauzy/contracts';
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { OrganizationVendor } from './../core/entities/internal';
 
 export const createOrganizationVendors = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	organizations: IOrganization[]
 ): Promise<OrganizationVendor[]> => {
@@ -26,7 +26,7 @@ export const createOrganizationVendors = async (
 };
 
 export const createRandomOrganizationVendors = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	tenantOrganizationsMap: Map<ITenant, IOrganization[]>
 ): Promise<Map<IOrganization, IOrganizationVendor[]>> => {
@@ -55,7 +55,7 @@ export const createRandomOrganizationVendors = async (
 };
 
 const insertOrganizationVendors = async (
-	connection: Connection,
+	dataSource: DataSource,
 	organizationVendors: OrganizationVendor[]
 ) => {
 	await connection

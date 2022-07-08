@@ -1,4 +1,4 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { faker } from '@ever-co/faker';
 import { chain } from 'underscore';
 import { OrganizationProject } from './organization-project.entity';
@@ -14,7 +14,7 @@ import { DEFAULT_ORGANIZATION_PROJECTS } from './default-organization-projects';
 import { Employee, OrganizationContact, Tag } from './../core/entities/internal';
 
 export const createDefaultOrganizationProjects = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	organization: IOrganization
 ): Promise<IOrganizationProject[]> => {
@@ -74,7 +74,7 @@ export const createDefaultOrganizationProjects = async (
 };
 
 export const createRandomOrganizationProjects = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	tenantOrganizationsMap: Map<ITenant, IOrganization[]>,
 	tags: ITag[] | void,
@@ -146,7 +146,7 @@ export const createRandomOrganizationProjects = async (
 * Assign Organization Project To Respective Employees
 */
 export const assignOrganizationProjectToEmployee = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	organization: IOrganization
 ) => {
@@ -174,7 +174,7 @@ export const assignOrganizationProjectToEmployee = async (
 };
 
 export async function seedProjectMembersCount(
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[]
 ) {
 	/**

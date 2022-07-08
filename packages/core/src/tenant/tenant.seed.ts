@@ -1,11 +1,11 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { Tenant } from './tenant.entity';
 import { faker } from '@ever-co/faker';
 import { DEFAULT_EVER_TENANT } from './default-tenants';
 import { ITenant } from '@gauzy/contracts';
 
 export const getDefaultTenant = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenantName: string = DEFAULT_EVER_TENANT
 ): Promise<Tenant> => {
 	const repo = connection.getRepository(Tenant);
@@ -14,7 +14,7 @@ export const getDefaultTenant = async (
 };
 
 export const createDefaultTenant = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenantName: string
 ): Promise<Tenant> => {
 	const tenant: ITenant = {
@@ -25,7 +25,7 @@ export const createDefaultTenant = async (
 };
 
 export const createRandomTenants = async (
-	connection: Connection,
+	dataSource: DataSource,
 	noOfTenants: number = 0
 ): Promise<Tenant[]> => {
 	const randomTenants: Tenant[] = [];
@@ -39,7 +39,7 @@ export const createRandomTenants = async (
 };
 
 const insertTenant = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: Tenant
 ): Promise<Tenant> => {
 	const repo = connection.getRepository(Tenant);
@@ -60,7 +60,7 @@ const insertTenant = async (
 };
 
 const insertTenants = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: Tenant[]
 ): Promise<Tenant[]> => {
 	return await connection.manager.save(tenants);

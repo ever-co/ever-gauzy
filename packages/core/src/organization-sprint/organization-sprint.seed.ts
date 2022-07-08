@@ -1,4 +1,4 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { faker } from '@ever-co/faker';
 import { OrganizationSprint } from './organization-sprint.entity';
 import { IOrganization, ITenant, SprintStartDayEnum } from '@gauzy/contracts';
@@ -7,7 +7,7 @@ import * as moment from 'moment';
 import { Task } from '../tasks/task.entity';
 
 export const createRandomOrganizationSprint = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	tenantOrganizationsMap: Map<ITenant, IOrganization[]>
 ) => {

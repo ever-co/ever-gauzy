@@ -1,9 +1,9 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { IIntegration, DEFAULT_INTEGRATIONS, IIntegrationType } from '@gauzy/contracts';
 import { Integration } from './integration.entity';
 
 export const createDefaultIntegrations = async (
-	connection: Connection,
+	dataSource: DataSource,
 	integrationTypes: IIntegrationType[] | void
 ): Promise<IIntegration[]> => {
 	if (!integrationTypes) {
@@ -33,6 +33,6 @@ export const createDefaultIntegrations = async (
 };
 
 const insertIntegrations = async (
-	connection: Connection,
+	dataSource: DataSource,
 	integrations: IIntegration[]
 ) => await connection.manager.save(integrations);

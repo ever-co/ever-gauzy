@@ -1,5 +1,5 @@
 import * as fs from 'fs';
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { EmailTemplate } from './email-template.entity';
 import * as mjml2html from 'mjml';
 import * as path from 'path';
@@ -14,7 +14,7 @@ import * as path from 'path';
  * template-type: Can be 'html', 'subject' or 'text' but needs to only have .hbs or .mjml extension
  */
 export const createDefaultEmailTemplates = async (
-	connection: Connection
+	dataSource: DataSource
 ): Promise<any> => {
 	try {
 		const templatePath = [
@@ -66,7 +66,7 @@ const fileToTemplate = async (connection, files) => {
 };
 
 const insertTemplate = async (
-	connection: Connection,
+	dataSource: DataSource,
 	emailTemplate: EmailTemplate
 ): Promise<void> => {
 	await connection

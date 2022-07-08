@@ -1,10 +1,10 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { IChangelog } from '@gauzy/contracts';
 import { Changelog } from './changelog.entity';
 import { INITIAL_CHANGELOG_TEMPLATE } from './initial-changelog-template';
 
 export const createChangelog = async (
-	connection: Connection
+	dataSource: DataSource
 ): Promise<IChangelog[]> => {
 	return await new Promise<IChangelog[]>(async (resolve, reject) => {
 		try {
@@ -33,7 +33,7 @@ export const createChangelog = async (
 };
 
 const insertChangelog = async (
-	connection: Connection,
+	dataSource: DataSource,
 	changelogs: IChangelog[]
 ): Promise<void> => {
 	await connection

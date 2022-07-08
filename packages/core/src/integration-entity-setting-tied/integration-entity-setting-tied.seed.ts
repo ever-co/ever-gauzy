@@ -1,4 +1,4 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { faker } from '@ever-co/faker';
 import { IIntegrationEntitySettingTied, IntegrationEntity, ITenant } from '@gauzy/contracts';
 import { PROJECT_TIED_ENTITIES } from '@gauzy/integration-hubstaff';
@@ -6,7 +6,7 @@ import { IntegrationEntitySetting, IntegrationTenant, Organization } from './../
 import { IntegrationEntitySettingTied } from './integration-entity-setting-tied.entity';
 
 export const createRandomIntegrationEntitySettingTied = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[]
 ): Promise<IIntegrationEntitySettingTied[]> => {
 	if (!tenants) {

@@ -1,9 +1,9 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { IOrganization, ITenant } from '@gauzy/contracts';
 import { EquipmentSharingPolicy } from './equipment-sharing-policy.entity';
 
 export const createDefaultEquipmentSharingPolicyForOrg = async (
-	connection: Connection,
+	dataSource: DataSource,
 	defaultData: {
 		orgs: IOrganization[];
 		tenant: ITenant;
@@ -26,7 +26,7 @@ export const createDefaultEquipmentSharingPolicyForOrg = async (
 };
 
 const insertDefaultPolicy = async (
-	connection: Connection,
+	dataSource: DataSource,
 	defaultPolicy: EquipmentSharingPolicy
 ): Promise<void> => {
 	await connection
@@ -38,7 +38,7 @@ const insertDefaultPolicy = async (
 };
 
 export const createRandomEquipmentSharingPolicyForOrg = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	tenantOrganizationsMap: Map<ITenant, IOrganization[]>
 ): Promise<EquipmentSharingPolicy[]> => {

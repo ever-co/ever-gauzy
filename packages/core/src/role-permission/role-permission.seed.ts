@@ -2,7 +2,7 @@
 // MIT License, see https://github.com/alexitaylor/angular-graphql-nestjs-postgres-starter-kit/blob/master/LICENSE
 // Copyright (c) 2019 Alexi Taylor
 
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { IRole, ITenant, IRolePermission, PermissionsEnum } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/common';
 import { v4 as uuidV4 } from 'uuid';
@@ -10,12 +10,12 @@ import { DEFAULT_ROLE_PERMISSIONS } from './default-role-permissions';
 import { RolePermission } from './role-permission.entity';
 
 export const createRolePermissions = async (
-	connection: Connection,
+	dataSource: DataSource,
 	roles: IRole[],
 	tenants: ITenant[],
 	isDemo: boolean
 ): Promise<IRolePermission[]> => {
-	
+
 	// removed permissions for all users in DEMO mode
 	const deniedPermissions = [
 		PermissionsEnum.ACCESS_DELETE_ACCOUNT,
@@ -48,7 +48,7 @@ export const createRolePermissions = async (
 
 
 export const reloadRolePermissions = async (
-	connection: Connection,
+	dataSource: DataSource,
 	isDemo: boolean
 ) => {
 	// removed permissions for all users in DEMO mode
@@ -76,23 +76,23 @@ export const reloadRolePermissions = async (
 			if (isNotEmpty(permissions)) {
 				for await (const permission of permissions) {
 					const existPermission = await connection.manager.query(
-						`SELECT DISTINCT 
+						`SELECT DISTINCT
 							"distinctAlias"."role_permission_id"
 						FROM (
-							SELECT 
+							SELECT
 								"role_permission"."id" AS "role_permission_id",
 								"role_permission"."tenantId" AS "role_permission_tenantId",
 								"role_permission"."permission" AS "role_permission_permission",
 								"role_permission"."roleId" AS "role_permission_roleId"
 							FROM "role_permission" "role_permission"
-							INNER JOIN "role" "role" 
-								ON "role"."id"="role_permission"."roleId" 
+							INNER JOIN "role" "role"
+								ON "role"."id"="role_permission"."roleId"
 							WHERE (
 								"role_permission"."tenantId" = $1 AND
 								"role_permission"."permission" = $2 AND
 								"role"."name" = $3
 							)
-						) 
+						)
 						"distinctAlias" ORDER BY "role_permission_id" ASC LIMIT 1`, [
 							tenantId,
 							permission,
@@ -116,13 +116,13 @@ export const reloadRolePermissions = async (
 						if (connection.options.type === 'sqlite') {
 							payload.push(uuidV4());
 							await connection.manager.query(`
-								INSERT INTO "role_permission" ("tenantId", "permission", "enabled", "roleId", "id") 
+								INSERT INTO "role_permission" ("tenantId", "permission", "enabled", "roleId", "id")
 								VALUES($1, $2, $3, $4, $5)`,
 								payload
 							);
 						} else {
 							await connection.manager.query(`
-								INSERT INTO "role_permission" ("tenantId", "permission", "enabled", "roleId") 
+								INSERT INTO "role_permission" ("tenantId", "permission", "enabled", "roleId")
 								VALUES($1, $2, $3, $4)`,
 								payload
 							);

@@ -1,4 +1,4 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { RequestApproval } from './request-approval.entity';
 import { RequestApprovalEmployee } from '../request-approval-employee/request-approval-employee.entity';
 import { Tenant } from '../tenant/tenant.entity';
@@ -25,7 +25,7 @@ const approvalTypes = [
 ];
 
 export const createRandomRequestApproval = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: Tenant[],
 	tenantEmployeeMap: Map<Tenant, Employee[]>,
 	noOfRequestsPerOrganizations: number
@@ -51,14 +51,14 @@ export const createRandomRequestApproval = async (
 				const specificEmployees = employees
 					.sort(() => Math.random() - Math.random())
 					.slice(0, 3);
-	
+
 				const requestApproval = new RequestApproval();
 				requestApproval.name = faker.random.arrayElement(approvalTypes);
 				requestApproval.status = faker.datatype.number({ min: 1, max: 3 });
 				requestApproval.approvalPolicy = tenantPolicy;
 				requestApproval.min_count = faker.datatype.number({ min: 1, max: 56 });
 				requestApproval.createdBy = faker.random.arrayElement(specificEmployees).id;
-	
+
 				const requestApprovalEmployees: RequestApprovalEmployee[] = [];
 				for await (const employee of specificEmployees) {
 					const raEmployees = new RequestApprovalEmployee();

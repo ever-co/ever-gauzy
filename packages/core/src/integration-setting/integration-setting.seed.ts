@@ -1,11 +1,11 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { IntegrationSetting } from './integration-setting.entity';
 import { faker } from '@ever-co/faker';
 import { ITenant } from '@gauzy/contracts';
 import { IntegrationTenant, Organization } from './../core/entities/internal';
 
 export const createRandomIntegrationSetting = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[]
 ): Promise<IntegrationSetting[]> => {
 	if (!tenants) {

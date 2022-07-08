@@ -1,7 +1,7 @@
 import { faker } from '@ever-co/faker';
 import * as _ from 'underscore';
 import * as moment from 'moment';
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { ActivityType, ITenant, ITimeSlot } from '@gauzy/contracts';
 import { Activity } from './activity.entity';
 import { OrganizationProject } from './../../core/entities/internal';
@@ -19,7 +19,7 @@ const AppsNames: string[] = [
 ];
 
 export const createRandomActivities = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	timeSlots: ITimeSlot[]
 ): Promise<Activity[]> => {
@@ -36,7 +36,7 @@ export const createRandomActivities = async (
 	query.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId: tenant.id });
 
 	const projects: OrganizationProject[] = await query.getMany();
-	
+
 	const appNames: string[] = _.shuffle(AppsNames);
 	const allActivities: Activity[] = [];
 

@@ -1,9 +1,9 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { ICurrency, DEFAULT_CURRENCIES } from '@gauzy/contracts';
 import { Currency } from './currency.entity';
 
 export const createCurrencies = async (
-	connection: Connection
+	dataSource: DataSource
 ): Promise<ICurrency[]> => {
 	return await new Promise<ICurrency[]>(async (resolve, reject) => {
 		try {
@@ -29,7 +29,7 @@ export const createCurrencies = async (
 };
 
 const insertCurrency = async (
-	connection: Connection,
+	dataSource: DataSource,
 	currencies: ICurrency[]
 ): Promise<void> => {
 	await connection

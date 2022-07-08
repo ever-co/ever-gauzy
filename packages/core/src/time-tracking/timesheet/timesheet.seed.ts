@@ -1,4 +1,4 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { faker } from '@ever-co/faker';
 import {
 	TimesheetStatus,
@@ -18,7 +18,7 @@ import { Employee, Timesheet } from './../../core/entities/internal';
 import { randomSeedConfig } from './../../core/seeds/random-seed-config';
 
 export const createDefaultTimeSheet = async (
-	connection: Connection,
+	dataSource: DataSource,
 	config: IPluginConfig,
 	tenant: ITenant,
 	organization: IOrganization,
@@ -98,8 +98,8 @@ export const createDefaultTimeSheet = async (
 			createdTimesheets
 		);
 		await createRandomActivities(
-			connection, 
-			tenant, 
+			connection,
+			tenant,
 			timeSlots
 		);
 	} catch (error) {
@@ -108,7 +108,7 @@ export const createDefaultTimeSheet = async (
 };
 
 export const createRandomTimesheet = async (
-	connection: Connection,
+	dataSource: DataSource,
 	config: IPluginConfig,
 	tenants: ITenant[]
 ) => {
@@ -125,7 +125,7 @@ export const createRandomTimesheet = async (
 				const date = moment().subtract(index, 'week').toDate();
 				const startedAt = moment(date).startOf('week').toDate();
 				const stoppedAt = moment(date).endOf('week').toDate();
-	
+
 				_.chain(employees)
 					.shuffle()
 					.take(faker.datatype.number(employees.length))
@@ -133,11 +133,11 @@ export const createRandomTimesheet = async (
 						const status = faker.random.arrayElement(
 							Object.keys(TimesheetStatus)
 						);
-	
+
 						let isBilled = false;
 						let approvedAt: Date = null;
 						let submittedAt: Date = null;
-	
+
 						if (TimesheetStatus[status] === TimesheetStatus.PENDING) {
 							approvedAt = null;
 							submittedAt = faker.date.past();
@@ -153,7 +153,7 @@ export const createRandomTimesheet = async (
 							approvedAt = faker.date.between(startedAt, new Date());
 							submittedAt = faker.date.between(startedAt, approvedAt);
 						}
-	
+
 						const timesheet = new Timesheet();
 						timesheet.employee = employee;
 						timesheet.organization = employee.organization;
@@ -203,7 +203,7 @@ export const createRandomTimesheet = async (
 			);
 			await createRandomActivities(
 				connection,
-				tenant, 
+				tenant,
 				timeSlots
 			);
 		}

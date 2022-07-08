@@ -1,10 +1,10 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { GoalTemplate } from './goal-template.entity';
 import { DEFAULT_GOAL_TEMPLATES } from './default-goal-templates';
 import { IOrganization, ITenant } from '@gauzy/contracts';
 
 export const createDefaultGoalTemplates = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	organization: IOrganization
 ): Promise<GoalTemplate[]> => {
@@ -23,7 +23,7 @@ export const createDefaultGoalTemplates = async (
 };
 
 const insertDefaultGoalTemplates = async (
-	connection: Connection,
+	dataSource: DataSource,
 	defaultGoalTemplates: GoalTemplate[]
 ): Promise<GoalTemplate[]> => {
 	return await connection.manager.save(defaultGoalTemplates);

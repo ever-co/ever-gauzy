@@ -1,5 +1,5 @@
 import * as fs from 'fs';
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import * as path from 'path';
 import { AccountingTemplate } from './accounting-template.entity';
 import * as mjml2html from 'mjml';
@@ -13,7 +13,7 @@ import * as mjml2html from 'mjml';
  * template-type: Can be 'html', 'subject' or 'text' but needs to only have .hbs or .mjml extension
  */
 export const createDefaultAccountingTemplates = async (
-	connection: Connection
+	dataSource: DataSource
 ): Promise<any> => {
 	try {
 		const templatePath = [
@@ -61,7 +61,7 @@ const fileToTemplate = async (connection, files) => {
 };
 
 const insertTemplate = async (
-	connection: Connection,
+	dataSource: DataSource,
 	accountingTemplate: AccountingTemplate
 ): Promise<void> => {
 	await connection

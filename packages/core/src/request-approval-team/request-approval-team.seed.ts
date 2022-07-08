@@ -1,11 +1,11 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { IEmployee, IOrganization, IRequestApprovalTeam, ITenant } from '@gauzy/contracts';
 import { RequestApprovalTeam } from './request-approval-team.entity';
 import { faker } from '@ever-co/faker';
 import { ApprovalPolicy, OrganizationTeam, RequestApproval } from './../core/entities/internal';
 
 export const createRandomRequestApprovalTeam = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	tenantEmployeeMap: Map<ITenant, IEmployee[]>,
 	tenantOrganizationsMap: Map<ITenant, IOrganization[]>
@@ -39,7 +39,7 @@ export const createRandomRequestApprovalTeam = async (
 			});
 			for (const approvalPolicy of approvalPolicies) {
 				const requestApprovals = await connection.manager.find(RequestApproval, {
-					where: { 
+					where: {
 						approvalPolicy,
 						organization
 					}

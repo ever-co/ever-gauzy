@@ -5,7 +5,7 @@ import { IEmail, IEmailTemplate, IOrganization, ITenant, IUser } from '@gauzy/co
 import { EmailTemplate, User } from './../core/entities/internal';
 
 export const createDefaultEmailSent = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	organization: IOrganization,
 	noOfEmailsPerOrganization: number
@@ -31,7 +31,7 @@ export const createDefaultEmailSent = async (
 };
 
 export const createRandomEmailSent = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	tenantOrganizationsMap: Map<ITenant, IOrganization[]>,
 	noOfEmailsPerOrganization: number
@@ -66,7 +66,7 @@ export const createRandomEmailSent = async (
 };
 
 const dataOperation = async (
-	connection: Connection,
+	dataSource: DataSource,
 	sentEmails: IEmail[],
 	noOfEmailsPerOrganization,
 	organization: IOrganization,

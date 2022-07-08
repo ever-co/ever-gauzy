@@ -1,4 +1,4 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { Invoice } from './invoice.entity';
 import { faker } from '@ever-co/faker';
 import * as moment from 'moment';
@@ -19,7 +19,7 @@ import { InvoiceEstimateHistory, OrganizationContact, Tag, User } from './../cor
 import { randomSeedConfig } from './../core/seeds/random-seed-config';
 
 export const createDefaultInvoice = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	organizations: IOrganization[],
 	noOfInvoicePerOrganization: number
@@ -27,22 +27,22 @@ export const createDefaultInvoice = async (
 	const invoices: IInvoice[] = [];
 	for (const organization of organizations) {
 		const tags = await connection.manager.find(Tag, {
-			where: { 
+			where: {
 				organization
 			}
 		});
-		const organizationContacts = await connection.manager.find(OrganizationContact, { 
-			where: { 
+		const organizationContacts = await connection.manager.find(OrganizationContact, {
+			where: {
 				tenant,
-				organization 
-			} 
+				organization
+			}
 		});
 		for (let i = 0; i < noOfInvoicePerOrganization; i++) {
 			const invoice = await generateInvoice(
 				connection,
-				tenant, 
-				organization, 
-				tags, 
+				tenant,
+				organization,
+				tags,
 				organizationContacts
 			)
 			invoices.push(invoice);
@@ -52,7 +52,7 @@ export const createDefaultInvoice = async (
 };
 
 export const createRandomInvoice = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	tenantOrganizationsMap: Map<ITenant, IOrganization[]>,
 	noOfInvoicePerOrganization: number
@@ -64,11 +64,11 @@ export const createRandomInvoice = async (
 			const tags = await connection.manager.find(Tag, {
 				where: { organization }
 			});
-			const organizationContacts = await connection.manager.find(OrganizationContact, { 
-				where: { 
+			const organizationContacts = await connection.manager.find(OrganizationContact, {
+				where: {
 					organization,
 					tenant
-				} 
+				}
 			});
 			for (let i = 0; i < noOfInvoicePerOrganization; i++) {
 				const invoice = await generateInvoice(connection, tenant, organization, tags, organizationContacts)
@@ -80,13 +80,13 @@ export const createRandomInvoice = async (
 };
 
 const generateInvoice = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	organization: IOrganization,
 	tags: ITag[],
 	organizationContacts: IOrganizationContact[]
 ): Promise<IInvoice> => {
-	
+
 	const invoice = new Invoice();
 	invoice.tags = chain(tags)
 		.shuffle()
@@ -94,7 +94,7 @@ const generateInvoice = async (
 		.values()
 		.value();
 	invoice.invoiceNumber = faker.datatype.number({ min: 111111111111, max: 999999999999 });
-	
+
 	invoice.invoiceDate = moment(
 		faker.date.between(
 			new Date(),
@@ -111,9 +111,9 @@ const generateInvoice = async (
 	)
 	.startOf('day')
 	.toDate();
-	
+
 	if (organizationContacts.length) {
-		invoice.organizationContactId = faker.random.arrayElement(organizationContacts).id; 
+		invoice.organizationContactId = faker.random.arrayElement(organizationContacts).id;
 	}
 
 	invoice.sentTo = organization.id;
@@ -157,17 +157,17 @@ const generateInvoice = async (
 * @param connection
 * @param tenant
 * @param organization
-* @param invoice 
+* @param invoice
 */
 const generateInvoiceHistory = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	organization: IOrganization,
 	invoice: IInvoice
 ): Promise<IInvoiceEstimateHistory[]> => {
 	const historyRecords: IInvoiceEstimateHistory[] = [];
 	const users = await connection.manager.find(User, {
-		where: { 
+		where: {
 			tenant
 		}
 	});

@@ -1,11 +1,11 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { ICountry, IOrganization, ITenant } from '@gauzy/contracts';
 import { Country, Warehouse, Contact, Product, WarehouseProduct, WarehouseProductVariant, ImageAsset } from './../core/entities/internal';
 import { faker } from '@ever-co/faker';
 
 
 export const createRandomWarehouses = async (
-    connection: Connection,
+    dataSource: DataSource,
     tenants: ITenant[],
     tenantOrganizationsMap: Map<ITenant, IOrganization[]>
 ) => {
@@ -39,7 +39,7 @@ export const createRandomWarehouses = async (
                     warehouseProduct.warehouse = warehouse;
 
                     const warehouseProductDb = await connection.manager.save(warehouseProduct);
-                    
+
                     let productsQuantity = 0;
                     for await (const variant of product.variants) {
                         const warehouseVariant = new WarehouseProductVariant();

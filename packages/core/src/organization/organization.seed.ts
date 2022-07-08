@@ -1,7 +1,7 @@
 import * as _ from 'underscore';
 import * as moment from 'moment';
 import * as timezone from 'moment-timezone';
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { faker } from '@ever-co/faker';
 import { getDummyImage } from '../core';
 import {
@@ -22,7 +22,7 @@ import {
 import { environment as env } from '@gauzy/config';
 
 export const getDefaultOrganization = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant
 ): Promise<IOrganization> => {
 	const repo = connection.getRepository(Organization);
@@ -33,7 +33,7 @@ export const getDefaultOrganization = async (
 };
 
 export const getDefaultOrganizations = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant
 ): Promise<IOrganization[]> => {
 	const repo = connection.getRepository(Organization);
@@ -46,7 +46,7 @@ export const getDefaultOrganizations = async (
 let defaultOrganizationsInserted = [];
 
 export const createDefaultOrganizations = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	organizations: any
 ): Promise<Organization[]> => {
@@ -134,7 +134,7 @@ export const createDefaultOrganizations = async (
 };
 
 export const createRandomOrganizations = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	noOfOrganizations: number
 ): Promise<Map<ITenant, IOrganization[]>> => {
@@ -246,7 +246,7 @@ export const createRandomOrganizations = async (
 };
 
 const insertOrganizations = async (
-	connection: Connection,
+	dataSource: DataSource,
 	organizations: IOrganization[]
 ): Promise<void> => {
 	await connection.manager.save(organizations);
@@ -291,10 +291,10 @@ const generateLink = (name) => {
 	return name.replace(/[^A-Z0-9]+/gi, '-').toLowerCase();
 };
 
-const getSkills = async (connection: Connection): Promise<any> => {
+const getSkills = async (dataSource: DataSource): Promise<any> => {
 	return await connection.manager.find(Skill, {});
 };
 
-const getContacts = async (connection: Connection): Promise<Contact[]> => {
+const getContacts = async (dataSource: DataSource): Promise<Contact[]> => {
 	return await connection.manager.find(Contact, {});
 };

@@ -1,4 +1,4 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { IOrganization } from '@gauzy/contracts';
 import { ProductCategory } from './product-category.entity';
 import * as seed from './product-category.seed.json';
@@ -6,7 +6,7 @@ import { faker } from '@ever-co/faker';
 import { ProductCategoryTranslation } from './product-category-translation.entity';
 
 export const createDefaultProductCategories = async (
-	connection: Connection,
+	dataSource: DataSource,
 	organizations: IOrganization[]
 ): Promise<ProductCategory[]> => {
 	const seedProductCategories = [];
@@ -38,7 +38,7 @@ export const createDefaultProductCategories = async (
 };
 
 const insertProductCategories = async (
-	connection: Connection,
+	dataSource: DataSource,
 	categories: ProductCategory[]
 ): Promise<void> => {
 	await connection.manager.save(categories);

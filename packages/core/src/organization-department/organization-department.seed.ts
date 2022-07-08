@@ -1,4 +1,4 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { OrganizationDepartment } from './organization-department.entity';
 import { faker } from '@ever-co/faker';
 import { Tag } from '../tags/tag.entity';
@@ -6,7 +6,7 @@ import { DEFAULT_ORGANIZATION_DEPARTMENTS } from './default-organization-departm
 import { IOrganization, ITenant } from '@gauzy/contracts';
 
 export const createDefaultOrganizationDepartments = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	organizations: IOrganization[]
 ) => {
@@ -30,7 +30,7 @@ export const createDefaultOrganizationDepartments = async (
 };
 
 export const seedRandomOrganizationDepartments = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	tenantOrganizationsMap: Map<ITenant, IOrganization[]>
 ): Promise<void> => {
@@ -54,7 +54,7 @@ export const seedRandomOrganizationDepartments = async (
 };
 
 const insertEmploymentDepartment = async (
-	connection: Connection,
+	dataSource: DataSource,
 	employmentDepartment: OrganizationDepartment[]
 ): Promise<void> => {
 	await connection.manager.save(employmentDepartment);

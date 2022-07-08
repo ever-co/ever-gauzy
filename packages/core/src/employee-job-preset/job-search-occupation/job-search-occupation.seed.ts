@@ -1,9 +1,9 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { IOrganization, ITenant, JobPostSourceEnum } from '@gauzy/contracts';
 import { JobSearchOccupation } from './job-search-occupation.entity';
 
 export const createDefaultJobSearchOccupations = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	organization: IOrganization
 ): Promise<JobSearchOccupation[]> => {
@@ -37,7 +37,7 @@ export const createDefaultJobSearchOccupations = async (
 };
 
 const insertOccupations = async (
-	connection: Connection,
+	dataSource: DataSource,
 	occupations: JobSearchOccupation[]
 ): Promise<void> => {
 	await connection.manager.save(occupations);

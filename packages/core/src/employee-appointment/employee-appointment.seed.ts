@@ -1,4 +1,4 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { IEmployee, IOrganization, ITenant } from '@gauzy/contracts';
 import { faker } from '@ever-co/faker';
 import * as moment from 'moment';
@@ -7,7 +7,7 @@ import { AGENDAS } from './default-employee-appointment';
 import { AppointmentEmployee } from './../core/entities/internal';
 
 export const createDefaultEmployeeAppointment = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	employees: IEmployee[],
 	organizations
@@ -39,7 +39,7 @@ export const createDefaultEmployeeAppointment = async (
 };
 
 export const createRandomEmployeeAppointment = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	tenantEmployeeMap: Map<ITenant, IEmployee[]>,
 	tenantOrganizationsMap: Map<ITenant, IOrganization[]>
@@ -76,7 +76,7 @@ export const createRandomEmployeeAppointment = async (
 };
 
 const dataOperation = async (
-	connection: Connection,
+	dataSource: DataSource,
 	employeesAppointments,
 	tenantEmployee,
 	organizations: IOrganization[],

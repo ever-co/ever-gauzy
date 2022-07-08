@@ -1,11 +1,11 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { OrganizationAward } from './organization-award.entity';
 import { faker } from '@ever-co/faker';
 import { DEFAULT_ORGANIZATION_AWARDS } from './default-organization-awards';
 import { IOrganization, IOrganizationAward, ITenant } from '@gauzy/contracts';
 
 export const createDefaultAwards = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	organizations: IOrganization[]
 ): Promise<IOrganizationAward[]> => {
@@ -25,7 +25,7 @@ export const createDefaultAwards = async (
 };
 
 export const createRandomAwards = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	tenantOrganizationsMap: Map<ITenant, IOrganization[]>
 ): Promise<IOrganizationAward[]> => {

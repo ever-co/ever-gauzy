@@ -1,10 +1,10 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { Merchant, Contact, ImageAsset, Country } from './../core/entities/internal';
 import { faker } from '@ever-co/faker';
 import { ICountry, IMerchant, IOrganization, ITenant } from '@gauzy/contracts';
 
 export const createRandomMerchants = async (
-    connection: Connection,
+    dataSource: DataSource,
     tenants: ITenant[],
     tenantOrganizationsMap: Map<ITenant, IOrganization[]>
 ) => {
@@ -33,7 +33,7 @@ export const createRandomMerchants = async (
 }
 
 
-export const createDefaultMerchants = async (connection: Connection,
+export const createDefaultMerchants = async (dataSource: DataSource,
     tenant: ITenant,
     organizations: IOrganization[]
 ) => {
@@ -44,7 +44,7 @@ export const createDefaultMerchants = async (connection: Connection,
         merchant.organization = organization;
         merchant.tenant = tenant;
         merchants.push(merchant);
-    } 
+    }
     await connection.manager.save(merchants);
 }
 

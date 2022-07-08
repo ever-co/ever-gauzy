@@ -1,10 +1,10 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { faker } from '@ever-co/faker';
 import { IOrganization, ITenant, LanguagesEnum } from '@gauzy/contracts';
 import { Product, ProductCategory, ProductTranslation, ProductType } from './../core/entities/internal';
 
 export const createDefaultProducts = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	organization: IOrganization
 ) => {
@@ -40,14 +40,14 @@ export const createDefaultProducts = async (
 };
 
 const insertProduct = async (
-	connection: Connection,
+	dataSource: DataSource,
 	products: Product[]
 ): Promise<void> => {
 	await connection.manager.save(products);
 };
 
 export const createRandomProduct = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	tenantOrganizationsMap: Map<ITenant, IOrganization[]>
 ): Promise<Product[]> => {

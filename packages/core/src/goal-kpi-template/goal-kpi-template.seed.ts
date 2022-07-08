@@ -1,10 +1,10 @@
 import { IOrganization, ITenant } from '@gauzy/contracts';
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { DEFAULT_GOAL_KPI_TEMPLATES } from './default-goal-kpi-templates';
 import { GoalKPITemplate } from './goal-kpi-template.entity';
 
 export const createDefaultGoalKpiTemplate = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	organization: IOrganization
 ): Promise<GoalKPITemplate[]> => {
@@ -26,7 +26,7 @@ export const createDefaultGoalKpiTemplate = async (
 };
 
 const insertRandomGoalKpi = async (
-	connection: Connection,
+	dataSource: DataSource,
 	goalKpiTemplates: GoalKPITemplate[]
 ): Promise<GoalKPITemplate[]> => {
 	return await connection.manager.save(goalKpiTemplates);

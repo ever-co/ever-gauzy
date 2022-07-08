@@ -1,4 +1,4 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { IOrganization, ITenant } from '@gauzy/contracts';
 import { ProductOption } from './product-option.entity';
 import { faker } from '@ever-co/faker';
@@ -7,7 +7,7 @@ import { Product } from '../product/product.entity';
 import { ProductOptionGroup } from './product-option-group.entity';
 
 export const createRandomProductOption = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	tenantOrganizationsMap: Map<ITenant, IOrganization[]>,
 	numberOfOptionPerProduct
@@ -42,13 +42,13 @@ export const createRandomProductOption = async (
 					for (let group of productOptionGroups) {
 						for (let i = 0; i <= numberOfOptionPerProduct; i++) {
 							const productOption = new ProductOption();
-	
+
 							productOption.name = faker.company.companyName();
 							productOption.code = product.code;
 							productOption.tenant = tenant;
 							productOption.organization = tenantOrg;
 							productOption.group = group;
-	
+
 							productOptions.push(productOption);
 						}
 					}
@@ -60,7 +60,7 @@ export const createRandomProductOption = async (
 };
 
 export const createRandomProductOptionGroups = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	tenantOrganizationsMap: Map<ITenant, IOrganization[]>,
 	numberOfOptionGroupPerProduct
@@ -77,8 +77,8 @@ export const createRandomProductOptionGroups = async (
 		const tenantOrgs = tenantOrganizationsMap.get(tenant);
 		for (const tenantOrg of tenantOrgs) {
 			const productCategories = await connection.manager.find(ProductCategory, {
-				where: { 
-					organization: tenantOrg 
+				where: {
+					organization: tenantOrg
 				}
 			});
 			for (const productCategory of productCategories) {

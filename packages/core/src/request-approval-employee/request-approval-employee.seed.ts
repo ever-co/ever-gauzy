@@ -1,11 +1,11 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { IEmployee, IOrganization, ITenant } from '@gauzy/contracts';
 import { faker } from '@ever-co/faker';
 import { RequestApprovalEmployee } from './request-approval-employee.entity';
 import { ApprovalPolicy, RequestApproval } from './../core/entities/internal';
 
 export const createRandomRequestApprovalEmployee = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	tenantEmployeeMap: Map<ITenant, IEmployee[]>,
 	tenantOrganizationsMap: Map<ITenant, IOrganization[]>

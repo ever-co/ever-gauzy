@@ -1,10 +1,10 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { ICandidate, ICandidateSource, IOrganization, ITenant } from '@gauzy/contracts';
 import { DEFAULT_CANDIDATE_SOURCES } from './default-candidate-sources';
 import { CandidateSource } from './../core/entities/internal';
 
 export const createCandidateSources = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	candidates: ICandidate[] | void,
 	organization: IOrganization
@@ -33,7 +33,7 @@ export const createCandidateSources = async (
 };
 
 export const createRandomCandidateSources = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	tenantCandidatesMap: Map<ITenant, ICandidate[]> | void
 ): Promise<Map<ICandidate, ICandidateSource[]>> => {
@@ -64,7 +64,7 @@ export const createRandomCandidateSources = async (
 };
 
 const insertCandidateSources = async (
-	connection: Connection,
+	dataSource: DataSource,
 	candidateSources: CandidateSource[]
 ) => {
 	await connection

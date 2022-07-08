@@ -1,4 +1,4 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { IEmployee, ITenant } from '@gauzy/contracts';
 import { faker } from '@ever-co/faker';
 import { environment as env } from '@gauzy/config';
@@ -6,7 +6,7 @@ import { Organization } from '../organization/organization.entity';
 import { EmployeeSetting } from './employee-setting.entity';
 
 export const createRandomEmployeeSetting = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	tenantEmployeeMap: Map<ITenant, IEmployee[]>
 ): Promise<EmployeeSetting[]> => {
@@ -46,7 +46,7 @@ export const createRandomEmployeeSetting = async (
 };
 
 const insertRandomEmployeeSetting = async (
-	connection: Connection,
+	dataSource: DataSource,
 	Employees: EmployeeSetting[]
 ) => {
 	await connection

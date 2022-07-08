@@ -19,13 +19,13 @@ import {
 	Tag,
 	Task,
 	User,
-	Employee 
+	Employee
 } from './../core/entities/internal';
 
 const GITHUB_API_URL = 'https://api.github.com';
 
 export const createDefaultTask = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	organization: IOrganization
 ) => {
@@ -102,7 +102,7 @@ export const createDefaultTask = async (
 };
 
 export const createRandomTask = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[]
 ) => {
 	const httpService = new HttpService();
@@ -207,7 +207,7 @@ export const createRandomTask = async (
 };
 
 export async function createTags(
-	connection: Connection,
+	dataSource: DataSource,
 	labels,
 	tenant: ITenant,
 	organization: IOrganization
@@ -233,11 +233,11 @@ export async function createTags(
 
 /**
  * GET maximum task number by project filter
- * 
- * @param options 
+ *
+ * @param options
  */
 export async function getMaxTaskNumberByProject(
-	connection: Connection,
+	dataSource: DataSource,
 	options: IGetTaskOptions
 ) {
 	const { tenantId, organizationId, projectId } = options;

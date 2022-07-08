@@ -1,4 +1,4 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { Proposal } from './proposal.entity';
 import { faker } from '@ever-co/faker';
 import * as moment from 'moment';
@@ -7,7 +7,7 @@ import { IEmployee, IOrganization, ITenant, ProposalStatusEnum } from '@gauzy/co
 import { OrganizationContact } from './../core/entities/internal';
 
 export const createDefaultProposals = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	employees: IEmployee[],
 	organizations: IOrganization[],
@@ -18,11 +18,11 @@ export const createDefaultProposals = async (
 		const tags = await connection.manager.find(Tag, {
 			where: [{ organization: organization }]
 		});
-		const organizationContacts = await connection.manager.find(OrganizationContact, { 
-			where: { 
+		const organizationContacts = await connection.manager.find(OrganizationContact, {
+			where: {
 				organization,
 				tenant
-			} 
+			}
 		});
 		for (let i = 0; i < noOfProposalsPerOrganization; i++) {
 			const proposal = new Proposal();
@@ -36,7 +36,7 @@ export const createDefaultProposals = async (
 			proposal.proposalContent = faker.name.jobDescriptor();
 			proposal.tenant = tenant;
 			if (organizationContacts.length) {
-				proposal.organizationContactId = faker.random.arrayElement(organizationContacts).id; 
+				proposal.organizationContactId = faker.random.arrayElement(organizationContacts).id;
 			}
 			proposals.push(proposal);
 		}
@@ -46,7 +46,7 @@ export const createDefaultProposals = async (
 };
 
 export const createRandomProposals = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	tenantEmployeeMap: Map<ITenant, IEmployee[]>,
 	tenantOrganizationsMap: Map<ITenant, IOrganization[]>,
@@ -60,11 +60,11 @@ export const createRandomProposals = async (
 			const tags = await connection.manager.find(Tag, {
 				where: [{ organization: organization }]
 			});
-			const organizationContacts = await connection.manager.find(OrganizationContact, { 
-				where: { 
+			const organizationContacts = await connection.manager.find(OrganizationContact, {
+				where: {
 					organization,
 					tenant
-				} 
+				}
 			});
 			for (let i = 0; i < noOfProposalsPerOrganization; i++) {
 				const proposal = new Proposal();
@@ -78,7 +78,7 @@ export const createRandomProposals = async (
 				proposal.proposalContent = faker.name.jobDescriptor();
 				proposal.tenant = tenant;
 				if (organizationContacts.length) {
-					proposal.organizationContactId = faker.random.arrayElement(organizationContacts).id; 
+					proposal.organizationContactId = faker.random.arrayElement(organizationContacts).id;
 				}
 				proposals.push(proposal);
 			}

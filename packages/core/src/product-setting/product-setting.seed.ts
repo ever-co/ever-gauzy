@@ -1,4 +1,4 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { IOrganization, IProductVariantSetting, ITenant } from '@gauzy/contracts';
 import { ProductVariantSetting } from './product-setting.entity';
 import { faker } from '@ever-co/faker';
@@ -7,7 +7,7 @@ import { Product } from '../product/product.entity';
 import { ProductVariant } from '../product-variant/product-variant.entity';
 
 export const createRandomProductVariantSettings = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	tenantOrganizationsMap: Map<ITenant, IOrganization[]>
 ): Promise<IProductVariantSetting[]> => {

@@ -1,4 +1,4 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { faker } from '@ever-co/faker';
 import { KeyResult } from './keyresult.entity';
 import {
@@ -15,7 +15,7 @@ import { GoalKPI } from '../goal-kpi/goal-kpi.entity';
 import { DEFAULT_KEY_RESULTS } from './default-keyresults';
 
 export const createDefaultKeyResults = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	employees: IEmployee[],
 	goals
@@ -87,7 +87,7 @@ export const createDefaultKeyResults = async (
 };
 
 export const updateDefaultKeyResultProgress = async (
-	connection: Connection
+	dataSource: DataSource
 ): Promise<KeyResult[]> => {
 	const keyResults: KeyResult[] = await connection.manager.find(KeyResult, {
 		relations: ['updates']
@@ -114,7 +114,7 @@ export const updateDefaultKeyResultProgress = async (
 };
 
 const insertDefaultKeyResults = async (
-	connection: Connection,
+	dataSource: DataSource,
 	defaultKeyResults: KeyResult[]
 ) => {
 	await connection
@@ -126,7 +126,7 @@ const insertDefaultKeyResults = async (
 };
 
 export const createRandomKeyResult = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	tenantEmployeeMap: Map<ITenant, IEmployee[]>,
 	goals

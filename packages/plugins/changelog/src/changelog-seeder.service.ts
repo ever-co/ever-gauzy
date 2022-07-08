@@ -11,7 +11,7 @@ import { SEEDER_DB_CONNECTION } from '@gauzy/common';
  */
 @Injectable()
 export class ChangelogSeederService {
-	connection: Connection;
+	dataSource: DataSource;
 
 	/**
 	 * Create an instance of class.

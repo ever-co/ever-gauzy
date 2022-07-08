@@ -1,10 +1,10 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { IEmployee, IOrganization, ITenant } from '@gauzy/contracts';
 import { faker } from '@ever-co/faker';
 import { EventType, Tag } from './../core/entities/internal';
 
 export const createRandomEventType = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	tenantEmployeeMap: Map<ITenant, IEmployee[]>,
 	tenantOrganizationsMap: Map<ITenant, IOrganization[]>
@@ -49,7 +49,7 @@ export const createRandomEventType = async (
 };
 
 export const createDefaultEventTypes = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	organizations: IOrganization[]
 ): Promise<EventType[]> => {
@@ -90,7 +90,7 @@ export const createDefaultEventTypes = async (
 };
 
 const insertEventTypes = async (
-	connection: Connection,
+	dataSource: DataSource,
 	eventTypes: EventType[]
 ): Promise<EventType[]> => {
 	return await connection.manager.save(eventTypes);

@@ -1,4 +1,4 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { faker } from '@ever-co/faker';
 import {
 	IOrganization,
@@ -15,7 +15,7 @@ import { environment as env } from '@gauzy/config';
 import { Expense } from './../core/entities/internal';
 
 export const createDefaultExpenses = async (
-	connection: Connection,
+	dataSource: DataSource,
 	organizations: IOrganization[],
 	tenant: ITenant,
 	employees: IEmployee[],
@@ -90,7 +90,7 @@ export const createDefaultExpenses = async (
 };
 
 export const createRandomExpenses = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	tenantEmployeeMap: Map<ITenant, IEmployee[]>,
 	organizationVendorsMap: Map<IOrganization, IOrganizationVendor[]> | void,
@@ -157,7 +157,7 @@ export const createRandomExpenses = async (
 };
 
 const insertExpense = async (
-	connection: Connection,
+	dataSource: DataSource,
 	expenses: Expense[]
 ): Promise<void> => {
 	await connection.manager.save(expenses);

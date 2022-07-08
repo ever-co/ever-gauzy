@@ -1,4 +1,4 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { IEmployee, IOrganization, ITenant, PaymentMethodEnum } from '@gauzy/contracts';
 import { Payment } from './payment.entity';
 import { faker } from '@ever-co/faker';
@@ -8,32 +8,32 @@ import { Invoice, OrganizationProject, Tag, User } from './../core/entities/inte
 import * as _ from 'underscore';
 
 export const createDefaultPayment = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	employees: IEmployee[],
 	organizations: IOrganization[]
 ): Promise<Payment[]> => {
 	const payments: Payment[] = [];
 	const users = await connection.manager.find(User, {
-		where: { 
-			tenant 
+		where: {
+			tenant
 		}
 	});
-	
+
 	for (const organization of organizations) {
 		const projects = await connection.manager.find(OrganizationProject, {
-			where: { 
+			where: {
 				organization,
 				tenant
 			}
 		});
 		const tags = await connection.manager.find(Tag, {
-			where: { 
+			where: {
 				organization
 			}
 		});
 		const invoices = await connection.manager.find(Invoice, {
-			where: { 
+			where: {
 				organization,
 				tenant,
 				isEstimate: 0
@@ -84,7 +84,7 @@ export const createDefaultPayment = async (
 };
 
 export const createRandomPayment = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	tenantEmployeeMap: Map<ITenant, IEmployee[]>,
 	tenantOrganizationsMap: Map<ITenant, IOrganization[]>
@@ -100,7 +100,7 @@ export const createRandomPayment = async (
 		const tenantOrgs = tenantOrganizationsMap.get(tenant);
 		const tenantEmployees = tenantEmployeeMap.get(tenant);
 		const users = await connection.manager.find(User, {
-			where: { 
+			where: {
 				tenant
 			}
 		});
@@ -108,18 +108,18 @@ export const createRandomPayment = async (
 		const payments2: Payment[] = [];
 		for (const organization of tenantOrgs) {
 			const projects = await connection.manager.find(OrganizationProject, {
-				where: { 
+				where: {
 					organization,
 					tenant
 				}
 			});
 			const tags = await connection.manager.find(Tag, {
-				where: { 
+				where: {
 					organization
 				}
 			});
 			const invoices = await connection.manager.find(Invoice, {
-				where: { 
+				where: {
 					organization,
 					tenant,
 					isEstimate: 0
@@ -163,7 +163,7 @@ export const createRandomPayment = async (
 				if (project) {
 					payment.projectId = project.id;
 				}
-				
+
 				if (count % 2 === 0) {
 					payments1.push(payment);
 				} else {

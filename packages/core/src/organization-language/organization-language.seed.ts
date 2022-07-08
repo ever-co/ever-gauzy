@@ -6,16 +6,16 @@ import { Language } from '../language/language.entity';
 import { DEFAULT_LANGUAGE_LEVEL, DEFAULT_ORGANIZATION_LANGUAGES } from './default-organization-languages';
 
 export const createDefaultOrganizationLanguage = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	defaultOrganizations: IOrganization[]
 ): Promise<IOrganizationLanguage[]> => {
 	const mapOrganizationLanguage: IOrganizationLanguage[] = [];
-	
+
 	const allLanguage = await connection.getRepository(Language).find({
 		code: In(["en", "he", "ru", "bg"])
 	});
-	
+
 	for (const defaultOrganization of defaultOrganizations) {
 		for (const language of allLanguage) {
 			const organization = new OrganizationLanguage();
@@ -33,7 +33,7 @@ export const createDefaultOrganizationLanguage = async (
 };
 
 export const createRandomOrganizationLanguage = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	tenantOrganizationsMap: Map<ITenant, IOrganization[]>
 ): Promise<IOrganizationLanguage[]> => {
@@ -49,7 +49,7 @@ export const createRandomOrganizationLanguage = async (
 	.orderBy("random()")
 	.limit(4)
 	.getMany();
-	
+
 	for (const tenant of tenants) {
 		const tenantOrganization = tenantOrganizationsMap.get(tenant);
 		for (const tenantOrg of tenantOrganization) {
@@ -69,7 +69,7 @@ export const createRandomOrganizationLanguage = async (
 };
 
 const insertRandomOrganizationLanguage = async (
-	connection: Connection,
+	dataSource: DataSource,
 	data: IOrganizationLanguage[]
 ) => {
 	await connection

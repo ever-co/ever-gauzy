@@ -1,11 +1,11 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { faker } from '@ever-co/faker';
 import * as moment from 'moment';
 import { AvailabilitySlotType, IEmployee, IOrganization, ITenant } from '@gauzy/contracts';
 import { AvailabilitySlot } from './availability-slots.entity';
 
 export const createDefaultAvailabilitySlots = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	organization: IOrganization,
 	employees,
@@ -26,7 +26,7 @@ export const createDefaultAvailabilitySlots = async (
 };
 
 export const createRandomAvailabilitySlots = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	tenantOrganizationsMap: Map<ITenant, IOrganization[]>,
 	tenantEmployeeMap: Map<ITenant, IEmployee[]>,
@@ -51,7 +51,7 @@ export const createRandomAvailabilitySlots = async (
 };
 
 const dataOperation = async (
-	connection: Connection,
+	dataSource: DataSource,
 	slots,
 	noOfAvailabilitySlotsPerOrganization,
 	employees,

@@ -1,4 +1,4 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { faker } from '@ever-co/faker';
 import { addDays } from 'date-fns';
 import { IEmployee, IOrganization, ITenant } from '@gauzy/contracts';
@@ -6,7 +6,7 @@ import { EquipmentSharing } from './equipment-sharing.entity';
 import { Equipment } from './../core/entities/internal';
 
 export const createDefaultEquipmentSharing = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	organization: IOrganization,
 	defaultEmployees,
@@ -30,7 +30,7 @@ export const createDefaultEquipmentSharing = async (
 };
 
 export const createRandomEquipmentSharing = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	tenantEmployeeMap: Map<ITenant, IEmployee[]>,
 	noOfEquipmentSharingPerTenant: number
@@ -55,7 +55,7 @@ export const createRandomEquipmentSharing = async (
 };
 
 const dataOperation = async (
-	connection: Connection,
+	dataSource: DataSource,
 	equipmentSharings,
 	noOfEquipmentSharingPerTenant,
 	equipments,

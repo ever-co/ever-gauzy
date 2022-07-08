@@ -1,4 +1,4 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { IntegrationMap } from './integration-map.entity';
 import { faker } from '@ever-co/faker';
 import { IntegrationTenant } from '../integration-tenant/integration-tenant.entity';
@@ -6,7 +6,7 @@ import { Organization } from '../organization/organization.entity';
 import { IIntegrationMap, IntegrationEntity, ITenant } from '@gauzy/contracts';
 
 export const createRandomIntegrationMap = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[]
 ): Promise<IIntegrationMap[]> => {
 	if (!tenants) {
@@ -18,13 +18,13 @@ export const createRandomIntegrationMap = async (
 	const integrationMaps: IIntegrationMap[] = [];
 	for (const tenant of tenants) {
 		const integrationTenants = await connection.manager.find(IntegrationTenant, {
-			where: { 
-				tenant: tenant 
+			where: {
+				tenant: tenant
 			}
 		});
 		const organizations = await connection.manager.find(Organization, {
-			where: { 
-				tenant: tenant 
+			where: {
+				tenant: tenant
 			}
 		});
 		for (const integrationTenant of integrationTenants) {

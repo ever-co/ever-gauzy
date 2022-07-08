@@ -1,4 +1,4 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import {
 	IEmployee,
 	ITenant,
@@ -11,7 +11,7 @@ import { Organization } from '../organization/organization.entity';
 import { environment as env } from '@gauzy/config';
 
 export const createRandomEmployeeRecurringExpense = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	tenantEmployeeMap: Map<ITenant, IEmployee[]>
 ): Promise<EmployeeRecurringExpense[]> => {
@@ -75,7 +75,7 @@ export const createRandomEmployeeRecurringExpense = async (
 };
 
 const insertRandomEmployeeRecurringExpense = async (
-	connection: Connection,
+	dataSource: DataSource,
 	Employees: EmployeeRecurringExpense[]
 ) => {
 	await connection

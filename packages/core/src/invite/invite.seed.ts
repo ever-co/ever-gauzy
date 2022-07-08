@@ -1,4 +1,4 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { faker } from '@ever-co/faker';
 import { InviteStatusEnum, IOrganization, ITenant, IUser, RolesEnum } from '@gauzy/contracts';
 import { sign } from 'jsonwebtoken';
@@ -7,7 +7,7 @@ import * as moment from 'moment';
 import { Invite, Role } from './../core/entities/internal';
 
 export const createDefaultEmployeeInviteSent = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	organizations: IOrganization[],
 	SuperAdmin: IUser[]
@@ -46,7 +46,7 @@ export const createDefaultEmployeeInviteSent = async (
 };
 
 export const createRandomEmployeeInviteSent = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	tenantOrganizationsMap: Map<ITenant, IOrganization[]>,
 	tenantSuperAdminMap: Map<ITenant, IUser[]>,

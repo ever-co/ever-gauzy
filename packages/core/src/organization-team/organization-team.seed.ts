@@ -1,4 +1,4 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { OrganizationTeam } from './organization-team.entity';
 import { OrganizationTeamEmployee } from '../organization-team-employee/organization-team-employee.entity';
 import { IEmployee, IOrganization, IRole, ITenant, RolesEnum } from '@gauzy/contracts';
@@ -7,7 +7,7 @@ import { faker } from '@ever-co/faker';
 import { DEFAULT_ORGANIZATION_TEAMS } from './default-organization-teams';
 
 export const createDefaultTeams = async (
-	connection: Connection,
+	dataSource: DataSource,
 	organization: IOrganization,
 	employees: IEmployee[],
 	roles: IRole[]
@@ -57,7 +57,7 @@ export const createDefaultTeams = async (
 };
 
 export const createRandomTeam = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	tenantOrganizationsMap: Map<ITenant, IOrganization[]>,
 	roles: IRole[]
@@ -120,7 +120,7 @@ export const createRandomTeam = async (
 };
 
 const insertOrganizationTeam = async (
-	connection: Connection,
+	dataSource: DataSource,
 	teams: OrganizationTeam[]
 ): Promise<void> => {
 	await connection.manager.save(teams);

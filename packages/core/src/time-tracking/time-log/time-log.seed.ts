@@ -19,7 +19,7 @@ import { getDateRangeFormat } from './../../core/utils';
 import { BadRequestException } from '@nestjs/common';
 
 export const createRandomTimeLogs = async (
-	connection: Connection,
+	dataSource: DataSource,
 	config: IPluginConfig,
 	tenant: ITenant,
 	timeSheets: ITimesheet[]
@@ -127,18 +127,18 @@ export const createRandomTimeLogs = async (
 			});
 			trackedTimeSlots.push(...newTimeSlots);
 		}
-		 
+
 		/*
-		* Saved Tracked Time Log & Time Slots and Related Screenshots 
+		* Saved Tracked Time Log & Time Slots and Related Screenshots
 		*/
 		const newTrackedTimeSlots: ITimeSlot[] = [];
 		for await (const timeSlot of trackedTimeSlots) {
 			const { tenantId, organizationId, startedAt, stoppedAt } = timeSlot;
 			const randomScreenshots = await createRandomScreenshot(
-				config, 
+				config,
 				tenantId,
 				organizationId,
-				startedAt, 
+				startedAt,
 				stoppedAt
 			);
 			const screenshots = randomScreenshots.map(
@@ -170,7 +170,7 @@ function dateRanges(start: Date, stop: Date) {
 }
 
 export const recalculateTimesheetActivity = async (
-	connection: Connection,
+	dataSource: DataSource,
 	timesheets: ITimesheet[]
 ) => {
 	for await (const timesheet of timesheets) {

@@ -1,5 +1,5 @@
 import * as seed from './product-type.seed.json';
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { Tenant } from '../tenant/tenant.entity';
 import { IOrganization, ProductTypesIconsEnum } from '@gauzy/contracts';
 import { ProductType } from './product-type.entity';
@@ -9,7 +9,7 @@ import { Product } from '../product/product.entity';
 import { ProductTypeTranslation } from './product-type-translation.entity';
 
 export const createDefaultProductTypes = async (
-	connection: Connection,
+	dataSource: DataSource,
 	organizations: IOrganization[]
 ): Promise<ProductType[]> => {
 	const seedProductTypes = [];
@@ -38,14 +38,14 @@ export const createDefaultProductTypes = async (
 };
 
 const insertProductTypes = async (
-	connection: Connection,
+	dataSource: DataSource,
 	productTypes: ProductType[]
 ): Promise<void> => {
 	await connection.manager.save(productTypes);
 };
 
 export const createRandomProductType = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: Tenant[],
 	tenantOrganizationsMap: Map<Tenant, IOrganization[]>
 ): Promise<ProductType[]> => {

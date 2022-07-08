@@ -1,4 +1,4 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { ITenant, KeyResultTypeEnum } from '@gauzy/contracts';
 import { KeyResultTemplate } from './keyresult-template.entity';
 import { GoalTemplate } from '../goal-template/goal-template.entity';
@@ -7,7 +7,7 @@ import { faker } from '@ever-co/faker';
 import { DEFAULT_KEY_RESULT_TEMPLATES } from './default-keyresult-templates';
 
 export const createDefaultKeyResultTemplates = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant
 ): Promise<KeyResultTemplate[]> => {
 	const defaultKeyResultTemplates = [];
@@ -56,7 +56,7 @@ export const createDefaultKeyResultTemplates = async (
 };
 
 const insertDefaultKeyResults = async (
-	connection: Connection,
+	dataSource: DataSource,
 	defaultKeyResults: KeyResultTemplate[]
 ): Promise<KeyResultTemplate[]> => {
 	return await connection.manager.save(defaultKeyResults);

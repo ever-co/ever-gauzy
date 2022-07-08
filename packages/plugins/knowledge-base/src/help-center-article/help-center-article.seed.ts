@@ -5,13 +5,13 @@ import { HelpCenterArticle } from './help-center-article.entity';
 import { HelpCenter } from './../help-center';
 
 export const createHelpCenterArticle = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	tenantOrganizationsMap: Map<ITenant, IOrganization[]>,
 	numberOfHelpCenterArticle
 ): Promise<IHelpCenterArticle[]> => {
 	const helpCenterArticles: IHelpCenterArticle[] = [];
-	for await (const tenant of tenants) { 
+	for await (const tenant of tenants) {
 		const organizations = tenantOrganizationsMap.get(tenant);
 		for await (const organization of organizations) {
 			const organizationId = organization.id;

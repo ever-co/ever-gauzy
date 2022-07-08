@@ -1,4 +1,4 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { faker } from '@ever-co/faker';
 import { TimeOffRequest } from './time-off-request.entity';
 import { TimeOffPolicy } from '../time-off-policy/time-off-policy.entity';
@@ -9,7 +9,7 @@ import * as _ from 'underscore';
 const status = Object.values(StatusTypesEnum);
 
 export const createDefaultEmployeeTimeOff = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	organization: IOrganization,
 	employees: IEmployee[],
@@ -32,7 +32,7 @@ export const createDefaultEmployeeTimeOff = async (
 };
 
 export const createRandomEmployeeTimeOff = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	tenantOrganizationsMap: Map<ITenant, IOrganization[]>,
 	tenantEmployeeMap: Map<ITenant, IEmployee[]>,
@@ -61,7 +61,7 @@ export const createRandomEmployeeTimeOff = async (
 };
 
 const dataOperation = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	requests,
 	noOfEmployeeTimeOffRequest,

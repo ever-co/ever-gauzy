@@ -1,4 +1,4 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { InvoiceItem } from './invoice-item.entity';
 import { faker } from '@ever-co/faker';
 import {
@@ -18,12 +18,12 @@ import {
 	Invoice,
 	OrganizationProject,
 	Product,
-	Task 
+	Task
 } from './../core/entities/internal';
 
 
 export const createDefaultInvoiceItem = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	organizations: IOrganization[],
 	numberOfInvoiceItemPerInvoice: number
@@ -40,7 +40,7 @@ export const createDefaultInvoiceItem = async (
 };
 
 export const createRandomInvoiceItem = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	tenantOrganizationsMap: Map<ITenant, IOrganization[]>,
 	numberOfInvoiceItemPerInvoice: number
@@ -60,7 +60,7 @@ export const createRandomInvoiceItem = async (
 };
 
 async function invoiceItemForInvoiceType(
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	organization: IOrganization,
 	numberOfInvoiceItemPerInvoice: number
@@ -86,7 +86,7 @@ async function invoiceItemForInvoiceType(
 			invoiceItem.quantity = faker.datatype.number({ min: 10, max: 20 });
 			invoiceItem.totalValue = invoiceItem.price * invoiceItem.quantity;
 			invoiceItem.invoice = invoice;
-	
+
 			switch (invoice.invoiceType) {
 				case InvoiceTypeEnum.BY_EMPLOYEE_HOURS:
 					invoiceItem.employee = faker.random.arrayElement(employees);
@@ -104,7 +104,7 @@ async function invoiceItemForInvoiceType(
 					invoiceItem.expense = faker.random.arrayElement(expenses);
 					break;
 			}
-	
+
 			invoiceItem.applyDiscount = faker.datatype.boolean();
 			invoiceItem.applyTax = faker.datatype.boolean();
 			invoiceItem.tenant = tenant;

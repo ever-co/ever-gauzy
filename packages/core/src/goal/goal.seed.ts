@@ -1,5 +1,5 @@
 import { Goal } from './goal.entity';
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { faker } from '@ever-co/faker';
 import { GoalTimeFrame } from '../goal-time-frame/goal-time-frame.entity';
 import { GoalLevelEnum, IEmployee, IOrganization, ITenant } from '@gauzy/contracts';
@@ -7,7 +7,7 @@ import { OrganizationTeam } from '../organization-team/organization-team.entity'
 import { DEFAULT_GOALS } from './default-goals';
 
 export const createDefaultGoals = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	organizations: IOrganization[],
 	employees: IEmployee[]
@@ -47,7 +47,7 @@ export const createDefaultGoals = async (
 };
 
 export const updateDefaultGoalProgress = async (
-	connection: Connection
+	dataSource: DataSource
 ): Promise<Goal[]> => {
 	const goals: Goal[] = await connection.manager.find(Goal, {
 		relations: ['keyResults']
@@ -78,7 +78,7 @@ export const updateDefaultGoalProgress = async (
 };
 
 const insertDefaultGoals = async (
-	connection: Connection,
+	dataSource: DataSource,
 	defaultGoals: Goal[]
 ) => {
 	await connection
@@ -90,7 +90,7 @@ const insertDefaultGoals = async (
 };
 
 export const createRandomGoal = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	tenantOrganizationsMap: Map<ITenant, IOrganization[]>,
 	tenantEmployeeMap: Map<ITenant, IEmployee[]>

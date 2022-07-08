@@ -1,4 +1,4 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { OrganizationRecurringExpense } from './organization-recurring-expense.entity';
 import { faker } from '@ever-co/faker';
 import {
@@ -10,7 +10,7 @@ import * as moment from 'moment';
 import { environment as env } from '@gauzy/config';
 
 export const createDefaultOrganizationRecurringExpense = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	defaultOrganization: IOrganization
 ): Promise<OrganizationRecurringExpense[]> => {
@@ -37,7 +37,7 @@ export const createDefaultOrganizationRecurringExpense = async (
 };
 
 export const createRandomOrganizationRecurringExpense = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	tenantOrganizationsMap: Map<ITenant, IOrganization[]>
 ): Promise<OrganizationRecurringExpense[]> => {
@@ -70,7 +70,7 @@ export const createRandomOrganizationRecurringExpense = async (
 };
 
 const dataOperation = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	mapOrganizationRecurringExpense,
 	expenseCategories,

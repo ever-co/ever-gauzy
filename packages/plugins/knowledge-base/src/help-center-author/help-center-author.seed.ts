@@ -1,11 +1,11 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { faker } from '@ever-co/faker';
 import { IEmployee, IHelpCenterAuthor, ITenant } from '@gauzy/contracts';
 import { HelpCenterAuthor } from './help-center-author.entity';
 import { HelpCenterArticle } from '../help-center-article/help-center-article.entity';
 
 export const createDefaultHelpCenterAuthor = async (
-	connection: Connection,
+	dataSource: DataSource,
 	defaultEmployees: IEmployee[]
 ): Promise<IHelpCenterAuthor[]> => {
 	if (!defaultEmployees) {
@@ -30,7 +30,7 @@ export const createDefaultHelpCenterAuthor = async (
 };
 
 export const createRandomHelpCenterAuthor = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	tenantEmployeeMap: Map<ITenant, IEmployee[]> | void
 ): Promise<IHelpCenterAuthor[]> => {
@@ -63,14 +63,14 @@ export const createRandomHelpCenterAuthor = async (
 };
 
 const insertRandomHelpCenterAuthor = async (
-	connection: Connection,
+	dataSource: DataSource,
 	data: IHelpCenterAuthor[]
 ) => {
 	await connection.manager.save(data);
 };
 
 const operateData = async (
-	connection: Connection,
+	dataSource: DataSource,
 	mapEmployeeToArticles,
 	allArticle,
 	employees: IEmployee[]

@@ -1,4 +1,4 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import {
 	IEmployee,
 	IOrganization,
@@ -14,7 +14,7 @@ import { Employee, Organization } from './../core/entities/internal';
 import { getDefaultOrganization } from './../organization/organization.seed';
 
 export const createDefaultEmployees = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	organization: IOrganization,
 	users: IUser[],
@@ -52,7 +52,7 @@ export const createDefaultEmployees = async (
 };
 
 export const createRandomEmployees = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	tenantOrganizationsMap: Map<ITenant, Organization[]>,
 	tenantUsersMap: Map<ITenant, ISeedUsers>,
@@ -99,7 +99,7 @@ export const createRandomEmployees = async (
 };
 
 const insertEmployees = async (
-	connection: Connection,
+	dataSource: DataSource,
 	employees: IEmployee[]
 ): Promise<IEmployee[]> => {
 	return await connection.manager.save(employees);
@@ -117,7 +117,7 @@ const getDate = (dateString: string): Date => {
  * Default employees
  */
 export const getDefaultEmployees = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant
 ): Promise<IEmployee[]> => {
 	const organization = await getDefaultOrganization(

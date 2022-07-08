@@ -1,10 +1,10 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { faker } from '@ever-co/faker';
 import { IOrganization, IPipeline, ITenant } from '@gauzy/contracts';
 import { Pipeline } from './pipeline.entity';
 
 export const createDefaultPipeline = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	tenantOrganizations
 ): Promise<IPipeline[]> => {
@@ -26,7 +26,7 @@ export const createDefaultPipeline = async (
 };
 
 export const createRandomPipeline = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	tenantOrganizationsMap: Map<ITenant, IOrganization[]>
 ): Promise<IPipeline[]> => {
@@ -52,7 +52,7 @@ export const createRandomPipeline = async (
 };
 
 const dataOperation = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	pipelines: IPipeline[],
 	organization: IOrganization

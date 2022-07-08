@@ -231,7 +231,7 @@ export async function establishDatabaseConnection(config: Partial<IPluginConfig>
         logging: ['all']
     };
 
-    let connection: Connection|undefined = undefined;
+    let dataSource: DataSource|undefined = undefined;
     try {
         connection = getConnection(DEFAULT_DB_CONNECTION);
     } catch (error) {
@@ -258,7 +258,7 @@ export async function establishDatabaseConnection(config: Partial<IPluginConfig>
  *
  * @param connection
  */
-async function closeConnection(connection: Connection) {
+async function closeConnection(dataSource: DataSource) {
     try {
         if (connection && connection.isConnected) {
             await connection.close();

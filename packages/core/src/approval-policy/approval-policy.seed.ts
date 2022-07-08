@@ -1,10 +1,10 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { IOrganization, ITenant } from '@gauzy/contracts';
 import { ApprovalPolicy } from './approval-policy.entity';
 import { DEFAULT_APPROVAL_POLICIES } from './default-approval-policies';
 
 export const createDefaultApprovalPolicyForOrg = async (
-	connection: Connection,
+	dataSource: DataSource,
 	defaultData: {
 		orgs: IOrganization[];
 	}
@@ -25,7 +25,7 @@ export const createDefaultApprovalPolicyForOrg = async (
 };
 
 const insertDefaultPolicy = async (
-	connection: Connection,
+	dataSource: DataSource,
 	defaultPolicy: ApprovalPolicy
 ): Promise<void> => {
 	await connection
@@ -37,7 +37,7 @@ const insertDefaultPolicy = async (
 };
 
 export const createRandomApprovalPolicyForOrg = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	tenantOrganizationsMap: Map<ITenant, IOrganization[]>
 ): Promise<ApprovalPolicy[]> => {

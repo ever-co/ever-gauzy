@@ -326,7 +326,7 @@ export enum SeederTypeEnum {
 
 @Injectable()
 export class SeedDataService {
-	connection: Connection;
+	dataSource: DataSource;
 	log = console.log;
 
 	organizations: IOrganization[] = [];

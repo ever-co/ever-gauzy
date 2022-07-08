@@ -1,4 +1,4 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { faker } from '@ever-co/faker';
 import { IOrganization, ITenant } from '@gauzy/contracts';
 import { environment as env } from '@gauzy/config';
@@ -6,7 +6,7 @@ import { DEFAULT_RANDOM_EQUIPMENTS } from './default-equipments';
 import { Equipment, Organization, Tag } from './../core/entities/internal';
 
 export const createDefaultEquipments = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	organization: IOrganization
 ): Promise<Equipment[]> => {
@@ -35,14 +35,14 @@ export const createDefaultEquipments = async (
 };
 
 const insertEquipment = async (
-	connection: Connection,
+	dataSource: DataSource,
 	equipment: Equipment[]
 ): Promise<void> => {
 	await connection.manager.save(equipment);
 };
 
 export const createRandomEquipments = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	noOfEquipmentsPerTenant: number
 ): Promise<Equipment[]> => {

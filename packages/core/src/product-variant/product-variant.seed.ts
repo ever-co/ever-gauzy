@@ -13,7 +13,7 @@ import {
 } from './../core/entities/internal';
 
 export const createRandomProductVariant = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	tenantOrganizationsMap: Map<ITenant, IOrganization[]>,
 	numberOfVariantPerProduct
@@ -46,7 +46,7 @@ export const createRandomProductVariant = async (
 					);
 					const productOptionGroupsIds = _.pluck(productOptionGroups, 'id');
 					const productOptions = await connection.manager.find(ProductOption, {
-							where: { 
+							where: {
 								group: In(productOptionGroupsIds),
 							}
 						}
