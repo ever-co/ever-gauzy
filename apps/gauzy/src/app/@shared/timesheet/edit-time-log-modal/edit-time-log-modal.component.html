@@ -64,9 +64,9 @@
 					>
 					</ngx-timer-range-picker>
 				</div>
-        <div class="col-6 show-time" *ngIf="selectedTime.start && selectedTime.end">
+        <div class="col-6 show-time" *ngIf="timeDiff">
          <div>
-          {{ selectedTime.start }} - {{ selectedTime.end }}
+          {{ timeDiff }}
          </div>
         </div>
 			</div>

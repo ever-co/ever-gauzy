@@ -43,7 +43,7 @@ export class EditTimeLogModalComponent
 	overlaps: ITimeLog[] = [];
 
 	selectedRange: IDateRange = { start: null, end: null };
-	selectedTime: { start: string; end: string } = { start: null, end: null };
+	timeDiff: string = null;
 	organization: IOrganization;
 
 	employee: ISelectedEmployee;
@@ -148,6 +148,17 @@ export class EditTimeLogModalComponent
 			.pipe(
 				debounceTime(300),
 				distinctUntilChange(),
+				tap(([employeeId, selectedRange]) => {
+					const { start, end } = selectedRange;
+					const startMoment = moment(start);
+					const endMoment = moment(end);
+
+					this.timeDiff = moment
+						.duration({
+							seconds: endMoment.diff(startMoment, 'seconds')
+						})
+						.humanize();
+				}),
 				filter(
 					([employeeId, selectedRange]) =>
 						!!employeeId && !!selectedRange
@@ -160,25 +171,6 @@ export class EditTimeLogModalComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
-
-		this.form
-			.get('selectedRange')
-			.valueChanges.pipe(
-				untilDestroyed(this),
-				tap((selectedRange: { start: Date; end: Date }) => {
-					const { start, end } = selectedRange;
-					this.selectedTime.end = this.toLocaleTimeString(end);
-					this.selectedTime.start = this.toLocaleTimeString(start);
-				})
-			)
-			.subscribe();
-	}
-
-	toLocaleTimeString(date: Date) {
-		return date.toLocaleTimeString('en', {
-			hour: '2-digit',
-			minute: '2-digit'
-		});
 	}
 
 	close() {
