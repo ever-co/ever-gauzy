@@ -3,6 +3,7 @@ import { NgModule } from '@angular/core';
 
 import { PagesComponent } from './pages.component';
 import { NotFoundComponent } from './miscellaneous/not-found/not-found.component';
+import { DateRangePickerResolver } from '../@theme/components/header/selectors/date-range-picker';
 
 const routes: Routes = [
 	{
@@ -40,6 +41,9 @@ const routes: Routes = [
 							datePicker: {
 								unitOfTime: 'month'
 							}
+						},
+						resolve: {
+							dates: DateRangePickerResolver
 						}
 					},
 					{
@@ -51,6 +55,9 @@ const routes: Routes = [
 							datePicker: {
 								unitOfTime: 'month'
 							}
+						},
+						resolve: {
+							dates: DateRangePickerResolver
 						}
 					},
 					{
@@ -66,6 +73,9 @@ const routes: Routes = [
 							datePicker: {
 								unitOfTime: 'month'
 							}
+						},
+						resolve: {
+							dates: DateRangePickerResolver
 						}
 					},
 					{
@@ -95,6 +105,9 @@ const routes: Routes = [
 							datePicker: {
 								unitOfTime: 'month'
 							}
+						},
+						resolve: {
+							dates: DateRangePickerResolver
 						}
 					}
 				]
@@ -131,7 +144,12 @@ const routes: Routes = [
 						path: '',
 						loadChildren: () => import('./tasks/tasks.module').then(
 							(m) => m.TasksModule
-						)
+						),
+						data: {
+							selectors: {
+								date: false,
+							}
+						}
 					}
 				]
 			},
@@ -185,6 +203,9 @@ const routes: Routes = [
 							datePicker: {
 								unitOfTime: 'month'
 							}
+						},
+						resolve: {
+							dates: DateRangePickerResolver
 						}
 					},
 					{
@@ -199,6 +220,9 @@ const routes: Routes = [
 							datePicker: {
 								unitOfTime: 'month'
 							}
+						},
+						resolve: {
+							dates: DateRangePickerResolver
 						}
 					},
 					{
@@ -313,6 +337,9 @@ const routes: Routes = [
 							datePicker: {
 								unitOfTime: 'month'
 							}
+						},
+						resolve: {
+							dates: DateRangePickerResolver
 						}
 					},
 					{
@@ -397,6 +424,9 @@ const routes: Routes = [
 							datePicker: {
 								unitOfTime: 'month'
 							}
+						},
+						resolve: {
+							dates: DateRangePickerResolver
 						}
 					},
 					{
@@ -573,6 +603,9 @@ const routes: Routes = [
 							datePicker: {
 								unitOfTime: 'week'
 							}
+						},
+						resolve: {
+							dates: DateRangePickerResolver
 						}
 					},
 					{
@@ -585,6 +618,9 @@ const routes: Routes = [
 								unitOfTime: 'week',
 								isLockDatePicker: true
 							}
+						},
+						resolve: {
+							dates: DateRangePickerResolver
 						}
 					},
 					{
@@ -596,6 +632,9 @@ const routes: Routes = [
 							datePicker: {
 								unitOfTime: 'week'
 							}
+						},
+						resolve: {
+							dates: DateRangePickerResolver
 						}
 					},
 					{
@@ -607,6 +646,9 @@ const routes: Routes = [
 							datePicker: {
 								unitOfTime: 'week'
 							}
+						},
+						resolve: {
+							dates: DateRangePickerResolver
 						}
 					},
 					{
@@ -632,6 +674,9 @@ const routes: Routes = [
 							datePicker: {
 								unitOfTime: 'week'
 							}
+						},
+						resolve: {
+							dates: DateRangePickerResolver
 						}
 					},
 					{
@@ -643,6 +688,9 @@ const routes: Routes = [
 							datePicker: {
 								unitOfTime: 'week'
 							}
+						},
+						resolve: {
+							dates: DateRangePickerResolver
 						}
 					},
 					{
@@ -654,6 +702,9 @@ const routes: Routes = [
 							datePicker: {
 								unitOfTime: 'week'
 							}
+						},
+						resolve: {
+							dates: DateRangePickerResolver
 						}
 					},
 					{
@@ -668,6 +719,9 @@ const routes: Routes = [
 								unitOfTime: 'week',
 								isLockDatePicker: true
 							}
+						},
+						resolve: {
+							dates: DateRangePickerResolver
 						}
 					},
 					{
@@ -681,6 +735,9 @@ const routes: Routes = [
 							datePicker: {
 								unitOfTime: 'week'
 							}
+						},
+						resolve: {
+							dates: DateRangePickerResolver
 						}
 					},
 					{
@@ -692,6 +749,9 @@ const routes: Routes = [
 							datePicker: {
 								unitOfTime: 'week'
 							}
+						},
+						resolve: {
+							dates: DateRangePickerResolver
 						}
 					},
 					{
@@ -703,6 +763,9 @@ const routes: Routes = [
 							datePicker: {
 								unitOfTime: 'week'
 							}
+						},
+						resolve: {
+							dates: DateRangePickerResolver
 						}
 					},
 					{

@@ -3,7 +3,7 @@
 		<div class="cancel">
 			<i class="fas fa-times" (click)="close()"></i>
 		</div>
-		<div class="d-flex align-items-center">
+		<div>
 			<h4 class="title" *ngIf="expense; else headerAdd">
 				{{
 					(duplicate ? 'POP_UPS.DUPLICATE' : 'POP_UPS.EDIT_EXPENSE')
@@ -392,7 +392,7 @@
 			</div>
 		</form>
 	</nb-card-body>
-	<nb-card-footer class="text-left">
+	<nb-card-footer>
 		<button 
 			(click)="close()"
 			status="basic"

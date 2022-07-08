@@ -20,6 +20,7 @@
 			display: flex;
 			font-size: 18px;
 			color: #333333;
+			gap: 8px;
 		}
 
 		.info-text {
@@ -30,7 +31,8 @@
 		.info-value {
 			flex-direction: row;
 			align-items: center;
-
+			display: flex;
+			gap: 8px;
 			span {
 				font-size: 20px;
 				margin-right: 12px;

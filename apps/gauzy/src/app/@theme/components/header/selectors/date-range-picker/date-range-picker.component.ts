@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy, AfterViewInit, Input, ViewChild } from '@angular/core';
-import { combineLatest, debounceTime, of as observableOf, Subject, switchMap, take } from 'rxjs';
+import { BehaviorSubject, combineLatest, debounceTime, of as observableOf, Subject, switchMap, take } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { DaterangepickerDirective as DateRangePickerDirective, LocaleConfig } from 'ngx-daterangepicker-material';
@@ -25,15 +25,19 @@ import { TimesheetFilterService } from './../../../../../@shared/timesheet/times
 	templateUrl: './date-range-picker.component.html',
 	styleUrls: ['./date-range-picker.component.scss']
 })
-export class DateRangePickerComponent extends TranslationBaseComponent 
+export class DateRangePickerComponent extends TranslationBaseComponent
 	implements AfterViewInit, OnInit, OnDestroy {
 
-	public organization: IOrganization; 
+	public organization: IOrganization;
 	public maxDate: string;
 	public futureDateAllowed: boolean;
 
 	/**
-	 * Local store date range 
+	 * Default selected date picker ranges
+	 */
+	public dates$: BehaviorSubject<IDateRangePicker> = this.dateRangePickerBuilderService.dates$;
+	/**
+	 * Local store date picker ranges
 	 */
 	private range$: Subject<IDateRangePicker> = new Subject();
 
@@ -82,20 +86,10 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 		if (value) {
 			this._unitOfTime = value;
 		}
-		const start = moment().startOf(this.unitOfTime);
-		const end = moment().endOf(this.unitOfTime);
-		const range = {
-			startDate: start.toDate(),
-			endDate: end.toDate(),
-			isCustomDate: this.isCustomDate({
-				startDate: start,
-				endDate: end
-			})
-		}
 		if (this.isSaveDatePicker) {
-			this.onSavingFilter(range);
+			this.onSavingFilter(this.getSelectorDates());
 		} else {
-			this.selectedDateRange = this.rangePicker = range;
+			this.selectedDateRange = this.rangePicker = this.getSelectorDates();
 		}
 	}
 
@@ -119,7 +113,7 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 			}
 			this._selectedDateRange = range;
 			this.range$.next(range);
-		}		
+		}
 	}
 
 	/*
@@ -132,7 +126,7 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 	public set rangePicker(range: IDateRangePicker) {
 		if (isNotEmpty(range)) {
 			this._rangePicker = range;
-		}		
+		}
 	}
 
 	/*
@@ -221,7 +215,7 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 				}),
 				tap(([organization]) => {
 					if (organization.timeZone) {
-						let format: string; 
+						let format: string;
 						if (moment.tz.zonesForCountry('US').includes(organization.timeZone)) {
 							format = 'MM.DD.YYYY';
 						} else {
@@ -243,13 +237,6 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.dateRangePickerBuilderService.datePickerRange$
-			.pipe(
-				debounceTime(100),
-				distinctUntilChange(),
-				untilDestroyed(this)
-			)
-			.subscribe()
 	}
 
 	ngAfterViewInit() {
@@ -266,7 +253,7 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 	}
 
 	/**
-	 * Create Date Range Translated Menus 
+	 * Create Date Range Translated Menus
 	 */
 	createDateRangeMenus() {
 		this.ranges = new Object();
@@ -290,7 +277,7 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 		if (this.isLockDatePicker && (this.unitOfTime !== 'month')) {
 			delete this.ranges[DateRangeKeyEnum.CURRENT_MONTH];
 			delete this.ranges[DateRangeKeyEnum.LAST_MONTH];
-		}		
+		}
 	}
 
 	/**
@@ -342,8 +329,8 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 
 	/**
 	 * Is check to disabled Next Button or Not
-	 * 
-	 * @returns 
+	 *
+	 * @returns
 	 */
 	isNextDisabled() {
 		if (!this.selectedDateRange) {
@@ -392,7 +379,7 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 	 * @param event
 	 */
 	rangeClicked(range: any) {
-		const { label } = range 
+		const { label } = range
 		switch (label) {
 			case DateRangeKeyEnum.TODAY:
 			case DateRangeKeyEnum.YESTERDAY:
@@ -413,9 +400,9 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 
 	/**
 	 * Check is custom date
-	 * 
-	 * @param dateRange 
-	 * @returns 
+	 *
+	 * @param dateRange
+	 * @returns
 	 */
 	isCustomDate(dateRange: any): boolean {
 		let isCustomRange = true;
@@ -439,8 +426,8 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 
 	/**
 	 * When date range picker wants to save dates in local storage
-	 * 
-	 * @param range 
+	 *
+	 * @param range
 	 */
 	onSavingFilter(range: IDateRangePicker) {
 		this.timesheetFilterService.filter$
@@ -449,7 +436,7 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 				filter(() => !!this.isSaveDatePicker),
 				tap((filters: ITimeLogFilters) => {
 					const { startDate = range.startDate } = filters;
-					const date = (!this.hasFutureStrategy() && this.isSameOrAfterDay(startDate)) ? 
+					const date = (!this.hasFutureStrategy() && this.isSameOrAfterDay(startDate)) ?
 							moment() :
 							moment(startDate);
 
@@ -472,8 +459,8 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 
 	/**
 	 * Is same or after today
-	 * 
-	 * @param date 
+	 *
+	 * @param date
 	 * @returns {Boolean}
 	 */
 	isSameOrAfterDay(date: string | Date): boolean {
@@ -482,7 +469,7 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 
 	/**
 	 * If has future strategy or not
-	 * 
+	 *
 	 * @param date
 	 * @returns {Boolean}
 	 */
@@ -500,6 +487,26 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 	 */
 	openDatepicker() {
 		this.dateRangePickerDirective.toggle();
+	}
+
+	/**
+	 * get selector default dates
+	 *
+	 * @returns
+	 */
+	getSelectorDates(): IDateRangePicker {
+		const { startDate, endDate } = this.dates$.getValue();
+		const start = moment(startDate);
+		const end = moment(endDate);
+
+		return {
+			startDate: start.toDate(),
+			endDate: end.toDate(),
+			isCustomDate: this.isCustomDate({
+				startDate: start,
+				endDate: end
+			})
+		}
 	}
 
 	ngOnDestroy() {}

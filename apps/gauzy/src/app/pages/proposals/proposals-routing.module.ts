@@ -6,6 +6,7 @@ import { ProposalDetailsComponent } from './proposal-details/proposal-details.co
 import { ProposalEditComponent } from './proposal-edit/proposal-edit.component';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { NgxPermissionsGuard } from 'ngx-permissions';
+import { DateRangePickerResolver } from '../../@theme/components/header/selectors/date-range-picker';
 
 export function redirectTo() {
 	return '/pages/dashboard';
@@ -28,7 +29,10 @@ const routes: Routes = [
 		path: '',
 		component: ProposalsComponent,
 		canActivate: [NgxPermissionsGuard],
-		data: PROPOSAL_VIEW_PERMISSION
+		data: PROPOSAL_VIEW_PERMISSION,
+		resolve: {
+			dates: DateRangePickerResolver
+		}
 	},
 	{
 		path: 'register',

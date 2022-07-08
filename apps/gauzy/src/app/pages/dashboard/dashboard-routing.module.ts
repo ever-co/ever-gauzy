@@ -5,6 +5,7 @@ import { HumanResourcesComponent } from './human-resources/human-resources.compo
 import { AccountingComponent } from './accounting/accounting.component';
 import { ProjectManagementComponent } from './project-management/project-management.component';
 import { TimeTrackingComponent } from './time-tracking/time-tracking.component';
+import { DateRangePickerResolver } from '../../@theme/components/header/selectors/date-range-picker';
 
 const routes: Routes = [
 	{
@@ -26,6 +27,9 @@ const routes: Routes = [
 					datePicker: {
 						unitOfTime: 'month'
 					}
+				},
+				resolve: {
+					dates: DateRangePickerResolver
 				}
 			},
 			{
@@ -38,6 +42,9 @@ const routes: Routes = [
 					datePicker: {
 						unitOfTime: 'month'
 					}
+				},
+				resolve: {
+					dates: DateRangePickerResolver
 				}
 			},
 			{
@@ -47,6 +54,9 @@ const routes: Routes = [
 					datePicker: {
 						unitOfTime: 'week'
 					}
+				},
+				resolve: {
+					dates: DateRangePickerResolver
 				}
 			},
 			{
@@ -56,6 +66,9 @@ const routes: Routes = [
 					datePicker: {
 						unitOfTime: 'month'
 					}
+				},
+				resolve: {
+					dates: DateRangePickerResolver
 				}
 			}
 		]

@@ -1,3 +1,5 @@
+@import 'themes';
+
 .sidemenu-wrap {
   display: flex;
   flex-direction: row;
@@ -78,16 +80,15 @@
   line-height: 14px;
   letter-spacing: 0em;
   text-align: center;
-
-  &.privacy-base {
-    margin-right: 2.25rem;
-  }
-
+  
   &.privacy-category {
     margin-right: 0.5rem;
   }
 }
-
+:host .icons.privacy-base{
+  @include nb-ltr(margin-right, 2.25rem);
+  @include nb-rtl(margin-left, 2.25rem);
+}
 .edit-icons {
   display: none;
   font-size: 1.1rem;
@@ -108,10 +109,11 @@
   background-color: var(--gauzy-card-3);
 }
 
-.parent {
+:host .parent {
   min-width: 272px;
-  margin-left: -16px;
   background-color: var(--gauzy-card-3);
+  @include nb-ltr(margin-left, -16px);
+  @include nb-rtl(margin-right, -16px);
 }
 
 .parentin {
@@ -125,12 +127,13 @@
   background-color: #fafafa;
 }
 
-::ng-deep {
+:host ::ng-deep {
   .toggle-children-wrapper {
     .toggle-children {
       position: relative;
       top: 10px;
-      left: 220px;
+      @include nb-ltr(left, 220px);
+      @include nb-rtl(right, 220px);
       border: solid var(--gauzy-text-color-1);
       ;
       border-width: 0 2px 2px 0;

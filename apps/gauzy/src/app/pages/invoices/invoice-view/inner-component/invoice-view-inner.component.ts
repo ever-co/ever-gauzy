@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, Input, TemplateRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, Input, TemplateRef, ViewChild } from '@angular/core';
 import { CurrencyPipe } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
 import {
@@ -6,7 +6,8 @@ import {
 	IInvoice,
 	InvoiceTypeEnum
 } from '@gauzy/contracts';
-import { LocalDataSource } from 'ng2-smart-table';
+import { tap } from 'rxjs/operators';
+import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
 import { Store, TranslatableService, UsersOrganizationsService } from './../../../../@core/services';
@@ -32,10 +33,21 @@ export class InvoiceViewInnerComponent
 	isTax2FlatValue: boolean;
 	isDiscountFlatValue: boolean;
 	discountTaxTypes = DiscountTaxTypeEnum;
-
+	
+	invoiceViewInnerTable: Ng2SmartTableComponent;
+	@ViewChild('invoiceViewInnerTable') set content(
+		content: Ng2SmartTableComponent
+	) {
+		if (content) {
+			this.invoiceViewInnerTable = content;			
+			this._onChangedSource();
+		}
+	}
+	
 	@Input() invoice: IInvoice;
 	@Input() isEstimate: boolean;
-  @Input() buttonsOutlet: TemplateRef<any>;
+  	@Input() buttonsOutlet: TemplateRef<any>;
+	
 
 	constructor(
 		readonly translateService: TranslateService,
@@ -55,6 +67,7 @@ export class InvoiceViewInnerComponent
 		this.invoiceDate = this.invoice.invoiceDate.toString().slice(0, 10);
 		this.dueDate = this.invoice.dueDate.toString().slice(0, 10);
 		this.loadTableData();
+		this._deselectAll();
 	}
 
 	loadSmartTable() {
@@ -217,6 +230,25 @@ export class InvoiceViewInnerComponent
 	getPipesTransform(value: number, currencyCode: string, position: string): string {
 		const transform = this.currencyPipe.transform(value, currencyCode);
 		return this.currencyPipePosition.transform(transform, position);
+	}
+
+	/*
+	 * Table on changed source event
+	 */
+	private _onChangedSource() {
+		this.invoiceViewInnerTable.source.onChangedSource
+			.pipe(
+				untilDestroyed(this),
+				tap(() => this._deselectAll())
+			)
+			.subscribe();
+	}
+
+	private _deselectAll() {
+		if (this.invoiceViewInnerTable && this.invoiceViewInnerTable.grid) {
+			this.invoiceViewInnerTable.grid.dataSet['willSelect'] = 'false';
+			this.invoiceViewInnerTable.grid.dataSet.deselectAll();
+		}
 	}
 
 	ngOnDestroy() {}

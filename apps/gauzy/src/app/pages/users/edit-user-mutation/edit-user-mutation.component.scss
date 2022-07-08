@@ -1,5 +1,12 @@
 @import 'gauzy/_gauzy-dialogs';
 
-:host nb-card {
-    background: rgba(50, 50, 50, 0.06);
+:host {
+    nb-card {
+        background: rgba(50, 50, 50, 0.06);
+    }
+    .add-organization-action{
+        gap: 1rem;
+        @include nb-ltr(margin-left, 1rem);
+        @include nb-rtl(margin-right, 1rem);
+    }
 }

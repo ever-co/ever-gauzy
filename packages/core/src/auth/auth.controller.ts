@@ -9,7 +9,8 @@ import {
 	Query,
 	UseInterceptors,
 	UsePipes,
-	ValidationPipe
+	ValidationPipe,
+	UseGuards
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiOkResponse, ApiBadRequestResponse } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
@@ -21,14 +22,15 @@ import {
 } from '@gauzy/contracts';
 import { AuthService } from './auth.service';
 import { User as IUser } from '../user/user.entity';
-import { AuthRegisterCommand } from './commands';
+import { AuthLoginCommand, AuthRegisterCommand } from './commands';
 import { RequestContext } from '../core/context';
-import { AuthLoginCommand } from './commands';
 import { TransformInterceptor } from './../core/interceptors';
 import { Public } from './../shared/decorators';
+import { AuthRefreshGuard } from './../shared/guards';
 import { ChangePasswordRequestDTO, ResetPasswordRequestDTO } from './../password-reset/dto';
 import { LoginUserDTO, RegisterUserDTO } from './../user/dto';
-import { HasRoleQueryDTO } from './dto';
+import { UserService } from './../user/user.service';
+import { HasRoleQueryDTO, RefreshTokenDto } from './dto';
 
 @ApiTags('Auth')
 @UseInterceptors(TransformInterceptor)
@@ -36,11 +38,12 @@ import { HasRoleQueryDTO } from './dto';
 export class AuthController {
 	constructor(
 		private readonly authService: AuthService,
+		private readonly userService: UserService,
 		private readonly commandBus: CommandBus
 	) {}
 
 	@ApiOperation({ summary: 'Check if user is authenticated' })
-	
+
 	@ApiOkResponse({ status: HttpStatus.OK, description:'The success server response' })
 	@ApiBadRequestResponse({ status: HttpStatus.BAD_REQUEST, })
 	@Get('/authenticated')
@@ -80,8 +83,8 @@ export class AuthController {
 		@I18nLang() languageCode: LanguagesEnum
 	): Promise<IUser> {
 		return await this.commandBus.execute(
-			new AuthRegisterCommand({ 
-				originalUrl: request.get('Origin'), ...entity }, 
+			new AuthRegisterCommand({
+				originalUrl: request.get('Origin'), ...entity },
 				languageCode
 			)
 		);
@@ -121,5 +124,24 @@ export class AuthController {
 			languageCode,
 			request.get('Origin')
 		);
+	}
+
+	@HttpCode(HttpStatus.OK)
+	@ApiOperation({ summary: 'Logout' })
+	@Get('logout')
+	async getLogOut() {
+		return await this.userService.removeRefreshToken();
+	}
+
+	@HttpCode(HttpStatus.OK)
+	@ApiOperation({ summary: 'Refresh token' })
+	@Public()
+	@UsePipes(new ValidationPipe({ transform: true }))
+	@UseGuards(AuthRefreshGuard)
+	@Post('/refresh-token')
+	async refreshToken(
+		@Body() body: RefreshTokenDto
+	) {
+		return await this.authService.getAccessTokenFromRefreshToken();
 	}
 }

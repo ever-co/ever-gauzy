@@ -12,6 +12,15 @@
   nb-card {
     background-color: nb-theme(gauzy-card-2);
   }
+  ::ng-deep {
+    .card-header-title {
+      @include nb-rtl(gap, 24px);
+    }
+    .actions-container{
+      @include nb-rtl(padding-left, 2rem !important); 
+    }
+  }
+
   @include nb-card-overrides(
     unset,
     calc($default-card-height + 3.5rem),

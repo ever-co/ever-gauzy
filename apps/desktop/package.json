@@ -54,7 +54,7 @@
 		"form-data": "^3.0.0",
 		"knex": "^0.21.6",
 		"mac-screen-capture-permissions": "^2.0.0",
-		"moment": "^2.29.3",
+		"moment": "^2.29.4",
 		"ngx-electron": "^2.2.0",
 		"node-fetch": "^2.6.7",
 		"node-notifier": "^8.0.0",
@@ -65,7 +65,7 @@
 		"sound-play": "1.1.0",
 		"squirrelly": "^8.0.8",
 		"twing": "^5.0.2",
-		"typeorm": "^0.2.38",
+		"typeorm": "^0.2.45",
 		"typeorm-aurora-data-api-driver": "^2.3.3",
 		"typeorm-express-query-builder": "https://github.com/ever-co/typeorm-express-query-builder.git",
 		"@angular/material": "13.2.2"

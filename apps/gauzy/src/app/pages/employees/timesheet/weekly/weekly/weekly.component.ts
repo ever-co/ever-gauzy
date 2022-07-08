@@ -32,7 +32,7 @@ interface WeeklyDayData {
 	templateUrl: './weekly.component.html',
 	styleUrls: ['./weekly.component.scss']
 })
-export class WeeklyComponent extends BaseSelectorFilterComponent 
+export class WeeklyComponent extends BaseSelectorFilterComponent
 	implements OnInit, OnDestroy {
 
 	PermissionsEnum = PermissionsEnum;
@@ -114,8 +114,8 @@ export class WeeklyComponent extends BaseSelectorFilterComponent
 
 	/**
 	 * Prepare Unique Request Always
-	 * 
-	 * @returns 
+	 *
+	 * @returns
 	 */
 	prepareRequest() {
 		if (!this.organization || isEmpty(this.filters)) {
@@ -178,12 +178,16 @@ export class WeeklyComponent extends BaseSelectorFilterComponent
 	openAddEdit(timeLog?: ITimeLog) {
 		this.nbDialogService
 			.open(EditTimeLogModalComponent, { context: { timeLog } })
-			.onClose.pipe(untilDestroyed(this))
-			.subscribe((data) => {
-				if (data) {
-					this.subject$.next(true);
-				}
-			});
+			.onClose
+			.pipe(
+				filter((timeLog: ITimeLog) => !!timeLog),
+				tap((timeLog: ITimeLog) => this._dateRangePickerBuilderService.refreshDateRangePicker(
+					moment(timeLog.startedAt)
+				)),
+				tap(() => this.subject$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	openAddByDateProject(date, project: IOrganizationProject) {
@@ -213,12 +217,16 @@ export class WeeklyComponent extends BaseSelectorFilterComponent
 					}
 				}
 			})
-			.onClose.pipe(untilDestroyed(this))
-			.subscribe((data) => {
-				if (data) {
-					this.subject$.next(true);
-				}
-			});
+			.onClose
+			.pipe(
+				filter((timeLog: ITimeLog) => !!timeLog),
+				tap((timeLog: ITimeLog) => this._dateRangePickerBuilderService.refreshDateRangePicker(
+					moment(timeLog.startedAt)
+				)),
+				tap(() => this.subject$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	addTimeCallback = (data: ITimeLog) => {
@@ -232,6 +240,6 @@ export class WeeklyComponent extends BaseSelectorFilterComponent
 			? true
 			: moment(date).isSameOrBefore(moment());
 	}
-	
+
 	ngOnDestroy(): void {}
 }

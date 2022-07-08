@@ -5,22 +5,23 @@ import {
 	IRolePermission,
 	IAuthResponse,
 	IUser,
-	IChangePasswordRequest
+	IChangePasswordRequest,
+	IPasswordReset
 } from '@gauzy/contracts';
 import { CommandBus } from '@nestjs/cqrs';
+import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { getManager } from 'typeorm';
 import { SocialAuthService } from '@gauzy/auth';
-import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { isNotEmpty } from '@gauzy/common';
 import * as bcrypt from 'bcrypt';
-import { JsonWebTokenError, sign, verify } from 'jsonwebtoken';
+import { JsonWebTokenError, JwtPayload, sign, verify } from 'jsonwebtoken';
 import { EmailService } from '../email/email.service';
 import { User } from '../user/user.entity';
 import { UserService } from '../user/user.service';
 import { UserOrganizationService } from '../user-organization/user-organization.services';
 import { ImportRecordUpdateOrCreateCommand } from './../export-import/import-record';
 import { PasswordResetCreateCommand, PasswordResetGetCommand } from './../password-reset/commands';
-import { IPasswordReset } from '@gauzy/contracts';
-import { RequestContext } from 'core';
+import { RequestContext } from './../core/context';
 
 @Injectable()
 export class AuthService extends SocialAuthService {
@@ -35,10 +36,10 @@ export class AuthService extends SocialAuthService {
 
 	/**
 	 * User Login Request
-	 * 
-	 * @param email 
-	 * @param password 
-	 * @returns 
+	 *
+	 * @param email
+	 * @param password
+	 * @returns
 	 */
 	async login(email: string, password: string): Promise<IAuthResponse | null> {
 		const user = await this.userService.findOneByConditions({ email }, {
@@ -47,23 +48,37 @@ export class AuthService extends SocialAuthService {
 				createdAt: 'DESC'
 			}
 		});
-		if (!user || !(await bcrypt.compare(password, user.hash))) {
-			return null;
+
+		if (!user || user.isActive === false) {
+			throw new UnauthorizedException();
 		}
-		const { token } = await this.createToken(user);
+		// If employees are inactive
+		if (isNotEmpty(user.employee) && user.employee.isActive === false) {
+			throw new UnauthorizedException();
+		}
+		// If password is not matching with any user
+		if (!(await bcrypt.compare(password, user.hash))) {
+			throw new UnauthorizedException();
+		}
+
+		const access_token = await this.getJwtAccessToken(user);
+		const refresh_token = await this.getJwtRefreshToken(user);
+
+		await this.userService.setCurrentRefreshToken(refresh_token, user.id);
 		return {
 			user,
-			token
+			token: access_token,
+			refresh_token: refresh_token
 		};
 	}
 
 	/**
 	 * Request Reset Password
-	 * 
-	 * @param request 
-	 * @param languageCode 
-	 * @param originUrl 
-	 * @returns 
+	 *
+	 * @param request
+	 * @param languageCode
+	 * @param originUrl
+	 * @returns
 	 */
 	async requestPassword(
 		request: any,
@@ -78,7 +93,7 @@ export class AuthService extends SocialAuthService {
 				/**
 				 * Create password reset request
 				 */
-				const { token } = await this.createToken(user);
+				const token = await this.getJwtAccessToken(user);
 				if (token) {
 					await this.commandBus.execute(
 						new PasswordResetCreateCommand({
@@ -93,7 +108,7 @@ export class AuthService extends SocialAuthService {
 							user
 						}
 					});
-					
+
 					this.emailService.requestPassword(
 						user,
 						url,
@@ -117,8 +132,8 @@ export class AuthService extends SocialAuthService {
 
 	/**
 	 * Change password
-	 * 
-	 * @param request 
+	 *
+	 * @param request
 	 */
 	async resetPassword(request: IChangePasswordRequest) {
 		try {
@@ -256,12 +271,12 @@ export class AuthService extends SocialAuthService {
 
 	/**
 	 * Check current user has role
-	 * 
-	 * @param token 
-	 * @param roles 
-	 * @returns 
+	 *
+	 * @param token
+	 * @param roles
+	 * @returns
 	 */
-	 async hasRole(roles: string[] = []): Promise<boolean> {
+	async hasRole(roles: string[] = []): Promise<boolean> {
 		try {
 			const { role } = await this.userService.findOneByIdString(RequestContext.currentUserId(), {
 				relations: ['role']
@@ -294,7 +309,7 @@ export class AuthService extends SocialAuthService {
 				);
 				if (userExist) {
 					const user = await this.userService.getUserByEmail(value);
-					const { token } = await this.createToken(user);
+					const token = await this.getJwtAccessToken(user);
 
 					response = {
 						success: true,
@@ -312,43 +327,86 @@ export class AuthService extends SocialAuthService {
 	}
 
 	/**
-	 * Create random token
-	 * 
-	 * @param user 
-	 * @returns 
+	 * Get JWT access token
+	 *
+	 * @param payload
+	 * @returns
 	 */
-	async createToken(user: Partial<IUser>): Promise<{ token: string }> {
-		if (!user.role || !user.employee) {
-			user = await this.userService.findOneByIdString(user.id, {
-				relations: ['role', 'role.rolePermissions', 'employee']
+	public async getJwtAccessToken(request: Partial<IUser>) {
+		try {
+			const userId = request.id;
+			const user = await this.userService.findOneByConditions({ id: userId }, {
+				relations: ['role', 'role.rolePermissions', 'employee'],
+				order: {
+					createdAt: 'DESC'
+				}
 			});
-		}
-
-		const payload: any = {
-			id: user.id,
-			tenantId: user.tenantId,
-			employeeId: user.employee ? user.employee.id : null
-		};
-
-		if (user.role) {
-			payload.role = user.role.name;
-			if (user.role.rolePermissions) {
-				payload.permissions = user.role.rolePermissions
-					.filter(
-						(rolePermission: IRolePermission) =>
-							rolePermission.enabled
-					)
-					.map(
-						(rolePermission: IRolePermission) =>
-							rolePermission.permission
-					);
+			const payload: JwtPayload = {
+				id: user.id,
+				tenantId: user.tenantId,
+				employeeId: user.employee ? user.employee.id : null
+			};
+			if (user.role) {
+				payload.role = user.role.name;
+				if (user.role.rolePermissions) {
+					payload.permissions = user.role.rolePermissions
+						.filter(
+							(rolePermission: IRolePermission) =>
+								rolePermission.enabled
+						)
+						.map(
+							(rolePermission: IRolePermission) =>
+								rolePermission.permission
+						);
+				} else {
+					payload.permissions = null;
+				}
 			} else {
-				payload.permissions = null;
+				payload.role = null;
 			}
-		} else {
-			payload.role = null;
+			const accessToken = sign(payload, environment.JWT_SECRET, {})
+        	return accessToken;
+		} catch (error) {
+			console.log('Error while getting jwt access token', error);
 		}
-		const token: string = sign(payload, environment.JWT_SECRET, {});
-		return { token };
+    }
+
+	/**
+	 * Get JWT refresh token
+	 *
+	 * @param payload
+	 * @returns
+	 */
+	public async getJwtRefreshToken(user: Partial<IUser>) {
+		try {
+			const payload: JwtPayload = {
+				id: user.id,
+				email: user.email,
+				tenantId: (user.tenantId) || null,
+				role: (user.role) ? (user.role.name) : null
+			};
+			const refreshToken = sign(payload, environment.JWT_REFRESH_TOKEN_SECRET, {
+				expiresIn: `${environment.JWT_REFRESH_TOKEN_EXPIRATION_TIME}s`
+			});
+			return refreshToken;
+		} catch (error) {
+			console.log('Error while getting jwt refresh token', error);
+		}
+    }
+
+	/**
+	 * Get JWT access token from JWT refresh token
+	 *
+	 * @returns
+	 */
+	async getAccessTokenFromRefreshToken() {
+		try {
+			const user = RequestContext.currentUser();
+			return {
+				token: await this.getJwtAccessToken(user)
+			}
+		} catch (error) {
+			console.log('Error while getting jwt access token from refresh token', error);
+		}
 	}
 }

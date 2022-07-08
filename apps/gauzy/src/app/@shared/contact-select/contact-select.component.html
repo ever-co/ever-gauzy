@@ -1,5 +1,5 @@
 <ng-select
-	[addTag]="(addTag) ? addOrganizationContact : null"
+	[addTag]="((hasEditEmployee$ | async) && addTag) ? addOrganizationContact : null"
 	[clearable]="clearable"
 	[disabled]="disabled"
 	[searchable]="searchable"

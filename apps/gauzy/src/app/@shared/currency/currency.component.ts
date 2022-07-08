@@ -35,7 +35,7 @@ import { environment as ENV } from './../../../environments/environment';
 		}
 	]
 })
-export class CurrencyComponent extends TranslationBaseComponent 
+export class CurrencyComponent extends TranslationBaseComponent
 	implements OnInit, AfterViewInit, ControlValueAccessor {
 
 	@Input() formControl: FormControl = new FormControl();
@@ -63,7 +63,7 @@ export class CurrencyComponent extends TranslationBaseComponent
 			this.onTouched();
 		}
 	}
-	
+
 	/*
 	* Getter & Setter for dynamic placeholder
 	*/
@@ -119,7 +119,7 @@ export class CurrencyComponent extends TranslationBaseComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
-		
+
 	}
 
 	ngAfterViewInit() {
@@ -131,7 +131,7 @@ export class CurrencyComponent extends TranslationBaseComponent
 			const currency = this._currencies.find(
 				(currency: ICurrency) => currency.isoCode === value
 			);
-			this.currency = currency.isoCode;
+			this.currency = !!currency ? currency.isoCode : null;
 			this.onOptionChange(currency);
 		}
 	}

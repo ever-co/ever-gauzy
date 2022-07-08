@@ -5,4 +5,13 @@
   nb-card {
     background-color: nb-theme(background-basic-color-1);
   }
+
+  ::ng-deep {
+    .cancel {
+      @include nb-rtl(justify-content, flex-start);
+    }
+    .title {
+      @include nb-rtl(text-align, right);
+    }
+  }
 }

@@ -160,6 +160,7 @@ Together with Gauzy, Docker Compose will run following:
 -   Optionally install and run [PostgreSQL](https://www.postgresql.org) version 11 or 12 (version 13 might not be supported yet). Note: other DB can be configured manually in TypeORM. The default DB is set to SQLite (recommended for testing/demo purposes only).
 -   Install [Yarn](https://github.com/yarnpkg/yarn) (if you don't have it) with `npm i -g yarn`.
 -   Install NPM packages and bootstrap solution using command `yarn bootstrap`.
+-   If you will need to make code changes (and push to Git repo), please run `yarn prepare:husky`.
 -   Adjust settings in the [`.env.local`](https://github.com/ever-co/ever-gauzy/blob/develop/.env.local) which used in local runs.  
 -   Alternatively, you can copy [`.env.sample`](https://github.com/ever-co/ever-gauzy/blob/develop/.env.sample) to `.env` and change default settings there, e.g. database type, name, user, password, etc.
 -   Optionally, if you want to seed a lot of fake data for demo testing, run `yarn seed:all`.

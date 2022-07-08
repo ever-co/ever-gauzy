@@ -34,7 +34,10 @@
 
   .view-all {
     position: absolute;
-    right: 20px;
+    ::ng-deep {
+      @include nb-ltr(right, 20px);
+      @include nb-rtl(left, 20px);
+    }
   }
 
   [nbButton].appearance-outline.status-primary {
@@ -43,7 +46,6 @@
     font-weight: 600;
     line-height: 15px;
     letter-spacing: 0em;
-    text-align: left;
     border-color: var(--gauzy-background-transparent);
     color: var(--button-outline-primary-text-color);
     border-width: 2px;
@@ -141,7 +143,6 @@ nb-badge {
     font-weight: 600;
     line-height: 11px;
     letter-spacing: 0em;
-    text-align: left;
   }
 }
 
@@ -165,6 +166,5 @@ nb-card-body>p {
   font-weight: 400;
   line-height: 16px;
   letter-spacing: -0.009em;
-  text-align: left;
   color: var(--gauzy-text-color-2);
 }

@@ -117,6 +117,10 @@ spec:
                         value: '$EXPRESS_SESSION_SECRET'
                       - name: JWT_SECRET
                         value: '$JWT_SECRET'
+                      - name: JWT_REFRESH_TOKEN_SECRET
+                        value: '$JWT_REFRESH_TOKEN_SECRET'
+                      - name: JWT_REFRESH_TOKEN_EXPIRATION_TIME
+                        value: '$JWT_REFRESH_TOKEN_EXPIRATION_TIME'
                       - name: CLOUDINARY_API_KEY
                         value: '$CLOUDINARY_API_KEY'
                       - name: CLOUDINARY_API_SECRET
