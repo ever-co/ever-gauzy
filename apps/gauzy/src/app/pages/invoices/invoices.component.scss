@@ -390,10 +390,11 @@ nb-tab {
 }
 
 ::ng-deep {
-  .search-tab .no-data-found{
+  .search-tab .no-data-found {
     max-height: calc(100vh - 42rem)!important;
   }
-  .history-tab .no-data-found{
+  
+  .history-tab .no-data-found {
     max-height: calc(100vh - 32rem)!important;
   }
 }
