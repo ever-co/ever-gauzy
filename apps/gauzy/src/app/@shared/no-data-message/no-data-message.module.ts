@@ -1,17 +1,17 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NbCardModule, NbIconModule } from '@nebular/theme';
-import { NodataComponent } from './no-data.component';
 import { NbEvaIconsModule } from '@nebular/eva-icons';
 import { TranslateModule } from '../translate/translate.module';
+import { NoDataMessageComponent } from './no-data-message.component';
 
 
 @NgModule({
   declarations: [
-    NodataComponent
+    NoDataMessageComponent
   ],
   exports:[
-    NodataComponent
+    NoDataMessageComponent
   ],
   imports: [
     TranslateModule,
@@ -21,4 +21,4 @@ import { TranslateModule } from '../translate/translate.module';
     NbEvaIconsModule
   ]
 })
-export class NodataModule { }
+export class NoDataMessageModule { }

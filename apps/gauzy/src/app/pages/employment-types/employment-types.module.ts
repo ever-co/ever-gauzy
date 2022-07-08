@@ -23,7 +23,8 @@ import { TranslateModule } from '../../@shared/translate/translate.module';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
 import { PaginationModule } from '../../@shared/pagination/pagination.module';
-import { NodataModule } from '../../@shared/no-data/no-data.module';
+import { NoDataMessageModule } from '../../@shared/no-data-message/no-data-message.module';
+
 
 @NgModule({
 	imports: [
@@ -48,7 +49,7 @@ import { NodataModule } from '../../@shared/no-data/no-data.module';
 		GauzyButtonActionModule,
 		PaginationModule,
 		NbTabsetModule,
-		NodataModule,
+		NoDataMessageModule,
 		NbTooltipModule
 	],
 	declarations: [EmploymentTypesComponent],

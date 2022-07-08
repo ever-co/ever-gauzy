@@ -58,9 +58,9 @@
 			></ga-card-grid>
 		</ng-template>
 		<ng-template [ngIf]="!loading && employeeLevels?.length == 0">
-			<gauzy-no-data 
+			<ngx-no-data-message 
 				[message]="'ORGANIZATIONS_PAGE.EMPLOYEE_LEVEL_NO_DATA_MESSAGE'"
-			></gauzy-no-data>			
+			></ngx-no-data-message>			
 		</ng-template>
 	</nb-card-body>
 </nb-card>
