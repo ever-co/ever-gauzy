@@ -6,7 +6,7 @@
 	class="mb-1"
 >
 	<nb-card>
-		<nb-card-header class="d-flex justify-content-between" *ngIf="!!task">
+		<!-- <nb-card-header class="d-flex justify-content-between" *ngIf="!!task">
 			<div>
 				<ngx-status-view
 					class="mr-2"
@@ -14,7 +14,7 @@
 					[nbContextMenu]="taskStatusList"
 					[nbContextMenuTag]="'changeStatus:' + task.id"
 				></ngx-status-view>
-				<span>{{ task.title }}</span>
+				<div>{{ task.title }}</div>
 			</div>
 			<div>
 				<button
@@ -26,10 +26,30 @@
 					...
 				</button>
 			</div>
-		</nb-card-header>
-		<nb-card-body style="min-height: 3rem;">
+		</nb-card-header> -->
+		<nb-card-body>
 			<div class="row">
-				<span class="col-3">
+				<span class="col">
+					{{ task?.taskNumber }}
+				</span>
+				<span class="col">
+					<ga-notes-with-tags [rowData]="task"></ga-notes-with-tags>
+				</span>
+				<span class="col">
+					<ngx-project [rowData]="task"></ngx-project>
+				</span>
+				<span class="col">
+					<ngx-created-at [value]="task?.createdAt"></ngx-created-at>
+				</span>
+				<span class="col">
+					<ngx-status-view
+						class="mr-2"
+						[value]="task.status"
+						[nbContextMenu]="taskStatusList"
+						[nbContextMenuTag]="'changeStatus:' + task.id"
+					></ngx-status-view>
+				</span>
+				<span class="col">
 					<nb-badge
 						*ngFor="let tag of task.tags"
 						class="color"
@@ -39,12 +59,11 @@
 					>
 					</nb-badge>
 				</span>
-				<span class="col-5">
+				<span class="col">
 					<ngx-employee-with-links
-						[value]="task.employees"
+						[value]="task?.employees"
 					></ngx-employee-with-links>
 				</span>
-				<span class="col-4"> </span>
 			</div>
 		</nb-card-body>
 	</nb-card>
