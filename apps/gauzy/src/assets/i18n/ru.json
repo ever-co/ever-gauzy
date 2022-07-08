@@ -391,7 +391,8 @@
 			"DEFAULT_ESTIMATE_TEMPLATE": "Стандартный шаблон оценки",
 			"DEFAULT_RECEIPT_TEMPLATE": "Шаблон чека по умолчанию",
 			"DEFAULT": "Организация по умолчанию",
-			"INVITATION_EXPIRATION": "Срок приглашения истекает"
+			"INVITATION_EXPIRATION": "Срок приглашения истекает",
+			"PERIOD": "Период"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Имя",
