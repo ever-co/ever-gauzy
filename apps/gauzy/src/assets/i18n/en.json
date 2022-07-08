@@ -161,7 +161,8 @@
 			"TIME_FRAME": "You have not created any time frame.",
 			"KPI": "You have not created any KPI.",
 			"INVOICE": "You have not created any invoice.",
-			"ESTIMATE": "You have not created any estimate."
+			"ESTIMATE": "You have not created any estimate.",
+			"EVENT_TYPE": "You have not created any event type."
 		},
 		"TRANSACTION_TYPE": "Type",
 		"AMOUNT": "Amount",
