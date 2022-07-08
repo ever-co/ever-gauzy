@@ -14,7 +14,7 @@ ng-select {
 	}
 }
 
-::ng-deep .employee.ng-select .ng-select-container .ng-value-container {
+:host ::ng-deep .employee.ng-select .ng-select-container .ng-value-container {
 	@include nb-ltr(padding-left, 0);
 	@include nb-rtl(padding-right, 0);
 }
