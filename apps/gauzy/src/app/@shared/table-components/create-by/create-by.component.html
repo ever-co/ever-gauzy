@@ -1,19 +1,21 @@
 <div class="avatar-container">
-	<ng-template [ngIf]="value?.id" [ngIfElse]="string">
+	<ng-template [ngIf]="rowData?.creator">
 		<a
 			class="avatar"
-			[nbTooltip]="value?.firstName + value?.lastName"
-			(click)="edit(value?.id)"
+			[nbTooltip]="
+				rowData?.creator?.firstName + rowData?.creator?.lastName
+			"
+			(click)="edit(rowData?.creator?.id)"
 		>
-			<img class="img" type="creator" [src]="value?.imageUrl" />
+			<img
+				class="img"
+				type="creator"
+				[src]="rowData?.creator?.imageUrl"
+			/>
 			<div class="names-wrapper">
-				{{ value?.firstName }} {{ value?.lastName }}
+				{{ rowData?.creator?.firstName }}
+				{{ rowData?.creator?.lastName }}
 			</div>
-		</a>
-	</ng-template>
-	<ng-template #string>
-		<a class="avatar string">
-			<div class="names-wrapper">{{ value }}</div>
 		</a>
 	</ng-template>
 </div>
