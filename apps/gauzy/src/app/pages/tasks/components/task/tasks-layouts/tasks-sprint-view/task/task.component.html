@@ -20,6 +20,11 @@
 					></ngx-employee-with-links>
 				</span>
 				<span class="col">
+					<ngx-date-view
+						[value]="task?.dueDate"
+					></ngx-date-view>
+				</span>
+				<span class="col">
 					<ngx-status-view
 						class="mr-2"
 						[value]="task.status"

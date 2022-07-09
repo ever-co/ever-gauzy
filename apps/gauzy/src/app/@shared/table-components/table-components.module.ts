@@ -100,7 +100,8 @@ import { PhoneUrlComponent } from './phone-url/phone-url.component';
 		ProjectOrganizationComponent,
 		PhoneUrlComponent,
 		CreateByComponent,
-		CreatedAtComponent
+		CreatedAtComponent,
+		DateViewComponent
 	],
 	providers: []
 })
