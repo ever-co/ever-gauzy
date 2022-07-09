@@ -1,7 +1,7 @@
-import { Connection, ConnectionOptions, createConnection, getConnection } from 'typeorm';
+import { DataSource, DataSourceOptions } from 'typeorm';
 import * as chalk from 'chalk';
 import * as path from 'path';
-import { DEFAULT_DB_CONNECTION, IPluginConfig, isNotEmpty } from "@gauzy/common";
+import { IPluginConfig, isNotEmpty } from "@gauzy/common";
 import { camelCase } from 'typeorm/util/StringUtils';
 import { registerPluginConfig } from './../bootstrap';
 import { MigrationUtils } from './utils';
@@ -17,6 +17,7 @@ import { MigrationUtils } from './utils';
      * Name of the migration class.
      * `{TIMESTAMP}-{name}.ts`.
      */
+
     name: string;
 
     /**
@@ -40,10 +41,10 @@ import { MigrationUtils } from './utils';
  */
 export async function runDatabaseMigrations(pluginConfig: Partial<IPluginConfig>) {
     const config = await registerPluginConfig(pluginConfig);
-    const connection = await establishDatabaseConnection(config);
+    const dataSource: DataSource = await establishDatabaseConnection(config);
 
     try {
-        const migrations = await connection.runMigrations({ transaction: 'each' });
+        const migrations = await dataSource.runMigrations({ transaction: 'each' });
         if (isNotEmpty(migrations)) {
             for (const migration of migrations) {
                 console.log(chalk.green(`Migration ${migration.name} has been run successfully!`));
@@ -52,13 +53,13 @@ export async function runDatabaseMigrations(pluginConfig: Partial<IPluginConfig>
             console.log(chalk.yellow(`There are no pending migrations to run.`));
         }
     } catch (error) {
-        if (connection) (await closeConnection(connection));
+        if (dataSource) (await closeConnection(dataSource));
 
         console.log(chalk.black.bgRed("Error during migration run:"));
         console.error(error);
         process.exit(1);
     } finally {
-        await closeConnection(connection);
+        await closeConnection(dataSource);
     }
 }
 
@@ -103,7 +104,7 @@ export async function generateMigration(pluginConfig: Partial<IPluginConfig>, op
     // if directory is not set then try to open plugin config and find default path there
     if (!directory) {
         try {
-            directory = config.dbConnectionOptions.cli ? config.dbConnectionOptions.cli.migrationsDir : undefined;
+            directory = config.dbConnectionOptions['cli'] ? config.dbConnectionOptions['cli']['migrationsDir'] : undefined;
         } catch (err) {
             console.log('Error while finding migration directory', err);
         }
@@ -175,7 +176,7 @@ export async function generateMigration(pluginConfig: Partial<IPluginConfig>, op
     // if directory is not set then try to open plugin config and find default path there
     if (!directory) {
         try {
-            directory = config.dbConnectionOptions.cli ? config.dbConnectionOptions.cli.migrationsDir : undefined;
+            directory = config.dbConnectionOptions['cli'] ? config.dbConnectionOptions['cli']['migrationsDir'] : undefined;
         } catch (err) {
             console.log('Error while finding migration directory', err);
         }
@@ -221,7 +222,7 @@ export async function generateMigration(pluginConfig: Partial<IPluginConfig>, op
  *
  * @param config
  */
-export async function establishDatabaseConnection(config: Partial<IPluginConfig>): Promise<Connection> {
+export async function establishDatabaseConnection(config: Partial<IPluginConfig>): Promise<DataSource> {
     const { dbConnectionOptions } = config;
     const overrideDbConfig = {
         subscribers: [],
@@ -231,25 +232,23 @@ export async function establishDatabaseConnection(config: Partial<IPluginConfig>
         logging: ['all']
     };
 
-    let dataSource: DataSource|undefined = undefined;
+    let dataSource: DataSource;
     try {
-        connection = getConnection(DEFAULT_DB_CONNECTION);
-    } catch (error) {
         console.log(chalk.yellow('NOTE: DATABASE CONNECTION DOES NOT EXIST YET. NEW ONE WILL BE CREATED!'));
-    }
-    try {
-        if (!connection || !connection.isConnected) {
-            connection = await createConnection({
-                name: DEFAULT_DB_CONNECTION,
+        try {
+            console.log(chalk.green(`CONNECTING TO DATABASE...`));
+            dataSource = new DataSource({
                 ...dbConnectionOptions,
                 ...overrideDbConfig
-            } as ConnectionOptions);
+            } as DataSourceOptions);
             console.log(chalk.green(`✅ CONNECTED TO DATABASE!`));
+        } catch (error) {
+            console.log('Unable to connect to database', error);
         }
     } catch (error) {
         console.log('Error while connecting to the database', error);
     }
-    return connection;
+    return dataSource;
 }
 
 /**
@@ -260,8 +259,8 @@ export async function establishDatabaseConnection(config: Partial<IPluginConfig>
  */
 async function closeConnection(dataSource: DataSource) {
     try {
-        if (connection && connection.isConnected) {
-            await connection.close();
+        if (dataSource && dataSource.isInitialized) {
+            await dataSource.destroy();
             console.log(chalk.green(`✅ DISCONNECTED TO DATABASE!`));
         }
     } catch (error) {
