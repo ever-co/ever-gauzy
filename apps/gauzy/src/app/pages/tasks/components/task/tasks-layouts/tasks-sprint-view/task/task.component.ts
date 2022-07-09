@@ -6,7 +6,7 @@ import {
 	OnInit,
 	OnDestroy
 } from '@angular/core';
-import { ITask, IEmployee, TaskStatusEnum, ITasksStatistics } from '@gauzy/contracts';
+import { ITask, TaskStatusEnum } from '@gauzy/contracts';
 import { NbMenuService } from '@nebular/theme';
 import { tap, filter, map, takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
@@ -20,15 +20,15 @@ import { TranslateService } from '@ngx-translate/core';
 })
 export class SprintTaskComponent
 	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
+	implements OnInit, OnDestroy
+{
 	@Input() task: any;
 	@Output() taskActionEvent: EventEmitter<{
 		action: string;
 		task: ITask;
 	}> = new EventEmitter();
-	@Output() changeStatusEvent: EventEmitter<
-		Partial<ITask>
-	> = new EventEmitter();
+	@Output() changeStatusEvent: EventEmitter<Partial<ITask>> =
+		new EventEmitter();
 	taskStatusList: any;
 	taskActions: any;
 	private onDestroy$ = new Subject<void>();

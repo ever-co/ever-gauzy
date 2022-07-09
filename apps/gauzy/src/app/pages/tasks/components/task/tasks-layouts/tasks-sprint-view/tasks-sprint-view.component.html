@@ -75,6 +75,7 @@
 					(cdkDropListDropped)="drop($event)"
 				>
 					<ga-sprint-task
+						(changeStatusEvent)="changeTaskStatus($event)"
 						(click)="toggleItemSelection(task)"
 						*ngFor="let task of backlogTasks"
 						[task]="task"
