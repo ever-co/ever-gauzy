@@ -30,6 +30,7 @@ import { TaskSelectModule } from './../../../../@shared/tasks/task-select/task-s
 import { DialogsModule } from './../../../../@shared/dialogs';
 import { TableComponentsModule } from 'apps/gauzy/src/app/@shared';
 import { GauzyButtonActionModule } from 'apps/gauzy/src/app/@shared/gauzy-button-action/gauzy-button-action.module';
+import { NoDataMessageModule } from 'apps/gauzy/src/app/@shared/no-data-message/no-data-message.module';
 
 @NgModule({
 	declarations: [DailyComponent],
@@ -60,7 +61,8 @@ import { GauzyButtonActionModule } from 'apps/gauzy/src/app/@shared/gauzy-button
 		ViewTimeLogModule,
 		DialogsModule,
 		TableComponentsModule,
-		GauzyButtonActionModule
+		GauzyButtonActionModule,
+		NoDataMessageModule
 	]
 })
 export class DailyModule {}

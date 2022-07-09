@@ -27,4 +27,8 @@
         background: var(--gauzy-sidebar-background-3);
 
     }
+    ::ng-deep .log-container .no-data-found {
+		max-height: calc(100vh - 30.7rem);  
+		margin-top: 1rem;
+	}
 }

@@ -165,9 +165,10 @@
 			"EVENT_TYPE": "You have not created any event type.",
 			"SCREENSHOTS": "No records found. Please select date range, employee or project.",
 			"NO_SCREENSHOT": "No Screenshots",
-			"TIME_LOG": "No Timelog",
+			"TIME_LOG": "No timelogs found",
 			"ACTIVITIES": "No Activities",
-			"CLIENT": "You have not created any client."			
+			"CLIENT": "You have not created any client.",
+			"AMOUNT_OWED": "No Amount Owed"			
 		},
 		"TRANSACTION_TYPE": "Type",
 		"AMOUNT": "Amount",
@@ -1028,7 +1029,6 @@
 		"CLIENT": "Client",
 		"PROJECTS_WORKED": "Projects Worked",
 		"APPS_AND_URLS_REPORT": "Apps & URLs Report",
-		"NO_ACTIVITIES": "No Activities",
 		"ACTIVITY": "Activity",
 		"TOTAL_HOURS": "Total Hours",
 		"EMPLOYEE": "Employee",
@@ -1058,7 +1058,6 @@
 		"CURRENCY": "Currency",
 		"NOTE": "Note",
 		"AMOUNT_OWED": "Amount Owed Report",
-		"NO_AMOUNT_OWED": "No Amount Owed",
 		"CURRENT_RATE": "Current Rate",
 		"HOURS": "Hours",
 		"SPENT": "Spent",

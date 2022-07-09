@@ -15,6 +15,7 @@
 	</nb-card-header>
 	<nb-card-body>
 		<div
+			class="approval-container"
 			[nbSpinner]="loading"
 			[nbSpinnerSize]="'giant'"
 			[nbSpinnerStatus]="'primary'"
@@ -87,11 +88,9 @@
 				</div>
 			</ng-template>
 			<ng-template #notFound>
-				<div class="row font-weight-bold py-3 align-items-center">
-					<div class="col text-center">
-						{{ 'TIMESHEET.NO_TIMELOG' | translate }}
-					</div>
-				</div>
+				<ngx-no-data-message
+					[message]="'SM_TABLE.NO_DATA.TIME_LOG'"
+				></ngx-no-data-message>	
 			</ng-template>
 		</div>
 	</nb-card-body>
