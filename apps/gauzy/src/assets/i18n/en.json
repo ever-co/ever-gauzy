@@ -166,7 +166,8 @@
 			"SCREENSHOTS": "No records found. Please select date range, employee or project.",
 			"NO_SCREENSHOT": "No Screenshots",
 			"TIME_LOG": "No Timelog",
-			"ACTIVITIES": "No Activities"
+			"ACTIVITIES": "No Activities",
+			"CLIENT": "You have not created any client."			
 		},
 		"TRANSACTION_TYPE": "Type",
 		"AMOUNT": "Amount",
@@ -1070,9 +1071,7 @@
 		"SPENT_HOURS": "Spent Hours",
 		"REMAINING_HOURS": "Remaining Hours",
 		"PROJECT_BUDGET_REPORTS": "Project Budget Reports",
-		"NO_PROJECTS": "No Projects",
 		"CLIENT_BUDGET_REPORTS": "Client Budget Reports",
-		"NO_CLIENTS": "No Clients",
 		"EXPENSE": "Expense",
 		"PAYMENT": "Payment",
 		"NO_EMPLOYEES_WORKED": "No employees worked",

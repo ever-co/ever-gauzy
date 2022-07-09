@@ -23,6 +23,7 @@ import { SharedModule } from './../../../../@shared/shared.module';
 import { GauzyFiltersModule } from './../../../../@shared/timesheet/gauzy-filters/gauzy-filters.module';
 import { EditTimeLogModalModule, ViewTimeLogModule } from 'apps/gauzy/src/app/@shared/timesheet';
 import { TableComponentsModule } from 'apps/gauzy/src/app/@shared';
+import { NoDataMessageModule } from 'apps/gauzy/src/app/@shared/no-data-message/no-data-message.module';
 
 @NgModule({
 	declarations: [WeeklyComponent],
@@ -46,7 +47,8 @@ import { TableComponentsModule } from 'apps/gauzy/src/app/@shared';
 		ViewTimeLogModule,
 		NbCardModule,
 		NbCheckboxModule,
-		TableComponentsModule
+		TableComponentsModule,
+		NoDataMessageModule
 	]
 })
 export class WeeklyModule {}

@@ -20,7 +20,7 @@
 	</div>
 </div>
 <div
-	class="weekly-logs row-table"
+	class="weekly-logs row-table payment-report-grid"
 	[nbSpinner]="loading"
 	nbSpinnerSize="giant"
 	nbSpinnerStatus="primary"
@@ -58,15 +58,9 @@
 		</nb-card>
 	</ng-template>
 	<ng-template #notFound>
-		<nb-card>
-			<nb-card-body>
-				<div class="row font-weight-bold py-5 align-items-center">
-					<div class="col text-center">
-						{{ 'REPORT_PAGE.NO_PAYMENTS' | translate }}
-					</div>
-				</div>
-			</nb-card-body>
-		</nb-card>
+		<ngx-no-data-message 
+			[message]="'SM_TABLE.NO_DATA.PAYMENT'"
+		></ngx-no-data-message>		
 	</ng-template>
 </div>
 
@@ -270,14 +264,18 @@
 		[project]="project"
 	></ga-project-column-view>
 	<ng-template #noProjects>
-		<span>{{ 'REPORT_PAGE.NO_PROJECT' | translate }}</span>
+		<ngx-no-data-message 
+			[message]="'SM_TABLE.NO_DATA.PROJECT'"
+		></ngx-no-data-message>		
 	</ng-template>
 </ng-template>
 
 <ng-template let-client #clientEl>
 	<span *ngIf="client; else noClient">{{ client?.name }} </span>
 	<ng-template #noClient>
-		<span>{{ 'REPORT_PAGE.NO_CLIENT' | translate }}</span>
+		<ngx-no-data-message 
+			[message]="'SM_TABLE.NO_DATA.CLIENT'"
+		></ngx-no-data-message>
 	</ng-template>
 </ng-template>
 

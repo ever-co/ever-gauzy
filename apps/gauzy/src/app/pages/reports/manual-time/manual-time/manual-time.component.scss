@@ -52,5 +52,9 @@
         @include ng-select-overrides(2.25rem,
             $default-button-radius,
             $default-box-shadow );
+
+        .weekly-logs .no-data-found {
+            max-height: calc(100vh - 26rem);        
+        }
     }
 }
