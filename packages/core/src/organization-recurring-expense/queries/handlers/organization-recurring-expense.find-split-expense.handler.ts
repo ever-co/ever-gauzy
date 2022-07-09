@@ -40,13 +40,13 @@ export class OrganizationRecurringExpenseFindSplitExpenseHandler
 			where: [
 				{
 					splitExpense: true,
-					orgId,
+					organizationId : orgId,
 					startDate: LessThanOrEqual(filterDate),
 					endDate: IsNull()
 				},
 				{
 					splitExpense: true,
-					orgId,
+					organizationId : orgId,
 					startDate: LessThanOrEqual(filterDate),
 					endDate: MoreThanOrEqual(filterDate)
 				}
@@ -60,7 +60,7 @@ export class OrganizationRecurringExpenseFindSplitExpenseHandler
 		//2. Find all employees of the organization
 		const orgEmployees = await this.employeeService.findAll({
 			where: {
-				organization
+				organizationId: organization.id
 			}
 		});
 

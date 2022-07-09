@@ -26,7 +26,7 @@ export class PipelineService extends TenantAwareCrudService<Pipeline> {
 
 		@InjectRepository(Pipeline)
 		protected pipelineRepository: Repository<Pipeline>,
-		
+
 		@InjectRepository(User)
 		protected userRepository: Repository<User>
 	) {
@@ -50,9 +50,9 @@ export class PipelineService extends TenantAwareCrudService<Pipeline> {
 		const { length: total } = items;
 
 		for (const deal of items) {
-			deal.createdBy = await this.userRepository.findOne(
-				deal.createdByUserId
-			);
+			deal.createdBy = await this.userRepository.findOneBy({
+				id: deal.createdByUserId
+			});
 		}
 
 		return { items, total };

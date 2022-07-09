@@ -35,7 +35,7 @@ export class TimeLogUpdateHandler
 		if (id instanceof TimeLog) {
 			timeLog = id;
 		} else {
-			timeLog = await this.timeLogRepository.findOne(id);
+			timeLog = await this.timeLogRepository.findOneBy({ id });
 		}
 
 		const tenantId = RequestContext.currentTenantId();

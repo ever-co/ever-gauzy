@@ -38,7 +38,7 @@ export class FindSplitExpenseHandler
 			{
 				where: [
 					{
-						organization: employee.organization,
+						organizationId: employee.organization.id,
 						splitExpense: true
 					},
 					{
@@ -55,7 +55,7 @@ export class FindSplitExpenseHandler
 		//2. Find all employees of the organization
 		const orgEmployees = await this.employeeService.findAll({
 			where: {
-				organization: employee.organization
+				organizationId: employee.organization.id
 			}
 		});
 

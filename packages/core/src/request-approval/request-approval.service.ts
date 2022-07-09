@@ -175,11 +175,12 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 			// 		];
 			// 	}
 			// }
-
-			const employee = await this.employeeRepository.findOne(id, {
+			const [employee] = await this.employeeRepository.find({
+				where: {
+					id
+				},
 				relations
 			});
-
 			if (
 				employee &&
 				employee.requestApprovals &&
@@ -193,18 +194,18 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 			}
 
 			for (const request of requestApproval) {
-				const emp = await this.requestApprovalRepository.findOne(
-					request.requestApprovalId,
-					{
-						relations: [
-							'approvalPolicy',
-							'employeeApprovals',
-							'teamApprovals',
-							'tags'
-						]
+				const [approval] = await this.requestApprovalRepository.find({
+					where: {
+						id: request.requestApprovalId
+					},
+					relations: {
+						approvalPolicy: true,
+						employeeApprovals: true,
+						teamApprovals: true,
+						tags: true
 					}
-				);
-				result.push(emp);
+				});
+				result.push(approval);
 			}
 
 			return { items: result, total: result.length };
@@ -357,17 +358,17 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 		status: number
 	): Promise<RequestApproval> {
 		try {
-			const requestApproval = await this.requestApprovalRepository.findOne(
-				id,
-				{
-					relations: ['approvalPolicy']
+			const [requestApproval] = await this.requestApprovalRepository.find({
+				where: {
+					id
+				},
+				relations: {
+					approvalPolicy: true
 				}
-			);
-
+			});
 			if (!requestApproval) {
 				throw new NotFoundException('Request Approval not found');
 			}
-
 			// if (
 			// 	requestApproval.status ===
 			// 		RequestApprovalStatusTypesEnum.APPROVED ||
@@ -392,12 +393,15 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 		try {
 			let minCount = 0;
 			const employeeId = RequestContext.currentUser().employeeId;
-			const requestApproval = await this.requestApprovalRepository.findOne(
-				id,
-				{
-					relations: ['employeeApprovals', 'teamApprovals']
+			const [requestApproval] = await this.requestApprovalRepository.find({
+				where: {
+					id
+				},
+				relations: {
+					employeeApprovals: true,
+					teamApprovals: true
 				}
-			);
+			});
 
 			if (!requestApproval) {
 				throw new NotFoundException('Request Approval not found');

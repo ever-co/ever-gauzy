@@ -48,9 +48,9 @@ export class TimeSlotBulkCreateOrUpdateHandler
 
 		let organizationId;
 		if (!slots[0].organizationId) {
-			const employee = await this.employeeRepository.findOne(
-				slots[0].employeeId
-			);
+			const employee = await this.employeeRepository.findOneBy({
+				id: slots[0].employeeId
+			});
 			organizationId = employee.organizationId;
 		} else {
 			organizationId = slots[0].organizationId;

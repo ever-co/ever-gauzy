@@ -67,7 +67,9 @@ export class CreateTimeSlotHandler
 		 */
 		const { employeeId } = input;
 		if (!organizationId) {
-			const employee = await this.employeeRepository.findOne(employeeId);
+			const employee = await this.employeeRepository.findOneBy({
+				id: employeeId
+			});
 			organizationId = employee ? employee.organizationId : null;
 		}
 
@@ -109,7 +111,7 @@ export class CreateTimeSlotHandler
 		console.log({ timeSlot }, `Find Time Slot For Time: ${input.startedAt}`);
 		try {
 			/**
-			 * Find TimeLog for TimeSlot Range 
+			 * Find TimeLog for TimeSlot Range
 			 */
 			const timeLog = await this.timeLogRepository.findOneOrFail({
 				where: (query: SelectQueryBuilder<TimeLog>) => {
@@ -140,12 +142,12 @@ export class CreateTimeSlotHandler
 					timeLogIds.push(input.timeLogId);
 				}
 				/**
-				 * Find TimeLog for TimeSlot Range 
+				 * Find TimeLog for TimeSlot Range
 				 */
 				const timeLogs = await this.timeLogRepository.find({
 					where: (query: SelectQueryBuilder<TimeLog>) => {
 						query.andWhere(
-							new Brackets((qb: WhereExpressionBuilder) => { 
+							new Brackets((qb: WhereExpressionBuilder) => {
 								qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
 								qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
 								qb.andWhere(`"${query.alias}"."source" = :source`, { source: TimeLogSourceEnum.DESKTOP });
@@ -196,7 +198,7 @@ export class CreateTimeSlotHandler
 		let [mergedTimeSlot] = await this.commandBus.execute(
 			new TimeSlotMergeCommand(
 				employeeId,
-				minDate, 
+				minDate,
 				maxDate
 			)
 		);
@@ -205,8 +207,16 @@ export class CreateTimeSlotHandler
 		}
 
 		console.log({ timeSlot }, 'Final Merged TimeSlot');
-		return await this.timeSlotRepository.findOne(timeSlot.id, {
-			relations: ['timeLogs', 'screenshots']
+
+		const [slot] = await this.timeSlotRepository.find({
+			where : {
+				id: timeSlot.id
+			},
+			relations: {
+				timeLogs: true,
+				screenshots: true
+			}
 		});
+		return slot;
 	}
 }

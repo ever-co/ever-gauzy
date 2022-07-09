@@ -48,12 +48,12 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 	}
 
 	async updateTaskViewMode(id: string, taskViewMode: string): Promise<any> {
-		const project = await this.organizationProjectRepository.findOne(id);
+		const project = await this.organizationProjectRepository.findOneBy({ id });
 		project.taskListType = taskViewMode;
 		return await this.organizationProjectRepository.save(project);
 	}
 
-	public pagination(filter?: any) {		
+	public pagination(filter?: any) {
 		if ('where' in filter) {
 			const { where } = filter;
 			if (where.tags) {

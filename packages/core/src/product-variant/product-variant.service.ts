@@ -34,9 +34,17 @@ export class ProductVariantService extends TenantAwareCrudService<ProductVariant
 	}
 
 	async findOne(id: string): Promise<ProductVariant> {
-		return this.productVariantRepository.findOne(id, {
-			relations: ['settings', 'price', 'image']
+		const [productVariant] = await this.productVariantRepository.find({
+			where: {
+				id: id
+			},
+			relations: {
+				setting: true,
+				price: true,
+				image: true
+			}
 		});
+		return productVariant;
 	}
 
 	async createBulk(
@@ -63,7 +71,9 @@ export class ProductVariantService extends TenantAwareCrudService<ProductVariant
 
 	async deleteFeaturedImage(id: string): Promise<IProductVariant> {
 		try {
-			let variant = await this.productVariantRepository.findOne(id);
+			let variant = await this.productVariantRepository.findOneBy({
+				id
+			});
 			variant.image = null;
 			return await this.productVariantRepository.save(variant);
 		} catch (err) {

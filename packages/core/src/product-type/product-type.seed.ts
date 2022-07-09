@@ -61,21 +61,25 @@ export const createRandomProductType = async (
 	const productTypes: ProductType[] = [];
 
 	for (const tenant of tenants) {
+		const { id: tenantId } = tenant;
 		const tenantOrgs = tenantOrganizationsMap.get(tenant);
 		for (const tenantOrg of tenantOrgs) {
-			const productCategories = await dataSource.manager.find(
-				ProductCategory,
-				{
-					where: [{ organization: tenantOrg }]
+			const { id: organizationId } = tenantOrg;
+			const productCategories = await dataSource.manager.find(ProductCategory, {
+				where: {
+					tenantId,
+					organizationId
 				}
-			);
+			});
 			for (const productCategory of productCategories) {
 				const products = await dataSource.manager.find(Product, {
-					where: [{ category: productCategory }]
+					where: {
+						tenantId,
+						organizationId,
+						productCategoryId: productCategory.id
+					}
 				});
-
 				const productType = new ProductType();
-
 				const productTypeTranslation: ProductTypeTranslation[] = [];
 
 				productType.icon = faker.random.arrayElement(

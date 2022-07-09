@@ -27,7 +27,7 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 	constructor(
 		@InjectRepository(TimeOffRequest)
 		private readonly timeOffRequestRepository: Repository<TimeOffRequest>,
-		
+
 		@InjectRepository(RequestApproval)
 		private readonly requestApprovalRepository: Repository<RequestApproval>
 	) {
@@ -66,7 +66,7 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 	}
 
 	async getAllTimeOffRequests(
-		relations: string[], 
+		relations: string[],
 		findInput: ITimeOffFindInput
 	): Promise<IPagination<TimeOffRequest>> {
 		try {
@@ -79,12 +79,12 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 				.leftJoinAndSelect(`employees.user`, `user`);
 			query
 				.andWhere(
-					new Brackets((qb: WhereExpressionBuilder) => { 
+					new Brackets((qb: WhereExpressionBuilder) => {
 						qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
 						qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
 					})
 				);
-				
+
 			if (employeeId) {
 				const employeeIds = [employeeId];
 				query.innerJoin(`${query.alias}.employees`, 'employee', 'employee.id IN (:...employeeIds)', {
@@ -124,9 +124,9 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 		status: string
 	): Promise<TimeOffRequest> {
 		try {
-			const timeOffRequest = await this.timeOffRequestRepository.findOne(
+			const timeOffRequest = await this.timeOffRequestRepository.findOneBy({
 				id
-			);
+			});
 
 			if (!timeOffRequest) {
 				throw new NotFoundException('Request time off not found');
@@ -142,7 +142,7 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 		}
 	}
 
-	public pagination(filter?: any) {		
+	public pagination(filter?: any) {
 		if ('where' in filter) {
 			const { where } = filter;
 			if (isNotEmpty(where.employeeIds)) {

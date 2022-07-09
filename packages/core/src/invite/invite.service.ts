@@ -21,7 +21,7 @@ import {
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { sign } from 'jsonwebtoken';
-import { Brackets, IsNull, MoreThanOrEqual, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
+import { Brackets, In, IsNull, MoreThanOrEqual, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import { TenantAwareCrudService } from './../core/crud';
 import { Invite } from './invite.entity';
 import { EmailService } from '../email/email.service';
@@ -39,7 +39,7 @@ import {
 @Injectable()
 export class InviteService extends TenantAwareCrudService<Invite> {
 	constructor(
-		@InjectRepository(Invite) 
+		@InjectRepository(Invite)
 		private readonly inviteRepository: Repository<Invite>,
 
 		@InjectRepository(OrganizationProject)
@@ -88,22 +88,24 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 		} = emailInvites;
 		const originUrl = this.configSerice.get('clientBaseUrl') as string;
 
-		const projects: IOrganizationProject[] = await this.organizationProjectsRepository.findByIds(
-			projectIds || []
-		);
+		const projects: IOrganizationProject[] = await this.organizationProjectsRepository.findBy({
+			id: In(projectIds || [])
+		});
 
-		const departments: IOrganizationDepartment[] = await this.organizationDepartmentRepository.findByIds(
-			departmentIds || []
-		);
+		const departments: IOrganizationDepartment[] = await this.organizationDepartmentRepository.findBy({
+			id: In(departmentIds || [])
+		});
 
-		const organizationContacts: IOrganizationContact[] = await this.organizationContactRepository.findByIds(
-			organizationContactIds || []
-		);
+		const organizationContacts: IOrganizationContact[] = await this.organizationContactRepository.findBy({
+			id: In(organizationContactIds || [])
+		});
 
-		const organization: IOrganization = await this.organizationRepository.findOne(
-			organizationId
-		);
-		const role: IRole = await this.roleRepository.findOne(roleId);
+		const organization: IOrganization = await this.organizationRepository.findOneBy({
+			id: organizationId
+		});
+		const role: IRole = await this.roleRepository.findOneBy({
+			id: roleId
+		});
 		const user: IUser = await this.userService.findOneByIdString(invitedById, {
 			relations: ['role']
 		});
@@ -213,7 +215,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 
 		const registerUrl = `${originUrl}/#/auth/accept-invite?email=${email}&token=${token}`;
 
-		
+
 		try{
 			await this.update(id, {
 			   status,
@@ -221,7 +223,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 			   invitedById,
 			   token
 			})
-			
+
 			if (data.inviteType === InvitationTypeEnum.USER) {
 				this.emailService.inviteUser({
 					email,
@@ -244,34 +246,27 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 					invitedBy: user
 				});
 			}
-
-			
-			
-
-		}catch(error){
+		} catch(error){
 			return error
 		}
-
-
-		
 	}
 
 	async sendAcceptInvitationEmail(
 		organization: IOrganization,
 		employee: IEmployee,
 		languageCode: LanguagesEnum
-	): Promise<any> 
-	{	
+	): Promise<any>
+	{
 		const superAdminUsers: IUser[] = await this.userService.getAdminUsers(organization.tenantId);
 
 		try {
 			for await (const superAdmin of superAdminUsers) {
-					this.emailService.sendAcceptInvitationEmail({
-						email: superAdmin.email,
-						employee,
-						organization,
-						languageCode,
-					});
+				this.emailService.sendAcceptInvitationEmail({
+					email: superAdmin.email,
+					employee,
+					organization,
+					languageCode,
+				});
 			}
 		} catch (e) {
 			console.log('caught', e)
@@ -291,13 +286,12 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 			languageCode
 		} = inviteInput;
 
-		const organizationContact: IOrganizationContact = await this.organizationContactRepository.findOne(
-			organizationContactId
-		);
-
-		const organization: Organization = await this.organizationRepository.findOne(
-			organizationId
-		);
+		const organizationContact: IOrganizationContact = await this.organizationContactRepository.findOneBy({
+			id: organizationContactId
+		});
+		const organization: Organization = await this.organizationRepository.findOneBy({
+			id: organizationId
+		});
 
 		const inviterUser: IUser = await this.userService.findOneByIdString(invitedById);
 
@@ -336,7 +330,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 		return await this.repository.findOne({
 			where: (query: SelectQueryBuilder<Invite>) => {
 				query.andWhere(
-					new Brackets((qb: WhereExpressionBuilder) => { 
+					new Brackets((qb: WhereExpressionBuilder) => {
 						qb.where(
 							[
 								{
@@ -350,7 +344,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 					})
 				);
 				query.andWhere(
-					new Brackets((qb: WhereExpressionBuilder) => { 
+					new Brackets((qb: WhereExpressionBuilder) => {
 						qb.andWhere(`"${query.alias}"."email" = :email`, { email });
 						qb.andWhere(`"${query.alias}"."token" = :token`, { token });
 						qb.andWhere(`"${query.alias}"."status" = :status`, { status: InviteStatusEnum.INVITED });
