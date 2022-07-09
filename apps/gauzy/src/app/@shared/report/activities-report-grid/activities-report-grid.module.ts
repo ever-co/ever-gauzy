@@ -13,6 +13,7 @@ import { SharedModule } from '../../shared.module';
 import { FiltersModule } from '../../timesheet/filters/filters.module';
 import { ProgressStatusModule } from '../../progress-status/progress-status.module';
 import { ProjectColumnViewModule } from "../project-column-view/project-column-view.module";
+import { NoDataMessageModule } from '../../no-data-message/no-data-message.module';
 
 @NgModule({
 	declarations: [ActivitiesReportGridComponent],
@@ -29,6 +30,7 @@ import { ProjectColumnViewModule } from "../project-column-view/project-column-v
 		FormsModule,
 		ProgressStatusModule,
 		ProjectColumnViewModule,
+		NoDataMessageModule
 	],
 })
 export class ActivitiesReportGridModule {}

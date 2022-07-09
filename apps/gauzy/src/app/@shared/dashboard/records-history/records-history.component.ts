@@ -112,7 +112,7 @@ export class RecordsHistoryComponent
 					actions: false,
 					mode: 'external',
 					editable: true,
-					noDataMessage: this.getTranslation('SM_TABLE.NO_DATA'),
+					noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.HISTORY_RECORD'),
 					columns: {
 						valueDate: {
 							title: this.getTranslation('SM_TABLE.DATE'),
@@ -152,7 +152,7 @@ export class RecordsHistoryComponent
 				this.smartTableSettings = {
 					actions: false,
 					editable: true,
-					noDataMessage: this.getTranslation('SM_TABLE.NO_DATA'),
+					noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.HISTORY_RECORD'),
 					columns: {
 						source: {
 							title: this.getTranslation('SM_TABLE.SOURCE'),

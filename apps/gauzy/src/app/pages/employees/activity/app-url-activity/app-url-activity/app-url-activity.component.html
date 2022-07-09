@@ -43,9 +43,11 @@
 					></ngx-activity-item>
 				</div>
 			</div>
-			<div class="py-5 text-center" *ngIf="!loading && apps?.length == 0">
-				<h6>{{ 'ACTIVITY.NO_ACTIVITIES' | translate }}</h6>
-			</div>
+			<div *ngIf="!loading && apps?.length == 0">
+				<ngx-no-data-message 
+					[message]="'ACTIVITY.NO_ACTIVITIES'"
+				></ngx-no-data-message>
+			</div>			
 		</div>
 	</div>
 </div>

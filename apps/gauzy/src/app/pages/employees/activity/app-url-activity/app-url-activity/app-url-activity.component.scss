@@ -14,6 +14,10 @@
         }
       }
     }
+    .screenshot-container .no-data-found {
+      max-height: calc(100vh - 34rem);
+      margin: 15px 12px 0 0;
+    }
   }
 }
 .mini-card {

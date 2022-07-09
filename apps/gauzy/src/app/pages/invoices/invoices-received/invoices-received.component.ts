@@ -331,7 +331,7 @@ export class InvoicesReceivedComponent extends PaginationFilterBaseComponent
 			},
 			mode: 'external',
 			editable: true,
-			noDataMessage: this.getTranslation('SM_TABLE.RECEIVE_ESTIMATE_NO_DATA'),
+			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.RECEIVE_ESTIMATE'),
 			columns: {
 				invoiceNumber: {
 					title: this.isEstimate

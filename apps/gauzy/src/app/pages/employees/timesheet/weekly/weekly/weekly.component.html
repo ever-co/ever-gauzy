@@ -26,7 +26,7 @@
 		</div>
 	</nb-card-header>
 	<nb-card-body
-		class="weekly-logs row-table pt-0"
+		class="weekly-logs row-table pt-0 timesheet-weekly-container"
 		[nbSpinner]="loading"
 		nbSpinnerSize="giant"
 		nbSpinnerStatus="primary"
@@ -115,11 +115,9 @@
 			</div>
 		</ng-template>
 		<ng-template #notFound>
-			<div class="row font-weight-bold py-3 align-items-center">
-				<div class="col text-center">
-					{{ 'TIMESHEET.NO_TIMELOG' | translate }}
-				</div>
-			</div>
+			<ngx-no-data-message
+				[message]="'SM_TABLE.NO_DATA.ACTIVITIES'"
+			></ngx-no-data-message>
 		</ng-template>
 	</nb-card-body>
 </nb-card>

@@ -329,7 +329,7 @@ export class ProjectsComponent
 	loadSmartTable() {
 		const pagination = this.getPagination();
 		this.settingsSmartTable = {
-			noDataMessage: this.getTranslation('SM_TABLE.PROJECT_NO_DATA'),
+			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.PROJECT'),
 			actions: false,
 			pager: {
 				display: false,

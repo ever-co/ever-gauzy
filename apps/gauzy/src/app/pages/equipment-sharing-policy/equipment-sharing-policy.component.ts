@@ -138,7 +138,7 @@ export class EquipmentSharingPolicyComponent
 		this.settingsSmartTable = {
 			actions: false,
 			editable: true,
-			noDataMessage: this.getTranslation('SM_TABLE.EQUIPMENT_SHARING_POLICY_NO_DATA'),
+			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.EQUIPMENT_SHARING_POLICY'),
 			pager: {
 				display: false,
 				perPage: pagination ? pagination.itemsPerPage : 10

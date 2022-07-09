@@ -277,7 +277,7 @@ export class InvitesComponent extends PaginationFilterBaseComponent
 				display: false,
 				perPage: pagination ? pagination.itemsPerPage : 10
 			},
-			noDataMessage: this.getTranslation('SM_TABLE.INVITE_NO_DATA'),
+			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.INVITE'),
 			columns: {
 				email: {
 					title: this.getTranslation('SM_TABLE.EMAIL'),

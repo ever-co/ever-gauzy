@@ -8,6 +8,7 @@ import { AppUrlActivityComponent } from './app-url-activity/app-url-activity.com
 import { SharedModule } from './../../../../@shared/shared.module';
 import { ActivityItemModule } from './../../../../@shared/timesheet/activities/activity-item/activity-item.module';
 import { GauzyFiltersModule } from './../../../../@shared/timesheet/gauzy-filters/gauzy-filters.module';
+import { NoDataMessageModule } from 'apps/gauzy/src/app/@shared/no-data-message/no-data-message.module';
 
 @NgModule({
 	declarations: [AppUrlActivityComponent],
@@ -18,7 +19,8 @@ import { GauzyFiltersModule } from './../../../../@shared/timesheet/gauzy-filter
 		TranslateModule,
 		SharedModule,
 		ActivityItemModule,
-		GauzyFiltersModule
+		GauzyFiltersModule,
+		NoDataMessageModule
 	]
 })
 export class AppUrlActivityModule {}

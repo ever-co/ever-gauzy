@@ -21,7 +21,7 @@
 	</div>
 </div>
 <div
-	class="weekly-logs row-table"
+	class="weekly-logs row-table expense-report-grid"
 	[nbSpinner]="loading"
 	[nbSpinnerSize]="'giant'"
 	[nbSpinnerStatus]="'primary'"
@@ -87,15 +87,9 @@
 		</nb-card>
 	</ng-template>
 	<ng-template #notFound>
-		<nb-card>
-			<nb-card-body>
-				<div class="row font-weight-bold py-5 align-items-center">
-					<div class="col text-center">
-						{{ 'REPORT_PAGE.NO_EXPENSES' | translate }}
-					</div>
-				</div>
-			</nb-card-body>
-		</nb-card>
+		<ngx-no-data-message 
+			[message]="'SM_TABLE.NO_DATA.EXPENSE'"
+		></ngx-no-data-message>
 	</ng-template>
 </div>
 

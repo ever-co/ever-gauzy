@@ -311,6 +311,7 @@ export class EventTypeComponent extends PaginationFilterBaseComponent
 		const pagination: IPaginationBase = this.getPagination();
 		this.smartTableSettings = {
 			actions: false,
+			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.EVENT_TYPE'),
 			columns: {
 				title: {
 					title: this.getTranslation('EVENT_TYPE_PAGE.EVENT_NAME'),

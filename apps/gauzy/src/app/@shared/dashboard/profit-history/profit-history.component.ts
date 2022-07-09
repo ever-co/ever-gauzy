@@ -81,7 +81,7 @@ export class ProfitHistoryComponent
 			actions: false,
 			mode: 'external',
 			editable: true,
-			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA'),
+			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.PROFIT_HISTORY'),
 			columns: {
 				valueDate: {
 					title: this.getTranslation(

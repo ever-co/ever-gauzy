@@ -11,6 +11,7 @@ import {
 import { TranslateModule } from '@ngx-translate/core';
 import { SharedModule } from '../../shared.module';
 import { FiltersModule } from '../../timesheet/filters/filters.module';
+import { NoDataMessageModule } from '../../no-data-message/no-data-message.module';
 
 @NgModule({
 	declarations: [AmountsOwedGridComponent],
@@ -24,7 +25,8 @@ import { FiltersModule } from '../../timesheet/filters/filters.module';
 		NbCardModule,
 		FiltersModule,
 		NbSelectModule,
-		FormsModule
+		FormsModule,
+		NoDataMessageModule
 	]
 })
 export class AmountsOwedGridModule {}

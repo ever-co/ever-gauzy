@@ -166,11 +166,9 @@
 			</ng-template>
 		</div>
 		<ng-template #notFound>
-			<div class="row font-weight-bold py-3 align-items-center">
-				<div class="col text-center">
-					{{ 'TIMESHEET.NO_TIMELOG' | translate }}
-				</div>
-			</div>
+			<ngx-no-data-message
+				[message]="'SM_TABLE.NO_DATA.TIME_LOG'"
+			></ngx-no-data-message>			
 		</ng-template>
 	</nb-card-body>
 </nb-card>
