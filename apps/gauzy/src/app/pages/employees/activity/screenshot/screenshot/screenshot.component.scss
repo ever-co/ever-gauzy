@@ -100,6 +100,9 @@
       height: calc(100vh - 35.7rem);
     }
   }
+  ::ng-deep ngx-no-data-message .no-data-found {
+    max-height: calc(100vh - 36rem);
+  }
 }
 .hour-slot-group {
   margin-bottom: 1rem;
