@@ -42,39 +42,60 @@
 					</div>
 				</div>
 			</nb-accordion-item-header>
-			<nb-accordion-item-body
-				class="tasks"
-				id="{{ sprint.id }}"
-				cdkDropList
-				[cdkDropListData]="sprint.tasks"
-				[cdkDropListConnectedTo]="sprintIds"
-				(cdkDropListDropped)="drop($event)"
-			>
-				<ga-sprint-task
-					(taskActionEvent)="taskAction($event)"
-					(changeStatusEvent)="changeTaskStatus($event)"
-					*ngFor="let task of sprint.tasks; trackBy: trackByFn"
-					[task]="task"
-				></ga-sprint-task>
+			<nb-accordion-item-body>
+				<ng-container *ngTemplateOutlet="taskHeader"></ng-container>
+				<div
+					class="tasks"
+					id="{{ sprint.id }}"
+					cdkDropList
+					[cdkDropListData]="sprint.tasks"
+					[cdkDropListConnectedTo]="sprintIds"
+					(cdkDropListDropped)="drop($event)"
+				>
+					<ga-sprint-task
+						(taskActionEvent)="taskAction($event)"
+						(changeStatusEvent)="changeTaskStatus($event)"
+						*ngFor="let task of sprint.tasks; trackBy: trackByFn"
+						[task]="task"
+					></ga-sprint-task>
+				</div>
 			</nb-accordion-item-body>
 		</nb-accordion-item>
 		<nb-accordion-item [expanded]="true">
-			<nb-accordion-item-header class="backlog-header">{{
-				'TASKS_PAGE.BACKLOG' | translate
-			}}</nb-accordion-item-header>
-			<nb-accordion-item-body
-				id="backlog"
-				cdkDropList
-				[cdkDropListData]="backlogTasks"
-				[cdkDropListConnectedTo]="sprintIds"
-				(cdkDropListDropped)="drop($event)"
-			>
-				<ga-sprint-task
-					(click)="toggleItemSelection(task)"
-					*ngFor="let task of backlogTasks"
-					[task]="task"
-				></ga-sprint-task>
+			<nb-accordion-item-header class="backlog-header">
+				{{ 'TASKS_PAGE.BACKLOG' | translate }}
+			</nb-accordion-item-header>
+			<nb-accordion-item-body>
+				<ng-container *ngTemplateOutlet="taskHeader"></ng-container>
+				<div
+					id="backlog"
+					cdkDropList
+					[cdkDropListData]="backlogTasks"
+					[cdkDropListConnectedTo]="sprintIds"
+					(cdkDropListDropped)="drop($event)"
+				>
+					<ga-sprint-task
+						(click)="toggleItemSelection(task)"
+						*ngFor="let task of backlogTasks"
+						[task]="task"
+					></ga-sprint-task>
+				</div>
 			</nb-accordion-item-body>
 		</nb-accordion-item>
 	</nb-accordion>
 </div>
+
+<ng-template #taskHeader>
+	<div class="row header">
+		<div class="col-1">{{ 'TASKS_PAGE.TASK_ID' | translate }}</div>
+		<div class="col">{{ 'TASKS_PAGE.TASKS_TITLE' | translate }}</div>
+		<div class="col">{{ 'TASKS_PAGE.TASKS_PROJECT' | translate }}</div>
+		<div class="col">{{ 'TASKS_PAGE.TASKS_CREATOR' | translate }}</div>
+		<div class="col">{{ 'TASKS_PAGE.DUE_DATE' | translate }}</div>
+		<div class="col">
+			{{ 'TASKS_PAGE.TASK_MEMBERS' | translate }}/
+			{{ 'TASKS_PAGE.TASK_TEAMS' | translate }}
+		</div>
+		<div class="col">{{ 'TASKS_PAGE.TASKS_STATUS' | translate }}</div>
+	</div>
+</ng-template>
