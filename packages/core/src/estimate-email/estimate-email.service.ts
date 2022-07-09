@@ -22,10 +22,10 @@ export class EstimateEmailService extends TenantAwareCrudService<EstimateEmail> 
 	}
 
 	async createEstimateEmail(id: string, email: string, token: string) {
-		const invoice: Invoice = await this.invoiceRepository.findOne(id);
-		const organization: Organization = await this.organizationRepository.findOne(
-			invoice.organizationId
-		);
+		const invoice: Invoice = await this.invoiceRepository.findOneBy({id});
+		const organization: Organization = await this.organizationRepository.findOneBy({
+			id: invoice.organizationId
+		});
 
 		const tokenExpiryPeriod =
 			organization && organization.inviteExpiryPeriod

@@ -11,6 +11,7 @@ import {
 	IMatchingCriterions
 } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
+import { RequestContext } from './../core/context';
 import { JobPresetUpworkJobSearchCriterion } from './job-preset-upwork-job-search-criterion.entity';
 import { EmployeeUpworkJobsSearchCriterion } from './employee-upwork-jobs-search-criterion.entity';
 import { CommandBus } from '@nestjs/cqrs';
@@ -21,7 +22,6 @@ import {
 	SaveEmployeePresetCommand,
 	SavePresetCriterionCommand
 } from './commands';
-import { RequestContext } from 'core';
 
 @Injectable()
 export class JobPresetService extends TenantAwareCrudService<JobPreset> {
@@ -103,7 +103,7 @@ export class JobPresetService extends TenantAwareCrudService<JobPreset> {
 	public getJobPresetCriterion(presetId: string) {
 		return this.jobPresetUpworkJobSearchCriterionRepository.find({
 			where: {
-				presetId: presetId
+				jobPresetId: presetId
 			}
 		});
 	}
@@ -111,7 +111,7 @@ export class JobPresetService extends TenantAwareCrudService<JobPreset> {
 	public getEmployeeCriterion(input: IGetMatchingCriterions) {
 		return this.employeeUpworkJobsSearchCriterionRepository.find({
 			where: {
-				...(input.jobPresetId ? { presetId: input.jobPresetId } : {}),
+				...(input.jobPresetId ? { jobPresetId: input.jobPresetId } : {}),
 				employeeId: input.employeeId
 			}
 		});
@@ -132,8 +132,13 @@ export class JobPresetService extends TenantAwareCrudService<JobPreset> {
 	}
 
 	async getEmployeePreset(employeeId: string) {
-		const employee = await this.employeeRepository.findOne(employeeId, {
-			relations: ['jobPresets']
+		const [employee] = await this.employeeRepository.find({
+			where: {
+				id: employeeId
+			},
+			relations: {
+				jobPresets: true
+			}
 		});
 		return employee.jobPresets;
 	}

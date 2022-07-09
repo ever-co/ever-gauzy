@@ -41,7 +41,7 @@ export class TimerService {
 		const userId = RequestContext.currentUserId();
 		const tenantId = RequestContext.currentTenantId();
 
-		const employee = await this.employeeRepository.findOne({
+		const employee = await this.employeeRepository.findOneBy({
 			userId,
 			tenantId
 		});
@@ -118,7 +118,7 @@ export class TimerService {
 		const userId = RequestContext.currentUserId();
 		const tenantId = RequestContext.currentTenantId();
 
-		const employee = await this.employeeRepository.findOne({
+		const employee = await this.employeeRepository.findOneBy({
 			userId,
 			tenantId
 		});
@@ -133,7 +133,7 @@ export class TimerService {
 			request,
 			lastLog
 		});
-		
+
 		if (lastLog) {
 			/**
 			 * If you want to start timer, but employee timer is already started.
@@ -246,14 +246,20 @@ export class TimerService {
 	}
 
 	/*
-	* Get employee last running timer 
+	* Get employee last running timer
 	*/
 	private async getLastRunningLog() {
 		const userId = RequestContext.currentUserId();
 		const tenantId = RequestContext.currentTenantId();
 
-		const employee = await this.employeeRepository.findOne({ userId, tenantId }, {
-			relations: ['user']
+		const [employee] = await this.employeeRepository.find({
+			where: {
+				userId,
+				tenantId
+			},
+			relations: {
+				user: true
+			}
 		});
 		if (!employee) {
 			throw new NotFoundException('Employee not found.');

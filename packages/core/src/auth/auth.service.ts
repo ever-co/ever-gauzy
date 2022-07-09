@@ -87,7 +87,10 @@ export class AuthService extends SocialAuthService {
 	): Promise<{ token: string } | null> {
 		try {
 			const user = await this.userService.findOneByConditions(request, {
-				relations: ['role', 'employee']
+				relations: {
+					role: true,
+					employee: true
+				}
 			});
 			try {
 				/**
@@ -102,10 +105,12 @@ export class AuthService extends SocialAuthService {
 						})
 					);
 
+					const { id: userId } = user;
+
 					const url = `${environment.clientBaseUrl}/#/auth/reset-password?token=${token}`;
 					const { organizationId } = await this.userOrganizationService.findOneByOptions({
 						where: {
-							user
+							userId
 						}
 					});
 

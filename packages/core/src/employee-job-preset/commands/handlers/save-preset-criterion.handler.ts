@@ -13,6 +13,7 @@ export class SavePresetCriterionHandler
 	constructor(
 		@InjectRepository(Employee)
 		private readonly employeeRepository: Repository<Employee>,
+
 		@InjectRepository(JobPresetUpworkJobSearchCriterion)
 		private readonly jobPresetUpworkJobSearchCriterionRepository: Repository<JobPresetUpworkJobSearchCriterion>
 	) {}
@@ -21,19 +22,19 @@ export class SavePresetCriterionHandler
 		command: SavePresetCriterionCommand
 	): Promise<IMatchingCriterions> {
 		const { input } = command;
+		const tenantId = RequestContext.currentTenantId();
 
 		if (!input.organizationId) {
 			const user = RequestContext.currentUser();
-			const employee = await this.employeeRepository.findOne(
-				user.employeeId
-			);
+			const employee = await this.employeeRepository.findOneBy({
+				id: user.employeeId
+			});
 			input.organizationId = employee.organizationId;
 		}
-		input.tenantId = RequestContext.currentTenantId();
+		input.tenantId = tenantId;
 
 		const creation = new JobPresetUpworkJobSearchCriterion(input);
 		await this.jobPresetUpworkJobSearchCriterionRepository.save(creation);
-
 		return creation;
 	}
 }

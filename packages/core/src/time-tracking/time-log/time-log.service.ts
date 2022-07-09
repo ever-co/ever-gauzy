@@ -140,10 +140,10 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				*/
 				const slots: ITimeSlot[] = chain(logs).pluck('timeSlots').flatten(true).value();
 				const weeklyActivity = (
-					(reduce(pluck(slots, 'overall'), ArraySum, 0) * 100) / 
+					(reduce(pluck(slots, 'overall'), ArraySum, 0) * 100) /
 					(reduce(pluck(slots, 'duration'), ArraySum, 0))
 				);
-				
+
 				const byDate = chain(logs)
 					.groupBy((log: ITimeLog) =>
 						moment(log.startedAt).format('YYYY-MM-DD')
@@ -191,7 +191,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				this.getFilterTimeLogQuery(qb, request);
 			}
 		});
-	
+
 		const { startDate, endDate } = request;
 		const days: Array<string> = getDaysBetweenDates(startDate, endDate);
 
@@ -599,7 +599,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 						0
 					);
 				}
-				
+
 				spentPercentage = (spent * 100) / budget;
 				reamingBudget = Math.max(budget - spent, 0);
 
@@ -620,7 +620,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	async clientBudgetLimit(request: IGetTimeLogReportInput) {
 		const { organizationId, employeeIds, startDate, endDate } = request;
 		const tenantId = RequestContext.currentTenantId();
-	
+
 		const query = this.organizationContactRepository.createQueryBuilder('organization_contact');
 		query.innerJoinAndSelect(`${query.alias}.timeLogs`, 'timeLogs');
 		query.innerJoinAndSelect(`timeLogs.employee`, 'employee');
@@ -662,7 +662,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			})
 		);
 
-		const organizationContacts = await query.getMany();		
+		const organizationContacts = await query.getMany();
 		return organizationContacts.map(
 			(organizationContact: IOrganizationContact): IClientBudgetLimitReport => {
 				const { budgetType, timeLogs = [] } = organizationContact;
@@ -794,7 +794,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			}
 		}
 		query.andWhere(
-			new Brackets((qb: WhereExpressionBuilder) => { 
+			new Brackets((qb: WhereExpressionBuilder) => {
 				qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
 				qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
 				qb.andWhere(`"${query.alias}"."deletedAt" IS NULL`);
@@ -813,17 +813,23 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			);
 		}
 
-		const employee = await this.employeeRepository.findOne(
-			employeeId,
-			{ relations: ['organization'] }
-		);
-
+		/**
+		 * Get Employee
+		 */
+		const [employee] = await this.employeeRepository.find({
+			where: {
+				id: employeeId
+			},
+			relations: {
+				organization: true
+			}
+		});
 		const isDateAllow = this.allowDate(
 			startedAt,
 			stoppedAt,
 			employee.organization
 		);
-		
+
 		if (!isDateAllow) {
 			throw new BadRequestException(
 				'Please select valid Date, start time and end time'
@@ -865,7 +871,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	async updateManualTime(id: string, request: IManualTimeInput): Promise<TimeLog> {
 		const tenantId = RequestContext.currentTenantId();
 		const { startedAt, stoppedAt, employeeId, organizationId } = request;
-		
+
 		if (!startedAt || !stoppedAt) {
 			throw new BadRequestException('Please select valid Date start and end time');
 		}
@@ -873,10 +879,14 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		/**
 		 * Get Employee
 		 */
-		const employee = await this.employeeRepository.findOne(employeeId, {
-			relations: ['organization']
+		const [employee] = await this.employeeRepository.find({
+			where: {
+				id: employeeId
+			},
+			relations: {
+				organization: true
+			}
 		});
-
 		/**
 		 * Check future date allow
 		 */
@@ -892,7 +902,9 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		/**
 		 * Check Conflicts TimeLogs
 		 */
-		const timeLog = await this.timeLogRepository.findOne(id);
+		const timeLog = await this.timeLogRepository.findOneBy({
+			id: id
+		});
 		const conflicts = await this.checkConflictTime({
 			startDate: startedAt,
 			endDate: stoppedAt,
@@ -923,7 +935,10 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		await this.commandBus.execute(
 			new TimeLogUpdateCommand(request, timeLog)
 		);
-		return await this.timeLogRepository.findOne(request.id);
+
+		return await this.timeLogRepository.findOneBy({
+			id: request.id
+		});
 	}
 
 	async deleteTimeLogs(
@@ -940,7 +955,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		const tenantId = RequestContext.currentTenantId();
 		const user = RequestContext.currentUser();
 		const { organizationId, forceDelete } = query;
-	
+
 		const timeLogs = await this.timeLogRepository.find({
 			where: (query: SelectQueryBuilder<TimeLog>) => {
 				query.where({
@@ -953,7 +968,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 					)
 				});
 				query.andWhere(
-					new Brackets((qb: WhereExpressionBuilder) => { 
+					new Brackets((qb: WhereExpressionBuilder) => {
 						qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
 						qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
 						qb.andWhere(`"${query.alias}"."id" IN (:...logIds)`, {

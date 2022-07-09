@@ -40,7 +40,7 @@ export class TimeLogUpdateHandler
 
 		const tenantId = RequestContext.currentTenantId();
 		const { employeeId, organizationId } = timeLog;
-	
+
 		let needToUpdateTimeSlots = false;
 		if (input.startedAt || input.stoppedAt) {
 			needToUpdateTimeSlots = true;
@@ -78,7 +78,9 @@ export class TimeLogUpdateHandler
 			timeLog.stoppedAt
 		);
 
-		timeLog = await this.timeLogRepository.findOne(timeLog.id);
+		timeLog = await this.timeLogRepository.findOneBy({
+			id: timeLog.id
+		});
 		const { timesheetId } = timeLog;
 
 		if (needToUpdateTimeSlots) {
@@ -170,7 +172,9 @@ export class TimeLogUpdateHandler
 				);
 			}
 		}
-		
-		return await this.timeLogRepository.findOne(timeLog.id);
+
+		return await this.timeLogRepository.findOneBy({
+			id: timeLog.id
+		});
 	}
 }

@@ -27,9 +27,14 @@ export class UpdateTimeSlotMinutesHandler
 			delete input.timeSlotId;
 			await this.timeSlotMinuteRepository.update(id, input);
 
-			timeMinute = await this.timeSlotMinuteRepository.findOne(id, {
-				relations: ['timeSlot']
-			});
+			const [timeMinute] = await this.timeSlotMinuteRepository.find({
+				where: {
+					id: id
+				},
+				relations: {
+					timeSlot: true
+				}
+			})
 			return timeMinute;
 		} else {
 			return null;

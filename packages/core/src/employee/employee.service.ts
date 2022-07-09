@@ -19,9 +19,9 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 
 	/**
 	 * Create Bulk Employee User
-	 * 
-	 * @param input 
-	 * @returns 
+	 *
+	 * @param input
+	 * @returns
 	 */
 	async createBulk(input: IEmployeeCreateInput[]): Promise<Employee[]> {
 		const employees: IEmployee[] = [];
@@ -64,7 +64,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 				const { startDate, endDate } = forRange;
 				const tenantId = RequestContext.currentTenantId();
 				query.andWhere(
-					new Brackets((qb: WhereExpressionBuilder) => { 
+					new Brackets((qb: WhereExpressionBuilder) => {
 						qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
 						qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
 						qb.andWhere(`"${query.alias}"."isActive" = :isActive`, { isActive: true });
@@ -121,7 +121,12 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 	}
 
 	async findWithoutTenant(id: string, relations?: any) {
-		return await this.repository.findOne(id, relations);
+		return await this.repository.find({
+			where: {
+				id
+			},
+			relations
+		});
 	}
 
 	public async pagination(filter: any) {
@@ -180,17 +185,17 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 									if (isNotEmpty(where.user.name)) {
 										const keywords: string[] = where.user.name.split(' ');
 										keywords.forEach((keyword: string, index: number) => {
-											qb.orWhere(`LOWER("user"."firstName") like LOWER(:keyword_${index})`, { 
+											qb.orWhere(`LOWER("user"."firstName") like LOWER(:keyword_${index})`, {
 												[`keyword_${index}`]:`%${keyword}%`
 											});
-											qb.orWhere(`LOWER("user"."lastName") like LOWER(:${index}_keyword)`, { 
+											qb.orWhere(`LOWER("user"."lastName") like LOWER(:${index}_keyword)`, {
 												[`${index}_keyword`]:`%${keyword}%`
 											});
 										});
 									}
 									if (isNotEmpty(where.user.email)) {
 										const { email } = where.user;
-										qb.orWhere(`LOWER("user"."email") like LOWER(:email)`, { 
+										qb.orWhere(`LOWER("user"."email") like LOWER(:email)`, {
 											email:`%${email}%`
 										});
 									}
