@@ -1,6 +1,6 @@
 <div class="task" cdkDrag [cdkDragData]="task" [cdkDragLockAxis]="'y'">
 	<nb-card>
-		<nb-card-body>
+		<nb-card-body [ngClass]="{ selected: isSelected }">
 			<div class="row">
 				<span class="col-1">
 					{{ task?.taskNumber }}
@@ -20,9 +20,7 @@
 					></ngx-employee-with-links>
 				</span>
 				<span class="col">
-					<ngx-date-view
-						[value]="task?.dueDate"
-					></ngx-date-view>
+					<ngx-date-view [value]="task?.dueDate"></ngx-date-view>
 				</span>
 				<span class="col">
 					<ngx-status-view

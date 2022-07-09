@@ -16,13 +16,14 @@ import { TranslateService } from '@ngx-translate/core';
 @Component({
 	selector: 'ga-sprint-task',
 	templateUrl: './task.component.html',
-	styleUrls: ['./task.component.css']
+	styleUrls: ['./task.component.scss']
 })
 export class SprintTaskComponent
 	extends TranslationBaseComponent
 	implements OnInit, OnDestroy
 {
 	@Input() task: any;
+	@Input() isSelected: boolean = false;
 	@Output() taskActionEvent: EventEmitter<{
 		action: string;
 		task: ITask;
