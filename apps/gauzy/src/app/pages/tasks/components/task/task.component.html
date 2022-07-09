@@ -1,8 +1,4 @@
-<nb-card
-	[nbSpinner]="loading"
-	nbSpinnerStatus="primary"
-	nbSpinnerSize="large"
->
+<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
 	<nb-card-header class="card-customer-header">
 		<div class="card-header-title">
 			<h4>
@@ -86,6 +82,8 @@
 					(createTaskEvent)="createTaskDialog()"
 					(editTaskEvent)="editTaskDialog($event)"
 					(deleteTaskEvent)="deleteTask($event)"
+					(selectedTaskEvent)="selectTask($event)"
+					[sync]="!disableButton"
 					[project]="selectedProject"
 					[tasks]="availableTasks$ | async"
 				></ga-tasks-sprint-view>
@@ -150,10 +148,7 @@
 	</div>
 </ng-template>
 
-<ng-template 
-	#paginationTemplate
-	let-pagination="pagination"
->
+<ng-template #paginationTemplate let-pagination="pagination">
 	<div class="pagination-container">
 		<ng-container *ngIf="pagination.totalItems > minItemPerPage">
 			<ga-pagination
@@ -168,12 +163,7 @@
 	</div>
 </ng-template>
 <ng-template #visibleButton>
-	<button 
-		nbButton
-		status="success"
-		(click)="createTaskDialog()"
-		size="small"
-	>
+	<button nbButton status="success" (click)="createTaskDialog()" size="small">
 		<nb-icon icon="plus-outline"></nb-icon>
 		{{ 'BUTTONS.ADD' | translate }}
 	</button>

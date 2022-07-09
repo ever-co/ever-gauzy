@@ -42,7 +42,7 @@
 					</div>
 				</div>
 			</nb-accordion-item-header>
-			<nb-accordion-item-body>
+			<nb-accordion-item-body *ngIf="sprint?.tasks?.length > 0">
 				<ng-container *ngTemplateOutlet="taskHeader"></ng-container>
 				<div
 					class="tasks"
@@ -55,7 +55,9 @@
 					<ga-sprint-task
 						(taskActionEvent)="taskAction($event)"
 						(changeStatusEvent)="changeTaskStatus($event)"
+						(click)="toggleItemSelection(task)"
 						*ngFor="let task of sprint.tasks; trackBy: trackByFn"
+						[isSelected]="sync && task === selectedTask"
 						[task]="task"
 					></ga-sprint-task>
 				</div>
@@ -76,8 +78,10 @@
 				>
 					<ga-sprint-task
 						(changeStatusEvent)="changeTaskStatus($event)"
+						(taskActionEvent)="taskAction($event)"
 						(click)="toggleItemSelection(task)"
 						*ngFor="let task of backlogTasks"
+						[isSelected]="sync && task === selectedTask"
 						[task]="task"
 					></ga-sprint-task>
 				</div>
@@ -92,11 +96,11 @@
 		<div class="col">{{ 'TASKS_PAGE.TASKS_TITLE' | translate }}</div>
 		<div class="col">{{ 'TASKS_PAGE.TASKS_PROJECT' | translate }}</div>
 		<div class="col">{{ 'TASKS_PAGE.TASKS_CREATOR' | translate }}</div>
-		<div class="col">{{ 'TASKS_PAGE.DUE_DATE' | translate }}</div>
 		<div class="col">
 			{{ 'TASKS_PAGE.TASK_MEMBERS' | translate }}/
 			{{ 'TASKS_PAGE.TASK_TEAMS' | translate }}
 		</div>
+		<div class="col">{{ 'TASKS_PAGE.DUE_DATE' | translate }}</div>
 		<div class="col">{{ 'TASKS_PAGE.TASKS_STATUS' | translate }}</div>
 	</div>
 </ng-template>

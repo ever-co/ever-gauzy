@@ -49,6 +49,7 @@ export class TasksSprintViewComponent
 	@Output() createTaskEvent: EventEmitter<any> = new EventEmitter();
 	@Output() editTaskEvent: EventEmitter<any> = new EventEmitter();
 	@Output() deleteTaskEvent: EventEmitter<any> = new EventEmitter();
+	@Output() selectedTaskEvent: EventEmitter<any> = new EventEmitter();
 
 	sprints$: Observable<IOrganizationSprint[]> = this.store$.sprints$.pipe(
 		map((sprints: IOrganizationSprint[]): IOrganizationSprint[] =>
@@ -68,6 +69,9 @@ export class TasksSprintViewComponent
 	sprintIds: string[] = [];
 	sprintActions: { title: string }[] = [];
 	organizationId: string;
+	selectedTask: ITask;
+	isSelected: boolean = false;
+	@Input() sync: boolean = false;
 
 	constructor(
 		private readonly store$: SprintStoreService,
@@ -150,11 +154,23 @@ export class TasksSprintViewComponent
 	}
 
 	editTask(selectedItem: ITask): void {
-		this.editTaskEvent.emit(this.selectedItem || selectedItem);
+		this.selectedTaskEvent.emit(this.selectedItem || selectedItem);
 	}
 
 	deleteTask(selectedItem: ITask): void {
 		this.deleteTaskEvent.emit(selectedItem);
+	}
+
+	toggleItemSelection(task: ITask) {
+		this.isSelected =
+			this.isSelected && task === this.selectedTask
+				? !this.isSelected
+				: true;
+		this.selectedTask = task === this.selectedTask ? null : task;
+		this.selectedTaskEvent.emit({
+			data: task,
+			isSelected: this.isSelected
+		});
 	}
 
 	drop(event: CdkDragDrop<string[]>) {
