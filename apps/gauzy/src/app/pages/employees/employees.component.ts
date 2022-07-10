@@ -488,6 +488,11 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 			const { activePage, itemsPerPage } = this.getPagination();
 			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
 			this._loadGridLayoutData();
+			this.setPagination({
+				...this.getPagination(),
+				totalItems: this.smartTableSource.count()
+			});
+			this.loading = false;
 		} catch (error) {
 			this.toastrService.danger(error);
 		}
@@ -533,8 +538,10 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 	}
 
 	private async _loadGridLayoutData() {
-		if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID)
-			this.employees = await this.smartTableSource.getElements();
+		if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID){
+			await this.smartTableSource.getElements();
+			this.employees = this.smartTableSource.getData();
+		}
 	}
 
 	private _loadSmartTableSettings() {
