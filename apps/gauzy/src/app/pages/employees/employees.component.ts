@@ -155,11 +155,11 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 					(componentLayout) =>
 						(this.dataLayoutStyle = componentLayout)
 				),
+				tap(() => this.refreshPagination()),
 				filter(
-					(componentLayout) => 
+					(componentLayout) =>
 						componentLayout === ComponentLayoutStyleEnum.CARDS_GRID
 				),
-				tap(() => this.refreshPagination()),
 				tap(() => this.employees$.next(true)),
 				untilDestroyed(this)
 			)
@@ -463,7 +463,11 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 				...this.filters.where
 			},
 			resultMap: (employee: IEmployee) => {
-				return Object.assign({}, employee, this.employeeMapper(employee));
+				return Object.assign(
+					{},
+					employee,
+					this.employeeMapper(employee)
+				);
 			},
 			finalize: () => {
 				this.setPagination({
@@ -475,23 +479,15 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 		});
 	}
 
-	private async getEmployees() {
+	private getEmployees() {
 		if (!this.organization) {
 			return;
 		}
 		try {
 			this.setSmartTableSource();
-
 			const { activePage, itemsPerPage } = this.getPagination();
-			this.smartTableSource.setPaging(
-				activePage,
-				itemsPerPage,
-				false
-			);
-
-			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
-				await this._loadGridLayoutData();
-			}
+			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
+			this._loadGridLayoutData();
 		} catch (error) {
 			this.toastrService.danger(error);
 		}
@@ -537,13 +533,8 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 	}
 
 	private async _loadGridLayoutData() {
-		await this.smartTableSource.getElements();
-		this.employees = this.smartTableSource.getData();
-
-		this.setPagination({
-			...this.getPagination(),
-			totalItems: this.smartTableSource.count()
-		});
+		if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID)
+			this.employees = await this.smartTableSource.getElements();
 	}
 
 	private _loadSmartTableSettings() {
@@ -568,7 +559,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 					},
 					filterFunction: (name: string) => {
 						this.setFilter({ field: 'user.name', search: name });
-					},
+					}
 				},
 				email: {
 					title: this.getTranslation('SM_TABLE.EMAIL'),
@@ -581,7 +572,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 					},
 					filterFunction: (email: string) => {
 						this.setFilter({ field: 'user.email', search: email });
-					},
+					}
 				},
 				averageIncome: {
 					title: this.getTranslation('SM_TABLE.INCOME'),
