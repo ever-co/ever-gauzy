@@ -82,9 +82,9 @@ export class TaskController extends CrudController<Task> {
 	})
 	@Get('me')
 	async findMyTasks(
-		@Query() data: any
+		@Query() filter: PaginationParams<ITask>
 	): Promise<IPagination<ITask>> {
-		return this.taskService.getMyTasks(data);
+		return this.taskService.getMyTasks(filter);
 	}
 
 	@ApiOperation({ summary: 'Find my team tasks.' })
@@ -99,9 +99,9 @@ export class TaskController extends CrudController<Task> {
 	})
 	@Get('team')
 	async findTeamTasks(
-		@Query() data: any
+		@Query() filter: PaginationParams<ITask>
 	): Promise<IPagination<ITask>> {
-		return this.taskService.findTeamTasks(data);
+		return this.taskService.findTeamTasks(filter);
 	}
 
 	@ApiOperation({
