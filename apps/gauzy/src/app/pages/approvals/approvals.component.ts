@@ -146,13 +146,20 @@ export class ApprovalsComponent
 		this.store
 			.componentLayout$(this.viewComponentName)
 			.pipe(
-				tap(() => this.subject$.next(true)),
+				distinctUntilChange(),
+				tap(
+					(componentLayout) =>
+						(this.dataLayoutStyle = componentLayout)
+				),
 				tap(() => this.refreshPagination()),
+				filter(
+					(componentLayout) =>
+						componentLayout === ComponentLayoutStyleEnum.CARDS_GRID
+				),
+				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
-			.subscribe((componentLayout) => {
-				this.dataLayoutStyle = componentLayout;
-			});
+			.subscribe();
 	}
 
 	/*

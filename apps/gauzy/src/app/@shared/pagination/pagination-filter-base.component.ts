@@ -63,7 +63,8 @@ export class PaginationFilterBaseComponent extends TranslationBaseComponent
 	protected refreshPagination() {
 		this.setPagination({
 			...this.getPagination(),
-			activePage: 1
+			activePage: 1,
+			itemsPerPage: this.minItemPerPage
 		});
 	}
 
