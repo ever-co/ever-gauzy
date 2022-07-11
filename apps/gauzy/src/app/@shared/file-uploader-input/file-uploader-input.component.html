@@ -1,7 +1,7 @@
 <div
 	[nbSpinner]="loading"
 	nbSpinnerStatus="primary"
-	class="row file-uploader-container"
+	class="file-uploader-container"
 >
 	<input
 		[hidden]="true"
@@ -16,7 +16,7 @@
 	<input
 		#shownInput="ngModel"
 		type="text"
-		class="form-control col-12"
+		class="form-control"
 		placeholder="{{ placeholder }}"
 		(change)="imageUrlChanged()"
 		[(ngModel)]="fileUrl"
