@@ -1,14 +1,6 @@
-<!-- <div class="sprints" cdkDropListGroup> -->
-<div class="mb-3">
-	<button nbButton status="success" class="mr-2" (click)="createTask()">
-		<nb-icon class="mr-1" icon="plus-outline"></nb-icon
-		>{{ 'BUTTONS.ADD' | translate }}
-	</button>
-	<ng-container *ngTemplateOutlet="actionButtons"></ng-container>
-</div>
 <div class="sprints">
 	<nb-accordion multi>
-		<nb-accordion-item [expanded]="true" *ngFor="let sprint of sprints">
+		<nb-accordion-item [expanded]="false" *ngFor="let sprint of sprints">
 			<nb-accordion-item-header
 				class="d-flex flex-column align-items-start"
 			>
@@ -25,95 +17,90 @@
 						>
 							{{ 'TASKS_PAGE.COMPLETE_SPRINT' | translate }}
 						</button>
-						<!-- <button
-							nbButton
-							size="tiny"
-							[nbContextMenu]="sprintActions"
-							[nbContextMenuTag]="sprint.id"
-							(click)="preventExpand($event)"
-						>
-							...
-						</button> -->
 					</div>
 				</div>
 
-				<div class="sprint__details">
-					<span class="col">Tasks: {{ sprint.tasks?.length }}</span>
-					<span class="col" *ngIf="sprint.startDate"
-						>{{ 'TASKS_PAGE.DATE_START' | translate }}:
-						{{ sprint.startDate | date: 'short' }}</span
-					>
-					<span class="col" *ngIf="sprint.endDate"
-						>{{ 'TASKS_PAGE.DATE_END' | translate }}:
-						{{ sprint.endDate | date: 'short' }}</span
-					>
+				<div class="sprint__details row">
+					<div class="col">Tasks: {{ sprint.tasks?.length }}</div>
+					<div class="col" *ngIf="sprint.startDate">
+						<div class="d-flex flex-column">
+							<span class="date"
+								>{{
+									'TASKS_PAGE.DATE_START' | translate
+								}}:</span
+							>
+							{{ sprint.startDate | date: 'short' }}
+						</div>
+					</div>
+					<div class="col" *ngIf="sprint.endDate">
+						<div class="d-flex flex-column">
+							<span class="date"
+								>{{ 'TASKS_PAGE.DATE_END' | translate }}:</span
+							>
+							{{ sprint.endDate | date: 'short' }}
+						</div>
+					</div>
 				</div>
 			</nb-accordion-item-header>
-			<nb-accordion-item-body
-				class="tasks"
-				id="{{ sprint.id }}"
-				cdkDropList
-				[cdkDropListData]="sprint.tasks"
-				[cdkDropListConnectedTo]="sprintIds"
-				(cdkDropListDropped)="drop($event)"
-			>
-				<ga-sprint-task
-					(taskActionEvent)="taskAction($event)"
-					(changeStatusEvent)="changeTaskStatus($event)"
-					*ngFor="let task of sprint.tasks; trackBy: trackByFn"
-					[task]="task"
-				></ga-sprint-task>
+			<nb-accordion-item-body *ngIf="sprint?.tasks?.length > 0">
+				<ng-container *ngTemplateOutlet="taskHeader"></ng-container>
+				<div
+					class="tasks"
+					id="{{ sprint.id }}"
+					cdkDropList
+					[cdkDropListData]="sprint.tasks"
+					[cdkDropListConnectedTo]="sprintIds"
+					(cdkDropListDropped)="drop($event)"
+				>
+					<ga-sprint-task
+						(taskActionEvent)="taskAction($event)"
+						(changeStatusEvent)="changeTaskStatus($event)"
+						(click)="toggleItemSelection(task)"
+						*ngFor="let task of sprint.tasks; trackBy: trackByFn"
+						[isSelected]="sync && task === selectedTask"
+						[task]="task"
+					></ga-sprint-task>
+				</div>
 			</nb-accordion-item-body>
 		</nb-accordion-item>
 		<nb-accordion-item [expanded]="true">
-			<nb-accordion-item-header>{{
-				'TASKS_PAGE.BACKLOG' | translate
-			}}</nb-accordion-item-header>
-			<nb-accordion-item-body
-				id="backlog"
-				cdkDropList
-				[cdkDropListData]="backlogTasks"
-				[cdkDropListConnectedTo]="sprintIds"
-				(cdkDropListDropped)="drop($event)"
-			>
-				<ga-sprint-task
-					(click)="toggleItemSelection(task)"
-					*ngFor="let task of backlogTasks"
-					[task]="task"
-				></ga-sprint-task>
+			<nb-accordion-item-header class="backlog-header">
+				{{ 'TASKS_PAGE.BACKLOG' | translate }}
+			</nb-accordion-item-header>
+			<nb-accordion-item-body>
+				<ng-container *ngTemplateOutlet="taskHeader"></ng-container>
+				<div
+					id="backlog"
+					cdkDropList
+					[cdkDropListData]="backlogTasks"
+					[cdkDropListConnectedTo]="sprintIds"
+					(cdkDropListDropped)="drop($event)"
+				>
+					<ga-sprint-task
+						(changeStatusEvent)="changeTaskStatus($event)"
+						(taskActionEvent)="taskAction($event)"
+						(click)="toggleItemSelection(task)"
+						*ngFor="let task of backlogTasks"
+						[isSelected]="sync && task === selectedTask"
+						[task]="task"
+					></ga-sprint-task>
+				</div>
 			</nb-accordion-item-body>
 		</nb-accordion-item>
 	</nb-accordion>
 </div>
 
-<ng-template
-	#actionButtons
-	let-buttonSize="buttonSize"
-	let-selectedItem="selectedItem"
->
-	<button nbButton status="info" class="mr-2" [size]="buttonSize || 'medium'">
-		<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
-		{{ 'BUTTONS.DUPLICATE' | translate }}
-	</button>
-	<button
-		nbButton
-		status="info"
-		class="mr-2"
-		[size]="buttonSize || 'medium'"
-		(click)="editTask()"
-	>
-		<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
-		{{ 'BUTTONS.EDIT' | translate }}
-	</button>
-	<button
-		nbButton
-		status="danger"
-		class="mr-2"
-		[size]="buttonSize || 'medium'"
-		[disabled]="!selectedItem"
-		(click)="deleteTask()"
-	>
-		<nb-icon class="mr-1" icon="archive-outline"> </nb-icon>
-		{{ 'BUTTONS.DELETE' | translate }}
-	</button>
+<ng-template #taskHeader>
+	<div class="row header">
+		<div class="col-1">{{ 'TASKS_PAGE.TASK_ID' | translate }}</div>
+		<div class="col">{{ 'TASKS_PAGE.TASKS_TITLE' | translate }}</div>
+		<div class="col">{{ 'TASKS_PAGE.TASKS_PROJECT' | translate }}</div>
+		<div class="col">{{ 'TASKS_PAGE.TASKS_CREATOR' | translate }}</div>
+		<div class="col">
+			{{ 'TASKS_PAGE.TASK_MEMBERS' | translate }}/
+			{{ 'TASKS_PAGE.TASK_TEAMS' | translate }}
+		</div>
+		<div class="col">{{ 'TASKS_PAGE.DUE_DATE' | translate }}</div>
+		<div class="col">{{ 'TASKS_PAGE.TASKS_STATUS' | translate }}</div>
+	</div>
 </ng-template>

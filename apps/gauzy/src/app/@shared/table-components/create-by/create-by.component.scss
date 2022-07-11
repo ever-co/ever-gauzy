@@ -2,6 +2,10 @@
 
 $radius: nb-theme(button-rectangle-border-radius);
 
+a {
+  cursor: pointer;
+}
+
 :host .avatar-container {
   width: 100%;
 

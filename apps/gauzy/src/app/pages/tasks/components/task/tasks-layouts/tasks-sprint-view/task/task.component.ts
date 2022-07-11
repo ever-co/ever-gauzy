@@ -6,7 +6,7 @@ import {
 	OnInit,
 	OnDestroy
 } from '@angular/core';
-import { ITask, IEmployee, TaskStatusEnum } from '@gauzy/contracts';
+import { ITask, TaskStatusEnum } from '@gauzy/contracts';
 import { NbMenuService } from '@nebular/theme';
 import { tap, filter, map, takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
@@ -16,19 +16,20 @@ import { TranslateService } from '@ngx-translate/core';
 @Component({
 	selector: 'ga-sprint-task',
 	templateUrl: './task.component.html',
-	styleUrls: ['./task.component.css']
+	styleUrls: ['./task.component.scss']
 })
 export class SprintTaskComponent
 	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
-	@Input() task: ITask & { employees: IEmployee[] };
+	implements OnInit, OnDestroy
+{
+	@Input() task: any;
+	@Input() isSelected: boolean = false;
 	@Output() taskActionEvent: EventEmitter<{
 		action: string;
 		task: ITask;
 	}> = new EventEmitter();
-	@Output() changeStatusEvent: EventEmitter<
-		Partial<ITask>
-	> = new EventEmitter();
+	@Output() changeStatusEvent: EventEmitter<Partial<ITask>> =
+		new EventEmitter();
 	taskStatusList: any;
 	taskActions: any;
 	private onDestroy$ = new Subject<void>();
