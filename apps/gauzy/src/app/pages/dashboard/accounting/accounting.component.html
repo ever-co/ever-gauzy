@@ -119,15 +119,14 @@
 				<div class="block-info">
 					<div class="row">
 						<div class="col">
-							<div class="image-container">
-								<img
-									[src]="
-										employeeExpense.employee?.user?.imageUrl
-									"
-								/>
-							</div>
-							{{ employeeExpense.employee?.user?.firstName }}
-							{{ employeeExpense.employee?.user?.lastName }}
+							<ngx-avatar
+								class="report-table"
+								[name]="employeeExpense?.employee?.user?.name"
+								[src]="
+									employeeExpense?.employee?.user?.imageUrl
+								"
+								[id]="employeeExpense?.employee?.id"
+							></ngx-avatar>
 						</div>
 						<div class="col">
 							{{

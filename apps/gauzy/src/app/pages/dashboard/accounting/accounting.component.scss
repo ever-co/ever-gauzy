@@ -5,13 +5,13 @@
 
 .setting-block {
   &:hover {
-    box-shadow: 0 2px 9px 0 rgba(0, 0, 0, 0.26);
+    box-shadow: var(--gauzy-shadow);
     transform: translateY(-1px);
   }
-  box-shadow: 0 1px 1px 0.5px rgba(50, 50, 50, 0.1);
-  border-radius: $default-radius 0 0 $default-radius;
-  margin-bottom: 20px;
-  padding: 10px 0px;
+  box-shadow:var(--gauzy-shadow);
+  border-radius: $default-radius;
+  margin-bottom: 4px;
+  padding: 15px 20px;
   .block-content {
     .block-info {
       width: 100%;
@@ -30,8 +30,9 @@
     }
     img {
       height: 100%;
-      max-width: 70px;
-      border-radius: 50%;
+      width: 70px;
+      border-radius: var(--button-rectangle-border-radius);
+      object-fit: cover;
     }
     .row {
       cursor: pointer;
