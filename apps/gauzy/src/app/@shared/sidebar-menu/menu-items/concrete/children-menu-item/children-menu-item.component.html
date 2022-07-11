@@ -19,9 +19,11 @@
 			<span class="info">
 				<i [class]="item?.icon"></i
 				><span *ngIf="collapse || mouseHover"
-					><a [href]="'#' + item?.link" onclick="return false;">{{
-						item?.title
-					}}</a></span
+					><a
+						[href]="adpatExternalUrl(item?.link)"
+						onclick="return false;"
+						>{{ item?.title }}</a
+					></span
 				>
 			</span>
 		</div>
@@ -45,9 +47,11 @@
 			<span (click)="select()" class="info w-100">
 				<i [class]="item?.icon"></i
 				><span *ngIf="collapse || mouseHover"
-					><a [href]="'#' + item?.link" onclick="return false;">{{
-						item?.title
-					}}</a></span
+					><a
+						[href]="adpatExternalUrl(item?.link)"
+						onclick="return false;"
+						>{{ item?.title }}</a
+					></span
 				>
 			</span>
 			<button

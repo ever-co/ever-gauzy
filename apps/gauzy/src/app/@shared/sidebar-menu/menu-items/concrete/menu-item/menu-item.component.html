@@ -16,7 +16,7 @@
 		>
 			<i [class]="item?.icon"></i
 			><span *ngIf="state"
-				><a [href]="'#' + item?.link" onclick="return false;">{{
+				><a [href]="adpatExternalUrl(item?.link)" onclick="return false;">{{
 					item?.title
 				}}</a></span
 			>
@@ -30,7 +30,7 @@
 		>
 			<i [class]="item?.icon"></i
 			><span *ngIf="state"
-				><a [href]="'#' + item?.link" onclick="return false;">{{
+				><a [href]="adpatExternalUrl(item?.link)" onclick="return false;">{{
 					item?.title
 				}}</a></span
 			>
