@@ -192,6 +192,9 @@ $orange: #f56d58;
 
 .timer-action {
   cursor: pointer;
+  span {
+    width: 64px;
+  }
 }
 .timer-card {
   position: relative;
