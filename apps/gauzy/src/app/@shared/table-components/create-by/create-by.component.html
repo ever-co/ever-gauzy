@@ -3,7 +3,7 @@
 		<a
 			class="avatar"
 			[nbTooltip]="
-				rowData?.creator?.firstName + rowData?.creator?.lastName
+				rowData?.creator?.name
 			"
 			(click)="edit(rowData?.creator?.id)"
 		>
@@ -13,8 +13,7 @@
 				[src]="rowData?.creator?.imageUrl"
 			/>
 			<div class="names-wrapper">
-				{{ rowData?.creator?.firstName }}
-				{{ rowData?.creator?.lastName }}
+				{{ rowData?.creator?.name }}
 			</div>
 		</a>
 	</ng-template>
