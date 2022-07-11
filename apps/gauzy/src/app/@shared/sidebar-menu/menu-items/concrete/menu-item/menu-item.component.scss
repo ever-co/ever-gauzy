@@ -84,6 +84,11 @@
     letter-spacing: 0em;
     gap: 0.625rem;
   }
+  
+  a {
+    text-decoration: none;
+    color: unset;
+  }
 }
 
 :host .sub-item {
