@@ -159,11 +159,11 @@ export class InvoicesReceivedComponent extends PaginationFilterBaseComponent
 					(componentLayout) =>
 						(this.dataLayoutStyle = componentLayout)
 				),
+				tap(() => this.refreshPagination()),
 				filter(
 					(componentLayout) =>
 						componentLayout === ComponentLayoutStyleEnum.CARDS_GRID
 				),
-				tap(() => this.refreshPagination()),
 				tap(() => this.invoices$.next(true)),
 				untilDestroyed(this)
 			)

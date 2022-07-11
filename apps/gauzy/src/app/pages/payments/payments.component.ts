@@ -161,11 +161,11 @@ export class PaymentsComponent extends PaginationFilterBaseComponent
 					(componentLayout) =>
 						(this.dataLayoutStyle = componentLayout)
 				),
+				tap(() => this.refreshPagination()),
 				filter(
 					(componentLayout) =>
 						componentLayout === ComponentLayoutStyleEnum.CARDS_GRID
 				),
-				tap(() => this.refreshPagination()),
 				tap(() => this.payments$.next(true)),
 				untilDestroyed(this)
 			)
