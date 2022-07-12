@@ -176,9 +176,9 @@ export class AccountingComponent
 				{
 					label: this.getTranslation('DASHBOARD_PAGE.CHARTS.BONUS'),
 					data: pluck(pluck(pluck(data, 'stats'), 'total'), 'bonus'),
-					borderColor: ChartUtil.CHART_COLORS.yellow,
+					borderColor: ChartUtil.CHART_COLORS.green,
 					backgroundColor: ChartUtil.transparentize(
-						ChartUtil.CHART_COLORS.yellow,
+						ChartUtil.CHART_COLORS.green,
 						1
 					),
 					...commonOptions
@@ -201,9 +201,9 @@ export class AccountingComponent
 				{
 					label: this.getTranslation('DASHBOARD_PAGE.CHARTS.PROFIT'),
 					data: pluck(pluck(pluck(data, 'stats'), 'total'), 'profit'),
-					borderColor: ChartUtil.CHART_COLORS.green,
+					borderColor: ChartUtil.CHART_COLORS.yellow,
 					backgroundColor: ChartUtil.transparentize(
-						ChartUtil.CHART_COLORS.green,
+						ChartUtil.CHART_COLORS.yellow,
 						1
 					),
 					...commonOptions
