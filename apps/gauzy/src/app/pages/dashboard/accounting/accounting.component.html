@@ -78,6 +78,16 @@
 				</nb-card>
 			</div>
 		</div>
+		<div class="cash-flow-report">
+			<nb-card>
+				<nb-card-header>Cashflow</nb-card-header>
+				<nb-card-body class="chart">
+					<ngx-line-chart 
+						[data]="chartData"
+					></ngx-line-chart>
+				</nb-card-body>
+			</nb-card>
+		</div>
 	</nb-card-header>
 	<nb-card-body class="card-body">
 		<div class="body-header">
@@ -88,73 +98,95 @@
 			</h4>
 		</div>
 
-		<div class="sub-header block-content">
-			<div class="row block-info">
-				<div class="col"></div>
-				<div class="col">
-					{{ 'DASHBOARD_PAGE.DEVELOPER.TOTAL_INCOME' | translate }}
-				</div>
-				<div class="col">
-					{{ 'DASHBOARD_PAGE.DEVELOPER.TOTAL_EXPENSES' | translate }}
-				</div>
-				<div class="col">
-					{{ 'DASHBOARD_PAGE.DEVELOPER.PROFIT' | translate }}
-				</div>
-				<div *ngIf="organization?.bonusType" class="col">
-					{{ 'DASHBOARD_PAGE.DEVELOPER.BONUS' | translate }}
-				</div>
-			</div>
-		</div>
-
-		<div
-			class="setting-block"
-			*ngFor="
-				let employeeExpense of aggregatedEmployeeStatistics?.employees
-			"
-		>
-			<div
-				class="block-content"
-				(click)="selectEmployee(employeeExpense.employee)"
-			>
+		<div class="setting-block sub-header">
+			<div class="block-content">
 				<div class="block-info">
 					<div class="row">
 						<div class="col">
-							<ngx-avatar
-								class="report-table"
-								[name]="employeeExpense?.employee?.user?.name"
-								[src]="
-									employeeExpense?.employee?.user?.imageUrl
-								"
-								[id]="employeeExpense?.employee?.id"
-							></ngx-avatar>
-						</div>
-						<div class="col">
 							{{
-								employeeExpense.income || 0
-									| currency: organization?.currency
-									| position: organization?.currencyPosition
+								'DASHBOARD_PAGE.DEVELOPER.EMPLOYEES' | translate
 							}}
 						</div>
 						<div class="col">
 							{{
-								employeeExpense.expense || 0
-									| currency: organization?.currency
-									| position: organization?.currencyPosition
+								'DASHBOARD_PAGE.DEVELOPER.TOTAL_INCOME'
+									| translate
 							}}
 						</div>
 						<div class="col">
 							{{
-								employeeExpense.profit || 0
-									| currency: organization?.currency
-									| position: organization?.currencyPosition
+								'DASHBOARD_PAGE.DEVELOPER.TOTAL_EXPENSES'
+									| translate
 							}}
+						</div>
+						<div class="col">
+							{{ 'DASHBOARD_PAGE.DEVELOPER.PROFIT' | translate }}
 						</div>
 						<div *ngIf="organization?.bonusType" class="col">
-							{{
-								employeeExpense.bonus || 0
-									| currency: organization?.currency
-									| position: organization?.currencyPosition
-							}}
+							{{ 'DASHBOARD_PAGE.DEVELOPER.BONUS' | translate }}
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="table-scrollable">
+			<div
+				class="setting-block"
+				*ngFor="
+					let employeeExpense of aggregatedEmployeeStatistics?.employees
+				"
+			>
+				<div
+					class="block-content"
+					(click)="selectEmployee(employeeExpense.employee)"
+				>
+					<div class="block-info">
+						<div class="row">
+							<div class="col">
+								<ngx-avatar
+									class="report-table"
+									[name]="
+										employeeExpense?.employee?.user?.name
+									"
+									[src]="
+										employeeExpense?.employee?.user
+											?.imageUrl
+									"
+									[id]="employeeExpense?.employee?.id"
+								></ngx-avatar>
+							</div>
+							<div class="col">
+								{{
+									employeeExpense.income || 0
+										| currency: organization?.currency
+										| position
+											: organization?.currencyPosition
+								}}
+							</div>
+							<div class="col">
+								{{
+									employeeExpense.expense || 0
+										| currency: organization?.currency
+										| position
+											: organization?.currencyPosition
+								}}
+							</div>
+							<div class="col">
+								{{
+									employeeExpense.profit || 0
+										| currency: organization?.currency
+										| position
+											: organization?.currencyPosition
+								}}
+							</div>
+							<div *ngIf="organization?.bonusType" class="col">
+								{{
+									employeeExpense.bonus || 0
+										| currency: organization?.currency
+										| position
+											: organization?.currencyPosition
+								}}
+							</div>
 						</div>
 					</div>
 				</div>
