@@ -19,6 +19,10 @@ import {
 	Store,
 	ToastrService
 } from '../../../@core/services';
+import { IChartData } from '../../../@shared/report/charts/line-chart/line-chart.component';
+import * as moment from 'moment';
+import { pluck } from 'underscore';
+import { ChartUtil } from '../../../@shared/report/charts/line-chart/chart-utils';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -30,11 +34,20 @@ import {
 	]
 })
 export class AccountingComponent implements OnInit, OnDestroy {
-
 	aggregatedEmployeeStatistics: IAggregatedEmployeeStatistic;
 	selectedDateRange: IDateRangePicker;
 	organization: IOrganization;
 	isEmployee: boolean;
+	chartData: IChartData;
+	options: {
+		scales: {
+			x: {
+				ticks: {
+					maxTicksLimit: 10;
+				};
+			};
+		};
+	};
 
 	statistics$: Subject<any> = new Subject();
 
@@ -50,9 +63,10 @@ export class AccountingComponent implements OnInit, OnDestroy {
 		this.store.user$
 			.pipe(
 				filter((user: IUser) => !!user),
-				tap((user: IUser) => (
-					this.isEmployee = user.employee ? true : false
-				)),
+				tap(
+					(user: IUser) =>
+						(this.isEmployee = user.employee ? true : false)
+				),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -76,7 +90,9 @@ export class AccountingComponent implements OnInit, OnDestroy {
 			.pipe(
 				debounceTime(300),
 				distinctUntilChange(),
-				filter(([organization, dateRange]) => !!organization && !!dateRange),
+				filter(
+					([organization, dateRange]) => !!organization && !!dateRange
+				),
 				tap(([organization, dateRange]) => {
 					this.organization = organization;
 					this.selectedDateRange = dateRange;
@@ -100,33 +116,117 @@ export class AccountingComponent implements OnInit, OnDestroy {
 			const { id: organizationId } = this.organization;
 			const { startDate, endDate } = this.selectedDateRange;
 
-			this.aggregatedEmployeeStatistics = await this.employeeStatisticsService.getAggregateStatisticsByOrganizationId(
-				{
-					organizationId,
-					tenantId,
-					startDate,
-					endDate
-				}
-			);
+			this.aggregatedEmployeeStatistics =
+				await this.employeeStatisticsService.getAggregateStatisticsByOrganizationId(
+					{
+						organizationId,
+						tenantId,
+						startDate,
+						endDate
+					}
+				);
+			this.generateDataForChart();
 		} catch (error) {
-			console.log('Error while retriving employee aggregate statistics', error);
+			console.log(
+				'Error while retriving employee aggregate statistics',
+				error
+			);
 			this.toastrService.danger(error);
 		}
 	}
 
+	public async generateDataForChart() {
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
+		const { startDate, endDate } = this.selectedDateRange;
+		const PERIOD = moment(endDate).diff(moment(startDate), 'day') + 1;
+		const data: any[] = [];
+		const commonOptions = {
+			borderWidth: 2,
+			pointRadius: 2,
+			pointHoverRadius: 4,
+			pointHoverBorderWidth: 4
+		};
+		for (let i = 0; i < PERIOD; i++) {
+			data.push({
+				dates: moment(startDate).add(i, 'day').format('LL'),
+				stats: await this.employeeStatisticsService.getAggregateStatisticsByOrganizationId(
+					{
+						organizationId,
+						tenantId,
+						startDate: moment(startDate).add(i, 'day').toDate(),
+						endDate: moment(startDate)
+							.add(i + 1, 'day')
+							.toDate()
+					}
+				)
+			});
+		}
+		this.chartData = {
+			labels: pluck(data, 'dates'),
+			datasets: [
+				{
+					label: 'Bonus',
+					data: pluck(pluck(pluck(data, 'stats'), 'total'), 'bonus'),
+					borderColor: ChartUtil.CHART_COLORS.yellow,
+					backgroundColor: ChartUtil.transparentize(
+						ChartUtil.CHART_COLORS.yellow,
+						1
+					),
+					...commonOptions
+				},
+				{
+					label: 'Expense',
+					data: pluck(
+						pluck(pluck(data, 'stats'), 'total'),
+						'expense'
+					),
+					borderColor: ChartUtil.CHART_COLORS.red,
+					backgroundColor: ChartUtil.transparentize(
+						ChartUtil.CHART_COLORS.red,
+						1
+					),
+					...commonOptions
+				},
+				{
+					label: 'Profit',
+					data: pluck(pluck(pluck(data, 'stats'), 'total'), 'profit'),
+					borderColor: ChartUtil.CHART_COLORS.green,
+					backgroundColor: ChartUtil.transparentize(
+						ChartUtil.CHART_COLORS.green,
+						1
+					),
+					...commonOptions
+				},
+				{
+					label: 'Income',
+					data: pluck(pluck(pluck(data, 'stats'), 'total'), 'income'),
+					borderColor: ChartUtil.CHART_COLORS.blue,
+					backgroundColor: ChartUtil.transparentize(
+						ChartUtil.CHART_COLORS.blue,
+						1
+					),
+					...commonOptions
+				}
+			]
+		};
+	}
+
 	async selectEmployee(employee: ISelectedEmployee) {
-		const people  = await this.employeesService.getEmployeeById(
+		const people = await this.employeesService.getEmployeeById(
 			employee.id,
 			['user']
 		);
-		this.store.selectedEmployee = (employee.id) ? {
-			id: people.id,
-			firstName: people.user.firstName,
-			lastName: people.user.lastName,
-			imageUrl: people.user.imageUrl,
-			employeeLevel: people.employeeLevel,
-			shortDescription: people.short_description
-		} as ISelectedEmployee : ALL_EMPLOYEES_SELECTED;
+		this.store.selectedEmployee = employee.id
+			? ({
+					id: people.id,
+					firstName: people.user.firstName,
+					lastName: people.user.lastName,
+					imageUrl: people.user.imageUrl,
+					employeeLevel: people.employeeLevel,
+					shortDescription: people.short_description
+			  } as ISelectedEmployee)
+			: ALL_EMPLOYEES_SELECTED;
 	}
 
 	ngOnDestroy(): void {}
