@@ -1,5 +1,5 @@
 @import 'var';
-nb-card-body {
+:host nb-card-body {
 	padding: 50px 70px;
 	@include respond(dsk) {
 		padding: 30px 40px;
@@ -21,7 +21,7 @@ nb-card-body {
 		display: flex;
 	}
 
-	:host .employee-container {
+	.employee-container {
 		position: relative;
 		display: flex;
 		flex-direction: column;
