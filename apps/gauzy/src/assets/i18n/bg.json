@@ -1135,7 +1135,8 @@
 			"EXPENSES": "Разходи",
 			"PROFIT": "Печалба",
 			"BONUS": "Бонус",
-			"NO_MONTH_DATA": "No Data for this month"
+			"NO_MONTH_DATA": "No Data for this month",
+			"CASH_FLOW": "Cash Flow"
 		},
 		"PROFIT_HISTORY": {
 			"PROFIT_REPORT": "Репорт на печалбата",
@@ -1176,7 +1177,8 @@
 			"PROFIT": "Печалба",
 			"PROFIT_CALC": "Profit (Net Income) = Total Income {{ totalAllIncome }} - Total Expenses {{ totalExpense }}",
 			"NOTE": "Забележка: отрицателните бонуси трябва да се приспадат през следващите месеци от положителните бонуси преди окончателните плащания на бонуси",
-			"BONUS": "Бонус"
+			"BONUS": "Бонус",
+			"EMPLOYEES": "Служители"
 		},
 		"ADD_INCOME": "Добавете ново въвеждане на доходи",
 		"ADD_EXPENSE": "Добавете ново въвеждане на разходи",
