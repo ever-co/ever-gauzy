@@ -1135,7 +1135,8 @@
 			"EXPENSES": "crwdns3216:0crwdne3216:0",
 			"PROFIT": "crwdns3218:0crwdne3218:0",
 			"BONUS": "crwdns3220:0crwdne3220:0",
-			"NO_MONTH_DATA": "crwdns3222:0crwdne3222:0"
+			"NO_MONTH_DATA": "crwdns3222:0crwdne3222:0",
+			"CASH_FLOW": "crwdns11415:0crwdne11415:0"
 		},
 		"PROFIT_HISTORY": {
 			"PROFIT_REPORT": "crwdns2585:0crwdne2585:0",
@@ -1176,7 +1177,8 @@
 			"PROFIT": "crwdns206:0crwdne206:0",
 			"PROFIT_CALC": "crwdns2933:0{{ totalAllIncome }}crwdnd2933:0{{ totalExpense }}crwdne2933:0",
 			"NOTE": "crwdns210:0crwdne210:0",
-			"BONUS": "crwdns212:0crwdne212:0"
+			"BONUS": "crwdns212:0crwdne212:0",
+			"EMPLOYEES": "crwdns11417:0crwdne11417:0"
 		},
 		"ADD_INCOME": "crwdns2761:0crwdne2761:0",
 		"ADD_EXPENSE": "crwdns2763:0crwdne2763:0",
