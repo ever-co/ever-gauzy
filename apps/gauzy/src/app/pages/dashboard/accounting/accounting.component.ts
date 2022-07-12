@@ -174,11 +174,11 @@ export class AccountingComponent
 			labels: pluck(data, 'dates'),
 			datasets: [
 				{
-					label: this.getTranslation('DASHBOARD_PAGE.CHARTS.BONUS'),
-					data: pluck(pluck(pluck(data, 'stats'), 'total'), 'bonus'),
-					borderColor: ChartUtil.CHART_COLORS.green,
+					label: this.getTranslation('INCOME_PAGE.INCOME'),
+					data: pluck(pluck(pluck(data, 'stats'), 'total'), 'income'),
+					borderColor: ChartUtil.CHART_COLORS.blue,
 					backgroundColor: ChartUtil.transparentize(
-						ChartUtil.CHART_COLORS.green,
+						ChartUtil.CHART_COLORS.blue,
 						1
 					),
 					...commonOptions
@@ -209,11 +209,11 @@ export class AccountingComponent
 					...commonOptions
 				},
 				{
-					label: this.getTranslation('INCOME_PAGE.INCOME'),
-					data: pluck(pluck(pluck(data, 'stats'), 'total'), 'income'),
-					borderColor: ChartUtil.CHART_COLORS.blue,
+					label: this.getTranslation('DASHBOARD_PAGE.CHARTS.BONUS'),
+					data: pluck(pluck(pluck(data, 'stats'), 'total'), 'bonus'),
+					borderColor: ChartUtil.CHART_COLORS.green,
 					backgroundColor: ChartUtil.transparentize(
-						ChartUtil.CHART_COLORS.blue,
+						ChartUtil.CHART_COLORS.green,
 						1
 					),
 					...commonOptions
