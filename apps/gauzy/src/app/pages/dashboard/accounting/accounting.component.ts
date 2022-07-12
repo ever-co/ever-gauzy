@@ -39,16 +39,6 @@ export class AccountingComponent implements OnInit, OnDestroy {
 	organization: IOrganization;
 	isEmployee: boolean;
 	chartData: IChartData;
-	options: {
-		scales: {
-			x: {
-				ticks: {
-					maxTicksLimit: 10;
-				};
-			};
-		};
-	};
-
 	statistics$: Subject<any> = new Subject();
 
 	constructor(
