@@ -18,7 +18,13 @@
 		>
 			<span class="info">
 				<i [class]="item?.icon"></i
-				><span *ngIf="collapse || mouseHover">{{ item?.title }}</span>
+				><span *ngIf="collapse || mouseHover"
+					><a
+						[href]="adpatExternalUrl(item?.link)"
+						onclick="return false;"
+						>{{ item?.title }}</a
+					></span
+				>
 			</span>
 		</div>
 	</ng-container>
@@ -40,7 +46,13 @@
 		>
 			<span (click)="select()" class="info w-100">
 				<i [class]="item?.icon"></i
-				><span *ngIf="collapse || mouseHover">{{ item?.title }} </span>
+				><span *ngIf="collapse || mouseHover"
+					><a
+						[href]="adpatExternalUrl(item?.link)"
+						onclick="return false;"
+						>{{ item?.title }}</a
+					></span
+				>
 			</span>
 			<button
 				*ngIf="item?.data?.add"

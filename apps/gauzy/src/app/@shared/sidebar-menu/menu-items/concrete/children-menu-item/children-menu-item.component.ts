@@ -1,3 +1,4 @@
+import { Location } from '@angular/common';
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
 import { IMenuItem } from '../../interface/menu-item.interface';
@@ -16,7 +17,10 @@ export class ChildrenMenuItemComponent implements OnInit {
 
 	@Output() public focusItemChange: EventEmitter<any> = new EventEmitter();
 
-	constructor(private readonly router: Router) {}
+	constructor(
+		private readonly router: Router,
+		private readonly location: Location
+	) {}
 
 	ngOnInit(): void {
 		this.router.events.subscribe((val) => {
@@ -48,7 +52,11 @@ export class ChildrenMenuItemComponent implements OnInit {
 		}
 	}
 
-	public add(){
+	public adpatExternalUrl(url: string): string {
+		return url ? this.location.prepareExternalUrl(url) : url;
+	}
+
+	public add() {
 		this.focusItemChange.emit({
 			children: this.item,
 			parent: this.parent
@@ -56,7 +64,7 @@ export class ChildrenMenuItemComponent implements OnInit {
 		this.router.navigateByUrl(this.item.data.add);
 	}
 
-	public isLast(): boolean{
+	public isLast(): boolean {
 		const last = this.parent.children.slice(-1)[0];
 		return this.item === last;
 	}
