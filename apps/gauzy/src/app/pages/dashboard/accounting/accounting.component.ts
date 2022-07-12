@@ -45,6 +45,7 @@ export class AccountingComponent
 	isEmployee: boolean;
 	chartData: IChartData;
 	statistics$: Subject<any> = new Subject();
+	isLoading: boolean = false;
 
 	constructor(
 		private readonly employeesService: EmployeesService,
@@ -155,6 +156,7 @@ export class AccountingComponent
 			pointHoverRadius: 4,
 			pointHoverBorderWidth: 4
 		};
+		this.isLoading = true;
 		for (let i = 0; i < PERIOD; i++) {
 			data.push({
 				dates: moment(startDate).add(i, 'day').format('LL'),
@@ -220,6 +222,7 @@ export class AccountingComponent
 				}
 			]
 		};
+		this.isLoading = false;
 	}
 
 	async selectEmployee(employee: ISelectedEmployee) {

@@ -79,7 +79,7 @@
 			</div>
 		</div>
 		<div class="cash-flow-report">
-			<nb-card>
+			<nb-card [nbSpinner]="isLoading" nbSpinnerStatus="primary">
 				<nb-card-header>
 					{{ 'DASHBOARD_PAGE.CHARTS.CASH_FLOW' | translate }}
 				</nb-card-header>
