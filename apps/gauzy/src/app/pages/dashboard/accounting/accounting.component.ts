@@ -23,6 +23,8 @@ import { IChartData } from '../../../@shared/report/charts/line-chart/line-chart
 import * as moment from 'moment';
 import { pluck } from 'underscore';
 import { ChartUtil } from '../../../@shared/report/charts/line-chart/chart-utils';
+import { TranslateService } from '@ngx-translate/core';
+import { TranslationBaseComponent } from '../../../@shared/language-base';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -33,7 +35,10 @@ import { ChartUtil } from '../../../@shared/report/charts/line-chart/chart-utils
 		'./accounting.component.scss'
 	]
 })
-export class AccountingComponent implements OnInit, OnDestroy {
+export class AccountingComponent
+	extends TranslationBaseComponent
+	implements OnInit, OnDestroy
+{
 	aggregatedEmployeeStatistics: IAggregatedEmployeeStatistic;
 	selectedDateRange: IDateRangePicker;
 	organization: IOrganization;
@@ -46,10 +51,14 @@ export class AccountingComponent implements OnInit, OnDestroy {
 		private readonly store: Store,
 		private readonly router: Router,
 		private readonly employeeStatisticsService: EmployeeStatisticsService,
-		private readonly toastrService: ToastrService
-	) {}
+		private readonly toastrService: ToastrService,
+		readonly translateService: TranslateService
+	) {
+		super(translateService);
+	}
 
 	ngOnInit() {
+		this._applyTranslationOnSmartTable();
 		this.store.user$
 			.pipe(
 				filter((user: IUser) => !!user),
@@ -88,6 +97,15 @@ export class AccountingComponent implements OnInit, OnDestroy {
 					this.selectedDateRange = dateRange;
 				}),
 				tap(() => this.statistics$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
+
+	private _applyTranslationOnSmartTable() {
+		this.translateService.onLangChange
+			.pipe(
+				tap(() => this.generateDataForChart()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -156,7 +174,7 @@ export class AccountingComponent implements OnInit, OnDestroy {
 			labels: pluck(data, 'dates'),
 			datasets: [
 				{
-					label: 'Bonus',
+					label: this.getTranslation('DASHBOARD_PAGE.CHARTS.BONUS'),
 					data: pluck(pluck(pluck(data, 'stats'), 'total'), 'bonus'),
 					borderColor: ChartUtil.CHART_COLORS.yellow,
 					backgroundColor: ChartUtil.transparentize(
@@ -166,7 +184,9 @@ export class AccountingComponent implements OnInit, OnDestroy {
 					...commonOptions
 				},
 				{
-					label: 'Expense',
+					label: this.getTranslation(
+						'DASHBOARD_PAGE.PROFIT_HISTORY.EXPENSES'
+					),
 					data: pluck(
 						pluck(pluck(data, 'stats'), 'total'),
 						'expense'
@@ -179,7 +199,7 @@ export class AccountingComponent implements OnInit, OnDestroy {
 					...commonOptions
 				},
 				{
-					label: 'Profit',
+					label: this.getTranslation('DASHBOARD_PAGE.CHARTS.PROFIT'),
 					data: pluck(pluck(pluck(data, 'stats'), 'total'), 'profit'),
 					borderColor: ChartUtil.CHART_COLORS.green,
 					backgroundColor: ChartUtil.transparentize(
@@ -189,7 +209,7 @@ export class AccountingComponent implements OnInit, OnDestroy {
 					...commonOptions
 				},
 				{
-					label: 'Income',
+					label: this.getTranslation('INCOME_PAGE.INCOME'),
 					data: pluck(pluck(pluck(data, 'stats'), 'total'), 'income'),
 					borderColor: ChartUtil.CHART_COLORS.blue,
 					backgroundColor: ChartUtil.transparentize(
