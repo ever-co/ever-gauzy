@@ -1136,7 +1136,7 @@
 			"PROFIT": "Profit",
 			"BONUS": "Bonus",
 			"NO_MONTH_DATA": "No Data for this month",
-			"CASHFLOW": "Cashflow"
+			"CASH_FLOW": "Cash Flow"
 		},
 		"PROFIT_HISTORY": {
 			"PROFIT_REPORT": "Profit Report",
