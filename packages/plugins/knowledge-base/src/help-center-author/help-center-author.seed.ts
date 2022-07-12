@@ -17,10 +17,10 @@ export const createDefaultHelpCenterAuthor = async (
 
 	let mapEmployeeToArticles: IHelpCenterAuthor[] = [];
 
-	const allArticle = await connection.manager.find(HelpCenterArticle, {});
+	const allArticle = await dataSource.manager.find(HelpCenterArticle, {});
 
 	mapEmployeeToArticles = await operateData(
-		connection,
+		dataSource,
 		mapEmployeeToArticles,
 		allArticle,
 		defaultEmployees
@@ -44,7 +44,7 @@ export const createRandomHelpCenterAuthor = async (
 	let mapEmployeeToArticles: IHelpCenterAuthor[] = [];
 	const employees: IEmployee[] = [];
 
-	const allArticle = await connection.manager.find(HelpCenterArticle, {});
+	const allArticle = await dataSource.manager.find(HelpCenterArticle, {});
 	for (const tenant of tenants) {
 		const tenantEmployee = tenantEmployeeMap.get(tenant);
 		for (const tenantEmp of tenantEmployee) {
@@ -53,7 +53,7 @@ export const createRandomHelpCenterAuthor = async (
 	}
 
 	mapEmployeeToArticles = await operateData(
-		connection,
+		dataSource,
 		mapEmployeeToArticles,
 		allArticle,
 		employees
@@ -66,7 +66,7 @@ const insertRandomHelpCenterAuthor = async (
 	dataSource: DataSource,
 	data: IHelpCenterAuthor[]
 ) => {
-	await connection.manager.save(data);
+	await dataSource.manager.save(data);
 };
 
 const operateData = async (
@@ -87,6 +87,6 @@ const operateData = async (
 		mapEmployeeToArticles.push(employeeMap);
 	}
 
-	await insertRandomHelpCenterAuthor(connection, mapEmployeeToArticles);
+	await insertRandomHelpCenterAuthor(dataSource, mapEmployeeToArticles);
 	return mapEmployeeToArticles;
 };

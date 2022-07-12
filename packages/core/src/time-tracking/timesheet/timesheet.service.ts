@@ -32,7 +32,7 @@ export class TimeSheetService extends TenantAwareCrudService<Timesheet> {
 	}
 
 	async createOrFindTimeSheet(
-		employeeId: string, 
+		employeeId: string,
 		date: Date = new Date()
 	): Promise<ITimesheet> {
 		return await this.commandBus.execute(
@@ -58,55 +58,42 @@ export class TimeSheetService extends TenantAwareCrudService<Timesheet> {
 
 	/**
 	 * GET timesheets count in date range for same tenant
-	 * 
-	 * @param request 
-	 * @returns 
+	 *
+	 * @param request
+	 * @returns
 	 */
 	async getTimeSheetCount(request: IGetTimesheetInput): Promise<number> {
-		return await this.timeSheetRepository.count({
-			join: {
-				alias: 'timesheet',
-				innerJoin: {
-					employee: 'timesheet.employee',
-					timeLogs: 'timesheet.timeLogs'
-				}
-			},
-			where: (query: SelectQueryBuilder<Timesheet>) => {
-				this.getFilterTimesheetQuery(query, request);
-			}
+		const query = this.timeSheetRepository.createQueryBuilder('timesheet');
+		query.innerJoin(`${query.alias}.employee`, 'employee');
+		query.innerJoin(`${query.alias}.timeLogs`, 'timeLogs');
+		query.where((query: SelectQueryBuilder<Timesheet>) => {
+			this.getFilterTimesheetQuery(query, request);
 		});
+		return await query.getCount();
 	}
 
 	/**
 	 * GET timesheets in date range for same tenant
-	 * 
-	 * @param request 
-	 * @returns 
+	 *
+	 * @param request
+	 * @returns
 	 */
 	async getTimeSheets(request: IGetTimesheetInput): Promise<ITimesheet[]> {
-		return await this.timeSheetRepository.find({
-			join: {
-				alias: 'timesheet',
-				innerJoin: {
-					employee: 'timesheet.employee',
-					timeLogs: 'timesheet.timeLogs'
-				}
-			},
-			relations: [
-				...(request.relations ? request.relations : [])
-			],
-			where: (query: SelectQueryBuilder<Timesheet>) => {
-				this.getFilterTimesheetQuery(query, request);
-			}
+		const query = this.timeSheetRepository.createQueryBuilder('timesheet');
+		query.innerJoin(`${query.alias}.employee`, 'employee');
+		query.innerJoin(`${query.alias}.timeLogs`, 'timeLogs');
+		query.where((query: SelectQueryBuilder<Timesheet>) => {
+			this.getFilterTimesheetQuery(query, request);
 		});
+		return await query.getMany();
 	}
 
 	/**
 	 * GET timesheet QueryBuilder
-	 * 
-	 * @param qb 
-	 * @param request 
-	 * @returns 
+	 *
+	 * @param qb
+	 * @param request
+	 * @returns
 	 */
 	async getFilterTimesheetQuery(
 		qb: SelectQueryBuilder<Timesheet>,
@@ -114,7 +101,7 @@ export class TimeSheetService extends TenantAwareCrudService<Timesheet> {
 	) {
 		const user = RequestContext.currentUser();
 		const tenantId = RequestContext.currentTenantId();
-		
+
 		const { organizationId, startDate, endDate } = request;
 		const { start, end } = (startDate && endDate) ?
 								getDateRangeFormat(
@@ -142,7 +129,7 @@ export class TimeSheetService extends TenantAwareCrudService<Timesheet> {
 		}
 
 		qb.andWhere(
-			new Brackets((qb: WhereExpressionBuilder) => { 
+			new Brackets((qb: WhereExpressionBuilder) => {
 				qb.where(						{
 					startedAt: Between(start, end),
 					...(employeeIds.length > 0 ? { employeeId: In(employeeIds) } : {})

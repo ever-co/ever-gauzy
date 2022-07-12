@@ -1,8 +1,7 @@
 import * as path from 'path';
-import fs from 'fs';
 import { TlsOptions } from 'tls';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
-import { ConnectionOptions } from 'typeorm';
+import { DataSourceOptions } from 'typeorm';
 import { PostgresConnectionOptions } from 'typeorm/driver/postgres/PostgresConnectionOptions';
 
 let dbType:string;
@@ -52,8 +51,8 @@ switch (dbType) {
 			logger: 'file', // Removes console logging, instead logs all queries in a file ormlogs.log
 			synchronize: process.env.DB_SYNCHRONIZE === 'true' ? true : false, // We are using migrations, synchronize should be set to false.
 			uuidExtension: 'pgcrypto',
-      migrations: ["src/modules/not-exists/*.migration{.ts,.js}"],
-      entities: ["src/modules/not-exists/*.entity{.ts,.js}"],
+      		migrations: ["src/modules/not-exists/*.migration{.ts,.js}"],
+      		entities: ["src/modules/not-exists/*.entity{.ts,.js}"],
 		};
 
 		connectionConfig = postgresConnectionOptions;
@@ -68,7 +67,7 @@ switch (dbType) {
 
 		console.log('Sqlite DB Path: ' + dbPath);
 
-		const sqliteConfig: ConnectionOptions = {
+		const sqliteConfig: DataSourceOptions = {
 			type: dbType,
 			database: dbPath,
 			logging: 'all',

@@ -22,8 +22,8 @@ export const createHelpCenter = async (
 					child.organization = organization;
 					child.tenant = tenant;
 				});
-				const entity = await createEntity(connection, helpCenter);
-				await connection.manager.save(entity);
+				const entity = await createEntity(dataSource, helpCenter);
+				await dataSource.manager.save(entity);
 			}
 		}
 	}
@@ -34,5 +34,5 @@ const createEntity = async (dataSource: DataSource, node: IHelpCenter) => {
 	if (!node) {
 		return;
 	}
-	return connection.manager.create(HelpCenter, node);
+	return dataSource.manager.create(HelpCenter, node);
 };

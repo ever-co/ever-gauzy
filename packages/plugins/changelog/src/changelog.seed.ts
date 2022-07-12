@@ -22,7 +22,7 @@ export const createChangelog = async (
 				};
 				changelogs.push(changelog);
 			}
-			await insertChangelog(connection, changelogs);
+			await insertChangelog(dataSource, changelogs);
 			resolve(changelogs);
 		} catch (err) {
 			console.log('Error parsing changelog:', err);
@@ -36,7 +36,7 @@ const insertChangelog = async (
 	dataSource: DataSource,
 	changelogs: IChangelog[]
 ): Promise<void> => {
-	await connection
+	await dataSource
 		.createQueryBuilder()
 		.insert()
 		.into(Changelog)

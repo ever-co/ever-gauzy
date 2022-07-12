@@ -35,21 +35,21 @@ export class TimesheetFirstOrCreateHandler
 		 * If organization not found,use employee organization
 		 */
 		if (!organizationId) {
-			const employee = await this.employeeRepository.findOne(employeeId, {
-				where: (query: SelectQueryBuilder<Employee>) => {
-					query.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
-				}
+			const employee = await this.employeeRepository.findOneBy({
+				id: employeeId,
+				tenantId
 			});
 			organizationId = employee.organizationId;
 		}
 
-		/**
-		 * Find employee current week working timesheet
-		 */
-		let timesheet = await this.timeSheetRepository.findOne({
-			where: (query: SelectQueryBuilder<Timesheet>) => {
+		try {
+			/**
+			 * Find employee current week working timesheet
+			 */
+			const query = this.timeSheetRepository.createQueryBuilder('timesheet');
+			query.where((query: SelectQueryBuilder<Timesheet>) => {
 				query.andWhere(
-					new Brackets((qb: WhereExpressionBuilder) => { 
+					new Brackets((qb: WhereExpressionBuilder) => {
 						qb.where(
 							[
 								{
@@ -57,7 +57,7 @@ export class TimesheetFirstOrCreateHandler
 										startedAt.format('YYYY-MM-DD HH:mm:ss.SSS'),
 										stoppedAt.format('YYYY-MM-DD HH:mm:ss.SSS')
 									)
-								}, 
+								},
 								{
 									stoppedAt: Between(
 										startedAt.format('YYYY-MM-DD HH:mm:ss.SSS'),
@@ -69,17 +69,21 @@ export class TimesheetFirstOrCreateHandler
 					})
 				);
 				query.andWhere(
-					new Brackets((qb: WhereExpressionBuilder) => { 
+					new Brackets((qb: WhereExpressionBuilder) => {
 						qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
 						qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
 						qb.andWhere(`"${query.alias}"."employeeId" = :employeeId`, { employeeId });
 						qb.andWhere(`"${query.alias}"."deletedAt" IS NULL`);
 					})
 				);
-			}
-		});
-		if (!timesheet) {
-			timesheet = await this.commandBus.execute(
+			});
+			let timesheet = await query.getOneOrFail();
+			return timesheet;
+		} catch (error) {
+			/**
+			 * Create employee current week working timesheet
+			 */
+			return await this.commandBus.execute(
 				new TimesheetCreateCommand({
 					startedAt: new Date(startedAt.toDate()),
 					stoppedAt: new Date(stoppedAt.toDate()),
@@ -91,6 +95,5 @@ export class TimesheetFirstOrCreateHandler
 				})
 			);
 		}
-		return timesheet;
 	}
 }

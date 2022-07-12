@@ -1,4 +1,4 @@
-import { Connection, IsNull, Not } from 'typeorm';
+import { DataSource, IsNull, Not } from 'typeorm';
 import { faker } from '@ever-co/faker';
 import { IHelpCenter, IHelpCenterArticle, IOrganization, ITenant } from '@gauzy/contracts';
 import { HelpCenterArticle } from './help-center-article.entity';
@@ -16,7 +16,7 @@ export const createHelpCenterArticle = async (
 		for await (const organization of organizations) {
 			const organizationId = organization.id;
 			const tenantId = organization.tenantId;
-			const helpCenters: IHelpCenter[] = await connection.manager.find(HelpCenter, {
+			const helpCenters: IHelpCenter[] = await dataSource.manager.find(HelpCenter, {
 				where: {
 					parentId: Not(IsNull()),
 					tenantId,
@@ -40,5 +40,5 @@ export const createHelpCenterArticle = async (
 			}
 		}
 	}
-	return await connection.manager.save(helpCenterArticles);
+	return await dataSource.manager.save(helpCenterArticles);
 };
