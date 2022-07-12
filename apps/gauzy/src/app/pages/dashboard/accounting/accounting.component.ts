@@ -19,6 +19,12 @@ import {
 	Store,
 	ToastrService
 } from '../../../@core/services';
+import { IChartData } from '../../../@shared/report/charts/line-chart/line-chart.component';
+import * as moment from 'moment';
+import { pluck } from 'underscore';
+import { ChartUtil } from '../../../@shared/report/charts/line-chart/chart-utils';
+import { TranslateService } from '@ngx-translate/core';
+import { TranslationBaseComponent } from '../../../@shared/language-base';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -29,30 +35,38 @@ import {
 		'./accounting.component.scss'
 	]
 })
-export class AccountingComponent implements OnInit, OnDestroy {
-
+export class AccountingComponent
+	extends TranslationBaseComponent
+	implements OnInit, OnDestroy
+{
 	aggregatedEmployeeStatistics: IAggregatedEmployeeStatistic;
 	selectedDateRange: IDateRangePicker;
 	organization: IOrganization;
 	isEmployee: boolean;
-
+	chartData: IChartData;
 	statistics$: Subject<any> = new Subject();
+	isLoading: boolean = false;
 
 	constructor(
 		private readonly employeesService: EmployeesService,
 		private readonly store: Store,
 		private readonly router: Router,
 		private readonly employeeStatisticsService: EmployeeStatisticsService,
-		private readonly toastrService: ToastrService
-	) {}
+		private readonly toastrService: ToastrService,
+		readonly translateService: TranslateService
+	) {
+		super(translateService);
+	}
 
 	ngOnInit() {
+		this._applyTranslationOnSmartTable();
 		this.store.user$
 			.pipe(
 				filter((user: IUser) => !!user),
-				tap((user: IUser) => (
-					this.isEmployee = user.employee ? true : false
-				)),
+				tap(
+					(user: IUser) =>
+						(this.isEmployee = user.employee ? true : false)
+				),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -76,12 +90,23 @@ export class AccountingComponent implements OnInit, OnDestroy {
 			.pipe(
 				debounceTime(300),
 				distinctUntilChange(),
-				filter(([organization, dateRange]) => !!organization && !!dateRange),
+				filter(
+					([organization, dateRange]) => !!organization && !!dateRange
+				),
 				tap(([organization, dateRange]) => {
 					this.organization = organization;
 					this.selectedDateRange = dateRange;
 				}),
 				tap(() => this.statistics$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
+
+	private _applyTranslationOnSmartTable() {
+		this.translateService.onLangChange
+			.pipe(
+				tap(() => this.generateDataForChart()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -100,33 +125,121 @@ export class AccountingComponent implements OnInit, OnDestroy {
 			const { id: organizationId } = this.organization;
 			const { startDate, endDate } = this.selectedDateRange;
 
-			this.aggregatedEmployeeStatistics = await this.employeeStatisticsService.getAggregateStatisticsByOrganizationId(
-				{
-					organizationId,
-					tenantId,
-					startDate,
-					endDate
-				}
-			);
+			this.aggregatedEmployeeStatistics =
+				await this.employeeStatisticsService.getAggregateStatisticsByOrganizationId(
+					{
+						organizationId,
+						tenantId,
+						startDate,
+						endDate
+					}
+				);
+			this.generateDataForChart();
 		} catch (error) {
-			console.log('Error while retriving employee aggregate statistics', error);
+			console.log(
+				'Error while retriving employee aggregate statistics',
+				error
+			);
 			this.toastrService.danger(error);
 		}
 	}
 
+	public async generateDataForChart() {
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
+		const { startDate, endDate } = this.selectedDateRange;
+		const PERIOD = moment(endDate).diff(moment(startDate), 'day') + 1;
+		const data: any[] = [];
+		const commonOptions = {
+			borderWidth: 2,
+			pointRadius: 2,
+			pointHoverRadius: 4,
+			pointHoverBorderWidth: 4
+		};
+		this.isLoading = true;
+		for (let i = 0; i < PERIOD; i++) {
+			data.push({
+				dates: moment(startDate).add(i, 'day').format('LL'),
+				stats: await this.employeeStatisticsService.getAggregateStatisticsByOrganizationId(
+					{
+						organizationId,
+						tenantId,
+						startDate: moment(startDate).add(i, 'day').toDate(),
+						endDate: moment(startDate)
+							.add(i + 1, 'day')
+							.toDate()
+					}
+				)
+			});
+		}
+		this.chartData = {
+			labels: pluck(data, 'dates'),
+			datasets: [
+				{
+					label: this.getTranslation('INCOME_PAGE.INCOME'),
+					data: pluck(pluck(pluck(data, 'stats'), 'total'), 'income'),
+					borderColor: ChartUtil.CHART_COLORS.blue,
+					backgroundColor: ChartUtil.transparentize(
+						ChartUtil.CHART_COLORS.blue,
+						1
+					),
+					...commonOptions
+				},
+				{
+					label: this.getTranslation(
+						'DASHBOARD_PAGE.PROFIT_HISTORY.EXPENSES'
+					),
+					data: pluck(
+						pluck(pluck(data, 'stats'), 'total'),
+						'expense'
+					),
+					borderColor: ChartUtil.CHART_COLORS.red,
+					backgroundColor: ChartUtil.transparentize(
+						ChartUtil.CHART_COLORS.red,
+						1
+					),
+					...commonOptions
+				},
+				{
+					label: this.getTranslation('DASHBOARD_PAGE.CHARTS.PROFIT'),
+					data: pluck(pluck(pluck(data, 'stats'), 'total'), 'profit'),
+					borderColor: ChartUtil.CHART_COLORS.yellow,
+					backgroundColor: ChartUtil.transparentize(
+						ChartUtil.CHART_COLORS.yellow,
+						1
+					),
+					...commonOptions
+				},
+				{
+					label: this.getTranslation('DASHBOARD_PAGE.CHARTS.BONUS'),
+					data: pluck(pluck(pluck(data, 'stats'), 'total'), 'bonus'),
+					borderColor: ChartUtil.CHART_COLORS.green,
+					backgroundColor: ChartUtil.transparentize(
+						ChartUtil.CHART_COLORS.green,
+						1
+					),
+					...commonOptions
+				}
+			]
+		};
+		this.isLoading = false;
+	}
+
 	async selectEmployee(employee: ISelectedEmployee) {
-		const people  = await this.employeesService.getEmployeeById(
+		const people = await this.employeesService.getEmployeeById(
 			employee.id,
 			['user']
 		);
-		this.store.selectedEmployee = (employee.id) ? {
-			id: people.id,
-			firstName: people.user.firstName,
-			lastName: people.user.lastName,
-			imageUrl: people.user.imageUrl,
-			employeeLevel: people.employeeLevel,
-			shortDescription: people.short_description
-		} as ISelectedEmployee : ALL_EMPLOYEES_SELECTED;
+		this.store.selectedEmployee = employee.id
+			? ({
+					id: people.id,
+					firstName: people.user.firstName,
+					lastName: people.user.lastName,
+					imageUrl: people.user.imageUrl,
+					employeeLevel: people.employeeLevel,
+					shortDescription: people.short_description
+			  } as ISelectedEmployee)
+			: ALL_EMPLOYEES_SELECTED;
 	}
 
 	ngOnDestroy(): void {}

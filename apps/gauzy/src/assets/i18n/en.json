@@ -1135,7 +1135,8 @@
 			"EXPENSES": "Expenses",
 			"PROFIT": "Profit",
 			"BONUS": "Bonus",
-			"NO_MONTH_DATA": "No Data for this month"
+			"NO_MONTH_DATA": "No Data for this month",
+			"CASH_FLOW": "Cash Flow"
 		},
 		"PROFIT_HISTORY": {
 			"PROFIT_REPORT": "Profit Report",
@@ -1176,7 +1177,8 @@
 			"PROFIT": "Profit",
 			"PROFIT_CALC": "Profit (Net Income) = Total Income {{ totalAllIncome }} - Total Expenses {{ totalExpense }}",
 			"NOTE": "Note: negative bonuses should be deducted in the upcoming months from the positive bonuses before final bonus payments",
-			"BONUS": "Bonus"
+			"BONUS": "Bonus",
+			"EMPLOYEES": "Employees"
 		},
 		"ADD_INCOME": "Add New Income Entry",
 		"ADD_EXPENSE": "Add New Expense Entry",

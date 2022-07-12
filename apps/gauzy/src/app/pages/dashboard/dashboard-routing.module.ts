@@ -25,7 +25,7 @@ const routes: Routes = [
 						project: false
 					},
 					datePicker: {
-						unitOfTime: 'month'
+						unitOfTime: 'week'
 					}
 				},
 				resolve: {
