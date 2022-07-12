@@ -80,11 +80,11 @@
 		</div>
 		<div class="cash-flow-report">
 			<nb-card>
-				<nb-card-header>Cashflow</nb-card-header>
+				<nb-card-header>
+					{{ 'DASHBOARD_PAGE.CHARTS.CASHFLOW' | translate }}
+				</nb-card-header>
 				<nb-card-body class="chart">
-					<ngx-line-chart 
-						[data]="chartData"
-					></ngx-line-chart>
+					<ngx-line-chart [data]="chartData"></ngx-line-chart>
 				</nb-card-body>
 			</nb-card>
 		</div>
