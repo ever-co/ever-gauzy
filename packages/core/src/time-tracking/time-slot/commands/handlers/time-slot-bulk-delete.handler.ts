@@ -1,6 +1,6 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, SelectQueryBuilder } from 'typeorm';
+import { FindManyOptions, Repository, SelectQueryBuilder } from 'typeorm';
 import { isNotEmpty } from '@gauzy/common';
 import { TimeSlot } from '../../time-slot.entity';
 import { TimeSlotBulkDeleteCommand } from '../time-slot-bulk-delete.command';
@@ -41,7 +41,7 @@ export class TimeSlotBulkDeleteHandler
 				console.log('Time Slots Delete Range Query', qb.getQueryAndParameters());
 			},
 			relations: ['screenshots', 'timeLogs']
-		});
+		} as FindManyOptions<TimeSlot>);
 		console.log({ timeSlots, forceDirectDelete }, 'Time Slots Delete Range');
 
 		if (isNotEmpty(timeSlots)) {

@@ -1,6 +1,6 @@
 import { ICommandHandler, CommandBus, CommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, SelectQueryBuilder } from 'typeorm';
+import { FindManyOptions, Repository, SelectQueryBuilder } from 'typeorm';
 import * as moment from 'moment';
 import { ITimeLog, ITimesheet, TimeLogSourceEnum } from '@gauzy/contracts';
 import { TimeLog } from './../../time-log.entity';
@@ -116,7 +116,7 @@ export class TimeLogUpdateHandler
 						});
 					},
 					relations: ['screenshots']
-				});
+				} as FindManyOptions<TimeSlot>);
 				await this.timeSlotRepository.remove(timeSlots);
 			}
 

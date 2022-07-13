@@ -6,44 +6,75 @@ import { BadRequestException, NotFoundException } from '@nestjs/common';
 import {
 	DeepPartial,
 	DeleteResult,
-	FindConditions,
 	FindManyOptions,
 	FindOneOptions,
+	FindOptionsWhere,
 	Repository,
 	SelectQueryBuilder,
 	UpdateResult
 } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import * as moment from 'moment';
-import { environment as env } from '@gauzy/config';
-import * as bcrypt from 'bcrypt';
+import { of as observableOf, throwError } from 'rxjs';
+import { mergeMap } from 'rxjs/operators';
+import { IPagination } from '@gauzy/contracts';
 import { BaseEntity } from '../entities/internal';
 import { ICrudService } from './icrud.service';
-import { IPagination } from '@gauzy/contracts';
 import { ITryRequest } from './try-request';
 import { filterQuery } from './query-builder';
-import { mergeMap } from 'rxjs/operators';
-import { RequestContext } from 'core/context';
-import { of as observableOf, throwError } from 'rxjs';
+import { RequestContext } from './../../core/context';
 
 export abstract class CrudService<T extends BaseEntity>
 	implements ICrudService<T> {
-	saltRounds: number;
 
-	protected constructor(protected readonly repository: Repository<T>) {
-		this.saltRounds = env.USER_PASSWORD_BCRYPT_SALT_ROUNDS;
+	protected constructor(
+		protected readonly repository: Repository<T>
+	) {}
+
+	/**
+	 * Counts entities that match given options.
+	 * Useful for pagination.
+	 *
+	 * @param options
+	 * @returns
+	 */
+	public async count(options?: FindManyOptions<T>): Promise<number> {
+		return await this.repository.count(options);
 	}
 
-	public async count(filter?: FindManyOptions<T>): Promise<number> {
-		return await this.repository.count(filter);
+	/**
+	 * Counts entities that match given options.
+	 * Useful for pagination.
+	 *
+	 * @param options
+	 * @returns
+	 */
+	public async countBy(options?: FindOptionsWhere<T>): Promise<number> {
+		return await this.repository.countBy(options);
 	}
 
-	public async findAll(filter?: FindManyOptions<T>): Promise<IPagination<T>> {
-		const total = await this.repository.count(filter);
-		const items = await this.repository.find(filter);
+	/**
+	 * Finds entities that match given find options.
+	 * Also counts all entities that match given conditions,
+	 * but ignores pagination settings (from and take options).
+	 *
+	 * @param options
+	 * @returns
+	 */
+	public async findAll(options?: FindManyOptions<T>): Promise<IPagination<T>> {
+		const total = await this.repository.count(options);
+		const items = await this.repository.find(options);
 		return { items, total };
 	}
 
+	/**
+	 * Finds entities that match given find options.
+	 * Also counts all entities that match given conditions,
+	 * But includes pagination settings
+	 *
+	 * @param filter
+	 * @returns
+	 */
 	public async paginate(filter?: any): Promise<IPagination<T>> {
 		try {
 			let options: FindManyOptions = {};
@@ -88,36 +119,27 @@ export abstract class CrudService<T extends BaseEntity>
 		}
 	}
 
+	/**
+	 * Finds first entity by a given find options.
+	 * If entity was not found in the database - rejects with error.
+	 *
+	 * @param id
+	 * @param options
+	 * @returns
+	 */
 	public async findOneOrFailByIdString(
 		id: string,
 		options?: FindOneOptions<T>
-	): Promise<ITryRequest> {
+	): Promise<ITryRequest<T>> {
 		try {
-			const record = await this.repository.findOneOrFail(
-				id,
-				options
-			);
-			return {
-				success: true,
-				record
-			};
-		} catch (error) {
-			return {
-				success: false,
-				error
-			};
-		}
-	}
-	
-	public async findOneOrFailByIdNumber(
-		id: number,
-		options?: FindOneOptions<T>
-	): Promise<ITryRequest> {
-		try {
-			const record = await this.repository.findOneOrFail(
-				id,
-				options
-			);
+			const record = await this.repository.findOneOrFail({
+				select: options.select,
+				where: {
+					id: id,
+					...options.where
+				},
+				relations: options.relations,
+			} as FindOneOptions<T>);
 			return {
 				success: true,
 				record
@@ -130,33 +152,25 @@ export abstract class CrudService<T extends BaseEntity>
 		}
 	}
 
-	public async findOneOrFailByDate(
-		id: Date,
-		options?: FindOneOptions<T>
-	): Promise<ITryRequest> {
-		try {
-			const record = await this.repository.findOneOrFail(
-				id,
-				options
-			);
-			return {
-				success: true,
-				record
-			};
-		} catch (error) {
-			return {
-				success: false,
-				error
-			};
-		}
-	}
+	/*
+    |--------------------------------------------------------------------------
+    | @FindOneOrFail
+    |--------------------------------------------------------------------------
+    */
 
+	/**
+	 * Finds first entity by a given find options.
+	 * If entity was not found in the database - rejects with error.
+	 *
+	 * @param options
+	 * @returns
+	 */
 	public async findOneOrFailByOptions(
-		options: FindOneOptions<T>		
-	): Promise<ITryRequest> {
+		options: FindOneOptions<T>
+	): Promise<ITryRequest<T>> {
 		try {
 			const record = await this.repository.findOneOrFail(
-				options				
+				options
 			);
 			return {
 				success: true,
@@ -170,13 +184,18 @@ export abstract class CrudService<T extends BaseEntity>
 		}
 	}
 
-	public async findOneOrFailByConditions(
-		conditions: FindConditions<T>,
-		options?: FindOneOptions<T>
-	): Promise<ITryRequest> {
+	/**
+	 * Finds first entity that matches given where condition.
+	 * If entity was not found in the database - rejects with error.
+	 *
+	 * @param options
+	 * @returns
+	 */
+	public async findOneOrFailByWhereOptions(
+		options: FindOptionsWhere<T>
+	): Promise<ITryRequest<T>> {
 		try {
-			const record = await this.repository.findOneOrFail(
-				conditions,
+			const record = await this.repository.findOneByOrFail(
 				options
 			);
 			return {
@@ -196,9 +215,9 @@ export abstract class CrudService<T extends BaseEntity>
     | @FindOne
     |--------------------------------------------------------------------------
     */
-
 	/**
-	 * Finds first entity that matches given id and options.
+	 * Finds first entity by a given find options.
+	 * If entity was not found in the database - returns null.
 	 *
 	 * @param id {string}
 	 * @param options
@@ -208,10 +227,14 @@ export abstract class CrudService<T extends BaseEntity>
 		id: string,
 		options?: FindOneOptions<T>
 	): Promise<T> {
-		const record = await this.repository.findOne(
-			id,
-			options
-		);
+		const record = await this.repository.findOne({
+			select: options.select,
+			where: {
+				id,
+				...options.where
+			},
+			relations: options.relations,
+		} as FindOneOptions<T>);
 		if (!record) {
 			throw new NotFoundException(`The requested record was not found`);
 		}
@@ -219,35 +242,15 @@ export abstract class CrudService<T extends BaseEntity>
 	}
 
 	/**
-	 * Finds first entity that matches given id and options.
-	 *
-	 * @param id {number}
-	 * @param options
-	 * @returns
-	 */
-	public async findOneByIdNumber(
-		id: number,
-		options?: FindOneOptions<T>
-	): Promise<T> {
-		const record = await this.repository.findOne(
-			id,
-			options
-		);
-		if (!record) {
-			throw new NotFoundException(`The requested record was not found`);
-		}
-		return record;
-	}
-
-	/**
-	 * Finds first entity that matches given options.
+	 * Finds first entity by a given find options.
+	 * If entity was not found in the database - returns null.
 	 *
 	 * @param options
 	 * @returns
 	 */
 	public async findOneByOptions(
 		options: FindOneOptions<T>
-	): Promise<T> {
+	): Promise<T | null> {
 		const record = await this.repository.findOne(
 			options
 		);
@@ -258,18 +261,16 @@ export abstract class CrudService<T extends BaseEntity>
 	}
 
 	/**
-	 * Finds first entity that matches given conditions and options.
+	 * Finds first entity that matches given where condition.
+	 * If entity was not found in the database - returns null.
 	 *
-	 * @param conditions
 	 * @param options
 	 * @returns
 	 */
-	public async findOneByConditions(
-		conditions: FindConditions<T>,
-		options?: FindOneOptions<T>
-	): Promise<T> {
-		const record = await this.repository.findOne(
-			conditions,
+	public async findOneByWhereOptions(
+		options: FindOptionsWhere<T>
+	): Promise<T | null> {
+		const record = await this.repository.findOneBy(
 			options
 		);
 		if (!record) {
@@ -278,7 +279,7 @@ export abstract class CrudService<T extends BaseEntity>
 		return record;
 	}
 
-	public async create(entity: DeepPartial<T>, ...options: any[]): Promise<T> {
+	public async create(entity: DeepPartial<T>): Promise<T> {
 		const obj = this.repository.create(entity);
 		try {
 			// https://github.com/Microsoft/TypeScript/issues/21592
@@ -288,14 +289,19 @@ export abstract class CrudService<T extends BaseEntity>
 		}
 	}
 
-	async getPasswordHash(password: string): Promise<string> {
-		return bcrypt.hash(password, this.saltRounds);
-	}
-
+	/**
+	 * Updates entity partially. Entity can be found by a given conditions.
+	 * Unlike save method executes a primitive operation without cascades, relations and other operations included.
+	 * Executes fast and efficient UPDATE query.
+	 * Does not check if entity exist in the database.
+	 *
+	 * @param id
+	 * @param partialEntity
+	 * @returns
+	 */
 	public async update(
-		id: string | number | FindConditions<T>,
-		partialEntity: QueryDeepPartialEntity<T>,
-		...options: any[]
+		id: string | number | FindOptionsWhere<T>,
+		partialEntity: QueryDeepPartialEntity<T>
 	): Promise<UpdateResult | T> {
 		try {
 			// try if can import somehow the service and use its method
@@ -305,8 +311,18 @@ export abstract class CrudService<T extends BaseEntity>
 		}
 	}
 
+	/**
+     * Deletes entities by a given criteria.
+     * Unlike save method executes a primitive operation without cascades, relations and other operations included.
+     * Executes fast and efficient DELETE query.
+     * Does not check if entity exist in the database.
+     *
+	 * @param criteria
+	 * @param options
+	 * @returns
+	 */
 	public async delete(
-		criteria: string | number | FindConditions<T>,
+		criteria: string | number | FindOptionsWhere<T>,
 		...options: any[]
 	): Promise<DeleteResult> {
 		try {

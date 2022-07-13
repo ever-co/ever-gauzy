@@ -1,7 +1,7 @@
 import { Injectable, BadRequestException, NotAcceptableException } from '@nestjs/common';
 import { TimeLog } from './time-log.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, SelectQueryBuilder, Brackets, WhereExpressionBuilder, DeleteResult, UpdateResult } from 'typeorm';
+import { Repository, SelectQueryBuilder, Brackets, WhereExpressionBuilder, DeleteResult, UpdateResult, FindManyOptions } from 'typeorm';
 import { RequestContext } from '../../core/context';
 import {
 	IManualTimeInput,
@@ -95,7 +95,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			where: (qb: SelectQueryBuilder<TimeLog>) => {
 				this.getFilterTimeLogQuery(qb, request);
 			}
-		});
+		} as FindManyOptions<TimeLog>);
 	}
 
 	async getWeeklyReport(request: IGetTimeLogReportInput) {
@@ -123,7 +123,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			where: (qb: SelectQueryBuilder<TimeLog>) => {
 				this.getFilterTimeLogQuery(qb, request);
 			}
-		});
+		} as FindManyOptions<TimeLog>);
 
 		const { startDate, endDate } = request;
 		const days: Array<string> = getDaysBetweenDates(startDate, endDate);
@@ -190,7 +190,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			where: (qb: SelectQueryBuilder<TimeLog>) => {
 				this.getFilterTimeLogQuery(qb, request);
 			}
-		});
+		} as FindManyOptions<TimeLog>);
 
 		const { startDate, endDate } = request;
 		const days: Array<string> = getDaysBetweenDates(startDate, endDate);
@@ -283,7 +283,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			where: (qb: SelectQueryBuilder<TimeLog>) => {
 				this.getFilterTimeLogQuery(qb, request);
 			}
-		});
+		} as FindManyOptions<TimeLog>);
 
 		let dailyLogs;
 		switch (request.groupBy) {
@@ -330,7 +330,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			where: (qb: SelectQueryBuilder<TimeLog>) => {
 				this.getFilterTimeLogQuery(qb, request);
 			}
-		});
+		} as FindManyOptions<TimeLog>);
 
 		const dailyLogs: any = chain(timeLogs)
 			.groupBy((log) => moment(log.startedAt).format('YYYY-MM-DD'))
@@ -384,7 +384,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			where: (qb: SelectQueryBuilder<TimeLog>) => {
 				this.getFilterTimeLogQuery(qb, request);
 			}
-		});
+		} as FindManyOptions<TimeLog>);
 
 		const { startDate, endDate } = request;
 		const days: Array<string> = getDaysBetweenDates(startDate, endDate);
@@ -459,7 +459,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			where: (qb: SelectQueryBuilder<TimeLog>) => {
 				this.getFilterTimeLogQuery(qb, request);
 			}
-		});
+		} as FindManyOptions<TimeLog>);
 
 		const { startDate, endDate } = request;
 		const days: Array<string> = getDaysBetweenDates(startDate, endDate);
@@ -978,7 +978,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				);
 			},
 			relations: ['timeSlots']
-		});
+		} as FindManyOptions<TimeLog>);
 		return await this.commandBus.execute(
 			new TimeLogDeleteCommand(timeLogs, forceDelete)
 		);

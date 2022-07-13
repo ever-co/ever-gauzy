@@ -1,6 +1,6 @@
 import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In, SelectQueryBuilder } from 'typeorm';
+import { Repository, In, SelectQueryBuilder, FindManyOptions } from 'typeorm';
 import * as moment from 'moment';
 import * as _ from 'underscore';
 import { IActivity, IScreenshot, ITimeLog } from '@gauzy/contracts';
@@ -63,7 +63,7 @@ export class TimeSlotMergeHandler
 				query.addOrderBy(`"${query.alias}"."createdAt"`, 'ASC');
 			},
 			relations: ['timeLogs', 'screenshots', 'activities']
-		});
+		} as FindManyOptions<TimeSlot>);
 
 		for (const timeSlot of timerSlots) {
 			console.log({ timeSlot }, timeSlot.timeLogs, 'Time Slot Merging Dates');
@@ -117,14 +117,14 @@ export class TimeSlotMergeHandler
 						mouse: (mouse < 0) ? 0 : (mouse > 600) ? 600 : mouse
 					}
 					/*
-					* Map old screenshots newly created TimeSlot 
+					* Map old screenshots newly created TimeSlot
 					*/
 					screenshots = screenshots.map(
 						(item) => new Screenshot(_.omit(item, ['timeSlotId']))
 					);
 
 					/*
-					* Map old activities newly created TimeSlot 
+					* Map old activities newly created TimeSlot
 					*/
 					activities = activities.map(
 						(item) => new Activity(_.omit(item, ['timeSlotId']))

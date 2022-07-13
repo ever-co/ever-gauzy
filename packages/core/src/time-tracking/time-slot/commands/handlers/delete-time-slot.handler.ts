@@ -1,7 +1,7 @@
 import { CommandHandler, ICommandHandler, CommandBus } from '@nestjs/cqrs';
 import { NotAcceptableException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Brackets, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
+import { Brackets, FindManyOptions, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import { ITimeSlot, PermissionsEnum } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/common';
 import { TimeSlot } from './../../time-slot.entity';
@@ -42,7 +42,7 @@ export class DeleteTimeSlotHandler
 			const timeSlots: ITimeSlot[] = await this.timeSlotRepository.find({
 				where: (query: SelectQueryBuilder<TimeSlot>) => {
 					query.andWhere(
-						new Brackets((qb: WhereExpressionBuilder) => { 
+						new Brackets((qb: WhereExpressionBuilder) => {
 							qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
 							qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
 							qb.andWhere(`"${query.alias}"."id" = :id`, { id });
@@ -56,7 +56,7 @@ export class DeleteTimeSlotHandler
 					query.addOrderBy(`"${query.alias}"."createdAt"`, 'ASC');
 				},
 				relations: ['timeLogs', 'screenshots']
-			});
+			} as FindManyOptions<TimeSlot>);
 			if (isEmpty(timeSlots)) {
 				continue;
 			}

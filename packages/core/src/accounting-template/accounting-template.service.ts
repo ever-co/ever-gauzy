@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Brackets, IsNull, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
+import { Brackets, FindManyOptions, IsNull, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import { AccountingTemplateTypeEnum, IAccountingTemplate, IListQueryInput, IPagination, LanguagesEnum } from '@gauzy/contracts';
 import * as mjml2html from 'mjml';
 import * as Handlebars from 'handlebars';
@@ -138,7 +138,7 @@ export class AccountingTemplateService extends CrudService<AccountingTemplate> {
 		const { data } = input;
 		const tenantId = RequestContext.currentTenantId();
 
-		const { success, record } = await this.findOneOrFailByConditions({
+		const { success, record } = await this.findOneOrFailByWhereOptions({
 			languageCode: data.languageCode,
 			templateType: data.templateType,
 			organizationId: data.organizationId,
@@ -180,14 +180,14 @@ export class AccountingTemplateService extends CrudService<AccountingTemplate> {
 		const tenantId = RequestContext.currentTenantId();
 
 		try {
-			template = await this.findOneByConditions({
+			template = await this.findOneByWhereOptions({
 				languageCode,
 				templateType,
 				organizationId,
 				tenantId
 			});
 		} catch (error) {
-			const { success, record } = await this.findOneOrFailByConditions({
+			const { success, record } = await this.findOneOrFailByWhereOptions({
 				languageCode,
 				templateType,
 				organizationId: IsNull(),
@@ -197,14 +197,14 @@ export class AccountingTemplateService extends CrudService<AccountingTemplate> {
 				template = record
 			} else {
 				try {
-					template = await this.findOneByConditions({
+					template = await this.findOneByWhereOptions({
 						languageCode: LanguagesEnum.ENGLISH,
 						templateType,
 						organizationId,
 						tenantId
 					});
 				} catch (error) {
-					template = await this.findOneByConditions({
+					template = await this.findOneByWhereOptions({
 						languageCode: LanguagesEnum.ENGLISH,
 						templateType,
 						organizationId: IsNull(),
@@ -220,7 +220,7 @@ export class AccountingTemplateService extends CrudService<AccountingTemplate> {
 
 	/**
 	* Get Accounting Templates
-	* @param params 
+	* @param params
 	* @returns
 	*/
 	async findAll(params: IListQueryInput<IAccountingTemplate>): Promise<IPagination<IAccountingTemplate>> {
@@ -231,7 +231,7 @@ export class AccountingTemplateService extends CrudService<AccountingTemplate> {
 			],
 			where: (qb: SelectQueryBuilder<AccountingTemplate>) => {
 				qb.where(
-					new Brackets((bck: WhereExpressionBuilder) => { 
+					new Brackets((bck: WhereExpressionBuilder) => {
 						const tenantId = RequestContext.currentTenantId();
 						const { organizationId, languageCode } = findInput;
 						if (organizationId) {
@@ -250,13 +250,13 @@ export class AccountingTemplateService extends CrudService<AccountingTemplate> {
 					})
 				);
 				qb.orWhere(
-					new Brackets((bck: WhereExpressionBuilder) => { 
+					new Brackets((bck: WhereExpressionBuilder) => {
 						bck.andWhere(`"${qb.alias}"."organizationId" IS NULL`);
 						bck.andWhere(`"${qb.alias}"."tenantId" IS NULL`);
 					})
 				)
 			}
-		});
+		} as FindManyOptions<AccountingTemplate>);
 		return { items, total };
 	}
 }

@@ -3,13 +3,9 @@
 // Copyright (c) 2018 Sumanth Chinthagunta
 
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import { FindOptionsOrder } from 'typeorm';
 import { Transform, TransformFnParams } from 'class-transformer';
 import { IsOptional, Max, Min } from 'class-validator';
-
-export enum OrderTypeEnum {
-	DESC = 'DESC',
-	ASC = 'ASC'
-}
 
 /**
  * Describes generic pagination params
@@ -39,5 +35,5 @@ export abstract class PaginationParams<T> {
 	 */
 	@ApiPropertyOptional()
 	@IsOptional()
-	abstract readonly order?: { [P in keyof T]?: OrderTypeEnum };
+	abstract readonly order?: FindOptionsOrder<T>;
 }

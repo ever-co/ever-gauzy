@@ -1,6 +1,6 @@
 import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Brackets, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
+import { Brackets, FindManyOptions, FindOneOptions, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import * as moment from 'moment';
 import { omit } from 'underscore';
 import { ITimeSlot, PermissionsEnum, TimeLogSourceEnum, TimeLogType } from '@gauzy/contracts';
@@ -99,7 +99,7 @@ export class CreateTimeSlotHandler
 					console.log('Get Time Slot Query & Parameters', query.getQueryAndParameters());
 				},
 				relations: ['timeLogs']
-			});
+			} as FindOneOptions<TimeSlot>);
 		} catch (error) {
 			if (!timeSlot) {
 				timeSlot = new TimeSlot(omit(input, ['timeLogId']));
@@ -130,7 +130,7 @@ export class CreateTimeSlotHandler
 					query.addOrderBy(`"${query.alias}"."createdAt"`, 'DESC');
 					console.log(query.getQueryAndParameters());
 				}
-			});
+			} as FindOneOptions<TimeLog>);
 			console.log(timeLog, 'Found latest Worked Time Log!');
 			timeSlot.timeLogs.push(timeLog);
 		} catch (error) {
@@ -162,7 +162,7 @@ export class CreateTimeSlotHandler
 						});
 						console.log(query.getQueryAndParameters(), 'Time Log Query For TimeLog IDs');
 					}
-				});
+				} as FindManyOptions<TimeLog>);
 				console.log(timeLogs, 'Found recent time logs using timelog ids');
 				timeSlot.timeLogs.push(...timeLogs);
 			}

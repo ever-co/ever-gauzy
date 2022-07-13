@@ -1,12 +1,12 @@
 import { ICommandHandler, CommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, SelectQueryBuilder } from 'typeorm';
+import { FindManyOptions, Repository, SelectQueryBuilder } from 'typeorm';
+import { isNotEmpty } from '@gauzy/common';
 import { TimeSlot } from './../../time-slot.entity';
 import { ScheduleTimeSlotEntriesCommand } from '../schedule-time-slot-entries.command';
-import { isNotEmpty } from '@gauzy/common';
 
 @CommandHandler(ScheduleTimeSlotEntriesCommand)
-export class ScheduleTimeSlotEntriesHandler 
+export class ScheduleTimeSlotEntriesHandler
 	implements ICommandHandler<ScheduleTimeSlotEntriesCommand> {
 
 	constructor(
@@ -31,7 +31,7 @@ export class ScheduleTimeSlotEntriesHandler
                 });
             },
             relations: ['timeLogs']
-        });
+        } as FindManyOptions<TimeSlot>);
 		if (isNotEmpty(timeSlots)) {
 			for await (const timeSlot of timeSlots) {
 				await this.timeSlotRepository.save({

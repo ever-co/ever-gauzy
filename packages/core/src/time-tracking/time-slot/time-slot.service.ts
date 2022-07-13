@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CommandBus } from '@nestjs/cqrs';
-import { Brackets, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
+import { Brackets, FindManyOptions, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import { PermissionsEnum, IGetTimeSlotInput, ITimeSlot } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/common';
 import { TenantAwareCrudService } from './../../core/crud';
@@ -105,7 +105,7 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 					})
 				);
 				query.andWhere(
-					new Brackets((qb: WhereExpressionBuilder) => { 
+					new Brackets((qb: WhereExpressionBuilder) => {
 						if (isNotEmpty(request.activityLevel)) {
 							/**
 							 * Activity Level should be 0-100%
@@ -114,7 +114,7 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 							const { activityLevel } = request;
 							const start = (activityLevel.start * 6);
 							const end = (activityLevel.end * 6);
-		
+
 							qb.andWhere(`"${query.alias}"."overall" BETWEEN :start AND :end`, {
 								start,
 								end
@@ -154,7 +154,7 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 					})
 				);
 				query.andWhere(
-					new Brackets((qb: WhereExpressionBuilder) => { 
+					new Brackets((qb: WhereExpressionBuilder) => {
 						qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
 						qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
 					})
@@ -162,7 +162,7 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 				query.addOrderBy(`"${query.alias}"."createdAt"`, 'ASC');
 				console.log('Get Screenshots Query And Parameters', query.getQueryAndParameters());
 			}
-		});
+		} as FindManyOptions<TimeSlot>);
 		return slots;
 	}
 
