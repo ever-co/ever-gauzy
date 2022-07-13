@@ -19,7 +19,7 @@ import {
 	ApiTags
 } from '@nestjs/swagger';
 import { QueryBus } from '@nestjs/cqrs';
-import { FindManyOptions, FindOptionsWhere } from 'typeorm';
+import { FindOptionsWhere } from 'typeorm';
 import {
 	IAccountingTemplate,
 	IAccountingTemplateUpdateInput,

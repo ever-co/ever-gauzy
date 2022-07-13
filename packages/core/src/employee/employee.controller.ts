@@ -24,7 +24,7 @@ import {
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { I18nLang } from 'nestjs-i18n';
-import { FindManyOptions } from 'typeorm';
+import { FindManyOptions, FindOptionsWhere } from 'typeorm';
 import { Request } from 'express';
 import {
 	EmployeeCreateCommand,
@@ -164,7 +164,7 @@ export class EmployeeController extends CrudController<Employee> {
 	async findByUserId(
 		@Param('userId', UUIDValidationPipe) userId: string,
 		@Query('data', ParseJsonPipe) data?: any
-	): Promise<ITryRequest> {
+	): Promise<ITryRequest<Employee>> {
 		const { relations = [] } = data;
 		return this.employeeService.findOneOrFailByOptions({
 			where: {
@@ -213,14 +213,9 @@ export class EmployeeController extends CrudController<Employee> {
 	@Get('count')
 	@UsePipes(new ValidationPipe({ transform: true }))
 	async getCount(
-		@Query() filter: PaginationParams<IEmployee>
+		@Query() options: FindOptionsWhere<Employee>
 	): Promise<number> {
-		return this.employeeService.count({
-			where: {
-				tenantId: RequestContext.currentTenantId()
-			},
-			...filter
-		});
+		return this.employeeService.countBy(options);
 	}
 
 	/**

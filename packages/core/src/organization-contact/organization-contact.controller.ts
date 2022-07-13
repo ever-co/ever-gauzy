@@ -13,6 +13,7 @@ import {
 	ValidationPipe
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
+import { FindOptionsWhere } from 'typeorm';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import {
 	IEditEntityByMemberInput,
@@ -42,9 +43,9 @@ export class OrganizationContactController extends CrudController<OrganizationCo
 
 	/**
 	 * GET organization contact count
-	 * 
-	 * @param filter 
-	 * @returns 
+	 *
+	 * @param filter
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'Find all organization contact counts in the same tenant' })
 	@ApiResponse({
@@ -53,16 +54,16 @@ export class OrganizationContactController extends CrudController<OrganizationCo
 	})
 	@Get('count')
 	async getCount(
-		@Query() filter: PaginationParams<IOrganizationContact>
+		@Query() options: FindOptionsWhere<OrganizationContact>
 	): Promise<number> {
-		return await this.organizationContactService.count(filter);
+		return await this.organizationContactService.countBy(options);
 	}
 
 	/**
 	 * GET all organization contact by Pagination
-	 * 
-	 * @param filter 
-	 * @returns 
+	 *
+	 * @param filter
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'Find all organization contacts in the same tenant using pagination.' })
 	@ApiResponse({
@@ -86,10 +87,10 @@ export class OrganizationContactController extends CrudController<OrganizationCo
 
 	/**
 	 * GET all organization contacts by Employee
-	 * 
-	 * @param id 
-	 * @param data 
-	 * @returns 
+	 *
+	 * @param id
+	 * @param data
+	 * @returns
 	 */
 	@ApiOperation({
 		summary: 'Find all organization contacts by Employee.'
@@ -113,9 +114,9 @@ export class OrganizationContactController extends CrudController<OrganizationCo
 
 	/**
 	 * UPDATE organization contact by Employee
-	 * 
-	 * @param entity 
-	 * @returns 
+	 *
+	 * @param entity
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'Update an existing record' })
 	@ApiResponse({
@@ -145,9 +146,9 @@ export class OrganizationContactController extends CrudController<OrganizationCo
 
 	/**
 	 * GET all organization contacts
-	 * 
-	 * @param data 
-	 * @returns 
+	 *
+	 * @param data
+	 * @returns
 	 */
 	@ApiOperation({
 		summary: 'Find all organization contacts.'
@@ -172,9 +173,9 @@ export class OrganizationContactController extends CrudController<OrganizationCo
 
 	/**
 	 * CREATE organization contact
-	 * 
-	 * @param body 
-	 * @returns 
+	 *
+	 * @param body
+	 * @returns
 	 */
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_CONTACT_EDIT)
@@ -190,10 +191,10 @@ export class OrganizationContactController extends CrudController<OrganizationCo
 
 	/**
 	 * GET organization contacts by id
-	 * 
-	 * @param id 
-	 * @param data 
-	 * @returns 
+	 *
+	 * @param id
+	 * @param data
+	 * @returns
 	 */
 	@ApiOperation({
 		summary: 'Get organization contacts by id.'

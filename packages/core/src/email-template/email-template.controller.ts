@@ -27,7 +27,7 @@ import {
 	ApiResponse,
 	ApiTags
 } from '@nestjs/swagger';
-import { UpdateResult } from 'typeorm';
+import { FindOptionsWhere, UpdateResult } from 'typeorm';
 import { CrudController, PaginationParams } from './../core/crud';
 import { RequestContext } from './../core/context';
 import { TenantPermissionGuard } from './../shared/guards';
@@ -58,14 +58,9 @@ export class EmailTemplateController extends CrudController<EmailTemplate> {
 	@Get('count')
 	@UsePipes(new ValidationPipe({ transform: true }))
 	async getCount(
-		@Query() filter: PaginationParams<IEmailTemplate>
+		@Query() options: FindOptionsWhere<EmailTemplate>
 	): Promise<number> {
-		return this.emailTemplateService.count({
-			where: {
-				tenantId: RequestContext.currentTenantId()
-			},
-			...filter
-		});
+		return this.emailTemplateService.countBy(options);
 	}
 
 	@Get('pagination')

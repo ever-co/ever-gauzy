@@ -12,7 +12,7 @@ import {
 	ValidationPipe
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { UpdateResult } from 'typeorm';
+import { FindManyOptions, FindOptionsWhere, UpdateResult } from 'typeorm';
 import {
 	ICandidateInterview,
 	ICandidateInterviewCreateInput,
@@ -39,9 +39,9 @@ export class CandidateInterviewController extends CrudController<CandidateInterv
 
 	/**
 	 * GET candidate interview by candidate id
-	 * 
-	 * @param id 
-	 * @returns 
+	 *
+	 * @param id
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'Find interview by candidate id' })
 	@ApiResponse({
@@ -64,9 +64,9 @@ export class CandidateInterviewController extends CrudController<CandidateInterv
 
 	/**
 	 * GET candidate interview count
-	 * 
-	 * @param filter 
-	 * @returns 
+	 *
+	 * @param filter
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'Find all candidate interviews count in the same tenant' })
 	@ApiResponse({
@@ -75,21 +75,16 @@ export class CandidateInterviewController extends CrudController<CandidateInterv
 	})
 	@Get('count')
     async getCount(
-		@Query() filter: PaginationParams<ICandidateInterview>
+		@Query() options: FindOptionsWhere<CandidateInterview>
 	): Promise<number> {
-        return await this.candidateInterviewService.count({
-			where: {
-				tenantId: RequestContext.currentTenantId()
-			},
-			...filter
-		});
+        return await this.candidateInterviewService.countBy(options);
     }
 
 	/**
 	 * GET candidate intreview by pagination
-	 * 
-	 * @param filter 
-	 * @returns 
+	 *
+	 * @param filter
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'Find all candidate interviews in the same tenant using pagination.' })
 	@ApiResponse({
@@ -111,9 +106,9 @@ export class CandidateInterviewController extends CrudController<CandidateInterv
 
 	/**
 	 * GET all candidate interview
-	 * 
-	 * @param data 
-	 * @returns 
+	 *
+	 * @param data
+	 * @returns
 	 */
 	@ApiOperation({
 		summary: 'Find all candidate interview.'
@@ -140,9 +135,9 @@ export class CandidateInterviewController extends CrudController<CandidateInterv
 
 	/**
 	 * GET candidate interview by id
-	 * 
-	 * @param id 
-	 * @returns 
+	 *
+	 * @param id
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'Find interview by id' })
 	@ApiResponse({
@@ -165,9 +160,9 @@ export class CandidateInterviewController extends CrudController<CandidateInterv
 
 	/**
 	 * CREATE candidate interview
-	 * 
-	 * @param body 
-	 * @returns 
+	 *
+	 * @param body
+	 * @returns
 	 */
 	@ApiOperation({
 		summary: 'Create new record interview'
@@ -188,10 +183,10 @@ export class CandidateInterviewController extends CrudController<CandidateInterv
 
 	/**
 	 * UPDATE candidate interview by id
-	 * 
-	 * @param id 
-	 * @param body 
-	 * @returns 
+	 *
+	 * @param id
+	 * @param body
+	 * @returns
 	 */
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_INTERVIEW_EDIT)

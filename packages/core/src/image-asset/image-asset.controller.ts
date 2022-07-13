@@ -14,6 +14,7 @@ import {
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { IImageAsset, IPagination, PermissionsEnum } from '@gauzy/contracts';
+import { FindOptionsWhere } from 'typeorm';
 import { CrudController, PaginationParams } from './../core/crud';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
@@ -33,9 +34,9 @@ export class ImageAssetController extends CrudController<ImageAsset> {
 
 	/**
 	 * GET image assets counts
-	 * 
+	 *
 	 * @param filter
-	 * @returns 
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'Find all image assets counts in the same tenant' })
 	@ApiResponse({
@@ -46,16 +47,16 @@ export class ImageAssetController extends CrudController<ImageAsset> {
 	@Permissions(PermissionsEnum.INVENTORY_GALLERY_VIEW)
 	@Get('count')
 	async getCount(
-		@Query() filter: PaginationParams<IImageAsset>
+		@Query() options: FindOptionsWhere<ImageAsset>
 	): Promise<number> {
-		return await this.imageAssetService.count(filter);
+		return await this.imageAssetService.countBy(options);
 	}
 
 	/**
-	 * GET image assets by pagination  
-	 * 
-	 * @param filter 
-	 * @returns 
+	 * GET image assets by pagination
+	 *
+	 * @param filter
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'Find all image assets in the same tenant using pagination.' })
 	@ApiResponse({
@@ -79,9 +80,9 @@ export class ImageAssetController extends CrudController<ImageAsset> {
 
 	/**
 	 * GET image assets
-	 * 
-	 * @param data 
-	 * @returns 
+	 *
+	 * @param data
+	 * @returns
 	 */
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.INVENTORY_GALLERY_VIEW)
@@ -98,9 +99,9 @@ export class ImageAssetController extends CrudController<ImageAsset> {
 
 	/**
 	 * GET image assets by id
-	 * 
-	 * @param id 
-	 * @returns 
+	 *
+	 * @param id
+	 * @returns
 	 */
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.INVENTORY_GALLERY_VIEW)
@@ -113,9 +114,9 @@ export class ImageAssetController extends CrudController<ImageAsset> {
 
 	/**
 	 * CREATE new image asset
-	 * 
-	 * @param entity 
-	 * @returns 
+	 *
+	 * @param entity
+	 * @returns
 	 */
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.INVENTORY_GALLERY_EDIT)
@@ -128,9 +129,9 @@ export class ImageAssetController extends CrudController<ImageAsset> {
 
 	/**
 	 * DELETE image assets
-	 * 
-	 * @param id 
-	 * @returns 
+	 *
+	 * @param id
+	 * @returns
 	 */
 	@HttpCode(HttpStatus.ACCEPTED)
 	@UseGuards(PermissionGuard)
