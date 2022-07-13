@@ -10,7 +10,7 @@ import {
 	InvoiceTypeEnum,
 	DiscountTaxTypeEnum,
 	ITag,
-	IInvoiceItemCreateInput,
+	IInvoiceItemCreateInput
 } from '@gauzy/contracts';
 import { filter, tap } from 'rxjs/operators';
 import { firstValueFrom } from 'rxjs';
@@ -37,6 +37,7 @@ import {
 	InvoiceProjectsSelectorComponent,
 	InvoiceTasksSelectorComponent
 } from '../table-components';
+import { any } from 'underscore';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -46,8 +47,8 @@ import {
 })
 export class InvoiceEditComponent
 	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
-
+	implements OnInit, OnDestroy
+{
 	shouldLoadTable = false;
 	invoiceId: string;
 	settingsSmartTable: object;
@@ -68,6 +69,10 @@ export class InvoiceEditComponent
 	isRemainingAmount: string;
 	alreadyPaid: number;
 	amountDue: number;
+	selectedItem = {
+		data: any,
+		isSelected: false
+	};
 
 	get currency() {
 		return this.form.get('currency');
@@ -102,9 +107,10 @@ export class InvoiceEditComponent
 		this.initializeForm();
 		this.route.paramMap
 			.pipe(
-				tap((params) => this.invoiceId = params.get('id')),
+				tap((params) => (this.invoiceId = params.get('id'))),
 				untilDestroyed(this)
-			).subscribe();
+			)
+			.subscribe();
 		this.route.queryParamMap
 			.pipe(untilDestroyed(this))
 			.subscribe((params) => {
@@ -115,7 +121,7 @@ export class InvoiceEditComponent
 			});
 		this.invoicesService.currentData
 			.pipe(
-				tap((response) => this.duplicate = response),
+				tap((response) => (this.duplicate = response)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -162,7 +168,8 @@ export class InvoiceEditComponent
 				this.invoice = invoice;
 				this.invoiceItems = invoice.invoiceItems;
 				this.selectedOrganizationContact = invoice.toContact;
-				this.discountAfterTax = invoice.fromOrganization.discountAfterTax;
+				this.discountAfterTax =
+					invoice.fromOrganization.discountAfterTax;
 
 				await this._loadOrganizationData();
 				this.updateValueAndValidity(invoice);
@@ -502,7 +509,9 @@ export class InvoiceEditComponent
 			const { invoiceDate } = this.form.getRawValue();
 			await this.invoicesService.update(this.invoice.id, {
 				invoiceNumber: invoiceData.invoiceNumber,
-				invoiceDate: moment(invoiceData.invoiceDate).startOf('day').toDate(),
+				invoiceDate: moment(invoiceData.invoiceDate)
+					.startOf('day')
+					.toDate(),
 				dueDate: moment(invoiceData.dueDate).endOf('day').toDate(),
 				currency: this.currency.value,
 				discountValue: invoiceData.discountValue,
@@ -532,7 +541,9 @@ export class InvoiceEditComponent
 
 			const invoiceItems: IInvoiceItemCreateInput[] = [];
 			for (const invoiceItem of tableData) {
-				const id = invoiceItem.selectedItem ? invoiceItem.selectedItem.id : null;
+				const id = invoiceItem.selectedItem
+					? invoiceItem.selectedItem.id
+					: null;
 				const itemToAdd = {
 					description: invoiceItem.description,
 					price: Number(invoiceItem.price),
@@ -609,7 +620,7 @@ export class InvoiceEditComponent
 				);
 				this.router.navigate(['/pages/accounting/invoices/estimates'], {
 					queryParams: {
-						date: moment(invoiceDate).format("MM-DD-YYYY")
+						date: moment(invoiceDate).format('MM-DD-YYYY')
 					}
 				});
 			} else {
@@ -618,7 +629,7 @@ export class InvoiceEditComponent
 				);
 				this.router.navigate(['/pages/accounting/invoices'], {
 					queryParams: {
-						date: moment(invoiceDate).format("MM-DD-YYYY")
+						date: moment(invoiceDate).format('MM-DD-YYYY')
 					}
 				});
 			}
@@ -755,14 +766,14 @@ export class InvoiceEditComponent
 
 			invoice.invoiceItems = invoiceItems;
 
-			const result = await firstValueFrom(this.dialogService
-				.open(InvoiceEmailMutationComponent, {
+			const result = await firstValueFrom(
+				this.dialogService.open(InvoiceEmailMutationComponent, {
 					context: {
 						invoice: invoice,
 						isEstimate: this.isEstimate
 					}
-				})
-				.onClose);
+				}).onClose
+			);
 
 			if (result) {
 				await this.updateInvoice('SENT');
@@ -911,6 +922,7 @@ export class InvoiceEditComponent
 	}
 
 	async onCreateConfirm(event) {
+		console.log(event)
 		if (
 			!isNaN(event.newData.quantity) &&
 			!isNaN(event.newData.price) &&
@@ -968,7 +980,7 @@ export class InvoiceEditComponent
 			this.itemsToDelete.push(event.data.id);
 		}
 		this.subtotal -= +event.data.quantity * +event.data.price;
-		await event.confirm.resolve(event.data);
+		//await event.confirm.resolve(event.data);
 		await this.calculateTotal();
 	}
 
@@ -996,6 +1008,10 @@ export class InvoiceEditComponent
 	selectedTagsEvent(selectedTags: ITag[]) {
 		this.form.get('tags').setValue(selectedTags);
 		this.form.get('tags').updateValueAndValidity();
+	}
+
+	selectItem(item: any){
+		this.selectedItem = item;
 	}
 
 	ngOnDestroy() {}
