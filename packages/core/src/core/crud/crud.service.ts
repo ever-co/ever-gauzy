@@ -234,6 +234,7 @@ export abstract class CrudService<T extends BaseEntity>
 				...options.where
 			},
 			relations: options.relations,
+			order: options.order
 		} as FindOneOptions<T>);
 		if (!record) {
 			throw new NotFoundException(`The requested record was not found`);

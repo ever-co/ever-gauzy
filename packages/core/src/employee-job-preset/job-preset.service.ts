@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, SelectQueryBuilder } from 'typeorm';
+import { FindManyOptions, Repository, SelectQueryBuilder } from 'typeorm';
 import { JobPreset } from './job-preset.entity';
 import {
 	IEmployeePresetInput,
@@ -77,7 +77,7 @@ export class JobPresetService extends TenantAwareCrudService<JobPreset> {
 					});
 				}
 			}
-		});
+		} as FindManyOptions<JobPreset>);
 		return data;
 	}
 

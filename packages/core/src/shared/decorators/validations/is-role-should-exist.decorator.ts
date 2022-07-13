@@ -1,4 +1,4 @@
-import { Brackets, getConnection, SelectQueryBuilder, WhereExpressionBuilder } from "typeorm";
+import { Brackets, FindOneOptions, getConnection, SelectQueryBuilder, WhereExpressionBuilder } from "typeorm";
 import {
 	registerDecorator,
 	ValidationArguments,
@@ -12,9 +12,9 @@ import { RequestContext } from "../../../core/context";
 
 /**
  * Role should existed validation constraint
- * 
- * @param validationOptions 
- * @returns 
+ *
+ * @param validationOptions
+ * @returns
  */
 export const IsRoleShouldExist = (validationOptions?: ValidationOptions) => {
 	return (object: Object, propertyName: string) => {
@@ -57,7 +57,7 @@ export class IsRoleShouldExistConstraint implements ValidatorConstraintInterface
 						})
 					);
 				}
-			})
+			} as FindOneOptions<Role>)
 		);
 		return !!existed;
 	}

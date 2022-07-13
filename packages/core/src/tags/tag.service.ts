@@ -1,9 +1,10 @@
-import { Brackets, IsNull, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
-import { Tag } from './tag.entity';
-import { CrudService, RequestContext } from '../core';
+import { Brackets, FindManyOptions, IsNull, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IPagination, ITag, ITagFindInput } from '@gauzy/contracts';
+import { RequestContext } from '../core/context';
+import { CrudService } from '../core/crud';
+import { Tag } from './tag.entity';
 
 @Injectable()
 export class TagService extends CrudService<Tag> {
@@ -26,10 +27,10 @@ export class TagService extends CrudService<Tag> {
 
 	/**
 	 * GET tenant/organization level tags
-	 * 
-	 * @param input 
-	 * @param relations 
-	 * @returns 
+	 *
+	 * @param input
+	 * @param relations
+	 * @returns
 	 */
 	async findAllTags(
 		input: ITagFindInput,
@@ -47,7 +48,7 @@ export class TagService extends CrudService<Tag> {
 							[
 								{
 									organizationId: IsNull()
-								}, 
+								},
 								{
 									organizationId
 								}
@@ -67,16 +68,16 @@ export class TagService extends CrudService<Tag> {
 					isSystem: false
 				});
 			}
-		});
+		} as FindManyOptions<Tag>);
 		return { items, total };
 	}
 
 	/**
 	 * GET tenant/organization level tags
-	 * 
-	 * @param input 
-	 * @param relations 
-	 * @returns 
+	 *
+	 * @param input
+	 * @param relations
+	 * @returns
 	 */
 	async getTenantOrganizationLevelTags(
 		input: ITagFindInput,
@@ -143,13 +144,13 @@ export class TagService extends CrudService<Tag> {
 		const items = await query
 			.where((query: SelectQueryBuilder<Tag>) => {
 				query.andWhere(
-					new Brackets((qb: WhereExpressionBuilder) => { 
+					new Brackets((qb: WhereExpressionBuilder) => {
 						const { organizationId } = input;
 						qb.where(
 							[
 								{
 									organizationId: IsNull()
-								}, 
+								},
 								{
 									organizationId
 								}

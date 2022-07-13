@@ -6,6 +6,7 @@ import {
 import { BadRequestException } from '@nestjs/common';
 import {
 	Between,
+	FindManyOptions,
 	In,
 	IsNull,
 	LessThanOrEqual,
@@ -263,7 +264,7 @@ export abstract class RecurringExpenseEditHandler<
 					endDate: Between(updatedStartDate, currentStartDate)
 				}
 			]
-		});
+		} as FindManyOptions<T>);
 	}
 
 	async findConflictingExpense(
@@ -290,7 +291,7 @@ export abstract class RecurringExpenseEditHandler<
 						endDate: MoreThanOrEqual(inputEndDate)
 					}
 				]
-			});
+			} as FindManyOptions<T>);
 
 			//If this is the same expense as the expense we want to update, then it is not a conflicting expense
 			return expense.id !== recurringExpenseId ? expense : undefined;

@@ -1,6 +1,6 @@
 import { ICommandHandler, CommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Brackets, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
+import { Brackets, FindManyOptions, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import * as moment from 'moment';
 import { isEmpty, isNotEmpty } from "@gauzy/common";
 import { getConfig } from '@gauzy/config';
@@ -52,7 +52,7 @@ export class ScheduleTimeLogEntriesHandler
 					console.log('Schedule Time Log Query For Tenant Organization Entries', query.getQueryAndParameters());
 				},
 				relations: ['timeSlots']
-			});
+			} as FindManyOptions<TimeLog>);
 		} else {
 			timeLogs = await this.timeLogRepository.find({
 				where: (query: SelectQueryBuilder<TimeLog>) => {
@@ -70,7 +70,7 @@ export class ScheduleTimeLogEntriesHandler
 					console.log('Schedule Time Log Query For All Entries', query.getQueryAndParameters());
 				},
 				relations: ['timeSlots']
-			});
+			} as FindManyOptions<TimeLog>);
 		}
 
 		for await (const timeLog of timeLogs) {

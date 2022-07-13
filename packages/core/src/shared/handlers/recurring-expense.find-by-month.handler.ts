@@ -3,7 +3,7 @@ import {
 	IRecurringExpenseByMonthFindInput,
 	IRecurringExpenseModel
 } from '@gauzy/contracts';
-import { Between, IsNull, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
+import { Between, FindManyOptions, IsNull, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
 import { CrudService } from './../../core/crud';
 import { getDateRange } from './../../core/utils';
 import { RequestContext } from './../../core/context';
@@ -57,7 +57,7 @@ export abstract class FindRecurringExpenseByMonthHandler<
 				}
 			],
 			relations
-		});
+		} as FindManyOptions<T>);
 
 		return expenses;
 	}

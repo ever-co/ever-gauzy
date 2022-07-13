@@ -1,15 +1,15 @@
+import { NotFoundException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { Brackets, FindOneOptions, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import { RequestContext } from './../../../core/context';
 import { OrganizationVendorFirstOrCreateCommand } from './../organization-vendor-first-or-create.command';
 import { OrganizationVendorService } from './../../organization-vendor.service';
-import { OrganizationVendor } from 'core';
-import { Brackets, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
-import { NotFoundException } from '@nestjs/common';
+import { OrganizationVendor } from './../../organization-vendor.entity';
 
 @CommandHandler(OrganizationVendorFirstOrCreateCommand)
 export class OrganizationVendorFirstOrCreateHandler
 	implements ICommandHandler<OrganizationVendorFirstOrCreateCommand> {
-	
+
 	constructor(
 		private readonly _organizationVendorService : OrganizationVendorService
 	) {}
@@ -32,7 +32,7 @@ export class OrganizationVendorFirstOrCreateHandler
 						})
 					);
 				}
-			});
+			} as FindOneOptions<OrganizationVendor>);
 		} catch (error) {
 			if (error instanceof NotFoundException) {
 				return await this._organizationVendorService.create(input);

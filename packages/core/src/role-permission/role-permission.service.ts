@@ -1,7 +1,7 @@
 import { Injectable, BadRequestException, NotAcceptableException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CommandBus } from '@nestjs/cqrs';
-import { Repository, UpdateResult, getManager, FindManyOptions, Not, In, DeepPartial } from 'typeorm';
+import { Repository, UpdateResult, getManager, FindManyOptions, Not, In, DeepPartial, FindOptionsWhere } from 'typeorm';
 import {
 	RolesEnum,
 	ITenant,
@@ -182,7 +182,7 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 	}
 
 	public async updatePermission(
-		id: string | number | FindConditions<IRolePermission>,
+		id: string | number | FindOptionsWhere<IRolePermission>,
 		partialEntity: DeepPartial<IRolePermission>
 	): Promise<UpdateResult | IRolePermission> {
 		try {

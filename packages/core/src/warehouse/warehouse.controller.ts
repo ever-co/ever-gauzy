@@ -13,7 +13,7 @@ import {
 	UsePipes,
 	ValidationPipe
 } from '@nestjs/common';
-import { FindManyOptions } from 'typeorm';
+import { FindManyOptions, FindOptionsWhere } from 'typeorm';
 import {
 	IPagination,
 	PermissionsEnum,
@@ -171,16 +171,9 @@ export class WarehouseController extends CrudController<Warehouse> {
 	})
 	@Get('count')
 	async getCount(
-		@Query(new ValidationPipe({
-			transform: true
-		})) options: PaginationParams<Warehouse>
+		@Query() options: FindOptionsWhere<Warehouse>
 	): Promise<number> {
-		return await this.warehouseService.count({
-			where: {
-				tenantId: RequestContext.currentTenantId()
-			},
-			...options as FindManyOptions<Warehouse>
-		});
+		return await this.warehouseService.countBy(options);
 	}
 
 	/**

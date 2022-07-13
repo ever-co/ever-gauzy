@@ -57,7 +57,7 @@ export class FindEmailTemplateHandler
 
 		try {
 			// Find customized email template for given organization
-			const { hbs, mjml } = await this.emailTemplateService.findOneByConditions({
+			const { hbs, mjml } = await this.emailTemplateService.findOneByWhereOptions({
 				languageCode,
 				name: `${name}/${type}`,
 				organizationId,
@@ -67,7 +67,7 @@ export class FindEmailTemplateHandler
 			template = mjml;
 		} catch (error) {
 			// If no email template present for given organization, use default email template
-			const { success, record } = await this.emailTemplateService.findOneOrFailByConditions({
+			const { success, record } = await this.emailTemplateService.findOneOrFailByWhereOptions({
 				languageCode,
 				name: `${name}/${type}`,
 				organizationId: IsNull(),
@@ -78,7 +78,7 @@ export class FindEmailTemplateHandler
 				template = record.mjml;
 			} else {
 				try {
-					const { hbs, mjml } = await this.emailTemplateService.findOneByConditions({
+					const { hbs, mjml } = await this.emailTemplateService.findOneByWhereOptions({
 						languageCode: LanguagesEnum.ENGLISH,
 						name: `${name}/${type}`,
 						organizationId,
@@ -87,7 +87,7 @@ export class FindEmailTemplateHandler
 					subject = hbs;
 					template = mjml;
 				} catch (error) {
-					const { hbs, mjml } = await this.emailTemplateService.findOneByConditions({
+					const { hbs, mjml } = await this.emailTemplateService.findOneByWhereOptions({
 						languageCode: LanguagesEnum.ENGLISH,
 						name: `${name}/${type}`,
 						organizationId: IsNull(),

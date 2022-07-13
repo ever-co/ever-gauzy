@@ -3,7 +3,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { isNotEmpty } from '@gauzy/common';
 import * as moment from 'moment';
-import { Brackets, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
+import { Brackets, FindManyOptions, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import { RequestContext } from '../core/context';
 import { TenantAwareCrudService } from './../core/crud';
 import { Employee } from './employee.entity';
@@ -89,7 +89,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 			relations: [
 				...(withUser ? ['user'] : [])
 			]
-		});
+		} as FindManyOptions<Employee>);
 		return {
 			total,
 			items
@@ -121,7 +121,12 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 	}
 
 	async findWithoutTenant(id: string, relations?: any) {
-		return await this.repository.findOne(id, relations);
+		return await this.repository.findOne({
+			where: {
+				id
+			},
+			relations
+		});
 	}
 
 	public async pagination(filter: any) {
@@ -199,7 +204,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 						);
 					}
 				}
-			});
+			} as FindManyOptions<Employee>);
 			return { items, total };
 		} catch (error) {
 			console.log(error);

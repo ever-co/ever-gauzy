@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Brackets, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
+import { Brackets, FindManyOptions, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import { IEmailTemplate, IListQueryInput, IPagination } from '@gauzy/contracts';
 import { CrudService } from './../core/crud';
 import { EmailTemplate } from './email-template.entity';
@@ -17,7 +17,7 @@ export class EmailTemplateService extends CrudService<EmailTemplate> {
 
 	/**
 	* Get Email Templates
-	* @param params 
+	* @param params
 	* @returns
 	*/
 	async findAll(params: IListQueryInput<IEmailTemplate>): Promise<IPagination<IEmailTemplate>> {
@@ -28,7 +28,7 @@ export class EmailTemplateService extends CrudService<EmailTemplate> {
 			],
 			where: (qb: SelectQueryBuilder<EmailTemplate>) => {
 				qb.where(
-					new Brackets((bck: WhereExpressionBuilder) => { 
+					new Brackets((bck: WhereExpressionBuilder) => {
 						const tenantId = RequestContext.currentTenantId();
 						const { organizationId, languageCode } = findInput;
 						if (organizationId) {
@@ -47,13 +47,13 @@ export class EmailTemplateService extends CrudService<EmailTemplate> {
 					})
 				);
 				qb.orWhere(
-					new Brackets((bck: WhereExpressionBuilder) => { 
+					new Brackets((bck: WhereExpressionBuilder) => {
 						bck.andWhere(`"${qb.alias}"."organizationId" IS NULL`);
 						bck.andWhere(`"${qb.alias}"."tenantId" IS NULL`);
 					})
 				)
 			}
-		});
+		} as FindManyOptions<EmailTemplate>);
 		return { items, total };
 	}
 }

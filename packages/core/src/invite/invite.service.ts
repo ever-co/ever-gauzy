@@ -21,7 +21,7 @@ import {
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { sign } from 'jsonwebtoken';
-import { Brackets, In, IsNull, MoreThanOrEqual, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
+import { Brackets, FindManyOptions, In, IsNull, MoreThanOrEqual, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import { TenantAwareCrudService } from './../core/crud';
 import { Invite } from './invite.entity';
 import { EmailService } from '../email/email.service';
@@ -352,7 +352,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 				);
 			},
 			relations
-		});
+		} as FindManyOptions<Invite>);
 	}
 
 	createToken(email): string {
