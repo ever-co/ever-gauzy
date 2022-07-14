@@ -3,7 +3,7 @@
 		<div class="filters">
 			<div class="add-button">
 				<ng-template [ngxPermissionsOnly]="PermissionsEnum.ALLOW_MANUAL_TIME">
-					<ng-template 
+					<ng-template
 						ngxTimeTrackingAuthorized
 						[permission]="PermissionsEnum.ALLOW_MANUAL_TIME"
 					>
@@ -82,11 +82,11 @@
 							{{ day.dates[date]?.sum | durationFormat }}
 						</button>
 						<ng-template #noLogsCol>
-							<ng-template 
+							<ng-template
 								[ngxPermissionsOnly]="PermissionsEnum.ALLOW_MANUAL_TIME"
 								[ngxPermissionsOnlyElse]="notAllowAddTimeBlock"
 							>
-								<ng-template 
+								<ng-template
 									ngxTimeTrackingAuthorized
 									[permission]="PermissionsEnum.ALLOW_MANUAL_TIME"
 									[permissionElse]="notAllowAddTimeBlock"
@@ -116,7 +116,7 @@
 		</ng-template>
 		<ng-template #notFound>
 			<ngx-no-data-message
-				[message]="'SM_TABLE.NO_DATA.ACTIVITIES'"
+				[message]="'TIMESHEET.NO_DATA.WEEKLY_TIMESHEET'"
 			></ngx-no-data-message>
 		</ng-template>
 	</nb-card-body>

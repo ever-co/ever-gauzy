@@ -47,15 +47,15 @@
 				</div>
 			</ng-template>
 			<ng-template #notFound>
-				<ng-container *ngIf="!selectedEmployeeId; else blankScreenshot">
-					<ngx-no-data-message 
-						[message]="'SM_TABLE.NO_DATA.SCREENSHOTS'"
+				<ng-container *ngIf="!request.employeeIds; else noFoundScreenshot">
+					<ngx-no-data-message
+						[message]="'ACTIVITY.NO_RECORD_FOUND'"
 					></ngx-no-data-message>
 				</ng-container>
-				<ng-template #blankScreenshot>
-					<ngx-no-data-message 
-						[message]="'SM_TABLE.NO_DATA.NO_SCREENSHOT'"
-					></ngx-no-data-message>					
+				<ng-template #noFoundScreenshot>
+					<ngx-no-data-message
+						[message]="'ACTIVITY.NO_SCREENSHOTS'"
+					></ngx-no-data-message>
 				</ng-template>
 			</ng-template>
 		</div>

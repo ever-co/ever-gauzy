@@ -34,7 +34,7 @@
 				<ng-template
 					[ngxPermissionsOnly]="PermissionsEnum.ALLOW_DELETE_TIME"
 				>
-					<ng-template 
+					<ng-template
 						ngxTimeTrackingAuthorized
 						[permission]="PermissionsEnum.ALLOW_DELETE_TIME"
 					>
@@ -68,7 +68,7 @@
 			<ng-template [ngIf]="timeLogs?.length > 0" [ngIfElse]="notFound">
 				<div class="custom-body" style="cursor: pointer">
 					<ng-container *ngFor="let log of timeLogs; let last = last;">
-						<div 
+						<div
 							(click)="userRowSelect(log);"
 							class="row m-0 py-3 align-items-center"
 							[ngClass]="{ 'border-bottom' : !last, 'selected' : log?.isSelected }"
@@ -76,7 +76,7 @@
 							<ng-template
 								[ngxPermissionsOnly]="PermissionsEnum.ALLOW_DELETE_TIME"
 							>
-								<ng-template 
+								<ng-template
 									ngxTimeTrackingAuthorized
 									[permission]="PermissionsEnum.ALLOW_DELETE_TIME"
 								>
@@ -167,13 +167,13 @@
 		</div>
 		<ng-template #notFound>
 			<ngx-no-data-message
-				[message]="'SM_TABLE.NO_DATA.TIME_LOG'"
-			></ngx-no-data-message>			
+				[message]="'TIMESHEET.NO_DATA.DAILY_TIMESHEET'"
+			></ngx-no-data-message>
 		</ng-template>
 	</nb-card-body>
 </nb-card>
 
-<ng-template 
+<ng-template
 	#actionButtons
 	let-selectedItem
 >
@@ -205,10 +205,10 @@
 				<nb-icon icon="eye-outline"></nb-icon>
 				{{ 'TIMESHEET.VIEW' | translate }}
 			</button>
-			<ng-template 
+			<ng-template
 				[ngxPermissionsOnly]="PermissionsEnum.ALLOW_MODIFY_TIME"
 			>
-				<ng-template 
+				<ng-template
 					ngxTimeTrackingAuthorized
 					[permission]="PermissionsEnum.ALLOW_MODIFY_TIME"
 				>
@@ -226,10 +226,10 @@
 					</button>
 				</ng-template>
 			</ng-template>
-			<ng-template 
+			<ng-template
 				[ngxPermissionsOnly]="PermissionsEnum.ALLOW_DELETE_TIME"
 			>
-				<ng-template 
+				<ng-template
 					ngxTimeTrackingAuthorized
 					[permission]="PermissionsEnum.ALLOW_DELETE_TIME"
 				>
@@ -253,10 +253,10 @@
 	</div>
 </ng-template>
 <ng-template #visibleButtons>
-	<ng-template 
+	<ng-template
 		[ngxPermissionsOnly]="PermissionsEnum.ALLOW_MANUAL_TIME"
 	>
-		<ng-template 
+		<ng-template
 			ngxTimeTrackingAuthorized
 			[permission]="PermissionsEnum.ALLOW_MANUAL_TIME"
 		>
