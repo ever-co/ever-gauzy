@@ -155,20 +155,15 @@
 			"WAREHOUSE": "crwdns11381:0crwdne11381:0",
 			"PRODUCT_CATEGORY": "crwdns11383:0crwdne11383:0",
 			"TAGS": "crwdns11385:0crwdne11385:0",
-			"PROJECT": "crwdns11387:0crwdne11387:0",
 			"DEPARTMENT": "crwdns11389:0crwdne11389:0",
 			"CONTACT": "crwdns11391:0crwdne11391:0",
+			"CLIENT": "crwdns11411:0crwdne11411:0",
+			"LEAD": "crwdns11419:0crwdne11419:0",
 			"TIME_FRAME": "crwdns11393:0crwdne11393:0",
 			"KPI": "crwdns11395:0crwdne11395:0",
 			"INVOICE": "crwdns11397:0crwdne11397:0",
 			"ESTIMATE": "crwdns11399:0crwdne11399:0",
-			"EVENT_TYPE": "crwdns11401:0crwdne11401:0",
-			"SCREENSHOTS": "crwdns11403:0crwdne11403:0",
-			"NO_SCREENSHOT": "crwdns11405:0crwdne11405:0",
-			"TIME_LOG": "crwdns11407:0crwdne11407:0",
-			"ACTIVITIES": "crwdns11409:0crwdne11409:0",
-			"CLIENT": "crwdns11411:0crwdne11411:0",
-			"AMOUNT_OWED": "crwdns11413:0crwdne11413:0"
+			"EVENT_TYPE": "crwdns11401:0crwdne11401:0"
 		},
 		"TRANSACTION_TYPE": "crwdns7534:0crwdne7534:0",
 		"AMOUNT": "crwdns7536:0crwdne7536:0",
@@ -1074,7 +1069,16 @@
 		"EXPENSE": "crwdns10517:0crwdne10517:0",
 		"PAYMENT": "crwdns10264:0crwdne10264:0",
 		"NO_EMPLOYEES_WORKED": "crwdns9496:0crwdne9496:0",
-		"WEEKLY_TOTAL": "crwdns11193:0crwdne11193:0"
+		"WEEKLY_TOTAL": "crwdns11193:0crwdne11193:0",
+		"NO_DATA": {
+			"APP_AND_URL_ACTIVITY": "crwdns11421:0crwdne11421:0",
+			"MANUAL_ACTIVITY": "crwdns11423:0crwdne11423:0",
+			"AMOUNT_OWED": "crwdns11425:0crwdne11425:0",
+			"WEEKLY_TIME_AND_ACTIVITY": "crwdns11427:0crwdne11427:0",
+			"DAILY_TIME_AND_ACTIVITY": "crwdns11429:0crwdne11429:0",
+			"PROJECT_BUDGET": "crwdns11431:0crwdne11431:0",
+			"CLIENT_BUDGET": "crwdns11433:0crwdne11433:0"
+		}
 	},
 	"INTEGRATIONS": {
 		"AVAILABLE_INTEGRATIONS": "crwdns8266:0crwdne8266:0",
@@ -3618,7 +3622,12 @@
 		},
 		"RUNNING_TIMER_WARNING": "crwdns10875:0crwdne10875:0",
 		"DELETE_CONFIRM": "crwdns10952:0crwdne10952:0",
-		"VIEW_LOG": "crwdns11160:0crwdne11160:0"
+		"VIEW_LOG": "crwdns11160:0crwdne11160:0",
+		"NO_DATA": {
+			"DAILY_TIMESHEET": "crwdns11435:0crwdne11435:0",
+			"WEEKLY_TIMESHEET": "crwdns11437:0crwdne11437:0",
+			"APPROVAL_TIMESHEET": "crwdns11439:0crwdne11439:0"
+		}
 	},
 	"ACTIVITY": {
 		"SCREENSHOTS": "crwdns4944:0crwdne4944:0",
@@ -3626,7 +3635,7 @@
 		"TIME_SPENT": "crwdns11126:0crwdne11126:0",
 		"APPS": "crwdns8376:0crwdne8376:0",
 		"VISITED_SITES": "crwdns8378:0crwdne8378:0",
-		"NO_ACTIVITIES": "crwdns8380:0crwdne8380:0",
+		"NO_ACTIVITIES": "crwdns11441:0crwdne11441:0",
 		"NO_ACTIVITY": "crwdns7146:0crwdne7146:0",
 		"TIME_AND_ACTIVITIES": "crwdns8382:0crwdne8382:0",
 		"VIEW_SCREEN": "crwdns7148:0crwdne7148:0",
@@ -3634,7 +3643,10 @@
 		"MINUTES": "crwdns8094:0crwdne8094:0",
 		"NO_EMPLOYEES_SELECTED": "crwdns10256:0crwdne10256:0",
 		"DELETE_CONFIRM": "crwdns8096:0crwdne8096:0",
-		"VISITED_DATES": "crwdns11130:0crwdne11130:0"
+		"VISITED_DATES": "crwdns11130:0crwdne11130:0",
+		"NO_SCREENSHOT": "crwdns11443:0crwdne11443:0",
+		"NO_SCREENSHOTS": "crwdns11445:0crwdne11445:0",
+		"NO_RECORD_FOUND": "crwdns11447:0crwdne11447:0"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "crwdns3476:0crwdne3476:0",
