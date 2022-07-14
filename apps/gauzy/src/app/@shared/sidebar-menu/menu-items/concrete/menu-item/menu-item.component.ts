@@ -1,3 +1,4 @@
+import { Location } from '@angular/common';
 import {
 	AfterViewChecked,
 	ChangeDetectorRef,
@@ -32,7 +33,8 @@ export class MenuItemComponent implements OnInit, AfterViewChecked {
 	constructor(
 		private router: Router,
 		private sidebarService: NbSidebarService,
-		private cdr: ChangeDetectorRef
+		private cdr: ChangeDetectorRef,
+		private location: Location
 	) {}
 
 	ngOnInit(): void {
@@ -61,6 +63,10 @@ export class MenuItemComponent implements OnInit, AfterViewChecked {
 		if (!this.state && !this.item.home)
 			this.sidebarService.toggle(false, 'menu-sidebar');
 		this.redirectTo();
+	}
+
+	public adpatExternalUrl(url: string): string {
+		return url ? this.location.prepareExternalUrl(url) : url;
 	}
 
 	ngAfterViewChecked(): void {

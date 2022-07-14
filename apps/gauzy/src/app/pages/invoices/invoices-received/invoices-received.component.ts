@@ -159,11 +159,11 @@ export class InvoicesReceivedComponent extends PaginationFilterBaseComponent
 					(componentLayout) =>
 						(this.dataLayoutStyle = componentLayout)
 				),
+				tap(() => this.refreshPagination()),
 				filter(
 					(componentLayout) =>
 						componentLayout === ComponentLayoutStyleEnum.CARDS_GRID
 				),
-				tap(() => this.refreshPagination()),
 				tap(() => this.invoices$.next(true)),
 				untilDestroyed(this)
 			)
@@ -331,7 +331,7 @@ export class InvoicesReceivedComponent extends PaginationFilterBaseComponent
 			},
 			mode: 'external',
 			editable: true,
-			noDataMessage: this.getTranslation('SM_TABLE.RECEIVE_ESTIMATE_NO_DATA'),
+			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.RECEIVE_ESTIMATE'),
 			columns: {
 				invoiceNumber: {
 					title: this.isEstimate

@@ -3,8 +3,8 @@
 		{{ 'REPORT_PAGE.GROUP_BY' | translate }}
 	</div>
 	<div class="ml-3">
-		<nb-select 
-			[(ngModel)]="groupBy" 
+		<nb-select
+			[(ngModel)]="groupBy"
 			(selectedChange)="groupByChange()"
 		>
 			<nb-option value="date">
@@ -20,7 +20,7 @@
 	</div>
 </div>
 <div
-	class="weekly-logs row-table"
+	class="weekly-logs row-table payment-report-grid"
 	[nbSpinner]="loading"
 	nbSpinnerSize="giant"
 	nbSpinnerStatus="primary"
@@ -58,15 +58,9 @@
 		</nb-card>
 	</ng-template>
 	<ng-template #notFound>
-		<nb-card>
-			<nb-card-body>
-				<div class="row font-weight-bold py-5 align-items-center">
-					<div class="col text-center">
-						{{ 'REPORT_PAGE.NO_PAYMENTS' | translate }}
-					</div>
-				</div>
-			</nb-card-body>
-		</nb-card>
+		<ngx-no-data-message
+			[message]="'SM_TABLE.NO_DATA.PAYMENT'"
+		></ngx-no-data-message>
 	</ng-template>
 </div>
 
@@ -270,17 +264,22 @@
 		[project]="project"
 	></ga-project-column-view>
 	<ng-template #noProjects>
-		<span>{{ 'REPORT_PAGE.NO_PROJECT' | translate }}</span>
+		<span>
+			{{ 'REPORT_PAGE.NO_PROJECT' | translate }}
+		</span>
 	</ng-template>
 </ng-template>
 
 <ng-template let-client #clientEl>
-	<span *ngIf="client; else noClient">{{ client?.name }} </span>
+	<span *ngIf="client; else noClient">
+		{{ client?.name }}
+	</span>
 	<ng-template #noClient>
-		<span>{{ 'REPORT_PAGE.NO_CLIENT' | translate }}</span>
+		<span>
+			{{ 'REPORT_PAGE.NO_CLIENT' | translate }}
+		</span>
 	</ng-template>
 </ng-template>
-
 
 <ng-template #columnsHeader>
 	<div class="columns-header" *ngIf="dailyData?.length > 0">

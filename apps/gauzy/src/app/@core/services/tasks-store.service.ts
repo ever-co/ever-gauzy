@@ -40,8 +40,7 @@ export class TasksStoreService {
 		return tasks.map((task) => ({
 			...task,
 			projectName: task.project ? task.project.name : null,
-			employees: task.members ? task.members : null,
-			creator: task.creator ? `${task.creator.name}` : null
+			employees: task.members ? task.members : null
 		}));
 	}
 

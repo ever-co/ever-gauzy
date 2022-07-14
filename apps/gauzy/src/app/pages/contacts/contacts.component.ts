@@ -55,9 +55,9 @@ import { InputFilterComponent } from '../../@shared/table-filters';
 	templateUrl: './contacts.component.html',
 	styleUrls: ['./contacts.component.scss']
 })
-export class ContactsComponent extends PaginationFilterBaseComponent 
+export class ContactsComponent extends PaginationFilterBaseComponent
 	implements OnInit, OnDestroy {
-	
+
 	showAddCard: boolean;
 	organizationContacts: IOrganizationContact[] = [];
 	projectsWithoutOrganizationContacts: IOrganizationProject[] = [];
@@ -120,11 +120,11 @@ export class ContactsComponent extends PaginationFilterBaseComponent
 
 	ngOnInit(): void {
 		this._applyTranslationOnSmartTable();
-		this._loadSmartTableSettings();
 		this.route.data
 			.pipe(
 				tap((params: Data) => this.contactType = params.contactType),
 				tap(() => this.setView()),
+				tap(() => this._loadSmartTableSettings()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -222,7 +222,7 @@ export class ContactsComponent extends PaginationFilterBaseComponent
 				display: false,
 				perPage: pagination ? pagination.itemsPerPage : 10
 			},
-			noDataMessage: this.getTranslation('SM_TABLE.CONTACT_NO_DATA'),
+			noDataMessage: this.getNoDataMessage(),
 			columns: {
 				name: {
 					title: this.getTranslation('ORGANIZATIONS_PAGE.NAME'),
@@ -296,6 +296,22 @@ export class ContactsComponent extends PaginationFilterBaseComponent
 		};
 	}
 
+	private getNoDataMessage() {
+		let noDataMessage: string;
+		switch (this.contactType) {
+			case ContactType.CLIENT:
+				noDataMessage = this.getTranslation('SM_TABLE.NO_DATA.CLIENT');
+				break;
+			case ContactType.LEAD:
+				noDataMessage = this.getTranslation('SM_TABLE.NO_DATA.LEAD');
+				break;
+			default:
+				noDataMessage = this.getTranslation('SM_TABLE.NO_DATA.CONTACT');
+				break;
+		}
+		return noDataMessage;
+	}
+
 	public onUpdateResult(params: any) {
 		if (params) this.invite(params);
 	}
@@ -351,8 +367,8 @@ export class ContactsComponent extends PaginationFilterBaseComponent
 			.pipe(
 				distinctUntilChange(),
 				tap((componentLayout) => (this.dataLayoutStyle = componentLayout)),
-				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => this.refreshPagination()),
+				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => this.contacts$.next(true)),
 				untilDestroyed(this)
 			)

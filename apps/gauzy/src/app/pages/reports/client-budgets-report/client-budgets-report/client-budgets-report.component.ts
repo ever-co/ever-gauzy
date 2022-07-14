@@ -30,11 +30,11 @@ import { GauzyFiltersComponent } from './../../../../@shared/timesheet/gauzy-fil
 	templateUrl: './client-budgets-report.component.html',
 	styleUrls: ['./client-budgets-report.component.scss']
 })
-export class ClientBudgetsReportComponent extends BaseSelectorFilterComponent 
+export class ClientBudgetsReportComponent extends BaseSelectorFilterComponent
 	implements OnInit, AfterViewInit {
-		
+
 	OrganizationContactBudgetTypeEnum = OrganizationContactBudgetTypeEnum;
-	loading: boolean;
+	loading: boolean = false;
 	filters: IGetPaymentInput;
 	clients: IClientBudgetLimitReport[] = [];
 

@@ -530,3 +530,11 @@ ng2-smart-table {
     color: #ffffff !important;
   }
 }
+
+.nb-theme-default nb-select .select-button {
+   min-width: var(--select-min-width) !important;
+}
+
+.nb-theme-default nb-accordion-item-header {
+  padding: var(--accordion-padding);;
+}

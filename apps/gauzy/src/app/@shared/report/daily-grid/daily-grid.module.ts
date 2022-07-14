@@ -15,6 +15,7 @@ import { SharedModule } from '../../shared.module';
 import { FiltersModule } from '../../timesheet/filters/filters.module';
 import { ProjectColumnViewModule } from '../project-column-view/project-column-view.module';
 import { TableComponentsModule } from '../../table-components';
+import { NoDataMessageModule } from '../../no-data-message/no-data-message.module';
 
 @NgModule({
 	declarations: [DailyGridComponent],
@@ -32,7 +33,8 @@ import { TableComponentsModule } from '../../table-components';
 		FormsModule,
 		ProjectColumnViewModule,
 		NbBadgeModule,
-		TableComponentsModule
+		TableComponentsModule,
+		NoDataMessageModule
 	]
 })
 export class DailyGridModule {}

@@ -34,6 +34,7 @@ import { TranslateModule } from '../../@shared/translate/translate.module';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { SharedModule } from '../../@shared/shared.module';
 import { DateRangeTitleModule } from '../../@shared/components/date-range-title';
+import { LineChartModule } from '../../@shared/report/charts/line-chart/line-chart.module';
 
 @NgModule({
 	imports: [
@@ -62,7 +63,8 @@ import { DateRangeTitleModule } from '../../@shared/components/date-range-title'
 		TimeTrackingModule,
 		HeaderTitleModule,
     	SharedModule,
-		DateRangeTitleModule
+		DateRangeTitleModule,
+		LineChartModule
 	],
 	declarations: [
 		DashboardComponent,

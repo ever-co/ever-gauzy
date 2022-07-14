@@ -145,12 +145,12 @@ export class TimeOffComponent extends PaginationFilterBaseComponent
 					(componentLayout) =>
 						(this.dataLayoutStyle = componentLayout)
 				),
-				tap(() => this.timeOff$.next(true)),
+				tap(() => this.refreshPagination()),
 				filter(
 					(componentLayout) =>
 						componentLayout === ComponentLayoutStyleEnum.CARDS_GRID
 				),
-				tap(() => this.refreshPagination()),
+				tap(() => this.timeOff$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -371,7 +371,7 @@ export class TimeOffComponent extends PaginationFilterBaseComponent
 				display: false,
 				perPage: pagination ? pagination.itemsPerPage : 10
 			},
-			noDataMessage: this.getTranslation('SM_TABLE.TIME_OFF_NO_DATA'),
+			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.TIME_OFF'),
 			columns: {
 				fullName: {
 					title: this.getTranslation('SM_TABLE.EMPLOYEE'),

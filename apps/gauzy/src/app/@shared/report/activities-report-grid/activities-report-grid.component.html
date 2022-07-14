@@ -25,7 +25,7 @@
 	<ng-template #columnsHeader>
 		<div class="columns-header">
 			<div class="table-inner-wrapper font-weight-bold align-items-center">
-				<div 
+				<div
 					*ngIf="groupBy != 'date'"
 					class="responsive-table-row employee-column"
 				>
@@ -92,15 +92,9 @@
 		</nb-card>
 	</ng-template>
 	<ng-template #notFound>
-		<nb-card>
-			<nb-card-body>
-				<div class="row font-weight-bold py-5 align-items-center">
-					<div class="col text-center">
-						{{ 'REPORT_PAGE.NO_ACTIVITIES' | translate }}
-					</div>
-				</div>
-			</nb-card-body>
-		</nb-card>
+		<ngx-no-data-message
+			[message]="'REPORT_PAGE.NO_DATA.APP_AND_URL_ACTIVITY'"
+		></ngx-no-data-message>
 	</ng-template>
 </div>
 
@@ -294,7 +288,7 @@
 </ng-template>
 
 <ng-template let-project #projectEl>
-	<ga-project-column-view 
+	<ga-project-column-view
 		*ngIf="project; else noProjects"
 		[project]="project"
 	></ga-project-column-view>

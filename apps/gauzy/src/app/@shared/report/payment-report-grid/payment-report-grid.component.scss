@@ -6,6 +6,10 @@
   .report-row {
     min-height: 56px;
   }
+  ::ng-deep .payment-report-grid .no-data-found {
+    max-height: calc(100vh - 45rem);  
+    margin-top: 1rem; 
+  }
 }
 
 .employee-column {

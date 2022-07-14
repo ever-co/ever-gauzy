@@ -17,6 +17,9 @@
         .names-wrapper {
             max-width: 110px;
         }
+        .day-grid-container .no-data-found {
+            max-height: calc(100vh - 40rem);            
+        }
     }
 }
 

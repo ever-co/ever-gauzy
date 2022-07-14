@@ -1,50 +1,35 @@
-<div
-	class="task"
-	cdkDrag
-	[cdkDragData]="task"
-	[cdkDragLockAxis]="'y'"
-	class="mb-1"
->
-	<nb-card class="card-scroll">
-		<nb-card-header class="d-flex justify-content-between" *ngIf="!!task">
-			<div>
-				<ngx-status-view
-					class="mr-2"
-					[value]="task.status"
-					[nbContextMenu]="taskStatusList"
-					[nbContextMenuTag]="'changeStatus:' + task.id"
-				></ngx-status-view>
-				<span>{{ task.title }}</span>
-			</div>
-			<div>
-				<button
-					nbButton
-					size="tiny"
-					[nbContextMenu]="taskActions"
-					[nbContextMenuTag]="'updateTask:' + task.id"
-				>
-					...
-				</button>
-			</div>
-		</nb-card-header>
-		<nb-card-body style="min-height: 3rem;">
+<div class="task" cdkDrag [cdkDragData]="task" [cdkDragLockAxis]="'y'">
+	<nb-card>
+		<nb-card-body [ngClass]="{ selected: isSelected }">
 			<div class="row">
-				<span class="col-3">
-					<nb-badge
-						*ngFor="let tag of task.tags"
-						class="color"
-						position="centered"
-						[style.background]="tag.color"
-						text="{{ tag.name }}"
-					>
-					</nb-badge>
+				<span class="col-1">
+					{{ task?.taskNumber }}
 				</span>
-				<span class="col-5">
+				<span class="col">
+					<ga-notes-with-tags [rowData]="task"></ga-notes-with-tags>
+				</span>
+				<span class="col">
+					<ngx-project [rowData]="task"></ngx-project>
+				</span>
+				<span class="col">
+					<ngx-create-by [rowData]="task"></ngx-create-by>
+				</span>
+				<span class="col">
 					<ngx-employee-with-links
-						[value]="task.employees"
+						[value]="task?.employees"
 					></ngx-employee-with-links>
 				</span>
-				<span class="col-4"> </span>
+				<span class="col">
+					<ngx-date-view [value]="task?.dueDate"></ngx-date-view>
+				</span>
+				<span class="col">
+					<ngx-status-view
+						class="mr-2"
+						[value]="task.status"
+						[nbContextMenu]="taskStatusList"
+						[nbContextMenuTag]="'changeStatus:' + task.id"
+					></ngx-status-view>
+				</span>
 			</div>
 		</nb-card-body>
 	</nb-card>

@@ -20,6 +20,7 @@ import { ScreenshotsItemModule } from './../../../../@shared/timesheet/screensho
 import { GalleryModule } from './../../../../@shared/gallery/gallery.module';
 import { GauzyFiltersModule } from './../../../../@shared/timesheet/gauzy-filters/gauzy-filters.module';
 import { DailyStatisticsModule } from 'apps/gauzy/src/app/@shared/report/daily-statistics/daily-statistics.module';
+import { NoDataMessageModule } from 'apps/gauzy/src/app/@shared/no-data-message/no-data-message.module';
 
 @NgModule({
 	declarations: [ScreenshotComponent],
@@ -40,7 +41,8 @@ import { DailyStatisticsModule } from 'apps/gauzy/src/app/@shared/report/daily-s
 		ScreenshotsItemModule,
 		GalleryModule,
 		GauzyFiltersModule,
-		DailyStatisticsModule
+		DailyStatisticsModule,
+		NoDataMessageModule
 	]
 })
 export class ScreenshotModule {}

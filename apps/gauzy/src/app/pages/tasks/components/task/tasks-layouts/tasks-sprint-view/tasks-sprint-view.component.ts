@@ -24,7 +24,11 @@ import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { GauzyEditableGridComponent } from '../../../../../../@shared/components/editable-grid/gauzy-editable-grid.component';
-import { SprintStoreService, Store, TasksStoreService } from './../../../../../../@core/services';
+import {
+	SprintStoreService,
+	Store,
+	TasksStoreService
+} from './../../../../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -34,8 +38,8 @@ import { SprintStoreService, Store, TasksStoreService } from './../../../../../.
 })
 export class TasksSprintViewComponent
 	extends GauzyEditableGridComponent<ITask>
-	implements OnInit, OnChanges {
-
+	implements OnInit, OnChanges
+{
 	sprints: IOrganizationSprint[] = [];
 	backlogTasks: ITask[] = [];
 
@@ -45,10 +49,14 @@ export class TasksSprintViewComponent
 	@Output() createTaskEvent: EventEmitter<any> = new EventEmitter();
 	@Output() editTaskEvent: EventEmitter<any> = new EventEmitter();
 	@Output() deleteTaskEvent: EventEmitter<any> = new EventEmitter();
+	@Output() selectedTaskEvent: EventEmitter<any> = new EventEmitter();
 
 	sprints$: Observable<IOrganizationSprint[]> = this.store$.sprints$.pipe(
 		map((sprints: IOrganizationSprint[]): IOrganizationSprint[] =>
-			sprints.filter((sprint: IOrganizationSprint) => sprint.projectId === this.project.id)
+			sprints.filter(
+				(sprint: IOrganizationSprint) =>
+					sprint.projectId === this.project.id
+			)
 		),
 		tap((sprints: IOrganizationSprint[]) => {
 			this.sprintIds = [
@@ -60,6 +68,10 @@ export class TasksSprintViewComponent
 
 	sprintIds: string[] = [];
 	sprintActions: { title: string }[] = [];
+	organizationId: string;
+	selectedTask: ITask;
+	isSelected: boolean = false;
+	@Input() sync: boolean = false;
 
 	constructor(
 		private readonly store$: SprintStoreService,
@@ -86,6 +98,7 @@ export class TasksSprintViewComponent
 				tap((organization: IOrganization) => {
 					const { tenantId } = this.storeService.user;
 					const { id: organizationId } = organization;
+					this.organizationId = organizationId;
 					this.store$.fetchSprints({
 						organizationId,
 						projectId: project.id,
@@ -106,7 +119,10 @@ export class TasksSprintViewComponent
 						acc: { [key: string]: IOrganizationSprint },
 						sprint: IOrganizationSprint
 					) => {
-						acc[sprint.id] = { ...sprint, tasks: sprint.tasks || [] };
+						acc[sprint.id] = {
+							...sprint,
+							tasks: sprint.tasks || []
+						};
 						return acc;
 					},
 					{}
@@ -138,11 +154,23 @@ export class TasksSprintViewComponent
 	}
 
 	editTask(selectedItem: ITask): void {
-		this.editTaskEvent.emit(this.selectedItem || selectedItem);
+		this.selectedTaskEvent.emit(this.selectedItem || selectedItem);
 	}
 
 	deleteTask(selectedItem: ITask): void {
 		this.deleteTaskEvent.emit(selectedItem);
+	}
+
+	toggleItemSelection(task: ITask) {
+		this.isSelected =
+			this.isSelected && task === this.selectedTask
+				? !this.isSelected
+				: true;
+		this.selectedTask = task === this.selectedTask ? null : task;
+		this.selectedTaskEvent.emit({
+			data: task,
+			isSelected: this.isSelected
+		});
 	}
 
 	drop(event: CdkDragDrop<string[]>) {
@@ -153,16 +181,17 @@ export class TasksSprintViewComponent
 				event.currentIndex
 			);
 		} else {
-			this.taskStore.editTask({
-				id: event.item.data.id,
-				title: event.item.data.title,
-				organizationSprint:
-					this.sprints.find(
-						(sprint) => sprint.id === event.container.id
-					) || null
-			})
-			.pipe(untilDestroyed(this))
-			.subscribe();
+			this.taskStore
+				.editTask({
+					id: event.item.data.id,
+					title: event.item.data.title,
+					organizationSprint:
+						this.sprints.find(
+							(sprint) => sprint.id === event.container.id
+						) || null
+				})
+				.pipe(untilDestroyed(this))
+				.subscribe();
 			transferArrayItem(
 				event.previousContainer.data,
 				event.container.data,
@@ -185,13 +214,15 @@ export class TasksSprintViewComponent
 	}
 
 	changeTaskStatus({ id, status, title }: Partial<ITask>): void {
-		this.taskStore.editTask({
-			id,
-			status,
-			title
-		})
-		.pipe(untilDestroyed(this))
-		.subscribe();
+		this.taskStore
+			.editTask({
+				id,
+				status,
+				title,
+				organizationId: this.organizationId
+			})
+			.pipe(untilDestroyed(this))
+			.subscribe();
 	}
 
 	completeSprint(sprint: IOrganizationSprint, evt: any): void {

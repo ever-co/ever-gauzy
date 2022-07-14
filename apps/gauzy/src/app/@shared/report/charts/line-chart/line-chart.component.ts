@@ -118,7 +118,8 @@ export class LineChartComponent implements OnInit, OnDestroy {
 									color: chartJs.axisLineColor
 								},
 								ticks: {
-									fontColor: chartJs.textColor
+									fontColor: chartJs.textColor,
+									maxTicksLimit: 10
 								}
 							}
 						],

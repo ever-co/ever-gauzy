@@ -24,7 +24,7 @@
 	</div>
 </div>
 <div
-	class="row-table tables-wrapper"
+	class="row-table tables-wrapper day-grid-container"
 	[nbSpinner]="loading"
 	[nbSpinnerSize]="'giant'"
 	[nbSpinnerStatus]="'primary'"
@@ -182,15 +182,9 @@
 		</nb-accordion>
 	</ng-template>
 	<ng-template #notFound>
-		<nb-card class="m-0">
-			<nb-card-body>
-				<div class="row font-weight-bold py-5 align-items-center">
-					<div class="col text-center">
-						{{ 'REPORT_PAGE.NO_TIMELOG' | translate }}
-					</div>
-				</div>
-			</nb-card-body>
-		</nb-card>
+		<ngx-no-data-message
+			[message]="'REPORT_PAGE.NO_DATA.DAILY_TIME_AND_ACTIVITY'"
+		></ngx-no-data-message>
 	</ng-template>
 </div>
 <ng-template class="table-template" let-day #groupByDateCardEl>

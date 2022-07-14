@@ -142,15 +142,9 @@
 				</nb-card>
 			</ng-template>
 			<ng-template #notFound>
-				<nb-card>
-					<nb-card-body>
-						<div class="row font-weight-bold py-5 align-items-center">
-							<div class="col text-center">
-								{{ 'REPORT_PAGE.NO_PROJECTS' | translate }}
-							</div>
-						</div>
-					</nb-card-body>
-				</nb-card>
+				<ngx-no-data-message
+					[message]="'REPORT_PAGE.NO_DATA.PROJECT_BUDGET'"
+				></ngx-no-data-message>
 			</ng-template>
 		</div>
 	</nb-card-body>

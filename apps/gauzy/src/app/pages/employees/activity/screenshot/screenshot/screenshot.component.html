@@ -11,7 +11,9 @@
 	</div>
 	<div class="custom-card-body">
 		<div
-			class="px-3"
+			[ngClass]="{
+				'px-3': timeSlots?.length > 0
+			}"
 			[nbSpinner]="loading"
 			nbSpinnerSize="giant"
 			nbSpinnerStatus="primary"
@@ -45,17 +47,15 @@
 				</div>
 			</ng-template>
 			<ng-template #notFound>
-				<ng-container *ngIf="!selectedEmployeeId; else blankScreenshot">
-					<div class="py-5 text-center">
-						<h6>
-							{{ 'ACTIVITY.NO_RECORD_FOUND' | translate }}
-						</h6>
-					</div>
+				<ng-container *ngIf="!request.employeeIds; else noFoundScreenshot">
+					<ngx-no-data-message
+						[message]="'ACTIVITY.NO_RECORD_FOUND'"
+					></ngx-no-data-message>
 				</ng-container>
-				<ng-template #blankScreenshot>
-					<div class="py-5 text-center">
-						<h6>{{ 'ACTIVITY.NO_SCREENSHOTS' | translate }}</h6>
-					</div>
+				<ng-template #noFoundScreenshot>
+					<ngx-no-data-message
+						[message]="'ACTIVITY.NO_SCREENSHOTS'"
+					></ngx-no-data-message>
 				</ng-template>
 			</ng-template>
 		</div>

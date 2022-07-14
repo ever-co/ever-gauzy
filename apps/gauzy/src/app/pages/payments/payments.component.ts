@@ -161,11 +161,11 @@ export class PaymentsComponent extends PaginationFilterBaseComponent
 					(componentLayout) =>
 						(this.dataLayoutStyle = componentLayout)
 				),
+				tap(() => this.refreshPagination()),
 				filter(
 					(componentLayout) =>
 						componentLayout === ComponentLayoutStyleEnum.CARDS_GRID
 				),
-				tap(() => this.refreshPagination()),
 				tap(() => this.payments$.next(true)),
 				untilDestroyed(this)
 			)
@@ -414,7 +414,7 @@ export class PaymentsComponent extends PaginationFilterBaseComponent
 		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
 			actions: false,
-			noDataMessage: this.getTranslation('SM_TABLE.PAYMENT_NO_DATA'),
+			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.PAYMENT'),
 			pager: {
 				display: false,
 				perPage: pagination ? pagination.itemsPerPage : 10

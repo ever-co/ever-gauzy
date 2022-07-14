@@ -17,7 +17,9 @@
   }
 
   .changelog-sidebar.expanded {
-    width: 33rem !important;
+    width: 29.5rem !important;
+    height: fit-content;
+    z-index: 1042;
   }
 
   nb-user {
@@ -172,6 +174,24 @@ nb-sidebar[tag='menu-sidebar'] {
       background-color: nb-theme(background-basic-color-1);
       border-radius: nb-theme(border-radius);
       overflow: unset;
+    }
+  }
+  nb-layout
+    .layout
+    .layout-container
+    nb-sidebar.changelog-sidebar.expanded
+    .main-container-fixed {
+    top: calc(var(--header-height) - 27px);
+    height: fit-content;
+    max-height: 100vh;
+    width: 22.5rem !important;
+    box-shadow: 0px 6px 30px 0px rgba(0, 0, 0, 0.2);
+    z-index: 1041;
+    border-radius: nb-theme(border-radius);
+    .scrollable {
+      background-color: nb-theme(background-basic-color-1);
+      border-radius: nb-theme(border-radius);
+      padding: 0;
     }
   }
 

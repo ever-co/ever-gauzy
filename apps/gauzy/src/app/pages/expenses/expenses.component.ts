@@ -161,8 +161,8 @@ export class ExpensesComponent extends PaginationFilterBaseComponent
 			.pipe(
 				distinctUntilChange(),
 				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
-				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => this.refreshPagination()),
+				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => this.expenses$.next(true)),
 				untilDestroyed(this)
 			)
@@ -200,7 +200,7 @@ export class ExpensesComponent extends PaginationFilterBaseComponent
 		this.smartTableSettings = {
 			actions: false,
 			editable: true,
-			noDataMessage: this.getTranslation('SM_TABLE.EXPENSE_NO_DATA'),
+			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.EXPENSE'),
 			pager: {
 				display: false,
 				perPage: pagination ? pagination.itemsPerPage : 10

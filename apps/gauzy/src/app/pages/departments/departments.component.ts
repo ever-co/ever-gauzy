@@ -141,7 +141,7 @@ export class DepartmentsComponent extends PaginationFilterBaseComponent
 		this.smartTableSettings = {
 			actions: false,
 			editable: true,
-			noDataMessage: this.getTranslation('SM_TABLE.DEPARTMENT_NO_DATA'),
+			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.DEPARTMENT'),
 			pager: {
 				display: false,
 				perPage: pagination ? pagination.itemsPerPage : 10
@@ -192,8 +192,8 @@ export class DepartmentsComponent extends PaginationFilterBaseComponent
 			.pipe(
 				distinctUntilChange(),
 				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
-				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => this.refreshPagination()),
+				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => this.departments$.next(true)),
 				untilDestroyed(this)
 			)

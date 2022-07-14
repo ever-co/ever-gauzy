@@ -21,6 +21,7 @@ import { ApprovalsRoutingModule } from './approvals-routing.module';
 import { ApprovalsComponent } from './approvals/approvals.component';
 import { StatusBadgeModule } from './../../../../@shared/status-badge';
 import { GauzyButtonActionModule } from './../../../../@shared/gauzy-button-action/gauzy-button-action.module';
+import { NoDataMessageModule } from 'apps/gauzy/src/app/@shared/no-data-message/no-data-message.module';
 
 @NgModule({
 	declarations: [ApprovalsComponent],
@@ -42,7 +43,8 @@ import { GauzyButtonActionModule } from './../../../../@shared/gauzy-button-acti
 		SharedModule,
 		ApprovalsRoutingModule,
 		StatusBadgeModule,
-		GauzyButtonActionModule
+		GauzyButtonActionModule,
+		NoDataMessageModule
 	]
 })
 export class ApprovalsModule {}

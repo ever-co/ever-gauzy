@@ -81,8 +81,8 @@
 										</div>
 										<div class="responsive-table-content day-col">
 											<span *ngIf="client.budgetType === OrganizationContactBudgetTypeEnum.HOURS">
-												{{ (client?.spent * 3600) 
-													| durationFormat 
+												{{ (client?.spent * 3600)
+													| durationFormat
 												}}
 											</span>
 											<span *ngIf="client.budgetType === OrganizationContactBudgetTypeEnum.COST">
@@ -99,7 +99,7 @@
 										</div>
 										<div class="responsive-table-content day-col">
 											<span *ngIf="client.budgetType === OrganizationContactBudgetTypeEnum.HOURS">
-												{{ (client.reamingBudget * 3600) 
+												{{ (client.reamingBudget * 3600)
 													| durationFormat
 												}}
 											</span>
@@ -117,8 +117,8 @@
 										</div>
 										<div class="responsive-table-content day-col budget-row">
 											<span *ngIf="client.budgetType === OrganizationContactBudgetTypeEnum.HOURS" class="currency-span">
-												{{ (client?.budget * 3600) 
-													| durationFormat 
+												{{ (client?.budget * 3600)
+													| durationFormat
 												}}
 											</span>
 											<span *ngIf="client.budgetType === OrganizationContactBudgetTypeEnum.COST " class="currency-span">
@@ -143,15 +143,9 @@
 				</nb-card>
 			</ng-template>
 			<ng-template #notFound>
-				<nb-card>
-					<nb-card-body>
-						<div class="row font-weight-bold py-5 align-items-center">
-							<div class="col text-center">
-								{{ 'REPORT_PAGE.NO_CLIENTS' | translate }}
-							</div>
-						</div>
-					</nb-card-body>
-				</nb-card>
+				<ngx-no-data-message
+					[message]="'REPORT_PAGE.NO_DATA.CLIENT_BUDGET'"
+				></ngx-no-data-message>
 			</ng-template>
 		</div>
 	</nb-card-body>

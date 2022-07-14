@@ -12,6 +12,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { SharedModule } from '../../shared.module';
 import { FiltersModule } from '../../timesheet/filters/filters.module';
 import { ProjectColumnViewModule } from "../project-column-view/project-column-view.module";
+import { NoDataMessageModule } from '../../no-data-message/no-data-message.module';
 
 @NgModule({
 	declarations: [PaymentReportGridComponent],
@@ -27,6 +28,7 @@ import { ProjectColumnViewModule } from "../project-column-view/project-column-v
 		NbSelectModule,
 		FormsModule,
 		ProjectColumnViewModule,
+		NoDataMessageModule
 	],
 })
 export class PaymentReportGridModule {}

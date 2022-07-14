@@ -79,12 +79,12 @@
 		<button
 			nbButton
 			status="basic"
-			class="action secondary mr-2"
+			class="action secondary"
 			(click)="view(selectedItem)"
 			[disabled]="!selectedItem && disableButton"
 			size="small"
 		>
-			<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
+			<nb-icon icon="eye-outline"></nb-icon>
 			{{ 'BUTTONS.VIEW' | translate }}
 		</button>
 		<button
@@ -115,7 +115,7 @@
 			*ngIf="!isEstimate"
 			nbButton
 			status="basic"
-			class="action secondary mr-2"
+			class="action secondary"
 			[disabled]="!selectedItem && disableButton"
 			(click)="payments()"
 			size="small"
@@ -127,13 +127,12 @@
 			*ngIf="isEstimate"
 			nbButton
 			status="basic"
-			class="action success mr-2"
+			class="action success"
 			size="small"
 			(click)="accept(selectedItem)"
 			[disabled]="!selectedItem && disableButton"
-			[size]="buttonSize || 'medium'"
 		>
-			<nb-icon class="mr-1" icon="checkmark-outline"></nb-icon>
+			<nb-icon icon="checkmark-outline"></nb-icon>
 			{{ 'INVOICES_PAGE.ESTIMATES.ACCEPT' | translate }}
 		</button>
 		<button
@@ -145,7 +144,7 @@
 			(click)="reject(selectedItem)"
 			[disabled]="!selectedItem && disableButton"
 		>
-			<nb-icon class="mr-1" icon="close-outline"></nb-icon>
+			<nb-icon icon="close-outline"></nb-icon>
 			{{ 'INVOICES_PAGE.ESTIMATES.REJECT' | translate }}
 		</button>
 		<button

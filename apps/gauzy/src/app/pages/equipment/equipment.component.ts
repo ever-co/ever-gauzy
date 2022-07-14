@@ -113,8 +113,8 @@ export class EquipmentComponent extends PaginationFilterBaseComponent
 			.pipe(
 				distinctUntilChange(),
 				tap((componentLayout) => (this.dataLayoutStyle = componentLayout)),
-				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => this.refreshPagination()),
+				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => this.equipments$.next(true)),
 				untilDestroyed(this)
 			)
@@ -141,7 +141,7 @@ export class EquipmentComponent extends PaginationFilterBaseComponent
 				display: false,
 				perPage: pagination ? pagination.itemsPerPage : 10
 			},
-			noDataMessage: this.getTranslation('SM_TABLE.EQUIPMENT_NO_DATA'),
+			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.EQUIPMENT'),
 			columns: {
 				image: {
 					title: this.getTranslation('INVENTORY_PAGE.IMAGE'),

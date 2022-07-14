@@ -98,6 +98,10 @@
 		text-align: left;
 		border: none;
 	}
+	::ng-deep .timesheet-weekly-container .no-data-found {
+		max-height: calc(100vh - 30.7rem);  
+		margin-top: 1rem;
+	}
 }
 
 .gauzy-action {

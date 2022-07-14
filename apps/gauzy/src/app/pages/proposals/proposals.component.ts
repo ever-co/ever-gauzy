@@ -152,11 +152,11 @@ export class ProposalsComponent extends PaginationFilterBaseComponent
 					(componentLayout) =>
 						(this.dataLayoutStyle = componentLayout)
 				),
+				tap(() => this.refreshPagination()),
 				filter(
 					(componentLayout) =>
 						componentLayout === ComponentLayoutStyleEnum.CARDS_GRID
 				),
-				tap(() => this.refreshPagination()),
 				tap(() => this.proposals$.next(true)),
 				untilDestroyed(this)
 			)
@@ -313,7 +313,7 @@ export class ProposalsComponent extends PaginationFilterBaseComponent
 				display: false,
 				perPage: pagination ? pagination.itemsPerPage : 10
 			},
-			noDataMessage: this.getTranslation('SM_TABLE.PROPOSAL_NO_DATA'),
+			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.PROPOSAL'),
 			columns: {
 				valueDate: {
 					title: this.getTranslation('SM_TABLE.DATE'),

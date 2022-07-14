@@ -48,6 +48,9 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			query.take(filter.limit);
 		}
 
+		query.skip(filter.skip ? (filter.take * (filter.skip - 1)) : 0);
+		query.take(filter.take ? (filter.take) : 10);
+
 		const [ items, total ] = await query
 			.leftJoinAndSelect(`${query.alias}.project`, 'project')
 			.leftJoinAndSelect(`${query.alias}.tags`, 'tags')
@@ -126,6 +129,9 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			query.skip(filter.limit * (filter.page - 1));
 			query.take(filter.limit);
 		}
+
+		query.skip(filter.skip ? (filter.take * (filter.skip - 1)) : 0);
+		query.take(filter.take ? (filter.take) : 10);
 	
 		const [ items, total ] = await query
 			.leftJoinAndSelect(`${query.alias}.project`, 'project')

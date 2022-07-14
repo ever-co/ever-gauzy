@@ -48,7 +48,7 @@
 		</div>
 		<div class="table card mt-4">
 			<div
-				class="weekly-logs row-table"
+				class="weekly-logs row-table weekly-time-grid"
 				[nbSpinner]="loading"
 				nbSpinnerSize="giant"
 				nbSpinnerStatus="primary"
@@ -195,11 +195,9 @@
 					</nb-card-body>
 				</nb-card>
 				<ng-template #notFound>
-					<div class="row font-weight-bold py-3 align-items-center">
-						<div class="col text-center">
-							{{ 'REPORT_PAGE.NO_ACTIVITIES' | translate }}
-						</div>
-					</div>
+					<ngx-no-data-message
+						[message]="'REPORT_PAGE.NO_DATA.WEEKLY_TIME_AND_ACTIVITY'"
+					></ngx-no-data-message>
 				</ng-template>
 			</div>
 		</div>

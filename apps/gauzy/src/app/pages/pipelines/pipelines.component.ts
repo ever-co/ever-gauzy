@@ -140,8 +140,8 @@ export class PipelinesComponent extends PaginationFilterBaseComponent
 			.pipe(
 				distinctUntilChange(),
 				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
-				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => this.refreshPagination()),
+				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
@@ -176,7 +176,7 @@ export class PipelinesComponent extends PaginationFilterBaseComponent
 				perPage: pagination ? pagination.itemsPerPage : 10
 			},
 			actions: false,
-			noDataMessage: this.getTranslation('SM_TABLE.PIPELINE_NO_DATA'),
+			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.PIPELINE'),
 			columns: {
 				name: {
 					type: 'string',

@@ -15,7 +15,11 @@
 			(click)="redirectTo()"
 		>
 			<i [class]="item?.icon"></i
-			><span *ngIf="state">{{ item?.title }}</span>
+			><span *ngIf="state"
+				><a [href]="adpatExternalUrl(item?.link)" onclick="return false;">{{
+					item?.title
+				}}</a></span
+			>
 		</nb-accordion-item-header>
 		<nb-accordion-item-header
 			[nbTooltip]="item?.title"
@@ -25,7 +29,11 @@
 			(click)="redirectTo()"
 		>
 			<i [class]="item?.icon"></i
-			><span *ngIf="state">{{ item?.title }}</span>
+			><span *ngIf="state"
+				><a [href]="adpatExternalUrl(item?.link)" onclick="return false;">{{
+					item?.title
+				}}</a></span
+			>
 		</nb-accordion-item-header>
 		<nb-accordion-item-body
 			[ngClass]="{ 'item-collapsed': !state }"

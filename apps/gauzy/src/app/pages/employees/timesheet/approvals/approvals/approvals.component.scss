@@ -26,6 +26,10 @@
 		}
 	}
 
+	::ng-deep .approval-container .no-data-found {
+		max-height: calc(100vh - 30.7rem);  
+		margin-top: 1rem;
+	}
 }
 
 .menu-item {

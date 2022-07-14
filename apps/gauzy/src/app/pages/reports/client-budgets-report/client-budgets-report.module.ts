@@ -17,6 +17,7 @@ import { HeaderTitleModule } from '../../../@shared/components/header-title/head
 import { DateRangeTitleModule } from '../../../@shared/components/date-range-title/date-range-title.module';
 import { GauzyFiltersModule } from '../../../@shared/timesheet/gauzy-filters/gauzy-filters.module';
 import { TableComponentsModule } from '../../../@shared/table-components/table-components.module';
+import { NoDataMessageModule } from '../../../@shared/no-data-message/no-data-message.module';
 
 @NgModule({
 	declarations: [ClientBudgetsReportComponent],
@@ -35,7 +36,8 @@ import { TableComponentsModule } from '../../../@shared/table-components/table-c
 		HeaderTitleModule,
 		DateRangeTitleModule,
 		GauzyFiltersModule,
-		TableComponentsModule
+		TableComponentsModule,
+		NoDataMessageModule
 	],
 })
 export class ClientBudgetsReportModule {}

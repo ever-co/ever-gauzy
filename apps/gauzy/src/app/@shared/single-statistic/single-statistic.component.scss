@@ -5,18 +5,27 @@
 		display: inline-flex;
 		flex-direction: column;
 	}
+
 	.title {
-		font-size: nb-theme(text-subtitle-2-font-size);
-		color: nb-theme(text-hint-color);
-    margin-bottom: 20px;
+		font-size: 14px;
+		font-weight: 400;
+		line-height: 16px;
+		letter-spacing: -0.009em;
+		color: nb-theme(gauzy-text-color-2);
+		margin-bottom: 20px;
 	}
+
 	.content {
-		font-size: nb-theme(text-heading-4-font-size);
-		color: nb-theme(text-basic-color);
-    margin-bottom: 20px;
+		font-size: 36px;
+		font-weight: 400;
+		line-height: 44px;
+		letter-spacing: 0em;
+		color: nb-theme(gauzy-text-color-1);
+		margin-bottom: 20px;
 	}
+
 	.block-amount {
-		color: #0091ff;
-		font-weight: bold;
+		color: var(--color-success-default);
+		font-weight: 600;
 	}
 }

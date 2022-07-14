@@ -18,6 +18,7 @@ import { HeaderTitleModule } from '../../../@shared/components/header-title/head
 import { DateRangeTitleModule } from '../../../@shared/components/date-range-title/date-range-title.module';
 import { GauzyFiltersModule } from '../../../@shared/timesheet/gauzy-filters/gauzy-filters.module';
 import { ProjectColumnViewModule } from "../../../@shared/report/project-column-view/project-column-view.module";
+import { NoDataMessageModule } from '../../../@shared/no-data-message/no-data-message.module';
 
 @NgModule({
 	declarations: [ProjectBudgetsReportComponent],
@@ -37,6 +38,7 @@ import { ProjectColumnViewModule } from "../../../@shared/report/project-column-
 		DateRangeTitleModule,
 		GauzyFiltersModule,
 		ProjectColumnViewModule,
+		NoDataMessageModule
 	],
 })
 export class ProjectBudgetsReportModule {}

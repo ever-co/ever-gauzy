@@ -35,7 +35,7 @@
             ></ng-select>
         </div>
         <div class="table">
-            <div 
+            <div
                 class="weekly-logs row-table"
                 [nbSpinner]="loading"
                 nbSpinnerSize="giant"
@@ -108,7 +108,7 @@
                                         <div class="responsive-table-row small-column action-column justify-end">
                                             <div class="responsive-table-header">{{ 'REPORT_PAGE.ACTION' | translate }}</div>
                                             <div class="responsive-table-content day-col" [ngSwitch]="timeLogRow.isEdited">
-                                                <nb-badge 
+                                                <nb-badge
                                                     *ngSwitchCase="true"
                                                     [text]="ManualTimeLogAction.EDITED | titlecase"
                                                 ></nb-badge>
@@ -119,21 +119,15 @@
                                             </div>
                                         </div>
                                     </div>
-                                </div> 
+                                </div>
                             </div>
                         </nb-card-body>
                     </nb-card>
                 </ng-template>
                 <ng-template #notFound>
-                    <nb-card>
-                        <nb-card-body [nbSpinner]="loading">
-                            <div class="row font-weight-bold py-5 align-items-center">
-                                <div class="col text-center">
-                                    {{ 'REPORT_PAGE.NO_ACTIVITIES' | translate }}
-                                </div>
-                            </div>
-                        </nb-card-body>
-                    </nb-card>
+                    <ngx-no-data-message
+                        [message]="'REPORT_PAGE.NO_DATA.MANUAL_ACTIVITY'"
+                    ></ngx-no-data-message>
                 </ng-template>
             </div>
         </div>

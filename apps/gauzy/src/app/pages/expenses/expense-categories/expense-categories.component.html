@@ -27,7 +27,7 @@
 			[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
 			[ngIfElse]="gridLayout"
 		>
-			<ng-container *ngIf="expenseCategories?.length">
+			<ng-container *ngIf="expenseCategories?.length > 0">
 				<nb-card class="p-0" *ngFor="let item of expenseCategories">
 					<nb-card-body
 						class="custom-table"
@@ -44,6 +44,11 @@
 					</nb-card-body>
 				</nb-card>
 			</ng-container>
+			<ng-template [ngIf]="!loading && expenseCategories?.length == 0">
+				<ngx-no-data-message 
+					[message]="'SM_TABLE.NO_DATA.EXPENSE_CATEGORY'"
+				></ngx-no-data-message>
+			</ng-template>
 			<div class="pagination-container">
 				<ng-container
 					*ngIf="pagination.totalItems > pagination.itemsPerPage"
@@ -100,6 +105,7 @@
 			class="action"
 			[disabled]="disableButton"
 			size="small"
+			[nbTooltip]="'BUTTONS.DELETE' | translate"
 		>
 			<nb-icon status="danger" icon="trash-2-outline"> </nb-icon>
 		</button>

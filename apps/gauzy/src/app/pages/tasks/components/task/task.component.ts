@@ -72,7 +72,7 @@ export class TaskComponent extends PaginationFilterBaseComponent
 	viewMode: TaskListTypeEnum = TaskListTypeEnum.GRID;
 	taskListTypeEnum = TaskListTypeEnum;
 	defaultProject = ALL_PROJECT_SELECTED;
-	subject$: Subject<any> = new Subject();
+	taskSubject$: Subject<any> = this.subject$;
 	selectedEmployee: ISelectedEmployee;
 	selectedProject: IOrganizationProject;
 
@@ -105,7 +105,7 @@ export class TaskComponent extends PaginationFilterBaseComponent
 	ngOnInit() {
 		this._loadSmartTableSettings();
 		this._applyTranslationOnSmartTable();
-		this.subject$
+		this.taskSubject$
 			.pipe(
 				debounceTime(400),
 				tap(() => this.clearItem()),
@@ -117,7 +117,7 @@ export class TaskComponent extends PaginationFilterBaseComponent
 			.pipe(
 				debounceTime(100),
 				distinctUntilChange(),
-				tap(() => this.subject$.next(true)),
+				tap(() => this.taskSubject$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -140,7 +140,7 @@ export class TaskComponent extends PaginationFilterBaseComponent
 						: TaskListTypeEnum.GRID;
 				}),
 				tap(() => this.refreshPagination()),
-				tap(() => this.subject$.next(true)),
+				tap(() => this.taskSubject$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -180,9 +180,9 @@ export class TaskComponent extends PaginationFilterBaseComponent
 			.pipe(
 				distinctUntilChange(),
 				tap((componentLayout) => (this.dataLayoutStyle = componentLayout)),
-				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => this.refreshPagination()),
-				tap(() => this.subject$.next(true)),
+				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
+				tap(() => this.taskSubject$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -284,7 +284,6 @@ export class TaskComponent extends PaginationFilterBaseComponent
 					projectName: task.project ? task.project : undefined,
 					employees: task.members ? task.members : undefined,
 					assignTo: this._teamTaskStore._getTeamNames(task),
-					creator: task.creator ? task.creator : undefined,
 					employeesMergedTeams: [task.members, task.teams]
 				});
 			},
@@ -337,7 +336,7 @@ export class TaskComponent extends PaginationFilterBaseComponent
 				display: false,
 				perPage: pagination ? pagination.itemsPerPage : 10
 			},
-			noDataMessage: this.getTranslation('SM_TABLE.TASK_NO_DATA'),
+			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.TASK'),
 			columns: {
 				taskNumber: {
 					title: this.getTranslation('TASKS_PAGE.TASK_ID'),
@@ -501,7 +500,7 @@ export class TaskComponent extends PaginationFilterBaseComponent
 				this.storeInstance
 					.createTask(payload)
 					.pipe(
-						tap(() => this.subject$.next(true)),
+						tap(() => this.taskSubject$.next(true)),
 						untilDestroyed(this)
 					)
 					.subscribe();
@@ -561,7 +560,7 @@ export class TaskComponent extends PaginationFilterBaseComponent
 				this.storeInstance
 					.editTask({ ...payload, id: this.selectedTask.id })
 					.pipe(
-						tap(() => this.subject$.next(true)),
+						tap(() => this.taskSubject$.next(true)),
 						untilDestroyed(this)
 					)
 					.subscribe();
@@ -622,7 +621,7 @@ export class TaskComponent extends PaginationFilterBaseComponent
 				this.storeInstance
 					.createTask(payload)
 					.pipe(
-						tap(() => this.subject$.next(true)),
+						tap(() => this.taskSubject$.next(true)),
 						untilDestroyed(this)
 					)
 					.subscribe();
@@ -646,7 +645,7 @@ export class TaskComponent extends PaginationFilterBaseComponent
 			this.storeInstance
 				.delete(this.selectedTask.id)
 				.pipe(
-					tap(() => this.subject$.next(true)),
+					tap(() => this.taskSubject$.next(true)),
 					untilDestroyed(this)
 				)
 				.subscribe();

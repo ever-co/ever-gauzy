@@ -18,6 +18,9 @@
         display: inline-flex;
         max-width: 99%;
     }
+    ::ng-deep .weekly-time-grid .no-data-found {
+        max-height: calc(100vh - 45rem);  
+    }
 }
 
 @include respond(lg) {
