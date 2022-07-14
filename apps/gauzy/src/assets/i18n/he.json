@@ -155,20 +155,15 @@
 			"WAREHOUSE": "You have not created any warehouse.",
 			"PRODUCT_CATEGORY": "You have not created any product category.",
 			"TAGS": "You have not created any tag.",
-			"PROJECT": "You have not created any project.",
 			"DEPARTMENT": "You have not created any department.",
 			"CONTACT": "You have not created any contact.",
+			"CLIENT": "You have not created any client.",
+			"LEAD": "You have not created any lead.",
 			"TIME_FRAME": "You have not created any time frame.",
 			"KPI": "You have not created any KPI.",
 			"INVOICE": "You have not created any invoice.",
 			"ESTIMATE": "You have not created any estimate.",
-			"EVENT_TYPE": "You have not created any event type.",
-			"SCREENSHOTS": "No records found. Please select date range, employee or project.",
-			"NO_SCREENSHOT": "No Screenshots",
-			"TIME_LOG": "No timelogs found",
-			"ACTIVITIES": "No Activities",
-			"CLIENT": "You have not created any client.",
-			"AMOUNT_OWED": "No Amount Owed"
+			"EVENT_TYPE": "You have not created any event type."
 		},
 		"TRANSACTION_TYPE": "סוג",
 		"AMOUNT": "כמות",
@@ -1074,7 +1069,16 @@
 		"EXPENSE": "הוצאה",
 		"PAYMENT": "Payment",
 		"NO_EMPLOYEES_WORKED": "No employees worked",
-		"WEEKLY_TOTAL": "Weekly Total"
+		"WEEKLY_TOTAL": "Weekly Total",
+		"NO_DATA": {
+			"APP_AND_URL_ACTIVITY": "No records found. Please select date range, employee or project.",
+			"MANUAL_ACTIVITY": "No records found. Please select date range, employee or project.",
+			"AMOUNT_OWED": "No Amount Owed",
+			"WEEKLY_TIME_AND_ACTIVITY": "You have not any tracked time and activity yet for these day's.",
+			"DAILY_TIME_AND_ACTIVITY": "You have not any tracked time and activity yet for this day.",
+			"PROJECT_BUDGET": "You have not created any project with budget.",
+			"CLIENT_BUDGET": "You have not created any client with budget."
+		}
 	},
 	"INTEGRATIONS": {
 		"AVAILABLE_INTEGRATIONS": "Available Apps & Integrations",
@@ -3618,7 +3622,12 @@
 		},
 		"RUNNING_TIMER_WARNING": "Warning. Timer is running, you can only remove screenshots if you stop timer or Inside Timer app",
 		"DELETE_CONFIRM": "Are you sure to delete this screenshots and time log?",
-		"VIEW_LOG": "View Log"
+		"VIEW_LOG": "View Log",
+		"NO_DATA": {
+			"DAILY_TIMESHEET": "You have not any time log yet for this day.",
+			"WEEKLY_TIMESHEET": "You have not any time log yet for these day's.",
+			"APPROVAL_TIMESHEET": "You don't have any timesheets for approvals yet for these day's."
+		}
 	},
 	"ACTIVITY": {
 		"SCREENSHOTS": "Screenshots",
@@ -3626,7 +3635,7 @@
 		"TIME_SPENT": "Time spent (hours)",
 		"APPS": "Apps",
 		"VISITED_SITES": "Visited Sites",
-		"NO_ACTIVITIES": "No activities",
+		"NO_ACTIVITIES": "No records found. Please select date range, employee or project.",
 		"NO_ACTIVITY": "No Activity",
 		"TIME_AND_ACTIVITIES": "Time & Activities",
 		"VIEW_SCREEN": "View Screen",
@@ -3634,7 +3643,10 @@
 		"MINUTES": "Minutes",
 		"NO_EMPLOYEES_SELECTED": "Please select Employee",
 		"DELETE_CONFIRM": "Are you sure you want to delete this screenshots and activities?",
-		"VISITED_DATES": "Visited Dates"
+		"VISITED_DATES": "Visited Dates",
+		"NO_SCREENSHOT": "No Screenshot",
+		"NO_SCREENSHOTS": "No Screenshots",
+		"NO_RECORD_FOUND": "No records found. Please select date range, employee or project."
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Let's create your first organization",
