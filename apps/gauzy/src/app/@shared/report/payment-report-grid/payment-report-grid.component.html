@@ -3,8 +3,8 @@
 		{{ 'REPORT_PAGE.GROUP_BY' | translate }}
 	</div>
 	<div class="ml-3">
-		<nb-select 
-			[(ngModel)]="groupBy" 
+		<nb-select
+			[(ngModel)]="groupBy"
 			(selectedChange)="groupByChange()"
 		>
 			<nb-option value="date">
@@ -58,9 +58,9 @@
 		</nb-card>
 	</ng-template>
 	<ng-template #notFound>
-		<ngx-no-data-message 
+		<ngx-no-data-message
 			[message]="'SM_TABLE.NO_DATA.PAYMENT'"
-		></ngx-no-data-message>		
+		></ngx-no-data-message>
 	</ng-template>
 </div>
 
@@ -264,21 +264,22 @@
 		[project]="project"
 	></ga-project-column-view>
 	<ng-template #noProjects>
-		<ngx-no-data-message 
-			[message]="'SM_TABLE.NO_DATA.PROJECT'"
-		></ngx-no-data-message>		
+		<span>
+			{{ 'REPORT_PAGE.NO_PROJECT' | translate }}
+		</span>
 	</ng-template>
 </ng-template>
 
 <ng-template let-client #clientEl>
-	<span *ngIf="client; else noClient">{{ client?.name }} </span>
+	<span *ngIf="client; else noClient">
+		{{ client?.name }}
+	</span>
 	<ng-template #noClient>
-		<ngx-no-data-message 
-			[message]="'SM_TABLE.NO_DATA.CLIENT'"
-		></ngx-no-data-message>
+		<span>
+			{{ 'REPORT_PAGE.NO_CLIENT' | translate }}
+		</span>
 	</ng-template>
 </ng-template>
-
 
 <ng-template #columnsHeader>
 	<div class="columns-header" *ngIf="dailyData?.length > 0">
