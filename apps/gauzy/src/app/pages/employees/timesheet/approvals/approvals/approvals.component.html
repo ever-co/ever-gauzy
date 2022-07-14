@@ -43,7 +43,7 @@
 			<ng-template [ngIf]="timesheets?.length > 0" [ngIfElse]="notFound">
 				<div class="custom-body approval">
 					<ng-container *ngFor="let timesheet of timesheets; let last = last;">
-						<div 
+						<div
 							(click)="userRowSelect(timesheet);"
 							class="row item m-0 py-3 align-items-center"
 							[ngClass]="{ 'border-bottom' : !last, 'selected' : timesheet?.isSelected }"
@@ -89,8 +89,8 @@
 			</ng-template>
 			<ng-template #notFound>
 				<ngx-no-data-message
-					[message]="'SM_TABLE.NO_DATA.TIME_LOG'"
-				></ngx-no-data-message>	
+					[message]="'TIMESHEET.NO_DATA.APPROVAL_TIMESHEET'"
+				></ngx-no-data-message>
 			</ng-template>
 		</div>
 	</nb-card-body>
