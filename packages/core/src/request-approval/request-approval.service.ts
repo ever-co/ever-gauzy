@@ -82,8 +82,9 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 			);
 		}
 
-		if (filter.relations && filter.relations.length > 0) {
-			filter.relations.forEach((item) => {
+		const relations = filter.relations as string[];
+		if (relations && relations.length > 0) {
+			relations.forEach((item) => {
 				let relationArr = item.split(".");
 				if (relationArr.length === 2) {
 					query.leftJoinAndSelect(`${relationArr[0]}.${relationArr[1]}`, relationArr[1]);
@@ -230,24 +231,25 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 			requestApproval.tags = entity.tags;
 			requestApproval.organizationId = entity.organizationId;
 			requestApproval.tenantId = tenantId;
-			if (entity.employeeApprovals) {
-				const employees = await this.employeeRepository.findByIds(
-					entity.employeeApprovals,
-					{
-						relations: ['user']
-					}
-				);
-				const requestApprovalEmployees: IRequestApprovalEmployee[] = [];
-				employees.forEach((employee: IEmployee) => {
-					const raEmployees = new RequestApprovalEmployee();
-					raEmployees.employeeId = employee.id;
-					raEmployees.organizationId = entity.organizationId;
-					raEmployees.tenantId = tenantId;
-					raEmployees.status = RequestApprovalStatusTypesEnum.REQUESTED;
-					requestApprovalEmployees.push(raEmployees);
-				});
-				requestApproval.employeeApprovals = requestApprovalEmployees;
-			}
+
+			// if (entity.employeeApprovals) {
+			// 	const employees = await this.employeeRepository.findByIds(
+			// 		entity.employeeApprovals,
+			// 		{
+			// 			relations: ['user']
+			// 		}
+			// 	);
+			// 	const requestApprovalEmployees: IRequestApprovalEmployee[] = [];
+			// 	employees.forEach((employee: IEmployee) => {
+			// 		const raEmployees = new RequestApprovalEmployee();
+			// 		raEmployees.employeeId = employee.id;
+			// 		raEmployees.organizationId = entity.organizationId;
+			// 		raEmployees.tenantId = tenantId;
+			// 		raEmployees.status = RequestApprovalStatusTypesEnum.REQUESTED;
+			// 		requestApprovalEmployees.push(raEmployees);
+			// 	});
+			// 	requestApproval.employeeApprovals = requestApprovalEmployees;
+			// }
 
 			if (entity.teams) {
 				const teams = await this.organizationTeamRepository.findByIds(
@@ -282,9 +284,9 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 			let employees: IEmployee[];
 			let teams: IOrganizationTeam[];
 
-			const requestApproval = await this.requestApprovalRepository.findOne(
+			const requestApproval = await this.requestApprovalRepository.findOneBy({
 				id
-			);
+			});
 			requestApproval.name = entity.name;
 			requestApproval.status = RequestApprovalStatusTypesEnum.REQUESTED;
 			requestApproval.approvalPolicyId = entity.approvalPolicyId;
@@ -307,27 +309,27 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 				.where('requestApprovalId = :id', { id: id })
 				.execute();
 
-			if (entity.employeeApprovals) {
-				employees = await this.employeeRepository.findByIds(
-					entity.employeeApprovals,
-					{
-						relations: ['user']
-					}
-				);
+			// if (entity.employeeApprovals) {
+			// 	employees = await this.employeeRepository.findByIds(
+			// 		entity.employeeApprovals,
+			// 		{
+			// 			relations: ['user']
+			// 		}
+			// 	);
 
-				const requestApprovalEmployees: IRequestApprovalEmployee[] = [];
-				employees.forEach((employee) => {
-					const raEmployees = new RequestApprovalEmployee();
-					raEmployees.employeeId = employee.id;
-					raEmployees.employee = employee;
-					raEmployees.organizationId = entity.organizationId;
-					raEmployees.tenantId = tenantId;
-					raEmployees.status = RequestApprovalStatusTypesEnum.REQUESTED;
-					requestApprovalEmployees.push(raEmployees);
-				});
+			// 	const requestApprovalEmployees: IRequestApprovalEmployee[] = [];
+			// 	employees.forEach((employee) => {
+			// 		const raEmployees = new RequestApprovalEmployee();
+			// 		raEmployees.employeeId = employee.id;
+			// 		raEmployees.employee = employee;
+			// 		raEmployees.organizationId = entity.organizationId;
+			// 		raEmployees.tenantId = tenantId;
+			// 		raEmployees.status = RequestApprovalStatusTypesEnum.REQUESTED;
+			// 		requestApprovalEmployees.push(raEmployees);
+			// 	});
 
-				requestApproval.employeeApprovals = requestApprovalEmployees;
-			}
+			// 	requestApproval.employeeApprovals = requestApprovalEmployees;
+			// }
 
 			if (entity.teams) {
 				teams = await this.organizationTeamRepository.findByIds(

@@ -4,14 +4,15 @@
 
 import { ForbiddenException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, InsertResult, SelectQueryBuilder, Brackets, WhereExpressionBuilder } from 'typeorm';
+import { Repository, InsertResult, SelectQueryBuilder, Brackets, WhereExpressionBuilder, FindManyOptions, In, FindOneOptions } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { JwtPayload } from 'jsonwebtoken';
 import { ComponentLayoutStyleEnum, IUser, LanguagesEnum, PermissionsEnum, RolesEnum } from '@gauzy/contracts';
+import { isNotEmpty } from '@gauzy/common';
+import { environment as env } from '@gauzy/config';
 import { User } from './user.entity';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
-import { isNotEmpty } from '@gauzy/common';
 
 @Injectable()
 export class UserService extends TenantAwareCrudService<User> {
@@ -104,22 +105,14 @@ export class UserService extends TenantAwareCrudService<User> {
 			}
 		}
 		let user: IUser;
-
 		if (typeof(id) == 'string') {
 			user = await this.findOneByIdString(id, {
 				relations: ['role']
 			});
 		}
-		if (typeof(id) == 'number') {
-			user = await this.findOneByIdNumber(id, {
-				relations: ['role']
-			});
-		}
-
 		if (!user) {
 			throw new NotFoundException(`The user was not found`);
 		}
-
 		/**
 		 * If user try to update Super Admin without permission
 		 */
@@ -137,7 +130,6 @@ export class UserService extends TenantAwareCrudService<User> {
 	}
 
 	async getAdminUsers(tenantId: string): Promise<User[]> {
-		const roleNames =[RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN];
 		return await this.repository.find({
 			join: {
 				alias: 'user',
@@ -145,15 +137,15 @@ export class UserService extends TenantAwareCrudService<User> {
 					role: 'user.role'
 				},
 			},
-			where: (qb: SelectQueryBuilder<User>) => {
-					qb.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, {
-						tenantId
-					});
-					qb.andWhere(`role.name IN (:...roleNames)`, {
-						roleNames
-					});
+			where: {
+				tenantId,
+				role: {
+					name: In([
+						RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN
+					])
 				}
-			});
+			}
+		} as FindManyOptions<User>);
 	}
 
 	/*
@@ -165,15 +157,9 @@ export class UserService extends TenantAwareCrudService<User> {
 	): Promise<IUser> {
 		try {
 			let user: User;
-
 			if (typeof(id) == 'string') {
 				user = await this.findOneByIdString(id);
 			}
-
-			if (typeof(id) == 'number') {
-				user = await this.findOneByIdNumber(id);
-			}
-
 			if (!user) {
 				throw new NotFoundException(`The user was not found`);
 			}
@@ -194,21 +180,13 @@ export class UserService extends TenantAwareCrudService<User> {
 		try {
 
 			let user: User;
-
 			if (typeof(id) == 'string') {
 				user = await this.findOneByIdString(id);
 			}
-
-			if (typeof(id) == 'number') {
-				user = await this.findOneByIdNumber(id);
-			}
-
 			if (!user) {
 				throw new NotFoundException(`The user was not found`);
 			}
-
 			user.preferredComponentLayout = preferredComponentLayout;
-
 			return await this.repository.save(user);
 		} catch (err) {
 			throw new NotFoundException(`The record was not found`, err);
@@ -289,7 +267,7 @@ export class UserService extends TenantAwareCrudService<User> {
 						})
 					);
 				}
-			});
+			} as FindOneOptions<User>);
 			const isRefreshTokenMatching = await bcrypt.compare(refreshToken, user.refreshToken);
 			if (isRefreshTokenMatching) {
 				return user;
@@ -299,5 +277,9 @@ export class UserService extends TenantAwareCrudService<User> {
 		} catch (error) {
 			throw new UnauthorizedException();
 		}
+	}
+
+	private async getPasswordHash(password: string): Promise<string> {
+		return bcrypt.hash(password, env.USER_PASSWORD_BCRYPT_SALT_ROUNDS);
 	}
 }

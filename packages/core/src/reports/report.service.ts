@@ -9,9 +9,9 @@ import {
 } from '@gauzy/contracts';
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { FindManyOptions, Repository } from 'typeorm';
 import { indexBy } from 'underscore';
-import { CrudService } from '../core';
+import { CrudService } from '../core/crud';
 import { ReportOrganization } from './report-organization.entity';
 import { Report } from './report.entity';
 
@@ -19,14 +19,15 @@ import { Report } from './report.entity';
 export class ReportService extends CrudService<Report> {
 	constructor(
 		@InjectRepository(Report)
-		reportRepository: Repository<Report>,
+		protected reportRepository: Repository<Report>,
+
 		@InjectRepository(ReportOrganization)
 		private reportOrganizationRepository: Repository<ReportOrganization>
 	) {
 		super(reportRepository);
 	}
 
-	public async findAll(filter?: IGetReport): Promise<IPagination<Report>> {
+	public async findAll(filter?: any): Promise<IPagination<Report>> {
 		const { items, total } = await super.findAll(filter);
 
 		const menuItems = await this.getMenuItems({
@@ -63,7 +64,7 @@ export class ReportService extends CrudService<Report> {
 					isEnabled: true
 				});
 			}
-		});
+		} as FindManyOptions<Report>);
 	}
 
 	async updateReportMenu(
@@ -90,13 +91,13 @@ export class ReportService extends CrudService<Report> {
 	}
 
 	/*
-	* Bulk Create Organization Default Reports Menu 
+	* Bulk Create Organization Default Reports Menu
 	*/
 	async bulkCreateOrganizationReport(input: IOrganization) {
 		try {
 			const { id: organizationId } = input;
 			const { items } = await super.findAll();
-			
+
 			const reportOrganizations: IReportOrganization[] = [];
 			items.forEach((report: IReport) => {
 				reportOrganizations.push(

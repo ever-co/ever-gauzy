@@ -42,7 +42,10 @@ export class AuthService extends SocialAuthService {
 	 * @returns
 	 */
 	async login(email: string, password: string): Promise<IAuthResponse | null> {
-		const user = await this.userService.findOneByConditions({ email }, {
+		const user = await this.userService.findOneByOptions({
+			where: {
+				email
+			},
 			relations: ['role', 'role.rolePermissions', 'employee'],
 			order: {
 				createdAt: 'DESC'
@@ -86,7 +89,10 @@ export class AuthService extends SocialAuthService {
 		originUrl?: string
 	): Promise<{ token: string } | null> {
 		try {
-			const user = await this.userService.findOneByConditions(request, {
+			const user = await this.userService.findOneByOptions({
+				where: {
+					...request
+				},
 				relations: {
 					role: true,
 					employee: true
@@ -340,7 +346,7 @@ export class AuthService extends SocialAuthService {
 	public async getJwtAccessToken(request: Partial<IUser>) {
 		try {
 			const userId = request.id;
-			const user = await this.userService.findOneByConditions({ id: userId }, {
+			const user =  await this.userService.findOneByIdString(userId, {
 				relations: ['role', 'role.rolePermissions', 'employee'],
 				order: {
 					createdAt: 'DESC'

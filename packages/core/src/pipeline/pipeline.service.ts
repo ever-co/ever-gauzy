@@ -1,17 +1,12 @@
 import { TenantAwareCrudService } from './../core/crud';
 import { Pipeline } from './pipeline.entity';
 import {
-	DeepPartial,
-	EntityManager,
-	FindConditions,
+	FindOptionsWhere,
 	Like,
 	Repository,
-	Transaction,
-	TransactionManager,
 	UpdateResult
 } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import { PipelineStage } from '../pipeline-stage/pipeline-stage.entity';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { Injectable } from '@nestjs/common';
 import { Deal } from '../deal/deal.entity';
@@ -58,66 +53,13 @@ export class PipelineService extends TenantAwareCrudService<Pipeline> {
 		return { items, total };
 	}
 
-	@Transaction()
 	public async update(
-		id: string | number | FindConditions<Pipeline>,
-		partialEntity: QueryDeepPartialEntity<Pipeline>,
-		@TransactionManager() manager: EntityManager,
-		...options
+		id: string | number | FindOptionsWhere<Pipeline>,
+		partialEntity: QueryDeepPartialEntity<Pipeline>
 	): Promise<UpdateResult | Pipeline> {
-		const onePipeline = await manager.findOne(Pipeline, id as any);
-		const pipeline = manager.create(Pipeline, {
-			...partialEntity,
-			id: onePipeline.id
-		} as any);
-		const updatedStages =
-			pipeline.stages?.filter((stage) => stage.id) || [];
-		const deletedStages = await manager
-			.find(PipelineStage, {
-				where: {
-					pipelineId: id
-				},
-				select: ['id']
-			})
-			.then((stages) => {
-				const requestStageIds = updatedStages.map(
-					(updatedStage) => updatedStage.id
-				);
-
-				return stages.filter(
-					(stage) => !requestStageIds.includes(stage.id)
-				);
-			});
-		const createdStages =
-			pipeline.stages?.filter(
-				(stage) => !updatedStages.includes(stage)
-			) || [];
-
-		// partialEntity.stages?.forEach((stage, index) => {
-		// 	stage.pipelineId = pipeline.id;
-		// 	stage.index = ++index;
-		// });
-		pipeline.__before_persist();
-		delete pipeline.stages;
-
-		await manager.remove(deletedStages);
-		await Promise.all(
-			createdStages.map((stage) => {
-				stage = manager.create(
-					PipelineStage,
-					stage as DeepPartial<PipelineStage>
-				);
-
-				return manager.save(stage);
-			})
-		);
-		await Promise.all(
-			updatedStages.map((stage) =>
-				manager.update(PipelineStage, stage.id, stage)
-			)
-		);
-
-		return await manager.update(Pipeline, id, pipeline);
+		const onePipeline = await this.repository.findOneBy({ id } as FindOptionsWhere<Pipeline>);
+		const pipeline = this.repository.create({ ...partialEntity, id: onePipeline.id } as Pipeline);
+		return await this.repository.update(id, pipeline);
 	}
 
 	public pagination(filter: any) {
