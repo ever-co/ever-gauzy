@@ -61,7 +61,7 @@ export class Proposal
 
 	/*
     |--------------------------------------------------------------------------
-    | @ManyToOne 
+    | @ManyToOne
     |--------------------------------------------------------------------------
     */
 
@@ -74,7 +74,7 @@ export class Proposal
 	@RelationId((it: Proposal) => it.employee)
 	@IsString()
 	@Column({ nullable: true })
-	readonly employeeId?: string;
+	employeeId?: string;
 
 	@ApiPropertyOptional({ type: () => OrganizationContact })
 	@ManyToOne(() => OrganizationContact, (organizationContact) => organizationContact.proposals, {
@@ -92,7 +92,7 @@ export class Proposal
 
 	/*
     |--------------------------------------------------------------------------
-    | @ManyToMany 
+    | @ManyToMany
     |--------------------------------------------------------------------------
     */
 	// Tags

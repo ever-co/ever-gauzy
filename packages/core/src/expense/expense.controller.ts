@@ -85,8 +85,8 @@ export class ExpenseController extends CrudController<Expense> {
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<IExpense>> {
 		const { relations, filterDate } = data;
-		const employee = await this.employeeService.findOneByConditions({
-			user: { id: RequestContext.currentUser().id }
+		const employee = await this.employeeService.findOneByWhereOptions({
+			userId: RequestContext.currentUserId()
 		});
 		return await this.queryBus.execute(
 			new FindSplitExpenseQuery({

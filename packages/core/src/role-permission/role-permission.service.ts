@@ -386,7 +386,7 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 				const destination = await this.rolePermissionRepository.findOneBy({
 					tenantId: RequestContext.currentTenantId(),
 					permission,
-					role
+					roleId: role.id
 				});
 				if (destination) {
 					records.push(
