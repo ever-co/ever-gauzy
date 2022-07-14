@@ -22,6 +22,9 @@ import { HeaderTitleModule } from '../../../@shared/components/header-title/head
 import { FiltersModule } from '../../../@shared/timesheet/filters/filters.module';
 import { DateRangeTitleModule } from '../../../@shared/components/date-range-title/date-range-title.module';
 import { CounterPointModule } from '../../../@shared/counter-point/counter-point.module';
+import { DragDropModule } from '@angular/cdk/drag-drop';
+import { WidgetModule } from '../../../@shared/dashboard/widget/widget.module';
+import { WidgetLayoutModule } from '../../../@shared/dashboard/widget-layout/widget-layout.module';
 
 @NgModule({
 	imports: [
@@ -44,7 +47,8 @@ import { CounterPointModule } from '../../../@shared/counter-point/counter-point
 		HeaderTitleModule,
 		DateRangeTitleModule,
 		FiltersModule,
-    	CounterPointModule
+    	CounterPointModule,
+		WidgetLayoutModule
 	],
 	declarations: [TimeTrackingComponent],
 	exports: [TimeTrackingComponent],

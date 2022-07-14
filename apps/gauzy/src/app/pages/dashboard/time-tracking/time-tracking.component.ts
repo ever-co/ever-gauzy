@@ -1,4 +1,13 @@
-import { AfterViewInit, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+import {
+	AfterViewInit,
+	ChangeDetectorRef,
+	Component,
+	OnDestroy,
+	OnInit,
+	QueryList,
+	TemplateRef,
+	ViewChildren
+} from '@angular/core';
 import { Router } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
@@ -101,6 +110,9 @@ export class TimeTrackingComponent
 
 	payloads$: BehaviorSubject<ITimeLogFilters> = new BehaviorSubject(null);
 
+	@ViewChildren('widget') listOfElements: QueryList<TemplateRef<HTMLElement>>;
+	widgets: TemplateRef<HTMLElement>[] = [];
+
 	constructor(
 		private readonly timesheetStatisticsService: TimesheetStatisticsService,
 		private readonly store: Store,
@@ -163,6 +175,7 @@ export class TimeTrackingComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
+		this.widgets = this.listOfElements.toArray();
 	}
 
 	ngAfterViewChecked(): void {
