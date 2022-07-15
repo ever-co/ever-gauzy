@@ -266,11 +266,11 @@ export class EmployeeSelectorComponent
 
 	/**
 	 * GET Shortend Name
-	 * 
+	 *
 	 * @param firstName
 	 * @param lastName
 	 * @param limit
-	 * @returns 
+	 * @returns
 	 */
 	getShortenedName(firstName: string, lastName: string, limit = 18) {
 		if (firstName && lastName) {
@@ -324,7 +324,7 @@ export class EmployeeSelectorComponent
 			selectedDateRange,
 			true
 		);
-		
+
 		this.people = [
 			...items.map((e) => {
 				return {
@@ -343,7 +343,7 @@ export class EmployeeSelectorComponent
 		if (this.showAllEmployeesOption) {
 			this.people.unshift(ALL_EMPLOYEES_SELECTED);
 		}
-		
+
 		//Set selected employee if no employee selected
 		if (items.length > 0 && !this.store.selectedEmployee) {
 			this.store.selectedEmployee = this.people[0] || ALL_EMPLOYEES_SELECTED;
@@ -352,18 +352,18 @@ export class EmployeeSelectorComponent
 
 	ngOnDestroy() {
 		if (
-			this.people.length > 0 && 
+			this.people.length > 0 &&
 			!this.store.selectedEmployee &&
 			!this.skipGlobalChange
-		) { 
+		) {
 			this.store.selectedEmployee = this.people[0] || ALL_EMPLOYEES_SELECTED;
 		}
 	}
 
 	/**
 	 * Display clearable option in employee selector
-	 * 
-	 * @returns 
+	 *
+	 * @returns
 	 */
 	isClearable(): boolean {
 		if (
@@ -379,9 +379,9 @@ export class EmployeeSelectorComponent
 
 	/**
 	 * Create new employee from ng-select tag
-	 * 
-	 * @param name 
-	 * @returns 
+	 *
+	 * @param name
+	 * @returns
 	 */
 	createNew = async (name: string) => {
 		if (!this.organization || !name) {

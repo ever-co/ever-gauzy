@@ -36,7 +36,7 @@
 			<div class="employee-info">
 				<div class="employee-details">
 					<div
-						*ngIf="selectedEmployee?.user.username"
+						*ngIf="selectedEmployee?.user?.username"
 						class="transparent"
 					>
 						{{ 'FORM.USERNAME' | translate }}:
@@ -53,7 +53,9 @@
 			<h6>{{ 'EMPLOYEES_PAGE.SELECT_EMPLOYEE_MSG' | translate }}</h6>
 		</ng-template>
 	</nb-card-header>
-	<nb-card-body
-		><ngx-edit-employee-profile (updatedImage)="updateImage($event)"></ngx-edit-employee-profile>
+	<nb-card-body>
+		<ngx-edit-employee-profile
+			(updatedImage)="updateImage($event)"
+		></ngx-edit-employee-profile>
 	</nb-card-body>
 </nb-card>

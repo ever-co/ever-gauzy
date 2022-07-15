@@ -7,12 +7,11 @@ import {
 	PermissionsEnum
 } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
-import { Subject } from 'rxjs';
+import { firstValueFrom, Subject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
 import {
-	AuthService,
 	EmployeesService,
 	EmployeeStore,
 	ErrorHandlingService,
@@ -51,7 +50,6 @@ export class EditEmployeeProfileComponent
 		private readonly employeeStore: EmployeeStore,
 		private readonly errorHandler: ErrorHandlingService,
 		public readonly translateService: TranslateService,
-		private readonly authService: AuthService,
 		private readonly store: Store
 	) {
 		super(translateService);
@@ -227,7 +225,7 @@ export class EditEmployeeProfileComponent
 
 	private async _getEmployeeProfile() {
 		const { id } = this.routeParams;
-		const employee = await this.employeeService.getEmployeeById(id, [
+		const employee = await firstValueFrom(this.employeeService.getEmployeeById(id, [
 			'user',
 			'organizationDepartments',
 			'organizationPosition',
@@ -235,7 +233,7 @@ export class EditEmployeeProfileComponent
 			'tags',
 			'skills',
 			'contact'
-		]);
+		]));
 		this.employeeStore.selectedEmployee = this.selectedEmployee = employee;
 		this.employeeName = employee?.user?.name || employee?.user?.username || 'Employee';
 	}
