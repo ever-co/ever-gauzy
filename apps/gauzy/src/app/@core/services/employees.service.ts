@@ -123,11 +123,9 @@ export class EmployeesService {
 
 	getEmployeeById(id: string, relations?: string[], useTenant?: boolean) {
 		const data = JSON.stringify({ relations, useTenant });
-		return firstValueFrom(
-			this.http.get<IEmployee>(`${API_PREFIX}/employee/${id}`, {
-				params: { data }
-			})
-		);
+		return this.http.get<IEmployee>(`${API_PREFIX}/employee/${id}`, {
+			params: { data }
+		});
 	}
 
 	setEmployeeProfileStatus(id: string, status: IEmployeeUpdateProfileStatus): Promise<IEmployee> {
