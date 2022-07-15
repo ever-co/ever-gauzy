@@ -1,24 +1,27 @@
-import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 import { Component, Input, OnInit, TemplateRef } from '@angular/core';
+import { LayoutWithDraggableObject } from '../interfaces/layout-with-draggable-object.abstract';
 
 @Component({
 	selector: 'ga-widget-layout',
 	templateUrl: './widget-layout.component.html',
 	styleUrls: ['./widget-layout.component.scss']
 })
-export class WidgetLayoutComponent implements OnInit {
+export class WidgetLayoutComponent
+	extends LayoutWithDraggableObject
+	implements OnInit
+{
 	@Input()
-	widgets: TemplateRef<HTMLElement>[] = [];
+	set widgets(value: TemplateRef<HTMLElement>[]) {
+		this.draggableObject = value;
+	}
 
-	constructor() {}
+	constructor() {
+		super();
+	}
 
 	ngOnInit(): void {}
 
-	drop(event: CdkDragDrop<number>): void {
-		moveItemInArray(
-			this.widgets,
-			event.previousContainer.data,
-			event.container.data
-		);
+	get widgets() {
+		return this.draggableObject;
 	}
 }
