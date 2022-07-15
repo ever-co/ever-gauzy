@@ -1,0 +1,12 @@
+<div class="masonry-boundary" cdkDropListGroup>
+	<div
+		class="window"
+		cdkDropList
+		cdkDropListOrientation="horizontal"
+		[cdkDropListData]="index"
+		(cdkDropListDropped)="drop($event)"
+		*ngFor="let window of windows; let index = index"
+	>
+		<ga-window cdkDrag [templateRef]="window"></ga-window>
+	</div>
+</div>
