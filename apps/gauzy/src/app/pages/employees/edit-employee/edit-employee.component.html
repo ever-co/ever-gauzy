@@ -35,6 +35,14 @@
 			</div>
 			<div class="employee-info">
 				<div class="employee-details">
+					<div class="edit-public-page">
+						<ng-template [ngxPermissionsOnly]="['PUBLIC_PAGE_EDIT']">
+							<span class="edit-public-button" (click)="editPublicPage()">
+								<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
+								{{ 'ORGANIZATIONS_PAGE.EDIT_PUBLIC_PAGE' | translate }}
+							</span>
+						</ng-template>
+					</div>
 					<div
 						*ngIf="selectedEmployee?.user?.username"
 						class="transparent"

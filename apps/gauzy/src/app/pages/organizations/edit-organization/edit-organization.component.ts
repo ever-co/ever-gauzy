@@ -1,8 +1,9 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
-import { IOrganization, PermissionsEnum } from '@gauzy/contracts';
-import { filter } from 'rxjs/operators';
+import { ActivatedRoute, Router, UrlSerializer } from '@angular/router';
+import { Location } from '@angular/common';
+import { IOrganization } from '@gauzy/contracts';
 import { firstValueFrom } from 'rxjs';
+import { filter } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
@@ -20,21 +21,23 @@ import { TranslationBaseComponent } from '../../../@shared/language-base/transla
 		'../../dashboard/dashboard.component.scss'
 	]
 })
-export class EditOrganizationComponent
-	extends TranslationBaseComponent
+export class EditOrganizationComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
+
 	selectedOrg: IOrganization;
 	selectedOrgFromHeader: IOrganization;
 	employeesCount: number;
 	params: any;
 
 	constructor(
-		private router: Router,
-		private route: ActivatedRoute,
-		private organizationsService: OrganizationsService,
-		private employeesService: EmployeesService,
-		private store: Store,
-		readonly translateService: TranslateService
+		private readonly router: Router,
+		private readonly route: ActivatedRoute,
+		private readonly organizationsService: OrganizationsService,
+		private readonly employeesService: EmployeesService,
+		private readonly store: Store,
+		readonly translateService: TranslateService,
+		private readonly _urlSerializer: UrlSerializer,
+		private readonly _location: Location
 	) {
 		super(translateService);
 	}
@@ -49,7 +52,6 @@ export class EditOrganizationComponent
 				});
 			}
 		});
-
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization) => !!organization),
@@ -69,26 +71,23 @@ export class EditOrganizationComponent
 		this.selectedOrgFromHeader = this.selectedOrg;
 	}
 
-	canEditPublicPage() {
-		return this.store.hasPermission(PermissionsEnum.PUBLIC_PAGE_EDIT);
-	}
-
-	// Converts the route into a string that can be used
-	// with the window.open() function
+	/**
+	 * Create URL tree for organization edit public page
+	 *
+	 * @returns
+	 */
 	editPublicPage() {
-		const url = this.router.serializeUrl(
-			this.router.createUrlTree([
-				`/share/organization/${this.selectedOrg.profile_link}`
-			])
-		);
-		if(window.location.hash) {
-			window.open('#' + url, '_blank');
-		} else {
-			window.open(url, '_blank');
+		if (!this.selectedOrg) {
+			return;
 		}
-	}
 
-	ngOnDestroy() {}
+		// The call to Location.prepareExternalUrl is the key thing here.
+		let tree = this.router.createUrlTree([`/share/organization/${this.selectedOrg.profile_link}`]);
+
+    	// As far as I can tell you don't really need the UrlSerializer.
+		const externalUrl = this._location.prepareExternalUrl(this._urlSerializer.serialize(tree));
+		window.open(externalUrl, '_blank');
+	}
 
 	private async loadEmployeesCount() {
 		const { tenantId } = this.store.user;
@@ -100,4 +99,6 @@ export class EditOrganizationComponent
 		);
 		this.employeesCount = total;
 	}
+
+	ngOnDestroy() {}
 }

@@ -1,7 +1,9 @@
 import { AfterViewInit, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, UrlSerializer } from '@angular/router';
+import { Location } from '@angular/common';
 import {
 	IEmployee,
+	IOrganization,
 	ISelectedEmployee,
 	IUser
 } from '@gauzy/contracts';
@@ -26,6 +28,7 @@ import { ALL_EMPLOYEES_SELECTED } from '../../../@theme/components/header/select
 export class EditEmployeeComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy, AfterViewInit {
 
+	organization: IOrganization;
 	selectedEmployee: IEmployee;
 	selectedEmployeeFromHeader: ISelectedEmployee;
 
@@ -34,7 +37,9 @@ export class EditEmployeeComponent extends TranslationBaseComponent
 		private readonly router: Router,
 		private readonly store: Store,
 		public readonly translateService: TranslateService,
-		private readonly cdr: ChangeDetectorRef
+		private readonly cdr: ChangeDetectorRef,
+		private readonly _urlSerializer: UrlSerializer,
+		private readonly _location: Location
 	) {
 		super(translateService);
 	}
@@ -50,6 +55,13 @@ export class EditEmployeeComponent extends TranslationBaseComponent
 					this.cdr.detectChanges();
 					this.router.navigate(['/pages/employees/edit/', id]);
 				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.store.selectedOrganization$
+			.pipe(
+				filter((organization: IOrganization) => !!organization),
+				tap((organization: IOrganization) => this.organization = organization),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -98,6 +110,19 @@ export class EditEmployeeComponent extends TranslationBaseComponent
 		} catch (error) {
 			console.log('Error while uploading profile avatar', error);
 		}
+	}
+
+	editPublicPage() {
+		if (!this.organization || !this.selectedEmployee) {
+			return;
+		}
+		// The call to Location.prepareExternalUrl is the key thing here.
+		let tree = this.router.createUrlTree([
+			`/share/organization/${this.organization.profile_link}/${this.selectedEmployee.profile_link}/${this.selectedEmployee.id}`
+		]);
+    	// As far as I can tell you don't really need the UrlSerializer.
+		const externalUrl = this._location.prepareExternalUrl(this._urlSerializer.serialize(tree));
+		window.open(externalUrl, '_blank');
 	}
 
 	ngOnDestroy() {
