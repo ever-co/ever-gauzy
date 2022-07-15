@@ -99,9 +99,11 @@ nb-badge {
     border-radius: 0 0 var(--border-radius) var(--border-radius);
   }
 
-  @include card_overrides(auto,
+  @include card_overrides(
+    auto,
     $default-card-height,
-    0 $default-radius $default-radius $default-radius );
+    0 $default-radius $default-radius $default-radius
+  );
 
   ngx-activity-item.tracking-progress ::ng-deep {
     .progress-container {
@@ -133,17 +135,20 @@ nb-badge {
     background-color: var(--gauzy-card-2);
   }
 
-  ngx-avatar {
-    margin-bottom: 1.5rem;
-  }
-
   .project-name {
     color: var(--gauzy-text-color-1);
     font-size: 14px;
     font-weight: 600;
-    line-height: 11px;
-    letter-spacing: 0em;
   }
+}
+
+.custom-card-body-inner-list{
+  padding: 0 9px;
+}
+
+.font-weight-bold {
+  font-weight: 600;
+  color: var(--gauzy-text-color-2);
 }
 
 .custom-container {
@@ -161,7 +166,7 @@ nb-badge {
   background-color: nb-theme(gauzy-card-2);
 }
 
-nb-card-body>p {
+nb-card-body > p {
   font-size: 14px;
   font-weight: 400;
   line-height: 16px;
