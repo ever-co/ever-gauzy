@@ -25,6 +25,7 @@ import { CounterPointModule } from '../../../@shared/counter-point/counter-point
 import { DragDropModule } from '@angular/cdk/drag-drop';
 import { WidgetModule } from '../../../@shared/dashboard/widget/widget.module';
 import { WidgetLayoutModule } from '../../../@shared/dashboard/widget-layout/widget-layout.module';
+import { WindowLayoutModule } from '../../../@shared/dashboard/window-layout/window-layout.module';
 
 @NgModule({
 	imports: [
@@ -48,7 +49,8 @@ import { WidgetLayoutModule } from '../../../@shared/dashboard/widget-layout/wid
 		DateRangeTitleModule,
 		FiltersModule,
     	CounterPointModule,
-		WidgetLayoutModule
+		WidgetLayoutModule,
+		WindowLayoutModule
 	],
 	declarations: [TimeTrackingComponent],
 	exports: [TimeTrackingComponent],
