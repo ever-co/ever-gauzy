@@ -1,8 +1,19 @@
-import { Component, Input, OnInit, TemplateRef } from '@angular/core';
+import {
+	Component,
+	Input,
+	OnInit,
+	TemplateRef,
+	ViewChild
+} from '@angular/core';
+import { NbPopoverDirective } from '@nebular/theme';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { Observable } from 'rxjs/internal/Observable';
+import { filter, tap } from 'rxjs/operators';
 import { Collapsable } from '../interfaces/collapsable.interface';
 import { Draggable } from '../interfaces/draggable.interface';
 import { Expandable } from '../interfaces/expandable.interface';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-widget',
 	templateUrl: './widget.component.html',
@@ -15,11 +26,27 @@ export class WidgetComponent
 	private _position: number;
 	private _title: string;
 	private _collapsed: boolean = false;
-	hide: boolean = false;
+	private _move: boolean = false;
+	public hide: boolean = false;
+	@Input()
+	public dragEnded: Observable<any>;
+	@ViewChild(NbPopoverDirective) popover: NbPopoverDirective;
 
 	constructor() {}
 
-	ngOnInit(): void {}
+	ngOnInit(): void {
+		this.dragEnded
+			.pipe(
+				filter((event) => !!event),
+				tap(() => (this.move = false)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
+
+	public onClickSetting(event: boolean) {
+		if (event) this.popover.hide();
+	}
 
 	@Input()
 	set templateRef(value: TemplateRef<HTMLElement>) {
@@ -51,5 +78,11 @@ export class WidgetComponent
 	}
 	set isCollapse(value: boolean) {
 		this._collapsed = value;
+	}
+	get move(): boolean {
+		return this._move;
+	}
+	set move(value: boolean) {
+		this._move = value;
 	}
 }

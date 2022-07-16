@@ -13,6 +13,13 @@ export class WindowComponent implements OnInit, Draggable {
 
 	constructor() {}
 
+	get move(): boolean {
+		throw new Error('Method not implemented.');
+	}
+	set move(value: boolean) {
+		throw new Error('Method not implemented.');
+	}
+
 	ngOnInit(): void {}
 
 	@Input()

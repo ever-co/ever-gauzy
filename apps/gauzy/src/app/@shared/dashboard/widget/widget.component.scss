@@ -1,13 +1,14 @@
-.widget {
+#widget {
   position: relative;
   color: var(--gauzy-text-color-2);
-  nb-icon {
-    font-size: 11px;
-    position: absolute;
-    right: 12px;
-    top: 10.5px;
-    z-index: 2;
-  }
+}
+
+nb-icon {
+  font-size: 11px;
+  position: absolute;
+  right: 12px;
+  top: 10.5px;
+  z-index: 2;
 }
 
 :host {
@@ -20,6 +21,10 @@
     }
     .expanded nb-card-body div.h1 {
       display: block;
+    }
+
+    .moved nb-card {
+      cursor: move;
     }
   }
 }

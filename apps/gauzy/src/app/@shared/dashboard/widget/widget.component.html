@@ -1,7 +1,11 @@
 <div
 	*ngIf="!hide"
-	[ngClass]="{ collapsed: isCollapse, expanded: isExpand }"
-	class="widget"
+	[ngClass]="{
+		collapsed: isCollapse,
+		expanded: isExpand,
+		moved: move
+	}"
+	id="widget"
 >
 	<nb-icon
 		icon="more-vertical-outline"
@@ -14,14 +18,14 @@
 </div>
 <!-- Settings -->
 <ng-template #setting>
-	<div class="setting">
+	<div gauzyOutside (clickOutside)="onClickSetting($event)" class="setting">
 		<div class="action" (click)="isCollapse = true">
 			<i class="far fa-window-minimize"></i> <span>Collapse</span>
 		</div>
 		<div class="action" (click)="isExpand = true">
 			<i class="fas fa-expand"></i> <span>Expand</span>
 		</div>
-		<div class="action">
+		<div class="action" (click)="move = true">
 			<i class="fas fa-expand-arrows-alt"></i> <span>Move</span>
 		</div>
 		<div class="action" (click)="hide = true">
