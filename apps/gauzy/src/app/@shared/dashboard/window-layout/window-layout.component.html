@@ -7,6 +7,10 @@
 		(cdkDropListDropped)="drop($event)"
 		*ngFor="let window of windows; let index = index"
 	>
-		<ga-window cdkDrag [templateRef]="window"></ga-window>
+		<ga-window
+			cdkDrag
+			[dragEnded]="event"
+			[templateRef]="window"
+		></ga-window>
 	</div>
 </div>
