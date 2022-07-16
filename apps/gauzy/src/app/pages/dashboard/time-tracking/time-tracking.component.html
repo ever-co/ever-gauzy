@@ -321,63 +321,67 @@
 	>
 		<nb-card-header class="nb-card-header">
 			{{ 'TIMESHEET.MANUAL_TIME' | translate }}
-			<button
-				nbButton
-				status="primary"
-				outline
-				size="small"
-				(click)="redirectToManualTimeReport()"
-			>
-				{{ 'BUTTONS.VIEW_REPORT' | translate }}
-			</button>
 		</nb-card-header>
 		<ng-template
 			[ngIf]="manualTimes?.length > 0"
 			[ngIfElse]="noManualTimes"
 		>
-			<nb-list class="custom-card-body-inner-list">
-				<nb-list-item>
-					<div class="w-100">
-						<div class="row py-2 font-weight-bold">
-							<div class="col-sm-3">
-								{{ 'TIMESHEET.MEMBER' | translate }}
-							</div>
-							<div class="col-sm-5">
-								{{ 'TIMESHEET.PROJECT' | translate }}
-							</div>
-							<div class="col">
-								{{ 'TIMESHEET.DURATION' | translate }}
-							</div>
-							<div class="col">
-								{{ 'TIMESHEET.DATE' | translate }}
-							</div>
-						</div>
-					</div>
-				</nb-list-item>
-				<nb-list-item *ngFor="let manualTime of manualTimes">
-					<div class="w-100">
-						<div class="row">
-							<div class="col-sm-3">
-								<ngx-avatar
-									[name]="manualTime?.user?.name"
-									[src]="manualTime?.user?.imageUrl"
-									[id]="manualTime?.employeeId"
-									size="sm"
-								></ngx-avatar>
-							</div>
-							<div class="col-sm-5 project-name">
-								{{ manualTime.project.name }}
-							</div>
-							<div class="col">
-								{{ manualTime.duration | durationFormat }}
-							</div>
-							<div class="col">
-								{{ manualTime.startedAt | dateFormat }}
+			<nb-card-body class="custom-card-body-inner-list">
+				<div class="custom-card-button">
+					<button
+						nbButton
+						status="primary"
+						outline
+						size="small"
+						(click)="redirectToManualTimeReport()"
+					>
+						{{ 'BUTTONS.VIEW_REPORT' | translate }}
+					</button>
+				</div>
+				<nb-list>
+					<nb-list-item>
+						<div class="w-100">
+							<div class="row py-2 font-weight-bold">
+								<div class="col-sm-3">
+									{{ 'TIMESHEET.MEMBER' | translate }}
+								</div>
+								<div class="col-sm-5">
+									{{ 'TIMESHEET.PROJECT' | translate }}
+								</div>
+								<div class="col">
+									{{ 'TIMESHEET.DURATION' | translate }}
+								</div>
+								<div class="col">
+									{{ 'TIMESHEET.DATE' | translate }}
+								</div>
 							</div>
 						</div>
-					</div>
-				</nb-list-item>
-			</nb-list>
+					</nb-list-item>
+					<nb-list-item *ngFor="let manualTime of manualTimes">
+						<div class="w-100">
+							<div class="row">
+								<div class="col-sm-3">
+									<ngx-avatar
+										[name]="manualTime?.user?.name"
+										[src]="manualTime?.user?.imageUrl"
+										[id]="manualTime?.employeeId"
+										size="sm"
+									></ngx-avatar>
+								</div>
+								<div class="col-sm-5 project-name">
+									{{ manualTime.project.name }}
+								</div>
+								<div class="col">
+									{{ manualTime.duration | durationFormat }}
+								</div>
+								<div class="col">
+									{{ manualTime.startedAt | dateFormat }}
+								</div>
+							</div>
+						</div>
+					</nb-list-item>
+				</nb-list>
+			</nb-card-body>
 		</ng-template>
 		<ng-template #noManualTimes>
 			<ng-container
@@ -407,48 +411,52 @@
 	>
 		<nb-card-header class="nb-card-header">
 			{{ 'TIMESHEET.TASKS' | translate }}
-			<button
-				size="small"
-				nbButton
-				status="primary"
-				outline
-				(click)="redirectToTask()"
-			>
-				{{ 'BUTTONS.VIEW_ALL' | translate }}
-			</button>
 		</nb-card-header>
 		<ng-template [ngIf]="tasks?.length > 0" [ngIfElse]="noTasks">
-			<nb-list class="custom-card-body-inner-list">
-				<nb-list-item *ngFor="let task of tasks">
-					<div class="w-100">
-						<div class="row align-items-center">
-							<div class="col-5 project-name text-left">
-								{{ task.title }}
-							</div>
-							<div class="col-4 text-center">
-								<div class="d-flex align-items-center">
-									{{ task.durationPercentage }}%
-									<nb-progress-bar
-										class="mb-1 ml-3 mr-3 w-100 custom-progress"
-										[value]="task.durationPercentage"
-										[status]="
-											progressStatus(
-												task.durationPercentage
-											)
-										"
-										[displayValue]="true"
-										size="tiny"
-									>
-									</nb-progress-bar>
+			<nb-card-body class="custom-card-body-inner-list">
+				<div class="custom-card-button">
+					<button
+						size="small"
+						nbButton
+						status="primary"
+						outline
+						(click)="redirectToTask()"
+					>
+						{{ 'BUTTONS.VIEW_ALL' | translate }}
+					</button>
+				</div>
+				<nb-list>
+					<nb-list-item *ngFor="let task of tasks">
+						<div class="w-100">
+							<div class="row align-items-center">
+								<div class="col-5 project-name text-left">
+									{{ task.title }}
+								</div>
+								<div class="col-4 text-center">
+									<div class="d-flex align-items-center">
+										{{ task.durationPercentage }}%
+										<nb-progress-bar
+											class="mb-1 ml-3 mr-3 w-100 custom-progress"
+											[value]="task.durationPercentage"
+											[status]="
+												progressStatus(
+													task.durationPercentage
+												)
+											"
+											[displayValue]="true"
+											size="tiny"
+										>
+										</nb-progress-bar>
+									</div>
+								</div>
+								<div class="col text-right">
+									{{ task.duration | durationFormat }}
 								</div>
 							</div>
-							<div class="col text-right">
-								{{ task.duration | durationFormat }}
-							</div>
 						</div>
-					</div>
-				</nb-list-item>
-			</nb-list>
+					</nb-list-item>
+				</nb-list>
+			</nb-card-body>
 		</ng-template>
 		<ng-template #noTasks>
 			<ng-container *ngIf="!tasksLoading" [ngSwitch]="selectedPeriod">
@@ -532,27 +540,31 @@
 	>
 		<nb-card-header class="nb-card-header"
 			>{{ 'TIMESHEET.APPS_URLS' | translate }}
-			<button
-				nbButton
-				status="primary"
-				size="small"
-				outline
-				(click)="redirectToAppUrlReport()"
-			>
-				{{ 'BUTTONS.VIEW_REPORT' | translate }}
-			</button>
 		</nb-card-header>
 		<ng-template [ngIf]="activities?.length > 0" [ngIfElse]="noActivities">
-			<nb-list class="custom-card-body-inner-list">
-				<nb-list-item *ngFor="let activity of activities">
-					<div class="w-100">
-						<ngx-activity-item
-							class="tracking-progress"
-							[item]="activity"
-						></ngx-activity-item>
-					</div>
-				</nb-list-item>
-			</nb-list>
+			<nb-card-body class="custom-card-body-inner-list">
+				<div class="custom-card-button">
+					<button
+						nbButton
+						status="primary"
+						size="small"
+						outline
+						(click)="redirectToAppUrlReport()"
+					>
+						{{ 'BUTTONS.VIEW_REPORT' | translate }}
+					</button>
+				</div>
+				<nb-list>
+					<nb-list-item *ngFor="let activity of activities">
+						<div class="w-100">
+							<ngx-activity-item
+								class="tracking-progress"
+								[item]="activity"
+							></ngx-activity-item>
+						</div>
+					</nb-list-item>
+				</nb-list>
+			</nb-card-body>
 		</ng-template>
 		<ng-template #noActivities>
 			<ng-container

@@ -144,6 +144,11 @@ nb-badge {
 
 .custom-card-body-inner-list {
   padding: 0 9px;
+  .custom-card-button {
+    display: flex;
+    justify-content: flex-end;
+    margin: 1rem 15px 0 15px;
+  }
 }
 
 .font-weight-bold {
