@@ -59,17 +59,21 @@
 				nbSpinnerStatus="primary"
 			>
 				<nb-card-body>
-					<p>
-						{{ 'TIMESHEET.MEMBERS_WORKED' | translate }}
-					</p>
+					<div class="header-widget">
+						<div class="title">
+							{{ 'TIMESHEET.MEMBERS_WORKED' | translate }}
+						</div>
+					</div>
 					<div class="h1">
 						{{ counts?.employeesCount || 0 }}
 					</div>
-					<gauzy-counter-point
-						[total]="employeesCount"
-						[value]="counts?.employeesCount || 0"
-						[color]="'#0088FE'"
-					></gauzy-counter-point>
+					<div class="counter-container">
+						<gauzy-counter-point
+							[total]="employeesCount"
+							[value]="counts?.employeesCount || 0"
+							[color]="'#0088FE'"
+						></gauzy-counter-point>
+					</div>
 				</nb-card-body>
 			</nb-card>
 		</ng-container>
@@ -83,17 +87,21 @@
 			nbSpinnerStatus="primary"
 		>
 			<nb-card-body>
-				<p>
-					{{ 'TIMESHEET.PROJECTS_WORKED' | translate }}
-				</p>
+				<div class="header-widget">
+					<div class="title">
+						{{ 'TIMESHEET.PROJECTS_WORKED' | translate }}
+					</div>
+				</div>
 				<div class="h1">
 					{{ counts?.projectsCount || 0 }}
 				</div>
-				<gauzy-counter-point
-					[total]="projectCount"
-					[value]="counts?.projectsCount || 0"
-					[color]="'#00D68F'"
-				></gauzy-counter-point>
+				<div class="counter-container">
+					<gauzy-counter-point
+						[total]="projectCount"
+						[value]="counts?.projectsCount || 0"
+						[color]="'#00D68F'"
+					></gauzy-counter-point>
+				</div>
 			</nb-card-body>
 		</nb-card>
 	</ng-container>
@@ -105,14 +113,18 @@
 		nbSpinnerStatus="primary"
 	>
 		<nb-card-body>
-			<p>
-				{{ 'TIMESHEET.TODAY_ACTIVITY' | translate }}
-			</p>
+			<div class="header-widget">
+				<div class="title">
+					{{ 'TIMESHEET.TODAY_ACTIVITY' | translate }}
+				</div>
+			</div>
 			<div class="h1">{{ counts?.todayActivities || 0 }}%</div>
-			<gauzy-counter-point
-				[progress]="true"
-				[value]="counts?.todayActivities || 0"
-			></gauzy-counter-point>
+			<div class="counter-container">
+				<gauzy-counter-point
+					[progress]="true"
+					[value]="counts?.todayActivities || 0"
+				></gauzy-counter-point>
+			</div>
 		</nb-card-body>
 	</nb-card>
 </ng-template>
@@ -123,17 +135,21 @@
 		nbSpinnerStatus="primary"
 	>
 		<nb-card-body>
-			<p>
-				{{ 'TIMESHEET.WORKED_TODAY' | translate }}
-			</p>
+			<div class="header-widget">
+				<div class="title">
+					{{ 'TIMESHEET.WORKED_TODAY' | translate }}
+				</div>
+			</div>
 			<div class="h1">
 				{{ counts?.todayDuration || 0 | durationFormat }}
 			</div>
-			<gauzy-counter-point
-				[total]="period"
-				[value]="counts?.todayDuration || 0"
-				[color]="'#00D68F'"
-			></gauzy-counter-point>
+			<div class="counter-container">
+				<gauzy-counter-point
+					[total]="period"
+					[value]="counts?.todayDuration || 0"
+					[color]="'#00D68F'"
+				></gauzy-counter-point>
+			</div>
 		</nb-card-body>
 	</nb-card>
 </ng-template>
@@ -145,31 +161,35 @@
 	>
 		<nb-card-body>
 			<ng-container [ngSwitch]="selectedPeriod">
-				<p>
-					<ng-template [ngSwitchCase]="RangePeriod.PERIOD">
-						{{ 'TIMESHEET.WORKED_OVER_PERIOD' | translate }}
-					</ng-template>
-					<ng-template [ngSwitchCase]="RangePeriod.DAY">
-						{{ 'TIMESHEET.WORKED_FOR_DAY' | translate }}
-					</ng-template>
-					<ng-template [ngSwitchDefault]>
-						{{
-							(isCurrentWeek()
-								? 'TIMESHEET.WORKED_THIS_WEEK'
-								: 'TIMESHEET.WORKED_FOR_WEEK'
-							) | translate
-						}}
-					</ng-template>
-				</p>
+				<div class="header-widget">
+					<div class="title">
+						<ng-template [ngSwitchCase]="RangePeriod.PERIOD">
+							{{ 'TIMESHEET.WORKED_OVER_PERIOD' | translate }}
+						</ng-template>
+						<ng-template [ngSwitchCase]="RangePeriod.DAY">
+							{{ 'TIMESHEET.WORKED_FOR_DAY' | translate }}
+						</ng-template>
+						<ng-template [ngSwitchDefault]>
+							{{
+								(isCurrentWeek()
+									? 'TIMESHEET.WORKED_THIS_WEEK'
+									: 'TIMESHEET.WORKED_FOR_WEEK'
+								) | translate
+							}}
+						</ng-template>
+					</div>
+				</div>
 			</ng-container>
 			<div class="h1">
 				{{ counts?.weekDuration || 0 | durationFormat }}
 			</div>
-			<gauzy-counter-point
-				[total]="period"
-				[value]="counts?.weekDuration || 0"
-				[color]="'#00D68E'"
-			></gauzy-counter-point>
+			<div class="counter-container">
+				<gauzy-counter-point
+					[total]="period"
+					[value]="counts?.weekDuration || 0"
+					[color]="'#00D68E'"
+				></gauzy-counter-point>
+			</div>
 		</nb-card-body>
 	</nb-card>
 </ng-template>
@@ -181,23 +201,27 @@
 	>
 		<nb-card-body>
 			<ng-container [ngSwitch]="selectedPeriod">
-				<p>
-					<ng-template [ngSwitchCase]="RangePeriod.PERIOD">
-						{{ 'TIMESHEET.ACTIVITY_OVER_PERIOD' | translate }}
-					</ng-template>
-					<ng-template [ngSwitchCase]="RangePeriod.DAY">
-						{{ 'TIMESHEET.ACTIVITY_FOR_DAY' | translate }}
-					</ng-template>
-					<ng-template [ngSwitchDefault]>
-						{{ 'TIMESHEET.ACTIVITY_FOR_WEEK' | translate }}
-					</ng-template>
-				</p>
+				<div class="header-widget">
+					<div class="title">
+						<ng-template [ngSwitchCase]="RangePeriod.PERIOD">
+							{{ 'TIMESHEET.ACTIVITY_OVER_PERIOD' | translate }}
+						</ng-template>
+						<ng-template [ngSwitchCase]="RangePeriod.DAY">
+							{{ 'TIMESHEET.ACTIVITY_FOR_DAY' | translate }}
+						</ng-template>
+						<ng-template [ngSwitchDefault]>
+							{{ 'TIMESHEET.ACTIVITY_FOR_WEEK' | translate }}
+						</ng-template>
+					</div>
+				</div>
 			</ng-container>
 			<div class="h1">{{ counts?.weekActivities || 0 }}%</div>
-			<gauzy-counter-point
-				[progress]="true"
-				[value]="counts?.weekActivities || 0"
-			></gauzy-counter-point>
+			<div class="counter-container">
+				<gauzy-counter-point
+					[progress]="true"
+					[value]="counts?.weekActivities || 0"
+				></gauzy-counter-point>
+			</div>
 		</nb-card-body>
 	</nb-card>
 </ng-template>
@@ -695,4 +719,20 @@
 			</ng-template>
 		</nb-card-body>
 	</nb-card>
+</ng-template>
+<ng-template #setting>
+	<div class="setting">
+		<div class="action">
+			<i class="far fa-window-minimize"></i> <span>Collapse</span>
+		</div>
+		<div class="action">
+			<i class="fas fa-expand"></i> <span>Expand</span>
+		</div>
+		<div class="action">
+			<i class="fas fa-expand-arrows-alt"></i> <span>Move</span>
+		</div>
+		<div class="action">
+			<i class="fas fa-times"></i> <span>Delete</span>
+		</div>
+	</div>
 </ng-template>

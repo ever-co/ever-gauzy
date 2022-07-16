@@ -8,7 +8,8 @@ import {
 	NbBadgeModule,
 	NbToggleModule,
 	NbIconModule,
-	NbButtonModule
+	NbButtonModule,
+	NbPopoverModule
 } from '@nebular/theme';
 import { FormsModule } from '@angular/forms';
 import { ChartModule } from 'angular2-chartjs';
@@ -22,8 +23,6 @@ import { HeaderTitleModule } from '../../../@shared/components/header-title/head
 import { FiltersModule } from '../../../@shared/timesheet/filters/filters.module';
 import { DateRangeTitleModule } from '../../../@shared/components/date-range-title/date-range-title.module';
 import { CounterPointModule } from '../../../@shared/counter-point/counter-point.module';
-import { DragDropModule } from '@angular/cdk/drag-drop';
-import { WidgetModule } from '../../../@shared/dashboard/widget/widget.module';
 import { WidgetLayoutModule } from '../../../@shared/dashboard/widget-layout/widget-layout.module';
 import { WindowLayoutModule } from '../../../@shared/dashboard/window-layout/window-layout.module';
 
@@ -48,9 +47,10 @@ import { WindowLayoutModule } from '../../../@shared/dashboard/window-layout/win
 		HeaderTitleModule,
 		DateRangeTitleModule,
 		FiltersModule,
-    	CounterPointModule,
+		CounterPointModule,
 		WidgetLayoutModule,
-		WindowLayoutModule
+		WindowLayoutModule,
+		NbPopoverModule
 	],
 	declarations: [TimeTrackingComponent],
 	exports: [TimeTrackingComponent],

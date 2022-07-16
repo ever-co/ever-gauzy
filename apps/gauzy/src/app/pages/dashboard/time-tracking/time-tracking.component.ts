@@ -32,10 +32,21 @@ import {
 	IDateRangePicker,
 	ITimeLogFilters
 } from '@gauzy/contracts';
-import { BehaviorSubject, combineLatest, Subject, Subscription, timer } from 'rxjs';
+import {
+	BehaviorSubject,
+	combineLatest,
+	Subject,
+	Subscription,
+	timer
+} from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { indexBy, range, reduce } from 'underscore';
-import { distinctUntilChange, isNotEmpty, progressStatus, toUTC } from '@gauzy/common-angular';
+import {
+	distinctUntilChange,
+	isNotEmpty,
+	progressStatus,
+	toUTC
+} from '@gauzy/common-angular';
 import * as moment from 'moment';
 import { NgxPermissionsService } from 'ngx-permissions';
 import { TranslateService } from '@ngx-translate/core';
@@ -50,11 +61,12 @@ import { GalleryService } from '../../../@shared/gallery';
 import { TranslationBaseComponent } from '../../../@shared/language-base';
 import { ALL_EMPLOYEES_SELECTED } from '../../../@theme/components/header/selectors/employee';
 import { getAdjustDateRangeFutureAllowed } from '../../../@theme/components/header/selectors/date-range-picker';
+import { NbPopoverDirective } from '@nebular/theme';
 
 export enum RangePeriod {
-	DAY = "DAY",
-	WEEK = "WEEK",
-	PERIOD = "PERIOD"
+	DAY = 'DAY',
+	WEEK = 'WEEK',
+	PERIOD = 'PERIOD'
 }
 
 @UntilDestroy({ checkProperties: true })
@@ -65,8 +77,8 @@ export enum RangePeriod {
 })
 export class TimeTrackingComponent
 	extends TranslationBaseComponent
-	implements AfterViewInit, OnInit, OnDestroy {
-
+	implements AfterViewInit, OnInit, OnDestroy
+{
 	timeSlotEmployees: ITimeSlotStatistics[] = [];
 	activities: IActivitiesStatistics[] = [];
 	projects: IProjectsStatistics[] = [];
@@ -112,8 +124,10 @@ export class TimeTrackingComponent
 
 	@ViewChildren('widget') listOfWidgets: QueryList<TemplateRef<HTMLElement>>;
 	@ViewChildren('window') listOfWindows: QueryList<TemplateRef<HTMLElement>>;
-	widgets: TemplateRef<HTMLElement>[] = [];
-	windows: TemplateRef<HTMLElement>[] = [];
+	public widgets: TemplateRef<HTMLElement>[] = [];
+	public windows: TemplateRef<HTMLElement>[] = [];
+	@ViewChildren(NbPopoverDirective)
+	public popups: QueryList<NbPopoverDirective>;
 
 	constructor(
 		private readonly timesheetStatisticsService: TimesheetStatisticsService,
