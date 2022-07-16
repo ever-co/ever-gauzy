@@ -7,4 +7,6 @@ export interface Draggable {
 	get title(): string;
 	get position(): number;
 	set position(value: number);
+	get move(): boolean;
+	set move(value: boolean);
 }
