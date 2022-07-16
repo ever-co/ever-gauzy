@@ -10,8 +10,7 @@
   margin-bottom: 1rem;
 
   ga-widget {
-    cursor: move;
-
+    cursor: pointer;
     ::ng-deep nb-card {
       margin: 0;
     }

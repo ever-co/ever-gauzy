@@ -6,6 +6,11 @@
 		(cdkDropListDropped)="drop($event)"
 		*ngFor="let widget of widgets; let index = index"
 	>
-		<ga-widget cdkDrag [templateRef]="widget"></ga-widget>
+		<ga-widget
+			cdkDrag
+			(cdkDragEnded)="onDragEnded($event)"
+			[dragEnded]="event"
+			[templateRef]="widget"
+		></ga-widget>
 	</div>
 </div>
