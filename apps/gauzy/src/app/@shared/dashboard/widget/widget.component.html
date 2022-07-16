@@ -1,1 +1,31 @@
-<ng-container *ngTemplateOutlet="templateRef"></ng-container>
+<div
+	*ngIf="!hide"
+	[ngClass]="{ collapsed: isCollapse, expanded: isExpand }"
+	class="widget"
+>
+	<nb-icon
+		icon="more-vertical-outline"
+		nbPopoverPlacement="bottom"
+		[nbPopover]="setting"
+		nbPopoverTrigger="click"
+		nbButton
+	></nb-icon>
+	<ng-container *ngTemplateOutlet="templateRef"></ng-container>
+</div>
+<!-- Settings -->
+<ng-template #setting>
+	<div class="setting">
+		<div class="action" (click)="isCollapse = true">
+			<i class="far fa-window-minimize"></i> <span>Collapse</span>
+		</div>
+		<div class="action" (click)="isExpand = true">
+			<i class="fas fa-expand"></i> <span>Expand</span>
+		</div>
+		<div class="action">
+			<i class="fas fa-expand-arrows-alt"></i> <span>Move</span>
+		</div>
+		<div class="action" (click)="hide = true">
+			<i class="fas fa-times"></i> <span>Delete</span>
+		</div>
+	</div>
+</ng-template>
