@@ -19,15 +19,15 @@ import { GuiDrag } from '../interfaces/gui-drag.abstract';
 })
 export class WidgetComponent extends GuiDrag implements OnInit {
 	@Input()
-	public dragEnded: Observable<any>;
-	@ViewChild(NbPopoverDirective) popover: NbPopoverDirective;
+	public widgetDragEnded: Observable<any>;
+	@ViewChild(NbPopoverDirective) widgetPopover: NbPopoverDirective;
 
 	constructor() {
 		super();
 	}
 
 	ngOnInit(): void {
-		this.dragEnded
+		this.widgetDragEnded
 			.pipe(
 				filter((event) => !!event),
 				tap(() => (this.move = false)),
@@ -37,7 +37,7 @@ export class WidgetComponent extends GuiDrag implements OnInit {
 	}
 
 	public onClickSetting(event: boolean) {
-		if (event) this.popover.hide();
+		if (event) this.widgetPopover.hide();
 	}
 
 	@Input()
