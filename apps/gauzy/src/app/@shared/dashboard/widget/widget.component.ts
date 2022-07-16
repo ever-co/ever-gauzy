@@ -9,9 +9,7 @@ import { NbPopoverDirective } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Observable } from 'rxjs/internal/Observable';
 import { filter, tap } from 'rxjs/operators';
-import { Collapsable } from '../interfaces/collapsable.interface';
-import { Draggable } from '../interfaces/draggable.interface';
-import { Expandable } from '../interfaces/expandable.interface';
+import { GuiDrag } from '../interfaces/gui-drag.abstract';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -19,20 +17,14 @@ import { Expandable } from '../interfaces/expandable.interface';
 	templateUrl: './widget.component.html',
 	styleUrls: ['./widget.component.scss']
 })
-export class WidgetComponent
-	implements OnInit, Draggable, Expandable, Collapsable
-{
-	private _templateRef: TemplateRef<HTMLElement>;
-	private _position: number;
-	private _title: string;
-	private _collapsed: boolean = false;
-	private _move: boolean = false;
-	public hide: boolean = false;
+export class WidgetComponent extends GuiDrag implements OnInit {
 	@Input()
 	public dragEnded: Observable<any>;
 	@ViewChild(NbPopoverDirective) popover: NbPopoverDirective;
 
-	constructor() {}
+	constructor() {
+		super();
+	}
 
 	ngOnInit(): void {
 		this.dragEnded
@@ -49,40 +41,11 @@ export class WidgetComponent
 	}
 
 	@Input()
-	set templateRef(value: TemplateRef<HTMLElement>) {
+	public set templateRef(value: TemplateRef<HTMLElement>) {
 		this._templateRef = value;
 	}
-	get templateRef(): TemplateRef<HTMLElement> {
+
+	public get templateRef(): TemplateRef<HTMLElement> {
 		return this._templateRef;
-	}
-	set title(value: string) {
-		this._title = value;
-	}
-	get title(): string {
-		return this._title;
-	}
-	get position(): number {
-		return this._position;
-	}
-	set position(value: number) {
-		this._position = value;
-	}
-	get isExpand(): boolean {
-		return !this._collapsed;
-	}
-	set isExpand(value: boolean) {
-		this._collapsed = !value;
-	}
-	get isCollapse(): boolean {
-		return this._collapsed;
-	}
-	set isCollapse(value: boolean) {
-		this._collapsed = value;
-	}
-	get move(): boolean {
-		return this._move;
-	}
-	set move(value: boolean) {
-		this._move = value;
 	}
 }
