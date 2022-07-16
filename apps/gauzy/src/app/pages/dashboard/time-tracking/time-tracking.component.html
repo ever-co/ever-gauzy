@@ -483,37 +483,39 @@
 	>
 		<nb-card-header>{{ 'TIMESHEET.PROJECTS' | translate }}</nb-card-header>
 		<ng-template [ngIf]="projects?.length > 0" [ngIfElse]="noProjects">
-			<nb-list class="custom-card-body-inner-list">
-				<nb-list-item *ngFor="let project of projects">
-					<div class="w-100">
-						<div class="row align-items-center">
-							<div class="col-5 project-name text-left">
-								{{ project.name }}
-							</div>
-							<div class="col-4 text-center">
-								<div class="d-flex align-items-center">
-									{{ project.durationPercentage }}%
-									<nb-progress-bar
-										class="mb-1 ml-3 mr-3 w-100 custom-progress"
-										[value]="project.durationPercentage"
-										[status]="
-											progressStatus(
-												project.durationPercentage
-											)
-										"
-										[displayValue]="true"
-										size="tiny"
-									>
-									</nb-progress-bar>
+			<nb-card-body class="custom-card-body-inner-list">
+				<nb-list>
+					<nb-list-item *ngFor="let project of projects">
+						<div class="w-100">
+							<div class="row align-items-center">
+								<div class="col-5 project-name text-left">
+									{{ project.name }}
+								</div>
+								<div class="col-4 text-center">
+									<div class="d-flex align-items-center">
+										{{ project.durationPercentage }}%
+										<nb-progress-bar
+											class="mb-1 ml-3 mr-3 w-100 custom-progress"
+											[value]="project.durationPercentage"
+											[status]="
+												progressStatus(
+													project.durationPercentage
+												)
+											"
+											[displayValue]="true"
+											size="tiny"
+										>
+										</nb-progress-bar>
+									</div>
+								</div>
+								<div class="col text-right">
+									{{ project.duration | durationFormat }}
 								</div>
 							</div>
-							<div class="col text-right">
-								{{ project.duration | durationFormat }}
-							</div>
 						</div>
-					</div>
-				</nb-list-item>
-			</nb-list>
+					</nb-list-item>
+				</nb-list>
+			</nb-card-body>
 		</ng-template>
 		<ng-template #noProjects>
 			<ng-container *ngIf="!projectsLoading" [ngSwitch]="selectedPeriod">
@@ -731,20 +733,4 @@
 			</ng-template>
 		</nb-card-body>
 	</nb-card>
-</ng-template>
-<ng-template #setting>
-	<div class="setting">
-		<div class="action">
-			<i class="far fa-window-minimize"></i> <span>Collapse</span>
-		</div>
-		<div class="action">
-			<i class="fas fa-expand"></i> <span>Expand</span>
-		</div>
-		<div class="action">
-			<i class="fas fa-expand-arrows-alt"></i> <span>Move</span>
-		</div>
-		<div class="action">
-			<i class="fas fa-times"></i> <span>Delete</span>
-		</div>
-	</div>
 </ng-template>
