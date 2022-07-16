@@ -1,44 +1,51 @@
-import { Component, Input, OnInit, TemplateRef } from '@angular/core';
-import { Draggable } from '../interfaces/draggable.interface';
+import {
+	Component,
+	Input,
+	OnInit,
+	TemplateRef,
+	ViewChild
+} from '@angular/core';
+import { NbPopoverDirective } from '@nebular/theme';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { Observable } from 'rxjs/internal/Observable';
+import { filter, tap } from 'rxjs/operators';
+import { GuiDrag } from '../interfaces/gui-drag.abstract';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-window',
 	templateUrl: './window.component.html',
 	styleUrls: ['./window.component.scss']
 })
-export class WindowComponent implements OnInit, Draggable {
-	private _templateRef: TemplateRef<HTMLElement>;
-	private _position: number;
-	private _title: string;
+export class WindowComponent extends GuiDrag implements OnInit {
+	@Input()
+	public dragEnded: Observable<any>;
+	@ViewChild(NbPopoverDirective) popover: NbPopoverDirective;
 
-	constructor() {}
-
-	get move(): boolean {
-		throw new Error('Method not implemented.');
-	}
-	set move(value: boolean) {
-		throw new Error('Method not implemented.');
+	constructor() {
+		super();
 	}
 
-	ngOnInit(): void {}
+	ngOnInit(): void {
+		this.dragEnded
+			.pipe(
+				filter((event) => !!event),
+				tap(() => (this.move = false)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
+
+	public onClickSetting(event: boolean) {
+		if (event) this.popover.hide();
+	}
 
 	@Input()
-	set templateRef(value: TemplateRef<HTMLElement>) {
+	public set templateRef(value: TemplateRef<HTMLElement>) {
 		this._templateRef = value;
 	}
-	get templateRef(): TemplateRef<HTMLElement> {
+
+	public get templateRef(): TemplateRef<HTMLElement> {
 		return this._templateRef;
-	}
-	set title(value: string) {
-		this._title = value;
-	}
-	get title(): string {
-		return this._title;
-	}
-	get position(): number {
-		return this._position;
-	}
-	set position(value: number) {
-		this._position = value;
 	}
 }
