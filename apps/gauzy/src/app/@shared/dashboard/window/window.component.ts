@@ -31,7 +31,6 @@ export class WindowComponent extends GuiDrag implements OnInit {
 			.pipe(
 				filter((event) => !!event),
 				tap(() => (this.move = false)),
-				tap((event) => console.log(event)),
 				untilDestroyed(this)
 			)
 			.subscribe();

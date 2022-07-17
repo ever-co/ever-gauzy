@@ -1,12 +1,15 @@
+@import 'themes';
+
 #widget {
   position: relative;
   color: var(--gauzy-text-color-2);
 }
 
-nb-icon {
+:host nb-icon {
   font-size: 11px;
   position: absolute;
-  right: 12px;
+  @include nb-rtl(left, 12px);
+  @include nb-ltr(right, 12px);
   top: 10.5px;
   z-index: 2;
 }
@@ -14,7 +17,8 @@ nb-icon {
 :host {
   ::ng-deep {
     nb-card-body {
-      padding: 8px 12px 8px 15px;
+      @include nb-rtl(padding, 8px 15px 8px 12px);
+      @include nb-ltr(padding, 8px 12px 8px 15px);
     }
     .collapsed nb-card-body div.h1 {
       display: none;

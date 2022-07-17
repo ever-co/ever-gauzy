@@ -1,12 +1,15 @@
+@import 'themes';
+
 #window {
   position: relative;
   color: var(--gauzy-text-color-2);
 }
 
-nb-icon {
+:host nb-icon {
   font-size: 11px;
   position: absolute;
-  right: 1rem;
+  @include nb-rtl(left, 1rem);
+  @include nb-ltr(right, 1rem);
   top: 1.125rem;
   z-index: 2;
 }
