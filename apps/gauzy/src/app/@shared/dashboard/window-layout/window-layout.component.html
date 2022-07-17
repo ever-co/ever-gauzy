@@ -9,6 +9,7 @@
 	>
 		<ga-window
 			cdkDrag
+			(cdkDragEnded)="onDragEnded($event)"
 			[windowDragEnded]="event"
 			[templateRef]="window"
 		></ga-window>
