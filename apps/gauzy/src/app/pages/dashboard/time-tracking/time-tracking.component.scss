@@ -169,6 +169,7 @@ nb-card-header {
   -webkit-box-pack: start;
   justify-content: start;
   column-gap: 1rem;
+  gap: 1rem;
   grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
 }
 
