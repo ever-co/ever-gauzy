@@ -2,7 +2,7 @@ import { Controller, Get, HttpStatus, Param } from '@nestjs/common';
 import { QueryBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Public } from './../../shared/decorators';
-import { GetPublicOrganizationQuery } from './queries';
+import { FindPublicOrganizationQuery } from './queries';
 
 @Public()
 @Controller()
@@ -32,7 +32,7 @@ export class PublicOrganizationController {
 		@Param('profile_link') profile_link: string
 	) {
 		return await this.queryBus.execute(
-			new GetPublicOrganizationQuery({
+			new FindPublicOrganizationQuery({
 				profile_link
 			})
 		);

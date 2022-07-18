@@ -1,1 +1,1 @@
-export { GetPublicOrganizationQuery } from './get-public-organization.query';
+export { FindPublicOrganizationQuery } from './find-public-organization.query';

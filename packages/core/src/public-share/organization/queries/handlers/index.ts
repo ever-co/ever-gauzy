@@ -1,5 +1,5 @@
-import { GetPublicOrganizationHandler } from "./get-public-organization.handler";
+import { FindPublicOrganizationHandler } from "./find-public-organization.handler";
 
 export const QueryHandlers = [
-	GetPublicOrganizationHandler
+	FindPublicOrganizationHandler
 ];
