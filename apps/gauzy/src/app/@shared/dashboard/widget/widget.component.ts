@@ -4,7 +4,6 @@ import {
 	ElementRef,
 	Input,
 	OnInit,
-	TemplateRef,
 	ViewChild
 } from '@angular/core';
 import { NbPopoverDirective } from '@nebular/theme';
@@ -12,6 +11,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Observable } from 'rxjs/internal/Observable';
 import { filter, tap } from 'rxjs/operators';
 import { GuiDrag } from '../interfaces/gui-drag.abstract';
+import { WidgetService } from './widget.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -25,7 +25,7 @@ export class WidgetComponent extends GuiDrag implements OnInit, AfterViewInit {
 	@ViewChild(NbPopoverDirective) widgetPopover: NbPopoverDirective;
 	@ViewChild('widget') element: ElementRef;
 
-	constructor() {
+	constructor(private readonly widgetService: WidgetService) {
 		super();
 	}
 	ngAfterViewInit(): void {
@@ -42,18 +42,15 @@ export class WidgetComponent extends GuiDrag implements OnInit, AfterViewInit {
 				untilDestroyed(this)
 			)
 			.subscribe();
+		this.widgetService.widgets.forEach((widget: GuiDrag) => {
+			if (widget.templateRef === this.templateRef) {
+				this.isCollapse = widget.isCollapse;
+				this.isExpand = widget.isExpand;
+			}
+		});
 	}
 
 	public onClickSetting(event: boolean) {
 		if (event) this.widgetPopover.hide();
-	}
-
-	@Input()
-	public set templateRef(value: TemplateRef<HTMLElement>) {
-		this._templateRef = value;
-	}
-
-	public get templateRef(): TemplateRef<HTMLElement> {
-		return this._templateRef;
 	}
 }

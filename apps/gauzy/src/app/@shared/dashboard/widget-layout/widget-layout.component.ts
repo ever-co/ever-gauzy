@@ -1,6 +1,16 @@
 import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
-import { Component, Input, OnInit, TemplateRef } from '@angular/core';
+import {
+	AfterViewInit,
+	Component,
+	Input,
+	OnInit,
+	QueryList,
+	TemplateRef,
+	ViewChildren
+} from '@angular/core';
+import { GuiDrag } from '../interfaces/gui-drag.abstract';
 import { LayoutWithDraggableObject } from '../interfaces/layout-with-draggable-object.abstract';
+import { WidgetComponent } from '../widget/widget.component';
 import { WidgetService } from '../widget/widget.service';
 
 @Component({
@@ -10,15 +20,24 @@ import { WidgetService } from '../widget/widget.service';
 })
 export class WidgetLayoutComponent
 	extends LayoutWithDraggableObject
-	implements OnInit
+	implements OnInit, AfterViewInit
 {
 	@Input()
 	set widgets(value: TemplateRef<HTMLElement>[]) {
 		this.draggableObject = value;
 	}
+	@ViewChildren(WidgetComponent) listWidgets: QueryList<GuiDrag>;
 
 	constructor(private readonly widgetService: WidgetService) {
 		super();
+	}
+
+	ngAfterViewInit(): void {
+		this.listWidgets.changes.subscribe(
+			(listwidgets: QueryList<GuiDrag>) => {
+				this.widgetService.widgets = listwidgets.toArray();
+			}
+		);
 	}
 
 	protected drop(event: CdkDragDrop<number>): void {
@@ -27,17 +46,17 @@ export class WidgetLayoutComponent
 			event.previousContainer.data,
 			event.container.data
 		);
-		this.widgetService.widgets = this.draggableObject;
+		this.widgetService.widgetsRef = this.draggableObject;
 	}
 
 	ngOnInit(): void {}
 
 	get widgets() {
 		if (
-			this.widgetService.widgets.length > 0 &&
-			this.draggableObject !== this.widgetService.widgets
+			this.widgetService.widgetsRef.length > 0 &&
+			this.draggableObject !== this.widgetService.widgetsRef
 		)
-			this.draggableObject = this.widgetService.widgets;
+			this.draggableObject = this.widgetService.widgetsRef;
 		return this.draggableObject;
 	}
 }
