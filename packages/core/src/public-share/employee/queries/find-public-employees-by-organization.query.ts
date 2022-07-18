@@ -2,7 +2,7 @@ import { IQuery } from '@nestjs/cqrs';
 import { FindConditions } from 'typeorm';
 import { Employee, Organization } from '../../../core/entities/internal';
 
-export class GetPublicEmployeesByOrganizationQuery implements IQuery {
+export class FindPublicEmployeesByOrganizationQuery implements IQuery {
 
 	constructor(
 		public readonly params: FindConditions<Organization>,

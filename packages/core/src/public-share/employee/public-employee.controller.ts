@@ -5,7 +5,7 @@ import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { FindConditions } from 'typeorm';
 import { Employee, Organization } from './../../core/entities/internal';
 import { Public } from './../../shared/decorators';
-import { GetPublicEmployeesByOrganizationQuery } from './queries';
+import { FindPublicEmployeesByOrganizationQuery } from './queries';
 
 @Public()
 @Controller()
@@ -39,7 +39,7 @@ export class PublicEmployeeController {
 		@Query() options: FindConditions<Employee>
 	): Promise<IPagination<IEmployee>> {
 		return await this.queryBus.execute(
-			new GetPublicEmployeesByOrganizationQuery(params, options)
+			new FindPublicEmployeesByOrganizationQuery(params, options)
 		);
 	}
 }

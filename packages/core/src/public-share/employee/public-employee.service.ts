@@ -22,7 +22,7 @@ export class PublicEmployeeService {
 	 * @param where
 	 * @returns
 	 */
-	async getAllPublicEmployeeByOrganizationProfile(
+	async findPublicEmployeeByOrganizationProfile(
 		params: FindConditions<Organization>,
 		where: FindConditions<Employee>
 	): Promise<IPagination<IEmployee>> {

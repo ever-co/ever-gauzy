@@ -1,5 +1,5 @@
-import { GetPublicEmployeesByOrganizationHandler } from "./get-public-employees-by-organization.handler";
+import { FindPublicEmployeesByOrganizationHandler } from "./find-public-employees-by-organization.handler";
 
 export const QueryHandlers = [
-	GetPublicEmployeesByOrganizationHandler
+	FindPublicEmployeesByOrganizationHandler
 ];

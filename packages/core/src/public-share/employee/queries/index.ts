@@ -1,1 +1,1 @@
-export { GetPublicEmployeesByOrganizationQuery } from './get-public-employees-by-organization.query';
+export { FindPublicEmployeesByOrganizationQuery } from './find-public-employees-by-organization.query';
