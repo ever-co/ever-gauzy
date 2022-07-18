@@ -42,15 +42,15 @@ export class WidgetLayoutComponent
 
 	ngAfterViewInit(): void {
 		this.listWidgets.changes.subscribe(
-			(listwidgets: QueryList<GuiDrag>) => {
+			(listWidgets: QueryList<GuiDrag>) => {
 				if (this.widgetService.widgets.length === 0) {
 					if (!this.widgetService.deSerialize()) {
-						this.widgetService.widgets = listwidgets.toArray();
+						this.widgetService.widgets = listWidgets.toArray();
 					} else {
 						this.widgetService
 							.deSerialize()
 							.forEach((buffer: Partial<GuiDrag>) => {
-								listwidgets
+								listWidgets
 									.toArray()
 									.forEach((widget: GuiDrag) => {
 										if (widget.title === buffer.title) {
@@ -68,7 +68,7 @@ export class WidgetLayoutComponent
 							});
 					}
 				} else {
-					this.widgetService.widgets = listwidgets.toArray();
+					this.widgetService.widgets = listWidgets.toArray();
 				}
 			}
 		);
