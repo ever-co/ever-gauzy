@@ -1,6 +1,8 @@
 import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 import {
+	AfterViewChecked,
 	AfterViewInit,
+	ChangeDetectorRef,
 	Component,
 	Input,
 	OnInit,
@@ -20,7 +22,7 @@ import { WidgetService } from '../widget/widget.service';
 })
 export class WidgetLayoutComponent
 	extends LayoutWithDraggableObject
-	implements OnInit, AfterViewInit
+	implements OnInit, AfterViewInit, AfterViewChecked
 {
 	@Input()
 	set widgets(value: TemplateRef<HTMLElement>[]) {
@@ -28,14 +30,46 @@ export class WidgetLayoutComponent
 	}
 	@ViewChildren(WidgetComponent) listWidgets: QueryList<GuiDrag>;
 
-	constructor(private readonly widgetService: WidgetService) {
+	constructor(
+		private readonly widgetService: WidgetService,
+		private readonly cdr: ChangeDetectorRef
+	) {
 		super();
+	}
+	ngAfterViewChecked(): void {
+		this.cdr.detectChanges();
 	}
 
 	ngAfterViewInit(): void {
 		this.listWidgets.changes.subscribe(
 			(listwidgets: QueryList<GuiDrag>) => {
-				this.widgetService.widgets = listwidgets.toArray();
+				if (this.widgetService.widgets.length === 0) {
+					if (!this.widgetService.deSerialize()) {
+						this.widgetService.widgets = listwidgets.toArray();
+					} else {
+						this.widgetService
+							.deSerialize()
+							.forEach((buffer: Partial<GuiDrag>) => {
+								listwidgets
+									.toArray()
+									.forEach((widget: GuiDrag) => {
+										if (widget.title === buffer.title) {
+											widget.isCollapse =
+												buffer.isCollapse;
+											widget.isExpand = buffer.isExpand;
+											this.widgetService.widgets.push(
+												widget
+											);
+											this.widgetService.widgetsRef.push(
+												widget.templateRef
+											);
+										}
+									});
+							});
+					}
+				} else {
+					this.widgetService.widgets = listwidgets.toArray();
+				}
 			}
 		);
 	}
