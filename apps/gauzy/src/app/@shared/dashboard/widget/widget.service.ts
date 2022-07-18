@@ -11,7 +11,7 @@ export class WidgetService extends DashboardPersistance {
 
 	constructor() {
 		super();
-		this._KEY = '_dashboard';
+		this._KEY = '_widget';
 	}
 
 	public get widgetsRef(): TemplateRef<HTMLElement>[] {
