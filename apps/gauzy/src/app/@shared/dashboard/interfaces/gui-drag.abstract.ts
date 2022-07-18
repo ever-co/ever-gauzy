@@ -1,8 +1,9 @@
-import { TemplateRef } from '@angular/core';
+import { Component, Input, TemplateRef } from '@angular/core';
 import { Collapsable } from './collapsable.interface';
 import { Draggable } from './draggable.interface';
 import { Expandable } from './expandable.interface';
 
+@Component({ template: '' })
 export abstract class GuiDrag implements Draggable, Expandable, Collapsable {
 	protected _templateRef: TemplateRef<HTMLElement>;
 	protected _position: number;
@@ -14,8 +15,10 @@ export abstract class GuiDrag implements Draggable, Expandable, Collapsable {
 	constructor() {}
 
 	public onClickSetting(event: boolean) {}
-
-	public set templateRef(value: TemplateRef<HTMLElement>) {}
+	@Input()
+	public set templateRef(value: TemplateRef<HTMLElement>) {
+		this._templateRef = value;
+	}
 
 	public get templateRef(): TemplateRef<HTMLElement> {
 		return this._templateRef;
@@ -29,18 +32,21 @@ export abstract class GuiDrag implements Draggable, Expandable, Collapsable {
 	public get position(): number {
 		return this._position;
 	}
+	@Input()
 	public set position(value: number) {
 		this._position = value;
 	}
 	public get isExpand(): boolean {
 		return !this._collapsed;
 	}
+	@Input()
 	public set isExpand(value: boolean) {
 		this._collapsed = !value;
 	}
 	public get isCollapse(): boolean {
 		return this._collapsed;
 	}
+	@Input()
 	public set isCollapse(value: boolean) {
 		this._collapsed = value;
 	}
