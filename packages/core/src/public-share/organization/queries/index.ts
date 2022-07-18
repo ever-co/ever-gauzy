@@ -1,0 +1,1 @@
+export { GetPublicOrganizationQuery } from './get-public-organization.query';
