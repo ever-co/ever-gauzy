@@ -1,10 +1,10 @@
-import { IEmployee, IPagination } from '@gauzy/contracts';
 import { Controller, Get, HttpStatus, Param, Query, ValidationPipe } from '@nestjs/common';
 import { QueryBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { FindConditions } from 'typeorm';
-import { Organization } from './../../core/entities/internal';
+import { IEmployee, IPagination } from '@gauzy/contracts';
 import { TenantOrganizationBaseDTO } from './../../core/dto';
+import { Employee } from './../../core/entities/internal';
 import { UUIDValidationPipe } from './../../shared/pipes';
 import { Public } from './../../shared/decorators';
 import { FindOnePublicEmployeeQuery, FindPublicEmployeesByOrganizationQuery } from './queries';
@@ -33,7 +33,7 @@ export class PublicEmployeeController {
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
+		description: 'Records not found'
 	})
 	@Get()
 	async findPublicEmployeesByOrganization(
@@ -47,9 +47,30 @@ export class PublicEmployeeController {
 		);
 	}
 
+	/**
+	 * GET public employee by profile link in the specific organization
+	 *
+	 * @param id
+	 * @param profile_link
+	 * @returns
+	 */
+	 @ApiOperation({
+		summary: 'Find public information for one employee by profile link in the organization.'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found employee in the organization'
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
 	@Get('/:profile_link/:id')
 	async findPublicEmployeeByProfileLink(
-		@Param('profile_link') profile_link: string,
-		@Param('id', UUIDValidationPipe) id: string,
-	) {}
+		@Param() params: FindConditions<Employee>
+	) {
+		return await this.queryBus.execute(
+			new FindOnePublicEmployeeQuery(params)
+		);
+	}
 }

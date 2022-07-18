@@ -11,9 +11,15 @@ export class PublicOrganizationService {
 		private readonly repository: Repository<Organization>
 	) {}
 
-	async findOneByProfileLink(where: FindConditions<Organization>) {
+	/**
+	 * GET organization by profile link
+	 *
+	 * @param options
+	 * @returns
+	 */
+	async findOneByProfileLink(options: FindConditions<Organization>) {
 		try {
-			return await this.repository.findOneOrFail(where, {
+			return await this.repository.findOneOrFail(options, {
 				relations: [
 					'skills',
 					'awards',

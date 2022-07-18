@@ -31,4 +31,26 @@ export class PublicEmployeeService {
 			throw new BadRequestException(error, `Error while gettting public employees`);
 		}
 	}
+
+	/**
+	 * GET employee by profile link & primary ID
+	 *
+	 * @param options
+	 * @returns
+	 */
+	async findOneByProfileLink(options: FindConditions<Employee>) {
+		try {
+			return await this.repository.findOneOrFail(options, {
+				relations: [
+					'user',
+					'organization',
+					'organizationEmploymentTypes',
+					'tags',
+					'skills'
+				]
+			});
+		} catch (error) {
+			throw new BadRequestException(error);
+		}
+	}
 }

@@ -10,7 +10,7 @@ export class FindOnePublicEmployeeHandler implements IQueryHandler<FindOnePublic
     ) {}
 
     async execute(query: FindOnePublicEmployeeQuery) {
-        const { params, options } = query;
-        console.log({ params, options });
+        const { params } = query;
+        return await this.publicEmployeeService.findOneByProfileLink(params);
     }
 }
