@@ -7,7 +7,8 @@ import {
 	IEmployeeUpdateInput,
 	IEmployeeUpdateProfileStatus,
 	IBasePerTenantAndOrganizationEntityModel,
-	IDateRangePicker
+	IDateRangePicker,
+	IPagination
 } from '@gauzy/contracts';
 import { firstValueFrom, Observable } from 'rxjs';
 import { toParams } from '@gauzy/common-angular';
@@ -15,19 +16,15 @@ import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable()
 export class EmployeesService {
-	constructor(private http: HttpClient) {}
+	constructor(
+		private readonly http: HttpClient
+	) {}
 
-	getAllPublic(
-		relations?: string[],
-		findInput?: IEmployeeFindInput
-	): Observable<{ items: IEmployee[]; total: number }> {
-		const data = JSON.stringify({ relations, findInput });
-		return this.http.get<{ items: IEmployee[]; total: number }>(
-			`${API_PREFIX}/employee/public`,
-			{
-				params: { data }
-			}
-		);
+	getAllPublic(request: IEmployeeFindInput): Observable<IPagination<IEmployee>> {
+		const params = toParams(request);
+		return this.http.get<IPagination<IEmployee>>(`${API_PREFIX}/public/employee`, {
+			params
+		})
 	}
 
 	getPublicById(id: string, relations?: string[]): Observable<IEmployee> {

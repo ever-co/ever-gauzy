@@ -66,16 +66,13 @@ export class OrganizationsService {
 		);
 	}
 
-	getByProfileLink(
-		profile_link: string = '',
-		select?: OrganizationSelectInput[],
-		relations?: string[]
-	): Observable<IOrganization> {
-		const option = JSON.stringify(relations || '');
-		return this.http.get<IOrganization>(
-			`${API_PREFIX}/organization/profile/${profile_link}/${JSON.stringify(
-				select || ''
-			)}/${option}`
-		);
+	/**
+	 * GET organization by profile link
+	 *
+	 * @param profile_link
+	 * @returns
+	 */
+	getByProfileLink(profile_link: string): Observable<IOrganization> {
+		return this.http.get<IOrganization>(`${API_PREFIX}/public/organization/${profile_link}`);
 	}
 }
