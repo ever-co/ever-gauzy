@@ -1,5 +1,7 @@
 import {
+	AfterViewInit,
 	Component,
+	ElementRef,
 	Input,
 	OnInit,
 	TemplateRef,
@@ -17,13 +19,19 @@ import { GuiDrag } from '../interfaces/gui-drag.abstract';
 	templateUrl: './widget.component.html',
 	styleUrls: ['./widget.component.scss']
 })
-export class WidgetComponent extends GuiDrag implements OnInit {
+export class WidgetComponent extends GuiDrag implements OnInit, AfterViewInit {
 	@Input()
 	public widgetDragEnded: Observable<any>;
 	@ViewChild(NbPopoverDirective) widgetPopover: NbPopoverDirective;
+	@ViewChild('widget') element: ElementRef;
 
 	constructor() {
 		super();
+	}
+	ngAfterViewInit(): void {
+		const wgt: HTMLElement = this.element.nativeElement;
+		const title: any = wgt.querySelector('div.title');
+		if (title) this.title = title.innerText;
 	}
 
 	ngOnInit(): void {
