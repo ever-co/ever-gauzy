@@ -28,10 +28,13 @@ export class WidgetComponent extends GuiDrag implements OnInit, AfterViewInit {
 	constructor(private readonly widgetService: WidgetService) {
 		super();
 	}
+
 	ngAfterViewInit(): void {
-		const wgt: HTMLElement = this.element.nativeElement;
-		const title: any = wgt.querySelector('div.title');
-		if (title) this.title = title.innerText;
+		if (this.element) {
+			const wgt: HTMLElement = this.element.nativeElement;
+			const title: any = wgt.querySelector('div.title');
+			if (title) this.title = title.innerText;
+		}
 	}
 
 	ngOnInit(): void {
