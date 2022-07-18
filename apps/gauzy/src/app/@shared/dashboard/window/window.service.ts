@@ -1,4 +1,5 @@
 import { Injectable, TemplateRef } from '@angular/core';
+import { Store } from '../../../@core';
 import { DashboardPersistance } from '../interfaces/dashboard-persistance.abstract';
 import { GuiDrag } from '../interfaces/gui-drag.abstract';
 
@@ -9,9 +10,8 @@ export class WindowService extends DashboardPersistance {
 	private _windowsRef: TemplateRef<HTMLElement>[] = [];
 	private _windows: GuiDrag[] = [];
 
-	constructor() {
+	constructor(private readonly store: Store) {
 		super();
-		this._KEY = '_window';
 	}
 
 	public get windowsRef(): any[] {
@@ -35,5 +35,24 @@ export class WindowService extends DashboardPersistance {
 	}
 	public set windows(value: GuiDrag[]) {
 		this._windows = value;
+	}
+	public serialize(values: GuiDrag[]): void {
+		if (values.length === 0) return;
+		const toJson: Partial<GuiDrag>[] = values.map(
+			(value: Partial<GuiDrag>) => {
+				return {
+					position: value.position,
+					isCollapse: value.isCollapse,
+					isExpand: value.isExpand,
+					hide: value.hide,
+					title: value.title
+				};
+			}
+		);
+		this.store.windows = toJson;
+	}
+
+	public deSerialize(): Partial<GuiDrag>[] {
+		return this.store.windows;
 	}
 }

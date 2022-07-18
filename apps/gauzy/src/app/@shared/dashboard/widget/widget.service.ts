@@ -1,4 +1,5 @@
 import { Injectable, TemplateRef } from '@angular/core';
+import { Store } from '../../../@core';
 import { DashboardPersistance } from '../interfaces/dashboard-persistance.abstract';
 import { GuiDrag } from '../interfaces/gui-drag.abstract';
 
@@ -9,9 +10,8 @@ export class WidgetService extends DashboardPersistance {
 	private _widgetsRef: TemplateRef<HTMLElement>[] = [];
 	private _widgets: GuiDrag[] = [];
 
-	constructor() {
+	constructor(private readonly store: Store) {
 		super();
-		this._KEY = '_widget';
 	}
 
 	public get widgetsRef(): TemplateRef<HTMLElement>[] {
@@ -36,5 +36,24 @@ export class WidgetService extends DashboardPersistance {
 	}
 	public set widgets(value: GuiDrag[]) {
 		this._widgets = value;
+	}
+	public serialize(values: GuiDrag[]): void {
+		if (values.length === 0) return;
+		const toJson: Partial<GuiDrag>[] = values.map(
+			(value: Partial<GuiDrag>) => {
+				return {
+					position: value.position,
+					isCollapse: value.isCollapse,
+					isExpand: value.isExpand,
+					hide: value.hide,
+					title: value.title
+				};
+			}
+		);
+		this.store.widgets = toJson;
+	}
+
+	public deSerialize(): Partial<GuiDrag>[] {
+		return this.store.widgets;
 	}
 }

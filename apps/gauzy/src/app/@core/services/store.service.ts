@@ -25,6 +25,7 @@ import { ComponentLayoutStyleEnum } from '@gauzy/contracts';
 import { map } from 'rxjs/operators';
 import { merge, Subject } from 'rxjs';
 import * as _ from 'underscore';
+import { GuiDrag } from '../../@shared/dashboard/interfaces/gui-drag.abstract';
 
 export interface AppState {
 	user: IUser;
@@ -51,6 +52,8 @@ export interface PersistState {
 	preferredComponentLayout: ComponentLayoutStyleEnum;
 	componentLayout: any[]; //This would be a Map but since Maps can't be serialized/deserialized it is stored as an array
 	themeName: string;
+	windows: Partial<GuiDrag>[],
+	widgets: Partial<GuiDrag>[]
 }
 
 export function createInitialAppState(): AppState {
@@ -71,6 +74,8 @@ export function createInitialPersistState(): PersistState {
 	const preferredLanguage = localStorage.getItem('preferredLanguage') || null;
 	const componentLayout = localStorage.getItem('componentLayout') || [];
 	const themeName = localStorage.getItem('themeName')|| null;
+	const widgets = JSON.parse(localStorage.getItem('_widgets'));
+	const windows = JSON.parse(localStorage.getItem('_windows'));
 
 	return {
 		token,
@@ -80,7 +85,9 @@ export function createInitialPersistState(): PersistState {
 		serverConnection,
 		preferredLanguage,
 		componentLayout,
-		themeName
+		themeName,
+		widgets, 
+		windows
 	} as PersistState;
 }
 
@@ -505,6 +512,28 @@ export class Store {
 	set currentTheme(name: string){
 		this.persistStore.update({
 			themeName: name
+		})
+	}
+
+	get windows(): Partial<GuiDrag>[] {
+		const { windows } = this.persistQuery.getValue();
+		return windows as  Partial<GuiDrag>[];
+	}
+
+	set windows(values: Partial<GuiDrag>[]){
+		this.persistStore.update({
+			windows: values
+		})
+	}
+
+	get widgets(): Partial<GuiDrag>[] {
+		const { widgets } = this.persistQuery.getValue();
+		return widgets as  Partial<GuiDrag>[];
+	}
+
+	set widgets(values: Partial<GuiDrag>[]){
+		this.persistStore.update({
+			widgets: values
 		})
 	}
 }
