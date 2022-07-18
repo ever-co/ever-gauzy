@@ -1,11 +1,13 @@
 import { IEmployee, IPagination } from '@gauzy/contracts';
-import { Controller, Get, HttpStatus, Param, Query } from '@nestjs/common';
+import { Controller, Get, HttpStatus, Param, Query, ValidationPipe } from '@nestjs/common';
 import { QueryBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { FindConditions } from 'typeorm';
-import { Employee, Organization } from './../../core/entities/internal';
+import { Organization } from './../../core/entities/internal';
+import { TenantOrganizationBaseDTO } from './../../core/dto';
+import { UUIDValidationPipe } from './../../shared/pipes';
 import { Public } from './../../shared/decorators';
-import { FindPublicEmployeesByOrganizationQuery } from './queries';
+import { FindOnePublicEmployeeQuery, FindPublicEmployeesByOrganizationQuery } from './queries';
 
 @Public()
 @Controller()
@@ -33,13 +35,21 @@ export class PublicEmployeeController {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@Get(':profile_link')
-	async getAllEmployeesByProfileLink(
-		@Param() params: FindConditions<Organization>,
-		@Query() options: FindConditions<Employee>
+	@Get()
+	async findPublicEmployeesByOrganization(
+		@Query(new ValidationPipe({
+			transform: true,
+			whitelist: true
+		})) options: TenantOrganizationBaseDTO
 	): Promise<IPagination<IEmployee>> {
 		return await this.queryBus.execute(
-			new FindPublicEmployeesByOrganizationQuery(params, options)
+			new FindPublicEmployeesByOrganizationQuery(options)
 		);
 	}
+
+	@Get('/:profile_link/:id')
+	async findPublicEmployeeByProfileLink(
+		@Param('profile_link') profile_link: string,
+		@Param('id', UUIDValidationPipe) id: string,
+	) {}
 }

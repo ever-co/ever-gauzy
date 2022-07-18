@@ -11,9 +11,8 @@ export class FindPublicEmployeesByOrganizationHandler implements IQueryHandler<F
     ) {}
 
     async execute(query: FindPublicEmployeesByOrganizationQuery): Promise<IPagination<IEmployee>> {
-        const { params, options } = query;
-        return await this.publicEmployeeService.findPublicEmployeeByOrganizationProfile(
-            params,
+        const { options } = query;
+        return await this.publicEmployeeService.findPublicEmployeeByOrganization(
             options
         );
     }
