@@ -10,11 +10,14 @@ import {
 	TemplateRef,
 	ViewChildren
 } from '@angular/core';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { filter, tap } from 'rxjs/operators';
 import { GuiDrag } from '../interfaces/gui-drag.abstract';
 import { LayoutWithDraggableObject } from '../interfaces/layout-with-draggable-object.abstract';
 import { WidgetComponent } from '../widget/widget.component';
 import { WidgetService } from '../widget/widget.service';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-widget-layout',
 	templateUrl: './widget-layout.component.html',
@@ -41,37 +44,27 @@ export class WidgetLayoutComponent
 	}
 
 	ngAfterViewInit(): void {
-		this.listWidgets.changes.subscribe(
-			(listWidgets: QueryList<GuiDrag>) => {
-				if (this.widgetService.widgets.length === 0) {
-					if (!this.widgetService.deSerialize()) {
-						this.widgetService.widgets = listWidgets.toArray();
-					} else {
-						this.widgetService
-							.deSerialize()
-							.forEach((buffer: Partial<GuiDrag>) => {
-								listWidgets
-									.toArray()
-									.forEach((widget: GuiDrag) => {
-										if (widget.title === buffer.title) {
-											widget.isCollapse =
-												buffer.isCollapse;
-											widget.isExpand = buffer.isExpand;
-											this.widgetService.widgets.push(
-												widget
-											);
-											this.widgetService.widgetsRef.push(
-												widget.templateRef
-											);
-										}
-									});
-							});
-					}
-				} else {
-					this.widgetService.widgets = listWidgets.toArray();
-				}
-			}
-		);
+		this.listWidgets.changes
+			.pipe(
+				tap(
+					(listWidgets: QueryList<GuiDrag>) =>
+						(this.widgetService.widgets = listWidgets.toArray())
+				),
+				filter(() => this.widgetService.widgetsRef.length === 0),
+				tap(() => {
+					this.widgetService.deSerialize().length === 0
+						? this.widgetService.serialize()
+						: this.widgetService
+								.deSerialize()
+								.forEach((deserialized: GuiDrag) =>
+									this.widgetService.widgetsRef.push(
+										deserialized.templateRef
+									)
+								);
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	protected drop(event: CdkDragDrop<number>): void {
