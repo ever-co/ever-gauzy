@@ -47,15 +47,18 @@ export class WidgetService extends LayoutPersistance {
 
 	public deSerialize(): Partial<GuiDrag>[] {
 		return this.store.widgets
-			.flatMap((serialized: Partial<GuiDrag>) => {
-				return this.widgets.map((widget: GuiDrag) => {
-					if (widget.title === serialized.title) {
-						widget.isCollapse = serialized.isCollapse;
-						widget.isExpand = serialized.isExpand;
-						return widget;
-					}
-				});
-			})
-			.filter((deserialized: GuiDrag) => deserialized);
+			? this.store.widgets
+					.flatMap((serialized: Partial<GuiDrag>) => {
+						return this.widgets.map((widget: GuiDrag) => {
+							if (widget.position === serialized.position) {
+								widget.isCollapse = serialized.isCollapse;
+								widget.isExpand = serialized.isExpand;
+								widget.title = serialized.title;
+								return widget;
+							}
+						});
+					})
+					.filter((deserialized: GuiDrag) => deserialized)
+			: [];
 	}
 }
