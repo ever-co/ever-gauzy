@@ -1,4 +1,5 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
+import { IOrganization } from '@gauzy/contracts';
 import { FindPublicOrganizationQuery } from './../find-public-organization.query';
 import { PublicOrganizationService } from './../../public-organization.service';
 
@@ -9,7 +10,7 @@ export class FindPublicOrganizationHandler implements IQueryHandler<FindPublicOr
         private readonly publicOrganizationService: PublicOrganizationService
     ) {}
 
-    async execute(query: FindPublicOrganizationQuery) {
+    async execute(query: FindPublicOrganizationQuery): Promise<IOrganization> {
         const { params } = query;
         return await this.publicOrganizationService.findOneByProfileLink(params);
     }

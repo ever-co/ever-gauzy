@@ -1,8 +1,10 @@
-import { Controller, Get, HttpStatus, Param } from '@nestjs/common';
+import { IOrganization, IOrganizationContact, IPagination } from '@gauzy/contracts';
+import { Controller, Get, HttpStatus, Param, Query, ValidationPipe } from '@nestjs/common';
 import { QueryBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { TenantOrganizationBaseDTO } from './../../core/dto';
 import { Public } from './../../shared/decorators';
-import { FindPublicOrganizationQuery } from './queries';
+import { FindPublicClientsByOrganizationQuery, FindPublicOrganizationQuery } from './queries';
 
 @Public()
 @Controller()
@@ -11,6 +13,35 @@ export class PublicOrganizationController {
 	constructor(
 		private readonly queryBus: QueryBus
 	) {}
+
+	/**
+	 * GET public clients in the specific organization
+	 *
+	 * @param options
+	 * @returns
+	 */
+	 @ApiOperation({
+		summary: 'Find public information for all clients in the organization.'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found clients in the organization'
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Records not found'
+	})
+	@Get('client')
+	async findPublicClientsByOrganization(
+		@Query(new ValidationPipe({
+			transform: true,
+			whitelist: true
+		})) options: TenantOrganizationBaseDTO
+	): Promise<IPagination<IOrganizationContact>> {
+		return await this.queryBus.execute(
+			new FindPublicClientsByOrganizationQuery(options)
+		);
+	}
 
 	/**
 	 * GET organization by profile link
@@ -30,7 +61,7 @@ export class PublicOrganizationController {
 	@Get(':profile_link')
 	async findOneByProfileLink(
 		@Param('profile_link') profile_link: string
-	) {
+	): Promise<IOrganization> {
 		return await this.queryBus.execute(
 			new FindPublicOrganizationQuery({
 				profile_link
