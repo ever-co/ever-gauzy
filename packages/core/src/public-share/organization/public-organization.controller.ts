@@ -4,6 +4,7 @@ import { QueryBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { TenantOrganizationBaseDTO } from './../../core/dto';
 import { Public } from './../../shared/decorators';
+import { PublicOrganizationService } from './public-organization.service';
 import { FindPublicClientsByOrganizationQuery, FindPublicOrganizationQuery } from './queries';
 
 @Public()
@@ -11,7 +12,8 @@ import { FindPublicClientsByOrganizationQuery, FindPublicOrganizationQuery } fro
 export class PublicOrganizationController {
 
 	constructor(
-		private readonly queryBus: QueryBus
+		private readonly queryBus: QueryBus,
+		private readonly publicOrganizationService: PublicOrganizationService
 	) {}
 
 	/**
@@ -41,6 +43,38 @@ export class PublicOrganizationController {
 		return await this.queryBus.execute(
 			new FindPublicClientsByOrganizationQuery(options)
 		);
+	}
+
+	/**
+	 * GET public clients counts in the specific organization
+	 *
+	 * @param options
+	 * @returns
+	 */
+	@Get('client/count')
+	async findPublicClientCountsByOrganization(
+		@Query(new ValidationPipe({
+			transform: true,
+			whitelist: true
+		})) options: TenantOrganizationBaseDTO
+	): Promise<Number> {
+		return await this.publicOrganizationService.findPublicClientCountsByOrganization(options)
+	}
+
+	/**
+	 * GET public clients counts in the specific organization
+	 *
+	 * @param options
+	 * @returns
+	 */
+	@Get('project/count')
+	async findPublicProjectCountsByOrganization(
+		@Query(new ValidationPipe({
+			transform: true,
+			whitelist: true
+		})) options: TenantOrganizationBaseDTO
+	): Promise<Number> {
+		return await this.publicOrganizationService.findPublicProjectCountsByOrganization(options)
 	}
 
 	/**

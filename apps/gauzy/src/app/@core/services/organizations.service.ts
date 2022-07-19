@@ -91,4 +91,28 @@ export class OrganizationsService {
 			params: toParams(request)
 		})
 	}
+
+	/**
+	 * GET public client counts by organization
+	 *
+	 * @param request
+	 * @returns
+	 */
+	getAllPublicClientCounts(request: IOrganizationContactFindInput): Observable<Number> {
+		return this.http.get<Number>(`${API_PREFIX}/public/organization/client/count`, {
+			params: toParams(request)
+		})
+	}
+
+	/**
+	 * GET public project counts by organization
+	 *
+	 * @param request
+	 * @returns
+	 */
+	getAllPublicProjectCounts(request: IOrganizationContactFindInput): Observable<Number> {
+		return this.http.get<Number>(`${API_PREFIX}/public/organization/project/count`, {
+			params: toParams(request)
+		})
+	}
 }

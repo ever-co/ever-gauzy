@@ -2,7 +2,7 @@ import { IOrganization, IOrganizationContact, IPagination } from '@gauzy/contrac
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindConditions, Repository } from 'typeorm';
-import { Organization, OrganizationContact } from './../../core/entities/internal';
+import { Organization, OrganizationContact, OrganizationProject } from './../../core/entities/internal';
 
 @Injectable()
 export class PublicOrganizationService {
@@ -12,7 +12,10 @@ export class PublicOrganizationService {
 		private readonly repository: Repository<Organization>,
 
 		@InjectRepository(OrganizationContact)
-		private readonly organizationContact: Repository<OrganizationContact>
+		private readonly organizationContact: Repository<OrganizationContact>,
+
+		@InjectRepository(OrganizationProject)
+		private readonly organizationProject: Repository<OrganizationProject>
 	) {}
 
 	/**
@@ -52,6 +55,38 @@ export class PublicOrganizationService {
 				where: options
 			});
 			return { items, total };
+		} catch (error) {
+			throw new BadRequestException(error, `Error while gettting public employees`);
+		}
+	}
+
+	/**
+	 * GET all public client counts by organization condition
+	 *
+	 * @param options
+	 * @returns
+	 */
+	 async findPublicClientCountsByOrganization(
+		options: FindConditions<OrganizationContact>
+	): Promise<Number> {
+		try {
+			return await this.organizationContact.count(options);
+		} catch (error) {
+			throw new BadRequestException(error, `Error while gettting public employees`);
+		}
+	}
+
+	/**
+	 * GET all public project counts by organization condition
+	 *
+	 * @param options
+	 * @returns
+	 */
+	async findPublicProjectCountsByOrganization(
+		options: FindConditions<OrganizationProject>
+	): Promise<Number> {
+		try {
+			return await this.organizationProject.count(options);
 		} catch (error) {
 			throw new BadRequestException(error, `Error while gettting public employees`);
 		}
