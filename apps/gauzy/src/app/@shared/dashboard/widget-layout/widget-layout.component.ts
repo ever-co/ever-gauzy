@@ -81,6 +81,7 @@ export class WidgetLayoutComponent
 			event.container.data
 		);
 		this.widgetService.widgetsRef = this.draggableObject;
+		this.widgetService.serialize();
 	}
 
 	ngOnInit(): void {}

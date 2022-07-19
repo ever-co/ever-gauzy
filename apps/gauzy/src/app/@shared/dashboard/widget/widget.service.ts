@@ -32,7 +32,6 @@ export class WidgetService extends DashboardPersistance {
 			});
 		});
 		this.widgets = buffers;
-		this.serialize(this.widgets);
 	}
 
 	public get widgets(): GuiDrag[] {
@@ -41,9 +40,8 @@ export class WidgetService extends DashboardPersistance {
 	public set widgets(value: GuiDrag[]) {
 		this._widgets = value;
 	}
-	public serialize(values: GuiDrag[]): void {
-		if (values.length === 0) return;
-		this.store.widgets = this.toJson(values);
+	public serialize(): void {
+		this.store.widgets = this.toJson(this.widgets);
 	}
 
 	public deSerialize(): Partial<GuiDrag>[] {
