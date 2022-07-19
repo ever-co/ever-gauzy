@@ -39,18 +39,7 @@ export class WidgetService extends DashboardPersistance {
 	}
 	public serialize(values: GuiDrag[]): void {
 		if (values.length === 0) return;
-		const toJson: Partial<GuiDrag>[] = values.map(
-			(value: Partial<GuiDrag>) => {
-				return {
-					position: value.position,
-					isCollapse: value.isCollapse,
-					isExpand: value.isExpand,
-					hide: value.hide,
-					title: value.title
-				};
-			}
-		);
-		this.store.widgets = toJson;
+		this.store.widgets = this.toJson(values);
 	}
 
 	public deSerialize(): Partial<GuiDrag>[] {
