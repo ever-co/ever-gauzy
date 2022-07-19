@@ -29,6 +29,8 @@ export abstract class DashboardPersistance implements Serializable<GuiDrag> {
 		});
 	}
 
+	protected sorting(): void {}
+
 	public deSerialize(): Partial<GuiDrag>[] {
 		return JSON.parse(
 			localStorage.getItem(this._KEY)

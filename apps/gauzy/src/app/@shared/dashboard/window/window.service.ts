@@ -18,6 +18,10 @@ export class WindowService extends DashboardPersistance {
 		return this._windowsRef;
 	}
 	public set windowsRef(value: any[]) {
+		this._windowsRef = value;
+		this.sorting();
+	}
+	protected sorting(): void {
 		const buffers: GuiDrag[] = [];
 		this.windowsRef.forEach((windowsRef: TemplateRef<HTMLElement>) => {
 			this.windows.forEach((window: GuiDrag) => {
@@ -28,7 +32,6 @@ export class WindowService extends DashboardPersistance {
 		});
 		this.windows = buffers;
 		this.serialize(this.windows);
-		this._windowsRef = value;
 	}
 	public get windows(): GuiDrag[] {
 		return this._windows;
@@ -38,18 +41,7 @@ export class WindowService extends DashboardPersistance {
 	}
 	public serialize(values: GuiDrag[]): void {
 		if (values.length === 0) return;
-		const toJson: Partial<GuiDrag>[] = values.map(
-			(value: Partial<GuiDrag>) => {
-				return {
-					position: value.position,
-					isCollapse: value.isCollapse,
-					isExpand: value.isExpand,
-					hide: value.hide,
-					title: value.title
-				};
-			}
-		);
-		this.store.windows = toJson;
+		this.store.windows = this.toJson(values);
 	}
 
 	public deSerialize(): Partial<GuiDrag>[] {

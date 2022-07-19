@@ -18,6 +18,11 @@ export class WidgetService extends DashboardPersistance {
 		return this._widgetsRef;
 	}
 	public set widgetsRef(value: TemplateRef<HTMLElement>[]) {
+		this._widgetsRef = value;
+		this.sorting();
+	}
+
+	protected sorting(): void {
 		const buffers: GuiDrag[] = [];
 		this.widgetsRef.forEach((widgetRef: TemplateRef<HTMLElement>) => {
 			this.widgets.forEach((widget: GuiDrag) => {
@@ -28,7 +33,6 @@ export class WidgetService extends DashboardPersistance {
 		});
 		this.widgets = buffers;
 		this.serialize(this.widgets);
-		this._widgetsRef = value;
 	}
 
 	public get widgets(): GuiDrag[] {
