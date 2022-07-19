@@ -24,7 +24,7 @@ export class PublicEmployeeService {
 		try {
 			const [items = [], total = 0] = await this.repository.findAndCount({
 				where: options,
-				relations: ['user', 'skills']
+				relations: ['user', 'organizationPosition', 'skills']
 			});
 			return { items, total };
 		} catch (error) {

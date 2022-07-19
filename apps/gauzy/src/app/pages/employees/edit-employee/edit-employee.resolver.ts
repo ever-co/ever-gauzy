@@ -18,7 +18,7 @@ export class EditEmployeeResolver implements Resolve<Observable<IEmployee>> {
     ): Observable<IEmployee> {
         try {
             const employeeId = route.params.id;
-            return this.employeeService.getEmployeeById(employeeId, ['user']).pipe(
+            return this.employeeService.getEmployeeById(employeeId, ['user', 'organizationPosition']).pipe(
                 catchError((error) => {
                     return observableOf(error);
                 })
