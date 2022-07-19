@@ -7,6 +7,7 @@ const routes: Routes = [
 	{
 		path: '',
 		component: OrganizationComponent,
+		runGuardsAndResolvers: 'always',
 		resolve: {
 			organization: PublicOrganizationResolver
 		}

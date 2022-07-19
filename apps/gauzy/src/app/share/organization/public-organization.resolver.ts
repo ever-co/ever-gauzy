@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import {
 	Resolve,
+	RouterStateSnapshot,
 	ActivatedRouteSnapshot,
 	Router
 } from '@angular/router';
@@ -19,7 +20,10 @@ export class PublicOrganizationResolver implements Resolve<any> {
 		private readonly errorHandlingService: ErrorHandlingService
 	) {}
 
-	resolve(route: ActivatedRouteSnapshot): Observable<IOrganization> {
+	resolve(
+		route: ActivatedRouteSnapshot,
+		state: RouterStateSnapshot
+	): Observable<IOrganization> {
 		try {
             const profile_link = route.params.link;
 			return this.organizationsService.getByProfileLink(profile_link).pipe(
