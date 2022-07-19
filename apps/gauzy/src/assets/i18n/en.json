@@ -210,6 +210,7 @@
 		"FRIDAY": "Friday",
 		"SATURDAY": "Saturday",
 		"SUNDAY": "Sunday",
+		"NONE": "None",
 		"ROLE": "Role",
 		"PROJECTS": "Projects",
 		"PROJECT": "Project",
