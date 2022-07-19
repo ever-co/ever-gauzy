@@ -367,7 +367,7 @@ p,
     text-align: left;
   }
 
-  .speciality {
+  .specialty, .position {
     color: var(--gauzy-text-color-2);
     font-size: 12px;
     font-weight: 400;
@@ -401,11 +401,7 @@ p,
     color: #56d48f;
   }
 
-  .profil-bio {
-    line-height: 24px;
-    width: 100%;
-    overflow: hidden;
-    white-space: nowrap;
+  .profile-bio {
     text-overflow: ellipsis;
     color: var(--gauzy-text-color-1);
     font-size: 12px;
@@ -413,6 +409,7 @@ p,
     line-height: 15px;
     letter-spacing: 0em;
     text-align: left;
+    word-break: break-word;
   }
 
   .push-bottom-10 {

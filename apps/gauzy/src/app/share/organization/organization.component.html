@@ -531,7 +531,7 @@
 									<div class="row align-items-center">
 										<div>
 											<div class="avatar has-aura">
-												<a [routerLink]="[employee.id]">
+												<a>
 													<img
 														[src]="
 															employee?.user
@@ -553,8 +553,11 @@
 													{{ employee?.fullName }}
 												</a>
 											</div>
-											<div class="speciality">
-												Full Stack Web Developer
+											<div class="position">
+												{{ employee?.organizationPosition?.name }}
+											</div>
+											<div class="specialty">
+												{{ employee?.short_description }}
 											</div>
 										</div>
 										<div class="col">
@@ -577,6 +580,7 @@
 												<a
 													class="works-at"
 													[routerLink]="[
+														'/share/organization',
 														organization.profile_link
 													]"
 												>
@@ -606,7 +610,7 @@
 													Sofia, Sofia, Bulgaria
 												</span>
 											</div>
-											<div class="profil-bio">
+											<div class="profile-bio">
 												<span class="average-bonus">
 													{{
 														'PUBLIC_PAGE.AVERAGE_BONUS'
@@ -627,13 +631,10 @@
 											</div>
 										</div>
 										<div class="col-3">
-											<div class="profil-bio text">
-												I am Full-stack Web Developer
-												with experience in the following
-												languages &amp;amp; platforms
-												TypeScript and JavaScript
-												React.js, G...
-											</div>
+											<div
+												class="profile-bio text"
+												[innerHtml]="employee.description | truncate : 180 | safeHtml"
+											></div>
 										</div>
 										<div class="col-1">
 											<div class="list-inline">
@@ -703,7 +704,7 @@
 														| translate
 												}}
 											</div>
-											<div class="speciality">
+											<div class="specialty">
 												Full Stack Web Developer
 											</div>
 										</div>
@@ -727,6 +728,7 @@
 												<a
 													class="works-at"
 													[routerLink]="[
+														'/share/organization',
 														organization.profile_link
 													]"
 												>
@@ -756,7 +758,7 @@
 													Sofia, Sofia, Bulgaria
 												</span>
 											</div>
-											<div class="profil-bio">
+											<div class="profile-bio">
 												<span class="average-bonus">
 													{{
 														'PUBLIC_PAGE.AVERAGE_BONUS'
@@ -815,7 +817,7 @@
 				<div class="main-details">
 					{{ client?.name }}
 				</div>
-				<div class="speciality">
+				<div class="specialty">
 					<gauzy-email
 						[rowData]="{ email: client?.primaryEmail }"
 					></gauzy-email>

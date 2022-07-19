@@ -5,22 +5,37 @@ import { DomSanitizer } from '@angular/platform-browser';
   name: 'safeUrl'
 })
 export class SafeUrlPipe implements PipeTransform {
-  constructor(private sanitizer: DomSanitizer){}
-  /**
-   *
-   * @param url should be a string
-   * @returns is safe string
-   */
-  transform(url: string) {
-    return this.sanitizer.bypassSecurityTrustResourceUrl(url);
-  }
-
+	constructor(
+		private readonly sanitizer: DomSanitizer
+	) {}
+	/**
+	 *
+	 * @param url should be a string
+	 * @returns is safe string
+	 */
+	transform(url: string) {
+		if (url) {
+			return this.sanitizer.bypassSecurityTrustResourceUrl(url);
+		}
+	}
 }
 
-@Pipe({ name: 'safeHtml' })
+@Pipe({
+	name: 'safeHtml'
+})
 export class SafeHtmlPipe implements PipeTransform {
-	constructor(private sanitized: DomSanitizer) {}
-	transform(value) {
-		return this.sanitized.bypassSecurityTrustHtml(value);
+	constructor(
+		private readonly sanitizer: DomSanitizer
+	) {}
+
+	/**
+	 *
+	 * @param value should be a string
+	 * @returns is safe string
+	 */
+	transform(value: string) {
+		if (value) {
+			return this.sanitizer.bypassSecurityTrustHtml(value);
+		}
 	}
 }

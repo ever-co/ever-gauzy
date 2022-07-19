@@ -18,7 +18,7 @@ import { isNotEmpty } from '@gauzy/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CrudController } from './../core/crud';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
-import { Permissions, Public } from './../shared/decorators';
+import { Permissions } from './../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { OrganizationCreateCommand, OrganizationUpdateCommand } from './commands';
 import { Organization } from './organization.entity';
@@ -84,30 +84,6 @@ export class OrganizationController extends CrudController<Organization> {
 			request['relations'] = relations;
 		}
 		return await this.organizationService.findOneByIdString(id, request);
-	}
-
-	@ApiOperation({ summary: 'Find Organization by profile link.' })
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Found one record',
-		type: Organization
-	})
-	@ApiResponse({
-		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
-	})
-	@Get('profile/:profile_link/:select/:relations')
-	@Public()
-	async findOneByProfileLink(
-		@Param('profile_link') profile_link: string,
-		@Param('select') select: string,
-		@Param('relations') relations: string
-	): Promise<IOrganization> {
-		return await this.organizationService.findByPublicLink(
-			profile_link,
-			select,
-			relations
-		);
 	}
 
 	@ApiOperation({ summary: 'Create new Organization' })
