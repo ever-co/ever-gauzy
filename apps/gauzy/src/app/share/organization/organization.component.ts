@@ -1,78 +1,110 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import {
 	IOrganization,
-	IOrganizationAward,
-	IOrganizationLanguage,
 	PermissionsEnum,
-	IOrganizationContact
+	IOrganizationContact,
+	IEmployee
 } from '@gauzy/contracts';
-import { NbDialogService } from '@nebular/theme';
+import { NbDialogService, NbTabComponent, NbTabsetComponent } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { tap } from 'rxjs/operators';
-import { firstValueFrom } from 'rxjs';
+import { Observable, of as observableOf, Subject } from 'rxjs';
+import { debounceTime, map, tap } from 'rxjs/operators';
 import * as moment from 'moment';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { PublicPageMutationComponent } from '../../@shared/organizations/public-page-mutation/public-page-mutation.component';
 import {
 	EmployeesService,
 	EmployeeStatisticsService,
-	OrganizationContactService,
-	OrganizationProjectsService,
 	OrganizationsService,
 	Store,
-	ToastrService,
-	UsersOrganizationsService
+	ToastrService
 } from '../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-organization',
+	selector: 'ngx-public-organization',
 	templateUrl: './organization.component.html',
 	styleUrls: ['./organization.component.scss']
 })
-export class OrganizationComponent
-	extends TranslationBaseComponent
+export class OrganizationComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
-	organization: IOrganization;
-	hasEditPermission = false;
-	belongsToOrganization = false;
-	organizationLanguages: IOrganizationLanguage[];
-	awards: IOrganizationAward[];
-	clients: IOrganizationContact[];
+
+	public hasEditPublicPage$: Observable<boolean> = observableOf(false);
+	public organization: IOrganization;
+	public organization$: Observable<IOrganization>;
+	public employees$: Observable<IEmployee[]> = observableOf([]);
+	public employeeCounts$: Observable<Number> = observableOf(0);
+	public clients$: Observable<IOrganizationContact[]> = observableOf([]);
+	public clientCounts$: Observable<Number> = observableOf(0);
+	public projectCounts$: Observable<Number> = observableOf(0);
+
 	bonusesPaid = 0;
-	totalClients = 0;
 	totalIncome = 0;
 	profits = 0;
-	totalProjects = 0;
-	totalEmployees = 0;
-	employees = [];
+
 	imageUrl: string;
 	hoverState: boolean;
-	languageExist: boolean;
-	awardExist: boolean;
 	imageUpdateButton = false;
-	moment = moment;
-	tabTitle = 'Profile';
-	tenantId: string;
-	profileLink: string;
+
+	/**
+	 * Reload Resolver Subject
+	 */
+	reload$: Subject<boolean> = new Subject();
+	/**
+	 * Tabset Type of the ViewChild metadata.
+	 */
+	@ViewChild("tabset") tabsetEl: NbTabsetComponent;
+	@ViewChild("profileTab") profileTabEl: NbTabComponent;
 
 	constructor(
-		private route: ActivatedRoute,
-		private router: Router,
-		private organizationsService: OrganizationsService,
-		private userOrganizationService: UsersOrganizationsService,
-		private toastrService: ToastrService,
-		private employeesService: EmployeesService,
-		private organizationContactService: OrganizationContactService,
-		private employeeStatisticsService: EmployeeStatisticsService,
-		private organizationProjectsService: OrganizationProjectsService,
-		private store: Store,
-		private dialogService: NbDialogService,
+		private readonly router: Router,
+		private readonly route: ActivatedRoute,
+		private readonly organizationsService: OrganizationsService,
+		private readonly toastrService: ToastrService,
+		private readonly employeesService: EmployeesService,
+		private readonly employeeStatisticsService: EmployeeStatisticsService,
+		private readonly store: Store,
+		private readonly dialogService: NbDialogService,
 		readonly translateService: TranslateService
 	) {
 		super(translateService);
+	}
+
+	ngOnInit() {
+		this.organization$ = this.route.data.pipe(
+			map(({ organization }) => organization),
+			tap((organization: IOrganization) => this.organization = organization),
+			tap((organization: IOrganization) => this.imageUrl = organization.imageUrl),
+			tap(() => this.getEmployeesAndEmployeeCounts()),
+			tap(() => this.getClientsAndClientCounts()),
+			tap(() => this.getProjectCounts()),
+			// tap(() => this.getEmployeeStatistics())
+		);
+		this.hasEditPublicPage$ = this.store.userRolePermissions$.pipe(
+			map(() =>
+				this.store.hasPermission(PermissionsEnum.PUBLIC_PAGE_EDIT)
+			)
+		);
+	}
+
+	ngAfterViewInit() {
+		this.reload$
+			.pipe(
+				debounceTime(100),
+				tap(() => this.reloadResolver()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
+
+	/**
+	 * Reload Resolver
+	 */
+	reloadResolver() {
+		this.router.navigated = false;
+		this.router.navigate([this.router.url]);
 	}
 
 	updateImageUrl(url: string) {
@@ -82,119 +114,73 @@ export class OrganizationComponent
 
 	handleImageUploadError(event: any) { }
 
-	ngOnInit() {
-		this.store.userRolePermissions$
-			.pipe(untilDestroyed(this))
-			.subscribe(() => {
-				this.hasEditPermission = this.store.hasPermission(
-					PermissionsEnum.PUBLIC_PAGE_EDIT
-				);
-			});
-		this.route.params.pipe(untilDestroyed(this)).subscribe((params) => {
-			this.profileLink = params.link;
-			this.getPublicOrganization();
-		});
-	}
-
-	private async getPublicOrganization() {
-		try {
-			this.organization = await firstValueFrom(this.organizationsService
-				.getByProfileLink(this.profileLink, null, [
-					'skills',
-					'awards',
-					'languages',
-					'languages.language'
-				])
+	/**
+	 * GET public information of the clients in the organization
+	 * GET clients counts in the organization
+	 *
+	 * @returns
+	 */
+	private getClientsAndClientCounts() {
+		if (!this.organization) {
+			return;
+		}
+		const { id: organizationId, tenantId } = this.organization;
+		if (!!this.organization.show_clients) {
+			this.clients$ = this.organizationsService.getAllPublicClients({ organizationId, tenantId }).pipe(
+				map(({ items }) => items),
 			);
-
-			this.tenantId = this.store.user.tenantId;
-			if (this.store.userId) {
-				const { total } = await this.userOrganizationService.getAll(
-					[],
-					{
-						userId: this.store.userId,
-						organizationId: this.organization.id,
-						tenantId: this.tenantId
-					}
-				);
-				this.belongsToOrganization = total > 0;
-			}
-
-			this.imageUrl = this.organization.imageUrl;
-
-			this.organizationLanguages = this.organization.languages;
-			this.languageExist = !!this.organizationLanguages.length;
-
-			this.awards = this.organization.awards;
-			this.awardExist = !!this.awards.length;
-
-			await this.getEmployeeStatistics();
-			if (
-				!!this.organization.show_clients_count ||
-				this.organization.show_clients
-			) {
-				await this.getClientsAndClientsCount();
-			}
-			if (!!this.organization.show_employees_count) {
-				await this.getEmployees();
-			}
-			if (!!this.organization.show_projects_count) {
-				await this.getProjectCount();
-			}
-		} catch (error) {
-			await this.router.navigate(['/share/404']);
+		}
+		if (!!this.organization.show_clients_count) {
+			this.clientCounts$ = this.organizationsService.getAllPublicClientCounts({ organizationId, tenantId });
 		}
 	}
 
-	private async getClientsAndClientsCount() {
-		const { tenantId } = this;
-		const { id: organizationId } = this.organization;
-
-		const {
-			total,
-			items = []
-		} = await this.organizationContactService.getAll(null, {
-			organizationId,
-			tenantId
-		});
-		this.totalClients = total;
-		this.clients = items;
+	/**
+	 * GET project counts in the organization
+	 *
+	 * @returns
+	 */
+	private async getProjectCounts() {
+		if (!this.organization) {
+			return;
+		}
+		if (!!this.organization.show_projects_count) {
+			const { id: organizationId, tenantId } = this.organization;
+			this.projectCounts$ = this.organizationsService.getAllPublicProjectCounts({ organizationId, tenantId });
+		}
 	}
 
-	private async getProjectCount() {
-		const { tenantId } = this;
-		const { id: organizationId } = this.organization;
-
-		const { total } = await this.organizationProjectsService.getAll(
-			['members'],
-			{ organizationId, tenantId, public: true }
-		);
-		this.totalProjects = total;
-	}
-
-	private async getEmployees() {
-		const { tenantId } = this;
-		const { id: organizationId } = this.organization;
-
-		const employees = await firstValueFrom(this.employeesService
-			.getAllPublic(['user', 'skills', 'organization'], {
-				organizationId,
-				tenantId
-			})
-		);
-
-		this.employees = employees.items;
-		this.totalEmployees = employees.total;
-
-		if (typeof this.organization.totalEmployees !== 'number') {
-			this.organization.totalEmployees = employees.total;
+	/**
+	 * GET public information of the employees in the organization
+	 * GET employees counts in the organization
+	 *
+	 * @returns
+	 */
+	private async getEmployeesAndEmployeeCounts() {
+		if (!this.organization) {
+			return;
+		}
+		const { id: organizationId, tenantId } = this.organization;
+		if (!!this.organization.show_employees_count) {
+			this.employees$ = this.employeesService.getAllPublic({ organizationId, tenantId }).pipe(
+				tap(({ total }) => this.employeeCounts$ = observableOf(total)),
+				map(({ items }) => items),
+			);
 		}
 	}
 
 	private async getEmployeeStatistics() {
-		const { tenantId } = this;
-		const { id: organizationId } = this.organization;
-		const { startDate, endDate } = this.store.selectedDateRange;
+		if (!this.organization) {
+			return;
+		}
+		const { id: organizationId, tenantId } = this.organization;
+
+		let startDate = moment().startOf('month').toDate();
+		let endDate = moment().endOf('month').toDate();
+		if (this.store.selectedDateRange) {
+			startDate = this.store.selectedDateRange.startDate;
+			endDate = this.store.selectedDateRange.endDate;
+		}
 
 		const statistics = await this.employeeStatisticsService.getAggregateStatisticsByOrganizationId(
 			{
@@ -224,7 +210,7 @@ export class OrganizationComponent
 		this.toastrService.success('TOASTR.MESSAGE.IMAGE_UPDATED');
 	}
 
-	async editPage() {
+	editPublicPage() {
 		this.dialogService
 			.open(PublicPageMutationComponent, {
 				context: {
@@ -243,29 +229,23 @@ export class OrganizationComponent
 						this.organization.id,
 						{...result, currency: this.organization.currency, defaultValueDateType: this.organization.defaultValueDateType}
 					);
-					this.getPublicOrganization();
-					this.toastrService.success(
-						'TOASTR.MESSAGE.ORGANIZATION_PAGE_UPDATED',
-						{
-							name: this.organization.name
-						}
-					);
+					this.toastrService.success('TOASTR.MESSAGE.ORGANIZATION_PAGE_UPDATED', {
+						name: this.organization.name
+					});
+					this.reload$.next(true);
 				}
 			});
 	}
 
+	/**
+	 * If clients tab is active and privacy mutation turned off clients view.
+	 * We have to removed clients tab from UI and default select profile tab.
+	 */
 	private _changeClientsTabIfActiveAndPrivacyIsTurnedOff() {
-		if (
-			!this.organization.show_clients &&
-			this.tabTitle === this.getTranslation('ORGANIZATIONS_PAGE.CLIENTS')
-		) {
-			this.tabTitle = this.getTranslation('ORGANIZATIONS_PAGE.PROFILE');
+		if (!this.organization.show_clients) {
+			this.tabsetEl.selectTab(this.profileTabEl);
 		}
 	}
 
-	onTabChange(e) {
-		this.tabTitle = e.tabTitle;
-	}
-
-	ngOnDestroy() { }
+	ngOnDestroy() {}
 }
