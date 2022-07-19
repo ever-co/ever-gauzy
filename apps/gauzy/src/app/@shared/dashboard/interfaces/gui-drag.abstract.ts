@@ -35,7 +35,7 @@ export abstract class GuiDrag implements Draggable, Expandable, Collapsable {
 	}
 	@Input()
 	public set position(value: number) {
-		this._positions.push(value);
+		if (this._positions.length === 0) this._positions.push(value);
 		this._position = this._positions[0];
 	}
 	public get isExpand(): boolean {
