@@ -1,7 +1,7 @@
-import { IEmployee, IPagination } from '@gauzy/contracts';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindConditions, Repository } from 'typeorm';
+import { IEmployee, IPagination } from '@gauzy/contracts';
 import { Employee } from './../../core/entities/internal';
 
 @Injectable()
@@ -38,7 +38,9 @@ export class PublicEmployeeService {
 	 * @param options
 	 * @returns
 	 */
-	async findOneByProfileLink(options: FindConditions<Employee>) {
+	async findOneByProfileLink(
+		options: FindConditions<Employee>
+	): Promise<IEmployee> {
 		try {
 			return await this.repository.findOneOrFail(options, {
 				relations: [

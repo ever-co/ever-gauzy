@@ -5,7 +5,6 @@ import { FindConditions } from 'typeorm';
 import { IEmployee, IPagination } from '@gauzy/contracts';
 import { TenantOrganizationBaseDTO } from './../../core/dto';
 import { Employee } from './../../core/entities/internal';
-import { UUIDValidationPipe } from './../../shared/pipes';
 import { Public } from './../../shared/decorators';
 import { FindOnePublicEmployeeQuery, FindPublicEmployeesByOrganizationQuery } from './queries';
 
@@ -68,7 +67,7 @@ export class PublicEmployeeController {
 	@Get('/:profile_link/:id')
 	async findPublicEmployeeByProfileLink(
 		@Param() params: FindConditions<Employee>
-	) {
+	): Promise<IEmployee> {
 		return await this.queryBus.execute(
 			new FindOnePublicEmployeeQuery(params)
 		);

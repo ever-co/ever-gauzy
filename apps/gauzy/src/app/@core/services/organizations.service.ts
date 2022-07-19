@@ -1,12 +1,16 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { Observable, firstValueFrom } from 'rxjs';
 import {
 	IOrganization,
 	OrganizationSelectInput,
 	IOrganizationCreateInput,
-	IOrganizationFindInput
+	IOrganizationFindInput,
+	IOrganizationContactFindInput,
+	IPagination,
+	IOrganizationContact
 } from '@gauzy/contracts';
-import { Observable, firstValueFrom } from 'rxjs';
+import { toParams } from '@gauzy/common-angular';
 import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable()
@@ -74,5 +78,17 @@ export class OrganizationsService {
 	 */
 	getByProfileLink(profile_link: string): Observable<IOrganization> {
 		return this.http.get<IOrganization>(`${API_PREFIX}/public/organization/${profile_link}`);
+	}
+
+	/**
+	 * GET public clients by organization
+	 *
+	 * @param request
+	 * @returns
+	 */
+	getAllPublicClients(request: IOrganizationContactFindInput): Observable<IPagination<IOrganizationContact>> {
+		return this.http.get<IPagination<IOrganizationContact>>(`${API_PREFIX}/public/organization/client`, {
+			params: toParams(request)
+		})
 	}
 }
