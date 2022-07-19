@@ -5,12 +5,13 @@ import { Expandable } from './expandable.interface';
 
 @Component({ template: '' })
 export abstract class GuiDrag implements Draggable, Expandable, Collapsable {
-	protected _templateRef: TemplateRef<HTMLElement>;
-	protected _position: number;
-	protected _title: string;
-	protected _collapsed: boolean = false;
-	protected _move: boolean = false;
-	public hide: boolean = false;
+	private _templateRef: TemplateRef<HTMLElement>;
+	private _position: number;
+	private _title: string;
+	private _collapsed: boolean = false;
+	private _move: boolean = false;
+	private _hide: boolean = false;
+	private _positions: number[] = [];
 
 	constructor() {}
 
@@ -34,7 +35,8 @@ export abstract class GuiDrag implements Draggable, Expandable, Collapsable {
 	}
 	@Input()
 	public set position(value: number) {
-		this._position = value;
+		this._positions.push(value);
+		this._position = this._positions[0];
 	}
 	public get isExpand(): boolean {
 		return !this._collapsed;
@@ -55,5 +57,11 @@ export abstract class GuiDrag implements Draggable, Expandable, Collapsable {
 	}
 	public set move(value: boolean) {
 		this._move = value;
+	}
+	public get hide(): boolean {
+		return this._hide;
+	}
+	public set hide(value: boolean) {
+		this._hide = value;
 	}
 }
