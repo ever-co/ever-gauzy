@@ -647,4 +647,20 @@ export class TimeTrackingComponent
 		}
 		return isWidget ? widgetsTitles[position] : windowsTitles[position];
 	}
+
+	public updateWindowVisibility(value: GuiDrag) {
+		this.windowService.windows.forEach((window: GuiDrag) => {
+			if (window.templateRef === value.templateRef) {
+				window.hide = !value.hide;
+			}
+		});
+	}
+
+	public updateWidgetVisibility(value: GuiDrag) {
+		this.widgetService.widgets.forEach((widget: GuiDrag) => {
+			if (widget.templateRef === value.templateRef) {
+				widget.hide = !value.hide;
+			}
+		});
+	}
 }

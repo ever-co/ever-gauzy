@@ -760,7 +760,7 @@
 			<div class="view">View widgets</div>
 			<ng-container *ngIf="widgets.length > 0">
 				<ng-container *ngFor="let widget of widgets">
-					<div class="title">
+					<div (click)="updateWidgetVisibility(widget)" class="title">
 						<i
 							[ngStyle]="{
 								visibility: widget.hide ? 'hidden' : 'visible'
@@ -779,7 +779,7 @@
 			<div class="view">View windows</div>
 			<ng-container *ngIf="windows.length > 0">
 				<ng-container *ngFor="let window of windows">
-					<div class="title">
+					<div (click)="updateVisibility(window)" class="title">
 						<i
 							[ngStyle]="{
 								visibility: window.hide ? 'hidden' : 'visible'
