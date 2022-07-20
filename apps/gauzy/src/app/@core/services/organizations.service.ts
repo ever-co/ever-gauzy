@@ -1,12 +1,16 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { Observable, firstValueFrom } from 'rxjs';
 import {
 	IOrganization,
 	OrganizationSelectInput,
 	IOrganizationCreateInput,
-	IOrganizationFindInput
+	IOrganizationFindInput,
+	IOrganizationContactFindInput,
+	IPagination,
+	IOrganizationContact
 } from '@gauzy/contracts';
-import { Observable, firstValueFrom } from 'rxjs';
+import { toParams } from '@gauzy/common-angular';
 import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable()
@@ -66,16 +70,54 @@ export class OrganizationsService {
 		);
 	}
 
+	/**
+	 * GET organization by profile link
+	 *
+	 * @param profile_link
+	 * @returns
+	 */
 	getByProfileLink(
-		profile_link: string = '',
-		select?: OrganizationSelectInput[],
-		relations?: string[]
+		profile_link: string,
+		relations: string[] = []
 	): Observable<IOrganization> {
-		const option = JSON.stringify(relations || '');
-		return this.http.get<IOrganization>(
-			`${API_PREFIX}/organization/profile/${profile_link}/${JSON.stringify(
-				select || ''
-			)}/${option}`
-		);
+		return this.http.get<IOrganization>(`${API_PREFIX}/public/organization/${profile_link}`, {
+			params: toParams({ relations })
+		});
+	}
+
+	/**
+	 * GET public clients by organization
+	 *
+	 * @param request
+	 * @returns
+	 */
+	getAllPublicClients(request: IOrganizationContactFindInput): Observable<IPagination<IOrganizationContact>> {
+		return this.http.get<IPagination<IOrganizationContact>>(`${API_PREFIX}/public/organization/client`, {
+			params: toParams(request)
+		})
+	}
+
+	/**
+	 * GET public client counts by organization
+	 *
+	 * @param request
+	 * @returns
+	 */
+	getAllPublicClientCounts(request: IOrganizationContactFindInput): Observable<Number> {
+		return this.http.get<Number>(`${API_PREFIX}/public/organization/client/count`, {
+			params: toParams(request)
+		})
+	}
+
+	/**
+	 * GET public project counts by organization
+	 *
+	 * @param request
+	 * @returns
+	 */
+	getAllPublicProjectCounts(request: IOrganizationContactFindInput): Observable<Number> {
+		return this.http.get<Number>(`${API_PREFIX}/public/organization/project/count`, {
+			params: toParams(request)
+		})
 	}
 }

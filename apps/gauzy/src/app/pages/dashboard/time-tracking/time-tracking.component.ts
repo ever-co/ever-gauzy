@@ -32,13 +32,7 @@ import {
 	IDateRangePicker,
 	ITimeLogFilters
 } from '@gauzy/contracts';
-import {
-	BehaviorSubject,
-	combineLatest,
-	Subject,
-	Subscription,
-	timer
-} from 'rxjs';
+import { BehaviorSubject, combineLatest, firstValueFrom, Subject, Subscription, timer } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { indexBy, range, reduce } from 'underscore';
 import {
@@ -507,10 +501,10 @@ export class TimeTrackingComponent
 			return;
 		}
 		try {
-			const people  = await this.employeesService.getEmployeeById(
+			const people  = await firstValueFrom(this.employeesService.getEmployeeById(
 				employee.id,
 				['user']
-			);
+			));
 			this.store.selectedEmployee = (employee.id) ? {
 				id: people.id,
 				firstName: people.user.firstName,

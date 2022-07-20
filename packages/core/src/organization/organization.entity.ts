@@ -150,55 +150,46 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	isActive: boolean;
 
 	@ApiProperty({ type: () => String })
-	@Column()
 	@IsOptional()
 	@Column({ nullable: true })
 	defaultAlignmentType?: string;
 
 	@ApiProperty({ type: () => String })
-	@Column()
 	@IsOptional()
 	@Column({ nullable: true })
 	timeZone?: string;
 
 	@ApiProperty({ type: () => String })
-	@Column()
 	@IsOptional()
 	@Column({ nullable: true })
 	regionCode?: string;
 
 	@ApiProperty({ type: () => String })
-	@Column()
 	@IsOptional()
 	@Column({ nullable: true })
 	brandColor?: string;
 
 	@ApiProperty({ type: () => String })
-	@Column()
 	@IsOptional()
 	@Column({ nullable: true })
 	dateFormat?: string;
 
 	@ApiProperty({ type: () => String })
-	@Column()
 	@IsOptional()
 	@Column({ nullable: true })
 	officialName?: string;
 
 	@ApiProperty({ type: () => String, enum: WeekDaysEnum })
-	@Column()
 	@IsOptional()
 	@Column({ nullable: true })
 	startWeekOn?: WeekDaysEnum;
 
 	@ApiProperty({ type: () => String, maxLength: 256 })
-	@Column()
 	@IsOptional()
 	@Column({ nullable: true })
 	taxId?: string;
 
 	@ApiProperty({ type: () => String })
-	@Column()
 	@IsOptional()
 	@Column({ nullable: true })
 	numberFormat?: string;
@@ -348,15 +339,13 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	@Column({ nullable: true })
 	separateInvoiceItemTaxAndDiscount?: boolean;
 
-	
+
 	@ApiProperty({ type: () => String })
-	@Column()
 	@IsOptional()
 	@Column({ nullable: true })
 	website?: string;
 
 	@ApiProperty({ type: () => String })
-	@Column()
 	@IsOptional()
 	@Column({ nullable: true })
 	fiscalInformation?: string;
@@ -399,10 +388,10 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	daysUntilDue?: number;
 	/*
     |--------------------------------------------------------------------------
-    | @ManyToOne 
+    | @ManyToOne
     |--------------------------------------------------------------------------
     */
-	
+
 	// Contact
 	@ApiProperty({ type: () => Contact })
 	@ManyToOne(() => Contact, (contact) => contact.organization, {
@@ -421,7 +410,7 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 
 	/*
     |--------------------------------------------------------------------------
-    | @OneToMany 
+    | @OneToMany
     |--------------------------------------------------------------------------
     */
 
@@ -467,15 +456,15 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	organizationSprints?: IOrganizationSprint[];
 
 	@ApiPropertyOptional({ type: () => InvoiceEstimateHistory, isArray: true })
-	@OneToMany(() => InvoiceEstimateHistory, (invoiceEstimateHistory) => invoiceEstimateHistory.organization, { 
-		onDelete: 'SET NULL' 
+	@OneToMany(() => InvoiceEstimateHistory, (invoiceEstimateHistory) => invoiceEstimateHistory.organization, {
+		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
 	invoiceEstimateHistories?: IInvoiceEstimateHistory[];
 
 	@ApiProperty({ type: () => AccountingTemplate })
-	@OneToMany(() => AccountingTemplate, (accountingTemplate) => accountingTemplate.organization, { 
-		onDelete: 'SET NULL' 
+	@OneToMany(() => AccountingTemplate, (accountingTemplate) => accountingTemplate.organization, {
+		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
 	accountingTemplates?: IAccountingTemplate[];
@@ -487,7 +476,7 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 
 	/*
     |--------------------------------------------------------------------------
-    | @ManyToMany 
+    | @ManyToMany
     |--------------------------------------------------------------------------
     */
 	// Tags

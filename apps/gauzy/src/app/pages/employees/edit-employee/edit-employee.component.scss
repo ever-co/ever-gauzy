@@ -34,12 +34,25 @@
   }
 }
 
-.org-details {
-  .edit-public-page {
-    cursor: pointer;
-    color: #027ad6;
-    padding-top: 3px;
-  }
+.edit-public-page {
+	.edit-public-button {
+		display: flex;
+		flex-direction: row;
+		justify-content: center;
+		align-items: center;
+		padding: 2px 12px;
+		box-sizing: border-box;
+		border-radius: nb-theme(button-rectangle-border-radius);
+		border: 2px solid nb-theme(color-primary-transparent-default);
+		font-size: 12px;
+		font-style: normal;
+		font-weight: 600;
+		line-height: 11px;
+		letter-spacing: 0em;
+		text-align: left;
+		color: nb-theme(text-primary-color);
+		cursor: pointer;
+	}
 }
 
 .setting-name {

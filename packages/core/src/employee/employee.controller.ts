@@ -37,12 +37,17 @@ import {
 import { CrudController, ITryRequest, PaginationParams } from './../core/crud';
 import { RequestContext } from '../core/context';
 import { TransformInterceptor } from './../core/interceptors';
-import { Permissions, Public } from './../shared/decorators';
+import { Permissions } from './../shared/decorators';
 import { BulkBodyLoadTransformPipe, ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Employee } from './employee.entity';
 import { EmployeeService } from './employee.service';
-import { EmployeeBulkInputDTO, CreateEmployeeDTO, UpdateEmployeeDTO, UpdateProfileDTO } from './dto';
+import {
+	EmployeeBulkInputDTO,
+	CreateEmployeeDTO,
+	UpdateEmployeeDTO,
+	UpdateProfileDTO
+} from './dto';
 
 @ApiTags('Employee')
 @UseInterceptors(TransformInterceptor)
@@ -57,9 +62,9 @@ export class EmployeeController extends CrudController<Employee> {
 
 	/**
 	 * GET all working employees
-	 * 
-	 * @param data 
-	 * @returns 
+	 *
+	 * @param data
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'Find all working employees.' })
 	@ApiResponse({
@@ -84,9 +89,9 @@ export class EmployeeController extends CrudController<Employee> {
 
 	/**
 	 * GET all working employees count
-	 * 
-	 * @param data 
-	 * @returns 
+	 *
+	 * @param data
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'Find all working employees count.' })
 	@ApiResponse({
@@ -114,9 +119,9 @@ export class EmployeeController extends CrudController<Employee> {
 
 	/**
 	 * GET employee jobs statistics
-	 * 
-	 * @param request 
-	 * @returns 
+	 *
+	 * @param request
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'Get Employee Jobs Statistics' })
 	@ApiResponse({
@@ -138,76 +143,11 @@ export class EmployeeController extends CrudController<Employee> {
 	}
 
 	/**
-	 * GET all public information employees in the same tenant.
-	 * 
-	 * @param data 
-	 * @returns 
-	 */
-	@ApiOperation({
-		summary: 'Find all public information employees in the same tenant.'
-	})
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Found employees in the tenant',
-		type: Employee
-	})
-	@ApiResponse({
-		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
-	})
-	@Get('/public')
-	@Public()
-	/**
-	 * TODO: This is a public service, the response should only contain
-	 * those fields (columns) of an employee that can be shown to the public
-	 */
-	async findAllEmployeesPublic(
-		@Query('data', ParseJsonPipe) data: any
-	): Promise<IPagination<IEmployee>> {
-		const { relations = [], findInput = null } = data;
-		return this.employeeService.findAll({ 
-			where: findInput, 
-			relations 
-		});
-	}
-
-	/**
-	 * GET all public information employee in the same tenant.
-	 * 
-	 * @param id 
-	 * @param data 
-	 * @returns 
-	 */
-	@ApiOperation({
-		summary: 'Find all public information employee in the same tenant.'
-	})
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Found employee in the tenant',
-		type: Employee
-	})
-	@ApiResponse({
-		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
-	})
-	@Get('/public/:id')
-	@Public()
-	async findEmployeePublic(
-		@Param('id', UUIDValidationPipe) id: string,
-		@Query('data', ParseJsonPipe) data: any
-	): Promise<IEmployee> {
-		const { relations = [] } = data;
-		return this.employeeService.findOneByIdString(id, {
-			relations
-		});
-	}
-
-	/**
 	 * GET employee by user id in the same tenant
-	 * 
-	 * @param userId 
-	 * @param data 
-	 * @returns 
+	 *
+	 * @param userId
+	 * @param data
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'Find employee by user id in the same tenant.' })
 	@ApiResponse({
@@ -236,10 +176,10 @@ export class EmployeeController extends CrudController<Employee> {
 
 	/**
 	 * CREATE bulk employees in the same tenant.
-	 * 
-	 * @param entity 
-	 * @param languageCode 
-	 * @returns 
+	 *
+	 * @param entity
+	 * @param languageCode
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'Create records in Bulk' })
 	@ApiResponse({
@@ -263,12 +203,12 @@ export class EmployeeController extends CrudController<Employee> {
 		);
 	}
 
-	
+
 	/**
 	 * GET employee count in the same tenant.
-	 * 
-	 * @param filter 
-	 * @returns 
+	 *
+	 * @param filter
+	 * @returns
 	 */
 	@Get('count')
 	@UsePipes(new ValidationPipe({ transform: true }))
@@ -285,9 +225,9 @@ export class EmployeeController extends CrudController<Employee> {
 
 	/**
 	 * GET employees by pagination in the same tenant.
-	 * 
-	 * @param filter 
-	 * @returns 
+	 *
+	 * @param filter
+	 * @returns
 	 */
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_EMPLOYEES_VIEW)
@@ -301,9 +241,9 @@ export class EmployeeController extends CrudController<Employee> {
 
 	/**
 	 * GET all employees in the same tenant.
-	 * 
-	 * @param data 
-	 * @returns 
+	 *
+	 * @param data
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'Find all employees in the same tenant.' })
 	@ApiResponse({
@@ -329,10 +269,10 @@ export class EmployeeController extends CrudController<Employee> {
 
 	/**
 	 * GET employee by id in the same tenant.
-	 * 
-	 * @param id 
-	 * @param data 
-	 * @returns 
+	 *
+	 * @param id
+	 * @param data
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'Find employee by id in the same tenant.' })
 	@ApiResponse({
@@ -361,14 +301,14 @@ export class EmployeeController extends CrudController<Employee> {
 			});
 		}
 	}
-	
+
 	/**
 	 * CREATE employee in the same tenant
-	 * 
-	 * @param entity 
-	 * @param request 
-	 * @param languageCode 
-	 * @returns 
+	 *
+	 * @param entity
+	 * @param request
+	 * @param languageCode
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'Create new record' })
 	@ApiResponse({
@@ -384,7 +324,9 @@ export class EmployeeController extends CrudController<Employee> {
 	@Permissions(PermissionsEnum.ORG_EMPLOYEES_EDIT)
 	@Post()
 	async create(
-		@Body(new ValidationPipe({ transform:true })) entity: CreateEmployeeDTO,
+		@Body(new ValidationPipe({
+			transform:true
+		})) entity: CreateEmployeeDTO,
 		@Req() request: Request,
 		@I18nLang() languageCode: LanguagesEnum
 	): Promise<IEmployee> {
@@ -395,11 +337,11 @@ export class EmployeeController extends CrudController<Employee> {
 	}
 
 	/**
-	 * UPDATE employee by id in the same tenant 
-	 * 
-	 * @param id 
-	 * @param entity 
-	 * @returns 
+	 * UPDATE employee by id in the same tenant
+	 *
+	 * @param id
+	 * @param entity
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'Update an existing record' })
 	@ApiResponse({
@@ -419,10 +361,12 @@ export class EmployeeController extends CrudController<Employee> {
 	@Put(':id')
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_EMPLOYEES_EDIT)
-	@UsePipes(new ValidationPipe({ transform : true, whitelist: true }))
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body() entity: UpdateEmployeeDTO
+		@Body(new ValidationPipe({
+			transform : true,
+			whitelist: true
+		})) entity: UpdateEmployeeDTO
 	): Promise<IEmployee> {
 		return await this.commandBus.execute(
 			new EmployeeUpdateCommand({
@@ -434,10 +378,10 @@ export class EmployeeController extends CrudController<Employee> {
 
 	/**
 	 * Update employee own profile by themselves
-	 * 
-	 * @param id 
-	 * @param entity 
-	 * @returns 
+	 *
+	 * @param id
+	 * @param entity
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'Update Employee Own Profile' })
 	@ApiResponse({
@@ -466,10 +410,10 @@ export class EmployeeController extends CrudController<Employee> {
 
 	/**
 	 * UPDATE employee job search status by employee id
-	 * 
-	 * @param employeeId 
-	 * @param entity 
-	 * @returns 
+	 *
+	 * @param employeeId
+	 * @param entity
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'Update Job Search Status' })
 	@ApiResponse({

@@ -25,8 +25,9 @@
 							status="primary"
 						>
 						</nb-icon>
-						<span class="employee-name">{{ selectedEmployee?.user?.name }}</span
-						>
+						<span class="employee-name">
+							{{ selectedEmployee?.user?.name }}
+						</span>
 						<div class="employee-position">
 							{{ selectedEmployee?.organizationPosition?.name }}
 						</div>
@@ -35,8 +36,16 @@
 			</div>
 			<div class="employee-info">
 				<div class="employee-details">
+					<div class="edit-public-page">
+						<ng-template [ngxPermissionsOnly]="['PUBLIC_PAGE_EDIT']">
+							<span class="edit-public-button" (click)="editPublicPage()">
+								<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
+								{{ 'ORGANIZATIONS_PAGE.EDIT_PUBLIC_PAGE' | translate }}
+							</span>
+						</ng-template>
+					</div>
 					<div
-						*ngIf="selectedEmployee?.user.username"
+						*ngIf="selectedEmployee?.user?.username"
 						class="transparent"
 					>
 						{{ 'FORM.USERNAME' | translate }}:
@@ -53,7 +62,9 @@
 			<h6>{{ 'EMPLOYEES_PAGE.SELECT_EMPLOYEE_MSG' | translate }}</h6>
 		</ng-template>
 	</nb-card-header>
-	<nb-card-body
-		><ngx-edit-employee-profile (updatedImage)="updateImage($event)"></ngx-edit-employee-profile>
+	<nb-card-body>
+		<ngx-edit-employee-profile
+			(updatedImage)="updateImage($event)"
+		></ngx-edit-employee-profile>
 	</nb-card-body>
 </nb-card>

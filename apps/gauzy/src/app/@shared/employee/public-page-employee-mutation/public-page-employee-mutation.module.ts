@@ -1,4 +1,3 @@
-import { ThemeModule } from '../../../@theme/theme.module';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgModule } from '@angular/core';
 import {
@@ -17,19 +16,22 @@ import {
 	NbTabsetModule,
 	NbTagModule
 } from '@nebular/theme';
-import { PublicPageEmployeeMutationComponent } from './public-page-employee-mutation.component';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { SkillsInputModule } from '../../skills/skills-input/skills-input.module';
 import { CKEditorModule } from 'ckeditor4-angular';
+import { PublicPageEmployeeMutationComponent } from './public-page-employee-mutation.component';
+import { SkillsInputModule } from '../../skills/skills-input/skills-input.module';
 import { TagsColorInputModule } from '../../tags/tags-color-input/tags-color-input.module';
 import { CurrencyModule } from '../../currency/currency.module';
 import { TranslateModule } from '../../translate/translate.module';
 import { LanguageSelectorModule } from '../../language/language-selector';
+import { ThemeModule } from '../../../@theme/theme.module';
+import { SharedModule } from '../../shared.module';
 
 @NgModule({
 	imports: [
 		SkillsInputModule,
 		ThemeModule,
+		SharedModule,
 		FormsModule,
 		NbCardModule,
 		NbListModule,

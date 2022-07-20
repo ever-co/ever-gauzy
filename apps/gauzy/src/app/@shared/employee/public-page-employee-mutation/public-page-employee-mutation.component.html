@@ -271,14 +271,13 @@
 											fullWidth="true"
 										>
 											<nb-option
-												*ngFor="
-													let payPeriod of payPeriods
-												"
+												*ngFor="let payPeriod of payPeriods"
 												[value]="payPeriod"
 											>
 												{{
-													'SM_TABLE.' + payPeriod
-														| translate
+													payPeriod
+														| replace: '_':' '
+															| titlecase
 												}}
 											</nb-option>
 										</nb-select>

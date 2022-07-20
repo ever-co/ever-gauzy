@@ -67,9 +67,9 @@ export class RecurringExpenseMutationComponent extends TranslationBaseComponent
 		if (recurringExpense) {
 			this._recurringExpense = recurringExpense;
 			this._initializeForm(recurringExpense);
-		}	
+		}
 	}
-	
+
 	componentType: COMPONENT_TYPE;
 	conflicts: IRecurringExpenseModel[] = [];
 	selectedOrganization: IOrganization;
@@ -186,8 +186,8 @@ export class RecurringExpenseMutationComponent extends TranslationBaseComponent
 
 	/**
 	 * Mapped Expense Categories
-	 * 
-	 * @param categories 
+	 *
+	 * @param categories
 	 */
 	mappedExpenseCategories(categories: IExpenseCategory[]) {
 		const storedCategories: {
@@ -222,10 +222,10 @@ export class RecurringExpenseMutationComponent extends TranslationBaseComponent
 
 		let employee: IEmployee;
 		if (this.recurringExpense && this.recurringExpense.employeeId) {
-			employee = await this.employeesService.getEmployeeById(
-				this.recurringExpense.employeeId
+			employee = await firstValueFrom(
+				this.employeesService.getEmployeeById(this.recurringExpense.employeeId)
 			);
-		}	
+		}
 		const { categoryName, startDate } = this.form.getRawValue();
 		const payload = {
 			...this.form.getRawValue(),

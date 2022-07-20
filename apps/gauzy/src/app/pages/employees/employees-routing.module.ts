@@ -6,16 +6,17 @@ import { NgxPermissionsGuard } from 'ngx-permissions';
 import { EmployeesComponent } from './employees.component';
 import { ManageEmployeeInviteComponent } from './manage-employee-invite/manage-employee-invite.component';
 import { EditEmployeeComponent } from './edit-employee/edit-employee.component';
-import { 
+import {
 	EditEmployeeContactComponent,
 	EditEmployeeEmploymentComponent,
 	EditEmployeeHiringComponent,
 	EditEmployeeLocationComponent,
 	EditEmployeeMainComponent,
 	EditEmployeeNetworksComponent,
-	EditEmployeeProjectsComponent, 
-	EditEmployeeRatesComponent 
+	EditEmployeeProjectsComponent,
+	EditEmployeeRatesComponent
 } from './edit-employee/edit-employee-profile';
+import { EditEmployeeResolver } from './edit-employee';
 
 export function redirectTo() {
 	return '/pages/dashboard';
@@ -50,6 +51,9 @@ const routes: Routes = [
 				],
 				redirectTo
 			}
+		},
+		resolve: {
+			employee: EditEmployeeResolver
 		},
 		children: [
 			{

@@ -7,7 +7,8 @@ import {
 	IEmployeeUpdateInput,
 	IEmployeeUpdateProfileStatus,
 	IBasePerTenantAndOrganizationEntityModel,
-	IDateRangePicker
+	IDateRangePicker,
+	IPagination
 } from '@gauzy/contracts';
 import { firstValueFrom, Observable } from 'rxjs';
 import { toParams } from '@gauzy/common-angular';
@@ -15,25 +16,26 @@ import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable()
 export class EmployeesService {
-	constructor(private http: HttpClient) {}
+	constructor(
+		private readonly http: HttpClient
+	) {}
 
 	getAllPublic(
-		relations?: string[],
-		findInput?: IEmployeeFindInput
-	): Observable<{ items: IEmployee[]; total: number }> {
-		const data = JSON.stringify({ relations, findInput });
-		return this.http.get<{ items: IEmployee[]; total: number }>(
-			`${API_PREFIX}/employee/public`,
-			{
-				params: { data }
-			}
-		);
+		request: IEmployeeFindInput,
+		relations: string[] = []
+	): Observable<IPagination<IEmployee>> {
+		return this.http.get<IPagination<IEmployee>>(`${API_PREFIX}/public/employee`, {
+			params: toParams({ ...request, relations })
+		})
 	}
 
-	getPublicById(id: string, relations?: string[]): Observable<IEmployee> {
-		const data = JSON.stringify({ relations });
-		return this.http.get<IEmployee>(`${API_PREFIX}/employee/public/${id}`, {
-			params: { data }
+	getPublicById(
+		slug: string,
+		id: string,
+		relations: string[] = []
+	): Observable<IEmployee> {
+		return this.http.get<IEmployee>(`${API_PREFIX}/public/employee/${slug}/${id}`, {
+			params: toParams({ relations })
 		});
 	}
 
@@ -123,11 +125,9 @@ export class EmployeesService {
 
 	getEmployeeById(id: string, relations?: string[], useTenant?: boolean) {
 		const data = JSON.stringify({ relations, useTenant });
-		return firstValueFrom(
-			this.http.get<IEmployee>(`${API_PREFIX}/employee/${id}`, {
-				params: { data }
-			})
-		);
+		return this.http.get<IEmployee>(`${API_PREFIX}/employee/${id}`, {
+			params: { data }
+		});
 	}
 
 	setEmployeeProfileStatus(id: string, status: IEmployeeUpdateProfileStatus): Promise<IEmployee> {
