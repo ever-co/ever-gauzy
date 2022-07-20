@@ -761,7 +761,12 @@
 			<ng-container *ngIf="widgets.length > 0">
 				<ng-container *ngFor="let widget of widgets">
 					<div class="title">
-						<i *ngIf="!widget.hide" class="fas fa-check"></i>
+						<i
+							[ngStyle]="{
+								visibility: widget.hide ? 'hidden' : 'visible'
+							}"
+							class="fas fa-check"
+						></i>
 						<div>
 							{{ titleMapper(widget.position) | translate }}
 						</div>
@@ -775,9 +780,16 @@
 			<ng-container *ngIf="windows.length > 0">
 				<ng-container *ngFor="let window of windows">
 					<div class="title">
-						<i *ngIf="!window.hide" class="fas fa-check"></i>
+						<i
+							[ngStyle]="{
+								visibility: window.hide ? 'hidden' : 'visible'
+							}"
+							class="fas fa-check"
+						></i>
 						<div>
-							{{ titleMapper(window.position, false) | translate }}
+							{{
+								titleMapper(window.position, false) | translate
+							}}
 						</div>
 					</div>
 				</ng-container>
