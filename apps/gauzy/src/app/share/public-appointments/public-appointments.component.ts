@@ -1,13 +1,12 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { Router, ActivatedRoute } from '@angular/router';
 import { IEmployee, IEventType } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
+import { firstValueFrom } from 'rxjs';
 import { filter } from 'rxjs/operators';
-import { EmployeesService } from '../../@core/services';
-import { EventTypeService } from '../../@core/services/event-type.service';
-import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
+import { EmployeesService, EventTypeService, Store } from '../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -25,11 +24,11 @@ export class PublicAppointmentsComponent
 	eventTypesExist: boolean;
 
 	constructor(
-		private router: Router,
-		private route: ActivatedRoute,
-		private store: Store,
-		private employeeService: EmployeesService,
-		private eventTypeService: EventTypeService,
+		private readonly router: Router,
+		private readonly route: ActivatedRoute,
+		private readonly store: Store,
+		private readonly employeeService: EmployeesService,
+		private readonly eventTypeService: EventTypeService,
 		readonly translateService: TranslateService
 	) {
 		super(translateService);
@@ -40,10 +39,10 @@ export class PublicAppointmentsComponent
 			.pipe(untilDestroyed(this))
 			.subscribe(async (params) => {
 				try {
-					this.employee = await this.employeeService.getEmployeeById(
+					this.employee = await firstValueFrom(this.employeeService.getEmployeeById(
 						params.id,
 						['user']
-					);
+					));
 					await this._getEventTypes();
 				} catch (error) {
 					await this.router.navigate(['/share/404']);

@@ -74,10 +74,10 @@ export class KeyResultDetailsComponent
 
 	async ngOnInit() {
 		this.organization = this.store.selectedOrganization;
-		const employee = await this.employeeService.getEmployeeById(
+		const employee = await firstValueFrom(this.employeeService.getEmployeeById(
 			this.keyResult.owner.id,
 			['user']
-		);
+		));
 		this.src = employee.user.imageUrl;
 		this.ownerName = employee.user.name;
 		this.updates = [...this.keyResult.updates].sort((a, b) =>

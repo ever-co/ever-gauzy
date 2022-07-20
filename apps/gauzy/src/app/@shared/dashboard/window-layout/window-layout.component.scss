@@ -1,0 +1,59 @@
+.masonry-boundary {
+  -webkit-column-count: 2;
+  -moz-column-count: 2;
+  column-count: 2;
+  -webkit-column-gap: 1rem;
+  -moz-column-gap: 1rem;
+  column-gap: 1rem;
+  -moz-column-gap: 1rem;
+  -webkit-column-gap: 1rem;
+  column-gap: 1rem;
+  .window {
+    display: inline-block;
+    width: 100%;
+    -webkit-transition: 1s ease all;
+    transition: 1s ease all;
+    box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    margin-bottom: 1rem;
+    ga-window {
+      cursor: pointer;
+      ::ng-deep nb-card {
+        margin: 0;
+      }
+    }
+  }
+}
+
+@media only screen and (max-width: 1200px) {
+  .masonry-boundary {
+    -moz-column-count: 1;
+    -webkit-column-count: 1;
+    column-count: 1;
+  }
+}
+@media only screen and (min-width: 1201px) {
+  .masonry-boundary {
+    -moz-column-count: 2;
+    -webkit-column-count: 2;
+    column-count: 2;
+  }
+}
+
+.cdk-drop-list-dragging > .cdk-drag-placeholder {
+  ::ng-deep {
+    nb-card nb-card-body {
+      background-color: var(--gauzy-sidebar-background-3);
+      border-radius: var(--border-radius);
+    }
+  }
+}
+
+.cdk-drop-list-dragging > *:not(.cdk-drag-placeholder) {
+  display: none;
+}
+
+.cdk-drag-animating {
+  transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+}

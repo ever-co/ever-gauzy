@@ -130,6 +130,7 @@ import { WarehouseModule } from './warehouse/warehouse.module';
 import { MerchantModule } from './merchant/merchant.module';
 import { GauzyCloudModule } from './gauzy-cloud/gauzy-cloud.module';
 import { ContactModule } from './contact/contact.module';
+import { PublicShareModule } from './public-share/public-share.module';
 
 const { unleashConfig } = environment;
 
@@ -311,7 +312,8 @@ if (process.env.DB_TYPE === 'postgres') {
 		WarehouseModule,
 		MerchantModule,
 		GauzyCloudModule,
-		ContactModule
+		ContactModule,
+		PublicShareModule
 	],
 	controllers: [AppController],
 	providers: [AppService],

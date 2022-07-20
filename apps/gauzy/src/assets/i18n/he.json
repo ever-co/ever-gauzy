@@ -211,10 +211,6 @@
 		"SATURDAY": "Saturday",
 		"SUNDAY": "Sunday",
 		"NONE": "None",
-		"BI_WEEKLY": "Bi Weekly",
-		"WEEKLY": "Weekly",
-		"TWICE_PER_MONTH": "Twice per month",
-		"MONTHLY": "Monthly",
 		"ROLE": "Role",
 		"PROJECTS": "פרויקטים",
 		"PROJECT": "פרויקטים",
@@ -1936,6 +1932,8 @@
 		"AWARDS": "Awards",
 		"COMPANY_SKILLS": "Company Skills",
 		"SKILLS": "Skills",
+		"PROFILE": "Profile",
+		"PORTFOLIO": "Portfolio",
 		"OVERVIEW": "Overview",
 		"DESCRIPTION": "Description",
 		"TOTAL_BONUSES_PAID": "Total Bonuses Paid",
@@ -3627,7 +3625,9 @@
 			"DAILY_TIMESHEET": "You have not any time log yet for this day.",
 			"WEEKLY_TIMESHEET": "You have not any time log yet for these day's.",
 			"APPROVAL_TIMESHEET": "You don't have any timesheets for approvals yet for these day's."
-		}
+		},
+		"VIEW_WINDOWS": "View windows",
+		"VIEW_WIDGETS": "View widgets"
 	},
 	"ACTIVITY": {
 		"SCREENSHOTS": "Screenshots",

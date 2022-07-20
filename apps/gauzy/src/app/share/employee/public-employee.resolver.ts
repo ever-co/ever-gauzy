@@ -2,7 +2,6 @@ import { Injectable } from '@angular/core';
 import {
 	Resolve,
 	Router,
-	RouterStateSnapshot,
 	ActivatedRouteSnapshot
 } from '@angular/router';
 import { EmployeesService } from '../../@core/services';
@@ -14,23 +13,22 @@ import { IEmployee } from '@gauzy/contracts';
 @Injectable({
 	providedIn: 'root'
 })
-export class EmployeeResolver implements Resolve<any> {
+export class PublicEmployeeResolver implements Resolve<any> {
 	constructor(
-		private employeesService: EmployeesService,
-		private router: Router,
-		private errorHandlingService: ErrorHandlingService
+		private readonly employeesService: EmployeesService,
+		private readonly router: Router,
+		private readonly errorHandlingService: ErrorHandlingService
 	) {}
 
 	resolve(
-		route: ActivatedRouteSnapshot,
-		state: RouterStateSnapshot
+		route: ActivatedRouteSnapshot
 	): Observable<IEmployee> {
-		return this.employeesService
-			.getPublicById(route.params.employeeId, [
+		const slug = route.params.slug;
+		const employeeId = route.params.employeeId;
+		try {
+			return this.employeesService.getPublicById(slug, employeeId, [
 				'user',
-				'organization',
 				'organizationEmploymentTypes',
-				'tags',
 				'skills'
 			])
 			.pipe(
@@ -40,5 +38,8 @@ export class EmployeeResolver implements Resolve<any> {
 					return EMPTY;
 				})
 			);
+        } catch (error) {
+            this.router.navigateByUrl('/');
+        }
 	}
 }

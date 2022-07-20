@@ -31,25 +31,24 @@ export class OrganizationUpdateHandler
 					isDefault: false
 				});
 			}
-
 			const request = {
 				...input,
-				show_profits: input.show_profits || false,
-				show_bonuses_paid: input.show_bonuses_paid || false,
-				show_income: input.show_income || false,
-				show_total_hours: input.show_total_hours || false,
-				show_projects_count: input.show_projects_count || true,
-				show_minimum_project_size: input.show_minimum_project_size || true,
-				show_clients_count: input.show_clients_count || true,
-				show_clients: input.show_clients || true,
-				show_employees_count: input.show_employees_count || true
+				show_profits: input.show_profits === true ? true : false,
+				show_bonuses_paid: input.show_bonuses_paid === true ? true : false,
+				show_income: input.show_income === true ? true : false,
+				show_total_hours: input.show_total_hours === true ? true : false,
+				show_projects_count: input.show_projects_count === false ? false : true,
+				show_minimum_project_size: input.show_minimum_project_size === false ? false : true,
+				show_clients_count: input.show_clients_count === false ? false : true,
+				show_clients: input.show_clients === false ? false : true,
+				show_employees_count: input.show_employees_count === false ? false : true
 			};
 			await this.organizationService.create({
 				id,
 				...request
 			});
 		}
-		
+
 		return await this.organizationService.findOneByIdString(id);
 	}
 }

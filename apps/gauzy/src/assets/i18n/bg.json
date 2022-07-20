@@ -211,10 +211,6 @@
 		"SATURDAY": "Събота",
 		"SUNDAY": "Неделя",
 		"NONE": "Нито един",
-		"BI_WEEKLY": "Двуседмично",
-		"WEEKLY": "Седмично",
-		"TWICE_PER_MONTH": "Два пъти месечно",
-		"MONTHLY": "Ежемесечно",
 		"ROLE": "Роля",
 		"PROJECTS": "Проекти",
 		"PROJECT": "Проект",
@@ -1936,6 +1932,8 @@
 		"AWARDS": "Awards",
 		"COMPANY_SKILLS": "Company Skills",
 		"SKILLS": "Skills",
+		"PROFILE": "Profile",
+		"PORTFOLIO": "Portfolio",
 		"OVERVIEW": "Overview",
 		"DESCRIPTION": "Description",
 		"TOTAL_BONUSES_PAID": "Total Bonuses Paid",
@@ -3627,7 +3625,9 @@
 			"DAILY_TIMESHEET": "You have not any time log yet for this day.",
 			"WEEKLY_TIMESHEET": "You have not any time log yet for these day's.",
 			"APPROVAL_TIMESHEET": "You don't have any timesheets for approvals yet for these day's."
-		}
+		},
+		"VIEW_WINDOWS": "View windows",
+		"VIEW_WIDGETS": "View widgets"
 	},
 	"ACTIVITY": {
 		"SCREENSHOTS": "Screenshots",

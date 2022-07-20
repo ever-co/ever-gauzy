@@ -24,8 +24,15 @@
 										size="medium"
 										fullWidth
 									>
-										<nb-option *ngFor="let payPeriod of payPeriods" [value]="payPeriod" >
-											{{ 'SM_TABLE.' + payPeriod | translate }}
+										<nb-option
+											*ngFor="let payPeriod of payPeriods"
+											[value]="payPeriod"
+										>
+											{{
+												payPeriod
+													| replace: '_':' '
+														| titlecase
+											}}
 										</nb-option>
 									</nb-select>
 								</div>

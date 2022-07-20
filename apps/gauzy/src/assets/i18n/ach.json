@@ -211,10 +211,6 @@
 		"SATURDAY": "crwdns2177:0crwdne2177:0",
 		"SUNDAY": "crwdns2179:0crwdne2179:0",
 		"NONE": "crwdns2271:0crwdne2271:0",
-		"BI_WEEKLY": "crwdns2273:0crwdne2273:0",
-		"WEEKLY": "crwdns2275:0crwdne2275:0",
-		"TWICE_PER_MONTH": "crwdns2277:0crwdne2277:0",
-		"MONTHLY": "crwdns2279:0crwdne2279:0",
 		"ROLE": "crwdns2303:0crwdne2303:0",
 		"PROJECTS": "crwdns2353:0crwdne2353:0",
 		"PROJECT": "crwdns10262:0crwdne10262:0",
@@ -1936,6 +1932,8 @@
 		"AWARDS": "crwdns4800:0crwdne4800:0",
 		"COMPANY_SKILLS": "crwdns4802:0crwdne4802:0",
 		"SKILLS": "crwdns7746:0crwdne7746:0",
+		"PROFILE": "crwdns11449:0crwdne11449:0",
+		"PORTFOLIO": "crwdns11451:0crwdne11451:0",
 		"OVERVIEW": "crwdns7748:0crwdne7748:0",
 		"DESCRIPTION": "crwdns7750:0crwdne7750:0",
 		"TOTAL_BONUSES_PAID": "crwdns4826:0crwdne4826:0",
@@ -3627,7 +3625,9 @@
 			"DAILY_TIMESHEET": "crwdns11435:0crwdne11435:0",
 			"WEEKLY_TIMESHEET": "crwdns11437:0crwdne11437:0",
 			"APPROVAL_TIMESHEET": "crwdns11439:0crwdne11439:0"
-		}
+		},
+		"VIEW_WINDOWS": "crwdns11453:0crwdne11453:0",
+		"VIEW_WIDGETS": "crwdns11455:0crwdne11455:0"
 	},
 	"ACTIVITY": {
 		"SCREENSHOTS": "crwdns4944:0crwdne4944:0",

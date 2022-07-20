@@ -1,0 +1,47 @@
+.grid-boundary {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+  -webkit-box-align: start;
+  align-items: flex-start;
+  -webkit-box-pack: start;
+  justify-content: flex-start;
+  column-gap: 1rem;
+  grid-gap: 1rem;
+  margin-bottom: 1rem;
+
+  ga-widget {
+    cursor: pointer;
+    ::ng-deep nb-card {
+      margin: 0;
+    }
+  }
+}
+
+.cdk-drag-preview {
+  ::ng-deep {
+    nb-card nb-card-body {
+      background-color: var(--color-primary-transparent-100);
+      border-radius: var(--border-radius);
+      * {
+        color: var(--text-primary-color) !important;
+      }
+    }
+  }
+}
+
+.cdk-drop-list-dragging > .cdk-drag-placeholder {
+  ::ng-deep {
+    nb-card nb-card-body {
+      background-color: var(--gauzy-sidebar-background-3);
+      border-radius: var(--border-radius);
+    }
+  }
+}
+
+.cdk-drop-list-dragging > *:not(.cdk-drag-placeholder) {
+  display: none;
+}
+
+.cdk-drag-animating {
+  transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+}

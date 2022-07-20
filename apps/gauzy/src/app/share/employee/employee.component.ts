@@ -1,57 +1,61 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { Observable, Subject, of } from 'rxjs';
-import { map, tap, takeUntil } from 'rxjs/operators';
-import { PermissionsEnum, IEmployee, IEmployeeAward } from '@gauzy/contracts';
-import { Store } from '../../@core/services/store.service';
-import * as moment from 'moment';
+import { Observable, of } from 'rxjs';
+import { map, tap } from 'rxjs/operators';
 import { NbDialogService } from '@nebular/theme';
+import { PermissionsEnum, IEmployee, IEmployeeAward, IOrganization } from '@gauzy/contracts';
+import * as moment from 'moment';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
+import {
+	EmployeeAwardService,
+	EmployeesService,
+	ErrorHandlingService,
+	Store,
+	ToastrService,
+	UsersService
+} from '../../@core/services';
 import { PublicPageEmployeeMutationComponent } from '../../@shared/employee/public-page-employee-mutation/public-page-employee-mutation.component';
-import { EmployeesService, UsersService } from '../../@core/services';
-import { ToastrService } from '../../@core/services/toastr.service';
-import { ErrorHandlingService } from '../../@core/services/error-handling.service';
-import { EmployeeAwardService } from '../../@core/services/employee-award.service';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-employee',
+	selector: 'ngx-employee-share',
 	templateUrl: './employee.component.html',
 	styleUrls: ['./employee.component.scss']
 })
-export class EmployeeComponent
-	extends TranslationBaseComponent
+export class EmployeeComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
-	private _ngDestroy$: Subject<void> = new Subject();
+
 	hasEditPermission$: Observable<boolean>;
 	imageUrl: string;
 	imageUpdateButton: boolean;
-	employee$: Observable<IEmployee>;
+	public organization$: Observable<IOrganization>;
+	public organization: IOrganization;
+	public employee$: Observable<IEmployee>;
 	hoverState: boolean;
-	employeeAwards: IEmployeeAward[];
+	employeeAwards: IEmployeeAward[] = [];
 
 	constructor(
-		private employeeService: EmployeesService,
-		private userService: UsersService,
-		private activatedRoute: ActivatedRoute,
+		private readonly employeeService: EmployeesService,
+		private readonly userService: UsersService,
+		private readonly route: ActivatedRoute,
 		readonly translateService: TranslateService,
-		private dialogService: NbDialogService,
-		private toastrService: ToastrService,
-		private store: Store,
-		private errorHandlingService: ErrorHandlingService,
-		private employeeAwardService: EmployeeAwardService
+		private readonly dialogService: NbDialogService,
+		private readonly toastrService: ToastrService,
+		private readonly store: Store,
+		private readonly errorHandlingService: ErrorHandlingService,
+		private readonly employeeAwardService: EmployeeAwardService
 	) {
 		super(translateService);
 	}
 
 	ngOnInit(): void {
-		this.initEmployeePublicData();
-		this.initEmployeeAwards();
-		this.handleUserPermission();
-	}
-
-	private initEmployeePublicData() {
-		this.employee$ = this.activatedRoute.data.pipe(
+		this.organization$ = this.route.data.pipe(
+			map(({ organization }) => organization),
+			tap((organization: IOrganization) => this.organization = organization)
+		);
+		this.employee$ = this.route.data.pipe(
 			map(({ employee }) => ({
 				...employee,
 				startedWorkOn: employee.startedWorkOn
@@ -60,25 +64,26 @@ export class EmployeeComponent
 			})),
 			tap((employee) => (this.imageUrl = employee.user.imageUrl))
 		);
-	}
-
-	private initEmployeeAwards() {
-		const employeeId = this.activatedRoute.snapshot.params.employeeId;
-		this.employeeAwardService
-			.getAll({ employeeId })
-			.pipe(
-				tap(({ items }) => (this.employeeAwards = items)),
-				takeUntil(this._ngDestroy$)
-			)
-			.subscribe();
-	}
-
-	private handleUserPermission() {
 		this.hasEditPermission$ = this.store.userRolePermissions$.pipe(
 			map(() =>
 				this.store.hasPermission(PermissionsEnum.PUBLIC_PAGE_EDIT)
 			)
 		);
+	}
+
+	ngAfterViewInit() {
+		this.initEmployeeAwards();
+	}
+
+	private initEmployeeAwards() {
+		const employeeId = this.route.snapshot.params.employeeId;
+		this.employeeAwardService
+			.getAll({ employeeId })
+			.pipe(
+				tap(({ items }) => (this.employeeAwards = items)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	updateImageUrl(url: string) {
@@ -113,7 +118,7 @@ export class EmployeeComponent
 						await this.handleEmployeeUpdate(employee, empFormValue);
 					}
 				}),
-				takeUntil(this._ngDestroy$)
+				untilDestroyed(this)
 			)
 			.subscribe();
 	}
@@ -130,6 +135,10 @@ export class EmployeeComponent
 		}
 	) {
 		try {
+			if (!this.organization) {
+				return;
+			}
+			const { id: organizationId, tenantId } = this.organization;
 			const updatedUser: any = await this.userService.update(
 				employee.user.id,
 				{
@@ -142,9 +151,12 @@ export class EmployeeComponent
 			);
 			const employeeUpdatedRes = await this.employeeService.update(
 				employee.id,
-				empFormValue
+				{
+					organizationId,
+					tenantId,
+					...empFormValue
+				}
 			);
-
 			const updatedEmployee = {
 				...employee,
 				...employeeUpdatedRes,
@@ -174,8 +186,5 @@ export class EmployeeComponent
 		this.toastrService.danger(error, 'Error');
 	}
 
-	ngOnDestroy(): void {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+	ngOnDestroy(): void {}
 }

@@ -26,12 +26,12 @@ export class GoalDetailsComponent
 	ownerName: string;
 	updates: Array<IKeyResultUpdate> = [];
 	constructor(
-		private dialogRef: NbDialogRef<GoalDetailsComponent>,
-		private employeeService: EmployeesService,
-		private dialogService: NbDialogService,
-		private keyResultService: KeyResultService,
-		private goalService: GoalService,
-		private toastrService: ToastrService,
+		private readonly dialogRef: NbDialogRef<GoalDetailsComponent>,
+		private readonly employeeService: EmployeesService,
+		private readonly dialogService: NbDialogService,
+		private readonly keyResultService: KeyResultService,
+		private readonly goalService: GoalService,
+		private readonly toastrService: ToastrService,
 		readonly translateService: TranslateService
 	) {
 		super(translateService);
@@ -39,10 +39,10 @@ export class GoalDetailsComponent
 
 	async ngOnInit() {
 		if (!!this.goal.ownerEmployee) {
-			const employee = await this.employeeService.getEmployeeById(
+			const employee = await firstValueFrom(this.employeeService.getEmployeeById(
 				this.goal.ownerEmployee.id,
 				['user']
-			);
+			));
 			this.src = employee.user.imageUrl;
 			this.ownerName = employee.user.name;
 		} else if (!!this.goal.organization) {

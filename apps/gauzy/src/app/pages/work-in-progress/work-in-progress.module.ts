@@ -13,6 +13,7 @@ import { TranslateModule } from '../../@shared/translate/translate.module';
 		NbIconModule,
 		TranslateModule
 	],
-	declarations: [WorkInProgressComponent]
+	declarations: [WorkInProgressComponent],
+	exports: [WorkInProgressComponent]
 })
 export class WorkInProgressModule {}

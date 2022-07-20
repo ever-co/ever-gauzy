@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { combineLatest, debounceTime } from 'rxjs';
+import { combineLatest, debounceTime, firstValueFrom } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { Subject } from 'rxjs/internal/Subject';
 import {
@@ -35,10 +35,8 @@ import { TranslationBaseComponent } from '../../../@shared/language-base';
 		'./accounting.component.scss'
 	]
 })
-export class AccountingComponent
-	extends TranslationBaseComponent
-	implements OnInit, OnDestroy
-{
+export class AccountingComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
+
 	aggregatedEmployeeStatistics: IAggregatedEmployeeStatistic;
 	selectedDateRange: IDateRangePicker;
 	organization: IOrganization;
@@ -226,10 +224,10 @@ export class AccountingComponent
 	}
 
 	async selectEmployee(employee: ISelectedEmployee) {
-		const people = await this.employeesService.getEmployeeById(
+		const people = await firstValueFrom(this.employeesService.getEmployeeById(
 			employee.id,
 			['user']
-		);
+		));
 		this.store.selectedEmployee = employee.id
 			? ({
 					id: people.id,

@@ -8,7 +8,7 @@ import { HiringDTO } from "./hiring.dto";
 import { RatesDTO } from "./rates.dto";
 
 /**
- * Only EMPLOYEE updates these fields
+ * EMPLOYEE can updates these fields only
  * Public Fields DTO
  */
 export class UpdateProfileDTO extends IntersectionType(

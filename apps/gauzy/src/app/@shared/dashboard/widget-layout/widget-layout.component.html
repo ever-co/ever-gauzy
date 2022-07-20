@@ -1,0 +1,17 @@
+<div class="grid-boundary" cdkDropListGroup>
+	<div
+		cdkDropList
+		cdkDropListOrientation="horizontal"
+		[cdkDropListData]="index"
+		(cdkDropListDropped)="drop($event)"
+		*ngFor="let widget of widgets; let index = index"
+	>
+		<ga-widget
+			cdkDrag
+			(cdkDragEnded)="onDragEnded($event)"
+			[widgetDragEnded]="event"
+			[templateRef]="widget"
+			[position]="index"
+		></ga-widget>
+	</div>
+</div>
