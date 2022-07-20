@@ -20,17 +20,18 @@ import { WindowService } from './window.service';
 	styleUrls: ['./window.component.scss']
 })
 export class WindowComponent extends GuiDrag implements OnInit, AfterViewInit {
-	@Input()
-	public windowDragEnded: Observable<any>;
-	@ViewChild(NbPopoverDirective) windowPopover: NbPopoverDirective;
-	@ViewChild('window') element: ElementRef;
+	private _windowDragEnded: Observable<any>;
+	@ViewChild(NbPopoverDirective)
+	private _windowPopover: NbPopoverDirective;
+	@ViewChild('window')
+	private _element: ElementRef;
 
 	constructor(private readonly windowService: WindowService) {
 		super();
 	}
 	ngAfterViewInit(): void {
-		if (this.element) {
-			const win: HTMLElement = this.element.nativeElement;
+		if (this._element) {
+			const win: HTMLElement = this._element.nativeElement;
 			const title: any = win.querySelector('nb-card-header');
 			if (title) this.title = title.innerText;
 		}
@@ -54,8 +55,17 @@ export class WindowComponent extends GuiDrag implements OnInit, AfterViewInit {
 
 	public onClickSetting(event: boolean) {
 		if (event) {
-			this.windowPopover.hide();
+			this._windowPopover.hide();
 			this.windowService.serialize();
 		}
+	}
+
+	public get windowDragEnded(): Observable<any> {
+		return this._windowDragEnded;
+	}
+
+	@Input()
+	public set windowDragEnded(value: Observable<any>) {
+		this._windowDragEnded = value;
 	}
 }
