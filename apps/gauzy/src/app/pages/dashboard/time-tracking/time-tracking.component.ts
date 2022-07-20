@@ -654,6 +654,7 @@ export class TimeTrackingComponent
 				window.hide = !value.hide;
 			}
 		});
+		this.windowService.serialize();
 	}
 
 	public updateWidgetVisibility(value: GuiDrag) {
@@ -662,5 +663,6 @@ export class TimeTrackingComponent
 				widget.hide = !value.hide;
 			}
 		});
+		this.widgetService.serialize();
 	}
 }
