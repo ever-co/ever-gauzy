@@ -3625,7 +3625,9 @@
 			"DAILY_TIMESHEET": "You have not any time log yet for this day.",
 			"WEEKLY_TIMESHEET": "You have not any time log yet for these day's.",
 			"APPROVAL_TIMESHEET": "You don't have any timesheets for approvals yet for these day's."
-		}
+		},
+		"VIEW_WINDOWS": "View windows",
+		"VIEW_WIDGETS": "View widgets"
 	},
 	"ACTIVITY": {
 		"SCREENSHOTS": "Screenshots",
