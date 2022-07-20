@@ -1,5 +1,5 @@
 import { IOrganization, IOrganizationContact, IPagination } from '@gauzy/contracts';
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindConditions, Repository } from 'typeorm';
 import { Organization, OrganizationContact, OrganizationProject } from './../../core/entities/internal';
@@ -46,12 +46,10 @@ export class PublicOrganizationService {
 		options: FindConditions<OrganizationContact>
 	): Promise<IPagination<IOrganizationContact>> {
 		try {
-			const [items = [], total = 0] = await this.organizationContact.findAndCount({
-				where: options
-			});
+			const [items = [], total = 0] = await this.organizationContact.findAndCount(options);
 			return { items, total };
 		} catch (error) {
-			throw new BadRequestException(error, `Error while gettting public employees`);
+			throw new NotFoundException(`The requested public clients was not found`);
 		}
 	}
 
@@ -67,7 +65,7 @@ export class PublicOrganizationService {
 		try {
 			return await this.organizationContact.count(options);
 		} catch (error) {
-			throw new BadRequestException(error, `Error while gettting public employees`);
+			throw new NotFoundException(`The requested client counts was not found`);
 		}
 	}
 
@@ -83,7 +81,7 @@ export class PublicOrganizationService {
 		try {
 			return await this.organizationProject.count(options);
 		} catch (error) {
-			throw new BadRequestException(error, `Error while gettting public employees`);
+			throw new NotFoundException(`The requested project counts was not found`);
 		}
 	}
 }

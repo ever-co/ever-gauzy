@@ -20,10 +20,12 @@ export class EmployeesService {
 		private readonly http: HttpClient
 	) {}
 
-	getAllPublic(request: IEmployeeFindInput): Observable<IPagination<IEmployee>> {
-		const params = toParams(request);
+	getAllPublic(
+		request: IEmployeeFindInput,
+		relations: string[] = []
+	): Observable<IPagination<IEmployee>> {
 		return this.http.get<IPagination<IEmployee>>(`${API_PREFIX}/public/employee`, {
-			params
+			params: toParams({ ...request, relations })
 		})
 	}
 

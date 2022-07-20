@@ -42,10 +42,14 @@ export class PublicEmployeeController {
 		@Query(new ValidationPipe({
 			transform: true,
 			whitelist: true
-		})) options: TenantOrganizationBaseDTO
+		})) conditions: TenantOrganizationBaseDTO,
+		@Query(new ValidationPipe({
+			transform: true,
+			whitelist: true
+		})) options: PublicEmployeeQueryDTO
 	): Promise<IPagination<IEmployee>> {
 		return await this.queryBus.execute(
-			new FindPublicEmployeesByOrganizationQuery(options)
+			new FindPublicEmployeesByOrganizationQuery(conditions, options.relations)
 		);
 	}
 

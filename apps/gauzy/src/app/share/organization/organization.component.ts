@@ -162,7 +162,11 @@ export class OrganizationComponent extends TranslationBaseComponent
 		}
 		const { id: organizationId, tenantId } = this.organization;
 		if (!!this.organization.show_employees_count) {
-			this.employees$ = this.employeesService.getAllPublic({ organizationId, tenantId }).pipe(
+			this.employees$ = this.employeesService.getAllPublic({ organizationId, tenantId }, [
+				'user',
+				'organizationPosition',
+				'skills'
+			]).pipe(
 				tap(({ total }) => this.employeeCounts$ = observableOf(total)),
 				map(({ items }) => items),
 			);

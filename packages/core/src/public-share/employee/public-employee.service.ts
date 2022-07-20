@@ -19,12 +19,13 @@ export class PublicEmployeeService {
 	 * @returns
 	 */
 	async findPublicEmployeeByOrganization(
-		options: FindConditions<Employee>
+		where: FindConditions<Employee>,
+		relations: string[] = []
 	): Promise<IPagination<IEmployee>> {
 		try {
 			const [items = [], total = 0] = await this.repository.findAndCount({
-				where: options,
-				relations: ['user', 'organizationPosition', 'skills']
+				where,
+				relations
 			});
 			return { items, total };
 		} catch (error) {
