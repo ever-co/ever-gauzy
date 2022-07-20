@@ -1,15 +1,18 @@
 import { AfterViewInit, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, UrlSerializer } from '@angular/router';
+import { Location } from '@angular/common';
 import {
 	IEmployee,
+	IOrganization,
 	ISelectedEmployee,
 	IUser
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { distinctUntilChange } from '@gauzy/common-angular';
+import { debounceTime } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
-import { EmployeesService, Store } from '../../../@core/services';
+import { Store } from '../../../@core/services';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { ALL_EMPLOYEES_SELECTED } from '../../../@theme/components/header/selectors/employee';
 
@@ -22,20 +25,21 @@ import { ALL_EMPLOYEES_SELECTED } from '../../../@theme/components/header/select
 		'../../dashboard/dashboard.component.scss'
 	]
 })
-export class EditEmployeeComponent
-	extends TranslationBaseComponent
+export class EditEmployeeComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy, AfterViewInit {
 
+	organization: IOrganization;
 	selectedEmployee: IEmployee;
 	selectedEmployeeFromHeader: ISelectedEmployee;
 
 	constructor(
 		private readonly route: ActivatedRoute,
 		private readonly router: Router,
-		private readonly employeeService: EmployeesService,
 		private readonly store: Store,
 		public readonly translateService: TranslateService,
-		private readonly cdr: ChangeDetectorRef
+		private readonly cdr: ChangeDetectorRef,
+		private readonly _urlSerializer: UrlSerializer,
+		private readonly _location: Location
 	) {
 		super(translateService);
 	}
@@ -43,48 +47,55 @@ export class EditEmployeeComponent
 	ngOnInit() {
 		this.store.selectedEmployee$
 			.pipe(
+				debounceTime(200),
 				filter((employee: ISelectedEmployee) => !!employee && !!employee.id),
 				distinctUntilChange(),
 				tap((employee) => this.selectedEmployeeFromHeader = employee),
+				tap(({ id }) => {
+					this.cdr.detectChanges();
+					this.router.navigate(['/pages/employees/edit/', id]);
+				}),
 				untilDestroyed(this)
 			)
-			.subscribe(({ id }) => {
-				this.cdr.detectChanges();
-				this.router.navigate(['/pages/employees/edit/', id]);
-			});
+			.subscribe();
+		this.store.selectedOrganization$
+			.pipe(
+				filter((organization: IOrganization) => !!organization),
+				tap((organization: IOrganization) => this.organization = organization),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	ngAfterViewInit() {
-		this.route.params
+		this.route.data
 			.pipe(
-				filter((params) => !!params.id)
+				debounceTime(500),
+				distinctUntilChange(),
+				filter((data) => !!data && !!data.employee),
+				tap(({ employee }) => this.selectedEmployee = employee),
+				tap(({ employee }) => {
+					try {
+						if (employee.startedWorkOn) {
+							setTimeout(() => {
+								this.store.selectedEmployee = {
+									id: employee.id,
+									firstName: employee.user.firstName,
+									lastName: employee.user.lastName,
+									fullName: employee.user.name,
+									imageUrl: employee.user.imageUrl,
+									tags: employee.user.tags || [],
+									skills: employee.skills || []
+								};
+							}, 1600);
+						}
+					} catch (error) {
+						this.router.navigate(['/pages/employees']);
+					}
+				}),
+				untilDestroyed(this)
 			)
-			.subscribe(async ({ id }) => {
-				try {
-					const employee = await this.employeeService.getEmployeeById(id, [
-						'user',
-						'organizationPosition',
-						'tags',
-						'skills'
-					]);
-					this.selectedEmployee = employee;
-					if (employee.startedWorkOn) {
-						setTimeout(() => {
-							this.store.selectedEmployee = {
-								id: employee.id,
-								firstName: employee.user.firstName,
-								lastName: employee.user.lastName,
-								fullName: employee.user.name,
-								imageUrl: employee.user.imageUrl,
-								tags: employee.user.tags || [],
-								skills: employee.skills || []
-							};
-						}, 1600);
-					}	
-				} catch (error) {
-					this.router.navigate(['/pages/employees']);
-				}
-			});
+			.subscribe();
 	}
 
 	updateImage(imageUrl: string) {
@@ -99,6 +110,19 @@ export class EditEmployeeComponent
 		} catch (error) {
 			console.log('Error while uploading profile avatar', error);
 		}
+	}
+
+	editPublicPage() {
+		if (!this.organization || !this.selectedEmployee) {
+			return;
+		}
+		// The call to Location.prepareExternalUrl is the key thing here.
+		let tree = this.router.createUrlTree([
+			`/share/organization/${this.organization.profile_link}/${this.selectedEmployee.profile_link}/${this.selectedEmployee.id}`
+		]);
+    	// As far as I can tell you don't really need the UrlSerializer.
+		const externalUrl = this._location.prepareExternalUrl(this._urlSerializer.serialize(tree));
+		window.open(externalUrl, '_blank');
 	}
 
 	ngOnDestroy() {

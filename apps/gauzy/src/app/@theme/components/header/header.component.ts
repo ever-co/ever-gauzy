@@ -12,7 +12,7 @@ import {
 	NbThemeService,
 	NbMenuItem
 } from '@nebular/theme';
-import { combineLatest, lastValueFrom, Subject } from 'rxjs';
+import { combineLatest, firstValueFrom, lastValueFrom, Subject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
@@ -277,13 +277,13 @@ export class HeaderComponent extends TranslationBaseComponent
 						this.store.selectedEmployee = ALL_EMPLOYEES_SELECTED;
 					}
 				} else {
-					const emp = await this.employeesService.getEmployeeById(
+					const employee = await firstValueFrom(this.employeesService.getEmployeeById(
 						this.user.employeeId,
 						[]
-					);
-					if (emp) {
+					));
+					if (employee) {
 						this.store.selectedEmployee = {
-							id: emp.id,
+							id: employee.id,
 							firstName: this.user.firstName,
 							lastName: this.user.lastName,
 							fullName: this.user.name,

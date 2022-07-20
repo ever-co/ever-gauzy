@@ -15,10 +15,13 @@ import { ImageUploaderModule } from '../../@shared/image-uploader/image-uploader
 import { EmployeeComponent } from './employee.component';
 import { PublicPageEmployeeMutationModule } from '../../@shared/employee/public-page-employee-mutation/public-page-employee-mutation.module';
 import { TranslateModule } from '../../@shared/translate/translate.module';
+import { WorkInProgressModule } from '../../pages/work-in-progress/work-in-progress.module';
+import { SharedModule } from '../../@shared/shared.module';
 
 @NgModule({
 	imports: [
 		ThemeModule,
+		SharedModule,
 		EmployeeRoutingModule,
 		NbCardModule,
 		NbButtonModule,
@@ -30,7 +33,8 @@ import { TranslateModule } from '../../@shared/translate/translate.module';
 		NbListModule,
 		NbUserModule,
 		NbTabsetModule,
-		NbTagModule
+		NbTagModule,
+		WorkInProgressModule
 	],
 	declarations: [EmployeeComponent],
 	providers: []

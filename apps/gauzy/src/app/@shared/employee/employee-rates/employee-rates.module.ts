@@ -9,11 +9,11 @@ import {
 	NbInputModule
 } from '@nebular/theme';
 import { ThemeModule } from '../../../@theme/theme.module';
+import { SharedModule } from '../../shared.module';
 import { EmployeeRatesComponent } from './employee-rates.component';
-import { CandidateStore } from '../../../@core/services/candidate-store.service';
-import { EmployeeStore } from '../../../@core/services/employee-store.service';
 import { CurrencyModule } from '../../currency/currency.module';
 import { TranslateModule } from '../../translate/translate.module';
+import { CandidateStore, EmployeeStore } from '../../../@core/services';
 
 @NgModule({
 	imports: [
@@ -25,6 +25,7 @@ import { TranslateModule } from '../../translate/translate.module';
 		NbInputModule,
 		NbSelectModule,
 		NbIconModule,
+		SharedModule,
 		ThemeModule,
 		NbActionsModule,
 		TranslateModule,

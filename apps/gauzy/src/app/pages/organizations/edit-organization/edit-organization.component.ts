@@ -1,15 +1,13 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
-import { IOrganization, PermissionsEnum } from '@gauzy/contracts';
-import { filter } from 'rxjs/operators';
+import { ActivatedRoute, Router, UrlSerializer } from '@angular/router';
+import { Location } from '@angular/common';
+import { IOrganization } from '@gauzy/contracts';
 import { firstValueFrom } from 'rxjs';
+import { filter, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import {
-	EmployeesService,
-	OrganizationsService,
-	Store
-} from '../../../@core/services';
+import { distinctUntilChange } from '@gauzy/common-angular';
+import { EmployeesService, Store } from '../../../@core/services';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 
 @UntilDestroy({ checkProperties: true })
@@ -20,84 +18,79 @@ import { TranslationBaseComponent } from '../../../@shared/language-base/transla
 		'../../dashboard/dashboard.component.scss'
 	]
 })
-export class EditOrganizationComponent
-	extends TranslationBaseComponent
+export class EditOrganizationComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
-	selectedOrg: IOrganization;
-	selectedOrgFromHeader: IOrganization;
+
 	employeesCount: number;
-	params: any;
+	organization: IOrganization;
 
 	constructor(
-		private router: Router,
-		private route: ActivatedRoute,
-		private organizationsService: OrganizationsService,
-		private employeesService: EmployeesService,
-		private store: Store,
-		readonly translateService: TranslateService
+		private readonly router: Router,
+		private readonly route: ActivatedRoute,
+		private readonly employeesService: EmployeesService,
+		private readonly store: Store,
+		readonly translateService: TranslateService,
+		private readonly _urlSerializer: UrlSerializer,
+		private readonly _location: Location
 	) {
 		super(translateService);
 	}
 
-	async ngOnInit() {
-		this.route.params.pipe(untilDestroyed(this)).subscribe((params) => {
-			if (params.id) {
-				firstValueFrom(
-					this.organizationsService.getById(params.id, null, ['tags'])
-				).then((organization) => {
-					this.setSelectedOrg(organization);
-				});
-			}
-		});
-
-		this.store.selectedOrganization$
+	ngOnInit() {
+		this.route.data
 			.pipe(
-				filter((organization) => !!organization),
+				distinctUntilChange(),
+				filter((data) => !!data && !!data.organization),
+				tap(({ organization }) => this.organization = organization),
+				tap(() => this.loadEmployeesCount()),
 				untilDestroyed(this)
 			)
-			.subscribe((organization) => {
-				this.setSelectedOrg(organization);
-			});
-		this.loadEmployeesCount();
+			.subscribe();
+		this.store.selectedOrganization$
+			.pipe(
+				filter((organization: IOrganization) => !!organization),
+				distinctUntilChange(),
+				tap(({ id }) => {
+					this.router.navigate(['/pages/organizations/edit/', id]);
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
-	setSelectedOrg(selectedOrg) {
-		this.store.selectedEmployee = null;
-		this.selectedOrg = selectedOrg;
-		this.store.selectedOrganization = this.selectedOrg;
-		this.store.organizationId = this.selectedOrg.id;
-		this.selectedOrgFromHeader = this.selectedOrg;
-	}
-
-	canEditPublicPage() {
-		return this.store.hasPermission(PermissionsEnum.PUBLIC_PAGE_EDIT);
-	}
-
-	// Converts the route into a string that can be used
-	// with the window.open() function
+	/**
+	 * Create URL tree for organization edit public page
+	 *
+	 * @returns
+	 */
 	editPublicPage() {
-		const url = this.router.serializeUrl(
-			this.router.createUrlTree([
-				`/share/organization/${this.selectedOrg.profile_link}`
-			])
-		);
-		if(window.location.hash) {
-			window.open('#' + url, '_blank');
-		} else {
-			window.open(url, '_blank');
+		if (!this.organization) {
+			return;
 		}
-	}
 
-	ngOnDestroy() {}
+		// The call to Location.prepareExternalUrl is the key thing here.
+		let tree = this.router.createUrlTree([`/share/organization/${this.organization.profile_link}`]);
+
+    	// As far as I can tell you don't really need the UrlSerializer.
+		const externalUrl = this._location.prepareExternalUrl(this._urlSerializer.serialize(tree));
+		window.open(externalUrl, '_blank');
+	}
 
 	private async loadEmployeesCount() {
+		if (!this.organization) {
+			return;
+		}
 		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
+
 		const { total } = await firstValueFrom(
 			this.employeesService.getAll([], {
-				organizationId: this.selectedOrg.id,
+				organizationId,
 				tenantId
 			})
 		);
 		this.employeesCount = total;
 	}
+
+	ngOnDestroy() {}
 }

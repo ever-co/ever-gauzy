@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
-import { Subject } from 'rxjs';
+import { firstValueFrom, Subject } from 'rxjs';
 import { Router, ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { IEventType, IEmployee } from '@gauzy/contracts';
@@ -39,10 +39,10 @@ export class AppointmentFormComponent
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(async (params) => {
 				try {
-					this.employee = await this.employeeService.getEmployeeById(
+					this.employee = await firstValueFrom(this.employeeService.getEmployeeById(
 						params.employeeid,
 						['user']
-					);
+					));
 
 					this.selectedEventType = history.state.selectedEventType;
 

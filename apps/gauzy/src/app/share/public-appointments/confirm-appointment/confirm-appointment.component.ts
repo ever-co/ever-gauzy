@@ -1,22 +1,22 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
-import { Subject, firstValueFrom } from 'rxjs';
 import { Router, ActivatedRoute } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
-import { EmployeesService } from '../../../@core/services';
-import { takeUntil } from 'rxjs/operators';
-import { EmployeeAppointmentService } from '../../../@core/services/employee-appointment.service';
-import { IEmployee, IEmployeeAppointment } from '@gauzy/contracts';
-import * as moment from 'moment';
-import { AlertModalComponent } from '../../../@shared/alert-modal/alert-modal.component';
 import { NbDialogService } from '@nebular/theme';
+import * as moment from 'moment';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { IEmployee, IEmployeeAppointment } from '@gauzy/contracts';
+import { EmployeeAppointmentService, EmployeesService } from '../../../@core/services';
+import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
+import { AlertModalComponent } from '../../../@shared/alert-modal/alert-modal.component';
+
+@UntilDestroy({ checkProperties: true })
 @Component({
 	templateUrl: './confirm-appointment.component.html'
 })
-export class ConfirmAppointmentComponent
-	extends TranslationBaseComponent
+export class ConfirmAppointmentComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
-	private _ngDestroy$ = new Subject<void>();
+
 	loading: boolean = true;
 	employee: IEmployee;
 	appointment: IEmployeeAppointment;
@@ -25,11 +25,11 @@ export class ConfirmAppointmentComponent
 	editLink: string;
 
 	constructor(
-		private route: ActivatedRoute,
-		private router: Router,
-		private dialogService: NbDialogService,
-		private employeeService: EmployeesService,
-		private employeeAppointmentService: EmployeeAppointmentService,
+		private readonly route: ActivatedRoute,
+		private readonly router: Router,
+		private readonly dialogService: NbDialogService,
+		private readonly employeeService: EmployeesService,
+		private readonly employeeAppointmentService: EmployeeAppointmentService,
 		readonly translateService: TranslateService
 	) {
 		super(translateService);
@@ -37,7 +37,9 @@ export class ConfirmAppointmentComponent
 
 	ngOnInit(): void {
 		this.route.params
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(
+				untilDestroyed(this)
+			)
 			.subscribe(async (params) => {
 				const appointmentId = params.appointmentId;
 				const employeeId = params.id;
@@ -60,10 +62,10 @@ export class ConfirmAppointmentComponent
 		);
 
 		if (employeeId) {
-			this.employee = await this.employeeService.getEmployeeById(
+			this.employee = await firstValueFrom(this.employeeService.getEmployeeById(
 				employeeId,
 				['user']
-			);
+			));
 		}
 
 		this.duration = `${moment(this.appointment.startDateTime).format(
@@ -96,8 +98,5 @@ export class ConfirmAppointmentComponent
 		}
 	}
 
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+	ngOnDestroy() {}
 }

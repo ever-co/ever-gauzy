@@ -1,35 +1,34 @@
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
-import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
-import { Subject } from 'rxjs';
 import { Router, ActivatedRoute } from '@angular/router';
+import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
+import { firstValueFrom } from 'rxjs';
 import { IEmployee, IEventType } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
-import { takeUntil } from 'rxjs/operators';
-import { EmployeesService } from '../../../@core/services';
-import { EventTypeService } from '../../../@core/services/event-type.service';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { AppointmentComponent } from '../../../pages/employees/appointment/appointment.component';
+import { EmployeesService, EventTypeService } from '../../../@core/services';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	templateUrl: './create-appointment.component.html',
 	styleUrls: ['../public-appointments.component.scss']
 })
-export class CreateAppointmentComponent
-	extends TranslationBaseComponent
+export class CreateAppointmentComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
-	private _ngDestroy$ = new Subject<void>();
+
 	employee: IEmployee;
 	eventType: IEventType;
-	loading = true;
+	loading: boolean = true;
 	public appointmentFormURL: string;
 
 	@ViewChild('appointmentCalendar')
 	appointmentCalendar: AppointmentComponent;
 
 	constructor(
-		private route: ActivatedRoute,
-		private router: Router,
-		private employeeService: EmployeesService,
-		private eventTypeService: EventTypeService,
+		private readonly route: ActivatedRoute,
+		private readonly router: Router,
+		private readonly employeeService: EmployeesService,
+		private readonly eventTypeService: EventTypeService,
 		readonly translateService: TranslateService
 	) {
 		super(translateService);
@@ -37,13 +36,15 @@ export class CreateAppointmentComponent
 
 	ngOnInit(): void {
 		this.route.params
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(
+				untilDestroyed(this)
+			)
 			.subscribe(async (params) => {
 				try {
-					this.employee = await this.employeeService.getEmployeeById(
+					this.employee = await firstValueFrom(this.employeeService.getEmployeeById(
 						params.id,
 						['user']
-					);
+					));
 					this.eventType = await this.eventTypeService.getEventTypeById(
 						params.eventId
 					);
@@ -55,8 +56,5 @@ export class CreateAppointmentComponent
 			});
 	}
 
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+	ngOnDestroy() {}
 }
