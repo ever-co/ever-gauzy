@@ -54,6 +54,7 @@ export class WidgetService extends LayoutPersistance {
 								widget.isCollapse = serialized.isCollapse;
 								widget.isExpand = serialized.isExpand;
 								widget.title = serialized.title;
+								widget.hide = serialized.hide;
 								return widget;
 							}
 						});
