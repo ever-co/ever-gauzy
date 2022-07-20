@@ -779,7 +779,7 @@
 			<div class="view">View windows</div>
 			<ng-container *ngIf="windows.length > 0">
 				<ng-container *ngFor="let window of windows">
-					<div (click)="updateVisibility(window)" class="title">
+					<div (click)="updateWindowVisibility(window)" class="title">
 						<i
 							[ngStyle]="{
 								visibility: window.hide ? 'hidden' : 'visible'
