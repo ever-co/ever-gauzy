@@ -1,0 +1,54 @@
+@import 'themes';
+
+#widget {
+  position: relative;
+  color: var(--gauzy-text-color-2);
+}
+
+:host nb-icon {
+  font-size: 11px;
+  position: absolute;
+  @include nb-rtl(left, 12px);
+  @include nb-ltr(right, 12px);
+  top: 10.5px;
+  z-index: 2;
+}
+
+:host {
+  ::ng-deep {
+    nb-card-body {
+      @include nb-rtl(padding, 8px 15px 8px 12px);
+      @include nb-ltr(padding, 8px 12px 8px 15px);
+    }
+    .collapsed nb-card-body div.h1 {
+      display: none;
+    }
+    .expanded nb-card-body div.h1 {
+      display: block;
+    }
+
+    .moved nb-card {
+      cursor: move;
+    }
+  }
+}
+
+.setting {
+  display: flex;
+  flex-direction: column;
+  padding: 10px 12px;
+  gap: 10px;
+  .action {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    cursor: pointer;
+    i {
+      font-size: 12px;
+      color: var(--gauzy-text-color-2);
+    }
+    span {
+      color: rgba(126, 126, 143, 0.5);
+    }
+  }
+}

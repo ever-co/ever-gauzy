@@ -369,9 +369,12 @@
 			<div class="table-scroll-container custom-table">
 				<ng-container>
 					<div class="btn-action">
-						<ng-template
-							[ngTemplateOutlet]="actionButtons"
-						></ng-template>
+						<ngx-gauzy-button-action
+							[buttonTemplateVisible]="visible"
+							[isDisable]="!selectedItem?.isSelected"
+							[buttonTemplate]="actionButtons"
+							[hasLayoutSelector]="false"
+						></ngx-gauzy-button-action>
 					</div>
 				</ng-container>
 				<ng2-smart-table
@@ -382,6 +385,7 @@
 					(createConfirm)="onCreateConfirm($event)"
 					(editConfirm)="onEditConfirm($event)"
 					(deleteConfirm)="onDeleteConfirm($event)"
+					(userRowSelect)="selectItem($event)"
 				>
 				</ng2-smart-table>
 			</div>
@@ -414,7 +418,7 @@
 			</div>
 		</div>
 	</nb-card-body>
-	<nb-card-footer class="text-left">
+	<nb-card-footer>
 		<button
 			*ngIf="!duplicate"
 			status="danger"
@@ -462,16 +466,8 @@
 </nb-card>
 
 <ng-template #actionButtons>
-	<ng-template ngxPermissionsOnly="INVOICES_EDIT">
-		<div class="button-action mr-3 ml-3">
-			<button nbButton status="success" size="small">
-				<nb-icon icon="plus-outline"> </nb-icon>
-				{{ 'BUTTONS.ADD' | translate }}
-			</button>
-		</div>
-	</ng-template>
-	<div class="button-action">
-		<ng-template ngxPermissionsOnly="INVOICES_EDIT">
+	<ng-container *ngxPermissionsOnly="INVOICES_EDIT">
+		<div class="actions">
 			<button
 				nbButton
 				status="basic"
@@ -487,12 +483,20 @@
 				status="basic"
 				class="action"
 				[disabled]="!selectedItem && disableButton"
-				(click)="deleteIncome(selectedItem)"
 				size="small"
 				[nbTooltip]="'BUTTONS.DELETE' | translate"
 			>
 				<nb-icon status="danger" icon="trash-2-outline"> </nb-icon>
 			</button>
-		</ng-template>
-	</div>
+		</div>
+	</ng-container>
+</ng-template>
+
+<ng-template #visible>
+	<ng-container *ngxPermissionsOnly="INVOICES_EDIT">
+		<button nbButton status="success" size="small">
+			<nb-icon icon="plus-outline"> </nb-icon>
+			{{ 'BUTTONS.ADD' | translate }}
+		</button>
+	</ng-container>
 </ng-template>

@@ -1,4 +1,13 @@
-import { AfterViewInit, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+import {
+	AfterViewInit,
+	ChangeDetectorRef,
+	Component,
+	OnDestroy,
+	OnInit,
+	QueryList,
+	TemplateRef,
+	ViewChildren
+} from '@angular/core';
 import { Router } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
@@ -26,7 +35,12 @@ import {
 import { BehaviorSubject, combineLatest, firstValueFrom, Subject, Subscription, timer } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { indexBy, range, reduce } from 'underscore';
-import { distinctUntilChange, isNotEmpty, progressStatus, toUTC } from '@gauzy/common-angular';
+import {
+	distinctUntilChange,
+	isNotEmpty,
+	progressStatus,
+	toUTC
+} from '@gauzy/common-angular';
 import * as moment from 'moment';
 import { NgxPermissionsService } from 'ngx-permissions';
 import { TranslateService } from '@ngx-translate/core';
@@ -41,11 +55,15 @@ import { GalleryService } from '../../../@shared/gallery';
 import { TranslationBaseComponent } from '../../../@shared/language-base';
 import { ALL_EMPLOYEES_SELECTED } from '../../../@theme/components/header/selectors/employee';
 import { getAdjustDateRangeFutureAllowed } from '../../../@theme/components/header/selectors/date-range-picker';
+import { NbPopoverDirective } from '@nebular/theme';
+import { WidgetService } from '../../../@shared/dashboard/widget/widget.service';
+import { GuiDrag } from '../../../@shared/dashboard/interfaces/gui-drag.abstract';
+import { WindowService } from '../../../@shared/dashboard/window/window.service';
 
 export enum RangePeriod {
-	DAY = "DAY",
-	WEEK = "WEEK",
-	PERIOD = "PERIOD"
+	DAY = 'DAY',
+	WEEK = 'WEEK',
+	PERIOD = 'PERIOD'
 }
 
 @UntilDestroy({ checkProperties: true })
@@ -56,8 +74,8 @@ export enum RangePeriod {
 })
 export class TimeTrackingComponent
 	extends TranslationBaseComponent
-	implements AfterViewInit, OnInit, OnDestroy {
-
+	implements AfterViewInit, OnInit, OnDestroy
+{
 	timeSlotEmployees: ITimeSlotStatistics[] = [];
 	activities: IActivitiesStatistics[] = [];
 	projects: IProjectsStatistics[] = [];
@@ -101,6 +119,15 @@ export class TimeTrackingComponent
 
 	payloads$: BehaviorSubject<ITimeLogFilters> = new BehaviorSubject(null);
 
+	@ViewChildren('widget') listOfWidgets: QueryList<TemplateRef<HTMLElement>>;
+	@ViewChildren('window') listOfWindows: QueryList<TemplateRef<HTMLElement>>;
+	public widgetsRef: TemplateRef<HTMLElement>[] = [];
+	public windowsRef: TemplateRef<HTMLElement>[] = [];
+	@ViewChildren(NbPopoverDirective)
+	public popups: QueryList<NbPopoverDirective>;
+	public widgets: GuiDrag[];
+	public windows: GuiDrag[];
+
 	constructor(
 		private readonly timesheetStatisticsService: TimesheetStatisticsService,
 		private readonly store: Store,
@@ -111,7 +138,9 @@ export class TimeTrackingComponent
 		private readonly _router: Router,
 		private readonly employeesService: EmployeesService,
     	private readonly projectService: OrganizationProjectsService,
-		private readonly toastrService: ToastrService
+		private readonly toastrService: ToastrService,
+		private readonly widgetService: WidgetService,
+		private readonly windowService: WindowService
 	) {
 		super(translateService);
 	}
@@ -163,9 +192,13 @@ export class TimeTrackingComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
+		this.widgetsRef = this.listOfWidgets.toArray();
+		this.windowsRef = this.listOfWindows.toArray();
 	}
 
 	ngAfterViewChecked(): void {
+		this.widgets = this.widgetService.widgets;
+		this.windows = this.windowService.windows;
 		this.changeRef.detectChanges();
 	}
 
@@ -566,5 +599,64 @@ export class TimeTrackingComponent
 	 */
 	get hideEmployeeBlock() {
 		return this.employeeIds.filter(Boolean).length;
+	}
+	/**
+	 * The order of titles in array depend to order of templates
+	 * @param position default position of widget or window
+	 * @param isWidget define if it's widget or not
+	 * @returns not translated title
+	 */
+	public titleMapper(position: number, isWidget: boolean = true): string {
+		const widgetsTitles: string[] = [
+			'TIMESHEET.MEMBERS_WORKED',
+			'TIMESHEET.PROJECTS_WORKED',
+			'TIMESHEET.TODAY_ACTIVITY',
+			'TIMESHEET.WORKED_TODAY',
+			'TIMESHEET.MEMBERS_WORKED',
+			'TIMESHEET.MEMBERS_WORKED'
+		];
+		const windowsTitles = [
+			'TIMESHEET.RECENT_ACTIVITIES',
+			'TIMESHEET.MANUAL_TIME',
+			'TIMESHEET.TASKS',
+			'TIMESHEET.PROJECTS',
+			'TIMESHEET.APPS_URLS',
+			'TIMESHEET.MEMBERS'
+		];
+		switch (this.selectedPeriod) {
+			case RangePeriod.PERIOD:
+				widgetsTitles[4] = 'TIMESHEET.WORKED_OVER_PERIOD';
+				widgetsTitles[5] = 'TIMESHEET.ACTIVITY_OVER_PERIOD';
+				break;
+			case RangePeriod.DAY:
+				widgetsTitles[4] = 'TIMESHEET.WORKED_FOR_DAY';
+				widgetsTitles[5] = 'TIMESHEET.ACTIVITY_FOR_DAY';
+				break;
+			default:
+				widgetsTitles[4] = this.isCurrentWeek()
+					? 'TIMESHEET.WORKED_THIS_WEEK'
+					: 'TIMESHEET.WORKED_FOR_WEEK';
+				widgetsTitles[5] = 'TIMESHEET.ACTIVITY_FOR_WEEK';
+				break;
+		}
+		return isWidget ? widgetsTitles[position] : windowsTitles[position];
+	}
+
+	public updateWindowVisibility(value: GuiDrag) {
+		this.windowService.windows.forEach((window: GuiDrag) => {
+			if (window.templateRef === value.templateRef) {
+				window.hide = !value.hide;
+			}
+		});
+		this.windowService.serialize();
+	}
+
+	public updateWidgetVisibility(value: GuiDrag) {
+		this.widgetService.widgets.forEach((widget: GuiDrag) => {
+			if (widget.templateRef === value.templateRef) {
+				widget.hide = !value.hide;
+			}
+		});
+		this.widgetService.serialize();
 	}
 }

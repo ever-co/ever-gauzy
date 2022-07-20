@@ -99,9 +99,11 @@ nb-badge {
     border-radius: 0 0 var(--border-radius) var(--border-radius);
   }
 
-  @include card_overrides(auto,
+  @include card_overrides(
+    auto,
     $default-card-height,
-    0 $default-radius $default-radius $default-radius );
+    0 $default-radius $default-radius $default-radius
+  );
 
   ngx-activity-item.tracking-progress ::ng-deep {
     .progress-container {
@@ -133,19 +135,33 @@ nb-badge {
     background-color: var(--gauzy-card-2);
   }
 
-  ngx-avatar {
-    margin-bottom: 1.5rem;
-  }
-
   .project-name {
     color: var(--gauzy-text-color-1);
     font-size: 14px;
     font-weight: 600;
-    line-height: 11px;
-    letter-spacing: 0em;
   }
 }
 
+.custom-card-body-inner-list {
+  padding: 0 9px;
+  .custom-card-button {
+    display: flex;
+    justify-content: flex-end;
+    margin: 1rem 15px 0 15px;
+  }
+}
+
+.font-weight-bold {
+  font-weight: 600;
+  color: var(--gauzy-text-color-2);
+}
+nb-card-header {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 16px;
+  letter-spacing: -0.009em;
+  color: var(--gauzy-text-color-2);
+}
 .custom-container {
   display: grid;
   -webkit-box-align: center;
@@ -153,6 +169,7 @@ nb-badge {
   -webkit-box-pack: start;
   justify-content: start;
   column-gap: 1rem;
+  gap: 1rem;
   grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
 }
 
@@ -161,10 +178,71 @@ nb-badge {
   background-color: nb-theme(gauzy-card-2);
 }
 
-nb-card-body>p {
-  font-size: 14px;
+nb-card-body > .header-widget {
+  font-size: 16px;
   font-weight: 400;
   line-height: 16px;
   letter-spacing: -0.009em;
   color: var(--gauzy-text-color-2);
+  margin-bottom: 15px;
+  nb-icon {
+    font-size: 11px;
+  }
+}
+
+.counter-container {
+  width: 71%;
+}
+
+.manage-widget {
+  border: unset;
+  box-shadow: var(--gauzy-shadow);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 11px;
+  letter-spacing: 0em;
+  &[nbButton].appearance-filled.status-basic {
+    color: var(--gauzy-text-color-2);
+    background-color: var(--gauzy-card-1);
+  }
+  nb-icon {
+    height: 11px;
+    width: 11px;
+  }
+}
+
+.widget-popover {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 14px;
+  gap: 21px;
+  .category {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+    .view {
+      font-size: 10px;
+      font-weight: 600;
+      line-height: 12px;
+      letter-spacing: 0em;
+      color: rgba(126, 126, 143, 0.5);
+    }
+    .title {
+      font-size: 12px;
+      font-weight: 400;
+      line-height: 15px;
+      letter-spacing: 0em;
+      color: var(--gauzy-text-color-2);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+    }
+  }
+  .line {
+    border-bottom: 0.5px solid rgba(126, 126, 143, 0.25);
+    width: 100%;
+  }
 }
