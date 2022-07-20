@@ -20,6 +20,25 @@
 		<div class="container">
 			<div class="row">
 				<div class="mb-4 ml-auto col-auto d-flex align-items-center">
+					<button
+						class="manage-widget"
+						status="basic"
+						size="small"
+						nbButton
+					>
+						Manage widgets
+						<nb-icon
+							icon="more-vertical-outline"
+							nbPopoverPlacement="bottom"
+							[nbPopover]="widgetManager"
+							nbPopoverTrigger="click"
+							nbButton
+						></nb-icon>
+					</button>
+				</div>
+			</div>
+			<div class="row">
+				<div class="mb-4 ml-auto col-auto d-flex align-items-center">
 					<nb-toggle
 						class="custom-toggle mr-3 ml-3"
 						size="small"
@@ -42,8 +61,8 @@
 					</button>
 				</div>
 			</div>
-			<ga-widget-layout [widgets]="widgets"></ga-widget-layout>
-			<ga-window-layout [windows]="windows"></ga-window-layout>
+			<ga-widget-layout [widgets]="widgetsRef"></ga-widget-layout>
+			<ga-window-layout [windows]="windowsRef"></ga-window-layout>
 		</div>
 	</nb-card-body>
 </nb-card>
@@ -733,4 +752,36 @@
 			</ng-template>
 		</nb-card-body>
 	</nb-card>
+</ng-template>
+<!-- Manage Widgets -->
+<ng-template #widgetManager>
+	<div class="widget-popover">
+		<div class="category">
+			<div class="view">View widgets</div>
+			<ng-container *ngIf="widgets.length > 0">
+				<ng-container *ngFor="let widget of widgets">
+					<div class="title">
+						<i *ngIf="!widget.hide" class="fas fa-check"></i>
+						<div>
+							{{ titleMapper(widget.position) | translate }}
+						</div>
+					</div>
+				</ng-container>
+			</ng-container>
+		</div>
+		<div class="line"></div>
+		<div class="category">
+			<div class="view">View windows</div>
+			<ng-container *ngIf="windows.length > 0">
+				<ng-container *ngFor="let window of windows">
+					<div class="title">
+						<i *ngIf="!window.hide" class="fas fa-check"></i>
+						<div>
+							{{ titleMapper(window.position, false) | translate }}
+						</div>
+					</div>
+				</ng-container>
+			</ng-container>
+		</div>
+	</div>
 </ng-template>
