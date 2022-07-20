@@ -10,11 +10,14 @@ import {
 	TemplateRef,
 	ViewChildren
 } from '@angular/core';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { filter, tap } from 'rxjs/operators';
 import { GuiDrag } from '../interfaces/gui-drag.abstract';
 import { LayoutWithDraggableObject } from '../interfaces/layout-with-draggable-object.abstract';
 import { WindowComponent } from '../window/window.component';
 import { WindowService } from '../window/window.service';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-window-layout',
 	templateUrl: './window-layout.component.html',
@@ -37,37 +40,27 @@ export class WindowLayoutComponent
 		super();
 	}
 	ngAfterViewInit(): void {
-		this.listWindows.changes.subscribe(
-			(listWindows: QueryList<GuiDrag>) => {
-				if (this.windowService.windows.length === 0) {
-					if (!this.windowService.deSerialize()) {
-						this.windowService.windows = listWindows.toArray();
-					} else {
-						this.windowService
-							.deSerialize()
-							.forEach((buffer: Partial<GuiDrag>) => {
-								listWindows
-									.toArray()
-									.forEach((window: GuiDrag) => {
-										if (window.title === buffer.title) {
-											window.isCollapse =
-												buffer.isCollapse;
-											window.isExpand = buffer.isExpand;
-											this.windowService.windows.push(
-												window
-											);
-											this.windowService.windowsRef.push(
-												window.templateRef
-											);
-										}
-									});
-							});
-					}
-				} else {
-					this.windowService.windows = this.listWindows.toArray();
-				}
-			}
-		);
+		this.listWindows.changes
+			.pipe(
+				tap(
+					(listWindows: QueryList<GuiDrag>) =>
+						(this.windowService.windows = listWindows.toArray())
+				),
+				filter(() => this.windowService.windowsRef.length === 0),
+				tap(() => {
+					this.windowService.deSerialize().length === 0
+						? this.windowService.serialize()
+						: this.windowService
+								.deSerialize()
+								.forEach((deserialized: GuiDrag) =>
+									this.windowService.windowsRef.push(
+										deserialized.templateRef
+									)
+								);
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 	ngAfterViewChecked(): void {
 		this.cdr.detectChanges();
@@ -82,6 +75,7 @@ export class WindowLayoutComponent
 			event.container.data
 		);
 		this.windowService.windowsRef = this.draggableObject;
+		this.windowService.serialize();
 	}
 
 	get windows() {

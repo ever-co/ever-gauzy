@@ -31,7 +31,6 @@ export class WindowService extends LayoutPersistance {
 			});
 		});
 		this.windows = buffers;
-		this.serialize();
 	}
 	public get windows(): GuiDrag[] {
 		return this._windows;
@@ -45,6 +44,19 @@ export class WindowService extends LayoutPersistance {
 	}
 
 	public deSerialize(): Partial<GuiDrag>[] {
-		return this.store.windows;
+		return this.store.windows
+			? this.store.windows
+					.flatMap((serialized: Partial<GuiDrag>) => {
+						return this.windows.map((window: GuiDrag) => {
+							if (window.position === serialized.position) {
+								window.isCollapse = serialized.isCollapse;
+								window.isExpand = serialized.isExpand;
+								window.title = serialized.title;
+								return window;
+							}
+						});
+					})
+					.filter((deserialized: GuiDrag) => deserialized)
+			: [];
 	}
 }
