@@ -8,6 +8,14 @@ const routes: Routes = [
 		path: '',
 		component: OrganizationComponent,
 		runGuardsAndResolvers: 'always',
+		data: {
+			relations: [
+				'skills',
+				'awards',
+				'languages',
+				'languages.language'
+			]
+		},
 		resolve: {
 			organization: PublicOrganizationResolver
 		}

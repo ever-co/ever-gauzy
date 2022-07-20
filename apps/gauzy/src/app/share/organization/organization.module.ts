@@ -19,6 +19,7 @@ import { ImageUploaderModule } from '../../@shared/image-uploader/image-uploader
 import { TranslateModule } from '../../@shared/translate/translate.module';
 import { SharedModule } from '../../@shared/shared.module';
 import { TableComponentsModule } from '../../@shared';
+import { WorkInProgressModule } from '../../pages/work-in-progress/work-in-progress.module';
 
 @NgModule({
 	imports: [
@@ -39,7 +40,8 @@ import { TableComponentsModule } from '../../@shared';
 		NbTabsetModule,
 		NbTagModule,
 		SharedModule,
-		TableComponentsModule
+		TableComponentsModule,
+		WorkInProgressModule
 	],
 	declarations: [OrganizationComponent],
 	providers: []

@@ -1,14 +1,16 @@
 import { IOrganization, IOrganizationContact, IPagination } from '@gauzy/contracts';
-import { Controller, Get, HttpStatus, Param, Query, ValidationPipe } from '@nestjs/common';
+import { Controller, Get, HttpStatus, Param, Query, UseInterceptors, ValidationPipe } from '@nestjs/common';
 import { QueryBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { TenantOrganizationBaseDTO } from './../../core/dto';
 import { Public } from './../../shared/decorators';
+import { PublicTransformInterceptor } from './../public-transform.interceptor';
 import { PublicOrganizationQueryDTO } from './dto/public-organization-query.dto';
 import { PublicOrganizationService } from './public-organization.service';
 import { FindPublicClientsByOrganizationQuery, FindPublicOrganizationQuery } from './queries';
 
 @Public()
+@UseInterceptors(PublicTransformInterceptor)
 @Controller()
 export class PublicOrganizationController {
 
