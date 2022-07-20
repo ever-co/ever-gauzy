@@ -3625,7 +3625,9 @@
 			"DAILY_TIMESHEET": "crwdns11435:0crwdne11435:0",
 			"WEEKLY_TIMESHEET": "crwdns11437:0crwdne11437:0",
 			"APPROVAL_TIMESHEET": "crwdns11439:0crwdne11439:0"
-		}
+		},
+		"VIEW_WINDOWS": "crwdns11453:0crwdne11453:0",
+		"VIEW_WIDGETS": "crwdns11455:0crwdne11455:0"
 	},
 	"ACTIVITY": {
 		"SCREENSHOTS": "crwdns4944:0crwdne4944:0",
