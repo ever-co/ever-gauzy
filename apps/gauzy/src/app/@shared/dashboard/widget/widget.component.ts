@@ -20,18 +20,19 @@ import { WidgetService } from './widget.service';
 	styleUrls: ['./widget.component.scss']
 })
 export class WidgetComponent extends GuiDrag implements OnInit, AfterViewInit {
-	@Input()
-	public widgetDragEnded: Observable<any>;
-	@ViewChild(NbPopoverDirective) widgetPopover: NbPopoverDirective;
-	@ViewChild('widget') element: ElementRef;
+	private _widgetDragEnded: Observable<any>;
+	@ViewChild(NbPopoverDirective)
+	private _widgetPopover: NbPopoverDirective;
+	@ViewChild('widget')
+	private _element: ElementRef;
 
 	constructor(private readonly widgetService: WidgetService) {
 		super();
 	}
 
 	ngAfterViewInit(): void {
-		if (this.element) {
-			const wgt: HTMLElement = this.element.nativeElement;
+		if (this._element) {
+			const wgt: HTMLElement = this._element.nativeElement;
 			const title: any = wgt.querySelector('div.title');
 			if (title) this.title = title.innerText;
 		}
@@ -55,8 +56,17 @@ export class WidgetComponent extends GuiDrag implements OnInit, AfterViewInit {
 
 	public onClickSetting(event: boolean) {
 		if (event) {
-			this.widgetPopover.hide();
+			this._widgetPopover.hide();
 			this.widgetService.serialize();
 		}
+	}
+
+	public get widgetDragEnded(): Observable<any> {
+		return this._widgetDragEnded;
+	}
+
+	@Input()
+	public set widgetDragEnded(value: Observable<any>) {
+		this._widgetDragEnded = value;
 	}
 }
