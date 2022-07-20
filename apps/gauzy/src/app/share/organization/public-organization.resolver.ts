@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 import {
 	Resolve,
-	RouterStateSnapshot,
 	ActivatedRouteSnapshot,
 	Router
 } from '@angular/router';
@@ -21,17 +20,12 @@ export class PublicOrganizationResolver implements Resolve<any> {
 	) {}
 
 	resolve(
-		route: ActivatedRouteSnapshot,
-		state: RouterStateSnapshot
+		route: ActivatedRouteSnapshot
 	): Observable<IOrganization> {
 		try {
+			const relations = route.data.relations || [];
             const profile_link = route.params.link;
-			return this.organizationsService.getByProfileLink(profile_link, [
-				'skills',
-				'awards',
-				'languages',
-				'languages.language'
-			]).pipe(
+			return this.organizationsService.getByProfileLink(profile_link, [...relations]).pipe(
 				catchError((error) => {
 					this.errorHandlingService.handleError(error);
 					this.router.navigateByUrl('/');
