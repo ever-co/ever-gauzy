@@ -52,6 +52,7 @@ export class WindowService extends LayoutPersistance {
 								window.isCollapse = serialized.isCollapse;
 								window.isExpand = serialized.isExpand;
 								window.title = serialized.title;
+								window.hide = serialized.hide;
 								return window;
 							}
 						});
