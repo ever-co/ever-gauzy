@@ -26,7 +26,12 @@ export class PublicOrganizationResolver implements Resolve<any> {
 	): Observable<IOrganization> {
 		try {
             const profile_link = route.params.link;
-			return this.organizationsService.getByProfileLink(profile_link).pipe(
+			return this.organizationsService.getByProfileLink(profile_link, [
+				'skills',
+				'awards',
+				'languages',
+				'languages.language'
+			]).pipe(
 				catchError((error) => {
 					this.errorHandlingService.handleError(error);
 					this.router.navigateByUrl('/');

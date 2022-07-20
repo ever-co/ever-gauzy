@@ -6,5 +6,6 @@ export class FindPublicOrganizationQuery implements IQuery {
 
 	constructor(
 		public readonly params: FindConditions<Organization>,
+		public readonly relations: string[],
 	) {}
 }

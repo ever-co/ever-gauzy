@@ -76,8 +76,13 @@ export class OrganizationsService {
 	 * @param profile_link
 	 * @returns
 	 */
-	getByProfileLink(profile_link: string): Observable<IOrganization> {
-		return this.http.get<IOrganization>(`${API_PREFIX}/public/organization/${profile_link}`);
+	getByProfileLink(
+		profile_link: string,
+		relations: string[] = []
+	): Observable<IOrganization> {
+		return this.http.get<IOrganization>(`${API_PREFIX}/public/organization/${profile_link}`, {
+			params: toParams({ relations })
+		});
 	}
 
 	/**

@@ -4,6 +4,7 @@ import { QueryBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { TenantOrganizationBaseDTO } from './../../core/dto';
 import { Public } from './../../shared/decorators';
+import { PublicOrganizationQueryDTO } from './dto/public-organization-query.dto';
 import { PublicOrganizationService } from './public-organization.service';
 import { FindPublicClientsByOrganizationQuery, FindPublicOrganizationQuery } from './queries';
 
@@ -94,12 +95,14 @@ export class PublicOrganizationController {
 	})
 	@Get(':profile_link')
 	async findOneByProfileLink(
-		@Param('profile_link') profile_link: string
+		@Param('profile_link') profile_link: string,
+		@Query(new ValidationPipe({
+			transform: true,
+			whitelist: true
+		})) options: PublicOrganizationQueryDTO
 	): Promise<IOrganization> {
 		return await this.queryBus.execute(
-			new FindPublicOrganizationQuery({
-				profile_link
-			})
+			new FindPublicOrganizationQuery({ profile_link }, options.relations)
 		);
 	}
 }

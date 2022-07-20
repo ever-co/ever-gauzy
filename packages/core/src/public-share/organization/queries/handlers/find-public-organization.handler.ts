@@ -11,7 +11,7 @@ export class FindPublicOrganizationHandler implements IQueryHandler<FindPublicOr
     ) {}
 
     async execute(query: FindPublicOrganizationQuery): Promise<IOrganization> {
-        const { params } = query;
-        return await this.publicOrganizationService.findOneByProfileLink(params);
+        const { params, relations = [] } = query;
+        return await this.publicOrganizationService.findOneByProfileLink(params, relations);
     }
 }

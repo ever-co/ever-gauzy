@@ -1,5 +1,5 @@
 import { IOrganization, IOrganizationContact, IPagination } from '@gauzy/contracts';
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindConditions, Repository } from 'typeorm';
 import { Organization, OrganizationContact, OrganizationProject } from './../../core/entities/internal';
@@ -22,22 +22,17 @@ export class PublicOrganizationService {
 	 * GET organization by profile link
 	 *
 	 * @param options
+	 * @param relations
 	 * @returns
 	 */
 	async findOneByProfileLink(
-		options: FindConditions<Organization>
+		options: FindConditions<Organization>,
+		relations: string[]
 	): Promise<IOrganization> {
 		try {
-			return await this.repository.findOneOrFail(options, {
-				relations: [
-					'skills',
-					'awards',
-					'languages',
-					'languages.language'
-				]
-			});
+			return await this.repository.findOneOrFail(options, { relations });
 		} catch (error) {
-			throw new BadRequestException(error);
+			throw new NotFoundException(`The requested record was not found`);
 		}
 	}
 
