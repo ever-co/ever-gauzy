@@ -11,7 +11,7 @@ export class FindOnePublicEmployeeHandler implements IQueryHandler<FindOnePublic
     ) {}
 
     async execute(query: FindOnePublicEmployeeQuery): Promise<IEmployee> {
-        const { params } = query;
-        return await this.publicEmployeeService.findOneByProfileLink(params);
+        const { params, relations = [] } = query;
+        return await this.publicEmployeeService.findOneByConditions(params, relations);
     }
 }

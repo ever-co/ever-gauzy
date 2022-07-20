@@ -27,10 +27,13 @@ export class EmployeesService {
 		})
 	}
 
-	getPublicById(id: string, relations?: string[]): Observable<IEmployee> {
-		const data = JSON.stringify({ relations });
-		return this.http.get<IEmployee>(`${API_PREFIX}/employee/public/${id}`, {
-			params: { data }
+	getPublicById(
+		slug: string,
+		id: string,
+		relations: string[] = []
+	): Observable<IEmployee> {
+		return this.http.get<IEmployee>(`${API_PREFIX}/public/employee/${slug}/${id}`, {
+			params: toParams({ relations })
 		});
 	}
 

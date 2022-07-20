@@ -1,4 +1,4 @@
-import { Controller, Get, HttpStatus, Param, Query, ValidationPipe } from '@nestjs/common';
+import { Controller, Get, HttpStatus, Param, Query, UseInterceptors, ValidationPipe } from '@nestjs/common';
 import { QueryBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { FindConditions } from 'typeorm';
@@ -7,8 +7,11 @@ import { TenantOrganizationBaseDTO } from './../../core/dto';
 import { Employee } from './../../core/entities/internal';
 import { Public } from './../../shared/decorators';
 import { FindOnePublicEmployeeQuery, FindPublicEmployeesByOrganizationQuery } from './queries';
+import { PublicEmployeeQueryDTO } from './dto/public-employee-query.dto';
+import { PublicTransformInterceptor } from './../public-transform.interceptor';
 
 @Public()
+@UseInterceptors(PublicTransformInterceptor)
 @Controller()
 export class PublicEmployeeController {
 
@@ -66,10 +69,14 @@ export class PublicEmployeeController {
 	})
 	@Get('/:profile_link/:id')
 	async findPublicEmployeeByProfileLink(
-		@Param() params: FindConditions<Employee>
+		@Param() params: FindConditions<Employee>,
+		@Query(new ValidationPipe({
+			transform: true,
+			whitelist: true
+		})) options: PublicEmployeeQueryDTO
 	): Promise<IEmployee> {
 		return await this.queryBus.execute(
-			new FindOnePublicEmployeeQuery(params)
+			new FindOnePublicEmployeeQuery(params, options.relations)
 		);
 	}
 }
