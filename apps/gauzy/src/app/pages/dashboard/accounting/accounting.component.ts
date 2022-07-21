@@ -35,8 +35,10 @@ import { TranslationBaseComponent } from '../../../@shared/language-base';
 		'./accounting.component.scss'
 	]
 })
-export class AccountingComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
-
+export class AccountingComponent
+	extends TranslationBaseComponent
+	implements OnInit, OnDestroy
+{
 	aggregatedEmployeeStatistics: IAggregatedEmployeeStatistic;
 	selectedDateRange: IDateRangePicker;
 	organization: IOrganization;
@@ -122,7 +124,7 @@ export class AccountingComponent extends TranslationBaseComponent implements OnI
 			const { tenantId } = this.store.user;
 			const { id: organizationId } = this.organization;
 			const { startDate, endDate } = this.selectedDateRange;
-
+			this.isLoading = true;
 			this.aggregatedEmployeeStatistics =
 				await this.employeeStatisticsService.getAggregateStatisticsByOrganizationId(
 					{
@@ -133,6 +135,7 @@ export class AccountingComponent extends TranslationBaseComponent implements OnI
 					}
 				);
 			this.generateDataForChart();
+			this.isLoading = false;
 		} catch (error) {
 			console.log(
 				'Error while retriving employee aggregate statistics',
@@ -142,40 +145,25 @@ export class AccountingComponent extends TranslationBaseComponent implements OnI
 		}
 	}
 
-	public async generateDataForChart() {
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.organization;
-		const { startDate, endDate } = this.selectedDateRange;
-		const PERIOD = moment(endDate).diff(moment(startDate), 'day') + 1;
-		const data: any[] = [];
+	public generateDataForChart() {
 		const commonOptions = {
 			borderWidth: 2,
 			pointRadius: 2,
 			pointHoverRadius: 4,
 			pointHoverBorderWidth: 4
 		};
-		this.isLoading = true;
-		for (let i = 0; i < PERIOD; i++) {
-			data.push({
-				dates: moment(startDate).add(i, 'day').format('LL'),
-				stats: await this.employeeStatisticsService.getAggregateStatisticsByOrganizationId(
-					{
-						organizationId,
-						tenantId,
-						startDate: moment(startDate).add(i, 'day').toDate(),
-						endDate: moment(startDate)
-							.add(i + 1, 'day')
-							.toDate()
-					}
-				)
-			});
-		}
 		this.chartData = {
-			labels: pluck(data, 'dates'),
+			labels: pluck(this.aggregatedEmployeeStatistics.chart, 'dates'),
 			datasets: [
 				{
 					label: this.getTranslation('INCOME_PAGE.INCOME'),
-					data: pluck(pluck(pluck(data, 'stats'), 'total'), 'income'),
+					data: pluck(
+						pluck(
+							this.aggregatedEmployeeStatistics.chart,
+							'statistics'
+						),
+						'income'
+					),
 					borderColor: ChartUtil.CHART_COLORS.blue,
 					backgroundColor: ChartUtil.transparentize(
 						ChartUtil.CHART_COLORS.blue,
@@ -188,7 +176,10 @@ export class AccountingComponent extends TranslationBaseComponent implements OnI
 						'DASHBOARD_PAGE.PROFIT_HISTORY.EXPENSES'
 					),
 					data: pluck(
-						pluck(pluck(data, 'stats'), 'total'),
+						pluck(
+							this.aggregatedEmployeeStatistics.chart,
+							'statistics'
+						),
 						'expense'
 					),
 					borderColor: ChartUtil.CHART_COLORS.red,
@@ -200,7 +191,13 @@ export class AccountingComponent extends TranslationBaseComponent implements OnI
 				},
 				{
 					label: this.getTranslation('DASHBOARD_PAGE.CHARTS.PROFIT'),
-					data: pluck(pluck(pluck(data, 'stats'), 'total'), 'profit'),
+					data: pluck(
+						pluck(
+							this.aggregatedEmployeeStatistics.chart,
+							'statistics'
+						),
+						'profit'
+					),
 					borderColor: ChartUtil.CHART_COLORS.yellow,
 					backgroundColor: ChartUtil.transparentize(
 						ChartUtil.CHART_COLORS.yellow,
@@ -210,7 +207,13 @@ export class AccountingComponent extends TranslationBaseComponent implements OnI
 				},
 				{
 					label: this.getTranslation('DASHBOARD_PAGE.CHARTS.BONUS'),
-					data: pluck(pluck(pluck(data, 'stats'), 'total'), 'bonus'),
+					data: pluck(
+						pluck(
+							this.aggregatedEmployeeStatistics.chart,
+							'statistics'
+						),
+						'bonus'
+					),
 					borderColor: ChartUtil.CHART_COLORS.green,
 					backgroundColor: ChartUtil.transparentize(
 						ChartUtil.CHART_COLORS.green,
@@ -220,14 +223,12 @@ export class AccountingComponent extends TranslationBaseComponent implements OnI
 				}
 			]
 		};
-		this.isLoading = false;
 	}
 
 	async selectEmployee(employee: ISelectedEmployee) {
-		const people = await firstValueFrom(this.employeesService.getEmployeeById(
-			employee.id,
-			['user']
-		));
+		const people = await firstValueFrom(
+			this.employeesService.getEmployeeById(employee.id, ['user'])
+		);
 		this.store.selectedEmployee = employee.id
 			? ({
 					id: people.id,
