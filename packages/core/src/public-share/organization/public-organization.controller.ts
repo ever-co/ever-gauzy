@@ -2,6 +2,8 @@ import { IOrganization, IOrganizationContact, IPagination } from '@gauzy/contrac
 import { Controller, Get, HttpStatus, Param, Query, UseInterceptors, ValidationPipe } from '@nestjs/common';
 import { QueryBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { FindOptionsWhere } from 'typeorm';
+import { OrganizationContact, OrganizationProject } from './../../core/entities/internal';
 import { TenantOrganizationBaseDTO } from './../../core/dto';
 import { Public } from './../../shared/decorators';
 import { PublicTransformInterceptor } from './../public-transform.interceptor';
@@ -44,7 +46,9 @@ export class PublicOrganizationController {
 		})) options: TenantOrganizationBaseDTO
 	): Promise<IPagination<IOrganizationContact>> {
 		return await this.queryBus.execute(
-			new FindPublicClientsByOrganizationQuery(options)
+			new FindPublicClientsByOrganizationQuery(
+				options as FindOptionsWhere<OrganizationContact>
+			)
 		);
 	}
 
@@ -61,7 +65,9 @@ export class PublicOrganizationController {
 			whitelist: true
 		})) options: TenantOrganizationBaseDTO
 	): Promise<Number> {
-		return await this.publicOrganizationService.findPublicClientCountsByOrganization(options)
+		return await this.publicOrganizationService.findPublicClientCountsByOrganization(
+			options as FindOptionsWhere<OrganizationContact>
+		)
 	}
 
 	/**
@@ -77,7 +83,9 @@ export class PublicOrganizationController {
 			whitelist: true
 		})) options: TenantOrganizationBaseDTO
 	): Promise<Number> {
-		return await this.publicOrganizationService.findPublicProjectCountsByOrganization(options)
+		return await this.publicOrganizationService.findPublicProjectCountsByOrganization(
+			options as FindOptionsWhere<OrganizationProject>
+		)
 	}
 
 	/**
