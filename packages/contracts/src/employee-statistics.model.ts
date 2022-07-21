@@ -65,6 +65,12 @@ export interface IEmployeeStatisticSum extends IStatisticSum {
 export interface IAggregatedEmployeeStatistic {
 	total: IStatisticSum;
 	employees: IEmployeeStatisticSum[];
+	chart: IChartEmployeeStatistic[];
+}
+
+export interface IChartEmployeeStatistic {
+	dates: string;
+	statistics: IStatisticSum
 }
 
 export enum EmployeeStatisticsHistoryEnum {
