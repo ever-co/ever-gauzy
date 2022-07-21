@@ -4,9 +4,7 @@ import {
 	ElementRef,
 	Input,
 	ViewChild,
-	OnDestroy,
-	AfterViewInit,
-	ChangeDetectorRef
+	OnDestroy
 } from '@angular/core';
 import { trigger, style, animate, transition } from '@angular/animations';
 import { NbDialogRef } from '@nebular/theme';
@@ -34,7 +32,7 @@ export const fadeInOutAnimation = trigger('fadeInOut', [
 	styleUrls: ['./gallery.component.scss'],
 	animations: [fadeInOutAnimation]
 })
-export class GalleryComponent implements OnInit, OnDestroy, AfterViewInit {
+export class GalleryComponent implements OnInit, OnDestroy {
 	active_index: any;
 
 	@ViewChild('customScroll', { static: true })
@@ -47,11 +45,10 @@ export class GalleryComponent implements OnInit, OnDestroy, AfterViewInit {
 
 	constructor(
 		private readonly dialogRef: NbDialogRef<GalleryComponent>,
-		private readonly galleryService: GalleryService,
-		private readonly cdr: ChangeDetectorRef
-	) {}
-	
-	ngAfterViewInit(): void {
+		private readonly galleryService: GalleryService
+	) { }
+
+	ngOnInit() {
 		this.galleryService.items$
 			.pipe(untilDestroyed(this))
 			.subscribe((items) => {
@@ -64,10 +61,7 @@ export class GalleryComponent implements OnInit, OnDestroy, AfterViewInit {
 				}
 				this.setFocus(this.item);
 			});
-		this.cdr.detectChanges();
 	}
-
-	ngOnInit() {}
 
 	close() {
 		this.dialogRef.close();
