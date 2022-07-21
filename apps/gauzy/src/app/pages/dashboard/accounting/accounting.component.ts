@@ -20,7 +20,6 @@ import {
 	ToastrService
 } from '../../../@core/services';
 import { IChartData } from '../../../@shared/report/charts/line-chart/line-chart.component';
-import * as moment from 'moment';
 import { pluck } from 'underscore';
 import { ChartUtil } from '../../../@shared/report/charts/line-chart/chart-utils';
 import { TranslateService } from '@ngx-translate/core';
