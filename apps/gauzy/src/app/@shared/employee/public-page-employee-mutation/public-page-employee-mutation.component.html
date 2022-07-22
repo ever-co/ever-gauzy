@@ -472,20 +472,20 @@
 					tabIcon="shield-outline"
 					responsive
 				>
-					<div class="row">
+					<div class="row mt-3">
 						<div
 							class="col-sm-6"
 							*ngFor="let setting of privacySettings"
 						>
-							<div class="form-group form-item">
-								<label class="check" for="{{ setting.key }}">
-									{{ setting.translation | translate }}
-								</label>
+							<div class="form-group extra_padding">
 								<nb-toggle
 									class="nb_toggle"
 									id="{{ setting.key }}"
 									[formControlName]="setting.key"
 								>
+								<label class="check" for="{{ setting.key }}">
+									{{ setting.translation | translate }}
+								</label>
 								</nb-toggle>
 							</div>
 						</div>
