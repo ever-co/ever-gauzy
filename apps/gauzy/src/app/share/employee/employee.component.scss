@@ -24,7 +24,6 @@
 
 .employee-photo-wrapper {
   display: flex;
-  border-right: 1px solid lightgray;
   .employee-info {
     display: flex;
     flex-flow: column;
@@ -50,14 +49,14 @@ img.employee-image {
     position: absolute;
     height: 100%;
     width: 100%;
-    border-radius: 13px;
+    border-radius: var(--button-rectangle-border-radius);
   }
 
   img {
     width: 180px;
     height: 180px;
-    border-radius: 50%;
-    box-shadow: 0 2px 4px rgba(0, 0, 1, 0.2);
+    border-radius: var(--button-rectangle-border-radius);
+    box-shadow: var(--gauzy-shadow);
   }
 
   input {
@@ -76,6 +75,9 @@ img.employee-image {
     position: absolute;
     top: calc(50% - 68px / 2);
     left: calc(50% - 68px / 2);
+    g circle {
+      fill: var(--text-primary-color);
+    }
   }
 }
 
