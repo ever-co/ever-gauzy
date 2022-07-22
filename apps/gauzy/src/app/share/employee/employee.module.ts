@@ -17,6 +17,7 @@ import { PublicPageEmployeeMutationModule } from '../../@shared/employee/public-
 import { TranslateModule } from '../../@shared/translate/translate.module';
 import { WorkInProgressModule } from '../../pages/work-in-progress/work-in-progress.module';
 import { SharedModule } from '../../@shared/shared.module';
+import { TableComponentsModule } from '../../@shared';
 
 @NgModule({
 	imports: [
@@ -34,7 +35,8 @@ import { SharedModule } from '../../@shared/shared.module';
 		NbUserModule,
 		NbTabsetModule,
 		NbTagModule,
-		WorkInProgressModule
+		WorkInProgressModule,
+		TableComponentsModule
 	],
 	declarations: [EmployeeComponent],
 	providers: []
