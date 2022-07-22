@@ -90,7 +90,9 @@
 						{{ employee.user.name }}
 					</h4>
 					<span class="employee-banner">
-						{{ employee.user.email }}
+						<gauzy-email
+							[rowData]="employee.user"
+						></gauzy-email>
 					</span>
 					<span class="employee-banner">
 						{{ employee.short_description }}
@@ -194,62 +196,64 @@
 
 <!-- Profile HTML Template -->
 <ng-template let-employee="employee" #profileTemplate>
-	<ng-template [ngIf]="employee.show_billrate">
-		<div class="employee-profile-item">
-			<h5 class="employee-profile-item-title">
-				{{ 'PUBLIC_PAGE.RATE' | translate }}:
-			</h5>
-			<span>
-				{{ employee.billRateValue }}
-				{{ employee.billRateCurrency }}
-			</span>
-		</div>
-	</ng-template>
-	<ng-template [ngIf]="employee.show_payperiod">
-		<div class="employee-profile-item">
-			<h5 class="employee-profile-item-title">
-				{{ 'PUBLIC_PAGE.PAY_PERIOD' | translate }}:
-			</h5>
-			<span>
-				{{ employee.payPeriod | replace: '_':' ' | titlecase }}
-			</span>
-		</div>
-	</ng-template>
-	<ng-template [ngIf]="employee.short_description">
-		<div class="employee-profile-item">
-			<h5 class="employee-profile-item-title">
-				{{ 'PUBLIC_PAGE.DESCRIPTION' | translate }}:
-			</h5>
-			<div
-				class="org-banner"
-				[textContent]="employee.short_description"
-			></div>
-		</div>
-	</ng-template>
-	<ng-template [ngIf]="employee.show_average_income">
-		<div class="employee-profile-item">
-			<h5 class="employee-profile-item-title">
-				{{ 'PUBLIC_PAGE.AVERAGE_INCOME' | translate }}:
-			</h5>
-			<span>{{ employee.averageIncome }}</span>
-		</div>
-	</ng-template>
-	<ng-template [ngIf]="employee.show_average_expenses">
-		<div class="employee-profile-item">
-			<h5 class="employee-profile-item-title">
-				{{ 'PUBLIC_PAGE.AVERAGE_EXPENSES' | translate }}:
-			</h5>
-			<span>{{ employee.averageExpenses }}</span>
-		</div>
-	</ng-template>
-	<ng-template [ngIf]="employee.show_average_bonus">
-		<div class="employee-profile-item">
-			<h5 class="employee-profile-item-title">
-				{{ 'PUBLIC_PAGE.AVERAGE_BONUS' | translate }}:
-			</h5>
-			<span>{{ employee.averageBonus }}</span>
-		</div>
-	</ng-template>
+	<div class="tab-employee-info">
+		<ng-template [ngIf]="employee.show_billrate">
+			<div class="employee-profile-item">
+				<h5 class="employee-profile-item-title">
+					{{ 'PUBLIC_PAGE.RATE' | translate }}:
+				</h5>
+				<div class="bill-rate">
+					{{ employee.billRateValue }}
+					{{ employee.billRateCurrency }}/hr
+				</div>
+			</div>
+		</ng-template>
+		<ng-template [ngIf]="employee.show_payperiod">
+			<div class="employee-profile-item">
+				<h5 class="employee-profile-item-title">
+					{{ 'PUBLIC_PAGE.PAY_PERIOD' | translate }}:
+				</h5>
+				<div class="pay-period">
+					{{ employee.payPeriod | replace: '_':' ' | titlecase }}
+				</div>
+			</div>
+		</ng-template>
+		<ng-template [ngIf]="employee.short_description">
+			<div class="employee-profile-item">
+				<h5 class="employee-profile-item-title">
+					{{ 'PUBLIC_PAGE.DESCRIPTION' | translate }}:
+				</h5>
+				<div
+					class="org-banner"
+					[textContent]="employee.short_description"
+				></div>
+			</div>
+		</ng-template>
+		<ng-template [ngIf]="employee.show_average_income">
+			<div class="employee-profile-item">
+				<h5 class="employee-profile-item-title">
+					{{ 'PUBLIC_PAGE.AVERAGE_INCOME' | translate }}:
+				</h5>
+				<span>{{ employee.averageIncome }}</span>
+			</div>
+		</ng-template>
+		<ng-template [ngIf]="employee.show_average_expenses">
+			<div class="employee-profile-item">
+				<h5 class="employee-profile-item-title">
+					{{ 'PUBLIC_PAGE.AVERAGE_EXPENSES' | translate }}:
+				</h5>
+				<span>{{ employee.averageExpenses }}</span>
+			</div>
+		</ng-template>
+		<ng-template [ngIf]="employee.show_average_bonus">
+			<div class="employee-profile-item">
+				<h5 class="employee-profile-item-title">
+					{{ 'PUBLIC_PAGE.AVERAGE_BONUS' | translate }}:
+				</h5>
+				<span>{{ employee.averageBonus }}</span>
+			</div>
+		</ng-template>
+	</div>
 </ng-template>
 
 <!-- Skill HTML Template -->

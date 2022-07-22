@@ -187,3 +187,37 @@ nb-card {
     margin-right: 5px;
   }
 }
+
+.tab-employee-info {
+  .employee-profile-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+    .employee-profile-item-title {
+      font-size: 12px;
+      font-weight: 600;
+      line-height: 15px;
+      letter-spacing: 0em;
+      width: 8rem;
+    }
+    .bill-rate {
+      background-color: var(--color-primary-transparent-100);
+      font-weight: 600;
+      border-radius: 4px;
+      padding: 4px 8px;
+      color: var(--text-primary-color);
+    }
+    .pay-period {
+      padding: 4px 8px;
+      background-color: var(--color-success-transparent-300);
+      font-weight: 600;
+      border-radius: 4px;
+      color: var(--color-success-600);
+    }
+    color: var(--gauzy-text-color-1);
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 17px;
+    letter-spacing: 0em;
+  }
+}
