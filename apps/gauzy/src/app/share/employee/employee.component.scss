@@ -6,11 +6,11 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  padding: 1rem;
   flex-wrap: wrap;
 }
 .right-side {
   gap: 1rem;
+  padding: 1rem;
   .employee-org-info {
     padding: 10px;
     background-color: var(--gauzy-card-2);
@@ -45,6 +45,7 @@
   display: flex;
   gap: 17px;
   align-items: center;
+  padding: 1rem;
   .employee-info {
     .employee-name {
       font-size: 14px;

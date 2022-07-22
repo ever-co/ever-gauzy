@@ -79,11 +79,11 @@ export class EmployeeComponent extends TranslationBaseComponent
 		const employeeId = this.route.snapshot.params.employeeId;
 		this.employeeAwardService
 			.getAll({ employeeId })
-			.pipe(
-				tap(({ items }) => (this.employeeAwards = items)),
-				untilDestroyed(this)
-			)
-			.subscribe();
+			.pipe(untilDestroyed(this))
+			.subscribe({
+				next: ({ items }) => (this.employeeAwards = items),
+				error: (error) => console.warn(error)
+			});
 	}
 
 	updateImageUrl(url: string) {
