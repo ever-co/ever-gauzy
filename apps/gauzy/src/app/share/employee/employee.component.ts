@@ -59,7 +59,7 @@ export class EmployeeComponent extends TranslationBaseComponent
 			map(({ employee }) => ({
 				...employee,
 				startedWorkOn: employee.startedWorkOn
-					? moment(employee.startedWorkOn)
+					? moment(employee.startedWorkOn).toDate()
 					: undefined
 			})),
 			tap((employee) => (this.imageUrl = employee.user.imageUrl))
