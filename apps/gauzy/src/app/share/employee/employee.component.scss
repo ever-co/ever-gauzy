@@ -7,6 +7,7 @@
   align-items: flex-start;
   justify-content: space-between;
   padding: 1rem;
+  flex-wrap: wrap;
 }
 .right-side {
   gap: 1rem;
@@ -42,19 +43,32 @@
 
 .employee-photo-wrapper {
   display: flex;
+  gap: 17px;
+  align-items: center;
   .employee-info {
+    .employee-name {
+      font-size: 14px;
+      font-weight: 600;
+      line-height: 17px;
+      letter-spacing: 0em;
+      color: var(--gauzy-text-color-1);
+    }
+    color: var(--gauzy-text-color-2);
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 15px;
+    letter-spacing: 0em;
     display: flex;
     flex-flow: column;
-    margin-left: 35px;
   }
 }
 
 img.employee-image {
   object-fit: cover;
   object-position: center;
-  width: 180px;
-  height: 180px;
-  border-radius: var(--button-rectangle-border-radius);
+  width: 96px;
+  height: 96px;
+  border-radius: var(--border-radius);
   box-shadow: var(--gauzy-shadow);
 }
 
@@ -67,13 +81,13 @@ img.employee-image {
     position: absolute;
     height: 100%;
     width: 100%;
-    border-radius: var(--button-rectangle-border-radius);
+    border-radius: var(--border-radius);
   }
 
   img {
-    width: 180px;
-    height: 180px;
-    border-radius: var(--button-rectangle-border-radius);
+    width: 96px;
+    height: 96px;
+    border-radius: var(--border-radius);
     box-shadow: var(--gauzy-shadow);
     object-fit: cover;
   }
@@ -92,20 +106,21 @@ img.employee-image {
     transition: opacity 0.2s ease-in;
     opacity: 0.3;
     position: absolute;
-    top: calc(50% - 68px / 2);
-    left: calc(50% - 68px / 2);
+    width: 48px;
+    height: 48px;
+    top: calc(50% - 48px / 2);
+    left: calc(50% - 48px / 2);
     g circle {
       fill: var(--text-primary-color);
     }
   }
 }
 
-button.save_image {
-  bottom: 4px;
+button.save-image {
+  bottom: -20px;
   position: absolute;
-  left: 50px;
+  left: 8px;
   z-index: 9999;
-  padding: 5px 15px;
   font-size: 12px;
   border: none;
   box-shadow: var(--gauzy-shadow);
@@ -152,14 +167,14 @@ button.save_image {
   border-radius: 0 var(--border-radius) var(--border-radius)
     var(--border-radius);
   overflow: auto;
-  height: calc(100vh - 19rem);
+  height: calc(100vh - 16rem);
 }
 
 nb-card {
+  margin: 0;
   nb-card-body {
     background-color: var(--gauzy-card-2);
     border-radius: var(--border-radius);
-    margin: 0;
     padding: 0;
   }
 }

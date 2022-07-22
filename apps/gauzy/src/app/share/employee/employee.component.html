@@ -64,7 +64,7 @@
 						/>
 						<button
 							*ngIf="imageUpdateButton"
-							class="save_image"
+							class="save-image"
 							(click)="
 								saveImage({
 									userId: employee.user.id,
@@ -120,10 +120,10 @@
 							</div>
 							<div class="employee-profile-item-value">
 								<span>
-									{{ employee.isActive ? 'Yes' : 'No' }}
+									{{ organization.name }}
 								</span>
 								<span>
-									{{ organization.name }}
+									{{ employee.isActive ? 'Yes' : 'No' }}
 								</span>
 								<span *ngIf="employee.show_start_work_on">
 									{{
