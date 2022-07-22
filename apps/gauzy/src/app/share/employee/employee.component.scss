@@ -67,8 +67,8 @@
 img.employee-image {
   object-fit: cover;
   object-position: center;
-  width: 96px;
-  height: 96px;
+  width: 72px;
+  height: 72px;
   border-radius: var(--border-radius);
   box-shadow: var(--gauzy-shadow);
 }
@@ -86,8 +86,8 @@ img.employee-image {
   }
 
   img {
-    width: 96px;
-    height: 96px;
+    width: 72px;
+    height: 72px;
     border-radius: var(--border-radius);
     box-shadow: var(--gauzy-shadow);
     object-fit: cover;
@@ -118,9 +118,9 @@ img.employee-image {
 }
 
 button.save-image {
-  bottom: -20px;
+  bottom: -24px;
   position: absolute;
-  left: 8px;
+  left: -4px;
   z-index: 9999;
   font-size: 12px;
   border: none;
