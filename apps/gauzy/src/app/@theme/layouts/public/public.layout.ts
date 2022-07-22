@@ -7,12 +7,16 @@ import {
 	OnInit
 } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
-import { NbLayoutComponent } from '@nebular/theme';
+import { NbLayoutComponent, NbThemeService } from '@nebular/theme';
 
 import { WindowModeBlockScrollService } from '../../services/window-mode-block-scroll.service';
 import { Store } from '../../../@core/services/store.service';
 import { UsersService } from '../../../@core/services';
+import { tap } from 'rxjs/operators';
+import { distinctUntilChange } from 'packages/common-angular/dist';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-public-layout',
 	styleUrls: ['./public.layout.scss'],
@@ -23,7 +27,8 @@ export class PublicLayoutComponent implements OnInit, AfterViewInit {
 		@Inject(PLATFORM_ID) private platformId,
 		private windowModeBlockScrollService: WindowModeBlockScrollService,
 		private store: Store,
-		private usersService: UsersService
+		private usersService: UsersService,
+		private themeService: NbThemeService
 	) {}
 	@ViewChild(NbLayoutComponent) layout: NbLayoutComponent;
 
@@ -31,6 +36,20 @@ export class PublicLayoutComponent implements OnInit, AfterViewInit {
 
 	ngOnInit() {
 		this.loadUserData();
+		this.themeService
+			.getJsTheme()
+			.pipe(
+				distinctUntilChange(),
+				tap((theme) =>
+					this.themeService.changeTheme(
+						(this.store.currentTheme
+							? this.store.currentTheme
+							: theme.name) as string
+					)
+				),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	ngAfterViewInit() {
