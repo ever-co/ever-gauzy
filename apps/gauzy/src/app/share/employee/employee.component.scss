@@ -1,24 +1,42 @@
-.employee-info-wrapper {
+@import 'gauzy/_gauzy-table';
+
+.employee-info-wrapper,
+.right-side {
   position: relative;
-  margin-bottom: 40px;
-}
-
-.edit-icon {
-  right: 36px;
-  position: absolute;
-  width: 36px;
   display: flex;
-  justify-content: center;
-  height: 36px;
-  align-items: center;
-
-  svg {
-    position: absolute;
-  }
-
-  nb-icon {
-    cursor: pointer;
-    z-index: 999;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 1rem;
+}
+.right-side {
+  gap: 1rem;
+  .employee-org-info {
+    padding: 10px;
+    background-color: var(--gauzy-card-2);
+    border-radius: var(--border-radius);
+    color: var(--gauzy-text-color-1);
+    height: 100%;
+    .employee-profile-item-title {
+      color: var(--gauzy-text-color-2);
+      font-size: 12px;
+      font-weight: 600;
+      line-height: 15px;
+      letter-spacing: 0em;
+    }
+    .employee-profile-item-keys,
+    .employee-profile-item-value {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      gap: 6px;
+    }
+    .employee-profile-item-value {
+      font-size: 14px;
+      font-weight: 400;
+      line-height: 17px;
+      letter-spacing: 0em;
+      gap: 4px;
+    }
   }
 }
 
@@ -36,8 +54,8 @@ img.employee-image {
   object-position: center;
   width: 180px;
   height: 180px;
-  border-radius: 50%;
-  box-shadow: 0 2px 4px rgba(0, 0, 1, 0.2);
+  border-radius: var(--button-rectangle-border-radius);
+  box-shadow: var(--gauzy-shadow);
 }
 
 .employee-photo {
@@ -57,6 +75,7 @@ img.employee-image {
     height: 180px;
     border-radius: var(--button-rectangle-border-radius);
     box-shadow: var(--gauzy-shadow);
+    object-fit: cover;
   }
 
   input {
@@ -82,12 +101,14 @@ img.employee-image {
 }
 
 button.save_image {
-  top: 125px;
+  bottom: 4px;
   position: absolute;
   left: 50px;
   z-index: 9999;
   padding: 5px 15px;
   font-size: 12px;
+  border: none;
+  box-shadow: var(--gauzy-shadow);
 }
 
 .employee-profile-item-title {
@@ -98,9 +119,8 @@ button.save_image {
 }
 
 .employee-profile-item {
-  height: 35px;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
 }
 
 .tag {
@@ -128,8 +148,20 @@ button.save_image {
 }
 
 .o__p__s__t {
-  padding-left: 0;
-  padding-right: 0;
+  background-color: var(--gauzy-card-2);
+  border-radius: 0 var(--border-radius) var(--border-radius)
+    var(--border-radius);
+  overflow: auto;
+  height: calc(100vh - 19rem);
+}
+
+nb-card {
+  nb-card-body {
+    background-color: var(--gauzy-card-2);
+    border-radius: var(--border-radius);
+    margin: 0;
+    padding: 0;
+  }
 }
 
 .skill-items {

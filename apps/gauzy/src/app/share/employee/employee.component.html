@@ -1,7 +1,7 @@
 <nb-card>
 	<nb-card-body *ngIf="employee$ | async as employee" class="employee-card">
-		<div class="row employee-info-wrapper">
-			<div class="employee-photo-wrapper col-md-6">
+		<div class="employee-info-wrapper">
+			<div class="employee-photo-wrapper">
 				<ng-container
 					*ngIf="hasEditPermission$ | async; else noPermissionTemp"
 				>
@@ -71,7 +71,7 @@
 									imageUrl: imageUrl
 								})
 							"
-							status="success"
+							status="primary"
 							nbButton
 						>
 							{{ 'BUTTONS.UPDATE' | translate }}
@@ -97,63 +97,60 @@
 					</span>
 				</div>
 			</div>
-			<div class="col-md-6">
-				<ng-container *ngIf="(organization$ | async) as organization">
-					<div class="employee-profile-item">
-						<h5 class="employee-profile-item-title">
-							{{ 'MENU.ORGANIZATION' | translate }}:
-						</h5>
-						<span>
-							{{ organization.name }}
-						</span>
-					</div>
-					<div class="employee-profile-item">
-						<h5 class="employee-profile-item-title">
-							{{ 'PUBLIC_PAGE.ACTIVE' | translate }}:
-						</h5>
-						<span>
-							{{ employee.isActive ? 'Yes' : 'No' }}
-						</span>
-					</div>
-					<div
-						class="employee-profile-item"
-						*ngIf="employee.show_start_work_on"
-					>
-						<h5 class="employee-profile-item-title">
-							{{ 'PUBLIC_PAGE.STARTED_WORK_ON' | translate }}:
-						</h5>
-						<span>
-							{{
-								employee.startedWorkOn
-									| dateFormat : organization.regionCode
-										: organization.dateFormat
-							}}
-						</span>
-					</div>
-				</ng-container>
-			</div>
-			<div class="edit-icon" *ngIf="hasEditPermission$ | async">
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					width="36"
-					height="36"
-					viewBox="0 0 36 36"
-				>
-					<circle
-						cx="18"
-						cy="18"
-						r="18"
-						fill="#0091FF"
-						fill-rule="evenodd"
-					/>
-				</svg>
-				<nb-icon
-					class="open"
-					icon="edit-outline"
-					[options]="{ color: 'white' }"
+			<div class="right-side">
+				<div class="employee-org-info">
+					<ng-container *ngIf="organization$ | async as organization">
+						<div class="employee-profile-item">
+							<div class="employee-profile-item-keys">
+								<h5 class="employee-profile-item-title">
+									{{ 'MENU.ORGANIZATION' | translate }}:
+								</h5>
+								<h5 class="employee-profile-item-title">
+									{{ 'PUBLIC_PAGE.ACTIVE' | translate }}:
+								</h5>
+								<h5
+									*ngIf="employee.show_start_work_on"
+									class="employee-profile-item-title"
+								>
+									{{
+										'PUBLIC_PAGE.STARTED_WORK_ON'
+											| translate
+									}}:
+								</h5>
+							</div>
+							<div class="employee-profile-item-value">
+								<span>
+									{{ employee.isActive ? 'Yes' : 'No' }}
+								</span>
+								<span>
+									{{ organization.name }}
+								</span>
+								<span *ngIf="employee.show_start_work_on">
+									{{
+										employee.startedWorkOn
+											| dateFormat
+												: organization.regionCode
+												: organization.dateFormat
+									}}
+								</span>
+							</div>
+						</div>
+					</ng-container>
+				</div>
+				<div
 					(click)="openEditEmployeeDialog(employee)"
+					*ngIf="hasEditPermission$ | async"
 				>
-				</nb-icon>
+					<button
+						status="basic"
+						class="action primary"
+						size="small"
+						nbButton
+					>
+						<nb-icon icon="edit-outline"> </nb-icon>
+						{{ 'BUTTONS.EDIT' | translate }}
+					</button>
+				</div>
 			</div>
 		</div>
 		<nb-tabset class="o__p__s">
@@ -162,9 +159,12 @@
 				class="o__p__s__t"
 			>
 				<ng-container
-					*ngTemplateOutlet="profileTemplate; context:{
-						employee: employee
-					}"
+					*ngTemplateOutlet="
+						profileTemplate;
+						context: {
+							employee: employee
+						}
+					"
 				></ng-container>
 			</nb-tab>
 			<nb-tab
@@ -172,9 +172,12 @@
 				class="o__p__s__t"
 			>
 				<ng-container
-					*ngTemplateOutlet="skillTemplate; context:{
-						skills: employee.skills
-					}"
+					*ngTemplateOutlet="
+						skillTemplate;
+						context: {
+							skills: employee.skills
+						}
+					"
 				></ng-container>
 			</nb-tab>
 			<nb-tab
@@ -208,11 +211,7 @@
 				{{ 'PUBLIC_PAGE.PAY_PERIOD' | translate }}:
 			</h5>
 			<span>
-				{{
-					employee.payPeriod
-						| replace: '_':' '
-						| titlecase
-				}}
+				{{ employee.payPeriod | replace: '_':' ' | titlecase }}
 			</span>
 		</div>
 	</ng-template>
