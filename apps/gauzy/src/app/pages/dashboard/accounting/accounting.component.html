@@ -1,82 +1,71 @@
 <nb-card class="card">
 	<nb-card-header class="card-header">
-		<div class="row organization-employee-header">
-			<div class="col">
-				<nb-card>
-					<nb-card-body>
-						<ga-single-statistic
-							[color]="'var(--color-info-default)'"
-							[title]="
-								'DASHBOARD_PAGE.TITLE.TOTAL_INCOME' | translate
-							"
-							[value]="
-								aggregatedEmployeeStatistics?.total?.income || 0
-									| currency: organization?.currency
-									| position: organization?.currencyPosition
-							"
-						></ga-single-statistic>
-					</nb-card-body>
-				</nb-card>
-			</div>
-
-			<div class="col">
-				<nb-card>
-					<nb-card-body>
-						<ga-single-statistic
-							[color]="'var(--color-danger-default)'"
-							[title]="
-								'DASHBOARD_PAGE.TITLE.TOTAL_EXPENSES'
-									| translate
-							"
-							[value]="
-								aggregatedEmployeeStatistics?.total?.expense ||
-									0
-									| currency: organization?.currency
-									| position: organization?.currencyPosition
-							"
-						></ga-single-statistic>
-					</nb-card-body>
-				</nb-card>
-			</div>
-
-			<div class="col">
-				<nb-card>
-					<nb-card-body>
-						<ga-single-statistic
-							[color]="
-								aggregatedEmployeeStatistics?.total?.profit >= 0
-									? 'var(--color-warning-default)'
-									: '#ff7b00'
-							"
-							[title]="'DASHBOARD_PAGE.TITLE.PROFIT' | translate"
-							[value]="
-								aggregatedEmployeeStatistics?.total?.profit || 0
-									| currency: organization?.currency
-									| position: organization?.currencyPosition
-							"
-						></ga-single-statistic>
-					</nb-card-body>
-				</nb-card>
-			</div>
-
-			<div *ngIf="organization?.bonusType" class="col">
-				<nb-card>
-					<nb-card-body>
-						<ga-single-statistic
-							[color]="'#089c17'"
-							[title]="
-								'DASHBOARD_PAGE.TITLE.TOTAL_BONUS' | translate
-							"
-							[value]="
-								aggregatedEmployeeStatistics?.total?.bonus || 0
-									| currency: organization?.currency
-									| position: organization?.currencyPosition
-							"
-							type="highlight"
-						></ga-single-statistic>
-					</nb-card-body>
-				</nb-card>
-			</div>
+		<div class="organization-employee-header">
+			<nb-card [nbSpinner]="isLoading" nbSpinnerStatus="primary">
+				<nb-card-body>
+					<ga-single-statistic
+						[color]="'var(--color-info-default)'"
+						[title]="
+							'DASHBOARD_PAGE.TITLE.TOTAL_INCOME' | translate
+						"
+						[value]="
+							aggregatedEmployeeStatistics?.total?.income || 0
+								| currency: organization?.currency
+								| position: organization?.currencyPosition
+						"
+					></ga-single-statistic>
+				</nb-card-body>
+			</nb-card>
+			<nb-card [nbSpinner]="isLoading" nbSpinnerStatus="primary">
+				<nb-card-body>
+					<ga-single-statistic
+						[color]="'var(--color-danger-default)'"
+						[title]="
+							'DASHBOARD_PAGE.TITLE.TOTAL_EXPENSES' | translate
+						"
+						[value]="
+							aggregatedEmployeeStatistics?.total?.expense || 0
+								| currency: organization?.currency
+								| position: organization?.currencyPosition
+						"
+					></ga-single-statistic>
+				</nb-card-body>
+			</nb-card>
+			<nb-card [nbSpinner]="isLoading" nbSpinnerStatus="primary">
+				<nb-card-body>
+					<ga-single-statistic
+						[color]="
+							aggregatedEmployeeStatistics?.total?.profit >= 0
+								? 'var(--color-warning-default)'
+								: '#ff7b00'
+						"
+						[title]="'DASHBOARD_PAGE.TITLE.PROFIT' | translate"
+						[value]="
+							aggregatedEmployeeStatistics?.total?.profit || 0
+								| currency: organization?.currency
+								| position: organization?.currencyPosition
+						"
+					></ga-single-statistic>
+				</nb-card-body>
+			</nb-card>
+			<nb-card
+				*ngIf="organization?.bonusType"
+				[nbSpinner]="isLoading"
+				nbSpinnerStatus="primary"
+			>
+				<nb-card-body>
+					<ga-single-statistic
+						[color]="'#089c17'"
+						[title]="'DASHBOARD_PAGE.TITLE.TOTAL_BONUS' | translate"
+						[value]="
+							aggregatedEmployeeStatistics?.total?.bonus || 0
+								| currency: organization?.currency
+								| position: organization?.currencyPosition
+						"
+						type="highlight"
+					></ga-single-statistic>
+				</nb-card-body>
+			</nb-card>
 		</div>
 		<div class="cash-flow-report">
 			<nb-card [nbSpinner]="isLoading" nbSpinnerStatus="primary">
