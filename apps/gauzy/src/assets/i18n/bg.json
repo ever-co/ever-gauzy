@@ -122,7 +122,11 @@
 		"FEEDBACK": "Feedback",
 		"EQUIPMENT_SHARING": "Equipment Sharing",
 		"PRIVATE": "Private",
-		"PUBLIC": "Public"
+		"PUBLIC": "Public",
+		"MANAGE_WIDGET": "Manage widgets",
+		"MOVE": "Move",
+		"COLLAPSE": "Collapse",
+		"EXPAND": "Expand"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
