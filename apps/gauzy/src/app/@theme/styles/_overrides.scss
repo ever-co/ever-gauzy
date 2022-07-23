@@ -192,6 +192,18 @@ body {
         background-color: transparent !important;
       }
     }
+
+    .ng2-smart-filter
+      .ng-select
+      .ng-select-container
+      .ng-value-container
+      .ng-placeholder {
+      font-size: 13px;
+      font-weight: 400;
+      line-height: 16px;
+      letter-spacing: 0em;
+      color: var(--input-basic-placeholder-text-color);
+    }
   }
 
   .card-scroll {
@@ -257,7 +269,7 @@ body {
   }
 
   .ng-value-container .ng-input input {
-    background-color: nb-theme(select-outline-basic-background-color);
+    background-color: transparent;
     color: nb-theme(text-basic-color);
   }
 
