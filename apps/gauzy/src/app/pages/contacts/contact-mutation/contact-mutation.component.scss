@@ -133,4 +133,6 @@ h4 {
     height: calc(100vh - 29rem);
     width: 100%;
   }
+
+  @include dialog(transparent, var(--gauzy-card-1));
 }
