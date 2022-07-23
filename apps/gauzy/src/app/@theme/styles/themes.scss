@@ -327,6 +327,7 @@ $nb-themes: nb-register-theme(
     toggle-basic-background-color: rgba(126, 126, 143, 1),
     background-basic-color-1: gauzy-card-1,
     gauzy-primary-background: rgba(248, 246, 254, 1),
+    input-basic-placeholder-text-color: rgba(126, 126, 143, 0.5),
   ),
   gauzy-light,
   default
@@ -396,7 +397,8 @@ $nb-themes: nb-register-theme(
     background-basic-color-2: rgba(32, 32, 35, 1),
     smart-table-bg-active: rgba(126, 126, 143, 0.05),
     background-basic-color-3: gauzy-card-3,
-    gauzy-primary-background: rgb(86, 82, 99)
+    gauzy-primary-background: rgb(86, 82, 99),
+    input-basic-placeholder-text-color: rgba(126, 126, 143, 0.5),
   ),
   gauzy-dark,
   dark
