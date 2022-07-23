@@ -234,6 +234,8 @@ $orange: #f56d58;
     .ng-select.ng-select-single .ng-select-container {
       height: 2rem;
       background-color: var(--gauzy-card-1);
+      min-height: 32px;
+      min-width: 4rem;
     }
     .ng-select .ng-select-container {
       box-shadow: var(--gauzy-shadow);
