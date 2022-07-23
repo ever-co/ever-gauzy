@@ -178,6 +178,20 @@ body {
 
   ng2-smart-table table {
     border-collapse: separate !important;
+    .ng2-smart-filter input {
+      height: 32px;
+      background-color: var(--gauzy-sidebar-background-3) !important;
+      border: none !important;
+    }
+
+    .ng2-smart-filter .ng-select .ng-select-container {
+      background-color: var(--gauzy-sidebar-background-3) !important;
+      height: 32px;
+      min-height: auto;
+      input {
+        background-color: transparent !important;
+      }
+    }
   }
 
   .card-scroll {
@@ -525,16 +539,16 @@ ng2-smart-table {
   }
 }
 
-.nb-theme-material-light{
+.nb-theme-material-light {
   a > nb-icon {
     color: #ffffff !important;
   }
 }
 
 .nb-theme-default nb-select .select-button {
-   min-width: var(--select-min-width) !important;
+  min-width: var(--select-min-width) !important;
 }
 
 .nb-theme-default nb-accordion-item-header {
-  padding: var(--accordion-padding);;
+  padding: var(--accordion-padding);
 }
