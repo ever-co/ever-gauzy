@@ -600,3 +600,53 @@ ng2-smart-table {
     }
   }
 }
+
+ng2-smart-table table tr.ng2-smart-titles .ng2-smart-sort {
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  line-height: 15px;
+  letter-spacing: 0em;
+  color: var(--gauzy-text-color-2) !important;
+}
+
+ng2-smart-table table tr.ng2-smart-titles th a.sort {
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  line-height: 15px;
+  letter-spacing: 0em;
+  color: var(--gauzy-text-color-2) !important;
+  display: flex;
+  flex-direction: row-reverse;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.25rem;
+  &.asc {
+    &:before {
+      color: rgba(126, 126, 143, 0.25);
+      font-size: 10px;
+      font-family: 'Font Awesome\ 5 Free' !important;
+      content: '\f063' !important;
+      font-weight: 900;
+      transform: rotate(180deg) !important;
+      top: 55% !important;
+      right: 0.625rem !important;
+    }
+    &:after {
+      display: none;
+    }
+  }
+  &.desc {
+    &:before {
+      color: rgba(126, 126, 143, 0.25);
+      font-size: 10px;
+      font-family: 'Font Awesome\ 5 Free' !important;
+      content: '\f063' !important;
+      font-weight: 900;
+      top: 55% !important;
+      right: 0.625rem !important;
+    }
+    &:after {
+      display: none;
+    }
+  }
+}
