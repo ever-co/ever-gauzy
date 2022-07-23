@@ -18,3 +18,7 @@
 .entities {
   margin-bottom: 0.5rem;
 }
+
+:host{
+  @include dialog(var(--gauzy-card-2), var(--gauzy-card-1));
+}
