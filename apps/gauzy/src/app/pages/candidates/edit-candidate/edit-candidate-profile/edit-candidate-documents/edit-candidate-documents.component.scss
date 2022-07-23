@@ -84,4 +84,5 @@ input {
       margin-bottom: 8px;
     }
   }
+  @include dialog(var(--gauzy-card-2), var(--gauzy-card-1));
 }
