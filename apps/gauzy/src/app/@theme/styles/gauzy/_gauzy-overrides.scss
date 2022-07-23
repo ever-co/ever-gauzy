@@ -38,7 +38,12 @@ $default-box-shadow: var(--gauzy-shadow);
     .ng-select.ng-select-multiple
     .ng-select-container
     .ng-value-container
-    .ng-placeholder {
+    .ng-placeholder,
+  ::ng-deep
+    .ng-select.ng-select-single
+    .ng-select-container
+    .ng-value-container
+    .ng-input {
     top: unset !important;
   }
 
@@ -134,8 +139,8 @@ $default-box-shadow: var(--gauzy-shadow);
     justify-content: center;
   }
 
-  nb-stepper .header .step.selected+.connector,
-  nb-stepper .header .step.completed+.connector {
+  nb-stepper .header .step.selected + .connector,
+  nb-stepper .header .step.completed + .connector {
     background-color: nb-theme(background-primary-color-1);
     height: 10px !important;
     margin: 0px 10px 0 -5px !important;
@@ -168,7 +173,6 @@ $default-box-shadow: var(--gauzy-shadow);
 * End
 * Override nb-stepper
 */
-
 
 /* 
 * Begin
@@ -220,7 +224,6 @@ $default-box-shadow: var(--gauzy-shadow);
   }
 
   ckeditor {
-
     a.cke_button_off:hover,
     a.cke_button_on,
     a.cke_button_off:focus,
@@ -241,23 +244,25 @@ $default-box-shadow: var(--gauzy-shadow);
 */
 
 @mixin gauzy-overrides() {
-  @include nb-select-overrides($default-height,
+  @include nb-select-overrides(
+    $default-height,
     $default-radius,
-    $default-box-shadow-inset );
+    $default-box-shadow-inset
+  );
   @include text-inputs-overrides;
-  @include ng-select-overrides($default-height,
+  @include ng-select-overrides(
+    $default-height,
     $default-radius,
-    $default-box-shadow-inset );
+    $default-box-shadow-inset
+  );
   @include nb-stepper;
   @include full-calendar();
   @include ck-editor();
 }
 
 @mixin full-calendar() {
-
   /* Overrides full-calendar */
   full-calendar {
-
     /* Header */
     div.fc-header-toolbar {
       .fc-toolbar-chunk {
@@ -412,7 +417,7 @@ $default-box-shadow: var(--gauzy-shadow);
     }
   }
 
-  .fc .fc-scrollgrid-section-sticky>* {
+  .fc .fc-scrollgrid-section-sticky > * {
     background: unset !important;
   }
 
@@ -481,7 +486,7 @@ $default-box-shadow: var(--gauzy-shadow);
   .fc .fc-timegrid-slot-label,
   .fc .fc-timegrid-axis-frame,
   .fc .fc-daygrid-day-frame,
-  .fc fc-timegrid-col-bg>* {
+  .fc fc-timegrid-col-bg > * {
     background-color: rgba($color: white, $alpha: 0.5);
     border-radius: nb-theme(border-radius);
   }
