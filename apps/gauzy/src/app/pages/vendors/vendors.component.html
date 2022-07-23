@@ -64,7 +64,7 @@
 			</nb-card>			
 		</ng-template>
 		<ng-template
-			[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID && vendors.length > 0"
+			[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID && vendors?.length > 0"
 		>
 			<ga-card-grid
 				[settings]="settingsSmartTable"
