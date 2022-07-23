@@ -17,12 +17,12 @@
     font-weight: 600;
     line-height: 16px;
     letter-spacing: 0em;
-    text-align: left;
   }
 
   i {
     cursor: pointer;
   }
+  @include dialog(var(--gauzy-card-1), var(--gauzy-sidebar-background-4));
 }
 
 .popover-container-action {
