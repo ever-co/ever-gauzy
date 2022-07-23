@@ -26,12 +26,19 @@ $default-box-shadow: var(--gauzy-shadow);
 }
 
 @mixin dialog($card-background-color, $input-background-color) {
+  @include input-appearance(42px, $input-background-color);
+  nb-card {
+    background-color: $card-background-color;
+  }
+}
+
+@mixin input-appearance($height, $input-background-color) {
   ::ng-deep input,
   ::ng-deep nb-select.appearance-outline.status-basic .select-button,
   ::ng-deep .ng-select .ng-select-container {
     background-color: $input-background-color !important;
     border: none;
-    height: 42px !important;
+    height: $height !important;
   }
 
   ::ng-deep
@@ -66,10 +73,6 @@ $default-box-shadow: var(--gauzy-shadow);
     input {
       background-color: unset !important;
     }
-  }
-
-  nb-card {
-    background-color: $card-background-color;
   }
 }
 
@@ -264,6 +267,7 @@ $default-box-shadow: var(--gauzy-shadow);
   @include nb-stepper;
   @include full-calendar();
   @include ck-editor();
+  @include input-appearance(42px, var(--gauzy-card-1));
 }
 
 @mixin full-calendar() {
