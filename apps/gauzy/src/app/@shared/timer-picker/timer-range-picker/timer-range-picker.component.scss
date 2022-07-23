@@ -4,11 +4,10 @@
 :host input {
   display: flex;
   align-items: center;
-  background: nb-theme(input-basic-background-color);
-  box-shadow: rgba(0, 0, 0, 0.1) 0px 1px 0px 0px inset;
+  box-shadow: var(--gauzy-shadow) inset;
   color: nb-theme(text-basic-color);
   border-color: nb-theme(background-basic-color-3);
-  border-radius: 0.5rem;
+  border-radius: var(--border-radius);
   height: 42px;
   position: relative;
   &:hover {
