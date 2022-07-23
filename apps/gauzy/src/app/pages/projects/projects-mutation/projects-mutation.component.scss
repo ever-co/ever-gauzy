@@ -101,3 +101,7 @@
 		}
 	}
 }
+
+:host {
+	@include dialog(transparent, var(--gauzy-card-1));
+}
