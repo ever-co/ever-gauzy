@@ -25,6 +25,49 @@ $default-box-shadow: var(--gauzy-shadow);
   }
 }
 
+@mixin dialog($card-background-color, $input-background-color) {
+  ::ng-deep input,
+  ::ng-deep nb-select.appearance-outline.status-basic .select-button,
+  ::ng-deep .ng-select .ng-select-container {
+    background-color: $input-background-color !important;
+    border: none;
+    height: 42px !important;
+  }
+
+  ::ng-deep
+    .ng-select.ng-select-multiple
+    .ng-select-container
+    .ng-value-container
+    .ng-placeholder {
+    top: unset;
+  }
+
+  ::ng-deep label,
+  ::ng-deep .label {
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 13px;
+    letter-spacing: -0.01em;
+    color: var(--gauzy-text-color-2);
+  }
+
+  ::ng-deep textarea {
+    background-color: $input-background-color !important;
+    border: none;
+  }
+
+  ::ng-deep .ng-select .ng-select-container,
+  ::ng-deep nb-tag-list {
+    input {
+      background-color: unset !important;
+    }
+  }
+
+  nb-card {
+    background-color: $card-background-color;
+  }
+}
+
 @mixin text-inputs-overrides() {
   input {
     border-radius: $default-radius;
