@@ -330,7 +330,9 @@ $nb-themes: nb-register-theme(
     input-basic-placeholder-text-color: rgba(126, 126, 143, 0.5),
     input-basic-background-color: gauzy-card-1,
     select-outline-basic-background-color: gauzy-card-1,
-    input-border-width: 0
+    input-border-width: 0,
+    select-outline-border-width: 0,
+    select-outline-basic-border-color: transparent
   ),
   gauzy-light,
   default
@@ -403,7 +405,9 @@ $nb-themes: nb-register-theme(
     gauzy-primary-background: rgb(86, 82, 99),
     input-basic-placeholder-text-color: rgba(126, 126, 143, 0.5),
     select-outline-basic-background-color: gauzy-card-1,
-    input-border-width: 0
+    input-border-width: 0,
+    select-outline-border-width: 0,
+    select-outline-basic-border-color: transparent
   ),
   gauzy-dark,
   dark
