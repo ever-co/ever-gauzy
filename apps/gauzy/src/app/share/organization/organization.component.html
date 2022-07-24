@@ -817,7 +817,7 @@
 				<div class="main-details">
 					{{ client?.name }}
 				</div>
-				<div class="specialty">
+				<div *ngIf="hasEditPublicPage$ | async" class="specialty">
 					<gauzy-email
 						[rowData]="{ email: client?.primaryEmail }"
 					></gauzy-email>
