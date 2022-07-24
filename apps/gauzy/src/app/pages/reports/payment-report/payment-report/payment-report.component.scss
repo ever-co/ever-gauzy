@@ -1,20 +1,20 @@
-@import "report";
+@import 'report';
+@import 'gauzy/_gauzy-overrides';
 
 :host {
-    ::ng-deep {
-        .filters {
-            text-align: right;
-
-            .contact-select {
-                margin-right: 10px;
-
-                & span:first-of-type{
-                    margin-right: 60px;
-                }
-            }
-            .currency-select span:first-of-type {
-                margin-right: 40px;
-            }
-        }
+  .filters {
+    display: flex;
+    justify-content: flex-end;
+    gap: 5px;
+  }
+  ::ng-deep {
+    ng-select {
+      min-width: 10rem;
     }
+    @include ng-select-overrides(
+      2rem,
+      $default-button-radius,
+      $default-box-shadow
+    );
+  }
 }

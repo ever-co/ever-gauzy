@@ -13,6 +13,7 @@ import * as _ from 'underscore';
 import {
 	timeTrackerPage
 } from '@gauzy/desktop-window';
+const timerHandler = new TimerHandler();
 
 // Import logging for electron and override default console logging
 import log from 'electron-log';
@@ -26,7 +27,6 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 	ipcMain.removeAllListeners('return_time_sheet');
 	ipcMain.removeAllListeners('return_toggle_api');
 	ipcMain.removeAllListeners('set_project_task');
-	const timerHandler = new TimerHandler();
 	ipcMain.on('start_server', (event, arg) => {
 		global.variableGlobal = {
 			API_BASE_URL: arg.serverUrl
@@ -140,7 +140,6 @@ export function ipcTimer(
 	windowPath,
 	soundPath
 ) {
-	const timerHandler = new TimerHandler();
 	ipcMain.on('start_timer', (event, arg) => {
 		log.info(`Timer Start: ${moment().format()}`);
 		store.set({
@@ -386,19 +385,27 @@ export function ipcTimer(
 		const maxWidth = height < 768 ? 360 - 50 : 360;
 		const widthLarge = height < 768 ? 1024 - 50 : 1024;
 		if (arg) {
-			timeTrackerWindow.setBounds({
-				width: widthLarge,
-				height: maxHeight,
-				x: (width - widthLarge) * (0.5),
-				y: (height - maxHeight) * (0.5)
-			}, true)
+			try {
+				timeTrackerWindow.setBounds({
+					width: widthLarge,
+					height: maxHeight,
+					x: (width - widthLarge) * (0.5),
+					y: (height - maxHeight) * (0.5)
+				}, true)
+			} catch (error) {
+				console.log('error on change window width', error);
+			}
 		} else {
-			timeTrackerWindow.setBounds({
-				width: maxWidth,
-				height: maxHeight,
-				x: (width - maxWidth) * (0.5),
-				y: (height - maxHeight) * (0.5)
-			}, true)
+			try {
+				timeTrackerWindow.setBounds({
+					width: maxWidth,
+					height: maxHeight,
+					x: (width - maxWidth) * (0.5),
+					y: (height - maxHeight) * (0.5)
+				}, true)
+			} catch (error) {
+				console.log('error on change window width', error);
+			}
 		}
 	})
 

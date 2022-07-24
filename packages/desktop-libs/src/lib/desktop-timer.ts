@@ -249,13 +249,11 @@ export default class Timerhandler {
 	 * Stop timer interval period after stop timer
 	 */
 	stopTimerIntervalPeriod() {
-		if (this.intevalTimer) {
+		try {
 			clearInterval(this.intevalTimer);
-			this.intevalTimer = null;
-		}
-		if (this.intervalUpdateTime) {
 			clearInterval(this.intervalUpdateTime);
-			this.intervalUpdateTime = null;
+		} catch (error) {
+			console.log('error on clear all intervals for timer');
 		}
 		console.log(
 			'Stop Timer Interval Period:',

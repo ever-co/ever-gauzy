@@ -21,16 +21,20 @@
 <ng-template #setting>
 	<div gauzyOutside (clickOutside)="onClickSetting($event)" class="setting">
 		<div class="action" (click)="isCollapse = true">
-			<i class="far fa-window-minimize"></i> <span>Collapse</span>
+			<i class="far fa-window-minimize"></i>
+			<span>{{ 'BUTTONS.COLLAPSE' | translate }}</span>
 		</div>
 		<div class="action" (click)="isExpand = true">
-			<i class="fas fa-expand"></i> <span>Expand</span>
+			<i class="fas fa-expand"></i>
+			<span>{{ 'BUTTONS.EXPAND' | translate }}</span>
 		</div>
 		<div class="action" (click)="move = true">
-			<i class="fas fa-expand-arrows-alt"></i> <span>Move</span>
+			<i class="fas fa-expand-arrows-alt"></i>
+			<span>{{ 'BUTTONS.MOVE' | translate }}</span>
 		</div>
 		<div class="action" (click)="hide = true">
-			<i class="fas fa-times"></i> <span>Delete</span>
+			<i class="fas fa-times"></i>
+			<span>{{ 'BUTTONS.DELETE' | translate }}</span>
 		</div>
 	</div>
 </ng-template>

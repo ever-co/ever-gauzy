@@ -122,7 +122,11 @@
 		"FEEDBACK": "crwdns11132:0crwdne11132:0",
 		"EQUIPMENT_SHARING": "crwdns11146:0crwdne11146:0",
 		"PRIVATE": "crwdns11217:0crwdne11217:0",
-		"PUBLIC": "crwdns11219:0crwdne11219:0"
+		"PUBLIC": "crwdns11219:0crwdne11219:0",
+		"MANAGE_WIDGET": "crwdns11457:0crwdne11457:0",
+		"MOVE": "crwdns11459:0crwdne11459:0",
+		"COLLAPSE": "crwdns11461:0crwdne11461:0",
+		"EXPAND": "crwdns11463:0crwdne11463:0"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {

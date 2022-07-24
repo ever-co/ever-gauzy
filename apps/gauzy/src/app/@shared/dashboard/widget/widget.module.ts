@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { WidgetComponent } from './widget.component';
 import { NbButtonModule, NbIconModule, NbPopoverModule } from '@nebular/theme';
 import { SharedModule } from '../../shared.module';
+import { TranslateModule } from '../../translate/translate.module';
 
 @NgModule({
 	declarations: [WidgetComponent],
@@ -11,7 +12,8 @@ import { SharedModule } from '../../shared.module';
 		NbIconModule,
 		NbPopoverModule,
 		NbButtonModule,
-		SharedModule
+		SharedModule,
+		TranslateModule
 	],
 	exports: [WidgetComponent]
 })
