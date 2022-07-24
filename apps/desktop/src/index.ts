@@ -62,7 +62,8 @@ import {
 	DataModel,
 	AppMenu,
 	removeMainListener,
-	removeTimerListener
+	removeTimerListener,
+	appUpdateNotification
 } from '@gauzy/desktop-libs';
 import {
 	createGauzyWindow,
@@ -329,6 +330,9 @@ const getApiBaseUrl = (configs) => {
 app.on('ready', async () => {
 	// require(path.join(__dirname, 'desktop-api/main.js'));
 	/* set menu */
+	setTimeout(() => {
+		checForUpdateNotify()
+	}, 5000);
 	await knex.raw(`pragma journal_mode = WAL;`).then((res) => console.log(res));
 	await dataModel.createNewTable(knex);
 	const configs: any = store.get('configs');
@@ -501,29 +505,13 @@ ipcMain.on('open_browser', (event, arg) => {
 });
 
 ipcMain.on('check_for_update', async (event, arg) => {
-	const updaterConfig = {
-		repo: 'ever-gauzy-desktop',
-		owner: 'ever-co',
-		typeRelease: 'releases'
-	};
-	let latestReleaseTag = null;
-	try {
-		latestReleaseTag = await fetch(
-			`https://github.com/${updaterConfig.owner}/${updaterConfig.repo}/${updaterConfig.typeRelease}/latest`,
-			{
-				method: 'GET',
-				headers: {
-					Accept: 'application/json'
-				}
-			}
-		).then((res) => res.json());
-	} catch (error) {}
+	const updateFeedUrl = await getUpdaterConfig();
 
-	if (latestReleaseTag) {
+	if (updateFeedUrl) {
 		autoUpdater.setFeedURL({
 			channel: 'latest',
 			provider: 'generic',
-			url: `https://github.com/${updaterConfig.owner}/${updaterConfig.repo}/${updaterConfig.typeRelease}/download/${latestReleaseTag.tag_name}`
+			url: updateFeedUrl
 		});
 		autoUpdater.checkForUpdatesAndNotify().then((downloadPromise) => {
 			if (cancellationToken)
@@ -695,4 +683,33 @@ function launchAtStartup(autoLaunch, hidden) {
 		default:
 			break;
 	}
+}
+
+async function getUpdaterConfig() {
+	const updaterConfig = {
+		repo: 'ever-gauzy-desktop',
+		owner: 'ever-co',
+		typeRelease: 'releases'
+	};
+	let latestReleaseTag = null;
+	try {
+		latestReleaseTag = await fetch(
+			`https://github.com/${updaterConfig.owner}/${updaterConfig.repo}/${updaterConfig.typeRelease}/latest`,
+			{
+				method: 'GET',
+				headers: {
+					Accept: 'application/json'
+				}
+			}
+		).then((res) => res.json());
+	} catch (error) {}
+	if (latestReleaseTag) {
+		return `https://github.com/${updaterConfig.owner}/${updaterConfig.repo}/${updaterConfig.typeRelease}/download/${latestReleaseTag.tag_name}`
+	}
+	return null;
+}
+
+async function checForUpdateNotify() {
+	const updateFeedUrl = await getUpdaterConfig();
+	appUpdateNotification(updateFeedUrl)
 }

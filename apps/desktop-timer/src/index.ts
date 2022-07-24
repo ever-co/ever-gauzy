@@ -62,7 +62,8 @@ import {
 	DataModel,
 	AppMenu,
 	removeMainListener,
-	removeTimerListener
+	removeTimerListener,
+	appUpdateNotification
 } from '@gauzy/desktop-libs';
 import {
 	createSetupWindow,
@@ -273,6 +274,9 @@ const getApiBaseUrl = (configs) => {
 app.on('ready', async () => {
 	// require(path.join(__dirname, 'desktop-api/main.js'));
 	/* set menu */
+	setTimeout(() => {
+		checForUpdateNotify()
+	}, 5000);
 	const configs: any = store.get('configs');
 	if (configs && typeof configs.autoLaunch === 'undefined') {
 		launchAtStartup(true, false);
@@ -424,29 +428,13 @@ ipcMain.on('open_browser', (event, arg) => {
 });
 
 ipcMain.on('check_for_update', async (event, arg) => {
-	const updaterConfig = {
-		repo: 'ever-gauzy-desktop-timer',
-		owner: 'ever-co',
-		typeRelease: 'releases'
-	};
-	let latestReleaseTag = null;
-	try {
-		latestReleaseTag = await fetch(
-			`https://github.com/${updaterConfig.owner}/${updaterConfig.repo}/${updaterConfig.typeRelease}/latest`,
-			{
-				method: 'GET',
-				headers: {
-					Accept: 'application/json'
-				}
-			}
-		).then((res) => res.json());
-	} catch (error) {}
-
-	if (latestReleaseTag) {
+	autoUpdater.autoDownload = true;
+	const updateFeedUrl = await getUpdaterConfig();
+	if (updateFeedUrl) {
 		autoUpdater.setFeedURL({
 			channel: 'latest',
 			provider: 'generic',
-			url: `https://github.com/${updaterConfig.owner}/${updaterConfig.repo}/${updaterConfig.typeRelease}/download/${latestReleaseTag.tag_name}`
+			url: updateFeedUrl
 		});
 		autoUpdater.checkForUpdatesAndNotify().then((downloadPromise) => {
 			if (cancellationToken)
@@ -457,7 +445,7 @@ ipcMain.on('check_for_update', async (event, arg) => {
 	}
 });
 
-autoUpdater.on('update-available', () => {
+autoUpdater.once('update-available', () => {
 	settingsWindow.webContents.send('update_available');
 });
 
@@ -583,6 +571,34 @@ app.on('before-quit', (e) => {
 	}
 });
 
+async function getUpdaterConfig() {
+	const updaterConfig = {
+		repo: 'ever-gauzy-desktop-timer',
+		owner: 'ever-co',
+		typeRelease: 'releases'
+	};
+	let latestReleaseTag = null;
+	try {
+		latestReleaseTag = await fetch(
+			`https://github.com/${updaterConfig.owner}/${updaterConfig.repo}/${updaterConfig.typeRelease}/latest`,
+			{
+				method: 'GET',
+				headers: {
+					Accept: 'application/json'
+				}
+			}
+		).then((res) => res.json());
+	} catch (error) {}
+	if (latestReleaseTag) {
+		return `https://github.com/${updaterConfig.owner}/${updaterConfig.repo}/${updaterConfig.typeRelease}/download/${latestReleaseTag.tag_name}`
+	}
+	return null;
+}
+
+async function checForUpdateNotify() {
+	const updateFeedUrl = await getUpdaterConfig();
+	appUpdateNotification(updateFeedUrl)
+}
 // On OS X it is common for applications and their menu bar
 // to stay active until the user quits explicitly with Cmd + Q
 function quit() {
