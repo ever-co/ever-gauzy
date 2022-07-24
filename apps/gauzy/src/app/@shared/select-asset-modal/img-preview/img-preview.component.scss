@@ -6,7 +6,7 @@
 
 .no-img-asset-preview {
   position: relative;
-  background: rgba(123, 123, 143, 0.1);
+  background: var(--gauzy-sidebar-background-3);
   height: 200px;
   width: 100%;
   border-radius: nb-theme(border-radius);
@@ -14,12 +14,17 @@
   i {
     position: absolute;
     left: calc(50% - 15px);
-    top:  50%;
+    top: 50%;
   }
 }
 
 nb-card {
   width: 100%;
+  background: var(--gauzy-card-2);
+  nb-card-body {
+    padding: 1rem;
+    border-radius: nb-theme(border-radius);
+  }
 }
 
 .img-preview-info {
@@ -46,10 +51,10 @@ img {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  &.dimension{
+  &.dimension {
     width: fit-content;
   }
-  &:hover{
+  &:hover {
     z-index: 2;
     text-overflow: clip;
     white-space: unset;
