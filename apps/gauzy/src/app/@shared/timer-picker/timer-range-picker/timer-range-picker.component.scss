@@ -6,7 +6,6 @@
   align-items: center;
   box-shadow: var(--gauzy-shadow) inset;
   color: nb-theme(text-basic-color);
-  border-color: nb-theme(background-basic-color-3);
   border-radius: var(--border-radius);
   height: 42px;
   position: relative;
@@ -22,13 +21,14 @@
   }
   .icon {
     position: absolute;
-    @include nb-ltr(right, 14px);
-    @include nb-rtl(left, 0);
+    @include nb-ltr(right, 8px);
+    @include nb-rtl(left, -8px);
   }
 }
 
 input {
   width: 100%;
+  padding: 0 10px;
 }
 
 .input {
