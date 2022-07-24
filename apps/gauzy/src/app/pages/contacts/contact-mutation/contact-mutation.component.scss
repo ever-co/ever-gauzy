@@ -19,7 +19,6 @@
       height: 100%;
       width: 100%;
       border-radius: nb-theme(border-radius);
-      ;
     }
 
     img,
@@ -28,7 +27,6 @@
       height: 294px;
       object-fit: cover;
       border-radius: nb-theme(border-radius);
-      ;
     }
 
     .image {
@@ -38,7 +36,7 @@
         margin: 5px;
       }
 
-      >span {
+      > span {
         color: rgba(126, 126, 143, 1);
         z-index: 2;
         transition: opacity 0.2s ease-in;
@@ -113,7 +111,6 @@ h4 {
 }
 
 :host {
-
   nb-card,
   nb-card-body,
   nb-card-header {
@@ -132,6 +129,10 @@ h4 {
   .custom-card {
     height: calc(100vh - 29rem);
     width: 100%;
+  }
+
+  ::ng-deep ngx-image-uploader input {
+    height: 100% !important;
   }
 
   @include dialog(transparent, var(--gauzy-card-1));

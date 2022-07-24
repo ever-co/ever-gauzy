@@ -1,4 +1,11 @@
 @import 'var';
+@import 'gauzy/_gauzy-overrides';
+:host {
+	nb-card-body{
+		background-color: var(--gauzy-card-2);
+		@include input-appearance(42px, var(--gauzy-card-1));
+	}
+}
 :host nb-card-body {
 	padding: 50px 70px;
 	@include respond(dsk) {

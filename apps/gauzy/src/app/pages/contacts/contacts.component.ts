@@ -55,9 +55,10 @@ import { InputFilterComponent } from '../../@shared/table-filters';
 	templateUrl: './contacts.component.html',
 	styleUrls: ['./contacts.component.scss']
 })
-export class ContactsComponent extends PaginationFilterBaseComponent
-	implements OnInit, OnDestroy {
-
+export class ContactsComponent
+	extends PaginationFilterBaseComponent
+	implements OnInit, OnDestroy
+{
 	showAddCard: boolean;
 	organizationContacts: IOrganizationContact[] = [];
 	projectsWithoutOrganizationContacts: IOrganizationProject[] = [];
@@ -122,7 +123,7 @@ export class ContactsComponent extends PaginationFilterBaseComponent
 		this._applyTranslationOnSmartTable();
 		this.route.data
 			.pipe(
-				tap((params: Data) => this.contactType = params.contactType),
+				tap((params: Data) => (this.contactType = params.contactType)),
 				tap(() => this.setView()),
 				tap(() => this._loadSmartTableSettings()),
 				untilDestroyed(this)
@@ -164,7 +165,9 @@ export class ContactsComponent extends PaginationFilterBaseComponent
 		this.route.queryParamMap
 			.pipe(
 				filter((params: ParamMap) => !!params),
-				filter((params: ParamMap) => params.get('openAddDialog') === 'true'),
+				filter(
+					(params: ParamMap) => params.get('openAddDialog') === 'true'
+				),
 				debounceTime(1000),
 				tap(() => this.add()),
 				untilDestroyed(this)
@@ -174,7 +177,9 @@ export class ContactsComponent extends PaginationFilterBaseComponent
 			.pipe(
 				filter((params: ParamMap) => !!params),
 				filter((params: ParamMap) => !!params.get('id')),
-				tap((params: ParamMap) => this._initEditMethod(params.get('id'))),
+				tap((params: ParamMap) =>
+					this._initEditMethod(params.get('id'))
+				),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -236,7 +241,7 @@ export class ContactsComponent extends PaginationFilterBaseComponent
 					},
 					filterFunction: (name: string) => {
 						this.setFilter({ field: 'name', search: name });
-					},
+					}
 				},
 				members: {
 					title: this.getTranslation(
@@ -254,8 +259,11 @@ export class ContactsComponent extends PaginationFilterBaseComponent
 						component: InputFilterComponent
 					},
 					filterFunction: (primaryPhone: string) => {
-						this.setFilter({ field: 'primaryPhone', search: primaryPhone });
-					},
+						this.setFilter({
+							field: 'primaryPhone',
+							search: primaryPhone
+						});
+					}
 				},
 				primaryEmail: {
 					title: this.getTranslation('CONTACTS_PAGE.EMAIL'),
@@ -265,8 +273,11 @@ export class ContactsComponent extends PaginationFilterBaseComponent
 						component: InputFilterComponent
 					},
 					filterFunction: (primaryEmail: string) => {
-						this.setFilter({ field: 'primaryEmail', search: primaryEmail });
-					},
+						this.setFilter({
+							field: 'primaryEmail',
+							search: primaryEmail
+						});
+					}
 				},
 				projects: {
 					title: this.getTranslation('CONTACTS_PAGE.PROJECTS'),
@@ -284,11 +295,6 @@ export class ContactsComponent extends PaginationFilterBaseComponent
 				},
 				city: {
 					title: this.getTranslation('CONTACTS_PAGE.CITY'),
-					type: 'string',
-					filter: false
-				},
-				street: {
-					title: this.getTranslation('CONTACTS_PAGE.STREET'),
 					type: 'string',
 					filter: false
 				}
@@ -366,9 +372,15 @@ export class ContactsComponent extends PaginationFilterBaseComponent
 			.componentLayout$(this.viewComponentName)
 			.pipe(
 				distinctUntilChange(),
-				tap((componentLayout) => (this.dataLayoutStyle = componentLayout)),
+				tap(
+					(componentLayout) =>
+						(this.dataLayoutStyle = componentLayout)
+				),
 				tap(() => this.refreshPagination()),
-				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
+				filter(
+					(componentLayout) =>
+						componentLayout === ComponentLayoutStyleEnum.CARDS_GRID
+				),
 				tap(() => this.contacts$.next(true)),
 				untilDestroyed(this)
 			)
@@ -432,7 +444,9 @@ export class ContactsComponent extends PaginationFilterBaseComponent
 		const { id: organizationId } = this.organization;
 
 		const request = {};
-		if (isNotEmpty(this.selectedEmployeeId)) { request['members'] = [this.selectedEmployeeId]; };
+		if (isNotEmpty(this.selectedEmployeeId)) {
+			request['members'] = [this.selectedEmployeeId];
+		}
 
 		try {
 			this.smartTableSource = new ServerDataSource(this.http, {
@@ -456,7 +470,7 @@ export class ContactsComponent extends PaginationFilterBaseComponent
 					...{
 						organizationId,
 						tenantId,
-						contactType: this.contactType,
+						contactType: this.contactType
 					},
 					...request,
 					...this.filters.where
@@ -512,7 +526,8 @@ export class ContactsComponent extends PaginationFilterBaseComponent
 
 	private async _loadGridLayoutData() {
 		if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
-			this.organizationContacts = await this.smartTableSource.getElements();
+			this.organizationContacts =
+				await this.smartTableSource.getElements();
 		}
 	}
 
