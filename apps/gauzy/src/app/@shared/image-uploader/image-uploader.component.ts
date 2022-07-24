@@ -28,7 +28,6 @@ export class ImageUploaderComponent implements OnInit {
     @Input()
     styles: Object = {
         width: '100%',
-        height: '100%',
         opacity: '0',
         position: 'absolute',
         zIndex: 3,
