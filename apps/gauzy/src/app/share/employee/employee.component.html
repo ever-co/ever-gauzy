@@ -1,7 +1,7 @@
 <nb-card>
 	<nb-card-body *ngIf="employee$ | async as employee" class="employee-card">
-		<div class="row employee-info-wrapper">
-			<div class="employee-photo-wrapper col-md-6">
+		<div class="employee-info-wrapper">
+			<div class="employee-photo-wrapper">
 				<ng-container
 					*ngIf="hasEditPermission$ | async; else noPermissionTemp"
 				>
@@ -64,14 +64,14 @@
 						/>
 						<button
 							*ngIf="imageUpdateButton"
-							class="save_image"
+							class="save-image"
 							(click)="
 								saveImage({
 									userId: employee.user.id,
 									imageUrl: imageUrl
 								})
 							"
-							status="success"
+							status="primary"
 							nbButton
 						>
 							{{ 'BUTTONS.UPDATE' | translate }}
@@ -90,70 +90,69 @@
 						{{ employee.user.name }}
 					</h4>
 					<span class="employee-banner">
-						{{ employee.user.email }}
+						<gauzy-email
+							[rowData]="employee.user"
+						></gauzy-email>
 					</span>
 					<span class="employee-banner">
 						{{ employee.short_description }}
 					</span>
 				</div>
 			</div>
-			<div class="col-md-6">
-				<ng-container *ngIf="(organization$ | async) as organization">
-					<div class="employee-profile-item">
-						<h5 class="employee-profile-item-title">
-							{{ 'MENU.ORGANIZATION' | translate }}:
-						</h5>
-						<span>
-							{{ organization.name }}
-						</span>
-					</div>
-					<div class="employee-profile-item">
-						<h5 class="employee-profile-item-title">
-							{{ 'PUBLIC_PAGE.ACTIVE' | translate }}:
-						</h5>
-						<span>
-							{{ employee.isActive ? 'Yes' : 'No' }}
-						</span>
-					</div>
-					<div
-						class="employee-profile-item"
-						*ngIf="employee.show_start_work_on"
-					>
-						<h5 class="employee-profile-item-title">
-							{{ 'PUBLIC_PAGE.STARTED_WORK_ON' | translate }}:
-						</h5>
-						<span>
-							{{
-								employee.startedWorkOn
-									| dateFormat : organization.regionCode
-										: organization.dateFormat
-							}}
-						</span>
-					</div>
-				</ng-container>
-			</div>
-			<div class="edit-icon" *ngIf="hasEditPermission$ | async">
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					width="36"
-					height="36"
-					viewBox="0 0 36 36"
-				>
-					<circle
-						cx="18"
-						cy="18"
-						r="18"
-						fill="#0091FF"
-						fill-rule="evenodd"
-					/>
-				</svg>
-				<nb-icon
-					class="open"
-					icon="edit-outline"
-					[options]="{ color: 'white' }"
+			<div class="right-side">
+				<div class="employee-org-info">
+					<ng-container *ngIf="organization$ | async as organization">
+						<div class="employee-profile-item">
+							<div class="employee-profile-item-keys">
+								<h5 class="employee-profile-item-title">
+									{{ 'MENU.ORGANIZATION' | translate }}:
+								</h5>
+								<h5 class="employee-profile-item-title">
+									{{ 'PUBLIC_PAGE.ACTIVE' | translate }}:
+								</h5>
+								<h5
+									*ngIf="employee.show_start_work_on"
+									class="employee-profile-item-title"
+								>
+									{{
+										'PUBLIC_PAGE.STARTED_WORK_ON'
+											| translate
+									}}:
+								</h5>
+							</div>
+							<div class="employee-profile-item-value">
+								<span>
+									{{ organization.name }}
+								</span>
+								<span>
+									{{ employee.isActive ? 'Yes' : 'No' }}
+								</span>
+								<span *ngIf="employee.show_start_work_on">
+									{{
+										employee.startedWorkOn
+											| dateFormat
+												: organization.regionCode
+												: organization.dateFormat
+									}}
+								</span>
+							</div>
+						</div>
+					</ng-container>
+				</div>
+				<div
 					(click)="openEditEmployeeDialog(employee)"
+					*ngIf="hasEditPermission$ | async"
 				>
-				</nb-icon>
+					<button
+						status="basic"
+						class="action primary"
+						size="small"
+						nbButton
+					>
+						<nb-icon icon="edit-outline"> </nb-icon>
+						{{ 'BUTTONS.EDIT' | translate }}
+					</button>
+				</div>
 			</div>
 		</div>
 		<nb-tabset class="o__p__s">
@@ -162,9 +161,12 @@
 				class="o__p__s__t"
 			>
 				<ng-container
-					*ngTemplateOutlet="profileTemplate; context:{
-						employee: employee
-					}"
+					*ngTemplateOutlet="
+						profileTemplate;
+						context: {
+							employee: employee
+						}
+					"
 				></ng-container>
 			</nb-tab>
 			<nb-tab
@@ -172,9 +174,12 @@
 				class="o__p__s__t"
 			>
 				<ng-container
-					*ngTemplateOutlet="skillTemplate; context:{
-						skills: employee.skills
-					}"
+					*ngTemplateOutlet="
+						skillTemplate;
+						context: {
+							skills: employee.skills
+						}
+					"
 				></ng-container>
 			</nb-tab>
 			<nb-tab
@@ -191,66 +196,64 @@
 
 <!-- Profile HTML Template -->
 <ng-template let-employee="employee" #profileTemplate>
-	<ng-template [ngIf]="employee.show_billrate">
-		<div class="employee-profile-item">
-			<h5 class="employee-profile-item-title">
-				{{ 'PUBLIC_PAGE.RATE' | translate }}:
-			</h5>
-			<span>
-				{{ employee.billRateValue }}
-				{{ employee.billRateCurrency }}
-			</span>
-		</div>
-	</ng-template>
-	<ng-template [ngIf]="employee.show_payperiod">
-		<div class="employee-profile-item">
-			<h5 class="employee-profile-item-title">
-				{{ 'PUBLIC_PAGE.PAY_PERIOD' | translate }}:
-			</h5>
-			<span>
-				{{
-					employee.payPeriod
-						| replace: '_':' '
-						| titlecase
-				}}
-			</span>
-		</div>
-	</ng-template>
-	<ng-template [ngIf]="employee.short_description">
-		<div class="employee-profile-item">
-			<h5 class="employee-profile-item-title">
-				{{ 'PUBLIC_PAGE.DESCRIPTION' | translate }}:
-			</h5>
-			<div
-				class="org-banner"
-				[textContent]="employee.short_description"
-			></div>
-		</div>
-	</ng-template>
-	<ng-template [ngIf]="employee.show_average_income">
-		<div class="employee-profile-item">
-			<h5 class="employee-profile-item-title">
-				{{ 'PUBLIC_PAGE.AVERAGE_INCOME' | translate }}:
-			</h5>
-			<span>{{ employee.averageIncome }}</span>
-		</div>
-	</ng-template>
-	<ng-template [ngIf]="employee.show_average_expenses">
-		<div class="employee-profile-item">
-			<h5 class="employee-profile-item-title">
-				{{ 'PUBLIC_PAGE.AVERAGE_EXPENSES' | translate }}:
-			</h5>
-			<span>{{ employee.averageExpenses }}</span>
-		</div>
-	</ng-template>
-	<ng-template [ngIf]="employee.show_average_bonus">
-		<div class="employee-profile-item">
-			<h5 class="employee-profile-item-title">
-				{{ 'PUBLIC_PAGE.AVERAGE_BONUS' | translate }}:
-			</h5>
-			<span>{{ employee.averageBonus }}</span>
-		</div>
-	</ng-template>
+	<div class="tab-employee-info">
+		<ng-template [ngIf]="employee.show_billrate">
+			<div class="employee-profile-item">
+				<h5 class="employee-profile-item-title">
+					{{ 'PUBLIC_PAGE.RATE' | translate }}:
+				</h5>
+				<div class="bill-rate">
+					{{ employee.billRateValue }}
+					{{ employee.billRateCurrency }}/hr
+				</div>
+			</div>
+		</ng-template>
+		<ng-template [ngIf]="employee.show_payperiod">
+			<div class="employee-profile-item">
+				<h5 class="employee-profile-item-title">
+					{{ 'PUBLIC_PAGE.PAY_PERIOD' | translate }}:
+				</h5>
+				<div class="pay-period">
+					{{ employee.payPeriod | replace: '_':' ' | titlecase }}
+				</div>
+			</div>
+		</ng-template>
+		<ng-template [ngIf]="employee.short_description">
+			<div class="employee-profile-item">
+				<h5 class="employee-profile-item-title">
+					{{ 'PUBLIC_PAGE.DESCRIPTION' | translate }}:
+				</h5>
+				<div
+					class="org-banner"
+					[textContent]="employee.short_description"
+				></div>
+			</div>
+		</ng-template>
+		<ng-template [ngIf]="employee.show_average_income">
+			<div class="employee-profile-item">
+				<h5 class="employee-profile-item-title">
+					{{ 'PUBLIC_PAGE.AVERAGE_INCOME' | translate }}:
+				</h5>
+				<span>{{ employee.averageIncome }}</span>
+			</div>
+		</ng-template>
+		<ng-template [ngIf]="employee.show_average_expenses">
+			<div class="employee-profile-item">
+				<h5 class="employee-profile-item-title">
+					{{ 'PUBLIC_PAGE.AVERAGE_EXPENSES' | translate }}:
+				</h5>
+				<span>{{ employee.averageExpenses }}</span>
+			</div>
+		</ng-template>
+		<ng-template [ngIf]="employee.show_average_bonus">
+			<div class="employee-profile-item">
+				<h5 class="employee-profile-item-title">
+					{{ 'PUBLIC_PAGE.AVERAGE_BONUS' | translate }}:
+				</h5>
+				<span>{{ employee.averageBonus }}</span>
+			</div>
+		</ng-template>
+	</div>
 </ng-template>
 
 <!-- Skill HTML Template -->
