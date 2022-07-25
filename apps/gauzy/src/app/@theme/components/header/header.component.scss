@@ -38,30 +38,30 @@ $orange: #f56d58;
       max-width: nb-theme(sidebar-width);
       width: nb-theme(sidebar-width);
       margin-left: nb-theme(sidebar-width-compact);
-      button.hidden-menu{
-        padding: 0 .5rem;
+      button.hidden-menu {
+        padding: 0 0.5rem;
         height: 1.625rem;
         width: 1.625rem;
-        margin-left: .625rem;
+        margin-left: 0.625rem;
       }
-      ngx-gauzy-logo{
+      ngx-gauzy-logo {
         width: 100%;
       }
-      &.compacted{
+      &.compacted {
         width: nb-theme(sidebar-width-compact);
         justify-content: space-around;
         align-items: center;
-        button.hidden-menu{
+        button.hidden-menu {
           margin-left: 0;
         }
         ::ng-deep .accordion.workspace {
           box-shadow: none;
           width: 1.75rem;
           height: auto;
-          .logo{
+          .logo {
             display: none;
           }
-          nb-accordion-item-header{
+          nb-accordion-item-header {
             padding: 0px;
             nb-icon {
               border: none;
@@ -85,7 +85,7 @@ $orange: #f56d58;
       }
     }
 
-    nb-actions.size-small nb-action{
+    nb-actions.size-small nb-action {
       padding: 0.5625rem;
     }
     ::ng-deep nb-search button {
@@ -212,14 +212,14 @@ $orange: #f56d58;
   max-width: auto;
 }
 
-
 .button.create {
   background: $orange;
   box-shadow: var(--gauzy-shadow);
-  &[nbButton].appearance-filled{
+  &[nbButton].appearance-filled {
     border-width: 0;
   }
-  &:hover, &:focus {
+  &:hover,
+  &:focus {
     background: $orange;
   }
 }
@@ -233,22 +233,26 @@ $orange: #f56d58;
     }
     .ng-select.ng-select-single .ng-select-container {
       height: 2rem;
+      background-color: var(--gauzy-card-1);
+      min-height: 32px;
+      min-width: 4rem;
     }
     .ng-select .ng-select-container {
       box-shadow: var(--gauzy-shadow);
       border-radius: nb-theme(button-rectangle-border-radius);
+      background-color: var(--gauzy-card-1);
     }
   }
 }
 
 .project-selector,
-.employee-selector{
+.employee-selector {
   min-width: 12.5rem;
 }
 
-:host .actions{
-  margin: .625rem;
-  padding: .625rem;
+:host .actions {
+  margin: 0.625rem;
+  padding: 0.625rem;
   border-radius: nb-theme(button-rectangle-border-radius);
   background-color: nb-theme(gauzy-card-2);
   display: flex;

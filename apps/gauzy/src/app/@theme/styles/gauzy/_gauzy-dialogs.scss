@@ -1,4 +1,4 @@
-@import 'themes';
+@import './gauzy-overrides';
 $orange: rgba(245, 109, 88, 1);
 $gray: rgba(126, 126, 143, 1);
 $green: rgba(37, 184, 105, 1);
@@ -101,11 +101,12 @@ $shadow: 0 0 0 nb-theme(button-outline-width) rgba($color: $green,
   }
 
   ::ng-deep {
-
     input,
     textarea {
       @include nb-ltr(text-align, start);
       @include nb-rtl(text-align, end);
     }
   }
+
+  @include dialog(var(--gauzy-card-1), var(--gauzy-sidebar-background-4));
 }

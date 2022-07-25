@@ -178,6 +178,32 @@ body {
 
   ng2-smart-table table {
     border-collapse: separate !important;
+    .ng2-smart-filter input {
+      height: 32px;
+      background-color: var(--gauzy-sidebar-background-3) !important;
+      border: none !important;
+    }
+
+    .ng2-smart-filter .ng-select .ng-select-container {
+      background-color: var(--gauzy-sidebar-background-3) !important;
+      height: 32px;
+      min-height: auto;
+      input {
+        background-color: transparent !important;
+      }
+    }
+
+    .ng2-smart-filter
+      .ng-select
+      .ng-select-container
+      .ng-value-container
+      .ng-placeholder {
+      font-size: 13px;
+      font-weight: 400;
+      line-height: 16px;
+      letter-spacing: 0em;
+      color: var(--input-basic-placeholder-text-color);
+    }
   }
 
   .card-scroll {
@@ -243,7 +269,7 @@ body {
   }
 
   .ng-value-container .ng-input input {
-    background-color: nb-theme(select-outline-basic-background-color);
+    background-color: transparent;
     color: nb-theme(text-basic-color);
   }
 
@@ -525,16 +551,102 @@ ng2-smart-table {
   }
 }
 
-.nb-theme-material-light{
+.nb-theme-material-light {
   a > nb-icon {
     color: #ffffff !important;
   }
 }
 
 .nb-theme-default nb-select .select-button {
-   min-width: var(--select-min-width) !important;
+  min-width: var(--select-min-width) !important;
 }
 
 .nb-theme-default nb-accordion-item-header {
-  padding: var(--accordion-padding);;
+  padding: var(--accordion-padding);
+}
+
+// TODO overrides perfectly chevron-down unicode
+.ng-select {
+  .ng-select-container {
+    border-radius: nb-theme(border-radius);
+    box-shadow: 0px 1px 1px 0px rgba(0, 0, 0, 0.15) inset;
+  }
+  .ng-arrow {
+    font-family: 'Font Awesome\ 5 Free' !important;
+    border-color: inherit !important;
+    border-width: 0 !important;
+    font-size: 10px;
+    font-weight: 900;
+    top: 0 !important;
+    left: -4px;
+    @include nb-ltr(left, -4px);
+    @include nb-rtl(right, -4px);
+    color: var(--select-outline-basic-icon-color);
+    text-align: center;
+    transform: rotate(0deg);
+    transform-origin: 5.5px 8.6px;
+    @include nb-ltr(transform-origin, 5.5px 8.6px);
+    @include nb-rtl(transform-origin, -5.5px 8.6px);
+    transition: transform 0.2s ease;
+    &:before {
+      content: '\f078';
+      font-weight: 900;
+    }
+  }
+
+  &.ng-select-opened {
+    .ng-arrow {
+      transform: rotate(180deg);
+    }
+  }
+}
+
+ng2-smart-table table tr.ng2-smart-titles .ng2-smart-sort {
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  line-height: 15px;
+  letter-spacing: 0em;
+  color: var(--gauzy-text-color-2) !important;
+}
+
+ng2-smart-table table tr.ng2-smart-titles th a.sort {
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  line-height: 15px;
+  letter-spacing: 0em;
+  color: var(--gauzy-text-color-2) !important;
+  display: flex;
+  flex-direction: row-reverse;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.25rem;
+  &.asc {
+    &:before {
+      color: rgba(126, 126, 143, 0.25);
+      font-size: 10px;
+      font-family: 'Font Awesome\ 5 Free' !important;
+      content: '\f063' !important;
+      font-weight: 900;
+      transform: rotate(180deg) !important;
+      top: 55% !important;
+      right: 0.625rem !important;
+    }
+    &:after {
+      display: none;
+    }
+  }
+  &.desc {
+    &:before {
+      color: rgba(126, 126, 143, 0.25);
+      font-size: 10px;
+      font-family: 'Font Awesome\ 5 Free' !important;
+      content: '\f063' !important;
+      font-weight: 900;
+      top: 55% !important;
+      right: 0.625rem !important;
+    }
+    &:after {
+      display: none;
+    }
+  }
 }

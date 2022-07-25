@@ -1,4 +1,4 @@
-@import 'themes';
+@import 'gauzy/_gauzy-overrides';
 
 :host {
   nb-card,
@@ -17,4 +17,5 @@
     display: flex;
     gap: 4px;
   }
+  @include input-appearance(42px, var(--gauzy-card-1));
 }

@@ -38,6 +38,10 @@
   width: 5%;
 }
 
+:host {
+  @include dialog(var(--gauzy-card-2), var(--gauzy-card-1));
+}
+
 .form {
   width: 100%;
   display: flex;

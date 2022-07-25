@@ -1,5 +1,6 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, tap } from 'rxjs/operators';
@@ -17,6 +18,7 @@ import {
 	IEmployee,
 	ITag
 } from '@gauzy/contracts';
+import { distinctUntilChange } from '@gauzy/common-angular';
 import {
 	OrganizationContactService,
 	OrganizationProjectsService,
@@ -34,9 +36,7 @@ import {
 } from '../../@shared/table-components';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import { ServerDataSource } from '../../@core/utils/smart-table';
-import { HttpClient } from '@angular/common/http';
 import { PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
-import { distinctUntilChange } from 'packages/common-angular/dist';
 import { VisibilityComponent } from '../../@shared/table-components/visibility/visibility.component';
 import { ProjectOrganizationGridComponent } from '../../@shared/table-components/project-organization-grid/project-organization-grid.component';
 import { ProjectOrganizationGridDetailsComponent } from '../../@shared/table-components/project-organization-grid-details/project-organization-grid-details.component';

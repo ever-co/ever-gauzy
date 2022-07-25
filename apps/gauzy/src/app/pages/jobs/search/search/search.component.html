@@ -1,6 +1,6 @@
-<nb-card class="card-scroll">
+<nb-card>
 	<nb-card-header
-		class="header d-flex justify-content-between align-items-center"
+		class="header d-flex justify-content-between align-items-center p-3"
 	>
 		<h4>
 			<ngx-header-title>
@@ -13,6 +13,7 @@
 				[routerLink]="'/pages/jobs/employee'"
 				size="small"
 				outline
+				class="action"
 				nbButton
 			>
 				{{ 'JOBS.EMPLOYEES' | translate }}
@@ -21,6 +22,7 @@
 				status="primary"
 				[routerLink]="'/pages/jobs/matching'"
 				size="small"
+				class="action"
 				outline
 				nbButton
 			>
@@ -30,6 +32,7 @@
 				status="primary"
 				[routerLink]="'/pages/jobs/proposal-template'"
 				size="small"
+				class="action"
 				outline
 				nbButton
 			>
@@ -70,21 +73,18 @@
 				</button>
 			</div>
 		</div>
-		<nb-tabset 
-			(changeTab)="onTabChange($event)"
-			class="mt-4"
-		>
+		<nb-tabset (changeTab)="onTabChange($event)" class="mt-4">
 			<nb-tab
 				[tabId]="jobSearchTabsEnum.ACTIONS"
 				[tabTitle]="'JOBS.BROWSE' | translate"
 			>
-				<ng-container 
+				<ng-container
 					*ngIf="(nbTab$ | async) === jobSearchTabsEnum.ACTIONS"
 				>
 					<ng-template [ngTemplateOutlet]="tableLayout"></ng-template>
 				</ng-container>
 			</nb-tab>
-			<nb-tab 
+			<nb-tab
 				[tabId]="jobSearchTabsEnum.SEARCH"
 				[tabTitle]="'JOBS.SEARCH' | translate"
 			>
@@ -92,7 +92,10 @@
 					<div class="advanced-filter">
 						<nb-card>
 							<nb-card-body class="body-filter">
-								<form [formGroup]="form" (ngSubmit)="searchJobs()">
+								<form
+									[formGroup]="form"
+									(ngSubmit)="searchJobs()"
+								>
 									<div class="row">
 										<div
 											class="col-xl-6 col-md-8 col-12 form-group m-0"
@@ -101,22 +104,32 @@
 												nbInput
 												type="text"
 												class="w-100"
-												[placeholder]="'JOBS.JOB_SEARCH' | translate"
+												[placeholder]="
+													'JOBS.JOB_SEARCH'
+														| translate
+												"
 												formControlName="search"
 											/>
 										</div>
 									</div>
-									<div class="row mt-3">
+									<div class="row selects mt-3">
 										<div
 											class="col-xl-2 col-lg-3 col-md-6 form-group"
 										>
-											<label class="d-block" for="jobSource">
-												{{ 'JOBS.FILTER.SOURCE' | translate }}
+											<label
+												class="d-block"
+												for="jobSource"
+											>
+												{{
+													'JOBS.FILTER.SOURCE'
+														| translate
+												}}
 											</label>
 											<nb-select
 												id="jobSource"
 												[placeholder]="
-													'JOBS.FILTER.SOURCE' | translate
+													'JOBS.FILTER.SOURCE'
+														| translate
 												"
 												fullWidth
 												multiple
@@ -138,8 +151,14 @@
 										<div
 											class="col-xl-2 col-lg-3 col-md-6 form-group"
 										>
-											<label class="d-block" for="jobType">
-												{{ 'JOBS.FILTER.JOB_TYPE' | translate }}
+											<label
+												class="d-block"
+												for="jobType"
+											>
+												{{
+													'JOBS.FILTER.JOB_TYPE'
+														| translate
+												}}
 											</label>
 											<nb-select
 												id="jobType"
@@ -167,8 +186,14 @@
 										<div
 											class="col-xl-2 col-lg-3 col-md-6 form-group"
 										>
-											<label class="d-block" for="jobStatus">
-												{{ 'JOBS.FILTER.JOB_STATUS' | translate }}
+											<label
+												class="d-block"
+												for="jobStatus"
+											>
+												{{
+													'JOBS.FILTER.JOB_STATUS'
+														| translate
+												}}
 											</label>
 											<nb-select
 												id="jobStatus"
@@ -186,7 +211,8 @@
 													"
 													[value]="type.value"
 													>{{
-														'JOBS.STATUS_' + type.value
+														'JOBS.STATUS_' +
+															type.value
 															| translate
 													}}
 												</nb-option>
@@ -196,30 +222,46 @@
 											class="col-xl-2 col-lg-3 col-md-6 form-group"
 										>
 											<label class="d-block" for="budget">
-												{{ 'JOBS.FILTER.BUDGET' | translate }}
+												{{
+													'JOBS.FILTER.BUDGET'
+														| translate
+												}}
 											</label>
 											<nb-select
 												id="budget"
 												[placeholder]="
-													'JOBS.FILTER.BUDGET' | translate
+													'JOBS.FILTER.BUDGET'
+														| translate
 												"
 												fullWidth
 												multiple
 												formControlName="budget"
 											>
-												<nb-option [value]="[null, 100]">
-													{{ 'JOBS.FILTER.LESS_THAN' | translate }} $100
-												</nb-option >
+												<nb-option
+													[value]="[null, 100]"
+												>
+													{{
+														'JOBS.FILTER.LESS_THAN'
+															| translate
+													}}
+													$100
+												</nb-option>
 												<nb-option [value]="[100, 500]">
 													$100 - $500
 												</nb-option>
-												<nb-option [value]="[500, 1000]">
+												<nb-option
+													[value]="[500, 1000]"
+												>
 													$500 - $1K
 												</nb-option>
-												<nb-option [value]="[1000, 5000]">
+												<nb-option
+													[value]="[1000, 5000]"
+												>
 													$1K - $5K
 												</nb-option>
-												<nb-option [value]="[5000, null]">
+												<nb-option
+													[value]="[5000, null]"
+												>
 													$5K+
 												</nb-option>
 											</nb-select>
@@ -253,7 +295,9 @@
 						</nb-card>
 					</div>
 				</div>
-				<ng-container *ngIf="(nbTab$ | async) === jobSearchTabsEnum.SEARCH">
+				<ng-container
+					*ngIf="(nbTab$ | async) === jobSearchTabsEnum.SEARCH"
+				>
 					<ng-template [ngTemplateOutlet]="tableLayout"></ng-template>
 				</ng-container>
 			</nb-tab>
@@ -261,22 +305,14 @@
 	</nb-card-body>
 </nb-card>
 <ng-template #tableLayout>
-	<div
-		[ngClass]="
-			(nbTab$ | async) === jobSearchTabsEnum.SEARCH
-				? 'table-scroll-container table-search-scroll'
-				: 'table-scroll-container'
-		"
-	>
-		<div class="table-scroll-container">
-			<ng2-smart-table
-				style="cursor: pointer"
-				[settings]="settingsSmartTable"
-				(userRowSelect)="onSelectJob($event)"
-				[source]="smartTableSource"
-				#jobSearchTable
-			></ng2-smart-table>
-		</div>
+	<div class="table-scroll-container">
+		<ng2-smart-table
+			style="cursor: pointer"
+			[settings]="settingsSmartTable"
+			(userRowSelect)="onSelectJob($event)"
+			[source]="smartTableSource"
+			#jobSearchTable
+		></ng2-smart-table>
 	</div>
 	<div class="pagination-container">
 		<ng-container *ngIf="pagination.totalItems > minItemPerPage">

@@ -18,8 +18,8 @@
 		<img
 			*ngIf="item.imageUrl"
 			[src]="item.imageUrl"
-			width="40"
-			height="40"
+			width="20"
+			height="20"
 		/>
 		{{ getShortenedName(item.firstName, item.lastName, 42) }}
 	</ng-template>
@@ -27,8 +27,8 @@
 		<div class="selector-template">
 			<img
 				*ngIf="item.imageUrl"
-				height="25"
-				width="25"
+				height="20"
+				width="20"
 				[src]="item.imageUrl"
 			/>
 			<span>

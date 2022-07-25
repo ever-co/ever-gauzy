@@ -11,11 +11,12 @@
 }
 
 .image-asset-list-item {
+  border-radius: nb-theme(border-radius);
   transition: 0.1s all ease-in-out;
   cursor: pointer;
 
   &:hover {
-    box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+    box-shadow: var(--gauzy-shadow);
 
     .delete-asset-btn {
       opacity: 1;
@@ -23,7 +24,7 @@
   }
 
   &.selected {
-    box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+    box-shadow: var(--gauzy-shadow);
   }
 }
 
@@ -40,6 +41,6 @@
   align-items: center;
   cursor: pointer;
   opacity: 0;
-  box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+  box-shadow: var(--gauzy-shadow);;
   color: nb-theme(text-danger-color);
 }

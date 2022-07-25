@@ -3,25 +3,31 @@ import { Cloudinary } from '@cloudinary/angular-5.x';
 import { FileUploader, FileUploaderOptions } from 'ng2-file-upload';
 
 @Component({
-    selector: 'ngx-image-uploader',
-    template: `
-        <input
-            type="file"
-            accept="image/*"
-            (change)="handlePhotoUpload()"
-            (mouseenter)="changeHoverState.emit(true)"
-            (mouseleave)="changeHoverState.emit(false)"
-            ng2FileSelect
-            [ngStyle]="styles"
-            [uploader]="uploader"
-        />
-    `
+	selector: 'ngx-image-uploader',
+	template: `
+		<input
+			type="file"
+			accept="image/*"
+			(change)="handlePhotoUpload()"
+			(mouseenter)="changeHoverState.emit(true)"
+			(mouseleave)="changeHoverState.emit(false)"
+			ng2FileSelect
+			[ngStyle]="styles"
+			[uploader]="uploader"
+		/>
+	`,
+	styles: [
+		`
+			input {
+				height: 100% !important;
+			}
+		`
+	]
 })
 export class ImageUploaderComponent implements OnInit {
     @Input()
     styles: Object = {
         width: '100%',
-        height: '100%',
         opacity: '0',
         position: 'absolute',
         zIndex: 3,

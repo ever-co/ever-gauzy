@@ -48,7 +48,7 @@
 
 	.project-image-photo {
 		width: fit-content;
-		height: fit-content;
+		height: 294px;
 		position: relative;
 
 		.image-overlay {
@@ -100,4 +100,11 @@
 			}
 		}
 	}
+}
+
+:host {
+	::ng-deep ngx-image-uploader input {
+		height: 100% !important;
+	  }
+	@include dialog(transparent, var(--gauzy-card-1));
 }
