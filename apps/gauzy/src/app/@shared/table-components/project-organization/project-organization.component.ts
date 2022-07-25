@@ -1,5 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { IOrganization, IProject } from 'packages/contracts/dist';
+import { IOrganization, IProject } from '@gauzy/contracts';
 
 @Component({
 	selector: 'gauzy-project-organization',
