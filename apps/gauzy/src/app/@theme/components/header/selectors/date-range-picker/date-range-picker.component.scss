@@ -16,7 +16,7 @@ $button-radius: nb-theme(button-rectangle-border-radius);
     height: inherit;
     display: flex;
     align-items: center;
-    background: nb-theme(background-basic-color-2);
+    background: var(--gauzy-card-1);
     box-shadow: var(--gauzy-shadow) inset;
     border-radius: nb-theme(button-rectangle-border-radius);
     /* I've used padding so you can see the edges of the elements. */

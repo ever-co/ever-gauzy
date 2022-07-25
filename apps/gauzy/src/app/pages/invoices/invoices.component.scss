@@ -17,12 +17,12 @@
     font-weight: 600;
     line-height: 16px;
     letter-spacing: 0em;
-    text-align: left;
   }
 
   i {
     cursor: pointer;
   }
+  @include dialog(var(--gauzy-card-1), var(--gauzy-sidebar-background-4));
 }
 
 .popover-container-action {
@@ -191,6 +191,7 @@ ga-currency::ng-deep nb-select {
 #inputStatus::ng-deep {
   .select-button {
     border-radius: nb-theme(input-rectangle-border-radius);
+    height: 42px;
   }
 }
 
@@ -387,6 +388,10 @@ nb-tab {
       background-color: var(--background-basic-color-1);
     }
   }
+}
+
+:host nb-accordion {
+  @include dialog(var(--gauzy-card-1), var(--gauzy-card-1));
 }
 
 ::ng-deep {

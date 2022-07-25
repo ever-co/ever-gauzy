@@ -1,4 +1,5 @@
 @import 'gauzy/_gauzy-table';
+@import 'gauzy/_gauzy-overrides';
 
 .right-block {
   display: flex;
@@ -156,4 +157,5 @@
   .custom-card-body {
     background-color: var(--gauzy-card-2);
   }
+  @include input-appearance(2rem, var(--gauzy-card-1));
 }

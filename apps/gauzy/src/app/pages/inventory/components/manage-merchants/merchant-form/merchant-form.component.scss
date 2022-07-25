@@ -84,11 +84,5 @@ h4 {
     height: calc(100vh - 19rem);
   }
 
-  input,
-  textarea,
-  ::ng-deep .ng-select .ng-select-container,
-  ::ng-deep nb-select.appearance-outline.status-basic .select-button,
-  ga-location-form ::ng-deep input {
-    background-color: var(--gauzy-card-1);
-  }
+  @include dialog(var(--gauzy-card-2), var(--gauzy-card-1));
 }

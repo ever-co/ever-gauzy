@@ -9,8 +9,9 @@ ng-select {
   img {
     margin-right: 0.25rem;
     margin-left: 0.25rem;
-    height: 28px;
-    width: 28px;
+    height: 20px;
+    width: 20px;
+    box-shadow: var(--gauzy-shadow);
     object-fit: cover;
     border-radius: $radius;
   }
@@ -25,6 +26,11 @@ ng-select {
       .ng-value-container {
         padding-left: 0;
       }
+    }
+    .ng-arrow-wrapper {
+      display: flex;
+      align-items: baseline;
+      justify-content: center;
     }
     &.close.ng-select .ng-select-container .ng-value-container {
       span {

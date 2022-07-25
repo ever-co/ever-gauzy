@@ -49,3 +49,10 @@ form {
   border-radius: nb-theme(border-radius);
   padding: 1rem;
 }
+
+:host {
+  @include dialog(transparent, var(--gauzy-card-1));
+  .table-scroll-container{
+    @include input-appearance(2rem, var(--gauzy-sidebar-background-4));
+  }
+}

@@ -11,3 +11,7 @@ form {
   background-color: nb-theme(background-basic-color-1);
   margin-bottom: 8px;
 }
+
+:host {
+  @include dialog(var(--gauzy-card-2), var(--gauzy-card-1));
+}
