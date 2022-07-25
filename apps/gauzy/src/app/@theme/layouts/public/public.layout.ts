@@ -7,14 +7,12 @@ import {
 	OnInit
 } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
-import { NbLayoutComponent, NbThemeService } from '@nebular/theme';
-
-import { WindowModeBlockScrollService } from '../../services/window-mode-block-scroll.service';
-import { Store } from '../../../@core/services/store.service';
-import { UsersService } from '../../../@core/services';
 import { tap } from 'rxjs/operators';
-import { distinctUntilChange } from 'packages/common-angular/dist';
+import { NbLayoutComponent, NbThemeService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { distinctUntilChange } from '@gauzy/common-angular';
+import { WindowModeBlockScrollService } from '../../services';
+import { Store, UsersService } from '../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -25,10 +23,10 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 export class PublicLayoutComponent implements OnInit, AfterViewInit {
 	constructor(
 		@Inject(PLATFORM_ID) private platformId,
-		private windowModeBlockScrollService: WindowModeBlockScrollService,
-		private store: Store,
-		private usersService: UsersService,
-		private themeService: NbThemeService
+		private readonly windowModeBlockScrollService: WindowModeBlockScrollService,
+		private readonly store: Store,
+		private readonly usersService: UsersService,
+		private readonly themeService: NbThemeService
 	) {}
 	@ViewChild(NbLayoutComponent) layout: NbLayoutComponent;
 
