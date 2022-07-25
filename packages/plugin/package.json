@@ -31,8 +31,8 @@
 	"dependencies": {
 		"@gauzy/common": "^0.1.0",
 		"@gauzy/config": "^0.1.0",
-		"@nestjs/common": "^8.4.4",
-		"@nestjs/core": "^8.4.4"
+		"@nestjs/common": "^9.0.5",
+		"@nestjs/core": "^9.0.5"
 	},
 	"devDependencies": {
 		"@types/node": "^17.0.33",
