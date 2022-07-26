@@ -14,6 +14,7 @@ import {
 import { FormsModule } from '@angular/forms';
 import { ChartModule } from 'angular2-chartjs';
 import { TranslateModule } from '@ngx-translate/core';
+import { SwiperModule } from 'swiper/angular';
 import { TimeTrackingComponent } from './time-tracking.component';
 import { SharedModule } from '../../../@shared/shared.module';
 import { ScreenshotsItemModule } from '../../../@shared/timesheet/screenshots/screenshots-item/screenshots-item.module';
@@ -50,7 +51,8 @@ import { WindowLayoutModule } from '../../../@shared/dashboard/window-layout/win
 		CounterPointModule,
 		WidgetLayoutModule,
 		WindowLayoutModule,
-		NbPopoverModule
+		NbPopoverModule,
+		SwiperModule
 	],
 	declarations: [TimeTrackingComponent],
 	exports: [TimeTrackingComponent],
