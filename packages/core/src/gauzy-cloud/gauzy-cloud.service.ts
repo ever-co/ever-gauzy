@@ -108,7 +108,7 @@ export class GauzyCloudService {
         tenant: ITenant
     ): Observable<AxiosResponse<any, any>> {
         const params = JSON.stringify(payload);
-        return this._http.post('/api/role/import/migrate', params, {
+        return this._http.post('/api/roles/import/migrate', params, {
             headers: {
                 'Authorization': `Bearer ${token}`,
                 'Tenant-Id': `${tenant.id}`
