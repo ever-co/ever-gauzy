@@ -9,24 +9,24 @@ export class PersistanceTakers {
 
 	public addPersistance(persistance: IPersistance) {
 		this._history.push(persistance);
-		this._strategy.serializables = this.history;
+		this._strategy.serializables = this._history;
 	}
 	public removePersistance(persistance: IPersistance) {
 		let buffers: IPersistance[] = [];
-		buffers = this.history.filter(
+		buffers = this._history.filter(
 			(historyPersistance) => historyPersistance !== persistance
 		);
-		this.history = buffers;
-		this._strategy.serializables = this.history;
+		this._history = buffers;
+		this._strategy.serializables = this._history;
 	}
 	public undo() {
-		this.history.pop();
+		if (this._history.length > 1) this._history.pop();
 	}
-	public get history(): IPersistance[] {
-		return this._history;
-	}
-	public set history(value: IPersistance[]) {
-		this._history = value;
+
+	public get lastPersistance() {
+		if (this._history.length < 1) return;
+		const size = this._history.length - 1;
+		return this._history[size];
 	}
 
 	public get strategy(): BackupStrategy {
