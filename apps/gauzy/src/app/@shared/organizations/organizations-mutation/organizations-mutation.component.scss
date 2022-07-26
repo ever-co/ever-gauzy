@@ -1,0 +1,8 @@
+@import 'gauzy/_gauzy-overrides';
+
+:host ga-organizations-step-form ::ng-deep {
+  @include dialog(var(--gauzy-card-1), var(--gauzy-sidebar-background-4));
+  nb-stepper {
+    @include input-appearance(42px, var(--gauzy-sidebar-background-4));
+  }
+}
