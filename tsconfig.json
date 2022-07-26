@@ -27,6 +27,9 @@
 			"ngx-daterangepicker-material/*": [
 				"./node_modules/ngx-daterangepicker-material/*"
 			],
+			"swiper_angular": [
+				"./node_modules/swiper/angular"
+			],
 			"ng2-completer": ["node_modules/@akveo/ng2-completer"],
 			"@gauzy/wakatime": ["libs/wakatime/src/index.ts"],
 			"@gauzy/desktop-timer": ["packages/desktop-timer/src/index.ts"],

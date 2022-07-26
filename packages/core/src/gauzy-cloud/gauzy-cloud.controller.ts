@@ -5,13 +5,17 @@ import { IOrganizationCreateInput, ITenantCreateInput, IUserRegistrationInput, P
 import { CloudMigrateInterceptor } from './../core/interceptors';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
-import { GauzyCloudOrganizationMigrateCommand, GauzyCloudTenantMigrateCommand, GauzyCloudUserMigrateCommand } from './commands';
+import {
+	GauzyCloudOrganizationMigrateCommand,
+	GauzyCloudTenantMigrateCommand,
+	GauzyCloudUserMigrateCommand
+} from './commands';
 
 @UseInterceptors(CloudMigrateInterceptor)
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Controller()
 export class GauzyCloudController {
-	
+
 	constructor(
 		private readonly commandBus: CommandBus
 	) {}

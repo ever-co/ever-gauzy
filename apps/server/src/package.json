@@ -111,50 +111,50 @@
 		"sqlite3": "^5.0.8",
 		"electron-store": "^8.0.0",
 		"electron-log": "^4.3.5",
-    "node-notifier": "^8.0.0",
+    	"node-notifier": "^8.0.0",
 		"moment": "^2.29.4",
 		"knex": "^0.21.6",
 		"consolidate": "^0.16.0",
 		"squirrelly": "^8.0.8",
 		"twing": "^5.0.2",
-    "electron-util": "^0.17.2",
+    	"electron-util": "^0.17.2",
 		"form-data": "^3.0.0",
 		"electron-updater": "~4.3.8",
 		"pg": "^8.7.3",
 		"pg-query-stream": "^4.2.3",
-		"@nestjs/platform-express": "^8.4.4",
+		"@nestjs/platform-express": "^9.0.5",
 		"sound-play": "1.1.0",
-    "auto-launch": "5.0.5",
+    	"auto-launch": "5.0.5",
 		"tslib": "^2.3.1",
 		"@sentry/electron": "^3.0.7",
 		"@sentry/types": "^6.19.7",
 		"@sentry/node": "^6.19.7",
 		"@sentry/tracing": "^6.19.7",
-    "underscore": "^1.13.3",
+    	"underscore": "^1.13.3",
 		"node-static": "^0.7.11",
 		"pdfmake": "^0.2.0",
-    "htmlparser2": "^3.10.1",
-    "@gauzy/core": "^0.1.0",
+    	"htmlparser2": "^3.10.1",
+    	"@gauzy/core": "^0.1.0",
 		"@gauzy/auth": "^0.1.0",
-    "@gauzy/desktop-window": "^0.1.0",
+    	"@gauzy/desktop-window": "^0.1.0",
 		"@gauzy/desktop-libs": "^0.1.0",
 		"@gauzy/knowledge-base": "^0.1.0",
 		"@gauzy/changelog": "^0.1.0",
 		"@electron/remote": "^2.0.1"
 	},
-  "optionalDependencies": {
-    "node-windows": "^1.0.0-beta.5",
+  	"optionalDependencies": {
+    	"node-windows": "^1.0.0-beta.5",
 		"node-mac": "^1.0.1"
-  },
+  	},
 	"pkg": {
 		"assets": [
-		  "api/assets/**/*",
-		  "node_modules/bcrypt/lib/binding/napi-v3/bcrypt_lib.node",
-		  "node_modules/linebreak/src/classes.trie"
+			"api/assets/**/*",
+			"node_modules/bcrypt/lib/binding/napi-v3/bcrypt_lib.node",
+			"node_modules/linebreak/src/classes.trie"
 		],
 		"targets": [
-		  "node14-mac-x64",
-		  "node14-win-x64"
+			"node14-mac-x64",
+			"node14-win-x64"
 		]
 	}
 }
