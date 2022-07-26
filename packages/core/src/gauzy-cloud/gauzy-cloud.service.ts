@@ -24,13 +24,12 @@ export class GauzyCloudService {
      * Extract user from cloud server
      * Register user from local to cloud server
      *
-     * @param payload
+     * @param params
      * @returns
      */
     migrateUser(
-        payload: IUserRegistrationInput
+        params: IUserRegistrationInput
     ): Observable<AxiosResponse<any, any>> {
-        const params = JSON.stringify(payload);
         return this._http.post('/api/auth/register', params).pipe(
             map((resp: AxiosResponse<any, any>) => resp),
         );
@@ -40,13 +39,12 @@ export class GauzyCloudService {
      * Extract Bearer Token from cloud server
      * Login user from local to cloud server
      *
-     * @param payload
+     * @param params
      * @returns
      */
     extractToken(
-        payload: IUserLoginInput
+        params: IUserLoginInput
     ): Observable<AxiosResponse<any, any>> {
-        const params = JSON.stringify(payload);
         return this._http.post('/api/auth/login', params).pipe(
             map((resp: AxiosResponse<any, any>) => resp),
         );
@@ -55,15 +53,14 @@ export class GauzyCloudService {
     /**
      * Migrate default tenant to the cloud server
      *
-     * @param payload
+     * @param params
      * @param token
      * @returns
      */
     migrateTenant(
-        payload: ITenantCreateInput,
+        params: ITenantCreateInput,
         token: string
     ): Observable<AxiosResponse<any, any>> {
-        const params = JSON.stringify(payload);
         return this._http.post('/api/tenant', params, {
             headers: {
                 'Authorization': `Bearer ${token}`
@@ -76,15 +73,14 @@ export class GauzyCloudService {
     /**
      * Migrate default organization to the cloud server
      *
-     * @param payload
+     * @param params
      * @param token
      * @returns
      */
     migrateOrganization(
-        payload: IOrganizationCreateInput,
+        params: IOrganizationCreateInput,
         token: string
     ): Observable<AxiosResponse<any, any>> {
-        const params = JSON.stringify(payload);
         return this._http.post('/api/organization', params, {
             headers: {
                 'Authorization': `Bearer ${token}`
@@ -97,17 +93,16 @@ export class GauzyCloudService {
     /**
      * Migrate roles to the cloud server
      *
-     * @param payload
+     * @param params
      * @param token
      * @param tenant
      * @returns
      */
     migrateRoles(
-        payload: IRoleMigrateInput[],
+        params: IRoleMigrateInput[],
         token: string,
         tenant: ITenant
     ): Observable<AxiosResponse<any, any>> {
-        const params = JSON.stringify(payload);
         return this._http.post('/api/roles/import/migrate', params, {
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -121,17 +116,16 @@ export class GauzyCloudService {
     /**
      * Migrate role permissions to the cloud server
      *
-     * @param payload
+     * @param params
      * @param token
      * @param tenant
      * @returns
      */
     migrateRolePermissions(
-        payload: IRolePermissionMigrateInput[],
+        params: IRolePermissionMigrateInput[],
         token: string,
         tenant: ITenant
     ): Observable<AxiosResponse<any, any>> {
-        const params = JSON.stringify(payload);
         return this._http.post('/api/role-permissions/import/migrate', params, {
             headers: {
                 'Authorization': `Bearer ${token}`,
