@@ -5,6 +5,7 @@ import {
 	ChangeDetectorRef,
 	Component,
 	Input,
+	OnDestroy,
 	OnInit,
 	QueryList,
 	TemplateRef,
@@ -25,7 +26,7 @@ import { WidgetService } from '../widget/widget.service';
 })
 export class WidgetLayoutComponent
 	extends LayoutWithDraggableObject
-	implements OnInit, AfterViewInit, AfterViewChecked
+	implements OnInit, AfterViewInit, AfterViewChecked, OnDestroy
 {
 	@Input()
 	set widgets(value: TemplateRef<HTMLElement>[]) {
@@ -52,10 +53,10 @@ export class WidgetLayoutComponent
 				),
 				filter(() => this.widgetService.widgetsRef.length === 0),
 				tap(() => {
-					this.widgetService.deSerialize().length === 0
-						? this.widgetService.serialize()
+					this.widgetService.retrieveFromLocalStorage().length === 0
+						? this.widgetService.saveToLocalStorage()
 						: this.widgetService
-								.deSerialize()
+								.retrieveFromLocalStorage()
 								.forEach((deserialized: GuiDrag) =>
 									this.widgetService.widgetsRef.push(
 										deserialized.templateRef
@@ -74,7 +75,7 @@ export class WidgetLayoutComponent
 			event.container.data
 		);
 		this.widgetService.widgetsRef = this.draggableObject;
-		this.widgetService.serialize();
+		this.widgetService.saveToLocalStorage();
 	}
 
 	ngOnInit(): void {}
@@ -87,4 +88,6 @@ export class WidgetLayoutComponent
 			this.draggableObject = this.widgetService.widgetsRef;
 		return this.draggableObject;
 	}
+
+	ngOnDestroy(): void {}
 }
