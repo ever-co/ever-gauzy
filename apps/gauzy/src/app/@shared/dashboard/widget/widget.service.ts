@@ -51,7 +51,7 @@ export class WidgetService {
 	public set widgets(value: GuiDrag[]) {
 		this._widgets = value;
 	}
-	public saveToLocalStorage(): void {
+	public save(): void {
 		if (this.widgets.length === 0) return;
 		this._layoutPersistance.state = this.widgets;
 		this._persistanceTakers.strategy = this._localStorage;
@@ -60,23 +60,11 @@ export class WidgetService {
 			this._persistanceTakers.strategy.serialize() as Partial<GuiDrag>[];
 	}
 
-	public retrieveFromLocalStorage(): Partial<GuiDrag>[] {
+	public retrieve(): Partial<GuiDrag>[] {
 		this._persistanceTakers.strategy = this._localStorage;
 		return this._persistanceTakers.strategy.deSerialize(
 			this.store.widgets,
 			this.widgets
 		);
-	}
-
-	public saveToDB() {
-		this._layoutPersistance.state = this.widgets;
-		this._persistanceTakers.strategy = this._dataBaseStorage;
-		this._persistanceTakers.addPersistance(this._layoutPersistance.save());
-		this._persistanceTakers.strategy.serialize();
-	}
-
-	public retreiveFromDB() {
-		this._persistanceTakers.strategy = this._dataBaseStorage;
-		return this._persistanceTakers.strategy.deSerialize();
 	}
 }

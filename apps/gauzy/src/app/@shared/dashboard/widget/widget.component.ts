@@ -61,7 +61,7 @@ export class WidgetComponent
 	public onClickSetting(event: boolean) {
 		if (event) {
 			this._widgetPopover.hide();
-			this.widgetService.saveToLocalStorage();
+			this.widgetService.save();
 		}
 	}
 

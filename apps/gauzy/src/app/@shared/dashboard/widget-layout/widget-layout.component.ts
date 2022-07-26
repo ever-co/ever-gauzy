@@ -53,10 +53,10 @@ export class WidgetLayoutComponent
 				),
 				filter(() => this.widgetService.widgetsRef.length === 0),
 				tap(() => {
-					this.widgetService.retrieveFromLocalStorage().length === 0
-						? this.widgetService.saveToLocalStorage()
+					this.widgetService.retrieve().length === 0
+						? this.widgetService.save()
 						: this.widgetService
-								.retrieveFromLocalStorage()
+								.retrieve()
 								.forEach((deserialized: GuiDrag) =>
 									this.widgetService.widgetsRef.push(
 										deserialized.templateRef
@@ -75,7 +75,7 @@ export class WidgetLayoutComponent
 			event.container.data
 		);
 		this.widgetService.widgetsRef = this.draggableObject;
-		this.widgetService.saveToLocalStorage();
+		this.widgetService.save();
 	}
 
 	ngOnInit(): void {}
