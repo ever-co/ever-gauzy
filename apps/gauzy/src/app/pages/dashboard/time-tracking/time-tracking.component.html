@@ -24,16 +24,13 @@
 						class="manage-widget"
 						status="basic"
 						size="small"
+						nbPopoverPlacement="bottom"
+						[nbPopover]="widgetManager"
+						nbPopoverTrigger="click"
 						nbButton
 					>
 						{{ 'BUTTONS.MANAGE_WIDGET' | translate }}
-						<nb-icon
-							icon="more-vertical-outline"
-							nbPopoverPlacement="bottom"
-							[nbPopover]="widgetManager"
-							nbPopoverTrigger="click"
-							nbButton
-						></nb-icon>
+						<nb-icon icon="more-vertical-outline"></nb-icon>
 					</button>
 				</div>
 			</div>
