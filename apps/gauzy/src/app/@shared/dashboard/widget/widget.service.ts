@@ -45,6 +45,18 @@ export class WidgetService {
 		this.widgets = buffers;
 	}
 
+	protected sortingReverse(): void {
+		const buffers: TemplateRef<HTMLElement>[] = [];
+		this.widgets.forEach((widget: GuiDrag) => {
+			this.widgetsRef.forEach((widgetRef: TemplateRef<HTMLElement>) => {
+				if (widgetRef === widget.templateRef) {
+					buffers.push(widgetRef);
+				}
+			});
+		});
+		this.widgetsRef = buffers;
+	}
+
 	public get widgets(): GuiDrag[] {
 		return this._widgets;
 	}
@@ -66,5 +78,15 @@ export class WidgetService {
 			this.store.widgets,
 			this.widgets
 		);
+	}
+
+	public undoDrag() {
+		this._persistanceTakers.strategy = this._localStorage;
+		this._persistanceTakers.undo();
+		if (this._persistanceTakers.lastPersistance) {
+			this.widgets =
+				this._persistanceTakers.lastPersistance.restore() as GuiDrag[];
+			this.sortingReverse();
+		}
 	}
 }

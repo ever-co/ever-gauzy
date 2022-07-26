@@ -659,4 +659,10 @@ export class TimeTrackingComponent
 		});
 		this.widgetService.save();
 	}
+
+	public undo(isWindow?: boolean){
+		isWindow
+			? this.windowService.undoDrag()
+			: this.widgetService.undoDrag();
+	}
 }

@@ -65,4 +65,26 @@ export class WindowService {
 			this.windows
 		);
 	}
+
+	public undoDrag() {
+		this._persistanceTakers.strategy = this._localStorage;
+		this._persistanceTakers.undo();
+		if (this._persistanceTakers.lastPersistance) {
+			this.windows =
+				this._persistanceTakers.lastPersistance.restore() as GuiDrag[];
+			this.sortingReverse();
+		}
+	}
+
+	protected sortingReverse(): void {
+		const buffers: TemplateRef<HTMLElement>[] = [];
+		this.windows.forEach((widget: GuiDrag) => {
+			this.windowsRef.forEach((widgetRef: TemplateRef<HTMLElement>) => {
+				if (widgetRef === widget.templateRef) {
+					buffers.push(widgetRef);
+				}
+			});
+		});
+		this.windowsRef = buffers;
+	}
 }
