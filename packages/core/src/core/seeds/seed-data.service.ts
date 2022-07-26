@@ -6,14 +6,10 @@ import * as rimraf from 'rimraf';
 import * as path from 'path';
 import { Injectable } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
-import {
-	DataSource,
-	DataSourceOptions
-} from 'typeorm';
+import { DataSource } from 'typeorm';
 import * as chalk from 'chalk';
 import * as moment from 'moment';
-import { IPluginConfig } from '@gauzy/common';
-import { environment as env, getConfig, ConfigService } from '@gauzy/config';
+import { environment as env, ConfigService } from '@gauzy/config';
 import {
 	IEmployee,
 	IOrganization,
@@ -323,35 +319,23 @@ export enum SeederTypeEnum {
 
 @Injectable()
 export class SeedDataService {
-	dataSource: DataSource;
 	log = console.log;
+	defaultOrganization: IOrganization;
+	tenant: ITenant;
+	seedType: SeederTypeEnum;
 
 	organizations: IOrganization[] = [];
-	defaultOrganization: IOrganization;
 	defaultProjects: IOrganizationProject[] | void = [];
-	tenant: ITenant;
 	roles: IRole[] = [];
 	superAdminUsers: IUser[] = [];
 	defaultCandidateUsers: IUser[] = [];
 	defaultEmployees: IEmployee[] = [];
 
-	config: IPluginConfig = getConfig();
-	seedType: SeederTypeEnum;
-
 	constructor(
 		private readonly moduleRef: ModuleRef,
-		private readonly configService: ConfigService
-	) { }
-
-	/**
-	 * This config is applied only for `yarn seed:*` type calls because
-	 * that is when connection is created by this service itself.
-	 */
-	overrideDbConfig = {
-		logging: 'all',
-		logger: 'file' //Removes console logging, instead logs all queries in a file ormlogs.log
-		// dropSchema: !env.production //Drops the schema each time connection is being established in development mode.
-	};
+		private readonly configService: ConfigService,
+		private readonly dataSource: DataSource
+	) {}
 
 	/**
 	* Seed All Data
@@ -361,9 +345,6 @@ export class SeedDataService {
 			this.seedType = SeederTypeEnum.ALL;
 
 			await this.cleanUpPreviousRuns();
-
-			// Connect to database
-			await this.createConnection();
 
 			// Reset database to start with new, fresh data
 			await this.resetDatabase();
@@ -382,9 +363,6 @@ export class SeedDataService {
 
 			// Seed jobs related data
 			await this.seedJobsData();
-
-			// Disconnect to database
-			await this.closeConnection();
 
 			console.log('Database All Seed Completed');
 		} catch (error) {
@@ -405,9 +383,6 @@ export class SeedDataService {
 
 			await this.cleanUpPreviousRuns();
 
-			// Connect to database
-			await this.createConnection();
-
 			// Reset database to start with new, fresh data
 			await this.resetDatabase();
 
@@ -416,9 +391,6 @@ export class SeedDataService {
 
 			// Seed reports related data
 			await this.seedReportsData();
-
-			// Disconnect to database
-			await this.closeConnection();
 
 			console.log('Database Default Seed Completed');
 		} catch (error) {
@@ -435,9 +407,6 @@ export class SeedDataService {
 
 			await this.cleanUpPreviousRuns();
 
-			// Connect to database
-			await this.createConnection();
-
 			// Reset database to start with new, fresh data
 			await this.resetDatabase();
 
@@ -446,9 +415,6 @@ export class SeedDataService {
 
 			// Seed reports related data
 			await this.seedReportsData();
-
-			// Disconnect to database
-			await this.closeConnection();
 
 			console.log('Database Ever Seed Completed');
 		} catch (error) {
@@ -461,14 +427,8 @@ export class SeedDataService {
 	*/
 	public async runReportsSeed() {
 		try {
-			// Connect to database
-			await this.createConnection();
-
 			// Seed reports related data
 			await this.seedReportsData();
-
-			// Disconnect to database
-			await this.closeConnection();
 
 			console.log('Database Reports Seed Completed');
 		} catch (error) {
@@ -484,9 +444,6 @@ export class SeedDataService {
 		try {
 			console.log('Database Demo Seed Started');
 
-			// Connect to database
-			await this.createConnection();
-
 			// Seed reports related data
 			await this.seedReportsData();
 
@@ -498,9 +455,6 @@ export class SeedDataService {
 
 			// Seed jobs related data
 			await this.seedJobsData();
-
-			// Disconnect to database
-			await this.closeConnection();
 
 			console.log('Database Demo Seed Completed');
 		} catch (error) {
@@ -525,7 +479,7 @@ export class SeedDataService {
 				'Default Report Category & Report',
 				createDefaultReport(
 					this.dataSource,
-					this.config,
+					this.configService.config,
 					this.tenant
 				)
 			);
@@ -548,14 +502,8 @@ export class SeedDataService {
 	public async runJobsSeed() {
 		this.seedType = SeederTypeEnum.ALL;
 		try {
-			// Connect to database
-			await this.createConnection();
-
 			// Seed jobs related data
 			await this.seedJobsData();
-
-			// Disconnect to database
-			await this.closeConnection();
 
 			console.log('Database Jobs Seed Completed');
 		} catch (error) {
@@ -679,7 +627,7 @@ export class SeedDataService {
 			'Default Feature Toggle',
 			createDefaultFeatureToggle(
 				this.dataSource,
-				this.config,
+				this.configService.config,
 				this.tenant
 			)
 		);
@@ -1376,7 +1324,7 @@ export class SeedDataService {
 			'Default TimeSheets',
 			createDefaultTimeSheet(
 				this.dataSource,
-				this.config,
+				this.configService.config,
 				this.tenant,
 				this.defaultOrganization,
 				this.defaultEmployees
@@ -2085,22 +2033,34 @@ export class SeedDataService {
 
 		await this.tryExecute(
 			'Random Integrations',
-			createRandomIntegrationTenant(this.dataSource, tenants)
+			createRandomIntegrationTenant(
+				this.dataSource,
+				tenants
+			)
 		);
 
 		await this.tryExecute(
 			'Random Integration Settings',
-			createRandomIntegrationSetting(this.dataSource, tenants)
+			createRandomIntegrationSetting(
+				this.dataSource,
+				tenants
+			)
 		);
 
 		await this.tryExecute(
 			'Random Integration Map',
-			createRandomIntegrationMap(this.dataSource, tenants)
+			createRandomIntegrationMap(
+				this.dataSource,
+				tenants
+			)
 		);
 
 		await this.tryExecute(
 			'Random Integration Entity Settings',
-			createRandomIntegrationEntitySetting(this.dataSource, tenants)
+			createRandomIntegrationEntitySetting(
+				this.dataSource,
+				tenants
+			)
 		);
 
 		await this.tryExecute(
@@ -2154,7 +2114,7 @@ export class SeedDataService {
 			'Random TimeSheets',
 			createRandomTimesheet(
 				this.dataSource,
-				this.config,
+				this.configService.config,
 				tenants
 			)
 		);
@@ -2185,7 +2145,7 @@ export class SeedDataService {
 		this.log(chalk.green(`CLEANING UP FROM PREVIOUS RUNS...`));
 
 		await new Promise((resolve) => {
-			const assetOptions = this.config.assetOptions;
+			const assetOptions = this.configService.assetOptions;
 			const dir = env.isElectron
 				? path.join(
 					path.resolve(env.gauzyUserPath, ...['public']),
@@ -2202,62 +2162,21 @@ export class SeedDataService {
 	}
 
 	/**
-	* Create connection from database
-	*/
-	private async createConnection() {
-		const { dbConnectionOptions } = this.config;
-		if (!this.dataSource || !this.dataSource.isInitialized) {
-			this.log('NOTE: DATABASE CONNECTION DOES NOT EXIST YET. NEW ONE WILL BE CREATED!');
-			try {
-				this.log(chalk.green(`CONNECTING TO DATABASE...`));
-				this.dataSource = new DataSource({ ...dbConnectionOptions, ...this.overrideDbConfig } as DataSourceOptions);
-				this.log(chalk.green(`✅ CONNECTED TO DATABASE!`));
-			} catch (error) {
-				this.handleError(error, 'Unable to connect to database');
-			}
-		}
-	}
-
-	/**
-	* Close connection from database
-	*/
-	private async closeConnection() {
-		try {
-			if (this.dataSource && this.dataSource.isInitialized) {
-				await this.dataSource.destroy();
-				this.log(chalk.green(`✅ DISCONNECTED TO DATABASE!`));
-			}
-		} catch (error) {
-			this.log('NOTE: DATABASE CONNECTION DOES NOT EXIST YET. CANT CLOSE CONNECTION!');
-		}
-	}
-
-	/**
-	 * Use this wrapper function for all seed functions which are not essential.
-	 * Essentials seeds are ONLY those which are required to start the UI/login
+	 * Reset the database, truncate all tables (remove all data)
 	 */
-	public tryExecute<T>(
-		name: string,
-		p: Promise<T>
-	): Promise<T> | Promise<void> {
-		this.log(chalk.green(`${moment().format('DD.MM.YYYY HH:mm:ss')} SEEDING ${name}`));
+	 private async resetDatabase() {
+		this.log(chalk.green(`RESETTING DATABASE...`));
 
-		return (p as any).then(
-			(x: T) => x,
-			(error: Error) => {
-				this.log(
-					chalk.bgRed(
-						`🛑 ERROR: ${error ? error.message : 'unknown'}`
-					)
-				);
-			}
-		);
+		const entities = await this.getEntities();
+		await this.cleanAll(entities);
+
+		this.log(chalk.green(`✅ RESET DATABASE SUCCESSFUL`));
 	}
 
 	/**
 	 * Retrieve entities metadata
 	 */
-	private async getEntities() {
+	 private async getEntities() {
 		const entities = [];
 		try {
 			this.dataSource.entityMetadatas.forEach((entity) =>
@@ -2279,7 +2198,7 @@ export class SeedDataService {
 	private async cleanAll(entities: Array<any>) {
 		try {
 			const manager = this.dataSource.manager;
-			const database = this.config.dbConnectionOptions;
+			const database = this.configService.dbConnectionOptions;
 
 			switch (database.type) {
 				case 'postgres':
@@ -2305,32 +2224,16 @@ export class SeedDataService {
 	}
 
 	/**
-	 * Reset the database, truncate all tables (remove all data)
+	 * Bootstrap Plugins Seed Methods
+	 *
+	 * @param lifecycleMethod
+	 * @param closure
 	 */
-	private async resetDatabase() {
-		this.log(chalk.green(`RESETTING DATABASE`));
-
-		const entities = await this.getEntities();
-		await this.cleanAll(entities);
-
-		this.log(chalk.green(`✅ RESET DATABASE SUCCESSFUL`));
-	}
-
-	private handleError(error: Error, message?: string): void {
-		this.log(
-			chalk.bgRed(
-				`🛑 ERROR: ${message ? message + '-> ' : ''} ${error ? error.message : ''
-				}`
-			)
-		);
-		throw error;
-	}
-
 	private async bootstrapPluginSeedMethods(
 		lifecycleMethod: keyof PluginLifecycleMethods,
 		closure?: (instance: any) => void
 	): Promise<void> {
-		const plugins = getPluginModules(this.config.plugins);
+		const plugins = getPluginModules(this.configService.plugins);
 		for (const plugin of plugins) {
 			let classInstance: ClassDecorator;
 			try {
@@ -2351,5 +2254,37 @@ export class SeedDataService {
 				}
 			}
 		}
+	}
+
+	/**
+	 * Use this wrapper function for all seed functions which are not essential.
+	 * Essentials seeds are ONLY those which are required to start the UI/login
+	 */
+	 public tryExecute<T>(
+		name: string,
+		p: Promise<T>
+	): Promise<T> | Promise<void> {
+		this.log(chalk.green(`${moment().format('DD.MM.YYYY HH:mm:ss')} SEEDING ${name}`));
+
+		return (p as any).then(
+			(x: T) => x,
+			(error: Error) => {
+				this.log(
+					chalk.bgRed(
+						`🛑 ERROR: ${error ? error.message : 'unknown'}`
+					)
+				);
+			}
+		);
+	}
+
+	private handleError(error: Error, message?: string): void {
+		this.log(
+			chalk.bgRed(
+				`🛑 ERROR: ${message ? message + '-> ' : ''} ${error ? error.message : ''
+				}`
+			)
+		);
+		throw error;
 	}
 }
