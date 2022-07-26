@@ -84,7 +84,6 @@ export class ImportExportComponent extends TranslationBaseComponent implements O
 	* Migrate Self Hosted to Gauzy Cloud Hosted
 	*/
 	onMigrateIntoCloud(password: string) {
-		this.loading = true;
 		const {
 			id: sourceId,
 			firstName,
@@ -110,9 +109,11 @@ export class ImportExportComponent extends TranslationBaseComponent implements O
 			},
 			isImporting: true,
 			sourceId,
-			password
+			password,
+			confirmPassword: password
 		}
 
+		this.loading = true;
 		try {
 			this.gauzyCloudService.migrateIntoCloud(register)
 				.pipe(
@@ -121,11 +122,14 @@ export class ImportExportComponent extends TranslationBaseComponent implements O
 						return observableOf(EMPTY);
 					}),
 					switchMap((response: IAuthResponse) => {
-						if (response && response['status'] === 404) {
-							this._errorHandlingService.handleError(response);
-							return EMPTY;
-						}
 						if (response) {
+							if (response['status']) {
+								const statuses = [400, 404];
+								if (statuses.includes(response['status'])) {
+									this._errorHandlingService.handleError(response);
+									return EMPTY;
+								}
+							}
 							const { token, user } = response;
 							this.token = token;
 							this.gauzyUser = user;
@@ -192,7 +196,13 @@ export class ImportExportComponent extends TranslationBaseComponent implements O
 
 	async getOrganizations() {
 		const { id: userId, tenantId } = this.user;
-		const { items = [] } = await this.userOrganizationService.getAll([ 'organization' ], { userId, tenantId });
+		const { items = [] } = await this.userOrganizationService.getAll([
+			'organization',
+			'organization.contact'
+		], {
+			userId,
+			tenantId
+		});
 		this.userOrganizations = items;
 	}
 
@@ -203,6 +213,7 @@ export class ImportExportComponent extends TranslationBaseComponent implements O
 	): IOrganizationCreateInput {
 		const { currency, defaultValueDateType, bonusType, imageUrl, id: sourceId } = organization;
 		delete organization['id'];
+		delete organization['contactId'];
 
 		return {
 			...organization,
