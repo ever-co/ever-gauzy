@@ -19,7 +19,7 @@ import { randomSeedConfig } from './../../core/seeds/random-seed-config';
 
 export const createDefaultTimeSheet = async (
 	dataSource: DataSource,
-	config: IPluginConfig,
+	config: Partial<IPluginConfig>,
 	tenant: ITenant,
 	organization: IOrganization,
 	employees: IEmployee[]
@@ -111,7 +111,7 @@ export const createDefaultTimeSheet = async (
 
 export const createRandomTimesheet = async (
 	dataSource: DataSource,
-	config: IPluginConfig,
+	config: Partial<IPluginConfig>,
 	tenants: ITenant[]
 ) => {
 	for await (const tenant of tenants) {

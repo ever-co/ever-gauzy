@@ -16,7 +16,7 @@ import { IPluginConfig } from '@gauzy/common';
 
 export const createDefaultFeatureToggle = async (
 	dataSource: DataSource,
-	config: IPluginConfig,
+	config: Partial<IPluginConfig>,
 	tenant: ITenant
 ) => {
 	await cleanFeature(dataSource, config);
@@ -73,7 +73,7 @@ export const createRandomFeatureToggle = async (
 async function createFeature(
 	item: IFeature,
 	tenant: ITenant,
-	config: IPluginConfig
+	config: Partial<IPluginConfig>
 ) {
 	const {
 		name,
@@ -104,7 +104,7 @@ async function createFeature(
 }
 
 async function cleanFeature(dataSource, config) {
-	if (config.dbdataSourceOptions.type === 'sqlite') {
+	if (config.dbConnectionOptions.type === 'sqlite') {
 		await dataSource.query('DELETE FROM feature');
 		await dataSource.query('DELETE FROM feature_organization');
 	} else {
@@ -160,7 +160,7 @@ async function cleanFeature(dataSource, config) {
 	});
 }
 
-function copyImage(fileName: string, config: IPluginConfig) {
+function copyImage(fileName: string, config: Partial<IPluginConfig>) {
 	try {
 		const destDir = 'features';
 

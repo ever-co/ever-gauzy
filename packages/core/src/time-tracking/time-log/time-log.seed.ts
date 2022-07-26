@@ -20,7 +20,7 @@ import { BadRequestException } from '@nestjs/common';
 
 export const createRandomTimeLogs = async (
 	dataSource: DataSource,
-	config: IPluginConfig,
+	config: Partial<IPluginConfig>,
 	tenant: ITenant,
 	timeSheets: ITimesheet[]
 ) => {

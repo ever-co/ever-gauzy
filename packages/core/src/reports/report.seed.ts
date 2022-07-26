@@ -15,7 +15,7 @@ import { Organization } from './../core/entities/internal';
 
 export const createDefaultReport = async (
 	dataSource: DataSource,
-	config: IPluginConfig,
+	config: Partial<IPluginConfig>,
 	tenant: ITenant
 ): Promise<IReport[]> => {
 	await cleanReport(dataSource, config);
@@ -154,7 +154,7 @@ export const createDefaultReport = async (
 
 async function cleanReport(
 	dataSource: DataSource,
-	config: IPluginConfig
+	config: Partial<IPluginConfig>
 ) {
 	const report = dataSource.getRepository(Report).metadata.tableName;
 	const reportCategory = dataSource.getRepository(ReportCategory).metadata.tableName;
@@ -188,7 +188,10 @@ async function cleanReport(
 	});
 }
 
-function copyImage(fileName: string, config: IPluginConfig) {
+function copyImage(
+	fileName: string,
+	config: Partial<IPluginConfig>
+) {
 	try {
 		const destDir = 'reports';
 
