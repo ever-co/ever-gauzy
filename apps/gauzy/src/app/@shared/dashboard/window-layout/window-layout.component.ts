@@ -5,6 +5,7 @@ import {
 	ChangeDetectorRef,
 	Component,
 	Input,
+	OnDestroy,
 	OnInit,
 	QueryList,
 	TemplateRef,
@@ -25,7 +26,7 @@ import { WindowService } from '../window/window.service';
 })
 export class WindowLayoutComponent
 	extends LayoutWithDraggableObject
-	implements OnInit, AfterViewInit, AfterViewChecked
+	implements OnInit, AfterViewInit, AfterViewChecked, OnDestroy
 {
 	@Input()
 	set windows(value: TemplateRef<HTMLElement>[]) {
@@ -86,4 +87,6 @@ export class WindowLayoutComponent
 			this.draggableObject = this.windowService.windowsRef;
 		return this.draggableObject;
 	}
+
+	ngOnDestroy(): void {}
 }

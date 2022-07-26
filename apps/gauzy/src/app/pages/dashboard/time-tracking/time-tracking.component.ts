@@ -657,6 +657,6 @@ export class TimeTrackingComponent
 				widget.hide = !value.hide;
 			}
 		});
-		this.widgetService.serialize();
+		this.widgetService.saveToLocalStorage();
 	}
 }

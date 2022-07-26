@@ -1,6 +1,6 @@
 import { Injectable, TemplateRef } from '@angular/core';
 import { Store } from '../../../@core';
-import { LayoutPersistance } from '../interfaces/layout-persistance.abstract';
+import { LayoutPersistance } from '../concretes/contexts/layout-persistance.class';
 import { GuiDrag } from '../interfaces/gui-drag.abstract';
 
 @Injectable({
@@ -40,7 +40,7 @@ export class WindowService extends LayoutPersistance {
 	}
 	public serialize(): void {
 		if (this.windows.length === 0) return;
-		this.store.windows = this.toObject(this.windows);
+		// this.store.windows = this.toObject(this.windows);
 	}
 
 	public deSerialize(): Partial<GuiDrag>[] {
