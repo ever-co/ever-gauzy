@@ -87,6 +87,8 @@ export class WidgetService {
 			this.widgets =
 				this._persistanceTakers.lastPersistance.restore() as GuiDrag[];
 			this.sortingReverse();
+			this.store.widgets =
+				this._persistanceTakers.strategy.serialize() as Partial<GuiDrag>[];
 		}
 	}
 }
