@@ -52,8 +52,7 @@ export class WidgetService {
 		this._widgets = value;
 	}
 	public saveToLocalStorage(): void {
-		const size = this.widgets.length;
-		if (size === 0) return;
+		if (this.widgets.length === 0) return;
 		this._layoutPersistance.state = this.widgets;
 		this._persistanceTakers.strategy = this._localStorage;
 		this._persistanceTakers.addPersistance(this._layoutPersistance.save());

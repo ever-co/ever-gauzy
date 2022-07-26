@@ -57,7 +57,7 @@ export class WindowComponent extends GuiDrag implements OnInit, AfterViewInit, O
 	public onClickSetting(event: boolean) {
 		if (event) {
 			this._windowPopover.hide();
-			this.windowService.serialize();
+			this.windowService.save();
 		}
 	}
 

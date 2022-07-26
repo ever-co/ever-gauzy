@@ -49,10 +49,10 @@ export class WindowLayoutComponent
 				),
 				filter(() => this.windowService.windowsRef.length === 0),
 				tap(() => {
-					this.windowService.deSerialize().length === 0
-						? this.windowService.serialize()
+					this.windowService.retrieve().length === 0
+						? this.windowService.save()
 						: this.windowService
-								.deSerialize()
+								.retrieve()
 								.forEach((deserialized: GuiDrag) =>
 									this.windowService.windowsRef.push(
 										deserialized.templateRef
@@ -76,7 +76,7 @@ export class WindowLayoutComponent
 			event.container.data
 		);
 		this.windowService.windowsRef = this.draggableObject;
-		this.windowService.serialize();
+		this.windowService.save();
 	}
 
 	get windows() {

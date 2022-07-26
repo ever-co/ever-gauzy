@@ -648,7 +648,7 @@ export class TimeTrackingComponent
 				window.hide = !value.hide;
 			}
 		});
-		this.windowService.serialize();
+		this.windowService.save();
 	}
 
 	public updateWidgetVisibility(value: GuiDrag) {

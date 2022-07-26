@@ -1,17 +1,28 @@
 import { Injectable, TemplateRef } from '@angular/core';
 import { Store } from '../../../@core';
 import { LayoutPersistance } from '../concretes/contexts/layout-persistance.class';
+import { PersistanceTakers } from '../concretes/contexts/persistance-takers.class';
+import { DatabaseStrategy } from '../concretes/strategies/database-strategy.class';
+import { LocalstorageStrategy } from '../concretes/strategies/localstorage-strategy.class';
+import { BackupStrategy } from '../interfaces/backup-strategy.interface';
 import { GuiDrag } from '../interfaces/gui-drag.abstract';
 
 @Injectable({
 	providedIn: 'root'
 })
-export class WindowService extends LayoutPersistance {
+export class WindowService {
 	private _windowsRef: TemplateRef<HTMLElement>[] = [];
 	private _windows: GuiDrag[] = [];
+	private _layoutPersistance: LayoutPersistance;
+	private _persistanceTakers: PersistanceTakers;
+	private _localStorage: BackupStrategy;
+	private _dataBaseStorage: BackupStrategy;
 
 	constructor(private readonly store: Store) {
-		super();
+		this._layoutPersistance = new LayoutPersistance();
+		this._localStorage = new LocalstorageStrategy();
+		this._dataBaseStorage = new DatabaseStrategy();
+		this._persistanceTakers = new PersistanceTakers();
 	}
 
 	public get windowsRef(): any[] {
@@ -38,26 +49,20 @@ export class WindowService extends LayoutPersistance {
 	public set windows(value: GuiDrag[]) {
 		this._windows = value;
 	}
-	public serialize(): void {
+	public save(): void {
 		if (this.windows.length === 0) return;
-		// this.store.windows = this.toObject(this.windows);
+		this._layoutPersistance.state = this.windows;
+		this._persistanceTakers.strategy = this._localStorage;
+		this._persistanceTakers.addPersistance(this._layoutPersistance.save());
+		this.store.windows =
+			this._persistanceTakers.strategy.serialize() as Partial<GuiDrag>[];
 	}
 
-	public deSerialize(): Partial<GuiDrag>[] {
-		return this.store.windows
-			? this.store.windows
-					.flatMap((serialized: Partial<GuiDrag>) => {
-						return this.windows.map((window: GuiDrag) => {
-							if (window.position === serialized.position) {
-								window.isCollapse = serialized.isCollapse;
-								window.isExpand = serialized.isExpand;
-								window.title = serialized.title;
-								window.hide = serialized.hide;
-								return window;
-							}
-						});
-					})
-					.filter((deserialized: GuiDrag) => deserialized)
-			: [];
+	public retrieve(): Partial<GuiDrag>[] {
+		this._persistanceTakers.strategy = this._localStorage;
+		return this._persistanceTakers.strategy.deSerialize(
+			this.store.windows,
+			this.windows
+		);
 	}
 }
