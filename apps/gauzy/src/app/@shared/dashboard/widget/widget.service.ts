@@ -57,7 +57,8 @@ export class WidgetService {
 		this._layoutPersistance.state = this.widgets;
 		this._persistanceTakers.strategy = this._localStorage;
 		this._persistanceTakers.addPersistance(this._layoutPersistance.save());
-		this.store.widgets = this._persistanceTakers.strategy.serialize(size);
+		this.store.widgets =
+			this._persistanceTakers.strategy.serialize() as Partial<GuiDrag>[];
 	}
 
 	public retrieveFromLocalStorage(): Partial<GuiDrag>[] {

@@ -33,7 +33,8 @@ export class LocalstorageStrategy implements BackupStrategy {
 			: [];
 	}
 
-	serialize(size?: number): Partial<GuiDrag>[] {
+	serialize(): Partial<GuiDrag>[] {
+		const size: number = this.serializables[0].restore().length;
 		return this.serializables
 			.flatMap((serializable: IPersistance) =>
 				serializable
@@ -41,7 +42,7 @@ export class LocalstorageStrategy implements BackupStrategy {
 					.map((restored: Partial<GuiDrag>) => restored.toObject())
 			)
 			.reverse()
-			.slice(0, size as number)
+			.slice(0, size)
 			.reverse();
 	}
 
