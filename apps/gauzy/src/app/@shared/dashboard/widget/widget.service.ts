@@ -1,17 +1,28 @@
 import { Injectable, TemplateRef } from '@angular/core';
 import { Store } from '../../../@core';
-import { LayoutPersistance } from '../interfaces/layout-persistance.abstract';
+import { LayoutPersistance } from '../concretes/contexts/layout-persistance.class';
+import { PersistanceTakers } from '../concretes/contexts/persistance-takers.class';
+import { DatabaseStrategy } from '../concretes/strategies/database-strategy.class';
+import { LocalstorageStrategy } from '../concretes/strategies/localstorage-strategy.class';
+import { BackupStrategy } from '../interfaces/backup-strategy.interface';
 import { GuiDrag } from '../interfaces/gui-drag.abstract';
 
 @Injectable({
 	providedIn: 'root'
 })
-export class WidgetService extends LayoutPersistance {
+export class WidgetService {
 	private _widgetsRef: TemplateRef<HTMLElement>[] = [];
 	private _widgets: GuiDrag[] = [];
+	private _layoutPersistance: LayoutPersistance;
+	private _persistanceTakers: PersistanceTakers;
+	private _localStorage: BackupStrategy;
+	private _dataBaseStorage: BackupStrategy;
 
 	constructor(private readonly store: Store) {
-		super();
+		this._layoutPersistance = new LayoutPersistance();
+		this._localStorage = new LocalstorageStrategy();
+		this._dataBaseStorage = new DatabaseStrategy();
+		this._persistanceTakers = new PersistanceTakers();
 	}
 
 	public get widgetsRef(): TemplateRef<HTMLElement>[] {
@@ -40,26 +51,32 @@ export class WidgetService extends LayoutPersistance {
 	public set widgets(value: GuiDrag[]) {
 		this._widgets = value;
 	}
-	public serialize(): void {
-		if (this.widgets.length === 0) return;
-		this.store.widgets = this.toObject(this.widgets);
+	public saveToLocalStorage(): void {
+		const size = this.widgets.length;
+		if (size === 0) return;
+		this._layoutPersistance.state = this.widgets;
+		this._persistanceTakers.strategy = this._localStorage;
+		this._persistanceTakers.addPersistance(this._layoutPersistance.save());
+		this.store.widgets = this._persistanceTakers.strategy.serialize(size);
 	}
 
-	public deSerialize(): Partial<GuiDrag>[] {
-		return this.store.widgets
-			? this.store.widgets
-					.flatMap((serialized: Partial<GuiDrag>) => {
-						return this.widgets.map((widget: GuiDrag) => {
-							if (widget.position === serialized.position) {
-								widget.isCollapse = serialized.isCollapse;
-								widget.isExpand = serialized.isExpand;
-								widget.title = serialized.title;
-								widget.hide = serialized.hide;
-								return widget;
-							}
-						});
-					})
-					.filter((deserialized: GuiDrag) => deserialized)
-			: [];
+	public retrieveFromLocalStorage(): Partial<GuiDrag>[] {
+		this._persistanceTakers.strategy = this._localStorage;
+		return this._persistanceTakers.strategy.deSerialize(
+			this.store.widgets,
+			this.widgets
+		);
+	}
+
+	public saveToDB() {
+		this._layoutPersistance.state = this.widgets;
+		this._persistanceTakers.strategy = this._dataBaseStorage;
+		this._persistanceTakers.addPersistance(this._layoutPersistance.save());
+		this._persistanceTakers.strategy.serialize();
+	}
+
+	public retreiveFromDB() {
+		this._persistanceTakers.strategy = this._dataBaseStorage;
+		return this._persistanceTakers.strategy.deSerialize();
 	}
 }
