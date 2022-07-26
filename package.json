@@ -19,8 +19,8 @@
 	},
 	"scripts": {
 		"prepare:husky": "npx husky install .husky",
-		"ng": "cross-env NODE_ENV=development NODE_OPTIONS=--max_old_space_size=4096 yarn nx",
-		"ng:prod": "cross-env NODE_ENV=production NODE_OPTIONS=--max_old_space_size=4096 yarn nx",
+		"ng": "cross-env NODE_ENV=development NODE_OPTIONS=--max_old_space_size=8192 yarn nx",
+		"ng:prod": "cross-env NODE_ENV=production NODE_OPTIONS=--max_old_space_size=8192 yarn nx",
 		"ng:ci": "cross-env NODE_ENV=production NODE_OPTIONS=--max_old_space_size=7000 yarn nx",
 		"config": "yarn ts-node ./.scripts/configure.ts",
 		"config:dev": "yarn run config -- --environment=dev",
