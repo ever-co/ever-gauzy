@@ -15,10 +15,7 @@ import { DEFAULT_DB_CONNECTION } from '@gauzy/common';
 			name: DEFAULT_DB_CONNECTION,
 			useFactory: async (configService: ConfigService) => {
 				const { dbConnectionOptions } = configService.config;
-				return {
-					name: DEFAULT_DB_CONNECTION,
-					...dbConnectionOptions
-				};
+				return dbConnectionOptions;
 			},
 			inject: [ConfigService]
 		} as TypeOrmModuleAsyncOptions)
@@ -26,4 +23,4 @@ import { DEFAULT_DB_CONNECTION } from '@gauzy/common';
 	providers: [],
 	exports: [TypeOrmModule]
 })
-export class DatabaseConnectionProviderModule {}
+export class DatabaseModule {}
