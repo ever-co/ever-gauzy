@@ -35,7 +35,6 @@ import {
 	WorkingEmployeeGetCommand
 } from './commands';
 import { CrudController, ITryRequest, PaginationParams } from './../core/crud';
-import { RequestContext } from '../core/context';
 import { TransformInterceptor } from './../core/interceptors';
 import { Permissions } from './../shared/decorators';
 import { BulkBodyLoadTransformPipe, ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
@@ -227,9 +226,10 @@ export class EmployeeController extends CrudController<Employee> {
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_EMPLOYEES_VIEW)
 	@Get('pagination')
-	@UsePipes(new ValidationPipe({ transform: true }))
 	async pagination(
-		@Query() filter: PaginationParams<IEmployee>
+		@Query(new ValidationPipe({
+			transform: true
+		})) filter: PaginationParams<IEmployee>
 	): Promise<IPagination<IEmployee>> {
 		return this.employeeService.pagination(filter);
 	}

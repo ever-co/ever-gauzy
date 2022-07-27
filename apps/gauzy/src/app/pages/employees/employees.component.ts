@@ -52,7 +52,7 @@ import { ServerDataSource } from '../../@core/utils/smart-table';
 	templateUrl: './employees.component.html',
 	styleUrls: ['./employees.component.scss']
 })
-export class EmployeesComponent extends PaginationFilterBaseComponent 
+export class EmployeesComponent extends PaginationFilterBaseComponent
 	implements OnInit, OnDestroy {
 
 	settingsSmartTable: object;
@@ -77,7 +77,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 	}
 
 	/*
-	* Actions Buttons directive 
+	* Actions Buttons directive
 	*/
 	@ViewChild('actionButtons', { static: true }) actionButtons: TemplateRef<any>;
 
@@ -457,9 +457,12 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 
 		this.smartTableSource = new ServerDataSource(this.http, {
 			endPoint: `${API_PREFIX}/employee/pagination`,
-			relations: ['user', 'tags'],
 			where: {
-				...{ organizationId, tenantId, isActive: !this.includeDeleted },
+				...{
+					organizationId,
+					tenantId,
+					isActive: !this.includeDeleted
+				},
 				...this.filters.where
 			},
 			resultMap: (employee: IEmployee) => {
