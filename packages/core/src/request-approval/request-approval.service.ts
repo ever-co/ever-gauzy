@@ -49,14 +49,8 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 		filter: FindManyOptions<RequestApproval>,
 		findInput: IRequestApprovalFindInput
 	): Promise<IPagination<IRequestApproval>> {
-		const tenantId = RequestContext.currentTenantId();
-		const query = this.requestApprovalRepository.createQueryBuilder(
-			'request_approval'
-		);
-		query.leftJoinAndSelect(
-			`${query.alias}.approvalPolicy`,
-			'approvalPolicy'
-		);
+		const query = this.requestApprovalRepository.createQueryBuilder('request_approval');
+		query.leftJoinAndSelect(`${query.alias}.approvalPolicy`, 'approvalPolicy');
 
 		if (config.dbConnectionOptions.type === 'sqlite') {
 			query.leftJoinAndSelect(
@@ -84,50 +78,37 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 
 		const relations = filter.relations as string[];
 		if (relations && relations.length > 0) {
-			relations.forEach((item) => {
-				let relationArr = item.split(".");
-				if (relationArr.length === 2) {
-					query.leftJoinAndSelect(`${relationArr[0]}.${relationArr[1]}`, relationArr[1]);
-				} else {
-					query.leftJoinAndSelect(`request_approval.${item}`, item);
-				}
-			});
+			query.setFindOptions({ relations });
 		}
 
+		const tenantId = RequestContext.currentTenantId();
 		const { organizationId } = findInput;
+
 		const [items, total] = await query
 			.where(
 				new Brackets((sqb) => {
-					sqb.where(
-						'approvalPolicy.organizationId =:organizationId',
-						{
-							organizationId
-						}
-					).andWhere('approvalPolicy.tenantId =:tenantId', {
+					sqb.where('approvalPolicy.organizationId =:organizationId', {
+						organizationId
+					}).andWhere('approvalPolicy.tenantId =:tenantId', {
 						tenantId
 					});
 				})
 			)
 			.orWhere(
 				new Brackets((sqb) => {
-					sqb.where(
-						'time_off_request.organizationId =:organizationId',
-						{
-							organizationId
-						}
-					).andWhere('time_off_request.tenantId =:tenantId', {
+					sqb.where('time_off_request.organizationId =:organizationId', {
+						organizationId
+					})
+					.andWhere('time_off_request.tenantId =:tenantId', {
 						tenantId
 					});
 				})
 			)
 			.orWhere(
 				new Brackets((sqb) => {
-					sqb.where(
-						'equipment_sharing.organizationId =:organizationId',
-						{
-							organizationId
-						}
-					).andWhere('equipment_sharing.tenantId =:tenantId', {
+					sqb.where('equipment_sharing.organizationId =:organizationId', {
+						organizationId
+					}).andWhere('equipment_sharing.tenantId =:tenantId', {
 						tenantId
 					});
 				})
