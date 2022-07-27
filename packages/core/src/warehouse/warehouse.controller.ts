@@ -13,7 +13,7 @@ import {
 	UsePipes,
 	ValidationPipe
 } from '@nestjs/common';
-import { FindManyOptions, FindOptionsWhere } from 'typeorm';
+import { FindOptionsWhere } from 'typeorm';
 import {
 	IPagination,
 	PermissionsEnum,
@@ -28,7 +28,6 @@ import { WarehouseProductService } from './warehouse-product-service';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
-import { RequestContext } from './../core/context';
 import { CrudController, PaginationParams } from './../core/crud';
 
 @ApiTags('Warehouses')
