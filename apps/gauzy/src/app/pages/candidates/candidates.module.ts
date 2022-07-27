@@ -97,6 +97,7 @@ import { HeaderTitleModule } from '../../@shared/components/header-title/header-
 import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
 import { NbToggleModule } from '@nebular/theme';
 import { PaginationModule } from '../../@shared/pagination/pagination.module';
+import { WorkInProgressModule } from '../work-in-progress/work-in-progress.module';
 
 const COMPONENTS = [
 	CandidatesComponent,
@@ -191,10 +192,11 @@ const COMPONENTS = [
 		DeleteFeedbackModule,
 		NgxPermissionsModule.forChild(),
 		HeaderTitleModule,
-    GauzyButtonActionModule,
-    NbToggleModule,
-    PaginationModule,
-    CardGridModule
+    	GauzyButtonActionModule,
+    	NbToggleModule,
+    	PaginationModule,
+    	CardGridModule,
+		WorkInProgressModule
 	],
 	declarations: [...COMPONENTS],
 	providers: [
