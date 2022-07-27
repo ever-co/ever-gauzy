@@ -72,7 +72,7 @@ export class WindowService {
 		this._windowsTakers.backup();
 		this._strategy = this._localStorage;
 		this._strategy.serializables = this.windows;
-		this.store.widgets = this._strategy.serialize() as Partial<GuiDrag>[];
+		this.store.windows = this._strategy.serialize() as Partial<GuiDrag>[];
 	}
 
 	public retrieve(): Partial<GuiDrag>[] {
@@ -87,15 +87,15 @@ export class WindowService {
 		this.sortingReverse();
 		this._strategy = this._localStorage;
 		this._strategy.serializables = this.windows;
-		this.store.widgets = this._strategy.serialize() as Partial<GuiDrag>[];
+		this.store.windows = this._strategy.serialize() as Partial<GuiDrag>[];
 	}
 
 	protected sortingReverse(): void {
 		const buffers: TemplateRef<HTMLElement>[] = [];
-		this.windows.forEach((widget: GuiDrag) => {
-			this.windowsRef.forEach((widgetRef: TemplateRef<HTMLElement>) => {
-				if (widgetRef === widget.templateRef) {
-					buffers.push(widgetRef);
+		this.windows.forEach((windows: GuiDrag) => {
+			this.windowsRef.forEach((windowsRef: TemplateRef<HTMLElement>) => {
+				if (windowsRef === windows.templateRef) {
+					buffers.push(windowsRef);
 				}
 			});
 		});
