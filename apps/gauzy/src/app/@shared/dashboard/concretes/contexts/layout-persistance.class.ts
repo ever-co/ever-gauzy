@@ -6,12 +6,12 @@ import { Persistance } from './persistance.class';
 export class LayoutPersistance implements ILayoutPersistance {
 	private _state: Partial<GuiDrag>[];
 
-	save(): IPersistance {
-		return new Persistance(this, this.state);
+	public save(): Persistance {
+		return new Persistance(this._state);
 	}
 
-	restore(): Partial<GuiDrag>[] {
-		return this.state;
+	public restore(persistance: IPersistance): void {
+		this._state = persistance.state;
 	}
 
 	public get state(): Partial<GuiDrag>[] {
