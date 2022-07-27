@@ -1,4 +1,4 @@
-import { Brackets, FindManyOptions, IsNull, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
+import { Brackets, IsNull, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IPagination, ITag, ITagFindInput } from '@gauzy/contracts';
@@ -16,11 +16,10 @@ export class TagService extends CrudService<Tag> {
 	}
 
 	async findOneByName(name: string): Promise<Tag> {
-		const query = this.tagRepository
-			.createQueryBuilder('tag')
-			.where('"tag"."name" = :name', {
-				name
-			});
+		const query = this.tagRepository.createQueryBuilder();
+		query.where('"tag"."name" = :name', {
+			name
+		});
 		const item = await query.getOne();
 		return item;
 	}
@@ -36,39 +35,39 @@ export class TagService extends CrudService<Tag> {
 		input: ITagFindInput,
 		relations: string[]
 	): Promise<IPagination<ITag>> {
-		const [ items, total ] = await this.tagRepository.findAndCount({
-			relations: [
-				...relations
-			],
-			where: (query: SelectQueryBuilder<Tag>) => {
-				query.andWhere(
-					new Brackets((qb: WhereExpressionBuilder) => {
-						const { organizationId } = input;
-						qb.where(
-							[
-								{
-									organizationId: IsNull()
-								},
-								{
-									organizationId
-								}
-							]
-						);
-					})
-				);
-				query.andWhere(
-					new Brackets((qb: WhereExpressionBuilder) => {
-						const tenantId = RequestContext.currentTenantId();
-						qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
-							tenantId
-						});
-					})
-				);
-				query.andWhere(`"${query.alias}"."isSystem" = :isSystem`, {
-					isSystem: false
-				});
-			}
-		} as FindManyOptions<Tag>);
+		const query = this.tagRepository.createQueryBuilder();
+		query.setFindOptions({
+			relations
+		});
+		query.where((qb: SelectQueryBuilder<Tag>) => {
+			qb.andWhere(
+				new Brackets((web: WhereExpressionBuilder) => {
+					const { organizationId } = input;
+					web.where(
+						[
+							{
+								organizationId: IsNull()
+							},
+							{
+								organizationId
+							}
+						]
+					);
+				})
+			);
+			qb.andWhere(
+				new Brackets((web: WhereExpressionBuilder) => {
+					const tenantId = RequestContext.currentTenantId();
+					web.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, {
+						tenantId
+					});
+				})
+			);
+			qb.andWhere(`"${qb.alias}"."isSystem" = :isSystem`, {
+				isSystem: false
+			});
+		});
+		const [ items, total ] = await query.getManyAndCount();
 		return { items, total };
 	}
 

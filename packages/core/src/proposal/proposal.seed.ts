@@ -17,16 +17,12 @@ export const createDefaultProposals = async (
 	const proposals: Proposal[] = [];
 	for (const organization of organizations) {
 		const { id: organizationId } = organization;
-		const tags = await dataSource.manager.find(Tag, {
-			where: {
-				organizationId
-			}
+		const tags = await dataSource.manager.findBy(Tag, {
+			organizationId
 		});
-		const organizationContacts = await dataSource.manager.find(OrganizationContact, {
-			where: {
-				organizationId,
-				tenantId
-			}
+		const organizationContacts = await dataSource.manager.findBy(OrganizationContact, {
+			organizationId,
+			tenantId
 		});
 		for (let i = 0; i < noOfProposalsPerOrganization; i++) {
 			const proposal = new Proposal();
@@ -63,16 +59,12 @@ export const createRandomProposals = async (
 		const employees = tenantEmployeeMap.get(tenant);
 		for (const organization of organizations) {
 			const { id: organizationId } = organization;
-			const tags = await dataSource.manager.find(Tag, {
-				where: {
-					organizationId
-				}
+			const tags = await dataSource.manager.findBy(Tag, {
+				organizationId
 			});
-			const organizationContacts = await dataSource.manager.find(OrganizationContact, {
-				where: {
-					organizationId,
-					tenantId
-				}
+			const organizationContacts = await dataSource.manager.findBy(OrganizationContact, {
+				organizationId,
+				tenantId
 			});
 			for (let i = 0; i < noOfProposalsPerOrganization; i++) {
 				const proposal = new Proposal();

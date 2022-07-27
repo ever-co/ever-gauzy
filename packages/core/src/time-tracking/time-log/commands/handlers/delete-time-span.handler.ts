@@ -34,7 +34,7 @@ export class DeleteTimeSpanHandler
 		const { id } = timeLog;
 		const { start, end } = newTime;
 
-		const [refreshTimeLog] = await this.timeLogRepository.find({
+		const refreshTimeLog = await this.timeLogRepository.findOne({
 			where: {
 				id: id
 			},
@@ -141,7 +141,7 @@ export class DeleteTimeSpanHandler
 						/*
 						* Delete TimeLog if remaining timeSlots are 0
 						*/
-						[updatedTimeLog] = await this.timeLogRepository.find({
+						updatedTimeLog = await this.timeLogRepository.findOne({
 							where: {
 								id: updatedTimeLog.id
 							},
@@ -216,7 +216,7 @@ export class DeleteTimeSpanHandler
 						/*
 						* Delete TimeLog if remaining timeSlots are 0
 						*/
-						[updatedTimeLog] = await this.timeLogRepository.find({
+						updatedTimeLog = await this.timeLogRepository.findOne({
 							where: {
 								id: updatedTimeLog.id
 							},

@@ -49,7 +49,7 @@ export class OrganizationPermissionGuard implements CanActivate {
 
 			let organizationId: string;
 			if  (role === RolesEnum.EMPLOYEE) {
-				const [employee] = await this.employeeRepository.find({
+				const employee = await this.employeeRepository.findOne({
 					where: {
 						id: employeeId
 					},

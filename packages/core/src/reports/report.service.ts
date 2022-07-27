@@ -1,6 +1,5 @@
 import {
 	GetReportMenuItemsInput,
-	IGetReport,
 	IOrganization,
 	IPagination,
 	IReport,
@@ -9,7 +8,7 @@ import {
 } from '@gauzy/contracts';
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindManyOptions, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { indexBy } from 'underscore';
 import { CrudService } from '../core/crud';
 import { ReportOrganization } from './report-organization.entity';
@@ -48,23 +47,23 @@ export class ReportService extends CrudService<Report> {
 
 	public getMenuItems(filter: GetReportMenuItemsInput): Promise<Report[]> {
 		return this.repository.find({
-			relations: ['reportOrganizations'],
 			join: {
 				alias: 'reports',
 				innerJoin: {
 					reportOrganizations: 'reports.reportOrganizations'
 				}
 			},
-			where: (qb) => {
-				qb.where(
-					'"reportOrganizations"."organizationId" = :organizationId',
-					{ organizationId: filter.organizationId }
-				);
-				qb.andWhere('"reportOrganizations"."isEnabled" = :isEnabled', {
+			relationLoadStrategy: 'query',
+			relations: {
+				reportOrganizations: true
+			},
+			where: {
+				reportOrganizations: {
+					organizationId: filter.organizationId,
 					isEnabled: true
-				});
+				}
 			}
-		} as FindManyOptions<Report>);
+		});
 	}
 
 	async updateReportMenu(

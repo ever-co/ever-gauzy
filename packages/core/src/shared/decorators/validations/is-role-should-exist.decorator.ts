@@ -1,4 +1,4 @@
-import { Brackets, FindOneOptions, getConnection, SelectQueryBuilder, WhereExpressionBuilder } from "typeorm";
+import { Brackets, getConnection, SelectQueryBuilder, WhereExpressionBuilder } from "typeorm";
 import {
 	registerDecorator,
 	ValidationArguments,
@@ -45,20 +45,17 @@ export class IsRoleShouldExistConstraint implements ValidatorConstraintInterface
 		if (!roleId) {
 			return false;
 		}
-		const existed = (
-			await getConnection().getRepository(Role).findOne({
-				where: (query: SelectQueryBuilder<Role>) => {
-					query.andWhere(
-						new Brackets((qb: WhereExpressionBuilder) => {
-							qb.andWhere(`"${query.alias}"."id" = :roleId`, {
-								roleId: roleId
-							});
-							qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
-						})
-					);
-				}
-			} as FindOneOptions<Role>)
-		);
+
+		const query = getConnection().getRepository(Role).createQueryBuilder();
+		query.where((qb: SelectQueryBuilder<Role>) => {
+			qb.andWhere(
+				new Brackets((web: WhereExpressionBuilder) => {
+					web.andWhere(`"${qb.alias}"."id" = :roleId`, { roleId });
+					web.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, { tenantId });
+				})
+			);
+		});
+		const existed = (await query.getOne());
 		return !!existed;
 	}
 }
