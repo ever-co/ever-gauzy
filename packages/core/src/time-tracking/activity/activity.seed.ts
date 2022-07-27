@@ -24,10 +24,8 @@ export const createRandomActivities = async (
 	timeSlots: ITimeSlot[]
 ): Promise<Activity[]> => {
 	const { id: tenantId } = tenant;
-	const employees = await dataSource.getRepository(Employee).find({
-		where: {
-			tenantId
-		}
+	const employees = await dataSource.manager.findBy(Employee, {
+		tenantId
 	});
 
 	let query = dataSource

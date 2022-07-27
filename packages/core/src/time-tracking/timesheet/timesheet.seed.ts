@@ -80,11 +80,9 @@ export const createDefaultTimeSheet = async (
 		console.log(chalk.green(`SEEDING Default TimeLogs & Activities`));
 		const { id: tenantId } = tenant;
 		const { id: organizationId } = organization;
-		const createdTimesheets = await dataSource.getRepository(Timesheet).find({
-			where: {
-				tenantId: tenantId,
-				organizationId: organizationId
-			}
+		const createdTimesheets = await dataSource.manager.findBy(Timesheet, {
+			tenantId,
+			organizationId
 		});
 		const timeSlots: ITimeSlot[] = await createRandomTimeLogs(
 			dataSource,
@@ -189,10 +187,8 @@ export const createRandomTimesheet = async (
 		console.log(chalk.green(`SEEDING Random TimeLogs & Activities`));
 		for await (const tenant of tenants) {
 			const { id: tenantId } = tenant;
-			const createdTimesheets = await dataSource.getRepository(Timesheet).find({
-				where: {
-					tenantId: tenantId
-				}
+			const createdTimesheets = await dataSource.manager.findBy(Timesheet, {
+				tenantId
 			});
 			const timeSlots: ITimeSlot[] = await createRandomTimeLogs(
 				dataSource,

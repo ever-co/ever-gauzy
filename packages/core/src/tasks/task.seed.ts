@@ -137,11 +137,9 @@ export const createRandomTask = async (
 		});
 		for await (const organization of organizations) {
 			const { id: organizationId } = organization;
-			const projects = await dataSource.manager.find(OrganizationProject, {
-				where: {
-					tenantId,
-					organizationId
-				}
+			const projects = await dataSource.manager.findBy(OrganizationProject, {
+				tenantId,
+				organizationId
 			});
 			if (!projects) {
 				console.warn(
@@ -149,11 +147,9 @@ export const createRandomTask = async (
 				);
 				continue;
 			}
-			const teams = await dataSource.manager.find(OrganizationTeam, {
-				where: {
-					tenantId,
-					organizationId
-				}
+			const teams = await dataSource.manager.findBy(OrganizationTeam, {
+				tenantId,
+				organizationId
 			});
 
 			const tags: ITag[] = await createTags(
@@ -162,11 +158,9 @@ export const createRandomTask = async (
 				tenant,
 				organization
 			);
-			const employees = await dataSource.manager.find(Employee, {
-				where: {
-					tenantId,
-					organizationId
-				}
+			const employees = await dataSource.manager.findBy(Employee, {
+				tenantId,
+				organizationId
 			});
 			let count = 0;
 
