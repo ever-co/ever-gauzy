@@ -15,7 +15,6 @@ export class PersistanceTakers {
 
 	public undo() {
 		if (!this._persistances.length) return;
-		console.log(this._persistances);
 		const persistance = this._persistances.pop();
 		this._layout.restore(persistance);
 	}
