@@ -16,26 +16,22 @@ export class UpdateTimeSlotMinutesHandler
 		command: UpdateTimeSlotMinutesCommand
 	): Promise<TimeSlotMinute> {
 		const { input, id } = command;
-
-		let timeMinute = await this.timeSlotMinuteRepository.findOne({
-			where: {
-				id: id
-			}
+		let timeMinute = await this.timeSlotMinuteRepository.findOneBy({
+			id
 		});
 
 		if (timeMinute) {
 			delete input.timeSlotId;
 			await this.timeSlotMinuteRepository.update(id, input);
 
-			const [timeMinute] = await this.timeSlotMinuteRepository.find({
+			return await this.timeSlotMinuteRepository.findOne({
 				where: {
 					id: id
 				},
 				relations: {
 					timeSlot: true
 				}
-			})
-			return timeMinute;
+			});
 		} else {
 			return null;
 		}

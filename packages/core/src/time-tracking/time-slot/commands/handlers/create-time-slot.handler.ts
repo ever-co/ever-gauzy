@@ -1,6 +1,6 @@
 import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Brackets, FindManyOptions, FindOneOptions, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
+import { Brackets, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import * as moment from 'moment';
 import { omit } from 'underscore';
 import { ITimeSlot, PermissionsEnum, TimeLogSourceEnum, TimeLogType } from '@gauzy/contracts';
@@ -78,28 +78,32 @@ export class CreateTimeSlotHandler
 
 		let timeSlot: ITimeSlot;
 		try {
-			timeSlot = await this.timeSlotRepository.findOneOrFail({
-				where: (query: SelectQueryBuilder<TimeSlot>) => {
-					const { start, end } = getStartEndIntervals(
-						moment(minDate),
-						moment(maxDate)
-					);
-					const { start: startDate, end: endDate } = getDateRangeFormat(
-						moment.utc(start),
-						moment.utc(end)
-					);
-					query.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
-					query.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
-					query.andWhere(`"${query.alias}"."employeeId" = :employeeId`, { employeeId });
-					query.andWhere(`"${query.alias}"."startedAt" BETWEEN :startDate AND :endDate`, {
-						startDate,
-						endDate
-					});
-					query.addOrderBy(`"${query.alias}"."createdAt"`, 'ASC');
-					console.log('Get Time Slot Query & Parameters', query.getQueryAndParameters());
-				},
-				relations: ['timeLogs']
-			} as FindOneOptions<TimeSlot>);
+			const query = this.timeSlotRepository.createQueryBuilder('time_slot');
+			query.setFindOptions({
+				relations: {
+					timeLogs: true
+				}
+			});
+			query.where((qb: SelectQueryBuilder<TimeSlot>) => {
+				const { start, end } = getStartEndIntervals(
+					moment(minDate),
+					moment(maxDate)
+				);
+				const { start: startDate, end: endDate } = getDateRangeFormat(
+					moment.utc(start),
+					moment.utc(end)
+				);
+				qb.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, { tenantId });
+				qb.andWhere(`"${qb.alias}"."organizationId" = :organizationId`, { organizationId });
+				qb.andWhere(`"${qb.alias}"."employeeId" = :employeeId`, { employeeId });
+				qb.andWhere(`"${qb.alias}"."startedAt" BETWEEN :startDate AND :endDate`, {
+					startDate,
+					endDate
+				});
+				qb.addOrderBy(`"${qb.alias}"."createdAt"`, 'ASC');
+				console.log('Get Time Slot Query & Parameters', qb.getQueryAndParameters());
+			});
+			timeSlot = await query.getOneOrFail();
 		} catch (error) {
 			if (!timeSlot) {
 				timeSlot = new TimeSlot(omit(input, ['timeLogId']));
@@ -113,24 +117,24 @@ export class CreateTimeSlotHandler
 			/**
 			 * Find TimeLog for TimeSlot Range
 			 */
-			const timeLog = await this.timeLogRepository.findOneOrFail({
-				where: (query: SelectQueryBuilder<TimeLog>) => {
-					console.log({ input });
-					query.andWhere(
-						new Brackets((qb: WhereExpressionBuilder) => {
-							qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
-							qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
-							qb.andWhere(`"${query.alias}"."employeeId" = :employeeId`, { employeeId });
-							qb.andWhere(`"${query.alias}"."source" = :source`, { source: TimeLogSourceEnum.DESKTOP });
-							qb.andWhere(`"${query.alias}"."logType" = :logType`, { logType: TimeLogType.TRACKED });
-							qb.andWhere(`"${query.alias}"."stoppedAt" IS NOT NULL`);
-							qb.andWhere(`"${query.alias}"."deletedAt" IS NULL`);
-						})
-					);
-					query.addOrderBy(`"${query.alias}"."createdAt"`, 'DESC');
-					console.log(query.getQueryAndParameters());
-				}
-			} as FindOneOptions<TimeLog>);
+			const query = this.timeLogRepository.createQueryBuilder('time_log');
+			query.where((qb: SelectQueryBuilder<TimeLog>) => {
+				console.log({ input });
+				qb.andWhere(
+					new Brackets((web: WhereExpressionBuilder) => {
+						web.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, { tenantId });
+						web.andWhere(`"${qb.alias}"."organizationId" = :organizationId`, { organizationId });
+						web.andWhere(`"${qb.alias}"."employeeId" = :employeeId`, { employeeId });
+						web.andWhere(`"${qb.alias}"."source" = :source`, { source: TimeLogSourceEnum.DESKTOP });
+						web.andWhere(`"${qb.alias}"."logType" = :logType`, { logType: TimeLogType.TRACKED });
+						web.andWhere(`"${qb.alias}"."stoppedAt" IS NOT NULL`);
+						web.andWhere(`"${qb.alias}"."deletedAt" IS NULL`);
+					})
+				);
+				qb.addOrderBy(`"${qb.alias}"."createdAt"`, 'DESC');
+				console.log(qb.getQueryAndParameters());
+			});
+			const timeLog = await query.getOneOrFail();
 			console.log(timeLog, 'Found latest Worked Time Log!');
 			timeSlot.timeLogs.push(timeLog);
 		} catch (error) {
@@ -141,28 +145,29 @@ export class CreateTimeSlotHandler
 				} else {
 					timeLogIds.push(input.timeLogId);
 				}
+
 				/**
 				 * Find TimeLog for TimeSlot Range
 				 */
-				const timeLogs = await this.timeLogRepository.find({
-					where: (query: SelectQueryBuilder<TimeLog>) => {
-						query.andWhere(
-							new Brackets((qb: WhereExpressionBuilder) => {
-								qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
-								qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
-								qb.andWhere(`"${query.alias}"."source" = :source`, { source: TimeLogSourceEnum.DESKTOP });
-								qb.andWhere(`"${query.alias}"."logType" = :logType`, { logType: TimeLogType.TRACKED });
-								qb.andWhere(`"${query.alias}"."employeeId" = :employeeId`, { employeeId });
-								qb.andWhere(`"${query.alias}"."stoppedAt" IS NOT NULL`);
-								qb.andWhere(`"${query.alias}"."deletedAt" IS NULL`);
-							})
-						);
-						query.andWhere(`"${query.alias}"."id" IN (:...timeLogIds)`, {
-							timeLogIds
-						});
-						console.log(query.getQueryAndParameters(), 'Time Log Query For TimeLog IDs');
-					}
-				} as FindManyOptions<TimeLog>);
+				const query = this.timeLogRepository.createQueryBuilder('time_log');
+				query.where((qb: SelectQueryBuilder<TimeLog>) => {
+					qb.andWhere(
+						new Brackets((web: WhereExpressionBuilder) => {
+							web.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, { tenantId });
+							web.andWhere(`"${qb.alias}"."organizationId" = :organizationId`, { organizationId });
+							web.andWhere(`"${qb.alias}"."source" = :source`, { source: TimeLogSourceEnum.DESKTOP });
+							web.andWhere(`"${qb.alias}"."logType" = :logType`, { logType: TimeLogType.TRACKED });
+							web.andWhere(`"${qb.alias}"."employeeId" = :employeeId`, { employeeId });
+							web.andWhere(`"${qb.alias}"."stoppedAt" IS NOT NULL`);
+							web.andWhere(`"${qb.alias}"."deletedAt" IS NULL`);
+						})
+					);
+					qb.andWhere(`"${qb.alias}"."id" IN (:...timeLogIds)`, {
+						timeLogIds
+					});
+					console.log(qb.getQueryAndParameters(), 'Time Log Query For TimeLog IDs');
+				});
+				const timeLogs = await query.getMany();
 				console.log(timeLogs, 'Found recent time logs using timelog ids');
 				timeSlot.timeLogs.push(...timeLogs);
 			}

@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CommandBus } from '@nestjs/cqrs';
-import { Brackets, FindManyOptions, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
+import { Brackets, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import { PermissionsEnum, IGetTimeSlotInput, ITimeSlot } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/common';
 import { TenantAwareCrudService } from './../../core/crud';
@@ -25,6 +25,7 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 	constructor(
 		@InjectRepository(TimeSlot)
 		private readonly timeSlotRepository: Repository<TimeSlot>,
+
 		private readonly commandBus: CommandBus
 	) {
 		super(timeSlotRepository);
@@ -58,7 +59,8 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 									moment().endOf('day').utc()
 								);
 
-		const slots = await this.timeSlotRepository.find({
+		const builder = this.timeSlotRepository.createQueryBuilder('time_slot');
+		builder.setFindOptions({
 			join: {
 				alias: 'time_slot',
 				leftJoin: {
@@ -70,99 +72,100 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 			},
 			relations: [
 				...(request.relations ? request.relations : [])
-			],
-			where: (query: SelectQueryBuilder<TimeSlot>) => {
-				query.andWhere(
-					new Brackets((qb: WhereExpressionBuilder) => {
-						qb.andWhere(`"${query.alias}"."startedAt" BETWEEN :startDate AND :endDate`, {
+			]
+		});
+		builder.where((query: SelectQueryBuilder<TimeSlot>) => {
+			query.andWhere(
+				new Brackets((qb: WhereExpressionBuilder) => {
+					qb.andWhere(`"${query.alias}"."startedAt" BETWEEN :startDate AND :endDate`, {
+						startDate: start,
+						endDate: end
+					});
+					if (isEmpty(syncSlots)) {
+						qb.andWhere(`"timeLog"."startedAt" BETWEEN :startDate AND :endDate`, {
 							startDate: start,
 							endDate: end
 						});
-						if (isEmpty(syncSlots)) {
-							qb.andWhere(`"timeLog"."startedAt" BETWEEN :startDate AND :endDate`, {
-								startDate: start,
-								endDate: end
-							});
-						}
-					})
-				);
-				query.andWhere(
-					new Brackets((qb: WhereExpressionBuilder) => {
-						if (isNotEmpty(employeeIds)) {
-							qb.andWhere(`"${query.alias}"."employeeId" IN (:...employeeIds)`, {
-								employeeIds
-							});
-							qb.andWhere(`"timeLog"."employeeId" IN (:...employeeIds)`, {
-								employeeIds
-							});
-						}
-						if (isNotEmpty(request.projectIds)) {
-							const { projectIds } = request;
-							qb.andWhere('"timeLog"."projectId" IN (:...projectIds)', {
-								projectIds
-							});
-						}
-					})
-				);
-				query.andWhere(
-					new Brackets((qb: WhereExpressionBuilder) => {
-						if (isNotEmpty(request.activityLevel)) {
-							/**
-							 * Activity Level should be 0-100%
-							 * So, we have convert it into 10 minutes TimeSlot by multiply by 6
-							 */
-							const { activityLevel } = request;
-							const start = (activityLevel.start * 6);
-							const end = (activityLevel.end * 6);
+					}
+				})
+			);
+			query.andWhere(
+				new Brackets((qb: WhereExpressionBuilder) => {
+					if (isNotEmpty(employeeIds)) {
+						qb.andWhere(`"${query.alias}"."employeeId" IN (:...employeeIds)`, {
+							employeeIds
+						});
+						qb.andWhere(`"timeLog"."employeeId" IN (:...employeeIds)`, {
+							employeeIds
+						});
+					}
+					if (isNotEmpty(request.projectIds)) {
+						const { projectIds } = request;
+						qb.andWhere('"timeLog"."projectId" IN (:...projectIds)', {
+							projectIds
+						});
+					}
+				})
+			);
+			query.andWhere(
+				new Brackets((qb: WhereExpressionBuilder) => {
+					if (isNotEmpty(request.activityLevel)) {
+						/**
+						 * Activity Level should be 0-100%
+						 * So, we have convert it into 10 minutes TimeSlot by multiply by 6
+						 */
+						const { activityLevel } = request;
+						const start = (activityLevel.start * 6);
+						const end = (activityLevel.end * 6);
 
-							qb.andWhere(`"${query.alias}"."overall" BETWEEN :start AND :end`, {
-								start,
-								end
+						qb.andWhere(`"${query.alias}"."overall" BETWEEN :start AND :end`, {
+							start,
+							end
+						});
+					}
+					if (isNotEmpty(request.source)) {
+						const { source } = request;
+						if (source instanceof Array) {
+							qb.andWhere('"timeLog"."source" IN (:...source)', {
+								source
+							});
+						} else {
+							qb.andWhere('"timeLog"."source" = :source', {
+								source
 							});
 						}
-						if (isNotEmpty(request.source)) {
-							const { source } = request;
-							if (source instanceof Array) {
-								qb.andWhere('"timeLog"."source" IN (:...source)', {
-									source
-								});
-							} else {
-								qb.andWhere('"timeLog"."source" = :source', {
-									source
-								});
-							}
+					}
+					if (isNotEmpty(request.logType)) {
+						const { logType } = request;
+						if (logType instanceof Array) {
+							qb.andWhere('"timeLog"."logType" IN (:...logType)', {
+								logType
+							});
+						} else {
+							qb.andWhere('"timeLog"."logType" = :logType', {
+								logType
+							});
 						}
-						if (isNotEmpty(request.logType)) {
-							const { logType } = request;
-							if (logType instanceof Array) {
-								qb.andWhere('"timeLog"."logType" IN (:...logType)', {
-									logType
-								});
-							} else {
-								qb.andWhere('"timeLog"."logType" = :logType', {
-									logType
-								});
-							}
-						}
-					})
-				);
-				query.andWhere(
-					new Brackets((qb: WhereExpressionBuilder) => {
-						qb.andWhere(`"timeLog"."tenantId" = :tenantId`, { tenantId });
-						qb.andWhere(`"timeLog"."organizationId" = :organizationId`, { organizationId });
-						qb.andWhere(`"timeLog"."deletedAt" IS NULL`);
-					})
-				);
-				query.andWhere(
-					new Brackets((qb: WhereExpressionBuilder) => {
-						qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
-						qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
-					})
-				);
-				query.addOrderBy(`"${query.alias}"."createdAt"`, 'ASC');
-				console.log('Get Screenshots Query And Parameters', query.getQueryAndParameters());
-			}
-		} as FindManyOptions<TimeSlot>);
+					}
+				})
+			);
+			query.andWhere(
+				new Brackets((qb: WhereExpressionBuilder) => {
+					qb.andWhere(`"timeLog"."tenantId" = :tenantId`, { tenantId });
+					qb.andWhere(`"timeLog"."organizationId" = :organizationId`, { organizationId });
+					qb.andWhere(`"timeLog"."deletedAt" IS NULL`);
+				})
+			);
+			query.andWhere(
+				new Brackets((qb: WhereExpressionBuilder) => {
+					qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
+					qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
+				})
+			);
+			query.addOrderBy(`"${query.alias}"."createdAt"`, 'ASC');
+			console.log('Get Screenshots Query And Parameters', query.getQueryAndParameters());
+		});
+		const slots = await builder.getMany();
 		return slots;
 	}
 

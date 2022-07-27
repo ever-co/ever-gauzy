@@ -1,6 +1,6 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindManyOptions, Repository, SelectQueryBuilder } from 'typeorm';
+import { Repository, SelectQueryBuilder } from 'typeorm';
 import { isNotEmpty } from '@gauzy/common';
 import { TimeSlot } from '../../time-slot.entity';
 import { TimeSlotBulkDeleteCommand } from '../time-slot-bulk-delete.command';
@@ -22,26 +22,31 @@ export class TimeSlotBulkDeleteHandler
 		const { input, forceDirectDelete } = command;
 		const { organizationId, employeeId, timeLog, timeSlotsIds = [] } = input;
 
-		const timeSlots = await this.timeSlotRepository.find({
-			where: (qb: SelectQueryBuilder<TimeSlot>) => {
-				if (isNotEmpty(timeSlotsIds)) {
-					qb.andWhere(`"${qb.alias}"."id" IN (:...timeSlotsIds)`, {
-						timeSlotsIds
-					});
-				}
-				qb.andWhere(`"${qb.alias}"."employeeId" = :employeeId`, {
-					employeeId
+		const query = this.timeSlotRepository.createQueryBuilder('time_slot');
+		query.setFindOptions({
+			relations: {
+				timeLogs: true,
+				screenshots: true
+			}
+		});
+		query.where((qb: SelectQueryBuilder<TimeSlot>) => {
+			if (isNotEmpty(timeSlotsIds)) {
+				qb.andWhere(`"${qb.alias}"."id" IN (:...timeSlotsIds)`, {
+					timeSlotsIds
 				});
-				qb.andWhere(`"${qb.alias}"."organizationId" = :organizationId`, {
-					organizationId
-				});
-				qb.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, {
-					tenantId
-				});
-				console.log('Time Slots Delete Range Query', qb.getQueryAndParameters());
-			},
-			relations: ['screenshots', 'timeLogs']
-		} as FindManyOptions<TimeSlot>);
+			}
+			qb.andWhere(`"${qb.alias}"."employeeId" = :employeeId`, {
+				employeeId
+			});
+			qb.andWhere(`"${qb.alias}"."organizationId" = :organizationId`, {
+				organizationId
+			});
+			qb.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, {
+				tenantId
+			});
+			console.log('Time Slots Delete Range Query', qb.getQueryAndParameters());
+		});
+		const timeSlots = await query.getMany();
 		console.log({ timeSlots, forceDirectDelete }, 'Time Slots Delete Range');
 
 		if (isNotEmpty(timeSlots)) {

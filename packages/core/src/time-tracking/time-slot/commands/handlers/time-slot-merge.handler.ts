@@ -1,6 +1,6 @@
 import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In, SelectQueryBuilder, FindManyOptions } from 'typeorm';
+import { Repository, In, SelectQueryBuilder } from 'typeorm';
 import * as moment from 'moment';
 import * as _ from 'underscore';
 import { IActivity, IScreenshot, ITimeLog } from '@gauzy/contracts';
@@ -48,22 +48,32 @@ export class TimeSlotMergeHandler
 			endDate
 		);
 		console.log({ startedAt, stoppedAt }, 'Time Slot Merging Dates');
-		const timerSlots = await this.timeSlotRepository.find({
-			where: (query: SelectQueryBuilder<TimeSlot>) => {
-				query.andWhere(`"${query.alias}"."startedAt" >= :startedAt AND "${query.alias}"."startedAt" < :stoppedAt`, {
-					startedAt,
-					stoppedAt
-				});
-				query.andWhere(`"${query.alias}"."employeeId" = :employeeId`, {
-					employeeId
-				});
-				query.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
-					tenantId
-				});
-				query.addOrderBy(`"${query.alias}"."createdAt"`, 'ASC');
-			},
-			relations: ['timeLogs', 'screenshots', 'activities']
-		} as FindManyOptions<TimeSlot>);
+
+		/**
+		 * GET Time Slots for given date range slot
+		 */
+		const builder = this.timeSlotRepository.createQueryBuilder('time_slot');
+		builder.setFindOptions({
+			relations: {
+				timeLogs: true,
+				screenshots: true,
+				activities: true
+			}
+		});
+		builder.where((query: SelectQueryBuilder<TimeSlot>) => {
+			query.andWhere(`"${query.alias}"."startedAt" >= :startedAt AND "${query.alias}"."startedAt" < :stoppedAt`, {
+				startedAt,
+				stoppedAt
+			});
+			query.andWhere(`"${query.alias}"."employeeId" = :employeeId`, {
+				employeeId
+			});
+			query.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
+				tenantId
+			});
+			query.addOrderBy(`"${query.alias}"."createdAt"`, 'ASC');
+		});
+		const timerSlots = await builder.getMany();
 
 		for (const timeSlot of timerSlots) {
 			console.log({ timeSlot }, timeSlot.timeLogs, 'Time Slot Merging Dates');
