@@ -4,7 +4,7 @@
 
 import { ForbiddenException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, InsertResult, SelectQueryBuilder, Brackets, WhereExpressionBuilder, FindManyOptions, In, FindOneOptions } from 'typeorm';
+import { Repository, InsertResult, SelectQueryBuilder, Brackets, WhereExpressionBuilder, In, FindOneOptions } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { JwtPayload } from 'jsonwebtoken';
 import { ComponentLayoutStyleEnum, IUser, LanguagesEnum, PermissionsEnum, RolesEnum } from '@gauzy/contracts';
@@ -145,7 +145,7 @@ export class UserService extends TenantAwareCrudService<User> {
 					])
 				}
 			}
-		} as FindManyOptions<User>);
+		});
 	}
 
 	/*

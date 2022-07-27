@@ -77,8 +77,7 @@ export class TimesheetFirstOrCreateHandler
 					})
 				);
 			});
-			let timesheet = await query.getOneOrFail();
-			return timesheet;
+			return await query.getOneOrFail();
 		} catch (error) {
 			/**
 			 * Create employee current week working timesheet

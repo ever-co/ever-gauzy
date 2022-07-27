@@ -64,8 +64,15 @@ export class TimeSheetService extends TenantAwareCrudService<Timesheet> {
 	 */
 	async getTimeSheetCount(request: IGetTimesheetInput): Promise<number> {
 		const query = this.timeSheetRepository.createQueryBuilder('timesheet');
-		query.innerJoin(`${query.alias}.employee`, 'employee');
-		query.innerJoin(`${query.alias}.timeLogs`, 'timeLogs');
+		query.setFindOptions({
+			join: {
+				alias: 'timesheet',
+				innerJoin: {
+					employee: 'timesheet.employee',
+					timeLogs: 'timesheet.timeLogs'
+				}
+			}
+		});
 		query.where((query: SelectQueryBuilder<Timesheet>) => {
 			this.getFilterTimesheetQuery(query, request);
 		});
@@ -80,8 +87,18 @@ export class TimeSheetService extends TenantAwareCrudService<Timesheet> {
 	 */
 	async getTimeSheets(request: IGetTimesheetInput): Promise<ITimesheet[]> {
 		const query = this.timeSheetRepository.createQueryBuilder('timesheet');
-		query.innerJoin(`${query.alias}.employee`, 'employee');
-		query.innerJoin(`${query.alias}.timeLogs`, 'timeLogs');
+		query.setFindOptions({
+			join: {
+				alias: 'timesheet',
+				innerJoin: {
+					employee: 'timesheet.employee',
+					timeLogs: 'timesheet.timeLogs'
+				}
+			},
+			relations: [
+				...(request.relations ? request.relations : [])
+			]
+		});
 		query.where((query: SelectQueryBuilder<Timesheet>) => {
 			this.getFilterTimesheetQuery(query, request);
 		});
