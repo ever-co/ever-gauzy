@@ -1,6 +1,6 @@
 import { ICommandHandler, CommandBus, CommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindManyOptions, Repository, SelectQueryBuilder } from 'typeorm';
+import { Repository, SelectQueryBuilder } from 'typeorm';
 import * as moment from 'moment';
 import { ITimeLog, ITimesheet, TimeLogSourceEnum } from '@gauzy/contracts';
 import { TimeLog } from './../../time-log.entity';
@@ -100,23 +100,27 @@ export class TimeLogUpdateHandler
 				/**
 				 * Removed Deleted TimeSlots
 				 */
-				const timeSlots = await this.timeSlotRepository.find({
-					where: (qb: SelectQueryBuilder<TimeSlot>) => {
-						qb.andWhere(`"${qb.alias}"."organizationId" = :organizationId`, {
-							organizationId
-						});
-						qb.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, {
-							tenantId
-						});
-						qb.andWhere(`"${qb.alias}"."employeeId" = :employeeId`, {
-							employeeId
-						});
-						qb.andWhere(`"${qb.alias}"."startedAt" IN (:...startTimes)`, {
-							startTimes
-						});
-					},
-					relations: ['screenshots']
-				} as FindManyOptions<TimeSlot>);
+				const query = this.timeSlotRepository.createQueryBuilder('time_slot');
+				query.setFindOptions({
+					relations: {
+						screenshots: true
+					}
+				});
+				query.where((qb: SelectQueryBuilder<TimeSlot>) => {
+					qb.andWhere(`"${qb.alias}"."organizationId" = :organizationId`, {
+						organizationId
+					});
+					qb.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, {
+						tenantId
+					});
+					qb.andWhere(`"${qb.alias}"."employeeId" = :employeeId`, {
+						employeeId
+					});
+					qb.andWhere(`"${qb.alias}"."startedAt" IN (:...startTimes)`, {
+						startTimes
+					});
+				});
+				const timeSlots = await query.getMany();
 				await this.timeSlotRepository.remove(timeSlots);
 			}
 

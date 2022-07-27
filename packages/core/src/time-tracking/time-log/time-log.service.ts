@@ -1,7 +1,7 @@
 import { Injectable, BadRequestException, NotAcceptableException } from '@nestjs/common';
 import { TimeLog } from './time-log.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, SelectQueryBuilder, Brackets, WhereExpressionBuilder, DeleteResult, UpdateResult, FindManyOptions } from 'typeorm';
+import { Repository, SelectQueryBuilder, Brackets, WhereExpressionBuilder, DeleteResult, UpdateResult } from 'typeorm';
 import { RequestContext } from '../../core/context';
 import {
 	IManualTimeInput,
@@ -70,7 +70,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	}
 
 	async getTimeLogs(request: IGetTimeLogInput): Promise<ITimeLog[]> {
-		return await this.timeLogRepository.find({
+		const query = this.timeLogRepository.createQueryBuilder('time_log');
+		query.setFindOptions({
 			join: {
 				alias: 'timeLogs',
 				innerJoin: {
@@ -78,53 +79,68 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 					timeSlots: 'timeLogs.timeSlots'
 				}
 			},
-			relations: [
-				'project',
-				'task',
-				'organizationContact',
-				'timeSlots',
-				...(RequestContext.hasPermission(
-					PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-				)
-					? ['employee', 'employee.organization', 'employee.user']
-					: [])
-			],
-			order: {
-				startedAt: 'ASC'
-			},
-			where: (qb: SelectQueryBuilder<TimeLog>) => {
-				this.getFilterTimeLogQuery(qb, request);
-			}
-		} as FindManyOptions<TimeLog>);
-	}
-
-	async getWeeklyReport(request: IGetTimeLogReportInput) {
-		const logs = await this.timeLogRepository.find({
-			join: {
-				alias: 'timeLogs',
-				innerJoin: {
-					employee: 'timeLogs.employee',
-					timeSlots: 'timeLogs.timeSlots'
-				}
-			},
-			relations: [
-				'timeSlots',
+			relations: {
+				project: true,
+				task: true,
+				organizationContact: true,
+				timeSlots: true,
 				...(
 					RequestContext.hasPermission(
 						PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-					)
-					? ['employee', 'employee.user']
-					: []
-				)
-			],
+					) ? {
+						employee: {
+							organization: true,
+							user: true
+						}
+					} : {})
+			},
 			order: {
 				startedAt: 'ASC'
-			},
-			where: (qb: SelectQueryBuilder<TimeLog>) => {
-				this.getFilterTimeLogQuery(qb, request);
 			}
-		} as FindManyOptions<TimeLog>);
+		});
+		query.where((qb: SelectQueryBuilder<TimeLog>) => {
+			this.getFilterTimeLogQuery(qb, request);
+		});
+		return await query.getMany();
+	}
 
+	async getWeeklyReport(request: IGetTimeLogReportInput) {
+		/**
+		 * GET weekly time logs
+		 */
+		const query = this.timeLogRepository.createQueryBuilder('time_log');
+		query.setFindOptions({
+			join: {
+				alias: 'timeLogs',
+				innerJoin: {
+					employee: 'timeLogs.employee',
+					timeSlots: 'timeLogs.timeSlots'
+				}
+			},
+			relations: {
+				timeSlots: true,
+				...(
+					RequestContext.hasPermission(
+						PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+					) ? {
+						employee: {
+							user: true
+						}
+					} : {})
+			},
+			order: {
+				startedAt: 'ASC'
+			}
+		});
+		query.where((qb: SelectQueryBuilder<TimeLog>) => {
+			this.getFilterTimeLogQuery(qb, request);
+		});
+		const logs = await query.getMany();
+
+		/**
+		 * GET weekly time logs reports
+		 *
+		 */
 		const { startDate, endDate } = request;
 		const days: Array<string> = getDaysBetweenDates(startDate, endDate);
 
@@ -176,7 +192,11 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	}
 
 	async getDailyReportChartData(request: IGetTimeLogReportInput) {
-		const logs = await this.timeLogRepository.find({
+		/**
+		 * GET daily time logs
+		 */
+		const query = this.timeLogRepository.createQueryBuilder('time_log');
+		query.setFindOptions({
 			join: {
 				alias: 'timeLogs',
 				innerJoin: {
@@ -186,12 +206,17 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			},
 			order: {
 				startedAt: 'ASC'
-			},
-			where: (qb: SelectQueryBuilder<TimeLog>) => {
-				this.getFilterTimeLogQuery(qb, request);
 			}
-		} as FindManyOptions<TimeLog>);
+		});
+		query.where((qb: SelectQueryBuilder<TimeLog>) => {
+			this.getFilterTimeLogQuery(qb, request);
+		});
+		const logs = await query.getMany();
 
+		/**
+		 * GET daily time logs chart reports
+		 *
+		 */
 		const { startDate, endDate } = request;
 		const days: Array<string> = getDaysBetweenDates(startDate, endDate);
 
@@ -257,7 +282,11 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	}
 
 	async getDailyReport(request: IGetTimeLogReportInput) {
-		const logs = await this.timeLogRepository.find({
+		/**
+		 * GET daily time logs report
+		 */
+		const query = this.timeLogRepository.createQueryBuilder('time_log');
+		query.setFindOptions({
 			join: {
 				alias: 'timeLogs',
 				innerJoin: {
@@ -265,26 +294,34 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 					timeSlots: 'timeLogs.timeSlots'
 				}
 			},
-			relations: [
-				'project',
-				'project.organizationContact',
-				'task',
-				'timeSlots',
-				'organizationContact',
-				...(RequestContext.hasPermission(
-					PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-				)
-					? ['employee', 'employee.user']
-					: [])
-			],
+			relations: {
+				project: {
+					organizationContact: true
+				},
+				task: true,
+				timeSlots: true,
+				organizationContact: true,
+				...(
+					RequestContext.hasPermission(
+						PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+					) ? {
+						employee: {
+							user: true
+						}
+					} : {})
+			},
 			order: {
 				startedAt: 'ASC'
-			},
-			where: (qb: SelectQueryBuilder<TimeLog>) => {
-				this.getFilterTimeLogQuery(qb, request);
 			}
-		} as FindManyOptions<TimeLog>);
+		});
+		query.where((qb: SelectQueryBuilder<TimeLog>) => {
+			this.getFilterTimeLogQuery(qb, request);
+		});
+		const logs = await query.getMany();
 
+		/**
+		 * GET daily time logs report group by filters
+		 */
 		let dailyLogs;
 		switch (request.groupBy) {
 			case ReportGroupFilterEnum.employee:
@@ -315,7 +352,12 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	async getOwedAmountReport(
 		request: IGetTimeLogReportInput
 	): Promise<IAmountOwedReport[]> {
-		const timeLogs = await this.timeLogRepository.find({
+		/**
+		 * GET Owed amount report time logs
+		 *
+		 */
+		const query = this.timeLogRepository.createQueryBuilder('time_log');
+		query.setFindOptions({
 			join: {
 				alias: 'timeLogs',
 				innerJoin: {
@@ -323,14 +365,19 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 					timeSlots: 'timeLogs.timeSlots'
 				}
 			},
-			relations: ['employee', 'employee.user'],
+			relations: {
+				employee: {
+					user: true
+				}
+			},
 			order: {
 				startedAt: 'ASC'
-			},
-			where: (qb: SelectQueryBuilder<TimeLog>) => {
-				this.getFilterTimeLogQuery(qb, request);
 			}
-		} as FindManyOptions<TimeLog>);
+		});
+		query.where((qb: SelectQueryBuilder<TimeLog>) => {
+			this.getFilterTimeLogQuery(qb, request);
+		});
+		const timeLogs = await query.getMany();
 
 		const dailyLogs: any = chain(timeLogs)
 			.groupBy((log) => moment(log.startedAt).format('YYYY-MM-DD'))
@@ -369,7 +416,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	}
 
 	async getOwedAmountReportChartData(request: IGetTimeLogReportInput) {
-		const timeLogs = await this.timeLogRepository.find({
+		const query = this.timeLogRepository.createQueryBuilder('time_log');
+		query.setFindOptions({
 			join: {
 				alias: 'timeLogs',
 				innerJoin: {
@@ -377,14 +425,19 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 					timeSlots: 'timeLogs.timeSlots'
 				}
 			},
-			relations: ['employee', 'employee.user'],
+			relations: {
+				employee: {
+					user: true
+				}
+			},
 			order: {
 				startedAt: 'ASC'
-			},
-			where: (qb: SelectQueryBuilder<TimeLog>) => {
-				this.getFilterTimeLogQuery(qb, request);
 			}
-		} as FindManyOptions<TimeLog>);
+		});
+		query.where((qb: SelectQueryBuilder<TimeLog>) => {
+			this.getFilterTimeLogQuery(qb, request);
+		});
+		const timeLogs = await query.getMany();
 
 		const { startDate, endDate } = request;
 		const days: Array<string> = getDaysBetweenDates(startDate, endDate);
@@ -444,7 +497,9 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		if (!request.duration) {
 			request.duration = 'day';
 		}
-		const timeLogs = await this.timeLogRepository.find({
+
+		const query = this.timeLogRepository.createQueryBuilder('time_log');
+		query.setFindOptions({
 			join: {
 				alias: 'timeLogs',
 				innerJoin: {
@@ -452,14 +507,19 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 					timeSlots: 'timeLogs.timeSlots'
 				}
 			},
-			relations: ['employee', 'employee.user'],
+			relations: {
+				employee: {
+					user: true
+				}
+			},
 			order: {
 				startedAt: 'ASC'
-			},
-			where: (qb: SelectQueryBuilder<TimeLog>) => {
-				this.getFilterTimeLogQuery(qb, request);
 			}
-		} as FindManyOptions<TimeLog>);
+		});
+		query.where((qb: SelectQueryBuilder<TimeLog>) => {
+			this.getFilterTimeLogQuery(qb, request);
+		});
+		const timeLogs = await query.getMany();
 
 		const { startDate, endDate } = request;
 		const days: Array<string> = getDaysBetweenDates(startDate, endDate);
@@ -942,9 +1002,9 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	}
 
 	async deleteTimeLogs(
-		query: IDeleteTimeLog
+		params: IDeleteTimeLog
 	): Promise<DeleteResult | UpdateResult> {
-		let logIds: string | string[] = query.logIds;
+		let logIds: string | string[] = params.logIds;
 		if (isEmpty(logIds)) {
 			throw new NotAcceptableException('You can not delete time logs');
 		}
@@ -954,31 +1014,36 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 
 		const tenantId = RequestContext.currentTenantId();
 		const user = RequestContext.currentUser();
-		const { organizationId, forceDelete } = query;
+		const { organizationId, forceDelete } = params;
 
-		const timeLogs = await this.timeLogRepository.find({
-			where: (query: SelectQueryBuilder<TimeLog>) => {
-				query.where({
-					...(
-						RequestContext.hasPermission(
-							PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-						) ? {} : {
-							employeeId: user.employeeId
-						}
-					)
-				});
-				query.andWhere(
-					new Brackets((qb: WhereExpressionBuilder) => {
-						qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
-						qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
-						qb.andWhere(`"${query.alias}"."id" IN (:...logIds)`, {
-							logIds
-						});
-					})
-				);
-			},
-			relations: ['timeSlots']
-		} as FindManyOptions<TimeLog>);
+		const query = this.timeLogRepository.createQueryBuilder('time_log');
+		query.setFindOptions({
+			relations: {
+				timeSlots: true
+			}
+		});
+		query.where((db: SelectQueryBuilder<TimeLog>) => {
+			db.andWhere({
+				...(
+					RequestContext.hasPermission(
+						PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+					) ? {} : {
+						employeeId: user.employeeId
+					}
+				)
+			});
+			db.andWhere(
+				new Brackets((web: WhereExpressionBuilder) => {
+					web.andWhere(`"${db.alias}"."tenantId" = :tenantId`, { tenantId });
+					web.andWhere(`"${db.alias}"."organizationId" = :organizationId`, { organizationId });
+					web.andWhere(`"${db.alias}"."id" IN (:...logIds)`, {
+						logIds
+					});
+				})
+			);
+		});
+
+		const timeLogs = await query.getMany();
 		return await this.commandBus.execute(
 			new TimeLogDeleteCommand(timeLogs, forceDelete)
 		);
