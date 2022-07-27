@@ -22,10 +22,8 @@ export const createRandomCandidateExperience = async (
 	for (const tenant of tenants) {
 		const { id: tenantId } = tenant;
 		const tenantCandidates = tenantCandidatesMap.get(tenant);
-		const organizations = await dataSource.manager.find(Organization, {
-			where: {
-				tenantId: tenantId
-			}
+		const organizations = await dataSource.manager.findBy(Organization, {
+			tenantId
 		});
 		for (const tenantCandidate of tenantCandidates) {
 			for (let i = 0; i <= Math.floor(Math.random() * 3) + 1; i++) {

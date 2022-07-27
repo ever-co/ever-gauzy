@@ -20,10 +20,8 @@ export const createDefaultCandidatePersonalQualities = async (
 	let candidates: CandidatePersonalQualities[] = [];
 	for (const tenantCandidate of defaultCandidates) {
 		const { id: candidateId } = tenantCandidate;
-		const candidateInterviews = await dataSource.manager.find(CandidateInterview, {
-			where: {
-				candidateId: candidateId
-			}
+		const candidateInterviews = await dataSource.manager.findBy(CandidateInterview, {
+			candidateId
 		});
 		candidates = await dataOperation(
 			dataSource,
@@ -53,10 +51,8 @@ export const createRandomCandidatePersonalQualities = async (
 		const tenantCandidates = tenantCandidatesMap.get(tenant);
 		for (const tenantCandidate of tenantCandidates) {
 			const { id: candidateId } = tenantCandidate;
-			const candidateInterviews = await dataSource.manager.find(CandidateInterview, {
-				where: {
-					candidateId: candidateId
-				}
+			const candidateInterviews = await dataSource.manager.findBy(CandidateInterview, {
+				candidateId
 			});
 			candidates = await dataOperation(
 				dataSource,

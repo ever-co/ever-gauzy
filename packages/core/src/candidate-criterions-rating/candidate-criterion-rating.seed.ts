@@ -1,5 +1,13 @@
 import { DataSource } from 'typeorm';
-import { ICandidate, ICandidateCriterionsRating, ICandidateFeedback, ICandidatePersonalQualities, ICandidateTechnologies, IOrganization, ITenant } from '@gauzy/contracts';
+import {
+	ICandidate,
+	ICandidateCriterionsRating,
+	ICandidateFeedback,
+	ICandidatePersonalQualities,
+	ICandidateTechnologies,
+	IOrganization,
+	ITenant
+} from '@gauzy/contracts';
 import { CandidateCriterionsRating } from './candidate-criterion-rating.entity';
 import {
 	CandidateFeedback,
@@ -24,27 +32,19 @@ export const createDefaultCandidateCriterionRating = async (
 	let candidates: CandidateCriterionsRating[] = [];
 	for (const defaultCandidate of defaultCandidates) {
 		const { id: candidateId } = defaultCandidate;
-		const candidateInterviews = await dataSource.manager.find(CandidateInterview, {
-			where: {
-				candidateId: candidateId
-			}
+		const candidateInterviews = await dataSource.manager.findBy(CandidateInterview, {
+			candidateId
 		});
 		for (const interview of candidateInterviews) {
 			const { id: interviewId } = interview;
-			const candidatesFeedbacks = await dataSource.manager.find(CandidateFeedback, {
-				where: {
-					candidateId: candidateId
-				}
+			const candidatesFeedbacks = await dataSource.manager.findBy(CandidateFeedback, {
+				candidateId
 			});
-			const candidatesPersonalQualities = await dataSource.manager.find(CandidatePersonalQualities, {
-				where: {
-					interviewId: interviewId
-				}
+			const candidatesPersonalQualities = await dataSource.manager.findBy(CandidatePersonalQualities, {
+				interviewId
 			});
-			const candidatesTechnologies = await dataSource.manager.find(CandidateTechnologies,{
-				where: {
-					interviewId: interviewId
-				}
+			const candidatesTechnologies = await dataSource.manager.findBy(CandidateTechnologies, {
+				interviewId
 			});
 			candidates = await dataOperation(
 				dataSource,
@@ -79,27 +79,19 @@ export const createRandomCandidateCriterionRating = async (
 		const tenantCandidates = tenantCandidatesMap.get(tenant);
 		for (const tenantCandidate of tenantCandidates) {
 			const { id: candidateId } = tenantCandidate;
-			const candidateInterviews = await dataSource.manager.find(CandidateInterview, {
-				where: {
-					candidateId: candidateId
-				}
+			const candidateInterviews = await dataSource.manager.findBy(CandidateInterview, {
+				candidateId: candidateId
 			});
 			for (const interview of candidateInterviews) {
 				const { id: interviewId } = interview;
-				const candidatesFeedbacks = await dataSource.manager.find(CandidateFeedback, {
-					where: {
-						candidateId: candidateId
-					}
+				const candidatesFeedbacks = await dataSource.manager.findBy(CandidateFeedback, {
+					candidateId
 				});
-				const candidatesPersonalQualities = await dataSource.manager.find(CandidatePersonalQualities, {
-					where: {
-						interviewId: interviewId
-					}
+				const candidatesPersonalQualities = await dataSource.manager.findBy(CandidatePersonalQualities, {
+					interviewId
 				});
-				const candidatesTechnologies = await dataSource.manager.find(CandidateTechnologies, {
-					where: {
-						interviewId: interviewId
-					}
+				const candidatesTechnologies = await dataSource.manager.findBy(CandidateTechnologies, {
+					interviewId
 				});
 				candidates = await dataOperation(
 					dataSource,

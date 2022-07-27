@@ -42,10 +42,8 @@ export const createRandomCandidateInterview = async (
 	let candidates: ICandidateInterview[] = [];
 	for (const tenant of tenants) {
 		const { id: tenantId } = tenant;
-		const organizations = await dataSource.manager.find(Organization, {
-			where: {
-				tenantId: tenantId
-			}
+		const organizations = await dataSource.manager.findBy(Organization, {
+			tenantId
 		});
 		const organization = faker.random.arrayElement(organizations);
 		const tenantCandidates = tenantCandidatesMap.get(tenant);

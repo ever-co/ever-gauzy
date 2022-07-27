@@ -43,10 +43,8 @@ export const createRandomCandidateFeedbacks = async (
 	let candidateFeedbacksMap: Map<ICandidate, any[]> = new Map();
 	for (const tenant of tenants) {
 		const { id: tenantId } = tenant;
-		const organizations = await dataSource.manager.find(Organization, {
-			where: {
-				tenantId: tenantId
-			}
+		const organizations = await dataSource.manager.findBy(Organization, {
+			tenantId
 		});
 		const organization = faker.random.arrayElement(organizations);
 		const candidates = tenantCandidatesMap.get(tenant);
@@ -84,10 +82,8 @@ const dataOperation = async (
 ) => {
 	for (const candidate of candidates) {
 		const { id: candidateId } = candidate;
-		const candidateInterviews = await dataSource.manager.find(CandidateInterview, {
-			where: {
-				candidateId: candidateId
-			}
+		const candidateInterviews = await dataSource.manager.findBy(CandidateInterview, {
+			candidateId
 		});
 		const interview = faker.random.arrayElement(candidateInterviews);
 		const feedbacks = DEFAULT_CANDIDATE_FEEDBACKS.map((feedback) => ({

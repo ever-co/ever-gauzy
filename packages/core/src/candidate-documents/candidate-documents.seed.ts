@@ -53,10 +53,8 @@ export const createRandomCandidateDocuments = async (
 	const candidateDocumentsMap: Map<ICandidate, any[]> = new Map();
 	for await (const tenant of tenants || []) {
 		const { id: tenantId } = tenant;
-		const organizations = await dataSource.manager.find(Organization, {
-			where: {
-				tenantId: tenantId
-			}
+		const organizations = await dataSource.manager.findBy(Organization, {
+			tenantId: tenantId
 		});
 		const candidates = tenantCandidatesMap.get(tenant);
 		for (const candidate of candidates || []) {
