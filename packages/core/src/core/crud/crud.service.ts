@@ -77,25 +77,28 @@ export abstract class CrudService<T extends BaseEntity>
 	 */
 	public async paginate(filter?: any): Promise<IPagination<T>> {
 		try {
-			let options: FindManyOptions = {};
-			options.skip = filter && filter.skip ? (filter.take * (filter.skip - 1)) : 0;
-			options.take = filter && filter.take ? (filter.take) : 10;
+			const builder = this.repository.createQueryBuilder();
+			builder.setFindOptions({
+				skip: filter && filter.skip ? (filter.take * (filter.skip - 1)) : 0,
+				take: filter && filter.take ? (filter.take) : 10
+			});
 			if (filter) {
 				if (filter.orderBy && filter.order) {
-					options.order = {
-						[filter.orderBy]: filter.order
-					}
+					builder.setFindOptions({
+						order: {
+							[filter.orderBy]: filter.order
+						}
+					});
 				} else if (filter.orderBy) {
-					options.order = filter.orderBy;
+					builder.setFindOptions({
+						order: filter.orderBy
+					});
 				}
 				if (filter.relations) {
-					options.relations = filter.relations;
-				}
-				if (filter.join) {
-					options.join = filter.join;
+					builder.setFindOptions({ relations: filter.relations });
 				}
 			}
-			options.where = (qb: SelectQueryBuilder<T>) => {
+			builder.where((query: SelectQueryBuilder<T>) => {
 				if (filter && (filter.filters || filter.where)) {
 					if (filter.where) {
 						const wheres: any = {}
@@ -104,14 +107,15 @@ export abstract class CrudService<T extends BaseEntity>
 								wheres[field] = filter.where[field];
 							}
 						}
-						filterQuery(qb, wheres);
+						filterQuery(query, wheres);
 					}
 				}
 				const tenantId = RequestContext.currentTenantId();
-				qb.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, { tenantId });
-			}
-			console.log(filter, options, moment().format('DD.MM.YYYY HH:mm:ss'));
-			const [items, total] = await this.repository.findAndCount(options);
+				query.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
+				console.log(query.getQueryAndParameters());
+			});
+			console.log(filter, moment().format('DD.MM.YYYY HH:mm:ss'));
+			const [items, total] = await builder.getManyAndCount();
 			return { items, total };
 		} catch (error) {
 			console.log(error);

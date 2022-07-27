@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Brackets, FindManyOptions, IsNull, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
+import { Brackets, IsNull, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import { AccountingTemplateTypeEnum, IAccountingTemplate, IListQueryInput, IPagination, LanguagesEnum } from '@gauzy/contracts';
 import * as mjml2html from 'mjml';
 import * as Handlebars from 'handlebars';
@@ -223,40 +223,38 @@ export class AccountingTemplateService extends CrudService<AccountingTemplate> {
 	* @param params
 	* @returns
 	*/
-	async findAll(params: IListQueryInput<IAccountingTemplate>): Promise<IPagination<IAccountingTemplate>> {
-		const { findInput, relations } = params;
-		const [items, total]  = await this.accountingRepository.findAndCount({
-			relations: [
-				...(relations ? relations : [])
-			],
-			where: (qb: SelectQueryBuilder<AccountingTemplate>) => {
-				qb.where(
-					new Brackets((bck: WhereExpressionBuilder) => {
-						const tenantId = RequestContext.currentTenantId();
-						const { organizationId, languageCode } = findInput;
-						if (organizationId) {
-							bck.andWhere(`"${qb.alias}"."organizationId" = :organizationId`, {
-								organizationId
-							});
-						}
-						if (languageCode) {
-							bck.andWhere(`"${qb.alias}"."languageCode" = :languageCode`, {
-								languageCode
-							});
-						}
-						bck.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, {
-							tenantId
+	async findAll(
+		params: IListQueryInput<IAccountingTemplate>
+	): Promise<IPagination<IAccountingTemplate>> {
+		const { findInput } = params;
+		const builder = this.accountingRepository.createQueryBuilder('accounting_template');
+		builder.where((qb: SelectQueryBuilder<AccountingTemplate>) => {
+			qb.andWhere(
+				new Brackets((bck: WhereExpressionBuilder) => {
+					const { organizationId, languageCode } = findInput;
+					if (organizationId) {
+						bck.andWhere(`"${qb.alias}"."organizationId" = :organizationId`, {
+							organizationId
 						});
-					})
-				);
-				qb.orWhere(
-					new Brackets((bck: WhereExpressionBuilder) => {
-						bck.andWhere(`"${qb.alias}"."organizationId" IS NULL`);
-						bck.andWhere(`"${qb.alias}"."tenantId" IS NULL`);
-					})
-				)
-			}
-		} as FindManyOptions<AccountingTemplate>);
+					}
+					if (languageCode) {
+						bck.andWhere(`"${qb.alias}"."languageCode" = :languageCode`, {
+							languageCode
+						});
+					}
+					bck.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, {
+						tenantId: RequestContext.currentTenantId()
+					});
+				})
+			);
+			qb.orWhere(
+				new Brackets((bck: WhereExpressionBuilder) => {
+					bck.andWhere(`"${qb.alias}"."organizationId" IS NULL`);
+					bck.andWhere(`"${qb.alias}"."tenantId" IS NULL`);
+				})
+			)
+		});
+		const [items, total] = await builder.getManyAndCount();
 		return { items, total };
 	}
 }

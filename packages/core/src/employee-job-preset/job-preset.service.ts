@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindManyOptions, Repository, SelectQueryBuilder } from 'typeorm';
-import { JobPreset } from './job-preset.entity';
+import { CommandBus } from '@nestjs/cqrs';
+import { Repository, SelectQueryBuilder } from 'typeorm';
 import {
 	IEmployeePresetInput,
 	IGetJobPresetCriterionInput,
@@ -14,7 +14,7 @@ import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
 import { JobPresetUpworkJobSearchCriterion } from './job-preset-upwork-job-search-criterion.entity';
 import { EmployeeUpworkJobsSearchCriterion } from './employee-upwork-jobs-search-criterion.entity';
-import { CommandBus } from '@nestjs/cqrs';
+import { JobPreset } from './job-preset.entity';
 import { Employee } from '../employee/employee.entity';
 import {
 	CreateJobPresetCommand,
@@ -44,41 +44,42 @@ export class JobPresetService extends TenantAwareCrudService<JobPreset> {
 	}
 
 	public async getAll(request?: IGetJobPresetInput) {
-		const data = await this.jobPresetRepository.find({
+		const builder = this.jobPresetRepository.createQueryBuilder('job_preset');
+		builder.setFindOptions({
 			join: {
 				alias: 'job_preset',
 				leftJoin: {
 					employees: 'job_preset.employees'
 				}
 			},
-			relations: ['jobPresetCriterions'],
+			relations: {
+				jobPresetCriterions: true
+			},
 			order: {
 				name: 'ASC'
 			},
-			where: (qb: SelectQueryBuilder<IJobPreset>) => {
-				const tenantId = RequestContext.currentTenantId();
-				qb.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, { tenantId });
-				if (request.search) {
-					qb.andWhere('name LIKE :search', {
-						search: request.search
-					});
-				}
-				if (request.organizationId) {
-					qb.andWhere(
-						`"${qb.alias}"."organizationId" = :organizationId`,
-						{
-							organizationId: request.organizationId
-						}
-					);
-				}
-				if (request.employeeId) {
-					qb.andWhere(`"employees"."id" = :employeeId`, {
-						employeeId: request.employeeId
-					});
-				}
+		});
+		builder.where((qb: SelectQueryBuilder<JobPreset>) => {
+			const tenantId = RequestContext.currentTenantId();
+			qb.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, { tenantId });
+
+			if (request.search) {
+				qb.andWhere('name LIKE :search', {
+					search: request.search
+				});
 			}
-		} as FindManyOptions<JobPreset>);
-		return data;
+			if (request.organizationId) {
+				qb.andWhere(`"${qb.alias}"."organizationId" = :organizationId`, {
+					organizationId: request.organizationId
+				});
+			}
+			if (request.employeeId) {
+				qb.andWhere(`"employees"."id" = :employeeId`, {
+					employeeId: request.employeeId
+				});
+			}
+		});
+		return await builder.getMany();
 	}
 
 	public async get(id: string, request?: IGetJobPresetCriterionInput) {
@@ -101,28 +102,28 @@ export class JobPresetService extends TenantAwareCrudService<JobPreset> {
 	}
 
 	public getJobPresetCriterion(presetId: string) {
-		return this.jobPresetUpworkJobSearchCriterionRepository.find({
-			where: {
-				jobPresetId: presetId
-			}
+		return this.jobPresetUpworkJobSearchCriterionRepository.findBy({
+			jobPresetId: presetId
 		});
 	}
 
 	public getEmployeeCriterion(input: IGetMatchingCriterions) {
-		return this.employeeUpworkJobsSearchCriterionRepository.find({
-			where: {
-				...(input.jobPresetId ? { jobPresetId: input.jobPresetId } : {}),
-				employeeId: input.employeeId
-			}
+		return this.employeeUpworkJobsSearchCriterionRepository.findBy({
+			...(input.jobPresetId ? { jobPresetId: input.jobPresetId } : {}),
+			employeeId: input.employeeId
 		});
 	}
 
 	public async createJobPreset(request?: IJobPreset) {
-		return this.commandBus.execute(new CreateJobPresetCommand(request));
+		return this.commandBus.execute(
+			new CreateJobPresetCommand(request)
+		);
 	}
 
 	async saveJobPresetCriterion(request: IMatchingCriterions) {
-		return this.commandBus.execute(new SavePresetCriterionCommand(request));
+		return this.commandBus.execute(
+			new SavePresetCriterionCommand(request)
+		);
 	}
 
 	async saveEmployeeCriterion(request: IMatchingCriterions) {

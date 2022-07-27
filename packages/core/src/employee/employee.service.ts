@@ -3,7 +3,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { isNotEmpty } from '@gauzy/common';
 import * as moment from 'moment';
-import { Brackets, FindManyOptions, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
+import { Brackets, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import { RequestContext } from '../core/context';
 import { TenantAwareCrudService } from './../core/crud';
 import { Employee } from './employee.entity';
@@ -59,41 +59,40 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 		forRange: IDateRangePicker | any,
 		withUser: boolean
 	): Promise<IPagination<IEmployee>> {
-		const [items, total] = await this.employeeRepository.findAndCount({
-			where: (query: SelectQueryBuilder<Employee>) => {
-				const { startDate, endDate } = forRange;
-				const tenantId = RequestContext.currentTenantId();
-				query.andWhere(
-					new Brackets((qb: WhereExpressionBuilder) => {
-						qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
-						qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
-						qb.andWhere(`"${query.alias}"."isActive" = :isActive`, { isActive: true });
-					})
-				);
-				query.andWhere(
-					new Brackets((qb: WhereExpressionBuilder) => {
-						qb.andWhere(`"${query.alias}"."startedWorkOn" <= :startedWorkOn`, {
-							startedWorkOn: moment.utc(endDate).format('YYYY-MM-DD hh:mm:ss')
-						});
-					})
-				);
-				query.andWhere(
-					new Brackets((qb: WhereExpressionBuilder) => {
-						qb.where(`"${query.alias}"."endWork" IS NULL`);
-						qb.orWhere( `"${query.alias}"."endWork" >= :endWork`, {
-							endWork: moment.utc(startDate).format('YYYY-MM-DD hh:mm:ss')
-						});
-					})
-				);
-			},
-			relations: [
-				...(withUser ? ['user'] : [])
-			]
-		} as FindManyOptions<Employee>);
-		return {
-			total,
-			items
-		};
+		const builder = this.repository.createQueryBuilder('employee');
+		builder.setFindOptions({
+			relations: {
+				...(withUser ? { user: true } : {})
+			}
+		});
+		builder.where((query: SelectQueryBuilder<Employee>) => {
+			const { startDate, endDate } = forRange;
+			const tenantId = RequestContext.currentTenantId();
+			query.andWhere(
+				new Brackets((qb: WhereExpressionBuilder) => {
+					qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
+					qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
+					qb.andWhere(`"${query.alias}"."isActive" = :isActive`, { isActive: true });
+				})
+			);
+			query.andWhere(
+				new Brackets((qb: WhereExpressionBuilder) => {
+					qb.andWhere(`"${query.alias}"."startedWorkOn" <= :startedWorkOn`, {
+						startedWorkOn: moment.utc(endDate).format('YYYY-MM-DD hh:mm:ss')
+					});
+				})
+			);
+			query.andWhere(
+				new Brackets((qb: WhereExpressionBuilder) => {
+					qb.where(`"${query.alias}"."endWork" IS NULL`);
+					qb.orWhere( `"${query.alias}"."endWork" >= :endWork`, {
+						endWork: moment.utc(startDate).format('YYYY-MM-DD hh:mm:ss')
+					});
+				})
+			);
+		});
+		const [items, total] = await builder.getManyAndCount();
+		return { items, total };
 	}
 
 	/**
@@ -137,7 +136,6 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 				take: filter && filter.take ? (filter.take) : 10
 			});
 			builder.setFindOptions({
-				relationLoadStrategy: 'query',
 				relations: {
 					user: true,
 					tags: true
@@ -201,7 +199,6 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 							}
 						})
 					);
-					console.log(query.getQueryAndParameters());
 				}
 			});
 			const [items, total] = await builder.getManyAndCount();
