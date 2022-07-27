@@ -5,7 +5,7 @@ import {
 	ConflictException
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Brackets, FindManyOptions, Repository } from 'typeorm';
+import { Brackets, FindManyOptions, In, Repository } from 'typeorm';
 import {
 	IRequestApproval,
 	RequestApprovalStatusTypesEnum,
@@ -17,6 +17,7 @@ import {
 	IEmployee,
 	IRequestApprovalTeam
 } from '@gauzy/contracts';
+import { getConfig } from '@gauzy/config';
 import { RequestContext } from '../core/context';
 import {
 	Employee,
@@ -26,7 +27,6 @@ import {
 } from './../core/entities/internal';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestApproval } from './request-approval.entity';
-import { getConfig } from '@gauzy/config';
 
 const config = getConfig();
 
@@ -152,30 +152,7 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 					tenantId
 				}
 			});
-
-			// const employeeTeam = await this.organizationTeamService.getMyOrgTeams(
-			// 	{
-			// 		relations: ['members']
-			// 	},
-			// 	id
-			// );
-
 			let requestApproval = [];
-
-			// if (employeeTeam.items && employeeTeam.items.length > 0) {
-			// 	for (const team of employeeTeam.items) {
-			// 		const organizationTeam = await this.organizationTeamRepository.findOne(
-			// 			team.id,
-			// 			{
-			// 				relations: ['requestApprovals']
-			// 			}
-			// 		);
-			// 		requestApproval = [
-			// 			...requestApproval,
-			// 			...organizationTeam.requestApprovals
-			// 		];
-			// 	}
-			// }
 			const [employee] = await this.employeeRepository.find({
 				where: {
 					id
@@ -187,7 +164,6 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 				employee.requestApprovals &&
 				employee.requestApprovals.length > 0
 			) {
-				// requestApproval.concat(employee.requestApprovals);
 				requestApproval = [
 					...requestApproval,
 					...employee.requestApprovals
@@ -220,7 +196,6 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 	): Promise<RequestApproval> {
 		try {
 			const tenantId = RequestContext.currentTenantId();
-
 			const requestApproval = new RequestApproval();
 			requestApproval.status = RequestApprovalStatusTypesEnum.REQUESTED;
 			requestApproval.approvalPolicyId = entity.approvalPolicyId;
@@ -231,31 +206,29 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 			requestApproval.tags = entity.tags;
 			requestApproval.organizationId = entity.organizationId;
 			requestApproval.tenantId = tenantId;
-
-			// if (entity.employeeApprovals) {
-			// 	const employees = await this.employeeRepository.findByIds(
-			// 		entity.employeeApprovals,
-			// 		{
-			// 			relations: ['user']
-			// 		}
-			// 	);
-			// 	const requestApprovalEmployees: IRequestApprovalEmployee[] = [];
-			// 	employees.forEach((employee: IEmployee) => {
-			// 		const raEmployees = new RequestApprovalEmployee();
-			// 		raEmployees.employeeId = employee.id;
-			// 		raEmployees.organizationId = entity.organizationId;
-			// 		raEmployees.tenantId = tenantId;
-			// 		raEmployees.status = RequestApprovalStatusTypesEnum.REQUESTED;
-			// 		requestApprovalEmployees.push(raEmployees);
-			// 	});
-			// 	requestApproval.employeeApprovals = requestApprovalEmployees;
-			// }
-
+			if (entity.employeeApprovals) {
+				const employees: IEmployee[] = await this.employeeRepository.find({
+					where: {
+						id: In(entity.employeeApprovals)
+					}
+				});
+				const requestApprovalEmployees: IRequestApprovalEmployee[] = [];
+				employees.forEach((employee: IEmployee) => {
+					const raEmployees = new RequestApprovalEmployee();
+					raEmployees.employeeId = employee.id;
+					raEmployees.organizationId = entity.organizationId;
+					raEmployees.tenantId = tenantId;
+					raEmployees.status = RequestApprovalStatusTypesEnum.REQUESTED;
+					requestApprovalEmployees.push(raEmployees);
+				});
+				requestApproval.employeeApprovals = requestApprovalEmployees;
+			}
 			if (entity.teams) {
-				const teams = await this.organizationTeamRepository.findByIds(
-					entity.teams
-				);
-
+				const teams: IOrganizationTeam[] = await this.organizationTeamRepository.find({
+					where: {
+						id: In(entity.teams)
+					}
+				});
 				const requestApprovalTeams: RequestApprovalTeam[] = [];
 				teams.forEach((team) => {
 					const raTeam = new RequestApprovalTeam();
@@ -266,10 +239,8 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 					raTeam.tenantId = tenantId;
 					requestApprovalTeams.push(raTeam);
 				});
-
 				requestApproval.teamApprovals = requestApprovalTeams;
 			}
-
 			return this.requestApprovalRepository.save(requestApproval);
 		} catch (err) {
 			throw new BadRequestException(err);
@@ -281,9 +252,6 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 	): Promise<RequestApproval> {
 		try {
 			const tenantId = RequestContext.currentTenantId();
-			let employees: IEmployee[];
-			let teams: IOrganizationTeam[];
-
 			const requestApproval = await this.requestApprovalRepository.findOneBy({
 				id
 			});
@@ -309,33 +277,31 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 				.where('requestApprovalId = :id', { id: id })
 				.execute();
 
-			// if (entity.employeeApprovals) {
-			// 	employees = await this.employeeRepository.findByIds(
-			// 		entity.employeeApprovals,
-			// 		{
-			// 			relations: ['user']
-			// 		}
-			// 	);
-
-			// 	const requestApprovalEmployees: IRequestApprovalEmployee[] = [];
-			// 	employees.forEach((employee) => {
-			// 		const raEmployees = new RequestApprovalEmployee();
-			// 		raEmployees.employeeId = employee.id;
-			// 		raEmployees.employee = employee;
-			// 		raEmployees.organizationId = entity.organizationId;
-			// 		raEmployees.tenantId = tenantId;
-			// 		raEmployees.status = RequestApprovalStatusTypesEnum.REQUESTED;
-			// 		requestApprovalEmployees.push(raEmployees);
-			// 	});
-
-			// 	requestApproval.employeeApprovals = requestApprovalEmployees;
-			// }
+			if (entity.employeeApprovals) {
+				const employees: IEmployee[] = await this.employeeRepository.find({
+					where: {
+						id: In(entity.employeeApprovals)
+					}
+				});
+				const requestApprovalEmployees: IRequestApprovalEmployee[] = [];
+				employees.forEach((employee) => {
+					const raEmployees = new RequestApprovalEmployee();
+					raEmployees.employeeId = employee.id;
+					raEmployees.employee = employee;
+					raEmployees.organizationId = entity.organizationId;
+					raEmployees.tenantId = tenantId;
+					raEmployees.status = RequestApprovalStatusTypesEnum.REQUESTED;
+					requestApprovalEmployees.push(raEmployees);
+				});
+				requestApproval.employeeApprovals = requestApprovalEmployees;
+			}
 
 			if (entity.teams) {
-				teams = await this.organizationTeamRepository.findByIds(
-					entity.teams
-				);
-
+				const teams: IOrganizationTeam[] = await this.organizationTeamRepository.find({
+					where: {
+						id: In(entity.teams)
+					}
+				});
 				const requestApprovalTeams: IRequestApprovalTeam[] = [];
 				teams.forEach((team) => {
 					const raTeam = new RequestApprovalTeam();
@@ -346,7 +312,6 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 					raTeam.tenantId = tenantId;
 					requestApprovalTeams.push(raTeam);
 				});
-
 				requestApproval.teamApprovals = requestApprovalTeams;
 			}
 			return this.requestApprovalRepository.save(requestApproval);
