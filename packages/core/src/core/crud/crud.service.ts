@@ -112,7 +112,6 @@ export abstract class CrudService<T extends BaseEntity>
 				}
 				const tenantId = RequestContext.currentTenantId();
 				query.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
-				console.log(query.getQueryAndParameters());
 			});
 			console.log(filter, moment().format('DD.MM.YYYY HH:mm:ss'));
 			const [items, total] = await builder.getManyAndCount();
