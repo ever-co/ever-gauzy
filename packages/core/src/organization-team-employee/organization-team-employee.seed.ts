@@ -31,11 +31,9 @@ export const createRandomOrganizationTeamEmployee = async (
 
 		for (const organization of organizations) {
 			const { id: organizationId } = organization;
-			const organizationTeams = await dataSource.manager.find(OrganizationTeam, {
-				where: {
-					organizationId,
-					tenantId
-				}
+			const organizationTeams = await dataSource.manager.findBy(OrganizationTeam, {
+				organizationId,
+				tenantId
 			});
 			const roles = await dataSource.manager.find(Role, {});
 			const team = faker.random.arrayElement(organizationTeams);

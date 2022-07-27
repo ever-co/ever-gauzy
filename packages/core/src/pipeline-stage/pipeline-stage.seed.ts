@@ -22,11 +22,9 @@ export const createRandomPipelineStage = async (
 		const tenantOrganization = tenantOrganizationsMap.get(tenant);
 		for (const tenantOrg of tenantOrganization) {
 			const { id: organizationId } = tenantOrg;
-			const organizationPipeline = await dataSource.manager.find(Pipeline, {
-				where: {
-					organizationId,
-					tenantId
-				}
+			const organizationPipeline = await dataSource.manager.findBy(Pipeline, {
+				organizationId,
+				tenantId
 			});
 			for (const pipeline of organizationPipeline) {
 				for (let i = 0; i <= faker.datatype.number(10); i++) {

@@ -24,19 +24,15 @@ export const createRandomOrganizationSprint = async (
 		const organizations = tenantOrganizationsMap.get(tenant);
 		for (const organization of organizations) {
 			const { id: organizationId } = organization;
-			const projects = await dataSource.manager.find(OrganizationProject, {
-				where: {
-					tenantId,
-					organizationId
-				}
+			const projects = await dataSource.getRepository(OrganizationProject).findBy({
+				tenantId,
+				organizationId
 			});
 			let project = faker.random.arrayElement(projects);
 
 			const { id: projectId } = project;
-			const tasks = await dataSource.manager.find(Task, {
-				where: {
-					projectId
-				}
+			const tasks = await dataSource.getRepository(Task).findBy({
+				projectId
 			});
 			for (let i = 0; i <= faker.datatype.number(10); i++) {
 				const sprint = new OrganizationSprint();

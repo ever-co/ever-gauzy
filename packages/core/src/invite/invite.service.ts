@@ -21,7 +21,7 @@ import {
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { sign } from 'jsonwebtoken';
-import { Brackets, FindManyOptions, In, IsNull, MoreThanOrEqual, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
+import { Brackets, In, IsNull, MoreThanOrEqual, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import { TenantAwareCrudService } from './../core/crud';
 import { Invite } from './invite.entity';
 import { EmailService } from '../email/email.service';
@@ -326,33 +326,37 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 		return createdInvite;
 	}
 
-	async validate(relations, email: string, token: string): Promise<IInvite> {
-		return await this.repository.findOne({
-			where: (query: SelectQueryBuilder<Invite>) => {
-				query.andWhere(
-					new Brackets((qb: WhereExpressionBuilder) => {
-						qb.where(
-							[
-								{
-									expireDate: MoreThanOrEqual(new Date())
-								},
-								{
-									expireDate: IsNull()
-								}
-							]
-						);
-					})
-				);
-				query.andWhere(
-					new Brackets((qb: WhereExpressionBuilder) => {
-						qb.andWhere(`"${query.alias}"."email" = :email`, { email });
-						qb.andWhere(`"${query.alias}"."token" = :token`, { token });
-						qb.andWhere(`"${query.alias}"."status" = :status`, { status: InviteStatusEnum.INVITED });
-					})
-				);
-			},
-			relations
-		} as FindManyOptions<Invite>);
+	async validate(
+		relations,
+		email: string,
+		token: string
+	): Promise<IInvite> {
+		const query = this.repository.createQueryBuilder();
+		query.setFindOptions({ relations });
+		query.where((qb: SelectQueryBuilder<Invite>) => {
+			qb.andWhere(
+				new Brackets((web: WhereExpressionBuilder) => {
+					web.where(
+						[
+							{
+								expireDate: MoreThanOrEqual(new Date())
+							},
+							{
+								expireDate: IsNull()
+							}
+						]
+					);
+				})
+			);
+			qb.andWhere(
+				new Brackets((web: WhereExpressionBuilder) => {
+					web.andWhere(`"${qb.alias}"."email" = :email`, { email });
+					web.andWhere(`"${qb.alias}"."token" = :token`, { token });
+					web.andWhere(`"${qb.alias}"."status" = :status`, { status: InviteStatusEnum.INVITED });
+				})
+			);
+		});
+		return await query.getOne();
 	}
 
 	createToken(email): string {

@@ -38,7 +38,7 @@ export class SaveEmployeeCriterionHandler
 		const creation = new EmployeeUpworkJobsSearchCriterion(input);
 		await this.employeeUpworkJobsSearchCriterionRepository.save(creation);
 
-		const [employee] = await this.employeeRepository.find({
+		const employee = await this.employeeRepository.findOne({
 			where: {
 				id: input.employeeId
 			},
@@ -46,11 +46,9 @@ export class SaveEmployeeCriterionHandler
 				user: true
 			}
 		});
-		const criteria = await this.employeeUpworkJobsSearchCriterionRepository.find({
-			where: {
-				employeeId: input.employeeId,
-				jobPresetId: input.jobPresetId
-			}
+		const criteria = await this.employeeUpworkJobsSearchCriterionRepository.findBy({
+			employeeId: input.employeeId,
+			jobPresetId: input.jobPresetId
 		})
 		this.gauzyAIService.syncGauzyEmployeeJobSearchCriteria(
 			employee,

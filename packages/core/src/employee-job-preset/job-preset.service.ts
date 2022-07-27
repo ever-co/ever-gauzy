@@ -44,8 +44,8 @@ export class JobPresetService extends TenantAwareCrudService<JobPreset> {
 	}
 
 	public async getAll(request?: IGetJobPresetInput) {
-		const builder = this.jobPresetRepository.createQueryBuilder('job_preset');
-		builder.setFindOptions({
+		const query = this.jobPresetRepository.createQueryBuilder('job_preset');
+		query.setFindOptions({
 			join: {
 				alias: 'job_preset',
 				leftJoin: {
@@ -59,7 +59,7 @@ export class JobPresetService extends TenantAwareCrudService<JobPreset> {
 				name: 'ASC'
 			},
 		});
-		builder.where((qb: SelectQueryBuilder<JobPreset>) => {
+		query.where((qb: SelectQueryBuilder<JobPreset>) => {
 			const tenantId = RequestContext.currentTenantId();
 			qb.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, { tenantId });
 
@@ -79,7 +79,7 @@ export class JobPresetService extends TenantAwareCrudService<JobPreset> {
 				});
 			}
 		});
-		return await builder.getMany();
+		return await query.getMany();
 	}
 
 	public async get(id: string, request?: IGetJobPresetCriterionInput) {
@@ -133,7 +133,7 @@ export class JobPresetService extends TenantAwareCrudService<JobPreset> {
 	}
 
 	async getEmployeePreset(employeeId: string) {
-		const [employee] = await this.employeeRepository.find({
+		const employee = await this.employeeRepository.findOne({
 			where: {
 				id: employeeId
 			},

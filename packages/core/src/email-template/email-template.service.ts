@@ -24,35 +24,35 @@ export class EmailTemplateService extends CrudService<EmailTemplate> {
 		params: IListQueryInput<IEmailTemplate>
 	): Promise<IPagination<IEmailTemplate>> {
 		const { findInput } = params;
-		const builder = this.repository.createQueryBuilder('email_template');
-		builder.where((qb: SelectQueryBuilder<EmailTemplate>) => {
+		const query = this.repository.createQueryBuilder('email_template');
+		query.where((qb: SelectQueryBuilder<EmailTemplate>) => {
 			qb.where(
-				new Brackets((bck: WhereExpressionBuilder) => {
+				new Brackets((web: WhereExpressionBuilder) => {
 					const tenantId = RequestContext.currentTenantId();
 					const { organizationId, languageCode } = findInput;
 					if (organizationId) {
-						bck.andWhere(`"${qb.alias}"."organizationId" = :organizationId`, {
+						web.andWhere(`"${qb.alias}"."organizationId" = :organizationId`, {
 							organizationId
 						});
 					}
 					if (languageCode) {
-						bck.andWhere(`"${qb.alias}"."languageCode" = :languageCode`, {
+						web.andWhere(`"${qb.alias}"."languageCode" = :languageCode`, {
 							languageCode
 						});
 					}
-					bck.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, {
+					web.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, {
 						tenantId
 					});
 				})
 			);
 			qb.orWhere(
-				new Brackets((bck: WhereExpressionBuilder) => {
-					bck.andWhere(`"${qb.alias}"."organizationId" IS NULL`);
-					bck.andWhere(`"${qb.alias}"."tenantId" IS NULL`);
+				new Brackets((web: WhereExpressionBuilder) => {
+					web.andWhere(`"${qb.alias}"."organizationId" IS NULL`);
+					web.andWhere(`"${qb.alias}"."tenantId" IS NULL`);
 				})
 			)
 		});
-		const [items, total] = await builder.getManyAndCount();
+		const [items, total] = await query.getManyAndCount();
 		return { items, total };
 	}
 }

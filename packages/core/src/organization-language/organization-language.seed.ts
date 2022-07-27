@@ -11,10 +11,8 @@ export const createDefaultOrganizationLanguage = async (
 	defaultOrganizations: IOrganization[]
 ): Promise<IOrganizationLanguage[]> => {
 	const mapOrganizationLanguage: IOrganizationLanguage[] = [];
-	const allLanguage = await dataSource.getRepository(Language).find({
-		where: {
-			code: In(Object.values(LanguagesEnum))
-		}
+	const allLanguage = await dataSource.getRepository(Language).findBy({
+		code: In(Object.values(LanguagesEnum))
 	});
 
 	for (const defaultOrganization of defaultOrganizations) {

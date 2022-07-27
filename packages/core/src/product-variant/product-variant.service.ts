@@ -34,7 +34,7 @@ export class ProductVariantService extends TenantAwareCrudService<ProductVariant
 	}
 
 	async findOne(id: string): Promise<ProductVariant> {
-		const [productVariant] = await this.productVariantRepository.find({
+		return await this.productVariantRepository.findOne({
 			where: {
 				id: id
 			},
@@ -44,7 +44,6 @@ export class ProductVariantService extends TenantAwareCrudService<ProductVariant
 				image: true
 			}
 		});
-		return productVariant;
 	}
 
 	async createBulk(

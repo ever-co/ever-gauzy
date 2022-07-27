@@ -23,15 +23,14 @@ export const createRandomProductOption = async (
 	for (const tenant of tenants) {
 		const tenantOrgs = tenantOrganizationsMap.get(tenant);
 		for (const tenantOrg of tenantOrgs) {
-			const productCategories = await dataSource.manager.find(
-				ProductCategory,
-				{
-					where: { organizationId: tenantOrg.id }
-				}
-			);
+			const productCategories = await dataSource.manager.findBy(ProductCategory, {
+				organizationId: tenantOrg.id
+			});
 			for (const productCategory of productCategories) {
 				const products = await dataSource.manager.find(Product, {
-					where: { productCategoryId: productCategory.id }
+					where: {
+						productCategoryId: productCategory.id
+					}
 				});
 				for (const product of products) {
 					const productOptionGroups = await dataSource.manager.find(

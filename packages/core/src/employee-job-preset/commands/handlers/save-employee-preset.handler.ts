@@ -27,7 +27,7 @@ export class SaveEmployeePresetHandler
 		command: SaveEmployeePresetCommand
 	): Promise<JobPreset[]> {
 		const { input } = command;
-		const [employee] = await this.employeeRepository.find({
+		const employee = await this.employeeRepository.findOne({
 			where: {
 				id: input.employeeId
 			},
@@ -35,7 +35,7 @@ export class SaveEmployeePresetHandler
 				jobPresets: true
 			}
 		});
-		const [jobPreset] = await this.jobPresetRepository.find({
+		const jobPreset = await this.jobPresetRepository.findOne({
 			where: {
 				id: In(input.jobPresetIds)
 			},

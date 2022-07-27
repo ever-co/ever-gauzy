@@ -15,24 +15,18 @@ export const createDefaultPayment = async (
 ): Promise<Payment[]> => {
 	const payments: Payment[] = [];
 	const { id: tenantId } = tenant;
-	const users = await dataSource.manager.find(User, {
-		where: {
-			tenantId
-		}
+	const users = await dataSource.manager.findBy(User, {
+		tenantId
 	});
 	for (const organization of organizations) {
 		const { id: organizationId } = organization;
-		const projects = await dataSource.manager.find(OrganizationProject, {
-			where: {
-				tenantId,
-				organizationId
-			}
+		const projects = await dataSource.manager.findBy(OrganizationProject, {
+			tenantId,
+			organizationId
 		});
-		const tags = await dataSource.manager.find(Tag, {
-			where: {
-				tenantId,
-				organizationId
-			}
+		const tags = await dataSource.manager.findBy(Tag, {
+			tenantId,
+			organizationId
 		});
 		const invoices = await dataSource.manager.find(Invoice, {
 			where: {
@@ -102,26 +96,20 @@ export const createRandomPayment = async (
 		const { id: tenantId } = tenant;
 		const tenantOrgs = tenantOrganizationsMap.get(tenant);
 		const tenantEmployees = tenantEmployeeMap.get(tenant);
-		const users = await dataSource.manager.find(User, {
-			where: {
-				tenantId
-			}
+		const users = await dataSource.manager.findBy(User, {
+			tenantId
 		});
 		const payments1: Payment[] = [];
 		const payments2: Payment[] = [];
 		for (const organization of tenantOrgs) {
 			const { id: organizationId } = organization;
-			const projects = await dataSource.manager.find(OrganizationProject, {
-				where: {
-					organizationId,
-					tenantId
-				}
+			const projects = await dataSource.manager.findBy(OrganizationProject, {
+				organizationId,
+				tenantId
 			});
-			const tags = await dataSource.manager.find(Tag, {
-				where: {
-					organizationId,
-					tenantId
-				}
+			const tags = await dataSource.manager.findBy(Tag, {
+				organizationId,
+				tenantId
 			});
 			const invoices = await dataSource.manager.find(Invoice, {
 				where: {
