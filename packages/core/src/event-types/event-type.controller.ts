@@ -14,6 +14,7 @@ import {
 	ValidationPipe
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
+import { FindOptionsWhere } from 'typeorm';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CrudController, PaginationParams } from './../core/crud';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
@@ -21,7 +22,6 @@ import { TenantPermissionGuard } from './../shared/guards';
 import { EventTypeCreateCommand } from './commands';
 import { EventType } from './event-type.entity';
 import { EventTypeService } from './event-type.service';
-import { FindOptionsWhere } from 'typeorm';
 
 @ApiTags('EventType')
 @UseGuards(TenantPermissionGuard)

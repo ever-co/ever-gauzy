@@ -10,10 +10,8 @@ export const createDefaultEmailSent = async (
 	organization: IOrganization,
 	noOfEmailsPerOrganization: number
 ): Promise<any> => {
-	const emailTemplates: IEmailTemplate[] = await dataSource.getRepository(EmailTemplate).find({
-		where: {
-			name: Not(ILike(`%subject%`))
-		}
+	const emailTemplates: IEmailTemplate[] = await dataSource.manager.findBy(EmailTemplate, {
+		name: Not(ILike(`%subject%`))
 	});
 	const users: IUser[] = await dataSource.getRepository(User).find();
 
@@ -36,19 +34,15 @@ export const createRandomEmailSent = async (
 	tenantOrganizationsMap: Map<ITenant, IOrganization[]>,
 	noOfEmailsPerOrganization: number
 ): Promise<any> => {
-	const emailTemplates: IEmailTemplate[] = await dataSource.getRepository(EmailTemplate).find({
-		where: {
-			name: Not(ILike(`%subject%`))
-		}
+	const emailTemplates: IEmailTemplate[] = await dataSource.manager.findBy(EmailTemplate, {
+		name: Not(ILike(`%subject%`))
 	});
 
 	let sentEmails: IEmail[] = [];
 	for (const tenant of tenants) {
 		const { id: tenantId } = tenant;
-		const users = await dataSource.getRepository(User).find({
-			where: {
-				tenantId: tenantId
-			}
+		const users = await dataSource.manager.findBy(User, {
+			tenantId
 		});
 		const orgs = tenantOrganizationsMap.get(tenant);
 		for (const org of orgs) {

@@ -17,15 +17,11 @@ export const createRandomIntegrationSetting = async (
 	const integrationSettings: IntegrationSetting[] = [];
 	for (const tenant of tenants) {
 		const { id: tenantId } = tenant;
-		const integrationTenants = await dataSource.manager.find(IntegrationTenant, {
-			where: {
-				tenantId: tenantId
-			}
+		const integrationTenants = await dataSource.manager.findBy(IntegrationTenant, {
+			tenantId
 		});
-		const organizations = await dataSource.manager.find(Organization, {
-			where: {
-				tenantId: tenantId
-			}
+		const organizations = await dataSource.manager.findBy(Organization, {
+			tenantId
 		});
 		for (const integrationTenant of integrationTenants) {
 			const integrationSetting = new IntegrationSetting();

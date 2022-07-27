@@ -103,11 +103,8 @@ export class HelpCenterSeederService {
 		for await (const tenant of rendomTenants) {
 			const { organizations } = tenant;
 			tenantOrganizationsMap.set(tenant, organizations);
-
-			const employees: Employee[] = await this.dataSource.getRepository(Employee).find({
-				where: {
-					tenantId: tenant.id
-				}
+			const employees: Employee[] = await this.dataSource.manager.findBy(Employee, {
+				tenantId: tenant.id
 			});
 			employeeMap.set(tenant, employees);
 		}

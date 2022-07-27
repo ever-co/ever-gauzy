@@ -54,10 +54,8 @@ export const createRandomEquipments = async (
 
 	for await (const tenant of tenants || []) {
 		const { id: tenantId } = tenant;
-		const organizations = await dataSource.manager.find(Organization, {
-			where: {
-				tenantId: tenantId
-			}
+		const organizations = await dataSource.manager.findBy(Organization, {
+			tenantId
 		});
 		for (let i = 0; i < noOfEquipmentsPerTenant; i++) {
 			const equipment = new Equipment();

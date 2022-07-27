@@ -21,15 +21,11 @@ export const createRandomIntegrationEntitySetting = async (
 
 	for (const tenant of tenants) {
 		const { id: tenantId } = tenant;
-		const organizations = await dataSource.manager.find(Organization, {
-			where: {
-				tenantId: tenantId
-			}
+		const organizations = await dataSource.manager.findBy(Organization, {
+			tenantId
 		});
-		const integrationTenants = await dataSource.manager.find(IntegrationTenant, {
-			where: {
-				tenantId: tenantId
-			}
+		const integrationTenants = await dataSource.manager.findBy(IntegrationTenant, {
+			tenantId
 		});
 		for (const integrationTenant of integrationTenants) {
 			const integrationEntitySetting = new IntegrationEntitySetting();

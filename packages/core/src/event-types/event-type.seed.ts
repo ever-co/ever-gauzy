@@ -29,10 +29,8 @@ export const createRandomEventType = async (
 			const eventTypes: EventType[] = [];
 			for (const organization of organizations) {
 				const { id: organizationId } = organization;
-				const tags = await dataSource.manager.find(Tag, {
-					where: {
-						organizationId: organizationId
-					}
+				const tags = await dataSource.manager.findBy(Tag, {
+					organizationId
 				});
 				const event = new EventType();
 				event.isActive = faker.datatype.boolean();

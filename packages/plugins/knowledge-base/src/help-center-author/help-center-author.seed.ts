@@ -17,7 +17,7 @@ export const createDefaultHelpCenterAuthor = async (
 
 	let mapEmployeeToArticles: IHelpCenterAuthor[] = [];
 
-	const allArticle = await dataSource.manager.find(HelpCenterArticle, {});
+	const allArticle = await dataSource.manager.find(HelpCenterArticle);
 
 	mapEmployeeToArticles = await operateData(
 		dataSource,

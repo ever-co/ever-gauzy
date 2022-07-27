@@ -41,10 +41,8 @@ export const createDefaultIncomes = async (
 	const { id: tenantId } = tenant;
 	for await (const organization of organizations) {
 		const { id: organizationId } = organization;
-		const tags = await dataSource.manager.find(Tag, {
-			where: {
-				organizationId: organizationId
-			}
+		const tags = await dataSource.manager.findBy(Tag, {
+			organizationId
 		});
 		fs.createReadStream(filePath)
 			.pipe(csv())
@@ -120,19 +118,15 @@ export const createRandomIncomes = async (
 	const randomIncomes: Income[] = []
 	for (const tenant of tenants || []) {
 		const { id: tenantId } = tenant;
-		const organizationContacts = await dataSource.manager.find(OrganizationContact, {
-			where: {
-				tenantId: tenantId
-			}
+		const organizationContacts = await dataSource.manager.findBy(OrganizationContact, {
+			tenantId
 		});
 		const employees = tenantEmployeeMap.get(tenant);
 		for (const employee of employees || []) {
 			const { id: organizationId } = employee.organization;
-			const tags = await dataSource.manager.find(Tag, {
-				where: {
-					tenantId: tenantId,
-					organizationId: organizationId
-				}
+			const tags = await dataSource.manager.findBy(Tag, {
+				tenantId,
+				organizationId
 			});
 			for (let index = 0; index < 100; index++) {
 				const income = new Income();

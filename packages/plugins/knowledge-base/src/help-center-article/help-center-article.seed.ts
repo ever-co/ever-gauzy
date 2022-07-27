@@ -16,14 +16,11 @@ export const createHelpCenterArticle = async (
 		for await (const organization of organizations) {
 			const organizationId = organization.id;
 			const tenantId = organization.tenantId;
-			const helpCenters: IHelpCenter[] = await dataSource.manager.find(HelpCenter, {
-				where: {
-					parentId: Not(IsNull()),
-					tenantId,
-					organizationId
-				}
+			const helpCenters: IHelpCenter[] = await dataSource.manager.findBy(HelpCenter, {
+				parentId: Not(IsNull()),
+				tenantId,
+				organizationId
 			});
-
 			for (let i = 0; i <= numberOfHelpCenterArticle; i++) {
 				const article = new HelpCenterArticle();
 				article.organizationId = organizationId;

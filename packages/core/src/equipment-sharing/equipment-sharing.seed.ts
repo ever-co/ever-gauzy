@@ -14,10 +14,8 @@ export const createDefaultEquipmentSharing = async (
 ): Promise<EquipmentSharing[]> => {
 	const { id: tenantId } = tenant;
 	let equipmentSharings: EquipmentSharing[] = [];
-	const equipments = await dataSource.manager.find(Equipment, {
-		where: {
-			tenantId: tenantId
-		}
+	const equipments = await dataSource.manager.findBy(Equipment, {
+		tenantId
 	});
 	equipmentSharings = await dataOperation(
 		dataSource,
@@ -41,10 +39,8 @@ export const createRandomEquipmentSharing = async (
 	let equipmentSharings: EquipmentSharing[] = [];
 	for (const tenant of tenants) {
 		const { id: tenantId } = tenant;
-		const equipments = await dataSource.manager.find(Equipment, {
-			where: {
-				tenantId: tenantId
-			}
+		const equipments = await dataSource.manager.findBy(Equipment, {
+			tenantId
 		});
 		const employees = tenantEmployeeMap.get(tenant);
 		equipmentSharings = await dataOperation(

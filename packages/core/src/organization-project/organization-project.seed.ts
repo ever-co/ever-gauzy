@@ -30,11 +30,9 @@ export const createDefaultOrganizationProjects = async (
 	const projects: IOrganizationProject[] = [];
 	for (let index = 0; index < DEFAULT_ORGANIZATION_PROJECTS.length; index++) {
 		const name = DEFAULT_ORGANIZATION_PROJECTS[index];
-		const organizationContacts = await dataSource.manager.find(OrganizationContact, {
-			where: {
-				tenantId: tenantId,
-				organizationId: organizationId
-			}
+		const organizationContacts = await dataSource.manager.findBy(OrganizationContact, {
+			tenantId,
+			organizationId
 		});
 		const project = new OrganizationProject();
 		project.tags = [tag];
@@ -98,11 +96,9 @@ export const createRandomOrganizationProjects = async (
 
 		for await (const organization of organizations) {
 			const { id: organizationId } = organization;
-			const organizationContacts = await dataSource.manager.find(OrganizationContact, {
-				where: {
-					tenantId: tenantId,
-					organizationId: organizationId
-				}
+			const organizationContacts = await dataSource.manager.findBy(OrganizationContact, {
+				tenantId,
+				organizationId
 			});
 			const organizationContact = faker.random.arrayElement(organizationContacts);
 
@@ -160,17 +156,13 @@ export const assignOrganizationProjectToEmployee = async (
 	const { id: tenantId } = tenant;
 	const { id: organizationId } = organization;
 
-	const organizationProjects = await dataSource.manager.find(OrganizationProject, {
-		where: {
-			tenantId,
-			organizationId
-		}
+	const organizationProjects = await dataSource.manager.findBy(OrganizationProject, {
+		tenantId,
+		organizationId
 	});
-	const employees = await dataSource.manager.find(Employee, {
-		where: {
-			tenantId,
-			organizationId
-		}
+	const employees = await dataSource.manager.findBy(Employee, {
+		tenantId,
+		organizationId
 	});
 	for await (const employee of employees) {
 		employee.projects = chain(organizationProjects)

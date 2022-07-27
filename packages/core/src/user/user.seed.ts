@@ -79,11 +79,9 @@ export const createRandomSuperAdminUsers = async (
 
 	for await (const tenant of tenants) {
 		const { id: tenantId } = tenant;
-		const superAdminRole = await dataSource.manager.findOne(Role, {
-			where: {
-				tenantId: tenantId,
-				name: RolesEnum.SUPER_ADMIN
-			}
+		const superAdminRole = await dataSource.manager.findOneBy(Role, {
+			tenantId,
+			name: RolesEnum.SUPER_ADMIN
 		});
 		const tenantSuperAdmins = [];
 		// Generate random super admins
@@ -244,11 +242,9 @@ const seedSuperAdminUsers = async (
 	const superAdmins: Promise<IUser>[] = [];
 
 	const { id: tenantId } = tenant;
-	const superAdminRole = await dataSource.manager.findOne(Role, {
-		where: {
-			tenantId: tenantId,
-			name: RolesEnum.SUPER_ADMIN
-		}
+	const superAdminRole = await dataSource.manager.findOneBy(Role, {
+		tenantId,
+		name: RolesEnum.SUPER_ADMIN
 	});
 
 	// Generate default super admins
@@ -270,11 +266,9 @@ const seedAdminUsers = async (
 	const admins: Promise<IUser>[] = [];
 
 	const { id: tenantId } = tenant;
-	const adminRole = await dataSource.manager.findOne(Role, {
-		where: {
-			tenantId: tenantId,
-			name: RolesEnum.ADMIN
-		}
+	const adminRole = await dataSource.manager.findOneBy(Role, {
+		tenantId,
+		name: RolesEnum.ADMIN
 	});
 
 	// Generate default admins
@@ -295,11 +289,9 @@ const seedDefaultEmployeeUsers = async (
 	employees: any[]
 ): Promise<IUser[]> => {
 	const { id: tenantId } = tenant;
-	const employeeRole = await dataSource.manager.findOne(Role, {
-		where: {
-			tenantId: tenantId,
-			name: RolesEnum.EMPLOYEE
-		}
+	const employeeRole = await dataSource.manager.findOneBy(Role, {
+		tenantId,
+		name: RolesEnum.EMPLOYEE
 	});
 
 	const defaultUsers: Promise<IUser>[] = [];
@@ -319,11 +311,9 @@ const seedRandomUsers = async (
 	maxUserCount: number
 ): Promise<IUser[]> => {
 	const { id: tenantId } = tenant;
-	const role = await dataSource.manager.findOne(Role, {
-		where: {
-			tenantId: tenantId,
-			name: roleEnum
-		}
+	const role = await dataSource.manager.findOneBy(Role, {
+		tenantId,
+		name: roleEnum
 	});
 	const randomUsers: Promise<IUser>[] = [];
 	let user: Promise<IUser>;
@@ -341,11 +331,9 @@ const seedDefaultCandidateUsers = async (
 	tenant: ITenant
 ): Promise<IUser[]> => {
 	const { id: tenantId } = tenant;
-	const candidateRole = await dataSource.manager.findOne(Role, {
-		where: {
-			tenantId: tenantId,
-			name: RolesEnum.CANDIDATE
-		}
+	const candidateRole = await dataSource.manager.findOneBy(Role, {
+		tenantId,
+		name: RolesEnum.CANDIDATE
 	});
 	const defaultCandidates = DEFAULT_CANDIDATES;
 	const defaultCandidateUsers: Promise<IUser>[] = [];

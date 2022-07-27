@@ -26,10 +26,8 @@ export const createRandomEmployeeRecurringExpense = async (
 
 	for (const tenant of tenants) {
 		const { id: tenantId } = tenant;
-		const organizations = await dataSource.manager.find(Organization, {
-			where: {
-				tenantId: tenantId
-			}
+		const organizations = await dataSource.manager.findBy(Organization, {
+			tenantId
 		});
 		const tenantEmployees = tenantEmployeeMap.get(tenant);
 

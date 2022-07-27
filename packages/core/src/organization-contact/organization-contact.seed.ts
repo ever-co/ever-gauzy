@@ -58,11 +58,9 @@ const createOrganizationContact = async (
 		const { id: organizationId } = organization;
 		const { employees } = organization;
 		const organizationContacts: IOrganizationContact[] = [];
-		const tags = await dataSource.manager.find(Tag, {
-			where: {
-				organizationId,
-				tenantId
-			}
+		const tags = await dataSource.manager.findBy(Tag, {
+			organizationId,
+			tenantId
 		});
 		for (let i = 0; i < noOfContactsPerOrganization; i++) {
 			const orgContact = await generateOrganizationContact(
@@ -133,11 +131,9 @@ export const assignOrganizationContactToEmployee = async (
 	const { id: tenantId } = tenant;
 	const { id: organizationId } = organization;
 
-	const organizationContacts = await dataSource.manager.find(OrganizationContact, {
-		where: {
-			organizationId,
-			tenantId
-		}
+	const organizationContacts = await dataSource.manager.findBy(OrganizationContact, {
+		organizationId,
+		tenantId
 	});
 	for await (const employee of employees) {
 		employee.organizationContacts = _.chain(organizationContacts)

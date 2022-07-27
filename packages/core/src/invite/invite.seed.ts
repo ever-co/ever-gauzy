@@ -16,17 +16,13 @@ export const createDefaultEmployeeInviteSent = async (
 	const invitationStatus = Object.values(InviteStatusEnum);
 
 	const { id: tenantId } = tenant;
-	const employeeRole = await dataSource.getRepository(Role).find({
-		where: {
-			tenantId: tenantId,
-			name: RolesEnum.EMPLOYEE
-		}
+	const employeeRole = await dataSource.manager.findBy(Role, {
+		tenantId,
+		name: RolesEnum.EMPLOYEE
 	});
-	const candidateRole = await dataSource.getRepository(Role).find({
-		where: {
-			tenantId: tenantId,
-			name: RolesEnum.CANDIDATE
-		}
+	const candidateRole = await dataSource.manager.findBy(Role, {
+		tenantId,
+		name: RolesEnum.CANDIDATE
 	});
 	organizations.forEach((organization: IOrganization) => {
 		for (let i = 0; i < 10; i++) {
@@ -63,17 +59,13 @@ export const createRandomEmployeeInviteSent = async (
 
 	for (const tenant of tenants) {
 		const { id: tenantId } = tenant;
-		const employeeRole = await dataSource.getRepository(Role).find({
-			where: {
-				tenantId: tenantId,
-				name: RolesEnum.EMPLOYEE
-			}
+		const employeeRole = await dataSource.manager.findBy(Role, {
+			tenantId,
+			name: RolesEnum.EMPLOYEE
 		});
-		const candidateRole = await dataSource.getRepository(Role).find({
-			where: {
-				tenantId: tenantId,
-				name: RolesEnum.CANDIDATE
-			}
+		const candidateRole = await dataSource.manager.findBy(Role, {
+			tenantId,
+			name: RolesEnum.CANDIDATE
 		});
 		const organizations = tenantOrganizationsMap.get(tenant);
 		const admins = tenantSuperAdminMap.get(tenant);

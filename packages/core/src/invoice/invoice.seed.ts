@@ -28,16 +28,12 @@ export const createDefaultInvoice = async (
 	const invoices: IInvoice[] = [];
 	for (const organization of organizations) {
 		const { id: organizationId } = organization;
-		const tags = await dataSource.manager.find(Tag, {
-			where: {
-				organizationId
-			}
+		const tags = await dataSource.manager.findBy(Tag, {
+			organizationId
 		});
-		const organizationContacts = await dataSource.manager.find(OrganizationContact, {
-			where: {
-				tenantId,
-				organizationId
-			}
+		const organizationContacts = await dataSource.manager.findBy(OrganizationContact, {
+			tenantId,
+			organizationId
 		});
 		for (let i = 0; i < noOfInvoicePerOrganization; i++) {
 			const invoice = await generateInvoice(
@@ -65,16 +61,12 @@ export const createRandomInvoice = async (
 		const invoices: IInvoice[] = [];
 		for (const organization of organizations) {
 			const { id: organizationId } = organization;
-			const tags = await dataSource.manager.find(Tag, {
-				where: {
-					organizationId
-				}
+			const tags = await dataSource.manager.findBy(Tag, {
+				organizationId
 			});
-			const organizationContacts = await dataSource.manager.find(OrganizationContact, {
-				where: {
-					organizationId,
-					tenantId
-				}
+			const organizationContacts = await dataSource.manager.findBy(OrganizationContact, {
+				organizationId,
+				tenantId
 			});
 			for (let i = 0; i < noOfInvoicePerOrganization; i++) {
 				const invoice = await generateInvoice(dataSource, tenant, organization, tags, organizationContacts)
@@ -173,10 +165,8 @@ const generateInvoiceHistory = async (
 ): Promise<IInvoiceEstimateHistory[]> => {
 	const historyRecords: IInvoiceEstimateHistory[] = [];
 	const { id: tenantId } = tenant;
-	const users = await dataSource.manager.find(User, {
-		where: {
-			tenantId
-		}
+	const users = await dataSource.manager.findBy(User, {
+		tenantId
 	});
 
 	historyRecords.push(

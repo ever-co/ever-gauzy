@@ -17,10 +17,8 @@ export const createRandomIntegrationTenant = async (
 	const integrationTenants: IntegrationTenant[] = [];
 	for (const tenant of tenants) {
 		const { id: tenantId } = tenant;
-		const organizations = await dataSource.manager.find(Organization, {
-			where: {
-				tenantId: tenantId
-			}
+		const organizations = await dataSource.manager.findBy(Organization, {
+			tenantId
 		});
 		const integrationTenant = new IntegrationTenant();
 		//todo:change name with some real values;
