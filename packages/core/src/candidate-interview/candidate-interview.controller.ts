@@ -12,7 +12,7 @@ import {
 	ValidationPipe
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { FindManyOptions, FindOptionsWhere, UpdateResult } from 'typeorm';
+import { FindOptionsWhere, UpdateResult } from 'typeorm';
 import {
 	ICandidateInterview,
 	ICandidateInterviewCreateInput,
@@ -25,7 +25,6 @@ import { CandidateInterviewService } from './candidate-interview.service';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
-import { RequestContext } from './../core/context';
 
 @ApiTags('CandidateInterview')
 @UseGuards(TenantPermissionGuard)
