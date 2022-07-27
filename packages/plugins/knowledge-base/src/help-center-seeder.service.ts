@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { DataSource, getConnection, Not } from 'typeorm';
+import { DataSource, Not } from 'typeorm';
 import { IEmployee, IOrganization, ITenant } from '@gauzy/contracts';
 import {
 	getDefaultOrganizations,
@@ -8,7 +8,6 @@ import {
 	Tenant,
 	Employee
 } from '@gauzy/core';
-import { SEEDER_DB_CONNECTION } from '@gauzy/common';
 import { createHelpCenter } from './help-center';
 import { createHelpCenterArticle } from './help-center-article/help-center-article.seed';
 import {
@@ -23,7 +22,6 @@ import {
  */
 @Injectable()
 export class HelpCenterSeederService {
-	dataSource: DataSource;
 	tenant: ITenant;
 
 	/**
@@ -32,7 +30,10 @@ export class HelpCenterSeederService {
 	 * @constructs
 	 *
 	 */
-	constructor(private readonly seeder: SeedDataService) {}
+	constructor(
+		private readonly seeder: SeedDataService,
+		private readonly dataSource: DataSource
+	) {}
 
 	/**
 	 * Seed all default help center and related methods.
@@ -40,7 +41,6 @@ export class HelpCenterSeederService {
 	 * @function
 	 */
 	async createDefault() {
-		this.dataSource = getConnection(SEEDER_DB_CONNECTION);
 		this.tenant = this.seeder.tenant;
 
 		const organizations = await getDefaultOrganizations(
