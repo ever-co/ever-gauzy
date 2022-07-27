@@ -15,18 +15,22 @@ export class LocalstorageStrategy implements BackupStrategy {
 		return store
 			? store
 					.flatMap((serialized: Partial<GuiDrag>) => {
-						return values.map((draggableObject: GuiDrag) => {
-							if (
-								draggableObject.position === serialized.position
-							) {
-								draggableObject.isCollapse =
-									serialized.isCollapse;
-								draggableObject.isExpand = serialized.isExpand;
-								draggableObject.title = serialized.title;
-								draggableObject.hide = serialized.hide;
-								return draggableObject;
+						return this.serializables.map(
+							(draggableObject: GuiDrag) => {
+								if (
+									draggableObject.position ===
+									serialized.position
+								) {
+									draggableObject.isCollapse =
+										serialized.isCollapse;
+									draggableObject.isExpand =
+										serialized.isExpand;
+									draggableObject.title = serialized.title;
+									draggableObject.hide = serialized.hide;
+									return draggableObject;
+								}
 							}
-						});
+						);
 					})
 					.filter((deserialized: GuiDrag) => deserialized)
 			: [];

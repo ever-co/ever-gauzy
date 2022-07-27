@@ -14,23 +14,23 @@ import { GuiDrag } from '../interfaces/gui-drag.abstract';
 export class WidgetService {
 	private _widgetsRef: TemplateRef<HTMLElement>[] = [];
 	private _widgets: GuiDrag[] = [];
-	private _layoutPersistance: LayoutPersistance;
-	private _persistanceTakers: PersistanceTakers;
+	private _widgetLayoutPersistance: LayoutPersistance;
+	private _widgetsTakers: PersistanceTakers;
 	private _localStorage: BackupStrategy;
 	private _widgets$: Subject<Partial<GuiDrag[]>>;
 	private _strategy: BackupStrategy;
 
 	constructor(private readonly store: Store) {
-		this._layoutPersistance = new LayoutPersistance();
+		this._widgetLayoutPersistance = new LayoutPersistance();
 		this._localStorage = new LocalstorageStrategy();
-		this._persistanceTakers = new PersistanceTakers(
-			this._layoutPersistance
+		this._widgetsTakers = new PersistanceTakers(
+			this._widgetLayoutPersistance
 		);
 		this._widgets$ = new Subject();
 		this._widgets$
 			.pipe(
 				tap((widgets: GuiDrag[]) => (this.widgets = widgets)),
-				tap(() => (this._layoutPersistance.state = this.widgets)),
+				tap(() => (this._widgetLayoutPersistance.state = this.widgets)),
 				filter(() => this.widgetsRef.length === 0),
 				tap(() => {
 					this.retrieve().length === 0
@@ -86,7 +86,7 @@ export class WidgetService {
 
 	public save(): void {
 		if (this.widgets.length === 0) return;
-		this._persistanceTakers.backup();
+		this._widgetsTakers.backup();
 		this._strategy = this._localStorage;
 		this._strategy.serializables = this.widgets;
 		this.store.widgets = this._strategy.serialize() as Partial<GuiDrag>[];
@@ -94,12 +94,13 @@ export class WidgetService {
 
 	public retrieve(): Partial<GuiDrag>[] {
 		this._strategy = this._localStorage;
-		return this._strategy.deSerialize(this.store.widgets, this.widgets);
+		this._strategy.serializables = this.widgets;
+		return this._strategy.deSerialize(this.store.widgets);
 	}
 
 	public undoDrag() {
-		this._persistanceTakers.undo();
-		this.widgets = this._layoutPersistance.state as GuiDrag[];
+		this._widgetsTakers.undo();
+		this.widgets = this._widgetLayoutPersistance.state as GuiDrag[];
 		this.sortingReverse();
 		this._strategy = this._localStorage;
 		this._strategy.serializables = this.widgets;

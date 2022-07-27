@@ -12,7 +12,7 @@ import {
 	ViewChildren
 } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { filter, tap } from 'rxjs/operators';
+import { tap } from 'rxjs/operators';
 import { GuiDrag } from '../interfaces/gui-drag.abstract';
 import { LayoutWithDraggableObject } from '../interfaces/layout-with-draggable-object.abstract';
 import { WindowComponent } from '../window/window.component';
@@ -45,20 +45,8 @@ export class WindowLayoutComponent
 			.pipe(
 				tap(
 					(listWindows: QueryList<GuiDrag>) =>
-						(this.windowService.windows = listWindows.toArray())
+						(this.windowService.windows$ = listWindows.toArray())
 				),
-				filter(() => this.windowService.windowsRef.length === 0),
-				tap(() => {
-					this.windowService.retrieve().length === 0
-						? this.windowService.save()
-						: this.windowService
-								.retrieve()
-								.forEach((deserialized: GuiDrag) =>
-									this.windowService.windowsRef.push(
-										deserialized.templateRef
-									)
-								);
-				}),
 				untilDestroyed(this)
 			)
 			.subscribe();
