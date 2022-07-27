@@ -1,6 +1,5 @@
 import {
 	GetReportMenuItemsInput,
-	IGetReport,
 	IPagination,
 	UpdateReportMenuInput
 } from '@gauzy/contracts';
