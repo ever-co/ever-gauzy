@@ -131,12 +131,18 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 
 	public async pagination(filter: any) {
 		try {
-			const skip = filter && filter.skip ? (filter.take * (filter.skip - 1)) : 0;
-			const take = filter && filter.take ? (filter.take) : 10;
-
 			const builder = this.repository.createQueryBuilder('employee');
-			builder.innerJoinAndSelect(`${builder.alias}.user`, 'user');
-			builder.leftJoinAndSelect(`${builder.alias}.tags`, 'tags');
+			builder.setFindOptions({
+				skip: filter && filter.skip ? (filter.take * (filter.skip - 1)) : 0,
+				take: filter && filter.take ? (filter.take) : 10
+			});
+			builder.setFindOptions({
+				relationLoadStrategy: 'query',
+				relations: {
+					user: true,
+					tags: true
+				}
+			});
 			builder.where((query: SelectQueryBuilder<Employee>) => {
 				const tenantId = RequestContext.currentTenantId();
 				query.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
@@ -198,9 +204,6 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 					console.log(query.getQueryAndParameters());
 				}
 			});
-			builder.skip(skip);
-			builder.take(take);
-
 			const [items, total] = await builder.getManyAndCount();
 			return { items, total };
 		} catch (error) {
