@@ -1,9 +1,8 @@
 import { BackupStrategy } from '../../interfaces/backup-strategy.interface';
 import { GuiDrag } from '../../interfaces/gui-drag.abstract';
-import { IPersistance } from '../../interfaces/persistance.interface';
 
 export class LocalstorageStrategy implements BackupStrategy {
-	private _serializables: Partial<IPersistance>[];
+	private _serializables: Partial<GuiDrag>[];
 
 	constructor() {}
 
@@ -34,23 +33,16 @@ export class LocalstorageStrategy implements BackupStrategy {
 	}
 
 	serialize(): Partial<GuiDrag>[] {
-		const size: number = this.serializables[0].restore().length;
-		return this.serializables
-			.flatMap((serializable: IPersistance) =>
-				serializable
-					.restore()
-					.map((restored: Partial<GuiDrag>) => restored.toObject())
-			)
-			.reverse()
-			.slice(0, size)
-			.reverse();
+		return this.serializables.map((restored: Partial<GuiDrag>) =>
+			restored.toObject()
+		);
 	}
 
-	public get serializables(): Partial<IPersistance>[] {
+	public get serializables(): Partial<GuiDrag>[] {
 		return this._serializables;
 	}
 
-	public set serializables(value: Partial<IPersistance>[]) {
+	public set serializables(value: Partial<GuiDrag>[]) {
 		this._serializables = value;
 	}
 }
