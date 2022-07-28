@@ -117,7 +117,7 @@
 		"nats": "^2.6.1",
 		"nest-router": "^1.0.9",
 		"nestjs-i18n": "^9.0.12",
-		"node-fetch": "^3.2.9",
+		"node-fetch": "^2.6.7",
 		"nodemailer": "^6.4.11",
 		"nodemailer-handlebars": "^1.0.1",
 		"passport": "^0.6.0",
