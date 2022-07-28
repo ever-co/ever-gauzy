@@ -1,13 +1,7 @@
 .grid-boundary {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
-  -webkit-box-align: start;
-  align-items: flex-start;
-  -webkit-box-pack: start;
-  justify-content: flex-start;
-  column-gap: 1rem;
-  grid-gap: 1rem;
-  margin-bottom: 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  margin: 0 -0.5rem;
 
   ga-widget {
     cursor: pointer;
@@ -32,6 +26,7 @@
 .cdk-drop-list-dragging > .cdk-drag-placeholder {
   ::ng-deep {
     nb-card nb-card-body {
+      min-width: 230px;
       background-color: var(--gauzy-sidebar-background-3);
       border-radius: var(--border-radius);
     }

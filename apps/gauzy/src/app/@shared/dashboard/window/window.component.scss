@@ -3,6 +3,14 @@
 #window {
   position: relative;
   color: var(--gauzy-text-color-2);
+  display: inline-block;
+  width: 100%;
+  -webkit-transition: 1s ease all;
+  transition: 1s ease all;
+  box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  margin-bottom: 1rem;
 }
 
 :host nb-icon {
