@@ -178,10 +178,24 @@ export class TimeTrackingComponent
 				filter(([organization, dateRange, employee]) => !!organization && !!dateRange && !!employee),
 				tap(([organization, dateRange, employee, project]) => {
 					this.organization = organization;
-
 					this.employeeIds = employee ? [employee.id] : [];
 					this.projectIds = project ? [project.id] : [];
 					this.selectedDateRange = dateRange;
+					this.widgetService.widgets.forEach((widget: GuiDrag) => {
+						if (widget.position === 0 && this.employeeIds[0]) {
+							widget.hide = true;
+						}
+						if (widget.position === 1 && this.projectIds[0]) {
+							widget.hide = true;
+						}
+					});
+					this.windowService.windows.forEach((windows: GuiDrag) => {
+						if (windows.position === 5 && this.employeeIds[0]) {
+							windows.hide = true;
+						}
+					});
+					this.widgetService.save();
+					this.windowService.save();
 				}),
 				tap(() => this.preparePayloads()),
 				tap(() => {
