@@ -458,11 +458,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 		this.smartTableSource = new ServerDataSource(this.http, {
 			endPoint: `${API_PREFIX}/employee/pagination`,
 			where: {
-				...{
-					organizationId,
-					tenantId,
-					isActive: !this.includeDeleted
-				},
+				...{ organizationId, tenantId, isActive: !this.includeDeleted },
 				...this.filters.where
 			},
 			resultMap: (employee: IEmployee) => {

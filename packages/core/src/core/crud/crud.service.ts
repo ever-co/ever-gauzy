@@ -77,28 +77,26 @@ export abstract class CrudService<T extends BaseEntity>
 	 */
 	public async paginate(filter?: any): Promise<IPagination<T>> {
 		try {
-			const builder = this.repository.createQueryBuilder();
-			builder.setFindOptions({
+			const query = this.repository.createQueryBuilder();
+			query.setFindOptions({
 				skip: filter && filter.skip ? (filter.take * (filter.skip - 1)) : 0,
 				take: filter && filter.take ? (filter.take) : 10
 			});
 			if (filter) {
 				if (filter.orderBy && filter.order) {
-					builder.setFindOptions({
+					query.setFindOptions({
 						order: {
 							[filter.orderBy]: filter.order
 						}
 					});
 				} else if (filter.orderBy) {
-					builder.setFindOptions({
-						order: filter.orderBy
-					});
+					query.setFindOptions({ order: filter.orderBy });
 				}
 				if (filter.relations) {
-					builder.setFindOptions({ relations: filter.relations });
+					query.setFindOptions({ relations: filter.relations });
 				}
 			}
-			builder.where((query: SelectQueryBuilder<T>) => {
+			query.where((query: SelectQueryBuilder<T>) => {
 				if (filter && (filter.filters || filter.where)) {
 					if (filter.where) {
 						const wheres: any = {}
@@ -114,7 +112,7 @@ export abstract class CrudService<T extends BaseEntity>
 				query.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
 			});
 			console.log(filter, moment().format('DD.MM.YYYY HH:mm:ss'));
-			const [items, total] = await builder.getManyAndCount();
+			const [items, total] = await query.getManyAndCount();
 			return { items, total };
 		} catch (error) {
 			console.log(error);
