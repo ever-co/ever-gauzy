@@ -8,7 +8,6 @@ import {
 	Body,
 	Put,
 	Param,
-	UsePipes,
 	ValidationPipe,
 	ForbiddenException,
 	Delete
@@ -46,18 +45,32 @@ export class AccountingTemplateController extends CrudController<AccountingTempl
 		super(accountingTemplateService);
 	}
 
+	/**
+	 * GET count for accouting template
+	 *
+	 * @param options
+	 * @returns
+	 */
 	@Get('count')
-	@UsePipes(new ValidationPipe({ transform: true }))
 	async getCount(
-		@Query() options: FindOptionsWhere<AccountingTemplate>
+		@Query(new ValidationPipe({
+			transform: true
+		})) options: FindOptionsWhere<AccountingTemplate>
 	): Promise<number> {
 		return this.accountingTemplateService.countBy(options);
 	}
 
+	/**
+	 * GET accouting templates using pagination params
+	 *
+	 * @param options
+	 * @returns
+	 */
 	@Get('pagination')
-	@UsePipes(new ValidationPipe({ transform: true }))
 	async pagination(
-		@Query() options: PaginationParams<IAccountingTemplate>
+		@Query(new ValidationPipe({
+			transform: true
+		})) options: PaginationParams<AccountingTemplate>
 	): Promise<IPagination<IAccountingTemplate>> {
 		return this.accountingTemplateService.paginate(options);
 	}
@@ -114,10 +127,12 @@ export class AccountingTemplateController extends CrudController<AccountingTempl
 
 	@Get()
 	async findAll(
-		@Query('data', ParseJsonPipe) filter: PaginationParams<IAccountingTemplate>
+		@Query(new ValidationPipe({
+			transform: true
+		})) options: PaginationParams<AccountingTemplate>
 	): Promise<IPagination<IAccountingTemplate>> {
 		return await this.queryBus.execute(
-			new AccountingTemplateQuery(filter)
+			new AccountingTemplateQuery(options)
 		);
 	}
 

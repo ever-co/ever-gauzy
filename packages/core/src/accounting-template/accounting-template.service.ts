@@ -1,11 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Brackets, IsNull, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
-import { AccountingTemplateTypeEnum, IAccountingTemplate, IListQueryInput, IPagination, LanguagesEnum } from '@gauzy/contracts';
 import * as mjml2html from 'mjml';
 import * as Handlebars from 'handlebars';
-import { CrudService } from './../core/crud';
+import { AccountingTemplateTypeEnum, IAccountingTemplate, IPagination, LanguagesEnum } from '@gauzy/contracts';
+import { isNotEmpty } from '@gauzy/common';
 import { AccountingTemplate } from './accounting-template.entity';
+import { CrudService, PaginationParams } from './../core/crud';
 import { RequestContext } from './../core/context';
 
 @Injectable()
@@ -219,32 +220,38 @@ export class AccountingTemplateService extends CrudService<AccountingTemplate> {
 
 
 	/**
-	* Get Accounting Templates
-	* @param params
-	* @returns
-	*/
+	 * Get Accounting Templates using pagination params
+	 *
+	 * @param params
+	 * @returns
+	 */
 	async findAll(
-		params: IListQueryInput<IAccountingTemplate>
+		params: PaginationParams<AccountingTemplate>
 	): Promise<IPagination<IAccountingTemplate>> {
-		const { findInput } = params;
-		const builder = this.accountingRepository.createQueryBuilder('accounting_template');
-		builder.where((qb: SelectQueryBuilder<AccountingTemplate>) => {
+		const query = this.accountingRepository.createQueryBuilder('accounting_template');
+		query.setFindOptions({
+			relations: params.relations,
+			order: params.order
+		});
+		query.where((qb: SelectQueryBuilder<AccountingTemplate>) => {
 			qb.andWhere(
 				new Brackets((bck: WhereExpressionBuilder) => {
-					const { organizationId, languageCode } = findInput;
-					if (organizationId) {
+					const { tenantId, organizationId, languageCode } = params.where;
+					if (isNotEmpty(organizationId)) {
 						bck.andWhere(`"${qb.alias}"."organizationId" = :organizationId`, {
 							organizationId
 						});
 					}
-					if (languageCode) {
+					if (isNotEmpty(languageCode)) {
 						bck.andWhere(`"${qb.alias}"."languageCode" = :languageCode`, {
 							languageCode
 						});
 					}
-					bck.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, {
-						tenantId: RequestContext.currentTenantId()
-					});
+					if (isNotEmpty(tenantId)) {
+						bck.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, {
+							tenantId: RequestContext.currentTenantId()
+						});
+					}
 				})
 			);
 			qb.orWhere(
@@ -254,7 +261,7 @@ export class AccountingTemplateService extends CrudService<AccountingTemplate> {
 				})
 			)
 		});
-		const [items, total] = await builder.getManyAndCount();
+		const [items, total] = await query.getManyAndCount();
 		return { items, total };
 	}
 }
