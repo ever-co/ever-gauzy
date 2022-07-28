@@ -1,9 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Brackets, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
-import { IEmailTemplate, IListQueryInput, IPagination } from '@gauzy/contracts';
-import { CrudService } from './../core/crud';
+import { IEmailTemplate, IPagination } from '@gauzy/contracts';
+import { isNotEmpty } from '@gauzy/common';
 import { EmailTemplate } from './email-template.entity';
+import { CrudService, PaginationParams } from './../core/crud';
 import { RequestContext } from './../core/context';
 
 @Injectable()
@@ -21,28 +22,32 @@ export class EmailTemplateService extends CrudService<EmailTemplate> {
 	* @returns
 	*/
 	async findAll(
-		params: IListQueryInput<IEmailTemplate>
+		params: PaginationParams<EmailTemplate>
 	): Promise<IPagination<IEmailTemplate>> {
-		const { findInput } = params;
 		const query = this.repository.createQueryBuilder('email_template');
+		query.setFindOptions({
+			relations: params.relations,
+			order: params.order
+		});
 		query.where((qb: SelectQueryBuilder<EmailTemplate>) => {
 			qb.where(
 				new Brackets((web: WhereExpressionBuilder) => {
-					const tenantId = RequestContext.currentTenantId();
-					const { organizationId, languageCode } = findInput;
-					if (organizationId) {
+					const { tenantId, organizationId, languageCode } = params.where;
+					if (isNotEmpty(tenantId)) {
+						web.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, {
+							tenantId: RequestContext.currentTenantId()
+						});
+					}
+					if (isNotEmpty(organizationId)) {
 						web.andWhere(`"${qb.alias}"."organizationId" = :organizationId`, {
 							organizationId
 						});
 					}
-					if (languageCode) {
+					if (isNotEmpty(languageCode)) {
 						web.andWhere(`"${qb.alias}"."languageCode" = :languageCode`, {
 							languageCode
 						});
 					}
-					web.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, {
-						tenantId
-					});
 				})
 			);
 			qb.orWhere(
