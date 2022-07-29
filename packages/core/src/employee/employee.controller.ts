@@ -206,13 +206,14 @@ export class EmployeeController extends CrudController<Employee> {
 	/**
 	 * GET employee count in the same tenant.
 	 *
-	 * @param filter
+	 * @param options
 	 * @returns
 	 */
 	@Get('count')
-	@UsePipes(new ValidationPipe({ transform: true }))
 	async getCount(
-		@Query() options: FindOptionsWhere<Employee>
+		@Query(new ValidationPipe({
+			transform: true
+		})) options: FindOptionsWhere<Employee>
 	): Promise<number> {
 		return this.employeeService.countBy(options);
 	}
