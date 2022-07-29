@@ -6,8 +6,8 @@ import {
 	ValidatorConstraintInterface
 } from "class-validator";
 import { IRole } from "@gauzy/contracts";
-import { Role } from "../../../../core/entities/internal";
-import { RequestContext } from "../../../../core/context";
+import { Role } from "../../../core/entities/internal";
+import { RequestContext } from "../../../core/context";
 
 /**
  * Role should existed validation constraint

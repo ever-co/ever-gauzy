@@ -1,7 +1,7 @@
 import { Module } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
 
-import { Role } from "./../../../core/entities/internal";
+import { Role } from "./../../core/entities/internal";
 import { IsRoleAlreadyExistConstraint, IsRoleShouldExistConstraint } from "./constraints";
 
 @Module({
