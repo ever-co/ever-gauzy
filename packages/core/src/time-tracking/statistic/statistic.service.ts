@@ -1097,12 +1097,12 @@ export class StatisticService {
 			);
 		}
 
-		const query = this.timeLogRepository.createQueryBuilder();
+		const query = this.timeLogRepository.createQueryBuilder('time_log');
 		query.setFindOptions({
 			join: {
 				alias: 'time_log',
 				innerJoin: {
-					time_slot: 'time_log.timeSlots'
+					time_slots: 'time_log.timeSlots'
 				}
 			},
 			relations: {
@@ -1127,7 +1127,7 @@ export class StatisticService {
 						start,
 						end
 					});
-					web.andWhere(`"time_slot"."startedAt" BETWEEN :start AND :end`, {
+					web.andWhere(`"time_slots"."startedAt" BETWEEN :start AND :end`, {
 						start,
 						end
 					});
