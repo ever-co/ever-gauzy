@@ -10,8 +10,6 @@ export class CreateRoleDTO implements IRoleCreateInput {
 
     @ApiProperty({ type: () => String })
     @IsNotEmpty()
-    @IsRoleAlreadyExist({
-        message: 'Role $value already exists',
-    })
+    @IsRoleAlreadyExist()
     readonly name: string;
 }

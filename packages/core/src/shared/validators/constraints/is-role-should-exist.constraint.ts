@@ -22,6 +22,9 @@ export class IsRoleShouldExistConstraint implements ValidatorConstraintInterface
 		private readonly repository: Repository<Role>
     ) {}
 
+	/**
+     * Method to be called to perform custom validation over given value.
+     */
 	async validate(role: string | IRole, args: ValidationArguments) {
 		if (!role) {
 			return false;
@@ -45,5 +48,13 @@ export class IsRoleShouldExistConstraint implements ValidatorConstraintInterface
 		} catch (error) {
 			return false;
 		}
+	}
+
+	/**
+     * Gets default message when validation for this constraint fail.
+     */
+	defaultMessage(validationArguments?: ValidationArguments): string {
+		const { value } = validationArguments;
+		return `Role ${value} must be a valid value.`;
 	}
 }

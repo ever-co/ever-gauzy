@@ -5,7 +5,11 @@ import { Role } from "./../../core/entities/internal";
 import { IsRoleAlreadyExistConstraint, IsRoleShouldExistConstraint } from "./constraints";
 
 @Module({
-    imports: [TypeOrmModule.forFeature([Role])],
+    imports: [
+        TypeOrmModule.forFeature([
+            Role
+        ])
+    ],
     providers: [
         IsRoleAlreadyExistConstraint,
         IsRoleShouldExistConstraint

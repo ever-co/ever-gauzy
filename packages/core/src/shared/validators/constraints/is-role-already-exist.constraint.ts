@@ -21,6 +21,9 @@ export class IsRoleAlreadyExistConstraint implements ValidatorConstraintInterfac
 		private readonly repository: Repository<Role>
     ) {}
 
+	/**
+	 * Method to be called to perform custom validation over given value.
+	 */
 	async validate(name: any, args: ValidationArguments): Promise<boolean> {
 		return !(
 			await this.repository.findOne({
@@ -30,5 +33,13 @@ export class IsRoleAlreadyExistConstraint implements ValidatorConstraintInterfac
 				}
 			})
 		);
+	}
+
+	/**
+     * Gets default message when validation for this constraint fail.
+     */
+	defaultMessage(validationArguments?: ValidationArguments): string {
+		const { value } = validationArguments;
+		return `Role ${value} already exists.`;
 	}
 }

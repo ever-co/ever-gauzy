@@ -9,6 +9,7 @@ import { PluginModule } from '@gauzy/plugin';
 import { AppModule } from './../app.module';
 import { HealthIndicatorModule } from '../health-indicator';
 import { Logger, LoggerModule } from '../logger';
+import { SharedModule } from './../shared/shared.module';
 
 @Module({
 	imports: [
@@ -16,7 +17,8 @@ import { Logger, LoggerModule } from '../logger';
 		AppModule,
 		LoggerModule.forRoot(),
 		PluginModule.forRoot(getConfig()),
-		HealthIndicatorModule
+		HealthIndicatorModule,
+		SharedModule
 	]
 })
 export class BootstrapModule implements NestModule, OnApplicationShutdown {

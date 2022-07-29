@@ -132,8 +132,6 @@ import { GauzyCloudModule } from './gauzy-cloud/gauzy-cloud.module';
 import { ContactModule } from './contact/contact.module';
 import { PublicShareModule } from './public-share/public-share.module';
 
-import { ValidatorModule } from './shared/validators/validator.module';
-
 const { unleashConfig } = environment;
 
 if (unleashConfig.url) {
@@ -315,9 +313,7 @@ if (process.env.DB_TYPE === 'postgres') {
 		MerchantModule,
 		GauzyCloudModule,
 		ContactModule,
-		PublicShareModule,
-
-		ValidatorModule
+		PublicShareModule
 	],
 	controllers: [AppController],
 	providers: [AppService],

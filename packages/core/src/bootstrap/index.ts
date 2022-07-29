@@ -19,6 +19,7 @@ import { coreSubscribers } from './../core/entities/subscribers';
 import { AppService } from '../app.service';
 import { AppModule } from '../app.module';
 import { AuthGuard } from './../shared/guards';
+import { SharedModule } from './../shared/shared.module';
 
 export async function bootstrap(
 	pluginConfig?: Partial<IPluginConfig>
@@ -91,7 +92,7 @@ export async function bootstrap(
 	/**
 	 * Dependency injection with class-validator
 	 */
-	useContainer(app.select(AppModule), { fallbackOnErrors: true });
+	useContainer(app.select(SharedModule), { fallbackOnErrors: true });
 
 	await app.listen(port, host, () => {
 		console.log(chalk.magenta(`Listening at http://${host}:${port}/${globalPrefix}`));
