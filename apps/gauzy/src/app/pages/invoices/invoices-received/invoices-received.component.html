@@ -154,6 +154,7 @@
 			[disabled]="disableButton"
 			size="small"
 			[nbTooltip]="'BUTTONS.DELETE' | translate"
+			(click)="delete(selectedItem)"
 		>
 			<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
 		</button>

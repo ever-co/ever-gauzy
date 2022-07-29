@@ -2,7 +2,7 @@ import { OnInit, Component, OnDestroy, ViewChild, Input } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { combineLatest, Subject } from 'rxjs';
+import { combineLatest, firstValueFrom, Subject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { Ng2SmartTableComponent } from 'ng2-smart-table';
 import {
@@ -37,6 +37,7 @@ import { InputFilterComponent, TagsColorFilterComponent } from '../../../@shared
 import { StatusBadgeComponent } from '../../../@shared/status-badge';
 import { IPaginationBase, PaginationFilterBaseComponent } from '../../../@shared/pagination/pagination-filter-base.component';
 import { InvoiceDownloadMutationComponent } from '../invoice-download/invoice-download-mutation.component';
+import { DeleteConfirmationComponent } from '../../../@shared/user/forms';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -318,6 +319,30 @@ export class InvoicesReceivedComponent extends PaginationFilterBaseComponent
 				});
 		} catch (error) {
 			this._errorHandlingService.handleError(error);
+		}
+	}
+
+	async delete(selectedItem?: IInvoice) {
+		if (selectedItem) {
+			this.selectInvoice({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
+		const result = await firstValueFrom(this.dialogService
+			.open(DeleteConfirmationComponent)
+			.onClose);
+
+		if (result) {
+			const { id } = this.selectedInvoice;
+			await this.invoicesService.delete(id);
+
+			if (this.isEstimate) {
+				this.toastrService.success('INVOICES_PAGE.INVOICES_DELETE_ESTIMATE');
+			} else {
+				this.toastrService.success('INVOICES_PAGE.INVOICES_DELETE_INVOICE');
+			}
+			this.invoices$.next(true);
 		}
 	}
 
