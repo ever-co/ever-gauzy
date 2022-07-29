@@ -15,7 +15,6 @@ import {
 	Put,
 	Query,
 	UseGuards,
-	UsePipes,
 	ValidationPipe
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
@@ -91,11 +90,12 @@ export class RolePermissionController extends CrudController<RolePermission> {
 	@Permissions(PermissionsEnum.CHANGE_ROLES_PERMISSIONS)
 	@HttpCode(HttpStatus.CREATED)
 	@Post()
-	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
 	async create(
-		@Body() entity: CreateRolePermissionDTO
+		@Body(new ValidationPipe({
+			transform: true,
+			whitelist: true
+		})) entity: CreateRolePermissionDTO
 	): Promise<IRolePermission> {
-		console.log({ entity });
 		return this.rolePermissionService.createPermission(entity);
 	}
 
@@ -117,10 +117,12 @@ export class RolePermissionController extends CrudController<RolePermission> {
 	@Permissions(PermissionsEnum.CHANGE_ROLES_PERMISSIONS)
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
-	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body() entity: UpdateRolePermissionDTO
+		@Body(new ValidationPipe({
+			transform: true,
+			whitelist: true
+		})) entity: UpdateRolePermissionDTO
 	): Promise<UpdateResult | IRolePermission> {
 		return await this.rolePermissionService.updatePermission(id, entity);
 	}

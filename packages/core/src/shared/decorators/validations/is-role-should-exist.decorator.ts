@@ -1,4 +1,5 @@
-import { Brackets, getConnection, SelectQueryBuilder, WhereExpressionBuilder } from "typeorm";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
 import {
 	registerDecorator,
 	ValidationArguments,
@@ -30,32 +31,33 @@ export const IsRoleShouldExist = (validationOptions?: ValidationOptions) => {
 
 @ValidatorConstraint({ name: "IsRoleShouldExist", async: true })
 export class IsRoleShouldExistConstraint implements ValidatorConstraintInterface {
+	constructor(
+        @InjectRepository(Role)
+		private readonly repository: Repository<Role>
+    ) {}
+
 	async validate(role: string | IRole, args: ValidationArguments) {
 		if (!role) {
 			return false;
 		}
-		const tenantId = RequestContext.currentTenantId();
+
 		let roleId: string;
 		if (typeof(role) === 'string') {
 			roleId = role;
-		} else if (typeof role == 'object') {
+		} else if (typeof(role) == 'object') {
 			roleId = role.id
 		}
-
 		if (!roleId) {
 			return false;
 		}
 
-		const query = getConnection().getRepository(Role).createQueryBuilder();
-		query.where((qb: SelectQueryBuilder<Role>) => {
-			qb.andWhere(
-				new Brackets((web: WhereExpressionBuilder) => {
-					web.andWhere(`"${qb.alias}"."id" = :roleId`, { roleId });
-					web.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, { tenantId });
-				})
-			);
-		});
-		const existed = (await query.getOne());
-		return !!existed;
+		try {
+			return !!await this.repository.findOneByOrFail({
+				id: roleId,
+				tenantId: RequestContext.currentTenantId()
+			});
+		} catch (error) {
+			return false;
+		}
 	}
 }
