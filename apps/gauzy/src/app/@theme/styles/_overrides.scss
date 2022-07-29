@@ -290,6 +290,14 @@ body {
     }
   }
 
+  .ng-select.ng-select-multiple
+    .ng-select-container
+    .ng-value-container
+    .ng-input
+    > input {
+    color: var(--gauzy-text-color-1);
+  }
+
   .ng-select .ng-select-container {
     color: nb-theme(text-basic-color) !important;
   }
