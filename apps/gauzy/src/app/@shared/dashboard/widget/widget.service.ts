@@ -120,4 +120,12 @@ export class WidgetService {
 			}
 		});
 	}
+
+	public hideWidget(position: number) {
+		this.widgets.forEach((widget: GuiDrag) => {
+			if (widget.position === position) {
+				widget.hide = true;
+			}
+		});
+	}
 }

@@ -605,14 +605,26 @@ export class TimeTrackingComponent
 	 * Hide Project Worked Block, If project selected from header
 	 */
 	get hideProjectBlock() {
-		return this.projectIds.filter(Boolean).length;
+		const hide = this.projectIds.filter(Boolean).length;
+		if (hide) {
+			this.widgetService.hideWidget(1);
+			this.widgetService.save();
+		}
+		return hide;
 	}
 
 	/**
 	 * Hide Employee Worked Block, If employee selected from header
 	 */
 	get hideEmployeeBlock() {
-		return this.employeeIds.filter(Boolean).length;
+		const hide = this.employeeIds.filter(Boolean).length;
+		if (hide) {
+			this.widgetService.hideWidget(0);
+			this.windowService.hideWindow(5);
+			this.widgetService.save();
+			this.windowService.save();
+		}
+		return hide;
 	}
 	/**
 	 * The order of titles in array depend to order of templates

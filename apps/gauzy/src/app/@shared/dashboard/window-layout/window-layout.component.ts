@@ -55,7 +55,9 @@ export class WindowLayoutComponent
 		this.cdr.detectChanges();
 	}
 
-	ngOnInit(): void {}
+	ngOnInit(): void {
+		this.windowService.windowsRef = this.draggableObject;
+	}
 
 	protected drop(event: CdkDragDrop<number, number, any>): void {
 		moveItemInArray(

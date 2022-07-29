@@ -66,7 +66,9 @@ export class WidgetLayoutComponent
 		this.widgetService.save();
 	}
 
-	ngOnInit(): void {}
+	ngOnInit(): void {
+		this.widgetService.widgetsRef = this.draggableObject;
+	}
 
 	get widgets() {
 		if (

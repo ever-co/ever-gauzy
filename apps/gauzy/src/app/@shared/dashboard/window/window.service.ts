@@ -115,4 +115,12 @@ export class WindowService {
 			}
 		});
 	}
+
+	public hideWindow(position: number) {
+		this.windows.forEach((widget: GuiDrag) => {
+			if (widget.position === position) {
+				widget.hide = true;
+			}
+		});
+	}
 }
