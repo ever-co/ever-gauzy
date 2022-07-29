@@ -1,17 +1,8 @@
-import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
-import {
-	registerDecorator,
-	ValidationArguments,
-	ValidationOptions,
-	ValidatorConstraint,
-	ValidatorConstraintInterface
-} from "class-validator";
-import { Role } from "../../../core/entities/internal";
-import { RequestContext } from "../../../core/context";
+import { registerDecorator, ValidationOptions } from "class-validator";
+import { IsRoleAlreadyExistConstraint } from "./constraints";
 
 /**
- * Role already existed validation constraint
+ * Role already existed validation decorator
  *
  * @param validationOptions
  * @returns
@@ -26,23 +17,4 @@ export const IsRoleAlreadyExist = (validationOptions?: ValidationOptions) => {
 			validator: IsRoleAlreadyExistConstraint,
 		});
     };
-}
-
-@ValidatorConstraint({ name: "IsRoleAlreadyExist", async: true })
-export class IsRoleAlreadyExistConstraint implements ValidatorConstraintInterface {
-	constructor(
-        @InjectRepository(Role)
-		private readonly repository: Repository<Role>
-    ) {}
-
-	async validate(name: any, args: ValidationArguments): Promise<boolean> {
-		return !(
-			await this.repository.findOne({
-				where: {
-					name,
-					tenantId: RequestContext.currentTenantId()
-				}
-			})
-		);
-	}
 }

@@ -1,12 +1,15 @@
 import { ClassConstructor } from 'class-transformer';
-import {
-    registerDecorator,
-    ValidationArguments,
-    ValidationOptions,
-    ValidatorConstraint,
-    ValidatorConstraintInterface
-} from 'class-validator';
+import { registerDecorator, ValidationOptions } from 'class-validator';
+import { IsMatchConstraint } from './constraints';
 
+/**
+ * Match two fields value decorator
+ *
+ * @param type
+ * @param property
+ * @param validationOptions
+ * @returns
+ */
 export const Match = <T>(type: ClassConstructor<T>, property: (o: T) => any, validationOptions?: ValidationOptions) => {
     return (object: any, propertyName: string) => {
         registerDecorator({
@@ -14,20 +17,7 @@ export const Match = <T>(type: ClassConstructor<T>, property: (o: T) => any, val
             propertyName,
             options: validationOptions,
             constraints: [property],
-            validator: MatchConstraint,
+            validator: IsMatchConstraint,
         });
     };
 };
-
-
-@ValidatorConstraint({ name: "Match" })
-export class MatchConstraint implements ValidatorConstraintInterface {
-    validate(value: any, args: ValidationArguments) {
-        const [fn] = args.constraints;
-        return fn(args.object) === value;
-    }
-
-    defaultMessage(args: ValidationArguments) {
-        return `The password and confirmation password do not match.`;
-    }
-}
