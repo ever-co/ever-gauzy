@@ -141,6 +141,6 @@
 		"@gauzy/changelog": "^0.1.0",
 		"@electron/remote": "^2.0.1",
 		"embedded-queue": "^0.0.11",
-		"node-fetch": "^3.2.9"
+		"node-fetch": "^2.6.7"
 	}
 }
