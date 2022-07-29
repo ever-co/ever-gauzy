@@ -3,6 +3,7 @@ import { ConflictException, INestApplication, Type } from '@nestjs/common';
 import { NestFactory, Reflector } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { SentryService } from '@ntegral/nestjs-sentry';
+import { useContainer } from 'class-validator';
 import * as expressSession from 'express-session';
 import * as helmet from 'helmet';
 import * as chalk from 'chalk';
@@ -23,7 +24,7 @@ export async function bootstrap(
 	pluginConfig?: Partial<IPluginConfig>
 ): Promise<INestApplication> {
 	const config = await registerPluginConfig(pluginConfig);
-	
+
 	const { BootstrapModule } = await import('./bootstrap.module');
 	const app = await NestFactory.create<NestExpressApplication>(BootstrapModule, {
 		logger: ['log', 'error', 'warn', 'debug', 'verbose']
@@ -36,7 +37,7 @@ export async function bootstrap(
 	app.useLogger(app.get(SentryService));
 	app.use(json({ limit: '50mb' }));
 	app.use(urlencoded({ extended: true, limit: '50mb' }));
-  
+
 	app.enableCors({
 		origin: '*',
 		methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
@@ -73,7 +74,7 @@ export async function bootstrap(
 
 	const document = SwaggerModule.createDocument(app, options);
 	SwaggerModule.setup('swg', app, document);
-		
+
 	let { port, host } = config.apiConfigOptions;
 	if (!port) {
 		port = 3000;
@@ -86,6 +87,11 @@ export async function bootstrap(
 	console.log(chalk.green(`Configured Port: ${port}`));
 
 	console.log(chalk.green(`Swagger UI available at http://${host}:${port}/swg`));
+
+	/**
+	 * Dependency injection with class-validator
+	 */
+	useContainer(app.select(AppModule), { fallbackOnErrors: true });
 
 	await app.listen(port, host, () => {
 		console.log(chalk.magenta(`Listening at http://${host}:${port}/${globalPrefix}`));
@@ -124,7 +130,7 @@ export async function registerPluginConfig(
 	);
 
 	/**
-	 * Registered core & plugins entities 
+	 * Registered core & plugins entities
 	 */
 	const entities = await registerAllEntities(pluginConfig);
 	setConfig({
@@ -133,7 +139,7 @@ export async function registerPluginConfig(
 			subscribers: coreSubscribers as Array<Type<EntitySubscriberInterface>>,
 		}
 	});
-	
+
 	let registeredConfig = getConfig();
 	return registeredConfig;
 }
@@ -161,8 +167,8 @@ export async function registerAllEntities(
 
 /**
  * GET migrations directory & CLI paths
- * 
- * @returns 
+ *
+ * @returns
  */
 export function getMigrationsSetting() {
 
