@@ -53,13 +53,11 @@ export class EmployeesService {
 	}
 
 	getCount(
-		relations: string[],
-		findInput?: IEmployeeFindInput
+		request: IEmployeeFindInput
 	): Promise<any> {
-		const data = JSON.stringify({ relations, findInput });
 		return firstValueFrom(
 			this.http.get<{ items: IEmployeeFindInput[]; total: number }>(`${API_PREFIX}/employee/count`, {
-				params: toParams({ data })
+				params: toParams({ ...request })
 			})
 		);
 	}
