@@ -1,7 +1,14 @@
 import { Injectable, BadRequestException, NotAcceptableException } from '@nestjs/common';
 import { TimeLog } from './time-log.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, SelectQueryBuilder, Brackets, WhereExpressionBuilder, DeleteResult, UpdateResult } from 'typeorm';
+import {
+	Repository,
+	SelectQueryBuilder,
+	Brackets,
+	WhereExpressionBuilder,
+	DeleteResult,
+	UpdateResult
+} from 'typeorm';
 import { RequestContext } from '../../core/context';
 import {
 	IManualTimeInput,
@@ -73,10 +80,10 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		const query = this.timeLogRepository.createQueryBuilder('time_log');
 		query.setFindOptions({
 			join: {
-				alias: 'timeLogs',
+				alias: 'time_log',
 				innerJoin: {
-					employee: 'timeLogs.employee',
-					timeSlots: 'timeLogs.timeSlots'
+					employee: 'time_log.employee',
+					time_slot: 'time_log.timeSlots'
 				}
 			},
 			relations: {
@@ -111,10 +118,10 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		const query = this.timeLogRepository.createQueryBuilder('time_log');
 		query.setFindOptions({
 			join: {
-				alias: 'timeLogs',
+				alias: 'time_log',
 				innerJoin: {
-					employee: 'timeLogs.employee',
-					timeSlots: 'timeLogs.timeSlots'
+					employee: 'time_log.employee',
+					time_slot: 'time_log.timeSlots'
 				}
 			},
 			relations: {
@@ -198,10 +205,10 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		const query = this.timeLogRepository.createQueryBuilder('time_log');
 		query.setFindOptions({
 			join: {
-				alias: 'timeLogs',
+				alias: 'time_log',
 				innerJoin: {
-					employee: 'timeLogs.employee',
-					timeSlots: 'timeLogs.timeSlots'
+					employee: 'time_log.employee',
+					time_slot: 'time_log.timeSlots'
 				}
 			},
 			order: {
@@ -288,10 +295,10 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		const query = this.timeLogRepository.createQueryBuilder('time_log');
 		query.setFindOptions({
 			join: {
-				alias: 'timeLogs',
+				alias: 'time_log',
 				innerJoin: {
-					employee: 'timeLogs.employee',
-					timeSlots: 'timeLogs.timeSlots'
+					employee: 'time_log.employee',
+					time_slot: 'time_log.timeSlots'
 				}
 			},
 			relations: {
@@ -359,10 +366,10 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		const query = this.timeLogRepository.createQueryBuilder('time_log');
 		query.setFindOptions({
 			join: {
-				alias: 'timeLogs',
+				alias: 'time_log',
 				innerJoin: {
-					employee: 'timeLogs.employee',
-					timeSlots: 'timeLogs.timeSlots'
+					employee: 'time_log.employee',
+					time_slot: 'time_log.timeSlots'
 				}
 			},
 			relations: {
@@ -419,10 +426,10 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		const query = this.timeLogRepository.createQueryBuilder('time_log');
 		query.setFindOptions({
 			join: {
-				alias: 'timeLogs',
+				alias: 'time_log',
 				innerJoin: {
-					employee: 'timeLogs.employee',
-					timeSlots: 'timeLogs.timeSlots'
+					employee: 'time_log.employee',
+					time_slot: 'time_log.timeSlots'
 				}
 			},
 			relations: {
@@ -501,10 +508,10 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		const query = this.timeLogRepository.createQueryBuilder('time_log');
 		query.setFindOptions({
 			join: {
-				alias: 'timeLogs',
+				alias: 'time_log',
 				innerJoin: {
-					employee: 'timeLogs.employee',
-					timeSlots: 'timeLogs.timeSlots'
+					employee: 'time_log.employee',
+					time_slot: 'time_log.timeSlots'
 				}
 			},
 			relations: {
@@ -824,7 +831,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			const start = (activityLevel.start * 6);
 			const end = (activityLevel.end * 6);
 
-			query.andWhere(`"timeSlots"."overall" BETWEEN :start AND :end`, {
+			query.andWhere(`"time_slot"."overall" BETWEEN :start AND :end`, {
 				start,
 				end
 			});
