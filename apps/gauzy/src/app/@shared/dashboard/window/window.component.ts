@@ -20,7 +20,10 @@ import { WindowService } from './window.service';
 	templateUrl: './window.component.html',
 	styleUrls: ['./window.component.scss']
 })
-export class WindowComponent extends GuiDrag implements OnInit, AfterViewInit, OnDestroy {
+export class WindowComponent
+	extends GuiDrag
+	implements OnInit, AfterViewInit, OnDestroy
+{
 	private _windowDragEnded: Observable<any>;
 	@ViewChild(NbPopoverDirective)
 	private _windowPopover: NbPopoverDirective;
@@ -46,12 +49,7 @@ export class WindowComponent extends GuiDrag implements OnInit, AfterViewInit, O
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.windowService.windows.forEach((window: GuiDrag) => {
-			if (window.templateRef === this.templateRef) {
-				this.isCollapse = window.isCollapse;
-				this.isExpand = window.isExpand;
-			}
-		});
+		this.windowService.updateWindow(this);
 	}
 
 	public onClickSetting(event: boolean) {

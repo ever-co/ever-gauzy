@@ -105,4 +105,14 @@ export class WindowService {
 	public set windows$(value: Partial<GuiDrag[]>) {
 		this._windows$.next(value);
 	}
+
+	public updateWindow(value: GuiDrag) {
+		this.windows.forEach((window: GuiDrag) => {
+			if (window.templateRef === value.templateRef) {
+				value.hide = window.hide;
+				value.isCollapse = window.isCollapse;
+				value.isExpand = window.isExpand;
+			}
+		});
+	}
 }

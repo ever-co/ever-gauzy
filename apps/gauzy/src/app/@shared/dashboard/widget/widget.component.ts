@@ -50,12 +50,7 @@ export class WidgetComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.widgetService.widgets.forEach((widget: GuiDrag) => {
-			if (widget.templateRef === this.templateRef) {
-				this.isCollapse = widget.isCollapse;
-				this.isExpand = widget.isExpand;
-			}
-		});
+		this.widgetService.updateWidget(this);
 	}
 
 	public onClickSetting(event: boolean) {

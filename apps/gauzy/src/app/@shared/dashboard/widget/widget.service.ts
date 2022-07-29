@@ -110,4 +110,14 @@ export class WidgetService {
 	public set widgets$(value: Partial<GuiDrag[]>) {
 		this._widgets$.next(value);
 	}
+
+	public updateWidget(value: GuiDrag) {
+		this.widgets.forEach((widget: GuiDrag) => {
+			if (widget.templateRef === value.templateRef) {
+				value.hide = widget.hide;
+				value.isCollapse = widget.isCollapse;
+				value.isExpand = widget.isExpand;
+			}
+		});
+	}
 }
