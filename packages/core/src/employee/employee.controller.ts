@@ -19,7 +19,8 @@ import {
 	Req,
 	UseInterceptors,
 	ValidationPipe,
-	UsePipes
+	UsePipes,
+	ForbiddenException
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
@@ -34,7 +35,7 @@ import {
 	EmployeeUpdateCommand,
 	WorkingEmployeeGetCommand
 } from './commands';
-import { CrudController, ITryRequest, PaginationParams } from './../core/crud';
+import { CrudController, ITryRequest, OptionParams, PaginationParams } from './../core/crud';
 import { TransformInterceptor } from './../core/interceptors';
 import { Permissions } from './../shared/decorators';
 import { BulkBodyLoadTransformPipe, ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
@@ -284,17 +285,16 @@ export class EmployeeController extends CrudController<Employee> {
 	@Get(':id')
 	async findById(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Query('data', ParseJsonPipe) data?: any
+		@Query(new ValidationPipe({
+			transform: true
+		})) options: OptionParams<Employee>
 	): Promise<Employee> {
-		const { relations = [], useTenant } = data;
-		if (useTenant) {
+		try {
 			return this.employeeService.findOneByIdString(id, {
-				relations
+				relations: options.relations || []
 			});
-		} else {
-			return this.employeeService.findWithoutTenant(id, {
-				relations
-			});
+		} catch (error) {
+			throw new ForbiddenException(error);
 		}
 	}
 

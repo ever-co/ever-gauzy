@@ -119,15 +119,6 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 		};
 	}
 
-	async findWithoutTenant(id: string, relations?: any) {
-		return await this.repository.findOne({
-			where: {
-				id
-			},
-			relations
-		});
-	}
-
 	public async pagination(filter: any) {
 		try {
 			const query = this.repository.createQueryBuilder('employee');

@@ -3,7 +3,7 @@
 // Copyright (c) 2018 Sumanth Chinthagunta
 
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { FindOptionsOrder, FindOptionsRelations, FindOptionsWhereProperty } from 'typeorm';
+import { FindOptionsOrder, FindOptionsRelationByString, FindOptionsRelations, FindOptionsWhereProperty } from 'typeorm';
 import { Transform, TransformFnParams } from 'class-transformer';
 import { IsOptional, Max, Min } from 'class-validator';
 
@@ -29,7 +29,7 @@ export abstract class OptionParams<T> {
      */
 	@ApiPropertyOptional()
 	@IsOptional()
-	readonly relations?: FindOptionsRelations<T>;
+	readonly relations?: FindOptionsRelations<T> | FindOptionsRelationByString;
 }
 
 /**
