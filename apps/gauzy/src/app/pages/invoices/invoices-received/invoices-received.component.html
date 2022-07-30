@@ -147,17 +147,6 @@
 			<nb-icon icon="close-outline"></nb-icon>
 			{{ 'INVOICES_PAGE.ESTIMATES.REJECT' | translate }}
 		</button>
-		<button
-			nbButton
-			status="basic"
-			class="action"
-			[disabled]="disableButton"
-			size="small"
-			[nbTooltip]="'BUTTONS.DELETE' | translate"
-			(click)="delete(selectedItem)"
-		>
-			<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
-		</button>
 	</div>
 </ng-template>
 <ng-template #visibleButton>

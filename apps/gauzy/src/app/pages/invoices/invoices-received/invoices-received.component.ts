@@ -322,30 +322,6 @@ export class InvoicesReceivedComponent extends PaginationFilterBaseComponent
 		}
 	}
 
-	async delete(selectedItem?: IInvoice) {
-		if (selectedItem) {
-			this.selectInvoice({
-				isSelected: true,
-				data: selectedItem
-			});
-		}
-		const result = await firstValueFrom(this.dialogService
-			.open(DeleteConfirmationComponent)
-			.onClose);
-
-		if (result) {
-			const { id } = this.selectedInvoice;
-			await this.invoicesService.delete(id);
-
-			if (this.isEstimate) {
-				this.toastrService.success('INVOICES_PAGE.INVOICES_DELETE_ESTIMATE');
-			} else {
-				this.toastrService.success('INVOICES_PAGE.INVOICES_DELETE_INVOICE');
-			}
-			this.invoices$.next(true);
-		}
-	}
-
 	private _loadSettingsSmartTable() {
 		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
