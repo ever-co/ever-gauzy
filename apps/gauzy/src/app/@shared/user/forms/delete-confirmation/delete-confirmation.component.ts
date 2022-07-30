@@ -15,7 +15,10 @@ import { NbDialogRef } from '@nebular/theme';
 				<span>
 					{{ 'FORM.DELETE_CONFIRMATION.SURE' | translate }}
 					{{ recordType | translate }}
-					{{ 'FORM.DELETE_CONFIRMATION.RECORD' | translate }}?
+					<span *ngIf="isRecord">{{
+						'FORM.DELETE_CONFIRMATION.RECORD' | translate
+					}}</span
+					>?
 				</span>
 			</nb-card-body>
 			<nb-card-footer>
@@ -37,6 +40,7 @@ import { NbDialogRef } from '@nebular/theme';
 })
 export class DeleteConfirmationComponent {
 	recordType: string;
+	isRecord: boolean = true;
 	constructor(
 		protected dialogRef: NbDialogRef<DeleteConfirmationComponent>
 	) {}
