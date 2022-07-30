@@ -32,7 +32,7 @@ export class UpdateTimeSlotHandler
 			employeeId = user.employeeId;
 		}
 
-		let [timeSlot] = await this.timeSlotRepository.find({
+		let timeSlot = await this.timeSlotRepository.findOne({
 			where: {
 				...(employeeId ? { employeeId: employeeId } : {}),
 				id: id

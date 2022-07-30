@@ -213,7 +213,7 @@ export class CreateTimeSlotHandler
 
 		console.log({ timeSlot }, 'Final Merged TimeSlot');
 
-		const [slot] = await this.timeSlotRepository.find({
+		const slot = await this.timeSlotRepository.findOne({
 			where : {
 				id: timeSlot.id
 			},

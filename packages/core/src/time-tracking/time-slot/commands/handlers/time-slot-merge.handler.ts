@@ -52,28 +52,28 @@ export class TimeSlotMergeHandler
 		/**
 		 * GET Time Slots for given date range slot
 		 */
-		const builder = this.timeSlotRepository.createQueryBuilder('time_slot');
-		builder.setFindOptions({
+		const query = this.timeSlotRepository.createQueryBuilder('time_slot');
+		query.setFindOptions({
 			relations: {
 				timeLogs: true,
 				screenshots: true,
 				activities: true
 			}
 		});
-		builder.where((query: SelectQueryBuilder<TimeSlot>) => {
-			query.andWhere(`"${query.alias}"."startedAt" >= :startedAt AND "${query.alias}"."startedAt" < :stoppedAt`, {
+		query.where((qb: SelectQueryBuilder<TimeSlot>) => {
+			qb.andWhere(`"${qb.alias}"."startedAt" >= :startedAt AND "${qb.alias}"."startedAt" < :stoppedAt`, {
 				startedAt,
 				stoppedAt
 			});
-			query.andWhere(`"${query.alias}"."employeeId" = :employeeId`, {
+			qb.andWhere(`"${qb.alias}"."employeeId" = :employeeId`, {
 				employeeId
 			});
-			query.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
+			qb.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, {
 				tenantId
 			});
-			query.addOrderBy(`"${query.alias}"."createdAt"`, 'ASC');
+			qb.addOrderBy(`"${qb.alias}"."createdAt"`, 'ASC');
 		});
-		const timerSlots = await builder.getMany();
+		const timerSlots = await query.getMany();
 
 		for (const timeSlot of timerSlots) {
 			console.log({ timeSlot }, timeSlot.timeLogs, 'Time Slot Merging Dates');

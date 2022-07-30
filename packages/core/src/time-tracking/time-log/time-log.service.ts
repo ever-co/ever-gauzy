@@ -883,7 +883,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		/**
 		 * Get Employee
 		 */
-		const [employee] = await this.employeeRepository.find({
+		const employee = await this.employeeRepository.findOne({
 			where: {
 				id: employeeId
 			},
@@ -946,7 +946,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		/**
 		 * Get Employee
 		 */
-		const [employee] = await this.employeeRepository.find({
+		const employee = await this.employeeRepository.findOne({
 			where: {
 				id: employeeId
 			},

@@ -252,7 +252,7 @@ export class TimerService {
 		const userId = RequestContext.currentUserId();
 		const tenantId = RequestContext.currentTenantId();
 
-		const [employee] = await this.employeeRepository.find({
+		const employee = await this.employeeRepository.findOne({
 			where: {
 				userId,
 				tenantId

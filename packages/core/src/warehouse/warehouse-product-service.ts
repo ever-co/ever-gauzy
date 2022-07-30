@@ -110,7 +110,7 @@ export class WarehouseProductService extends TenantAwareCrudService<WarehousePro
 		warehouseProductVariantId: string,
 		quantity: number
 	): Promise<IWarehouseProductVariant> {
-		let [warehouseProductVariant] = await this.warehouseProductVariantRepository.find({
+		let warehouseProductVariant = await this.warehouseProductVariantRepository.findOne({
 			where: {
 				id: warehouseProductVariantId
 			},
@@ -125,7 +125,7 @@ export class WarehouseProductService extends TenantAwareCrudService<WarehousePro
 		);
 
 
-		let [warehouseProduct] = await this.warehouseProductRepository.find({
+		let warehouseProduct = await this.warehouseProductRepository.findOne({
 			where: {
 				id: warehouseProductVariant.warehouseProduct.id
 			},
