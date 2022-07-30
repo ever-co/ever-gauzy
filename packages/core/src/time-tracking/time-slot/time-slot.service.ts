@@ -67,7 +67,7 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 					employee: 'time_slot.employee'
 				},
 				innerJoin: {
-					timeLog: 'time_slot.timeLogs'
+					time_log: 'time_slot.timeLogs'
 				}
 			},
 			relations: [
@@ -82,7 +82,7 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 						endDate: end
 					});
 					if (isEmpty(syncSlots)) {
-						web.andWhere(`"timeLog"."startedAt" BETWEEN :startDate AND :endDate`, {
+						web.andWhere(`"time_log"."startedAt" BETWEEN :startDate AND :endDate`, {
 							startDate: start,
 							endDate: end
 						});
@@ -95,13 +95,13 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 						web.andWhere(`"${qb.alias}"."employeeId" IN (:...employeeIds)`, {
 							employeeIds
 						});
-						web.andWhere(`"timeLog"."employeeId" IN (:...employeeIds)`, {
+						web.andWhere(`"time_log"."employeeId" IN (:...employeeIds)`, {
 							employeeIds
 						});
 					}
 					if (isNotEmpty(request.projectIds)) {
 						const { projectIds } = request;
-						web.andWhere('"timeLog"."projectId" IN (:...projectIds)', {
+						web.andWhere('"time_log"."projectId" IN (:...projectIds)', {
 							projectIds
 						});
 					}
@@ -126,11 +126,11 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 					if (isNotEmpty(request.source)) {
 						const { source } = request;
 						if (source instanceof Array) {
-							web.andWhere('"timeLog"."source" IN (:...source)', {
+							web.andWhere('"time_log"."source" IN (:...source)', {
 								source
 							});
 						} else {
-							web.andWhere('"timeLog"."source" = :source', {
+							web.andWhere('"time_log"."source" = :source', {
 								source
 							});
 						}
@@ -138,11 +138,11 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 					if (isNotEmpty(request.logType)) {
 						const { logType } = request;
 						if (logType instanceof Array) {
-							web.andWhere('"timeLog"."logType" IN (:...logType)', {
+							web.andWhere('"time_log"."logType" IN (:...logType)', {
 								logType
 							});
 						} else {
-							web.andWhere('"timeLog"."logType" = :logType', {
+							web.andWhere('"time_log"."logType" = :logType', {
 								logType
 							});
 						}
@@ -151,9 +151,9 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 			);
 			qb.andWhere(
 				new Brackets((web: WhereExpressionBuilder) => {
-					web.andWhere(`"timeLog"."tenantId" = :tenantId`, { tenantId });
-					web.andWhere(`"timeLog"."organizationId" = :organizationId`, { organizationId });
-					web.andWhere(`"timeLog"."deletedAt" IS NULL`);
+					web.andWhere(`"time_log"."tenantId" = :tenantId`, { tenantId });
+					web.andWhere(`"time_log"."organizationId" = :organizationId`, { organizationId });
+					web.andWhere(`"time_log"."deletedAt" IS NULL`);
 				})
 			);
 			qb.andWhere(
