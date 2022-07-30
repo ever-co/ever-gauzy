@@ -8,14 +8,14 @@ import { NotesWithTagsComponent } from '../notes-with-tags/notes-with-tags.compo
 		<ngx-avatar
 			[src]="rowData?.imageUrl"
 			[name]="rowData?.fullName ? rowData?.fullName : rowData?.name"
-      		[id]="rowData?.id"
+			[id]="rowData?.id"
 			class="report-table"
 		></ngx-avatar>
 		<ng-template [ngIf]="rowData?.isDefault">
 			<nb-badge
 				class="color"
 				position="centered"
-				[style.background]="rowData?.brandColor"
+				[style.background]="background(rowData?.color)"
 				[style.color]="backgroundContrast(rowData?.brandColor)"
 				text="Default"
 			>
@@ -26,7 +26,7 @@ import { NotesWithTagsComponent } from '../notes-with-tags/notes-with-tags.compo
 				*ngFor="let tag of (data | async)?.tags"
 				class="color"
 				position="centered"
-				[style.background]="tag?.color"
+				[style.background]="background(tag?.color)"
 				[style.color]="backgroundContrast(tag?.color)"
 				[text]="tag?.name"
 			>
@@ -47,6 +47,11 @@ import { NotesWithTagsComponent } from '../notes-with-tags/notes-with-tags.compo
 				margin-top: 5px;
 				margin-right: 5px;
 				display: inline-block;
+				font-size: 11px;
+				font-weight: 600;
+				line-height: 13px;
+				letter-spacing: 0em;
+				padding: 3px 8px 4px;
 			}
 			.tags {
 				display: flex;
