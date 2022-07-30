@@ -284,7 +284,7 @@
 		"cypress-cucumber-preprocessor": "^4.3.1",
 		"cypress-file-upload": "^5.0.8",
 		"cz-conventional-changelog": "^3.3.0",
-		"dotenv": "^8.2.0",
+		"dotenv": "^16.0.0",
 		"electron": "^15.1.2",
 		"electron-builder": "^22.14.5",
 		"envalid": "^6.0.2",
