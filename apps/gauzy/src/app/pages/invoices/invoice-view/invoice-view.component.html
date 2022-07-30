@@ -21,16 +21,16 @@
 </nb-card>
 <ng-template #buttons>
 	<div class="button-container">
-    <button
-					nbButton
-					status="basic"
-					class="action secondary"
-					[disabled]="disableButton"
-					size="small"
-				>
-					<nb-icon icon="printer-outline" pack="eva"></nb-icon>
-					{{ 'BUTTONS.PRINT' | translate }}
-				</button>
+		<button
+			nbButton
+			status="basic"
+			class="action secondary"
+			[disabled]="disableButton"
+			size="small"
+		>
+			<nb-icon icon="printer-outline" pack="eva"></nb-icon>
+			{{ 'BUTTONS.PRINT' | translate }}
+		</button>
 		<button
 			nbButton
 			status="basic"
@@ -47,7 +47,7 @@
 			class="action primary"
 			[disabled]="!selectedItem && disableButton"
 			size="small"
-      (click)="edit()"
+			(click)="edit()"
 		>
 			<nb-icon icon="edit-outline"></nb-icon>
 			{{ 'BUTTONS.EDIT' | translate }}
@@ -59,6 +59,7 @@
 			[disabled]="disableButton"
 			size="small"
 			[nbTooltip]="'BUTTONS.DELETE' | translate"
+			(click)="delete()"
 		>
 			<nb-icon status="danger" icon="trash-2-outline"> </nb-icon>
 		</button>
