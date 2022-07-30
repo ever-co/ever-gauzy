@@ -62,7 +62,7 @@ export class UpdateTimeSlotHandler
 			}
 			await this.timeSlotRepository.update(id, input);
 
-			let slot = await this.timeSlotRepository.findOne({
+			timeSlot = await this.timeSlotRepository.findOne({
 				where: {
 					...(employeeId ? { employeeId } : {}),
 					id
@@ -73,7 +73,7 @@ export class UpdateTimeSlotHandler
 					activities: true
 				}
 			});
-			return slot;
+			return timeSlot;
 		} else {
 			return null;
 		}

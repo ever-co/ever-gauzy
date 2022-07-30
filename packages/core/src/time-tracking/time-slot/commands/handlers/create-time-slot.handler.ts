@@ -212,8 +212,7 @@ export class CreateTimeSlotHandler
 		}
 
 		console.log({ timeSlot }, 'Final Merged TimeSlot');
-
-		const slot = await this.timeSlotRepository.findOne({
+		return await this.timeSlotRepository.findOne({
 			where : {
 				id: timeSlot.id
 			},
@@ -222,6 +221,5 @@ export class CreateTimeSlotHandler
 				screenshots: true
 			}
 		});
-		return slot;
 	}
 }
