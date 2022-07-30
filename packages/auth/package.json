@@ -39,7 +39,8 @@
 		"passport-jwt": "^4.0.0",
 		"passport-linkedin-oauth2": "^2.0.0",
 		"passport-twitter": "^1.0.4",
-		"rxjs": "^7.4.0"
+		"rxjs": "^7.4.0",
+		"dotenv": "^16.0.0"
 	},
 	"devDependencies": {
 		"@types/bcrypt": "^3.0.0",
@@ -48,7 +49,6 @@
 		"@types/passport-facebook": "^2.1.10",
 		"@types/passport-google-oauth20": "^2.0.6",
 		"@types/passport-jwt": "^3.0.6",
-		"dotenv": "^16.0.0",
 		"rimraf": "^3.0.2",
 		"typescript": "4.5.5"
 	}
