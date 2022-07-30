@@ -1,16 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Brackets, IsNull, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
+import { Brackets, FindOptionsWhere, IsNull, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import * as mjml2html from 'mjml';
 import * as Handlebars from 'handlebars';
 import { AccountingTemplateTypeEnum, IAccountingTemplate, IPagination, LanguagesEnum } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
 import { AccountingTemplate } from './accounting-template.entity';
-import { CrudService, PaginationParams } from './../core/crud';
+import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
 
 @Injectable()
-export class AccountingTemplateService extends CrudService<AccountingTemplate> {
+export class AccountingTemplateService extends TenantAwareCrudService<AccountingTemplate> {
 	constructor(
 		@InjectRepository(AccountingTemplate)
 		private readonly accountingRepository: Repository<AccountingTemplate>
@@ -169,7 +169,7 @@ export class AccountingTemplateService extends CrudService<AccountingTemplate> {
 
 
 	async getAccountTemplate(
-		input,
+		options: FindOptionsWhere<AccountingTemplate>,
 		themeLanguage: LanguagesEnum
 	) {
 		let template: any;
@@ -177,7 +177,7 @@ export class AccountingTemplateService extends CrudService<AccountingTemplate> {
 			templateType = AccountingTemplateTypeEnum.INVOICE,
 			organizationId,
 			languageCode = themeLanguage
-		} = input;
+		} = options;
 		const tenantId = RequestContext.currentTenantId();
 
 		try {
@@ -236,7 +236,7 @@ export class AccountingTemplateService extends CrudService<AccountingTemplate> {
 		query.where((qb: SelectQueryBuilder<AccountingTemplate>) => {
 			qb.andWhere(
 				new Brackets((bck: WhereExpressionBuilder) => {
-					const { tenantId, organizationId, languageCode } = params.where;
+					const { organizationId, languageCode } = params.where;
 					if (isNotEmpty(organizationId)) {
 						bck.andWhere(`"${qb.alias}"."organizationId" = :organizationId`, {
 							organizationId
@@ -247,11 +247,9 @@ export class AccountingTemplateService extends CrudService<AccountingTemplate> {
 							languageCode
 						});
 					}
-					if (isNotEmpty(tenantId)) {
-						bck.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, {
-							tenantId: RequestContext.currentTenantId()
-						});
-					}
+					bck.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, {
+						tenantId: RequestContext.currentTenantId()
+					});
 				})
 			);
 			qb.orWhere(
