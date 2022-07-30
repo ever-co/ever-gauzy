@@ -45,9 +45,14 @@ export class NotesWithTagsComponent
 		});
 	}
 
+	background(bgColor: string) {
+		let color = new Color(bgColor);
+		return color.valid ? bgColor : this._test(bgColor);
+	}
+
 	backgroundContrast(bgColor: string) {
 		let color = new Color(bgColor);
-		color = color.valid ? color : new Color(new Rgba(255, 255, 255, 0.5));
+		color = color.valid ? color : new Color(this.hex2rgb(bgColor));
 		const MIN_THRESHOLD = 128;
 		const MAX_THRESHOLD = 186;
 		const contrast = color.rgb
@@ -59,6 +64,24 @@ export class NotesWithTagsComponent
 			return '#000000';
 		} else {
 			return this.textColor;
+		}
+	}
+
+	public hex2rgb(hex: string) {
+		hex = this._test(hex);
+		const r = parseInt(hex.slice(1, 3), 16);
+		const g = parseInt(hex.slice(3, 5), 16);
+		const b = parseInt(hex.slice(5, 7), 16);
+		return new Rgba(r, g, b, 1);
+	}
+
+	private _test(hex: string): string {
+		const regex = /^#[0-9A-F]{6}$/i;
+		if (regex.test(hex)) {
+			return hex;
+		} else {
+			hex = '#' + hex;
+			return regex.test(hex) ? hex : '#000000';
 		}
 	}
 }
