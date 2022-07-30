@@ -152,7 +152,7 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 			}
 
 			for (const request of requestApproval) {
-				const [approval] = await this.requestApprovalRepository.find({
+				const approval = await this.requestApprovalRepository.findOne({
 					where: {
 						id: request.requestApprovalId
 					},
