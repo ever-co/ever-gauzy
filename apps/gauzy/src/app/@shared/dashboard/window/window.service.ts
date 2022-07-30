@@ -1,4 +1,5 @@
-import { Injectable, TemplateRef } from '@angular/core';
+import { Injectable, OnDestroy, TemplateRef } from '@angular/core';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Subject } from 'rxjs/internal/Subject';
 import { filter, tap } from 'rxjs/operators';
 import { Store } from '../../../@core';
@@ -8,10 +9,11 @@ import { LocalstorageStrategy } from '../concretes/strategies/localstorage-strat
 import { BackupStrategy } from '../interfaces/backup-strategy.interface';
 import { GuiDrag } from '../interfaces/gui-drag.abstract';
 
+@UntilDestroy({ checkProperties: true })
 @Injectable({
 	providedIn: 'root'
 })
-export class WindowService {
+export class WindowService implements OnDestroy {
 	private _windowsRef: TemplateRef<HTMLElement>[] = [];
 	private _windows: GuiDrag[] = [];
 	private _windowLayoutPersistance: LayoutPersistance;
@@ -38,7 +40,8 @@ export class WindowService {
 						: this.retrieve().forEach((deserialized: GuiDrag) =>
 								this.windowsRef.push(deserialized.templateRef)
 						  );
-				})
+				}),
+				untilDestroyed(this)
 			)
 			.subscribe();
 	}
@@ -123,4 +126,6 @@ export class WindowService {
 			}
 		});
 	}
+
+	ngOnDestroy(): void {}
 }
