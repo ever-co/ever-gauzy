@@ -13,18 +13,26 @@
   display: unset;
   margin-right: 0;
   border-radius: 2rem;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 13px;
+  letter-spacing: 0em;
+  padding: 3px 8px 4px;
 }
 
-input{
+input {
   box-shadow: unset;
 }
-:host ::ng-deep{
-  .ng-select.ng-select-multiple .ng-select-container .ng-value-container .ng-value{
+:host ::ng-deep {
+  .ng-select.ng-select-multiple
+    .ng-select-container
+    .ng-value-container
+    .ng-value {
     background-color: transparent;
     margin-right: 0;
   }
 }
-.text{
+.text {
   overflow-x: hidden;
   text-overflow: ellipsis;
 }
