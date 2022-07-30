@@ -120,6 +120,12 @@ export abstract class CrudService<T extends BaseEntity>
 		}
 	}
 
+	/*
+    |--------------------------------------------------------------------------
+    | @FindOneOrFail
+    |--------------------------------------------------------------------------
+    */
+
 	/**
 	 * Finds first entity by a given find options.
 	 * If entity was not found in the database - rejects with error.
@@ -152,12 +158,6 @@ export abstract class CrudService<T extends BaseEntity>
 			};
 		}
 	}
-
-	/*
-    |--------------------------------------------------------------------------
-    | @FindOneOrFail
-    |--------------------------------------------------------------------------
-    */
 
 	/**
 	 * Finds first entity by a given find options.
