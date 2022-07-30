@@ -51,7 +51,7 @@ import { NotesWithTagsComponent } from '../notes-with-tags/notes-with-tags.compo
 				font-weight: 600;
 				line-height: 13px;
 				letter-spacing: 0em;
-				padding: 3px 8px 4px;
+				padding: 3px 8px;
 			}
 			.tags {
 				display: flex;
