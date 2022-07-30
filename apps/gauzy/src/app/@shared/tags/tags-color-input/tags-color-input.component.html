@@ -21,7 +21,7 @@
           <input type="checkbox" [ngModel]="tag$.selected" />
         </ng-container>
         <nb-badge
-          [style.background]="tag.color"
+          [style.background]="background(tag.color)"
           class="tag-color"
         ></nb-badge>
         <span class="text">{{ tag.name }}</span>
@@ -31,7 +31,7 @@
 		<ng-template ng-label-tmp let-tag="item" let-clear="clear">
 			<nb-badge
 				class="tag-color tag-label"
-				[style.background]="tag.color"
+				[style.background]="background(tag.color)"
 				[style.color]="backgroundContrast(tag.color)"
 				text="{{ tag.name }}"
 				(click)="clear(tag)"
