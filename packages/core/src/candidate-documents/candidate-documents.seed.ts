@@ -1,11 +1,11 @@
 import { ICandidate, ICandidateDocument, IOrganization, ITenant } from '@gauzy/contracts';
 import { faker } from '@ever-co/faker';
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { CandidateDocument, Organization } from './../core/entities/internal';
 import { DEFAULT_CANDIDATE_DOCUMENTS } from './default-candidate-documents';
 
 export const createCandidateDocuments = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	candidates: ICandidate[] | void,
 	organization: IOrganization
@@ -18,24 +18,28 @@ export const createCandidateDocuments = async (
 	}
 	let defaultCandidateDocuments = [];
 	for (const candidate of candidates) {
+		const { id: organizationId } = organization;
+		const { id: tenantId } = tenant;
+		const { id: candidateId } = candidate;
+
 		const documents = DEFAULT_CANDIDATE_DOCUMENTS.map((document) => ({
 			name: document.name,
 			documentUrl: document.documentUrl,
-			candidateId: candidate.id,
-			tenant: tenant,
-			organization: organization
+			candidateId: candidateId,
+			tenantId: tenantId,
+			organizationId: organizationId
 		}));
 		defaultCandidateDocuments = [
 			...defaultCandidateDocuments,
 			...documents
 		];
 	}
-	await insertCandidateDocuments(connection, defaultCandidateDocuments);
+	await insertCandidateDocuments(dataSource, defaultCandidateDocuments);
 	return defaultCandidateDocuments;
 };
 
 export const createRandomCandidateDocuments = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	tenantCandidatesMap: Map<ITenant, ICandidate[]> | void
 ): Promise<Map<ICandidate, ICandidateDocument[]>> => {
@@ -48,33 +52,33 @@ export const createRandomCandidateDocuments = async (
 	let candidateDocuments = [];
 	const candidateDocumentsMap: Map<ICandidate, any[]> = new Map();
 	for await (const tenant of tenants || []) {
-		const organizations = await connection.manager.find(Organization, {
-			where: { 
-				tenant: tenant 
-			}
+		const { id: tenantId } = tenant;
+		const organizations = await dataSource.manager.findBy(Organization, {
+			tenantId: tenantId
 		});
 		const candidates = tenantCandidatesMap.get(tenant);
 		for (const candidate of candidates || []) {
+			const { id: candidateId } = candidate;
 			const documents = DEFAULT_CANDIDATE_DOCUMENTS.map((document) => ({
 				name: document.name,
 				documentUrl: document.documentUrl,
-				candidateId: candidate.id,
+				candidateId: candidateId,
 				organization: faker.random.arrayElement(organizations),
-				tenant: tenant
+				tenantId: tenantId
 			}));
 			candidateDocumentsMap.set(candidate, documents);
 			candidateDocuments = [...candidateDocuments, ...documents];
 		}
 	}
-	await insertCandidateDocuments(connection, candidateDocuments);
+	await insertCandidateDocuments(dataSource, candidateDocuments);
 	return candidateDocumentsMap;
 };
 
 const insertCandidateDocuments = async (
-	connection: Connection,
+	dataSource: DataSource,
 	candidateDocuments: CandidateDocument[]
 ) => {
-	await connection
+	await dataSource
 		.createQueryBuilder()
 		.insert()
 		.into(CandidateDocument)

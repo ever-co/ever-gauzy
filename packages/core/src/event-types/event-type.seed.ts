@@ -1,10 +1,10 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { IEmployee, IOrganization, ITenant } from '@gauzy/contracts';
 import { faker } from '@ever-co/faker';
 import { EventType, Tag } from './../core/entities/internal';
 
 export const createRandomEventType = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	tenantEmployeeMap: Map<ITenant, IEmployee[]>,
 	tenantOrganizationsMap: Map<ITenant, IOrganization[]>
@@ -28,8 +28,9 @@ export const createRandomEventType = async (
 		for (const tenantEmployee of tenantEmployees) {
 			const eventTypes: EventType[] = [];
 			for (const organization of organizations) {
-				const tags = await connection.manager.find(Tag, {
-					where: [{ organization: organization }]
+				const { id: organizationId } = organization;
+				const tags = await dataSource.manager.findBy(Tag, {
+					organizationId
 				});
 				const event = new EventType();
 				event.isActive = faker.datatype.boolean();
@@ -43,13 +44,13 @@ export const createRandomEventType = async (
 				event.tenant = tenant;
 				eventTypes.push(event);
 			}
-			await connection.manager.save(eventTypes);
+			await dataSource.manager.save(eventTypes);
 		}
 	}
 };
 
 export const createDefaultEventTypes = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	organizations: IOrganization[]
 ): Promise<EventType[]> => {
@@ -86,12 +87,12 @@ export const createDefaultEventTypes = async (
 		eventTypes.push(eventTypeTwo);
 	});
 
-	return await insertEventTypes(connection, eventTypes);
+	return await insertEventTypes(dataSource, eventTypes);
 };
 
 const insertEventTypes = async (
-	connection: Connection,
+	dataSource: DataSource,
 	eventTypes: EventType[]
 ): Promise<EventType[]> => {
-	return await connection.manager.save(eventTypes);
+	return await dataSource.manager.save(eventTypes);
 };

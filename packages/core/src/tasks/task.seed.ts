@@ -1,4 +1,4 @@
-import { Brackets, Connection, WhereExpressionBuilder } from 'typeorm';
+import { Brackets, DataSource, WhereExpressionBuilder } from 'typeorm';
 import { faker } from '@ever-co/faker';
 import { filter, uniq } from 'underscore';
 import { lastValueFrom, map } from 'rxjs';
@@ -19,13 +19,13 @@ import {
 	Tag,
 	Task,
 	User,
-	Employee 
+	Employee
 } from './../core/entities/internal';
 
 const GITHUB_API_URL = 'https://api.github.com';
 
 export const createDefaultTask = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	organization: IOrganization
 ) => {
@@ -47,22 +47,22 @@ export const createDefaultTask = async (
 
 	labels = uniq(labels, (label) => label.name);
 	const tags: ITag[] = await createTags(
-		connection,
+		dataSource,
 		labels,
 		tenant,
 		organization
 	);
 
-	const defaultProjects = await connection.manager.find(OrganizationProject);
+	const defaultProjects = await dataSource.manager.find(OrganizationProject);
 	if (!defaultProjects) {
 		console.warn(
 			'Warning: projects not found, DefaultTasks will not be created'
 		);
 		return;
 	}
-	const teams = await connection.manager.find(OrganizationTeam);
-	const users = await connection.manager.find(User);
-	const employees = await connection.manager.find(Employee);
+	const teams = await dataSource.manager.find(OrganizationTeam);
+	const users = await dataSource.manager.find(User);
+	const employees = await dataSource.manager.find(Employee);
 
 	let count = 0;
 	for await (const issue of issues) {
@@ -71,7 +71,7 @@ export const createDefaultTask = async (
 			status = TaskStatusEnum.IN_PROGRESS;
 		}
 		const project = faker.random.arrayElement(defaultProjects);
-		const maxTaskNumber = await getMaxTaskNumberByProject(connection, {
+		const maxTaskNumber = await getMaxTaskNumberByProject(dataSource, {
 			tenantId: tenant.id,
 			organizationId: organization.id,
 			projectId: project.id
@@ -96,13 +96,13 @@ export const createDefaultTask = async (
 		} else {
 			task.teams = [faker.random.arrayElement(teams)];
 		}
-		await connection.manager.save(task);
+		await dataSource.manager.save(task);
 		count++;
 	}
 };
 
 export const createRandomTask = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[]
 ) => {
 	const httpService = new HttpService();
@@ -124,22 +124,22 @@ export const createRandomTask = async (
 	labels = uniq(labels, (label) => label.name);
 
 	for await (const tenant of tenants || []) {
-		const users = await connection.manager.find(User, {
+		const { id: tenantId } = tenant;
+		const users = await dataSource.manager.find(User, {
 			where: {
-				tenant
+				tenantId
 			}
 		});
-		const organizations = await connection.manager.find(Organization, {
+		const organizations = await dataSource.manager.find(Organization, {
 			where: {
-				tenant
+				tenantId
 			}
 		});
 		for await (const organization of organizations) {
-			const projects = await connection.manager.find(OrganizationProject, {
-				where: {
-					tenant,
-					organization
-				}
+			const { id: organizationId } = organization;
+			const projects = await dataSource.manager.findBy(OrganizationProject, {
+				tenantId,
+				organizationId
 			});
 			if (!projects) {
 				console.warn(
@@ -147,22 +147,20 @@ export const createRandomTask = async (
 				);
 				continue;
 			}
-			const teams = await connection.manager.find(OrganizationTeam, {
-				where: {
-					tenant,
-					organization
-				}
+			const teams = await dataSource.manager.findBy(OrganizationTeam, {
+				tenantId,
+				organizationId
 			});
 
 			const tags: ITag[] = await createTags(
-				connection,
+				dataSource,
 				labels,
 				tenant,
 				organization
 			);
-			const employees = await connection.manager.find(Employee, {
-				tenant,
-				organization
+			const employees = await dataSource.manager.findBy(Employee, {
+				tenantId,
+				organizationId
 			});
 			let count = 0;
 
@@ -172,7 +170,7 @@ export const createRandomTask = async (
 					status = TaskStatusEnum.IN_PROGRESS;
 				}
 				const project = faker.random.arrayElement(projects);
-				const maxTaskNumber = await getMaxTaskNumberByProject(connection, {
+				const maxTaskNumber = await getMaxTaskNumberByProject(dataSource, {
 					tenantId: tenant.id,
 					organizationId: organization.id,
 					projectId: project.id
@@ -199,7 +197,7 @@ export const createRandomTask = async (
 					task.teams = [faker.random.arrayElement(teams)];
 				}
 
-				await connection.manager.save(task);
+				await dataSource.manager.save(task);
 				count++;
 			}
 		}
@@ -207,7 +205,7 @@ export const createRandomTask = async (
 };
 
 export async function createTags(
-	connection: Connection,
+	dataSource: DataSource,
 	labels,
 	tenant: ITenant,
 	organization: IOrganization
@@ -227,24 +225,24 @@ export async function createTags(
 			})
 	);
 
-	const insertedTags = await connection.getRepository(Tag).save(tags);
+	const insertedTags = await dataSource.getRepository(Tag).save(tags);
 	return insertedTags;
 }
 
 /**
  * GET maximum task number by project filter
- * 
- * @param options 
+ *
+ * @param options
  */
 export async function getMaxTaskNumberByProject(
-	connection: Connection,
+	dataSource: DataSource,
 	options: IGetTaskOptions
 ) {
 	const { tenantId, organizationId, projectId } = options;
 	/**
 	 * GET maximum task number by project
 	 */
-	const query = connection.createQueryBuilder(Task, 'task');
+	const query = dataSource.createQueryBuilder(Task, 'task');
 	query.select(`COALESCE(MAX("${query.alias}"."number"), 0)`, "maxTaskNumber");
 	query.andWhere(
 		new Brackets((qb: WhereExpressionBuilder) => {

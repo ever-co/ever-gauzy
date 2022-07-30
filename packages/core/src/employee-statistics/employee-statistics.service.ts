@@ -239,7 +239,7 @@ export class EmployeeStatisticsService {
 		employeeIds: string[],
 		{ startDate, endDate }: IDateRangePicker,
 		organizationId: string
-	) => 
+	) =>
 		await this.incomeService.findAll({
 			select: [
 				'employeeId',
@@ -260,9 +260,9 @@ export class EmployeeStatisticsService {
 				employee: {
 					id: In(employeeIds)
 				},
-				valueDate: Between(
-					moment(startDate).format('YYYY-MM-DD HH:mm:ss.SSS'),
-					moment(endDate).format('YYYY-MM-DD HH:mm:ss.SSS')
+				valueDate: Between<Date>(
+					moment(moment(startDate).format('YYYY-MM-DD HH:mm:ss.SSS')).toDate(),
+					moment(moment(endDate).format('YYYY-MM-DD HH:mm:ss.SSS')).toDate(),
 				)
 			},
 			order: {
@@ -280,7 +280,7 @@ export class EmployeeStatisticsService {
 		employeeIds: string[],
 		{ startDate, endDate }: IDateRangePicker,
 		organizationId: string
-	) => 
+	) =>
 		await this.expenseService.findAll({
 			select: [
 				'employeeId',
@@ -297,9 +297,9 @@ export class EmployeeStatisticsService {
 					id: In(employeeIds)
 				},
 				splitExpense: false,
-				valueDate: Between(
-					moment(startDate).format('YYYY-MM-DD HH:mm:ss.SSS'),
-					moment(endDate).format('YYYY-MM-DD HH:mm:ss.SSS')
+				valueDate: Between<Date>(
+					moment(moment(startDate).format('YYYY-MM-DD HH:mm:ss.SSS')).toDate(),
+					moment(moment(endDate).format('YYYY-MM-DD HH:mm:ss.SSS')).toDate(),
 				)
 			},
 			order: {

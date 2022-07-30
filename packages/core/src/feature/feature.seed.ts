@@ -1,4 +1,4 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import * as path from 'path';
 import { copyFileSync, mkdirSync } from 'fs';
 import * as chalk from 'chalk';
@@ -15,16 +15,16 @@ import { FeatureOrganization } from './feature-organization.entity';
 import { IPluginConfig } from '@gauzy/common';
 
 export const createDefaultFeatureToggle = async (
-	connection: Connection,
-	config: IPluginConfig,
+	dataSource: DataSource,
+	config: Partial<IPluginConfig>,
 	tenant: ITenant
 ) => {
-	await cleanFeature(connection, config);
+	await cleanFeature(dataSource, config);
 
 	for await (const item of DEFAULT_FEATURES) {
 		const feature: IFeature = await createFeature(item, tenant, config);
-		const parent = await connection.manager.save(feature);
-		
+		const parent = await dataSource.manager.save(feature);
+
 		const { children = [] } = item;
 		if (children.length > 0) {
 			const featureChildren: IFeature[] = [];
@@ -39,17 +39,17 @@ export const createDefaultFeatureToggle = async (
 				featureChildren.push(childFeature);
 			}
 
-			await connection.manager.save(featureChildren);
+			await dataSource.manager.save(featureChildren);
 		}
 	}
-	return await connection.getRepository(Feature).find();
+	return await dataSource.getRepository(Feature).find();
 };
 
 export const createRandomFeatureToggle = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[]
 ) => {
-	const features: IFeature[] = await connection.getRepository(Feature).find();
+	const features: IFeature[] = await dataSource.getRepository(Feature).find();
 	const featureOrganizations: IFeatureOrganization[] = [];
 
 	for await (const feature of features) {
@@ -65,15 +65,15 @@ export const createRandomFeatureToggle = async (
 			featureOrganizations.push(featureOrganization);
 		}
 	}
-	
-	await connection.manager.save(featureOrganizations);
+
+	await dataSource.manager.save(featureOrganizations);
 	return features;
 };
 
 async function createFeature(
 	item: IFeature,
 	tenant: ITenant,
-	config: IPluginConfig
+	config: Partial<IPluginConfig>
 ) {
 	const {
 		name,
@@ -103,15 +103,15 @@ async function createFeature(
 	return feature;
 }
 
-async function cleanFeature(connection, config) {
+async function cleanFeature(dataSource, config) {
 	if (config.dbConnectionOptions.type === 'sqlite') {
-		await connection.query('DELETE FROM feature');
-		await connection.query('DELETE FROM feature_organization');
+		await dataSource.query('DELETE FROM feature');
+		await dataSource.query('DELETE FROM feature_organization');
 	} else {
-		await connection.query(
+		await dataSource.query(
 			'TRUNCATE TABLE feature RESTART IDENTITY CASCADE'
 		);
-		await connection.query(
+		await dataSource.query(
 			'TRUNCATE TABLE feature_organization RESTART IDENTITY CASCADE'
 		);
 	}
@@ -160,7 +160,7 @@ async function cleanFeature(connection, config) {
 	});
 }
 
-function copyImage(fileName: string, config: IPluginConfig) {
+function copyImage(fileName: string, config: Partial<IPluginConfig>) {
 	try {
 		const destDir = 'features';
 

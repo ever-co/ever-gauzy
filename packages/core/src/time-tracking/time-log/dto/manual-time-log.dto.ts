@@ -1,7 +1,7 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { IsNotEmpty } from "class-validator";
 import { IManualTimeInput } from "@gauzy/contracts";
-import { IsBeforeDate } from "./../../../shared/decorators/validations";
+import { IsBeforeDate } from "./../../../shared/validators";
 import { TenantOrganizationBaseDTO } from "./../../../core/dto";
 
 export class ManualTimeLogDTO extends TenantOrganizationBaseDTO implements IManualTimeInput {

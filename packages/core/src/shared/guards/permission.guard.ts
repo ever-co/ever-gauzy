@@ -15,7 +15,7 @@ export class PermissionGuard implements CanActivate {
 
 	async canActivate(context: ExecutionContext): Promise<boolean> {
 		/*
-		* GET metadata permissions class method level 
+		* GET metadata permissions class method level
 		*/
 		const methodPermissions = this._reflector.get<string[]>(
 			'permissions',
@@ -23,15 +23,15 @@ export class PermissionGuard implements CanActivate {
 		) || [];
 
 		/*
-		* GET metadata permissions class level 
+		* GET metadata permissions class level
 		*/
 		const classPermissions = this._reflector.get<string[]>(
-			'permissions', 
+			'permissions',
 			context.getClass()
 		) || [];
 
 		const permissions = removeDuplicates(methodPermissions.concat(classPermissions));
-		
+
 		let isAuthorized = false;
 		if (permissions.length === 0) {
 			isAuthorized = true;
@@ -44,7 +44,11 @@ export class PermissionGuard implements CanActivate {
 			};
 
 			const user = await this.userService.findOneByIdString(id, {
-				relations: ['role', 'role.rolePermissions']
+				relations: {
+					role: {
+						rolePermissions: true
+					}
+				}
 			});
 
 			isAuthorized = !!user.role.rolePermissions.find(

@@ -1,11 +1,11 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { faker } from '@ever-co/faker';
 import { IOrganization, ITenant } from '@gauzy/contracts';
 import { PipelineStage } from './pipeline-stage.entity';
 import { Pipeline } from './../core/entities/internal';
 
 export const createRandomPipelineStage = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	tenantOrganizationsMap: Map<ITenant, IOrganization[]>
 ): Promise<PipelineStage[]> => {
@@ -18,10 +18,13 @@ export const createRandomPipelineStage = async (
 
 	const pipelineStages: PipelineStage[] = [];
 	for (const tenant of tenants) {
+		const { id: tenantId } = tenant;
 		const tenantOrganization = tenantOrganizationsMap.get(tenant);
 		for (const tenantOrg of tenantOrganization) {
-			const organizationPipeline = await connection.manager.find(Pipeline, {
-				where: { organization: tenantOrg }
+			const { id: organizationId } = tenantOrg;
+			const organizationPipeline = await dataSource.manager.findBy(Pipeline, {
+				organizationId,
+				tenantId
 			});
 			for (const pipeline of organizationPipeline) {
 				for (let i = 0; i <= faker.datatype.number(10); i++) {
@@ -40,10 +43,10 @@ export const createRandomPipelineStage = async (
 		}
 	}
 
-	return await insertRandomPipelineStage(connection, pipelineStages);
+	return await insertRandomPipelineStage(dataSource, pipelineStages);
 };
 
 const insertRandomPipelineStage = async (
-	connection: Connection,
+	dataSource: DataSource,
 	pipelineStages: PipelineStage[]
-) => await connection.manager.save(pipelineStages);
+) => await dataSource.manager.save(pipelineStages);

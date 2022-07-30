@@ -35,12 +35,12 @@ export class TimeLogUpdateHandler
 		if (id instanceof TimeLog) {
 			timeLog = id;
 		} else {
-			timeLog = await this.timeLogRepository.findOne(id);
+			timeLog = await this.timeLogRepository.findOneBy({ id });
 		}
 
 		const tenantId = RequestContext.currentTenantId();
 		const { employeeId, organizationId } = timeLog;
-	
+
 		let needToUpdateTimeSlots = false;
 		if (input.startedAt || input.stoppedAt) {
 			needToUpdateTimeSlots = true;
@@ -78,7 +78,9 @@ export class TimeLogUpdateHandler
 			timeLog.stoppedAt
 		);
 
-		timeLog = await this.timeLogRepository.findOne(timeLog.id);
+		timeLog = await this.timeLogRepository.findOneBy({
+			id: timeLog.id
+		});
 		const { timesheetId } = timeLog;
 
 		if (needToUpdateTimeSlots) {
@@ -98,23 +100,27 @@ export class TimeLogUpdateHandler
 				/**
 				 * Removed Deleted TimeSlots
 				 */
-				const timeSlots = await this.timeSlotRepository.find({
-					where: (qb: SelectQueryBuilder<TimeSlot>) => {
-						qb.andWhere(`"${qb.alias}"."organizationId" = :organizationId`, {
-							organizationId
-						});
-						qb.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, {
-							tenantId
-						});
-						qb.andWhere(`"${qb.alias}"."employeeId" = :employeeId`, {
-							employeeId
-						});
-						qb.andWhere(`"${qb.alias}"."startedAt" IN (:...startTimes)`, {
-							startTimes
-						});
-					},
-					relations: ['screenshots']
+				const query = this.timeSlotRepository.createQueryBuilder('time_slot');
+				query.setFindOptions({
+					relations: {
+						screenshots: true
+					}
 				});
+				query.where((qb: SelectQueryBuilder<TimeSlot>) => {
+					qb.andWhere(`"${qb.alias}"."organizationId" = :organizationId`, {
+						organizationId
+					});
+					qb.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, {
+						tenantId
+					});
+					qb.andWhere(`"${qb.alias}"."employeeId" = :employeeId`, {
+						employeeId
+					});
+					qb.andWhere(`"${qb.alias}"."startedAt" IN (:...startTimes)`, {
+						startTimes
+					});
+				});
+				const timeSlots = await query.getMany();
 				await this.timeSlotRepository.remove(timeSlots);
 			}
 
@@ -170,7 +176,9 @@ export class TimeLogUpdateHandler
 				);
 			}
 		}
-		
-		return await this.timeLogRepository.findOne(timeLog.id);
+
+		return await this.timeLogRepository.findOneBy({
+			id: timeLog.id
+		});
 	}
 }

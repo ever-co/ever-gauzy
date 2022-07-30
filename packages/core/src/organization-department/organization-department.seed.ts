@@ -1,4 +1,4 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { OrganizationDepartment } from './organization-department.entity';
 import { faker } from '@ever-co/faker';
 import { Tag } from '../tags/tag.entity';
@@ -6,11 +6,11 @@ import { DEFAULT_ORGANIZATION_DEPARTMENTS } from './default-organization-departm
 import { IOrganization, ITenant } from '@gauzy/contracts';
 
 export const createDefaultOrganizationDepartments = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	organizations: IOrganization[]
 ) => {
-	const tag = connection.getRepository(Tag).create({
+	const tag = dataSource.getRepository(Tag).create({
 		name: 'API',
 		description: '',
 		color: faker.commerce.color()
@@ -26,11 +26,11 @@ export const createDefaultOrganizationDepartments = async (
 			departments.push(department);
 		});
 	}
-	return await connection.manager.save(departments);
+	return await dataSource.manager.save(departments);
 };
 
 export const seedRandomOrganizationDepartments = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	tenantOrganizationsMap: Map<ITenant, IOrganization[]>
 ): Promise<void> => {
@@ -49,13 +49,13 @@ export const seedRandomOrganizationDepartments = async (
 			);
 			departments = [...departments, ...organizationDepartments];
 		});
-		await insertEmploymentDepartment(connection, departments);
+		await insertEmploymentDepartment(dataSource, departments);
 	}
 };
 
 const insertEmploymentDepartment = async (
-	connection: Connection,
+	dataSource: DataSource,
 	employmentDepartment: OrganizationDepartment[]
 ): Promise<void> => {
-	await connection.manager.save(employmentDepartment);
+	await dataSource.manager.save(employmentDepartment);
 };

@@ -1,5 +1,5 @@
 import * as seed from './product-type.seed.json';
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { Tenant } from '../tenant/tenant.entity';
 import { IOrganization, ProductTypesIconsEnum } from '@gauzy/contracts';
 import { ProductType } from './product-type.entity';
@@ -9,7 +9,7 @@ import { Product } from '../product/product.entity';
 import { ProductTypeTranslation } from './product-type-translation.entity';
 
 export const createDefaultProductTypes = async (
-	connection: Connection,
+	dataSource: DataSource,
 	organizations: IOrganization[]
 ): Promise<ProductType[]> => {
 	const seedProductTypes = [];
@@ -32,20 +32,20 @@ export const createDefaultProductTypes = async (
 		});
 	});
 
-	await insertProductTypes(connection, seedProductTypes);
+	await insertProductTypes(dataSource, seedProductTypes);
 
 	return seedProductTypes;
 };
 
 const insertProductTypes = async (
-	connection: Connection,
+	dataSource: DataSource,
 	productTypes: ProductType[]
 ): Promise<void> => {
-	await connection.manager.save(productTypes);
+	await dataSource.manager.save(productTypes);
 };
 
 export const createRandomProductType = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: Tenant[],
 	tenantOrganizationsMap: Map<Tenant, IOrganization[]>
 ): Promise<ProductType[]> => {
@@ -61,21 +61,25 @@ export const createRandomProductType = async (
 	const productTypes: ProductType[] = [];
 
 	for (const tenant of tenants) {
+		const { id: tenantId } = tenant;
 		const tenantOrgs = tenantOrganizationsMap.get(tenant);
 		for (const tenantOrg of tenantOrgs) {
-			const productCategories = await connection.manager.find(
-				ProductCategory,
-				{
-					where: [{ organization: tenantOrg }]
+			const { id: organizationId } = tenantOrg;
+			const productCategories = await dataSource.manager.find(ProductCategory, {
+				where: {
+					tenantId,
+					organizationId
 				}
-			);
+			});
 			for (const productCategory of productCategories) {
-				const products = await connection.manager.find(Product, {
-					where: [{ category: productCategory }]
+				const products = await dataSource.manager.find(Product, {
+					where: {
+						tenantId,
+						organizationId,
+						productCategoryId: productCategory.id
+					}
 				});
-
 				const productType = new ProductType();
-
 				const productTypeTranslation: ProductTypeTranslation[] = [];
 
 				productType.icon = faker.random.arrayElement(
@@ -90,5 +94,5 @@ export const createRandomProductType = async (
 		}
 	}
 
-	await connection.manager.save(productTypes);
+	await dataSource.manager.save(productTypes);
 };

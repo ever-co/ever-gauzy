@@ -179,7 +179,7 @@ export class ApprovalsComponent
 		this.disableButton = !isSelected;
 		setTimeout(() => {
 			this.selectedRequestApproval = isSelected ? data : null;
-		}, 50);				
+		}, 50);
 	}
 
 	async getApprovals() {
@@ -206,7 +206,7 @@ export class ApprovalsComponent
 					[
 						'employeeApprovals',
 						'employeeApprovals.employee',
-						'employee.user',
+						'employeeApprovals.employee.user',
 						'teamApprovals',
 						'teamApprovals.team',
 						'tags'

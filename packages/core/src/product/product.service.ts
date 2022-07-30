@@ -1,4 +1,4 @@
-import { Repository } from 'typeorm';
+import { FindManyOptions, Repository } from 'typeorm';
 import {
 	BadRequestException,
 	HttpException,
@@ -74,7 +74,7 @@ export class ProductService extends TenantAwareCrudService<Product> {
 			}
 		}
 		const { items, total } = await super.paginate(filter);
-		
+
 		return await this.mapTranslatedProducts(items as any, language).then((items) => {
 			return { items, total };
 		});
@@ -102,14 +102,14 @@ export class ProductService extends TenantAwareCrudService<Product> {
 		findInput?: IProductFindInput,
 		options = { page: 1, limit: 10 }
 	): Promise<IPagination<Product | IProductTranslated>> {
-		const total = await this.productRepository.count(findInput);
-		const items = await this.productRepository.find({
-			relations: relations,
-			where: findInput,
+		const [items, total] = await this.productRepository.findAndCount({
 			skip: (options.page - 1) * options.limit,
-			take: options.limit
-		});
-
+			take: options.limit,
+			relations: relations,
+			where: {
+				...findInput
+			}
+		} as FindManyOptions<Product>);
 		return await this.mapTranslatedProducts(items as any, langCode).then((items) => {
 			return { items, total };
 		});

@@ -19,9 +19,9 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 
 	/**
 	 * Create Bulk Employee User
-	 * 
-	 * @param input 
-	 * @returns 
+	 *
+	 * @param input
+	 * @returns
 	 */
 	async createBulk(input: IEmployeeCreateInput[]): Promise<Employee[]> {
 		const employees: IEmployee[] = [];
@@ -59,41 +59,40 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 		forRange: IDateRangePicker | any,
 		withUser: boolean
 	): Promise<IPagination<IEmployee>> {
-		const [items, total] = await this.employeeRepository.findAndCount({
-			where: (query: SelectQueryBuilder<Employee>) => {
-				const { startDate, endDate } = forRange;
-				const tenantId = RequestContext.currentTenantId();
-				query.andWhere(
-					new Brackets((qb: WhereExpressionBuilder) => { 
-						qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
-						qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
-						qb.andWhere(`"${query.alias}"."isActive" = :isActive`, { isActive: true });
-					})
-				);
-				query.andWhere(
-					new Brackets((qb: WhereExpressionBuilder) => {
-						qb.andWhere(`"${query.alias}"."startedWorkOn" <= :startedWorkOn`, {
-							startedWorkOn: moment.utc(endDate).format('YYYY-MM-DD hh:mm:ss')
-						});
-					})
-				);
-				query.andWhere(
-					new Brackets((qb: WhereExpressionBuilder) => {
-						qb.where(`"${query.alias}"."endWork" IS NULL`);
-						qb.orWhere( `"${query.alias}"."endWork" >= :endWork`, {
-							endWork: moment.utc(startDate).format('YYYY-MM-DD hh:mm:ss')
-						});
-					})
-				);
-			},
-			relations: [
-				...(withUser ? ['user'] : [])
-			]
+		const query = this.repository.createQueryBuilder('employee');
+		query.setFindOptions({
+			relations: {
+				...(withUser ? { user: true } : {})
+			}
 		});
-		return {
-			total,
-			items
-		};
+		query.where((qb: SelectQueryBuilder<Employee>) => {
+			const { startDate, endDate } = forRange;
+			const tenantId = RequestContext.currentTenantId();
+			qb.andWhere(
+				new Brackets((web: WhereExpressionBuilder) => {
+					web.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, { tenantId });
+					web.andWhere(`"${qb.alias}"."organizationId" = :organizationId`, { organizationId });
+					web.andWhere(`"${qb.alias}"."isActive" = :isActive`, { isActive: true });
+				})
+			);
+			qb.andWhere(
+				new Brackets((web: WhereExpressionBuilder) => {
+					web.andWhere(`"${qb.alias}"."startedWorkOn" <= :startedWorkOn`, {
+						startedWorkOn: moment.utc(endDate).format('YYYY-MM-DD hh:mm:ss')
+					});
+				})
+			);
+			qb.andWhere(
+				new Brackets((web: WhereExpressionBuilder) => {
+					web.where(`"${qb.alias}"."endWork" IS NULL`);
+					web.orWhere( `"${qb.alias}"."endWork" >= :endWork`, {
+						endWork: moment.utc(startDate).format('YYYY-MM-DD hh:mm:ss')
+					});
+				})
+			);
+		});
+		const [items, total] = await query.getManyAndCount();
+		return { items, total };
 	}
 
 	/**
@@ -120,86 +119,80 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 		};
 	}
 
-	async findWithoutTenant(id: string, relations?: any) {
-		return await this.repository.findOne(id, relations);
-	}
-
 	public async pagination(filter: any) {
 		try {
-			const [items, total] = await this.repository.findAndCount({
+			const query = this.repository.createQueryBuilder('employee');
+			query.setFindOptions({
 				skip: filter && filter.skip ? (filter.take * (filter.skip - 1)) : 0,
-				take: filter && filter.take ? (filter.take) : 10,
-				join: {
-					alias: 'employee',
-					leftJoin: {
-						user: 'employee.user',
-						tags: 'employee.tags'
-					}
-				},
-				relations: [
-					...(filter && filter.relations) ? filter.relations : []
-				],
-				where: (query: SelectQueryBuilder<Employee>) => {
-					const tenantId = RequestContext.currentTenantId();
-					query.andWhere(
-						new Brackets((qb: WhereExpressionBuilder) => {
-							qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
-							if (filter.where) {
-								const { where } = filter;
-								const { tenantId, organizationId } = where;
+				take: filter && filter.take ? (filter.take) : 10
+			});
+			query.setFindOptions({
+				relations: {
+					user: true,
+					tags: true
+				}
+			});
+			query.where((qb: SelectQueryBuilder<Employee>) => {
+				const tenantId = RequestContext.currentTenantId();
+				qb.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, { tenantId });
+				qb.andWhere(
+					new Brackets((web: WhereExpressionBuilder) => {
+						if (filter.where) {
+							const { where } = filter;
+							const { tenantId, organizationId } = where;
 
-								qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
-								qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
+							web.andWhere(`"${qb.alias}"."organizationId" = :organizationId`, { organizationId });
+							web.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, { tenantId });
+						}
+					})
+				);
+				if (filter.where) {
+					query.andWhere(
+						new Brackets((web: WhereExpressionBuilder) => {
+							const { where } = filter;
+							if (isNotEmpty(Boolean(JSON.parse(where.isActive)))) {
+								web.andWhere(`"${qb.alias}"."isActive" = :isActive`, {
+									isActive: true
+								});
 							}
 						})
 					);
-					if (filter.where) {
-						query.andWhere(
-							new Brackets((qb: WhereExpressionBuilder) => {
-								const { where } = filter;
-								if (isNotEmpty(Boolean(JSON.parse(where.isActive)))) {
-									qb.andWhere(`"${query.alias}"."isActive" = :isActive`, {
-										isActive: true
+					query.andWhere(
+						new Brackets((web: WhereExpressionBuilder) => {
+							const { where } = filter;
+							if (isNotEmpty(where.tags)) {
+								const { tags } = where;
+								web.andWhere(`"tags"."id" IN (:...tags)`, { tags });
+							}
+						})
+					);
+					query.andWhere(
+						new Brackets((web: WhereExpressionBuilder) => {
+							const { where } = filter;
+							if (isNotEmpty(where.user)) {
+								if (isNotEmpty(where.user.name)) {
+									const keywords: string[] = where.user.name.split(' ');
+									keywords.forEach((keyword: string, index: number) => {
+										web.orWhere(`LOWER("user"."firstName") like LOWER(:keyword_${index})`, {
+											[`keyword_${index}`]:`%${keyword}%`
+										});
+										web.orWhere(`LOWER("user"."lastName") like LOWER(:${index}_keyword)`, {
+											[`${index}_keyword`]:`%${keyword}%`
+										});
 									});
 								}
-							})
-						);
-						query.andWhere(
-							new Brackets((qb: WhereExpressionBuilder) => {
-								const { where } = filter;
-								if (isNotEmpty(where.tags)) {
-									const { tags } = where;
-									qb.andWhere(`"tags"."id" IN (:...tags)`, { tags });
+								if (isNotEmpty(where.user.email)) {
+									const { email } = where.user;
+									web.orWhere(`LOWER("user"."email") like LOWER(:email)`, {
+										email:`%${email}%`
+									});
 								}
-							})
-						);
-						query.andWhere(
-							new Brackets((qb: WhereExpressionBuilder) => {
-								const { where } = filter;
-								if (isNotEmpty(where.user)) {
-									if (isNotEmpty(where.user.name)) {
-										const keywords: string[] = where.user.name.split(' ');
-										keywords.forEach((keyword: string, index: number) => {
-											qb.orWhere(`LOWER("user"."firstName") like LOWER(:keyword_${index})`, { 
-												[`keyword_${index}`]:`%${keyword}%`
-											});
-											qb.orWhere(`LOWER("user"."lastName") like LOWER(:${index}_keyword)`, { 
-												[`${index}_keyword`]:`%${keyword}%`
-											});
-										});
-									}
-									if (isNotEmpty(where.user.email)) {
-										const { email } = where.user;
-										qb.orWhere(`LOWER("user"."email") like LOWER(:email)`, { 
-											email:`%${email}%`
-										});
-									}
-								}
-							})
-						);
-					}
+							}
+						})
+					);
 				}
 			});
+			const [items, total] = await query.getManyAndCount();
 			return { items, total };
 		} catch (error) {
 			console.log(error);

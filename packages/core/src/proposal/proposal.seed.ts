@@ -1,4 +1,4 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { Proposal } from './proposal.entity';
 import { faker } from '@ever-co/faker';
 import * as moment from 'moment';
@@ -7,22 +7,22 @@ import { IEmployee, IOrganization, ITenant, ProposalStatusEnum } from '@gauzy/co
 import { OrganizationContact } from './../core/entities/internal';
 
 export const createDefaultProposals = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	employees: IEmployee[],
 	organizations: IOrganization[],
 	noOfProposalsPerOrganization: number
 ): Promise<Proposal[]> => {
+	const { id: tenantId } = tenant;
 	const proposals: Proposal[] = [];
 	for (const organization of organizations) {
-		const tags = await connection.manager.find(Tag, {
-			where: [{ organization: organization }]
+		const { id: organizationId } = organization;
+		const tags = await dataSource.manager.findBy(Tag, {
+			organizationId
 		});
-		const organizationContacts = await connection.manager.find(OrganizationContact, { 
-			where: { 
-				organization,
-				tenant
-			} 
+		const organizationContacts = await dataSource.manager.findBy(OrganizationContact, {
+			organizationId,
+			tenantId
 		});
 		for (let i = 0; i < noOfProposalsPerOrganization; i++) {
 			const proposal = new Proposal();
@@ -36,17 +36,17 @@ export const createDefaultProposals = async (
 			proposal.proposalContent = faker.name.jobDescriptor();
 			proposal.tenant = tenant;
 			if (organizationContacts.length) {
-				proposal.organizationContactId = faker.random.arrayElement(organizationContacts).id; 
+				proposal.organizationContactId = faker.random.arrayElement(organizationContacts).id;
 			}
 			proposals.push(proposal);
 		}
 	}
 
-	return await connection.manager.save(proposals);
+	return await dataSource.manager.save(proposals);
 };
 
 export const createRandomProposals = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	tenantEmployeeMap: Map<ITenant, IEmployee[]>,
 	tenantOrganizationsMap: Map<ITenant, IOrganization[]>,
@@ -54,17 +54,17 @@ export const createRandomProposals = async (
 ): Promise<Proposal[]> => {
 	const proposals: Proposal[] = [];
 	for (const tenant of tenants) {
+		const { id: tenantId } = tenant;
 		const organizations = tenantOrganizationsMap.get(tenant);
 		const employees = tenantEmployeeMap.get(tenant);
 		for (const organization of organizations) {
-			const tags = await connection.manager.find(Tag, {
-				where: [{ organization: organization }]
+			const { id: organizationId } = organization;
+			const tags = await dataSource.manager.findBy(Tag, {
+				organizationId
 			});
-			const organizationContacts = await connection.manager.find(OrganizationContact, { 
-				where: { 
-					organization,
-					tenant
-				} 
+			const organizationContacts = await dataSource.manager.findBy(OrganizationContact, {
+				organizationId,
+				tenantId
 			});
 			for (let i = 0; i < noOfProposalsPerOrganization; i++) {
 				const proposal = new Proposal();
@@ -78,12 +78,12 @@ export const createRandomProposals = async (
 				proposal.proposalContent = faker.name.jobDescriptor();
 				proposal.tenant = tenant;
 				if (organizationContacts.length) {
-					proposal.organizationContactId = faker.random.arrayElement(organizationContacts).id; 
+					proposal.organizationContactId = faker.random.arrayElement(organizationContacts).id;
 				}
 				proposals.push(proposal);
 			}
 		}
 	}
 
-	return await connection.manager.save(proposals);
+	return await dataSource.manager.save(proposals);
 };

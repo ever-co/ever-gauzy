@@ -1,9 +1,9 @@
 import { ExpenseCategoriesEnum, IExpenseCategory, IOrganization, ITenant } from '@gauzy/contracts';
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { ExpenseCategory } from './expense-category.entity';
 
 export const createExpenseCategories = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	organizations: IOrganization[]
 ): Promise<ExpenseCategory[]> => {
@@ -18,11 +18,11 @@ export const createExpenseCategories = async (
 		});
 		defaultExpenseCategories = [...defaultExpenseCategories, ...categories];
 	}
-	return insertExpenseCategories(connection, defaultExpenseCategories);
+	return insertExpenseCategories(dataSource, defaultExpenseCategories);
 };
 
 export const createRandomExpenseCategories = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	tenantOrganizationMap: Map<ITenant, IOrganization[]>
 ): Promise<Map<IOrganization, IExpenseCategory[]>> => {
@@ -44,13 +44,13 @@ export const createRandomExpenseCategories = async (
 			expenseCategories = [...expenseCategories, ...categories];
 		});
 	}
-	await insertExpenseCategories(connection, expenseCategories);
+	await insertExpenseCategories(dataSource, expenseCategories);
 	return expenseCategoryMap;
 };
 
 const insertExpenseCategories = async (
-	connection: Connection,
+	dataSource: DataSource,
 	expenseCategories: ExpenseCategory[]
 ): Promise<ExpenseCategory[]> => {
-	return await connection.manager.save(expenseCategories);
+	return await dataSource.manager.save(expenseCategories);
 };

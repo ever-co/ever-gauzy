@@ -436,7 +436,7 @@ export class FactoryResetService {
             });
         }
 
-        const firstOrganization = await this.organizationRepository.findOne({
+        const firstOrganization = await this.organizationRepository.findOneBy({
             id: oldOrganization.organizationId,
         });
 

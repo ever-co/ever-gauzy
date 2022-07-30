@@ -213,7 +213,7 @@ export class EmployeeStatisticsHistoryQueryHandler
 			value.expense.forEach(({ amount, category, valueDate }) => {
 				history.push({
 					amount: Number((amount / value.splitAmong).toFixed(2)),
-					valueDate,
+					valueDate : valueDate as Date,
 					categoryName: category.name,
 					splitExpense: {
 						originalValue: amount,

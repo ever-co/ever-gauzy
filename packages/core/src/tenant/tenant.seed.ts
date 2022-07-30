@@ -1,31 +1,31 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { Tenant } from './tenant.entity';
 import { faker } from '@ever-co/faker';
 import { DEFAULT_EVER_TENANT } from './default-tenants';
 import { ITenant } from '@gauzy/contracts';
 
 export const getDefaultTenant = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenantName: string = DEFAULT_EVER_TENANT
 ): Promise<Tenant> => {
-	const repo = connection.getRepository(Tenant);
+	const repo = dataSource.getRepository(Tenant);
 	const existedTenant = await repo.findOne({ where: { name: tenantName } });
 	return existedTenant;
 };
 
 export const createDefaultTenant = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenantName: string
 ): Promise<Tenant> => {
 	const tenant: ITenant = {
 		name: tenantName
 	};
-	await insertTenant(connection, tenant);
+	await insertTenant(dataSource, tenant);
 	return tenant;
 };
 
 export const createRandomTenants = async (
-	connection: Connection,
+	dataSource: DataSource,
 	noOfTenants: number = 0
 ): Promise<Tenant[]> => {
 	const randomTenants: Tenant[] = [];
@@ -35,20 +35,20 @@ export const createRandomTenants = async (
 		randomTenants.push(tenant);
 	}
 
-	return await insertTenants(connection, randomTenants);
+	return await insertTenants(dataSource, randomTenants);
 };
 
 const insertTenant = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: Tenant
 ): Promise<Tenant> => {
-	const repo = connection.getRepository(Tenant);
+	const repo = dataSource.getRepository(Tenant);
 
 	const existedTenant = await repo.findOne({ where: { name: tenant.name } });
 
 	if (existedTenant) return existedTenant;
 	else {
-		await connection
+		await dataSource
 			.createQueryBuilder()
 			.insert()
 			.into(Tenant)
@@ -60,8 +60,8 @@ const insertTenant = async (
 };
 
 const insertTenants = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: Tenant[]
 ): Promise<Tenant[]> => {
-	return await connection.manager.save(tenants);
+	return await dataSource.manager.save(tenants);
 };

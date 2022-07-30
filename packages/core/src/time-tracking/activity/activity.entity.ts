@@ -6,9 +6,7 @@ import {
 	ManyToOne,
 	JoinColumn,
 	CreateDateColumn,
-	Index,
-	getConnection,
-	ConnectionOptions
+	Index
 } from 'typeorm';
 import {
 	IActivity,
@@ -37,12 +35,10 @@ import {
 	TimeSlot
 } from './../../core/entities/internal';
 
-let options: ConnectionOptions | TypeOrmModuleOptions;
+let options: TypeOrmModuleOptions;
 try {
-	options = getConnection().options;
-} catch (error) {
 	options = getConfig().dbConnectionOptions
-}
+} catch (error) {}
 
 @Entity('activity')
 export class Activity extends TenantOrganizationBaseEntity implements IActivity {
@@ -105,7 +101,7 @@ export class Activity extends TenantOrganizationBaseEntity implements IActivity 
 
 	/*
     |--------------------------------------------------------------------------
-    | @ManyToOne 
+    | @ManyToOne
     |--------------------------------------------------------------------------
     */
 	// Employee

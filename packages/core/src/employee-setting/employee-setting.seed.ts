@@ -1,4 +1,4 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { IEmployee, ITenant } from '@gauzy/contracts';
 import { faker } from '@ever-co/faker';
 import { environment as env } from '@gauzy/config';
@@ -6,7 +6,7 @@ import { Organization } from '../organization/organization.entity';
 import { EmployeeSetting } from './employee-setting.entity';
 
 export const createRandomEmployeeSetting = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	tenantEmployeeMap: Map<ITenant, IEmployee[]>
 ): Promise<EmployeeSetting[]> => {
@@ -21,8 +21,9 @@ export const createRandomEmployeeSetting = async (
 	const setting = ['Normal', 'Custom'];
 
 	for (const tenant of tenants) {
-		const organizations = await connection.manager.find(Organization, {
-			where: [{ tenant: tenant }]
+		const { id: tenantId } = tenant;
+		const organizations = await dataSource.manager.findBy(Organization, {
+			tenantId
 		});
 		const tenantEmployees = tenantEmployeeMap.get(tenant);
 		for (const tenantEmployee of tenantEmployees) {
@@ -41,15 +42,15 @@ export const createRandomEmployeeSetting = async (
 			employees.push(employee);
 		}
 	}
-	await insertRandomEmployeeSetting(connection, employees);
+	await insertRandomEmployeeSetting(dataSource, employees);
 	return employees;
 };
 
 const insertRandomEmployeeSetting = async (
-	connection: Connection,
+	dataSource: DataSource,
 	Employees: EmployeeSetting[]
 ) => {
-	await connection
+	await dataSource
 		.createQueryBuilder()
 		.insert()
 		.into(EmployeeSetting)

@@ -1,10 +1,10 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { IEmployeeLevelInput, IOrganization, ITenant } from '@gauzy/contracts';
 import { EmployeeLevel } from './employee-level.entity';
 import { DEFAULT_EMPLOYEE_LEVELS } from './default-employee-levels';
 
 export const createEmployeeLevels = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	organizations: IOrganization[]
 ): Promise<IEmployeeLevelInput[]> => {
@@ -18,10 +18,10 @@ export const createEmployeeLevels = async (
 			employeeLevels.push(entity);
 		}
 	});
-	return insertLevels(connection, employeeLevels);
+	return insertLevels(dataSource, employeeLevels);
 };
 
 const insertLevels = async (
-	connection: Connection,
+	dataSource: DataSource,
 	employeeLevels: EmployeeLevel[]
-) => await connection.manager.save(employeeLevels);
+) => await dataSource.manager.save(employeeLevels);

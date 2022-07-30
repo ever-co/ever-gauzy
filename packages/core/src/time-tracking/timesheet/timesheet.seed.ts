@@ -1,4 +1,4 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { faker } from '@ever-co/faker';
 import {
 	TimesheetStatus,
@@ -18,8 +18,8 @@ import { Employee, Timesheet } from './../../core/entities/internal';
 import { randomSeedConfig } from './../../core/seeds/random-seed-config';
 
 export const createDefaultTimeSheet = async (
-	connection: Connection,
-	config: IPluginConfig,
+	dataSource: DataSource,
+	config: Partial<IPluginConfig>,
 	tenant: ITenant,
 	organization: IOrganization,
 	employees: IEmployee[]
@@ -71,21 +71,21 @@ export const createDefaultTimeSheet = async (
 				timesheets.push(timesheet);
 			}
 		}
-		await connection.getRepository(Timesheet).save(timesheets);
+		await dataSource.getRepository(Timesheet).save(timesheets);
 	} catch (error) {
 		console.log(chalk.red(`SEEDING Default Timesheet`, error));
 	}
 
 	try {
 		console.log(chalk.green(`SEEDING Default TimeLogs & Activities`));
-		const createdTimesheets = await connection.getRepository(Timesheet).find({
-			where: {
-				tenant,
-				organization
-			}
+		const { id: tenantId } = tenant;
+		const { id: organizationId } = organization;
+		const createdTimesheets = await dataSource.manager.findBy(Timesheet, {
+			tenantId,
+			organizationId
 		});
 		const timeSlots: ITimeSlot[] = await createRandomTimeLogs(
-			connection,
+			dataSource,
 			config,
 			tenant,
 			createdTimesheets
@@ -94,12 +94,12 @@ export const createDefaultTimeSheet = async (
 		 * Recalculate Timesheet Activities
 		 */
 		await recalculateTimesheetActivity(
-			connection,
+			dataSource,
 			createdTimesheets
 		);
 		await createRandomActivities(
-			connection, 
-			tenant, 
+			dataSource,
+			tenant,
 			timeSlots
 		);
 	} catch (error) {
@@ -108,24 +108,27 @@ export const createDefaultTimeSheet = async (
 };
 
 export const createRandomTimesheet = async (
-	connection: Connection,
-	config: IPluginConfig,
+	dataSource: DataSource,
+	config: Partial<IPluginConfig>,
 	tenants: ITenant[]
 ) => {
 	for await (const tenant of tenants) {
 		try {
 			const timesheets: ITimesheet[] = [];
-			const employees = await connection.getRepository(Employee).find({
+			const { id: tenantId } = tenant;
+			const employees = await dataSource.getRepository(Employee).find({
 				where: {
-					tenant
+					tenantId: tenantId
 				},
-				relations: ['organization']
+				relations: {
+					organization: true
+				}
 			});
 			for (let index = 0; index < randomSeedConfig.noOfTimesheetPerEmployee; index++) {
 				const date = moment().subtract(index, 'week').toDate();
 				const startedAt = moment(date).startOf('week').toDate();
 				const stoppedAt = moment(date).endOf('week').toDate();
-	
+
 				_.chain(employees)
 					.shuffle()
 					.take(faker.datatype.number(employees.length))
@@ -133,11 +136,11 @@ export const createRandomTimesheet = async (
 						const status = faker.random.arrayElement(
 							Object.keys(TimesheetStatus)
 						);
-	
+
 						let isBilled = false;
 						let approvedAt: Date = null;
 						let submittedAt: Date = null;
-	
+
 						if (TimesheetStatus[status] === TimesheetStatus.PENDING) {
 							approvedAt = null;
 							submittedAt = faker.date.past();
@@ -153,7 +156,7 @@ export const createRandomTimesheet = async (
 							approvedAt = faker.date.between(startedAt, new Date());
 							submittedAt = faker.date.between(startedAt, approvedAt);
 						}
-	
+
 						const timesheet = new Timesheet();
 						timesheet.employee = employee;
 						timesheet.organization = employee.organization;
@@ -174,7 +177,7 @@ export const createRandomTimesheet = async (
 						timesheets.push(timesheet);
 					});
 			}
-			await connection.getRepository(Timesheet).save(timesheets);
+			await dataSource.getRepository(Timesheet).save(timesheets);
 		} catch (error) {
 			console.log(chalk.red(`SEEDING Default Timesheet`, error));
 		}
@@ -183,13 +186,12 @@ export const createRandomTimesheet = async (
 	try {
 		console.log(chalk.green(`SEEDING Random TimeLogs & Activities`));
 		for await (const tenant of tenants) {
-			const createdTimesheets = await connection.getRepository(Timesheet).find({
-				where: {
-					tenant
-				}
+			const { id: tenantId } = tenant;
+			const createdTimesheets = await dataSource.manager.findBy(Timesheet, {
+				tenantId
 			});
 			const timeSlots: ITimeSlot[] = await createRandomTimeLogs(
-				connection,
+				dataSource,
 				config,
 				tenant,
 				createdTimesheets
@@ -198,12 +200,12 @@ export const createRandomTimesheet = async (
 			 * Recalculate Timesheet Activities
 			 */
 			await recalculateTimesheetActivity(
-				connection,
+				dataSource,
 				createdTimesheets
 			);
 			await createRandomActivities(
-				connection,
-				tenant, 
+				dataSource,
+				tenant,
 				timeSlots
 			);
 		}

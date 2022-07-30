@@ -1,4 +1,4 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { OrganizationRecurringExpense } from './organization-recurring-expense.entity';
 import { faker } from '@ever-co/faker';
 import {
@@ -10,7 +10,7 @@ import * as moment from 'moment';
 import { environment as env } from '@gauzy/config';
 
 export const createDefaultOrganizationRecurringExpense = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	defaultOrganization: IOrganization
 ): Promise<OrganizationRecurringExpense[]> => {
@@ -27,7 +27,7 @@ export const createDefaultOrganizationRecurringExpense = async (
 	);
 
 	mapOrganizationRecurringExpense = await dataOperation(
-		connection,
+		dataSource,
 		tenant,
 		mapOrganizationRecurringExpense,
 		expenseCategories,
@@ -37,7 +37,7 @@ export const createDefaultOrganizationRecurringExpense = async (
 };
 
 export const createRandomOrganizationRecurringExpense = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	tenantOrganizationsMap: Map<ITenant, IOrganization[]>
 ): Promise<OrganizationRecurringExpense[]> => {
@@ -57,7 +57,7 @@ export const createRandomOrganizationRecurringExpense = async (
 		const tenantOrganization = tenantOrganizationsMap.get(tenant);
 		for (const tenantOrg of tenantOrganization) {
 			mapOrganizationRecurringExpense = await dataOperation(
-				connection,
+				dataSource,
 				tenant,
 				mapOrganizationRecurringExpense,
 				expenseCategories,
@@ -70,7 +70,7 @@ export const createRandomOrganizationRecurringExpense = async (
 };
 
 const dataOperation = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	mapOrganizationRecurringExpense,
 	expenseCategories,
@@ -103,6 +103,6 @@ const dataOperation = async (
 
 		mapOrganizationRecurringExpense.push(organization);
 	}
-	await connection.manager.save(mapOrganizationRecurringExpense);
+	await dataSource.manager.save(mapOrganizationRecurringExpense);
 	return mapOrganizationRecurringExpense;
 };

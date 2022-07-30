@@ -66,9 +66,9 @@ export class KeyResultUpdateController extends CrudController<KeyResultUpdate> {
 		description: 'Updates not found'
 	})
 	@Get(':id')
-	async getAll(@Param('id') findInput: string) {
+	async getAll(@Param('id') id: string) {
 		return this.keyResultUpdateService.findAll({
-			where: { key_result_id: findInput },
+			where: { keyResultId: id },
 			relations: ['keyResult']
 		});
 	}

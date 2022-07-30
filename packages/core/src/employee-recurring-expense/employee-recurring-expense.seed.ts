@@ -1,4 +1,4 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import {
 	IEmployee,
 	ITenant,
@@ -11,7 +11,7 @@ import { Organization } from '../organization/organization.entity';
 import { environment as env } from '@gauzy/config';
 
 export const createRandomEmployeeRecurringExpense = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	tenantEmployeeMap: Map<ITenant, IEmployee[]>
 ): Promise<EmployeeRecurringExpense[]> => {
@@ -25,8 +25,9 @@ export const createRandomEmployeeRecurringExpense = async (
 	const employees: EmployeeRecurringExpense[] = [];
 
 	for (const tenant of tenants) {
-		const organizations = await connection.manager.find(Organization, {
-			where: [{ tenant: tenant }]
+		const { id: tenantId } = tenant;
+		const organizations = await dataSource.manager.findBy(Organization, {
+			tenantId
 		});
 		const tenantEmployees = tenantEmployeeMap.get(tenant);
 
@@ -69,16 +70,16 @@ export const createRandomEmployeeRecurringExpense = async (
 		}
 	}
 
-	await insertRandomEmployeeRecurringExpense(connection, employees);
+	await insertRandomEmployeeRecurringExpense(dataSource, employees);
 
 	return employees;
 };
 
 const insertRandomEmployeeRecurringExpense = async (
-	connection: Connection,
+	dataSource: DataSource,
 	Employees: EmployeeRecurringExpense[]
 ) => {
-	await connection
+	await dataSource
 		.createQueryBuilder()
 		.insert()
 		.into(EmployeeRecurringExpense)

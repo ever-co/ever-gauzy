@@ -1,6 +1,6 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { TimeOffPolicy } from './time-off-policy.entity';
 import { TenantAwareCrudService } from './../core/crud';
 import { Employee } from '../employee/employee.entity';
@@ -14,6 +14,7 @@ export class TimeOffPolicyService extends TenantAwareCrudService<TimeOffPolicy> 
 	constructor(
 		@InjectRepository(TimeOffPolicy)
 		private readonly policyRepository: Repository<TimeOffPolicy>,
+
 		@InjectRepository(Employee)
 		private readonly employeeRepository: Repository<Employee>
 	) {
@@ -29,15 +30,15 @@ export class TimeOffPolicyService extends TenantAwareCrudService<TimeOffPolicy> 
 		policy.requiresApproval = entity.requiresApproval;
 		policy.paid = entity.paid;
 
-		const employees = await this.employeeRepository.findByIds(
-			entity.employees,
-			{
-				relations: ['user']
+		const employees = await this.employeeRepository.find({
+			where: {
+				id: In(entity.employees)
+			},
+			relations: {
+				user: true
 			}
-		);
-
+		})
 		policy.employees = employees;
-
 		return this.policyRepository.save(policy);
 	}
 
@@ -55,15 +56,15 @@ export class TimeOffPolicyService extends TenantAwareCrudService<TimeOffPolicy> 
 			policy.requiresApproval = entity.requiresApproval;
 			policy.paid = entity.paid;
 
-			const employees = await this.employeeRepository.findByIds(
-				entity.employees,
-				{
-					relations: ['user']
+			const employees = await this.employeeRepository.find({
+				where: {
+					id: In(entity.employees)
+				},
+				relations: {
+					user: true
 				}
-			);
-
+			});
 			policy.employees = employees;
-
 			return this.policyRepository.save(policy);
 		} catch (err /*: WriteError*/) {
 			throw new BadRequestException(err);

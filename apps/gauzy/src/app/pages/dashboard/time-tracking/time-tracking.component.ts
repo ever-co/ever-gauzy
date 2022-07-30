@@ -571,7 +571,7 @@ export class TimeTrackingComponent
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 
-		this.employeesCount = await this.employeesService.getCount([], {
+		this.employeesCount = await this.employeesService.getCount({
 			organizationId,
 			tenantId
 		});
@@ -581,7 +581,7 @@ export class TimeTrackingComponent
     	const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 
-		this.projectCount = await this.projectService.getCount([],{
+		this.projectCount = await this.projectService.getCount({
 			organizationId,
 			tenantId
 		});

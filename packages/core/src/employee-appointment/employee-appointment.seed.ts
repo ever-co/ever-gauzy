@@ -1,4 +1,4 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { IEmployee, IOrganization, ITenant } from '@gauzy/contracts';
 import { faker } from '@ever-co/faker';
 import * as moment from 'moment';
@@ -7,7 +7,7 @@ import { AGENDAS } from './default-employee-appointment';
 import { AppointmentEmployee } from './../core/entities/internal';
 
 export const createDefaultEmployeeAppointment = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	employees: IEmployee[],
 	organizations
@@ -28,18 +28,18 @@ export const createDefaultEmployeeAppointment = async (
 	let employeesAppointments: EmployeeAppointment[] = [];
 	for (const employee of employees) {
 		employeesAppointments = await dataOperation(
-			connection,
+			dataSource,
 			employeesAppointments,
 			employee,
 			[organizations],
 			tenant
 		);
 	}
-	await connection.manager.save(employeesAppointments);
+	await dataSource.manager.save(employeesAppointments);
 };
 
 export const createRandomEmployeeAppointment = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	tenantEmployeeMap: Map<ITenant, IEmployee[]>,
 	tenantOrganizationsMap: Map<ITenant, IOrganization[]>
@@ -65,7 +65,7 @@ export const createRandomEmployeeAppointment = async (
 
 		for (const tenantEmployee of tenantEmployees) {
 			employeesAppointments = await dataOperation(
-				connection,
+				dataSource,
 				employeesAppointments,
 				tenantEmployee,
 				tenantOrgs,
@@ -76,7 +76,7 @@ export const createRandomEmployeeAppointment = async (
 };
 
 const dataOperation = async (
-	connection: Connection,
+	dataSource: DataSource,
 	employeesAppointments,
 	tenantEmployee,
 	organizations: IOrganization[],
@@ -85,7 +85,7 @@ const dataOperation = async (
 	for (const organization of organizations) {
 		const employeesAppointment = new EmployeeAppointment();
 
-		const invitees = await connection.manager.find(AppointmentEmployee, {
+		const invitees = await dataSource.manager.find(AppointmentEmployee, {
 			where: [{ employeeId: tenantEmployee.id }]
 		});
 
@@ -108,6 +108,6 @@ const dataOperation = async (
 		employeesAppointments.push(employeesAppointment);
 	}
 
-	await connection.manager.save(employeesAppointments);
+	await dataSource.manager.save(employeesAppointments);
 	return employeesAppointments;
 };

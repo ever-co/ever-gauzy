@@ -1,4 +1,4 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { IEmployee, IOrganization, ITenant, PaymentMethodEnum } from '@gauzy/contracts';
 import { Payment } from './payment.entity';
 import { faker } from '@ever-co/faker';
@@ -8,35 +8,31 @@ import { Invoice, OrganizationProject, Tag, User } from './../core/entities/inte
 import * as _ from 'underscore';
 
 export const createDefaultPayment = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	employees: IEmployee[],
 	organizations: IOrganization[]
 ): Promise<Payment[]> => {
 	const payments: Payment[] = [];
-	const users = await connection.manager.find(User, {
-		where: { 
-			tenant 
-		}
+	const { id: tenantId } = tenant;
+	const users = await dataSource.manager.findBy(User, {
+		tenantId
 	});
-	
 	for (const organization of organizations) {
-		const projects = await connection.manager.find(OrganizationProject, {
-			where: { 
-				organization,
-				tenant
-			}
+		const { id: organizationId } = organization;
+		const projects = await dataSource.manager.findBy(OrganizationProject, {
+			tenantId,
+			organizationId
 		});
-		const tags = await connection.manager.find(Tag, {
-			where: { 
-				organization
-			}
+		const tags = await dataSource.manager.findBy(Tag, {
+			tenantId,
+			organizationId
 		});
-		const invoices = await connection.manager.find(Invoice, {
-			where: { 
-				organization,
-				tenant,
-				isEstimate: 0
+		const invoices = await dataSource.manager.find(Invoice, {
+			where: {
+				tenantId,
+				organizationId,
+				isEstimate: false
 			},
 			relations: ['toContact']
 		});
@@ -79,12 +75,12 @@ export const createDefaultPayment = async (
 			payments.push(payment);
 		}
 	}
-	await connection.manager.save(payments);
+	await dataSource.manager.save(payments);
 	return payments;
 };
 
 export const createRandomPayment = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	tenantEmployeeMap: Map<ITenant, IEmployee[]>,
 	tenantOrganizationsMap: Map<ITenant, IOrganization[]>
@@ -97,32 +93,29 @@ export const createRandomPayment = async (
 	}
 
 	for (const tenant of tenants) {
+		const { id: tenantId } = tenant;
 		const tenantOrgs = tenantOrganizationsMap.get(tenant);
 		const tenantEmployees = tenantEmployeeMap.get(tenant);
-		const users = await connection.manager.find(User, {
-			where: { 
-				tenant
-			}
+		const users = await dataSource.manager.findBy(User, {
+			tenantId
 		});
 		const payments1: Payment[] = [];
 		const payments2: Payment[] = [];
 		for (const organization of tenantOrgs) {
-			const projects = await connection.manager.find(OrganizationProject, {
-				where: { 
-					organization,
-					tenant
-				}
+			const { id: organizationId } = organization;
+			const projects = await dataSource.manager.findBy(OrganizationProject, {
+				organizationId,
+				tenantId
 			});
-			const tags = await connection.manager.find(Tag, {
-				where: { 
-					organization
-				}
+			const tags = await dataSource.manager.findBy(Tag, {
+				organizationId,
+				tenantId
 			});
-			const invoices = await connection.manager.find(Invoice, {
-				where: { 
-					organization,
-					tenant,
-					isEstimate: 0
+			const invoices = await dataSource.manager.find(Invoice, {
+				where: {
+					organizationId,
+					tenantId,
+					isEstimate: false
 				},
 				relations: ['toContact']
 			});
@@ -163,7 +156,7 @@ export const createRandomPayment = async (
 				if (project) {
 					payment.projectId = project.id;
 				}
-				
+
 				if (count % 2 === 0) {
 					payments1.push(payment);
 				} else {
@@ -172,7 +165,7 @@ export const createRandomPayment = async (
 				count++;
 			}
 		}
-		await connection.manager.save(payments1);
-		await connection.manager.save(payments2);
+		await dataSource.manager.save(payments1);
+		await dataSource.manager.save(payments2);
 	}
 };

@@ -15,9 +15,9 @@ export class EmployeeProposalTemplateService extends TenantAwareCrudService<Empl
 	}
 
 	async makeDefault(id: string): Promise<IEmployeeProposalTemplate> {
-		const proposalTemplate: IEmployeeProposalTemplate = await this.employeeProposalTemplateRepository.findOne(
+		const proposalTemplate: IEmployeeProposalTemplate = await this.employeeProposalTemplateRepository.findOneBy({
 			id
-		);
+		});
 		proposalTemplate.isDefault = true;
 
 		await this.employeeProposalTemplateRepository.update(

@@ -1,11 +1,11 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { faker } from '@ever-co/faker';
 import { DEFAULT_GLOBAL_TAGS, DEFAULT_ORGANIZATION_TAGS } from './default-tags';
 import { IOrganization, ITenant } from '@gauzy/contracts';
 import { Tag } from './../core/entities/internal';
 
 export const createDefaultTags = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	organizations: IOrganization[]
 ): Promise<Tag[]> => {
@@ -27,10 +27,10 @@ export const createDefaultTags = async (
 		);
 		tags = [...tags, ...organizationTags];
 	}
-	return await connection.manager.save(tags);
+	return await dataSource.manager.save(tags);
 };
 
-export const createTags = async (connection: Connection): Promise<Tag[]> => {
+export const createTags = async (dataSource: DataSource): Promise<Tag[]> => {
 	const tags: Tag[] = [];
 	for (const name of DEFAULT_ORGANIZATION_TAGS) {
 		const tag = new Tag();
@@ -43,7 +43,7 @@ export const createTags = async (connection: Connection): Promise<Tag[]> => {
 		tags.push(tag);
 	}
 
-	await connection
+	await dataSource
 		.createQueryBuilder()
 		.insert()
 		.into(Tag)
@@ -54,7 +54,7 @@ export const createTags = async (connection: Connection): Promise<Tag[]> => {
 };
 
 export const createRandomOrganizationTags = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	tenantOrganizationsMap: Map<ITenant, IOrganization[]>
 ): Promise<Tag[]> => {
@@ -80,5 +80,5 @@ export const createRandomOrganizationTags = async (
 			tags = [...tags, ...organizationTags];
 		});
 	}
-	return await connection.manager.save(tags);
+	return await dataSource.manager.save(tags);
 };

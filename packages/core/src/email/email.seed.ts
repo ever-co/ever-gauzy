@@ -1,25 +1,23 @@
-import { Connection, ILike, Not } from 'typeorm';
+import { DataSource, ILike, Not } from 'typeorm';
 import { Email } from './email.entity';
 import { faker } from '@ever-co/faker';
 import { IEmail, IEmailTemplate, IOrganization, ITenant, IUser } from '@gauzy/contracts';
 import { EmailTemplate, User } from './../core/entities/internal';
 
 export const createDefaultEmailSent = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	organization: IOrganization,
 	noOfEmailsPerOrganization: number
 ): Promise<any> => {
-	const emailTemplates: IEmailTemplate[] = await connection.getRepository(EmailTemplate).find({
-		where: {
-			name: Not(ILike(`%subject%`))
-		}
+	const emailTemplates: IEmailTemplate[] = await dataSource.manager.findBy(EmailTemplate, {
+		name: Not(ILike(`%subject%`))
 	});
-	const users: IUser[] = await connection.getRepository(User).find();
+	const users: IUser[] = await dataSource.getRepository(User).find();
 
 	let sentEmails: IEmail[] = [];
 	sentEmails = await dataOperation(
-		connection,
+		dataSource,
 		sentEmails,
 		noOfEmailsPerOrganization,
 		organization,
@@ -31,28 +29,25 @@ export const createDefaultEmailSent = async (
 };
 
 export const createRandomEmailSent = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	tenantOrganizationsMap: Map<ITenant, IOrganization[]>,
 	noOfEmailsPerOrganization: number
 ): Promise<any> => {
-	const emailTemplates: IEmailTemplate[] = await connection.getRepository(EmailTemplate).find({
-		where: {
-			name: Not(ILike(`%subject%`))
-		}
+	const emailTemplates: IEmailTemplate[] = await dataSource.manager.findBy(EmailTemplate, {
+		name: Not(ILike(`%subject%`))
 	});
 
 	let sentEmails: IEmail[] = [];
 	for (const tenant of tenants) {
-		const users = await connection.getRepository(User).find({
-			where: {
-				tenant
-			}
+		const { id: tenantId } = tenant;
+		const users = await dataSource.manager.findBy(User, {
+			tenantId
 		});
 		const orgs = tenantOrganizationsMap.get(tenant);
 		for (const org of orgs) {
 			sentEmails = await dataOperation(
-				connection,
+				dataSource,
 				sentEmails,
 				noOfEmailsPerOrganization,
 				org,
@@ -66,7 +61,7 @@ export const createRandomEmailSent = async (
 };
 
 const dataOperation = async (
-	connection: Connection,
+	dataSource: DataSource,
 	sentEmails: IEmail[],
 	noOfEmailsPerOrganization,
 	organization: IOrganization,
@@ -85,6 +80,6 @@ const dataOperation = async (
 		sentEmail.user = faker.random.arrayElement(users);
 		sentEmails.push(sentEmail);
 	}
-	await connection.manager.save(sentEmails);
+	await dataSource.manager.save(sentEmails);
 	return sentEmails;
 };

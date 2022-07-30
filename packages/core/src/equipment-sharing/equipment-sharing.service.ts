@@ -145,9 +145,9 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 		status: number
 	): Promise<EquipmentSharing> {
 		try {
-			const equipmentSharing = await this.equipmentSharingRepository.findOne(
+			const equipmentSharing = await this.equipmentSharingRepository.findOneBy({
 				id
-			);
+			});
 
 			if (!equipmentSharing) {
 				throw new NotFoundException('Equiment Sharing not found');

@@ -1,11 +1,11 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { OrganizationAward } from './organization-award.entity';
 import { faker } from '@ever-co/faker';
 import { DEFAULT_ORGANIZATION_AWARDS } from './default-organization-awards';
 import { IOrganization, IOrganizationAward, ITenant } from '@gauzy/contracts';
 
 export const createDefaultAwards = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	organizations: IOrganization[]
 ): Promise<IOrganizationAward[]> => {
@@ -21,11 +21,11 @@ export const createDefaultAwards = async (
 			awards.push(award);
 		}
 	}
-	return await connection.manager.save(awards);
+	return await dataSource.manager.save(awards);
 };
 
 export const createRandomAwards = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	tenantOrganizationsMap: Map<ITenant, IOrganization[]>
 ): Promise<IOrganizationAward[]> => {
@@ -52,5 +52,5 @@ export const createRandomAwards = async (
 			}
 		}
 	}
-	return await connection.manager.save(awards);
+	return await dataSource.manager.save(awards);
 };

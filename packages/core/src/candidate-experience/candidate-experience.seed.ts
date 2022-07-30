@@ -1,4 +1,4 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { Tenant } from '../tenant/tenant.entity';
 import { ICandidate } from '@gauzy/contracts';
 import { faker } from '@ever-co/faker';
@@ -6,7 +6,7 @@ import { CandidateExperience } from './candidate-experience.entity';
 import { Organization } from '../organization/organization.entity';
 
 export const createRandomCandidateExperience = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: Tenant[],
 	tenantCandidatesMap: Map<Tenant, ICandidate[]> | void
 ): Promise<CandidateExperience[]> => {
@@ -20,9 +20,10 @@ export const createRandomCandidateExperience = async (
 	const candidateExperiences: CandidateExperience[] = [];
 
 	for (const tenant of tenants) {
+		const { id: tenantId } = tenant;
 		const tenantCandidates = tenantCandidatesMap.get(tenant);
-		const organizations = await connection.manager.find(Organization, {
-			where: [{ tenant: tenant }]
+		const organizations = await dataSource.manager.findBy(Organization, {
+			tenantId
 		});
 		for (const tenantCandidate of tenantCandidates) {
 			for (let i = 0; i <= Math.floor(Math.random() * 3) + 1; i++) {
@@ -53,14 +54,14 @@ export const createRandomCandidateExperience = async (
 		}
 	}
 	return await insertRandomCandidateExperience(
-		connection,
+		dataSource,
 		candidateExperiences
 	);
 };
 
 const insertRandomCandidateExperience = async (
-	connection: Connection,
+	dataSource: DataSource,
 	candidateExperiences: CandidateExperience[]
 ): Promise<CandidateExperience[]> => {
-	return await connection.manager.save(candidateExperiences);
+	return await dataSource.manager.save(candidateExperiences);
 };

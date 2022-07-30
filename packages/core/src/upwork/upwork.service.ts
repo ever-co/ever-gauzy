@@ -59,13 +59,10 @@ import { EmployeeCreateCommand } from '../employee/commands';
 import { IntegrationMapService } from '../integration-map/integration-map.service';
 import { UserService } from '../user/user.service';
 import { OrganizationService } from '../organization/organization.service';
-import { OrganizationVendorService } from '../organization-vendor/organization-vendor.service';
 import { RoleService } from '../role/role.service';
 import { TimeSlotService } from '../time-tracking/time-slot/time-slot.service';
 import { ExpenseService } from '../expense/expense.service';
-import { ExpenseCategoriesService } from '../expense-categories/expense-categories.service';
 import { IncomeService } from '../income/income.service';
-import { OrganizationContactService } from '../organization-contact/organization-contact.service';
 import { IncomeCreateCommand } from '../income/commands';
 import { ExpenseCreateCommand } from '../expense/commands';
 import { OrganizationContactCreateCommand } from '../organization-contact/commands';
@@ -91,14 +88,11 @@ export class UpworkService {
 
 	constructor(
 		private readonly _expenseService: ExpenseService,
-		private readonly _expenseCategoryService: ExpenseCategoriesService,
 		private readonly _incomeService: IncomeService,
 		private readonly _integrationMapService: IntegrationMapService,
 		private readonly _userService: UserService,
 		private readonly _roleService: RoleService,
 		private readonly _organizationService: OrganizationService,
-		private readonly _orgVendorService: OrganizationVendorService,
-		private readonly _orgContactService: OrganizationContactService,
 		private readonly _timeSlotService: TimeSlotService,
 		private readonly _upworkReportService: UpworkReportService,
 		private readonly _upworkJobService: UpworkJobService,
@@ -482,7 +476,7 @@ export class UpworkService {
 	async syncTimeLog(timeLog): Promise<ITimeLog> {
 		const organizationId = timeLog.organizationId;
 		const tenantId = RequestContext.currentTenantId();
-		
+
 		const gauzyTimeLog = await this.commandBus.execute(
 			new TimeLogCreateCommand({
 				projectId: timeLog.projectId,
@@ -776,9 +770,7 @@ export class UpworkService {
 						where: {
 							tenantId,
 							employeeId,
-							startedAt: moment
-								.unix(cell_time)
-								.format('YYYY-MM-DD HH:mm:ss')
+							startedAt: moment(moment.unix(cell_time).format('YYYY-MM-DD HH:mm:ss')).toDate()
 						}
 					});
 
@@ -965,7 +957,7 @@ export class UpworkService {
 	}
 
 	private async _getUpworkGauzyEmployee(
-		providerRefernceId: string,
+		providerRefernceId: number,
 		integrationId: string,
 		organizationId: string,
 		config: IUpworkApiConfig
@@ -1050,7 +1042,7 @@ export class UpworkService {
 				})
 			);
 		}
-		
+
 		return await this.commandBus.execute(
 			new IntegrationMapSyncEntityCommand({
 				gauzyId: employee.id,
@@ -1262,7 +1254,7 @@ export class UpworkService {
 			);
 			const { table: { cols = [] } } = reports;
 			let { table: { rows = [] } } = reports;
-	
+
 			const columns = pluck(cols, 'label');
 			//mapped inner row and associate to object key
 			rows = map(rows, function (row) {
@@ -1273,7 +1265,7 @@ export class UpworkService {
 				}
 				return ele;
 			});
-	
+
 			let integratedIncomes = [];
 			for await (const row of rows) {
 				const {
@@ -1283,7 +1275,7 @@ export class UpworkService {
 					hours,
 					assignment_ref: contractId
 				} = row;
-	
+
 				//sync upwork contract client
 				const client: IIntegrationMap = await this.syncClient(integrationId, organizationId, row);
 				const { record: income } = await this._incomeService.findOneOrFailByOptions({
@@ -1297,7 +1289,7 @@ export class UpworkService {
 						organizationId
 					}
 				});
-	
+
 				if (income) {
 					const { record } = await this._integrationMapService.findOneOrFailByOptions({
 						where: {
@@ -1380,22 +1372,28 @@ export class UpworkService {
 			dateRange: { start, end }
 		} = filter;
 
-		const whereClause = {
-			id: In(gauzyIds),
-			valueDate: Between(
-				moment(start).format('YYYY-MM-DD hh:mm:ss'),
-				moment(end).format('YYYY-MM-DD hh:mm:ss')
-			),
-			organizationId,
-			tenantId
-		};
-
 		const income = await this._incomeService.findAll({
-			where: whereClause,
+			where: {
+				id: In(gauzyIds),
+				valueDate: Between<Date>(
+					moment(moment(start).format('YYYY-MM-DD hh:mm:ss')).toDate(),
+					moment(moment(end).format('YYYY-MM-DD hh:mm:ss')).toDate(),
+				),
+				organizationId,
+				tenantId
+			},
 			relations: relations.income
 		});
 		const expense = await this._expenseService.findAll({
-			where: whereClause,
+			where: {
+				id: In(gauzyIds),
+				valueDate: Between<Date>(
+					moment(moment(start).format('YYYY-MM-DD hh:mm:ss')).toDate(),
+					moment(moment(end).format('YYYY-MM-DD hh:mm:ss')).toDate(),
+				),
+				organizationId,
+				tenantId
+			},
 			relations: relations.expense
 		});
 

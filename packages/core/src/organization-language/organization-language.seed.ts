@@ -1,21 +1,20 @@
-import { Connection, In } from 'typeorm';
+import { DataSource, In } from 'typeorm';
 import { OrganizationLanguage } from './organization-language.entity';
 import { faker } from '@ever-co/faker';
-import { IOrganization, IOrganizationLanguage, ITenant } from '@gauzy/contracts';
+import { IOrganization, IOrganizationLanguage, ITenant, LanguagesEnum } from '@gauzy/contracts';
 import { Language } from '../language/language.entity';
 import { DEFAULT_LANGUAGE_LEVEL, DEFAULT_ORGANIZATION_LANGUAGES } from './default-organization-languages';
 
 export const createDefaultOrganizationLanguage = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	defaultOrganizations: IOrganization[]
 ): Promise<IOrganizationLanguage[]> => {
 	const mapOrganizationLanguage: IOrganizationLanguage[] = [];
-	
-	const allLanguage = await connection.getRepository(Language).find({
-		code: In(["en", "he", "ru", "bg"])
+	const allLanguage = await dataSource.getRepository(Language).findBy({
+		code: In(Object.values(LanguagesEnum))
 	});
-	
+
 	for (const defaultOrganization of defaultOrganizations) {
 		for (const language of allLanguage) {
 			const organization = new OrganizationLanguage();
@@ -28,12 +27,12 @@ export const createDefaultOrganizationLanguage = async (
 		}
 	}
 
-	await insertRandomOrganizationLanguage(connection, mapOrganizationLanguage);
+	await insertRandomOrganizationLanguage(dataSource, mapOrganizationLanguage);
 	return mapOrganizationLanguage;
 };
 
 export const createRandomOrganizationLanguage = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	tenantOrganizationsMap: Map<ITenant, IOrganization[]>
 ): Promise<IOrganizationLanguage[]> => {
@@ -45,11 +44,11 @@ export const createRandomOrganizationLanguage = async (
 	}
 
 	const mapOrganizationLanguage: IOrganizationLanguage[] = [];
-	const allLanguage = await connection.manager.createQueryBuilder(Language, "language")
+	const allLanguage = await dataSource.manager.createQueryBuilder(Language, "language")
 	.orderBy("random()")
 	.limit(4)
 	.getMany();
-	
+
 	for (const tenant of tenants) {
 		const tenantOrganization = tenantOrganizationsMap.get(tenant);
 		for (const tenantOrg of tenantOrganization) {
@@ -64,15 +63,15 @@ export const createRandomOrganizationLanguage = async (
 		}
 	}
 
-	await insertRandomOrganizationLanguage(connection, mapOrganizationLanguage);
+	await insertRandomOrganizationLanguage(dataSource, mapOrganizationLanguage);
 	return mapOrganizationLanguage;
 };
 
 const insertRandomOrganizationLanguage = async (
-	connection: Connection,
+	dataSource: DataSource,
 	data: IOrganizationLanguage[]
 ) => {
-	await connection
+	await dataSource
 		.createQueryBuilder()
 		.insert()
 		.into(OrganizationLanguage)

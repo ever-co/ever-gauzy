@@ -25,7 +25,7 @@ export class TenantService extends CrudService<Tenant> {
 	constructor(
 		@InjectRepository(Tenant)
 		private readonly tenantRepository: Repository<Tenant>,
-		
+
 		private readonly userService: UserService,
 		private readonly roleService: RoleService,
 		private readonly commandBus: CommandBus,
@@ -65,8 +65,8 @@ export class TenantService extends CrudService<Tenant> {
 		);
 
 		//4. Find SUPER_ADMIN role to relative tenant.
-		const role = await this.roleService.findOneByConditions({
-			tenant,
+		const role = await this.roleService.findOneByWhereOptions({
+			tenantId,
 			name: RolesEnum.SUPER_ADMIN
 		});
 

@@ -1,7 +1,7 @@
 import { faker } from '@ever-co/faker';
 import * as _ from 'underscore';
 import * as moment from 'moment';
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { ActivityType, ITenant, ITimeSlot } from '@gauzy/contracts';
 import { Activity } from './activity.entity';
 import { OrganizationProject } from './../../core/entities/internal';
@@ -19,24 +19,23 @@ const AppsNames: string[] = [
 ];
 
 export const createRandomActivities = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	timeSlots: ITimeSlot[]
 ): Promise<Activity[]> => {
-	const employees = await connection.getRepository(Employee).find({
-		where: {
-			tenant
-		}
+	const { id: tenantId } = tenant;
+	const employees = await dataSource.manager.findBy(Employee, {
+		tenantId
 	});
 
-	let query = connection
+	let query = dataSource
 		.getRepository(OrganizationProject)
 		.createQueryBuilder();
 	query.leftJoinAndSelect(`${query.alias}.tasks`, 'tasks');
 	query.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId: tenant.id });
 
 	const projects: OrganizationProject[] = await query.getMany();
-	
+
 	const appNames: string[] = _.shuffle(AppsNames);
 	const allActivities: Activity[] = [];
 
@@ -122,7 +121,7 @@ export const createRandomActivities = async (
 					activities.push(activity);
 				}
 			}
-			await connection.manager.save(activities);
+			await dataSource.manager.save(activities);
 			allActivities.push(...allActivities);
 		}
 	}

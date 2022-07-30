@@ -14,9 +14,9 @@ import {
 	ValidationPipe
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
+import { FindOptionsWhere } from 'typeorm';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CrudController, PaginationParams } from './../core/crud';
-import { RequestContext } from './../core/context';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { TenantPermissionGuard } from './../shared/guards';
 import { EventTypeCreateCommand } from './commands';
@@ -36,28 +36,23 @@ export class EventTypeController extends CrudController<EventType> {
 
 	/**
 	 * GET event types counts
-	 * 
+	 *
 	 * @param filter
-	 * @returns 
+	 * @returns
 	 */
 	@Get('count')
 	@UsePipes(new ValidationPipe({ transform: true }))
 	async getCount(
-		@Query() filter: PaginationParams<EventType>
+		@Query() options: FindOptionsWhere<EventType>
 	): Promise<number> {
-		return this.eventTypeService.count({
-			where: {
-				tenantId: RequestContext.currentTenantId()
-			},
-			...filter
-		});
+		return this.eventTypeService.countBy(options);
 	}
 
 	/**
-	 * GET event types pagination  
-	 * 
-	 * @param filter 
-	 * @returns 
+	 * GET event types pagination
+	 *
+	 * @param filter
+	 * @returns
 	 */
 	@Get('pagination')
 	@UsePipes(new ValidationPipe({ transform: true }))
@@ -69,9 +64,9 @@ export class EventTypeController extends CrudController<EventType> {
 
 	/**
 	 * GET all event types
-	 * 
-	 * @param data 
-	 * @returns 
+	 *
+	 * @param data
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'Find all event types' })
 	@ApiResponse({
@@ -96,10 +91,10 @@ export class EventTypeController extends CrudController<EventType> {
 
 	/**
 	 * GET event type by id
-	 * 
-	 * @param id 
-	 * @param data 
-	 * @returns 
+	 *
+	 * @param id
+	 * @param data
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'Find event type by id.' })
 	@ApiResponse({
@@ -124,9 +119,9 @@ export class EventTypeController extends CrudController<EventType> {
 
 	/**
 	 * CREATE new event type
-	 * 
-	 * @param entity 
-	 * @returns 
+	 *
+	 * @param entity
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'Create new record' })
 	@ApiResponse({
@@ -149,10 +144,10 @@ export class EventTypeController extends CrudController<EventType> {
 
 	/**
 	 * UPDATE event type by id
-	 * 
-	 * @param id 
-	 * @param entity 
-	 * @returns 
+	 *
+	 * @param id
+	 * @param entity
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'Update record' })
 	@ApiResponse({

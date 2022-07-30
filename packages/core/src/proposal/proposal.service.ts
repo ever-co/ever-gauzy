@@ -12,6 +12,7 @@ export class ProposalService extends TenantAwareCrudService<Proposal> {
 	constructor(
 		@InjectRepository(Proposal)
 		private readonly proposalRepository: Repository<Proposal>,
+
 		@InjectRepository(Employee)
 		private readonly employeeRepository: Repository<Employee>
 	) {
@@ -47,9 +48,7 @@ export class ProposalService extends TenantAwareCrudService<Proposal> {
 		proposal.valueDate = entity.valueDate;
 		proposal.jobPostContent = entity.jobPostContent;
 		proposal.proposalContent = entity.proposalContent;
-
-		await this.employeeRepository.findOneOrFail(entity.employeeId);
-
+		proposal.employeeId = entity.employeeId;
 		return this.proposalRepository.save(proposal);
 	}
 

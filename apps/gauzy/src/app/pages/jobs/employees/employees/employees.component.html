@@ -20,22 +20,18 @@
 			></ngx-gauzy-button-action>
 		</div>
 		<nb-tabset>
-			<nb-tab 
-				[tabTitle]="'JOB_EMPLOYEE.BROWSE' | translate"
-			>
+			<nb-tab [tabTitle]="'JOB_EMPLOYEE.BROWSE' | translate">
 				<ng-container>
-					<ng-template [ngTemplateOutlet]="tableLayout"></ng-template>
+					<ng-template
+						[ngTemplateOutlet]="tableLayout"
+					></ng-template>
 				</ng-container>
 			</nb-tab>
-			<nb-tab 
-				[tabTitle]="'JOB_EMPLOYEE.SEARCH' | translate"
-			>
-				<p>This page is coming soon!</p>
+			<nb-tab [tabTitle]="'JOB_EMPLOYEE.SEARCH' | translate">
+				<ga-wip></ga-wip>
 			</nb-tab>
-			<nb-tab
-				[tabTitle]="'JOB_EMPLOYEE.HISTORY' | translate"
-			>
-				<p>This page is coming soon!</p>
+			<nb-tab [tabTitle]="'JOB_EMPLOYEE.HISTORY' | translate">
+				<ga-wip></ga-wip>
 			</nb-tab>
 		</nb-tabset>
 	</nb-card-body>

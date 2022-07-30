@@ -63,7 +63,7 @@ export class EmailTemplateSaveHandler
 		}: {
 			success: boolean;
 			record?: IEmailTemplate;
-		} = await this.emailTemplateService.findOneOrFailByConditions({
+		} = await this.emailTemplateService.findOneOrFailByWhereOptions({
 			languageCode,
 			name: `${name}/${type}`,
 			organizationId,

@@ -1,15 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Brackets, IsNull, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
-import { AccountingTemplateTypeEnum, IAccountingTemplate, IListQueryInput, IPagination, LanguagesEnum } from '@gauzy/contracts';
+import { Brackets, FindOptionsWhere, IsNull, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import * as mjml2html from 'mjml';
 import * as Handlebars from 'handlebars';
-import { CrudService } from './../core/crud';
+import { AccountingTemplateTypeEnum, IAccountingTemplate, IPagination, LanguagesEnum } from '@gauzy/contracts';
+import { isNotEmpty } from '@gauzy/common';
 import { AccountingTemplate } from './accounting-template.entity';
+import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
 
 @Injectable()
-export class AccountingTemplateService extends CrudService<AccountingTemplate> {
+export class AccountingTemplateService extends TenantAwareCrudService<AccountingTemplate> {
 	constructor(
 		@InjectRepository(AccountingTemplate)
 		private readonly accountingRepository: Repository<AccountingTemplate>
@@ -138,7 +139,7 @@ export class AccountingTemplateService extends CrudService<AccountingTemplate> {
 		const { data } = input;
 		const tenantId = RequestContext.currentTenantId();
 
-		const { success, record } = await this.findOneOrFailByConditions({
+		const { success, record } = await this.findOneOrFailByWhereOptions({
 			languageCode: data.languageCode,
 			templateType: data.templateType,
 			organizationId: data.organizationId,
@@ -168,7 +169,7 @@ export class AccountingTemplateService extends CrudService<AccountingTemplate> {
 
 
 	async getAccountTemplate(
-		input,
+		options: FindOptionsWhere<AccountingTemplate>,
 		themeLanguage: LanguagesEnum
 	) {
 		let template: any;
@@ -176,18 +177,18 @@ export class AccountingTemplateService extends CrudService<AccountingTemplate> {
 			templateType = AccountingTemplateTypeEnum.INVOICE,
 			organizationId,
 			languageCode = themeLanguage
-		} = input;
+		} = options;
 		const tenantId = RequestContext.currentTenantId();
 
 		try {
-			template = await this.findOneByConditions({
+			template = await this.findOneByWhereOptions({
 				languageCode,
 				templateType,
 				organizationId,
 				tenantId
 			});
 		} catch (error) {
-			const { success, record } = await this.findOneOrFailByConditions({
+			const { success, record } = await this.findOneOrFailByWhereOptions({
 				languageCode,
 				templateType,
 				organizationId: IsNull(),
@@ -197,14 +198,14 @@ export class AccountingTemplateService extends CrudService<AccountingTemplate> {
 				template = record
 			} else {
 				try {
-					template = await this.findOneByConditions({
+					template = await this.findOneByWhereOptions({
 						languageCode: LanguagesEnum.ENGLISH,
 						templateType,
 						organizationId,
 						tenantId
 					});
 				} catch (error) {
-					template = await this.findOneByConditions({
+					template = await this.findOneByWhereOptions({
 						languageCode: LanguagesEnum.ENGLISH,
 						templateType,
 						organizationId: IsNull(),
@@ -219,44 +220,46 @@ export class AccountingTemplateService extends CrudService<AccountingTemplate> {
 
 
 	/**
-	* Get Accounting Templates
-	* @param params 
-	* @returns
-	*/
-	async findAll(params: IListQueryInput<IAccountingTemplate>): Promise<IPagination<IAccountingTemplate>> {
-		const { findInput, relations } = params;
-		const [items, total]  = await this.accountingRepository.findAndCount({
-			relations: [
-				...(relations ? relations : [])
-			],
-			where: (qb: SelectQueryBuilder<AccountingTemplate>) => {
-				qb.where(
-					new Brackets((bck: WhereExpressionBuilder) => { 
-						const tenantId = RequestContext.currentTenantId();
-						const { organizationId, languageCode } = findInput;
-						if (organizationId) {
-							bck.andWhere(`"${qb.alias}"."organizationId" = :organizationId`, {
-								organizationId
-							});
-						}
-						if (languageCode) {
-							bck.andWhere(`"${qb.alias}"."languageCode" = :languageCode`, {
-								languageCode
-							});
-						}
-						bck.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, {
-							tenantId
-						});
-					})
-				);
-				qb.orWhere(
-					new Brackets((bck: WhereExpressionBuilder) => { 
-						bck.andWhere(`"${qb.alias}"."organizationId" IS NULL`);
-						bck.andWhere(`"${qb.alias}"."tenantId" IS NULL`);
-					})
-				)
-			}
+	 * Get Accounting Templates using pagination params
+	 *
+	 * @param params
+	 * @returns
+	 */
+	async findAll(
+		params: PaginationParams<AccountingTemplate>
+	): Promise<IPagination<IAccountingTemplate>> {
+		const query = this.accountingRepository.createQueryBuilder('accounting_template');
+		query.setFindOptions({
+			relations: params.relations,
+			order: params.order
 		});
+		query.where((qb: SelectQueryBuilder<AccountingTemplate>) => {
+			qb.andWhere(
+				new Brackets((bck: WhereExpressionBuilder) => {
+					const { organizationId, languageCode } = params.where;
+					if (isNotEmpty(organizationId)) {
+						bck.andWhere(`"${qb.alias}"."organizationId" = :organizationId`, {
+							organizationId
+						});
+					}
+					if (isNotEmpty(languageCode)) {
+						bck.andWhere(`"${qb.alias}"."languageCode" = :languageCode`, {
+							languageCode
+						});
+					}
+					bck.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, {
+						tenantId: RequestContext.currentTenantId()
+					});
+				})
+			);
+			qb.orWhere(
+				new Brackets((bck: WhereExpressionBuilder) => {
+					bck.andWhere(`"${qb.alias}"."organizationId" IS NULL`);
+					bck.andWhere(`"${qb.alias}"."tenantId" IS NULL`);
+				})
+			)
+		});
+		const [items, total] = await query.getManyAndCount();
 		return { items, total };
 	}
 }
