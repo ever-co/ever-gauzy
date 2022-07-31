@@ -1,4 +1,4 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { Invoice } from './invoice.entity';
 import { faker } from '@ever-co/faker';
 import * as moment from 'moment';
@@ -19,74 +19,72 @@ import { InvoiceEstimateHistory, OrganizationContact, Tag, User } from './../cor
 import { randomSeedConfig } from './../core/seeds/random-seed-config';
 
 export const createDefaultInvoice = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	organizations: IOrganization[],
 	noOfInvoicePerOrganization: number
 ) => {
+	const { id: tenantId } = tenant;
 	const invoices: IInvoice[] = [];
 	for (const organization of organizations) {
-		const tags = await connection.manager.find(Tag, {
-			where: { 
-				organization
-			}
+		const { id: organizationId } = organization;
+		const tags = await dataSource.manager.findBy(Tag, {
+			organizationId
 		});
-		const organizationContacts = await connection.manager.find(OrganizationContact, { 
-			where: { 
-				tenant,
-				organization 
-			} 
+		const organizationContacts = await dataSource.manager.findBy(OrganizationContact, {
+			tenantId,
+			organizationId
 		});
 		for (let i = 0; i < noOfInvoicePerOrganization; i++) {
 			const invoice = await generateInvoice(
-				connection,
-				tenant, 
-				organization, 
-				tags, 
+				dataSource,
+				tenant,
+				organization,
+				tags,
 				organizationContacts
 			)
 			invoices.push(invoice);
 		}
 	}
-	await connection.manager.save(invoices);
+	await dataSource.manager.save(invoices);
 };
 
 export const createRandomInvoice = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	tenantOrganizationsMap: Map<ITenant, IOrganization[]>,
 	noOfInvoicePerOrganization: number
 ) => {
 	for (const tenant of tenants) {
+		const { id: tenantId } = tenant;
 		const organizations = tenantOrganizationsMap.get(tenant);
 		const invoices: IInvoice[] = [];
 		for (const organization of organizations) {
-			const tags = await connection.manager.find(Tag, {
-				where: { organization }
+			const { id: organizationId } = organization;
+			const tags = await dataSource.manager.findBy(Tag, {
+				organizationId
 			});
-			const organizationContacts = await connection.manager.find(OrganizationContact, { 
-				where: { 
-					organization,
-					tenant
-				} 
+			const organizationContacts = await dataSource.manager.findBy(OrganizationContact, {
+				organizationId,
+				tenantId
 			});
 			for (let i = 0; i < noOfInvoicePerOrganization; i++) {
-				const invoice = await generateInvoice(connection, tenant, organization, tags, organizationContacts)
+				const invoice = await generateInvoice(dataSource, tenant, organization, tags, organizationContacts)
 				invoices.push(invoice);
 			}
 		}
-		await connection.manager.save(invoices);
+		await dataSource.manager.save(invoices);
 	}
 };
 
 const generateInvoice = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	organization: IOrganization,
 	tags: ITag[],
 	organizationContacts: IOrganizationContact[]
 ): Promise<IInvoice> => {
-	
+
 	const invoice = new Invoice();
 	invoice.tags = chain(tags)
 		.shuffle()
@@ -94,7 +92,7 @@ const generateInvoice = async (
 		.values()
 		.value();
 	invoice.invoiceNumber = faker.datatype.number({ min: 111111111111, max: 999999999999 });
-	
+
 	invoice.invoiceDate = moment(
 		faker.date.between(
 			new Date(),
@@ -111,9 +109,9 @@ const generateInvoice = async (
 	)
 	.startOf('day')
 	.toDate();
-	
+
 	if (organizationContacts.length) {
-		invoice.organizationContactId = faker.random.arrayElement(organizationContacts).id; 
+		invoice.organizationContactId = faker.random.arrayElement(organizationContacts).id;
 	}
 
 	invoice.sentTo = organization.id;
@@ -144,7 +142,7 @@ const generateInvoice = async (
 	invoice.isArchived = false;
 
 	invoice.historyRecords = await generateInvoiceHistory(
-		connection,
+		dataSource,
 		tenant,
 		organization,
 		invoice
@@ -154,22 +152,21 @@ const generateInvoice = async (
 
 /**
 * Updates invoice estimate records history
-* @param connection
+* @param dataSource
 * @param tenant
 * @param organization
-* @param invoice 
+* @param invoice
 */
 const generateInvoiceHistory = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	organization: IOrganization,
 	invoice: IInvoice
 ): Promise<IInvoiceEstimateHistory[]> => {
 	const historyRecords: IInvoiceEstimateHistory[] = [];
-	const users = await connection.manager.find(User, {
-		where: { 
-			tenant
-		}
+	const { id: tenantId } = tenant;
+	const users = await dataSource.manager.findBy(User, {
+		tenantId
 	});
 
 	historyRecords.push(

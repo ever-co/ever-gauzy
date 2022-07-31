@@ -1,5 +1,5 @@
 import * as fs from 'fs';
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { EmailTemplate } from './email-template.entity';
 import * as mjml2html from 'mjml';
 import * as path from 'path';
@@ -14,7 +14,7 @@ import * as path from 'path';
  * template-type: Can be 'html', 'subject' or 'text' but needs to only have .hbs or .mjml extension
  */
 export const createDefaultEmailTemplates = async (
-	connection: Connection
+	dataSource: DataSource
 ): Promise<any> => {
 	try {
 		const templatePath = [
@@ -34,7 +34,7 @@ export const createDefaultEmailTemplates = async (
 
 		findInDir(FOLDER_PATH, files);
 
-		await fileToTemplate(connection, files);
+		await fileToTemplate(dataSource, files);
 	} catch (error) {
 		// it's not a big issue for now if we can't create email templates
 		console.error(error);
@@ -56,20 +56,20 @@ function findInDir(dir, fileList = []) {
 	});
 }
 
-const fileToTemplate = async (connection, files) => {
+const fileToTemplate = async (dataSource, files) => {
 	for (const file of files) {
 		const template = await pathToEmailTemplate(file);
 		if (template && template.hbs) {
-			await insertTemplate(connection, template);
+			await insertTemplate(dataSource, template);
 		}
 	}
 };
 
 const insertTemplate = async (
-	connection: Connection,
+	dataSource: DataSource,
 	emailTemplate: EmailTemplate
 ): Promise<void> => {
-	await connection
+	await dataSource
 		.createQueryBuilder()
 		.insert()
 		.into(EmailTemplate)

@@ -51,7 +51,7 @@ export class CandidateHiredHandler
 
 			//3. Migrate CANDIDATE role to EMPLOYEE role
 			const { user } = candidate;
-			const role: IRole = await this.roleService.findOneByConditions({
+			const role: IRole = await this.roleService.findOneByWhereOptions({
 				tenantId: RequestContext.currentTenantId(),
 				name: RolesEnum.EMPLOYEE
 			});
@@ -61,8 +61,8 @@ export class CandidateHiredHandler
 			});
 
 			//4. Convert candidate to employee user
-			return await this.candidateService.create({ 
-				id, 
+			return await this.candidateService.create({
+				id,
 				employee
 			});
 		} catch (error) {

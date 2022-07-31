@@ -24,7 +24,7 @@ export class DeleteTimeSpanHandler
 
 		@InjectRepository(TimeSlot)
 		private readonly timeSlotRepository: Repository<TimeSlot>,
-		
+
 		private readonly commandBus: CommandBus,
 		private readonly timeSlotService: TimeSlotService
 	) {}
@@ -34,9 +34,15 @@ export class DeleteTimeSpanHandler
 		const { id } = timeLog;
 		const { start, end } = newTime;
 
-		const refreshTimeLog = await this.timeLogRepository.findOne(id, {
-			relations: ['timeSlots']
+		const refreshTimeLog = await this.timeLogRepository.findOne({
+			where: {
+				id: id
+			},
+			relations: {
+				timeSlots: true
+			}
 		});
+
 		const { startedAt, stoppedAt, employeeId, organizationId, timesheetId } = refreshTimeLog;
 
 		const newTimeRange = moment.range(start, end);
@@ -135,8 +141,13 @@ export class DeleteTimeSpanHandler
 						/*
 						* Delete TimeLog if remaining timeSlots are 0
 						*/
-						updatedTimeLog = await this.timeLogRepository.findOne(updatedTimeLog.id, {
-							relations: ['timeSlots']
+						updatedTimeLog = await this.timeLogRepository.findOne({
+							where: {
+								id: updatedTimeLog.id
+							},
+							relations: {
+								timeSlots: true
+							}
 						});
 						if (isEmpty(updatedTimeLog.timeSlots)) {
 							await this.commandBus.execute(
@@ -205,8 +216,13 @@ export class DeleteTimeSpanHandler
 						/*
 						* Delete TimeLog if remaining timeSlots are 0
 						*/
-						updatedTimeLog = await this.timeLogRepository.findOne(updatedTimeLog.id, {
-							relations: ['timeSlots']
+						updatedTimeLog = await this.timeLogRepository.findOne({
+							where: {
+								id: updatedTimeLog.id
+							},
+							relations: {
+								timeSlots: true
+							}
 						});
 						if (isEmpty(updatedTimeLog.timeSlots)) {
 							await this.commandBus.execute(
@@ -253,7 +269,7 @@ export class DeleteTimeSpanHandler
 							timeLog.stoppedAt = start;
 							await this.timeLogRepository.save(timeLog);
 						} catch (error) {
-							console.error(`Error while updating old timelog`, error);						
+							console.error(`Error while updating old timelog`, error);
 						}
 					} else {
 						/*
@@ -264,7 +280,7 @@ export class DeleteTimeSpanHandler
 								new TimeLogDeleteCommand(refreshTimeLog, true)
 							);
 						} catch (error) {
-							console.error(`Error while deleting old timelog`, error);						
+							console.error(`Error while deleting old timelog`, error);
 						}
 					}
 					const timeSlotsIds = [timeSlot.id];

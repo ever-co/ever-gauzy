@@ -48,10 +48,10 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 
 	/**
 	 * GET email instance for tenant/organization
-	 * 
-	 * @param organizationId 
-	 * @param tenantId 
-	 * @returns 
+	 *
+	 * @param organizationId
+	 * @param tenantId
+	 * @returns
 	 */
 	private async getEmailInstance(
 		organizationId?: string,
@@ -101,7 +101,7 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 			render: this.render
 		};
 
-		/* TODO: uncomment this after we figure out issues with dev / prod in the environment.*.ts 
+		/* TODO: uncomment this after we figure out issues with dev / prod in the environment.*.ts
 		if (!env.production && !env.demo) {
 			config.preview = {
 				open: {
@@ -120,7 +120,7 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 			view = view.replace('\\', '/');
 
 			// Find email template for customized for given organization
-			let emailTemplate: IEmailTemplate = await this.emailTemplateRepository.findOne({
+			let emailTemplate: IEmailTemplate = await this.emailTemplateRepository.findOneBy({
 				name: view,
 				languageCode: locals.locale || LanguagesEnum.ENGLISH,
 				organizationId: locals.organizationId,
@@ -129,7 +129,7 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 
 			// if no email template present for given organization, use default email template
 			if (!emailTemplate) {
-				emailTemplate = await this.emailTemplateRepository.findOne({
+				emailTemplate = await this.emailTemplateRepository.findOneBy({
 					name: view,
 					languageCode: locals.locale || LanguagesEnum.ENGLISH,
 					organizationId: IsNull(),
@@ -230,7 +230,7 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 				organizationId,
 				locale: languageCode,
 				host: baseUrl,
-				acceptUrl: `${baseUrl}#/auth/estimate/?token=${token}&id=${invoiceId}&action=accept&email=${email}`, 
+				acceptUrl: `${baseUrl}#/auth/estimate/?token=${token}&id=${invoiceId}&action=accept&email=${email}`,
 				rejectUrl: `${baseUrl}#/auth/estimate/?token=${token}&id=${invoiceId}&action=reject&email=${email}`
 			}
 		};
@@ -360,7 +360,7 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 	}
 
 	async inviteEmployee(inviteEmployeeModel: IInviteEmployeeModel) {
-		const { 
+		const {
 			email,
 			registerUrl,
 			projects,
@@ -412,7 +412,7 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 	}
 
 	async sendAcceptInvitationEmail(joinEmployeeModel: IJoinEmployeeModel, originUrl?: string) {
-		const { 
+		const {
 			email,
 			employee,
 			organization,
@@ -463,9 +463,9 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 	) {
 		let organization: Organization;
 		if (organizationId) {
-			organization = await this.organizationRepository.findOne(
-				organizationId
-			);
+			organization = await this.organizationRepository.findOneBy({
+				id: organizationId
+			});
 		}
 		const tenantId = (organization) ? organization.tenantId : RequestContext.currentTenantId();
 		const sendOptions = {
@@ -513,9 +513,9 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 	) {
 		let organization: Organization;
 		if (organizationId) {
-			organization = await this.organizationRepository.findOne(
-				organizationId
-			);
+			organization = await this.organizationRepository.findOneBy({
+				id: organizationId
+			});
 		}
 		const tenantId = (organization) ? organization.tenantId : RequestContext.currentTenantId();
 		const sendOptions = {
@@ -563,9 +563,9 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 	) {
 		let organization: Organization;
 		if (organizationId) {
-			organization = await this.organizationRepository.findOne(
-				organizationId
-			);
+			organization = await this.organizationRepository.findOneBy({
+				id: organizationId
+			});
 		}
 		const tenantId = (organization) ? organization.tenantId : RequestContext.currentTenantId();
 		const sendOptions = {
@@ -607,9 +607,9 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 	async setTimesheetAction(email: string, timesheet: ITimesheet) {
 		const languageCode = RequestContext.getLanguageCode();
 		const organizationId = timesheet.employee.organizationId;
-		const organization = await this.organizationRepository.findOne(
-			timesheet.employee.organizationId
-		);
+		const organization = await this.organizationRepository.findOneBy({
+			id: timesheet.employee.organizationId
+		});
 		const tenantId = (organization) ? organization.tenantId : RequestContext.currentTenantId();
 		const sendOptions = {
 			template: 'timesheet-action',
@@ -653,9 +653,9 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 	async timesheetSubmit(email: string, timesheet: ITimesheet) {
 		const languageCode = RequestContext.getLanguageCode();
 		const organizationId = timesheet.employee.organizationId;
-		const organization = await this.organizationRepository.findOne(
-			timesheet.employee.organizationId
-		);
+		const organization = await this.organizationRepository.findOneBy({
+			id: timesheet.employee.organizationId
+		});
 		const tenantId = (organization) ? organization.tenantId : RequestContext.currentTenantId();
 		const sendOptions = {
 			template: 'timesheet-submit',
@@ -714,7 +714,7 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 			user
 		} = createEmailOptions;
 		const tenantId = (organization) ? organization.tenantId : RequestContext.currentTenantId();
-		const emailTemplate = await this.emailTemplateRepository.findOne({
+		const emailTemplate = await this.emailTemplateRepository.findOneBy({
 			name: template + '/html',
 			languageCode
 		});

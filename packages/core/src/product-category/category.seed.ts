@@ -1,4 +1,4 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { ProductCategory } from './product-category.entity';
 import { faker } from '@ever-co/faker';
 import * as seed from './product-category.seed.json';
@@ -6,7 +6,7 @@ import { ProductCategoryTranslation } from './product-category-translation.entit
 import { IOrganization, ITenant } from '@gauzy/contracts';
 
 export const createCategories = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	organizations: IOrganization[]
 ): Promise<ProductCategory[]> => {
@@ -32,18 +32,18 @@ export const createCategories = async (
 			seedProductCategories.push(newCategory);
 		}
 	}
-	return await insertProductCategories(connection, seedProductCategories);
+	return await insertProductCategories(dataSource, seedProductCategories);
 };
 
 const insertProductCategories = async (
-	connection: Connection,
+	dataSource: DataSource,
 	categories: ProductCategory[]
 ): Promise<ProductCategory[]> => {
-	return await connection.manager.save(categories);
+	return await dataSource.manager.save(categories);
 };
 
 export const createRandomCategories = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	tenantOrganizationsMap: Map<ITenant, IOrganization[]>
 ): Promise<ProductCategory[]> => {
@@ -75,6 +75,6 @@ export const createRandomCategories = async (
 			}
 		}
 	}
-	await insertProductCategories(connection, seedProductCategories);
+	await insertProductCategories(dataSource, seedProductCategories);
 	return seedProductCategories;
 };

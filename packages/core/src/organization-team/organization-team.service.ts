@@ -55,12 +55,15 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 			const role = await this.roleService.findOneByOptions({
 				where: { tenant: { id: tenantId }, name: RolesEnum.MANAGER }
 			});
-			const employees = await this.employeeRepository.findByIds(
-				[...memberIds, ...managerIds],
-				{
-					relations: ['user']
+
+			const employees = await this.employeeRepository.find({
+				where: {
+					id: In([...memberIds, ...managerIds])
+				},
+				relations: {
+					user: true
 				}
-			);
+			});
 
 			const teamEmployees: OrganizationTeamEmployee[] = [];
 			employees.forEach((employee) => {
@@ -102,12 +105,15 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 			const role = await this.roleService.findOneByOptions({
 				where: { tenant: { id: tenantId }, name: RolesEnum.MANAGER }
 			});
-			const employees = await this.employeeRepository.findByIds(
-				[...memberIds, ...managerIds],
-				{
-					relations: ['user']
+
+			const employees = await this.employeeRepository.find({
+				where: {
+					id: In([...memberIds, ...managerIds])
+				},
+				relations: {
+					user: true
 				}
-			);
+			});
 
 			// Update nested entity
 			await this.organizationTeamEmployeeService.updateOrganizationTeam(
@@ -213,11 +219,11 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 				filter.where.name = Like(`%${name}%`);
 			}
 			if ('tags' in where) {
-				const { tags } = where; 
+				const { tags } = where;
 				filter.where.tags = {
 					id: In(tags)
 				}
-			}			
+			}
 		}
 		return super.paginate(filter);
 	}

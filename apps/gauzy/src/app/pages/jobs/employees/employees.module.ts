@@ -19,6 +19,7 @@ import { SmartTableToggleModule } from '../../../@shared/smart-table/smart-table
 import { HeaderTitleModule } from '../../../@shared/components/header-title/header-title.module';
 import { GauzyButtonActionModule } from '../../../@shared/gauzy-button-action/gauzy-button-action.module';
 import { PaginationModule } from '../../../@shared/pagination/pagination.module';
+import { WorkInProgressModule } from '../../work-in-progress/work-in-progress.module';
 
 @NgModule({
 	declarations: [EmployeesComponent],
@@ -39,7 +40,8 @@ import { PaginationModule } from '../../../@shared/pagination/pagination.module'
 		SmartTableToggleModule,
 		HeaderTitleModule,
 		GauzyButtonActionModule,
-		PaginationModule
+		PaginationModule,
+		WorkInProgressModule
 	]
 })
 export class EmployeesModule {}

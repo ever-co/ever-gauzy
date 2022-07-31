@@ -1,11 +1,11 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { IEmployee, IOrganization, IRequestApprovalTeam, ITenant } from '@gauzy/contracts';
 import { RequestApprovalTeam } from './request-approval-team.entity';
 import { faker } from '@ever-co/faker';
 import { ApprovalPolicy, OrganizationTeam, RequestApproval } from './../core/entities/internal';
 
 export const createRandomRequestApprovalTeam = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	tenantEmployeeMap: Map<ITenant, IEmployee[]>,
 	tenantOrganizationsMap: Map<ITenant, IOrganization[]>
@@ -25,23 +25,29 @@ export const createRandomRequestApprovalTeam = async (
 
 	const requestApprovalTeams: IRequestApprovalTeam[] = [];
 	for await (const tenant of tenants) {
+		const { id: tenantId } = tenant;
 		const organizations = tenantOrganizationsMap.get(tenant);
 		for await (const organization of organizations) {
-			const approvalPolicies = await connection.manager.find(ApprovalPolicy, {
+			const { id: organizationId } = organization;
+			const approvalPolicies = await dataSource.manager.find(ApprovalPolicy, {
 				where: {
-					organization
+					organizationId,
+					tenantId
 				}
 			});
-			const organizationTeams = await connection.manager.find(OrganizationTeam, {
+			const organizationTeams = await dataSource.manager.find(OrganizationTeam, {
 				where: {
-					organization
+					organizationId,
+					tenantId
 				}
 			});
 			for (const approvalPolicy of approvalPolicies) {
-				const requestApprovals = await connection.manager.find(RequestApproval, {
-					where: { 
-						approvalPolicy,
-						organization
+				const { id: approvalPolicyId } = approvalPolicy;
+				const requestApprovals = await dataSource.manager.find(RequestApproval, {
+					where: {
+						approvalPolicyId,
+						organizationId,
+						tenantId
 					}
 				});
 				for await (const requestApproval of requestApprovals) {
@@ -58,5 +64,5 @@ export const createRandomRequestApprovalTeam = async (
 			}
 		}
 	}
-	return await connection.manager.save(requestApprovalTeams);
+	return await dataSource.manager.save(requestApprovalTeams);
 };

@@ -19,12 +19,13 @@ import {
 	Req,
 	UseInterceptors,
 	ValidationPipe,
-	UsePipes
+	UsePipes,
+	ForbiddenException
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { I18nLang } from 'nestjs-i18n';
-import { FindManyOptions } from 'typeorm';
+import { FindManyOptions, FindOptionsWhere } from 'typeorm';
 import { Request } from 'express';
 import {
 	EmployeeCreateCommand,
@@ -34,8 +35,7 @@ import {
 	EmployeeUpdateCommand,
 	WorkingEmployeeGetCommand
 } from './commands';
-import { CrudController, ITryRequest, PaginationParams } from './../core/crud';
-import { RequestContext } from '../core/context';
+import { CrudController, ITryRequest, OptionParams, PaginationParams } from './../core/crud';
 import { TransformInterceptor } from './../core/interceptors';
 import { Permissions } from './../shared/decorators';
 import { BulkBodyLoadTransformPipe, ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
@@ -164,7 +164,7 @@ export class EmployeeController extends CrudController<Employee> {
 	async findByUserId(
 		@Param('userId', UUIDValidationPipe) userId: string,
 		@Query('data', ParseJsonPipe) data?: any
-	): Promise<ITryRequest> {
+	): Promise<ITryRequest<Employee>> {
 		const { relations = [] } = data;
 		return this.employeeService.findOneOrFailByOptions({
 			where: {
@@ -207,20 +207,16 @@ export class EmployeeController extends CrudController<Employee> {
 	/**
 	 * GET employee count in the same tenant.
 	 *
-	 * @param filter
+	 * @param options
 	 * @returns
 	 */
 	@Get('count')
-	@UsePipes(new ValidationPipe({ transform: true }))
 	async getCount(
-		@Query() filter: PaginationParams<IEmployee>
+		@Query(new ValidationPipe({
+			transform: true
+		})) options: FindOptionsWhere<Employee>
 	): Promise<number> {
-		return this.employeeService.count({
-			where: {
-				tenantId: RequestContext.currentTenantId()
-			},
-			...filter
-		});
+		return this.employeeService.countBy(options);
 	}
 
 	/**
@@ -232,9 +228,10 @@ export class EmployeeController extends CrudController<Employee> {
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_EMPLOYEES_VIEW)
 	@Get('pagination')
-	@UsePipes(new ValidationPipe({ transform: true }))
 	async pagination(
-		@Query() filter: PaginationParams<IEmployee>
+		@Query(new ValidationPipe({
+			transform: true
+		})) filter: PaginationParams<IEmployee>
 	): Promise<IPagination<IEmployee>> {
 		return this.employeeService.pagination(filter);
 	}
@@ -288,17 +285,16 @@ export class EmployeeController extends CrudController<Employee> {
 	@Get(':id')
 	async findById(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Query('data', ParseJsonPipe) data?: any
+		@Query(new ValidationPipe({
+			transform: true
+		})) options: OptionParams<Employee>
 	): Promise<Employee> {
-		const { relations = [], useTenant } = data;
-		if (useTenant) {
+		try {
 			return this.employeeService.findOneByIdString(id, {
-				relations
+				relations: options.relations || []
 			});
-		} else {
-			return this.employeeService.findWithoutTenant(id, {
-				relations
-			});
+		} catch (error) {
+			throw new ForbiddenException(error);
 		}
 	}
 

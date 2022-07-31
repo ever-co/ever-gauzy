@@ -1,7 +1,7 @@
 import { IOrganization, IOrganizationContact, IPagination } from '@gauzy/contracts';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindConditions, Repository } from 'typeorm';
+import { FindOptionsWhere, Repository } from 'typeorm';
 import { Organization, OrganizationContact, OrganizationProject } from './../../core/entities/internal';
 
 @Injectable()
@@ -26,11 +26,14 @@ export class PublicOrganizationService {
 	 * @returns
 	 */
 	async findOneByProfileLink(
-		options: FindConditions<Organization>,
+		where: FindOptionsWhere<Organization>,
 		relations: string[]
 	): Promise<IOrganization> {
 		try {
-			return await this.repository.findOneOrFail(options, { relations });
+			return await this.repository.findOneOrFail({
+				where,
+				relations
+			});
 		} catch (error) {
 			throw new NotFoundException(`The requested record was not found`);
 		}
@@ -43,10 +46,10 @@ export class PublicOrganizationService {
 	 * @returns
 	 */
 	async findPublicClientsByOrganization(
-		options: FindConditions<OrganizationContact>
+		options: FindOptionsWhere<OrganizationContact>
 	): Promise<IPagination<IOrganizationContact>> {
 		try {
-			const [items = [], total = 0] = await this.organizationContact.findAndCount(options);
+			const [items = [], total = 0] = await this.organizationContact.findAndCountBy(options);
 			return { items, total };
 		} catch (error) {
 			throw new NotFoundException(`The requested public clients was not found`);
@@ -59,11 +62,11 @@ export class PublicOrganizationService {
 	 * @param options
 	 * @returns
 	 */
-	 async findPublicClientCountsByOrganization(
-		options: FindConditions<OrganizationContact>
+	async findPublicClientCountsByOrganization(
+		options: FindOptionsWhere<OrganizationContact>
 	): Promise<Number> {
 		try {
-			return await this.organizationContact.count(options);
+			return await this.organizationContact.countBy(options);
 		} catch (error) {
 			throw new NotFoundException(`The requested client counts was not found`);
 		}
@@ -76,10 +79,10 @@ export class PublicOrganizationService {
 	 * @returns
 	 */
 	async findPublicProjectCountsByOrganization(
-		options: FindConditions<OrganizationProject>
+		options: FindOptionsWhere<OrganizationProject>
 	): Promise<Number> {
 		try {
-			return await this.organizationProject.count(options);
+			return await this.organizationProject.countBy(options);
 		} catch (error) {
 			throw new NotFoundException(`The requested project counts was not found`);
 		}

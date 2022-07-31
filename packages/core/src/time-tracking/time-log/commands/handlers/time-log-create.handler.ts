@@ -19,7 +19,7 @@ export class TimeLogCreateHandler
 	constructor(
 		@InjectRepository(TimeLog)
 		private readonly timeLogRepository: Repository<TimeLog>,
-		
+
 		private readonly commandBus: CommandBus,
 		private readonly timeSlotService: TimeSlotService
 	) {}
@@ -108,7 +108,7 @@ export class TimeLogCreateHandler
 		await this.timeLogRepository.save(timeLog);
 
 		/**
-		 * RECALCULATE timesheet activity  
+		 * RECALCULATE timesheet activity
 		 */
 		if (timesheet) {
 			const { id: timesheetId } = timesheet;
@@ -123,11 +123,13 @@ export class TimeLogCreateHandler
 		await this.commandBus.execute(
 			new UpdateEmployeeTotalWorkedHoursCommand(employeeId)
 		);
-		
+
 		console.log('Newly created time log & request', {
 			timeLog,
 			input
 		});
-		return await this.timeLogRepository.findOne(timeLog.id);
+		return await this.timeLogRepository.findOneBy({
+			id: timeLog.id
+		});
 	}
 }

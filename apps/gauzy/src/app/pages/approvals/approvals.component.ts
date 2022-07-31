@@ -34,6 +34,7 @@ import {
 import { distinctUntilChange } from '@gauzy/common-angular';
 import { Subject } from 'rxjs/internal/Subject';
 import { DateViewComponent } from '../../@shared/table-components/date-view/date-view.component';
+import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -179,7 +180,7 @@ export class ApprovalsComponent
 		this.disableButton = !isSelected;
 		setTimeout(() => {
 			this.selectedRequestApproval = isSelected ? data : null;
-		}, 50);				
+		}, 50);
 	}
 
 	async getApprovals() {
@@ -206,7 +207,7 @@ export class ApprovalsComponent
 					[
 						'employeeApprovals',
 						'employeeApprovals.employee',
-						'employee.user',
+						'employeeApprovals.employee.user',
 						'teamApprovals',
 						'teamApprovals.team',
 						'tags'
@@ -446,17 +447,22 @@ export class ApprovalsComponent
 				data: selectedItem
 			});
 		}
-		const isSuccess = await this.approvalRequestService.delete(
-			this.selectedRequestApproval.id
+		const result = await firstValueFrom(
+			this.dialogService.open(DeleteConfirmationComponent).onClose
 		);
-		if (isSuccess) {
-			this.toastrService.success(
-				'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_DELETED',
-				{ name: this.selectedRequestApproval.name }
+		if (result) {
+			const isSuccess = await this.approvalRequestService.delete(
+				this.selectedRequestApproval.id
 			);
+			if (isSuccess) {
+				this.toastrService.success(
+					'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_DELETED',
+					{ name: this.selectedRequestApproval.name }
+				);
+				this.clearItem();
+				this.getApprovals();
+			}
 		}
-		this.clearItem();
-		this.getApprovals();
 	}
 
 	/*

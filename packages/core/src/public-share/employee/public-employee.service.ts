@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindConditions, Repository } from 'typeorm';
+import { FindOptionsWhere, Repository } from 'typeorm';
 import { IEmployee, IPagination } from '@gauzy/contracts';
 import { Employee } from './../../core/entities/internal';
 
@@ -19,7 +19,7 @@ export class PublicEmployeeService {
 	 * @returns
 	 */
 	async findPublicEmployeeByOrganization(
-		where: FindConditions<Employee>,
+		where: FindOptionsWhere<Employee>,
 		relations: string[] = []
 	): Promise<IPagination<IEmployee>> {
 		try {
@@ -40,11 +40,14 @@ export class PublicEmployeeService {
 	 * @returns
 	 */
 	async findOneByConditions(
-		options: FindConditions<Employee>,
+		where: FindOptionsWhere<Employee>,
 		relations: string[]
 	): Promise<IEmployee> {
 		try {
-			return await this.repository.findOneOrFail(options, { relations });
+			return await this.repository.findOneOrFail({
+				where,
+				relations
+			});
 		} catch (error) {
 			throw new NotFoundException(`The requested record was not found`);
 		}

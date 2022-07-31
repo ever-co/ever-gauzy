@@ -8,7 +8,7 @@
 	<nb-badge
 		class="color"
 		position="centered"
-		[style.background]="rowData?.brandColor"
+		[style.background]="background(rowData?.color)"
 		[style.color]="backgroundContrast(rowData?.brandColor)"
 		text="Default"
 	>
@@ -19,7 +19,7 @@
 		*ngFor="let tag of (data | async)?.tags"
 		class="color"
 		position="centered"
-		[style.background]="tag?.color"
+		[style.background]="background(tag?.color)"
 		[style.color]="backgroundContrast(tag?.color)"
 		[text]="tag?.name"
 	>

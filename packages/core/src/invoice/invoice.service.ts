@@ -91,7 +91,9 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 			token: token,
 			publicLink: result
 		});
-		return await this.invoiceRepository.findOne(invoiceId);
+		return await this.invoiceRepository.findOneBy({
+			id: invoiceId
+		});
 	}
 
 	createToken(email): string {
@@ -310,7 +312,7 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 		return stream;
 	}
 
-	public pagination(filter?: any) {		
+	public pagination(filter?: any) {
 		if ('where' in filter) {
 			const { where } = filter;
 			if (where.tags) {

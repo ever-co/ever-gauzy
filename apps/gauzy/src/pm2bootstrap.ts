@@ -1,4 +1,6 @@
-require('dotenv').config();
+import * as dotenv from 'dotenv';
+dotenv.config();
+
 const pm2 = require('pm2');
 
 const PRIVATE_KEY = process.env.KEYMETRICS_SECRET_KEY || '';

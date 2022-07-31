@@ -7,10 +7,12 @@ import {
 	OnDestroy
 } from '@angular/core';
 import { ITag, IOrganization } from '@gauzy/contracts';
-import { getContrastColor } from '@gauzy/common-angular';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { filter, tap } from 'rxjs/operators';
 import { Store, TagsService } from '../../../@core/services';
+import { PictureNameTagsComponent } from '../../table-components';
+import { NbThemeService } from '@nebular/theme';
+import { TranslateService } from '@ngx-translate/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -18,8 +20,10 @@ import { Store, TagsService } from '../../../@core/services';
 	templateUrl: './tags-color-input.component.html',
 	styleUrls: ['./tags-color-input.component.scss']
 })
-export class TagsColorInputComponent implements OnInit, OnDestroy {
-	
+export class TagsColorInputComponent
+	extends PictureNameTagsComponent
+	implements OnInit, OnDestroy
+{
 	tags: ITag[] = [];
 	loading: boolean;
 	private organization: IOrganization;
@@ -62,8 +66,12 @@ export class TagsColorInputComponent implements OnInit, OnDestroy {
 
 	constructor(
 		private readonly tagsService: TagsService,
-		private readonly store: Store
-	) {}
+		private readonly store: Store,
+		readonly themeService: NbThemeService,
+		readonly translateService: TranslateService
+	) {
+		super(themeService, translateService);
+	}
 
 	async onChange(currentSelection: string[]) {
 		const selectedTags = this.tags.filter((tag) =>
@@ -123,10 +131,6 @@ export class TagsColorInputComponent implements OnInit, OnDestroy {
 			);
 			this.tags = items;
 		}
-	}
-
-	backgroundContrast(bgColor: string) {
-		return getContrastColor(bgColor);
 	}
 
 	ngOnDestroy() {}

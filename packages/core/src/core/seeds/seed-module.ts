@@ -1,7 +1,8 @@
 // Modified code from https://github.com/alexitaylor/angular-graphql-nestjs-postgres-starter-kit.
 // MIT License, see https://github.com/alexitaylor/angular-graphql-nestjs-postgres-starter-kit/blob/master/LICENSE
 // Copyright (c) 2019 Alexi Taylor
-import yargs from 'yargs';
+
+import * as yargs from 'yargs';
 import * as chalk from 'chalk';
 
 import { NestFactory } from '@nestjs/core';

@@ -1,7 +1,7 @@
 import { Controller, Get, HttpStatus, Param, Query, UseInterceptors, ValidationPipe } from '@nestjs/common';
 import { QueryBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { FindConditions } from 'typeorm';
+import { FindOptionsWhere } from 'typeorm';
 import { IEmployee, IPagination } from '@gauzy/contracts';
 import { TenantOrganizationBaseDTO } from './../../core/dto';
 import { Employee } from './../../core/entities/internal';
@@ -49,7 +49,10 @@ export class PublicEmployeeController {
 		})) options: PublicEmployeeQueryDTO
 	): Promise<IPagination<IEmployee>> {
 		return await this.queryBus.execute(
-			new FindPublicEmployeesByOrganizationQuery(conditions, options.relations)
+			new FindPublicEmployeesByOrganizationQuery(
+				conditions as FindOptionsWhere<Employee>,
+				options.relations
+			)
 		);
 	}
 
@@ -73,7 +76,7 @@ export class PublicEmployeeController {
 	})
 	@Get('/:profile_link/:id')
 	async findPublicEmployeeByProfileLink(
-		@Param() params: FindConditions<Employee>,
+		@Param() params: FindOptionsWhere<Employee>,
 		@Query(new ValidationPipe({
 			transform: true,
 			whitelist: true

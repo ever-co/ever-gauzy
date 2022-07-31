@@ -62,8 +62,16 @@ export class UpdateTimeSlotHandler
 			}
 			await this.timeSlotRepository.update(id, input);
 
-			timeSlot = await this.timeSlotRepository.findOne(id, {
-				relations: ['timeLogs', 'screenshots', 'activities']
+			timeSlot = await this.timeSlotRepository.findOne({
+				where: {
+					...(employeeId ? { employeeId } : {}),
+					id
+				},
+				relations: {
+					timeLogs: true,
+					screenshots: true,
+					activities: true
+				}
 			});
 			return timeSlot;
 		} else {

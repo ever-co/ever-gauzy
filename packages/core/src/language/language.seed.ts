@@ -1,11 +1,11 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { ILanguage, LanguagesEnum } from '@gauzy/contracts';
 import { faker } from '@ever-co/faker';
 import { Language } from './language.entity';
 import  allLanguages from './all-languages';
 
 export const createLanguages = async (
-	connection: Connection
+	dataSource: DataSource
 ): Promise<ILanguage[]> => {
 	const systemLanguages: string[] = Object.values(LanguagesEnum);
 	const languages: ILanguage[] = [];
@@ -22,7 +22,7 @@ export const createLanguages = async (
 		}
 	}
 	try {
-		await connection.getRepository(Language).save(languages)
+		await dataSource.getRepository(Language).save(languages)
 	} catch (error) {
 		console.log({error})
 	}

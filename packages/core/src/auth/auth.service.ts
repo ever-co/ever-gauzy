@@ -10,7 +10,7 @@ import {
 } from '@gauzy/contracts';
 import { CommandBus } from '@nestjs/cqrs';
 import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException, UnauthorizedException } from '@nestjs/common';
-import { getManager } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { SocialAuthService } from '@gauzy/auth';
 import { isNotEmpty } from '@gauzy/common';
 import * as bcrypt from 'bcrypt';
@@ -29,7 +29,8 @@ export class AuthService extends SocialAuthService {
 		private readonly userService: UserService,
 		private readonly emailService: EmailService,
 		private readonly userOrganizationService: UserOrganizationService,
-		private readonly commandBus: CommandBus
+		private readonly commandBus: CommandBus,
+		private readonly dataSource: DataSource
 	) {
 		super();
 	}
@@ -42,8 +43,17 @@ export class AuthService extends SocialAuthService {
 	 * @returns
 	 */
 	async login(email: string, password: string): Promise<IAuthResponse | null> {
-		const user = await this.userService.findOneByConditions({ email }, {
-			relations: ['role', 'role.rolePermissions', 'employee'],
+		const user = await this.userService.findOneByOptions({
+			where: {
+				email
+			},
+			relations: {
+				employee: true,
+				role: {
+					rolePermissions: true
+				}
+			},
+			relationLoadStrategy: 'query',
 			order: {
 				createdAt: 'DESC'
 			}
@@ -86,8 +96,14 @@ export class AuthService extends SocialAuthService {
 		originUrl?: string
 	): Promise<{ token: string } | null> {
 		try {
-			const user = await this.userService.findOneByConditions(request, {
-				relations: ['role', 'employee']
+			const user = await this.userService.findOneByOptions({
+				where: {
+					...request
+				},
+				relations: {
+					role: true,
+					employee: true
+				}
 			});
 			try {
 				/**
@@ -102,10 +118,12 @@ export class AuthService extends SocialAuthService {
 						})
 					);
 
+					const { id: userId } = user;
+
 					const url = `${environment.clientBaseUrl}/#/auth/reset-password?token=${token}`;
 					const { organizationId } = await this.userOrganizationService.findOneByOptions({
 						where: {
-							user
+							userId
 						}
 					});
 
@@ -157,7 +175,9 @@ export class AuthService extends SocialAuthService {
 						where: {
 							tenantId
 						},
-						relations: ['tenant']
+						relations: {
+							tenant: true
+						}
 					}
 				);
 				if (user) {
@@ -189,7 +209,9 @@ export class AuthService extends SocialAuthService {
 			const creatingUser = await this.userService.findOneByIdString(
 				input.createdById,
 				{
-					relations: ['tenant']
+					relations: {
+						tenant: true
+					}
 				}
 			);
 			tenant = creatingUser.tenant;
@@ -218,7 +240,7 @@ export class AuthService extends SocialAuthService {
 			const { sourceId } = input;
 			await this.commandBus.execute(
 				new ImportRecordUpdateOrCreateCommand({
-					entityType: getManager().getRepository(User).metadata.tableName,
+					entityType: this.dataSource.getRepository(User).metadata.tableName,
 					sourceId,
 					destinationId: user.id
 				})
@@ -279,7 +301,9 @@ export class AuthService extends SocialAuthService {
 	async hasRole(roles: string[] = []): Promise<boolean> {
 		try {
 			const { role } = await this.userService.findOneByIdString(RequestContext.currentUserId(), {
-				relations: ['role']
+				relations: {
+					role: true
+				}
 			});
 			return role ? roles.includes(role.name) : false;
 		} catch (err) {
@@ -335,8 +359,13 @@ export class AuthService extends SocialAuthService {
 	public async getJwtAccessToken(request: Partial<IUser>) {
 		try {
 			const userId = request.id;
-			const user = await this.userService.findOneByConditions({ id: userId }, {
-				relations: ['role', 'role.rolePermissions', 'employee'],
+			const user =  await this.userService.findOneByIdString(userId, {
+				relations: {
+					employee: true,
+					role: {
+						rolePermissions: true
+					}
+				},
 				order: {
 					createdAt: 'DESC'
 				}

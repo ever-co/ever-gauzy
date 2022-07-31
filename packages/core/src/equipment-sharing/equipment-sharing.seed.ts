@@ -1,4 +1,4 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { faker } from '@ever-co/faker';
 import { addDays } from 'date-fns';
 import { IEmployee, IOrganization, ITenant } from '@gauzy/contracts';
@@ -6,18 +6,19 @@ import { EquipmentSharing } from './equipment-sharing.entity';
 import { Equipment } from './../core/entities/internal';
 
 export const createDefaultEquipmentSharing = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	organization: IOrganization,
 	defaultEmployees,
 	noOfEquipmentSharingPerTenant: number
 ): Promise<EquipmentSharing[]> => {
+	const { id: tenantId } = tenant;
 	let equipmentSharings: EquipmentSharing[] = [];
-	const equipments = await connection.manager.find(Equipment, {
-		where: [{ tenant: tenant }]
+	const equipments = await dataSource.manager.findBy(Equipment, {
+		tenantId
 	});
 	equipmentSharings = await dataOperation(
-		connection,
+		dataSource,
 		equipmentSharings,
 		noOfEquipmentSharingPerTenant,
 		equipments,
@@ -26,23 +27,24 @@ export const createDefaultEquipmentSharing = async (
 		organization
 	);
 
-	return await connection.manager.save(equipmentSharings);
+	return await dataSource.manager.save(equipmentSharings);
 };
 
 export const createRandomEquipmentSharing = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	tenantEmployeeMap: Map<ITenant, IEmployee[]>,
 	noOfEquipmentSharingPerTenant: number
 ): Promise<EquipmentSharing[]> => {
 	let equipmentSharings: EquipmentSharing[] = [];
 	for (const tenant of tenants) {
-		const equipments = await connection.manager.find(Equipment, {
-			where: [{ tenant: tenant }]
+		const { id: tenantId } = tenant;
+		const equipments = await dataSource.manager.findBy(Equipment, {
+			tenantId
 		});
 		const employees = tenantEmployeeMap.get(tenant);
 		equipmentSharings = await dataOperation(
-			connection,
+			dataSource,
 			equipmentSharings,
 			noOfEquipmentSharingPerTenant,
 			equipments,
@@ -55,7 +57,7 @@ export const createRandomEquipmentSharing = async (
 };
 
 const dataOperation = async (
-	connection: Connection,
+	dataSource: DataSource,
 	equipmentSharings,
 	noOfEquipmentSharingPerTenant,
 	equipments,
@@ -81,6 +83,6 @@ const dataOperation = async (
 		sharing.tenant = tenant;
 		equipmentSharings.push(sharing);
 	}
-	await connection.manager.save(equipmentSharings);
+	await dataSource.manager.save(equipmentSharings);
 	return equipmentSharings;
 };

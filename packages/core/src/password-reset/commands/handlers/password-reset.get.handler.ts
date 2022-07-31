@@ -7,7 +7,7 @@ import { IPasswordReset } from '@gauzy/contracts';
 @CommandHandler(PasswordResetGetCommand)
 export class PasswordResetGetHandler
 	implements ICommandHandler<PasswordResetGetCommand> {
-	
+
 	constructor(
 		private readonly _passwordResetService : PasswordResetService
 	) {}
@@ -19,9 +19,10 @@ export class PasswordResetGetHandler
 		const { token } = input;
 
 		try {
-			return await this._passwordResetService.findOneByConditions({
-				token
-			}, {
+			return await this._passwordResetService.findOneByOptions({
+				where: {
+					token
+				},
 				order: {
 					createdAt: 'DESC'
 				}

@@ -1,4 +1,4 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { faker } from '@ever-co/faker';
 import { DEFAULT_ENTITY_SETTINGS } from '@gauzy/integration-hubstaff';
 import { IIntegrationEntitySetting, IIntegrationEntitySettingTied, ITenant } from '@gauzy/contracts';
@@ -6,7 +6,7 @@ import { IntegrationEntitySetting } from './integration-entity-setting.entity';
 import { IntegrationTenant, Organization } from './../core/entities/internal';
 
 export const createRandomIntegrationEntitySetting = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[]
 ): Promise<IIntegrationEntitySetting[]> => {
 	if (!tenants) {
@@ -20,15 +20,13 @@ export const createRandomIntegrationEntitySetting = async (
 	const integrationEntitySettingTiedEntities: IIntegrationEntitySettingTied[] = [];
 
 	for (const tenant of tenants) {
-		const organizations = await connection.manager.find(Organization, {
-			where: [{ tenant: tenant }]
+		const { id: tenantId } = tenant;
+		const organizations = await dataSource.manager.findBy(Organization, {
+			tenantId
 		});
-		const integrationTenants = await connection.manager.find(
-			IntegrationTenant,
-			{
-				where: [{ tenant: tenant }]
-			}
-		);
+		const integrationTenants = await dataSource.manager.findBy(IntegrationTenant, {
+			tenantId
+		});
 		for (const integrationTenant of integrationTenants) {
 			const integrationEntitySetting = new IntegrationEntitySetting();
 
@@ -47,5 +45,5 @@ export const createRandomIntegrationEntitySetting = async (
 		}
 	}
 
-	await connection.manager.save(integrationEntitySettings);
+	await dataSource.manager.save(integrationEntitySettings);
 };

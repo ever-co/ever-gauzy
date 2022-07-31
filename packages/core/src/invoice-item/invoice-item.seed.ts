@@ -1,4 +1,4 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { InvoiceItem } from './invoice-item.entity';
 import { faker } from '@ever-co/faker';
 import {
@@ -18,29 +18,29 @@ import {
 	Invoice,
 	OrganizationProject,
 	Product,
-	Task 
+	Task
 } from './../core/entities/internal';
 
 
 export const createDefaultInvoiceItem = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	organizations: IOrganization[],
 	numberOfInvoiceItemPerInvoice: number
 ) => {
 	for await (const organization of organizations) {
 		const invoiceItems = await invoiceItemForInvoiceType(
-			connection,
+			dataSource,
 			tenant,
 			organization,
 			numberOfInvoiceItemPerInvoice
 		);
-		await connection.manager.save(invoiceItems);
+		await dataSource.manager.save(invoiceItems);
 	}
 };
 
 export const createRandomInvoiceItem = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	tenantOrganizationsMap: Map<ITenant, IOrganization[]>,
 	numberOfInvoiceItemPerInvoice: number
@@ -49,32 +49,36 @@ export const createRandomInvoiceItem = async (
 		const organizations = tenantOrganizationsMap.get(tenant);
 		for await (const organization of organizations) {
 			const invoiceItems = await invoiceItemForInvoiceType(
-				connection,
+				dataSource,
 				tenant,
 				organization,
 				numberOfInvoiceItemPerInvoice
 			);
-			await connection.manager.save(invoiceItems);
+			await dataSource.manager.save(invoiceItems);
 		}
 	}
 };
 
 async function invoiceItemForInvoiceType(
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	organization: IOrganization,
 	numberOfInvoiceItemPerInvoice: number
 ) {
+
+	const { id: tenantId } = tenant;
+	const { id: organizationId } = organization;
+
 	const where = {
-		tenant,
-		organization
+		tenantId: tenantId,
+		organizationId: organizationId
 	};
-	const employees: IEmployee[] = await connection.manager.find(Employee, { where });
-	const projects: IOrganizationProject[] = await connection.manager.find(OrganizationProject, { where });
-	const tasks: ITask[] = await connection.manager.find(Task, { where });
-	const products: Product[] = await connection.manager.find(Product, { where });
-	const expenses: IExpense[] = await connection.manager.find(Expense, { where });
-	const invoices: IInvoice[] = await connection.manager.find(Invoice, { where });
+	const employees: IEmployee[] = await dataSource.manager.find(Employee, { where });
+	const projects: IOrganizationProject[] = await dataSource.manager.find(OrganizationProject, { where });
+	const tasks: ITask[] = await dataSource.manager.find(Task, { where });
+	const products: Product[] = await dataSource.manager.find(Product, { where });
+	const expenses: IExpense[] = await dataSource.manager.find(Expense, { where });
+	const invoices: IInvoice[] = await dataSource.manager.find(Invoice, { where });
 
 	const invoiceItems: IInvoiceItem[] = [];
 	for await (const invoice of invoices) {
@@ -86,7 +90,7 @@ async function invoiceItemForInvoiceType(
 			invoiceItem.quantity = faker.datatype.number({ min: 10, max: 20 });
 			invoiceItem.totalValue = invoiceItem.price * invoiceItem.quantity;
 			invoiceItem.invoice = invoice;
-	
+
 			switch (invoice.invoiceType) {
 				case InvoiceTypeEnum.BY_EMPLOYEE_HOURS:
 					invoiceItem.employee = faker.random.arrayElement(employees);
@@ -104,7 +108,7 @@ async function invoiceItemForInvoiceType(
 					invoiceItem.expense = faker.random.arrayElement(expenses);
 					break;
 			}
-	
+
 			invoiceItem.applyDiscount = faker.datatype.boolean();
 			invoiceItem.applyTax = faker.datatype.boolean();
 			invoiceItem.tenant = tenant;
@@ -113,7 +117,7 @@ async function invoiceItemForInvoiceType(
 			invoiceItems.push(invoiceItem);
 		}
 		invoice.totalValue = totalValue;
-		await connection.manager.save(invoice);
+		await dataSource.manager.save(invoice);
 	}
 	return invoiceItems;
 }

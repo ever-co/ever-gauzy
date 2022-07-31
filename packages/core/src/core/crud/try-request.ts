@@ -1,5 +1,5 @@
-export interface ITryRequest {
+export interface ITryRequest<T> {
 	success: boolean;
-	record?: any;
+	record?: T;
 	error?: any;
 }

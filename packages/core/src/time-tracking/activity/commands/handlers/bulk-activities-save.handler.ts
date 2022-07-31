@@ -25,9 +25,9 @@ export class BulkActivitiesSaveHandler
 
 		if (!organizationId) {
 			const user = RequestContext.currentUser();
-			const employee = await this.employeeRepository.findOne(
-				user.employeeId
-			);
+			const employee = await this.employeeRepository.findOneBy({
+				id: user.employeeId
+			});
 			organizationId = employee.organizationId;
 		}
 		const insertActivities = activities.map((activity: IActivity) => {

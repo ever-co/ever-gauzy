@@ -1,4 +1,4 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { Report } from './report.entity';
 import { ReportCategory } from './report-category.entity';
 import { indexBy } from 'underscore';
@@ -14,11 +14,11 @@ import { ReportOrganization } from './report-organization.entity';
 import { Organization } from './../core/entities/internal';
 
 export const createDefaultReport = async (
-	connection: Connection,
-	config: IPluginConfig,
+	dataSource: DataSource,
+	config: Partial<IPluginConfig>,
 	tenant: ITenant
 ): Promise<IReport[]> => {
-	await cleanReport(connection, config);
+	await cleanReport(dataSource, config);
 
 	const defaultCategories: IReportCategory[] = [
 		new ReportCategory({
@@ -39,7 +39,7 @@ export const createDefaultReport = async (
 		})
 	];
 
-	await connection.manager.save(defaultCategories);
+	await dataSource.manager.save(defaultCategories);
 
 	const categoryByName = indexBy(defaultCategories, 'name');
 
@@ -143,9 +143,9 @@ export const createDefaultReport = async (
 		})
 	];
 
-	await connection.manager.save(reports);
+	await dataSource.manager.save(reports);
 	await createDefaultOrganizationsReport(
-		connection, 
+		dataSource,
 		reports,
 		tenant
 	);
@@ -153,17 +153,17 @@ export const createDefaultReport = async (
 };
 
 async function cleanReport(
-	connection: Connection,
-	config: IPluginConfig
+	dataSource: DataSource,
+	config: Partial<IPluginConfig>
 ) {
-	const report = connection.getRepository(Report).metadata.tableName;
-	const reportCategory = connection.getRepository(ReportCategory).metadata.tableName;
+	const report = dataSource.getRepository(Report).metadata.tableName;
+	const reportCategory = dataSource.getRepository(ReportCategory).metadata.tableName;
 
 	if (config.dbConnectionOptions.type === 'sqlite') {
-		await connection.query(`DELETE FROM ${reportCategory}`);
-		await connection.query(`DELETE FROM ${report}`);
+		await dataSource.query(`DELETE FROM ${reportCategory}`);
+		await dataSource.query(`DELETE FROM ${report}`);
 	} else {
-		await connection.query(`TRUNCATE TABLE ${report}, ${reportCategory} RESTART IDENTITY CASCADE`);
+		await dataSource.query(`TRUNCATE TABLE ${report}, ${reportCategory} RESTART IDENTITY CASCADE`);
 	}
 
 	console.log(chalk.green(`CLEANING UP REPORT IMAGES...`));
@@ -188,7 +188,10 @@ async function cleanReport(
 	});
 }
 
-function copyImage(fileName: string, config: IPluginConfig) {
+function copyImage(
+	fileName: string,
+	config: Partial<IPluginConfig>
+) {
 	try {
 		const destDir = 'reports';
 
@@ -228,12 +231,12 @@ function copyImage(fileName: string, config: IPluginConfig) {
 }
 
 async function createDefaultOrganizationsReport(
-	connection: Connection,
+	dataSource: DataSource,
 	reports: IReport[],
 	tenant: ITenant
 ) {
 	const organizations = await getDefaultOrganizations(
-		connection,
+		dataSource,
 		tenant
 	);
 	const reportOrganizations: IReportOrganization[] = [];
@@ -248,19 +251,20 @@ async function createDefaultOrganizationsReport(
 			);
 		}
 	}
-	return await connection.manager.save(reportOrganizations);
+	return await dataSource.manager.save(reportOrganizations);
 }
 
 export async function createRandomTenantOrganizationsReport(
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[]
 ) {
 	try {
-		const reports = await connection.manager.find(Report);
+		const reports = await dataSource.manager.find(Report);
 		for await (const tenant of tenants) {
-			const organizations = await connection.getRepository(Organization).find({
+			const { id: tenantId } = tenant;
+			const organizations = await dataSource.getRepository(Organization).find({
 				where: {
-					tenant,
+					tenantId,
 				}
 			});
 			const reportOrganizations: IReportOrganization[] = [];
@@ -275,7 +279,7 @@ export async function createRandomTenantOrganizationsReport(
 					);
 				}
 			}
-			await connection.manager.save(reportOrganizations);
+			await dataSource.manager.save(reportOrganizations);
 		}
 	} catch (error) {
 		console.log(chalk.red(`SEEDING Random Reports`, error));

@@ -1,4 +1,4 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { faker } from '@ever-co/faker';
 import {
 	IOrganization,
@@ -18,7 +18,7 @@ import { getDummyImage } from './../core/utils';
 import { chain } from 'underscore';
 
 export const createDefaultIncomes = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	organizations: IOrganization[],
 	employees: IEmployee[]
@@ -38,11 +38,11 @@ export const createDefaultIncomes = async (
 	const incomeFromFile = [];
 	let defaultIncomes = [];
 
+	const { id: tenantId } = tenant;
 	for await (const organization of organizations) {
-		const tags = await connection.manager.find(Tag, {
-			where: {
-				organization
-			}
+		const { id: organizationId } = organization;
+		const tags = await dataSource.manager.findBy(Tag, {
+			organizationId
 		});
 		fs.createReadStream(filePath)
 			.pipe(csv())
@@ -68,12 +68,12 @@ export const createDefaultIncomes = async (
 
 					const payload = {
 						name: `Client ${seedIncome.clientName}`,
-						tenant: tenant,
-						organization: organization,
+						tenantId: tenantId,
+						organizationId: organizationId,
 						contactType: ContactType.CLIENT,
 						budgetType: OrganizationContactBudgetTypeEnum.HOURS
 					}
-					income.client = await connection.manager.findOne(OrganizationContact, {
+					income.client = await dataSource.manager.findOne(OrganizationContact, {
 						where: {
 							...payload
 						}
@@ -82,7 +82,7 @@ export const createDefaultIncomes = async (
 						/**
 						 * Create income related client
 						 */
-						income.client = await connection.manager.save(
+						income.client = await dataSource.manager.save(
 							new OrganizationContact({
 								...payload,
 								imageUrl: getDummyImage(330, 300, (seedIncome.clientName).charAt(0).toUpperCase())
@@ -96,7 +96,7 @@ export const createDefaultIncomes = async (
 						.value();
 					incomes.push(income);
 				}
-				await insertIncome(connection, incomes);
+				await insertIncome(dataSource, incomes);
 			});
 	}
 
@@ -104,7 +104,7 @@ export const createDefaultIncomes = async (
 };
 
 export const createRandomIncomes = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	tenantEmployeeMap: Map<ITenant, IEmployee[]>
 ): Promise<void> => {
@@ -117,18 +117,16 @@ export const createRandomIncomes = async (
 	];
 	const randomIncomes: Income[] = []
 	for (const tenant of tenants || []) {
-		const organizationContacts = await connection.manager.find(OrganizationContact, {
-			where: {
-				tenant
-			}
+		const { id: tenantId } = tenant;
+		const organizationContacts = await dataSource.manager.findBy(OrganizationContact, {
+			tenantId
 		});
 		const employees = tenantEmployeeMap.get(tenant);
 		for (const employee of employees || []) {
-			const tags = await connection.manager.find(Tag, {
-				where: {
-					tenant,
-					organization: employee.organization
-				}
+			const { id: organizationId } = employee.organization;
+			const tags = await dataSource.manager.findBy(Tag, {
+				tenantId,
+				organizationId
 			});
 			for (let index = 0; index < 100; index++) {
 				const income = new Income();
@@ -162,16 +160,16 @@ export const createRandomIncomes = async (
 			}
 		}
 	}
-	await insertIncome(connection, randomIncomes);
+	await insertIncome(dataSource, randomIncomes);
 	return;
 };
 
 const insertIncome = async (
-	connection: Connection,
+	dataSource: DataSource,
 	incomes: Income[]
 ): Promise<void> => {
 	try {
-		await connection.manager.save(incomes);
+		await dataSource.manager.save(incomes);
 	} catch (error) {
 		console.log(error);
 	}

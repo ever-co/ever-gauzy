@@ -3,41 +3,55 @@
 // Copyright (c) 2018 Sumanth Chinthagunta
 
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import { FindOptionsOrder, FindOptionsRelationByString, FindOptionsRelations, FindOptionsWhereProperty } from 'typeorm';
 import { Transform, TransformFnParams } from 'class-transformer';
 import { IsOptional, Max, Min } from 'class-validator';
 
-export enum OrderTypeEnum {
-	DESC = 'DESC',
-	ASC = 'ASC'
+export abstract class OptionParams<T> {
+	/**
+	 * Order, in which entities should be ordered.
+	 */
+	@ApiPropertyOptional()
+	@IsOptional()
+	readonly order?: FindOptionsOrder<T>;
+
+	/**
+     * Simple condition that should be applied to match entities.
+     */
+	@ApiPropertyOptional()
+	@IsOptional()
+	readonly where?: {
+		[P in keyof T]?: FindOptionsWhereProperty<NonNullable<T[P]>>;
+	};
+
+	/**
+     * Indicates what relations of entity should be loaded (simplified left join form).
+     */
+	@ApiPropertyOptional()
+	@IsOptional()
+	readonly relations?: FindOptionsRelations<T> | FindOptionsRelationByString;
 }
 
 /**
  * Describes generic pagination params
  */
-export abstract class PaginationParams<T> {
+export abstract class PaginationParams<T = any> extends OptionParams<T>{
 	/**
-	 * Pagination limit
-	 */
+     * Limit (paginated) - max number of entities should be taken.
+     */
 	@ApiPropertyOptional({ type: () => Number, minimum: 0, maximum: 100 })
 	@IsOptional()
 	@Min(0)
 	@Max(100)
 	@Transform((params: TransformFnParams) => parseInt(params.value, 10))
-	readonly take = 10;
+	readonly take: number = 10;
 
 	/**
-	 * Pagination offset
-	 */
+     * Offset (paginated) where from entities should be taken.
+     */
 	@ApiPropertyOptional({ type: () => Number, minimum: 0 })
 	@IsOptional()
 	@Min(0)
 	@Transform((params: TransformFnParams) => parseInt(params.value, 10))
-	readonly skip = 0;
-
-	/**
-	 * OrderBy
-	 */
-	@ApiPropertyOptional()
-	@IsOptional()
-	abstract readonly order?: { [P in keyof T]?: OrderTypeEnum };
+	readonly skip: number = 0;
 }

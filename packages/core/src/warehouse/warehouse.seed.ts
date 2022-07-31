@@ -1,11 +1,11 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { ICountry, IOrganization, ITenant } from '@gauzy/contracts';
 import { Country, Warehouse, Contact, Product, WarehouseProduct, WarehouseProductVariant, ImageAsset } from './../core/entities/internal';
 import { faker } from '@ever-co/faker';
 
 
 export const createRandomWarehouses = async (
-    connection: Connection,
+    dataSource: DataSource,
     tenants: ITenant[],
     tenantOrganizationsMap: Map<ITenant, IOrganization[]>
 ) => {
@@ -17,8 +17,8 @@ export const createRandomWarehouses = async (
         return;
     }
 
-    const countries: ICountry[] = await connection.manager.find(Country);
-    const products = await connection.manager.find(Product, { relations: ['variants'] });
+    const countries: ICountry[] = await dataSource.manager.find(Country);
+    const products = await dataSource.manager.find(Product, { relations: ['variants'] });
 
     let warehouses: Warehouse[] = [];
 
@@ -38,8 +38,8 @@ export const createRandomWarehouses = async (
                     warehouseProduct.product = product;
                     warehouseProduct.warehouse = warehouse;
 
-                    const warehouseProductDb = await connection.manager.save(warehouseProduct);
-                    
+                    const warehouseProductDb = await dataSource.manager.save(warehouseProduct);
+
                     let productsQuantity = 0;
                     for await (const variant of product.variants) {
                         const warehouseVariant = new WarehouseProductVariant();
@@ -49,7 +49,7 @@ export const createRandomWarehouses = async (
                         productsQuantity += warehouseVariant.quantity;
 
                         warehouseProduct.variants.push(warehouseVariant);
-                        await connection.manager.save(warehouseVariant);
+                        await dataSource.manager.save(warehouseVariant);
                     }
 
                     warehouseProduct.quantity = productsQuantity;
@@ -62,7 +62,7 @@ export const createRandomWarehouses = async (
             }
         }
     }
-    await connection.manager.save(warehouses);
+    await dataSource.manager.save(warehouses);
 
 }
 

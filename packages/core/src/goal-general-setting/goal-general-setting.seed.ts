@@ -1,9 +1,9 @@
 import { GoalOwnershipEnum, IOrganization, ITenant } from '@gauzy/contracts';
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { GoalGeneralSetting } from './goal-general-setting.entity';
 
 export const createDefaultGeneralGoalSetting = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	organizations: IOrganization[]
 ): Promise<GoalGeneralSetting[]> => {
@@ -22,17 +22,17 @@ export const createDefaultGeneralGoalSetting = async (
 		});
 	}
 	await insertDefaultGeneralGoalSetting(
-		connection,
+		dataSource,
 		defaultGeneralGoalSetting
 	);
 	return defaultGeneralGoalSetting;
 };
 
 const insertDefaultGeneralGoalSetting = async (
-	connection: Connection,
+	dataSource: DataSource,
 	defaultGeneralGoalSetting: GoalGeneralSetting[]
 ) => {
-	await connection
+	await dataSource
 		.createQueryBuilder()
 		.insert()
 		.into(GoalGeneralSetting)

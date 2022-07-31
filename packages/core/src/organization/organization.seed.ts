@@ -1,7 +1,7 @@
 import * as _ from 'underscore';
 import * as moment from 'moment';
 import * as timezone from 'moment-timezone';
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { faker } from '@ever-co/faker';
 import { getDummyImage } from '../core';
 import {
@@ -22,10 +22,10 @@ import {
 import { environment as env } from '@gauzy/config';
 
 export const getDefaultOrganization = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant
 ): Promise<IOrganization> => {
-	const repo = connection.getRepository(Organization);
+	const repo = dataSource.getRepository(Organization);
 	const existedOrganization = await repo.findOne({
 		where: { tenantId: tenant.id, isDefault: true }
 	});
@@ -33,10 +33,10 @@ export const getDefaultOrganization = async (
 };
 
 export const getDefaultOrganizations = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant
 ): Promise<IOrganization[]> => {
-	const repo = connection.getRepository(Organization);
+	const repo = dataSource.getRepository(Organization);
 	const organizations = await repo.find({
 		where: { tenantId: tenant.id }
 	});
@@ -46,13 +46,13 @@ export const getDefaultOrganizations = async (
 let defaultOrganizationsInserted = [];
 
 export const createDefaultOrganizations = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	organizations: any
 ): Promise<Organization[]> => {
 	const defaultOrganizations: IOrganization[] = [];
-	const skills = await getSkills(connection);
-	const contacts = await getContacts(connection);
+	const skills = await getSkills(dataSource);
+	const contacts = await getContacts(dataSource);
 
 	organizations.forEach((organization: IOrganizationCreateInput) => {
 		const organizationSkills = _.chain(skills)
@@ -128,19 +128,19 @@ export const createDefaultOrganizations = async (
 		defaultOrganizations.push(defaultOrganization);
 	});
 
-	await connection.manager.save(defaultOrganizations);
+	await dataSource.manager.save(defaultOrganizations);
 	defaultOrganizationsInserted = [...defaultOrganizations];
 	return defaultOrganizationsInserted;
 };
 
 export const createRandomOrganizations = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	noOfOrganizations: number
 ): Promise<Map<ITenant, IOrganization[]>> => {
 	const defaultDateTypes = Object.values(DefaultValueDateTypeEnum);
-	const skills = await getSkills(connection);
-	const contacts = await getContacts(connection);
+	const skills = await getSkills(dataSource);
+	const contacts = await getContacts(dataSource);
 	const tenantOrganizations: Map<ITenant, IOrganization[]> = new Map();
 	let allOrganizations: IOrganization[] = [];
 
@@ -241,15 +241,15 @@ export const createRandomOrganizations = async (
 		allOrganizations = allOrganizations.concat(randomOrganizations);
 	});
 
-	await insertOrganizations(connection, allOrganizations);
+	await insertOrganizations(dataSource, allOrganizations);
 	return tenantOrganizations;
 };
 
 const insertOrganizations = async (
-	connection: Connection,
+	dataSource: DataSource,
 	organizations: IOrganization[]
 ): Promise<void> => {
-	await connection.manager.save(organizations);
+	await dataSource.manager.save(organizations);
 };
 
 const _extractLogoAbbreviation = (companyName: string) => {
@@ -291,10 +291,10 @@ const generateLink = (name) => {
 	return name.replace(/[^A-Z0-9]+/gi, '-').toLowerCase();
 };
 
-const getSkills = async (connection: Connection): Promise<any> => {
-	return await connection.manager.find(Skill, {});
+const getSkills = async (dataSource: DataSource): Promise<any> => {
+	return await dataSource.manager.find(Skill, {});
 };
 
-const getContacts = async (connection: Connection): Promise<Contact[]> => {
-	return await connection.manager.find(Contact, {});
+const getContacts = async (dataSource: DataSource): Promise<Contact[]> => {
+	return await dataSource.manager.find(Contact, {});
 };

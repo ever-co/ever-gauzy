@@ -24,6 +24,7 @@ import { HeaderTitleModule } from '../../@shared/components/header-title/header-
 import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
 import { PaginationModule } from '../../@shared/pagination/pagination.module';
 import { NoDataMessageModule } from '../../@shared/no-data-message/no-data-message.module';
+import { WorkInProgressModule } from '../work-in-progress/work-in-progress.module';
 
 
 @NgModule({
@@ -50,7 +51,8 @@ import { NoDataMessageModule } from '../../@shared/no-data-message/no-data-messa
 		PaginationModule,
 		NbTabsetModule,
 		NoDataMessageModule,
-		NbTooltipModule
+		NbTooltipModule,
+		WorkInProgressModule
 	],
 	declarations: [EmploymentTypesComponent],
 	providers: [OrganizationEmploymentTypesService]

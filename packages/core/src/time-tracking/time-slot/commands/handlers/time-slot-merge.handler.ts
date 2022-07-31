@@ -48,22 +48,32 @@ export class TimeSlotMergeHandler
 			endDate
 		);
 		console.log({ startedAt, stoppedAt }, 'Time Slot Merging Dates');
-		const timerSlots = await this.timeSlotRepository.find({
-			where: (query: SelectQueryBuilder<TimeSlot>) => {
-				query.andWhere(`"${query.alias}"."startedAt" >= :startedAt AND "${query.alias}"."startedAt" < :stoppedAt`, {
-					startedAt,
-					stoppedAt
-				});
-				query.andWhere(`"${query.alias}"."employeeId" = :employeeId`, {
-					employeeId
-				});
-				query.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
-					tenantId
-				});
-				query.addOrderBy(`"${query.alias}"."createdAt"`, 'ASC');
-			},
-			relations: ['timeLogs', 'screenshots', 'activities']
+
+		/**
+		 * GET Time Slots for given date range slot
+		 */
+		const query = this.timeSlotRepository.createQueryBuilder('time_slot');
+		query.setFindOptions({
+			relations: {
+				timeLogs: true,
+				screenshots: true,
+				activities: true
+			}
 		});
+		query.where((qb: SelectQueryBuilder<TimeSlot>) => {
+			qb.andWhere(`"${qb.alias}"."startedAt" >= :startedAt AND "${qb.alias}"."startedAt" < :stoppedAt`, {
+				startedAt,
+				stoppedAt
+			});
+			qb.andWhere(`"${qb.alias}"."employeeId" = :employeeId`, {
+				employeeId
+			});
+			qb.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, {
+				tenantId
+			});
+			qb.addOrderBy(`"${qb.alias}"."createdAt"`, 'ASC');
+		});
+		const timerSlots = await query.getMany();
 
 		for (const timeSlot of timerSlots) {
 			console.log({ timeSlot }, timeSlot.timeLogs, 'Time Slot Merging Dates');
@@ -117,14 +127,14 @@ export class TimeSlotMergeHandler
 						mouse: (mouse < 0) ? 0 : (mouse > 600) ? 600 : mouse
 					}
 					/*
-					* Map old screenshots newly created TimeSlot 
+					* Map old screenshots newly created TimeSlot
 					*/
 					screenshots = screenshots.map(
 						(item) => new Screenshot(_.omit(item, ['timeSlotId']))
 					);
 
 					/*
-					* Map old activities newly created TimeSlot 
+					* Map old activities newly created TimeSlot
 					*/
 					activities = activities.map(
 						(item) => new Activity(_.omit(item, ['timeSlotId']))

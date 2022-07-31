@@ -1,27 +1,17 @@
-import { ClassConstructor } from 'class-transformer';
 import {
-    registerDecorator,
     ValidationArguments,
-    ValidationOptions,
     ValidatorConstraint,
     ValidatorConstraintInterface
 } from 'class-validator';
 import * as moment from 'moment';
 
-export const IsBeforeDate = <T>(type: ClassConstructor<T>, property: (o: T) => any, validationOptions?: ValidationOptions) => {
-    return (object: any, propertyName: string) => {
-        registerDecorator({
-            target: object.constructor,
-            propertyName,
-            options: validationOptions,
-            constraints: [property],
-            validator: IsBeforeConstraint,
-        });
-    };
-};
-
-
-@ValidatorConstraint({ name: "isBeforeDate", async: false })
+/**
+ * Is before date check validation constraint
+ *
+ * @param validationOptions
+ * @returns
+ */
+@ValidatorConstraint({ name: "IsBeforeDate", async: false })
 export class IsBeforeConstraint implements ValidatorConstraintInterface {
     validate(value: Date, args: ValidationArguments) {
         const [fn] = args.constraints;

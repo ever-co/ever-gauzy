@@ -22,6 +22,7 @@ import {
 	ICandidate,
 	IPagination
 } from '@gauzy/contracts';
+import { FindOptionsWhere } from 'typeorm';
 import { CrudController, PaginationParams} from './../core/crud';
 import { CandidateService } from './candidate.service';
 import { Candidate } from './candidate.entity';
@@ -93,9 +94,9 @@ export class CandidateController extends CrudController<Candidate> {
 	})
 	@Get('count')
     async getCount(
-		@Query() filter: PaginationParams<ICandidate>
+		@Query() options: FindOptionsWhere<Candidate>
 	): Promise<number> {
-        return await this.candidateService.count(filter);
+        return await this.candidateService.countBy(options);
     }
 
 	/**

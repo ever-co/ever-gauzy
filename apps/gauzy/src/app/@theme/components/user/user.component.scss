@@ -24,9 +24,13 @@
       top: 0;
     }
   }
-  .identity-container{
-    .email{
+  .identity-container {
+    width: 100%;
+    .email {
       color: nb-theme(text-primary-color);
+      width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
   }
 }

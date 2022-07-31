@@ -5,7 +5,7 @@ import {
 	ConflictException
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Brackets, FindManyOptions, Repository } from 'typeorm';
+import { Brackets, FindManyOptions, In, Repository } from 'typeorm';
 import {
 	IRequestApproval,
 	RequestApprovalStatusTypesEnum,
@@ -17,6 +17,7 @@ import {
 	IEmployee,
 	IRequestApprovalTeam
 } from '@gauzy/contracts';
+import { getConfig } from '@gauzy/config';
 import { RequestContext } from '../core/context';
 import {
 	Employee,
@@ -26,7 +27,6 @@ import {
 } from './../core/entities/internal';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestApproval } from './request-approval.entity';
-import { getConfig } from '@gauzy/config';
 
 const config = getConfig();
 
@@ -49,14 +49,8 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 		filter: FindManyOptions<RequestApproval>,
 		findInput: IRequestApprovalFindInput
 	): Promise<IPagination<IRequestApproval>> {
-		const tenantId = RequestContext.currentTenantId();
-		const query = this.requestApprovalRepository.createQueryBuilder(
-			'request_approval'
-		);
-		query.leftJoinAndSelect(
-			`${query.alias}.approvalPolicy`,
-			'approvalPolicy'
-		);
+		const query = this.requestApprovalRepository.createQueryBuilder('request_approval');
+		query.leftJoinAndSelect(`${query.alias}.approvalPolicy`, 'approvalPolicy');
 
 		if (config.dbConnectionOptions.type === 'sqlite') {
 			query.leftJoinAndSelect(
@@ -82,51 +76,39 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 			);
 		}
 
-		if (filter.relations && filter.relations.length > 0) {
-			filter.relations.forEach((item) => {
-				let relationArr = item.split(".");
-				if (relationArr.length === 2) {
-					query.leftJoinAndSelect(`${relationArr[0]}.${relationArr[1]}`, relationArr[1]);
-				} else {
-					query.leftJoinAndSelect(`request_approval.${item}`, item);
-				}
-			});
+		const relations = filter.relations as string[];
+		if (relations && relations.length > 0) {
+			query.setFindOptions({ relations });
 		}
 
+		const tenantId = RequestContext.currentTenantId();
 		const { organizationId } = findInput;
+
 		const [items, total] = await query
 			.where(
 				new Brackets((sqb) => {
-					sqb.where(
-						'approvalPolicy.organizationId =:organizationId',
-						{
-							organizationId
-						}
-					).andWhere('approvalPolicy.tenantId =:tenantId', {
+					sqb.where('approvalPolicy.organizationId =:organizationId', {
+						organizationId
+					}).andWhere('approvalPolicy.tenantId =:tenantId', {
 						tenantId
 					});
 				})
 			)
 			.orWhere(
 				new Brackets((sqb) => {
-					sqb.where(
-						'time_off_request.organizationId =:organizationId',
-						{
-							organizationId
-						}
-					).andWhere('time_off_request.tenantId =:tenantId', {
+					sqb.where('time_off_request.organizationId =:organizationId', {
+						organizationId
+					})
+					.andWhere('time_off_request.tenantId =:tenantId', {
 						tenantId
 					});
 				})
 			)
 			.orWhere(
 				new Brackets((sqb) => {
-					sqb.where(
-						'equipment_sharing.organizationId =:organizationId',
-						{
-							organizationId
-						}
-					).andWhere('equipment_sharing.tenantId =:tenantId', {
+					sqb.where('equipment_sharing.organizationId =:organizationId', {
+						organizationId
+					}).andWhere('equipment_sharing.tenantId =:tenantId', {
 						tenantId
 					});
 				})
@@ -151,41 +133,18 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 					tenantId
 				}
 			});
-
-			// const employeeTeam = await this.organizationTeamService.getMyOrgTeams(
-			// 	{
-			// 		relations: ['members']
-			// 	},
-			// 	id
-			// );
-
 			let requestApproval = [];
-
-			// if (employeeTeam.items && employeeTeam.items.length > 0) {
-			// 	for (const team of employeeTeam.items) {
-			// 		const organizationTeam = await this.organizationTeamRepository.findOne(
-			// 			team.id,
-			// 			{
-			// 				relations: ['requestApprovals']
-			// 			}
-			// 		);
-			// 		requestApproval = [
-			// 			...requestApproval,
-			// 			...organizationTeam.requestApprovals
-			// 		];
-			// 	}
-			// }
-
-			const employee = await this.employeeRepository.findOne(id, {
+			const [employee] = await this.employeeRepository.find({
+				where: {
+					id
+				},
 				relations
 			});
-
 			if (
 				employee &&
 				employee.requestApprovals &&
 				employee.requestApprovals.length > 0
 			) {
-				// requestApproval.concat(employee.requestApprovals);
 				requestApproval = [
 					...requestApproval,
 					...employee.requestApprovals
@@ -193,18 +152,18 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 			}
 
 			for (const request of requestApproval) {
-				const emp = await this.requestApprovalRepository.findOne(
-					request.requestApprovalId,
-					{
-						relations: [
-							'approvalPolicy',
-							'employeeApprovals',
-							'teamApprovals',
-							'tags'
-						]
+				const approval = await this.requestApprovalRepository.findOne({
+					where: {
+						id: request.requestApprovalId
+					},
+					relations: {
+						approvalPolicy: true,
+						employeeApprovals: true,
+						teamApprovals: true,
+						tags: true
 					}
-				);
-				result.push(emp);
+				});
+				result.push(approval);
 			}
 
 			return { items: result, total: result.length };
@@ -218,7 +177,6 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 	): Promise<RequestApproval> {
 		try {
 			const tenantId = RequestContext.currentTenantId();
-
 			const requestApproval = new RequestApproval();
 			requestApproval.status = RequestApprovalStatusTypesEnum.REQUESTED;
 			requestApproval.approvalPolicyId = entity.approvalPolicyId;
@@ -230,12 +188,11 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 			requestApproval.organizationId = entity.organizationId;
 			requestApproval.tenantId = tenantId;
 			if (entity.employeeApprovals) {
-				const employees = await this.employeeRepository.findByIds(
-					entity.employeeApprovals,
-					{
-						relations: ['user']
+				const employees: IEmployee[] = await this.employeeRepository.find({
+					where: {
+						id: In(entity.employeeApprovals)
 					}
-				);
+				});
 				const requestApprovalEmployees: IRequestApprovalEmployee[] = [];
 				employees.forEach((employee: IEmployee) => {
 					const raEmployees = new RequestApprovalEmployee();
@@ -247,12 +204,12 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 				});
 				requestApproval.employeeApprovals = requestApprovalEmployees;
 			}
-
 			if (entity.teams) {
-				const teams = await this.organizationTeamRepository.findByIds(
-					entity.teams
-				);
-
+				const teams: IOrganizationTeam[] = await this.organizationTeamRepository.find({
+					where: {
+						id: In(entity.teams)
+					}
+				});
 				const requestApprovalTeams: RequestApprovalTeam[] = [];
 				teams.forEach((team) => {
 					const raTeam = new RequestApprovalTeam();
@@ -263,10 +220,8 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 					raTeam.tenantId = tenantId;
 					requestApprovalTeams.push(raTeam);
 				});
-
 				requestApproval.teamApprovals = requestApprovalTeams;
 			}
-
 			return this.requestApprovalRepository.save(requestApproval);
 		} catch (err) {
 			throw new BadRequestException(err);
@@ -278,12 +233,9 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 	): Promise<RequestApproval> {
 		try {
 			const tenantId = RequestContext.currentTenantId();
-			let employees: IEmployee[];
-			let teams: IOrganizationTeam[];
-
-			const requestApproval = await this.requestApprovalRepository.findOne(
+			const requestApproval = await this.requestApprovalRepository.findOneBy({
 				id
-			);
+			});
 			requestApproval.name = entity.name;
 			requestApproval.status = RequestApprovalStatusTypesEnum.REQUESTED;
 			requestApproval.approvalPolicyId = entity.approvalPolicyId;
@@ -307,13 +259,11 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 				.execute();
 
 			if (entity.employeeApprovals) {
-				employees = await this.employeeRepository.findByIds(
-					entity.employeeApprovals,
-					{
-						relations: ['user']
+				const employees: IEmployee[] = await this.employeeRepository.find({
+					where: {
+						id: In(entity.employeeApprovals)
 					}
-				);
-
+				});
 				const requestApprovalEmployees: IRequestApprovalEmployee[] = [];
 				employees.forEach((employee) => {
 					const raEmployees = new RequestApprovalEmployee();
@@ -324,15 +274,15 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 					raEmployees.status = RequestApprovalStatusTypesEnum.REQUESTED;
 					requestApprovalEmployees.push(raEmployees);
 				});
-
 				requestApproval.employeeApprovals = requestApprovalEmployees;
 			}
 
 			if (entity.teams) {
-				teams = await this.organizationTeamRepository.findByIds(
-					entity.teams
-				);
-
+				const teams: IOrganizationTeam[] = await this.organizationTeamRepository.find({
+					where: {
+						id: In(entity.teams)
+					}
+				});
 				const requestApprovalTeams: IRequestApprovalTeam[] = [];
 				teams.forEach((team) => {
 					const raTeam = new RequestApprovalTeam();
@@ -343,7 +293,6 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 					raTeam.tenantId = tenantId;
 					requestApprovalTeams.push(raTeam);
 				});
-
 				requestApproval.teamApprovals = requestApprovalTeams;
 			}
 			return this.requestApprovalRepository.save(requestApproval);
@@ -357,17 +306,17 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 		status: number
 	): Promise<RequestApproval> {
 		try {
-			const requestApproval = await this.requestApprovalRepository.findOne(
-				id,
-				{
-					relations: ['approvalPolicy']
+			const [requestApproval] = await this.requestApprovalRepository.find({
+				where: {
+					id
+				},
+				relations: {
+					approvalPolicy: true
 				}
-			);
-
+			});
 			if (!requestApproval) {
 				throw new NotFoundException('Request Approval not found');
 			}
-
 			// if (
 			// 	requestApproval.status ===
 			// 		RequestApprovalStatusTypesEnum.APPROVED ||
@@ -392,12 +341,15 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 		try {
 			let minCount = 0;
 			const employeeId = RequestContext.currentUser().employeeId;
-			const requestApproval = await this.requestApprovalRepository.findOne(
-				id,
-				{
-					relations: ['employeeApprovals', 'teamApprovals']
+			const [requestApproval] = await this.requestApprovalRepository.find({
+				where: {
+					id
+				},
+				relations: {
+					employeeApprovals: true,
+					teamApprovals: true
 				}
-			);
+			});
 
 			if (!requestApproval) {
 				throw new NotFoundException('Request Approval not found');

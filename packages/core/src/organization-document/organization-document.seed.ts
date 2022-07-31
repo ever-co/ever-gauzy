@@ -1,10 +1,10 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { faker } from '@ever-co/faker';
 import { IOrganization, IOrganizationDocument, ITenant } from '@gauzy/contracts';
 import { OrganizationDocument } from './organization-document.entity';
 
 export const createOrganizationDocuments = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	organizations: IOrganization[]
 ): Promise<IOrganizationDocument[]> => {
@@ -25,11 +25,11 @@ export const createOrganizationDocuments = async (
 		documents.push(requestPaidDaysOff);
 		documents.push(requestUnpaidDaysOff);
 	}
-	return await connection.manager.save(documents);
+	return await dataSource.manager.save(documents);
 };
 
 export const createRandomOrganizationDocuments = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	tenantOrganizationsMap: Map<ITenant, IOrganization[]>
 ): Promise<IOrganizationDocument[]> => {
@@ -64,5 +64,5 @@ export const createRandomOrganizationDocuments = async (
 		}
 	}
 
-	await connection.manager.save(organizationDocuments);
+	await dataSource.manager.save(organizationDocuments);
 };

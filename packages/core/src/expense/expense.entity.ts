@@ -44,7 +44,7 @@ import { ColumnNumericTransformerPipe } from './../shared/pipes';
 
 @Entity('expense')
 export class Expense extends TenantOrganizationBaseEntity implements IExpense {
-	
+
 	@ApiProperty({ type: () => Number })
 	@IsNumber()
 	@IsNotEmpty()
@@ -136,7 +136,7 @@ export class Expense extends TenantOrganizationBaseEntity implements IExpense {
 	status?: ExpenseStatusesEnum;
 	/*
     |--------------------------------------------------------------------------
-    | @ManyToOne 
+    | @ManyToOne
     |--------------------------------------------------------------------------
     */
 
@@ -233,7 +233,7 @@ export class Expense extends TenantOrganizationBaseEntity implements IExpense {
 
 	/*
     |--------------------------------------------------------------------------
-    | @ManyToOne 
+    | @ManyToOne
     |--------------------------------------------------------------------------
     */
 
@@ -249,7 +249,7 @@ export class Expense extends TenantOrganizationBaseEntity implements IExpense {
 
 	/*
     |--------------------------------------------------------------------------
-    | @ManyToMany 
+    | @ManyToMany
     |--------------------------------------------------------------------------
     */
 

@@ -22,8 +22,8 @@ export class EquipmentSharingStatusHandler
 		const { id, status } = command;
 
 		const [equipmentSharing, requestApproval] = await Promise.all([
-			await this.equipmentSharingRepository.findOne(id),
-			await this.requestApprovalRepository.findOne({
+			await this.equipmentSharingRepository.findOneBy({id}),
+			await this.requestApprovalRepository.findOneBy({
 				requestId: id
 			})
 		]);
@@ -38,7 +38,7 @@ export class EquipmentSharingStatusHandler
 			requestApproval.status = status;
 			await this.requestApprovalRepository.save(requestApproval);
 		}
-		
+
 		return await this.equipmentSharingRepository.save(equipmentSharing);
 	}
 }

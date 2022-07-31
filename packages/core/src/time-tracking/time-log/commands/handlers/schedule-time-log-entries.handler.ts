@@ -25,52 +25,60 @@ export class ScheduleTimeLogEntriesHandler
 			const { organizationId, employeeId } = timeLog;
 			const tenantId = RequestContext.currentTenantId();
 
-			timeLogs = await this.timeLogRepository.find({
-				where: (query: SelectQueryBuilder<TimeLog>) => {
-					query.andWhere(
-						new Brackets((qb: WhereExpressionBuilder) => {
-							qb.andWhere(`"${query.alias}"."employeeId" = :employeeId`, { employeeId });
-							qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
-							qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
-						})
-					);
-					query.andWhere(
-						new Brackets((qb: WhereExpressionBuilder) => {
-							qb.andWhere(
-								new Brackets((qb: WhereExpressionBuilder) => {
-									qb.andWhere(`"${query.alias}"."stoppedAt" IS NOT NULL`);
-									qb.andWhere(`"${query.alias}"."isRunning" = :isRunning`, { isRunning: true });
-								})
-							);
-							qb.orWhere(
-								new Brackets((qb: WhereExpressionBuilder) => {
-									qb.andWhere(`"${query.alias}"."stoppedAt" IS NULL`);
-								})
-							);
-						})
-					);
-					console.log('Schedule Time Log Query For Tenant Organization Entries', query.getQueryAndParameters());
-				},
-				relations: ['timeSlots']
+			const query = this.timeLogRepository.createQueryBuilder('time_log');
+			query.setFindOptions({
+				relations: {
+					timeSlots: true
+				}
 			});
+			query.where((qb: SelectQueryBuilder<TimeLog>) => {
+				qb.andWhere(
+					new Brackets((web: WhereExpressionBuilder) => {
+						web.andWhere(`"${qb.alias}"."employeeId" = :employeeId`, { employeeId });
+						web.andWhere(`"${qb.alias}"."organizationId" = :organizationId`, { organizationId });
+						web.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, { tenantId });
+					})
+				);
+				qb.andWhere(
+					new Brackets((web: WhereExpressionBuilder) => {
+						web.andWhere(
+							new Brackets((web: WhereExpressionBuilder) => {
+								web.andWhere(`"${qb.alias}"."stoppedAt" IS NOT NULL`);
+								web.andWhere(`"${qb.alias}"."isRunning" = :isRunning`, { isRunning: true });
+							})
+						);
+						web.orWhere(
+							new Brackets((web: WhereExpressionBuilder) => {
+								web.andWhere(`"${qb.alias}"."stoppedAt" IS NULL`);
+							})
+						);
+					})
+				);
+				console.log('Schedule Time Log Query For Tenant Organization Entries', qb.getQueryAndParameters());
+			});
+			timeLogs = await query.getMany();
 		} else {
-			timeLogs = await this.timeLogRepository.find({
-				where: (query: SelectQueryBuilder<TimeLog>) => {
-					query.andWhere(
-						new Brackets((qb: WhereExpressionBuilder) => {
-							qb.andWhere(`"${query.alias}"."stoppedAt" IS NOT NULL`);
-							qb.andWhere(`"${query.alias}"."isRunning" = :isRunning`, { isRunning: true });
-						})
-					);
-					query.orWhere(
-						new Brackets((qb: WhereExpressionBuilder) => {
-							qb.andWhere(`"${query.alias}"."stoppedAt" IS NULL`);
-						})
-					);
-					console.log('Schedule Time Log Query For All Entries', query.getQueryAndParameters());
-				},
-				relations: ['timeSlots']
+			const query = this.timeLogRepository.createQueryBuilder('time_log');
+			query.setFindOptions({
+				relations: {
+					timeSlots: true
+				}
 			});
+			query.where((qb: SelectQueryBuilder<TimeLog>) => {
+				qb.andWhere(
+					new Brackets((web: WhereExpressionBuilder) => {
+						web.andWhere(`"${qb.alias}"."stoppedAt" IS NOT NULL`);
+						web.andWhere(`"${qb.alias}"."isRunning" = :isRunning`, { isRunning: true });
+					})
+				);
+				qb.orWhere(
+					new Brackets((web: WhereExpressionBuilder) => {
+						web.andWhere(`"${qb.alias}"."stoppedAt" IS NULL`);
+					})
+				);
+				console.log('Schedule Time Log Query For All Entries', query.getQueryAndParameters());
+			});
+			timeLogs = await query.getMany();
 		}
 
 		for await (const timeLog of timeLogs) {

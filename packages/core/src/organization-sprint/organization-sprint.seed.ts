@@ -1,4 +1,4 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { faker } from '@ever-co/faker';
 import { OrganizationSprint } from './organization-sprint.entity';
 import { IOrganization, ITenant, SprintStartDayEnum } from '@gauzy/contracts';
@@ -7,7 +7,7 @@ import * as moment from 'moment';
 import { Task } from '../tasks/task.entity';
 
 export const createRandomOrganizationSprint = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	tenantOrganizationsMap: Map<ITenant, IOrganization[]>
 ) => {
@@ -20,18 +20,19 @@ export const createRandomOrganizationSprint = async (
 
 	const sprints: OrganizationSprint[] = [];
 	for (const tenant of tenants) {
-		const orgs = tenantOrganizationsMap.get(tenant);
-		for (const org of orgs) {
-			const orgProjects = await connection.manager.find(
-				OrganizationProject,
-				{
-					where: [{ organization: org }]
-				}
-			);
-			let project = faker.random.arrayElement(orgProjects);
+		const { id: tenantId } = tenant;
+		const organizations = tenantOrganizationsMap.get(tenant);
+		for (const organization of organizations) {
+			const { id: organizationId } = organization;
+			const projects = await dataSource.getRepository(OrganizationProject).findBy({
+				tenantId,
+				organizationId
+			});
+			let project = faker.random.arrayElement(projects);
 
-			const tasks = await connection.manager.find(Task, {
-				where: [{ project: project }]
+			const { id: projectId } = project;
+			const tasks = await dataSource.getRepository(Task).findBy({
+				projectId
 			});
 			for (let i = 0; i <= faker.datatype.number(10); i++) {
 				const sprint = new OrganizationSprint();
@@ -45,17 +46,12 @@ export const createRandomOrganizationSprint = async (
 					.toDate();
 				sprint.isActive = faker.datatype.boolean();
 				sprint.dayStart = SprintStartDayEnum.MONDAY;
-				sprint.organizationId = org.id;
-				sprint.organization = org;
+				sprint.organizationId = organizationId;
+				sprint.tenantId = tenantId;
 				sprint.tasks = tasks;
-				sprint.tenant = tenant;
-
-				// TODO: which goal
-				// sprint.goal = '';
-
 				sprints.push(sprint);
 			}
 		}
 	}
-	await connection.manager.save(sprints);
+	await dataSource.manager.save(sprints);
 };

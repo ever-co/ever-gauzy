@@ -23,7 +23,7 @@ export class RoleService extends TenantAwareCrudService<Role> {
 	async createBulk(tenants: ITenant[]): Promise<IRole[]> {
 		const roles: IRole[] = [];
 		const rolesNames = Object.values(RolesEnum);
-		
+
 		for await (const tenant of tenants) {
 			for await (const name of rolesNames) {
 				const role = new Role();
@@ -43,13 +43,13 @@ export class RoleService extends TenantAwareCrudService<Role> {
 				tenantId: RequestContext.currentTenantId()
 			}
 		});
-		const payload: IRoleMigrateInput[] = []; 
+		const payload: IRoleMigrateInput[] = [];
 		for await (const item of roles) {
 			const { id: sourceId, name } = item;
 			payload.push({
 				name,
 				isImporting: true,
-				sourceId 
+				sourceId
 			})
 		}
 		return payload;
@@ -60,8 +60,14 @@ export class RoleService extends TenantAwareCrudService<Role> {
 		for await (const item of roles) {
 			const { isImporting, sourceId, name } = item;
 			if (isImporting && sourceId) {
-				const destinantion = await this.roleRepository.findOne({ tenantId: RequestContext.currentTenantId(), name }, {
-					order: { createdAt: 'DESC' }
+				const [destinantion] = await this.repository.find({
+					where: {
+						tenantId: RequestContext.currentTenantId(),
+						name
+					},
+					order: {
+						createdAt: 'DESC'
+					}
 				});
 				if (destinantion) {
 					records.push(
@@ -83,9 +89,9 @@ export class RoleService extends TenantAwareCrudService<Role> {
 	/**
 	 * Few Roles can't be removed/delete for tenant
 	 * RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN, RolesEnum.EMPLOYEE, RolesEnum.VIEWER, RolesEnum.CANDIDATE
-	 * 
-	 * @param id 
-	 * @returns 
+	 *
+	 * @param id
+	 * @returns
 	 */
 	async deleteRole(id: string): Promise<DeleteResult> {
 		return await this.delete(id, {

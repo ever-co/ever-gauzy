@@ -246,14 +246,12 @@ export class HeaderComponent extends TranslationBaseComponent
 
 		const { id: organizationId } = this.organization;
 		const { tenantId } = this.store.user;
-		this.organizationProjectsService
-			.getCount([], {
-				organizationId,
-				tenantId
-			})
-			.then((count) => {
-				this.showProjectsSelector = count > 0;
-			});
+		this.organizationProjectsService.getCount({
+			organizationId,
+			tenantId
+		}).then((count) => {
+			this.showProjectsSelector = count > 0;
+		});
 	}
 
 	checkEmployeeSelectorVisibility() {
