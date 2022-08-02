@@ -113,6 +113,10 @@
       }
     }
   }
+  .no-activity{
+    background-color: var(--gauzy-sidebar-background-4);
+    border-radius: var(--border-radius);
+  }
 }
 .hour-label {
   font-size: 14px;

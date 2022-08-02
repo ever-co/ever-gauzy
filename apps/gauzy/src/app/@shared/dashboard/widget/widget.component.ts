@@ -3,6 +3,7 @@ import {
 	Component,
 	ElementRef,
 	Input,
+	OnDestroy,
 	OnInit,
 	ViewChild
 } from '@angular/core';
@@ -19,7 +20,10 @@ import { WidgetService } from './widget.service';
 	templateUrl: './widget.component.html',
 	styleUrls: ['./widget.component.scss']
 })
-export class WidgetComponent extends GuiDrag implements OnInit, AfterViewInit {
+export class WidgetComponent
+	extends GuiDrag
+	implements OnInit, AfterViewInit, OnDestroy
+{
 	private _widgetDragEnded: Observable<any>;
 	@ViewChild(NbPopoverDirective)
 	private _widgetPopover: NbPopoverDirective;
@@ -46,18 +50,13 @@ export class WidgetComponent extends GuiDrag implements OnInit, AfterViewInit {
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.widgetService.widgets.forEach((widget: GuiDrag) => {
-			if (widget.templateRef === this.templateRef) {
-				this.isCollapse = widget.isCollapse;
-				this.isExpand = widget.isExpand;
-			}
-		});
+		this.widgetService.updateWidget(this);
 	}
 
 	public onClickSetting(event: boolean) {
 		if (event) {
 			this._widgetPopover.hide();
-			this.widgetService.serialize();
+			this.widgetService.save();
 		}
 	}
 
@@ -69,4 +68,6 @@ export class WidgetComponent extends GuiDrag implements OnInit, AfterViewInit {
 	public set widgetDragEnded(value: Observable<any>) {
 		this._widgetDragEnded = value;
 	}
+
+	ngOnDestroy(): void {}
 }

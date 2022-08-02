@@ -1,5 +1,4 @@
 export interface Serializable<T> {
-	serialize(): void;
-	deSerialize(): Partial<T>[];
-	toObject(values: T[]): Partial<T>[];
+	serialize(): Partial<T>[] | void;
+	deSerialize(store?: Partial<T>[]): Partial<T>[];
 }

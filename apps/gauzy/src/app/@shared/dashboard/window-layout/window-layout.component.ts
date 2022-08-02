@@ -5,13 +5,14 @@ import {
 	ChangeDetectorRef,
 	Component,
 	Input,
+	OnDestroy,
 	OnInit,
 	QueryList,
 	TemplateRef,
 	ViewChildren
 } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { filter, tap } from 'rxjs/operators';
+import { tap } from 'rxjs/operators';
 import { GuiDrag } from '../interfaces/gui-drag.abstract';
 import { LayoutWithDraggableObject } from '../interfaces/layout-with-draggable-object.abstract';
 import { WindowComponent } from '../window/window.component';
@@ -25,7 +26,7 @@ import { WindowService } from '../window/window.service';
 })
 export class WindowLayoutComponent
 	extends LayoutWithDraggableObject
-	implements OnInit, AfterViewInit, AfterViewChecked
+	implements OnInit, AfterViewInit, AfterViewChecked, OnDestroy
 {
 	@Input()
 	set windows(value: TemplateRef<HTMLElement>[]) {
@@ -44,20 +45,8 @@ export class WindowLayoutComponent
 			.pipe(
 				tap(
 					(listWindows: QueryList<GuiDrag>) =>
-						(this.windowService.windows = listWindows.toArray())
+						(this.windowService.windows$ = listWindows.toArray())
 				),
-				filter(() => this.windowService.windowsRef.length === 0),
-				tap(() => {
-					this.windowService.deSerialize().length === 0
-						? this.windowService.serialize()
-						: this.windowService
-								.deSerialize()
-								.forEach((deserialized: GuiDrag) =>
-									this.windowService.windowsRef.push(
-										deserialized.templateRef
-									)
-								);
-				}),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -66,7 +55,9 @@ export class WindowLayoutComponent
 		this.cdr.detectChanges();
 	}
 
-	ngOnInit(): void {}
+	ngOnInit(): void {
+		this.windowService.windowsRef = this.draggableObject;
+	}
 
 	protected drop(event: CdkDragDrop<number, number, any>): void {
 		moveItemInArray(
@@ -75,7 +66,7 @@ export class WindowLayoutComponent
 			event.container.data
 		);
 		this.windowService.windowsRef = this.draggableObject;
-		this.windowService.serialize();
+		this.windowService.save();
 	}
 
 	get windows() {
@@ -86,4 +77,6 @@ export class WindowLayoutComponent
 			this.draggableObject = this.windowService.windowsRef;
 		return this.draggableObject;
 	}
+
+	ngOnDestroy(): void {}
 }

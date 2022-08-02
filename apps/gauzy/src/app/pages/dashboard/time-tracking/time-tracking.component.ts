@@ -178,10 +178,24 @@ export class TimeTrackingComponent
 				filter(([organization, dateRange, employee]) => !!organization && !!dateRange && !!employee),
 				tap(([organization, dateRange, employee, project]) => {
 					this.organization = organization;
-
 					this.employeeIds = employee ? [employee.id] : [];
 					this.projectIds = project ? [project.id] : [];
 					this.selectedDateRange = dateRange;
+					this.widgetService.widgets.forEach((widget: GuiDrag) => {
+						if (widget.position === 0 && this.employeeIds[0]) {
+							widget.hide = true;
+						}
+						if (widget.position === 1 && this.projectIds[0]) {
+							widget.hide = true;
+						}
+					});
+					this.windowService.windows.forEach((windows: GuiDrag) => {
+						if (windows.position === 5 && this.employeeIds[0]) {
+							windows.hide = true;
+						}
+					});
+					this.widgetService.save();
+					this.windowService.save();
 				}),
 				tap(() => this.preparePayloads()),
 				tap(() => {
@@ -591,14 +605,26 @@ export class TimeTrackingComponent
 	 * Hide Project Worked Block, If project selected from header
 	 */
 	get hideProjectBlock() {
-		return this.projectIds.filter(Boolean).length;
+		const hide = this.projectIds.filter(Boolean).length;
+		if (hide) {
+			this.widgetService.hideWidget(1);
+			this.widgetService.save();
+		}
+		return hide;
 	}
 
 	/**
 	 * Hide Employee Worked Block, If employee selected from header
 	 */
 	get hideEmployeeBlock() {
-		return this.employeeIds.filter(Boolean).length;
+		const hide = this.employeeIds.filter(Boolean).length;
+		if (hide) {
+			this.widgetService.hideWidget(0);
+			this.windowService.hideWindow(5);
+			this.widgetService.save();
+			this.windowService.save();
+		}
+		return hide;
 	}
 	/**
 	 * The order of titles in array depend to order of templates
@@ -643,20 +669,20 @@ export class TimeTrackingComponent
 	}
 
 	public updateWindowVisibility(value: GuiDrag) {
-		this.windowService.windows.forEach((window: GuiDrag) => {
-			if (window.templateRef === value.templateRef) {
-				window.hide = !value.hide;
-			}
-		});
-		this.windowService.serialize();
+		value.hide = !value.hide;
+		this.windowService.updateWindow(value);
+		this.windowService.save();
 	}
 
 	public updateWidgetVisibility(value: GuiDrag) {
-		this.widgetService.widgets.forEach((widget: GuiDrag) => {
-			if (widget.templateRef === value.templateRef) {
-				widget.hide = !value.hide;
-			}
-		});
-		this.widgetService.serialize();
+		value.hide = !value.hide;
+		this.widgetService.updateWidget(value);
+		this.widgetService.save();
+	}
+
+	public undo(isWindow?: boolean){
+		isWindow
+			? this.windowService.undoDrag()
+			: this.widgetService.undoDrag();
 	}
 }

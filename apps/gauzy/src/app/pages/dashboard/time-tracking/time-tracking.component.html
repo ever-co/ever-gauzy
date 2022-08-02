@@ -24,16 +24,13 @@
 						class="manage-widget"
 						status="basic"
 						size="small"
+						nbPopoverPlacement="bottom"
+						[nbPopover]="widgetManager"
+						nbPopoverTrigger="click"
 						nbButton
 					>
 						{{ 'BUTTONS.MANAGE_WIDGET' | translate }}
-						<nb-icon
-							icon="more-vertical-outline"
-							nbPopoverPlacement="bottom"
-							[nbPopover]="widgetManager"
-							nbPopoverTrigger="click"
-							nbButton
-						></nb-icon>
+						<nb-icon icon="more-vertical-outline"></nb-icon>
 					</button>
 				</div>
 			</div>
@@ -757,7 +754,12 @@
 <ng-template #widgetManager>
 	<div class="widget-popover">
 		<div class="category">
-			<div class="view">{{ 'TIMESHEET.VIEW_WIDGETS' | translate }}</div>
+			<div class="view">
+				{{ 'TIMESHEET.VIEW_WIDGETS' | translate }}
+				<button class="manage-widget undo" (click)="undo()" nbButton>
+					<i class="fas fa-undo"></i>Undo
+				</button>
+			</div>
 			<ng-container *ngIf="widgets.length > 0">
 				<ng-container *ngFor="let widget of widgets">
 					<div (click)="updateWidgetVisibility(widget)" class="title">
@@ -776,7 +778,12 @@
 		</div>
 		<div class="line"></div>
 		<div class="category">
-			<div class="view">{{ 'TIMESHEET.VIEW_WINDOWS' | translate }}</div>
+			<div class="view">
+				{{ 'TIMESHEET.VIEW_WINDOWS' | translate
+				}}<button class="manage-widget undo" (click)="undo(true)" nbButton>
+					<i class="fas fa-undo"></i>Undo
+				</button>
+			</div>
 			<ng-container *ngIf="windows.length > 0">
 				<ng-container *ngFor="let window of windows">
 					<div (click)="updateWindowVisibility(window)" class="title">

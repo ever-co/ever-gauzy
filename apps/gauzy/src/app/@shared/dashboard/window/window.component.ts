@@ -3,6 +3,7 @@ import {
 	Component,
 	ElementRef,
 	Input,
+	OnDestroy,
 	OnInit,
 	ViewChild
 } from '@angular/core';
@@ -19,7 +20,10 @@ import { WindowService } from './window.service';
 	templateUrl: './window.component.html',
 	styleUrls: ['./window.component.scss']
 })
-export class WindowComponent extends GuiDrag implements OnInit, AfterViewInit {
+export class WindowComponent
+	extends GuiDrag
+	implements OnInit, AfterViewInit, OnDestroy
+{
 	private _windowDragEnded: Observable<any>;
 	@ViewChild(NbPopoverDirective)
 	private _windowPopover: NbPopoverDirective;
@@ -45,18 +49,13 @@ export class WindowComponent extends GuiDrag implements OnInit, AfterViewInit {
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.windowService.windows.forEach((window: GuiDrag) => {
-			if (window.templateRef === this.templateRef) {
-				this.isCollapse = window.isCollapse;
-				this.isExpand = window.isExpand;
-			}
-		});
+		this.windowService.updateWindow(this);
 	}
 
 	public onClickSetting(event: boolean) {
 		if (event) {
 			this._windowPopover.hide();
-			this.windowService.serialize();
+			this.windowService.save();
 		}
 	}
 
@@ -68,4 +67,6 @@ export class WindowComponent extends GuiDrag implements OnInit, AfterViewInit {
 	public set windowDragEnded(value: Observable<any>) {
 		this._windowDragEnded = value;
 	}
+
+	ngOnDestroy(): void {}
 }
