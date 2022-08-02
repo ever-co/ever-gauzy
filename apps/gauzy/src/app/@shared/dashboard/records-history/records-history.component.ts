@@ -15,7 +15,7 @@ import { debounceTime, tap } from 'rxjs/operators';
 import { ContactLinksComponent } from '../../table-components';
 import { PaginationFilterBaseComponent } from '../../pagination/pagination-filter-base.component';
 import { Subject } from 'rxjs/internal/Subject';
-import { distinctUntilChange } from 'packages/common-angular/dist';
+import { distinctUntilChange } from '@gauzy/common-angular';
 import { NbDialogRef } from '@nebular/theme';
 
 @UntilDestroy({ checkProperties: true })

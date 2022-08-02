@@ -11,7 +11,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { NbDialogRef } from '@nebular/theme';
 import { PaginationFilterBaseComponent } from '../../pagination/pagination-filter-base.component';
 import { Subject } from 'rxjs/internal/Subject';
-import { distinctUntilChange } from 'packages/common-angular/dist';
+import { distinctUntilChange } from '@gauzy/common-angular';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
