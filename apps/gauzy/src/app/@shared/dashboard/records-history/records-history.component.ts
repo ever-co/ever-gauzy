@@ -15,6 +15,7 @@ import { debounceTime, tap } from 'rxjs/operators';
 import { ContactLinksComponent } from '../../table-components';
 import { PaginationFilterBaseComponent } from '../../pagination/pagination-filter-base.component';
 import { Subject } from 'rxjs/internal/Subject';
+import { distinctUntilChange } from 'packages/common-angular/dist';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -70,6 +71,7 @@ export class RecordsHistoryComponent
 		this.pagination$
 			.pipe(
 				debounceTime(100),
+				distinctUntilChange(),
 				tap(() => this._recordsHistory$.next(true)),
 				untilDestroyed(this)
 			)
@@ -148,7 +150,7 @@ export class RecordsHistoryComponent
 						valueDate: {
 							title: this.getTranslation('SM_TABLE.DATE'),
 							type: 'custom',
-							width: '20%',
+							width: '30%',
 							renderComponent: DateViewComponent,
 							filter: false
 						},

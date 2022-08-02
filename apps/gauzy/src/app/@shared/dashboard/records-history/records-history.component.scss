@@ -1,10 +1,12 @@
 @import 'gauzy/_gauzy-table.scss';
 @import 'gauzy/_gauzy-dialogs';
 @import 'gauzy/_gauzy-overrides';
-.records {
+
+:host nb-card {
   box-shadow: 0px 0px 16px 9px grey;
   border-radius: nb-theme(border-radius);
   margin-bottom: 0;
+  width: 645px;
   nb-card-body {
     overflow: unset;
     @include input-appearance(2rem, var(--gauzy-sidebar-background-4));
