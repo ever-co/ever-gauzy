@@ -7,10 +7,14 @@ import {
 import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { TranslationBaseComponent } from '../../language-base/translation-base.component';
-import { DateViewComponent, IncomeExpenseAmountComponent } from '../../table-components';
-import { tap } from 'rxjs/operators';
+import {
+	DateViewComponent,
+	IncomeExpenseAmountComponent
+} from '../../table-components';
+import { debounceTime, tap } from 'rxjs/operators';
 import { ContactLinksComponent } from '../../table-components';
+import { PaginationFilterBaseComponent } from '../../pagination/pagination-filter-base.component';
+import { Subject } from 'rxjs/internal/Subject';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -19,15 +23,27 @@ import { ContactLinksComponent } from '../../table-components';
 	styleUrls: ['./records-history.component.scss']
 })
 export class RecordsHistoryComponent
-	extends TranslationBaseComponent
-	implements OnInit {
+	extends PaginationFilterBaseComponent
+	implements OnInit
+{
 	type: HistoryType;
 	recordsData: IEmployeeStatisticsHistory[];
 	smartTableSource = new LocalDataSource();
 	translatedType: string;
 	loading: boolean;
+	private _recordsHistory$: Subject<any> = this.subject$;
 
-	smartTableSettings: Object;
+	smartTableSettings: Object = {
+		actions: false,
+		editable: true,
+		noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.HISTORY_RECORD'),
+		pager: {
+			display: false,
+			perPage: this.pagination
+				? this.pagination.itemsPerPage
+				: this.minItemPerPage
+		}
+	};
 
 	recordHistoryTable: Ng2SmartTableComponent;
 	@ViewChild('recordHistoryTable') set content(
@@ -44,9 +60,23 @@ export class RecordsHistoryComponent
 	}
 
 	ngOnInit() {
+		this._recordsHistory$
+			.pipe(
+				debounceTime(300),
+				tap(() => this._populateSmartTable()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.pagination$
+			.pipe(
+				debounceTime(100),
+				tap(() => this._recordsHistory$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this._populateSmartTable();
 		this.loadSettingsSmartTable();
 		this._applyTranslationOnSmartTable();
-		this._populateSmartTable();
 	}
 
 	private _populateSmartTable() {
@@ -57,9 +87,8 @@ export class RecordsHistoryComponent
 			case HistoryType.BONUS_INCOME:
 			case HistoryType.NON_BONUS_INCOME:
 				viewModel = this.recordsData;
-				this.translatedType = this.getTranslation(
-					'INCOME_PAGE.INCOME'
-				).toUpperCase();
+				this.translatedType =
+					this.getTranslation('INCOME_PAGE.INCOME').toUpperCase();
 				break;
 
 			case HistoryType.EXPENSES:
@@ -98,8 +127,13 @@ export class RecordsHistoryComponent
 				).toUpperCase();
 				break;
 		}
-
+		const { activePage, itemsPerPage } = this.getPagination();
+		this.smartTableSource.setPaging(activePage, itemsPerPage, false);
 		this.smartTableSource.load(viewModel);
+		this.setPagination({
+			...this.getPagination(),
+			totalItems: this.smartTableSource.count()
+		});
 		this.loading = false;
 	}
 
@@ -109,10 +143,7 @@ export class RecordsHistoryComponent
 			case HistoryType.BONUS_INCOME:
 			case HistoryType.NON_BONUS_INCOME:
 				this.smartTableSettings = {
-					actions: false,
-					mode: 'external',
-					editable: true,
-					noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.HISTORY_RECORD'),
+					...this.smartTableSettings,
 					columns: {
 						valueDate: {
 							title: this.getTranslation('SM_TABLE.DATE'),
@@ -126,7 +157,7 @@ export class RecordsHistoryComponent
 							type: 'custom',
 							renderComponent: ContactLinksComponent,
 							valuePrepareFunction: (cell, row) => {
-								return row.client ?  row.client : null;
+								return row.client ? row.client : null;
 							}
 						},
 						amount: {
@@ -140,19 +171,13 @@ export class RecordsHistoryComponent
 							title: this.getTranslation('SM_TABLE.NOTES'),
 							type: 'string'
 						}
-					},
-					pager: {
-						display: true,
-						perPage: 5
 					}
 				};
 				break;
 			case HistoryType.EXPENSES:
 			case HistoryType.EXPENSES_WITHOUT_SALARY:
 				this.smartTableSettings = {
-					actions: false,
-					editable: true,
-					noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.HISTORY_RECORD'),
+					...this.smartTableSettings,
 					columns: {
 						source: {
 							title: this.getTranslation('SM_TABLE.SOURCE'),
@@ -198,10 +223,6 @@ export class RecordsHistoryComponent
 							title: this.getTranslation('SM_TABLE.NOTES'),
 							type: 'string'
 						}
-					},
-					pager: {
-						display: true,
-						perPage: 8
 					}
 				};
 				break;
