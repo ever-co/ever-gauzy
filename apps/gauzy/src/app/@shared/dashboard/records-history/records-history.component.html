@@ -1,17 +1,34 @@
-<div
+<nb-card
 	class="records"
 	[nbSpinner]="loading"
 	nbSpinnerStatus="primary"
 	nbSpinnerSize="large"
 >
-	<h5>{{ translatedType }}</h5>
-	<div class="table-scroll-container">
-    <ng2-smart-table
-		class="table"
-		[settings]="smartTableSettings"
-		[source]="smartTableSource"
-		#recordHistoryTable
-	>
-	</ng2-smart-table>
-  </div>
-</div>
+	<nb-card-header>
+		<span class="cancel"><i class="fas fa-times"></i></span>
+		<h5 class="title">{{ translatedType | titlecase }}</h5>
+	</nb-card-header>
+	<nb-card-body>
+		<div class="table-scroll-container">
+			<ng2-smart-table
+				[settings]="smartTableSettings"
+				[source]="smartTableSource"
+				#recordHistoryTable
+			>
+			</ng2-smart-table>
+		</div>
+		<div
+			*ngIf="pagination.totalItems > minItemPerPage"
+			class="pagination-container"
+		>
+			<ga-pagination
+				(selectedOption)="onUpdateOption($event)"
+				(selectedPage)="onPageChange($event)"
+				[doEmit]="false"
+				[totalItems]="pagination?.totalItems"
+				[itemsPerPage]="pagination?.itemsPerPage"
+				[activePage]="pagination?.activePage"
+			></ga-pagination>
+		</div>
+	</nb-card-body>
+</nb-card>
