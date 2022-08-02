@@ -16,6 +16,10 @@ $shadow: 0 0 0 nb-theme(button-outline-width) rgba($color: $green,
     display: flex;
     @include nb-ltr(justify-content, flex-end);
     @include nb-rtl(justify-content, flex-start);
+    i {
+      font-size: 11px;
+      color: var(--gauzy-text-color-1);
+    }
   }
 
   [nbButton].appearance-outline.status-basic {
