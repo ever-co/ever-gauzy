@@ -122,6 +122,7 @@ export class PaginationFilterBaseComponent extends TranslationBaseComponent
 	}
 
 	public onUpdateOption(itemsPerPage: number) {
+		this.refreshPagination();
 		this.pagination.itemsPerPage = itemsPerPage;
 		this.setPagination({
 			...this.getPagination(),
