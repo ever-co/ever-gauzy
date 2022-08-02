@@ -6,15 +6,19 @@ import { ProfitHistoryComponent } from './profit-history.component';
 import { ExpenseTableComponent } from './table-components/expense-table.component';
 import { IncomeTableComponent } from './table-components/income-table.component';
 import { TranslateModule } from '../../translate/translate.module';
+import { PaginationModule } from '../../pagination/pagination.module';
+import { CommonModule } from '@angular/common';
 
 @NgModule({
 	imports: [
+		CommonModule,
 		Ng2SmartTableModule,
 		IncomeModule,
 		NbIconModule,
 		NbCardModule,
 		NbSpinnerModule,
-		TranslateModule
+		TranslateModule,
+		PaginationModule
 	],
 	exports: [ProfitHistoryComponent],
 	declarations: [
