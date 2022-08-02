@@ -6,9 +6,12 @@ import { ExpenseTableComponent } from './table-components/expense-table.componen
 import { IncomeTableComponent } from './table-components/income-table.component';
 import { IEmployeeStatisticsHistory } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { tap } from 'rxjs/operators';
-import { TranslationBaseComponent } from '../../language-base/translation-base.component';
+import { debounceTime, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
+import { NbDialogRef } from '@nebular/theme';
+import { PaginationFilterBaseComponent } from '../../pagination/pagination-filter-base.component';
+import { Subject } from 'rxjs/internal/Subject';
+import { distinctUntilChange } from 'packages/common-angular/dist';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -16,8 +19,9 @@ import { TranslateService } from '@ngx-translate/core';
 	styleUrls: ['./profit-history.component.scss']
 })
 export class ProfitHistoryComponent
-	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
+	extends PaginationFilterBaseComponent
+	implements OnInit, OnDestroy
+{
 	smartTableSettings;
 	smartTableSource = new LocalDataSource();
 	recordsData: {
@@ -30,6 +34,7 @@ export class ProfitHistoryComponent
 	loading: boolean;
 
 	currency: string;
+	private _profitHistory$: Subject<any> = this.subject$;
 
 	profileHistoryTable: Ng2SmartTableComponent;
 	@ViewChild('profileHistoryTable') set content(
@@ -43,14 +48,35 @@ export class ProfitHistoryComponent
 
 	constructor(
 		private store: Store,
-		readonly translateService: TranslateService
+		readonly translateService: TranslateService,
+		private readonly dialogRef: NbDialogRef<ProfitHistoryComponent>
 	) {
 		super(translateService);
 	}
 
 	ngOnInit() {
-		this.loading = true;
+		this._profitHistory$
+			.pipe(
+				debounceTime(300),
+				tap(() => this._populateSmartTable()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.pagination$
+			.pipe(
+				debounceTime(100),
+				distinctUntilChange(),
+				tap(() => this._profitHistory$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+
 		this.loadSettingsSmartTable();
+		this._populateSmartTable();
+	}
+
+	private _populateSmartTable() {
+		this.loading = true;
 		const incomeList = this.recordsData.incomes.map((inc) => {
 			return {
 				income: inc.amount,
@@ -59,7 +85,6 @@ export class ProfitHistoryComponent
 				notes: inc.notes
 			};
 		});
-
 		const expenseList = this.recordsData.expenses.map((exp) => {
 			return {
 				expense: Math.abs(exp.amount),
@@ -69,10 +94,14 @@ export class ProfitHistoryComponent
 			};
 		});
 		const combinedTableData = [...incomeList, ...expenseList];
-
 		this.currency = this.store.selectedOrganization.currency;
-
+		const { activePage, itemsPerPage } = this.getPagination();
+		this.smartTableSource.setPaging(activePage, itemsPerPage, false);
 		this.smartTableSource.load(combinedTableData);
+		this.setPagination({
+			...this.getPagination(),
+			totalItems: this.smartTableSource.count()
+		});
 		this.loading = false;
 	}
 
@@ -81,14 +110,16 @@ export class ProfitHistoryComponent
 			actions: false,
 			mode: 'external',
 			editable: true,
-			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.PROFIT_HISTORY'),
+			noDataMessage: this.getTranslation(
+				'SM_TABLE.NO_DATA.PROFIT_HISTORY'
+			),
 			columns: {
 				valueDate: {
 					title: this.getTranslation(
 						'DASHBOARD_PAGE.PROFIT_HISTORY.DATE'
 					),
 					type: 'custom',
-					width: '20%',
+					width: '25%',
 					sortDirection: 'desc',
 					renderComponent: DateViewComponent,
 					filter: false
@@ -115,8 +146,10 @@ export class ProfitHistoryComponent
 				}
 			},
 			pager: {
-				display: true,
-				perPage: 8
+				display: false,
+				perPage: this.pagination
+					? this.pagination.itemsPerPage
+					: this.minItemPerPage
 			}
 		};
 	}
@@ -143,4 +176,8 @@ export class ProfitHistoryComponent
 	}
 
 	ngOnDestroy() {}
+
+	public close() {
+		this.dialogRef.close();
+	}
 }
