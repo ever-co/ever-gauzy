@@ -16,6 +16,7 @@ import { ContactLinksComponent } from '../../table-components';
 import { PaginationFilterBaseComponent } from '../../pagination/pagination-filter-base.component';
 import { Subject } from 'rxjs/internal/Subject';
 import { distinctUntilChange } from 'packages/common-angular/dist';
+import { NbDialogRef } from '@nebular/theme';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -56,7 +57,10 @@ export class RecordsHistoryComponent
 		}
 	}
 
-	constructor(readonly translateService: TranslateService) {
+	constructor(
+		readonly translateService: TranslateService,
+		private readonly dialogRef: NbDialogRef<RecordsHistoryComponent>
+	) {
 		super(translateService);
 	}
 
@@ -274,5 +278,9 @@ export class RecordsHistoryComponent
 			this.recordHistoryTable.grid.dataSet['willSelect'] = 'false';
 			this.recordHistoryTable.grid.dataSet.deselectAll();
 		}
+	}
+
+	close() {
+		this.dialogRef.close();
 	}
 }

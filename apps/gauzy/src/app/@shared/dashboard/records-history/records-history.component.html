@@ -5,7 +5,9 @@
 	nbSpinnerSize="large"
 >
 	<nb-card-header>
-		<span class="cancel"><i class="fas fa-times"></i></span>
+		<span class="cancel"
+			><i class="fas fa-times close" (click)="close()"></i
+		></span>
 		<h5 class="title">{{ translatedType | titlecase }}</h5>
 	</nb-card-header>
 	<nb-card-body>
