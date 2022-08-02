@@ -6,10 +6,11 @@ import * as rimraf from 'rimraf';
 import * as path from 'path';
 import { Injectable } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
-import { DataSource } from 'typeorm';
+import { DataSource, DataSourceOptions } from 'typeorm';
 import * as chalk from 'chalk';
 import * as moment from 'moment';
 import { environment as env, ConfigService } from '@gauzy/config';
+import { SEEDER_DB_CONNECTION } from '@gauzy/common';
 import {
 	IEmployee,
 	IOrganization,
@@ -305,7 +306,7 @@ import {
 	createDefaultFeatureToggle,
 	createRandomFeatureToggle
 } from '../../feature/feature.seed';
-import { createDefaultAccountingTemplates } from 'accounting-template/accounting-template.seed';
+import { createDefaultAccountingTemplates } from './../../accounting-template/accounting-template.seed';
 import { DEFAULT_EMPLOYEES, DEFAULT_EVER_EMPLOYEES } from './../../employee';
 import { createRandomMerchants, createDefaultMerchants } from './../../merchant/merchant.seed';
 import { createRandomWarehouses } from './../../warehouse/warehouse.seed';
@@ -331,11 +332,22 @@ export class SeedDataService {
 	defaultCandidateUsers: IUser[] = [];
 	defaultEmployees: IEmployee[] = [];
 
+	dataSource: DataSource;
+
 	constructor(
 		private readonly moduleRef: ModuleRef,
 		private readonly configService: ConfigService,
-		private readonly dataSource: DataSource
 	) {}
+
+	/**
+	 * This config is applied only for `yarn seed:*` type calls because
+	 * that is when connection is created by this service itself.
+	 */
+	overrideDbConfig = {
+		logging: 'all',
+		logger: 'file' //Removes console logging, instead logs all queries in a file ormlogs.log
+		// dropSchema: !env.production //Drops the schema each time connection is being established in development mode.
+	};
 
 	/**
 	* Seed All Data
@@ -345,6 +357,9 @@ export class SeedDataService {
 			this.seedType = SeederTypeEnum.ALL;
 
 			await this.cleanUpPreviousRuns();
+
+			// Connect to database
+			await this.createConnection();
 
 			// Reset database to start with new, fresh data
 			await this.resetDatabase();
@@ -363,6 +378,9 @@ export class SeedDataService {
 
 			// Seed jobs related data
 			await this.seedJobsData();
+
+			// Disconnect to database
+			await this.closeConnection();
 
 			console.log('Database All Seed Completed');
 		} catch (error) {
@@ -383,6 +401,9 @@ export class SeedDataService {
 
 			await this.cleanUpPreviousRuns();
 
+			// Connect to database
+			await this.createConnection();
+
 			// Reset database to start with new, fresh data
 			await this.resetDatabase();
 
@@ -391,6 +412,9 @@ export class SeedDataService {
 
 			// Seed reports related data
 			await this.seedReportsData();
+
+			// Disconnect to database
+			await this.closeConnection();
 
 			console.log('Database Default Seed Completed');
 		} catch (error) {
@@ -407,6 +431,9 @@ export class SeedDataService {
 
 			await this.cleanUpPreviousRuns();
 
+			// Connect to database
+			await this.createConnection();
+
 			// Reset database to start with new, fresh data
 			await this.resetDatabase();
 
@@ -415,6 +442,9 @@ export class SeedDataService {
 
 			// Seed reports related data
 			await this.seedReportsData();
+
+			// Disconnect to database
+			await this.closeConnection();
 
 			console.log('Database Ever Seed Completed');
 		} catch (error) {
@@ -427,8 +457,14 @@ export class SeedDataService {
 	*/
 	public async runReportsSeed() {
 		try {
+			// Connect to database
+			await this.createConnection();
+
 			// Seed reports related data
 			await this.seedReportsData();
+
+			// Disconnect to database
+			await this.closeConnection();
 
 			console.log('Database Reports Seed Completed');
 		} catch (error) {
@@ -444,6 +480,9 @@ export class SeedDataService {
 		try {
 			console.log('Database Demo Seed Started');
 
+			// Connect to database
+			await this.createConnection();
+
 			// Seed reports related data
 			await this.seedReportsData();
 
@@ -455,6 +494,9 @@ export class SeedDataService {
 
 			// Seed jobs related data
 			await this.seedJobsData();
+
+			// Disconnect to database
+			await this.closeConnection();
 
 			console.log('Database Demo Seed Completed');
 		} catch (error) {
@@ -757,7 +799,10 @@ export class SeedDataService {
 
 		await this.tryExecute(
 			'Default Integrations',
-			createDefaultIntegrations(this.dataSource, integrationTypes)
+			createDefaultIntegrations(
+				this.dataSource,
+				integrationTypes
+			)
 		);
 
 		await this.tryExecute(
@@ -2159,6 +2204,52 @@ export class SeedDataService {
 				resolve(true);
 			});
 		});
+	}
+
+	/**
+	* Create connection from database
+	*/
+	private async createConnection() {
+		if (!this.dataSource) {
+			this.log(
+				'NOTE: DATABASE CONNECTION DOES NOT EXIST YET. NEW ONE WILL BE CREATED!'
+			);
+		}
+		const { dbConnectionOptions } = this.configService;
+		if (!this.dataSource || !this.dataSource.isInitialized) {
+			try {
+				this.log(chalk.green(`CONNECTING TO DATABASE...`));
+				const options = {
+					...dbConnectionOptions,
+					...this.overrideDbConfig
+				}
+				const dataSource = new DataSource({
+					name: SEEDER_DB_CONNECTION,
+					...options
+				} as DataSourceOptions);
+
+				if (!dataSource.isInitialized) {
+					this.dataSource = await dataSource.initialize();
+					this.log(chalk.green(`✅ CONNECTED TO DATABASE!`));
+				}
+			} catch (error) {
+				this.handleError(error, 'Unable to connect to database');
+			}
+		}
+	}
+
+	/**
+	* Close connection from database
+	*/
+	private async closeConnection() {
+		try {
+			if (this.dataSource && this.dataSource.isInitialized) {
+				await this.dataSource.destroy();
+				this.log(chalk.green(`✅ DISCONNECTED TO DATABASE!`));
+			}
+		} catch (error) {
+			this.log('NOTE: DATABASE CONNECTION DOES NOT EXIST YET. CANT CLOSE CONNECTION!');
+		}
 	}
 
 	/**
