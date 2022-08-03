@@ -37,7 +37,6 @@ export class DatabaseModule {
 					// dataSource receives the configured DataSourceOptions
 					// and returns a Promise<DataSource>.
 					dataSourceFactory: async (options: DataSourceOptions) => {
-						console.log('Initialized API Connection');
 						return initializedDataSource({
 							name: API_DB_CONNECTION,
 							...options
@@ -71,7 +70,6 @@ export class DatabaseModule {
 					// dataSource receives the configured DataSourceOptions
 					// and returns a Promise<DataSource>.
 					dataSourceFactory: async (options: DataSourceOptions) => {
-						console.log('Initialized SEEDER Connection');
 						return initializedDataSource({
 							name: SEEDER_DB_CONNECTION,
 							...options
