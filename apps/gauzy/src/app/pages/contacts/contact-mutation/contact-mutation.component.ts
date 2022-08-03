@@ -28,7 +28,7 @@ import { FilterArrayPipe } from '../../../@shared/pipes/filter-array.pipe';
 import { LeafletMapComponent } from '../../../@shared/forms/maps/leaflet/leaflet.component';
 import { ErrorHandlingService, OrganizationProjectsService, Store, ToastrService } from '../../../@core/services';
 import { FormHelpers } from '../../../@shared/forms';
-import { getDummyImage } from "@gauzy/core";
+import { getDummyImage } from '@gauzy/core/src/core/utils';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
