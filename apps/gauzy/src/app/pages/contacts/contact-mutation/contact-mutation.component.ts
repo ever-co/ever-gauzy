@@ -367,9 +367,10 @@ export class ContactMutationComponent extends TranslationBaseComponent
 			...{ latitude, longitude }
 		};
 
-		const members = (this.members || this.selectedEmployeeIds || [])
+		let members = (this.members || this.selectedEmployeeIds || [])
 						.map((id) => this.employees.find((e) => e.id === id))
 						.filter((e) => !!e);
+		if(!members.length) members = this.selectedMembers;
 
 		let { projects = [] } = this.contMainForm.getRawValue();
 		projects.map((project: IOrganizationProject) => {
