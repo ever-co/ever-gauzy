@@ -2,14 +2,17 @@ import { Component, OnDestroy, OnInit, Input } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import {
 	IEmployee,
-	OrganizationSelectInput,
 	PayPeriodEnum,
 	ICandidate,
 	ICurrency
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { firstValueFrom, filter, tap } from 'rxjs';
-import { CandidateStore, EmployeeStore, OrganizationsService, Store } from '../../../@core/services';
+import { filter, tap } from 'rxjs';
+import {
+	CandidateStore,
+	EmployeeStore,
+	Store
+} from '../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -18,6 +21,7 @@ import { CandidateStore, EmployeeStore, OrganizationsService, Store } from '../.
 	styleUrls: ['employee-rates.component.scss']
 })
 export class EmployeeRatesComponent implements OnInit, OnDestroy {
+
 	@Input() public isEmployee: boolean;
 	@Input() public isCandidate: boolean;
 
@@ -37,7 +41,7 @@ export class EmployeeRatesComponent implements OnInit, OnDestroy {
 			reWeeklyLimit: ['', Validators.compose([
 					Validators.min(1),
 					Validators.max(128)
-				]) 
+				])
 			]
 		});
 	}
@@ -46,8 +50,7 @@ export class EmployeeRatesComponent implements OnInit, OnDestroy {
 		private readonly fb: FormBuilder,
 		private readonly store: Store,
 		private readonly employeeStore: EmployeeStore,
-		private readonly candidateStore: CandidateStore,
-		private readonly organizationsService: OrganizationsService
+		private readonly candidateStore: CandidateStore
 	) { }
 
 	ngOnInit() {
@@ -70,7 +73,7 @@ export class EmployeeRatesComponent implements OnInit, OnDestroy {
 	}
 
 	async onSubmit() {
-		if (this.form.invalid) {
+		if (this.form.invalid || !this.store.selectedOrganization) {
 			return;
 		}
 		const { id: organizationId } = this.store.selectedOrganization;
@@ -89,23 +92,12 @@ export class EmployeeRatesComponent implements OnInit, OnDestroy {
 	}
 
 	private async _syncRates(user: IEmployee | ICandidate) {
-		const billRateCurrency = user.billRateCurrency || (await this.getDefaultCurrency(user));
 		this.form.patchValue({
 			payPeriod: user.payPeriod,
 			billRateValue: user.billRateValue,
-			billRateCurrency: billRateCurrency,
+			billRateCurrency: user.billRateCurrency,
 			reWeeklyLimit: user.reWeeklyLimit
 		});
-	}
-
-	private async getDefaultCurrency(user: IEmployee | ICandidate) {
-		const { currency } = await firstValueFrom(
-			this.organizationsService.getById(
-				user.organizationId,
-				[OrganizationSelectInput.currency]
-			)
-		);
-		return currency;
 	}
 
 	/*
