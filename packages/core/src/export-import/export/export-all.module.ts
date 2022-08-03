@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { DataSource } from 'typeorm';
 import { RouterModule } from 'nest-router';
 import { getEntitiesFromPlugins } from '@gauzy/plugin';
 import { getConfig } from '@gauzy/config';
@@ -28,6 +27,6 @@ import { ImportRecordModule } from './../../export-import/import-record';
 	providers: [
 		ExportAllService
 	],
-	exports: [DataSource]
+	exports: []
 })
 export class ExportAllModule {}
