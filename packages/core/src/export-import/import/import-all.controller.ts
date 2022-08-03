@@ -11,17 +11,18 @@ import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import * as path from 'path';
 import { CommandBus } from '@nestjs/cqrs';
-import { IImportHistory, ImportStatusEnum, IPagination, PermissionsEnum, UploadedFile } from '@gauzy/contracts';
+import { IImportHistory, ImportStatusEnum, ImportTypeEnum, IPagination, PermissionsEnum, UploadedFile } from '@gauzy/contracts';
 import { ImportAllService } from './import-all.service';
 import { RequestContext } from './../../core/context';
 import { FileStorage, UploadedFileStorage } from '../../core/file-storage';
 import { ImportHistoryCreateCommand, ImportHistoryService } from './../import-history';
-import { PermissionGuard } from './../../shared/guards';
+import { PermissionGuard, TenantPermissionGuard } from './../../shared/guards';
 import { Permissions } from './../../shared/decorators';
 import { TransformInterceptor } from './../../core/interceptors';
 
 @ApiTags('Import')
 @UseInterceptors(TransformInterceptor)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class ImportAllController {
 	constructor(
@@ -44,9 +45,6 @@ export class ImportAllController {
 	@Get()
 	async importAll(): Promise<IPagination<IImportHistory>> {
 		return this.importHistoryService.findAll({
-			where: {
-				tenantId: RequestContext.currentTenantId()
-			},
 			order: {
 				importDate: 'DESC'
 			}
@@ -72,7 +70,7 @@ export class ImportAllController {
 	})
 	@Post()
 	async parse(
-		@Body() { importType }, 
+		@Body() { importType },
 		@UploadedFileStorage() file: UploadedFile
 	) {
 		const { key, originalname, size } = file;
@@ -83,19 +81,22 @@ export class ImportAllController {
 			tenantId: RequestContext.currentTenantId()
 		}
 		try {
-			await this.importAllService.unzipAndParse(key, importType === 'clean');
+			await this.importAllService.unzipAndParse(
+				key,
+				importType === ImportTypeEnum.CLEAN
+			);
 			this.importAllService.removeExtractedFiles();
 			return await this.commandBus.execute(
-				new ImportHistoryCreateCommand({ 
-					...history, 
-					status: ImportStatusEnum.SUCCESS 
+				new ImportHistoryCreateCommand({
+					...history,
+					status: ImportStatusEnum.SUCCESS
 				})
 			);
 		} catch (error) {
 			return await this.commandBus.execute(
-				new ImportHistoryCreateCommand({ 
-					...history, 
-					status: ImportStatusEnum.FAILED 
+				new ImportHistoryCreateCommand({
+					...history,
+					status: ImportStatusEnum.FAILED
 				})
 			);
 		}
