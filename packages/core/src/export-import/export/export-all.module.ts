@@ -9,6 +9,7 @@ import {
 	UpworkJobService,
 	UpworkOffersService
 } from '@gauzy/integration-upwork';
+import { DatabaseModule } from './../../database/database.module';
 import { coreEntities } from './../../core/entities';
 import { ExportAllController } from './export-all.controller';
 import { ExportAllService } from './export-all.service';
@@ -129,7 +130,8 @@ import { ImportRecordModule } from './../../export-import/import-record';
 			...coreEntities,
 			...getEntitiesFromPlugins(getConfig().plugins)
 		]),
-		ImportRecordModule
+		ImportRecordModule,
+		DatabaseModule.forRoot()
 	],
 	controllers: [ExportAllController],
 	providers: [

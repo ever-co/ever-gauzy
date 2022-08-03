@@ -1,6 +1,7 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
+import { ColumnMetadata } from 'typeorm/metadata/ColumnMetadata';
 import { BehaviorSubject } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
 import * as _ from 'lodash';
@@ -140,7 +141,6 @@ import {
 	WarehouseProductVariant
 } from './../../core/entities/internal';
 import { RequestContext } from './../../core/context';
-import { ColumnMetadata } from 'typeorm/metadata/ColumnMetadata';
 
 export interface IColumnRelationMetadata {
 	joinTableName: string;
@@ -541,7 +541,9 @@ export class ExportAllService implements OnModuleInit {
 
 		private readonly configService: ConfigService,
 		private readonly dataSource: DataSource
-	) {}
+	) {
+		console.log(this.dataSource.name, 'export all module');
+	}
 
 	async onModuleInit() {
 		const public_path = this.configService.assetOptions.assetPublicPath || __dirname;
