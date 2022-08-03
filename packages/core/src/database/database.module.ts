@@ -29,14 +29,15 @@ export class DatabaseModule {
 					imports: [ConfigModule],
 					inject: [ConfigService],
 					// Use useFactory, useClass, or useExisting
-					  // to configure the DataSourceOptions.
+					// to configure the DataSourceOptions.
 					useFactory: async (configService: ConfigService) => {
 						const { dbConnectionOptions } = configService.config;
 						return dbConnectionOptions;
 					},
 					// dataSource receives the configured DataSourceOptions
-					  // and returns a Promise<DataSource>.
+					// and returns a Promise<DataSource>.
 					dataSourceFactory: async (options: DataSourceOptions) => {
+						console.log('Initialized API Connection');
 						return initializedDataSource({
 							name: API_DB_CONNECTION,
 							...options
@@ -62,14 +63,15 @@ export class DatabaseModule {
 					imports: [ConfigModule],
 					inject: [ConfigService],
 					// Use useFactory, useClass, or useExisting
-					  // to configure the DataSourceOptions.
+					// to configure the DataSourceOptions.
 					useFactory: async (configService: ConfigService) => {
 						const { dbConnectionOptions } = configService.config;
 						return dbConnectionOptions;
 					},
 					// dataSource receives the configured DataSourceOptions
-					  // and returns a Promise<DataSource>.
+					// and returns a Promise<DataSource>.
 					dataSourceFactory: async (options: DataSourceOptions) => {
+						console.log('Initialized SEEDER Connection');
 						return initializedDataSource({
 							name: SEEDER_DB_CONNECTION,
 							...options

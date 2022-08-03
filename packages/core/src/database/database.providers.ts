@@ -6,14 +6,13 @@ import { initializedDataSource } from './database-helper';
 /**
  * API database connection provider
  */
-export const API_PROVIDER = {
-    provide: DataSource,
-    inject: [ConfigService],
-    useFactory: async (configService: ConfigService) => {
-        const { dbConnectionOptions } = configService.config;
-        return initializedDataSource({
-            name: API_DB_CONNECTION,
-            ...dbConnectionOptions
-        } as DataSourceOptions);
-    }
-}
+export const databaseProviders = [
+    {
+        provide: DataSource,
+        inject: [ConfigService],
+        useFactory: async (configService: ConfigService) => {
+            const { dbConnectionOptions } = configService.config;
+            return initializedDataSource({ name: API_DB_CONNECTION, ...dbConnectionOptions } as DataSourceOptions);
+        }
+    },
+];

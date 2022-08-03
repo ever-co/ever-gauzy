@@ -12,10 +12,12 @@ import { JwtRefreshTokenStrategy, JwtStrategy } from './strategies';
 import { UserOrganizationService } from '../user-organization/user-organization.services';
 import { UserModule } from './../user/user.module';
 import { PasswordResetModule } from './../password-reset/password-reset.module';
+import { databaseProviders } from './../database/database.providers';
 
 const providers = [
 	AuthService,
-	UserOrganizationService
+	UserOrganizationService,
+	...databaseProviders
 ];
 
 const strategies = [

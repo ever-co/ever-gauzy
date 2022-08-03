@@ -544,9 +544,7 @@ export class ImportAllService implements OnModuleInit {
 		private readonly configService: ConfigService,
 		private readonly commandBus: CommandBus,
 		private readonly dataSource: DataSource
-	) {
-		console.log(this.dataSource.name, 'import module');
-	}
+	) {}
 
 	async onModuleInit() {
 		//base import csv directory path

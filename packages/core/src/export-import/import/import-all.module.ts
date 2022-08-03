@@ -13,6 +13,7 @@ import { ImportRecordModule } from './../import-record';
 import { ImportHistoryModule } from './../import-history';
 import { TenantModule } from './../../tenant/tenant.module';
 import { UserModule } from './../../user/user.module';
+import { databaseProviders } from './../../database/database.providers';
 
 @Module({
 	imports: [
@@ -38,8 +39,11 @@ import { UserModule } from './../../user/user.module';
 	controllers: [ImportAllController],
 	providers: [
 		ImportAllService,
-		...CommandHandlers
+		...CommandHandlers,
+		...databaseProviders
 	],
-	exports: []
+	exports: [
+		...databaseProviders
+	]
 })
 export class ImportAllModule {}

@@ -541,9 +541,7 @@ export class ExportAllService implements OnModuleInit {
 
 		private readonly configService: ConfigService,
 		private readonly dataSource: DataSource
-	) {
-		console.log(this.dataSource.name, 'export module');
-	}
+	) {}
 
 	async onModuleInit() {
 		const public_path = this.configService.assetOptions.assetPublicPath || __dirname;
