@@ -16,17 +16,12 @@ export class AccountingTemplateService {
 
 	getAll(
 		relations?: string[],
-		findInput?: IAccountingTemplateFindInput
+		where?: IAccountingTemplateFindInput
 	): Promise<{ items: IAccountingTemplate[] }> {
-		const data = JSON.stringify({ relations, findInput });
 		return firstValueFrom(
-			this.http
-			.get<{ items: IAccountingTemplate[] }>(
-				`${API_PREFIX}/accounting-template`,
-				{
-					params: { data }
-				}
-			)
+			this.http.get<{ items: IAccountingTemplate[] }>(`${API_PREFIX}/accounting-template`, {
+				params: toParams({ where, relations })
+			})
 		);
 	}
 

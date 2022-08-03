@@ -128,9 +128,7 @@ export class AccountingTemplateController extends CrudController<AccountingTempl
 
 	@Get()
 	async findAll(
-		@Query(new ValidationPipe({
-			transform: true
-		})) options: PaginationParams<AccountingTemplate>
+		@Query() options: PaginationParams<AccountingTemplate>
 	): Promise<IPagination<IAccountingTemplate>> {
 		return await this.queryBus.execute(
 			new AccountingTemplateQuery(options)
