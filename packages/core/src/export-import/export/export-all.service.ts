@@ -315,7 +315,7 @@ export class ExportAllService implements OnModuleInit {
 		private readonly integrationEntitySettingRepository: Repository<IntegrationEntitySetting>,
 
 		@InjectRepository(IntegrationEntitySettingTied)
-		private readonly IntegrationEntitySettingTiedRepository: Repository<IntegrationEntitySettingTied>,
+		private readonly integrationEntitySettingTiedRepository: Repository<IntegrationEntitySettingTied>,
 
 		@InjectRepository(IntegrationMap)
 		private readonly integrationMapRepository: Repository<IntegrationMap>,
@@ -1096,7 +1096,7 @@ export class ExportAllService implements OnModuleInit {
 				repository: this.integrationEntitySettingRepository
 			},
 			{
-				repository: this.IntegrationEntitySettingTiedRepository
+				repository: this.integrationEntitySettingTiedRepository
 			},
 			{
 				repository: this.integrationMapRepository
