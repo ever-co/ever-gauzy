@@ -3,9 +3,7 @@ import { CqrsModule } from '@nestjs/cqrs';
 import { RouterModule } from 'nest-router';
 import { MulterModule } from '@nestjs/platform-express';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { DataSource, DataSourceOptions } from 'typeorm';
-import { ConfigService, getConfig } from '@gauzy/config';
-import { API_DB_CONNECTION } from '@gauzy/common';
+import { getConfig } from '@gauzy/config';
 import { getEntitiesFromPlugins } from '@gauzy/plugin';
 import { ImportAllController } from './import-all.controller';
 import { ImportAllService } from './import-all.service';
@@ -15,7 +13,6 @@ import { ImportRecordModule } from './../import-record';
 import { ImportHistoryModule } from './../import-history';
 import { TenantModule } from './../../tenant/tenant.module';
 import { UserModule } from './../../user/user.module';
-import { initializedDataSource } from './../../database/database-helper';
 
 @Module({
 	imports: [
@@ -41,17 +38,6 @@ import { initializedDataSource } from './../../database/database-helper';
 	controllers: [ImportAllController],
 	providers: [
 		ImportAllService,
-		{
-			provide: DataSource,
-			inject: [ConfigService],
-			useFactory: async (configService: ConfigService) => {
-				const { dbConnectionOptions } = configService.config;
-				return initializedDataSource({
-					name: API_DB_CONNECTION,
-					...dbConnectionOptions
-				} as DataSourceOptions);
-			},
-		},
 		...CommandHandlers
 	],
 	exports: []
