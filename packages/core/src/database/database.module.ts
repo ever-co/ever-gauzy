@@ -4,6 +4,7 @@ import { DataSourceOptions } from 'typeorm';
 import { ConfigModule, ConfigService } from '@gauzy/config';
 import { API_DB_CONNECTION, SEEDER_DB_CONNECTION } from '@gauzy/common';
 import { initializedDataSource } from './database-helper';
+import { API_PROVIDER } from './database.providers';
 
 /**
  * Import and provide base typeorm related classes.
@@ -24,7 +25,6 @@ export class DatabaseModule {
 	static forRoot(): DynamicModule {
 		return {
 			module: DatabaseModule,
-			providers: [],
 			imports: [
 				TypeOrmModule.forRootAsync({
 					imports: [ConfigModule],
@@ -45,7 +45,12 @@ export class DatabaseModule {
 					}
 				} as TypeOrmModuleAsyncOptions)
 			],
-			exports: [TypeOrmModule]
+			providers: [
+				API_PROVIDER
+			],
+			exports: [
+				API_PROVIDER
+			]
 		} as DynamicModule;
 	}
 
@@ -57,7 +62,6 @@ export class DatabaseModule {
 	static forSeeder(): DynamicModule {
 		return {
 			module: DatabaseModule,
-			providers: [],
 			imports: [
 				TypeOrmModule.forRootAsync({
 					imports: [ConfigModule],
@@ -78,7 +82,8 @@ export class DatabaseModule {
 					}
 				} as TypeOrmModuleAsyncOptions)
 			],
-			exports: [TypeOrmModule]
+			providers: [],
+			exports: []
 		} as DynamicModule;
 	}
 }

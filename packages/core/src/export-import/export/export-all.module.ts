@@ -1,17 +1,15 @@
 import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { DataSource, DataSourceOptions } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { RouterModule } from 'nest-router';
 import { getEntitiesFromPlugins } from '@gauzy/plugin';
-import { ConfigService, getConfig } from '@gauzy/config';
-import { API_DB_CONNECTION } from '@gauzy/common';
+import { getConfig } from '@gauzy/config';
 import { TenantModule } from './../../tenant/tenant.module';
 import { coreEntities } from './../../core/entities';
 import { ExportAllController } from './export-all.controller';
 import { ExportAllService } from './export-all.service';
 import { ImportRecordModule } from './../../export-import/import-record';
-import { initializedDataSource } from './../../database/database-helper';
 
 @Module({
 	imports: [
@@ -28,18 +26,7 @@ import { initializedDataSource } from './../../database/database-helper';
 	],
 	controllers: [ExportAllController],
 	providers: [
-		ExportAllService,
-		{
-			provide: DataSource,
-			inject: [ConfigService],
-			useFactory: async (configService: ConfigService) => {
-				const { dbConnectionOptions } = configService.config;
-				return initializedDataSource({
-					name: API_DB_CONNECTION,
-					...dbConnectionOptions
-				} as DataSourceOptions);
-			},
-		},
+		ExportAllService
 	],
 	exports: [DataSource]
 })
