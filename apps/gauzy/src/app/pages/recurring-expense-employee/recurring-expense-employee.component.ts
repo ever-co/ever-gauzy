@@ -6,7 +6,8 @@ import {
 	RecurringExpenseDeletionEnum,
 	IEmployeeRecurringExpense,
 	IEmployee,
-	IDateRangePicker
+	IDateRangePicker,
+	ComponentType
 } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -24,7 +25,6 @@ import {
 } from '../../@core/services';
 import {
 	RecurringExpenseMutationComponent,
-	COMPONENT_TYPE,
 	RecurringExpenseDeleteConfirmationComponent
 } from '../../@shared/expenses';
 
@@ -164,7 +164,7 @@ export class RecurringExpensesEmployeeComponent
 		const result = await firstValueFrom(
 			this.dialogService.open(RecurringExpenseMutationComponent, {
 				context: {
-					componentType: COMPONENT_TYPE.EMPLOYEE
+					componentType: ComponentType.EMPLOYEE
 				}
 			}).onClose
 		);
@@ -198,7 +198,7 @@ export class RecurringExpensesEmployeeComponent
 				// TODO
 				context: {
 					recurringExpense: this.selectedRecurringExpense.data,
-					componentType: COMPONENT_TYPE.EMPLOYEE
+					componentType: ComponentType.EMPLOYEE
 				}
 			}).onClose
 		);

@@ -1,7 +1,7 @@
 import { Component, OnInit, ViewChild, Input, OnDestroy, AfterViewInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import {
-	OrganizationSelectInput,
+	ComponentType,
 	IRecurringExpenseModel,
 	RecurringExpenseDefaultCategoriesEnum,
 	StartDateUpdateTypeEnum,
@@ -20,14 +20,13 @@ import {
 	ErrorHandlingService,
 	ExpenseCategoriesStoreService,
 	OrganizationRecurringExpenseService,
-	OrganizationsService,
 	Store,
 	ToastrService
 } from '../../../@core/services';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
 import { defaultDateFormat } from '../../../@core/utils/date';
 import { EmployeeSelectorComponent } from '../../../@theme/components/header/selectors/employee/employee.component';
-import { COMPONENT_TYPE, DEFAULT_CATEGORIES } from './recurring-expense.setting';
+import { DEFAULT_CATEGORIES } from './recurring-expense.setting';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -37,8 +36,6 @@ import { COMPONENT_TYPE, DEFAULT_CATEGORIES } from './recurring-expense.setting'
 })
 export class RecurringExpenseMutationComponent extends TranslationBaseComponent
 	implements AfterViewInit, OnInit, OnDestroy {
-
-	organization: IOrganization;
 
 	@ViewChild('employeeSelector', { static: false })
 	employeeSelector: EmployeeSelectorComponent;
@@ -53,7 +50,7 @@ export class RecurringExpenseMutationComponent extends TranslationBaseComponent
 
 	defaultCategories: {
 		category: string;
-		types: COMPONENT_TYPE[];
+		types: ComponentType[];
 	}[] = DEFAULT_CATEGORIES;
 
 	/*
@@ -70,9 +67,10 @@ export class RecurringExpenseMutationComponent extends TranslationBaseComponent
 		}
 	}
 
-	componentType: COMPONENT_TYPE;
+	ComponentTypeEnum = ComponentType;
+	componentType: ComponentType;
 	conflicts: IRecurringExpenseModel[] = [];
-	selectedOrganization: IOrganization;
+	public organization: IOrganization;
 
 	/*
 	* Recurring Expense Mutation Form
@@ -107,7 +105,6 @@ export class RecurringExpenseMutationComponent extends TranslationBaseComponent
 	constructor(
 		private readonly fb: FormBuilder,
 		protected readonly dialogRef: NbDialogRef<RecurringExpenseMutationComponent>,
-		private readonly organizationsService: OrganizationsService,
 		private readonly store: Store,
 		private readonly employeesService: EmployeesService,
 		private readonly expenseCategoriesStore: ExpenseCategoriesStoreService,
@@ -159,7 +156,6 @@ export class RecurringExpenseMutationComponent extends TranslationBaseComponent
 				filter((organization) => !!organization),
 				debounceTime(200),
 				tap((organization: IOrganization) => this.organization = organization),
-				tap(() => this._loadDefaultCurrency()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -313,7 +309,7 @@ export class RecurringExpenseMutationComponent extends TranslationBaseComponent
 		) {
 			const newStartDate = new Date(newValue);
 			const { value, conflicts } =
-				this.componentType === COMPONENT_TYPE.ORGANIZATION
+				this.componentType === ComponentType.ORGANIZATION
 					? await this.organizationRecurringExpenseService.getStartDateUpdateType(
 						{
 							newStartDate,
@@ -330,19 +326,6 @@ export class RecurringExpenseMutationComponent extends TranslationBaseComponent
 			this.conflicts = conflicts;
 		}
 		this.startDateChangeLoading = false;
-	}
-
-	private async _loadDefaultCurrency() {
-		const orgData = await firstValueFrom(this.organizationsService
-			.getById(this.store.selectedOrganization.id, [
-				OrganizationSelectInput.currency
-			])
-		);
-
-		if (orgData && this.currency && !this.currency.value) {
-			this.currency.setValue(orgData.currency);
-			this.currency.updateValueAndValidity();
-		}
 	}
 
 	close() {
