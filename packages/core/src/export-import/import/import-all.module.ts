@@ -13,10 +13,11 @@ import { ImportRecordModule } from './../import-record';
 import { ImportHistoryModule } from './../import-history';
 import { TenantModule } from './../../tenant/tenant.module';
 import { UserModule } from './../../user/user.module';
-import { databaseProviders } from './../../database/database.providers';
+import { DataSourceModule } from './../../database/data-source.module';
 
 @Module({
 	imports: [
+		DataSourceModule,
 		RouterModule.forRoutes([
 			{
 				path: '/import',
@@ -39,11 +40,8 @@ import { databaseProviders } from './../../database/database.providers';
 	controllers: [ImportAllController],
 	providers: [
 		ImportAllService,
-		...CommandHandlers,
-		...databaseProviders
+		...CommandHandlers
 	],
-	exports: [
-		...databaseProviders
-	]
+	exports: []
 })
 export class ImportAllModule {}

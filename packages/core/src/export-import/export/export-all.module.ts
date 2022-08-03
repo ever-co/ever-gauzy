@@ -9,10 +9,11 @@ import { coreEntities } from './../../core/entities';
 import { ExportAllController } from './export-all.controller';
 import { ExportAllService } from './export-all.service';
 import { ImportRecordModule } from './../../export-import/import-record';
-import { databaseProviders } from './../../database/database.providers';
+import { DataSourceModule } from './../../database/data-source.module';
 
 @Module({
 	imports: [
+		DataSourceModule,
 		RouterModule.forRoutes([
 			{ path: '/download', module: ExportAllModule }
 		]),
@@ -26,11 +27,8 @@ import { databaseProviders } from './../../database/database.providers';
 	],
 	controllers: [ExportAllController],
 	providers: [
-		ExportAllService,
-		...databaseProviders
+		ExportAllService
 	],
-	exports: [
-		...databaseProviders
-	]
+	exports: []
 })
 export class ExportAllModule {}

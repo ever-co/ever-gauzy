@@ -12,6 +12,7 @@ export const databaseProviders = [
         inject: [ConfigService],
         useFactory: async (configService: ConfigService) => {
             const { dbConnectionOptions } = configService.config;
+            console.log('Initialized Database Providers');
             return initializedDataSource({ name: API_DB_CONNECTION, ...dbConnectionOptions } as DataSourceOptions);
         }
     },
