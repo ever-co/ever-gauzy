@@ -16,11 +16,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 100%;
-  border-radius: 3px;
+  border-radius: var(--border-radius);
 
   h4 {
-    font-size: 1em;
+    font-size: 15px;
     padding: 0;
     margin: 0;
     text-transform: uppercase;
@@ -32,11 +31,11 @@
 }
 
 .status-label.approved {
-  background: #2ce69b;
+  background: #03e88c;
 }
 
 .status-label.active {
-  background: #598bff;
+  background: #e45959;
 }
 
 nb-radio-group {

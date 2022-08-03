@@ -1,6 +1,9 @@
 <nb-card class="main">
-	<nb-card-header class="d-flex">
-		<h5>
+	<nb-card-header class="d-flex flex-column">
+		<span class="cancel"
+			><i class="fas fa-times" (click)="closeDialog()"></i
+		></span>
+		<h5 class="title">
 			{{
 				(equipmentSharingPolicy
 					? 'EQUIPMENT_SHARING_POLICY_PAGE.EDIT_EQUIPMENT_SHARING_POLICY'
@@ -8,11 +11,6 @@
 				) | translate
 			}}
 		</h5>
-		<nb-icon
-			class="ml-auto mt-1 close"
-			icon="close-outline"
-			(click)="closeDialog()"
-		></nb-icon>
 	</nb-card-header>
 	<nb-card-body class="body">
 		<form [formGroup]="form" *ngIf="form">
@@ -75,7 +73,7 @@
 			outline
 		>
 			{{ 'BUTTONS.CANCEL' | translate }}
-		</button>	
+		</button>
 		<button
 			[disabled]="form.invalid"
 			(click)="saveEquipmentSharingPolicy()"
