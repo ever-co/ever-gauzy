@@ -4,7 +4,6 @@ import { DataSourceOptions } from 'typeorm';
 import { ConfigModule, ConfigService } from '@gauzy/config';
 import { API_DB_CONNECTION, SEEDER_DB_CONNECTION } from '@gauzy/common';
 import { initializedDataSource } from './database-helper';
-import { API_PROVIDER } from './database.providers';
 
 /**
  * Import and provide base typeorm related classes.
@@ -45,12 +44,8 @@ export class DatabaseModule {
 					}
 				} as TypeOrmModuleAsyncOptions)
 			],
-			providers: [
-				API_PROVIDER
-			],
-			exports: [
-				API_PROVIDER
-			]
+			providers: [],
+			exports: []
 		} as DynamicModule;
 	}
 

@@ -9,6 +9,7 @@ import { coreEntities } from './../../core/entities';
 import { ExportAllController } from './export-all.controller';
 import { ExportAllService } from './export-all.service';
 import { ImportRecordModule } from './../../export-import/import-record';
+import { API_PROVIDER } from './../../database/database.providers';
 
 @Module({
 	imports: [
@@ -25,8 +26,11 @@ import { ImportRecordModule } from './../../export-import/import-record';
 	],
 	controllers: [ExportAllController],
 	providers: [
-		ExportAllService
+		ExportAllService,
+		API_PROVIDER
 	],
-	exports: []
+	exports: [
+		API_PROVIDER
+	]
 })
 export class ExportAllModule {}
