@@ -38,6 +38,6 @@ import { UserModule } from './../../user/user.module';
 		ImportAllService,
 		...CommandHandlers
 	],
-	exports: [ImportAllService]
+	exports: []
 })
 export class ImportAllModule {}
