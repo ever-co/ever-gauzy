@@ -542,7 +542,7 @@ export class ExportAllService implements OnModuleInit {
 		private readonly configService: ConfigService,
 		private readonly dataSource: DataSource
 	) {
-		console.log(this.dataSource.name, 'export all module');
+		console.log(this.dataSource.name, 'export module');
 	}
 
 	async onModuleInit() {

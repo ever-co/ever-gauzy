@@ -4,7 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { DataSource, DataSourceOptions } from 'typeorm';
 import { RouterModule } from 'nest-router';
 import { getEntitiesFromPlugins } from '@gauzy/plugin';
-import { ConfigModule, ConfigService, getConfig } from '@gauzy/config';
+import { ConfigService, getConfig } from '@gauzy/config';
 import { API_DB_CONNECTION } from '@gauzy/common';
 import { TenantModule } from './../../tenant/tenant.module';
 import { coreEntities } from './../../core/entities';
@@ -24,8 +24,7 @@ import { initializedDataSource } from './../../database/database-helper';
 			...getEntitiesFromPlugins(getConfig().plugins)
 		]),
 		ImportRecordModule,
-		TenantModule,
-		ConfigModule
+		TenantModule
 	],
 	controllers: [ExportAllController],
 	providers: [

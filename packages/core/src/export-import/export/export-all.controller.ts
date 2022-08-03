@@ -12,9 +12,12 @@ import { ParseJsonPipe } from './../../shared/pipes/parse-json.pipe';
 import { TenantPermissionGuard } from './../../shared/guards';
 
 @ApiTags('Download')
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class ExportAllController {
-	constructor(private readonly exportService: ExportAllService) {}
+	constructor(
+		private readonly exportService: ExportAllService
+	) {}
 
 	@ApiOperation({ summary: 'Find all exports.' })
 	@ApiResponse({
@@ -25,7 +28,6 @@ export class ExportAllController {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@UseGuards(TenantPermissionGuard)
 	@Get()
 	async exportAll(
 		@Query('data', ParseJsonPipe) data: any,
@@ -48,7 +50,6 @@ export class ExportAllController {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@UseGuards(TenantPermissionGuard)
 	@Get('template')
 	async downloadTemplate(
 		@Res() res
@@ -70,7 +71,6 @@ export class ExportAllController {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@UseGuards(TenantPermissionGuard)
 	@Get('filter')
 	async exportByName(
 		@Query('data', ParseJsonPipe) data: any,
