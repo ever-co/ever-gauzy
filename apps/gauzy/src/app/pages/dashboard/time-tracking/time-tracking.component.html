@@ -293,34 +293,56 @@
 									</ng-container>
 								</div>
 							</div>
-							<div>
-								<swiper
-									[slidesPerView]="3"
-									[spaceBetween]="30"
-									[slidesPerGroup]="3"
-									[loop]="true"
-									[loopFillGroupWithBlank]="true"
-									[pagination]="{
-										clickable: true
-									}"
-									[navigation]="true"
-									class="m-swiper"
-								>
-									<ng-container
+							<div
+								*ngIf="
+									employee.timeSlots.length > 3;
+									else timeslot
+								"
+							>
+								<div>
+									<swiper
+										[slidesPerView]="3"
+										[spaceBetween]="16"
+										[slidesPerGroup]="3"
+										[loop]="true"
+										[loopFillGroupWithBlank]="true"
+										[pagination]="{
+											clickable: true
+										}"
+										[navigation]="true"
+										class="m-swiper"
+									>
+										<ng-container
+											*ngFor="
+												let timeSlot of employee.timeSlots
+											"
+										>
+											<ng-template swiperSlide>
+												<ngx-screenshots-item
+													[timeSlot]="timeSlot"
+													(delete)="onDelete()"
+													[multiple]="false"
+												></ngx-screenshots-item>
+											</ng-template>
+										</ng-container>
+									</swiper>
+								</div>
+							</div>
+							<ng-template #timeslot>
+								<div class="custom-container">
+									<div
 										*ngFor="
 											let timeSlot of employee.timeSlots
 										"
 									>
-										<ng-template swiperSlide>
-											<ngx-screenshots-item
-												[timeSlot]="timeSlot"
-												(delete)="onDelete()"
-												[multiple]="false"
-											></ngx-screenshots-item>
-										</ng-template>
-									</ng-container>
-								</swiper>
-							</div>
+										<ngx-screenshots-item
+											[timeSlot]="timeSlot"
+											(delete)="onDelete()"
+											[multiple]="false"
+										></ngx-screenshots-item>
+									</div>
+								</div>
+							</ng-template>
 						</div>
 					</ng-container>
 				</div>
