@@ -35,7 +35,7 @@ import {
 	EmployeeUpdateCommand,
 	WorkingEmployeeGetCommand
 } from './commands';
-import { CrudController, ITryRequest, OptionParams, PaginationParams } from './../core/crud';
+import { CrudController, ITryRequest, PaginationParams } from './../core/crud';
 import { TransformInterceptor } from './../core/interceptors';
 import { Permissions } from './../shared/decorators';
 import { BulkBodyLoadTransformPipe, ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
