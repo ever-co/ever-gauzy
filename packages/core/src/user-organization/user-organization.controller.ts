@@ -7,12 +7,11 @@ import {
 	HttpCode,
 	Delete,
 	Param,
-	Req,
 	UseInterceptors
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CrudController } from './../core/crud';
-import { IUserOrganization, RolesEnum, LanguagesEnum, IPagination } from '@gauzy/contracts';
+import { IUserOrganization, RolesEnum, LanguagesEnum, IPagination, IUser } from '@gauzy/contracts';
 import { UserOrganizationService } from './user-organization.services';
 import { UserOrganization } from './user-organization.entity';
 import { Not } from 'typeorm';
@@ -21,6 +20,7 @@ import { UserOrganizationDeleteCommand } from './commands';
 import { I18nLang } from 'nestjs-i18n';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { TenantPermissionGuard } from './../shared/guards';
+import { User } from './../shared/decorators';
 import { TransformInterceptor } from './../core/interceptors';
 
 @ApiTags('UserOrganization')
@@ -69,13 +69,13 @@ export class UserOrganizationController extends CrudController<UserOrganization>
 	@Delete(':id')
 	async delete(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Req() request,
+		@User() user: IUser,
 		@I18nLang() language: LanguagesEnum
 	): Promise<IUserOrganization> {
 		return this.commandBus.execute(
 			new UserOrganizationDeleteCommand({
 				userOrganizationId: id,
-				requestingUser: request.user,
+				requestingUser: user,
 				language
 			})
 		);
