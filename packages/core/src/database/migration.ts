@@ -241,7 +241,10 @@ export async function establishDatabaseConnection(config: Partial<IPluginConfig>
                 ...dbConnectionOptions,
                 ...overrideDbConfig
             } as DataSourceOptions);
-            console.log(chalk.green(`✅ CONNECTED TO DATABASE!`));
+            if (!dataSource.isInitialized) {
+                await dataSource.initialize();
+                console.log(chalk.green(`✅ CONNECTED TO DATABASE!`));
+            }
         } catch (error) {
             console.log('Unable to connect to database', error);
         }
