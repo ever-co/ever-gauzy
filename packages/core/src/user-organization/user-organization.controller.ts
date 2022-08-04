@@ -20,7 +20,7 @@ import { UserOrganizationDeleteCommand } from './commands';
 import { I18nLang } from 'nestjs-i18n';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { TenantPermissionGuard } from './../shared/guards';
-import { User } from './../shared/decorators';
+import { UserDecorator } from './../shared/decorators';
 import { TransformInterceptor } from './../core/interceptors';
 
 @ApiTags('UserOrganization')
@@ -69,7 +69,7 @@ export class UserOrganizationController extends CrudController<UserOrganization>
 	@Delete(':id')
 	async delete(
 		@Param('id', UUIDValidationPipe) id: string,
-		@User() user: IUser,
+		@UserDecorator() user: IUser,
 		@I18nLang() language: LanguagesEnum
 	): Promise<IUserOrganization> {
 		return this.commandBus.execute(
