@@ -44,7 +44,7 @@ import { InvoiceDownloadMutationComponent } from '../invoice-download/invoice-do
 	templateUrl: './invoices-received.component.html',
 	styleUrls: ['./invoices-received.component.scss']
 })
-export class InvoicesReceivedComponent extends PaginationFilterBaseComponent 
+export class InvoicesReceivedComponent extends PaginationFilterBaseComponent
 	implements OnInit, OnDestroy {
 
 	loading: boolean = false;
