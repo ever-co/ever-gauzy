@@ -293,16 +293,33 @@
 									</ng-container>
 								</div>
 							</div>
-							<div class="custom-container">
-								<div
-									*ngFor="let timeSlot of employee.timeSlots"
+							<div>
+								<swiper
+									[slidesPerView]="3"
+									[spaceBetween]="30"
+									[slidesPerGroup]="3"
+									[loop]="true"
+									[loopFillGroupWithBlank]="true"
+									[pagination]="{
+										clickable: true
+									}"
+									[navigation]="true"
+									class="m-swiper"
 								>
-									<ngx-screenshots-item
-										[timeSlot]="timeSlot"
-										(delete)="onDelete()"
-										[multiple]="false"
-									></ngx-screenshots-item>
-								</div>
+									<ng-container
+										*ngFor="
+											let timeSlot of employee.timeSlots
+										"
+									>
+										<ng-template swiperSlide>
+											<ngx-screenshots-item
+												[timeSlot]="timeSlot"
+												(delete)="onDelete()"
+												[multiple]="false"
+											></ngx-screenshots-item>
+										</ng-template>
+									</ng-container>
+								</swiper>
 							</div>
 						</div>
 					</ng-container>
@@ -780,7 +797,11 @@
 		<div class="category">
 			<div class="view">
 				{{ 'TIMESHEET.VIEW_WINDOWS' | translate
-				}}<button class="manage-widget undo" (click)="undo(true)" nbButton>
+				}}<button
+					class="manage-widget undo"
+					(click)="undo(true)"
+					nbButton
+				>
 					<i class="fas fa-undo"></i>Undo
 				</button>
 			</div>
