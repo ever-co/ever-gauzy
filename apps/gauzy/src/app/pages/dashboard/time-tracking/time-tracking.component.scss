@@ -42,13 +42,23 @@
 
     .swiper-button-next,
     .swiper-button-prev {
+      display: none;
+    }
+
+    .swiper-button {
+      padding: 2px 8px;
+      border: 2px solid var(--gauzy-background-transparent);
       color: var(--text-primary-color);
-      border-radius: var(--border-radius);
-      width: 0;
-      height: 0;
-      padding: 8px;
-      border: 2px solid var(--color-primary-transparent-100);
-      background-color: var(--color-primary-transparent-200);
+      border-radius: var(--button-rectangle-border-radius);
+      i {
+        font-weight: 900;
+      }
+      height: fit-content;
+    }
+
+    .swiper-button-container {
+      display: flex;
+      gap: 4px;
     }
 
     .swiper-button-next:after,
@@ -88,12 +98,9 @@
     background-color: var(--gauzy-card-2);
   }
 
-  .view-all {
-    position: absolute;
-    ::ng-deep {
-      @include nb-ltr(right, 20px);
-      @include nb-rtl(left, 20px);
-    }
+  .button-container {
+    display: flex;
+    gap: 1rem;
   }
 
   [nbButton].appearance-outline.status-primary {
@@ -105,11 +112,13 @@
     border-color: var(--gauzy-background-transparent);
     color: var(--button-outline-primary-text-color);
     border-width: 2px;
+    padding: 4px 10px;
   }
 }
 
 .hour-label {
   display: flex;
+  justify-content: space-between;
 }
 
 .link-text {

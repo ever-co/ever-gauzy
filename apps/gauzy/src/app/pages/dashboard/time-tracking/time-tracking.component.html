@@ -277,20 +277,41 @@
 									[id]="employee?.id"
 									class="mb-3"
 								></ngx-avatar>
-								<div class="view-all">
-									<ng-container>
-										<button
-											nbButton
-											status="primary"
-											size="small"
-											outline
-											(click)="
-												redirectToScreenshots(employee)
-											"
+								<div class="button-container">
+									<div class="swiper-button-container">
+										<div
+											class="swiper-button"
+											(click)="slidePrev(swiper)"
 										>
-											{{ 'BUTTONS.VIEW_ALL' | translate }}
-										</button>
-									</ng-container>
+											<i class="fas fa-angle-left"></i>
+										</div>
+										<div
+											class="swiper-button"
+											(click)="slideNext(swiper)"
+										>
+											<i class="fas fa-angle-right"></i>
+										</div>
+									</div>
+									<div class="view-all">
+										<ng-container>
+											<button
+												nbButton
+												status="primary"
+												size="small"
+												outline
+												(click)="
+													redirectToScreenshots(
+														employee
+													)
+												"
+											>
+												{{
+													'BUTTONS.VIEW_ALL'
+														| translate
+												}}
+											</button>
+										</ng-container>
+									</div>
 								</div>
 							</div>
 							<div>
@@ -304,6 +325,8 @@
 										clickable: true
 									}"
 									[navigation]="true"
+									[virtual]="true"
+									#swiper
 									class="m-swiper"
 								>
 									<ng-container

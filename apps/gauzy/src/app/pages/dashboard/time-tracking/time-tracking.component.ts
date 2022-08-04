@@ -6,7 +6,6 @@ import {
 	OnInit,
 	QueryList,
 	TemplateRef,
-	ViewChild,
 	ViewChildren} from '@angular/core';
 import { Router } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -61,11 +60,10 @@ import { GuiDrag } from '../../../@shared/dashboard/interfaces/gui-drag.abstract
 import { WindowService } from '../../../@shared/dashboard/window/window.service';
 import { SwiperComponent } from "swiper/angular";
 // import Swiper core and required modules
-import SwiperCore, { Pagination, Navigation } from "swiper";
+import SwiperCore, { Virtual, Pagination, Navigation } from "swiper";
 
 // install Swiper modules
-SwiperCore.use([Pagination, Navigation]);
-
+SwiperCore.use([Pagination, Navigation, Virtual]);
 export enum RangePeriod {
 	DAY = 'DAY',
 	WEEK = 'WEEK',
@@ -103,7 +101,6 @@ export class TimeTrackingComponent
 	countsLoading = false;
 	manualTimeLoading = false;
 
-	@ViewChild('swiper', { static: false }) swiper?: SwiperComponent;
 	progressStatus = progressStatus;
 	public readonly PermissionsEnum = PermissionsEnum;
 	public readonly RangePeriod = RangePeriod;
@@ -693,11 +690,11 @@ export class TimeTrackingComponent
 			: this.widgetService.undoDrag();
 	}
 
-	public slideNext() {
-		this.swiper.swiperRef.slideNext(100);
+	public slideNext(swiper: SwiperComponent) {
+		swiper.swiperRef.slideNext(100);
 	}
 
-	public slidePrev() {
-		this.swiper.swiperRef.slidePrev(100);
+	public slidePrev(swiper: SwiperComponent) {
+		swiper.swiperRef.slidePrev(100);
 	}
 }
