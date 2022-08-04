@@ -1,4 +1,4 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { IntegrationType } from './integration-type.entity';
 import {
 	IntegrationTypeGroupEnum,
@@ -44,7 +44,7 @@ const DEFAULT_INTEGRATION_TYPES = [
 ];
 
 export const createDefaultIntegrationTypes = async (
-	connection: Connection
+	dataSource: DataSource
 ): Promise<IntegrationType[]> => {
 	const integrationTypes = DEFAULT_INTEGRATION_TYPES.map(
 		({ name, groupName, order }) => {
@@ -55,11 +55,11 @@ export const createDefaultIntegrationTypes = async (
 			return entity;
 		}
 	);
-	return await insertIntegrationTypes(connection, integrationTypes);
+	return await insertIntegrationTypes(dataSource, integrationTypes);
 };
 
 const insertIntegrationTypes = async (
-	connection: Connection,
+	dataSource: DataSource,
 	integrationTypes: IntegrationType[]
 ): Promise<IntegrationType[]> =>
-	await connection.manager.save(integrationTypes);
+	await dataSource.manager.save(integrationTypes);

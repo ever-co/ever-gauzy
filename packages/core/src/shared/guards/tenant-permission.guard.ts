@@ -44,7 +44,7 @@ export class TenantPermissionGuard
 		}
 
 		/*
-		* GET metadata permissions class method level 
+		* GET metadata permissions class method level
 		*/
 		const methodPermissions = this.reflector.get<string[]>(
 			'permissions',
@@ -52,17 +52,19 @@ export class TenantPermissionGuard
 		) || [];
 
 		/*
-		* GET metadata permissions class level 
+		* GET metadata permissions class level
 		*/
 		const classPermissions = this.reflector.get<string[]>(
-			'permissions', 
+			'permissions',
 			context.getClass()
 		) || [];
 
-		const permissions = removeDuplicates(methodPermissions.concat(classPermissions));		
+		const permissions = removeDuplicates(methodPermissions.concat(classPermissions));
 		if (permissions.length > 0) {
 			const tenant = await this.tenantService.findOneByIdString(currentTenantId, {
-				relations: ['rolePermissions']
+				relations: {
+					rolePermissions: true
+				}
 			});
 			isAuthorized = !!tenant.rolePermissions.find(
 				(p) => permissions.indexOf(p.permission) > -1 && p.enabled

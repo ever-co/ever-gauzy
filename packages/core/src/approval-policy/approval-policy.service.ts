@@ -1,5 +1,3 @@
-import { TenantAwareCrudService } from './../core/crud';
-import { ApprovalPolicy } from './approval-policy.entity';
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Not, In } from 'typeorm';
@@ -11,6 +9,8 @@ import {
 	IRequestApprovalFindInput,
 	IPagination
 } from '@gauzy/contracts';
+import { ApprovalPolicy } from './approval-policy.entity';
+import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
 
 @Injectable()
@@ -72,7 +72,7 @@ export class ApprovalPolicyService extends TenantAwareCrudService<ApprovalPolicy
 			approvalPolicy.approvalType = entity.name
 				? entity.name.replace(/\s+/g, '_').toUpperCase()
 				: null;
-			return this.approvalPolicyRepository.save(approvalPolicy);
+			return this.repository.save(approvalPolicy);
 		} catch (error /*: WriteError*/) {
 			throw new BadRequestException(error);
 		}
@@ -86,9 +86,9 @@ export class ApprovalPolicyService extends TenantAwareCrudService<ApprovalPolicy
 		entity: IApprovalPolicyCreateInput
 	): Promise<ApprovalPolicy> {
 		try {
-			const approvalPolicy = await this.approvalPolicyRepository.findOne(
-				id
-			);
+			const approvalPolicy = await this.approvalPolicyRepository.findOneBy({
+				id: id
+			});
 			approvalPolicy.name = entity.name;
 			approvalPolicy.organizationId = entity.organizationId;
 			approvalPolicy.tenantId = RequestContext.currentTenantId();

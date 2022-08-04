@@ -1,11 +1,12 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { API_PREFIX } from '../constants/app.constants';
 import {
 	IAccountingTemplateFindInput,
 	IAccountingTemplate
 } from '@gauzy/contracts';
 import { firstValueFrom } from 'rxjs';
+import { toParams } from '@gauzy/common-angular';
+import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable({
 	providedIn: 'root'
@@ -15,17 +16,12 @@ export class AccountingTemplateService {
 
 	getAll(
 		relations?: string[],
-		findInput?: IAccountingTemplateFindInput
+		where?: IAccountingTemplateFindInput
 	): Promise<{ items: IAccountingTemplate[] }> {
-		const data = JSON.stringify({ relations, findInput });
 		return firstValueFrom(
-			this.http
-			.get<{ items: IAccountingTemplate[] }>(
-				`${API_PREFIX}/accounting-template`,
-				{
-					params: { data }
-				}
-			)
+			this.http.get<{ items: IAccountingTemplate[] }>(`${API_PREFIX}/accounting-template`, {
+				params: toParams({ where, relations })
+			})
 		);
 	}
 
@@ -39,17 +35,12 @@ export class AccountingTemplateService {
 	}
 
 	getTemplate(
-		findInput?: IAccountingTemplateFindInput
+		request?: IAccountingTemplateFindInput
 	): Promise<IAccountingTemplate> {
-		const data = JSON.stringify({ findInput });
 		return firstValueFrom(
-			this.http
-			.get<IAccountingTemplate>(
-				`${API_PREFIX}/accounting-template/template`,
-				{
-					params: { data }
-				}
-			)
+			this.http.get<IAccountingTemplate>(`${API_PREFIX}/accounting-template/template`, {
+				params: toParams({ ...request })
+			})
 		);
 	}
 

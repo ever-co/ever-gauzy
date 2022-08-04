@@ -1,5 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import {
+	ComponentType,
 	IDateRangePicker,
 	IOrganization,
 	IOrganizationRecurringExpense,
@@ -26,7 +27,6 @@ import {
 } from '../../@core/services';
 import { monthNames } from '../../@core/utils/date';
 import {
-	COMPONENT_TYPE,
 	RecurringExpenseDeleteConfirmationComponent,
 	RecurringExpenseMutationComponent
 } from '../../@shared/expenses';
@@ -174,7 +174,7 @@ export class ExpenseRecurringComponent
 		const result = await firstValueFrom(
 			this.dialogService.open(RecurringExpenseMutationComponent, {
 				context: {
-					componentType: COMPONENT_TYPE.ORGANIZATION
+					componentType: ComponentType.ORGANIZATION
 				}
 			}).onClose
 		);
@@ -207,7 +207,7 @@ export class ExpenseRecurringComponent
 			this.dialogService.open(RecurringExpenseMutationComponent, {
 				context: {
 					recurringExpense: this.selectedRecurringExpense.data,
-					componentType: COMPONENT_TYPE.ORGANIZATION
+					componentType: ComponentType.ORGANIZATION
 				}
 			}).onClose
 		);
@@ -241,7 +241,7 @@ export class ExpenseRecurringComponent
 		}
 
 		this.loading = true;
-		
+
 		const { id: organizationId } = this.organization;
 		const { tenantId } = this.store.user;
 		const { startDate, endDate } = this.selectedDateRange;

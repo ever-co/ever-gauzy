@@ -1,11 +1,11 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { faker } from '@ever-co/faker';
 import { OrganizationTeamEmployee } from './organization-team-employee.entity';
 import { IEmployee, IOrganization, ITenant } from '@gauzy/contracts';
 import { OrganizationTeam, Role } from './../core/entities/internal';
 
 export const createRandomOrganizationTeamEmployee = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	tenantEmployeeMap: Map<ITenant, IEmployee[]>,
 	tenantOrganizationsMap: Map<ITenant, IOrganization[]>
@@ -25,16 +25,17 @@ export const createRandomOrganizationTeamEmployee = async (
 
 	const orgTeamEmployees: OrganizationTeamEmployee[] = [];
 	for (const tenant of tenants) {
-		const orgs = tenantOrganizationsMap.get(tenant);
+		const { id: tenantId } = tenant;
+		const organizations = tenantOrganizationsMap.get(tenant);
 		const tenantEmployees = tenantEmployeeMap.get(tenant);
-		for (const org of orgs) {
-			const organizationTeams = await connection.manager.find(
-				OrganizationTeam,
-				{
-					where: [{ organizationId: org.id }]
-				}
-			);
-			const roles = await connection.manager.find(Role, {});
+
+		for (const organization of organizations) {
+			const { id: organizationId } = organization;
+			const organizationTeams = await dataSource.manager.findBy(OrganizationTeam, {
+				organizationId,
+				tenantId
+			});
+			const roles = await dataSource.manager.find(Role, {});
 			const team = faker.random.arrayElement(organizationTeams);
 			const employee = faker.random.arrayElement(tenantEmployees);
 
@@ -44,12 +45,12 @@ export const createRandomOrganizationTeamEmployee = async (
 			orgTeamEmployee.employeeId = employee.id;
 			orgTeamEmployee.organizationTeam = team;
 			orgTeamEmployee.employee = employee;
-			orgTeamEmployee.organization = org;
-			orgTeamEmployee.tenant = tenant;
+			orgTeamEmployee.organizationId = organizationId;
+			orgTeamEmployee.tenantId = tenantId;
 			orgTeamEmployee.role = faker.random.arrayElement(roles);
 
 			orgTeamEmployees.push(orgTeamEmployee);
 		}
 	}
-	await connection.manager.save(orgTeamEmployees);
+	await dataSource.manager.save(orgTeamEmployees);
 };

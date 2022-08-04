@@ -1,10 +1,10 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { faker } from '@ever-co/faker';
 import { IContact, IOrganization, ITenant } from '@gauzy/contracts';
 import { Contact } from './../core/entities/internal';
 
 export const createRandomContacts = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	organizations: IOrganization[],
 	noOfRandomContacts: number
@@ -19,12 +19,12 @@ export const createRandomContacts = async (
 
 			// organization primary contact location
 			organization.contact = contact;
-			await connection.manager.save(organization);
+			await dataSource.manager.save(organization);
 
 			contacts.push(contact);
 		}
 	}
-	return await connection.manager.save(contacts);
+	return await dataSource.manager.save(contacts);
 };
 
 export const getRandomContact = (

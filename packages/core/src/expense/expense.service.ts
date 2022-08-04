@@ -24,16 +24,12 @@ export class ExpenseService extends TenantAwareCrudService<Expense> {
 		filterDate?: string
 	): Promise<IPagination<Expense>> {
 		if (filterDate) {
-			const startOfMonth = moment(filterDate)
-				.startOf('month')
-				.format('YYYY-MM-DD hh:mm:ss');
-			const endOfMonth = moment(filterDate)
-				.endOf('month')
-				.format('YYYY-MM-DD hh:mm:ss');
+			const startOfMonth = moment(moment(filterDate).startOf('month').format('YYYY-MM-DD hh:mm:ss')).toDate();
+			const endOfMonth = moment(moment(filterDate).endOf('month').format('YYYY-MM-DD hh:mm:ss')).toDate();
 			return filter
 				? await this.findAll({
 						where: {
-							valueDate: Between(startOfMonth, endOfMonth),
+							valueDate: Between<Date>(startOfMonth, endOfMonth),
 							...(filter.where as Object)
 						},
 						relations: filter.relations
@@ -133,7 +129,7 @@ export class ExpenseService extends TenantAwareCrudService<Expense> {
 									moment().startOf('week').utc(),
 									moment().endOf('week').utc()
 								);
-		
+
 		const tenantId = RequestContext.currentTenantId();
 		if (
 			RequestContext.hasPermission(
@@ -155,20 +151,20 @@ export class ExpenseService extends TenantAwareCrudService<Expense> {
 		}
 		query.leftJoin(`${query.alias}.employee`, 'employee');
 		query.andWhere(
-			new Brackets((qb: WhereExpressionBuilder) => { 
+			new Brackets((qb: WhereExpressionBuilder) => {
 				qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
 				qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
 			})
 		)
 		query.andWhere(
-			new Brackets((qb: WhereExpressionBuilder) => { 
+			new Brackets((qb: WhereExpressionBuilder) => {
 				qb.where(						{
 					valueDate: Between(start, end)
 				});
 			})
 		);
 		query.andWhere(
-			new Brackets((qb: WhereExpressionBuilder) => { 			
+			new Brackets((qb: WhereExpressionBuilder) => {
 				if (isNotEmpty(employeeIds)) {
 					qb.andWhere(`"${query.alias}"."employeeId" IN (:...employeeIds)`, {
 						employeeIds

@@ -4,7 +4,7 @@ import {
 	IRecurringExpenseModel,
 	StartDateUpdateTypeEnum
 } from '@gauzy/contracts';
-import { Between, Not } from 'typeorm';
+import { Between, FindManyOptions, Not } from 'typeorm';
 import { CrudService, getLastDayOfMonth } from '../../core';
 
 /**
@@ -154,6 +154,6 @@ export abstract class FindRecurringExpenseStartDateUpdateTypeHandler<
 					endDate: Between(fromStartDate, toStartDate)
 				}
 			]
-		});
+		} as FindManyOptions<T>);
 	}
 }

@@ -15,8 +15,8 @@ import {
 } from '@nestjs/common';
 import { ApiResponse, ApiOperation } from '@nestjs/swagger';
 import { IMerchant, IPagination } from '@gauzy/contracts';
+import { FindOptionsWhere } from 'typeorm';
 import { CrudController, PaginationParams } from './../core/crud';
-import { RequestContext } from './../core/context';
 import { Merchant } from './merchant.entity';
 import { MerchantService } from './merchant.service';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
@@ -35,9 +35,9 @@ export class MerchantController extends CrudController<Merchant> {
 
 	/**
 	 * GET merchant store count
-	 * 
-	 * @param filter 
-	 * @returns 
+	 *
+	 * @param filter
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'Find all merchant stores count in the same tenant' })
 	@ApiResponse({
@@ -46,21 +46,16 @@ export class MerchantController extends CrudController<Merchant> {
 	})
 	@Get('count')
 	async getCount(
-		@Query() filter: PaginationParams<Merchant>
+		@Query() options: FindOptionsWhere<Merchant>
 	): Promise<number> {
-		return await this.merchantService.count({
-			where: {
-				tenantId: RequestContext.currentTenantId()
-			},
-			...filter
-		});
+		return await this.merchantService.countBy(options);
 	}
 
 	/**
 	 * GET merchants by pagination
-	 * 
-	 * @param filter 
-	 * @returns 
+	 *
+	 * @param filter
+	 * @returns
 	 */
 	@Get('pagination')
 	@UsePipes(new ValidationPipe({ transform: true }))
@@ -72,9 +67,9 @@ export class MerchantController extends CrudController<Merchant> {
 
 	/**
 	 * GET all products merchants stores
-	 * 
-	 * @param data 
-	 * @returns 
+	 *
+	 * @param data
+	 * @returns
 	 */
 	@ApiOperation({
 		summary: 'Find all product stores.'
@@ -101,10 +96,10 @@ export class MerchantController extends CrudController<Merchant> {
 
 	/**
 	 * GET merchant by id
-	 * 
-	 * @param id 
-	 * @param data 
-	 * @returns 
+	 *
+	 * @param id
+	 * @param data
+	 * @returns
 	 */
 	@ApiOperation({
 		summary: 'Get merchant by id.'
@@ -132,9 +127,9 @@ export class MerchantController extends CrudController<Merchant> {
 
 	/**
 	 * CREATE new merchant store
-	 * 
-	 * @param entity 
-	 * @returns 
+	 *
+	 * @param entity
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'Create new record' })
 	@ApiResponse({
@@ -157,10 +152,10 @@ export class MerchantController extends CrudController<Merchant> {
 
 	/**
 	 * UPDATE merchant store by id
-	 * 
-	 * @param id 
-	 * @param entity 
-	 * @returns 
+	 *
+	 * @param id
+	 * @param entity
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'Update merchant store record' })
 	@ApiResponse({
@@ -183,5 +178,5 @@ export class MerchantController extends CrudController<Merchant> {
 		@Body() entity: Merchant
 	): Promise<IMerchant> {
 		return await this.merchantService.update(id, entity);
-	}    
+	}
 }

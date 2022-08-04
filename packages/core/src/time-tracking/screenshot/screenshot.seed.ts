@@ -11,7 +11,7 @@ import { randomSeedConfig } from './../../core/seeds/random-seed-config';
 let fileList: string[] = [];
 
 export const createRandomScreenshot = async (
-	config: IPluginConfig,
+	config: Partial<IPluginConfig>,
 	tenantId: string,
 	organizationId: string,
 	startedAt: Date,

@@ -11,10 +11,13 @@ import { coreEntities } from './../../core/entities';
 import { CommandHandlers } from './commands/handlers';
 import { ImportRecordModule } from './../import-record';
 import { ImportHistoryModule } from './../import-history';
+import { TenantModule } from './../../tenant/tenant.module';
 import { UserModule } from './../../user/user.module';
+import { DataSourceModule } from './../../database/data-source.module';
 
 @Module({
 	imports: [
+		DataSourceModule,
 		RouterModule.forRoutes([
 			{
 				path: '/import',
@@ -29,6 +32,7 @@ import { UserModule } from './../../user/user.module';
 			...coreEntities,
 			...getEntitiesFromPlugins(getConfig().plugins)
 		]),
+		TenantModule,
 		UserModule,
 		ImportRecordModule,
 		ImportHistoryModule
@@ -38,6 +42,6 @@ import { UserModule } from './../../user/user.module';
 		ImportAllService,
 		...CommandHandlers
 	],
-	exports: [ImportAllService]
+	exports: []
 })
 export class ImportAllModule {}

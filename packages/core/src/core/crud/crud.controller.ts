@@ -14,14 +14,14 @@ import {
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { IPagination } from '@gauzy/contracts';
-import { DeepPartial } from 'typeorm';
+import { DeepPartial, FindOptionsWhere } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { BaseEntity } from '../entities/internal';
 import { ICrudService } from './icrud.service';
 import { PaginationParams } from './pagination-params';
 import { UUIDValidationPipe } from './../../shared/pipes';
 
-@ApiResponse({ 
+@ApiResponse({
 	status: HttpStatus.UNAUTHORIZED,
 	description: 'Unauthorized'
 })
@@ -40,9 +40,9 @@ export abstract class CrudController<T extends BaseEntity> {
 	})
 	@Get('count')
     async getCount(
-		filter?: PaginationParams<T>
+		options?: FindOptionsWhere<T>
 	): Promise<number | void> {
-        return await this.crudService.count(filter);
+        return await this.crudService.countBy(options);
     }
 
 	@ApiOperation({ summary: 'Find all records using pagination' })
@@ -70,7 +70,7 @@ export abstract class CrudController<T extends BaseEntity> {
 	): Promise<IPagination<T>> {
 		return this.crudService.findAll(filter);
 	}
-	
+
 	@ApiOperation({ summary: 'Find by id' })
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -143,7 +143,7 @@ export abstract class CrudController<T extends BaseEntity> {
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Delete(':id')
 	async delete(
-		@Param('id', UUIDValidationPipe) id: string, 
+		@Param('id', UUIDValidationPipe) id: string,
 		...options: any[]
 	): Promise<any> {
 		return this.crudService.delete(id);

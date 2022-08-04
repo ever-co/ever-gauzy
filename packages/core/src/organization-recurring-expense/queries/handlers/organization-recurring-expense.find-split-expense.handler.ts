@@ -40,27 +40,27 @@ export class OrganizationRecurringExpenseFindSplitExpenseHandler
 			where: [
 				{
 					splitExpense: true,
-					orgId,
+					organizationId : orgId,
 					startDate: LessThanOrEqual(filterDate),
 					endDate: IsNull()
 				},
 				{
 					splitExpense: true,
-					orgId,
+					organizationId : orgId,
 					startDate: LessThanOrEqual(filterDate),
 					endDate: MoreThanOrEqual(filterDate)
 				}
 			]
 		});
 
-		const organization = await this.organizationService.findOneByConditions({
+		const organization = await this.organizationService.findOneByWhereOptions({
 			id: orgId
 		});
 
 		//2. Find all employees of the organization
 		const orgEmployees = await this.employeeService.findAll({
 			where: {
-				organization
+				organizationId: organization.id
 			}
 		});
 

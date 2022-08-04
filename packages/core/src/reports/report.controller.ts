@@ -1,6 +1,5 @@
 import {
 	GetReportMenuItemsInput,
-	IGetReport,
 	IPagination,
 	UpdateReportMenuInput
 } from '@gauzy/contracts';
@@ -13,6 +12,7 @@ import {
 	Query
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { FindOptionsWhere } from 'typeorm';
 import { Report } from './report.entity';
 import { ReportService } from './report.service';
 
@@ -29,8 +29,10 @@ export class ReportController {
 		description: 'Found records'
 	})
 	@Get()
-	async getAll(@Query() filter?: IGetReport): Promise<IPagination<Report>> {
-		return this.reportService.findAll(filter);
+	async findAll(
+		@Query() options: FindOptionsWhere<Report>
+	): Promise<IPagination<Report>> {
+		return this.reportService.findAll(options);
 	}
 
 	@ApiOperation({ summary: 'Find all' })

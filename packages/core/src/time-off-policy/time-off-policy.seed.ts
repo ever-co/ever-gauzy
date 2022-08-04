@@ -1,4 +1,4 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import {
 	ITimeOffPolicy as ITimeOfPolicy,
 	IOrganization,
@@ -10,7 +10,7 @@ import { faker } from '@ever-co/faker';
 import { DEFAULT_TIMEOFF_POLICIES } from './default-time-off-policies';
 
 export const createDefaultTimeOffPolicy = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	organization: IOrganization,
 	employees: IEmployee[]
@@ -24,15 +24,15 @@ export const createDefaultTimeOffPolicy = async (
 	defaultTimeOffPolicy.paid = true;
 	defaultTimeOffPolicy.employees = employees;
 
-	await insertDefaultPolicy(connection, defaultTimeOffPolicy);
+	await insertDefaultPolicy(dataSource, defaultTimeOffPolicy);
 	return defaultTimeOffPolicy;
 };
 
 const insertDefaultPolicy = async (
-	connection: Connection,
+	dataSource: DataSource,
 	defaultPolicy: TimeOffPolicy
 ): Promise<void> => {
-	await connection
+	await dataSource
 		.createQueryBuilder()
 		.insert()
 		.into(TimeOffPolicy)
@@ -41,7 +41,7 @@ const insertDefaultPolicy = async (
 };
 
 export const createRandomTimeOffPolicies = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	tenantOrganizationsMap: Map<ITenant, IOrganization[]>
 ): Promise<TimeOffPolicy[]> => {
@@ -64,5 +64,5 @@ export const createRandomTimeOffPolicies = async (
 		});
 	});
 
-	return await connection.manager.save(policies);
+	return await dataSource.manager.save(policies);
 };

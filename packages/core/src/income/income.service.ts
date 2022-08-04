@@ -20,12 +20,12 @@ export class IncomeService extends TenantAwareCrudService<Income> {
 		filterDate?: string
 	): Promise<IPagination<Income>> {
 		if (filterDate) {
-			const startOfMonth = moment(filterDate).startOf('month').format('YYYY-MM-DD hh:mm:ss');
-			const endOfMonth = moment(filterDate).endOf('month').format('YYYY-MM-DD hh:mm:ss');
+			const startOfMonth = moment(moment(filterDate).startOf('month').format('YYYY-MM-DD hh:mm:ss')).toDate();
+			const endOfMonth = moment(moment(filterDate).endOf('month').format('YYYY-MM-DD hh:mm:ss')).toDate();
 			return filter
 				? await this.findAll({
 					where: {
-						valueDate: Between(startOfMonth, endOfMonth),
+						valueDate: Between<Date>(startOfMonth, endOfMonth),
 						...(filter.where as Object)
 					},
 					relations: filter.relations
@@ -74,7 +74,7 @@ export class IncomeService extends TenantAwareCrudService<Income> {
 				}
 			}
 			if ('tags' in where) {
-				const { tags } = where; 
+				const { tags } = where;
 				filter.where.tags = {
 					id: In(tags)
 				}

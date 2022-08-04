@@ -1,12 +1,12 @@
 import { ICommandHandler, CommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, SelectQueryBuilder } from 'typeorm';
+import { isNotEmpty } from '@gauzy/common';
 import { TimeSlot } from './../../time-slot.entity';
 import { ScheduleTimeSlotEntriesCommand } from '../schedule-time-slot-entries.command';
-import { isNotEmpty } from '@gauzy/common';
 
 @CommandHandler(ScheduleTimeSlotEntriesCommand)
-export class ScheduleTimeSlotEntriesHandler 
+export class ScheduleTimeSlotEntriesHandler
 	implements ICommandHandler<ScheduleTimeSlotEntriesCommand> {
 
 	constructor(
@@ -15,23 +15,27 @@ export class ScheduleTimeSlotEntriesHandler
 	) {}
 
 	public async execute(command: ScheduleTimeSlotEntriesCommand) {
-		const timeSlots = await this.timeSlotRepository.find({
-            where: (query: SelectQueryBuilder<TimeSlot>) => {
-                query.orWhere(`"${query.alias}"."overall" < :overall`, {
-                    overall: 0
-                });
-                query.orWhere(`"${query.alias}"."keyboard" < :keyboard`, {
-                    keyboard: 0
-                });
-                query.orWhere(`"${query.alias}"."mouse" < :mouse`, {
-                    mouse: 0
-                });
-                query.orWhere(`"${query.alias}"."duration" > :duration`, {
-                    duration: 600
-                });
-            },
-            relations: ['timeLogs']
-        });
+		const query = this.timeSlotRepository.createQueryBuilder('time_slot');
+		query.setFindOptions({
+			relations: {
+				timeLogs: true
+			}
+		});
+		query.where((qb: SelectQueryBuilder<TimeSlot>) => {
+			qb.orWhere(`"${qb.alias}"."overall" < :overall`, {
+				overall: 0
+			});
+			qb.orWhere(`"${qb.alias}"."keyboard" < :keyboard`, {
+				keyboard: 0
+			});
+			qb.orWhere(`"${qb.alias}"."mouse" < :mouse`, {
+				mouse: 0
+			});
+			qb.orWhere(`"${qb.alias}"."duration" > :duration`, {
+				duration: 600
+			});
+		});
+		const timeSlots = await query.getMany();
 		if (isNotEmpty(timeSlots)) {
 			for await (const timeSlot of timeSlots) {
 				await this.timeSlotRepository.save({

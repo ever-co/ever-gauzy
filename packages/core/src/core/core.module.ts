@@ -16,11 +16,11 @@ import { RequestContextMiddleware } from './context';
 import { FileStorageModule } from './file-storage';
 import { GraphqlModule } from '../graphql/graphql.module';
 import { GraphqlApiModule } from '../graphql/graphql-api.module';
-import { DatabaseConnectionProviderModule } from './../database/connection-provider.module';
+import { DatabaseModule } from '../database/database.module';
 
 @Module({
 	imports: [
-		DatabaseConnectionProviderModule,
+		DatabaseModule.forRoot(),
 		GraphqlApiModule,
 		GraphqlModule.registerAsync((configService: ConfigService) => ({
 			path: configService.graphqlConfigOptions.path,

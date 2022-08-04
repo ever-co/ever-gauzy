@@ -34,7 +34,7 @@ export class EquipmentSharingPolicyService extends TenantAwareCrudService<Equipm
 		entity: IEquipmentSharingPolicy
 	): Promise<EquipmentSharingPolicy> {
 		try {
-			const policy = await this.equipmentSharingRepository.findOne(id);
+			const policy = await this.equipmentSharingRepository.findOneBy({ id });
 			policy.name = entity.name;
 			policy.organizationId = entity.organizationId;
 			policy.description = entity.description;

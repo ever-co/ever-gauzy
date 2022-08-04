@@ -1,10 +1,10 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { IChangelog } from '@gauzy/contracts';
 import { Changelog } from './changelog.entity';
 import { INITIAL_CHANGELOG_TEMPLATE } from './initial-changelog-template';
 
 export const createChangelog = async (
-	connection: Connection
+	dataSource: DataSource
 ): Promise<IChangelog[]> => {
 	return await new Promise<IChangelog[]>(async (resolve, reject) => {
 		try {
@@ -22,7 +22,7 @@ export const createChangelog = async (
 				};
 				changelogs.push(changelog);
 			}
-			await insertChangelog(connection, changelogs);
+			await insertChangelog(dataSource, changelogs);
 			resolve(changelogs);
 		} catch (err) {
 			console.log('Error parsing changelog:', err);
@@ -33,10 +33,10 @@ export const createChangelog = async (
 };
 
 const insertChangelog = async (
-	connection: Connection,
+	dataSource: DataSource,
 	changelogs: IChangelog[]
 ): Promise<void> => {
-	await connection
+	await dataSource
 		.createQueryBuilder()
 		.insert()
 		.into(Changelog)

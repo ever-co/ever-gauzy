@@ -298,7 +298,6 @@
 										'CONTACTS_PAGE.CONTACT_TYPE' | translate
 									}}</label>
 									<ng-select
-										#contactType
 										formControlName="contactType"
 										[clearable]="false"
 										[searchable]="false"
@@ -309,6 +308,7 @@
 										appendTo="body"
 									>
 										<ng-option
+											[value]="type"
 											*ngFor="let type of contactTypes"
 										>{{ type }}</ng-option>
 									</ng-select>

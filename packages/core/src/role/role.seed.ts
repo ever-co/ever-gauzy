@@ -2,13 +2,13 @@
 // MIT License, see https://github.com/alexitaylor/angular-graphql-nestjs-postgres-starter-kit/blob/master/LICENSE
 // Copyright (c) 2019 Alexi Taylor
 
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { Role } from './role.entity';
 import { IRole, ITenant, RolesEnum } from '@gauzy/contracts';
 import { defaultRoles } from './default-role';
 
 export const createRoles = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[]
 ): Promise<IRole[]> => {
 	try {
@@ -22,7 +22,7 @@ export const createRoles = async (
 				roles.push(role);
 			}
 		}
-		return await connection.manager.save(roles);
+		return await dataSource.manager.save(roles);
 	} catch (error) {
 		console.log({error})
 	}

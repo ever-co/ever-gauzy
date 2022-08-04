@@ -2,7 +2,7 @@
 // MIT License, see https://github.com/alexitaylor/angular-graphql-nestjs-postgres-starter-kit/blob/master/LICENSE
 // Copyright (c) 2019 Alexi Taylor
 
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { environment as env } from '@gauzy/config';
 import { faker } from '@ever-co/faker';
@@ -23,17 +23,17 @@ import { DEFAULT_CANDIDATES } from '../candidate/default-candidates';
 import { DEFAULT_SUPER_ADMINS, DEFAULT_ADMINS } from './default-users';
 
 export const createDefaultAdminUsers = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant
 ): Promise<{
 	defaultSuperAdminUsers: IUser[];
 	defaultAdminUsers: IUser[];
 }> => {
 	// Super Admin Users
-	const _defaultSuperAdminUsers: Promise<IUser[]> = seedSuperAdminUsers(connection, tenant);
+	const _defaultSuperAdminUsers: Promise<IUser[]> = seedSuperAdminUsers(dataSource, tenant);
 	// Admin Users
-	const _defaultAdminUsers: Promise<IUser[]> = seedAdminUsers(connection, tenant);
-	
+	const _defaultAdminUsers: Promise<IUser[]> = seedAdminUsers(dataSource, tenant);
+
 	const [
 		defaultSuperAdminUsers,
 		defaultAdminUsers
@@ -42,7 +42,7 @@ export const createDefaultAdminUsers = async (
 		_defaultAdminUsers
 	]);
 
-	await insertUsers(connection, [
+	await insertUsers(dataSource, [
 		...defaultSuperAdminUsers,
 		...defaultAdminUsers
 	]);
@@ -54,32 +54,33 @@ export const createDefaultAdminUsers = async (
 };
 
 export const createDefaultEmployeesUsers = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 ): Promise<{ defaultEmployeeUsers: IUser[]; }> => {
 	// Employee Users
-	const _defaultEmployeeUsers: Promise<IUser[]> = seedDefaultEmployeeUsers(connection, tenant, DEFAULT_EMPLOYEES);
+	const _defaultEmployeeUsers: Promise<IUser[]> = seedDefaultEmployeeUsers(dataSource, tenant, DEFAULT_EMPLOYEES);
 	const [ defaultEmployeeUsers ] = await Promise.all([ _defaultEmployeeUsers ]);
-	
-	await insertUsers(connection, [ ...defaultEmployeeUsers ]);
-	
+
+	await insertUsers(dataSource, [ ...defaultEmployeeUsers ]);
+
 	return {
 		defaultEmployeeUsers
 	};
 };
 
 export const createRandomSuperAdminUsers = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	noOfSuperAdmins: number = 1
 ): Promise<Map<ITenant, IUser[]>> => {
-	
+
 	const tenantSuperAdminsMap: Map<ITenant, IUser[]> = new Map();
 	const superAdmins: IUser[] = [];
 
 	for await (const tenant of tenants) {
-		const superAdminRole = await connection.manager.findOne(Role, {
-			tenant,
+		const { id: tenantId } = tenant;
+		const superAdminRole = await dataSource.manager.findOneBy(Role, {
+			tenantId,
 			name: RolesEnum.SUPER_ADMIN
 		});
 		const tenantSuperAdmins = [];
@@ -96,25 +97,25 @@ export const createRandomSuperAdminUsers = async (
 		tenantSuperAdminsMap.set(tenant, tenantSuperAdmins);
 	}
 
-	await insertUsers(connection, superAdmins);
+	await insertUsers(dataSource, superAdmins);
 	return tenantSuperAdminsMap;
 };
 
 export const createDefaultUsers = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant
 ): Promise<{
 	defaultEverEmployeeUsers: IUser[];
 	defaultCandidateUsers: IUser[];
 }> => {
 	const _defaultEverEmployeeUsers: Promise<IUser[]> = seedDefaultEmployeeUsers(
-		connection,
+		dataSource,
 		tenant,
 		DEFAULT_EVER_EMPLOYEES
 	);
 
 	const _defaultCandidateUsers: Promise<IUser[]> = seedDefaultCandidateUsers(
-		connection,
+		dataSource,
 		tenant
 	);
 
@@ -126,7 +127,7 @@ export const createDefaultUsers = async (
 		_defaultCandidateUsers
 	]);
 
-	await insertUsers(connection, [
+	await insertUsers(dataSource, [
 		...defaultEverEmployeeUsers,
 		...defaultCandidateUsers
 	]);
@@ -138,7 +139,7 @@ export const createDefaultUsers = async (
 };
 
 export const createRandomUsers = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	organizationPerTenant: number,
 	employeesPerOrganization: number,
@@ -151,42 +152,42 @@ export const createRandomUsers = async (
 
 	for (const tenant of tenants) {
 		const _adminUsers: Promise<IUser[]> = seedRandomUsers(
-			connection,
+			dataSource,
 			RolesEnum.ADMIN,
 			tenant,
 			organizationPerTenant //Because we want to seed at least one admin per organization
 		);
 
 		const _employeeUsers: Promise<IUser[]> = seedRandomUsers(
-			connection,
+			dataSource,
 			RolesEnum.EMPLOYEE,
 			tenant,
 			employeesPerOrganization * organizationPerTenant
 		);
 
 		const _candidateUsers: Promise<IUser[]> = seedRandomUsers(
-			connection,
+			dataSource,
 			RolesEnum.CANDIDATE,
 			tenant,
 			candidatesPerOrganization * organizationPerTenant
 		);
 
 		const _managerUsers: Promise<IUser[]> = seedRandomUsers(
-			connection,
+			dataSource,
 			RolesEnum.MANAGER,
 			tenant,
 			managersPerOrganization * organizationPerTenant
 		);
 
 		const _dataEntryUsers: Promise<IUser[]> = seedRandomUsers(
-			connection,
+			dataSource,
 			RolesEnum.DATA_ENTRY,
 			tenant,
 			dataEntriesPerOrganization * organizationPerTenant
 		);
 
 		const _viewerUsers: Promise<IUser[]> = seedRandomUsers(
-			connection,
+			dataSource,
 			RolesEnum.VIEWER,
 			tenant,
 			viewerPerOrganization * organizationPerTenant
@@ -208,17 +209,17 @@ export const createRandomUsers = async (
 			_viewerUsers
 		]);
 
-		const adminUsers = await insertUsers(connection, [
+		const adminUsers = await insertUsers(dataSource, [
 			...promiseAdminUsers
 		]);
-		const employeeUsers = await insertUsers(connection, [
+		const employeeUsers = await insertUsers(dataSource, [
 			...promiseEmployeeUsers
 		]);
-		const candidateUsers = await insertUsers(connection, [
+		const candidateUsers = await insertUsers(dataSource, [
 			...promiseCandidateUsers
 		]);
 
-		await insertUsers(connection, [
+		await insertUsers(dataSource, [
 			...promiseManagerUsers,
 			...promiseDataEntryUsers,
 			...promiseViewerUsers
@@ -235,15 +236,17 @@ export const createRandomUsers = async (
 };
 
 const seedSuperAdminUsers = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant
 ): Promise<IUser[]> => {
 	const superAdmins: Promise<IUser>[] = [];
-	const superAdminRole = await connection.manager.findOne(Role, {
-		tenant,
+
+	const { id: tenantId } = tenant;
+	const superAdminRole = await dataSource.manager.findOneBy(Role, {
+		tenantId,
 		name: RolesEnum.SUPER_ADMIN
 	});
-	
+
 	// Generate default super admins
 	for (const superAdmin of DEFAULT_SUPER_ADMINS) {
 		const superAdminUser: Promise<IUser> = generateDefaultUser(
@@ -257,20 +260,22 @@ const seedSuperAdminUsers = async (
 };
 
 const seedAdminUsers = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant
 ): Promise<IUser[]> => {
 	const admins: Promise<IUser>[] = [];
-	const adminRole = await connection.manager.findOne(Role, {
-		tenant,
+
+	const { id: tenantId } = tenant;
+	const adminRole = await dataSource.manager.findOneBy(Role, {
+		tenantId,
 		name: RolesEnum.ADMIN
 	});
 
 	// Generate default admins
 	for (const admin of DEFAULT_ADMINS) {
 		const adminUser: Promise<IUser> = generateDefaultUser(
-			admin, 
-			adminRole, 
+			admin,
+			adminRole,
 			tenant
 		);
 		admins.push(adminUser);
@@ -279,12 +284,13 @@ const seedAdminUsers = async (
 };
 
 const seedDefaultEmployeeUsers = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	employees: any[]
 ): Promise<IUser[]> => {
-	const employeeRole = await connection.manager.findOne(Role, {
-		tenant,
+	const { id: tenantId } = tenant;
+	const employeeRole = await dataSource.manager.findOneBy(Role, {
+		tenantId,
 		name: RolesEnum.EMPLOYEE
 	});
 
@@ -299,13 +305,14 @@ const seedDefaultEmployeeUsers = async (
 };
 
 const seedRandomUsers = async (
-	connection: Connection,
+	dataSource: DataSource,
 	roleEnum: RolesEnum,
 	tenant: ITenant,
 	maxUserCount: number
 ): Promise<IUser[]> => {
-	const role = await connection.manager.findOne(Role, {
-		tenant,
+	const { id: tenantId } = tenant;
+	const role = await dataSource.manager.findOneBy(Role, {
+		tenantId,
 		name: roleEnum
 	});
 	const randomUsers: Promise<IUser>[] = [];
@@ -320,11 +327,12 @@ const seedRandomUsers = async (
 };
 
 const seedDefaultCandidateUsers = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant
 ): Promise<IUser[]> => {
-	const candidateRole = await connection.manager.findOne(Role, {
-		tenant,
+	const { id: tenantId } = tenant;
+	const candidateRole = await dataSource.manager.findOneBy(Role, {
+		tenantId,
 		name: RolesEnum.CANDIDATE
 	});
 	const defaultCandidates = DEFAULT_CANDIDATES;
@@ -406,8 +414,8 @@ const generateRandomUser = async (
 };
 
 const insertUsers = async (
-	connection: Connection,
+	dataSource: DataSource,
 	users: IUser[]
 ): Promise<IUser[]> => {
-	return await connection.manager.save(users);
+	return await dataSource.manager.save(users);
 };

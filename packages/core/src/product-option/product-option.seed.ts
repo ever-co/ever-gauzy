@@ -1,4 +1,4 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { IOrganization, ITenant } from '@gauzy/contracts';
 import { ProductOption } from './product-option.entity';
 import { faker } from '@ever-co/faker';
@@ -7,7 +7,7 @@ import { Product } from '../product/product.entity';
 import { ProductOptionGroup } from './product-option-group.entity';
 
 export const createRandomProductOption = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	tenantOrganizationsMap: Map<ITenant, IOrganization[]>,
 	numberOfOptionPerProduct
@@ -23,32 +23,33 @@ export const createRandomProductOption = async (
 	for (const tenant of tenants) {
 		const tenantOrgs = tenantOrganizationsMap.get(tenant);
 		for (const tenantOrg of tenantOrgs) {
-			const productCategories = await connection.manager.find(
-				ProductCategory,
-				{
-					where: { organization: tenantOrg }
-				}
-			);
+			const productCategories = await dataSource.manager.findBy(ProductCategory, {
+				organizationId: tenantOrg.id
+			});
 			for (const productCategory of productCategories) {
-				const products = await connection.manager.find(Product, {
-					where: { productCategory: productCategory }
+				const products = await dataSource.manager.find(Product, {
+					where: {
+						productCategoryId: productCategory.id
+					}
 				});
 				for (const product of products) {
-					const productOptionGroups = await connection.manager.find(
+					const productOptionGroups = await dataSource.manager.find(
 						ProductOptionGroup, {
-							where: { product: product }
+							where: {
+								productId: product.id
+							}
 						}
 					);
 					for (let group of productOptionGroups) {
 						for (let i = 0; i <= numberOfOptionPerProduct; i++) {
 							const productOption = new ProductOption();
-	
+
 							productOption.name = faker.company.companyName();
 							productOption.code = product.code;
 							productOption.tenant = tenant;
 							productOption.organization = tenantOrg;
 							productOption.group = group;
-	
+
 							productOptions.push(productOption);
 						}
 					}
@@ -56,11 +57,11 @@ export const createRandomProductOption = async (
 			}
 		}
 	}
-	return await connection.manager.save(productOptions);
+	return await dataSource.manager.save(productOptions);
 };
 
 export const createRandomProductOptionGroups = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	tenantOrganizationsMap: Map<ITenant, IOrganization[]>,
 	numberOfOptionGroupPerProduct
@@ -76,14 +77,16 @@ export const createRandomProductOptionGroups = async (
 	for (const tenant of tenants) {
 		const tenantOrgs = tenantOrganizationsMap.get(tenant);
 		for (const tenantOrg of tenantOrgs) {
-			const productCategories = await connection.manager.find(ProductCategory, {
-				where: { 
-					organization: tenantOrg 
+			const productCategories = await dataSource.manager.find(ProductCategory, {
+				where: {
+					organizationId: tenantOrg.id
 				}
 			});
 			for (const productCategory of productCategories) {
-				const products = await connection.manager.find(Product, {
-					where: { productCategory: productCategory }
+				const products = await dataSource.manager.find(Product, {
+					where: {
+						productCategoryId: productCategory.id
+					}
 				});
 				for (const product of products) {
 					for (let i = 0; i <= numberOfOptionGroupPerProduct; i++) {
@@ -98,5 +101,5 @@ export const createRandomProductOptionGroups = async (
 			}
 		}
 	}
-	return await connection.manager.save(productOptionGroups);
+	return await dataSource.manager.save(productOptionGroups);
 };

@@ -8,7 +8,7 @@ import {
 } from '@gauzy/common';
 import { environment } from '@gauzy/config';
 import { PostgresConnectionOptions } from 'typeorm/driver/postgres/PostgresConnectionOptions';
-import { ConnectionOptions } from 'typeorm';
+import { DataSourceOptions } from 'typeorm';
 import * as path from 'path';
 import { KnowledgeBasePlugin } from '@gauzy/knowledge-base';
 import { ChangelogPlugin } from '@gauzy/changelog';
@@ -67,7 +67,7 @@ export const pluginConfig: IPluginConfig = {
 	plugins: [KnowledgeBasePlugin, ChangelogPlugin]
 };
 
-function getDbConfig(): ConnectionOptions {
+function getDbConfig(): DataSourceOptions {
 	let dbType:string;
 
 	if (process.env.DB_TYPE)

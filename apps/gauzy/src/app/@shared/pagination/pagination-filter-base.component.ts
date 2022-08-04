@@ -24,19 +24,30 @@ export class PaginationFilterBaseComponent extends TranslationBaseComponent
 	 * Can't be modified outside the class
 	 */
 	private _minItemPerPage: number = 10;
-	protected get minItemPerPage() {
+
+	public get minItemPerPage() {
 		return this._minItemPerPage;
 	}
 
-	protected pagination: IPaginationBase = {
+	private _pagination: IPaginationBase = {
 		totalItems: 0,
 		activePage: 1,
 		itemsPerPage: 10
 	};
+
+	public get pagination(): IPaginationBase {
+		return this._pagination;
+	}
+
+	protected set pagination(value: IPaginationBase) {
+		this._pagination = value;
+	}
+
 	protected pagination$: BehaviorSubject<IPaginationBase> = new BehaviorSubject({
 		activePage: this.pagination.activePage,
 		itemsPerPage: this.pagination.itemsPerPage
 	});
+
 	protected subject$: Subject<any> = new Subject();
 
 
@@ -92,7 +103,7 @@ export class PaginationFilterBaseComponent extends TranslationBaseComponent
 		}
 	}
 
-	protected onPageChange(selectedPage: number) {
+	public onPageChange(selectedPage: number) {
 		this.setPagination({
 			...this.getPagination(),
 			activePage: selectedPage
@@ -110,7 +121,8 @@ export class PaginationFilterBaseComponent extends TranslationBaseComponent
 		this.pagination$.next({ activePage, itemsPerPage });
 	}
 
-	onUpdateOption(itemsPerPage: number) {
+	public onUpdateOption(itemsPerPage: number) {
+		this.refreshPagination();
 		this.pagination.itemsPerPage = itemsPerPage;
 		this.setPagination({
 			...this.getPagination(),

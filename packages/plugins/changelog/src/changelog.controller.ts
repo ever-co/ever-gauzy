@@ -8,14 +8,14 @@ import {
 	Body,
 	Param,
 	Put,
-	Query
+	Query,
+	ValidationPipe
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
 import {
 	IChangelog,
 	IChangelogCreateInput,
-	IChangelogFindInput,
 	IChangelogUpdateInput,
 	IPagination
 } from '@gauzy/contracts';
@@ -28,6 +28,7 @@ import {
 import { Changelog } from './changelog.entity';
 import { ChangelogService } from './changelog.service';
 import { ChangelogCreateCommand, ChangelogUpdateCommand } from './commands';
+import { ChangelogQueryDTO } from './dto/changelog-query.dto';
 
 @ApiTags('Changelog')
 @UseGuards(AuthGuard)
@@ -52,9 +53,13 @@ export class ChangelogController extends CrudController<Changelog> {
 	})
 	@Public()
 	@Get()
-	async findChangelog(@Query() findInput: IChangelogFindInput): Promise<IPagination<IChangelog>> {
+	async findChangelog(
+		@Query(new ValidationPipe({
+			transform: true
+		})) options: ChangelogQueryDTO
+	): Promise<IPagination<IChangelog>> {
 		return await this.changelogService.findAllChangelogs({
-			where: findInput
+			where: options
 		});
 	}
 

@@ -64,4 +64,13 @@ export abstract class GuiDrag implements Draggable, Expandable, Collapsable {
 	public set hide(value: boolean) {
 		this._hide = value;
 	}
+	public toObject(): Partial<GuiDrag> {
+		return {
+			position: this.position,
+			isCollapse: this.isCollapse,
+			isExpand: this.isExpand,
+			hide: this.hide,
+			title: this.title
+		};
+	}
 }

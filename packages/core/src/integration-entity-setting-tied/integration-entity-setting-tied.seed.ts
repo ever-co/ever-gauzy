@@ -1,4 +1,4 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { faker } from '@ever-co/faker';
 import { IIntegrationEntitySettingTied, IntegrationEntity, ITenant } from '@gauzy/contracts';
 import { PROJECT_TIED_ENTITIES } from '@gauzy/integration-hubstaff';
@@ -6,7 +6,7 @@ import { IntegrationEntitySetting, IntegrationTenant, Organization } from './../
 import { IntegrationEntitySettingTied } from './integration-entity-setting-tied.entity';
 
 export const createRandomIntegrationEntitySettingTied = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[]
 ): Promise<IIntegrationEntitySettingTied[]> => {
 	if (!tenants) {
@@ -19,22 +19,17 @@ export const createRandomIntegrationEntitySettingTied = async (
 	const randomIntegrationEntitySettingsTiedEntity: IIntegrationEntitySettingTied[] = [];
 
 	for (const tenant of tenants) {
-		const organizations = await connection.manager.find(Organization, {
-			where: [{ tenant: tenant }]
+		const { id: tenantId } = tenant;
+		const organizations = await dataSource.manager.findBy(Organization, {
+			tenantId
 		});
-		const integrationTenants = await connection.manager.find(
-			IntegrationTenant,
-			{
-				where: [{ tenant: tenant }]
-			}
-		);
+		const integrationTenants = await dataSource.manager.findBy(IntegrationTenant, {
+			tenantId
+		});
 		for (const integrationTenant of integrationTenants) {
-			const integrationEntitySettings = await connection.manager.find(
-				IntegrationEntitySetting,
-				{
-					where: [{ integration: integrationTenant }]
-				}
-			);
+			const integrationEntitySettings = await dataSource.manager.findBy(IntegrationEntitySetting, {
+				integrationId: integrationTenant.id
+			});
 			for (const integrationEntitySetting of integrationEntitySettings) {
 				const integrationEntitySettingTiedEntity = new IntegrationEntitySettingTied();
 
@@ -64,5 +59,5 @@ export const createRandomIntegrationEntitySettingTied = async (
 		}
 	}
 
-	await connection.manager.save(randomIntegrationEntitySettingsTiedEntity);
+	await dataSource.manager.save(randomIntegrationEntitySettingsTiedEntity);
 };

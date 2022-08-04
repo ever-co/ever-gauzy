@@ -1,10 +1,10 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { Merchant, Contact, ImageAsset, Country } from './../core/entities/internal';
 import { faker } from '@ever-co/faker';
 import { ICountry, IMerchant, IOrganization, ITenant } from '@gauzy/contracts';
 
 export const createRandomMerchants = async (
-    connection: Connection,
+    dataSource: DataSource,
     tenants: ITenant[],
     tenantOrganizationsMap: Map<ITenant, IOrganization[]>
 ) => {
@@ -15,7 +15,7 @@ export const createRandomMerchants = async (
         return;
     }
 
-    const countries: ICountry[] = await connection.manager.find(Country);
+    const countries: ICountry[] = await dataSource.manager.find(Country);
     const merchants: IMerchant[] = [];
 
     for await (const tenant of tenants) {
@@ -29,23 +29,23 @@ export const createRandomMerchants = async (
             }
         }
     }
-    await connection.manager.save(merchants);
+    await dataSource.manager.save(merchants);
 }
 
 
-export const createDefaultMerchants = async (connection: Connection,
+export const createDefaultMerchants = async (dataSource: DataSource,
     tenant: ITenant,
     organizations: IOrganization[]
 ) => {
-    const countries: ICountry[] = await connection.manager.find(Country);
+    const countries: ICountry[] = await dataSource.manager.find(Country);
     let merchants: IMerchant[] = [];
     for (const organization of organizations) {
         const merchant = applyRandomProperties(tenant, organization, countries);
         merchant.organization = organization;
         merchant.tenant = tenant;
         merchants.push(merchant);
-    } 
-    await connection.manager.save(merchants);
+    }
+    await dataSource.manager.save(merchants);
 }
 
 const applyRandomProperties = (

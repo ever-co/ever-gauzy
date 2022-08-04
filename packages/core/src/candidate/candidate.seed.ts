@@ -1,9 +1,9 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { IUser, ISeedUsers, IOrganization, ITenant, ICandidate } from '@gauzy/contracts';
 import { Candidate } from './../core/entities/internal';
 
 export const createDefaultCandidates = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	organization: IOrganization,
 	users: IUser[]
@@ -17,11 +17,11 @@ export const createDefaultCandidates = async (
 		candidate.tenant = tenant;
 		candidates.push(candidate);
 	}
-	return await insertCandidates(connection, candidates);
+	return await insertCandidates(dataSource, candidates);
 };
 
 export const createRandomCandidates = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	tenantOrganizationsMap: Map<ITenant, IOrganization[]>,
 	tenantUsersMap: Map<ITenant, ISeedUsers>,
@@ -46,7 +46,7 @@ export const createRandomCandidates = async (
 					candidates.push(candidate);
 				}
 			}
-			await insertCandidates(connection, candidates);
+			await insertCandidates(dataSource, candidates);
 		};
 		for await (const org of randomOrgs) {
 			if (randomUsers.length) {
@@ -62,8 +62,8 @@ export const createRandomCandidates = async (
 };
 
 const insertCandidates = async (
-	connection: Connection,
+	dataSource: DataSource,
 	candidates: Candidate[]
 ): Promise<Candidate[]> => {
-	return await connection.manager.save(candidates);
+	return await dataSource.manager.save(candidates);
 };

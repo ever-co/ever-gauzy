@@ -1,17 +1,49 @@
-import { Injectable, TemplateRef } from '@angular/core';
+import { Injectable, OnDestroy, TemplateRef } from '@angular/core';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { Subject } from 'rxjs/internal/Subject';
+import { filter, tap } from 'rxjs/operators';
 import { Store } from '../../../@core';
-import { LayoutPersistance } from '../interfaces/layout-persistance.abstract';
+import { LayoutPersistance } from '../concretes/contexts/layout-persistance.class';
+import { PersistanceTakers } from '../concretes/contexts/persistance-takers.class';
+import { LocalstorageStrategy } from '../concretes/strategies/localstorage-strategy.class';
+import { BackupStrategy } from '../interfaces/backup-strategy.interface';
 import { GuiDrag } from '../interfaces/gui-drag.abstract';
 
+@UntilDestroy({ checkProperties: true })
 @Injectable({
 	providedIn: 'root'
 })
-export class WindowService extends LayoutPersistance {
+export class WindowService implements OnDestroy {
 	private _windowsRef: TemplateRef<HTMLElement>[] = [];
 	private _windows: GuiDrag[] = [];
+	private _windowLayoutPersistance: LayoutPersistance;
+	private _windowsTakers: PersistanceTakers;
+	private _localStorage: BackupStrategy;
+	private _strategy: BackupStrategy;
+	private _windows$: Subject<Partial<GuiDrag[]>>;
 
 	constructor(private readonly store: Store) {
-		super();
+		this._windowLayoutPersistance = new LayoutPersistance();
+		this._localStorage = new LocalstorageStrategy();
+		this._windowsTakers = new PersistanceTakers(
+			this._windowLayoutPersistance
+		);
+		this._windows$ = new Subject();
+		this._windows$
+			.pipe(
+				tap((windows: GuiDrag[]) => (this.windows = windows)),
+				tap(() => (this._windowLayoutPersistance.state = this.windows)),
+				filter(() => this.windowsRef.length === 0),
+				tap(() => {
+					this.retrieve().length === 0
+						? this.save()
+						: this.retrieve().forEach((deserialized: GuiDrag) =>
+								this.windowsRef.push(deserialized.templateRef)
+						  );
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	public get windowsRef(): any[] {
@@ -38,26 +70,62 @@ export class WindowService extends LayoutPersistance {
 	public set windows(value: GuiDrag[]) {
 		this._windows = value;
 	}
-	public serialize(): void {
+	public save(): void {
 		if (this.windows.length === 0) return;
-		this.store.windows = this.toObject(this.windows);
+		this._windowsTakers.backup();
+		this._strategy = this._localStorage;
+		this._strategy.serializables = this.windows;
+		this.store.windows = this._strategy.serialize() as Partial<GuiDrag>[];
 	}
 
-	public deSerialize(): Partial<GuiDrag>[] {
-		return this.store.windows
-			? this.store.windows
-					.flatMap((serialized: Partial<GuiDrag>) => {
-						return this.windows.map((window: GuiDrag) => {
-							if (window.position === serialized.position) {
-								window.isCollapse = serialized.isCollapse;
-								window.isExpand = serialized.isExpand;
-								window.title = serialized.title;
-								window.hide = serialized.hide;
-								return window;
-							}
-						});
-					})
-					.filter((deserialized: GuiDrag) => deserialized)
-			: [];
+	public retrieve(): Partial<GuiDrag>[] {
+		this._strategy = this._localStorage;
+		this._strategy.serializables = this.windows;
+		return this._strategy.deSerialize(this.store.windows);
 	}
+
+	public undoDrag() {
+		this._windowsTakers.undo();
+		this.windows = this._windowLayoutPersistance.state as GuiDrag[];
+		this.sortingReverse();
+		this._strategy = this._localStorage;
+		this._strategy.serializables = this.windows;
+		this.store.windows = this._strategy.serialize() as Partial<GuiDrag>[];
+	}
+
+	protected sortingReverse(): void {
+		const buffers: TemplateRef<HTMLElement>[] = [];
+		this.windows.forEach((windows: GuiDrag) => {
+			this.windowsRef.forEach((windowsRef: TemplateRef<HTMLElement>) => {
+				if (windowsRef === windows.templateRef) {
+					buffers.push(windowsRef);
+				}
+			});
+		});
+		this.windowsRef = buffers;
+	}
+
+	public set windows$(value: Partial<GuiDrag[]>) {
+		this._windows$.next(value);
+	}
+
+	public updateWindow(value: GuiDrag) {
+		this.windows.forEach((window: GuiDrag) => {
+			if (window.templateRef === value.templateRef) {
+				value.hide = window.hide;
+				value.isCollapse = window.isCollapse;
+				value.isExpand = window.isExpand;
+			}
+		});
+	}
+
+	public hideWindow(position: number) {
+		this.windows.forEach((widget: GuiDrag) => {
+			if (widget.position === position) {
+				widget.hide = true;
+			}
+		});
+	}
+
+	ngOnDestroy(): void {}
 }

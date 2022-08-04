@@ -1,11 +1,11 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { IntegrationSetting } from './integration-setting.entity';
 import { faker } from '@ever-co/faker';
 import { ITenant } from '@gauzy/contracts';
 import { IntegrationTenant, Organization } from './../core/entities/internal';
 
 export const createRandomIntegrationSetting = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[]
 ): Promise<IntegrationSetting[]> => {
 	if (!tenants) {
@@ -16,11 +16,12 @@ export const createRandomIntegrationSetting = async (
 	}
 	const integrationSettings: IntegrationSetting[] = [];
 	for (const tenant of tenants) {
-		const integrationTenants = await connection.manager.find(IntegrationTenant, {
-			where: { tenant: tenant }
+		const { id: tenantId } = tenant;
+		const integrationTenants = await dataSource.manager.findBy(IntegrationTenant, {
+			tenantId
 		});
-		const organizations = await connection.manager.find(Organization, {
-			where: { tenant: tenant }
+		const organizations = await dataSource.manager.findBy(Organization, {
+			tenantId
 		});
 		for (const integrationTenant of integrationTenants) {
 			const integrationSetting = new IntegrationSetting();
@@ -37,5 +38,5 @@ export const createRandomIntegrationSetting = async (
 		}
 	}
 
-	await connection.manager.save(integrationSettings);
+	await dataSource.manager.save(integrationSettings);
 };

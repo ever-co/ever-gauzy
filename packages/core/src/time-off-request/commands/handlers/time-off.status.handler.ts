@@ -25,8 +25,8 @@ export class TimeOffStatusHandler
 		const { id, status } = command;
 
 		const [timeOffRequest, requestApproval] = await Promise.all([
-			await this.timeOffRequestRepository.findOne(id),
-			await this.requestApprovalRepository.findOne({
+			await this.timeOffRequestRepository.findOneBy({ id }),
+			await this.requestApprovalRepository.findOneBy({
 				requestId: id
 			})
 		]);

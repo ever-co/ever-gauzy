@@ -290,6 +290,14 @@ body {
     }
   }
 
+  .ng-select.ng-select-multiple
+    .ng-select-container
+    .ng-value-container
+    .ng-input
+    > input {
+    color: var(--gauzy-text-color-1);
+  }
+
   .ng-select .ng-select-container {
     color: nb-theme(text-basic-color) !important;
   }
@@ -569,7 +577,7 @@ ng2-smart-table {
 .ng-select {
   .ng-select-container {
     border-radius: nb-theme(border-radius);
-    box-shadow: 0px 1px 1px 0px rgba(0, 0, 0, 0.15) inset;
+    box-shadow: var(--gauzy-shadow) inset;
   }
   .ng-arrow {
     font-family: 'Font Awesome\ 5 Free' !important;

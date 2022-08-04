@@ -1,4 +1,4 @@
-import { Connection, In } from 'typeorm';
+import { DataSource, In } from 'typeorm';
 import { BillingInvoicingPolicyEnum, IOrganization, ITenant } from '@gauzy/contracts';
 import { faker } from '@ever-co/faker';
 import * as _ from 'underscore';
@@ -13,11 +13,11 @@ import {
 } from './../core/entities/internal';
 
 export const createRandomProductVariant = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	tenantOrganizationsMap: Map<ITenant, IOrganization[]>,
-	numberOfVariantPerProduct
-): Promise<ProductVariant[]> => {
+	numberOfVariantPerProduct: number
+) => {
 	if (!tenantOrganizationsMap) {
 		console.warn(
 			'Warning: tenantOrganizationsMap not found, Product Variant will not be created'
@@ -25,28 +25,30 @@ export const createRandomProductVariant = async (
 		return;
 	}
 
-	const productVariants: ProductVariant[] = [];
-	for (const tenant of tenants) {
-		const tenantOrgs = tenantOrganizationsMap.get(tenant);
-		for (const tenantOrg of tenantOrgs) {
-			const productCategories = await connection.manager.find(
-				ProductCategory,
-				{
-					where: { organization: tenantOrg }
-				}
-			);
-			for (const productCategory of productCategories) {
-				const products = await connection.manager.find(Product, {
-					where: { productCategory: productCategory }
+	for await (const tenant of tenants) {
+		const { id: tenantId } = tenant;
+		const organizations = tenantOrganizationsMap.get(tenant);
+
+		for await (const organization of organizations) {
+			const { id: organizationId } = organization;
+			const productCategories = await dataSource.manager.findBy(ProductCategory, {
+				organizationId,
+				tenantId
+			});
+
+			for await (const productCategory of productCategories) {
+				const products = await dataSource.manager.findBy(Product, {
+					productCategoryId: productCategory.id
 				});
-				for (const product of products) {
-					const productOptionGroups = await connection.manager.find(ProductOptionGroup, {
-							where: { product: product }
-						}
-					);
+
+				const productVariants: ProductVariant[] = [];
+				for await (const product of products) {
+					const productOptionGroups = await dataSource.manager.findBy(ProductOptionGroup, {
+						productId: product.id
+					});
 					const productOptionGroupsIds = _.pluck(productOptionGroups, 'id');
-					const productOptions = await connection.manager.find(ProductOption, {
-							where: { 
+					const productOptions = await dataSource.manager.find(ProductOption, {
+							where: {
 								group: In(productOptionGroupsIds),
 							}
 						}
@@ -65,14 +67,13 @@ export const createRandomProductVariant = async (
 						productVariant.price = new ProductVariantPrice();
 						productVariant.product = product;
 						productVariant.tenant = tenant;
-						productVariant.organization = tenantOrg;
+						productVariant.organization = organization;
 
 						productVariants.push(productVariant);
 					}
 				}
+				await dataSource.manager.save(productVariants);
 			}
 		}
 	}
-
-	return await connection.manager.save(productVariants);
 };

@@ -1,7 +1,7 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { IsBoolean, IsEnum, IsNotEmpty, ValidateIf } from "class-validator";
 import { IRole, IRolePermissionCreateInput, PermissionsEnum } from "@gauzy/contracts";
-import { IsRoleShouldExist } from "./../../shared/decorators/validations";
+import { IsRoleShouldExist } from "./../../shared/validators";
 import { TenantBaseDTO } from "./../../core/dto";
 
 /**
@@ -24,7 +24,7 @@ export class CreateRolePermissionDTO extends TenantBaseDTO implements IRolePermi
     @ValidateIf((it) => !it.role)
     @IsNotEmpty()
     @IsRoleShouldExist({
-        message: 'roleId {$value} must be a valid value'
+        message: 'RoleId {$value} should be exist for this tenant.'
     })
     readonly roleId: string;
 
@@ -32,7 +32,7 @@ export class CreateRolePermissionDTO extends TenantBaseDTO implements IRolePermi
     @ValidateIf((it) => !it.roleId)
     @IsNotEmpty()
     @IsRoleShouldExist({
-        message: 'role must be a valid value'
+        message: 'Role should be exist for this tenant.'
     })
     readonly role: IRole;
 }

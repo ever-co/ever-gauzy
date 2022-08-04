@@ -1,7 +1,7 @@
 import { ITimeLogFilters, TimeLogSourceEnum, TimeLogType } from "@gauzy/contracts";
 import { ApiPropertyOptional } from "@nestjs/swagger";
 import { IsEnum, IsOptional } from "class-validator";
-import { IsBetweenActivty } from "./../../shared/decorators/validations";
+import { IsBetweenActivty } from "./../../shared/validators";
 
 /**
  * Get filters common request DTO validation

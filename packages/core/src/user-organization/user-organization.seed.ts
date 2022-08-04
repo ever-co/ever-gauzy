@@ -1,4 +1,4 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import {
 	IOrganization,
 	IUser,
@@ -9,7 +9,7 @@ import {
 import { UserOrganization } from './user-organization.entity';
 
 export const createDefaultUsersOrganizations = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	organizations: IOrganization[],
 	users: IUser[]
@@ -25,11 +25,11 @@ export const createDefaultUsersOrganizations = async (
 			usersOrganizations.push(userOrganization);
 		}
 	}
-	return await insertUserOrganization(connection, usersOrganizations);
+	return await insertUserOrganization(dataSource, usersOrganizations);
 };
 
 export const createRandomUsersOrganizations = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	tenantOrganizationsMap: Map<ITenant, IOrganization[]>,
 	tenantSuperAdminsMap: Map<ITenant, IUser[]>,
@@ -70,12 +70,12 @@ export const createRandomUsersOrganizations = async (
 		});
 	}
 
-	return await insertUserOrganization(connection, usersOrganizations);
+	return await insertUserOrganization(dataSource, usersOrganizations);
 };
 
 const insertUserOrganization = async (
-	connection: Connection,
+	dataSource: DataSource,
 	userOrganizations: IUserOrganization[]
 ): Promise<IUserOrganization[]> => {
-	return await connection.manager.save(userOrganizations);
+	return await dataSource.manager.save(userOrganizations);
 };

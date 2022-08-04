@@ -1,4 +1,4 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { faker } from '@ever-co/faker';
 import { IOrganization, ITenant } from '@gauzy/contracts';
 import { environment as env } from '@gauzy/config';
@@ -6,11 +6,11 @@ import { DEFAULT_RANDOM_EQUIPMENTS } from './default-equipments';
 import { Equipment, Organization, Tag } from './../core/entities/internal';
 
 export const createDefaultEquipments = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	organization: IOrganization
 ): Promise<Equipment[]> => {
-	const tags = await connection
+	const tags = await dataSource
 		.getRepository(Tag)
 		.createQueryBuilder()
 		.getMany();
@@ -30,33 +30,33 @@ export const createDefaultEquipments = async (
 	equipment.autoApproveShare = true;
 	equipments.push(equipment);
 
-	await insertEquipment(connection, equipments);
+	await insertEquipment(dataSource, equipments);
 	return equipments;
 };
 
 const insertEquipment = async (
-	connection: Connection,
+	dataSource: DataSource,
 	equipment: Equipment[]
 ): Promise<void> => {
-	await connection.manager.save(equipment);
+	await dataSource.manager.save(equipment);
 };
 
 export const createRandomEquipments = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	noOfEquipmentsPerTenant: number
 ): Promise<Equipment[]> => {
 	const equipments: Equipment[] = [];
-	const tags = await connection
+	const tags = await dataSource
 		.getRepository(Tag)
 		.createQueryBuilder()
 		.getMany();
 
 	for await (const tenant of tenants || []) {
-		const organizations = await connection.manager.find(Organization, {
-			where: [{ tenant: tenant }]
+		const { id: tenantId } = tenant;
+		const organizations = await dataSource.manager.findBy(Organization, {
+			tenantId
 		});
-
 		for (let i = 0; i < noOfEquipmentsPerTenant; i++) {
 			const equipment = new Equipment();
 			const randomElement = faker.random.arrayElement(
@@ -84,6 +84,6 @@ export const createRandomEquipments = async (
 		}
 	}
 
-	await insertEquipment(connection, equipments);
+	await insertEquipment(dataSource, equipments);
 	return equipments;
 };

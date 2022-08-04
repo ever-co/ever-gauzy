@@ -1,10 +1,10 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { IOrganization, IOrganizationPosition, ITenant } from '@gauzy/contracts';
 import { OrganizationPosition } from './organization-position.entity';
 import { DEFAULT_ORGANIZATION_POSITIONS } from './default-organization-positions';
 
 export const seedDefaultOrganizationPosition = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	organizations
 ): Promise<void> => {
@@ -19,11 +19,11 @@ export const seedDefaultOrganizationPosition = async (
 		}
 	);
 	positions = [...positions, ...organizationPositions];
-	await insertEmploymentPosition(connection, positions);
+	await insertEmploymentPosition(dataSource, positions);
 };
 
 export const seedRandomOrganizationPosition = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	tenantOrganizationsMap: Map<ITenant, IOrganization[]>
 ): Promise<void> => {
@@ -42,13 +42,13 @@ export const seedRandomOrganizationPosition = async (
 			);
 			positions = [...positions, ...organizationPositions];
 		});
-		await insertEmploymentPosition(connection, positions);
+		await insertEmploymentPosition(dataSource, positions);
 	}
 };
 
 const insertEmploymentPosition = async (
-	connection: Connection,
+	dataSource: DataSource,
 	organizationPosition: IOrganizationPosition[]
 ): Promise<void> => {
-	await connection.manager.save(organizationPosition);
+	await dataSource.manager.save(organizationPosition);
 };

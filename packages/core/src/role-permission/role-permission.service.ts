@@ -1,7 +1,7 @@
 import { Injectable, BadRequestException, NotAcceptableException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CommandBus } from '@nestjs/cqrs';
-import { Repository, FindConditions, UpdateResult, getManager, FindManyOptions, Not, In, DeepPartial } from 'typeorm';
+import { Repository, UpdateResult, getManager, FindManyOptions, Not, In, DeepPartial, FindOptionsWhere } from 'typeorm';
 import {
 	RolesEnum,
 	ITenant,
@@ -35,9 +35,9 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 
 	/**
 	 * GET all role-permissions using API filter
-	 * 
-	 * @param filter 
-	 * @returns 
+	 *
+	 * @param filter
+	 * @returns
 	 */
 	public async findAllRolePermissions(
 		filter?: FindManyOptions<RolePermission>,
@@ -79,7 +79,7 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 			if (!filter.where) {
 				/**
 				 * GET all role-permissions for (DATA_ENTRY, EMPLOYEE, CANDIDATE, MANAGER, VIEWER) roles them self (ADMIN), if specific role filter not used in API.
-				 * 
+				 *
 				 */
 				filter['where'] = {
 					roleId: In(pluck(roles, 'id')),
@@ -102,7 +102,7 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 
 		/**
 		 * If (DATA_ENTRY, EMPLOYEE, CANDIDATE, MANAGER, VIEWER) roles users try to retrieve role-permissions.
-		 * Allow only to retrieve current users role-permissions. 
+		 * Allow only to retrieve current users role-permissions.
 		 */
 		filter['where'] = {
 			roleId,
@@ -113,9 +113,9 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 
 	/**
 	 * Create permissions for lower roles users
-	 * 
-	 * @param partialEntity 
-	 * @returns 
+	 *
+	 * @param partialEntity
+	 * @returns
 	 */
 	public async createPermission(
 		partialEntity: DeepPartial<IRolePermission>
@@ -182,7 +182,7 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 	}
 
 	public async updatePermission(
-		id: string | number | FindConditions<IRolePermission>,
+		id: string | number | FindOptionsWhere<IRolePermission>,
 		partialEntity: DeepPartial<IRolePermission>
 	): Promise<UpdateResult | IRolePermission> {
 		try {
@@ -242,9 +242,9 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 
 	/**
 	 * DELETE role permissions
-	 * 
-	 * @param id 
-	 * @returns 
+	 *
+	 * @param id
+	 * @returns
 	 */
 	public async deletePermission(id: string) {
 		try {
@@ -353,7 +353,7 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 			},
 			relations: ['role']
 		})
-		const payload: IRolePermissionMigrateInput[] = []; 
+		const payload: IRolePermissionMigrateInput[] = [];
 		for await (const item of permissions) {
 			const { id: sourceId, permission, role: { name }, description } = item;
 			payload.push({
@@ -371,18 +371,22 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 		permissions: IRolePermissionMigrateInput[]
 	) {
 		let records: IImportRecord[] = [];
-		const roles: IRole[] = await getManager().getRepository(Role).find({
-			tenantId: RequestContext.currentTenantId(),
-		});
+		const roles: IRole[] = (await this.roleService.findAll({
+			where: {
+				tenantId: RequestContext.currentTenantId()
+			}
+		})).items;
+
 		for await (const item of permissions) {
 			const { isImporting, sourceId } = item;
 			if (isImporting && sourceId) {
 				const { permission, role: name } = item;
 				const role = roles.find((role: IRole) => role.name === name);
-				const destination = await this.rolePermissionRepository.findOne({
-					tenantId: RequestContext.currentTenantId(), 
+
+				const destination = await this.rolePermissionRepository.findOneBy({
+					tenantId: RequestContext.currentTenantId(),
 					permission,
-					role
+					roleId: role.id
 				});
 				if (destination) {
 					records.push(

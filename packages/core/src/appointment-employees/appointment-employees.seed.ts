@@ -1,10 +1,10 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { IAppointmentEmployee, IEmployee, ITenant } from '@gauzy/contracts';
 import { AppointmentEmployee } from './appointment-employees.entity';
 import { faker } from '@ever-co/faker';
 
 export const createRandomAppointmentEmployees = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	tenantEmployeeMap: Map<ITenant, IEmployee[]>
 ): Promise<IAppointmentEmployee[]> => {
@@ -34,5 +34,5 @@ export const createRandomAppointmentEmployees = async (
 		}
 	}
 
-	await connection.manager.save(appointEmployees);
+	await dataSource.manager.save(appointEmployees);
 };

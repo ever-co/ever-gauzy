@@ -76,18 +76,12 @@ export class OrganizationProjectsService {
 	}
 
 	getCount(
-		relations: string[],
-		findInput?: IOrganizationProjectsFindInput
+		request: IOrganizationProjectsFindInput
 	): Promise<any> {
-		const data = JSON.stringify({ relations, findInput });
 		return firstValueFrom(
-			this.http
-				.get<{ items: IOrganizationProject[]; total: number }>(
-					`${this.API_URL}/count`,
-					{
-						params: toParams({ data })
-					}
-				)
+			this.http.get<{ items: IOrganizationProject[]; total: number }>(`${this.API_URL}/count`, {
+				params: toParams({ ...request })
+			})
 		);
 	}
 

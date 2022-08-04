@@ -13,8 +13,10 @@ export class CreateJobPresetHandler
 	constructor(
 		@InjectRepository(JobPreset)
 		private readonly jobPresetRepository: Repository<JobPreset>,
+
 		@InjectRepository(Employee)
 		private readonly employeeRepository: Repository<Employee>,
+
 		@InjectRepository(JobPresetUpworkJobSearchCriterion)
 		private readonly jobPresetUpworkJobSearchCriterionRepository: Repository<JobPresetUpworkJobSearchCriterion>
 	) {}
@@ -24,9 +26,9 @@ export class CreateJobPresetHandler
 
 		if (!input.organizationId) {
 			const user = RequestContext.currentUser();
-			const employee = await this.employeeRepository.findOne(
-				user.employeeId
-			);
+			const employee = await this.employeeRepository.findOneBy({
+				id: user.employeeId
+			});
 			input.organizationId = employee.organizationId;
 		}
 		input.tenantId = RequestContext.currentTenantId();

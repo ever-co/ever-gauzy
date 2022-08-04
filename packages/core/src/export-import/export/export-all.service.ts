@@ -1,6 +1,7 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { getConnection, getManager, Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
+import { ColumnMetadata } from 'typeorm/metadata/ColumnMetadata';
 import { BehaviorSubject } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
 import * as _ from 'lodash';
@@ -140,7 +141,6 @@ import {
 	WarehouseProductVariant
 } from './../../core/entities/internal';
 import { RequestContext } from './../../core/context';
-import { ColumnMetadata } from 'typeorm/metadata/ColumnMetadata';
 
 export interface IColumnRelationMetadata {
 	joinTableName: string;
@@ -315,7 +315,7 @@ export class ExportAllService implements OnModuleInit {
 		private readonly integrationEntitySettingRepository: Repository<IntegrationEntitySetting>,
 
 		@InjectRepository(IntegrationEntitySettingTied)
-		private readonly IntegrationEntitySettingTiedRepository: Repository<IntegrationEntitySettingTied>,
+		private readonly integrationEntitySettingTiedRepository: Repository<IntegrationEntitySettingTied>,
 
 		@InjectRepository(IntegrationMap)
 		private readonly integrationMapRepository: Repository<IntegrationMap>,
@@ -539,7 +539,8 @@ export class ExportAllService implements OnModuleInit {
 		@InjectRepository(UserOrganization)
 		private readonly userOrganizationRepository: Repository<UserOrganization>,
 
-		private readonly configService: ConfigService
+		private readonly configService: ConfigService,
+		private readonly dataSource: DataSource
 	) {}
 
 	async onModuleInit() {
@@ -618,7 +619,7 @@ export class ExportAllService implements OnModuleInit {
 	}
 
 	async getAsCsv(
-		item: IRepositoryModel<any>, 
+		item: IRepositoryModel<any>,
 		where: { tenantId: string; }
 	): Promise<any> {
 		const conditions = {};
@@ -629,7 +630,7 @@ export class ExportAllService implements OnModuleInit {
 		}
 
 		/*
-		* Replace condition with default condition 
+		* Replace condition with default condition
 		*/
 		if (isNotEmpty(item.condition) && isNotEmpty(conditions['where'])) {
 			const { condition : { replace = 'tenantId', column = 'id' } } = item;
@@ -641,7 +642,7 @@ export class ExportAllService implements OnModuleInit {
 
 		const { repository } = item;
 		const nameFile = repository.metadata.tableName;
-		
+
 		const [ items, count ] = await repository.findAndCount(conditions);
 		if (count > 0) {
 			return await this.csvWriter(nameFile, items);
@@ -767,14 +768,14 @@ export class ExportAllService implements OnModuleInit {
 		return new Promise(async (resolve, reject) => {
 			try {
 				for await (const item of this.repositories) {
-					await this.getAsCsv(item, { 
-						tenantId: RequestContext.currentTenantId() 
+					await this.getAsCsv(item, {
+						tenantId: RequestContext.currentTenantId()
 					});
 
 					// export pivot relational tables
 					if (isNotEmpty(item.relations)) {
-						await this.exportRelationalTables(item, { 
-							tenantId: RequestContext.currentTenantId() 
+						await this.exportRelationalTables(item, {
+							tenantId: RequestContext.currentTenantId()
 						});
 					}
 				}
@@ -791,14 +792,14 @@ export class ExportAllService implements OnModuleInit {
 				for await (const item of this.repositories) {
 					const nameFile = item.repository.metadata.tableName;
 					if (names.includes(nameFile)) {
-						await this.getAsCsv(item, { 
-							tenantId: RequestContext.currentTenantId() 
+						await this.getAsCsv(item, {
+							tenantId: RequestContext.currentTenantId()
 						});
 
 						// export pivot relational tables
 						if (isNotEmpty(item.relations)) {
-							await this.exportRelationalTables(item, { 
-								tenantId: RequestContext.currentTenantId() 
+							await this.exportRelationalTables(item, {
+								tenantId: RequestContext.currentTenantId()
 							});
 						}
 					}
@@ -811,10 +812,10 @@ export class ExportAllService implements OnModuleInit {
 	}
 
 	/*
-	* Export Many To Many Pivot Table Using TypeORM Relations 
+	* Export Many To Many Pivot Table Using TypeORM Relations
 	*/
 	async exportRelationalTables(
-		entity: IRepositoryModel<any>, 
+		entity: IRepositoryModel<any>,
 		where: { tenantId: string; }
 	) {
 		const { repository, relations } = entity;
@@ -826,22 +827,22 @@ export class ExportAllService implements OnModuleInit {
 				const [ joinColumn ] = item.joinColumns as ColumnMetadata[];
 				if (joinColumn) {
 					const { entityMetadata, propertyName, referencedColumn } = joinColumn;
-					
+
 					const referencColumn = referencedColumn.propertyName;
 					const referencTableName = entityMetadata.givenTableName;
 					let sql = `
-						SELECT 
-							${referencTableName}.* 
-						FROM 
-							${referencTableName} 
-						INNER JOIN ${masterTable} 
+						SELECT
+							${referencTableName}.*
+						FROM
+							${referencTableName}
+						INNER JOIN ${masterTable}
 							ON "${referencTableName}"."${propertyName}" = "${masterTable}"."${referencColumn}"
 					`;
 					if (entity.tenantBase !== false) {
 						sql += ` WHERE "${masterTable}"."tenantId" = '${where['tenantId']}'`;
 					}
 
-					const items = await getManager().query(sql);
+					const items = await this.dataSource.manager.query(sql);
 					if (isNotEmpty(items)) {
 						await this.csvWriter(referencTableName, items);
 					}
@@ -849,7 +850,7 @@ export class ExportAllService implements OnModuleInit {
 			}
 		}
 	}
-	
+
 	async exportSpecificTablesSchema() {
 		return new Promise(async (resolve, reject) => {
 			try {
@@ -873,7 +874,7 @@ export class ExportAllService implements OnModuleInit {
 	}
 
 	async exportRelationalTablesSchema(
-		entity: IRepositoryModel<any>, 	
+		entity: IRepositoryModel<any>,
 	) {
 		const { repository, relations } = entity;
 		for await (const item of repository.metadata.manyToManyRelations) {
@@ -899,7 +900,7 @@ export class ExportAllService implements OnModuleInit {
 			}
 
 			const className = _.camelCase(entity.name);
-			const repository = getConnection().getRepository(entity);
+			const repository = this.dataSource.getRepository(entity);
 
 			this[className] = repository;
 			this.dynamicEntitiesClassMap.push({ repository });
@@ -970,7 +971,7 @@ export class ExportAllService implements OnModuleInit {
 			{
 				repository: this.customSmtpRepository
 			},
-			{ 
+			{
 				repository: this.contactRepository
 			},
 			{
@@ -981,10 +982,10 @@ export class ExportAllService implements OnModuleInit {
 				repository: this.currencyRepository,
 				tenantBase: false
 			},
-			{ 
+			{
 				repository: this.dealRepository
 			},
-			{ 
+			{
 				repository: this.emailRepository
 			},
 			{
@@ -1008,7 +1009,7 @@ export class ExportAllService implements OnModuleInit {
 			{
 				repository: this.employeeRecurringExpenseRepository
 			},
-			{ 
+			{
 				repository: this.employeeRepository,
 				relations: [
 					{ joinTableName: 'employee_job_preset' },
@@ -1021,7 +1022,7 @@ export class ExportAllService implements OnModuleInit {
 			{
 				repository: this.employeeUpworkJobsSearchCriterionRepository
 			},
-			{ 
+			{
 				repository: this.equipmentRepository,
 				relations: [
 					{ joinTableName: 'tag_equipment' }
@@ -1040,7 +1041,7 @@ export class ExportAllService implements OnModuleInit {
 			{
 				repository: this.estimateEmailRepository
 			},
-			{ 
+			{
 				repository: this.eventTypeRepository,
 				relations: [
 					{ joinTableName: 'tag_event_type' }
@@ -1052,26 +1053,26 @@ export class ExportAllService implements OnModuleInit {
 					{ joinTableName: 'tag_organization_expense_category' }
 				]
 			},
-			{ 
+			{
 				repository: this.expenseRepository,
 				relations: [
 					{ joinTableName: 'tag_expense' }
 				]
 			},
-			{ 
+			{
 				repository: this.featureRepository,
 				tenantBase: false
 			},
-			{ 
+			{
 				repository: this.featureOrganizationRepository
 			},
-			{ 
+			{
 				repository: this.goalKpiRepository
 			},
 			{
 				repository: this.goalKpiTemplateRepository
 			},
-			{ 
+			{
 				repository: this.goalRepository
 			},
 			{
@@ -1083,7 +1084,7 @@ export class ExportAllService implements OnModuleInit {
 			{
 				repository: this.goalGeneralSettingRepository
 			},
-			{ 
+			{
 				repository: this.incomeRepository,
 				relations: [
 					{ joinTableName: 'tag_income' }
@@ -1093,7 +1094,7 @@ export class ExportAllService implements OnModuleInit {
 				repository: this.integrationEntitySettingRepository
 			},
 			{
-				repository: this.IntegrationEntitySettingTiedRepository
+				repository: this.integrationEntitySettingTiedRepository
 			},
 			{
 				repository: this.integrationMapRepository
@@ -1116,7 +1117,7 @@ export class ExportAllService implements OnModuleInit {
 			{
 				repository: this.integrationTenantRepository
 			},
-			{ 
+			{
 				repository: this.inviteRepository,
 				relations: [
 					{ joinTableName: 'invite_organization_contact' },
@@ -1130,16 +1131,16 @@ export class ExportAllService implements OnModuleInit {
 			{
 				repository: this.invoiceItemRepository
 			},
-			{ 
+			{
 				repository: this.invoiceRepository,
 				relations: [
 					{ joinTableName: 'tag_invoice' }
 				]
 			},
-			{ 
+			{
 				repository: this.jobPresetRepository
 			},
-			{ 
+			{
 				repository: this.jobPresetUpworkJobSearchCriterionRepository
 			},
 			{
@@ -1148,7 +1149,7 @@ export class ExportAllService implements OnModuleInit {
 			{
 				repository: this.jobSearchOccupationRepository
 			},
-			{ 
+			{
 				repository: this.keyResultRepository
 			},
 			{
@@ -1231,13 +1232,13 @@ export class ExportAllService implements OnModuleInit {
 					{ joinTableName: 'tag_organization_vendor' }
 				]
 			},
-			{ 
+			{
 				repository: this.paymentRepository,
 				relations: [
 					{ joinTableName: 'tag_payment' }
 				]
 			},
-			{ 
+			{
 				repository: this.pipelineRepository
 			},
 			{
@@ -1258,7 +1259,7 @@ export class ExportAllService implements OnModuleInit {
 			{
 				repository: this.productOptionTranslationRepository
 			},
-			{ 
+			{
 				repository: this.productRepository,
 				relations: [
 					{ joinTableName: 'product_gallery_item' },
@@ -1308,7 +1309,7 @@ export class ExportAllService implements OnModuleInit {
 			{
 				repository: this.warehouseProductVariantRepository
 			},
-			{ 
+			{
 				repository: this.proposalRepository,
 				relations: [
 					{ joinTableName: 'tag_proposal' }
@@ -1353,7 +1354,7 @@ export class ExportAllService implements OnModuleInit {
 					{ joinTableName: 'skill_organization' }
 				]
 			},
-			{ 
+			{
 				repository: this.pipelineStageRepository
 			},
 			{

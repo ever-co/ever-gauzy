@@ -5,13 +5,14 @@ import {
 	ChangeDetectorRef,
 	Component,
 	Input,
+	OnDestroy,
 	OnInit,
 	QueryList,
 	TemplateRef,
 	ViewChildren
 } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { filter, tap } from 'rxjs/operators';
+import { tap } from 'rxjs/operators';
 import { GuiDrag } from '../interfaces/gui-drag.abstract';
 import { LayoutWithDraggableObject } from '../interfaces/layout-with-draggable-object.abstract';
 import { WidgetComponent } from '../widget/widget.component';
@@ -25,7 +26,7 @@ import { WidgetService } from '../widget/widget.service';
 })
 export class WidgetLayoutComponent
 	extends LayoutWithDraggableObject
-	implements OnInit, AfterViewInit, AfterViewChecked
+	implements OnInit, AfterViewInit, AfterViewChecked, OnDestroy
 {
 	@Input()
 	set widgets(value: TemplateRef<HTMLElement>[]) {
@@ -48,20 +49,8 @@ export class WidgetLayoutComponent
 			.pipe(
 				tap(
 					(listWidgets: QueryList<GuiDrag>) =>
-						(this.widgetService.widgets = listWidgets.toArray())
+						(this.widgetService.widgets$ = listWidgets.toArray())
 				),
-				filter(() => this.widgetService.widgetsRef.length === 0),
-				tap(() => {
-					this.widgetService.deSerialize().length === 0
-						? this.widgetService.serialize()
-						: this.widgetService
-								.deSerialize()
-								.forEach((deserialized: GuiDrag) =>
-									this.widgetService.widgetsRef.push(
-										deserialized.templateRef
-									)
-								);
-				}),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -74,10 +63,12 @@ export class WidgetLayoutComponent
 			event.container.data
 		);
 		this.widgetService.widgetsRef = this.draggableObject;
-		this.widgetService.serialize();
+		this.widgetService.save();
 	}
 
-	ngOnInit(): void {}
+	ngOnInit(): void {
+		this.widgetService.widgetsRef = this.draggableObject;
+	}
 
 	get widgets() {
 		if (
@@ -87,4 +78,6 @@ export class WidgetLayoutComponent
 			this.draggableObject = this.widgetService.widgetsRef;
 		return this.draggableObject;
 	}
+
+	ngOnDestroy(): void {}
 }

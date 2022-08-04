@@ -1,11 +1,11 @@
 import { IOrganization, ITenant } from '@gauzy/contracts';
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { faker } from '@ever-co/faker';
 import { DEFAULT_SKILLS } from './default-skills';
 import { Skill } from './skill.entity';
 
 export const createDefaultSkills = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	organization: IOrganization
 ): Promise<Skill[]> => {
@@ -20,7 +20,7 @@ export const createDefaultSkills = async (
 			skill.color = faker.internet.color();
 			skills.push(skill);
 		}
-		return await connection.manager.save(skills);
+		return await dataSource.manager.save(skills);
 	} catch (error) {
 		console.log({error})
 	}

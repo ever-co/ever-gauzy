@@ -12,10 +12,13 @@ export class SaveEmployeePresetHandler
 	implements ICommandHandler<SaveEmployeePresetCommand> {
 	constructor(
 		private readonly gauzyAIService: GauzyAIService,
+
 		@InjectRepository(JobPreset)
 		private readonly jobPresetRepository: Repository<JobPreset>,
+
 		@InjectRepository(Employee)
 		private readonly employeeRepository: Repository<Employee>,
+
 		@InjectRepository(EmployeeUpworkJobsSearchCriterion)
 		private readonly employeeUpworkJobsSearchCriterionRepository: Repository<EmployeeUpworkJobsSearchCriterion>
 	) {}
@@ -24,23 +27,22 @@ export class SaveEmployeePresetHandler
 		command: SaveEmployeePresetCommand
 	): Promise<JobPreset[]> {
 		const { input } = command;
-
-		const employee = await this.employeeRepository.findOne(
-			input.employeeId,
-			{
-				relations: ['jobPresets']
+		const employee = await this.employeeRepository.findOne({
+			where: {
+				id: input.employeeId
+			},
+			relations: {
+				jobPresets: true
 			}
-		);
-
-		const jobPreset = await this.jobPresetRepository.findOne(
-			{
+		});
+		const jobPreset = await this.jobPresetRepository.findOne({
+			where: {
 				id: In(input.jobPresetIds)
 			},
-			{
-				relations: ['jobPresetCriterions']
+			relations: {
+				jobPresetCriterions: true
 			}
-		);
-
+		});
 		const employeeCriterions = jobPreset.jobPresetCriterions.map((item) => {
 			return new EmployeeUpworkJobsSearchCriterion({
 				...item,

@@ -1,1 +1,6 @@
 @import '../equipment-sharing/equipment-sharing-mutation.component.scss';
+
+:host .main {
+  width: 445px;
+  min-width: unset;
+}

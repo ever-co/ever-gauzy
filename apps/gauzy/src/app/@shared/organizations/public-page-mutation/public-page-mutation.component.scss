@@ -1,4 +1,5 @@
 @import 'gauzy/gauzy-dialogs';
+@import 'gauzy/gauzy-overrides';
 
 .main {
   background-color: var(--gauzy-card-1);
@@ -107,15 +108,20 @@
   .info-btn {
     margin: 5px 1px;
   }
+
+  .content-active {
+    nb-card {
+      @include input-appearance(42px, var(--gauzy-sidebar-background-4));
+    }
+  }
 }
 
 :host {
-
   nb-tab,
   nb-card-footer {
     background-color: var(--gauzy-card-2);
   }
-
+  @include input-appearance(42px, var(--gauzy-card-1));
   ::ng-deep nb-tabset .tabset .tab.active a.tab-link {
     border-radius: nb-theme(border-radius) nb-theme(border-radius) 0 0;
     display: flex;
@@ -162,8 +168,7 @@
   }
 
   ::ng-deep {
-
-    ng-select.ng-select.ng-select-opened>.ng-select-container,
+    ng-select.ng-select.ng-select-opened > .ng-select-container,
     ng-select.ng-select .ng-select-container {
       background-color: var(--gauzy-card-1);
     }
@@ -190,7 +195,7 @@
     }
 
     nb-toggle {
-      div.checked+span.text label {
+      div.checked + span.text label {
         color: var(--text-primary-color);
       }
     }

@@ -1,12 +1,12 @@
 import { ISkill, ICandidate, IOrganization, ITenant } from '@gauzy/contracts';
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { faker } from '@ever-co/faker';
 import { CandidateSkill } from './candidate-skill.entity';
 import { Organization } from '../organization/organization.entity';
 import { DEFAULT_CANDIDATE_SKILLS } from './default-candidate-skills';
 
 export const createCandidateSkills = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	candidates: ICandidate[] | void,
 	organization: IOrganization
@@ -26,12 +26,12 @@ export const createCandidateSkills = async (
 		}));
 		defaultCandidateSkills = [...defaultCandidateSkills, ...skills];
 	}
-	await insertCandidateSkills(connection, defaultCandidateSkills);
+	await insertCandidateSkills(dataSource, defaultCandidateSkills);
 	return defaultCandidateSkills;
 };
 
 export const createRandomCandidateSkills = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	tenantCandidatesMap: Map<ITenant, ICandidate[]> | void
 ): Promise<Map<ICandidate, CandidateSkill[]>> => {
@@ -45,8 +45,9 @@ export const createRandomCandidateSkills = async (
 	let candidateSkills = [];
 	const candidateSkillsMap: Map<ICandidate, any[]> = new Map();
 	for await (const tenant of tenants || []) {
-		const organizations = await connection.manager.find(Organization, {
-			where: [{ tenant: tenant }]
+		const { id: tenantId } = tenant;
+		const organizations = await dataSource.manager.findBy(Organization, {
+			tenantId
 		});
 		const candidates = tenantCandidatesMap.get(tenant);
 		for (const candidate of candidates) {
@@ -60,15 +61,15 @@ export const createRandomCandidateSkills = async (
 			candidateSkills = [...candidateSkills, ...skills];
 		}
 	}
-	await insertCandidateSkills(connection, candidateSkills);
+	await insertCandidateSkills(dataSource, candidateSkills);
 	return candidateSkillsMap;
 };
 
 const insertCandidateSkills = async (
-	connection: Connection,
+	dataSource: DataSource,
 	candidateSkills: CandidateSkill[]
 ) => {
-	await connection
+	await dataSource
 		.createQueryBuilder()
 		.insert()
 		.into(CandidateSkill)

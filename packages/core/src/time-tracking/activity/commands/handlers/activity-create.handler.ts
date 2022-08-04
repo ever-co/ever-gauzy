@@ -36,8 +36,8 @@ export class ActivityCreateHandler
 			} = input;
 			const tenantId = RequestContext.currentTenantId();
 
-			const startedAt = moment.utc(activityTimestamp).format('YYYY-MM-DD HH:mm:ss');
-			const stoppedAt = moment.utc(activityTimestamp).add(10, 'minutes').format('YYYY-MM-DD HH:mm:ss');
+			const startedAt = moment(moment.utc(activityTimestamp).format('YYYY-MM-DD HH:mm:ss')).toDate();
+			const stoppedAt = moment(moment.utc(activityTimestamp).add(10, 'minutes').format('YYYY-MM-DD HH:mm:ss')).toDate();
 
 			let timeSlot: ITimeSlot;
 			try {
@@ -46,7 +46,7 @@ export class ActivityCreateHandler
 						employeeId,
 						organizationId,
 						tenantId,
-						startedAt: Between(startedAt, stoppedAt),
+						startedAt: Between<Date>(startedAt, stoppedAt),
 					}
 				});
 			} catch (error) {

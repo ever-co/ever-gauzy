@@ -1,4 +1,4 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { faker } from '@ever-co/faker';
 import { InviteStatusEnum, IOrganization, ITenant, IUser, RolesEnum } from '@gauzy/contracts';
 import { sign } from 'jsonwebtoken';
@@ -7,7 +7,7 @@ import * as moment from 'moment';
 import { Invite, Role } from './../core/entities/internal';
 
 export const createDefaultEmployeeInviteSent = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	organizations: IOrganization[],
 	SuperAdmin: IUser[]
@@ -15,13 +15,16 @@ export const createDefaultEmployeeInviteSent = async (
 	const totalInvites: Invite[] = [];
 	const invitationStatus = Object.values(InviteStatusEnum);
 
-	const employeeRole = await connection.getRepository(Role).find({
-		where: [{ tenant: tenant, name: RolesEnum.EMPLOYEE }]
+	const { id: tenantId } = tenant;
+	const employeeRole = await dataSource.manager.findBy(Role, {
+		tenantId,
+		name: RolesEnum.EMPLOYEE
 	});
-	const candidateRole = await connection.getRepository(Role).find({
-		where: [{ tenant: tenant, name: RolesEnum.CANDIDATE }]
+	const candidateRole = await dataSource.manager.findBy(Role, {
+		tenantId,
+		name: RolesEnum.CANDIDATE
 	});
-	organizations.forEach((org) => {
+	organizations.forEach((organization: IOrganization) => {
 		for (let i = 0; i < 10; i++) {
 			const invitee = new Invite();
 			invitee.email = faker.internet.exampleEmail();
@@ -30,8 +33,7 @@ export const createDefaultEmployeeInviteSent = async (
 				moment(new Date()).add(30, 'days').toDate()
 			);
 			invitee.invitedBy = faker.random.arrayElement(SuperAdmin);
-			invitee.organizationId = org.id;
-			invitee.organization = org;
+			invitee.organizationId = organization.id;
 			invitee.role = faker.random.arrayElement([
 				employeeRole[0],
 				candidateRole[0]
@@ -42,11 +44,11 @@ export const createDefaultEmployeeInviteSent = async (
 			totalInvites.push(invitee);
 		}
 	});
-	await connection.manager.save(totalInvites);
+	await dataSource.manager.save(totalInvites);
 };
 
 export const createRandomEmployeeInviteSent = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	tenantOrganizationsMap: Map<ITenant, IOrganization[]>,
 	tenantSuperAdminMap: Map<ITenant, IUser[]>,
@@ -56,15 +58,18 @@ export const createRandomEmployeeInviteSent = async (
 	const invitationStatus = Object.values(InviteStatusEnum);
 
 	for (const tenant of tenants) {
-		const employeeRole = await connection.getRepository(Role).find({
-			where: [{ tenant: tenant, name: RolesEnum.EMPLOYEE }]
+		const { id: tenantId } = tenant;
+		const employeeRole = await dataSource.manager.findBy(Role, {
+			tenantId,
+			name: RolesEnum.EMPLOYEE
 		});
-		const candidateRole = await connection.getRepository(Role).find({
-			where: [{ tenant: tenant, name: RolesEnum.CANDIDATE }]
+		const candidateRole = await dataSource.manager.findBy(Role, {
+			tenantId,
+			name: RolesEnum.CANDIDATE
 		});
-		const orgs = tenantOrganizationsMap.get(tenant);
+		const organizations = tenantOrganizationsMap.get(tenant);
 		const admins = tenantSuperAdminMap.get(tenant);
-		orgs.forEach((org) => {
+		organizations.forEach((organization: IOrganization) => {
 			for (let i = 0; i < noOfInvitesPerOrganization; i++) {
 				const invitee = new Invite();
 				invitee.email = faker.internet.exampleEmail();
@@ -73,8 +78,7 @@ export const createRandomEmployeeInviteSent = async (
 					moment(new Date()).add(30, 'days').toDate()
 				);
 				invitee.invitedBy = faker.random.arrayElement(admins);
-				invitee.organizationId = org.id;
-				invitee.organization = org;
+				invitee.organizationId = organization.id;
 				invitee.role = faker.random.arrayElement([
 					employeeRole[0],
 					candidateRole[0]
@@ -86,7 +90,7 @@ export const createRandomEmployeeInviteSent = async (
 			}
 		});
 	}
-	await connection.manager.save(totalInvites);
+	await dataSource.manager.save(totalInvites);
 };
 
 function createToken(email): string {

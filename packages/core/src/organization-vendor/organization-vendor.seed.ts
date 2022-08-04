@@ -1,9 +1,9 @@
 import { OrganizationVendorEnum, IOrganization, IOrganizationVendor, ITenant } from '@gauzy/contracts';
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { OrganizationVendor } from './../core/entities/internal';
 
 export const createOrganizationVendors = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	organizations: IOrganization[]
 ): Promise<OrganizationVendor[]> => {
@@ -21,12 +21,12 @@ export const createOrganizationVendors = async (
 			...vendors
 		];
 	}
-	await insertOrganizationVendors(connection, defaultOrganizationVendors);
+	await insertOrganizationVendors(dataSource, defaultOrganizationVendors);
 	return defaultOrganizationVendors;
 };
 
 export const createRandomOrganizationVendors = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	tenantOrganizationsMap: Map<ITenant, IOrganization[]>
 ): Promise<Map<IOrganization, IOrganizationVendor[]>> => {
@@ -50,15 +50,15 @@ export const createRandomOrganizationVendors = async (
 			organizationVendors = [...organizationVendors, ...vendors];
 		}
 	}
-	await insertOrganizationVendors(connection, organizationVendors);
+	await insertOrganizationVendors(dataSource, organizationVendors);
 	return organizationVendorsMap;
 };
 
 const insertOrganizationVendors = async (
-	connection: Connection,
+	dataSource: DataSource,
 	organizationVendors: OrganizationVendor[]
 ) => {
-	await connection
+	await dataSource
 		.createQueryBuilder()
 		.insert()
 		.into(OrganizationVendor)

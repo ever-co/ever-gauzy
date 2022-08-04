@@ -24,9 +24,9 @@ export class TimeLogDeleteHandler
 
 		let timeLogs: TimeLog[];
 		if (typeof ids === 'string') {
-			timeLogs = await this.timeLogRepository.find({ id: ids });
+			timeLogs = await this.timeLogRepository.findBy({ id: ids });
 		} else if (ids instanceof Array && typeof ids[0] === 'string') {
-			timeLogs = await this.timeLogRepository.find({
+			timeLogs = await this.timeLogRepository.findBy({
 				id: In(ids as string[])
 			});
 		} else if (ids instanceof TimeLog) {

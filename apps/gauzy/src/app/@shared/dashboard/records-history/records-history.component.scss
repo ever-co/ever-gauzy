@@ -1,6 +1,24 @@
 @import 'gauzy/_gauzy-table.scss';
-.records {
-    box-shadow: 0px 0px 16px 9px grey;
-    padding: 15px;
-    border-radius: nb-theme(border-radius);
+@import 'gauzy/_gauzy-dialogs';
+@import 'gauzy/_gauzy-overrides';
+
+:host nb-card {
+  border-radius: nb-theme(border-radius);
+  margin-bottom: 0;
+  &.records {
+    width: 645px;
+  }
+  nb-card-body {
+    overflow: unset;
+    @include input-appearance(2rem, var(--gauzy-sidebar-background-4));
+    background-color: var(--gauzy-card-2);
+    padding: 1rem 11px;
+    .table-scroll-container {
+      padding: 0 11px;
+    }
+  }
+  h5 {
+    font-weight: 600;
+    font-size: 18px;
+  }
 }

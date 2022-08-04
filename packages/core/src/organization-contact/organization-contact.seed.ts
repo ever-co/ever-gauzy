@@ -1,4 +1,4 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { faker } from '@ever-co/faker';
 import {
 	ContactOrganizationInviteStatus,
@@ -16,25 +16,25 @@ import { Organization, OrganizationContact, Tag } from './../core/entities/inter
 import { getRandomContact } from 'contact/contact.seed';
 
 export const createDefaultOrganizationContact = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	noOfContactsPerOrganization: number
 ): Promise<IOrganizationContact[]> => {
 	return await createOrganizationContact(
-		connection,
+		dataSource,
 		tenant,
 		noOfContactsPerOrganization
 	)
 };
 
 export const createRandomOrganizationContact = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	noOfContactsPerOrganization: number
 ) => {
 	for await (const tenant of tenants) {
 		await createOrganizationContact(
-			connection,
+			dataSource,
 			tenant,
 			noOfContactsPerOrganization
 		)
@@ -42,22 +42,25 @@ export const createRandomOrganizationContact = async (
 };
 
 const createOrganizationContact = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	noOfContactsPerOrganization: number
 ) => {
-	const organizations = await connection.manager.find(Organization, { 
-		where: { 
-			tenant
-		}, 
-		relations: ['employees'] 
+	const { id: tenantId } = tenant;
+	const organizations = await dataSource.manager.find(Organization, {
+		where: {
+			tenantId
+		},
+		relations: ['employees']
 	});
 	const allCrganizationContacts: IOrganizationContact[] = [];
 	for await (const organization of organizations) {
+		const { id: organizationId } = organization;
 		const { employees } = organization;
 		const organizationContacts: IOrganizationContact[] = [];
-		const tags = await connection.manager.find(Tag, { 
-			where: { tenant, organization }
+		const tags = await dataSource.manager.findBy(Tag, {
+			organizationId,
+			tenantId
 		});
 		for (let i = 0; i < noOfContactsPerOrganization; i++) {
 			const orgContact = await generateOrganizationContact(
@@ -67,9 +70,9 @@ const createOrganizationContact = async (
 			)
 			organizationContacts.push(orgContact);
 		}
-		await connection.manager.save(organizationContacts);
+		await dataSource.manager.save(organizationContacts);
 		await assignOrganizationContactToEmployee(
-			connection,
+			dataSource,
 			tenant,
 			organization,
 			employees
@@ -120,16 +123,17 @@ const generateOrganizationContact = async (
 * Assign Organization Contact To Respective Employees
 */
 export const assignOrganizationContactToEmployee = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	organization: IOrganization,
 	employees: IEmployee[]
 ) => {
-	const organizationContacts = await connection.manager.find(OrganizationContact, { 
-		where: {
-			tenant,
-			organization
-		} 
+	const { id: tenantId } = tenant;
+	const { id: organizationId } = organization;
+
+	const organizationContacts = await dataSource.manager.findBy(OrganizationContact, {
+		organizationId,
+		tenantId
 	});
 	for await (const employee of employees) {
 		employee.organizationContacts = _.chain(organizationContacts)
@@ -139,5 +143,5 @@ export const assignOrganizationContactToEmployee = async (
 			.values()
 			.value();
 	}
-	await connection.manager.save(employees);
+	await dataSource.manager.save(employees);
 };

@@ -14,6 +14,7 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
+import { FindOptionsWhere } from 'typeorm';
 import {
 	PermissionsEnum,
 	ICandidateFeedbackCreateInput,
@@ -41,9 +42,9 @@ export class CandidateFeedbacksController extends CrudController<CandidateFeedba
 
 	/**
 	 * GET feedback by interview id
-	 * 
-	 * @param interviewId 
-	 * @returns 
+	 *
+	 * @param interviewId
+	 * @returns
 	 */
 	@ApiOperation({
 		summary: 'Find feedbacks By Interview Id.'
@@ -71,10 +72,10 @@ export class CandidateFeedbacksController extends CrudController<CandidateFeedba
 
 	/**
 	 * DELETE feedback by interview id
-	 * 
-	 * @param interviewId 
-	 * @param feedbackId 
-	 * @returns 
+	 *
+	 * @param interviewId
+	 * @param feedbackId
+	 * @returns
 	 */
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_FEEDBACK_EDIT)
@@ -90,9 +91,9 @@ export class CandidateFeedbacksController extends CrudController<CandidateFeedba
 
 	/**
 	 * GET candidate feedback count
-	 * 
-	 * @param filter 
-	 * @returns 
+	 *
+	 * @param filter
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'Find all candidate feedbacks counts in the same tenant' })
 	@ApiResponse({
@@ -101,16 +102,16 @@ export class CandidateFeedbacksController extends CrudController<CandidateFeedba
 	})
 	@Get('count')
     async getCount(
-		@Query() filter: PaginationParams<ICandidateFeedback>
+		@Query() options: FindOptionsWhere<CandidateFeedback>
 	): Promise<number> {
-        return await this.candidateFeedbacksService.count(filter);
+        return await this.candidateFeedbacksService.countBy(options);
     }
 
 	/**
 	 * GET candidate feedbacks by pagination
-	 * 
-	 * @param filter 
-	 * @returns 
+	 *
+	 * @param filter
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'Find all candidate feedbacks in the same tenant using pagination.' })
 	@ApiResponse({
@@ -132,9 +133,9 @@ export class CandidateFeedbacksController extends CrudController<CandidateFeedba
 
 	/**
 	 * GET all candidate feedbacks
-	 * 
-	 * @param data 
-	 * @returns 
+	 *
+	 * @param data
+	 * @returns
 	 */
 	@ApiOperation({
 		summary: 'Find all candidate feedback.'
@@ -161,9 +162,9 @@ export class CandidateFeedbacksController extends CrudController<CandidateFeedba
 
 	/**
 	 * GET candidate feedback by id
-	 * 
-	 * @param id 
-	 * @returns 
+	 *
+	 * @param id
+	 * @returns
 	 */
 	@ApiOperation({
 		summary: 'Find candidate feedback by id'
@@ -186,9 +187,9 @@ export class CandidateFeedbacksController extends CrudController<CandidateFeedba
 
 	/**
 	 * CREATE candidate feedback
-	 * 
-	 * @param body 
-	 * @returns 
+	 *
+	 * @param body
+	 * @returns
 	 */
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_FEEDBACK_EDIT)
@@ -201,10 +202,10 @@ export class CandidateFeedbacksController extends CrudController<CandidateFeedba
 
 	/**
 	 * UPDATE candidate feedback by id
-	 * 
-	 * @param id 
-	 * @param body 
-	 * @returns 
+	 *
+	 * @param id
+	 * @param body
+	 * @returns
 	 */
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_FEEDBACK_EDIT)

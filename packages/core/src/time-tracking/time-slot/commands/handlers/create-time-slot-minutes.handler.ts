@@ -19,12 +19,11 @@ export class CreateTimeSlotMinutesHandler
 		command: CreateTimeSlotMinutesCommand
 	): Promise<TimeSlotMinute> {
 		const { input } = command;
+		const { id: timeSlotId } = input.timeSlot;
 
-		const timeMinute = await this.timeSlotMinuteRepository.findOne({
-			where: {
-				timeSlot: input.timeSlot,
-				datetime: input.datetime
-			}
+		const timeMinute = await this.timeSlotMinuteRepository.findOneBy({
+			timeSlotId: timeSlotId,
+			datetime: input.datetime
 		});
 
 		if (timeMinute) {

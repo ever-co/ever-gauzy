@@ -474,7 +474,7 @@ export class HubstaffService {
 			return integratedScreenshots;
 		} catch (error) {
 			throw new BadRequestException(error, `Can\'t sync ${IntegrationEntity.SCREENSHOT}`);
-		}		
+		}
 	}
 
 	async syncTasks({
@@ -549,9 +549,9 @@ export class HubstaffService {
 
 	/**
 	 * Map worked timeslot activity
-	 * 
-	 * @param timeSlots 
-	 * @returns 
+	 *
+	 * @param timeSlots
+	 * @returns
 	 */
 	async syncTimeSlots(
 		integrationId: string,
@@ -735,7 +735,7 @@ export class HubstaffService {
 				integrationId,
 				user,
 				organizationId
-			});	
+			});
 		} catch (error) {
 			throw new BadRequestException(error, `Can\'t handle ${IntegrationEntity.EMPLOYEE}`);
 		}
@@ -785,7 +785,7 @@ export class HubstaffService {
 				integrationId,
 				organizationId: gauzyId,
 				clients
-			});	
+			});
 		} catch (error) {
 			throw new BadRequestException(error, `Can\'t handle ${IntegrationEntity.CLIENT}`);
 		}
@@ -866,7 +866,7 @@ export class HubstaffService {
 									organizationId
 								})
 							)
-						);	
+						);
 					}
 				)
 			);
@@ -997,7 +997,7 @@ export class HubstaffService {
 									organizationId
 								})
 							)
-						);	
+						);
 					}
 				)
 			);
@@ -1087,7 +1087,7 @@ export class HubstaffService {
 		try {
 			const start = moment(dateRange.start).format('YYYY-MM-DD');
 			const end = moment(dateRange.end).format('YYYY-MM-DD');
-						
+
 			const integratedTimeLogs: IIntegrationMap[] = [];
 
 			for await (const project of projectsMap) {
@@ -1128,7 +1128,7 @@ export class HubstaffService {
 		dateRange: IDateRangeActivityFilter
 	): Promise<IIntegrationMap[][]> {
 		try {
-			
+
 			const start = moment(dateRange.start).format('YYYY-MM-DD');
 			const end = moment(dateRange.end).format('YYYY-MM-DD');
 			const pageLimit = 500;
@@ -1198,7 +1198,7 @@ export class HubstaffService {
 		 * GET organization tenant integration entities settings
 		 */
 		const tenantId = RequestContext.currentTenantId();
-		const { entitySettings } = await this._integrationTenantService.findOneByConditions(integrationId, {
+		const { entitySettings } = await this._integrationTenantService.findOneByIdString(integrationId, {
 			where: {
 				tenantId
 			},
@@ -1344,9 +1344,9 @@ export class HubstaffService {
 
 	/**
 	 * GET TimeLogs from Activity TimeSlots
-	 * 
-	 * @param timeSlots 
-	 * @returns 
+	 *
+	 * @param timeSlots
+	 * @returns
 	 */
 	getLogsActivityFromSlots(timeSlots: IHubstaffTimeSlotActivity[]): IHubstaffLogFromTimeSlots[] {
 		const timeLogs = timeSlots.reduce((prev, current) => {

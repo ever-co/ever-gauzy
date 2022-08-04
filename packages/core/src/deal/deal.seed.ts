@@ -1,11 +1,11 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { IEmployee, IOrganization, ITenant } from '@gauzy/contracts';
 import { Deal } from './deal.entity';
 import { faker } from '@ever-co/faker';
 import { Pipeline, PipelineStage } from './../core/entities/internal';
 
 export const createRandomDeal = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	tenantEmployeeMap: Map<ITenant, IEmployee[]>,
 	tenantOrganizationsMap: Map<ITenant, IOrganization[]>
@@ -31,16 +31,15 @@ export const createRandomDeal = async (
 
 		for (const tenantEmployee of tenantEmployees) {
 			for (const tenantOrg of tenantOrgs) {
-				const pipelines = await connection.manager.find(Pipeline, {
-					where: [{ organization: tenantOrg }]
+				const { id: organizationId } = tenantOrg;
+				const pipelines = await dataSource.manager.findBy(Pipeline, {
+					organizationId
 				});
 				for (const pipeline of pipelines) {
-					const pipelineStages = await connection.manager.find(
-						PipelineStage,
-						{
-							where: [{ pipeline: pipeline }]
-						}
-					);
+					const { id: pipelineId } = pipeline;
+					const pipelineStages = await dataSource.manager.findBy(PipelineStage, {
+						pipelineId
+					});
 					for (const pipelineStage of pipelineStages) {
 						const deal = new Deal();
 
@@ -60,5 +59,5 @@ export const createRandomDeal = async (
 		}
 	}
 
-	await connection.manager.save(deals);
+	await dataSource.manager.save(deals);
 };

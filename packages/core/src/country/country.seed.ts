@@ -1,10 +1,10 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { Country } from './country.entity';
 import { ICountry } from '@gauzy/contracts';
 import { DEFAULT_COUNTRIES } from './default-countries';
 
 export const createCountries = async (
-	connection: Connection
+	dataSource: DataSource
 ): Promise<ICountry[]> => {
 	return await new Promise<ICountry[]>(async (resolve, reject) => {
 		try {
@@ -19,7 +19,7 @@ export const createCountries = async (
 					countries.push(country);
 				}
 			}
-			await insertCountry(connection, countries);
+			await insertCountry(dataSource, countries);
 			resolve(countries);
 		} catch (err) {
 			console.log('Error parsing country:', err);
@@ -30,10 +30,10 @@ export const createCountries = async (
 };
 
 const insertCountry = async (
-	connection: Connection,
+	dataSource: DataSource,
 	countries: ICountry[]
 ): Promise<void> => {
-	await connection
+	await dataSource
 		.createQueryBuilder()
 		.insert()
 		.into(Country)

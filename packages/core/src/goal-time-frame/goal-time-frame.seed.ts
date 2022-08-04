@@ -1,10 +1,10 @@
 import { GoalTimeFrame } from './goal-time-frame.entity';
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import * as moment from 'moment';
 import { IOrganization, ITenant } from '@gauzy/contracts';
 
 export const createDefaultTimeFrames = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	organizations: IOrganization[]
 ): Promise<GoalTimeFrame[]> => {
@@ -34,15 +34,15 @@ export const createDefaultTimeFrames = async (
 		}
 	}
 
-	await insertDefaultTimeFrames(connection, defaultTimeFrames);
+	await insertDefaultTimeFrames(dataSource, defaultTimeFrames);
 	return defaultTimeFrames;
 };
 
 const insertDefaultTimeFrames = async (
-	connection: Connection,
+	dataSource: DataSource,
 	defaultTimeFrames: GoalTimeFrame[]
 ) => {
-	await connection
+	await dataSource
 		.createQueryBuilder()
 		.insert()
 		.into(GoalTimeFrame)

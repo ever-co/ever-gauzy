@@ -5,7 +5,6 @@ import { RouterModule } from 'nest-router';
 import { AuthService } from '../auth/auth.service';
 import { EmailModule } from '../email/email.module';
 import { EmailService } from '../email/email.service';
-import { SharedModule } from '../shared';
 import { CommandHandlers } from './commands/handlers';
 import { TenantModule } from '../tenant/tenant.module';
 import { RoleModule } from './../role/role.module';
@@ -26,7 +25,6 @@ import { InviteService } from './invite.service';
 			{ path: '/invite', module: InviteModule }
 		]),
 		TypeOrmModule.forFeature([ Invite ]),
-		SharedModule,
 		CqrsModule,
 		EmailModule,
 		TenantModule,

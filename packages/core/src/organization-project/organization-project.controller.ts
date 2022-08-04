@@ -21,6 +21,7 @@ import {
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { FindOptionsWhere } from 'typeorm';
 import { CrudController, PaginationParams } from './../core/crud';
 import { OrganizationProjectEditByEmployeeCommand } from './commands';
 import { OrganizationProject } from './organization-project.entity';
@@ -138,7 +139,7 @@ export class OrganizationProjectController extends CrudController<OrganizationPr
 	/**
 	 * GET organization project count
 	 *
-	 * @param data
+	 * @param options
 	 * @returns
 	 */
 	@ApiOperation({
@@ -154,12 +155,12 @@ export class OrganizationProjectController extends CrudController<OrganizationPr
 		description: 'Record not found'
 	})
 	@Get('count')
-	async getCount(@Query('data', ParseJsonPipe) data: any): Promise<any> {
-		const { relations, findInput } = data;
-		return this.organizationProjectService.count({
-			where: findInput,
-			relations
-		});
+	async getCount(
+		@Query(new ValidationPipe({
+			transform: true
+		})) options: FindOptionsWhere<OrganizationProject>
+	): Promise<any> {
+		return this.organizationProjectService.countBy(options);
 	}
 
 	/**

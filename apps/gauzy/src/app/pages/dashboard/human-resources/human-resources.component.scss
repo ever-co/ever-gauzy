@@ -1,5 +1,6 @@
 @import 'gauzy/_gauzy-cards';
 .header {
+	background-color: unset;
 	.header-container {
 		display: flex;
 		justify-content: space-between;
@@ -61,6 +62,9 @@
 		display: flex;
 		flex-direction: column;
 		align-items: stretch;
+		ga-info-block {
+			border-radius: var(--border-radius);
+		}
 	}
 	.bonus {
 		display: flex;
@@ -104,9 +108,13 @@ $height: calc(
   100vh - nb-theme(header-height) - nb-theme(footer-height) - 13rem
 );
 :host {
-  @include nb-card_overrides(
+	@include nb-card_overrides(
     auto,
     $height,
     0 $default-radius $default-radius $default-radius
   );
+  nb-card,
+  nb-card-body{
+	background-color: var(--gauzy-card-2);
+  }
 }

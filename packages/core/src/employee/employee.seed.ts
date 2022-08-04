@@ -1,4 +1,4 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import {
 	IEmployee,
 	IOrganization,
@@ -14,7 +14,7 @@ import { Employee, Organization } from './../core/entities/internal';
 import { getDefaultOrganization } from './../organization/organization.seed';
 
 export const createDefaultEmployees = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	organization: IOrganization,
 	users: IUser[],
@@ -47,12 +47,12 @@ export const createDefaultEmployees = async (
 		employees.push(employee);
 	}
 
-	await insertEmployees(connection, employees);
+	await insertEmployees(dataSource, employees);
 	return employees;
 };
 
 export const createRandomEmployees = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: ITenant[],
 	tenantOrganizationsMap: Map<ITenant, Organization[]>,
 	tenantUsersMap: Map<ITenant, ISeedUsers>,
@@ -92,17 +92,17 @@ export const createRandomEmployees = async (
 			}
 		}
 		employeeMap.set(tenant, employees);
-		await insertEmployees(connection, employees);
+		await insertEmployees(dataSource, employees);
 	}
 
 	return employeeMap;
 };
 
 const insertEmployees = async (
-	connection: Connection,
+	dataSource: DataSource,
 	employees: IEmployee[]
 ): Promise<IEmployee[]> => {
-	return await connection.manager.save(employees);
+	return await dataSource.manager.save(employees);
 };
 
 const getDate = (dateString: string): Date => {
@@ -117,14 +117,14 @@ const getDate = (dateString: string): Date => {
  * Default employees
  */
 export const getDefaultEmployees = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant
 ): Promise<IEmployee[]> => {
 	const organization = await getDefaultOrganization(
-		connection,
+		dataSource,
 		tenant
 	);
-	const employees = await connection.getRepository(Employee).find({
+	const employees = await dataSource.getRepository(Employee).find({
 		where: {
 			tenantId: tenant.id,
 			organizationId: organization.id

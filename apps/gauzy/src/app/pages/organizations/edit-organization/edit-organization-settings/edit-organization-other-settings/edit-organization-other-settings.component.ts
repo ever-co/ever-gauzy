@@ -46,7 +46,7 @@ export class EditOrganizationOtherSettingsComponent extends NotesWithTagsCompone
 	public organization: IOrganization;
 	form: FormGroup;
 	defaultOrganizationSelection: IKeyValuePair[] = [
-		{ key: 'Yes', value: true }, 
+		{ key: 'Yes', value: true },
 		{ key: 'No', value: false }
 	];
 	defaultValueDateTypes: string[] = Object.values(DefaultValueDateTypeEnum);
@@ -73,7 +73,7 @@ export class EditOrganizationOtherSettingsComponent extends NotesWithTagsCompone
 	regionCodes = Object.keys(RegionsEnum);
 	regionCode: string;
 	regions = Object.values(RegionsEnum);
-	
+
 	/**
 	 * Nebular Accordion Main Component
 	 */
@@ -82,7 +82,7 @@ export class EditOrganizationOtherSettingsComponent extends NotesWithTagsCompone
 	/**
 	 * Nebular Accordion Item Components
 	 */
-	@ViewChild('general') set general(general: NbAccordionItemComponent) { 
+	@ViewChild('general') set general(general: NbAccordionItemComponent) {
 		if (general) {
 			general.open();
 			this.cdr.detectChanges();
@@ -127,7 +127,7 @@ export class EditOrganizationOtherSettingsComponent extends NotesWithTagsCompone
 			)
 			.subscribe();
 	}
-	
+
 	getTimeWithOffset(zone: string) {
 		let cutZone = zone;
 		if (zone.includes('/')) {
@@ -169,7 +169,7 @@ export class EditOrganizationOtherSettingsComponent extends NotesWithTagsCompone
 		});
 	}
 
-	
+
 
 	async updateOrganizationSettings() {
 		this.organizationService
@@ -332,12 +332,17 @@ export class EditOrganizationOtherSettingsComponent extends NotesWithTagsCompone
 	}
 
 	async getTemplates() {
-		const result = await this.accountingTemplateService.getAll(
-			['organization'],
-			{
-				languageCode: this.store.preferredLanguage
-			}
-		);
+		if (!this.organization) {
+			return;
+		}
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
+
+		const result = await this.accountingTemplateService.getAll(['organization'], {
+			languageCode: this.store.preferredLanguage,
+			organizationId,
+			tenantId
+		});
 
 		result.items.forEach((item) => {
 			switch (item.templateType) {

@@ -1,9 +1,11 @@
 <nb-card class="main">
 	<nb-card-header class="d-flex flex-column">
-    <div class="cancel"><i (click)="close()" class="fas fa-times"></i></div>
+    <div class="cancel">
+		<i (click)="close()" class="fas fa-times"></i>
+	</div>
 		<h5 class="title">
 			{{
-				(componentType === 'EMPLOYEE'
+				(componentType === ComponentTypeEnum.EMPLOYEE
 					? 'EMPLOYEES_PAGE.RECURRING_EXPENSE'
 					: 'ORGANIZATIONS_PAGE.RECURRING_EXPENSE'
 				) | translate
@@ -12,7 +14,7 @@
 	</nb-card-header>
 	<nb-card-body>
 		<form [formGroup]="form">
-			<ng-container *ngIf="componentType === 'EMPLOYEE'">
+			<ng-container *ngIf="componentType === ComponentTypeEnum.EMPLOYEE">
 				<div class="row" [hidden]="recurringExpense">
 					<div class="col-sm-12 mb-3">
 						<ga-employee-selector
@@ -48,7 +50,7 @@
 					</div>
 				</div>
 			</div>
-			<div class="row" *ngIf="componentType === 'ORGANIZATION'">
+			<div class="row" *ngIf="componentType === ComponentTypeEnum.ORGANIZATION">
 				<div class="col">
 					<div class="form-group">
 						<nb-checkbox formControlName="splitExpense">
@@ -83,7 +85,9 @@
 					</div>
 				</div>
 				<div class="col-sm-6">
-					<ga-currency formControlName="currency"></ga-currency>
+					<ga-currency
+						formControlName="currency"
+					></ga-currency>
 				</div>
 			</div>
 			<!-- TODO: translate -->
@@ -295,7 +299,14 @@
 		</form>
 	</nb-card-body>
 	<nb-card-footer>
-		<button (click)="close()" nbButton size="small"  outline class="mr-2" status="basic">
+		<button
+			(click)="close()"
+			nbButton
+			size="small"
+			outline
+			class="mr-2"
+			status="basic"
+		>
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
 		<button
@@ -305,13 +316,13 @@
 			nbButton
 			status="success"
 			*ngIf="!recurringExpense"
-			nbTooltip="{{ 'EMPLOYEES_PAGE.RECURRING_EXPENSE_ADD' | translate }}"
+			[nbTooltip]="'EMPLOYEES_PAGE.RECURRING_EXPENSE_ADD' | translate"
 		>
 			{{ 'BUTTONS.SAVE' | translate }}
 		</button>
 		<button
 			(click)="submitForm()"
-      size="small"
+      		size="small"
 			[disabled]="
 				form.invalid || startDateUpdateType === 'INCREASE_CONFLICT'
 			"

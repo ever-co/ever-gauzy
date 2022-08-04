@@ -209,6 +209,16 @@ nb-card-body > .header-widget {
     height: 11px;
     width: 11px;
   }
+  &.undo {
+    font-size: 10px;
+    font-weight: 600;
+    &[nbButton].appearance-filled.status-basic {
+      color: var(--text-primary-color);
+    }
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
 }
 
 .widget-popover {
@@ -217,17 +227,24 @@ nb-card-body > .header-widget {
   align-items: flex-start;
   padding: 14px;
   gap: 21px;
+  min-width: 219px;
   .category {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
     gap: 14px;
+    width: 100%;
     .view {
       font-size: 10px;
       font-weight: 600;
       line-height: 12px;
       letter-spacing: 0em;
       color: rgba(126, 126, 143, 0.5);
+      align-items: center;
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      width: 100%;
     }
     .title {
       font-size: 12px;
@@ -239,6 +256,7 @@ nb-card-body > .header-widget {
       align-items: center;
       gap: 10px;
       cursor: pointer;
+      width: 100%;
     }
   }
   .line {

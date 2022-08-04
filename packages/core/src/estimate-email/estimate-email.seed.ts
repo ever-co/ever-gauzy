@@ -1,4 +1,4 @@
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { Tenant } from '../tenant/tenant.entity';
 import { IEmployee, IOrganization } from '@gauzy/contracts';
 import { EstimateEmail } from './estimate-email.entity';
@@ -7,7 +7,7 @@ import { sign } from 'jsonwebtoken';
 import { environment as env } from '@gauzy/config';
 
 export const createRandomEstimateEmail = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenants: Tenant[],
 	tenantEmployeeMap: Map<Tenant, IEmployee[]>,
 	tenantOrganizationsMap: Map<Tenant, IOrganization[]>
@@ -42,7 +42,7 @@ export const createRandomEstimateEmail = async (
 		}
 	}
 
-	await connection.manager.save(estimateEmails);
+	await dataSource.manager.save(estimateEmails);
 };
 
 function createToken(email): string {

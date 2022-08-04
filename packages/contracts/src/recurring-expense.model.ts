@@ -19,7 +19,7 @@ export interface IRecurringExpenseModel
 	employee?: IEmployee;
 }
 
-export interface IRecurringExpenseByMonthFindInput 
+export interface IRecurringExpenseByMonthFindInput
 	extends IBasePerTenantAndOrganizationEntityModel {
 	employeeId?: string;
 	month?: number;
@@ -83,4 +83,9 @@ export enum StartDateUpdateTypeEnum {
 	INCREASE_CONFLICT = 'INCREASE_CONFLICT',
 	WITHIN_MONTH = 'WITHIN_MONTH',
 	NO_CHANGE = 'NO_CHANGE'
+}
+
+export enum ComponentType {
+	EMPLOYEE = 'EMPLOYEE',
+	ORGANIZATION = 'ORGANIZATION'
 }

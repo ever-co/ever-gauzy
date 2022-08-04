@@ -1,22 +1,31 @@
 import { environment as env } from '@gauzy/config';
 import { Injectable } from '@nestjs/common';
-import { getRandomEmployeeJobPosts } from './employee-job.seed';
+import { faker } from '@ever-co/faker';
 import { GauzyAIService } from '@gauzy/integration-ai';
 import {
 	IApplyJobPostInput,
+	ICountry,
+	IEmployee,
 	IEmployeeJobPost,
 	IGetEmployeeJobPostInput,
 	IPagination,
 	IUpdateEmployeeJobPostAppliedResult,
-	IVisibilityJobPostInput
+	IVisibilityJobPostInput,
+	JobPostSourceEnum,
+	JobPostStatusEnum,
+	JobPostTypeEnum
 } from '@gauzy/contracts';
 import { EmployeeService } from '../employee/employee.service';
+import { CountryService } from './../country/country.service';
+import { EmployeeJobPost } from './employee-job.entity';
+import { JobPost } from './jobPost.entity';
 
 @Injectable()
 export class EmployeeJobPostService {
 	constructor(
 		private readonly employeeService: EmployeeService,
-		private readonly gauzyAIService: GauzyAIService
+		private readonly gauzyAIService: GauzyAIService,
+		private readonly countryService: CountryService
 	) {}
 
 	/**
@@ -69,7 +78,7 @@ export class EmployeeJobPostService {
 					};
 				} else {
 					// In development, even if connection failed, we want to show fake jobs in UI
-					jobs = await getRandomEmployeeJobPosts(
+					jobs = await this.getRandomEmployeeJobPosts(
 						employees,
 						data.page,
 						data.limit
@@ -95,7 +104,7 @@ export class EmployeeJobPostService {
 		} else {
 			// If it's production, we should return empty here because we don't want fake jobs in production
 			if (env.production === false) {
-				jobs = await getRandomEmployeeJobPosts(
+				jobs = await this.getRandomEmployeeJobPosts(
 					employees,
 					data.page,
 					data.limit
@@ -109,5 +118,44 @@ export class EmployeeJobPostService {
 		}
 
 		return jobs;
+	}
+
+	private async getRandomEmployeeJobPosts(
+		employees?: IEmployee[],
+		page = 0,
+		limit = 10
+	): Promise<IPagination<IEmployeeJobPost>> {
+		const { items : countries = [] as ICountry[] } = await this.countryService.findAll();
+
+		const employeesJobs: EmployeeJobPost[] = [];
+		for (let i = 0; i < limit; i++) {
+			const employee = faker.random.arrayElement(employees);
+			const jobPostEmployee = new EmployeeJobPost({
+				employeeId: employee ? employee.id : null,
+				employee: employee
+			});
+
+			const job = new JobPost({
+				country: faker.random.arrayElement(countries).isoCode,
+				category: faker.name.jobTitle(),
+				title: faker.lorem.sentence(),
+				description: faker.lorem.sentences(3),
+				jobDateCreated: faker.date.past(0.1),
+				jobStatus: faker.random.arrayElement(
+					Object.values(JobPostStatusEnum)
+				),
+				jobSource: faker.random.arrayElement(
+					Object.values(JobPostSourceEnum)
+				),
+				jobType: faker.random.arrayElement(Object.values(JobPostTypeEnum))
+			});
+
+			jobPostEmployee.jobPost = job;
+			employeesJobs.push(jobPostEmployee);
+		}
+		return {
+			items: employeesJobs,
+			total: 100
+		};
 	}
 }

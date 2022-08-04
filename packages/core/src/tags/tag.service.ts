@@ -1,9 +1,10 @@
 import { Brackets, IsNull, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
-import { Tag } from './tag.entity';
-import { CrudService, RequestContext } from '../core';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IPagination, ITag, ITagFindInput } from '@gauzy/contracts';
+import { RequestContext } from '../core/context';
+import { CrudService } from '../core/crud';
+import { Tag } from './tag.entity';
 
 @Injectable()
 export class TagService extends CrudService<Tag> {
@@ -15,68 +16,67 @@ export class TagService extends CrudService<Tag> {
 	}
 
 	async findOneByName(name: string): Promise<Tag> {
-		const query = this.tagRepository
-			.createQueryBuilder('tag')
-			.where('"tag"."name" = :name', {
-				name
-			});
+		const query = this.tagRepository.createQueryBuilder();
+		query.where('"tag"."name" = :name', {
+			name
+		});
 		const item = await query.getOne();
 		return item;
 	}
 
 	/**
 	 * GET tenant/organization level tags
-	 * 
-	 * @param input 
-	 * @param relations 
-	 * @returns 
+	 *
+	 * @param input
+	 * @param relations
+	 * @returns
 	 */
 	async findAllTags(
 		input: ITagFindInput,
 		relations: string[]
 	): Promise<IPagination<ITag>> {
-		const [ items, total ] = await this.tagRepository.findAndCount({
-			relations: [
-				...relations
-			],
-			where: (query: SelectQueryBuilder<Tag>) => {
-				query.andWhere(
-					new Brackets((qb: WhereExpressionBuilder) => {
-						const { organizationId } = input;
-						qb.where(
-							[
-								{
-									organizationId: IsNull()
-								}, 
-								{
-									organizationId
-								}
-							]
-						);
-					})
-				);
-				query.andWhere(
-					new Brackets((qb: WhereExpressionBuilder) => {
-						const tenantId = RequestContext.currentTenantId();
-						qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
-							tenantId
-						});
-					})
-				);
-				query.andWhere(`"${query.alias}"."isSystem" = :isSystem`, {
-					isSystem: false
-				});
-			}
+		const query = this.tagRepository.createQueryBuilder();
+		query.setFindOptions({
+			relations
 		});
+		query.where((qb: SelectQueryBuilder<Tag>) => {
+			qb.andWhere(
+				new Brackets((web: WhereExpressionBuilder) => {
+					const { organizationId } = input;
+					web.where(
+						[
+							{
+								organizationId: IsNull()
+							},
+							{
+								organizationId
+							}
+						]
+					);
+				})
+			);
+			qb.andWhere(
+				new Brackets((web: WhereExpressionBuilder) => {
+					const tenantId = RequestContext.currentTenantId();
+					web.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, {
+						tenantId
+					});
+				})
+			);
+			qb.andWhere(`"${qb.alias}"."isSystem" = :isSystem`, {
+				isSystem: false
+			});
+		});
+		const [ items, total ] = await query.getManyAndCount();
 		return { items, total };
 	}
 
 	/**
 	 * GET tenant/organization level tags
-	 * 
-	 * @param input 
-	 * @param relations 
-	 * @returns 
+	 *
+	 * @param input
+	 * @param relations
+	 * @returns
 	 */
 	async getTenantOrganizationLevelTags(
 		input: ITagFindInput,
@@ -143,13 +143,13 @@ export class TagService extends CrudService<Tag> {
 		const items = await query
 			.where((query: SelectQueryBuilder<Tag>) => {
 				query.andWhere(
-					new Brackets((qb: WhereExpressionBuilder) => { 
+					new Brackets((qb: WhereExpressionBuilder) => {
 						const { organizationId } = input;
 						qb.where(
 							[
 								{
 									organizationId: IsNull()
-								}, 
+								},
 								{
 									organizationId
 								}

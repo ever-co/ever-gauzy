@@ -3,10 +3,13 @@ import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IInvoice, IUser } from '@gauzy/contracts';
+import { firstValueFrom } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { saveAs } from 'file-saver';
 import { InvoicesService, Store, ToastrService } from '../../../@core/services';
+import { DeleteConfirmationComponent } from '../../../@shared/user/forms';
+import { NbDialogService } from '@nebular/theme';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -30,7 +33,8 @@ export class InvoiceViewComponent
 		private readonly invoicesService: InvoicesService,
 		private readonly toastrService: ToastrService,
 		private readonly store: Store,
-		private readonly router: Router
+		private readonly router: Router,
+		private readonly dialogService: NbDialogService
 	) {
 		super(translateService);
 	}
@@ -110,6 +114,33 @@ export class InvoiceViewComponent
 			]);
 		} else {
 			this.router.navigate([`/pages/accounting/invoices/edit`, id]);
+		}
+	}
+	async delete() {
+		const result = await firstValueFrom(
+			this.dialogService.open(DeleteConfirmationComponent, {
+				context: {
+					isRecord: false,
+					recordType: this.isEstimate
+						? this.getTranslation('INVOICES_PAGE.ESTIMATE')
+						: this.getTranslation('INVOICES_PAGE.INVOICE')
+				}
+			}).onClose
+		);
+
+		if (result) {
+			await this.invoicesService.delete(this.invoiceId);
+			if (this.isEstimate) {
+				this.toastrService.success(
+					'INVOICES_PAGE.INVOICES_DELETE_ESTIMATE'
+				);
+				this.router.navigate([`/pages/accounting/invoices/estimates`]);
+			} else {
+				this.toastrService.success(
+					'INVOICES_PAGE.INVOICES_DELETE_INVOICE'
+				);
+				this.router.navigate([`/pages/accounting/invoices`]);
+			}
 		}
 	}
 }

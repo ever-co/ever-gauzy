@@ -1,5 +1,5 @@
 import { KeyResultUpdate } from './keyresult-update.entity';
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { KeyResult } from '../keyresult/keyresult.entity';
 import { faker } from '@ever-co/faker';
 import {
@@ -13,13 +13,13 @@ import * as moment from 'moment';
 import { GoalTimeFrame } from '../goal-time-frame/goal-time-frame.entity';
 
 export const createDefaultKeyResultUpdates = async (
-	connection: Connection,
+	dataSource: DataSource,
 	tenant: ITenant,
 	organization: IOrganization,
 	keyResults: KeyResult[] | void
 ): Promise<KeyResultUpdate[]> => {
 	const defaultKeyResultUpdates = [];
-	const goalTimeFrames: GoalTimeFrame[] = await connection.manager.find(
+	const goalTimeFrames: GoalTimeFrame[] = await dataSource.manager.find(
 		GoalTimeFrame
 	);
 
@@ -85,14 +85,14 @@ export const createDefaultKeyResultUpdates = async (
 	});
 
 	return await insertDefaultKeyResultUpdates(
-		connection,
+		dataSource,
 		defaultKeyResultUpdates
 	);
 };
 
 const insertDefaultKeyResultUpdates = async (
-	connection: Connection,
+	dataSource: DataSource,
 	defaultKeyResultUpdates: KeyResultUpdate[]
 ): Promise<KeyResultUpdate[]> => {
-	return await connection.manager.save(defaultKeyResultUpdates);
+	return await dataSource.manager.save(defaultKeyResultUpdates);
 };

@@ -5,18 +5,7 @@
   -webkit-column-gap: 1rem;
   -moz-column-gap: 1rem;
   column-gap: 1rem;
-  -moz-column-gap: 1rem;
-  -webkit-column-gap: 1rem;
-  column-gap: 1rem;
   .window {
-    display: inline-block;
-    width: 100%;
-    -webkit-transition: 1s ease all;
-    transition: 1s ease all;
-    box-sizing: border-box;
-    -moz-box-sizing: border-box;
-    -webkit-box-sizing: border-box;
-    margin-bottom: 1rem;
     ga-window {
       cursor: pointer;
       ::ng-deep nb-card {
