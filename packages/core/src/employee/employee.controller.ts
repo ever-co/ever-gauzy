@@ -231,9 +231,9 @@ export class EmployeeController extends CrudController<Employee> {
 	async pagination(
 		@Query(new ValidationPipe({
 			transform: true
-		})) filter: PaginationParams<IEmployee>
+		})) options: PaginationParams<Employee>
 	): Promise<IPagination<IEmployee>> {
-		return this.employeeService.pagination(filter);
+		return this.employeeService.pagination(options);
 	}
 
 	/**
@@ -287,7 +287,7 @@ export class EmployeeController extends CrudController<Employee> {
 		@Param('id', UUIDValidationPipe) id: string,
 		@Query(new ValidationPipe({
 			transform: true
-		})) options: OptionParams<Employee>
+		})) options
 	): Promise<Employee> {
 		try {
 			return this.employeeService.findOneByIdString(id, {
