@@ -59,13 +59,18 @@ import { NbPopoverDirective } from '@nebular/theme';
 import { WidgetService } from '../../../@shared/dashboard/widget/widget.service';
 import { GuiDrag } from '../../../@shared/dashboard/interfaces/gui-drag.abstract';
 import { WindowService } from '../../../@shared/dashboard/window/window.service';
+import { SwiperComponent } from "swiper/angular";
+// import Swiper core and required modules
+import SwiperCore, { Virtual, Pagination, Navigation } from "swiper";
+
+// install Swiper modules
+SwiperCore.use([Pagination, Navigation, Virtual]);
 
 export enum RangePeriod {
 	DAY = 'DAY',
 	WEEK = 'WEEK',
 	PERIOD = 'PERIOD'
 }
-
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-time-tracking',
@@ -684,5 +689,13 @@ export class TimeTrackingComponent
 		isWindow
 			? this.windowService.undoDrag()
 			: this.widgetService.undoDrag();
+	}
+
+	public slideNext(swiper: SwiperComponent) {
+		swiper.swiperRef.slideNext(100);
+	}
+
+	public slidePrev(swiper: SwiperComponent) {
+		swiper.swiperRef.slidePrev(100);
 	}
 }
