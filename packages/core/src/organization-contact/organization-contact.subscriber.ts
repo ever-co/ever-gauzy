@@ -12,6 +12,15 @@ export class OrganizationContactSubscriber implements EntitySubscriberInterface<
     }
 
     /**
+    * Called after entity is loaded.
+    */
+    afterLoad(entity: OrganizationContact) {
+        if (!entity.imageUrl) {
+            entity.imageUrl = getDummyImage(330, 300, (entity.name).charAt(0).toUpperCase());
+        }
+    }
+
+    /**
     * Called before organization contact insertion.
     */
     beforeInsert(event: InsertEvent<OrganizationContact>) {
