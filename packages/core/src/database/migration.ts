@@ -301,5 +301,41 @@ function getTemplate(name: string, timestamp: number, upSqls: string[], downSqls
             ${downSqls.join(`
             `)}
         }
+
+        /**
+        * PostgresDB Up Migration
+        *
+        * @param queryRunner
+        */
+        public async postgresUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
+
+        }
+
+        /**
+        * PostgresDB Down Migration
+        *
+        * @param queryRunner
+        */
+        public async postgresDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
+
+        }
+
+        /**
+        * SqliteDB Up Migration
+        *
+        * @param queryRunner
+        */
+        public async sqliteUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
+
+        }
+
+        /**
+        * SqliteDB Down Migration
+        *
+        * @param queryRunner
+        */
+        public async sqliteDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
+
+        }
     }`;
 }
