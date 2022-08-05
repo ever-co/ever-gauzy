@@ -129,6 +129,7 @@ export async function generateMigration(pluginConfig: Partial<IPluginConfig>, op
              *  Gets contents of the migration file.
              */
             const fileContent = getTemplate(
+                connection,
                 options.name as any,
                 timestamp,
                 upSqls,
@@ -189,6 +190,7 @@ export async function generateMigration(pluginConfig: Partial<IPluginConfig>, op
          *  Gets contents of the migration file.
          */
         const fileContent = getTemplate(
+            connection,
             options.name as any,
             timestamp,
             [],
@@ -285,57 +287,83 @@ function queryParams(parameters: any[] | undefined): string {
 /**
  * Gets contents of the migration file.
  */
-function getTemplate(name: string, timestamp: number, upSqls: string[], downSqls: string[]): string {
-    return `import { MigrationInterface, QueryRunner } from "typeorm";
+function getTemplate(connection: DataSource, name: string, timestamp: number, upSqls: string[], downSqls: string[]): string {
+return `
+import { MigrationInterface, QueryRunner } from "typeorm";
 
-    export class ${camelCase(name, true)}${timestamp} implements MigrationInterface {
+export class ${camelCase(name, true)}${timestamp} implements MigrationInterface {
 
-        name = '${camelCase(name, true)}${timestamp}';
+    name = '${camelCase(name, true)}${timestamp}';
 
-        public async up(queryRunner: QueryRunner): Promise<any> {
-            ${upSqls.join(`
-            `)}
+    /**
+    * Up Migration
+    *
+    * @param queryRunner
+    */
+    public async up(queryRunner: QueryRunner): Promise<any> {
+        if (queryRunner.connection.options.type === 'sqlite') {
+            await this.sqliteUpQueryRunner(queryRunner);
+        } else {
+            await this.postgresUpQueryRunner(queryRunner);
         }
+    }
 
-        public async down(queryRunner: QueryRunner): Promise<any> {
-            ${downSqls.join(`
-            `)}
+    /**
+    * Down Migration
+    *
+    * @param queryRunner
+    */
+    public async down(queryRunner: QueryRunner): Promise<any> {
+        if (queryRunner.connection.options.type === 'sqlite') {
+            await this.sqliteDownQueryRunner(queryRunner);
+        } else {
+            await this.postgresDownQueryRunner(queryRunner);
         }
+    }
 
-        /**
-        * PostgresDB Up Migration
-        *
-        * @param queryRunner
-        */
-        public async postgresUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
+    /**
+    * PostgresDB Up Migration
+    *
+    * @param queryRunner
+    */
+    public async postgresUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
+        ${ (connection.options.type === 'postgres') ? upSqls.join(`
+        `) : [].join(`
+        `)}
+    }
 
-        }
+    /**
+    * PostgresDB Down Migration
+    *
+    * @param queryRunner
+    */
+    public async postgresDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
+        ${ (connection.options.type === 'postgres') ? downSqls.join(`
+        `) : [].join(`
+        `)}
+    }
 
-        /**
-        * PostgresDB Down Migration
-        *
-        * @param queryRunner
-        */
-        public async postgresDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
+    /**
+    * SqliteDB Up Migration
+    *
+    * @param queryRunner
+    */
+    public async sqliteUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
+        ${ (connection.options.type === 'sqlite') ? upSqls.join(`
+        `) : [].join(`
+        `)}
+    }
 
-        }
-
-        /**
-        * SqliteDB Up Migration
-        *
-        * @param queryRunner
-        */
-        public async sqliteUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
-
-        }
-
-        /**
-        * SqliteDB Down Migration
-        *
-        * @param queryRunner
-        */
-        public async sqliteDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
-
-        }
-    }`;
+    /**
+    * SqliteDB Down Migration
+    *
+    * @param queryRunner
+    */
+    public async sqliteDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
+        ${ (connection.options.type === 'sqlite') ? downSqls.join(`
+        `) : [].join(`
+        `)}
+    }
+}
+`;
 }
