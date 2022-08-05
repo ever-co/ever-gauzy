@@ -35,6 +35,11 @@
 @import './includes/dialog';
 @import './includes/scroll';
 
+// install swiper.js
+@import '~swiper/css';
+@import '~swiper/css/pagination';
+@import '~swiper/css/navigation';
+
 // install the framework and custom global styles
 @include nb-install() {
   @include angular-material();
