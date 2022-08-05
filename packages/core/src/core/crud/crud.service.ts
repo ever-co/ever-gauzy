@@ -18,6 +18,7 @@ import * as moment from 'moment';
 import { of as observableOf, throwError } from 'rxjs';
 import { mergeMap } from 'rxjs/operators';
 import { IPagination } from '@gauzy/contracts';
+import { isNotEmpty } from '@gauzy/common';
 import { BaseEntity } from '../entities/internal';
 import { ICrudService } from './icrud.service';
 import { ITryRequest } from './try-request';
@@ -77,7 +78,9 @@ export abstract class CrudService<T extends BaseEntity>
 	 */
 	public async paginate(filter?: any): Promise<IPagination<T>> {
 		try {
-			const query = this.repository.createQueryBuilder();
+			const query = this.repository.createQueryBuilder(
+				this.repository.metadata.tableName
+			);
 			query.setFindOptions({
 				skip: filter && filter.skip ? (filter.take * (filter.skip - 1)) : 0,
 				take: filter && filter.take ? (filter.take) : 10
@@ -91,6 +94,9 @@ export abstract class CrudService<T extends BaseEntity>
 					});
 				} else if (filter.orderBy) {
 					query.setFindOptions({ order: filter.orderBy });
+				}
+				if (isNotEmpty(filter.join)) {
+					query.setFindOptions({ join: filter.join });
 				}
 				if (filter.relations) {
 					query.setFindOptions({ relations: filter.relations });

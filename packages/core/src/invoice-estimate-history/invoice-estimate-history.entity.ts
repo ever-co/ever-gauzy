@@ -12,7 +12,7 @@ import {
 export class InvoiceEstimateHistory
 	extends TenantOrganizationBaseEntity
 	implements IInvoiceEstimateHistory {
-	
+
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@Column()
@@ -20,7 +20,7 @@ export class InvoiceEstimateHistory
 
 	/*
     |--------------------------------------------------------------------------
-    | @ManyToOne 
+    | @ManyToOne
     |--------------------------------------------------------------------------
     */
 	@ApiProperty({ type: () => User })
@@ -34,7 +34,7 @@ export class InvoiceEstimateHistory
 	@RelationId((it: InvoiceEstimateHistory) => it.user)
 	@IsString()
 	@Index()
-	@Column()
+	@Column({ nullable: true })
 	userId: string;
 
 	@ApiProperty({ type: () => Invoice })

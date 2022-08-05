@@ -1,16 +1,22 @@
 import { Module } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
 
-import { Role } from "./../../core/entities/internal";
-import { IsRoleAlreadyExistConstraint, IsRoleShouldExistConstraint } from "./constraints";
+import { Role, UserOrganization } from "./../../core/entities/internal";
+import {
+    IsOrganizationShouldBelongsToConstraint,
+    IsRoleAlreadyExistConstraint,
+    IsRoleShouldExistConstraint
+} from "./constraints";
 
 @Module({
     imports: [
         TypeOrmModule.forFeature([
-            Role
+            Role,
+            UserOrganization
         ])
     ],
     providers: [
+        IsOrganizationShouldBelongsToConstraint,
         IsRoleAlreadyExistConstraint,
         IsRoleShouldExistConstraint
     ]

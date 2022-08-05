@@ -39,6 +39,14 @@
   }
 }
 
+.cdk-drag-preview {
+  ::ng-deep {
+    nb-card nb-card-body {
+      filter: blur(10px);
+    }
+  }
+}
+
 .cdk-drop-list-dragging > *:not(.cdk-drag-placeholder) {
   display: none;
 }

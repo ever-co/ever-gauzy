@@ -1471,7 +1471,7 @@ export class StatisticService {
 					},
 					screenshots: true
 				},
-				take: 3,
+				take: 9,
 				order: {
 					startedAt: 'DESC'
 				}

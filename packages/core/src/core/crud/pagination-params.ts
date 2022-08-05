@@ -2,10 +2,11 @@
 // MIT License, see https://github.com/xmlking/ngx-starter-kit/blob/develop/LICENSE
 // Copyright (c) 2018 Sumanth Chinthagunta
 
-import { ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { FindOptionsOrder, FindOptionsRelationByString, FindOptionsRelations, FindOptionsWhereProperty } from 'typeorm';
-import { Transform, TransformFnParams } from 'class-transformer';
-import { IsOptional, Max, Min } from 'class-validator';
+import { Transform, TransformFnParams, Type } from 'class-transformer';
+import { IsNotEmpty, IsObject, IsOptional, Max, Min, ValidateNested } from 'class-validator';
+import { TenantOrganizationBaseDTO } from './../../core/dto';
 
 export abstract class OptionParams<T> {
 	/**
@@ -18,8 +19,11 @@ export abstract class OptionParams<T> {
 	/**
      * Simple condition that should be applied to match entities.
      */
-	@ApiPropertyOptional()
-	@IsOptional()
+	@ApiProperty()
+	@IsNotEmpty()
+	@IsObject()
+	@ValidateNested({ each: true })
+	@Type(() => TenantOrganizationBaseDTO)
 	readonly where?: {
 		[P in keyof T]?: FindOptionsWhereProperty<NonNullable<T[P]>>;
 	};
