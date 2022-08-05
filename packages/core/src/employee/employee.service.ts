@@ -119,12 +119,14 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 		};
 	}
 
-	public async pagination(filter: any) {
+	public async pagination(options: any) {
 		try {
 			const query = this.repository.createQueryBuilder('employee');
+			query.innerJoin(`${query.alias}.user`, 'user');
+			query.leftJoin(`${query.alias}.tags`, 'tags');
 			query.setFindOptions({
-				skip: filter && filter.skip ? (filter.take * (filter.skip - 1)) : 0,
-				take: filter && filter.take ? (filter.take) : 10
+				skip: options && options.skip ? (options.take * (options.skip - 1)) : 0,
+				take: options && options.take ? (options.take) : 10
 			});
 			query.setFindOptions({
 				relations: {
@@ -133,42 +135,46 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 				}
 			});
 			query.where((qb: SelectQueryBuilder<Employee>) => {
-				const tenantId = RequestContext.currentTenantId();
-				qb.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, { tenantId });
 				qb.andWhere(
 					new Brackets((web: WhereExpressionBuilder) => {
-						if (filter.where) {
-							const { where } = filter;
-							const { tenantId, organizationId } = where;
-
-							web.andWhere(`"${qb.alias}"."organizationId" = :organizationId`, { organizationId });
-							web.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, { tenantId });
+						web.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, {
+							tenantId: RequestContext.currentTenantId()
+						});
+						if (isNotEmpty(options.where)) {
+							const { where } = options;
+							if (isNotEmpty(where.organizationId)) {
+								const { organizationId } = where;
+								web.andWhere(`"${qb.alias}"."organizationId" = :organizationId`, {
+									organizationId
+								});
+							}
 						}
 					})
 				);
-				if (filter.where) {
-					query.andWhere(
+				if (isNotEmpty(options.where)) {
+					const { where } = options;
+					qb.andWhere(
 						new Brackets((web: WhereExpressionBuilder) => {
-							const { where } = filter;
-							if (isNotEmpty(Boolean(JSON.parse(where.isActive)))) {
+							if (
+								isNotEmpty(where.isActive) &&
+								isNotEmpty(Boolean(JSON.parse(where.isActive)))
+							) {
 								web.andWhere(`"${qb.alias}"."isActive" = :isActive`, {
 									isActive: true
 								});
 							}
 						})
 					);
-					query.andWhere(
+					qb.andWhere(
 						new Brackets((web: WhereExpressionBuilder) => {
-							const { where } = filter;
 							if (isNotEmpty(where.tags)) {
 								const { tags } = where;
 								web.andWhere(`"tags"."id" IN (:...tags)`, { tags });
 							}
 						})
 					);
-					query.andWhere(
+					qb.andWhere(
 						new Brackets((web: WhereExpressionBuilder) => {
-							const { where } = filter;
 							if (isNotEmpty(where.user)) {
 								if (isNotEmpty(where.user.name)) {
 									const keywords: string[] = where.user.name.split(' ');

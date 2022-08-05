@@ -80,7 +80,7 @@ import {
 export class Employee
 	extends TenantOrganizationBaseEntity
 	implements IEmployee {
-	
+
 	@ApiPropertyOptional({ type: () => Date })
 	@IsDate()
 	@IsOptional()
@@ -338,7 +338,7 @@ export class Employee
 
 	/*
     |--------------------------------------------------------------------------
-    | @OneToOne 
+    | @OneToOne
     |--------------------------------------------------------------------------
     */
 	@ApiProperty({ type: () => User })
@@ -381,9 +381,9 @@ export class Employee
 	@ApiProperty({ type: () => Candidate })
 	@OneToOne(() => Candidate, (candidate) => candidate.employee)
 	candidate?: ICandidate;
-	/*	
+	/*
     |--------------------------------------------------------------------------
-    | @ManyToOne 
+    | @ManyToOne
     |--------------------------------------------------------------------------
     */
 
@@ -402,7 +402,7 @@ export class Employee
 
 	/*
     |--------------------------------------------------------------------------
-    | @OneToMany 
+    | @OneToMany
     |--------------------------------------------------------------------------
     */
 
@@ -466,7 +466,7 @@ export class Employee
 		onDelete: 'SET NULL'
 	})
 	goals?: IGoal[];
-	
+
 	/**
 	 * Lead
 	 */
@@ -475,10 +475,10 @@ export class Employee
 		onDelete: 'SET NULL'
 	})
 	leads?: IGoal[];
-	
+
 	/*
     |--------------------------------------------------------------------------
-    | @ManyToMany 
+    | @ManyToMany
     |--------------------------------------------------------------------------
     */
 
@@ -509,15 +509,15 @@ export class Employee
 
 	// Organization Departments
 	@ApiProperty({ type: () => OrganizationDepartment })
-	@ManyToMany(() => OrganizationDepartment, (it) => it.members, { 
-		cascade: true 
+	@ManyToMany(() => OrganizationDepartment, (it) => it.members, {
+		cascade: true
 	})
 	organizationDepartments?: IOrganizationDepartment[];
 
 	// Organization Employment Types
 	@ApiProperty({ type: () => OrganizationEmploymentType })
-	@ManyToMany(() => OrganizationEmploymentType, (it) => it.members, { 
-		cascade: true 
+	@ManyToMany(() => OrganizationEmploymentType, (it) => it.members, {
+		cascade: true
 	})
 	organizationEmploymentTypes?: IOrganizationEmploymentType[];
 
