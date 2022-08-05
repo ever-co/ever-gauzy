@@ -64,12 +64,12 @@ import SwiperCore, { Virtual, Pagination, Navigation } from "swiper";
 
 // install Swiper modules
 SwiperCore.use([Pagination, Navigation, Virtual]);
+
 export enum RangePeriod {
 	DAY = 'DAY',
 	WEEK = 'WEEK',
 	PERIOD = 'PERIOD'
 }
-
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-time-tracking',
