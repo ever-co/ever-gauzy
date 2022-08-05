@@ -13,6 +13,7 @@ import {
 	OrganizationContact,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
+import { ColumnNumericTransformerPipe } from './../shared/pipes';
 
 @Entity('contact')
 export class Contact extends TenantOrganizationBaseEntity implements IContact {
@@ -67,13 +68,21 @@ export class Contact extends TenantOrganizationBaseEntity implements IContact {
 	@ApiPropertyOptional({ type: () => Number })
 	@IsNumber()
 	@IsOptional()
-	@Column({ nullable: true, type: 'float', scale: 6 })
+	@Column({
+		nullable: true,
+		type: 'numeric',
+		transformer: new ColumnNumericTransformerPipe()
+	})
 	latitude?: number;
 
 	@ApiPropertyOptional({ type: () => Number })
 	@IsNumber()
 	@IsOptional()
-	@Column({ nullable: true, type: 'float', scale: 6 })
+	@Column({
+		nullable: true,
+		type: 'numeric',
+		transformer: new ColumnNumericTransformerPipe()
+	})
 	longitude?: number;
 
 	@ApiProperty({ type: () => String })
@@ -102,7 +111,7 @@ export class Contact extends TenantOrganizationBaseEntity implements IContact {
 
 	/*
     |--------------------------------------------------------------------------
-    | @OneToOne 
+    | @OneToOne
     |--------------------------------------------------------------------------
     */
 
