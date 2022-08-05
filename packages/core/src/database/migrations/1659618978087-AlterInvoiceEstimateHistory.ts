@@ -152,6 +152,6 @@ export class AlterInvoiceEstimateHistory1659618978087 implements MigrationInterf
         await queryRunner.query(`CREATE INDEX "IDX_cc0ac824ba89deda98bb418e8c" ON "invoice_estimate_history" ("tenantId") `);
         await queryRunner.query(`CREATE INDEX "IDX_856f24297f120604f8ae294276" ON "invoice_estimate_history" ("organizationId") `);
         await queryRunner.query(`CREATE INDEX "IDX_da2893697d57368470952a76f6" ON "invoice_estimate_history" ("userId") `);
-    await queryRunner.query(`CREATE INDEX "IDX_31ec3d5a6b0985cec544c64217" ON "invoice_estimate_history" ("invoiceId") `);
+        await queryRunner.query(`CREATE INDEX "IDX_31ec3d5a6b0985cec544c64217" ON "invoice_estimate_history" ("invoiceId") `);
     }
 }

@@ -26,13 +26,12 @@ export class Tenant extends BaseEntity implements ITenant {
 	name?: string;
 
 	@ApiPropertyOptional({ type: () => String })
-	@Index()
 	@Column({ nullable: true })
 	logo?: string;
 
 	/*
     |--------------------------------------------------------------------------
-    | @OneToMany 
+    | @OneToMany
     |--------------------------------------------------------------------------
     */
 	@ApiProperty({ type: () => Organization })
