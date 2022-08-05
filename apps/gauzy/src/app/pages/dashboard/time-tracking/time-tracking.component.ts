@@ -6,7 +6,8 @@ import {
 	OnInit,
 	QueryList,
 	TemplateRef,
-	ViewChildren} from '@angular/core';
+	ViewChildren
+} from '@angular/core';
 import { Router } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
