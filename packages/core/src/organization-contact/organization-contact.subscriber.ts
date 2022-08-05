@@ -15,7 +15,7 @@ export class OrganizationContactSubscriber implements EntitySubscriberInterface<
     * Called after entity is loaded.
     */
     afterLoad(entity: OrganizationContact) {
-        if (!entity.imageUrl) {
+        if (!entity.imageUrl && entity.name)  {
             entity.imageUrl = getDummyImage(330, 300, (entity.name).charAt(0).toUpperCase());
         }
     }
