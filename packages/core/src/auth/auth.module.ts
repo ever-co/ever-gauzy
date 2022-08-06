@@ -12,7 +12,6 @@ import { JwtRefreshTokenStrategy, JwtStrategy } from './strategies';
 import { UserOrganizationService } from '../user-organization/user-organization.services';
 import { UserModule } from './../user/user.module';
 import { PasswordResetModule } from './../password-reset/password-reset.module';
-import { DataSourceModule } from './../database/data-source.module';
 
 const providers = [
 	AuthService,
@@ -26,7 +25,6 @@ const strategies = [
 
 @Module({
 	imports: [
-		DataSourceModule,
 		RouterModule.forRoutes([
 			{
 				path: '/auth',
@@ -36,7 +34,6 @@ const strategies = [
 		]),
 		SocialAuthModule.registerAsync({
 			imports: [
-				DataSourceModule,
 				AuthModule,
 				EmailModule,
 				UserModule,
