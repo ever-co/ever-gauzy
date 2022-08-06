@@ -1,4 +1,4 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { ColumnMetadata } from 'typeorm/metadata/ColumnMetadata';
@@ -539,8 +539,10 @@ export class ExportAllService implements OnModuleInit {
 		@InjectRepository(UserOrganization)
 		private readonly userOrganizationRepository: Repository<UserOrganization>,
 
-		private readonly configService: ConfigService,
-		private readonly dataSource: DataSource
+		@Inject(DataSource)
+		private readonly dataSource: DataSource,
+
+		private readonly configService: ConfigService
 	) {}
 
 	async onModuleInit() {
@@ -842,7 +844,7 @@ export class ExportAllService implements OnModuleInit {
 						sql += ` WHERE "${masterTable}"."tenantId" = '${where['tenantId']}'`;
 					}
 
-					const items = await this.dataSource.manager.query(sql);
+					const items = await repository.manager.query(sql);
 					if (isNotEmpty(items)) {
 						await this.csvWriter(referencTableName, items);
 					}

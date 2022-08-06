@@ -29,9 +29,7 @@ export class AlterOrganizationProject1650532321598 implements MigrationInterface
     * @param queryRunner
     */
     public async postgresUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
-        console.log('ALTER TABLE "organization_project" started...');
         await queryRunner.query(`ALTER TABLE "organization_project" ADD "membersCount" integer NOT NULL DEFAULT '0'`);
-        console.log('ALTER TABLE "organization_project" done...');
     }
 
     /**
