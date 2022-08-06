@@ -10,7 +10,8 @@ import {
 } from '@gauzy/contracts';
 import { CommandBus } from '@nestjs/cqrs';
 import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException, UnauthorizedException } from '@nestjs/common';
-import { DataSource } from 'typeorm';
+import { Repository } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
 import { SocialAuthService } from '@gauzy/auth';
 import { isNotEmpty } from '@gauzy/common';
 import * as bcrypt from 'bcrypt';
@@ -26,11 +27,13 @@ import { RequestContext } from './../core/context';
 @Injectable()
 export class AuthService extends SocialAuthService {
 	constructor(
+		@InjectRepository(User)
+		private readonly userRepository: Repository<User>,
+
 		private readonly userService: UserService,
 		private readonly emailService: EmailService,
 		private readonly userOrganizationService: UserOrganizationService,
-		private readonly commandBus: CommandBus,
-		private readonly dataSource: DataSource
+		private readonly commandBus: CommandBus
 	) {
 		super();
 	}
@@ -240,7 +243,7 @@ export class AuthService extends SocialAuthService {
 			const { sourceId } = input;
 			await this.commandBus.execute(
 				new ImportRecordUpdateOrCreateCommand({
-					entityType: this.dataSource.getRepository(User).metadata.tableName,
+					entityType: this.userRepository.metadata.tableName,
 					sourceId,
 					destinationId: user.id
 				})
