@@ -461,9 +461,9 @@ export class ContactsComponent
 					'contact'
 				],
 				join: {
-					alias: 'organization-contact',
+					alias: 'organization_contact',
 					leftJoin: {
-						members: 'organization-contact.members'
+						members: 'organization_contact.members'
 					}
 				},
 				where: {

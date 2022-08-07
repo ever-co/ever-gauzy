@@ -28,7 +28,6 @@ import { FilterArrayPipe } from '../../../@shared/pipes/filter-array.pipe';
 import { LeafletMapComponent } from '../../../@shared/forms/maps/leaflet/leaflet.component';
 import { ErrorHandlingService, OrganizationProjectsService, Store, ToastrService } from '../../../@core/services';
 import { FormHelpers } from '../../../@shared/forms';
-import { getDummyImage } from '@gauzy/core/src/core/utils';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -355,7 +354,7 @@ export class ContactMutationComponent extends TranslationBaseComponent
 		const { name, primaryEmail, primaryPhone, fax, tags = [] } = this.contMainForm.getRawValue();
 
 		let { imageUrl } = this.contMainForm.getRawValue();
-		if (!imageUrl) imageUrl =  getDummyImage(330, 300, (name).charAt(0).toUpperCase()) ;
+		
 		const location = this.locationFormDirective.getValue();
 		const { coordinates } = location['loc'];
 		delete location['loc'];
