@@ -9,7 +9,6 @@ import {
 	Put,
 	Param,
 	HttpCode,
-	UsePipes,
 	ValidationPipe
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
@@ -45,18 +44,19 @@ export class TimeOffRequestController extends CrudController<TimeOffRequest> {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_TIME_OFF_VIEW)
 	@Get('pagination')
-	@UsePipes(new ValidationPipe({ transform: true }))
 	async pagination(
-		@Query() filter: PaginationParams<ITimeOffRequest>
+		@Query(new ValidationPipe({
+			transform: true
+		})) options: PaginationParams<ITimeOffRequest>
 	): Promise<IPagination<ITimeOffRequest>> {
-		return this.timeOffRequestService.pagination(filter);
+		return this.timeOffRequestService.pagination(options);
 	}
 
 	/**
 	 * UPDATE time off request approved
-	 * 
-	 * @param id 
-	 * @returns 
+	 *
+	 * @param id
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'Time off request approved' })
 	@ApiResponse({
@@ -83,9 +83,9 @@ export class TimeOffRequestController extends CrudController<TimeOffRequest> {
 
 	/**
 	 * UPDATE time off request denied
-	 * 
-	 * @param id 
-	 * @returns 
+	 *
+	 * @param id
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'Time off request denied' })
 	@ApiResponse({
@@ -112,9 +112,9 @@ export class TimeOffRequestController extends CrudController<TimeOffRequest> {
 
 	/**
 	 * GET all time off requests
-	 * 
-	 * @param data 
-	 * @returns 
+	 *
+	 * @param data
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'Find all time off requests.' })
 	@ApiResponse({
@@ -141,10 +141,10 @@ export class TimeOffRequestController extends CrudController<TimeOffRequest> {
 
 	/**
 	 * CREATE new time off request/holiday
-	 * 
-	 * @param entity 
-	 * @param options 
-	 * @returns 
+	 *
+	 * @param entity
+	 * @param options
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'Create new time off request / holiday record' })
 	@ApiResponse({
@@ -163,10 +163,10 @@ export class TimeOffRequestController extends CrudController<TimeOffRequest> {
 
 	/**
 	 * UPDATE time off request by id
-	 * 
-	 * @param id 
-	 * @param entity 
-	 * @returns 
+	 *
+	 * @param id
+	 * @param entity
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'Time off request update' })
 	@ApiResponse({
