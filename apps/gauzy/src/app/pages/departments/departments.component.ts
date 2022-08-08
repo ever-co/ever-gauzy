@@ -279,9 +279,9 @@ export class DepartmentsComponent extends PaginationFilterBaseComponent
 				'tags'
 			],
 			join: {
-				alias: 'organization-department',
+				alias: 'organization_department',
 				leftJoin: {
-					tags: 'organization-department.tags'
+					tags: 'organization_department.tags'
 				},
 				...(this.filters.join) ? this.filters.join : {}
 			},
