@@ -469,13 +469,13 @@ export class TimeOffComponent extends PaginationFilterBaseComponent
 					...{
 						organizationId,
 						tenantId,
+						isHoliday: !this.displayHolidays,
+						includeArchived: this.includeArchived,
+						startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm'),
+						endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm'),
 						...(this.selectedEmployeeId
 							? { employeeIds: [ this.selectedEmployeeId ] }
 							: {}),
-						startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm'),
-						endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm'),
-						isHoliday: this.displayHolidays,
-						includeArchived: this.includeArchived
 					},
 					...this.filters.where
 				},
