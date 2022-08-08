@@ -1,6 +1,6 @@
-import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, Repository } from 'typeorm';
+import { Injectable, OnModuleInit } from '@nestjs/common';
+import { InjectConnection, InjectRepository } from '@nestjs/typeorm';
+import { Connection, Repository } from 'typeorm';
 import { ColumnMetadata } from 'typeorm/metadata/ColumnMetadata';
 import { BehaviorSubject } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
@@ -539,8 +539,8 @@ export class ExportAllService implements OnModuleInit {
 		@InjectRepository(UserOrganization)
 		private readonly userOrganizationRepository: Repository<UserOrganization>,
 
-		@Inject(DataSource)
-		private readonly dataSource: DataSource,
+		@InjectConnection()
+		private readonly dataSource: Connection,
 
 		private readonly configService: ConfigService
 	) {}
