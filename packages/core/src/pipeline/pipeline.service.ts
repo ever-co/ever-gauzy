@@ -1,17 +1,19 @@
 import { TenantAwareCrudService } from './../core/crud';
 import { Pipeline } from './pipeline.entity';
 import {
+	Connection,
+	DeepPartial,
 	FindOptionsWhere,
 	Like,
 	Repository,
 	UpdateResult
 } from 'typeorm';
-import { InjectRepository } from '@nestjs/typeorm';
+import { InjectConnection, InjectRepository } from '@nestjs/typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
-import { Injectable } from '@nestjs/common';
-import { Deal } from '../deal/deal.entity';
-import { User } from '../user/user.entity';
+import { IPipelineStage } from '@gauzy/contracts';
+import { BadGatewayException, Injectable } from '@nestjs/common';
 import { RequestContext } from '../core/context';
+import { Deal, PipelineStage, User } from './../core/entities/internal';
 
 @Injectable()
 export class PipelineService extends TenantAwareCrudService<Pipeline> {
@@ -23,7 +25,10 @@ export class PipelineService extends TenantAwareCrudService<Pipeline> {
 		protected pipelineRepository: Repository<Pipeline>,
 
 		@InjectRepository(User)
-		protected userRepository: Repository<User>
+		protected userRepository: Repository<User>,
+
+		@InjectConnection()
+		private readonly connection: Connection
 	) {
 		super(pipelineRepository);
 	}
@@ -55,11 +60,62 @@ export class PipelineService extends TenantAwareCrudService<Pipeline> {
 
 	public async update(
 		id: string | number | FindOptionsWhere<Pipeline>,
-		partialEntity: QueryDeepPartialEntity<Pipeline>
+		entity: QueryDeepPartialEntity<Pipeline>
 	): Promise<UpdateResult | Pipeline> {
-		const onePipeline = await this.repository.findOneBy({ id } as FindOptionsWhere<Pipeline>);
-		const pipeline = this.repository.create({ ...partialEntity, id: onePipeline.id } as Pipeline);
-		return await this.repository.update(id, pipeline);
+		const queryRunner = this.connection.createQueryRunner();
+		/**
+		 * Query runner connect & start transaction
+		 */
+		await queryRunner.connect();
+        await queryRunner.startTransaction();
+
+		try {
+			await queryRunner.manager.findOneByOrFail(Pipeline, {
+				id: id as any
+			});
+
+			const pipeline: Pipeline = await queryRunner.manager.create(Pipeline, { id: id as any, ...entity, } as any);
+			const updatedStages: IPipelineStage[] = pipeline.stages?.filter((stage: IPipelineStage) => stage.id) || [];
+
+			const deletedStages = await queryRunner.manager.findBy(PipelineStage, {
+				pipelineId: id as any
+			}).then((stages: IPipelineStage[]) => {
+				const requestStageIds = updatedStages.map(
+					(updatedStage: IPipelineStage) => updatedStage.id
+				);
+				return stages.filter(
+					(stage: IPipelineStage) => !requestStageIds.includes(stage.id)
+				);
+			});
+
+			const createdStages = pipeline.stages?.filter(
+				(stage: IPipelineStage) => !updatedStages.includes(stage)
+			) || [];
+
+			pipeline.__before_persist();
+			delete pipeline.stages;
+
+			await queryRunner.manager.remove(deletedStages);
+
+			for await (const stage of createdStages) {
+				await queryRunner.manager.save(queryRunner.manager.create(
+					PipelineStage,
+					stage as DeepPartial<PipelineStage>
+				));
+			}
+			for await (const stage of updatedStages) {
+				await queryRunner.manager.update(PipelineStage, stage.id, stage);
+			}
+
+			const saved = await queryRunner.manager.update(Pipeline, id, pipeline);
+			await queryRunner.commitTransaction();
+
+			return saved;
+		} catch (error) {
+			await queryRunner.rollbackTransaction();
+		} finally {
+			await queryRunner.release();
+        }
 	}
 
 	public pagination(filter: any) {
