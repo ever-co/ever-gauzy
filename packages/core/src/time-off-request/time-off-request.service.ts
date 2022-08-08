@@ -266,7 +266,6 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 					);
 				}
 			});
-			console.log(query.getQueryAndParameters());
 			const [items, total] = await query.getManyAndCount();
 			return { items, total };
 		} catch (error) {
