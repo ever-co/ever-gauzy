@@ -21,7 +21,7 @@ export class SeederModule {
 			providers: [],
 			imports: [
 				...getDynamicPluginsModules(),
-				DatabaseModule.forSeeder()
+				DatabaseModule
 			],
 			exports: []
 		} as DynamicModule;
