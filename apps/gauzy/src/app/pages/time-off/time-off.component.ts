@@ -457,10 +457,10 @@ export class TimeOffComponent extends PaginationFilterBaseComponent
 				endPoint: `${API_PREFIX}/time-off-request/pagination`,
 				relations: ['policy', 'employees', 'employees.user'],
 				join: {
-					alias: "time-off",
+					alias: "time_off_request",
 					leftJoin: {
-						policy: 'time-off.policy',
-						employees: 'time-off.employees',
+						policy: 'time_off_request.policy',
+						employees: 'time_off_request.employees',
 						user: 'employees.user'
 					},
 					...(this.filters.join) ? this.filters.join : {}
@@ -473,18 +473,11 @@ export class TimeOffComponent extends PaginationFilterBaseComponent
 							? { employeeIds: [ this.selectedEmployeeId ] }
 							: {}),
 						startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm'),
-						endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm')
+						endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm'),
+						isHoliday: this.displayHolidays,
+						includeArchived: this.includeArchived
 					},
 					...this.filters.where
-				},
-				filterMap: (timeOffs: ITimeOff[]) => {
-					if (!this.displayHolidays) {
-						timeOffs = timeOffs.filter((timeOff: ITimeOff) => !timeOff.isHoliday);
-					}
-					if (!this.includeArchived) {
-						timeOffs = timeOffs.filter((timeOff: ITimeOff) => !timeOff.isArchived);
-					}
-					return timeOffs;
 				},
 				resultMap: (timeOff: ITimeOff) => {
 					return Object.assign({}, timeOff, this.mapTimeOffRequest(timeOff));
