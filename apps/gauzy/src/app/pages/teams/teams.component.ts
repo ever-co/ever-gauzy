@@ -287,9 +287,9 @@ export class TeamsComponent extends PaginationFilterBaseComponent
 				...this.filters.where
 			},
 			join: {
-				alias: 'teams',
+				alias: 'organization_team',
 				leftJoin: {
-					tags: 'teams.tags'
+					tags: 'organization_team.tags'
 				}
 			},			
 			resultMap: (team: IOrganizationTeam) => {

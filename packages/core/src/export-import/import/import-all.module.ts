@@ -13,11 +13,9 @@ import { ImportRecordModule } from './../import-record';
 import { ImportHistoryModule } from './../import-history';
 import { TenantModule } from './../../tenant/tenant.module';
 import { UserModule } from './../../user/user.module';
-import { DataSourceModule } from './../../database/data-source.module';
 
 @Module({
 	imports: [
-		DataSourceModule,
 		RouterModule.forRoutes([
 			{
 				path: '/import',

@@ -20,7 +20,7 @@ import { DatabaseModule } from '../database/database.module';
 
 @Module({
 	imports: [
-		DatabaseModule.forRoot(),
+		DatabaseModule,
 		GraphqlApiModule,
 		GraphqlModule.registerAsync((configService: ConfigService) => ({
 			path: configService.graphqlConfigOptions.path,

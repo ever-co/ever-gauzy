@@ -10,7 +10,6 @@ import { DataSource, DataSourceOptions } from 'typeorm';
 import * as chalk from 'chalk';
 import * as moment from 'moment';
 import { environment as env, ConfigService } from '@gauzy/config';
-import { SEEDER_DB_CONNECTION } from '@gauzy/common';
 import {
 	IEmployee,
 	IOrganization,
@@ -2224,7 +2223,6 @@ export class SeedDataService {
 					...this.overrideDbConfig
 				}
 				const dataSource = new DataSource({
-					name: SEEDER_DB_CONNECTION,
 					...options
 				} as DataSourceOptions);
 

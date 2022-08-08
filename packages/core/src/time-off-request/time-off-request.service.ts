@@ -5,7 +5,7 @@ import {
 	ConflictException
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Between, Brackets, In, Like, Repository, WhereExpressionBuilder } from 'typeorm';
+import { Between, Brackets, Like, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import * as moment from 'moment';
 import {
 	ITimeOffCreateInput,
@@ -142,41 +142,135 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 		}
 	}
 
-	public pagination(filter?: any) {
-		if ('where' in filter) {
-			const { where } = filter;
-			if (isNotEmpty(where.employeeIds)) {
-				filter.where.employees = {
-					id: In(where.employeeIds)
+	/**
+	 * Time Off Request override pagination method
+	 *
+	 * @param options
+	 * @returns
+	 */
+	public async pagination(options: any) {
+		try {
+			const query = this.repository.createQueryBuilder('time_off_request');
+			query.setFindOptions({
+				skip: options && options.skip ? (options.take * (options.skip - 1)) : 0,
+				take: options && options.take ? (options.take) : 10
+			});
+			if (isNotEmpty(options)) {
+				if (isNotEmpty(options.join)) {
+					query.setFindOptions({ join: options.join });
 				}
-				delete filter['where']['employeeIds'];
+				if (isNotEmpty(options.relations)) {
+					query.setFindOptions({
+						relations: options.relations
+					});
+				}
 			}
-			if (where.startDate && where.endDate) {
-				filter.where.start = Between(
-					moment.utc(where.startDate).format('YYYY-MM-DD HH:mm:ss'),
-					moment.utc(where.endDate).format('YYYY-MM-DD HH:mm:ss')
+			query.where((qb: SelectQueryBuilder<TimeOffRequest>) => {
+				qb.andWhere(
+					new Brackets((web: WhereExpressionBuilder) => {
+						web.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, {
+							tenantId: RequestContext.currentTenantId()
+						});
+						if (isNotEmpty(options.where)) {
+							const { where } = options;
+							if (isNotEmpty(where.organizationId)) {
+								const { organizationId } = where;
+								web.andWhere(`"${qb.alias}"."organizationId" = :organizationId`, {
+									organizationId
+								});
+							}
+						}
+					})
 				);
-				delete filter['where']['startDate'];
-				delete filter['where']['endDate'];
-			} else {
-				filter.where.start = Between(
-					moment().startOf('month').utc().format('YYYY-MM-DD HH:mm:ss'),
-					moment().endOf('month').utc().format('YYYY-MM-DD HH:mm:ss')
-				);
-			}
-			if ('user' in where) {
-				const { firstName } = where.user;
-				if (isNotEmpty(firstName)) filter.where.user['firstName'] = Like(`%${firstName}%`);
-			}
-      		if ('policy' in where) {
-				const { name } = where.policy;
-				if (isNotEmpty(name)) filter.where.policy['name'] = Like(`%${name}%`);
-			}
-			if ('description' in where) {
-				const { description } = where;
-				if (isNotEmpty(description)) filter.where['description'] = Like(`%${description}%`);
-			}
+				if (isNotEmpty(options.where)) {
+					const { where } = options;
+					if (isNotEmpty(where.employeeIds)) {
+						const { employeeIds } = where;
+						qb.andWhere(`"employees"."id" IN (:...employeeIds)`, {
+							employeeIds
+						});
+					}
+					/**
+					 * Filter by dates or current month
+					 */
+					let startDate = moment().startOf('month').utc().format('YYYY-MM-DD HH:mm:ss');
+					let endDate = moment().endOf('month').utc().format('YYYY-MM-DD HH:mm:ss');
+					if (isNotEmpty(where.startDate) && isNotEmpty(where.endDate)) {
+						startDate = moment.utc(where.startDate).format('YYYY-MM-DD HH:mm:ss');
+						endDate = moment.utc(where.endDate).format('YYYY-MM-DD HH:mm:ss');
+					}
+					qb.andWhere(
+						new Brackets((web: WhereExpressionBuilder) => {
+							web.where(
+								[
+									{
+										start: Between(startDate, endDate)
+									},
+									{
+										end: Between(startDate, endDate)
+									}
+								]
+							);
+						})
+					);
+					if (
+						isNotEmpty(where.isHoliday) &&
+						isNotEmpty(Boolean(JSON.parse(where.isHoliday)))
+					) {
+						qb.andWhere({ isHoliday : false });
+					}
+					if (isNotEmpty(where.includeArchived)) {
+						qb.andWhere({
+							isArchived : Boolean(JSON.parse(where.includeArchived))
+						});
+					}
+					if (isNotEmpty(where.status)) {
+						qb.andWhere({
+							status : where.status
+						});
+					}
+					qb.andWhere(
+						new Brackets((web: WhereExpressionBuilder) => {
+							if (isNotEmpty(where.user) && isNotEmpty(where.user.name)) {
+								const keywords: string[] = where.user.name.split(' ');
+								keywords.forEach((keyword: string, index: number) => {
+									web.orWhere(`LOWER("user"."firstName") like LOWER(:keyword_${index})`, {
+										[`keyword_${index}`]:`%${keyword}%`
+									});
+									web.orWhere(`LOWER("user"."lastName") like LOWER(:${index}_keyword)`, {
+										[`${index}_keyword`]:`%${keyword}%`
+									});
+								});
+							}
+						})
+					);
+					qb.andWhere(
+						new Brackets((web: WhereExpressionBuilder) => {
+							if (isNotEmpty(where.description)) {
+								const { description } = where;
+								web.andWhere({
+									description: Like(`%${description}%`)
+								});
+							}
+							if (isNotEmpty(where.policy) && isNotEmpty(where.policy.name)) {
+								web.andWhere({
+									policy: {
+										name: Like(`%${where.policy.name}%`)
+									}
+								});
+								web.andWhere(`LOWER("policy"."name") like LOWER(:name)`, {
+									name:`%${where.policy.name}%`
+								});
+							}
+						})
+					);
+				}
+			});
+			const [items, total] = await query.getManyAndCount();
+			return { items, total };
+		} catch (error) {
+			console.log(error);
+			throw new BadRequestException(error);
 		}
-		return super.paginate(filter);
 	}
 }

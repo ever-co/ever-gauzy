@@ -44,7 +44,7 @@ export class ServerDataSource extends LocalDataSource {
                         if (this.conf.finalize) {
                             this.conf.finalize();
                         }
-                        // failed from server then call finalize method 
+                        // failed from server then call finalize method
                         throw new Error(error)
                     })
                 )
@@ -61,7 +61,6 @@ export class ServerDataSource extends LocalDataSource {
         let data = !!this.conf.dataKey ? rawData[this.conf.dataKey] : rawData;
         try {
             if (data instanceof Array) {
-                data = this.conf.filterMap ? this.conf.filterMap(data) : data;
                 return this.conf.resultMap ? data.map(this.conf.resultMap).filter(Boolean) : data;
             }
             throw new Error(`Data must be an array. Please check that data extracted from the server response by the key '${this.conf.dataKey}' exists and is array.`);
