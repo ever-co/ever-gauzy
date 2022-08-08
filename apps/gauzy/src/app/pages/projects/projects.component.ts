@@ -67,7 +67,7 @@ export class ProjectsComponent
 	disableButton = true;
 	selectedProject: IOrganizationProject;
 	smartTableSource: ServerDataSource;
-	project$: Subject<any> = new Subject();
+	project$: Subject<any> = this.subject$;
 
 	projectsTable: Ng2SmartTableComponent;
 	@ViewChild('projectsTable') set content(content: Ng2SmartTableComponent) {
@@ -275,9 +275,9 @@ export class ProjectsComponent
 				'tags'
 			],
 			join: {
-				alias: 'project',
+				alias: 'organization_project',
 				leftJoin: {
-					tags: 'project.tags'
+					tags: 'organization_project.tags'
 				}
 			},
 			where: { organizationId, tenantId, ...this.filters.where },
@@ -421,7 +421,6 @@ export class ProjectsComponent
 								tagIds.push(tag.id);
 							}
 							this.setFilter({ field: 'tags', search: tagIds });
-							this.project$.next(true);
 						},
 						sort: false
 					}
