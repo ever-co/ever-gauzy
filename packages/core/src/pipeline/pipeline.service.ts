@@ -1,5 +1,5 @@
-import { TenantAwareCrudService } from './../core/crud';
-import { Pipeline } from './pipeline.entity';
+import { Injectable } from '@nestjs/common';
+import { InjectConnection, InjectRepository } from '@nestjs/typeorm';
 import {
 	Connection,
 	DeepPartial,
@@ -8,12 +8,12 @@ import {
 	Repository,
 	UpdateResult
 } from 'typeorm';
-import { InjectConnection, InjectRepository } from '@nestjs/typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { IPipelineStage } from '@gauzy/contracts';
-import { BadGatewayException, Injectable } from '@nestjs/common';
-import { RequestContext } from '../core/context';
+import { Pipeline } from './pipeline.entity';
 import { Deal, PipelineStage, User } from './../core/entities/internal';
+import { RequestContext } from '../core/context';
+import { TenantAwareCrudService } from './../core/crud';
 
 @Injectable()
 export class PipelineService extends TenantAwareCrudService<Pipeline> {
