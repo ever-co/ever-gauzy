@@ -5,7 +5,7 @@ import {
 	ConflictException
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Between, Brackets, In, Like, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
+import { Between, Brackets, Like, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import * as moment from 'moment';
 import {
 	ITimeOffCreateInput,
