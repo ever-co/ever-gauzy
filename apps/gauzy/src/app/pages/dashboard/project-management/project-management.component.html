@@ -2,7 +2,7 @@
 	<nb-card-header>
 		<h4>
 			<ngx-header-title>
-				Project Management
+				{{ 'DASHBOARD_PAGE.PROJECT_MANAGEMENT' | translate }}
 			</ngx-header-title>
 		</h4>
 		<ng-container
@@ -16,6 +16,9 @@
 		</ng-container>
 	</nb-card-header>
 	<nb-card-body>
-		{{ 'PROJECT_MANAGEMENT_PAGE.THIS_TAB_WILL_SHOW_PROJECT_MANAGEMENT_CHARTS_AND_AGGREGATED_DATA' | translate }}
+		{{
+			'PROJECT_MANAGEMENT_PAGE.THIS_TAB_WILL_SHOW_PROJECT_MANAGEMENT_CHARTS_AND_AGGREGATED_DATA'
+				| translate
+		}}
 	</nb-card-body>
 </nb-card>
