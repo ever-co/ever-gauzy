@@ -23,6 +23,7 @@ export class DatabaseModule {
 	 */
 	static forRoot(): DynamicModule {
 		return {
+			global: true,
 			module: DatabaseModule,
 			imports: [
 				TypeOrmModule.forRootAsync({
@@ -56,6 +57,7 @@ export class DatabaseModule {
 	 */
 	static forSeeder(): DynamicModule {
 		return {
+			global: true,
 			module: DatabaseModule,
 			imports: [
 				TypeOrmModule.forRootAsync({

@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { DataSource } from 'typeorm';
 import { SeedDataService } from '@gauzy/core';
 import { createChangelog } from './changelog.seed';
 
@@ -17,8 +16,7 @@ export class ChangelogSeederService {
 	 *
 	 */
 	constructor(
-		private readonly seeder: SeedDataService,
-		private readonly dataSource: DataSource
+		private readonly seeder: SeedDataService
 	) {}
 
 	/**
@@ -28,7 +26,7 @@ export class ChangelogSeederService {
 	async createBasicDefault() {
 		await this.seeder.tryExecute(
 			'Default Changelog',
-			createChangelog(this.dataSource)
+			createChangelog(this.seeder.dataSource)
 		);
 	}
 }

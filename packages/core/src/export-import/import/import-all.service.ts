@@ -1,4 +1,4 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import { DataSource, IsNull, Repository } from 'typeorm';
 import { ColumnMetadata } from 'typeorm/metadata/ColumnMetadata';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -541,9 +541,11 @@ export class ImportAllService implements OnModuleInit {
 		@InjectRepository(UserOrganization)
 		private readonly userOrganizationRepository: Repository<UserOrganization>,
 
+		@Inject(DataSource)
+		private readonly dataSource: DataSource,
+
 		private readonly configService: ConfigService,
-		private readonly commandBus: CommandBus,
-		private readonly dataSource: DataSource
+		private readonly commandBus: CommandBus
 	) {}
 
 	async onModuleInit() {
@@ -796,7 +798,7 @@ export class ImportAllService implements OnModuleInit {
 				new ImportRecordFindOrFailCommand({
 					tenantId: RequestContext.currentTenantId(),
 					sourceId: data['organizationId'],
-					entityType: this.dataSource.getRepository(Organization).metadata.tableName
+					entityType: this.organizationRepository.metadata.tableName
 				})
 			);
 			data['organizationId'] = record ? record.destinationId : IsNull().value;
