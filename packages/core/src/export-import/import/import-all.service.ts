@@ -1,7 +1,7 @@
-import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
-import { DataSource, IsNull, Repository } from 'typeorm';
+import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Connection, IsNull, Repository } from 'typeorm';
 import { ColumnMetadata } from 'typeorm/metadata/ColumnMetadata';
-import { InjectRepository } from '@nestjs/typeorm';
+import { InjectConnection, InjectRepository } from '@nestjs/typeorm';
 import { CommandBus } from '@nestjs/cqrs';
 import * as fs from 'fs';
 import * as unzipper from 'unzipper';
@@ -541,8 +541,8 @@ export class ImportAllService implements OnModuleInit {
 		@InjectRepository(UserOrganization)
 		private readonly userOrganizationRepository: Repository<UserOrganization>,
 
-		@Inject(DataSource)
-		private readonly dataSource: DataSource,
+		@InjectConnection()
+		private readonly dataSource: Connection,
 
 		private readonly configService: ConfigService,
 		private readonly commandBus: CommandBus
