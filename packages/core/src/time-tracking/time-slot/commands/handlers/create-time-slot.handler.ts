@@ -14,8 +14,6 @@ import { TimeSlot } from './../../time-slot.entity';
 import { CreateTimeSlotCommand } from '../create-time-slot.command';
 import { BulkActivitiesSaveCommand } from '../../../activity/commands';
 import { TimeSlotMergeCommand } from './../time-slot-merge.command';
-import { getStartEndIntervals } from './../../utils';
-import { getDateRangeFormat } from './../../../../core/utils';
 
 @CommandHandler(CreateTimeSlotCommand)
 export class CreateTimeSlotHandler
