@@ -54,14 +54,14 @@ export class TimesheetFirstOrCreateHandler
 							[
 								{
 									startedAt: Between(
-										startedAt.format('YYYY-MM-DD HH:mm:ss.SSS'),
-										stoppedAt.format('YYYY-MM-DD HH:mm:ss.SSS')
+										startedAt.toDate(),
+										stoppedAt.toDate()
 									)
 								},
 								{
 									stoppedAt: Between(
-										startedAt.format('YYYY-MM-DD HH:mm:ss.SSS'),
-										stoppedAt.format('YYYY-MM-DD HH:mm:ss.SSS')
+										startedAt.toDate(),
+										stoppedAt.toDate()
 									)
 								}
 							]
@@ -79,13 +79,14 @@ export class TimesheetFirstOrCreateHandler
 			});
 			return await query.getOneOrFail();
 		} catch (error) {
+
 			/**
 			 * Create employee current week working timesheet
 			 */
 			return await this.commandBus.execute(
 				new TimesheetCreateCommand({
-					startedAt: new Date(startedAt.toDate()),
-					stoppedAt: new Date(stoppedAt.toDate()),
+					startedAt: moment(startedAt).toDate(),
+					stoppedAt: moment(stoppedAt).toDate(),
 					employeeId,
 					organizationId,
 					mouse: 0,
