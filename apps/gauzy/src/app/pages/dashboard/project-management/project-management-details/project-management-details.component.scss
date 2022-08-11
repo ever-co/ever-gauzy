@@ -88,8 +88,9 @@ $gap: 1rem;
     display: flex;
     flex-direction: column;
     gap: $gap;
+    height: $height;
     nb-card {
-      height: calc(($height - $gap) / 2);
+      height: 100%;
     }
   }
 }

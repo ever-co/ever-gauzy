@@ -123,7 +123,7 @@ export class ProjectManagementDetailsComponent
 			]
 		);
 
-		if (this._selectedEmployee && this._selectedEmployee.id) {
+		if (this.isSelectedEmployee) {
 			request['employeeId'] = this._selectedEmployee.id;
 			endPoint = `${API_PREFIX}/tasks/me/`;
 		}
@@ -164,7 +164,6 @@ export class ProjectManagementDetailsComponent
 			await this._smartTableSource.getElements();
 			this._tasks.push(...this._smartTableSource.getData());
 		} catch (error) {
-			console.log(error);
 			this._errorHandlingService.handleError(error);
 		}
 	}
@@ -196,6 +195,12 @@ export class ProjectManagementDetailsComponent
 
 	public set tasks(value: ITask[]) {
 		this._tasks = value;
+	}
+
+	public get isSelectedEmployee(): boolean {
+		return this._selectedEmployee && this._selectedEmployee.id
+			? true
+			: false;
 	}
 
 	ngOnDestroy(): void {}

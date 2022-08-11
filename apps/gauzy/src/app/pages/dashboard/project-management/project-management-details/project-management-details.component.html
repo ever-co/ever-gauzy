@@ -44,7 +44,7 @@
 				</button>
 			</nb-card-body>
 		</nb-card>
-		<nb-card class="recently">
+		<nb-card *ngIf="isSelectedEmployee" class="recently">
 			<nb-card-header>Recently Assigned</nb-card-header>
 			<nb-card-body>
 				<button status="primary" size="small" outline nbButton>
