@@ -14,8 +14,6 @@ import { TimeSlot } from './../../time-slot.entity';
 import { CreateTimeSlotCommand } from '../create-time-slot.command';
 import { BulkActivitiesSaveCommand } from '../../../activity/commands';
 import { TimeSlotMergeCommand } from './../time-slot-merge.command';
-import { getStartEndIntervals } from './../../utils';
-import { getDateRangeFormat } from './../../../../core/utils';
 
 @CommandHandler(CreateTimeSlotCommand)
 export class CreateTimeSlotHandler
@@ -73,6 +71,11 @@ export class CreateTimeSlotHandler
 			organizationId = employee ? employee.organizationId : null;
 		}
 
+		input.startedAt = moment(input.startedAt)
+			.utc()
+			.set('millisecond', 0)
+			.toDate();
+
 		const minDate = input.startedAt;
 		const maxDate = input.startedAt;
 
@@ -85,22 +88,10 @@ export class CreateTimeSlotHandler
 				}
 			});
 			query.where((qb: SelectQueryBuilder<TimeSlot>) => {
-				const { start, end } = getStartEndIntervals(
-					moment(minDate),
-					moment(maxDate)
-				);
-				const { start: startDate, end: endDate } = getDateRangeFormat(
-					moment.utc(start),
-					moment.utc(end)
-				);
 				qb.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, { tenantId });
 				qb.andWhere(`"${qb.alias}"."organizationId" = :organizationId`, { organizationId });
 				qb.andWhere(`"${qb.alias}"."employeeId" = :employeeId`, { employeeId });
-				qb.andWhere(`"${qb.alias}"."startedAt" BETWEEN :startDate AND :endDate`, {
-					startDate,
-					endDate
-				});
-				qb.addOrderBy(`"${qb.alias}"."createdAt"`, 'ASC');
+				qb.andWhere(`"${qb.alias}"."startedAt" = :startedAt`, { startedAt: input.startedAt });
 				console.log('Get Time Slot Query & Parameters', qb.getQueryAndParameters());
 			});
 			timeSlot = await query.getOneOrFail();
