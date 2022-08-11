@@ -1,0 +1,56 @@
+<div class="main">
+	<nb-card class="inbox">
+		<nb-card-header>Inbox</nb-card-header>
+		<nb-card-body> <div class="soon">⚡️ soon 🚀</div> </nb-card-body>
+	</nb-card>
+	<nb-card class="today">
+		<nb-card-header>Today</nb-card-header>
+		<nb-card-body>
+			<button status="primary" size="small" outline nbButton>
+				Plan my day
+			</button>
+			<div
+				infinite-scroll
+				(scrolled)="onScrollTasks()"
+				[scrollWindow]="false"
+				class="card-body-content"
+			>
+				<ng-container *ngFor="let task of tasks">
+					<div class="card todo">
+						<div
+							[ngClass]="{
+								checked: status.COMPLETED === task?.status
+							}"
+							class="dot"
+						></div>
+						<div class="">
+							<div class="status">{{ task?.status }}:</div>
+							<div class="title">
+								{{ task?.title }}
+							</div>
+						</div>
+					</div>
+				</ng-container>
+			</div>
+			<div class="more"><i class="fas fa-plus"></i> Add to do</div>
+		</nb-card-body>
+	</nb-card>
+	<div class="last-column">
+		<nb-card class="projects">
+			<nb-card-header>Most viewed projects</nb-card-header>
+			<nb-card-body>
+				<button status="primary" size="small" outline nbButton>
+					View All
+				</button>
+			</nb-card-body>
+		</nb-card>
+		<nb-card class="recently">
+			<nb-card-header>Recently Assigned</nb-card-header>
+			<nb-card-body>
+				<button status="primary" size="small" outline nbButton>
+					View All
+				</button>
+			</nb-card-body>
+		</nb-card>
+	</div>
+</div>
