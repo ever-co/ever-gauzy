@@ -37,6 +37,7 @@ import { DateRangeTitleModule } from '../../@shared/components/date-range-title'
 import { LineChartModule } from '../../@shared/report/charts/line-chart/line-chart.module';
 import { ProjectManagementDetailsComponent } from './project-management/project-management-details/project-management-details.component';
 import { InfiniteScrollModule } from 'ngx-infinite-scroll';
+import { TableComponentsModule } from '../../@shared';
 
 @NgModule({
 	imports: [
@@ -67,7 +68,8 @@ import { InfiniteScrollModule } from 'ngx-infinite-scroll';
 		SharedModule,
 		DateRangeTitleModule,
 		LineChartModule,
-		InfiniteScrollModule
+		InfiniteScrollModule,
+		TableComponentsModule
 	],
 	declarations: [
 		DashboardComponent,
