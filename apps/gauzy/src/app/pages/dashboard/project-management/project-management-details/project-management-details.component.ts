@@ -199,10 +199,11 @@ export class ProjectManagementDetailsComponent
 
 	private _sortProjectByPopularity() {
 		const count = {};
-		pluck(this.tasks, 'project').forEach(({ id }) => {
+		const projects = pluck(this.tasks, 'project');
+		projects.forEach(({ id }) => {
 			count[id] = (count[id] || 0) + 1;
 		});
-		this.projects = pluck(this.tasks, 'project').filter(
+		this.projects = projects.filter(
 			(value, index, self) =>
 				index === self.findIndex(({ id }) => id === value.id)
 		);
