@@ -35,6 +35,8 @@ import { HeaderTitleModule } from '../../@shared/components/header-title/header-
 import { SharedModule } from '../../@shared/shared.module';
 import { DateRangeTitleModule } from '../../@shared/components/date-range-title';
 import { LineChartModule } from '../../@shared/report/charts/line-chart/line-chart.module';
+import { ProjectManagementDetailsComponent } from './project-management/project-management-details/project-management-details.component';
+import { InfiniteScrollModule } from 'ngx-infinite-scroll';
 
 @NgModule({
 	imports: [
@@ -62,16 +64,18 @@ import { LineChartModule } from '../../@shared/report/charts/line-chart/line-cha
 		NbRouteTabsetModule,
 		TimeTrackingModule,
 		HeaderTitleModule,
-    	SharedModule,
+		SharedModule,
 		DateRangeTitleModule,
-		LineChartModule
+		LineChartModule,
+		InfiniteScrollModule
 	],
 	declarations: [
 		DashboardComponent,
 		AccountingComponent,
 		HumanResourcesComponent,
 		DataEntryShortcutsComponent,
-		ProjectManagementComponent
+		ProjectManagementComponent,
+		ProjectManagementDetailsComponent
 	],
 	providers: [IncomeService, ExpensesService, AuthService]
 })
