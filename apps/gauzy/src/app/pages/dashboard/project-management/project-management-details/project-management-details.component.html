@@ -42,6 +42,15 @@
 				<button status="primary" size="small" outline nbButton>
 					View All
 				</button>
+				<div class="card-body-content">
+					<ng-container *ngFor="let project of projects">
+						<div class="card project">
+							<ngx-project
+								[rowData]="{ project: project }"
+							></ngx-project>
+						</div>
+					</ng-container>
+				</div>
 			</nb-card-body>
 		</nb-card>
 		<nb-card *ngIf="isSelectedEmployee" class="recently">
@@ -50,6 +59,18 @@
 				<button status="primary" size="small" outline nbButton>
 					View All
 				</button>
+				<div class="card-body-content">
+					<ng-container *ngFor="let task of assigned">
+						<div class="card assigned">
+							<div class="">
+								<div class="title">
+									{{ task?.title }}
+								</div>
+								<ga-only-tags [rowData]="task"></ga-only-tags>
+							</div>
+						</div>
+					</ng-container>
+				</div>
 			</nb-card-body>
 		</nb-card>
 	</div>

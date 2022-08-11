@@ -17,11 +17,6 @@ $gap: 1rem;
   .today {
     width: 35%;
     height: $height;
-    nb-card-body .card-body-content {
-      display: flex;
-      flex-direction: column;
-      gap: $gap;
-    }
     .more {
       font-size: 12px;
       font-weight: 600;
@@ -89,8 +84,29 @@ $gap: 1rem;
     flex-direction: column;
     gap: $gap;
     height: $height;
+    .card-body-content {
+      max-height: calc(100% - 55px);
+    }
+    .card.project {
+      display: flex;
+      gap: $gap;
+      align-items: baseline;
+      flex-direction: row;
+      padding: 10px;
+      border: unset;
+      box-shadow: var(--gauzy-shadow);
+      background-color: var(--gauzy-card-1);
+      border-radius: var(--border-radius);
+      width: 100%;
+    }
     nb-card {
       height: 100%;
+    }
+    .card.assigned {
+      padding: 10px;
+      background-color: transparent;
+      border: 2px solid var(--gauzy-border-default-color);
+      border-radius: var(--border-radius);
     }
   }
 }
@@ -126,6 +142,9 @@ $gap: 1rem;
         overflow: auto;
         max-height: calc(100% - 104px);
         width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: $gap;
       }
     }
   }

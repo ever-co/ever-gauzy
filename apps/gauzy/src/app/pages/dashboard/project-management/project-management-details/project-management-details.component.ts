@@ -23,6 +23,7 @@ import {
 	PaginationFilterBaseComponent
 } from 'apps/gauzy/src/app/@shared/pagination/pagination-filter-base.component';
 import { TranslateService } from '@ngx-translate/core';
+import { pluck } from 'underscore';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -163,6 +164,10 @@ export class ProjectManagementDetailsComponent
 			this._smartTableSource.setPaging(activePage, itemsPerPage, false);
 			await this._smartTableSource.getElements();
 			this._tasks.push(...this._smartTableSource.getData());
+			this.projects = pluck(this.tasks, 'project').filter(
+				(value, index, self) =>
+					index === self.findIndex(({ id }) => id === value.id)
+			);
 		} catch (error) {
 			this._errorHandlingService.handleError(error);
 		}
@@ -201,6 +206,17 @@ export class ProjectManagementDetailsComponent
 		return this._selectedEmployee && this._selectedEmployee.id
 			? true
 			: false;
+	}
+
+	public get projects(): IOrganizationProject[] {
+		return this._projects;
+	}
+	public set projects(value: IOrganizationProject[]) {
+		this._projects = value;
+	}
+
+	public get assigned(): ITask[] {
+		return this.tasks.filter(({ status }) => status === this.status.TODO);
 	}
 
 	ngOnDestroy(): void {}
