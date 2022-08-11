@@ -133,7 +133,9 @@ export class AccountingComponent
 						endDate
 					}
 				);
-			this.generateDataForChart();
+			do {
+				this.generateDataForChart();
+			} while (!this.aggregatedEmployeeStatistics.chart.length);
 			this.isLoading = false;
 		} catch (error) {
 			console.log(
