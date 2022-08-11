@@ -11,8 +11,7 @@ import { HttpClient } from '@angular/common/http';
 import {
 	API_PREFIX,
 	ErrorHandlingService,
-	Store,
-	TasksService
+	Store
 } from 'apps/gauzy/src/app/@core';
 import { combineLatest, debounceTime, filter, Subject } from 'rxjs';
 import { tap } from 'rxjs/operators';
@@ -48,7 +47,6 @@ export class ProjectManagementDetailsComponent
 	constructor(
 		readonly translateService: TranslateService,
 		private readonly _httpClient: HttpClient,
-		private readonly _taskService: TasksService,
 		private readonly _store: Store,
 		private readonly _errorHandlingService: ErrorHandlingService
 	) {
@@ -164,10 +162,7 @@ export class ProjectManagementDetailsComponent
 			this._smartTableSource.setPaging(activePage, itemsPerPage, false);
 			await this._smartTableSource.getElements();
 			this._tasks.push(...this._smartTableSource.getData());
-			this.projects = pluck(this.tasks, 'project').filter(
-				(value, index, self) =>
-					index === self.findIndex(({ id }) => id === value.id)
-			);
+			this._sortProjectByPopularity();
 		} catch (error) {
 			this._errorHandlingService.handleError(error);
 		}
@@ -184,6 +179,20 @@ export class ProjectManagementDetailsComponent
 					: this.minItemPerPage
 			}
 		};
+	}
+
+	private _sortProjectByPopularity() {
+		const count = {};
+		pluck(this.tasks, 'project').forEach(({ id }) => {
+			count[id] = (count[id] || 0) + 1;
+		});
+		this.projects = pluck(this.tasks, 'project').filter(
+			(value, index, self) =>
+				index === self.findIndex(({ id }) => id === value.id)
+		);
+		this.projects.sort(
+			(current, next) => -(count[current.id] - count[next.id])
+		);
 	}
 
 	public onScrollTasks(): void {
