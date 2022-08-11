@@ -1,0 +1,202 @@
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { ServerDataSource } from './../../../../@core/utils/smart-table';
+import {
+	IOrganization,
+	IOrganizationProject,
+	ISelectedEmployee,
+	ITask,
+	TaskStatusEnum
+} from '@gauzy/contracts';
+import { HttpClient } from '@angular/common/http';
+import {
+	API_PREFIX,
+	ErrorHandlingService,
+	Store,
+	TasksService
+} from 'apps/gauzy/src/app/@core';
+import { combineLatest, debounceTime, filter, Subject } from 'rxjs';
+import { tap } from 'rxjs/operators';
+import { distinctUntilChange } from 'packages/common-angular/dist';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import {
+	IPaginationBase,
+	PaginationFilterBaseComponent
+} from 'apps/gauzy/src/app/@shared/pagination/pagination-filter-base.component';
+import { TranslateService } from '@ngx-translate/core';
+
+@UntilDestroy({ checkProperties: true })
+@Component({
+	selector: 'gauzy-project-management-details',
+	templateUrl: './project-management-details.component.html',
+	styleUrls: ['./project-management-details.component.scss']
+})
+export class ProjectManagementDetailsComponent
+	extends PaginationFilterBaseComponent
+	implements OnInit, OnDestroy
+{
+	private _smartTableSource: ServerDataSource;
+	private _tasks: ITask[] = [];
+	private _selectedEmployee: ISelectedEmployee;
+	private _selectedProject: IOrganizationProject;
+	private _organization: IOrganization;
+	private _task$: Subject<any> = this.subject$;
+	private _settingsSmartTable: object;
+	private _projects: IOrganizationProject[] = [];
+	public status = TaskStatusEnum;
+
+	constructor(
+		readonly translateService: TranslateService,
+		private readonly _httpClient: HttpClient,
+		private readonly _taskService: TasksService,
+		private readonly _store: Store,
+		private readonly _errorHandlingService: ErrorHandlingService
+	) {
+		super(translateService);
+	}
+
+	ngOnInit(): void {
+		const storeOrganization$ = this._store.selectedOrganization$;
+		const storeEmployee$ = this._store.selectedEmployee$;
+		const storeProject$ = this._store.selectedProject$;
+		combineLatest([storeEmployee$, storeOrganization$, storeProject$])
+			.pipe(
+				debounceTime(300),
+				filter(
+					([organization, employee]) => !!organization && !!employee
+				),
+				distinctUntilChange(),
+				tap(([employee, organization, project]) => {
+					this._organization = organization;
+					this._selectedEmployee = employee;
+					this._selectedProject = project;
+					this.refreshPagination();
+					this.tasks = [];
+					this._task$.next(true);
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this._task$
+			.pipe(
+				debounceTime(400),
+				tap(() => this._getTasks()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.pagination$
+			.pipe(
+				debounceTime(100),
+				distinctUntilChange(),
+				tap(() => this._task$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this._loadSmartTableSettings();
+	}
+
+	private _setSmartTableSource() {
+		if (!this._organization) {
+			return;
+		}
+		const { tenantId } = this._store.user;
+		const { id: organizationId } = this._organization;
+		const request = {};
+		const relations = [];
+		let endPoint: string = `${API_PREFIX}/tasks/pagination`;
+		const join: any = {
+			alias: 'task',
+			leftJoinAndSelect: {
+				members: 'task.members',
+				user: 'members.user'
+			}
+		};
+		relations.push(
+			...[
+				'project',
+				'project.organization',
+				'tags',
+				'teams',
+				'teams.members',
+				'teams.members.employee',
+				'teams.members.employee.user',
+				'creator'
+			]
+		);
+
+		if (this._selectedEmployee && this._selectedEmployee.id) {
+			request['employeeId'] = this._selectedEmployee.id;
+			endPoint = `${API_PREFIX}/tasks/me/`;
+		}
+
+		if (this._selectedProject && this._selectedProject.id) {
+			request['projectId'] = this._selectedProject.id;
+		}
+
+		this._smartTableSource = new ServerDataSource(this._httpClient, {
+			endPoint,
+			relations,
+			join,
+			where: {
+				...{ organizationId, tenantId },
+				...request,
+				...this.filters.where
+			},
+			resultMap: (task: ITask) => {
+				return Object.assign({}, task, { ...task });
+			},
+			finalize: () => {
+				this.setPagination({
+					...this.getPagination(),
+					totalItems: this._smartTableSource.count()
+				});
+			}
+		});
+	}
+
+	private async _getTasks() {
+		if (!this._organization) {
+			return;
+		}
+		try {
+			this._setSmartTableSource();
+			const { activePage, itemsPerPage } = this.pagination;
+			this._smartTableSource.setPaging(activePage, itemsPerPage, false);
+			await this._smartTableSource.getElements();
+			this._tasks.push(...this._smartTableSource.getData());
+		} catch (error) {
+			console.log(error);
+			this._errorHandlingService.handleError(error);
+		}
+	}
+
+	private _loadSmartTableSettings() {
+		const pagination: IPaginationBase = this.getPagination();
+		this._settingsSmartTable = {
+			actions: false,
+			pager: {
+				display: false,
+				perPage: pagination
+					? pagination.itemsPerPage
+					: this.minItemPerPage
+			}
+		};
+	}
+
+	public onScrollTasks(): void {
+		const activePage = this.pagination.activePage + 1;
+		this.setPagination({
+			...this.getPagination(),
+			activePage: activePage
+		});
+	}
+
+	public get tasks(): ITask[] {
+		return this._tasks;
+	}
+
+	public set tasks(value: ITask[]) {
+		this._tasks = value;
+	}
+
+	ngOnDestroy(): void {}
+}
