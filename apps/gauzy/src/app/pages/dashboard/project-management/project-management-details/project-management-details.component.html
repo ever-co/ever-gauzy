@@ -32,15 +32,22 @@
 					</div>
 				</ng-container>
 			</div>
-			<div class="more"><i class="fas fa-plus"></i> Add to do</div>
+			<div (click)="addTodo()" class="more">
+				<i class="fas fa-plus"></i> Add to do
+			</div>
 		</nb-card-body>
 	</nb-card>
 	<div class="last-column">
-		<nb-card class="projects">
+		<nb-card
+			[ngStyle]="{
+				height: !isSelectedEmployee ? '100%' : ''
+			}"
+			class="projects"
+		>
 			<nb-card-header>Most viewed projects</nb-card-header>
 			<nb-card-body>
 				<button status="primary" size="small" outline nbButton>
-					View All
+					{{ 'BUTTONS.VIEW_ALL' | translate }}
 				</button>
 				<div class="card-body-content">
 					<ng-container *ngFor="let project of projects">
@@ -57,7 +64,7 @@
 			<nb-card-header>Recently Assigned</nb-card-header>
 			<nb-card-body>
 				<button status="primary" size="small" outline nbButton>
-					View All
+					{{ 'BUTTONS.VIEW_ALL' | translate }}
 				</button>
 				<div class="card-body-content">
 					<ng-container *ngFor="let task of assigned">

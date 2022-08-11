@@ -11,9 +11,17 @@ import { HttpClient } from '@angular/common/http';
 import {
 	API_PREFIX,
 	ErrorHandlingService,
-	Store
+	Store,
+	TasksService
 } from 'apps/gauzy/src/app/@core';
-import { combineLatest, debounceTime, filter, Subject } from 'rxjs';
+import {
+	combineLatest,
+	debounceTime,
+	filter,
+	first,
+	firstValueFrom,
+	Subject
+} from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { distinctUntilChange } from 'packages/common-angular/dist';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -23,6 +31,9 @@ import {
 } from 'apps/gauzy/src/app/@shared/pagination/pagination-filter-base.component';
 import { TranslateService } from '@ngx-translate/core';
 import { pluck } from 'underscore';
+import { NbDialogService } from '@nebular/theme';
+import { AddTaskDialogComponent } from 'apps/gauzy/src/app/@shared/tasks/add-task-dialog/add-task-dialog.component';
+import { MyTaskDialogComponent } from '../../../tasks/components/my-task-dialog/my-task-dialog.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -48,7 +59,9 @@ export class ProjectManagementDetailsComponent
 		readonly translateService: TranslateService,
 		private readonly _httpClient: HttpClient,
 		private readonly _store: Store,
-		private readonly _errorHandlingService: ErrorHandlingService
+		private readonly _errorHandlingService: ErrorHandlingService,
+		private readonly _dialogService: NbDialogService,
+		private readonly _tasksService: TasksService
 	) {
 		super(translateService);
 	}
@@ -160,6 +173,9 @@ export class ProjectManagementDetailsComponent
 			this._setSmartTableSource();
 			const { activePage, itemsPerPage } = this.pagination;
 			this._smartTableSource.setPaging(activePage, itemsPerPage, false);
+			this._smartTableSource.setSort([
+				{ field: 'dueDate', direction: 'asc' }
+			]);
 			await this._smartTableSource.getElements();
 			this._tasks.push(...this._smartTableSource.getData());
 			this._sortProjectByPopularity();
@@ -220,12 +236,56 @@ export class ProjectManagementDetailsComponent
 	public get projects(): IOrganizationProject[] {
 		return this._projects;
 	}
+
 	public set projects(value: IOrganizationProject[]) {
 		this._projects = value;
 	}
 
 	public get assigned(): ITask[] {
 		return this.tasks.filter(({ status }) => status === this.status.TODO);
+	}
+
+	public async addTodo() {
+		let dialog: any;
+		if (!this.isSelectedEmployee) {
+			dialog = this._dialogService.open(AddTaskDialogComponent, {
+				context: {}
+			});
+		} else {
+			dialog = this._dialogService.open(MyTaskDialogComponent, {
+				context: {}
+			});
+		}
+		if (dialog) {
+			const data: any = await firstValueFrom(
+				dialog.onClose.pipe(first())
+			);
+			if (data) {
+				const { estimateDays, estimateHours, estimateMinutes } = data;
+				const estimate =
+					estimateDays * 24 * 60 * 60 +
+					estimateHours * 60 * 60 +
+					estimateMinutes * 60;
+
+				estimate ? (data.estimate = estimate) : (data.estimate = null);
+
+				const { tenantId } = this._store.user;
+				const { id: organizationId } = this._organization;
+				const payload = Object.assign(data, {
+					organizationId,
+					tenantId
+				});
+				this._tasksService
+					.createTask(payload)
+					.pipe(
+						tap(() => this.refreshPagination()),
+						tap(() => (this.tasks = [])),
+						tap(() => this._task$.next(true)),
+						untilDestroyed(this)
+					)
+					.subscribe();
+			}
+		}
 	}
 
 	ngOnDestroy(): void {}

@@ -100,7 +100,7 @@ $gap: 1rem;
       width: 100%;
     }
     nb-card {
-      height: 100%;
+      height: calc(50% - 0.5rem);
     }
     .card.assigned {
       padding: 10px;
