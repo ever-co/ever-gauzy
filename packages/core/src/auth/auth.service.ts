@@ -9,7 +9,13 @@ import {
 	IPasswordReset
 } from '@gauzy/contracts';
 import { CommandBus } from '@nestjs/cqrs';
-import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import {
+	BadRequestException,
+	Injectable,
+	InternalServerErrorException,
+	NotFoundException,
+	UnauthorizedException
+} from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { SocialAuthService } from '@gauzy/auth';
@@ -46,43 +52,47 @@ export class AuthService extends SocialAuthService {
 	 * @returns
 	 */
 	async login(email: string, password: string): Promise<IAuthResponse | null> {
-		const user = await this.userService.findOneByOptions({
-			where: {
-				email
-			},
-			relations: {
-				employee: true,
-				role: {
-					rolePermissions: true
+		try {
+			const user = await this.userService.findOneByOptions({
+				where: {
+					email
+				},
+				relations: {
+					employee: true,
+					role: {
+						rolePermissions: true
+					}
+				},
+				order: {
+					createdAt: 'DESC'
 				}
-			},
-			relationLoadStrategy: 'query',
-			order: {
-				createdAt: 'DESC'
+			});
+
+			// If users are inactive
+			if (user.isActive === false) {
+				throw new UnauthorizedException();
 			}
-		});
+			// If employees are inactive
+			if (isNotEmpty(user.employee) && user.employee.isActive === false) {
+				throw new UnauthorizedException();
+			}
+			// If password is not matching with any user
+			if (!(await bcrypt.compare(password, user.hash))) {
+				throw new UnauthorizedException();
+			}
 
-		if (!user || user.isActive === false) {
+			const access_token = await this.getJwtAccessToken(user);
+			const refresh_token = await this.getJwtRefreshToken(user);
+
+			await this.userService.setCurrentRefreshToken(refresh_token, user.id);
+			return {
+				user,
+				token: access_token,
+				refresh_token: refresh_token
+			};
+		} catch (error) {
 			throw new UnauthorizedException();
 		}
-		// If employees are inactive
-		if (isNotEmpty(user.employee) && user.employee.isActive === false) {
-			throw new UnauthorizedException();
-		}
-		// If password is not matching with any user
-		if (!(await bcrypt.compare(password, user.hash))) {
-			throw new UnauthorizedException();
-		}
-
-		const access_token = await this.getJwtAccessToken(user);
-		const refresh_token = await this.getJwtRefreshToken(user);
-
-		await this.userService.setCurrentRefreshToken(refresh_token, user.id);
-		return {
-			user,
-			token: access_token,
-			refresh_token: refresh_token
-		};
 	}
 
 	/**
@@ -335,7 +345,7 @@ export class AuthService extends SocialAuthService {
 					value
 				);
 				if (userExist) {
-					const user = await this.userService.getUserByEmail(value);
+					const user = await this.userService.getOAuthLoginEmail(value);
 					const token = await this.getJwtAccessToken(user);
 
 					response = {
