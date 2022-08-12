@@ -141,7 +141,14 @@ export class UserService extends TenantAwareCrudService<User> {
 			if (entity['hash']) {
 				entity['hash'] = await this.getPasswordHash(entity['hash']);
 			}
-			return await this.repository.save(entity);
+		 	await this.repository.save(entity);
+
+			try {
+				return await this.repository.findOneBy({
+					id: id as string,
+					tenantId: RequestContext.currentTenantId()
+				});
+			} catch {}
 		} catch (error) {
 			throw new ForbiddenException();
 		}
