@@ -12,8 +12,8 @@ import {
 	ErrorHandlingService,
 	Store,
 	TasksService
-} from 'apps/gauzy/src/app/@core';
-import { API_PREFIX } from '../../../../@core/constants';
+} from 'apps/gauzy/src/app/@core/services';
+import { API_PREFIX } from 'apps/gauzy/src/app/@core/constants';
 import {
 	combineLatest,
 	debounceTime,
