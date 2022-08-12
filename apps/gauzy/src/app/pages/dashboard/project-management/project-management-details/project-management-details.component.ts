@@ -195,6 +195,10 @@ export class ProjectManagementDetailsComponent
 		);
 	}
 
+	private get _isMyTask() {
+		return this._selectedEmployee.id === this._store.user.employeeId;
+	}
+
 	public onScrollTasks(): void {
 		const activePage = this.pagination.activePage + 1;
 		this.setPagination({
@@ -231,7 +235,7 @@ export class ProjectManagementDetailsComponent
 
 	public async addTodo() {
 		let dialog: any;
-		if (!this.isSelectedEmployee) {
+		if (!this._isMyTask) {
 			dialog = this._dialogService.open(AddTaskDialogComponent, {
 				context: {}
 			});
