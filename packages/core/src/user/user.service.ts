@@ -54,7 +54,7 @@ export class UserService extends TenantAwareCrudService<User> {
 	}
 
 	/**
-	 * Check if, email address exist or not in database
+	 * Check if, email address exist
 	 *
 	 * @param email
 	 * @returns
@@ -66,33 +66,27 @@ export class UserService extends TenantAwareCrudService<User> {
 	}
 
 	async checkIfExists(id: string): Promise<boolean> {
-		const count = await this.repository
-			.createQueryBuilder('user')
-			.where('user.id = :id', { id })
-			.getCount();
-		return count > 0;
+		return !!(await this.repository.findOneBy({
+			id
+		}));
 	}
 
 	async checkIfExistsThirdParty(thirdPartyId: string): Promise<boolean> {
-		const count = await this.repository
-			.createQueryBuilder('user')
-			.where('user.thirdPartyId = :thirdPartyId', { thirdPartyId })
-			.getCount();
-		return count > 0;
+		return !!(await this.repository.findOneBy({
+			thirdPartyId
+		}));
 	}
 
 	async getIfExists(id: string): Promise<User> {
-		return await this.repository
-			.createQueryBuilder('user')
-			.where('user.id = :id', { id })
-			.getOne();
+		return await this.repository.findOneBy({
+			id
+		});
 	}
 
 	async getIfExistsThirdParty(thirdPartyId: string): Promise<User> {
-		return await this.repository
-			.createQueryBuilder('user')
-			.where('user.thirdPartyId = :thirdPartyId', { thirdPartyId })
-			.getOne();
+		return await this.repository.findOneBy({
+			thirdPartyId
+		});
 	}
 
 	async createOne(user: User): Promise<InsertResult> {
@@ -100,22 +94,26 @@ export class UserService extends TenantAwareCrudService<User> {
 	}
 
 	async changePassword(id: string, hash: string) {
-		const user = await this.findOneByIdString(id);
-		user.hash = hash;
-		return await this.repository.save(user);
+		try {
+			const user = await this.findOneByIdString(id);
+			user.hash = hash;
+			return await this.repository.save(user);
+		} catch (error) {
+			throw new ForbiddenException();
+		}
 	}
 
 	/*
 	 * Update user profile
 	 */
 	async updateProfile(
-		id: string,
+		id: string | number,
 		entity: User,
 	): Promise<IUser> {
 		/**
 		 * If user has only own profile edit permission
 		 */
-		 if (
+		if (
 			RequestContext.hasPermission(PermissionsEnum.PROFILE_EDIT) &&
 			!RequestContext.hasPermission(PermissionsEnum.ORG_USERS_EDIT)
 		) {
@@ -125,11 +123,13 @@ export class UserService extends TenantAwareCrudService<User> {
 		}
 		let user: IUser;
 		try {
-			user = await this.findOneByIdString(id, {
-				relations: {
-					role: true
-				}
-			});
+			if (typeof(id) == 'string') {
+				user = await this.findOneByIdString(id, {
+					relations: {
+						role: true
+					}
+				});
+			}
 			/**
 			 * If user try to update Super Admin without permission
 			 */
