@@ -39,6 +39,7 @@ import { ProjectManagementDetailsComponent } from './project-management/project-
 import { InfiniteScrollModule } from 'ngx-infinite-scroll';
 import { TableComponentsModule } from '../../@shared';
 import { NoDataMessageModule } from '../../@shared/no-data-message/no-data-message.module';
+import { WorkInProgressModule } from '../work-in-progress/work-in-progress.module';
 
 @NgModule({
 	imports: [
@@ -71,7 +72,8 @@ import { NoDataMessageModule } from '../../@shared/no-data-message/no-data-messa
 		LineChartModule,
 		InfiniteScrollModule,
 		TableComponentsModule,
-		NoDataMessageModule
+		NoDataMessageModule,
+		WorkInProgressModule
 	],
 	declarations: [
 		DashboardComponent,
