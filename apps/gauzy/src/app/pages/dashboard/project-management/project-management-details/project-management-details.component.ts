@@ -23,7 +23,7 @@ import {
 	Subject
 } from 'rxjs';
 import { tap } from 'rxjs/operators';
-import { distinctUntilChange } from 'packages/common-angular/dist';
+import { distinctUntilChange } from '@gauzy/common-angular';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
 	IPaginationBase,
