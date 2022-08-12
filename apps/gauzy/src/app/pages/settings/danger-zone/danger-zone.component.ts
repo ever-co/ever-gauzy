@@ -19,7 +19,7 @@ import { Store, ToastrService, UsersService } from '../../../@core/services';
 export class DangerZoneComponent
 	extends TranslationBaseComponent
 	implements OnInit {
-	
+
 	environment: Environment = environment;
 	user: IUser;
 	loading: boolean;
@@ -90,7 +90,7 @@ export class DangerZoneComponent
 			});
 	}
 
-	ngOnInit() { 
+	ngOnInit() {
 		this.store.user$
 			.pipe(
 				filter((user) => !!user),
@@ -118,12 +118,11 @@ export class DangerZoneComponent
 					try {
 						this.loading = true;
 						this.process = 0;
-						setTimeout(() => { this.process = 20; }, 200); 
+						setTimeout(() => { this.process = 20; }, 200);
 						setTimeout(() => { this.process = 50; }, 200);
 
-						const { id: userId } = this.user;
 						this.userService
-							.deleteAllData(userId)
+							.deleteAllData()
 							.then((organization: any) => {
 								if (organization) {
 									this.store.selectedOrganization = organization;

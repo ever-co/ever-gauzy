@@ -10,7 +10,8 @@ import {
 	UseInterceptors,
 	UsePipes,
 	ValidationPipe,
-	UseGuards
+	UseGuards,
+	BadRequestException
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiOkResponse, ApiBadRequestResponse } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
@@ -113,12 +114,15 @@ export class AuthController {
 
 	@Post('/request-password')
 	@Public()
-	@UsePipes(new ValidationPipe({ transform: true }))
+	@UsePipes(new ValidationPipe({
+		transform: true,
+		whitelist: true
+	}))
 	async requestPassword(
 		@Body() body: ResetPasswordRequestDTO,
 		@Req() request: Request,
 		@I18nLang() languageCode: LanguagesEnum
-	): Promise<{ token: string } | null> {
+	): Promise<boolean | BadRequestException> {
 		return await this.authService.requestPassword(
 			body,
 			languageCode,

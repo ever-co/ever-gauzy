@@ -68,10 +68,7 @@ export class LayoutSelectorComponent implements OnInit, OnDestroy {
 			return;
 		}
 		try {
-			await this.userService.updatePreferredComponentLayout(
-				this.user.id,
-				payload
-			);
+			await this.userService.updatePreferredComponentLayout(payload);
 		} catch (error) {
 			console.error(`Failed to update user preferred component layout`);
 		}
