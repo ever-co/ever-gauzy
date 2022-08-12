@@ -237,7 +237,14 @@ export class ProjectManagementDetailsComponent
 		let dialog: any;
 		if (!this._isMyTask) {
 			dialog = this._dialogService.open(AddTaskDialogComponent, {
-				context: {}
+				context: {
+					selectedTask: this.isSelectedEmployee
+						? ({
+								members: [{ ...this._selectedEmployee }] as any,
+								status: this.status.TODO
+						  } as ITask)
+						: ({} as ITask)
+				}
 			});
 		} else {
 			dialog = this._dialogService.open(MyTaskDialogComponent, {
