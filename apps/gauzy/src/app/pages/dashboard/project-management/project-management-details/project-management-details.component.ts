@@ -117,29 +117,11 @@ export class ProjectManagementDetailsComponent
 		const request = {};
 		const relations = [];
 		let endPoint: string = `${API_PREFIX}/tasks/pagination`;
-		const join: any = {
-			alias: 'task',
-			leftJoinAndSelect: {
-				members: 'task.members',
-				user: 'members.user'
-			}
-		};
-		relations.push(
-			...[
-				'project',
-				'project.organization',
-				'tags',
-				'teams',
-				'teams.members',
-				'teams.members.employee',
-				'teams.members.employee.user',
-				'creator'
-			]
-		);
+		relations.push(...['project', 'tags']);
 
 		if (this.isSelectedEmployee) {
 			request['employeeId'] = this._selectedEmployee.id;
-			endPoint = `${API_PREFIX}/tasks/me/`;
+			endPoint = `${API_PREFIX}/tasks/employee`;
 		}
 
 		if (this._selectedProject && this._selectedProject.id) {
@@ -149,7 +131,6 @@ export class ProjectManagementDetailsComponent
 		this._smartTableSource = new ServerDataSource(this._httpClient, {
 			endPoint,
 			relations,
-			join,
 			where: {
 				...{ organizationId, tenantId },
 				...request,
