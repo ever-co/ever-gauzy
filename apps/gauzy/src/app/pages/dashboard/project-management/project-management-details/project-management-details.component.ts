@@ -135,15 +135,6 @@ export class ProjectManagementDetailsComponent
 				...{ organizationId, tenantId },
 				...request,
 				...this.filters.where
-			},
-			resultMap: (task: ITask) => {
-				return Object.assign({}, task, { ...task });
-			},
-			finalize: () => {
-				this.setPagination({
-					...this.getPagination(),
-					totalItems: this._smartTableSource.count()
-				});
 			}
 		});
 	}
@@ -195,7 +186,7 @@ export class ProjectManagementDetailsComponent
 		);
 	}
 
-	private get _isMyTask() {
+	public get isMyTask() {
 		return this._selectedEmployee.id === this._store.user.employeeId;
 	}
 
@@ -237,7 +228,7 @@ export class ProjectManagementDetailsComponent
 
 	public async addTodo() {
 		let dialog: any;
-		if (!this._isMyTask) {
+		if (!this.isMyTask) {
 			dialog = this._dialogService.open(AddTaskDialogComponent, {
 				context: {
 					selectedTask: this.isSelectedEmployee

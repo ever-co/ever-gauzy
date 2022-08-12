@@ -14,7 +14,7 @@
 				(scrolled)="onScrollTasks()"
 				[scrollWindow]="false"
 				class="card-body-content"
-				[ngStyle]="{ height: !tasks?.length ? '100%' : ''}"
+				[ngStyle]="{ height: !tasks?.length ? '100%' : '' }"
 			>
 				<ng-container *ngFor="let task of tasks">
 					<div class="card todo">
@@ -82,6 +82,7 @@
 			<nb-card-header>Recently Assigned</nb-card-header>
 			<nb-card-body>
 				<button
+					*ngIf="isMyTask"
 					(click)="redirectToMyTasks()"
 					status="primary"
 					size="small"
@@ -90,7 +91,12 @@
 				>
 					{{ 'BUTTONS.VIEW_ALL' | translate }}
 				</button>
-				<div class="card-body-content">
+				<div
+					[ngStyle]="{
+						'max-height': !isMyTask ? 'calc(100% - 28px)' : ''
+					}"
+					class="card-body-content"
+				>
 					<ng-container *ngFor="let task of assigned">
 						<div class="card assigned">
 							<div class="">
