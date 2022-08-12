@@ -6,14 +6,14 @@ import {
 	IAuthResponse,
 	IUser,
 	IChangePasswordRequest,
-	IPasswordReset
+	IPasswordReset,
+	IResetPasswordRequest
 } from '@gauzy/contracts';
 import { CommandBus } from '@nestjs/cqrs';
 import {
 	BadRequestException,
 	Injectable,
 	InternalServerErrorException,
-	NotFoundException,
 	UnauthorizedException
 } from '@nestjs/common';
 import { Repository } from 'typeorm';
@@ -104,60 +104,60 @@ export class AuthService extends SocialAuthService {
 	 * @returns
 	 */
 	async requestPassword(
-		request: any,
+		request: IResetPasswordRequest,
 		languageCode: LanguagesEnum,
 		originUrl?: string
-	): Promise<{ token: string } | null> {
+	): Promise<boolean | BadRequestException> {
+		try {
+			await this.userRepository.findOneByOrFail({
+				email: request.email
+			});
+		} catch (error) {
+			throw new BadRequestException('Forgot password request failed!');
+		}
+
 		try {
 			const user = await this.userService.findOneByOptions({
 				where: {
-					...request
+					email: request.email
 				},
 				relations: {
 					role: true,
 					employee: true
 				}
 			});
-			try {
-				/**
-				 * Create password reset request
-				 */
-				const token = await this.getJwtAccessToken(user);
-				if (token) {
-					await this.commandBus.execute(
-						new PasswordResetCreateCommand({
-							email: user.email,
-							token
-						})
-					);
-
-					const { id: userId } = user;
-
-					const url = `${environment.clientBaseUrl}/#/auth/reset-password?token=${token}`;
-					const { organizationId } = await this.userOrganizationService.findOneByOptions({
-						where: {
-							userId
-						}
-					});
-
-					this.emailService.requestPassword(
-						user,
-						url,
-						languageCode,
-						organizationId,
-						originUrl
-					);
-					return {
+			/**
+			 * Create password reset request
+			 */
+			const token = await this.getJwtAccessToken(user);
+			if (token) {
+				await this.commandBus.execute(
+					new PasswordResetCreateCommand({
+						email: user.email,
 						token
-					};
-				}
-			} catch (error) {
-				console.log(error);
-				throw new InternalServerErrorException();
+					})
+				);
+
+				const { id: userId, tenantId } = user;
+
+				const url = `${environment.clientBaseUrl}/#/auth/reset-password?token=${token}`;
+				const { organizationId } = await this.userOrganizationService.findOneByOptions({
+					where: {
+						userId,
+						tenantId
+					}
+				});
+				this.emailService.requestPassword(
+					user,
+					url,
+					languageCode,
+					organizationId,
+					originUrl
+				);
+				return true;
 			}
 		} catch (error) {
-			console.log(error);
-			throw new NotFoundException('Email is not correct, please try again.');
+			throw new BadRequestException('Forgot password request failed!');
 		}
 	}
 
