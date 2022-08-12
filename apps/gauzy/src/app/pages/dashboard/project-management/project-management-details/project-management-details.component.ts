@@ -9,11 +9,11 @@ import {
 } from '@gauzy/contracts';
 import { HttpClient } from '@angular/common/http';
 import {
-	API_PREFIX,
 	ErrorHandlingService,
 	Store,
 	TasksService
 } from 'apps/gauzy/src/app/@core';
+import { API_PREFIX } from '../../../../@core/constants';
 import {
 	combineLatest,
 	debounceTime,
