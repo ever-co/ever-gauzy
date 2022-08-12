@@ -26,7 +26,9 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	}
 
 	async getMyTasks(filter: any) {
-		const { where : { organizationId, employeeId, projectId, status, title, organizationSprintId = null } } = filter;
+		const {
+			where: { employeeId }
+		} = filter;
 
 		//If user is not an employee, then this will return 404
 		const employee = await this.employeeService.findOneByOptions({
@@ -36,22 +38,33 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		});
 
 		if (!employee || employee.id !== employeeId) {
-			throw new HttpException(
-				'Unauthorized',
-				HttpStatus.UNAUTHORIZED
-			);
+			throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
 		}
 
+		return this.getEmployeeTasks(filter);
+	}
+
+	async getEmployeeTasks(filter: any) {
+		const {
+			where: {
+				organizationId,
+				employeeId,
+				projectId,
+				status,
+				title,
+				organizationSprintId = null
+			}
+		} = filter;
 		const query = this.taskRepository.createQueryBuilder('task');
 		if (filter.page && filter.limit) {
 			query.skip(filter.limit * (filter.page - 1));
 			query.take(filter.limit);
 		}
 
-		query.skip(filter.skip ? (filter.take * (filter.skip - 1)) : 0);
-		query.take(filter.take ? (filter.take) : 10);
+		query.skip(filter.skip ? filter.take * (filter.skip - 1) : 0);
+		query.take(filter.take ? filter.take : 10);
 
-		const [ items, total ] = await query
+		const [items, total] = await query
 			.leftJoinAndSelect(`${query.alias}.project`, 'project')
 			.leftJoinAndSelect(`${query.alias}.tags`, 'tags')
 			.leftJoinAndSelect(`${query.alias}.organizationSprint`, 'sprint')
@@ -60,36 +73,54 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			.leftJoinAndSelect(`${query.alias}.members`, 'members')
 			.leftJoinAndSelect('members.user', 'user')
 			.where((qb: SelectQueryBuilder<Task>) => {
-				qb
-				.andWhere((cb) => {
+				qb.andWhere((cb) => {
 					const subQuery = cb
 						.subQuery()
 						.select('"task_employee"."taskId"')
 						.from('task_employee', 'task_employee');
 					if (employeeId) {
-						subQuery.andWhere('"task_employee"."employeeId" = :employeeId', {
-							employeeId
-						});
+						subQuery.andWhere(
+							'"task_employee"."employeeId" = :employeeId',
+							{
+								employeeId
+							}
+						);
 					}
-					return '"task_members"."taskId" IN ' + subQuery.distinct(true).getQuery();
+					return (
+						'"task_members"."taskId" IN ' +
+						subQuery.distinct(true).getQuery()
+					);
 				})
-				.andWhere(`"${qb.alias}"."organizationId" = :organizationId`, { organizationId })
-				.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, { tenantId: RequestContext.currentTenantId() });
+					.andWhere(
+						`"${qb.alias}"."organizationId" = :organizationId`,
+						{ organizationId }
+					)
+					.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, {
+						tenantId: RequestContext.currentTenantId()
+					});
 
 				if (projectId) {
-					query.andWhere(`"${qb.alias}"."projectId" = :projectId`, { projectId });
+					query.andWhere(`"${qb.alias}"."projectId" = :projectId`, {
+						projectId
+					});
 				}
 				if (status) {
-					query.andWhere(`"${qb.alias}"."status" = :status`, { status });
+					query.andWhere(`"${qb.alias}"."status" = :status`, {
+						status
+					});
 				}
 				if (title) {
-					query.andWhere(`"${qb.alias}"."title" LIKE :title`, { title: `%${title}%` });
+					query.andWhere(`"${qb.alias}"."title" LIKE :title`, {
+						title: `%${title}%`
+					});
 				}
 				if (organizationSprintId) {
-					query.andWhere(`"${qb.alias}"."organizationSprintId" IS NULL`);
+					query.andWhere(
+						`"${qb.alias}"."organizationSprintId" IS NULL`
+					);
 				}
 			})
-			.getManyAndCount()
+			.getManyAndCount();
 		return { items, total };
 	}
 
