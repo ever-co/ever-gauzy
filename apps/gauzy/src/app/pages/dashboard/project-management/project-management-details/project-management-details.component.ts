@@ -230,7 +230,9 @@ export class ProjectManagementDetailsComponent
 	}
 
 	public get assigned(): ITask[] {
-		return this.tasks.filter(({ status }) => status === this.status.TODO);
+		return this.tasks
+			.filter(({ status }) => status === this.status.TODO)
+			.reverse();
 	}
 
 	public async addTodo() {
