@@ -1,13 +1,19 @@
 <div class="main">
 	<nb-card class="inbox">
-		<nb-card-header>Inbox</nb-card-header>
-		<nb-card-body> <div class="soon">⚡️ soon 🚀</div> </nb-card-body>
+		<nb-card-header>{{
+			'DASHBOARD_PAGE.INBOX' | translate
+		}}</nb-card-header>
+		<nb-card-body>
+			<div class="soon">
+				⚡️ {{ 'INTEGRATIONS.COMING_SOON' | translate }} 🚀
+			</div>
+		</nb-card-body>
 	</nb-card>
 	<nb-card class="today">
-		<nb-card-header>Today</nb-card-header>
+		<nb-card-header>{{ 'TIMESHEET.TODAY' | translate }}</nb-card-header>
 		<nb-card-body>
 			<button status="primary" size="small" outline nbButton>
-				Plan my day
+				{{ 'DASHBOARD_PAGE.PLAN_MY_DAY' | translate }}
 			</button>
 			<div
 				infinite-scroll
@@ -24,7 +30,7 @@
 							}"
 							class="dot"
 						></div>
-						<div class="">
+						<div>
 							<div class="status">{{ task?.status }}:</div>
 							<div class="title">
 								{{ task?.title }}
@@ -34,12 +40,13 @@
 				</ng-container>
 				<ng-template [ngIf]="!tasks?.length">
 					<ngx-no-data-message
-						[message]="'No Tasks'"
+						[message]="'REPORT_PAGE.NO_TASK' | translate"
 					></ngx-no-data-message>
 				</ng-template>
 			</div>
 			<div (click)="addTodo()" class="more">
-				<i class="fas fa-plus"></i> Add to do
+				<i class="fas fa-plus"></i>
+				{{ 'DASHBOARD_PAGE.ADD_TODO' | translate }}
 			</div>
 		</nb-card-body>
 	</nb-card>
@@ -50,7 +57,9 @@
 			}"
 			class="projects"
 		>
-			<nb-card-header>Most viewed projects</nb-card-header>
+			<nb-card-header>{{
+				'DASHBOARD_PAGE.MOST_VIEW_PROJECTS' | translate
+			}}</nb-card-header>
 			<nb-card-body>
 				<button
 					*ngxPermissionsOnly="'ALL_ORG_VIEW'"
@@ -72,14 +81,16 @@
 					</ng-container>
 					<ng-template [ngIf]="!projects?.length">
 						<ngx-no-data-message
-							[message]="'No project'"
+							[message]="'TIMESHEET.NO_PROJECT' | translate"
 						></ngx-no-data-message>
 					</ng-template>
 				</div>
 			</nb-card-body>
 		</nb-card>
 		<nb-card *ngIf="isSelectedEmployee" class="recently">
-			<nb-card-header>Recently Assigned</nb-card-header>
+			<nb-card-header>{{
+				'DASHBOARD_PAGE.RECENTLY_ASSIGNED' | translate
+			}}</nb-card-header>
 			<nb-card-body>
 				<button
 					*ngIf="isMyTask"
@@ -109,7 +120,9 @@
 					</ng-container>
 					<ng-template [ngIf]="!assigned?.length">
 						<ngx-no-data-message
-							[message]="'No assigned Todo'"
+							[message]="
+								'DASHBOARD_PAGE.NO_TODO_ASSIGNED' | translate
+							"
 						></ngx-no-data-message>
 					</ng-template>
 				</div>
