@@ -85,6 +85,7 @@ $gap: 1rem;
     gap: $gap;
     height: $height;
     .card-body-content {
+      height: 100%;
       max-height: calc(100% - 55px);
     }
     .card.project {
@@ -145,6 +146,14 @@ $gap: 1rem;
         display: flex;
         flex-direction: column;
         gap: $gap;
+      }
+    }
+  }
+  ::ng-deep {
+    ngx-no-data-message {
+      height: 100%;
+      .no-data-found {
+        height: 100% !important;
       }
     }
   }

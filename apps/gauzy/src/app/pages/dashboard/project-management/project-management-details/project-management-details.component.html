@@ -14,6 +14,7 @@
 				(scrolled)="onScrollTasks()"
 				[scrollWindow]="false"
 				class="card-body-content"
+				[ngStyle]="{ height: !tasks?.length ? '100%' : ''}"
 			>
 				<ng-container *ngFor="let task of tasks">
 					<div class="card todo">
@@ -31,6 +32,11 @@
 						</div>
 					</div>
 				</ng-container>
+				<ng-template [ngIf]="!tasks?.length">
+					<ngx-no-data-message
+						[message]="'No Tasks'"
+					></ngx-no-data-message>
+				</ng-template>
 			</div>
 			<div (click)="addTodo()" class="more">
 				<i class="fas fa-plus"></i> Add to do
@@ -64,6 +70,11 @@
 							></ngx-project>
 						</div>
 					</ng-container>
+					<ng-template [ngIf]="!projects?.length">
+						<ngx-no-data-message
+							[message]="'No project'"
+						></ngx-no-data-message>
+					</ng-template>
 				</div>
 			</nb-card-body>
 		</nb-card>
@@ -90,6 +101,11 @@
 							</div>
 						</div>
 					</ng-container>
+					<ng-template [ngIf]="!assigned?.length">
+						<ngx-no-data-message
+							[message]="'No assigned Todo'"
+						></ngx-no-data-message>
+					</ng-template>
 				</div>
 			</nb-card-body>
 		</nb-card>
