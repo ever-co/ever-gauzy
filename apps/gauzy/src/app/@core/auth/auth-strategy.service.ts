@@ -48,7 +48,7 @@ export class AuthStrategy extends NbAuthStrategy {
 				success: '/',
 				failure: null
 			},
-			defaultErrors: ['Email is not correct, please try again.'],
+			defaultErrors: ['Something went wrong, please try again.'],
 			defaultMessages: [
 				'Reset password instructions have been sent to your email.'
 			]
@@ -169,6 +169,12 @@ export class AuthStrategy extends NbAuthStrategy {
 		return from(this._logout());
 	}
 
+	/**
+	 * Forgot password request strategy
+	 *
+	 * @param data
+	 * @returns
+	 */
 	requestPassword(data?: any): Observable<NbAuthResult> {
 		const { email } = data;
 		return this.authService
@@ -176,34 +182,28 @@ export class AuthStrategy extends NbAuthStrategy {
 				email
 			})
 			.pipe(
-				map((res: { token: string }) => {
-					let token;
-					if (res) {
-						token = res.token;
-					}
-
-					if (!token) {
+				map((value: any) => {
+					if (typeof(value) === 'boolean') {
 						return new NbAuthResult(
+							true,
+							value,
 							false,
-							res,
-							false,
-							AuthStrategy.config.requestPass.defaultErrors
+							[],
+							AuthStrategy.config.requestPass.defaultMessages
 						);
 					}
 					return new NbAuthResult(
-						true,
-						res,
 						false,
-						[],
-						AuthStrategy.config.requestPass.defaultMessages
+						value.response,
+						false,
+						value.message || AuthStrategy.config.requestPass.defaultErrors
 					);
 				}),
-				catchError((err) => {
-					console.log(err);
+				catchError((error) => {
 					return of(
 						new NbAuthResult(
 							false,
-							err,
+							error,
 							false,
 							AuthStrategy.config.requestPass.defaultErrors,
 							[AuthStrategy.config.requestPass.defaultErrors]
