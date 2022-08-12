@@ -18,31 +18,51 @@ import { RequestContext } from './../core/context';
 export class UserService extends TenantAwareCrudService<User> {
 	constructor(
 		@InjectRepository(User)
-		userRepository: Repository<User>
+		private readonly userRepository: Repository<User>
 	) {
 		super(userRepository);
 	}
 
-	async getUserByEmail(email: string): Promise<User> {
-		const user = await this.repository
-			.createQueryBuilder('user')
-			.where('user.email = :email', { email })
-			.getOne();
-		return user;
+	/**
+	 * GET user by email in the same tenant
+	 *
+	 * @param email
+	 * @returns
+	 */
+	async getUserByEmail(email: string): Promise<IUser> {
+		return await this.findOneByOptions({
+			where: {
+				email
+			}
+		});
 	}
 
-	async getUserIdByEmail(email: string): Promise<string> {
-		const user = await this.getUserByEmail(email);
-		const userId = user.id;
-		return userId;
+	/**
+	 * GET user by email using social logins
+	 *
+	 * @param email
+	 * @returns
+	 */
+	async getOAuthLoginEmail(email: string): Promise<IUser> {
+		try {
+			return await this.repository.findOneByOrFail({
+				email
+			});
+		} catch (error) {
+			throw new NotFoundException(`The requested record was not found`);
+		}
 	}
 
+	/**
+	 * Check if, email address exist or not in database
+	 *
+	 * @param email
+	 * @returns
+	 */
 	async checkIfExistsEmail(email: string): Promise<boolean> {
-		const count = await this.repository
-			.createQueryBuilder('user')
-			.where('user.email = :email', { email })
-			.getCount();
-		return count > 0;
+		return !!(await this.repository.findOneBy({
+			email
+		}));
 	}
 
 	async checkIfExists(id: string): Promise<boolean> {
@@ -89,9 +109,8 @@ export class UserService extends TenantAwareCrudService<User> {
 	 * Update user profile
 	 */
 	async updateProfile(
-		id: string | number,
-		partialEntity: User,
-		...options: any[]
+		id: string,
+		entity: User,
 	): Promise<IUser> {
 		/**
 		 * If user has only own profile edit permission
@@ -105,28 +124,27 @@ export class UserService extends TenantAwareCrudService<User> {
 			}
 		}
 		let user: IUser;
-		if (typeof(id) == 'string') {
+		try {
 			user = await this.findOneByIdString(id, {
-				relations: ['role']
+				relations: {
+					role: true
+				}
 			});
-		}
-		if (!user) {
-			throw new NotFoundException(`The user was not found`);
-		}
-		/**
-		 * If user try to update Super Admin without permission
-		 */
-		if (user.role.name === RolesEnum.SUPER_ADMIN) {
-			if (!RequestContext.hasPermission(PermissionsEnum.SUPER_ADMIN_EDIT)) {
-				throw new ForbiddenException();
+			/**
+			 * If user try to update Super Admin without permission
+			 */
+			if (user.role.name === RolesEnum.SUPER_ADMIN) {
+				if (!RequestContext.hasPermission(PermissionsEnum.SUPER_ADMIN_EDIT)) {
+					throw new ForbiddenException();
+				}
 			}
+			if (entity['hash']) {
+				entity['hash'] = await this.getPasswordHash(entity['hash']);
+			}
+			return await this.repository.save(entity);
+		} catch (error) {
+			throw new ForbiddenException();
 		}
-
-		if (partialEntity['hash']) {
-			partialEntity['hash'] = await this.getPasswordHash(partialEntity['hash']);
-		}
-
-		return await this.repository.save(partialEntity);
 	}
 
 	async getAdminUsers(tenantId: string): Promise<User[]> {
@@ -160,9 +178,6 @@ export class UserService extends TenantAwareCrudService<User> {
 			if (typeof(id) == 'string') {
 				user = await this.findOneByIdString(id);
 			}
-			if (!user) {
-				throw new NotFoundException(`The user was not found`);
-			}
 			user.preferredLanguage = preferredLanguage;
 			return await this.repository.save(user);
 		} catch (err) {
@@ -178,13 +193,9 @@ export class UserService extends TenantAwareCrudService<User> {
 		preferredComponentLayout: ComponentLayoutStyleEnum
 	): Promise<IUser> {
 		try {
-
 			let user: User;
 			if (typeof(id) == 'string') {
 				user = await this.findOneByIdString(id);
-			}
-			if (!user) {
-				throw new NotFoundException(`The user was not found`);
 			}
 			user.preferredComponentLayout = preferredComponentLayout;
 			return await this.repository.save(user);
@@ -281,5 +292,17 @@ export class UserService extends TenantAwareCrudService<User> {
 
 	private async getPasswordHash(password: string): Promise<string> {
 		return bcrypt.hash(password, env.USER_PASSWORD_BCRYPT_SALT_ROUNDS);
+	}
+
+	/**
+	 * Find current loggin user details
+	 *
+	 * @param relations
+	 * @returns
+	 */
+	public async findMe(relations: string[]): Promise<IUser> {
+		return await this.findOneByIdString(RequestContext.currentUserId(), {
+			relations
+		})
 	}
 }

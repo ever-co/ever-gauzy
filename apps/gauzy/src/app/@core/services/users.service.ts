@@ -64,10 +64,9 @@ export class UsersService {
 		);
 	}
 
-	deleteAllData(userId) {
+	deleteAllData() {
 		return firstValueFrom(
-			this.http
-			.delete(`${this.API_URL}/reset/${userId}`)
+			this.http.delete(`${this.API_URL}/reset`)
 		);
 	}
 
