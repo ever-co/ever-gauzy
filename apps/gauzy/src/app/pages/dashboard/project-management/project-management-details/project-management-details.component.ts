@@ -34,6 +34,7 @@ import { pluck } from 'underscore';
 import { NbDialogService } from '@nebular/theme';
 import { AddTaskDialogComponent } from 'apps/gauzy/src/app/@shared/tasks/add-task-dialog/add-task-dialog.component';
 import { MyTaskDialogComponent } from '../../../tasks/components/my-task-dialog/my-task-dialog.component';
+import { Router } from '@angular/router';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -61,7 +62,8 @@ export class ProjectManagementDetailsComponent
 		private readonly _store: Store,
 		private readonly _errorHandlingService: ErrorHandlingService,
 		private readonly _dialogService: NbDialogService,
-		private readonly _tasksService: TasksService
+		private readonly _tasksService: TasksService,
+		private readonly _router: Router
 	) {
 		super(translateService);
 	}
@@ -287,6 +289,14 @@ export class ProjectManagementDetailsComponent
 					.subscribe();
 			}
 		}
+	}
+
+	public redirectToProjects(): void {
+		this._router.navigate(['/pages/organization/projects']);
+	}
+
+	public redirectToMyTasks(): void {
+		this._router.navigate(['/pages/tasks/me']);
 	}
 
 	ngOnDestroy(): void {}

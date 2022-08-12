@@ -46,7 +46,14 @@
 		>
 			<nb-card-header>Most viewed projects</nb-card-header>
 			<nb-card-body>
-				<button status="primary" size="small" outline nbButton>
+				<button
+					*ngxPermissionsOnly="'ALL_ORG_VIEW'"
+					(click)="redirectToProjects()"
+					status="primary"
+					size="small"
+					outline
+					nbButton
+				>
 					{{ 'BUTTONS.VIEW_ALL' | translate }}
 				</button>
 				<div class="card-body-content">
@@ -63,7 +70,13 @@
 		<nb-card *ngIf="isSelectedEmployee" class="recently">
 			<nb-card-header>Recently Assigned</nb-card-header>
 			<nb-card-body>
-				<button status="primary" size="small" outline nbButton>
+				<button
+					(click)="redirectToMyTasks()"
+					status="primary"
+					size="small"
+					outline
+					nbButton
+				>
 					{{ 'BUTTONS.VIEW_ALL' | translate }}
 				</button>
 				<div class="card-body-content">
