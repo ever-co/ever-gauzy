@@ -1189,7 +1189,13 @@
 		"ADD_EXPENSE": "Добавить запись расхода",
 		"RECURRING_EXPENSES": "Периодические расходы",
 		"ADD_ORGANIZATION_RECURRING_EXPENSE": "Добавить новую запись периодических расходов для организации",
-		"ADD_EMPLOYEE_RECURRING_EXPENSE": "Добавить новую запись периодических расходов для сотрудника"
+		"ADD_EMPLOYEE_RECURRING_EXPENSE": "Добавить новую запись периодических расходов для сотрудника",
+		"PLAN_MY_DAY": "Планировать мой день",
+		"ADD_TODO": "Добавить задачу",
+		"MOST_VIEW_PROJECTS": "Самые популярные проекты",
+		"INBOX": "Входящие",
+		"RECENTLY_ASSIGNED": "Недавно назначенные",
+		"NO_TODO_ASSIGNED": "Нет заданий"
 	},
 	"INCOME_PAGE": {
 		"INCOME": "Доход",
