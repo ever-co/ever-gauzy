@@ -1189,7 +1189,13 @@
 		"ADD_EXPENSE": "crwdns2763:0crwdne2763:0",
 		"RECURRING_EXPENSES": "crwdns2925:0crwdne2925:0",
 		"ADD_ORGANIZATION_RECURRING_EXPENSE": "crwdns2927:0crwdne2927:0",
-		"ADD_EMPLOYEE_RECURRING_EXPENSE": "crwdns2929:0crwdne2929:0"
+		"ADD_EMPLOYEE_RECURRING_EXPENSE": "crwdns2929:0crwdne2929:0",
+		"PLAN_MY_DAY": "crwdns11467:0crwdne11467:0",
+		"ADD_TODO": "crwdns11469:0crwdne11469:0",
+		"MOST_VIEW_PROJECTS": "crwdns11471:0crwdne11471:0",
+		"INBOX": "crwdns11473:0crwdne11473:0",
+		"RECENTLY_ASSIGNED": "crwdns11475:0crwdne11475:0",
+		"NO_TODO_ASSIGNED": "crwdns11477:0crwdne11477:0"
 	},
 	"INCOME_PAGE": {
 		"INCOME": "crwdns214:0crwdne214:0",
