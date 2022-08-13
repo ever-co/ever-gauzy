@@ -135,7 +135,6 @@ import { ContactModule } from './contact/contact.module';
 import { PublicShareModule } from './public-share/public-share.module';
 
 const { unleashConfig } = environment;
-
 if (unleashConfig.url) {
 	const unleashInstanceConfig = {
 		appName: unleashConfig.appName,
@@ -164,7 +163,6 @@ sentryIntegrations.push(
 if (process.env.DB_TYPE === 'postgres') {
 	sentryIntegrations.push(new TrackingIntegrations.Postgres());
 }
-
 @Module({
 	imports: [
 		ServeStaticModule.forRootAsync({

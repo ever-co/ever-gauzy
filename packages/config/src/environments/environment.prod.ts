@@ -30,7 +30,7 @@ export const environment: IEnvironment = {
 	 * Throttler (Rate Limiting) Options
 	 */
 	THROTTLE_TTL: parseInt(process.env.THROTTLE_TTL) || 60,
-	THROTTLE_LIMIT: parseInt(process.env.THROTTLE_LIMIT) || 10,
+	THROTTLE_LIMIT: parseInt(process.env.THROTTLE_LIMIT) || 30,
 
 	fileSystem: {
 		name:
