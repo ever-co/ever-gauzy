@@ -4043,6 +4043,13 @@
   dependencies:
     tslib "2.4.0"
 
+"@nestjs/throttler@^3.0.0":
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/@nestjs/throttler/-/throttler-3.0.0.tgz#08a9c53d1246069292504f5d4d9db2257b51e36f"
+  integrity sha512-E5aLstJ1a3yZE6AgcN+BgHLiRd8lonR5E4E4I3wzVHRGfgglHQS1sa2zEUuD/pdzLPlbI8pvVDJom8Z2D1oDug==
+  dependencies:
+    md5 "^2.2.1"
+
 "@nestjs/typeorm@^9.0.0":
   version "9.0.0"
   resolved "https://registry.yarnpkg.com/@nestjs/typeorm/-/typeorm-9.0.0.tgz#dea9e5ba006dc06911712660d8aa0787b7791652"

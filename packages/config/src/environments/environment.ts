@@ -30,6 +30,12 @@ export const environment: IEnvironment = {
 	JWT_REFRESH_TOKEN_SECRET: process.env.JWT_REFRESH_TOKEN_SECRET || 'refreshSecretKey',
     JWT_REFRESH_TOKEN_EXPIRATION_TIME: parseInt(process.env.JWT_REFRESH_TOKEN_EXPIRATION_TIME) || 60 * 60 * 24,
 
+	/**
+	 * Throttler (Rate Limiting) Options
+	 */
+	THROTTLE_TTL: parseInt(process.env.THROTTLE_TTL) || 60,
+	THROTTLE_LIMIT: parseInt(process.env.THROTTLE_LIMIT) || 30,
+
 	fileSystem: {
 		name:
 			(process.env.FILE_PROVIDER as FileStorageProviderEnum) ||
