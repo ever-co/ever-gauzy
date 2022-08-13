@@ -7,6 +7,21 @@
   margin: 0;
 }
 
+h5,
+div {
+  color: var(--gauzy-text-color-1);
+  font-weight: 600;
+  font-size: 18px;
+}
+
+div {
+  color: var(--text-primary-color);
+}
+
+p {
+  color: var(--gauzy-text-color-2);
+}
+
 .no-record-icon {
   transform: rotate(0.75turn) scaleY(-1);
   font-size: 48px;

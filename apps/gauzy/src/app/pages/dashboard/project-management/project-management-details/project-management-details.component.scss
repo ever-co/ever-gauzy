@@ -1,0 +1,160 @@
+$height: calc(100vh - 23.5rem);
+$gap: 1rem;
+
+.main {
+  display: flex;
+  gap: $gap;
+  .inbox {
+    width: 45%;
+    height: $height;
+    .soon {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100%;
+    }
+  }
+  .today {
+    width: 35%;
+    height: $height;
+    .more {
+      font-size: 12px;
+      font-weight: 600;
+      line-height: 11px;
+      letter-spacing: 0em;
+      color: var(--gauzy-text-color-2);
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      padding: 10px;
+      gap: 10px;
+      background-color: var(--gauzy-card-4);
+      border-radius: var(--border-radius);
+      cursor: pointer;
+      margin-right: 14px;
+      i {
+        font-size: 11px;
+        border: 2px solid var(--gauzy-border-default-color);
+        color: var(--gauzy-text-color-2);
+        border-radius: var(--button-rectangle-border-radius);
+        padding: 5px 5.5px;
+      }
+    }
+    .card.todo {
+      display: flex;
+      gap: $gap;
+      align-items: baseline;
+      flex-direction: row;
+      padding: 10px;
+      border: unset;
+      box-shadow: var(--gauzy-shadow);
+      background-color: var(--gauzy-card-1);
+      border-radius: var(--border-radius);
+      width: 100%;
+      cursor: pointer;
+      .dot {
+        border: 1px solid #6e49e8;
+        padding: 4px;
+        border-radius: var(--border-radius);
+        &.checked {
+          background-color: #6e49e8;
+        }
+      }
+      .status {
+        color: var(--gauzy-text-color-2);
+        font-size: 12px;
+        font-weight: 400;
+        line-height: 15px;
+        letter-spacing: 0em;
+        margin-bottom: 8px;
+      }
+      .title {
+        width: 100%;
+        color: var(--gauzy-text-color-1);
+        font-size: 12px;
+        font-weight: 400;
+        line-height: 15px;
+        letter-spacing: 0em;
+      }
+    }
+  }
+  .last-column {
+    width: 30%;
+    display: flex;
+    flex-direction: column;
+    gap: $gap;
+    height: $height;
+    .card-body-content {
+      height: 100%;
+      max-height: calc(100% - 55px);
+    }
+    .card.project {
+      display: flex;
+      gap: $gap;
+      align-items: baseline;
+      flex-direction: row;
+      padding: 10px;
+      border: unset;
+      box-shadow: var(--gauzy-shadow);
+      background-color: var(--gauzy-card-1);
+      border-radius: var(--border-radius);
+      width: 100%;
+    }
+    nb-card {
+      height: calc(50% - 0.5rem);
+    }
+    .card.assigned {
+      padding: 10px;
+      background-color: transparent;
+      border: 2px solid var(--gauzy-border-default-color);
+      border-radius: var(--border-radius);
+    }
+  }
+}
+
+:host {
+  nb-card {
+    background-color: var(--gauzy-card-1);
+    margin: 0;
+    box-shadow: 0px 6px 20px 0px rgba(0, 0, 0, 0.05);
+    nb-card-header {
+      color: var(--gauzy-text-color-2);
+      padding: 1rem;
+    }
+    nb-card-body {
+      background-color: var(--gauzy-sidebar-background-2);
+      border-radius: 0 0 var(--border-radius) var(--border-radius);
+      padding: 10px 11px 10px 1rem;
+      [nbButton].appearance-outline.status-primary {
+        width: fit-content;
+        background-color: unset;
+        font-size: 12px;
+        font-weight: 600;
+        line-height: 15px;
+        letter-spacing: 0em;
+        border-color: var(--gauzy-background-transparent);
+        color: var(--button-outline-primary-text-color);
+        border-width: 2px;
+        padding: 4px 10px;
+      }
+      .card-body-content {
+        margin: calc(1rem - 2px) 0;
+        padding: 2px 11px 2px 0px;
+        overflow: auto;
+        max-height: calc(100% - 104px);
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: $gap;
+      }
+    }
+  }
+  ::ng-deep {
+    ngx-no-data-message {
+      height: 100%;
+      .no-data-found {
+        height: 100% !important;
+      }
+    }
+  }
+}

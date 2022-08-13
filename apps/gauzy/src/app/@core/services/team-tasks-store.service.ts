@@ -42,8 +42,7 @@ export class TeamTasksStoreService {
 			...task,
 			projectName: task.project ? task.project.name : undefined,
 			employees: task.members ? task.members : undefined,
-			assignTo: this._getTeamNames(task),
-			creator: task.creator ? `${task.creator.name}` : null
+			assignTo: this._getTeamNames(task)
 		}));
 	}
 

@@ -5,7 +5,7 @@
 		</div>
 		<h5 class="title">
 			{{
-				(selectedTask
+				(selectedTask && selectedTask.id
 					? 'TASKS_PAGE.EDIT_TASKS'
 					: 'TASKS_PAGE.ADD_TASKS'
 				) | translate
@@ -14,7 +14,7 @@
 	</nb-card-header>
 	<nb-card-body class="body">
 		<form [formGroup]="form">
-			<ng-template [ngIf]="!selectedTask">
+			<ng-template [ngIf]="!(selectedTask && selectedTask.id)">
 				<div class="row">
 					<div class="col-sm-12">
 						<ngx-task-number-field
