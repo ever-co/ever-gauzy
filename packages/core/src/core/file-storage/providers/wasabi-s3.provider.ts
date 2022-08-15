@@ -196,10 +196,12 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 			Bucket: this.getWasabiBucket(),
 			Key: key
 		};
-		return new Promise((deleteFileResolve, reject) => {
-			s3.deleteObject(params, function (err) {
-				if (err) reject(err);
-				else deleteFileResolve();
+		return new Promise((resolve, reject) => {
+			s3.deleteObject(params, function (error, data) {
+				if (error) {
+					console.log(error);
+					reject(error);
+				} else resolve();
 			});
 		});
 	}
@@ -232,8 +234,8 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 
 	/**
 	 * Mapped default wasabi service URLs
-	 * 
-	 * @returns 
+	 *
+	 * @returns
 	 */
 	private _mapDefaultWasabiServiceUrl(): {
 		wasabi_aws_default_region: string,

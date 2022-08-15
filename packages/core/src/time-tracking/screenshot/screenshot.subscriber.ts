@@ -32,13 +32,16 @@ export class ScreenshotSubscriber implements EntitySubscriberInterface<Screensho
         if (event.entityId) {
             console.log(`BEFORE SCREENSHOT ENTITY WITH ID ${event.entityId} REMOVED`);
             (async () => {
-                const screenshot: IScreenshot = event.entity;
-                const instance = await new FileStorage().getProvider(screenshot.storageProvider).getInstance();
-                if (screenshot.file) {
-                    instance.deleteFile(screenshot.file);
+                const entity: IScreenshot = event.entity;
+                const { storageProvider } = entity;
+
+                const instance = new FileStorage().setProvider(storageProvider).getProviderInstance();
+                console.log({ instance });
+                if (entity.file) {
+                    await instance.deleteFile(entity.file);
                 }
-                if (screenshot.thumb) {
-                    instance.deleteFile(screenshot.thumb);
+                if (entity.thumb) {
+                    await instance.deleteFile(entity.thumb);
                 }
             })();
         }
