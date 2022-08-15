@@ -25,7 +25,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ToastrService } from '../../@core/services/toastr.service';
 import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.component';
 import { PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
-import { distinctUntilChange } from 'packages/common-angular/dist';
+import { distinctUntilChange } from '@gauzy/common-angular';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -109,7 +109,7 @@ export class GoalSettingsComponent
 			});
 		this.pagination$
 			.pipe(
-				debounceTime(300),
+				debounceTime(100),
 				distinctUntilChange(),
 				tap(() => this._goalSettings$.next(true)),
 				untilDestroyed(this)
@@ -117,7 +117,7 @@ export class GoalSettingsComponent
 			.subscribe();
 		this._goalSettings$
 			.pipe(
-				debounceTime(300),
+				debounceTime(100),
 				filter(() => !!this.selectedTab),
 				tap(async () => await this._loadTableData(this.selectedTab)),
 				untilDestroyed(this)
