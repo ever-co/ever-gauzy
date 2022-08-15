@@ -109,7 +109,6 @@ export class GoalSettingsComponent
 			});
 		this.pagination$
 			.pipe(
-				debounceTime(100),
 				distinctUntilChange(),
 				tap(() => this._goalSettings$.next(true)),
 				untilDestroyed(this)
@@ -129,9 +128,21 @@ export class GoalSettingsComponent
 		this.viewComponentName = ComponentEnum.GOAL_SETTINGS;
 		this.store
 			.componentLayout$(this.viewComponentName)
-			.pipe(untilDestroyed(this))
-			.subscribe((componentLayout) => {
-				this.dataLayoutStyle = componentLayout;
+			.pipe(
+				distinctUntilChange(),
+				tap(
+					(componentLayout) =>
+						(this.dataLayoutStyle = componentLayout)
+				),
+				tap(() => this.refreshPagination()),
+				filter(
+					(componentLayout) =>
+						componentLayout === ComponentLayoutStyleEnum.CARDS_GRID
+				),
+				tap(() => this._goalSettings$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe(() => {
 				this.selectedKPI = null;
 				this.selectedTimeFrame = null;
 			});
@@ -157,6 +168,9 @@ export class GoalSettingsComponent
 		this.selectedTab = e.tabId;
 		this._loadTableSettings(e.tabId);
 		this._loadTableData(e.tabId);
+		this.refreshPagination();
+		this.smartTableData.empty();
+		this.goalTimeFrames = [];
 		if (this.goalSettingsTable) {
 			this.selectedKPI = null;
 			this.selectedTimeFrame = null;
@@ -182,8 +196,6 @@ export class GoalSettingsComponent
 			return;
 		}
 
-		this.smartTableData.empty();
-		this.goalTimeFrames = [];
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 		const findObj = {
@@ -193,16 +205,11 @@ export class GoalSettingsComponent
 			tenantId
 		};
 		const { activePage, itemsPerPage } = this.getPagination();
+		this.smartTableData.setPaging(activePage, itemsPerPage, false);
 
 		if (tab === 'kpi') {
 			await this.goalSettingService.getAllKPI(findObj).then((res) => {
-				this.smartTableData.setPaging(activePage, itemsPerPage, false);
 				this.smartTableData.load(res.items);
-				this.goalTimeFrames = res.items;
-				this.setPagination({
-					...this.getPagination(),
-					totalItems: this.smartTableData.count()
-				});
 			});
 		} else if (tab === 'timeframe') {
 			await this.goalSettingService
@@ -216,17 +223,7 @@ export class GoalSettingsComponent
 							});
 							mappedItems.push(item);
 						});
-						this.smartTableData.setPaging(
-							activePage,
-							itemsPerPage,
-							false
-						);
 						this.smartTableData.load(mappedItems);
-						this.goalTimeFrames = mappedItems;
-						this.setPagination({
-							...this.getPagination(),
-							totalItems: this.smartTableData.count()
-						});
 					}
 				});
 		} else {
@@ -240,7 +237,18 @@ export class GoalSettingsComponent
 					});
 				});
 		}
+		this._loadGridLayoutData();
+		this.setPagination({
+			...this.getPagination(),
+			totalItems: this.smartTableData.count()
+		});
 		this.loading = false;
+	}
+
+	private async _loadGridLayoutData() {
+		if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
+			this.goalTimeFrames = await this.smartTableData.getElements();
+		}
 	}
 
 	private _loadTableSettings(tab: string | null) {
