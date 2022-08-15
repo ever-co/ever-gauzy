@@ -50,15 +50,7 @@ const routes: Routes = [
 				path: 'calendar',
 				loadChildren: () => import('./calendar/calendar.module').then(
 					(m) => m.CalendarModule
-				),
-				data: {
-					datePicker: {
-						unitOfTime: 'week'
-					}
-				},
-				resolve: {
-					dates: DateRangePickerResolver
-				}
+				)
 			},
 			{
 				path: 'approvals',
