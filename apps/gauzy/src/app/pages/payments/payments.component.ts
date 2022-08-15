@@ -134,6 +134,7 @@ export class PaymentsComponent extends PaginationFilterBaseComponent
 					this.projectId = project ? project.id : null;
 				}),
 				tap(() => this.refreshPagination()),
+				tap(() => (this.payments = [])),
 				tap(() => this.payments$.next(true)),
 				untilDestroyed(this)
 			)
@@ -159,6 +160,7 @@ export class PaymentsComponent extends PaginationFilterBaseComponent
 						(this.dataLayoutStyle = componentLayout)
 				),
 				tap(() => this.refreshPagination()),
+				tap(() => (this.payments = [])),
 				filter(
 					(componentLayout) =>
 						componentLayout === ComponentLayoutStyleEnum.CARDS_GRID
@@ -287,7 +289,7 @@ export class PaymentsComponent extends PaginationFilterBaseComponent
 			) {
 				// Initiate GRID view pagination
 				await this.smartTableSource.getElements();
-				this.payments = this.smartTableSource.getData();
+				this.payments.push(...this.smartTableSource.getData());
 
 				this.setPagination({
 					...this.getPagination(),
