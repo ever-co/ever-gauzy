@@ -129,4 +129,12 @@ export class PaginationFilterBaseComponent extends TranslationBaseComponent
 			itemsPerPage: this.pagination.itemsPerPage
 		});
 	}
+
+	public onScroll() {
+		const activePage = this.pagination.activePage + 1;
+		this.setPagination({
+			...this.getPagination(),
+			activePage: activePage
+		});
+	}
 }
