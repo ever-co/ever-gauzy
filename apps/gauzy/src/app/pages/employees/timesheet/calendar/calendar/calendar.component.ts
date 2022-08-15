@@ -79,9 +79,6 @@ export class CalendarComponent extends BaseSelectorFilterComponent
 		public readonly translateService: TranslateService
 	) {
 		super(store, translateService);
-	}
-
-	ngOnInit() {
 		this.calendarOptions = {
 			initialView: 'timeGridWeek',
 			headerToolbar: {
@@ -112,22 +109,13 @@ export class CalendarComponent extends BaseSelectorFilterComponent
 			eventMouseEnter: this.handleEventMouseEnter.bind(this),
 			eventMouseLeave: this.handleEventMouseLeave.bind(this)
 		};
-
 	}
 
-	filtersChange(filters: ITimeLogFilters) {
-		if (this.gauzyFiltersComponent.saveFilters) {
-			this.timesheetFilterService.filter = filters;
-		}
-		this.filters = Object.assign({}, filters);
-		this.subject$.next(true);
-	}
-
-	ngAfterViewInit() {
+	ngOnInit() {
 		this.subject$
 			.pipe(
 				filter(() => !!this.calendar.getApi()),
-				debounceTime(200),
+				debounceTime(500),
 				tap(async () => {
 					const {
 						allowManualTime,
@@ -158,18 +146,21 @@ export class CalendarComponent extends BaseSelectorFilterComponent
 					this.futureDateAllowed = futureDateAllowed;
 				}),
 				tap(() => this.setCalenderInitialView()),
-				tap(() => {
-					if (this.request.startDate && this.calendar.getApi()) {
-						this.calendar.getApi().gotoDate(this.request.startDate);
-					}
-					if (this.calendar.getApi()) {
-						this.calendar.getApi().refetchEvents();
-					}
-				}),
 				untilDestroyed(this)
 			)
 			.subscribe();
+	}
+
+	ngAfterViewInit() {
 		this.cdr.detectChanges();
+	}
+
+	filtersChange(filters: ITimeLogFilters) {
+		if (this.gauzyFiltersComponent.saveFilters) {
+			this.timesheetFilterService.filter = filters;
+		}
+		this.filters = Object.assign({}, filters);
+		this.subject$.next(true);
 	}
 
 	/**
@@ -177,12 +168,13 @@ export class CalendarComponent extends BaseSelectorFilterComponent
 	 */
 	setCalenderInitialView() {
 		if (this.calendar.getApi()) {
+			const { startDate } = this.request;
 			if (this.isMoreThanUnit('weeks')) {
-				this.calendar.getApi().changeView('dayGridMonth');
+				this.calendar.getApi().changeView('dayGridMonth', startDate);
 			} else if (this.isMoreThanUnit('days')) {
-				this.calendar.getApi().changeView('timeGridWeek');
+				this.calendar.getApi().changeView('timeGridWeek', startDate);
 			} else {
-				this.calendar.getApi().changeView('timeGridDay');
+				this.calendar.getApi().changeView('timeGridDay', startDate);
 			}
 		}
 	}
