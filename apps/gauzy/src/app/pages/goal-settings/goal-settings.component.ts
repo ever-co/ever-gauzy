@@ -1,12 +1,11 @@
 import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
-import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 import { DateViewComponent } from '../../@shared/table-components/date-view/date-view.component';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { NbDialogService } from '@nebular/theme';
 import { EditTimeFrameComponent } from './edit-time-frame/edit-time-frame.component';
 import { tap } from 'rxjs/operators';
-import { firstValueFrom } from 'rxjs';
+import { debounceTime, filter, firstValueFrom, Subject } from 'rxjs';
 import { GoalSettingsService } from '../../@core/services/goal-settings.service';
 import { AlertModalComponent } from '../../@shared/alert-modal/alert-modal.component';
 import { Store } from '../../@core/services/store.service';
@@ -25,6 +24,8 @@ import { ValueWithUnitComponent } from '../../@shared/table-components/value-wit
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ToastrService } from '../../@core/services/toastr.service';
 import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.component';
+import { PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
+import { distinctUntilChange } from 'packages/common-angular/dist';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -33,7 +34,7 @@ import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.co
 	styleUrls: ['./goal-settings.component.scss']
 })
 export class GoalSettingsComponent
-	extends TranslationBaseComponent
+	extends PaginationFilterBaseComponent
 	implements OnInit, OnDestroy
 {
 	smartTableData = new LocalDataSource();
@@ -51,6 +52,7 @@ export class GoalSettingsComponent
 	goalOwnershipEnum = GoalOwnershipEnum;
 	predefinedTimeFrames = [];
 	loading: boolean;
+	private _goalSettings$: Subject<any> = this.subject$;
 
 	goalSettingsTable: Ng2SmartTableComponent;
 	@ViewChild('goalSettingsTable') set content(
@@ -105,6 +107,22 @@ export class GoalSettingsComponent
 					this.setView();
 				}
 			});
+		this.pagination$
+			.pipe(
+				debounceTime(300),
+				distinctUntilChange(),
+				tap(() => this._goalSettings$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this._goalSettings$
+			.pipe(
+				debounceTime(300),
+				filter(() => !!this.selectedTab),
+				tap(async () => await this._loadTableData(this.selectedTab)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	setView() {
@@ -174,11 +192,17 @@ export class GoalSettingsComponent
 			},
 			tenantId
 		};
+		const { activePage, itemsPerPage } = this.getPagination();
 
 		if (tab === 'kpi') {
 			await this.goalSettingService.getAllKPI(findObj).then((res) => {
+				this.smartTableData.setPaging(activePage, itemsPerPage, false);
 				this.smartTableData.load(res.items);
 				this.goalTimeFrames = res.items;
+				this.setPagination({
+					...this.getPagination(),
+					totalItems: this.smartTableData.count()
+				});
 			});
 		} else if (tab === 'timeframe') {
 			await this.goalSettingService
@@ -192,8 +216,17 @@ export class GoalSettingsComponent
 							});
 							mappedItems.push(item);
 						});
+						this.smartTableData.setPaging(
+							activePage,
+							itemsPerPage,
+							false
+						);
 						this.smartTableData.load(mappedItems);
 						this.goalTimeFrames = mappedItems;
+						this.setPagination({
+							...this.getPagination(),
+							totalItems: this.smartTableData.count()
+						});
 					}
 				});
 		} else {
@@ -213,7 +246,10 @@ export class GoalSettingsComponent
 	private _loadTableSettings(tab: string | null) {
 		this.smartTableSettings = {
 			actions: false,
-			hideSubHeader: true
+			hideSubHeader: true,
+			pager: {
+				display: false
+			}
 		};
 		if (tab === 'kpi') {
 			this.smartTableSettings = {
@@ -247,7 +283,9 @@ export class GoalSettingsComponent
 		} else if (tab === 'timeframe') {
 			this.smartTableSettings = {
 				...this.smartTableSettings,
-				noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.TIME_FRAME'),
+				noDataMessage: this.getTranslation(
+					'SM_TABLE.NO_DATA.TIME_FRAME'
+				),
 				columns: {
 					name: {
 						title: this.getTranslation('SM_TABLE.NAME'),
