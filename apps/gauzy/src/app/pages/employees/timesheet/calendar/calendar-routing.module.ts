@@ -9,7 +9,7 @@ const routes: Routes = [
 		component: CalendarComponent,
 		data: {
 			datePicker: {
-				unitOfTime: 'month'
+				unitOfTime: 'week'
 			}
 		},
 		resolve: {

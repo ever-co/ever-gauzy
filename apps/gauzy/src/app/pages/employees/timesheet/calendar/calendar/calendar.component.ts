@@ -17,6 +17,7 @@ import interactionPlugin from '@fullcalendar/interaction';
 import bootstrapPlugin from '@fullcalendar/bootstrap';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NgxPermissionsService } from 'ngx-permissions';
+import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
 import { pick } from 'underscore';
 import { Observable, Subject } from 'rxjs';
@@ -28,8 +29,10 @@ import {
 	PermissionsEnum
 } from '@gauzy/contracts';
 import { toLocal, isEmpty } from '@gauzy/common-angular';
-import { TranslateService } from '@ngx-translate/core';
-import { DateRangePickerBuilderService, Store } from './../../../../../@core/services';
+import {
+	DateRangePickerBuilderService,
+	Store
+} from './../../../../../@core/services';
 import {
 	EditTimeLogModalComponent,
 	TimesheetFilterService,
@@ -62,7 +65,7 @@ export class CalendarComponent extends BaseSelectorFilterComponent
 	filters: ITimeLogFilters;
 	subject$: Subject<any> = new Subject();
 
-	loading: boolean;
+	loading: boolean = false;
 	futureDateAllowed: boolean;
 
 	constructor(
@@ -76,6 +79,9 @@ export class CalendarComponent extends BaseSelectorFilterComponent
 		public readonly translateService: TranslateService
 	) {
 		super(store, translateService);
+	}
+
+	ngOnInit() {
 		this.calendarOptions = {
 			initialView: 'timeGridWeek',
 			headerToolbar: {
@@ -90,6 +96,7 @@ export class CalendarComponent extends BaseSelectorFilterComponent
 				interactionPlugin,
 				bootstrapPlugin
 			],
+			showNonCurrentDates: false,
 			weekends: true,
 			height: 'auto',
 			editable: true,
@@ -105,13 +112,22 @@ export class CalendarComponent extends BaseSelectorFilterComponent
 			eventMouseEnter: this.handleEventMouseEnter.bind(this),
 			eventMouseLeave: this.handleEventMouseLeave.bind(this)
 		};
+
 	}
 
-	ngOnInit() {
+	filtersChange(filters: ITimeLogFilters) {
+		if (this.gauzyFiltersComponent.saveFilters) {
+			this.timesheetFilterService.filter = filters;
+		}
+		this.filters = Object.assign({}, filters);
+		this.subject$.next(true);
+	}
+
+	ngAfterViewInit() {
 		this.subject$
 			.pipe(
-				debounceTime(500),
 				filter(() => !!this.calendar.getApi()),
+				debounceTime(200),
 				tap(async () => {
 					const {
 						allowManualTime,
@@ -138,10 +154,10 @@ export class CalendarComponent extends BaseSelectorFilterComponent
 					} else {
 						calendar.setOption('editable', false);
 					}
-
 					calendar.setOption('firstDay', dayOfWeekAsString(this.organization.startWeekOn));
 					this.futureDateAllowed = futureDateAllowed;
 				}),
+				tap(() => this.setCalenderInitialView()),
 				tap(() => {
 					if (this.request.startDate && this.calendar.getApi()) {
 						this.calendar.getApi().gotoDate(this.request.startDate);
@@ -153,18 +169,22 @@ export class CalendarComponent extends BaseSelectorFilterComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
-	}
-
-	filtersChange(filters: ITimeLogFilters) {
-		if (this.gauzyFiltersComponent.saveFilters) {
-			this.timesheetFilterService.filter = filters;
-		}
-		this.filters = Object.assign({}, filters);
-		this.subject$.next(true);
-	}
-
-	ngAfterViewInit() {
 		this.cdr.detectChanges();
+	}
+
+	/**
+	 * SET calender initial view
+	 */
+	setCalenderInitialView() {
+		if (this.calendar.getApi()) {
+			if (this.isMoreThanUnit('weeks')) {
+				this.calendar.getApi().changeView('dayGridMonth');
+			} else if (this.isMoreThanUnit('days')) {
+				this.calendar.getApi().changeView('timeGridWeek');
+			} else {
+				this.calendar.getApi().changeView('timeGridDay');
+			}
+		}
 	}
 
 	getEvents(arg: any, callback) {
@@ -180,6 +200,7 @@ export class CalendarComponent extends BaseSelectorFilterComponent
 			'activityLevel',
 			'logType'
 		);
+
 		const request: IGetTimeLogInput = {
 			...appliedFilter,
 			...this.getFilterRequest({
@@ -212,7 +233,6 @@ export class CalendarComponent extends BaseSelectorFilterComponent
 	}
 
 	selectAllow({ start, end }) {
-		console.log({ start, end });
 		const isOneDay = moment(start).isSame(moment(end), 'day');
 		return this.futureDateAllowed
 			? isOneDay
@@ -308,6 +328,17 @@ export class CalendarComponent extends BaseSelectorFilterComponent
 		this.timesheetService.updateTime(id, timeLog).then(() => {
 			this.loading = false;
 		});
+	}
+
+	/**
+	 * If, selected date range are more than a weeks/days
+	 */
+	isMoreThanUnit(unitOfTime: moment.unitOfTime.Base): boolean {
+		if (!this.request.startDate) {
+			return false;
+		}
+		const { startDate, endDate } = this.request;
+		return moment(endDate).diff(moment(startDate), unitOfTime) > 0;
 	}
 
 	ngOnDestroy() {}
