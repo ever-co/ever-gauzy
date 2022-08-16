@@ -397,6 +397,8 @@ nb-card-body {
   border-radius: var(--border-radius);
   overflow-y: auto;
   max-height: calc(100vh - 28rem);
+  @include nb-ltr(padding-right, 8px);
+  @include nb-rtl(padding-left, 8px);
   @include respond(dsk) {
     max-height: calc(70vh - 132px);
   }
@@ -454,7 +456,7 @@ nb-card-body {
 }
 
 .grid-scroll-container {
-  max-height: calc(100vh - 24rem);
+  max-height: 100%;
 }
 
 nb-tabset .tab.active .tab-link {
