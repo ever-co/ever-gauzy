@@ -14,7 +14,6 @@ import {
 	ITag,
 	IDateRangePicker
 } from '@gauzy/contracts';
-import * as moment from 'moment';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange, toUTC } from '@gauzy/common-angular';
 import { NbDialogService } from '@nebular/theme';

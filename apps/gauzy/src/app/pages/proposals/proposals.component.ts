@@ -18,7 +18,6 @@ import {
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange, toUTC } from '@gauzy/common-angular';
-import * as moment from 'moment';
 import {
 	ContactLinksComponent,
 	DateViewComponent,
