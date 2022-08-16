@@ -13,6 +13,7 @@
   overflow-y: auto;
   @include nb-ltr(padding-right, 0.5rem);
   @include nb-rtl(padding-left, 0.5rem);
+  max-height: 100%;
 
   .card-item {
     display: flex;
@@ -177,4 +178,8 @@
     justify-content: space-around;
     display: flex;
   }
+}
+
+:host {
+  max-height: 100%;
 }
