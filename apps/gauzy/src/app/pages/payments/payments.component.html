@@ -48,6 +48,7 @@
 			<ga-card-grid
 				[settings]="settingsSmartTable"
 				[source]="payments"
+				(onSelectedItem)="selectPayment($event)"
 				(scroll)="onScroll()"
 			></ga-card-grid>
 		</ng-template>
