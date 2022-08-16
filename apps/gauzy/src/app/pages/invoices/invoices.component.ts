@@ -58,6 +58,7 @@ import { AddInternalNoteComponent } from './add-internal-note/add-internal-note.
 import { PublicLinkComponent } from './public-link/public-link.component';
 import { generateCsv } from '../../@shared/invoice/generate-csv';
 import {
+	DateRangePickerBuilderService,
 	InvoiceEstimateHistoryService,
 	InvoiceItemService,
 	InvoicesService,
@@ -159,6 +160,7 @@ export class InvoicesComponent
 		private readonly fb: FormBuilder,
 		public readonly translateService: TranslateService,
 		private readonly store: Store,
+		private readonly dateRangePickerBuilderService: DateRangePickerBuilderService,
 		private readonly dialogService: NbDialogService,
 		private readonly toastrService: ToastrService,
 		private readonly invoicesService: InvoicesService,
@@ -207,12 +209,12 @@ export class InvoicesComponent
 			)
 			.subscribe();
 		const storeOrganization$ = this.store.selectedOrganization$;
-		const storeDateRange$ = this.store.selectedDateRange$;
+		const storeDateRange$ = this.dateRangePickerBuilderService.selectedDateRange$;
 		combineLatest([storeOrganization$, storeDateRange$])
 			.pipe(
 				debounceTime(300),
-				filter(([organization]) => !!organization),
 				distinctUntilChange(),
+				filter(([organization, dateRange]) => !!organization && !!dateRange),
 				tap(([organization, dateRange]) => {
 					this.organization = organization as IOrganization;
 					this.selectedDateRange = dateRange as IDateRangePicker;
@@ -907,8 +909,8 @@ export class InvoicesComponent
 			actions: false,
 			mode: 'external',
 			editable: true,
-			noDataMessage: this.getTranslation(this.isEstimate 
-				? 'SM_TABLE.NO_DATA.ESTIMATE' 
+			noDataMessage: this.getTranslation(this.isEstimate
+				? 'SM_TABLE.NO_DATA.ESTIMATE'
 				: 'SM_TABLE.NO_DATA.INVOICE'),
 			columns: {
 				invoiceNumber: {

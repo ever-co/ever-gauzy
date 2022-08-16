@@ -96,7 +96,15 @@ const routes: Routes = [
 			{
 				path: 'add',
 				component: EstimateAddComponent,
-				data: ESTIMATES_EDIT_PERMISSION
+				data: {
+					...ESTIMATES_EDIT_PERMISSION,
+					datePicker: {
+						unitOfTime: 'month'
+					}
+				},
+				resolve: {
+					dates: DateRangePickerResolver
+				}
 			},
 			{
 				path: 'edit/:id',

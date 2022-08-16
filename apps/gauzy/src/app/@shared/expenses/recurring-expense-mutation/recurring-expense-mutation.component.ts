@@ -14,7 +14,9 @@ import { debounceTime, filter, firstValueFrom, tap } from 'rxjs';
 import * as moment from 'moment';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { distinctUntilChange } from '@gauzy/common-angular';
 import {
+	DateRangePickerBuilderService,
 	EmployeeRecurringExpenseService,
 	EmployeesService,
 	ErrorHandlingService,
@@ -80,17 +82,11 @@ export class RecurringExpenseMutationComponent extends TranslationBaseComponent
 		fb: FormBuilder,
 		self: RecurringExpenseMutationComponent
 	): FormGroup {
-		const { startDate } = self.store.selectedDateRange;
+		const { startDate } = self.dateRangePickerBuilderService.selectedDateRange;
 		return fb.group({
 			categoryName: [null, Validators.required],
 			value: [null, Validators.required],
-			currency: [
-				{
-					value: null,
-					disabled: true
-				},
-				Validators.required
-			],
+			currency: [null, Validators.required],
 			splitExpense: [false],
 			startDate: [
 				new Date(
@@ -106,6 +102,7 @@ export class RecurringExpenseMutationComponent extends TranslationBaseComponent
 		private readonly fb: FormBuilder,
 		protected readonly dialogRef: NbDialogRef<RecurringExpenseMutationComponent>,
 		private readonly store: Store,
+		private readonly dateRangePickerBuilderService: DateRangePickerBuilderService,
 		private readonly employeesService: EmployeesService,
 		private readonly expenseCategoriesStore: ExpenseCategoriesStoreService,
 		private readonly translate: TranslateService,
@@ -153,8 +150,9 @@ export class RecurringExpenseMutationComponent extends TranslationBaseComponent
 	ngOnInit(): void {
 		this.store.selectedOrganization$
 			.pipe(
-				filter((organization) => !!organization),
 				debounceTime(200),
+				distinctUntilChange(),
+				filter((organization) => !!organization),
 				tap((organization: IOrganization) => this.organization = organization),
 				untilDestroyed(this)
 			)
@@ -271,7 +269,7 @@ export class RecurringExpenseMutationComponent extends TranslationBaseComponent
 	};
 
 	private _initializeForm(recurringExpense?: any) {
-		const { startDate } = this.store.selectedDateRange;
+		const { startDate } = this.dateRangePickerBuilderService.selectedDateRange;
 		this.form.patchValue({
 			categoryName: recurringExpense ? recurringExpense.categoryName : '',
 			value: recurringExpense ? recurringExpense.value : '',

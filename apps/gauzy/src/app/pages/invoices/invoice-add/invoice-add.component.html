@@ -107,9 +107,7 @@
 								}}</label>
 								<input
 									nbInput
-									placeholder="{{
-										'INVOICES_PAGE.DUE_DATE' | translate
-									}}"
+									[placeholder]="'INVOICES_PAGE.DUE_DATE' | translate"
 									[nbDatepicker]="dueDatePicker"
 									formControlName="dueDate"
 									id="inputDueDate"

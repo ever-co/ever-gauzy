@@ -16,11 +16,12 @@ import {
 } from '@gauzy/contracts';
 import * as moment from 'moment';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { distinctUntilChange } from '@gauzy/common-angular';
+import { distinctUntilChange, toUTC } from '@gauzy/common-angular';
 import { NbDialogService } from '@nebular/theme';
 import { API_PREFIX, ComponentEnum } from '../../../@core/constants';
 import { ServerDataSource } from '../../../@core/utils/smart-table';
 import {
+	DateRangePickerBuilderService,
 	ErrorHandlingService,
 	InvoicesService,
 	Store,
@@ -37,6 +38,7 @@ import { InputFilterComponent, TagsColorFilterComponent } from '../../../@shared
 import { StatusBadgeComponent } from '../../../@shared/status-badge';
 import { IPaginationBase, PaginationFilterBaseComponent } from '../../../@shared/pagination/pagination-filter-base.component';
 import { InvoiceDownloadMutationComponent } from '../invoice-download/invoice-download-mutation.component';
+import { getAdjustDateRangeFutureAllowed } from '../../../@theme/components/header/selectors/date-range-picker';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -84,6 +86,7 @@ export class InvoicesReceivedComponent extends PaginationFilterBaseComponent
 
 	constructor(
 		private readonly store: Store,
+		private readonly dateRangePickerBuilderService: DateRangePickerBuilderService,
 		private readonly invoicesService: InvoicesService,
 		public readonly translateService: TranslateService,
 		private readonly router: Router,
@@ -120,7 +123,7 @@ export class InvoicesReceivedComponent extends PaginationFilterBaseComponent
 			)
 			.subscribe();
 		const storeOrganization$ = this.store.selectedOrganization$;
-		const storeDateRange$ = this.store.selectedDateRange$;
+		const storeDateRange$ = this.dateRangePickerBuilderService.selectedDateRange$;
 		combineLatest([storeOrganization$, storeDateRange$])
 			.pipe(
 				debounceTime(300),
@@ -189,8 +192,8 @@ export class InvoicesReceivedComponent extends PaginationFilterBaseComponent
 
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
-		const { startDate, endDate } = this.selectedDateRange;
 
+		const { startDate, endDate } = getAdjustDateRangeFutureAllowed(this.selectedDateRange);
 		this.smartTableSource = new ServerDataSource(this.httpClient, {
 			endPoint: `${API_PREFIX}/invoices/pagination`,
 			relations: ['payments', 'tags', 'toContact'],
@@ -206,8 +209,8 @@ export class InvoicesReceivedComponent extends PaginationFilterBaseComponent
 				tenantId,
 				isEstimate: this.isEstimate === true ? 1 : 0,
 				invoiceDate: {
-					startDate: moment(startDate).format('YYYY-MM-DD HH:mm:ss'),
-					endDate: moment(endDate).format('YYYY-MM-DD HH:mm:ss')
+					startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm:ss'),
+					endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm:ss')
 				},
 				...(this.filters.where ? this.filters.where : {})
 			},

@@ -116,12 +116,12 @@ export class PaymentsComponent extends PaginationFilterBaseComponent
 			)
 			.subscribe();
 		const storeOrganization$ = this.store.selectedOrganization$;
-		const selectedDateRange$ = this.store.selectedDateRange$;
+		const storeDateRange$ = this.dateRangePickerBuilderService.selectedDateRange$;
 		const storeProject$ = this.store.selectedProject$;
-		combineLatest([storeOrganization$, selectedDateRange$, storeProject$])
+		combineLatest([storeOrganization$, storeDateRange$, storeProject$])
 			.pipe(
 				debounceTime(300),
-				filter(([organization]) => !!organization),
+				filter(([organization, dateRange]) => !!organization && !!dateRange),
 				distinctUntilChange(),
 				tap(
 					([organization]) =>
@@ -140,10 +140,7 @@ export class PaymentsComponent extends PaginationFilterBaseComponent
 			.subscribe();
 		this.route.queryParamMap
 			.pipe(
-				filter(
-					(params) =>
-						!!params && params.get('openAddDialog') === 'true'
-				),
+				filter((params) => !!params && params.get('openAddDialog') === 'true'),
 				debounceTime(1000),
 				tap(() => this.recordPayment()),
 				untilDestroyed(this)
@@ -195,20 +192,8 @@ export class PaymentsComponent extends PaginationFilterBaseComponent
 
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
-
-		const request = {};
-		if (this.projectId) { request['projectId'] = this.projectId; }
-
 		const { startDate, endDate } = getAdjustDateRangeFutureAllowed(this.selectedDateRange);
-		if (startDate && endDate) {
-			request['paymentDate'] = {};
-			if (moment(startDate).isValid()) {
-				request['paymentDate']['startDate'] = toUTC(startDate).format('YYYY-MM-DD HH:mm:ss');
-			}
-			if (moment(endDate).isValid()) {
-				request['paymentDate']['endDate'] = toUTC(endDate).format('YYYY-MM-DD HH:mm:ss');
-			}
-		}
+
 		this.smartTableSource = new ServerDataSource(this.httpClient, {
 			endPoint: `${API_PREFIX}/payments/pagination`,
 			relations: [
@@ -228,9 +213,18 @@ export class PaymentsComponent extends PaginationFilterBaseComponent
 				...(this.filters.join ? this.filters.join : {})
 			},
 			where: {
-				...{ organizationId, tenantId },
-				...request,
-				...this.filters.where
+				organizationId,
+				tenantId,
+				...(
+					this.projectId ? {
+						projectId: this.projectId
+					} : {}
+				),
+				paymentDate: {
+					startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm:ss'),
+					endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm:ss')
+				},
+				...(this.filters.where ? this.filters.where : {})
 			},
 			resultMap: (payment: IPayment) => {
 				try {
