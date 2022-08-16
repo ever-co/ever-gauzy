@@ -25,6 +25,5 @@
   nb-card-header {
     border-radius: var(--border-radius);
   }
-
-  @include nb-card-overrides(unset, calc(100vh - 16.5rem), $default-radius);
+  @include nb-card-overrides(unset, calc(100vh - 17.25rem), $default-radius);
 }

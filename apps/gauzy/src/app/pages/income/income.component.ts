@@ -1,4 +1,11 @@
-import { AfterViewInit, Component, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
+import {
+	AfterViewInit,
+	Component,
+	OnDestroy,
+	OnInit,
+	TemplateRef,
+	ViewChild
+} from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import {
@@ -12,7 +19,11 @@ import {
 } from '@gauzy/contracts';
 import { Subject } from 'rxjs';
 import { combineLatest } from 'rxjs';
-import { distinctUntilChange, employeeMapper, toUTC } from '@gauzy/common-angular';
+import {
+	distinctUntilChange,
+	employeeMapper,
+	toUTC
+} from '@gauzy/common-angular';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { Ng2SmartTableComponent } from 'ng2-smart-table';
@@ -53,9 +64,10 @@ import { getAdjustDateRangeFutureAllowed } from '../../@theme/components/header/
 	templateUrl: './income.component.html',
 	styleUrls: ['./income.component.scss']
 })
-export class IncomeComponent extends PaginationFilterBaseComponent
-	implements AfterViewInit, OnInit, OnDestroy {
-
+export class IncomeComponent
+	extends PaginationFilterBaseComponent
+	implements AfterViewInit, OnInit, OnDestroy
+{
 	smartTableSettings: object;
 	selectedEmployeeId: string;
 	selectedDateRange: IDateRangePicker;
@@ -70,6 +82,7 @@ export class IncomeComponent extends PaginationFilterBaseComponent
 
 	public organization: IOrganization;
 	incomes$: Subject<any> = this.subject$;
+	private _refresh$: Subject<any> = new Subject();
 
 	incomeTable: Ng2SmartTableComponent;
 	@ViewChild('incomeTable') set content(content: Ng2SmartTableComponent) {
@@ -82,7 +95,8 @@ export class IncomeComponent extends PaginationFilterBaseComponent
 	/*
 	 * Actions Buttons directive
 	 */
-	@ViewChild('actionButtons', { static: true }) actionButtons: TemplateRef<any>;
+	@ViewChild('actionButtons', { static: true })
+	actionButtons: TemplateRef<any>;
 
 	constructor(
 		private readonly store: Store,
@@ -131,16 +145,30 @@ export class IncomeComponent extends PaginationFilterBaseComponent
 					this.selectedDateRange = dateRange;
 					this.selectedEmployeeId = employee ? employee.id : null;
 				}),
-				tap(() => this.refreshPagination()),
+				tap(() => this._refresh$.next(true)),
 				tap(() => this.incomes$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
 		this.route.queryParamMap
 			.pipe(
-				filter((params) => !!params && params.get('openAddDialog') === 'true'),
+				filter(
+					(params) =>
+						!!params && params.get('openAddDialog') === 'true'
+				),
 				debounceTime(1000),
 				tap(() => this.addIncome()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this._refresh$
+			.pipe(
+				filter(
+					(componentLayout) =>
+						componentLayout === ComponentLayoutStyleEnum.CARDS_GRID
+				),
+				tap(() => this.refreshPagination()),
+				tap(() => (this.incomes = [])),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -162,9 +190,16 @@ export class IncomeComponent extends PaginationFilterBaseComponent
 			.componentLayout$(this.viewComponentName)
 			.pipe(
 				distinctUntilChange(),
-				tap((componentLayout) => (this.dataLayoutStyle = componentLayout)),
-				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
+				tap(
+					(componentLayout) =>
+						(this.dataLayoutStyle = componentLayout)
+				),
 				tap(() => this.refreshPagination()),
+				filter(
+					(componentLayout) =>
+						componentLayout === ComponentLayoutStyleEnum.CARDS_GRID
+				),
+				tap(() => (this.incomes = [])),
 				tap(() => this.incomes$.next(true)),
 				untilDestroyed(this)
 			)
@@ -291,7 +326,9 @@ export class IncomeComponent extends PaginationFilterBaseComponent
 							.create({
 								amount,
 								clientId: organizationContact.id,
-								valueDate: moment(valueDate).startOf('day').toDate(),
+								valueDate: moment(valueDate)
+									.startOf('day')
+									.toDate(),
 								employeeId: employee ? employee.id : null,
 								organizationId,
 								tenantId,
@@ -312,6 +349,7 @@ export class IncomeComponent extends PaginationFilterBaseComponent
 								this.dateRangePickerBuilderService.refreshDateRangePicker(
 									moment(valueDate)
 								);
+								this._refresh$.next(true);
 								this.incomes$.next(true);
 							});
 					} catch (error) {
@@ -361,7 +399,9 @@ export class IncomeComponent extends PaginationFilterBaseComponent
 							.update(this.selectedIncome.id, {
 								amount,
 								clientId: organizationContact.id,
-								valueDate: moment(valueDate).startOf('day').toDate(),
+								valueDate: moment(valueDate)
+									.startOf('day')
+									.toDate(),
 								notes,
 								currency,
 								isBonus,
@@ -382,6 +422,7 @@ export class IncomeComponent extends PaginationFilterBaseComponent
 								this.dateRangePickerBuilderService.refreshDateRangePicker(
 									moment(valueDate)
 								);
+								this._refresh$.next(true);
 								this.incomes$.next(true);
 							});
 					} catch (error) {
@@ -420,6 +461,7 @@ export class IncomeComponent extends PaginationFilterBaseComponent
 								);
 							})
 							.finally(() => {
+								this._refresh$.next(true);
 								this.incomes$.next(true);
 							});
 					} catch (error) {
@@ -441,7 +483,20 @@ export class IncomeComponent extends PaginationFilterBaseComponent
 
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
+
+		const request = {};
+		if (this.selectedEmployeeId) request['employeeId'] = this.selectedEmployeeId;
+
 		const { startDate, endDate } = getAdjustDateRangeFutureAllowed(this.selectedDateRange);
+		if (startDate && endDate) {
+			request['valueDate'] = {};
+			if (moment(startDate).isValid()) {
+				request['valueDate']['startDate'] = toUTC(startDate).format('YYYY-MM-DD HH:mm:ss');
+			}
+			if (moment(endDate).isValid()) {
+				request['valueDate']['endDate'] = toUTC(endDate).format('YYYY-MM-DD HH:mm:ss');
+			}
+		}
 
 		this.smartTableSource = new ServerDataSource(this.httpClient, {
 			endPoint: `${API_PREFIX}/income/pagination`,
@@ -504,7 +559,7 @@ export class IncomeComponent extends PaginationFilterBaseComponent
 
 			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
 				await this.smartTableSource.getElements();
-				this.incomes = this.smartTableSource.getData();
+				this.incomes.push(...this.smartTableSource.getData());
 			}
 		} catch (error) {
 			this.toastrService.danger(error);
