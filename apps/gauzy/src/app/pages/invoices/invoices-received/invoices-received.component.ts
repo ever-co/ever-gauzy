@@ -191,8 +191,8 @@ export class InvoicesReceivedComponent extends PaginationFilterBaseComponent
 
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
-
 		const { startDate, endDate } = getAdjustDateRangeFutureAllowed(this.selectedDateRange);
+
 		this.smartTableSource = new ServerDataSource(this.httpClient, {
 			endPoint: `${API_PREFIX}/invoices/pagination`,
 			relations: ['payments', 'tags', 'toContact'],
@@ -201,7 +201,8 @@ export class InvoicesReceivedComponent extends PaginationFilterBaseComponent
 				leftJoin: {
 					tags: 'invoice.tags',
 					toContact: 'invoice.toContact'
-				}
+				},
+				...(this.filters.join) ? this.filters.join : {}
 			},
 			where: {
 				sentTo: organizationId,

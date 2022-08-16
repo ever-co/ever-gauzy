@@ -37,7 +37,7 @@ import { AtLeastOneFieldValidator } from '../../@core/validators';
 	selector: 'ga-pipelines',
 	styleUrls: ['./pipelines.component.scss']
 })
-export class PipelinesComponent extends PaginationFilterBaseComponent 
+export class PipelinesComponent extends PaginationFilterBaseComponent
 	implements OnInit, OnDestroy {
 
 	smartTableSettings: object;
@@ -50,7 +50,7 @@ export class PipelinesComponent extends PaginationFilterBaseComponent
 	organization: IOrganization;
 	name: string;
 	disableButton: boolean = true;
-	loading: boolean = false;	
+	loading: boolean = false;
 	pipelineTabsEnum = PipelineTabsEnum;
 	pipelines$: Subject<any> = this.subject$;
 	nbTab$: Subject<string> = new BehaviorSubject(PipelineTabsEnum.ACTIONS);
@@ -251,8 +251,9 @@ export class PipelinesComponent extends PaginationFilterBaseComponent
 				...(this.filters.join) ? this.filters.join : {}
 			},
 			where: {
-				...{ organizationId, tenantId },
-				...this.filters.where
+				organizationId,
+				tenantId,
+				...(this.filters.where ? this.filters.where : {})
 			},
 			resultMap: (pipeline: IPipeline) => {
 				return Object.assign({}, pipeline, {

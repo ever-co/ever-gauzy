@@ -659,18 +659,7 @@ export class InvoicesComponent
 
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
-
 		const { startDate, endDate } = getAdjustDateRangeFutureAllowed(this.selectedDateRange);
-		const request = {};
-		if (startDate && endDate) {
-			request['invoiceDate'] = {};
-			if (moment(startDate).isValid()) {
-				request['invoiceDate']['startDate'] = toUTC(startDate).format('YYYY-MM-DD HH:mm:ss');
-			}
-			if (moment(endDate).isValid()) {
-				request['invoiceDate']['endDate'] = toUTC(endDate).format('YYYY-MM-DD HH:mm:ss');
-			}
-		}
 
 		this.smartTableSource = new ServerDataSource(this.httpClient, {
 			endPoint: `${API_PREFIX}/invoices/pagination`,
@@ -703,8 +692,11 @@ export class InvoicesComponent
 				tenantId,
 				isEstimate: (this.isEstimate === true) ? 1 : 0,
 				isArchived: (this.includeArchived === true) ? 1 : 0,
-				...request,
-				...this.filters.where
+				invoiceDate: {
+					startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm:ss'),
+					endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm:ss')
+				},
+				...(this.filters.where ? this.filters.where : {})
 			},
 			resultMap: (invoice: IInvoice) => {
 				return Object.assign({}, invoice, {
