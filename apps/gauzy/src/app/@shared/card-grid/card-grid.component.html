@@ -55,7 +55,7 @@
 	</nb-card>
 </div>
 <ng-template #noDataGridLayout>
-	<div [ngClass]="{ 'no-data': !source.length }">
+	<div class="no-data">
 		<ngx-no-data-message
 			[message]="getNoDataMessage()"
 		></ngx-no-data-message>

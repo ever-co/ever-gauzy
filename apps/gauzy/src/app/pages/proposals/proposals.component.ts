@@ -70,6 +70,7 @@ export class ProposalsComponent extends PaginationFilterBaseComponent
 	disableButton: boolean = true;
 	organization: IOrganization;
 	proposals$: Subject<any> = this.subject$;
+	private _refresh$: Subject<any> = new Subject();
 
 	proposalsTable: Ng2SmartTableComponent;
 	@ViewChild('proposalsTable') set content(content: Ng2SmartTableComponent) {
@@ -126,11 +127,17 @@ export class ProposalsComponent extends PaginationFilterBaseComponent
 					this.selectedDateRange = dateRange;
 					this.employeeId = employee ? employee.id : null;
 				}),
-				tap(() => this.refreshPagination()),
+				tap(() => this._refresh$.next(true)),
 				tap(() => this.proposals$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
+		this._refresh$.pipe(
+				filter(() => this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID),
+				tap(() => this.refreshPagination()),
+				tap(() => this.proposals = []),
+				untilDestroyed(this)
+			).subscribe();
 	}
 
 	ngAfterViewInit() {
@@ -158,6 +165,7 @@ export class ProposalsComponent extends PaginationFilterBaseComponent
 					(componentLayout) =>
 						componentLayout === ComponentLayoutStyleEnum.CARDS_GRID
 				),
+				tap(() => this.proposals = []),
 				tap(() => this.proposals$.next(true)),
 				untilDestroyed(this)
 			)
@@ -213,6 +221,7 @@ export class ProposalsComponent extends PaginationFilterBaseComponent
 					} catch (error) {
 						this.errorHandler.handleError(error);
 					} finally {
+						this._refresh$.next(true);
 						this.proposals$.next(true);
 					}
 				}
@@ -249,6 +258,7 @@ export class ProposalsComponent extends PaginationFilterBaseComponent
 					} catch (error) {
 						this.errorHandler.handleError(error);
 					} finally {
+						this._refresh$.next(true);
 						this.proposals$.next(true);
 					}
 				}
@@ -284,6 +294,7 @@ export class ProposalsComponent extends PaginationFilterBaseComponent
 					} catch (error) {
 						this.errorHandler.handleError(error);
 					} finally {
+						this._refresh$.next(true);
 						this.proposals$.next(true);
 					}
 				}
@@ -543,7 +554,7 @@ export class ProposalsComponent extends PaginationFilterBaseComponent
 			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
 				// Initiate GRID view pagination
 				await this.smartTableSource.getElements();
-				this.proposals = this.smartTableSource.getData();
+				this.proposals.push(...this.smartTableSource.getData());
 
 				this.setPagination({
 					...this.getPagination(),
