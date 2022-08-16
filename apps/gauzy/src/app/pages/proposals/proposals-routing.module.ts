@@ -29,7 +29,9 @@ const routes: Routes = [
 		path: '',
 		component: ProposalsComponent,
 		canActivate: [NgxPermissionsGuard],
-		data: PROPOSAL_VIEW_PERMISSION,
+		data: {
+			...PROPOSAL_VIEW_PERMISSION
+		},
 		resolve: {
 			dates: DateRangePickerResolver
 		}
@@ -43,14 +45,22 @@ const routes: Routes = [
 			selectors: {
 				project: false,
 				employee: false
+			},
+			datePicker: {
+				unitOfTime: 'month'
 			}
+		},
+		resolve: {
+			dates: DateRangePickerResolver
 		}
 	},
 	{
 		path: 'details/:id',
 		component: ProposalDetailsComponent,
 		canActivate: [NgxPermissionsGuard],
-		data: PROPOSAL_VIEW_PERMISSION
+		data: {
+			...PROPOSAL_VIEW_PERMISSION
+		}
 	},
 	{
 		path: 'edit/:id',

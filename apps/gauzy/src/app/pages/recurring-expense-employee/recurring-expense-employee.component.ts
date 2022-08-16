@@ -18,6 +18,7 @@ import { distinctUntilChange } from '@gauzy/common-angular';
 import { TranslationBaseComponent } from '../../@shared/language-base';
 import { monthNames } from '../../@core/utils/date';
 import {
+	DateRangePickerBuilderService,
 	EmployeeRecurringExpenseService,
 	EmployeesService,
 	Store,
@@ -61,6 +62,7 @@ export class RecurringExpensesEmployeeComponent
 		private readonly route: ActivatedRoute,
 		private readonly employeeService: EmployeesService,
 		private readonly store: Store,
+		private readonly dateRangePickerBuilderService: DateRangePickerBuilderService,
 		private readonly dialogService: NbDialogService,
 		private readonly employeeRecurringExpenseService: EmployeeRecurringExpenseService,
 		private readonly toastrService: ToastrService,
@@ -79,7 +81,7 @@ export class RecurringExpensesEmployeeComponent
 			.subscribe();
 		const selectedOrganization$ = this.store.selectedOrganization$;
 		const selectedEmployee$ = this.store.selectedEmployee$;
-		const selectedDateRange$ = this.store.selectedDateRange$;
+		const selectedDateRange$ = this.dateRangePickerBuilderService.selectedDateRange$;
 		combineLatest([
 			selectedOrganization$,
 			selectedEmployee$,

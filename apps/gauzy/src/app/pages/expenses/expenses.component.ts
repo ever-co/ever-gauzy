@@ -478,7 +478,7 @@ export class ExpensesComponent extends PaginationFilterBaseComponent
 					startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm:ss'),
 					endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm:ss')
 				},
-				...this.filters.where
+				...(this.filters.where ? this.filters.where : {})
 			},
 			resultMap: (expense: IExpense) => {
 				return Object.assign({}, expense, {
