@@ -364,10 +364,6 @@ nb-tab {
       .grid {
         overflow: auto;
         height: 100%;
-        &.no-data {
-          @include nb-ltr(padding-right, 0.625rem);
-          @include nb-rtl(padding-left, 0.625rem);
-        }
       }
 
       ga-card-grid {

@@ -610,7 +610,7 @@
 			</div>
 		</ng-template>
 		<ng-template #gridLayout>
-			<div class="grid" [ngClass]="{ 'no-data': !invoices.length }">
+			<div class="grid">
 				<ga-card-grid
 					[settings]="settingsSmartTable"
 					[source]="invoices"
