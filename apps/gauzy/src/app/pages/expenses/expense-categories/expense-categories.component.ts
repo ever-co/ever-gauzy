@@ -114,7 +114,7 @@ export class ExpenseCategoriesComponent extends PaginationFilterBaseComponent
 			actions: false,
 			pager: {
 				display: false,
-				perPage: pagination ? pagination.itemsPerPage : 10
+				perPage: pagination ? pagination.itemsPerPage : this.minItemPerPage
 			},
 			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.EXPENSE_CATEGORY'),
 			columns: {
@@ -232,9 +232,9 @@ export class ExpenseCategoriesComponent extends PaginationFilterBaseComponent
 			endPoint: `${API_PREFIX}/expense-categories/pagination`,
 			relations: ['tags'],
 			join: {
-				alias: 'expense-category',
+				alias: 'expense_category',
 				leftJoin: {
-					tags: 'expense-category.tags'
+					tags: 'expense_category.tags'
 				}
 			},
 			where: {
