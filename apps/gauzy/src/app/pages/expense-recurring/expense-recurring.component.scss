@@ -61,8 +61,11 @@
 }
 
 .container{
-  padding: 0;
+  padding: 0.5rem;
   overflow-x: scroll;
+  height: 100%;
+  margin: 0;
+  max-width: unset;
 }
 
 .container::-webkit-scrollbar {

@@ -23,6 +23,7 @@
 
 :host .header-content {
   display: flex;
+  margin: auto 8px auto 16px;
 
   .header-info {
     display: flex;
@@ -71,13 +72,19 @@
   }
 
   .settings-body {
-    padding: 8px;
+    padding: 0;
   }
 
   .table-scroll {
-    height: calc(100vh - 30rem);
-    padding: 8px;
+    height: calc(100vh - 23.5rem);
+    @include nb-ltr(padding, 1rem 0.5rem 1rem 18px);
+    @include nb-rtl(padding, 1rem 18px 1rem 0.5rem);
     overflow: auto;
+  }
+
+  .no-data{
+    height: calc(100vh - 19.25rem);
+    padding: 8px;
   }
 }
 
