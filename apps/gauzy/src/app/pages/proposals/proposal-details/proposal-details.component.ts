@@ -1,11 +1,12 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { Store } from '../../../@core/services/store.service';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
-import { IProposalViewModel } from '@gauzy/contracts';
-import { ProposalsService } from '../../../@core/services/proposals.service';
-import { filter, tap } from 'rxjs/operators';
+import { IOrganization, IProposalViewModel, IUser } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { distinctUntilChange } from '@gauzy/common-angular';
+import { filter, tap } from 'rxjs/operators';
+import { ProposalsService, Store } from '../../../@core/services';
+
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-proposal-details',
@@ -13,14 +14,16 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 	styleUrls: ['./proposal-details.component.scss']
 })
 export class ProposalDetailsComponent implements OnInit, OnDestroy {
+
 	constructor(
-		private route: ActivatedRoute,
-		private store: Store,
-		private sanitizer: DomSanitizer,
-		private router: Router,
-		private proposalsService: ProposalsService
+		private readonly route: ActivatedRoute,
+		private readonly store: Store,
+		private readonly sanitizer: DomSanitizer,
+		private readonly router: Router,
+		private readonly proposalsService: ProposalsService
 	) {}
 
+	user: IUser;
 	proposal: IProposalViewModel;
 	jobPostLink: SafeHtml;
 	jobPostContent: SafeHtml;
@@ -29,6 +32,13 @@ export class ProposalDetailsComponent implements OnInit, OnDestroy {
 	proposalId: string;
 
 	ngOnInit() {
+		this.store.user$
+			.pipe(
+				filter((user: IUser) => !!user),
+				tap((user: IUser) => (this.user = user)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this.route.params
 			.pipe(
 				untilDestroyed(this),
@@ -37,9 +47,10 @@ export class ProposalDetailsComponent implements OnInit, OnDestroy {
 			.subscribe();
 		this.store.selectedOrganization$
 			.pipe(
-				filter((organization) => !!organization),
+				distinctUntilChange(),
+				filter((organization: IOrganization) => !!organization),
+				tap(() => this.getProposalById()),
 				untilDestroyed(this),
-				tap(() => this.getProposalById())
 			)
 			.subscribe();
 	}
@@ -50,6 +61,7 @@ export class ProposalDetailsComponent implements OnInit, OnDestroy {
 		if (!this.proposalId) {
 			this.router.navigate([`/pages/sales/proposals`]);
 		}
+
 		const { tenantId } = this.store.user;
 		const proposal = await this.proposalsService.getById(
 			this.proposalId,
