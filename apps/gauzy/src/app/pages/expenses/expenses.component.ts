@@ -117,14 +117,14 @@ export class ExpensesComponent extends PaginationFilterBaseComponent
 			.subscribe();
 		const storeOrganization$ = this.store.selectedOrganization$;
 		const storeEmployee$ = this.store.selectedEmployee$;
-		const selectedDateRange$ = this.store.selectedDateRange$;
+		const selectedDateRange$ = this.dateRangePickerBuilderService.selectedDateRange$;
 		const selectedProject$ = this.store.selectedProject$;
-		combineLatest([storeOrganization$, storeEmployee$, selectedDateRange$, selectedProject$])
+		combineLatest([storeOrganization$, selectedDateRange$, storeEmployee$, selectedProject$])
 			.pipe(
 				debounceTime(300),
-				filter(([organization]) => !!organization),
+				filter(([organization, dateRange]) => !!organization && !!dateRange),
 				distinctUntilChange(),
-				tap(([organization, employee, dateRange, project]) => {
+				tap(([organization, dateRange, employee, project]) => {
 					this.organization = organization;
 					this.selectedDateRange = dateRange;
 					this.employeeId = employee ? employee.id : null;
@@ -445,21 +445,7 @@ export class ExpensesComponent extends PaginationFilterBaseComponent
 		}
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
-
-		const request = {};
-		if (this.employeeId) { request['employeeId'] = this.employeeId; }
-		if (this.projectId) { request['projectId'] = this.projectId; }
-
 		const { startDate, endDate } = getAdjustDateRangeFutureAllowed(this.selectedDateRange);
-		if (startDate && endDate) {
-			request['valueDate'] = {};
-			if (moment(startDate).isValid()) {
-				request['valueDate']['startDate'] = toUTC(startDate).format('YYYY-MM-DD HH:mm:ss');
-			}
-			if (moment(endDate).isValid()) {
-				request['valueDate']['endDate'] = toUTC(endDate).format('YYYY-MM-DD HH:mm:ss');
-			}
-		}
 
 		this.smartTableSource = new ServerDataSource(this.httpClient, {
 			endPoint: `${API_PREFIX}/expense/pagination`,
@@ -476,9 +462,23 @@ export class ExpensesComponent extends PaginationFilterBaseComponent
 				...(this.filters.join) ? this.filters.join : {}
 			},
 			where: {
-				...{ organizationId, tenantId },
-				...request,
-				...this.filters.where
+				organizationId,
+				tenantId,
+				...(
+					this.employeeId ? {
+						employeeId: this.employeeId
+					} : {}
+				),
+				...(
+					this.projectId ? {
+						projectId: this.projectId
+					} : {}
+				),
+				valueDate: {
+					startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm:ss'),
+					endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm:ss')
+				},
+				...(this.filters.where ? this.filters.where : {})
 			},
 			resultMap: (expense: IExpense) => {
 				return Object.assign({}, expense, {

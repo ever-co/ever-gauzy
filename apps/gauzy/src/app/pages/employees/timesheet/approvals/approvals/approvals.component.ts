@@ -21,7 +21,7 @@ import { GauzyFiltersComponent } from './../../../../../@shared/timesheet/gauzy-
 	templateUrl: './approvals.component.html',
 	styleUrls: ['./approvals.component.scss']
 })
-export class ApprovalsComponent extends BaseSelectorFilterComponent implements 
+export class ApprovalsComponent extends BaseSelectorFilterComponent implements
 	AfterViewInit, OnInit, OnDestroy {
 
 	timesheets: ITimesheet[] = [];
@@ -34,7 +34,7 @@ export class ApprovalsComponent extends BaseSelectorFilterComponent implements
 	TimesheetStatus = TimesheetStatus;
 
 	@ViewChild(GauzyFiltersComponent) gauzyFiltersComponent: GauzyFiltersComponent;
-	datePickerConfig$: Observable<any> = this._dateRangePickerBuilderService.datePickerConfig$;
+	datePickerConfig$: Observable<any> = this.dateRangePickerBuilderService.datePickerConfig$;
 
 	selectedTimesheet: {
 		data: ITimesheet,
@@ -48,9 +48,9 @@ export class ApprovalsComponent extends BaseSelectorFilterComponent implements
 		private readonly toastrService: ToastrService,
 		private readonly nbMenuService: NbMenuService,
 		public readonly translateService: TranslateService,
-		public readonly _dateRangePickerBuilderService: DateRangePickerBuilderService
+		protected readonly dateRangePickerBuilderService: DateRangePickerBuilderService
 	) {
-		super(store, translateService);
+		super(store, translateService, dateRangePickerBuilderService);
 	}
 
 	ngOnInit() {
@@ -279,8 +279,8 @@ export class ApprovalsComponent extends BaseSelectorFilterComponent implements
 
 	/**
 	 * User Select Single Row
-	 * 
-	 * @param timesheet 
+	 *
+	 * @param timesheet
 	 */
 	userRowSelect(timesheet: ITimesheet) {
 		// if row is already selected, deselect it.
@@ -309,7 +309,7 @@ export class ApprovalsComponent extends BaseSelectorFilterComponent implements
 	}
 
 	isRowSelected() {
-		return !!this.timesheets.find((t: ITimesheet) => t.isSelected);	
+		return !!this.timesheets.find((t: ITimesheet) => t.isSelected);
 	}
 
 	isCheckboxSelected() {

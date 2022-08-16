@@ -18,7 +18,6 @@ import {
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange, toUTC } from '@gauzy/common-angular';
-import * as moment from 'moment';
 import {
 	ContactLinksComponent,
 	DateViewComponent,
@@ -31,6 +30,7 @@ import { IPaginationBase, PaginationFilterBaseComponent } from '../../@shared/pa
 import { API_PREFIX, ComponentEnum } from '../../@core/constants';
 import { StatusBadgeComponent } from '../../@shared/status-badge';
 import {
+	DateRangePickerBuilderService,
 	ErrorHandlingService,
 	ProposalsService,
 	Store,
@@ -81,6 +81,7 @@ export class ProposalsComponent extends PaginationFilterBaseComponent
 
 	constructor(
 		private readonly store: Store,
+		private readonly dateRangePickerBuilderService: DateRangePickerBuilderService,
 		private readonly router: Router,
 		private readonly proposalsService: ProposalsService,
 		private readonly toastrService: ToastrService,
@@ -113,14 +114,14 @@ export class ProposalsComponent extends PaginationFilterBaseComponent
 			)
 			.subscribe();
 		const storeOrganization$ = this.store.selectedOrganization$;
+		const storeDateRange$ = this.dateRangePickerBuilderService.selectedDateRange$;
 		const storeEmployee$ = this.store.selectedEmployee$;
-		const selectedDateRange$ = this.store.selectedDateRange$;
-		combineLatest([storeOrganization$, storeEmployee$, selectedDateRange$])
+		combineLatest([storeOrganization$, storeDateRange$, storeEmployee$])
 			.pipe(
 				debounceTime(500),
-				filter(([organization]) => !!organization),
+				filter(([organization, dateRange]) => !!organization && !!dateRange),
 				distinctUntilChange(),
-				tap(([organization, employee, dateRange]) => {
+				tap(([organization, dateRange, employee]) => {
 					this.organization = organization;
 					this.selectedDateRange = dateRange;
 					this.employeeId = employee ? employee.id : null;
@@ -429,23 +430,10 @@ export class ProposalsComponent extends PaginationFilterBaseComponent
 
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
-
-		const request = {};
-		if (this.employeeId) {
-			request['employeeId'] = this.employeeId;
-			delete this.smartTableSettings['columns']['author'];
-		}
-
 		const { startDate, endDate } = getAdjustDateRangeFutureAllowed(this.selectedDateRange);
-		if (startDate && endDate) {
-			request['valueDate'] = {};
-			if (moment(startDate).isValid()) {
-				request['valueDate']['startDate'] = toUTC(startDate).format('YYYY-MM-DD HH:mm:ss');
-			}
-			if (moment(endDate).isValid()) {
-				request['valueDate']['endDate'] = toUTC(endDate).format('YYYY-MM-DD HH:mm:ss');
-			}
-		}
+
+		if (this.employeeId) { delete this.smartTableSettings['columns']['author']; }
+
 		this.smartTableSource = new ServerDataSource(this.httpClient, {
 			endPoint: `${API_PREFIX}/proposal/pagination`,
 			relations: [
@@ -459,9 +447,18 @@ export class ProposalsComponent extends PaginationFilterBaseComponent
 				...(this.filters.join ? this.filters.join : {})
 			},
 			where: {
-				...{ organizationId, tenantId },
-				...request,
-				...this.filters.where
+				organizationId,
+				tenantId,
+				...(
+					this.employeeId ? {
+						employeeId: this.employeeId
+					} : {}
+				),
+				valueDate: {
+					startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm:ss'),
+					endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm:ss')
+				},
+				...(this.filters.where ? this.filters.where : {})
 			},
 			resultMap: (proposal: IProposal) => {
 				return this.proposalMapper(proposal);

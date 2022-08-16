@@ -7,12 +7,16 @@ import {
 	forwardRef,
 	OnDestroy
 } from '@angular/core';
-import { IEmployee, IOrganization } from '@gauzy/contracts';
 import { NG_VALUE_ACCESSOR, FormControl } from '@angular/forms';
-import { filter, Subject, tap } from 'rxjs';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { combineLatest, filter, Subject, tap } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
-import { EmployeesService, Store } from '../../../@core/services';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { IDateRangePicker, IEmployee, IOrganization } from '@gauzy/contracts';
+import {
+	DateRangePickerBuilderService,
+	EmployeesService,
+	Store
+} from '../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -29,8 +33,8 @@ import { EmployeesService, Store } from '../../../@core/services';
 })
 export class EmployeeSelectComponent implements OnInit, OnDestroy {
 	loaded: boolean;
-	organization: any;
 	preSelected: string[] | string;
+
 	@Input()
 	public set reset(value: boolean | null) {
 		if (value) {
@@ -42,6 +46,7 @@ export class EmployeeSelectComponent implements OnInit, OnDestroy {
 			}
 		}
 	}
+
 	@Input()
 	public get allEmployees(): IEmployee[] {
 		return this._allEmployees;
@@ -75,7 +80,8 @@ export class EmployeeSelectComponent implements OnInit, OnDestroy {
 
 	constructor(
 		private readonly employeesService: EmployeesService,
-		private readonly store: Store
+		private readonly store: Store,
+		private readonly dateRangePickerBuilderService: DateRangePickerBuilderService
 	) {}
 
 	set employeeId(value: string[] | string) {
@@ -100,6 +106,9 @@ export class EmployeeSelectComponent implements OnInit, OnDestroy {
 	onChange: any = () => {};
 	onTouched: any = () => {};
 
+	public organization: IOrganization;
+	public selectedDateRange: IDateRangePicker;
+
 	ngOnInit(): void {
 		//delay to pre selected employee
 		this.loaded = false;
@@ -122,17 +131,23 @@ export class EmployeeSelectComponent implements OnInit, OnDestroy {
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.store.selectedOrganization$
+		const storeOrganization$ = this.store.selectedOrganization$;
+		const selectedDateRange$ = this.dateRangePickerBuilderService.selectedDateRange$;
+		combineLatest([storeOrganization$, selectedDateRange$])
 			.pipe(
-				filter((organization: IOrganization) => !!organization),
-				tap((organization: IOrganization) => this.organization = organization),
+				filter(([organization, dateRange]) => !!organization && !!dateRange),
+				tap(([organization, dateRange]) => {
+					this.organization = organization;
+					this.selectedDateRange = dateRange;
+				}),
+				tap(() => {
+					if (!this.allEmployees || this.allEmployees.length === 0) {
+						this.getWorkingEmployees();
+					}
+				}),
 				untilDestroyed(this)
 			)
-			.subscribe(() => {
-				if (!this.allEmployees || this.allEmployees.length === 0) {
-					this.getWorkingEmployees();
-				}
-			});
+			.subscribe();
 	}
 
 	checkForMultiSelectValue(val): void {
@@ -169,12 +184,11 @@ export class EmployeeSelectComponent implements OnInit, OnDestroy {
 	private async getWorkingEmployees(): Promise<void> {
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
-		const { selectedDateRange } = this.store;
 
 		const { items = [] } = await this.employeesService.getWorking(
 			organizationId,
 			tenantId,
-			selectedDateRange,
+			this.selectedDateRange,
 			true
 		);
 		this.employees = items;

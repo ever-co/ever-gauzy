@@ -30,10 +30,24 @@ export class DateRangePickerBuilderService {
 
 	public dates$: BehaviorSubject<IDateRangePicker> = new BehaviorSubject({
 		startDate: moment().startOf(DEFAULT_DATE_PICKER_CONFIG.unitOfTime).toDate(),
-		endDate: moment().endOf(DEFAULT_DATE_PICKER_CONFIG.unitOfTime).toDate()
+		endDate: moment().endOf(DEFAULT_DATE_PICKER_CONFIG.unitOfTime).toDate(),
+		isCustomDate: false
 	});
 
+	public _selectedDateRange$: BehaviorSubject<IDateRangePicker> = new BehaviorSubject(null);
+	public selectedDateRange$: Observable<IDateRangePicker> = this._selectedDateRange$.asObservable();
+
 	constructor() {}
+
+	/**
+	 * Getter & Setter for selected date range
+	 */
+	get selectedDateRange(): IDateRangePicker {
+		return this._selectedDateRange$.getValue();
+	}
+	set selectedDateRange(range: IDateRangePicker) {
+		this._selectedDateRange$.next(range);
+	}
 
 	/**
 	 * Override date range picker default configuration

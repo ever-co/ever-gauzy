@@ -14,7 +14,7 @@ import { debounceTime, filter, tap } from 'rxjs/operators';
 import { Subject } from 'rxjs/internal/Subject';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange } from '@gauzy/common-angular';
-import { EmployeeStatisticsService, Store } from '../../../@core/services';
+import { DateRangePickerBuilderService, EmployeeStatisticsService, Store } from '../../../@core/services';
 import { ProfitHistoryComponent, RecordsHistoryComponent } from '../../../@shared/dashboard';
 
 @UntilDestroy({ checkProperties: true })
@@ -56,7 +56,8 @@ export class HumanResourcesComponent implements OnInit, OnDestroy {
 		private readonly store: Store,
 		private readonly dialogService: NbDialogService,
 		private readonly router: Router,
-		private readonly employeeStatisticsService: EmployeeStatisticsService
+		private readonly employeeStatisticsService: EmployeeStatisticsService,
+		private readonly dateRangePickerBuilderService: DateRangePickerBuilderService
 	) {}
 
 	async ngOnInit() {
@@ -68,16 +69,16 @@ export class HumanResourcesComponent implements OnInit, OnDestroy {
 			)
 			.subscribe();
 		const storeOrganization$ = this.store.selectedOrganization$;
-		const selectedDateRange$ = this.store.selectedDateRange$;
+		const selectedDateRange$ = this.dateRangePickerBuilderService.selectedDateRange$;
 		const selectedEmployee$ = this.store.selectedEmployee$
 		combineLatest([storeOrganization$, selectedDateRange$, selectedEmployee$])
 			.pipe(
 				debounceTime(300),
 				distinctUntilChange(),
-				filter(([organization, range, employee]) => !!organization && !!range && !!employee),
-				tap(([organization, range, employee]) => {
+				filter(([organization, dateRange, employee]) => !!organization && !!dateRange && !!employee),
+				tap(([organization, dateRange, employee]) => {
 					this.selectedOrganization = organization;
-					this.selectedDateRange = range;
+					this.selectedDateRange = dateRange;
 					this.selectedEmployee = employee;
 				}),
 				tap(() => {
@@ -221,14 +222,14 @@ export class HumanResourcesComponent implements OnInit, OnDestroy {
 	}
 
 	/**
-	 * GET Employee Position Accessor 
+	 * GET Employee Position Accessor
 	 */
 	get employeePosition() {
 		if (!this.selectedEmployee) {
 			return;
 		}
 		const { shortDescription, employeeLevel } = this.selectedEmployee;
-		return [shortDescription, employeeLevel].filter(Boolean).join(' | '); 
+		return [shortDescription, employeeLevel].filter(Boolean).join(' | ');
 	}
 
 	ngOnDestroy() {}

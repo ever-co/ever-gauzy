@@ -11,15 +11,15 @@ import { TimesheetFilterService } from './../../../../../@shared/timesheet/times
 	styleUrls: ['./time-and-activities.component.scss']
 })
 export class TimeAndActivitiesComponent implements OnInit {
-	
+
 	filters: ITimeLogFilters;
-	datePickerConfig$: Observable<any> = this._dateRangePickerBuilderService.datePickerConfig$;
-	
+	datePickerConfig$: Observable<any> = this.dateRangePickerBuilderService.datePickerConfig$;
+
 	@ViewChild(GauzyFiltersComponent) gauzyFiltersComponent: GauzyFiltersComponent;
-	
+
 	constructor(
 		private readonly timesheetFilterService: TimesheetFilterService,
-		public readonly _dateRangePickerBuilderService: DateRangePickerBuilderService
+		public readonly dateRangePickerBuilderService: DateRangePickerBuilderService
 	) {}
 
 	filtersChange(filters: ITimeLogFilters) {

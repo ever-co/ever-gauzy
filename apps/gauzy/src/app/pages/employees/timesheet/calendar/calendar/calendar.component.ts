@@ -56,7 +56,7 @@ export class CalendarComponent extends BaseSelectorFilterComponent
 	@ViewChild('viewLogTemplate', { static: true }) viewLogTemplate: TemplateRef<any>;
 
 	@ViewChild(GauzyFiltersComponent) gauzyFiltersComponent: GauzyFiltersComponent;
-	datePickerConfig$: Observable<any> = this._dateRangePickerBuilderService.datePickerConfig$;
+	datePickerConfig$: Observable<any> = this.dateRangePickerBuilderService.datePickerConfig$;
 
 	PermissionsEnum = PermissionsEnum;
 	calendarComponent: FullCalendarComponent; // the #calendar in the template
@@ -75,10 +75,10 @@ export class CalendarComponent extends BaseSelectorFilterComponent
 		private readonly timesheetFilterService: TimesheetFilterService,
 		private readonly ngxPermissionsService: NgxPermissionsService,
 		private readonly cdr: ChangeDetectorRef,
-		public readonly _dateRangePickerBuilderService: DateRangePickerBuilderService,
+		protected readonly dateRangePickerBuilderService: DateRangePickerBuilderService,
 		public readonly translateService: TranslateService
 	) {
-		super(store, translateService);
+		super(store, translateService, dateRangePickerBuilderService);
 		this.calendarOptions = {
 			initialView: 'timeGridWeek',
 			headerToolbar: {
@@ -306,7 +306,7 @@ export class CalendarComponent extends BaseSelectorFilterComponent
 			.onClose
 			.pipe(
 				filter((timeLog: ITimeLog) => !!timeLog),
-				tap((timeLog: ITimeLog) => this._dateRangePickerBuilderService.refreshDateRangePicker(
+				tap((timeLog: ITimeLog) => this.dateRangePickerBuilderService.refreshDateRangePicker(
 					moment(timeLog.startedAt)
 				)),
 				tap(() => this.subject$.next(true)),

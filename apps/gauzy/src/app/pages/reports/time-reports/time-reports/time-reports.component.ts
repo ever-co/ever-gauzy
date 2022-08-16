@@ -42,7 +42,7 @@ export class TimeReportsComponent extends BaseSelectorFilterComponent
 	groupBy: ReportGroupByFilter = ReportGroupFilterEnum.date;
 
 	@ViewChild(GauzyFiltersComponent) gauzyFiltersComponent: GauzyFiltersComponent;
-	datePickerConfig$: Observable<any> = this._dateRangePickerBuilderService.datePickerConfig$;
+	datePickerConfig$: Observable<any> = this.dateRangePickerBuilderService.datePickerConfig$;
 	payloads$: BehaviorSubject<ITimeLogFilters> = new BehaviorSubject(null);
 
 	constructor(
@@ -51,9 +51,9 @@ export class TimeReportsComponent extends BaseSelectorFilterComponent
 		public readonly translateService: TranslateService,
 		private readonly cdr: ChangeDetectorRef,
 		private readonly timesheetFilterService: TimesheetFilterService,
-		public readonly _dateRangePickerBuilderService: DateRangePickerBuilderService
+		protected readonly dateRangePickerBuilderService: DateRangePickerBuilderService
 	) {
-		super(store, translateService);
+		super(store, translateService, dateRangePickerBuilderService);
 	}
 
 	ngOnInit() {

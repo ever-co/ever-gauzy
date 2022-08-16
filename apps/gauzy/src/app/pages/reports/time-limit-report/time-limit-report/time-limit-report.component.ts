@@ -28,7 +28,7 @@ import { GauzyFiltersComponent } from './../../../../@shared/timesheet/gauzy-fil
 	templateUrl: './time-limit-report.component.html',
 	styleUrls: ['./time-limit-report.component.scss']
 })
-export class TimeLimitReportComponent extends BaseSelectorFilterComponent 
+export class TimeLimitReportComponent extends BaseSelectorFilterComponent
 	implements OnInit, AfterViewInit {
 
 	filters: ITimeLogFilters;
@@ -38,7 +38,7 @@ export class TimeLimitReportComponent extends BaseSelectorFilterComponent
 	duration: 'day' | 'week' | 'month';
 
 	@ViewChild(GauzyFiltersComponent) gauzyFiltersComponent: GauzyFiltersComponent;
-	datePickerConfig$: Observable<any> = this._dateRangePickerBuilderService.datePickerConfig$;
+	datePickerConfig$: Observable<any> = this.dateRangePickerBuilderService.datePickerConfig$;
 
 	constructor(
 		private readonly cd: ChangeDetectorRef,
@@ -47,9 +47,9 @@ export class TimeLimitReportComponent extends BaseSelectorFilterComponent
 		protected readonly store: Store,
 		public readonly translateService: TranslateService,
 		private readonly timesheetFilterService: TimesheetFilterService,
-		public readonly _dateRangePickerBuilderService: DateRangePickerBuilderService
+		protected readonly dateRangePickerBuilderService: DateRangePickerBuilderService
 	) {
-		super(store, translateService);
+		super(store, translateService, dateRangePickerBuilderService);
 	}
 
 	ngOnInit(): void {

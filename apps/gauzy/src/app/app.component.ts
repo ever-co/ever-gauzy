@@ -43,7 +43,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 		private readonly router: Router,
 		private readonly activatedRoute: ActivatedRoute,
 		public readonly selectorBuilderService: SelectorBuilderService,
-		public readonly dateRangePickerBuilderService: DateRangePickerBuilderService
+		private readonly dateRangePickerBuilderService: DateRangePickerBuilderService
 	) {
 		this.getActivateRouterDataEvent();
 	}

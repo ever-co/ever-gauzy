@@ -176,8 +176,9 @@ const routes: Routes = [
 	},
 	{
 		path: 'activity',
-		loadChildren: () =>
-			import('./activity/activity.module').then((m) => m.ActivityModule)
+		loadChildren: () => import('./activity/activity.module').then(
+			(m) => m.ActivityModule
+		)
 	}
 ];
 

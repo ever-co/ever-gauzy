@@ -18,7 +18,7 @@ export class Next implements IArrowStrategy {
 		const { startDate, endDate, isCustomDate } = request;
 		let start: moment.Moment = moment(endDate).add(1, 'days');
 		let end: moment.Moment;
-		
+
 		if (isCustomDate) {
 			const range = moment(endDate).diff(moment(startDate), 'days');
 			end = moment(start).add(range, 'days');

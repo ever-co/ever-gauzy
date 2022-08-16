@@ -15,6 +15,7 @@ import * as moment from 'moment';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { PublicPageMutationComponent } from '../../@shared/organizations/public-page-mutation/public-page-mutation.component';
 import {
+	DateRangePickerBuilderService,
 	EmployeesService,
 	EmployeeStatisticsService,
 	OrganizationsService,
@@ -66,6 +67,7 @@ export class OrganizationComponent extends TranslationBaseComponent
 		private readonly employeesService: EmployeesService,
 		private readonly employeeStatisticsService: EmployeeStatisticsService,
 		private readonly store: Store,
+		private readonly dateRangePickerService: DateRangePickerBuilderService,
 		private readonly dialogService: NbDialogService,
 		readonly translateService: TranslateService
 	) {
@@ -181,9 +183,11 @@ export class OrganizationComponent extends TranslationBaseComponent
 
 		let startDate = moment().startOf('month').toDate();
 		let endDate = moment().endOf('month').toDate();
-		if (this.store.selectedDateRange) {
-			startDate = this.store.selectedDateRange.startDate;
-			endDate = this.store.selectedDateRange.endDate;
+
+		if (this.dateRangePickerService.selectedDateRange) {
+			const selectedDateRange = this.dateRangePickerService.selectedDateRange;
+			startDate = selectedDateRange.startDate;
+			endDate = selectedDateRange.endDate;
 		}
 
 		const statistics = await this.employeeStatisticsService.getAggregateStatisticsByOrganizationId(

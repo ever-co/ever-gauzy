@@ -1,3 +1,4 @@
+import { Injectable } from '@angular/core';
 import {
 	DefaultValueDateTypeEnum,
 	IOrganization,
@@ -12,20 +13,19 @@ import {
 	IFeatureOrganization,
 	FeatureEnum,
 	ISelectedEmployee,
-	IDateRangePicker
+	ComponentLayoutStyleEnum
 } from '@gauzy/contracts';
-import { Injectable } from '@angular/core';
 import { StoreConfig, Store as AkitaStore, Query } from '@datorama/akita';
 import { NgxPermissionsService, NgxRolesService } from 'ngx-permissions';
+import { merge, Subject } from 'rxjs';
+import { map } from 'rxjs/operators';
+import * as _ from 'underscore';
 import {
 	ComponentEnum,
 	SYSTEM_DEFAULT_LAYOUT
 } from '../constants/layout.constants';
-import { ComponentLayoutStyleEnum } from '@gauzy/contracts';
-import { map } from 'rxjs/operators';
-import { merge, Subject } from 'rxjs';
-import * as _ from 'underscore';
 import { GuiDrag } from '../../@shared/dashboard/interfaces/gui-drag.abstract';
+import { DateRangePickerBuilderService } from './selector-builder';
 
 export interface AppState {
 	user: IUser;
@@ -34,7 +34,6 @@ export interface AppState {
 	selectedEmployee: ISelectedEmployee;
 	selectedProposal: IProposalViewModel;
 	selectedProject: IOrganizationProject;
-	selectedDateRange: IDateRangePicker;
 	systemLanguages: ILanguage[];
 	featureToggles: IFeatureToggle[];
 	featureOrganizations: IFeatureOrganization[];
@@ -86,7 +85,7 @@ export function createInitialPersistState(): PersistState {
 		preferredLanguage,
 		componentLayout,
 		themeName,
-		widgets, 
+		widgets,
 		windows
 	} as PersistState;
 }
@@ -109,14 +108,14 @@ export class PersistStore extends AkitaStore<PersistState> {
 
 @Injectable({ providedIn: 'root' })
 export class AppQuery extends Query<AppState> {
-	constructor(protected store: AppStore) {
+	constructor(protected readonly store: AppStore) {
 		super(store);
 	}
 }
 
 @Injectable({ providedIn: 'root' })
 export class PersistQuery extends Query<PersistState> {
-	constructor(protected store: PersistStore) {
+	constructor(protected readonly store: PersistStore) {
 		super(store);
 	}
 }
@@ -124,12 +123,13 @@ export class PersistQuery extends Query<PersistState> {
 @Injectable({ providedIn: 'root' })
 export class Store {
 	constructor(
-		protected appStore: AppStore,
-		protected appQuery: AppQuery,
-		protected persistStore: PersistStore,
-		protected persistQuery: PersistQuery,
-		protected permissionsService: NgxPermissionsService,
-		protected ngxRolesService: NgxRolesService
+		protected readonly appStore: AppStore,
+		protected readonly appQuery: AppQuery,
+		protected readonly persistStore: PersistStore,
+		protected readonly persistQuery: PersistQuery,
+		protected readonly permissionsService: NgxPermissionsService,
+		protected readonly ngxRolesService: NgxRolesService,
+		protected readonly dateRangePickerBuilderService: DateRangePickerBuilderService
 	) {}
 
 	user$ = this.appQuery.select((state) => state.user);
@@ -138,7 +138,6 @@ export class Store {
 	);
 	selectedEmployee$ = this.appQuery.select((state) => state.selectedEmployee);
 	selectedProject$ = this.appQuery.select((state) => state.selectedProject);
-	selectedDateRange$ = this.appQuery.select((state) => state.selectedDateRange);
 	userRolePermissions$ = this.appQuery.select(
 		(state) => state.userRolePermissions
 	);
@@ -293,17 +292,6 @@ export class Store {
 		});
 	}
 
-	get selectedDateRange() {
-		const { selectedDateRange } = this.appQuery.getValue();
-		return selectedDateRange;
-	}
-
-	set selectedDateRange(range: IDateRangePicker) {
-		this.appStore.update({
-			selectedDateRange: range
-		});
-	}
-
 	get selectedProposal(): IProposalViewModel {
 		const { selectedProposal } = this.appQuery.getValue();
 		return selectedProposal;
@@ -394,7 +382,10 @@ export class Store {
 	}
 
 	getDateFromOrganizationSettings() {
-		const { startDate } = this.selectedDateRange;
+		let startDate = new Date();
+		if (this.dateRangePickerBuilderService.selectedDateRange) {
+			startDate = this.dateRangePickerBuilderService.selectedDateRange.startDate;
+		}
 		switch (
 			this.selectedOrganization &&
 			this.selectedOrganization.defaultValueDateType
