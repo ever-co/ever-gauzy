@@ -184,7 +184,6 @@ export class TimeTrackingComponent
 				debounceTime(500),
 				filter(([organization, dateRange, employee]) => !!organization && !!dateRange && !!employee),
 				tap(([organization, dateRange, employee, project]) => {
-					console.log(dateRange);
 					this.organization = organization;
 					this.employeeIds = employee ? [employee.id] : [];
 					this.projectIds = project ? [project.id] : [];
