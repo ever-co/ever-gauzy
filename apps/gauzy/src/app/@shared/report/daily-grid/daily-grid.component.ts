@@ -19,7 +19,7 @@ import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import { pick } from 'underscore';
 import { distinctUntilChange, isEmpty, progressStatus } from '@gauzy/common-angular';
 import { TranslateService } from '@ngx-translate/core';
-import { Store } from '../../../@core/services';
+import { DateRangePickerBuilderService, Store } from '../../../@core/services';
 import { TimesheetService } from '../../timesheet/timesheet.service';
 import { BaseSelectorFilterComponent } from '../../timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
 
@@ -31,7 +31,7 @@ import { BaseSelectorFilterComponent } from '../../timesheet/gauzy-filters/base-
 })
 export class DailyGridComponent extends BaseSelectorFilterComponent
 	implements OnInit, AfterViewInit, OnDestroy {
-	
+
 	payloads$: BehaviorSubject<ITimeLogFilters> = new BehaviorSubject(null);
 
 	dailyLogs: IReportDayData[] = [];
@@ -56,10 +56,11 @@ export class DailyGridComponent extends BaseSelectorFilterComponent
 	constructor(
 		private readonly timesheetService: TimesheetService,
 		protected readonly store: Store,
+		protected readonly dateRangePickerBuilderService: DateRangePickerBuilderService,
 		public readonly translateService: TranslateService,
 		private readonly cd: ChangeDetectorRef
 	) {
-		super(store, translateService);
+		super(store, translateService, dateRangePickerBuilderService);
 	}
 
 	ngOnInit() {
@@ -84,7 +85,7 @@ export class DailyGridComponent extends BaseSelectorFilterComponent
 	ngAfterViewInit() {
 		this.cd.detectChanges();
 	}
-	
+
 	groupByChange() {
 		this.subject$.next(true);
 	}

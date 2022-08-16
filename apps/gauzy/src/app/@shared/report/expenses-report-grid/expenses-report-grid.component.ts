@@ -16,7 +16,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { isEmpty } from '@gauzy/common-angular';
 import { debounceTime, tap } from 'rxjs/operators';
-import { ExpensesService, Store } from '../../../@core/services';
+import { DateRangePickerBuilderService, ExpensesService, Store } from '../../../@core/services';
 import { BaseSelectorFilterComponent } from '../../timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
 
 @UntilDestroy({ checkProperties: true })
@@ -44,10 +44,11 @@ export class ExpensesReportGridComponent extends BaseSelectorFilterComponent
 	constructor(
 		private readonly expensesService: ExpensesService,
 		protected readonly store: Store,
+		protected readonly dateRangePickerBuilderService: DateRangePickerBuilderService,
 		public readonly translateService: TranslateService,
 		private readonly cd: ChangeDetectorRef
 	) {
-		super(store, translateService);
+		super(store, translateService, dateRangePickerBuilderService);
 	}
 
 	ngOnInit() {

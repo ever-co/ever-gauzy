@@ -30,16 +30,16 @@ import { GauzyFiltersComponent } from './../../../../@shared/timesheet/gauzy-fil
 	templateUrl: './expenses-report.component.html',
 	styleUrls: ['./expenses-report.component.scss']
 })
-export class ExpensesReportComponent extends BaseSelectorFilterComponent 
+export class ExpensesReportComponent extends BaseSelectorFilterComponent
 	implements OnInit, AfterViewInit {
-		
+
 	filters: ITimeLogFilters;
 	loading: boolean = false;
 	chartData: IChartData;
 	groupBy: ReportGroupByFilter = ReportGroupFilterEnum.date;
 
 	@ViewChild(GauzyFiltersComponent) gauzyFiltersComponent: GauzyFiltersComponent;
-	datePickerConfig$: Observable<any> = this._dateRangePickerBuilderService.datePickerConfig$;
+	datePickerConfig$: Observable<any> = this.dateRangePickerBuilderService.datePickerConfig$;
 
 	constructor(
 		private readonly expensesService: ExpensesService,
@@ -47,9 +47,9 @@ export class ExpensesReportComponent extends BaseSelectorFilterComponent
 		protected readonly store: Store,
 		public readonly translateService: TranslateService,
 		private readonly timesheetFilterService: TimesheetFilterService,
-		public readonly _dateRangePickerBuilderService: DateRangePickerBuilderService
+		protected readonly dateRangePickerBuilderService: DateRangePickerBuilderService
 	) {
-		super(store, translateService);
+		super(store, translateService, dateRangePickerBuilderService);
 	}
 
 	ngOnInit() {

@@ -16,7 +16,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { debounceTime, tap } from 'rxjs/operators';
 import { isEmpty } from '@gauzy/common-angular';
-import { Store } from '../../../@core/services';
+import { DateRangePickerBuilderService, Store } from '../../../@core/services';
 import { TimesheetService } from '../../timesheet/timesheet.service';
 import { BaseSelectorFilterComponent } from '../../timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
 
@@ -45,10 +45,11 @@ export class AmountsOwedGridComponent extends BaseSelectorFilterComponent
 	constructor(
 		private readonly timesheetService: TimesheetService,
 		protected readonly store: Store,
+		protected readonly dateRangePickerBuilderService: DateRangePickerBuilderService,
 		private readonly cd: ChangeDetectorRef,
-		public readonly translateService: TranslateService
+		public readonly translateService: TranslateService,
 	) {
-		super(store, translateService);
+		super(store, translateService, dateRangePickerBuilderService);
 	}
 
 	ngOnInit() {

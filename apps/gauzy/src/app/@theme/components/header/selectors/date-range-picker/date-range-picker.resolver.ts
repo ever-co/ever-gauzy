@@ -1,7 +1,6 @@
 import { Injectable } from "@angular/core";
 import { ActivatedRouteSnapshot, Resolve } from "@angular/router";
 import { of as observableOf } from 'rxjs';
-import { tap } from 'rxjs/operators';
 import { Observable } from "rxjs/internal/Observable";
 import * as moment from 'moment';
 import { IDateRangePicker } from "@gauzy/contracts";
@@ -14,7 +13,6 @@ export class DateRangePickerResolver implements Resolve<Observable<IDateRangePic
 
     resolve(route: ActivatedRouteSnapshot): Observable<IDateRangePicker>  {
         const { unitOfTime } = route.data.datePicker as IDatePickerConfig;
-        console.log(route);
 
         const date_start = route.queryParams.date || new Date();
         const date_end = route.queryParams.date_end;
@@ -25,10 +23,6 @@ export class DateRangePickerResolver implements Resolve<Observable<IDateRangePic
         return observableOf({
             startDate: start_date.toDate(),
             endDate: end_date.toDate()
-        }).pipe(
-            tap((range: IDateRangePicker) => {
-                console.log({ range});
-            })
-        );
+        });
     }
 }

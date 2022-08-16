@@ -42,7 +42,7 @@ export class WeeklyTimeReportsComponent extends BaseSelectorFilterComponent
 	chartData: IChartData;
 
 	@ViewChild(GauzyFiltersComponent) gauzyFiltersComponent: GauzyFiltersComponent;
-	datePickerConfig$: Observable<any> = this._dateRangePickerBuilderService.datePickerConfig$;
+	datePickerConfig$: Observable<any> = this.dateRangePickerBuilderService.datePickerConfig$;
 	payloads$: BehaviorSubject<ITimeLogFilters> = new BehaviorSubject(null);
 
 	constructor(
@@ -51,9 +51,9 @@ export class WeeklyTimeReportsComponent extends BaseSelectorFilterComponent
 		protected readonly store: Store,
 		public readonly translateService: TranslateService,
 		private readonly timesheetFilterService: TimesheetFilterService,
-		public readonly _dateRangePickerBuilderService: DateRangePickerBuilderService
+		protected readonly dateRangePickerBuilderService: DateRangePickerBuilderService
 	) {
-		super(store, translateService);
+		super(store, translateService, dateRangePickerBuilderService);
 	}
 
 	ngOnInit() {
@@ -145,14 +145,14 @@ export class WeeklyTimeReportsComponent extends BaseSelectorFilterComponent
 
 	/**
 	* Weekly reports for employee logs
-	* @param logs 
+	* @param logs
 	*/
 	private _mapLogs(logs: ReportDayData[]) {
 		let employees = [];
 		const datasets = [];
 
 		logs.forEach((log: ReportDayData) => {
-			const color = randomColor({ 
+			const color = randomColor({
 				luminosity: 'light',
 				format: 'rgba',
 				alpha: 1

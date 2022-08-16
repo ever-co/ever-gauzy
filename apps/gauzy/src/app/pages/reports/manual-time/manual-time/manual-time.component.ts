@@ -44,7 +44,7 @@ export class ManualTimeComponent extends BaseSelectorFilterComponent
 	actions: string[] = Object.values(ManualTimeLogAction);
 
 	@ViewChild(GauzyFiltersComponent) gauzyFiltersComponent: GauzyFiltersComponent;
-	datePickerConfig$: Observable<any> = this._dateRangePickerBuilderService.datePickerConfig$;
+	datePickerConfig$: Observable<any> = this.dateRangePickerBuilderService.datePickerConfig$;
 
 	constructor(
 		private readonly cd: ChangeDetectorRef,
@@ -52,9 +52,9 @@ export class ManualTimeComponent extends BaseSelectorFilterComponent
 		protected readonly store: Store,
 		public readonly translateService: TranslateService,
 		private readonly timesheetFilterService: TimesheetFilterService,
-		public readonly _dateRangePickerBuilderService: DateRangePickerBuilderService
+		protected readonly dateRangePickerBuilderService: DateRangePickerBuilderService
 	) {
-		super(store, translateService);
+		super(store, translateService, dateRangePickerBuilderService);
 	}
 
 	ngOnInit(): void {
