@@ -70,6 +70,7 @@ export class ExpensesComponent extends PaginationFilterBaseComponent
 
 	organization: IOrganization;
 	expenses$: Subject<any> = this.subject$;
+	private _refresh$ :  Subject<any> = new Subject();
 
 	expensesTable: Ng2SmartTableComponent;
 	@ViewChild('expensesTable') set content(content: Ng2SmartTableComponent) {
@@ -130,7 +131,7 @@ export class ExpensesComponent extends PaginationFilterBaseComponent
 					this.employeeId = employee ? employee.id : null;
 					this.projectId = project ? project.id : null;
 				}),
-				tap(() => this.refreshPagination()),
+				tap(() => this._refresh$.next(true)),
 				tap(() => this.expenses$.next(true)),
 				untilDestroyed(this)
 			)
@@ -144,6 +145,13 @@ export class ExpensesComponent extends PaginationFilterBaseComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
+		this._refresh$.pipe(
+				filter(() => this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID),
+				tap(() => this.refreshPagination()),
+				tap(() => this.expenses = []),
+				untilDestroyed(this)
+			).subscribe();
+	
 	}
 
 	ngAfterViewInit() {
@@ -163,6 +171,7 @@ export class ExpensesComponent extends PaginationFilterBaseComponent
 				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
 				tap(() => this.refreshPagination()),
 				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
+				tap(() => this.expenses = []),
 				tap(() => this.expenses$.next(true)),
 				untilDestroyed(this)
 			)
@@ -302,6 +311,7 @@ export class ExpensesComponent extends PaginationFilterBaseComponent
 			this.dateRangePickerBuilderService.refreshDateRangePicker(
 				moment(expense.valueDate)
 			);
+			this._refresh$.next(true)
 			this.expenses$.next(true);
 		} catch (error) {
 			this.errorHandler.handleError(error);
@@ -359,6 +369,7 @@ export class ExpensesComponent extends PaginationFilterBaseComponent
 						this.toastrService.success('NOTES.EXPENSES.OPEN_EDIT_EXPENSE_DIALOG', {
 							name: this.employeeName(employee)
 						});
+						this._refresh$.next(true)
 						this.expenses$.next(true);
 					} catch (error) {
 						this.errorHandler.handleError(error);
@@ -423,6 +434,7 @@ export class ExpensesComponent extends PaginationFilterBaseComponent
 						this.toastrService.success('NOTES.EXPENSES.DELETE_EXPENSE', {
 							name: this.employeeName(employee)
 						});
+						this._refresh$.next(true)
 						this.expenses$.next(true);
 					} catch (error) {
 						this.errorHandler.handleError(error);
@@ -515,7 +527,7 @@ export class ExpensesComponent extends PaginationFilterBaseComponent
 
 			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
 				await this.smartTableSource.getElements();
-				this.expenses = this.smartTableSource.getData();
+				this.expenses.push(...this.smartTableSource.getData());
 			}
 		} catch (error) {
 			this.toastrService.danger('NOTES.EXPENSES.EXPENSES_ERROR', null, {
