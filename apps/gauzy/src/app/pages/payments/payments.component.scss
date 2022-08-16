@@ -2,7 +2,6 @@
 @import 'gauzy/_gauzy-cards.scss';
 
 :host {
-
   nb-card,
   nb-card-body {
     background-color: var(--gauzy-card-2);
@@ -16,11 +15,16 @@
     }
   }
 
-  nb-card-body{
+  nb-card-body {
     border-radius: 0 0 $default-radius $default-radius;
+    @include nb-ltr(padding, 1rem 0.5rem 1rem 18px);
+    @include nb-rtl(padding, 1rem 18px 1rem 0.5rem);
   }
 
-  @include nb-card-overrides(unset,
-    calc(100vh - 22rem),
-    $default-radius );
+  nb-card,
+  nb-card-header {
+    border-radius: var(--border-radius);
+  }
+
+  @include nb-card-overrides(unset, calc(100vh - 16.5rem), $default-radius);
 }
