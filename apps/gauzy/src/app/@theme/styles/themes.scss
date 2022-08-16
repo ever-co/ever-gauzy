@@ -11,6 +11,7 @@
 $nb-themes: nb-register-theme(
   (
     font-family-secondary: font-family-primary,
+    layout-padding-top: 24px,
     layout-window-mode-padding-top: 0,
     menu-item-icon-margin: 0 0.5rem 0 0,
     card-height-tiny: 13.5rem,
@@ -63,6 +64,7 @@ $nb-themes: nb-register-theme(
   (
     font-family-secondary: font-family-primary,
     layout-window-mode-padding-top: 0,
+    layout-padding-top: 24px,
     menu-item-icon-margin: 0 0.5rem 0 0,
     card-height-tiny: 13.5rem,
     card-height-small: 21.1875rem,
@@ -154,7 +156,7 @@ $nb-themes: nb-register-theme(
 $nb-themes: nb-register-theme(
   (
     font-family-secondary: font-family-primary,
-    layout-padding: 24px,
+    layout-padding-top: 24px,
     layout-window-mode-padding-top: 0,
     menu-item-icon-margin: 0 0.5rem 0 0,
     card-height-tiny: 13.5rem,
@@ -203,7 +205,7 @@ $nb-themes: nb-register-theme(
 
 $nb-themes: nb-register-theme(
   (
-    layout-padding: 24px,
+    layout-padding-top: 24px,
     menu-item-icon-margin: 0 0.5rem 0 0,
     card-height-tiny: 13.5rem,
     card-height-small: 21.1875rem,
@@ -229,7 +231,7 @@ $nb-themes: nb-register-theme(
 
 $nb-themes: nb-register-theme(
   (
-    layout-padding: 24px,
+    layout-padding-top: 24px,
     menu-item-icon-margin: 0 0.5rem 0 0,
     card-height-tiny: 13.5rem,
     card-height-small: 21.1875rem,
