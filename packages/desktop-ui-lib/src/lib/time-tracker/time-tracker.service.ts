@@ -225,7 +225,7 @@ export class TimeTrackerService {
 		try {
 			userDetail = await this.reqGetUserDetail(values);
 			localStorage.setItem('userDetail', JSON.stringify(userDetail));
-			return userDetail;	
+			return userDetail;
 		} catch (error) {
 			userDetail = localStorage.getItem('userDetail');
 			if (userDetail) {
@@ -240,17 +240,19 @@ export class TimeTrackerService {
 			Authorization: `Bearer ${values.token}`,
 			'Tenant-Id': values.tenantId
 		});
-
-		const params = this.toParams({
-			data: JSON.stringify({
-				relations: ['employee', 'tenant', 'employee.organization', 'role', 'role.rolePermissions']
+		const params = this.toParams({ relations: [
+			'tenant',
+			'employee',
+			'employee.organization',
+			'role',
+			'role.rolePermissions'
+		]});
+		return firstValueFrom(
+			this.http.get(`${values.apiHost}/api/user/me`, {
+				params,
+				headers: headers
 			})
-		});
-
-		return this.http
-			.get(`${values.apiHost}/api/user/me`, { params, headers: headers })
-			.pipe()
-			.toPromise();
+		);
 	}
 
 	async getTimeLogs(values) {
@@ -294,7 +296,7 @@ export class TimeTrackerService {
 		try {
 			timeSLot = await this.reqGetTimeSlot(values);
 			localStorage.setItem('timeSlot', JSON.stringify(timeSLot));
-			return timeSLot;	
+			return timeSLot;
 		} catch (error) {
 			timeSLot = localStorage.getItem('timeSlot');
 			if (timeSLot) {
@@ -632,19 +634,19 @@ export class TimeTrackerService {
 	b64toBlob = (b64Data, contentType='', sliceSize=512) => {
 		const byteCharacters = atob(b64Data);
 		const byteArrays = [];
-	  
+
 		for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
 		  const slice = byteCharacters.slice(offset, offset + sliceSize);
-	  
+
 		  const byteNumbers = new Array(slice.length);
 		  for (let i = 0; i < slice.length; i++) {
 			byteNumbers[i] = slice.charCodeAt(i);
 		  }
-	  
+
 		  const byteArray = new Uint8Array(byteNumbers);
 		  byteArrays.push(byteArray);
 		}
-	  
+
 		const blob = new Blob(byteArrays, {type: contentType});
 		return blob;
 	}
@@ -694,5 +696,5 @@ export class TimeTrackerService {
 			)
 			.toPromise();
 	}
-	  
+
 }
