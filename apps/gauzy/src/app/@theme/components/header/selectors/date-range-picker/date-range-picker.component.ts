@@ -495,17 +495,14 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 	 * @returns
 	 */
 	getSelectorDates(): IDateRangePicker {
-		const { startDate, endDate } = this.dates$.getValue();
+		const { startDate, endDate, isCustomDate } = this.dates$.getValue();
 		const start = moment(startDate);
 		const end = moment(endDate);
 
 		return {
 			startDate: start.toDate(),
 			endDate: end.toDate(),
-			isCustomDate: this.isCustomDate({
-				startDate: start,
-				endDate: end
-			})
+			isCustomDate: isCustomDate
 		}
 	}
 

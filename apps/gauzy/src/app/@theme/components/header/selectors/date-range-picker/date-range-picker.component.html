@@ -41,7 +41,7 @@
 				[(ngModel)]="selectedDateRange"
 				(datesUpdated)="onDatesUpdated($event)"
 				(rangeClicked)="rangeClicked($event)"
-				[ngClass]="{ 
+				[ngClass]="{
 					'double-range': !isSingleDatePicker,
 					'single-range': isSingleDatePicker
 				}"

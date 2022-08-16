@@ -20,9 +20,17 @@ export class DateRangePickerResolver implements Resolve<Observable<IDateRangePic
         const start_date = moment(date_start).startOf(unitOfTime);
         const end_date = moment(date_end || start_date).endOf(unitOfTime);
 
+        let isCustomDate: boolean;
+        if (date_end) {
+            isCustomDate = true;
+        } else {
+            isCustomDate = false;
+        }
+
         return observableOf({
             startDate: start_date.toDate(),
-            endDate: end_date.toDate()
+            endDate: end_date.toDate(),
+            isCustomDate: isCustomDate
         });
     }
 }

@@ -30,7 +30,8 @@ export class DateRangePickerBuilderService {
 
 	public dates$: BehaviorSubject<IDateRangePicker> = new BehaviorSubject({
 		startDate: moment().startOf(DEFAULT_DATE_PICKER_CONFIG.unitOfTime).toDate(),
-		endDate: moment().endOf(DEFAULT_DATE_PICKER_CONFIG.unitOfTime).toDate()
+		endDate: moment().endOf(DEFAULT_DATE_PICKER_CONFIG.unitOfTime).toDate(),
+		isCustomDate: false
 	});
 
 	public _selectedDateRange$: BehaviorSubject<IDateRangePicker> = new BehaviorSubject(null);
