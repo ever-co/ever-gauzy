@@ -33,6 +33,7 @@ import {
 } from './selectors/employee';
 import { TimeTrackerService } from '../../../@shared/time-tracker/time-tracker.service';
 import {
+	DateRangePickerBuilderService,
 	EmployeesService,
 	EmployeeStore,
 	ISidebarActionConfig,
@@ -123,10 +124,11 @@ export class HeaderComponent extends TranslationBaseComponent
 		private readonly employeesService: EmployeesService,
 		private readonly organizationProjectsService: OrganizationProjectsService,
 		public readonly navigationBuilderService: NavigationBuilderService,
+		private readonly dateRangeService: DateRangePickerBuilderService,
 		private readonly organizationEditStore: OrganizationEditStore,
 		private readonly organizationProjectStore: OrganizationProjectStore,
 		private readonly employeeStore: EmployeeStore,
-		public readonly selectorBuilderService: SelectorBuilderService,
+		private readonly selectorBuilderService: SelectorBuilderService,
 		private readonly cd: ChangeDetectorRef
 	) {
 		super(translate);
@@ -213,7 +215,7 @@ export class HeaderComponent extends TranslationBaseComponent
 				}
 			});
 		const storeOrganization$ = this.store.selectedOrganization$;
-		const selectedDateRange$ = this.store.selectedDateRange$;
+		const selectedDateRange$ = this.dateRangeService.selectedDateRange$;
 		combineLatest([storeOrganization$, selectedDateRange$])
 			.pipe(
 				filter(([organization, dateRange]) => !!organization && !!dateRange),

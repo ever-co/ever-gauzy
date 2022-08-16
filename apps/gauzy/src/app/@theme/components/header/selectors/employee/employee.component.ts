@@ -9,7 +9,7 @@ import {
 	ChangeDetectorRef,
 	ChangeDetectionStrategy
 } from '@angular/core';
-import { filter, debounceTime, tap, switchMap } from 'rxjs/operators';
+import { ActivatedRoute, Router } from '@angular/router';
 import {
 	CrudActionEnum,
 	DEFAULT_TYPE,
@@ -19,12 +19,13 @@ import {
 	ISelectedEmployee,
 	PermissionsEnum
 } from '@gauzy/contracts';
-import { ActivatedRoute, Router } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { combineLatest, map, Observable, Subject } from 'rxjs';
+import { filter, debounceTime, tap, switchMap } from 'rxjs/operators';
 import { isNotEmpty } from '@gauzy/common-angular';
 import { ALL_EMPLOYEES_SELECTED } from './default-employee';
 import {
+	DateRangePickerBuilderService,
 	EmployeesService,
 	EmployeeStore,
 	Store,
@@ -114,6 +115,7 @@ export class EmployeeSelectorComponent
 	constructor(
 		private readonly employeesService: EmployeesService,
 		private readonly store: Store,
+		private readonly dateRangePickerBuilderService: DateRangePickerBuilderService,
 		private readonly activatedRoute: ActivatedRoute,
 		private readonly cdRef: ChangeDetectorRef,
 		private readonly _employeeStore: EmployeeStore,
@@ -143,8 +145,8 @@ export class EmployeeSelectorComponent
 			.subscribe();
 		this.store.selectedEmployee$
 			.pipe(
-				filter((employee) => !!employee),
-				tap((employee) => {
+				filter((employee: ISelectedEmployee) => !!employee),
+				tap((employee: ISelectedEmployee) => {
 					if (this.defaultSelected) {
 						this.selectedEmployee = employee;
 					}
@@ -162,13 +164,13 @@ export class EmployeeSelectorComponent
 			)
 			.subscribe();
 		const storeOrganization$ = this.store.selectedOrganization$;
-		const selectedDateRange$ = this.store.selectedDateRange$;
+		const selectedDateRange$ = this.dateRangePickerBuilderService.selectedDateRange$;
 		combineLatest([storeOrganization$, selectedDateRange$])
 			.pipe(
-				filter(([organization]) => !!organization),
+				filter(([organization, dateRange]) => !!organization && !!dateRange),
 				tap(([organization, dateRange]) => {
-					this.organization = organization;
-					this._selectedDateRange = dateRange;
+					this.organization = organization as IOrganization;
+					this._selectedDateRange = dateRange as IDateRangePicker;
 					this.subject$.next([organization, dateRange])
 				}),
 				untilDestroyed(this)

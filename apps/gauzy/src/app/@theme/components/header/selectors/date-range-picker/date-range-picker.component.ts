@@ -245,7 +245,7 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 				distinctUntilChange(),
 				debounceTime(100),
 				tap((range: IDateRangePicker) => {
-					this.store.selectedDateRange = range;
+					this.dateRangePickerBuilderService.selectedDateRange = range;
 				}),
 				untilDestroyed(this)
 			)
