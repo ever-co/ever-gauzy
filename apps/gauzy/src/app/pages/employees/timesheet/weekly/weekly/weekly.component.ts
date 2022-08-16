@@ -58,7 +58,7 @@ export class WeeklyComponent extends BaseSelectorFilterComponent
 		protected readonly store: Store,
 		public readonly _dateRangePickerBuilderService: DateRangePickerBuilderService
 	) {
-		super(store, translateService);
+		super(store, translateService, _dateRangePickerBuilderService);
 	}
 
 	ngOnInit() {

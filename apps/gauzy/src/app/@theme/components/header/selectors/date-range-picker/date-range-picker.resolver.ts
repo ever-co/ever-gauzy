@@ -14,6 +14,7 @@ export class DateRangePickerResolver implements Resolve<Observable<IDateRangePic
 
     resolve(route: ActivatedRouteSnapshot): Observable<IDateRangePicker>  {
         const { unitOfTime } = route.data.datePicker as IDatePickerConfig;
+        console.log(route);
 
         const date_start = route.queryParams.date || new Date();
         const date_end = route.queryParams.date_end;

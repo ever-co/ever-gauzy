@@ -136,8 +136,8 @@ const COMPONENTS = [
 		GauzyButtonActionModule,
 		NbTabsetModule,
 		NbToggleModule,
-    PaginationModule,
-    CardGridModule
+    	PaginationModule,
+   	 	CardGridModule
 	],
 	declarations: [...COMPONENTS],
 	providers: [

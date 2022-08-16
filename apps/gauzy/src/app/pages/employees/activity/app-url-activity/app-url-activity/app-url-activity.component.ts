@@ -27,9 +27,9 @@ import { GauzyFiltersComponent } from './../../../../../@shared/timesheet/gauzy-
 	styleUrls: ['./app-url-activity.component.scss'],
 	templateUrl: './app-url-activity.component.html'
 })
-export class AppUrlActivityComponent extends BaseSelectorFilterComponent 
+export class AppUrlActivityComponent extends BaseSelectorFilterComponent
 	implements OnInit, OnDestroy {
-	
+
 	payloads$: BehaviorSubject<ITimeLogFilters> = new BehaviorSubject(null);
 
 	filters: ITimeLogFilters = this.request;
@@ -41,7 +41,7 @@ export class AppUrlActivityComponent extends BaseSelectorFilterComponent
 	type: 'apps' | 'urls';
 
 	@ViewChild(GauzyFiltersComponent) gauzyFiltersComponent: GauzyFiltersComponent;
-	datePickerConfig$: Observable<any> = this._dateRangePickerBuilderService.datePickerConfig$;
+	datePickerConfig$: Observable<any> = this.dateRangePickerBuilderService.datePickerConfig$;
 
 	constructor(
 		public readonly translateService: TranslateService,
@@ -49,9 +49,9 @@ export class AppUrlActivityComponent extends BaseSelectorFilterComponent
 		private readonly activatedRoute: ActivatedRoute,
 		private readonly timesheetFilterService: TimesheetFilterService,
 		private readonly activityService: ActivityService,
-		public readonly _dateRangePickerBuilderService: DateRangePickerBuilderService
+		protected readonly dateRangePickerBuilderService: DateRangePickerBuilderService
 	) {
-		super(store, translateService);
+		super(store, translateService, dateRangePickerBuilderService);
 	}
 
 	ngOnInit(): void {
