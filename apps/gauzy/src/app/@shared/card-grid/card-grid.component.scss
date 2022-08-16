@@ -11,6 +11,8 @@
   grid-gap: 1rem;
   color: nb-theme(color-basic-default);
   overflow-y: auto;
+  @include nb-ltr(padding-right, 0.5rem);
+  @include nb-rtl(padding-left, 0.5rem);
 
   .card-item {
     display: flex;
@@ -27,8 +29,7 @@
       padding: 12px 10px;
 
       &.active {
-        box-shadow: nb-theme(color-primary-active-border) 0px 1px 2px 0px,
-          nb-theme(color-primary-hover-border) 0px 1px 3px 1px;
+        background: var(--color-primary-transparent-100);
       }
     }
 
@@ -58,6 +59,9 @@
         &.image-logo {
           display: none;
         }
+        &.active {
+          background-color: var(--gauzy-sidebar-background-4);
+        }
       }
 
       .info-value {
@@ -75,6 +79,10 @@
         &.image-logo {
           background-color: unset;
           padding: 0;
+        }
+
+        &.active {
+          background-color: var(--gauzy-sidebar-background-4);
         }
 
         .custom::ng-deep {
