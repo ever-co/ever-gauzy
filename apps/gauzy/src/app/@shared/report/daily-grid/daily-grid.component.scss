@@ -9,6 +9,10 @@
 :host {
     display: block;
 
+    .no-data{
+        height: calc(100vh - 35.3rem);
+    }
+
     ::ng-deep {
         .select-button {
             background-color: nb-theme(gauzy-card-1) !important;
@@ -17,8 +21,8 @@
         .names-wrapper {
             max-width: 110px;
         }
-        .day-grid-container .no-data-found {
-            max-height: calc(100vh - 40rem);            
+        .day-grid-container {
+            height: 100%;            
         }
     }
 }

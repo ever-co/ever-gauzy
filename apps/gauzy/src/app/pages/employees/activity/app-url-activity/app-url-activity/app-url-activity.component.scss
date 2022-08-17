@@ -14,9 +14,13 @@
         }
       }
     }
-    .screenshot-container .no-data-found {
-      max-height: calc(100vh - 34rem);
-      margin: 15px 12px 0 0;
+  }
+  .screenshot-container {
+    height: calc(100% - 3.5rem);
+    .no-data {
+      margin-top: 12px;
+      height: 100%;
+      width: 99%;
     }
   }
 }
