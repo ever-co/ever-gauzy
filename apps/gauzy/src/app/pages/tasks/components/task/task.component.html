@@ -71,15 +71,18 @@
 				</ng-template>
 			</ng-template>
 			<ng-template [ngSwitchCase]="taskListTypeEnum.SPRINT">
-				<ga-tasks-sprint-view
-					(createTaskEvent)="createTaskDialog()"
-					(editTaskEvent)="editTaskDialog($event)"
-					(deleteTaskEvent)="deleteTask($event)"
-					(selectedTaskEvent)="selectTask($event)"
-					[sync]="!disableButton"
-					[project]="selectedProject"
-					[tasks]="availableTasks$ | async"
-				></ga-tasks-sprint-view>
+				<div class="sprint-view">
+					<ga-tasks-sprint-view
+						(createTaskEvent)="createTaskDialog()"
+						(editTaskEvent)="editTaskDialog($event)"
+						(deleteTaskEvent)="deleteTask($event)"
+						(selectedTaskEvent)="selectTask($event)"
+						[sync]="!disableButton"
+						[project]="selectedProject"
+						[tasks]="availableTasks$ | async"
+					></ga-tasks-sprint-view>
+				</div>
+
 				<ng-container
 					*ngTemplateOutlet="
 						paginationTemplate;
