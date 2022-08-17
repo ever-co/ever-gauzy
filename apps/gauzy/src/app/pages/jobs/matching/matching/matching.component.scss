@@ -1,6 +1,7 @@
 @import 'gauzy/_gauzy-overrides';
 
 :host {
+  height: 100%;
   nb-card,
   nb-card-body {
     background-color: var(--gauzy-card-2);

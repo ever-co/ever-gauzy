@@ -1,35 +1,31 @@
 @import 'gauzy/_gauzy-table';
-@import '../../search/search/search.component.scss';
+@import '../../employees/employees/employees.component.scss';
 @import 'gauzy/_gauzy-cards';
 
-:host {
-  nb-tab {
-    background-color: var(--gauzy-card-2);
-    &.content-active {
-      padding: 1rem;
-    }
-  }
-  nb-card {
-    background-color: nb-theme(gauzy-card-2);
-  }
-  ::ng-deep {
-    .card-header-title {
-      @include nb-rtl(gap, 24px);
-    }
-    .actions-container{
-      @include nb-rtl(padding-left, 2rem !important); 
-    }
-  }
+:host ::ng-deep ngx-avatar {
+  .inner-wrapper {
+    background-color: nb-theme(color-primary-transparent-100);
+    border-radius: nb-theme(button-rectangle-border-radius);
+    padding: 3px 9px 3px 3px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    width: fit-content;
+    .image-container {
+      height: 20px;
+      width: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
 
-  @include nb-card-overrides(
-    unset,
-    calc($default-card-height + 3.5rem),
-    $default-radius
-  );
-}
-
-.gauzy-button-container {
-  position: absolute;
-  right: 1rem;
-  top: 0;
+      img[type='user'] {
+        height: 18px;
+        width: 18px;
+      }
+    }
+    .link-text {
+      color: nb-theme(text-primary-color);
+      font-weight: normal;
+    }
+  }
 }
