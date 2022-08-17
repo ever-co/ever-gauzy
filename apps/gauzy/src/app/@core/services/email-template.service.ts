@@ -5,9 +5,11 @@ import {
 	IEmailTemplateFindInput,
 	ICustomizeEmailTemplateFindInput,
 	ICustomizableEmailTemplate,
-	IEmailTemplateSaveInput
+	IEmailTemplateSaveInput,
+	IPagination
 } from '@gauzy/contracts';
 import { firstValueFrom } from 'rxjs';
+import { toParams } from '@gauzy/common-angular';
 import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable({
@@ -16,21 +18,14 @@ import { API_PREFIX } from '../constants/app.constants';
 export class EmailTemplateService {
 	constructor(private http: HttpClient) {}
 
-	getAll(
-		relations?: string[],
-		findInput?: IEmailTemplateFindInput
-	): Promise<{ items: IEmailTemplate[]; total: number }> {
-		const data = JSON.stringify({ relations, findInput });
+	getAll(where: IEmailTemplateFindInput): Promise<IPagination<IEmailTemplate>> {
 		return firstValueFrom(
-			this.http
-			.get<{ items: IEmailTemplate[]; total: number }>(
-				`${API_PREFIX}/email-template`,
-				{
-					params: { data }
-				}
-			)
+			this.http.get<IPagination<IEmailTemplate>>(`${API_PREFIX}/email-template`, {
+				params: toParams({ where })
+			})
 		);
 	}
+
 	getTemplate(
 		findInput?: ICustomizeEmailTemplateFindInput
 	): Promise<ICustomizableEmailTemplate> {

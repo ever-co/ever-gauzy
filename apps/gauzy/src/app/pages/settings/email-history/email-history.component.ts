@@ -28,23 +28,23 @@ import {
 	templateUrl: './email-history.component.html',
 	styleUrls: ['./email-history.component.scss']
 })
-export class EmailHistoryComponent
-	extends TranslationBaseComponent
+export class EmailHistoryComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 
-	loading: boolean;
-	emails: IEmail[] = [];
-	employees: IEmployee[] = [];
-	organizationContacts: IOrganizationContact[] = [];
+	loading: boolean = false;
 	selectedEmail: IEmail;
 	filteredCount: Number;
 	thresholdHitCount = 1;
 	pageSize = 10;
 	imageUrl: string;
-	filters = [];
+	filters = {};
 	disableLoadMore: boolean = false;
 	totalNoPage: number;
 	nextDataLoading: boolean = false;
+
+	organizationContacts: IOrganizationContact[] = [];
+	emails: IEmail[] = [];
+	employees: IEmployee[] = [];
 	private organization: IOrganization;
 	emails$: Subject<any> = new Subject();
 
@@ -92,24 +92,17 @@ export class EmailHistoryComponent
 	}
 
 	async openFiltersDialog() {
-		const filters = await firstValueFrom(this.dialogService
-			.open(EmailFiltersComponent, {
+		const filters = await firstValueFrom(
+			this.dialogService.open(EmailFiltersComponent, {
 				context: {
-					filters: this.filters,
-					organization: this.organization
+					filters: this.filters
 				}
-			})
-			.onClose);
-
+			}).onClose
+		);
 		if (filters) {
-			this.emails$.next(true);
-			const getCount = function (obj) {
-				return Object.values(obj).filter(
-					(value) => typeof value !== 'undefined'
-				);
-			};
 			this.filters = filters;
-			this.filteredCount = getCount(filters).length;
+			this.filteredCount = Object.values(filters).filter(Boolean).length;
+			this.emails$.next(true);
 		}
 	}
 
@@ -134,14 +127,13 @@ export class EmailHistoryComponent
 		try {
 			const { tenantId } = this.store.user;
 			const { id: organizationId } = this.organization;
-			const filters = this.filters;
 
 			await this.emailService.getAll(['emailTemplate', 'user'],
 				{
 					organizationId,
 					tenantId,
 					isArchived: false,
-					...filters
+					...(this.filters ? this.filters : {})
 				},
 				this.thresholdHitCount * this.pageSize
 			)
@@ -229,12 +221,12 @@ export class EmailHistoryComponent
 	}
 
 	getUrl(email: string): string {
-		let employee;
-		let organizationContact;
+		let employee: IEmployee;
+		let organizationContact: IOrganizationContact;
+
 		if (this.employees) {
 			employee = this.employees.find((e) => e.user.email === email);
 		}
-
 		if (this.organizationContacts) {
 			organizationContact = this.organizationContacts.find(
 				(oc) => oc.primaryEmail === email
@@ -251,7 +243,7 @@ export class EmailHistoryComponent
 	}
 
 	public resetFilters() {
-		this.filters = [];
+		this.filters = {};
 		this.filteredCount = 0;
 	}
 
