@@ -76,7 +76,7 @@ export function unixTimestampToDate(
  */
 export function convertToDatetime(datetime) {
 	if (moment(new Date(datetime)).isValid()) {
-		const dbType = getConfig().dbConnectionOptions.type || 'sqlite';		
+		const dbType = getConfig().dbConnectionOptions.type || 'sqlite';
 		if (dbType === 'sqlite') {
 			return moment(new Date(datetime)).format('YYYY-MM-DD HH:mm:ss');
 		} else {
@@ -171,9 +171,9 @@ export const getTenantLogo = (name: string) => {
 
 /**
  * Merge Overlapping Date & Time
- * 
- * @param ranges 
- * @returns 
+ *
+ * @param ranges
+ * @returns
  */
 export function mergeOverlappingDateRanges(
 	ranges: IDateRange[],
@@ -182,40 +182,40 @@ export function mergeOverlappingDateRanges(
 		// By start, ascending
 		(a, b) => a.start.getTime() - b.start.getTime(),
 	);
-  
+
 	const dates = sorted.reduce((acc, curr) => {
 		// Skip the first range
 		if (acc.length === 0) {
 			return [curr];
 		}
-	
+
 		const prev = acc.pop();
-	
+
 		if (curr.end <= prev.end) {
 			// Current range is completely inside previous
 			return [...acc, prev];
 		}
-	
+
 		// Merges overlapping (<) and contiguous (==) ranges
 		if (curr.start <= prev.end) {
 			// Current range overlaps previous
 			return [...acc, { start: prev.start, end: curr.end }];
 		}
-	
+
 		// Ranges do not overlap
 		return [...acc, prev, curr];
 
 	}, [] as IDateRange[]);
-  
+
 	return dates;
 }
 
 /**
  * GET Date Range Format
- * 
- * @param startDate 
- * @param endDate 
- * @returns 
+ *
+ * @param startDate
+ * @param endDate
+ * @returns
  */
 export function getDateRangeFormat(
 	startDate: moment.Moment,
@@ -250,10 +250,10 @@ export function getDateRangeFormat(
 
 /**
  * Get All Dates Between Two Dates in Moment JS
- * 
- * @param startDate 
- * @param endDate 
- * @returns 
+ *
+ * @param startDate
+ * @param endDate
+ * @returns
  */
 export function getDaysBetweenDates(
 	startDate: string | Date,
