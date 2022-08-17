@@ -15,10 +15,9 @@ import {
 } from './../../core/entities/internal';
 
 @Entity('screenshot')
-export class Screenshot
-	extends TenantOrganizationBaseEntity
+export class Screenshot extends TenantOrganizationBaseEntity
 	implements IScreenshot {
-	
+
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@Column()
@@ -42,7 +41,7 @@ export class Screenshot
 	deletedAt?: Date;
 
 	@ApiPropertyOptional({ type: () => String, enum: FileStorageProviderEnum })
-	@Exclude()
+	@Exclude({ toPlainOnly: true })
 	@Column({
 		type: 'simple-enum',
 		nullable: true,
@@ -54,7 +53,7 @@ export class Screenshot
 	thumbUrl?: string;
 	/*
     |--------------------------------------------------------------------------
-    | @ManyToOne 
+    | @ManyToOne
     |--------------------------------------------------------------------------
     */
 
