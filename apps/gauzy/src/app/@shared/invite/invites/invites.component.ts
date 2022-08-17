@@ -23,11 +23,7 @@ import { debounceTime, filter, tap } from 'rxjs/operators';
 import { Subject, firstValueFrom } from 'rxjs';
 import * as moment from 'moment-timezone';
 import { distinctUntilChange } from '@gauzy/common-angular';
-import {
-	InviteService,
-	Store,
-	ToastrService
-} from '../../../@core/services';
+import { InviteService, Store, ToastrService } from '../../../@core/services';
 import { DeleteConfirmationComponent } from '../../user/forms';
 import { InviteMutationComponent } from '../invite-mutation/invite-mutation.component';
 import { ProjectNamesComponent } from './project-names/project-names.component';
@@ -47,9 +43,10 @@ import {
 	templateUrl: './invites.component.html',
 	styleUrls: ['invites.component.scss']
 })
-export class InvitesComponent extends PaginationFilterBaseComponent 
-	implements AfterViewInit, OnInit, OnDestroy {
-
+export class InvitesComponent
+	extends PaginationFilterBaseComponent
+	implements AfterViewInit, OnInit, OnDestroy
+{
 	@Input()
 	invitationType: InvitationTypeEnum;
 
@@ -65,6 +62,7 @@ export class InvitesComponent extends PaginationFilterBaseComponent
 
 	invites$: Subject<any> = new Subject();
 	public organization: IOrganization;
+	private _refresh$: Subject<any> = new Subject();
 
 	invitesTable: Ng2SmartTableComponent;
 	@ViewChild('invitesTable') set content(content: Ng2SmartTableComponent) {
@@ -104,6 +102,18 @@ export class InvitesComponent extends PaginationFilterBaseComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
+		this._refresh$
+			.pipe(
+				filter(
+					() =>
+						this.dataLayoutStyle ===
+						ComponentLayoutStyleEnum.CARDS_GRID
+				),
+				tap(() => this.refreshPagination()),
+				tap(() => (this.invites = [])),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	ngAfterViewInit() {
@@ -114,6 +124,7 @@ export class InvitesComponent extends PaginationFilterBaseComponent
 					(organization: IOrganization) =>
 						(this.organization = organization)
 				),
+				tap(() => this._refresh$.next(true)),
 				tap(() => this.invites$.next(true)),
 				untilDestroyed(this)
 			)
@@ -128,8 +139,12 @@ export class InvitesComponent extends PaginationFilterBaseComponent
 			.componentLayout$(this.viewComponentName)
 			.pipe(
 				distinctUntilChange(),
-				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
 				tap(() => this.refreshPagination()),
+				tap(
+					(componentLayout) =>
+						(this.dataLayoutStyle = componentLayout)
+				),
+				tap(() => (this.invites = [])),
 				tap(() => this.invites$.next(true)),
 				untilDestroyed(this)
 			)
@@ -162,6 +177,7 @@ export class InvitesComponent extends PaginationFilterBaseComponent
 
 		const data = await firstValueFrom(dialog.onClose);
 		if (data.length != 0) {
+			this._refresh$.next(true);
 			this.invites$.next(true);
 		}
 	}
@@ -192,7 +208,7 @@ export class InvitesComponent extends PaginationFilterBaseComponent
 		let invites = [];
 		const { activePage, itemsPerPage } = this.getPagination();
 		this.loading = true;
-		
+
 		try {
 			const { tenantId } = this.store.user;
 			const { id: organizationId } = this.organization;
@@ -210,7 +226,9 @@ export class InvitesComponent extends PaginationFilterBaseComponent
 			invites = items.filter((invite: IInvite) => {
 				if (this.invitationType === InvitationTypeEnum.EMPLOYEE) {
 					return invite.role.name == RolesEnum.EMPLOYEE;
-				} else if (this.invitationType === InvitationTypeEnum.CANDIDATE) {
+				} else if (
+					this.invitationType === InvitationTypeEnum.CANDIDATE
+				) {
 					return invite.role.name === RolesEnum.CANDIDATE;
 				} else {
 					return invite.role.name !== RolesEnum.EMPLOYEE;
@@ -266,7 +284,8 @@ export class InvitesComponent extends PaginationFilterBaseComponent
 	}
 
 	private async _loadGridLayoutData() {
-		this.invites = await this.sourceSmartTable.getElements();
+		const invites = await this.sourceSmartTable.getElements();
+		if (this.invites === invites) this.invites.push(...invites);
 	}
 
 	private _loadSmartTableSettings() {
@@ -383,6 +402,7 @@ export class InvitesComponent extends PaginationFilterBaseComponent
 								);
 							})
 							.finally(() => {
+								this._refresh$.next(true);
 								this.invites$.next(true);
 							});
 					} catch (error) {
@@ -446,6 +466,7 @@ export class InvitesComponent extends PaginationFilterBaseComponent
 								);
 							})
 							.finally(() => {
+								this._refresh$.next(true);
 								this.invites$.next(true);
 							});
 					} catch (error) {
