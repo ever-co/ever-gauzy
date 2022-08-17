@@ -3,6 +3,9 @@
 
 nb-card {
   background-color: var(--gauzy-card-2);
+  nb-card-body {
+    height: calc(100vh - 17.75rem) !important;
+  }
 }
 .btn-group.actions {
   padding: 0;
@@ -28,5 +31,9 @@ nb-card {
         border-color: nb-theme(color-primary-transparent-default);
       }
     }
+  }
+  .grid {
+    height: 100%;
+    overflow: auto;
   }
 }
