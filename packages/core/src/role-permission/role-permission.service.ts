@@ -12,7 +12,7 @@ import {
 	IPagination,
 	PermissionsEnum
 } from '@gauzy/contracts';
-import { isNotEmpty } from '@gauzy/common';
+import { environment } from '@gauzy/config';
 import { pluck } from 'underscore';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
@@ -327,26 +327,37 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 	}
 
 	public async updateRolesAndPermissions(
-		tenants: ITenant[],
-		roles: IRole[]
-	): Promise<IRolePermission[]> {
+		tenants: ITenant[]
+	): Promise<IRolePermission[] & RolePermission[]> {
 		if (!tenants.length) {
 			return;
 		}
-
+		// removed permissions for all users in DEMO mode
+		const deniedPermissions = [
+			PermissionsEnum.ACCESS_DELETE_ACCOUNT,
+			PermissionsEnum.ACCESS_DELETE_ALL_DATA
+		];
 		const rolesPermissions: IRolePermission[] = [];
 		for await (const tenant of tenants) {
+			const roles = (await this.roleService.findAll({
+				where: {
+					tenantId: tenant.id
+				}
+			})).items;
 			for await (const role of roles) {
 				const defaultPermissions = DEFAULT_ROLE_PERMISSIONS.find(
 					(defaultRole) => role.name === defaultRole.role
 				);
-				if (defaultPermissions && isNotEmpty(defaultPermissions['defaultEnabledPermissions'])) {
-					const { defaultEnabledPermissions } = defaultPermissions;
-					for await (const permission of defaultEnabledPermissions) {
+				const permissions = Object.values(PermissionsEnum).filter(
+					(permission: PermissionsEnum) => environment.demo ? !deniedPermissions.includes(permission) : true
+				);
+				for await (const permission of permissions) {
+					if (defaultPermissions) {
+						const { defaultEnabledPermissions = [] } = defaultPermissions;
 						const rolePermission = new RolePermission();
 						rolePermission.roleId = role.id;
 						rolePermission.permission = permission;
-						rolePermission.enabled = true;
+						rolePermission.enabled = defaultEnabledPermissions.includes(permission);
 						rolePermission.tenant = tenant;
 						rolesPermissions.push(rolePermission);
 					}
@@ -362,7 +373,9 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 			where: {
 				tenantId: RequestContext.currentTenantId()
 			},
-			relations: ['role']
+			relations: {
+				role: true
+			}
 		})
 		const payload: IRolePermissionMigrateInput[] = [];
 		for await (const item of permissions) {
