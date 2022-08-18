@@ -1,63 +1,71 @@
 <nb-card class="card">
 	<nb-card-header class="card-header">
-		<ng-container
-			*ngIf="selectedDateRange?.startDate && selectedDateRange?.endDate"
-		>
-			<h4>
-				<ngx-header-title>
-					{{ headerTitle }}
-					{{ 'TIMESHEET.TIME_TRACKING' | translate }}
-				</ngx-header-title>
-			</h4>
-			<ngx-date-range-title
-				[start]="selectedDateRange?.startDate"
-				[end]="selectedDateRange?.endDate"
-				[format]="'dddd, LL'"
-			></ngx-date-range-title>
-		</ng-container>
+		<div class="row">
+			<div class="col-auto">
+				<ng-container
+					*ngIf="
+						selectedDateRange?.startDate &&
+						selectedDateRange?.endDate
+					"
+				>
+					<h4>
+						<ngx-header-title>
+							{{ headerTitle }}
+							{{ 'TIMESHEET.TIME_TRACKING' | translate }}
+						</ngx-header-title>
+					</h4>
+					<ngx-date-range-title
+						[start]="selectedDateRange?.startDate"
+						[end]="selectedDateRange?.endDate"
+						[format]="'dddd, LL'"
+					></ngx-date-range-title>
+				</ng-container>
+			</div>
+		</div>
+
+		<div class="row">
+			<div class="mb-4 ml-auto col-auto d-flex align-items-center">
+				<button
+					class="manage-widget"
+					status="basic"
+					size="small"
+					nbPopoverPlacement="bottom"
+					[nbPopover]="widgetManager"
+					nbPopoverTrigger="click"
+					nbButton
+				>
+					{{ 'BUTTONS.MANAGE_WIDGET' | translate }}
+					<nb-icon icon="more-vertical-outline"></nb-icon>
+				</button>
+			</div>
+		</div>
+		<div class="row">
+			<div class="mb-2 ml-auto col-auto d-flex align-items-center">
+				<nb-toggle
+					class="custom-toggle mr-3 ml-3"
+					size="small"
+					[(ngModel)]="autoRefresh"
+					(checkedChange)="setAutoRefresh($event)"
+				>
+					{{ 'BUTTONS.AUTO_REFRESH' | translate }}
+				</nb-toggle>
+				<button
+					[disabled]="autoRefresh"
+					size="small"
+					type="button"
+					nbButton
+					outline
+					status="basic"
+					(click)="logs$.next(true)"
+				>
+					<nb-icon icon="sync-outline"></nb-icon>
+					{{ 'BUTTONS.REFRESH' | translate }}
+				</button>
+			</div>
+		</div>
 	</nb-card-header>
 	<nb-card-body class="card-body">
 		<div class="container">
-			<div class="row">
-				<div class="mb-4 ml-auto col-auto d-flex align-items-center">
-					<button
-						class="manage-widget"
-						status="basic"
-						size="small"
-						nbPopoverPlacement="bottom"
-						[nbPopover]="widgetManager"
-						nbPopoverTrigger="click"
-						nbButton
-					>
-						{{ 'BUTTONS.MANAGE_WIDGET' | translate }}
-						<nb-icon icon="more-vertical-outline"></nb-icon>
-					</button>
-				</div>
-			</div>
-			<div class="row">
-				<div class="mb-4 ml-auto col-auto d-flex align-items-center">
-					<nb-toggle
-						class="custom-toggle mr-3 ml-3"
-						size="small"
-						[(ngModel)]="autoRefresh"
-						(checkedChange)="setAutoRefresh($event)"
-					>
-						{{ 'BUTTONS.AUTO_REFRESH' | translate }}
-					</nb-toggle>
-					<button
-						[disabled]="autoRefresh"
-						size="small"
-						type="button"
-						nbButton
-						outline
-						status="basic"
-						(click)="logs$.next(true)"
-					>
-						<nb-icon icon="sync-outline"></nb-icon>
-						{{ 'BUTTONS.REFRESH' | translate }}
-					</button>
-				</div>
-			</div>
 			<ga-widget-layout [widgets]="widgetsRef"></ga-widget-layout>
 			<ga-window-layout [windows]="windowsRef"></ga-window-layout>
 		</div>
