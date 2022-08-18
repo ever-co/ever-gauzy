@@ -640,12 +640,10 @@ export class SeedDataService {
 			[this.tenant]
 		);
 
-		const isDemo = this.configService.get('demo') as boolean;
 		await createRolePermissions(
 			this.dataSource,
 			this.roles,
-			[this.tenant],
-			isDemo
+			[this.tenant]
 		);
 
 		// Tenant level inserts which only need connection, tenant, roles
@@ -1435,12 +1433,10 @@ export class SeedDataService {
 			tenants
 		);
 
-		const isDemo = this.configService.get('demo') as boolean;
 		await createRolePermissions(
 			this.dataSource,
 			roles,
-			tenants,
-			isDemo
+			tenants
 		);
 
 		// Tenant level inserts which only need connection, tenant, role

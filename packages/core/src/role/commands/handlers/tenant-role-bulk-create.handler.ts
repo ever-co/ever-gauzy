@@ -17,11 +17,12 @@ export class TenantRoleBulkCreateHandler
 	): Promise<IRole[]> {
 		const { input: tenants } = command;
 
-		//create roles/permissions after create tenant
+		//1. Create Roles of tenant.
 		const roles = await this.roleService.createBulk(tenants);
+
+		//2. Update RolePermission of tenant.
 		await this.rolePermissionService.updateRolesAndPermissions(
-			tenants,
-			roles
+			tenants
 		);
 		return roles;
 	}

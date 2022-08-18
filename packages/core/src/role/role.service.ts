@@ -20,7 +20,7 @@ export class RoleService extends TenantAwareCrudService<Role> {
 		super(roleRepository);
 	}
 
-	async createBulk(tenants: ITenant[]): Promise<IRole[]> {
+	async createBulk(tenants: ITenant[]): Promise<IRole[] & Role[]> {
 		const roles: IRole[] = [];
 		const rolesNames = Object.values(RolesEnum);
 
@@ -33,8 +33,7 @@ export class RoleService extends TenantAwareCrudService<Role> {
 				roles.push(role);
 			}
 		}
-		await this.roleRepository.save(roles);
-		return roles;
+		return await this.roleRepository.save(roles);
 	}
 
 	async migrateRoles(): Promise<IRoleMigrateInput[]> {
