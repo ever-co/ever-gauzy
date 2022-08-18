@@ -242,9 +242,13 @@ export class UserService extends TenantAwareCrudService<User> {
 			const userId = RequestContext.currentUserId();
 			const tenantId = RequestContext.currentTenantId();
 
-			return await this.repository.update({ id: userId, tenantId }, {
-				refreshToken: null
-			});
+			try {
+				await this.repository.update({ id: userId, tenantId }, {
+					refreshToken: null
+				});
+			} catch (error) {
+				console.log('Error while remove refresh token', error);
+			}
 		} catch (error) {
 			console.log('Error while logout device', error);
 		}
