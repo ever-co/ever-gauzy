@@ -1,35 +1,37 @@
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { FormGroup, FormBuilder, FormArray, Validators } from '@angular/forms';
-import { takeUntil } from 'rxjs/operators';
-import { Subject } from 'rxjs';
-import { CandidateStore } from 'apps/gauzy/src/app/@core/services/candidate-store.service';
-import { CandidateEducationsService } from 'apps/gauzy/src/app/@core/services/candidate-educations.service';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
 	ICandidateEducation,
 	ComponentLayoutStyleEnum,
 	IOrganization
 } from '@gauzy/contracts';
-import { LocalDataSource } from 'ng2-smart-table';
-import { ComponentEnum } from 'apps/gauzy/src/app/@core/constants/layout.constants';
-import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
-import { DateViewComponent } from 'apps/gauzy/src/app/@shared/table-components/date-view/date-view.component';
-import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
+import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
+import { TranslationBaseComponent } from './../../../../../../@shared/language-base/translation-base.component';
+import { DateViewComponent } from './../../../../../../@shared/table-components';
+import { ComponentEnum } from './../../../../../../@core/constants';
+import {
+	CandidateEducationsService,
+	CandidateStore,
+	Store,
+	ToastrService
+} from './../../../../../../@core/services';
+import { tap } from 'rxjs/operators';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-edit-candidate-education',
 	templateUrl: './edit-candidate-education.component.html',
 	styleUrls: ['./edit-candidate-education.component.scss']
 })
-export class EditCandidateEducationComponent
-	extends TranslationBaseComponent
+export class EditCandidateEducationComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
+
 	selectedOrganization: IOrganization;
 	showAddCard: boolean;
 	candidateId: string;
 	educationList: ICandidateEducation[] = [];
-	private _ngDestroy$ = new Subject<void>();
 	form: FormGroup;
 	settingsSmartTable: object;
 	sourceSmartTable = new LocalDataSource();
@@ -38,21 +40,29 @@ export class EditCandidateEducationComponent
 	selectedEducation: ICandidateEducation;
 	disableButton = true;
 	loading: boolean;
-	@ViewChild('educationTable') educationTable;
+
+	educationTable: Ng2SmartTableComponent;
+	@ViewChild('educationTable') set content(content: Ng2SmartTableComponent) {
+		if (content) {
+			this.educationTable = content;
+			this.onChangedSource();
+		}
+	}
+
 	constructor(
 		private readonly toastrService: ToastrService,
 		readonly translateService: TranslateService,
-		private candidateStore: CandidateStore,
-		private fb: FormBuilder,
-		private store: Store,
-		private candidateEducationsService: CandidateEducationsService
+		private readonly candidateStore: CandidateStore,
+		private readonly fb: FormBuilder,
+		private readonly store: Store,
+		private readonly candidateEducationsService: CandidateEducationsService
 	) {
 		super(translateService);
 		this.setView();
 	}
 	ngOnInit() {
 		this.candidateStore.selectedCandidate$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe(async (candidate) => {
 				if (candidate) {
 					this.candidateId = candidate.id;
@@ -89,12 +99,8 @@ export class EditCandidateEducationComponent
 		this.selectedEducation = selectedItem;
 	}
 	selectEducation({ isSelected, data }) {
-		const selectedEducation = isSelected ? data : null;
-		if (this.educationTable) {
-			this.educationTable.grid.dataSet.willSelect = false;
-		}
 		this.disableButton = !isSelected;
-		this.selectedEducation = selectedEducation;
+		this.selectedEducation = isSelected ? data : null;
 	}
 	showCard() {
 		this.showAddCard = !this.showAddCard;
@@ -168,7 +174,7 @@ export class EditCandidateEducationComponent
 		this.viewComponentName = ComponentEnum.EDUCATION;
 		this.store
 			.componentLayout$(this.viewComponentName)
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((componentLayout) => {
 				this.dataLayoutStyle = componentLayout;
 				this.selectedEducation =
@@ -255,16 +261,13 @@ export class EditCandidateEducationComponent
 		this.toastrService.danger(error);
 	}
 
-	_applyTranslationOnSmartTable() {
+	private _applyTranslationOnSmartTable() {
 		this.translateService.onLangChange
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe(() => {
-				this.loadSmartTable();
-			});
-	}
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
+			.pipe(
+				tap(() => this.loadSmartTable()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	/*
@@ -273,4 +276,28 @@ export class EditCandidateEducationComponent
 	get educations(): FormArray {
 		return this.form.get('educations') as FormArray;
 	}
+
+	/*
+	 * Table on changed source event
+	 */
+	onChangedSource() {
+		this.educationTable.source.onChangedSource
+			.pipe(
+				untilDestroyed(this),
+				tap(() => this.deselectAll())
+			)
+			.subscribe();
+	}
+
+	/*
+	 * Deselect all table rows
+	 */
+	deselectAll() {
+		if (this.educationTable && this.educationTable.grid) {
+			this.educationTable.grid.dataSet['willSelect'] = 'false';
+			this.educationTable.grid.dataSet.deselectAll();
+		}
+	}
+
+	ngOnDestroy(): void {}
 }
