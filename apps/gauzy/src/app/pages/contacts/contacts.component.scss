@@ -1,5 +1,4 @@
-@import 'gauzy/_gauzy-table';
-@import 'gauzy/_gauzy-cards';
+@import '../payments/payments.component.scss';
 
 .contact-list {
   display: flex;
@@ -44,29 +43,29 @@
   justify-content: space-between;
 }
 
-:host {
+// :host {
 
-  nb-card,
-  nb-card-body {
-    background-color: nb-theme(gauzy-card-2);
-    border-radius: 0 0 nb-theme(border-radius) nb-theme(border-radius);
-  }
-  nb-card{
-    border-radius: nb-theme(border-radius);
-  }
-  .custom-card {
-    display: flex;
-    flex-direction: column;
-    overflow: unset;
-    height: calc(100vh - 27rem);
+//   nb-card,
+//   nb-card-body {
+//     background-color: nb-theme(gauzy-card-2);
+//     border-radius: 0 0 nb-theme(border-radius) nb-theme(border-radius);
+//   }
+//   nb-card{
+//     border-radius: nb-theme(border-radius);
+//   }
+//   .custom-card {
+//     display: flex;
+//     flex-direction: column;
+//     overflow: unset;
+//     height: calc(100vh - 27rem);
 
-    .table-scroll-container {
-      flex-grow: 10;
-    }
-  }
+//     .table-scroll-container {
+//       flex-grow: 10;
+//     }
+//   }
 
-  ngx-contact-action {
-    display: flex;
-    align-items: center;
-  }
-}
+//   ngx-contact-action {
+//     display: flex;
+//     align-items: center;
+//   }
+// }
