@@ -19,6 +19,7 @@ import { DeleteArticleModule } from './delete-article/delete-article.module';
 import { TranslateModule } from '../../@shared/translate/translate.module';
 import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
 import { SharedModule } from '../../@shared/shared.module';
+import { NoDataMessageModule } from '../../@shared/no-data-message/no-data-message.module';
 
 @NgModule({
 	imports: [
@@ -39,7 +40,8 @@ import { SharedModule } from '../../@shared/shared.module';
 		SidebarModule,
 		TranslateModule,
 		GauzyButtonActionModule,
-		SharedModule
+		SharedModule,
+		NoDataMessageModule
 	],
 	declarations: [HelpCenterComponent]
 })

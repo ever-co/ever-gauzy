@@ -145,7 +145,6 @@ h6 {
 }
 
 :host {
-
   nb-card,
   nb-card-body {
     background-color: var(--gauzy-card-2);
@@ -183,8 +182,8 @@ h6 {
   }
 
   .table-scroll {
-    height: calc(100vh - 22.5rem);
-    padding: .5rem;
+    height: calc(100vh - 21rem);
+    padding: 0.5rem;
     overflow: auto;
     display: flex;
     flex-direction: column;
@@ -192,8 +191,13 @@ h6 {
     border-radius: var(--border-radius);
 
     &.filter {
-      height: calc(100vh - 30.2rem);
+      height: calc(100vh - 28.7rem);
     }
+  }
+
+  .no-data {
+    height: calc(100vh - 15rem);
+    padding: 0 0.5rem;
   }
 
   ::ng-deep ngx-avatar {
