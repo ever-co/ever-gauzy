@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, Input } from '@angular/core';
+import { Component, OnInit, OnDestroy, Input, ViewChild } from '@angular/core';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
@@ -14,7 +14,7 @@ import {
 } from '@gauzy/contracts';
 import { filter, tap } from 'rxjs/operators';
 import { firstValueFrom } from 'rxjs';
-import { LocalDataSource } from 'ng2-smart-table';
+import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { Router, ActivatedRoute } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -45,10 +45,9 @@ import { any } from 'underscore';
 	templateUrl: './invoice-edit.component.html',
 	styleUrls: ['./invoice-edit.component.scss']
 })
-export class InvoiceEditComponent
-	extends TranslationBaseComponent
-	implements OnInit, OnDestroy
-{
+export class InvoiceEditComponent extends TranslationBaseComponent
+	implements OnInit, OnDestroy {
+
 	shouldLoadTable = false;
 	invoiceId: string;
 	settingsSmartTable: object;
@@ -84,6 +83,14 @@ export class InvoiceEditComponent
 	}
 	get isEstimate() {
 		return this._isEstimate;
+	}
+
+	invoiceItemTable: Ng2SmartTableComponent;
+	@ViewChild('invoiceItemTable') set content(content: Ng2SmartTableComponent) {
+		if (content) {
+			this.invoiceItemTable = content;
+			this.onChangedSource();
+		}
 	}
 
 	constructor(
@@ -1012,6 +1019,23 @@ export class InvoiceEditComponent
 
 	selectItem(item: any){
 		this.selectedItem = item;
+	}
+
+	/*
+	 * Table on changed source event
+	 */
+	onChangedSource() {
+		this.invoiceItemTable.source.onChangedSource
+			.pipe(
+				tap(() => {
+					if (this.invoiceItemTable && this.invoiceItemTable.grid) {
+						this.invoiceItemTable.grid.dataSet['willSelect'] = 'false';
+						this.invoiceItemTable.grid.dataSet.deselectAll();
+					}
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	ngOnDestroy() {}

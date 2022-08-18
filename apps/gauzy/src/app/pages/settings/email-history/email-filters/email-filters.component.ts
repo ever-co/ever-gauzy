@@ -1,40 +1,57 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
-import { EmailTemplateService } from 'apps/gauzy/src/app/@core/services/email-template.service';
-import { IEmailTemplate, IEmail, IOrganization } from '@gauzy/contracts';
+import { Component, OnInit, OnDestroy, Input } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
-import { EmailService } from 'apps/gauzy/src/app/@core/services/email.service';
+import { IEmailTemplate, IEmail, IOrganization, LanguagesEnum } from '@gauzy/contracts';
+import { filter, tap } from 'rxjs/operators';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { distinctUntilChange } from '@gauzy/common-angular';
+import {
+	EmailService,
+	EmailTemplateService,
+	Store
+} from './../../../../@core/services';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-email-filters',
 	templateUrl: './email-filters.component.html',
 	styleUrls: ['./email-filters.component.scss']
 })
 export class EmailFiltersComponent implements OnInit, OnDestroy {
+
 	constructor(
-		private emailTemplateService: EmailTemplateService,
-		private dialogRef: NbDialogRef<EmailFiltersComponent>,
-		private emailService: EmailService
+		private readonly store: Store,
+		private readonly emailTemplateService: EmailTemplateService,
+		private readonly dialogRef: NbDialogRef<EmailFiltersComponent>,
+		private readonly emailService: EmailService
 	) {}
 
-	emailTemplates: IEmailTemplate[];
-
+	public organization: IOrganization;
 	selectedTemplateId: string;
-
 	emailTo: string;
-
 	emails?: IEmail;
-
 	to: Object[] = [];
+	emailTemplates: IEmailTemplate[] = [];
 
-	organizationId: string;
+	@Input() set filters(filters: any) {
+		this.emailTo = filters.email;
+		this.selectedTemplateId = filters.emailTemplateId;
+	}
 
-	filters: any;
-	organization: IOrganization;
 	ngOnInit() {
-		this._getAllEmailTemplates();
-		this._getEmails();
-		this.emailTo = this.filters.email;
-		this.selectedTemplateId = this.filters.emailTemplateId;
+		this.store.selectedOrganization$
+			.pipe(
+				distinctUntilChange(),
+				filter((organization: IOrganization) => !!organization),
+				tap((organization: IOrganization) => {
+					this.organization = organization;
+				}),
+				tap(() => {
+					this._getAllEmailTemplates();
+					this._getEmails();
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	formatTemplateName(name: string, languageCode: string) {
@@ -48,13 +65,13 @@ export class EmailFiltersComponent implements OnInit, OnDestroy {
 
 	getEmailLanguageFullName(languageCode: string) {
 		switch (languageCode) {
-			case 'en':
+			case LanguagesEnum.ENGLISH:
 				return 'English';
-			case 'bg':
+			case LanguagesEnum.BULGARIAN:
 				return 'Bulgarian';
-			case 'he':
+			case LanguagesEnum.HEBREW:
 				return 'Hebrew';
-			case 'ru':
+			case LanguagesEnum.RUSSIAN:
 				return 'Russian';
 		}
 	}
@@ -72,13 +89,15 @@ export class EmailFiltersComponent implements OnInit, OnDestroy {
 
 	private _toTitleCase(str: string) {
 		return str.replace(/\w\S*/g, (txt) => {
-			return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
+			return txt.charAt(0).toUpperCase() + txt.substring(1).toLowerCase();
 		});
 	}
 
 	private async _getAllEmailTemplates() {
-		const { id: organizationId, tenantId } = this.organization;
-		const { items } = await this.emailTemplateService.getAll([], {
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
+
+		const { items } = await this.emailTemplateService.getAll({
 			organizationId,
 			tenantId
 		});
@@ -91,8 +110,11 @@ export class EmailFiltersComponent implements OnInit, OnDestroy {
 				(et.name = this.formatTemplateName(et.name, et.languageCode))
 		);
 	}
+
 	private async _getEmails() {
-		const { id: organizationId, tenantId } = this.organization;
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
+
 		const { items } = await this.emailService.getAll(['emailTemplate'], {
 			organizationId,
 			tenantId

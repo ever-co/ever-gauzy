@@ -14,15 +14,16 @@
 				size="small"
 			>
 				{{ 'BUTTONS.FILTER' | translate }}
-				<span *ngIf="filteredCount">
-					<nb-badge
-						[text]="filteredCount"
-						status="danger"
-						position="fixed"
-						class="filter-count"
-					>
-					</nb-badge>
-				</span>
+				<ng-container *ngIf="filteredCount">
+					<span>
+						<nb-badge
+							[text]="filteredCount"
+							status="danger"
+							position="fixed"
+							class="filter-count"
+						></nb-badge>
+					</span>
+				</ng-container>
 			</button>
 		</div>
 	</nb-card-header>
