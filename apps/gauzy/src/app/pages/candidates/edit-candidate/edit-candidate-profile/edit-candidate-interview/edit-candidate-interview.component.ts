@@ -17,7 +17,7 @@ import {
 	IOrganization
 } from '@gauzy/contracts';
 import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
-import { LocalDataSource } from 'ng2-smart-table';
+import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import {
 	CandidateFeedbacksService,
 	CandidateInterviewService,
@@ -42,7 +42,7 @@ import { InterviewCriterionsTableComponent } from '../../../manage-candidate-int
 	templateUrl: './edit-candidate-interview.component.html',
 	styleUrls: ['./edit-candidate-interview.component.scss']
 })
-export class EditCandidateInterviewComponent extends TranslationBaseComponent 
+export class EditCandidateInterviewComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 
 	interviewList: ICandidateInterview[];
@@ -55,7 +55,6 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 	loading: boolean;
 	onlyPast = false;
 	onlyFuture = false;
-	@ViewChild('interviewsTable') interviewsTable;
 	settingsSmartTable: object;
 	sourceSmartTable = new LocalDataSource();
 	viewComponentName: ComponentEnum;
@@ -70,6 +69,14 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 		data: null,
 		isSelected: false
 	};
+
+	interviewsTable: Ng2SmartTableComponent;
+	@ViewChild('interviewsTable') set content(content: Ng2SmartTableComponent) {
+		if (content) {
+			this.interviewsTable = content;
+			this.onChangedSource();
+		}
+	}
 
 	constructor(
 		private readonly dialogService: NbDialogService,
@@ -101,7 +108,7 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 					this.selectedOrganization = this.store.selectedOrganization;
 					this.candidateId = candidate.id;
 					this.loadInterview();
-					
+
 					const { tenantId } = this.store.user;
 					const { id: organizationId } = this.selectedOrganization;
 
@@ -275,7 +282,7 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 			],
 			{ candidateId: this.candidateId, organizationId, tenantId }
 		);
-		
+
 		if (interviews) {
 			this.interviewList = interviews.items;
 			this.allInterviews = interviews.items;
@@ -460,6 +467,28 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
+	}
+
+	/*
+	 * Table on changed source event
+	 */
+	onChangedSource() {
+		this.interviewsTable.source.onChangedSource
+			.pipe(
+				untilDestroyed(this),
+				tap(() => this.deselectAll())
+			)
+			.subscribe();
+	}
+
+	/*
+	 * Deselect all table rows
+	 */
+	deselectAll() {
+		if (this.interviewsTable && this.interviewsTable.grid) {
+			this.interviewsTable.grid.dataSet['willSelect'] = 'false';
+			this.interviewsTable.grid.dataSet.deselectAll();
+		}
 	}
 
 	ngOnDestroy() {}
