@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
-import { getManager, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { CrudService } from '../core/crud/crud.service';
 import { Tenant } from './tenant.entity';
 import {
@@ -23,9 +23,8 @@ import { TenantSettingSaveCommand } from './tenant-setting/commands';
 @Injectable()
 export class TenantService extends CrudService<Tenant> {
 	constructor(
-		@InjectRepository(Tenant)
-		private readonly tenantRepository: Repository<Tenant>,
-
+		@InjectRepository(Tenant) private readonly tenantRepository: Repository<Tenant>,
+		@InjectRepository(User) private readonly userRepository: Repository<User>,
 		private readonly userService: UserService,
 		private readonly roleService: RoleService,
 		private readonly commandBus: CommandBus,
@@ -85,7 +84,7 @@ export class TenantService extends CrudService<Tenant> {
 			const { sourceId, userSourceId } = entity;
 			await this.commandBus.execute(
 				new ImportRecordUpdateOrCreateCommand({
-					entityType: getManager().getRepository(Tenant).metadata.tableName,
+					entityType: this.tenantRepository.metadata.tableName,
 					sourceId,
 					destinationId: tenant.id,
 					tenantId: tenant.id
@@ -94,7 +93,7 @@ export class TenantService extends CrudService<Tenant> {
 			if (userSourceId) {
 				await this.commandBus.execute(
 					new ImportRecordUpdateOrCreateCommand({
-						entityType: getManager().getRepository(User).metadata.tableName,
+						entityType: this.userRepository.metadata.tableName,
 						sourceId: userSourceId,
 						destinationId: user.id
 					}, {

@@ -1,6 +1,7 @@
 import { BadRequestException } from '@nestjs/common';
 import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { getManager } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { faker } from '@ever-co/faker';
 import { IOrganization, RolesEnum } from '@gauzy/contracts';
 import { RoleService } from '../../../role/role.service';
@@ -23,6 +24,8 @@ export class OrganizationCreateHandler
 		private readonly userOrganizationService: UserOrganizationService,
 		private readonly userService: UserService,
 		private readonly roleService: RoleService,
+		@InjectRepository(UserOrganization) private readonly userOrganizationRepository: Repository<UserOrganization>,
+		@InjectRepository(Organization) private readonly organizationRepository: Repository<Organization>,
 	) {}
 
 	public async execute(
@@ -84,7 +87,7 @@ export class OrganizationCreateHandler
 					if (isImporting && userOrganizationSourceId) {
 						await this.commandBus.execute(
 							new ImportRecordUpdateOrCreateCommand({
-								entityType: getManager().getRepository(UserOrganization).metadata.tableName,
+								entityType: this.userOrganizationRepository.metadata.tableName,
 								sourceId: userOrganizationSourceId,
 								destinationId: userOrganization.id,
 								tenantId
@@ -116,10 +119,9 @@ export class OrganizationCreateHandler
 			//7. Create Import Records while migrating for relative organization.
 			if (isImporting && sourceId) {
 				const { sourceId } = input;
-				const entityType = getManager().getRepository(Organization).metadata.tableName;
 				await this.commandBus.execute(
 					new ImportRecordUpdateOrCreateCommand({
-						entityType,
+						entityType: this.organizationRepository.metadata.tableName,
 						sourceId,
 						destinationId: organization.id,
 						tenantId

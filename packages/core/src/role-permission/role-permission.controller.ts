@@ -18,8 +18,8 @@ import {
 	ValidationPipe
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { UpdateResult } from 'typeorm';
-import { CrudController } from './../core/crud';
+import { DeleteResult, UpdateResult } from 'typeorm';
+import { CrudController, PaginationParams } from './../core/crud';
 import { Permissions } from './../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
@@ -28,7 +28,7 @@ import { RolePermission } from './role-permission.entity';
 import { RolePermissionService } from './role-permission.service';
 
 @ApiTags('Role')
-@UseGuards(TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard)
 @Controller()
 export class RolePermissionController extends CrudController<RolePermission> {
 	constructor(
@@ -46,13 +46,20 @@ export class RolePermissionController extends CrudController<RolePermission> {
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid input, The request body may contain clues as to what went wrong'
 	})
-	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.MIGRATE_GAUZY_CLOUD)
 	@Post('import/migrate')
 	async importRole(
 		@Body() input: any
 	) {
 		return await this.rolePermissionService.migrateImportRecord(input);
+	}
+
+	@Permissions(PermissionsEnum.CHANGE_ROLES_PERMISSIONS)
+	@Get('pagination')
+	async pagination(
+		@Query() options: PaginationParams<RolePermission>
+	): Promise<IPagination<IRolePermission>> {
+		return await this.rolePermissionService.findAllRolePermissions(options);
 	}
 
 	@ApiOperation({ summary: 'Find role permissions.' })
@@ -65,7 +72,6 @@ export class RolePermissionController extends CrudController<RolePermission> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.CHANGE_ROLES_PERMISSIONS)
 	@HttpCode(HttpStatus.OK)
 	@Get()
@@ -86,7 +92,6 @@ export class RolePermissionController extends CrudController<RolePermission> {
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
-	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.CHANGE_ROLES_PERMISSIONS)
 	@HttpCode(HttpStatus.CREATED)
 	@Post()
@@ -113,7 +118,6 @@ export class RolePermissionController extends CrudController<RolePermission> {
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
-	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.CHANGE_ROLES_PERMISSIONS)
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
@@ -128,12 +132,11 @@ export class RolePermissionController extends CrudController<RolePermission> {
 	}
 
 	@HttpCode(HttpStatus.ACCEPTED)
-	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.CHANGE_ROLES_PERMISSIONS)
 	@Delete(':id')
 	async delete(
 		@Param('id', UUIDValidationPipe) id: string
-	): Promise<any> {
+	): Promise<DeleteResult> {
 		return await this.rolePermissionService.deletePermission(id);
 	}
 }
