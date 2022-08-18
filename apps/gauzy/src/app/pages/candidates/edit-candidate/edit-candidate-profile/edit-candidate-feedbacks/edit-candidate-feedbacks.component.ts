@@ -1,6 +1,5 @@
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
-import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
-import { Subject, firstValueFrom } from 'rxjs';
+import { TranslationBaseComponent } from './../../../../../@shared/language-base/translation-base.component';
 import {
 	FormBuilder,
 	Validators,
@@ -10,9 +9,8 @@ import {
 } from '@angular/forms';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { CandidateStore } from 'apps/gauzy/src/app/@core/services/candidate-store.service';
-import { takeUntil } from 'rxjs/operators';
-import { CandidateFeedbacksService } from 'apps/gauzy/src/app/@core/services/candidate-feedbacks.service';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { firstValueFrom, tap } from 'rxjs';
 import {
 	ICandidateFeedback,
 	CandidateStatusEnum,
@@ -24,29 +22,32 @@ import {
 	ComponentLayoutStyleEnum,
 	IOrganization
 } from '@gauzy/contracts';
-import { CandidateInterviewService } from 'apps/gauzy/src/app/@core/services/candidate-interview.service';
-import { EmployeesService } from 'apps/gauzy/src/app/@core/services';
-import { CandidatesService } from 'apps/gauzy/src/app/@core/services/candidates.service';
-import { CandidateCriterionsRatingService } from 'apps/gauzy/src/app/@core/services/candidate-criterions-rating.service';
-import { DeleteFeedbackComponent } from 'apps/gauzy/src/app/@shared/candidate/candidate-confirmation/delete-feedback/delete-feedback.component';
-import { LocalDataSource } from 'ng2-smart-table';
-import { ComponentEnum } from 'apps/gauzy/src/app/@core/constants/layout.constants';
-import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
+import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
+import { DeleteFeedbackComponent } from './../../../../../@shared/candidate/candidate-confirmation/delete-feedback/delete-feedback.component';
+import { ComponentEnum } from './../../../../../@core/constants';
+import {
+	CandidateCriterionsRatingService,
+	CandidateFeedbacksService,
+	CandidateInterviewService,
+	CandidatesService,
+	CandidateStore,
+	EmployeesService,
+	Store,
+	ToastrService
+} from './../../../../../@core/services';
 import { InterviewersTableComponent } from '../../../manage-candidate-interviews/interview-panel/table-components/interviewers/interviewers.component';
 import { InterviewStarRatingComponent } from '../../../manage-candidate-interviews/interview-panel/table-components/rating/rating.component';
-import { FeedbackStatusTableComponent } from './table-components/status/status.component';
-import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
+import { FeedbackStatusTableComponent } from './table-components';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-edit-candidate-feedbacks',
 	templateUrl: './edit-candidate-feedbacks.component.html',
 	styleUrls: ['./edit-candidate-feedbacks.component.scss']
 })
-export class EditCandidateFeedbacksComponent
-	extends TranslationBaseComponent
-	implements OnInit, OnDestroy
-{
-	private _ngDestroy$ = new Subject<void>();
+export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
+	implements OnInit, OnDestroy {
+
 	feedbackId = null;
 	showAddCard: boolean;
 	feedbackList: ICandidateFeedback[] = [];
@@ -73,31 +74,40 @@ export class EditCandidateFeedbacksComponent
 	isEmployeeReset: boolean;
 	selectInterview: FormControl = new FormControl();
 	interviewList: ICandidateInterview[];
-	@ViewChild('feedbackTable') feedbackTable;
 	settingsSmartTable: object;
 	sourceSmartTable = new LocalDataSource();
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	selectedOrganization: IOrganization;
+
+	feedbackTable: Ng2SmartTableComponent;
+	@ViewChild('feedbackTable') set content(content: Ng2SmartTableComponent) {
+		if (content) {
+			this.feedbackTable = content;
+			this.onChangedSource();
+		}
+	}
+
 	constructor(
 		private readonly fb: FormBuilder,
 		private readonly candidateFeedbacksService: CandidateFeedbacksService,
 		private readonly toastrService: ToastrService,
 		readonly translateService: TranslateService,
-		private candidateStore: CandidateStore,
-		private employeesService: EmployeesService,
-		private dialogService: NbDialogService,
-		private candidatesService: CandidatesService,
-		private store: Store,
-		private candidateInterviewService: CandidateInterviewService,
-		private candidateCriterionsRatingService: CandidateCriterionsRatingService
+		private readonly candidateStore: CandidateStore,
+		private readonly employeesService: EmployeesService,
+		private readonly dialogService: NbDialogService,
+		private readonly candidatesService: CandidatesService,
+		private readonly store: Store,
+		private readonly candidateInterviewService: CandidateInterviewService,
+		private readonly candidateCriterionsRatingService: CandidateCriterionsRatingService
 	) {
 		super(translateService);
 		this.setView();
 	}
-	async ngOnInit() {
+
+	ngOnInit() {
 		this.candidateStore.selectedCandidate$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((candidate) => {
 				if (candidate) {
 					this.selectedOrganization = this.store.selectedOrganization;
@@ -108,7 +118,7 @@ export class EditCandidateFeedbacksComponent
 					this._applyTranslationOnSmartTable();
 				}
 			});
-		this.loadSmartTable();
+		this.loadSmartTableSettings();
 		this.selectInterview.setValue('all');
 	}
 	async getEmployees() {
@@ -130,7 +140,7 @@ export class EditCandidateFeedbacksComponent
 		this.viewComponentName = ComponentEnum.FEEDBACKS;
 		this.store
 			.componentLayout$(this.viewComponentName)
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((componentLayout) => {
 				this.dataLayoutStyle = componentLayout;
 				this.selectedFeedback =
@@ -153,7 +163,7 @@ export class EditCandidateFeedbacksComponent
 			})
 		);
 	}
-	async loadSmartTable() {
+	async loadSmartTableSettings() {
 		this.settingsSmartTable = {
 			actions: false,
 			columns: {
@@ -510,14 +520,12 @@ export class EditCandidateFeedbacksComponent
 			this.loadInterviews();
 		}
 	}
+
 	selectFeedback({ isSelected, data }) {
-		const selectedFeedback = isSelected ? data : null;
-		if (this.feedbackTable) {
-			this.feedbackTable.grid.dataSet.willSelect = false;
-		}
 		this.disableButton = !isSelected;
-		this.selectedFeedback = selectedFeedback;
+		this.selectedFeedback = isSelected ? data : null;
 	}
+
 	onInterviewSelected(value: any) {
 		this.isEmployeeReset = true;
 		this.feedbackList = this.allFeedbacks;
@@ -527,15 +535,18 @@ export class EditCandidateFeedbacksComponent
 			);
 		}
 	}
+
 	private toastrError(error) {
 		this.toastrService.danger(error);
 	}
+
 	private toastrInvalid() {
 		this.toastrService.danger(
 			this.getTranslation('NOTES.CANDIDATE.INVALID_FORM'),
 			this.getTranslation('TOASTR.MESSAGE.CANDIDATE_FEEDBACK_REQUIRED')
 		);
 	}
+
 	cancel() {
 		this.showAddCard = !this.showAddCard;
 		this.feedbacks.reset();
@@ -545,21 +556,44 @@ export class EditCandidateFeedbacksComponent
 		this.feedbackInterviewId = null;
 		this.interviewers = [];
 	}
-	_applyTranslationOnSmartTable() {
+
+	private _applyTranslationOnSmartTable() {
 		this.translateService.onLangChange
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe(() => {
-				this.loadSmartTable();
-			});
+			.pipe(
+				tap(() => this.loadSmartTableSettings()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+
 	/*
 	 * Getter for candidate feedback form controls array
 	 */
 	get feedbacks(): FormArray {
 		return this.form.get('feedbacks') as FormArray;
 	}
+
+	/*
+	 * Table on changed source event
+	 */
+	onChangedSource() {
+		this.feedbackTable.source.onChangedSource
+			.pipe(
+				untilDestroyed(this),
+				tap(() => this.deselectAll())
+			)
+			.subscribe();
+	}
+
+	/*
+	 * Deselect all table rows
+	 */
+	deselectAll() {
+		if (this.feedbackTable && this.feedbackTable.grid) {
+			this.feedbackTable.grid.dataSet['willSelect'] = 'false';
+			this.feedbackTable.grid.dataSet.deselectAll();
+		}
+	}
+
+	ngOnDestroy(): void {}
 }
