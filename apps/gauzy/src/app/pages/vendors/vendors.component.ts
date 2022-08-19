@@ -21,7 +21,7 @@ import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { NbDialogRef, NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, tap } from 'rxjs/operators';
-import { debounceTime, firstValueFrom } from 'rxjs';
+import { debounceTime, firstValueFrom, Subject } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { API_PREFIX, ComponentEnum } from './../../@core/constants';
 import {
@@ -58,7 +58,7 @@ export class VendorsComponent
 	@ViewChild('addEditTemplate') public addEditTemplateRef: TemplateRef<any>;
 	addEditdialogRef: NbDialogRef<any>;
 	organization: IOrganization;
-	vendors: IOrganizationVendor[];
+	vendors: IOrganizationVendor[] = [];
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
@@ -73,6 +73,7 @@ export class VendorsComponent
 	};
 	disabled: boolean = true;
 	isLoading: boolean = false;
+	private _refresh$: Subject<any> = new Subject();
 
 	constructor(
 		private readonly organizationVendorsService: OrganizationVendorsService,
@@ -112,6 +113,7 @@ export class VendorsComponent
 			.pipe(
 				filter((organization: IOrganization) => !!organization),
 				tap((organization) => (this.organization = organization)),
+				tap(() => this._refresh$.next(true)),
 				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
@@ -131,6 +133,13 @@ export class VendorsComponent
 				),
 				debounceTime(1000),
 				tap(() => this.openDialog(this.addEditTemplateRef, false)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this._refresh$
+			.pipe(
+				tap(() => this.refreshPagination()),
+				tap(() => (this.vendors = [])),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -158,7 +167,8 @@ export class VendorsComponent
 					(componentLayout) =>
 						(this.dataLayoutStyle = componentLayout)
 				),
-				tap(() => this.refreshPagination()),
+				tap(() => this._refresh$.next(true)),
+				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -168,7 +178,7 @@ export class VendorsComponent
 		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
 			pager: {
-				perPage: pagination ? pagination : 10
+				perPage: pagination ? pagination : this.minItemPerPage
 			},
 			actions: false,
 			columns: {
@@ -255,6 +265,7 @@ export class VendorsComponent
 					);
 				})
 				.finally(() => {
+					this._refresh$.next(true);
 					this.subject$.next(true);
 					this.cancel();
 				});
@@ -285,6 +296,7 @@ export class VendorsComponent
 					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_VENDOR.REMOVE_VENDOR',
 					{ name }
 				);
+				this._refresh$.next(true);
 				this.subject$.next(true);
 			} catch (error) {
 				this.errorHandlingService.handleError(error);
@@ -314,6 +326,7 @@ export class VendorsComponent
 				);
 			})
 			.finally(() => {
+				this._refresh$.next(true);
 				this.subject$.next(true);
 				this.cancel();
 			});
@@ -329,7 +342,6 @@ export class VendorsComponent
 			this.setSmartTableSource();
 			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
 			await this.smartTableSource.getElements();
-			this.vendors = this.smartTableSource.getData();
 			this.isLoading = false;
 		} catch (error) {
 			console.log(error, 'error');
@@ -350,6 +362,9 @@ export class VendorsComponent
 				return Object.assign({}, item, {
 					logo: item.name
 				});
+			},
+			finalize: () => {
+				this.vendors.push(...this.smartTableSource.getData());
 			}
 		});
 	}
@@ -392,12 +407,5 @@ export class VendorsComponent
 		this.selected.state = res.state;
 		this.selected.vendor = vendor;
 		this.selectedVendor = this.selected.vendor;
-	}
-
-	public onScroll() {
-		this.setPagination({
-			...this.getPagination(),
-			itemsPerPage: this.pagination.itemsPerPage + 10
-		});
 	}
 }
