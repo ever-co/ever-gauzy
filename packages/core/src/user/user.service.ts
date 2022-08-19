@@ -4,7 +4,7 @@
 
 import { ForbiddenException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, InsertResult, SelectQueryBuilder, Brackets, WhereExpressionBuilder, In, FindOneOptions } from 'typeorm';
+import { Repository, InsertResult, SelectQueryBuilder, Brackets, WhereExpressionBuilder, In } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { JwtPayload } from 'jsonwebtoken';
 import { ComponentLayoutStyleEnum, IUser, LanguagesEnum, PermissionsEnum, RolesEnum } from '@gauzy/contracts';
@@ -242,9 +242,13 @@ export class UserService extends TenantAwareCrudService<User> {
 			const userId = RequestContext.currentUserId();
 			const tenantId = RequestContext.currentTenantId();
 
-			return await this.repository.update({ id: userId, tenantId }, {
-				refreshToken: null
-			});
+			try {
+				await this.repository.update({ id: userId, tenantId }, {
+					refreshToken: null
+				});
+			} catch (error) {
+				console.log('Error while remove refresh token', error);
+			}
 		} catch (error) {
 			console.log('Error while logout device', error);
 		}
@@ -260,32 +264,35 @@ export class UserService extends TenantAwareCrudService<User> {
 	async getUserIfRefreshTokenMatches(refreshToken: string, payload: JwtPayload) {
 		try {
 			const { id, email, tenantId, role } = payload;
-			const user = await this.repository.findOneOrFail({
+			const query = this.repository.createQueryBuilder('user');
+			query.setFindOptions({
 				join: {
 					alias: 'user',
 					leftJoin: {
 						role: 'user.role'
 					}
-				},
-				where: (query: SelectQueryBuilder<User>) => {
-					query.andWhere(
-						new Brackets((qb: WhereExpressionBuilder) => {
-							qb.andWhere(`"${query.alias}"."id" = :id`, { id });
-							qb.andWhere(`"${query.alias}"."email" = :email`, { email });
-						})
-					);
-					query.andWhere(
-						new Brackets((qb: WhereExpressionBuilder) => {
-							if (isNotEmpty(tenantId)) {
-								qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
-							}
-							if (isNotEmpty(role)) {
-								qb.andWhere(`"role"."name" = :role`, { role });
-							}
-						})
-					);
 				}
-			} as FindOneOptions<User>);
+			});
+			query.where((query: SelectQueryBuilder<User>) => {
+				query.andWhere(
+					new Brackets((web: WhereExpressionBuilder) => {
+						web.andWhere(`"${query.alias}"."id" = :id`, { id });
+						web.andWhere(`"${query.alias}"."email" = :email`, { email });
+					})
+				);
+				query.andWhere(
+					new Brackets((web: WhereExpressionBuilder) => {
+						if (isNotEmpty(tenantId)) {
+							web.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
+						}
+						if (isNotEmpty(role)) {
+							web.andWhere(`"role"."name" = :role`, { role });
+						}
+					})
+				);
+				query.orderBy(`"${query.alias}"."createdAt"`, 'DESC');
+			});
+			const user = await query.getOneOrFail();
 			const isRefreshTokenMatching = await bcrypt.compare(refreshToken, user.refreshToken);
 			if (isRefreshTokenMatching) {
 				return user;

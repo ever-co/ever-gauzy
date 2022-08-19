@@ -1,10 +1,10 @@
-import { Observable, from, of, tap } from 'rxjs';
+import { Observable, from, of, tap, Subject } from 'rxjs';
 import { NbAuthResult, NbAuthStrategy } from '@nebular/auth';
 import { ActivatedRoute } from '@angular/router';
-import { catchError, map, switchMap } from 'rxjs/operators';
+import { catchError, filter, map, switchMap } from 'rxjs/operators';
 import { Injectable } from '@angular/core';
 import { IUser, IAuthResponse } from '@gauzy/contracts';
-import { isNotEmpty } from '@gauzy/common-angular';
+import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
 import { NbAuthStrategyClass } from '@nebular/auth/auth.options';
 import { AuthService } from '../services/auth.service';
 import { Store } from '../services/store.service';
@@ -64,6 +64,8 @@ export class AuthStrategy extends NbAuthStrategy {
 		}
 	};
 
+	logout$: Subject<boolean> = new Subject();
+
 	constructor(
 		private readonly route: ActivatedRoute,
 		private readonly authService: AuthService,
@@ -74,6 +76,13 @@ export class AuthStrategy extends NbAuthStrategy {
 		private readonly cookieService: CookieService
 	) {
 		super();
+		this.logout$
+			.pipe(
+				distinctUntilChange(),
+				filter(() => !!this.store.token),
+				tap(() => this._preLogout()),
+			)
+			.subscribe()
 	}
 
 	static setup(options: { name: string }): [NbAuthStrategyClass, any] {
@@ -261,7 +270,7 @@ export class AuthStrategy extends NbAuthStrategy {
 	}
 
 	private async _logout(): Promise<NbAuthResult> {
-		await this._preLogout();
+		this.logout$.next(true);
 
 		this.store.clear();
 		this.store.serverConnection = 200;
@@ -281,6 +290,9 @@ export class AuthStrategy extends NbAuthStrategy {
 	}
 
 	private async _preLogout() {
+		if (this.store.token) {
+			this.authService.doLogout().subscribe();
+		}
 		//remove time tracking/timesheet filter just before logout
 		if (this.store.user && this.store.user.employeeId) {
 			if (this.timeTrackerService.running) {
@@ -293,7 +305,6 @@ export class AuthStrategy extends NbAuthStrategy {
 	}
 
 	public login(loginInput): Observable<NbAuthResult> {
-
 		return this.authService.login(loginInput).pipe(
 			map((res: IAuthResponse) => {
 				let user, token, refresh_token;

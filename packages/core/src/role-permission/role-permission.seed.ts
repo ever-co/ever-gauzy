@@ -6,15 +6,15 @@ import { DataSource } from 'typeorm';
 import { IRole, ITenant, IRolePermission, PermissionsEnum } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/common';
 import { v4 as uuidV4 } from 'uuid';
+import { environment } from '@gauzy/config'
 import { DEFAULT_ROLE_PERMISSIONS } from './default-role-permissions';
 import { RolePermission } from './role-permission.entity';
 
 export const createRolePermissions = async (
 	dataSource: DataSource,
 	roles: IRole[],
-	tenants: ITenant[],
-	isDemo: boolean
-): Promise<IRolePermission[]> => {
+	tenants: ITenant[]
+) => {
 
 	// removed permissions for all users in DEMO mode
 	const deniedPermissions = [
@@ -22,35 +22,32 @@ export const createRolePermissions = async (
 		PermissionsEnum.ACCESS_DELETE_ALL_DATA
 	];
 
-	const rolePermissions: IRolePermission[] = [];
 	for (const tenant of tenants) {
+		const rolePermissions: IRolePermission[] = [];
 		DEFAULT_ROLE_PERMISSIONS.forEach(({ role: roleEnum, defaultEnabledPermissions }) => {
 			const role = roles.find(
-				(dbRole) => dbRole.name === roleEnum && dbRole.tenant.name === tenant.name
+				(dbRole: IRole) => dbRole.name === roleEnum && dbRole.tenant.name === tenant.name
 			);
 			if (role) {
-				defaultEnabledPermissions
-					.filter((permission) => isDemo ? !deniedPermissions.includes(permission) : true)
-					.forEach((permission) => {
-						const rolePermission = new RolePermission();
-						rolePermission.role = role;
-						rolePermission.permission = permission;
-						rolePermission.enabled = true;
-						rolePermission.tenant = tenant;
-
-						rolePermissions.push(rolePermission);
-					});
+				const permissions = Object.values(PermissionsEnum).filter(
+					(permission: PermissionsEnum) => environment.demo ? !deniedPermissions.includes(permission) : true
+				);
+				for (const permission of permissions) {
+					const rolePermission = new RolePermission();
+					rolePermission.role = role;
+					rolePermission.permission = permission;
+					rolePermission.enabled = defaultEnabledPermissions.includes(permission);
+					rolePermission.tenant = tenant;
+					rolePermissions.push(rolePermission);
+				}
 			}
 		});
+		await dataSource.manager.save(rolePermissions);
 	}
-	return await dataSource.manager.save(rolePermissions);
 };
 
 
-export const reloadRolePermissions = async (
-	dataSource: DataSource,
-	isDemo: boolean
-) => {
+export const reloadRolePermissions = async (dataSource: DataSource) => {
 	// removed permissions for all users in DEMO mode
 	const deniedPermissions = [
 		PermissionsEnum.ACCESS_DELETE_ACCOUNT,
@@ -70,9 +67,9 @@ export const reloadRolePermissions = async (
 
 		for await (const { role: roleEnum, defaultEnabledPermissions } of DEFAULT_ROLE_PERMISSIONS) {
 			const permissions = defaultEnabledPermissions.filter(
-				(permission) => isDemo ? !deniedPermissions.includes(permission) : true
+				(permission: PermissionsEnum) => environment.demo ? !deniedPermissions.includes(permission) : true
 			);
-			const role = roles.find((dbRole) => dbRole.name === roleEnum);
+			const role = roles.find((dbRole: IRole) => dbRole.name === roleEnum);
 			if (isNotEmpty(permissions)) {
 				for await (const permission of permissions) {
 					const existPermission = await dataSource.manager.query(
