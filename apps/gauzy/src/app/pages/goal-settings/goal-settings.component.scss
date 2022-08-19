@@ -2,9 +2,18 @@
 
 :host {
   nb-tab.content-active {
-    padding: 1rem;
+    @include nb-ltr(padding, 1rem 0.5rem 1rem 18px);
+    @include nb-rtl(padding, 1rem 18px 1rem 0.5rem);
     overflow: unset;
     border-radius: 0 0 var(--border-radius) var(--border-radius);
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 18.5rem);
+    overflow: unset;
+    .table-scroll-container {
+      flex-grow: 10;
+      max-height: unset;
+    }
   }
   nb-card,
   nb-tab {
@@ -14,28 +23,27 @@
   nb-card-body {
     overflow: unset;
     margin: 0;
+    border-radius: 0 0 var(--border-radius) var(--border-radius);
   }
+}
 
-  .nb-tabset {
-    margin-top: 27px;
-  }
+.nb-tabset {
+  margin-top: 27px;
+}
 
-  nb-tab {
-    height: calc(100vh - 22.5rem);
-    .table-data {
-      display: flex;
-      flex-direction: column;
-      height: 100%;
-      overflow: unset;
-      .table-scroll-container {
-        flex-grow: 10;
-      }
-    }
-  }
+nb-tab {
+  height: calc(100vh - 18.5rem);
 }
 .card-general {
   background: var(--gauzy-card-3);
   border-radius: nb-theme(border-radius);
+}
+
+:host .card-general-container {
+  @include nb-ltr(padding, 0 0.5rem 0 0);
+  @include nb-rtl(padding, 0 0 0 0.5rem);
+  overflow: auto;
+  height: 100%;
 }
 :host .gauzy-button-container {
   position: absolute;

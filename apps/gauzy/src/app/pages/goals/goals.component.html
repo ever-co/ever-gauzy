@@ -2,7 +2,6 @@
 	[nbSpinner]="loading"
 	nbSpinnerStatus="primary"
 	nbSpinnerSize="large"
-	class="card-scroll"
 >
 	<nb-card-header *ngIf="!loading">
 		<div class="main-header">
@@ -31,116 +30,124 @@
 		</div>
 	</nb-card-header>
 	<nb-card-body *ngIf="!loading">
-		<div class="text-center p-5" *ngIf="noGoals == true">
-			<nb-alert outline="warning" fullWidth>
-				{{ 'GOALS_PAGE.GOALS_EMPTY' | translate }}
-			</nb-alert>
-		</div>
-		<div
-			*ngFor="
-				let group of objectiveGroup == 'timeFrames'
-					? goalTimeFrames
-					: goalLevels
-			"
-		>
-			<h6 *ngIf="noGoals == false">{{ group }}</h6>
-			<nb-accordion
-				[hidden]="
-					objectiveGroup == 'timeFrames'
-						? goal.deadline != group
-						: goal.level != group
+		<div class="goals-container">
+			<div class="text-center p-5" *ngIf="noGoals == true">
+				<nb-alert outline="warning" fullWidth>
+					{{ 'GOALS_PAGE.GOALS_EMPTY' | translate }}
+				</nb-alert>
+			</div>
+			<div
+				*ngFor="
+					let group of objectiveGroup == 'timeFrames'
+						? goalTimeFrames
+						: goalLevels
 				"
-				class="my-3"
-				*ngFor="let goal of goals; let index = index"
 			>
-				<nb-accordion-item>
-					<nb-accordion-item-header
-						(click)="onClickObjective(goal, index)"
-						><div
-							class="w-100 d-flex align-items-center justify-content-between"
-						>
-							{{ goal.name }}
-							<div
-								class="w-25 d-flex align-items-center mr-5 ml-5"
+				<h6 *ngIf="noGoals == false">{{ group }}</h6>
+				<nb-accordion
+					[hidden]="
+						objectiveGroup == 'timeFrames'
+							? goal.deadline != group
+							: goal.level != group
+					"
+					class="my-3"
+					*ngFor="let goal of goals; let index = index"
+				>
+					<nb-accordion-item>
+						<nb-accordion-item-header
+							(click)="onClickObjective(goal, index)"
+							><div
+								class="w-100 d-flex align-items-center justify-content-between"
 							>
-								<span class="ml-3">{{ goal.progress }}%</span>
-								<nb-progress-bar
-									nbTooltip="{{
-										'GOALS_PAGE.TOOLTIPS.PROGRESS'
-											| translate
-									}}"
-									class="ml-4"
-									[value]="goal.progress"
-									[status]="
-										goal.progress < 50
-											? 'warning'
-											: goal.progress < 75
-											? 'info'
-											: 'success'
-									"
-									size="small"
+								{{ goal.name }}
+								<div
+									class="w-25 d-flex align-items-center mr-5 ml-5"
 								>
-								</nb-progress-bar>
+									<span class="ml-3"
+										>{{ goal.progress }}%</span
+									>
+									<nb-progress-bar
+										nbTooltip="{{
+											'GOALS_PAGE.TOOLTIPS.PROGRESS'
+												| translate
+										}}"
+										class="ml-4"
+										[value]="goal.progress"
+										[status]="
+											goal.progress < 50
+												? 'warning'
+												: goal.progress < 75
+												? 'info'
+												: 'success'
+										"
+										size="small"
+									>
+									</nb-progress-bar>
+								</div>
 							</div>
-						</div>
-					</nb-accordion-item-header>
-					<nb-accordion-item-body
-						[ngClass]="
-							selectedKeyResult.isSelected &&
-							selectedKeyResult.data.id === keyResult.id
-								? 'item selected'
-								: ''
-						"
-						*ngFor="let keyResult of goal.keyResults"
-					>
-						<div
-							(click)="onClickKeyResult(keyResult, index)"
-							class="w-100 d-flex align-items-center justify-content-between keyResult"
+						</nb-accordion-item-header>
+						<nb-accordion-item-body
+							[ngClass]="
+								selectedKeyResult.isSelected &&
+								selectedKeyResult.data.id === keyResult.id
+									? 'item selected'
+									: ''
+							"
+							*ngFor="let keyResult of goal.keyResults"
 						>
-							{{ keyResult.name }}
-							<div class="w-25 d-flex align-items-center">
-								<span class="ml-3">{{ keyResult.progress }}%</span>
-								<nb-progress-bar
-									nbTooltip="{{
-										'KEY_RESULT_PAGE.TOOLTIPS.PROGRESS'
-											| translate
-												: {
-														weight: calculateKeyResultWeight(
-															keyResult.weight,
-															goal
-														)
-												  }
-									}}"
-									class="ml-3"
-									[value]="keyResult.progress"
-									[status]="
-										keyResult.progress < 50
-											? 'warning'
-											: keyResult.progress < 75
-											? 'info'
-											: 'success'
-									"
-									size="small"
-								>
-								</nb-progress-bar>
+							<div
+								(click)="onClickKeyResult(keyResult, index)"
+								class="w-100 d-flex align-items-center justify-content-between keyResult"
+							>
+								{{ keyResult.name }}
+								<div class="w-25 d-flex align-items-center">
+									<span class="ml-3"
+										>{{ keyResult.progress }}%</span
+									>
+									<nb-progress-bar
+										nbTooltip="{{
+											'KEY_RESULT_PAGE.TOOLTIPS.PROGRESS'
+												| translate
+													: {
+															weight: calculateKeyResultWeight(
+																keyResult.weight,
+																goal
+															)
+													  }
+										}}"
+										class="ml-3"
+										[value]="keyResult.progress"
+										[status]="
+											keyResult.progress < 50
+												? 'warning'
+												: keyResult.progress < 75
+												? 'info'
+												: 'success'
+										"
+										size="small"
+									>
+									</nb-progress-bar>
+								</div>
 							</div>
-						</div>
-					</nb-accordion-item-body>
-					<nb-accordion-item-body>
-						<button
-							nbButton
-							status="success"
-							class="gen"
-							outline
-							size="small"
-							(click)="addKeyResult(index, true)"
-						>
-							<nb-icon icon="plus-outline"></nb-icon>
-							{{ 'GOALS_PAGE.ADD_NEW_KEY_RESULT' | translate }}
-						</button>
-					</nb-accordion-item-body>
-				</nb-accordion-item>
-			</nb-accordion>
+						</nb-accordion-item-body>
+						<nb-accordion-item-body>
+							<button
+								nbButton
+								status="success"
+								class="gen"
+								outline
+								size="small"
+								(click)="addKeyResult(index, true)"
+							>
+								<nb-icon icon="plus-outline"></nb-icon>
+								{{
+									'GOALS_PAGE.ADD_NEW_KEY_RESULT' | translate
+								}}
+							</button>
+						</nb-accordion-item-body>
+					</nb-accordion-item>
+				</nb-accordion>
+			</div>
 		</div>
 	</nb-card-body>
 </nb-card>

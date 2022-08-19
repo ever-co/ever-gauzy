@@ -23,7 +23,7 @@
 				tabId="general"
 				tabTitle="{{ 'GOALS_PAGE.SETTINGS.GENERAL' | translate }}"
 			>
-				<div>
+				<div class="card-general-container">
 					<nb-card>
 						<nb-card-body class="card-general">
 							<form
@@ -192,6 +192,9 @@
 				</div>
 			</nb-tab>
 			<nb-tab
+				[nbSpinner]="loading"
+				nbSpinnerStatus="primary"
+				nbSpinnerSize="large"
 				tabId="timeframe"
 				tabTitle="{{
 					'GOALS_PAGE.SETTINGS.TIME_FRAME_PAGE_TITLE' | translate
@@ -320,49 +323,34 @@
 	</div>
 </ng-template>
 <ng-template #tableLayout>
-	<div
-		class="table-data"
-		[nbSpinner]="loading"
-		nbSpinnerStatus="primary"
-		nbSpinnerSize="large"
-	>
-		<div class="table-scroll-container">
-			<ng2-smart-table
-				[settings]="smartTableSettings"
-				[source]="smartTableData"
-				(userRowSelect)="selectRow($event)"
-				style="cursor: pointer"
-				#goalSettingsTable
-			>
-			</ng2-smart-table>
-		</div>
-		<div class="pagination-container">
-			<ng-container *ngIf="pagination.totalItems > minItemPerPage">
-				<ga-pagination
-					(selectedOption)="onUpdateOption($event)"
-					(selectedPage)="onPageChange($event)"
-					[doEmit]="false"
-					[totalItems]="pagination?.totalItems"
-					[itemsPerPage]="pagination?.itemsPerPage"
-					[activePage]="pagination?.activePage"
-				></ga-pagination>
-			</ng-container>
-		</div>
+	<div class="table-scroll-container">
+		<ng2-smart-table
+			[settings]="smartTableSettings"
+			[source]="smartTableData"
+			(userRowSelect)="selectRow($event)"
+			style="cursor: pointer"
+			#goalSettingsTable
+		>
+		</ng2-smart-table>
+	</div>
+	<div class="pagination-container">
+		<ng-container *ngIf="pagination.totalItems > minItemPerPage">
+			<ga-pagination
+				(selectedOption)="onUpdateOption($event)"
+				(selectedPage)="onPageChange($event)"
+				[doEmit]="false"
+				[totalItems]="pagination?.totalItems"
+				[itemsPerPage]="pagination?.itemsPerPage"
+				[activePage]="pagination?.activePage"
+			></ga-pagination>
+		</ng-container>
 	</div>
 </ng-template>
 <ng-template #gridLayout>
-	<div [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
-		<ga-card-grid
-			[settings]="smartTableSettings"
-			[source]="goalTimeFrames"
-			[buttonTemplate]="actionButtons"
-			(onSelectedItem)="selectRow($event)"
-			(selectedOption)="onUpdateOption($event)"
-			(selectedPage)="onPageChange($event)"
-			[doEmit]="false"
-			[totalItems]="pagination?.totalItems"
-			[itemsPerPage]="pagination?.itemsPerPage"
-			[activePage]="pagination?.activePage"
-		></ga-card-grid>
-	</div>
+	<ga-card-grid
+		[settings]="smartTableSettings"
+		[source]="goalTimeFrames"
+		(onSelectedItem)="selectRow($event)"
+		(scroll)="onScroll()"
+	></ga-card-grid>
 </ng-template>
