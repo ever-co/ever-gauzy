@@ -1,4 +1,4 @@
-<div class="row">
+<div class="row h-100">
 	<div class="col-2">
 		<nb-card class="filter">
 			<nb-card-header>
@@ -9,21 +9,23 @@
 				></ngx-search-input>
 			</nb-card-header>
 			<ng-container *ngIf="filterOptions.length">
-				<nb-list>
-					<nb-list-item
-						*ngFor="let option of filterOptions"
-						class="filter-item"
-						(click)="selectedFilterOption(option.property)"
-					>
-						{{ option.displayName }}
-					</nb-list-item>
-				</nb-list>
+				<div class="list">
+					<nb-list>
+						<nb-list-item
+							*ngFor="let option of filterOptions"
+							class="filter-item"
+							(click)="selectedFilterOption(option.property)"
+						>
+							{{ option.displayName }}
+						</nb-list-item>
+					</nb-list>
+				</div>
 			</ng-container>
 		</nb-card>
 	</div>
-	<div class="col-10">
+	<div class="col-10 h-100">
 		<nb-card
-			class="tags-component card-scroll"
+			class="tags-component h-100"
 			[nbSpinner]="loading"
 			nbSpinnerStatus="primary"
 			nbSpinnerSize="large"
@@ -77,13 +79,8 @@
 					<ga-card-grid
 						[settings]="settingsSmartTable"
 						[source]="tags"
-						(selectedOption)="onUpdateOption($event)"
 						(onSelectedItem)="selectTag($event)"
-						(selectedPage)="onPageChange($event)"
-						[doEmit]="false"
-						[totalItems]="pagination?.totalItems"
-						[itemsPerPage]="pagination?.itemsPerPage"
-						[activePage]="pagination?.activePage"
+						(scroll)="onScroll()"
 					></ga-card-grid>
 				</ng-template>
 			</nb-card-body>
