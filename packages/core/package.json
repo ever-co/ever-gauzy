@@ -73,7 +73,7 @@
 		"@sentry/node": "^6.19.7",
 		"@sentry/tracing": "^6.19.7",
 		"@sentry/types": "^6.19.7",
-		"apollo-server-core": "^3.5.0",
+		"apollo-server-core": "^3.10.1",
 		"apollo-server-express": "^3.5.0",
 		"apollo-server-fastify": "^3.5.0",
 		"app-root-path": "^3.0.0",
