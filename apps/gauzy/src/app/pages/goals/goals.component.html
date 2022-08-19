@@ -1,9 +1,5 @@
-<nb-card
-	[nbSpinner]="loading"
-	nbSpinnerStatus="primary"
-	nbSpinnerSize="large"
->
-	<nb-card-header *ngIf="!loading">
+<nb-card>
+	<nb-card-header>
 		<div class="main-header">
 			<h4>
 				<ngx-header-title>
@@ -29,12 +25,16 @@
 			</ngx-gauzy-button-action>
 		</div>
 	</nb-card-header>
-	<nb-card-body *ngIf="!loading">
+	<nb-card-body
+		[nbSpinner]="loading"
+		nbSpinnerStatus="primary"
+		nbSpinnerSize="large"
+	>
 		<div class="goals-container">
-			<div class="text-center p-5" *ngIf="noGoals == true">
-				<nb-alert outline="warning" fullWidth>
-					{{ 'GOALS_PAGE.GOALS_EMPTY' | translate }}
-				</nb-alert>
+			<div class="h-100" *ngIf="noGoals == true">
+				<ngx-no-data-message
+					[message]="'GOALS_PAGE.GOALS_EMPTY'"
+				></ngx-no-data-message>
 			</div>
 			<div
 				*ngFor="
