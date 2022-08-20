@@ -70,11 +70,16 @@ export class WarehouseProductService extends TenantAwareCrudService<WarehousePro
 				let newWarehouseProduct = new WarehouseProduct();
 				newWarehouseProduct.warehouse = warehouse;
 				newWarehouseProduct.product = product;
+				newWarehouseProduct.organizationId = warehouse.organizationId;
+				newWarehouseProduct.tenantId = warehouse.tenantId;
 
 				let warehouseVariants = await Promise.all(
 					product.variants.map(async (variant) => {
 						let warehouseVariant = new WarehouseProductVariant();
 						warehouseVariant.variant = variant;
+
+						warehouseVariant.organizationId = warehouse.organizationId;
+						warehouseVariant.tenantId = warehouse.tenantId;
 
 						return this.warehouseProductVariantRepository.save(
 							warehouseVariant
