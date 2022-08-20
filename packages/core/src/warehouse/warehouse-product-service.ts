@@ -8,6 +8,7 @@ import {
 	IWarehouseProductVariant
 } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
+import { RequestContext } from './../core/context';
 import {
 	WarehouseProduct,
 	WarehouseProductVariant,
@@ -36,9 +37,8 @@ export class WarehouseProductService extends TenantAwareCrudService<WarehousePro
 	async getAllWarehouseProducts(warehouseId: string): Promise<IWarehouseProduct[]> {
 		return await this.warehouseProductRepository.find({
 			where: {
-				warehouse: {
-					id: warehouseId
-				}
+				warehouseId,
+				tenantId: RequestContext.currentTenantId()
 			},
 			relations: {
 				product: true,
@@ -54,12 +54,15 @@ export class WarehouseProductService extends TenantAwareCrudService<WarehousePro
 		warehouseId: string
 	): Promise<IPagination<IWarehouseProduct[]>> {
 		let productIds = warehouseProductCreateInput.map((pr) => pr.productId);
+		const tenantId = RequestContext.currentTenantId();
 		let warehouse = await this.warehouseRepository.findOneBy({
-			id: warehouseId
+			id: warehouseId,
+			tenantId
 		});
 		let products = await this.productRespository.find({
 			where: {
-				id: In(productIds)
+				id: In(productIds),
+				tenantId
 			},
 			relations: {
 				variants: true
@@ -71,7 +74,7 @@ export class WarehouseProductService extends TenantAwareCrudService<WarehousePro
 				newWarehouseProduct.warehouse = warehouse;
 				newWarehouseProduct.product = product;
 				newWarehouseProduct.organizationId = warehouse.organizationId;
-				newWarehouseProduct.tenantId = warehouse.tenantId;
+				newWarehouseProduct.tenantId = tenantId;
 
 				let warehouseVariants = await Promise.all(
 					product.variants.map(async (variant) => {
@@ -79,7 +82,7 @@ export class WarehouseProductService extends TenantAwareCrudService<WarehousePro
 						warehouseVariant.variant = variant;
 
 						warehouseVariant.organizationId = warehouse.organizationId;
-						warehouseVariant.tenantId = warehouse.tenantId;
+						warehouseVariant.tenantId = tenantId;
 
 						return this.warehouseProductVariantRepository.save(
 							warehouseVariant
@@ -103,10 +106,9 @@ export class WarehouseProductService extends TenantAwareCrudService<WarehousePro
 		warehouseProductId: String,
 		quantity: number
 	): Promise<IWarehouseProduct> {
-		let warehouseProduct = await this.warehouseProductRepository.findOne(
-			warehouseProductId as any
-		);
-
+		let warehouseProduct = await this.warehouseProductRepository.findOneBy({
+			id: warehouseProductId as any
+		});
 		warehouseProduct.quantity = quantity;
 		return this.warehouseProductRepository.save(warehouseProduct);
 	}

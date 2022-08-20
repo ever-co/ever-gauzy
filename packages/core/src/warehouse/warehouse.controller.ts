@@ -64,7 +64,7 @@ export class WarehouseController extends CrudController<Warehouse> {
 	async findAllWarehouseProducts(
 		@Param('warehouseId', UUIDValidationPipe) warehouseId: string
 	): Promise<IWarehouseProduct[]> {
-		return this.warehouseProductsService.getAllWarehouseProducts(
+		return await this.warehouseProductsService.getAllWarehouseProducts(
 			warehouseId
 		);
 	}
