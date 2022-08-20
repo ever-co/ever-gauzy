@@ -1,10 +1,10 @@
-import { ITag, IWarehouse, IImageAsset, IOrganization } from '@gauzy/contracts';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { TranslateService } from '@ngx-translate/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { ITag, IWarehouse, IImageAsset, IOrganization } from '@gauzy/contracts';
+import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { LatLng } from 'leaflet';
-import { AfterViewInit, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { NbDialogService, NbStepperComponent } from '@nebular/theme';
 import { Subject, firstValueFrom, debounceTime } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
@@ -31,7 +31,6 @@ export class WarehouseFormComponent extends TranslationBaseComponent
 
 	FormHelpers: typeof FormHelpers = FormHelpers;
 
-	warehouseId: string;
 	hoverState: boolean;
 	organization: IOrganization;
 	warehouse: IWarehouse;

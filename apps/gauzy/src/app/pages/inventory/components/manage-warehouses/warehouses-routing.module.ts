@@ -38,11 +38,25 @@ const routes: Routes = [
 			},
 			{
 				path: 'create',
-				component: WarehouseFormComponent
+				component: WarehouseFormComponent,
+				data: {
+					selectors: {
+						date: false,
+						employee: false,
+						project: false
+					}
+				}
 			},
 			{
 				path: 'edit/:id',
 				component: WarehouseFormComponent,
+				data: {
+					selectors: {
+						date: false,
+						employee: false,
+						project: false
+					}
+				},
 				resolve: {
 					warehouse: WarehouseFormResolver
 				}
