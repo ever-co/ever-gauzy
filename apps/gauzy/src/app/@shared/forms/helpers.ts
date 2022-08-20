@@ -26,10 +26,10 @@ export class FormHelpers {
 
 	/**
 	 * Deep check invalid control
-	 * 
+	 *
 	 * @param {FormGroup} formGroup
-	 * @param control 
-	 * @returns 
+	 * @param control
+	 * @returns
 	 */
 	static isInvalidControl(
 		formGroup: FormGroup,
@@ -42,17 +42,17 @@ export class FormHelpers {
 			(
 				formGroup.get(control).touched ||
 				formGroup.get(control).dirty
-			) && 
+			) &&
 			formGroup.get(control).invalid
 		);
 	}
 
 	/**
 	 * Deep check valid control
-	 * 
+	 *
 	 * @param {FormGroup} formGroup
-	 * @param control 
-	 * @returns 
+	 * @param control
+	 * @returns
 	 */
 	static isValidControl(
 		formGroup: FormGroup,
@@ -65,7 +65,7 @@ export class FormHelpers {
 			(
 				formGroup.get(control).touched ||
 				formGroup.get(control).dirty
-			) && 
+			) &&
 			formGroup.get(control).valid
 		);
 	}
