@@ -13,22 +13,20 @@ import {
 	IWarehouseProduct,
 	IWarehouseProductVariant
 } from '@gauzy/contracts';
-import { ApiProperty } from '@nestjs/swagger';
-import { IsString } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
-	TenantBaseEntity,
 	Product,
 	Warehouse,
-	WarehouseProductVariant
+	WarehouseProductVariant,
+	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
 
 @Entity('warehouse_product')
-export class WarehouseProduct
-	extends TenantBaseEntity
+export class WarehouseProduct extends TenantOrganizationBaseEntity
 	implements IWarehouseProduct {
 
-	@ApiProperty({ name: 'quantity' })
+	@ApiPropertyOptional({ type: Number })
 	@Column({
 		nullable: true,
 		type: 'numeric',
@@ -39,7 +37,7 @@ export class WarehouseProduct
 
 	/*
     |--------------------------------------------------------------------------
-    | @ManyToOne 
+    | @ManyToOne
     |--------------------------------------------------------------------------
     */
 
@@ -55,10 +53,9 @@ export class WarehouseProduct
 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: WarehouseProduct) => it.warehouse)
-	@IsString()
 	@Index()
-	@Column({ nullable: true })
-	warehouseId?: string;
+	@Column()
+	warehouseId: string;
 
 	/**
 	 * Product
@@ -72,14 +69,13 @@ export class WarehouseProduct
 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: WarehouseProduct) => it.product)
-	@IsString()
 	@Index()
 	@Column()
-	productId?: string;
+	productId: string;
 
 	/*
     |--------------------------------------------------------------------------
-    | @OneToMany 
+    | @OneToMany
     |--------------------------------------------------------------------------
     */
 	@ApiProperty({ type: () => WarehouseProductVariant, isArray: true })

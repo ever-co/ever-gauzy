@@ -1,15 +1,18 @@
 <nb-card-body>
 	<div class="mb-3">
-		<button nbButton status="success" class="mr-2" (click)="onAddProduct()">
+		<button
+			nbButton
+			status="success"
+			class="mr-2"
+			(click)="onAddProduct()"
+		>
 			{{ 'INVENTORY_PAGE.ADD_PRODUCT' | translate }}
 		</button>
 	</div>
-
 	<ng2-smart-table
-		class="tags-table"
 		[settings]="settingsSmartTable"
 		[source]="smartTableSource"
 		style="cursor: pointer"
-		#warehouseStockTable
+		#warehouseProductsTable
 	></ng2-smart-table>
 </nb-card-body>
