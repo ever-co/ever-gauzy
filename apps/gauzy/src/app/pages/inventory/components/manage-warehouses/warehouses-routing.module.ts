@@ -41,6 +41,7 @@ const routes: Routes = [
 				component: WarehouseFormComponent,
 				data: {
 					selectors: {
+						organization: false,
 						date: false,
 						employee: false,
 						project: false
@@ -52,6 +53,7 @@ const routes: Routes = [
 				component: WarehouseFormComponent,
 				data: {
 					selectors: {
+						organization: false,
 						date: false,
 						employee: false,
 						project: false
