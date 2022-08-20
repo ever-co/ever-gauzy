@@ -24,6 +24,11 @@ const routes: Routes = [
 					PermissionsEnum.ORG_INVENTORY_VIEW
 				],
 				redirectTo: '/pages/dashboard'
+			},
+			selectors: {
+				date: false,
+				employee: false,
+				project: false
 			}
 		},
 		children: [
