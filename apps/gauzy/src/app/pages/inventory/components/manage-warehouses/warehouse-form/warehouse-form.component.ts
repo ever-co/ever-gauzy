@@ -4,15 +4,21 @@ import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { LatLng } from 'leaflet';
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { NbDialogService, NbStepperComponent } from '@nebular/theme';
-import { Subject, firstValueFrom } from 'rxjs';
+import { Subject, firstValueFrom, debounceTime } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { TranslationBaseComponent } from './../../../../../@shared/language-base';
 import { LocationFormComponent } from './../../../../../@shared/forms/location';
 import { LeafletMapComponent } from './../../../../../@shared/forms/maps';
 import { SelectAssetComponent } from './../../../../../@shared/select-asset-modal/select-asset.component';
-import { ImageAssetService, Store, ToastrService, WarehouseService } from './../../../../../@core/services';
+import {
+	ImageAssetService,
+	Store,
+	ToastrService,
+	WarehouseService
+} from './../../../../../@core/services';
+import { FormHelpers } from './../../../../../@shared/forms';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -20,37 +26,41 @@ import { ImageAssetService, Store, ToastrService, WarehouseService } from './../
 	templateUrl: './warehouse-form.component.html',
 	styleUrls: ['./warehouse-form.component.scss']
 })
-export class WarehouseFormComponent
-	extends TranslationBaseComponent
-	implements OnInit {
-	
+export class WarehouseFormComponent extends TranslationBaseComponent
+	implements AfterViewInit, OnInit, OnDestroy {
+
+	FormHelpers: typeof FormHelpers = FormHelpers;
+
 	warehouseId: string;
 	hoverState: boolean;
 	organization: IOrganization;
 	warehouse: IWarehouse;
 	logo: IImageAsset;
 	images: IImageAsset[] = [];
-	
+
 	private newImageUploadedEvent$ = new Subject<any>();
-	
+
 	/*
-	* Location Mutation Form 
+	* Location Mutation Form
 	*/
 	readonly locationForm: FormGroup = LocationFormComponent.buildForm(this.fb);
 
 	/*
-	* Warehouse Mutation Form 
+	* Warehouse Mutation Form
 	*/
 	public form: FormGroup = WarehouseFormComponent.buildForm(this.fb);
 	static buildForm(fb: FormBuilder): FormGroup {
 		return fb.group({
-			name: ['', Validators.required],
+			name: [null, Validators.required],
 			tags: [],
-			code: ['', Validators.required],
-			email: ['', Validators.email],
+			code: [null, Validators.required],
+			email: [null, [
+				Validators.required,
+				Validators.email
+			]],
 			active: [false],
-			logo: [''],
-			description: ['']
+			logo: [null],
+			description: [null]
 		});
 	}
 
@@ -87,22 +97,6 @@ export class WarehouseFormComponent
 	}
 
 	ngOnInit(): void {
-		this.route.params
-			.pipe(
-				filter((params) => !!params.id),
-				tap(({ id }) => this.warehouseId = id),
-				untilDestroyed(this)
-			)
-			.subscribe(async (params) => {
-				if (params.id) {
-					this.warehouse = await this.warehouseService.getById(
-						params.id,
-						['logo', 'contact', 'tags']
-					);
-					this._patchForm();
-					this._patchLocationForm();
-				}
-			});
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization: IOrganization) => !!organization),
@@ -114,8 +108,20 @@ export class WarehouseFormComponent
 		this.newImageUploadedEvent$
 			.pipe(
 				filter((image) => !!image),
-				tap((image) => {
-					console.log(image)
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
+
+	ngAfterViewInit(): void {
+		this.route.data
+			.pipe(
+				debounceTime(100),
+				filter((data) => !!data && !!data.warehouse),
+				tap(({ warehouse }) => this.warehouse = warehouse),
+				tap(() => {
+					this._patchForm();
+					this._patchLocationForm();
 				}),
 				untilDestroyed(this)
 			)
@@ -141,8 +147,11 @@ export class WarehouseFormComponent
 		}
 	}
 
-	
+
 	private async _getAssetsImages() {
+		if (!this.organization) {
+			return;
+		}
 		const { id: organizationId } = this.organization;
 		const { tenantId } = this.store.user;
 		this.images = (await this.imageAssetService.getAll({ tenantId, organizationId })).items;
@@ -170,7 +179,6 @@ export class WarehouseFormComponent
 		if (!this.warehouse || !this.warehouse.contact) return;
 
 		const { contact } = this.warehouse;
-
 		this.locationFormDirective.setValue({
 			country: contact.country,
 			city: contact.city,
@@ -195,7 +203,6 @@ export class WarehouseFormComponent
 	}
 
 	async onSaveRequest() {
-
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 
@@ -221,12 +228,12 @@ export class WarehouseFormComponent
 			await this.warehouseService
 				.create(request)
 				.then(() => {
-					this.toastrService.success('INVENTORY_PAGE.WAREHOUSE_WAS_CREATED', { 
-						name: request.name 
+					this.toastrService.success('INVENTORY_PAGE.WAREHOUSE_WAS_CREATED', {
+						name: request.name
 					});
 				})
 				.catch(() => {
-					this.toastrService.danger('INVENTORY_PAGE.COULD_NOT_CREATE_WAREHOUSE', null, { 
+					this.toastrService.danger('INVENTORY_PAGE.COULD_NOT_CREATE_WAREHOUSE', null, {
 						name: request.name
 					});
 				})
@@ -237,8 +244,8 @@ export class WarehouseFormComponent
 			await this.warehouseService
 				.update(this.warehouse.id, request)
 				.then((res) => {
-					this.toastrService.success('INVENTORY_PAGE.WAREHOUSE_WAS_UPDATED', { 
-						name: request.name 
+					this.toastrService.success('INVENTORY_PAGE.WAREHOUSE_WAS_UPDATED', {
+						name: request.name
 					});
 					this.warehouse = res;
 				})
@@ -287,10 +294,5 @@ export class WarehouseFormComponent
 		return this.warehouse && this.warehouse.id;
 	}
 
-	isInvalidControl(control: string) {
-		if (!this.form.contains(control)) {
-			return true;
-		}
-		return this.form.get(control).touched && this.form.get(control).invalid;
-	}
+	ngOnDestroy(): void {}
 }

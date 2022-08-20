@@ -5,6 +5,7 @@ import { PermissionsEnum } from '@gauzy/contracts';
 import { WarehousesComponent } from './warehouses.component';
 import { WarehouseFormComponent } from './warehouse-form/warehouse-form.component';
 import { WarehousesTableComponent } from './warehouses-table/warehouses-table.component';
+import { WarehouseFormResolver } from './warehouse-form/warehouse-form.resolver';
 
 const ORG_PERMISSIONS = [
 	PermissionsEnum.ALL_ORG_VIEW,
@@ -36,7 +37,10 @@ const routes: Routes = [
 			},
 			{
 				path: 'edit/:id',
-				component: WarehouseFormComponent
+				component: WarehouseFormComponent,
+				resolve: {
+					warehouse: WarehouseFormResolver
+				}
 			}
 		]
 	}
