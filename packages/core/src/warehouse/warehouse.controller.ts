@@ -255,10 +255,10 @@ export class WarehouseController extends CrudController<Warehouse> {
 	@Post()
 	async create(
 		@Body(new ValidationPipe({
-			transform: true
+			transform: true,
+			whitelist: true
 		})) entity: CreateWarehouseDTO
 	): Promise<IWarehouse> {
-		console.log({ entity });
 		return this.warehouseService.create(entity);
 	}
 
@@ -289,10 +289,10 @@ export class WarehouseController extends CrudController<Warehouse> {
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
 		@Body(new ValidationPipe({
-			transform: true
+			transform: true,
+			whitelist: true
 		})) entity: UpdateWarehouseDTO
 	): Promise<IWarehouse> {
-		console.log({ entity });
 		return await this.warehouseService.update(id, entity);
 	}
 }
