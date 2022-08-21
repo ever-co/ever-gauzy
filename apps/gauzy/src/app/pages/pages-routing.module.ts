@@ -598,58 +598,25 @@ const routes: Routes = [
 						path: 'time-activity',
 						loadChildren: () => import('./reports/time-reports/time-reports.module').then(
 							(m) => m.TimeReportsModule
-						),
-						data: {
-							datePicker: {
-								unitOfTime: 'week'
-							}
-						},
-						resolve: {
-							dates: DateRangePickerResolver
-						}
+						)
 					},
 					{
 						path: 'weekly',
 						loadChildren: () => import('./reports/weekly-time-reports/weekly-time-reports.module').then(
 							(m) => m.WeeklyTimeReportsModule
-						),
-						data: {
-							datePicker: {
-								unitOfTime: 'week',
-								isLockDatePicker: true
-							}
-						},
-						resolve: {
-							dates: DateRangePickerResolver
-						}
+						)
 					},
 					{
 						path: 'apps-urls',
 						loadChildren: () => import('./reports/apps-urls-report/apps-urls-report.module').then(
 							(m) => m.AppsUrlsReportModule
-						),
-						data: {
-							datePicker: {
-								unitOfTime: 'week'
-							}
-						},
-						resolve: {
-							dates: DateRangePickerResolver
-						}
+						)
 					},
 					{
 						path: 'manual-time-edits',
 						loadChildren: () => import('./reports/manual-time/manual-time.module').then(
 							(m) => m.ManualTimeModule
-						),
-						data: {
-							datePicker: {
-								unitOfTime: 'week'
-							}
-						},
-						resolve: {
-							dates: DateRangePickerResolver
-						}
+						)
 					},
 					{
 						path: 'accounting',
@@ -669,43 +636,19 @@ const routes: Routes = [
 						path: 'expense',
 						loadChildren: () => import('./reports/expenses-report/expenses-report.module').then(
 							(m) => m.ExpensesReportModule
-						),
-						data: {
-							datePicker: {
-								unitOfTime: 'week'
-							}
-						},
-						resolve: {
-							dates: DateRangePickerResolver
-						}
+						)
 					},
 					{
 						path: 'payments',
 						loadChildren: () => import('./reports/payment-report/payment-report.module').then(
 							(m) => m.PaymentReportModule
-						),
-						data: {
-							datePicker: {
-								unitOfTime: 'week'
-							}
-						},
-						resolve: {
-							dates: DateRangePickerResolver
-						}
+						)
 					},
 					{
 						path: 'amounts-owed',
 						loadChildren: () => import('./reports/amounts-owed-report/amounts-owed-report.module').then(
 							(m) => m.AmountsOwedReportModule
-						),
-						data: {
-							datePicker: {
-								unitOfTime: 'week'
-							}
-						},
-						resolve: {
-							dates: DateRangePickerResolver
-						}
+						)
 					},
 					{
 						path: 'weekly-limits',
@@ -744,29 +687,13 @@ const routes: Routes = [
 						path: 'project-budgets',
 						loadChildren: () => import('./reports/project-budgets-report/project-budgets-report.module').then(
 							(m) => m.ProjectBudgetsReportModule
-						),
-						data: {
-							datePicker: {
-								unitOfTime: 'week'
-							}
-						},
-						resolve: {
-							dates: DateRangePickerResolver
-						}
+						)
 					},
 					{
 						path: 'client-budgets',
 						loadChildren: () => import('./reports/client-budgets-report/client-budgets-report.module').then(
 							(m) => m.ClientBudgetsReportModule
-						),
-						data: {
-							datePicker: {
-								unitOfTime: 'week'
-							}
-						},
-						resolve: {
-							dates: DateRangePickerResolver
-						}
+						)
 					},
 					{
 						path: '*',

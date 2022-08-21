@@ -45,7 +45,7 @@ export class DailyComponent extends BaseSelectorFilterComponent implements
 	contextMenus: NbMenuItem[] = [];
 
 	@ViewChild(GauzyFiltersComponent) gauzyFiltersComponent: GauzyFiltersComponent;
-	datePickerConfig$: Observable<any> = this._dateRangePickerBuilderService.datePickerConfig$;
+	datePickerConfig$: Observable<any> = this.dateRangePickerBuilderService.datePickerConfig$;
 	payloads$: BehaviorSubject<ITimeLogFilters> = new BehaviorSubject(null);
 
 	selectedLog: {
@@ -58,14 +58,14 @@ export class DailyComponent extends BaseSelectorFilterComponent implements
 		private readonly timeTrackerService: TimeTrackerService,
 		private readonly dialogService: NbDialogService,
 		protected readonly store: Store,
+		protected readonly dateRangePickerBuilderService: DateRangePickerBuilderService,
 		private readonly nbMenuService: NbMenuService,
 		private readonly timesheetFilterService: TimesheetFilterService,
 		public readonly translateService: TranslateService,
 		private readonly route: ActivatedRoute,
 		private readonly toastrService: ToastrService,
-		public readonly _dateRangePickerBuilderService: DateRangePickerBuilderService
 	) {
-		super(store, translateService);
+		super(store, translateService, dateRangePickerBuilderService);
 	}
 
 	ngOnInit() {
@@ -184,7 +184,7 @@ export class DailyComponent extends BaseSelectorFilterComponent implements
 			.onClose
 			.pipe(
 				filter((timeLog: ITimeLog) => !!timeLog),
-				tap((timeLog: ITimeLog) => this._dateRangePickerBuilderService.refreshDateRangePicker(
+				tap((timeLog: ITimeLog) => this.dateRangePickerBuilderService.refreshDateRangePicker(
 					moment(timeLog.startedAt)
 				)),
 				tap(() => this.subject$.next(true)),
@@ -202,7 +202,7 @@ export class DailyComponent extends BaseSelectorFilterComponent implements
 			.onClose
 			.pipe(
 				filter((timeLog: ITimeLog) => !!timeLog),
-				tap((timeLog: ITimeLog) => this._dateRangePickerBuilderService.refreshDateRangePicker(
+				tap((timeLog: ITimeLog) => this.dateRangePickerBuilderService.refreshDateRangePicker(
 					moment(timeLog.startedAt)
 				)),
 				tap(() => this.subject$.next(true)),

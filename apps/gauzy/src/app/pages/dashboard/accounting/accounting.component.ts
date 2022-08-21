@@ -14,6 +14,7 @@ import {
 import { distinctUntilChange } from '@gauzy/common-angular';
 import { ALL_EMPLOYEES_SELECTED } from '../../../@theme/components/header/selectors/employee';
 import {
+	DateRangePickerBuilderService,
 	EmployeesService,
 	EmployeeStatisticsService,
 	Store,
@@ -49,6 +50,7 @@ export class AccountingComponent
 	constructor(
 		private readonly employeesService: EmployeesService,
 		private readonly store: Store,
+		private readonly dateRangePickerBuilderService: DateRangePickerBuilderService,
 		private readonly router: Router,
 		private readonly employeeStatisticsService: EmployeeStatisticsService,
 		private readonly toastrService: ToastrService,
@@ -71,7 +73,7 @@ export class AccountingComponent
 			.subscribe();
 		this.store.selectedEmployee$
 			.pipe(
-				filter((employee) => !!employee && !!employee.id),
+				filter((employee: ISelectedEmployee) => !!employee && !!employee.id),
 				tap(() => this.navigateToEmployeeStatistics()),
 				untilDestroyed(this)
 			)
@@ -84,17 +86,15 @@ export class AccountingComponent
 			)
 			.subscribe();
 		const storeOrganization$ = this.store.selectedOrganization$;
-		const selectedDateRange$ = this.store.selectedDateRange$;
+		const selectedDateRange$ = this.dateRangePickerBuilderService.selectedDateRange$;
 		combineLatest([storeOrganization$, selectedDateRange$])
 			.pipe(
 				debounceTime(300),
 				distinctUntilChange(),
-				filter(
-					([organization, dateRange]) => !!organization && !!dateRange
-				),
+				filter(([organization, dateRange]) => !!organization && !!dateRange),
 				tap(([organization, dateRange]) => {
-					this.organization = organization;
-					this.selectedDateRange = dateRange;
+					this.organization = organization as IOrganization;
+					this.selectedDateRange = dateRange as IDateRangePicker;
 				}),
 				tap(() => this.statistics$.next(true)),
 				untilDestroyed(this)
@@ -133,7 +133,9 @@ export class AccountingComponent
 						endDate
 					}
 				);
-			this.generateDataForChart();
+			do {
+				this.generateDataForChart();
+			} while (!this.aggregatedEmployeeStatistics.chart.length);
 			this.isLoading = false;
 		} catch (error) {
 			console.log(

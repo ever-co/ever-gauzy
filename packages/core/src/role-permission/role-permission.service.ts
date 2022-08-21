@@ -1,7 +1,7 @@
 import { Injectable, BadRequestException, NotAcceptableException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CommandBus } from '@nestjs/cqrs';
-import { Repository, UpdateResult, getManager, FindManyOptions, Not, In, DeepPartial, FindOptionsWhere } from 'typeorm';
+import { Repository, UpdateResult, FindManyOptions, Not, In, DeepPartial, FindOptionsWhere } from 'typeorm';
 import {
 	RolesEnum,
 	ITenant,
@@ -12,7 +12,7 @@ import {
 	IPagination,
 	PermissionsEnum
 } from '@gauzy/contracts';
-import { isNotEmpty } from '@gauzy/common';
+import { environment } from '@gauzy/config';
 import { pluck } from 'underscore';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
@@ -49,9 +49,9 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 		/**
 		 * Find current user role
 		 */
-		const { role } = await this.repository.findOne({
-			where: { roleId },
-			relations: ['role']
+		const role = await this.roleService.findOneByWhereOptions({
+			id: roleId,
+			tenantId
 		});
 
 		/**
@@ -65,7 +65,9 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 		 * SUPER_ADMIN can retrieve all role-permissions for assign TENANT.
 		 * ADMIN can retrieve role-permissions for lower roles (DATA_ENTRY, EMPLOYEE, CANDIDATE, MANAGER, VIEWER) & them self (ADMIN)
 		 */
-		if (RequestContext.hasPermission(PermissionsEnum.CHANGE_ROLES_PERMISSIONS)) {
+		if (RequestContext.hasPermission(
+			PermissionsEnum.CHANGE_ROLES_PERMISSIONS
+		)) {
 			/**
 			 * Retrieve all role-permissions except "SUPER_ADMIN" role
 			 */
@@ -127,12 +129,9 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 			/**
 			 * Find current user role
 			 */
-			const { role } = await this.repository.findOne({
-				where: {
-					roleId: currentRoleId,
-					tenantId: currentTenantId
-				},
-				relations: ['role']
+			const role = await this.roleService.findOneByWhereOptions({
+				id: currentRoleId,
+				tenantId: currentTenantId
 			});
 
 			let { roleId } = partialEntity;
@@ -150,7 +149,9 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 				/**
 				 * Reject request, if SUPER ADMIN try to create permissions for SUPER ADMIN role.
 				 */
-				 if (wantToCreatePermissionForRole.name === RolesEnum.SUPER_ADMIN) {
+				if (wantToCreatePermissionForRole.name === RolesEnum.SUPER_ADMIN || !RequestContext.hasPermission(
+					PermissionsEnum.CHANGE_ROLES_PERMISSIONS
+				)) {
 					throw new NotAcceptableException(
 						'You can not change/add your permissions for SUPER_ADMIN'
 					);
@@ -169,7 +170,9 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 				/**
 				 * Reject request, if ADMIN try to create permissions for ADMIN role.
 				 */
-				if (wantToCreatePermissionForRole.name === RolesEnum.ADMIN) {
+				if (wantToCreatePermissionForRole.name === RolesEnum.ADMIN || !RequestContext.hasPermission(
+					PermissionsEnum.CHANGE_ROLES_PERMISSIONS
+				)) {
 					throw new NotAcceptableException(
 						'You can not change/add your permissions to ADMIN, please ask your SUPER_ADMIN to give you more permissions'
 					);
@@ -189,12 +192,12 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 			const currentTenantId = RequestContext.currentTenantId();
 			const currentRoleId = RequestContext.currentRoleId();
 
-			const { role } = await this.repository.findOne({
-				where: {
-					roleId: currentRoleId,
-					tenantId: currentTenantId
-				},
-				relations: ['role']
+			/**
+			 * Find current user role
+			 */
+			const role = await this.roleService.findOneByWhereOptions({
+				id: currentRoleId,
+				tenantId: currentTenantId
 			});
 
 			let { roleId } = partialEntity;
@@ -209,7 +212,9 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 				/**
 				 * Reject request, if SUPER ADMIN try to update permissions for SUPER ADMIN role.
 				 */
-				 if (wantToUpdatePermissionForRole.name === RolesEnum.SUPER_ADMIN) {
+				if (wantToUpdatePermissionForRole.name === RolesEnum.SUPER_ADMIN || !RequestContext.hasPermission(
+					PermissionsEnum.CHANGE_ROLES_PERMISSIONS
+				)) {
 					throw new NotAcceptableException(
 						'You can not change/add your permissions for SUPER_ADMIN'
 					);
@@ -219,7 +224,7 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 				/**
 				 * Reject request, if ADMIN try to update permissions for SUPER ADMIN role.
 				 */
-				 if (wantToUpdatePermissionForRole.name === RolesEnum.SUPER_ADMIN) {
+				if (wantToUpdatePermissionForRole.name === RolesEnum.SUPER_ADMIN) {
 					throw new NotAcceptableException(
 						'You can not change your role to SUPER_ADMIN, please ask your SUPER_ADMIN to give you more permissions'
 					);
@@ -228,7 +233,9 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 				/**
 				 * Reject request, if ADMIN try to create permissions for ADMIN role.
 				 */
-				if (wantToUpdatePermissionForRole.name === RolesEnum.ADMIN) {
+				if (wantToUpdatePermissionForRole.name === RolesEnum.ADMIN || !RequestContext.hasPermission(
+					PermissionsEnum.CHANGE_ROLES_PERMISSIONS
+				)) {
 					throw new NotAcceptableException(
 						'You can not change/add your permissions to ADMIN, please ask your SUPER_ADMIN to give you more permissions'
 					);
@@ -251,12 +258,12 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 			const currentTenantId = RequestContext.currentTenantId();
 			const currentRoleId = RequestContext.currentRoleId();
 
-			const { role } = await this.repository.findOne({
-				where: {
-					roleId: currentRoleId,
-					tenantId: currentTenantId
-				},
-				relations: ['role']
+			/**
+			 * Find current user role
+			 */
+			const role = await this.roleService.findOneByWhereOptions({
+				id: currentRoleId,
+				tenantId: currentTenantId
 			});
 
 			/**
@@ -270,7 +277,9 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 				/**
 				 * Reject request, if SUPER ADMIN try to delete permissions for SUPER ADMIN role.
 				 */
-				if (wantToDeletePermissionForRole.name === RolesEnum.SUPER_ADMIN) {
+				if (wantToDeletePermissionForRole.name === RolesEnum.SUPER_ADMIN || !RequestContext.hasPermission(
+					PermissionsEnum.CHANGE_ROLES_PERMISSIONS
+				)) {
 					throw new NotAcceptableException(
 						'You can not delete your permissions to SUPER_ADMIN'
 					);
@@ -289,7 +298,9 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 				/**
 				 * Reject request, if ADMIN try to create permissions for ADMIN role.
 				 */
-				if (wantToDeletePermissionForRole.name === RolesEnum.ADMIN) {
+				if (wantToDeletePermissionForRole.name === RolesEnum.ADMIN || !RequestContext.hasPermission(
+					PermissionsEnum.CHANGE_ROLES_PERMISSIONS
+				)) {
 					throw new NotAcceptableException(
 						'You can not delete your permissions to ADMIN, please ask your SUPER_ADMIN to give you more permissions'
 					);
@@ -316,26 +327,37 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 	}
 
 	public async updateRolesAndPermissions(
-		tenants: ITenant[],
-		roles: IRole[]
-	): Promise<IRolePermission[]> {
+		tenants: ITenant[]
+	): Promise<IRolePermission[] & RolePermission[]> {
 		if (!tenants.length) {
 			return;
 		}
-
+		// removed permissions for all users in DEMO mode
+		const deniedPermissions = [
+			PermissionsEnum.ACCESS_DELETE_ACCOUNT,
+			PermissionsEnum.ACCESS_DELETE_ALL_DATA
+		];
 		const rolesPermissions: IRolePermission[] = [];
 		for await (const tenant of tenants) {
+			const roles = (await this.roleService.findAll({
+				where: {
+					tenantId: tenant.id
+				}
+			})).items;
 			for await (const role of roles) {
 				const defaultPermissions = DEFAULT_ROLE_PERMISSIONS.find(
 					(defaultRole) => role.name === defaultRole.role
 				);
-				if (defaultPermissions && isNotEmpty(defaultPermissions['defaultEnabledPermissions'])) {
-					const { defaultEnabledPermissions } = defaultPermissions;
-					for await (const permission of defaultEnabledPermissions) {
+				const permissions = Object.values(PermissionsEnum).filter(
+					(permission: PermissionsEnum) => environment.demo ? !deniedPermissions.includes(permission) : true
+				);
+				for await (const permission of permissions) {
+					if (defaultPermissions) {
+						const { defaultEnabledPermissions = [] } = defaultPermissions;
 						const rolePermission = new RolePermission();
 						rolePermission.roleId = role.id;
 						rolePermission.permission = permission;
-						rolePermission.enabled = true;
+						rolePermission.enabled = defaultEnabledPermissions.includes(permission);
 						rolePermission.tenant = tenant;
 						rolesPermissions.push(rolePermission);
 					}
@@ -351,7 +373,9 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 			where: {
 				tenantId: RequestContext.currentTenantId()
 			},
-			relations: ['role']
+			relations: {
+				role: true
+			}
 		})
 		const payload: IRolePermissionMigrateInput[] = [];
 		for await (const item of permissions) {
@@ -392,7 +416,7 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 					records.push(
 						await this._commandBus.execute(
 							new ImportRecordUpdateOrCreateCommand({
-								entityType: getManager().getRepository(RolePermission).metadata.tableName,
+								entityType: this.rolePermissionRepository.metadata.tableName,
 								sourceId,
 								destinationId: destination.id,
 								tenantId: RequestContext.currentTenantId()

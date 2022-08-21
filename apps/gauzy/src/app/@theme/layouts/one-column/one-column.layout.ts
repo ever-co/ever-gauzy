@@ -38,7 +38,7 @@ export class OneColumnLayoutComponent
 	isOpen: boolean = false;
 	isExpanded: boolean = true;
 	isCollapse: boolean = true;
-  trigger: boolean = true;
+  	trigger: boolean = true;
 
 	constructor(
 		@Inject(PLATFORM_ID) private platformId,

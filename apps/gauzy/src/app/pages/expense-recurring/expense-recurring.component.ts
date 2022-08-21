@@ -1,4 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import {
 	ComponentType,
 	IDateRangePicker,
@@ -21,6 +22,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import { TranslationBaseComponent } from '../../@shared/language-base';
 import {
+	DateRangePickerBuilderService,
 	OrganizationRecurringExpenseService,
 	Store,
 	ToastrService
@@ -30,7 +32,6 @@ import {
 	RecurringExpenseDeleteConfirmationComponent,
 	RecurringExpenseMutationComponent
 } from '../../@shared/expenses';
-import { ActivatedRoute } from '@angular/router';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -63,6 +64,7 @@ export class ExpenseRecurringComponent
 	constructor(
 		private readonly organizationRecurringExpenseService: OrganizationRecurringExpenseService,
 		private readonly store: Store,
+		private readonly dateRangePickerBuilderService: DateRangePickerBuilderService,
 		private readonly dialogService: NbDialogService,
 		private readonly toastrService: ToastrService,
 		public readonly translateService: TranslateService,
@@ -80,23 +82,22 @@ export class ExpenseRecurringComponent
 			)
 			.subscribe();
 		const storeOrganization$ = this.store.selectedOrganization$;
-		const selectedDateRange$ = this.store.selectedDateRange$;
+		const selectedDateRange$ = this.dateRangePickerBuilderService.selectedDateRange$;
 		combineLatest([storeOrganization$, selectedDateRange$])
 			.pipe(
 				debounceTime(300),
-				filter(([organization]) => !!organization),
+				filter(([organization, dateRange]) => !!organization && !!dateRange),
 				tap(([organization]) => (this.organization = organization)),
 				distinctUntilChange(),
 				tap(([organization, dateRange]) => {
-					if (organization) {
-						this.selectedDateRange = dateRange;
-						this.expenses$.next(true);
-					}
+					this.organization = organization;
+					this.selectedDateRange = dateRange;
 				}),
+				tap(() => this.expenses$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
-			this.route.queryParamMap
+		this.route.queryParamMap
 			.pipe(
 				filter((params) => !!params && params.get('openAddDialog') === 'true'),
 				debounceTime(1000),

@@ -13,7 +13,6 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiInternalServerErrorResponse, ApiOkResponse, ApiNotFoundResponse } from '@nestjs/swagger';
 import { IEmail, IPagination } from '@gauzy/contracts';
-import { CrudController } from './../core/crud';
 import { Email } from './email.entity';
 import { EmailService } from './email.service';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
@@ -23,10 +22,10 @@ import { UpdateEmailDTO } from './dto';
 @ApiTags('Email')
 @UseGuards(TenantPermissionGuard)
 @Controller()
-export class EmailController extends CrudController<Email> {
-	constructor(private readonly emailService: EmailService) {
-		super(emailService);
-	}
+export class EmailController {
+	constructor(
+		private readonly emailService: EmailService
+	) {}
 
 	@ApiOperation({ summary: 'Find all emails under specific tenant.' })
 	@ApiOkResponse({
@@ -73,9 +72,12 @@ export class EmailController extends CrudController<Email> {
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
-	@UsePipes(new ValidationPipe({ transform: true }))
+	@UsePipes(new ValidationPipe({
+		transform: true,
+		whitelist: true
+	}))
 	async update(
-		@Param('id', UUIDValidationPipe) id: string, 
+		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: UpdateEmailDTO
 	): Promise<any> {
 		return await this.emailService.update(id, entity);

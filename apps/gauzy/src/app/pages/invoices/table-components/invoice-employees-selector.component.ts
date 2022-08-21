@@ -4,7 +4,7 @@ import { DefaultEditor } from 'ng2-smart-table';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { isNotEmpty } from '@gauzy/common-angular';
-import { EmployeesService, Store } from '../../../@core/services';
+import { DateRangePickerBuilderService, EmployeesService, Store } from '../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -39,7 +39,8 @@ export class InvoiceEmployeesSelectorComponent
 
 	constructor(
 		private readonly employeeService: EmployeesService,
-		private readonly store: Store
+		private readonly store: Store,
+		private readonly dateRangePickerBuilderService: DateRangePickerBuilderService
 	) {
 		super();
 	}
@@ -47,8 +48,8 @@ export class InvoiceEmployeesSelectorComponent
 	ngOnInit() {
 		this.store.selectedOrganization$
 			.pipe(
-				filter((organization) => !!organization),
-				tap((organization) => (this.organization = organization)),
+				filter((organization: IOrganization) => !!organization),
+				tap((organization: IOrganization) => (this.organization = organization)),
 				tap(() => this._getWorkingEmployees()),
 				untilDestroyed(this)
 			)
@@ -59,9 +60,13 @@ export class InvoiceEmployeesSelectorComponent
 	 * Get working employees of the selected month
 	 */
 	 private async _getWorkingEmployees(): Promise<void> {
+		if (!this.organization) {
+			return;
+		}
+
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
-		const { selectedDateRange } = this.store;
+		const { selectedDateRange } = this.dateRangePickerBuilderService;
 
 		const { items = [] } = await this.employeeService.getWorking(
 			organizationId,

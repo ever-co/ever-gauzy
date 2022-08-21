@@ -86,14 +86,14 @@ export class IncomeComponent extends PaginationFilterBaseComponent
 
 	constructor(
 		private readonly store: Store,
+		private readonly dateRangePickerBuilderService: DateRangePickerBuilderService,
 		private readonly incomeService: IncomeService,
 		private readonly dialogService: NbDialogService,
 		private readonly toastrService: ToastrService,
 		private readonly route: ActivatedRoute,
 		private readonly errorHandler: ErrorHandlingService,
 		public readonly translateService: TranslateService,
-		private readonly httpClient: HttpClient,
-		private readonly dateRangePickerBuilderService: DateRangePickerBuilderService
+		private readonly httpClient: HttpClient
 	) {
 		super(translateService);
 		this.setView();
@@ -119,14 +119,14 @@ export class IncomeComponent extends PaginationFilterBaseComponent
 			)
 			.subscribe();
 		const storeOrganization$ = this.store.selectedOrganization$;
+		const selectedDateRange$ = this.dateRangePickerBuilderService.selectedDateRange$;
 		const storeEmployee$ = this.store.selectedEmployee$;
-		const selectedDateRange$ = this.store.selectedDateRange$;
-		combineLatest([storeOrganization$, storeEmployee$, selectedDateRange$])
+		combineLatest([storeOrganization$, selectedDateRange$, storeEmployee$])
 			.pipe(
 				debounceTime(300),
-				filter(([organization]) => !!organization),
+				filter(([organization, dateRange]) => !!organization && !!dateRange),
 				distinctUntilChange(),
-				tap(([organization, employee, dateRange]) => {
+				tap(([organization, dateRange, employee]) => {
 					this.organization = organization;
 					this.selectedDateRange = dateRange;
 					this.selectedEmployeeId = employee ? employee.id : null;
@@ -441,20 +441,7 @@ export class IncomeComponent extends PaginationFilterBaseComponent
 
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
-
-		const request = {};
-		if (this.selectedEmployeeId) request['employeeId'] = this.selectedEmployeeId;
-
 		const { startDate, endDate } = getAdjustDateRangeFutureAllowed(this.selectedDateRange);
-		if (startDate && endDate) {
-			request['valueDate'] = {};
-			if (moment(startDate).isValid()) {
-				request['valueDate']['startDate'] = toUTC(startDate).format('YYYY-MM-DD HH:mm:ss');
-			}
-			if (moment(endDate).isValid()) {
-				request['valueDate']['endDate'] = toUTC(endDate).format('YYYY-MM-DD HH:mm:ss');
-			}
-		}
 
 		this.smartTableSource = new ServerDataSource(this.httpClient, {
 			endPoint: `${API_PREFIX}/income/pagination`,
@@ -469,12 +456,22 @@ export class IncomeComponent extends PaginationFilterBaseComponent
 				alias: 'income',
 				leftJoin: {
 					tags: 'income.tags'
-				}
+				},
+				...(this.filters.join) ? this.filters.join : {}
 			},
 			where: {
-				...{ organizationId, tenantId },
-				...request,
-				...this.filters.where
+				organizationId,
+				tenantId,
+				...(
+					this.selectedEmployeeId ? {
+						employeeId: this.selectedEmployeeId
+					} : {}
+				),
+				valueDate: {
+					startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm:ss'),
+					endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm:ss')
+				},
+				...(this.filters.where ? this.filters.where : {})
 			},
 			resultMap: (income: IIncome) => {
 				return Object.assign({}, income, {

@@ -46,6 +46,7 @@ import { NgxPermissionsService } from 'ngx-permissions';
 import { TranslateService } from '@ngx-translate/core';
 import { TimesheetStatisticsService } from '../../../@shared/timesheet/timesheet-statistics.service';
 import {
+	DateRangePickerBuilderService,
 	EmployeesService,
 	OrganizationProjectsService,
 	Store,
@@ -136,6 +137,7 @@ export class TimeTrackingComponent
 	constructor(
 		private readonly timesheetStatisticsService: TimesheetStatisticsService,
 		private readonly store: Store,
+		private readonly dateRangePickerBuilderService: DateRangePickerBuilderService,
 		private readonly galleryService: GalleryService,
 		private readonly ngxPermissionsService: NgxPermissionsService,
 		public readonly translateService: TranslateService,
@@ -174,9 +176,9 @@ export class TimeTrackingComponent
 		const storeOrganization$ = this.store.selectedOrganization$;
 		const storeEmployee$ = this.store.selectedEmployee$;
 		const storeProject$ = this.store.selectedProject$;
-		const storeDateRange$ = this.store.selectedDateRange$;
+		const selectedDateRange$ = this.dateRangePickerBuilderService.selectedDateRange$;
 
-		combineLatest([storeOrganization$, storeDateRange$, storeEmployee$, storeProject$])
+		combineLatest([storeOrganization$, selectedDateRange$, storeEmployee$, storeProject$])
 			.pipe(
 				distinctUntilChange(),
 				debounceTime(500),

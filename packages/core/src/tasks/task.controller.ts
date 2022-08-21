@@ -87,6 +87,23 @@ export class TaskController extends CrudController<Task> {
 		return this.taskService.getMyTasks(filter);
 	}
 
+	@ApiOperation({ summary: 'Find my tasks.' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found tasks',
+		type: Task
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Records not found'
+	})
+	@Get('employee')
+	async findEmployeeTask(
+		@Query() filter: PaginationParams<ITask>
+	): Promise<IPagination<ITask>> {
+		return this.taskService.getEmployeeTasks(filter);
+	}
+
 	@ApiOperation({ summary: 'Find my team tasks.' })
 	@ApiResponse({
 		status: HttpStatus.OK,

@@ -6,10 +6,16 @@ import {
 	IAuthResponse,
 	IUser,
 	IChangePasswordRequest,
-	IPasswordReset
+	IPasswordReset,
+	IResetPasswordRequest
 } from '@gauzy/contracts';
 import { CommandBus } from '@nestjs/cqrs';
-import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import {
+	BadRequestException,
+	Injectable,
+	InternalServerErrorException,
+	UnauthorizedException
+} from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { SocialAuthService } from '@gauzy/auth';
@@ -46,43 +52,47 @@ export class AuthService extends SocialAuthService {
 	 * @returns
 	 */
 	async login(email: string, password: string): Promise<IAuthResponse | null> {
-		const user = await this.userService.findOneByOptions({
-			where: {
-				email
-			},
-			relations: {
-				employee: true,
-				role: {
-					rolePermissions: true
+		try {
+			const user = await this.userService.findOneByOptions({
+				where: {
+					email
+				},
+				relations: {
+					employee: true,
+					role: {
+						rolePermissions: true
+					}
+				},
+				order: {
+					createdAt: 'DESC'
 				}
-			},
-			relationLoadStrategy: 'query',
-			order: {
-				createdAt: 'DESC'
+			});
+
+			// If users are inactive
+			if (user.isActive === false) {
+				throw new UnauthorizedException();
 			}
-		});
+			// If employees are inactive
+			if (isNotEmpty(user.employee) && user.employee.isActive === false) {
+				throw new UnauthorizedException();
+			}
+			// If password is not matching with any user
+			if (!(await bcrypt.compare(password, user.hash))) {
+				throw new UnauthorizedException();
+			}
 
-		if (!user || user.isActive === false) {
+			const access_token = await this.getJwtAccessToken(user);
+			const refresh_token = await this.getJwtRefreshToken(user);
+
+			await this.userService.setCurrentRefreshToken(refresh_token, user.id);
+			return {
+				user,
+				token: access_token,
+				refresh_token: refresh_token
+			};
+		} catch (error) {
 			throw new UnauthorizedException();
 		}
-		// If employees are inactive
-		if (isNotEmpty(user.employee) && user.employee.isActive === false) {
-			throw new UnauthorizedException();
-		}
-		// If password is not matching with any user
-		if (!(await bcrypt.compare(password, user.hash))) {
-			throw new UnauthorizedException();
-		}
-
-		const access_token = await this.getJwtAccessToken(user);
-		const refresh_token = await this.getJwtRefreshToken(user);
-
-		await this.userService.setCurrentRefreshToken(refresh_token, user.id);
-		return {
-			user,
-			token: access_token,
-			refresh_token: refresh_token
-		};
 	}
 
 	/**
@@ -94,60 +104,60 @@ export class AuthService extends SocialAuthService {
 	 * @returns
 	 */
 	async requestPassword(
-		request: any,
+		request: IResetPasswordRequest,
 		languageCode: LanguagesEnum,
 		originUrl?: string
-	): Promise<{ token: string } | null> {
+	): Promise<boolean | BadRequestException> {
+		try {
+			await this.userRepository.findOneByOrFail({
+				email: request.email
+			});
+		} catch (error) {
+			throw new BadRequestException('Forgot password request failed!');
+		}
+
 		try {
 			const user = await this.userService.findOneByOptions({
 				where: {
-					...request
+					email: request.email
 				},
 				relations: {
 					role: true,
 					employee: true
 				}
 			});
-			try {
-				/**
-				 * Create password reset request
-				 */
-				const token = await this.getJwtAccessToken(user);
-				if (token) {
-					await this.commandBus.execute(
-						new PasswordResetCreateCommand({
-							email: user.email,
-							token
-						})
-					);
-
-					const { id: userId } = user;
-
-					const url = `${environment.clientBaseUrl}/#/auth/reset-password?token=${token}`;
-					const { organizationId } = await this.userOrganizationService.findOneByOptions({
-						where: {
-							userId
-						}
-					});
-
-					this.emailService.requestPassword(
-						user,
-						url,
-						languageCode,
-						organizationId,
-						originUrl
-					);
-					return {
+			/**
+			 * Create password reset request
+			 */
+			const token = await this.getJwtAccessToken(user);
+			if (token) {
+				await this.commandBus.execute(
+					new PasswordResetCreateCommand({
+						email: user.email,
 						token
-					};
-				}
-			} catch (error) {
-				console.log(error);
-				throw new InternalServerErrorException();
+					})
+				);
+
+				const { id: userId, tenantId } = user;
+
+				const url = `${environment.clientBaseUrl}/#/auth/reset-password?token=${token}`;
+				const { organizationId } = await this.userOrganizationService.findOneByOptions({
+					where: {
+						userId,
+						tenantId
+					}
+				});
+				this.emailService.requestPassword(
+					user,
+					url,
+					languageCode,
+					organizationId,
+					originUrl
+				);
+				return true;
 			}
 		} catch (error) {
-			console.log(error);
-			throw new NotFoundException('Email is not correct, please try again.');
+			throw new BadRequestException('Forgot password request failed!');
 		}
 	}
 
@@ -335,7 +345,7 @@ export class AuthService extends SocialAuthService {
 					value
 				);
 				if (userExist) {
-					const user = await this.userService.getUserByEmail(value);
+					const user = await this.userService.getOAuthLoginEmail(value);
 					const token = await this.getJwtAccessToken(user);
 
 					response = {

@@ -9,7 +9,9 @@ import {
 } from '@gauzy/contracts';
 import { API_PREFIX } from '../constants/app.constants';
 
-@Injectable()
+@Injectable({
+	providedIn: 'root'
+})
 export class WarehouseService {
 	WAREHOUSES_URL = `${API_PREFIX}/warehouses`;
 

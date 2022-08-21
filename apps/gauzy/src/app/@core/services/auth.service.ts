@@ -30,6 +30,15 @@ export class AuthService {
 		);
 	}
 
+	/**
+	 * Logout API Route
+	 *
+	 * @returns
+	 */
+	doLogout(): Observable<boolean> {
+		return this.http.get<boolean>(`${API_PREFIX}/auth/logout`);
+	}
+
 	register(registerInput: IUserRegistrationInput): Observable<IUser> {
 		return this.http.post<IUser>(
 			`${API_PREFIX}/auth/register`,

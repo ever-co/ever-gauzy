@@ -4,7 +4,7 @@ import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import { IDateRangePicker, IOrganization } from '@gauzy/contracts';
-import { Store } from '../../../@core/services';
+import { DateRangePickerBuilderService, Store } from '../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -18,12 +18,13 @@ export class ProjectManagementComponent implements OnInit, OnDestroy {
 	selectedDateRange: IDateRangePicker;
 
 	constructor(
-		private readonly store: Store
+		private readonly store: Store,
+		private readonly dateRangePickerBuilderService: DateRangePickerBuilderService
 	) {}
 
 	ngOnInit() {
 		const storeOrganization$ = this.store.selectedOrganization$;
-		const storeDateRange$ = this.store.selectedDateRange$;
+		const storeDateRange$ = this.dateRangePickerBuilderService.selectedDateRange$;
 
 		combineLatest([storeOrganization$, storeDateRange$])
 			.pipe(
@@ -31,8 +32,8 @@ export class ProjectManagementComponent implements OnInit, OnDestroy {
 				distinctUntilChange(),
 				filter(([organization, dateRange]) => !!organization && !!dateRange),
 				tap(([organization, dateRange]) => {
-					this.organization = organization;
-					this.selectedDateRange = dateRange;
+					this.organization = organization as IOrganization;
+					this.selectedDateRange = dateRange as IDateRangePicker;
 				}),
 				untilDestroyed(this)
 			)

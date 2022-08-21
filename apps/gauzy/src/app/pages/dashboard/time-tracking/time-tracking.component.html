@@ -1,14 +1,14 @@
 <nb-card class="card">
 	<nb-card-header class="card-header">
-		<h4>
-			<ngx-header-title>
-				{{ headerTitle }}
-				{{ 'TIMESHEET.TIME_TRACKING' | translate }}
-			</ngx-header-title>
-		</h4>
 		<ng-container
 			*ngIf="selectedDateRange?.startDate && selectedDateRange?.endDate"
 		>
+			<h4>
+				<ngx-header-title>
+					{{ headerTitle }}
+					{{ 'TIMESHEET.TIME_TRACKING' | translate }}
+				</ngx-header-title>
+			</h4>
 			<ngx-date-range-title
 				[start]="selectedDateRange?.startDate"
 				[end]="selectedDateRange?.endDate"

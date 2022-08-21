@@ -17,7 +17,7 @@ export class ThemeLanguageSelectorComponent implements OnInit, OnDestroy, AfterV
 	user: IUser;
 	languages: ILanguage[] = [];
 	preferredLanguage: LanguagesEnum = LanguagesEnum.ENGLISH;
-	
+
 	constructor(
 		private readonly _store: Store,
 		private readonly _userService: UsersService,
@@ -115,20 +115,17 @@ export class ThemeLanguageSelectorComponent implements OnInit, OnDestroy, AfterV
 
 	/**
 	 * Changed User Selected Preferred Language
-	 * 
-	 * @param payload 
-	 * @returns 
+	 *
+	 * @param payload
+	 * @returns
 	 */
 	private async changePreferredLanguage(payload: IUserUpdateInput) {
 		if (!this.user) {
 			return;
 		}
 		try {
-			await this._userService.updatePreferredLanguage(
-				this.user.id,
-				payload
-			);
-		} catch (error) { 			
+			await this._userService.updatePreferredLanguage(payload);
+		} catch (error) {
 			console.error(`Failed to update user preferred language`);
 		}
 	}

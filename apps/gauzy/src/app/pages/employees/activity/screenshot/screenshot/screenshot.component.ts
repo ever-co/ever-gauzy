@@ -31,7 +31,7 @@ import { GauzyFiltersComponent } from './../../../../../@shared/timesheet/gauzy-
 	templateUrl: './screenshot.component.html',
 	styleUrls: ['./screenshot.component.scss']
 })
-export class ScreenshotComponent extends BaseSelectorFilterComponent 
+export class ScreenshotComponent extends BaseSelectorFilterComponent
 	implements OnInit, OnDestroy {
 
 	payloads$: BehaviorSubject<ITimeLogFilters> = new BehaviorSubject(null);
@@ -48,7 +48,7 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent
 	originalTimeSlots: ITimeSlot[] = [];
 
 	@ViewChild(GauzyFiltersComponent) gauzyFiltersComponent: GauzyFiltersComponent;
-	datePickerConfig$: Observable<any> = this._dateRangePickerBuilderService.datePickerConfig$;
+	datePickerConfig$: Observable<any> = this.dateRangePickerBuilderService.datePickerConfig$;
 
 	constructor(
 		public readonly translateService: TranslateService,
@@ -57,9 +57,9 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent
 		private readonly nbDialogService: NbDialogService,
 		protected readonly store: Store,
 		private readonly galleryService: GalleryService,
-		public readonly _dateRangePickerBuilderService: DateRangePickerBuilderService
+		protected readonly dateRangePickerBuilderService: DateRangePickerBuilderService
 	) {
-		super(store, translateService);
+		super(store, translateService, dateRangePickerBuilderService);
 	}
 
 	ngOnInit(): void {
@@ -245,7 +245,7 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent
 					const time = moment().set('hour', parseInt(hour, 0)).set('minute', 0);
 					const startTime = time.format('HH:mm');
 					const endTime = time.add(1, 'hour').format('HH:mm');
-					
+
 					return { startTime, endTime, timeSlots };
 				}
 			)

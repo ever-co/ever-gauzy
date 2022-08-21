@@ -3,13 +3,34 @@
 :host {
   nb-tab.content-active {
     padding: 1rem;
+    overflow: unset;
+    border-radius: 0 0 var(--border-radius) var(--border-radius);
   }
   nb-card,
   nb-tab {
     background-color: var(--gauzy-card-2);
+    margin: 0;
   }
+  nb-card-body {
+    overflow: unset;
+    margin: 0;
+  }
+
+  .nb-tabset {
+    margin-top: 27px;
+  }
+
   nb-tab {
     height: calc(100vh - 22.5rem);
+    .table-data {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      overflow: unset;
+      .table-scroll-container {
+        flex-grow: 10;
+      }
+    }
   }
 }
 .card-general {

@@ -1,5 +1,7 @@
 import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import { MulterModule } from '@nestjs/platform-express';
+import { ThrottlerGuard, ThrottlerModule, ThrottlerModuleOptions } from '@nestjs/throttler';
 import { SentryModule } from '@ntegral/nestjs-sentry';
 import {
 	ServeStaticModule,
@@ -29,10 +31,10 @@ import { RoleModule } from './role/role.module';
 import { OrganizationModule } from './organization/organization.module';
 import { IncomeModule } from './income/income.module';
 import { ExpenseModule } from './expense/expense.module';
-import { EmployeeSettingModule } from './employee-setting';
-import { EmployeeJobPostModule } from './employee-job';
-import { EmployeeAppointmentModule } from './employee-appointment';
-import { CoreModule } from './core';
+import { EmployeeSettingModule } from './employee-setting/employee-setting.module';
+import { EmployeeJobPostModule } from './employee-job/employee-job.module';
+import { EmployeeAppointmentModule } from './employee-appointment/employee-appointment.module';
+import { CoreModule } from './core/core.module';
 import { AuthModule } from './auth/auth.module';
 import { UserOrganizationModule } from './user-organization/user-organization.module';
 import { EmployeeStatisticsModule } from './employee-statistics/employee-statistics.module';
@@ -49,8 +51,8 @@ import { OrganizationAwardModule } from './organization-award/organization-award
 import { OrganizationLanguageModule } from './organization-language/organization-language.module';
 import { OrganizationDocumentModule } from './organization-document/organization-document.module';
 import { ProposalModule } from './proposal/proposal.module';
-import { CountryModule } from './country';
-import { CurrencyModule } from './currency';
+import { CountryModule } from './country/country.module';
+import { CurrencyModule } from './currency/currency.module';
 import { InviteModule } from './invite/invite.module';
 import { EmailModule } from './email/email.module';
 import { TimeOffPolicyModule } from './time-off-policy/time-off-policy.module';
@@ -133,7 +135,6 @@ import { ContactModule } from './contact/contact.module';
 import { PublicShareModule } from './public-share/public-share.module';
 
 const { unleashConfig } = environment;
-
 if (unleashConfig.url) {
 	const unleashInstanceConfig = {
 		appName: unleashConfig.appName,
@@ -162,7 +163,6 @@ sentryIntegrations.push(
 if (process.env.DB_TYPE === 'postgres') {
 	sentryIntegrations.push(new TrackingIntegrations.Postgres());
 }
-
 @Module({
 	imports: [
 		ServeStaticModule.forRootAsync({
@@ -199,6 +199,13 @@ if (process.env.DB_TYPE === 'postgres') {
 		 			})
 		 	  ]
 		: []),
+		ThrottlerModule.forRootAsync({
+			inject: [ConfigService],
+			useFactory: (config: ConfigService): ThrottlerModuleOptions => ({
+				ttl: config.get('THROTTLE_TTL'),
+				limit: config.get('THROTTLE_LIMIT'),
+			} as ThrottlerModuleOptions),
+		}),
 		CoreModule,
 		AuthModule,
 		UserModule,
@@ -316,7 +323,13 @@ if (process.env.DB_TYPE === 'postgres') {
 		PublicShareModule
 	],
 	controllers: [AppController],
-	providers: [AppService],
+	providers: [
+		AppService,
+		{
+			provide: APP_GUARD,
+			useClass: ThrottlerGuard,
+		}
+	],
 	exports: []
 })
 export class AppModule {

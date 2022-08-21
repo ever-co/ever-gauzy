@@ -58,6 +58,7 @@ import { AddInternalNoteComponent } from './add-internal-note/add-internal-note.
 import { PublicLinkComponent } from './public-link/public-link.component';
 import { generateCsv } from '../../@shared/invoice/generate-csv';
 import {
+	DateRangePickerBuilderService,
 	InvoiceEstimateHistoryService,
 	InvoiceItemService,
 	InvoicesService,
@@ -159,6 +160,7 @@ export class InvoicesComponent
 		private readonly fb: FormBuilder,
 		public readonly translateService: TranslateService,
 		private readonly store: Store,
+		private readonly dateRangePickerBuilderService: DateRangePickerBuilderService,
 		private readonly dialogService: NbDialogService,
 		private readonly toastrService: ToastrService,
 		private readonly invoicesService: InvoicesService,
@@ -207,12 +209,12 @@ export class InvoicesComponent
 			)
 			.subscribe();
 		const storeOrganization$ = this.store.selectedOrganization$;
-		const storeDateRange$ = this.store.selectedDateRange$;
+		const storeDateRange$ = this.dateRangePickerBuilderService.selectedDateRange$;
 		combineLatest([storeOrganization$, storeDateRange$])
 			.pipe(
 				debounceTime(300),
-				filter(([organization]) => !!organization),
 				distinctUntilChange(),
+				filter(([organization, dateRange]) => !!organization && !!dateRange),
 				tap(([organization, dateRange]) => {
 					this.organization = organization as IOrganization;
 					this.selectedDateRange = dateRange as IDateRangePicker;
@@ -657,18 +659,7 @@ export class InvoicesComponent
 
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
-
 		const { startDate, endDate } = getAdjustDateRangeFutureAllowed(this.selectedDateRange);
-		const request = {};
-		if (startDate && endDate) {
-			request['invoiceDate'] = {};
-			if (moment(startDate).isValid()) {
-				request['invoiceDate']['startDate'] = toUTC(startDate).format('YYYY-MM-DD HH:mm:ss');
-			}
-			if (moment(endDate).isValid()) {
-				request['invoiceDate']['endDate'] = toUTC(endDate).format('YYYY-MM-DD HH:mm:ss');
-			}
-		}
 
 		this.smartTableSource = new ServerDataSource(this.httpClient, {
 			endPoint: `${API_PREFIX}/invoices/pagination`,
@@ -701,8 +692,11 @@ export class InvoicesComponent
 				tenantId,
 				isEstimate: (this.isEstimate === true) ? 1 : 0,
 				isArchived: (this.includeArchived === true) ? 1 : 0,
-				...request,
-				...this.filters.where
+				invoiceDate: {
+					startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm:ss'),
+					endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm:ss')
+				},
+				...(this.filters.where ? this.filters.where : {})
 			},
 			resultMap: (invoice: IInvoice) => {
 				return Object.assign({}, invoice, {
@@ -907,8 +901,8 @@ export class InvoicesComponent
 			actions: false,
 			mode: 'external',
 			editable: true,
-			noDataMessage: this.getTranslation(this.isEstimate 
-				? 'SM_TABLE.NO_DATA.ESTIMATE' 
+			noDataMessage: this.getTranslation(this.isEstimate
+				? 'SM_TABLE.NO_DATA.ESTIMATE'
 				: 'SM_TABLE.NO_DATA.INVOICE'),
 			columns: {
 				invoiceNumber: {

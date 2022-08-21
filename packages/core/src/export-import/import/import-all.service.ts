@@ -621,19 +621,19 @@ export class ImportAllService implements OnModuleInit {
 					});
 					rstream.on('end', async () => {
 						results = results.filter(isNotEmpty);
-						for await (const data of results) {
-							try {
+						try {
+							for await (const data of results) {
 								if (isNotEmpty(data)) {
 									await this.migrateImportEntityRecord(
 										item,
 										data
 									);
-									console.log(chalk.green(`Success to inserts data for table: ${masterTable}`));
 								}
-							} catch (error) {
-								console.log(chalk.red(`Failed to inserts data for table: ${masterTable}`), error, data);
-								reject(error);
 							}
+							console.log(chalk.green(`Success to inserts data for table: ${masterTable}`));
+						} catch (error) {
+							console.log(chalk.red(`Failed to inserts data for table: ${masterTable}`), error);
+							reject(error);
 						}
 						resolve(true);
 					});
@@ -721,8 +721,8 @@ export class ImportAllService implements OnModuleInit {
 					if ('tenantId' in entity && isNotEmpty(entity['tenantId'])) {
 						where.push({ tenantId: RequestContext.currentTenantId() });
 					}
-					for (const item of uniqueIdentifier) {
-						where.push({ [item.column] : entity[item.column] });
+					for (const unique of uniqueIdentifier) {
+						where.push({ [unique.column] : entity[unique.column] });
 					}
 				}
 				const desination = await this.commandBus.execute(
@@ -794,14 +794,22 @@ export class ImportAllService implements OnModuleInit {
 			data['tenantId'] = RequestContext.currentTenantId();
 		}
 		if ('organizationId' in data && isNotEmpty(data['organizationId'])) {
-			const { record } = await this.commandBus.execute(
-				new ImportRecordFindOrFailCommand({
-					tenantId: RequestContext.currentTenantId(),
-					sourceId: data['organizationId'],
-					entityType: this.organizationRepository.metadata.tableName
-				})
-			);
-			data['organizationId'] = record ? record.destinationId : IsNull().value;
+			try {
+				const organization = await this.organizationRepository.findOneByOrFail({
+					id: data['organizationId'],
+					tenantId: RequestContext.currentTenantId()
+				});
+				data['organizationId'] = organization ? organization.id : IsNull().value;
+			} catch (error) {
+				const { record } = await this.commandBus.execute(
+					new ImportRecordFindOrFailCommand({
+						tenantId: RequestContext.currentTenantId(),
+						sourceId: data['organizationId'],
+						entityType: this.organizationRepository.metadata.tableName
+					})
+				);
+				data['organizationId'] = record ? record.destinationId : IsNull().value;
+			}
 		}
 		return await this.mapTimeStampsFields(
 			item, await this.mapRelationFields(item, data)
@@ -816,9 +824,7 @@ export class ImportAllService implements OnModuleInit {
 		for await (const column of repository.metadata.columns as ColumnMetadata[]) {
 			const { propertyName, type } = column;
 			if (`${propertyName}` in data && isNotEmpty(data[`${propertyName}`])) {
-				if (type.valueOf() === Date) {
-					data[`${propertyName}`] = convertToDatetime(data[`${propertyName}`]);
-				} else if (type === 'datetime') {
+				if ((type.valueOf() === Date) || (type === 'datetime' || type === 'timestamp')) {
 					data[`${propertyName}`] = convertToDatetime(data[`${propertyName}`]);
 				} else if (data[`${propertyName}`] === 'true') {
 					data[`${propertyName}`] = true;

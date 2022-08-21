@@ -18,7 +18,7 @@ import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import * as moment from 'moment';
 import { TranslateService } from '@ngx-translate/core';
 import { distinctUntilChange, isEmpty } from '@gauzy/common-angular';
-import { EmployeesService, OrganizationProjectsService, Store } from './../../../../@core/services';
+import { DateRangePickerBuilderService, EmployeesService, OrganizationProjectsService, Store } from './../../../../@core/services';
 import { TimesheetStatisticsService } from '../../../timesheet/timesheet-statistics.service';
 import { BaseSelectorFilterComponent } from '../../../timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
 
@@ -56,12 +56,13 @@ export class DailyStatisticsComponent extends BaseSelectorFilterComponent
 	constructor(
 		private readonly timesheetStatisticsService: TimesheetStatisticsService,
 		protected readonly store: Store,
+		protected readonly dateRangePickerBuilderService: DateRangePickerBuilderService,
 		public readonly translateService: TranslateService,
 		private readonly cd: ChangeDetectorRef,
 		private readonly employeesService: EmployeesService,
 		private readonly projectService: OrganizationProjectsService
 	) {
-		super(store, translateService);
+		super(store, translateService, dateRangePickerBuilderService);
 	}
 
 	ngOnInit() {

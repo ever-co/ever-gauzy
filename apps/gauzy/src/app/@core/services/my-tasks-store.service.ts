@@ -33,8 +33,7 @@ export class MyTasksStoreService {
 		return tasks.map((task) => ({
 			...task,
 			projectName: task.project ? task.project.name : undefined,
-			employees: task.members ? task.members : undefined,
-			creator: task.creator ? `${task.creator.name}` : null
+			employees: task.members ? task.members : undefined
 		}));
 	}
 

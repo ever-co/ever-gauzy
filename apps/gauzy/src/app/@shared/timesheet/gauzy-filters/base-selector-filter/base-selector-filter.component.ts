@@ -7,7 +7,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { distinctUntilChange, toUTC } from '@gauzy/common-angular';
 import { pick } from 'underscore';
-import { Store } from './../../../../@core/services';
+import { DateRangePickerBuilderService, Store } from './../../../../@core/services';
 import { TranslationBaseComponent } from './../../../language-base/translation-base.component';
 import { getAdjustDateRangeFutureAllowed } from './../../../../@theme/components/header/selectors/date-range-picker';
 
@@ -25,7 +25,8 @@ export class BaseSelectorFilterComponent extends TranslationBaseComponent {
 
 	constructor(
 		protected readonly store: Store,
-		public readonly translateService: TranslateService
+		public readonly translateService: TranslateService,
+		protected readonly dateRangePickerBuilderService: DateRangePickerBuilderService
 	) {
 		super(translateService);
 		this.onInit();
@@ -33,7 +34,7 @@ export class BaseSelectorFilterComponent extends TranslationBaseComponent {
 
 	onInit() {
 		const storeOrganization$ = this.store.selectedOrganization$;
-		const storeDateRange$ = this.store.selectedDateRange$;
+		const storeDateRange$ = this.dateRangePickerBuilderService.selectedDateRange$;
 		const storeProject$ = this.store.selectedProject$;
 		const storeEmployee$ = this.store.selectedEmployee$;
 		combineLatest([storeOrganization$, storeDateRange$, storeEmployee$, storeProject$])

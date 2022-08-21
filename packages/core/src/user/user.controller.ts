@@ -16,8 +16,7 @@ import {
 	Delete,
 	UseInterceptors,
 	UsePipes,
-	ValidationPipe,
-	ForbiddenException
+	ValidationPipe
 } from '@nestjs/common';
 import {
 	ApiOperation,
@@ -46,7 +45,8 @@ import {
 	UpdatePreferredLanguageDTO,
 	UpdatePreferredComponentLayoutDTO,
 	CreateUserDTO,
-	UpdateUserDTO
+	UpdateUserDTO,
+	FindMeQueryDTO
 } from './dto';
 
 @ApiTags('User')
@@ -80,13 +80,14 @@ export class UserController extends CrudController<User> {
 	})
 	@Get('/me')
 	async findMe(
-		@Query('data', ParseJsonPipe) data: any
-	): Promise<User> {
-		const { relations = [] } = data;
-		const id = RequestContext.currentUserId();
-		return await this.userService.findOneByIdString(id, {
-			relations
-		});
+		@Query(new ValidationPipe({
+			transform: true,
+			whitelist: true
+		})) options: FindMeQueryDTO
+	): Promise<IUser> {
+		return await this.userService.findMe(
+			options.relations
+		);
 	}
 
 	/**
@@ -106,8 +107,10 @@ export class UserController extends CrudController<User> {
 		description: 'Record not found'
 	})
 	@Get('/email/:email')
-	async findByEmail(@Param('email') email: string): Promise<User> {
-		return this.userService.getUserByEmail(email);
+	async findByEmail(
+		@Param('email') email: string
+	): Promise<User> {
+		return await this.userService.getUserByEmail(email);
 	}
 
 	/**
@@ -120,24 +123,16 @@ export class UserController extends CrudController<User> {
 	 */
 	@HttpCode(HttpStatus.ACCEPTED)
 	@UseGuards(TenantPermissionGuard)
-	@Put('/preferred-language/:id')
-	@UsePipes(new ValidationPipe({
-		transform: true,
-		whitelist: true
-	}))
+	@Put('/preferred-language')
 	async updatePreferredLanguage(
-		@Param('id', UUIDValidationPipe) id: string,
-		@Body() entity: UpdatePreferredLanguageDTO
+		@Body(new ValidationPipe({
+			transform: true,
+			whitelist: true
+		})) entity: UpdatePreferredLanguageDTO
 	) {
-		const userId = RequestContext.currentUserId();
-		if (userId !== id) {
-			throw new ForbiddenException();
-		}
-
-		const { preferredLanguage } = entity;
-		return this.userService.updatePreferredLanguage(
-			id,
-			preferredLanguage
+		return await this.userService.updatePreferredLanguage(
+			RequestContext.currentUserId(),
+			entity.preferredLanguage
 		);
 	}
 
@@ -151,24 +146,16 @@ export class UserController extends CrudController<User> {
 	 */
 	@HttpCode(HttpStatus.ACCEPTED)
 	@UseGuards(TenantPermissionGuard)
-	@Put('/preferred-layout/:id')
-	@UsePipes(new ValidationPipe({
-		transform: true,
-		whitelist: true
-	}))
+	@Put('/preferred-layout')
 	async updatePreferredComponentLayout(
-		@Param('id', UUIDValidationPipe) id: string,
-		@Body() entity: UpdatePreferredComponentLayoutDTO
+		@Body(new ValidationPipe({
+			transform: true,
+			whitelist: true
+		})) entity: UpdatePreferredComponentLayoutDTO
 	) {
-		const userId = RequestContext.currentUserId();
-		if (userId !== id) {
-			throw new ForbiddenException();
-		}
-
-		const { preferredComponentLayout } = entity;
-		return this.userService.updatePreferredComponentLayout(
-			id,
-			preferredComponentLayout
+		return await this.userService.updatePreferredComponentLayout(
+			RequestContext.currentUserId(),
+			entity.preferredComponentLayout
 		);
 	}
 
@@ -193,17 +180,16 @@ export class UserController extends CrudController<User> {
 	/**
 	 * GET user list by pagination
 	 *
-	 * @param filter
+	 * @param options
 	 * @returns
 	 */
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_USERS_VIEW)
 	@Get('pagination')
-	@UsePipes(new ValidationPipe({ transform: true }))
 	async pagination(
-		@Query() filter: PaginationParams<IUser>
+		@Query() options: PaginationParams<IUser>
 	): Promise<IPagination<IUser>> {
-		return this.userService.paginate(filter);
+		return this.userService.paginate(options);
 	}
 
 	/**
@@ -361,10 +347,8 @@ export class UserController extends CrudController<User> {
 	})
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ACCESS_DELETE_ALL_DATA)
-	@Delete('/reset/:id')
-	async deleteAllData(
-		@Param('id', UUIDValidationPipe) id: string
-	){
-		return this.factoryResetService.reset(id);
+	@Delete('/reset')
+	async factoryReset() {
+		return await this.factoryResetService.reset();
 	}
 }

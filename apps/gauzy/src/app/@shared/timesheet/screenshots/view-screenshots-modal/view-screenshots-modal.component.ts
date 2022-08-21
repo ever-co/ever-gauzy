@@ -36,7 +36,7 @@ export class ViewScreenshotsModalComponent implements OnInit {
 				employee: timeSlot.employee,
 				...screenshot
 			}
-		}); 
+		});
 		this._timeSlot = Object.assign({}, timeSlot, {
 			localStartedAt: toLocal(timeSlot.startedAt).toDate(),
 			localStoppedAt: toLocal(timeSlot.stoppedAt).toDate()
@@ -87,10 +87,10 @@ export class ViewScreenshotsModalComponent implements OnInit {
 		try {
 			this.timeSlot = await this.timesheetService.getTimeSlot(this.timeSlot.id, {
 				relations: [
+					'employee',
+					'employee.user',
 					'screenshots',
 					'timeLogs',
-					'timeLogs.employee',
-					'timeLogs.employee.user',
 					'timeLogs.project',
 					'timeLogs.task',
 					'timeLogs.organizationContact'
@@ -115,7 +115,7 @@ export class ViewScreenshotsModalComponent implements OnInit {
 
 	/**
 	 * DELETE specific Screenshot
-	 * 
+	 *
 	 * @param screenshot
 	 */
 	async deleteImage(
@@ -143,15 +143,14 @@ export class ViewScreenshotsModalComponent implements OnInit {
 
 	/**
 	 * DELETE specific TimeLog
-	 * 
-	 * @param timeLog 
+	 *
+	 * @param timeLog
 	 */
-	async deleteTimeLog(timeLog: ITimeLog) {
+	async deleteTimeLog(timeLog: ITimeLog, employee: IEmployee) {
 		if (timeLog.isRunning) {
 			return;
 		}
 		try {
-			const employee = timeLog.employee;
 			const { id: organizationId } = this.organization;
 			const request = {
 				logIds: [timeLog.id],

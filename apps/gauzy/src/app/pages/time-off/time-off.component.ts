@@ -83,7 +83,7 @@ export class TimeOffComponent extends PaginationFilterBaseComponent
 		private readonly translate: TranslateService,
 		private readonly httpClient: HttpClient,
 		private readonly route: ActivatedRoute,
-		private readonly _dateRangePickerBuilderService: DateRangePickerBuilderService
+		private readonly dateRangePickerBuilderService: DateRangePickerBuilderService
 	) {
 		super(translate);
 		this.setView();
@@ -109,13 +109,13 @@ export class TimeOffComponent extends PaginationFilterBaseComponent
 			)
 			.subscribe();
 		const storeOrganization$ = this.store.selectedOrganization$;
-		const selectedDateRange$ = this.store.selectedDateRange$;
+		const selectedDateRange$ = this.dateRangePickerBuilderService.selectedDateRange$;
 		const storeEmployee$ = this.store.selectedEmployee$;
 		combineLatest([storeOrganization$, selectedDateRange$, storeEmployee$])
 			.pipe(
-				debounceTime(100),
-				filter(([organization, dateRange]) => !!organization && !!dateRange),
+				debounceTime(200),
 				distinctUntilChange(),
+				filter(([organization, dateRange]) => !!organization && !!dateRange),
 				tap(([organization, dateRange, employee]) => {
 					this.organization = organization;
 					this.selectedDateRange = dateRange;
@@ -579,7 +579,7 @@ export class TimeOffComponent extends PaginationFilterBaseComponent
 								'TIME_OFF_PAGE.NOTIFICATIONS.RECORD_CREATED'
 							)
 						),
-						tap(() => this._dateRangePickerBuilderService.refreshDateRangePicker(
+						tap(() => this.dateRangePickerBuilderService.refreshDateRangePicker(
 							moment(this.timeOffRequest.start)
 						)),
 						finalize(() => this.timeOff$.next(true))
@@ -603,7 +603,7 @@ export class TimeOffComponent extends PaginationFilterBaseComponent
 						'TIME_OFF_PAGE.NOTIFICATIONS.REQUEST_UPDATED'
 					)
 				),
-				tap(() => this._dateRangePickerBuilderService.refreshDateRangePicker(
+				tap(() => this.dateRangePickerBuilderService.refreshDateRangePicker(
 					moment(this.timeOffRequest.start)
 				)),
 				finalize(() => this.timeOff$.next(true))

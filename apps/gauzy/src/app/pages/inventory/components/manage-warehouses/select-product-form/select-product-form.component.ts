@@ -9,6 +9,7 @@ import { ImageRowComponent } from '../../inventory-table-components/image-row.co
 import { NbDialogRef } from '@nebular/theme';
 import { SelectedRowComponent } from '../../inventory-table-components/selected-row.component';
 import { HttpClient } from '@angular/common/http';
+import { tap } from 'rxjs/operators';
 
 export interface SelectedRowEvent {
 	data: IProductTranslated,
@@ -31,17 +32,17 @@ export class SelectProductComponent
 	smartTableSource: ServerDataSource;
 	selectedLanguage: string = LanguagesEnum.ENGLISH;
 
-
 	selectedRows: any[] = [];
 	tableData: any[] = [];
 
 	productsTable: Ng2SmartTableComponent;
-
 	@ViewChild('productsTable') set content(content: Ng2SmartTableComponent) {
 		if (content) {
 			this.productsTable = content;
+			this.onChangedSource();
 		}
 	}
+
 	PRODUCTS_URL = `${API_PREFIX}/products/local/${this.selectedLanguage}?`;
 
 
@@ -60,7 +61,6 @@ export class SelectProductComponent
 		this.loadSmartTable();
 		this.selectedLanguage = this.store.preferredLanguage;
 
-
 		this.store.selectedOrganization$
 			.pipe(untilDestroyed(this))
 			.subscribe((organization: IOrganization) => {
@@ -69,6 +69,28 @@ export class SelectProductComponent
 					this.loadSettings();
 				}
 			});
+	}
+
+	/*
+	 * Table on changed source event
+	 */
+	onChangedSource() {
+		this.productsTable.source.onChangedSource
+			.pipe(
+				untilDestroyed(this),
+				tap(() => this.deselectAll())
+			)
+			.subscribe();
+	}
+
+	/*
+	 * Deselect all table rows
+	 */
+	deselectAll() {
+		if (this.productsTable && this.productsTable.grid) {
+			this.productsTable.grid.dataSet['willSelect'] = 'false';
+			this.productsTable.grid.dataSet.deselectAll();
+		}
 	}
 
 	translateProp(elem, prop) {
@@ -90,7 +112,6 @@ export class SelectProductComponent
 			relations: ['productType', 'productCategory', 'featuredImage', 'variants'],
 			findInput: { organizationId, tenantId },
 		});
-
 
 		this.smartTableSource = new ServerDataSource(this.http, {
 			endPoint: this.PRODUCTS_URL + data,
@@ -115,7 +136,7 @@ export class SelectProductComponent
 					type: 'custom',
 					valuePrepareFunction: (cell, row) => {
 						row.selected = !!this.selectedRows.find(p => p.id == row.id);
-					}, 
+					},
 					renderComponent: SelectedRowComponent
 				},
 				image: {

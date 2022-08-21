@@ -1,10 +1,10 @@
-import { Observable, from, of, tap } from 'rxjs';
+import { Observable, from, of, tap, Subject } from 'rxjs';
 import { NbAuthResult, NbAuthStrategy } from '@nebular/auth';
 import { ActivatedRoute } from '@angular/router';
-import { catchError, map, switchMap } from 'rxjs/operators';
+import { catchError, filter, map, switchMap } from 'rxjs/operators';
 import { Injectable } from '@angular/core';
 import { IUser, IAuthResponse } from '@gauzy/contracts';
-import { isNotEmpty } from '@gauzy/common-angular';
+import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
 import { NbAuthStrategyClass } from '@nebular/auth/auth.options';
 import { AuthService } from '../services/auth.service';
 import { Store } from '../services/store.service';
@@ -48,7 +48,7 @@ export class AuthStrategy extends NbAuthStrategy {
 				success: '/',
 				failure: null
 			},
-			defaultErrors: ['Email is not correct, please try again.'],
+			defaultErrors: ['Something went wrong, please try again.'],
 			defaultMessages: [
 				'Reset password instructions have been sent to your email.'
 			]
@@ -64,6 +64,8 @@ export class AuthStrategy extends NbAuthStrategy {
 		}
 	};
 
+	logout$: Subject<boolean> = new Subject();
+
 	constructor(
 		private readonly route: ActivatedRoute,
 		private readonly authService: AuthService,
@@ -74,6 +76,13 @@ export class AuthStrategy extends NbAuthStrategy {
 		private readonly cookieService: CookieService
 	) {
 		super();
+		this.logout$
+			.pipe(
+				distinctUntilChange(),
+				filter(() => !!this.store.token),
+				tap(() => this._preLogout()),
+			)
+			.subscribe()
 	}
 
 	static setup(options: { name: string }): [NbAuthStrategyClass, any] {
@@ -169,6 +178,12 @@ export class AuthStrategy extends NbAuthStrategy {
 		return from(this._logout());
 	}
 
+	/**
+	 * Forgot password request strategy
+	 *
+	 * @param data
+	 * @returns
+	 */
 	requestPassword(data?: any): Observable<NbAuthResult> {
 		const { email } = data;
 		return this.authService
@@ -176,34 +191,28 @@ export class AuthStrategy extends NbAuthStrategy {
 				email
 			})
 			.pipe(
-				map((res: { token: string }) => {
-					let token;
-					if (res) {
-						token = res.token;
-					}
-
-					if (!token) {
+				map((value: any) => {
+					if (typeof(value) === 'boolean') {
 						return new NbAuthResult(
+							true,
+							value,
 							false,
-							res,
-							false,
-							AuthStrategy.config.requestPass.defaultErrors
+							[],
+							AuthStrategy.config.requestPass.defaultMessages
 						);
 					}
 					return new NbAuthResult(
-						true,
-						res,
 						false,
-						[],
-						AuthStrategy.config.requestPass.defaultMessages
+						value.response,
+						false,
+						value.message || AuthStrategy.config.requestPass.defaultErrors
 					);
 				}),
-				catchError((err) => {
-					console.log(err);
+				catchError((error) => {
 					return of(
 						new NbAuthResult(
 							false,
-							err,
+							error,
 							false,
 							AuthStrategy.config.requestPass.defaultErrors,
 							[AuthStrategy.config.requestPass.defaultErrors]
@@ -261,7 +270,7 @@ export class AuthStrategy extends NbAuthStrategy {
 	}
 
 	private async _logout(): Promise<NbAuthResult> {
-		await this._preLogout();
+		this.logout$.next(true);
 
 		this.store.clear();
 		this.store.serverConnection = 200;
@@ -281,6 +290,9 @@ export class AuthStrategy extends NbAuthStrategy {
 	}
 
 	private async _preLogout() {
+		if (this.store.token) {
+			this.authService.doLogout().subscribe();
+		}
 		//remove time tracking/timesheet filter just before logout
 		if (this.store.user && this.store.user.employeeId) {
 			if (this.timeTrackerService.running) {
@@ -293,7 +305,6 @@ export class AuthStrategy extends NbAuthStrategy {
 	}
 
 	public login(loginInput): Observable<NbAuthResult> {
-
 		return this.authService.login(loginInput).pipe(
 			map((res: IAuthResponse) => {
 				let user, token, refresh_token;

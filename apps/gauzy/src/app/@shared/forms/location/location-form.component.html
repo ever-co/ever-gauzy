@@ -146,7 +146,7 @@
 				</div>
 			</div>
 			<ng-container *ngIf="showCoordinateInput">
-				<div class="row">
+				<div class="row mb-2">
 					<div class="col-sm-11">
 						<nb-checkbox
 							(checkedChange)="toggleShowCoordinates()"
@@ -159,7 +159,7 @@
 			</ng-container>
 		</ng-container>
 		<ng-container *ngIf="showCoordinates">
-			<div class="row mt-3" formGroupName="loc">
+			<div class="row" formGroupName="loc">
 				<ng-container formArrayName="coordinates">
 					<div class="col-sm-6">
 						<div class="form-group">

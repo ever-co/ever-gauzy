@@ -68,6 +68,12 @@ export interface IEnvironment {
 	JWT_REFRESH_TOKEN_SECRET?: string;
     JWT_REFRESH_TOKEN_EXPIRATION_TIME?: number;
 
+	/**
+	 * Throttler (Rate Limiting) Options
+	 */
+	THROTTLE_TTL?: number;
+	THROTTLE_LIMIT?: number;
+
 	fileSystem: FileSystem;
 	awsConfig?: IAWSConfig;
 	wasabiConfig?: IWasabiConfig;

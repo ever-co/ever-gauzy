@@ -18,7 +18,7 @@
 			>
 			</ngx-gauzy-button-action>
 		</div>
-		<nb-tabset class="mt-4" (changeTab)="tabChange($event)">
+		<nb-tabset class="nb-tabset" (changeTab)="tabChange($event)">
 			<nb-tab
 				tabId="general"
 				tabTitle="{{ 'GOALS_PAGE.SETTINGS.GENERAL' | translate }}"
@@ -321,19 +321,33 @@
 </ng-template>
 <ng-template #tableLayout>
 	<div
+		class="table-data"
 		[nbSpinner]="loading"
 		nbSpinnerStatus="primary"
 		nbSpinnerSize="large"
-		class="table-scroll-container"
 	>
-		<ng2-smart-table
-			[settings]="smartTableSettings"
-			[source]="smartTableData"
-			(userRowSelect)="selectRow($event)"
-			style="cursor: pointer"
-			#goalSettingsTable
-		>
-		</ng2-smart-table>
+		<div class="table-scroll-container">
+			<ng2-smart-table
+				[settings]="smartTableSettings"
+				[source]="smartTableData"
+				(userRowSelect)="selectRow($event)"
+				style="cursor: pointer"
+				#goalSettingsTable
+			>
+			</ng2-smart-table>
+		</div>
+		<div class="pagination-container">
+			<ng-container *ngIf="pagination.totalItems > minItemPerPage">
+				<ga-pagination
+					(selectedOption)="onUpdateOption($event)"
+					(selectedPage)="onPageChange($event)"
+					[doEmit]="false"
+					[totalItems]="pagination?.totalItems"
+					[itemsPerPage]="pagination?.itemsPerPage"
+					[activePage]="pagination?.activePage"
+				></ga-pagination>
+			</ng-container>
+		</div>
 	</div>
 </ng-template>
 <ng-template #gridLayout>
@@ -343,6 +357,12 @@
 			[source]="goalTimeFrames"
 			[buttonTemplate]="actionButtons"
 			(onSelectedItem)="selectRow($event)"
+			(selectedOption)="onUpdateOption($event)"
+			(selectedPage)="onPageChange($event)"
+			[doEmit]="false"
+			[totalItems]="pagination?.totalItems"
+			[itemsPerPage]="pagination?.itemsPerPage"
+			[activePage]="pagination?.activePage"
 		></ga-card-grid>
 	</div>
 </ng-template>

@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CommandBus } from '@nestjs/cqrs';
-import { DeleteResult, getManager, Repository } from 'typeorm';
+import { DeleteResult, Repository } from 'typeorm';
 import { IRole, ITenant, RolesEnum, IRoleMigrateInput, IImportRecord } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
 import { Role } from './role.entity';
@@ -20,7 +20,7 @@ export class RoleService extends TenantAwareCrudService<Role> {
 		super(roleRepository);
 	}
 
-	async createBulk(tenants: ITenant[]): Promise<IRole[]> {
+	async createBulk(tenants: ITenant[]): Promise<IRole[] & Role[]> {
 		const roles: IRole[] = [];
 		const rolesNames = Object.values(RolesEnum);
 
@@ -33,8 +33,7 @@ export class RoleService extends TenantAwareCrudService<Role> {
 				roles.push(role);
 			}
 		}
-		await this.roleRepository.save(roles);
-		return roles;
+		return await this.roleRepository.save(roles);
 	}
 
 	async migrateRoles(): Promise<IRoleMigrateInput[]> {
@@ -60,7 +59,7 @@ export class RoleService extends TenantAwareCrudService<Role> {
 		for await (const item of roles) {
 			const { isImporting, sourceId, name } = item;
 			if (isImporting && sourceId) {
-				const [destinantion] = await this.repository.find({
+				const destinantion = await this.repository.findOne({
 					where: {
 						tenantId: RequestContext.currentTenantId(),
 						name
@@ -73,7 +72,7 @@ export class RoleService extends TenantAwareCrudService<Role> {
 					records.push(
 						await this._commandBus.execute(
 							new ImportRecordUpdateOrCreateCommand({
-								entityType: getManager().getRepository(Role).metadata.tableName,
+								entityType: this.roleRepository.metadata.tableName,
 								sourceId,
 								destinationId: destinantion.id,
 								tenantId: RequestContext.currentTenantId()

@@ -1189,7 +1189,13 @@
 		"ADD_EXPENSE": "Добавете ново въвеждане на разходи",
 		"RECURRING_EXPENSES": "Recurring Expenses",
 		"ADD_ORGANIZATION_RECURRING_EXPENSE": "Add New Recurring Expense Entry for Organization",
-		"ADD_EMPLOYEE_RECURRING_EXPENSE": "Add New Recurring Expense Entry for Employee"
+		"ADD_EMPLOYEE_RECURRING_EXPENSE": "Add New Recurring Expense Entry for Employee",
+		"PLAN_MY_DAY": "Plan My Day",
+		"ADD_TODO": "Add Todo",
+		"MOST_VIEW_PROJECTS": "Most Viewed Projects",
+		"INBOX": "Inbox",
+		"RECENTLY_ASSIGNED": "Recently Assigned",
+		"NO_TODO_ASSIGNED": "No Todo Assigned"
 	},
 	"INCOME_PAGE": {
 		"INCOME": "Доход",

@@ -5,6 +5,7 @@
 import { ConfigService } from '@gauzy/config';
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { RequestContext } from 'core';
 import { Repository, In } from 'typeorm';
 import { filter, map, some } from 'underscore';
 import {
@@ -383,12 +384,17 @@ export class FactoryResetService {
         this.registerCoreRepositories();
     }
 
-    async reset(id: any) {
+    async reset() {
         if (this.configService.get('demo') === true) {
             throw new ForbiddenException();
         }
+        const userId = RequestContext.currentUserId();
+        const tenantId = RequestContext.currentTenantId();
 
-        const user = await this.userRepository.findOne(id);
+        const user = await this.userRepository.findOneBy({
+            id: userId,
+            tenantId
+        });
         user.thirdPartyId = null;
         user.preferredLanguage = null;
         user.preferredComponentLayout = null;
@@ -401,13 +407,13 @@ export class FactoryResetService {
             },
             select: ["organizationId"],
             where: {
-                userId: id
+                userId: userId
             }
         });
         const organizations: any = await this.userOrganizationRepository.find({
             select: ["organizationId"],
             where: {
-                userId: id
+                userId: userId
             }
         });
 
@@ -426,7 +432,7 @@ export class FactoryResetService {
         await this.deleteSpecificTables(findInput)
         if (deleteOrganizationIds?.length > 0) {
             await this.userOrganizationRepository.delete({
-                userId: id,
+                userId: userId,
                 organizationId: In(deleteOrganizationIds),
                 tenantId: user.tenantId
             });

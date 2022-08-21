@@ -5,7 +5,7 @@
 				<h4>
 					<ngx-back-navigation></ngx-back-navigation>
 					{{
-						(!warehouseId
+						(!warehouse
 							? 'INVENTORY_PAGE.CREATE_WAREHOUSE'
 							: 'INVENTORY_PAGE.EDIT_WAREHOUSE'
 						) | translate
@@ -48,14 +48,14 @@
 													| translate
 											"
 											[status]="
-												isInvalidControl('name')
+												FormHelpers.isInvalidControl(form, 'name')
 													? 'danger'
 													: 'basic'
 											"
 										/>
 										<div
 											class="text-danger"
-											*ngIf="isInvalidControl('name')"
+											*ngIf="FormHelpers.isInvalidControl(form, 'name')"
 										>
 											{{
 												'INVENTORY_PAGE.THIS_FIELD_IS_REQUIRED'
@@ -101,14 +101,14 @@
 													| translate
 											"
 											[status]="
-												isInvalidControl('code')
+												FormHelpers.isInvalidControl(form, 'code')
 													? 'danger'
 													: 'basic'
 											"
 										/>
 										<div
 											class="text-danger"
-											*ngIf="isInvalidControl('code')"
+											*ngIf="FormHelpers.isInvalidControl(form, 'code')"
 										>
 											{{
 												'INVENTORY_PAGE.THIS_FIELD_IS_REQUIRED'
@@ -139,14 +139,14 @@
 													| translate
 											"
 											[status]="
-												isInvalidControl('email')
+												FormHelpers.isInvalidControl(form, 'email')
 													? 'danger'
 													: 'basic'
 											"
 										/>
 										<div
 											class="text-danger"
-											*ngIf="isInvalidControl('email')"
+											*ngIf="FormHelpers.isInvalidControl(form, 'email')"
 										>
 											{{
 												'INVENTORY_PAGE.EMAIL_WRONG_FORMAT'
@@ -161,10 +161,8 @@
 									<nb-checkbox
 										status="basic"
 										formControlName="active"
-										>{{
-											'INVENTORY_PAGE.ACTIVE' | translate
-										}}</nb-checkbox
-									>
+									>{{ 'INVENTORY_PAGE.ACTIVE' | translate }}
+									</nb-checkbox>
 								</div>
 							</div>
 							<div class="row">
@@ -204,9 +202,7 @@
 							#locationFormDirective
 							[form]="locationForm"
 							[showAutocompleteSearch]="true"
-							(mapCoordinatesEmitter)="
-								onCoordinatesChanges($event)
-							"
+							(mapCoordinatesEmitter)="onCoordinatesChanges($event)"
 						></ga-location-form>
 					</div>
 					<div class="col-md-8 col-sm-7">
@@ -224,7 +220,9 @@
 				<ng-container *ngIf="isActiveInventoryTab()">
 					<div class="row h-100">
 						<div class="col-md-12 col-sm-12">
-							<ga-warehouse-products-table></ga-warehouse-products-table>
+							<ga-warehouse-products-table
+								[warehouse]="warehouse"
+							></ga-warehouse-products-table>
 						</div>
 					</div>
 				</ng-container>
@@ -232,7 +230,13 @@
 		</nb-stepper>
 	</nb-card-body>
 	<nb-card-footer class="text-left">
-		<button (click)="cancel()" status="basic" class="mr-2" outline nbButton>
+		<button
+			(click)="cancel()"
+			status="basic"
+			class="mr-2"
+			outline
+			nbButton
+		>
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
 		<button

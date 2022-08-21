@@ -46,7 +46,7 @@ export class WeeklyComponent extends BaseSelectorFilterComponent
 	futureDateAllowed: boolean;
 
 	@ViewChild(GauzyFiltersComponent) gauzyFiltersComponent: GauzyFiltersComponent;
-	datePickerConfig$: Observable<any> = this._dateRangePickerBuilderService.datePickerConfig$;
+	datePickerConfig$: Observable<any> = this.dateRangePickerBuilderService.datePickerConfig$;
 
 	payloads$: BehaviorSubject<ITimeLogFilters> = new BehaviorSubject(null);
 
@@ -56,9 +56,9 @@ export class WeeklyComponent extends BaseSelectorFilterComponent
 		private readonly timesheetFilterService: TimesheetFilterService,
 		public readonly translateService: TranslateService,
 		protected readonly store: Store,
-		public readonly _dateRangePickerBuilderService: DateRangePickerBuilderService
+		protected readonly dateRangePickerBuilderService: DateRangePickerBuilderService
 	) {
-		super(store, translateService);
+		super(store, translateService, dateRangePickerBuilderService);
 	}
 
 	ngOnInit() {
@@ -181,7 +181,7 @@ export class WeeklyComponent extends BaseSelectorFilterComponent
 			.onClose
 			.pipe(
 				filter((timeLog: ITimeLog) => !!timeLog),
-				tap((timeLog: ITimeLog) => this._dateRangePickerBuilderService.refreshDateRangePicker(
+				tap((timeLog: ITimeLog) => this.dateRangePickerBuilderService.refreshDateRangePicker(
 					moment(timeLog.startedAt)
 				)),
 				tap(() => this.subject$.next(true)),
@@ -220,7 +220,7 @@ export class WeeklyComponent extends BaseSelectorFilterComponent
 			.onClose
 			.pipe(
 				filter((timeLog: ITimeLog) => !!timeLog),
-				tap((timeLog: ITimeLog) => this._dateRangePickerBuilderService.refreshDateRangePicker(
+				tap((timeLog: ITimeLog) => this.dateRangePickerBuilderService.refreshDateRangePicker(
 					moment(timeLog.startedAt)
 				)),
 				tap(() => this.subject$.next(true)),

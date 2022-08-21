@@ -39,7 +39,7 @@ export class ClientBudgetsReportComponent extends BaseSelectorFilterComponent
 	clients: IClientBudgetLimitReport[] = [];
 
 	@ViewChild(GauzyFiltersComponent) gauzyFiltersComponent: GauzyFiltersComponent;
-	datePickerConfig$: Observable<any> = this._dateRangePickerBuilderService.datePickerConfig$;
+	datePickerConfig$: Observable<any> = this.dateRangePickerBuilderService.datePickerConfig$;
 
 	constructor(
 		private readonly timesheetService: TimesheetService,
@@ -47,9 +47,9 @@ export class ClientBudgetsReportComponent extends BaseSelectorFilterComponent
 		public readonly translateService: TranslateService,
 		private readonly cd: ChangeDetectorRef,
 		private readonly timesheetFilterService: TimesheetFilterService,
-		public readonly _dateRangePickerBuilderService: DateRangePickerBuilderService
+		protected readonly dateRangePickerBuilderService: DateRangePickerBuilderService
 	) {
-		super(store, translateService);
+		super(store, translateService, dateRangePickerBuilderService);
 	}
 
 	ngOnInit() {

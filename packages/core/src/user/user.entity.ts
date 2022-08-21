@@ -87,12 +87,12 @@ export class User extends TenantBaseEntity implements IUser {
 	@IsString()
 	@Column()
 	@IsOptional()
-	@Exclude()
+	@Exclude({ toPlainOnly: true })
 	@Column({ nullable: true })
 	hash?: string;
 
 	@ApiProperty({ type: () => String })
-	@Exclude()
+	@Exclude({ toPlainOnly: true })
 	@Column({ nullable: true })
 	public refreshToken?: string;
 

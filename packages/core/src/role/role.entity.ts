@@ -25,7 +25,7 @@ export class Role extends TenantBaseEntity implements IRole {
 	 * Role Users
 	 */
 	@ApiProperty({ type: () => User, isArray: true })
-	@Exclude()
+	@Exclude({ toPlainOnly: true })
 	@OneToMany(() => User, (user) => user.role)
 	users?: IUser[];
 }

@@ -107,9 +107,7 @@
 								}}</label>
 								<input
 									nbInput
-									placeholder="{{
-										'INVOICES_PAGE.DUE_DATE' | translate
-									}}"
+									[placeholder]="'INVOICES_PAGE.DUE_DATE' | translate"
 									[nbDatepicker]="dueDatePicker"
 									formControlName="dueDate"
 									id="inputDueDate"
@@ -358,10 +356,10 @@
 							<div class="form-group">
 								<div class="buttons">
 									<button
-                    class="gen"
+                    					class="gen"
 										(click)="generateTable()"
 										status="basic"
-                    outline
+                    					outline
 										[disabled]="!invoiceType"
 										nbButton
 									>
@@ -589,6 +587,7 @@
 					(createConfirm)="onCreateConfirm($event)"
 					(editConfirm)="onEditConfirm($event)"
 					(deleteConfirm)="onDeleteConfirm($event)"
+					#invoiceItemTable
 				></ng2-smart-table>
 			</div>
 
