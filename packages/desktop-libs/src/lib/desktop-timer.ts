@@ -395,8 +395,10 @@ export default class Timerhandler {
 		log.info(`Config: ${moment().format()}`, config);
 		const { id: lastTimerId, timeLogId } = this.lastTimer;
 		const durationNow = now.diff(moment(lastTimeSlot), 'seconds');
-		const durationNonAfk = durationNow - dataCollection.durationAfk;
-
+		let durationNonAfk = durationNow - dataCollection.durationAfk;
+		if (!projectInfo.aw.isAw || !appSetting.awIsConnected || dataCollection.allActivities.length === 0) {
+			durationNonAfk = 0;
+		}
 		switch (
 			appSetting.SCREENSHOTS_ENGINE_METHOD ||
 			config.SCREENSHOTS_ENGINE_METHOD
@@ -425,7 +427,9 @@ export default class Timerhandler {
 					idsWakatime: dataCollection.idsWakatime,
 					duration: durationNow,
 					durationNonAfk: durationNonAfk < 0 ? 0 : durationNonAfk,
-					activeWindow: detectActiveWindow()
+					activeWindow: detectActiveWindow(),
+					isAw: projectInfo.aw.isAw,
+					isAwConnected: appSetting.awIsConnected
 				});
 				break;
 			case 'ScreenshotDesktopLib':
@@ -453,7 +457,9 @@ export default class Timerhandler {
 					idsWakatime: dataCollection.idsWakatime,
 					duration: durationNow,
 					durationNonAfk: durationNonAfk < 0 ? 0 : durationNonAfk,
-					activeWindow: null
+					activeWindow: null,
+					isAw: projectInfo.aw.isAw,
+					isAwConnected: appSetting.awIsConnected
 				});
 				break;
 			default:
