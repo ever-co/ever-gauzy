@@ -42,7 +42,6 @@ import { ProjectOrganizationGridComponent } from '../../@shared/table-components
 import { ProjectOrganizationGridDetailsComponent } from '../../@shared/table-components/project-organization-grid-details/project-organization-grid-details.component';
 import { TagsColorFilterComponent } from '../../@shared/table-filters';
 import { ProjectOrganizationEmployeesComponent } from '../../@shared/table-components/project-organization-employees/project-organization-employees.component';
-import { values } from 'underscore';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
