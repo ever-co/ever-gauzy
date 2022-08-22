@@ -89,28 +89,6 @@ export class InviteController {
 		);
 	}
 
-	@ApiOperation({ summary: 'Get invite.' })
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Found invite',
-		type: Invite
-	})
-	@ApiResponse({
-		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
-	})
-	@Get('validate')
-	@Public()
-	async validateInvite(
-		@Query('data', ParseJsonPipe) data: any
-	): Promise<Invite> {
-		const { relations, findInput: { email, token } } = data;
-		if (!email && !token) {
-			throw new BadRequestException('Email & Token Mandatory');
-		}
-		return await this.inviteService.validate(relations, email, token);
-	}
-
 	@ApiOperation({ summary: 'Find all invites.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
