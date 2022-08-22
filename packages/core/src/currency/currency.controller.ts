@@ -1,7 +1,7 @@
 import { Controller, Get, HttpStatus } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { IPagination } from '@gauzy/contracts';
-import { Public } from './../shared/decorators';
+import { Public } from '@gauzy/common';
 import { Currency } from './currency.entity';
 import { CurrencyService } from './currency.service';
 

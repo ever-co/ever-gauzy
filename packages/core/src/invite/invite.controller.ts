@@ -36,9 +36,10 @@ import {
 import { UpdateResult } from 'typeorm';
 import { Request } from 'express';
 import { I18nLang } from 'nestjs-i18n';
+import { Public } from '@gauzy/common';
 import { Invite } from './invite.entity';
 import { InviteService } from './invite.service';
-import { LanguageDecorator, Permissions, Public } from './../shared/decorators';
+import { LanguageDecorator, Permissions } from './../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { TransformInterceptor } from './../core/interceptors';

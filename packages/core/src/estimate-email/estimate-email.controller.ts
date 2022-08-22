@@ -1,10 +1,10 @@
-import { CrudController } from './../core/crud';
 import { ApiTags } from '@nestjs/swagger';
 import { Controller, Get, Query, BadRequestException } from '@nestjs/common';
+import { Public } from '@gauzy/common';
 import { EstimateEmail } from './estimate-email.entity';
 import { EstimateEmailService } from './estimate-email.service';
+import { CrudController } from './../core/crud';
 import { ParseJsonPipe } from './../shared/pipes';
-import { Public } from './../shared/decorators';
 
 @ApiTags('EstimateEmail')
 @Controller()
