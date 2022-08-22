@@ -14,15 +14,6 @@ export class OrganizationSubscriber implements EntitySubscriberInterface<Organiz
     }
 
     /**
-    * Called after entity is loaded.
-    */
-    afterLoad(entity: Organization) {
-        if (!entity.brandColor) {
-            entity.brandColor = faker.internet.color();
-        }
-    }
-
-    /**
      * Called before organization insertion.
      */
     beforeInsert(event: InsertEvent<Organization>) {
@@ -31,9 +22,11 @@ export class OrganizationSubscriber implements EntitySubscriberInterface<Organiz
             if(entity.name || entity.officialName) {
                 entity.profile_link = generateSlug(`${entity.name || entity.officialName}`);
             }
- 
             if (!entity.imageUrl) {
                 entity.imageUrl = getOrganizationDummyImage(entity.name || entity.officialName);
+            }
+            if (!entity.brandColor) {
+                entity.brandColor = faker.internet.color();
             }
         }
     }

@@ -6,6 +6,7 @@ import { AuthService } from '../auth/auth.service';
 import { EmailModule } from '../email/email.module';
 import { EmailService } from '../email/email.service';
 import { CommandHandlers } from './commands/handlers';
+import { QueryHandlers } from './queries/handlers';
 import { TenantModule } from '../tenant/tenant.module';
 import { RoleModule } from './../role/role.module';
 import { UserModule } from './../user/user.module';
@@ -40,9 +41,10 @@ import { InviteService } from './invite.service';
 	controllers: [InviteController],
 	providers: [
 		InviteService,
-		...CommandHandlers,
 		AuthService,
 		EmailService,
+		...CommandHandlers,
+		...QueryHandlers,
 	],
 	exports: [
 		TypeOrmModule,

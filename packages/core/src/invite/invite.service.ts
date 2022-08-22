@@ -18,10 +18,11 @@ import {
 	IInvite,
 	InvitationTypeEnum
 } from '@gauzy/contracts';
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { sign } from 'jsonwebtoken';
-import { Brackets, In, IsNull, MoreThanOrEqual, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
+import { Brackets, FindOptionsWhere, In, IsNull, MoreThanOrEqual, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
+import { isNotEmpty } from '@gauzy/common';
 import { TenantAwareCrudService } from './../core/crud';
 import { Invite } from './invite.entity';
 import { EmailService } from '../email/email.service';
@@ -326,43 +327,58 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 		return createdInvite;
 	}
 
+	/**
+	 * Check, if invite exist or expired for user
+	 *
+	 * @param where
+	 * @param relations
+	 * @returns
+	 */
 	async validate(
-		relations: [] = [],
-		email: string,
-		token: string
+		where: FindOptionsWhere<Invite>,
+		relations: string[] = []
 	): Promise<IInvite> {
-		const query = this.repository.createQueryBuilder();
-		query.setFindOptions({
-			...(
-				(relations) ? {
-					relations: relations
-				} : {}
-			),
-		});
-		query.where((qb: SelectQueryBuilder<Invite>) => {
-			qb.andWhere(
-				new Brackets((web: WhereExpressionBuilder) => {
-					web.where(
-						[
-							{
-								expireDate: MoreThanOrEqual(new Date())
-							},
-							{
-								expireDate: IsNull()
-							}
-						]
-					);
+		try {
+			const query = this.repository.createQueryBuilder();
+			query.setFindOptions({
+				select: {
+					id: true,
+					email: true,
+					organization: {
+						id: true,
+						name: true
+					}
+				},
+				...(
+					(isNotEmpty(relations)) ? {
+						relations: relations
+					} : {}
+				),
+			});
+			query.where((qb: SelectQueryBuilder<Invite>) => {
+				qb.where({
+					...where,
+					status: InviteStatusEnum.INVITED
 				})
-			);
-			qb.andWhere(
-				new Brackets((web: WhereExpressionBuilder) => {
-					web.andWhere(`"${qb.alias}"."email" = :email`, { email });
-					web.andWhere(`"${qb.alias}"."token" = :token`, { token });
-					web.andWhere(`"${qb.alias}"."status" = :status`, { status: InviteStatusEnum.INVITED });
-				})
-			);
-		});
-		return await query.getOne();
+				qb.andWhere(
+					new Brackets((web: WhereExpressionBuilder) => {
+						web.where(
+							[
+								{
+									expireDate: MoreThanOrEqual(new Date())
+								},
+								{
+									expireDate: IsNull()
+								}
+							]
+						);
+					})
+				);
+			});
+			return await query.getOneOrFail();
+		} catch (error) {
+			throw new BadRequestException();
+		}
 	}
 
 	createToken(email): string {
