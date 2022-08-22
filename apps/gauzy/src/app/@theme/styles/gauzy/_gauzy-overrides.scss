@@ -288,7 +288,6 @@ $default-box-shadow: var(--gauzy-shadow);
         .btn-group {
           padding: 4px 0px 3px 0px;
           box-shadow: 0px 1px 1px 0px rgba(0, 0, 0, 0.1) inset;
-          background-color: nb-theme(background-basic-color-1);
           border-radius: nb-theme(button-rectangle-border-radius);
 
           .fc-next-button,
