@@ -73,42 +73,42 @@ export abstract class CrudService<T extends BaseEntity>
 	 * Also counts all entities that match given conditions,
 	 * But includes pagination settings
 	 *
-	 * @param filter
+	 * @param options
 	 * @returns
 	 */
-	public async paginate(filter?: any): Promise<IPagination<T>> {
+	public async paginate(options?: any): Promise<IPagination<T>> {
 		try {
 			const query = this.repository.createQueryBuilder(
 				this.repository.metadata.tableName
 			);
 			query.setFindOptions({
-				skip: filter && filter.skip ? (filter.take * (filter.skip - 1)) : 0,
-				take: filter && filter.take ? (filter.take) : 10
+				skip: options && options.skip ? (options.take * (options.skip - 1)) : 0,
+				take: options && options.take ? (options.take) : 10
 			});
-			if (filter) {
-				if (filter.orderBy && filter.order) {
+			if (options) {
+				if (options.orderBy && options.order) {
 					query.setFindOptions({
 						order: {
-							[filter.orderBy]: filter.order
+							[options.orderBy]: options.order
 						}
 					});
-				} else if (filter.orderBy) {
-					query.setFindOptions({ order: filter.orderBy });
+				} else if (options.orderBy) {
+					query.setFindOptions({ order: options.orderBy });
 				}
-				if (isNotEmpty(filter.join)) {
-					query.setFindOptions({ join: filter.join });
+				if (isNotEmpty(options.join)) {
+					query.setFindOptions({ join: options.join });
 				}
-				if (filter.relations) {
-					query.setFindOptions({ relations: filter.relations });
+				if (options.relations) {
+					query.setFindOptions({ relations: options.relations });
 				}
 			}
 			query.where((query: SelectQueryBuilder<T>) => {
-				if (filter && (filter.filters || filter.where)) {
-					if (filter.where) {
+				if (options && (options.filters || options.where)) {
+					if (options.where) {
 						const wheres: any = {}
-						for (const field in filter.where) {
-							if (Object.prototype.hasOwnProperty.call(filter.where, field)) {
-								wheres[field] = filter.where[field];
+						for (const field in options.where) {
+							if (Object.prototype.hasOwnProperty.call(options.where, field)) {
+								wheres[field] = options.where[field];
 							}
 						}
 						filterQuery(query, wheres);
@@ -117,7 +117,7 @@ export abstract class CrudService<T extends BaseEntity>
 				const tenantId = RequestContext.currentTenantId();
 				query.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
 			});
-			console.log(filter, moment().format('DD.MM.YYYY HH:mm:ss'));
+			console.log(options, moment().format('DD.MM.YYYY HH:mm:ss'));
 			const [items, total] = await query.getManyAndCount();
 			return { items, total };
 		} catch (error) {
@@ -146,12 +146,27 @@ export abstract class CrudService<T extends BaseEntity>
 	): Promise<ITryRequest<T>> {
 		try {
 			const record = await this.repository.findOneOrFail({
-				select: options.select,
+				...(
+					(options && options.select) ? {
+						select: options.select
+					} : {}
+				),
 				where: {
-					id: id,
-					...options.where
+					id,
+					...(
+						(options && options.where) ? options.where : {}
+					)
 				},
-				relations: options.relations,
+				...(
+					(options && options.relations) ? {
+						relations: options.relations
+					} : []
+				),
+				...(
+					(options && options.order) ? {
+						order: options.order
+					} : {}
+				),
 			} as FindOneOptions<T>);
 			return {
 				success: true,
@@ -235,13 +250,27 @@ export abstract class CrudService<T extends BaseEntity>
 		options?: FindOneOptions<T>
 	): Promise<T> {
 		const record = await this.repository.findOne({
-			select: options.select,
+			...(
+				(options && options.select) ? {
+					select: options.select
+				} : {}
+			),
 			where: {
 				id,
-				...options.where
+				...(
+					(options && options.where) ? options.where : {}
+				)
 			},
-			relations: options.relations,
-			order: options.order
+			...(
+				(options && options.relations) ? {
+					relations: options.relations
+				} : []
+			),
+			...(
+				(options && options.order) ? {
+					order: options.order
+				} : {}
+			),
 		} as FindOneOptions<T>);
 		if (!record) {
 			throw new NotFoundException(`The requested record was not found`);
