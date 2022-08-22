@@ -43,9 +43,10 @@ import { ServerDataSource } from '../../../@core/utils/smart-table/server.data-s
 	templateUrl: './event-type.component.html',
 	styleUrls: ['event-type.component.scss']
 })
-export class EventTypeComponent extends PaginationFilterBaseComponent 
-	implements AfterViewInit, OnInit, OnDestroy {
-
+export class EventTypeComponent
+	extends PaginationFilterBaseComponent
+	implements AfterViewInit, OnInit, OnDestroy
+{
 	smartTableSource: ServerDataSource;
 	smartTableSettings: object;
 	localDataSource = new LocalDataSource();
@@ -62,6 +63,7 @@ export class EventTypeComponent extends PaginationFilterBaseComponent
 	eventTypes$: Subject<any> = new Subject();
 
 	defaultEventTypes: IEventTypeViewModel[] = DEFAULT_EVENT_TYPE;
+	private _refresh$: Subject<any> = new Subject();
 
 	eventTypesTable: Ng2SmartTableComponent;
 	@ViewChild('eventTypesTable') set content(content: Ng2SmartTableComponent) {
@@ -116,14 +118,31 @@ export class EventTypeComponent extends PaginationFilterBaseComponent
 					this.selectedEmployeeId = employee ? employee.id : null;
 					this.eventTypes$.next(true);
 				}),
+				tap(() => this._refresh$.next(true)),
+				tap(() => this.eventTypes$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
 		this.route.queryParamMap
 			.pipe(
-				filter((params) => !!params && params.get('openAddDialog') === 'true'),
+				filter(
+					(params) =>
+						!!params && params.get('openAddDialog') === 'true'
+				),
 				debounceTime(1000),
 				tap(() => this.openAddEventTypeDialog()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this._refresh$
+			.pipe(
+				filter(
+					() =>
+						this.dataLayoutStyle ===
+						ComponentLayoutStyleEnum.CARDS_GRID
+				),
+				tap(() => this.refreshPagination()),
+				tap(() => (this.eventTypes = [])),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -146,8 +165,16 @@ export class EventTypeComponent extends PaginationFilterBaseComponent
 			.componentLayout$(this.viewComponentName)
 			.pipe(
 				distinctUntilChange(),
-				tap((componentLayout) => (this.dataLayoutStyle = componentLayout)),
+				tap(
+					(componentLayout) =>
+						(this.dataLayoutStyle = componentLayout)
+				),
 				tap(() => this.refreshPagination()),
+				filter(
+					(componentLayout) =>
+						componentLayout === ComponentLayoutStyleEnum.CARDS_GRID
+				),
+				tap(() => (this.eventTypes = [])),
 				tap(() => this.eventTypes$.next(true)),
 				untilDestroyed(this)
 			)
@@ -181,6 +208,7 @@ export class EventTypeComponent extends PaginationFilterBaseComponent
 			this.toastrService.success('NOTES.EVENT_TYPES.ADD_EVENT_TYPE', {
 				name: title
 			});
+			this._refresh$.next(true);
 			this.eventTypes$.next(true);
 		} catch (error) {
 			this.errorHandler.handleError(error);
@@ -231,6 +259,7 @@ export class EventTypeComponent extends PaginationFilterBaseComponent
 				} catch (error) {
 					this.errorHandler.handleError(error);
 				} finally {
+					this._refresh$.next(true);
 					this.eventTypes$.next(true);
 				}
 			});
@@ -275,11 +304,13 @@ export class EventTypeComponent extends PaginationFilterBaseComponent
 								);
 							})
 							.finally(() => {
+								this._refresh$.next(true);
 								this.eventTypes$.next(true);
 							});
 					} catch (error) {
 						this.errorHandler.handleError(error);
 					} finally {
+						this._refresh$.next(true);
 						this.eventTypes$.next(true);
 					}
 				}
@@ -412,23 +443,25 @@ export class EventTypeComponent extends PaginationFilterBaseComponent
 		}
 		try {
 			this.setSmartTableSource();
-			
+
 			const { activePage, itemsPerPage } = this.getPagination();
 			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
 
-			if (
-				this.dataLayoutStyle ===
-				this.componentLayoutStyleEnum.CARDS_GRID
-			) {
+			if (this._isGridLayout) {
 				// Initiate GRID view pagination
 				await this.smartTableSource.getElements();
-				this.eventTypes = this.mapEventTypes();
+				const data = this.mapEventTypes();
+				this.eventTypes.push(...data);
 			}
 		} catch (error) {
 			this.toastrService.danger(error);
 		}
 	}
-
+	private get _isGridLayout(): boolean {
+		return (
+			this.dataLayoutStyle === this.componentLayoutStyleEnum.CARDS_GRID
+		);
+	}
 	/**
 	 * Map default types & organization event types
 	 *
