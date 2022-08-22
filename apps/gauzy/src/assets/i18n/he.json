@@ -157,6 +157,7 @@
 			"INVENTORY": "You have not created any inventory.",
 			"MERCHANT": "You have not created any merchant.",
 			"WAREHOUSE": "You have not created any warehouse.",
+			"WAREHOUSE_PRODUCT": "No warehouse products here.",
 			"PRODUCT_CATEGORY": "You have not created any product category.",
 			"TAGS": "You have not created any tag.",
 			"PROJECT": "You have not created any project.",
