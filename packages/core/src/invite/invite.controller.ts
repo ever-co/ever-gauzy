@@ -13,6 +13,7 @@ import {
 	Body,
 	Controller,
 	Get,
+	Headers,
 	HttpCode,
 	HttpStatus,
 	Post,
@@ -26,7 +27,7 @@ import {
 	UsePipes,
 	ValidationPipe
 } from '@nestjs/common';
-import { CommandBus } from '@nestjs/cqrs';
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import {
 	ApiOperation,
 	ApiResponse,
@@ -44,14 +45,14 @@ import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { TransformInterceptor } from './../core/interceptors';
 import {
-	InviteAcceptEmployeeCommand,
+	InviteAcceptCommand,
 	InviteAcceptOrganizationContactCommand,
-	InviteAcceptUserCommand,
 	InviteBulkCreateCommand,
 	InviteOrganizationContactCommand,
 	InviteResendCommand
 } from './commands';
-import { CreateInviteDTO } from './dto';
+import { CreateInviteDTO, FindInviteQueryDTO } from './dto';
+import { FindPublicInviteByEmailTokenQuery } from './queries';
 
 @ApiTags('Invite')
 @UseInterceptors(TransformInterceptor)
@@ -59,7 +60,8 @@ import { CreateInviteDTO } from './dto';
 export class InviteController {
 	constructor(
 		private readonly inviteService: InviteService,
-		private readonly commandBus: CommandBus
+		private readonly commandBus: CommandBus,
+		private readonly queryBus: QueryBus
 	) {}
 
 	@ApiOperation({ summary: 'Create email invites' })
@@ -89,6 +91,52 @@ export class InviteController {
 		);
 	}
 
+	@ApiOperation({ summary: 'Get invite.' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found invite',
+		type: Invite
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Public()
+	@Get('validate')
+	async validateInvite(@Query() options: FindInviteQueryDTO) {
+		return await this.queryBus.execute(
+			new FindPublicInviteByEmailTokenQuery({
+				email: options.email,
+				token: options.token
+			}, options.relations)
+		);
+	}
+
+	@ApiOperation({ summary: 'Accept employee/user/candidate invite.' })
+	@ApiResponse({
+		status: HttpStatus.CREATED,
+		description: 'The record has been successfully exceuted.'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description:
+			'Invalid input, The response body may contain clues as to what went wrong'
+	})
+	@Public()
+	@Post('accept')
+	async acceptInvitation(
+		@Body() entity: IInviteAcceptInput,
+		@Headers('origin') origin: string,
+		@I18nLang() languageCode: LanguagesEnum
+	) {
+		return await this.commandBus.execute(
+			new InviteAcceptCommand({
+				...entity,
+				originalUrl: origin
+			}, languageCode)
+		);
+	}
+
 	@ApiOperation({ summary: 'Find all invites.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -113,52 +161,6 @@ export class InviteController {
 			where: findInput,
 			relations
 		});
-	}
-
-	@ApiOperation({ summary: 'Accept employee invite.' })
-	@ApiResponse({
-		status: HttpStatus.CREATED,
-		description: 'The record has been successfully created.'
-	})
-	@ApiResponse({
-		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
-	})
-	@Post('employee')
-	@Public()
-	async acceptEmployeeInvite(
-		@Body() entity: IInviteAcceptInput,
-		@Req() request: Request,
-		@I18nLang() languageCode: LanguagesEnum
-	): Promise<UpdateResult | Invite> {
-		entity.originalUrl = request.get('Origin');
-		return this.commandBus.execute(
-			new InviteAcceptEmployeeCommand(entity, languageCode)
-		);
-	}
-
-	@ApiOperation({ summary: 'Accept user invite.' })
-	@ApiResponse({
-		status: HttpStatus.CREATED,
-		description: 'The record has been successfully created.'
-	})
-	@ApiResponse({
-		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
-	})
-	@Post('user')
-	@Public()
-	async acceptUserInvite(
-		@Body() entity: IInviteAcceptInput,
-		@Req() request: Request,
-		@I18nLang() languageCode: LanguagesEnum
-	): Promise<UpdateResult | Invite> {
-		entity.originalUrl = request.get('Origin');
-		return this.commandBus.execute(
-			new InviteAcceptUserCommand(entity, languageCode)
-		);
 	}
 
 	@ApiOperation({ summary: 'Accept organization contact invite.' })
