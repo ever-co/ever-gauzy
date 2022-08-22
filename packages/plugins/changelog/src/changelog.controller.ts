@@ -22,9 +22,9 @@ import {
 import {
 	AuthGuard,
 	CrudController,
-	Public,
 	UUIDValidationPipe
 } from '@gauzy/core';
+import { Public } from '@gauzy/common';
 import { Changelog } from './changelog.entity';
 import { ChangelogService } from './changelog.service';
 import { ChangelogCreateCommand, ChangelogUpdateCommand } from './commands';

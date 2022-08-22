@@ -1,11 +1,11 @@
 import { Controller, Get, HttpStatus, Res } from '@nestjs/common';
 import { Response } from 'express';
 import * as moment from 'moment';
-import { Public } from './../shared/decorators';
+import { Public } from '@gauzy/common';
 
 @Controller()
 export class HomeController {
-	
+
 	@Get('/')
 	@Public()
 	async home(@Res() res: Response) {

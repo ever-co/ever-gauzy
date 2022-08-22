@@ -23,7 +23,6 @@ import {
 	Put,
 	Req,
 	UseInterceptors,
-	UsePipes,
 	ValidationPipe
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
@@ -36,9 +35,10 @@ import {
 import { UpdateResult } from 'typeorm';
 import { Request } from 'express';
 import { I18nLang } from 'nestjs-i18n';
+import { Public } from '@gauzy/common';
 import { Invite } from './invite.entity';
 import { InviteService } from './invite.service';
-import { LanguageDecorator, Permissions, Public } from './../shared/decorators';
+import { LanguageDecorator, Permissions } from './../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { TransformInterceptor } from './../core/interceptors';
@@ -71,13 +71,13 @@ export class InviteController {
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
-	@HttpCode(HttpStatus.CREATED)
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_INVITE_EDIT)
 	@Post('/emails')
-	@UsePipes(new ValidationPipe({ transform: true }))
 	async createManyWithEmailsId(
-		@Body() entity: CreateInviteDTO,
+		@Body(new ValidationPipe({
+			transform: true
+		})) entity: CreateInviteDTO,
 		@LanguageDecorator() languageCode: LanguagesEnum
 	): Promise<ICreateEmailInvitesOutput> {
 		return await this.commandBus.execute(
@@ -86,28 +86,6 @@ export class InviteController {
 				languageCode
 			)
 		);
-	}
-
-	@ApiOperation({ summary: 'Get invite.' })
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Found invite',
-		type: Invite
-	})
-	@ApiResponse({
-		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
-	})
-	@Get('validate')
-	@Public()
-	async validateInvite(
-		@Query('data', ParseJsonPipe) data: any
-	): Promise<Invite> {
-		const { relations, findInput: { email, token } } = data;
-		if (!email && !token) {
-			throw new BadRequestException('Email & Token Mandatory');
-		}
-		return await this.inviteService.validate(relations, email, token);
 	}
 
 	@ApiOperation({ summary: 'Find all invites.' })
@@ -153,9 +131,11 @@ export class InviteController {
 		@Req() request: Request,
 		@I18nLang() languageCode: LanguagesEnum
 	): Promise<UpdateResult | Invite> {
-		entity.originalUrl = request.get('Origin');
 		return this.commandBus.execute(
-			new InviteAcceptEmployeeCommand(entity, languageCode)
+			new InviteAcceptEmployeeCommand({
+				...entity,
+				originalUrl: request.get('Origin')
+			}, languageCode)
 		);
 	}
 

@@ -21,12 +21,12 @@ import {
 	IAuthResponse,
 	LanguagesEnum
 } from '@gauzy/contracts';
+import { Public } from '@gauzy/common';
 import { AuthService } from './auth.service';
 import { User as IUser } from '../user/user.entity';
 import { AuthLoginCommand, AuthRegisterCommand } from './commands';
 import { RequestContext } from '../core/context';
 import { TransformInterceptor } from './../core/interceptors';
-import { Public } from './../shared/decorators';
 import { AuthRefreshGuard } from './../shared/guards';
 import { ChangePasswordRequestDTO, ResetPasswordRequestDTO } from './../password-reset/dto';
 import { LoginUserDTO, RegisterUserDTO } from './../user/dto';

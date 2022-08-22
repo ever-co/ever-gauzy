@@ -8,8 +8,8 @@ import {
 } from '@gauzy/contracts';
 import { ApiTags } from '@nestjs/swagger';
 import { ConfigService } from '@gauzy/config';
+import { Public } from '@gauzy/common';
 import { UUIDValidationPipe } from './../shared/pipes';
-import { Public } from './../shared/decorators';
 import { HubstaffService } from './hubstaff.service';
 
 @ApiTags('Integrations')
@@ -22,11 +22,11 @@ export class HubstaffController {
 
 	/**
 	 * Hubstaff Integration Authorization Flow Callback
-	 * 
-	 * @param code 
-	 * @param state 
-	 * @param res 
-	 * @returns 
+	 *
+	 * @param code
+	 * @param state
+	 * @param res
+	 * @returns
 	 */
 	@Public()
 	@Get('callback')

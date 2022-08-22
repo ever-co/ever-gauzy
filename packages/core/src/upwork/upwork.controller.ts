@@ -24,11 +24,11 @@ import {
 	IPagination
 } from '@gauzy/contracts';
 import { ConfigService } from '@gauzy/config';
+import { Public } from '@gauzy/common';
 import { UpworkTransactionService } from './upwork-transaction.service';
 import { UpworkService } from './upwork.service';
 import { Expense, Income } from './../core/entities/internal';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
-import { Public } from './../shared/decorators';
 
 @ApiTags('Integrations')
 @Controller()
@@ -41,11 +41,11 @@ export class UpworkController {
 
 	/**
 	 * Upwork Integration Authorization Flow Callback
-	 * 
-	 * @param oauth_token 
-	 * @param oauth_verifier 
-	 * @param res 
-	 * @returns 
+	 *
+	 * @param oauth_token
+	 * @param oauth_verifier
+	 * @param res
+	 * @returns
 	 */
 	@Public()
 	@Get('callback')
