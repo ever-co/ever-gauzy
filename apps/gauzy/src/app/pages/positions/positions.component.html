@@ -24,20 +24,22 @@
 				positions?.length
 			"
 		>
-			<nb-card class="p-0" *ngFor="let position of positions">
-				<nb-card-body
-					class="custom-table"
-					[ngClass]="
-						selected?.state && position === selected?.position
-							? 'custom-table selected'
-							: 'custom-table'
-					"
-					(click)="selectPosition(position)"
-				>
-					<ga-notes-with-tags [rowData]="position">
-					</ga-notes-with-tags>
-				</nb-card-body>
-			</nb-card>
+			<div class="table-scroll-container">
+				<nb-card class="p-0" *ngFor="let position of positions">
+					<nb-card-body
+						class="custom-table"
+						[ngClass]="
+							selected?.state && position === selected?.position
+								? 'custom-table selected'
+								: 'custom-table'
+						"
+						(click)="selectPosition(position)"
+					>
+						<ga-notes-with-tags [rowData]="position">
+						</ga-notes-with-tags>
+					</nb-card-body>
+				</nb-card>
+			</div>
 		</ng-template>
 		<ng-template
 			[ngIf]="
@@ -48,19 +50,16 @@
 			<ga-card-grid
 				[settings]="settingsSmartTable"
 				[source]="positions"
-				[doEmit]="false"
-				[totalItems]="pagination?.totalItems"
-				[itemsPerPage]="pagination?.itemsPerPage"
-				[activePage]="pagination?.activePage"
 				(onSelectedItem)="selectPosition($event)"
-				(selectedOption)="onUpdateOption($event)"
-				(selectedPage)="onPageChange($event)"
+				(scroll)="onScroll()"
 			></ga-card-grid>
 		</ng-template>
 		<ng-template [ngIf]="!loading && positions?.length == 0">
-			<ngx-no-data-message 
-				[message]="'ORGANIZATIONS_PAGE.POSITION_NO_DATA_MESSAGE'"
-			></ngx-no-data-message>
+			<div class="no-data">
+				<ngx-no-data-message
+					[message]="'ORGANIZATIONS_PAGE.POSITION_NO_DATA_MESSAGE'"
+				></ngx-no-data-message>
+			</div>
 		</ng-template>
 	</nb-card-body>
 </nb-card>
