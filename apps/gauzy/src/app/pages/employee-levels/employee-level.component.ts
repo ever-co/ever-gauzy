@@ -120,7 +120,6 @@ export class EmployeeLevelComponent
 			tenantId,
 			organizationId
 		});
-		this.loading = false;
 		if (items) {
 			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
 			this.smartTableSource.load(items);
@@ -129,6 +128,7 @@ export class EmployeeLevelComponent
 			} else this.employeeLevels = items;
 		}
 		await this.emptyListInvoke();
+		this.loading = false;
 	}
 
 	private async _loadGridLayoutData() {
@@ -149,6 +149,7 @@ export class EmployeeLevelComponent
 			.componentLayout$(this.viewComponentName)
 			.pipe(
 				distinctUntilChange(),
+				tap(() => this.refreshPagination()),
 				tap(() => (this.employeeLevels = [])),
 				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)

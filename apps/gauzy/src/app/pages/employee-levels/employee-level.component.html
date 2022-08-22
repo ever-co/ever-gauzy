@@ -17,7 +17,11 @@
 			</ngx-gauzy-button-action>
 		</div>
 	</nb-card-header>
-	<nb-card-body>
+	<nb-card-body
+		[nbSpinner]="loading"
+		nbSpinnerStatus="primary"
+		nbSpinnerSize="large"
+	>
 		<ng-template
 			[ngIf]="
 				employeeLevels?.length &&
