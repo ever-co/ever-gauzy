@@ -12,7 +12,7 @@ export interface IInvite extends IBasePerTenantAndOrganizationEntityModel {
 	email: string;
 	roleId: string;
 	invitedById: string;
-	status: string;
+	status: InviteStatusEnum;
 	expireDate: Date;
 	actionDate?: Date;
 	role?: IRole;
@@ -86,7 +86,8 @@ export interface IInviteUpdateInput {
 
 export enum InviteStatusEnum {
 	INVITED = 'INVITED',
-	ACCEPTED = 'ACCEPTED'
+	ACCEPTED = 'ACCEPTED',
+	FAILED = 'FAILED'
 }
 
 export enum InvitationTypeEnum {

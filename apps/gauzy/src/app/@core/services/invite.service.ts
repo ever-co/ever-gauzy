@@ -11,6 +11,7 @@ import {
 	IOrganizationContact,
 	IOrganizationContactAcceptInviteInput
 } from '@gauzy/contracts';
+import { toParams } from '@gauzy/common-angular';
 import { firstValueFrom } from 'rxjs';
 import { API_PREFIX } from '../constants/app.constants';
 
@@ -49,14 +50,12 @@ export class InviteService {
 
 	validateInvite(
 		relations: string[],
-		findInput: IPublicInviteFindInput
+		where: IPublicInviteFindInput
 	): Promise<IInvite> {
-		const data = JSON.stringify({ relations, findInput });
-
 		return firstValueFrom(
 			this.http
 			.get<IInvite>(`${API_PREFIX}/invite/validate`, {
-				params: { data }
+				params: toParams({ ...where, relations })
 			})
 		);
 	}
@@ -68,22 +67,9 @@ export class InviteService {
 		);
 	}
 
-	acceptEmployeeInvite(acceptInviteInput: IInviteAcceptInput): Promise<any> {
+	acceptInvite(input: IInviteAcceptInput): Promise<IInvite> {
 		return firstValueFrom(
-			this.http
-			.post(`${API_PREFIX}/invite/employee`, acceptInviteInput)
-		);
-	}
-	acceptCandidateInvite(acceptInviteInput: IInviteAcceptInput): Promise<any> {
-		return firstValueFrom(
-			this.http
-			.post(`${API_PREFIX}/invite/candidate`, acceptInviteInput)
-		);
-	}
-	acceptUserInvite(acceptInviteInput: IInviteAcceptInput): Promise<any> {
-		return firstValueFrom(
-			this.http
-			.post(`${API_PREFIX}/invite/user`, acceptInviteInput)
+			this.http.post<IInvite>(`${API_PREFIX}/invite/accept`, input)
 		);
 	}
 
