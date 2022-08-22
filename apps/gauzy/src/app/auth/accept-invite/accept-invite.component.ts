@@ -25,7 +25,7 @@ export class AcceptInvitePage
 		private readonly toastrService: ToastrService,
 		private readonly inviteService: InviteService,
 		private readonly route: ActivatedRoute,
-		private translate: TranslateService
+		private readonly translate: TranslateService
 	) {
 		super(translate);
 	}
@@ -43,11 +43,11 @@ export class AcceptInvitePage
 
 	loadInvite = async (email: string, token: string) => {
 		try {
-			this.invitation = await this.inviteService.validateInvite(['role', 'organization'], {
+			this.invitation = await this.inviteService.validateInvite(['organization'], {
 				email,
 				token
 			});
-			if (!this.invitation) {
+			if (this.invitation.status) {
 				throw new Error();
 			}
 		} catch (error) {
@@ -59,24 +59,19 @@ export class AcceptInvitePage
 	submitForm = async (input: IUserRegistrationInput) => {
 		try {
 			const { user, password } = input;
-			const { id: inviteId, role, organization } = this.invitation;
-			if (role.name === RolesEnum.EMPLOYEE) {
-				await this.inviteService.acceptEmployeeInvite({ 
-					user,
-					password,
-					organization,
-					inviteId
-				});
-			} else {
-				await this.inviteService.acceptUserInvite({ 
-					user,
-					password,
-					organization,
-					inviteId
-				});
-			}
-			this.toastrService.success('TOASTR.MESSAGE.PROFILE_UPDATED');
-			this.router.navigate(['/auth/login']);
+			const { id: inviteId, organization } = this.invitation;
+			/**
+			 * Accept Invite
+			 */
+			await this.inviteService.acceptInvite({
+				user,
+				password,
+				organization,
+				inviteId
+			}).then(() => {
+				this.toastrService.success('TOASTR.MESSAGE.PROFILE_UPDATED');
+				this.router.navigate(['/auth/login']);
+			});
 		} catch (error) {
 			this.toastrService.danger(
 				error,
