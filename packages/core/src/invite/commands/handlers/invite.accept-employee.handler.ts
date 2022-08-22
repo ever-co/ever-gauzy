@@ -34,19 +34,18 @@ export class InviteAcceptEmployeeHandler
 		command: InviteAcceptEmployeeCommand
 	): Promise<UpdateResult | IInvite> {
 		const { input, languageCode } = command;
-
 		const invite = await this.inviteService.findOneByOptions({
 			where: { id: input.inviteId },
-			relations: [
-				'projects',
-				'organizationContact',
-				'departments',
-				'projects.members',
-				'organizationContact.members',
-				'departments.members'
-			]
+			relations: {
+				projects: true,
+				departments: {
+					members: true
+				},
+				organizationContact: {
+					members: true
+				}
+			}
 		});
-
 		if (!invite) {
 			throw Error('Invite does not exist');
 		}
@@ -56,11 +55,9 @@ export class InviteAcceptEmployeeHandler
 		if (!organization.invitesAllowed) {
 			throw Error('Organization no longer allows invites');
 		}
-
 		if (!input.user.imageUrl) {
 			input.user.imageUrl = getUserDummyImage(input.user);
 		}
-
 		const user = await this.authService.register(
 			{
 				...input,
@@ -106,7 +103,7 @@ export class InviteAcceptEmployeeHandler
 				});
 			});
 		}
-			
+
 		//Update organization Contacts members
 		if (invite.organizationContacts) {
 			invite.organizationContacts.forEach((organizationContact) => {
