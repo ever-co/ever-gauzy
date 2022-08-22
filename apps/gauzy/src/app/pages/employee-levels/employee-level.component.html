@@ -24,20 +24,23 @@
 				dataLayoutStyle === componentLayoutStyleEnum.TABLE
 			"
 		>
-			<nb-card class="p-0" *ngFor="let employee of employeeLevels">
-				<nb-card-body
-					class="custom-table"
-					[ngClass]="
-						selected?.state && employee === selected?.employeeLevel
-							? 'custom-table selected'
-							: 'custom-table'
-					"
-					(click)="selectEmployee(employee)"
-				>
-					<ga-notes-with-tags [rowData]="employee">
-					</ga-notes-with-tags>
-				</nb-card-body>
-			</nb-card>			
+			<div class="table-scroll-container">
+				<nb-card class="p-0" *ngFor="let employee of employeeLevels">
+					<nb-card-body
+						class="custom-table"
+						[ngClass]="
+							selected?.state &&
+							employee === selected?.employeeLevel
+								? 'custom-table selected'
+								: 'custom-table'
+						"
+						(click)="selectEmployee(employee)"
+					>
+						<ga-notes-with-tags [rowData]="employee">
+						</ga-notes-with-tags>
+					</nb-card-body>
+				</nb-card>
+			</div>
 		</ng-template>
 		<ng-template
 			[ngIf]="
@@ -48,19 +51,18 @@
 			<ga-card-grid
 				[settings]="settingsSmartTable"
 				[source]="employeeLevels"
-				[doEmit]="false"
-				[totalItems]="pagination?.totalItems"
-				[itemsPerPage]="pagination?.itemsPerPage"
-				[activePage]="pagination?.activePage"
 				(onSelectedItem)="selectEmployee($event)"
-				(selectedOption)="onUpdateOption($event)"
-				(selectedPage)="onPageChange($event)"
+				(scroll)="onScroll()"
 			></ga-card-grid>
 		</ng-template>
 		<ng-template [ngIf]="!loading && employeeLevels?.length == 0">
-			<ngx-no-data-message 
-				[message]="'ORGANIZATIONS_PAGE.EMPLOYEE_LEVEL_NO_DATA_MESSAGE'"
-			></ngx-no-data-message>			
+			<div class="no-data">
+				<ngx-no-data-message
+					[message]="
+						'ORGANIZATIONS_PAGE.EMPLOYEE_LEVEL_NO_DATA_MESSAGE'
+					"
+				></ngx-no-data-message>
+			</div>
 		</ng-template>
 	</nb-card-body>
 </nb-card>

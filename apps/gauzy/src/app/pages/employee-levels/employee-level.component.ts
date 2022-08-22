@@ -8,7 +8,7 @@ import {
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, Subject } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { LocalDataSource } from 'ng2-smart-table';
 import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
@@ -54,6 +54,7 @@ export class EmployeeLevelComponent
 		employeeLevel: null,
 		state: false
 	};
+	private _refresh$: Subject<any> = new Subject();
 
 	constructor(
 		private readonly employeeLevelService: EmployeeLevelService,
@@ -87,7 +88,16 @@ export class EmployeeLevelComponent
 					(organization: IOrganization) =>
 						(this.organization = organization)
 				),
+				tap(() => this._refresh$.next(true)),
 				tap(() => this.subject$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this._refresh$
+			.pipe(
+				filter(() => this._isGridLayout),
+				tap(() => this.refreshPagination()),
+				tap(() => (this.employeeLevels = [])),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -112,24 +122,25 @@ export class EmployeeLevelComponent
 		});
 		this.loading = false;
 		if (items) {
-			this.employeeLevels = items;
 			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
 			this.smartTableSource.load(items);
-			if (
-				this.componentLayoutStyleEnum.CARDS_GRID ===
-				this.dataLayoutStyle
-			)
+			if (this._isGridLayout) {
 				this._loadGridLayoutData();
+			} else this.employeeLevels = items;
 		}
 		await this.emptyListInvoke();
 	}
 
 	private async _loadGridLayoutData() {
-		this.employeeLevels = await this.smartTableSource.getElements();
-		this.setPagination({
-			...this.getPagination(),
-			totalItems: this.smartTableSource.count()
-		});
+		this.employeeLevels.push(
+			...(await this.smartTableSource.getElements())
+		);
+	}
+
+	private get _isGridLayout(): boolean {
+		return (
+			this.componentLayoutStyleEnum.CARDS_GRID === this.dataLayoutStyle
+		);
 	}
 
 	setView() {
@@ -137,6 +148,8 @@ export class EmployeeLevelComponent
 		this.store
 			.componentLayout$(this.viewComponentName)
 			.pipe(
+				distinctUntilChange(),
+				tap(() => (this.employeeLevels = [])),
 				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
@@ -184,6 +197,7 @@ export class EmployeeLevelComponent
 				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EMPLOYEE_LEVELS.ADD_EMPLOYEE_LEVEL',
 				{ name: level }
 			);
+			this._refresh$.next(true);
 			this.subject$.next(true);
 			this.cancel();
 		} else {
@@ -212,7 +226,7 @@ export class EmployeeLevelComponent
 		this.toastrService.success('TOASTR.MESSAGE.EMPLOYEE_LEVEL_UPDATE', {
 			name: employeeLevelName
 		});
-
+		this._refresh$.next(true);
 		this.subject$.next(true);
 		this.cancel();
 	}
@@ -247,6 +261,7 @@ export class EmployeeLevelComponent
 				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EMPLOYEE_LEVELS.REMOVE_EMPLOYEE_LEVEL',
 				{ name }
 			);
+			this._refresh$.next(true);
 			this.subject$.next(true);
 			this.cancel();
 		}
@@ -269,7 +284,7 @@ export class EmployeeLevelComponent
 		};
 		this.isGridEdit = false;
 		this.tags = [];
-    this.disabled = true;
+		this.disabled = true;
 	}
 
 	selectedTagsEvent(ev) {
