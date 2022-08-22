@@ -327,12 +327,18 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 	}
 
 	async validate(
-		relations,
+		relations: [] = [],
 		email: string,
 		token: string
 	): Promise<IInvite> {
 		const query = this.repository.createQueryBuilder();
-		query.setFindOptions({ relations });
+		query.setFindOptions({
+			...(
+				(relations) ? {
+					relations: relations
+				} : {}
+			),
+		});
 		query.where((qb: SelectQueryBuilder<Invite>) => {
 			qb.andWhere(
 				new Brackets((web: WhereExpressionBuilder) => {
