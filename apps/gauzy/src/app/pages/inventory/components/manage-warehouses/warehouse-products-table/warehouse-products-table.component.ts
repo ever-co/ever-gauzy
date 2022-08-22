@@ -108,6 +108,9 @@ export class WarehouseProductsTableComponent extends TranslationBaseComponent
  	private _loadSmartTableSettings() {
 		this.settingsSmartTable = {
 			actions: false,
+			mode: 'external',
+			editable: true,
+			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.WAREHOUSE_PRODUCT'),
 			columns: {
 				image: {
 					title: this.getTranslation('INVENTORY_PAGE.IMAGE'),
