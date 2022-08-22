@@ -1,15 +1,18 @@
-@import 'gauzy/gauzy-cards';
+@import '../../../../payments/payments.component.scss';
 
 :host nb-card {
   background-color: var(--gauzy-card-2);
   ngx-gauzy-filters {
     margin: 0 -2rem;
   }
-  @include nb-card-overrides(unset, $default-card-height, $default-radius);
-}
-.custom-calendar {
-  max-height: calc($default-card-height - 7.325rem);
-  overflow: auto;
+  nb-card-body {
+    height: calc(100vh - 21.75rem);
+  }
+
+  .custom-calendar {
+    height: 100%;
+    overflow: auto;
+  }
 }
 .add-button {
   position: absolute;
