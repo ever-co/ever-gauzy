@@ -1,1 +1,0 @@
-export * from './find-public-invite-by-email-token.query';
