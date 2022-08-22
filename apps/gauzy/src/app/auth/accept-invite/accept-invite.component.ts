@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { IInvite, RolesEnum, IUserRegistrationInput } from '@gauzy/contracts';
+import { IInvite, IUserRegistrationInput } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { SetLanguageBaseComponent } from '../../@shared/language-base/set-language-base.component';
 import { tap } from 'rxjs/operators';
