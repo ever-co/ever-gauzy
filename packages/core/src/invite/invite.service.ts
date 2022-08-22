@@ -333,14 +333,6 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 	): Promise<IInvite> {
 		const query = this.repository.createQueryBuilder();
 		query.setFindOptions({
-			select: {
-				id: true,
-				organization: {
-					id: true,
-					name: true,
-					officialName: true
-				}
-			},
 			...(
 				(relations) ? {
 					relations: relations
