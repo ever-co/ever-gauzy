@@ -31,6 +31,17 @@ input {
     background-color: transparent;
     margin-right: 0;
   }
+  .ng-select .ng-select-focused .ng-select-container {
+    &:hover,
+    &:focus,
+    &:active,
+    &:visited {
+      box-shadow: var(--gauzy-shadow) inset !important;
+    }
+  }
+  .ng-select .ng-select-container {
+    box-shadow: var(--gauzy-shadow) inset !important;
+  }
 }
 .text {
   overflow-x: hidden;
