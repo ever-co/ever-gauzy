@@ -1,11 +1,11 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService, NbStepperComponent } from '@nebular/theme';
 import { Subject, firstValueFrom } from 'rxjs';
-import { filter, tap } from 'rxjs/operators';
+import { debounceTime, filter, tap } from 'rxjs/operators';
 import { LatLng } from 'leaflet';
 import {
 	ITag,
@@ -14,7 +14,8 @@ import {
 	IImageAsset,
 	IOrganization,
 } from '@gauzy/contracts';
-import { LocationFormComponent, LeafletMapComponent } from './../../../../../@shared/forms';
+import { distinctUntilChange } from '@gauzy/common-angular';
+import { LocationFormComponent, LeafletMapComponent, FormHelpers } from './../../../../../@shared/forms';
 import {
 	ToastrService,
 	Store,
@@ -25,19 +26,17 @@ import {
 import { SelectAssetComponent } from './../../../../../@shared/select-asset-modal/select-asset.component';
 import { TranslationBaseComponent } from './../../../../../@shared/language-base/translation-base.component';
 
-
-
-@UntilDestroy()
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-merchant-form',
 	templateUrl: './merchant-form.component.html',
 	styleUrls: ['./merchant-form.component.scss']
 })
-export class MerchantFormComponent
-	extends TranslationBaseComponent
-	implements OnInit {
+export class MerchantFormComponent extends TranslationBaseComponent
+	implements AfterViewInit, OnInit, OnDestroy {
 
-	merchantId: string;
+	FormHelpers: typeof FormHelpers = FormHelpers;
+
 	organization: IOrganization;
 	hoverState: boolean;
 	warehouses: IWarehouse[] = [];
@@ -45,9 +44,9 @@ export class MerchantFormComponent
 	image: IImageAsset = null;
 	images: IImageAsset[] = [];
 	merchant: IMerchant;
-	
+
 	private newImageUploadedEvent$ = new Subject<any>();
-	
+
 	/**
 	 * Location Mutation Form
 	 */
@@ -61,11 +60,14 @@ export class MerchantFormComponent
 		return fb.group({
 			logo: [],
 			tags: [],
-			name: ['', Validators.required ],
-			code: ['', Validators.required ],
-			currency: ['', Validators.required ],
-			email: ['', Validators.email ],
-			phone: ['', Validators.pattern('^[+]*[(]{0,1}[0-9]{1,4}[)]{0,1}[-\s\./0-9]*$') ],
+			name: [null, Validators.required ],
+			code: [null, Validators.required ],
+			currency: [null, Validators.required ],
+			email: [null, [
+				Validators.required,
+				Validators.email
+			]],
+			phone: [null, Validators.pattern('^[+]*[(]{0,1}[0-9]{1,4}[)]{0,1}[-\s\./0-9]*$') ],
 			fax: [],
 			fiscalInformation: [],
 			website: [],
@@ -110,28 +112,29 @@ export class MerchantFormComponent
 
 
 	ngOnInit(): void {
-		this.route.params
-			.pipe(
-				filter((params) => !!params.id),
-				tap(({ id }) => this.merchantId = id),
-				untilDestroyed(this)
-			)
-			.subscribe(async (params) => {
-				if (params.id) {
-					this.merchant = await this.merchantService.getById(
-						params.id,
-						['logo', 'contact', 'warehouses', 'tags']
-					);					
-					this._patchForm();
-					this._patchLocationForm();
-				}
-			});
 		this.store.selectedOrganization$
 			.pipe(
+				debounceTime(100),
+				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
 				tap((organization: IOrganization) => this.organization = organization),
 				tap(() => this._getWarehouses()),
 				tap(() => this._getAssetsImages()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
+
+	ngAfterViewInit(): void {
+		this.route.data
+			.pipe(
+				debounceTime(100),
+				filter((data) => !!data && !!data.merchant),
+				tap(({ merchant }) => this.merchant = merchant),
+				tap(() => {
+					this._patchForm();
+					this._patchLocationForm();
+				}),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -316,10 +319,5 @@ export class MerchantFormComponent
 		});
 	}
 
-	isInvalidControl(control: string) {
-		if (!this.form.contains(control)) {
-			return true;
-		}
-		return this.form.get(control).touched && this.form.get(control).invalid;
-	}
+	ngOnDestroy(): void {}
 }

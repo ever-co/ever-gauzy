@@ -1,5 +1,6 @@
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import {
+	BadRequestException,
 	Body,
 	Controller,
 	Get,
@@ -164,7 +165,7 @@ export class WarehouseController extends CrudController<Warehouse> {
 	/**
 	 * GET warehouse count
 	 *
-	 * @param filter
+	 * @param options
 	 * @returns
 	 */
 	@ApiOperation({ summary: 'Find all warehouse count in the same tenant' })
@@ -227,20 +228,15 @@ export class WarehouseController extends CrudController<Warehouse> {
 	 * GET warehouse with relations by id
 	 *
 	 * @param id
-	 * @param data
 	 * @returns
 	 */
 	@Permissions(PermissionsEnum.ORG_INVENTORY_VIEW)
 	@Get(':id')
 	async findById(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Query('data', ParseJsonPipe) data: any
+		@Query('relations') relations: string[]
 	): Promise<IWarehouse> {
-		const { relations = [], findInput = null } = data;
 		return await this.warehouseService.findOneByIdString(id, {
-			where: {
-				...findInput
-			},
 			relations
 		});
 	}
@@ -259,7 +255,11 @@ export class WarehouseController extends CrudController<Warehouse> {
 			whitelist: true
 		})) entity: CreateWarehouseDTO
 	): Promise<IWarehouse> {
-		return this.warehouseService.create(entity);
+		try {
+			return this.warehouseService.create(entity);
+		} catch (error) {
+			throw new BadRequestException(error);
+		}
 	}
 
 	/**
@@ -293,6 +293,10 @@ export class WarehouseController extends CrudController<Warehouse> {
 			whitelist: true
 		})) entity: UpdateWarehouseDTO
 	): Promise<IWarehouse> {
-		return await this.warehouseService.update(id, entity);
+		try {
+			return await this.warehouseService.update(id, entity);
+		} catch (error) {
+			throw new BadRequestException(error);
+		}
 	}
 }

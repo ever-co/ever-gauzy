@@ -5,18 +5,18 @@ import { NgxPermissionsGuard } from 'ngx-permissions';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { MerchantTableComponent } from './merchant-table/merchant-table.component';
 import { MerchantFormComponent } from './merchant-form/merchant-form.component';
+import { MerchantFormResolver } from './merchant-form/merchant-form.resolver';
 
 const ORG_PERMISSIONS = [
 	PermissionsEnum.ALL_ORG_VIEW,
 	PermissionsEnum.ALL_ORG_EDIT
 ];
-   
 
 const routes: Routes = [
 	{
         path: '',
 		component: MerchantComponent,
-		canActivate: [NgxPermissionsGuard], 
+		canActivate: [NgxPermissionsGuard],
 		data: {
 			permissions: {
 				only: [
@@ -24,6 +24,11 @@ const routes: Routes = [
 					PermissionsEnum.ORG_INVENTORY_VIEW
 				],
 				redirectTo: '/pages/dashboard'
+			},
+			selectors: {
+				date: false,
+				employee: false,
+				project: false
 			}
 		},
 		children: [
@@ -33,16 +38,34 @@ const routes: Routes = [
 			},
 			{
 				path: 'create',
-				component: MerchantFormComponent
+				component: MerchantFormComponent,
+				data: {
+					selectors: {
+						organization: false,
+						date: false,
+						employee: false,
+						project: false
+					}
+				}
 			},
 			{
 				path: 'edit/:id',
-				component: MerchantFormComponent
+				component: MerchantFormComponent,
+				data: {
+					selectors: {
+						organization: false,
+						date: false,
+						employee: false,
+						project: false
+					}
+				},
+				resolve: {
+					merchant: MerchantFormResolver
+				}
 			},
 		]
 	}
 ];
-
 
 @NgModule({
 	imports: [RouterModule.forChild(routes)],
