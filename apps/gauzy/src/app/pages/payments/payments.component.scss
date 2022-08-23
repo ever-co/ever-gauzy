@@ -1,6 +1,8 @@
 @import 'gauzy/_gauzy-table.scss';
 @import 'gauzy/_gauzy-cards.scss';
 
+$card-height: calc($default-card-height + 3.75rem);
+
 :host {
   nb-card,
   nb-card-body {
@@ -25,5 +27,5 @@
   nb-card-header {
     border-radius: var(--border-radius);
   }
-  @include nb-card-overrides(unset, calc(100vh - 17.25rem), $default-radius);
+  @include nb-card-overrides(unset, $card-height, $default-radius);
 }
