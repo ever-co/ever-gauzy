@@ -9,7 +9,6 @@ import {
 	IPagination
 } from '@gauzy/contracts';
 import {
-	BadRequestException,
 	Body,
 	Controller,
 	Get,
@@ -25,7 +24,8 @@ import {
 	Req,
 	UseInterceptors,
 	UsePipes,
-	ValidationPipe
+	ValidationPipe,
+	MethodNotAllowedException
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import {
@@ -34,7 +34,7 @@ import {
 	ApiTags,
 	ApiExcludeEndpoint
 } from '@nestjs/swagger';
-import { UpdateResult } from 'typeorm';
+import { DeleteResult, UpdateResult } from 'typeorm';
 import { Request } from 'express';
 import { I18nLang } from 'nestjs-i18n';
 import { Public } from '@gauzy/common';
@@ -220,19 +220,17 @@ export class InviteController {
 	@Permissions(PermissionsEnum.ORG_INVITE_EDIT)
 	@Delete(':id')
 	async delete(
-		@Param('id', UUIDValidationPipe) id: string,
-		...options: any[]
-	): Promise<any> {
+		@Param('id', UUIDValidationPipe) id: string
+	): Promise<DeleteResult> {
 		return this.inviteService.delete(id);
 	}
 
 	@ApiExcludeEndpoint()
 	@Put()
 	async update(
-		@Param('id', UUIDValidationPipe) id: string,
-		...options: any[]
+		@Param('id', UUIDValidationPipe) id: string
 	): Promise<any> {
-		throw new BadRequestException('Invalid route');
+		throw new MethodNotAllowedException();
 	}
 
 	@ApiOperation({ summary: 'Update an existing record' })

@@ -128,6 +128,7 @@
 		"ng2-smart-table": "^1.7.2",
 		"ng5-slider": "^1.2.6",
 		"ngx-ace-editor-wrapper": "^9.1.12",
+		"ngx-clipboard": "^15.1.0",
 		"ngx-color-picker": "^12.0.1",
 		"ngx-cookie-service": "^13.2.1",
 		"ngx-countdown": "^13.0.0",

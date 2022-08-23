@@ -15,13 +15,6 @@ import {
 	ApiPropertyOptional
 } from '@nestjs/swagger';
 import {
-	IsBoolean,
-	IsEmail,
-	IsNotEmpty,
-	IsOptional,
-	IsString
-} from 'class-validator';
-import {
 	IContact,
 	IImageAsset,
 	IMerchant,
@@ -42,18 +35,14 @@ import { WarehouseProduct } from './warehouse-product.entity';
 export class Warehouse extends TenantOrganizationBaseEntity implements IWarehouse {
 
 	@ApiProperty({ type: () => String })
-	@IsString()
-	@IsNotEmpty()
 	@Column()
 	name: string;
 
 	@ApiProperty({ type: () => String })
-	@IsString()
 	@Column()
 	code: string;
 
 	@ApiProperty({ type: () => String })
-	@IsEmail()
 	@Column()
 	email: string;
 
@@ -62,7 +51,6 @@ export class Warehouse extends TenantOrganizationBaseEntity implements IWarehous
 	description: string;
 
 	@ApiPropertyOptional({ type: () => Boolean })
-	@IsBoolean()
 	@Column({ default: true })
 	active: boolean;
 
@@ -84,8 +72,6 @@ export class Warehouse extends TenantOrganizationBaseEntity implements IWarehous
 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Warehouse) => it.logo)
-	@IsString()
-	@IsOptional()
 	@Index()
 	@Column({ nullable: true })
 	logoId?: string;
@@ -109,8 +95,6 @@ export class Warehouse extends TenantOrganizationBaseEntity implements IWarehous
 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Warehouse) => it.contact)
-	@IsString()
-	@IsOptional()
 	@Index()
 	@Column({ nullable: false })
 	contactId?: string;
