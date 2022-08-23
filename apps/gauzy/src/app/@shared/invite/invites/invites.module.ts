@@ -15,6 +15,7 @@ import {
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
+import { ClipboardModule } from 'ngx-clipboard';
 import { ThemeModule } from '../../../@theme/theme.module';
 import { InviteMutationModule } from '../invite-mutation/invite-mutation.module';
 import { InvitesComponent } from './invites.component';
@@ -56,6 +57,7 @@ const COMPONENTS = [
 		NbBadgeModule,
 		NbRouteTabsetModule,
 		NbCheckboxModule,
+		ClipboardModule,
 		TranslateModule,
 		NbSpinnerModule,
 		InviteMutationModule,

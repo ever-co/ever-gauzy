@@ -86,8 +86,7 @@ export interface IInviteUpdateInput {
 
 export enum InviteStatusEnum {
 	INVITED = 'INVITED',
-	ACCEPTED = 'ACCEPTED',
-	FAILED = 'FAILED'
+	ACCEPTED = 'ACCEPTED'
 }
 
 export enum InvitationTypeEnum {
@@ -116,7 +115,7 @@ export interface IInviteViewModel {
 	clientNames: string[];
 	departmentNames: string[];
 	id: string;
-	inviteUrl: string;
+	token: string;
 }
 
 export interface IInviteUserModel
