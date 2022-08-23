@@ -7,6 +7,7 @@ import {
 	IWarehouseProduct,
 	IWarehouseProductVariant
 } from '@gauzy/contracts';
+import { toParams } from '@gauzy/common-angular';
 import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable({
@@ -56,12 +57,10 @@ export class WarehouseService {
 		);
 	}
 
-	getById(id: string, relations?: string[], findInput?: any) {
-		const data = JSON.stringify({ relations, findInput });
+	getById(id: string, relations: string[] = []) {
 		return firstValueFrom(
-			this.http
-			.get<IWarehouse>(`${this.WAREHOUSES_URL}/${id}`, {
-				params: { data }
+			this.http.get<IWarehouse>(`${this.WAREHOUSES_URL}/${id}`, {
+				params: toParams({ relations })
 			})
 		);
 	}

@@ -6,8 +6,9 @@ import {
 import { firstValueFrom } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 
-
-@Injectable()
+@Injectable({
+	providedIn: 'root'
+})
 export class MerchantService {
 	MERCHANTS_URL = `${API_PREFIX}/merchants`;
 
