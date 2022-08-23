@@ -70,11 +70,11 @@ export class Merchant extends TenantOrganizationBaseEntity implements IMerchant 
 	@ApiProperty({ type: () => String })
 	@IsEnum(CurrenciesEnum)
 	@Column({ default: CurrenciesEnum.USD })
-	currency: string;
+	currency: CurrenciesEnum;
 
 	/*
     |--------------------------------------------------------------------------
-    | @OneToOne 
+    | @OneToOne
     |--------------------------------------------------------------------------
     */
 
@@ -99,7 +99,7 @@ export class Merchant extends TenantOrganizationBaseEntity implements IMerchant 
 
 	/*
     |--------------------------------------------------------------------------
-    | @OneToOne 
+    | @OneToOne
     |--------------------------------------------------------------------------
     */
 
@@ -121,7 +121,7 @@ export class Merchant extends TenantOrganizationBaseEntity implements IMerchant 
 
 	/*
     |--------------------------------------------------------------------------
-    | @ManyToMany 
+    | @ManyToMany
     |--------------------------------------------------------------------------
     */
 
@@ -139,10 +139,12 @@ export class Merchant extends TenantOrganizationBaseEntity implements IMerchant 
 	tags?: ITag[];
 
 	/**
-	 * Warehouse
+	 * Warehouses
 	 */
 	@ApiProperty({ type: () => Warehouse, isArray: true })
-	@ManyToMany(() => Warehouse)
+	@ManyToMany(() => Warehouse, (it) => it.merchants, {
+		onDelete: 'CASCADE'
+	})
 	@JoinTable({
 		name: 'warehouse_merchant'
 	})

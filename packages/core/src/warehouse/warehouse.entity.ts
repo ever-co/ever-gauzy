@@ -24,6 +24,7 @@ import {
 import {
 	IContact,
 	IImageAsset,
+	IMerchant,
 	ITag,
 	IWarehouse,
 	IWarehouseProduct
@@ -32,13 +33,14 @@ import {
 	Contact,
 	Tag,
 	TenantOrganizationBaseEntity,
-	ImageAsset
+	ImageAsset,
+	Merchant
 } from '../core/entities/internal';
 import { WarehouseProduct } from './warehouse-product.entity';
 
 @Entity('warehouse')
 export class Warehouse extends TenantOrganizationBaseEntity implements IWarehouse {
-	
+
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
@@ -66,7 +68,7 @@ export class Warehouse extends TenantOrganizationBaseEntity implements IWarehous
 
 	/*
     |--------------------------------------------------------------------------
-    | @ManyToOne 
+    | @ManyToOne
     |--------------------------------------------------------------------------
     */
 
@@ -90,7 +92,7 @@ export class Warehouse extends TenantOrganizationBaseEntity implements IWarehous
 
 	/*
     |--------------------------------------------------------------------------
-    | @OneToOne 
+    | @OneToOne
     |--------------------------------------------------------------------------
     */
 
@@ -115,7 +117,7 @@ export class Warehouse extends TenantOrganizationBaseEntity implements IWarehous
 
 	/*
     |--------------------------------------------------------------------------
-    | @OneToMany 
+    | @OneToMany
     |--------------------------------------------------------------------------
     */
 
@@ -124,14 +126,14 @@ export class Warehouse extends TenantOrganizationBaseEntity implements IWarehous
 	 */
 	@ApiProperty({ type: () => WarehouseProduct, isArray: true })
 	@OneToMany(() => WarehouseProduct, (warehouseProduct) => warehouseProduct.warehouse, {
-		cascade: true 
+		cascade: true
 	})
 	@JoinColumn()
 	products?: IWarehouseProduct[];
 
 	/*
     |--------------------------------------------------------------------------
-    | @ManyToMany 
+    | @ManyToMany
     |--------------------------------------------------------------------------
     */
 
@@ -147,4 +149,13 @@ export class Warehouse extends TenantOrganizationBaseEntity implements IWarehous
 		name: 'tag_warehouse'
 	})
 	tags?: ITag[];
+
+	/**
+	 * Merchants
+	 */
+	@ApiProperty({ type: () => Warehouse, isArray: true })
+	@ManyToMany(() => Merchant, (it) => it.warehouses, {
+		onDelete: 'CASCADE'
+	})
+	merchants?: IMerchant[];
 }
