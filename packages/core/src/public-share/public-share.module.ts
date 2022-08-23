@@ -15,7 +15,7 @@ import { PublicOrganizationModule } from './organization/public-organization.mod
 			}
 		]),
 		PublicEmployeeModule,
-		PublicOrganizationModule
+		PublicOrganizationModule,
 	],
 	controllers: [],
 	providers: [],

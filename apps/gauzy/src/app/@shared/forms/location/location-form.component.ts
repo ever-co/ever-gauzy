@@ -28,7 +28,7 @@ import { DOCUMENT } from '@angular/common';
 	styleUrls: ['./location-form.component.scss'],
 	templateUrl: 'location-form.component.html'
 })
-export class LocationFormComponent extends TranslationBaseComponent 
+export class LocationFormComponent extends TranslationBaseComponent
 	implements AfterViewInit {
 
 	FormHelpers: typeof FormHelpers = FormHelpers;
@@ -158,7 +158,9 @@ export class LocationFormComponent extends TranslationBaseComponent
 	}
 
 	setValue<T extends IGeoLocationCreateObject>(geoLocation: T) {
-		FormHelpers.deepMark(this.form, 'dirty');
+		if (this.form.controls) {
+			FormHelpers.deepMark(this.form, 'dirty');
+		}
 		this.form.setValue({
 			postcode: geoLocation.postcode || '',
 			...(pick(geoLocation, Object.keys(this.getValue())) as any)
@@ -336,7 +338,7 @@ export class LocationFormComponent extends TranslationBaseComponent
 		let postcode: string = '';
 		let city: string = '';
 
-		locationResult.address_components.forEach((address) => {			
+		locationResult.address_components.forEach((address) => {
 			const addressType = address.types[0];
 			const addressTypeKey = neededAddressTypes[addressType];
 			const val = address[addressTypeKey];

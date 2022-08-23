@@ -3,9 +3,9 @@ import { Controller, Get, HttpStatus, Param, Query, UseInterceptors, ValidationP
 import { QueryBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { FindOptionsWhere } from 'typeorm';
+import { Public } from '@gauzy/common';
 import { OrganizationContact, OrganizationProject } from './../../core/entities/internal';
 import { TenantOrganizationBaseDTO } from './../../core/dto';
-import { Public } from './../../shared/decorators';
 import { PublicTransformInterceptor } from './../public-transform.interceptor';
 import { PublicOrganizationQueryDTO } from './dto/public-organization-query.dto';
 import { PublicOrganizationService } from './public-organization.service';

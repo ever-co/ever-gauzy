@@ -49,7 +49,7 @@ export class WarehousesTableComponent
 	}
 
 	/*
-	* Actions Buttons directive 
+	* Actions Buttons directive
 	*/
 	@ViewChild('actionButtons', { static: true }) actionButtons: TemplateRef<any>;
 
@@ -163,6 +163,11 @@ export class WarehousesTableComponent
 						this.setFilter({ field: 'email', search: email });
 					},
 				},
+				code: {
+					title: this.getTranslation('INVENTORY_PAGE.CODE'),
+					type: 'string',
+					filter: false
+				},
 				contact: {
 					title: this.getTranslation('INVENTORY_PAGE.CONTACT'),
 					type: 'custom',
@@ -245,7 +250,7 @@ export class WarehousesTableComponent
 	}
 
 	/*
-	* Register Smart Table Source Config 
+	* Register Smart Table Source Config
 	*/
 	setSmartTableSource() {
 		if (!this.organization) {

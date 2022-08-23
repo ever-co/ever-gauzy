@@ -113,11 +113,6 @@ export class TimeTrackerComponent implements AfterViewInit {
 			  renderComponent: CustomRenderComponent
 			  
 			},
-			description: {
-			  title: 'Description',
-			  type: 'custom',
-			  renderComponent: CustomDescriptionComponent
-			},
 			dueDate: {
 			  title: 'Due',
 			  type: 'text',
@@ -1028,9 +1023,10 @@ export class TimeTrackerComponent implements AfterViewInit {
 			tenantId: arg.tenantId,
 			organizationContactId: arg.organizationContactId,
 			apiHost: arg.apiHost,
-			token: arg.token
+			token: arg.token,
+			isAw: arg.isAw,
+			isAwConnected: arg.isAwConnected
 		}
-
 
 		try {
 			const resActivities:any = await this.timeTrackerService.pushToTimeSlot(ParamActivity)
@@ -1163,11 +1159,13 @@ export class TimeTrackerComponent implements AfterViewInit {
 
 	addTask() {
 		this.isAddTask = true;
+		this._cdr.detectChanges();
 	}
 
 	cloasAddTask(e) {
 		this.isAddTask = false;
 		this.electronService.ipcRenderer.send('refresh-timer');
+		this._cdr.detectChanges();
 	}
 
 	callbackNewTask(e) {

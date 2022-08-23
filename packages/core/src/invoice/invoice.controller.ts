@@ -26,10 +26,11 @@ import {
 	LanguagesEnum,
 	IPagination
 } from '@gauzy/contracts';
+import { Public } from '@gauzy/common';
 import { CrudController, PaginationParams } from './../core/crud';
 import { Invoice } from './invoice.entity';
 import { InvoiceService } from './invoice.service';
-import { Permissions, Public } from './../shared/decorators';
+import { Permissions } from './../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import {

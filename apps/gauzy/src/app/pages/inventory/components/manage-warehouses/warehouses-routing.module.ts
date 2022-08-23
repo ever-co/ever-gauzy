@@ -5,6 +5,7 @@ import { PermissionsEnum } from '@gauzy/contracts';
 import { WarehousesComponent } from './warehouses.component';
 import { WarehouseFormComponent } from './warehouse-form/warehouse-form.component';
 import { WarehousesTableComponent } from './warehouses-table/warehouses-table.component';
+import { WarehouseFormResolver } from './warehouse-form/warehouse-form.resolver';
 
 const ORG_PERMISSIONS = [
 	PermissionsEnum.ALL_ORG_VIEW,
@@ -23,6 +24,11 @@ const routes: Routes = [
 					PermissionsEnum.ORG_INVENTORY_VIEW
 				],
 				redirectTo: '/pages/dashboard'
+			},
+			selectors: {
+				date: false,
+				employee: false,
+				project: false
 			}
 		},
 		children: [
@@ -32,11 +38,30 @@ const routes: Routes = [
 			},
 			{
 				path: 'create',
-				component: WarehouseFormComponent
+				component: WarehouseFormComponent,
+				data: {
+					selectors: {
+						organization: false,
+						date: false,
+						employee: false,
+						project: false
+					}
+				}
 			},
 			{
 				path: 'edit/:id',
-				component: WarehouseFormComponent
+				component: WarehouseFormComponent,
+				data: {
+					selectors: {
+						organization: false,
+						date: false,
+						employee: false,
+						project: false
+					}
+				},
+				resolve: {
+					warehouse: WarehouseFormResolver
+				}
 			}
 		]
 	}

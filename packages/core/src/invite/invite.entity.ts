@@ -30,7 +30,7 @@ import {
 
 @Entity('invite')
 export class Invite extends TenantOrganizationBaseEntity implements IInvite {
-	
+
 	@ApiPropertyOptional({ type: () => String })
 	@IsString()
 	@Index({ unique: true })
@@ -48,7 +48,7 @@ export class Invite extends TenantOrganizationBaseEntity implements IInvite {
 	@IsEnum(InviteStatusEnum)
 	@IsNotEmpty()
 	@Column()
-	status: string;
+	status: InviteStatusEnum;
 
 	@ApiPropertyOptional({ type: () => Date })
 	@IsDate()
@@ -62,7 +62,7 @@ export class Invite extends TenantOrganizationBaseEntity implements IInvite {
 
 	/*
     |--------------------------------------------------------------------------
-    | @ManyToOne 
+    | @ManyToOne
     |--------------------------------------------------------------------------
     */
 
@@ -94,7 +94,7 @@ export class Invite extends TenantOrganizationBaseEntity implements IInvite {
 
 	/*
     |--------------------------------------------------------------------------
-    | @ManyToMany 
+    | @ManyToMany
     |--------------------------------------------------------------------------
     */
 	@ApiPropertyOptional({ type: () => OrganizationProject })
