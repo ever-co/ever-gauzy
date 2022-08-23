@@ -41,9 +41,9 @@ export class MerchantDTO extends TenantOrganizationBaseDTO implements IMerchant 
 
 	@ApiPropertyOptional({ type: () => Object, readOnly: true })
 	@IsOptional()
-	readonly logo: IImageAsset
+	readonly logo: IImageAsset;
 
 	@ApiPropertyOptional({ type: () => String, readOnly: true })
 	@IsOptional()
-	readonly logoId: IImageAsset['id']
+	readonly logoId: IImageAsset['id'];
 }
