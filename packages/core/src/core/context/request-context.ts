@@ -69,6 +69,16 @@ export class RequestContext {
 		return null;
 	}
 
+	static currentEmployeeId(): string {
+		const user: IUser = RequestContext.currentUser();
+		if(!RequestContext.hasPermission(
+			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+		) && user) {
+			return user.employeeId;
+		}
+		return null;
+	}
+
 	static currentUser(throwError?: boolean): IUser {
 		const requestContext = RequestContext.currentRequestContext();
 
