@@ -1,5 +1,6 @@
 @import 'gauzy/_gauzy-table';
 @import 'gauzy/_gauzy-cards';
+@import '../payments/payments.component.scss';
 
 .manage-btn {
   display: flex;
@@ -104,24 +105,9 @@
 }
 
 :host {
-
-  nb-card,
   nb-card-body {
-    background-color: var(--gauzy-card-2);
-
-    .custom-table {
-      max-height: calc(100vh - 24rem);
-      flex-grow: 10;
-    }
-
-    display: flex;
-    flex-direction: column;
+    height: calc($card-height - 0.25rem) !important;
   }
-
-  @include nb-card-overrides(unset,
-    calc($default-card-height - 1rem),
-    $default-radius );
-
   ::ng-deep {
     .toggle-label {
       margin-bottom: 0;
