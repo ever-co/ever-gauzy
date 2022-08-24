@@ -1,7 +1,7 @@
 @import 'var';
 
 :host {
-  height: 93%;
+  height: 100%;
   @include nb-ltr(border-radius, 0 nb-theme(border-radius) nb-theme(border-radius) nb-theme(border-radius));
   @include nb-rtl(border-radius, nb-theme(border-radius) 0 nb-theme(border-radius) nb-theme(border-radius));
 }
@@ -15,7 +15,7 @@
   @include nb-rtl(border-radius, nb-theme(border-radius) 0 nb-theme(border-radius) nb-theme(border-radius));
 
   &.main {
-    height: calc(100vh - 22.5rem);
+    height: calc(100vh - 19.25rem);
   }
 }
 
