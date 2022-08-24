@@ -65,7 +65,6 @@
 }
 
 :host {
-
   nb-card,
   nb-card-header {
     background-color: var(--gauzy-card-2);
@@ -82,12 +81,18 @@
     overflow: auto;
   }
 
-  .no-data{
+  .no-data {
     height: calc(100vh - 19.25rem);
     padding: 8px;
   }
 }
-
+.container {
+  padding: 0.5rem;
+  overflow-x: scroll;
+  height: 100%;
+  margin: 0;
+  max-width: unset;
+}
 .history {
   align-items: center;
   gap: 8px;
