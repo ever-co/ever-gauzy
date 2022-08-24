@@ -1,1 +1,2 @@
-export { UserCreateCommand } from './user.create.command';
+export * from './user.create.command';
+export * from './user.delete.command';

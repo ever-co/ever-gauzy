@@ -29,11 +29,9 @@ export class UserService extends TenantAwareCrudService<User> {
 	 * @param email
 	 * @returns
 	 */
-	async getUserByEmail(email: string): Promise<IUser> {
-		return await this.findOneByOptions({
-			where: {
-				email
-			}
+	async getUserByEmail(email: string): Promise<IUser | null> {
+		return await this.repository.findOneBy({
+			email
 		});
 	}
 
