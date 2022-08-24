@@ -105,7 +105,9 @@ export class InviteAcceptOrganizationContactHandler
 
 		// 8. Link newly created contact organization to organization contact invite
 		const { organizationContact } = await this.inviteService.findOneByIdString(inviteId, {
-			relations: ['organizationContact']
+			relations: {
+				organizationContact: true
+			}
 		});
 
 		// TODO Make invite and contact as one to one, since an invite is not shared by multiple contacts
