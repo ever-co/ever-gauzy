@@ -19,14 +19,6 @@ import {
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
-	IsBoolean,
-	IsEmail,
-	IsEnum,
-	IsNotEmpty,
-	IsOptional,
-	IsString
-} from 'class-validator';
-import {
 	TenantOrganizationBaseEntity,
 	ImageAsset,
 	Tag,
@@ -38,23 +30,18 @@ import {
 export class Merchant extends TenantOrganizationBaseEntity implements IMerchant {
 
 	@ApiProperty({ type: () => String })
-	@IsString()
-	@IsNotEmpty()
 	@Column()
 	name: string;
 
 	@ApiProperty({ type: () => String })
-	@IsString()
 	@Column()
 	code: string;
 
 	@ApiProperty({ type: () => String })
-	@IsEmail()
 	@Column()
 	email: string;
 
 	@ApiProperty({ type: () => String })
-	@IsString()
 	@Column({ nullable: true })
 	phone: string;
 
@@ -63,18 +50,16 @@ export class Merchant extends TenantOrganizationBaseEntity implements IMerchant 
 	description: string;
 
 	@ApiPropertyOptional({ type: () => Boolean })
-	@IsBoolean()
 	@Column({ default: true })
 	active: boolean;
 
 	@ApiProperty({ type: () => String })
-	@IsEnum(CurrenciesEnum)
 	@Column({ default: CurrenciesEnum.USD })
-	currency: string;
+	currency: CurrenciesEnum;
 
 	/*
     |--------------------------------------------------------------------------
-    | @OneToOne 
+    | @OneToOne
     |--------------------------------------------------------------------------
     */
 
@@ -91,15 +76,13 @@ export class Merchant extends TenantOrganizationBaseEntity implements IMerchant 
 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Merchant) => it.contact)
-	@IsString()
-	@IsOptional()
 	@Index()
 	@Column({ nullable: true })
 	contactId?: string;
 
 	/*
     |--------------------------------------------------------------------------
-    | @OneToOne 
+    | @OneToOne
     |--------------------------------------------------------------------------
     */
 
@@ -113,15 +96,13 @@ export class Merchant extends TenantOrganizationBaseEntity implements IMerchant 
 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Merchant) => it.logo)
-	@IsString()
-	@IsOptional()
 	@Index()
 	@Column({ nullable: true })
 	logoId?: string;
 
 	/*
     |--------------------------------------------------------------------------
-    | @ManyToMany 
+    | @ManyToMany
     |--------------------------------------------------------------------------
     */
 
@@ -139,10 +120,12 @@ export class Merchant extends TenantOrganizationBaseEntity implements IMerchant 
 	tags?: ITag[];
 
 	/**
-	 * Warehouse
+	 * Warehouses
 	 */
 	@ApiProperty({ type: () => Warehouse, isArray: true })
-	@ManyToMany(() => Warehouse)
+	@ManyToMany(() => Warehouse, (it) => it.merchants, {
+		onDelete: 'CASCADE'
+	})
 	@JoinTable({
 		name: 'warehouse_merchant'
 	})

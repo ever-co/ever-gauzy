@@ -6,6 +6,7 @@ import { ITranslation, ITranslatable } from './translation.model';
 import { ITag } from './tag-entity.model';
 import { IContact } from './contact.model';
 import { IInvoiceItem } from './invoice-item.model';
+import { CurrenciesEnum } from './currency.model';
 
 export interface IProduct extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
@@ -269,12 +270,12 @@ export interface IMerchant extends IBasePerTenantAndOrganizationEntityModel {
 	phone: string;
 	code: string;
 	active: boolean;
-	currency: string;
+	currency: CurrenciesEnum;
 	description: string;
 	contact?: IContact;
 	contactId?: string;
 	logo?: IImageAsset;
-	logoId?: string;
+	logoId?: IImageAsset['id'];
 	tags?: ITag[];
 	warehouses?: IWarehouse[];
 }

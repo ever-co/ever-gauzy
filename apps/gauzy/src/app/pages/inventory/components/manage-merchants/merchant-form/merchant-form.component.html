@@ -5,7 +5,7 @@
 				<h4>
 					<ngx-back-navigation></ngx-back-navigation>
 					{{
-						(!merchantId
+						(!merchant
 							? 'INVENTORY_PAGE.CREATE_MERCHANT'
 							: 'INVENTORY_PAGE.EDIT_MERCHANT'
 						) | translate
@@ -17,7 +17,7 @@
 
 	<nb-card-body>
 		<form [formGroup]="form">
-			<nb-stepper #stepper [disableStepNavigation]="!merchantId">
+			<nb-stepper #stepper [disableStepNavigation]="!merchant">
 				<nb-step [label]="'INVENTORY_PAGE.MAIN' | translate">
 					<div
 						class="d-flex flex-column justify-content-between h-100"
@@ -52,14 +52,14 @@
 														| translate
 												"
 												[status]="
-													isInvalidControl('name')
+													FormHelpers.isInvalidControl(form, 'name')
 														? 'danger'
 														: 'basic'
 												"
 											/>
 											<div
 												class="text-danger"
-												*ngIf="isInvalidControl('name')"
+												*ngIf="FormHelpers.isInvalidControl(form, 'name')"
 											>
 												{{
 													'INVENTORY_PAGE.THIS_FIELD_IS_REQUIRED'
@@ -90,14 +90,14 @@
 														| translate
 												"
 												[status]="
-													isInvalidControl('code')
+													FormHelpers.isInvalidControl(form, 'code')
 														? 'danger'
 														: 'basic'
 												"
 											/>
 											<div
 												class="text-danger"
-												*ngIf="isInvalidControl('code')"
+												*ngIf="FormHelpers.isInvalidControl(form, 'code')"
 											>
 												{{
 													'INVENTORY_PAGE.THIS_FIELD_IS_REQUIRED'
@@ -130,16 +130,14 @@
 														| translate
 												"
 												[status]="
-													isInvalidControl('email')
+													FormHelpers.isInvalidControl(form, 'email')
 														? 'danger'
 														: 'basic'
 												"
 											/>
 											<div
 												class="text-danger"
-												*ngIf="
-													isInvalidControl('email')
-												"
+												*ngIf="FormHelpers.isInvalidControl(form, 'email')"
 											>
 												{{
 													'INVENTORY_PAGE.EMAIL_WRONG_FORMAT'
@@ -170,7 +168,7 @@
 														| translate
 												"
 												[status]="
-													isInvalidControl('phone')
+													FormHelpers.isInvalidControl(form, 'phone')
 														? 'danger'
 														: 'basic'
 												"
@@ -178,7 +176,7 @@
 											<div
 												class="text-danger"
 												*ngIf="
-													isInvalidControl('phone')
+													FormHelpers.isInvalidControl(form, 'phone')
 												"
 											>
 												{{

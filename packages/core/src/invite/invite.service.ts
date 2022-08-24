@@ -308,6 +308,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 		invite.email = emailId;
 		invite.roleId = roleId;
 		invite.organizationId = organizationId;
+		invite.tenantId = RequestContext.currentTenantId();
 		invite.invitedById = invitedById;
 		invite.status = InviteStatusEnum.INVITED;
 		invite.expireDate = expireDate;

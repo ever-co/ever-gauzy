@@ -6,6 +6,8 @@ import {
 	OnInit,
 	ViewChild
 } from '@angular/core';
+import { Router, UrlSerializer } from '@angular/router';
+import { Location } from '@angular/common';
 import {
 	InvitationTypeEnum,
 	RolesEnum,
@@ -20,8 +22,9 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { debounceTime, filter, tap } from 'rxjs/operators';
-import { Subject, firstValueFrom } from 'rxjs';
+import { Subject } from 'rxjs';
 import * as moment from 'moment-timezone';
+import { ClipboardService, IClipboardResponse } from 'ngx-clipboard';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import { InviteService, Store, ToastrService } from '../../../@core/services';
 import { DeleteConfirmationComponent } from '../../user/forms';
@@ -74,6 +77,10 @@ export class InvitesComponent
 
 	constructor(
 		private readonly dialogService: NbDialogService,
+		private readonly clipboardService: ClipboardService,
+		private readonly router: Router,
+		private readonly _location: Location,
+		private readonly _urlSerializer: UrlSerializer,
 		private readonly store: Store,
 		private readonly toastrService: ToastrService,
 		private readonly translate: TranslateService,
@@ -81,11 +88,29 @@ export class InvitesComponent
 	) {
 		super(translate);
 		this.setView();
+
+		/**
+		 * Destroyed textarea element after each copy to clipboard
+		 */
+		clipboardService.configure({ cleanUpAfterCopy: true });
 	}
 
-	ngOnInit() {
+	ngOnInit(): void {
 		this._loadSmartTableSettings();
 		this._applyTranslationOnSmartTable();
+	}
+
+	ngAfterViewInit(): void {
+		this.clipboardService.copyResponse$
+			.pipe(
+				filter(
+					(clipboard: IClipboardResponse) => !!clipboard.isSuccess
+				),
+				tap((clipboard: IClipboardResponse) =>
+					this.onCopySuccess(clipboard)
+				)
+			)
+			.subscribe();
 		this.invites$
 			.pipe(
 				debounceTime(200),
@@ -102,23 +127,10 @@ export class InvitesComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this._refresh$
-			.pipe(
-				filter(
-					() =>
-						this.dataLayoutStyle ===
-						ComponentLayoutStyleEnum.CARDS_GRID
-				),
-				tap(() => this.refreshPagination()),
-				tap(() => (this.invites = [])),
-				untilDestroyed(this)
-			)
-			.subscribe();
-	}
-
-	ngAfterViewInit() {
 		this.store.selectedOrganization$
 			.pipe(
+				debounceTime(100),
+				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
 				tap(
 					(organization: IOrganization) =>
@@ -168,37 +180,68 @@ export class InvitesComponent
 		this.selectedInvite = isSelected ? data : null;
 	}
 
-	async invite(): Promise<void> {
-		const dialog = this.dialogService.open(InviteMutationComponent, {
-			context: {
-				invitationType: this.invitationType
-			}
-		});
-
-		const data = await firstValueFrom(dialog.onClose);
-		if (data.length != 0) {
-			this._refresh$.next(true);
-			this.invites$.next(true);
-		}
+	invite(): void {
+		this.dialogService
+			.open(InviteMutationComponent, {
+				context: {
+					invitationType: this.invitationType
+				}
+			})
+			.onClose.pipe(
+				filter((invite: IInvite) => !!invite),
+				tap(() => this._refresh$.next(true)),
+				tap(() => this.invites$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
-	copyToClipboard(selectedItem?: IInviteViewModel) {
+	async copyToClipboard(selectedItem?: IInviteViewModel) {
 		if (selectedItem) {
 			this.selectInvite({
 				isSelected: true,
 				data: selectedItem
 			});
 		}
-		const textField = document.createElement('textarea');
-		textField.innerText = location.origin + '/#/' + this.selectedInvite.inviteUrl;
-		document.body.appendChild(textField);
-		textField.select();
-		document.execCommand('copy');
-		textField.remove();
-
-		this.toastrService.success('TOASTR.MESSAGE.COPIED');
-		this.clearItem();
+		if (this.selectedInvite) {
+			const { email, token } = this.selectedInvite;
+			// The call to Location.prepareExternalUrl is the key thing here.
+			let tree = this.router.createUrlTree([`auth/accept-invite`], {
+				queryParams: {
+					email: email,
+					token: token
+				}
+			});
+			this.clipboardService.copy(
+				[
+					location.origin,
+					this._location.prepareExternalUrl(
+						this._urlSerializer.serialize(tree)
+					)
+				].join('/')
+			);
+		}
 	}
+
+	/**
+	 * Copy Success
+	 *
+	 * @param clipboard
+	 */
+	onCopySuccess(clipboard: IClipboardResponse) {
+		try {
+			this.toastrService.success('TOASTR.MESSAGE.COPIED');
+		} finally {
+			this.clearItem();
+		}
+	}
+
+	/**
+	 * Copy Failure
+	 *
+	 * @param clipboard
+	 */
+	onCopyFailure(clipboard: IClipboardResponse) {}
 
 	private async loadInvites() {
 		if (!this.organization) {
@@ -247,9 +290,7 @@ export class InvitesComponent
 					: InvitationExpirationEnum.NEVER,
 				createdDate: invite.createdAt,
 				imageUrl: invite.invitedBy ? invite.invitedBy.imageUrl : '',
-				fullName: `${
-					(invite.invitedBy && invite.invitedBy.firstName) || ''
-				} ${(invite.invitedBy && invite.invitedBy.lastName) || ''}`,
+				fullName: invite.invitedBy ? invite.invitedBy.name : '',
 				roleName: invite.role ? invite.role.name : '',
 				status:
 					!invite.expireDate ||
@@ -268,7 +309,7 @@ export class InvitesComponent
 					(department) => department.name
 				),
 				id: invite.id,
-				inviteUrl: `auth/accept-invite?email=${invite.email}&token=${invite.token}`
+				token: invite.token
 			});
 		}
 		this.invites = invitesVm;

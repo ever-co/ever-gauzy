@@ -1,5 +1,6 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { ConfigService } from '@gauzy/config';
+import { DeleteResult } from 'typeorm';
 import { UserDeleteCommand } from './../user.delete.command';
 import { UserService } from './../../user.service';
 import { ForbiddenException } from '@nestjs/common';
@@ -13,7 +14,7 @@ export class UserDeleteHandler
 		private readonly configService: ConfigService
 	) {}
 
-	public async execute(command: UserDeleteCommand): Promise<any> {
+	public async execute(command: UserDeleteCommand): Promise<DeleteResult> {
 		const { userId } = command;
 		if (this.configService.get('demo') === true) {
             throw new ForbiddenException();

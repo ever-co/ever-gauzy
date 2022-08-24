@@ -73,7 +73,7 @@ export class InviteContactComponent
 					const user = await this.usersService.getUserByEmail(
 						form.get('primaryEmail').value
 					);
-					if (user) {
+					if (!!user) {
 						form.get('primaryEmail').setErrors({ invalid: true });
 						form.get('primaryEmail').setErrors({ exists: true });
 					}
@@ -85,7 +85,7 @@ export class InviteContactComponent
 	ngAfterViewInit() {
 		this.cdr.detectChanges();
 	}
-	
+
 	closeDialog(organizationContact?) {
 		this.dialogRef.close(organizationContact);
 	}
