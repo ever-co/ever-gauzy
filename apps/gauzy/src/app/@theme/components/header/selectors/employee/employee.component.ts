@@ -22,7 +22,7 @@ import {
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { combineLatest, map, Observable, Subject } from 'rxjs';
 import { filter, debounceTime, tap, switchMap } from 'rxjs/operators';
-import { isNotEmpty } from '@gauzy/common-angular';
+import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
 import { ALL_EMPLOYEES_SELECTED } from './default-employee';
 import {
 	DateRangePickerBuilderService,
@@ -145,10 +145,12 @@ export class EmployeeSelectorComponent
 			.subscribe();
 		this.store.selectedEmployee$
 			.pipe(
+				distinctUntilChange(),
 				filter((employee: ISelectedEmployee) => !!employee),
 				tap((employee: ISelectedEmployee) => {
 					if (this.defaultSelected) {
 						this.selectedEmployee = employee;
+						this.selectionChanged.emit(employee);
 					}
 					this.cdRef.detectChanges();
 				}),
@@ -252,9 +254,11 @@ export class EmployeeSelectorComponent
 		if (!this.skipGlobalChange) {
 			this.store.selectedEmployee = employee || ALL_EMPLOYEES_SELECTED;
 		} else {
-			this.selectedEmployee = employee;
+			this.selectedEmployee = employee || ALL_EMPLOYEES_SELECTED;
 		}
-		this.selectionChanged.emit(employee);
+		if (isNotEmpty(employee)) {
+			this.selectionChanged.emit(employee);
+		}
 	}
 
 	selectEmployeeById(employeeId: string) {
@@ -283,11 +287,10 @@ export class EmployeeSelectorComponent
 	}
 
 	private _selectedEmployee() {
-		if (!this.selectedEmployee) {
+		if (!this.selectedEmployee && isNotEmpty(this.people)) {
 			// This is so selected employee doesn't get reset when it's already set from somewhere else
 			this.selectEmployee(this.people[0]);
 		}
-
 		if (
 			!this.defaultSelected &&
 			this.selectedEmployee === ALL_EMPLOYEES_SELECTED
@@ -342,7 +345,9 @@ export class EmployeeSelectorComponent
 		];
 
 		//Insert All Employees Option
-		if (this.showAllEmployeesOption) {
+		if (this.showAllEmployeesOption && this.store.hasPermission(
+			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+		)) {
 			this.people.unshift(ALL_EMPLOYEES_SELECTED);
 		}
 
@@ -376,7 +381,9 @@ export class EmployeeSelectorComponent
 				return false;
 			}
 		}
-		return true;
+		return !!this.store.hasPermission(
+			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+		);
 	}
 
 	/**
