@@ -54,7 +54,8 @@ $nb-themes: nb-register-theme(
     gauzy-shadow: 0px 1px 1px 0px rgb(0 0 0 / 15%),
     gauzy-scrollbar: rgba(126, 126, 143, 0.1),
     gauzy-primary-background: rgb(246, 250, 254),
-    layout-padding: 24px 24px 0 12px
+    layout-padding: 24px 24px 0 12px,
+    header-height: 4.5rem
   ),
   default,
   default
@@ -100,7 +101,8 @@ $nb-themes: nb-register-theme(
     gauzy-scrollbar: rgba(137, 126, 143, 0.25),
     gauzy-primary-background: rgb(214, 200, 255),
     gauzy-card-6: rgb(57, 52, 62),
-    layout-padding: 24px 24px 0 12px
+    layout-padding: 24px 24px 0 12px,
+    header-height: 4.5rem
   ),
   cosmic,
   cosmic
@@ -147,7 +149,8 @@ $nb-themes: nb-register-theme(
     gauzy-scrollbar: rgba(126, 126, 143, 0.1),
     gauzy-primary-background: rgb(246, 247, 254),
     gauzy-card-6: rgba(249, 249, 249, 1),
-    layout-padding: 24px 24px 0 12px
+    layout-padding: 24px 24px 0 12px,
+    header-height: 4.5rem
   ),
   corporate,
   corporate
@@ -197,7 +200,8 @@ $nb-themes: nb-register-theme(
     gauzy-scrollbar: rgba(126, 126, 143, 0.25),
     gauzy-primary-background: rgb(58, 62, 75),
     gauzy-card-6: rgba(52, 52, 62, 1),
-    layout-padding: 24px 24px 0 12px
+    layout-padding: 24px 24px 0 12px,
+    header-height: 4.5rem
   ),
   dark,
   dark
