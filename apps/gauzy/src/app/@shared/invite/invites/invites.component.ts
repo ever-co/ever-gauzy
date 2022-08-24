@@ -141,6 +141,18 @@ export class InvitesComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
+		this._refresh$
+			.pipe(
+				filter(
+					() =>
+						this.dataLayoutStyle ===
+						this.componentLayoutStyleEnum.CARDS_GRID
+				),
+				tap(() => this.refreshPagination()),
+				tap(() => (this.invites = [])),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	ngOnDestroy(): void {}
@@ -312,7 +324,6 @@ export class InvitesComponent
 				token: invite.token
 			});
 		}
-		this.invites = invitesVm;
 		this.sourceSmartTable.setPaging(activePage, itemsPerPage, false);
 		this.sourceSmartTable.load(invitesVm);
 		if (this.dataLayoutStyle === this.componentLayoutStyleEnum.CARDS_GRID)
@@ -325,8 +336,7 @@ export class InvitesComponent
 	}
 
 	private async _loadGridLayoutData() {
-		const invites = await this.sourceSmartTable.getElements();
-		if (this.invites === invites) this.invites.push(...invites);
+		this.invites.push(...(await this.sourceSmartTable.getElements()));
 	}
 
 	private _loadSmartTableSettings() {
