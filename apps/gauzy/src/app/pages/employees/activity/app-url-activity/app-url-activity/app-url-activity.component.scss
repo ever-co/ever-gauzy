@@ -3,6 +3,9 @@
   .percentage-col {
     width: 90px;
   }
+  .custom-card-body {
+    height: calc(100vh - 21.5rem) !important;
+  }
   ::ng-deep {
     nb-progress-bar {
       .progress-container {
@@ -20,12 +23,10 @@
     .no-data {
       margin-top: 12px;
       height: 100%;
-      width: 99%;
     }
   }
 }
 .mini-card {
-  width: 99%;
   background-color: nb-theme(background-basic-color-1);
   padding: 20px;
   margin-bottom: 5px;
