@@ -1,8 +1,10 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { IImageAsset } from '@gauzy/contracts';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
+import { TranslateService } from '@ngx-translate/core';
 import { firstValueFrom } from 'rxjs';
 import { ImageAssetService } from '../../../@core/services/image-asset.service';
+import { TranslationBaseComponent } from '../../language-base';
 import { DeleteConfirmationComponent } from '../../user/forms/delete-confirmation/delete-confirmation.component';
 
 @Component({
@@ -10,7 +12,10 @@ import { DeleteConfirmationComponent } from '../../user/forms/delete-confirmatio
 	templateUrl: './img-asset.component.html',
 	styleUrls: ['./img-asset.component.scss']
 })
-export class ImageAssetComponent implements OnInit {
+export class ImageAssetComponent
+	extends TranslationBaseComponent
+	implements OnInit
+{
 	@Input()
 	imageAsset: IImageAsset;
 
@@ -26,9 +31,12 @@ export class ImageAssetComponent implements OnInit {
 
 	constructor(
 		private imageAssetService: ImageAssetService,
+		readonly translateService: TranslateService,
 		private dialogService: NbDialogService,
 		private toastrService: NbToastrService
-	) {}
+	) {
+		super(translateService);
+	}
 
 	get selected() {
 		if (!this.imageAsset || !this.selectedImages) return;
@@ -43,16 +51,18 @@ export class ImageAssetComponent implements OnInit {
 	}
 
 	async onDeleteAsset($event) {
-		const result = await firstValueFrom(this.dialogService
-			.open(DeleteConfirmationComponent)
-			.onClose);
+		const result = await firstValueFrom(
+			this.dialogService.open(DeleteConfirmationComponent).onClose
+		);
 
 		if (result) {
 			await this.imageAssetService
 				.deleteImageAsset(this.imageAsset)
 				.then(() => {
 					this.toastrService.success(
-						'INVENTORY_PAGE.IMAGE_ASSET_DELETED',
+						this.getTranslation(
+							'INVENTORY_PAGE.IMAGE_ASSET_DELETED'
+						),
 						this.imageAsset.name
 					);
 
