@@ -15,7 +15,7 @@ import {
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
-import { debounceTime, firstValueFrom } from 'rxjs';
+import { debounceTime, firstValueFrom, Subject } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange } from '@gauzy/common-angular';
@@ -60,6 +60,7 @@ export class OrganizationsComponent
 	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
 	loading: boolean = true;
 	user: IUser;
+	private _refresh$: Subject<any> = new Subject();
 
 	organizationsTable: Ng2SmartTableComponent;
 	@ViewChild('organizationsTable') set content(
@@ -104,7 +105,6 @@ export class OrganizationsComponent
 			.pipe(
 				filter((user: IUser) => !!user),
 				tap((user: IUser) => (this.user = user)),
-				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -127,6 +127,14 @@ export class OrganizationsComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
+		this._refresh$
+			.pipe(
+				filter(() => this._isGridLayout),
+				tap(() => this.refreshPagination()),
+				tap(() => (this.organizations = [])),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	setView() {
@@ -140,6 +148,9 @@ export class OrganizationsComponent
 						(this.dataLayoutStyle = componentLayout)
 				),
 				tap(() => this.refreshPagination()),
+				filter(() => this._isGridLayout),
+				tap(() => (this.organizations = [])),
+				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -183,7 +194,9 @@ export class OrganizationsComponent
 			},
 			pager: {
 				display: false,
-				perPage: pagination ? pagination.itemsPerPage : 10
+				perPage: pagination
+					? pagination.itemsPerPage
+					: this.minItemPerPage
 			}
 		};
 	}
@@ -223,6 +236,7 @@ export class OrganizationsComponent
 						this.errorHandler.handleError(error);
 					})
 					.finally(() => {
+						this._refresh$.next(true);
 						this.subject$.next(true);
 					});
 			} catch (error) {
@@ -279,6 +293,7 @@ export class OrganizationsComponent
 					})
 					.finally(() => {
 						this.clearItem();
+						this._refresh$.next(true);
 						this.subject$.next(true);
 					});
 			} catch (error) {
@@ -296,17 +311,17 @@ export class OrganizationsComponent
 
 			const { itemsPerPage, activePage } = this.getPagination();
 
-			this.organizations = items.map(
+			const organizations = items.map(
 				(userOrganization) => userOrganization.organization
 			);
 
-			for (const org of this.organizations) {
+			for (const org of organizations) {
 				const activeEmployees = org.employees.filter((i) => i.isActive);
 				org.totalEmployees = activeEmployees.length;
 				delete org['employees'];
 			}
 			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
-			this.smartTableSource.load(this.organizations);
+			this.smartTableSource.load(organizations);
 			this._loadDataGridLayout();
 			this.setPagination({
 				...this.getPagination(),
@@ -320,9 +335,17 @@ export class OrganizationsComponent
 	}
 
 	private async _loadDataGridLayout() {
-		if (this.dataLayoutStyle === this.componentLayoutStyleEnum.CARDS_GRID) {
-			this.organizations = await this.smartTableSource.getElements();
+		if (this._isGridLayout) {
+			this.organizations.push(
+				...(await this.smartTableSource.getElements())
+			);
 		}
+	}
+
+	private get _isGridLayout(): boolean {
+		return (
+			this.dataLayoutStyle === this.componentLayoutStyleEnum.CARDS_GRID
+		);
 	}
 
 	/*
@@ -332,8 +355,7 @@ export class OrganizationsComponent
 		this.organizationsTable.source.onChangedSource
 			.pipe(
 				untilDestroyed(this),
-				tap(() => this.clearItem()),
-				tap(() => this.subject$.next(true))
+				tap(() => this.clearItem())
 			)
 			.subscribe();
 	}
