@@ -181,6 +181,14 @@ export class ExpenseService extends TenantAwareCrudService<Expense> {
 	}
 
 	public pagination(filter: any) {
+		/**
+		 * If employee has login, return only self incomes
+		 */
+		 if (!RequestContext.hasPermission(
+			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+		)) {
+			filter.where.employeeId = RequestContext.currentEmployeeId();
+		}
 		if ('filters' in filter) {
 			const { filters } = filter;
 			if ('notes' in filters) {

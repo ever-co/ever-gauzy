@@ -18,7 +18,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
-import { distinctUntilChange } from '@gauzy/common-angular';
+import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
 import { CurrencyService, Store } from '../../@core/services';
 import { TranslationBaseComponent } from '../language-base/translation-base.component';
 import { environment as ENV } from './../../../environments/environment';
@@ -57,7 +57,7 @@ export class CurrencyComponent extends TranslationBaseComponent
 		return this._currency;
 	}
 	@Input() set currency(val: string) {
-		if (val) {
+		if (isNotEmpty(val)) {
 			this._currency = val;
 			this.onChange(val);
 			this.onTouched();
@@ -106,6 +106,9 @@ export class CurrencyComponent extends TranslationBaseComponent
 				tap((organization: IOrganization) => this.organization = organization),
 				tap(({ currency }) => {
 					this.currency = currency || ENV.DEFAULT_CURRENCY;
+				}),
+				tap(({ currency }) => {
+					this.formControl.setValue(currency);
 					this.formControl.updateValueAndValidity();
 				}),
 				untilDestroyed(this)
@@ -119,7 +122,6 @@ export class CurrencyComponent extends TranslationBaseComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
-
 	}
 
 	ngAfterViewInit() {

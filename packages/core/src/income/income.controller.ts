@@ -10,7 +10,6 @@ import {
 	Query,
 	UseGuards,
 	Delete,
-	UsePipes,
 	ValidationPipe
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
@@ -20,6 +19,7 @@ import {
 	IPagination,
 	PermissionsEnum
 } from '@gauzy/contracts';
+import { DeleteResult, FindOptionsWhere } from 'typeorm';
 import { RequestContext } from '../core/context';
 import { CrudController, PaginationParams } from './../core/crud';
 import { EmployeeService } from '../employee/employee.service';
@@ -34,6 +34,7 @@ import {
 import { Income } from './income.entity';
 import { IncomeService } from './income.service';
 import { CreateIncomeDTO, UpdateIncomeDTO } from './dto';
+import { EmployeeFeatureDTO } from './../employee/dto';
 
 @ApiTags('Income')
 @UseGuards(TenantPermissionGuard)
@@ -72,14 +73,29 @@ export class IncomeController extends CrudController<Income> {
 		);
 	}
 
+	/**
+	 * GET income count
+	 *
+	 * @param options
+	 * @returns
+	 */
+	@Permissions(PermissionsEnum.ORG_INCOMES_VIEW)
+	@Get('count')
+	async getCount(
+		@Query() options: FindOptionsWhere<Income>
+	): Promise<number> {
+		return await this.incomeService.countBy(options);
+	}
+
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_INCOMES_VIEW)
 	@Get('pagination')
-	@UsePipes(new ValidationPipe({ transform: true }))
 	async pagination(
-		@Query() filter: PaginationParams<IIncome>
+		@Query(new ValidationPipe({
+			transform: true
+		})) options: PaginationParams<IIncome>
 	): Promise<IPagination<IIncome>> {
-		return this.incomeService.pagination(filter);
+		return this.incomeService.pagination(options);
 	}
 
 	@ApiOperation({ summary: 'Find all income.' })
@@ -105,6 +121,19 @@ export class IncomeController extends CrudController<Income> {
 		);
 	}
 
+	/**
+	 * Find income by primary ID
+	 *
+	 * @param id
+	 * @returns
+	 */
+	@Get(':id')
+	async findById(
+		@Param('id', UUIDValidationPipe) id: string,
+	): Promise<IIncome> {
+		return await this.incomeService.findOneByIdString(id);
+	}
+
 	@ApiOperation({ summary: 'Create new record' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
@@ -118,10 +147,11 @@ export class IncomeController extends CrudController<Income> {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_INCOMES_EDIT)
 	@Post()
-	@UsePipes(new ValidationPipe({ transform : true }))
 	async create(
-		@Body() entity: CreateIncomeDTO,
-		...options: any[]
+		@Body(new ValidationPipe({
+			transform: true,
+			whitelist: true
+		})) entity: CreateIncomeDTO
 	): Promise<IIncome> {
 		return await this.commandBus.execute(
 			new IncomeCreateCommand(entity)
@@ -146,11 +176,11 @@ export class IncomeController extends CrudController<Income> {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_INCOMES_EDIT)
 	@Put(':id')
-	@UsePipes( new ValidationPipe({ transform : true }))
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body() entity: UpdateIncomeDTO,
-		...options: any[]
+		@Body(new ValidationPipe({
+			transform : true
+		})) entity: UpdateIncomeDTO
 	): Promise<IIncome> {
 		return await this.commandBus.execute(
 			new IncomeUpdateCommand(id, entity)
@@ -173,11 +203,16 @@ export class IncomeController extends CrudController<Income> {
 	@Delete(':id')
 	async delete(
 		@Param('id', UUIDValidationPipe) incomeId: string,
-		@Query('data', ParseJsonPipe) data: any
-	): Promise<any> {
-		const { employeeId = null } = data;
+		@Query(new ValidationPipe({
+			transform : true,
+			whitelist: true
+		})) options: EmployeeFeatureDTO
+	): Promise<DeleteResult> {
 		return await this.commandBus.execute(
-			new IncomeDeleteCommand(employeeId, incomeId)
+			new IncomeDeleteCommand(
+				options.employeeId,
+				incomeId
+			)
 		);
 	}
 }

@@ -157,7 +157,7 @@ export class Expense extends TenantOrganizationBaseEntity implements IExpense {
 	@IsOptional()
 	@Index()
 	@Column({ nullable: true })
-	readonly employeeId?: string;
+	employeeId?: string;
 
 	/**
 	 * OrganizationVendor
@@ -174,7 +174,7 @@ export class Expense extends TenantOrganizationBaseEntity implements IExpense {
 	@IsString()
 	@Index()
 	@Column({ nullable: true })
-	readonly vendorId: string;
+	vendorId: string;
 
 	/**
 	 * ExpenseCategory
@@ -191,7 +191,7 @@ export class Expense extends TenantOrganizationBaseEntity implements IExpense {
 	@IsString()
 	@Index()
 	@Column({ nullable: true })
-	readonly categoryId: string;
+	categoryId: string;
 
 	/**
 	 * OrganizationProject

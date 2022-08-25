@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { AfterViewInit, Component, Input, OnInit } from '@angular/core';
 import {
 	Validators,
 	FormBuilder,
@@ -8,11 +8,11 @@ import { NbDialogRef } from '@nebular/theme';
 import {
 	IIncome,
 	ITag,
-	IOrganizationContact,
 	IOrganization,
 	ICurrency,
 	ISelectedEmployee
 } from '@gauzy/contracts';
+import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
@@ -26,25 +26,21 @@ import { FormHelpers } from '../../forms/helpers';
 	templateUrl: './income-mutation.component.html',
 	styleUrls: ['./income-mutation.component.scss']
 })
-export class IncomeMutationComponent
-	extends TranslationBaseComponent
-	implements OnInit {
+export class IncomeMutationComponent extends TranslationBaseComponent
+	implements AfterViewInit, OnInit {
 
 	FormHelpers: typeof FormHelpers = FormHelpers;
+	public organization: IOrganization;
 
-	income?: IIncome;
-	organizationContact: IOrganizationContact;
-	organization: IOrganization;
-
-	get valueDate() {
-		return this.form.get('valueDate').value;
+	/*
+	* Getter & Setter
+	*/
+	_income: IIncome;
+	get income(): IIncome {
+		return this._income;
 	}
-	set valueDate(value) {
-		this.form.get('valueDate').setValue(value);
-	}
-
-	get currency() {
-		return this.form.get('currency');
+	@Input() set income(value: IIncome) {
+		this._income = value;
 	}
 
 	/*
@@ -76,30 +72,33 @@ export class IncomeMutationComponent
 		super(translateService);
 	}
 
-	ngOnInit() {
+	ngOnInit(): void {
 		this.store.selectedOrganization$
 			.pipe(
-				filter((organization) => !!organization),
-				debounceTime(200),
+				debounceTime(100),
+				distinctUntilChange(),
+				filter((organization: IOrganization) => !!organization),
 				tap((organization: IOrganization) => this.organization = organization),
-				tap(() => this._loadDefaultCurrency()),
 				tap(() => this._initializeForm()),
 				untilDestroyed(this)
 			)
 			.subscribe();
 	}
 
-	selectOrganizationContact($event) {
-		this.organizationContact = $event;
-	}
+	ngAfterViewInit(): void {}
 
 	async addOrEditIncome() {
 		if (this.form.invalid) {
 			return;
 		}
-		this.dialogRef.close(Object.assign({}, this.form.getRawValue()));
+		this.dialogRef.close(
+			Object.assign(
+				{},
+				this.form.getRawValue()
+			)
+		);
 	}
-	
+
 	close() {
 		this.dialogRef.close();
 	}
@@ -120,25 +119,17 @@ export class IncomeMutationComponent
 		}
 	}
 
-	private _loadDefaultCurrency() {
-		const organization = this.organization;
-		if (organization && this.currency && !this.currency.value) {
-			this.currency.setValue(organization.currency);
-			this.currency.updateValueAndValidity();
+	selectedTagsHandler(tags: ITag[]) {
+		if (isNotEmpty(tags)) {
+			this.form.patchValue({ tags: tags });
+			this.form.updateValueAndValidity();
 		}
-	}
-
-	selectedTagsHandler(currentSelection: ITag[]) {
-		this.form.patchValue({
-			tags: currentSelection
-		});
-		this.form.updateValueAndValidity();
 	}
 
 	/**
 	 * Select Employee Selector
-	 * 
-	 * @param employee 
+	 *
+	 * @param employee
 	 */
 	selectionEmployee(employee: ISelectedEmployee) {
 		if (employee) {
