@@ -1,4 +1,10 @@
-import { Component, OnInit, ViewChild, OnDestroy, TemplateRef } from '@angular/core';
+import {
+	Component,
+	OnInit,
+	ViewChild,
+	OnDestroy,
+	TemplateRef
+} from '@angular/core';
 import { FormGroup, FormBuilder, FormArray, Validators } from '@angular/forms';
 import {
 	IOrganizationDocument,
@@ -14,10 +20,22 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { DeleteConfirmationComponent } from './../../@shared/user/forms';
 import { UploadDocumentComponent } from './upload-document/upload-document.component';
 import { ComponentEnum } from '../../@core/constants';
-import { DocumentDateTableComponent, DocumentUrlTableComponent } from '../../@shared/table-components';
-import { OrganizationDocumentsService, Store, ToastrService } from '../../@core/services';
+import {
+	DocumentDateTableComponent,
+	DocumentUrlTableComponent
+} from '../../@shared/table-components';
+import {
+	ErrorHandlingService,
+	OrganizationDocumentsService,
+	Store,
+	ToastrService
+} from '../../@core/services';
 import { ActivatedRoute } from '@angular/router';
-import { IPaginationBase, PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
+import {
+	IPaginationBase,
+	PaginationFilterBaseComponent
+} from '../../@shared/pagination/pagination-filter-base.component';
+import { Subject } from 'rxjs/internal/Subject';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -25,12 +43,13 @@ import { IPaginationBase, PaginationFilterBaseComponent } from '../../@shared/pa
 	templateUrl: './documents.component.html',
 	styleUrls: ['documents.component.scss']
 })
-export class DocumentsComponent extends PaginationFilterBaseComponent 
-	implements OnInit, OnDestroy {
-
+export class DocumentsComponent
+	extends PaginationFilterBaseComponent
+	implements OnInit, OnDestroy
+{
 	@ViewChild('uploadDoc')
 	uploadDoc: UploadDocumentComponent;
-	@ViewChild('addEditTemplate') 
+	@ViewChild('addEditTemplate')
 	addEditTemplate: TemplateRef<any>;
 	addEditDialogRef: NbDialogRef<any>;
 	formDocument: FormGroup;
@@ -50,9 +69,11 @@ export class DocumentsComponent extends PaginationFilterBaseComponent
 		document: null,
 		state: false
 	};
+	private _refresh$: Subject<any> = new Subject();
+
 	/*
-	* Organization Document Mutation Form
-	*/
+	 * Organization Document Mutation Form
+	 */
 	public form: FormGroup = DocumentsComponent.buildForm(this.fb);
 	static buildForm(fb: FormBuilder): FormGroup {
 		const form = fb.group({
@@ -75,7 +96,8 @@ export class DocumentsComponent extends PaginationFilterBaseComponent
 		public readonly translateService: TranslateService,
 		private readonly organizationDocumentsService: OrganizationDocumentsService,
 		private readonly toastrService: ToastrService,
-		private readonly route: ActivatedRoute
+		private readonly route: ActivatedRoute,
+		private readonly _errorhandlingService: ErrorHandlingService
 	) {
 		super(translateService);
 		this.setView();
@@ -102,20 +124,34 @@ export class DocumentsComponent extends PaginationFilterBaseComponent
 			.pipe(
 				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
-				tap((organization: IOrganization) => this.organization = organization),
+				tap(
+					(organization: IOrganization) =>
+						(this.organization = organization)
+				),
+				tap(() => this._refresh$.next(true)),
 				tap(() => this._loadDocuments()),
 				untilDestroyed(this)
 			)
 			.subscribe();
 		this.route.queryParamMap
 			.pipe(
-				filter((params) => !!params && params.get('openAddDialog') === 'true'),
+				filter(
+					(params) =>
+						!!params && params.get('openAddDialog') === 'true'
+				),
 				debounceTime(1000),
 				tap(() => this.openDialog(this.addEditTemplate, false)),
 				untilDestroyed(this)
 			)
 			.subscribe();
-		
+		this._refresh$
+			.pipe(
+				filter(() => this._isGridLayout),
+				tap(() => this.refreshPagination()),
+				tap(() => (this.documentList = [])),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	documents(): FormArray {
@@ -128,12 +164,18 @@ export class DocumentsComponent extends PaginationFilterBaseComponent
 			.componentLayout$(this.viewComponentName)
 			.pipe(
 				distinctUntilChange(),
-				tap((componentLayout: ComponentLayoutStyleEnum) => this.dataLayoutStyle = componentLayout),
+				tap(
+					(componentLayout: ComponentLayoutStyleEnum) =>
+						(this.dataLayoutStyle = componentLayout)
+				),
+				tap(() => this.refreshPagination()),
+				tap(() => (this.documentList = [])),
+				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
 	}
-	
+
 	loadSmartTableSetting() {
 		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
@@ -160,6 +202,12 @@ export class DocumentsComponent extends PaginationFilterBaseComponent
 				}
 			}
 		};
+	}
+
+	private get _isGridLayout(): boolean {
+		return (
+			this.componentLayoutStyleEnum.CARDS_GRID === this.dataLayoutStyle
+		);
 	}
 
 	submitForm() {
@@ -201,10 +249,7 @@ export class DocumentsComponent extends PaginationFilterBaseComponent
 				organizationId,
 				tenantId
 			})
-			.pipe(
-				first(),
-				untilDestroyed(this)
-			)
+			.pipe(first(), untilDestroyed(this))
 			.subscribe(
 				() => {
 					this.toastrService.success(
@@ -213,8 +258,9 @@ export class DocumentsComponent extends PaginationFilterBaseComponent
 							name: formValue.name
 						}
 					);
-					this.addEditDialogRef.close()
+					this.addEditDialogRef.close();
 					this.cancel();
+					this._refresh$.next(true);
 					this.subject$.next(true);
 				},
 				() =>
@@ -242,7 +288,6 @@ export class DocumentsComponent extends PaginationFilterBaseComponent
 			.pipe(first(), untilDestroyed(this))
 			.subscribe({
 				next: (data) => {
-					this.documentList = data.items;
 					this.loading = false;
 					this.smartTableSource.setPaging(
 						activePage,
@@ -250,25 +295,21 @@ export class DocumentsComponent extends PaginationFilterBaseComponent
 						false
 					);
 					this.smartTableSource.load(data.items);
-					if (
-						this.componentLayoutStyleEnum.CARDS_GRID ===
-						this.dataLayoutStyle
-					)
+					if (this._isGridLayout) {
 						this._loadGridLayoutData();
+					} else this.documentList = data.items;
 				},
 				error: () =>
-					this.toastrService.error(
-						'NOTES.ORGANIZATIONS.EDIT_ORGANIZATION_DOCS.ERR_LOAD'
+					this._errorhandlingService.handleError(
+						this.getTranslation(
+							'NOTES.ORGANIZATIONS.EDIT_ORGANIZATION_DOCS.ERR_LOAD'
+						)
 					)
 			});
 	}
 
 	private async _loadGridLayoutData() {
-		this.documentList = await this.smartTableSource.getElements();
-		this.setPagination({
-			...this.getPagination(),
-			totalItems: this.smartTableSource.count()
-		});
+		this.documentList.push(...(await this.smartTableSource.getElements()));
 	}
 
 	private _updateDocument(formValue: IOrganizationDocument) {
@@ -287,6 +328,7 @@ export class DocumentsComponent extends PaginationFilterBaseComponent
 					);
 					this.addEditDialogRef.close();
 					this.cancel();
+					this._refresh$.next(true);
 					this.subject$.next(true);
 				},
 				error: () =>
@@ -303,9 +345,9 @@ export class DocumentsComponent extends PaginationFilterBaseComponent
 	}
 
 	removeDocument(document: IOrganizationDocument) {
-		if(!document){
-			document = this.selectedDocument
-		}		
+		if (!document) {
+			document = this.selectedDocument;
+		}
 		this.dialogService
 			.open(DeleteConfirmationComponent, {
 				context: {
@@ -329,10 +371,15 @@ export class DocumentsComponent extends PaginationFilterBaseComponent
 										}
 									)
 								);
+								this._refresh$.next(true);
 								this.subject$.next(true);
 							},
 							error: () =>
-								'NOTES.ORGANIZATIONS.EDIT_ORGANIZATION_DOCS.ERR_DELETED'
+								this._errorhandlingService.handleError(
+									this.getTranslation(
+										'NOTES.ORGANIZATIONS.EDIT_ORGANIZATION_DOCS.ERR_DELETED'
+									)
+								)
 						});
 				}
 			});
@@ -373,7 +420,7 @@ export class DocumentsComponent extends PaginationFilterBaseComponent
 			console.log('An error occurred on open dialog');
 		}
 	}
-	
+
 	selectDocument(position: any) {
 		if (position.data) position = position.data;
 		const res =

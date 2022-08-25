@@ -24,26 +24,36 @@
 				documentList?.length
 			"
 		>
-			<nb-card class="p-0" *ngFor="let document of documentList">
-				<nb-card-body class="custom-table" 
-					[ngClass]="{ selected: selected?.state && document === selected?.document }"
-					(click)="selectDocument(document)">
-					<div>
-						<nb-icon icon="file-text-outline"></nb-icon>
-						<a [href]="document.documentUrl">
-							{{ document.name }}
-						</a>
-					</div>
-					<div>
-						{{ document.updatedAt | dateTimeFormat }}
-					</div>
-				</nb-card-body>
-			</nb-card>
+			<div class="table-scroll-container">
+				<nb-card class="p-0" *ngFor="let document of documentList">
+					<nb-card-body
+						class="custom-table"
+						[ngClass]="{
+							selected:
+								selected?.state &&
+								document === selected?.document
+						}"
+						(click)="selectDocument(document)"
+					>
+						<div>
+							<nb-icon icon="file-text-outline"></nb-icon>
+							<a [href]="document.documentUrl">
+								{{ document.name }}
+							</a>
+						</div>
+						<div>
+							{{ document.updatedAt | dateTimeFormat }}
+						</div>
+					</nb-card-body>
+				</nb-card>
+			</div>
 		</ng-template>
-		<ng-template [ngIf]="!loading && documentList?.length == 0">
-			<ngx-no-data-message 
-				[message]="'ORGANIZATIONS_PAGE.DOCUMENTS_NO_DATA_MESSAGE'"
-			></ngx-no-data-message>
+		<ng-template [ngIf]="!documentList?.length">
+			<div class="no-data">
+				<ngx-no-data-message
+					[message]="'ORGANIZATIONS_PAGE.DOCUMENTS_NO_DATA_MESSAGE'"
+				></ngx-no-data-message>
+			</div>
 		</ng-template>
 		<ng-template
 			[ngIf]="
@@ -54,13 +64,8 @@
 			<ga-card-grid
 				[settings]="settingsSmartTable"
 				[source]="documentList"
-				[doEmit]="false"
-				[totalItems]="pagination?.totalItems"
-				[itemsPerPage]="pagination?.itemsPerPage"
-				[activePage]="pagination?.activePage"
 				(onSelectedItem)="selectDocument($event)"
-				(selectedOption)="onUpdateOption($event)"
-				(selectedPage)="onPageChange($event)"
+				(scroll)="onScroll()"
 			></ga-card-grid>
 		</ng-template>
 	</nb-card-body>
@@ -102,7 +107,7 @@
 			size="small"
 		>
 			<nb-icon status="danger" icon="trash-2-outline"> </nb-icon>
-		</button>		
+		</button>
 	</div>
 </ng-template>
 
@@ -118,15 +123,19 @@
 				</div>
 			</div>
 			<div class="row mb-3">
-				<h5 class="title mr-3 ml-3">{{ this.selected.document ? ('POP_UPS.EDIT' | translate) : ('POP_UPS.ADD' | translate) }}</h5>
+				<h5 class="title mr-3 ml-3">
+					{{
+						this.selected.document
+							? ('POP_UPS.EDIT' | translate)
+							: ('POP_UPS.ADD' | translate)
+					}}
+				</h5>
 			</div>
 			<form [formGroup]="form" *ngIf="form">
 				<div formArrayName="documents">
 					<div
 						*ngFor="
-							let document of form.controls.documents[
-								'controls'
-							];
+							let document of form.controls.documents['controls'];
 							let i = index
 						"
 					>
@@ -153,7 +162,7 @@
 						</div>
 					</div>
 				</div>
-			</form>		
+			</form>
 
 			<div class="row mb-3">
 				<div class="col-sm-12 d-flex flex-column">
@@ -171,23 +180,19 @@
 
 			<div class="row mb-3">
 				<div class="col-sm-12"></div>
-					<button
-						class="delete mr-3 ml-3"
-						(click)="ref.close(); disabled = true"
-						nbButton
-						status="basic"
-						outline
-					>
-						{{ 'BUTTONS.CANCEL' | translate }}
-					</button>
-					<button
-						(click)="submitForm();"
-						nbButton
-						status="success"
-					>
-						{{ 'BUTTONS.SAVE' | translate }}
-					</button>
-				</div>			
+				<button
+					class="delete mr-3 ml-3"
+					(click)="ref.close(); disabled = true"
+					nbButton
+					status="basic"
+					outline
+				>
+					{{ 'BUTTONS.CANCEL' | translate }}
+				</button>
+				<button (click)="submitForm()" nbButton status="success">
+					{{ 'BUTTONS.SAVE' | translate }}
+				</button>
 			</div>
+		</div>
 	</div>
 </ng-template>
