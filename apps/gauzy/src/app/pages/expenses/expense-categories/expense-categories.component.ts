@@ -110,18 +110,11 @@ export class ExpenseCategoriesComponent
 			.subscribe();
 		this._refresh$
 			.pipe(
-				filter(() => this._isGridLayout),
 				tap(() => this.refreshPagination()),
 				tap(() => (this.expenseCategories = [])),
 				untilDestroyed(this)
 			)
 			.subscribe();
-	}
-
-	private get _isGridLayout(): boolean {
-		return (
-			this.componentLayoutStyleEnum.CARDS_GRID === this.dataLayoutStyle
-		);
 	}
 
 	cancel() {
