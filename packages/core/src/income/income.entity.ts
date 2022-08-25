@@ -35,7 +35,7 @@ import { ColumnNumericTransformerPipe } from './../shared/pipes';
 
 @Entity('income')
 export class Income extends TenantOrganizationBaseEntity implements IIncome {
-	
+
 	@ApiProperty({ type: () => Number })
 	@IsNumber()
 	@IsNotEmpty()
@@ -78,7 +78,7 @@ export class Income extends TenantOrganizationBaseEntity implements IIncome {
 
 	/*
     |--------------------------------------------------------------------------
-    | @ManyToOne 
+    | @ManyToOne
     |--------------------------------------------------------------------------
     */
 	/**
@@ -95,7 +95,7 @@ export class Income extends TenantOrganizationBaseEntity implements IIncome {
 	@IsOptional()
 	@Index()
 	@Column({ nullable: true })
-	readonly employeeId?: string;
+	employeeId?: string;
 
 	/**
 	 * Client
@@ -117,10 +117,10 @@ export class Income extends TenantOrganizationBaseEntity implements IIncome {
 
 	/*
     |--------------------------------------------------------------------------
-    | @ManyToMany 
+    | @ManyToMany
     |--------------------------------------------------------------------------
     */
-    
+
 	/**
 	* Tag
     */
