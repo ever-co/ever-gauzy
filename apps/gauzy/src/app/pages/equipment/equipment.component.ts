@@ -14,10 +14,16 @@ import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import { EquipmentMutationComponent } from '../../@shared/equipment/equipment-mutation.component';
-import { IPaginationBase, PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
+import {
+	IPaginationBase,
+	PaginationFilterBaseComponent
+} from '../../@shared/pagination/pagination-filter-base.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import { AutoApproveComponent } from './auto-approve/auto-approve.component';
-import { PictureNameTagsComponent, TagsOnlyComponent } from '../../@shared/table-components';
+import {
+	PictureNameTagsComponent,
+	TagsOnlyComponent
+} from '../../@shared/table-components';
 import { API_PREFIX, ComponentEnum } from '../../@core/constants';
 import { EquipmentService, Store, ToastrService } from '../../@core/services';
 import { ImageRowComponent } from '../inventory/components/inventory-table-components';
@@ -29,9 +35,10 @@ import { InputFilterComponent } from '../../@shared/table-filters';
 	templateUrl: './equipment.component.html',
 	styleUrls: ['./equipment.component.scss']
 })
-export class EquipmentComponent extends PaginationFilterBaseComponent
-	implements OnInit, OnDestroy {
-
+export class EquipmentComponent
+	extends PaginationFilterBaseComponent
+	implements OnInit, OnDestroy
+{
 	settingsSmartTable: object;
 	loading: boolean = true;
 	disableButton: boolean = true;
@@ -44,6 +51,7 @@ export class EquipmentComponent extends PaginationFilterBaseComponent
 
 	public organization: IOrganization;
 	equipments$: Subject<any> = this.subject$;
+	private _refresh$: Subject<any> = new Subject();
 
 	equipmentTable: Ng2SmartTableComponent;
 	@ViewChild('equipmentTable') set content(content: Ng2SmartTableComponent) {
@@ -89,16 +97,35 @@ export class EquipmentComponent extends PaginationFilterBaseComponent
 			.pipe(
 				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
-				tap((organization: IOrganization) => this.organization = organization),
+				tap(
+					(organization: IOrganization) =>
+						(this.organization = organization)
+				),
+				tap(() => this._refresh$.next(true)),
 				tap(() => this.equipments$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
 		this.route.queryParamMap
 			.pipe(
-				filter((params) => !!params && params.get('openAddDialog') === 'true'),
+				filter(
+					(params) =>
+						!!params && params.get('openAddDialog') === 'true'
+				),
 				debounceTime(1000),
 				tap(() => this.save()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this._refresh$
+			.pipe(
+				filter(
+					() =>
+						this.dataLayoutStyle ===
+						ComponentLayoutStyleEnum.CARDS_GRID
+				),
+				tap(() => this.refreshPagination()),
+				tap(() => (this.equipments = [])),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -112,9 +139,16 @@ export class EquipmentComponent extends PaginationFilterBaseComponent
 			.componentLayout$(this.viewComponentName)
 			.pipe(
 				distinctUntilChange(),
-				tap((componentLayout) => (this.dataLayoutStyle = componentLayout)),
+				tap(
+					(componentLayout) =>
+						(this.dataLayoutStyle = componentLayout)
+				),
 				tap(() => this.refreshPagination()),
-				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
+				filter(
+					(componentLayout) =>
+						componentLayout === ComponentLayoutStyleEnum.CARDS_GRID
+				),
+				tap(() => (this.equipments = [])),
 				tap(() => this.equipments$.next(true)),
 				untilDestroyed(this)
 			)
@@ -154,34 +188,37 @@ export class EquipmentComponent extends PaginationFilterBaseComponent
 					title: this.getTranslation('EQUIPMENT_PAGE.EQUIPMENT_NAME'),
 					type: 'custom',
 					renderComponent: PictureNameTagsComponent,
-          filter: {
+					filter: {
 						type: 'custom',
 						component: InputFilterComponent
 					},
-          filterFunction: (value) => {
+					filterFunction: (value) => {
 						this.setFilter({ field: 'name', search: value });
 					}
 				},
 				type: {
 					title: this.getTranslation('EQUIPMENT_PAGE.EQUIPMENT_TYPE'),
 					type: 'string',
-          filter: {
+					filter: {
 						type: 'custom',
 						component: InputFilterComponent
 					},
-          filterFunction: (value) => {
+					filterFunction: (value) => {
 						this.setFilter({ field: 'type', search: value });
 					}
 				},
 				serialNumber: {
 					title: this.getTranslation('EQUIPMENT_PAGE.EQUIPMENT_SN'),
 					type: 'string',
-          filter: {
+					filter: {
 						type: 'custom',
 						component: InputFilterComponent
 					},
-          filterFunction: (value) => {
-						this.setFilter({ field: 'serialNumber', search: value });
+					filterFunction: (value) => {
+						this.setFilter({
+							field: 'serialNumber',
+							search: value
+						});
 					}
 				},
 				manufacturedYear: {
@@ -221,9 +258,7 @@ export class EquipmentComponent extends PaginationFilterBaseComponent
 					renderComponent: AutoApproveComponent
 				},
 				tags: {
-					title: this.getTranslation(
-						'SM_TABLE.TAGS'
-					),
+					title: this.getTranslation('SM_TABLE.TAGS'),
 					type: 'custom',
 					filter: false,
 					renderComponent: TagsOnlyComponent
@@ -238,7 +273,7 @@ export class EquipmentComponent extends PaginationFilterBaseComponent
 				isSelected: true,
 				data: selectedItem
 			});
-		}else{
+		} else {
 			this.selectEquipment({
 				isSelected: false,
 				data: null
@@ -254,9 +289,9 @@ export class EquipmentComponent extends PaginationFilterBaseComponent
 			this.toastrService.success('EQUIPMENT_PAGE.EQUIPMENT_SAVED', {
 				name: equipment.name
 			});
+			this._refresh$.next(true);
 			this.equipments$.next(true);
 		}
-
 	}
 
 	async delete(selectedItem?: IEquipment) {
@@ -272,6 +307,7 @@ export class EquipmentComponent extends PaginationFilterBaseComponent
 
 		if (result) {
 			await this.equipmentService.delete(this.selectedEquipment.id);
+			this._refresh$.next(true);
 			this.equipments$.next(true);
 			this.toastrService.success('EQUIPMENT_PAGE.EQUIPMENT_DELETED', {
 				name: this.selectedEquipment.name
@@ -293,16 +329,17 @@ export class EquipmentComponent extends PaginationFilterBaseComponent
 
 		this.smartTableSource = new ServerDataSource(this.http, {
 			endPoint: `${API_PREFIX}/equipment/pagination`,
-			relations: [
-				'equipmentSharings',
-				'tags',
-				'image'
-			],
+			relations: ['equipmentSharings', 'tags', 'image'],
 			where: {
 				...{ organizationId, tenantId },
 				...this.filters.where
 			},
 			finalize: () => {
+				if (
+					this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID
+				) {
+					this.equipments.push(...this.smartTableSource.getData());
+				}
 				this.setPagination({
 					...this.getPagination(),
 					totalItems: this.smartTableSource.count()
@@ -324,12 +361,6 @@ export class EquipmentComponent extends PaginationFilterBaseComponent
 
 			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
 				await this.smartTableSource.getElements();
-				this.equipments = this.smartTableSource.getData();
-
-				this.setPagination({
-					...this.getPagination(),
-					totalItems: this.smartTableSource.count()
-				});
 			}
 		} catch (error) {
 			this.toastrService.danger(error);

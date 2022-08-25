@@ -164,8 +164,9 @@ export class EmployeesComponent
 		this._refresh$
 			.pipe(
 				filter(
-					(componentLayout) =>
-						componentLayout === ComponentLayoutStyleEnum.CARDS_GRID
+					() =>
+						this.dataLayoutStyle ===
+						ComponentLayoutStyleEnum.CARDS_GRID
 				),
 				tap(() => this.refreshPagination()),
 				tap(() => (this.employees = [])),

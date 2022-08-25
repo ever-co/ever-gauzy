@@ -133,12 +133,15 @@ export class IncomeComponent
 			)
 			.subscribe();
 		const storeOrganization$ = this.store.selectedOrganization$;
-		const selectedDateRange$ = this.dateRangePickerBuilderService.selectedDateRange$;
+		const selectedDateRange$ =
+			this.dateRangePickerBuilderService.selectedDateRange$;
 		const storeEmployee$ = this.store.selectedEmployee$;
 		combineLatest([storeOrganization$, selectedDateRange$, storeEmployee$])
 			.pipe(
 				debounceTime(300),
-				filter(([organization, dateRange]) => !!organization && !!dateRange),
+				filter(
+					([organization, dateRange]) => !!organization && !!dateRange
+				),
 				distinctUntilChange(),
 				tap(([organization, dateRange, employee]) => {
 					this.organization = organization;
@@ -164,8 +167,9 @@ export class IncomeComponent
 		this._refresh$
 			.pipe(
 				filter(
-					(componentLayout) =>
-						componentLayout === ComponentLayoutStyleEnum.CARDS_GRID
+					() =>
+						this.dataLayoutStyle ===
+						ComponentLayoutStyleEnum.CARDS_GRID
 				),
 				tap(() => this.refreshPagination()),
 				tap(() => (this.incomes = [])),
@@ -485,16 +489,23 @@ export class IncomeComponent
 		const { id: organizationId } = this.organization;
 
 		const request = {};
-		if (this.selectedEmployeeId) request['employeeId'] = this.selectedEmployeeId;
+		if (this.selectedEmployeeId)
+			request['employeeId'] = this.selectedEmployeeId;
 
-		const { startDate, endDate } = getAdjustDateRangeFutureAllowed(this.selectedDateRange);
+		const { startDate, endDate } = getAdjustDateRangeFutureAllowed(
+			this.selectedDateRange
+		);
 		if (startDate && endDate) {
 			request['valueDate'] = {};
 			if (moment(startDate).isValid()) {
-				request['valueDate']['startDate'] = toUTC(startDate).format('YYYY-MM-DD HH:mm:ss');
+				request['valueDate']['startDate'] = toUTC(startDate).format(
+					'YYYY-MM-DD HH:mm:ss'
+				);
 			}
 			if (moment(endDate).isValid()) {
-				request['valueDate']['endDate'] = toUTC(endDate).format('YYYY-MM-DD HH:mm:ss');
+				request['valueDate']['endDate'] = toUTC(endDate).format(
+					'YYYY-MM-DD HH:mm:ss'
+				);
 			}
 		}
 
@@ -512,16 +523,16 @@ export class IncomeComponent
 				leftJoin: {
 					tags: 'income.tags'
 				},
-				...(this.filters.join) ? this.filters.join : {}
+				...(this.filters.join ? this.filters.join : {})
 			},
 			where: {
 				organizationId,
 				tenantId,
-				...(
-					this.selectedEmployeeId ? {
-						employeeId: this.selectedEmployeeId
-					} : {}
-				),
+				...(this.selectedEmployeeId
+					? {
+							employeeId: this.selectedEmployeeId
+					  }
+					: {}),
 				valueDate: {
 					startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm:ss'),
 					endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm:ss')
