@@ -48,13 +48,8 @@
 			<ga-card-grid
 				[settings]="settingsSmartTable"
 				[source]="merchants"
-				(selectedOption)="onUpdateOption($event)"
-				(selectedPage)="onPageChange($event)"
 				(onSelectedItem)="selectStore($event)"
-				[doEmit]="false"
-				[totalItems]="pagination?.totalItems"
-				[itemsPerPage]="pagination?.itemsPerPage"
-				[activePage]="pagination?.activePage"
+				(scroll)="onScroll()"
 			></ga-card-grid>
 		</ng-template>
 	</nb-card-body>
@@ -78,7 +73,12 @@
 	let-buttonSize="buttonSize"
 	let-selectedItem="selectedItem"
 >
-	<ng-container *ngxPermissionsOnly="['ORG_PRODUCT_TYPES_EDIT', 'ORG_PRODUCT_TYPES_VIEW']">
+	<ng-container
+		*ngxPermissionsOnly="[
+			'ORG_PRODUCT_TYPES_EDIT',
+			'ORG_PRODUCT_TYPES_VIEW'
+		]"
+	>
 		<div class="btn-group actions">
 			<ng-container *ngxPermissionsOnly="ORG_PRODUCT_TYPES_VIEW">
 				<button

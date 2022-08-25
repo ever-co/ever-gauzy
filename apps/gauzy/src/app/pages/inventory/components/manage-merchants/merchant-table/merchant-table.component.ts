@@ -15,9 +15,20 @@ import {
 	IWarehouse
 } from '@gauzy/contracts';
 import { API_PREFIX, ComponentEnum } from './../../../../../@core/constants';
-import { MerchantService, Store, ToastrService } from '../../../../../@core/services';
-import { ContactRowComponent, EnabledStatusComponent, ItemImgTagsComponent } from '../../inventory-table-components';
-import { IPaginationBase, PaginationFilterBaseComponent } from './../../../../../@shared/pagination/pagination-filter-base.component';
+import {
+	MerchantService,
+	Store,
+	ToastrService
+} from '../../../../../@core/services';
+import {
+	ContactRowComponent,
+	EnabledStatusComponent,
+	ItemImgTagsComponent
+} from '../../inventory-table-components';
+import {
+	IPaginationBase,
+	PaginationFilterBaseComponent
+} from './../../../../../@shared/pagination/pagination-filter-base.component';
 import { ServerDataSource } from './../../../../../@core/utils/smart-table/server.data-source';
 import { DeleteConfirmationComponent } from './../../../../../@shared/user/forms';
 import { InputFilterComponent } from './../../../../../@shared/table-filters';
@@ -28,9 +39,10 @@ import { InputFilterComponent } from './../../../../../@shared/table-filters';
 	templateUrl: './merchant-table.component.html',
 	styleUrls: ['./merchant-table.component.scss']
 })
-export class MerchantTableComponent extends PaginationFilterBaseComponent
-	implements OnInit {
-
+export class MerchantTableComponent
+	extends PaginationFilterBaseComponent
+	implements OnInit
+{
 	settingsSmartTable: object;
 	loading: boolean = false;
 	selectedMerchant: IMerchant;
@@ -43,6 +55,7 @@ export class MerchantTableComponent extends PaginationFilterBaseComponent
 
 	public organization: IOrganization;
 	merchants$: Subject<any> = this.subject$;
+	private _refresh$: Subject<any> = new Subject();
 
 	merchantsTable: Ng2SmartTableComponent;
 	@ViewChild('merchantsTable') set content(content: Ng2SmartTableComponent) {
@@ -53,9 +66,10 @@ export class MerchantTableComponent extends PaginationFilterBaseComponent
 	}
 
 	/*
-	* Actions Buttons directive
-	*/
-	@ViewChild('actionButtons', { static: true }) actionButtons: TemplateRef<any>;
+	 * Actions Buttons directive
+	 */
+	@ViewChild('actionButtons', { static: true })
+	actionButtons: TemplateRef<any>;
 
 	constructor(
 		public readonly translateService: TranslateService,
@@ -98,8 +112,24 @@ export class MerchantTableComponent extends PaginationFilterBaseComponent
 				debounceTime(300),
 				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
-				tap((organization: IOrganization) => (this.organization = organization)),
+				tap(
+					(organization: IOrganization) =>
+						(this.organization = organization)
+				),
+				tap(() => this._refresh$.next(true)),
 				tap(() => this.merchants$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this._refresh$
+			.pipe(
+				filter(
+					() =>
+						this.dataLayoutStyle ===
+						ComponentLayoutStyleEnum.CARDS_GRID
+				),
+				tap(() => this.refreshPagination()),
+				tap(() => (this.merchants = [])),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -111,9 +141,16 @@ export class MerchantTableComponent extends PaginationFilterBaseComponent
 			.componentLayout$(this.viewComponentName)
 			.pipe(
 				distinctUntilChange(),
-				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
+				tap(
+					(componentLayout) =>
+						(this.dataLayoutStyle = componentLayout)
+				),
 				tap(() => this.refreshPagination()),
-				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
+				filter(
+					(componentLayout) =>
+						componentLayout === ComponentLayoutStyleEnum.CARDS_GRID
+				),
+				tap(() => (this.merchants = [])),
 				tap(() => this.merchants$.next(true)),
 				untilDestroyed(this)
 			)
@@ -175,10 +212,10 @@ export class MerchantTableComponent extends PaginationFilterBaseComponent
 					type: 'custom',
 					width: '5%',
 					renderComponent: EnabledStatusComponent,
-					filter: false,
+					filter: false
 				}
 			}
-		}
+		};
 	}
 
 	private _applyTranslationOnSmartTable() {
@@ -234,31 +271,33 @@ export class MerchantTableComponent extends PaginationFilterBaseComponent
 		}
 
 		const dialog = await firstValueFrom(
-			this.dialogService
-				.open(DeleteConfirmationComponent)
-				.onClose
+			this.dialogService.open(DeleteConfirmationComponent).onClose
 		);
 
 		if (dialog) {
 			await this.merchantService
 				.delete(this.selectedMerchant.id)
-				.then(res => {
+				.then((res) => {
 					if (res && res['affected'] == 1) {
 						const { name } = this.selectedMerchant;
-						this.toastrService.success('INVENTORY_PAGE.MERCHANT_DELETED_SUCCESSFULLY', {
-							name
-						});
+						this.toastrService.success(
+							'INVENTORY_PAGE.MERCHANT_DELETED_SUCCESSFULLY',
+							{
+								name
+							}
+						);
 					}
 				})
 				.finally(() => {
+					this._refresh$.next(true);
 					this.merchants$.next(true);
 				});
 		}
 	}
 
 	/*
-	* Register Smart Table Source Config
-	*/
+	 * Register Smart Table Source Config
+	 */
 	setSmartTableSource() {
 		if (!this.organization) {
 			return;
@@ -271,12 +310,7 @@ export class MerchantTableComponent extends PaginationFilterBaseComponent
 
 			this.smartTableSource = new ServerDataSource(this.http, {
 				endPoint: `${API_PREFIX}/merchants/pagination`,
-				relations: [
-					'logo',
-					'contact',
-					'tags',
-					'warehouses'
-				],
+				relations: ['logo', 'contact', 'tags', 'warehouses'],
 				where: {
 					organizationId,
 					tenantId,
@@ -286,14 +320,21 @@ export class MerchantTableComponent extends PaginationFilterBaseComponent
 					return Object.assign({}, warehouse);
 				},
 				finalize: () => {
-					this.loading = false;
+					if (
+						this.dataLayoutStyle ===
+						ComponentLayoutStyleEnum.CARDS_GRID
+					) {
+						this.merchants.push(...this.smartTableSource.getData());
+					}
 					this.setPagination({
 						...this.getPagination(),
 						totalItems: this.smartTableSource.count()
 					});
+					this.loading = false;
 				}
 			});
 		} catch (error) {
+			this.loading = false;
 			this.toastrService.danger(error);
 		}
 	}
@@ -305,18 +346,12 @@ export class MerchantTableComponent extends PaginationFilterBaseComponent
 		if (!this.organization) {
 			return;
 		}
-		this.setSmartTableSource();
-
 		try {
+			this.setSmartTableSource();
 			const { activePage, itemsPerPage } = this.getPagination();
-			this.smartTableSource.setPaging(
-				activePage,
-				itemsPerPage,
-				false
-			);
+			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
 			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
 				await this.smartTableSource.getElements();
-				this.merchants = this.smartTableSource.getData();
 			}
 		} catch (error) {
 			this.toastrService.danger(error);
