@@ -33,7 +33,7 @@
 		<form [formGroup]="form">
 			<div class="text-center">
 				<nb-radio-group formControlName="typeOfExpense">
-					<nb-radio 
+					<nb-radio
 						*ngFor="let expenseType of expenseTypes"
 						[value]="expenseType"
 						(valueChange)="setExpenseStatuses($event)"
@@ -393,7 +393,7 @@
 		</form>
 	</nb-card-body>
 	<nb-card-footer>
-		<button 
+		<button
 			(click)="close()"
 			status="basic"
 			outline

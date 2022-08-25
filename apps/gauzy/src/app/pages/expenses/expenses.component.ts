@@ -10,7 +10,8 @@ import {
 	IOrganizationVendor,
 	IExpenseCategory,
 	IDateRangePicker,
-	ExpenseStatusesEnum
+	ExpenseStatusesEnum,
+	PermissionsEnum
 } from '@gauzy/contracts';
 import { combineLatest, Subject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
@@ -155,9 +156,14 @@ export class ExpensesComponent extends PaginationFilterBaseComponent
 	}
 
 	ngAfterViewInit() {
-		const { employeeId } = this.store.user;
-		if (employeeId) {
-			delete this.smartTableSettings['columns']['employeeName'];
+		if (
+			!this.store.hasPermission(
+				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+			) &&
+			this.store.user &&
+			this.store.user.employeeId
+		) {
+			delete this.smartTableSettings['columns']['employee'];
 			this.smartTableSettings = Object.assign({}, this.smartTableSettings);
 		}
 	}

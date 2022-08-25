@@ -8,12 +8,12 @@ import { OrganizationVendorFeatureDTO } from "./../../organization-vendor/dto";
 import { ExpenseDTO } from "./expense.dto";
 
 /**
- * Create Expense DTO request validation 
+ * Create Expense DTO request validation
  */
 export class CreateExpenseDTO extends IntersectionType(
+    ExpenseDTO,
     OrganizationVendorFeatureDTO,
     EmployeeFeatureDTO,
-    ExpenseDTO,
     RelationalTagDTO
 ) implements IExpenseCreateInput {
 

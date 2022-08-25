@@ -260,7 +260,9 @@ export class ExpenseCategoriesComponent
 
 		this.smartTableSource = new ServerDataSource(this.httpClient, {
 			endPoint: `${API_PREFIX}/expense-categories/pagination`,
-			relations: ['tags'],
+			relations: [
+				'tags'
+			],
 			join: {
 				alias: 'expense_category',
 				leftJoin: {
@@ -268,8 +270,9 @@ export class ExpenseCategoriesComponent
 				}
 			},
 			where: {
-				...{ organizationId, tenantId },
-				...this.filters.where
+				organizationId,
+				tenantId,
+				...(this.filters.where ? this.filters.where : {})
 			},
 			finalize: () => {
 				this.expenseCategories.push(...this.smartTableSource.getData());

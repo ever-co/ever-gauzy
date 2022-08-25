@@ -15,7 +15,8 @@ import {
 	IEmployee,
 	IOrganizationContact,
 	ITag,
-	IDateRangePicker
+	IDateRangePicker,
+	PermissionsEnum
 } from '@gauzy/contracts';
 import { Subject } from 'rxjs';
 import { combineLatest } from 'rxjs';
@@ -179,8 +180,14 @@ export class IncomeComponent
 	}
 
 	ngAfterViewInit() {
-		const { employeeId } = this.store.user;
-		if (employeeId) {
+		if (
+			!this.store.hasPermission(
+				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+			) &&
+			this.store.user &&
+			this.store.user.employeeId
+		) {
+			delete this.smartTableSettings['columns']['employee'];
 			this.smartTableSettings = Object.assign(
 				{},
 				this.smartTableSettings

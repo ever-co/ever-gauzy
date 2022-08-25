@@ -18,48 +18,40 @@
 		>
 			<div class="row employees">
 				<div [hidden]="income" class="col-sm-7">
-					<label 
-						class="label"
-						for="employee"
-						[hidden]="income"
-					>
+					<label class="label" for="employee" [hidden]="income">
 						{{ 'INCOME_PAGE.EMPLOYEES_GENERATE_INCOME' | translate }}
 					</label>
 					<ga-employee-selector
 						#employeeSelector
-						[placeholder]="
-							'INCOME_PAGE.EMPLOYEES_GENERATE_INCOME' | translate
-						"
+						[placeholder]="'INCOME_PAGE.EMPLOYEES_GENERATE_INCOME' | translate"
 						[defaultSelected]="true"
 						[showAllEmployeesOption]="true"
 						[hidden]="income"
 						[skipGlobalChange]="true"
 						(selectionChanged)="selectionEmployee($event)"
-						class="employees"
 						id="employee"
 					></ga-employee-selector>
 				</div>
 				<div [ngClass]="income ? 'col-sm-12' : 'col-sm-5'">
 					<div class="form-group">
-						<label class="label">{{
-							'POP_UPS.CONTACT' | translate
-						}}</label>
+						<label class="label">
+							{{ 'POP_UPS.CONTACT' | translate }}
+						</label>
 						<ga-contact-select
 							[addTag]="true"
 							[clearable]="true"
 							[searchable]="true"
 							[placeholder]="'POP_UPS.ALL_CONTACTS' | translate"
 							formControlName="organizationContact"
-							(onChanged)="selectOrganizationContact($event)"
 						></ga-contact-select>
 					</div>
 				</div>
 			</div>
 			<div class="row">
 				<div class="col-sm-4">
-					<label class="label">{{
-						'POP_UPS.PICK_DATE' | translate
-					}}</label>
+					<label class="label">
+						{{ 'POP_UPS.PICK_DATE' | translate }}
+					</label>
 					<input
 						formControlName="valueDate"
 						nbInput
@@ -77,15 +69,16 @@
 			<div class="row mt-3">
 				<div class="col-sm-6">
 					<ga-currency
+						formControlName="currency"
 						[formControl]="form.get('currency')"
 						(optionChange)="currencyChanged($event)"
 					></ga-currency>
 				</div>
 				<div class="col-sm-6">
 					<div class="form-group">
-						<label class="label">{{
-							'POP_UPS.AMOUNT' | translate
-						}}</label>
+						<label class="label">
+							{{ 'POP_UPS.AMOUNT' | translate }}
+						</label>
 						<input
 							nbInput
 							type="number"
@@ -119,9 +112,9 @@
 				<div class="col">
 					<div class="form-group flex-container">
 						<nb-checkbox formControlName="isBonus">
-							<span class="label">{{
-								'DASHBOARD_PAGE.DEVELOPER.BONUS' | translate
-							}}</span>
+							<span class="label">
+								{{ 'DASHBOARD_PAGE.DEVELOPER.BONUS' | translate }}
+							</span>
 						</nb-checkbox>
 						<span
 							class="label info-font"
@@ -134,9 +127,9 @@
 			</div>
 			<div class="row">
 				<div class="col">
-					<label class="label">{{
-						'TIMER_TRACKER.DESCRIPTION' | translate
-					}}</label>
+					<label class="label">
+						{{ 'TIMER_TRACKER.DESCRIPTION' | translate }}
+					</label>
 					<div class="form-group">
 						<textarea
 							nbInput
@@ -144,15 +137,20 @@
 							[placeholder]="'POP_UPS.NOTES' | translate"
 							formControlName="notes"
 							class="notes"
-						>
-						</textarea>
+						></textarea>
 					</div>
 				</div>
 			</div>
 		</form>
 	</nb-card-body>
 	<nb-card-footer class="text-left">
-		<button (click)="close()" status="basic" outline class="mr-3" nbButton>
+		<button
+			(click)="close()"
+			status="basic"
+			outline
+			class="mr-3"
+			nbButton
+		>
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
 		<button
