@@ -18,16 +18,33 @@ import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { filter, tap } from 'rxjs/operators';
-import { debounceTime, firstValueFrom, Subject, of as observableOf, map, finalize } from 'rxjs';
+import {
+	debounceTime,
+	firstValueFrom,
+	Subject,
+	of as observableOf,
+	map,
+	finalize
+} from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange } from '@gauzy/common-angular';
-import { Store, ToastrService, UsersOrganizationsService } from '../../@core/services';
+import {
+	Store,
+	ToastrService,
+	UsersOrganizationsService
+} from '../../@core/services';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import { UserMutationComponent } from '../../@shared/user/user-mutation/user-mutation.component';
 import { InviteMutationComponent } from '../../@shared/invite/invite-mutation/invite-mutation.component';
-import { PictureNameTagsComponent, TagsOnlyComponent } from '../../@shared/table-components';
+import {
+	PictureNameTagsComponent,
+	TagsOnlyComponent
+} from '../../@shared/table-components';
 import { ComponentEnum } from '../../@core/constants';
-import { IPaginationBase, PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
+import {
+	IPaginationBase,
+	PaginationFilterBaseComponent
+} from '../../@shared/pagination/pagination-filter-base.component';
 import { TagsColorFilterComponent } from '../../@shared/table-filters';
 import { monthNames } from '../../@core/utils/date';
 import { EmployeeWorkStatusComponent } from '../employees/table-components';
@@ -41,8 +58,8 @@ import { RoleComponent } from '../../@shared/table-components/role/role.componen
 })
 export class UsersComponent
 	extends PaginationFilterBaseComponent
-	implements OnInit, OnDestroy {
-
+	implements OnInit, OnDestroy
+{
 	settingsSmartTable: object;
 	sourceSmartTable = new LocalDataSource();
 	selectedUser: IUserViewModel;
@@ -58,10 +75,10 @@ export class UsersComponent
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
-	
+
 	users: IUser[] = [];
-	subject$: Subject<any> = new Subject();
 	organization: IOrganization;
+	private _refresh$: Subject<any> = new Subject();
 
 	usersTable: Ng2SmartTableComponent;
 	@ViewChild('usersTable') set content(content: Ng2SmartTableComponent) {
@@ -90,7 +107,7 @@ export class UsersComponent
 		this.subject$
 			.pipe(
 				debounceTime(300),
-				tap(() => this.loading = true),
+				tap(() => (this.loading = true)),
 				tap(() => this.getUsers()),
 				tap(() => this.cancel()),
 				tap(() => this.clearItem()),
@@ -109,6 +126,7 @@ export class UsersComponent
 					({ invitesAllowed }: IOrganization) =>
 						(this.organizationInvitesAllowed = invitesAllowed)
 				),
+				tap(() => this._refresh$.next(true)),
 				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
@@ -127,7 +145,10 @@ export class UsersComponent
 			});
 		this.route.queryParamMap
 			.pipe(
-				filter((params) => !!params && params.get('openAddDialog') === 'true'),
+				filter(
+					(params) =>
+						!!params && params.get('openAddDialog') === 'true'
+				),
 				debounceTime(1000),
 				tap(() => this.add()),
 				untilDestroyed(this)
@@ -138,6 +159,14 @@ export class UsersComponent
 				debounceTime(300),
 				distinctUntilChange(),
 				tap(() => this.subject$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this._refresh$
+			.pipe(
+				filter(() => this._isGridLayout),
+				tap(() => this.refreshPagination()),
+				tap(() => (this.users = [])),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -154,9 +183,18 @@ export class UsersComponent
 						(this.dataLayoutStyle = componentLayout)
 				),
 				tap(() => this.refreshPagination()),
+				filter(() => this._isGridLayout),
+				tap(() => (this.users = [])),
+				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
+	}
+
+	private get _isGridLayout(): boolean {
+		return (
+			this.componentLayoutStyleEnum.CARDS_GRID === this.dataLayoutStyle
+		);
 	}
 
 	selectUser({ isSelected, data }) {
@@ -179,24 +217,26 @@ export class UsersComponent
 	async add() {
 		const dialog = this.dialogService.open(UserMutationComponent);
 		const data = await firstValueFrom(dialog.onClose);
-		
+
 		if (data && data.user) {
 			if (data.user.firstName || data.user.lastName) {
 				this.userName = data.user.firstName + ' ' + data.user.lastName;
 			}
-			this.toastrService.success('NOTES.ORGANIZATIONS.ADD_NEW_USER_TO_ORGANIZATION', {
-				username: this.userName.trim(),
-				orgname: this.store.selectedOrganization.name
-			});
+			this.toastrService.success(
+				'NOTES.ORGANIZATIONS.ADD_NEW_USER_TO_ORGANIZATION',
+				{
+					username: this.userName.trim(),
+					orgname: this.store.selectedOrganization.name
+				}
+			);
+			this._refresh$.next(true);
 			this.subject$.next(true);
 		}
 	}
 
 	async addOrEditUser(user: IUserOrganizationCreateInput) {
 		if (user.isActive) {
-			await firstValueFrom(this.userOrganizationsService
-				.create(user)
-			);
+			await firstValueFrom(this.userOrganizationsService.create(user));
 
 			this.toastrService.success(
 				'NOTES.ORGANIZATIONS.ADD_NEW_USER_TO_ORGANIZATION',
@@ -205,6 +245,7 @@ export class UsersComponent
 					orgname: this.store.selectedOrganization.name
 				}
 			);
+			this._refresh$.next(true);
 			this.subject$.next(true);
 		}
 	}
@@ -255,9 +296,13 @@ export class UsersComponent
 						await this.userOrganizationsService.setUserAsInactive(
 							this.selectedUser.id
 						);
-						this.toastrService.success('NOTES.ORGANIZATIONS.DELETE_USER_FROM_ORGANIZATION', {
-							username: this.userName
-						});
+						this.toastrService.success(
+							'NOTES.ORGANIZATIONS.DELETE_USER_FROM_ORGANIZATION',
+							{
+								username: this.userName
+							}
+						);
+						this._refresh$.next(true);
 						this.subject$.next(true);
 					} catch (error) {
 						this.toastrService.danger(error);
@@ -272,16 +317,18 @@ export class UsersComponent
 
 	async remove(selectedOrganization: IUserViewModel) {
 		const { userOrganizationId } = selectedOrganization;
-		const fullName = selectedOrganization.fullName.trim() || selectedOrganization.email;
+		const fullName =
+			selectedOrganization.fullName.trim() || selectedOrganization.email;
 
 		/**
 		 *  User belongs to only 1 organization -> delete user
 		 *	User belongs multiple organizations -> remove user from Organization
 		 *
 		 */
-		const count = await this.userOrganizationsService.getUserOrganizationCount(
-			userOrganizationId
-		);
+		const count =
+			await this.userOrganizationsService.getUserOrganizationCount(
+				userOrganizationId
+			);
 		const confirmationMessage =
 			count === 1
 				? 'FORM.DELETE_CONFIRMATION.DELETE_USER'
@@ -295,8 +342,7 @@ export class UsersComponent
 					)}`
 				}
 			})
-			.onClose
-			.pipe(untilDestroyed(this))
+			.onClose.pipe(untilDestroyed(this))
 			.subscribe(async (result) => {
 				if (result) {
 					try {
@@ -306,6 +352,7 @@ export class UsersComponent
 						this.toastrService.success('USERS_PAGE.REMOVE_USER', {
 							name: fullName
 						});
+						this._refresh$.next(true);
 						this.subject$.next(true);
 					} catch (error) {
 						this.toastrService.danger(error);
@@ -320,24 +367,45 @@ export class UsersComponent
 		const { activePage, itemsPerPage } = this.getPagination();
 
 		const organizations: IUserOrganization[] = [];
-		observableOf((
-			await this.userOrganizationsService.getAll(
-				['user', 'user.role', 'user.tags', 'user.employee'],
-				{ organizationId, tenantId }
-			)).items
-		).pipe(
-			map((organizations: IUserOrganization[]) => organizations
-				.filter((organizaiton: IUserOrganization) => organizaiton.isActive)
-				.filter((organizaiton: IUserOrganization) => organizaiton.user.role)
-				.filter((organizaiton: IUserOrganization) => organizaiton.user.role.name !== RolesEnum.EMPLOYEE)
-			),
-			tap((users: IUserOrganization[]) => organizations.push(...users)),
-			untilDestroyed(this),
-			finalize(() => this.loading = false)
-		).subscribe();
+		observableOf(
+			(
+				await this.userOrganizationsService.getAll(
+					['user', 'user.role', 'user.tags', 'user.employee'],
+					{ organizationId, tenantId }
+				)
+			).items
+		)
+			.pipe(
+				map((organizations: IUserOrganization[]) =>
+					organizations
+						.filter(
+							(organizaiton: IUserOrganization) =>
+								organizaiton.isActive
+						)
+						.filter(
+							(organizaiton: IUserOrganization) =>
+								organizaiton.user.role
+						)
+						.filter(
+							(organizaiton: IUserOrganization) =>
+								organizaiton.user.role.name !==
+								RolesEnum.EMPLOYEE
+						)
+				),
+				tap((users: IUserOrganization[]) =>
+					organizations.push(...users)
+				),
+				untilDestroyed(this),
+				finalize(() => (this.loading = false))
+			)
+			.subscribe();
 
 		const users = [];
-		for (const { id: userOrganizationId, user, isActive } of organizations) {
+		for (const {
+			id: userOrganizationId,
+			user,
+			isActive
+		} of organizations) {
 			users.push({
 				id: user.id,
 				fullName: user.name,
@@ -350,20 +418,18 @@ export class UsersComponent
 				...this.employeeMapper(user.employee)
 			});
 		}
-
-		this.users = users;
 		this.sourceSmartTable.setPaging(activePage, itemsPerPage, false);
 		this.sourceSmartTable.load(users);
 		this._loadDataGridLayout();
 		this.setPagination({
 			...this.getPagination(),
 			totalItems: this.sourceSmartTable.count()
-		})
+		});
 	}
 
 	private async _loadDataGridLayout() {
-		if (this.dataLayoutStyle === this.componentLayoutStyleEnum.CARDS_GRID) {
-			this.users = await this.sourceSmartTable.getElements();
+		if (this._isGridLayout) {
+			this.users.push(...(await this.sourceSmartTable.getElements()));
 		}
 	}
 
@@ -453,7 +519,7 @@ export class UsersComponent
 		});
 		this.deselectAll();
 	}
-	
+
 	/*
 	 * Deselect all table rows
 	 */
