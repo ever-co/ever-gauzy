@@ -92,13 +92,14 @@ nb-card-body {
   @include dialog(var(--gauzy-card-1), var(--gauzy-sidebar-background-4));
 }
 
-.custom-table {
+:host .custom-table {
   background-color: nb-theme(gauzy-card-1);
   border-radius: nb-theme(border-radius);
   cursor: pointer;
 
   &.selected {
-    box-shadow: -6px 0px 0px 0px rgba(50, 50, 50, 0.05);
+    @include nb-ltr(border-left, 6px solid rgb(50 50 50 / 10%));
+    @include nb-rtl(border-right, 6px solid rgb(50 50 50 / 10%));
     background: rgba(50, 50, 50, 0.03);
   }
 
