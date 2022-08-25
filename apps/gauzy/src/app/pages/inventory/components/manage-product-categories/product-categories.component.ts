@@ -16,8 +16,15 @@ import { ImageRowComponent } from '../inventory-table-components';
 import { ProductCategoryMutationComponent } from '../../../../@shared/product-mutation';
 import { DeleteConfirmationComponent } from '../../../../@shared/user/forms';
 import { API_PREFIX, ComponentEnum } from '../../../../@core/constants';
-import { ProductCategoryService, Store, ToastrService } from './../../../../@core/services';
-import { IPaginationBase, PaginationFilterBaseComponent } from './../../../../@shared/pagination/pagination-filter-base.component';
+import {
+	ProductCategoryService,
+	Store,
+	ToastrService
+} from './../../../../@core/services';
+import {
+	IPaginationBase,
+	PaginationFilterBaseComponent
+} from './../../../../@shared/pagination/pagination-filter-base.component';
 import { ServerDataSource } from './../../../../@core/utils/smart-table/server.data-source';
 
 @UntilDestroy({ checkProperties: true })
@@ -28,8 +35,8 @@ import { ServerDataSource } from './../../../../@core/utils/smart-table/server.d
 })
 export class ProductCategoriesComponent
 	extends PaginationFilterBaseComponent
-	implements AfterViewInit, OnInit {
-
+	implements AfterViewInit, OnInit
+{
 	smartTableSource: ServerDataSource;
 	settingsSmartTable: object;
 	loading: boolean = false;
@@ -43,6 +50,7 @@ export class ProductCategoriesComponent
 
 	public organization: IOrganization;
 	categories$: Subject<any> = this.subject$;
+	private _refresh$: Subject<any> = new Subject();
 
 	productCategoriesTable: Ng2SmartTableComponent;
 	@ViewChild('productCategoriesTable') set content(
@@ -89,17 +97,32 @@ export class ProductCategoriesComponent
 
 	ngAfterViewInit() {
 		const storeOrganization$ = this.store.selectedOrganization$;
-		const preferredLanguage$ = this.store.preferredLanguage$
+		const preferredLanguage$ = this.store.preferredLanguage$;
 		combineLatest([storeOrganization$, preferredLanguage$])
-				.pipe(
-					debounceTime(300),
-					filter(([organization, language]) => !!organization && !!language),
-					tap(([organization]) => this.organization = organization),
-					distinctUntilChange(),
-					tap(() => this.categories$.next(true)),
-					untilDestroyed(this)
-				)
-				.subscribe();
+			.pipe(
+				debounceTime(300),
+				filter(
+					([organization, language]) => !!organization && !!language
+				),
+				tap(([organization]) => (this.organization = organization)),
+				distinctUntilChange(),
+				tap(() => this._refresh$.next(true)),
+				tap(() => this.categories$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this._refresh$
+			.pipe(
+				filter(
+					() =>
+						this.dataLayoutStyle ===
+						ComponentLayoutStyleEnum.CARDS_GRID
+				),
+				tap(() => this.refreshPagination()),
+				tap(() => (this.productCategories = [])),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	/*
@@ -120,9 +143,16 @@ export class ProductCategoriesComponent
 			.componentLayout$(this.viewComponentName)
 			.pipe(
 				distinctUntilChange(),
-				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
+				tap(
+					(componentLayout) =>
+						(this.dataLayoutStyle = componentLayout)
+				),
 				tap(() => this.refreshPagination()),
-				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
+				filter(
+					(componentLayout) =>
+						componentLayout === ComponentLayoutStyleEnum.CARDS_GRID
+				),
+				tap(() => (this.productCategories = [])),
 				tap(() => this.categories$.next(true)),
 				untilDestroyed(this)
 			)
@@ -138,7 +168,9 @@ export class ProductCategoriesComponent
 				display: false,
 				perPage: pagination ? pagination.itemsPerPage : 10
 			},
-			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.PRODUCT_CATEGORY'),
+			noDataMessage: this.getTranslation(
+				'SM_TABLE.NO_DATA.PRODUCT_CATEGORY'
+			),
 			columns: {
 				imageUrl: {
 					title: this.getTranslation('INVENTORY_PAGE.IMAGE'),
@@ -175,14 +207,21 @@ export class ProductCategoriesComponent
 			return;
 		}
 		try {
-			const dialog = this.dialogService.open(ProductCategoryMutationComponent);
+			const dialog = this.dialogService.open(
+				ProductCategoryMutationComponent
+			);
 			const productCategory = await firstValueFrom(dialog.onClose);
 
 			if (productCategory) {
-				let productCategoryTranslation = productCategory.translations[0];
-				this.toastrService.success('INVENTORY_PAGE.PRODUCT_CATEGORY_SAVED', {
-					name: productCategoryTranslation?.name
-				});
+				let productCategoryTranslation =
+					productCategory.translations[0];
+				this.toastrService.success(
+					'INVENTORY_PAGE.PRODUCT_CATEGORY_SAVED',
+					{
+						name: productCategoryTranslation?.name
+					}
+				);
+				this._refresh$.next(true);
 				this.categories$.next(true);
 			}
 		} catch (error) {
@@ -203,30 +242,38 @@ export class ProductCategoriesComponent
 
 		try {
 			const editProductCategory = this.selectedProductCategory
-			? await this.productCategoryService.getById(
-				this.selectedProductCategory.id
-			)
-			: null;
+				? await this.productCategoryService.getById(
+						this.selectedProductCategory.id
+				  )
+				: null;
 
-			const dialog = this.dialogService.open(ProductCategoryMutationComponent, {
-				context: {
-					productCategory: editProductCategory
+			const dialog = this.dialogService.open(
+				ProductCategoryMutationComponent,
+				{
+					context: {
+						productCategory: editProductCategory
+					}
 				}
-			});
+			);
 			const productCategory = await firstValueFrom(dialog.onClose);
 
 			if (productCategory) {
-				let productCategoryTranslation = productCategory.translations[0];
-				this.toastrService.success('INVENTORY_PAGE.PRODUCT_CATEGORY_SAVED', {
-					name: productCategoryTranslation?.name
-				});
+				let productCategoryTranslation =
+					productCategory.translations[0];
+				this.toastrService.success(
+					'INVENTORY_PAGE.PRODUCT_CATEGORY_SAVED',
+					{
+						name: productCategoryTranslation?.name
+					}
+				);
+				this._refresh$.next(true);
 				this.categories$.next(true);
 			}
 		} catch (error) {
 			console.log('Error while updating product categories', error);
 		}
 	}
-	
+
 	async delete(selectedItem?: IProductCategoryTranslated) {
 		if (selectedItem) {
 			this.selectProductCategory({
@@ -234,20 +281,25 @@ export class ProductCategoriesComponent
 				data: selectedItem
 			});
 		}
-		const result = await firstValueFrom(this.dialogService
-			.open(DeleteConfirmationComponent)
-			.onClose);
+		const result = await firstValueFrom(
+			this.dialogService.open(DeleteConfirmationComponent).onClose
+		);
 
 		if (result) {
 			if (this.selectedProductCategory) {
 				const { id, name } = this.selectedProductCategory;
-				await this.productCategoryService.delete(id)
+				await this.productCategoryService
+					.delete(id)
 					.then(() => {
-						this.toastrService.success('INVENTORY_PAGE.PRODUCT_CATEGORY_DELETED', {
-							name
-						});
+						this.toastrService.success(
+							'INVENTORY_PAGE.PRODUCT_CATEGORY_DELETED',
+							{
+								name
+							}
+						);
 					})
 					.finally(() => {
+						this._refresh$.next(true);
 						this.categories$.next(true);
 					});
 			}
@@ -271,12 +323,10 @@ export class ProductCategoriesComponent
 
 			const { tenantId } = this.store.user;
 			const { id: organizationId } = this.organization;
-	
+
 			this.smartTableSource = new ServerDataSource(this.http, {
 				endPoint: `${API_PREFIX}/product-categories/pagination`,
-				relations: [
-					'translations'
-				],
+				relations: ['translations'],
 				where: {
 					...{ organizationId, tenantId },
 					...this.filters.where
@@ -285,14 +335,23 @@ export class ProductCategoriesComponent
 					return Object.assign({}, item);
 				},
 				finalize: () => {
+					if (
+						this.dataLayoutStyle ===
+						ComponentLayoutStyleEnum.CARDS_GRID
+					) {
+						this.productCategories.push(
+							...this.smartTableSource.getData()
+						);
+					}
 					this.setPagination({
 						...this.getPagination(),
 						totalItems: this.smartTableSource.count()
 					});
 					this.loading = false;
 				}
-			});	
+			});
 		} catch (error) {
+			this.loading = false;
 			this.toastrService.danger(error);
 		}
 	}
@@ -304,24 +363,18 @@ export class ProductCategoriesComponent
 		if (!this.organization) {
 			return;
 		}
-		this.setSmartTableSource();
 		try {
+			this.setSmartTableSource();
 			const { activePage, itemsPerPage } = this.getPagination();
-			this.smartTableSource.setPaging(
-				activePage,
-				itemsPerPage,
-				false
-			);
+			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
 
 			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
 				await this.smartTableSource.getElements();
-				this.productCategories = this.smartTableSource.getData();
 			}
 		} catch (error) {
 			this.toastrService.danger(error);
 		}
 	}
-
 
 	/*
 	 * Clear selected item
