@@ -1,3 +1,5 @@
+import { IEmployeeRecurringExpense } from '@gauzy/contracts';
+import { BadRequestException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { EmployeeRecurringExpenseService } from '../../employee-recurring-expense.service';
 import { EmployeeRecurringExpenseCreateCommand } from '../employee-recurring-expense.create.command';
@@ -15,19 +17,18 @@ export class EmployeeRecurringExpenseCreateHandler
 
 	public async execute(
 		command: EmployeeRecurringExpenseCreateCommand
-	): Promise<any> {
-		const { input } = command;
-		const createdExpense = await this.employeeRecurringExpenseService.create(
-			input
-		);
-
-		await this.employeeRecurringExpenseService.update(createdExpense.id, {
-			parentRecurringExpenseId: createdExpense.id
-		});
-
-		return {
-			...createdExpense,
-			parentRecurringExpenseId: createdExpense.id
-		};
+	): Promise<IEmployeeRecurringExpense> {
+		try {
+			const { input } = command;
+			const recurringExpense = await this.employeeRecurringExpenseService.create(
+				input
+			);
+			await this.employeeRecurringExpenseService.update(recurringExpense.id, {
+				parentRecurringExpenseId: recurringExpense.id
+			});
+			return await this.employeeRecurringExpenseService.findOneByIdString(recurringExpense.id)
+		} catch (error) {
+			throw new BadRequestException(error);
+		}
 	}
 }

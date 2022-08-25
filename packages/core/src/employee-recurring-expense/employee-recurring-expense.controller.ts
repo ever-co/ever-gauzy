@@ -128,9 +128,10 @@ export class EmployeeRecurringExpenseController extends CrudController<EmployeeR
 	})
 	@HttpCode(HttpStatus.CREATED)
 	@Post()
-	@UsePipes(new ValidationPipe({ transform: true }))
 	async create(
-		@Body() entity: CreateEmployeeRecurringExpenseDTO
+		@Body(new ValidationPipe({
+			transform: true
+		})) entity: CreateEmployeeRecurringExpenseDTO
 	): Promise<IEmployeeRecurringExpense> {
 		return this.commandBus.execute(
 			new EmployeeRecurringExpenseCreateCommand(entity)
@@ -153,10 +154,11 @@ export class EmployeeRecurringExpenseController extends CrudController<EmployeeR
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
-	@UsePipes(new ValidationPipe({ transform: true }))
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body() entity: UpdateEmployeeRecurringExpenseDTO
+		@Body(new ValidationPipe({
+			transform: true
+		})) entity: UpdateEmployeeRecurringExpenseDTO
 	): Promise<IRecurringExpenseEditInput> {
 		return await this.commandBus.execute(
 			new EmployeeRecurringExpenseEditCommand(id, entity)
