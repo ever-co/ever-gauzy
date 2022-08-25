@@ -1,4 +1,10 @@
-import { Component, OnInit, ViewChild, OnDestroy, TemplateRef } from '@angular/core';
+import {
+	Component,
+	OnInit,
+	ViewChild,
+	OnDestroy,
+	TemplateRef
+} from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import {
 	IOrganization,
@@ -14,6 +20,7 @@ import { Subject, firstValueFrom } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import {
+	ErrorHandlingService,
 	ProductTypeService,
 	Store,
 	ToastrService
@@ -22,10 +29,12 @@ import { ProductTypeMutationComponent } from '../../../../@shared/product-mutati
 import { DeleteConfirmationComponent } from '../../../../@shared/user/forms';
 import { IconRowComponent } from '../inventory-table-components';
 import { API_PREFIX, ComponentEnum } from '../../../../@core/constants';
-import { IPaginationBase, PaginationFilterBaseComponent } from './../../../../@shared/pagination/pagination-filter-base.component';
+import {
+	IPaginationBase,
+	PaginationFilterBaseComponent
+} from './../../../../@shared/pagination/pagination-filter-base.component';
 import { ServerDataSource } from './../../../../@core/utils/smart-table/server.data-source';
 import { InputFilterComponent } from './../../../../@shared/table-filters';
-
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -35,8 +44,8 @@ import { InputFilterComponent } from './../../../../@shared/table-filters';
 })
 export class ProductTypesComponent
 	extends PaginationFilterBaseComponent
-	implements OnInit, OnDestroy {
-
+	implements OnInit, OnDestroy
+{
 	smartTableSource: ServerDataSource;
 	settingsSmartTable: object;
 	loading: boolean = false;
@@ -49,6 +58,7 @@ export class ProductTypesComponent
 
 	public organization: IOrganization;
 	types$: Subject<any> = this.subject$;
+	private _refresh$: Subject<any> = new Subject();
 
 	productTypesTable: Ng2SmartTableComponent;
 	@ViewChild('productTypesTable') set content(
@@ -61,9 +71,10 @@ export class ProductTypesComponent
 	}
 
 	/*
-	* Actions Buttons directive 
-	*/
-	@ViewChild('actionButtons', { static: true }) actionButtons: TemplateRef<any>;
+	 * Actions Buttons directive
+	 */
+	@ViewChild('actionButtons', { static: true })
+	actionButtons: TemplateRef<any>;
 
 	constructor(
 		public readonly translateService: TranslateService,
@@ -71,7 +82,8 @@ export class ProductTypesComponent
 		private readonly dialogService: NbDialogService,
 		private readonly productTypeService: ProductTypeService,
 		private readonly toastrService: ToastrService,
-		private readonly store: Store
+		private readonly store: Store,
+		private readonly _errorHandlingService: ErrorHandlingService
 	) {
 		super(translateService);
 		this.setView();
@@ -97,14 +109,29 @@ export class ProductTypesComponent
 			)
 			.subscribe();
 		const storeOrganization$ = this.store.selectedOrganization$;
-		const preferredLanguage$ = this.store.preferredLanguage$
-			combineLatest([storeOrganization$, preferredLanguage$])
+		const preferredLanguage$ = this.store.preferredLanguage$;
+		combineLatest([storeOrganization$, preferredLanguage$])
 			.pipe(
 				debounceTime(300),
-				filter(([organization, language]) => !!organization && !!language),
-				tap(([organization]) => this.organization = organization),
+				filter(
+					([organization, language]) => !!organization && !!language
+				),
+				tap(([organization]) => (this.organization = organization)),
 				distinctUntilChange(),
+				tap(() => this._refresh$.next(true)),
 				tap(() => this.types$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this._refresh$
+			.pipe(
+				filter(
+					() =>
+						this.dataLayoutStyle ===
+						ComponentLayoutStyleEnum.CARDS_GRID
+				),
+				tap(() => this.refreshPagination()),
+				tap(() => (this.productTypes = [])),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -116,9 +143,16 @@ export class ProductTypesComponent
 			.componentLayout$(this.viewComponentName)
 			.pipe(
 				distinctUntilChange(),
-				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
+				tap(
+					(componentLayout) =>
+						(this.dataLayoutStyle = componentLayout)
+				),
 				tap(() => this.refreshPagination()),
-				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
+				filter(
+					(componentLayout) =>
+						componentLayout === ComponentLayoutStyleEnum.CARDS_GRID
+				),
+				tap(() => (this.productTypes = [])),
 				tap(() => this.types$.next(true)),
 				untilDestroyed(this)
 			)
@@ -190,14 +224,20 @@ export class ProductTypesComponent
 			return;
 		}
 		try {
-			const dialog = this.dialogService.open(ProductTypeMutationComponent);
+			const dialog = this.dialogService.open(
+				ProductTypeMutationComponent
+			);
 			const productType = await firstValueFrom(dialog.onClose);
 
 			if (productType) {
 				let translation = productType.translations[0];
-				this.toastrService.success('INVENTORY_PAGE.PRODUCT_TYPE_SAVED', {
-					name: translation.name
-				});
+				this.toastrService.success(
+					'INVENTORY_PAGE.PRODUCT_TYPE_SAVED',
+					{
+						name: translation.name
+					}
+				);
+				this._refresh$.next(true);
 				this.types$.next(true);
 			}
 		} catch (error) {
@@ -218,21 +258,30 @@ export class ProductTypesComponent
 
 		try {
 			const editProductType = this.selectedProductType
-				? await this.productTypeService.getById(this.selectedProductType.id)
+				? await this.productTypeService.getById(
+						this.selectedProductType.id
+				  )
 				: null;
 
-			const dialog = this.dialogService.open(ProductTypeMutationComponent, {
-				context: {
-					productType: editProductType
+			const dialog = this.dialogService.open(
+				ProductTypeMutationComponent,
+				{
+					context: {
+						productType: editProductType
+					}
 				}
-			});
+			);
 
 			const productType = await firstValueFrom(dialog.onClose);
 			if (productType) {
 				let translation = productType.translations[0];
-				this.toastrService.success('INVENTORY_PAGE.PRODUCT_TYPE_SAVED', {
-					name: translation.name
-				});
+				this.toastrService.success(
+					'INVENTORY_PAGE.PRODUCT_TYPE_SAVED',
+					{
+						name: translation.name
+					}
+				);
+				this._refresh$.next(true);
 				this.types$.next(true);
 			}
 		} catch (error) {
@@ -249,25 +298,30 @@ export class ProductTypesComponent
 				});
 			}
 
-			const result = await firstValueFrom(this.dialogService
-				.open(DeleteConfirmationComponent)
-				.onClose);
+			const result = await firstValueFrom(
+				this.dialogService.open(DeleteConfirmationComponent).onClose
+			);
 
 			if (result) {
 				if (this.selectedProductType) {
-					await this.productTypeService.delete(this.selectedProductType.id)
+					await this.productTypeService
+						.delete(this.selectedProductType.id)
 						.then(() => {
-							this.toastrService.success('INVENTORY_PAGE.PRODUCT_TYPE_DELETED', {
-								name: this.selectedProductType.name
-							});
+							this.toastrService.success(
+								'INVENTORY_PAGE.PRODUCT_TYPE_DELETED',
+								{
+									name: this.selectedProductType.name
+								}
+							);
 						})
 						.finally(() => {
+							this._refresh$.next(true);
 							this.types$.next(true);
 						});
 				}
 			}
 		} catch (error) {
-			this.types$.next(true);
+			this._errorHandlingService.handleError(error);
 		}
 	}
 
@@ -275,7 +329,6 @@ export class ProductTypesComponent
 		this.disableButton = !isSelected;
 		this.selectedProductType = isSelected ? data : null;
 	}
-
 
 	/**
 	 * Register Smart Table Source Config
@@ -289,7 +342,7 @@ export class ProductTypesComponent
 
 			const { tenantId } = this.store.user;
 			const { id: organizationId } = this.organization;
-	
+
 			this.smartTableSource = new ServerDataSource(this.http, {
 				endPoint: `${API_PREFIX}/product-types/pagination`,
 				relations: [],
@@ -301,15 +354,24 @@ export class ProductTypesComponent
 					return Object.assign({}, item);
 				},
 				finalize: () => {
+					if (
+						this.dataLayoutStyle ===
+						ComponentLayoutStyleEnum.CARDS_GRID
+					) {
+						this.productTypes.push(
+							...this.smartTableSource.getData()
+						);
+					}
 					this.setPagination({
 						...this.getPagination(),
 						totalItems: this.smartTableSource.count()
 					});
 					this.loading = false;
 				}
-			});	
+			});
 		} catch (error) {
-			this.toastrService.danger(error);
+			this._errorHandlingService.handleError(error);
+			this.loading = false;
 		}
 	}
 
@@ -320,19 +382,13 @@ export class ProductTypesComponent
 		if (!this.organization) {
 			return;
 		}
-		this.setSmartTableSource();
-
 		try {
+			this.setSmartTableSource();
 			const { activePage, itemsPerPage } = this.getPagination();
-			this.smartTableSource.setPaging(
-				activePage,
-				itemsPerPage,
-				false
-			);
+			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
 
 			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
 				await this.smartTableSource.getElements();
-				this.productTypes = this.smartTableSource.getData();
 			}
 		} catch (error) {
 			this.toastrService.danger(error);
