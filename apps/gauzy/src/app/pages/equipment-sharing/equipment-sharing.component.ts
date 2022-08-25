@@ -18,10 +18,17 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import { EquipmentSharingMutationComponent } from '../../@shared/equipment-sharing';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
-import { IPaginationBase, PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
+import {
+	IPaginationBase,
+	PaginationFilterBaseComponent
+} from '../../@shared/pagination/pagination-filter-base.component';
 import { StatusBadgeComponent } from '../../@shared/status-badge';
 import { EquipmentSharingPolicyComponent } from './table-components';
-import { EquipmentSharingService, Store, ToastrService } from '../../@core/services';
+import {
+	EquipmentSharingService,
+	Store,
+	ToastrService
+} from '../../@core/services';
 import { API_PREFIX, ComponentEnum } from '../../@core/constants';
 import { ServerDataSource } from '../../@core/utils/smart-table';
 import { DateViewComponent } from '../../@shared/table-components';
@@ -31,9 +38,10 @@ import { DateViewComponent } from '../../@shared/table-components';
 	templateUrl: './equipment-sharing.component.html',
 	styleUrls: ['./equipment-sharing.component.scss']
 })
-export class EquipmentSharingComponent extends PaginationFilterBaseComponent
-	implements OnInit, OnDestroy {
-
+export class EquipmentSharingComponent
+	extends PaginationFilterBaseComponent
+	implements OnInit, OnDestroy
+{
 	loading: boolean = false;
 	disableButton: boolean = true;
 
@@ -51,9 +59,12 @@ export class EquipmentSharingComponent extends PaginationFilterBaseComponent
 	equipmentSharing$: Subject<boolean> = this.subject$;
 	public organization: IOrganization;
 	public selectedEmployeeId: string;
+	private _refresh$: Subject<any> = new Subject();
 
 	equipmentSharingTable: Ng2SmartTableComponent;
-	@ViewChild('equipmentSharingTable') set content(content: Ng2SmartTableComponent) {
+	@ViewChild('equipmentSharingTable') set content(
+		content: Ng2SmartTableComponent
+	) {
 		if (content) {
 			this.equipmentSharingTable = content;
 			this.onChangedSource();
@@ -96,21 +107,38 @@ export class EquipmentSharingComponent extends PaginationFilterBaseComponent
 				distinctUntilChange(),
 				tap(([user, organization, employee]) => {
 					this.organization = organization;
-					this.selectedEmployeeId = (user.employee) ?
-													user.employee.id :
-														(employee) ? employee.id : null;
+					this.selectedEmployeeId = user.employee
+						? user.employee.id
+						: employee
+						? employee.id
+						: null;
 				}),
-				tap(() => this.refreshPagination()),
+				tap(() => this._refresh$.next(true)),
 				tap(() => this.equipmentSharing$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
 
-			this.pagination$.pipe(
+		this.pagination$
+			.pipe(
 				distinctUntilChange(),
 				tap(() => this.equipmentSharing$.next(true)),
 				untilDestroyed(this)
-			).subscribe()
+			)
+			.subscribe();
+
+		this._refresh$
+			.pipe(
+				filter(
+					() =>
+						this.dataLayoutStyle ===
+						ComponentLayoutStyleEnum.CARDS_GRID
+				),
+				tap(() => this.refreshPagination()),
+				tap(() => (this.equipments = [])),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	ngOnDestroy() {}
@@ -121,9 +149,15 @@ export class EquipmentSharingComponent extends PaginationFilterBaseComponent
 			.componentLayout$(this.viewComponentName)
 			.pipe(
 				distinctUntilChange(),
-				tap((componentLayout) => (this.dataLayoutStyle = componentLayout)),
+				tap(
+					(componentLayout) =>
+						(this.dataLayoutStyle = componentLayout)
+				),
 				tap(() => this.refreshPagination()),
-				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
+				filter(
+					(componentLayout) =>
+						componentLayout === ComponentLayoutStyleEnum.CARDS_GRID
+				),
 				tap(() => this.equipmentSharing$.next(true)),
 				untilDestroyed(this)
 			)
@@ -150,7 +184,9 @@ export class EquipmentSharingComponent extends PaginationFilterBaseComponent
 				display: false,
 				perPage: pagination ? pagination.itemsPerPage : 10
 			},
-			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.EQUIPMENT_SHARING'),
+			noDataMessage: this.getTranslation(
+				'SM_TABLE.NO_DATA.EQUIPMENT_SHARING'
+			),
 			columns: {
 				name: {
 					title: this.getTranslation(
@@ -218,7 +254,7 @@ export class EquipmentSharingComponent extends PaginationFilterBaseComponent
 			const statues: RequestApprovalStatusTypesEnum[] = [
 				RequestApprovalStatusTypesEnum.REFUSED,
 				RequestApprovalStatusTypesEnum.REQUESTED
-			]
+			];
 			return statues.includes(equipementSharing.status);
 		}
 		return false;
@@ -235,7 +271,7 @@ export class EquipmentSharingComponent extends PaginationFilterBaseComponent
 			const statues: RequestApprovalStatusTypesEnum[] = [
 				RequestApprovalStatusTypesEnum.APPROVED,
 				RequestApprovalStatusTypesEnum.REQUESTED
-			]
+			];
 			return statues.includes(equipementSharing.status);
 		}
 		return false;
@@ -251,14 +287,17 @@ export class EquipmentSharingComponent extends PaginationFilterBaseComponent
 					equipementSharing.id
 				);
 				if (request) {
-					this.toastrService.success('EQUIPMENT_SHARING_PAGE.APPROVAL_SUCCESS', {
-						name: equipementSharing.name
-					});
+					this.toastrService.success(
+						'EQUIPMENT_SHARING_PAGE.APPROVAL_SUCCESS',
+						{
+							name: equipementSharing.name
+						}
+					);
 				}
 			}
 		} catch (error) {
-
 		} finally {
+			this._refresh$.next(true);
 			this.equipmentSharing$.next(true);
 		}
 	}
@@ -273,22 +312,22 @@ export class EquipmentSharingComponent extends PaginationFilterBaseComponent
 					equipementSharing.id
 				);
 				if (request) {
-					this.toastrService.success('EQUIPMENT_SHARING_PAGE.APPROVAL_SUCCESS', {
-						name: equipementSharing.name
-					});
+					this.toastrService.success(
+						'EQUIPMENT_SHARING_PAGE.APPROVAL_SUCCESS',
+						{
+							name: equipementSharing.name
+						}
+					);
 				}
 			}
 		} catch (error) {
-
 		} finally {
+			this._refresh$.next(true);
 			this.equipmentSharing$.next(true);
 		}
 	}
 
-	async save(
-		isCreate: boolean,
-		selectedItem?: IEquipmentSharing
-	) {
+	async save(isCreate: boolean, selectedItem?: IEquipmentSharing) {
 		if (selectedItem) {
 			this.selectEquipmentSharing({
 				isSelected: true,
@@ -298,21 +337,28 @@ export class EquipmentSharingComponent extends PaginationFilterBaseComponent
 		try {
 			let dialog;
 			if (!isCreate) {
-				dialog = this.dialogService.open(EquipmentSharingMutationComponent, {
-					context: {
-						equipmentSharing: this.selectedEquipmentSharing
+				dialog = this.dialogService.open(
+					EquipmentSharingMutationComponent,
+					{
+						context: {
+							equipmentSharing: this.selectedEquipmentSharing
+						}
 					}
-				});
+				);
 			} else {
-				dialog = this.dialogService.open(EquipmentSharingMutationComponent);
+				dialog = this.dialogService.open(
+					EquipmentSharingMutationComponent
+				);
 			}
 			const equipmentSharing = await firstValueFrom(dialog.onClose);
 			if (equipmentSharing) {
-				this.toastrService.success('EQUIPMENT_SHARING_PAGE.REQUEST_SAVED');
+				this.toastrService.success(
+					'EQUIPMENT_SHARING_PAGE.REQUEST_SAVED'
+				);
 			}
 		} catch (error) {
-
 		} finally {
+			this._refresh$.next(true);
 			this.equipmentSharing$.next(true);
 		}
 	}
@@ -329,12 +375,16 @@ export class EquipmentSharingComponent extends PaginationFilterBaseComponent
 				this.dialogService.open(DeleteConfirmationComponent).onClose
 			);
 			if (result) {
-				await this.equipmentSharingService.delete(this.selectedEquipmentSharing.id);
-				this.toastrService.success('EQUIPMENT_SHARING_PAGE.REQUEST_DELETED');
+				await this.equipmentSharingService.delete(
+					this.selectedEquipmentSharing.id
+				);
+				this.toastrService.success(
+					'EQUIPMENT_SHARING_PAGE.REQUEST_DELETED'
+				);
 			}
 		} catch (error) {
-
 		} finally {
+			this._refresh$.next(true);
 			this.equipmentSharing$.next(true);
 		}
 	}
@@ -360,24 +410,32 @@ export class EquipmentSharingComponent extends PaginationFilterBaseComponent
 		const { id: organizationId } = this.organization;
 
 		const request = {};
-		if (this.selectedEmployeeId) request['employeeId'] = this.selectedEmployeeId;
+		if (this.selectedEmployeeId)
+			request['employeeId'] = this.selectedEmployeeId;
 
 		this.smartTableSource = new ServerDataSource(this.http, {
 			endPoint: `${API_PREFIX}/equipment-sharing/pagination`,
 			where: {
 				...{ organizationId, tenantId },
-				... (this.selectedEmployeeId) ? { employeeIds: [this.selectedEmployeeId] } : {},
+				...(this.selectedEmployeeId
+					? { employeeIds: [this.selectedEmployeeId] }
+					: {}),
 				...this.filters.where
 			},
 			resultMap: (sharing: IEquipmentSharing) => {
 				return Object.assign({}, sharing, {
 					sharingStatus: this.statusMapper(sharing),
 					name: sharing.equipment
-							? sharing.equipment.name
-							: sharing.name
+						? sharing.equipment.name
+						: sharing.name
 				});
 			},
 			finalize: () => {
+				if (
+					this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID
+				) {
+					this.equipments.push(...this.smartTableSource.getData());
+				}
 				this.setPagination({
 					...this.getPagination(),
 					totalItems: this.smartTableSource.count()
@@ -399,7 +457,6 @@ export class EquipmentSharingComponent extends PaginationFilterBaseComponent
 
 			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
 				await this.smartTableSource.getElements();
-				this.equipments = this.smartTableSource.getData();
 			}
 		} catch (error) {
 			this.toastrService.danger(error);
@@ -437,7 +494,7 @@ export class EquipmentSharingComponent extends PaginationFilterBaseComponent
 	}
 
 	statusMapper(row: IEquipmentSharing) {
-		let value : string;
+		let value: string;
 		let badgeClass: string;
 
 		switch (row.status) {
