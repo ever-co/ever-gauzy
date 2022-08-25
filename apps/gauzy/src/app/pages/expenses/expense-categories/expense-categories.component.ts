@@ -31,14 +31,14 @@ import { ExpenseCategoryMutationComponent } from './expense-category-mutation/ex
 	templateUrl: './expense-categories.component.html',
 	styleUrls: ['expense-categories.component.scss']
 })
-export class ExpenseCategoriesComponent extends PaginationFilterBaseComponent 
+export class ExpenseCategoriesComponent extends PaginationFilterBaseComponent
 	implements OnInit, OnDestroy {
 
 	loading: boolean = false;
 	disableButton: boolean = true;
 	smartTableSource: ServerDataSource;
 	settingsSmartTable: object;
-	
+
 	expenseCategories: IOrganizationExpenseCategory[] = [];
 	selected = {
 		expenseCategory: null,
@@ -51,7 +51,7 @@ export class ExpenseCategoriesComponent extends PaginationFilterBaseComponent
 
 	public organization: IOrganization;
 	categories$: Subject<any> = this.subject$;
-	
+
 	constructor(
 		private readonly organizationExpenseCategoryService: OrganizationExpenseCategoriesService,
 		private readonly toastrService: ToastrService,
@@ -99,7 +99,7 @@ export class ExpenseCategoriesComponent extends PaginationFilterBaseComponent
 			)
 			.subscribe();
 	}
-	
+
 	cancel() {
 		this.selected = {
 			expenseCategory: null,
@@ -227,19 +227,22 @@ export class ExpenseCategoriesComponent extends PaginationFilterBaseComponent
 
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
-		
+
 		this.smartTableSource = new ServerDataSource(this.httpClient, {
 			endPoint: `${API_PREFIX}/expense-categories/pagination`,
-			relations: ['tags'],
+			relations: [
+				'tags'
+			],
 			join: {
-				alias: 'expense-category',
+				alias: 'expense_category',
 				leftJoin: {
-					tags: 'expense-category.tags'
+					tags: 'expense_category.tags'
 				}
 			},
 			where: {
-				...{ organizationId, tenantId },
-				...this.filters.where
+				organizationId,
+				tenantId,
+				...(this.filters.where ? this.filters.where : {})
 			},
 			finalize: () => {
 				this.setPagination({
