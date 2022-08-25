@@ -34,7 +34,7 @@ import {
 import { Income } from './income.entity';
 import { IncomeService } from './income.service';
 import { CreateIncomeDTO, UpdateIncomeDTO } from './dto';
-import { RelationalEmployeeDTO } from './../employee/dto';
+import { EmployeeFeatureDTO } from './../employee/dto';
 
 @ApiTags('Income')
 @UseGuards(TenantPermissionGuard)
@@ -79,7 +79,7 @@ export class IncomeController extends CrudController<Income> {
 	 * @param options
 	 * @returns
 	 */
-	@Permissions(PermissionsEnum.ORG_INVENTORY_VIEW)
+	@Permissions(PermissionsEnum.ORG_INCOMES_VIEW)
 	@Get('count')
 	async getCount(
 		@Query() options: FindOptionsWhere<Income>
@@ -119,6 +119,19 @@ export class IncomeController extends CrudController<Income> {
 			{ where: findInput, relations },
 			filterDate
 		);
+	}
+
+	/**
+	 * Find income by primary ID
+	 *
+	 * @param id
+	 * @returns
+	 */
+	@Get(':id')
+	async findById(
+		@Param('id', UUIDValidationPipe) id: string,
+	): Promise<IIncome> {
+		return await this.incomeService.findOneByIdString(id);
 	}
 
 	@ApiOperation({ summary: 'Create new record' })
@@ -193,7 +206,7 @@ export class IncomeController extends CrudController<Income> {
 		@Query(new ValidationPipe({
 			transform : true,
 			whitelist: true
-		})) options: RelationalEmployeeDTO
+		})) options: EmployeeFeatureDTO
 	): Promise<DeleteResult> {
 		return await this.commandBus.execute(
 			new IncomeDeleteCommand(

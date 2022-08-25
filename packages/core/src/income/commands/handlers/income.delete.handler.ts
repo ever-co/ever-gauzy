@@ -1,4 +1,4 @@
-import { ForbiddenException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { DeleteResult } from 'typeorm';
 import { isNotEmpty } from '@gauzy/common';
@@ -19,28 +19,30 @@ export class IncomeDeleteHandler
 	) {}
 
 	public async execute(command: IncomeDeleteCommand): Promise<DeleteResult> {
-		const { employeeId, incomeId } = command;
+		const { incomeId } = command;
 		const result = await this.deleteIncome(incomeId);
-
-		if (isNotEmpty(employeeId)) {
-			const id = employeeId;
-			let averageIncome = 0;
-			let averageBonus = 0;
-
-			const stat = await this.employeeStatisticsService.getStatisticsByEmployeeId(
-				id
-			);
-			averageIncome = this.incomeService.countStatistic(
-				stat.incomeStatistics
-			);
-			averageBonus = this.incomeService.countStatistic(
-				stat.bonusStatistics
-			);
-			await this.employeeService.create({
-				id,
-				averageIncome: averageIncome,
-				averageBonus: averageBonus
-			});
+		try {
+			const { employeeId } = command;
+			if (isNotEmpty(employeeId)) {
+				let averageIncome = 0;
+				let averageBonus = 0;
+				const stat = await this.employeeStatisticsService.getStatisticsByEmployeeId(
+					employeeId
+				);
+				averageIncome = this.incomeService.countStatistic(
+					stat.incomeStatistics
+				);
+				averageBonus = this.incomeService.countStatistic(
+					stat.bonusStatistics
+				);
+				await this.employeeService.create({
+					id: employeeId,
+					averageIncome: averageIncome,
+					averageBonus: averageBonus
+				});
+			}
+		} catch (error) {
+			throw new BadRequestException(error);
 		}
 		return result;
 	}
