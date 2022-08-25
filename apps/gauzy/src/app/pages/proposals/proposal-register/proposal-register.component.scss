@@ -51,14 +51,14 @@
 
 :host {
   ::ng-deep .card-header {
-    @include nb-rtl(gap, 2rem);   
+    @include nb-rtl(gap, 2rem);
     ngx-back-navigation button {
-      @include nb-rtl(margin, 3px 0 0 0 !important);    
+      @include nb-rtl(margin, 3px 0 0 0 !important);
     }
   }
   @include card-overrides(
     overlay,
-    calc($default-card-height - 2rem),
+    calc($default-card-height + 1.5rem),
     $default-radius
   );
   .card,
