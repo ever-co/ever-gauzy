@@ -3,74 +3,110 @@
 @import 'gauzy/_gauzy-overrides';
 
 nb-card-body {
-	background: nb-theme(gauzy-card-2);
+  background: nb-theme(gauzy-card-2);
+}
+
+:host {
+  nb-card.main-wrapper {
+    display: flex;
+    flex-flow: column;
+    height: 100%;
+    border-radius: var(--border-radius);
+    nb-card-header.card-header-title {
+      flex: 0 1 auto;
+    }
+    nb-card-body.content-body {
+      overflow: unset;
+      @include nb-ltr(padding, 1rem 0.5rem 1rem 18px);
+      @include nb-rtl(padding, 1rem 18px 1rem 0.5rem);
+      display: flex;
+      flex-direction: column;
+      flex: 1 1 auto;
+      height: calc(100vh - 12.75rem);
+      .no-data {
+        @include nb-ltr(padding, 0 0.5rem 0 0);
+        @include nb-rtl(padding, 0 0 0 0.5rem);
+        height: 100%;
+      }
+      .table-scroll-container {
+        flex-grow: 10;
+        max-height: unset;
+      }
+      .grid {
+        flex-grow: 10;
+        overflow: auto;
+        height: 100%;
+      }
+    }
+  }
 }
 
 .editable {
-	$orange: rgba(245, 109, 88, 1);
+  $orange: rgba(245, 109, 88, 1);
 
-	i {
-		cursor: pointer;
-	}
+  i {
+    cursor: pointer;
+  }
 
-	.cancel {
-		width: 100%;
-		display: flex;
-		justify-content: flex-end;
-	}
+  .cancel {
+    width: 100%;
+    display: flex;
+    justify-content: flex-end;
+  }
 
-	[nbButton].delete.appearance-outline.status-basic {
-		background-color: transparent;
-		border-color: rgba($color: $orange, $alpha: 0.3);
-		border-width: 2px;
-		color: $orange;
+  [nbButton].delete.appearance-outline.status-basic {
+    background-color: transparent;
+    border-color: rgba($color: $orange, $alpha: 0.3);
+    border-width: 2px;
+    color: $orange;
 
-		&:hover {
-			border-color: $orange;
-		}
-	}
+    &:hover {
+      border-color: $orange;
+    }
+  }
 
-	[nbButton].delete.appearance-outline:hover {
-		box-shadow: 0 0 0 nb-theme(button-outline-width) rgba($color: $orange, $alpha: 0.05),
-			inset nb-theme(button-outline-focus-inset-shadow-length) transparent;
-	}
+  [nbButton].delete.appearance-outline:hover {
+    box-shadow: 0 0 0 nb-theme(button-outline-width)
+        rgba($color: $orange, $alpha: 0.05),
+      inset nb-theme(button-outline-focus-inset-shadow-length) transparent;
+  }
 
-	[nbButton].delete.appearance-outline:focus:not(:hover):not(:active) {
-		box-shadow: unset;
-	}
+  [nbButton].delete.appearance-outline:focus:not(:hover):not(:active) {
+    box-shadow: unset;
+  }
 
-	.title {
-		color: nb-theme(text-primary-color);
-		font-size: 16px;
-		font-weight: 600;
-		line-height: 16px;
-		letter-spacing: 0em;
-		text-align: left;
-	}
+  .title {
+    color: nb-theme(text-primary-color);
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 16px;
+    letter-spacing: 0em;
+    text-align: left;
+  }
 
-	background-color: nb-theme(gauzy-card-1);
-	padding: 1rem 0 3px 0;
-	border-radius: nb-theme(border-radius);
-	width: 400px;
+  background-color: nb-theme(gauzy-card-1);
+  padding: 1rem 0 3px 0;
+  border-radius: nb-theme(border-radius);
+  width: 400px;
 
-	@include dialog(var(--gauzy-card-1), var(--gauzy-sidebar-background-4));
+  @include dialog(var(--gauzy-card-1), var(--gauzy-sidebar-background-4));
 }
 
 .custom-table {
-	background-color: nb-theme(gauzy-card-1);
-	border-radius: nb-theme(border-radius);
-	cursor: pointer;
+  background-color: nb-theme(gauzy-card-1);
+  border-radius: nb-theme(border-radius);
+  cursor: pointer;
 
-	&.selected {
-		box-shadow: -6px 0px 0px 0px rgba(50, 50, 50, 0.05);
-		background: rgba(50, 50, 50, 0.03);
-	}
+  &.selected {
+    box-shadow: -6px 0px 0px 0px rgba(50, 50, 50, 0.05);
+    background: rgba(50, 50, 50, 0.03);
+  }
 
-	&:hover {
-		background: rgba(50, 50, 50, 0.03);
-	}
+  &:hover {
+    background: rgba(50, 50, 50, 0.03);
+  }
 }
 
 nb-card {
-	margin-bottom: 0.5rem;
+  margin-bottom: 0.5rem;
 }

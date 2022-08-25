@@ -30,6 +30,7 @@ import { PaginationModule } from '../../@shared/pagination/pagination.module';
 import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
 import { ExpenseCategoryMutationComponent } from './expense-categories/expense-category-mutation/expense-category-mutation.component';
 import { NoDataMessageModule } from '../../@shared/no-data-message/no-data-message.module';
+import { InfiniteScrollModule } from 'ngx-infinite-scroll';
 
 @NgModule({
 	imports: [
@@ -58,7 +59,8 @@ import { NoDataMessageModule } from '../../@shared/no-data-message/no-data-messa
 		PaginationModule,
     	GauzyButtonActionModule,
 		NoDataMessageModule,
-		NbTooltipModule
+		NbTooltipModule,
+		InfiniteScrollModule
 	],
 	declarations: [
 		ExpensesComponent,
