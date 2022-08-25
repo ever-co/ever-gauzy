@@ -430,6 +430,10 @@ export class UsersComponent
 	private async _loadDataGridLayout() {
 		if (this._isGridLayout) {
 			this.users.push(...(await this.sourceSmartTable.getElements()));
+			this.users = this.users.filter(
+				(user, index, self) =>
+					index === self.findIndex(({ id }) => user.id === id)
+			);
 		}
 	}
 
