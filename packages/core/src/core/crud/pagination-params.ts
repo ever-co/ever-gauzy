@@ -14,7 +14,7 @@ export abstract class OptionParams<T> {
 	 */
 	@ApiPropertyOptional()
 	@IsOptional()
-	readonly order?: FindOptionsOrder<T>;
+	readonly order: FindOptionsOrder<T>;
 
 	/**
      * Simple condition that should be applied to match entities.
@@ -24,7 +24,7 @@ export abstract class OptionParams<T> {
 	@IsObject()
 	@ValidateNested({ each: true })
 	@Type(() => TenantOrganizationBaseDTO)
-	readonly where?: {
+	readonly where: {
 		[P in keyof T]?: FindOptionsWhereProperty<NonNullable<T[P]>>;
 	};
 

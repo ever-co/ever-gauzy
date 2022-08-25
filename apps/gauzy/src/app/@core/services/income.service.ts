@@ -7,6 +7,7 @@ import {
 	IIncomeUpdateInput,
 	IPagination
 } from '@gauzy/contracts';
+import { toParams } from '@gauzy/common-angular';
 import { firstValueFrom } from 'rxjs';
 import { API_PREFIX } from '../constants/app.constants';
 
@@ -60,11 +61,9 @@ export class IncomeService {
 	}
 
 	delete(incomeId: string, employeeId: string): Promise<any> {
-		const data = JSON.stringify({ employeeId });
 		return firstValueFrom(
-			this.http
-			.delete(`${API_PREFIX}/income/${incomeId}`, {
-				params: { data }
+			this.http.delete(`${API_PREFIX}/income/${incomeId}`, {
+				params: toParams({ employeeId })
 			})
 		);
 	}

@@ -1,4 +1,5 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { PermissionsEnum } from '@gauzy/contracts';
 import { IncomeCreateCommand } from '../income.create.command';
 import { IncomeService } from '../../income.service';
 import { Income } from '../../income.entity';
@@ -43,31 +44,26 @@ export class IncomeCreateHandler
 
 	public async createIncome(command: IncomeCreateCommand): Promise<Income> {
 		const { input } = command;
-
 		const income = new Income();
-		const employee = input.employeeId
-			? await this.employeeService.findOneByIdString(input.employeeId)
-			: null;
-		const organization = await this.organizationService.findOneByIdString(
-			input.organizationId
-		);
 
+		const organization = await this.organizationService.findOneByIdString(input.organizationId);
+		if (!RequestContext.hasPermission(
+			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+		)) {
+			income.employeeId = RequestContext.currentEmployeeId();
+		} else {
+			income.employeeId = input.employeeId || null;
+		}
 		income.clientId = input.clientId;
-		income.employee = employee;
-		income.organization = organization;
+		income.organizationId = organization.id;
 		income.amount = input.amount;
 		income.valueDate = input.valueDate;
 		income.notes = input.notes;
-		income.currency = input.currency;
+		income.currency = input.currency || organization.currency;
 		income.isBonus = input.isBonus;
 		income.reference = input.reference;
 		income.tags = input.tags;
 		income.tenantId = RequestContext.currentTenantId();
-
-		if (!income.currency) {
-			income.currency = organization.currency;
-		}
-
 		return await this.incomeService.create(income);
 	}
 }
