@@ -17,7 +17,6 @@ import {
 	Put,
 	Query,
 	UseGuards,
-	UsePipes,
 	ValidationPipe
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';

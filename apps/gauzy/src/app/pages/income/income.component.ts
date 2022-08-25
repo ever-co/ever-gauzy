@@ -9,8 +9,7 @@ import {
 	IOrganizationContact,
 	ITag,
 	IDateRangePicker,
-	PermissionsEnum,
-	IUser
+	PermissionsEnum
 } from '@gauzy/contracts';
 import { Subject } from 'rxjs';
 import { combineLatest } from 'rxjs';
