@@ -36,7 +36,7 @@
 			</div>
 		</div>
 	</nb-card-header>
-	<nb-card-body>
+	<nb-card-body [ngClass]="{ project: selectedProject }">
 		<ng-container [ngSwitch]="viewMode">
 			<ng-template [ngSwitchCase]="taskListTypeEnum.GRID">
 				<ng-template

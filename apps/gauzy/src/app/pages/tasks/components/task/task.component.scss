@@ -20,6 +20,9 @@
 
 nb-card-body {
   overflow: unset;
+  &.project {
+    height: calc($card-height - 0.5rem) !important;
+  }
 }
 
 :host ::ng-deep .sprint-view {
