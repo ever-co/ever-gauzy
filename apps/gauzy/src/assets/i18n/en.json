@@ -169,7 +169,8 @@
 			"KPI": "You have not created any KPI.",
 			"INVOICE": "You have not created any invoice.",
 			"ESTIMATE": "You have not created any estimate.",
-			"EVENT_TYPE": "You have not created any event type."
+			"EVENT_TYPE": "You have not created any event type.",
+			"PRODUCT_TYPE_NO_DATA": "You have not created any product type."
 		},
 		"TRANSACTION_TYPE": "Type",
 		"AMOUNT": "Amount",
