@@ -98,8 +98,8 @@
 
 .buttons {
   position: absolute;
-  left: 3rem;
-  bottom: 1rem;
+  left: 2.75rem;
+  bottom: 1.4rem;
 }
 
 h4 {
@@ -107,14 +107,20 @@ h4 {
   font-weight: 600;
   line-height: 30px;
   letter-spacing: 0em;
-  text-align: left;
 }
 
 :host {
+  height: 100%;
   nb-card,
   nb-card-body,
   nb-card-header {
     background-color: unset;
+  }
+  nb-card,
+  nb-card-body,
+  nb-stepper {
+    height: 100%;
+    padding-bottom: 0 !important;
   }
 
   nb-card {
@@ -124,10 +130,11 @@ h4 {
 
   nb-stepper ::ng-deep .step-content {
     overflow-y: auto;
+    height: calc(100vh - 20.75rem);
   }
 
   .custom-card {
-    height: calc(100vh - 29rem);
+    height: 100%;
     width: 100%;
   }
 

@@ -16,22 +16,20 @@
 			></ngx-gauzy-button-action>
 		</div>
 	</nb-card-header>
-	<nb-card-body class="custom-card">
+	<nb-card-body [ngClass]="{ mutation: showAddCard }" class="custom-card">
 		<ng-container *ngIf="showAddCard; else layout">
-			<div style="display: flex">
-				<ga-contact-mutation
-					class="w-100"
-					[contactType]="contactType"
-					[organizationContact]="selectedOrganizationContact"
-					[projectsWithoutOrganizationContacts]="
-						projectsWithoutOrganizationContacts
-					"
-					(canceled)="cancel()"
-					(addOrEditOrganizationContact)="
-						addOrEditOrganizationContact($event)
-					"
-				></ga-contact-mutation>
-			</div>
+			<ga-contact-mutation
+				class="w-100"
+				[contactType]="contactType"
+				[organizationContact]="selectedOrganizationContact"
+				[projectsWithoutOrganizationContacts]="
+					projectsWithoutOrganizationContacts
+				"
+				(canceled)="cancel()"
+				(addOrEditOrganizationContact)="
+					addOrEditOrganizationContact($event)
+				"
+			></ga-contact-mutation>
 		</ng-container>
 		<ng-template #layout>
 			<ng-template
