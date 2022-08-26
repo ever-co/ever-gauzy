@@ -95,7 +95,6 @@ export class EmployeeLevelComponent
 			.subscribe();
 		this._refresh$
 			.pipe(
-				filter(() => this._isGridLayout),
 				tap(() => this.refreshPagination()),
 				tap(() => (this.employeeLevels = [])),
 				untilDestroyed(this)
@@ -149,8 +148,7 @@ export class EmployeeLevelComponent
 			.componentLayout$(this.viewComponentName)
 			.pipe(
 				distinctUntilChange(),
-				tap(() => this.refreshPagination()),
-				tap(() => (this.employeeLevels = [])),
+				tap(() => this._refresh$.next(true)),
 				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
@@ -168,7 +166,9 @@ export class EmployeeLevelComponent
 		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
 			pager: {
-				perPage: pagination ? pagination : 10
+				perPage: pagination
+					? pagination.itemsPerPage
+					: this.minItemPerPage
 			},
 			actions: false,
 			columns: {
