@@ -9,7 +9,7 @@
   nb-card {
     nb-card-body {
       overflow: unset;
-      height: calc(100vh - 20rem);
+      height: 100%;
     }
   }
   ::ng-deep .route-tabset .route-tab a.tab-link {
