@@ -279,6 +279,7 @@ $default-box-shadow: var(--gauzy-shadow);
   @include full-calendar();
   @include ck-editor();
   @include input-appearance(42px, var(--gauzy-card-1));
+  @include nb-tabset-overrides;
 }
 
 @mixin full-calendar() {
@@ -513,5 +514,54 @@ $default-box-shadow: var(--gauzy-shadow);
 
   .fc .fc-daygrid-day.fc-day-today {
     border-radius: nb-theme(border-radius);
+  }
+}
+
+@mixin nb-tabset-overrides() {
+  nb-tabset .tabset .tab.active a.tab-link,
+  nb-route-tabset .route-tabset .route-tab.active a.tab-link {
+    border-radius: nb-theme(border-radius) nb-theme(border-radius) 0 0;
+    display: flex;
+    align-items: center;
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 16px;
+    letter-spacing: 0em;
+    text-align: center;
+    color: var(--text-primary-color);
+
+    nb-icon {
+      svg {
+        fill: var(--text-primary-color);
+      }
+    }
+  }
+
+  nb-tabset .tabset .tab a.tab-link,
+  nb-route-tabset .route-tabset .route-tab a.tab-link {
+    display: flex;
+    align-items: center;
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 16px;
+    letter-spacing: 0em;
+    text-align: center;
+    color: var(--gauzy-text-color-2);
+
+    nb-icon {
+      svg {
+        fill: var(--gauzy-text-color-2);
+      }
+    }
+
+    &:hover {
+      color: var(--text-primary-color);
+
+      nb-icon {
+        svg {
+          fill: var(--text-primary-color);
+        }
+      }
+    }
   }
 }
