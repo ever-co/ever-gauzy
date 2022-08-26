@@ -4,7 +4,8 @@ import { Reflector } from '@nestjs/core';
 import { InjectRepository } from '@nestjs/typeorm';
 import { verify } from 'jsonwebtoken';
 import { Repository } from 'typeorm';
-import { RolesEnum } from '@gauzy/contracts';
+import { PermissionsEnum, RolesEnum } from '@gauzy/contracts';
+import { isEmpty, PERMISSIONS_METADATA, removeDuplicates } from '@gauzy/common';
 import * as camelCase from 'camelcase';
 import { RequestContext } from './../../core/context';
 import { Employee } from './../../core/entities/internal';
@@ -19,13 +20,15 @@ export class OrganizationPermissionGuard implements CanActivate {
 	) {}
 
 	async canActivate(context: ExecutionContext): Promise<boolean> {
-		const permissions = this._reflector.get<string[]>(
-			'permissions',
-			context.getHandler()
-		);
-
 		let isAuthorized = false;
-		if (!permissions) {
+		/*
+		* Retrieve metadata for a specified key for a specified set of permissions
+		*/
+		const permissions = removeDuplicates(this._reflector.getAllAndOverride<PermissionsEnum[]>(PERMISSIONS_METADATA, [
+			context.getHandler(),
+			context.getClass(),
+		])) || [];
+		if (isEmpty(permissions)) {
 			isAuthorized = true;
 		} else {
 			const token = RequestContext.currentToken();
@@ -34,7 +37,6 @@ export class OrganizationPermissionGuard implements CanActivate {
 				role: string;
 				employeeId: string;
 			};
-
 			//Enabled AllowSuperAdminRole from .env file
 			if (env.allowSuperAdminRole === true) {
 				//Super admin and admin has allowed to access request
@@ -65,7 +67,6 @@ export class OrganizationPermissionGuard implements CanActivate {
 			} else {
 				isAuthorized = true;
 			}
-
 			if (!isAuthorized) {
 				console.log(
 					'Unauthorized access blocked. OrganizationId:',
@@ -75,7 +76,6 @@ export class OrganizationPermissionGuard implements CanActivate {
 				);
 			}
 		}
-
 		return isAuthorized;
 	}
 }
