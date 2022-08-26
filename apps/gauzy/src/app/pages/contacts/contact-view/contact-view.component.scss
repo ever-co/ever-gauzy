@@ -95,7 +95,7 @@ nb-tab.content-active {
     background-color: var(--gauzy-card-2);
     margin: 0 -24px -16px 0;
     border-radius: 0 0 var(--border-radius) 0;
-    height: calc(100vh - 18.5rem);
+    height: calc(100vh - 17.25rem);
     padding: 16px 20px 0 20px;
 
     .map {
@@ -104,5 +104,5 @@ nb-tab.content-active {
 }
 
 :host ga-leaflet-map ::ng-deep .leaflet-container {
-    height: calc(100vh - 36rem) !important;
+    height: calc(100vh - 30.5rem) !important;
 }
