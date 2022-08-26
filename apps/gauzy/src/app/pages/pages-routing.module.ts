@@ -64,19 +64,7 @@ const routes: Routes = [
 						path: 'expense-recurring',
 						loadChildren: () => import('./expense-recurring/expense-recurring.module').then(
 							(m) => m.ExpenseRecurringModule
-						),
-						data: {
-							selectors: {
-								project: false,
-								employee: false
-							},
-							datePicker: {
-								unitOfTime: 'month'
-							}
-						},
-						resolve: {
-							dates: DateRangePickerResolver
-						}
+						)
 					},
 					{
 						path: 'invoices',
@@ -329,18 +317,7 @@ const routes: Routes = [
 						path: 'recurring-expenses',
 						loadChildren: () => import('./recurring-expense-employee/recurring-expense-employee.module').then(
 							(m) => m.RecurringExpensesEmployeeModule
-						),
-						data: {
-							selectors: {
-								project: false
-							},
-							datePicker: {
-								unitOfTime: 'month'
-							}
-						},
-						resolve: {
-							dates: DateRangePickerResolver
-						}
+						)
 					},
 					{
 						path: 'candidates',
@@ -415,19 +392,7 @@ const routes: Routes = [
 						path: 'expense-recurring',
 						loadChildren: () => import('./expense-recurring/expense-recurring.module').then(
 							(m) => m.ExpenseRecurringModule
-						),
-						data: {
-							selectors: {
-								project: false,
-								employee: false
-							},
-							datePicker: {
-								unitOfTime: 'month'
-							}
-						},
-						resolve: {
-							dates: DateRangePickerResolver
-						}
+						)
 					},
 					{
 						path: 'help-center',
