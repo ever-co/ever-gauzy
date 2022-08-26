@@ -1,4 +1,4 @@
-<nb-card class="employee-edit card-scroll" >
+<nb-card class="employee-edit" >
 	<nb-card-header class="header">
 		<div
 			class="header-container"
@@ -62,7 +62,7 @@
 			<h6>{{ 'EMPLOYEES_PAGE.SELECT_EMPLOYEE_MSG' | translate }}</h6>
 		</ng-template>
 	</nb-card-header>
-	<nb-card-body>
+	<nb-card-body class="p-0">
 		<ngx-edit-employee-profile
 			(updatedImage)="updateImage($event)"
 		></ngx-edit-employee-profile>
