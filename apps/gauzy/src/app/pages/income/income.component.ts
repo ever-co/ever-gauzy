@@ -119,7 +119,7 @@ export class IncomeComponent
 		this._loadSmartTableSettings();
 		this.incomes$
 			.pipe(
-				debounceTime(100),
+				debounceTime(300),
 				tap(() => this._clearItem()),
 				tap(() => this.getIncomes()),
 				untilDestroyed(this)
@@ -556,6 +556,11 @@ export class IncomeComponent
 				});
 			},
 			finalize: () => {
+				if (
+					this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID
+				) {
+					this.incomes.push(...this.smartTableSource.getData());
+				}
 				this.setPagination({
 					...this.getPagination(),
 					totalItems: this.smartTableSource.count()
@@ -577,7 +582,6 @@ export class IncomeComponent
 
 			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
 				await this.smartTableSource.getElements();
-				this.incomes.push(...this.smartTableSource.getData());
 			}
 		} catch (error) {
 			this.toastrService.danger(error);
