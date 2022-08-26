@@ -508,6 +508,12 @@ export class ExpensesComponent extends PaginationFilterBaseComponent
 				});
 			},
 			finalize: () => {
+				if (
+					this.dataLayoutStyle ===
+					this.componentLayoutStyleEnum.CARDS_GRID
+				) {
+					this.expenses.push(...this.smartTableSource.getData());
+				}
 				this.setPagination({
 					...this.getPagination(),
 					totalItems: this.smartTableSource.count()
@@ -533,7 +539,6 @@ export class ExpensesComponent extends PaginationFilterBaseComponent
 
 			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
 				await this.smartTableSource.getElements();
-				this.expenses.push(...this.smartTableSource.getData());
 			}
 		} catch (error) {
 			this.toastrService.danger('NOTES.EXPENSES.EXPENSES_ERROR', null, {

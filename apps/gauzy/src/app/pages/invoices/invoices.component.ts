@@ -722,6 +722,11 @@ export class InvoicesComponent
 				});
 			},
 			finalize: () => {
+				if (
+					this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID
+				) {
+					this.invoices.push(...this.smartTableSource.getData());
+				}
 				this.setPagination({
 					...this.getPagination(),
 					totalItems: this.smartTableSource.count()
@@ -749,12 +754,6 @@ export class InvoicesComponent
 			) {
 				// Initiate GRID or TABLE view pagination
 				await this.smartTableSource.getElements();
-				this.invoices.push(...this.smartTableSource.getData());
-
-				this.setPagination({
-					...this.getPagination(),
-					totalItems: this.smartTableSource.count()
-				});
 			}
 		} catch (error) {
 			this.toastrService.danger(

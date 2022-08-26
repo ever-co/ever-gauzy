@@ -246,6 +246,9 @@ export class InvoicesReceivedComponent
 				});
 			},
 			finalize: () => {
+				if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
+					this.invoices.push(...this.smartTableSource.getData());
+				}
 				this.setPagination({
 					...this.getPagination(),
 					totalItems: this.smartTableSource.count()
@@ -267,12 +270,6 @@ export class InvoicesReceivedComponent
 			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
 				// Initiate GRID view pagination
 				await this.smartTableSource.getElements();
-				this.invoices.push(...this.smartTableSource.getData());
-
-				this.setPagination({
-					...this.getPagination(),
-					totalItems: this.smartTableSource.count()
-				});
 			}
 		} catch (error) {
 			this._errorHandlingService.handleError(error);
