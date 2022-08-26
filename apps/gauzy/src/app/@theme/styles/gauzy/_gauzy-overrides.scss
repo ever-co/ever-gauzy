@@ -12,11 +12,22 @@ $default-box-shadow: var(--gauzy-shadow);
       height: $height;
     }
 
+    &.ng-select-opened > .ng-select-container:hover {
+      box-shadow: $box-shadow !important;
+    }
+
+    &.ng-select-focused .ng-select-container {
+      box-shadow: $box-shadow !important;
+    }
+
     .ng-select-container {
       border-radius: $radius;
       box-shadow: $box-shadow;
       height: $height;
       border: none;
+      &:hover {
+        box-shadow: $box-shadow;
+      }
 
       input {
         height: unset;
