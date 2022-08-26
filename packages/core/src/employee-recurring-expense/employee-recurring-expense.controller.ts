@@ -39,7 +39,7 @@ import {
 } from './queries';
 
 @ApiTags('EmployeeRecurringExpense')
-@UseGuards(TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard)
 @Controller()
 export class EmployeeRecurringExpenseController extends CrudController<EmployeeRecurringExpense> {
 	constructor(
@@ -60,6 +60,7 @@ export class EmployeeRecurringExpenseController extends CrudController<EmployeeR
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
+	@Permissions(PermissionsEnum.EMPLOYEE_EXPENSES_VIEW)
 	@Get('/month')
 	async findAllByMonth(
 		@Query('data', ParseJsonPipe) data: any
@@ -81,6 +82,7 @@ export class EmployeeRecurringExpenseController extends CrudController<EmployeeR
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
+	@Permissions(PermissionsEnum.EMPLOYEE_EXPENSES_VIEW)
 	@Get('/date-update-type')
 	async findStartDateUpdateType(
 		@Query('data', ParseJsonPipe) data: any
@@ -103,6 +105,7 @@ export class EmployeeRecurringExpenseController extends CrudController<EmployeeR
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
+	@Permissions(PermissionsEnum.EMPLOYEE_EXPENSES_VIEW)
 	@Get()
 	async findAll(
 		@Query('data', ParseJsonPipe) data: any
@@ -126,6 +129,7 @@ export class EmployeeRecurringExpenseController extends CrudController<EmployeeR
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.CREATED)
+	@Permissions(PermissionsEnum.EMPLOYEE_EXPENSES_EDIT)
 	@Post()
 	async create(
 		@Body(new ValidationPipe({
@@ -152,6 +156,7 @@ export class EmployeeRecurringExpenseController extends CrudController<EmployeeR
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
+	@Permissions(PermissionsEnum.EMPLOYEE_EXPENSES_EDIT)
 	@Put(':id')
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
@@ -175,7 +180,7 @@ export class EmployeeRecurringExpenseController extends CrudController<EmployeeR
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.ORG_EMPLOYEES_EDIT)
+	@Permissions(PermissionsEnum.EMPLOYEE_EXPENSES_EDIT)
 	@Delete(':id')
 	async delete(
 		@Param('id', UUIDValidationPipe) id: string,
