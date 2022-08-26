@@ -1,4 +1,5 @@
 import { NgModule } from '@angular/core';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
 	NbButtonModule,
 	NbCardModule,
@@ -6,7 +7,7 @@ import {
 	NbSelectModule,
 	NbSpinnerModule
 } from '@nebular/theme';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { NgxPermissionsModule } from 'ngx-permissions';
 import { SMTPComponent } from './smtp.component';
 import { CustomSmtpService } from '../../@core/services/custom-smtp.service';
 import { ThemeModule } from '../../@theme/theme.module';
@@ -22,7 +23,8 @@ import { TranslateModule } from '../translate/translate.module';
 		NbSpinnerModule,
 		ReactiveFormsModule,
 		ThemeModule,
-		TranslateModule
+		TranslateModule,
+		NgxPermissionsModule.forChild()
 	],
 	exports: [SMTPComponent],
 	declarations: [SMTPComponent],
