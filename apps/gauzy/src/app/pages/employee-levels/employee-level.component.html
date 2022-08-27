@@ -32,12 +32,11 @@
 				<nb-card class="p-0" *ngFor="let employee of employeeLevels">
 					<nb-card-body
 						class="custom-table"
-						[ngClass]="
-							selected?.state &&
-							employee === selected?.employeeLevel
-								? 'custom-table selected'
-								: 'custom-table'
-						"
+						[ngClass]="{
+							selected:
+								selected?.state &&
+								employee === selected?.employeeLevel
+						}"
 						(click)="selectEmployee(employee)"
 					>
 						<ga-notes-with-tags [rowData]="employee">
