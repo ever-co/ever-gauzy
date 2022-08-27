@@ -7,3 +7,5 @@ export const DEFAULT_API_BASE_URL = 'http://127.0.0.1:3000';
 export const DEFAULT_GRAPHQL_API_PATH = 'graphql';
 
 export const PUBLIC_METHOD_METADATA = '__public:route__';
+export const ROLES_METADATA = 'roles';
+export const PERMISSIONS_METADATA = 'permissions';

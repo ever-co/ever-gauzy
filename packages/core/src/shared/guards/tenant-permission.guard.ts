@@ -1,21 +1,21 @@
 import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { RolesEnum } from '@gauzy/contracts';
+import { PermissionsEnum, RolesEnum } from '@gauzy/contracts';
 import { environment as env } from '@gauzy/config';
-import { removeDuplicates } from '@gauzy/common';
+import { isNotEmpty, PERMISSIONS_METADATA, removeDuplicates } from '@gauzy/common';
 import { RequestContext } from './../../core/context';
 import { TenantService } from './../../tenant/tenant.service';
 import { TenantBaseGuard } from './tenant-base.guard';
 
 @Injectable()
-export class TenantPermissionGuard
-	extends TenantBaseGuard
+export class TenantPermissionGuard extends TenantBaseGuard
 	implements CanActivate {
+
 	constructor(
-		protected readonly reflector: Reflector,
-		private readonly tenantService: TenantService
+		protected readonly _reflector: Reflector,
+		private readonly _tenantService: TenantService
 	) {
-		super(reflector);
+		super(_reflector);
 	}
 
 	async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -42,26 +42,15 @@ export class TenantPermissionGuard
 				return isAuthorized;
 			}
 		}
-
 		/*
-		* GET metadata permissions class method level
+		* Retrieve metadata for a specified key for a specified set of permissions
 		*/
-		const methodPermissions = this.reflector.get<string[]>(
-			'permissions',
-			context.getHandler()
-		) || [];
-
-		/*
-		* GET metadata permissions class level
-		*/
-		const classPermissions = this.reflector.get<string[]>(
-			'permissions',
-			context.getClass()
-		) || [];
-
-		const permissions = removeDuplicates(methodPermissions.concat(classPermissions));
-		if (permissions.length > 0) {
-			const tenant = await this.tenantService.findOneByIdString(currentTenantId, {
+		const permissions = removeDuplicates(this._reflector.getAllAndOverride<PermissionsEnum[]>(PERMISSIONS_METADATA, [
+			context.getHandler(),
+			context.getClass(),
+		])) || [];
+		if (isNotEmpty(permissions)) {
+			const tenant = await this._tenantService.findOneByIdString(currentTenantId, {
 				relations: {
 					rolePermissions: true
 				}
@@ -70,7 +59,6 @@ export class TenantPermissionGuard
 				(p) => permissions.indexOf(p.permission) > -1 && p.enabled
 			);
 		}
-
 		if (!isAuthorized) {
 			console.log(
 				'Unauthorized access blocked. TenantId:',
