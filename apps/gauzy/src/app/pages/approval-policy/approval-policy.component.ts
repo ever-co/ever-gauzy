@@ -145,10 +145,7 @@ export class ApprovalPolicyComponent
 						(this.dataLayoutStyle = componentLayout)
 				),
 				tap(() => this.refreshPagination()),
-				filter(
-					(componentLayout) =>
-						componentLayout === ComponentLayoutStyleEnum.CARDS_GRID
-				),
+				filter(() => this._isGridLayout),
 				tap(() => (this.approvalPolicies = [])),
 				tap(() => this.policies$.next(true)),
 				untilDestroyed(this)
