@@ -195,7 +195,6 @@ export class ApprovalPolicyComponent
 	private async _loadGridLayoutData() {
 		const data = await this.smartTableSource.getElements();
 		this.approvalPolicies.push(...data);
-		console.log(data);
 	}
 
 	private _loadSmartTableSettings() {
