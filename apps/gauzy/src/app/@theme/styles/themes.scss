@@ -29,8 +29,6 @@ $nb-themes: nb-register-theme(
     gauzy-text-contact: #323232,
     accordion-padding: 0.625rem,
     actions-divider-style: none,
-    button-filled-medium-padding: 0.4375rem 0.875rem,
-    button-outline-medium-padding: 0.4375rem 0.875rem,
     sidebar-padding: 0.625rem,
     header-shadow: none,
     gauzy-card-1: rgba(255, 255, 255, 1),
@@ -55,7 +53,11 @@ $nb-themes: nb-register-theme(
     gauzy-scrollbar: rgba(126, 126, 143, 0.1),
     gauzy-primary-background: rgb(246, 250, 254),
     layout-padding: 24px 24px 0 12px,
-    header-height: 4.5rem
+    header-height: 4.5rem,
+    button-filled-medium-padding: 0.4375rem 0.875rem,
+    button-outline-medium-padding: 0.4375rem 0.875rem,
+    button-filled-small-padding: 0.375rem 0.875rem,
+    button-outline-small-padding: 0.375rem 0.875rem,
   ),
   default,
   default
