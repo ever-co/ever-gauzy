@@ -107,7 +107,6 @@ export class UsersComponent
 		this.subject$
 			.pipe(
 				debounceTime(300),
-				tap(() => (this.loading = true)),
 				tap(() => this.getUsers()),
 				tap(() => this.cancel()),
 				tap(() => this.clearItem()),
@@ -367,6 +366,7 @@ export class UsersComponent
 		const { activePage, itemsPerPage } = this.getPagination();
 
 		const organizations: IUserOrganization[] = [];
+		this.loading = true;
 		observableOf(
 			(
 				await this.userOrganizationsService.getAll(
