@@ -34,12 +34,11 @@
 				<nb-card class="p-0" *ngFor="let vendor of vendors">
 					<nb-card-body
 						class="custom-table"
-						[ngClass]="
-							selected?.state && vendor === selected?.vendor
-								? 'custom-table selected'
-								: 'custom-table'
-						"
-						(click)="selectPosition(vendor)"
+						[ngClass]="{
+							selected:
+								selected?.state && vendor === selected?.vendor
+						}"
+						(click)="selectVendor(vendor)"
 					>
 						<div class="row align-items-center">
 							<div class="col-md-2 p-0 float-left text-truncate">
@@ -77,7 +76,7 @@
 			<ga-card-grid
 				[settings]="settingsSmartTable"
 				[source]="vendors"
-				(onSelectedItem)="selectPosition($event)"
+				(onSelectedItem)="selectVendor($event)"
 				(scroll)="onScroll()"
 			></ga-card-grid>
 		</ng-template>
