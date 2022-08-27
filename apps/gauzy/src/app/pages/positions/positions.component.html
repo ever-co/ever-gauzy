@@ -28,11 +28,11 @@
 				<nb-card class="p-0" *ngFor="let position of positions">
 					<nb-card-body
 						class="custom-table"
-						[ngClass]="
-							selected?.state && position === selected?.position
-								? 'custom-table selected'
-								: 'custom-table'
-						"
+						[ngClass]="{
+							selected:
+								selected?.state &&
+								position === selected?.position
+						}"
 						(click)="selectPosition(position)"
 					>
 						<ga-notes-with-tags [rowData]="position">
