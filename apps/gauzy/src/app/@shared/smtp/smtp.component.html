@@ -11,12 +11,18 @@
 				[ngIfElse]="tenantHeader"
 			>
 				<header>
-					{{ 'CUSTOM_SMTP_PAGE.HEADER' | translate: { name: organization?.name } }}
+					{{
+						'CUSTOM_SMTP_PAGE.HEADER'
+							| translate: { name: organization?.name }
+					}}
 				</header>
 			</ng-template>
 			<ng-template #tenantHeader>
 				<header>
-					{{ 'CUSTOM_SMTP_PAGE.HEADER' | translate: { name: user?.tenant?.name } }}
+					{{
+						'CUSTOM_SMTP_PAGE.HEADER'
+							| translate: { name: user?.tenant?.name }
+					}}
 				</header>
 			</ng-template>
 		</nb-card-header>
