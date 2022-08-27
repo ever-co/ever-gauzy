@@ -397,7 +397,7 @@ export class VendorsComponent
 		}
 	}
 
-	selectPosition(vendor: any) {
+	selectVendor(vendor: any) {
 		if (vendor.data) vendor = vendor.data;
 		const res =
 			this.selected.vendor && vendor.id === this.selected.vendor.id
