@@ -26,7 +26,7 @@
 		<ng-container *ngFor="let block of blocks$ | async">
 			<div class="row centered">
 				<ng-container *ngFor="let row of block">
-					<div class="col-xxl-5 col-lg-6 col-12">
+					<div class="col-xxl-5 mb-2 col-lg-6 col-12">
 						<nb-card class="shortcut-card" [status]="row?.status">
 							<nb-card-header class="p-3">
 								<div class="row">
