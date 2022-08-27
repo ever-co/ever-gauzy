@@ -14,17 +14,19 @@ import {
 	FormGroupDirective,
 	Validators
 } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Data } from '@angular/router';
 import {
 	ICustomSmtp,
 	IOrganization,
 	IUser,
+	PermissionsEnum,
 	SMTPSecureEnum
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, pairwise, tap } from 'rxjs/operators';
 import { CustomSmtpService, Store, ToastrService } from '../../@core/services';
+import { FormHelpers } from '../forms/helpers';
 import { TranslationBaseComponent } from '../language-base/translation-base.component';
 import { patterns } from '../regex/regex-patterns.const';
 
@@ -34,9 +36,9 @@ import { patterns } from '../regex/regex-patterns.const';
 	templateUrl: './smtp.component.html',
 	styleUrls: ['./smtp.component.scss']
 })
-export class SMTPComponent
-	extends TranslationBaseComponent
+export class SMTPComponent extends TranslationBaseComponent
 	implements OnInit, OnChanges, AfterViewInit {
+
 	@ViewChild('formDirective') formDirective: FormGroupDirective;
 
 	@Input() organization?: IOrganization;
@@ -51,14 +53,14 @@ export class SMTPComponent
 	user: IUser;
 	isValidated: boolean;
 
+	PermissionsEnum: typeof PermissionsEnum = PermissionsEnum;
+	FormHelpers: typeof FormHelpers = FormHelpers;
+
 	/*
-	* Income Mutation Form
+	* SMTP Mutation Form
 	*/
-	public form: FormGroup = SMTPComponent.buildForm(this.fb, this);
-	static buildForm(
-		fb: FormBuilder,
-		self: SMTPComponent
-	): FormGroup {
+	public form: FormGroup = SMTPComponent.buildForm(this.fb);
+	static buildForm(fb: FormBuilder): FormGroup {
 		return fb.group({
 			id: [],
 			organizationId: [],
@@ -81,7 +83,7 @@ export class SMTPComponent
 		private readonly _activatedRoute: ActivatedRoute,
 		private readonly fb: FormBuilder,
 		private readonly customSmtpService: CustomSmtpService,
-		readonly translate: TranslateService,
+		public readonly translate: TranslateService,
 		private readonly toastrService: ToastrService,
 		private readonly store: Store
 	) {
@@ -91,6 +93,7 @@ export class SMTPComponent
 	ngOnInit(): void {
 		this._activatedRoute.data
 			.pipe(
+				filter((data: Data) => !!data),
 				tap(
 					({ isOrganization }) =>
 						(this.isOrganization = isOrganization)
@@ -100,15 +103,15 @@ export class SMTPComponent
 			.subscribe();
 		this.store.user$
 			.pipe(
-				filter((user) => !!user),
-				tap((user) => (this.user = user)),
+				filter((user: IUser) => !!user),
+				tap((user: IUser) => (this.user = user)),
 				untilDestroyed(this)
 			)
 			.subscribe();
 		this.store.selectedOrganization$
 			.pipe(
-				filter((organization) => !!organization),
-				tap((organization) => (this.organization = organization)),
+				filter((organization: IOrganization) => !!organization),
+				tap((organization: IOrganization) => (this.organization = organization)),
 				tap(() => this.getTenantSmtpSetting()),
 				untilDestroyed(this)
 			)
@@ -154,16 +157,20 @@ export class SMTPComponent
 	 * Get tenant SMTP details
 	 */
 	getTenantSmtpSetting() {
+		if (!this.user) {
+			return;
+		}
+
 		const { tenantId } = this.user;
-		const find = { tenantId };
+		const request = { tenantId };
 
 		if (this.organization && this.isOrganization) {
-			find['organizationId'] = this.organization.id;
+			request['organizationId'] = this.organization.id;
 		}
 
 		this.loading = true;
 		this.customSmtpService
-			.getSMTPSetting(find)
+			.getSMTPSetting(request)
 			.then((setting) => {
 				this.formDirective.resetForm();
 				if (setting && setting.hasOwnProperty('auth')) {
