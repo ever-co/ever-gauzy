@@ -38,12 +38,12 @@
 						>
 							<nb-card-body
 								class="custom-table"
-								[ngClass]="
-									selected?.state &&
-									employmentType === selected?.employmentType
-										? 'custom-table selected'
-										: 'custom-table'
-								"
+								[ngClass]="{
+									selected:
+										selected?.state &&
+										employmentType ===
+											selected?.employmentType
+								}"
 								(click)="
 									selectOrganizationEmploymentType(
 										employmentType
