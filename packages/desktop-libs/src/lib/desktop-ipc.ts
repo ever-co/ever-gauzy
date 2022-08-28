@@ -125,6 +125,10 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 			console.log('error opening permission', error.message);
 		}
 	});
+
+	ipcMain.on('auth_failed', (event, arg) => {
+		event.sender.send('show_error_message', arg.message);
+	})
 }
 
 export function ipcTimer(

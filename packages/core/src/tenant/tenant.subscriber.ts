@@ -1,4 +1,4 @@
-import { EntitySubscriberInterface, EventSubscriber, InsertEvent } from "typeorm";
+import { EntitySubscriberInterface, EventSubscriber, InsertEvent, UpdateEvent } from "typeorm";
 import { Tenant } from "./tenant.entity";
 import { getTenantLogo } from "./../core/utils";
 
@@ -24,7 +24,19 @@ export class TenantSubscriber implements EntitySubscriberInterface<Tenant> {
     /**
      * Called before tenant insertion.
      */
-    beforeInsert(event: InsertEvent<Tenant>) {
+    beforeInsert(event: InsertEvent<Tenant>): void | Promise<any> {
+        if (event) {
+            const { entity } = event;
+            if (!entity.logo) {
+                entity.logo = getTenantLogo(entity.name);
+            }
+        }
+    }
+
+    /**
+     * Called before tenant update.
+     */
+    beforeUpdate(event: UpdateEvent<Tenant>): void | Promise<any> {
         if (event) {
             const { entity } = event;
             if (!entity.logo) {
