@@ -7,7 +7,6 @@ import {
 	RolePermission
 } from '../core/entities/internal';
 import { Entity, Column, Index, OneToMany, JoinColumn } from 'typeorm';
-import { IsNotEmpty, IsString } from 'class-validator';
 import {
 	ITenant,
 	IOrganization,
@@ -20,9 +19,7 @@ import {
 export class Tenant extends BaseEntity implements ITenant {
 	@ApiProperty({ type: () => String })
 	@Index()
-	@IsString()
-	@IsNotEmpty()
-	@Column({ nullable: false })
+	@Column()
 	name?: string;
 
 	@ApiPropertyOptional({ type: () => String })

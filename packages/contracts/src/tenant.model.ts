@@ -24,13 +24,18 @@ export interface ITenant {
 
 export interface ITenantCreateInput {
 	name: string;
-	
+
 	isImporting?: boolean;
 	sourceId?: string;
 	userSourceId?: string;
 }
 
-export interface ITenantSetting 
+export interface ITenantUpdateInput {
+	name: string;
+	logo: string;
+}
+
+export interface ITenantSetting
 	extends IS3FileStorageProviderConfig, IWasabiFileStorageProviderConfig {
 	fileStorageProvider?: FileStorageProviderEnum;
 }
