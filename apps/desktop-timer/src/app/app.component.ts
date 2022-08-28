@@ -305,7 +305,6 @@ export class AppComponent implements OnInit {
 
 	async authFromSocial(token: string, userId: string) {
 		const jwtParsed:any = await this.jwtDecode(token);
-		console.log('yyyyy', jwtParsed);
 		if (jwtParsed) {
 			if (jwtParsed.employeeId) {
 				this.electronService.ipcRenderer.send('auth_success', {
