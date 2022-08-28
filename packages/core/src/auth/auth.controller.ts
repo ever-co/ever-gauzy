@@ -44,7 +44,6 @@ export class AuthController {
 	) {}
 
 	@ApiOperation({ summary: 'Check if user is authenticated' })
-
 	@ApiOkResponse({ status: HttpStatus.OK, description:'The success server response' })
 	@ApiBadRequestResponse({ status: HttpStatus.BAD_REQUEST, })
 	@Get('/authenticated')
