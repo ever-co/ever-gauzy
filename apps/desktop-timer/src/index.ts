@@ -674,7 +674,8 @@ app.on('web-contents-created', (e, contents) => {
 			const urlParse = Url.parse(url, true);
 			const urlParsed = Url.parse(urlFormat(urlParse.hash, urlParse.host), true);
 			const query = urlParsed.query;
-			timeTrackerWindow.webContents.send('social_auth_success', {
+			const params = LocalStore.beforeRequestParams();
+			timeTrackerWindow.webContents.send('social_auth_success', {...params, 
 				token: query.jwt,
 				userId: query.userId
 			})

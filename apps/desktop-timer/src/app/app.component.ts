@@ -269,7 +269,7 @@ export class AppComponent implements OnInit {
 		this.electronService.ipcRenderer.on('social_auth_success', (event, arg) => {
 			localStorage.setItem('token', arg.token);
 			localStorage.setItem('_userId', arg.userId);
-			this.authFromSocial(arg.token, arg.userId)
+			this.authFromSocial(arg)
 		})
 	}
 
@@ -303,15 +303,24 @@ export class AppComponent implements OnInit {
 			});
 	}
 
-	async authFromSocial(token: string, userId: string) {
-		const jwtParsed:any = await this.jwtDecode(token);
+	async authFromSocial(arg) {
+		const jwtParsed:any = await this.jwtDecode(arg.token);
 		if (jwtParsed) {
 			if (jwtParsed.employeeId) {
-				this.electronService.ipcRenderer.send('auth_success', {
-					token: token,
-					userId: userId,
-					employeeId: jwtParsed.employeeId,
+				const user:any = await this.appService.getUserDetail({
+					...arg, 
+					token: arg.token, 
+					userId: arg.userId, 
 					tenantId: jwtParsed.tenantId
+				})
+				this.electronService.ipcRenderer.send('auth_success', {
+					token: arg.token,
+					userId: arg.userId,
+					employeeId: jwtParsed.employeeId,
+					tenantId: jwtParsed.tenantId,
+					organizationId: user.employee
+					? user.employee.organizationId
+					: null,
 				});
 			} else {
 				this.toastrService.show('Your account is not an employee', `Warning`, {
