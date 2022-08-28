@@ -17,7 +17,7 @@ import { debounceTime, filter, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { distinctUntilChange } from '@gauzy/common-angular';
+import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
 import {
 	CrudActionEnum,
 	IDateRangePicker,
@@ -201,12 +201,12 @@ export class HeaderComponent extends TranslationBaseComponent
 			});
 		this.store.user$
 			.pipe(
-				filter((user) => !!user),
+				filter((user: IUser) => !!user),
+				tap((user: IUser) => this.user = user),
+				tap((user: IUser) => this.isEmployee = !!user && !!user.employeeId),
 				untilDestroyed(this)
 			)
 			.subscribe(async (user) => {
-				this.user = user;
-				this.isEmployee = !!user && !!user.employeeId;
 				//check header selectors dropdown permissions
 				await this.checkOrganizationSelectorVisibility();
 				//check timer status for employee
@@ -240,12 +240,16 @@ export class HeaderComponent extends TranslationBaseComponent
 		this._loadRolePermissions();
 	}
 
+	/**
+	 * Check project selector visibility
+	 *
+	 * @returns
+	 */
 	checkProjectSelectorVisibility() {
 		// hidden project selector if not activate for current page
 		if (!this.organization || !this.selectorsVisibility.project) {
 			return;
 		}
-
 		const { id: organizationId } = this.organization;
 		const { tenantId } = this.store.user;
 		this.organizationProjectsService.getCount({
@@ -256,44 +260,52 @@ export class HeaderComponent extends TranslationBaseComponent
 		});
 	}
 
-	checkEmployeeSelectorVisibility() {
+	/**
+	 * Check employee selector visibility
+	 *
+	 * @returns
+	 */
+	async checkEmployeeSelectorVisibility() {
 		// hidden employee selector if not activate for current page
 		if (!this.organization || !this.selectorsVisibility.employee) {
 			return;
 		}
-
 		const { id: organizationId } = this.organization;
 		const { tenantId } = this.store.user;
-		this.employeesService
-			.getWorkingCount(organizationId, tenantId, this.selectedDateRange, true)
-			.then(async ({ total: employeeCount }) => {
-				if (
-					this.store.hasPermission(
-						PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-					)
-				) {
-					this.showEmployeesSelector = employeeCount > 0;
-					if (this.showEmployeesSelector && !this.store.selectedEmployee) {
-						this.store.selectedEmployee = ALL_EMPLOYEES_SELECTED;
-					}
-				} else {
-					const employee = await firstValueFrom(this.employeesService.getEmployeeById(
-						this.user.employeeId,
-						[]
-					));
-					if (employee) {
-						this.store.selectedEmployee = {
-							id: employee.id,
-							firstName: this.user.firstName,
-							lastName: this.user.lastName,
-							fullName: this.user.name,
-							imageUrl: this.user.imageUrl
-						};
-					} else {
-						this.store.selectedEmployee = NO_EMPLOYEE_SELECTED;
-					}
-				}
-			});
+		if (
+			this.store.hasPermission(
+				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+			)
+		) {
+			const { total: employeeCount } = await this.employeesService.getWorkingCount(
+				organizationId,
+				tenantId,
+				this.selectedDateRange,
+				true
+			);
+			this.showEmployeesSelector = employeeCount > 0;
+			if (this.showEmployeesSelector && !this.store.selectedEmployee) {
+				this.store.selectedEmployee = ALL_EMPLOYEES_SELECTED;
+			}
+		} else {
+			const employee = await firstValueFrom(
+				this.employeesService.getEmployeeById(
+					this.user.employeeId,
+					[]
+				)
+			);
+			if (isNotEmpty(employee)) {
+				this.store.selectedEmployee = {
+					id: employee.id,
+					firstName: this.user.firstName,
+					lastName: this.user.lastName,
+					fullName: this.user.name,
+					imageUrl: this.user.imageUrl
+				};
+			} else {
+				this.store.selectedEmployee = NO_EMPLOYEE_SELECTED;
+			}
+		}
 	}
 
 	async checkOrganizationSelectorVisibility() {

@@ -1,4 +1,4 @@
-import { IDateRangePicker, IEmployee, IEmployeeCreateInput, IPagination } from '@gauzy/contracts';
+import { IDateRangePicker, IEmployee, IEmployeeCreateInput, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { isNotEmpty } from '@gauzy/common';
@@ -60,6 +60,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 		withUser: boolean
 	): Promise<IPagination<IEmployee>> {
 		const query = this.repository.createQueryBuilder('employee');
+		query.innerJoin(`${query.alias}.user`, 'user');
 		query.setFindOptions({
 			relations: {
 				...(withUser ? { user: true } : {})
@@ -68,6 +69,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 		query.where((qb: SelectQueryBuilder<Employee>) => {
 			const { startDate, endDate } = forRange;
 			const tenantId = RequestContext.currentTenantId();
+
 			qb.andWhere(
 				new Brackets((web: WhereExpressionBuilder) => {
 					web.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, { tenantId });
@@ -90,6 +92,12 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 					});
 				})
 			);
+			if (!RequestContext.hasPermission(
+				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+			)) {
+				const employeeId = RequestContext.currentEmployeeId();
+				qb.andWhere(`"${qb.alias}"."id" = :employeeId`, { employeeId });
+			}
 		});
 		const [items, total] = await query.getManyAndCount();
 		return { items, total };

@@ -6,6 +6,7 @@ import { CustomSmtp } from './custom-smtp.entity';
 import { CustomSmtpController } from './custom-smtp.controller';
 import { CustomSmtpService } from './custom-smtp.service';
 import { TenantModule } from '../tenant/tenant.module';
+import { UserModule } from './../user/user.module';
 import { CommandHandlers } from './commands';
 
 @Module({
@@ -15,6 +16,7 @@ import { CommandHandlers } from './commands';
 		]),
 		TypeOrmModule.forFeature([CustomSmtp]),
 		forwardRef(() => TenantModule),
+		forwardRef(() => UserModule),
 		CqrsModule
 	],
 	controllers: [CustomSmtpController],

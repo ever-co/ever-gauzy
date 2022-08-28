@@ -12,16 +12,15 @@ import {
 	IMerchant,
 	IOrganization,
 	ComponentLayoutStyleEnum,
-	IContact,
 	IWarehouse
 } from '@gauzy/contracts';
 import { API_PREFIX, ComponentEnum } from './../../../../../@core/constants';
 import { MerchantService, Store, ToastrService } from '../../../../../@core/services';
-import { EnabledStatusComponent, ItemImgTagsComponent } from '../../inventory-table-components';
+import { ContactRowComponent, EnabledStatusComponent, ItemImgTagsComponent } from '../../inventory-table-components';
 import { IPaginationBase, PaginationFilterBaseComponent } from './../../../../../@shared/pagination/pagination-filter-base.component';
 import { ServerDataSource } from './../../../../../@core/utils/smart-table/server.data-source';
 import { DeleteConfirmationComponent } from './../../../../../@shared/user/forms';
-import { InputFilterComponent } from 'apps/gauzy/src/app/@shared/table-filters';
+import { InputFilterComponent } from './../../../../../@shared/table-filters';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -54,7 +53,7 @@ export class MerchantTableComponent extends PaginationFilterBaseComponent
 	}
 
 	/*
-	* Actions Buttons directive 
+	* Actions Buttons directive
 	*/
 	@ViewChild('actionButtons', { static: true }) actionButtons: TemplateRef<any>;
 
@@ -157,21 +156,9 @@ export class MerchantTableComponent extends PaginationFilterBaseComponent
 				},
 				contact: {
 					title: this.getTranslation('INVENTORY_PAGE.CONTACT'),
-					type: 'string',
-					valuePrepareFunction: (contact: IContact, row) => {
-
-						if (!contact) return '-';
-
-						return `${this.getTranslation(
-							'INVENTORY_PAGE.COUNTRY'
-						)}: ${contact.country || '-'}, ${this.getTranslation(
-							'INVENTORY_PAGE.CITY'
-						)}:${contact.city || '-'}, ${this.getTranslation(
-							'INVENTORY_PAGE.ADDRESS'
-						)}: ${contact.address || '-'}, ${this.getTranslation(
-							'INVENTORY_PAGE.ADDRESS'
-						)} 2: ${contact.address2 || '-'}`;
-					}
+					type: 'custom',
+					renderComponent: ContactRowComponent,
+					filter: false
 				},
 				description: {
 					title: this.getTranslation('INVENTORY_PAGE.DESCRIPTION'),
@@ -270,7 +257,7 @@ export class MerchantTableComponent extends PaginationFilterBaseComponent
 	}
 
 	/*
-	* Register Smart Table Source Config 
+	* Register Smart Table Source Config
 	*/
 	setSmartTableSource() {
 		if (!this.organization) {
@@ -291,11 +278,9 @@ export class MerchantTableComponent extends PaginationFilterBaseComponent
 					'warehouses'
 				],
 				where: {
-					...{
-						organizationId,
-						tenantId
-					},
-					...this.filters.where
+					organizationId,
+					tenantId,
+					...(this.filters.where ? this.filters.where : {})
 				},
 				resultMap: (warehouse: IWarehouse) => {
 					return Object.assign({}, warehouse);
@@ -329,7 +314,6 @@ export class MerchantTableComponent extends PaginationFilterBaseComponent
 				itemsPerPage,
 				false
 			);
-
 			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
 				await this.smartTableSource.getElements();
 				this.merchants = this.smartTableSource.getData();

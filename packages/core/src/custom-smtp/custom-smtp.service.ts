@@ -24,37 +24,30 @@ export class CustomSmtpService extends TenantAwareCrudService<CustomSmtp> {
 
 	/**
 	 * GET SMTP settings for tenant/organization
-	 * 
-	 * @param query 
-	 * @returns 
+	 *
+	 * @param query
+	 * @returns
 	 */
 	public async getSmtpSetting(
 		query: ICustomSmtpFindInput
 	): Promise<ICustomSmtp | ISMTPConfig> {
 		const tenantId = RequestContext.currentTenantId();
 		const { organizationId } = query;
-		
+
 		const globalSmtp = this.defaultSMTPTransporter();
 		delete globalSmtp['auth'];
-	
 		try {
 			if (!organizationId) {
-				const tenantSmtp = await this.findOneByOptions({
-					where: {
-						tenantId,
-						organizationId: IsNull()
-					}
-				});
-				return tenantSmtp || globalSmtp;
-			}
-			const organizationSmtp = await this.findOneByOptions({
-				where: {
+				return await this.findOneByWhereOptions({
 					tenantId,
-					organizationId
-				}
+					organizationId: IsNull()
+				});
+			}
+			return await this.findOneByWhereOptions({
+				tenantId,
+				organizationId
 			});
-			return organizationSmtp || globalSmtp;
-		} catch {
+		} catch (error) {
 			return globalSmtp;
 		}
 	}

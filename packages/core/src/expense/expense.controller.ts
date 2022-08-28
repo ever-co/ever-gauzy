@@ -18,13 +18,12 @@ import {
 	Query,
 	UseGuards,
 	Delete,
-	UsePipes,
 	ValidationPipe
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { PaginationParams } from '../core';
-import { CrudController } from './../core/crud';
+import { DeleteResult, FindOptionsWhere } from 'typeorm';
+import { CrudController, PaginationParams } from '../core/crud';
 import { EmployeeService } from '../employee/employee.service';
 import { Permissions } from './../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
@@ -41,9 +40,10 @@ import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { ExpenseMapService } from './expense.map.service';
 import { CreateExpenseDTO, UpdateExpenseDTO } from './dto';
 import { ExpenseReportQueryDTO } from './dto/query';
+import { EmployeeFeatureDTO } from './../employee/dto';
 
 @ApiTags('Expense')
-@UseGuards(TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard)
 @Controller()
 export class ExpenseController extends CrudController<Expense> {
 	constructor(
@@ -56,14 +56,34 @@ export class ExpenseController extends CrudController<Expense> {
 		super(expenseService);
 	}
 
-	@UseGuards(PermissionGuard)
+	/**
+	 * GET expense count
+	 *
+	 * @param options
+	 * @returns
+	 */
+	@Permissions(PermissionsEnum.ORG_EXPENSES_VIEW)
+	@Get('count')
+	async getCount(
+		@Query() options: FindOptionsWhere<Expense>
+	): Promise<number> {
+		return await this.expenseService.countBy(options);
+	}
+
+	/**
+	 * GET expense for same tenant
+	 *
+	 * @param options
+	 * @returns
+	 */
 	@Permissions(PermissionsEnum.ORG_EXPENSES_VIEW)
 	@Get('pagination')
-	@UsePipes(new ValidationPipe({ transform: true }))
 	async pagination(
-		@Query() filter: PaginationParams<IExpense>
+		@Query(new ValidationPipe({
+			transform: true
+		})) options: PaginationParams<Expense>
 	): Promise<IPagination<IExpense>> {
-		return this.expenseService.pagination(filter);
+		return this.expenseService.pagination(options);
 	}
 
 	// If user is not an employee, then this will return 404
@@ -80,6 +100,7 @@ export class ExpenseController extends CrudController<Expense> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
+	@Permissions(PermissionsEnum.ORG_EXPENSES_VIEW)
 	@Get('me')
 	async findMyExpenseWithSplitIncluded(
 		@Query('data', ParseJsonPipe) data: any
@@ -108,7 +129,6 @@ export class ExpenseController extends CrudController<Expense> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_EXPENSES_VIEW)
 	@Get('include-split/:employeeId')
 	async findAllSplitExpenses(
@@ -136,7 +156,6 @@ export class ExpenseController extends CrudController<Expense> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_EXPENSES_VIEW)
 	@Get('report')
 	async getExpenseReport(
@@ -166,7 +185,6 @@ export class ExpenseController extends CrudController<Expense> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_EXPENSES_VIEW)
 	@Get('report/daily-chart')
 	async getDailyReportChartData(
@@ -188,7 +206,6 @@ export class ExpenseController extends CrudController<Expense> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_EXPENSES_VIEW)
 	@Get()
 	async findAll(
@@ -201,6 +218,25 @@ export class ExpenseController extends CrudController<Expense> {
 		);
 	}
 
+	/**
+	 * Find expense by primary ID
+	 *
+	 * @param id
+	 * @returns
+	 */
+	@Get(':id')
+	async findById(
+		@Param('id', UUIDValidationPipe) id: string,
+	): Promise<IExpense> {
+		return await this.expenseService.findOneByIdString(id);
+	}
+
+	/**
+	 * Create Expense
+	 *
+	 * @param entity
+	 * @returns
+	 */
 	@ApiOperation({ summary: 'Create new record' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
@@ -211,23 +247,30 @@ export class ExpenseController extends CrudController<Expense> {
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
-	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_EXPENSES_EDIT)
 	@Post()
-	@UsePipes( new ValidationPipe({ transform : true }))
 	async create(
-		@Body() entity: CreateExpenseDTO,
-		...options: any[]
+		@Body(new ValidationPipe({
+			transform : true,
+			whitelist: true
+		})) entity: CreateExpenseDTO
 	): Promise<IExpense> {
 		return await this.commandBus.execute(
 			new ExpenseCreateCommand(entity)
 		);
 	}
 
+	/**
+	 * Update Expense
+	 *
+	 * @param id
+	 * @param entity
+	 * @returns
+	 */
 	@ApiOperation({ summary: 'Create new record' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
-		description: 'The record has been successfully created.' /*, type: T*/
+		description: 'The record has been successfully created.'
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
@@ -235,19 +278,27 @@ export class ExpenseController extends CrudController<Expense> {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
-	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_EXPENSES_EDIT)
 	@Put(':id')
-	@UsePipes( new ValidationPipe({ transform : true }))
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body() entity: UpdateExpenseDTO
+		@Body(new ValidationPipe({
+			transform : true,
+			whitelist: true
+		})) entity: UpdateExpenseDTO
 	): Promise<IExpense> {
 		return await this.commandBus.execute(
 			new ExpenseUpdateCommand(id, entity)
 		);
 	}
 
+	/**
+	 * Delete Expense
+	 *
+	 * @param expenseId
+	 * @param options
+	 * @returns
+	 */
 	@ApiOperation({
 		summary: 'Delete record'
 	})
@@ -259,16 +310,20 @@ export class ExpenseController extends CrudController<Expense> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_EXPENSES_EDIT)
 	@Delete(':id')
 	async delete(
 		@Param('id', UUIDValidationPipe) expenseId: string,
-		@Query('data', ParseJsonPipe) data: any
-	): Promise<any> {
-		const { employeeId = null } = data;
+		@Query(new ValidationPipe({
+			transform : true,
+			whitelist: true
+		})) options: EmployeeFeatureDTO
+	): Promise<DeleteResult> {
 		return await this.commandBus.execute(
-			new ExpenseDeleteCommand(employeeId, expenseId)
+			new ExpenseDeleteCommand(
+				options.employeeId,
+				expenseId
+			)
 		);
 	}
 }

@@ -3,14 +3,13 @@ import { ApiProperty } from '@nestjs/swagger';
 import { ICustomSmtp } from '@gauzy/contracts';
 import { ISMTPConfig } from '@gauzy/common';
 import { Exclude, Expose } from 'class-transformer';
-import { IsNotEmpty } from 'class-validator';
 import { TenantOrganizationBaseEntity } from '../core/entities/internal';
 import { IsSecret, WrapSecrets } from './../core/decorators';
 
 @Entity('custom_smtp')
-export class CustomSmtp
-	extends TenantOrganizationBaseEntity
+export class CustomSmtp extends TenantOrganizationBaseEntity
 	implements ICustomSmtp {
+
 	@ApiProperty({ type: () => String })
 	@Column()
 	host: string;
@@ -24,13 +23,11 @@ export class CustomSmtp
 	secure: boolean;
 
 	@ApiProperty({ type: () => String })
-	@IsNotEmpty()
 	@Exclude({ toPlainOnly: true })
 	@Column()
 	username: string;
 
 	@ApiProperty({ type: () => String })
-	@IsNotEmpty()
 	@Exclude({ toPlainOnly: true })
 	@Column()
 	password: string;

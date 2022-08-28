@@ -6,31 +6,30 @@ import { TenantOrganizationBaseDTO } from "./../../core/dto";
 
 export class IncomeDTO extends TenantOrganizationBaseDTO {
 
-	@ApiProperty({ type: () => Number })
-	@IsNumber()
+	@ApiProperty({ type: () => Number, readOnly: true })
 	@IsNotEmpty()
+	@IsNumber()
 	readonly amount: number;
 
-	@ApiProperty({ type: () => String, enum: CurrenciesEnum })
+	@ApiProperty({ type: () => String, enum: CurrenciesEnum, readOnly: true })
 	@IsEnum(CurrenciesEnum)
-	@IsNotEmpty()
 	readonly currency: string;
 
-	@ApiPropertyOptional({ type: () => Date })
+	@ApiPropertyOptional({ type: () => Date, readOnly: true })
 	@IsOptional()
 	readonly valueDate: Date;
 
-	@ApiPropertyOptional({ type: () => String })
+	@ApiPropertyOptional({ type: () => String, readOnly: true })
 	@IsOptional()
 	readonly notes: string;
 
-	@ApiProperty({ type: () => Boolean })
-	@IsBoolean()
+	@ApiPropertyOptional({ type: () => Boolean, readOnly: true })
 	@IsOptional()
+	@IsBoolean()
 	@Transform((params: TransformFnParams) => ((params.value) || false))
 	readonly isBonus: boolean;
 
-	@ApiPropertyOptional({ type: () => String, maxLength: 256 })
+	@ApiPropertyOptional({ type: () => String, maxLength: 256, readOnly: true })
 	@IsOptional()
 	readonly reference: string;
 }

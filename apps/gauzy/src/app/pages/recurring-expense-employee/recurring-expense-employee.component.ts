@@ -11,8 +11,8 @@ import {
 } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { debounceTime, filter } from 'rxjs/operators';
-import { combineLatest, firstValueFrom, Subject, tap } from 'rxjs';
+import { combineLatest, firstValueFrom, Subject } from 'rxjs';
+import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import { TranslationBaseComponent } from '../../@shared/language-base';
@@ -35,10 +35,9 @@ import {
 	templateUrl: './recurring-expense-employee.component.html',
 	styleUrls: ['./recurring-expense-employee.component.scss']
 })
-export class RecurringExpensesEmployeeComponent
-	extends TranslationBaseComponent
-	implements OnInit, OnDestroy
-{
+export class RecurringExpensesEmployeeComponent extends TranslationBaseComponent
+	implements OnInit, OnDestroy {
+
 	selectedEmployee: IEmployee;
 	selectedDateRange: IDateRangePicker;
 	recurringExpenses: IEmployeeRecurringExpense[] = [];
@@ -82,21 +81,15 @@ export class RecurringExpensesEmployeeComponent
 		const selectedOrganization$ = this.store.selectedOrganization$;
 		const selectedEmployee$ = this.store.selectedEmployee$;
 		const selectedDateRange$ = this.dateRangePickerBuilderService.selectedDateRange$;
-		combineLatest([
-			selectedOrganization$,
-			selectedEmployee$,
-			selectedDateRange$
-		])
+		combineLatest([selectedOrganization$, selectedDateRange$, selectedEmployee$])
 			.pipe(
 				debounceTime(300),
-				filter(
-					([organization, employee]) => !!organization && !!employee
-				),
 				distinctUntilChange(),
-				tap(([organization, employee, dateRange]) => {
+				filter(([organization, dateRange, employee]) => !!organization && !!dateRange && !!employee),
+				tap(([organization, dateRange, employee]) => {
 					this.organization = organization;
-					this.selectedEmployeeId = employee ? employee.id : null;
 					this.selectedDateRange = dateRange;
+					this.selectedEmployeeId = employee ? employee.id : null;
 				}),
 				tap(() => this.expenses$.next(true)),
 				untilDestroyed(this)
@@ -123,17 +116,12 @@ export class RecurringExpensesEmployeeComponent
 	 *
 	 */
 	async getSelectedEmployee(employeeId: string) {
-		const { items } = await firstValueFrom(
-			this.employeeService.getAll(
-				['user', 'organizationPosition', 'tags', 'skills'],
-				{
-					id: employeeId
-				}
-			)
-		);
-		const [employee] = items;
-
-		this.selectedEmployee = employee;
+		this.selectedEmployee = await firstValueFrom(this.employeeService.getEmployeeById(employeeId, [
+			'user',
+			'organizationPosition',
+			'tags',
+			'skills'
+		]));
 		this.store.selectedEmployee = {
 			id: this.selectedEmployee.id,
 			firstName: this.selectedEmployee.user.firstName,
@@ -142,7 +130,6 @@ export class RecurringExpensesEmployeeComponent
 			tags: this.selectedEmployee.user.tags,
 			skills: this.selectedEmployee.skills
 		};
-
 		const checkUsername = this.selectedEmployee.user.username;
 		this.employeeName = checkUsername
 			? checkUsername

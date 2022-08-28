@@ -1,7 +1,19 @@
-import { AfterViewInit, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import {
+	AfterViewInit,
+	Component,
+	OnDestroy,
+	OnInit,
+	ViewChild
+} from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { ITag, IWarehouse, IImageAsset, IOrganization } from '@gauzy/contracts';
+import {
+	ITag,
+	IWarehouse,
+	IImageAsset,
+	IOrganization
+} from '@gauzy/contracts';
+import { distinctUntilChange } from '@gauzy/common-angular';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { LatLng } from 'leaflet';
@@ -11,6 +23,7 @@ import { filter, tap } from 'rxjs/operators';
 import { TranslationBaseComponent } from './../../../../../@shared/language-base';
 import { LocationFormComponent } from './../../../../../@shared/forms/location';
 import { LeafletMapComponent } from './../../../../../@shared/forms/maps';
+import { FormHelpers } from './../../../../../@shared/forms';
 import { SelectAssetComponent } from './../../../../../@shared/select-asset-modal/select-asset.component';
 import {
 	ImageAssetService,
@@ -18,7 +31,6 @@ import {
 	ToastrService,
 	WarehouseService
 } from './../../../../../@core/services';
-import { FormHelpers } from './../../../../../@shared/forms';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -98,6 +110,8 @@ export class WarehouseFormComponent extends TranslationBaseComponent
 	ngOnInit(): void {
 		this.store.selectedOrganization$
 			.pipe(
+				debounceTime(100),
+				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
 				tap((organization: IOrganization) => this.organization = organization),
 				tap(() => this._getAssetsImages()),

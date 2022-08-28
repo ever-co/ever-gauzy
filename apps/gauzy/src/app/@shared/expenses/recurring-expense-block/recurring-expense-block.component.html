@@ -19,21 +19,17 @@
 						{{ getStartDate() }}
 					</div>
 					<div class="block-item">
-						<span class="block-amount"
-							>{{
+						<span class="block-amount">
+							{{
 								recurringExpense?.value
 									| currency: recurringExpense?.currency
+									| position: selectedOrganization?.currencyPosition
 							}}
-
 							<nb-icon
 								*ngIf="splitExpense"
-								nbTooltip="{{
-									'EXPENSES_PAGE.SPLIT_WILL_BE_TOOLTIP'
-										| translate
-								}}"
+								[nbTooltip]="'EXPENSES_PAGE.SPLIT_WILL_BE_TOOLTIP' | translate"
 								icon="pricetags-outline"
-							>
-							</nb-icon>
+							></nb-icon>
 						</span>
 					</div>
 				</div>

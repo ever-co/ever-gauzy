@@ -7,7 +7,7 @@ import {
 	FindOneOptions,
 	Repository
 } from 'typeorm';
-import { IPagination, IUser } from '@gauzy/contracts';
+import { IPagination, IUser, PermissionsEnum } from '@gauzy/contracts';
 import { User } from '../../user/user.entity';
 import { RequestContext } from '../context';
 import { TenantBaseEntity } from '../entities/internal';
@@ -28,13 +28,27 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity> extends
 		super(repository);
 	}
 
+	private findConditionsWithEmployeeByUser(): FindOptionsWhere<T>{
+		return (
+			(
+				!RequestContext.hasPermission(
+					PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+				) &&
+				this.repository.metadata.hasColumnWithPropertyPath('employeeId')
+			) ? {
+				employeeId: RequestContext.currentEmployeeId()
+			} : {}
+		) as FindOptionsWhere<T>
+	}
+
 	private findConditionsWithTenantByUser(
 		user: IUser
 	): FindOptionsWhere<T>{
 		return {
 			tenant: {
 				id: user.tenantId
-			}
+			},
+			...this.findConditionsWithEmployeeByUser()
 		} as FindOptionsWhere<T>;
 	}
 
@@ -49,7 +63,8 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity> extends
 					...options,
 					tenant: {
 						id: user.tenantId
-					}
+					},
+					...this.findConditionsWithEmployeeByUser()
 				})
 			});
 			return wheres;
@@ -59,11 +74,13 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity> extends
 				...where,
 				tenant: {
 					id: user.tenantId
-				}
+				},
+				...this.findConditionsWithEmployeeByUser()
 			} : {
 				tenant: {
 					id: user.tenantId
-				}
+				},
+				...this.findConditionsWithEmployeeByUser()
 			}
 		) as FindOptionsWhere<T>;
 	}

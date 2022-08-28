@@ -1,17 +1,16 @@
-import { IOrganization, ITenant } from "@gauzy/contracts";
-import { ApiPropertyOptional } from "@nestjs/swagger";
-import { IsArray, IsOptional, IsString } from "class-validator";
+import { ITenant } from "@gauzy/contracts";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import { IsNotEmpty, IsString, IsOptional } from "class-validator";
 
 export class TenantDTO implements ITenant {
 
-    @ApiPropertyOptional({ type: () => String })
+    @ApiProperty({ type: () => String, readOnly: true })
+    @IsNotEmpty()
+    @IsString()
+    readonly name: string;
+
+    @ApiPropertyOptional({ type: () => String, readOnly: true })
     @IsOptional()
     @IsString()
-    readonly name?: string;
-
-    @ApiPropertyOptional({ type: () => Array })
-    @IsOptional()
-    @IsArray()
-    organizations?: IOrganization[];
-
+    readonly logo: string;
 }

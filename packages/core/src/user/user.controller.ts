@@ -25,6 +25,7 @@ import {
 	ApiBearerAuth
 } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
+import { DeleteResult } from 'typeorm';
 import {
 	IPagination,
 	IUser,
@@ -38,9 +39,8 @@ import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
 import { User } from './user.entity';
 import { UserService } from './user.service';
-import { UserCreateCommand } from './commands';
+import { UserCreateCommand, UserDeleteCommand } from './commands';
 import { FactoryResetService } from './factory-reset/factory-reset.service';
-import { UserDeleteCommand } from './commands/user.delete.command';
 import {
 	UpdatePreferredLanguageDTO,
 	UpdatePreferredComponentLayoutDTO,
@@ -109,7 +109,7 @@ export class UserController extends CrudController<User> {
 	@Get('/email/:email')
 	async findByEmail(
 		@Param('email') email: string
-	): Promise<User> {
+	): Promise<IUser | null> {
 		return await this.userService.getUserByEmail(email);
 	}
 
@@ -129,7 +129,7 @@ export class UserController extends CrudController<User> {
 			transform: true,
 			whitelist: true
 		})) entity: UpdatePreferredLanguageDTO
-	) {
+	): Promise<IUser> {
 		return await this.userService.updatePreferredLanguage(
 			RequestContext.currentUserId(),
 			entity.preferredLanguage
@@ -152,7 +152,7 @@ export class UserController extends CrudController<User> {
 			transform: true,
 			whitelist: true
 		})) entity: UpdatePreferredComponentLayoutDTO
-	) {
+	): Promise<IUser> {
 		return await this.userService.updatePreferredComponentLayout(
 			RequestContext.currentUserId(),
 			entity.preferredComponentLayout
@@ -169,7 +169,7 @@ export class UserController extends CrudController<User> {
 	@Get('count')
 	async getCount(
 		@Query('data', ParseJsonPipe) data: any
-	): Promise<any> {
+	): Promise<number> {
 		const { relations, findInput } = data;
 		return this.userService.count({
 			where: findInput,
@@ -213,7 +213,7 @@ export class UserController extends CrudController<User> {
 	@Get()
 	async findAll(
 		@Query('data', ParseJsonPipe) data: any
-	): Promise<IPagination<User>> {
+	): Promise<IPagination<IUser>> {
 		const { relations, findInput } = data;
 		return this.userService.findAll({
 			where: findInput,
@@ -242,7 +242,7 @@ export class UserController extends CrudController<User> {
 	async findById(
 		@Param('id', UUIDValidationPipe) id: string,
 		@Query('data', ParseJsonPipe) data?: any
-	): Promise<User> {
+	): Promise<IUser> {
 		const { relations } = data;
 		return this.userService.findOneByIdString(id, { relations });
 	}
@@ -323,7 +323,7 @@ export class UserController extends CrudController<User> {
 	@Delete(':id')
 	async delete(
 		@Param('id', UUIDValidationPipe) userId: string,
-	): Promise<any> {
+	): Promise<DeleteResult> {
 		return await this.commandBus.execute(
 			new UserDeleteCommand(userId)
 		);

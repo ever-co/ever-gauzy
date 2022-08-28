@@ -14,7 +14,11 @@
 				{{ getMonthString(record.startMonth) }} {{ record.startYear }}
 			</div>
 			<div class="col">
-				{{ record.value | currency: record.currency }}
+				{{
+					record?.value
+						| currency: record?.currency
+						| position: organization?.currencyPosition
+				}}
 			</div>
 			<hr />
 		</div>

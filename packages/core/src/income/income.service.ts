@@ -1,10 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { IPagination } from '@gauzy/contracts';
+import { IPagination, PermissionsEnum } from '@gauzy/contracts';
 import { Repository, FindManyOptions, Between, Like, In } from 'typeorm';
 import * as moment from 'moment';
 import { Income } from './income.entity';
 import { TenantAwareCrudService } from './../core/crud';
+import { RequestContext } from './../core/context';
 
 @Injectable()
 export class IncomeService extends TenantAwareCrudService<Income> {
@@ -47,6 +48,14 @@ export class IncomeService extends TenantAwareCrudService<Income> {
 	}
 
 	public pagination(filter: any) {
+		/**
+		 * If employee has login, return only self incomes
+		 */
+		 if (!RequestContext.hasPermission(
+			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+		)) {
+			filter.where.employeeId = RequestContext.currentEmployeeId();
+		}
 		if ('filters' in filter) {
 			const { filters } = filter;
 			if ('notes' in filters) {

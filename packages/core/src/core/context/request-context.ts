@@ -69,6 +69,16 @@ export class RequestContext {
 		return null;
 	}
 
+	static currentEmployeeId(): string {
+		const user: IUser = RequestContext.currentUser();
+		if(!RequestContext.hasPermission(
+			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+		) && user) {
+			return user.employeeId;
+		}
+		return null;
+	}
+
 	static currentUser(throwError?: boolean): IUser {
 		const requestContext = RequestContext.currentRequestContext();
 
@@ -200,9 +210,9 @@ export class RequestContext {
 		return this.hasRoles([role], throwError);
 	}
 
-	static hasRoles(findRoles: RolesEnum[], throwError?: boolean): boolean {
-		const requestContext = RequestContext.currentRequestContext();
-		if (requestContext) {
+	static hasRoles(roles: RolesEnum[], throwError?: boolean): boolean {
+		const context = RequestContext.currentRequestContext();
+		if (context) {
 			try {
 				const token = this.currentToken();
 				if (token) {
@@ -210,8 +220,7 @@ export class RequestContext {
 						id: string;
 						role: RolesEnum;
 					};
-
-					return role ? findRoles.includes(role) : false;
+					return role ? roles.includes(role) : false;
 				}
 			} catch (error) {
 				if (error instanceof JsonWebTokenError) {
@@ -221,7 +230,6 @@ export class RequestContext {
 				}
 			}
 		}
-
 		if (throwError) {
 			throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
 		}

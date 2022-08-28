@@ -17,7 +17,6 @@ import {
 	Put,
 	Query,
 	UseGuards,
-	UsePipes,
 	ValidationPipe
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
@@ -40,7 +39,7 @@ import {
 } from './queries';
 
 @ApiTags('EmployeeRecurringExpense')
-@UseGuards(TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard)
 @Controller()
 export class EmployeeRecurringExpenseController extends CrudController<EmployeeRecurringExpense> {
 	constructor(
@@ -61,6 +60,7 @@ export class EmployeeRecurringExpenseController extends CrudController<EmployeeR
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
+	@Permissions(PermissionsEnum.EMPLOYEE_EXPENSES_VIEW)
 	@Get('/month')
 	async findAllByMonth(
 		@Query('data', ParseJsonPipe) data: any
@@ -82,6 +82,7 @@ export class EmployeeRecurringExpenseController extends CrudController<EmployeeR
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
+	@Permissions(PermissionsEnum.EMPLOYEE_EXPENSES_VIEW)
 	@Get('/date-update-type')
 	async findStartDateUpdateType(
 		@Query('data', ParseJsonPipe) data: any
@@ -104,6 +105,7 @@ export class EmployeeRecurringExpenseController extends CrudController<EmployeeR
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
+	@Permissions(PermissionsEnum.EMPLOYEE_EXPENSES_VIEW)
 	@Get()
 	async findAll(
 		@Query('data', ParseJsonPipe) data: any
@@ -127,10 +129,12 @@ export class EmployeeRecurringExpenseController extends CrudController<EmployeeR
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.CREATED)
+	@Permissions(PermissionsEnum.EMPLOYEE_EXPENSES_EDIT)
 	@Post()
-	@UsePipes(new ValidationPipe({ transform: true }))
 	async create(
-		@Body() entity: CreateEmployeeRecurringExpenseDTO
+		@Body(new ValidationPipe({
+			transform: true
+		})) entity: CreateEmployeeRecurringExpenseDTO
 	): Promise<IEmployeeRecurringExpense> {
 		return this.commandBus.execute(
 			new EmployeeRecurringExpenseCreateCommand(entity)
@@ -152,11 +156,13 @@ export class EmployeeRecurringExpenseController extends CrudController<EmployeeR
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
+	@Permissions(PermissionsEnum.EMPLOYEE_EXPENSES_EDIT)
 	@Put(':id')
-	@UsePipes(new ValidationPipe({ transform: true }))
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body() entity: UpdateEmployeeRecurringExpenseDTO
+		@Body(new ValidationPipe({
+			transform: true
+		})) entity: UpdateEmployeeRecurringExpenseDTO
 	): Promise<IRecurringExpenseEditInput> {
 		return await this.commandBus.execute(
 			new EmployeeRecurringExpenseEditCommand(id, entity)
@@ -174,7 +180,7 @@ export class EmployeeRecurringExpenseController extends CrudController<EmployeeR
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.ORG_EMPLOYEES_EDIT)
+	@Permissions(PermissionsEnum.EMPLOYEE_EXPENSES_EDIT)
 	@Delete(':id')
 	async delete(
 		@Param('id', UUIDValidationPipe) id: string,

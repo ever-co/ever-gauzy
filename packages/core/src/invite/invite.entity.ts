@@ -8,7 +8,6 @@ import {
 	IRole
 } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsDate, IsEmail, IsEnum, IsNotEmpty, IsString } from 'class-validator';
 import {
 	Column,
 	Entity,
@@ -32,31 +31,24 @@ import {
 export class Invite extends TenantOrganizationBaseEntity implements IInvite {
 
 	@ApiPropertyOptional({ type: () => String })
-	@IsString()
 	@Index({ unique: true })
 	@Column()
 	token: string;
 
 	@ApiProperty({ type: () => String, minLength: 3, maxLength: 100 })
-	@IsEmail()
-	@IsNotEmpty()
 	@Index({ unique: true })
 	@Column()
 	email: string;
 
 	@ApiProperty({ type: () => String, enum: InviteStatusEnum })
-	@IsEnum(InviteStatusEnum)
-	@IsNotEmpty()
 	@Column()
 	status: InviteStatusEnum;
 
 	@ApiPropertyOptional({ type: () => Date })
-	@IsDate()
 	@Column({ nullable: true })
 	expireDate: Date;
 
 	@ApiPropertyOptional({ type: () => Date })
-	@IsDate()
 	@Column({ nullable: true })
 	actionDate?: Date;
 
@@ -66,7 +58,9 @@ export class Invite extends TenantOrganizationBaseEntity implements IInvite {
     |--------------------------------------------------------------------------
     */
 
-	// Invited By User
+	/**
+	 * Invited By User
+	 */
 	@ApiPropertyOptional({ type: () => User })
 	@ManyToOne(() => User, { nullable: true, onDelete: 'CASCADE' })
 	@JoinColumn()
@@ -74,12 +68,13 @@ export class Invite extends TenantOrganizationBaseEntity implements IInvite {
 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Invite) => it.invitedBy)
-	@IsString()
 	@Index()
 	@Column({ nullable: true })
 	invitedById: string;
 
-	// Invited User Role
+	/**
+	 * Invited User Role
+	 */
 	@ApiPropertyOptional({ type: () => Role })
 	@ManyToOne(() => Role, { nullable: true, onDelete: 'CASCADE' })
 	@JoinColumn()
@@ -87,7 +82,6 @@ export class Invite extends TenantOrganizationBaseEntity implements IInvite {
 
 	@ApiProperty({ type: () => String })
 	@RelationId((invite: Invite) => invite.role)
-	@IsString()
 	@Index()
 	@Column({ nullable: true })
 	roleId: string;
@@ -97,6 +91,9 @@ export class Invite extends TenantOrganizationBaseEntity implements IInvite {
     | @ManyToMany
     |--------------------------------------------------------------------------
     */
+   /**
+	* Organization Projects
+    */
 	@ApiPropertyOptional({ type: () => OrganizationProject })
 	@ManyToMany(() => OrganizationProject)
 	@JoinTable({
@@ -104,6 +101,9 @@ export class Invite extends TenantOrganizationBaseEntity implements IInvite {
 	})
 	projects?: IOrganizationProject[];
 
+	/**
+	 * Organization Contacts
+	 */
 	@ApiPropertyOptional({ type: () => OrganizationContact })
 	@ManyToMany(() => OrganizationContact)
 	@JoinTable({
@@ -111,6 +111,9 @@ export class Invite extends TenantOrganizationBaseEntity implements IInvite {
 	})
 	organizationContact?: IOrganizationContact[];
 
+	/**
+	 * Organization Departments
+	 */
 	@ApiPropertyOptional({ type: () => OrganizationDepartment })
 	@ManyToMany(() => OrganizationDepartment)
 	@JoinTable({

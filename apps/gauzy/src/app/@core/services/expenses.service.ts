@@ -92,11 +92,9 @@ export class ExpensesService {
 	}
 
 	delete(expenseId: string, employeeId: string): Promise<any> {
-		const data = JSON.stringify({ employeeId });
 		return firstValueFrom(
-			this.http
-			.delete(`${API_PREFIX}/expense/${expenseId}`, {
-				params: { data }
+			this.http.delete(`${API_PREFIX}/expense/${expenseId}`, {
+				params: toParams({ employeeId })
 			})
 		);
 	}

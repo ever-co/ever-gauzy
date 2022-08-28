@@ -10,8 +10,8 @@ import {
 	Post,
 	Put,
 	Param,
-	UsePipes,
-	ValidationPipe
+	ValidationPipe,
+	BadRequestException
 } from '@nestjs/common';
 import { ApiResponse, ApiOperation } from '@nestjs/swagger';
 import { IMerchant, IPagination } from '@gauzy/contracts';
@@ -21,6 +21,7 @@ import { Merchant } from './merchant.entity';
 import { MerchantService } from './merchant.service';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { TenantPermissionGuard } from './../shared/guards';
+import { CreateMerchantDTO, UpdateMerchantDTO } from './dto';
 
 
 @ApiTags('Merchants')
@@ -58,11 +59,12 @@ export class MerchantController extends CrudController<Merchant> {
 	 * @returns
 	 */
 	@Get('pagination')
-	@UsePipes(new ValidationPipe({ transform: true }))
 	async pagination(
-		@Query() filter: PaginationParams<Merchant>
+		@Query(new ValidationPipe({
+			transform: true
+		})) options: PaginationParams<Merchant>
 	): Promise<IPagination<IMerchant>> {
-		return this.merchantService.paginate(filter);
+		return this.merchantService.paginate(options);
 	}
 
 	/**
@@ -118,7 +120,7 @@ export class MerchantController extends CrudController<Merchant> {
 		@Param('id', UUIDValidationPipe) id: string,
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<IMerchant> {
-		const {relations = []} = data;
+		const { relations = [] } = data;
 		return this.merchantService.findById(
 			id,
 			relations
@@ -143,11 +145,17 @@ export class MerchantController extends CrudController<Merchant> {
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Post()
-	@UsePipes(new ValidationPipe({ transform: true }))
 	async create(
-		@Body() entity: Merchant
+		@Body(new ValidationPipe({
+			transform: true,
+			whitelist: true
+		})) entity: CreateMerchantDTO
 	): Promise<IMerchant> {
-		return this.merchantService.create(entity);
+		try {
+			return await this.merchantService.create(entity);
+		} catch (error) {
+			throw new BadRequestException(error);
+		}
 	}
 
 	/**
@@ -175,8 +183,15 @@ export class MerchantController extends CrudController<Merchant> {
 	@Put(':id')
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body() entity: Merchant
+		@Body(new ValidationPipe({
+			transform: true,
+			whitelist: true
+		})) entity: UpdateMerchantDTO
 	): Promise<IMerchant> {
-		return await this.merchantService.update(id, entity);
+		try {
+			return await this.merchantService.update(id, entity);
+		} catch (error) {
+			throw new BadRequestException(error);
+		}
 	}
 }
