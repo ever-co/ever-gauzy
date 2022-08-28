@@ -304,14 +304,15 @@ export class AppComponent implements OnInit {
 	}
 
 	async authFromSocial(token: string, userId: string) {
-		const jwtParsed:any = this.jwtDecode(token);
-		if (jwtParsed.__zone_symbol__value) {
-			if (jwtParsed.__zone_symbol__value.employeeId) {
+		const jwtParsed:any = await this.jwtDecode(token);
+		console.log('yyyyy', jwtParsed);
+		if (jwtParsed) {
+			if (jwtParsed.employeeId) {
 				this.electronService.ipcRenderer.send('auth_success', {
 					token: token,
 					userId: userId,
-					employeeId: jwtParsed.__zone_symbol__value.employeeId,
-					tenantId: jwtParsed.__zone_symbol__value.tenantId
+					employeeId: jwtParsed.employeeId,
+					tenantId: jwtParsed.tenantId
 				});
 			} else {
 				this.toastrService.show('Your account is not an employee', `Warning`, {
