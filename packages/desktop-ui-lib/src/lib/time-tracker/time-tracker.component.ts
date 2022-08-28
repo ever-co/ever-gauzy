@@ -877,8 +877,8 @@ export class TimeTrackerComponent implements AfterViewInit {
 	async getScreenshot(arg, isThumb:boolean | null = false) {
 		let thumbSize = this.determineScreenshot(arg.screensize);
 		if (isThumb) thumbSize = {
-			width: 800,
-			height: 600
+			width: 320,
+			height: 240
 		}
 		return this.electronService.desktopCapturer
 			.getSources({
