@@ -6,7 +6,7 @@ console.log = log.log;
 Object.assign(console, log.functions);
 
 import * as path from 'path';
-import { app, dialog, BrowserWindow, ipcMain, shell, Menu, session } from 'electron';
+import { app, dialog, BrowserWindow, ipcMain, shell, Menu } from 'electron';
 import { environment } from './environments/environment';
 import Url from 'url';
   
@@ -646,10 +646,6 @@ function launchAtStartup(autoLaunch, hidden) {
 
 
 app.on('web-contents-created', (e, contents) => {
-	console.log('content', contents);
-	contents.on('will-navigate', (e, url) => {
-		console.log('navigate to url', url);
-	})
 	contents.on('will-redirect', (e, url, isInPlace, isMainFrame, frameProcessId) => {
 		const defaultBrowserConfig: any = {
 			title: '',
@@ -664,7 +660,6 @@ app.on('web-contents-created', (e, contents) => {
 			  webviewTag: false
 			},
 		};
-		console.log(url, '- ', isInPlace, ' - ',isMainFrame, ' - ', frameProcessId)
 		if ([
 			'https://www.linkedin.com/oauth',
 			'https://accounts.google.com'
