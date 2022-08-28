@@ -6,8 +6,10 @@ console.log = log.log;
 Object.assign(console, log.functions);
 
 import * as path from 'path';
-import { app, dialog, BrowserWindow, ipcMain, shell, Menu } from 'electron';
+import { app, dialog, BrowserWindow, ipcMain, shell, Menu, session } from 'electron';
 import { environment } from './environments/environment';
+import Url from 'url';
+  
 
 // setup logger to catch all unhandled errors and submit as bug reports to our repo
 log.catchErrors({
@@ -131,6 +133,7 @@ let serverGauzy = null;
 let serverDesktop = null;
 let dialogErr = false;
 let cancellationToken = null;
+let popupWin: BrowserWindow | null = null;
 
 try {
 	cancellationToken = new CancellationToken();
@@ -640,3 +643,66 @@ function launchAtStartup(autoLaunch, hidden) {
 			break;
 	}
 }
+
+
+app.on('web-contents-created', (e, contents) => {
+	console.log('content', contents);
+	contents.on('will-navigate', (e, url) => {
+		console.log('navigate to url', url);
+	})
+	contents.on('will-redirect', (e, url, isInPlace, isMainFrame, frameProcessId) => {
+		const defaultBrowserConfig: any = {
+			title: '',
+			width: 1280,
+			height: 600,
+			webPreferences: {
+			  allowRunningInsecureContent: false,
+			  contextIsolation: true,
+			  enableRemoteModule: true,
+			  javascript: true,
+			  webSecurity: false,
+			  webviewTag: false
+			},
+		};
+		console.log(url, '- ', isInPlace, ' - ',isMainFrame, ' - ', frameProcessId)
+		if ([
+			'https://www.linkedin.com/oauth',
+			'https://accounts.google.com'
+		].findIndex((str) => url.indexOf(str) > -1) > -1) {
+			e.preventDefault();
+			showPopup(url, defaultBrowserConfig)
+			return;
+		}
+
+		if (url.indexOf('sign-in/success?jwt') > -1) {
+			if (popupWin) popupWin.destroy();
+			const urlParse = Url.parse(url, true);
+			const urlParsed = Url.parse(urlFormat(urlParse.hash, urlParse.host), true);
+			const query = urlParsed.query;
+			timeTrackerWindow.webContents.send('social_auth_success', {
+				token: query.jwt,
+				userId: query.userId
+			})
+		}
+
+		if (url.indexOf('/auth/register') > -1) {
+			shell.openExternal(url);
+		}
+	})
+})
+
+const urlFormat = (hash:string, host: string) => {
+	const uri = hash.substring(1);
+	return `${host}${uri}`;
+}
+
+const showPopup = async (url: string, options: any) => {
+	options.width = 1280;
+	options.height = 768;
+	if (popupWin) popupWin.destroy();
+	popupWin = new BrowserWindow(options);
+	let userAgentWb =
+	  'Chrome/87.0.4280.66';
+	popupWin.loadURL(url, { userAgent: userAgentWb });
+	popupWin.show();
+ };

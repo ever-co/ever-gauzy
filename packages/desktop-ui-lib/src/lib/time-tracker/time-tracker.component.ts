@@ -316,6 +316,10 @@ export class TimeTrackerComponent implements AfterViewInit {
 				console.log('error play sound', error);
 			}
 		})
+
+		this.electronService.ipcRenderer.on('show_error_message', (event, arg) => {
+			this.showErrorMessage(arg);
+		})
 	}
 
 	ngAfterViewInit(): void {
@@ -1180,4 +1184,10 @@ export class TimeTrackerComponent implements AfterViewInit {
 			});
 		}
 	};
+
+	showErrorMessage(msg) {
+		this.toastrService.show(`${msg}`, `Warning`, {
+			status: 'danger'
+		});
+	}
 }

@@ -6,6 +6,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { LanguagesEnum } from '@gauzy/contracts';
 import { Store } from './auth/services/store.service';
 import { untilDestroyed } from '@ngneat/until-destroy';
+import { NbToastrService } from '@nebular/theme';
 import * as _ from 'underscore';
 import {
 	Router
@@ -26,7 +27,8 @@ export class AppComponent implements OnInit {
 		private authStrategy: AuthStrategy,
 		private router: Router,
 		public readonly translate: TranslateService,
-		private store: Store
+		private store: Store,
+		private toastrService: NbToastrService,
 	) {
 		this.electronService.ipcRenderer.on('collect_data', (event, arg) => {
 			this.appService
@@ -263,6 +265,12 @@ export class AppComponent implements OnInit {
 				this.electronService.ipcRenderer.send('navigate_to_login');
 			})
 		});
+
+		this.electronService.ipcRenderer.on('social_auth_success', (event, arg) => {
+			localStorage.setItem('token', arg.token);
+			localStorage.setItem('_userId', arg.userId);
+			this.authFromSocial(arg.token, arg.userId)
+		})
 	}
 
 	ngOnInit(): void {
@@ -293,5 +301,31 @@ export class AppComponent implements OnInit {
 				// 	this.loading = false;
 				// });
 			});
+	}
+
+	async authFromSocial(token: string, userId: string) {
+		const jwtParsed:any = this.jwtDecode(token);
+		if (jwtParsed.__zone_symbol__value) {
+			if (jwtParsed.__zone_symbol__value.employeeId) {
+				this.electronService.ipcRenderer.send('auth_success', {
+					token: token,
+					userId: userId,
+					employeeId: jwtParsed.__zone_symbol__value.employeeId,
+					tenantId: jwtParsed.__zone_symbol__value.tenantId
+				});
+			} else {
+				this.toastrService.show('Your account is not an employee', `Warning`, {
+					status: 'danger'
+				});
+			}
+		}
+	}
+
+	async jwtDecode(token) {
+		try {
+			return JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
+		  } catch (e) {
+			return null;
+		  }
 	}
 }
