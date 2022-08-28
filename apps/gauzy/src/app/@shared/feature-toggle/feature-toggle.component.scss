@@ -46,3 +46,32 @@
         }
     }
 }
+.mansory-layout {
+  -webkit-column-count: 2;
+  -moz-column-count: 2;
+  column-count: 2;
+}
+.shortcut-card {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+  -webkit-transition: 1s ease all;
+  transition: 1s ease all;
+  box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  margin-bottom: 1rem;
+}
+
+@media only screen and (max-width: 1200px) {
+  .mansory-layout {
+    -moz-column-count: 1;
+    -webkit-column-count: 1;
+    column-count: 1;
+  }
+}
+@media only screen and (min-width: 1680px) {
+  .mansory-layout {
+    width: calc(100% - 5rem);
+  }
+}
