@@ -11,7 +11,7 @@
 $nb-themes: nb-register-theme(
   (
     font-family-secondary: font-family-primary,
-    layout-padding-top: 2.25rem,
+    layout-padding-top: 24px,
     layout-window-mode-padding-top: 0,
     menu-item-icon-margin: 0 0.5rem 0 0,
     card-height-tiny: 13.5rem,
@@ -19,7 +19,7 @@ $nb-themes: nb-register-theme(
     card-height-medium: 28.875rem,
     card-height-large: 36.5625rem,
     card-height-giant: 44.25rem,
-    card-margin-bottom: 1.875rem,
+    card-margin-bottom: 0,
     card-header-with-select-padding-top: 0.5rem,
     card-header-with-select-padding-bottom: 0.5rem,
     select-min-width: 6rem,
@@ -29,8 +29,6 @@ $nb-themes: nb-register-theme(
     gauzy-text-contact: #323232,
     accordion-padding: 0.625rem,
     actions-divider-style: none,
-    button-filled-medium-padding: 0.4375rem 0.875rem,
-    button-outline-medium-padding: 0.4375rem 0.875rem,
     sidebar-padding: 0.625rem,
     header-shadow: none,
     gauzy-card-1: rgba(255, 255, 255, 1),
@@ -53,7 +51,13 @@ $nb-themes: nb-register-theme(
     gauzy-siderbar-background-5: rgb(237, 237, 238),
     gauzy-shadow: 0px 1px 1px 0px rgb(0 0 0 / 15%),
     gauzy-scrollbar: rgba(126, 126, 143, 0.1),
-    gauzy-primary-background: rgb(246, 250, 254)
+    gauzy-primary-background: rgb(246, 250, 254),
+    layout-padding: 24px 24px 0 12px,
+    header-height: 4.5rem,
+    button-filled-medium-padding: 0.4375rem 0.875rem,
+    button-outline-medium-padding: 0.4375rem 0.875rem,
+    button-filled-small-padding: 0.375rem 0.875rem,
+    button-outline-small-padding: 0.375rem 0.875rem,
   ),
   default,
   default
@@ -62,15 +66,15 @@ $nb-themes: nb-register-theme(
 $nb-themes: nb-register-theme(
   (
     font-family-secondary: font-family-primary,
-    layout-padding-top: 2.25rem,
     layout-window-mode-padding-top: 0,
+    layout-padding-top: 24px,
     menu-item-icon-margin: 0 0.5rem 0 0,
     card-height-tiny: 13.5rem,
     card-height-small: 21.1875rem,
     card-height-medium: 28.875rem,
     card-height-large: 36.5625rem,
     card-height-giant: 44.25rem,
-    card-margin-bottom: 1.875rem,
+    card-margin-bottom: 0,
     card-header-with-select-padding-top: 0.5rem,
     card-header-with-select-padding-bottom: 0.5rem,
     select-min-width: 6rem,
@@ -98,7 +102,9 @@ $nb-themes: nb-register-theme(
     gauzy-shadow: 0px 1px 1px 0px rgb(0 0 0 / 35%),
     gauzy-scrollbar: rgba(137, 126, 143, 0.25),
     gauzy-primary-background: rgb(214, 200, 255),
-    gauzy-card-6: rgb(57, 52, 62)
+    gauzy-card-6: rgb(57, 52, 62),
+    layout-padding: 24px 24px 0 12px,
+    header-height: 4.5rem
   ),
   cosmic,
   cosmic
@@ -107,7 +113,7 @@ $nb-themes: nb-register-theme(
 $nb-themes: nb-register-theme(
   (
     font-family-secondary: font-family-primary,
-    layout-padding-top: 2.25rem,
+    layout-padding-top: 24px,
     layout-window-mode-padding-top: 0,
     menu-item-icon-margin: 0 0.5rem 0 0,
     card-height-tiny: 13.5rem,
@@ -115,7 +121,7 @@ $nb-themes: nb-register-theme(
     card-height-medium: 28.875rem,
     card-height-large: 36.5625rem,
     card-height-giant: 44.25rem,
-    card-margin-bottom: 1.875rem,
+    card-margin-bottom: 0,
     card-header-with-select-padding-top: 0.5rem,
     card-header-with-select-padding-bottom: 0.5rem,
     select-min-width: 6rem,
@@ -144,7 +150,9 @@ $nb-themes: nb-register-theme(
     gauzy-shadow: 0px 1px 1px 0px rgb(0 0 0 / 15%),
     gauzy-scrollbar: rgba(126, 126, 143, 0.1),
     gauzy-primary-background: rgb(246, 247, 254),
-    gauzy-card-6: rgba(249, 249, 249, 1)
+    gauzy-card-6: rgba(249, 249, 249, 1),
+    layout-padding: 24px 24px 0 12px,
+    header-height: 4.5rem
   ),
   corporate,
   corporate
@@ -153,7 +161,7 @@ $nb-themes: nb-register-theme(
 $nb-themes: nb-register-theme(
   (
     font-family-secondary: font-family-primary,
-    layout-padding-top: 2.25rem,
+    layout-padding-top: 24px,
     layout-window-mode-padding-top: 0,
     menu-item-icon-margin: 0 0.5rem 0 0,
     card-height-tiny: 13.5rem,
@@ -161,7 +169,7 @@ $nb-themes: nb-register-theme(
     card-height-medium: 28.875rem,
     card-height-large: 36.5625rem,
     card-height-giant: 44.25rem,
-    card-margin-bottom: 1.875rem,
+    card-margin-bottom: 0,
     card-header-with-select-padding-top: 0.5rem,
     card-header-with-select-padding-bottom: 0.5rem,
     select-min-width: 6rem,
@@ -193,7 +201,9 @@ $nb-themes: nb-register-theme(
     gauzy-shadow: 0px 1px 1px 0px rgb(0 0 0 / 35%),
     gauzy-scrollbar: rgba(126, 126, 143, 0.25),
     gauzy-primary-background: rgb(58, 62, 75),
-    gauzy-card-6: rgba(52, 52, 62, 1)
+    gauzy-card-6: rgba(52, 52, 62, 1),
+    layout-padding: 24px 24px 0 12px,
+    header-height: 4.5rem
   ),
   dark,
   dark
@@ -201,14 +211,14 @@ $nb-themes: nb-register-theme(
 
 $nb-themes: nb-register-theme(
   (
-    layout-padding-top: 2.25rem,
+    layout-padding-top: 24px,
     menu-item-icon-margin: 0 0.5rem 0 0,
     card-height-tiny: 13.5rem,
     card-height-small: 21.1875rem,
     card-height-medium: 28.875rem,
     card-height-large: 36.5625rem,
     card-height-giant: 44.25rem,
-    card-margin-bottom: 1.875rem,
+    card-margin-bottom: 0,
     card-header-with-select-padding-top: 0.5rem,
     card-header-with-select-padding-bottom: 0.5rem,
     select-min-width: 6rem,
@@ -227,14 +237,14 @@ $nb-themes: nb-register-theme(
 
 $nb-themes: nb-register-theme(
   (
-    layout-padding-top: 2.25rem,
+    layout-padding-top: 24px,
     menu-item-icon-margin: 0 0.5rem 0 0,
     card-height-tiny: 13.5rem,
     card-height-small: 21.1875rem,
     card-height-medium: 28.875rem,
     card-height-large: 36.5625rem,
     card-height-giant: 44.25rem,
-    card-margin-bottom: 1.875rem,
+    card-margin-bottom: 0,
     card-header-with-select-padding-top: 0.5rem,
     card-header-with-select-padding-bottom: 0.5rem,
     select-min-width: 6rem,

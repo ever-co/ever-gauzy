@@ -1,4 +1,4 @@
-<nb-card class="card-scroll">
+<nb-card class="m-0">
 	<nb-card-header class="card-custom-header">
 		<div class="card-header-title">
 			<h4>
@@ -29,45 +29,59 @@
 						organizationEmploymentTypes?.length
 					"
 				>
-					<nb-card class="p-0" *ngFor="let employmentType of organizationEmploymentTypes">
-						<nb-card-body
-							class="custom-table"
-							[ngClass]="
-								selected?.state && employmentType === selected?.employmentType
-									? 'custom-table selected'
-									: 'custom-table'
+					<div class="table-scroll-container">
+						<nb-card
+							class="p-0"
+							*ngFor="
+								let employmentType of organizationEmploymentTypes
 							"
-							(click)="selectOrganizationEmploymentType(employmentType)"
 						>
-							<ga-notes-with-tags
-								[rowData]="employmentType"
+							<nb-card-body
+								class="custom-table"
+								[ngClass]="{
+									selected:
+										selected?.state &&
+										employmentType ===
+											selected?.employmentType
+								}"
+								(click)="
+									selectOrganizationEmploymentType(
+										employmentType
+									)
+								"
 							>
-							</ga-notes-with-tags>
-						</nb-card-body>
-					</nb-card>
+								<ga-notes-with-tags [rowData]="employmentType">
+								</ga-notes-with-tags>
+							</nb-card-body>
+						</nb-card>
+					</div>
 				</ng-template>
 				<ng-template [ngIf]="organizationEmploymentTypes?.length == 0">
-					<ngx-no-data-message
-						[message]="'ORGANIZATIONS_PAGE.EMPLOYMENT_TYPE_NO_DATA_MESSAGE'"
-					></ngx-no-data-message>
+					<div class="no-data">
+						<ngx-no-data-message
+							[message]="
+								'ORGANIZATIONS_PAGE.EMPLOYMENT_TYPE_NO_DATA_MESSAGE'
+							"
+						></ngx-no-data-message>
+					</div>
 				</ng-template>
 				<ng-template
 					[ngIf]="
-						dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID &&
+						dataLayoutStyle ===
+							componentLayoutStyleEnum.CARDS_GRID &&
 						organizationEmploymentTypes?.length
 					"
 				>
-					<ga-card-grid
-						[settings]="settingsSmartTable"
-						[source]="organizationEmploymentTypes"
-						[doEmit]="false"
-						[totalItems]="pagination?.totalItems"
-						[itemsPerPage]="pagination?.itemsPerPage"
-						[activePage]="pagination?.activePage"
-						(onSelectedItem)="selectOrganizationEmploymentType($event)"
-						(selectedOption)="onUpdateOption($event)"
-						(selectedPage)="onPageChange($event)"
-					></ga-card-grid>
+					<div class="grid">
+						<ga-card-grid
+							[settings]="settingsSmartTable"
+							[source]="organizationEmploymentTypes"
+							(onSelectedItem)="
+								selectOrganizationEmploymentType($event)
+							"
+							(scroll)="onScroll()"
+						></ga-card-grid>
+					</div>
 				</ng-template>
 			</nb-tab>
 			<nb-tab
@@ -105,7 +119,12 @@
 			{{ 'BUTTONS.EDIT' | translate }}
 		</button>
 		<button
-			(click)="deleteEmploymentType(selected.employmentType.id, selected.employmentType.name)"
+			(click)="
+				deleteEmploymentType(
+					selected.employmentType.id,
+					selected.employmentType.name
+				)
+			"
 			nbButton
 			status="basic"
 			class="action"
@@ -130,10 +149,10 @@
 			</div>
 			<div class="row mb-3">
 				<h5 class="title mr-3 ml-3">
-					{{ selectedOrgEmpType &&
-						selectedOrgEmpType?.id  ?
-						('POP_UPS.EDIT' | translate) :
-						('POP_UPS.ADD' | translate)
+					{{
+						selectedOrgEmpType && selectedOrgEmpType?.id
+							? ('POP_UPS.EDIT' | translate)
+							: ('POP_UPS.ADD' | translate)
 					}}
 				</h5>
 			</div>
@@ -179,11 +198,7 @@
 						{{ 'BUTTONS.CANCEL' | translate }}
 					</button>
 					<button
-						(click)="
-							submitForm();
-							disabled = true;
-							ref.close()
-						"
+						(click)="submitForm(); disabled = true; ref.close()"
 						nbButton
 						status="success"
 						[disabled]="form.invalid"

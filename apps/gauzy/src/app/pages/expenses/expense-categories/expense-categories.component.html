@@ -1,10 +1,10 @@
 <nb-card
+	class="main-wrapper"
 	[nbSpinner]="loading"
 	nbSpinnerStatus="primary"
 	nbSpinnerSize="large"
-	class="card-scroll"
 >
-	<nb-card-header class="card-header-title">
+	<nb-card-header class="card-header-title pb-0">
 		<div class="card-header-title">
 			<ngx-back-navigation></ngx-back-navigation>
 			<h4>
@@ -14,7 +14,7 @@
 			</h4>
 		</div>
 	</nb-card-header>
-	<nb-card-body class="pt-0">
+	<nb-card-body class="content-body">
 		<div class="gauzy-button-container">
 			<ngx-gauzy-button-action
 				[buttonTemplate]="actionButtons"
@@ -28,54 +28,46 @@
 			[ngIfElse]="gridLayout"
 		>
 			<ng-container *ngIf="expenseCategories?.length > 0">
-				<nb-card class="p-0" *ngFor="let item of expenseCategories">
-					<nb-card-body
-						class="custom-table"
-						[ngClass]="
-							selected?.state &&
-							item === selected?.expenseCategory
-								? 'custom-table selected'
-								: 'custom-table'
-						"
-						(click)="selectExpenseCategory(item)"
-					>
-						<ga-notes-with-tags [rowData]="item">
-						</ga-notes-with-tags>
-					</nb-card-body>
-				</nb-card>
+				<div
+					class="table-scroll-container"
+					infinite-scroll
+					[scrollWindow]="false"
+					(scrolled)="onScroll()"
+				>
+					<nb-card class="p-0" *ngFor="let item of expenseCategories">
+						<nb-card-body
+							class="custom-table"
+							[ngClass]="
+								selected?.state &&
+								item === selected?.expenseCategory
+									? 'custom-table selected'
+									: 'custom-table'
+							"
+							(click)="selectExpenseCategory(item)"
+						>
+							<ga-notes-with-tags [rowData]="item">
+							</ga-notes-with-tags>
+						</nb-card-body>
+					</nb-card>
+				</div>
 			</ng-container>
 			<ng-template [ngIf]="!loading && expenseCategories?.length == 0">
-				<ngx-no-data-message 
-					[message]="'SM_TABLE.NO_DATA.EXPENSE_CATEGORY'"
-				></ngx-no-data-message>
+				<div class="no-data">
+					<ngx-no-data-message
+						[message]="'SM_TABLE.NO_DATA.EXPENSE_CATEGORY'"
+					></ngx-no-data-message>
+				</div>
 			</ng-template>
-			<div class="pagination-container">
-				<ng-container
-					*ngIf="pagination.totalItems > pagination.itemsPerPage"
-				>
-					<ga-pagination
-						(selectedOption)="onUpdateOption($event)"
-						(selectedPage)="onPageChange($event)"
-						[doEmit]="false"
-						[totalItems]="pagination?.totalItems"
-						[itemsPerPage]="pagination?.itemsPerPage"
-						[activePage]="pagination?.activePage"
-					></ga-pagination>
-				</ng-container>
-			</div>
 		</ng-template>
 		<ng-template #gridLayout>
-			<ga-card-grid
-				[settings]="settingsSmartTable"
-				[source]="expenseCategories"
-				(selectedOption)="onUpdateOption($event)"
-				(selectedPage)="onPageChange($event)"
-				(onSelectedItem)="selectExpenseCategory($event)"
-				[doEmit]="false"
-				[totalItems]="pagination?.totalItems"
-				[itemsPerPage]="pagination?.itemsPerPage"
-				[activePage]="pagination?.activePage"
-			></ga-card-grid>
+			<div class="grid">
+				<ga-card-grid
+					[settings]="settingsSmartTable"
+					[source]="expenseCategories"
+					(onSelectedItem)="selectExpenseCategory($event)"
+					(scroll)="onScroll()"
+				></ga-card-grid>
+			</div>
 		</ng-template>
 	</nb-card-body>
 </nb-card>

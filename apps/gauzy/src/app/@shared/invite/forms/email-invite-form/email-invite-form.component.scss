@@ -18,7 +18,8 @@
   }
 
   ::ng-deep .custom-tag-list.nb-tag-list-with-input.size-medium {
-    box-shadow: var(--gauzy-shadow)(0, 0, 0, 0.15) inset;
+    box-shadow: var(--gauzy-shadow) inset;
+    background-color: var(--gauzy-card-2);
     input {
       box-shadow: unset;
     }

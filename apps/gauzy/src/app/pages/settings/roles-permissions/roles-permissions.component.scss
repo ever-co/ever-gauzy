@@ -45,6 +45,11 @@ h4 {
 	}
 }
 
+:host .col-12{
+ @include nb-ltr(padding-right, 8px !important);
+ @include nb-rtl(padding-left, 8px !important)
+}
+
 .menu-setting {
 	font-size: 24px;
 	font-weight: 400;
@@ -54,7 +59,7 @@ h4 {
 }
 
 .content {
-	height: calc(100vh - 23.5rem);
+	height: calc(100vh - 18.75rem);
 	overflow: auto;
 	padding: 0;
 	border-radius: nb-theme(border-radius);
@@ -101,7 +106,6 @@ h4 {
 				font-weight: 600;
 				line-height: 15px;
 				letter-spacing: 0em;
-				text-align: left;
 			}
 
 			nb-card-body {

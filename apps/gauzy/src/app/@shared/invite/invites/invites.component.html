@@ -1,14 +1,12 @@
-<nb-card
-	[nbSpinner]="loading"
-	nbSpinnerStatus="primary"
-	nbSpinnerSize="large"
->
+<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
 	<nb-card-header class="d-flex flex-column pb-0">
 		<div class="header-title-with-back">
 			<ngx-back-navigation></ngx-back-navigation>
 			<h4>
 				<ngx-header-title [allowEmployee]="false">
-					{{ 'INVITE_PAGE.' + invitationType + '.MANAGE' | translate }}
+					{{
+						'INVITE_PAGE.' + invitationType + '.MANAGE' | translate
+					}}
 				</ngx-header-title>
 			</h4>
 		</div>
@@ -26,7 +24,7 @@
 			[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
 			[ngIfElse]="gridLayout"
 		>
-			<div class="table-scroll-container custom-table">
+			<div class="table-scroll-container">
 				<ng2-smart-table
 					style="cursor: pointer"
 					[settings]="settingsSmartTable"
@@ -53,19 +51,12 @@
 			</div>
 		</ng-template>
 		<ng-template #gridLayout>
-			<div class="grid-scroll-container">
-				<ga-card-grid
-					[settings]="settingsSmartTable"
-					[source]="invites"
-					[doEmit]="false"
-					[totalItems]="pagination?.totalItems"
-					[itemsPerPage]="pagination?.itemsPerPage"
-					[activePage]="pagination?.activePage"
-					(selectedOption)="onUpdateOption($event)"
-					(selectedPage)="onPageChange($event)"
-					(onSelectedItem)="selectInvite($event)"
-				></ga-card-grid>
-			</div>
+			<ga-card-grid
+				[settings]="settingsSmartTable"
+				[source]="invites"
+				(onSelectedItem)="selectInvite($event)"
+				(scroll)="onScroll()"
+			></ga-card-grid>
 		</ng-template>
 	</nb-card-body>
 </nb-card>

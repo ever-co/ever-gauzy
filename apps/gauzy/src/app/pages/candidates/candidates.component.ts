@@ -51,9 +51,10 @@ import { InputFilterComponent } from '../../@shared/table-filters';
 	templateUrl: './candidates.component.html',
 	styleUrls: ['./candidates.component.scss']
 })
-export class CandidatesComponent extends PaginationFilterBaseComponent
-	implements OnInit, OnDestroy {
-
+export class CandidatesComponent
+	extends PaginationFilterBaseComponent
+	implements OnInit, OnDestroy
+{
 	settingsSmartTable: object;
 	sourceSmartTable: ServerDataSource;
 	selectedCandidate: ICandidateViewModel;
@@ -69,6 +70,7 @@ export class CandidatesComponent extends PaginationFilterBaseComponent
 
 	public organization: IOrganization;
 	candidates$: Subject<any> = this.subject$;
+	private _refresh$: Subject<any> = new Subject();
 
 	candidatesTable: Ng2SmartTableComponent;
 	@ViewChild('candidatesTable') set content(content: Ng2SmartTableComponent) {
@@ -115,20 +117,35 @@ export class CandidatesComponent extends PaginationFilterBaseComponent
 			.pipe(
 				filter((organization: IOrganization) => !!organization),
 				distinctUntilChange(),
-				tap((organization: IOrganization) => (this.organization = organization)),
+				tap(
+					(organization: IOrganization) =>
+						(this.organization = organization)
+				),
 				tap(
 					({ invitesAllowed }: IOrganization) =>
 						(this.organizationInvitesAllowed = invitesAllowed)
 				),
+				tap(() => this._refresh$.next(true)),
 				tap(() => this.candidates$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
 		this.route.queryParamMap
 			.pipe(
-				filter((params) => !!params && params.get('openAddDialog') === 'true'),
+				filter(
+					(params) =>
+						!!params && params.get('openAddDialog') === 'true'
+				),
 				debounceTime(1000),
 				tap(() => this.add()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this._refresh$
+			.pipe(
+				filter(() => this._isGridLayout),
+				tap(() => this.refreshPagination()),
+				tap(() => (this.candidates = [])),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -144,9 +161,16 @@ export class CandidatesComponent extends PaginationFilterBaseComponent
 			.componentLayout$(this.viewComponentName)
 			.pipe(
 				distinctUntilChange(),
-				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
+				tap(
+					(componentLayout) =>
+						(this.dataLayoutStyle = componentLayout)
+				),
 				tap(() => this.refreshPagination()),
-				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
+				filter(
+					(componentLayout) =>
+						componentLayout === ComponentLayoutStyleEnum.CARDS_GRID
+				),
+				tap(() => (this.candidates = [])),
 				tap(() => this.candidates$.next(true)),
 				untilDestroyed(this)
 			)
@@ -237,9 +261,11 @@ export class CandidatesComponent extends PaginationFilterBaseComponent
 						)
 				}
 			})
-			.onClose
-			.pipe(
-				finalize(() => this.candidates$.next(true)),
+			.onClose.pipe(
+				finalize(() => {
+					this._refresh$.next(true);
+					this.candidates$.next(true);
+				}),
 				untilDestroyed(this)
 			)
 			.subscribe(async (result) => {
@@ -300,11 +326,11 @@ export class CandidatesComponent extends PaginationFilterBaseComponent
 			endPoint: API_PREFIX + '/candidate/pagination',
 			relations: ['user', 'source', 'tags'],
 			join: {
-				alias: "candidate",
+				alias: 'candidate',
 				leftJoin: {
 					user: 'candidate.user'
 				},
-				...(this.filters.join) ? this.filters.join : {}
+				...(this.filters.join ? this.filters.join : {})
 			},
 			where: {
 				organizationId,
@@ -327,6 +353,8 @@ export class CandidatesComponent extends PaginationFilterBaseComponent
 				});
 			},
 			finalize: () => {
+				if (this._isGridLayout)
+					this.candidates.push(...this.sourceSmartTable.getData());
 				this.setPagination({
 					...this.getPagination(),
 					totalItems: this.sourceSmartTable.count()
@@ -334,6 +362,10 @@ export class CandidatesComponent extends PaginationFilterBaseComponent
 				this.loading = false;
 			}
 		});
+	}
+
+	private get _isGridLayout(): boolean {
+		return this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID;
 	}
 
 	/**
@@ -347,17 +379,9 @@ export class CandidatesComponent extends PaginationFilterBaseComponent
 		}
 		try {
 			this.setSmartTableSource();
-
 			const { activePage, itemsPerPage } = this.getPagination();
-			this.sourceSmartTable.setPaging(
-				activePage,
-				itemsPerPage,
-				false
-			);
-
-			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
-				this._loadCardLayoutData();
-			}
+			this.sourceSmartTable.setPaging(activePage, itemsPerPage, false);
+			if (this._isGridLayout) this._loadCardLayoutData();
 		} catch (error) {
 			this.toastrService.danger(
 				error,
@@ -372,12 +396,6 @@ export class CandidatesComponent extends PaginationFilterBaseComponent
 	private async _loadCardLayoutData() {
 		try {
 			await this.sourceSmartTable.getElements();
-			this.candidates = this.sourceSmartTable.getData();
-
-			this.setPagination({
-				...this.getPagination(),
-				totalItems: this.sourceSmartTable.count()
-			});
 		} catch (error) {
 			this.toastrService.danger(
 				error,
@@ -404,19 +422,22 @@ export class CandidatesComponent extends PaginationFilterBaseComponent
 					type: 'custom',
 					renderComponent: PictureNameTagsComponent,
 					class: 'align-row',
-          			filter: {
+					filter: {
 						type: 'custom',
 						component: InputFilterComponent
 					},
 					filterFunction: (value) => {
-						this.setFilter({ field: 'user.firstName', search: value });
+						this.setFilter({
+							field: 'user.firstName',
+							search: value
+						});
 					}
 				},
 				email: {
 					title: this.getTranslation('SM_TABLE.EMAIL'),
 					type: 'email',
 					class: 'email-column',
-          			filter: {
+					filter: {
 						type: 'custom',
 						component: InputFilterComponent
 					},
@@ -482,9 +503,11 @@ export class CandidatesComponent extends PaginationFilterBaseComponent
 					isReject: true
 				}
 			})
-			.onClose
-			.pipe(
-				finalize(() => this.candidates$.next(true)),
+			.onClose.pipe(
+				finalize(() => {
+					this._refresh$.next(true);
+					this.candidates$.next(true);
+				}),
 				untilDestroyed(this)
 			)
 			.subscribe(async (result) => {
@@ -493,9 +516,12 @@ export class CandidatesComponent extends PaginationFilterBaseComponent
 						const { id, fullName } = this.selectedCandidate;
 						await this.candidatesService.setCandidateAsRejected(id);
 
-						this.toastrService.success('TOASTR.MESSAGE.CANDIDATE_REJECTED', {
-							name: fullName
-						});
+						this.toastrService.success(
+							'TOASTR.MESSAGE.CANDIDATE_REJECTED',
+							{
+								name: fullName
+							}
+						);
 					} catch (error) {
 						this.errorHandler.handleError(error);
 					}
@@ -517,9 +543,11 @@ export class CandidatesComponent extends PaginationFilterBaseComponent
 					isReject: false
 				}
 			})
-			.onClose
-			.pipe(
-				finalize(() => this.candidates$.next(true)),
+			.onClose.pipe(
+				finalize(() => {
+					this._refresh$.next(true);
+					this.candidates$.next(true);
+				}),
 				untilDestroyed(this)
 			)
 			.subscribe(async (result) => {

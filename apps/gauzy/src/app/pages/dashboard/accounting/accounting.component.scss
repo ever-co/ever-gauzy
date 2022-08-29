@@ -6,22 +6,26 @@
   gap: 1rem;
 }
 
-.table-scrollable {
+:host .table-scrollable {
   height: calc($default-card-height - 14rem);
   overflow: auto;
+  @include nb-ltr(padding-right, 0.5rem);
+  @include nb-rtl(padding-left, 0.5rem);
 }
 
 .cash-flow-report {
   margin: 1rem 0;
 }
 
-.setting-block {
+:host .setting-block {
   &:hover {
     box-shadow: unset;
     background: var(--color-primary-transparent-100) !important;
   }
 
   &.sub-header {
+    @include nb-ltr(margin-right, 0.5rem);
+    @include nb-rtl(margin-left, 0.5rem);
     font-size: 12px;
     font-weight: 600;
     line-height: 15px;
@@ -30,7 +34,7 @@
     background: nb-theme(gauzy-card-3) !important;
   }
 
-  box-shadow:var(--gauzy-shadow);
+  box-shadow: var(--gauzy-shadow);
   border-radius: $default-radius;
   margin-bottom: 4px;
   padding: 15px 20px;
@@ -75,6 +79,11 @@
     margin-bottom: 0;
   }
 
+  .card-body {
+    @include nb-ltr(padding-right, 0.5rem);
+    @include nb-rtl(padding-left, 0.5rem);
+  }
+
   nb-card-header {
     font-size: 14px;
     font-weight: 600;
@@ -84,9 +93,11 @@
     padding-bottom: 0;
   }
 
-  @include card_overrides(auto,
+  @include card_overrides(
+    auto,
     unset,
-    0 $default-radius $default-radius $default-radius );
+    0 $default-radius $default-radius $default-radius
+  );
 
   .card,
   .card-header:first-child {

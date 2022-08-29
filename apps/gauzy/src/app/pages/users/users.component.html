@@ -26,7 +26,7 @@
 				</ng-template>
 			</ng-template>
 		</div>
-		<div class="align-self-end mt-3">
+		<div class="align-self-end">
 			<ng-template ngxPermissionsOnly="ORG_USERS_EDIT">
 				<ngx-gauzy-button-action
 					[componentName]="viewComponentName"
@@ -65,9 +65,7 @@
 				</ng2-smart-table>
 			</div>
 			<div class="pagination-container align-self-end">
-				<ng-container
-					*ngIf="pagination.totalItems > minItemPerPage"
-				>
+				<ng-container *ngIf="pagination.totalItems > minItemPerPage">
 					<ga-pagination
 						(selectedOption)="onUpdateOption($event)"
 						(selectedPage)="onPageChange($event)"
@@ -80,17 +78,14 @@
 			</div>
 		</ng-template>
 		<ng-template #gridLayout>
-			<ga-card-grid
-				[settings]="settingsSmartTable"
-				[source]="users"
-				(onSelectedItem)="selectUser($event)"
-				(selectedOption)="onUpdateOption($event)"
-				(selectedPage)="onPageChange($event)"
-				[doEmit]="false"
-				[totalItems]="pagination?.totalItems"
-				[itemsPerPage]="pagination?.itemsPerPage"
-				[activePage]="pagination?.activePage"
-			></ga-card-grid>
+			<div class="grid">
+				<ga-card-grid
+					[settings]="settingsSmartTable"
+					[source]="users"
+					(scroll)="onScroll()"
+					(onSelectedItem)="selectUser($event)"
+				></ga-card-grid>
+			</div>
 		</ng-template>
 	</nb-card-body>
 </nb-card>

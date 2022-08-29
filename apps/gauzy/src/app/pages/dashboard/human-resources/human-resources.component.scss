@@ -105,7 +105,7 @@
 	}
 }
 $height: calc(
-  100vh - nb-theme(header-height) - nb-theme(footer-height) - 13rem
+  100vh - nb-theme(header-height) - nb-theme(footer-height) - 9.5rem
 );
 :host {
 	@include nb-card_overrides(

@@ -94,7 +94,11 @@
 				nbSpinnerStatus="primary"
 				nbSpinnerSize="giant"
 			>
-				<div class="table-scroll" [ngClass]="{ filter: showFilters }">
+				<div
+					*ngIf="this.articleList.length; else nodata"
+					class="table-scroll"
+					[ngClass]="{ filter: showFilters }"
+				>
 					<div
 						class="custom-table"
 						[ngClass]="{
@@ -216,4 +220,11 @@
 			</button>
 		</div>
 	</ng-container>
+</ng-template>
+<ng-template #nodata>
+	<div class="no-data">
+		<ngx-no-data-message
+			[message]="'HELP_PAGE.CHOOSE_ANY_CATEGORY'"
+		></ngx-no-data-message>
+	</div>
 </ng-template>

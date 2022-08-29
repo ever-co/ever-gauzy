@@ -1,44 +1,44 @@
-@import "var";
+@import 'var';
 
 :host {
-    display: block;
+  display: block;
 }
 
 .main-wrapper {
-    width: 100%;
-    display: grid;
-    grid-template-columns: 23% 23% 19% 27%;
-    column-gap: 2.66%;
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, calc(25% - 0.75rem));
+  column-gap: 1rem;
 }
 
 nb-card {
-    background-color: nb-theme(gauzy-card-1);
-    box-shadow: 0px 6px 20px rgba(0, 0, 0, 0.05);
+  background-color: nb-theme(gauzy-card-1);
+  box-shadow: 0px 6px 20px rgba(0, 0, 0, 0.05);
 }
 
 .progress-container {
-    width: 75%;
+  width: 71%;
 }
 
 @include respond(xl) {
-    .main-wrapper {
-        grid-template-columns: repeat(auto-fit, calc(50% - 7.5px));
-        grid-gap: 15px
-    }
+  .main-wrapper {
+    grid-template-columns: repeat(auto-fit, calc(50% - 8px));
+    grid-gap: 1rem;
+  }
 }
 
 @include respond(md) {
-   .main-wrapper {
-       grid-template-columns: 100%;
-       row-gap: 10px;
-   }
+  .main-wrapper {
+    grid-template-columns: 100%;
+    row-gap: 10px;
+  }
 }
 
-@include respond(sm){
-    .progress-container {
-        width: 100%;
-    }
-    .h1 {
-        font-size: nb-theme(text-heading-1-font-size);
-    }
+@include respond(sm) {
+  .progress-container {
+    width: 100%;
+  }
+  .h1 {
+    font-size: nb-theme(text-heading-1-font-size);
+  }
 }

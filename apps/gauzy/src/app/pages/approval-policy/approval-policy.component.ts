@@ -56,7 +56,8 @@ export class ApprovalPolicyComponent
 	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
 
 	public organization: IOrganization;
-	policies$: Subject<any> = new Subject();
+	policies$: Subject<any> = this.subject$;
+	private _refresh$: Subject<any> = new Subject();
 
 	approvalPolicyTable: Ng2SmartTableComponent;
 	@ViewChild('approvalPolicyTable') set content(
@@ -91,7 +92,6 @@ export class ApprovalPolicyComponent
 				debounceTime(300),
 				tap(() => this.getApprovalPolicies()),
 				tap(() => this.clearItem()),
-				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -105,11 +105,14 @@ export class ApprovalPolicyComponent
 			.subscribe();
 		this.store.selectedOrganization$
 			.pipe(
+				debounceTime(300),
 				filter((organization: IOrganization) => !!organization),
+				distinctUntilChange(),
 				tap(
 					(organization: IOrganization) =>
 						(this.organization = organization)
 				),
+				tap(() => this._refresh$.next(true)),
 				tap(() => this.policies$.next(true)),
 				untilDestroyed(this)
 			)
@@ -121,23 +124,30 @@ export class ApprovalPolicyComponent
 					this.setView();
 				}
 			});
+		this._refresh$
+			.pipe(
+				filter(() => this._isGridLayout),
+				tap(() => this.refreshPagination()),
+				tap(() => (this.approvalPolicies = [])),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	setView() {
 		this.store
 			.componentLayout$(this.viewComponentName)
 			.pipe(
+				debounceTime(300),
+				distinctUntilChange(),
 				tap(
 					(componentLayout) =>
 						(this.dataLayoutStyle = componentLayout)
 				),
-				tap(() => {
-					if (
-						this.componentLayoutStyleEnum.CARDS_GRID ===
-						this.dataLayoutStyle
-					)
-						this._loadGridLayoutData();
-				}),
+				tap(() => this.refreshPagination()),
+				filter(() => this._isGridLayout),
+				tap(() => (this.approvalPolicies = [])),
+				tap(() => this.policies$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -165,14 +175,9 @@ export class ApprovalPolicyComponent
 				['organization'],
 				{ tenantId, organizationId } as IApprovalPolicyFindInput
 			);
-			this.approvalPolicies = items;
 			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
 			this.smartTableSource.load(items);
-			if (
-				this.componentLayoutStyleEnum.CARDS_GRID ===
-				this.dataLayoutStyle
-			)
-				this._loadGridLayoutData();
+			if (this._isGridLayout) this._loadGridLayoutData();
 		} catch (error) {
 			console.log('Error while retrieving approval policies', error);
 		} finally {
@@ -185,7 +190,8 @@ export class ApprovalPolicyComponent
 	}
 
 	private async _loadGridLayoutData() {
-		this.approvalPolicies = await this.smartTableSource.getElements();
+		const data = await this.smartTableSource.getElements();
+		this.approvalPolicies.push(...data);
 	}
 
 	private _loadSmartTableSettings() {
@@ -196,7 +202,9 @@ export class ApprovalPolicyComponent
 				display: false,
 				perPage: pagination ? pagination : 10
 			},
-			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.APPROVAL_POLICY'),
+			noDataMessage: this.getTranslation(
+				'SM_TABLE.NO_DATA.APPROVAL_POLICY'
+			),
 			columns: {
 				name: {
 					title: this.getTranslation(
@@ -250,6 +258,7 @@ export class ApprovalPolicyComponent
 						name: result.name
 					}
 				);
+				this._refresh$.next(true);
 				this.policies$.next(true);
 			}
 		} catch (error) {
@@ -272,6 +281,7 @@ export class ApprovalPolicyComponent
 						name: result.name
 					}
 				);
+				this._refresh$.next(true);
 				this.policies$.next(true);
 			}
 		} catch (error) {
@@ -307,6 +317,7 @@ export class ApprovalPolicyComponent
 				}
 			);
 		}
+		this._refresh$.next(true);
 		this.policies$.next(true);
 	}
 
@@ -329,6 +340,10 @@ export class ApprovalPolicyComponent
 			this.approvalPolicyTable.grid.dataSet['willSelect'] = 'false';
 			this.approvalPolicyTable.grid.dataSet.deselectAll();
 		}
+	}
+
+	private get _isGridLayout(): boolean {
+		return this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID;
 	}
 
 	ngOnDestroy() {}

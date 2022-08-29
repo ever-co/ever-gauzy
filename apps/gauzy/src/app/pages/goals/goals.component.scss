@@ -22,7 +22,17 @@
     background-color: var(--gauzy-card-2);
   }
   nb-card-body {
-    overflow-y: overlay;
+    overflow: unset;
+    border-radius: 0 0 var(--border-radius) var(--border-radius);
+    @include nb-ltr(padding, 1rem 0.5rem 1rem 18px);
+    @include nb-rtl(padding, 1rem 18px 1rem 0.5rem);
+    height: 100%;
+    .goals-container {
+      height: calc(100vh - 20.5rem);
+      overflow: auto;
+      @include nb-ltr(padding, 0 0.5rem 0 0);
+      @include nb-rtl(padding, 0 0 0 0.5rem);
+    }
   }
   ::ng-deep {
     nb-progress-bar {
@@ -45,10 +55,11 @@
   }
   nb-accordion {
     box-shadow: unset;
-}
+  }
 }
 nb-accordion-item-body {
-  &:hover, &.item.selected {
+  &:hover,
+  &.item.selected {
     background: var(--gauzy-card-2);
   }
 }

@@ -1,5 +1,4 @@
 <nb-card
-	class="card-scroll"
 	[nbSpinner]="loading"
 	nbSpinnerStatus="primary"
 	nbSpinnerSize="large"
@@ -11,7 +10,7 @@
 			</ngx-header-title>
 		</h4>
 	</nb-card-header>
-	<nb-card-body p-0>
+	<nb-card-body class="p-0">
 		<div class="gauzy-button-container">
 			<ngx-gauzy-button-action
 				[buttonTemplateVisible]="visibleButton"
@@ -19,7 +18,7 @@
 				[buttonTemplate]="actionButtons"
 			></ngx-gauzy-button-action>
 		</div>
-		<nb-tabset>
+		<nb-tabset class="mt-4">
 			<nb-tab [tabTitle]="'JOB_EMPLOYEE.BROWSE' | translate">
 				<ng-container>
 					<ng-template

@@ -2,20 +2,22 @@
 @import "../../../../../@theme/styles/var";
 
 :host {
-    height: 92%;
+    height: 100%;
 }
 
 // !importants exclusively for overriding Bootstrap and Nebular styles, which cannot be touched otherwise.
 
 // main sections
-.main-form {
+:host .main-form {
     width: 100%;
     background-color: nb-theme(gauzy-card-2);
     display: flex;
     justify-content: space-between;
     padding: 20px;
+    @include nb-ltr(padding-right, 8px);
+    @include nb-rtl(padding-left, 8px);
     overflow: hidden;
-    height: calc(100vh - 22.5rem);
+    height: calc(100vh - 19.25rem);
 }
 .aside-nav {
     width: 180px;
@@ -66,9 +68,11 @@
 .fields-section {
     width: calc(100% - 230px);
 }
-.accordion-section{
+:host .accordion-section{
     overflow: auto;
-    max-height: calc(100vh - 27rem);
+    max-height: calc(100% - 3rem);
+    @include nb-ltr(padding-right, 8px);
+    @include nb-rtl(padding-left, 8px);
 }
 // end of main sections.
 

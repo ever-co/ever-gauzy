@@ -27,7 +27,10 @@ import {
 } from '../../@core/services';
 import { ServerDataSource } from '../../@core/utils/smart-table';
 import { InputFilterComponent } from '../../@shared/table-filters';
-import { IPaginationBase, PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
+import {
+	IPaginationBase,
+	PaginationFilterBaseComponent
+} from '../../@shared/pagination/pagination-filter-base.component';
 import { StageComponent } from './stage/stage.component';
 import { AtLeastOneFieldValidator } from '../../@core/validators';
 
@@ -37,9 +40,10 @@ import { AtLeastOneFieldValidator } from '../../@core/validators';
 	selector: 'ga-pipelines',
 	styleUrls: ['./pipelines.component.scss']
 })
-export class PipelinesComponent extends PaginationFilterBaseComponent
-	implements OnInit, OnDestroy {
-
+export class PipelinesComponent
+	extends PaginationFilterBaseComponent
+	implements OnInit, OnDestroy
+{
 	smartTableSettings: object;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
@@ -54,6 +58,7 @@ export class PipelinesComponent extends PaginationFilterBaseComponent
 	pipelineTabsEnum = PipelineTabsEnum;
 	pipelines$: Subject<any> = this.subject$;
 	nbTab$: Subject<string> = new BehaviorSubject(PipelineTabsEnum.ACTIONS);
+	private _refresh$: Subject<any> = new Subject();
 
 	pipelineTable: Ng2SmartTableComponent;
 	@ViewChild('pipelineTable') set content(content: Ng2SmartTableComponent) {
@@ -64,17 +69,20 @@ export class PipelinesComponent extends PaginationFilterBaseComponent
 	}
 
 	/*
-	* Search Tab Form
-	*/
+	 * Search Tab Form
+	 */
 	public searchForm: FormGroup = PipelinesComponent.searchBuildForm(this.fb);
-	static searchBuildForm(fb: FormBuilder,): FormGroup {
-		return fb.group({
-			name: [],
-			stages: [],
-			status: []
-		}, {
-			validators: [AtLeastOneFieldValidator]
-		});
+	static searchBuildForm(fb: FormBuilder): FormGroup {
+		return fb.group(
+			{
+				name: [],
+				stages: [],
+				status: []
+			},
+			{
+				validators: [AtLeastOneFieldValidator]
+			}
+		);
 	}
 
 	constructor(
@@ -109,7 +117,12 @@ export class PipelinesComponent extends PaginationFilterBaseComponent
 			.pipe(
 				distinctUntilChange(),
 				debounceTime(100),
-				filter(() => this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID),
+				filter(
+					() =>
+						this.dataLayoutStyle ===
+						ComponentLayoutStyleEnum.CARDS_GRID
+				),
+				tap(() => this._refresh$.next(true)),
 				tap(() => this.pipelines$.next(true)),
 				untilDestroyed(this)
 			)
@@ -126,8 +139,24 @@ export class PipelinesComponent extends PaginationFilterBaseComponent
 			.pipe(
 				filter((organization: IOrganization) => !!organization),
 				distinctUntilChange(),
-				tap((organization: IOrganization) => this.organization = organization),
+				tap(
+					(organization: IOrganization) =>
+						(this.organization = organization)
+				),
+				tap(() => this._refresh$.next(true)),
 				tap(() => this.pipelines$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this._refresh$
+			.pipe(
+				filter(
+					() =>
+						this.dataLayoutStyle ===
+						ComponentLayoutStyleEnum.CARDS_GRID
+				),
+				tap(() => this.refreshPagination()),
+				tap(() => (this.pipelines = [])),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -139,16 +168,26 @@ export class PipelinesComponent extends PaginationFilterBaseComponent
 			.componentLayout$(this.viewComponentName)
 			.pipe(
 				distinctUntilChange(),
-				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
+				tap(
+					(componentLayout) =>
+						(this.dataLayoutStyle = componentLayout)
+				),
 				tap(() => this.refreshPagination()),
-				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
-				tap(() => this.subject$.next(true)),
+				filter(
+					(componentLayout) =>
+						componentLayout === ComponentLayoutStyleEnum.CARDS_GRID
+				),
+				tap(() => (this.pipelines = [])),
+				tap(() => this.pipelines$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
 		this.route.queryParamMap
 			.pipe(
-				filter((params) => !!params && params.get('openAddDialog') === 'true'),
+				filter(
+					(params) =>
+						!!params && params.get('openAddDialog') === 'true'
+				),
 				debounceTime(1000),
 				tap(() => this.createPipeline()),
 				untilDestroyed(this)
@@ -228,8 +267,8 @@ export class PipelinesComponent extends PaginationFilterBaseComponent
 	}
 
 	/*
-	* Register Smart Table Source Config
-	*/
+	 * Register Smart Table Source Config
+	 */
 	setSmartTableSource() {
 		if (!this.organization) {
 			return;
@@ -242,13 +281,13 @@ export class PipelinesComponent extends PaginationFilterBaseComponent
 
 		this.smartTableSource = new ServerDataSource(this.httpClient, {
 			endPoint: `${API_PREFIX}/pipelines/pagination`,
-			relations: [ 'stages' ],
+			relations: ['stages'],
 			join: {
-				alias: "pipeline",
+				alias: 'pipeline',
 				leftJoin: {
 					stages: 'pipeline.stages'
 				},
-				...(this.filters.join) ? this.filters.join : {}
+				...(this.filters.join ? this.filters.join : {})
 			},
 			where: {
 				organizationId,
@@ -279,7 +318,7 @@ export class PipelinesComponent extends PaginationFilterBaseComponent
 			text: value,
 			class: badgeClass
 		};
-	}
+	};
 
 	async getPipelines() {
 		if (!this.organization) {
@@ -290,17 +329,11 @@ export class PipelinesComponent extends PaginationFilterBaseComponent
 			this.setSmartTableSource();
 
 			const { activePage, itemsPerPage } = this.getPagination();
-			this.smartTableSource.setPaging(
-				activePage,
-				itemsPerPage,
-				false
-			);
-			if (
-				this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID
-			) {
+			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
+			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
 				// Initiate GRID view pagination
 				await this.smartTableSource.getElements();
-				this.pipelines = this.smartTableSource.getData();
+				this.pipelines.push(...this.smartTableSource.getData());
 
 				this.setPagination({
 					...this.getPagination(),
@@ -320,22 +353,23 @@ export class PipelinesComponent extends PaginationFilterBaseComponent
 			});
 		}
 
-		const canProceed: 'ok' = await firstValueFrom(this.dialogService
-			.open(DeleteConfirmationComponent, {
+		const canProceed: 'ok' = await firstValueFrom(
+			this.dialogService.open(DeleteConfirmationComponent, {
 				context: {
 					recordType: this.getTranslation(
 						'PIPELINES_PAGE.RECORD_TYPE',
 						this.pipeline
 					)
 				}
-			})
-			.onClose);
+			}).onClose
+		);
 
 		if ('ok' === canProceed) {
 			await this.pipelinesService.delete(this.pipeline.id);
 			this.toastrService.success('TOASTR.MESSAGE.PIPELINE_DELETED', {
 				name: this.pipeline.name
 			});
+			this._refresh$.next(true);
 			this.pipelines$.next(true);
 		}
 	}
@@ -388,6 +422,7 @@ export class PipelinesComponent extends PaginationFilterBaseComponent
 							name: data.name
 						}
 				  );
+			this._refresh$.next(true);
 			this.pipelines$.next(true);
 		}
 	}
@@ -399,7 +434,9 @@ export class PipelinesComponent extends PaginationFilterBaseComponent
 				data: selectedItem
 			});
 		}
-		this.router.navigate([`/pages/sales/pipelines/${this.pipeline.id}/deals`]);
+		this.router.navigate([
+			`/pages/sales/pipelines/${this.pipeline.id}/deals`
+		]);
 	}
 
 	selectPipeline({ isSelected, data }) {
@@ -435,12 +472,19 @@ export class PipelinesComponent extends PaginationFilterBaseComponent
 	search() {
 		const { status, name, stages } = this.searchForm.getRawValue();
 
-		if (status) { this.setFilter({ field: 'isActive', search: status }, false); }
-		if (name) { this.setFilter({ field: 'name', search: name }, false); }
-		if (stages) { this.setFilter({ field: 'stages', search: stages }, false); }
+		if (status) {
+			this.setFilter({ field: 'isActive', search: status }, false);
+		}
+		if (name) {
+			this.setFilter({ field: 'name', search: name }, false);
+		}
+		if (stages) {
+			this.setFilter({ field: 'stages', search: stages }, false);
+		}
 
 		if (isNotEmpty(this.filters)) {
 			this.refreshPagination();
+			this._refresh$.next(true);
 			this.pipelines$.next(true);
 		}
 	}
@@ -448,6 +492,7 @@ export class PipelinesComponent extends PaginationFilterBaseComponent
 	reset() {
 		this.searchForm.reset();
 		this._filters = {};
+		this._refresh$.next(true);
 		this.pipelines$.next(true);
 	}
 

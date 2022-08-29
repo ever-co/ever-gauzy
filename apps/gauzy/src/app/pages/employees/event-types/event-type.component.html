@@ -38,9 +38,7 @@
 				</ng2-smart-table>
 			</div>
 			<div class="pagination-container">
-				<ng-container
-					*ngIf="pagination.totalItems > minItemPerPage"
-				>
+				<ng-container *ngIf="pagination.totalItems > minItemPerPage">
 					<ga-pagination
 						(selectedOption)="onUpdateOption($event)"
 						(selectedPage)="onPageChange($event)"
@@ -57,13 +55,8 @@
 			<ga-card-grid
 				[settings]="smartTableSettings"
 				[source]="eventTypes"
-				(selectedOption)="onUpdateOption($event)"
-				(selectedPage)="onPageChange($event)"
 				(onSelectedItem)="selectEventType($event)"
-				[doEmit]="false"
-				[totalItems]="pagination?.totalItems"
-				[itemsPerPage]="pagination?.itemsPerPage"
-				[activePage]="pagination?.activePage"
+				(scroll)="onScroll()"
 			></ga-card-grid>
 		</ng-template>
 	</nb-card-body>

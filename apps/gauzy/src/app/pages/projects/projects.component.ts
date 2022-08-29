@@ -68,6 +68,7 @@ export class ProjectsComponent
 	selectedProject: IOrganizationProject;
 	smartTableSource: ServerDataSource;
 	project$: Subject<any> = this.subject$;
+	private _refresh$: Subject<any> = new Subject();
 
 	projectsTable: Ng2SmartTableComponent;
 	@ViewChild('projectsTable') set content(content: Ng2SmartTableComponent) {
@@ -96,7 +97,7 @@ export class ProjectsComponent
 	ngOnInit(): void {
 		this.project$
 			.pipe(
-				debounceTime(300),
+				debounceTime(150),
 				tap(() => (this.loading = !this.showAddCard)),
 				tap(() => this.loadProjects()),
 				tap(() => this.loadOrganizationContacts()),
@@ -105,11 +106,13 @@ export class ProjectsComponent
 			.subscribe();
 		this.store.selectedOrganization$
 			.pipe(
+				debounceTime(150),
 				filter((organization) => !!organization),
 				tap(
 					(organization: IOrganization) =>
 						(this.organization = organization)
 				),
+				tap(() => this._refresh$.next(true)),
 				tap(() => this.project$.next(true)),
 				untilDestroyed(this)
 			)
@@ -137,6 +140,18 @@ export class ProjectsComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
+		this._refresh$
+			.pipe(
+				filter(
+					() =>
+						this.dataLayoutStyle ===
+						ComponentLayoutStyleEnum.CARDS_GRID
+				),
+				tap(() => this.refreshPagination()),
+				tap(() => (this.projects = [])),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this.loadSmartTable();
 		this._applyTranslationOnSmartTable();
 	}
@@ -160,6 +175,7 @@ export class ProjectsComponent
 						componentLayout ===
 						this.componentLayoutStyleEnum.CARDS_GRID
 				),
+				tap(() => (this.projects = [])),
 				tap(() => this.project$.next(true)),
 				untilDestroyed(this)
 			)
@@ -194,6 +210,7 @@ export class ProjectsComponent
 				}
 			);
 
+			this._refresh$.next(true);
 			this.project$.next(true);
 		}
 	}
@@ -259,6 +276,7 @@ export class ProjectsComponent
 			}
 		);
 		this.cancel();
+		this._refresh$.next(true);
 		this.project$.next(true);
 	}
 
@@ -288,13 +306,22 @@ export class ProjectsComponent
 				});
 			},
 			finalize: () => {
+				if (this._isGridCardLayout) {
+					const projects = this.smartTableSource.getData();
+					this.projects.push(...projects);
+				}
 				this.setPagination({
 					...this.getPagination(),
 					totalItems: this.smartTableSource.count()
 				});
-				this.loading = false;
 			}
 		});
+	}
+
+	private get _isGridCardLayout(): boolean {
+		return (
+			this.dataLayoutStyle === this.componentLayoutStyleEnum.CARDS_GRID
+		);
 	}
 
 	async loadProjects() {
@@ -304,15 +331,16 @@ export class ProjectsComponent
 			this.setSmartTable();
 			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
 			this.loadGridLayoutData();
+			this.loading = false;
 		} catch (error) {
 			console.log(error);
+			this.loading = false;
 		}
 	}
 
 	private async loadGridLayoutData() {
-		if (this.dataLayoutStyle === this.componentLayoutStyleEnum.CARDS_GRID) {
+		if (this._isGridCardLayout) {
 			await this.smartTableSource.getElements();
-			this.projects = this.smartTableSource.getData();
 		}
 	}
 
@@ -485,7 +513,10 @@ export class ProjectsComponent
 					}
 				);
 			})
-			.finally(() => this.project$.next(true));
+			.finally(() => {
+				this._refresh$.next(true);
+				this.project$.next(true);
+			});
 	}
 
 	private loadOrganizationContacts() {

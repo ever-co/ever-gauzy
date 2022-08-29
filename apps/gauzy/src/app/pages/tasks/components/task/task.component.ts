@@ -45,7 +45,10 @@ import {
 	TaskStatusFilterComponent
 } from './../../../../@shared/table-filters';
 import { InputFilterComponent } from './../../../../@shared/table-filters';
-import { IPaginationBase, PaginationFilterBaseComponent } from './../../../../@shared/pagination/pagination-filter-base.component';
+import {
+	IPaginationBase,
+	PaginationFilterBaseComponent
+} from './../../../../@shared/pagination/pagination-filter-base.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -53,9 +56,10 @@ import { IPaginationBase, PaginationFilterBaseComponent } from './../../../../@s
 	templateUrl: './task.component.html',
 	styleUrls: ['task.component.scss']
 })
-export class TaskComponent extends PaginationFilterBaseComponent 
-	implements OnInit, OnDestroy {
-
+export class TaskComponent
+	extends PaginationFilterBaseComponent
+	implements OnInit, OnDestroy
+{
 	settingsSmartTable: object;
 	loading: boolean = false;
 	disableButton: boolean = true;
@@ -75,6 +79,8 @@ export class TaskComponent extends PaginationFilterBaseComponent
 	taskSubject$: Subject<any> = this.subject$;
 	selectedEmployee: ISelectedEmployee;
 	selectedProject: IOrganizationProject;
+	private _refresh$: Subject<any> = new Subject();
+	private _tasks: ITask[] = [];
 
 	tasksTable: Ng2SmartTableComponent;
 	@ViewChild('tasksTable') set content(content: Ng2SmartTableComponent) {
@@ -90,7 +96,7 @@ export class TaskComponent extends PaginationFilterBaseComponent
 		private readonly _myTaskStore: MyTasksStoreService,
 		private readonly _teamTaskStore: TeamTasksStoreService,
 		readonly translateService: TranslateService,
-		private readonly _router: Router, 
+		private readonly _router: Router,
 		private readonly _activatedRoute: ActivatedRoute,
 		private readonly _store: Store,
 		private readonly route: ActivatedRoute,
@@ -139,7 +145,7 @@ export class TaskComponent extends PaginationFilterBaseComponent
 						? (project.taskListType as TaskListTypeEnum)
 						: TaskListTypeEnum.GRID;
 				}),
-				tap(() => this.refreshPagination()),
+				tap(() => this._refresh$.next(true)),
 				tap(() => this.taskSubject$.next(true)),
 				untilDestroyed(this)
 			)
@@ -152,6 +158,18 @@ export class TaskComponent extends PaginationFilterBaseComponent
 				),
 				debounceTime(1000),
 				tap(() => this.createTaskDialog()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this._refresh$
+			.pipe(
+				filter(
+					() =>
+						this.dataLayoutStyle ===
+						ComponentLayoutStyleEnum.CARDS_GRID
+				),
+				tap(() => this.refreshPagination()),
+				tap(() => (this._tasks = [])),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -179,9 +197,16 @@ export class TaskComponent extends PaginationFilterBaseComponent
 			.componentLayout$(this.viewComponentName)
 			.pipe(
 				distinctUntilChange(),
-				tap((componentLayout) => (this.dataLayoutStyle = componentLayout)),
+				tap(
+					(componentLayout) =>
+						(this.dataLayoutStyle = componentLayout)
+				),
 				tap(() => this.refreshPagination()),
-				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
+				filter(
+					(componentLayout) =>
+						componentLayout === ComponentLayoutStyleEnum.CARDS_GRID
+				),
+				tap(() => (this._tasks = [])),
 				tap(() => this.taskSubject$.next(true)),
 				untilDestroyed(this)
 			)
@@ -288,9 +313,11 @@ export class TaskComponent extends PaginationFilterBaseComponent
 				});
 			},
 			finalize: () => {
-				const tasks = this.smartTableSource.getData();
-				this.storeInstance.loadAllTasks(tasks);
-
+				this.dataLayoutStyle ===
+				this.componentLayoutStyleEnum.CARDS_GRID
+					? this._tasks.push(...this.smartTableSource.getData())
+					: (this._tasks = this.smartTableSource.getData());
+				this.storeInstance.loadAllTasks(this._tasks);
 				this.setPagination({
 					...this.getPagination(),
 					totalItems: this.smartTableSource.count()
@@ -306,13 +333,9 @@ export class TaskComponent extends PaginationFilterBaseComponent
 		}
 		try {
 			this.setSmartTableSource();
-			
+
 			const { activePage, itemsPerPage } = this.pagination;
-			this.smartTableSource.setPaging(
-				activePage,
-				itemsPerPage,
-				false
-			);
+			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
 			if (
 				this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID ||
 				this.viewMode === TaskListTypeEnum.SPRINT
@@ -500,6 +523,7 @@ export class TaskComponent extends PaginationFilterBaseComponent
 				this.storeInstance
 					.createTask(payload)
 					.pipe(
+						tap(() => this._refresh$.next(true)),
 						tap(() => this.taskSubject$.next(true)),
 						untilDestroyed(this)
 					)
@@ -560,6 +584,7 @@ export class TaskComponent extends PaginationFilterBaseComponent
 				this.storeInstance
 					.editTask({ ...payload, id: this.selectedTask.id })
 					.pipe(
+						tap(() => this._refresh$.next(true)),
 						tap(() => this.taskSubject$.next(true)),
 						untilDestroyed(this)
 					)
@@ -621,6 +646,7 @@ export class TaskComponent extends PaginationFilterBaseComponent
 				this.storeInstance
 					.createTask(payload)
 					.pipe(
+						tap(() => this._refresh$.next(true)),
 						tap(() => this.taskSubject$.next(true)),
 						untilDestroyed(this)
 					)
@@ -645,6 +671,7 @@ export class TaskComponent extends PaginationFilterBaseComponent
 			this.storeInstance
 				.delete(this.selectedTask.id)
 				.pipe(
+					tap(() => this._refresh$.next(true)),
 					tap(() => this.taskSubject$.next(true)),
 					untilDestroyed(this)
 				)

@@ -101,6 +101,7 @@ export class InvoicesComponent
 	invoices$: Subject<any> = this.subject$;
 	invoiceTabsEnum = InvoiceTabsEnum;
 	nbTab$: Subject<string> = new BehaviorSubject(InvoiceTabsEnum.ACTIONS);
+	private _refresh$: Subject<any> = new Subject();
 
 	/*
 	* getter setter for check estimate or invoice
@@ -196,6 +197,7 @@ export class InvoicesComponent
 				distinctUntilChange(),
 				debounceTime(100),
 				filter(() => this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID),
+				tap(() => this._refresh$.next(true)),
 				tap(() => this.invoices$.next(true)),
 				untilDestroyed(this)
 			)
@@ -219,11 +221,17 @@ export class InvoicesComponent
 					this.organization = organization as IOrganization;
 					this.selectedDateRange = dateRange as IDateRangePicker;
 				}),
-				tap(() => this.refreshPagination()),
+				tap(() => this._refresh$.next(true)),
 				tap(() => this.invoices$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
+		this._refresh$.pipe(
+			filter(() => this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID),
+			tap(() => this.refreshPagination()),
+			tap(() => this.invoices = []),
+			untilDestroyed(this)
+		).subscribe();
 	}
 
 	/*
@@ -248,6 +256,7 @@ export class InvoicesComponent
 				tap(() => this.closeActionsPopover()),
 				tap(() => this.refreshPagination()),
 				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
+				tap(() => this.invoices = []),
 				tap(() => this.invoices$.next(true)),
 				untilDestroyed(this)
 			)
@@ -500,6 +509,7 @@ export class InvoicesComponent
 				})
 				.onClose
 				.pipe(
+					tap(() => this._refresh$.next(true)),
 					tap(() => this.invoices$.next(true)),
 					untilDestroyed(this)
 				)
@@ -527,6 +537,7 @@ export class InvoicesComponent
 		await this.createInvoiceHistory(action);
 
 		this.toastrService.success('INVOICES_PAGE.ESTIMATES.ESTIMATE_CONVERT');
+		this._refresh$.next(true);
 		this.invoices$.next(true);
 	}
 
@@ -550,6 +561,7 @@ export class InvoicesComponent
 			} else {
 				this.toastrService.success('INVOICES_PAGE.INVOICES_DELETE_INVOICE');
 			}
+			this._refresh$.next(true)
 			this.invoices$.next(true);
 		}
 	}
@@ -579,6 +591,7 @@ export class InvoicesComponent
 			})
 			.onClose
 			.pipe(
+				tap(() => this._refresh$.next(true)),
 				tap(() => this.invoices$.next(true)),
 				untilDestroyed(this)
 			)
@@ -599,6 +612,7 @@ export class InvoicesComponent
 			})
 			.onClose
 			.pipe(
+				tap(() => this._refresh$.next(true)),
 				tap(() => this.invoices$.next(true)),
 				untilDestroyed(this)
 			)
@@ -708,6 +722,11 @@ export class InvoicesComponent
 				});
 			},
 			finalize: () => {
+				if (
+					this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID
+				) {
+					this.invoices.push(...this.smartTableSource.getData());
+				}
 				this.setPagination({
 					...this.getPagination(),
 					totalItems: this.smartTableSource.count()
@@ -735,12 +754,6 @@ export class InvoicesComponent
 			) {
 				// Initiate GRID or TABLE view pagination
 				await this.smartTableSource.getElements();
-				this.invoices = this.smartTableSource.getData();
-
-				this.setPagination({
-					...this.getPagination(),
-					totalItems: this.smartTableSource.count()
-				});
 			}
 		} catch (error) {
 			this.toastrService.danger(
@@ -827,6 +840,7 @@ export class InvoicesComponent
 		await this.invoicesService.updateAction(this.selectedInvoice.id, {
 			isArchived: true
 		});
+		this._refresh$.next(true);
 		this.invoices$.next(true);
 	}
 
@@ -1077,18 +1091,21 @@ export class InvoicesComponent
 		}
 		if (isNotEmpty(this.filters)) {
 			this.refreshPagination();
+			this._refresh$.next(true);
 			this.invoices$.next(true);
 		}
 	}
 
 	toggleIncludeArchived(event) {
 		this.includeArchived = event;
+		 this._refresh$.next(true);
 		this.invoices$.next(true);
 	}
 
 	reset() {
 		this.searchForm.reset();
 		this._filters = {};
+		this._refresh$.next(true);
 		this.invoices$.next(true);
 	}
 
@@ -1102,6 +1119,7 @@ export class InvoicesComponent
 		await this.invoicesService.updateAction(this.selectedInvoice.id, {
 			status: $event
 		});
+		this._refresh$.next(true);
 		this.invoices$.next(true);
 	}
 

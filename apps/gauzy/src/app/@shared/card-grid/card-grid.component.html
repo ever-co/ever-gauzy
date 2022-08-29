@@ -1,15 +1,11 @@
 <div
 	*ngIf="source && source.length > 0; else noDataGridLayout"
-	class="card-layout grid-scroll-container p-1"
+	class="card-layout grid-scroll-container"
 	infinite-scroll
 	[scrollWindow]="false"
 	(scrolled)="onScroll()"
 >
-	<nb-card
-		*ngFor="let item of source"
-		class="card-item"
-		[ngClass]="{ big: cardSize === 'big' }"
-	>
+	<nb-card *ngFor="let item of source" class="card-item">
 		<nb-card-body
 			[ngClass]="
 				selected.isSelected && selected.data.id === item.id
@@ -22,7 +18,9 @@
 				<div
 					class="info-meta"
 					[ngClass]="{
-						'image-logo': settings.columns[key].title === 'Image'
+						'image-logo': settings.columns[key].title === 'Image',
+						active:
+							selected.isSelected && selected.data.id === item.id
 					}"
 				>
 					{{ settings.columns[key].title }}
@@ -30,7 +28,9 @@
 				<div
 					class="info-value"
 					[ngClass]="{
-						'image-logo': settings.columns[key].title === 'Image'
+						'image-logo': settings.columns[key].title === 'Image',
+						active:
+							selected.isSelected && selected.data.id === item.id
 					}"
 					[ngSwitch]="settings.columns[key].type"
 				>
@@ -53,10 +53,11 @@
 			</div>
 		</nb-card-body>
 	</nb-card>
-</div>	
+</div>
 <ng-template #noDataGridLayout>
-	<ngx-no-data-message 
-		[message]="getNoDataMessage()"
-	></ngx-no-data-message>
-</ng-template>				
-
+	<div class="no-data">
+		<ngx-no-data-message
+			[message]="getNoDataMessage()"
+		></ngx-no-data-message>
+	</div>
+</ng-template>

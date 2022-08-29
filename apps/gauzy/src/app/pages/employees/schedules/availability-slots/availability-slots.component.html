@@ -24,41 +24,37 @@
 				</h5>
 			</div>
 			<div class="time-range" *ngIf="recurringAvailabilityMode">
-					<div class="col">
-						{{
-							(organization?.startWeekOn == weekDaysEnum.MONDAY
-								? 'SCHEDULE.MONDAY_FRIDAY'
-								: 'SCHEDULE.SUNDAY_THURSDAY'
-							) | translate
-						}}
-					</div>
-					<div class="col">
-						<ga-timer-picker
-							[(ngModel)]="createForm.startTime"
-						></ga-timer-picker>
-					</div>
-					<div class="col">
-						<ga-timer-picker
-							[(ngModel)]="createForm.endTime"
-						></ga-timer-picker>
-					</div>
-					<div class="col">
-						<button
-							nbButton
-							status="primary"
-							(click)="setSchedule()"
-						>
-							{{ 'BUTTONS.SET' | translate }}
-						</button>
-					</div>
+				<div class="col">
+					{{
+						(organization?.startWeekOn == weekDaysEnum.MONDAY
+							? 'SCHEDULE.MONDAY_FRIDAY'
+							: 'SCHEDULE.SUNDAY_THURSDAY'
+						) | translate
+					}}
 				</div>
+				<div class="col">
+					<ga-timer-picker
+						[(ngModel)]="createForm.startTime"
+					></ga-timer-picker>
+				</div>
+				<div class="col">
+					<ga-timer-picker
+						[(ngModel)]="createForm.endTime"
+					></ga-timer-picker>
+				</div>
+				<div class="col">
+					<button nbButton status="primary" (click)="setSchedule()">
+						{{ 'BUTTONS.SET' | translate }}
+					</button>
+				</div>
+			</div>
 		</div>
-
-		<full-calendar
-			class="custom-calendar"
-			*ngIf="!loading"
-			#calendar
-			[options]="calendarOptions"
-		></full-calendar>
+		<div class="custom-calendar">
+			<full-calendar
+				*ngIf="!loading"
+				#calendar
+				[options]="calendarOptions"
+			></full-calendar>
+		</div>
 	</nb-card-body>
 </nb-card>

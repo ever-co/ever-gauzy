@@ -63,6 +63,7 @@ button {
  padding-bottom: 0;
 }
 
-nb-card-body{
+:host nb-card-body{
   overflow: unset;
+  height: calc(100vh - 17.5rem) !important;
 }

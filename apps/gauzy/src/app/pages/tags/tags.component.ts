@@ -51,7 +51,9 @@ export class TagsComponent
 	tags: ITag[] = [];
 
 	private organization: IOrganization;
-	tags$: Subject<any> = new Subject();
+	tags$: Subject<any> = this.subject$;
+	private _refresh$: Subject<any> = new Subject();
+	private _isFiltered: boolean = false;
 
 	tagsTable: Ng2SmartTableComponent;
 	@ViewChild('tagsTable') set content(content: Ng2SmartTableComponent) {
@@ -95,9 +97,20 @@ export class TagsComponent
 			.subscribe();
 		this.route.queryParamMap
 			.pipe(
-				filter((params) => !!params && params.get('openAddDialog') === 'true'),
+				filter(
+					(params) =>
+						!!params && params.get('openAddDialog') === 'true'
+				),
 				debounceTime(1000),
 				tap(() => this.add()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this._refresh$
+			.pipe(
+				filter(() => this._isGridLayout),
+				tap(() => this.refreshPagination()),
+				tap(() => (this.tags = [])),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -109,6 +122,7 @@ export class TagsComponent
 				filter((organization) => !!organization),
 				tap((organization) => (this.organization = organization)),
 				distinctUntilChange(),
+				tap(() => this._refresh$.next(true)),
 				tap(() => this.tags$.next(true)),
 				untilDestroyed(this)
 			)
@@ -129,9 +143,14 @@ export class TagsComponent
 							.toLowerCase()
 							.includes(searchText.toLowerCase()))
 			);
+			this._isFiltered = true;
+			this._refresh$.next(true);
 			this.smartTableSource.load(searchedTags);
+			this.tags$.next(true);
 		} else {
-			this.smartTableSource.load(this.allTags);
+			this._isFiltered = false;
+			this._refresh$.next(true);
+			this.tags$.next(true);
 		}
 	}
 
@@ -145,6 +164,12 @@ export class TagsComponent
 						(this.dataLayoutStyle = componentLayout)
 				),
 				tap(() => this.refreshPagination()),
+				filter(
+					(componentLayout) =>
+						componentLayout === ComponentLayoutStyleEnum.CARDS_GRID
+				),
+				tap(() => (this.tags = [])),
+				tap(() => this.tags$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -164,6 +189,7 @@ export class TagsComponent
 			this.toastrService.success('TAGS_PAGE.TAGS_ADD_TAG', {
 				name: addData.name
 			});
+			this._refresh$.next(true);
 			this.tags$.next(true);
 		}
 	}
@@ -194,6 +220,7 @@ export class TagsComponent
 						);
 					})
 					.finally(() => {
+						this._refresh$.next(true);
 						this.tags$.next(true);
 					});
 			}
@@ -220,6 +247,7 @@ export class TagsComponent
 				this.toastrService.success('TAGS_PAGE.TAGS_EDIT_TAG', {
 					name: this.selectedTag.name
 				});
+				this._refresh$.next(true);
 				this.tags$.next(true);
 			}
 		}
@@ -231,7 +259,9 @@ export class TagsComponent
 			actions: false,
 			pager: {
 				display: false,
-				perPage: pagination ? pagination.itemsPerPage : 10
+				perPage: pagination
+					? pagination.itemsPerPage
+					: this.minItemPerPage
 			},
 			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.TAGS'),
 			columns: {
@@ -288,11 +318,14 @@ export class TagsComponent
 		const { activePage, itemsPerPage } = this.getPagination();
 
 		this.allTags = items;
-		this.tags = this.allTags;
 
 		this._generateUniqueTags(this.allTags);
 		this.smartTableSource.setPaging(activePage, itemsPerPage, false);
-		this.smartTableSource.load(this.allTags);
+		if (!this._isFiltered) {
+			this.smartTableSource.load(this.allTags);
+		} else {
+			if (!this._isGridLayout) await this.smartTableSource.getElements();
+		}
 		this._loadDataLayoutCard();
 		this.setPagination({
 			...this.getPagination(),
@@ -301,10 +334,18 @@ export class TagsComponent
 		this.loading = false;
 	}
 
-	private async _loadDataLayoutCard(){
-		if(this.componentLayoutStyleEnum.CARDS_GRID === this.dataLayoutStyle){
-			this.tags = await this.smartTableSource.getElements();
+	private async _loadDataLayoutCard() {
+		if (this._isGridLayout) {
+			const tags = await this.smartTableSource.getElements();
+			this.tags = Array.from(new Set(this.tags));
+			this.tags.push(...tags);
 		}
+	}
+
+	private get _isGridLayout() {
+		return (
+			this.componentLayoutStyleEnum.CARDS_GRID === this.dataLayoutStyle
+		);
 	}
 
 	/**
@@ -315,15 +356,19 @@ export class TagsComponent
 	 */
 	selectedFilterOption(value: string) {
 		if (value === 'all') {
+			this._isFiltered = false;
+			this._refresh$.next(true);
 			this.tags$.next(true);
-			this.smartTableSource.load(this.allTags);
 			return;
 		}
 		if (value) {
 			const tags = this.allTags.filter(
 				(tag) => tag[value] && parseInt(tag[value]) > 0
 			);
+			this._isFiltered = true;
+			this._refresh$.next(true);
 			this.smartTableSource.load(tags);
+			this.tags$.next(true);
 		}
 	}
 

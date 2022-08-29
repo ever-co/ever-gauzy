@@ -5,17 +5,16 @@ h4 {
   font-weight: 600;
   line-height: 30px;
   letter-spacing: 0em;
-  text-align: left;
 }
 
 :host {
   .custom-body-content {
     background-color: unset;
     padding-bottom: 0;
+    height: calc(100vh - 15.25rem) !important;
   }
 
   ::ng-deep ga-projects-mutation {
-
     input,
     nb-select.appearance-outline.status-basic .select-button,
     .ng-select .ng-select-container {
@@ -29,12 +28,12 @@ h4 {
     }
 
     nb-card {
-      margin: -16px -24px;
+      @include nb-rtl(margin, -16px -18px -16px -8px);
+      @include nb-ltr(margin, -16px -8px -16px -18px);
     }
 
     nb-card-body {
       padding: 0;
-
 
       nb-tab.content-active,
       .action-buttons {
@@ -43,7 +42,7 @@ h4 {
       }
 
       nb-tab.content-active {
-        height: calc(100vh - 29rem);
+        height: calc(100vh - 22.5rem);
       }
 
       .action-buttons {

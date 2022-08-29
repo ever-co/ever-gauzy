@@ -61,13 +61,8 @@
 			<ga-card-grid
 				[settings]="smartTableSettings"
 				[source]="expenses"
-				(selectedOption)="onUpdateOption($event)"
-				(selectedPage)="onPageChange($event)"
 				(onSelectedItem)="selectExpense($event)"
-				[doEmit]="false"
-				[totalItems]="pagination?.totalItems"
-				[itemsPerPage]="pagination?.itemsPerPage"
-				[activePage]="pagination?.activePage"
+				(scroll)="onScroll()"
         	></ga-card-grid>
 		</ng-template>
 	</nb-card-body>

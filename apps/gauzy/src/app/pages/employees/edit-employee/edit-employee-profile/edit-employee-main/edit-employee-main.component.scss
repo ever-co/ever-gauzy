@@ -27,7 +27,7 @@ $radius: nb-theme(border-radius);
 :host {
   padding: 0;
   overflow-y: auto;
-  max-height: calc(100vh - 28rem);
+  max-height: calc(100vh - 20.5rem);
   border-radius: 0 $radius $radius $radius;
 
   ::ng-deep .employee-form{

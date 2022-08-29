@@ -102,6 +102,10 @@
 }
 
 :host {
-  @include nb-card_overrides(unset, calc($default-card-height - 0.5rem), $default-radius);
+  @include nb-card_overrides(
+    unset,
+    calc($default-card-height + 3.5rem),
+    $default-radius
+  );
   @include input-appearance(42px, var(--gauzy-card-1));
 }

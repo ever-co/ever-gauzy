@@ -126,7 +126,7 @@
       min-width: 250px;
       flex: none;
       overflow-y: auto;
-      max-height: calc(100vh - 22.5rem);
+      max-height: calc(100vh - 18.5rem);
 
       nb-list-item {
         cursor: pointer;
@@ -197,7 +197,7 @@
   margin-top: 1rem;
   padding: 0.5rem;
   overflow: auto;
-  max-height: calc(100vh - 30rem);
+  max-height: calc(100vh - 26rem);
 }
 
 .email-content {
