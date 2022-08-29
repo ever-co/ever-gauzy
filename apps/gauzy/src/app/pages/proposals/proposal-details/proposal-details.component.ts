@@ -1,11 +1,10 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
-import { IOrganization, IProposalViewModel, IUser } from '@gauzy/contracts';
+import { IProposal, IUser } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { distinctUntilChange } from '@gauzy/common-angular';
-import { filter, tap } from 'rxjs/operators';
-import { ProposalsService, Store } from '../../../@core/services';
+import { debounceTime, filter, tap } from 'rxjs/operators';
+import { Store } from '../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -13,25 +12,22 @@ import { ProposalsService, Store } from '../../../@core/services';
 	templateUrl: './proposal-details.component.html',
 	styleUrls: ['./proposal-details.component.scss']
 })
-export class ProposalDetailsComponent implements OnInit, OnDestroy {
+export class ProposalDetailsComponent implements AfterViewInit, OnInit, OnDestroy {
 
 	constructor(
 		private readonly route: ActivatedRoute,
 		private readonly store: Store,
 		private readonly sanitizer: DomSanitizer,
-		private readonly router: Router,
-		private readonly proposalsService: ProposalsService
+		private readonly router: Router
 	) {}
 
 	user: IUser;
-	proposal: IProposalViewModel;
+	proposal: IProposal;
 	jobPostLink: SafeHtml;
 	jobPostContent: SafeHtml;
 	proposalContent: SafeHtml;
-	author: any;
-	proposalId: string;
 
-	ngOnInit() {
+	ngOnInit(): void {
 		this.store.user$
 			.pipe(
 				filter((user: IUser) => !!user),
@@ -39,69 +35,46 @@ export class ProposalDetailsComponent implements OnInit, OnDestroy {
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.route.params
-			.pipe(
-				untilDestroyed(this),
-				tap((params) => (this.proposalId = params['id']))
-			)
-			.subscribe();
-		this.store.selectedOrganization$
-			.pipe(
-				distinctUntilChange(),
-				filter((organization: IOrganization) => !!organization),
-				tap(() => this.getProposalById()),
-				untilDestroyed(this),
-			)
-			.subscribe();
 	}
 
-	ngOnDestroy() {}
-
-	async getProposalById() {
-		if (!this.proposalId) {
-			this.router.navigate([`/pages/sales/proposals`]);
-		}
-
-		const { tenantId } = this.store.user;
-		const proposal = await this.proposalsService.getById(
-			this.proposalId,
-			{ tenantId },
-			['employee', 'employee.user', 'tags']
-		);
-		this.proposal = Object.assign({}, proposal, {
-			jobPostLink: proposal.jobPostUrl ? proposal.jobPostUrl : '',
-			jobTitle: proposal.jobPostContent
-				.toString()
-				.replace(/<[^>]*(>|$)|&nbsp;/g, '')
-				.split(/[\s,\n]+/)
-				.slice(0, 3)
-				.join(' '),
-			author: proposal.employee
-		});
-		this.setProposal();
+	ngAfterViewInit(): void {
+		this.route.data
+			.pipe(
+				debounceTime(100),
+				filter((data) => !!data && !!data.proposal),
+				tap(({ proposal }) => {
+					try {
+						this.proposal = Object.assign({}, proposal, {
+							jobPostLink: proposal.jobPostUrl ? proposal.jobPostUrl : '',
+							jobTitle: proposal.jobPostContent
+								.toString()
+								.replace(/<[^>]*(>|$)|&nbsp;/g, '')
+								.split(/[\s,\n]+/)
+								.slice(0, 3)
+								.join(' '),
+							author: proposal.employee
+						});
+						this.setProposal();
+					} catch (error) {
+						this.router.navigate(['/pages/sales/proposals']);
+					}
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	setProposal() {
 		this.jobPostLink = this.proposal.jobPostUrl;
-		this.jobPostContent = this.sanitizer.bypassSecurityTrustHtml(
-			this.proposal.jobPostContent
-		);
-		this.proposalContent = this.sanitizer.bypassSecurityTrustHtml(
-			this.proposal.proposalContent
-		);
-		if (!this.proposal.author) {
-			this.author =
-				this.store.selectedEmployee.firstName +
-				' ' +
-				this.store.selectedEmployee.lastName;
-		} else {
-			this.author = this.proposal.author;
-		}
+		this.jobPostContent = this.sanitizer.bypassSecurityTrustHtml(this.proposal.jobPostContent);
+		this.proposalContent = this.sanitizer.bypassSecurityTrustHtml(this.proposal.proposalContent);
 	}
 
 	edit() {
-		this.router.navigate([
-			`/pages/sales/proposals/edit/${this.proposal.id}`
-		]);
+		if (this.proposal) {
+			this.router.navigate([`/pages/sales/proposals/edit`, this.proposal.id]);
+		}
 	}
+
+	ngOnDestroy(): void {}
 }

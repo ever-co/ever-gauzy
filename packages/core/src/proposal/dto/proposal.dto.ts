@@ -1,55 +1,40 @@
-import { IEmployee, IOrganizationContact, ITag, ProposalStatusEnum } from "@gauzy/contracts";
-import { ApiProperty } from "@nestjs/swagger";
+import { IOrganizationContact, ProposalStatusEnum } from "@gauzy/contracts";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { IsEnum, IsNotEmpty, IsObject, IsOptional, IsString } from "class-validator";
+import { TenantOrganizationBaseDTO } from "./../../core/dto";
 
-export abstract class ProposalDTO {
+export class ProposalDTO extends TenantOrganizationBaseDTO {
 
-    @ApiProperty({ type: () => String })
+    @ApiPropertyOptional({ type: () => String, readOnly: true })
     @IsOptional()
     @IsString()
     readonly jobPostUrl: string;
 
-    @ApiProperty({ type: () => Date })
+    @ApiProperty({ type: () => Date, readOnly: true })
     @IsNotEmpty()
     readonly valueDate: Date;
 
-    @ApiProperty({ type: () => String })
+    @ApiProperty({ type: () => String, readOnly: true })
     @IsNotEmpty()
     @IsString()
     readonly jobPostContent: string;
 
-    @ApiProperty({ type: () => String })
+    @ApiProperty({ type: () => String, readOnly: true })
     @IsNotEmpty()
     @IsString()
     readonly proposalContent: string;
 
-    @ApiProperty({ type: () => String, enum: ProposalStatusEnum })
-    @IsNotEmpty()
+    @ApiProperty({ type: () => String, enum: ProposalStatusEnum, readOnly: true })
     @IsEnum(ProposalStatusEnum)
-    readonly status: ProposalStatusEnum;
+    readonly status: ProposalStatusEnum = ProposalStatusEnum.SENT;
 
-    @ApiProperty({ type: () => Object })
-    @IsOptional()
-    @IsObject()
-    readonly employee: IEmployee;
-
-    @ApiProperty({ type: () => String })
-    @IsOptional()
-    @IsString()
-    readonly employeeId: string;
-
-    @ApiProperty({ type: () => Object })
+    @ApiPropertyOptional({ type: () => Object, readOnly: true })
     @IsOptional()
     @IsObject()
     readonly organizationContact: IOrganizationContact;
 
-    @ApiProperty({ type: () => String })
+    @ApiPropertyOptional({ type: () => String, readOnly: true })
     @IsOptional()
     @IsString()
     readonly organizationContactId: string;
-
-    @ApiProperty({ type: () => Object, isArray: true })
-    @IsOptional()
-    readonly tags: ITag[];
-
 }

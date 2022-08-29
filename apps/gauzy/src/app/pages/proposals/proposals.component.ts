@@ -247,7 +247,7 @@ export class ProposalsComponent extends PaginationFilterBaseComponent
 					try {
 						if (this.selectedProposal) {
 							const { tenantId } = this.store.user;
-							await this.proposalsService.updateAction(this.selectedProposal.id, {
+							await this.proposalsService.update(this.selectedProposal.id, {
 								status: ProposalStatusEnum.ACCEPTED,
 								tenantId
 							}).then(() => {
@@ -284,7 +284,7 @@ export class ProposalsComponent extends PaginationFilterBaseComponent
 					try {
 						if (this.selectedProposal) {
 							const { tenantId } = this.store.user;
-							await this.proposalsService.updateAction(this.selectedProposal.id, {
+							await this.proposalsService.update(this.selectedProposal.id, {
 								status: ProposalStatusEnum.SENT,
 								tenantId
 							}).then(() => {
@@ -532,7 +532,6 @@ export class ProposalsComponent extends PaginationFilterBaseComponent
 			return;
 		}
 		try {
-
 			this.setSmartTableSource();
 
 			const { activePage, itemsPerPage } = this.getPagination();
@@ -596,6 +595,5 @@ export class ProposalsComponent extends PaginationFilterBaseComponent
 		}
 	}
 
-
-	ngOnDestroy() { }
+	ngOnDestroy(): void { }
 }

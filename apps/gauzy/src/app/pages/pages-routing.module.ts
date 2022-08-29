@@ -154,15 +154,7 @@ const routes: Routes = [
 						path: 'proposals',
 						loadChildren: () => import('./proposals/proposals.module').then(
 							(m) => m.ProposalsModule
-						),
-						data: {
-							selectors: {
-								project: false
-							},
-							datePicker: {
-								unitOfTime: 'month'
-							}
-						}
+						)
 					},
 					{
 						path: 'estimates',

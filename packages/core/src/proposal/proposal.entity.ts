@@ -9,7 +9,6 @@ import {
 	JoinTable
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsOptional, IsDate, IsEnum } from 'class-validator';
 import {
 	IProposal,
 	IEmployee,
@@ -31,31 +30,22 @@ export class Proposal
 
 	@ApiProperty({ type: () => String })
 	@Index()
-	@IsString()
 	@Column({ nullable: true })
 	jobPostUrl: string;
 
 	@ApiPropertyOptional({ type: () => Date })
-	@IsDate()
-	@IsOptional()
 	@Column({ nullable: true })
 	valueDate?: Date;
 
 	@ApiPropertyOptional({ type: () => String })
-	@IsString()
-	@IsOptional()
 	@Column()
 	jobPostContent?: string;
 
 	@ApiPropertyOptional({ type: () => String })
-	@IsString()
-	@IsOptional()
 	@Column()
 	proposalContent?: string;
 
 	@ApiProperty({ type: () => String, enum: ProposalStatusEnum })
-	@IsEnum(ProposalStatusEnum)
-	@IsOptional()
 	@Column()
 	status?: ProposalStatusEnum;
 
@@ -72,7 +62,6 @@ export class Proposal
 
 	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((it: Proposal) => it.employee)
-	@IsString()
 	@Column({ nullable: true })
 	employeeId?: string;
 
@@ -86,7 +75,6 @@ export class Proposal
 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Proposal) => it.organizationContact)
-	@IsString()
 	@Column({ nullable: true })
 	organizationContactId?: string;
 

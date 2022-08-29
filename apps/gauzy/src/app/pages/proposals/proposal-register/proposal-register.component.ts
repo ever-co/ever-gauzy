@@ -1,19 +1,18 @@
 import {
 	Component,
 	OnInit,
-	ViewChild,
 	OnDestroy,
 	AfterViewInit,
 	ChangeDetectorRef
 } from '@angular/core';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import {
-	ProposalStatusEnum,
 	ITag,
 	IOrganization,
 	IEmployee,
 	IEmployeeProposalTemplate,
-	IOrganizationContact
+	IOrganizationContact,
+	ISelectedEmployee
 } from '@gauzy/contracts';
 import { filter, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
@@ -23,7 +22,6 @@ import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
 import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
 import { NbDateService } from '@nebular/theme';
 import * as moment from 'moment';
-import { EmployeeSelectorComponent } from '../../../@theme/components/header/selectors/employee/employee.component';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { ProposalsService, Store, ToastrService } from '../../../@core/services';
 import { ckEditorConfig } from "../../../@shared/ckeditor.config";
@@ -35,12 +33,8 @@ import { UrlPatternValidator } from '../../../@core/validators';
 	templateUrl: './proposal-register.component.html',
 	styleUrls: ['././proposal-register.component.scss']
 })
-export class ProposalRegisterComponent
-	extends TranslationBaseComponent
+export class ProposalRegisterComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy, AfterViewInit {
-
-	@ViewChild('employeeSelector')
-	employeeSelector: EmployeeSelectorComponent;
 
 	proposalTemplate: IEmployeeProposalTemplate;
 	proposalTemplateId: string;
@@ -67,7 +61,8 @@ export class ProposalRegisterComponent
 			jobPostContent: ['', Validators.required],
 			proposalContent: ['', Validators.required],
 			tags: [],
-			organizationContact: []
+			organizationContact: [],
+			employee: []
 		}, {
 			validators: [
 				UrlPatternValidator.websiteUrlValidator('jobPostUrl'),
@@ -89,7 +84,7 @@ export class ProposalRegisterComponent
     	this.minDate =  this.dateService.addMonth(this.dateService.today(), 0);
 	}
 
-	ngOnInit() {
+	ngOnInit(): void {
 		this.store.selectedOrganization$
 			.pipe(
 				distinctUntilChange(),
@@ -100,10 +95,20 @@ export class ProposalRegisterComponent
 			.subscribe();
 	}
 
-	ngOnDestroy(): void {}
+	ngAfterViewInit(): void {
+		this.cdRef.detectChanges();
+	}
 
-	onEmployeeChange(item: IEmployee): void {
-		this.selectedEmployee = item;
+	/**
+	 * Select Employee Selector
+	 *
+	 * @param employee
+	 */
+	selectionEmployee(employee: ISelectedEmployee) {
+		if (employee) {
+			this.form.patchValue({ employee: employee });
+			this.form.updateValueAndValidity();
+		}
 		this.proposalTemplateId = null;
 	}
 
@@ -115,32 +120,25 @@ export class ProposalRegisterComponent
 		}
 	}
 
-	ngAfterViewInit(): void {
-		this.cdRef.detectChanges();
-	}
-
 	public async registerProposal() {
 		if (!this.organization || this.form.invalid) {
 			return;
 		}
-
 		const { jobPostUrl, valueDate, jobPostContent, proposalContent, organizationContact, tags } = this.form.getRawValue();
-		const selectedEmployee = this.employeeSelector.selectedEmployee;
-
+		const { employee } = this.form.getRawValue();
 		try {
-			if (selectedEmployee) {
+			if (employee) {
 				const { tenantId } = this.store.user;
 				const { id: organizationId } = this.organization;
 
 				await this.proposalsService.create({
-					employeeId: selectedEmployee.id,
+					employeeId: employee.id,
 					organizationId,
 					tenantId,
 					jobPostUrl,
 					valueDate: moment(valueDate).startOf('day').toDate(),
 					jobPostContent,
 					proposalContent,
-					status: ProposalStatusEnum.SENT,
 					tags,
 					organizationContactId: organizationContact ? organizationContact.id : null
 				});
@@ -176,4 +174,6 @@ export class ProposalRegisterComponent
 		this.form.get('tags').setValue(tags);
 		this.form.get('tags').updateValueAndValidity();
 	}
+
+	ngOnDestroy(): void {}
 }
