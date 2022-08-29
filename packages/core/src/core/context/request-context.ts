@@ -45,12 +45,12 @@ export class RequestContext {
 	}
 
 	static currentTenantId(): string {
-		const user: IUser = RequestContext.currentUser();
-		if (user) {
+		try {
+			const user: IUser = RequestContext.currentUser();
 			return user.tenantId;
+		} catch (error) {
+			return null;
 		}
-
-		return null;
 	}
 
 	static currentUserId(): string {

@@ -13,6 +13,7 @@ import {
 
 @UseInterceptors(CloudMigrateInterceptor)
 @UseGuards(TenantPermissionGuard, PermissionGuard)
+@Permissions(PermissionsEnum.MIGRATE_GAUZY_CLOUD)
 @Controller()
 export class GauzyCloudController {
 
@@ -30,9 +31,10 @@ export class GauzyCloudController {
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
-	@Permissions(PermissionsEnum.MIGRATE_GAUZY_CLOUD)
 	@Post()
-	async migrateToCloud(@Body() body: IUserRegistrationInput) {
+	async migrateUserToGauzyCloud(
+		@Body() body: IUserRegistrationInput
+	) {
 		return await this.commandBus.execute(
 			new GauzyCloudUserMigrateCommand(body)
 		);
@@ -48,9 +50,8 @@ export class GauzyCloudController {
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
-	@Permissions(PermissionsEnum.MIGRATE_GAUZY_CLOUD)
 	@Post('tenant/:token')
-	async migrateTenant(
+	async migrateTenantToGauzyCloud(
 		@Body() body: ITenantCreateInput,
 		@Param('token') token: string
 	) {
@@ -69,9 +70,8 @@ export class GauzyCloudController {
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
-	@Permissions(PermissionsEnum.MIGRATE_GAUZY_CLOUD)
 	@Post('organization/:token')
-	async migrateOrgnaization(
+	async migrateOrgnaizationToGauzyCloud(
 		@Body() body: IOrganizationCreateInput,
 		@Param('token') token: string
 	) {
