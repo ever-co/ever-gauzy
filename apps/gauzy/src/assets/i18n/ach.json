@@ -169,7 +169,8 @@
 			"KPI": "crwdns11395:0crwdne11395:0",
 			"INVOICE": "crwdns11397:0crwdne11397:0",
 			"ESTIMATE": "crwdns11399:0crwdne11399:0",
-			"EVENT_TYPE": "crwdns11401:0crwdne11401:0"
+			"EVENT_TYPE": "crwdns11401:0crwdne11401:0",
+			"PRODUCT_TYPE_NO_DATA": "crwdns11481:0crwdne11481:0"
 		},
 		"TRANSACTION_TYPE": "crwdns7534:0crwdne7534:0",
 		"AMOUNT": "crwdns7536:0crwdne7536:0",
