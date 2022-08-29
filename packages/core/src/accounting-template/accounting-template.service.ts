@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Brackets, FindOptionsWhere, IsNull, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
+import { Brackets, IsNull, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import * as mjml2html from 'mjml';
 import * as Handlebars from 'handlebars';
 import { AccountingTemplateTypeEnum, IAccountingTemplate, IAccountingTemplateFindInput, IAccountingTemplateUpdateInput, IPagination, LanguagesEnum } from '@gauzy/contracts';
@@ -8,7 +8,6 @@ import { isNotEmpty } from '@gauzy/common';
 import { AccountingTemplate } from './accounting-template.entity';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
-import { SaveAccountingTemplateDTO } from './dto';
 
 @Injectable()
 export class AccountingTemplateService extends TenantAwareCrudService<AccountingTemplate> {
