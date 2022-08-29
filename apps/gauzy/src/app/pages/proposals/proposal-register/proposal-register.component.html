@@ -16,11 +16,11 @@
 							{{ 'PROPOSALS_PAGE.REGISTER.AUTHOR' | translate }}
 						</label>
 						<ga-employee-selector
-							#employeeSelector
-							[skipGlobalChange]="true"
 							id="authorInput"
 							class="employees"
-							(selectionChanged)="onEmployeeChange($event)"
+							[skipGlobalChange]="true"
+							[defaultSelected]="true"
+							(selectionChanged)="selectionEmployee($event)"
 						></ga-employee-selector>
 					</div>
 				</div>
