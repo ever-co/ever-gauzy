@@ -55,9 +55,8 @@ export class AccountingTemplateService {
 
 	saveTemplate(data: any): Promise<any> {
 		return firstValueFrom(
-			this.http
-			.post<any>(`${API_PREFIX}/accounting-template/template/save`, {
-				data
+			this.http.post<any>(`${API_PREFIX}/accounting-template/template/save`, {
+				...data
 			})
 		);
 	}
