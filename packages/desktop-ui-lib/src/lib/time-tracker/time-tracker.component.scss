@@ -8,9 +8,10 @@
   background-color: black;
   color: white;
   font-size: large;
-  font-weight: bolder;
+  font-weight: 600;
   padding: 10px;
   text-align: center;
+  border-radius: var(--button-rectangle-border-radius);
 }
 
 .timer-box {
@@ -24,8 +25,8 @@
 }
 
 .button-ghost {
-    border: none;
-    background-color: transparent;
+  border: none;
+  background-color: transparent;
 }
 
 .center-text {
@@ -36,12 +37,9 @@
   height: 100%;
 }
 
-.full-width {
-  margin-left: -6px !important;
-}
-
 .max-width {
-  width: 103%;
+  width: 100%;
+  padding: 0;
 }
 
 .no-padding {
@@ -61,6 +59,7 @@
 .top-space {
   padding-top: 0px !important;
   padding-bottom: 0px !important;
+  background-color: var(--gauzy-card-2);
 }
 
 .screen-capture-label-left {
@@ -72,11 +71,13 @@
 .screen-capture-label-right {
   text-align: right;
   font-size: 12px;
-  font-weight: normal;
+  font-weight: 600;
 }
 
 .screen-capture-img {
   width: 100%;
+  height: 100%;
+  border-radius: var(--border-radius);
 }
 
 .img-placeholder {
@@ -100,12 +101,16 @@
 
 .org-name {
   font-size: 14px;
-  font-weight: bolder;
+  font-weight: 600;
+  background-color: var(--gauzy-background-transparent-1);
+  padding: 0 4px;
+  border-radius: 4px;
+  color: var(--text-primary-color);
 }
 
 .work-today {
   font-size: 12px;
-  font-weight: bold;
+  font-weight: 600;
 }
 
 .error-border {
@@ -121,10 +126,12 @@
 .overlay-img {
   position: absolute;
   background-color: rgba(0, 0, 0, 0.4);
-  top: 15px;
-  height: 126px;
-  width: 230px;
+  top: 0;
+  height: 100%;
+  width: 100%;
+  border-radius: var(--border-radius);
   display: none;
+  padding: 0 15px;
 }
 
 .max-card {
@@ -137,6 +144,11 @@
   margin: auto;
 }
 
+nb-card,
+nb-card-body {
+  background-color: unset;
+}
+
 .footer-button {
   position: relative;
   top: 0px;
@@ -144,8 +156,8 @@
 
 .last-screenshot-time {
   span {
-    font-size: 13px;
-    font-weight: bold;
+    font-size: 12px;
+    font-weight: 600;
   }
 }
 
@@ -153,12 +165,8 @@
   max-width: 385px;
 }
 
-::ng-deep .nb-theme-default nb-layout .layout .layout-container .content .columns nb-layout-column {
-  padding: 2.25rem 1.25rem 0.75rem;
-}
-
 .max-width-search {
-  width: 108%;
+  width: 100%;
 }
 
 .expand-icon {
@@ -166,7 +174,7 @@
   z-index: 999;
   right: -14px;
   top: 50%;
-  cursor: pointer
+  cursor: pointer;
 }
 
 .top-space-1 {
@@ -196,10 +204,6 @@
   margin-bottom: 0px;
 }
 
-::ng-deep .layout-container {
-  background-color: white;
-}
-
 ::ng-deep .nb-theme-default nb-card {
   border: none;
 }
@@ -207,7 +211,6 @@
 ::ng-deep nb-card {
   border: none;
 }
-
 
 .table-max-height {
   max-height: 500px;
@@ -218,7 +221,7 @@
   padding: 0px !important;
 }
 
-::ng-deep .nb-theme-default nb-layout .layout .layout-container .content nb-layout-footer nav {
+::ng-deep nb-layout .layout .layout-container .content nb-layout-footer nav {
   padding: 0px;
 }
 
@@ -231,19 +234,25 @@
 
 ::ng-deep .ng2-smart-pagination .page-link-next,
 ::ng-deep .ng2-smart-pagination .page-link-prev {
-	border-radius: 0px !important;
+  border-radius: 0px !important;
 }
 
-::ng-deep .nb-theme-default ng2-smart-table nav.ng2-smart-pagination-nav .pagination li a {
+::ng-deep
+  .nb-theme-default
+  ng2-smart-table
+  nav.ng2-smart-pagination-nav
+  .pagination
+  li
+  a {
   padding: 0 1.25rem !important;
 }
 
 ::ng-deep .page-item {
-	margin: auto !important;
+  margin: auto !important;
 }
 
 ::ng-deep .page-link {
-	margin: auto !important;
+  margin: auto !important;
 }
 
 ::ng-deep .ng-select.ng-select-single .ng-select-container {
@@ -254,3 +263,54 @@
   height: 90px;
 }
 
+nb-card.dialog {
+  background-color: var(--gauzy-card-1);
+}
+
+$input-background-color: var(--gauzy-card-1);
+$height: 2rem;
+
+:host {
+  ::ng-deep input,
+  ::ng-deep nb-select.appearance-outline.status-basic .select-button,
+  ::ng-deep .ng-select .ng-select-container {
+    background-color: $input-background-color !important;
+    border: none;
+    height: $height !important;
+    min-height: unset;
+  }
+
+  ::ng-deep
+    .ng-select.ng-select-multiple
+    .ng-select-container
+    .ng-value-container
+    .ng-placeholder,
+  ::ng-deep
+    .ng-select.ng-select-single
+    .ng-select-container
+    .ng-value-container
+    .ng-input {
+    top: unset !important;
+  }
+
+  ::ng-deep label,
+  ::ng-deep .label {
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 13px;
+    letter-spacing: -0.01em;
+    color: var(--gauzy-text-color-2);
+  }
+
+  ::ng-deep textarea {
+    background-color: $input-background-color !important;
+    border: none;
+  }
+
+  ::ng-deep .ng-select .ng-select-container,
+  ::ng-deep nb-tag-list {
+    input {
+      background-color: unset !important;
+    }
+  }
+}
