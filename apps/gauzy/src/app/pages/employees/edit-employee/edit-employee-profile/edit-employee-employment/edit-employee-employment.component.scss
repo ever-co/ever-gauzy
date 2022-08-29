@@ -19,7 +19,7 @@ $radius: nb-theme(border-radius);
 :host {
   @include nb-card_overrides(
     auto,
-    calc($default-card-height - 5rem),
+    calc($default-card-height + 0.25rem),
     $default-radius
   );
 }

@@ -2,7 +2,6 @@
 	[nbSpinner]="loading"
 	[nbSpinnerStatus]="'primary'"
 	[nbSpinnerSize]="'large'"
-	class="card-scroll"
 >
 	<nb-card-header class="flex flex-column">
 		<div class="card-header-title">
@@ -68,10 +67,12 @@
 				</div>
 			</ng-container>
 			<ng-template [ngIf]="!loading && expenses?.length == 0">
-				<ngx-no-data-message 
-					[message]="'ORGANIZATIONS_PAGE.EXPENSE_NO_DATA_MESSAGE'"
-				></ngx-no-data-message>
-			</ng-template>		
+				<div class="no-data">
+					<ngx-no-data-message
+						[message]="'ORGANIZATIONS_PAGE.EXPENSE_NO_DATA_MESSAGE'"
+					></ngx-no-data-message>
+				</div>
+			</ng-template>
 		</div>
 	</nb-card-body>
 </nb-card>

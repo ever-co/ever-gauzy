@@ -8,7 +8,7 @@
 :host {
   @include nb-card-overrides(
     overlay,
-    calc($default-card-height),
+    calc($default-card-height + 3.5rem),
     $default-radius
   );
   nb-card,

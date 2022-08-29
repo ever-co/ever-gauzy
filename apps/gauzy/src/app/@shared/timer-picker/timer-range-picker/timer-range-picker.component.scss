@@ -9,6 +9,7 @@
   border-radius: var(--border-radius);
   height: 42px;
   position: relative;
+  border: unset;
   &:hover {
     border-color: nb-theme(color-primary-hover);
     color: nb-theme(text-basic-color);

@@ -1,4 +1,11 @@
-import { AfterViewInit, Component, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
+import {
+	AfterViewInit,
+	Component,
+	OnDestroy,
+	OnInit,
+	TemplateRef,
+	ViewChild
+} from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Ng2SmartTableComponent } from 'ng2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
@@ -16,10 +23,17 @@ import {
 	IProductTranslated,
 	PermissionsEnum
 } from '@gauzy/contracts';
-import { IPaginationBase, PaginationFilterBaseComponent } from './../../../../@shared/pagination/pagination-filter-base.component';
+import {
+	IPaginationBase,
+	PaginationFilterBaseComponent
+} from './../../../../@shared/pagination/pagination-filter-base.component';
 import { DeleteConfirmationComponent } from '../../../../@shared/user/forms';
 import { API_PREFIX, ComponentEnum } from '../../../../@core/constants';
-import { ProductService, Store, ToastrService } from '../../../../@core/services';
+import {
+	ProductService,
+	Store,
+	ToastrService
+} from '../../../../@core/services';
 import { ServerDataSource } from './../../../../@core/utils/smart-table/server.data-source';
 import { ImageRowComponent } from '../inventory-table-components';
 import { NameWithDescriptionComponent } from '../inventory-table-components/name-with-description/name-with-description.component';
@@ -31,9 +45,10 @@ import { TagsOnlyComponent } from 'apps/gauzy/src/app/@shared';
 	templateUrl: './table-inventory.component.html',
 	styleUrls: ['./table-inventory.component.scss']
 })
-export class TableInventoryComponent extends PaginationFilterBaseComponent
-	implements AfterViewInit, OnInit, OnDestroy {
-
+export class TableInventoryComponent
+	extends PaginationFilterBaseComponent
+	implements AfterViewInit, OnInit, OnDestroy
+{
 	settingsSmartTable: object;
 	loading: boolean = false;
 	disableButton: boolean = true;
@@ -47,7 +62,7 @@ export class TableInventoryComponent extends PaginationFilterBaseComponent
 
 	public organization: IOrganization;
 	products$: Subject<any> = this.subject$;
-
+	private _refresh$: Subject<any> = new Subject();
 	inventoryTable: Ng2SmartTableComponent;
 	@ViewChild('inventoryTable') set content(content: Ng2SmartTableComponent) {
 		if (content) {
@@ -57,9 +72,10 @@ export class TableInventoryComponent extends PaginationFilterBaseComponent
 	}
 
 	/*
-	* Actions Buttons directive 
-	*/
-	@ViewChild('actionButtons', { static: true }) actionButtons: TemplateRef<any>;
+	 * Actions Buttons directive
+	 */
+	@ViewChild('actionButtons', { static: true })
+	actionButtons: TemplateRef<any>;
 
 	constructor(
 		private readonly http: HttpClient,
@@ -98,14 +114,29 @@ export class TableInventoryComponent extends PaginationFilterBaseComponent
 			.subscribe();
 
 		const storeOrganization$ = this.store.selectedOrganization$;
-		const preferredLanguage$ = this.store.preferredLanguage$
+		const preferredLanguage$ = this.store.preferredLanguage$;
 		combineLatest([storeOrganization$, preferredLanguage$])
 			.pipe(
 				debounceTime(300),
 				distinctUntilChange(),
-				filter(([organization, language]) => !!organization && !!language),
-				tap(([organization]) => this.organization = organization),
+				filter(
+					([organization, language]) => !!organization && !!language
+				),
+				tap(([organization]) => (this.organization = organization)),
+				tap(() => this._refresh$.next(true)),
 				tap(() => this.products$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this._refresh$
+			.pipe(
+				filter(
+					() =>
+						this.dataLayoutStyle ===
+						ComponentLayoutStyleEnum.CARDS_GRID
+				),
+				tap(() => this.refreshPagination()),
+				tap(() => (this.products = [])),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -117,9 +148,16 @@ export class TableInventoryComponent extends PaginationFilterBaseComponent
 			.componentLayout$(this.viewComponentName)
 			.pipe(
 				distinctUntilChange(),
-				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
+				tap(
+					(componentLayout) =>
+						(this.dataLayoutStyle = componentLayout)
+				),
 				tap(() => this.refreshPagination()),
-				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
+				filter(
+					(componentLayout) =>
+						componentLayout === ComponentLayoutStyleEnum.CARDS_GRID
+				),
+				tap(() => (this.products = [])),
 				tap(() => this.products$.next(true)),
 				untilDestroyed(this)
 			)
@@ -145,7 +183,9 @@ export class TableInventoryComponent extends PaginationFilterBaseComponent
 			editable: true,
 			pager: {
 				display: false,
-				perPage: pagination ? pagination.itemsPerPage : 10
+				perPage: pagination
+					? pagination.itemsPerPage
+					: this.minItemPerPage
 			},
 			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.INVENTORY'),
 			columns: {
@@ -163,7 +203,7 @@ export class TableInventoryComponent extends PaginationFilterBaseComponent
 				},
 				code: {
 					title: this.getTranslation('INVENTORY_PAGE.CODE'),
-					type: 'string',					
+					type: 'string'
 				},
 				productType: {
 					title: this.getTranslation('INVENTORY_PAGE.PRODUCT_TYPE'),
@@ -192,9 +232,7 @@ export class TableInventoryComponent extends PaginationFilterBaseComponent
 	}
 
 	manageProductTypes() {
-		this.router.navigate([
-			'/pages/organization/inventory/product-types'
-		]);
+		this.router.navigate(['/pages/organization/inventory/product-types']);
 	}
 
 	manageProductCategories() {
@@ -204,21 +242,15 @@ export class TableInventoryComponent extends PaginationFilterBaseComponent
 	}
 
 	manageWarehouses() {
-		this.router.navigate([
-			'/pages/organization/inventory/warehouses'
-		]);
+		this.router.navigate(['/pages/organization/inventory/warehouses']);
 	}
 
 	manageStores() {
-		this.router.navigate([
-			'/pages/organization/inventory/merchants'
-		]);
+		this.router.navigate(['/pages/organization/inventory/merchants']);
 	}
 
 	onAddInventoryItem() {
-		this.router.navigate([
-			`/pages/organization/inventory/create`
-		]);
+		this.router.navigate([`/pages/organization/inventory/create`]);
 	}
 
 	onEditInventoryItem(selectedItem?: IProduct) {
@@ -229,7 +261,8 @@ export class TableInventoryComponent extends PaginationFilterBaseComponent
 			});
 		}
 		this.router.navigate([
-			`/pages/organization/inventory/edit`, this.selectedProduct.id
+			`/pages/organization/inventory/edit`,
+			this.selectedProduct.id
 		]);
 	}
 
@@ -241,7 +274,8 @@ export class TableInventoryComponent extends PaginationFilterBaseComponent
 			});
 		}
 		this.router.navigate([
-			`/pages/organization/inventory/view`, this.selectedProduct.id
+			`/pages/organization/inventory/view`,
+			this.selectedProduct.id
 		]);
 	}
 
@@ -253,9 +287,7 @@ export class TableInventoryComponent extends PaginationFilterBaseComponent
 			});
 		}
 		const result = await firstValueFrom(
-			this.dialogService
-				.open(DeleteConfirmationComponent)
-				.onClose
+			this.dialogService.open(DeleteConfirmationComponent).onClose
 		);
 
 		if (!result) return;
@@ -265,20 +297,24 @@ export class TableInventoryComponent extends PaginationFilterBaseComponent
 				this.selectedProduct.id
 			);
 			if (res.affected > 0) {
-				this.toastrService.success('INVENTORY_PAGE.INVENTORY_ITEM_DELETED', {
-					name: this.selectedProduct.name
-				});
+				this.toastrService.success(
+					'INVENTORY_PAGE.INVENTORY_ITEM_DELETED',
+					{
+						name: this.selectedProduct.name
+					}
+				);
 			}
 		} catch {
 			this.toastrService.danger('TOASTR.MESSAGE.SOMETHING_BAD_HAPPENED');
 		} finally {
+			this._refresh$.next(true);
 			this.products$.next(true);
 		}
 	}
 
 	/*
-	* Register Smart Table Source Config 
-	*/
+	 * Register Smart Table Source Config
+	 */
 	setSmartTableSource() {
 		if (!this.organization) {
 			return;
@@ -308,17 +344,23 @@ export class TableInventoryComponent extends PaginationFilterBaseComponent
 					return Object.assign({}, product);
 				},
 				finalize: () => {
-					this.loading = false;
+					if (
+						this.dataLayoutStyle ===
+						ComponentLayoutStyleEnum.CARDS_GRID
+					) {
+						this.products.push(...this.smartTableSource.getData());
+					}
 					this.setPagination({
 						...this.getPagination(),
 						totalItems: this.smartTableSource.count()
 					});
+					this.loading = false;
 				}
 			});
 		} catch (error) {
 			this.toastrService.danger(error);
 		} finally {
-			this.loading = true;
+			this.loading = false;
 		}
 	}
 
@@ -329,17 +371,12 @@ export class TableInventoryComponent extends PaginationFilterBaseComponent
 		if (!this.organization) {
 			return;
 		}
-		this.setSmartTableSource();
 		try {
+			this.setSmartTableSource();
 			const { activePage, itemsPerPage } = this.getPagination();
-			this.smartTableSource.setPaging(
-				activePage,
-				itemsPerPage,
-				false
-			);
+			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
 			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
 				await this.smartTableSource.getElements();
-				this.products = this.smartTableSource.getData();
 			}
 		} catch (error) {
 			this.toastrService.danger(error);

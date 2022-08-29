@@ -597,9 +597,7 @@
 				*ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
 				class="pagination-container"
 			>
-				<ng-container
-					*ngIf="pagination.totalItems > minItemPerPage"
-				>
+				<ng-container *ngIf="pagination.totalItems > minItemPerPage">
 					<ga-pagination
 						(selectedOption)="onUpdateOption($event)"
 						(selectedPage)="onPageChange($event)"
@@ -614,19 +612,12 @@
 		<ng-template #gridLayout>
 			<div class="grid">
 				<ga-card-grid
-					(selectedOption)="onUpdateOption($event)"
-					(selectedPage)="onPageChange($event)"
-					[doEmit]="false"
-					[totalItems]="pagination?.totalItems"
-					[itemsPerPage]="pagination?.itemsPerPage"
-					[activePage]="pagination?.activePage"
 					[settings]="settingsSmartTable"
 					[source]="invoices"
-					[buttonTemplate]="actionButtons"
-					[cardSize]="'big'"
 					(onSelectedItem)="selectInvoice($event)"
+					(scroll)="onScroll()"
 				></ga-card-grid>
-			</div>			
+			</div>
 		</ng-template>
 	</nb-card-body>
 </nb-card>

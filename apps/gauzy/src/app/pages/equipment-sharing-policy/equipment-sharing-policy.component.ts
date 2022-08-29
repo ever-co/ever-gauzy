@@ -7,7 +7,8 @@ import {
 	IEquipmentSharing,
 	ComponentLayoutStyleEnum,
 	IEquipmentSharingPolicy,
-	IOrganization} from '@gauzy/contracts';
+	IOrganization
+} from '@gauzy/contracts';
 import { Ng2SmartTableComponent } from 'ng2-smart-table';
 import { FormGroup } from '@angular/forms';
 import { NbDialogService } from '@nebular/theme';
@@ -15,13 +16,19 @@ import { filter, tap } from 'rxjs/operators';
 import { firstValueFrom, Subject, debounceTime } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
-import { EquipmentSharingPolicyService, Store, ToastrService } from '../../@core/services';
+import {
+	EquipmentSharingPolicyService,
+	Store,
+	ToastrService
+} from '../../@core/services';
 import { API_PREFIX, ComponentEnum } from '../../@core/constants';
 import { EquipmentSharingPolicyMutationComponent } from '../../@shared/equipment-sharing-policy';
-import { IPaginationBase, PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
+import {
+	IPaginationBase,
+	PaginationFilterBaseComponent
+} from '../../@shared/pagination/pagination-filter-base.component';
 import { ServerDataSource } from '../../@core/utils/smart-table';
 import { InputFilterComponent } from '../../@shared/table-filters';
-
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -30,8 +37,8 @@ import { InputFilterComponent } from '../../@shared/table-filters';
 })
 export class EquipmentSharingPolicyComponent
 	extends PaginationFilterBaseComponent
-	implements OnInit, OnDestroy {
-
+	implements OnInit, OnDestroy
+{
 	settingsSmartTable: object;
 	loading: boolean;
 	selectedEquipmentSharingPolicy: IEquipmentSharingPolicy;
@@ -44,7 +51,8 @@ export class EquipmentSharingPolicyComponent
 	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
 	selectedOrganization: IOrganization;
 	equipmentSharingPolicy$: Subject<boolean> = this.subject$;
-	
+	private _refresh$: Subject<any> = new Subject();
+
 	equipmentSharingPolicyTable: Ng2SmartTableComponent;
 	@ViewChild('equipmentSharingPolicyTable') set content(
 		content: Ng2SmartTableComponent
@@ -62,7 +70,7 @@ export class EquipmentSharingPolicyComponent
 		private readonly toastrService: ToastrService,
 		private readonly store: Store,
 		private readonly router: Router,
-		private readonly httpClient: HttpClient,
+		private readonly httpClient: HttpClient
 	) {
 		super(translateService);
 		this.setView();
@@ -75,7 +83,7 @@ export class EquipmentSharingPolicyComponent
 			.pipe(
 				debounceTime(100),
 				tap(() => this.clearItem()),
-				tap(() => this.loadSettings()),
+				tap(() => this.loadEquipmentSharingPolicies()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -92,11 +100,15 @@ export class EquipmentSharingPolicyComponent
 				debounceTime(300),
 				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
-				tap((organization: IOrganization) => this.selectedOrganization = organization),
-				tap(() => this.refreshPagination()),
+				tap(
+					(organization: IOrganization) =>
+						(this.selectedOrganization = organization)
+				),
+				tap(() => this._refresh$.next(true)),
 				tap(() => this.equipmentSharingPolicy$.next(true)),
 				untilDestroyed(this)
-			).subscribe();
+			)
+			.subscribe();
 		this.router.events
 			.pipe(untilDestroyed(this))
 			.subscribe((event: RouterEvent) => {
@@ -104,6 +116,18 @@ export class EquipmentSharingPolicyComponent
 					this.setView();
 				}
 			});
+		this._refresh$
+			.pipe(
+				filter(
+					() =>
+						this.dataLayoutStyle ===
+						ComponentLayoutStyleEnum.CARDS_GRID
+				),
+				tap(() => this.refreshPagination()),
+				tap(() => (this.equipmentSharingPolicyData = [])),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	setView() {
@@ -112,13 +136,20 @@ export class EquipmentSharingPolicyComponent
 			.componentLayout$(this.viewComponentName)
 			.pipe(
 				distinctUntilChange(),
-				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
+				tap(
+					(componentLayout) =>
+						(this.dataLayoutStyle = componentLayout)
+				),
 				tap(() => this.refreshPagination()),
-				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
+				filter(
+					(componentLayout) =>
+						componentLayout === ComponentLayoutStyleEnum.CARDS_GRID
+				),
+				tap(() => (this.equipmentSharingPolicyData = [])),
 				tap(() => this.equipmentSharingPolicy$.next(true)),
 				untilDestroyed(this)
 			)
-			.subscribe();		
+			.subscribe();
 	}
 
 	/*
@@ -138,10 +169,14 @@ export class EquipmentSharingPolicyComponent
 		this.settingsSmartTable = {
 			actions: false,
 			editable: true,
-			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.EQUIPMENT_SHARING_POLICY'),
+			noDataMessage: this.getTranslation(
+				'SM_TABLE.NO_DATA.EQUIPMENT_SHARING_POLICY'
+			),
 			pager: {
 				display: false,
-				perPage: pagination ? pagination.itemsPerPage : 10
+				perPage: pagination
+					? pagination.itemsPerPage
+					: this.minItemPerPage
 			},
 			columns: {
 				name: {
@@ -195,6 +230,7 @@ export class EquipmentSharingPolicyComponent
 					name: equipmentSharingPolicy.name
 				}
 			);
+			this._refresh$.next(true);
 			this.equipmentSharingPolicy$.next(true);
 		}
 
@@ -208,15 +244,15 @@ export class EquipmentSharingPolicyComponent
 				data: selectedItem
 			});
 		}
-		const result = await firstValueFrom(this.dialogService
-			.open(DeleteConfirmationComponent)
-			.onClose);
+		const result = await firstValueFrom(
+			this.dialogService.open(DeleteConfirmationComponent).onClose
+		);
 
 		if (result) {
 			await this.equipmentSharingPolicyService.delete(
 				this.selectedEquipmentSharingPolicy.id
 			);
-
+			this._refresh$.next(true);
 			this.equipmentSharingPolicy$.next(true);
 			this.clearItem();
 			this.toastrService.success(
@@ -242,17 +278,19 @@ export class EquipmentSharingPolicyComponent
 		this.loading = true;
 		this.smartTableSource = new ServerDataSource(this.httpClient, {
 			endPoint: `${API_PREFIX}/equipment-sharing-policy/pagination`,
-			relations: [
-				'organization',				
-			],
+			relations: ['organization'],
 			where: {
 				...{ organizationId, tenantId },
 				...this.filters.where
 			},
-			resultMap: (equipmentSharingPolicy: IEquipmentSharingPolicy) => {
-				return equipmentSharingPolicy
-			},
 			finalize: () => {
+				if (
+					this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID
+				) {
+					this.equipmentSharingPolicyData.push(
+						...this.smartTableSource.getData()
+					);
+				}
 				this.setPagination({
 					...this.getPagination(),
 					totalItems: this.smartTableSource.count()
@@ -262,7 +300,7 @@ export class EquipmentSharingPolicyComponent
 		});
 	}
 
-	private async loadSettings() {
+	private async loadEquipmentSharingPolicies() {
 		if (!this.selectedOrganization) {
 			return;
 		}
@@ -270,20 +308,10 @@ export class EquipmentSharingPolicyComponent
 			this.setSmartTableSource();
 
 			const { activePage, itemsPerPage } = this.getPagination();
-			this.smartTableSource.setPaging(
-				activePage,
-				itemsPerPage,
-				false
-			);
+			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
 
 			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
 				await this.smartTableSource.getElements();
-				this.equipmentSharingPolicyData = this.smartTableSource.getData();
-
-				this.setPagination({
-					...this.getPagination(),
-					totalItems: this.smartTableSource.count()
-				});
 			}
 		} catch (error) {
 			this.toastrService.danger(error);

@@ -1,4 +1,11 @@
-import { AfterViewInit, Component, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
+import {
+	AfterViewInit,
+	Component,
+	OnDestroy,
+	OnInit,
+	TemplateRef,
+	ViewChild
+} from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import {
@@ -17,13 +24,26 @@ import { Ng2SmartTableComponent } from 'ng2-smart-table';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
-import { EmployeeWithLinksComponent, NotesWithTagsComponent } from '../../@shared/table-components';
+import {
+	EmployeeWithLinksComponent,
+	NotesWithTagsComponent
+} from '../../@shared/table-components';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
-import { OrganizationDepartmentsService, Store, ToastrService } from '../../@core/services';
-import { IPaginationBase, PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
+import {
+	OrganizationDepartmentsService,
+	Store,
+	ToastrService
+} from '../../@core/services';
+import {
+	IPaginationBase,
+	PaginationFilterBaseComponent
+} from '../../@shared/pagination/pagination-filter-base.component';
 import { ServerDataSource } from '../../@core/utils/smart-table';
 import { API_PREFIX } from '../../@core/constants';
-import { InputFilterComponent, TagsColorFilterComponent } from '../../@shared/table-filters';
+import {
+	InputFilterComponent,
+	TagsColorFilterComponent
+} from '../../@shared/table-filters';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -31,10 +51,11 @@ import { InputFilterComponent, TagsColorFilterComponent } from '../../@shared/ta
 	templateUrl: './departments.component.html',
 	styleUrls: ['./departments.component.scss']
 })
-export class DepartmentsComponent extends PaginationFilterBaseComponent
-	implements AfterViewInit, OnInit, OnDestroy {
-	
-	@ViewChild('addEditTemplate') 
+export class DepartmentsComponent
+	extends PaginationFilterBaseComponent
+	implements AfterViewInit, OnInit, OnDestroy
+{
+	@ViewChild('addEditTemplate')
 	addEditTemplate: TemplateRef<any>;
 	addEditDialogRef: NbDialogRef<any>;
 	smartTableSettings: object;
@@ -64,6 +85,7 @@ export class DepartmentsComponent extends PaginationFilterBaseComponent
 
 	public organization: IOrganization;
 	departments$: Subject<boolean> = this.subject$;
+	private _refresh$: Subject<any> = new Subject();
 
 	constructor(
 		private readonly organizationDepartmentsService: OrganizationDepartmentsService,
@@ -102,29 +124,49 @@ export class DepartmentsComponent extends PaginationFilterBaseComponent
 				debounceTime(300),
 				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
-				tap((organization: IOrganization) => this.organization = organization),
-				tap(() => this.refreshPagination()),
+				tap(
+					(organization: IOrganization) =>
+						(this.organization = organization)
+				),
+				tap(() => this._refresh$.next(true)),
 				tap(() => this.departments$.next(true)),
 				untilDestroyed(this)
-			).subscribe();
+			)
+			.subscribe();
 		this.route.queryParamMap
 			.pipe(
-				filter((params) => !!params && params.get('openAddDialog') === 'true'),
+				filter(
+					(params) =>
+						!!params && params.get('openAddDialog') === 'true'
+				),
 				debounceTime(1000),
 				tap(() => this.openDialog(this.addEditTemplate, false)),
 				untilDestroyed(this)
 			)
 			.subscribe();
+		this._refresh$
+			.pipe(
+				filter(
+					() =>
+						this.dataLayoutStyle ===
+						ComponentLayoutStyleEnum.CARDS_GRID
+				),
+				tap(() => this.refreshPagination()),
+				tap(() => (this.departments = [])),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
-	ngOnDestroy() { }
-	
+	ngOnDestroy() {}
+
 	ngAfterViewInit() {}
 
 	selectDepartment(department: any) {
 		if (department.data) department = department.data;
 		const res =
-			this.selected.department && department.id === this.selected.department.id
+			this.selected.department &&
+			department.id === this.selected.department.id
 				? { state: !this.selected.state }
 				: { state: true };
 		this.disableButton = !res.state;
@@ -132,7 +174,7 @@ export class DepartmentsComponent extends PaginationFilterBaseComponent
 		this.selected.department = department;
 		this.selectedDepartment = this.selected.department;
 	}
-	
+
 	/**
 	 * Load smart table columns settings
 	 */
@@ -159,7 +201,9 @@ export class DepartmentsComponent extends PaginationFilterBaseComponent
 					}
 				},
 				members: {
-					title: this.getTranslation('ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.MEMBERS'),
+					title: this.getTranslation(
+						'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.MEMBERS'
+					),
 					type: 'custom',
 					renderComponent: EmployeeWithLinksComponent,
 					filter: false
@@ -191,9 +235,16 @@ export class DepartmentsComponent extends PaginationFilterBaseComponent
 			.componentLayout$(this.viewComponentName)
 			.pipe(
 				distinctUntilChange(),
-				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
+				tap(
+					(componentLayout) =>
+						(this.dataLayoutStyle = componentLayout)
+				),
 				tap(() => this.refreshPagination()),
-				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
+				filter(
+					(componentLayout) =>
+						componentLayout === ComponentLayoutStyleEnum.CARDS_GRID
+				),
+				tap(() => (this.departments = [])),
 				tap(() => this.departments$.next(true)),
 				untilDestroyed(this)
 			)
@@ -201,13 +252,13 @@ export class DepartmentsComponent extends PaginationFilterBaseComponent
 	}
 
 	async removeDepartment(id?: string, name?: string) {
-		const result = await firstValueFrom(this.dialogService
-			.open(DeleteConfirmationComponent, {
+		const result = await firstValueFrom(
+			this.dialogService.open(DeleteConfirmationComponent, {
 				context: {
 					recordType: 'Department'
 				}
-			})
-			.onClose);
+			}).onClose
+		);
 
 		if (result) {
 			await this.organizationDepartmentsService.delete(
@@ -221,6 +272,7 @@ export class DepartmentsComponent extends PaginationFilterBaseComponent
 						: name
 				}
 			);
+			this._refresh$.next(true);
 			this.departments$.next(true);
 		}
 	}
@@ -233,21 +285,27 @@ export class DepartmentsComponent extends PaginationFilterBaseComponent
 			};
 		} else {
 			this.selectedDepartment = this.selected.department;
-		}			
+		}
 	}
 
-	public async addOrEditDepartment(input: IOrganizationDepartmentCreateInput) {
+	public async addOrEditDepartment(
+		input: IOrganizationDepartmentCreateInput
+	) {
 		if (input.name) {
 			this.selectedDepartment
 				? await this.organizationDepartmentsService.update(
-					this.selectedDepartment.id,
-					input
-				)
+						this.selectedDepartment.id,
+						input
+				  )
 				: await this.organizationDepartmentsService.create(input);
-			
-			this.toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_DEPARTMENTS.ADD_DEPARTMENT', {
-				name: input.name
-			});
+
+			this.toastrService.success(
+				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_DEPARTMENTS.ADD_DEPARTMENT',
+				{
+					name: input.name
+				}
+			);
+			this._refresh$.next(true);
 			this.departments$.next(true);
 		} else {
 			this.toastrService.danger(
@@ -262,8 +320,8 @@ export class DepartmentsComponent extends PaginationFilterBaseComponent
 	}
 
 	/*
-	* Register Smart Table Source Config
-	*/
+	 * Register Smart Table Source Config
+	 */
 	setSmartTableSource() {
 		if (!this.organization) {
 			return;
@@ -273,26 +331,24 @@ export class DepartmentsComponent extends PaginationFilterBaseComponent
 
 		this.smartTableSource = new ServerDataSource(this.httpClient, {
 			endPoint: `${API_PREFIX}/organization-department/pagination`,
-			relations: [
-				'members',
-				'members.user',
-				'tags'
-			],
+			relations: ['members', 'members.user', 'tags'],
 			join: {
 				alias: 'organization_department',
 				leftJoin: {
 					tags: 'organization_department.tags'
 				},
-				...(this.filters.join) ? this.filters.join : {}
+				...(this.filters.join ? this.filters.join : {})
 			},
 			where: {
 				...{ organizationId, tenantId },
 				...this.filters.where
 			},
 			resultMap: (department: IOrganizationDepartment) => {
-				return department
+				return department;
 			},
 			finalize: () => {
+				if (this._isGridLayout)
+					this.departments.push(...this.smartTableSource.getData());
 				this.setPagination({
 					...this.getPagination(),
 					totalItems: this.smartTableSource.count()
@@ -301,7 +357,7 @@ export class DepartmentsComponent extends PaginationFilterBaseComponent
 			}
 		});
 	}
-	
+
 	private async getDepartments() {
 		if (!this.organization) {
 			return;
@@ -310,16 +366,10 @@ export class DepartmentsComponent extends PaginationFilterBaseComponent
 			this.setSmartTableSource();
 
 			const { activePage, itemsPerPage } = this.getPagination();
-			this.smartTableSource.setPaging(
-				activePage,
-				itemsPerPage,
-				false
-			);
+			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
 
-			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
+			if (this._isGridLayout) {
 				await this.smartTableSource.getElements();
-				this.departments = this.smartTableSource.getData();
-
 				this.setPagination({
 					...this.getPagination(),
 					totalItems: this.smartTableSource.count()
@@ -328,6 +378,10 @@ export class DepartmentsComponent extends PaginationFilterBaseComponent
 		} catch (error) {
 			this.toastrService.danger(error);
 		}
+	}
+
+	private get _isGridLayout(): boolean {
+		return this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID;
 	}
 
 	/**
@@ -364,7 +418,7 @@ export class DepartmentsComponent extends PaginationFilterBaseComponent
 		};
 		this.selectedDepartment = null;
 		this.disableButton = true;
-		this.addEditDialogRef?.close()
+		this.addEditDialogRef?.close();
 		this._deselectAll();
 	}
 
@@ -380,7 +434,9 @@ export class DepartmentsComponent extends PaginationFilterBaseComponent
 
 	openDialog(template: TemplateRef<any>, isEditTemplate: boolean) {
 		try {
-			isEditTemplate ? this.editDepartment(this.selectedDepartment) : this._clearItem();
+			isEditTemplate
+				? this.editDepartment(this.selectedDepartment)
+				: this._clearItem();
 			this.addEditDialogRef = this.dialogService.open(template);
 		} catch (error) {
 			console.log('An error occurred on open dialog');

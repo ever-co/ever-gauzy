@@ -2,7 +2,7 @@
 @import 'gauzy/_gauzy-table';
 @import 'gauzy/_gauzy-overrides';
 
-.card {
+:host .card {
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
@@ -155,16 +155,12 @@
 }
 
 :host {
-  @include card-overrides(
-    unset,
-    calc($default-card-height - 4.5rem),
-    $default-radius
-  );
+  @include card-overrides(unset, calc($default-card-height), $default-radius);
   .custom-table {
-    max-height: calc($default-card-height - 10rem);
+    max-height: unset;
   }
   .custom-grid {
-    max-height: calc($default-card-height - 6.5rem);
+    height: 100%;
     overflow-y: auto;
   }
   ::ng-deep .header {
@@ -182,8 +178,12 @@
   @include nb-rtl(left, 1rem);
   top: -4.5rem;
 }
-::ng-deep {
-  .interview-panel .no-data-found {
-    max-height: calc(100vh - 29rem);
-  }
+
+.no-data-found {
+  height: 100%;
+}
+
+:host .interview-panel {
+  @include nb-ltr(padding-right, 0.5rem !important);
+  @include nb-rtl(padding-left, 0.5rem !important);
 }

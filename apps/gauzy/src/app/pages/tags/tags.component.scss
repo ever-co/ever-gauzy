@@ -1,4 +1,5 @@
-@import 'gauzy/_gauzy-table';
+@import 'gauzy/_gauzy-table.scss';
+@import 'gauzy/_gauzy-cards.scss';
 
 :host .search {
   margin: 20px 0 0 0;
@@ -7,7 +8,7 @@
   background-color: var(--gauzy-sidebar-background-3);
   border-radius: 8px;
   height: 32px;
-  padding: 0 10px;
+  padding: 0 8px;
 
   ::ng-deep {
     i.control-icon::before {
@@ -36,22 +37,29 @@
 
 :host nb-card.filter {
   background-color: var(--gauzy-card-2);
+  overflow: unset;
+  @include nb-ltr(padding-right, 4px);
+  @include nb-rtl(padding-left, 4px);
+  .list {
+    max-height: calc(100vh - 15.8rem);
+    overflow: auto;
+  }
 
   nb-card-header {
     font-size: 14px;
     font-weight: 600;
     line-height: 17px;
     letter-spacing: 0em;
-    @include nb-ltr(padding-left, 15px);
-    @include nb-rtl(padding-right, 15px);
+    @include nb-ltr(padding-left, 12px);
+    @include nb-rtl(padding-right, 12px);
   }
 }
 
 :host nb-list {
   flex-direction: row;
   flex-wrap: wrap;
-  @include nb-ltr(padding-left, 12px);
-  @include nb-rtl(padding-right, 12px);
+  @include nb-ltr(padding-left, 10px);
+  @include nb-rtl(padding-right, 10px);
   padding-bottom: 21px;
   gap: 10px;
 }
@@ -70,24 +78,38 @@
   align-items: center;
 }
 
-nb-card.tags-component {
-  background-color: var(--gauzy-card-2);
-
-  nb-card-body {
+:host {
+  nb-card.tags-component,
+  nb-card.tags-component nb-card-body {
+    background-color: var(--gauzy-card-2);
+    margin: 0;
     display: flex;
     flex-direction: column;
-    background-color: var(--gauzy-card-2);
-    overflow: unset;
-    height: calc(100vh - 27rem);
-    border-radius: 0 0 nb-theme(border-radius) nb-theme(border-radius);
 
     .table-scroll-container {
       flex-grow: 10;
       max-height: unset;
     }
+  }
 
-    .pagination-container {
-      align-self: flex-end;
-    }
+  nb-card.tags-component nb-card-body {
+    border-radius: 0 0 $default-radius $default-radius;
+    @include nb-ltr(padding, 1rem 0.5rem 1rem 18px);
+    @include nb-rtl(padding, 1rem 18px 1rem 0.5rem);
+  }
+
+  nb-card.tags-component,
+  nb-card.tags-component nb-card-header {
+    border-radius: var(--border-radius);
+  }
+  .col-10 {
+    @include nb-card-overrides(unset, calc(100vh - 17.25rem), $default-radius);
+  }
+  .col-2,
+  .col-10 {
+    padding: 0 10px;
+  }
+  .row {
+    margin: 0 -10px;
   }
 }

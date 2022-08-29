@@ -1,4 +1,11 @@
-import { AfterViewInit, Component, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
+import {
+	AfterViewInit,
+	Component,
+	OnDestroy,
+	OnInit,
+	TemplateRef,
+	ViewChild
+} from '@angular/core';
 import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { Ng2SmartTableComponent } from 'ng2-smart-table';
@@ -7,13 +14,28 @@ import { NbDialogService } from '@nebular/theme';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { Subject, firstValueFrom } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ComponentLayoutStyleEnum, IOrganization, IWarehouse } from '@gauzy/contracts';
+import {
+	ComponentLayoutStyleEnum,
+	IOrganization,
+	IWarehouse
+} from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import { DeleteConfirmationComponent } from './../../../../../@shared/user/forms';
 import { API_PREFIX, ComponentEnum } from './../../../../../@core/constants';
-import { Store, ToastrService, WarehouseService } from './../../../../../@core/services';
-import { ContactRowComponent, EnabledStatusComponent, ItemImgTagsComponent } from '../../inventory-table-components';
-import { IPaginationBase, PaginationFilterBaseComponent } from './../../../../../@shared/pagination/pagination-filter-base.component';
+import {
+	Store,
+	ToastrService,
+	WarehouseService
+} from './../../../../../@core/services';
+import {
+	ContactRowComponent,
+	EnabledStatusComponent,
+	ItemImgTagsComponent
+} from '../../inventory-table-components';
+import {
+	IPaginationBase,
+	PaginationFilterBaseComponent
+} from './../../../../../@shared/pagination/pagination-filter-base.component';
 import { ServerDataSource } from './../../../../../@core/utils/smart-table/server.data-source';
 import { InputFilterComponent } from './../../../../../@shared/table-filters';
 
@@ -25,8 +47,8 @@ import { InputFilterComponent } from './../../../../../@shared/table-filters';
 })
 export class WarehousesTableComponent
 	extends PaginationFilterBaseComponent
-	implements AfterViewInit, OnInit, OnDestroy {
-
+	implements AfterViewInit, OnInit, OnDestroy
+{
 	settingsSmartTable: object;
 	loading: boolean = false;
 	disableButton: boolean = true;
@@ -39,6 +61,7 @@ export class WarehousesTableComponent
 
 	public organization: IOrganization;
 	warehouses$: Subject<any> = this.subject$;
+	private _refresh$: Subject<any> = new Subject();
 
 	warehousesTable: Ng2SmartTableComponent;
 	@ViewChild('warehousesTable') set content(content: Ng2SmartTableComponent) {
@@ -49,9 +72,10 @@ export class WarehousesTableComponent
 	}
 
 	/*
-	* Actions Buttons directive
-	*/
-	@ViewChild('actionButtons', { static: true }) actionButtons: TemplateRef<any>;
+	 * Actions Buttons directive
+	 */
+	@ViewChild('actionButtons', { static: true })
+	actionButtons: TemplateRef<any>;
 
 	constructor(
 		public readonly translateService: TranslateService,
@@ -75,7 +99,7 @@ export class WarehousesTableComponent
 		this.warehouses$
 			.pipe(
 				debounceTime(300),
-				tap(() => this.loading = true),
+				tap(() => (this.loading = true)),
 				tap(() => this.getWarehouses()),
 				tap(() => this.clearItem()),
 				untilDestroyed(this)
@@ -95,8 +119,24 @@ export class WarehousesTableComponent
 				debounceTime(300),
 				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
-				tap((organization: IOrganization) => (this.organization = organization)),
+				tap(
+					(organization: IOrganization) =>
+						(this.organization = organization)
+				),
+				tap(() => this._refresh$.next(true)),
 				tap(() => this.warehouses$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this._refresh$
+			.pipe(
+				filter(
+					() =>
+						this.dataLayoutStyle ===
+						ComponentLayoutStyleEnum.CARDS_GRID
+				),
+				tap(() => this.refreshPagination()),
+				tap(() => (this.warehouses = [])),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -108,9 +148,16 @@ export class WarehousesTableComponent
 			.componentLayout$(this.viewComponentName)
 			.pipe(
 				distinctUntilChange(),
-				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
+				tap(
+					(componentLayout) =>
+						(this.dataLayoutStyle = componentLayout)
+				),
 				tap(() => this.refreshPagination()),
-				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
+				filter(
+					(componentLayout) =>
+						componentLayout === ComponentLayoutStyleEnum.CARDS_GRID
+				),
+				tap(() => (this.warehouses = [])),
 				tap(() => this.warehouses$.next(true)),
 				untilDestroyed(this)
 			)
@@ -161,7 +208,7 @@ export class WarehousesTableComponent
 					},
 					filterFunction: (email: string) => {
 						this.setFilter({ field: 'email', search: email });
-					},
+					}
 				},
 				code: {
 					title: this.getTranslation('INVENTORY_PAGE.CODE'),
@@ -212,7 +259,8 @@ export class WarehousesTableComponent
 			});
 		}
 		this.router.navigate([
-			'/pages/organization/inventory/warehouses/edit', this.selectedWarehouse.id
+			'/pages/organization/inventory/warehouses/edit',
+			this.selectedWarehouse.id
 		]);
 	}
 
@@ -228,9 +276,8 @@ export class WarehousesTableComponent
 		}
 
 		const result = await firstValueFrom(
-			this.dialogService
-				.open(DeleteConfirmationComponent)
-				.onClose);
+			this.dialogService.open(DeleteConfirmationComponent).onClose
+		);
 
 		if (result) {
 			await this.warehouseService
@@ -238,20 +285,24 @@ export class WarehousesTableComponent
 				.then((res) => {
 					if (res && res.affected == 1) {
 						const { name } = this.selectedWarehouse;
-						this.toastrService.success('INVENTORY_PAGE.WAREHOUSE_WAS_DELETED', {
-							name
-						});
+						this.toastrService.success(
+							'INVENTORY_PAGE.WAREHOUSE_WAS_DELETED',
+							{
+								name
+							}
+						);
 					}
 				})
 				.finally(() => {
+					this._refresh$.next(true);
 					this.warehouses$.next(true);
 				});
 		}
 	}
 
 	/*
-	* Register Smart Table Source Config
-	*/
+	 * Register Smart Table Source Config
+	 */
 	setSmartTableSource() {
 		if (!this.organization) {
 			return;
@@ -273,6 +324,14 @@ export class WarehousesTableComponent
 					return Object.assign({}, warehouse);
 				},
 				finalize: () => {
+					if (
+						this.dataLayoutStyle ===
+						ComponentLayoutStyleEnum.CARDS_GRID
+					) {
+						this.warehouses.push(
+							...this.smartTableSource.getData()
+						);
+					}
 					this.setPagination({
 						...this.getPagination(),
 						totalItems: this.smartTableSource.count()
@@ -282,6 +341,7 @@ export class WarehousesTableComponent
 			});
 		} catch (error) {
 			this.toastrService.danger(error);
+			this.loading = false;
 		}
 	}
 
@@ -292,17 +352,12 @@ export class WarehousesTableComponent
 		if (!this.organization) {
 			return;
 		}
-		this.setSmartTableSource();
 		try {
+			this.setSmartTableSource();
 			const { activePage, itemsPerPage } = this.getPagination();
-			this.smartTableSource.setPaging(
-				activePage,
-				itemsPerPage,
-				false
-			);
+			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
 			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
 				await this.smartTableSource.getElements();
-				this.warehouses = this.smartTableSource.getData();
 			}
 		} catch (error) {
 			this.toastrService.danger(error);
@@ -335,5 +390,5 @@ export class WarehousesTableComponent
 		}
 	}
 
-	ngOnDestroy() { }
+	ngOnDestroy() {}
 }

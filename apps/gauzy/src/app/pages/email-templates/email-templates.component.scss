@@ -1,5 +1,7 @@
 @import 'gauzy/_gauzy-overrides';
 
+$height: calc(100vh - 25.5rem);
+
 .main-form {
   .template-save {
     display: flex;
@@ -19,7 +21,7 @@
   justify-content: flex-start;
   width: 100%;
   overflow: auto;
-  height: calc(100vh - 27rem);
+  height: $height;
 }
 
 .email-content {
@@ -28,12 +30,16 @@
 
 :host {
   ::ng-deep {
-    @include nb-select-overrides (2.25rem,
+    @include nb-select-overrides(
+      2.25rem,
       $default-button-radius,
-      $default-box-shadow );
-    @include ng-select-overrides (2.25rem,
+      $default-box-shadow
+    );
+    @include ng-select-overrides(
+      2.25rem,
       $default-button-radius,
-      $default-box-shadow );
+      $default-box-shadow
+    );
   }
 
   nb-card {
@@ -71,7 +77,7 @@
       }
 
       .ace-editor {
-        height: calc(100vh - 28.7rem);
+        height: calc($height - 1.7rem);
         font-size: medium;
       }
 
@@ -100,7 +106,6 @@
           }
         }
       }
-
     }
   }
 
@@ -113,7 +118,6 @@
     text-align: left;
     background: rgba(231, 227, 218, 0.75);
     border-radius: 10px 10px 0px 0px;
-
   }
 
   .email-template-right {
@@ -146,7 +150,7 @@
         margin-bottom: 0;
       }
 
-      label+div {
+      label + div {
         font-size: 11px;
         font-weight: 600;
         line-height: 13px;

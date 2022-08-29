@@ -53,6 +53,7 @@ export class GoalSettingsComponent
 	predefinedTimeFrames = [];
 	loading: boolean;
 	private _goalSettings$: Subject<any> = this.subject$;
+	private _refresh$: Subject<any> = new Subject();
 
 	goalSettingsTable: Ng2SmartTableComponent;
 	@ViewChild('goalSettingsTable') set content(
@@ -96,6 +97,7 @@ export class GoalSettingsComponent
 					this.organization = organization;
 					this.selectedOrganizationId = organization.id;
 					if (this.selectedTab) {
+						this._refresh$.next(true);
 						await this._loadTableData(this.selectedTab);
 					}
 				}
@@ -122,6 +124,18 @@ export class GoalSettingsComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
+		this._refresh$
+			.pipe(
+				filter(
+					() =>
+						this.dataLayoutStyle ===
+						ComponentLayoutStyleEnum.CARDS_GRID
+				),
+				tap(() => this.refreshPagination()),
+				tap(() => (this.goalTimeFrames = [])),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	setView() {
@@ -139,6 +153,7 @@ export class GoalSettingsComponent
 					(componentLayout) =>
 						componentLayout === ComponentLayoutStyleEnum.CARDS_GRID
 				),
+				tap(() => (this.goalTimeFrames = [])),
 				tap(() => this._goalSettings$.next(true)),
 				untilDestroyed(this)
 			)
@@ -159,6 +174,7 @@ export class GoalSettingsComponent
 					this.toastrService.success(
 						'TOASTR.MESSAGE.GOAL_GENERAL_SETTING_UPDATED'
 					);
+					this._refresh$.next(true);
 					this._loadTableData(null);
 				}
 			});
@@ -168,9 +184,8 @@ export class GoalSettingsComponent
 		this.selectedTab = e.tabId;
 		this._loadTableSettings(e.tabId);
 		this._loadTableData(e.tabId);
-		this.refreshPagination();
+		this._refresh$.next(true);
 		this.smartTableData.empty();
-		this.goalTimeFrames = [];
 		if (this.goalSettingsTable) {
 			this.selectedKPI = null;
 			this.selectedTimeFrame = null;
@@ -247,7 +262,9 @@ export class GoalSettingsComponent
 
 	private async _loadGridLayoutData() {
 		if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
-			this.goalTimeFrames = await this.smartTableData.getElements();
+			this.goalTimeFrames.push(
+				...(await this.smartTableData.getElements())
+			);
 		}
 	}
 
@@ -357,6 +374,7 @@ export class GoalSettingsComponent
 		this.clearItem();
 		if (!!response) {
 			this._loadTableSettings('timeframe');
+			this._refresh$.next(true);
 			await this._loadTableData('timeframe');
 		}
 	}
@@ -382,6 +400,7 @@ export class GoalSettingsComponent
 		const response = await firstValueFrom(kpiDialog.onClose);
 		this.clearItem();
 		if (!!response) {
+			this._refresh$.next(true);
 			this._loadTableSettings('kpi');
 			await this._loadTableData('kpi');
 		}
@@ -420,6 +439,7 @@ export class GoalSettingsComponent
 								{ name: this.selectedTimeFrame.name }
 							);
 							this.clearItem();
+							this._refresh$.next(true);
 							this._loadTableSettings('timeframe');
 							await this._loadTableData('timeframe');
 						}
@@ -460,6 +480,7 @@ export class GoalSettingsComponent
 								'TOASTR.MESSAGE.KPI_DELETED'
 							);
 							this.clearItem();
+							this._refresh$.next(true);
 							this._loadTableSettings('kpi');
 							await this._loadTableData('kpi');
 						}

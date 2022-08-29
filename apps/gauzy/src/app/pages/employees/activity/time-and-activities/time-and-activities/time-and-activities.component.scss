@@ -1,13 +1,20 @@
 @import 'themes';
 
-.custom-card {
+:host .custom-card {
   border-radius: 0 nb-theme(border-radius) nb-theme(border-radius)
     nb-theme(border-radius);
   background-color: nb-theme(gauzy-card-2);
-  padding: 1rem;
+  @include nb-ltr(padding, 1rem 0.5rem 1rem 18px);
+  @include nb-rtl(padding, 1rem 18px 1rem 0.5rem);
   .custom-card-body {
     overflow-y: overlay;
     overflow-x: hidden;
-    height: calc(100vh - 25.7rem);
+    padding-right: 11px;
+    height: calc(100vh - 31.25rem);
   }
+}
+
+:host .filters {
+  @include nb-ltr(padding-right, 0.5rem);
+  @include nb-rtl(padding-left, 0.5rem);
 }

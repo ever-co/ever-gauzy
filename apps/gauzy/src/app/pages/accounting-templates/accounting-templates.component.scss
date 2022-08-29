@@ -2,14 +2,14 @@
 
 :host {
   .ace-editor {
-    height: calc(100vh - 25rem) !important;
+    height: calc($height + 3.5rem) !important;
   }
 
   .custom-parent-email-content {
-    height: calc(100vh - 27.3rem) !important;
+    height: calc($height + 1.3rem) !important;
   }
 
-  .custom-preview-template{
+  .custom-preview-template {
     width: 100%;
   }
 

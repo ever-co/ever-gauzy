@@ -1,41 +1,55 @@
 @import '../../daily/daily/daily.component.scss';
 
 :host {
-	.filters {
-		.form-control {
-			min-height: 40px;
-		}
-	}
+  .filters {
+    .form-control {
+      min-height: 40px;
+    }
+  }
 
-	ga-status-badge ::ng-deep .badge {
-		width: fit-content;
-	}
+  ga-status-badge ::ng-deep .badge {
+    width: fit-content;
+  }
 
-	nb-card {
-		::ng-deep {
-			.transition-container span {
-				background: unset;
-			}
-		}
-	}
+  nb-card {
+    ::ng-deep {
+      .transition-container span {
+        background: unset;
+      }
+    }
+    nb-card-body {
+      height: 100%;
+      background-color: unset;
+    }
+  }
 
-	.custom-body {
-		&.approval {
-			height: calc(100vh - 25.7rem) !important;
-			max-height: unset !important;
-		}
-	}
+  .custom-header-container {
+    @include nb-ltr(padding, 0 0.5rem 0 0 !important);
+    @include nb-rtl(padding, 0 0 0 0.5rem !important);
+  }
 
-	::ng-deep .approval-container .no-data-found {
-		max-height: calc(100vh - 30.7rem);  
-		margin-top: 1rem;
-	}
+  .custom-body {
+    &.approval {
+      height: calc(100vh - 21.75rem) !important;
+      width: 100%;
+      background: unset;
+      @include nb-ltr(padding, 0 0.5rem 0 0 !important);
+      @include nb-rtl(padding, 0 0 0 0.5rem !important);
+      background-color: unset !important;
+      .content-approval {
+        background-color: var(--gauzy-card-3);
+        border-radius: var(--border-radius);
+        @include nb-ltr(padding-left, 12px);
+        @include nb-rtl(padding-right, 12px);
+      }
+    }
+  }
 }
 
 .menu-item {
-	min-width: 150px;
+  min-width: 150px;
 
-	button {
-		width: 100%;
-	}
+  button {
+    width: 100%;
+  }
 }

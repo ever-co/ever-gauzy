@@ -21,67 +21,71 @@
 		[nbSpinner]="isLoading"
 		nbSpinnerStatus="primary"
 		nbSpinnerSize="large"
-		infinite-scroll
-		[scrollWindow]="false"
-		(scrolled)="onScroll()"
 	>
 		<ng-template
 			[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
 		>
-			<nb-card class="p-0" *ngFor="let vendor of vendors">
-				<nb-card-body
-					class="custom-table"
-					[ngClass]="
-						selected?.state && vendor === selected?.vendor
-							? 'custom-table selected'
-							: 'custom-table'
-					"
-					(click)="selectPosition(vendor)"
-				>
-					<div class="row align-items-center">
-						<div class="col-md-2 p-0 float-left text-truncate">
-							<ga-company-logo
-								[rowData]="vendor"
-							></ga-company-logo>
-							{{ vendor.name }}
+			<div
+				class="table-scroll-container"
+				infinite-scroll
+				[scrollWindow]="false"
+				(scrolled)="onScroll()"
+			>
+				<nb-card class="p-0" *ngFor="let vendor of vendors">
+					<nb-card-body
+						class="custom-table"
+						[ngClass]="{
+							selected:
+								selected?.state && vendor === selected?.vendor
+						}"
+						(click)="selectVendor(vendor)"
+					>
+						<div class="row align-items-center">
+							<div class="col-md-2 p-0 float-left text-truncate">
+								<ga-company-logo
+									[rowData]="vendor"
+								></ga-company-logo>
+								{{ vendor.name }}
+							</div>
+							<div class="col-md-2 p-0 text-center text-truncate">
+								{{ vendor.phone }}
+							</div>
+							<div class="col-md-2 p-0 text-center text-truncate">
+								<gauzy-email [rowData]="vendor"></gauzy-email>
+							</div>
+							<div class="col-md-3 p-0 float-left text-truncate">
+								<gauzy-external-link
+									[rowData]="vendor"
+								></gauzy-external-link>
+							</div>
+							<div class="col-md-3 text-center p-0 text-truncate">
+								<ga-only-tags [rowData]="vendor">
+								</ga-only-tags>
+							</div>
 						</div>
-						<div class="col-md-2 p-0 text-center text-truncate">
-							{{ vendor.phone }}
-						</div>
-						<div class="col-md-2 p-0 text-center text-truncate">
-							<gauzy-email [rowData]="vendor"></gauzy-email>
-						</div>
-						<div class="col-md-3 p-0 float-left text-truncate">
-							<gauzy-external-link
-								[rowData]="vendor"
-							></gauzy-external-link>
-						</div>
-						<div class="col-md-3 text-center p-0 text-truncate">
-							<ga-only-tags [rowData]="vendor"> </ga-only-tags>
-						</div>
-					</div>
-				</nb-card-body>
-			</nb-card>			
+					</nb-card-body>
+				</nb-card>
+			</div>
 		</ng-template>
 		<ng-template
-			[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID && vendors?.length > 0"
+			[ngIf]="
+				dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID &&
+				vendors?.length > 0
+			"
 		>
 			<ga-card-grid
 				[settings]="settingsSmartTable"
 				[source]="vendors"
-				[doEmit]="false"
-				[totalItems]="pagination?.totalItems"
-				[itemsPerPage]="pagination?.itemsPerPage"
-				[activePage]="pagination?.activePage"
-				(onSelectedItem)="selectPosition($event)"
-				(selectedOption)="onUpdateOption($event)"
-				(selectedPage)="onPageChange($event)"
+				(onSelectedItem)="selectVendor($event)"
+				(scroll)="onScroll()"
 			></ga-card-grid>
 		</ng-template>
-		<ng-template [ngIf]="!isLoading && vendors?.length == 0">
-			<ngx-no-data-message 
-				[message]="'ORGANIZATIONS_PAGE.VENDORS_NO_DATA_MESSAGE'"
-			></ngx-no-data-message>
+		<ng-template [ngIf]="!vendors?.length">
+			<div class="no-data">
+				<ngx-no-data-message
+					[message]="'ORGANIZATIONS_PAGE.VENDORS_NO_DATA_MESSAGE'"
+				></ngx-no-data-message>
+			</div>
 		</ng-template>
 	</nb-card-body>
 </nb-card>

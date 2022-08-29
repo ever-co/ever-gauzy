@@ -1,4 +1,5 @@
 @import 'gauzy/_gauzy-overrides';
+@import '../../../payments/payments.component.scss';
 
 .custom-header {
   display: flex;
@@ -26,6 +27,11 @@
 :host {
   nb-card {
     background-color: var(--gauzy-card-2);
+    nb-card-body {
+      background-color: unset;
+      padding-bottom: 1rem !important;
+      height: calc(100vh - 16.75rem) !important;
+    }
   }
   .time-range ::ng-deep ga-timer-picker {
     text-transform: lowercase;
@@ -36,7 +42,7 @@
     );
   }
 }
-.custom-calendar {
-  height: calc(100vh - 24rem);
-  overflow-y: overlay;
+:host .custom-calendar {
+  height: 100%;
+  overflow-y: auto;
 }

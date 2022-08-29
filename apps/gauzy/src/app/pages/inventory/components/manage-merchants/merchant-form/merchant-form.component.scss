@@ -81,7 +81,7 @@ h4 {
 
   nb-stepper ::ng-deep .step-content {
     padding: 1rem;
-    height: calc(100vh - 19rem);
+    height: calc(100vh - 17.25rem);
   }
 
   @include dialog(var(--gauzy-card-2), var(--gauzy-card-1));

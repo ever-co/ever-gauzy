@@ -1,9 +1,17 @@
 @import 'gauzy/_gauzy-overrides';
 
 :host {
+  height: 100%;
   nb-card,
   nb-card-body {
     background-color: var(--gauzy-card-2);
+  }
+  nb-card {
+    height: 100%;
+    nb-card-body {
+      height: 100vh;
+      border-radius: 0 0 var(--border-radius) var(--border-radius);
+    }
   }
   .form-group.row {
     display: flex;

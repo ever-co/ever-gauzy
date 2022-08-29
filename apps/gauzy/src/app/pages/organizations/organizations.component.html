@@ -1,9 +1,4 @@
-<nb-card
-	[nbSpinner]="loading"
-	nbSpinnerStatus="primary"
-	nbSpinnerSize="large"
-	class="card-scroll"
->
+<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
 	<nb-card-header class="d-flex flex-column pb-0">
 		<div class="card-header-title">
 			<h4>{{ 'ORGANIZATIONS_PAGE.ORGANIZATIONS' | translate }}</h4>
@@ -28,6 +23,7 @@
 					[source]="smartTableSource"
 					(userRowSelect)="selectOrganization($event)"
 					style="cursor: pointer"
+					#organizationsTable
 				>
 				</ng2-smart-table>
 			</div>
@@ -51,12 +47,7 @@
 				[settings]="settingsSmartTable"
 				[source]="organizations"
 				(onSelectedItem)="selectOrganization($event)"
-				(selectedOption)="onUpdateOption($event)"
-				(selectedPage)="onPageChange($event)"
-				[doEmit]="false"
-				[totalItems]="pagination?.totalItems"
-				[itemsPerPage]="pagination?.itemsPerPage"
-				[activePage]="pagination?.activePage"
+				(scroll)="onScroll()"
 			></ga-card-grid>
 		</ng-template>
 	</nb-card-body>

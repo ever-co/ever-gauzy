@@ -48,8 +48,14 @@
     border-radius: 0 0 var(--border-radius) var(--border-radius);
     display: flex;
     flex-direction: column;
-    height: calc($default-card-height);
+    height: calc($default-card-height + 2.5rem);
     overflow: unset;
+    @include nb-ltr(padding, 1rem 0.5rem 1rem 18px);
+    @include nb-rtl(padding, 1rem 18px 1rem 0.5rem);
+    .job-filters {
+      @include nb-ltr(margin-right, 0.625rem);
+      @include nb-rtl(margin-left, 0.625rem);
+    }
   }
   nb-card,
   nb-tab {

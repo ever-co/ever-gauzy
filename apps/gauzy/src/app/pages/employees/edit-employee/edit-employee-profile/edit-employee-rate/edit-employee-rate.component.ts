@@ -9,7 +9,7 @@ import { Component } from '@angular/core';
 		`
 			:host {
         overflow-y: auto;
-				max-height: calc(100vh - 28rem);
+				height: calc(100vh - 20.5rem);
 			}
 		`
 	]

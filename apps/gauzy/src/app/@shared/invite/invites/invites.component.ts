@@ -26,11 +26,7 @@ import { Subject } from 'rxjs';
 import * as moment from 'moment-timezone';
 import { ClipboardService, IClipboardResponse } from 'ngx-clipboard';
 import { distinctUntilChange } from '@gauzy/common-angular';
-import {
-	InviteService,
-	Store,
-	ToastrService
-} from '../../../@core/services';
+import { InviteService, Store, ToastrService } from '../../../@core/services';
 import { DeleteConfirmationComponent } from '../../user/forms';
 import { InviteMutationComponent } from '../invite-mutation/invite-mutation.component';
 import { ProjectNamesComponent } from './project-names/project-names.component';
@@ -50,9 +46,10 @@ import {
 	templateUrl: './invites.component.html',
 	styleUrls: ['invites.component.scss']
 })
-export class InvitesComponent extends PaginationFilterBaseComponent
-	implements AfterViewInit, OnInit, OnDestroy {
-
+export class InvitesComponent
+	extends PaginationFilterBaseComponent
+	implements AfterViewInit, OnInit, OnDestroy
+{
 	@Input()
 	invitationType: InvitationTypeEnum;
 
@@ -68,6 +65,7 @@ export class InvitesComponent extends PaginationFilterBaseComponent
 
 	invites$: Subject<any> = new Subject();
 	public organization: IOrganization;
+	private _refresh$: Subject<any> = new Subject();
 
 	invitesTable: Ng2SmartTableComponent;
 	@ViewChild('invitesTable') set content(content: Ng2SmartTableComponent) {
@@ -105,8 +103,12 @@ export class InvitesComponent extends PaginationFilterBaseComponent
 	ngAfterViewInit(): void {
 		this.clipboardService.copyResponse$
 			.pipe(
-				filter((clipboard: IClipboardResponse) => !!clipboard.isSuccess),
-				tap((clipboard: IClipboardResponse) => this.onCopySuccess(clipboard))
+				filter(
+					(clipboard: IClipboardResponse) => !!clipboard.isSuccess
+				),
+				tap((clipboard: IClipboardResponse) =>
+					this.onCopySuccess(clipboard)
+				)
 			)
 			.subscribe();
 		this.invites$
@@ -134,7 +136,20 @@ export class InvitesComponent extends PaginationFilterBaseComponent
 					(organization: IOrganization) =>
 						(this.organization = organization)
 				),
+				tap(() => this._refresh$.next(true)),
 				tap(() => this.invites$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this._refresh$
+			.pipe(
+				filter(
+					() =>
+						this.dataLayoutStyle ===
+						this.componentLayoutStyleEnum.CARDS_GRID
+				),
+				tap(() => this.refreshPagination()),
+				tap(() => (this.invites = [])),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -148,8 +163,12 @@ export class InvitesComponent extends PaginationFilterBaseComponent
 			.componentLayout$(this.viewComponentName)
 			.pipe(
 				distinctUntilChange(),
-				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
 				tap(() => this.refreshPagination()),
+				tap(
+					(componentLayout) =>
+						(this.dataLayoutStyle = componentLayout)
+				),
+				tap(() => (this.invites = [])),
 				tap(() => this.invites$.next(true)),
 				untilDestroyed(this)
 			)
@@ -174,18 +193,19 @@ export class InvitesComponent extends PaginationFilterBaseComponent
 	}
 
 	invite(): void {
-		this.dialogService.open(InviteMutationComponent, {
-			context: {
-				invitationType: this.invitationType
-			}
-		})
-		.onClose
-		.pipe(
-			filter((invite: IInvite) => !!invite),
-			tap(() => this.invites$.next(true)),
-			untilDestroyed(this)
-		)
-		.subscribe();
+		this.dialogService
+			.open(InviteMutationComponent, {
+				context: {
+					invitationType: this.invitationType
+				}
+			})
+			.onClose.pipe(
+				filter((invite: IInvite) => !!invite),
+				tap(() => this._refresh$.next(true)),
+				tap(() => this.invites$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	async copyToClipboard(selectedItem?: IInviteViewModel) {
@@ -207,9 +227,10 @@ export class InvitesComponent extends PaginationFilterBaseComponent
 			this.clipboardService.copy(
 				[
 					location.origin,
-					this._location.prepareExternalUrl(this._urlSerializer.serialize(tree))
-				]
-				.join('/')
+					this._location.prepareExternalUrl(
+						this._urlSerializer.serialize(tree)
+					)
+				].join('/')
 			);
 		}
 	}
@@ -225,7 +246,7 @@ export class InvitesComponent extends PaginationFilterBaseComponent
 		} finally {
 			this.clearItem();
 		}
-    }
+	}
 
 	/**
 	 * Copy Failure
@@ -260,7 +281,9 @@ export class InvitesComponent extends PaginationFilterBaseComponent
 			invites = items.filter((invite: IInvite) => {
 				if (this.invitationType === InvitationTypeEnum.EMPLOYEE) {
 					return invite.role.name == RolesEnum.EMPLOYEE;
-				} else if (this.invitationType === InvitationTypeEnum.CANDIDATE) {
+				} else if (
+					this.invitationType === InvitationTypeEnum.CANDIDATE
+				) {
 					return invite.role.name === RolesEnum.CANDIDATE;
 				} else {
 					return invite.role.name !== RolesEnum.EMPLOYEE;
@@ -278,9 +301,9 @@ export class InvitesComponent extends PaginationFilterBaseComponent
 					? moment(invite.expireDate).fromNow()
 					: InvitationExpirationEnum.NEVER,
 				createdDate: invite.createdAt,
-				imageUrl: (invite.invitedBy) ? invite.invitedBy.imageUrl : '',
-				fullName: (invite.invitedBy) ? invite.invitedBy.name : '',
-				roleName: (invite.role) ? invite.role.name : '',
+				imageUrl: invite.invitedBy ? invite.invitedBy.imageUrl : '',
+				fullName: invite.invitedBy ? invite.invitedBy.name : '',
+				roleName: invite.role ? invite.role.name : '',
 				status:
 					!invite.expireDate ||
 					moment(invite.expireDate).isAfter(moment())
@@ -301,7 +324,6 @@ export class InvitesComponent extends PaginationFilterBaseComponent
 				token: invite.token
 			});
 		}
-		this.invites = invitesVm;
 		this.sourceSmartTable.setPaging(activePage, itemsPerPage, false);
 		this.sourceSmartTable.load(invitesVm);
 		if (this.dataLayoutStyle === this.componentLayoutStyleEnum.CARDS_GRID)
@@ -314,7 +336,7 @@ export class InvitesComponent extends PaginationFilterBaseComponent
 	}
 
 	private async _loadGridLayoutData() {
-		this.invites = await this.sourceSmartTable.getElements();
+		this.invites.push(...(await this.sourceSmartTable.getElements()));
 	}
 
 	private _loadSmartTableSettings() {
@@ -431,6 +453,7 @@ export class InvitesComponent extends PaginationFilterBaseComponent
 								);
 							})
 							.finally(() => {
+								this._refresh$.next(true);
 								this.invites$.next(true);
 							});
 					} catch (error) {
@@ -494,6 +517,7 @@ export class InvitesComponent extends PaginationFilterBaseComponent
 								);
 							})
 							.finally(() => {
+								this._refresh$.next(true);
 								this.invites$.next(true);
 							});
 					} catch (error) {

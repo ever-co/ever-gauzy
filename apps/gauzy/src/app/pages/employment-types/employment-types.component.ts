@@ -1,4 +1,10 @@
-import { Component, OnInit, OnDestroy, TemplateRef, ViewChild } from '@angular/core';
+import {
+	Component,
+	OnInit,
+	OnDestroy,
+	TemplateRef,
+	ViewChild
+} from '@angular/core';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import {
@@ -7,7 +13,7 @@ import {
 	IOrganizationEmploymentType,
 	ITag,
 	ComponentLayoutStyleEnum,
-	EmploymentTypeTabsEnum	
+	EmploymentTypeTabsEnum
 } from '@gauzy/contracts';
 import { takeUntil } from 'rxjs/operators';
 import { NbDialogService } from '@nebular/theme';
@@ -21,9 +27,11 @@ import { Subject, firstValueFrom, filter, debounceTime, tap } from 'rxjs';
 import { ToastrService } from '../../@core/services/toastr.service';
 import { ActivatedRoute } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { IPaginationBase, PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
+import {
+	IPaginationBase,
+	PaginationFilterBaseComponent
+} from '../../@shared/pagination/pagination-filter-base.component';
 import { distinctUntilChange } from '@gauzy/common-angular';
-
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -33,13 +41,13 @@ import { distinctUntilChange } from '@gauzy/common-angular';
 })
 export class EmploymentTypesComponent
 	extends PaginationFilterBaseComponent
-	implements OnInit, OnDestroy {
-	
+	implements OnInit, OnDestroy
+{
 	@ViewChild('editableTemplate') public editableTemplateRef: TemplateRef<any>;
 	form: FormGroup;
 	selectedEmployee: IEmployee;
 	organization: IOrganization;
-	organizationEmploymentTypes: IOrganizationEmploymentType[];
+	organizationEmploymentTypes: IOrganizationEmploymentType[] = [];
 	tags: ITag[] = [];
 	selectedOrgEmpType: IOrganizationEmploymentType;
 	viewComponentName: ComponentEnum;
@@ -53,8 +61,9 @@ export class EmploymentTypesComponent
 		state: false
 	};
 	employmentTypeExist: boolean;
-	employmentTypeTabsEnum = EmploymentTypeTabsEnum;	
+	employmentTypeTabsEnum = EmploymentTypeTabsEnum;
 	private _ngDestroy$ = new Subject<void>();
+	private _refresh$: Subject<any> = new Subject();
 
 	constructor(
 		private fb: FormBuilder,
@@ -90,15 +99,26 @@ export class EmploymentTypesComponent
 					(organization: IOrganization) =>
 						(this.organization = organization)
 				),
+				tap(() => this._refresh$.next(true)),
 				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
 		this.route.queryParamMap
 			.pipe(
-				filter((params) => !!params && params.get('openAddDialog') === 'true'),
+				filter(
+					(params) =>
+						!!params && params.get('openAddDialog') === 'true'
+				),
 				debounceTime(1000),
 				tap(() => this.openDialog(this.editableTemplateRef, false)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this._refresh$
+			.pipe(
+				tap(() => this.refreshPagination()),
+				tap(() => (this.organizationEmploymentTypes = [])),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -121,23 +141,20 @@ export class EmploymentTypesComponent
 		const { tenantId } = this.store.user;
 		const { activePage, itemsPerPage } = this.getPagination();
 
-		const res = await this.organizationEmploymentTypesService.getAllWithPagination(
-			{
-				organizationId,
-				tenantId
-			},
-			['tags']
-		);
+		const res =
+			await this.organizationEmploymentTypesService.getAllWithPagination(
+				{
+					organizationId,
+					tenantId
+				},
+				['tags']
+			);
 		if (res) {
-			this.organizationEmploymentTypes = res.items;
 			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
 			this.smartTableSource.load(res.items);
-			if (
-				this.componentLayoutStyleEnum.CARDS_GRID ===
-				this.dataLayoutStyle
-			)
+			if (this._isGridLayout) {
 				this._loadGridLayoutData();
-
+			} else this.organizationEmploymentTypes = res.items;
 			if (this.organizationEmploymentTypes.length <= 0) {
 				this.employmentTypeExist = false;
 			} else {
@@ -151,22 +168,28 @@ export class EmploymentTypesComponent
 	private _initializeForm() {
 		this.form = this.fb.group({
 			name: ['', Validators.required]
-		});		
+		});
+	}
+
+	private get _isGridLayout(): boolean {
+		return (
+			this.componentLayoutStyleEnum.CARDS_GRID === this.dataLayoutStyle
+		);
 	}
 
 	private async _loadGridLayoutData() {
-		this.organizationEmploymentTypes = await this.smartTableSource.getElements();
-		this.setPagination({
-			...this.getPagination(),
-			totalItems: this.smartTableSource.count()
-		});
+		this.organizationEmploymentTypes.push(
+			...(await this.smartTableSource.getElements())
+		);
 	}
 
 	async _loadSmartTableSettings() {
 		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
 			pager: {
-				perPage: pagination ? pagination : 10
+				perPage: pagination
+					? pagination.itemsPerPage
+					: this.minItemPerPage
 			},
 			actions: false,
 			columns: {
@@ -182,19 +205,12 @@ export class EmploymentTypesComponent
 
 	setView() {
 		this.viewComponentName = ComponentEnum.EMPLOYMENT_TYPE;
-		
+
 		this.store
 			.componentLayout$(this.viewComponentName)
 			.pipe(
 				distinctUntilChange(),
-				tap(
-					(componentLayout) =>
-						(this.dataLayoutStyle = componentLayout)
-				),
-				filter(
-					(componentLayout) =>
-						componentLayout === ComponentLayoutStyleEnum.CARDS_GRID
-				),
+				tap(() => this._refresh$.next(true)),
 				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
@@ -216,15 +232,16 @@ export class EmploymentTypesComponent
 				.addEmploymentType(newEmploymentType)
 				.pipe(takeUntil(this._ngDestroy$))
 				.subscribe(() => {
+					this._refresh$.next(true);
 					this.subject$.next(true);
-					this.cancel();					
+					this.cancel();
 				});
 			this.toastrService.success(
 				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EMPLOYMENT_TYPES.ADD_EMPLOYMENT_TYPE',
 				{
 					name: this.form.get('name').value
 				}
-			);			
+			);
 		} else {
 			this.toastrService.success(
 				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EMPLOYMENT_TYPES.INVALID_EMPLOYMENT_TYPE',
@@ -246,13 +263,13 @@ export class EmploymentTypesComponent
 	}
 
 	async deleteEmploymentType(id, name) {
-		const result = await firstValueFrom(this.dialogService
-			.open(DeleteConfirmationComponent, {
+		const result = await firstValueFrom(
+			this.dialogService.open(DeleteConfirmationComponent, {
 				context: {
 					recordType: 'ORGANIZATIONS_PAGE.EMPLOYMENT_TYPE'
 				}
-			})
-			.onClose);
+			}).onClose
+		);
 
 		if (result) {
 			await this.organizationEmploymentTypesService.deleteEmploymentType(
@@ -264,9 +281,8 @@ export class EmploymentTypesComponent
 					name: name
 				}
 			);
-			this.organizationEmploymentTypes = this.organizationEmploymentTypes.filter(
-				(t) => t['id'] !== id
-			);
+			this.organizationEmploymentTypes =
+				this.organizationEmploymentTypes.filter((t) => t['id'] !== id);
 
 			this.emptyListInvoke();
 		}
@@ -275,7 +291,7 @@ export class EmploymentTypesComponent
 	selectedTagsEvent(ev) {
 		this.tags = ev;
 	}
-	
+
 	cancel() {
 		this.selectedOrgEmpType = null;
 		this.selected = {
@@ -302,6 +318,7 @@ export class EmploymentTypesComponent
 				name: name
 			}
 		);
+		this._refresh$.next(true);
 		this.subject$.next(true);
 		this.cancel();
 	}
@@ -322,9 +339,9 @@ export class EmploymentTypesComponent
 	}
 
 	edit(employmentType: IOrganizationEmploymentType) {
-		this.selectedOrgEmpType = employmentType;		
+		this.selectedOrgEmpType = employmentType;
 		this.tags = employmentType.tags;
-		this.form.patchValue(employmentType);	
+		this.form.patchValue(employmentType);
 	}
 
 	openDialog(template: TemplateRef<any>, isEditTemplate: boolean) {
@@ -335,16 +352,17 @@ export class EmploymentTypesComponent
 			console.log('An error occurred on open dialog');
 		}
 	}
-	
+
 	selectOrganizationEmploymentType(orgEmpType: any) {
 		if (orgEmpType.data) orgEmpType = orgEmpType.data;
 		const res =
-			this.selected.employmentType && orgEmpType.id === this.selected.employmentType.id
+			this.selected.employmentType &&
+			orgEmpType.id === this.selected.employmentType.id
 				? { state: !this.selected.state }
-				: { state: true };				
+				: { state: true };
 		this.disabled = !res.state;
 		this.selected.state = res.state;
 		this.selected.employmentType = orgEmpType;
-		this.selectedOrgEmpType = this.selected.employmentType;		
+		this.selectedOrgEmpType = this.selected.employmentType;
 	}
 }

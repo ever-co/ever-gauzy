@@ -1,5 +1,10 @@
 import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
-import { Router, RouterEvent, NavigationEnd, ActivatedRoute } from '@angular/router';
+import {
+	Router,
+	RouterEvent,
+	NavigationEnd,
+	ActivatedRoute
+} from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import {
 	IRequestApproval,
@@ -9,7 +14,7 @@ import {
 } from '@gauzy/contracts';
 import { RequestApprovalService } from '../../@core/services/request-approval.service';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
-import { firstValueFrom } from 'rxjs';
+import { combineLatest, firstValueFrom } from 'rxjs';
 import { filter, first, tap, debounceTime } from 'rxjs/operators';
 import { NbDialogService } from '@nebular/theme';
 import { Store } from '../../@core/services/store.service';
@@ -57,9 +62,9 @@ export class ApprovalsComponent
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
-	requestApprovalData: IRequestApproval[];
+	requestApprovalData: IRequestApproval[] = [];
 	organization: IOrganization;
-	subject$: Subject<any> = new Subject();
+	_refresh$: Subject<any> = new Subject();
 
 	requestApprovalTable: Ng2SmartTableComponent;
 	@ViewChild('requestApprovalTable') set content(
@@ -87,8 +92,8 @@ export class ApprovalsComponent
 		this.subject$
 			.pipe(
 				debounceTime(300),
-				tap(() => this.getApprovals()),
 				tap(() => this.clearItem()),
+				tap(() => this.getApprovals()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -100,28 +105,25 @@ export class ApprovalsComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.store.selectedEmployee$
+		combineLatest([
+			this.store.selectedEmployee$,
+			this.store.selectedOrganization$
+		])
 			.pipe(
-				filter((employee) => !!employee),
-				tap(() => this.subject$.next(true)),
-				untilDestroyed(this)
-			)
-			.subscribe((employee) => {
-				if (employee && employee.id) {
+				debounceTime(300),
+				filter(
+					([employee, organization]) => !!organization && !!employee
+				),
+				distinctUntilChange(),
+				tap(([employee, organization]) => {
 					this.selectedEmployeeId = employee.id;
-				}
-			});
-		this.store.selectedOrganization$
-			.pipe(
-				filter((organization) => !!organization),
+					this.organization = organization;
+				}),
+				tap(() => this._refresh$.next(true)),
 				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
-			.subscribe((org) => {
-				if (org) {
-					this.organization = org;
-				}
-			});
+			.subscribe();
 		this.router.events
 			.pipe(untilDestroyed(this))
 			.subscribe((event: RouterEvent) => {
@@ -131,9 +133,20 @@ export class ApprovalsComponent
 			});
 		this.route.queryParamMap
 			.pipe(
-				filter((params) => !!params && params.get('openAddDialog') === 'true'),
+				filter(
+					(params) =>
+						!!params && params.get('openAddDialog') === 'true'
+				),
 				debounceTime(1000),
 				tap(() => this.save(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this._refresh$
+			.pipe(
+				filter(() => this.isGridLayout),
+				tap(() => this.refreshPagination()),
+				tap(() => (this.requestApprovalData = [])),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -157,6 +170,7 @@ export class ApprovalsComponent
 					(componentLayout) =>
 						componentLayout === ComponentLayoutStyleEnum.CARDS_GRID
 				),
+				tap(() => (this.requestApprovalData = [])),
 				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
@@ -176,7 +190,7 @@ export class ApprovalsComponent
 	}
 
 	async selectRequestApproval({ isSelected, data }) {
-		this.selectedRequestApproval = null
+		this.selectedRequestApproval = null;
 		this.disableButton = !isSelected;
 		setTimeout(() => {
 			this.selectedRequestApproval = isSelected ? data : null;
@@ -231,10 +245,8 @@ export class ApprovalsComponent
 			});
 		});
 		this.smartTableSource.setPaging(activePage, itemsPerPage, false);
-		this.requestApprovalData = buffersItems;
-		this.smartTableSource.load(this.requestApprovalData);
-		if (this.dataLayoutStyle === this.componentLayoutStyleEnum.CARDS_GRID)
-			this._loadGridLayoutData();
+		this.smartTableSource.load(buffersItems);
+		if (this.isGridLayout) this._loadGridLayoutData();
 		this.setPagination({
 			...this.getPagination(),
 			totalItems: this.smartTableSource.count()
@@ -242,8 +254,14 @@ export class ApprovalsComponent
 		this.loading = false;
 	}
 
+	private get isGridLayout(): boolean {
+		return this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID;
+	}
+
 	async _loadGridLayoutData() {
-		this.requestApprovalData = await this.smartTableSource.getElements();
+		this.requestApprovalData.push(
+			...(await this.smartTableSource.getElements())
+		);
 	}
 
 	async _loadSmartTableSettings() {
@@ -252,9 +270,13 @@ export class ApprovalsComponent
 			actions: false,
 			pager: {
 				display: false,
-				perPage: pagination ? pagination : 10
+				perPage: pagination
+					? pagination.itemsPerPage
+					: this.minItemPerPage
 			},
-			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.APPROVAL_REQUEST'),
+			noDataMessage: this.getTranslation(
+				'SM_TABLE.NO_DATA.APPROVAL_REQUEST'
+			),
 			columns: {
 				name: {
 					title: this.getTranslation(
@@ -287,7 +309,9 @@ export class ApprovalsComponent
 					filter: false
 				},
 				createdAt: {
-					title: this.getTranslation('APPROVAL_REQUEST_PAGE.CREATED_AT'),
+					title: this.getTranslation(
+						'APPROVAL_REQUEST_PAGE.CREATED_AT'
+					),
 					type: 'custom',
 					filter: false,
 					renderComponent: DateViewComponent
@@ -391,14 +415,15 @@ export class ApprovalsComponent
 				);
 			}
 		}
-		this.clearItem();
-		this.getApprovals();
+		this._refresh$.next(true);
+		this.subject$.next(true);
 	}
 
 	_applyTranslationOnSmartTable() {
 		this.translateService.onLangChange
 			.pipe(untilDestroyed(this))
 			.subscribe(() => {
+				this._refresh$.next(true);
 				this.subject$.next(true);
 			});
 	}
@@ -435,8 +460,8 @@ export class ApprovalsComponent
 					: 'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_UPDATED',
 				{ name: requestApproval.name }
 			);
-			this.clearItem();
-			this.getApprovals();
+			this._refresh$.next(true);
+			this.subject$.next(true);
 		}
 	}
 
@@ -459,8 +484,8 @@ export class ApprovalsComponent
 					'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_DELETED',
 					{ name: this.selectedRequestApproval.name }
 				);
-				this.clearItem();
-				this.getApprovals();
+				this._refresh$.next(true);
+				this.subject$.next(true);
 			}
 		}
 	}

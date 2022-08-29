@@ -187,7 +187,7 @@
 	</ng-template>
 </ng-template>
 <ng-template #tableLayout>
-	<div class="table-scroll-container custom-table">
+	<div class="table-scroll-container">
 		<ng2-smart-table
 			class="employees-table"
 			style="cursor: pointer"
@@ -211,17 +211,12 @@
 	</div>
 </ng-template>
 <ng-template #gridLayout>
-	<div *ngIf="!loading">
+	<div class="grid" *ngIf="!loading">
 		<ga-card-grid
-			(selectedOption)="onUpdateOption($event)"
-			(selectedPage)="onPageChange($event)"
-			[doEmit]="false"
-			[totalItems]="pagination?.totalItems"
-			[itemsPerPage]="pagination?.itemsPerPage"
-			[activePage]="pagination?.activePage"
 			[settings]="settingsSmartTable"
 			[source]="employees"
 			(onSelectedItem)="selectEmployee($event)"
+			(scroll)="onScroll()"
 		></ga-card-grid>
 	</div>
 </ng-template>

@@ -1,9 +1,4 @@
-<nb-card
-	[nbSpinner]="loading"
-	nbSpinnerStatus="primary"
-	nbSpinnerSize="large"
-	class="card-scroll"
->
+<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
 	<nb-card-header class="d-flex flex-column pb-0">
 		<div class="card-header-title">
 			<h4>
@@ -46,9 +41,7 @@
 				></ng2-smart-table>
 			</div>
 			<div class="pagination-container align-self-end">
-				<ng-container
-					*ngIf="pagination.totalItems > minItemPerPage"
-				>
+				<ng-container *ngIf="pagination.totalItems > minItemPerPage">
 					<ga-pagination
 						(selectedOption)="onUpdateOption($event)"
 						(selectedPage)="onPageChange($event)"
@@ -64,14 +57,8 @@
 			<ga-card-grid
 				[settings]="settingsSmartTable"
 				[source]="equipments"
-				[buttonTemplate]="actionButtons"
-				(selectedOption)="onUpdateOption($event)"
-				(selectedPage)="onPageChange($event)"
 				(onSelectedItem)="selectEquipment($event)"
-				[doEmit]="false"
-				[totalItems]="pagination?.totalItems"
-				[itemsPerPage]="pagination?.itemsPerPage"
-				[activePage]="pagination?.activePage"
+				(scroll)="onScroll()"
 			></ga-card-grid>
 		</ng-template>
 	</nb-card-body>

@@ -69,5 +69,23 @@ export class WidgetComponent
 		this._widgetDragEnded = value;
 	}
 
+	get width() {
+		return this._interpolatedWidth();
+	}
+
+	_interpolatedWidth() {
+		const x = window.innerWidth;
+		return (
+			-(79730266276099 * Math.pow(x, 7)) / 2560103347328383765708800000 +
+			(4728564053374099 * Math.pow(x, 6)) / 14066501908397712998400000 -
+			(369154233196212757 * Math.pow(x, 5)) / 238104850011940454400000 +
+			(51440697463141483721 * Math.pow(x, 4)) / 12987537273378570240000 -
+			(491376385800833711797 * Math.pow(x, 3)) / 81172107958616064000 +
+			(16396027307988847931 * Math.pow(x, 2)) / 2962092580761600 -
+			(19016315799060904323959 * x) / 6781957804702080 +
+			6006199631979423447 / 9894312857
+		);
+	}
+
 	ngOnDestroy(): void {}
 }

@@ -1,23 +1,33 @@
 @import '../../../payments/payments.component.scss';
 
 .tasks-component {
-	&__settings {
-		display: flex;
-		align-items: center;
-	}
+  &__settings {
+    display: flex;
+    align-items: center;
+  }
 }
 .project-selector {
-	min-width: 15rem;
-	ng-select {
-		min-width: 10rem;
-		.selector-template {
-			display: flex;
-			align-items: center;
-			height: 100%;
-		}
-	}
+  min-width: 15rem;
+  ng-select {
+    min-width: 10rem;
+    .selector-template {
+      display: flex;
+      align-items: center;
+      height: 100%;
+    }
+  }
 }
 
-nb-card-body{
+nb-card-body {
   overflow: unset;
+  &.project {
+    height: calc($card-height - 0.5rem) !important;
+  }
+}
+
+:host ::ng-deep .sprint-view {
+  nb-accordion {
+    @include nb-ltr(padding-right, 0.5rem);
+    @include nb-rtl(padding-left, 0.5rem);
+  }
 }

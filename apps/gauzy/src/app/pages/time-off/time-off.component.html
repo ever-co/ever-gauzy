@@ -1,9 +1,4 @@
-<nb-card
-	[nbSpinner]="loading"
-	nbSpinnerStatus="primary"
-	nbSpinnerSize="large"
-	class="card-scroll"
->
+<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
 	<nb-card-header class="d-flex flex-column pb-0">
 		<div class="card-header-title">
 			<h4>
@@ -38,7 +33,7 @@
 			>
 				{{ 'TIME_OFF_PAGE.DISPLAY_HOLIDAYS' | translate }}
 			</nb-toggle>
-			<ga-layout-selector 
+			<ga-layout-selector
 				[componentName]="viewComponentName"
 			></ga-layout-selector>
 		</div>
@@ -99,17 +94,14 @@
 			</ng-container>
 		</ng-template>
 		<ng-template #gridLayout>
-			<ga-card-grid
-				(onSelectedItem)="selectRecord($event)"
-				(selectedOption)="onUpdateOption($event)"
-				(selectedPage)="onPageChange($event)"
-				[doEmit]="false"
-				[totalItems]="pagination?.totalItems"
-				[itemsPerPage]="pagination?.itemsPerPage"
-				[activePage]="pagination?.activePage"
-				[settings]="settingsSmartTable"
-				[source]="timeOffs"
-			></ga-card-grid>
+			<div class="custom-grid">
+				<ga-card-grid
+					(onSelectedItem)="selectRecord($event)"
+					(scroll)="onScroll()"
+					[settings]="settingsSmartTable"
+					[source]="timeOffs"
+				></ga-card-grid>
+			</div>
 		</ng-template>
 	</nb-card-body>
 </nb-card>
@@ -159,9 +151,7 @@
 	</ng-template>
 	<ng-template [ngIf]="showActions">
 		<div class="btn-group actions ml-2">
-			<ng-container 
-				*ngTemplateOutlet="additionalActions">
-			</ng-container>
+			<ng-container *ngTemplateOutlet="additionalActions"> </ng-container>
 		</div>
 	</ng-template>
 </ng-template>
