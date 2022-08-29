@@ -1,0 +1,113 @@
+@import 'var';
+
+.action {
+  box-shadow: var(--gauzy-shadow);
+  border: none;
+  &[nbButton].appearance-filled.status-basic {
+    background-color: #ffffff;
+  }
+  &.info {
+    &[nbButton].appearance-filled.status-basic {
+      background-color: nb-theme(color-info-default);
+      color: white;
+      border-color: nb-theme(color-info-default);
+    }
+  }
+  &.info-text-1 {
+    &[nbButton].appearance-filled.status-basic {
+      color: nb-theme(color-info-default);
+    }
+  }
+  &.secondary {
+    color: #7e7e8f;
+  }
+  &.success {
+    color: nb-theme(color-success-default);
+  }
+  &.warning {
+    color: rgba(245, 109, 88, 1);
+  }
+  &.orange {
+    color: rgba(255, 171, 45, 1);
+  }
+  &.primary {
+    color: nb-theme(text-primary-color);
+
+    &.soft {
+      &[nbButton].appearance-filled.status-basic {
+        background-color: rgba(110, 73, 232, 0.1);
+      }
+    }
+  }
+  &.select-nb ::ng-deep {
+    box-shadow: none;
+    .select-button {
+      box-shadow: var(--gauzy-shadow);
+      background: rgba(245, 245, 245);
+    }
+  }
+}
+
+button {
+  margin: 5px;
+}
+
+.actions {
+  background: var(--gauzy-card-2);
+  border-radius: nb-theme(button-rectangle-border-radius);
+  padding: 2px 4px !important;
+}
+
+.gauzy-button-container {
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+  padding-bottom: 0;
+}
+
+.card-custom-header {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding-bottom: 0;
+}
+
+:host ::ng-deep {
+  // TODO overrides perfectly chevron-down unicode
+  // .ng-select {
+  //   .ng-select-container {
+  //     border-radius: nb-theme(border-radius);
+  //     box-shadow: 0px 1px 1px 0px rgba(0, 0, 0, 0.15) inset;
+  //   }
+  //   .ng-arrow {
+  //     font-family: 'Font Awesome 6 Free' !important;
+  //     border-color: inherit !important;
+  //     border-width: 0 !important;
+  //     font-size: 11px;
+  //     top: 0 !important;
+  //     left: -4px;
+  //     @include nb-ltr(left, -4px);
+  //     @include nb-rtl(right, -4px);
+  //     color: inherit;
+  //     text-align: center;
+  //     transform: rotate(0deg);
+  //     transform-origin: 5.5px 8.6px;
+  //     @include nb-ltr(transform-origin, 5.5px 8.6px);
+  //     @include nb-rtl(transform-origin, -5.5px 8.6px);
+  //     transition: transform 0.2s ease;
+  //     &:before {
+  //       content: '\f078';
+  //     }
+  //   }
+
+  //   &.ng-select-opened {
+  //     .ng-arrow {
+  //       transform: rotate(180deg);
+  //     }
+  //   }
+  // }
+  input {
+    border-radius: nb-theme(border-radius);
+    box-shadow: var(--gauzy-shadow) inset;
+  }
+}

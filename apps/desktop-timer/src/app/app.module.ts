@@ -54,7 +54,7 @@ import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 		BrowserModule,
 		BrowserAnimationsModule,
 		AppRoutingModule,
-		NbThemeModule.forRoot({ name: 'default' }),
+		NbThemeModule.forRoot({ name: 'gauzy-light' }),
 		NgxLoginModule,
 		SetupModule,
 		TimeTrackerModule,
