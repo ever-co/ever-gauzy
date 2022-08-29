@@ -28,7 +28,7 @@
 				<ng-container *ngIf="!user?.employeeId">
 					<nb-card class="custom author d-flex flex-row p-3">
 						<div class="image-container">
-							<img [src]="author?.user?.imageUrl" alt=""/>
+							<img [src]="proposal?.author?.user?.imageUrl" alt=""/>
 						</div>
 						<div class="identity">
 							<h6 class="role">
@@ -38,17 +38,13 @@
 								}}
 							</h6>
 							<span class="name">
-								{{ author?.fullName }}
+								{{ proposal?.author?.fullName }}
 							</span>
 						</div>
 					</nb-card>
 				</ng-container>
 				<nb-card class="custom status">
-					<div>
-						{{
-							'PROPOSALS_PAGE.PROPOSAL_DETAILS.STATUS' | translate
-						}}
-					</div>
+					<div>{{ 'PROPOSALS_PAGE.PROPOSAL_DETAILS.STATUS' | translate }}</div>
 					<ga-proposal-status
 						*ngIf="proposal"
 						[rowData]="proposal"
@@ -69,11 +65,9 @@
 								*ngIf="jobPostLink"
 								[href]="jobPostLink"
 								target="_blank"
-								>{{
-									'PROPOSALS_PAGE.PROPOSAL_DETAILS.VIEW_JOB_POST'
-										| translate
-								}}</a
 							>
+								{{ 'PROPOSALS_PAGE.PROPOSAL_DETAILS.VIEW_JOB_POST' | translate }}
+							</a >
 						</nb-card>
 					</div>
 					<div class="col-lg-6 col-12">
@@ -109,8 +103,7 @@
 									position="centered"
 									[style.background]="tag.color"
 									[text]="tag.name"
-								>
-								</nb-badge>
+								></nb-badge>
 							</div>
 						</nb-card>
 					</div>

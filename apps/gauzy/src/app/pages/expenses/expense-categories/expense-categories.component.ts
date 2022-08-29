@@ -12,7 +12,10 @@ import {
 	IOrganization,
 	IExpenseCategory
 } from '@gauzy/contracts';
-import { IPaginationBase, PaginationFilterBaseComponent } from '../../../@shared/pagination/pagination-filter-base.component';
+import {
+	IPaginationBase,
+	PaginationFilterBaseComponent
+} from '../../../@shared/pagination/pagination-filter-base.component';
 import { NotesWithTagsComponent } from '../../../@shared/table-components';
 import { DeleteConfirmationComponent } from '../../../@shared/user/forms';
 import { API_PREFIX, ComponentEnum } from '../../../@core/constants';
@@ -31,9 +34,10 @@ import { ExpenseCategoryMutationComponent } from './expense-category-mutation/ex
 	templateUrl: './expense-categories.component.html',
 	styleUrls: ['expense-categories.component.scss']
 })
-export class ExpenseCategoriesComponent extends PaginationFilterBaseComponent
-	implements OnInit, OnDestroy {
-
+export class ExpenseCategoriesComponent
+	extends PaginationFilterBaseComponent
+	implements OnInit, OnDestroy
+{
 	loading: boolean = false;
 	disableButton: boolean = true;
 	smartTableSource: ServerDataSource;
@@ -51,6 +55,7 @@ export class ExpenseCategoriesComponent extends PaginationFilterBaseComponent
 
 	public organization: IOrganization;
 	categories$: Subject<any> = this.subject$;
+	private _refresh$: Subject<boolean> = new Subject();
 
 	constructor(
 		private readonly organizationExpenseCategoryService: OrganizationExpenseCategoriesService,
@@ -83,18 +88,30 @@ export class ExpenseCategoriesComponent extends PaginationFilterBaseComponent
 			)
 			.subscribe();
 		const storeOrganization$ = this.store.selectedOrganization$;
-		const componentLayout$ = this.store.componentLayout$(this.viewComponentName);
+		const componentLayout$ = this.store.componentLayout$(
+			this.viewComponentName
+		);
 		combineLatest([storeOrganization$, componentLayout$])
 			.pipe(
 				debounceTime(300),
 				distinctUntilChange(),
-				filter(([organization, componentLayout]) => !!organization && !!componentLayout),
+				filter(
+					([organization, componentLayout]) =>
+						!!organization && !!componentLayout
+				),
 				tap(([organization, componentLayout]) => {
 					this.organization = organization;
 					this.dataLayoutStyle = componentLayout;
 				}),
-				tap(() => this.refreshPagination()),
+				tap(() => this._refresh$.next(true)),
 				tap(() => this.categories$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this._refresh$
+			.pipe(
+				tap(() => this.refreshPagination()),
+				tap(() => (this.expenseCategories = [])),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -104,7 +121,7 @@ export class ExpenseCategoriesComponent extends PaginationFilterBaseComponent
 		this.selected = {
 			expenseCategory: null,
 			state: false
-		}
+		};
 		this.disableButton = true;
 	}
 
@@ -114,9 +131,13 @@ export class ExpenseCategoriesComponent extends PaginationFilterBaseComponent
 			actions: false,
 			pager: {
 				display: false,
-				perPage: pagination ? pagination.itemsPerPage : 10
+				perPage: pagination
+					? pagination.itemsPerPage
+					: this.minItemPerPage
 			},
-			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.EXPENSE_CATEGORY'),
+			noDataMessage: this.getTranslation(
+				'SM_TABLE.NO_DATA.EXPENSE_CATEGORY'
+			),
 			columns: {
 				name: {
 					title: this.getTranslation('ORGANIZATIONS_PAGE.NAME'),
@@ -140,10 +161,14 @@ export class ExpenseCategoriesComponent extends PaginationFilterBaseComponent
 
 			if (result) {
 				await this.organizationExpenseCategoryService.delete(id);
+				this._refresh$.next(true);
 				this.categories$.next(true);
-				this.toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EXPENSE_CATEGORIES.REMOVE_EXPENSE_CATEGORY', {
-					name
-				});
+				this.toastrService.success(
+					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EXPENSE_CATEGORIES.REMOVE_EXPENSE_CATEGORY',
+					{
+						name
+					}
+				);
 			}
 		} catch (error) {
 			this.errorHandlingService.handleError(error);
@@ -162,9 +187,13 @@ export class ExpenseCategoriesComponent extends PaginationFilterBaseComponent
 					tenantId,
 					...category
 				});
-				this.toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EXPENSE_CATEGORIES.ADD_EXPENSE_CATEGORY', {
-					name
-				});
+				this.toastrService.success(
+					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EXPENSE_CATEGORIES.ADD_EXPENSE_CATEGORY',
+					{
+						name
+					}
+				);
+				this._refresh$.next(true);
 				this.categories$.next(true);
 			} else {
 				this.toastrService.danger(
@@ -189,17 +218,18 @@ export class ExpenseCategoriesComponent extends PaginationFilterBaseComponent
 				const { id: organizationId } = this.organization;
 				const { tenantId } = this.store.user;
 
-				await this.organizationExpenseCategoryService.update(
-					id,
+				await this.organizationExpenseCategoryService.update(id, {
+					organizationId,
+					tenantId,
+					...category
+				});
+				this.toastrService.success(
+					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EXPENSE_CATEGORIES.UPDATE_EXPENSE_CATEGORY',
 					{
-						organizationId,
-						tenantId,
-						...category
+						name
 					}
 				);
-				this.toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EXPENSE_CATEGORIES.UPDATE_EXPENSE_CATEGORY', {
-					name
-				});
+				this._refresh$.next(true);
 				this.categories$.next(true);
 			} else {
 				this.toastrService.danger(
@@ -245,6 +275,7 @@ export class ExpenseCategoriesComponent extends PaginationFilterBaseComponent
 				...(this.filters.where ? this.filters.where : {})
 			},
 			finalize: () => {
+				this.expenseCategories.push(...this.smartTableSource.getData());
 				this.setPagination({
 					...this.getPagination(),
 					totalItems: this.smartTableSource.count()
@@ -260,17 +291,10 @@ export class ExpenseCategoriesComponent extends PaginationFilterBaseComponent
 		}
 		try {
 			this.setSmartTableSource();
-
 			// Initiate GRID view pagination
 			const { activePage, itemsPerPage } = this.getPagination();
-			this.smartTableSource.setPaging(
-				activePage,
-				itemsPerPage,
-				false
-			);
-
+			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
 			await this.smartTableSource.getElements();
-			this.expenseCategories = this.smartTableSource.getData();
 		} catch (error) {
 			this.errorHandlingService.handleError(error);
 		}
@@ -286,7 +310,9 @@ export class ExpenseCategoriesComponent extends PaginationFilterBaseComponent
 				: { state: true };
 		this.selected.state = res.state;
 		this.disableButton = !res.state;
-		this.selected.expenseCategory = this.selected.state ? expenseCategory : null;
+		this.selected.expenseCategory = this.selected.state
+			? expenseCategory
+			: null;
 	}
 
 	/**
@@ -295,8 +321,7 @@ export class ExpenseCategoriesComponent extends PaginationFilterBaseComponent
 	add() {
 		this.dialogService
 			.open(ExpenseCategoryMutationComponent)
-			.onClose
-			.pipe(
+			.onClose.pipe(
 				filter((category: IExpenseCategory) => !!category),
 				tap((category: IExpenseCategory) => this.addCategory(category)),
 				untilDestroyed(this)
@@ -317,10 +342,11 @@ export class ExpenseCategoriesComponent extends PaginationFilterBaseComponent
 					category: this.selected.expenseCategory
 				}
 			})
-			.onClose
-			.pipe(
+			.onClose.pipe(
 				filter((category: IExpenseCategory) => !!category),
-				tap((category: IExpenseCategory) => this.editCategory(category)),
+				tap((category: IExpenseCategory) =>
+					this.editCategory(category)
+				),
 				untilDestroyed(this)
 			)
 			.subscribe();

@@ -1,4 +1,4 @@
-<nb-card class="card-scroll">
+<nb-card>
 	<nb-card-header>
 		<div class="main-header" *ngIf="showHeader">
 			<h4>
@@ -50,6 +50,11 @@
 		</div>
 	</nb-card-header>
 	<nb-card-body>
-		<full-calendar #calendar [options]="calendarOptions"></full-calendar>
+		<div class="custom-calendar">
+			<full-calendar
+				#calendar
+				[options]="calendarOptions"
+			></full-calendar>
+		</div>
 	</nb-card-body>
 </nb-card>

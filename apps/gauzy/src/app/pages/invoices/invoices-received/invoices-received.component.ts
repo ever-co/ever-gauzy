@@ -26,16 +26,25 @@ import {
 	Store,
 	ToastrService
 } from '../../../@core/services';
-import { InvoiceEstimateTotalValueComponent, InvoicePaidComponent } from '../table-components';
+import {
+	InvoiceEstimateTotalValueComponent,
+	InvoicePaidComponent
+} from '../table-components';
 import {
 	ContactLinksComponent,
 	DateViewComponent,
 	NotesWithTagsComponent,
 	TagsOnlyComponent
 } from '../../../@shared/table-components';
-import { InputFilterComponent, TagsColorFilterComponent } from '../../../@shared/table-filters';
+import {
+	InputFilterComponent,
+	TagsColorFilterComponent
+} from '../../../@shared/table-filters';
 import { StatusBadgeComponent } from '../../../@shared/status-badge';
-import { IPaginationBase, PaginationFilterBaseComponent } from '../../../@shared/pagination/pagination-filter-base.component';
+import {
+	IPaginationBase,
+	PaginationFilterBaseComponent
+} from '../../../@shared/pagination/pagination-filter-base.component';
 import { InvoiceDownloadMutationComponent } from '../invoice-download/invoice-download-mutation.component';
 import { getAdjustDateRangeFutureAllowed } from '../../../@theme/components/header/selectors/date-range-picker';
 
@@ -45,9 +54,10 @@ import { getAdjustDateRangeFutureAllowed } from '../../../@theme/components/head
 	templateUrl: './invoices-received.component.html',
 	styleUrls: ['./invoices-received.component.scss']
 })
-export class InvoicesReceivedComponent extends PaginationFilterBaseComponent
-	implements OnInit, OnDestroy {
-
+export class InvoicesReceivedComponent
+	extends PaginationFilterBaseComponent
+	implements OnInit, OnDestroy
+{
 	loading: boolean = false;
 	disableButton: boolean = true;
 	settingsSmartTable: object;
@@ -61,6 +71,7 @@ export class InvoicesReceivedComponent extends PaginationFilterBaseComponent
 	invoices$: Subject<any> = this.subject$;
 	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
 	columns: string[] = [];
+	private _refresh$: Subject<any> = new Subject();
 
 	/*
 	 * getter setter for check estimate or invoice
@@ -126,14 +137,28 @@ export class InvoicesReceivedComponent extends PaginationFilterBaseComponent
 		combineLatest([storeOrganization$, storeDateRange$])
 			.pipe(
 				debounceTime(300),
-				filter(([organization, dateRange]) => !!organization && !!dateRange),
+				filter(
+					([organization, dateRange]) => !!organization && !!dateRange
+				),
 				distinctUntilChange(),
 				tap(([organization, dateRange]) => {
 					this.organization = organization as IOrganization;
 					this.selectedDateRange = dateRange as IDateRangePicker;
 				}),
-				tap(() => this.refreshPagination()),
+				tap(() => this._refresh$.next(true)),
 				tap(() => this.invoices$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this._refresh$
+			.pipe(
+				filter(
+					() =>
+						this.dataLayoutStyle ===
+						ComponentLayoutStyleEnum.CARDS_GRID
+				),
+				tap(() => this.refreshPagination()),
+				tap(() => (this.invoices = [])),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -166,6 +191,7 @@ export class InvoicesReceivedComponent extends PaginationFilterBaseComponent
 					(componentLayout) =>
 						componentLayout === ComponentLayoutStyleEnum.CARDS_GRID
 				),
+				tap(() => (this.invoices = [])),
 				tap(() => this.invoices$.next(true)),
 				untilDestroyed(this)
 			)
@@ -220,6 +246,9 @@ export class InvoicesReceivedComponent extends PaginationFilterBaseComponent
 				});
 			},
 			finalize: () => {
+				if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
+					this.invoices.push(...this.smartTableSource.getData());
+				}
 				this.setPagination({
 					...this.getPagination(),
 					totalItems: this.smartTableSource.count()
@@ -237,24 +266,11 @@ export class InvoicesReceivedComponent extends PaginationFilterBaseComponent
 			this.setSmartTableSource();
 
 			const { activePage, itemsPerPage } = this.getPagination();
-			this.smartTableSource.setPaging(
-				activePage,
-				itemsPerPage,
-				false
-			);
-			if (
-				this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID
-			) {
+			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
+			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
 				// Initiate GRID view pagination
 				await this.smartTableSource.getElements();
-				this.invoices = this.smartTableSource.getData();
-
-				this.setPagination({
-					...this.getPagination(),
-					totalItems: this.smartTableSource.count()
-				});
 			}
-
 		} catch (error) {
 			this._errorHandlingService.handleError(error);
 		}
@@ -291,6 +307,7 @@ export class InvoicesReceivedComponent extends PaginationFilterBaseComponent
 					isAccepted: true
 				})
 				.then(() => {
+					this._refresh$.next(true);
 					this.invoices$.next(true);
 					this.toastrService.success(
 						'INVOICES_PAGE.INVOICE_ACCEPTED'
@@ -314,6 +331,7 @@ export class InvoicesReceivedComponent extends PaginationFilterBaseComponent
 					isAccepted: false
 				})
 				.then(() => {
+					this._refresh$.next(true);
 					this.invoices$.next(true);
 					this.toastrService.success(
 						'INVOICES_PAGE.INVOICE_REJECTED'
@@ -334,7 +352,9 @@ export class InvoicesReceivedComponent extends PaginationFilterBaseComponent
 			},
 			mode: 'external',
 			editable: true,
-			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.RECEIVE_ESTIMATE'),
+			noDataMessage: this.getTranslation(
+				'SM_TABLE.NO_DATA.RECEIVE_ESTIMATE'
+			),
 			columns: {
 				invoiceNumber: {
 					title: this.isEstimate
@@ -351,7 +371,10 @@ export class InvoicesReceivedComponent extends PaginationFilterBaseComponent
 						component: InputFilterComponent
 					},
 					filterFunction: (invoiceNumber) => {
-						this.setFilter({ field: 'invoiceNumber', search: invoiceNumber });
+						this.setFilter({
+							field: 'invoiceNumber',
+							search: invoiceNumber
+						});
 					}
 				},
 				invoiceDate: {
@@ -380,7 +403,10 @@ export class InvoicesReceivedComponent extends PaginationFilterBaseComponent
 						component: InputFilterComponent
 					},
 					filterFunction: (totalValue) => {
-						this.setFilter({ field: 'totalValue', search: totalValue });
+						this.setFilter({
+							field: 'totalValue',
+							search: totalValue
+						});
 					}
 				}
 			}
@@ -416,10 +442,10 @@ export class InvoicesReceivedComponent extends PaginationFilterBaseComponent
 				},
 				filterFunction: (tags: ITag[]) => {
 					const tagIds = [];
-						for (const tag of tags) {
-							tagIds.push(tag.id);
-						}
-						this.setFilter({ field: 'tags', search: tagIds });
+					for (const tag of tags) {
+						tagIds.push(tag.id);
+					}
+					this.setFilter({ field: 'tags', search: tagIds });
 				},
 				sort: false
 			};

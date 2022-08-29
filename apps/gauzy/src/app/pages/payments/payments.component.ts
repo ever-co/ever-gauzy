@@ -71,6 +71,7 @@ export class PaymentsComponent extends PaginationFilterBaseComponent
 	projectId: string | null;
 	selectedDateRange: IDateRangePicker;
 	payments$: Subject<any> = this.subject$;
+	private _refresh$: Subject<any> = new Subject();
 
 	paymentsTable: Ng2SmartTableComponent;
 	@ViewChild('paymentsTable') set content(content: Ng2SmartTableComponent) {
@@ -133,7 +134,7 @@ export class PaymentsComponent extends PaginationFilterBaseComponent
 					this.selectedDateRange = dateRange;
 					this.projectId = project ? project.id : null;
 				}),
-				tap(() => this.refreshPagination()),
+				tap(() => this._refresh$.next(true)),
 				tap(() => this.payments$.next(true)),
 				untilDestroyed(this)
 			)
@@ -146,6 +147,12 @@ export class PaymentsComponent extends PaginationFilterBaseComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
+		this._refresh$.pipe(
+				filter(() => this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID),
+				tap(() => this.refreshPagination()),
+				tap(() => this.payments = []),
+				untilDestroyed(this)
+			).subscribe();
 	}
 
 	setView() {
@@ -163,6 +170,7 @@ export class PaymentsComponent extends PaginationFilterBaseComponent
 					(componentLayout) =>
 						componentLayout === ComponentLayoutStyleEnum.CARDS_GRID
 				),
+				tap(() => (this.payments = [])),
 				tap(() => this.payments$.next(true)),
 				untilDestroyed(this)
 			)
@@ -287,7 +295,7 @@ export class PaymentsComponent extends PaginationFilterBaseComponent
 			) {
 				// Initiate GRID view pagination
 				await this.smartTableSource.getElements();
-				this.payments = this.smartTableSource.getData();
+				this.payments.push(...this.smartTableSource.getData());
 
 				this.setPagination({
 					...this.getPagination(),
@@ -321,6 +329,7 @@ export class PaymentsComponent extends PaginationFilterBaseComponent
 
 			this.toastrService.success('INVOICES_PAGE.PAYMENTS.PAYMENT_ADD');
 			this.dateRangePickerBuilderService.refreshDateRangePicker(moment(payment.paymentDate));
+			this._refresh$.next(true);
 			this.payments$.next(true);
 		}
 	}
@@ -354,6 +363,7 @@ export class PaymentsComponent extends PaginationFilterBaseComponent
 
 			this.toastrService.success('INVOICES_PAGE.PAYMENTS.PAYMENT_EDIT');
 			this.dateRangePickerBuilderService.refreshDateRangePicker(moment(payment.paymentDate));
+			this._refresh$.next(true);
 			this.payments$.next(true);
 		}
 	}
@@ -385,6 +395,7 @@ export class PaymentsComponent extends PaginationFilterBaseComponent
 			}
 
 			this.toastrService.success('INVOICES_PAGE.PAYMENTS.PAYMENT_DELETE');
+			this._refresh$.next(true);
 			this.payments$.next(true);
 		}
 	}

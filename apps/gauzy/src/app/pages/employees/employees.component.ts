@@ -1,4 +1,10 @@
-import { Component, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
+import {
+	Component,
+	OnDestroy,
+	OnInit,
+	TemplateRef,
+	ViewChild
+} from '@angular/core';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import {
@@ -8,7 +14,7 @@ import {
 	EmployeeViewModel,
 	CrudActionEnum,
 	IEmployee,
-  ITag
+	ITag
 } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -24,8 +30,14 @@ import {
 } from '../../@shared/employee';
 import { InviteMutationComponent } from '../../@shared/invite/invite-mutation/invite-mutation.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
-import { PictureNameTagsComponent, TagsOnlyComponent } from '../../@shared/table-components';
-import { InputFilterComponent, TagsColorFilterComponent } from '../../@shared/table-filters';
+import {
+	PictureNameTagsComponent,
+	TagsOnlyComponent
+} from '../../@shared/table-components';
+import {
+	InputFilterComponent,
+	TagsColorFilterComponent
+} from '../../@shared/table-filters';
 import { API_PREFIX, ComponentEnum } from '../../@core/constants';
 import {
 	PaginationFilterBaseComponent,
@@ -52,9 +64,10 @@ import { ServerDataSource } from '../../@core/utils/smart-table';
 	templateUrl: './employees.component.html',
 	styleUrls: ['./employees.component.scss']
 })
-export class EmployeesComponent extends PaginationFilterBaseComponent
-	implements OnInit, OnDestroy {
-
+export class EmployeesComponent
+	extends PaginationFilterBaseComponent
+	implements OnInit, OnDestroy
+{
 	settingsSmartTable: object;
 	smartTableSource: ServerDataSource;
 	selectedEmployee: EmployeeViewModel;
@@ -67,6 +80,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 	includeDeleted: boolean = false;
 	loading: boolean = false;
 	organizationInvitesAllowed: boolean = false;
+	private _refresh$: Subject<any> = new Subject();
 
 	employeesTable: Ng2SmartTableComponent;
 	@ViewChild('employeesTable') set content(content: Ng2SmartTableComponent) {
@@ -77,9 +91,10 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 	}
 
 	/*
-	* Actions Buttons directive
-	*/
-	@ViewChild('actionButtons', { static: true }) actionButtons: TemplateRef<any>;
+	 * Actions Buttons directive
+	 */
+	@ViewChild('actionButtons', { static: true })
+	actionButtons: TemplateRef<any>;
 
 	public organization: IOrganization;
 	employees$: Subject<any> = this.subject$;
@@ -130,6 +145,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 					({ invitesAllowed }) =>
 						(this.organizationInvitesAllowed = invitesAllowed)
 				),
+				tap(() => this._refresh$.next(true)),
 				tap(() => this.employees$.next(true)),
 				untilDestroyed(this)
 			)
@@ -137,9 +153,23 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 		this.route.queryParamMap
 			.pipe(
 				filter((params: ParamMap) => !!params),
-				filter((params: ParamMap) => params.get('openAddDialog') === 'true'),
+				filter(
+					(params: ParamMap) => params.get('openAddDialog') === 'true'
+				),
 				debounceTime(1000),
 				tap(() => this.add()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this._refresh$
+			.pipe(
+				filter(
+					() =>
+						this.dataLayoutStyle ===
+						ComponentLayoutStyleEnum.CARDS_GRID
+				),
+				tap(() => this.refreshPagination()),
+				tap(() => (this.employees = [])),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -160,6 +190,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 					(componentLayout) =>
 						componentLayout === ComponentLayoutStyleEnum.CARDS_GRID
 				),
+				tap(() => (this.employees = [])),
 				tap(() => this.employees$.next(true)),
 				untilDestroyed(this)
 			)
@@ -202,6 +233,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 						}
 					);
 				});
+				this._refresh$.next(true);
 				this.employees$.next(true);
 			}
 		} catch (error) {
@@ -275,6 +307,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 					} catch (error) {
 						this.errorHandler.handleError(error);
 					} finally {
+						this._refresh$.next(true);
 						this.employees$.next(true);
 					}
 				}
@@ -315,6 +348,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 		} catch (error) {
 			this.errorHandler.handleError(error);
 		} finally {
+			this._refresh$.next(true);
 			this.employees$.next(true);
 		}
 	}
@@ -353,6 +387,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 		} catch (error) {
 			this.errorHandler.handleError(error);
 		} finally {
+			this._refresh$.next(true);
 			this.employees$.next(true);
 		}
 	}
@@ -391,6 +426,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 		} catch (error) {
 			this.errorHandler.handleError(error);
 		} finally {
+			this._refresh$.next(true);
 			this.employees$.next(true);
 		}
 	}
@@ -439,6 +475,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 		} catch (error) {
 			this.errorHandler.handleError(error);
 		} finally {
+			this._refresh$.next(true);
 			this.employees$.next(true);
 		}
 	}
@@ -514,10 +551,10 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 			endWork: endWork ? new Date(endWork) : '',
 			workStatus: endWork
 				? new Date(endWork).getDate() +
-					' ' +
-					monthNames[new Date(endWork).getMonth()] +
-					' ' +
-					new Date(endWork).getFullYear()
+				  ' ' +
+				  monthNames[new Date(endWork).getMonth()] +
+				  ' ' +
+				  new Date(endWork).getFullYear()
 				: '',
 			imageUrl: user.imageUrl,
 			tags,
@@ -529,13 +566,13 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 			bonusDate: Date.now(),
 			startedWorkOn,
 			isTrackingEnabled
-		}
+		};
 	}
 
 	private async _loadGridLayoutData() {
-		if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID){
+		if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
 			await this.smartTableSource.getElements();
-			this.employees = this.smartTableSource.getData();
+			this.employees.push(...this.smartTableSource.getData());
 			this.setPagination({
 				...this.getPagination(),
 				totalItems: this.smartTableSource.count()
@@ -549,7 +586,9 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 			actions: false,
 			pager: {
 				display: false,
-				perPage: pagination ? pagination.itemsPerPage : this.minItemPerPage
+				perPage: pagination
+					? pagination.itemsPerPage
+					: this.minItemPerPage
 			},
 			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.EMPLOYEE'),
 			columns: {
@@ -642,6 +681,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 
 	changeIncludeDeleted(checked: boolean) {
 		this.includeDeleted = checked;
+		this._refresh$.next(true);
 		this.employees$.next(true);
 	}
 

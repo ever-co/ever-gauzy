@@ -182,9 +182,11 @@
 		</nb-accordion>
 	</ng-template>
 	<ng-template #notFound>
-		<ngx-no-data-message
-			[message]="'REPORT_PAGE.NO_DATA.DAILY_TIME_AND_ACTIVITY'"
-		></ngx-no-data-message>
+		<div class="no-data">
+			<ngx-no-data-message
+				[message]="'REPORT_PAGE.NO_DATA.DAILY_TIME_AND_ACTIVITY'"
+			></ngx-no-data-message>	
+		</div>
 	</ng-template>
 </div>
 <ng-template class="table-template" let-day #groupByDateCardEl>

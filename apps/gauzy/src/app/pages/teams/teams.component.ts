@@ -1,4 +1,10 @@
-import { Component, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
+import {
+	Component,
+	OnDestroy,
+	OnInit,
+	TemplateRef,
+	ViewChild
+} from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import {
@@ -17,11 +23,25 @@ import { debounceTime, filter, tap } from 'rxjs/operators';
 import { Ng2SmartTableComponent } from 'ng2-smart-table';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange } from '@gauzy/common-angular';
-import { PaginationFilterBaseComponent, IPaginationBase } from '../../@shared/pagination/pagination-filter-base.component';
-import { InputFilterComponent, TagsColorFilterComponent } from '../../@shared/table-filters';
+import {
+	PaginationFilterBaseComponent,
+	IPaginationBase
+} from '../../@shared/pagination/pagination-filter-base.component';
+import {
+	InputFilterComponent,
+	TagsColorFilterComponent
+} from '../../@shared/table-filters';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
-import { EmployeeWithLinksComponent, NotesWithTagsComponent } from '../../@shared/table-components';
-import { EmployeesService, OrganizationTeamsService, Store, ToastrService } from '../../@core/services';
+import {
+	EmployeeWithLinksComponent,
+	NotesWithTagsComponent
+} from '../../@shared/table-components';
+import {
+	EmployeesService,
+	OrganizationTeamsService,
+	Store,
+	ToastrService
+} from '../../@core/services';
 import { API_PREFIX, ComponentEnum } from '../../@core/constants';
 import { ServerDataSource } from '../../@core/utils/smart-table';
 
@@ -31,27 +51,28 @@ import { ServerDataSource } from '../../@core/utils/smart-table';
 	templateUrl: './teams.component.html',
 	styleUrls: ['./teams.component.scss']
 })
-export class TeamsComponent extends PaginationFilterBaseComponent
-	implements OnInit, OnDestroy {
-	
-	@ViewChild('addEditTemplate') 
+export class TeamsComponent
+	extends PaginationFilterBaseComponent
+	implements OnInit, OnDestroy
+{
+	@ViewChild('addEditTemplate')
 	addEditTemplate: TemplateRef<any>;
 	addEditDialogRef: NbDialogRef<any>;
-	selectedTeam: IOrganizationTeam;	
+	selectedTeam: IOrganizationTeam;
 	disableButton: boolean = true;
 	loading: boolean;
-	
+
 	teams: IOrganizationTeam[] = [];
 	employees: IEmployee[] = [];
 	tags: ITag[] = [];
-	
+
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
-	
+
 	smartTableSettings: object;
 	smartTableSource: ServerDataSource;
-	
+
 	public organization: IOrganization;
 	teams$: Subject<any> = this.subject$;
 	employees$: Subject<any> = new Subject();
@@ -59,6 +80,7 @@ export class TeamsComponent extends PaginationFilterBaseComponent
 		team: null,
 		state: false
 	};
+	private _refresh$: Subject<any> = new Subject();
 
 	teamTable: Ng2SmartTableComponent;
 	@ViewChild('teamTable') set content(content: Ng2SmartTableComponent) {
@@ -77,7 +99,7 @@ export class TeamsComponent extends PaginationFilterBaseComponent
 		public readonly translateService: TranslateService,
 		private readonly route: ActivatedRoute,
 		private readonly router: Router,
-		private readonly httpClient: HttpClient,
+		private readonly httpClient: HttpClient
 	) {
 		super(translateService);
 		this.setView();
@@ -105,6 +127,7 @@ export class TeamsComponent extends PaginationFilterBaseComponent
 		this.employees$
 			.pipe(
 				debounceTime(300),
+				tap(() => this._refresh$.next(true)),
 				tap(() => this.loadEmployees()),
 				untilDestroyed(this)
 			)
@@ -112,8 +135,8 @@ export class TeamsComponent extends PaginationFilterBaseComponent
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization: IOrganization) => !!organization),
-				tap((organization) => this.organization = organization),
-				tap(() => this.refreshPagination()),
+				tap((organization) => (this.organization = organization)),
+				tap(() => this._refresh$.next(true)),
 				tap(() => this.teams$.next(true)),
 				tap(() => this.employees$.next(true)),
 				untilDestroyed(this)
@@ -121,7 +144,10 @@ export class TeamsComponent extends PaginationFilterBaseComponent
 			.subscribe();
 		this.route.queryParamMap
 			.pipe(
-				filter((params) => !!params && params.get('openAddDialog') === 'true'),
+				filter(
+					(params) =>
+						!!params && params.get('openAddDialog') === 'true'
+				),
 				tap(() => this.teams$.next(true)),
 				tap(() => this.employees$.next(true)),
 				debounceTime(1000),
@@ -129,9 +155,21 @@ export class TeamsComponent extends PaginationFilterBaseComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
+		this._refresh$
+			.pipe(
+				filter(
+					() =>
+						this.dataLayoutStyle ===
+						ComponentLayoutStyleEnum.CARDS_GRID
+				),
+				tap(() => this.refreshPagination()),
+				tap(() => (this.teams = [])),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
-	ngOnDestroy() { }
+	ngOnDestroy() {}
 
 	setView() {
 		this.viewComponentName = ComponentEnum.TEAMS;
@@ -139,15 +177,22 @@ export class TeamsComponent extends PaginationFilterBaseComponent
 			.componentLayout$(this.viewComponentName)
 			.pipe(
 				distinctUntilChange(),
-				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
+				tap(
+					(componentLayout) =>
+						(this.dataLayoutStyle = componentLayout)
+				),
 				tap(() => this.refreshPagination()),
-				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
+				filter(
+					(componentLayout) =>
+						componentLayout === ComponentLayoutStyleEnum.CARDS_GRID
+				),
+				tap(() => (this.teams = [])),
 				tap(() => this.teams$.next(true)),
 				untilDestroyed(this)
 			)
-			.subscribe();		
+			.subscribe();
 	}
-	
+
 	async addOrEditTeam(team: IOrganizationTeamCreateInput) {
 		if (team.members.length) {
 			if (this.selectedTeam) {
@@ -157,17 +202,18 @@ export class TeamsComponent extends PaginationFilterBaseComponent
 						team
 					);
 
-					this.toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_TEAM.EDIT_EXISTING_TEAM',
+					this.toastrService.success(
+						'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_TEAM.EDIT_EXISTING_TEAM',
 						{
 							name: team.name
 						}
 					);
 					this.clearItem();
+					this._refresh$.next(true);
 					this.teams$.next(true);
 				} catch (error) {
 					console.error(error);
 				}
-				
 			} else {
 				try {
 					await this.organizationTeamsService.create(team);
@@ -179,6 +225,7 @@ export class TeamsComponent extends PaginationFilterBaseComponent
 						}
 					);
 					this.clearItem();
+					this._refresh$.next(true);
 					this.teams$.next(true);
 				} catch (error) {
 					console.error(error);
@@ -195,13 +242,13 @@ export class TeamsComponent extends PaginationFilterBaseComponent
 	}
 
 	async removeTeam(id?: string, name?: string) {
-		const result = await firstValueFrom(this.dialogService
-			.open(DeleteConfirmationComponent, {
+		const result = await firstValueFrom(
+			this.dialogService.open(DeleteConfirmationComponent, {
 				context: {
 					recordType: 'Team'
 				}
-			})
-			.onClose);
+			}).onClose
+		);
 
 		if (result) {
 			try {
@@ -212,11 +259,10 @@ export class TeamsComponent extends PaginationFilterBaseComponent
 				this.toastrService.success(
 					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_TEAM.REMOVE_TEAM',
 					{
-						name: this.selectedTeam
-							? this.selectedTeam.name
-							: name
+						name: this.selectedTeam ? this.selectedTeam.name : name
 					}
 				);
+				this._refresh$.next(true);
 				this.teams$.next(true);
 			} catch (error) {
 				console.error(error);
@@ -243,8 +289,8 @@ export class TeamsComponent extends PaginationFilterBaseComponent
 		const { id: organizationId } = this.organization;
 		const { tenantId } = this.store.user;
 
-		const { items } = await firstValueFrom(this.employeesService
-			.getAll(['user', 'tags'], {
+		const { items } = await firstValueFrom(
+			this.employeesService.getAll(['user', 'tags'], {
 				organization: {
 					id: organizationId
 				},
@@ -253,7 +299,7 @@ export class TeamsComponent extends PaginationFilterBaseComponent
 		);
 		this.employees = items;
 	}
-	
+
 	public getTagsByEmployeeId(id: string) {
 		const employee = this.employees.find((empl) => empl.id === id);
 		return employee ? employee.tags : [];
@@ -264,8 +310,8 @@ export class TeamsComponent extends PaginationFilterBaseComponent
 	}
 
 	/*
-	* Register Smart Table Source Config
-	*/
+	 * Register Smart Table Source Config
+	 */
 	setSmartTableSource() {
 		if (!this.organization) {
 			return;
@@ -291,19 +337,29 @@ export class TeamsComponent extends PaginationFilterBaseComponent
 				leftJoin: {
 					tags: 'organization_team.tags'
 				}
-			},			
+			},
 			resultMap: (team: IOrganizationTeam) => {
 				return Object.assign({}, team, {
 					id: team.id,
 					name: team.name,
 					tags: team.tags,
-					managers : team.members.filter(
-						(member) => member.role && member.role.name === RolesEnum.MANAGER
-					).map((item) => item.employee),
-					members : team.members.filter((member) => !member.role).map((item) => item.employee)
+					managers: team.members
+						.filter(
+							(member) =>
+								member.role &&
+								member.role.name === RolesEnum.MANAGER
+						)
+						.map((item) => item.employee),
+					members: team.members
+						.filter((member) => !member.role)
+						.map((item) => item.employee)
 				});
 			},
 			finalize: () => {
+				if (
+					this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID
+				)
+					this.teams.push(...this.smartTableSource.getData());
 				this.setPagination({
 					...this.getPagination(),
 					totalItems: this.smartTableSource.count()
@@ -321,14 +377,10 @@ export class TeamsComponent extends PaginationFilterBaseComponent
 		try {
 			this.setSmartTableSource();
 			const { activePage, itemsPerPage } = this.getPagination();
-			this.smartTableSource.setPaging(
-				activePage,
-				itemsPerPage,
-				false
-			);
+			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
 			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
 				await this._loadGridLayoutData();
-			}			
+			}
 		} catch (error) {
 			this.toastrService.danger(error);
 		}
@@ -336,8 +388,6 @@ export class TeamsComponent extends PaginationFilterBaseComponent
 
 	private async _loadGridLayoutData() {
 		await this.smartTableSource.getElements();
-		this.teams = this.smartTableSource.getData();
-
 		this.setPagination({
 			...this.getPagination(),
 			totalItems: this.smartTableSource.count()
@@ -375,16 +425,20 @@ export class TeamsComponent extends PaginationFilterBaseComponent
 					},
 					filterFunction: (firstName: string) => {
 						this.setFilter({ field: 'name', search: firstName });
-					},
+					}
 				},
 				managers: {
-					title: this.getTranslation('ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.MANAGERS'),
+					title: this.getTranslation(
+						'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.MANAGERS'
+					),
 					type: 'custom',
 					renderComponent: EmployeeWithLinksComponent,
 					filter: false
 				},
 				members: {
-					title: this.getTranslation('ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.MEMBERS'),
+					title: this.getTranslation(
+						'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.MEMBERS'
+					),
 					type: 'custom',
 					renderComponent: EmployeeWithLinksComponent,
 					filter: false
@@ -404,7 +458,7 @@ export class TeamsComponent extends PaginationFilterBaseComponent
 							tagIds.push(tag.id);
 						}
 						this.setFilter({ field: 'tags', search: tagIds });
-					},
+					}
 				}
 			}
 		};
@@ -441,8 +495,8 @@ export class TeamsComponent extends PaginationFilterBaseComponent
 		};
 		this.selectedTeam = null;
 		this.disableButton = true;
-		this.deselectAll();	
-		this.addEditDialogRef?.close()
+		this.deselectAll();
+		this.addEditDialogRef?.close();
 	}
 
 	/*
@@ -454,10 +508,12 @@ export class TeamsComponent extends PaginationFilterBaseComponent
 			this.teamTable.grid.dataSet.deselectAll();
 		}
 	}
-	
+
 	openDialog(template: TemplateRef<any>, isEditTemplate: boolean) {
 		try {
-			isEditTemplate ? this.editTeam(this.selectedTeam) : this.clearItem();
+			isEditTemplate
+				? this.editTeam(this.selectedTeam)
+				: this.clearItem();
 			this.addEditDialogRef = this.dialogService.open(template);
 		} catch (error) {
 			console.log('An error occurred on open dialog');

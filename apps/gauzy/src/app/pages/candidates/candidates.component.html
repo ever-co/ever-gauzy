@@ -1,9 +1,4 @@
-<nb-card
-	[nbSpinner]="loading"
-	nbSpinnerStatus="primary"
-	nbSpinnerSize="large"
-	class="card-scroll"
->
+<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
 	<nb-card-header class="d-flex flex-column pb-0">
 		<div class="card-header-title">
 			<h4>
@@ -108,12 +103,7 @@
 				[settings]="settingsSmartTable"
 				[source]="candidates"
 				(onSelectedItem)="selectCandidate($event)"
-				(selectedOption)="onUpdateOption($event)"
-				(selectedPage)="onPageChange($event)"
-				[doEmit]="false"
-				[totalItems]="pagination?.totalItems"
-				[itemsPerPage]="pagination?.itemsPerPage"
-				[activePage]="pagination?.activePage"
+				(scroll)="onScroll()"
 			></ga-card-grid>
 		</ng-template>
 	</nb-card-body>
@@ -144,7 +134,11 @@
 				<nb-icon class="mr-1" icon="archive-outline"></nb-icon
 				>{{ 'BUTTONS.ARCHIVE' | translate }}
 			</button>
-			<ng-container *ngIf="selectedCandidate?.status === candidateStatusEnum.APPLIED">
+			<ng-container
+				*ngIf="
+					selectedCandidate?.status === candidateStatusEnum.APPLIED
+				"
+			>
 				<button
 					nbButton
 					[disabled]="!selectedItem && disableButton"

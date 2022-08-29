@@ -1,23 +1,4 @@
-@import 'gauzy/gauzy-table';
-@import 'gauzy/_gauzy-cards';
-
-:host {
-  nb-card,
-  nb-card-body {
-    background-color: var(--gauzy-card-2);
-    .custom-table {
-      max-height: calc(100vh - 24rem);
-      flex-grow: 10;
-    }
-    display: flex;
-    flex-direction: column;
-  }
-  @include nb-card-overrides(
-    unset,
-    calc($default-card-height - 1rem),
-    $default-radius
-  );
-}
+@import '../payments/payments.component.scss';
 
 nb-radio-group {
   display: flex;
@@ -29,114 +10,9 @@ nb-radio-group {
   justify-content: space-between;
 }
 
-.edit-icon {
-  margin-left: 30px;
-  position: relative;
-  width: 36px;
-
-  svg {
-    position: absolute;
-  }
-
-  nb-icon {
-    position: absolute;
-  }
-}
-
 .actions-container {
   justify-content: flex-start;
   margin-bottom: 1rem;
-}
-
-/* Card grid */
-
-.flex-container {
-  display: flex;
-  flex-flow: row wrap;
-  justify-content: flex-start;
-  padding: 0;
-  margin: 0;
-  list-style: none;
-}
-
-.flex-item {
-  border: 0.0625rem solid #e4e9f2;
-  border-radius: 0.25rem;
-  width: 330px;
-  margin: 10px;
-}
-
-.fullName {
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  padding: 1rem 1.5rem;
-  line-height: 40px;
-  font-size: 1.5em;
-}
-
-.avatar {
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-}
-
-.info-line {
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  font-size: 0.8em;
-  color: darkgray;
-  line-height: 0px;
-  padding: 1rem 1.5rem;
-
-  .info-meta {
-    margin-right: 10px;
-  }
-
-  .info-value {
-    display: flex;
-    justify-content: flex-end;
-    text-align: end;
-    font-size: 1em;
-  }
-}
-
-.card-footer {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-around;
-}
-
-.aditional-actions {
-  margin-top: 0.5rem;
-  display: flex;
-  justify-content: space-around;
-}
-
-/* Status */
-
-.badge-danger {
-  text-align: center;
-  padding: 5px;
-  background-color: #ff3d71;
-  margin-bottom: 5px;
-  border-radius: 0.25rem;
-}
-
-.badge-success {
-  text-align: center;
-  padding: 5px;
-  background-color: #00d68f;
-  border-radius: 0.25rem;
-}
-
-.badge-warning {
-  text-align: center;
-  padding: 5px;
-  background-color: #fa0;
-  color: #fff;
-  border-radius: 0.25rem;
 }
 
 ::ng-deep {
@@ -151,6 +27,14 @@ nb-radio-group {
         color: nb-theme(text-primary-color);
       }
     }
+  }
+  .custom-grid {
+    flex-grow: 10;
+    max-height: unset;
+    overflow-y: auto;
+  }
+  nb-card-body {
+    height: calc($card-height - 0.5rem) !important;
   }
 }
 

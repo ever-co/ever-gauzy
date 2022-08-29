@@ -62,13 +62,12 @@ h4 {
   font-weight: 500;
   line-height: 30px;
   letter-spacing: 0em;
-  text-align: left;
 }
 
 :host {
   @include nb-card-overrides(
-    overlay,
-    calc($default-card-height + 4rem),
+    auto,
+    calc($default-card-height + 7.5rem),
     $default-radius
   );
   nb-card {
@@ -90,6 +89,7 @@ h4 {
 .custom {
   align-items: center;
   background-color: nb-theme(gauzy-card-2);
+  margin-bottom: 1rem;
   .role {
     font-size: 16px;
     font-weight: 600;

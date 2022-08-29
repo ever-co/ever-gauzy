@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { filter, firstValueFrom } from 'rxjs';
+import { filter, firstValueFrom, Subject } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import {
 	ICandidateInterview,
@@ -33,7 +33,10 @@ import {
 } from './../../../../@core/services';
 import { ArchiveConfirmationComponent } from './../../../../@shared/user/forms/archive-confirmation/archive-confirmation.component';
 import { CandidateInterviewFeedbackComponent } from './../../../../@shared/candidate/candidate-interview-feedback/candidate-interview-feedback.component';
-import { IPaginationBase, PaginationFilterBaseComponent } from './../../../../@shared/pagination/pagination-filter-base.component';
+import {
+	IPaginationBase,
+	PaginationFilterBaseComponent
+} from './../../../../@shared/pagination/pagination-filter-base.component';
 import {
 	InterviewActionsTableComponent,
 	InterviewCriterionsTableComponent,
@@ -47,9 +50,10 @@ import {
 	templateUrl: './interview-panel.component.html',
 	styleUrls: ['./interview-panel.component.scss']
 })
-export class InterviewPanelComponent extends PaginationFilterBaseComponent 
-	implements OnInit, OnDestroy {
-
+export class InterviewPanelComponent
+	extends PaginationFilterBaseComponent
+	implements OnInit, OnDestroy
+{
 	interviewList: ICandidateInterview[];
 	tableInterviewList = [];
 	candidates: ICandidate[];
@@ -73,6 +77,7 @@ export class InterviewPanelComponent extends PaginationFilterBaseComponent
 	organization: IOrganization;
 	disabled: boolean = true;
 	selectedInterview: ICandidateInterview;
+	private _refresh$: Subject<boolean> = new Subject();
 
 	constructor(
 		private readonly dialogService: NbDialogService,
@@ -90,7 +95,7 @@ export class InterviewPanelComponent extends PaginationFilterBaseComponent
 		super(translateService);
 		this.setView();
 	}
-	
+
 	ngOnInit() {
 		this.subject$
 			.pipe(
@@ -108,8 +113,15 @@ export class InterviewPanelComponent extends PaginationFilterBaseComponent
 			.subscribe();
 		this.store.selectedOrganization$
 			.pipe(
+				debounceTime(300),
+				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
-				tap((organization: IOrganization) => this.organization = organization),
+				tap(
+					(organization: IOrganization) =>
+						(this.organization = organization)
+				),
+				tap(() => this._refresh$.next(true)),
+				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe((organization: IOrganization) => {
@@ -117,21 +129,36 @@ export class InterviewPanelComponent extends PaginationFilterBaseComponent
 					const { tenantId } = this.store.user;
 					const { id: organizationId } = organization;
 
-					this.candidatesService.getAll(['user'], {
+					this.candidatesService
+						.getAll(['user'], {
 							organizationId,
 							tenantId
 						})
 						.pipe(
-							tap((candidates) => this.candidates = candidates.items),
+							tap(
+								(candidates) =>
+									(this.candidates = candidates.items)
+							),
 							untilDestroyed(this)
 						)
 						.subscribe();
 					this.candidateStore.interviewList$
 						.pipe(untilDestroyed(this))
 						.subscribe();
-					this.subject$.next(true);
 				}
 			});
+		this._refresh$
+			.pipe(
+				filter(
+					() =>
+						this.dataLayoutStyle ===
+						ComponentLayoutStyleEnum.CARDS_GRID
+				),
+				tap(() => this.refreshPagination()),
+				tap(() => (this.tableInterviewList = [])),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this._loadSmartTableSettings();
 		this._applyTranslationOnSmartTable();
 	}
@@ -141,6 +168,7 @@ export class InterviewPanelComponent extends PaginationFilterBaseComponent
 		this.interviewList = this.findByEmployee(this.allInterviews);
 		const tableList = this.findByEmployee(this.tableInterviewList);
 		this.sourceSmartTable.load(tableList);
+		this._loadGridLayoutData();
 	}
 
 	findByEmployee(list: ICandidateInterview[]) {
@@ -200,7 +228,7 @@ export class InterviewPanelComponent extends PaginationFilterBaseComponent
 		if (interviews) {
 			this.interviewList = interviews.items;
 			this.allInterviews = interviews.items;
-			this.tableInterviewList = [];
+			let tableInterviewList = [];
 			const result = [];
 			this.interviewList.forEach((interview) => {
 				const employees = [];
@@ -244,22 +272,23 @@ export class InterviewPanelComponent extends PaginationFilterBaseComponent
 				this.includeArchived,
 				this.interviewList
 			);
-			// for table view
-			this.tableInterviewList = this.includeArchivedCheck(
+			//for table view
+			tableInterviewList = this.includeArchivedCheck(
 				this.includeArchived,
 				result
 			);
-			this.tableInterviewList = this.onlyPast
-				? this.filterInterviewByTime(this.tableInterviewList, true)
-				: this.tableInterviewList;
+			tableInterviewList = this.onlyPast
+				? this.filterInterviewByTime(tableInterviewList, true)
+				: tableInterviewList;
 
-			this.tableInterviewList = this.onlyFuture
-				? this.filterInterviewByTime(this.tableInterviewList, false)
-				: this.tableInterviewList;
+			tableInterviewList = this.onlyFuture
+				? this.filterInterviewByTime(tableInterviewList, false)
+				: tableInterviewList;
 			this.sourceSmartTable.setPaging(activePage, itemsPerPage, false);
-			this.sourceSmartTable.load(this.tableInterviewList);
-			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID)
-				this._loadGridLayoutData();
+			this.sourceSmartTable.load(
+				this._getUniquesById(tableInterviewList)
+			);
+			this._loadGridLayoutData();
 			this.setPagination({
 				...this.getPagination(),
 				totalItems: this.sourceSmartTable.count()
@@ -268,8 +297,22 @@ export class InterviewPanelComponent extends PaginationFilterBaseComponent
 		}
 	}
 
+	private _getUniquesById(array: any[]) {
+		return array.filter(
+			(value, index, self) =>
+				index === self.findIndex(({ id }) => id === value.id)
+		);
+	}
+
 	private async _loadGridLayoutData() {
-		this.tableInterviewList = await this.sourceSmartTable.getElements();
+		if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
+			this.tableInterviewList.push(
+				...(await this.sourceSmartTable.getElements())
+			);
+			this.tableInterviewList = this._getUniquesById(
+				this.tableInterviewList
+			);
+		}
 	}
 
 	filterInterviewByTime(list: ICandidateInterview[], isPast: boolean) {
@@ -393,7 +436,9 @@ export class InterviewPanelComponent extends PaginationFilterBaseComponent
 			},
 			pager: {
 				display: false,
-				perPage: pagination ? pagination.itemsPerPage : 10
+				perPage: pagination
+					? pagination.itemsPerPage
+					: this.minItemPerPage
 			}
 		};
 	}
@@ -404,8 +449,18 @@ export class InterviewPanelComponent extends PaginationFilterBaseComponent
 			.componentLayout$(this.viewComponentName)
 			.pipe(
 				distinctUntilChange(),
-				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
+				tap(
+					(componentLayout) =>
+						(this.dataLayoutStyle = componentLayout)
+				),
 				tap(() => this.refreshPagination()),
+				filter(
+					() =>
+						this.dataLayoutStyle ===
+						ComponentLayoutStyleEnum.CARDS_GRID
+				),
+				tap(() => (this.tableInterviewList = [])),
+				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -413,6 +468,7 @@ export class InterviewPanelComponent extends PaginationFilterBaseComponent
 
 	changeIncludeArchived(checked: boolean) {
 		this.includeArchived = checked;
+		this._refresh$.next(true);
 		this.subject$.next(true);
 	}
 
@@ -421,6 +477,7 @@ export class InterviewPanelComponent extends PaginationFilterBaseComponent
 		if (this.onlyFuture) {
 			this.onlyFuture = false;
 		}
+		this._refresh$.next(true);
 		this.subject$.next(true);
 	}
 
@@ -429,6 +486,7 @@ export class InterviewPanelComponent extends PaginationFilterBaseComponent
 		if (this.onlyPast) {
 			this.onlyPast = false;
 		}
+		this._refresh$.next(true);
 		this.subject$.next(true);
 	}
 
@@ -451,6 +509,7 @@ export class InterviewPanelComponent extends PaginationFilterBaseComponent
 				);
 				const data = await firstValueFrom(dialog.onClose);
 				if (data) {
+					this._refresh$.next(true);
 					this.subject$.next(true);
 					this.toastrService.success(
 						'TOASTR.MESSAGE.INTERVIEW_FEEDBACK_CREATED',
@@ -490,6 +549,7 @@ export class InterviewPanelComponent extends PaginationFilterBaseComponent
 									name: interview.title
 								}
 							);
+							this._refresh$.next(true);
 							this.subject$.next(true);
 						} catch (error) {
 							this.errorHandler.handleError(error);
@@ -533,6 +593,7 @@ export class InterviewPanelComponent extends PaginationFilterBaseComponent
 				this.toastrService.success('TOASTR.MESSAGE.INTERVIEW_UPDATED', {
 					name: data.title
 				});
+				this._refresh$.next(true);
 				this.subject$.next(true);
 			}
 		}
@@ -555,6 +616,7 @@ export class InterviewPanelComponent extends PaginationFilterBaseComponent
 				this.toastrService.success('TOASTR.MESSAGE.INTERVIEW_DELETED', {
 					name: data.title
 				});
+				this._refresh$.next(true);
 				this.subject$.next(true);
 			}
 		}
@@ -580,7 +642,7 @@ export class InterviewPanelComponent extends PaginationFilterBaseComponent
 	}
 
 	ngOnDestroy() {}
-	
+
 	private _applyTranslationOnSmartTable() {
 		this.translateService.onLangChange
 			.pipe(
@@ -617,6 +679,7 @@ export class InterviewPanelComponent extends PaginationFilterBaseComponent
 				}
 			);
 		}
+		this._refresh$.next(true);
 		this.subject$.next(true);
 	}
 }

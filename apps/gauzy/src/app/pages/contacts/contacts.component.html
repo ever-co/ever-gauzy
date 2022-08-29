@@ -1,10 +1,5 @@
-<nb-card
-	[nbSpinner]="loading"
-	nbSpinnerStatus="primary"
-	nbSpinnerSize="large"
-	class="card-scroll"
->
-	<nb-card-header class="d-flex flex-column">
+<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
+	<nb-card-header class="d-flex flex-column pb-0">
 		<div class="main-header">
 			<h4>
 				<ngx-header-title>
@@ -21,18 +16,20 @@
 			></ngx-gauzy-button-action>
 		</div>
 	</nb-card-header>
-	<nb-card-body class="custom-card">
+	<nb-card-body [ngClass]="{ mutation: showAddCard }" class="custom-card">
 		<ng-container *ngIf="showAddCard; else layout">
-			<div style="display: flex">
-				<ga-contact-mutation
-					class="w-100"
-					[contactType]="contactType"
-					[organizationContact]="selectedOrganizationContact"
-					[projectsWithoutOrganizationContacts]="projectsWithoutOrganizationContacts"
-					(canceled)="cancel()"
-					(addOrEditOrganizationContact)="addOrEditOrganizationContact($event)"
-				></ga-contact-mutation>
-			</div>
+			<ga-contact-mutation
+				class="w-100"
+				[contactType]="contactType"
+				[organizationContact]="selectedOrganizationContact"
+				[projectsWithoutOrganizationContacts]="
+					projectsWithoutOrganizationContacts
+				"
+				(canceled)="cancel()"
+				(addOrEditOrganizationContact)="
+					addOrEditOrganizationContact($event)
+				"
+			></ga-contact-mutation>
 		</ng-container>
 		<ng-template #layout>
 			<ng-template
@@ -69,12 +66,7 @@
 					(onSelectedItem)="selectContact($event)"
 					[settings]="settingsSmartTable"
 					[source]="organizationContacts"
-					(selectedOption)="onUpdateOption($event)"
-					(selectedPage)="onPageChange($event)"
-					[doEmit]="false"
-					[totalItems]="pagination?.totalItems"
-					[itemsPerPage]="pagination?.itemsPerPage"
-					[activePage]="pagination?.activePage"
+					(scroll)="onScroll()"
 				></ga-card-grid>
 			</ng-template>
 		</ng-template>

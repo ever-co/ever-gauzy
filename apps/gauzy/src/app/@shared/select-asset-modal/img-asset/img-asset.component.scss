@@ -14,6 +14,7 @@
   border-radius: nb-theme(border-radius);
   transition: 0.1s all ease-in-out;
   cursor: pointer;
+  position: relative;
 
   &:hover {
     box-shadow: var(--gauzy-shadow);
@@ -30,10 +31,10 @@
 
 .delete-asset-btn {
   position: absolute;
-  width: 35px;
-  height: 35px;
-  top: -5px;
-  left: 3px;
+  width: 32px;
+  height: 32px;
+  top: 4px;
+  left: 4px;
   background: #fff;
   border-radius: 50%;
   display: flex;
@@ -41,6 +42,6 @@
   align-items: center;
   cursor: pointer;
   opacity: 0;
-  box-shadow: var(--gauzy-shadow);;
+  box-shadow: var(--gauzy-shadow);
   color: nb-theme(text-danger-color);
 }

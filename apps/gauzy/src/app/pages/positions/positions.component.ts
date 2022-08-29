@@ -9,7 +9,7 @@ import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import { LocalDataSource } from 'ng2-smart-table';
-import { firstValueFrom, filter, tap } from 'rxjs';
+import { firstValueFrom, filter, tap, Subject, debounceTime } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
 	OrganizationPositionsService,
@@ -53,6 +53,7 @@ export class PositionsComponent
 	};
 	disabled: boolean = true;
 	loading: boolean = false;
+	private _refresh$: Subject<any> = new Subject();
 
 	constructor(
 		private readonly organizationPositionsService: OrganizationPositionsService,
@@ -68,12 +69,14 @@ export class PositionsComponent
 	ngOnInit(): void {
 		this.subject$
 			.pipe(
+				debounceTime(150),
 				tap(() => this.loadPositions()),
 				untilDestroyed(this)
 			)
 			.subscribe();
 		this.pagination$
 			.pipe(
+				debounceTime(150),
 				distinctUntilChange(),
 				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
@@ -81,12 +84,22 @@ export class PositionsComponent
 			.subscribe();
 		this.store.selectedOrganization$
 			.pipe(
+				debounceTime(300),
 				filter((organization: IOrganization) => !!organization),
 				tap(
 					(organization: IOrganization) =>
 						(this.organization = organization)
 				),
+				tap(() => this._refresh$.next(true)),
 				tap(() => this.subject$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this._refresh$
+			.pipe(
+				filter(() => this._isGridLayout),
+				tap(() => this.refreshPagination()),
+				tap(() => (this.positions = [])),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -133,9 +146,16 @@ export class PositionsComponent
 				{ name }
 			);
 
+			this._refresh$.next(true);
 			this.subject$.next(true);
 			this.cancel();
 		}
+	}
+
+	private get _isGridLayout(): boolean {
+		return (
+			this.componentLayoutStyleEnum.CARDS_GRID === this.dataLayoutStyle
+		);
 	}
 
 	edit(position: IOrganizationPosition) {
@@ -151,14 +171,8 @@ export class PositionsComponent
 			.componentLayout$(this.viewComponentName)
 			.pipe(
 				distinctUntilChange(),
-				tap(
-					(componentLayout) =>
-						(this.dataLayoutStyle = componentLayout)
-				),
-				filter(
-					(componentLayout) =>
-						componentLayout === ComponentLayoutStyleEnum.CARDS_GRID
-				),
+				tap(() => this.refreshPagination()),
+				tap(() => (this.positions = [])),
 				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
@@ -220,7 +234,7 @@ export class PositionsComponent
 				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_POSITIONS.ADD_POSITION',
 				{ name }
 			);
-
+			this._refresh$.next(true);
 			this.subject$.next(true);
 			this.cancel();
 		} else {
@@ -269,33 +283,25 @@ export class PositionsComponent
 			},
 			['tags']
 		);
-		this.loading = false;
 		if (res) {
-			this.positions = res.items;
 			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
 			this.smartTableSource.load(res.items);
-			if (
-				this.componentLayoutStyleEnum.CARDS_GRID ===
-				this.dataLayoutStyle
-			)
+			if (this._isGridLayout) {
 				this._loadGridLayoutData();
+			} else this.positions = res.items;
 
 			if (this.positions.length <= 0) {
 				this.positionsExist = false;
 			} else {
 				this.positionsExist = true;
 			}
-
 			this.emptyListInvoke();
+			this.loading = false;
 		}
 	}
 
 	private async _loadGridLayoutData() {
-		this.positions = await this.smartTableSource.getElements();
-		this.setPagination({
-			...this.getPagination(),
-			totalItems: this.smartTableSource.count()
-		});
+		this.positions.push(...(await this.smartTableSource.getElements()));
 	}
 
 	selectedTagsEvent(ev) {

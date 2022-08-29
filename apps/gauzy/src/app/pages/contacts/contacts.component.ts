@@ -76,6 +76,7 @@ export class ContactsComponent
 	contacts$: Subject<any> = this.subject$;
 	public organization: IOrganization;
 	selectedEmployeeId: string;
+	private _refresh$: Subject<any> = new Subject();
 
 	/*
 	 * Getter & Setter for contact type
@@ -157,7 +158,7 @@ export class ContactsComponent
 					this.organization = organization;
 					this.selectedEmployeeId = employee ? employee.id : null;
 				}),
-				tap(() => this.refreshPagination()),
+				tap(() => this._refresh$.next(true)),
 				tap(() => this.contacts$.next(true)),
 				untilDestroyed(this)
 			)
@@ -186,6 +187,18 @@ export class ContactsComponent
 		this.countryService.countries$
 			.pipe(
 				tap((countries: ICountry[]) => (this.countries = countries)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this._refresh$
+			.pipe(
+				filter(
+					() =>
+						this.dataLayoutStyle ===
+						ComponentLayoutStyleEnum.CARDS_GRID
+				),
+				tap(() => this.refreshPagination()),
+				tap(() => (this.organizationContacts = [])),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -351,7 +364,7 @@ export class ContactsComponent
 						: name
 				}
 			);
-
+			this._refresh$.next(true);
 			this.contacts$.next(true);
 		}
 	}
@@ -381,6 +394,7 @@ export class ContactsComponent
 					(componentLayout) =>
 						componentLayout === ComponentLayoutStyleEnum.CARDS_GRID
 				),
+				tap(() => (this.organizationContacts = [])),
 				tap(() => this.contacts$.next(true)),
 				untilDestroyed(this)
 			)
@@ -422,7 +436,7 @@ export class ContactsComponent
 			this.toastrService.success(toasterMessage, {
 				name: organizationContact.name
 			});
-
+			this._refresh$.next(true);
 			this.contacts$.next(true);
 		} else {
 			this.toastrService.danger(
@@ -526,8 +540,9 @@ export class ContactsComponent
 
 	private async _loadGridLayoutData() {
 		if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
-			this.organizationContacts =
-				await this.smartTableSource.getElements();
+			this.organizationContacts.push(
+				...(await this.smartTableSource.getElements())
+			);
 		}
 	}
 
@@ -609,6 +624,7 @@ export class ContactsComponent
 			const result = await firstValueFrom(dialog.onClose);
 
 			if (result) {
+				this._refresh$.next(true);
 				this.contacts$.next(true);
 				this.toastrService.success(
 					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CONTACTS.INVITE_CONTACT',

@@ -5,6 +5,7 @@
 }
 
 .card {
+  height: 100%;
   background-color: var(--gauzy-card-2);
   border: unset;
 }
@@ -20,5 +21,6 @@
 }
 
 :host{
+  height: 100%;
   @include dialog(var(--gauzy-card-2), var(--gauzy-card-1));
 }

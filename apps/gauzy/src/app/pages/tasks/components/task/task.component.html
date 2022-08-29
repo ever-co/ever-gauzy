@@ -1,5 +1,5 @@
 <nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
-	<nb-card-header class="card-customer-header">
+	<nb-card-header class="card-customer-header pb-0">
 		<div class="card-header-title">
 			<h4>
 				<ngx-header-title [allowEmployee]="false">
@@ -36,7 +36,7 @@
 			</div>
 		</div>
 	</nb-card-header>
-	<nb-card-body>
+	<nb-card-body [ngClass]="{ project: selectedProject }">
 		<ng-container [ngSwitch]="viewMode">
 			<ng-template [ngSwitchCase]="taskListTypeEnum.GRID">
 				<ng-template
@@ -62,31 +62,27 @@
 					></ng-container>
 				</ng-template>
 				<ng-template #gridLayout>
-					<div>
-						<ga-card-grid
-							[settings]="settingsSmartTable"
-							[source]="availableTasks$ | async"
-							(selectedOption)="onUpdateOption($event)"
-							(selectedPage)="onPageChange($event)"
-							(onSelectedItem)="selectTask($event)"
-							[doEmit]="false"
-							[totalItems]="pagination?.totalItems"
-							[itemsPerPage]="pagination?.itemsPerPage"
-							[activePage]="pagination?.activePage"
-						></ga-card-grid>
-					</div>
+					<ga-card-grid
+						[settings]="settingsSmartTable"
+						[source]="availableTasks$ | async"
+						(onSelectedItem)="selectTask($event)"
+						(scroll)="onScroll()"
+					></ga-card-grid>
 				</ng-template>
 			</ng-template>
 			<ng-template [ngSwitchCase]="taskListTypeEnum.SPRINT">
-				<ga-tasks-sprint-view
-					(createTaskEvent)="createTaskDialog()"
-					(editTaskEvent)="editTaskDialog($event)"
-					(deleteTaskEvent)="deleteTask($event)"
-					(selectedTaskEvent)="selectTask($event)"
-					[sync]="!disableButton"
-					[project]="selectedProject"
-					[tasks]="availableTasks$ | async"
-				></ga-tasks-sprint-view>
+				<div class="sprint-view">
+					<ga-tasks-sprint-view
+						(createTaskEvent)="createTaskDialog()"
+						(editTaskEvent)="editTaskDialog($event)"
+						(deleteTaskEvent)="deleteTask($event)"
+						(selectedTaskEvent)="selectTask($event)"
+						[sync]="!disableButton"
+						[project]="selectedProject"
+						[tasks]="availableTasks$ | async"
+					></ga-tasks-sprint-view>
+				</div>
+
 				<ng-container
 					*ngTemplateOutlet="
 						paginationTemplate;

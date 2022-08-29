@@ -4,13 +4,6 @@ import { Component } from '@angular/core';
 	template: `
 		<ga-employee-location [isEmployee]="true"></ga-employee-location>
 	`,
-	styles: [
-		`
-			:host {
-				overflow-y: auto;
-				max-height: calc(100vh - 27rem);
-			}
-		`
-	]
+	styleUrls: ['./edit-employee-location.component.scss']
 })
 export class EditEmployeeLocationComponent {}

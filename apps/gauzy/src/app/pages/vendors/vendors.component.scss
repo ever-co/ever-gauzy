@@ -1,5 +1,18 @@
 @import 'apps/gauzy/src/app/pages/expenses/expense-categories/expense-categories.component.scss';
 
-.editable{
+.editable {
   width: 525px;
+}
+
+:host nb-card-body {
+  @include nb-ltr(padding, 1rem 0.5rem 1rem 18px);
+  @include nb-rtl(padding, 1rem 18px 1rem 0.5rem);
+  .no-data {
+    @include nb-ltr(padding, 0 0.5rem 0 0);
+    @include nb-rtl(padding, 0 0 0 0.5rem);
+    height: 100%;
+  }
+  .table-scroll-container {
+    max-height: 100%;
+  }
 }
