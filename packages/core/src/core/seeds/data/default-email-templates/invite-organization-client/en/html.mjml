@@ -15,7 +15,7 @@
 				>
 				<mj-text font-size="16px" font-family="helvetica">
 					<p>Dear {{name}},</p>
-					<p>
+					<p style="line-height: 1.5rem">
 						{{organizationName}} has invited you to join Ever®
 						Gauzy™ - Open-Source Business Management Platform
 						(ERP/CRM/HRM) focused on Fairness and Transparency!
