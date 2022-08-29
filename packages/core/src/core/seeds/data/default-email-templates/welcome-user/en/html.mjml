@@ -15,7 +15,7 @@
 				>
 				<mj-text font-size="16px" font-family="helvetica">
 					<p>Dear {{email}},</p>
-					<p>
+					<p style="line-height: 1.5rem">
 						Thank you for your registration in Ever® Gauzy™ -
 						Open-Source Business Management Platform (ERP/CRM/HRM).
 					</p>
