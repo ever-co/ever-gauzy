@@ -17,32 +17,40 @@ export class ImportRecordUpdateOrCreateHandler
 	public async execute(
 		event: ImportRecordUpdateOrCreateCommand
 	): Promise<IImportRecord> {
+
 		const { options, input = {} as IImportRecord } = event;
-		const { record } = await this._importRecordService.findOneOrFailByWhereOptions(options);
-
 		const payload = Object.assign({}, options, input) as IImportRecord;
-		const { sourceId, destinationId, entityType, tenantId } = payload;
 
-		if (!record) {
+		const {
+			sourceId,
+			destinationId,
+			entityType,
+			tenantId = RequestContext.currentTenantId()
+		} = payload;
+
+		try {
+			const record = await this._importRecordService.findOneByWhereOptions(options);
+			if (record) {
+				return {
+					...await this._importRecordService.create({
+						id: record.id,
+						tenantId,
+						sourceId,
+						destinationId,
+						entityType
+					}),
+					wasCreated: false
+				};
+			}
+		} catch (error) {
 			return {
 				...await this._importRecordService.create({
-					tenantId: tenantId || RequestContext.currentTenantId(),
+					tenantId,
 					sourceId,
 					destinationId,
 					entityType
 				}),
 				wasCreated: true
-			};
-		} else {
-			return {
-				...await this._importRecordService.create({
-					id: record.id,
-					tenantId: tenantId || RequestContext.currentTenantId(),
-					sourceId,
-					destinationId,
-					entityType
-				}),
-				wasCreated: false
 			};
 		}
 	}
