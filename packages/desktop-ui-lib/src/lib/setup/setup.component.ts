@@ -93,7 +93,8 @@ export class SetupComponent implements OnInit {
 	awAPI: String = 'http://localhost:5600';
 	buttonSave = false;
 	gauzyIcon =
-		this.appName === 'gauzy-desktop-timer' || this.appName === 'gauzy-server'
+		this.appName === 'gauzy-desktop-timer' ||
+		this.appName === 'gauzy-server'
 			? './assets/images/logos/logo_Gauzy.svg'
 			: '../assets/images/logos/logo_Gauzy.svg';
 	desktopFeatures: any = {
@@ -103,8 +104,8 @@ export class SetupComponent implements OnInit {
 
 	connectivity: any = {
 		integrated: this.appName === 'gauzy-desktop-timer' ? false : true,
-		localNetwork: this.appName === 'gauzy-desktop-timer' ? true : false,
-		live: false
+		localNetwork: this.appName === 'gauzy-desktop-timer' ? false : true,
+		live:  this.appName === 'gauzy-desktop-timer' ? true : false
 	};
 
 	thirdParty: any = {
@@ -185,7 +186,8 @@ export class SetupComponent implements OnInit {
 	};
 
 	runApp: boolean = false;
-	welcomeTitle: string = 'GAUZY PLATFORM WIZARD';
+	welcomeTitle: string =
+		'Ever® Gauzy™ - Open-Source Business Management Platform (ERP/CRM/HRM)';
 	welcomeLabel: string = `
 		Gauzy Desktop App provides the full
 		functionality of the Gauzy Platform
