@@ -20,7 +20,6 @@ import {
 	ITimeSlot
 } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsBoolean, IsDateString, IsEnum, IsOptional } from 'class-validator';
 import * as moment from 'moment';
 import {
 	Employee,
@@ -36,49 +35,38 @@ import {
 export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 
 	@ApiProperty({ type: () => 'timestamptz' })
-	@IsDateString()
 	@Column({ nullable: true, default: null })
 	startedAt?: Date;
 
 	@ApiProperty({ type: () => 'timestamptz' })
-	@IsDateString()
 	@Column({ nullable: true, default: null })
 	stoppedAt?: Date;
 
 	@ApiProperty({ type: () => String, enum: TimeLogType })
-	@IsEnum(TimeLogType)
-	@IsString()
 	@Column({ default: TimeLogType.TRACKED })
 	logType: string;
 
 	@ApiProperty({ type: () => String, enum: TimeLogSourceEnum })
-	@IsEnum(TimeLogSourceEnum)
-	@IsString()
 	@Column({ default: TimeLogSourceEnum.BROWSER })
 	source?: string;
 
 	@ApiProperty({ type: () => String })
-	@IsBoolean()
 	@Column({ default: null, nullable: true })
 	description?: string;
 
 	@ApiProperty({ type: () => String })
-	@IsBoolean()
 	@Column({ default: null, nullable: true })
 	reason?: string;
 
 	@ApiProperty({ type: () => Boolean })
-	@IsBoolean()
 	@Column({ default: false })
 	isBillable: boolean;
 
 	@ApiProperty({ type: () => 'timestamptz' })
-	@IsDateString()
 	@Column({ nullable: true, default: null })
 	deletedAt?: Date;
 
 	@ApiProperty({ type: () => Boolean })
-	@IsBoolean()
 	@Column({ nullable: true })
 	isRunning?: boolean;
 
@@ -86,7 +74,7 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	isEdited?: boolean;
 	/*
     |--------------------------------------------------------------------------
-    | @ManyToOne 
+    | @ManyToOne
     |--------------------------------------------------------------------------
     */
 
@@ -100,7 +88,6 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 
 	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((it: TimeLog) => it.employee)
-	@IsString()
 	@Index()
 	@Column()
 	readonly employeeId: string;
@@ -109,7 +96,7 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	 * Timesheet
 	 */
 	@ApiProperty({ type: () => Timesheet })
-	@ManyToOne(() => Timesheet, (timesheet) => timesheet.timeLogs, {
+	@ManyToOne(() => Timesheet, {
 		nullable: true,
 		onDelete: 'CASCADE'
 	})
@@ -118,8 +105,6 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 
 	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((it: TimeLog) => it.timesheet)
-	@IsString()
-	@IsOptional()
 	@Index()
 	@Column({ nullable: true })
 	readonly timesheetId?: string;
@@ -137,8 +122,6 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 
 	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((timeLog: TimeLog) => timeLog.project)
-	@IsString()
-	@IsOptional()
 	@Index()
 	@Column({ nullable: true })
 	readonly projectId?: string;
@@ -156,11 +139,9 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 
 	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((timeLog: TimeLog) => timeLog.task)
-	@IsString()
-	@IsOptional()
 	@Index()
 	@Column({ nullable: true })
-	readonly taskId?: string;
+	taskId?: string;
 
 	/**
 	 * OrganizationContact
@@ -175,16 +156,14 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 
 	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((timeLog: TimeLog) => timeLog.organizationContact)
-	@IsString()
-	@IsOptional()
 	@Index()
 	@Column({ nullable: true })
-	readonly organizationContactId?: string;
+	organizationContactId?: string;
 
 
 	/*
     |--------------------------------------------------------------------------
-    | @ManyToMany 
+    | @ManyToMany
     |--------------------------------------------------------------------------
     */
 
@@ -200,7 +179,7 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 
 	/*
     |--------------------------------------------------------------------------
-    | @EventSubscriber 
+    | @EventSubscriber
     |--------------------------------------------------------------------------
     */
 
