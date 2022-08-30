@@ -13,12 +13,13 @@ import { ITag } from './tag-entity.model';
 import { IPaginationInput } from './core.model';
 import { ReportGroupByFilter } from './report.model';
 import { FileStorageProviderEnum } from './file-provider';
+import { IUser } from './user.model';
 
 export interface ITimesheet extends IBasePerTenantAndOrganizationEntityModel {
 	[x: string]: any;
 	employee: IEmployee;
 	employeeId?: string;
-	approvedBy?: IEmployee;
+	approvedBy?: IUser;
 	timeLogs?: ITimeLog[];
 	duration?: number;
 	keyboard?: number;
@@ -72,12 +73,12 @@ export enum TimesheetStatus {
 	APPROVED = 'APPROVED'
 }
 
-export interface IUpdateTimesheetStatusInput {
+export interface IUpdateTimesheetStatusInput extends IBasePerTenantAndOrganizationEntityModel {
 	ids: string | string[];
 	status?: TimesheetStatus;
 }
 
-export interface ISubmitTimesheetInput {
+export interface ISubmitTimesheetInput extends IBasePerTenantAndOrganizationEntityModel {
 	ids: string | string[];
 	status: 'submit' | 'unsubmit';
 }

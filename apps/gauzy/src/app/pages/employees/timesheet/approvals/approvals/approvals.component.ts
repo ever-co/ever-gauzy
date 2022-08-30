@@ -1,7 +1,9 @@
 import { AfterViewInit, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import {
+	ISubmitTimesheetInput,
 	ITimesheet,
+	IUpdateTimesheetStatusInput,
 	PermissionsEnum,
 	TimesheetStatus
 } from '@gauzy/contracts';
@@ -10,6 +12,7 @@ import { debounceTime, filter, map, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs/internal/Observable';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
+import { isEmpty } from '@gauzy/common-angular';
 import { TimesheetService } from './../../../../../@shared/timesheet';
 import { BaseSelectorFilterComponent } from './../../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
 import { DateRangePickerBuilderService, Store, ToastrService } from './../../../../../@core/services';
@@ -106,9 +109,29 @@ export class ApprovalsComponent extends BaseSelectorFilterComponent implements
 		}
 	}
 
-	updateStatus(timesheetIds: string | string[], status: TimesheetStatus) {
-		this.timesheetService
-			.updateStatus(timesheetIds, status)
+	/**
+	 * Update timesheets status
+	 *
+	 * @param timesheetIds
+	 * @param status
+	 * @returns
+	 */
+	updateStatus(
+		timesheetIds: string | string[],
+		status: TimesheetStatus
+	) {
+		if (!this.organization && isEmpty(timesheetIds)) {
+			return;
+		}
+		const { id: organizationId } = this.organization;
+		const { tenantId } = this.store.user;
+		const request: IUpdateTimesheetStatusInput = {
+			ids: this.prepareTimesheetIds(timesheetIds),
+			status,
+			organizationId,
+			tenantId
+		}
+		this.timesheetService.updateStatus(request)
 			.then(() => {
 				if (status === TimesheetStatus.APPROVED) {
 					this.toastrService.success('TIMESHEET.APPROVE_SUCCESS');
@@ -125,8 +148,19 @@ export class ApprovalsComponent extends BaseSelectorFilterComponent implements
 		timesheetIds: string | string[],
 		status: 'submit' | 'unsubmit'
 	) {
+		if (!this.organization && isEmpty(timesheetIds)) {
+			return;
+		}
+		const { id: organizationId } = this.organization;
+		const { tenantId } = this.store.user;
+		const request: ISubmitTimesheetInput = {
+			ids: this.prepareTimesheetIds(timesheetIds),
+			status,
+			organizationId,
+			tenantId
+		}
 		this.timesheetService
-			.submitTimesheet(timesheetIds, status)
+			.submitTimesheet(request)
 			.then(() => {
 				if (status === 'submit') {
 					this.toastrService.success('TIMESHEET.SUBMIT_SUCCESS');
@@ -166,7 +200,6 @@ export class ApprovalsComponent extends BaseSelectorFilterComponent implements
 		if (!timesheet) {
 			return;
 		}
-
 		this.router.navigate(['/pages/employees/timesheets', timesheet.id]);
 	}
 
@@ -314,6 +347,16 @@ export class ApprovalsComponent extends BaseSelectorFilterComponent implements
 
 	isCheckboxSelected() {
 		return this.timesheets.find((t: ITimesheet) => t.checked);
+	}
+
+	/**
+	 * Prapare timesheets ids payload
+	 *
+	 * @param timesheetIds
+	 * @returns
+	 */
+	prepareTimesheetIds(timesheetIds: string | string[]): string[] {
+		return (typeof timesheetIds === 'string') ? [timesheetIds] : timesheetIds;
 	}
 
 	ngOnDestroy(): void {}
