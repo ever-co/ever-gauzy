@@ -4,7 +4,6 @@ import {
 	ITimeLog,
 	IGetTimeLogInput,
 	IManualTimeInput,
-	TimesheetStatus,
 	ITimesheet,
 	IGetTimesheetInput,
 	IGetTimeLogConflictInput,
