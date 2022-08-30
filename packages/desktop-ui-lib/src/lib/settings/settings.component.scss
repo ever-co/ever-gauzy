@@ -23,7 +23,7 @@
 }
 
 .menu-item-active {
-  font-weight: bolder;
+  font-weight: 600;
 }
 
 .monitor-many {
@@ -34,7 +34,7 @@
 }
 
 .selected {
-  color: #00d68f;
+  color: var(--text-primary-color);
 }
 
 .centered-text {
@@ -106,7 +106,7 @@
 .update-message {
   margin-top: 15px;
   text-align: center;
-  font-weight: bold;
+  font-weight: 600;
   color: #00d68f;
   font-size: 12px;
 }
@@ -135,5 +135,36 @@
   }
   to {
     transform: rotate(360deg);
+  }
+}
+
+:host {
+  .layout-container ::ng-deep nb-sidebar.left {
+    background-color: var(--gauzy-sidebar-background-3);
+  }
+  nb-sidebar ::ng-deep .scrollable {
+    padding-right: 0;
+  }
+  nb-list {
+    width: 100%;
+    .menu-item-active {
+      background-color: white;
+      border-left: 6px solid var(--text-primary-color);
+      border-radius: 4px 0 0 4px;
+      font-weight: 600;
+      width: 100%;
+    }
+  }
+
+  h4 {
+    font-size: 24px;
+    font-weight: 600;
+    line-height: 30px;
+    letter-spacing: 0em;
+    color: var(--gauzy-text-color-1);
+  }
+  h6 {
+    font-weight: 600;
+    color: var(--gauzy-text-color-2);
   }
 }
