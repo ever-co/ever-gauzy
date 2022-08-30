@@ -1,10 +1,13 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In } from 'typeorm';
+import { NotAcceptableException } from '@nestjs/common';
+import { Repository, In, Not, IsNull } from 'typeorm';
 import { ITimesheet } from '@gauzy/contracts';
+import { isEmpty } from '@gauzy/common';
 import { EmailService } from './../../../../email/email.service';
 import { Timesheet } from './../../timesheet.entity';
 import { TimesheetSubmitCommand } from '../timesheet-submit.command';
+import { RequestContext } from './../../../../core/context';
 
 @CommandHandler(TimesheetSubmitCommand)
 export class TimesheetSubmitHandler
@@ -18,24 +21,53 @@ export class TimesheetSubmitHandler
 	public async execute(
 		command: TimesheetSubmitCommand
 	): Promise<ITimesheet[]> {
-		let { ids, status } = command.input;
-
+		const { input } = command;
+		let { ids, status, organizationId } = input;
+		if (isEmpty(ids)) {
+			throw new NotAcceptableException('You can not submit timesheet');
+		}
 		if (typeof ids === 'string') {
 			ids = [ids];
 		}
 		await this.timeSheetRepository.update(
 			{
-				id: In(ids)
+				id: In(ids),
+				organizationId,
+				tenantId: RequestContext.currentTenantId()
 			},
 			{
-				submittedAt: status === 'submit' ? new Date() : null
+				...(
+					(status === 'submit') ? {
+						submittedAt: new Date()
+					} : {
+						submittedAt: null
+					}
+				),
 			}
 		);
-
 		const timesheets = await this.timeSheetRepository.find({
-			relations: ['employee', 'employee.user'],
+			relations: {
+				employee: {
+					user: true
+				}
+			},
 			where: {
-				id: In(ids)
+				id: In(ids),
+				organizationId,
+				tenantId: RequestContext.currentTenantId(),
+				submittedAt: Not(IsNull())
+			},
+			select: {
+				employee: {
+					id: true,
+					organizationId: true,
+					user: {
+						id: true,
+						firstName: true,
+						lastName: true,
+						email: true
+					}
+				}
 			}
 		});
 		timesheets.forEach((timesheet) => {
@@ -48,7 +80,6 @@ export class TimesheetSubmitHandler
 				}
 			}
 		});
-
 		return timesheets;
 	}
 }

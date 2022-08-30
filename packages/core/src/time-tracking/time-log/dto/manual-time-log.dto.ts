@@ -6,7 +6,7 @@ import { TenantOrganizationBaseDTO } from "./../../../core/dto";
 
 export class ManualTimeLogDTO extends TenantOrganizationBaseDTO implements IManualTimeInput {
 
-    @ApiProperty({ type: () => Date })
+    @ApiProperty({ type: () => Date, readOnly: true })
     @IsNotEmpty({
         message: "Started date should not be empty"
     })
@@ -15,13 +15,13 @@ export class ManualTimeLogDTO extends TenantOrganizationBaseDTO implements IManu
     })
     readonly startedAt: Date;
 
-    @ApiProperty({ type: () => Date })
+    @ApiProperty({ type: () => Date, readOnly: true })
     @IsNotEmpty({
         message: "Stopped date should not be empty"
     })
     readonly stoppedAt: Date;
 
-    @ApiProperty({ type: () => String })
+    @ApiProperty({ type: () => String, readOnly: true })
     @IsNotEmpty()
     employeeId: string;
 }

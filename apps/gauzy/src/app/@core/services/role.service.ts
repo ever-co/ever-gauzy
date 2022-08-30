@@ -1,20 +1,17 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { IRole, RolesEnum, ITenant, IPagination, IRoleCreateInput } from '@gauzy/contracts';
 import { firstValueFrom, Observable } from 'rxjs';
+import { IRole, IPagination, IRoleCreateInput, IRoleFindInput } from '@gauzy/contracts';
+import { toParams } from '@gauzy/common-angular';
 import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable()
 export class RoleService {
 	constructor(private http: HttpClient) {}
 
-	getRoleByName(findInput?: {
-		name: RolesEnum;
-		tenantId: ITenant['id'];
-	}): Observable<IRole> {
-		const data = JSON.stringify({ findInput });
-		return this.http.get<IRole>(`${API_PREFIX}/roles/find`, {
-			params: { data }
+	getRoleByOptions(options: IRoleFindInput): Observable<IRole> {
+		return this.http.get<IRole>(`${API_PREFIX}/roles/options`, {
+			params: toParams({ ...options })
 		});
 	}
 

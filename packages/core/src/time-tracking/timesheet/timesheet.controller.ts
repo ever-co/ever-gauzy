@@ -8,12 +8,12 @@ import {
 	Query,
 	Param,
 	UseInterceptors,
-	ValidationPipe
+	ValidationPipe,
+	BadRequestException
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { CommandBus } from '@nestjs/cqrs';
 import {
-	IUpdateTimesheetStatusInput,
-	ISubmitTimesheetInput,
 	ITimesheet,
 	PermissionsEnum
 } from '@gauzy/contracts';
@@ -22,22 +22,33 @@ import { PermissionGuard, TenantPermissionGuard } from './../../shared/guards';
 import { UUIDValidationPipe } from './../../shared/pipes';
 import { Permissions } from './../../shared/decorators';
 import { TransformInterceptor } from './../../core/interceptors';
-import { TimesheetQueryDTO } from './dto/query';
+import {
+	SubmitTimesheetStatusDTO,
+	TimesheetQueryDTO,
+	UpdateTimesheetStatusDTO
+} from './dto/query';
+import {
+	TimesheetSubmitCommand,
+	TimesheetUpdateStatusCommand
+} from './commands';
 
 @ApiTags('TimeSheet')
-@UseGuards(TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard)
+@Permissions(PermissionsEnum.CAN_APPROVE_TIMESHEET)
 @UseInterceptors(TransformInterceptor)
 @Controller()
 export class TimeSheetController {
+
 	constructor(
+		private readonly commandBus: CommandBus,
 		private readonly timeSheetService: TimeSheetService
 	) {}
 
 	/**
-	 * GET all timesheet count in same tenant
-	 * 
-	 * @param entity 
-	 * @returns 
+	 * GET timesheet counts in the same tenant
+	 *
+	 * @param options
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'Get timesheet Count' })
 	@ApiResponse({
@@ -46,24 +57,26 @@ export class TimeSheetController {
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Get('/count')
 	async getTimesheetCount(
 		@Query(new ValidationPipe({
-			transform: true,
 			whitelist: true
 		})) options: TimesheetQueryDTO
 	): Promise<number> {
-		return await this.timeSheetService.getTimeSheetCount(options);
+		try {
+			return await this.timeSheetService.getTimeSheetCount(options);
+		} catch (error) {
+			throw new BadRequestException(error);
+		}
 	}
 
 	/**
 	 * UPDATE timesheet status
-	 * 
-	 * @param entity 
-	 * @returns 
+	 *
+	 * @param entity
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'Update timesheet' })
 	@ApiResponse({
@@ -75,20 +88,23 @@ export class TimeSheetController {
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
-	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.CAN_APPROVE_TIMESHEET)
 	@Put('/status')
 	async updateTimesheetStatus(
-		@Body() entity: IUpdateTimesheetStatusInput
+		@Body(new ValidationPipe({
+			transform: true,
+			whitelist: true
+		})) entity: UpdateTimesheetStatusDTO
 	): Promise<ITimesheet[]> {
-		return await this.timeSheetService.updateStatus(entity);
+		return await this.commandBus.execute(
+			new TimesheetUpdateStatusCommand(entity)
+		);
 	}
 
 	/**
 	 * UPDATE timesheet submit status
-	 * 
-	 * @param entity 
-	 * @returns 
+	 *
+	 * @param entity
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'Submit timesheet' })
 	@ApiResponse({
@@ -100,20 +116,23 @@ export class TimeSheetController {
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
-	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.CAN_APPROVE_TIMESHEET)
 	@Put('/submit')
 	async submitTimeSheet(
-		@Body() entity: ISubmitTimesheetInput
+		@Body(new ValidationPipe({
+			transform: true,
+			whitelist: true
+		})) entity: SubmitTimesheetStatusDTO
 	): Promise<ITimesheet[]> {
-		return await this.timeSheetService.submitTimeSheet(entity);
+		return await this.commandBus.execute(
+			new TimesheetSubmitCommand(entity)
+		);
 	}
 
 	/**
 	 * GET all timesheet in same tenant
-	 * 
-	 * @param entity 
-	 * @returns 
+	 *
+	 * @param options
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'Get timesheet' })
 	@ApiResponse({
@@ -125,18 +144,25 @@ export class TimeSheetController {
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
-	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.CAN_APPROVE_TIMESHEET)
-	@Get('/')
+	@Get()
 	async get(
 		@Query(new ValidationPipe({
-			transform: true,
 			whitelist: true
 		})) options: TimesheetQueryDTO
 	): Promise<ITimesheet[]> {
-		return await this.timeSheetService.getTimeSheets(options);
+		try {
+			return await this.timeSheetService.getTimeSheets(options);
+		} catch (error) {
+			throw new BadRequestException(error);
+		}
 	}
 
+	/**
+	 * Find timesheet by id
+	 *
+	 * @param id
+	 * @returns
+	 */
 	@ApiOperation({ summary: 'Find timesheet by id' })
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -144,15 +170,16 @@ export class TimeSheetController {
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
-	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.CAN_APPROVE_TIMESHEET)
 	@Get('/:id')
 	async findById(
 		@Param('id', UUIDValidationPipe) id: string
 	): Promise<ITimesheet> {
-		return this.timeSheetService.findOneByIdString(id);
+		try {
+			return await this.timeSheetService.findOneByIdString(id);
+		} catch (error) {
+			throw new BadRequestException(error);
+		}
 	}
 }

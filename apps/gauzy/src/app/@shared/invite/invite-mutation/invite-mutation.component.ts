@@ -27,10 +27,9 @@ import {
 	templateUrl: './invite-mutation.component.html',
 	styleUrls: ['./invite-mutation.component.scss']
 })
-export class InviteMutationComponent
-	extends TranslationBaseComponent
+export class InviteMutationComponent extends TranslationBaseComponent
 	implements OnInit {
-	
+
 	/*
 	* Getter & Setter for InvitationTypeEnum
 	*/

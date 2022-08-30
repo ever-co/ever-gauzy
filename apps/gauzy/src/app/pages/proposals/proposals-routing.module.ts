@@ -1,28 +1,17 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
+import { NgxPermissionsGuard } from 'ngx-permissions';
+import { PermissionsEnum } from '@gauzy/contracts';
 import { ProposalsComponent } from './proposals.component';
 import { ProposalRegisterComponent } from './proposal-register/proposal-register.component';
 import { ProposalDetailsComponent } from './proposal-details/proposal-details.component';
 import { ProposalEditComponent } from './proposal-edit/proposal-edit.component';
-import { PermissionsEnum } from '@gauzy/contracts';
-import { NgxPermissionsGuard } from 'ngx-permissions';
 import { DateRangePickerResolver } from '../../@theme/components/header/selectors/date-range-picker';
+import { ProposalEditOrDetailsResolver } from './proposal-edit-or-details.resolver';
 
 export function redirectTo() {
 	return '/pages/dashboard';
 }
-const PROPOSAL_VIEW_PERMISSION = {
-	permissions: {
-		only: [PermissionsEnum.ORG_PROPOSALS_VIEW],
-		redirectTo
-	}
-};
-const PROPOSAL_EDIT_PERMISSION = {
-	permissions: {
-		only: [PermissionsEnum.ORG_PROPOSALS_EDIT],
-		redirectTo
-	}
-};
 
 const routes: Routes = [
 	{
@@ -30,7 +19,16 @@ const routes: Routes = [
 		component: ProposalsComponent,
 		canActivate: [NgxPermissionsGuard],
 		data: {
-			...PROPOSAL_VIEW_PERMISSION
+			permissions: {
+				only: [PermissionsEnum.ORG_PROPOSALS_VIEW],
+				redirectTo
+			},
+			selectors: {
+				project: false
+			},
+			datePicker: {
+				unitOfTime: 'month'
+			}
 		},
 		resolve: {
 			dates: DateRangePickerResolver
@@ -41,7 +39,10 @@ const routes: Routes = [
 		component: ProposalRegisterComponent,
 		canActivate: [NgxPermissionsGuard],
 		data: {
-			...PROPOSAL_EDIT_PERMISSION,
+			permissions: {
+				only: [PermissionsEnum.ORG_PROPOSALS_EDIT],
+				redirectTo
+			},
 			selectors: {
 				project: false,
 				employee: false
@@ -59,7 +60,17 @@ const routes: Routes = [
 		component: ProposalDetailsComponent,
 		canActivate: [NgxPermissionsGuard],
 		data: {
-			...PROPOSAL_VIEW_PERMISSION
+			permissions: {
+				only: [PermissionsEnum.ORG_PROPOSALS_VIEW],
+				redirectTo
+			},
+			selectors: {
+				project: false,
+				employee: false
+			},
+		},
+		resolve: {
+			proposal: ProposalEditOrDetailsResolver
 		}
 	},
 	{
@@ -67,11 +78,17 @@ const routes: Routes = [
 		component: ProposalEditComponent,
 		canActivate: [NgxPermissionsGuard],
 		data: {
-			...PROPOSAL_EDIT_PERMISSION,
+			permissions: {
+				only: [PermissionsEnum.ORG_PROPOSALS_EDIT],
+				redirectTo
+			},
 			selectors: {
 				project: false,
 				employee: false
 			}
+		},
+		resolve: {
+			proposal: ProposalEditOrDetailsResolver
 		}
 	}
 ];

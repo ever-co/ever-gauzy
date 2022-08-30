@@ -15,10 +15,10 @@
 				>
 				<mj-text font-size="16px" font-family="helvetica">
 					<p>Dear {{name}},</p>
-					<p>
-						{{organizationName}} has invited you to join Gauzy™ -
-						Open-Source ERP Platform focused on Fairness and
-						Transparency!
+					<p style="line-height: 1.5rem">
+						{{organizationName}} הזמין אותך להצטרף ל-Ever® Gauzy™ -
+						פלטפורמת ניהול עסקי בקוד פתוח (ERP/CRM/HRM) המתמקדת
+						בהוגנות ושקיפות!
 					</p>
 				</mj-text>
 				<mj-button
