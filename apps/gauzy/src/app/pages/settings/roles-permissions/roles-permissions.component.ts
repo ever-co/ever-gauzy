@@ -36,7 +36,7 @@ export class RolesPermissionsComponent
 	isWantToCreate: boolean = false;
 	loading: boolean;
 	enabledPermissions: any = {};
-	
+
 	user: IUser;
 	role: IRole;
 	roles: IRole[] = [];
@@ -49,7 +49,7 @@ export class RolesPermissionsComponent
 
 	formControl: FormControl = new FormControl();
 	@ViewChild('input') input: ElementRef;
-	
+
 	constructor(
 		public readonly translateService: TranslateService,
 		private readonly toastrService: ToastrService,
@@ -97,9 +97,9 @@ export class RolesPermissionsComponent
 
 	/**
 	 * Roles filters using substring
-	 * 
-	 * @param value 
-	 * @returns 
+	 *
+	 * @param value
+	 * @returns
 	 */
 	private _filter(value: string): IRole[] {
 		return this.roles.filter((role: IRole) => !!role);
@@ -107,19 +107,19 @@ export class RolesPermissionsComponent
 
 	/**
 	 * Filtered roles options
-	 * 
-	 * @param value 
-	 * @returns 
+	 *
+	 * @param value
+	 * @returns
 	 */
 	private _getFilteredOptions(value: string): Observable<IRole[]> {
 		return observableOf(value).pipe(
 		  	map((value) => this._filter(value)),
 		);
 	}
-	
+
 	/**
 	 * On autocomplete selection
-	 * @param role 
+	 * @param role
 	 */
 	onSelectionChange(role: IRole['name']) {
 		if (role) {
@@ -138,7 +138,7 @@ export class RolesPermissionsComponent
 				(role: IRole) => role.name === nativeElementValue
 			);
 			this.role = role;
-	
+
 			/**
 			 * We want to create new role
 			 */
@@ -177,7 +177,7 @@ export class RolesPermissionsComponent
 		allowChange: boolean
 	) {
 		/**
-		 * If anyone trying to update another users permissions without enough permisison 
+		 * If anyone trying to update another users permissions without enough permisison
 		 */
 		if (!allowChange) {
 			this.toastrService.danger(
@@ -238,9 +238,9 @@ export class RolesPermissionsComponent
 
 	/**
 	 * GET role by name
-	 * 
-	 * @param name 
-	 * @returns 
+	 *
+	 * @param name
+	 * @returns
 	 */
 	getRoleByName(name: IRole['name']) {
 		return this.roles.find(
@@ -306,7 +306,7 @@ export class RolesPermissionsComponent
 			)
 			.subscribe();
 	}
-	
+
 	/**
 	 * Delete existed role
 	 */
@@ -342,8 +342,8 @@ export class RolesPermissionsComponent
 
 	/**
 	 * Disabled General Group Permissions
-	 * 
-	 * @returns 
+	 *
+	 * @returns
 	 */
 	isDisabledGeneralPermissions(): boolean {
 		if (!this.role) {
@@ -351,7 +351,7 @@ export class RolesPermissionsComponent
 		}
 
 		/**
-		 * Disabled all permissions for "SUPER_ADMIN" 
+		 * Disabled all permissions for "SUPER_ADMIN"
 		 */
 		const excludes = [ RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN ];
 		if (excludes.includes(this.user.role.name as RolesEnum)) {
@@ -369,8 +369,8 @@ export class RolesPermissionsComponent
 
 	/**
 	 * Disabled General Group Permissions
-	 * 
-	 * @returns 
+	 *
+	 * @returns
 	 */
 	isDisabledAdministrationPermissions(): boolean {
 		if (!this.role) {

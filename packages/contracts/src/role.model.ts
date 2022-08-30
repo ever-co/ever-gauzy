@@ -12,6 +12,11 @@ export interface IRoleCreateInput extends IBasePerTenantEntityModel {
 	name: string
 }
 
+export interface IRoleFindInput extends IBasePerTenantEntityModel {
+	name?: string;
+	isSystem?: boolean;
+}
+
 export enum RolesEnum {
 	SUPER_ADMIN = 'SUPER_ADMIN',
 	ADMIN = 'ADMIN',
