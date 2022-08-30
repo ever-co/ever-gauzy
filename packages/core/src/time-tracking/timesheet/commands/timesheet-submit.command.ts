@@ -2,7 +2,9 @@ import { ICommand } from '@nestjs/cqrs';
 import { ISubmitTimesheetInput } from '@gauzy/contracts';
 
 export class TimesheetSubmitCommand implements ICommand {
-	static readonly type = '[Timesheet] update-status';
+	static readonly type = '[Timesheet] Submit';
 
-	constructor(public readonly input: ISubmitTimesheetInput) {}
+	constructor(
+		public readonly input: ISubmitTimesheetInput
+	) {}
 }

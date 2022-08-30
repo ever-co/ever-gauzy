@@ -1,7 +1,9 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { ITimesheet, TimesheetStatus } from '@gauzy/contracts';
+import { NotAcceptableException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
+import { ITimesheet, TimesheetStatus } from '@gauzy/contracts';
+import { isEmpty } from '@gauzy/common';
 import { RequestContext } from './../../../../core/context';
 import { EmailService } from './../../../../email/email.service';
 import { TimesheetUpdateStatusCommand } from '../timesheet-update-status.command';
@@ -19,37 +21,61 @@ export class TimesheetUpdateStatusHandler
 	public async execute(
 		command: TimesheetUpdateStatusCommand
 	): Promise<ITimesheet[]> {
-		let { ids, status } = command.input;
-
+		const { input } = command;
+		let { ids, status, organizationId } = input;
+		if (isEmpty(ids)) {
+			throw new NotAcceptableException('You can not update timesheet status');
+		}
 		if (typeof ids === 'string') {
 			ids = [ids];
 		}
-
-		let approvedBy: string = null;
-		if (status === TimesheetStatus.APPROVED) {
-			const user = RequestContext.currentUser();
-			approvedBy = user.employeeId;
-		}
-
 		await this.timeSheetRepository.update(
 			{
-				id: In(ids)
+				id: In(ids),
+				organizationId,
+				tenantId: RequestContext.currentTenantId()
 			},
 			{
 				status: status,
-				approvedById: approvedBy,
-				approvedAt:
-					status === TimesheetStatus.APPROVED ? new Date() : null
+				...(
+					(status === TimesheetStatus.APPROVED) ? {
+						approvedById: RequestContext.currentUserId()
+					} : {}
+				),
+				...(
+					(status === TimesheetStatus.APPROVED) ? {
+						approvedAt: new Date()
+					} : {
+						approvedAt: null
+					}
+				),
 			}
 		);
-
 		const timesheets = await this.timeSheetRepository.find({
-			relations: ['employee', 'employee.user'],
+			relations: {
+				employee: {
+					user: true
+				}
+			},
 			where: {
-				id: In(ids)
+				id: In(ids),
+				organizationId,
+				tenantId: RequestContext.currentTenantId()
+			},
+			select: {
+				employee: {
+					id: true,
+					organizationId: true,
+					user: {
+						id: true,
+						firstName: true,
+						lastName: true,
+						email: true
+					}
+				}
 			}
 		});
-		timesheets.forEach((timesheet) => {
+		timesheets.forEach((timesheet: ITimesheet) => {
 			if (timesheet.employee && timesheet.employee.user) {
 				this.emailService.setTimesheetAction(
 					timesheet.employee.user.email,
@@ -57,7 +83,6 @@ export class TimesheetUpdateStatusHandler
 				);
 			}
 		});
-
 		return timesheets;
 	}
 }

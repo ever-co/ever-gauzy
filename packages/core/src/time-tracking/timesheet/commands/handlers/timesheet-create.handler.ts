@@ -27,7 +27,6 @@ export class TimesheetCreateHandler
 		} = input;
 
 		try {
-			const tenantId = RequestContext.currentTenantId();
 			return await this._timesheetService.create({
 				employeeId,
 				duration,
@@ -37,7 +36,7 @@ export class TimesheetCreateHandler
 				startedAt,
 				stoppedAt,
 				organizationId,
-				tenantId
+				tenantId: RequestContext.currentTenantId()
 			});
 		} catch (error) {
 			throw new BadRequestException(
