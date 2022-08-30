@@ -38,7 +38,7 @@ import { FormHelpers } from '../../forms/helpers';
 	templateUrl: './edit-profile-form.component.html',
 	styleUrls: ['./edit-profile-form.component.scss']
 })
-export class EditProfileFormComponent 
+export class EditProfileFormComponent
 	implements OnInit, OnDestroy {
 
 	FormHelpers: typeof FormHelpers = FormHelpers;
@@ -169,7 +169,7 @@ export class EditProfileFormComponent
 
 		if (this.allowRoleChange) {
 			const { tenantId } = this.store.user;
-			const role = await firstValueFrom(this.roleService.getRoleByName({
+			const role = await firstValueFrom(this.roleService.getRoleByOptions({
 					name: (this.form.get('role').value).name,
 					tenantId
 				})
@@ -195,7 +195,7 @@ export class EditProfileFormComponent
 						} as IUser
 					}
 					this.toastrService.success('TOASTR.MESSAGE.IMAGE_UPDATED');
-				} catch (error) { 
+				} catch (error) {
 					console.log('Error while uploading profile avatar', error);
 				}
 			});
@@ -223,7 +223,7 @@ export class EditProfileFormComponent
 
 		if (this.allowRoleChange) {
 			const { tenantId } = this.store.user;
-			const role = await firstValueFrom(this.roleService.getRoleByName({
+			const role = await firstValueFrom(this.roleService.getRoleByOptions({
 					name: (this.form.get('role').value).name,
 					tenantId
 				})
@@ -244,7 +244,7 @@ export class EditProfileFormComponent
 				if((this.selectedUser ? this.selectedUser.id : this.store.userId) === this.store.user.id){
 					this.store.user.email = request.email;
 				}
-				  
+
 				this.toastrService.success('TOASTR.MESSAGE.PROFILE_UPDATED');
 				this.userSubmitted.emit();
 				/**
@@ -281,7 +281,7 @@ export class EditProfileFormComponent
 
 	/**
 	 * On Selection Change
-	 * @param role 
+	 * @param role
 	 */
 	onSelectionChange(role: IRole) {
 		this.form.get('role').setValue(role);

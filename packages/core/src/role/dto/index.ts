@@ -1,1 +1,2 @@
-export { CreateRoleDTO } from './create-role.dto';
+export * from './create-role.dto';
+export * from './role-feature.dto';

@@ -1,7 +1,9 @@
 import {
+	BadRequestException,
 	Body,
 	Controller,
 	Delete,
+	ForbiddenException,
 	Get,
 	HttpCode,
 	HttpStatus,
@@ -11,30 +13,40 @@ import {
 	Query,
 	UseGuards,
 	UseInterceptors,
-	UsePipes,
 	ValidationPipe
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { IPagination, IRole, PermissionsEnum } from '@gauzy/contracts';
-import { DeleteResult, UpdateResult } from 'typeorm';
+import { IPagination, IRole, IRoleMigrateInput, PermissionsEnum } from '@gauzy/contracts';
+import { DeleteResult, FindOptionsWhere, UpdateResult } from 'typeorm';
 import { RoleService } from './role.service';
 import { Role } from './role.entity';
-import { CreateRoleDTO } from './dto';
+import { CreateRoleDTO, CreateRoleDTO as UpdateRoleDTO } from './dto';
 import { TransformInterceptor } from './../core/interceptors';
 import { CrudController } from './../core/crud';
-import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
+import { RequestContext } from './../core/context';
+import { UUIDValidationPipe } from './../shared/pipes';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
 
 @ApiTags('Role')
-@UseGuards(TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard)
+@Permissions(PermissionsEnum.CHANGE_ROLES_PERMISSIONS)
 @UseInterceptors(TransformInterceptor)
 @Controller()
 export class RoleController extends CrudController<Role> {
-	constructor(private readonly roleService: RoleService) {
+
+	constructor(
+		private readonly roleService: RoleService
+	) {
 		super(roleService);
 	}
 
+	/**
+	 * GET role by where condition
+	 *
+	 * @param data
+	 * @returns
+	 */
 	@ApiOperation({ summary: 'Find role.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -45,14 +57,25 @@ export class RoleController extends CrudController<Role> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@Get('find')
-	async findRole(
-		@Query('data', ParseJsonPipe) data: any
-	): Promise<Role> {
-		const { findInput } = data;
-		return this.roleService.findOneByOptions({ where: findInput });
+	@Get('options')
+	async findOneRoleByOptions(
+		@Query(new ValidationPipe()) options: FindOptionsWhere<Role>
+	): Promise<IRole> {
+		try {
+			return await this.roleService.findOneByWhereOptions({
+				tenantId: RequestContext.currentTenantId(),
+				...options
+			});
+		} catch (error) {
+			throw new ForbiddenException();
+		}
 	}
 
+	/**
+	 * Get roles for same tenant
+	 *
+	 * @returns
+	 */
 	@ApiOperation({ summary: 'Find roles.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -63,8 +86,6 @@ export class RoleController extends CrudController<Role> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.CHANGE_ROLES_PERMISSIONS)
 	@Get()
 	async findAll(): Promise<IPagination<IRole>> {
 		return this.roleService.findAll();
@@ -72,49 +93,72 @@ export class RoleController extends CrudController<Role> {
 
 	/**
 	 * Create role
-	 * 
-	 * @param entity 
-	 * @returns 
+	 *
+	 * @param entity
+	 * @returns
 	 */
-	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.CHANGE_ROLES_PERMISSIONS)
 	@HttpCode(HttpStatus.CREATED)
 	@Post()
-	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
 	async create(
-		@Body() entity: CreateRoleDTO
+		@Body(new ValidationPipe({
+			transform: true,
+			whitelist: true
+		})) entity: CreateRoleDTO
 	): Promise<IRole> {
-		return await this.roleService.create(entity);
+		try {
+			return await this.roleService.create(entity);
+		} catch (error) {
+			throw new BadRequestException(error);
+		}
 	}
 
 	/**
 	 * Update role
-	 * 
-	 * @param id 
-	 * @param entity 
-	 * @returns 
+	 *
+	 * @param id
+	 * @param entity
+	 * @returns
 	 */
-	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.CHANGE_ROLES_PERMISSIONS)
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
-	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body() entity: CreateRoleDTO
+		@Body(new ValidationPipe({
+			transform: true,
+			whitelist: true
+		})) entity: UpdateRoleDTO
 	): Promise<UpdateResult | IRole> {
-		return await this.roleService.update(id, entity);
+		try {
+			await this.roleService.findOneByIdString(id);
+			return await this.roleService.update(id, entity);
+		} catch (error) {
+			throw new ForbiddenException();
+		}
 	}
 
-	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.CHANGE_ROLES_PERMISSIONS)
+	/**
+	 * Delete role
+	 *
+	 * @param id
+	 * @returns
+	 */
 	@Delete(':id')
 	async delete(
 		@Param('id', UUIDValidationPipe) id: string
 	): Promise<DeleteResult> {
-		return await this.roleService.deleteRole(id);
+		try {
+			return await this.roleService.deleteRole(id);
+		} catch (error) {
+			throw new ForbiddenException();
+		}
 	}
 
+	/**
+	 * Import self hosted to gauzy cloud
+	 *
+	 * @param input
+	 * @returns
+	 */
 	@ApiOperation({ summary: 'Import role from self hosted to gauzy cloud hosted in bulk' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
@@ -124,12 +168,9 @@ export class RoleController extends CrudController<Role> {
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid input, The request body may contain clues as to what went wrong'
 	})
-	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.MIGRATE_GAUZY_CLOUD)
 	@Post('import/migrate')
-	async importRole(
-		@Body() input: any
-	) {
+	async importRole(@Body() input: IRoleMigrateInput[]) {
 		return await this.roleService.migrateImportRecord(input);
 	}
 }

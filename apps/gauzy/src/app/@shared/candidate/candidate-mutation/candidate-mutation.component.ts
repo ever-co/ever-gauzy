@@ -75,7 +75,7 @@ export class CandidateMutationComponent implements OnInit, AfterViewInit {
 
 		const { tenantId } = this.store.user;
 		this.role = await firstValueFrom(
-			this.roleService.getRoleByName({
+			this.roleService.getRoleByOptions({
 				name: RolesEnum.CANDIDATE,
 				tenantId
 			})
