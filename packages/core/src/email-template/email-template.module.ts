@@ -8,6 +8,7 @@ import { EmailTemplateController } from './email-template.controller';
 import { QueryHandlers } from './queries/handlers';
 import { CommandHandlers } from './commands/handlers';
 import { TenantModule } from '../tenant/tenant.module';
+import { UserModule } from './../user/user.module';
 
 @Module({
 	imports: [
@@ -16,6 +17,7 @@ import { TenantModule } from '../tenant/tenant.module';
 		]),
 		forwardRef(() => TypeOrmModule.forFeature([EmailTemplate])),
 		forwardRef(() => TenantModule),
+		forwardRef(() => UserModule),
 		CqrsModule
 	],
 	controllers: [EmailTemplateController],
