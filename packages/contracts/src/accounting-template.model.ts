@@ -1,12 +1,8 @@
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 
 export interface IAccountingTemplate
-	extends IBasePerTenantAndOrganizationEntityModel {
-	name: string;
-	mjml: string;
-	languageCode: string;
-	hbs: string;
-	templateType: string;
+	extends IAccountingTemplateUpdateInput {
+	hbs?: string;
 }
 
 export interface IAccountingTemplateFindInput
@@ -17,10 +13,8 @@ export interface IAccountingTemplateFindInput
 }
 
 export interface IAccountingTemplateUpdateInput
-	extends IBasePerTenantAndOrganizationEntityModel {
-	name?: string;
-	languageCode?: string;
-	templateType?: string;
+	extends IAccountingTemplateFindInput {
+	mjml?: string;
 }
 
 export enum AccountingTemplateTypeEnum {

@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Brackets, FindOptionsWhere, IsNull, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
+import { Brackets, IsNull, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import * as mjml2html from 'mjml';
 import * as Handlebars from 'handlebars';
-import { AccountingTemplateTypeEnum, IAccountingTemplate, IPagination, LanguagesEnum } from '@gauzy/contracts';
+import { AccountingTemplateTypeEnum, IAccountingTemplate, IAccountingTemplateFindInput, IAccountingTemplateUpdateInput, IPagination, LanguagesEnum } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
 import { AccountingTemplate } from './accounting-template.entity';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
@@ -135,87 +135,90 @@ export class AccountingTemplateService extends TenantAwareCrudService<Accounting
 		return { html };
 	}
 
-	async saveTemplate(input) {
-		const { data } = input;
+	/**
+	 * Save accounting template to the organization
+	 *
+	 * @param input
+	 * @returns
+	 */
+	async saveTemplate(input: IAccountingTemplateUpdateInput) {
 		const tenantId = RequestContext.currentTenantId();
-
-		const { success, record } = await this.findOneOrFailByWhereOptions({
-			languageCode: data.languageCode,
-			templateType: data.templateType,
-			organizationId: data.organizationId,
-			tenantId
-		});
-
-		let entity: AccountingTemplate;
-		if (success) {
-			entity = {
+		try {
+			const record = await this.findOneByWhereOptions({
+				languageCode: input.languageCode,
+				templateType: input.templateType,
+				organizationId: input.organizationId,
+				tenantId
+			});
+			let entity: AccountingTemplate = {
 				...record,
 				hbs: mjml2html(record.mjml).html,
-				mjml: data.mjml
-			};
+				mjml: input.mjml
+			}
 			return await this.update(record.id, entity);
-		} else {
-			entity = new AccountingTemplate();
-			entity.languageCode = data.languageCode;
-			entity.templateType = data.templateType;
-			entity.name = data.templateType;
-			entity.mjml = data.mjml;
-			entity.hbs = mjml2html(data.mjml).html;
-			entity.organizationId = data.organizationId;
+		} catch (error) {
+			const entity = new AccountingTemplate();
+			entity.languageCode = input.languageCode;
+			entity.templateType = input.templateType;
+			entity.name = input.templateType;
+			entity.mjml = input.mjml;
+			entity.hbs = mjml2html(input.mjml).html;
+			entity.organizationId = input.organizationId;
 			entity.tenantId = tenantId;
 			return await this.create(entity);
 		}
 	}
 
-
+	/**
+	 * GET single accounting template by conditions
+	 *
+	 * @param options
+	 * @param themeLanguage
+	 * @returns
+	 */
 	async getAccountTemplate(
-		options: FindOptionsWhere<AccountingTemplate>,
+		options: IAccountingTemplateFindInput,
 		themeLanguage: LanguagesEnum
 	) {
-		let template: any;
+		const tenantId = RequestContext.currentTenantId();
 		const {
 			templateType = AccountingTemplateTypeEnum.INVOICE,
 			organizationId,
 			languageCode = themeLanguage
 		} = options;
-		const tenantId = RequestContext.currentTenantId();
-
 		try {
-			template = await this.findOneByWhereOptions({
+			return await this.findOneByWhereOptions({
 				languageCode,
 				templateType,
 				organizationId,
 				tenantId
 			});
 		} catch (error) {
-			const { success, record } = await this.findOneOrFailByWhereOptions({
-				languageCode,
-				templateType,
-				organizationId: IsNull(),
-				tenantId: IsNull()
-			});
-			if (success) {
-				template = record
-			} else {
+			try {
+				return await this.findOneByWhereOptions({
+					languageCode,
+					templateType,
+					organizationId: IsNull(),
+					tenantId: IsNull()
+				});
+			} catch (error) {
 				try {
-					template = await this.findOneByWhereOptions({
+					return await this.findOneByWhereOptions({
 						languageCode: LanguagesEnum.ENGLISH,
 						templateType,
 						organizationId,
 						tenantId
 					});
 				} catch (error) {
-					template = await this.findOneByWhereOptions({
+					return await this.findOneByWhereOptions({
 						languageCode: LanguagesEnum.ENGLISH,
 						templateType,
 						organizationId: IsNull(),
 						tenantId: IsNull()
 					});
 				}
-
 			}
 		}
-		return template;
 	}
 
 
@@ -230,8 +233,23 @@ export class AccountingTemplateService extends TenantAwareCrudService<Accounting
 	): Promise<IPagination<IAccountingTemplate>> {
 		const query = this.accountingRepository.createQueryBuilder('accounting_template');
 		query.setFindOptions({
-			relations: params.relations,
-			order: params.order
+			select: {
+				organization: {
+					id: true,
+					name: true,
+					brandColor: true
+				}
+			},
+			...(
+				(params && params.relations) ? {
+					relations: params.relations
+				} : {}
+			),
+			...(
+				(params && params.order) ? {
+					order: params.order
+				} : {}
+			)
 		});
 		query.where((qb: SelectQueryBuilder<AccountingTemplate>) => {
 			qb.andWhere(

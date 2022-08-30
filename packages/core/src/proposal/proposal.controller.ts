@@ -9,36 +9,49 @@ import {
 	Put,
 	Param,
 	ValidationPipe,
-	UsePipes
+	BadRequestException
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { IProposal, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import { ProposalService } from './proposal.service';
 import { Proposal } from './proposal.entity';
-import { CrudController, PaginationParams } from './../core/crud';
+import { CrudController, OptionParams, PaginationParams } from './../core/crud';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
-import { CreateProposalDTO, UpdateProposalActionDTO, UpdateProposalDTO } from './dto';
+import { CreateProposalDTO, UpdateProposalDTO } from './dto';
 
 @ApiTags('Proposal')
-@UseGuards(TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard)
+@Permissions(PermissionsEnum.ORG_PROPOSALS_EDIT)
 @Controller()
 export class ProposalController extends CrudController<Proposal> {
 	constructor(private readonly proposalService: ProposalService) {
 		super(proposalService);
 	}
 
-	@UseGuards(PermissionGuard)
+	/**
+	 * GET proposal by pagination
+	 *
+	 * @param options
+	 * @returns
+	 */
 	@Permissions(PermissionsEnum.ORG_PROPOSALS_VIEW)
 	@Get('pagination')
-	@UsePipes(new ValidationPipe({ transform: true }))
 	async pagination(
-		@Query() filter: PaginationParams<Proposal>
+		@Query(new ValidationPipe({
+			transform: true
+		})) options: PaginationParams<Proposal>
 	): Promise<IPagination<IProposal>> {
-		return this.proposalService.pagination(filter);
+		return this.proposalService.pagination(options);
 	}
 
+	/**
+	 * GET proposal by find options
+	 *
+	 * @param data
+	 * @returns
+	 */
 	@ApiOperation({ summary: 'Find all proposals.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -49,7 +62,6 @@ export class ProposalController extends CrudController<Proposal> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_PROPOSALS_VIEW)
 	@Get()
 	async findAll(
@@ -72,17 +84,14 @@ export class ProposalController extends CrudController<Proposal> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_PROPOSALS_VIEW)
 	@Get(':id')
-	async findOne(
+	async findById(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Query('data', ParseJsonPipe) data: any
+		@Query() options: OptionParams<Proposal>
 	): Promise<IProposal> {
-		const { relations, findInput } = data;
-		return this.proposalService.findOneByIdString(id, {
-			where: findInput,
-			relations
+		return await this.proposalService.findOneByIdString(id, {
+			relations: options.relations ||  []
 		});
 	}
 
@@ -96,16 +105,26 @@ export class ProposalController extends CrudController<Proposal> {
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
-	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.ORG_PROPOSALS_EDIT)
 	@Post()
-	@UsePipes( new ValidationPipe({ transform : true }))
 	async create(
-		@Body() entity: CreateProposalDTO
+		@Body(new ValidationPipe({
+			transform : true,
+			whitelist: true
+		})) entity: CreateProposalDTO
 	): Promise<IProposal> {
-		return this.proposalService.create(entity);
+		try {
+			return await this.proposalService.create(entity);
+		} catch (error) {
+			throw new BadRequestException();
+		}
 	}
 
+	/**
+	 *
+	 * @param id
+	 * @param entity
+	 * @returns
+	 */
 	@ApiOperation({ summary: 'Update single proposal by id.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -116,41 +135,22 @@ export class ProposalController extends CrudController<Proposal> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.ORG_PROPOSALS_EDIT)
 	@Put(':id')
-	@UsePipes( new ValidationPipe({ transform : true }))
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body() entity: UpdateProposalDTO
+		@Body(new ValidationPipe({
+			transform : true,
+			whitelist: true
+		})) entity: UpdateProposalDTO
 	): Promise<IProposal> {
-		return this.proposalService.create({
-			id,
-			...entity
-		});
-	}
-
-	@ApiOperation({ summary: 'Update action of a single proposal by id.' })
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Updates proposal',
-		type: Proposal
-	})
-	@ApiResponse({
-		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
-	})
-	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.ORG_PROPOSALS_EDIT)
-	@Put(':id/action')
-	@UsePipes( new ValidationPipe({ transform : true, whitelist : true }))
-	async updateAction(
-		@Param('id', UUIDValidationPipe) id: string,
-		@Body() entity: UpdateProposalActionDTO
-	): Promise<IProposal> {
-		return this.proposalService.create({
-			id,
-			...entity
-		});
+		try {
+			await this.proposalService.create({
+				id,
+				...entity
+			});
+			return await this.proposalService.findOneByIdString(id);
+		} catch (error) {
+			throw new BadRequestException();
+		}
 	}
 }

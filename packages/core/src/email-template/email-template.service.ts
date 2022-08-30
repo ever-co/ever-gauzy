@@ -26,8 +26,23 @@ export class EmailTemplateService extends CrudService<EmailTemplate> {
 	): Promise<IPagination<IEmailTemplate>> {
 		const query = this.repository.createQueryBuilder('email_template');
 		query.setFindOptions({
-			relations: params.relations,
-			order: params.order
+			select: {
+				organization: {
+					id: true,
+					name: true,
+					brandColor: true
+				}
+			},
+			...(
+				(params && params.relations) ? {
+					relations: params.relations
+				} : {}
+			),
+			...(
+				(params && params.order) ? {
+					order: params.order
+				} : {}
+			)
 		});
 		query.where((qb: SelectQueryBuilder<EmailTemplate>) => {
 			qb.where(

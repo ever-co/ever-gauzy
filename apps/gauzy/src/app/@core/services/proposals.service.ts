@@ -7,9 +7,12 @@ import {
 	IProposalFindInput,
 	IProposalViewModel
 } from '@gauzy/contracts';
+import { toParams } from '@gauzy/common-angular';
 import { API_PREFIX } from '../constants/app.constants';
 
-@Injectable()
+@Injectable({
+	providedIn: 'root'
+})
 export class ProposalsService {
 	constructor(private http: HttpClient) {}
 
@@ -24,13 +27,6 @@ export class ProposalsService {
 		return firstValueFrom(
 			this.http
 			.put(`${API_PREFIX}/proposal/${id}`, updateInput)
-		);
-	}
-
-	updateAction(id: string, updateInput: IProposalCreateInput): Promise<any> {
-		return firstValueFrom(
-			this.http
-			.put(`${API_PREFIX}/proposal/${id}/action`, updateInput)
 		);
 	}
 
@@ -59,13 +55,9 @@ export class ProposalsService {
 		);
 	}
 
-	getById(id: string, findInput?: IProposalFindInput, relations?: string[]) {
-		const data = JSON.stringify({ relations, findInput });
-		return firstValueFrom(
-			this.http
-			.get<IProposalViewModel>(`${API_PREFIX}/proposal/${id}`, {
-				params: { data }
-			})
-		);
+	getById(id: string, relations?: string[]) {
+		return this.http.get<IProposalViewModel>(`${API_PREFIX}/proposal/${id}`, {
+			params: toParams({ relations })
+		});
 	}
 }

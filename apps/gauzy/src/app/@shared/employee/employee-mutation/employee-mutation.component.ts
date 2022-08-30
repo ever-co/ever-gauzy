@@ -66,7 +66,7 @@ export class EmployeeMutationComponent implements OnInit, AfterViewInit {
 		const { tenantId } = this.store.user;
 		this.form = this.userBasicInfo.form;
 		this.role = await firstValueFrom(
-			this.roleService.getRoleByName({
+			this.roleService.getRoleByOptions({
 				name: RolesEnum.EMPLOYEE,
 				tenantId
 			})
@@ -139,7 +139,7 @@ export class EmployeeMutationComponent implements OnInit, AfterViewInit {
 
 	/**
 	 * Removed one employe in the array of employees.
-	 * @param tag 
+	 * @param tag
 	 */
 	onEmployeeRemove(tag: NbTagComponent): void {
 		this.employees = this.employees.filter(

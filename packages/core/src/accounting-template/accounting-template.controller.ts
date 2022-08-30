@@ -9,8 +9,8 @@ import {
 	Put,
 	Param,
 	ValidationPipe,
-	ForbiddenException,
-	Delete
+	Delete,
+	BadRequestException
 } from '@nestjs/common';
 import {
 	ApiOperation,
@@ -18,24 +18,27 @@ import {
 	ApiTags
 } from '@nestjs/swagger';
 import { QueryBus } from '@nestjs/cqrs';
-import { FindOptionsWhere } from 'typeorm';
+import { FindOptionsWhere, UpdateResult } from 'typeorm';
 import {
 	IAccountingTemplate,
 	IAccountingTemplateUpdateInput,
 	IPagination,
-	LanguagesEnum
+	LanguagesEnum,
+	PermissionsEnum
 } from '@gauzy/contracts';
 import { CrudController, PaginationParams } from '../core/crud';
 import { RequestContext } from './../core/context';
-import { TenantPermissionGuard } from './../shared/guards';
+import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { UUIDValidationPipe } from './../shared/pipes';
-import { LanguageDecorator } from './../shared/decorators';
+import { Permissions, LanguageDecorator } from './../shared/decorators';
 import { AccountingTemplateQuery } from './queries';
 import { AccountingTemplate } from './accounting-template.entity';
 import { AccountingTemplateService } from './accounting-template.service';
+import { AccountingTemplateQueryDTO, SaveAccountingTemplateDTO } from './dto';
 
 @ApiTags('Accounting Template')
-@UseGuards(TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard)
+@Permissions(PermissionsEnum.VIEW_ALL_ACCOUNTING_TEMPLATES)
 @Controller()
 export class AccountingTemplateController extends CrudController<AccountingTemplate> {
 	constructor(
@@ -57,7 +60,7 @@ export class AccountingTemplateController extends CrudController<AccountingTempl
 			transform: true
 		})) options: FindOptionsWhere<AccountingTemplate>
 	): Promise<number> {
-		return this.accountingTemplateService.countBy(options);
+		return await this.accountingTemplateService.countBy(options);
 	}
 
 	/**
@@ -72,9 +75,16 @@ export class AccountingTemplateController extends CrudController<AccountingTempl
 			transform: true
 		})) options: PaginationParams<AccountingTemplate>
 	): Promise<IPagination<IAccountingTemplate>> {
-		return this.accountingTemplateService.paginate(options);
+		return await this.accountingTemplateService.paginate(options);
 	}
 
+	/**
+	 * GET accouting template
+	 *
+	 * @param options
+	 * @param themeLanguage
+	 * @returns
+	 */
 	@ApiOperation({
 		summary: 'Find template by name and language code for organization'
 	})
@@ -90,8 +100,9 @@ export class AccountingTemplateController extends CrudController<AccountingTempl
 	@Get('template')
 	async getAccoutingTemplate(
 		@Query(new ValidationPipe({
-			transform: true
-		})) options: FindOptionsWhere<AccountingTemplate>,
+			transform: true,
+			whitelist: true
+		})) options: AccountingTemplateQueryDTO,
 		@LanguageDecorator() themeLanguage: LanguagesEnum
 	): Promise<IAccountingTemplate> {
 		return await this.accountingTemplateService.getAccountTemplate(
@@ -113,6 +124,12 @@ export class AccountingTemplateController extends CrudController<AccountingTempl
 		return this.accountingTemplateService.generatePreview(input);
 	}
 
+	/**
+	 * Save accounting template to the organization
+	 *
+	 * @param entity
+	 * @returns
+	 */
 	@ApiOperation({
 		summary: 'Converts mjml or handlebar text to html for temaplate preview'
 	})
@@ -122,8 +139,14 @@ export class AccountingTemplateController extends CrudController<AccountingTempl
 		type: AccountingTemplate
 	})
 	@Post('template/save')
-	async saveTemplate(@Body() input: any): Promise<any> {
-		return this.accountingTemplateService.saveTemplate(input);
+	async saveTemplate(
+		@Body(new ValidationPipe()) entity: SaveAccountingTemplateDTO
+	): Promise<IAccountingTemplate | UpdateResult> {
+		try {
+			return await this.accountingTemplateService.saveTemplate(entity);
+		} catch (error) {
+			throw new BadRequestException();
+		}
 	}
 
 	@Get()
@@ -153,7 +176,7 @@ export class AccountingTemplateController extends CrudController<AccountingTempl
 				tenantId: RequestContext.currentTenantId()
 			});
 		} catch (error) {
-			throw new ForbiddenException();
+			throw new BadRequestException();
 		}
 	}
 
@@ -171,13 +194,13 @@ export class AccountingTemplateController extends CrudController<AccountingTempl
 		@Body() input: IAccountingTemplateUpdateInput,
 	): Promise<IAccountingTemplate> {
 		try {
-			await this.findById(id);
-			return await this.accountingTemplateService.create({
+			await this.accountingTemplateService.create({
 				id,
 				...input
 			});
+			return await this.findById(id);
 		} catch (error) {
-			throw new ForbiddenException();
+			throw new BadRequestException();
 		}
 	}
 
@@ -194,14 +217,11 @@ export class AccountingTemplateController extends CrudController<AccountingTempl
 		description: 'Accounting template not found'
 	})
 	@Delete(':id')
-	async delete(
-		@Param('id', UUIDValidationPipe) id: string
-	) {
+	async delete(@Param('id', UUIDValidationPipe) id: string) {
 		try {
-			await this.findById(id);
 			return await this.accountingTemplateService.delete(id);
 		} catch (error) {
-			throw new ForbiddenException();
+			throw new BadRequestException();
 		}
 	}
 }
