@@ -4,93 +4,71 @@ import {
 	RelationId,
 	ManyToOne,
 	JoinColumn,
-	OneToMany,
 	Index
 } from 'typeorm';
-import { IEmployee, ITimeLog, ITimesheet, TimesheetStatus } from '@gauzy/contracts';
+import { IEmployee, ITimesheet, IUser, TimesheetStatus } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
-import {
-	IsString,
-	IsBoolean,
-	IsNumber,
-	IsDateString,
-	IsEnum
-} from 'class-validator';
 import {
 	Employee,
 	TenantOrganizationBaseEntity,
-	TimeLog
+	User
 } from './../../core/entities/internal';
 
 @Entity('timesheet')
-export class Timesheet
-	extends TenantOrganizationBaseEntity
+export class Timesheet extends TenantOrganizationBaseEntity
 	implements ITimesheet {
-	
+
 	@ApiProperty({ type: () => Number })
-	@IsNumber()
 	@Column({ default: 0 })
 	duration?: number;
 
 	@ApiProperty({ type: () => Number })
-	@IsNumber()
 	@Column({ default: 0 })
 	keyboard?: number;
 
 	@ApiProperty({ type: () => Number })
-	@IsNumber()
 	@Column({ default: 0 })
 	mouse?: number;
 
 	@ApiProperty({ type: () => Number })
-	@IsNumber()
 	@Column({ default: 0 })
 	overall?: number;
 
 	@ApiProperty({ type: () => 'timestamptz' })
-	@IsDateString()
 	@Column({ nullable: true, default: null })
 	startedAt?: Date;
 
 	@ApiProperty({ type: () => 'timestamptz' })
-	@IsDateString()
 	@Column({ nullable: true, default: null })
 	stoppedAt?: Date;
 
 	@ApiProperty({ type: () => 'timestamptz' })
-	@IsDateString()
 	@Column({ nullable: true, default: null })
 	approvedAt?: Date;
 
 	@ApiProperty({ type: () => 'timestamptz' })
-	@IsDateString()
 	@Column({ nullable: true, default: null })
 	submittedAt?: Date;
 
 	@ApiProperty({ type: () => 'timestamptz' })
-	@IsDateString()
 	@Column({ nullable: true, default: null })
 	lockedAt?: Date;
 
 	@ApiProperty({ type: () => Boolean })
-	@IsBoolean()
 	@Column({ default: false })
 	isBilled?: boolean;
 
 	@ApiProperty({ type: () => String, enum: TimesheetStatus })
-	@IsEnum(TimesheetStatus)
-	@IsString()
 	@Column({ default: TimesheetStatus.PENDING })
 	status: string;
 
 	@ApiProperty({ type: () => 'timestamptz' })
-	@IsDateString()
 	@Column({ nullable: true, default: null })
 	deletedAt?: Date;
 
 	/*
     |--------------------------------------------------------------------------
-    | @ManyToOne 
+    | @ManyToOne
     |--------------------------------------------------------------------------
     */
 
@@ -106,39 +84,21 @@ export class Timesheet
 
 	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((it: Timesheet) => it.employee)
-	@IsString()
 	@Index()
 	@Column()
-	readonly employeeId?: string;
+	employeeId?: string;
 
 	/**
 	 * Approve By Employee
 	 */
 	@ApiProperty({ type: () => Employee })
-	@ManyToOne(() => Employee, { nullable: true })
+	@ManyToOne(() => User, { nullable: true })
 	@JoinColumn()
-	approvedBy?: IEmployee;
+	approvedBy?: IUser;
 
 	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((it: Timesheet) => it.approvedBy)
-	@IsString()
 	@Index()
 	@Column({ nullable: true })
-	readonly approvedById?: string;
-
-	/*
-    |--------------------------------------------------------------------------
-    | @OneToMany 
-    |--------------------------------------------------------------------------
-    */
-
-	/**
-	 * TimeLog
-	 */
-	@ApiProperty({ type: () => TimeLog, isArray: true })
-	@OneToMany(() => TimeLog, (timeLog) => timeLog.timesheet, {
-		cascade: true
-	})
-	@JoinColumn()
-	timeLogs?: ITimeLog[];
+	approvedById?: string;
 }

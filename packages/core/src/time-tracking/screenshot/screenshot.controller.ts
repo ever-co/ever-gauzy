@@ -7,25 +7,27 @@ import {
 	UseInterceptors,
 	Delete,
 	Param,
-	ExecutionContext
+	ExecutionContext,
+	BadRequestException
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import * as path from 'path';
 import * as moment from 'moment';
 import * as sharp from 'sharp';
 import * as fs from 'fs';
-import { FileStorageProviderEnum, IScreenshot, PermissionsEnum } from '@gauzy/contracts';
+import { FileStorageProviderEnum, IScreenshot, PermissionsEnum, RolesEnum } from '@gauzy/contracts';
 import { Screenshot } from './screenshot.entity';
 import { ScreenshotService } from './screenshot.service';
 import { FileStorage, UploadedFileStorage } from '../../core/file-storage';
 import { tempFile } from '../../core/utils';
-import { Permissions } from './../../shared/decorators';
-import { PermissionGuard, TenantPermissionGuard } from './../../shared/guards';
+import { Permissions, Roles } from './../../shared/decorators';
+import { PermissionGuard, RoleGuard, TenantPermissionGuard } from './../../shared/guards';
 import { UUIDValidationPipe } from './../../shared/pipes';
 import { LazyFileInterceptor, TransformInterceptor } from './../../core/interceptors';
 
 @ApiTags('Screenshot')
-@UseGuards(TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard, RoleGuard)
+@Roles(RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN, RolesEnum.EMPLOYEE)
 @UseInterceptors(TransformInterceptor)
 @Controller()
 export class ScreenshotController {
@@ -128,6 +130,10 @@ export class ScreenshotController {
 	async delete(
 		@Param('id', UUIDValidationPipe) screenshotId: string,
 	): Promise<IScreenshot> {
-		return await this.screenshotService.deleteScreenshot(screenshotId);
+		try {
+			return await this.screenshotService.deleteScreenshot(screenshotId);
+		} catch (error) {
+			throw new BadRequestException(error);
+		}
 	}
 }

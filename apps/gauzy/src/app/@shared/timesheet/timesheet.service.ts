@@ -4,7 +4,6 @@ import {
 	ITimeLog,
 	IGetTimeLogInput,
 	IManualTimeInput,
-	TimesheetStatus,
 	ITimesheet,
 	IGetTimesheetInput,
 	IGetTimeLogConflictInput,
@@ -17,7 +16,9 @@ import {
 	IClientBudgetLimitReport,
 	IProjectBudgetLimitReport,
 	IReportDayData,
-	ReportDayData
+	ReportDayData,
+	IUpdateTimesheetStatusInput,
+	ISubmitTimesheetInput
 } from '@gauzy/contracts';
 import { toParams } from '@gauzy/common-angular';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
@@ -87,22 +88,20 @@ export class TimesheetService {
 		});
 	}
 
-	updateStatus(ids: string | string[], status: TimesheetStatus) {
+	updateStatus(request: IUpdateTimesheetStatusInput): Promise<ITimesheet[]> {
 		return firstValueFrom(
-			this.http
-			.put(`${API_PREFIX}/timesheet/status`, { ids, status })
-		).then((data: any) => {
-			return data;
-		});
+			this.http.put<ITimesheet[]>(`${API_PREFIX}/timesheet/status`, {
+				...request
+			})
+		);
 	}
 
-	submitTimesheet(ids: string | string[], status: 'submit' | 'unsubmit') {
+	submitTimesheet(request: ISubmitTimesheetInput): Promise<ITimesheet[]> {
 		return firstValueFrom(
-			this.http
-			.put(`${API_PREFIX}/timesheet/submit`, { ids, status })
-		).then((data: any) => {
-			return data;
-		});
+			this.http.put<ITimesheet[]>(`${API_PREFIX}/timesheet/submit`, {
+				...request
+			})
+		);
 	}
 
 	getTimeLogs(request?: IGetTimeLogInput) {

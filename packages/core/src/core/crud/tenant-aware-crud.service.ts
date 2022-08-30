@@ -283,11 +283,11 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity> extends
 	 * @returns
 	 */
 	public async delete(
-		criteria: string | number | FindOptionsWhere<T>,
+		criteria: string | FindOptionsWhere<T>,
 		options?: FindOneOptions<T>
 	): Promise<DeleteResult> {
 		try {
-			let record;
+			let record: T;
 			if (typeof criteria === 'string') {
 				record = await this.findOneByIdString(criteria, options);
 			} else {

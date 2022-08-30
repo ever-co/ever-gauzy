@@ -9,15 +9,17 @@ import {
 	ValidationPipe
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { IGetActivitiesInput, IBulkActivitiesInput, ReportGroupFilterEnum, PermissionsEnum } from '@gauzy/contracts';
-import { PermissionGuard, TenantPermissionGuard } from './../../shared/guards';
-import { Permissions } from './../../shared/decorators';
+import { IGetActivitiesInput, IBulkActivitiesInput, ReportGroupFilterEnum, PermissionsEnum, RolesEnum } from '@gauzy/contracts';
+import { PermissionGuard, RoleGuard, TenantPermissionGuard } from './../../shared/guards';
+import { Permissions, Roles } from './../../shared/decorators';
 import { ActivityService } from './activity.service';
 import { ActivityMapService } from './activity.map.service';
 import { ActivityQueryDTO } from './dto/query';
 
 @ApiTags('Activity')
-@UseGuards(TenantPermissionGuard, PermissionGuard)
+@UseGuards(TenantPermissionGuard, RoleGuard, PermissionGuard)
+@Roles(RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN, RolesEnum.EMPLOYEE)
+@Permissions(PermissionsEnum.TIME_TRACKER, PermissionsEnum.TIMESHEET_EDIT_TIME)
 @Controller()
 export class ActivityController {
 	constructor(
@@ -31,8 +33,7 @@ export class ActivityController {
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
-	@Permissions(PermissionsEnum.TIME_TRACKER, PermissionsEnum.TIMESHEET_EDIT_TIME)
-	@Get('/')
+	@Get()
 	async getActivities(
 		@Query(new ValidationPipe({
 			transform: true,
@@ -53,8 +54,7 @@ export class ActivityController {
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
-	@Permissions(PermissionsEnum.TIME_TRACKER, PermissionsEnum.TIMESHEET_EDIT_TIME)
-	@Get('/daily')
+	@Get('daily')
 	async getDailyActivities(
 		@Query(new ValidationPipe({
 			transform: true,
@@ -70,8 +70,7 @@ export class ActivityController {
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
-	@Permissions(PermissionsEnum.TIME_TRACKER, PermissionsEnum.TIMESHEET_EDIT_TIME)
-	@Get('/report')
+	@Get('report')
 	async getDailyActivitiesReport(
 		@Query(new ValidationPipe({
 			transform: true,
@@ -95,7 +94,7 @@ export class ActivityController {
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
-	@Post('/bulk')
+	@Post('bulk')
 	async bulkSaveActivities(@Body() entities: IBulkActivitiesInput) {
 		return this.activityService.bulkSave(entities);
 	}
