@@ -120,7 +120,7 @@ export class ApprovalsComponent extends BaseSelectorFilterComponent implements
 		timesheetIds: string | string[],
 		status: TimesheetStatus
 	) {
-		if (!this.organization && isEmpty(timesheetIds)) {
+		if (!this.organization || isEmpty(timesheetIds)) {
 			return;
 		}
 		const { id: organizationId } = this.organization;
@@ -148,7 +148,7 @@ export class ApprovalsComponent extends BaseSelectorFilterComponent implements
 		timesheetIds: string | string[],
 		status: 'submit' | 'unsubmit'
 	) {
-		if (!this.organization && isEmpty(timesheetIds)) {
+		if (!this.organization || isEmpty(timesheetIds)) {
 			return;
 		}
 		const { id: organizationId } = this.organization;
