@@ -108,7 +108,7 @@
 			<div class="col-12">
 				<nb-card class="card-full-height">
 					<nb-card-body>
-						<div class="row center-content">
+						<div class="row update-setting center-content">
 							<div class="col-12 text-center margin-content">
 								<img [src]="gauzyIcon" class="margin-icon" />
 							</div>
@@ -131,7 +131,7 @@
 								</button>
 							</div>
 							<div class="col-12 update-message" *ngIf="notAvailable">
-								<span>{{ message }}</span>
+								<span class="update-message-content">{{ message }}</span>
 							</div>
 							<div class="col-12 update-message" *ngIf="showProgressBar">
 								<nb-progress-bar [value]="progressDownload" status="primary" [displayValue]="true">

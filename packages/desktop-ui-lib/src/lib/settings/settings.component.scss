@@ -53,7 +53,7 @@
   text-align: right;
   margin-bottom: 10px;
   font-size: 12px;
-  font-weight: bold;
+  font-weight: 600;
   color: orange;
 }
 
@@ -62,17 +62,16 @@
 }
 
 .margin-icon {
-  margin-top: 35px;
-  height: 56px;
+  height: 48px;
 }
 
 .full-height {
   height: 80% !important;
-  min-height: 600px !important;
+  min-height: 675px !important;
 }
 
 .card-full-height {
-  min-height: 600px;
+  min-height: 675px;
 }
 
 .top-bottom-space {
@@ -85,9 +84,9 @@
 
 .version-text {
   text-align: center;
-  font-size: 16px;
-  font-weight: bold;
-  margin-top: 40px;
+  font-size: 14px;
+  font-weight: 400;
+  margin-top: 48px;
 }
 
 .button-update {
@@ -96,15 +95,13 @@
 }
 
 .button-big {
-  font-size: 16px;
-  font-weight: bold;
-  height: 56px;
-  width: 180px;
+  font-size: 12px;
+  font-weight: 600;
+  height: 32px;
 }
 
 .center-content {
   position: relative;
-  top: 20vh;
 }
 
 .icon-spin {
@@ -115,8 +112,14 @@
   margin-top: 15px;
   text-align: center;
   font-weight: 600;
-  color: #00d68f;
+  color: rgb(100, 100, 100);
   font-size: 12px;
+}
+
+.update-message-content {
+  background-color: rgba(100, 100, 100, 0.25);
+  padding: 2px 4px;
+  border-radius: calc(var(--border-radius) / 2);
 }
 
 .log-box {
@@ -124,6 +127,7 @@
   color: white;
   font-size: 11px;
   text-align: left;
+  border-radius: 0 0 var(--border-radius) var(--border-radius);
 }
 
 .log-content {
@@ -134,7 +138,7 @@
 
 .content-text {
   color: white;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 400;
   line-height: 8px;
 }
