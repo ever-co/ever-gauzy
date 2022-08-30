@@ -15,9 +15,9 @@
 				>
 				<mj-text font-size="16px" font-family="helvetica">
 					<p>{{email}} היקר,</p>
-					<p>
-						תודה על הרשמתך ל- Gauzy ™ - שיתוף רווחים הוגנים פלטפורמת
-						קוד פתוח
+					<p style="line-height: 1.5rem">
+						תודה על הרשמתך ב-Ever® Gauzy™ - פלטפורמת ניהול עסקי בקוד
+						פתוח (ERP/CRM/HRM).
 					</p>
 					<p>אנו שמחים לקבל אותך על הסיפון!</p>
 					<p>בברכה ,</p>
