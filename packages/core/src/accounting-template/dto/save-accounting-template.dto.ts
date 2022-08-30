@@ -4,7 +4,7 @@ import { IsEnum, IsNotEmpty } from "class-validator";
 import { TenantOrganizationBaseDTO } from "./../../core/dto";
 
 /**
- * Save accounting tempplate request DTO validation
+ * Save accounting template request DTO validation
  */
 export class SaveAccountingTemplateDTO extends TenantOrganizationBaseDTO
     implements IAccountingTemplateUpdateInput {

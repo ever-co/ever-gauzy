@@ -27,17 +27,12 @@ export class EmailTemplateService {
 	}
 
 	getTemplate(
-		findInput?: ICustomizeEmailTemplateFindInput
+		where?: ICustomizeEmailTemplateFindInput
 	): Promise<ICustomizableEmailTemplate> {
-		const data = JSON.stringify({ findInput });
 		return firstValueFrom(
-			this.http
-			.get<ICustomizableEmailTemplate>(
-				`${API_PREFIX}/email-template/template`,
-				{
-					params: { data }
-				}
-			)
+			this.http.get<ICustomizableEmailTemplate>(`${API_PREFIX}/email-template/template`, {
+				params: toParams({ ...where })
+			})
 		);
 	}
 
@@ -55,9 +50,8 @@ export class EmailTemplateService {
 
 	saveEmailTemplate(data: IEmailTemplateSaveInput): Promise<IEmailTemplate> {
 		return firstValueFrom(
-			this.http
-			.post<IEmailTemplate>(`${API_PREFIX}/email-template/template/save`, {
-				data
+			this.http.post<IEmailTemplate>(`${API_PREFIX}/email-template/template/save`, {
+				...data
 			})
 		);
 	}
