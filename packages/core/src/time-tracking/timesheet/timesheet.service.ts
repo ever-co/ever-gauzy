@@ -1,12 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { CommandBus } from '@nestjs/cqrs';
 import { Repository, Between, In, SelectQueryBuilder, Brackets, WhereExpressionBuilder } from 'typeorm';
 import * as moment from 'moment';
 import {
-	IUpdateTimesheetStatusInput,
 	IGetTimesheetInput,
-	ISubmitTimesheetInput,
 	PermissionsEnum,
 	ITimesheet
 } from '@gauzy/contracts';
@@ -14,46 +11,14 @@ import { RequestContext } from './../../core/context';
 import { TenantAwareCrudService } from './../../core/crud';
 import { getDateRangeFormat } from './../../core/utils';
 import { Timesheet } from './timesheet.entity';
-import {
-	TimesheetFirstOrCreateCommand,
-	TimesheetSubmitCommand,
-	TimesheetUpdateStatusCommand
-} from './commands';
 
 @Injectable()
 export class TimeSheetService extends TenantAwareCrudService<Timesheet> {
 	constructor(
 		@InjectRepository(Timesheet)
 		private readonly timeSheetRepository: Repository<Timesheet>,
-
-		private readonly commandBus: CommandBus
 	) {
 		super(timeSheetRepository);
-	}
-
-	async createOrFindTimeSheet(
-		employeeId: string,
-		date: Date = new Date()
-	): Promise<ITimesheet> {
-		return await this.commandBus.execute(
-			new TimesheetFirstOrCreateCommand(date, employeeId)
-		);
-	}
-
-	async submitTimeSheet(
-		input: ISubmitTimesheetInput
-	): Promise<ITimesheet[]> {
-		return await this.commandBus.execute(
-			new TimesheetSubmitCommand(input)
-		);
-	}
-
-	async updateStatus(
-		input: IUpdateTimesheetStatusInput
-	): Promise<ITimesheet[]> {
-		return await this.commandBus.execute(
-			new TimesheetUpdateStatusCommand(input)
-		);
 	}
 
 	/**
@@ -64,15 +29,7 @@ export class TimeSheetService extends TenantAwareCrudService<Timesheet> {
 	 */
 	async getTimeSheetCount(request: IGetTimesheetInput): Promise<number> {
 		const query = this.timeSheetRepository.createQueryBuilder('timesheet');
-		query.setFindOptions({
-			join: {
-				alias: 'timesheet',
-				innerJoin: {
-					employee: 'timesheet.employee',
-					timeLogs: 'timesheet.timeLogs'
-				}
-			}
-		});
+		query.innerJoin(`${query.alias}.employee`, 'employee');
 		query.where((query: SelectQueryBuilder<Timesheet>) => {
 			this.getFilterTimesheetQuery(query, request);
 		});
@@ -87,17 +44,29 @@ export class TimeSheetService extends TenantAwareCrudService<Timesheet> {
 	 */
 	async getTimeSheets(request: IGetTimesheetInput): Promise<ITimesheet[]> {
 		const query = this.timeSheetRepository.createQueryBuilder('timesheet');
+		query.innerJoin(`${query.alias}.employee`, 'employee');
 		query.setFindOptions({
-			join: {
-				alias: 'timesheet',
-				innerJoin: {
-					employee: 'timesheet.employee',
-					timeLogs: 'timesheet.timeLogs'
+			select: {
+				employee: {
+					id: true,
+					user: {
+						id: true,
+						firstName: true,
+						lastName: true,
+						email: true
+					}
+				},
+				organization: {
+					id: true,
+					name: true,
+					brandColor: true
 				}
 			},
-			relations: [
-				...(request.relations ? request.relations : [])
-			]
+			...(
+				(request && request.relations) ? {
+					relations: request.relations
+				} : {}
+			),
 		});
 		query.where((query: SelectQueryBuilder<Timesheet>) => {
 			this.getFilterTimesheetQuery(query, request);

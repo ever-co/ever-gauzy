@@ -9,7 +9,7 @@ import { TenantOrganizationBaseDTO } from "./../../core/dto";
  */
 export class DateRangeQueryDTO extends TenantOrganizationBaseDTO implements IDateRangePicker {
 
-    @ApiPropertyOptional({ type: () => Date })
+    @ApiPropertyOptional({ type: () => Date, readOnly: true })
     @IsOptional()
     @IsString()
     @IsBeforeDate(DateRangeQueryDTO, (it) => it.endDate, {
@@ -17,7 +17,7 @@ export class DateRangeQueryDTO extends TenantOrganizationBaseDTO implements IDat
     })
     readonly startDate: Date;
 
-    @ApiPropertyOptional({ type: () => Date })
+    @ApiPropertyOptional({ type: () => Date, readOnly: true })
     @IsOptional()
     @IsString()
     readonly endDate: Date;
