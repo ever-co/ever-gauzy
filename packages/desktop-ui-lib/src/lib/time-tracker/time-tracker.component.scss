@@ -14,7 +14,7 @@
   border-radius: var(--button-rectangle-border-radius);
 }
 
-.search{
+.search {
   padding-right: 8px;
 }
 
@@ -82,6 +82,7 @@
   width: 100%;
   height: 160px;
   border-radius: var(--border-radius);
+  object-fit: cover;
 }
 
 .img-placeholder {
@@ -178,6 +179,9 @@ nb-card-body {
   z-index: 999;
   right: -14px;
   top: 50%;
+  background-color: var(--gauzy-sidebar-background-3) !important;
+  border-radius: var(--border-radius);
+  padding-left: 0px !important;
   cursor: pointer;
 }
 
