@@ -18,7 +18,6 @@ import {
 	IEmployee
 } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsDate, IsOptional, IsEnum, IsString } from 'class-validator';
 import {
 	Column,
 	Entity,
@@ -54,9 +53,8 @@ import { ColumnNumericTransformerPipe } from './../shared/pipes';
 export class Candidate
 	extends TenantOrganizationBaseEntity
 	implements ICandidate {
-	
+
 	@ApiPropertyOptional({ type: () => Number })
-	@IsOptional()
 	@Column({
 		nullable: true,
 		type: 'numeric',
@@ -65,64 +63,46 @@ export class Candidate
 	rating?: number;
 
 	@ApiPropertyOptional({ type: () => Date })
-	@IsDate()
-	@IsOptional()
 	@Column({ nullable: true })
 	valueDate?: Date;
 
 	@ApiPropertyOptional({ type: () => Date })
-	@IsDate()
-	@IsOptional()
 	@Column({ nullable: true })
 	appliedDate?: Date;
 
 	@ApiPropertyOptional({ type: () => Date })
-	@IsDate()
-	@IsOptional()
 	@Column({ nullable: true })
 	hiredDate?: Date;
 
 	@ApiProperty({ type: () => String, enum: CandidateStatusEnum })
-	@IsEnum(CandidateStatusEnum)
-	@IsOptional()
 	@Column({ nullable: true, default: CandidateStatusEnum.APPLIED })
 	status?: string;
 
 	@ApiPropertyOptional({ type: () => Date })
-	@IsDate()
-	@IsOptional()
 	@Column({ nullable: true })
 	rejectDate?: Date;
 
 	@ApiPropertyOptional({ type: () => String, maxLength: 500 })
-	@IsOptional()
 	@Column({ length: 500, nullable: true })
 	candidateLevel?: string;
 
 	@ApiPropertyOptional({ type: () => Number })
-	@IsDate()
-	@IsOptional()
 	@Column({ nullable: true })
 	reWeeklyLimit?: number; //Recurring Weekly Limit (hours)
 
 	@ApiPropertyOptional({ type: () => String, maxLength: 255 })
-	@IsOptional()
 	@Column({ length: 255, nullable: true })
 	billRateCurrency?: string;
 
 	@ApiPropertyOptional({ type: () => Number })
-	@IsOptional()
 	@Column({ nullable: true })
 	billRateValue?: number;
 
 	@ApiProperty({ type: () => String, enum: PayPeriodEnum })
-	@IsEnum(PayPeriodEnum)
-	@IsOptional()
 	@Column({ nullable: true })
 	payPeriod?: string;
 
 	@ApiPropertyOptional({ type: () => String })
-	@IsOptional()
 	@Column({ nullable: true })
 	cvUrl?: string;
 
@@ -135,7 +115,7 @@ export class Candidate
 
 	/*
     |--------------------------------------------------------------------------
-    | @OneToOne 
+    | @OneToOne
     |--------------------------------------------------------------------------
     */
 
@@ -152,15 +132,13 @@ export class Candidate
 
 	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((it: Candidate) => it.contact)
-	@IsOptional()
-	@IsString()
 	@Index()
 	@Column({ nullable: true })
 	readonly contactId?: string;
 
 	/*
     |--------------------------------------------------------------------------
-    | @ManyToOne 
+    | @ManyToOne
     |--------------------------------------------------------------------------
     */
 	@ApiProperty({ type: () => OrganizationPosition })
@@ -170,15 +148,13 @@ export class Candidate
 
 	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((it: Candidate) => it.organizationPosition)
-	@IsString()
-	@IsOptional()
 	@Index()
 	@Column({ nullable: true })
 	readonly organizationPositionId?: string;
 
 	/*
     |--------------------------------------------------------------------------
-    | @OneToOne 
+    | @OneToOne
     |--------------------------------------------------------------------------
     */
 
@@ -193,7 +169,6 @@ export class Candidate
 
 	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((it: Candidate) => it.source)
-	@IsString()
 	@Index()
 	@Column({ nullable: true })
 	readonly sourceId?: string;
@@ -208,7 +183,6 @@ export class Candidate
 
 	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((it: Candidate) => it.user)
-	@IsString()
 	@Index()
 	@Column()
 	readonly userId: string;
@@ -226,10 +200,10 @@ export class Candidate
 	@Index()
 	@Column({ nullable: true })
 	employeeId?: string;
-	
+
 	/*
     |--------------------------------------------------------------------------
-    | @OneToMany 
+    | @OneToMany
     |--------------------------------------------------------------------------
     */
 	@OneToMany(() => CandidateEducation, (education) => education.candidate, {
@@ -244,8 +218,8 @@ export class Candidate
 	@JoinColumn()
 	interview?: ICandidateInterview[];
 
-	@OneToMany(() => CandidateExperience, (experience) => experience.candidate, { 
-		onDelete: 'SET NULL' 
+	@OneToMany(() => CandidateExperience, (experience) => experience.candidate, {
+		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
 	experience?: ICandidateExperience[];
@@ -270,7 +244,7 @@ export class Candidate
 
 	/*
     |--------------------------------------------------------------------------
-    | @ManyToMany 
+    | @ManyToMany
     |--------------------------------------------------------------------------
     */
 

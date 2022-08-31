@@ -27,9 +27,8 @@ import {
 	ArchiveConfirmationComponent,
 	CandidateActionConfirmationComponent
 } from '../../@shared/user/forms';
-import { ComponentEnum } from '../../@core/constants';
+import { API_PREFIX, ComponentEnum } from '../../@core/constants';
 import { ServerDataSource } from '../../@core/utils/smart-table/server.data-source';
-import { API_PREFIX } from '../../@core/constants/app.constants';
 import {
 	CandidatesService,
 	ErrorHandlingService,
@@ -51,18 +50,18 @@ import { InputFilterComponent } from '../../@shared/table-filters';
 	templateUrl: './candidates.component.html',
 	styleUrls: ['./candidates.component.scss']
 })
-export class CandidatesComponent
-	extends PaginationFilterBaseComponent
-	implements OnInit, OnDestroy
-{
+export class CandidatesComponent extends PaginationFilterBaseComponent
+	implements OnInit, OnDestroy {
+
+	includeArchived: boolean = false;
+	loading: boolean = false;
+	organizationInvitesAllowed: boolean = false;
+	disableButton: boolean = true;
+
 	settingsSmartTable: object;
 	sourceSmartTable: ServerDataSource;
 	selectedCandidate: ICandidateViewModel;
-	includeArchived: boolean = false;
-	loading: boolean;
-	organizationInvitesAllowed: boolean = false;
 	viewComponentName: ComponentEnum;
-	disableButton: boolean = true;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
 	candidateStatusEnum = CandidateStatusEnum;
@@ -115,8 +114,8 @@ export class CandidatesComponent
 			.subscribe();
 		this.store.selectedOrganization$
 			.pipe(
-				filter((organization: IOrganization) => !!organization),
 				distinctUntilChange(),
+				filter((organization: IOrganization) => !!organization),
 				tap(
 					(organization: IOrganization) =>
 						(this.organization = organization)
@@ -261,11 +260,8 @@ export class CandidatesComponent
 						)
 				}
 			})
-			.onClose.pipe(
-				finalize(() => {
-					this._refresh$.next(true);
-					this.candidates$.next(true);
-				}),
+			.onClose
+			.pipe(
 				untilDestroyed(this)
 			)
 			.subscribe(async (result) => {
@@ -291,6 +287,9 @@ export class CandidatesComponent
 						);
 					} catch (error) {
 						this.errorHandler.handleError(error);
+					} finally {
+						this._refresh$.next(true);
+						this.candidates$.next(true);
 					}
 				}
 			});
@@ -335,7 +334,8 @@ export class CandidatesComponent
 			where: {
 				organizationId,
 				tenantId,
-				...this.filters.where
+				isArchived: !this.includeArchived,
+				...(this.filters.where ? this.filters.where : {})
 			},
 			resultMap: (candidate: any) => {
 				return Object.assign({}, candidate, {

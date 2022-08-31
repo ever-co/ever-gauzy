@@ -21,21 +21,26 @@ export class CandidateHiredHandler
 
 	public async execute(command: CandidateHiredCommand): Promise<ICandidate> {
 		const { id } = command;
-
 		const candidate: ICandidate = await this.candidateService.findOneByIdString(id, {
-			relations: ['user', 'user.role', 'tenant', 'organization', 'contact', 'organizationPosition']
+			relations: {
+				user: {
+					role: true
+				},
+				tenant: true,
+				organization: true,
+				contact: true,
+				organizationPosition: true
+			}
 		});
 		if (candidate.alreadyHired) {
-			throw new ConflictException('The candidate is already hired');
+			throw new ConflictException('The candidate is already hired, you can not hired it.');
 		}
-
 		try {
 			//1. Update hired candidate details
 			await this.candidateService.update(id,  {
 				status: CandidateStatusEnum.HIRED,
 				hiredDate: new Date()
 			});
-
 			//2. Create employee for respective candidate
 			const employee = await this.employeeService.create({
 				billRateValue: candidate.billRateValue,
@@ -48,7 +53,6 @@ export class CandidateHiredHandler
 				contactId: candidate.contactId,
 				organizationPositionId: candidate.organizationPositionId
 			});
-
 			//3. Migrate CANDIDATE role to EMPLOYEE role
 			const { user } = candidate;
 			const role: IRole = await this.roleService.findOneByWhereOptions({
@@ -59,7 +63,6 @@ export class CandidateHiredHandler
 				id: user.id,
 				role
 			});
-
 			//4. Convert candidate to employee user
 			return await this.candidateService.create({
 				id,

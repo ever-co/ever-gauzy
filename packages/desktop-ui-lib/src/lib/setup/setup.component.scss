@@ -35,7 +35,7 @@
 
 .button-home {
   font-size: 16px;
-  font-weight: bold;
+  font-weight: 600;
   height: 56px;
   width: 130px;
 }
@@ -45,7 +45,6 @@
 }
 
 ::ng-deep
-  .nb-theme-default
   nb-layout
   .layout
   .layout-container
@@ -58,7 +57,7 @@
   margin: auto;
 }
 
-::ng-deep .nb-theme-default nb-stepper .step-content {
+::ng-deep  nb-stepper .step-content {
   padding: 0px !important;
 }
 
@@ -100,7 +99,7 @@
 
 .card-item-label {
   font-size: 18px;
-  font-weight: bolder;
+  font-weight: 600er;
 }
 
 .btn-fixed {
@@ -134,7 +133,7 @@
 
 .integraion-label {
   font-size: 12px;
-  font-weight: bold;
+  font-weight: 600;
 }
 
 .margin-form {
@@ -143,7 +142,7 @@
 
 .btn-next {
   font-size: 16px;
-  font-weight: bold;
+  font-weight: 600;
   height: 56px;
   width: 180px;
 }
@@ -157,7 +156,7 @@
   line-height: 0px;
 }
 
-::ng-deep .nb-theme-default nb-stepper .header {
+::ng-deep nb-stepper .header {
   pointer-events: none !important;
 }
 
@@ -205,7 +204,7 @@
 
 .btn-check {
   font-size: 16px;
-  font-weight: bold;
+  font-weight: 600;
   height: 56px;
   width: 120px;
 }

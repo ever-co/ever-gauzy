@@ -23,7 +23,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { Subject } from 'rxjs';
-import * as moment from 'moment-timezone';
+import * as moment from 'moment';
 import { ClipboardService, IClipboardResponse } from 'ngx-clipboard';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import { InviteService, Store, ToastrService } from '../../../@core/services';
