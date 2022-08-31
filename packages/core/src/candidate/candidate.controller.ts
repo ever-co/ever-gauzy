@@ -10,7 +10,6 @@ import {
 	UseGuards,
 	Post,
 	UseInterceptors,
-	UsePipes,
 	ValidationPipe
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
@@ -40,8 +39,9 @@ import { TransformInterceptor } from './../core/interceptors';
 import { CreateCandidateDTO, UpdateCandidateDTO, CandidateBulkInputDTO } from './dto';
 
 @ApiTags('Candidate')
-@UseGuards(TenantPermissionGuard)
 @UseInterceptors(TransformInterceptor)
+@UseGuards(TenantPermissionGuard, PermissionGuard)
+@Permissions(PermissionsEnum.ORG_CANDIDATES_EDIT)
 @Controller()
 export class CandidateController extends CrudController<Candidate> {
 	constructor(
@@ -56,7 +56,6 @@ export class CandidateController extends CrudController<Candidate> {
 	 *
 	 * @param body
 	 * @param languageCode
-	 * @param options
 	 * @returns
 	 */
 	@ApiOperation({ summary: 'Create records in Bulk' })
@@ -66,14 +65,13 @@ export class CandidateController extends CrudController<Candidate> {
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
-	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.ORG_CANDIDATES_EDIT)
 	@Post('/bulk')
 	async createBulk(
-		@Body(BulkBodyLoadTransformPipe, new ValidationPipe({ transform : true })) body: CandidateBulkInputDTO,
+		@Body(BulkBodyLoadTransformPipe, new ValidationPipe({
+			transform : true
+		})) body: CandidateBulkInputDTO,
 		@I18nLang() languageCode: LanguagesEnum
 	): Promise<ICandidate[]> {
 		return await this.commandBus.execute(
@@ -84,7 +82,7 @@ export class CandidateController extends CrudController<Candidate> {
 	/**
 	 * GET candidate counts
 	 *
-	 * @param filter
+	 * @param options
 	 * @returns
 	 */
 	@ApiOperation({ summary: 'Find all candidates counts in the same tenant' })
@@ -92,6 +90,7 @@ export class CandidateController extends CrudController<Candidate> {
 		status: HttpStatus.OK,
 		description: 'Found candidates count'
 	})
+	@Permissions(PermissionsEnum.ORG_CANDIDATES_VIEW)
 	@Get('count')
     async getCount(
 		@Query() options: FindOptionsWhere<Candidate>
@@ -102,7 +101,7 @@ export class CandidateController extends CrudController<Candidate> {
 	/**
 	 * GET candidates by pagination
 	 *
-	 * @param filter
+	 * @param options
 	 * @returns
 	 */
 	@ApiOperation({ summary: 'Find all candidates in the same tenant using pagination.' })
@@ -115,14 +114,14 @@ export class CandidateController extends CrudController<Candidate> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_VIEW)
 	@Get('pagination')
-	@UsePipes(new ValidationPipe({ transform: true }))
 	async pagination(
-		@Query() filter: PaginationParams<ICandidate>
+		@Query(new ValidationPipe({
+			transform: true
+		})) options: PaginationParams<ICandidate>
 	): Promise<IPagination<ICandidate>> {
-		return this.candidateService.pagination(filter);
+		return this.candidateService.pagination(options);
 	}
 
 	/**
@@ -141,7 +140,6 @@ export class CandidateController extends CrudController<Candidate> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_VIEW)
 	@Get()
 	async findAll(
@@ -170,7 +168,6 @@ export class CandidateController extends CrudController<Candidate> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_VIEW)
 	@Get(':id')
 	async findById(
@@ -187,7 +184,6 @@ export class CandidateController extends CrudController<Candidate> {
 	 * CREATE new candidate
 	 *
 	 * @param body
-	 * @param options
 	 * @returns
 	 */
 	@ApiOperation({ summary: 'Create new record' })
@@ -200,12 +196,11 @@ export class CandidateController extends CrudController<Candidate> {
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
-	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.ORG_CANDIDATES_EDIT)
 	@Post()
-	@UsePipes( new ValidationPipe({ transform : true }) )
 	async create(
-		@Body() body: CreateCandidateDTO
+		@Body(new ValidationPipe({
+			transform : true
+		})) body: CreateCandidateDTO
 	): Promise<ICandidate> {
 		return await this.commandBus.execute(
 			new CandidateCreateCommand(body)
@@ -234,13 +229,12 @@ export class CandidateController extends CrudController<Candidate> {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
-	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.ORG_CANDIDATES_EDIT)
 	@Put(':id')
-	@UsePipes( new ValidationPipe({ transform : true }) )
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body() entity: UpdateCandidateDTO
+		@Body(new ValidationPipe({
+			transform : true
+		})) entity: UpdateCandidateDTO
 	): Promise<ICandidate> {
 		return await this.commandBus.execute(
 			new CandidateUpdateCommand({ id, ...entity })
@@ -268,9 +262,7 @@ export class CandidateController extends CrudController<Candidate> {
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
-	@UseGuards(PermissionGuard)
 	@HttpCode(HttpStatus.ACCEPTED)
-	@Permissions(PermissionsEnum.ORG_CANDIDATES_EDIT)
 	@Put(':id/hired')
 	async updateHiredStatus(
 		@Param('id', UUIDValidationPipe) id: string
@@ -301,9 +293,7 @@ export class CandidateController extends CrudController<Candidate> {
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
-	@UseGuards(PermissionGuard)
 	@HttpCode(HttpStatus.ACCEPTED)
-	@Permissions(PermissionsEnum.ORG_CANDIDATES_EDIT)
 	@Put(':id/rejected')
 	async updateRejectedStatus(
 		@Param('id', UUIDValidationPipe) id: string
