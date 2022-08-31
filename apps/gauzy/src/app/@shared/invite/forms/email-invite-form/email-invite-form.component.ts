@@ -34,12 +34,11 @@ export class EmailInviteFormComponent extends TranslationBaseComponent
 	FormHelpers: typeof FormHelpers = FormHelpers;
 
 	invitationTypeEnum = InvitationTypeEnum;
-	roles: any[] = [];
 	invitationExpiryOptions: any = [];
 
-	@Input() public organizationProjects: IOrganizationProject[];
-	@Input() public organizationContacts: IOrganizationContact[];
-	@Input() public organizationDepartments: IOrganizationDepartment[];
+	@Input() public organizationProjects: IOrganizationProject[] = [];
+	@Input() public organizationContacts: IOrganizationContact[] = [];
+	@Input() public organizationDepartments: IOrganizationDepartment[] = [];
 
 	/*
 	* Getter & Setter for InvitationTypeEnum
@@ -55,7 +54,7 @@ export class EmailInviteFormComponent extends TranslationBaseComponent
 
 	/**
 	 * Build email invite form group
-	 * 
+	 *
 	 */
 	public form: FormGroup = EmailInviteFormComponent.buildForm(this.fb);
 	static buildForm(fb: FormBuilder): FormGroup {
@@ -219,7 +218,7 @@ export class EmailInviteFormComponent extends TranslationBaseComponent
 		const { tenantId, id: invitedById } = this.store.user;
 		const { id: organizationId } = this.organization;
 
-		const role = await firstValueFrom(this.rolesService.getRoleByName({
+		const role = await firstValueFrom(this.rolesService.getRoleByOptions({
 				name: this.getRoleFromForm(),
 				tenantId
 			})
@@ -253,8 +252,8 @@ export class EmailInviteFormComponent extends TranslationBaseComponent
 
 	/**
 	 * Remove email from emails form control
-	 * 
-	 * @param tagToRemove 
+	 *
+	 * @param tagToRemove
 	 */
 	onEmailRemove(tagToRemove: NbTagComponent): void {
 		this.emails.delete(tagToRemove.text);
@@ -267,8 +266,8 @@ export class EmailInviteFormComponent extends TranslationBaseComponent
 
 	/**
 	 * Add emails to form emails control
-	 * 
-	 * @param param0 
+	 *
+	 * @param param0
 	 */
 	onEmailAdd({ value, input }: NbTagInputAddEvent): void {
 		if (value) {
@@ -285,8 +284,8 @@ export class EmailInviteFormComponent extends TranslationBaseComponent
 
 	/**
 	 * Email focus out event fire
-	 * 
-	 * @param event 
+	 *
+	 * @param event
 	 */
 	onFocusOut(event: any) {
 		const value = event.target.value;
@@ -298,7 +297,7 @@ export class EmailInviteFormComponent extends TranslationBaseComponent
 
 	/**
 	 * Reset emails form control
-	 * 
+	 *
 	 */
 	onResetEmails() {
 		[...this.emails.entries()].forEach(([email]) => {
@@ -314,7 +313,7 @@ export class EmailInviteFormComponent extends TranslationBaseComponent
 
 	/**
 	 * SET form validators
-	 * 
+	 *
 	 */
 	setFormValidators() {
 		if (this.isEmployeeInvitation() || this.isCandidateInvitation()) {
@@ -328,9 +327,9 @@ export class EmailInviteFormComponent extends TranslationBaseComponent
 	}
 
 	/**
-	 * SET invitation period as per organization selection 
-	 * 
-	 * @param organization 
+	 * SET invitation period as per organization selection
+	 *
+	 * @param organization
 	 */
 	setInvitationPeriodFormValue(organization: IOrganization) {
 		this.form.get('invitationExpirationPeriod').setValue(
@@ -341,12 +340,14 @@ export class EmailInviteFormComponent extends TranslationBaseComponent
 
 	/**
 	 * On Selection Change
-	 * @param role 
+	 * @param role
 	 */
-	onSelectionChange(role: IRole) { }
+	onSelectionChange(role: IRole) {
+		this.form.get('role').setValue(role);
+		this.form.get('role').updateValueAndValidity();
+	}
 
 	ngOnDestroy() {
 		this.emails.clear();
 	}
 }
-

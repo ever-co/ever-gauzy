@@ -1,10 +1,9 @@
 import {
-	ICustomizableEmailTemplate,
-	ICustomizeEmailTemplateFindInput,
 	IEmailTemplate,
 	IEmailTemplateSaveInput,
 	IPagination,
-	LanguagesEnum
+	LanguagesEnum,
+	PermissionsEnum
 } from '@gauzy/contracts';
 import {
 	Body,
@@ -30,9 +29,9 @@ import {
 import { FindOptionsWhere, UpdateResult } from 'typeorm';
 import { CrudController, PaginationParams } from './../core/crud';
 import { RequestContext } from './../core/context';
-import { TenantPermissionGuard } from './../shared/guards';
-import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
-import { LanguageDecorator } from './../shared/decorators';
+import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
+import { UUIDValidationPipe } from './../shared/pipes';
+import { Permissions, LanguageDecorator } from './../shared/decorators';
 import { EmailTemplate } from './email-template.entity';
 import { EmailTemplateService } from './email-template.service';
 import {
@@ -41,10 +40,11 @@ import {
 	FindEmailTemplateQuery
 } from './queries';
 import { EmailTemplateSaveCommand } from './commands';
-
+import { EmailTemplateQueryDTO, SaveEmailTemplateDTO } from './dto';
 
 @ApiTags('EmailTemplate')
-@UseGuards(TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard)
+@Permissions(PermissionsEnum.VIEW_ALL_EMAIL_TEMPLATES)
 @Controller()
 export class EmailTemplateController extends CrudController<EmailTemplate> {
 	constructor(
@@ -56,23 +56,23 @@ export class EmailTemplateController extends CrudController<EmailTemplate> {
 	}
 
 	/**
-	 * GET count for email template
+	 * GET count for email templates in the same tenant
 	 *
 	 * @param options
 	 * @returns
 	 */
 	@Get('count')
-	@UsePipes(new ValidationPipe({ transform: true }))
 	async getCount(
-		@Query(new ValidationPipe({
-			transform: true
-		})) options: FindOptionsWhere<EmailTemplate>
+		@Query(new ValidationPipe()) options: FindOptionsWhere<EmailTemplate>
 	): Promise<number> {
-		return this.emailTemplateService.countBy(options);
+		return this.emailTemplateService.countBy({
+			...options,
+			tenantId: RequestContext.currentTenantId()
+		});
 	}
 
 	/**
-	 * GET accouting templates using pagination params
+	 * GET email templates using pagination params
 	 *
 	 * @param options
 	 * @returns
@@ -87,9 +87,15 @@ export class EmailTemplateController extends CrudController<EmailTemplate> {
 		return this.emailTemplateService.paginate(options);
 	}
 
+	/**
+	 * GET specific email template by conditions
+	 *
+	 * @param themeLanguage
+	 * @param options
+	 * @returns
+	 */
 	@ApiOperation({
-		summary:
-			'Find email template by name and language code for organization'
+		summary: 'Find email template by name and language code for organization'
 	})
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -101,16 +107,26 @@ export class EmailTemplateController extends CrudController<EmailTemplate> {
 		description: 'Record not found'
 	})
 	@Get('template')
-	async findTemplate(
-		@Query('data', ParseJsonPipe) data: any,
-		@LanguageDecorator() themeLanguage: LanguagesEnum
-	): Promise<ICustomizableEmailTemplate> {
-		const { findInput }: { findInput: ICustomizeEmailTemplateFindInput } = data;
+	async findEmailTemplate(
+		@LanguageDecorator() themeLanguage: LanguagesEnum,
+		@Query(new ValidationPipe({
+			whitelist: true
+		})) options: EmailTemplateQueryDTO,
+	): Promise<IEmailTemplate> {
 		return await this.queryBus.execute(
-			new FindEmailTemplateQuery(findInput, themeLanguage)
+			new FindEmailTemplateQuery(
+				options,
+				themeLanguage
+			)
 		);
 	}
 
+	/**
+	 * Generate email template preview
+	 *
+	 * @param data
+	 * @returns
+	 */
 	@ApiOperation({
 		summary: 'Converts mjml or handlebar text to html for email preview'
 	})
@@ -122,12 +138,18 @@ export class EmailTemplateController extends CrudController<EmailTemplate> {
 	@Post('template/preview')
 	async generatePreview(
 		@Body('data') data: string
-	): Promise<ICustomizableEmailTemplate> {
+	): Promise<IEmailTemplate> {
 		return await this.queryBus.execute(
 			new EmailTemplateGeneratePreviewQuery(data)
 		);
 	}
 
+	/**
+	 * SAVE email template for specific language
+	 *
+	 * @param entity
+	 * @returns
+	 */
 	@ApiOperation({
 		summary: 'Convert mjml or handlebar text to html'
 	})
@@ -137,14 +159,22 @@ export class EmailTemplateController extends CrudController<EmailTemplate> {
 		type: EmailTemplate
 	})
 	@Post('template/save')
-	async saveTemplate(
-		@Body('data') data: IEmailTemplateSaveInput
+	async saveEmailTemplate(
+		@Body(new ValidationPipe({
+			whitelist: true
+		})) entity: SaveEmailTemplateDTO
 	): Promise<IEmailTemplate> {
 		return await this.commandBus.execute(
-			new EmailTemplateSaveCommand(data)
+			new EmailTemplateSaveCommand(entity)
 		);
 	}
 
+	/**
+	 * GET email templates in the same tenant
+	 *
+	 * @param options
+	 * @returns
+	 */
 	@Get()
 	async findAll(
 		@Query(new ValidationPipe({
@@ -156,6 +186,12 @@ export class EmailTemplateController extends CrudController<EmailTemplate> {
 		);
 	}
 
+	/**
+	 * FIND email template by id in the same tenant
+	 *
+	 * @param id
+	 * @returns
+	 */
 	@ApiOperation({
 		summary: 'Gets template by id'
 	})
@@ -168,13 +204,24 @@ export class EmailTemplateController extends CrudController<EmailTemplate> {
 	async findById(
 		@Param('id', UUIDValidationPipe) id: string
 	): Promise<IEmailTemplate> {
-		return this.emailTemplateService.findOneByIdString(id, {
-			where: {
-				tenantId: RequestContext.currentTenantId(),
-			}
-		});
+		try {
+			return await this.emailTemplateService.findOneByIdString(id, {
+				where: {
+					tenantId: RequestContext.currentTenantId(),
+				}
+			});
+		} catch (error) {
+			throw new ForbiddenException();
+		}
 	}
 
+	/**
+	 * UPDATE email template by id in the same tenant
+	 *
+	 * @param id
+	 * @param input
+	 * @returns
+	 */
 	@ApiOperation({
 		summary: 'Updates template'
 	})
@@ -188,14 +235,23 @@ export class EmailTemplateController extends CrudController<EmailTemplate> {
 		@Param('id', UUIDValidationPipe) id: string,
 		@Body() input: IEmailTemplateSaveInput,
 	): Promise<IEmailTemplate | UpdateResult> {
-		const record = await this.findById(id);
-		const tenantId = RequestContext.currentTenantId();
-		if (tenantId !== record.tenantId) {
+		try {
+			await this.findById(id);
+			return await this.emailTemplateService.update({
+				id,
+				tenantId: RequestContext.currentTenantId()
+			}, input);
+		} catch (error) {
 			throw new ForbiddenException();
 		}
-		return this.emailTemplateService.update(id, { tenantId, ...input });
 	}
 
+	/**
+	 * DELETE email template by id in the same tenant
+	 *
+	 * @param id
+	 * @returns
+	 */
 	@ApiOperation({
 		summary: 'Delete email template'
 	})
@@ -210,11 +266,14 @@ export class EmailTemplateController extends CrudController<EmailTemplate> {
 	})
 	@Delete(':id')
 	async delete(@Param('id', UUIDValidationPipe) id: string) {
-		const record = await this.findById(id);
-		const tenantId = RequestContext.currentTenantId();
-		if (tenantId !== record.tenantId) {
+		try {
+			await this.findById(id);
+			return await this.emailTemplateService.delete({
+				id,
+				tenantId: RequestContext.currentTenantId()
+			});
+		} catch (error) {
 			throw new ForbiddenException();
 		}
-		return await this.emailTemplateService.delete(id);
 	}
 }

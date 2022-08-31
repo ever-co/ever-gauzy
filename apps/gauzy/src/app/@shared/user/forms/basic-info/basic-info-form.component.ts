@@ -109,12 +109,12 @@ export class BasicInfoFormComponent
 			tags: [self.selectedTags],
 			featureAsEmployee: [false]
 		},
-		{ 
+		{
 			validators: [
 				CompareDateValidator.validateDate('offerDate', 'acceptDate'),
 				CompareDateValidator.validateDate('offerDate', 'rejectDate'),
 				UrlPatternValidator.imageUrlValidator('imageUrl')
-			] 
+			]
 		});
 	}
 
@@ -181,15 +181,15 @@ export class BasicInfoFormComponent
 
 		const { tenantId, tenant } = this.store.user;
 		/**
-		* Removed feature organizations from payload, 
-		* which is not necessary to send into the payload 
+		* Removed feature organizations from payload,
+		* which is not necessary to send into the payload
 		*/
 		if (tenant.hasOwnProperty('featureOrganizations')) {
 			delete tenant['featureOrganizations'];
 		}
 
 		const role = await firstValueFrom(
-			this.roleService.getRoleByName({
+			this.roleService.getRoleByOptions({
 				name: name || defaultRoleName,
 				tenantId
 			})
@@ -259,7 +259,7 @@ export class BasicInfoFormComponent
 
 	/**
 	 * On Selection Change
-	 * @param role 
+	 * @param role
 	 */
 	onSelectionChange(role: IRole) {
 		if (this.isShowRole) {
@@ -270,8 +270,8 @@ export class BasicInfoFormComponent
 
 	/**
 	 * SET role field validations
-	 * 
-	 * @param value 
+	 *
+	 * @param value
 	 */
 	setRoleValidations(value: boolean) {
 		if (value === true) {
@@ -284,9 +284,9 @@ export class BasicInfoFormComponent
 
 	/**
 	 * Create employee from user page
-	 * 
-	 * @param user 
-	 * @returns 
+	 *
+	 * @param user
+	 * @returns
 	 */
 	async createEmployee(user: IUser) {
 		const { tenantId } = this.store.user;
@@ -313,9 +313,9 @@ export class BasicInfoFormComponent
 
 	/**
 	 * Create candidate from user page
-	 * 
-	 * @param user 
-	 * @returns 
+	 *
+	 * @param user
+	 * @returns
 	 */
 	async createCandidate(user: IUser): Promise<ICandidate> {
 		const { tenantId } = this.store.user;
@@ -323,7 +323,7 @@ export class BasicInfoFormComponent
 
 		const { password, tags } = this.form.getRawValue();
 		const { appliedDate = null, rejectDate = null, source: sourceName = null } = this.form.getRawValue();
-			
+
 		let source: ICandidateSource = null;
 		if (sourceName !== null) {
 			source = {
@@ -351,8 +351,8 @@ export class BasicInfoFormComponent
 	/**
 	 * GET location old state & patch form value
 	 * We are using such functionality for create new employee from header selector
-	 * 
-	 * @param state 
+	 *
+	 * @param state
 	 */
 	patchUsingLocationState(state: any) {
 		if (!this.form) {
