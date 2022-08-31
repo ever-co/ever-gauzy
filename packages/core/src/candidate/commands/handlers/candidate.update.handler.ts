@@ -1,4 +1,5 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { BadRequestException } from '@nestjs/common';
 import { ICandidate } from '@gauzy/contracts';
 import { CandidateService } from '../../candidate.service';
 import { CandidateUpdateCommand } from '../candidate.update.command';
@@ -14,12 +15,15 @@ export class CandidateUpdateHandler
 	public async execute(command: CandidateUpdateCommand): Promise<ICandidate> {
 		const { input } = command;
 		const { id } = input;
-		
-		//We are using create here because create calls the method save()
-		//We need save() to save ManyToMany relations
-		return await this.candidateService.create({ 
-			id, 
-			...input
-		});
+		try {
+			//We are using create here because create calls the method save()
+			//We need save() to save ManyToMany relations
+			return await this.candidateService.create({
+				id,
+				...input
+			});
+		} catch (error) {
+			throw new BadRequestException(error);
+		}
 	}
 }

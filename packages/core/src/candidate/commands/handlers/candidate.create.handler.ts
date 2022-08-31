@@ -1,4 +1,5 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { BadRequestException } from '@nestjs/common';
 import { ICandidate } from '@gauzy/contracts';
 import { CandidateCreateCommand } from '../candidate.create.command';
 import { CandidateService } from '../../candidate.service';
@@ -10,6 +11,10 @@ export class CandidateCreateHandler
 
 	public async execute(command: CandidateCreateCommand): Promise<ICandidate> {
 		const { input } = command;
-		return await this.candidateService.create(input);
+		try {
+			return await this.candidateService.create(input);
+		} catch (error) {
+			throw new BadRequestException(error);
+		}
 	}
 }

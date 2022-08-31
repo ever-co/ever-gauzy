@@ -16,7 +16,7 @@ import { EmploymentDTO, UserInputDTO } from "./../../employee/dto";
 
 /**
  * Candidate Create DTO
- * 
+ *
  */
 export class CreateCandidateDTO extends IntersectionType(
     EmploymentDTO,

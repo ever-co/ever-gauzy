@@ -3,7 +3,7 @@ import { EntitySubscriberInterface, EventSubscriber, InsertEvent } from "typeorm
 import * as moment from 'moment';
 import { CandidateStatusEnum } from "@gauzy/contracts";
 import { getUserDummyImage } from "./../core/utils";
-import { Candidate } from "./../core/entities/internal";
+import { Candidate } from "./candidate.entity";
 
 @EventSubscriber()
 export class CandidateSubscriber implements EntitySubscriberInterface<Candidate> {
@@ -26,7 +26,7 @@ export class CandidateSubscriber implements EntitySubscriberInterface<Candidate>
          * If candidate already hired
          */
         entity.alreadyHired = (
-            (entity.status === CandidateStatusEnum.HIRED) && 
+            (entity.status === CandidateStatusEnum.HIRED) &&
             (moment(entity.hiredDate).isValid())
         );
     }
@@ -40,10 +40,11 @@ export class CandidateSubscriber implements EntitySubscriberInterface<Candidate>
             /**
              * Use a dummy image avatar if no image is uploaded for any of the candidate
              */
-            if (!entity.user.imageUrl) {
-                entity.user.imageUrl = getUserDummyImage(entity.user)
+            if (entity.user) {
+                if (!entity.user.imageUrl) {
+                    entity.user.imageUrl = getUserDummyImage(entity.user)
+                }
             }
-
             /**
              * Automatically update candidate rejected status
              */

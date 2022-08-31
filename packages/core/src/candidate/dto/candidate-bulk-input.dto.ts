@@ -5,7 +5,7 @@ import { CreateCandidateDTO } from "./create-candidate.dto";
 
 export class CandidateBulkInputDTO {
 
-    @ApiProperty({ type: () => Array, required : true })
+    @ApiProperty({ type: () => Array, required : true, readOnly: true })
     @IsArray()
     @ValidateNested({ each: true })
     @Type(() => CreateCandidateDTO)
