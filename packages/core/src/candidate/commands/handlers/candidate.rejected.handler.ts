@@ -17,15 +17,13 @@ export class CandidateRejectedHandler
 
 		const candidate: ICandidate = await this.candidateService.findOneByIdString(id);
 		if (candidate.alreadyHired) {
-			throw new ConflictException('The candidate is already hired, you can not reject it');
+			throw new ConflictException('The candidate is already hired, you can not reject it.');
 		}
-
 		try {
 			await this.candidateService.update(id,  {
 				status: CandidateStatusEnum.REJECTED,
 				rejectDate: candidate.rejectDate || new Date()
 			});
-
 			return await this.candidateService.findOneByIdString(id);
 		} catch (error) {
 			throw new BadRequestException(error);
