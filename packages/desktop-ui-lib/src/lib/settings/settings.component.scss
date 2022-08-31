@@ -9,13 +9,21 @@
 
 .title-tile {
   font-size: 16px;
-  font-weight: bolder;
+  font-weight: 600;
   margin-bottom: 10px;
+  color: var(--gauzy-text-color-2);
 }
 
 .subtitle-tile {
   font-size: 14px;
-  font-weight: bold;
+  font-weight: 600;
+  color: var(--gauzy-text-color-2);
+}
+
+.third-party-item {
+  display: flex;
+  gap: 8px;
+  align-items: center;
 }
 
 .menu-item {
@@ -23,7 +31,7 @@
 }
 
 .menu-item-active {
-  font-weight: bolder;
+  font-weight: 600;
 }
 
 .monitor-many {
@@ -34,7 +42,7 @@
 }
 
 .selected {
-  color: #00d68f;
+  color: var(--text-primary-color);
 }
 
 .centered-text {
@@ -45,7 +53,7 @@
   text-align: right;
   margin-bottom: 10px;
   font-size: 12px;
-  font-weight: bold;
+  font-weight: 600;
   color: orange;
 }
 
@@ -54,17 +62,16 @@
 }
 
 .margin-icon {
-  margin-top: 35px;
-  height: 56px;
+  height: 48px;
 }
 
 .full-height {
   height: 80% !important;
-  min-height: 600px !important;
+  min-height: 675px !important;
 }
 
 .card-full-height {
-  min-height: 600px;
+  min-height: 675px;
 }
 
 .top-bottom-space {
@@ -77,9 +84,9 @@
 
 .version-text {
   text-align: center;
-  font-size: 16px;
-  font-weight: bold;
-  margin-top: 40px;
+  font-size: 14px;
+  font-weight: 400;
+  margin-top: 48px;
 }
 
 .button-update {
@@ -88,15 +95,13 @@
 }
 
 .button-big {
-  font-size: 16px;
-  font-weight: bold;
-  height: 56px;
-  width: 180px;
+  font-size: 12px;
+  font-weight: 600;
+  height: 32px;
 }
 
 .center-content {
   position: relative;
-  top: 20vh;
 }
 
 .icon-spin {
@@ -106,9 +111,15 @@
 .update-message {
   margin-top: 15px;
   text-align: center;
-  font-weight: bold;
-  color: #00d68f;
+  font-weight: 600;
+  color: rgb(100, 100, 100);
   font-size: 12px;
+}
+
+.update-message-content {
+  background-color: rgba(100, 100, 100, 0.25);
+  padding: 2px 4px;
+  border-radius: calc(var(--border-radius) / 2);
 }
 
 .log-box {
@@ -116,6 +127,7 @@
   color: white;
   font-size: 11px;
   text-align: left;
+  border-radius: 0 0 var(--border-radius) var(--border-radius);
 }
 
 .log-content {
@@ -127,6 +139,8 @@
 .content-text {
   color: white;
   font-size: 11px;
+  font-weight: 400;
+  line-height: 8px;
 }
 
 @keyframes rotate {
@@ -135,5 +149,68 @@
   }
   to {
     transform: rotate(360deg);
+  }
+}
+
+:host {
+  nb-sidebar {
+    background-color: var(--gauzy-sidebar-background-3);
+  }
+
+  nb-sidebar ::ng-deep .scrollable {
+    padding-right: 0;
+  }
+
+  nb-list {
+    width: 100%;
+    .menu-item-active {
+      background-color: var(--layout-background-color);
+      border-left: 6px solid var(--text-primary-color);
+      border-radius: 4px 0 0 4px;
+      font-weight: 600;
+      width: 100%;
+    }
+  }
+
+  h4 {
+    font-size: 24px;
+    font-weight: 600;
+    line-height: 30px;
+    letter-spacing: 0em;
+    color: var(--gauzy-text-color-1);
+  }
+  h6 {
+    font-weight: 600;
+    color: var(--gauzy-text-color-2);
+  }
+
+  nb-tab.content-active {
+    background-color: var(--gauzy-card-2);
+    border-radius: 0 var(--border-radius) var(--border-radius);
+    nb-card {
+      margin-bottom: 1rem;
+    }
+  }
+
+  p {
+    font-size: 14px;
+  }
+
+  .monitors,
+  .notification {
+    nb-card {
+      border-radius: var(--border-radius);
+    }
+    nb-card-body {
+      background-color: var(--gauzy-card-2);
+      border-radius: var(--border-radius);
+    }
+  }
+  ::ng-deep {
+    nb-toggle {
+      div.checked + span.text label {
+        color: var(--text-primary-color);
+      }
+    }
   }
 }

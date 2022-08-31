@@ -1,12 +1,6 @@
 <nb-layout>
 	<nb-layout-column class="top-space">
-		<button 
-			nbButton
-			ghost
-			status="primary"
-			(click)="expand()"
-			class="expand-icon"
-		>
+		<button nbButton ghost status="primary" (click)="expand()" class="expand-icon">
 			<nb-icon [icon]="expandIcon"></nb-icon>
 		</button>
 		<div class="row">
@@ -15,38 +9,21 @@
 					<nb-card-body>
 						<div class="row">
 							<div class="col-3">
-								<button
-									ghost
-									*ngIf="!start"
-									class="button-ghost"
-									(click)="toggleStart(true)"
-									[disabled]="loading || !isTrackingEnabled"
-								>
-									<nb-icon
-										class="start-button"
-										icon="play-circle"
+								<button ghost *ngIf="!start" class="button-ghost" (click)="toggleStart(true)"
+									[disabled]="loading || !isTrackingEnabled">
+									<nb-icon class="start-button" icon="play-circle"
 										nbTooltip="Time tracker has been disabled"
-										[nbTooltipIcon]="{icon: 'alert-triangle-outline', pack: 'eva'}" 
-										nbTooltipStatus="warning"
-										[nbTooltipDisabled]="isTrackingEnabled"
-										nbTooltipPlacement="bottom"
-									>
+										[nbTooltipIcon]="{icon: 'alert-triangle-outline', pack: 'eva'}"
+										nbTooltipStatus="warning" [nbTooltipDisabled]="isTrackingEnabled"
+										nbTooltipPlacement="bottom">
 									</nb-icon>
 								</button>
-								<button
-									*ngIf="start"
-									(click)="toggleStart(false)"
-									[disabled]="loading"
-									ghost
-									class="button-ghost"
-								>
-									<nb-icon
-										class="start-button"
-										icon="stop-circle-outline"
-									>
+								<button *ngIf="start" (click)="toggleStart(false)" [disabled]="loading" ghost
+									class="button-ghost">
+									<nb-icon class="start-button" icon="stop-circle-outline">
 									</nb-icon>
 								</button>
-								
+
 							</div>
 							<div class="col-6 timer-box">
 								<div class="timer-container">
@@ -55,123 +32,86 @@
 									}}
 								</div>
 							</div>
-							<div class="col-2">
-								<button
-									nbButton
-									ghost
-									(click)="refreshTimer()"
-								>	
-									<nb-icon
-										icon="refresh-outline"
-									>
+							<div class="col-3 text-right">
+								<button nbButton ghost (click)="refreshTimer()">
+									<nb-icon icon="refresh-outline">
 									</nb-icon>
 								</button>
 							</div>
+						</div>
+						<div class="row">
 							<div class="col-12 form-group tp-padding">
 								<label>Client</label>
-								<ng-select
-									[class]="
+								<ng-select [class]="
 										errors.client ? 'error-border' : ''
-									"
-									[clearable]="true"
-									placeholder="Client"
-									[(ngModel)]="organizationContactId"
-									[items]="organizationContacts"
-									bindValue="id"
-									bindLabel="name"
-									(ngModelChange)="setClient($event, dialog)"
-								>
+									" [clearable]="true" placeholder="Client" [(ngModel)]="organizationContactId" [items]="organizationContacts"
+									bindValue="id" bindLabel="name" (ngModelChange)="setClient($event, dialog)">
 								</ng-select>
 							</div>
+						</div>
+						<div class="row">
 							<div class="col-12 form-group">
 								<label>Project</label>
-								<ng-select
-									[class]="
+								<ng-select [class]="
 										errors.project ? 'error-border' : ''
-									"
-									[clearable]="true"
-									placeholder="Project"
-									[(ngModel)]="projectSelect"
-									[items]="projects"
-									bindValue="id"
-									bindLabel="name"
-									(ngModelChange)="setProject($event)"
-								>
+									" [clearable]="true" placeholder="Project" [(ngModel)]="projectSelect" [items]="projects" bindValue="id"
+									bindLabel="name" (ngModelChange)="setProject($event)">
 								</ng-select>
 							</div>
+						</div>
+						<div class="row">
 							<div class="col-12 form-group" *ngIf="!isExpand">
 								<label>Task</label>
-								<ng-select
-									[class]="errors.task ? 'error-border' : ''"
-									[clearable]="true"
-									placeholder="Task"
-									[(ngModel)]="taskSelect"
-									[items]="tasks"
-									bindValue="id"
-									bindLabel="title"
-									(ngModelChange)="setTask($event)"
-								>
+								<ng-select [class]="errors.task ? 'error-border' : ''" [clearable]="true"
+									placeholder="Task" [(ngModel)]="taskSelect" [items]="tasks" bindValue="id"
+									bindLabel="title" (ngModelChange)="setTask($event)">
 								</ng-select>
 							</div>
+						</div>
+						<div class="row">
 							<div class="col-12 form-group">
 								<label>Working on:</label>
-								<textarea
-									nbInput
-									fullWidth
-									placeholder="Note"
-									status="basic"
-									[(ngModel)]="note"
+								<textarea nbInput fullWidth placeholder="Note" status="basic" [(ngModel)]="note"
 									[status]="errors.note ? 'danger' : 'basic'"
-									(ngModelChange)="descriptionChange($event)"
-								></textarea>
+									(ngModelChange)="descriptionChange($event)"></textarea>
 							</div>
+						</div>
+						<div class="row">
 							<div class="col-12 form-group tp-padding">
 								<div class="row">
-									<div
-										class="col-12"
-										*ngIf="
+									<div class="col-12" *ngIf="
 											appSetting &&
 											appSetting.visibleAwOption
-										"
-									>
+										">
 										<div class="row">
 											<div class="col-8">
-												<nb-checkbox
-													[checked]="aw"
-													(change)="setAW($event)"
-													>ActivityWatch</nb-checkbox
-												>
+												<nb-checkbox [checked]="aw" (change)="setAW($event)">ActivityWatch
+												</nb-checkbox>
 											</div>
-											<div class="col-4">
-												<nb-icon
-													[icon]="iconAw"
-													[status]="statusIcon"
-												>
+											<div class="col-4 text-right">
+												<nb-icon [icon]="iconAw" [status]="statusIcon">
 												</nb-icon>
 											</div>
 										</div>
 									</div>
 
-									<div
-										class="col-12"
-										*ngIf="
+									<div class="col-12" *ngIf="
 											appSetting &&
 											appSetting.visibleWakatimeOption
-										"
-									>
+										">
 										<div class="row">
 											<div class="col-8">
-												<nb-checkbox [disabled]="true"
-													>Wakatime</nb-checkbox
-												>
+												<nb-checkbox [disabled]="true">Wakatime</nb-checkbox>
 											</div>
 										</div>
 									</div>
 								</div>
 							</div>
+						</div>
+						<div class="row">
 							<div class="col-12">
 								<div class="row">
-									<div class="col-11 center-text">
+									<div class="col-12 center-text">
 										<span class="org-name">
 											{{
 												userOrganization.name
@@ -180,89 +120,60 @@
 											}}
 										</span>
 									</div>
-									<div class="col-11 center-text">
-										<span class="work-today"
-											>Total Worked Today
+								</div>
+								<div class="row">
+									<div class="col-12 center-text">
+										<span class="work-today">Total Worked Today
 											{{ todayDuration.hours }}:{{
 												todayDuration.minutes
-											}}</span
-										>
+											}}</span>
 									</div>
 								</div>
 							</div>
+						</div>
+						<div class="row">
 							<div class="col-12 tp-padding">
 								<div class="row">
 									<div class="col-12 center-text">
 										<nb-card>
-											<nb-card-header>
+											<nb-card-header class="p-0">
 												<div class="row">
-													<div
-														class="col-6 screen-capture-label-left"
-													>
-														<span
-															>Last screen
-															capture</span
-														>
+													<div class="col-6 screen-capture-label-left">
+														<span>Last screen
+															capture</span>
 													</div>
-													<div
-														*ngIf="
+													<div *ngIf="
 															lastScreenCapture.textTime
-														"
-														class="col-6 screen-capture-label-right"
-													>
+														" class="col-6 screen-capture-label-right">
 														<span>{{
 															lastScreenCapture.textTime
 														}}</span>
 													</div>
 												</div>
 											</nb-card-header>
-											<nb-card-body class="max-card">
-												<img
-													class="screen-capture-img"
-													*ngIf="
+											<nb-card-body class="max-card p-0">
+												<img class="screen-capture-img" *ngIf="
 														lastScreenCapture.fullUrl
-													"
-													[src]="
+													" [src]="
 														lastScreenCapture.fullUrl
-													"
-													(error)="updateImageUrl($event)"
-												/>
-												<nb-icon
-													*ngIf="
+													" (error)="updateImageUrl($event)" />
+												<nb-icon *ngIf="
 														!lastScreenCapture.fullUrl
-													"
-													icon="image-outline"
-													class="icon-img-size"
-												>
+													" icon="image-outline" class="icon-img-size">
 												</nb-icon>
 												<div class="overlay-img">
 													<div class="row">
-														<div
-															class="col-8 img-button"
-														>
+														<div class="col-8 img-button">
 															<div class="row">
-																<div
-																	class="col-6"
-																>
-																	<button
-																		nbButton
-																		status="primary"
-																		(click)="
+																<div class="col-6">
+																	<button nbButton status="primary" (click)="
 																			showImage()
-																		"
-																	>
-																		<nb-icon
-																			icon="eye"
-																		></nb-icon>
+																		">
+																		<nb-icon icon="eye"></nb-icon>
 																	</button>
 																</div>
-																<div
-																	class="col-6"
-																>
-																	<button
-																		nbButton
-																		status="danger"
-																		(click)="
+																<div class="col-6">
+																	<button nbButton status="danger" (click)="
 																			open(
 																				dialog,
 																				{
@@ -270,11 +181,8 @@
 																						'deleteLog'
 																				}
 																			)
-																		"
-																	>
-																		<nb-icon
-																			icon="trash-2"
-																		></nb-icon>
+																		">
+																		<nb-icon icon="trash-2"></nb-icon>
 																	</button>
 																</div>
 															</div>
@@ -286,43 +194,34 @@
 									</div>
 								</div>
 							</div>
-							<div
-								class="col-12"
-								*ngIf="lastScreenCapture.textTime"
-							>
+						</div>
+						<div class="row">
+							<div class="col-12" *ngIf="lastScreenCapture.textTime">
 								<div class="last-screenshot-time">
 									<div class="col-12 center-text">
-										<span
-											>Last screenshot taken at
+										<span>Last screenshot taken at
 											{{
 												lastScreenCapture?.recordedAt
 													| date: 'H:mm'
-											}}</span
-										>
+											}}</span>
 									</div>
 								</div>
 							</div>
+						</div>
+						<div class="row">
 							<ng-template #dialog let-data let-ref="dialogRef">
-								<nb-card accent="warning">
+								<nb-card class="dialog" accent="warning">
 									<nb-card-header>Warning</nb-card-header>
 									<nb-card-body>{{ data }}</nb-card-body>
 									<nb-card-footer>
 										<div class="row">
 											<div class="col-4">
-												<button
-													status="primary"
-													nbButton
-													(click)="ref.close(false)"
-												>
+												<button status="primary" nbButton (click)="ref.close(false)">
 													No
 												</button>
 											</div>
 											<div class="col-3">
-												<button
-													status="danger"
-													nbButton
-													(click)="ref.close(true)"
-												>
+												<button status="danger" nbButton (click)="ref.close(true)">
 													Yes
 												</button>
 											</div>
@@ -339,70 +238,43 @@
 					<nb-card-body>
 						<div class="row">
 							<div class="col-12">
-								<button
-									nbButton
-									status="success"
-									class="mr-2"
-									(click)="addTask()"
-								>
-									<nb-icon class="mr-1" icon="plus-outline"></nb-icon
-									>Add
+								<button nbButton class="mb-2" status="success" size="small" (click)="addTask()">
+									<nb-icon icon="plus-outline"></nb-icon>Add
 								</button>
 							</div>
-							<div class="col-12">
+						</div>
+						<div class="row">
+							<div class="col-12 search">
 								<nb-form-field>
-										<nb-icon nbPrefix icon="search-outline"></nb-icon>
-										<input 
-											type="text" 
-											fullWidth 
-											nbInput 
-											placeholder="Search"
-											#search
-											(keydown.enter)="onSearch(search.value)"
-										>
+									<nb-icon nbPrefix icon="search-outline"></nb-icon>
+									<input type="text" fullWidth nbInput placeholder="Search" #search
+										(keydown.enter)="onSearch(search.value)">
 								</nb-form-field>
 							</div>
-							<div class="col-12 top-space-1 table-max-height">
-								<ng2-smart-table 
-									[settings]="tableHeader" 
-									[source]="sourceData"
-									class="tb-custom"
-									(userRowSelect)="rowSelect($event)"
-								></ng2-smart-table>
+						</div>
+						<div class="row">
+							<div class="col-12 top-space-1 table-scroll-container table-max-height">
+								<ng2-smart-table [settings]="tableHeader" [source]="sourceData" class="tb-custom"
+									(userRowSelect)="rowSelect($event)"></ng2-smart-table>
 							</div>
 						</div>
 					</nb-card-body>
 				</nb-card>
-				<ngx-tasks 
-					*ngIf="isAddTask"
-					[userData]="argFromMain"
-					[employee]="userData"
-					(isAddTask)="cloasAddTask($event)"
-					(newTaskCallback)="callbackNewTask($event)"
-				></ngx-tasks>
+				<ngx-tasks *ngIf="isAddTask" [userData]="argFromMain" [employee]="userData"
+					(isAddTask)="cloasAddTask($event)" (newTaskCallback)="callbackNewTask($event)"></ngx-tasks>
 			</div>
 		</div>
 	</nb-layout-column>
 	<nb-layout-footer fixed class="no-padding-fotter footer-fixed">
-		<button
-			class="footer-button"
-			nbButton
-			ghost
-			*ngIf="userData && userData.name"
-			size="small"
-			(click)="openSetting()"
-		>
+		<button class="footer-button" nbButton ghost *ngIf="userData && userData.name" size="small"
+			(click)="openSetting()">
 			<nb-icon icon="settings-2-outline"></nb-icon>
 			{{ userData.name }}
 		</button>
-		<button
-			#dialogOpenBtn
-			(click)="
+		<button #dialogOpenBtn (click)="
 				open(dialog, {
 					type: 'timeTrackingOption'
 				})
-			"
-			style="display: none"
-		></button>
+			" style="display: none"></button>
 	</nb-layout-footer>
 </nb-layout>

@@ -476,8 +476,8 @@ export class SettingsComponent implements OnInit {
 		this.updateSetting({ captured: item.value }, 'monitor');
 		this.monitorsOption = this.monitorsOption.map((x) => {
 			if (x.value === item.value) {
-				x.accent = 'success';
-				x.status = 'success';
+				x.accent = 'primary';
+				x.status = 'primary';
 			} else {
 				x.accent = 'basic';
 				x.status = 'basic';

@@ -1,15 +1,11 @@
 <nb-layout>
 	<nb-sidebar>
 		<nb-list>
-			<nb-list-item
-				*ngFor="let menu of menus"
-				(click)="selectMenu(menu)"
-				[class]="
+			<nb-list-item *ngFor="let menu of menus" (click)="selectMenu(menu)" [class]="
 					selectedMenu === menu
 						? 'menu-item menu-item-active'
 						: 'menu-item'
-				"
-			>
+				">
 				<div #selectRef>
 					{{ menu }}
 				</div>
@@ -18,78 +14,71 @@
 	</nb-sidebar>
 
 	<nb-layout-column class="colored-column-success">
-		<div class="row" *ngIf="selectedMenu === 'Screen Capture'">
-			<div class="col-12">
-				<h4>Monitor</h4>
+		<ng-container *ngIf="selectedMenu === 'Screen Capture'">
+			<div class="row">
+				<div class="col-12">
+					<h4>Monitor</h4>
+				</div>
 			</div>
-			<div class="col-12">
-				<h6>Automatic Screen Capture</h6>
+			<div class="row">
+				<div class="col-12">
+					<h6>Automatic Screen Capture</h6>
+				</div>
 			</div>
-			<div class="col-12">
-				<div class="row">
-					<div class="col-4" *ngFor="let item of monitorsOption">
-						<nb-card accent="{{ item.accent }}" status="primary">
-							<nb-card-body
-								class="center-card"
-								(click)="selectMonitorOption(item)"
-							>
-								<div class="row">
-									<div class="col-12">
-										<nb-icon
-											class="all-monitor_icon"
-											icon="monitor-outline"
-											[status]="item.status"
-										>
-										</nb-icon>
-										<nb-icon
-											*ngIf="item.value === 'all'"
-											class="all-monitor_icon monitor-many"
-											icon="monitor-outline"
-											[status]="item.status"
-										>
-										</nb-icon>
-									</div>
-									<div class="col-12">
-										<span
-											[class]="
-												item.status === 'success'
+			<div class="row">
+				<div class="col-12">
+					<div class="row monitors mb-3">
+						<div class="col-5" *ngFor="let item of monitorsOption">
+							<nb-card accent="{{ item.accent }}" status="primary">
+								<nb-card-body class="center-card" (click)="selectMonitorOption(item)">
+									<div class="row">
+										<div class="col-12">
+											<nb-icon class="all-monitor_icon" icon="monitor-outline"
+												[status]="item.status">
+											</nb-icon>
+											<nb-icon *ngIf="item.value === 'all'" class="all-monitor_icon monitor-many"
+												icon="monitor-outline" [status]="item.status">
+											</nb-icon>
+										</div>
+										<div class="col-12">
+											<span [class]="
+												item.status === 'primary'
 													? 'title-tile selected'
 													: 'title-tile'
-											"
-										>
-											{{ item.title }}
-										</span>
-									</div>
-									<div class="col-12">
-										<span
-											[class]="
-												item.status === 'success'
+											">
+												{{ item.title }}
+											</span>
+										</div>
+										<div class="col-12">
+											<span [class]="
+												item.status === 'primary'
 													? 'subtitle-tile selected'
 													: 'subtitle-tile'
-											"
-										>
-											{{ item.subtitle }}
-										</span>
+											">
+												{{ item.subtitle }}
+											</span>
+										</div>
 									</div>
-								</div>
-							</nb-card-body>
-						</nb-card>
+								</nb-card-body>
+							</nb-card>
+						</div>
 					</div>
 				</div>
 			</div>
-			<div class="col-12">
-				<nb-card>
-					<nb-card-body>
-						<nb-toggle
-							[(ngModel)]="screenshotNotification"
-							(ngModelChange)="toggleNotificationChange($event)"
-							status="basic"
-							>Show Desktop Notification on Screen Capture
-						</nb-toggle>
-					</nb-card-body>
-				</nb-card>
+			<div class="row notification">
+				<div class="col-10">
+					<nb-card>
+						<nb-card-body>
+							<nb-toggle [(ngModel)]="screenshotNotification"
+								(ngModelChange)="toggleNotificationChange($event)" status="basic">Show Desktop
+								Notification
+								on Screen Capture
+							</nb-toggle>
+						</nb-card-body>
+					</nb-card>
+				</div>
 			</div>
-		</div>
+		</ng-container>
 		<div class="row" *ngIf="selectedMenu === 'Timer'">
 			<div class="col-12">
 				<h4>Timer</h4>
@@ -98,32 +87,20 @@
 				<h6>Update activities or screen capture every</h6>
 			</div>
 			<div class="col-12 form-group">
-				<nb-select
-					placeholder="Select Period"
-					[(ngModel)]="selectedPeriod"
-					(ngModelChange)="selectPeriod($event)"
-					[disabled]="appSetting.timerStarted"
-				>
-					<nb-option *ngFor="let item of periodOption" [value]="item"
-						>{{ item }} Minute</nb-option
-					>
+				<nb-select placeholder="Select Period" [(ngModel)]="selectedPeriod"
+					(ngModelChange)="selectPeriod($event)" [disabled]="appSetting.timerStarted">
+					<nb-option *ngFor="let item of periodOption" [value]="item">{{ item }} Minute</nb-option>
 				</nb-select>
 			</div>
 			<div class="col-12">
-				<nb-toggle
-					[(ngModel)]="appSetting.randomScreenshotTime"
-					(ngModelChange)="toggleRandomScreenshot($event)"
-					status="basic"
-					[disabled]="appSetting.timerStarted"
-					>Random Screenshot Time
+				<nb-toggle [(ngModel)]="appSetting.randomScreenshotTime"
+					(ngModelChange)="toggleRandomScreenshot($event)" status="basic"
+					[disabled]="appSetting.timerStarted">Random Screenshot Time
 				</nb-toggle>
 			</div>
 			<div class="col-12">
-				<nb-toggle
-					[(ngModel)]="appSetting.trackOnPcSleep"
-					(ngModelChange)="toggleTrackOnPcSleep($event)"
-					status="basic"
-					>Track Time when PC locked
+				<nb-toggle [(ngModel)]="appSetting.trackOnPcSleep" (ngModelChange)="toggleTrackOnPcSleep($event)"
+					status="basic">Track Time when PC locked
 				</nb-toggle>
 			</div>
 		</div>
@@ -131,85 +108,51 @@
 			<div class="col-12">
 				<nb-card class="card-full-height">
 					<nb-card-body>
-						<div class="row center-content">
+						<div class="row update-setting center-content">
 							<div class="col-12 text-center margin-content">
 								<img [src]="gauzyIcon" class="margin-icon" />
 							</div>
 							<div class="col-12 version-text">
 								<span>Version {{ version }}</span>
 							</div>
-							<div
-								class="col-12 button-update"
-								*ngIf="!downloadFinish"
-							>
-								<button
-									nbButton
-									[disabled]="loading"
-									status="primary"
-									class="button-big"
-									(click)="checkForUpdate()"
-								>
-									Check Update<nb-icon
-										icon="sync-outline"
-										[class]="
+							<div class="col-12 button-update" *ngIf="!downloadFinish">
+								<button nbButton [disabled]="loading" status="primary" class="button-big"
+									(click)="checkForUpdate()">
+									Check Update<nb-icon icon="sync-outline" [class]="
 											loading
 												? 'icon-medium icon-spin'
 												: 'icon-medium'
-										"
-									></nb-icon>
+										"></nb-icon>
 								</button>
 							</div>
-							<div
-								class="col-12 button-update"
-								*ngIf="downloadFinish"
-							>
-								<button
-									nbButton
-									status="primary"
-									class="button-big"
-									(click)="restartAndUpdate()"
-								>
-									Update Now<nb-icon
-										icon="arrow-circle-up-outline"
-										class="icon-medium"
-									></nb-icon>
+							<div class="col-12 button-update" *ngIf="downloadFinish">
+								<button nbButton status="primary" class="button-big" (click)="restartAndUpdate()">
+									Update Now<nb-icon icon="arrow-circle-up-outline" class="icon-medium"></nb-icon>
 								</button>
 							</div>
-							<div
-								class="col-12 update-message"
-								*ngIf="notAvailable"
-							>
-								<span>{{ message }}</span>
+							<div class="col-12 update-message" *ngIf="notAvailable">
+								<span class="update-message-content">{{ message }}</span>
 							</div>
-							<div
-								class="col-12 update-message"
-								*ngIf="showProgressBar"
-							>
-								<nb-progress-bar
-									[value]="progressDownload"
-									status="primary"
-									[displayValue]="true"
-								></nb-progress-bar>
+							<div class="col-12 update-message" *ngIf="showProgressBar">
+								<nb-progress-bar [value]="progressDownload" status="primary" [displayValue]="true">
+								</nb-progress-bar>
 							</div>
 							<div class="col-12 text-center update-message" *ngIf="loading">
 								<nb-accordion multi>
-									<nb-accordion-item 
-										#logUpdate
-										[expanded]="logIsOpen"
-										(collapsedChange)="logBoxChange($event)"
-									>
-									  <nb-accordion-item-header>
-										Update Logs
-									  </nb-accordion-item-header>
-									  <nb-accordion-item-body class="log-box">
-										  <div class="log-content" #logbox>
-											  <p class="content-text" *ngFor="let content of logContents">
-												  {{content}}
-											  </p>
-										  </div>
-									  </nb-accordion-item-body>
+									<nb-accordion-item #logUpdate [expanded]="logIsOpen"
+										(collapsedChange)="logBoxChange($event)">
+										<nb-accordion-item-header>
+											Update Logs
+										</nb-accordion-item-header>
+										<nb-accordion-item-body class="log-box">
+											<div class="log-content" #logbox>
+												<p class="content-text" *ngFor="let content of logContents">
+													{{content}}
+												</p>
+											</div>
+										</nb-accordion-item-body>
 									</nb-accordion-item>
-								  </nb-accordion>
+								</nb-accordion>
 							</div>
 						</div>
 					</nb-card-body>
@@ -217,323 +160,196 @@
 			</div>
 		</div>
 		<div class="row" *ngIf="selectedMenu === 'Advanced Setting'">
-			<div class="col-12"><h4>Advanced Setting</h4></div>
+			<div class="col-12">
+				<h4>Advanced Setting</h4>
+			</div>
 			<div class="col-12 warning-config" *ngIf="appSetting.timerStarted">
 				<span>Please Stop Timer if you want to change config</span>
 			</div>
 			<div class="col-12">
 				<nb-tabset>
 					<nb-tab tabTitle="General">
-					  <div class="row">
-						<div class="col-12">
-							<nb-card>
-								<nb-card-body>
-									<div class="row">
-										<div class="col-12">
-											<p class="subtitle-tile">API Config</p>
-										</div>
-										<div class="col-5 centered-text" *ngIf="appName !== 'gauzy-server'">
-											<p>Server Type</p>
-										</div>
-										<div class="col-7 form-group" *ngIf="appName !== 'gauzy-server'">
-											<nb-select
-												fullWidth
-												[(ngModel)]="config.serverType"
-												(ngModelChange)="onServerChange($event)"
-												[disabled]="appSetting.timerStarted"
-											>
-												<nb-option
-													*ngFor="let item of serverOptions"
-													[value]="item"
-													>{{ item }}</nb-option
-												>
-											</nb-select>
-										</div>
-										<div
-											class="col-5 centered-text"
-											*ngIf="config.isLocalServer"
-										>
-											<p>Local API Port</p>
-										</div>
-										<div
-											class="col-7 form-group"
-											*ngIf="config.isLocalServer"
-										>
-											<input
-												[(ngModel)]="config.port"
-												type="number"
-												nbInput
-												fullWidth
-												[disabled]="appSetting.timerStarted"
-												status="basic"
-												(ngModelChange)="portChange($event, 'api')"
-											/>
-										</div>
-										<div
-											class="col-5 centered-text"
-											*ngIf="appName === 'gauzy-server'"
-										>
-											<p>UI Port</p>
-										</div>
-										<div
-											class="col-7 form-group"
-											*ngIf="appName === 'gauzy-server'"
-										>
-											<input
-												[(ngModel)]="config.portUi"
-												type="number"
-												nbInput
-												fullWidth
-												[disabled]="appSetting.timerStarted"
-												status="basic"
-											/>
-										</div>
-										<div
-											class="col-5 centered-text"
-											*ngIf="!config.isLocalServer"
-										>
-											<p>Server URL</p>
-										</div>
-										<div
-											class="col-7 form-group"
-											*ngIf="!config.isLocalServer"
-										>
-											<input
-												[(ngModel)]="config.serverUrl"
-												type="text"
-												nbInput
-												fullWidth
-												[disabled]="
+						<div class="row">
+							<div class="col-12">
+								<nb-card>
+									<nb-card-body>
+										<div class="row">
+											<div class="col-12">
+												<p class="subtitle-tile">API Config</p>
+											</div>
+											<div class="col-5 centered-text" *ngIf="appName !== 'gauzy-server'">
+												<p>Server Type</p>
+											</div>
+											<div class="col-7 form-group" *ngIf="appName !== 'gauzy-server'">
+												<nb-select fullWidth [(ngModel)]="config.serverType"
+													(ngModelChange)="onServerChange($event)"
+													[disabled]="appSetting.timerStarted">
+													<nb-option *ngFor="let item of serverOptions" [value]="item">
+														{{ item }}
+													</nb-option>
+												</nb-select>
+											</div>
+											<div class="col-5 centered-text" *ngIf="config.isLocalServer">
+												<p>Local API Port</p>
+											</div>
+											<div class="col-7 form-group" *ngIf="config.isLocalServer">
+												<input [(ngModel)]="config.port" type="number" nbInput fullWidth
+													[disabled]="appSetting.timerStarted" status="basic"
+													(ngModelChange)="portChange($event, 'api')" />
+											</div>
+											<div class="col-5 centered-text" *ngIf="appName === 'gauzy-server'">
+												<p>UI Port</p>
+											</div>
+											<div class="col-7 form-group" *ngIf="appName === 'gauzy-server'">
+												<input [(ngModel)]="config.portUi" type="number" nbInput fullWidth
+													[disabled]="appSetting.timerStarted" status="basic" />
+											</div>
+											<div class="col-5 centered-text" *ngIf="!config.isLocalServer">
+												<p>Server URL</p>
+											</div>
+											<div class="col-7 form-group" *ngIf="!config.isLocalServer">
+												<input [(ngModel)]="config.serverUrl" type="text" nbInput fullWidth
+													[disabled]="
 													appSetting.timerStarted ||
 													config.serverType === serverTypes.live
-												"
-												status="basic"
-											/>
+												" status="basic" />
+											</div>
 										</div>
-									</div>
-								</nb-card-body>
-							</nb-card>
-						</div>
-						<div class="col-12" *ngIf="config.isLocalServer">
-							<nb-card>
-								<nb-card-body>
-									<div class="row">
-										<div class="col-12">
-											<p class="subtitle-tile">Database Config</p>
+									</nb-card-body>
+								</nb-card>
+							</div>
+							<div class="col-12" *ngIf="config.isLocalServer">
+								<nb-card>
+									<nb-card-body>
+										<div class="row">
+											<div class="col-12">
+												<p class="subtitle-tile">Database Config</p>
+											</div>
+											<div class="col-5 centered-text">
+												<p>DB Driver</p>
+											</div>
+											<div class="col-7 form-group">
+												<nb-select fullWidth [(ngModel)]="config.db"
+													(ngModelChange)="onDriverChange($event)"
+													[disabled]="appSetting.timerStarted">
+													<nb-option *ngFor="let item of driverOptions" [value]="item">
+														{{ item }}
+													</nb-option>
+												</nb-select>
+											</div>
+											<div class="col-5 centered-text" *ngIf="config.db === 'postgres'">
+												<p>DB Host</p>
+											</div>
+											<div class="col-7 form-group" *ngIf="config.db === 'postgres'">
+												<input [(ngModel)]="config.dbHost" type="text" nbInput fullWidth
+													status="basic" [disabled]="appSetting.timerStarted"
+													(ngModelChange)="portChange($event, 'db')" />
+											</div>
+											<div class="col-5 centered-text" *ngIf="config.db === 'postgres'">
+												<p>DB UserName</p>
+											</div>
+											<div class="col-7 form-group" *ngIf="config.db === 'postgres'">
+												<input [(ngModel)]="config.dbUsername" type="text" nbInput fullWidth
+													status="basic" [disabled]="appSetting.timerStarted"
+													(ngModelChange)="portChange($event, 'db')" />
+											</div>
+											<div class="col-5 centered-text" *ngIf="config.db === 'postgres'">
+												<p>DB Password</p>
+											</div>
+											<div class="col-7 form-group" *ngIf="config.db === 'postgres'">
+												<input [(ngModel)]="config.dbPassword" type="password" nbInput fullWidth
+													status="basic" [disabled]="appSetting.timerStarted"
+													(ngModelChange)="portChange($event, 'db')" />
+											</div>
+											<div class="col-5 centered-text" *ngIf="config.db === 'postgres'">
+												<p>DB Port</p>
+											</div>
+											<div class="col-7 form-group" *ngIf="config.db === 'postgres'">
+												<input [(ngModel)]="config.dbPort" type="number" nbInput fullWidth
+													status="basic" [disabled]="appSetting.timerStarted"
+													(ngModelChange)="portChange($event, 'db')" />
+											</div>
 										</div>
-										<div class="col-5 centered-text">
-											<p>DB Driver</p>
-										</div>
-										<div class="col-7 form-group">
-											<nb-select
-												fullWidth
-												[(ngModel)]="config.db"
-												(ngModelChange)="onDriverChange($event)"
-												[disabled]="appSetting.timerStarted"
-											>
-												<nb-option
-													*ngFor="let item of driverOptions"
-													[value]="item"
-													>{{ item }}</nb-option
-												>
-											</nb-select>
-										</div>
-										<div
-											class="col-5 centered-text"
-											*ngIf="config.db === 'postgres'"
-										>
-											<p>DB Host</p>
-										</div>
-										<div
-											class="col-7 form-group"
-											*ngIf="config.db === 'postgres'"
-										>
-											<input
-												[(ngModel)]="config.dbHost"
-												type="text"
-												nbInput
-												fullWidth
-												status="basic"
-												[disabled]="appSetting.timerStarted"
-												(ngModelChange)="portChange($event, 'db')"
-											/>
-										</div>
-										<div
-											class="col-5 centered-text"
-											*ngIf="config.db === 'postgres'"
-										>
-											<p>DB UserName</p>
-										</div>
-										<div
-											class="col-7 form-group"
-											*ngIf="config.db === 'postgres'"
-										>
-											<input
-												[(ngModel)]="config.dbUsername"
-												type="text"
-												nbInput
-												fullWidth
-												status="basic"
-												[disabled]="appSetting.timerStarted"
-												(ngModelChange)="portChange($event, 'db')"
-											/>
-										</div>
-										<div
-											class="col-5 centered-text"
-											*ngIf="config.db === 'postgres'"
-										>
-											<p>DB Password</p>
-										</div>
-										<div
-											class="col-7 form-group"
-											*ngIf="config.db === 'postgres'"
-										>
-											<input
-												[(ngModel)]="config.dbPassword"
-												type="password"
-												nbInput
-												fullWidth
-												status="basic"
-												[disabled]="appSetting.timerStarted"
-												(ngModelChange)="portChange($event, 'db')"
-											/>
-										</div>
-										<div
-											class="col-5 centered-text"
-											*ngIf="config.db === 'postgres'"
-										>
-											<p>DB Port</p>
-										</div>
-										<div
-											class="col-7 form-group"
-											*ngIf="config.db === 'postgres'"
-										>
-											<input
-												[(ngModel)]="config.dbPort"
-												type="number"
-												nbInput
-												fullWidth
-												status="basic"
-												[disabled]="appSetting.timerStarted"
-												(ngModelChange)="portChange($event, 'db')"
-											/>
-										</div>
-									</div>
-								</nb-card-body>
-							</nb-card>
-						</div>
-						<div class="col-12" *ngIf="config.timeTrackerWindow">
-							<nb-card>
-								<nb-card-body>
-									<div class="row">
-										<div class="col-12">
-											<p class="subtitle-tile">Third Party Config</p>
-										</div>
-										<div class="col-5 centered-text">
-											<p>Activity Watch Port</p>
-										</div>
-										<div class="col-7 form-group">
-											<input
-												[(ngModel)]="config.awPort"
-												type="text"
-												nbInput
-												fullWidth
-												status="basic"
-												[disabled]="true"
-											/>
-										</div>
-										<div class="col-12">
-											<nb-toggle
-												[(ngModel)]="appSetting.visibleAwOption"
-												(ngModelChange)="toggleAwView($event)"
-												status="basic"
-												>Visible Activity Watch option on window
-											</nb-toggle>
-										</div>
-										<div class="col-12">
-											<nb-toggle
-												[(ngModel)]="
+									</nb-card-body>
+								</nb-card>
+							</div>
+							<div class="col-12" *ngIf="config.timeTrackerWindow">
+								<nb-card>
+									<nb-card-body>
+										<div class="row">
+											<div class="col-12">
+												<p class="subtitle-tile">Third Party Config</p>
+											</div>
+											<div class="col-5 centered-text">
+												<p>Activity Watch Port</p>
+											</div>
+											<div class="col-7 form-group">
+												<input [(ngModel)]="config.awPort" type="text" nbInput fullWidth
+													status="basic" [disabled]="true" />
+											</div>
+											<div class="col-12">
+												<nb-toggle [(ngModel)]="appSetting.visibleAwOption"
+													(ngModelChange)="toggleAwView($event)" status="basic">Visible
+													Activity Watch option on window
+												</nb-toggle>
+											</div>
+											<div class="col-12">
+												<nb-toggle [(ngModel)]="
 													appSetting.visibleWakatimeOption
-												"
-												(ngModelChange)="toggleWakatimeView($event)"
-												status="basic"
-												>Visible Wakatime option on window
-											</nb-toggle>
+												" (ngModelChange)="toggleWakatimeView($event)" status="basic">Visible Wakatime option on window
+												</nb-toggle>
+											</div>
 										</div>
-									</div>
-								</nb-card-body>
-							</nb-card>
-						</div>
-						<div class="col-12" *ngIf="config.timeTrackerWindow">
-							<nb-card>
-								<nb-card-body>
-									<div class="row">
-										<div class="col-12">
-											<nb-toggle
-												[(ngModel)]="autoLaunch"
-												(ngModelChange)="toggleAutoLaunch($event)"
-												status="basic"
-												>Automatic Launch
-											</nb-toggle>
-										</div>
-										<div class="col-12">
-											<nb-toggle
-												[(ngModel)]="minimizeOnStartup"
-												(ngModelChange)="
+									</nb-card-body>
+								</nb-card>
+							</div>
+							<div class="col-12" *ngIf="config.timeTrackerWindow">
+								<nb-card>
+									<nb-card-body>
+										<div class="row">
+											<div class="col-12">
+												<nb-toggle [(ngModel)]="autoLaunch"
+													(ngModelChange)="toggleAutoLaunch($event)" status="basic">Automatic
+													Launch
+												</nb-toggle>
+											</div>
+											<div class="col-12">
+												<nb-toggle [(ngModel)]="minimizeOnStartup" (ngModelChange)="
 													toggleMinimizeOnStartup($event)
-												"
-												status="basic"
-												[disabled]="!autoLaunch"
-												>Minimize On Startup
-											</nb-toggle>
+												" status="basic" [disabled]="!autoLaunch">Minimize On Startup
+												</nb-toggle>
+											</div>
 										</div>
-									</div>
-								</nb-card-body>
-							</nb-card>
+									</nb-card-body>
+								</nb-card>
+							</div>
+							<div class="col-12">
+								<button nbButton status="primary" (click)="restartApp()"
+									[disabled]="restartDisable || appSetting.timerStarted">
+									{{ appName === 'gauzy-server' ? 'Save' : 'Restart App' }}
+								</button>
+							</div>
 						</div>
-						<div class="col-12">
-							<button
-								nbButton
-								status="primary"
-								(click)="restartApp()"
-								[disabled]="restartDisable || appSetting.timerStarted"
-							>
-								{{ appName === 'gauzy-server' ? 'Save' : 'Restart App' }}
-							</button>
-						</div>
-					  </div>
 					</nb-tab>
 					<nb-tab tabTitle="Third Party">
 						<div class="row">
 							<div class="col-12">
-								<nb-card
-									*ngFor="let item of thirdPartyConfig"
-								>
+								<nb-card *ngFor="let item of thirdPartyConfig">
 									<nb-card-body>
 										<div class="row">
 											<div class="col-12">
-												<p class="subtitle-tile">{{item.title}}</p>
+												<p class="subtitle-tile third-party-item"><i
+														[class]="('fab fa-'+item.title)|lowercase"></i>{{item.title}}
+												</p>
 											</div>
 											<div class="col-12" *ngFor="let field of item.fields">
 												<div class="row">
-													<div
-														class="col-5 centered-text"
-														*ngIf="config.isLocalServer"
-													>
+													<div class="col-5 centered-text" *ngIf="config.isLocalServer">
 														<p>{{field.name.replaceAll('_', ' ')}}</p>
 													</div>
-													<div
-														class="col-7 form-group"
-														*ngIf="config.isLocalServer"
-													>
-														<input
-															[(ngModel)]="field.value"
-															type="text"
-															nbInput
-															fullWidth
-															[disabled]="appSetting.timerStarted"
-															status="basic"
-														/>
+													<div class="col-7 form-group" *ngIf="config.isLocalServer">
+														<input [(ngModel)]="field.value" type="text" nbInput fullWidth
+															[disabled]="appSetting.timerStarted" status="basic" />
 													</div>
 												</div>
 											</div>
@@ -542,18 +358,14 @@
 								</nb-card>
 							</div>
 							<div class="col-12">
-								<button
-									nbButton
-									status="primary"
-									(click)="restartApp()"
-									[disabled]="restartDisable || appSetting.timerStarted"
-								>
+								<button nbButton status="primary" (click)="restartApp()"
+									[disabled]="restartDisable || appSetting.timerStarted">
 									{{ appName === 'gauzy-server' ? 'Save' : 'Restart App' }}
 								</button>
 							</div>
 						</div>
 					</nb-tab>
-				  </nb-tabset>
+				</nb-tabset>
 			</div>
 		</div>
 	</nb-layout-column>

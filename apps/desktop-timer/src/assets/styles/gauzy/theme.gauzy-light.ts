@@ -1,8 +1,8 @@
 import { NbJSThemeOptions } from '@nebular/theme';
 
 const palette = {
-  primary: '#3366ff',
-  success: '#00d68f',
+  primary: '#6E49E8',
+	success: '#25B869',
   info: '#0095ff',
   warning: '#ffaa00',
   danger: '#ff3d71',
@@ -43,8 +43,9 @@ const theme = {
   dangerLight: '#ff708d',
 };
 
-export const DEFAULT_THEME = {
-  name: 'default',
+export const GAUZY_LIGHT = {
+  name: 'gauzy-light',
+  base: 'default',
   variables: {
     ...theme,
 
