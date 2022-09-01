@@ -48,18 +48,16 @@ import {
 import { TagsColorFilterComponent } from '../../@shared/table-filters';
 import { monthNames } from '../../@core/utils/date';
 import { EmployeeWorkStatusComponent } from '../employees/table-components';
-import { EmailComponent } from '../../@shared/table-components/email/email.component';
-import { RoleComponent } from '../../@shared/table-components/role/role.component';
+import { EmailComponent, RoleComponent } from '../../@shared/table-components';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
 	templateUrl: './users.component.html',
 	styleUrls: ['./users.component.scss']
 })
-export class UsersComponent
-	extends PaginationFilterBaseComponent
-	implements OnInit, OnDestroy
-{
+export class UsersComponent extends PaginationFilterBaseComponent
+	implements OnInit, OnDestroy {
+
 	settingsSmartTable: object;
 	sourceSmartTable = new LocalDataSource();
 	selectedUser: IUserViewModel;
@@ -412,7 +410,7 @@ export class UsersComponent
 				email: user.email,
 				tags: user.tags,
 				imageUrl: user.imageUrl,
-				role: user.role.name,
+				role: user.role,
 				isActive: isActive,
 				userOrganizationId: userOrganizationId,
 				...this.employeeMapper(user.employee)

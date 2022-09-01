@@ -1,32 +1,12 @@
-import { ApiProperty } from "@nestjs/swagger";
-import { IsEnum, IsNotEmpty, IsString } from "class-validator";
-import { ICreateEmailInvitesInput, InvitationTypeEnum } from "@gauzy/contracts";
+import { ICreateEmailInvitesInput } from "@gauzy/contracts";
+import { IntersectionType } from "@nestjs/mapped-types";
+import { RoleFeatureDTO } from "./../../role/dto";
+import { InviteDTO } from "./invite.dto";
 
 /**
  * Create Invite DTO validation
  */
-export class CreateInviteDTO implements ICreateEmailInvitesInput {
-
-    @ApiProperty({ type: () => Array })
-    @IsNotEmpty()
-    readonly emailIds: string[];
-
-    @ApiProperty({ type: () => String })
-    @IsNotEmpty()
-    @IsString()
-    readonly roleId: string;
-
-    @ApiProperty({ type: () => String })
-    @IsNotEmpty()
-    @IsString()
-    readonly invitedById: string;
-
-    @ApiProperty({ type: () => String })
-    @IsNotEmpty()
-    @IsString()
-    @IsEnum(InvitationTypeEnum)
-    readonly inviteType: string;
-
-    @ApiProperty({ type: () => Date })
-    readonly startedWorkOn: Date;
-}
+export class CreateInviteDTO extends IntersectionType(
+    InviteDTO,
+    RoleFeatureDTO
+) implements ICreateEmailInvitesInput {}
