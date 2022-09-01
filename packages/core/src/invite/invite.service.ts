@@ -21,7 +21,17 @@ import {
 import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { sign } from 'jsonwebtoken';
-import { Brackets, FindOptionsWhere, In, IsNull, MoreThanOrEqual, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
+import {
+	Brackets,
+	FindOptionsWhere,
+	In,
+	IsNull,
+	MoreThanOrEqual,
+	Not,
+	Repository,
+	SelectQueryBuilder,
+	WhereExpressionBuilder
+} from 'typeorm';
 import { isNotEmpty } from '@gauzy/common';
 import { TenantAwareCrudService } from './../core/crud';
 import { Invite } from './invite.entity';
@@ -382,8 +392,62 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 		}
 	}
 
-	createToken(email): string {
+	createToken(email: string): string {
 		const token: string = sign({ email }, environment.JWT_SECRET, {});
 		return token;
+	}
+
+	/**
+	 * Find All Invites Using Pagination
+	 *
+	 * @param options
+	 * @returns
+	 */
+	public async findAllInvites(options: any) {
+		try {
+			const query = this.repository.createQueryBuilder();
+			query.setFindOptions({
+				skip: (options && options.skip) ? (options.take * (options.skip - 1)) : 0,
+				take: (options && options.take) ? (options.take) : 10,
+				...(
+					(options && options.relations) ? {
+						relations: options.relations
+					} : {}
+				)
+			});
+			query.where((qb: SelectQueryBuilder<Invite>) => {
+				qb.andWhere({
+					tenantId: RequestContext.currentTenantId()
+				});
+				if (isNotEmpty(options.where)) {
+					const { where } = options;
+					if (isNotEmpty(where.organizationId)) {
+						const { organizationId, tenantId } = where;
+						qb.andWhere({
+							organizationId,
+							tenantId
+						});
+					}
+					if (isNotEmpty(where.role)) {
+						const { role } = where;
+						qb.andWhere({
+							role: {
+								...role
+							}
+						});
+					} else {
+						qb.andWhere({
+							role: {
+								name: Not(RolesEnum.EMPLOYEE)
+							}
+						});
+					}
+				}
+			});
+			const [items, total] = await query.getManyAndCount();
+			return { items, total };
+		} catch (error) {
+			throw new BadRequestException(error);
+		}
 	}
 }
