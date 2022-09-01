@@ -22,15 +22,13 @@ import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/
 import { InjectRepository } from '@nestjs/typeorm';
 import { sign } from 'jsonwebtoken';
 import {
-	Brackets,
 	FindOptionsWhere,
 	In,
 	IsNull,
 	MoreThanOrEqual,
 	Not,
 	Repository,
-	SelectQueryBuilder,
-	WhereExpressionBuilder
+	SelectQueryBuilder
 } from 'typeorm';
 import { isNotEmpty } from '@gauzy/common';
 import { TenantAwareCrudService } from './../core/crud';
@@ -346,8 +344,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 	 * @returns
 	 */
 	async validate(
-		where: FindOptionsWhere<Invite>,
-		relations: string[] = []
+		where: FindOptionsWhere<Invite>
 	): Promise<IInvite> {
 		try {
 			const query = this.repository.createQueryBuilder();
@@ -360,31 +357,24 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 						name: true
 					}
 				},
-				...(
-					(isNotEmpty(relations)) ? {
-						relations: relations
-					} : {}
-				),
+				relationLoadStrategy: 'query',
+				relations: {
+					organization: true
+				}
 			});
 			query.where((qb: SelectQueryBuilder<Invite>) => {
-				qb.where({
+				qb.andWhere({
 					...where,
 					status: InviteStatusEnum.INVITED
-				})
-				qb.andWhere(
-					new Brackets((web: WhereExpressionBuilder) => {
-						web.where(
-							[
-								{
-									expireDate: MoreThanOrEqual(new Date())
-								},
-								{
-									expireDate: IsNull()
-								}
-							]
-						);
-					})
-				);
+				});
+				qb.andWhere([
+					{
+						expireDate: MoreThanOrEqual(new Date())
+					},
+					{
+						expireDate: IsNull()
+					}
+				]);
 			});
 			return await query.getOneOrFail();
 		} catch (error) {

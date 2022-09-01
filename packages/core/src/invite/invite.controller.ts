@@ -111,7 +111,7 @@ export class InviteController {
 			new FindPublicInviteByEmailTokenQuery({
 				email: options.email,
 				token: options.token
-			}, options.relations)
+			})
 		);
 	}
 
