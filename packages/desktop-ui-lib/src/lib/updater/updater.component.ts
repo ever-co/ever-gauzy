@@ -2,9 +2,9 @@ import {
 	Component,
 	OnInit,
 	ChangeDetectionStrategy,
-	ChangeDetectorRef,
 	ViewChild,
-	ElementRef
+	ElementRef,
+	NgZone
 } from '@angular/core';
 import { ElectronService } from 'ngx-electron';
 import { ElectronServices } from '../electron/services';
@@ -20,52 +20,56 @@ export class UpdaterComponent implements OnInit {
 	@ViewChild('logUpdate') logAccordion;
 	constructor(
 		private electronService: ElectronService,
-		private _cdr: ChangeDetectorRef,
+		private _ngZone: NgZone,
 		private electronServices: ElectronServices
 	) {
-		electronService.ipcRenderer.on('update-not-available', () => {
-			this.notAvailable = true;
-			this.message = 'Application Update';
-			this.logContents.push(this.message);
-			this.scrollToBottom();
-			this._cdr.detectChanges();
-		});
+		electronService.ipcRenderer.on('update-not-available', () =>
+			this._ngZone.run(() => {
+				this.notAvailable = true;
+				this.message = 'Application Update';
+				this.logContents.push(this.message);
+				this.scrollToBottom();
+			})
+		);
 
-		electronService.ipcRenderer.on('update_available', () => {
-			this.notAvailable = true;
-			this.message = 'Update Available';
-			this.logContents.push(this.message);
-			this.scrollToBottom();
-			this._cdr.detectChanges();
-		});
+		electronService.ipcRenderer.on('update_available', () =>
+			this._ngZone.run(() => {
+				this.notAvailable = true;
+				this.message = 'Update Available';
+				this.logContents.push(this.message);
+				this.scrollToBottom();
+			})
+		);
 
-		electronService.ipcRenderer.on('update_downloaded', () => {
-			this.notAvailable = true;
-			this.message = 'Update Download Completed';
-			this.logContents.push(this.message);
-			this.scrollToBottom();
-			this.downloadFinish = true;
-			this.loading = false;
-			this._cdr.detectChanges();
-		});
+		electronService.ipcRenderer.on('update_downloaded', () =>
+			this._ngZone.run(() => {
+				this.notAvailable = true;
+				this.message = 'Update Download Completed';
+				this.logContents.push(this.message);
+				this.scrollToBottom();
+				this.downloadFinish = true;
+				this.loading = false;
+			})
+		);
 
-		electronService.ipcRenderer.on('download_on_progress', (event, arg) => {
-			this.notAvailable = true;
-			this.message = `Update Downloading ${
-				arg.percent ? Math.floor(Number(arg.percent)) : 0
-			}%`;
-			this.logContents.push(this.message);
-			this.scrollToBottom();
-			this._cdr.detectChanges();
-		});
+		electronService.ipcRenderer.on('download_on_progress', (event, arg) =>
+			this._ngZone.run(() => {
+				this.notAvailable = true;
+				this.message = `Update Downloading ${
+					arg.percent ? Math.floor(Number(arg.percent)) : 0
+				}%`;
+				this.logContents.push(this.message);
+				this.scrollToBottom();
+			})
+		);
 	}
 	version = '0.0.0';
 	loading = false;
 	notAvailable = false;
 	message = 'Application Update';
 	downloadFinish = false;
-	logContents:any = [];
-	logIsOpen:boolean = false;
+	logContents: any = [];
+	logIsOpen: boolean = false;
 
 	ngOnInit(): void {
 		this.version = this.electronServices.remote.app.getVersion();
@@ -89,6 +93,7 @@ export class UpdaterComponent implements OnInit {
 	}
 
 	private scrollToBottom() {
-        this.logbox.nativeElement.scrollTop = this.logbox.nativeElement.scrollHeight;
-    }
+		this.logbox.nativeElement.scrollTop =
+			this.logbox.nativeElement.scrollHeight;
+	}
 }
