@@ -1,12 +1,14 @@
-<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
+<nb-card
+	[nbSpinner]="loading"
+	nbSpinnerStatus="primary"
+	nbSpinnerSize="large"
+>
 	<nb-card-header class="d-flex flex-column pb-0">
 		<div class="header-title-with-back">
 			<ngx-back-navigation></ngx-back-navigation>
 			<h4>
 				<ngx-header-title [allowEmployee]="false">
-					{{
-						'INVITE_PAGE.' + invitationType + '.MANAGE' | translate
-					}}
+					{{ 'INVITE_PAGE.' + invitationType + '.MANAGE' | translate }}
 				</ngx-header-title>
 			</h4>
 		</div>
@@ -28,11 +30,10 @@
 				<ng2-smart-table
 					style="cursor: pointer"
 					[settings]="settingsSmartTable"
-					[source]="sourceSmartTable"
+					[source]="smartTableSource"
 					(userRowSelect)="selectInvite($event)"
 					#invitesTable
-				>
-				</ng2-smart-table>
+				></ng2-smart-table>
 			</div>
 			<div class="pagination-container">
 				<ng-container
@@ -45,8 +46,7 @@
 						[totalItems]="pagination?.totalItems"
 						[itemsPerPage]="pagination?.itemsPerPage"
 						[activePage]="pagination?.activePage"
-					>
-					</ga-pagination>
+					></ga-pagination>
 				</ng-container>
 			</div>
 		</ng-template>

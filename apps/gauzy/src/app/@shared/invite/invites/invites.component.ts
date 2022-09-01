@@ -8,6 +8,7 @@ import {
 } from '@angular/core';
 import { Router, UrlSerializer } from '@angular/router';
 import { Location } from '@angular/common';
+import { HttpClient } from '@angular/common/http';
 import {
 	InvitationTypeEnum,
 	RolesEnum,
@@ -20,9 +21,9 @@ import {
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
-import { debounceTime, filter, tap } from 'rxjs/operators';
+import { Ng2SmartTableComponent } from 'ng2-smart-table';
 import { Subject } from 'rxjs';
+import { debounceTime, filter, tap } from 'rxjs/operators';
 import * as moment from 'moment';
 import { ClipboardService, IClipboardResponse } from 'ngx-clipboard';
 import { distinctUntilChange } from '@gauzy/common-angular';
@@ -33,12 +34,13 @@ import { ProjectNamesComponent } from './project-names/project-names.component';
 import { ResendConfirmationComponent } from './resend-confirmation/resend-confirmation.component';
 import { ClientNamesComponent } from './client-names/client-names.component';
 import { DepartmentNamesComponent } from './department-names/department-names.component';
-import { ComponentEnum } from '../../../@core/constants';
+import { API_PREFIX, ComponentEnum } from '../../../@core/constants';
 import { DateViewComponent } from '../../table-components';
 import {
 	PaginationFilterBaseComponent,
 	IPaginationBase
 } from '../../pagination/pagination-filter-base.component';
+import { ServerDataSource } from '../../../@core/utils/smart-table';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -46,22 +48,29 @@ import {
 	templateUrl: './invites.component.html',
 	styleUrls: ['invites.component.scss']
 })
-export class InvitesComponent
-	extends PaginationFilterBaseComponent
-	implements AfterViewInit, OnInit, OnDestroy
-{
-	@Input()
-	invitationType: InvitationTypeEnum;
+export class InvitesComponent extends PaginationFilterBaseComponent
+	implements AfterViewInit, OnInit, OnDestroy {
 
+	/*
+	* Getter & Setter for InvitationTypeEnum
+	*/
+	_invitationType: InvitationTypeEnum;
+	get invitationType(): InvitationTypeEnum {
+		return this._invitationType;
+	}
+	@Input() set invitationType(value: InvitationTypeEnum) {
+		this._invitationType = value;
+	}
+
+	loading: boolean = false;
+	disableButton: boolean = true;
 	settingsSmartTable: object;
-	sourceSmartTable = new LocalDataSource();
+	smartTableSource: ServerDataSource;
 	selectedInvite: IInviteViewModel;
 	viewComponentName: ComponentEnum;
-	disableButton: boolean = true;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
 	invites: IInviteViewModel[] = [];
-	loading: boolean;
 
 	invites$: Subject<any> = new Subject();
 	public organization: IOrganization;
@@ -84,7 +93,8 @@ export class InvitesComponent
 		private readonly store: Store,
 		private readonly toastrService: ToastrService,
 		private readonly translate: TranslateService,
-		private readonly inviteService: InviteService
+		private readonly inviteService: InviteService,
+		private readonly httpClient: HttpClient
 	) {
 		super(translate);
 		this.setView();
@@ -115,7 +125,7 @@ export class InvitesComponent
 			.pipe(
 				debounceTime(200),
 				tap(() => this.clearItem()),
-				tap(() => this.loadInvites()),
+				tap(() => this.getInvites()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -255,90 +265,117 @@ export class InvitesComponent
 	 */
 	onCopyFailure(clipboard: IClipboardResponse) {}
 
-	private async loadInvites() {
+	/*
+	 * Register Smart Table Source Config
+	 */
+	setSmartTableSource() {
 		if (!this.organization) {
 			return;
 		}
-
-		let invites = [];
-		const { activePage, itemsPerPage } = this.getPagination();
-		this.loading = true;
-
-		try {
-			const { tenantId } = this.store.user;
-			const { id: organizationId } = this.organization;
-
-			const { items } = await this.inviteService.getAll(
-				[
-					'projects',
-					'invitedBy',
-					'role',
-					'organizationContact',
-					'departments'
-				],
-				{ organizationId, tenantId }
-			);
-			invites = items.filter((invite: IInvite) => {
-				if (this.invitationType === InvitationTypeEnum.EMPLOYEE) {
-					return invite.role.name == RolesEnum.EMPLOYEE;
-				} else if (
-					this.invitationType === InvitationTypeEnum.CANDIDATE
-				) {
-					return invite.role.name === RolesEnum.CANDIDATE;
-				} else {
-					return invite.role.name !== RolesEnum.EMPLOYEE;
-				}
-			});
-		} catch (error) {
-			this.toastrService.danger('TOASTR.MESSAGE.INVITES_LOAD');
-		}
-
-		const invitesVm: IInviteViewModel[] = [];
-		for (const invite of invites) {
-			invitesVm.push({
-				email: invite.email,
-				expireDate: invite.expireDate
-					? moment(invite.expireDate).fromNow()
-					: InvitationExpirationEnum.NEVER,
-				createdDate: invite.createdAt,
-				imageUrl: invite.invitedBy ? invite.invitedBy.imageUrl : '',
-				fullName: invite.invitedBy ? invite.invitedBy.name : '',
-				roleName: invite.role ? invite.role.name : '',
-				status:
-					!invite.expireDate ||
-					moment(invite.expireDate).isAfter(moment())
-						? this.getTranslation(
-								`INVITE_PAGE.STATUS.${invite.status}`
-						  )
-						: this.getTranslation(`INVITE_PAGE.STATUS.EXPIRED`),
-				projectNames: (invite.projects || []).map(
-					(project) => project.name
+		// this.loading = true;
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
+		this.smartTableSource = new ServerDataSource(this.httpClient, {
+			endPoint: `${API_PREFIX}/invite`,
+			relations: [
+				'projects',
+				'invitedBy',
+				'role',
+				'organizationContact',
+				'departments'
+			],
+			where: {
+				organizationId,
+				tenantId,
+				...(
+					(this.invitationType === InvitationTypeEnum.EMPLOYEE) ? {
+						role: {
+							name: RolesEnum.EMPLOYEE
+						}
+					} : {}
 				),
-				clientNames: (invite.organizationContact || []).map(
-					(organizationContact) => organizationContact.name
-				),
-				departmentNames: (invite.departments || []).map(
-					(department) => department.name
-				),
-				id: invite.id,
-				token: invite.token
-			});
-		}
-		this.sourceSmartTable.setPaging(activePage, itemsPerPage, false);
-		this.sourceSmartTable.load(invitesVm);
-		if (this.dataLayoutStyle === this.componentLayoutStyleEnum.CARDS_GRID)
-			this._loadGridLayoutData();
-		this.setPagination({
-			...this.getPagination(),
-			totalItems: this.sourceSmartTable.count()
+				...(
+					(this.invitationType === InvitationTypeEnum.CANDIDATE) ? {
+						role: {
+							name: RolesEnum.CANDIDATE
+						}
+					} : {}
+				)
+			},
+			resultMap: (invite: IInvite) => {
+				return Object.assign({}, invite, {
+					email: invite.email,
+					expireDate: invite.expireDate ? moment(invite.expireDate).fromNow() : InvitationExpirationEnum.NEVER,
+					createdDate: invite.createdAt,
+					imageUrl: invite.invitedBy ? invite.invitedBy.imageUrl : '',
+					fullName: invite.invitedBy ? invite.invitedBy.name : '',
+					roleName: invite.role ? invite.role.name : '',
+					status: !invite.expireDate ||
+						moment(invite.expireDate).isAfter(moment())
+							? this.getTranslation(
+									`INVITE_PAGE.STATUS.${invite.status}`
+							  )
+							: this.getTranslation(`INVITE_PAGE.STATUS.EXPIRED`),
+					projectNames: (invite.projects || []).map(
+						(project) => project.name
+					),
+					clientNames: (invite.organizationContacts || []).map(
+						(organizationContact) => organizationContact.name
+					),
+					departmentNames: (invite.departments || []).map(
+						(department) => department.name
+					),
+					id: invite.id,
+					token: invite.token
+				});
+			},
+			finalize: () => {
+				this.setPagination({
+					...this.getPagination(),
+					totalItems: this.smartTableSource.count()
+				});
+				this.loading = false;
+			}
 		});
-		this.loading = false;
 	}
 
+	/***
+	 * GET invites
+	 *
+	 */
+	private async getInvites() {
+		if (!this.organization) {
+			return;
+		}
+		try {
+			this.setSmartTableSource();
+
+			const { activePage, itemsPerPage } = this.getPagination();
+			this.smartTableSource.setPaging(
+				activePage,
+				itemsPerPage,
+				false
+			);
+			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
+				await this.smartTableSource.getElements();
+				await this._loadGridLayoutData();
+			}
+		} catch (error) {
+			this.toastrService.danger(error);
+		}
+	}
+
+	/***
+	 * GET invites for GRID layout
+	 *
+	 */
 	private async _loadGridLayoutData() {
-		this.invites.push(...(await this.sourceSmartTable.getElements()));
+		this.invites.push(...this.smartTableSource.getData());
 	}
 
+	/**
+	 * Load smart table settings
+	 */
 	private _loadSmartTableSettings() {
 		const pagination: IPaginationBase = this.getPagination();
 		const settingsSmartTable = {
@@ -395,11 +432,9 @@ export class InvitesComponent
 				}
 			}
 		};
-
 		if (this.invitationType === InvitationTypeEnum.EMPLOYEE) {
 			delete settingsSmartTable['columns']['roleName'];
 		}
-
 		if (this.invitationType === InvitationTypeEnum.USER) {
 			delete settingsSmartTable['columns']['projects'];
 			delete settingsSmartTable['columns']['contact'];
