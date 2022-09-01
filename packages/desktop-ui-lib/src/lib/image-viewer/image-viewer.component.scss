@@ -23,7 +23,7 @@
     display: flex;
     align-items: center;
     padding-bottom: 115px;
-    padding-top: 1rem ;
+    padding-top: 1rem;
 
     .left-button,
     .right-button {
@@ -72,7 +72,9 @@
         cursor: pointer;
         border-radius: var(--border-radius);
         &.thumb-item-active {
-          background-color: var(--text-primary-color);
+          img {
+            border: 5px solid var(--text-primary-color);
+          }
         }
         img {
           width: 100px;

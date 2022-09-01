@@ -38,7 +38,9 @@ export class ImageViewerComponent implements OnInit {
 		// private dialogRef: NbDialogRef<any>
 		private electronService: ElectronServices,
 		private readonly _ngZone: NgZone
-	) {
+	) {}
+
+	ngOnInit(): void {
 		this.electronService.ipcRenderer.on('show_image', (event, arg) => {
 			this._ngZone.run(() => {
 				this.items = arg.sort((a, b) => {
@@ -49,9 +51,6 @@ export class ImageViewerComponent implements OnInit {
 				this.item = this.items[0];
 			});
 		});
-	}
-
-	ngOnInit(): void {
 		this.active_index = 0;
 	}
 
