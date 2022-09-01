@@ -22,8 +22,17 @@ export class UpdaterComponent implements OnInit {
 		private electronService: ElectronService,
 		private _ngZone: NgZone,
 		private electronServices: ElectronServices
-	) {
-		electronService.ipcRenderer.on('update-not-available', () =>
+	) {}
+	version = '0.0.0';
+	loading = false;
+	notAvailable = false;
+	message = 'Application Update';
+	downloadFinish = false;
+	logContents: any = [];
+	logIsOpen: boolean = false;
+
+	ngOnInit(): void {
+		this.electronService.ipcRenderer.on('update-not-available', () =>
 			this._ngZone.run(() => {
 				this.notAvailable = true;
 				this.message = 'Application Update';
@@ -32,7 +41,7 @@ export class UpdaterComponent implements OnInit {
 			})
 		);
 
-		electronService.ipcRenderer.on('update_available', () =>
+		this.electronService.ipcRenderer.on('update_available', () =>
 			this._ngZone.run(() => {
 				this.notAvailable = true;
 				this.message = 'Update Available';
@@ -41,7 +50,7 @@ export class UpdaterComponent implements OnInit {
 			})
 		);
 
-		electronService.ipcRenderer.on('update_downloaded', () =>
+		this.electronService.ipcRenderer.on('update_downloaded', () =>
 			this._ngZone.run(() => {
 				this.notAvailable = true;
 				this.message = 'Update Download Completed';
@@ -52,26 +61,18 @@ export class UpdaterComponent implements OnInit {
 			})
 		);
 
-		electronService.ipcRenderer.on('download_on_progress', (event, arg) =>
-			this._ngZone.run(() => {
-				this.notAvailable = true;
-				this.message = `Update Downloading ${
-					arg.percent ? Math.floor(Number(arg.percent)) : 0
-				}%`;
-				this.logContents.push(this.message);
-				this.scrollToBottom();
-			})
+		this.electronService.ipcRenderer.on(
+			'download_on_progress',
+			(event, arg) =>
+				this._ngZone.run(() => {
+					this.notAvailable = true;
+					this.message = `Update Downloading ${
+						arg.percent ? Math.floor(Number(arg.percent)) : 0
+					}%`;
+					this.logContents.push(this.message);
+					this.scrollToBottom();
+				})
 		);
-	}
-	version = '0.0.0';
-	loading = false;
-	notAvailable = false;
-	message = 'Application Update';
-	downloadFinish = false;
-	logContents: any = [];
-	logIsOpen: boolean = false;
-
-	ngOnInit(): void {
 		this.version = this.electronServices.remote.app.getVersion();
 	}
 
