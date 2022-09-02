@@ -26,56 +26,48 @@ export const createRandomWarehouses = async (
     }
 
     const countries: ICountry[] = await dataSource.manager.find(Country);
-    const products = await dataSource.manager.find(Product, { relations: ['variants'] });
-
-    let warehouses: Warehouse[] = [];
-
     for await (const tenant of tenants) {
         const organizations = tenantOrganizationsMap.get(tenant);
         for await (const organization of organizations) {
+            const products = await dataSource.manager.find(Product, {
+                where: {
+                    tenantId: tenant.id,
+                    organizationId: organization.id
+                },
+                relations: {
+                    variants: true
+                }
+            });
             for (let i = 0; i <= Math.floor(Math.random() * 3) + 1; i++) {
-                const warehouse = applyRandomProperties(tenant, organization, countries);
-                warehouse.products = [];
-
+                let warehouse = applyRandomProperties(tenant, organization, countries);
+                warehouse = await dataSource.manager.save(warehouse);
                 for (let i = 0; i <= Math.floor(Math.random() * 2); i++) {
-                    const warehouseProduct = new WarehouseProduct();
-                    warehouseProduct.variants = [];
-
                     const product = faker.random.arrayElement(products);
 
+                    let warehouseProduct = new WarehouseProduct();
                     warehouseProduct.product = product;
                     warehouseProduct.warehouse = warehouse;
                     warehouseProduct.tenant = tenant;
                     warehouseProduct.organization = organization;
-
-                    const warehouseProductDb = await dataSource.manager.save(warehouseProduct);
+                    warehouseProduct = await dataSource.manager.save(warehouseProduct);
 
                     let productsQuantity = 0;
                     for await (const variant of product.variants) {
                         const warehouseVariant = new WarehouseProductVariant();
-
                         warehouseVariant.tenant = tenant;
                         warehouseVariant.organization = organization;
                         warehouseVariant.variant = variant;
+                        warehouseVariant.warehouseProduct = warehouseProduct;
                         warehouseVariant.quantity = faker.datatype.number(200);
-                        warehouseVariant.warehouseProduct = warehouseProductDb;
                         productsQuantity += warehouseVariant.quantity;
-
-                        warehouseProduct.variants.push(warehouseVariant);
                         await dataSource.manager.save(warehouseVariant);
                     }
-
                     warehouseProduct.quantity = productsQuantity;
-                    warehouse.products.push(warehouseProduct);
+                    await dataSource.manager.save(warehouseProduct);
                 }
-
-                warehouse.organization = organization;
-                warehouse.tenant = tenant;
-                warehouses.push(warehouse);
             }
         }
     }
-    await dataSource.manager.save(warehouses);
 
 }
 
@@ -90,6 +82,7 @@ const applyRandomProperties = (
     warehouse.email = faker.internet.exampleEmail(warehouse.name);
     warehouse.description = faker.lorem.words();
     warehouse.active = faker.datatype.boolean();
+    warehouse.organization = organization;
     warehouse.tenant = tenant;
 
     const contact = new Contact();
