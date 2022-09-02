@@ -9,7 +9,7 @@
 					<nb-card-body>
 						<div class="row">
 							<div class="col-3">
-								<button ghost *ngIf="!start" class="button-ghost" (click)="toggleStart(true)"
+								<button ghost *ngIf="!(start$ | async)" class="button-ghost" (click)="toggleStart(true)"
 									[disabled]="loading || !isTrackingEnabled">
 									<nb-icon class="start-button" icon="play-circle"
 										nbTooltip="Time tracker has been disabled"
@@ -18,7 +18,7 @@
 										nbTooltipPlacement="bottom">
 									</nb-icon>
 								</button>
-								<button *ngIf="start" (click)="toggleStart(false)" [disabled]="loading" ghost
+								<button *ngIf="(start$ | async)" (click)="toggleStart(false)" [disabled]="loading" ghost
 									class="button-ghost">
 									<nb-icon class="start-button" icon="stop-circle-outline">
 									</nb-icon>
@@ -80,24 +80,24 @@
 							<div class="col-12 form-group tp-padding">
 								<div class="row">
 									<div class="col-12" *ngIf="
-											appSetting &&
-											appSetting.visibleAwOption
+											(appSetting$ | async) &&
+											(appSetting$ | async).visibleAwOption
 										">
 										<div class="row">
 											<div class="col-8">
-												<nb-checkbox [checked]="aw" (change)="setAW($event)">ActivityWatch
+												<nb-checkbox [checked]="aw$ | async" (change)="setAW($event)">ActivityWatch
 												</nb-checkbox>
 											</div>
 											<div class="col-4 text-right">
-												<nb-icon [icon]="iconAw" [status]="statusIcon">
+												<nb-icon [icon]="iconAw$ | async" [status]="statusIcon$ | async">
 												</nb-icon>
 											</div>
 										</div>
 									</div>
 
 									<div class="col-12" *ngIf="
-											appSetting &&
-											appSetting.visibleWakatimeOption
+										(appSetting$ | async) &&
+										(appSetting$ | async).visibleWakatimeOption
 										">
 										<div class="row">
 											<div class="col-8">
@@ -114,8 +114,8 @@
 									<div class="col-12 center-text">
 										<span class="org-name">
 											{{
-												userOrganization.name
-													? userOrganization.name
+												(userOrganization$ | async).name
+													? (userOrganization$ | async).name
 													: 'UNKNOWN'
 											}}
 										</span>
@@ -124,8 +124,8 @@
 								<div class="row">
 									<div class="col-12 center-text">
 										<span class="work-today">Total Worked Today
-											{{ todayDuration.hours }}:{{
-												todayDuration.minutes
+											{{ (todayDuration$ | async).hours }}:{{
+												(todayDuration$ | async).minutes
 											}}</span>
 									</div>
 								</div>
@@ -143,22 +143,22 @@
 															capture</span>
 													</div>
 													<div *ngIf="
-															lastScreenCapture.textTime
+													(lastScreenCapture$ | async).textTime
 														" class="col-6 screen-capture-label-right">
 														<span>{{
-															lastScreenCapture.textTime
+															(lastScreenCapture$ | async).textTime
 														}}</span>
 													</div>
 												</div>
 											</nb-card-header>
 											<nb-card-body class="max-card p-0">
 												<img class="screen-capture-img" *ngIf="
-														lastScreenCapture.fullUrl
+												(lastScreenCapture$ | async).fullUrl
 													" [src]="
-														lastScreenCapture.fullUrl
+													(lastScreenCapture$ | async).fullUrl
 													" (error)="updateImageUrl($event)" />
 												<nb-icon *ngIf="
-														!lastScreenCapture.fullUrl
+														!(lastScreenCapture$ | async).fullUrl
 													" icon="image-outline" class="icon-img-size">
 												</nb-icon>
 												<div class="overlay-img">
@@ -196,12 +196,12 @@
 							</div>
 						</div>
 						<div class="row">
-							<div class="col-12" *ngIf="lastScreenCapture.textTime">
+							<div class="col-12" *ngIf="(lastScreenCapture$ | async).textTime">
 								<div class="last-screenshot-time">
 									<div class="col-12 center-text">
 										<span>Last screenshot taken at
 											{{
-												lastScreenCapture?.recordedAt
+												(lastScreenCapture$ | async).recordedAt
 													| date: 'H:mm'
 											}}</span>
 									</div>
