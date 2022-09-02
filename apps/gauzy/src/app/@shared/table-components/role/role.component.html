@@ -3,6 +3,6 @@
 		*ngIf="role"
 		position="left"
 		[status]="status"
-		[text]="role | replace: '_':' '"
+		[text]="role?.name | replace: '_':' '"
 	></nb-badge>
 </div>

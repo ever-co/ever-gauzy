@@ -5,7 +5,6 @@ import { Invite } from './../../core/entities/internal';
 export class FindPublicInviteByEmailTokenQuery implements IQuery {
 
 	constructor(
-		public readonly params: FindOptionsWhere<Invite>,
-		public readonly relations: string[]
+		public readonly params: FindOptionsWhere<Invite>
 	) {}
 }

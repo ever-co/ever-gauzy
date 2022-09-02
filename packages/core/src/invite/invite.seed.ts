@@ -1,10 +1,11 @@
 import { DataSource } from 'typeorm';
 import { faker } from '@ever-co/faker';
-import { InviteStatusEnum, IOrganization, ITenant, IUser, RolesEnum } from '@gauzy/contracts';
+import { InviteStatusEnum, IOrganization, ITenant, IUser } from '@gauzy/contracts';
 import { sign } from 'jsonwebtoken';
 import { environment as env } from '@gauzy/config';
 import * as moment from 'moment';
-import { Invite, Role } from './../core/entities/internal';
+import { Invite } from './invite.entity';
+import { Role } from './../core/entities/internal';
 
 export const createDefaultEmployeeInviteSent = async (
 	dataSource: DataSource,
@@ -14,15 +15,9 @@ export const createDefaultEmployeeInviteSent = async (
 ): Promise<any> => {
 	const totalInvites: Invite[] = [];
 	const invitationStatus = Object.values(InviteStatusEnum);
-
 	const { id: tenantId } = tenant;
-	const employeeRole = await dataSource.manager.findBy(Role, {
-		tenantId,
-		name: RolesEnum.EMPLOYEE
-	});
-	const candidateRole = await dataSource.manager.findBy(Role, {
-		tenantId,
-		name: RolesEnum.CANDIDATE
+	const roles = await dataSource.manager.findBy(Role, {
+		tenantId
 	});
 	organizations.forEach((organization: IOrganization) => {
 		for (let i = 0; i < 10; i++) {
@@ -34,10 +29,7 @@ export const createDefaultEmployeeInviteSent = async (
 			);
 			invitee.invitedBy = faker.random.arrayElement(SuperAdmin);
 			invitee.organizationId = organization.id;
-			invitee.role = faker.random.arrayElement([
-				employeeRole[0],
-				candidateRole[0]
-			]);
+			invitee.role = faker.random.arrayElement(roles);
 			invitee.status = faker.random.arrayElement(invitationStatus);
 			invitee.token = createToken(invitee.email);
 			invitee.tenant = tenant;
@@ -59,13 +51,8 @@ export const createRandomEmployeeInviteSent = async (
 
 	for (const tenant of tenants) {
 		const { id: tenantId } = tenant;
-		const employeeRole = await dataSource.manager.findBy(Role, {
-			tenantId,
-			name: RolesEnum.EMPLOYEE
-		});
-		const candidateRole = await dataSource.manager.findBy(Role, {
-			tenantId,
-			name: RolesEnum.CANDIDATE
+		const roles = await dataSource.manager.findBy(Role, {
+			tenantId
 		});
 		const organizations = tenantOrganizationsMap.get(tenant);
 		const admins = tenantSuperAdminMap.get(tenant);
@@ -79,10 +66,7 @@ export const createRandomEmployeeInviteSent = async (
 				);
 				invitee.invitedBy = faker.random.arrayElement(admins);
 				invitee.organizationId = organization.id;
-				invitee.role = faker.random.arrayElement([
-					employeeRole[0],
-					candidateRole[0]
-				]);
+				invitee.role = faker.random.arrayElement(roles);
 				invitee.status = faker.random.arrayElement(invitationStatus);
 				invitee.token = createToken(invitee.email);
 				invitee.tenant = tenant;
@@ -93,7 +77,7 @@ export const createRandomEmployeeInviteSent = async (
 	await dataSource.manager.save(totalInvites);
 };
 
-function createToken(email): string {
+function createToken(email: string): string {
 	const token: string = sign({ email }, env.JWT_SECRET, {});
 	return token;
 }

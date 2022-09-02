@@ -12,9 +12,9 @@ export class FindPublicInviteByEmailTokenHandler
     ) {}
 
     async execute(query: FindPublicInviteByEmailTokenQuery) {
-        const { params, relations = [] } = query;
+        const { params } = query;
         try {
-            return await this.inviteService.validate(params, relations);
+            return await this.inviteService.validate(params);
         } catch (error) {
             throw new BadRequestException();
         }

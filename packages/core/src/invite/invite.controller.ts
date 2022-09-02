@@ -6,7 +6,8 @@ import {
 	LanguagesEnum,
 	IOrganizationContactAcceptInviteInput,
 	IOrganizationContact,
-	IPagination
+	IPagination,
+	IInvite
 } from '@gauzy/contracts';
 import {
 	Body,
@@ -23,16 +24,13 @@ import {
 	Put,
 	Req,
 	UseInterceptors,
-	UsePipes,
-	ValidationPipe,
-	MethodNotAllowedException
+	ValidationPipe
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import {
 	ApiOperation,
 	ApiResponse,
-	ApiTags,
-	ApiExcludeEndpoint
+	ApiTags
 } from '@nestjs/swagger';
 import { DeleteResult, UpdateResult } from 'typeorm';
 import { Request } from 'express';
@@ -42,8 +40,9 @@ import { Invite } from './invite.entity';
 import { InviteService } from './invite.service';
 import { LanguageDecorator, Permissions } from './../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
-import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
+import { UUIDValidationPipe } from './../shared/pipes';
 import { TransformInterceptor } from './../core/interceptors';
+import { PaginationParams } from './../core/crud';
 import {
 	InviteAcceptCommand,
 	InviteAcceptOrganizationContactCommand,
@@ -78,9 +77,8 @@ export class InviteController {
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_INVITE_EDIT)
 	@Post('/emails')
-	@UsePipes(new ValidationPipe({ transform: true }))
 	async createManyWithEmailsId(
-		@Body() entity: CreateInviteDTO,
+		@Body(new ValidationPipe({ transform: true })) entity: CreateInviteDTO,
 		@LanguageDecorator() languageCode: LanguagesEnum
 	): Promise<ICreateEmailInvitesOutput> {
 		return await this.commandBus.execute(
@@ -103,12 +101,17 @@ export class InviteController {
 	})
 	@Public()
 	@Get('validate')
-	async validateInvite(@Query() options: FindInviteQueryDTO) {
+	async validateInvite(
+		@Query(new ValidationPipe({
+			transform: true,
+			whitelist: true
+		})) options: FindInviteQueryDTO
+	) {
 		return await this.queryBus.execute(
 			new FindPublicInviteByEmailTokenQuery({
 				email: options.email,
 				token: options.token
-			}, options.relations)
+			})
 		);
 	}
 
@@ -137,6 +140,12 @@ export class InviteController {
 		);
 	}
 
+	/**
+	 * Find All Invites
+	 *
+	 * @param options
+	 * @returns
+	 */
 	@ApiOperation({ summary: 'Find all invites.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -148,19 +157,12 @@ export class InviteController {
 		description: 'Record not found'
 	})
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
-	@Permissions(
-		PermissionsEnum.ORG_INVITE_VIEW,
-		PermissionsEnum.ORG_INVITE_EDIT
-	)
+	@Permissions(PermissionsEnum.ORG_INVITE_VIEW)
 	@Get()
 	async findAll(
-		@Query('data', ParseJsonPipe) data: any
-	): Promise<IPagination<Invite>> {
-		const { relations, findInput } = data;
-		return this.inviteService.findAll({
-			where: findInput,
-			relations
-		});
+		@Query(new ValidationPipe({ transform: true })) options: PaginationParams<Invite>
+	): Promise<IPagination<IInvite>> {
+		return await this.inviteService.findAllInvites(options);
 	}
 
 	@ApiOperation({ summary: 'Accept organization contact invite.' })
@@ -223,14 +225,6 @@ export class InviteController {
 		@Param('id', UUIDValidationPipe) id: string
 	): Promise<DeleteResult> {
 		return this.inviteService.delete(id);
-	}
-
-	@ApiExcludeEndpoint()
-	@Put()
-	async update(
-		@Param('id', UUIDValidationPipe) id: string
-	): Promise<any> {
-		throw new MethodNotAllowedException();
 	}
 
 	@ApiOperation({ summary: 'Update an existing record' })

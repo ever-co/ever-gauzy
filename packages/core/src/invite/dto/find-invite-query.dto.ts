@@ -1,13 +1,5 @@
-import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { Transform, TransformFnParams } from "class-transformer";
-import { IsEmail, IsEnum, IsNotEmpty, IsOptional, IsString } from "class-validator";
-
-/**
- * Get public invite request DTO validation
- */
-export enum RelationEnum {
-    'organization' = 'organization'
-}
+import { ApiProperty } from "@nestjs/swagger";
+import { IsEmail, IsNotEmpty, IsString } from "class-validator";
 
 export class FindInviteQueryDTO {
 
@@ -20,10 +12,4 @@ export class FindInviteQueryDTO {
 	@IsNotEmpty()
 	@IsString()
 	readonly token: string;
-
-    @ApiPropertyOptional({ type: () => String, enum: RelationEnum, readOnly: true })
-    @IsOptional()
-    @Transform(({ value }: TransformFnParams) => (value) ? value.map((element: string) => element.trim()) : {})
-    @IsEnum(RelationEnum, { each: true })
-    readonly relations: string[];
 }
