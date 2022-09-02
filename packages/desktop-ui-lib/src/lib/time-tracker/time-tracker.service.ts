@@ -314,15 +314,15 @@ export class TimeTrackerService {
 
 		log.info(`Get Time Slot: ${moment().format()}`);
 
-		return this.http
+		return firstValueFrom(
+			this.http
 			.get(
 				`${values.apiHost}/api/timesheet/time-slot/${values.timeSlotId}?relations[]=screenshots&relations[]=activities&relations[]=employee`,
 				{
 					headers: headers
 				}
 			)
-			.pipe()
-			.toPromise();
+		)
 	}
 
 	pingAw(host) {

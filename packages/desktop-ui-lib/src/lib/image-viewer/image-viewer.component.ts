@@ -3,10 +3,9 @@ import {
 	OnInit,
 	ViewChild,
 	ElementRef,
-	ChangeDetectorRef
+	NgZone
 } from '@angular/core';
 import { transition, trigger, style, animate } from '@angular/animations';
-import { NbDialogRef } from '@nebular/theme';
 import { ElectronServices } from '../electron/services';
 export const fadeInOutAnimation = trigger('fadeInOut', [
 	transition(':enter', [
@@ -38,16 +37,20 @@ export class ImageViewerComponent implements OnInit {
 	constructor(
 		// private dialogRef: NbDialogRef<any>
 		private electronService: ElectronServices,
-		private _cdr: ChangeDetectorRef
-	) {
-		this.electronService.ipcRenderer.on('show_image', (event, arg) => {
-			this.items = arg;
-			this.item = arg[0];
-			this._cdr.detectChanges();
-		});
-	}
+		private readonly _ngZone: NgZone
+	) {}
 
 	ngOnInit(): void {
+		this.electronService.ipcRenderer.on('show_image', (event, arg) => {
+			this._ngZone.run(() => {
+				this.items = arg.sort((a, b) => {
+					const c: any = new Date(b.createdAt);
+					const d: any = new Date(a.createdAt);
+					return c - d;
+				});
+				this.item = this.items[0];
+			});
+		});
 		this.active_index = 0;
 	}
 
@@ -64,14 +67,12 @@ export class ImageViewerComponent implements OnInit {
 		);
 		this.item = this.items[this.active_index];
 		this.updateActiveIndex();
-		this._cdr.detectChanges();
 	}
 
 	prev($event) {
 		$event.stopPropagation();
 		this.active_index = Math.max(this.active_index - 1, 0);
 		this.item = this.items[this.active_index];
-		this._cdr.detectChanges();
 		this.updateActiveIndex();
 	}
 
@@ -86,23 +87,21 @@ export class ImageViewerComponent implements OnInit {
 		} else {
 			this.item = selectedItem;
 		}
-		this._cdr.detectChanges();
 		this.updateActiveIndex();
 	}
 
 	updateActiveIndex() {
-		const activeItem = this.customScroll.nativeElement.querySelector(
-			'.thumb-item-active'
-		);
+		const activeItem =
+			this.customScroll.nativeElement.querySelector('.thumb-item-active');
 		if (activeItem) {
 			const position = activeItem.getBoundingClientRect();
 			if (position) {
 				const left: any = position.left;
 				const right: any = position.left + activeItem.clientWidth;
-				const scrollRight: any = this.customScroll.nativeElement
-					.clientWidth;
-				const scrollLeft: any = this.customScroll.nativeElement
-					.scrollLeft;
+				const scrollRight: any =
+					this.customScroll.nativeElement.clientWidth;
+				const scrollLeft: any =
+					this.customScroll.nativeElement.scrollLeft;
 
 				if (left < Math.abs(scrollLeft) || right > scrollRight) {
 					this.customScroll.nativeElement.scrollTo({
@@ -111,6 +110,5 @@ export class ImageViewerComponent implements OnInit {
 				}
 			}
 		}
-		this._cdr.detectChanges();
 	}
 }
