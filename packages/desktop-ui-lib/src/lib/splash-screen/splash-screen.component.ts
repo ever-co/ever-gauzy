@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, NgZone } from '@angular/core';
 import { ElectronService } from 'ngx-electron';
 @Component({
 	selector: 'ngx-screen-capture',
@@ -11,17 +11,18 @@ export class SplashScreenComponent implements OnInit {
 
 	constructor(
 		private readonly electronService: ElectronService,
-		private _cdr: ChangeDetectorRef
-	) {
+		private _ngZone: NgZone
+	) {}
+
+	ngOnInit(): void {
 		this.electronService.ipcRenderer.on(
 			'show_popup_screen_capture',
 			(event, arg) => {
-				this.screenCaptureUrl = arg.imgUrl;
-				this.note = arg.note;
-				this._cdr.detectChanges();
+				this._ngZone.run(() => {
+					this.screenCaptureUrl = arg.imgUrl;
+					this.note = arg.note;
+				});
 			}
 		);
 	}
-
-	ngOnInit(): void {}
 }

@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, NgZone } from '@angular/core';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { ElectronServices } from '../electron/services';
 const log = window.require('electron-log');
@@ -15,20 +15,22 @@ export class ScreenCaptureComponent implements OnInit {
 
 	constructor(
 		private readonly electronService: ElectronServices,
-		private _cdr: ChangeDetectorRef,
+		private _ngZone: NgZone,
 		private domSanitizer: DomSanitizer
-	) {
-		this.electronService.ipcRenderer.on(
-			'show_popup_screen_capture',
-			(event, arg) => {
-				this.note = arg.note;
-				this._cdr.detectChanges();
-			}
-		);
-	}
+	) {}
 
 	ngOnInit(): void {
 		const imgSrc = this.electronService.remote.getGlobal('variableGlobal');
-		this.screenCaptureUrl = this.domSanitizer.bypassSecurityTrustUrl(imgSrc.screenshotSrc);
+		this.electronService.ipcRenderer.on(
+			'show_popup_screen_capture',
+			(event, arg) => {
+				this._ngZone.run(() => {
+					this.note = arg.note;
+				});
+			}
+		);
+		this.screenCaptureUrl = this.domSanitizer.bypassSecurityTrustUrl(
+			imgSrc.screenshotSrc
+		);
 	}
 }

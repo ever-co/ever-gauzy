@@ -185,8 +185,6 @@ export async function seedProjectMembersCount(
 	for await (const tenant of tenants) {
 		const tenantId = tenant.id;
 
-    	console.log(`Processing tenant: ${tenantId}`);
-
 		/**
 		 * GET all tenant projects for specific tenant
 		 */
@@ -194,13 +192,9 @@ export async function seedProjectMembersCount(
 			tenantId
 		]);
 
-    	console.log(`Find ${projects.length} projects in tenant ${tenantId}`);
-
 		for await (const project of projects) {
 
 			const projectId = project.id;
-
-      		console.log(`Processing project ${projectId} in tenant ${tenantId}`);
 
 			/**
 			 * GET member counts for organization project
@@ -219,11 +213,7 @@ export async function seedProjectMembersCount(
 
 			const count = members['count'];
 
-      		console.log(`Members qty: ${count}`);
-
 			await dataSource.manager.query(`UPDATE "organization_project" SET "membersCount" = $1 WHERE "id" = $2`, [count, projectId]);
-
-      		console.log('Updated Members qty');
 		}
 	}
 }
