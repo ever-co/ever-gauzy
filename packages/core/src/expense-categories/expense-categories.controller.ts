@@ -10,6 +10,7 @@ import {
 	ValidationPipe,
 	Post
 } from '@nestjs/common';
+import { CommandBus } from '@nestjs/cqrs';
 import { ApiTags } from '@nestjs/swagger';
 import { IExpenseCategory, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import { CrudController, PaginationParams } from './../core/crud';
@@ -18,7 +19,14 @@ import { ExpenseCategory } from './expense-category.entity';
 import { Permissions } from './../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { UUIDValidationPipe } from './../shared/pipes';
-import { CreateExpenseCategoryDTO, UpdateExpenseCategoryDTO } from './dto';
+import {
+	CreateExpenseCategoryDTO,
+	UpdateExpenseCategoryDTO
+} from './dto';
+import {
+	ExpenseCategoryCreateCommand,
+	ExpenseCategoryUpdateCommand
+} from './commands';
 
 @ApiTags('ExpenseCategories')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -26,9 +34,10 @@ import { CreateExpenseCategoryDTO, UpdateExpenseCategoryDTO } from './dto';
 @Controller()
 export class ExpenseCategoriesController extends CrudController<ExpenseCategory> {
 	constructor(
-		private readonly expenseCategoriesService: ExpenseCategoriesService
+		private readonly _expenseCategoriesService: ExpenseCategoriesService,
+		private readonly _commandBus: CommandBus
 	) {
-		super(expenseCategoriesService);
+		super(_expenseCategoriesService);
 	}
 
 	/**
@@ -43,7 +52,7 @@ export class ExpenseCategoriesController extends CrudController<ExpenseCategory>
 	async pagination(
 		@Query() options: PaginationParams<IExpenseCategory>
 	): Promise<IPagination<IExpenseCategory>> {
-		return this.expenseCategoriesService.paginate(options);
+		return this._expenseCategoriesService.paginate(options);
 	}
 
 	/**
@@ -58,8 +67,7 @@ export class ExpenseCategoriesController extends CrudController<ExpenseCategory>
 	async findAll(
 		@Query() options: PaginationParams<ExpenseCategory>
 	): Promise<IPagination<IExpenseCategory>> {
-		console.log({ options });
-		return await this.expenseCategoriesService.findAll(options);
+		return await this._expenseCategoriesService.findAll(options);
 	}
 
 	/**
@@ -75,7 +83,9 @@ export class ExpenseCategoriesController extends CrudController<ExpenseCategory>
 			whitelist: true
 		})) entity: CreateExpenseCategoryDTO
 	): Promise<IExpenseCategory> {
-		return await this.expenseCategoriesService.create(entity);
+		return await this._commandBus.execute(
+			new ExpenseCategoryCreateCommand(entity)
+		);
 	}
 
 	/**
@@ -93,9 +103,8 @@ export class ExpenseCategoriesController extends CrudController<ExpenseCategory>
 			whitelist: true
 		})) entity: UpdateExpenseCategoryDTO
 	): Promise<IExpenseCategory> {
-		return await this.expenseCategoriesService.create({
-			id,
-			...entity
-		});
+		return await this._commandBus.execute(
+			new ExpenseCategoryUpdateCommand(id, entity)
+		);
 	}
 }
