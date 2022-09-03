@@ -1,5 +1,5 @@
 import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
+import { Not, Repository } from "typeorm";
 import {
 	ValidationArguments,
 	ValidatorConstraint,
@@ -27,15 +27,27 @@ export class IsExpenseCategoryAlreadyExistConstraint
 	 * Method to be called to perform custom validation over given value.
 	 */
 	async validate(name: any, args: ValidationArguments): Promise<boolean> {
-		const obejct: object = args.object;
+		const object: object = args.object;
 		try {
-			if (obejct['organizationId'] || obejct['organization']['id']) {
-				const organizationId = obejct['organizationId'] || obejct['organization']['id'];
-				return !(await this.repository.findOneByOrFail({
-					name,
-					organizationId,
-					tenantId: RequestContext.currentTenantId()
-				}));
+			if (object['organizationId'] || object['organization']['id']) {
+				const organizationId = object['organizationId'] || object['organization']['id'];
+				if (args.targetName === 'UpdateExpenseCategoryDTO') {
+					if (object['id']) {
+						return !(await this.repository.findOneByOrFail({
+							id: Not(object['id']),
+							name,
+							organizationId,
+							tenantId: RequestContext.currentTenantId()
+						}));
+					}
+					return true;
+				} else {
+					return !(await this.repository.findOneByOrFail({
+						name,
+						organizationId,
+						tenantId: RequestContext.currentTenantId()
+					}));
+				}
 			}
 			return true;
 		} catch (error) {
@@ -48,6 +60,6 @@ export class IsExpenseCategoryAlreadyExistConstraint
      */
 	defaultMessage(validationArguments?: ValidationArguments): string {
 		const { value } = validationArguments;
-		return `Expense category ${value} already exists.`;
+		return `${value} already exists, please enter another category.`;
 	}
 }
