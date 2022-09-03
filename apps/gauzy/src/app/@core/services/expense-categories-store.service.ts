@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { IExpenseCategory } from '@gauzy/contracts';
+import { IExpenseCategory, IExpenseCategoryFind } from '@gauzy/contracts';
 import { tap } from 'rxjs/operators';
 import { ExpenseCategoriesService } from './expense-categories.service';
 
@@ -21,21 +21,21 @@ export class ExpenseCategoriesStoreService {
 
 	constructor(private expenseCategoriesService: ExpenseCategoriesService) {}
 
-	loadAll(): void {
+	loadAll(where: IExpenseCategoryFind): void {
 		this.expenseCategoriesService
-			.getAll()
+			.getAll(where)
 			.pipe(tap(({ items }) => this._expenseCategories$.next(items)))
 			.subscribe();
 	}
 
-	create(name): Observable<IExpenseCategory> {
+	create(category: IExpenseCategory): Observable<IExpenseCategory> {
 		return this.expenseCategoriesService
-			.create({ name })
+			.create(category)
 			.pipe(
-				tap((expenseCategory) =>
+				tap((category: IExpenseCategory) =>
 					this._expenseCategories$.next([
 						...this.expenseCategories,
-						expenseCategory
+						category
 					])
 				)
 			);

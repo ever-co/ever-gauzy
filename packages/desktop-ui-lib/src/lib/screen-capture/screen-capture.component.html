@@ -1,38 +1,18 @@
-<nb-layout>
-	<nb-layout-column class="top-bottom-space">
-		<nb-card class="no-padding">
-			<nb-card-body class="no-padding">
-				<div class="row" style="margin: auto">
-					<div class="col-1">
-						<div class="row">
-							<div class="col-12">
-								<img
-									class="icon-logo"
-									src="./assets/icons/icon_16x16.png"
-								/>
-							</div>
-						</div>
+<nb-layout class="p-0 m-0">
+	<nb-layout-column class="top-bottom-space p-0 m-0">
+		<nb-card class="no-padding p-0 m-0">
+			<nb-card-body class="notification no-padding p-0 m-0">
+				<div class="notification-header">
+					<div class="notification-header-title">
+						<img class="icon-logo" src="./assets/icons/icon_16x16.png" />
+						<div class="title-window">Screen Capture</div>
 					</div>
-					<div class="col-10 right-custom">
-						<div class="row">
-							<div class="col-12" style="text-align: left">
-								<p class="margin-p">
-									<span class="title-window"
-										>Screen Capture</span
-									>
-								</p>
-								<p class="margin-p">
-									<span class="hidden-long-text">{{ note }}</span>
-								</p>
-							</div>
-							<div class="col-12">
-								<img
-									class="screen-capture-img"
-									[src]="screenCaptureUrl"
-								/>
-							</div>
-						</div>
+					<div class="notification-header-note">
+						<span class="hidden-long-text">{{ note }}</span>
 					</div>
+				</div>
+				<div class="notification-body">
+					<img class="screen-capture-img" [src]="screenCaptureUrl" />
 				</div>
 			</nb-card-body>
 		</nb-card>

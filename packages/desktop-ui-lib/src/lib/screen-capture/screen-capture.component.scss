@@ -1,5 +1,8 @@
 .screen-capture-img {
   width: 100%;
+  border-radius: var(--border-radius);
+  height: 100%;
+  object-fit: cover;
 }
 
 .top-bottom-space {
@@ -7,17 +10,14 @@
 }
 
 .icon-logo {
-  position: relative;
-  left: -5px;
-  top: 10px;
+  width: 16px;
+  height: 16px;
+  border-radius: calc(var(--border-radius) / 2);
 }
 
 .title-window {
-  font-weight: bolder;
-}
-
-.margin-p {
-  margin-bottom: 6px;
+  font-size: 14px;
+  font-weight: 600;
 }
 
 ::ng-deep body {
@@ -25,7 +25,7 @@
 }
 
 ::ng-deep .layout-container {
-  background-color: white;
+  background-color: var(--gauzy-card-1);
 }
 
 ::ng-deep .nb-theme-default nb-card {
@@ -40,13 +40,33 @@
   padding: 0px !important;
 }
 
-.right-custom {
-  padding-right: 10px;
-}
-
 .hidden-long-text {
   display: -webkit-box;
   overflow: hidden;
   -webkit-line-clamp: 1;
   -webkit-box-orient: vertical;
+}
+
+.notification {
+  display: flex;
+  flex-direction: column;
+}
+
+.notification-header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 6px 6px 0 6px;
+  .notification-header-title {
+    display: flex;
+    align-items: flex-start;
+    gap: 4px;
+  }
+}
+
+.notification-body {
+  width: 100%;
+  padding: 6px;
+  align-self: stretch;
 }

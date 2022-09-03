@@ -474,6 +474,7 @@ export async function getScreeshot() {
 export function notifyScreenshot(notificationWindow: BrowserWindow, thumb, windowPath, soundPath, timeTrackerWindow) {
 	const soundCamera = soundPath;
 	const sizes = screen.getPrimaryDisplay().size;
+	const appSetting = LocalStore.getStore('appSetting');
 	// preparing show screenshot
 	const screenCaptureWindow = {
 		width: 310,
@@ -482,7 +483,8 @@ export function notifyScreenshot(notificationWindow: BrowserWindow, thumb, windo
 		webPreferences: {
 			nodeIntegration: true,
 			webSecurity: false,
-			contextIsolation: false			
+			contextIsolation: false,
+			//nativeWindowOpen: false,			
 		}
 	};
 
@@ -507,9 +509,13 @@ export function notifyScreenshot(notificationWindow: BrowserWindow, thumb, windo
 	// notificationWindow.webContents.toggleDevTools();
 	notificationWindow.setMenu(null);
 	notificationWindow.hide();
+	notificationWindow.setVisibleOnAllWorkspaces(true, {
+		visibleOnFullScreen: true,
+		skipTransformProcessType: true
+	});
 	notificationWindow.on('show', () => {
 		setTimeout(() => {
-			notificationWindow.focus();
+			notificationWindow.show();
 		  }, 200);
 	})
 
@@ -522,7 +528,7 @@ export function notifyScreenshot(notificationWindow: BrowserWindow, thumb, windo
 	setTimeout(() => {
 		timeTrackerWindow.webContents.send('last_capture_local', { fullUrl: `data:image/png;base64, ${thumb.img}` });
 		try {
-			if (existsSync(soundCamera)) {
+			if (existsSync(soundCamera) && !appSetting.mutedNotification) {
 				timeTrackerWindow.webContents.send('play_sound', { soundFile: soundCamera })
 			}
 		} catch (err) {

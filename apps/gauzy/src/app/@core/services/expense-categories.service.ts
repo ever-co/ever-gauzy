@@ -1,7 +1,8 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { IExpenseCategory } from '@gauzy/contracts';
+import { IExpenseCategory, IExpenseCategoryFind, IPagination } from '@gauzy/contracts';
+import { toParams } from '@gauzy/common-angular';
 import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable({
@@ -10,16 +11,13 @@ import { API_PREFIX } from '../constants/app.constants';
 export class ExpenseCategoriesService {
 	constructor(private http: HttpClient) {}
 
-	getAll(): Observable<{ items: IExpenseCategory[]; total: number }> {
-		return this.http.get<{ items: IExpenseCategory[]; total: number }>(
-			`${API_PREFIX}/expense-categories`
-		);
+	getAll(where: IExpenseCategoryFind): Observable<IPagination<IExpenseCategory>> {
+		return this.http.get<IPagination<IExpenseCategory>>(`${API_PREFIX}/expense-categories`, {
+			params: toParams({ where })
+		});
 	}
 
-	create(createDto): Observable<IExpenseCategory> {
-		return this.http.post<IExpenseCategory>(
-			`${API_PREFIX}/expense-categories`,
-			createDto
-		);
+	create(category: IExpenseCategory): Observable<IExpenseCategory> {
+		return this.http.post<IExpenseCategory>(`${API_PREFIX}/expense-categories`, category);
 	}
 }

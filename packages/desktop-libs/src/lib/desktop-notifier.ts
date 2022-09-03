@@ -1,5 +1,6 @@
 import { Notification, nativeImage } from 'electron';
 import * as path from 'path';
+import { LocalStore } from './desktop-store';
 
 export default class NotificationDesktop {
 	timerActionNotification(isStart) {
@@ -7,11 +8,13 @@ export default class NotificationDesktop {
 		console.log(iconPath);
 		const iconNativePath = nativeImage.createFromPath(iconPath);
 		iconNativePath.resize({ width: 16, height: 16 });
+		const appSetting = LocalStore.getStore('appSetting');
 		const notification = new Notification({
 			title: 'Gauzy',
 			body: isStart ? 'Time Tracking Started' : 'Time Tracking Stopped',
 			icon: iconNativePath,
-			closeButtonText: 'Close'
+			closeButtonText: 'Close',
+			silent: appSetting.mutedNotification
 		});
 
 		notification.show();
@@ -25,16 +28,18 @@ export default class NotificationDesktop {
 		console.log(iconPath);
 		const iconNativePath = nativeImage.createFromPath(iconPath);
 		iconNativePath.resize({ width: 16, height: 16 });
+		const appSetting = LocalStore.getStore('appSetting');
 		const notification = new Notification({
 			title: title,
 			body: message,
 			icon: iconNativePath,
-			closeButtonText: 'Close'
+			closeButtonText: 'Close',
+			silent: appSetting.mutedNotification
 		});
 
 		notification.show();
 		setTimeout(() => {
 			notification.close();
-		}, 30 * 1000);
+		}, 3000);
 	}
 }

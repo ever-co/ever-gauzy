@@ -5,23 +5,22 @@ import {
 	OnDestroy,
 	AfterViewInit
 } from '@angular/core';
-import { Router, RouterEvent, NavigationEnd } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
 import { filter, tap, debounceTime } from 'rxjs/operators';
 import { Subject, firstValueFrom } from 'rxjs';
-import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
+import { Ng2SmartTableComponent } from 'ng2-smart-table';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
 	IApprovalPolicy,
 	ComponentLayoutStyleEnum,
-	IApprovalPolicyFindInput,
 	IOrganization
 } from '@gauzy/contracts';
+import { distinctUntilChange } from '@gauzy/common-angular';
 import { ApprovalPolicyMutationComponent } from '../../@shared/approval-policy';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
-import { ComponentEnum } from '../../@core/constants';
-import { distinctUntilChange } from '@gauzy/common-angular';
+import { API_PREFIX, ComponentEnum } from '../../@core/constants';
 import {
 	ApprovalPolicyService,
 	Store,
@@ -31,6 +30,8 @@ import {
 	PaginationFilterBaseComponent,
 	IPaginationBase
 } from '../../@shared/pagination/pagination-filter-base.component';
+import { ServerDataSource } from '../../@core/utils/smart-table';
+import { InputFilterComponent } from '../../@shared/table-filters';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -38,17 +39,16 @@ import {
 	templateUrl: './approval-policy.component.html',
 	styleUrls: ['./approval-policy.component.scss']
 })
-export class ApprovalPolicyComponent
-	extends PaginationFilterBaseComponent
-	implements AfterViewInit, OnInit, OnDestroy
-{
+export class ApprovalPolicyComponent extends PaginationFilterBaseComponent
+	implements AfterViewInit, OnInit, OnDestroy {
+
 	public settingsSmartTable: object;
 
-	public loading: boolean;
-	public disableButton = true;
+	public loading: boolean = false;
+	public disableButton: boolean = true;
 
 	public selectedApprovalPolicy: IApprovalPolicy;
-	public smartTableSource = new LocalDataSource();
+	public smartTableSource: ServerDataSource;
 	approvalPolicies: IApprovalPolicy[] = [];
 
 	viewComponentName: ComponentEnum = ComponentEnum.APPROVAL_POLICY;
@@ -70,12 +70,12 @@ export class ApprovalPolicyComponent
 	}
 
 	constructor(
+		private readonly httpClient: HttpClient,
 		public readonly translateService: TranslateService,
 		private readonly store: Store,
 		private readonly dialogService: NbDialogService,
 		private readonly toastrService: ToastrService,
-		private readonly approvalPolicyService: ApprovalPolicyService,
-		private readonly router: Router
+		private readonly approvalPolicyService: ApprovalPolicyService
 	) {
 		super(translateService);
 		this.setView();
@@ -90,8 +90,8 @@ export class ApprovalPolicyComponent
 		this.policies$
 			.pipe(
 				debounceTime(300),
-				tap(() => this.getApprovalPolicies()),
 				tap(() => this.clearItem()),
+				tap(() => this.getApprovalPolicies()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -106,8 +106,8 @@ export class ApprovalPolicyComponent
 		this.store.selectedOrganization$
 			.pipe(
 				debounceTime(300),
-				filter((organization: IOrganization) => !!organization),
 				distinctUntilChange(),
+				filter((organization: IOrganization) => !!organization),
 				tap(
 					(organization: IOrganization) =>
 						(this.organization = organization)
@@ -117,13 +117,6 @@ export class ApprovalPolicyComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.router.events
-			.pipe(untilDestroyed(this))
-			.subscribe((event: RouterEvent) => {
-				if (event instanceof NavigationEnd) {
-					this.setView();
-				}
-			});
 		this._refresh$
 			.pipe(
 				filter(() => this._isGridLayout),
@@ -166,56 +159,77 @@ export class ApprovalPolicyComponent
 	}
 
 	async getApprovalPolicies() {
-		this.loading = true;
+		if (!this.organization) {
+			return;
+		}
 		try {
-			const { tenantId } = this.store.user;
-			const { id: organizationId } = this.organization;
+			this.setSmartTableSource();
+
 			const { activePage, itemsPerPage } = this.getPagination();
-			const { items = [] } = await this.approvalPolicyService.getAll(
-				['organization'],
-				{ tenantId, organizationId } as IApprovalPolicyFindInput
-			);
 			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
-			this.smartTableSource.load(items);
-			if (this._isGridLayout) this._loadGridLayoutData();
+
+			if (this._isGridLayout) this._loadGridLayout();
 		} catch (error) {
 			console.log('Error while retrieving approval policies', error);
-		} finally {
-			this.setPagination({
-				...this.getPagination(),
-				totalItems: this.smartTableSource.count()
-			});
-			this.loading = false;
+			this.toastrService.danger(error);
 		}
 	}
 
-	private async _loadGridLayoutData() {
+	private async _loadGridLayout() {
 		const data = await this.smartTableSource.getElements();
 		this.approvalPolicies.push(...data);
+	}
+
+	/*
+	 * Register Smart Table Source Config
+	 */
+	private setSmartTableSource() {
+		if (!this.organization) {
+			return;
+		}
+		this.loading = true;
+		const { id: organizationId, tenantId } = this.organization;
+
+		this.smartTableSource = new ServerDataSource(this.httpClient, {
+			endPoint: `${API_PREFIX}/approval-policy/pagination`,
+			where: {
+				organizationId,
+				tenantId,
+				...(this.filters.where ? this.filters.where : {})
+			},
+			finalize: () => {
+				this.setPagination({
+					...this.getPagination(),
+					totalItems: this.smartTableSource.count()
+				});
+				this.loading = false;
+			}
+		});
 	}
 
 	private _loadSmartTableSettings() {
 		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
 			actions: false,
+			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.APPROVAL_POLICY'),
 			pager: {
 				display: false,
-				perPage: pagination ? pagination : 10
+				perPage: pagination ? pagination.itemsPerPage : 10
 			},
-			noDataMessage: this.getTranslation(
-				'SM_TABLE.NO_DATA.APPROVAL_POLICY'
-			),
 			columns: {
 				name: {
-					title: this.getTranslation(
-						'APPROVAL_POLICY_PAGE.APPROVAL_POLICY_NAME'
-					),
-					type: 'string'
+					title: this.getTranslation('APPROVAL_POLICY_PAGE.APPROVAL_POLICY_NAME'),
+					type: 'string',
+					filter: {
+						type: 'custom',
+						component: InputFilterComponent
+					},
+					filterFunction: (value: string) => {
+						this.setFilter({ field: 'name', search: value });
+					}
 				},
 				description: {
-					title: this.getTranslation(
-						'APPROVAL_POLICY_PAGE.APPROVAL_POLICY_DESCRIPTION'
-					),
+					title: this.getTranslation('APPROVAL_POLICY_PAGE.APPROVAL_POLICY_DESCRIPTION'),
 					type: 'string',
 					filter: false
 				}
@@ -346,5 +360,5 @@ export class ApprovalPolicyComponent
 		return this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID;
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy(): void {}
 }

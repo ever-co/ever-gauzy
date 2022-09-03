@@ -219,6 +219,7 @@ export class ExpenseCategoriesComponent
 				const { tenantId } = this.store.user;
 
 				await this.organizationExpenseCategoryService.update(id, {
+					id,
 					organizationId,
 					tenantId,
 					...category

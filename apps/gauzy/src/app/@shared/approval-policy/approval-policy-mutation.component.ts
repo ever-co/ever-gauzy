@@ -9,23 +9,21 @@ import { NbDialogRef } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, tap } from 'rxjs/operators';
-import { ApprovalPolicyService, Store } from '../../@core/services';
+import { ApprovalPolicyService, Store, ToastrService } from '../../@core/services';
 import { FormHelpers } from '../forms/helpers';
 import { TranslationBaseComponent } from '../language-base';
-
 
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-approval-policy-mutation',
 	templateUrl: './approval-policy-mutation.component.html',
-  styleUrls:['./approval-policy-mutation.component.scss']
+  	styleUrls:['./approval-policy-mutation.component.scss']
 })
-export class ApprovalPolicyMutationComponent
-	extends TranslationBaseComponent
+export class ApprovalPolicyMutationComponent extends TranslationBaseComponent
 	implements OnInit {
 
 	FormHelpers: typeof FormHelpers = FormHelpers;
-	organization: IOrganization;
+	public organization: IOrganization;
 
 	@ViewChild('formDirective') formDirective: FormGroupDirective;
 	/*
@@ -46,7 +44,7 @@ export class ApprovalPolicyMutationComponent
 	public form: FormGroup = ApprovalPolicyMutationComponent.buildForm(this.fb);
 	static buildForm(fb: FormBuilder): FormGroup {
 		return fb.group({
-			name: ['', Validators.required],
+			name: [null, Validators.required],
 			description: [],
 		});
 	}
@@ -56,7 +54,8 @@ export class ApprovalPolicyMutationComponent
 		private readonly approvalPolicyService: ApprovalPolicyService,
 		private readonly fb: FormBuilder,
 		public readonly translationService: TranslateService,
-		private readonly store: Store
+		private readonly store: Store,
+		private readonly toastrService: ToastrService,
 	) {
 		super(translationService);
 	}
@@ -71,7 +70,7 @@ export class ApprovalPolicyMutationComponent
 			.subscribe();
 	}
 
-	async patchForm() {
+ 	patchForm() {
 		this.form.setValue({
 			name: this.approvalPolicy ? this.approvalPolicy.name : '',
 			description: this.approvalPolicy ? this.approvalPolicy.description : ''
@@ -79,29 +78,35 @@ export class ApprovalPolicyMutationComponent
 		this.form.updateValueAndValidity();
 	}
 
-	async closeDialog(approvalPolicy?: IApprovalPolicy) {
+	closeDialog(approvalPolicy?: IApprovalPolicy) {
 		this.onReset();
 		this.dialogRef.close(approvalPolicy);
 	}
 
 	async onSubmit() {
-		if (this.form.invalid || !this.formDirective.submitted) {
+		if (
+			this.form.invalid ||
+			!this.formDirective.submitted ||
+			!this.organization
+		) {
 			return;
 		}
-
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
-		const id = this.approvalPolicy ? this.approvalPolicy.id : null;
 
 		const approvalPolicy: IApprovalPolicyCreateInput = {
-			...this.form.getRawValue(),
-			id,
 			tenantId,
-			organizationId
+			organizationId,
+			...this.form.getRawValue(),
+			...(this.approvalPolicy ? { id: this.approvalPolicy.id } : {}),
 		};
-
-		const result: IApprovalPolicy = await this.approvalPolicyService.save(approvalPolicy);
-		this.closeDialog(result);
+		try {
+			const result: IApprovalPolicy = await this.approvalPolicyService.save(approvalPolicy);
+			this.closeDialog(result);
+		} catch (error) {
+			console.error('Error while creating/updating approval policy', error);
+			this.toastrService.danger(error);
+		}
 	}
 
 	/**

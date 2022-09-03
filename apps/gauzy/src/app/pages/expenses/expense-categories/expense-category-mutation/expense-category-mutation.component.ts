@@ -24,7 +24,7 @@ import { filter, tap } from 'rxjs/operators';
 	templateUrl: './expense-category-mutation.component.html',
 	styleUrls: ['./expense-category-mutation.component.scss']
 })
-export class ExpenseCategoryMutationComponent extends TranslationBaseComponent 
+export class ExpenseCategoryMutationComponent extends TranslationBaseComponent
 	implements OnInit {
 
 	FormHelpers: typeof FormHelpers = FormHelpers;

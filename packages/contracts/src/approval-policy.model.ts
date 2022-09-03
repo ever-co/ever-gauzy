@@ -7,7 +7,7 @@ export interface IApprovalPolicy
 	approvalType: string;
 }
 
-export interface IApprovalPolicyFindInput 
+export interface IApprovalPolicyFindInput
 	extends IBasePerTenantAndOrganizationEntityModel {
 	name?: string;
 	description?: string;
@@ -19,7 +19,7 @@ export interface IApprovalPolicyCreateInput
 	name?: string;
 }
 
-export interface IApprovalPolicyUpdateInput 
+export interface IApprovalPolicyUpdateInput
 	extends IApprovalPolicyCreateInput {
 	id?: string;
 }
@@ -33,5 +33,5 @@ export enum ApprovalPolicyTypesEnum {
 export enum ApprovalPolicyTypesStringEnum {
 	TIME_OFF = 'TIME_OFF',
 	EQUIPMENT_SHARING = 'EQUIPMENT_SHARING',
-	BUSINESS_TRIP = 'EQUIPMENT_SHARING'
+	BUSINESS_TRIP = 'BUSINESS_TRIP'
 }

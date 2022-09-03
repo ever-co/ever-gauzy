@@ -65,14 +65,51 @@
 					</div>
 				</div>
 			</div>
+			<div class="row">
+				<div class="col-12">
+					<h4>Notification</h4>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-12">
+					<h6>Desktop Notification</h6>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-12">
+					<p>Show desktop notification on screen capture</p>
+				</div>
+			</div>
 			<div class="row notification">
 				<div class="col-10">
 					<nb-card>
 						<nb-card-body>
 							<nb-toggle [(ngModel)]="screenshotNotification"
-								(ngModelChange)="toggleNotificationChange($event)" status="basic">Show Desktop
-								Notification
-								on Screen Capture
+								(ngModelChange)="toggleNotificationChange($event)" status="basic"> Detailled Notification
+							</nb-toggle>
+							<nb-toggle [checked]="!screenshotNotification"
+								(checkedChange)="toggleSimpleNotificationChange($event)" status="basic"> Simple Notification
+							</nb-toggle>
+						</nb-card-body>
+					</nb-card>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-12">
+					<h6>Sound Notification</h6>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-12">
+					<p>Play sound on screen capture</p>
+				</div>
+			</div>
+			<div class="row notification">
+				<div class="col-10">
+					<nb-card>
+						<nb-card-body>
+							<nb-toggle [checked]="muted"
+								(checkedChange)="toggleNotificationSoundChange($event)" status="basic"> Muted Notification
 							</nb-toggle>
 						</nb-card-body>
 					</nb-card>
