@@ -78,9 +78,8 @@ export abstract class CrudService<T extends BaseEntity>
 	 */
 	public async paginate(options?: any): Promise<IPagination<T>> {
 		try {
-			const query = this.repository.createQueryBuilder(
-				this.repository.metadata.tableName
-			);
+			const alias = this.repository.metadata.tableName;
+			const query = this.repository.createQueryBuilder(alias);
 			query.setFindOptions({
 				skip: options && options.skip ? (options.take * (options.skip - 1)) : 0,
 				take: options && options.take ? (options.take) : 10
