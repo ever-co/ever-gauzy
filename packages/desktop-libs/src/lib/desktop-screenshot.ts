@@ -483,7 +483,8 @@ export function notifyScreenshot(notificationWindow: BrowserWindow, thumb, windo
 		webPreferences: {
 			nodeIntegration: true,
 			webSecurity: false,
-			contextIsolation: false			
+			contextIsolation: false,
+			//nativeWindowOpen: false,			
 		}
 	};
 
@@ -508,9 +509,13 @@ export function notifyScreenshot(notificationWindow: BrowserWindow, thumb, windo
 	// notificationWindow.webContents.toggleDevTools();
 	notificationWindow.setMenu(null);
 	notificationWindow.hide();
+	notificationWindow.setVisibleOnAllWorkspaces(true, {
+		visibleOnFullScreen: true,
+		skipTransformProcessType: true
+	});
 	notificationWindow.on('show', () => {
 		setTimeout(() => {
-			notificationWindow.focus();
+			notificationWindow.show();
 		  }, 200);
 	})
 
