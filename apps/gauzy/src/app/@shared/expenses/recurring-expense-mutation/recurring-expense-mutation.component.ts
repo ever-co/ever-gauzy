@@ -152,8 +152,9 @@ export class RecurringExpenseMutationComponent extends TranslationBaseComponent
 			.pipe(
 				debounceTime(200),
 				distinctUntilChange(),
-				filter((organization) => !!organization),
+				filter((organization: IOrganization) => !!organization),
 				tap((organization: IOrganization) => this.organization = organization),
+				tap(() => this.getExpenseCategories()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -172,11 +173,27 @@ export class RecurringExpenseMutationComponent extends TranslationBaseComponent
 			.subscribe();
 	}
 
-	ngAfterViewInit(): void {
-		this.expenseCategoriesStore.loadAll();
-	}
+	ngAfterViewInit(): void {}
 
 	ngOnDestroy(): void {}
+
+	/**
+	 * GET expense categories by organization
+	 *
+	 * @returns
+	 */
+	getExpenseCategories() {
+		if (!this.organization) {
+			return;
+		}
+		const { id: organizationId } = this.organization;
+		const { tenantId } = this.store.user;
+
+		this.expenseCategoriesStore.loadAll({
+			organizationId,
+			tenantId
+		});
+	}
 
 	/**
 	 * Mapped Expense Categories
@@ -250,15 +267,24 @@ export class RecurringExpenseMutationComponent extends TranslationBaseComponent
 		return { value: term, label: term };
 	}
 
-	addNewCustomCategoryName = async (name: string): Promise<any> => {
+	addNewCustomCategory = async (name: string): Promise<any> => {
+		if (!this.organization || !name) {
+			return;
+		}
 		try {
-			this.toastrService.success(
-				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EXPENSE_CATEGORIES.ADD_EXPENSE_CATEGORY',
-				{
+			const { id: organizationId } = this.organization;
+			const { tenantId } = this.store.user;
+
+			const createdCategory =  await firstValueFrom(
+				this.expenseCategoriesStore.create({
+					tenantId,
+					organizationId,
 					name
-				}
+				})
 			);
-      		const createdCategory =  await firstValueFrom(this.expenseCategoriesStore.create(name));
+			this.toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EXPENSE_CATEGORIES.ADD_EXPENSE_CATEGORY', {
+				name
+			});
 			return {
 				value: createdCategory.name,
 				label: createdCategory.name
