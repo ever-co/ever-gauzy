@@ -340,6 +340,7 @@ export class SettingsComponent implements OnInit {
 			  ];
 
 	driverOptions = ['sqlite', 'postgres'];
+	muted: boolean;
 
 	constructor(
 		private electronService: ElectronServices,
@@ -363,6 +364,7 @@ export class SettingsComponent implements OnInit {
 				value: setting.monitor.captured
 			});
 			this.screenshotNotification = setting.screenshotNotification;
+			this.muted = setting.mutedNotification;
 			this.autoLaunch = setting.autoLaunch;
 			this.minimizeOnStartup = setting.minimizeOnStartup;
 
@@ -505,6 +507,18 @@ export class SettingsComponent implements OnInit {
 
 	toggleNotificationChange(value) {
 		this.updateSetting(value, 'screenshotNotification');
+		this.updateSetting(!value, 'simpleScreenshotNotification');
+	}
+
+	toggleSimpleNotificationChange(value) {
+		this.updateSetting(value, 'simpleScreenshotNotification');
+		this.updateSetting(!value, 'screenshotNotification');
+		this.screenshotNotification = !value;
+	}
+
+	toggleNotificationSoundChange(value) {
+		this.updateSetting(value, 'mutedNotification');
+		this.muted = value;
 	}
 
 	toggleAutoLaunch(value) {
