@@ -47,7 +47,7 @@ export class TimeTrackerService {
 			Authorization: `Bearer ${values.token}`,
 			'Tenant-Id': values.tenantId
 		});
-		return this.http
+		return firstValueFrom(this.http
 			.get(`${values.apiHost}/api/tasks/employee/${values.employeeId}`, {
 				headers: headers,
 				params: values.projectId
@@ -59,9 +59,7 @@ export class TimeTrackerService {
 							})
 					  })
 					: this.toParams({})
-			})
-			.pipe()
-			.toPromise();
+			}));
 	}
 
 	async getEmployees(values) {
@@ -84,7 +82,7 @@ export class TimeTrackerService {
 			Authorization: `Bearer ${values.token}`,
 			'Tenant-Id': values.tenantId
 		});
-		return this.http
+		return firstValueFrom(this.http
 			.get(`${values.apiHost}/api/employee`, {
 				headers: headers,
 				params: this.toParams({
@@ -99,9 +97,7 @@ export class TimeTrackerService {
 						}
 					  })
 				})
-			})
-			.pipe()
-			.toPromise();
+			}));
 	}
 
 	async getTags(values) {
@@ -124,7 +120,7 @@ export class TimeTrackerService {
 			Authorization: `Bearer ${values.token}`,
 			'Tenant-Id': values.tenantId
 		});
-		return this.http
+		return firstValueFrom(this.http
 			.get(
 				`${values.apiHost}/api/tags/level`,
 				{
@@ -143,9 +139,7 @@ export class TimeTrackerService {
 						  })
 						: this.toParams({})
 				}
-			)
-			.pipe()
-			.toPromise();
+			));
 	}
 
 	async getProjects(values) {
@@ -168,7 +162,7 @@ export class TimeTrackerService {
 			Authorization: `Bearer ${values.token}`,
 			'Tenant-Id': values.tenantId
 		});
-		return this.http
+		return firstValueFrom(this.http
 			.get(
 				`${values.apiHost}/api/organization-projects/employee/${values.employeeId}`,
 				{
@@ -184,9 +178,7 @@ export class TimeTrackerService {
 						  })
 						: this.toParams({})
 				}
-			)
-			.pipe()
-			.toPromise();
+			));
 	}
 
 	async getClient(values) {
@@ -209,15 +201,13 @@ export class TimeTrackerService {
 			Authorization: `Bearer ${values.token}`,
 			'Tenant-Id': values.tenantId
 		});
-		return this.http
+		return firstValueFrom(this.http
 			.get(
 				`${values.apiHost}/api/organization-contact/employee/${values.employeeId}`,
 				{
 					headers: headers
 				}
-			)
-			.pipe()
-			.toPromise();
+			));
 	}
 
 	async getUserDetail(values) {
@@ -276,7 +266,7 @@ export class TimeTrackerService {
 			'Tenant-Id': values.tenantId
 		});
 
-		return this.http
+		return firstValueFrom(this.http
 			.get(`${values.apiHost}/api/timesheet/statistics/counts`, {
 				headers: headers,
 				params: {
@@ -286,9 +276,7 @@ export class TimeTrackerService {
 					organizationId: values.organizationId,
 					employeeIds: [values.employeeId]
 				}
-			})
-			.pipe()
-			.toPromise();
+			}));
 	}
 
 	async getTimeSlot(values) {
@@ -326,7 +314,7 @@ export class TimeTrackerService {
 	}
 
 	pingAw(host) {
-		return this.http.get(host).pipe().toPromise();
+		return firstValueFrom(this.http.get(host));
 	}
 
 	toggleApiStart(values) {
@@ -392,13 +380,11 @@ export class TimeTrackerService {
 			'Tenant-Id': values.tenantId
 		});
 
-		return this.http
+		return firstValueFrom(this.http
 			.delete(`${values.apiHost}/api/timesheet/time-slot`, {
 				params,
 				headers: headers
-			})
-			.pipe()
-			.toPromise();
+			}));
 	}
 
 	toParams(query) {
@@ -443,7 +429,7 @@ export class TimeTrackerService {
 			'Tenant-Id': values.tenantId
 		});
 
-		return this.http
+		return firstValueFrom(this.http
 			.get(`${values.apiHost}/api/timesheet/time-log/`, {
 				headers: headers,
 				params: {
@@ -452,9 +438,7 @@ export class TimeTrackerService {
 					employeeId: values.employeeId,
 					source: 'DESKTOP'
 				}
-			})
-			.pipe()
-			.toPromise();
+			}));
 	}
 
 	deleteInvalidTimeLog(values) {
@@ -467,13 +451,11 @@ export class TimeTrackerService {
 			logIds: values.timeLogIds
 		});
 
-		return this.http
+		return firstValueFrom(this.http
 			.delete(`${values.apiHost}/api/timesheet/time-log`, {
 				params,
 				headers: headers
-			})
-			.pipe()
-			.toPromise();
+			}));
 	}
 
 	getTimerStatus(values) {
@@ -482,30 +464,26 @@ export class TimeTrackerService {
 			'Tenant-Id': values.tenantId
 		});
 
-		return this.http
+		return firstValueFrom(this.http
 			.get(`${values.apiHost}/api/timesheet/timer/status`, {
 				params: {
 					source: 'DESKTOP',
 					tenantId: values.tenantId
 				},
 				headers: headers
-			})
-			.pipe()
-			.toPromise();
+			}));
 	}
 
 	collectFromAW(tpURL, start, end) {
 		if (!this.buckets.windowBucket) return Promise.resolve([]);
-		return this.http
+		return firstValueFrom(this.http
 			.get(
 				`${tpURL}/api/0/buckets/${this.buckets.windowBucket.id}/events?start=${start}&end=${end}&limit=-1`
-			)
-			.pipe()
-			.toPromise();
+			));
 	}
 
 	getAwBuckets(tpURL): Promise<any> {
-		return this.http.get(`${tpURL}/api/0/buckets`).pipe().toPromise();
+		return firstValueFrom(this.http.get(`${tpURL}/api/0/buckets`));
 	}
 
 	parseBuckets(buckets) {
@@ -540,32 +518,26 @@ export class TimeTrackerService {
 
 	collectChromeActivityFromAW(tpURL, start, end): Promise<any> {
 		if (!this.buckets.chromeBucket) return Promise.resolve([]);
-		return this.http
+		return firstValueFrom(this.http
 			.get(
 				`${tpURL}/api/0/buckets/${this.buckets.chromeBucket.id}/events?start=${start}&end=${end}&limit=-1`
-			)
-			.pipe()
-			.toPromise();
+			));
 	}
 
 	collectFirefoxActivityFromAw(tpURL, start, end): Promise<any> {
 		if (!this.buckets.firefoxBucket) return Promise.resolve([]);
-		return this.http
+		return firstValueFrom( this.http
 			.get(
 				`${tpURL}/api/0/buckets/${this.buckets.firefoxBucket.id}/events?start=${start}&end=${end}&limit=-1`
-			)
-			.pipe()
-			.toPromise();
+			));
 	}
 
 	collectAfkFromAW(tpURL, start, end) {
 		if (!this.buckets.afkBucket) return Promise.resolve([]);
-		return this.http
+		return firstValueFrom(this.http
 			.get(
 				`${tpURL}/api/0/buckets/${this.buckets.afkBucket.id}/events?events?start=${start}&end=${end}&limit=1`
-			)
-			.pipe()
-			.toPromise();
+			));
 	}
 
 	pushToTimeSlot(values) {
@@ -592,7 +564,7 @@ export class TimeTrackerService {
 			delete params.mouse;
 			delete params.keyboard;
 		}
-		return this.http
+		return firstValueFrom(this.http
 			.post(`${values.apiHost}/api/timesheet/time-slot`, params, {
 				headers: headers
 			})
@@ -602,10 +574,9 @@ export class TimeTrackerService {
 						...error.error,
 						params: JSON.stringify(params)
 					};
-					return throwError(error);
+					return throwError(() => new Error(error));
 				})
-			)
-			.toPromise();
+			));
 	}
 
 	uploadImages(values, img:any) {
@@ -621,7 +592,7 @@ export class TimeTrackerService {
 		formData.append('timeSlotId', values.timeSlotId);
 		formData.append('tenantId', values.tenantId);
 		formData.append('organizationId', values.organizationId);
-		return this.http
+		return firstValueFrom(this.http
 			.post(`${values.apiHost}/api/timesheet/screenshot`, formData, {
 				headers: headers
 			})
@@ -631,10 +602,9 @@ export class TimeTrackerService {
 						...error.error,
 						params: JSON.stringify(formData)
 					};
-					return throwError(error);
+					return throwError(() => new Error(error));;
 				})
-			)
-			.toPromise();
+			));
 	}
 
 	b64toBlob = (b64Data, contentType='', sliceSize=512) => {
@@ -680,7 +650,7 @@ export class TimeTrackerService {
 	}
 
 	pingApi(values) {
-		return this.http.get(values.apiHost).pipe().toPromise();
+		return firstValueFrom(this.http.get(values.apiHost));
 	}
 
 	saveNewTask(values, payload) {
@@ -688,7 +658,7 @@ export class TimeTrackerService {
 			Authorization: `Bearer ${values.token}`,
 			'Tenant-Id': values.tenantId
 		});
-		return this.http
+		return firstValueFrom(this.http
 			.post(`${values.apiHost}/api/tasks`, payload, {
 				headers: headers
 			})
@@ -697,10 +667,9 @@ export class TimeTrackerService {
 					error.error = {
 						...error.error
 					};
-					return throwError(error);
+					return throwError(() => new Error(error));
 				})
-			)
-			.toPromise();
+			));
 	}
 
 }
