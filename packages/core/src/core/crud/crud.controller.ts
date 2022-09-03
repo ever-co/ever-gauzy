@@ -10,7 +10,9 @@ import {
 	Body,
 	Param,
 	HttpStatus,
-	HttpCode
+	HttpCode,
+	Query,
+	ValidationPipe
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { IPagination } from '@gauzy/contracts';
@@ -40,7 +42,7 @@ export abstract class CrudController<T extends BaseEntity> {
 	})
 	@Get('count')
     async getCount(
-		options?: FindOptionsWhere<T>
+		@Query() options?: FindOptionsWhere<T>,
 	): Promise<number | void> {
         return await this.crudService.countBy(options);
     }
@@ -52,7 +54,7 @@ export abstract class CrudController<T extends BaseEntity> {
 	})
 	@Get('pagination')
 	async pagination(
-		filter?: PaginationParams<T>,
+		@Query(new ValidationPipe()) filter?: PaginationParams<T>,
 		...options: any[]
 	): Promise<IPagination<T> | void> {
 		return this.crudService.paginate(filter);

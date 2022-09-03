@@ -1,17 +1,17 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Not, In } from 'typeorm';
+import { Repository, Like, Not, In } from 'typeorm';
 import {
 	IApprovalPolicy,
-	IApprovalPolicyCreateInput,
 	ApprovalPolicyTypesStringEnum,
 	IListQueryInput,
 	IRequestApprovalFindInput,
-	IPagination
+	IPagination,
+	IApprovalPolicyCreateInput
 } from '@gauzy/contracts';
 import { ApprovalPolicy } from './approval-policy.entity';
-import { TenantAwareCrudService } from './../core/crud';
-import { RequestContext } from '../core/context';
+import { PaginationParams, TenantAwareCrudService } from './../core/crud';
+import { RequestContext } from './../core/context';
 
 @Injectable()
 export class ApprovalPolicyService extends TenantAwareCrudService<ApprovalPolicy> {
@@ -22,17 +22,40 @@ export class ApprovalPolicyService extends TenantAwareCrudService<ApprovalPolicy
 		super(approvalPolicyRepository);
 	}
 
+	/**
+	 * GET approval policies by pagination
+	 *
+	 * @param options
+	 * @returns
+	 */
+	public pagination(options: PaginationParams<ApprovalPolicy>) {
+		if ('where' in options) {
+			const { where } = options;
+			if ('name' in where) {
+				options.where.name = Like(`%${where.name}%`)
+			}
+		}
+		return super.paginate(options);
+	}
+
 	/*
 	 * Get all approval policies
 	 */
-	async findAllApprovalPolicies({
-		findInput: where,
-		relations
-	}: IListQueryInput<IRequestApprovalFindInput>): Promise<
-		IPagination<IApprovalPolicy>
-	> {
-		const query = { where, relations };
-		return await super.findAll(query);
+	async findAllApprovalPolicies(
+		options: PaginationParams<ApprovalPolicy>
+	): Promise<IPagination<IApprovalPolicy>> {
+		return await super.findAll({
+			...(
+				(options && options.where) ? {
+					where: options.where
+				} : {}
+			),
+			...(
+				(options && options.relations) ? {
+					relations: options.relations
+				} : {}
+			),
+		});
 	}
 
 	/*
@@ -54,7 +77,11 @@ export class ApprovalPolicyService extends TenantAwareCrudService<ApprovalPolicy
 				),
 				...findInput
 			},
-			relations
+			...(
+				(relations) ? {
+					relations: relations
+				} : {}
+			),
 		};
 		return await super.findAll(query);
 	}
@@ -73,7 +100,7 @@ export class ApprovalPolicyService extends TenantAwareCrudService<ApprovalPolicy
 				? entity.name.replace(/\s+/g, '_').toUpperCase()
 				: null;
 			return this.repository.save(approvalPolicy);
-		} catch (error /*: WriteError*/) {
+		} catch (error) {
 			throw new BadRequestException(error);
 		}
 	}
@@ -97,7 +124,7 @@ export class ApprovalPolicyService extends TenantAwareCrudService<ApprovalPolicy
 				? entity.name.replace(/\s+/g, '_').toUpperCase()
 				: null;
 			return this.approvalPolicyRepository.save(approvalPolicy);
-		} catch (error /*: WriteError*/) {
+		} catch (error) {
 			throw new BadRequestException(error);
 		}
 	}

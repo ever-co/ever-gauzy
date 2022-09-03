@@ -1,4 +1,5 @@
 import { IApprovalPolicy, IPagination } from '@gauzy/contracts';
+import { BadRequestException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { ApprovalPolicyService } from '../../approval-policy.service';
 import { ApprovalPolicyGetCommand } from '../approval-policy.get.command';
@@ -13,7 +14,11 @@ export class ApprovalPolicyGetHandler
 	public async execute(
 		command: ApprovalPolicyGetCommand
 	): Promise<IPagination<IApprovalPolicy>> {
-		const { input } = command;
-		return this.approvalPolicyService.findAllApprovalPolicies(input);
+		try {
+			const { input } = command;
+			return await this.approvalPolicyService.findAllApprovalPolicies(input);
+		} catch (error) {
+			throw new BadRequestException();
+		}
 	}
 }

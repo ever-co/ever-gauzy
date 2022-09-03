@@ -1,7 +1,5 @@
 import {
 	PermissionsEnum,
-	IApprovalPolicyCreateInput,
-	IApprovalPolicyUpdateInput,
 	IPagination,
 	IApprovalPolicy,
 	IListQueryInput,
@@ -17,14 +15,15 @@ import {
 	HttpCode,
 	Put,
 	Param,
-	Controller
+	Controller,
+	ValidationPipe
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
 import { Permissions } from './../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
-import { CrudController } from '../core';
+import { CrudController, PaginationParams } from '../core';
 import { ApprovalPolicy } from './approval-policy.entity';
 import { ApprovalPolicyService } from './approval-policy.service';
 import {
@@ -33,9 +32,11 @@ import {
 	ApprovalPolicyUpdateCommand,
 	RequestApprovalPolicyGetCommand
 } from './commands';
+import { CreateApprovalPolicyDTO, UpdateApprovalPolicyDTO } from './commands/dto';
 
 @ApiTags('ApprovalPolicy')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
+@Permissions(PermissionsEnum.APPROVAL_POLICY_EDIT)
 @Controller()
 export class ApprovalPolicyController extends CrudController<ApprovalPolicy> {
 	constructor(
@@ -47,9 +48,9 @@ export class ApprovalPolicyController extends CrudController<ApprovalPolicy> {
 
 	/**
 	 * GET all approval policies except time off and equipment sharing policy
-	 * 
-	 * @param data 
-	 * @returns 
+	 *
+	 * @param data
+	 * @returns
 	 */
 	@ApiOperation({
 		summary:
@@ -77,10 +78,24 @@ export class ApprovalPolicyController extends CrudController<ApprovalPolicy> {
 	}
 
 	/**
+	 * GET approval policies by pagination
+	 *
+	 * @param options
+	 * @returns
+	 */
+	@Permissions(PermissionsEnum.APPROVAL_POLICY_VIEW)
+	@Get('pagination')
+	async pagination(
+		@Query(new ValidationPipe()) options: PaginationParams<ApprovalPolicy>
+	): Promise<IPagination<IApprovalPolicy>> {
+		return this.approvalPolicyService.pagination(options);
+	}
+
+	/**
 	 * GET all approval policies
-	 * 
-	 * @param data 
-	 * @returns 
+	 *
+	 * @param data
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'Find all approval policies.' })
 	@ApiResponse({
@@ -96,18 +111,18 @@ export class ApprovalPolicyController extends CrudController<ApprovalPolicy> {
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Get()
 	async findAll(
-		@Query('data', ParseJsonPipe) data: any
+		@Query(new ValidationPipe()) options: PaginationParams<ApprovalPolicy>
 	): Promise<IPagination<IApprovalPolicy>> {
 		return await this.commandBus.execute(
-			new ApprovalPolicyGetCommand(data)
+			new ApprovalPolicyGetCommand(options)
 		);
 	}
 
 	/**
 	 * CREATE approval policy
-	 * 
-	 * @param entity 
-	 * @returns 
+	 *
+	 * @param entity
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'Create new record' })
 	@ApiResponse({
@@ -119,11 +134,12 @@ export class ApprovalPolicyController extends CrudController<ApprovalPolicy> {
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
-	@Permissions(PermissionsEnum.APPROVAL_POLICY_EDIT)
-	@HttpCode(HttpStatus.ACCEPTED)
+	@HttpCode(HttpStatus.CREATED)
 	@Post()
 	async create(
-		@Body() entity: IApprovalPolicyCreateInput
+		@Body(new ValidationPipe({
+			whitelist: true
+		})) entity: CreateApprovalPolicyDTO
 	): Promise<IApprovalPolicy> {
 		return await this.commandBus.execute(
 			new ApprovalPolicyCreateCommand(entity)
@@ -132,10 +148,10 @@ export class ApprovalPolicyController extends CrudController<ApprovalPolicy> {
 
 	/**
 	 * UPDATE approval policy by id
-	 * 
-	 * @param id 
-	 * @param entity 
-	 * @returns 
+	 *
+	 * @param id
+	 * @param entity
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'Update record' })
 	@ApiResponse({
@@ -152,14 +168,15 @@ export class ApprovalPolicyController extends CrudController<ApprovalPolicy> {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
-	@Permissions(PermissionsEnum.APPROVAL_POLICY_EDIT)
 	@Put(':id')
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body() entity: IApprovalPolicyUpdateInput
+		@Body(new ValidationPipe({
+			whitelist: true
+		})) entity: UpdateApprovalPolicyDTO
 	): Promise<IApprovalPolicy> {
 		return await this.commandBus.execute(
-			new ApprovalPolicyUpdateCommand({ id, ...entity })
+			new ApprovalPolicyUpdateCommand(id, entity)
 		);
 	}
 }

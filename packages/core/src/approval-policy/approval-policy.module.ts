@@ -14,13 +14,22 @@ import { CommandHandlers } from './commands/handlers';
 		RouterModule.forRoutes([
 			{ path: '/approval-policy', module: ApprovalPolicyModule }
 		]),
-		TypeOrmModule.forFeature([ApprovalPolicy]),
+		TypeOrmModule.forFeature([
+			ApprovalPolicy
+		]),
 		TenantModule,
 		UserModule,
 		CqrsModule
 	],
-	controllers: [ApprovalPolicyController],
-	providers: [ApprovalPolicyService, ...CommandHandlers],
-	exports: [ApprovalPolicyService]
+	controllers: [
+		ApprovalPolicyController
+	],
+	providers: [
+		ApprovalPolicyService,
+		...CommandHandlers
+	],
+	exports: [
+		ApprovalPolicyService
+	]
 })
 export class ApprovalPolicyModule {}
