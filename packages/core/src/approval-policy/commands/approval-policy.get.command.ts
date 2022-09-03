@@ -1,10 +1,11 @@
-import { IListQueryInput, IRequestApprovalFindInput } from '@gauzy/contracts';
+import { IApprovalPolicy } from '@gauzy/contracts';
 import { ICommand } from '@nestjs/cqrs';
+import { PaginationParams } from './../../core/crud';
 
 export class ApprovalPolicyGetCommand implements ICommand {
-	static readonly type = '[ApprovalPolicy] Get';
+	static readonly type = '[Approval Policy] Get';
 
 	constructor(
-		public readonly input: IListQueryInput<IRequestApprovalFindInput>
+		public readonly input: PaginationParams<IApprovalPolicy>
 	) {}
 }
