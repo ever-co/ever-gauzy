@@ -1,4 +1,4 @@
-import { app, ipcMain, screen } from 'electron';
+import { ipcMain, screen } from 'electron';
 import { TimerData } from './desktop-timer-activity';
 import TimerHandler from './desktop-timer';
 import moment from 'moment';
