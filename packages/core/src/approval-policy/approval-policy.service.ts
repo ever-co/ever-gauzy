@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Like, Not, In } from 'typeorm';
 import {
@@ -6,10 +6,12 @@ import {
 	ApprovalPolicyTypesStringEnum,
 	IListQueryInput,
 	IRequestApprovalFindInput,
-	IPagination
+	IPagination,
+	IApprovalPolicyCreateInput
 } from '@gauzy/contracts';
 import { ApprovalPolicy } from './approval-policy.entity';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
+import { RequestContext } from './../core/context';
 
 @Injectable()
 export class ApprovalPolicyService extends TenantAwareCrudService<ApprovalPolicy> {
@@ -82,5 +84,48 @@ export class ApprovalPolicyService extends TenantAwareCrudService<ApprovalPolicy
 			),
 		};
 		return await super.findAll(query);
+	}
+
+	/*
+	 * Create approval policy
+	 */
+	async create(entity: IApprovalPolicyCreateInput): Promise<ApprovalPolicy> {
+		try {
+			const approvalPolicy = new ApprovalPolicy();
+			approvalPolicy.name = entity.name;
+			approvalPolicy.organizationId = entity.organizationId;
+			approvalPolicy.tenantId = RequestContext.currentTenantId();
+			approvalPolicy.description = entity.description;
+			approvalPolicy.approvalType = entity.name
+				? entity.name.replace(/\s+/g, '_').toUpperCase()
+				: null;
+			return this.repository.save(approvalPolicy);
+		} catch (error /*: WriteError*/) {
+			throw new BadRequestException(error);
+		}
+	}
+
+	/*
+	 * Update approval policy
+	 */
+	async update(
+		id: string,
+		entity: IApprovalPolicyCreateInput
+	): Promise<ApprovalPolicy> {
+		try {
+			const approvalPolicy = await this.approvalPolicyRepository.findOneBy({
+				id: id
+			});
+			approvalPolicy.name = entity.name;
+			approvalPolicy.organizationId = entity.organizationId;
+			approvalPolicy.tenantId = RequestContext.currentTenantId();
+			approvalPolicy.description = entity.description;
+			approvalPolicy.approvalType = entity.name
+				? entity.name.replace(/\s+/g, '_').toUpperCase()
+				: null;
+			return this.approvalPolicyRepository.save(approvalPolicy);
+		} catch (error /*: WriteError*/) {
+			throw new BadRequestException(error);
+		}
 	}
 }
