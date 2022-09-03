@@ -100,7 +100,7 @@ export class ApprovalPolicyService extends TenantAwareCrudService<ApprovalPolicy
 				? entity.name.replace(/\s+/g, '_').toUpperCase()
 				: null;
 			return this.repository.save(approvalPolicy);
-		} catch (error /*: WriteError*/) {
+		} catch (error) {
 			throw new BadRequestException(error);
 		}
 	}
@@ -124,7 +124,7 @@ export class ApprovalPolicyService extends TenantAwareCrudService<ApprovalPolicy
 				? entity.name.replace(/\s+/g, '_').toUpperCase()
 				: null;
 			return this.approvalPolicyRepository.save(approvalPolicy);
-		} catch (error /*: WriteError*/) {
+		} catch (error) {
 			throw new BadRequestException(error);
 		}
 	}
