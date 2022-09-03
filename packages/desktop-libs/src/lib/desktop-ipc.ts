@@ -17,6 +17,7 @@ const timerHandler = new TimerHandler();
 
 // Import logging for electron and override default console logging
 import log from 'electron-log';
+import NotificationDesktop from './desktop-notifier';
 console.log = log.log;
 Object.assign(console, log.functions);
 
@@ -291,7 +292,10 @@ export function ipcTimer(
 
 	ipcMain.on('show_screenshot_notif_window', (event, arg) => {
 		const appSetting = LocalStore.getStore('appSetting');
-		if (appSetting.screenshotNotification) {
+		const notify = new NotificationDesktop();
+		if(appSetting.simpleScreenshotNotification){
+			notify.customNotification('Screenshot taken', 'Gauzy');
+		}else if (appSetting.screenshotNotification) {
 			notifyScreenshot(notificationWindow, arg, windowPath, soundPath, timeTrackerWindow);
 		}
 	})

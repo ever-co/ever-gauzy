@@ -51,7 +51,9 @@ export const LocalStore = {
 						updatePeriod: 10 // [1, 5, 10]
 					},
 					SCREENSHOTS_ENGINE_METHOD: 'ElectronDesktopCapturer',
-					screenshotNotification: true,
+					screenshotNotification: false,
+					simpleScreenshotNotification: true,
+					mutedNotification: false,
 					autoLaunch: true,
 					visibleAwOption: true,
 					randomScreenshotTime: false,
