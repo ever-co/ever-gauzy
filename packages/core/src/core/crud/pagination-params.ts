@@ -3,9 +3,9 @@
 // Copyright (c) 2018 Sumanth Chinthagunta
 
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { FindOptionsOrder, FindOptionsRelationByString, FindOptionsRelations, FindOptionsWhereProperty } from 'typeorm';
+import { FindOptionsOrder, FindOptionsRelations, FindOptionsWhereProperty } from 'typeorm';
 import { Transform, TransformFnParams, Type } from 'class-transformer';
-import { IsNotEmpty, IsObject, IsOptional, Max, Min, ValidateNested } from 'class-validator';
+import { IsNotEmpty, IsOptional, Max, Min, ValidateNested } from 'class-validator';
 import { TenantOrganizationBaseDTO } from './../../core/dto';
 
 export abstract class OptionParams<T> {
@@ -21,7 +21,6 @@ export abstract class OptionParams<T> {
      */
 	@ApiProperty()
 	@IsNotEmpty()
-	@IsObject()
 	@ValidateNested({ each: true })
 	@Type(() => TenantOrganizationBaseDTO)
 	readonly where: {
@@ -33,7 +32,7 @@ export abstract class OptionParams<T> {
      */
 	@ApiPropertyOptional()
 	@IsOptional()
-	readonly relations?: FindOptionsRelations<T> | FindOptionsRelationByString;
+	readonly relations?: FindOptionsRelations<T>;
 }
 
 /**

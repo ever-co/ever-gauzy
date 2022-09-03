@@ -7,6 +7,7 @@ import {
 	IPagination
 } from '@gauzy/contracts';
 import { firstValueFrom } from 'rxjs';
+import { toParams } from '@gauzy/common-angular';
 import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable()
@@ -17,17 +18,15 @@ export class ApprovalPolicyService {
 
 	getAll(
 		relations?: string[],
-		findInput?: IApprovalPolicyFindInput
+		where?: IApprovalPolicyFindInput
 	): Promise<IPagination<IApprovalPolicy>> {
-		const data = JSON.stringify({ relations, findInput });
 		return firstValueFrom(
-			this.http
-				.get<IPagination<IApprovalPolicy>>(
-					`${this.APPROVAL_POLICY_URL}`,
-					{
-						params: { data }
-					}
-				)
+			this.http.get<IPagination<IApprovalPolicy>>(`${this.APPROVAL_POLICY_URL}`, {
+				params: toParams({
+					where,
+					relations
+				})
+			})
 		);
 	}
 

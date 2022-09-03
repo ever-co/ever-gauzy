@@ -1,5 +1,6 @@
 import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { CqrsModule } from '@nestjs/cqrs';
 import { RouterModule } from 'nest-router';
 import { ExpenseCategory } from './expense-category.entity';
 import { ExpenseCategoriesService } from './expense-categories.service';
@@ -15,7 +16,8 @@ import { CommandHandlers } from './commands/handlers';
 		]),
 		TypeOrmModule.forFeature([ExpenseCategory]),
 		forwardRef(() => TenantModule),
-		forwardRef(() => UserModule)
+		forwardRef(() => UserModule),
+		CqrsModule,
 	],
 	controllers: [ExpenseCategoriesController],
 	providers: [
