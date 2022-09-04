@@ -1,4 +1,11 @@
-import { Component, OnDestroy, OnInit, Input } from '@angular/core';
+import {
+	Component,
+	OnDestroy,
+	OnInit,
+	Input,
+	ViewChild,
+	ElementRef
+} from '@angular/core';
 
 import { Output, EventEmitter } from '@angular/core';
 
@@ -12,6 +19,7 @@ export class CardGridComponent implements OnInit, OnDestroy {
 	@Output() onSelectedItem: EventEmitter<any> = new EventEmitter<any>();
 	@Output() scroll: EventEmitter<any> = new EventEmitter<any>();
 	selected: any = { isSelected: false, data: null };
+	@ViewChild('grid', { read: ElementRef }) grid: ElementRef;
 
 	/*
 	 * Getter & Setter for dynamic columns settings
@@ -32,7 +40,8 @@ export class CardGridComponent implements OnInit, OnDestroy {
 
 	constructor() {}
 
-	ngOnInit(): void {}
+	ngOnInit(): void {
+	}
 
 	getNoDataMessage() {
 		return this.settings.noDataMessage;
@@ -72,6 +81,13 @@ export class CardGridComponent implements OnInit, OnDestroy {
 				return value;
 			}
 		}
+	}
+
+	public get isPresentScrollbar() {
+		return (
+			this.grid.nativeElement.scrollHeight >
+			this.grid.nativeElement.clientHeight
+		);
 	}
 
 	ngOnDestroy() {}
