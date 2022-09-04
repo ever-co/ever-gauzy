@@ -169,12 +169,15 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	) {}
 
 	ngOnInit(): void {
+		this.sourceData = new LocalDataSource(this.tableData);
+	}
+
+	ngAfterViewInit(): void {
 		this.electronService.ipcRenderer.on('timer_push', (event, arg) =>
 			this._ngZone.run(() => {
 				this.setTime(arg);
 			})
 		);
-		this.sourceData = new LocalDataSource(this.tableData);
 
 		this.electronService.ipcRenderer.on(
 			'timer_tracker_show',
@@ -380,9 +383,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					this.showErrorMessage(arg);
 				})
 		);
-	}
-
-	ngAfterViewInit(): void {
 		this.electronService.ipcRenderer.send('time_tracker_ready');
 	}
 
