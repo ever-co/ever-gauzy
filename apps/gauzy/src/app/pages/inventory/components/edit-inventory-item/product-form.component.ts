@@ -1,4 +1,6 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { Location } from '@angular/common';
 import {
 	FormGroup,
 	FormBuilder,
@@ -6,75 +8,69 @@ import {
 	AbstractControl,
 	ValidationErrors
 } from '@angular/forms';
+import { NbTabComponent, NbTabsetComponent } from '@nebular/theme';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
 	ITag,
 	IProductTypeTranslated,
 	IProductCategoryTranslated,
 	LanguagesEnum,
 	IOrganization,
-	ILanguage,
 	IProductTranslation,
 	IProductTranslatable
 } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
-import { ProductTypeService } from '../../../../@core/services/product-type.service';
-import { ProductCategoryService } from '../../../../@core/services/product-category.service';
 import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
-import { ActivatedRoute, Router } from '@angular/router';
-import { ProductService } from '../../../../@core/services/product.service';
-import { Location } from '@angular/common';
-import { Store } from '../../../../@core/services/store.service';
-import { ProductVariantService } from '../../../../@core/services/product-variant.service';
-import { ToastrService } from '../../../../@core/services/toastr.service';
-import { NbTabComponent, NbTabsetComponent } from '@nebular/theme';
-import { InventoryStore } from '../../../../@core/services/inventory-store.service';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import {
+	InventoryStore,
+	ProductCategoryService,
+	ProductService,
+	ProductTypeService,
+	ProductVariantService,
+	Store,
+	ToastrService
+} from '../../../../@core/services';
 
-@UntilDestroy()
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-product-form',
 	templateUrl: './product-form.component.html',
 	styleUrls: ['./product-form.component.scss']
 })
-export class ProductFormComponent
-	extends TranslationBaseComponent
+export class ProductFormComponent extends TranslationBaseComponent
 	implements OnInit {
+
 	form: FormGroup;
 	inventoryItem: IProductTranslatable;
-
 	hoverState: boolean;
 	selectedOrganizationId = '';
-	productTypes: IProductTypeTranslated[];
-	productCategories: IProductCategoryTranslated[];
-
-	languages: ILanguage[];
+	productTypes: IProductTypeTranslated[] = [];
+	productCategories: IProductCategoryTranslated[] = [];
 	selectedLanguage: string;
 	translations = [];
 	activeTranslation: IProductTranslation;
-
 	tags: ITag[] = [];
 	organization: IOrganization;
 	productId: string;
 
 	@ViewChild('inventoryTabset') inventoryTabset: NbTabsetComponent;
-
 	@ViewChild('mainTab') mainTab: NbTabComponent;
 	@ViewChild('optionsTab') optionsTab: NbTabComponent;
 	@ViewChild('variantsTab') variantsTab: NbTabComponent;
 
 	constructor(
-		readonly translationService: TranslateService,
-		private fb: FormBuilder,
+		public readonly translationService: TranslateService,
+		private readonly fb: FormBuilder,
 		private readonly store: Store,
-		private productService: ProductService,
-		private productTypeService: ProductTypeService,
-		private productCategoryService: ProductCategoryService,
-		private route: ActivatedRoute,
-		private location: Location,
-		private router: Router,
-		private toastrService: ToastrService,
-		private productVariantService: ProductVariantService,
-		private inventoryStore: InventoryStore
+		private readonly productService: ProductService,
+		private readonly productTypeService: ProductTypeService,
+		private readonly productCategoryService: ProductCategoryService,
+		private readonly route: ActivatedRoute,
+		private readonly location: Location,
+		private readonly router: Router,
+		private readonly toastrService: ToastrService,
+		private readonly productVariantService: ProductVariantService,
+		private readonly inventoryStore: InventoryStore
 	) {
 		super(translationService);
 	}
@@ -83,7 +79,6 @@ export class ProductFormComponent
 		this.inventoryStore.clearCurrentProduct();
 		this.setRouteSubscription();
 		this.setOrganizationSubscription();
-		this.setLanguageSubsctiption();
 		this.setTranslationSettings();
 	}
 
@@ -115,21 +110,6 @@ export class ProductFormComponent
 			});
 	}
 
-	private setLanguageSubsctiption() {
-		this.store.systemLanguages$
-			.pipe(untilDestroyed(this))
-			.subscribe((systemLanguages) => {
-				if (systemLanguages && systemLanguages.length > 0) {
-					this.languages = systemLanguages.map((item) => {
-						return {
-							value: item.code,
-							name: item.name
-						};
-					});
-				}
-			});
-	}
-
 	private _initializeForm() {
 		this.form = this.fb.group({
 			tags: [this.inventoryItem ? this.inventoryItem.tags : ''],
@@ -143,11 +123,9 @@ export class ProductFormComponent
 			],
 			productTypeId: [
 				this.inventoryItem ? this.inventoryItem.productTypeId : '',
-				Validators.required
 			],
 			productCategoryId: [
 				this.inventoryItem ? this.inventoryItem.productCategoryId : '',
-				Validators.required
 			],
 			enabled: [this.inventoryItem ? this.inventoryItem.enabled : true],
 			description: [
