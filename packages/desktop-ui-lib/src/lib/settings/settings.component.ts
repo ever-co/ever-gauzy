@@ -4,34 +4,49 @@ import {
 	ChangeDetectionStrategy,
 	ViewChild,
 	ElementRef,
-	ChangeDetectorRef
+	NgZone,
+	AfterViewInit
 } from '@angular/core';
-import { Router } from '@angular/router';
 import { TimeTrackerService } from '../time-tracker/time-tracker.service';
 import { NbToastrService } from '@nebular/theme';
 import { ElectronServices } from '../electron/services';
+import { BehaviorSubject, Observable } from 'rxjs';
 @Component({
 	selector: 'ngx-settings',
 	templateUrl: './settings.component.html',
 	styleUrls: ['./settings.component.scss'],
 	changeDetection: ChangeDetectionStrategy.OnPush,
-	styles: [`
-    :host nb-tab {
-      padding: 1.25rem;
-    }
-  `],
+	styles: [
+		`
+			:host nb-tab {
+				padding: 1rem;
+			}
+		`
+	]
 })
-export class SettingsComponent implements OnInit {
+export class SettingsComponent implements OnInit, AfterViewInit {
 	@ViewChild('selectRef') selectProjectElement: ElementRef;
-	@ViewChild('logbox') logbox: ElementRef;
+	@ViewChild('logbox', { read: ElementRef }) logbox: ElementRef;
 	@ViewChild('logUpdate') logAccordion;
-	logContents:any = [];
-	logIsOpen:boolean = false;
+	private _logContents$: BehaviorSubject<any[]> = new BehaviorSubject([]);
+	public get logContents$(): Observable<any[]> {
+		return this._logContents$.asObservable();
+	}
+	public set logContents(value: any) {
+		const logs = this._logContents$.getValue();
+		logs.push(value);
+		this._logContents$.next(logs);
+	}
+	logIsOpen: boolean = false;
 
 	appName: string = this.electronService.remote.app.getName();
-	menus = this.appName === 'gauzy-server' ? ['Update', 'Advanced Setting'] : ['Screen Capture', 'Timer', 'Update', 'Advanced Setting'];
+	menus =
+		this.appName === 'gauzy-server'
+			? ['Update', 'Advanced Setting']
+			: ['Screen Capture', 'Timer', 'Update', 'Advanced Setting'];
 	gauzyIcon =
-		this.appName === 'gauzy-desktop-timer' || this.appName === 'gauzy-server'
+		this.appName === 'gauzy-desktop-timer' ||
+		this.appName === 'gauzy-server'
 			? './assets/images/logos/logo_Gauzy.svg'
 			: '../assets/images/logos/logo_Gauzy.svg';
 
@@ -211,7 +226,6 @@ export class SettingsComponent implements OnInit {
 					name: 'MICROSOFT_TENANT',
 					field: 'MICROSOFT_TENANT',
 					value: ''
-
 				},
 				{
 					name: 'MICROSOFT_CALLBACK_URL',
@@ -223,32 +237,32 @@ export class SettingsComponent implements OnInit {
 		{
 			title: 'Fiverr',
 			fields: [
-				{ 
+				{
 					name: 'FIVERR_CLIENT_ID',
 					field: 'FIVERR_CLIENT_ID',
 					value: ''
 				},
-				{ 
+				{
 					name: 'FIVERR_CLIENT_SECRET',
 					field: 'FIVERR_CLIENT_SECRET',
 					value: ''
-				},
+				}
 			]
 		},
 		{
 			title: 'Auth0',
 			fields: [
-				{ 
+				{
 					name: 'AUTH0_CLIENT_ID',
 					field: 'AUTH0_CLIENT_ID',
 					value: ''
 				},
-				{ 
+				{
 					name: 'AUTH0_CLIENT_SECRET',
 					field: 'AUTH0_CLIENT_SECRET',
 					value: ''
 				},
-				{ 
+				{
 					name: 'AUTH0_DOMAIN',
 					field: 'AUTH0_DOMAIN',
 					value: ''
@@ -258,27 +272,27 @@ export class SettingsComponent implements OnInit {
 		{
 			title: 'KEYCLOAK',
 			fields: [
-				{ 
+				{
 					name: 'KEYCLOAK_REALM',
 					field: 'KEYCLOAK_REALM',
 					value: ''
 				},
-				{ 
+				{
 					name: 'KEYCLOAK_CLIENT_ID',
 					field: 'KEYCLOAK_CLIENT_ID',
 					value: ''
 				},
-				{ 
+				{
 					name: 'KEYCLOAK_SECRET',
 					field: 'KEYCLOAK_SECRET',
 					value: ''
 				},
-				{ 
+				{
 					name: 'KEYCLOAK_AUTH_SERVER_URL',
 					field: 'KEYCLOAK_AUTH_SERVER_URL',
 					value: ''
 				},
-				{ 
+				{
 					name: 'KEYCLOAK_COOKIE_KEY',
 					field: 'KEYCLOAK_COOKIE_KEY',
 					value: ''
@@ -299,8 +313,8 @@ export class SettingsComponent implements OnInit {
 					value: ''
 				}
 			]
-		},
-	]
+		}
+	];
 
 	selectedMenu = 'Screen Capture';
 
@@ -321,7 +335,7 @@ export class SettingsComponent implements OnInit {
 	autoLaunch = null;
 	minimizeOnStartup = null;
 	authSetting = null;
-	currentUser = null;
+	currentUser$: BehaviorSubject<any> = new BehaviorSubject({});
 	serverTypes = {
 		integrated: 'Integrated',
 		localNetwork: 'Local Network',
@@ -344,123 +358,147 @@ export class SettingsComponent implements OnInit {
 
 	constructor(
 		private electronService: ElectronServices,
-		private _cdr: ChangeDetectorRef,
-		private readonly router: Router,
+		private _ngZone: NgZone,
 		private readonly timeTrackerService: TimeTrackerService,
-		private toastrService: NbToastrService,
-	) {
-		this.electronService.ipcRenderer.on('app_setting', (event, arg) => {
-			const { setting, config, auth, additionalSetting } = arg;
-			this.appSetting = setting;
-			this.config = config;
-			this.authSetting = auth;
-			this.mappingAdditionalSetting(additionalSetting || null);
-
-			this.config.awPort = this.config.timeTrackerWindow
-				? this.config.awHost.split('t:')[1]
-				: null;
-			this.serverConnectivity();
-			this.selectMonitorOption({
-				value: setting.monitor.captured
-			});
-			this.screenshotNotification = setting.screenshotNotification;
-			this.muted = setting.mutedNotification;
-			this.autoLaunch = setting.autoLaunch;
-			this.minimizeOnStartup = setting.minimizeOnStartup;
-
-			this.selectPeriod(setting.timer.updatePeriod);
-			if (this.appName !== 'gauzy-server') {
-				this.getUserDetails();
-			}
-
-			this._cdr.detectChanges();
-		});
-
-		this.electronService.ipcRenderer.on(
-			'app_setting_update',
-			(event, arg) => {
-				const { setting } = arg;
-				this.appSetting = setting;
-			}
-		);
-
-		electronService.ipcRenderer.on('update_not_available', () => {
-			this.notAvailable = true;
-			this.message = 'Update Not Available';
-			this.logContents.push(this.message);
-			this.scrollToBottom();
-			this.loading = false;
-			this._cdr.detectChanges();
-		});
-
-		electronService.ipcRenderer.on('error_update', (event, arg) => {
-			this.notAvailable = true;
-			this.message = 'Update Error';
-			this.logContents.push(this.message);
-			this.logContents.push(`error message: ${arg}`)
-			this.scrollToBottom();
-			this._cdr.detectChanges();
-		});
-
-		electronService.ipcRenderer.on('update_available', () => {
-			this.notAvailable = true;
-			this.message = 'Update Available';
-			this.logContents.push(this.message);
-			this.scrollToBottom();
-			this._cdr.detectChanges();
-		});
-
-		electronService.ipcRenderer.on('update_downloaded', () => {
-			this.notAvailable = true;
-			this.message = 'Update Download Completed';
-			this.logContents.push(this.message);
-			this.scrollToBottom();
-			this.showProgressBar = false;
-			this.downloadFinish = true;
-			this.loading = false;
-			this._cdr.detectChanges();
-		});
-
-		electronService.ipcRenderer.on('download_on_progress', (event, arg) => {
-			this.notAvailable = true;
-			this.showProgressBar = true;
-			this.message = `Update Downloading`;
-			this.progressDownload = Math.floor(Number(arg.percent));
-			this.logContents.push(`Downloading update ${Math.floor(arg.transferred/1000000)} MB of ${Math.floor(arg.total/1000000)} MB  ->> ${Math.floor(arg.bytesPerSecond/1000)} KB/s`);
-			this.scrollToBottom();
-			this._cdr.detectChanges();
-		});
-
-		electronService.ipcRenderer.on('goto_update', () => {
-			this.selectMenu('Update');
-		});
-
-		electronService.ipcRenderer.on('goto_top_menu', () => {
-			if (this.appName === 'gauzy-server') {
-				this.selectMenu('Advanced Setting');
-			} else this.selectMenu('Screen Capture');
-		});
-
-		electronService.ipcRenderer.on('goto_advanced_setting', () => {
-			this.selectMenu('Advanced Setting');
-		});
-
-		electronService.ipcRenderer.on('logout_success', () => {
-			this.currentUser = null;
-			this._cdr.detectChanges();
-		})
-
-		electronService.ipcRenderer.on('resp_msg', (event, arg) => {
-			this.showAlert(arg);
-		})
-		electronService.ipcRenderer.on('server_status', (event, arg) => {
-			this.serverIsRunning = arg;
-		})
-	}
+		private toastrService: NbToastrService
+	) {}
 
 	ngOnInit(): void {
 		this.electronService.ipcRenderer.send('request_permission');
 		this.version = this.electronService.remote.app.getVersion();
+	}
+
+	ngAfterViewInit(): void {
+		this.electronService.ipcRenderer.on('app_setting', (event, arg) =>
+			this._ngZone.run(() => {
+				const { setting, config, auth, additionalSetting } = arg;
+				this.appSetting = setting;
+				this.config = config;
+				this.authSetting = auth;
+				this.mappingAdditionalSetting(additionalSetting || null);
+
+				this.config.awPort = this.config.timeTrackerWindow
+					? this.config.awHost.split('t:')[1]
+					: null;
+				this.serverConnectivity();
+				this.selectMonitorOption({
+					value: setting.monitor.captured
+				});
+				this.screenshotNotification = setting.screenshotNotification;
+				this.muted = setting.mutedNotification;
+				this.autoLaunch = setting.autoLaunch;
+				this.minimizeOnStartup = setting.minimizeOnStartup;
+
+				this.selectPeriod(setting.timer.updatePeriod);
+				if (this.appName !== 'gauzy-server') {
+					this.getUserDetails();
+				}
+			})
+		);
+
+		this.electronService.ipcRenderer.on(
+			'app_setting_update',
+			(event, arg) =>
+				this._ngZone.run(() => {
+					const { setting } = arg;
+					this.appSetting = setting;
+				})
+		);
+
+		this.electronService.ipcRenderer.on('update_not_available', () =>
+			this._ngZone.run(() => {
+				this.notAvailable = true;
+				this.message = 'Update Not Available';
+				this.logContents = this.message;
+				this.scrollToBottom();
+				this.loading = false;
+			})
+		);
+
+		this.electronService.ipcRenderer.on('error_update', (event, arg) =>
+			this._ngZone.run(() => {
+				this.notAvailable = true;
+				this.message = 'Update Error';
+				this.logContents = this.message;
+				this.logContents = `error message: ${arg}`;
+				this.scrollToBottom();
+				this.loading = false;
+			})
+		);
+
+		this.electronService.ipcRenderer.on('update_available', () =>
+			this._ngZone.run(() => {
+				this.notAvailable = true;
+				this.message = 'Update Available';
+				this.logContents = this.message;
+				this.scrollToBottom();
+			})
+		);
+
+		this.electronService.ipcRenderer.on('update_downloaded', () =>
+			this._ngZone.run(() => {
+				this.notAvailable = true;
+				this.message = 'Update Download Completed';
+				this.logContents = this.message;
+				this.scrollToBottom();
+				this.showProgressBar = false;
+				this.downloadFinish = true;
+				this.loading = false;
+			})
+		);
+
+		this.electronService.ipcRenderer.on(
+			'download_on_progress',
+			(event, arg) =>
+				this._ngZone.run(() => {
+					this.notAvailable = true;
+					this.showProgressBar = true;
+					this.message = `Update Downloading`;
+					this.progressDownload = Math.floor(Number(arg.percent));
+					this.logContents = `Downloading update ${Math.floor(
+						arg.transferred / 1000000
+					)} MB of ${Math.floor(
+						arg.total / 1000000
+					)} MB  ->> ${Math.floor(arg.bytesPerSecond / 1000)} KB/s`;
+					this.scrollToBottom();
+				})
+		);
+
+		this.electronService.ipcRenderer.on('goto_update', () =>
+			this._ngZone.run(() => {
+				this.selectMenu('Update');
+			})
+		);
+
+		this.electronService.ipcRenderer.on('goto_top_menu', () =>
+			this._ngZone.run(() => {
+				if (this.appName === 'gauzy-server') {
+					this.selectMenu('Advanced Setting');
+				} else this.selectMenu('Screen Capture');
+			})
+		);
+
+		this.electronService.ipcRenderer.on('goto_advanced_setting', () => {
+			this.selectMenu('Advanced Setting');
+		});
+
+		this.electronService.ipcRenderer.on('logout_success', () =>
+			this._ngZone.run(() => {
+				this.currentUser$.next(null);
+			})
+		);
+
+		this.electronService.ipcRenderer.on('resp_msg', (event, arg) =>
+			this._ngZone.run(() => {
+				this.showAlert(arg);
+			})
+		);
+
+		this.electronService.ipcRenderer.on('server_status', (event, arg) =>
+			this._ngZone.run(() => {
+				this.serverIsRunning = arg;
+			})
+		);
 	}
 
 	mappingAdditionalSetting(values) {
@@ -468,8 +506,8 @@ export class SettingsComponent implements OnInit {
 			this.thirdPartyConfig.forEach((item) => {
 				item.fields.forEach((itemField) => {
 					itemField.value = values[itemField.field];
-				})
-			})
+				});
+			});
 		}
 	}
 
@@ -490,7 +528,6 @@ export class SettingsComponent implements OnInit {
 
 	selectMenu(menu) {
 		this.selectedMenu = menu;
-		this._cdr.detectChanges();
 	}
 
 	updateSetting(value, type) {
@@ -545,7 +582,7 @@ export class SettingsComponent implements OnInit {
 		this.thirdPartyConfig.forEach((item) => {
 			item.fields.forEach((itemField) => {
 				thConfig[itemField.field] = itemField.value;
-			})
+			});
 		});
 		const newConfig: any = {
 			...this.config
@@ -553,7 +590,10 @@ export class SettingsComponent implements OnInit {
 		if (this.config.timeTrackerWindow)
 			newConfig.awHost = `http://localhost:${this.config.awPort}`;
 		this.electronService.ipcRenderer.send('restart_app', newConfig);
-		this.electronService.ipcRenderer.send('save_additional_setting', thConfig);
+		this.electronService.ipcRenderer.send(
+			'save_additional_setting',
+			thConfig
+		);
 	}
 
 	portChange(val, type) {
@@ -591,7 +631,6 @@ export class SettingsComponent implements OnInit {
 		this.loading = true;
 		this.logIsOpen = true;
 		this.electronService.ipcRenderer.send('check_for_update');
-		this._cdr.detectChanges();
 	}
 
 	restartAndUpdate() {
@@ -628,15 +667,13 @@ export class SettingsComponent implements OnInit {
 		if (this.authSetting) {
 			this.timeTrackerService.getUserDetail(request).then((res) => {
 				if (!this.authSetting.isLogout) {
-					this.currentUser = res;
+					this.currentUser$.next(res);
 				} else {
-					this.currentUser = null;
+					this.currentUser$.next(null);
 				}
-				this._cdr.detectChanges();
 			});
 		} else {
-			this.currentUser = null;
-			this._cdr.detectChanges();
+			this.currentUser$.next(null);
 		}
 	}
 
@@ -685,21 +722,17 @@ export class SettingsComponent implements OnInit {
 		let message = '';
 		switch (arg.type) {
 			case 'update_config':
-				message = 'Server configuration updated, please wait till server restarts';
+				message =
+					'Server configuration updated, please wait till server restarts';
 				break;
 			case 'start_server':
 				this.restartDisable = false;
-				this._cdr.detectChanges();
-				message = 'Server Restated Successfully'
+				message = 'Server Restated Successfully';
 				break;
 			default:
 				break;
 		}
-		this.toastrService.show(
-			message,
-			`Success`,
-			{ status: arg.status }
-		);
+		this.toastrService.show(message, `Success`, { status: arg.status });
 	}
 
 	logBoxChange(e) {
@@ -711,6 +744,9 @@ export class SettingsComponent implements OnInit {
 	}
 
 	private scrollToBottom() {
-        this.logbox.nativeElement.scrollTop = this.logbox.nativeElement.scrollHeight;
-    }
+		if (this.logIsOpen) {
+			this.logbox.nativeElement.scrollTop =
+				this.logbox.nativeElement.scrollHeight;
+		}
+	}
 }
