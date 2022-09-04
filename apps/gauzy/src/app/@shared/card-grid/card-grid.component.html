@@ -4,6 +4,7 @@
 	infinite-scroll
 	[scrollWindow]="false"
 	(scrolled)="onScroll()"
+	#grid
 >
 	<nb-card *ngFor="let item of source" class="card-item">
 		<nb-card-body
