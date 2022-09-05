@@ -230,11 +230,10 @@ export class ProductTypesComponent
 			const productType = await firstValueFrom(dialog.onClose);
 
 			if (productType) {
-				let translation = productType.translations[0];
 				this.toastrService.success(
 					'INVENTORY_PAGE.PRODUCT_TYPE_SAVED',
 					{
-						name: translation.name
+						name: productType.name
 					}
 				);
 				this._refresh$.next(true);

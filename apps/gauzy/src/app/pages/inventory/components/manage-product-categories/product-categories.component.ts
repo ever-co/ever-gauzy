@@ -213,12 +213,10 @@ export class ProductCategoriesComponent
 			const productCategory = await firstValueFrom(dialog.onClose);
 
 			if (productCategory) {
-				let productCategoryTranslation =
-					productCategory.translations[0];
 				this.toastrService.success(
 					'INVENTORY_PAGE.PRODUCT_CATEGORY_SAVED',
 					{
-						name: productCategoryTranslation?.name
+						name: productCategory.name
 					}
 				);
 				this._refresh$.next(true);
