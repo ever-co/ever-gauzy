@@ -1,7 +1,6 @@
 import { Entity, Column, OneToMany } from 'typeorm';
 import { ProductTypesIconsEnum } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional, IsEnum } from 'class-validator';
 import {
 	Product,
 	ProductTypeTranslation,
@@ -10,16 +9,14 @@ import {
 
 @Entity('product_type')
 export class ProductType extends TranslatableBase {
-	
+
 	@ApiProperty({ type: () => String, enum: ProductTypesIconsEnum })
-	@IsOptional()
-	@IsEnum(ProductTypesIconsEnum)
 	@Column({ nullable: true })
 	icon: string;
 
 	/*
     |--------------------------------------------------------------------------
-    | @OneToMany 
+    | @OneToMany
     |--------------------------------------------------------------------------
     */
 

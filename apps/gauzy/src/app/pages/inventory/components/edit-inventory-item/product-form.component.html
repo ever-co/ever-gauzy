@@ -173,75 +173,15 @@
 											</div>
 										</div>
 									</div>
-									<div
-										class="row mb-3"
-										*ngIf="
-											productTypes && productCategories
-										"
-									>
+									<div class="row mb-3">
 										<div class="col-sm-7">
-											<label
-												class="label"
-												for="productTypeId"
-											>
-												{{
-													'INVENTORY_PAGE.PRODUCT_TYPE'
-														| translate
-												}}
-											</label>
-											<nb-select
-												id="productTypeId"
+											<ngx-product-type-selector
 												formControlName="productTypeId"
-												fullWidth
-												[placeholder]="
-													'INVENTORY_PAGE.PRODUCT_TYPE'
-														| translate
-												"
-												[ngClass]="{
-													'status-danger':
-														form.controls[
-															'productTypeId'
-														].invalid &&
-														form.controls[
-															'productTypeId'
-														].touched
-												}"
-											>
-												<nb-option
-													*ngFor="
-														let productType of productTypes
-													"
-													[value]="productType.id"
-												>
-													{{
-														productType.name
-													}}</nb-option
-												>
-											</nb-select>
-											<div
-												*ngIf="
-													form.controls[
-														'productTypeId'
-													].errors &&
-													form.controls[
-														'productTypeId'
-													].touched
-												"
-											>
-												<div
-													class="text-danger"
-													*ngIf="
-														form.controls[
-															'productTypeId'
-														].errors.required
-													"
-												>
-													{{
-														'VALIDATION.FIELD_REQUIRED'
-															| translate
-													}}
-												</div>
-											</div>
+												[placeholder]="'INVENTORY_PAGE.PRODUCT_TYPE' | translate"
+												[addTag]="true"
+												(onLoaded)="onLoadProductTypes($event)"
+												(onChanged)="selectedProductType($event)"
+											></ngx-product-type-selector>
 										</div>
 										<div class="col-sm-5">
 											<label
