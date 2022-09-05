@@ -21,6 +21,7 @@ import { ProductFormComponent } from './components/edit-inventory-item/product-f
 import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-color-input.module';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgSelectModule } from '@ng-select/ng-select';
+import { NgxPermissionsModule } from 'ngx-permissions';
 import { TableInventoryComponent } from './components/table-inventory-items/table-inventory.component';
 import { InventoryComponent } from './components/inventory.component';
 import { SharedModule } from '../../@shared/shared.module';
@@ -54,7 +55,7 @@ import { SelectAssetModule } from '../../@shared/select-asset-modal/select-asset
 import { ImageAssetModule } from '../../@shared/image-asset/image-asset.module';
 import { PaginationModule } from '../../@shared/pagination/pagination.module';
 import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
-import { NgxPermissionsModule } from 'ngx-permissions';
+import { ProductTypeSelectorModule } from '../../@shared/product-type-selector/product-type-selector.module';
 
 const NB_MODULES = [
 	NbCardModule,
@@ -109,6 +110,7 @@ const NB_MODULES = [
 		WarehousesModule,
 		LanguageSelectorModule,
 		GauzyButtonActionModule,
+		ProductTypeSelectorModule,
 		NgxPermissionsModule.forChild()
 	],
 	providers: [
