@@ -4,7 +4,8 @@ import {
 	OnInit,
 	Input,
 	ViewChild,
-	ElementRef
+	ElementRef,
+	NgZone
 } from '@angular/core';
 
 import { Output, EventEmitter } from '@angular/core';
@@ -19,7 +20,16 @@ export class CardGridComponent implements OnInit, OnDestroy {
 	@Output() onSelectedItem: EventEmitter<any> = new EventEmitter<any>();
 	@Output() scroll: EventEmitter<any> = new EventEmitter<any>();
 	selected: any = { isSelected: false, data: null };
-	@ViewChild('grid', { read: ElementRef }) grid: ElementRef;
+	private _grid: ElementRef;
+	@ViewChild('grid', { static: false }) set grid(content: ElementRef) {
+		if (content) {
+			this._grid = content;
+			this._ngZone.run(() => {
+				setTimeout(() => (this.showMore = !this._hasScrollbar()), 300);
+			});
+		}
+	}
+	private _showMore: boolean = false;
 
 	/*
 	 * Getter & Setter for dynamic columns settings
@@ -38,10 +48,9 @@ export class CardGridComponent implements OnInit, OnDestroy {
 	 */
 	columns: any = [];
 
-	constructor() {}
+	constructor(private readonly _ngZone: NgZone) {}
 
-	ngOnInit(): void {
-	}
+	ngOnInit(): void {}
 
 	getNoDataMessage() {
 		return this.settings.noDataMessage;
@@ -66,7 +75,8 @@ export class CardGridComponent implements OnInit, OnDestroy {
 		this.onSelectedItem.emit(this.selected);
 	}
 
-	onScroll() {
+	onScroll(event: any) {
+		this.showMore = !this._hasScrollbar();
 		this.scroll.emit();
 	}
 
@@ -83,11 +93,19 @@ export class CardGridComponent implements OnInit, OnDestroy {
 		}
 	}
 
-	public get isPresentScrollbar() {
+	private _hasScrollbar() {
 		return (
-			this.grid.nativeElement.scrollHeight >
-			this.grid.nativeElement.clientHeight
+			this._grid.nativeElement.scrollHeight >
+			this._grid.nativeElement.clientHeight
 		);
+	}
+
+	public get showMore(): boolean {
+		return this._showMore && this.source.length >= 10;
+	}
+
+	public set showMore(value: boolean) {
+		this._showMore = value;
 	}
 
 	ngOnDestroy() {}
