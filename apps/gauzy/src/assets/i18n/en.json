@@ -126,7 +126,8 @@
 		"MANAGE_WIDGET": "Manage widgets",
 		"MOVE": "Move",
 		"COLLAPSE": "Collapse",
-		"EXPAND": "Expand"
+		"EXPAND": "Expand",
+		"SHOW_MORE": "Show More"
 	},
 	"SM_TABLE": {
 		"NO_DATA" : {
