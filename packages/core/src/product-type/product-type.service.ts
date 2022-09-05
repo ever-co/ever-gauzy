@@ -21,7 +21,7 @@ export class ProductTypeService extends TenantAwareCrudService<ProductType> {
 	/**
 	 * GET product types using pagination
 	 *
-	 * @param filter
+	 * @param options
 	 * @param language
 	 * @returns
 	 */

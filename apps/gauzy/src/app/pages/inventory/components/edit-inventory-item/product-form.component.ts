@@ -23,7 +23,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
 import {
 	InventoryStore,
-	ProductCategoryService,
 	ProductService,
 	ProductVariantService,
 	Store,
@@ -42,12 +41,11 @@ export class ProductFormComponent extends TranslationBaseComponent
 	form: FormGroup;
 	inventoryItem: IProductTranslatable;
 	hoverState: boolean;
-	productCategories: IProductCategoryTranslated[] = [];
 	selectedLanguage: string;
 	translations = [];
 	activeTranslation: IProductTranslation;
 	tags: ITag[] = [];
-	organization: IOrganization;
+	public organization: IOrganization;
 	productId: string;
 
 	@ViewChild('inventoryTabset') inventoryTabset: NbTabsetComponent;
@@ -60,7 +58,6 @@ export class ProductFormComponent extends TranslationBaseComponent
 		private readonly fb: FormBuilder,
 		private readonly store: Store,
 		private readonly productService: ProductService,
-		private readonly productCategoryService: ProductCategoryService,
 		private readonly route: ActivatedRoute,
 		private readonly location: Location,
 		private readonly router: Router,
@@ -98,7 +95,6 @@ export class ProductFormComponent extends TranslationBaseComponent
 			.subscribe((organization: IOrganization) => {
 				if (organization) {
 					this.organization = organization;
-					this.loadProductCategories(true);
 					this.loadProduct(this.productId);
 				}
 			});
@@ -116,12 +112,13 @@ export class ProductFormComponent extends TranslationBaseComponent
 				Validators.required
 			],
 			productTypeId: [
-				this.inventoryItem ? this.inventoryItem.productTypeId : '',
+				this.inventoryItem ? this.inventoryItem.productTypeId : null,
 			],
 			productType: [],
 			productCategoryId: [
-				this.inventoryItem ? this.inventoryItem.productCategoryId : '',
+				this.inventoryItem ? this.inventoryItem.productCategoryId : null,
 			],
+			productCategory: [],
 			enabled: [this.inventoryItem ? this.inventoryItem.enabled : true],
 			description: [
 				this.activeTranslation ? this.activeTranslation.description : ''
@@ -196,25 +193,25 @@ export class ProductFormComponent extends TranslationBaseComponent
 		this.form.get('productType').updateValueAndValidity();
 	}
 
-	async loadProductCategories(newOrg = false) {
-		if(!this.inventoryStore.productCategoriesLoaded && newOrg) {
-			const { id: organizationId, tenantId } = this.organization;
-			const searchCriteria = {
-				organization: { id: organizationId },
-				tenantId
-			};
-			const {
-				items = []
-			} = await this.productCategoryService.getAllTranslated(
-				{langCode: this.store.preferredLanguage || LanguagesEnum.ENGLISH,
-				findInput: searchCriteria,
-				relations: []}
-			);
-
-			this.inventoryStore.productCategories = items;
+	/**
+	 * When product categories selectors loaded in DOM
+	 *
+	 * @param productCategories
+	 */
+	onLoadProductCategories(productCategories: IProductCategoryTranslated[]) {
+		if(!this.inventoryStore.productCategoriesLoaded) {
+			this.inventoryStore.productCategories = productCategories;
 		}
+	}
 
-		this.productCategories = this.inventoryStore.productCategories;
+	/**
+	 * When product category is selected in DOM
+	 *
+	 * @param productCategory
+	 */
+	selectedProductCategory(productCategory: IProductCategoryTranslated) {
+		this.form.get('productCategory').setValue(productCategory);
+		this.form.get('productCategory').updateValueAndValidity();
 	}
 
 	async onSaveRequest() {
@@ -237,9 +234,7 @@ export class ProductFormComponent extends TranslationBaseComponent
 			optionGroupDeleteInputs: this.inventoryStore.deletedOptionGroups,
 			optionDeleteInputs: this.inventoryStore.deleteOptions,
 			gallery: this.inventoryStore.gallery || [],
-			category: this.productCategories.find((c) => {
-				return c.id === this.form.get('productCategoryId').value;
-			}),
+			category: this.form.get('productCategory').value,
 			type: this.form.get('productType').value,
 			tenantId: tenantId,
 			organizationId: organizationId

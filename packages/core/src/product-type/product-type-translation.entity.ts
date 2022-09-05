@@ -1,5 +1,5 @@
 import { Entity, Column, ManyToOne, JoinColumn, RelationId, Index } from 'typeorm';
-import { IProductTypeTranslation, LanguagesEnum } from '@gauzy/contracts';
+import { IProductTypeTranslation } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
 import { ProductType, TranslationBase } from '../core/entities/internal';
 
@@ -15,7 +15,7 @@ export class ProductTypeTranslation extends TranslationBase
 	@Column({ nullable: true })
 	description: string;
 
-	@ApiProperty({ type: () => String, enum: LanguagesEnum })
+	@ApiProperty({ type: () => String })
 	@Column({ nullable: false })
 	languageCode: string;
 

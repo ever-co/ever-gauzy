@@ -13,10 +13,10 @@ export class ProductTypeCreateHandler
 
 	public async execute(command: ProductTypeCreateCommand): Promise<IProductTypeTranslatable> {
 		try {
-			const { input, Language } = command;
+			const { input, language } = command;
 			return await this.productTypeService.mapTranslatedProductType(
 				await this.productTypeService.create(input),
-				Language
+				language
 			);
 		} catch (error) {
 			throw new BadRequestException(error);
