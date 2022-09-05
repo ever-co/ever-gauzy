@@ -125,7 +125,7 @@ export interface IProductTypeTranslated
 
 export interface IProductCategoryTranslatable
 	extends ITranslatable<IProductCategoryTranslation> {
-	imageUrl: string;
+	imageUrl?: string;
 	name?: string;
 	products?: IProductTranslatable[];
 }

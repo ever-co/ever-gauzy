@@ -1,10 +1,13 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import {
+	IBasePerTenantAndOrganizationEntityModel,
+	IPagination,
 	IProductCategoryTranslatable,
 	IProductCategoryTranslated
 } from '@gauzy/contracts';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, Observable } from 'rxjs';
+import { toParams } from '@gauzy/common-angular';
 import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable()
@@ -23,32 +26,11 @@ export class ProductCategoryService {
 	}
 
 	getAllTranslated(
-		options,
-		params?
-	): Promise<{ items: IProductCategoryTranslated[] }> {
-		const data = JSON.stringify(options);
-		return firstValueFrom(
-			this.http
-			.get<{ items: IProductCategoryTranslated[] }>(
-				this.PRODUCT_CATEGORY_URL,
-				{
-					params: { data, ...params }
-				}
-			)
-		);
-	}
-
-	count(findInput): Promise<Number> {
-		const data = JSON.stringify(findInput);
-		return firstValueFrom(
-			this.http
-			.get<number>(
-				`${this.PRODUCT_CATEGORY_URL}/count`,
-				{
-					params: { data }
-				}
-			)
-		);
+		where: IBasePerTenantAndOrganizationEntityModel
+	): Observable<IPagination<IProductCategoryTranslated>> {
+		return this.http.get<IPagination<IProductCategoryTranslated>>(`${this.PRODUCT_CATEGORY_URL}`, {
+			params: toParams({ where })
+		});
 	}
 
 	create(
