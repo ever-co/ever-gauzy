@@ -26,8 +26,14 @@ import { BehaviorSubject, Observable } from 'rxjs';
 })
 export class SettingsComponent implements OnInit, AfterViewInit {
 	@ViewChild('selectRef') selectProjectElement: ElementRef;
-	@ViewChild('logbox', { read: ElementRef }) logbox: ElementRef;
+	@ViewChild('logbox', { read: ElementRef })
+	set logobox(content: ElementRef) {
+		if (content) {
+			this._logbox = content;
+		}
+	}
 	@ViewChild('logUpdate') logAccordion;
+	private _logbox: ElementRef;
 	private _logContents$: BehaviorSubject<any[]> = new BehaviorSubject([]);
 	public get logContents$(): Observable<any[]> {
 		return this._logContents$.asObservable();
@@ -744,9 +750,9 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	}
 
 	private scrollToBottom() {
-		if (this.logIsOpen) {
-			this.logbox.nativeElement.scrollTop =
-				this.logbox.nativeElement.scrollHeight;
+		if (this.logIsOpen && this._logbox) {
+			this._logbox.nativeElement.scrollTop =
+				this._logbox.nativeElement.scrollHeight;
 		}
 	}
 }
