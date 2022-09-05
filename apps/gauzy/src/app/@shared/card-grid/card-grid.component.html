@@ -54,6 +54,19 @@
 			</div>
 		</nb-card-body>
 	</nb-card>
+	<div class="show-more-button">
+		<button
+			nbButton
+			(click)="onScroll()"
+			status="primary"
+			size="small"
+			*ngIf="showMore"
+			class="d-flex flex-column"
+		>
+			Show More
+			<nb-icon icon="arrow-ios-downward-outline"></nb-icon>
+		</button>
+	</div>
 </div>
 <ng-template #noDataGridLayout>
 	<div class="no-data">
