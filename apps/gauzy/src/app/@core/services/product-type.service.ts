@@ -1,10 +1,13 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, Observable } from 'rxjs';
 import {
+	IBasePerTenantAndOrganizationEntityModel,
+	IPagination,
 	IProductTypeTranslatable,
 	IProductTypeTranslated
 } from '@gauzy/contracts';
+import { toParams } from '@gauzy/common-angular';
 import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable()
@@ -17,19 +20,6 @@ export class ProductTypeService {
 		return firstValueFrom(
 			this.http
 			.get<IProductTypeTranslatable>(`${this.PRODUCT_TYPES_URL}/${id}`)
-		);
-	}
-
-	count(findInput): Promise<Number> {
-		const data = JSON.stringify(findInput);
-		return firstValueFrom(
-			this.http
-			.get<number>(
-				`${this.PRODUCT_TYPES_URL}/count`,
-				{
-					params: { data }
-				}
-			)
 		);
 	}
 
@@ -48,20 +38,11 @@ export class ProductTypeService {
 	}
 
 	getAllTranslated(
-		langCode: string,
-		relations?: string[],
-		findInput?: any
-	): Promise<{ items: IProductTypeTranslated[] }> {
-		const data = JSON.stringify({ relations, findInput, langCode });
-		return firstValueFrom(
-			this.http
-			.get<{ items: IProductTypeTranslated[] }>(
-				`${this.PRODUCT_TYPES_URL}`,
-				{
-					params: { data }
-				}
-			)
-		);
+		where: IBasePerTenantAndOrganizationEntityModel
+	): Observable<IPagination<IProductTypeTranslated>> {
+		return this.http.get<IPagination<IProductTypeTranslated>>(`${this.PRODUCT_TYPES_URL}`, {
+			params: toParams({ where })
+		});
 	}
 
 	create(

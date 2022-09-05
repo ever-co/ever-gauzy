@@ -25,7 +25,6 @@ import {
 	InventoryStore,
 	ProductCategoryService,
 	ProductService,
-	ProductTypeService,
 	ProductVariantService,
 	Store,
 	ToastrService
@@ -43,8 +42,6 @@ export class ProductFormComponent extends TranslationBaseComponent
 	form: FormGroup;
 	inventoryItem: IProductTranslatable;
 	hoverState: boolean;
-	selectedOrganizationId = '';
-	productTypes: IProductTypeTranslated[] = [];
 	productCategories: IProductCategoryTranslated[] = [];
 	selectedLanguage: string;
 	translations = [];
@@ -63,7 +60,6 @@ export class ProductFormComponent extends TranslationBaseComponent
 		private readonly fb: FormBuilder,
 		private readonly store: Store,
 		private readonly productService: ProductService,
-		private readonly productTypeService: ProductTypeService,
 		private readonly productCategoryService: ProductCategoryService,
 		private readonly route: ActivatedRoute,
 		private readonly location: Location,
@@ -102,8 +98,6 @@ export class ProductFormComponent extends TranslationBaseComponent
 			.subscribe((organization: IOrganization) => {
 				if (organization) {
 					this.organization = organization;
-					this.selectedOrganizationId = organization.id;
-					this.loadProductTypes(true);
 					this.loadProductCategories(true);
 					this.loadProduct(this.productId);
 				}
@@ -124,6 +118,7 @@ export class ProductFormComponent extends TranslationBaseComponent
 			productTypeId: [
 				this.inventoryItem ? this.inventoryItem.productTypeId : '',
 			],
+			productType: [],
 			productCategoryId: [
 				this.inventoryItem ? this.inventoryItem.productCategoryId : '',
 			],
@@ -180,23 +175,25 @@ export class ProductFormComponent extends TranslationBaseComponent
 		});
 	}
 
-	async loadProductTypes(newOrg = false) {
-		if(!this.inventoryStore.productTypesLoaded && newOrg) {
-			const { id: organizationId, tenantId } = this.organization;
-			const searchCriteria = {
-				organization: { id: organizationId },
-				tenantId
-			};
-			const { items = [] } = await this.productTypeService.getAllTranslated(
-				this.store.preferredLanguage || LanguagesEnum.ENGLISH,
-				[],
-				searchCriteria
-			);
-
-			this.inventoryStore.productTypes = items;
+	/**
+	 * When product types selectors loaded in DOM
+	 *
+	 * @param productTypes
+	 */
+	onLoadProductTypes(productTypes: IProductTypeTranslated[]) {
+		if(!this.inventoryStore.productTypesLoaded) {
+			this.inventoryStore.productTypes = productTypes;
 		}
+	}
 
-		this.productTypes = this.inventoryStore.productTypes;
+	/**
+	 * When product type is selected in DOM
+	 *
+	 * @param productType
+	 */
+	selectedProductType(productType: IProductTypeTranslated) {
+		this.form.get('productType').setValue(productType);
+		this.form.get('productType').updateValueAndValidity();
 	}
 
 	async loadProductCategories(newOrg = false) {
@@ -221,7 +218,11 @@ export class ProductFormComponent extends TranslationBaseComponent
 	}
 
 	async onSaveRequest() {
-		const { id: organizationId, tenantId } = this.organization;
+		if (!this.organization) {
+			return;
+		}
+		const { id: organizationId } = this.organization;
+		const { tenantId } = this.store.user;
 
 		const productRequest = {
 			tags: this.form.get('tags').value,
@@ -239,9 +240,7 @@ export class ProductFormComponent extends TranslationBaseComponent
 			category: this.productCategories.find((c) => {
 				return c.id === this.form.get('productCategoryId').value;
 			}),
-			type: this.productTypes.find((p) => {
-				return p.id === this.form.get('productTypeId').value;
-			}),
+			type: this.form.get('productType').value,
 			tenantId: tenantId,
 			organizationId: organizationId
 		};
