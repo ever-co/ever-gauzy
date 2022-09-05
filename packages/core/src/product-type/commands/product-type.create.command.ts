@@ -6,6 +6,6 @@ export class ProductTypeCreateCommand implements ICommand {
 
 	constructor(
 		public readonly input: IProductTypeTranslatable,
-		public readonly Language: LanguagesEnum
+		public readonly language: LanguagesEnum
 	) {}
 }
