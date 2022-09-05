@@ -9,10 +9,9 @@ import {
 } from '@angular/core';
 import {
 	IOrganization,
-	IProductTypeTranslatable,
-	IProductTypeTranslated,
-	PermissionsEnum,
-	ProductTypesIconsEnum
+	IProductCategoryTranslatable,
+	IProductCategoryTranslated,
+	PermissionsEnum
 } from '@gauzy/contracts';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { finalize, map, Observable, Subject } from 'rxjs';
@@ -21,29 +20,29 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import {
 	ErrorHandlingService,
-	ProductTypeService,
+	ProductCategoryService,
 	Store
 } from '../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-product-type-selector',
-	templateUrl: './product-type-selector.component.html',
-	styleUrls: ['./product-type-selector.component.scss'],
+	selector: 'ngx-product-category-selector',
+	templateUrl: './product-category-selector.component.html',
+	styleUrls: ['./product-category-selector.component.scss'],
 	providers: [
 		{
 			provide: NG_VALUE_ACCESSOR,
-			useExisting: forwardRef(() => ProductTypeSelectorComponent),
+			useExisting: forwardRef(() => ProductCategorySelectorComponent),
 			multi: true
 		}
 	]
 })
-export class ProductTypeSelectorComponent implements OnInit, OnDestroy {
+export class ProductCategorySelectorComponent implements OnInit, OnDestroy {
 
 	public organization: IOrganization;
 	protected subject$: Subject<any> = new Subject();
-	public hasEditProductType$: Observable<boolean>;
-	public productTypes$: Observable<IProductTypeTranslated[]>;
+	public hasEditProductCategory$: Observable<boolean>;
+	public productCategories$: Observable<IProductCategoryTranslated[]>;
 	public loading: boolean = false;
 
 	/*
@@ -79,50 +78,50 @@ export class ProductTypeSelectorComponent implements OnInit, OnDestroy {
 		this._addTag = value;
 	}
 
-	private _productTypeId: IProductTypeTranslated['id'];
-	set productTypeId(val: IProductTypeTranslated['id']) {
-		this._productTypeId = val;
+	private _productCategoryId: IProductCategoryTranslated['id'];
+	set productCategoryId(val: IProductCategoryTranslated['id']) {
+		this._productCategoryId = val;
 		this.onChange(val);
 		this.onTouched(val);
 	}
-	get productTypeId(): IProductTypeTranslated['id'] {
-		return this._productTypeId;
+	get productCategoryId(): IProductCategoryTranslated['id'] {
+		return this._productCategoryId;
 	}
 
 	/**
 	 * Getter & Setter for Product Type
 	 *
 	 */
-	private _productType: IProductTypeTranslated;
-	set productType(val: IProductTypeTranslated) {
-		this._productType = val;
+	private _productCategory: IProductCategoryTranslated;
+	set productCategory(val: IProductCategoryTranslated) {
+		this._productCategory = val;
 	}
-	get productType(): IProductTypeTranslated {
-		return this._productType;
+	get productCategory(): IProductCategoryTranslated {
+		return this._productCategory;
 	}
 
 	onChange: any = () => {};
 	onTouched: any = () => {};
 
-	@Output() onChanged: EventEmitter<IProductTypeTranslated> = new EventEmitter<IProductTypeTranslated>();
-	@Output() onLoaded: EventEmitter<IProductTypeTranslated[]> = new EventEmitter<IProductTypeTranslated[]>();
+	@Output() onChanged: EventEmitter<IProductCategoryTranslated> = new EventEmitter<IProductCategoryTranslated>();
+	@Output() onLoaded: EventEmitter<IProductCategoryTranslated[]> = new EventEmitter<IProductCategoryTranslated[]>();
 
 	constructor(
 		private readonly store: Store,
 		private readonly errorHandler: ErrorHandlingService,
-		private readonly productTypeService: ProductTypeService,
+		private readonly productCategoryService: ProductCategoryService,
 	) {}
 
 	ngOnInit(): void {
-		this.hasEditProductType$ = this.store.userRolePermissions$.pipe(
+		this.hasEditProductCategory$ = this.store.userRolePermissions$.pipe(
 			map(() =>
-				this.store.hasPermission(PermissionsEnum.ORG_PRODUCT_TYPES_EDIT)
+				this.store.hasPermission(PermissionsEnum.ORG_PRODUCT_CATEGORIES_EDIT)
 			)
 		);
 		this.subject$
 			.pipe(
 				debounceTime(100),
-				tap(() => this.getProductTypes()),
+				tap(() => this.getProductCategories()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -137,16 +136,16 @@ export class ProductTypeSelectorComponent implements OnInit, OnDestroy {
 			.subscribe();
 	}
 
-	writeValue(value: IProductTypeTranslated['id']) {
+	writeValue(value: IProductCategoryTranslated['id']) {
 		if (value) {
-			this._productTypeId = value;
+			this._productCategoryId = value;
 		}
 	}
 
 	/**
     * Register a listener for change events.
     */
-	 registerOnChange(fn: () => void): void {
+	registerOnChange(fn: () => void): void {
 		this.onChange = fn;
 	}
 
@@ -172,7 +171,7 @@ export class ProductTypeSelectorComponent implements OnInit, OnDestroy {
 	 * @param name
 	 * @returns
 	 */
-	addProductType = async (name: string) => {
+	addProductCategory = async (name: string) => {
 		if (!this.organization) {
 			return;
 		}
@@ -182,37 +181,33 @@ export class ProductTypeSelectorComponent implements OnInit, OnDestroy {
 			const { tenantId } = this.store.user;
 
 			const languageCode = this.store.preferredLanguage;
-			const description = name;
-			const icons = Object.values(ProductTypesIconsEnum);
 
 			// Added latest product category translations
 			const translations = [{
 				name,
-				description,
-				languageCode,
 				tenantId,
 				organizationId,
+				languageCode
 			}];
-			const payload: IProductTypeTranslatable = {
+			const payload: IProductCategoryTranslatable = {
 				organizationId,
 				tenantId,
-				translations,
-				icon: icons[Math.floor(Math.random() * icons.length)]
+				translations
 			};
-			return await this.productTypeService.create(payload).finally(() => {
+			return await this.productCategoryService.create(payload).finally(() => {
 				this.loading = false
 			});
 		} catch (error) {
-			this.errorHandler.handleError(error);
+			console.log('Error while creating product category', error);
 		}
 	}
 
 	/**
-	 * GET product types
+	 * GET product categories
 	 *
 	 * @returns
 	 */
-	async getProductTypes() {
+	async getProductCategories() {
 		if (!this.organization) {
 			return;
 		}
@@ -221,30 +216,30 @@ export class ProductTypeSelectorComponent implements OnInit, OnDestroy {
 			const { id: organizationId } = this.organization;
 			const { tenantId } = this.store.user;
 
-			this.productTypes$ = this.productTypeService.getAllTranslated({
+			this.productCategories$ = this.productCategoryService.getAllTranslated({
 				organizationId,
 				tenantId
 			})
 			.pipe(
-				tap(({ items = []  }) => this.onLoaded.emit(items)),
-				map(({ items }) => items),
+				map(({ items = [] }) => items),
+				tap((items) => this.onLoaded.emit(items)),
 				finalize(() => this.loading = false),
 				untilDestroyed(this)
 			);
 		} catch (error) {
-			console.log('Error while retrieving product types', error);
+			console.log('Error while retrieving product categories', error);
 		}
 	}
 
 	/**
 	 * On Change Product Type
 	 *
-	 * @param productType
+	 * @param productCategory
 	 */
-	selectProductType(productType: IProductTypeTranslated): void {
-		this.productTypeId = productType ? productType.id : null;
-		this.productType = productType ? productType : null;
-		this.onChanged.emit(productType);
+	selectProductCategory(productCategory: IProductCategoryTranslated): void {
+		this.productCategoryId = productCategory ? productCategory.id : null;
+		this.productCategory = productCategory ? productCategory : null;
+		this.onChanged.emit(productCategory);
 	}
 
 	ngOnDestroy(): void {}
