@@ -32,7 +32,7 @@ import {
 	ApprovalPolicyUpdateCommand,
 	RequestApprovalPolicyGetCommand
 } from './commands';
-import { CreateApprovalPolicyDTO, UpdateApprovalPolicyDTO } from './commands/dto';
+import { CreateApprovalPolicyDTO, UpdateApprovalPolicyDTO } from './dto';
 
 @ApiTags('ApprovalPolicy')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
