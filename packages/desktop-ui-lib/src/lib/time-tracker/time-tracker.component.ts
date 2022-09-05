@@ -353,6 +353,12 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				})
 		);
 
+		this.electronService.ipcRenderer.on('logout', (event, arg) =>
+			this._ngZone.run(() => {
+				this.stopTimer();
+			})
+		);
+
 		this.electronService.ipcRenderer.on(
 			'prepare_activities_screenshot',
 			(event, arg) =>
