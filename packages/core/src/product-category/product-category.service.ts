@@ -4,7 +4,6 @@ import { Repository } from 'typeorm';
 import {
 	IPagination,
 	IProductCategoryTranslatable,
-	IProductCategoryTranslated,
 	LanguagesEnum
 } from '@gauzy/contracts';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';

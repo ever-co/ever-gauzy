@@ -15,7 +15,7 @@ export class ProductTypeTranslation extends TranslationBase
 	@Column({ nullable: true })
 	description: string;
 
-	@ApiProperty({ type: () => String, enum: LanguagesEnum })
+	@ApiProperty({ type: () => String })
 	@Column({ nullable: false })
 	languageCode: string;
 
