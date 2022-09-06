@@ -197,5 +197,7 @@
   justify-content: center;
   button {
     border-radius: var(--border-radius);
+    border: none;
+    box-shadow: var(--gauzy-shadow);
   }
 }
