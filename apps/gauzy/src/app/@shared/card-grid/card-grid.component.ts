@@ -9,14 +9,21 @@ import {
 } from '@angular/core';
 
 import { Output, EventEmitter } from '@angular/core';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
+import { tap } from 'rxjs/operators';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-card-grid',
 	templateUrl: './card-grid.component.html',
 	styleUrls: ['./card-grid.component.scss']
 })
 export class CardGridComponent implements OnInit, OnDestroy {
-	@Input() source: any;
+	source$: BehaviorSubject<any> = new BehaviorSubject([]);
+	@Input() set source(content: any) {
+		this.source$.next(content);
+	}
 	@Output() onSelectedItem: EventEmitter<any> = new EventEmitter<any>();
 	@Output() scroll: EventEmitter<any> = new EventEmitter<any>();
 	selected: any = { isSelected: false, data: null };
@@ -48,9 +55,14 @@ export class CardGridComponent implements OnInit, OnDestroy {
 	 */
 	columns: any = [];
 
-	constructor(private readonly _ngZone: NgZone) {}
+	_totalItems$: BehaviorSubject<number> = new BehaviorSubject(0);
+	@Input() set totalItems(content: any) {
+		this._totalItems$.next(content);
+	}
 
-	ngOnInit(): void {}
+	private _arrayOverflow: boolean;
+
+	constructor(private readonly _ngZone: NgZone) {}
 
 	getNoDataMessage() {
 		return this.settings.noDataMessage;
@@ -75,9 +87,20 @@ export class CardGridComponent implements OnInit, OnDestroy {
 		this.onSelectedItem.emit(this.selected);
 	}
 
-	onScroll(event: any) {
+	onScroll() {
 		this.showMore = !this._hasScrollbar();
 		this.scroll.emit();
+	}
+
+	ngOnInit(): void {
+		this.source$
+			.pipe(
+				tap((source) => {
+					this._arrayOverflow = this.totalItems <= source.length;
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	getValue(row: any, key: string) {
@@ -101,11 +124,20 @@ export class CardGridComponent implements OnInit, OnDestroy {
 	}
 
 	public get showMore(): boolean {
-		return this._showMore && this.source.length >= 10;
+		const size = this.source.length;
+		return this._showMore && size >= 10 && !this._arrayOverflow;
 	}
 
 	public set showMore(value: boolean) {
 		this._showMore = value;
+	}
+
+	public get source() {
+		return this.source$.getValue();
+	}
+
+	public get totalItems() {
+		return this._totalItems$.getValue();
 	}
 
 	ngOnDestroy() {}
