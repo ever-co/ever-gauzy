@@ -1456,6 +1456,18 @@ export class StatisticService {
 
 			const query = this.timeSlotRepository.createQueryBuilder('time_slot');
 			query.setFindOptions({
+				select: {
+					employee: {
+						id: true,
+						userId: true,
+						user: {
+							id: true,
+							firstName: true,
+							lastName: true,
+							imageUrl: true
+						}
+					}
+				},
 				join: {
 					alias: 'time_slot',
 					leftJoin: {

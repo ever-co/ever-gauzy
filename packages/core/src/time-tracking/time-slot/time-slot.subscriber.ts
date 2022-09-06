@@ -19,7 +19,12 @@ export class TimeSlotSubscriber implements EntitySubscriberInterface<TimeSlot> {
     */
     afterLoad(entity: TimeSlot) {
 		entity.stoppedAt = moment(entity.startedAt).add(10, 'minutes').toDate();
-        entity.percentage = this.calculateActivityPercentage(entity);
+        /***
+         * Calculate activities in percentage
+         */
+        entity.percentage = this.calculateOverallActivity(entity);
+        entity.keyboardPercentage = this.calculateKeyboardActivity(entity);
+        entity.mousePercentage = this.calculateMouseActivity(entity);
     }
 
     /**
@@ -43,9 +48,39 @@ export class TimeSlotSubscriber implements EntitySubscriberInterface<TimeSlot> {
         }
     }
 
-    private calculateActivityPercentage(entity: ITimeSlot): number {
+    /**
+     * Calculate overall activity in percentage
+     *
+     * @param entity
+     * @returns
+     */
+    private calculateOverallActivity(entity: ITimeSlot): number {
         return parseFloat(
             Math.round(((entity.overall * 100) / (entity.duration))).toFixed(2)
+        ) || 0;
+    }
+
+    /**
+     * Calculate mouse activity in percentage
+     *
+     * @param entity
+     * @returns
+     */
+    private calculateMouseActivity(entity: ITimeSlot): number {
+        return parseFloat(
+            Math.round(((entity.mouse * 100) / (entity.duration))).toFixed(2)
+        ) || 0;
+    }
+
+    /**
+     * Calculate keyboard activity in percentage
+     *
+     * @param entity
+     * @returns
+     */
+    private calculateKeyboardActivity(entity: ITimeSlot): number {
+        return parseFloat(
+            Math.round(((entity.keyboard * 100) / (entity.duration))).toFixed(2)
         ) || 0;
     }
 }
