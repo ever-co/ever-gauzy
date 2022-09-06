@@ -10,7 +10,6 @@ import {
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { LocalDataSource } from 'ng2-smart-table';
 import { distinctUntilChange } from '@gauzy/common-angular';
-import { TranslationBaseComponent } from './../../../../../@shared/language-base';
 import { CandidateCvComponent } from './../../../../../@shared/candidate/candidate-cv/candidate-cv.component';
 import { ComponentEnum } from './../../../../../@core/constants';
 import { DocumentDateTableComponent, DocumentUrlTableComponent } from './../../../../../@shared/table-components';

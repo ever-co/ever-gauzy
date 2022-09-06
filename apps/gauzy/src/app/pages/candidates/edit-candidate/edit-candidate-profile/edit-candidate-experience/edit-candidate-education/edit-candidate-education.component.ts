@@ -8,7 +8,6 @@ import {
 	IOrganization
 } from '@gauzy/contracts';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
-import { TranslationBaseComponent } from './../../../../../../@shared/language-base/translation-base.component';
 import { DateViewComponent } from './../../../../../../@shared/table-components';
 import { ComponentEnum } from './../../../../../../@core/constants';
 import {

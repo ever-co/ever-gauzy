@@ -1,5 +1,4 @@
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
-import { TranslationBaseComponent } from './../../../../../@shared/language-base/translation-base.component';
 import {
 	FormBuilder,
 	Validators,
