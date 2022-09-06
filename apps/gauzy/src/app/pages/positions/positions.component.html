@@ -47,7 +47,8 @@
 				positions?.length
 			"
 		>
-			<ga-card-grid
+			<ga-card-grid 
+				[totalItems]="pagination?.totalItems"
 				[settings]="settingsSmartTable"
 				[source]="positions"
 				(onSelectedItem)="selectPosition($event)"

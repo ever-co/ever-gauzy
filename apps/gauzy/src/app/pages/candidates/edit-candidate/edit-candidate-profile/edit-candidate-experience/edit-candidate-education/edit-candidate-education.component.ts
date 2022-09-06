@@ -18,6 +18,7 @@ import {
 	ToastrService
 } from './../../../../../../@core/services';
 import { tap } from 'rxjs/operators';
+import { PaginationFilterBaseComponent } from 'apps/gauzy/src/app/@shared/pagination/pagination-filter-base.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -25,7 +26,7 @@ import { tap } from 'rxjs/operators';
 	templateUrl: './edit-candidate-education.component.html',
 	styleUrls: ['./edit-candidate-education.component.scss']
 })
-export class EditCandidateEducationComponent extends TranslationBaseComponent
+export class EditCandidateEducationComponent extends PaginationFilterBaseComponent
 	implements OnInit, OnDestroy {
 
 	selectedOrganization: IOrganization;
@@ -127,6 +128,10 @@ export class EditCandidateEducationComponent extends TranslationBaseComponent
 		});
 		this.educationList = items;
 		this.sourceSmartTable.load(items);
+		this.setPagination({
+			...this.getPagination(),
+			totalItems: this.sourceSmartTable.count()
+		});
 		this.loading = false;
 	}
 	async loadSmartTable() {

@@ -61,7 +61,8 @@
 				documentList?.length
 			"
 		>
-			<ga-card-grid
+			<ga-card-grid 
+				[totalItems]="pagination?.totalItems"
 				[settings]="settingsSmartTable"
 				[source]="documentList"
 				(onSelectedItem)="selectDocument($event)"

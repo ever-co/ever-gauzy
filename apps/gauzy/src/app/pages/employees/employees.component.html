@@ -212,7 +212,8 @@
 </ng-template>
 <ng-template #gridLayout>
 	<div class="grid" *ngIf="!loading">
-		<ga-card-grid
+		<ga-card-grid 
+			[totalItems]="pagination?.totalItems"
 			[settings]="settingsSmartTable"
 			[source]="employees"
 			(onSelectedItem)="selectEmployee($event)"

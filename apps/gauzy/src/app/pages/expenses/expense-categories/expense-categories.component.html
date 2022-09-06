@@ -61,7 +61,8 @@
 		</ng-template>
 		<ng-template #gridLayout>
 			<div class="grid">
-				<ga-card-grid
+				<ga-card-grid 
+					[totalItems]="pagination?.totalItems"
 					[settings]="settingsSmartTable"
 					[source]="expenseCategories"
 					(onSelectedItem)="selectExpenseCategory($event)"

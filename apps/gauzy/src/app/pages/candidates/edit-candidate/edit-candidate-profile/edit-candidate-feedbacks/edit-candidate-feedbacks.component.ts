@@ -38,6 +38,7 @@ import {
 import { InterviewersTableComponent } from '../../../manage-candidate-interviews/interview-panel/table-components/interviewers/interviewers.component';
 import { InterviewStarRatingComponent } from '../../../manage-candidate-interviews/interview-panel/table-components/rating/rating.component';
 import { FeedbackStatusTableComponent } from './table-components';
+import { PaginationFilterBaseComponent } from 'apps/gauzy/src/app/@shared/pagination/pagination-filter-base.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -45,7 +46,7 @@ import { FeedbackStatusTableComponent } from './table-components';
 	templateUrl: './edit-candidate-feedbacks.component.html',
 	styleUrls: ['./edit-candidate-feedbacks.component.scss']
 })
-export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
+export class EditCandidateFeedbacksComponent extends PaginationFilterBaseComponent
 	implements OnInit, OnDestroy {
 
 	feedbackId = null;
@@ -243,8 +244,13 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 				});
 			});
 			this.sourceSmartTable.load(feedbacksForTable);
-			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID)
+			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID){
 				this._loadGridLayoutData();
+			}
+			this.setPagination({
+				...this.getPagination(),
+				totalItems: this.sourceSmartTable.count()
+			});
 			return this.feedbackList;
 		}
 	}

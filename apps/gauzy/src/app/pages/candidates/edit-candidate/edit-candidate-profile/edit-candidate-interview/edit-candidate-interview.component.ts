@@ -35,6 +35,7 @@ import { InterviewDateTableComponent } from '../../../manage-candidate-interview
 import { InterviewStarRatingComponent } from '../../../manage-candidate-interviews/interview-panel/table-components/rating/rating.component';
 import { InterviewersTableComponent } from '../../../manage-candidate-interviews/interview-panel/table-components/interviewers/interviewers.component';
 import { InterviewCriterionsTableComponent } from '../../../manage-candidate-interviews/interview-panel/table-components/criterions/criterions.component';
+import { PaginationFilterBaseComponent } from 'apps/gauzy/src/app/@shared/pagination/pagination-filter-base.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -42,7 +43,7 @@ import { InterviewCriterionsTableComponent } from '../../../manage-candidate-int
 	templateUrl: './edit-candidate-interview.component.html',
 	styleUrls: ['./edit-candidate-interview.component.scss']
 })
-export class EditCandidateInterviewComponent extends TranslationBaseComponent
+export class EditCandidateInterviewComponent extends PaginationFilterBaseComponent
 	implements OnInit, OnDestroy {
 
 	interviewList: ICandidateInterview[];
@@ -340,6 +341,10 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 			: this.tableInterviewList;
 
 		this.sourceSmartTable.load(this.tableInterviewList);
+		this.setPagination({
+			...this.getPagination(),
+			totalItems: this.sourceSmartTable.count()
+		});
 		this.loading = false;
 	}
 

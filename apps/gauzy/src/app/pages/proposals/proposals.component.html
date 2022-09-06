@@ -79,7 +79,8 @@
 			</div>
 		</ng-template>
 		<ng-template #gridLayout>
-			<ga-card-grid
+			<ga-card-grid 
+				[totalItems]="pagination?.totalItems"
 				[settings]="smartTableSettings"
 				[source]="proposals"
 				(onSelectedItem)="selectProposal($event)"

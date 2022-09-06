@@ -20,6 +20,7 @@ import {
 	Store,
 	ToastrService
 } from './../../../../../@core/services';
+import { PaginationFilterBaseComponent } from 'apps/gauzy/src/app/@shared/pagination/pagination-filter-base.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -27,7 +28,7 @@ import {
 	templateUrl: './edit-candidate-documents.component.html',
 	styleUrls: ['./edit-candidate-documents.component.scss']
 })
-export class EditCandidateDocumentsComponent extends TranslationBaseComponent
+export class EditCandidateDocumentsComponent extends PaginationFilterBaseComponent
 	implements AfterViewInit, OnInit, OnDestroy {
 		
 	@ViewChild('candidateCv')
@@ -144,6 +145,10 @@ export class EditCandidateDocumentsComponent extends TranslationBaseComponent
 		
 		this.documentList = items;
 		this.smartTableSource.load(items);
+		this.setPagination({
+			...this.getPagination(),
+			totalItems: this.smartTableSource.count()
+		});
 	}
 
 	showCard() {

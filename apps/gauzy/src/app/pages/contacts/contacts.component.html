@@ -62,7 +62,8 @@
 				</div>
 			</ng-template>
 			<ng-template #gridLayout>
-				<ga-card-grid
+				<ga-card-grid 
+					[totalItems]="pagination?.totalItems"
 					(onSelectedItem)="selectContact($event)"
 					[settings]="settingsSmartTable"
 					[source]="organizationContacts"

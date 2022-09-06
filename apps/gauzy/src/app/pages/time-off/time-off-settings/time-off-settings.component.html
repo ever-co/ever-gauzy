@@ -51,7 +51,8 @@
 			</ng-container>
 		</ng-template>
 		<ng-template #gridLayout>
-			<ga-card-grid
+			<ga-card-grid 
+				[totalItems]="pagination?.totalItems"
 				[settings]="smartTableSettings"
 				[source]="timeOffPolicies"
 				(onSelectedItem)="selectTimeOffPolicy($event)"

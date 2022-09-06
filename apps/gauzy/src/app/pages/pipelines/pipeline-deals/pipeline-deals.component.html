@@ -66,7 +66,8 @@
 			style="cursor: pointer"
 			#pipelineDealsTable
 		></ng2-smart-table>
-		<ga-card-grid
+		<ga-card-grid 
+			[totalItems]="pagination?.totalItems"
 			*ngIf="dataLayoutStyle === 'CARDS_GRID'"
 			[settings]="smartTableSettings"
 			[source]="filteredDeals"
