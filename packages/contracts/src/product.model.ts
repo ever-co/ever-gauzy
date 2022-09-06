@@ -105,7 +105,7 @@ export interface IProductFindInput
 
 export interface IProductTypeTranslatable
 	extends ITranslatable<IProductTypeTranslation> {
-	icon: string;
+	icon?: string;
 	name?: string;
 	products?: IProductTranslatable[];
 }
@@ -125,7 +125,7 @@ export interface IProductTypeTranslated
 
 export interface IProductCategoryTranslatable
 	extends ITranslatable<IProductCategoryTranslation> {
-	imageUrl: string;
+	imageUrl?: string;
 	name?: string;
 	products?: IProductTranslatable[];
 }

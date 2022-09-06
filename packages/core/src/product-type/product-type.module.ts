@@ -1,12 +1,14 @@
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ProductType } from './product-type.entity';
+import { CqrsModule } from '@nestjs/cqrs';
 import { Module } from '@nestjs/common';
+import { ProductType } from './product-type.entity';
 import { RouterModule } from 'nest-router';
 import { ProductTypeController } from './product-type.controller';
 import { ProductTypeService } from './product-type.service';
 import { ProductTypeTranslation } from './product-type-translation.entity';
 import { TenantModule } from '../tenant/tenant.module';
 import { UserModule } from './../user/user.module';
+import { CommandHandlers } from './commands/handlers';
 
 @Module({
 	imports: [
@@ -18,10 +20,14 @@ import { UserModule } from './../user/user.module';
 			ProductTypeTranslation
 		]),
 		TenantModule,
-		UserModule
+		UserModule,
+		CqrsModule
 	],
 	controllers: [ProductTypeController],
-	providers: [ProductTypeService],
+	providers: [
+		ProductTypeService,
+		...CommandHandlers
+	],
 	exports: [
 		TypeOrmModule,
 		ProductTypeService
