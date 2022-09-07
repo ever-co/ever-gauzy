@@ -41,36 +41,39 @@ export const createDefaultEmployeeAppointment = async (
 export const createRandomEmployeeAppointment = async (
 	dataSource: DataSource,
 	tenants: ITenant[],
-	tenantEmployeeMap: Map<ITenant, IEmployee[]>,
-	tenantOrganizationsMap: Map<ITenant, IOrganization[]>
+	tenantOrganizationsMap: Map<ITenant, IOrganization[]>,
+	organizationEmployeesMap: Map<IOrganization, IEmployee[]>
 ): Promise<EmployeeAppointment[]> => {
-	if (!tenantEmployeeMap) {
-		console.warn(
-			'Warning: tenantEmployeeMap not found, Employee Appointment  will not be created'
-		);
-		return;
-	}
 	if (!tenantOrganizationsMap) {
 		console.warn(
 			'Warning: tenantOrganizationsMap not found, Employee Appointment  will not be created'
 		);
 		return;
 	}
+	if (!organizationEmployeesMap) {
+		console.warn(
+			'Warning: organizationEmployeesMap not found, Employee Appointment  will not be created'
+		);
+		return;
+	}
 
 	let employeesAppointments: EmployeeAppointment[] = [];
 
-	for (const tenant of tenants) {
-		const tenantEmployees = tenantEmployeeMap.get(tenant);
-		const tenantOrgs = tenantOrganizationsMap.get(tenant);
+	for await (const tenant of tenants) {
+		const organizations = tenantOrganizationsMap.get(tenant);
+		for await (const organization of organizations) {
+			const tenantEmployees = organizationEmployeesMap.get(organization);
+			const tenantOrgs = tenantOrganizationsMap.get(tenant);
 
-		for (const tenantEmployee of tenantEmployees) {
-			employeesAppointments = await dataOperation(
-				dataSource,
-				employeesAppointments,
-				tenantEmployee,
-				tenantOrgs,
-				tenant
-			);
+			for (const tenantEmployee of tenantEmployees) {
+				employeesAppointments = await dataOperation(
+					dataSource,
+					employeesAppointments,
+					tenantEmployee,
+					tenantOrgs,
+					tenant
+				);
+			}
 		}
 	}
 };

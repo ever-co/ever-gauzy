@@ -42,16 +42,15 @@ const insertProductCategories = async (
 	return await dataSource.manager.save(categories);
 };
 
-export const createRandomCategories = async (
+export const createRandomProductCategories = async (
 	dataSource: DataSource,
 	tenants: ITenant[],
 	tenantOrganizationsMap: Map<ITenant, IOrganization[]>
 ): Promise<ProductCategory[]> => {
 	const seedProductCategories: ProductCategory[] = [];
-
-	for (const tenant of tenants) {
-		const tenantOrgs = tenantOrganizationsMap.get(tenant);
-		for (const tenantOrg of tenantOrgs) {
+	for await (const tenant of tenants) {
+		const organizations = tenantOrganizationsMap.get(tenant);
+		for await (const organization of organizations) {
 			for (const seedProductCategory of seed) {
 				const newCategory = new ProductCategory();
 				const image =
@@ -59,13 +58,13 @@ export const createRandomCategories = async (
 					faker.image.abstract();
 
 				newCategory.imageUrl = image;
-				newCategory.organization = tenantOrg;
+				newCategory.organization = organization;
 				newCategory.tenant = tenant;
 				newCategory.translations = [];
 
 				seedProductCategory.translations.forEach((translation) => {
 					const newTranslation = new ProductCategoryTranslation();
-					newTranslation.organization = tenantOrg;
+					newTranslation.organization = organization;
 					newTranslation.tenant = tenant;
 
 					Object.assign(newTranslation, translation);

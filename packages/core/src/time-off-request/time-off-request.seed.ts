@@ -35,14 +35,14 @@ export const createRandomEmployeeTimeOff = async (
 	dataSource: DataSource,
 	tenants: ITenant[],
 	tenantOrganizationsMap: Map<ITenant, IOrganization[]>,
-	tenantEmployeeMap: Map<ITenant, IEmployee[]>,
+	organizationEmployeesMap: Map<IOrganization, IEmployee[]>,
 	noOfEmployeeTimeOffRequest: number
 ): Promise<TimeOffRequest[]> => {
 	let requests: TimeOffRequest[] = [];
 	for (const tenant of tenants) {
-		const employees = tenantEmployeeMap.get(tenant);
 		const organizations = tenantOrganizationsMap.get(tenant);
 		for (const organization of organizations) {
+			const employees = organizationEmployeesMap.get(organization);
 			const policies = await dataSource.manager.find(TimeOffPolicy, {
 				where: [{ organizationId: organization.id }]
 			});

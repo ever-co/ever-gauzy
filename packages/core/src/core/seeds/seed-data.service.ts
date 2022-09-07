@@ -283,7 +283,7 @@ import { createRandomProductVariant } from '../../product-variant/product-varian
 import { createRandomProductVariantPrice } from '../../product-variant-price/product-variant-price.seed';
 import {
 	createCategories,
-	createRandomCategories
+	createRandomProductCategories
 } from '../../product-category/category.seed';
 import {
 	createDefaultProductType,
@@ -1403,10 +1403,31 @@ export class SeedDataService {
 			)
 		);
 
+		await this.tryExecute(
+			'Random Tags',
+			createTags(this.dataSource)
+		);
+
 		// Platform level data which only need database connection
 		const tenants = await createRandomTenants(
 			this.dataSource,
 			randomSeedConfig.tenants || 1
+		);
+
+		await this.tryExecute(
+			'Random Tenant Settings',
+			createDefaultTenantSetting(
+				this.dataSource,
+				tenants
+			)
+		);
+
+		await this.tryExecute(
+			'Random Feature Reports',
+			createRandomTenantOrganizationsReport(
+				this.dataSource,
+				tenants
+			)
 		);
 
 		await this.tryExecute(
@@ -1417,26 +1438,19 @@ export class SeedDataService {
 			)
 		);
 
-		await this.tryExecute(
-			'Tags',
-			createTags(this.dataSource)
-		);
-
 		// Independent roles and role permissions for each tenant
 		const roles: IRole[] = await createRoles(
 			this.dataSource,
 			tenants
 		);
 
-		await createDefaultTenantSetting(
-			this.dataSource,
-			tenants
-		);
-
-		await createRolePermissions(
-			this.dataSource,
-			roles,
-			tenants
+		await this.tryExecute(
+			'Random Tenant Role Permissions',
+			createRolePermissions(
+				this.dataSource,
+				roles,
+				tenants
+			)
 		);
 
 		// Tenant level inserts which only need connection, tenant, role
@@ -1455,6 +1469,7 @@ export class SeedDataService {
 		const tenantUsersMap = await createRandomUsers(
 			this.dataSource,
 			tenants,
+			randomSeedConfig.adminPerOrganization || 1,
 			randomSeedConfig.organizationsPerTenant || 1,
 			randomSeedConfig.employeesPerOrganization || 1,
 			randomSeedConfig.candidatesPerOrganization || 1,
@@ -1463,44 +1478,45 @@ export class SeedDataService {
 			randomSeedConfig.viewersPerOrganization || 1
 		);
 
-		// Organization level inserts which need connection, tenant, organizations, users
-		await createRandomUsersOrganizations(
+		// // Organization level inserts which need connection, tenant, organizations, users
+		const organizationUsersMap = await createRandomUsersOrganizations(
 			this.dataSource,
 			tenants,
 			tenantOrganizationsMap,
 			tenantSuperAdminsMap,
 			tenantUsersMap,
-			randomSeedConfig.employeesPerOrganization || 1
+			randomSeedConfig.employeesPerOrganization || 1,
+			randomSeedConfig.adminPerOrganization || 1
 		);
 
-		const tenantEmployeeMap = await createRandomEmployees(
+		const organizationEmployeesMap = await createRandomEmployees(
 			this.dataSource,
 			tenants,
 			tenantOrganizationsMap,
-			tenantUsersMap,
-			randomSeedConfig.employeesPerOrganization || 1
+			organizationUsersMap
 		);
 
-		await this.tryExecute(
-			'Random Feature Reports',
-			createRandomTenantOrganizationsReport(
-				this.dataSource,
-				tenants
-			)
-		);
-
-		await this.tryExecute(
-			'Random Categories',
-			createRandomCategories(
+		const tags = await this.tryExecute(
+			'Random Organization Tags',
+			createRandomOrganizationTags(
 				this.dataSource,
 				tenants,
 				tenantOrganizationsMap
 			)
 		);
 
-		const tags = await this.tryExecute(
-			'Random Organization Tags',
-			createRandomOrganizationTags(
+		await this.tryExecute(
+			'Random Organization Documents',
+			createRandomOrganizationDocuments(
+				this.dataSource,
+				tenants,
+				tenantOrganizationsMap
+			)
+		);
+
+		await this.tryExecute(
+			'Random Product Categories',
+			createRandomProductCategories(
 				this.dataSource,
 				tenants,
 				tenantOrganizationsMap
@@ -1519,15 +1535,6 @@ export class SeedDataService {
 		await this.tryExecute(
 			'Random Products',
 			createRandomProduct(
-				this.dataSource,
-				tenants,
-				tenantOrganizationsMap
-			)
-		);
-
-		await this.tryExecute(
-			'Random Organization Documents',
-			createRandomOrganizationDocuments(
 				this.dataSource,
 				tenants,
 				tenantOrganizationsMap
@@ -1580,7 +1587,7 @@ export class SeedDataService {
 				tenants,
 				tenantOrganizationsMap
 			)
-		)
+		);
 
 		await this.tryExecute(
 			'Random Merchants',
@@ -1605,17 +1612,19 @@ export class SeedDataService {
 			createRandomIncomes(
 				this.dataSource,
 				tenants,
-				tenantEmployeeMap
+				tenantOrganizationsMap,
+				organizationEmployeesMap
 			)
 		);
 
 		await this.tryExecute(
-			'Random Teams',
+			'Random Organization Teams',
 			createRandomTeam(
 				this.dataSource,
 				tenants,
+				roles,
 				tenantOrganizationsMap,
-				roles
+				organizationEmployeesMap
 			)
 		);
 
@@ -1625,7 +1634,7 @@ export class SeedDataService {
 				this.dataSource,
 				tenants,
 				tenantOrganizationsMap,
-				tenantEmployeeMap
+				organizationEmployeesMap
 			)
 		);
 
@@ -1634,8 +1643,9 @@ export class SeedDataService {
 			createRandomKeyResult(
 				this.dataSource,
 				tenants,
-				tenantEmployeeMap,
-				randomGoals
+				randomGoals,
+				tenantOrganizationsMap,
+				organizationEmployeesMap
 			)
 		);
 
@@ -1718,7 +1728,8 @@ export class SeedDataService {
 			createRandomExpenses(
 				this.dataSource,
 				tenants,
-				tenantEmployeeMap,
+				tenantOrganizationsMap,
+				organizationEmployeesMap,
 				organizationVendorsMap,
 				categoriesMap
 			)
@@ -1738,7 +1749,8 @@ export class SeedDataService {
 			createRandomEquipmentSharing(
 				this.dataSource,
 				tenants,
-				tenantEmployeeMap,
+				tenantOrganizationsMap,
+				organizationEmployeesMap,
 				randomSeedConfig.equipmentSharingPerTenant || 20
 			)
 		);
@@ -1804,7 +1816,8 @@ export class SeedDataService {
 			createRandomRequestApproval(
 				this.dataSource,
 				tenants,
-				tenantEmployeeMap,
+				tenantOrganizationsMap,
+				organizationEmployeesMap,
 				randomSeedConfig.requestApprovalPerOrganization || 20
 			)
 		);
@@ -1826,7 +1839,7 @@ export class SeedDataService {
 				this.dataSource,
 				tenants,
 				tenantOrganizationsMap,
-				tenantEmployeeMap,
+				organizationEmployeesMap,
 				randomSeedConfig.employeeTimeOffPerOrganization || 20
 			)
 		);
@@ -1836,8 +1849,8 @@ export class SeedDataService {
 			createRandomProposals(
 				this.dataSource,
 				tenants,
-				tenantEmployeeMap,
 				tenantOrganizationsMap,
+				organizationEmployeesMap,
 				randomSeedConfig.proposalsSharingPerOrganizations || 30
 			)
 		);
@@ -1895,7 +1908,7 @@ export class SeedDataService {
 				this.dataSource,
 				tenants,
 				tenantOrganizationsMap,
-				tenantEmployeeMap,
+				organizationEmployeesMap,
 				randomSeedConfig.availabilitySlotsPerOrganization || 20
 			)
 		);
@@ -1905,10 +1918,11 @@ export class SeedDataService {
 			createRandomPayment(
 				this.dataSource,
 				tenants,
-				tenantEmployeeMap,
-				tenantOrganizationsMap
+				tenantOrganizationsMap,
+				organizationEmployeesMap
 			)
 		);
+
 		await this.tryExecute(
 			'Random Candidate Educations',
 			createRandomCandidateEducations(
@@ -1955,7 +1969,8 @@ export class SeedDataService {
 			createRandomCandidateInterviewers(
 				this.dataSource,
 				tenants,
-				tenantEmployeeMap,
+				tenantOrganizationsMap,
+				organizationEmployeesMap,
 				tenantCandidatesMap
 			)
 		);
@@ -1974,7 +1989,8 @@ export class SeedDataService {
 			createRandomEmployeeRecurringExpense(
 				this.dataSource,
 				tenants,
-				tenantEmployeeMap
+				tenantOrganizationsMap,
+				organizationEmployeesMap
 			)
 		);
 
@@ -1983,7 +1999,7 @@ export class SeedDataService {
 			createRandomEmployeeSetting(
 				this.dataSource,
 				tenants,
-				tenantEmployeeMap
+				organizationEmployeesMap
 			)
 		);
 
@@ -2019,8 +2035,8 @@ export class SeedDataService {
 			createRandomOrganizationTeamEmployee(
 				this.dataSource,
 				tenants,
-				tenantEmployeeMap,
-				tenantOrganizationsMap
+				tenantOrganizationsMap,
+				organizationEmployeesMap
 			)
 		);
 
@@ -2029,7 +2045,8 @@ export class SeedDataService {
 			createRandomAppointmentEmployees(
 				this.dataSource,
 				tenants,
-				tenantEmployeeMap
+				tenantOrganizationsMap,
+				organizationEmployeesMap
 			)
 		);
 
@@ -2038,8 +2055,8 @@ export class SeedDataService {
 			createRandomEmployeeAppointment(
 				this.dataSource,
 				tenants,
-				tenantEmployeeMap,
-				tenantOrganizationsMap
+				tenantOrganizationsMap,
+				organizationEmployeesMap
 			)
 		);
 
@@ -2066,8 +2083,8 @@ export class SeedDataService {
 			createRandomDeal(
 				this.dataSource,
 				tenants,
-				tenantEmployeeMap,
-				tenantOrganizationsMap
+				tenantOrganizationsMap,
+				organizationEmployeesMap
 			)
 		);
 
@@ -2116,8 +2133,8 @@ export class SeedDataService {
 			createRandomRequestApprovalEmployee(
 				this.dataSource,
 				tenants,
-				tenantEmployeeMap,
-				tenantOrganizationsMap
+				tenantOrganizationsMap,
+				organizationEmployeesMap
 			)
 		);
 
@@ -2126,7 +2143,6 @@ export class SeedDataService {
 			createRandomRequestApprovalTeam(
 				this.dataSource,
 				tenants,
-				tenantEmployeeMap,
 				tenantOrganizationsMap
 			)
 		);
@@ -2145,8 +2161,8 @@ export class SeedDataService {
 			createRandomEventType(
 				this.dataSource,
 				tenants,
-				tenantEmployeeMap,
-				tenantOrganizationsMap
+				tenantOrganizationsMap,
+				organizationEmployeesMap
 			)
 		);
 

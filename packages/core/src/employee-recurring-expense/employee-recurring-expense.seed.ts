@@ -1,78 +1,79 @@
 import { DataSource } from 'typeorm';
 import {
 	IEmployee,
+	IOrganization,
 	ITenant,
 	RecurringExpenseDefaultCategoriesEnum
 } from '@gauzy/contracts';
-import { EmployeeRecurringExpense } from './employee-recurring-expense.entity';
 import { faker } from '@ever-co/faker';
 import * as moment from 'moment';
-import { Organization } from '../organization/organization.entity';
 import { environment as env } from '@gauzy/config';
+import { EmployeeRecurringExpense } from './employee-recurring-expense.entity';
 
 export const createRandomEmployeeRecurringExpense = async (
 	dataSource: DataSource,
 	tenants: ITenant[],
-	tenantEmployeeMap: Map<ITenant, IEmployee[]>
+	tenantOrganizationsMap: Map<ITenant, IOrganization[]>,
+	organizationEmployeesMap: Map<IOrganization, IEmployee[]>
 ): Promise<EmployeeRecurringExpense[]> => {
-	if (!tenantEmployeeMap) {
+	if (!tenantOrganizationsMap) {
 		console.warn(
-			'Warning: tenantCandidatesMap not found, Employee Recurring Expense  will not be created'
+			'Warning: tenantOrganizationsMap not found, Employee Recurring Expense  will not be created'
 		);
 		return;
 	}
+	if (!organizationEmployeesMap) {
+		console.warn(
+			'Warning: organizationEmployeesMap not found, Employee Recurring Expense  will not be created'
+		);
+		return;
+	}
+	const employeeRecurringExpenses: EmployeeRecurringExpense[] = [];
+	for await (const tenant of tenants) {
+		const organizations = tenantOrganizationsMap.get(tenant);
+		for await(const organization of organizations) {
+			const tenantEmployees = organizationEmployeesMap.get(organization);
+			for (const [index, tenantEmployee] of tenantEmployees.entries()) {
+				const employeeRecurringExpense = new EmployeeRecurringExpense();
+				employeeRecurringExpense.employeeId = tenantEmployee.id;
 
-	const employees: EmployeeRecurringExpense[] = [];
+				const startDate = faker.date.past();
+				employeeRecurringExpense.startDay = startDate.getDate();
+				employeeRecurringExpense.startMonth = startDate.getMonth() + 1;
+				employeeRecurringExpense.startYear = startDate.getFullYear();
+				employeeRecurringExpense.startDate = startDate;
 
-	for (const tenant of tenants) {
-		const { id: tenantId } = tenant;
-		const organizations = await dataSource.manager.findBy(Organization, {
-			tenantId
-		});
-		const tenantEmployees = tenantEmployeeMap.get(tenant);
+				// TODO: fix endDate generation for some entities only, most should not have end date really
+				if (index % 2 === 0) {
+					// new changes
+					const endDate = faker.date.between(
+						new Date(startDate),
+						moment(startDate).add(4, 'months').toDate()
+					);
+					employeeRecurringExpense.endDay = endDate.getDate();
+					employeeRecurringExpense.endMonth = endDate.getMonth();
+					employeeRecurringExpense.endYear = endDate.getFullYear();
+					employeeRecurringExpense.endDate = endDate;
+				}
+				// TODO: seed with random Categories from that enum, but make sure that SALARY exists in most of employees anyway (except contractors)
+				employeeRecurringExpense.categoryName =
+					RecurringExpenseDefaultCategoriesEnum.SALARY;
 
-		for (const [index, tenantEmployee] of tenantEmployees.entries()) {
-			const employee = new EmployeeRecurringExpense();
-			employee.employeeId = tenantEmployee.id;
+				employeeRecurringExpense.value = faker.datatype.number(999); // new changes
+				employeeRecurringExpense.currency = env.defaultCurrency; // new changes
 
-			const startDate = faker.date.past();
-			employee.startDay = startDate.getDate();
-			employee.startMonth = startDate.getMonth() + 1;
-			employee.startYear = startDate.getFullYear();
-			employee.startDate = startDate;
+				// TODO: some expenses should have a parent if they change "over time"
+				employeeRecurringExpense.parentRecurringExpenseId = null;
+				employeeRecurringExpense.employee = tenantEmployee;
 
-			// TODO: fix endDate generation for some entities only, most should not have end date really
-			if (index % 2 === 0) {
-				// new changes
-				const endDate = faker.date.between(
-					new Date(startDate),
-					moment(startDate).add(4, 'months').toDate()
-				);
-				employee.endDay = endDate.getDate();
-				employee.endMonth = endDate.getMonth();
-				employee.endYear = endDate.getFullYear();
-				employee.endDate = endDate;
+				employeeRecurringExpense.tenant = tenant;
+				employeeRecurringExpense.organization = organization;
+				employeeRecurringExpenses.push(employeeRecurringExpense);
 			}
-			// TODO: seed with random Categories from that enum, but make sure that SALARY exists in most of employees anyway (except contractors)
-			employee.categoryName =
-				RecurringExpenseDefaultCategoriesEnum.SALARY;
-
-			employee.value = faker.datatype.number(999); // new changes
-			employee.currency = env.defaultCurrency; // new changes
-
-			// TODO: some expenses should have a parent if they change "over time"
-			employee.parentRecurringExpenseId = null;
-			employee.employee = tenantEmployee;
-
-			employee.tenant = tenant;
-			employee.organization = faker.random.arrayElement(organizations);
-			employees.push(employee);
 		}
 	}
-
-	await insertRandomEmployeeRecurringExpense(dataSource, employees);
-
-	return employees;
+	await insertRandomEmployeeRecurringExpense(dataSource, employeeRecurringExpenses);
+	return employeeRecurringExpenses;
 };
 
 const insertRandomEmployeeRecurringExpense = async (

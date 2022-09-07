@@ -106,7 +106,8 @@ export const createDefaultIncomes = async (
 export const createRandomIncomes = async (
 	dataSource: DataSource,
 	tenants: ITenant[],
-	tenantEmployeeMap: Map<ITenant, IEmployee[]>
+	tenantOrganizationsMap: Map<ITenant, IOrganization[]>,
+	organizationEmployeesMap: Map<IOrganization, IEmployee[]>,
 ): Promise<void> => {
 	const notes = [
 		'Great job!',
@@ -115,52 +116,56 @@ export const createRandomIncomes = async (
 		'Done',
 		'Great job!'
 	];
-	const randomIncomes: Income[] = []
-	for (const tenant of tenants || []) {
-		const { id: tenantId } = tenant;
-		const organizationContacts = await dataSource.manager.findBy(OrganizationContact, {
-			tenantId
-		});
-		const employees = tenantEmployeeMap.get(tenant);
-		for (const employee of employees || []) {
-			const { id: organizationId } = employee.organization;
+	for await (const tenant of tenants || []) {
+		const organizations = tenantOrganizationsMap.get(tenant);
+		for await (const organization of organizations) {
+			const incomes: IIncome[] = [];
+			const { id: organizationId } = organization;
+			const { id: tenantId } = tenant;
+			const organizationContacts = await dataSource.manager.findBy(OrganizationContact, {
+				tenantId,
+				organizationId
+			});
 			const tags = await dataSource.manager.findBy(Tag, {
 				tenantId,
 				organizationId
 			});
-			for (let index = 0; index < 100; index++) {
-				const income = new Income();
-				const currentIndex = faker.datatype.number({
-					min: 0,
-					max: index % 5
-				});
-				income.organization = employee.organization;
-				income.tenant = tenant;
-				income.employee = employee;
-				income.amount = faker.datatype.number({ min: 10, max: 9999 });
-				if (organizationContacts.length) {
-					income.client = faker.random.arrayElement(organizationContacts);
-				}
-				income.currency = employee.organization.currency || env.defaultCurrency;
-				income.valueDate = moment(
-					faker.date.between(
-						moment().subtract(3, 'months').calendar(),
-						moment().add(10, 'days').calendar()
+			const employees = organizationEmployeesMap.get(organization);
+			for await (const employee of employees || []) {
+				for (let index = 0; index < 100; index++) {
+					const income = new Income();
+					const currentIndex = faker.datatype.number({
+						min: 0,
+						max: index % 5
+					});
+					income.organization = organization;
+					income.tenant = tenant;
+					income.employee = employee;
+					income.amount = faker.datatype.number({ min: 10, max: 9999 });
+					if (organizationContacts.length) {
+						income.client = faker.random.arrayElement(organizationContacts);
+					}
+					income.currency = employee.organization.currency || env.defaultCurrency;
+					income.valueDate = moment(
+						faker.date.between(
+							moment().subtract(3, 'months').calendar(),
+							moment().add(10, 'days').calendar()
+						)
 					)
-				)
-				.startOf('day')
-				.toDate();
-				income.notes = notes[currentIndex];
-				income.tags = chain(tags)
-					.shuffle()
-					.take(faker.datatype.number({ min: 1, max: 3 }))
-					.values()
-					.value();
-				randomIncomes.push(income);
+					.startOf('day')
+					.toDate();
+					income.notes = notes[currentIndex];
+					income.tags = chain(tags)
+						.shuffle()
+						.take(faker.datatype.number({ min: 1, max: 3 }))
+						.values()
+						.value();
+					incomes.push(income);
+				}
 			}
+			await insertIncome(dataSource, incomes);
 		}
 	}
-	await insertIncome(dataSource, randomIncomes);
 	return;
 };
 
@@ -168,9 +173,5 @@ const insertIncome = async (
 	dataSource: DataSource,
 	incomes: Income[]
 ): Promise<void> => {
-	try {
-		await dataSource.manager.save(incomes);
-	} catch (error) {
-		console.log(error);
-	}
+	await dataSource.manager.save(incomes);
 };

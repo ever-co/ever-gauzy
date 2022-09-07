@@ -3,6 +3,8 @@ import { faker } from '@ever-co/faker';
 import { KeyResult } from './keyresult.entity';
 import {
 	IEmployee,
+	IGoal,
+	IOrganization,
 	ITenant,
 	KeyResultDeadlineEnum,
 	KeyResultTypeEnum,
@@ -128,12 +130,19 @@ const insertDefaultKeyResults = async (
 export const createRandomKeyResult = async (
 	dataSource: DataSource,
 	tenants: ITenant[],
-	tenantEmployeeMap: Map<ITenant, IEmployee[]>,
-	goals
+	goals: any,
+	tenantOrganizationsMap: Map<ITenant, IOrganization[]>,
+	organizationEmployeesMap: Map<IOrganization, IEmployee[]>,
 ): Promise<KeyResult[]> => {
-	if (!tenantEmployeeMap) {
+	if (!tenantOrganizationsMap) {
 		console.warn(
-			'Warning: tenantEmployeeMap not found, Random KeyResult will not be created'
+			'Warning: tenantOrganizationsMap not found, Random KeyResult will not be created'
+		);
+		return;
+	}
+	if (!organizationEmployeesMap) {
+		console.warn(
+			'Warning: organizationEmployeesMap not found, Random KeyResult will not be created'
 		);
 		return;
 	}
@@ -141,71 +150,74 @@ export const createRandomKeyResult = async (
 	const keyResults: KeyResult[] = [];
 
 	for (const tenant of tenants) {
-		const tenantEmployees = tenantEmployeeMap.get(tenant);
-		for (const goal of goals) {
-			const keyResult = new KeyResult();
+		const tenantOrgs = tenantOrganizationsMap.get(tenant);
+		for await (const organization of tenantOrgs) {
+			const organizationEmployees = organizationEmployeesMap.get(organization);
+			for (const goal of goals) {
+				const keyResult = new KeyResult();
 
-			keyResult.deadline = faker.random.arrayElement(
-				Object.keys(KeyResultDeadlineEnum)
-			);
-			if (
-				keyResult.deadline !== KeyResultDeadlineEnum.NO_CUSTOM_DEADLINE
-			) {
-				keyResult.hardDeadline = moment(new Date())
-					.add(1, 'days')
-					.toDate();
-				keyResult.softDeadline = null;
-				if (
-					keyResult.deadline ===
-					KeyResultDeadlineEnum.HARD_AND_SOFT_DEADLINE
-				) {
-					keyResult.softDeadline = moment(new Date())
-						.add(3, 'days')
-						.toDate();
-				}
-			} else {
-				keyResult.hardDeadline = null;
-				keyResult.softDeadline = null;
-			}
-			keyResult.owner = faker.random.arrayElement(tenantEmployees);
-			keyResult.lead = faker.random.arrayElement(tenantEmployees);
-			keyResult.type = faker.random.arrayElement(
-				Object.keys(KeyResultTypeEnum)
-			);
-
-			if (keyResult.type === KeyResultTypeEnum.TRUE_OR_FALSE) {
-				keyResult.initialValue = 0;
-				keyResult.targetValue = 1;
-			} else {
-				keyResult.targetValue = faker.datatype.number(5000);
-				keyResult.initialValue = faker.datatype.number(
-					keyResult.targetValue
+				keyResult.deadline = faker.random.arrayElement(
+					Object.keys(KeyResultDeadlineEnum)
 				);
+				if (
+					keyResult.deadline !== KeyResultDeadlineEnum.NO_CUSTOM_DEADLINE
+				) {
+					keyResult.hardDeadline = moment(new Date())
+						.add(1, 'days')
+						.toDate();
+					keyResult.softDeadline = null;
+					if (
+						keyResult.deadline ===
+						KeyResultDeadlineEnum.HARD_AND_SOFT_DEADLINE
+					) {
+						keyResult.softDeadline = moment(new Date())
+							.add(3, 'days')
+							.toDate();
+					}
+				} else {
+					keyResult.hardDeadline = null;
+					keyResult.softDeadline = null;
+				}
+				keyResult.owner = faker.random.arrayElement(organizationEmployees);
+				keyResult.lead = faker.random.arrayElement(organizationEmployees);
+				keyResult.type = faker.random.arrayElement(
+					Object.keys(KeyResultTypeEnum)
+				);
+
+				if (keyResult.type === KeyResultTypeEnum.TRUE_OR_FALSE) {
+					keyResult.initialValue = 0;
+					keyResult.targetValue = 1;
+				} else {
+					keyResult.targetValue = faker.datatype.number(5000);
+					keyResult.initialValue = faker.datatype.number(
+						keyResult.targetValue
+					);
+				}
+
+				keyResult.unit = faker.random.arrayElement([
+					'signups',
+					'publications',
+					'interviews',
+					'people',
+					'%'
+				]);
+
+				keyResult.progress = 0;
+				keyResult.name = faker.name.jobTitle();
+				keyResult.goal = goal;
+				keyResult.organizationId = goal.organizationId;
+				keyResult.tenant = tenant;
+				keyResult.update = keyResult.initialValue;
+				keyResult.status = 'none';
+				keyResult.description = ' ';
+				keyResult.weight = faker.random.arrayElement([
+					KeyResultWeightEnum.DEFAULT,
+					KeyResultWeightEnum.INCREASE_BY_2X,
+					KeyResultWeightEnum.INCREASE_BY_4X
+				]);
+
+				keyResults.push(keyResult);
 			}
-
-			keyResult.unit = faker.random.arrayElement([
-				'signups',
-				'publications',
-				'interviews',
-				'people',
-				'%'
-			]);
-
-			keyResult.progress = 0;
-			keyResult.name = faker.name.jobTitle();
-			keyResult.goal = goal;
-			keyResult.organizationId = goal.organizationId;
-			keyResult.tenant = tenant;
-			keyResult.update = keyResult.initialValue;
-			keyResult.status = 'none';
-			keyResult.description = ' ';
-			keyResult.weight = faker.random.arrayElement([
-				KeyResultWeightEnum.DEFAULT,
-				KeyResultWeightEnum.INCREASE_BY_2X,
-				KeyResultWeightEnum.INCREASE_BY_4X
-			]);
-
-			keyResults.push(keyResult);
 		}
 	}
 	await dataSource.manager.save(keyResults);
