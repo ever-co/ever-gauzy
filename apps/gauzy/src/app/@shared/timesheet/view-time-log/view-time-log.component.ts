@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, OnDestroy } from '@angular/core';
+import { Component, OnInit, Input, OnDestroy, Output, EventEmitter } from '@angular/core';
 import { IOrganization, ITimeLog, PermissionsEnum } from '@gauzy/contracts';
 import * as moment from 'moment';
 import { NbDialogService } from '@nebular/theme';
@@ -22,6 +22,7 @@ export class ViewTimeLogComponent implements OnInit, OnDestroy {
 	PermissionsEnum = PermissionsEnum;
 	@Input() timeLogs: ITimeLog[] = [];
 	@Input() callback: CallableFunction;
+	@Output() close: CallableFunction;
 
 	constructor(
 		private readonly nbDialogService: NbDialogService,
@@ -111,6 +112,10 @@ export class ViewTimeLogComponent implements OnInit, OnDestroy {
 		if (employee && employee.id) {
 			this.timeTrackerService.checkTimerStatus(tenantId);
 		}
+	}
+
+	onClose() {
+		this.close(true);
 	}
 
 	ngOnDestroy(): void {}
