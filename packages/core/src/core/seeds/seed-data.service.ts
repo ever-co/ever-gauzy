@@ -1478,7 +1478,7 @@ export class SeedDataService {
 			randomSeedConfig.viewersPerOrganization || 1
 		);
 
-		// // Organization level inserts which need connection, tenant, organizations, users
+		// Organization level inserts which need connection, tenant, organizations, users
 		const organizationUsersMap = await createRandomUsersOrganizations(
 			this.dataSource,
 			tenants,
@@ -1999,6 +1999,7 @@ export class SeedDataService {
 			createRandomEmployeeSetting(
 				this.dataSource,
 				tenants,
+				tenantOrganizationsMap,
 				organizationEmployeesMap
 			)
 		);

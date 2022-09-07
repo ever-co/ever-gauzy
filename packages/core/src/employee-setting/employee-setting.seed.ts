@@ -8,6 +8,7 @@ import { EmployeeSetting } from './employee-setting.entity';
 export const createRandomEmployeeSetting = async (
 	dataSource: DataSource,
 	tenants: ITenant[],
+	tenantOrganizationsMap: Map<ITenant, IOrganization[]>,
 	organizationEmployeesMap: Map<IOrganization, IEmployee[]>
 ): Promise<EmployeeSetting[]> => {
 	if (!organizationEmployeesMap) {
@@ -21,13 +22,10 @@ export const createRandomEmployeeSetting = async (
 	const setting = ['Normal', 'Custom'];
 
 	for await (const tenant of tenants) {
-		const { id: tenantId } = tenant;
-		const organizations = await dataSource.manager.findBy(Organization, {
-			tenantId
-		});
+		const organizations = tenantOrganizationsMap.get(tenant);
 		for await (const organization of organizations) {
 			const tenantEmployees = organizationEmployeesMap.get(organization);
-			for (const tenantEmployee of tenantEmployees) {
+			for await (const tenantEmployee of tenantEmployees) {
 				const employee = new EmployeeSetting();
 				const startDate = faker.date.past();
 
