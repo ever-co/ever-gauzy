@@ -94,6 +94,7 @@ export class EmploymentTypesComponent
 			.subscribe();
 		this.store.selectedOrganization$
 			.pipe(
+				debounceTime(100),
 				filter((organization: IOrganization) => !!organization),
 				tap(
 					(organization: IOrganization) =>
