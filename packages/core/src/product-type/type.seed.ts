@@ -1,8 +1,8 @@
 import { DataSource } from 'typeorm';
+import { IOrganization, ITenant } from '@gauzy/contracts';
 import { ProductType } from './product-type.entity';
 import * as seed from './product-type.seed.json';
 import { ProductTypeTranslation } from './product-type-translation.entity';
-import { IOrganization, ITenant } from '@gauzy/contracts';
 
 export const createDefaultProductType = async (
 	dataSource: DataSource,
@@ -39,9 +39,9 @@ export const createRandomProductType = async (
 		return;
 	}
 	const seedProductTypes: ProductType[] = [];
-	for (const tenant of tenants) {
+	for await (const tenant of tenants) {
 		const organizations = tenantOrganizationsMap.get(tenant);
-		for (const organization of organizations) {
+		for await (const organization of organizations) {
 			const productTypes = await generateProductType(
 				tenant,
 				organization

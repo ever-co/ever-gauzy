@@ -1,5 +1,4 @@
 import { DataSource } from 'typeorm';
-import { faker } from '@ever-co/faker';
 import { IOrganization, IOrganizationDocument, ITenant } from '@gauzy/contracts';
 import { OrganizationDocument } from './organization-document.entity';
 
@@ -40,29 +39,8 @@ export const createRandomOrganizationDocuments = async (
 		return;
 	}
 
-	const organizationDocuments: IOrganizationDocument[] = [];
-	const json = {
-		'Paid Days off Request':
-			'http://res.cloudinary.com/evereq/image/upload/v1595424362/everbie-products-images/qanadywgn3gxte7kwtwu.pdf',
-		'Unpaid Days off Request':
-			'http://res.cloudinary.com/evereq/image/upload/v1595506200/everbie-products-images/am3ujibzu660swicfcsw.pdf'
-	};
-
 	for await (const tenant of tenants) {
 		const organizations = tenantOrganizationsMap.get(tenant);
-
-		for await (const organization of organizations) {
-			const document = new OrganizationDocument();
-			document.name = faker.random.arrayElement([
-				'Paid Days off Request',
-				'Unpaid Days off Request'
-			]);
-			document.organization = organization;
-			document.tenant = tenant;
-			document.documentUrl = json[document.name];
-			organizationDocuments.push(document);
-		}
+		await createOrganizationDocuments(dataSource, tenant, organizations);
 	}
-
-	await dataSource.manager.save(organizationDocuments);
 };

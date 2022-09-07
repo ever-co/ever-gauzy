@@ -7,18 +7,18 @@ import { OrganizationTeam, Role } from './../core/entities/internal';
 export const createRandomOrganizationTeamEmployee = async (
 	dataSource: DataSource,
 	tenants: ITenant[],
-	tenantEmployeeMap: Map<ITenant, IEmployee[]>,
-	tenantOrganizationsMap: Map<ITenant, IOrganization[]>
+	tenantOrganizationsMap: Map<ITenant, IOrganization[]>,
+	organizationEmployeesMap: Map<IOrganization, IEmployee[]>
 ) => {
-	if (!tenantEmployeeMap) {
-		console.warn(
-			'Warning: tenantEmployeeMap not found, Random Organization Team Employee will not be created'
-		);
-		return;
-	}
 	if (!tenantOrganizationsMap) {
 		console.warn(
 			'Warning: tenantOrganizationsMap not found, Random Organization Team Employee will not be created'
+		);
+		return;
+	}
+	if (!organizationEmployeesMap) {
+		console.warn(
+			'Warning: organizationEmployeesMap not found, Random Organization Team Employee will not be created'
 		);
 		return;
 	}
@@ -27,9 +27,9 @@ export const createRandomOrganizationTeamEmployee = async (
 	for (const tenant of tenants) {
 		const { id: tenantId } = tenant;
 		const organizations = tenantOrganizationsMap.get(tenant);
-		const tenantEmployees = tenantEmployeeMap.get(tenant);
 
 		for (const organization of organizations) {
+			const tenantEmployees = organizationEmployeesMap.get(organization);
 			const { id: organizationId } = organization;
 			const organizationTeams = await dataSource.manager.findBy(OrganizationTeam, {
 				organizationId,

@@ -48,16 +48,16 @@ export const createDefaultProposals = async (
 export const createRandomProposals = async (
 	dataSource: DataSource,
 	tenants: ITenant[],
-	tenantEmployeeMap: Map<ITenant, IEmployee[]>,
 	tenantOrganizationsMap: Map<ITenant, IOrganization[]>,
+	organizationEmployeesMap: Map<IOrganization, IEmployee[]>,
 	noOfProposalsPerOrganization: number
 ): Promise<Proposal[]> => {
 	const proposals: Proposal[] = [];
 	for (const tenant of tenants) {
 		const { id: tenantId } = tenant;
 		const organizations = tenantOrganizationsMap.get(tenant);
-		const employees = tenantEmployeeMap.get(tenant);
 		for (const organization of organizations) {
+			const employees = organizationEmployeesMap.get(organization);
 			const { id: organizationId } = organization;
 			const tags = await dataSource.manager.findBy(Tag, {
 				organizationId

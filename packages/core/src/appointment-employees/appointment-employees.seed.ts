@@ -1,38 +1,47 @@
 import { DataSource } from 'typeorm';
-import { IAppointmentEmployee, IEmployee, ITenant } from '@gauzy/contracts';
+import { IAppointmentEmployee, IEmployee, IOrganization, ITenant } from '@gauzy/contracts';
 import { AppointmentEmployee } from './appointment-employees.entity';
 import { faker } from '@ever-co/faker';
 
 export const createRandomAppointmentEmployees = async (
 	dataSource: DataSource,
 	tenants: ITenant[],
-	tenantEmployeeMap: Map<ITenant, IEmployee[]>
+	tenantOrganizationsMap: Map<ITenant, IOrganization[]>,
+	organizationEmployeesMap: Map<IOrganization, IEmployee[]>
 ): Promise<IAppointmentEmployee[]> => {
-	if (!tenantEmployeeMap) {
+	if (!tenantOrganizationsMap) {
 		console.warn(
-			'Warning: tenantEmployeeMap not found, Appointment Employees  will not be created'
+			'Warning: tenantOrganizationsMap not found, Appointment Employees  will not be created'
+		);
+		return;
+	}
+	if (!organizationEmployeesMap) {
+		console.warn(
+			'Warning: organizationEmployeesMap not found, Appointment Employees  will not be created'
 		);
 		return;
 	}
 
 	const appointEmployees: IAppointmentEmployee[] = [];
 	for await (const tenant of tenants) {
-		const tenantEmployees = tenantEmployeeMap.get(tenant);
-		for await (const tenantEmployee of tenantEmployees) {
-			for (let i = 0; i < faker.datatype.number(15); i++) {
-				const appointemployee = new AppointmentEmployee();
-				//todo: need to verify appointmentId is used anywhere else or not
-				appointemployee.appointmentId = faker.datatype
-					.number({ min: 100000, max: 1000000 })
-					.toString();
-				appointemployee.employeeId = tenantEmployee.id;
-				appointemployee.organization = tenantEmployee.organization;
-				appointemployee.tenant = tenant;
+		const organizations = tenantOrganizationsMap.get(tenant);
+		for await (const organization of organizations) {
+			const tenantEmployees = organizationEmployeesMap.get(organization);
+			for await (const tenantEmployee of tenantEmployees) {
+				for (let i = 0; i < faker.datatype.number(15); i++) {
+					const appointemployee = new AppointmentEmployee();
+					//todo: need to verify appointmentId is used anywhere else or not
+					appointemployee.appointmentId = faker.datatype
+						.number({ min: 100000, max: 1000000 })
+						.toString();
+					appointemployee.employeeId = tenantEmployee.id;
+					appointemployee.organization = tenantEmployee.organization;
+					appointemployee.tenant = tenant;
 
-				appointEmployees.push(appointemployee);
+					appointEmployees.push(appointemployee);
+				}
 			}
 		}
 	}
-
 	await dataSource.manager.save(appointEmployees);
 };

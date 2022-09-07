@@ -1,11 +1,9 @@
 import { DataSource } from 'typeorm';
+import { faker } from '@ever-co/faker';
+import { IEmployee, IOrganization, ITenant } from '@gauzy/contracts';
 import { RequestApproval } from './request-approval.entity';
 import { RequestApprovalEmployee } from '../request-approval-employee/request-approval-employee.entity';
-import { Tenant } from '../tenant/tenant.entity';
-import { faker } from '@ever-co/faker';
 import { ApprovalPolicy } from '../approval-policy/approval-policy.entity';
-import { Employee } from '../employee/employee.entity';
-import { Organization } from '../organization/organization.entity';
 
 const approvalTypes = [
 	'Business Trip',
@@ -26,29 +24,27 @@ const approvalTypes = [
 
 export const createRandomRequestApproval = async (
 	dataSource: DataSource,
-	tenants: Tenant[],
-	tenantEmployeeMap: Map<Tenant, Employee[]>,
+	tenants: ITenant[],
+	tenantOrganizationsMap: Map<ITenant, IOrganization[]>,
+	organizationEmployeesMap: Map<IOrganization, IEmployee[]>,
 	noOfRequestsPerOrganizations: number
 ): Promise<any> => {
 	const requestApprovals: RequestApproval[] = [];
 	for await (const tenant of tenants || []) {
 		const { id: tenantId } = tenant;
-		const policies: ApprovalPolicy[] = await dataSource.manager.find(ApprovalPolicy, {
-				where: {
-					tenantId
-				}
-			}
-		);
-		const organizations = await dataSource.manager.find(Organization, {
-			where: {
-				tenantId
-			}
-		});
 
+		const organizations = tenantOrganizationsMap.get(tenant);
 		for await (const organization of organizations) {
+			const employees = organizationEmployeesMap.get(organization);
+			const policies: ApprovalPolicy[] = await dataSource.manager.find(ApprovalPolicy, {
+					where: {
+						tenantId,
+						organizationId: organization.id
+					}
+				}
+			);
 			for (let i = 0; i < noOfRequestsPerOrganizations; i++) {
 				const tenantPolicy = faker.random.arrayElement(policies);
-				const employees = tenantEmployeeMap.get(tenant);
 				const specificEmployees = employees
 					.sort(() => Math.random() - Math.random())
 					.slice(0, 3);

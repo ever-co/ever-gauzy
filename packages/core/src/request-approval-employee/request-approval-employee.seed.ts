@@ -7,8 +7,8 @@ import { ApprovalPolicy, RequestApproval } from './../core/entities/internal';
 export const createRandomRequestApprovalEmployee = async (
 	dataSource: DataSource,
 	tenants: ITenant[],
-	tenantEmployeeMap: Map<ITenant, IEmployee[]>,
-	tenantOrganizationsMap: Map<ITenant, IOrganization[]>
+	tenantOrganizationsMap: Map<ITenant, IOrganization[]>,
+	organizationEmployeesMap: Map<IOrganization, IEmployee[]>
 ): Promise<RequestApprovalEmployee[]> => {
 	if (!tenantOrganizationsMap) {
 		console.warn(
@@ -16,25 +16,25 @@ export const createRandomRequestApprovalEmployee = async (
 		);
 		return;
 	}
-	if (!tenantEmployeeMap) {
+	if (!organizationEmployeesMap) {
 		console.warn(
-			'Warning: tenantEmployeeMap not found, Request Approval Employee  will not be created'
+			'Warning: organizationEmployeesMap not found, Request Approval Employee  will not be created'
 		);
 		return;
 	}
 
-	for (const tenant of tenants) {
+	for await (const tenant of tenants) {
 		const { id: tenantId } = tenant;
 		const tenantOrgs = tenantOrganizationsMap.get(tenant);
-		const tenantEmployees = tenantEmployeeMap.get(tenant);
-		for (const tenantEmployee of tenantEmployees) {
-			for (const tenantOrg of tenantOrgs) {
-				const { id: organizationId } = tenantOrg;
+		for (const tenantOrg of tenantOrgs) {
+			const { id: organizationId } = tenantOrg;
+			const approvalPolicies = await dataSource.manager.find(
+				ApprovalPolicy,
+				{ where: { tenantId, organizationId } }
+			);
+			const tenantEmployees = organizationEmployeesMap.get(tenantOrg);
+			for (const tenantEmployee of tenantEmployees) {
 				const requestApprovalEmployees: RequestApprovalEmployee[] = [];
-				const approvalPolicies = await dataSource.manager.find(
-					ApprovalPolicy,
-					{ where: { tenantId, organizationId } }
-				);
 				for (const approvalPolicy of approvalPolicies) {
 					const requestApprovals = await dataSource.manager.find(
 						RequestApproval,

@@ -136,20 +136,20 @@ export const createDefaultOrganizations = async (
 export const createRandomOrganizations = async (
 	dataSource: DataSource,
 	tenants: ITenant[],
-	noOfOrganizations: number
+	organizationsPerTenant: number
 ): Promise<Map<ITenant, IOrganization[]>> => {
+
 	const defaultDateTypes = Object.values(DefaultValueDateTypeEnum);
 	const skills = await getSkills(dataSource);
 	const contacts = await getContacts(dataSource);
 	const tenantOrganizations: Map<ITenant, IOrganization[]> = new Map();
-	let allOrganizations: IOrganization[] = [];
 
-	tenants.forEach((tenant) => {
+	for await (const tenant of tenants) {
 		const randomOrganizations: IOrganization[] = [];
 		if (tenant.name === 'Ever') {
 			tenantOrganizations.set(tenant, defaultOrganizationsInserted);
 		} else {
-			for (let index = 0; index < noOfOrganizations; index++) {
+			for (let index = 0; index < organizationsPerTenant; index++) {
 				const organizationSkills = _.chain(skills)
 					.shuffle()
 					.take(faker.datatype.number({ min: 1, max: 4 }))
@@ -234,14 +234,10 @@ export const createRandomOrganizations = async (
 
 				randomOrganizations.push(organization);
 			}
-
 			tenantOrganizations.set(tenant, randomOrganizations);
 		}
-
-		allOrganizations = allOrganizations.concat(randomOrganizations);
-	});
-
-	await insertOrganizations(dataSource, allOrganizations);
+		await insertOrganizations(dataSource, randomOrganizations);
+	}
 	return tenantOrganizations;
 };
 

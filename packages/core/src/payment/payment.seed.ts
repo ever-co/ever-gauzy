@@ -82,8 +82,8 @@ export const createDefaultPayment = async (
 export const createRandomPayment = async (
 	dataSource: DataSource,
 	tenants: ITenant[],
-	tenantEmployeeMap: Map<ITenant, IEmployee[]>,
-	tenantOrganizationsMap: Map<ITenant, IOrganization[]>
+	tenantOrganizationsMap: Map<ITenant, IOrganization[]>,
+	organizationEmployeesMap: Map<IOrganization, IEmployee[]>
 ): Promise<Payment[]> => {
 	if (!tenantOrganizationsMap) {
 		console.warn(
@@ -95,13 +95,13 @@ export const createRandomPayment = async (
 	for (const tenant of tenants) {
 		const { id: tenantId } = tenant;
 		const tenantOrgs = tenantOrganizationsMap.get(tenant);
-		const tenantEmployees = tenantEmployeeMap.get(tenant);
 		const users = await dataSource.manager.findBy(User, {
 			tenantId
 		});
 		const payments1: Payment[] = [];
 		const payments2: Payment[] = [];
 		for (const organization of tenantOrgs) {
+			const tenantEmployees = organizationEmployeesMap.get(organization);
 			const { id: organizationId } = organization;
 			const projects = await dataSource.manager.findBy(OrganizationProject, {
 				organizationId,

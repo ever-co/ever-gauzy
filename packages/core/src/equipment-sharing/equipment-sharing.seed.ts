@@ -1,7 +1,7 @@
 import { DataSource } from 'typeorm';
 import { faker } from '@ever-co/faker';
 import { addDays } from 'date-fns';
-import { IEmployee, IOrganization, ITenant } from '@gauzy/contracts';
+import { IEmployee, IEquipment, IEquipmentSharing, IOrganization, ITenant } from '@gauzy/contracts';
 import { EquipmentSharing } from './equipment-sharing.entity';
 import { Equipment } from './../core/entities/internal';
 
@@ -33,37 +33,43 @@ export const createDefaultEquipmentSharing = async (
 export const createRandomEquipmentSharing = async (
 	dataSource: DataSource,
 	tenants: ITenant[],
-	tenantEmployeeMap: Map<ITenant, IEmployee[]>,
+	tenantOrganizationsMap: Map<ITenant, IOrganization[]>,
+	organizationEmployeesMap: Map<IOrganization, IEmployee[]>,
 	noOfEquipmentSharingPerTenant: number
 ): Promise<EquipmentSharing[]> => {
 	let equipmentSharings: EquipmentSharing[] = [];
-	for (const tenant of tenants) {
-		const { id: tenantId } = tenant;
-		const equipments = await dataSource.manager.findBy(Equipment, {
-			tenantId
-		});
-		const employees = tenantEmployeeMap.get(tenant);
-		equipmentSharings = await dataOperation(
-			dataSource,
-			equipmentSharings,
-			noOfEquipmentSharingPerTenant,
-			equipments,
-			employees,
-			tenant,
-			null
-		);
+	for await (const tenant of tenants) {
+		const organizations = tenantOrganizationsMap.get(tenant);
+		for await (const organization of organizations) {
+			const { id: tenantId } = tenant;
+			const { id: organizationId } = organization;
+			const equipments = await dataSource.manager.findBy(Equipment, {
+				tenantId,
+				organizationId
+			});
+			const employees = organizationEmployeesMap.get(organization);
+			equipmentSharings = await dataOperation(
+				dataSource,
+				equipmentSharings,
+				noOfEquipmentSharingPerTenant,
+				equipments,
+				employees,
+				tenant,
+				null
+			);
+		}
 	}
 	return equipmentSharings;
 };
 
 const dataOperation = async (
 	dataSource: DataSource,
-	equipmentSharings,
-	noOfEquipmentSharingPerTenant,
-	equipments,
-	employees,
-	tenant,
-	organization
+	equipmentSharings: IEquipmentSharing[],
+	noOfEquipmentSharingPerTenant: number,
+	equipments: IEquipment[],
+	employees: IEmployee[],
+	tenant: ITenant,
+	organization: IOrganization
 ) => {
 	for (let i = 0; i < noOfEquipmentSharingPerTenant; i++) {
 		const sharing = new EquipmentSharing();

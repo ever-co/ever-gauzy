@@ -7,12 +7,12 @@ import { Pipeline, PipelineStage } from './../core/entities/internal';
 export const createRandomDeal = async (
 	dataSource: DataSource,
 	tenants: ITenant[],
-	tenantEmployeeMap: Map<ITenant, IEmployee[]>,
-	tenantOrganizationsMap: Map<ITenant, IOrganization[]>
+	tenantOrganizationsMap: Map<ITenant, IOrganization[]>,
+	organizationEmployeesMap: Map<IOrganization, IEmployee[]>
 ): Promise<Deal[]> => {
-	if (!tenantEmployeeMap) {
+	if (!organizationEmployeesMap) {
 		console.warn(
-			'Warning: tenantEmployeeMap not found, deal  will not be created'
+			'Warning: organizationEmployeesMap not found, deal  will not be created'
 		);
 		return;
 	}
@@ -25,16 +25,17 @@ export const createRandomDeal = async (
 
 	const deals: Deal[] = [];
 
-	for (const tenant of tenants) {
-		const tenantEmployees = tenantEmployeeMap.get(tenant);
+	for await (const tenant of tenants) {
 		const tenantOrgs = tenantOrganizationsMap.get(tenant);
-
-		for (const tenantEmployee of tenantEmployees) {
-			for (const tenantOrg of tenantOrgs) {
-				const { id: organizationId } = tenantOrg;
-				const pipelines = await dataSource.manager.findBy(Pipeline, {
-					organizationId
-				});
+		for await (const tenantOrg of tenantOrgs) {
+			const { id: tenantId } = tenant;
+			const { id: organizationId } = tenantOrg;
+			const pipelines = await dataSource.manager.findBy(Pipeline, {
+				organizationId,
+				tenantId
+			});
+			const tenantEmployees = organizationEmployeesMap.get(tenantOrg);
+			for await (const tenantEmployee of tenantEmployees) {
 				for (const pipeline of pipelines) {
 					const { id: pipelineId } = pipeline;
 					const pipelineStages = await dataSource.manager.findBy(PipelineStage, {
@@ -42,7 +43,6 @@ export const createRandomDeal = async (
 					});
 					for (const pipelineStage of pipelineStages) {
 						const deal = new Deal();
-
 						deal.createdBy = tenantEmployee.user;
 						deal.stage = pipelineStage;
 						deal.title = faker.name.jobTitle();
@@ -51,7 +51,6 @@ export const createRandomDeal = async (
 						deal.organization = tenantOrg;
 						deal.probability = faker.datatype.number(5);
 						deal.tenant = tenant;
-
 						deals.push(deal);
 					}
 				}

@@ -44,9 +44,16 @@ export const createDefaultCandidateInterviewers = async (
 export const createRandomCandidateInterviewers = async (
 	dataSource: DataSource,
 	tenants: ITenant[],
-	tenantEmployeeMap: Map<ITenant, IEmployee[]>,
+	tenantOrganizationsMap: Map<ITenant, IOrganization[]>,
+	organizationEmployeesMap: Map<IOrganization, IEmployee[]>,
 	tenantCandidatesMap: Map<ITenant, ICandidate[]> | void
 ): Promise<CandidateInterviewers[]> => {
+	if (!tenantOrganizationsMap) {
+		console.warn(
+			'Warning: tenantOrganizationsMap not found, CandidateInterviewers will not be created'
+		);
+		return;
+	}
 	if (!tenantCandidatesMap) {
 		console.warn(
 			'Warning: tenantCandidatesMap not found, CandidateInterviewers will not be created'
@@ -57,8 +64,8 @@ export const createRandomCandidateInterviewers = async (
 	let candidates: CandidateInterviewers[] = [];
 	for (const tenant of tenants) {
 		const tenantCandidates = tenantCandidatesMap.get(tenant);
-		const tenantEmployees = tenantEmployeeMap.get(tenant);
 		for (const tenantCandidate of tenantCandidates) {
+			const tenantEmployees = organizationEmployeesMap.get(tenantCandidate.organization);
 			const { id: candidateId } = tenantCandidate;
 			const candidateInterviews = await dataSource.manager.findBy(CandidateInterview, {
 				candidateId
