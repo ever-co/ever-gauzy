@@ -342,6 +342,10 @@ export class VendorsComponent
 			this.setSmartTableSource();
 			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
 			await this.smartTableSource.getElements();
+			this.setPagination({
+				...this.getPagination(),
+				totalItems: this.smartTableSource.count()
+			});
 			this.isLoading = false;
 		} catch (error) {
 			console.log(error, 'error');
