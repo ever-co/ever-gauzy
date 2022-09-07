@@ -2,7 +2,6 @@ import { DataSource } from 'typeorm';
 import { IEmployee, IOrganization, ITenant } from '@gauzy/contracts';
 import { faker } from '@ever-co/faker';
 import { environment as env } from '@gauzy/config';
-import { Organization } from '../organization/organization.entity';
 import { EmployeeSetting } from './employee-setting.entity';
 
 export const createRandomEmployeeSetting = async (
