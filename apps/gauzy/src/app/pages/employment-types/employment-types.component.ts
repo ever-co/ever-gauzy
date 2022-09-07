@@ -160,7 +160,10 @@ export class EmploymentTypesComponent
 			} else {
 				this.employmentTypeExist = true;
 			}
-
+			this.setPagination({
+				...this.getPagination(),
+				totalItems: this.smartTableSource.count()
+			});
 			this.emptyListInvoke();
 		}
 	}
