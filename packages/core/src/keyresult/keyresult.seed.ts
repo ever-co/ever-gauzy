@@ -3,7 +3,6 @@ import { faker } from '@ever-co/faker';
 import { KeyResult } from './keyresult.entity';
 import {
 	IEmployee,
-	IGoal,
 	IOrganization,
 	ITenant,
 	KeyResultDeadlineEnum,

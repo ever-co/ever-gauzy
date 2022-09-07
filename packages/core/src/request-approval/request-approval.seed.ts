@@ -3,7 +3,6 @@ import { faker } from '@ever-co/faker';
 import { IEmployee, IOrganization, ITenant } from '@gauzy/contracts';
 import { RequestApproval } from './request-approval.entity';
 import { RequestApprovalEmployee } from '../request-approval-employee/request-approval-employee.entity';
-import { Organization } from '../organization/organization.entity';
 import { ApprovalPolicy } from '../approval-policy/approval-policy.entity';
 
 const approvalTypes = [
