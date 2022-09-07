@@ -10,7 +10,13 @@ import {
 
 import { Output, EventEmitter } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
+import {
+	BehaviorSubject,
+	combineLatest,
+	debounceTime,
+	filter,
+	Observable
+} from 'rxjs';
 import { tap } from 'rxjs/operators';
 
 @UntilDestroy({ checkProperties: true })
@@ -27,14 +33,15 @@ export class CardGridComponent implements OnInit, OnDestroy {
 	@Output() onSelectedItem: EventEmitter<any> = new EventEmitter<any>();
 	@Output() scroll: EventEmitter<any> = new EventEmitter<any>();
 	selected: any = { isSelected: false, data: null };
-	private _grid: ElementRef;
-	@ViewChild('grid', { static: false }) set grid(content: ElementRef) {
+	private _grid$: BehaviorSubject<ElementRef> = new BehaviorSubject(null);
+	@ViewChild('grid', { static: false })
+	set grid(content: ElementRef) {
 		if (content) {
-			this._grid = content;
-			this._ngZone.run(() => {
-				setTimeout(() => (this.showMore = !this._hasScrollbar()), 300);
-			});
+			this._grid$.next(content);
 		}
+	}
+	get grid(): ElementRef {
+		return this._grid$.getValue();
 	}
 	private _showMore: boolean = false;
 
@@ -62,7 +69,7 @@ export class CardGridComponent implements OnInit, OnDestroy {
 
 	private _arrayOverflow: boolean;
 
-	constructor(private readonly _ngZone: NgZone) {}
+	constructor() {}
 
 	getNoDataMessage() {
 		return this.settings.noDataMessage;
@@ -88,16 +95,20 @@ export class CardGridComponent implements OnInit, OnDestroy {
 	}
 
 	onScroll() {
-		this.showMore = !this._hasScrollbar();
 		this.scroll.emit();
 	}
 
 	ngOnInit(): void {
-		this.source$
+		const source$: Observable<any[]> = this.source$.asObservable();
+		const grid$: Observable<ElementRef> = this._grid$.asObservable();
+		combineLatest([source$, grid$])
 			.pipe(
-				tap((source) => {
+				debounceTime(100),
+				filter(([source, grid]) => !!grid && !!source),
+				tap(([source]) => {
 					this._arrayOverflow = this.totalItems <= source.length;
 				}),
+				tap(([, grid]) => (this.showMore = !this._hasScrollbar(grid))),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -116,10 +127,9 @@ export class CardGridComponent implements OnInit, OnDestroy {
 		}
 	}
 
-	private _hasScrollbar() {
+	private _hasScrollbar(grid: ElementRef) {
 		return (
-			this._grid.nativeElement.scrollHeight >
-			this._grid.nativeElement.clientHeight
+			grid.nativeElement.scrollHeight > grid.nativeElement.clientHeight
 		);
 	}
 
