@@ -298,6 +298,10 @@ export class DocumentsComponent
 					if (this._isGridLayout) {
 						this._loadGridLayoutData();
 					} else this.documentList = data.items;
+					this.setPagination({
+						...this.getPagination(),
+						totalItems: this.smartTableSource.count()
+					});
 				},
 				error: () =>
 					this._errorhandlingService.handleError(
