@@ -2,7 +2,8 @@ import {
 	IAggregatedEmployeeStatistic,
 	IEmployeeStatistics,
 	IMonthAggregatedEmployeeStatistics,
-	IEmployeeStatisticsHistory
+	IEmployeeStatisticsHistory,
+	IMonthAggregatedEmployeeStatisticsFindInput
 } from '@gauzy/contracts';
 import {
 	Controller,
@@ -11,7 +12,9 @@ import {
 	Param,
 	Query,
 	UseGuards,
-	UseInterceptors
+	UseInterceptors,
+	UsePipes,
+	ValidationPipe
 } from '@nestjs/common';
 import { QueryBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
@@ -24,6 +27,7 @@ import {
 	EmployeeStatisticsHistoryQuery,
 	MonthAggregatedEmployeeStatisticsQuery
 } from './queries';
+import { EmployeeAggregatedStatisticByMonthQueryDTO } from './dto';
 
 @ApiTags('EmployeeStatistics')
 @UseGuards(TenantPermissionGuard)
@@ -81,12 +85,12 @@ export class EmployeeStatisticsController {
 		description: 'Record not found'
 	})
 	@Get('/months')
+	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
 	async findAggregatedStatisticsByEmployeeId(
-		@Query('data', ParseJsonPipe) data: any
+		@Query() options: EmployeeAggregatedStatisticByMonthQueryDTO
 	): Promise<IMonthAggregatedEmployeeStatistics> {
-		const { findInput } = data;
-		return this.queryBus.execute(
-			new MonthAggregatedEmployeeStatisticsQuery(findInput)
+		return await this.queryBus.execute(
+			new MonthAggregatedEmployeeStatisticsQuery(options)
 		);
 	}
 	@ApiOperation({

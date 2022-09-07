@@ -118,9 +118,9 @@ export function ucFirst(str: string, force: boolean): string {
 
 /**
  * Remove duplicates from an array
- * 
- * @param data 
- * @returns 
+ *
+ * @param data
+ * @returns
  */
 export function removeDuplicates(data: string[]) {
 	return [...new Set(data)];
@@ -128,11 +128,30 @@ export function removeDuplicates(data: string[]) {
 
 /**
  * Check string is null or undefined
- * From https://github.com/typeorm/typeorm/issues/873#issuecomment-502294597 
- * 
- * @param obj 
- * @returns 
+ * From https://github.com/typeorm/typeorm/issues/873#issuecomment-502294597
+ *
+ * @param obj
+ * @returns
  */
 export function isNullOrUndefined<T>(string: T | null | undefined): string is null | undefined {
 	return typeof string === "undefined" || string === null
+}
+
+/**
+ * Split the `items` array into multiple, smaller arrays of the given `size`.
+ *
+ * @param {Array} items
+ * @param {Number} size
+ *
+ * @returns {Array[]}
+ */
+ export function chunks(items: any[], size: number): any[] {
+	const chunks = [];
+	items = [].concat(...items);
+	while (items.length) {
+		chunks.push(
+			items.splice(0, size)
+		)
+	}
+	return chunks;
 }

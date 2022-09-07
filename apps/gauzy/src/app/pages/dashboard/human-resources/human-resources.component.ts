@@ -13,7 +13,7 @@ import { combineLatest } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { Subject } from 'rxjs/internal/Subject';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { distinctUntilChange } from '@gauzy/common-angular';
+import { distinctUntilChange, toUTC } from '@gauzy/common-angular';
 import { DateRangePickerBuilderService, EmployeeStatisticsService, Store } from '../../../@core/services';
 import { ProfitHistoryComponent, RecordsHistoryComponent } from '../../../@shared/dashboard';
 
@@ -111,8 +111,8 @@ export class HumanResourcesComponent implements OnInit, OnDestroy {
 		this.employeeStatistics = await this.employeeStatisticsService.getAggregatedStatisticsByEmployeeId(
 			{
 				employeeId: this.selectedEmployee.id,
-				startDate,
-				endDate,
+				startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm:ss'),
+				endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm:ss'),
 				organizationId,
 				tenantId
 			}
