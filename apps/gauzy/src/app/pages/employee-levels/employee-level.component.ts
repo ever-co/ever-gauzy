@@ -125,6 +125,10 @@ export class EmployeeLevelComponent
 			if (this._isGridLayout) {
 				this._loadGridLayoutData();
 			} else this.employeeLevels = items;
+			this.setPagination({
+				...this.getPagination(),
+				totalItems: this.smartTableSource.count()
+			})
 		}
 		await this.emptyListInvoke();
 		this.loading = false;
