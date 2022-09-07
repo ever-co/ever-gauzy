@@ -4,8 +4,7 @@ import {
 	OnInit,
 	Input,
 	ViewChild,
-	ElementRef,
-	NgZone
+	ElementRef
 } from '@angular/core';
 
 import { Output, EventEmitter } from '@angular/core';
