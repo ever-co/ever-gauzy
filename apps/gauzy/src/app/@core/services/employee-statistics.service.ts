@@ -10,6 +10,7 @@ import {
 	IEmployeeStatisticsHistoryFindInput,
 	IEmployeeStatisticsHistory
 } from '@gauzy/contracts';
+import { toParams } from '@gauzy/common-angular';
 import { Subject } from 'rxjs';
 import { firstValueFrom } from 'rxjs';
 import { API_PREFIX } from '../constants/app.constants';
@@ -71,18 +72,12 @@ export class EmployeeStatisticsService {
 	 * @returns Promise<MonthAggregatedEmployeeStatistics[]>
 	 */
 	getAggregatedStatisticsByEmployeeId(
-		findInput: IMonthAggregatedEmployeeStatisticsFindInput
+		where: IMonthAggregatedEmployeeStatisticsFindInput
 	): Promise<IMonthAggregatedEmployeeStatistics[]> {
-		const data = JSON.stringify({ findInput });
-
 		return firstValueFrom(
-			this.http
-			.get<IMonthAggregatedEmployeeStatistics[]>(
-				`${API_PREFIX}/employee-statistics/months`,
-				{
-					params: { data }
-				}
-			)
+			this.http.get<IMonthAggregatedEmployeeStatistics[]>(`${API_PREFIX}/employee-statistics/months`, {
+				params: toParams({ ...where })
+			})
 		);
 	}
 
