@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { NbDialogService } from '@nebular/theme';
+import { NbDialogService, NbPopoverDirective } from '@nebular/theme';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs/internal/Observable';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
@@ -49,6 +49,7 @@ export class WeeklyComponent extends BaseSelectorFilterComponent
 	datePickerConfig$: Observable<any> = this.dateRangePickerBuilderService.datePickerConfig$;
 
 	payloads$: BehaviorSubject<ITimeLogFilters> = new BehaviorSubject(null);
+	@ViewChild(NbPopoverDirective) popover: NbPopoverDirective;
 
 	constructor(
 		private readonly timesheetService: TimesheetService,
@@ -234,6 +235,10 @@ export class WeeklyComponent extends BaseSelectorFilterComponent
 			this.subject$.next(true);
 		}
 	};
+
+	onClose = (event: boolean) => {
+		if(event) this.popover.hide();
+	}
 
 	allowAdd(date: string) {
 		return this.organization.futureDateAllowed
