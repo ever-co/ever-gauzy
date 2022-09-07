@@ -1,0 +1,17 @@
+
+<label class="label">
+	{{ 'INVENTORY_PAGE.PRODUCT_TYPE' | translate }}
+</label>
+<ng-select
+	[addTag]="((hasEditProductType$ | async) && addTag) ? addProductType : null"
+	[loading]="loading"
+	[placeholder]="placeholder || 'INVENTORY_PAGE.PRODUCT_TYPE' | translate"
+	[items]="(productTypes$ | async)"
+	[readonly]="disabled"
+	[virtualScroll]="true"
+	[(ngModel)]="productTypeId"
+	(change)="selectProductType($event)"
+	bindLabel="name"
+	bindValue="id"
+	appendTo="body"
+></ng-select>

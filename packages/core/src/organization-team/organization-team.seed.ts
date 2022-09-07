@@ -59,52 +59,45 @@ export const createDefaultTeams = async (
 export const createRandomTeam = async (
 	dataSource: DataSource,
 	tenants: ITenant[],
+	roles: IRole[],
 	tenantOrganizationsMap: Map<ITenant, IOrganization[]>,
-	roles: IRole[]
+	organizationEmployeesMap: Map<IOrganization, IEmployee[]>
 ): Promise<OrganizationTeam[]> => {
+
 	const teamNames = ['QA', 'Designers', 'Developers', 'Employees'];
 	const organizationTeams: OrganizationTeam[] = [];
 
 	for (const tenant of tenants) {
 		const organizations = tenantOrganizationsMap.get(tenant);
-		const employees = tenantOrganizationsMap.get(tenant);
-
 		for (const organization of organizations) {
+			const { id: tenantId } = tenant;
+			const { id: organizationId } = organization;
+			const employees = organizationEmployeesMap.get(organization);
 			for (const name of teamNames) {
+
 				const team = new OrganizationTeam();
 				team.name = name;
 				team.organizationId = organization.id;
 				team.tenant = organization.tenant;
-
-				const emps = _.chain(employees)
+				team.members = [];
+				/**
+				 * Team Members
+				 */
+				const managers = _.chain(employees)
 					.shuffle()
 					.take(faker.datatype.number({ min: 1, max: 5 }))
 					.values()
 					.value();
-
-				const teamEmployees: OrganizationTeamEmployee[] = [];
-
-				emps.forEach((emp) => {
-					const teamEmployee = new OrganizationTeamEmployee();
-					teamEmployee.employeeId = emp.id;
-					teamEmployees.push(teamEmployee);
+				managers.forEach((employee: IEmployee) => {
+					team.members.push(new OrganizationTeamEmployee({
+						employeeId: employee.id,
+						tenantId,
+						organizationId,
+						role: roles.filter(
+							(role: IRole) => role.name === RolesEnum.MANAGER && role.tenantId === tenantId
+						)
+					}));
 				});
-
-				const managers = _.chain(employees)
-					.shuffle()
-					.take(faker.datatype.number({ min: 1, max: 2 }))
-					.values()
-					.value();
-
-				managers.forEach((emp) => {
-					const teamEmployee = new OrganizationTeamEmployee();
-					teamEmployee.employeeId = emp.id;
-					teamEmployee.role = roles.filter(
-						(x) => x.name === RolesEnum.MANAGER
-					)[0];
-					teamEmployees.push(teamEmployee);
-				});
-
 				organizationTeams.push(team);
 			}
 		}

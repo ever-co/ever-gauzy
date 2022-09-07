@@ -28,8 +28,7 @@ import {
 import { TimeSlotMinute } from './time-slot-minute.entity';
 
 @Entity('time_slot')
-export class TimeSlot
-	extends TenantOrganizationBaseEntity
+export class TimeSlot extends TenantOrganizationBaseEntity
 	implements ITimeSlot {
 
 	@ApiProperty({ type: () => Number })
@@ -60,9 +59,11 @@ export class TimeSlot
 	stoppedAt?: Date;
 	percentage?: number;
 
+	keyboardPercentage?: number;
+	mousePercentage?: number;
 	/*
     |--------------------------------------------------------------------------
-    | @ManyToOne 
+    | @ManyToOne
     |--------------------------------------------------------------------------
     */
 
@@ -81,7 +82,7 @@ export class TimeSlot
 
 	/*
     |--------------------------------------------------------------------------
-    | @OneToMany 
+    | @OneToMany
     |--------------------------------------------------------------------------
     */
 
@@ -115,7 +116,7 @@ export class TimeSlot
 
 	/*
     |--------------------------------------------------------------------------
-    | @ManyToMany 
+    | @ManyToMany
     |--------------------------------------------------------------------------
     */
 

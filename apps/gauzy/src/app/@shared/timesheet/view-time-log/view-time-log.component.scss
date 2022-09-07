@@ -30,10 +30,14 @@
   nb-list {
     max-height: 50vh;
     overflow-x: hidden;
-    overflow-y: auto;
+    overflow-y: auto !important;
   }
 
   nb-list-item {
     cursor: pointer;
+  }
+
+  .cancel {
+    padding: 4px 4px 0;
   }
 }

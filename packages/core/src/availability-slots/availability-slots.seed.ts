@@ -29,14 +29,14 @@ export const createRandomAvailabilitySlots = async (
 	dataSource: DataSource,
 	tenants: ITenant[],
 	tenantOrganizationsMap: Map<ITenant, IOrganization[]>,
-	tenantEmployeeMap: Map<ITenant, IEmployee[]>,
+	organizationEmployeesMap: Map<IOrganization, IEmployee[]>,
 	noOfAvailabilitySlotsPerOrganization: number
 ): Promise<AvailabilitySlot[]> => {
 	let slots: AvailabilitySlot[] = [];
 	for (const tenant of tenants) {
 		const organizations = tenantOrganizationsMap.get(tenant);
-		const employees = tenantEmployeeMap.get(tenant);
 		for (const organization of organizations) {
+			const employees = organizationEmployeesMap.get(organization);
 			slots = await dataOperation(
 				dataSource,
 				slots,

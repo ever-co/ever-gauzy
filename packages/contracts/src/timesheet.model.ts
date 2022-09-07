@@ -202,6 +202,8 @@ export interface ITimeSlot extends IBasePerTenantAndOrganizationEntityModel {
 	startedAt: Date;
 	stoppedAt?: Date;
 	percentage?: number;
+	keyboardPercentage?: number;
+	mousePercentage?: number;
 	tags?: ITag[];
 	isAllowDelete?: boolean;
 }

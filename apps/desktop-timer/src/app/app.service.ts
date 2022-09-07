@@ -14,7 +14,7 @@ export class AppService {
 	constructor(private http: HttpClient) {}
 
 	pingServer(values) {
-		return this.http.get(values.host).pipe().toPromise();
+		return firstValueFrom(this.http.get(values.host));
 	}
 
 	startTime(id): Promise<any> {
@@ -29,13 +29,12 @@ export class AppService {
 		];
 
 		if (id) defaultValue[0].id = id;
-		return this.http
-			.post(
+		return firstValueFrom(
+			this.http.post(
 				`${this.AW_HOST}/api/0/buckets/aw-stopwatch/events`,
 				defaultValue
 			)
-			.pipe()
-			.toPromise();
+		);
 	}
 
 	stopTime(historyTime): Promise<any> {
@@ -49,17 +48,16 @@ export class AppService {
 				id: historyTime.id
 			}
 		];
-		return this.http
-			.post(
+		return firstValueFrom(
+			this.http.post(
 				`${this.AW_HOST}/api/0/buckets/aw-stopwatch/events`,
 				defaultStopParams
 			)
-			.pipe()
-			.toPromise();
+		);
 	}
 
 	getAwBuckets(tpURL): Promise<any> {
-		return this.http.get(`${tpURL}/api/0/buckets`).pipe().toPromise();
+		return firstValueFrom(this.http.get(`${tpURL}/api/0/buckets`));
 	}
 
 	parseBuckets(buckets) {
@@ -98,22 +96,20 @@ export class AppService {
 
 	collectChromeActivityFromAW(tpURL, start, end): Promise<any> {
 		if (!this.buckets.chromeBucket) return Promise.resolve([]);
-		return this.http
-			.get(
+		return firstValueFrom(
+			this.http.get(
 				`${tpURL}/api/0/buckets/${this.buckets.chromeBucket.id}/events?start=${start}&end=${end}&limit=-1`
 			)
-			.pipe()
-			.toPromise();
+		);
 	}
 
 	collectFirefoxActivityFromAw(tpURL, start, end): Promise<any> {
 		if (!this.buckets.firefoxBucket) return Promise.resolve([]);
-		return this.http
-			.get(
+		return firstValueFrom(
+			this.http.get(
 				`${tpURL}/api/0/buckets/${this.buckets.firefoxBucket.id}/events?start=${start}&end=${end}&limit=-1`
 			)
-			.pipe()
-			.toPromise();
+		);
 	}
 
 	pushActivityCollectionToGauzy() {
@@ -121,22 +117,20 @@ export class AppService {
 	}
 	collectFromAW(tpURL, start, end) {
 		if (!this.buckets.windowBucket) return Promise.resolve([]);
-		return this.http
-			.get(
+		return firstValueFrom(
+			this.http.get(
 				`${tpURL}/api/0/buckets/${this.buckets.windowBucket.id}/events?start=${start}&end=${end}&limit=-1`
 			)
-			.pipe()
-			.toPromise();
+		);
 	}
 
 	collectAfkFromAW(tpURL, start, end) {
 		if (!this.buckets.afkBucket) return Promise.resolve([]);
-		return this.http
-			.get(
+		return firstValueFrom(
+			this.http.get(
 				`${tpURL}/api/0/buckets/${this.buckets.afkBucket.id}/events?limit=1`
 			)
-			.pipe()
-			.toPromise();
+		);
 	}
 
 	pushToTimeSlot(values) {
@@ -159,18 +153,19 @@ export class AppService {
 			organizationContactId: values.organizationContactId
 		};
 		return firstValueFrom(
-			this.http.post(`${values.apiHost}/api/timesheet/time-slot`, params, {
-				headers: headers
-			})
-			.pipe(
-				catchError((error) => {
-					error.error = {
-						...error.error,
-						params: JSON.stringify(params)
-					};
-					return throwError(error);
+			this.http
+				.post(`${values.apiHost}/api/timesheet/time-slot`, params, {
+					headers: headers
 				})
-			)
+				.pipe(
+					catchError((error) => {
+						error.error = {
+							...error.error,
+							params: JSON.stringify(params)
+						};
+						return throwError(error);
+					})
+				)
 		);
 	}
 
@@ -179,8 +174,8 @@ export class AppService {
 			Authorization: `Bearer ${values.token}`,
 			'Tenant-Id': values.tenantId
 		});
-		return this.http
-			.post(
+		return firstValueFrom(
+			this.http.post(
 				`${values.apiHost}/api/timesheet`,
 				{
 					employeeId: values.employeeId,
@@ -200,8 +195,7 @@ export class AppService {
 					headers: headers
 				}
 			)
-			.pipe()
-			.toPromise();
+		);
 	}
 
 	updateToTimeSheet(values) {
@@ -209,8 +203,8 @@ export class AppService {
 			Authorization: `Bearer ${values.token}`,
 			'Tenant-Id': values.tenantId
 		});
-		return this.http
-			.put(
+		return firstValueFrom(
+			this.http.put(
 				`${values.apiHost}/api/timesheet/${values.timeSheetId}`,
 				{
 					duration: values.duration,
@@ -223,8 +217,7 @@ export class AppService {
 					headers: headers
 				}
 			)
-			.pipe()
-			.toPromise();
+		);
 	}
 
 	updateToTimeSlot(values) {
@@ -232,8 +225,8 @@ export class AppService {
 			Authorization: `Bearer ${values.token}`,
 			'Tenant-Id': values.tenantId
 		});
-		return this.http
-			.put(
+		return firstValueFrom(
+			this.http.put(
 				`${values.apiHost}/api/timesheet/time-slot/${values.timeSlotId}`,
 				{
 					duration: values.duration,
@@ -246,8 +239,7 @@ export class AppService {
 					headers: headers
 				}
 			)
-			.pipe()
-			.toPromise();
+		);
 	}
 
 	pushToActivity(values) {
@@ -255,8 +247,8 @@ export class AppService {
 			Authorization: `Bearer ${values.token}`,
 			'Tenant-Id': values.tenantId
 		});
-		return this.http
-			.post(
+		return firstValueFrom(
+			this.http.post(
 				`${values.apiHost}/api/timesheet/activity/bulk`,
 				{
 					activities: values.activities
@@ -265,8 +257,7 @@ export class AppService {
 					headers: headers
 				}
 			)
-			.pipe()
-			.toPromise();
+		);
 	}
 
 	updateToActivity(values) {
@@ -274,8 +265,8 @@ export class AppService {
 			Authorization: `Bearer ${values.token}`,
 			'Tenant-Id': values.tenantId
 		});
-		return this.http
-			.put(
+		return firstValueFrom(
+			this.http.put(
 				`${values.apiHost}/api/timesheet/activity/${values.activityId}`,
 				{
 					duration: values.duration
@@ -284,8 +275,7 @@ export class AppService {
 					headers: headers
 				}
 			)
-			.pipe()
-			.toPromise();
+		);
 	}
 
 	setTimeLog(values) {
@@ -303,7 +293,7 @@ export class AppService {
 			isBillable: true,
 			logType: TimeLogType.TRACKED,
 			source: TimeLogSourceEnum.DESKTOP
-		}
+		};
 		return firstValueFrom(
 			this.http.post(
 				`${values.apiHost}/api/timesheet/time-log`,
@@ -318,8 +308,8 @@ export class AppService {
 			Authorization: `Bearer ${values.token}`,
 			'Tenant-Id': values.tenantId
 		});
-		return this.http
-			.put(
+		return firstValueFrom(
+			this.http.put(
 				`${values.apiHost}/api/timesheet/time-log/${values.timeLogId}`,
 				{
 					startedAt: values.startedAt,
@@ -329,8 +319,7 @@ export class AppService {
 					headers: headers
 				}
 			)
-			.pipe()
-			.toPromise();
+		);
 	}
 
 	stopTimer(values) {
@@ -349,7 +338,7 @@ export class AppService {
 			organizationId: values.organizationId,
 			tenantId: values.tenantId,
 			organizationContactId: values.organizationContactId
-		}
+		};
 		console.log(body, 'body from toggle API from app.service.ts 353 line');
 		return firstValueFrom(
 			this.http.post(
@@ -373,12 +362,15 @@ export class AppService {
 		formData.append('timeSlotId', values.timeSlotId);
 		formData.append('organizationContactId', values.organizationContactId);
 
-		return this.http
-			.post(`${values.apiHost}/api/timesheet/screenshot`, formData, {
-				headers: headers
-			})
-			.pipe()
-			.toPromise();
+		return firstValueFrom(
+			this.http.post(
+				`${values.apiHost}/api/timesheet/screenshot`,
+				formData,
+				{
+					headers: headers
+				}
+			)
+		);
 	}
 
 	reqGetUserDetail(values) {
@@ -386,13 +378,15 @@ export class AppService {
 			Authorization: `Bearer ${values.token}`,
 			'Tenant-Id': values.tenantId
 		});
-		const params = this.toParams({ relations: [
-			'tenant',
-			'employee',
-			'employee.organization',
-			'role',
-			'role.rolePermissions'
-		]});
+		const params = this.toParams({
+			relations: [
+				'tenant',
+				'employee',
+				'employee.organization',
+				'role',
+				'role.rolePermissions'
+			]
+		});
 		return firstValueFrom(
 			this.http.get(`${values.apiHost}/api/user/me`, {
 				params,

@@ -6,45 +6,47 @@ import { EventType, Tag } from './../core/entities/internal';
 export const createRandomEventType = async (
 	dataSource: DataSource,
 	tenants: ITenant[],
-	tenantEmployeeMap: Map<ITenant, IEmployee[]>,
-	tenantOrganizationsMap: Map<ITenant, IOrganization[]>
+	tenantOrganizationsMap: Map<ITenant, IOrganization[]>,
+	organizationEmployeesMap: Map<IOrganization, IEmployee[]>
 ): Promise<EventType[]> => {
-	if (!tenantEmployeeMap) {
-		console.warn(
-			'Warning: tenantEmployeeMap not found, deal  will not be created'
-		);
-		return;
-	}
 	if (!tenantOrganizationsMap) {
 		console.warn(
 			'Warning: tenantOrganizationsMap not found, deal  will not be created'
 		);
 		return;
 	}
+	if (!organizationEmployeesMap) {
+		console.warn(
+			'Warning: organizationEmployeesMap not found, deal  will not be created'
+		);
+		return;
+	}
 
-	for (const tenant of tenants) {
-		const tenantEmployees = tenantEmployeeMap.get(tenant);
+	for await (const tenant of tenants) {
 		const organizations = tenantOrganizationsMap.get(tenant);
-		for (const tenantEmployee of tenantEmployees) {
-			const eventTypes: EventType[] = [];
-			for (const organization of organizations) {
-				const { id: organizationId } = organization;
-				const tags = await dataSource.manager.findBy(Tag, {
-					organizationId
-				});
-				const event = new EventType();
-				event.isActive = faker.datatype.boolean();
-				event.description = faker.name.jobDescriptor();
-				event.title = faker.name.jobTitle();
-				event.durationUnit = 'minutes';
-				event.duration = faker.datatype.number(50);
-				event.organization = organization;
-				event.employee = tenantEmployee;
-				event.tags = tags;
-				event.tenant = tenant;
-				eventTypes.push(event);
+		for (const organization of organizations) {
+			const tenantEmployees = organizationEmployeesMap.get(organization);
+			for (const tenantEmployee of tenantEmployees) {
+				const eventTypes: EventType[] = [];
+				for (const organization of organizations) {
+					const { id: organizationId } = organization;
+					const tags = await dataSource.manager.findBy(Tag, {
+						organizationId
+					});
+					const event = new EventType();
+					event.isActive = faker.datatype.boolean();
+					event.description = faker.name.jobDescriptor();
+					event.title = faker.name.jobTitle();
+					event.durationUnit = 'minutes';
+					event.duration = faker.datatype.number(50);
+					event.organization = organization;
+					event.employee = tenantEmployee;
+					event.tags = tags;
+					event.tenant = tenant;
+					eventTypes.push(event);
+				}
+				await dataSource.manager.save(eventTypes);
 			}
-			await dataSource.manager.save(eventTypes);
 		}
 	}
 };

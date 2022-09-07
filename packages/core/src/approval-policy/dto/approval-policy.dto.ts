@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { IsNotEmpty, IsOptional } from "class-validator";
-import { TenantOrganizationBaseDTO } from "./../../../core/dto";
+import { TenantOrganizationBaseDTO } from "./../../core/dto";
 
 export class ApprovalPolicyDTO extends TenantOrganizationBaseDTO {
 

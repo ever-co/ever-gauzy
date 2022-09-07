@@ -82,8 +82,10 @@
 								[nbPopover]="viewTimeLogComponent"
 								[nbPopoverContext]="{
 									timeLogs: day.dates[date]?.logs,
-									callback: addTimeCallback
+									callback: addTimeCallback,
+									close: onClose
 								}"
+								#popover
 							>
 								{{ day.dates[date]?.sum | durationFormat }}
 							</button>

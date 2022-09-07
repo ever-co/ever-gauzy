@@ -4,10 +4,9 @@ import { Repository } from 'typeorm';
 import {
 	IPagination,
 	IProductTypeTranslatable,
-	IProductTypeTranslated,
 	LanguagesEnum
 } from '@gauzy/contracts';
-import { TenantAwareCrudService } from './../core/crud';
+import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { ProductType } from './product-type.entity';
 
 @Injectable()
@@ -21,26 +20,16 @@ export class ProductTypeService extends TenantAwareCrudService<ProductType> {
 
 	/**
 	 * GET product types using pagination
-	 * 
-	 * @param filter 
-	 * @param language 
-	 * @returns 
+	 *
+	 * @param options
+	 * @param language
+	 * @returns
 	 */
 	public async pagination(
-		filter: any,
+		options: PaginationParams<ProductType>,
 		language: LanguagesEnum
 	) {
-		if ('where' in filter) {
-			const { where } = filter;
-			if ('languageCode' in where) {
-				const { languageCode } = where;
-				language = languageCode;
-
-				delete where['languageCode'];
-			}
-		}
-
-		const { items, total } = await super.paginate(filter);
+		const { items, total } = await super.paginate(options);
 		return await this.mapTranslatedProductTypes(items as any, language).then((items) => {
 			return { items, total };
 		});
@@ -48,10 +37,10 @@ export class ProductTypeService extends TenantAwareCrudService<ProductType> {
 
 	/**
 	 * UPDATE product type
-	 * 
-	 * @param id 
-	 * @param entity 
-	 * @returns 
+	 *
+	 * @param id
+	 * @param entity
+	 * @returns
 	 */
 	async updateProductType(
 		id: string,
@@ -67,26 +56,18 @@ export class ProductTypeService extends TenantAwareCrudService<ProductType> {
 
 	/**
 	 * GET all product types
-	 * 
-	 * @param input 
-	 * @param language 
-	 * @returns 
+	 *
+	 * @param options
+	 * @param language
+	 * @returns
 	 */
 	public async findProductTypes(
-		input: any,
+		options: PaginationParams<ProductType>,
 		language: LanguagesEnum
-	): Promise<IPagination<ProductType | IProductTypeTranslated>> {
-		const { relations = [], findInput } = input;
-		if ('langCode' in input) {
-			const { langCode } = input;
-			language = langCode;
-			delete input['langCode'];
-		}
-
+	): Promise<IPagination<ProductType>> {
+		const { relations = [], where } = options;
 		const { items, total } = await this.findAll({
-			where: {
-				...findInput
-			},
+			where,
 			relations
 		});
 		return await this.mapTranslatedProductTypes(items as any, language).then((items) => {
@@ -95,11 +76,11 @@ export class ProductTypeService extends TenantAwareCrudService<ProductType> {
 	}
 
 	/**
-	 * MAP product type translations
-	 * 
-	 * @param items 
-	 * @param languageCode 
-	 * @returns 
+	 * MAP product types translations
+	 *
+	 * @param items
+	 * @param languageCode
+	 * @returns
 	 */
 	async mapTranslatedProductTypes(
 		items: IProductTypeTranslatable[],
@@ -117,6 +98,32 @@ export class ProductTypeService extends TenantAwareCrudService<ProductType> {
 			);
 		} else {
 			return items;
+		}
+	}
+
+	/**
+	 * MAP product type translations
+	 *
+	 * @param type
+	 * @param languageCode
+	 * @returns
+	 */
+	async mapTranslatedProductType(
+		type: IProductTypeTranslatable,
+		languageCode: LanguagesEnum
+	) {
+		try {
+			if (languageCode) {
+				return Object.assign(
+					{},
+					type,
+					type.translate(languageCode)
+				);
+			} else {
+				return type;
+			}
+		} catch (error) {
+			throw new BadRequestException(error);
 		}
 	}
 }

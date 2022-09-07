@@ -93,7 +93,7 @@ export const createRandomGoal = async (
 	dataSource: DataSource,
 	tenants: ITenant[],
 	tenantOrganizationsMap: Map<ITenant, IOrganization[]>,
-	tenantEmployeeMap: Map<ITenant, IEmployee[]>
+	organizationEmployeesMap: Map<IOrganization, IEmployee[]>
 ): Promise<Goal[]> => {
 	if (!tenantOrganizationsMap) {
 		console.warn(
@@ -101,9 +101,9 @@ export const createRandomGoal = async (
 		);
 		return;
 	}
-	if (!tenantEmployeeMap) {
+	if (!organizationEmployeesMap) {
 		console.warn(
-			'Warning: tenantEmployeeMap not found, Random Goal will not be created'
+			'Warning: organizationEmployeesMap not found, Random Goal will not be created'
 		);
 		return;
 	}
@@ -116,8 +116,8 @@ export const createRandomGoal = async (
 
 	for await (const tenant of tenants) {
 		const tenantOrgs = tenantOrganizationsMap.get(tenant);
-		const tenantEmployees = tenantEmployeeMap.get(tenant);
 		for await (const organization of tenantOrgs) {
+			const tenantEmployees = organizationEmployeesMap.get(organization);
 			const organizationTeams = await dataSource.manager.find(OrganizationTeam, {
 				where: [
 					{ organizationId: organization.id }

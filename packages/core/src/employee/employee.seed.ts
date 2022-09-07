@@ -2,7 +2,6 @@ import { DataSource } from 'typeorm';
 import {
 	IEmployee,
 	IOrganization,
-	ISeedUsers,
 	ITenant,
 	IUser,
 	PayPeriodEnum
@@ -10,7 +9,7 @@ import {
 import { faker } from '@ever-co/faker';
 import { environment as env } from '@gauzy/config';
 import * as moment from 'moment';
-import { Employee, Organization } from './../core/entities/internal';
+import { Employee } from './../core/entities/internal';
 import { getDefaultOrganization } from './../organization/organization.seed';
 
 export const createDefaultEmployees = async (
@@ -46,7 +45,6 @@ export const createDefaultEmployees = async (
 		employee.reWeeklyLimit = faker.datatype.number({ min: 10, max: 40 });
 		employees.push(employee);
 	}
-
 	await insertEmployees(dataSource, employees);
 	return employees;
 };
@@ -54,48 +52,36 @@ export const createDefaultEmployees = async (
 export const createRandomEmployees = async (
 	dataSource: DataSource,
 	tenants: ITenant[],
-	tenantOrganizationsMap: Map<ITenant, Organization[]>,
-	tenantUsersMap: Map<ITenant, ISeedUsers>,
-	employeesPerOrganization: number
-): Promise<Map<ITenant, IEmployee[]>> => {
-	const employeeMap: Map<ITenant, IEmployee[]> = new Map();
-
-	for (const tenant of tenants) {
-		const employees: IEmployee[] = [];
-		const randomUsers = tenantUsersMap.get(tenant).employeeUsers;
-		const randomOrgs = tenantOrganizationsMap.get(tenant);
-
-		for (const organization of randomOrgs) {
-			if (randomUsers.length) {
-				for (let index = 0; index < employeesPerOrganization; index++) {
-					const employee = new Employee();
-					employee.organization = organization;
-					employee.tenant = tenant;
-					employee.user = randomUsers.pop();
-					employee.isActive = true;
-					employee.endWork = null;
-					employee.startedWorkOn = new Date(
-						moment(faker.date.past(index % 5)).format(
-							'YYYY-MM-DD hh:mm:ss'
-						)
-					);
-					employee.payPeriod = faker.random.arrayElement(
-						Object.keys(PayPeriodEnum)
-					);
-					employee.billRateValue = faker.datatype.number({ min: 15, max: 40 });
-					employee.billRateCurrency = organization.currency || env.defaultCurrency;
-					employee.reWeeklyLimit = faker.datatype.number({ min: 10, max: 40 });
-					if (employee.user) {
-						employees.push(employee);
-					}
-				}
+	tenantOrganizationsMap: Map<ITenant, IOrganization[]>,
+	organizationUsersMap: Map<IOrganization, IUser[]>
+): Promise<Map<IOrganization, IEmployee[]>> => {
+	const organizationEmployeesMap: Map<IOrganization, IEmployee[]> = new Map();
+	for await (const tenant of tenants) {
+		const organizations = tenantOrganizationsMap.get(tenant);
+		for await (const organization of organizations) {
+			const employees: IEmployee[] = [];
+			const users = organizationUsersMap.get(organization);
+			for await (const user of users) {
+				const employee = new Employee();
+				employee.organization = organization;
+				employee.tenant = tenant;
+				employee.user = user;
+				employee.isActive = true;
+				employee.endWork = null;
+				employee.startedWorkOn = new Date(moment(faker.date.past()).format( 'YYYY-MM-DD hh:mm:ss'));
+				employee.payPeriod = faker.random.arrayElement(
+					Object.keys(PayPeriodEnum)
+				);
+				employee.billRateValue = faker.datatype.number({ min: 15, max: 40 });
+				employee.billRateCurrency = organization.currency || env.defaultCurrency;
+				employee.reWeeklyLimit = faker.datatype.number({ min: 10, max: 40 });
+				employees.push(employee);
 			}
+			organizationEmployeesMap.set(organization, employees);
+			await insertEmployees(dataSource, employees);
 		}
-		employeeMap.set(tenant, employees);
-		await insertEmployees(dataSource, employees);
 	}
-
-	return employeeMap;
+	return organizationEmployeesMap;
 };
 
 const insertEmployees = async (
@@ -129,7 +115,10 @@ export const getDefaultEmployees = async (
 			tenantId: tenant.id,
 			organizationId: organization.id
 		},
-		relations: ['tenant', 'organization']
+		relations: {
+			tenant: true,
+			organization: true
+		}
 	});
 	return employees;
 };

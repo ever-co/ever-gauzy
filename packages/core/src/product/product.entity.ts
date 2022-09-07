@@ -33,7 +33,7 @@ import {
 
 @Entity('product')
 export class Product extends TranslatableBase implements IProductTranslatable {
-	
+
 	@ApiPropertyOptional({ type: () => Boolean })
 	@Column({ default: true })
 	enabled: boolean;
@@ -50,7 +50,7 @@ export class Product extends TranslatableBase implements IProductTranslatable {
 
 	/*
     |--------------------------------------------------------------------------
-    | @ManyToOne 
+    | @ManyToOne
     |--------------------------------------------------------------------------
     */
 
@@ -59,7 +59,7 @@ export class Product extends TranslatableBase implements IProductTranslatable {
 	 */
 	@ApiProperty({ type: () => ImageAsset })
 	@ManyToOne(() => ImageAsset, (imageAsset) => imageAsset.productFeaturedImage, {
-		onDelete: 'SET NULL' 
+		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
 	featuredImage?: IImageAsset;
@@ -76,7 +76,7 @@ export class Product extends TranslatableBase implements IProductTranslatable {
 	 */
 	@ApiProperty({ type: () => ProductType })
 	@ManyToOne(() => ProductType, (productType) => productType.products, {
-		onDelete: 'SET NULL' 
+		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
 	productType?: ProductType;
@@ -91,7 +91,7 @@ export class Product extends TranslatableBase implements IProductTranslatable {
 	/**
 	 * ProductCategory
 	 */
-	
+
 	@ApiProperty({ type: () => ProductCategory })
 	@ManyToOne(() => ProductCategory, (productCategory) => productCategory.products, {
 		onDelete: 'SET NULL'
@@ -107,7 +107,7 @@ export class Product extends TranslatableBase implements IProductTranslatable {
 	productCategoryId?: string;
 	/*
     |--------------------------------------------------------------------------
-    | @OneToMany 
+    | @OneToMany
     |--------------------------------------------------------------------------
     */
 
@@ -152,14 +152,14 @@ export class Product extends TranslatableBase implements IProductTranslatable {
 	 */
 	@ApiPropertyOptional({ type: () => WarehouseProduct, isArray: true })
 	@OneToMany(() => WarehouseProduct, (warehouseProduct) => warehouseProduct.product, {
-		cascade: true 
+		cascade: true
 	})
 	@JoinColumn()
 	warehouses?: IWarehouse[];
 
 	/*
     |--------------------------------------------------------------------------
-    | @ManyToMany 
+    | @ManyToMany
     |--------------------------------------------------------------------------
     */
 

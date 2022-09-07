@@ -71,7 +71,7 @@ export const createDefaultEmployeesUsers = async (
 export const createRandomSuperAdminUsers = async (
 	dataSource: DataSource,
 	tenants: ITenant[],
-	noOfSuperAdmins: number = 1
+	noOfSuperAdmins: number
 ): Promise<Map<ITenant, IUser[]>> => {
 
 	const tenantSuperAdminsMap: Map<ITenant, IUser[]> = new Map();
@@ -141,12 +141,13 @@ export const createDefaultUsers = async (
 export const createRandomUsers = async (
 	dataSource: DataSource,
 	tenants: ITenant[],
-	organizationPerTenant: number,
+	adminPerOrganization: number,
+	organizationsPerTenant: number,
 	employeesPerOrganization: number,
 	candidatesPerOrganization: number,
 	managersPerOrganization: number,
 	dataEntriesPerOrganization: number,
-	viewerPerOrganization: number
+	viewersPerOrganization: number
 ): Promise<Map<ITenant, ISeedUsers>> => {
 	const randomTenantUsers: Map<ITenant, ISeedUsers> = new Map();
 
@@ -155,42 +156,42 @@ export const createRandomUsers = async (
 			dataSource,
 			RolesEnum.ADMIN,
 			tenant,
-			organizationPerTenant //Because we want to seed at least one admin per organization
+			organizationsPerTenant * adminPerOrganization //Because we want to seed at least one admin per organization
 		);
 
 		const _employeeUsers: Promise<IUser[]> = seedRandomUsers(
 			dataSource,
 			RolesEnum.EMPLOYEE,
 			tenant,
-			employeesPerOrganization * organizationPerTenant
+			employeesPerOrganization * organizationsPerTenant
 		);
 
 		const _candidateUsers: Promise<IUser[]> = seedRandomUsers(
 			dataSource,
 			RolesEnum.CANDIDATE,
 			tenant,
-			candidatesPerOrganization * organizationPerTenant
+			candidatesPerOrganization * organizationsPerTenant
 		);
 
 		const _managerUsers: Promise<IUser[]> = seedRandomUsers(
 			dataSource,
 			RolesEnum.MANAGER,
 			tenant,
-			managersPerOrganization * organizationPerTenant
+			managersPerOrganization * organizationsPerTenant
 		);
 
 		const _dataEntryUsers: Promise<IUser[]> = seedRandomUsers(
 			dataSource,
 			RolesEnum.DATA_ENTRY,
 			tenant,
-			dataEntriesPerOrganization * organizationPerTenant
+			dataEntriesPerOrganization * organizationsPerTenant
 		);
 
 		const _viewerUsers: Promise<IUser[]> = seedRandomUsers(
 			dataSource,
 			RolesEnum.VIEWER,
 			tenant,
-			viewerPerOrganization * organizationPerTenant
+			viewersPerOrganization * organizationsPerTenant
 		);
 
 		const [

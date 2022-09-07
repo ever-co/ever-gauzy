@@ -13,6 +13,9 @@ import {
 	UsePipes,
 	Post
 } from '@nestjs/common';
+import { CommandBus } from '@nestjs/cqrs';
+import { FindOptionsWhere } from 'typeorm';
+import { I18nLang } from 'nestjs-i18n';
 import {
 	LanguagesEnum,
 	IPagination,
@@ -21,27 +24,29 @@ import {
 import { ProductCategory } from './product-category.entity';
 import { ProductCategoryService } from './product-category.service';
 import { CrudController, PaginationParams } from './../core/crud';
-import { RequestContext } from './../core/context';
-import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
+import { UUIDValidationPipe } from './../shared/pipes';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { LanguageDecorator, Permissions } from './../shared/decorators';
 import { ProductCategoryDTO } from './dto';
+import { ProductCategoryCreateCommand } from './commands';
 
 @ApiTags('ProductCategories')
-@UseGuards(TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard)
+@Permissions(PermissionsEnum.ORG_PRODUCT_CATEGORIES_EDIT)
 @Controller()
 export class ProductCategoryController extends CrudController<ProductCategory> {
 	constructor(
-		private readonly productCategoriesService: ProductCategoryService
+		private readonly productCategoryService: ProductCategoryService,
+		private readonly commandBus: CommandBus
 	) {
-		super(productCategoriesService);
+		super(productCategoryService);
 	}
 
 	/**
 	 * GET inventory product categories count
-	 * 
-	 * @param data 
-	 * @returns 
+	 *
+	 * @param options
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'Find product categories Count ' })
 	@ApiResponse({
@@ -53,26 +58,19 @@ export class ProductCategoryController extends CrudController<ProductCategory> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_PRODUCT_CATEGORIES_VIEW)
 	@Get('count')
 	async getCount(
-		@Query('data', ParseJsonPipe) data?: any
+		@Query() options: FindOptionsWhere<ProductCategory>,
 	): Promise<number> {
-		const { findInput = null } = data;
-		return await this.productCategoriesService.count({
-			where: {
-				tenantId: RequestContext.currentTenantId(),
-				...findInput
-			}
-		});
+		return await this.productCategoryService.countBy(options);
 	}
- 
+
 	 /**
 	  * GET inventory product categories by pagination
-	  * 
-	  * @param filter 
-	  * @returns 
+	  *
+	  * @param options
+	  * @returns
 	  */
 	@ApiOperation({ summary: 'Find all product categories by pagination' })
 	@ApiResponse({
@@ -84,26 +82,27 @@ export class ProductCategoryController extends CrudController<ProductCategory> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_PRODUCT_CATEGORIES_VIEW)
 	@Get('pagination')
 	@UsePipes(new ValidationPipe({ transform: true }))
 	async pagination(
-		@Query() filter: PaginationParams<ProductCategory>,
-		@LanguageDecorator() themeLanguage: LanguagesEnum
+		@Query() options: PaginationParams<ProductCategory>,
+		@LanguageDecorator() themeLanguage: LanguagesEnum,
+		@I18nLang() languageCode: LanguagesEnum
 	): Promise<IPagination<ProductCategory>> {
-		return await this.productCategoriesService.pagination(
-			filter,
-			themeLanguage
+		return await this.productCategoryService.pagination(
+			options,
+			themeLanguage || languageCode
 		);
 	}
 
 	/**
 	 * GET all product categories
-	 * 
-	 * @param data 
-	 * @param themeLanguage 
-	 * @returns 
+	 *
+	 * @param options
+	 * @param themeLanguage
+	 * @param languageCode
+	 * @returns
 	 */
 	 @ApiOperation({
 		summary: 'Find all product categories.'
@@ -121,20 +120,21 @@ export class ProductCategoryController extends CrudController<ProductCategory> {
 	@Permissions(PermissionsEnum.ORG_PRODUCT_CATEGORIES_VIEW)
 	@Get()
 	async findAll(
-		@Query('data', ParseJsonPipe) data: any,
-		@LanguageDecorator() themeLanguage: LanguagesEnum
-	): Promise<IPagination<any>> {
-		return await this.productCategoriesService.findProductCategories(
-			data,
-			themeLanguage
+		@Query(new ValidationPipe()) options: PaginationParams<ProductCategory>,
+		@LanguageDecorator() themeLanguage: LanguagesEnum,
+		@I18nLang() languageCode: LanguagesEnum
+	): Promise<IPagination<ProductCategory>> {
+		return await this.productCategoryService.findProductCategories(
+			options,
+			themeLanguage || languageCode
 		);
 	}
 
 	/**
 	 * CREATE product category
-	 * 
-	 * @param entity 
-	 * @returns 
+	 *
+	 * @param entity
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'Create new record' })
 	@ApiResponse({
@@ -146,22 +146,27 @@ export class ProductCategoryController extends CrudController<ProductCategory> {
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
-	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.ORG_PRODUCT_CATEGORIES_EDIT)
 	@Post()
 	@UsePipes(new ValidationPipe({ transform : true }))
 	async create(
-		@Body() entity: ProductCategoryDTO
+		@Body() entity: ProductCategoryDTO,
+		@LanguageDecorator() themeLanguage: LanguagesEnum,
+		@I18nLang() languageCode: LanguagesEnum
 	): Promise<ProductCategory> {
-		return await this.productCategoriesService.create(entity);
+		return await this.commandBus.execute(
+			new ProductCategoryCreateCommand(
+				entity,
+				themeLanguage || languageCode
+			)
+		);
 	}
 
 	/**
 	 * UPDATE product category by id
-	 * 
-	 * @param id 
-	 * @param entity 
-	 * @returns 
+	 *
+	 * @param id
+	 * @param entity
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'Update an existing record' })
 	@ApiResponse({
@@ -178,13 +183,13 @@ export class ProductCategoryController extends CrudController<ProductCategory> {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
-	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.ORG_PRODUCT_CATEGORIES_EDIT)
 	@Put(':id')
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body() entity: ProductCategoryDTO
+		@Body(new ValidationPipe({
+			transform : true
+		})) entity: ProductCategoryDTO
 	): Promise<ProductCategory> {
-		return await this.productCategoriesService.updateProductCategory(id, entity);
+		return await this.productCategoryService.updateProductCategory(id, entity);
 	}
 }

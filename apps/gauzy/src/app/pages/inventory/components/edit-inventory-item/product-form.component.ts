@@ -1,4 +1,6 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { Location } from '@angular/common';
 import {
 	FormGroup,
 	FormBuilder,
@@ -6,75 +8,62 @@ import {
 	AbstractControl,
 	ValidationErrors
 } from '@angular/forms';
+import { NbTabComponent, NbTabsetComponent } from '@nebular/theme';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
 	ITag,
 	IProductTypeTranslated,
 	IProductCategoryTranslated,
 	LanguagesEnum,
 	IOrganization,
-	ILanguage,
 	IProductTranslation,
 	IProductTranslatable
 } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
-import { ProductTypeService } from '../../../../@core/services/product-type.service';
-import { ProductCategoryService } from '../../../../@core/services/product-category.service';
 import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
-import { ActivatedRoute, Router } from '@angular/router';
-import { ProductService } from '../../../../@core/services/product.service';
-import { Location } from '@angular/common';
-import { Store } from '../../../../@core/services/store.service';
-import { ProductVariantService } from '../../../../@core/services/product-variant.service';
-import { ToastrService } from '../../../../@core/services/toastr.service';
-import { NbTabComponent, NbTabsetComponent } from '@nebular/theme';
-import { InventoryStore } from '../../../../@core/services/inventory-store.service';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import {
+	InventoryStore,
+	ProductService,
+	ProductVariantService,
+	Store,
+	ToastrService
+} from '../../../../@core/services';
 
-@UntilDestroy()
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-product-form',
 	templateUrl: './product-form.component.html',
 	styleUrls: ['./product-form.component.scss']
 })
-export class ProductFormComponent
-	extends TranslationBaseComponent
+export class ProductFormComponent extends TranslationBaseComponent
 	implements OnInit {
+
 	form: FormGroup;
 	inventoryItem: IProductTranslatable;
-
 	hoverState: boolean;
-	selectedOrganizationId = '';
-	productTypes: IProductTypeTranslated[];
-	productCategories: IProductCategoryTranslated[];
-
-	languages: ILanguage[];
 	selectedLanguage: string;
 	translations = [];
 	activeTranslation: IProductTranslation;
-
 	tags: ITag[] = [];
-	organization: IOrganization;
+	public organization: IOrganization;
 	productId: string;
 
 	@ViewChild('inventoryTabset') inventoryTabset: NbTabsetComponent;
-
 	@ViewChild('mainTab') mainTab: NbTabComponent;
 	@ViewChild('optionsTab') optionsTab: NbTabComponent;
 	@ViewChild('variantsTab') variantsTab: NbTabComponent;
 
 	constructor(
-		readonly translationService: TranslateService,
-		private fb: FormBuilder,
+		public readonly translationService: TranslateService,
+		private readonly fb: FormBuilder,
 		private readonly store: Store,
-		private productService: ProductService,
-		private productTypeService: ProductTypeService,
-		private productCategoryService: ProductCategoryService,
-		private route: ActivatedRoute,
-		private location: Location,
-		private router: Router,
-		private toastrService: ToastrService,
-		private productVariantService: ProductVariantService,
-		private inventoryStore: InventoryStore
+		private readonly productService: ProductService,
+		private readonly route: ActivatedRoute,
+		private readonly location: Location,
+		private readonly router: Router,
+		private readonly toastrService: ToastrService,
+		private readonly productVariantService: ProductVariantService,
+		private readonly inventoryStore: InventoryStore
 	) {
 		super(translationService);
 	}
@@ -83,7 +72,6 @@ export class ProductFormComponent
 		this.inventoryStore.clearCurrentProduct();
 		this.setRouteSubscription();
 		this.setOrganizationSubscription();
-		this.setLanguageSubsctiption();
 		this.setTranslationSettings();
 	}
 
@@ -107,25 +95,7 @@ export class ProductFormComponent
 			.subscribe((organization: IOrganization) => {
 				if (organization) {
 					this.organization = organization;
-					this.selectedOrganizationId = organization.id;
-					this.loadProductTypes(true);
-					this.loadProductCategories(true);
 					this.loadProduct(this.productId);
-				}
-			});
-	}
-
-	private setLanguageSubsctiption() {
-		this.store.systemLanguages$
-			.pipe(untilDestroyed(this))
-			.subscribe((systemLanguages) => {
-				if (systemLanguages && systemLanguages.length > 0) {
-					this.languages = systemLanguages.map((item) => {
-						return {
-							value: item.code,
-							name: item.name
-						};
-					});
 				}
 			});
 	}
@@ -142,13 +112,13 @@ export class ProductFormComponent
 				Validators.required
 			],
 			productTypeId: [
-				this.inventoryItem ? this.inventoryItem.productTypeId : '',
-				Validators.required
+				this.inventoryItem ? this.inventoryItem.productTypeId : null,
 			],
+			productType: [],
 			productCategoryId: [
-				this.inventoryItem ? this.inventoryItem.productCategoryId : '',
-				Validators.required
+				this.inventoryItem ? this.inventoryItem.productCategoryId : null,
 			],
+			productCategory: [],
 			enabled: [this.inventoryItem ? this.inventoryItem.enabled : true],
 			description: [
 				this.activeTranslation ? this.activeTranslation.description : ''
@@ -202,48 +172,54 @@ export class ProductFormComponent
 		});
 	}
 
-	async loadProductTypes(newOrg = false) {
-		if(!this.inventoryStore.productTypesLoaded && newOrg) {
-			const { id: organizationId, tenantId } = this.organization;
-			const searchCriteria = {
-				organization: { id: organizationId },
-				tenantId
-			};
-			const { items = [] } = await this.productTypeService.getAllTranslated(
-				this.store.preferredLanguage || LanguagesEnum.ENGLISH,
-				[],
-				searchCriteria
-			);
-
-			this.inventoryStore.productTypes = items;
+	/**
+	 * When product types selectors loaded in DOM
+	 *
+	 * @param productTypes
+	 */
+	onLoadProductTypes(productTypes: IProductTypeTranslated[]) {
+		if(!this.inventoryStore.productTypesLoaded) {
+			this.inventoryStore.productTypes = productTypes;
 		}
-
-		this.productTypes = this.inventoryStore.productTypes;
 	}
 
-	async loadProductCategories(newOrg = false) {
-		if(!this.inventoryStore.productCategoriesLoaded && newOrg) {
-			const { id: organizationId, tenantId } = this.organization;
-			const searchCriteria = {
-				organization: { id: organizationId },
-				tenantId
-			};
-			const {
-				items = []
-			} = await this.productCategoryService.getAllTranslated(
-				{langCode: this.store.preferredLanguage || LanguagesEnum.ENGLISH,
-				findInput: searchCriteria,
-				relations: []}
-			);
+	/**
+	 * When product type is selected in DOM
+	 *
+	 * @param productType
+	 */
+	selectedProductType(productType: IProductTypeTranslated) {
+		this.form.get('productType').setValue(productType);
+		this.form.get('productType').updateValueAndValidity();
+	}
 
-			this.inventoryStore.productCategories = items;
+	/**
+	 * When product categories selectors loaded in DOM
+	 *
+	 * @param productCategories
+	 */
+	onLoadProductCategories(productCategories: IProductCategoryTranslated[]) {
+		if(!this.inventoryStore.productCategoriesLoaded) {
+			this.inventoryStore.productCategories = productCategories;
 		}
+	}
 
-		this.productCategories = this.inventoryStore.productCategories;
+	/**
+	 * When product category is selected in DOM
+	 *
+	 * @param productCategory
+	 */
+	selectedProductCategory(productCategory: IProductCategoryTranslated) {
+		this.form.get('productCategory').setValue(productCategory);
+		this.form.get('productCategory').updateValueAndValidity();
 	}
 
 	async onSaveRequest() {
-		const { id: organizationId, tenantId } = this.organization;
+		if (!this.organization) {
+			return;
+		}
+		const { id: organizationId } = this.organization;
+		const { tenantId } = this.store.user;
 
 		const productRequest = {
 			tags: this.form.get('tags').value,
@@ -258,12 +234,8 @@ export class ProductFormComponent
 			optionGroupDeleteInputs: this.inventoryStore.deletedOptionGroups,
 			optionDeleteInputs: this.inventoryStore.deleteOptions,
 			gallery: this.inventoryStore.gallery || [],
-			category: this.productCategories.find((c) => {
-				return c.id === this.form.get('productCategoryId').value;
-			}),
-			type: this.productTypes.find((p) => {
-				return p.id === this.form.get('productTypeId').value;
-			}),
+			category: this.form.get('productCategory').value,
+			type: this.form.get('productType').value,
 			tenantId: tenantId,
 			organizationId: organizationId
 		};
