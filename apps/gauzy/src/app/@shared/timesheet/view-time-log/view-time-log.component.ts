@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, OnDestroy, Output, EventEmitter } from '@angular/core';
+import { Component, OnInit, Input, OnDestroy, Output } from '@angular/core';
 import { IOrganization, ITimeLog, PermissionsEnum } from '@gauzy/contracts';
 import * as moment from 'moment';
 import { NbDialogService } from '@nebular/theme';
