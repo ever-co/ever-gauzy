@@ -12,7 +12,13 @@
   }
 
   .info-massage h3 {
-    color: red;
+    color: var(--color-danger-default);
     width: 100%;
+    font-size: 16px;
+    font-weight: 600;
   }
+}
+
+img {
+  width: 200px;
 }

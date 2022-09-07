@@ -48,7 +48,7 @@ export default class Timerhandler {
 			powerMonitor.on('unlock-screen', () => {
 				// this.isPaused = false;
 				const appSetting = LocalStore.getStore('appSetting');
-				if (this.isPaused && !appSetting.trackOnPcSleep) {
+				if (this.isPaused && appSetting.trackOnPcSleep) {
 					this.isPaused = false;
 					timeTrackerWindow.webContents.send('device_wakeup');
 				}

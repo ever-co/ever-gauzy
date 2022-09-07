@@ -346,6 +346,8 @@ app.on('ready', async () => {
 
 app.on('window-all-closed', quit);
 
+app.commandLine.appendSwitch('disable-http2');
+
 ipcMain.on('server_is_ready', () => {
 	LocalStore.setDefaultApplicationSetting();
 	const appConfig = LocalStore.getStore('configs');
@@ -455,6 +457,11 @@ autoUpdater.once('update-available', () => {
 autoUpdater.on('update-downloaded', () => {
 	settingsWindow.webContents.send('update_downloaded');
 });
+
+autoUpdater.requestHeaders = {
+	'Cache-Control':
+		'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0'
+};
 
 autoUpdater.on('update-not-available', () => {
 	settingsWindow.webContents.send('update_not_available');
@@ -593,14 +600,14 @@ async function getUpdaterConfig() {
 		).then((res) => res.json());
 	} catch (error) {}
 	if (latestReleaseTag) {
-		return `https://github.com/${updaterConfig.owner}/${updaterConfig.repo}/${updaterConfig.typeRelease}/download/${latestReleaseTag.tag_name}`
+		return `https://github.com/${updaterConfig.owner}/${updaterConfig.repo}/${updaterConfig.typeRelease}/download/${latestReleaseTag.tag_name}`;
 	}
 	return null;
 }
 
 async function checForUpdateNotify() {
 	const updateFeedUrl = await getUpdaterConfig();
-	appUpdateNotification(updateFeedUrl)
+	appUpdateNotification(updateFeedUrl);
 }
 // On OS X it is common for applications and their menu bar
 // to stay active until the user quits explicitly with Cmd + Q
@@ -644,9 +651,10 @@ function launchAtStartup(autoLaunch, hidden) {
 	}
 }
 
-
 app.on('web-contents-created', (e, contents) => {
-	contents.on('will-redirect', (e, url, isInPlace, isMainFrame, frameProcessId) => {
+	contents.on(
+		'will-redirect',
+		(e, url, isInPlace, isMainFrame, frameProcessId) => {
 		const defaultBrowserConfig: any = {
 			title: '',
 			width: 1280,
@@ -658,47 +666,53 @@ app.on('web-contents-created', (e, contents) => {
 			  javascript: true,
 			  webSecurity: false,
 			  webviewTag: false
-			},
+				}
 		};
-		if ([
+			if (
+				[
 			'https://www.linkedin.com/oauth',
 			'https://accounts.google.com'
-		].findIndex((str) => url.indexOf(str) > -1) > -1) {
+				].findIndex((str) => url.indexOf(str) > -1) > -1
+			) {
 			e.preventDefault();
-			showPopup(url, defaultBrowserConfig)
+				showPopup(url, defaultBrowserConfig);
 			return;
 		}
 
 		if (url.indexOf('sign-in/success?jwt') > -1) {
 			if (popupWin) popupWin.destroy();
 			const urlParse = Url.parse(url, true);
-			const urlParsed = Url.parse(urlFormat(urlParse.hash, urlParse.host), true);
+				const urlParsed = Url.parse(
+					urlFormat(urlParse.hash, urlParse.host),
+					true
+				);
 			const query = urlParsed.query;
 			const params = LocalStore.beforeRequestParams();
-			timeTrackerWindow.webContents.send('social_auth_success', {...params, 
+				timeTrackerWindow.webContents.send('social_auth_success', {
+					...params,
 				token: query.jwt,
 				userId: query.userId
-			})
+				});
 		}
 
 		if (url.indexOf('/auth/register') > -1) {
 			shell.openExternal(url);
 		}
-	})
-})
+		}
+	);
+});
 
-const urlFormat = (hash:string, host: string) => {
+const urlFormat = (hash: string, host: string) => {
 	const uri = hash.substring(1);
 	return `${host}${uri}`;
-}
+};
 
 const showPopup = async (url: string, options: any) => {
 	options.width = 1280;
 	options.height = 768;
 	if (popupWin) popupWin.destroy();
 	popupWin = new BrowserWindow(options);
-	let userAgentWb =
-	  'Chrome/87.0.4280.66';
+	let userAgentWb = 'Chrome/87.0.4280.66';
 	popupWin.loadURL(url, { userAgent: userAgentWb });
 	popupWin.show();
  };
