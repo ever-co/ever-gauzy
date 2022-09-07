@@ -6,6 +6,7 @@ import {
 	ISeedUsers,
 	ITenant
 } from '@gauzy/contracts';
+import { chunks } from '@gauzy/common';
 import { UserOrganization } from './user-organization.entity';
 
 export const createDefaultUsersOrganizations = async (
@@ -34,43 +35,38 @@ export const createRandomUsersOrganizations = async (
 	tenantOrganizationsMap: Map<ITenant, IOrganization[]>,
 	tenantSuperAdminsMap: Map<ITenant, IUser[]>,
 	tenantUsersMap: Map<ITenant, ISeedUsers>,
-	employeesPerOrganization: number
-): Promise<IUserOrganization[]> => {
+	employeesPerOrganization: number,
+	adminPerOrganization: number
+): Promise<Map<IOrganization, IUser[]>> => {
 	const usersOrganizations: IUserOrganization[] = [];
+	const organizationUsersMap: Map<IOrganization, IUser[]> = new Map();
 
-	for (const tenant of tenants) {
-		const orgs = tenantOrganizationsMap.get(tenant);
+	for await (const tenant of tenants) {
+		const organizations = tenantOrganizationsMap.get(tenant);
 		const superAdmins = tenantSuperAdminsMap.get(tenant);
 		const { adminUsers, employeeUsers } = tenantUsersMap.get(tenant);
-
-		let start = 0;
-		let end: number = employeesPerOrganization;
-
-		let count = 0;
-
-		orgs.forEach((org) => {
-			const userList = [
-				...employeeUsers.slice(start, end),
-				adminUsers[count % adminUsers.length],
-				...superAdmins
+		for await (const [key, organization] of Object.entries(organizations)) {
+			const employees: IUser[] = chunks(employeeUsers, employeesPerOrganization)[key] || [];
+			const admins: IUser[] = chunks(adminUsers, adminPerOrganization)[key] || [];
+			const users = [
+				...superAdmins || [],
+				...admins,
+				...employees
 			];
-			start = end;
-			end = end + employeesPerOrganization;
-			count++;
-
-			userList.forEach(async (user) => {
+			for await (const user of users) {
 				if (user.id) {
 					const userOrganization = new UserOrganization();
-					userOrganization.organizationId = org.id;
+					userOrganization.organizationId = organization.id;
+					userOrganization.tenantId = organization.tenantId;
 					userOrganization.userId = user.id;
-					userOrganization.tenant = org.tenant;
 					usersOrganizations.push(userOrganization);
 				}
-			});
-		});
+			}
+			organizationUsersMap.set(organization, employees);
+		}
 	}
-
-	return await insertUserOrganization(dataSource, usersOrganizations);
+	await insertUserOrganization(dataSource, usersOrganizations);
+	return organizationUsersMap;
 };
 
 const insertUserOrganization = async (
