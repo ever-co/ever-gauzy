@@ -111,7 +111,11 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	get appSetting(): any {
 		return this.appSetting$.getValue();
 	}
-	isExpand = false;
+	
+	isExpand$: BehaviorSubject<boolean> = new BehaviorSubject(false);
+	get isExpand(): boolean {
+		return this.isExpand$.getValue();
+	}
 	dialogType = {
 		deleteLog: {
 			name: 'deleteLog',
@@ -391,11 +395,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 		this.electronService.ipcRenderer.on('expand', (event, arg) =>
 			this._ngZone.run(() => {
-				if (arg) {
-					this.expandIcon = 'arrow-left';
-				} else {
-					this.expandIcon = 'arrow-right';
-				}
+				this.isExpand$.next(arg);
+				this.expandIcon = arg ? 'arrow-left' : 'arrow-right';
 			})
 		);
 
@@ -919,8 +920,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	}
 
 	expand() {
-		this.isExpand = !this.isExpand;
-		this.electronService.ipcRenderer.send('expand', this.isExpand);
+		this.electronService.ipcRenderer.send('expand', !this.isExpand);
 	}
 
 	rowSelect(value) {

@@ -4,7 +4,7 @@
 			<nb-icon [icon]="expandIcon"></nb-icon>
 		</button>
 		<div class="timer-window-container">
-			<div class="no-padding full-width timer">
+			<div [ngClass]="{ expanded: isExpand$ | async }" class="no-padding full-width timer">
 				<nb-card class="full-height max-width">
 					<nb-card-body>
 						<div class="row">
@@ -233,7 +233,7 @@
 					</nb-card-body>
 				</nb-card>
 			</div>
-			<div class="task-table" *ngIf="isExpand">
+			<div class="task-table" *ngIf="isExpand$ | async">
 				<nb-card class="max-width-search" *ngIf="!isAddTask">
 					<nb-card-body>
 						<div class="row">

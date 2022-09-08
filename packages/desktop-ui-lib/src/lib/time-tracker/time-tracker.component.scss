@@ -26,9 +26,11 @@
 }
 
 .timer {
-  max-width: 360px !important;
-  width: 100%;
   min-width: 360px !important;
+  width: auto;
+  &.expanded {
+    max-width: 360px !important;
+  }
 }
 
 .search {
