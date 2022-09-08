@@ -1,7 +1,6 @@
 import {
 	PermissionsEnum,
 	LanguagesEnum,
-	UpdateEmployeeJobsStatistics,
 	IPagination,
 	IEmployee
 } from '@gauzy/contracts';
@@ -25,7 +24,7 @@ import {
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { I18nLang } from 'nestjs-i18n';
-import { FindManyOptions, FindOptionsWhere } from 'typeorm';
+import { FindOptionsWhere, UpdateResult } from 'typeorm';
 import { Request } from 'express';
 import {
 	EmployeeCreateCommand,
@@ -46,11 +45,13 @@ import {
 	EmployeeBulkInputDTO,
 	CreateEmployeeDTO,
 	UpdateEmployeeDTO,
-	UpdateProfileDTO
+	UpdateProfileDTO,
+	EmployeeJobStatisticDTO
 } from './dto';
 
 @ApiTags('Employee')
 @UseInterceptors(TransformInterceptor)
+@UseGuards(TenantPermissionGuard, PermissionGuard)
 @Controller()
 export class EmployeeController extends CrudController<Employee> {
 	constructor(
@@ -77,7 +78,6 @@ export class EmployeeController extends CrudController<Employee> {
 		description: 'Record not found'
 	})
 	@Get('/working')
-	@UseGuards(TenantPermissionGuard)
 	async findAllWorkingEmployees(
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<IEmployee>> {
@@ -104,7 +104,6 @@ export class EmployeeController extends CrudController<Employee> {
 		description: 'Count not found'
 	})
 	@Get('/working/count')
-	@UseGuards(TenantPermissionGuard)
 	async findAllWorkingEmployeesCount(
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<{ total: number }> {
@@ -120,7 +119,7 @@ export class EmployeeController extends CrudController<Employee> {
 	/**
 	 * GET employee jobs statistics
 	 *
-	 * @param request
+	 * @param options
 	 * @returns
 	 */
 	@ApiOperation({ summary: 'Get Employee Jobs Statistics' })
@@ -133,12 +132,14 @@ export class EmployeeController extends CrudController<Employee> {
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
-	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_JOB_EMPLOYEE_VIEW)
 	@Get('/job-statistics')
-	async getEmployeeJobsStatistics(@Query() request: FindManyOptions) {
-		return this.commandBus.execute(
-			new GetEmployeeJobStatisticsCommand(request)
+	@UsePipes(new ValidationPipe({ transform: true }))
+	async getEmployeeJobsStatistics(
+		@Query() options: PaginationParams<Employee>
+	): Promise<IPagination<IEmployee>> {
+		return await this.commandBus.execute(
+			new GetEmployeeJobStatisticsCommand(options)
 		);
 	}
 
@@ -160,7 +161,6 @@ export class EmployeeController extends CrudController<Employee> {
 		description: 'Record not found'
 	})
 	@Get('/user/:userId')
-	@UseGuards(TenantPermissionGuard)
 	async findByUserId(
 		@Param('userId', UUIDValidationPipe) userId: string,
 		@Query('data', ParseJsonPipe) data?: any
@@ -191,7 +191,6 @@ export class EmployeeController extends CrudController<Employee> {
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
-	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_EMPLOYEES_EDIT)
 	@Post('/bulk')
 	async createBulk(
@@ -222,10 +221,9 @@ export class EmployeeController extends CrudController<Employee> {
 	/**
 	 * GET employees by pagination in the same tenant.
 	 *
-	 * @param filter
+	 * @param options
 	 * @returns
 	 */
-	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_EMPLOYEES_VIEW)
 	@Get('pagination')
 	async pagination(
@@ -253,7 +251,6 @@ export class EmployeeController extends CrudController<Employee> {
 		description: 'Record not found'
 	})
 	@Get()
-	@UseGuards(TenantPermissionGuard)
 	async findAll(
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<IEmployee>> {
@@ -268,7 +265,7 @@ export class EmployeeController extends CrudController<Employee> {
 	 * GET employee by id in the same tenant.
 	 *
 	 * @param id
-	 * @param data
+	 * @param options
 	 * @returns
 	 */
 	@ApiOperation({ summary: 'Find employee by id in the same tenant.' })
@@ -281,13 +278,10 @@ export class EmployeeController extends CrudController<Employee> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@UseGuards(TenantPermissionGuard)
 	@Get(':id')
 	async findById(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Query(new ValidationPipe({
-			transform: true
-		})) options
+		@Query() options: PaginationParams<Employee>
 	): Promise<Employee> {
 		try {
 			return this.employeeService.findOneByIdString(id, {
@@ -316,13 +310,11 @@ export class EmployeeController extends CrudController<Employee> {
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
-	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_EMPLOYEES_EDIT)
 	@Post()
+	@UsePipes(new ValidationPipe({ transform:true }))
 	async create(
-		@Body(new ValidationPipe({
-			transform:true
-		})) entity: CreateEmployeeDTO,
+		@Body() entity: CreateEmployeeDTO,
 		@Req() request: Request,
 		@I18nLang() languageCode: LanguagesEnum
 	): Promise<IEmployee> {
@@ -354,15 +346,12 @@ export class EmployeeController extends CrudController<Employee> {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
-	@Put(':id')
-	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_EMPLOYEES_EDIT)
+	@Put(':id')
+	@UsePipes(new ValidationPipe({ transform:true, whitelist: true }))
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body(new ValidationPipe({
-			transform : true,
-			whitelist: true
-		})) entity: UpdateEmployeeDTO
+		@Body() entity: UpdateEmployeeDTO
 	): Promise<IEmployee> {
 		return await this.commandBus.execute(
 			new EmployeeUpdateCommand({
@@ -388,10 +377,9 @@ export class EmployeeController extends CrudController<Employee> {
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
-	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.PROFILE_EDIT)
-	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
 	@Put('/:id/profile')
+	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
 	async updateProfile(
 		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: UpdateProfileDTO
@@ -421,13 +409,13 @@ export class EmployeeController extends CrudController<Employee> {
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
-	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_EMPLOYEES_EDIT)
 	@Put('/:id/job-search-status')
+	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async updateJobSearchStatus(
 		@Param('id', UUIDValidationPipe) employeeId: string,
-		@Body() entity: UpdateEmployeeJobsStatistics
-	): Promise<IEmployee[]> {
+		@Body() entity: EmployeeJobStatisticDTO
+	): Promise<IEmployee | UpdateResult> {
 		return await this.commandBus.execute(
 			new UpdateEmployeeJobSearchStatusCommand(employeeId, entity)
 		);

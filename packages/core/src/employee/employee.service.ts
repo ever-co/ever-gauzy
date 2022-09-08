@@ -5,7 +5,7 @@ import { isNotEmpty } from '@gauzy/common';
 import * as moment from 'moment';
 import { Brackets, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import { RequestContext } from '../core/context';
-import { TenantAwareCrudService } from './../core/crud';
+import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { Employee } from './employee.entity';
 
 @Injectable()
@@ -46,22 +46,45 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 	}
 
 	/**
-	 * Find the employees working in the organization for a particular month.
+	 * Find the employees working in the organization for a particular date range.
 	 * An employee is considered to be 'working' if:
 	 * 1. The startedWorkOn date is (not null and) less than the last day forMonth
 	 * 2. The endWork date is either null or greater than the first day forMonth
-	 * @param organizationId  The organization id of the employees to find
-	 * @param tenantId  The tenant id of the employees to find
-	 * @param forMonth  Only the month & year is considered
+	 * @param organizationId
+	 * @param forRange
+	 * @param withUser
+	 * @returns
 	 */
 	async findWorkingEmployees(
 		organizationId: string,
 		forRange: IDateRangePicker | any,
 		withUser: boolean
 	): Promise<IPagination<IEmployee>> {
-		const query = this.repository.createQueryBuilder('employee');
+		const query = this.repository.createQueryBuilder(this.alias);
 		query.innerJoin(`${query.alias}.user`, 'user');
+		query.innerJoin(`user.organizations`, 'organizations');
 		query.setFindOptions({
+			/**
+			 * Load selected table properties/fields for self & relational select.
+			*/
+			 select: {
+				id: true,
+				isActive: true,
+				short_description: true,
+				description: true,
+				averageIncome: true,
+				averageExpenses: true,
+				averageBonus: true,
+				startedWorkOn: true,
+				isTrackingEnabled: true,
+				user: {
+					id: true,
+					firstName: true,
+					lastName: true,
+					email: true,
+					imageUrl: true
+				}
+			},
 			relations: {
 				...(withUser ? { user: true } : {})
 			}
@@ -69,7 +92,6 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 		query.where((qb: SelectQueryBuilder<Employee>) => {
 			const { startDate, endDate } = forRange;
 			const tenantId = RequestContext.currentTenantId();
-
 			qb.andWhere(
 				new Brackets((web: WhereExpressionBuilder) => {
 					web.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, { tenantId });
@@ -104,13 +126,14 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 	}
 
 	/**
-	 * Find the counts of employees working in the organization for a particular month.
+	 * Find the counts of employees working in the organization for a particular date range.
 	 * An employee is considered to be 'working' if:
 	 * 1. The startedWorkOn date is (not null and) less than the last day forMonth
 	 * 2. The endWork date is either null or greater than the first day forMonth
-	 * @param organizationId  The organization id of the employees to find
-	 * @param tenantId  The tenant id of the employees to find
-	 * @param forMonth  Only the month & year is considered
+	 * @param organizationId
+	 * @param forRange
+	 * @param withUser
+	 * @returns
 	 */
 	async findWorkingEmployeesCount(
 		organizationId: string,
@@ -127,20 +150,60 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 		};
 	}
 
-	public async pagination(options: any) {
+	/**
+	 * Get all employees using pagination
+	 *
+	 * @param options
+	 * @returns
+	 */
+	public async pagination(
+		options: PaginationParams<any>
+	): Promise<IPagination<IEmployee>> {
 		try {
-			const query = this.repository.createQueryBuilder('employee');
+			const query = this.repository.createQueryBuilder(this.alias);
+			/**
+			 * Tables joins with relations
+			 */
 			query.innerJoin(`${query.alias}.user`, 'user');
 			query.leftJoin(`${query.alias}.tags`, 'tags');
+			query.innerJoin(`user.organizations`, 'organizations');
+			/**
+			 * Set skip/take options for pagination
+			 */
 			query.setFindOptions({
 				skip: options && options.skip ? (options.take * (options.skip - 1)) : 0,
 				take: options && options.take ? (options.take) : 10
 			});
 			query.setFindOptions({
-				relations: {
-					user: true,
-					tags: true
-				}
+				/**
+				 * Load selected table properties/fields for self & relational select.
+				 */
+				select: {
+					id: true,
+					isActive: true,
+					short_description: true,
+					description: true,
+					averageIncome: true,
+					averageExpenses: true,
+					averageBonus: true,
+					startedWorkOn: true,
+					isTrackingEnabled: true,
+					user: {
+						id: true,
+						firstName: true,
+						lastName: true,
+						email: true,
+						imageUrl: true
+					}
+				},
+				/**
+				 * Load tables relations.
+				 */
+				...(
+					(options && options.relations) ? {
+						relations: options.relations
+					} : {}
+				)
 			});
 			query.where((qb: SelectQueryBuilder<Employee>) => {
 				qb.andWhere(
@@ -209,7 +272,6 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 			const [items, total] = await query.getManyAndCount();
 			return { items, total };
 		} catch (error) {
-			console.log(error);
 			throw new BadRequestException(error);
 		}
 	}

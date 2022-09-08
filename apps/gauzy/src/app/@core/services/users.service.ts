@@ -11,7 +11,7 @@ export class UsersService {
 
 	API_URL = `${API_PREFIX}/user`;
 
-	getMe(relations?: string[]): Promise<IUser> {
+	getMe(relations: string[] = []): Promise<IUser> {
 		return firstValueFrom(
 			this.http
 			.get<IUser>(`${this.API_URL}/me`, {

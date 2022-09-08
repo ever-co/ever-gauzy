@@ -28,6 +28,11 @@ import { RequestContext } from './../../core/context';
 export abstract class CrudService<T extends BaseEntity>
 	implements ICrudService<T> {
 
+	/**
+	 * Alias (default we used table name) for pagination crud
+	 */
+	protected alias: string = this.repository.metadata.tableName;
+
 	protected constructor(
 		protected readonly repository: Repository<T>
 	) {}
@@ -78,8 +83,7 @@ export abstract class CrudService<T extends BaseEntity>
 	 */
 	public async paginate(options?: any): Promise<IPagination<T>> {
 		try {
-			const alias = this.repository.metadata.tableName;
-			const query = this.repository.createQueryBuilder(alias);
+			const query = this.repository.createQueryBuilder(this.alias);
 			query.setFindOptions({
 				skip: options && options.skip ? (options.take * (options.skip - 1)) : 0,
 				take: options && options.take ? (options.take) : 10

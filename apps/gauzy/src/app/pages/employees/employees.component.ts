@@ -64,10 +64,9 @@ import { ServerDataSource } from '../../@core/utils/smart-table';
 	templateUrl: './employees.component.html',
 	styleUrls: ['./employees.component.scss']
 })
-export class EmployeesComponent
-	extends PaginationFilterBaseComponent
-	implements OnInit, OnDestroy
-{
+export class EmployeesComponent extends PaginationFilterBaseComponent
+	implements OnInit, OnDestroy {
+
 	settingsSmartTable: object;
 	smartTableSource: ServerDataSource;
 	selectedEmployee: EmployeeViewModel;
@@ -494,9 +493,12 @@ export class EmployeesComponent
 
 		this.smartTableSource = new ServerDataSource(this.http, {
 			endPoint: `${API_PREFIX}/employee/pagination`,
+			relations: ['user', 'tags'],
 			where: {
-				...{ organizationId, tenantId, isActive: !this.includeDeleted },
-				...this.filters.where
+				organizationId,
+				tenantId,
+				isActive: !this.includeDeleted,
+				...(this.filters.where ? this.filters.where : {})
 			},
 			resultMap: (employee: IEmployee) => {
 				return Object.assign(
@@ -515,7 +517,7 @@ export class EmployeesComponent
 		});
 	}
 
-	private getEmployees() {
+	private async getEmployees() {
 		if (!this.organization) {
 			return;
 		}
@@ -523,8 +525,13 @@ export class EmployeesComponent
 			this.setSmartTableSource();
 			const { activePage, itemsPerPage } = this.getPagination();
 			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
-			this._loadGridLayoutData();
-			this.loading = false;
+
+			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
+				await this.smartTableSource.getElements();
+				this.employees.push(
+					...this.smartTableSource.getData()
+				);
+			}
 		} catch (error) {
 			this.toastrService.danger(error);
 		}
@@ -569,26 +576,13 @@ export class EmployeesComponent
 		};
 	}
 
-	private async _loadGridLayoutData() {
-		if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
-			await this.smartTableSource.getElements();
-			this.employees.push(...this.smartTableSource.getData());
-			this.setPagination({
-				...this.getPagination(),
-				totalItems: this.smartTableSource.count()
-			});
-		}
-	}
-
 	private _loadSmartTableSettings() {
 		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
 			actions: false,
 			pager: {
 				display: false,
-				perPage: pagination
-					? pagination.itemsPerPage
-					: this.minItemPerPage
+				perPage: pagination ? pagination.itemsPerPage : this.minItemPerPage
 			},
 			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.EMPLOYEE'),
 			columns: {

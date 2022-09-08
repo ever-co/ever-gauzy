@@ -1,43 +1,47 @@
 <nb-card>
-	<nb-card-header
-		class="header d-flex justify-content-between align-items-center p-3"
-	>
+	<nb-card-header class="header d-flex justify-content-between align-items-center p-3">
 		<h4>
 			<ngx-header-title>
 				{{ 'JOBS.JOB_SEARCH' | translate }}
 			</ngx-header-title>
 		</h4>
 		<div>
-			<button
-				status="primary"
-				[routerLink]="'/pages/jobs/employee'"
-				size="small"
-				outline
-				class="action"
-				nbButton
-			>
-				{{ 'JOBS.EMPLOYEES' | translate }}
-			</button>
-			<button
-				status="primary"
-				[routerLink]="'/pages/jobs/matching'"
-				size="small"
-				class="action"
-				outline
-				nbButton
-			>
-				{{ 'JOBS.MATCHINGS' | translate }}
-			</button>
-			<button
-				status="primary"
-				[routerLink]="'/pages/jobs/proposal-template'"
-				size="small"
-				class="action"
-				outline
-				nbButton
-			>
-				{{ 'JOBS.PROPOSALS_TEMPLATE' | translate }}
-			</button>
+			<ng-template [ngxPermissionsOnly]="PermissionsEnum.ORG_JOB_EMPLOYEE_VIEW">
+				<button
+					status="primary"
+					[routerLink]="'/pages/jobs/employee'"
+					size="small"
+					outline
+					class="action"
+					nbButton
+				>
+					{{ 'JOBS.EMPLOYEES' | translate }}
+				</button>
+			</ng-template>
+			<ng-template [ngxPermissionsOnly]="PermissionsEnum.ORG_JOB_MATCHING_VIEW">
+				<button
+					status="primary"
+					[routerLink]="'/pages/jobs/matching'"
+					size="small"
+					class="action"
+					outline
+					nbButton
+				>
+					{{ 'JOBS.MATCHINGS' | translate }}
+				</button>
+			</ng-template>
+			<ng-template [ngxPermissionsOnly]="PermissionsEnum.ORG_PROPOSAL_TEMPLATES_VIEW">
+				<button
+					status="primary"
+					[routerLink]="'/pages/jobs/proposal-template'"
+					size="small"
+					class="action"
+					outline
+					nbButton
+				>
+					{{ 'JOBS.PROPOSALS_TEMPLATE' | translate }}
+				</button>
+			</ng-template>
 		</div>
 	</nb-card-header>
 	<nb-card-body class="p-0">
@@ -47,8 +51,7 @@
 				[isDisable]="!selectedJob.isSelected"
 				[buttonTemplate]="actionButtons"
 				[hasLayoutSelector]="false"
-			>
-			</ngx-gauzy-button-action>
+			></ngx-gauzy-button-action>
 			<div class="d-flex align-items-center">
 				<nb-toggle
 					class="mr-3 ml-3"
@@ -57,8 +60,9 @@
 					status="basic"
 					outline
 					size="small"
-					>{{ 'BUTTONS.AUTO_REFRESH' | translate }}</nb-toggle
 				>
+					{{ 'BUTTONS.AUTO_REFRESH' | translate }}
+				</nb-toggle>
 				<button
 					*ngIf="!autoRefresh"
 					type="button"

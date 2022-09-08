@@ -1,17 +1,17 @@
-import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import {
+	IEmployee,
 	IEmployeeJobsStatisticsResponse,
 	IOrganization
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import { TranslateService } from '@ngx-translate/core';
-import { AvatarComponent } from './../../../../@shared/components/avatar/avatar.component';
-import { IPaginationBase, PaginationFilterBaseComponent } from './../../../../@shared/pagination/pagination-filter-base.component';
-import { Ng2SmartTableComponent } from 'ng2-smart-table';
 import { Subject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
+import { EmployeeLinksComponent } from './../../../../@shared/table-components';
+import { IPaginationBase, PaginationFilterBaseComponent } from './../../../../@shared/pagination/pagination-filter-base.component';
 import { EmployeesService, Store, ToastrService } from './../../../../@core/services';
 import { SmartTableToggleComponent } from './../../../../@shared/smart-table/smart-table-toggle/smart-table-toggle.component';
 import { ServerDataSource } from './../../../../@core/utils/smart-table';
@@ -23,8 +23,8 @@ import { API_PREFIX } from './../../../../@core/constants';
 	templateUrl: './employees.component.html',
 	styleUrls: ['./employees.component.scss']
 })
-export class EmployeesComponent extends PaginationFilterBaseComponent 
-	implements OnInit, OnDestroy {
+export class EmployeesComponent extends PaginationFilterBaseComponent
+	implements AfterViewInit, OnInit, OnDestroy {
 
 	loading: boolean = false;
 	settingsSmartTable: any;
@@ -32,14 +32,6 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 	employees$: Subject<any> = new Subject();
 	smartTableSource: ServerDataSource;
 	organization: IOrganization;
-
-	jobEmployeesTable: Ng2SmartTableComponent;
-	@ViewChild('jobEmployeesTable') set content(content: Ng2SmartTableComponent) {
-		if (content) {
-			this.jobEmployeesTable = content;
-			this.onChangedSource();
-		}
-	}
 
 	constructor(
 		private readonly httpClient: HttpClient,
@@ -54,6 +46,9 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 	ngOnInit(): void {
 		this._applyTranslationOnSmartTable();
 		this._loadSmartTableSettings();
+	}
+
+	ngAfterViewInit(): void {
 		this.employees$
 			.pipe(
 				debounceTime(100),
@@ -97,7 +92,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 					tenantId,
 					organizationId,
 					isActive: true,
-					...this.filters.where
+					...(this.filters.where ? this.filters.where : {})
 				},
 				finalize: () => {
 					this.setPagination({
@@ -107,7 +102,6 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 					this.loading = false;
 				}
 			});
-
 			const { activePage, itemsPerPage } = this.getPagination();
 			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
 		} catch (error) {
@@ -118,6 +112,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 	private _loadSmartTableSettings() {
 		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
+			selectedRowIndex: -1,
 			editable: false,
 			actions: false,
 			hideSubHeader: true,
@@ -132,14 +127,14 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 					width: '40%',
 					type: 'custom',
 					sort: false,
-					renderComponent: AvatarComponent,
+					renderComponent: EmployeeLinksComponent,
 					valuePrepareFunction: (
 						cell,
 						row: IEmployeeJobsStatisticsResponse
 					) => {
 						return {
 							name: row.user ? row.user.name : null,
-							src: row.user ? row.user.imageUrl : null,
+							imageUrl: row.user ? row.user.imageUrl : null,
 							id: row.id
 						};
 					}
@@ -181,11 +176,10 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 					) => {
 						return {
 							checked: row.isJobSearchActive,
-							onChange: (toggleValue) =>
-								this.updateJobSearchAvailability(
-									row,
-									toggleValue
-								)
+							onChange: (toggleValue: boolean) => this.updateJobSearchAvailability(
+								row,
+								toggleValue
+							)
 						};
 					}
 				}
@@ -193,29 +187,34 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 		};
 	}
 
-	updateJobSearchAvailability(employee, toggleValue): void {
-		this.employeesService.updateJobSearchStatus(employee.id, toggleValue);
-	}
+	async updateJobSearchAvailability(
+		employee: IEmployee,
+		isJobSearchActive: boolean
+	): Promise<void> {
+		if (!this.organization) {
+			return;
+		}
+		try {
+			const { tenantId } = this.store.user;
+			const { id: organizationId } = this.organization;
 
-	/*
-	 * Table on changed source event
-	 */
-	onChangedSource() {
-		this.jobEmployeesTable.source.onChangedSource
-			.pipe(
-				untilDestroyed(this),
-				tap(() => this.deselectAll())
-			)
-			.subscribe();
-	}
-
-	/*
-	 * Deselect all table rows
-	 */
-	deselectAll() {
-		if (this.jobEmployeesTable && this.jobEmployeesTable.grid) {
-			this.jobEmployeesTable.grid.dataSet['willSelect'] = 'false';
-			this.jobEmployeesTable.grid.dataSet.deselectAll();
+			await this.employeesService.updateJobSearchStatus(employee.id, {
+				isJobSearchActive,
+				organizationId,
+				tenantId
+			}).then(() => {
+				if (isJobSearchActive) {
+					this.toastrService.success('TOASTR.MESSAGE.EMPLOYEE_JOB_STATUS_ACTIVE', {
+						name: employee.fullName.trim()
+					});
+				} else {
+					this.toastrService.success('TOASTR.MESSAGE.EMPLOYEE_JOB_STATUS_INACTIVE', {
+						name: employee.fullName.trim()
+					});
+				}
+			});
+		} catch (error) {
+			this.toastrService.danger(error);
 		}
 	}
 
@@ -227,6 +226,8 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 			)
 			.subscribe();
 	}
+
+	public handleGridSelected({ isSelected, data }): void {}
 
 	ngOnDestroy(): void {}
 }
