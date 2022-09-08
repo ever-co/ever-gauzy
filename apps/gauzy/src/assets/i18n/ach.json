@@ -126,7 +126,8 @@
 		"MANAGE_WIDGET": "crwdns11457:0crwdne11457:0",
 		"MOVE": "crwdns11459:0crwdne11459:0",
 		"COLLAPSE": "crwdns11461:0crwdne11461:0",
-		"EXPAND": "crwdns11463:0crwdne11463:0"
+		"EXPAND": "crwdns11463:0crwdne11463:0",
+		"SHOW_MORE": "crwdns11483:0crwdne11483:0"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
