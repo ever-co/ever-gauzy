@@ -81,12 +81,14 @@ export class EmploymentTypesComponent
 	ngOnInit(): void {
 		this.subject$
 			.pipe(
+				debounceTime(100),
 				tap(() => this.loadEmployeeTypes()),
 				untilDestroyed(this)
 			)
 			.subscribe();
 		this.pagination$
 			.pipe(
+				debounceTime(100),
 				distinctUntilChange(),
 				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
@@ -95,6 +97,7 @@ export class EmploymentTypesComponent
 		this.store.selectedOrganization$
 			.pipe(
 				debounceTime(100),
+				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
 				tap(
 					(organization: IOrganization) =>
