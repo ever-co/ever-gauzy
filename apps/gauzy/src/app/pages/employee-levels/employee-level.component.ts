@@ -8,7 +8,7 @@ import {
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
-import { firstValueFrom, Subject } from 'rxjs';
+import { debounceTime, firstValueFrom, Subject } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { LocalDataSource } from 'ng2-smart-table';
 import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
@@ -70,12 +70,14 @@ export class EmployeeLevelComponent
 	ngOnInit(): void {
 		this.subject$
 			.pipe(
+				debounceTime(100),
 				tap(() => this.loadEmployeeLevels()),
 				untilDestroyed(this)
 			)
 			.subscribe();
 		this.pagination$
 			.pipe(
+				debounceTime(100),
 				distinctUntilChange(),
 				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
@@ -83,6 +85,8 @@ export class EmployeeLevelComponent
 			.subscribe();
 		this.store.selectedOrganization$
 			.pipe(
+				debounceTime(100),
+				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
 				tap(
 					(organization: IOrganization) =>
