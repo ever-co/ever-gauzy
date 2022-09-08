@@ -270,13 +270,13 @@ export class HeaderComponent extends TranslationBaseComponent
 		if (!this.organization || !this.selectorsVisibility.employee) {
 			return;
 		}
-		const { id: organizationId } = this.organization;
-		const { tenantId } = this.store.user;
 		if (
 			this.store.hasPermission(
 				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
 			)
 		) {
+			const { id: organizationId } = this.organization;
+			const { tenantId } = this.store.user;
 			const { total: employeeCount } = await this.employeesService.getWorkingCount(
 				organizationId,
 				tenantId,

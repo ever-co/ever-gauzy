@@ -30,7 +30,8 @@ import {
 	ISelectedEmployee,
 	IEmployee,
 	IDateRangePicker,
-	ITimeLogFilters
+	ITimeLogFilters,
+	IUser
 } from '@gauzy/contracts';
 import { BehaviorSubject, combineLatest, firstValueFrom, Subject, Subscription, timer } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
@@ -78,10 +79,10 @@ export enum RangePeriod {
 	templateUrl: './time-tracking.component.html',
 	styleUrls: ['./time-tracking.component.scss']
 })
-export class TimeTrackingComponent
-	extends TranslationBaseComponent
-	implements AfterViewInit, OnInit, OnDestroy
-{
+export class TimeTrackingComponent extends TranslationBaseComponent
+	implements AfterViewInit, OnInit, OnDestroy {
+
+	user: IUser;
 	timeSlotEmployees: ITimeSlotStatistics[] = [];
 	activities: IActivitiesStatistics[] = [];
 	projects: IProjectsStatistics[] = [];
@@ -153,6 +154,13 @@ export class TimeTrackingComponent
 	}
 
 	ngOnInit() {
+		this.store.user$
+			.pipe(
+				filter((user: IUser) => !!user),
+				tap((user: IUser) => (this.user = user)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this.logs$
 			.pipe(
 				debounceTime(200),
@@ -588,7 +596,14 @@ export class TimeTrackingComponent
 		}
 	}
 
+	/**
+	 * Get employee counts
+	 *
+	 */
   	private async loadEmployeesCount() {
+		if (this.user && this.user.employeeId) {
+			return;
+		}
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 

@@ -221,7 +221,7 @@ export class EmployeeController extends CrudController<Employee> {
 	/**
 	 * GET employees by pagination in the same tenant.
 	 *
-	 * @param filter
+	 * @param options
 	 * @returns
 	 */
 	@Permissions(PermissionsEnum.ORG_EMPLOYEES_VIEW)
@@ -265,7 +265,7 @@ export class EmployeeController extends CrudController<Employee> {
 	 * GET employee by id in the same tenant.
 	 *
 	 * @param id
-	 * @param data
+	 * @param options
 	 * @returns
 	 */
 	@ApiOperation({ summary: 'Find employee by id in the same tenant.' })
@@ -281,9 +281,7 @@ export class EmployeeController extends CrudController<Employee> {
 	@Get(':id')
 	async findById(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Query(new ValidationPipe({
-			transform: true
-		})) options
+		@Query() options: PaginationParams<Employee>
 	): Promise<Employee> {
 		try {
 			return this.employeeService.findOneByIdString(id, {
@@ -314,10 +312,9 @@ export class EmployeeController extends CrudController<Employee> {
 	})
 	@Permissions(PermissionsEnum.ORG_EMPLOYEES_EDIT)
 	@Post()
+	@UsePipes(new ValidationPipe({ transform:true }))
 	async create(
-		@Body(new ValidationPipe({
-			transform:true
-		})) entity: CreateEmployeeDTO,
+		@Body() entity: CreateEmployeeDTO,
 		@Req() request: Request,
 		@I18nLang() languageCode: LanguagesEnum
 	): Promise<IEmployee> {
@@ -349,14 +346,12 @@ export class EmployeeController extends CrudController<Employee> {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
-	@Put(':id')
 	@Permissions(PermissionsEnum.ORG_EMPLOYEES_EDIT)
+	@Put(':id')
+	@UsePipes(new ValidationPipe({ transform:true, whitelist: true }))
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body(new ValidationPipe({
-			transform : true,
-			whitelist: true
-		})) entity: UpdateEmployeeDTO
+		@Body() entity: UpdateEmployeeDTO
 	): Promise<IEmployee> {
 		return await this.commandBus.execute(
 			new EmployeeUpdateCommand({

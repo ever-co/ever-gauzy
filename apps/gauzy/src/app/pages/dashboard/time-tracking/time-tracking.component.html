@@ -2,12 +2,7 @@
 	<nb-card-header class="card-header">
 		<div class="row">
 			<div class="col-auto">
-				<ng-container
-					*ngIf="
-						selectedDateRange?.startDate &&
-						selectedDateRange?.endDate
-					"
-				>
+				<ng-container *ngIf="selectedDateRange?.startDate && selectedDateRange?.endDate">
 					<h4>
 						<ngx-header-title>
 							{{ headerTitle }}
@@ -22,7 +17,6 @@
 				</ng-container>
 			</div>
 		</div>
-
 		<div class="row">
 			<div class="mb-4 ml-auto col-auto d-flex align-items-center">
 				<button
