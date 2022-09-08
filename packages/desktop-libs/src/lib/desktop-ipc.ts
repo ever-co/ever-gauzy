@@ -415,6 +415,7 @@ export function ipcTimer(
 				console.log('error on change window width', error);
 			}
 		}
+		event.sender.send('expand', arg);
 	})
 
 	ipcMain.on('timer_stopped', (event, arg) => {

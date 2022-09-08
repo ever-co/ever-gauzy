@@ -14,6 +14,23 @@
   border-radius: var(--button-rectangle-border-radius);
 }
 
+.timer-window-container {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 1rem;
+  .task-table {
+    flex-grow: 10;
+  }
+}
+
+.timer {
+  max-width: 360px !important;
+  width: 100%;
+  min-width: 360px !important;
+}
+
 .search {
   padding-right: 8px;
 }
@@ -61,8 +78,7 @@
 }
 
 .top-space {
-  padding-top: 0px !important;
-  padding-bottom: 0px !important;
+  padding: 0 !important;
   background-color: var(--gauzy-card-2);
 }
 
