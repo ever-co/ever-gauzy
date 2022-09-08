@@ -132,7 +132,7 @@ let alreadyQuit = false;
 let serverGauzy = null;
 let serverDesktop = null;
 let dialogErr = false;
-let cancellationToken = null;
+let cancellationToken;
 let popupWin: BrowserWindow | null = null;
 
 try {
