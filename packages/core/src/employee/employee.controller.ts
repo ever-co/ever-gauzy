@@ -1,7 +1,6 @@
 import {
 	PermissionsEnum,
 	LanguagesEnum,
-	UpdateEmployeeJobsStatistics,
 	IPagination,
 	IEmployee
 } from '@gauzy/contracts';
@@ -25,7 +24,7 @@ import {
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { I18nLang } from 'nestjs-i18n';
-import { FindManyOptions, FindOptionsWhere } from 'typeorm';
+import { FindManyOptions, FindOptionsWhere, UpdateResult } from 'typeorm';
 import { Request } from 'express';
 import {
 	EmployeeCreateCommand,
@@ -48,9 +47,11 @@ import {
 	UpdateEmployeeDTO,
 	UpdateProfileDTO
 } from './dto';
+import { EmployeeJobStatisticDTO } from './dto';
 
 @ApiTags('Employee')
 @UseInterceptors(TransformInterceptor)
+@UseGuards(TenantPermissionGuard, PermissionGuard)
 @Controller()
 export class EmployeeController extends CrudController<Employee> {
 	constructor(
@@ -421,13 +422,13 @@ export class EmployeeController extends CrudController<Employee> {
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
-	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_EMPLOYEES_EDIT)
 	@Put('/:id/job-search-status')
+	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async updateJobSearchStatus(
 		@Param('id', UUIDValidationPipe) employeeId: string,
-		@Body() entity: UpdateEmployeeJobsStatistics
-	): Promise<IEmployee[]> {
+		@Body() entity: EmployeeJobStatisticDTO
+	): Promise<IEmployee | UpdateResult> {
 		return await this.commandBus.execute(
 			new UpdateEmployeeJobSearchStatusCommand(employeeId, entity)
 		);
