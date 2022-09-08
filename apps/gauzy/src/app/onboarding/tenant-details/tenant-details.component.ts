@@ -32,8 +32,6 @@ export class TenantDetailsComponent implements OnInit, OnDestroy {
 		this.isOnboardingRequired();
 	}
 
-
-
 	async isOnboardingRequired() {
 		this.user = await this.usersService.getMe();
 		if (this.user.tenantId) {
