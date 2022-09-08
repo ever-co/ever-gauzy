@@ -1,5 +1,6 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { GauzyAIService } from '@gauzy/integration-ai';
+import { IEmployee, IPagination } from '@gauzy/contracts';
 import { indexBy } from 'underscore';
 import { EmployeeService } from '../../employee.service';
 import { GetEmployeeJobStatisticsCommand } from '../get-employee-job-statistics.command';
@@ -12,7 +13,7 @@ export class GetEmployeeJobStatisticsHandler
 		private readonly gauzyAIService: GauzyAIService
 	) {}
 
-	public async execute(command: GetEmployeeJobStatisticsCommand) {
+	public async execute(command: GetEmployeeJobStatisticsCommand): Promise<IPagination<IEmployee>> {
 		const { request } = command;
 
 		let { items, total } = await this.employeeService.paginate(request);
