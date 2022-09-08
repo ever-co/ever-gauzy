@@ -3160,6 +3160,8 @@
 			"EMPLOYEE_ADDED": "Сотрудник '{{name}}' ' ' добавлен в '{{organization}}'",
 			"EMPLOYEE_INACTIVE": "Сотрудник '{{name}}' ' ' установлен как неактивный.",
 			"EMPLOYEE_ACTIVE": "Сотрудник '{{name}}' ' ' установлен как активный.",
+			"EMPLOYEE_JOB_STATUS_ACTIVE": "Сотрудник '{{name}}' статус задания установлен как активный.",
+			"EMPLOYEE_JOB_STATUS_INACTIVE": "Сотрудник '{{name}}' статус задачи установлен как неактивный.",
 			"EMPLOYEE_TIME_TRACKING_ENABLED": "Включено отслеживание времени для '{{name}}'.",
 			"EMPLOYEE_TIME_TRACKING_DISABLED": "Отключено отслеживание времени для '{{name}}'.",
 			"CONFIRM": "Подтвердить",
