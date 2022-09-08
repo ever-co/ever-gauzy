@@ -65,7 +65,7 @@ export class UserController extends CrudController<User> {
 	/**
 	 * GET current login user
 	 *
-	 * @param data
+	 * @param options
 	 * @returns
 	 */
 	@ApiOperation({ summary: 'Find current user.' })
@@ -79,12 +79,8 @@ export class UserController extends CrudController<User> {
 		description: 'Record not found'
 	})
 	@Get('/me')
-	async findMe(
-		@Query(new ValidationPipe({
-			transform: true,
-			whitelist: true
-		})) options: FindMeQueryDTO
-	): Promise<IUser> {
+	@UsePipes(new ValidationPipe({ whitelist: true }))
+	async findMe(@Query() options: FindMeQueryDTO): Promise<IUser> {
 		return await this.userService.findMe(
 			options.relations
 		);

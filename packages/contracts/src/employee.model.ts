@@ -84,7 +84,8 @@ export interface IEmployee extends IBasePerTenantAndOrganizationEntityModel {
 export type IEmployeeJobsStatisticsResponse = IEmployee &
 	IEmployeeJobsStatistics;
 
-export interface UpdateEmployeeJobsStatistics {
+export interface UpdateEmployeeJobsStatistics
+	extends IBasePerTenantAndOrganizationEntityModel {
 	isJobSearchActive?: boolean;
 }
 
@@ -100,7 +101,7 @@ export interface IEmployeeFindInput {
 	profile_link?: string;
 }
 
-export interface IEmployeeUpdateInput 
+export interface IEmployeeUpdateInput
 	extends IBasePerTenantAndOrganizationEntityModel {
 	payPeriod?: string;
 	billRateValue?: number;
@@ -171,7 +172,7 @@ export enum PayPeriodEnum {
 	TWICE_PER_MONTH = 'TWICE_PER_MONTH',
 	MONTHLY = 'MONTHLY'
 }
-export interface IEmployeeLevel 
+export interface IEmployeeLevel
 	extends IBasePerTenantAndOrganizationEntityModel  {
 	level: string;
 	tag?: ITag[];

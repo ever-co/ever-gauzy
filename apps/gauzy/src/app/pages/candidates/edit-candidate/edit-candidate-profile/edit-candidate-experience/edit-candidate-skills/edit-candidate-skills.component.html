@@ -113,7 +113,8 @@
 		</nb-card>
 	</nb-card-body>
 	<nb-card-body *ngIf="skillList?.length">
-		<ga-card-grid
+		<ga-card-grid 
+			[totalItems]="pagination?.totalItems"
 			*ngIf="dataLayoutStyle === 'CARDS_GRID'"
 			[settings]="settingsSmartTable"
 			[source]="skillList"

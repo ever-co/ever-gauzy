@@ -8,7 +8,8 @@ import {
 	IEmployeeUpdateProfileStatus,
 	IBasePerTenantAndOrganizationEntityModel,
 	IDateRangePicker,
-	IPagination
+	IPagination,
+	UpdateEmployeeJobsStatistics
 } from '@gauzy/contracts';
 import { firstValueFrom, Observable } from 'rxjs';
 import { toParams } from '@gauzy/common-angular';
@@ -175,13 +176,11 @@ export class EmployeesService {
 	}
 
 	updateJobSearchStatus(
-		id: string,
-		isJobSearchActive: boolean
+		id: IEmployee['id'],
+		statistics: UpdateEmployeeJobsStatistics
 	) {
 		return firstValueFrom(
-			this.http.put(`${API_PREFIX}/employee/${id}/job-search-status`, {
-				isJobSearchActive
-			})
+			this.http.put(`${API_PREFIX}/employee/${id}/job-search-status`, statistics)
 		);
 	}
 

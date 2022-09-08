@@ -50,7 +50,8 @@
 				!loading
 			"
 		>
-			<ga-card-grid
+			<ga-card-grid 
+				[totalItems]="pagination?.totalItems"
 				[settings]="smartTableSettings"
 				[source]="departments"
 				(onSelectedItem)="selectDepartment($event)"

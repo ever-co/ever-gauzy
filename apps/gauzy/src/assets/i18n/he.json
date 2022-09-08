@@ -126,7 +126,8 @@
 		"MANAGE_WIDGET": "Manage widgets",
 		"MOVE": "Move",
 		"COLLAPSE": "Collapse",
-		"EXPAND": "Expand"
+		"EXPAND": "Expand",
+		"SHOW_MORE": "Show More"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -3159,6 +3160,8 @@
 			"EMPLOYEE_ADDED": "Employee '{{name}}' added to '{{organization}}'",
 			"EMPLOYEE_INACTIVE": "Employee '{{name}}' set as inactive.",
 			"EMPLOYEE_ACTIVE": "Employee '{{name}}' set as active.",
+			"EMPLOYEE_JOB_STATUS_ACTIVE": "Employee '{{name}}' job status set as active.",
+			"EMPLOYEE_JOB_STATUS_INACTIVE": "Employee '{{name}}' job status set as inactive.",
 			"EMPLOYEE_TIME_TRACKING_ENABLED": "Enabled time tracking for '{{name}}'.",
 			"EMPLOYEE_TIME_TRACKING_DISABLED": "Disabled time tracking for '{{name}}'.",
 			"CONFIRM": "אשר",

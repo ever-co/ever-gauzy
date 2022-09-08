@@ -267,7 +267,8 @@
 </ng-template>
 <ng-template #gridLayout>
 	<div class="grid">
-		<ga-card-grid
+		<ga-card-grid 
+			[totalItems]="pagination?.totalItems"
 			[settings]="smartTableSettings"
 			[source]="pipelines"
 			(onSelectedItem)="selectPipeline($event)"

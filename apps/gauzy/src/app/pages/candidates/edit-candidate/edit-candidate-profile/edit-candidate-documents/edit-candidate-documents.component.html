@@ -122,7 +122,8 @@
 		</nb-card>
 	</nb-card-body>
 	<nb-card-body>
-		<ga-card-grid
+		<ga-card-grid 
+			[totalItems]="pagination?.totalItems"
 			*ngIf="
 				documentList?.length &&
 				dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID

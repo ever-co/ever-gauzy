@@ -9,5 +9,5 @@ export class FindMeQueryDTO {
     @ApiPropertyOptional({ type: () => Array, isArray: true })
     @IsOptional()
     @IsArray()
-    readonly relations: string[];
+    readonly relations: string[] = [];
 }

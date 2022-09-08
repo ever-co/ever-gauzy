@@ -73,7 +73,8 @@
 				vendors?.length > 0
 			"
 		>
-			<ga-card-grid
+			<ga-card-grid 
+				[totalItems]="pagination?.totalItems"
 				[settings]="settingsSmartTable"
 				[source]="vendors"
 				(onSelectedItem)="selectVendor($event)"

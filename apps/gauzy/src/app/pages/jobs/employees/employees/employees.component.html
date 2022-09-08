@@ -42,6 +42,7 @@
 				style="cursor: pointer"
 				[settings]="settingsSmartTable"
 				[source]="smartTableSource"
+				(userRowSelect)="handleGridSelected($event)"
 				#jobEmployeesTable
 			></ng2-smart-table>
 		</div>

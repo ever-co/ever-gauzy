@@ -126,7 +126,8 @@
 		"MANAGE_WIDGET": "crwdns11457:0crwdne11457:0",
 		"MOVE": "crwdns11459:0crwdne11459:0",
 		"COLLAPSE": "crwdns11461:0crwdne11461:0",
-		"EXPAND": "crwdns11463:0crwdne11463:0"
+		"EXPAND": "crwdns11463:0crwdne11463:0",
+		"SHOW_MORE": "crwdns11483:0crwdne11483:0"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -3159,6 +3160,8 @@
 			"EMPLOYEE_ADDED": "crwdns8850:0{{name}}crwdnd8850:0{{organization}}crwdne8850:0",
 			"EMPLOYEE_INACTIVE": "crwdns8852:0{{name}}crwdne8852:0",
 			"EMPLOYEE_ACTIVE": "crwdns8854:0{{name}}crwdne8854:0",
+			"EMPLOYEE_JOB_STATUS_ACTIVE": "crwdns11485:0{{name}}crwdne11485:0",
+			"EMPLOYEE_JOB_STATUS_INACTIVE": "crwdns11487:0{{name}}crwdne11487:0",
 			"EMPLOYEE_TIME_TRACKING_ENABLED": "crwdns10944:0{{name}}crwdne10944:0",
 			"EMPLOYEE_TIME_TRACKING_DISABLED": "crwdns10946:0{{name}}crwdne10946:0",
 			"CONFIRM": "crwdns2561:0crwdne2561:0",

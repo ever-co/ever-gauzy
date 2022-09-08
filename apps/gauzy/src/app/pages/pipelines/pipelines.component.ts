@@ -137,6 +137,7 @@ export class PipelinesComponent
 			.subscribe();
 		this.store.selectedOrganization$
 			.pipe(
+				debounceTime(100),
 				filter((organization: IOrganization) => !!organization),
 				distinctUntilChange(),
 				tap(

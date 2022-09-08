@@ -76,7 +76,8 @@
 					</ng-container>
 				</ng-template>
 				<ng-template #gridLayout>
-					<ga-card-grid
+					<ga-card-grid 
+						[totalItems]="pagination?.totalItems"
 						[settings]="settingsSmartTable"
 						[source]="tags"
 						(onSelectedItem)="selectTag($event)"

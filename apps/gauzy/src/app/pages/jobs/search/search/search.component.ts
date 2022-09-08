@@ -3,7 +3,6 @@ import {
 	Component,
 	OnDestroy,
 	OnInit,
-	ViewChild,
 	AfterViewInit
 } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
@@ -11,7 +10,6 @@ import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Subject, Subscription, timer } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import * as moment from 'moment';
-import { Ng2SmartTableComponent } from 'ng2-smart-table';
 import {
 	IApplyJobPostInput,
 	IEmployeeJobPost,
@@ -22,7 +20,8 @@ import {
 	JobPostSourceEnum,
 	JobPostStatusEnum,
 	JobPostTypeEnum,
-	JobSearchTabsEnum
+	JobSearchTabsEnum,
+	PermissionsEnum
 } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import { NbTabComponent } from '@nebular/theme';
@@ -33,21 +32,21 @@ import {
 	Nl2BrPipe,
 	TruncatePipe
 } from './../../../../@shared/pipes';
+import { EmployeeLinksComponent } from './../../../../@shared/table-components';
 import { StatusBadgeComponent } from './../../../../@shared/status-badge/status-badge.component';
 import { IPaginationBase, PaginationFilterBaseComponent } from '../../../../@shared/pagination/pagination-filter-base.component';
 import { ProposalTemplateService } from '../../proposal-template/proposal-template.service';
 import { API_PREFIX } from './../../../../@core/constants';
 import { ServerDataSource } from './../../../../@core/utils/smart-table';
 import { AtLeastOneFieldValidator } from './../../../../@core/validators';
-import { EmployeeLinksComponent } from 'apps/gauzy/src/app/@shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-search',
+	selector: 'ga-job-search',
 	templateUrl: './search.component.html',
 	styleUrls: ['./search.component.scss']
 })
-export class SearchComponent extends PaginationFilterBaseComponent 
+export class SearchComponent extends PaginationFilterBaseComponent
 	implements OnInit, OnDestroy, AfterViewInit {
 
 	loading: boolean = false;
@@ -59,6 +58,7 @@ export class SearchComponent extends PaginationFilterBaseComponent
 	JobPostSourceEnum = JobPostSourceEnum;
 	JobPostTypeEnum = JobPostTypeEnum;
 	JobPostStatusEnum = JobPostStatusEnum;
+	PermissionsEnum = PermissionsEnum;
 
 	jobRequest: IGetEmployeeJobPostFilters = {
 		employeeIds: [],
@@ -81,14 +81,6 @@ export class SearchComponent extends PaginationFilterBaseComponent
 	jobSearchTabsEnum = JobSearchTabsEnum;
 	nbTab$: Subject<string> = new BehaviorSubject(JobSearchTabsEnum.ACTIONS);
 
-	jobSearchTable: Ng2SmartTableComponent;
-	@ViewChild('jobSearchTable') set content(content: Ng2SmartTableComponent) {
-		if (content) {
-			this.jobSearchTable = content;
-			this.onChangedSource();
-		}
-	}
-	
 	/*
 	* Search Tab Form
 	*/
@@ -352,6 +344,7 @@ export class SearchComponent extends PaginationFilterBaseComponent
 	private _loadSmartTableSettings() {
 		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
+			selectedRowIndex: -1,
 			editable: false,
 			hideSubHeader: true,
 			actions: false,
@@ -523,18 +516,6 @@ export class SearchComponent extends PaginationFilterBaseComponent
 	}
 
 	/*
-	 * Table on changed source event
-	 */
-	onChangedSource() {
-		this.jobSearchTable.source.onChangedSource
-			.pipe(
-				untilDestroyed(this),
-				tap(() => this.deselectAll())
-			)
-			.subscribe();
-	}
-
-	/*
 	 * Hide all jobs
 	 */
 	hideAll() {
@@ -550,17 +531,6 @@ export class SearchComponent extends PaginationFilterBaseComponent
 		});
 	}
 
-	/*
-	 * Deselect all table rows
-	 */
-	deselectAll() {
-		if (this.jobSearchTable && this.jobSearchTable.grid) {
-			this.jobSearchTable.grid.dataSet['willSelect'] = 'false';
-			this.jobSearchTable.grid.dataSet.deselectAll();
-		}
-	}
-
-	
 	onTabChange(tab: NbTabComponent) {
 		this.nbTab$.next(tab.tabId);
 	}

@@ -169,6 +169,10 @@ export class InterviewPanelComponent
 		const tableList = this.findByEmployee(this.tableInterviewList);
 		this.sourceSmartTable.load(tableList);
 		this._loadGridLayoutData();
+		this.setPagination({
+			...this.getPagination(),
+			totalItems: this.sourceSmartTable.count()
+		});
 	}
 
 	findByEmployee(list: ICandidateInterview[]) {

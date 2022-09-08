@@ -45,7 +45,8 @@
 			</div>
 		</ng-template>
 		<ng-template #gridLayout>
-			<ga-card-grid
+			<ga-card-grid 
+				[totalItems]="pagination?.totalItems"
 				[settings]="settingsSmartTable"
 				[source]="merchants"
 				(onSelectedItem)="selectStore($event)"

@@ -124,7 +124,8 @@
 		</div>
 	</nb-card-body>
 	<nb-card-body *ngIf="educationList?.length">
-		<ga-card-grid
+		<ga-card-grid 
+			[totalItems]="pagination?.totalItems"
 			*ngIf="dataLayoutStyle === 'CARDS_GRID'"
 			[settings]="settingsSmartTable"
 			[source]="educationList"

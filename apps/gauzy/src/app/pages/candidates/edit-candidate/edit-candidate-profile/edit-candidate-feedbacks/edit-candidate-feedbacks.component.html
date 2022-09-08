@@ -300,7 +300,8 @@
 			>
 			</ng2-smart-table>
 		</div>
-		<ga-card-grid
+		<ga-card-grid 
+			[totalItems]="pagination?.totalItems"
 			*ngIf="feedbackList?.length && dataLayoutStyle === 'CARDS_GRID'"
 			[settings]="settingsSmartTable"
 			[source]="feedbackList"
