@@ -111,8 +111,11 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	get appSetting(): any {
 		return this.appSetting$.getValue();
 	}
-	isExpand = false;
-	timerWindow = 'col-12 no-padding full-width';
+	
+	isExpand$: BehaviorSubject<boolean> = new BehaviorSubject(false);
+	get isExpand(): boolean {
+		return this.isExpand$.getValue();
+	}
 	dialogType = {
 		deleteLog: {
 			name: 'deleteLog',
@@ -389,6 +392,14 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					this.showErrorMessage(arg);
 				})
 		);
+
+		this.electronService.ipcRenderer.on('expand', (event, arg) =>
+			this._ngZone.run(() => {
+				this.isExpand$.next(arg);
+				this.expandIcon = arg ? 'arrow-left' : 'arrow-right';
+			})
+		);
+
 		this.electronService.ipcRenderer.send('time_tracker_ready');
 	}
 
@@ -909,15 +920,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	}
 
 	expand() {
-		this.isExpand = !this.isExpand;
-		if (this.isExpand) {
-			this.timerWindow = 'col-4 no-padding full-width timer-max';
-			this.expandIcon = 'arrow-left';
-		} else {
-			this.timerWindow = 'col-12 no-padding full-width';
-			this.expandIcon = 'arrow-right';
-		}
-		this.electronService.ipcRenderer.send('expand', this.isExpand);
+		this.electronService.ipcRenderer.send('expand', !this.isExpand);
 	}
 
 	rowSelect(value) {
