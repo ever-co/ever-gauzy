@@ -51,7 +51,8 @@
 					</ng-container>
 				</div>
 			</ng-container>
-			<ga-card-grid
+			<ga-card-grid 
+				[totalItems]="pagination?.totalItems"
 				*ngIf="dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID"
 				[settings]="settingsSmartTable"
 				[source]="approvalPolicies"

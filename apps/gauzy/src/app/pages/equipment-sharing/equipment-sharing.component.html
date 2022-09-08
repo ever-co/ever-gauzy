@@ -64,7 +64,8 @@
 				</div>
 			</ng-container>
 			<ng-container *ngIf="dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID">
-				<ga-card-grid
+				<ga-card-grid 
+					[totalItems]="pagination?.totalItems"
 					[settings]="settingsSmartTable"
 					[source]="equipments"
 					(onSelectedItem)="selectEquipmentSharing($event)"

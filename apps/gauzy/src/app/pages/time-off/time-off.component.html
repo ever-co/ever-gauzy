@@ -95,7 +95,8 @@
 		</ng-template>
 		<ng-template #gridLayout>
 			<div class="custom-grid">
-				<ga-card-grid
+				<ga-card-grid 
+					[totalItems]="pagination?.totalItems"
 					(onSelectedItem)="selectRecord($event)"
 					(scroll)="onScroll()"
 					[settings]="settingsSmartTable"

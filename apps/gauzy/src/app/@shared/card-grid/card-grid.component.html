@@ -1,11 +1,12 @@
 <div
-	*ngIf="source && source.length > 0; else noDataGridLayout"
+	*ngIf="source && (source$ | async).length > 0; else noDataGridLayout"
 	class="card-layout grid-scroll-container"
 	infinite-scroll
 	[scrollWindow]="false"
 	(scrolled)="onScroll()"
+	#grid
 >
-	<nb-card *ngFor="let item of source" class="card-item">
+	<nb-card *ngFor="let item of source$ | async" class="card-item">
 		<nb-card-body
 			[ngClass]="
 				selected.isSelected && selected.data.id === item.id
@@ -53,6 +54,19 @@
 			</div>
 		</nb-card-body>
 	</nb-card>
+	<div class="show-more-button">
+		<button
+			nbButton
+			(click)="onScroll()"
+			status="basic"
+			size="small"
+			*ngIf="showMore"
+			class="d-flex"
+		>
+			<nb-icon icon="arrowhead-down-outline"></nb-icon
+			>{{ 'BUTTONS.SHOW_MORE' | translate }}
+		</button>
+	</div>
 </div>
 <ng-template #noDataGridLayout>
 	<div class="no-data">

@@ -117,7 +117,8 @@
 	</ng-container>
 </ng-template>
 <ng-template #gridLayout>
-	<ga-card-grid
+	<ga-card-grid 
+		[totalItems]="pagination?.totalItems"
 		(onSelectedItem)="selectProject($event)"
 		(scroll)="onScroll()"
 		[settings]="settingsSmartTable"

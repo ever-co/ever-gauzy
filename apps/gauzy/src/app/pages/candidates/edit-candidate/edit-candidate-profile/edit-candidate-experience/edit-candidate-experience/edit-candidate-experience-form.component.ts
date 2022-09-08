@@ -1,6 +1,5 @@
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { FormGroup, FormBuilder, FormArray, Validators } from '@angular/forms';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
@@ -15,6 +14,7 @@ import { ComponentEnum } from 'apps/gauzy/src/app/@core/constants/layout.constan
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { LocalDataSource } from 'ng2-smart-table';
 import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
+import { PaginationFilterBaseComponent } from 'apps/gauzy/src/app/@shared/pagination/pagination-filter-base.component';
 
 @Component({
 	selector: 'ga-edit-candidate-experience-form',
@@ -22,7 +22,7 @@ import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service'
 	styleUrls: ['./edit-candidate-experience-form.component.scss']
 })
 export class EditCandidateExperienceFormComponent
-	extends TranslationBaseComponent
+	extends PaginationFilterBaseComponent
 	implements OnInit, OnDestroy {
 	selectedOrganization: IOrganization;
 	showAddCard: boolean;
@@ -91,6 +91,10 @@ export class EditCandidateExperienceFormComponent
 		);
 		this.experienceList = items;
 		this.sourceSmartTable.load(items);
+		this.setPagination({
+			...this.getPagination(),
+			totalItems: this.sourceSmartTable.count()
+		});
 		this.loading = false;
 	}
 	editExperience(experience: ICandidateExperience) {

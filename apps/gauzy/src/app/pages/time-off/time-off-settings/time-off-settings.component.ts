@@ -11,7 +11,6 @@ import {
 	IOrganization,
 	ITimeOffPolicy
 } from '@gauzy/contracts';
-import { combineLatest } from 'rxjs';
 import { debounceTime, filter, first, tap } from 'rxjs/operators';
 import { Ng2SmartTableComponent } from 'ng2-smart-table';
 import { NbDialogService } from '@nebular/theme';
@@ -63,6 +62,7 @@ export class TimeOffSettingsComponent
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
+	private _refresh$: Subject<any> = new Subject();
 
 	public organization: IOrganization;
 	timeOffPolicies$: Subject<any> = this.subject$;
@@ -89,18 +89,39 @@ export class TimeOffSettingsComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
-		const storeOrganization$ = this.store.selectedOrganization$;
-		const pagination$ = this.pagination$;
-		combineLatest([storeOrganization$, pagination$])
+		this.pagination$
 			.pipe(
 				debounceTime(100),
-				filter(([organization]) => !!organization),
 				distinctUntilChange(),
-				tap(([organization]) => (this.organization = organization)),
 				tap(() => this.timeOffPolicies$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
+		const storeOrganization$ = this.store.selectedOrganization$;
+		storeOrganization$.pipe(
+				debounceTime(100),
+				filter((organization) => !!organization),
+				distinctUntilChange(),
+				tap((organization) => (this.organization = organization)),
+				tap(() => this._refresh$.next(true)),
+				tap(() => this.timeOffPolicies$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this._refresh$
+			.pipe(
+				filter(() => this._isGridLayout),
+				tap(() => this.refreshPagination()),
+				tap(() => (this.timeOffPolicies = [])),
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
+
+	private get _isGridLayout(): boolean {
+		return (
+			this.componentLayoutStyleEnum.CARDS_GRID === this.dataLayoutStyle
+		);
 	}
 
 	setView() {
@@ -113,12 +134,13 @@ export class TimeOffSettingsComponent
 					(componentLayout) =>
 						(this.dataLayoutStyle = componentLayout)
 				),
-				tap(() => this.timeOffPolicies$.next(true)),
+				tap(() => this.refreshPagination()),
 				filter(
 					(componentLayout) =>
 						componentLayout === ComponentLayoutStyleEnum.CARDS_GRID
 				),
-				tap(() => this.refreshPagination()),
+				tap(() => this.timeOffPolicies = []),
+				tap(() => this.timeOffPolicies$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -144,7 +166,7 @@ export class TimeOffSettingsComponent
 			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.TIME_OFF'),
 			pager: {
 				display: false,
-				perPage: pagination ? pagination.itemsPerPage : 10
+				perPage: pagination ? pagination.itemsPerPage : this.minItemPerPage
 			},
 			columns: {
 				name: {
@@ -198,6 +220,7 @@ export class TimeOffSettingsComponent
 						this.toastrService.success('NOTES.POLICY.ADD_POLICY', {
 							name: policy.name
 						});
+						this._refresh$.next(true);
 						this.timeOffPolicies$.next(true);
 					},
 					error: () => {
@@ -238,6 +261,7 @@ export class TimeOffSettingsComponent
 					this.toastrService.success('NOTES.POLICY.EDIT_POLICY', {
 						name: policy.name
 					});
+					this._refresh$.next(true);
 					this.timeOffPolicies$.next(true);
 				},
 				error: (error) => this.errorHandler.handleError(error)
@@ -279,6 +303,7 @@ export class TimeOffSettingsComponent
 					this.toastrService.success('NOTES.POLICY.DELETE_POLICY', {
 						name: this.selectedPolicy.name
 					});
+					this._refresh$.next(true);
 					this.timeOffPolicies$.next(true);
 				},
 				error: (error) => this.errorHandler.handleError(error)
@@ -314,6 +339,8 @@ export class TimeOffSettingsComponent
 					...this.filters.where
 				},
 				finalize: () => {
+					if	(this._isGridLayout) 
+						this.timeOffPolicies.push(...this.smartTableSource.getData());
 					this.setPagination({
 						...this.getPagination(),
 						totalItems: this.smartTableSource.count()
@@ -338,17 +365,16 @@ export class TimeOffSettingsComponent
 	 *
 	 * @returns
 	 */
-	private async _getTimeOffSettings() {
+	private _getTimeOffSettings() {
 		if (!this.organization) {
 			return;
 		}
-		this.setSmartTableSource();
 		try {
+			this.setSmartTableSource();
 			const { activePage, itemsPerPage } = this.getPagination();
 			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
-			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
-				await this._loadGridLayoutData();
-			}
+			if (this._isGridLayout) this._loadGridLayoutData();
+			
 		} catch (error) {
 			this.toastrService.danger(
 				this.getTranslation('', {
@@ -364,11 +390,7 @@ export class TimeOffSettingsComponent
 	 */
 	private async _loadGridLayoutData() {
 		try {
-			this.timeOffPolicies = await this.smartTableSource.getElements();
-			this.setPagination({
-				...this.getPagination(),
-				totalItems: this.smartTableSource.count()
-			});
+			await this.smartTableSource.getElements();
 		} catch (error) {
 			this.toastrService.danger(
 				this.getTranslation('', {

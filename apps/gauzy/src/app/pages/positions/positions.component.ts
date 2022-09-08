@@ -289,7 +289,10 @@ export class PositionsComponent
 			if (this._isGridLayout) {
 				this._loadGridLayoutData();
 			} else this.positions = res.items;
-
+			this.setPagination({
+				...this.getPagination(),
+				totalItems: this.smartTableSource.count()
+			});
 			if (this.positions.length <= 0) {
 				this.positionsExist = false;
 			} else {
