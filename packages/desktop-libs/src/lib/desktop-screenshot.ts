@@ -515,7 +515,7 @@ export function notifyScreenshot(notificationWindow: BrowserWindow, thumb, windo
 	});
 	notificationWindow.on('show', () => {
 		setTimeout(() => {
-			notificationWindow.show();
+			notificationWindow.focus();
 		  }, 200);
 	})
 
@@ -528,7 +528,7 @@ export function notifyScreenshot(notificationWindow: BrowserWindow, thumb, windo
 	setTimeout(() => {
 		timeTrackerWindow.webContents.send('last_capture_local', { fullUrl: `data:image/png;base64, ${thumb.img}` });
 		try {
-			if (existsSync(soundCamera) && !appSetting.mutedNotification) {
+			if (existsSync(soundCamera) && appSetting && !appSetting.mutedNotification) {
 				timeTrackerWindow.webContents.send('play_sound', { soundFile: soundCamera })
 			}
 		} catch (err) {
