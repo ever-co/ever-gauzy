@@ -10,12 +10,10 @@ import {LocalDataSource, Ng2SmartTableComponent} from 'ng2-smart-table';
 import {NbDialogService} from '@nebular/theme';
 import {filter, firstValueFrom, Subject} from 'rxjs';
 import {debounceTime, tap} from 'rxjs/operators';
-import {TranslationBaseComponent} from './../../../../../@shared/language-base/translation-base.component';
 import {InventoryStore, Store, ToastrService, WarehouseService} from './../../../../../@core/services';
 import {SelectProductComponent} from '../select-product-form/select-product-form.component';
 import {ImageRowComponent} from '../../inventory-table-components/image-row.component';
 import {ManageQuantityComponent} from '../manage-quantity/manage-quantity.component';
-import {ManageVariantsQuantityComponent} from '../manage-variants-quantity/manage-variants-quantity.component';
 import {
 	IPaginationBase,
 	PaginationFilterBaseComponent
@@ -47,6 +45,10 @@ export class WarehouseProductsTableComponent extends PaginationFilterBaseCompone
 	}
 
 	@Input() warehouse: IWarehouse;
+	selectedWarehouse: any = {
+		isSelected: false,
+		data: null
+	}
 
 	constructor(
 		private readonly dialogService: NbDialogService,
@@ -140,11 +142,6 @@ export class WarehouseProductsTableComponent extends PaginationFilterBaseCompone
 					title: this.getTranslation('INVENTORY_PAGE.QUANTITY'),
 					type: 'custom',
 					renderComponent: ManageQuantityComponent
-				},
-				variants: {
-					title: this.getTranslation('INVENTORY_PAGE.MANAGE_VARIANTS_QUANTITY'),
-					type: 'custom',
-					renderComponent: ManageVariantsQuantityComponent
 				}
 			},
 			pager: {
@@ -225,5 +222,13 @@ export class WarehouseProductsTableComponent extends PaginationFilterBaseCompone
 		}
 
 		this.loadItems();
+	}
+
+	public selectWarehouse(event: any) {
+		this.selectedWarehouse = event;
+	}
+
+	public get variants() {
+		return this.selectedWarehouse && this.selectedWarehouse.data ? this.selectedWarehouse.data.variants : [];
 	}
 }

@@ -1,4 +1,5 @@
 @import "gauzy/gauzy-overrides";
+@import "gauzy/gauzy-table";
 
 :host {
 	@include input-appearance(2rem, var(--gauzy-sidebar-background-3));
@@ -17,5 +18,10 @@
 				border-radius: var(--border-radius);
 			}
 		}
+	}
+
+	.actions {
+		display: flex;
+		align-items: center;
 	}
 }

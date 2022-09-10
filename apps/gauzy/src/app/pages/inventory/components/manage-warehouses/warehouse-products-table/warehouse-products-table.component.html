@@ -1,19 +1,18 @@
 <nb-card-body class="container-content">
-	<div class="mb-3 d-flex justify-content-end">
-		<button
-			nbButton
-			status="success"
-			size="small"
-			(click)="onAddProduct()"
+	<div class="d-flex justify-content-end">
+		<ngx-gauzy-button-action
+			[buttonTemplateVisible]="visible"
+			[hasLayoutSelector]="false"
+			[buttonTemplate]="action"
+			[isDisable]="!selectedWarehouse?.isSelected"
 		>
-			<nb-icon icon="plus-outline"></nb-icon>
-			{{ 'INVENTORY_PAGE.ADD_PRODUCT' | translate }}
-		</button>
+		</ngx-gauzy-button-action>
 	</div>
 	<div class="table-scroll-container">
 		<ng2-smart-table
 			[settings]="settingsSmartTable"
 			[source]="smartTableSource"
+			(userRowSelect)="selectWarehouse($event)"
 			style="cursor: pointer"
 			#warehouseProductsTable
 		></ng2-smart-table>
@@ -32,3 +31,25 @@
 	</ng-container>
 
 </nb-card-body>
+
+<ng-template #visible>
+	<ng-container *ngxPermissionsOnly="'ALL_ORG_VIEW'">
+		<button
+			nbButton
+			status="success"
+			size="small"
+			(click)="onAddProduct()"
+		>
+			<nb-icon icon="plus-outline"></nb-icon>
+			{{ 'INVENTORY_PAGE.ADD_PRODUCT' | translate }}
+		</button>
+	</ng-container>
+</ng-template>
+
+<ng-template #action>
+	<ng-container *ngxPermissionsOnly="'ALL_ORG_EDIT'">
+		<div class="actions">
+			<ga-manage-variants-quantity [value]="variants"></ga-manage-variants-quantity>
+		</div>
+	</ng-container>
+</ng-template>
