@@ -1,7 +1,8 @@
 import { BrowserWindow } from 'electron';
 import * as url from 'url';
 import * as remoteMain from '@electron/remote/main';
-
+import { LocalStore } from '@gauzy/desktop-libs';
+ 
 export function createSettingsWindow(settingsWindow, filePath) {
 	const mainWindowSettings: Electron.BrowserWindowConstructorOptions = windowSetting();
 
@@ -46,6 +47,10 @@ const windowSetting = () => {
 		maximizable: false,
 		show: false
 	};
+	const filesPath = LocalStore.getStore('filePath');
+	if (process.platform === 'linux') {
+		mainWindowSettings.icon = filesPath.iconPath;
+	}
 
 	return mainWindowSettings;
 };

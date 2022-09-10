@@ -2,6 +2,7 @@ import log from 'electron-log';
 import { screen, BrowserWindow, ipcMain } from 'electron';
 import * as remoteMain from '@electron/remote/main';
 import * as url from 'url';
+import { LocalStore } from '@gauzy/desktop-libs';
 
 export function createServerWindow(serverWindow, config, filePath) {
 
@@ -54,5 +55,10 @@ const windowSetting = () => {
 		show: false,
 		center: true
 	};
+
+	const filesPath = LocalStore.getStore('filePath');
+	if (process.platform === 'linux') {
+		mainWindowSettings.icon = filesPath.iconPath;
+	}
 	return mainWindowSettings;
 };

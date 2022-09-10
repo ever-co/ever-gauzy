@@ -148,6 +148,10 @@ try {
 	cancellationToken = new CancellationToken();
 } catch (error) {}
 
+LocalStore.setFilePath({
+	iconPath: path.join(__dirname, 'icons', 'icon.png');
+})
+
  function startServer(value, restart = false) {
 	process.env.IS_ELECTRON = 'true';
 	if (value.db === 'sqlite') {

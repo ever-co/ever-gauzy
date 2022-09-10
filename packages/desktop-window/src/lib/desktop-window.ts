@@ -2,7 +2,7 @@ import log from 'electron-log';
 import { screen, BrowserWindow, ipcMain } from 'electron';
 import * as remoteMain from '@electron/remote/main';
 import * as url from 'url';
-
+import { LocalStore } from '@gauzy/desktop-libs';
 export function createGauzyWindow(gauzyWindow, serve, config, filePath) {
 	log.info('createGauzyWindow started');
 
@@ -58,6 +58,8 @@ export function createGauzyWindow(gauzyWindow, serve, config, filePath) {
 
 const windowSetting = () => {
 	const sizes = screen.getPrimaryDisplay().workAreaSize;
+	const filesPath = LocalStore.getStore('filePath');
+
 	const mainWindowSettings: Electron.BrowserWindowConstructorOptions = {
 		frame: true,
 		resizable: true,
@@ -75,6 +77,10 @@ const windowSetting = () => {
 		title: 'Gauzy Desktop',
 		show: false
 	};
+
+	if (process.platform === 'linux') {
+		mainWindowSettings.icon = filesPath.iconPath;
+	}
 	return mainWindowSettings;
 };
 
