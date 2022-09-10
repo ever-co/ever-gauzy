@@ -132,6 +132,7 @@ export class WarehouseProductsTableComponent extends PaginationFilterBaseCompone
 				image: {
 					title: this.getTranslation('INVENTORY_PAGE.IMAGE'),
 					type: 'custom',
+					filter: false,
 					renderComponent: ImageRowComponent
 				},
 				name: {
