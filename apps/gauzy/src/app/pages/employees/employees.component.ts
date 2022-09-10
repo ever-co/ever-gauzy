@@ -139,7 +139,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 				debounceTime(100),
 				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
-				tap((organization) => (this.organization = organization)),
+				tap((organization: IOrganization) => (this.organization = organization)),
 				tap(
 					({ invitesAllowed }) =>
 						(this.organizationInvitesAllowed = invitesAllowed)
@@ -214,7 +214,11 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 	}
 
 	async add() {
+		if (!this.organization) {
+			return;
+		}
 		try {
+			const { name } = this.organization;
 			const dialog = this.dialogService.open(EmployeeMutationComponent);
 			const response = await firstValueFrom(dialog.onClose);
 			if (response) {
@@ -224,19 +228,17 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 					if (firstName || lastName) {
 						fullName = `${firstName} ${lastName}`;
 					}
-					this.toastrService.success(
-						'TOASTR.MESSAGE.EMPLOYEE_ADDED',
-						{
-							name: fullName,
-							organization: employee.organization.name
-						}
-					);
+					this.toastrService.success('TOASTR.MESSAGE.EMPLOYEE_ADDED', {
+						name: fullName,
+						organization: name
+					});
 				});
-				this._refresh$.next(true);
-				this.employees$.next(true);
 			}
 		} catch (error) {
 			this.errorHandler.handleError(error);
+		} finally {
+			this._refresh$.next(true);
+			this.employees$.next(true);
 		}
 	}
 

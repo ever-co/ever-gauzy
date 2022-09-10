@@ -3,10 +3,8 @@ import { FormGroup } from '@angular/forms';
 import { NbDialogRef, NbStepperComponent, NbTagComponent } from '@nebular/theme';
 import { BasicInfoFormComponent } from '../../user/forms/basic-info/basic-info-form.component';
 import {
-	RolesEnum,
 	IEmployee,
 	IUser,
-	IRole,
 	IEmployeeCreateInput,
 	CrudActionEnum,
 	IOrganization
@@ -19,7 +17,6 @@ import {
 	EmployeeStore,
 	ErrorHandlingService,
 	OrganizationsService,
-	RoleService,
 	Store
 } from '../../../@core/services';
 
@@ -35,17 +32,17 @@ export class EmployeeMutationComponent implements OnInit, AfterViewInit {
 
 	@ViewChild('stepper')
 	stepper: NbStepperComponent;
-	linear = true;
+
+	loading: boolean = false;
+	linear: boolean = true;
 	form: FormGroup;
-	role: IRole;
 	employees: IEmployeeCreateInput[] = [];
-	organization: IOrganization;
+	public organization: IOrganization;
 
 	constructor(
 		protected readonly dialogRef: NbDialogRef<EmployeeMutationComponent>,
 		protected readonly organizationsService: OrganizationsService,
 		protected readonly employeesService: EmployeesService,
-		private readonly roleService: RoleService,
 		protected readonly store: Store,
 		private readonly errorHandler: ErrorHandlingService,
 		private readonly _employeeStore: EmployeeStore
@@ -62,15 +59,8 @@ export class EmployeeMutationComponent implements OnInit, AfterViewInit {
 			.subscribe();
 	}
 
-	async ngAfterViewInit() {
-		const { tenantId } = this.store.user;
+	ngAfterViewInit(): void {
 		this.form = this.userBasicInfo.form;
-		this.role = await firstValueFrom(
-			this.roleService.getRoleByOptions({
-				name: RolesEnum.EMPLOYEE,
-				tenantId
-			})
-		);
 	}
 
 	closeDialog(employee: IEmployee[] = null) {
@@ -78,6 +68,12 @@ export class EmployeeMutationComponent implements OnInit, AfterViewInit {
 	}
 
 	addEmployee() {
+		if (!this.organization) {
+			return;
+		}
+		const { id: organizationId } = this.organization;
+		const { tenantId } = this.store.user;
+
 		this.form = this.userBasicInfo.form;
 		const {
 			firstName,
@@ -95,24 +91,23 @@ export class EmployeeMutationComponent implements OnInit, AfterViewInit {
 			startedWorkOn = null
 		} = this.form.getRawValue();
 		const user: IUser = {
-			firstName: firstName,
-			lastName: lastName,
+			firstName,
+			lastName,
 			username,
-			email: email,
-			imageUrl: imageUrl,
-			tenant: null,
-			role: this.role,
-			tags: tags
+			email,
+			imageUrl,
+			tenantId,
+			tags
 		};
 		const employee: IEmployeeCreateInput = {
 			user,
-			startedWorkOn: startedWorkOn,
-			password: password,
-			organization: this.organization,
+			startedWorkOn,
+			password,
+			organizationId,
 			offerDate,
 			acceptDate,
 			rejectDate,
-			tags: tags
+			tags
 		};
    		// Check form validity before to add an employe to the array of employees.
 		if (this.form.valid) this.employees.push(employee);
@@ -122,11 +117,17 @@ export class EmployeeMutationComponent implements OnInit, AfterViewInit {
 	}
 
 	async add() {
+		if (!this.organization) {
+			return;
+		}
 		this.addEmployee();
 		try {
+			this.loading = true;
 			const employees = await firstValueFrom(
 				this.employeesService.createBulk(this.employees)
-			);
+			).finally(() => {
+				this.loading = false;
+			});
 			this._employeeStore.employeeAction = {
 				action: CrudActionEnum.CREATED,
 				employees
