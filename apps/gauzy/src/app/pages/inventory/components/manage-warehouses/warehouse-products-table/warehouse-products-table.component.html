@@ -1,18 +1,34 @@
-<nb-card-body>
-	<div class="mb-3">
+<nb-card-body class="container-content">
+	<div class="mb-3 d-flex justify-content-end">
 		<button
 			nbButton
 			status="success"
-			class="mr-2"
+			size="small"
 			(click)="onAddProduct()"
 		>
+			<nb-icon icon="plus-outline"></nb-icon>
 			{{ 'INVENTORY_PAGE.ADD_PRODUCT' | translate }}
 		</button>
 	</div>
-	<ng2-smart-table
-		[settings]="settingsSmartTable"
-		[source]="smartTableSource"
-		style="cursor: pointer"
-		#warehouseProductsTable
-	></ng2-smart-table>
+	<div class="table-scroll-container">
+		<ng2-smart-table
+			[settings]="settingsSmartTable"
+			[source]="smartTableSource"
+			style="cursor: pointer"
+			#warehouseProductsTable
+		></ng2-smart-table>
+	</div>
+	<ng-container
+		*ngIf="pagination.totalItems > minItemPerPage"
+	>
+		<ga-pagination
+			(selectedOption)="onUpdateOption($event)"
+			(selectedPage)="onPageChange($event)"
+			[doEmit]="false"
+			[totalItems]="pagination?.totalItems"
+			[itemsPerPage]="pagination?.itemsPerPage"
+			[activePage]="pagination?.activePage"
+		></ga-pagination>
+	</ng-container>
+
 </nb-card-body>

@@ -1,0 +1,21 @@
+@import "gauzy/gauzy-overrides";
+
+:host {
+	@include input-appearance(2rem, var(--gauzy-sidebar-background-3));
+
+	.container-content {
+		display: flex;
+		flex-direction: column;
+		height: calc(100vh - 21.5rem);
+		overflow: unset;
+
+		.table-scroll-container {
+			flex-grow: 10;
+			max-height: unset;
+
+			::ng-deep .form-control {
+				border-radius: var(--border-radius);
+			}
+		}
+	}
+}
