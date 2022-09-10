@@ -13,6 +13,7 @@ import { AuthService } from '../auth/auth.service';
 import { EmailService, EmailModule } from '../email';
 import { UserOrganizationModule } from '../user-organization/user-organization.module';
 import { TenantModule } from '../tenant/tenant.module';
+import { RoleModule } from './../role/role.module';
 
 @Module({
 	imports: [
@@ -22,7 +23,8 @@ import { TenantModule } from '../tenant/tenant.module';
 		UserOrganizationModule,
 		CqrsModule,
 		TenantModule,
-		UserModule
+		UserModule,
+		RoleModule
 	],
 	controllers: [EmployeeController],
 	providers: [
