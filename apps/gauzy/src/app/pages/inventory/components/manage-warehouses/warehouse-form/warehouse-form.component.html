@@ -5,20 +5,20 @@
 				<h4>
 					<ngx-back-navigation></ngx-back-navigation>
 					{{
-						(!warehouse
+					(!warehouse
 							? 'INVENTORY_PAGE.CREATE_WAREHOUSE'
 							: 'INVENTORY_PAGE.EDIT_WAREHOUSE'
-						) | translate
+					) | translate
 					}}
 				</h4>
 			</div>
 		</div>
 	</nb-card-header>
 	<nb-card-body>
-		<nb-stepper #stepper linear="false" (click)="stepClick()">
+		<nb-stepper disableStepNavigation="true" #stepper linear="false" (click)="stepClick()">
 			<nb-step [label]="'INVENTORY_PAGE.MAIN' | translate">
-				<form [formGroup]="form">
-					<div class="row">
+				<form class="step-container" [formGroup]="form">
+					<div class="row step-form">
 						<div class="col-md-3 col-sm-12 image-container">
 							<ng-container
 								*ngTemplateOutlet="warehouseImage"
@@ -58,8 +58,8 @@
 											*ngIf="FormHelpers.isInvalidControl(form, 'name')"
 										>
 											{{
-												'INVENTORY_PAGE.THIS_FIELD_IS_REQUIRED'
-													| translate
+											'INVENTORY_PAGE.THIS_FIELD_IS_REQUIRED'
+												| translate
 											}}
 										</div>
 									</div>
@@ -111,8 +111,8 @@
 											*ngIf="FormHelpers.isInvalidControl(form, 'code')"
 										>
 											{{
-												'INVENTORY_PAGE.THIS_FIELD_IS_REQUIRED'
-													| translate
+											'INVENTORY_PAGE.THIS_FIELD_IS_REQUIRED'
+												| translate
 											}}
 										</div>
 									</div>
@@ -149,8 +149,8 @@
 											*ngIf="FormHelpers.isInvalidControl(form, 'email')"
 										>
 											{{
-												'INVENTORY_PAGE.EMAIL_WRONG_FORMAT'
-													| translate
+											'INVENTORY_PAGE.EMAIL_WRONG_FORMAT'
+												| translate
 											}}
 										</div>
 									</div>
@@ -193,61 +193,103 @@
 							</div>
 						</div>
 					</div>
+					<div class="row">
+						<div class="col-12 next-button-container">
+							<button status="basic" outline (click)="cancel()" nbButton
+									nbStepperNext>{{ 'BUTTONS.CANCEL' | translate }}</button>
+							<button class="green" outline nbButton
+									nbStepperNext>{{ 'BUTTONS.NEXT' | translate }}</button>
+						</div>
+					</div>
 				</form>
 			</nb-step>
 			<nb-step [label]="'INVENTORY_PAGE.LOCATION' | translate">
-				<div class="row h-100">
-					<div class="col-md-4 col-sm-5">
-						<ga-location-form
-							#locationFormDirective
-							[form]="locationForm"
-							[showAutocompleteSearch]="true"
-							(mapCoordinatesEmitter)="onCoordinatesChanges($event)"
-						></ga-location-form>
+				<div class="step-container">
+					<div class="row step-form">
+						<div class="col-md-4 col-sm-5">
+							<ga-location-form
+								#locationFormDirective
+								[form]="locationForm"
+								[showAutocompleteSearch]="true"
+								(mapCoordinatesEmitter)="onCoordinatesChanges($event)"
+							></ga-location-form>
+						</div>
+						<div class="col-md-8 col-sm-7">
+							<ga-leaflet-map
+								#leafletTemplate
+								(mapClicked)="onMapClicked($event)"
+							></ga-leaflet-map>
+						</div>
 					</div>
-					<div class="col-md-8 col-sm-7">
-						<ga-leaflet-map
-							#leafletTemplate
-							(mapClicked)="onMapClicked($event)"
-						></ga-leaflet-map>
+					<div class="row">
+						<div class="col-12 next-button-container">
+							<button
+								(click)="cancel()"
+								status="basic"
+								outline
+								nbButton
+							>
+								{{ 'BUTTONS.CANCEL' | translate }}
+							</button>
+							<button class="gray" outline nbButton
+									nbStepperPrevious>{{ 'BUTTONS.PREVIOUS' | translate }}</button>
+							<button class="green" outline nbButton *ngIf="isActiveInventoryTab()"
+									nbStepperNext>{{ 'BUTTONS.NEXT' | translate }}</button>
+							<button
+								[disabled]="form.invalid"
+								status="success"
+								nbButton
+								(click)="onSaveRequest()"
+								*ngIf="!isActiveInventoryTab()"
+							>
+								{{ 'BUTTONS.SAVE' | translate }}
+							</button>
+						</div>
 					</div>
 				</div>
+
 			</nb-step>
 			<nb-step
 				[label]="'INVENTORY_PAGE.INVENTORY' | translate"
 				[hidden]="!isActiveInventoryTab()"
 			>
 				<ng-container *ngIf="isActiveInventoryTab()">
-					<div class="row h-100">
-						<div class="col-md-12 col-sm-12">
-							<ga-warehouse-products-table
-								[warehouse]="warehouse"
-							></ga-warehouse-products-table>
+					<div class="step-container">
+						<div class="row step-form">
+							<div class="col-md-12 col-sm-12">
+								<ga-warehouse-products-table
+									[warehouse]="warehouse"
+								></ga-warehouse-products-table>
+							</div>
+						</div>
+						<div class="row">
+							<div class="col-12 next-button-container">
+								<button
+									(click)="cancel()"
+									status="basic"
+									outline
+									nbButton
+								>
+									{{ 'BUTTONS.CANCEL' | translate }}
+								</button>
+								<button class="gray" outline nbButton
+										nbStepperPrevious>{{ 'BUTTONS.PREVIOUS' | translate }}</button>
+								<button
+									[disabled]="form.invalid"
+									status="success"
+									nbButton
+									(click)="onSaveRequest()"
+								>
+									{{ 'BUTTONS.SAVE' | translate }}
+								</button>
+							</div>
 						</div>
 					</div>
+
 				</ng-container>
 			</nb-step>
 		</nb-stepper>
 	</nb-card-body>
-	<nb-card-footer class="text-left">
-		<button
-			(click)="cancel()"
-			status="basic"
-			class="mr-2"
-			outline
-			nbButton
-		>
-			{{ 'BUTTONS.CANCEL' | translate }}
-		</button>
-		<button
-			[disabled]="form.invalid"
-			status="success"
-			nbButton
-			(click)="onSaveRequest()"
-		>
-			{{ 'BUTTONS.SAVE' | translate }}
-		</button>
-	</nb-card-footer>
 </nb-card>
 
 <ng-template #warehouseImage>
@@ -273,9 +315,9 @@
 				/>
 			</defs>
 			<g fill="none" fill-rule="evenodd">
-				<circle cx="34" cy="34" r="34" fill="#0091FF" opacity=".3" />
-				<circle cx="34" cy="34" r="26" fill="#0091FF" opacity=".9" />
-				<use fill="#FFF" fill-rule="nonzero" xlink:href="#a" />
+				<circle cx="34" cy="34" r="34" fill="#0091FF" opacity=".3"/>
+				<circle cx="34" cy="34" r="26" fill="#0091FF" opacity=".9"/>
+				<use fill="#FFF" fill-rule="nonzero" xlink:href="#a"/>
 			</g>
 		</svg>
 		<div

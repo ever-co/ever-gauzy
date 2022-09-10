@@ -3,6 +3,18 @@
 
 :host {
 	nb-stepper ::ng-deep .step-content {
-		height: calc(100vh - 20.75rem);
+		height: calc(100vh - 17.25rem);
+	}
+	.next-button-container{
+		display: flex;
+		gap: 1rem;
+	}
+	.step-container{
+		display: flex;
+		flex-direction: column;
+		height: 100%;
+		.step-form{
+			flex-grow: 10;
+		}
 	}
 }
