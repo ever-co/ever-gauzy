@@ -41,16 +41,12 @@ export class EmployeesService {
 	}
 
 	getAll(
-		relations?: string[],
-		findInput?: IEmployeeFindInput
+		relations: string[] = [],
+		where?: IEmployeeFindInput
 	): Observable<{ items: IEmployee[]; total: number }> {
-		const data = JSON.stringify({ relations, findInput });
-		return this.http.get<{ items: IEmployee[]; total: number }>(
-			`${API_PREFIX}/employee`,
-			{
-				params: { data }
-			}
-		);
+		return this.http.get<{ items: IEmployee[]; total: number }>( `${API_PREFIX}/employee`, {
+			params: toParams({ where, relations })
+		});
 	}
 
 	getCount(
@@ -102,22 +98,6 @@ export class EmployeesService {
 		return firstValueFrom(
 			this.http.get<{ items: IEmployee[]; total: number }>( `${API_PREFIX}/employee/working/count`, {
 				params: { data}
-			})
-		);
-	}
-
-	getEmployeeByUserId(
-		userId: string,
-		relations?: string[],
-		findInput?: IEmployeeFindInput
-	): Promise<{
-		success: boolean;
-		result: IEmployee;
-	}> {
-		const data = JSON.stringify({ relations, findInput });
-		return firstValueFrom(
-			this.http.get<{ success: boolean; result: IEmployee; }>(`${API_PREFIX}/employee/user/${userId}`, {
-				params: { data }
 			})
 		);
 	}
