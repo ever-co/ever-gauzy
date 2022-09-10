@@ -1,7 +1,8 @@
 import { BrowserWindow } from 'electron';
 import * as url from 'url';
 import * as remoteMain from '@electron/remote/main';
-import { LocalStore } from '@gauzy/desktop-libs';
+const Store = require('electron-store');
+const store = new Store();
 export function createUpdaterWindow(updaterWindow, filePath) {
 	const mainWindowSettings: Electron.BrowserWindowConstructorOptions = windowSetting();
 	updaterWindow = new BrowserWindow(mainWindowSettings);
@@ -28,7 +29,7 @@ export function createUpdaterWindow(updaterWindow, filePath) {
 }
 
 const windowSetting = () => {
-	const filesPath = LocalStore.getStore('filePath');
+	const filesPath = store.get('filePath');
 	const mainWindowSettings: Electron.BrowserWindowConstructorOptions = {
 		frame: true,
 		resizable: false,
