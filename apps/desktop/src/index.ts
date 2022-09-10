@@ -149,7 +149,7 @@ try {
 } catch (error) {}
 
 LocalStore.setFilePath({
-	iconPath: path.join(__dirname, 'icons', 'icon.png');
+	iconPath: path.join(__dirname, 'icons', 'icon.png')
 })
 
  function startServer(value, restart = false) {
