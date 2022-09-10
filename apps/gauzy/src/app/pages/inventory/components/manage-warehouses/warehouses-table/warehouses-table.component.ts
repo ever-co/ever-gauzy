@@ -38,6 +38,7 @@ import {
 } from './../../../../../@shared/pagination/pagination-filter-base.component';
 import { ServerDataSource } from './../../../../../@core/utils/smart-table/server.data-source';
 import { InputFilterComponent } from './../../../../../@shared/table-filters';
+import {DescriptionComponent} from "../../inventory-table-components/description/description.component";
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -223,8 +224,9 @@ export class WarehousesTableComponent
 				},
 				description: {
 					title: this.getTranslation('INVENTORY_PAGE.DESCRIPTION'),
-					type: 'string',
-					filter: false
+					type: 'custom',
+					filter: false,
+					renderComponent: DescriptionComponent
 				},
 				active: {
 					title: this.getTranslation('INVENTORY_PAGE.ACTIVE'),

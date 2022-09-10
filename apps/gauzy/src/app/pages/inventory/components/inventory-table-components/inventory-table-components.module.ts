@@ -11,6 +11,7 @@ import { TranslateModule } from 'apps/gauzy/src/app/@shared/translate/translate.
 import { NameWithDescriptionComponent } from './name-with-description/name-with-description.component';
 import { SharedModule } from 'apps/gauzy/src/app/@shared/shared.module';
 import { NoImageComponent } from './no-image/no-image.component';
+import { DescriptionComponent } from './description/description.component';
  
 @NgModule({
     declarations: [
@@ -21,7 +22,8 @@ import { NoImageComponent } from './no-image/no-image.component';
         SelectedRowComponent,
         ContactRowComponent,
         NameWithDescriptionComponent,
-        NoImageComponent
+        NoImageComponent,
+        DescriptionComponent
     ],
     imports: [
         NbCheckboxModule,
