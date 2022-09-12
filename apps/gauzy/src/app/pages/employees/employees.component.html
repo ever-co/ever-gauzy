@@ -211,8 +211,8 @@
 	</div>
 </ng-template>
 <ng-template #gridLayout>
-	<div class="grid" *ngIf="!loading">
-		<ga-card-grid 
+	<div class="grid">
+		<ga-card-grid
 			[totalItems]="pagination?.totalItems"
 			[settings]="settingsSmartTable"
 			[source]="employees"
