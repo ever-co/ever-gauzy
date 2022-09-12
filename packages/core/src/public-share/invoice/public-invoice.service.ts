@@ -26,7 +26,6 @@ export class PublicInvoiceService {
 		relations: string[] = []
 	): Promise<any> {
 		try {
-			console.log({ relations });
 			if (!params.id || !params.token) {
 				throw new ForbiddenException();
 			}
@@ -35,6 +34,58 @@ export class PublicInvoiceService {
 				throw new ForbiddenException();
 			}
 			return await this.repository.findOneOrFail({
+				select: {
+					tenant: {
+						name: true,
+						logo: true
+					},
+					organization: {
+						name: true,
+						officialName: true,
+						brandColor: true
+					},
+					fromOrganization: {
+						name: true,
+						officialName: true,
+						brandColor: true
+					},
+					invoiceItems: {
+						id: true,
+						description: true,
+						quantity: true,
+						price: true,
+						totalValue: true,
+						applyDiscount: true,
+						employeeId: true,
+						employee: {
+							user: {
+								firstName: true,
+								lastName: true,
+							}
+						},
+						projectId: true,
+						project: {
+							imageUrl: true,
+							name: true,
+							description: true
+						},
+						productId: true,
+						expenseId: true,
+						expense: {
+							purpose: true
+						},
+						taskId: true,
+						task: {
+							title: true,
+							description: true,
+						}
+					},
+					toContact: {
+						contactType: true,
+						imageUrl: true,
+						name: true,
+					}
+				},
 				where: {
 					id,
 					organizationId,

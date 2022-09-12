@@ -1,36 +1,35 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { IInvoice } from '@gauzy/contracts';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
-import { InvoicesService } from '../../@core/services/invoices.service';
+import { InvoicesService } from '../../@core/services';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-invoice-estimate',
 	templateUrl: './invoice-estimate.component.html',
 	styleUrls: ['./invoice-estimate.component.scss']
 })
-export class InvoiceEstimateComponent
-	extends TranslationBaseComponent
+export class InvoiceEstimateComponent extends TranslationBaseComponent
 	implements OnInit {
-	private _ngDestroy$ = new Subject<void>();
+
 	invoiceId: string;
 	token: string;
 	invoice: IInvoice;
 
 	constructor(
-		private route: ActivatedRoute,
-		private invoicesService: InvoicesService,
-		readonly translateService: TranslateService
+		private readonly route: ActivatedRoute,
+		private readonly invoicesService: InvoicesService,
+		public readonly translateService: TranslateService
 	) {
 		super(translateService);
 	}
 
 	ngOnInit() {
 		this.route.params
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe(async (params) => {
 				this.invoiceId = params.id;
 				this.token = params.token;
@@ -39,23 +38,24 @@ export class InvoiceEstimateComponent
 	}
 
 	async getInvoiceEstimate() {
-		const invoice = await this.invoicesService.getWithoutAuth(
-			this.invoiceId,
-			this.token,
-			[
-				'invoiceItems',
-				'invoiceItems.employee',
-				'invoiceItems.employee.user',
-				'invoiceItems.project',
-				'invoiceItems.product',
-				'invoiceItems.invoice',
-				'invoiceItems.expense',
-				'invoiceItems.task',
-				'fromOrganization',
-				'toContact'
-			]
-		);
-
-		this.invoice = invoice;
+		try {
+			this.invoice = await this.invoicesService.getPublicInvoice(
+				this.invoiceId,
+				this.token,
+				[
+					'invoiceItems',
+					'invoiceItems.employee',
+					'invoiceItems.employee.user',
+					'invoiceItems.project',
+					'invoiceItems.product',
+					'invoiceItems.expense',
+					'invoiceItems.task',
+					'fromOrganization',
+					'toContact'
+				]
+			)
+		} catch (error) {
+			console.error('Error while getting public invoice', error);
+		}
 	}
 }

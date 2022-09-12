@@ -51,12 +51,10 @@ export class InvoicesService {
 		);
 	}
 
-	getWithoutAuth(id: string, token: string, relations?: string[]) {
-		const data = JSON.stringify({ relations });
+	getPublicInvoice(id: string, token: string, relations: string[] = []) {
 		return firstValueFrom(
-			this.http
-			.get<IInvoice>(`${API_PREFIX}/invoices/public/${id}/${token}`, {
-				params: { data }
+			this.http.get<IInvoice>(`${API_PREFIX}/public/invoice/${id}/${token}`, {
+				params: toParams({ relations })
 			})
 		);
 	}
