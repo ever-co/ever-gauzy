@@ -93,9 +93,14 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 	async generateLink(invoiceId: string): Promise<IInvoice> {
 		try {
 			const invoice = await this.findOneByIdString(invoiceId);
+			const payload = {
+				id: invoice.id,
+				organizationId: invoice.organizationId,
+				tenantId: invoice.tenantId
+			}
 			return await this.create({
 				id: invoiceId,
-				token: sign({ id: invoice.id, invoiceNumber: invoice.invoiceNumber }, environment.JWT_SECRET, {})
+				token: sign(payload, environment.JWT_SECRET, {})
 			});
 		} catch (error) {
 			throw new BadRequestException(error);

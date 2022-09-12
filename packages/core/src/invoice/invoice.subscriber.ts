@@ -19,11 +19,13 @@ export class InvoiceSubscriber implements EntitySubscriberInterface<Invoice> {
     afterInsert(event: InsertEvent<Invoice>): void | Promise<any> {
         if (event.entity) {
             const { entity } = event;
+            const payload = {
+				id: entity.id,
+				organizationId: entity.organizationId,
+				tenantId: entity.tenantId
+			}
             event.manager.update(Invoice, entity.id, {
-                token: this.createToken({
-                    id: entity.id,
-                    invoiceNumber: entity.invoiceNumber
-                })
+                token: this.createToken(payload)
             });
         }
     }
