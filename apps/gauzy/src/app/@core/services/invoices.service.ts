@@ -106,14 +106,9 @@ export class InvoicesService {
 		);
 	}
 
-	generateLink(id: string, isEstimate: boolean): Promise<any> {
+	generateLink(id: string): Promise<IInvoice> {
 		return firstValueFrom(
-			this.http
-			.put<any>(`${API_PREFIX}/invoices/generate/${id}`, {
-				params: {
-					isEstimate
-				}
-			})
+			this.http.put<IInvoice>(`${API_PREFIX}/invoices/generate/${id}`, {})
 		);
 	}
 
