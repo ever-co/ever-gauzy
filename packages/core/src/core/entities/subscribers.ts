@@ -1,10 +1,11 @@
-import { 
+import {
 	ActivitySubscriber,
 	CandidateSubscriber,
 	EmailTemplateSubscriber,
 	EmployeeSubscriber,
 	FeatureSubscriber,
 	ImportHistorySubscriber,
+	InvoiceSubscriber,
 	OrganizationContactSubscriber,
 	OrganizationProjectSubscriber,
 	OrganizationSubscriber,
@@ -26,6 +27,7 @@ export const coreSubscribers = [
 	EmployeeSubscriber,
 	FeatureSubscriber,
 	ImportHistorySubscriber,
+	InvoiceSubscriber,
 	OrganizationContactSubscriber,
 	OrganizationProjectSubscriber,
 	OrganizationSubscriber,
