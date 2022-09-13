@@ -20,7 +20,7 @@ export async function generateInvoicePaymentPdfDefinition(
 			`${payment.paymentDate.toString().slice(0, 10)}`,
 			`${payment.amount}`,
 			`${payment.recordedBy.name}`,
-			`${payment.note}`,
+			`${payment.note ? payment.note : '-' }`,
 			`${
 				payment.overdue ? translatedText.overdue : translatedText.onTime
 			}`
@@ -38,31 +38,23 @@ export async function generateInvoicePaymentPdfDefinition(
 	];
 
 	const docDefinition = {
+		watermark: {
+			text: `${invoice.paid ? 'PAID' : ''}`,
+			color: '#B7D7E8',
+			opacity: 0.2,
+			bold: true,
+      		fontSize: 108,
+			italics: false
+		},
 		content: [
-			{
-				width: '*',
-				text: `${translatedText.paymentsForInvoice} ${invoice.invoiceNumber}`,
-				fontSize: 20
-			},
-			' ',
-			' ',
-			{
-				width: '*',
-				text: `${
-					translatedText.dueDate
-				}: ${invoice.dueDate.toString().slice(0, 10)}`
-			},
-			' ',
-			' ',
 			{
 				columns: [
 					{
-						width: '50%',
-						text: `${translatedText.totalValue}: ${invoice.totalValue} ${invoice.currency}`
-					},
-					{
-						width: '50%',
-						text: `${translatedText.totalPaid}: ${totalPaid} ${invoice.currency}`
+						fontSize: 16,
+						bold: true,
+						width: '*',
+						alignment: 'left',
+						text: `${translatedText.paymentsForInvoice} ${invoice.invoiceNumber}`,
 					}
 				]
 			},
@@ -72,12 +64,66 @@ export async function generateInvoicePaymentPdfDefinition(
 				columns: [
 					{
 						width: '50%',
-						text: `${translatedText.receivedFrom}: ${organizationContact.name}`
+						text: [
+							{
+								bold: true,
+								text: `${translatedText.receivedFrom}:\n`
+							},
+							`${organizationContact.name}`
+						]
 					},
+				]
+			},
+			' ',
+			{
+				columns: [
 					{
-						width: '50%',
-						text: `${translatedText.receiver}: ${organization.name}`
+						alignment: 'right',
+						text: [
+							{
+								bold: true,
+								text: `${translatedText.dueDate}: `
+							},
+							`${invoice.dueDate.toString().slice(0, 10)}`
+						]
 					}
+				]
+			},
+			{
+				columns: [
+					{
+						alignment: 'right',
+						text: [
+							{
+								bold: true,
+								text: `${translatedText.totalValue}: `
+							},
+							`${invoice.currency} ${invoice.totalValue}`
+						]
+					}
+				]
+			},
+			{
+				columns: [
+					{
+						alignment: 'right',
+						text: [
+							{
+								bold: true,
+								text: `${translatedText.totalPaid}: `
+							},
+							` ${invoice.currency} ${totalPaid}`
+						]
+					}
+				]
+			},
+			{
+				text: [
+					{
+						bold: true,
+						text: `${translatedText.receiver}:\n`
+					},
+					`${organization.name}`
 				]
 			},
 			' ',
@@ -86,6 +132,13 @@ export async function generateInvoicePaymentPdfDefinition(
 				table: {
 					widths: widths,
 					body: [tableHeader, ...body]
+				},
+				layout: {
+					fillColor: function (rowIndex, node, columnIndex) {
+						return rowIndex % 2 === 0 ? '#E6E6E6' : null;
+					},
+					defaultBorder: false,
+					border: [false, false, false, false]
 				}
 			}
 		]
