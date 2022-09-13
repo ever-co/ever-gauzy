@@ -32,11 +32,9 @@
 						</div>
 						<div class="col-6 pr-0 pl-0">
 							{{
-								invoice
-									? invoice.currency +
-									  ' ' +
-									  invoice.totalValue
-									: ''
+								invoice?.totalValue || 0
+									| currency: invoice?.currency
+									| position: organization?.currencyPosition
 							}}
 						</div>
 					</div>
@@ -49,9 +47,9 @@
 						</div>
 						<div class="col-6 pr-0 pl-0">
 							{{
-								invoice
-									? invoice.currency + ' ' + leftToPay
-									: ''
+								leftToPay || 0
+									| currency: invoice?.currency
+									| position: organization?.currencyPosition
 							}}
 						</div>
 					</div>
@@ -59,8 +57,11 @@
 			</div>
 			<div class="total-paid-label">
 				{{ 'INVOICES_PAGE.PAYMENTS.TOTAL_PAID' | translate }}:
-				{{ invoice ? invoice.currency : '' }}
-				{{ totalPaid ? totalPaid : 0 }}
+				{{
+					totalPaid || 0
+						| currency: invoice?.currency
+						| position: organization?.currencyPosition
+				}}
 				<span>
 					<div class="progress-bar-container">
 						<div class="progress-bar">
