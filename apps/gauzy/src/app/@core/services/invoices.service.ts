@@ -51,12 +51,10 @@ export class InvoicesService {
 		);
 	}
 
-	getWithoutAuth(id: string, token: string, relations?: string[]) {
-		const data = JSON.stringify({ relations });
+	getPublicInvoice(id: string, token: string, relations: string[] = []) {
 		return firstValueFrom(
-			this.http
-			.get<IInvoice>(`${API_PREFIX}/invoices/public/${id}/${token}`, {
-				params: { data }
+			this.http.get<IInvoice>(`${API_PREFIX}/public/invoice/${id}/${token}`, {
+				params: toParams({ relations })
 			})
 		);
 	}
@@ -106,14 +104,9 @@ export class InvoicesService {
 		);
 	}
 
-	generateLink(id: string, isEstimate: boolean): Promise<any> {
+	generateLink(id: string): Promise<IInvoice> {
 		return firstValueFrom(
-			this.http
-			.put<any>(`${API_PREFIX}/invoices/generate/${id}`, {
-				params: {
-					isEstimate
-				}
-			})
+			this.http.put<IInvoice>(`${API_PREFIX}/invoices/generate/${id}`, {})
 		);
 	}
 

@@ -14,7 +14,8 @@ import {
 	Delete,
 	Res,
 	UsePipes,
-	ValidationPipe
+	ValidationPipe,
+	BadRequestException
 } from '@nestjs/common';
 import { DeleteResult } from 'typeorm';
 import { Response } from 'express';
@@ -59,16 +60,28 @@ export class InvoiceController extends CrudController<Invoice> {
 		super(invoiceService);
 	}
 
+	/**
+	 * GET invoices by pagination params
+	 *
+	 * @param options
+	 * @returns
+	 */
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.INVOICES_VIEW)
 	@Get('pagination')
 	@UsePipes(new ValidationPipe({ transform: true }))
 	async pagination(
-		@Query() filter: PaginationParams<IInvoice>
+		@Query() options: PaginationParams<IInvoice>
 	): Promise<IPagination<IInvoice>> {
-		return this.invoiceService.pagination(filter);
+		return await this.invoiceService.pagination(options);
 	}
 
+	/**
+	 * GET all invoices
+	 *
+	 * @param data
+	 * @returns
+	 */
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.INVOICES_VIEW)
 	@Get()
@@ -82,13 +95,29 @@ export class InvoiceController extends CrudController<Invoice> {
 		});
 	}
 
+	/**
+	 * GET highest invoice number
+	 *
+	 * @returns
+	 */
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.INVOICES_VIEW)
 	@Get('highest')
-	async findHighestInvoiceNumber(): Promise<IPagination<IInvoice>> {
-		return this.invoiceService.getHighestInvoiceNumber();
+	async findHighestInvoiceNumber(): Promise<IInvoice> {
+		try {
+			return await this.invoiceService.getHighestInvoiceNumber();
+		} catch (error) {
+			throw new BadRequestException(error);
+		}
 	}
 
+	/**
+	 * GET invoice by ID
+	 *
+	 * @param id
+	 * @param data
+	 * @returns
+	 */
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.INVOICES_VIEW)
 	@Get(':id')
@@ -103,30 +132,6 @@ export class InvoiceController extends CrudController<Invoice> {
 		});
 	}
 
-	@ApiOperation({ summary: 'Find invoice by id ' })
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Found one record',
-		type: Invoice
-	})
-	@ApiResponse({
-		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
-	})
-	@Get('public/:id/:token')
-	@Public()
-	async findWithoutGuard(
-		@Param('id', UUIDValidationPipe) id: string,
-		@Param('token') token: string,
-		@Query('data', ParseJsonPipe) data: any
-	): Promise<IInvoice> {
-		const { relations = [] } = data;
-		return this.invoiceService.findOneByIdString(id, {
-			where: { token: token },
-			relations
-		});
-	}
-
 	@ApiOperation({ summary: 'Create new record' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
@@ -137,7 +142,7 @@ export class InvoiceController extends CrudController<Invoice> {
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
-	@HttpCode(HttpStatus.ACCEPTED)
+	@HttpCode(HttpStatus.CREATED)
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.INVOICES_EDIT)
 	@Post()
@@ -168,7 +173,7 @@ export class InvoiceController extends CrudController<Invoice> {
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.INVOICES_EDIT)
 	@Put(':id')
-	@UsePipes( new ValidationPipe({ transform : true }))
+	@UsePipes(new ValidationPipe({ transform : true }))
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: UpdateInvoiceDTO
@@ -277,14 +282,19 @@ export class InvoiceController extends CrudController<Invoice> {
 		);
 	}
 
+	/**
+	 * Generate invoice/estimate public link
+	 *
+	 * @param uuid
+	 * @returns
+	 */
 	@HttpCode(HttpStatus.ACCEPTED)
-	@Put('generate/:id')
+	@Put('generate/:uuid')
 	async generateLink(
-		@Param('id', UUIDValidationPipe) id: string,
-		@Req() request
+		@Param('uuid', UUIDValidationPipe) uuid: string
 	): Promise<any> {
-		return this.commandBus.execute(
-			new InvoiceGenerateLinkCommand(id, request.body.params)
+		return await this.commandBus.execute(
+			new InvoiceGenerateLinkCommand(uuid)
 		);
 	}
 
@@ -305,6 +315,14 @@ export class InvoiceController extends CrudController<Invoice> {
 		return this.commandBus.execute(new InvoiceDeleteCommand(id));
 	}
 
+	/**
+	 * Download invoice pdf
+	 *
+	 * @param uuid
+	 * @param locale
+	 * @param res
+	 * @returns
+	 */
 	@ApiOperation({ summary: 'Download Invoice' })
 	@ApiResponse({
 		status: HttpStatus.NO_CONTENT,
@@ -335,6 +353,14 @@ export class InvoiceController extends CrudController<Invoice> {
 		stream.pipe(res);
 	}
 
+	/**
+	 * Download invoice payment pdf
+	 *
+	 * @param uuid
+	 * @param locale
+	 * @param res
+	 * @returns
+	 */
 	@ApiOperation({ summary: 'Download Invoice' })
 	@ApiResponse({
 		status: HttpStatus.NO_CONTENT,
@@ -357,7 +383,6 @@ export class InvoiceController extends CrudController<Invoice> {
 		if (!buffer) {
 			return;
 		}
-
 		const stream = this.invoiceService.getReadableStream(buffer);
 		res.set({
 			'Content-Type': 'application/pdf',

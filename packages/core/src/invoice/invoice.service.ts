@@ -1,12 +1,12 @@
-import { TenantAwareCrudService } from './../core/crud';
+import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { Invoice } from './invoice.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Between, In, Repository } from 'typeorm';
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { EmailService } from '../email';
 import { IInvoice, IOrganization, LanguagesEnum } from '@gauzy/contracts';
 import { sign } from 'jsonwebtoken';
-import { ConfigService, IEnvironment } from '@gauzy/config';
+import { ConfigService, environment, IEnvironment } from '@gauzy/config';
 import { I18nService } from 'nestjs-i18n';
 import * as moment from 'moment';
 import { EstimateEmailService } from '../estimate-email/estimate-email.service';
@@ -33,12 +33,18 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 		super(invoiceRepository);
 	}
 
-	async getHighestInvoiceNumber() {
-		const invoice = await this.invoiceRepository
-			.createQueryBuilder('invoice')
-			.select('MAX(invoice.invoiceNumber)', 'max')
-			.getRawOne();
-		return invoice;
+	/**
+	 * GET highest invoice number
+	 *
+	 * @returns
+	 */
+	 async getHighestInvoiceNumber(): Promise<IInvoice> {
+		try {
+			const query = this.invoiceRepository.createQueryBuilder(this.alias);
+			return await query.select('COALESCE(MAX(invoice.invoiceNumber), 0)', 'max').getRawOne();
+		} catch (error) {
+			throw new BadRequestException(error);
+		}
 	}
 
 	async sendEmail(
@@ -78,22 +84,27 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 		);
 	}
 
-	async generateLink(invoiceId: string, isEstimate: boolean) {
-		const token = this.createToken(invoiceId);
-		const clientBaseUrl = this.configService.get(
-			'clientBaseUrl'
-		) as keyof IEnvironment;
-		const result = `${clientBaseUrl}/#/share/${
-			isEstimate ? 'estimates' : 'invoices'
-		}/${invoiceId}/${token}`;
-
-		await this.invoiceRepository.update(invoiceId, {
-			token: token,
-			publicLink: result
-		});
-		return await this.invoiceRepository.findOneBy({
-			id: invoiceId
-		});
+	/**
+	 * Generate invoice public link
+	 *
+	 * @param invoiceId
+	 * @returns
+	 */
+	async generateLink(invoiceId: string): Promise<IInvoice> {
+		try {
+			const invoice = await this.findOneByIdString(invoiceId);
+			const payload = {
+				id: invoice.id,
+				organizationId: invoice.organizationId,
+				tenantId: invoice.tenantId
+			}
+			return await this.create({
+				id: invoiceId,
+				token: sign(payload, environment.JWT_SECRET, {})
+			});
+		} catch (error) {
+			throw new BadRequestException(error);
+		}
 	}
 
 	createToken(email): string {
@@ -312,7 +323,13 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 		return stream;
 	}
 
-	public pagination(filter?: any) {
+	/**
+	 * GET invoices pagination by params
+	 *
+	 * @param filter
+	 * @returns
+	 */
+	public pagination(filter?: PaginationParams<any>) {
 		if ('where' in filter) {
 			const { where } = filter;
 			if (where.tags) {

@@ -26,6 +26,7 @@ import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ThemeModule } from '../../@theme/theme.module';
 import { NgSelectModule } from '@ng-select/ng-select';
+import { ClipboardModule } from 'ngx-clipboard';
 import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
 import { InvoiceAddComponent } from './invoice-add/invoice-add.component';
 import { InvoicesComponent } from './invoices.component';
@@ -93,6 +94,7 @@ import { ProjectSelectModule } from '../../@shared/project-select/project-select
 		TableComponentsModule,
 		TagsColorInputModule,
 		InvoicesRoutingModule,
+		ClipboardModule,
 		NbCardModule,
 		NbSpinnerModule,
 		NbIconModule,
