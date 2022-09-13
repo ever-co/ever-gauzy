@@ -132,30 +132,6 @@ export class InvoiceController extends CrudController<Invoice> {
 		});
 	}
 
-	@ApiOperation({ summary: 'Find invoice by id ' })
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Found one record',
-		type: Invoice
-	})
-	@ApiResponse({
-		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
-	})
-	@Get('public/:id/:token')
-	@Public()
-	async findWithoutGuard(
-		@Param('id', UUIDValidationPipe) id: string,
-		@Param('token') token: string,
-		@Query('data', ParseJsonPipe) data: any
-	): Promise<IInvoice> {
-		const { relations = [] } = data;
-		return this.invoiceService.findOneByIdString(id, {
-			where: { token: token },
-			relations
-		});
-	}
-
 	@ApiOperation({ summary: 'Create new record' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
