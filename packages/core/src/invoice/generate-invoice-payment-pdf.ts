@@ -5,6 +5,8 @@ import {
 	IInvoice
 } from '@gauzy/contracts';
 
+import * as moment from 'moment';
+
 export async function generateInvoicePaymentPdfDefinition(
 	invoice: IInvoice,
 	payments: IPayment[],
@@ -17,7 +19,7 @@ export async function generateInvoicePaymentPdfDefinition(
 
 	for (const payment of payments) {
 		const currentPayment = [
-			`${payment.paymentDate.toString().slice(0, 10)}`,
+			`${moment(invoice.dueDate).format(organization.dateFormat)}`,
 			`${payment.amount}`,
 			`${payment.recordedBy.name}`,
 			`${payment.note ? payment.note : '-' }`,
@@ -28,7 +30,7 @@ export async function generateInvoicePaymentPdfDefinition(
 		body.push(currentPayment);
 	}
 
-	const widths = ['20%', '20%', '20%', '20%', '20%'];
+	const widths = ['30%', '10%', '20%', '20%', '20%'];
 	const tableHeader = [
 		translatedText.paymentDate,
 		translatedText.amount,
@@ -84,7 +86,7 @@ export async function generateInvoicePaymentPdfDefinition(
 								bold: true,
 								text: `${translatedText.dueDate}: `
 							},
-							`${invoice.dueDate.toString().slice(0, 10)}`
+							`${moment(invoice.dueDate).format(organization.dateFormat)}`
 						]
 					}
 				]
