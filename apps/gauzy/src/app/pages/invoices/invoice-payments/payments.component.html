@@ -16,19 +16,25 @@
 			<div class="date-and-value">
 				<div class="block w-100">
 					<div class="row">
-						<div class="col-6">
-							{{ 'INVOICES_PAGE.DUE_DATE' | translate }}:
+						<div class="col-6 first-column">
+							<div>
+								{{ 'INVOICES_PAGE.DUE_DATE' | translate }}
+							</div>
+							<div>:</div>
 						</div>
 						<div class="col-6 pr-0 pl-0">
 							{{ invoice ? (invoice.dueDate | dateFormat) : '' }}
 						</div>
 					</div>
 					<div class="row">
-						<div class="col-6">
-							{{
-								'INVOICES_PAGE.PAYMENTS.TOTAL_VALUE'
-									| translate
-							}}:
+						<div class="col-6 first-column">
+							<div>
+								{{
+									'INVOICES_PAGE.PAYMENTS.TOTAL_VALUE'
+										| translate
+								}}
+							</div>
+							<div>:</div>
 						</div>
 						<div class="col-6 pr-0 pl-0">
 							{{
@@ -39,11 +45,14 @@
 						</div>
 					</div>
 					<div class="row">
-						<div class="col-6">
-							{{
-								'INVOICES_PAGE.PAYMENTS.LEFT_TO_PAY'
-									| translate
-							}}:
+						<div class="col-6 first-column">
+							<div>
+								{{
+									'INVOICES_PAGE.PAYMENTS.LEFT_TO_PAY'
+										| translate
+								}}
+							</div>
+							<div>:</div>
 						</div>
 						<div class="col-6 pr-0 pl-0">
 							{{
@@ -51,6 +60,34 @@
 									| currency: invoice?.currency
 									| position: organization?.currencyPosition
 							}}
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-6 first-column">
+							<div>
+								{{
+									'INVOICES_PAGE.PAYMENTS.RECEIVED_FROM'
+										| translate
+								}}
+							</div>
+							<div>:</div>
+						</div>
+						<div class="col-6 pr-0 pl-0">
+							{{ invoice?.toContact?.name }}
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-6 first-column">
+							<div>
+								{{
+									'INVOICES_PAGE.PAYMENTS.RECEIVER'
+										| translate
+								}}
+							</div>
+							<div>:</div>
+						</div>
+						<div class="col-6 pr-0 pl-0">
+							{{ invoice?.fromOrganization?.name }}
 						</div>
 					</div>
 				</div>
