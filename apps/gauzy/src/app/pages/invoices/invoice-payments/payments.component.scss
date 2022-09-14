@@ -51,3 +51,8 @@
   background-color: var(--gauzy-card-2);
   border-radius: 0 0 8px 8px;
 }
+
+.first-column {
+  display: flex;
+  justify-content: space-between;
+}
