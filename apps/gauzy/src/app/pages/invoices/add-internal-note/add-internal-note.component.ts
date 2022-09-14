@@ -13,9 +13,9 @@ import { InvoiceEmailMutationComponent } from '../invoice-email/invoice-email-mu
 	templateUrl: './add-internal-note.component.html',
 	styleUrls: ['./add-internal-note.component.scss']
 })
-export class AddInternalNoteComponent
-	extends TranslationBaseComponent
+export class AddInternalNoteComponent extends TranslationBaseComponent
 	implements OnInit {
+
 	invoice: IInvoice;
 	form: FormGroup;
 
