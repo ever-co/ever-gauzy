@@ -127,7 +127,15 @@ const routes: Routes = [
 	{
 		path: 'payments/:id',
 		component: InvoicePaymentsComponent,
-		data: INVOICES_VIEW_PERMISSION
+		data: {
+			...INVOICES_VIEW_PERMISSION,
+			selectors: {
+				organization: false,
+				date:false,
+				project: false,
+				employee: false
+			},
+		},
 	},
 	{
 		path: 'recurring',
