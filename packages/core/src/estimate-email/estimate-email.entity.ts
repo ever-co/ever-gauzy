@@ -1,37 +1,25 @@
 import { IEstimateEmail } from '@gauzy/contracts';
-import { ApiPropertyOptional } from '@nestjs/swagger';
-import {
-	IsBoolean,
-	IsDate,
-	IsEmail,
-	IsOptional,
-	IsString
-} from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Column, Entity } from 'typeorm';
 import { TenantOrganizationBaseEntity } from '../core/entities/internal';
 
 @Entity('estimate_email')
-export class EstimateEmail
-	extends TenantOrganizationBaseEntity
+export class EstimateEmail extends TenantOrganizationBaseEntity
 	implements IEstimateEmail {
-	@ApiPropertyOptional({ type: () => String })
-	@IsString()
+
+	@ApiProperty({ type: () => String })
 	@Column()
 	token?: string;
 
-	@ApiPropertyOptional({ type: () => String })
-	@IsEmail()
+	@ApiProperty({ type: () => String })
 	@Column()
 	email?: string;
 
-	@ApiPropertyOptional({ type: () => Date })
-	@IsDate()
+	@ApiProperty({ type: () => Date })
 	@Column()
 	expireDate?: Date;
 
 	@ApiPropertyOptional({ type: () => Boolean })
-	@IsBoolean()
-	@IsOptional()
 	@Column({ nullable: true })
 	convertAcceptedEstimates?: boolean;
 }

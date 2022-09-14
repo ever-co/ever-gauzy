@@ -1,3 +1,4 @@
+import { IInvoice } from '@gauzy/contracts';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { FindPublicInvoiceQuery } from '../find-public-invoice.query';
 import { PublicInvoiceService } from './../../public-invoice.service';
@@ -9,7 +10,7 @@ export class FindPublicInvoiceHandler implements IQueryHandler<FindPublicInvoice
         private readonly publicInvoiceService: PublicInvoiceService
     ) {}
 
-    async execute(query: FindPublicInvoiceQuery) {
+    async execute(query: FindPublicInvoiceQuery): Promise<IInvoice> {
         const { params, relations = [] } = query;
         return await this.publicInvoiceService.findOneByConditions(params, relations);
     }

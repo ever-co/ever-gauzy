@@ -1,12 +1,23 @@
-import { BadRequestException, Controller, Get, HttpStatus, Param, Query, UseInterceptors, ValidationPipe } from '@nestjs/common';
-import { QueryBus } from '@nestjs/cqrs';
+import {
+	UseInterceptors,
+	Controller,
+	Get,
+	Param,
+	Query,
+	ValidationPipe,
+	Put,
+	Body
+} from '@nestjs/common';
+import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { Public } from '@gauzy/common';
-import { FindOptionsWhere } from 'typeorm';
+import { FindOptionsWhere, UpdateResult } from 'typeorm';
+import { HttpStatus, IInvoice } from '@gauzy/contracts';
 import { Invoice } from './../../core/entities/internal';
 import { PublicTransformInterceptor } from './../public-transform.interceptor';
 import { FindPublicInvoiceQuery } from './queries';
-import { PublicInvoiceQueryDTO } from './dto';
-import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { PublicInvoiceUpdateCommand } from './commands';
+import { PublicEstimateUpdateDTO, PublicInvoiceQueryDTO } from './dto';
 
 @Public()
 @UseInterceptors(PublicTransformInterceptor)
@@ -14,14 +25,15 @@ import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 export class PublicInvoiceController {
 
 	constructor(
-		private readonly queryBus: QueryBus
+		private readonly queryBus: QueryBus,
+		private readonly commandBus: CommandBus
 	) {}
 
 	/**
 	 * GET invoice by token
 	 *
 	 * @param params
-	 * @param options
+	 * @param query
 	 * @returns
 	 */
 	@ApiOperation({ summary: 'Find Invoice by invoice token.' })
@@ -40,13 +52,35 @@ export class PublicInvoiceController {
 			transform: true,
 			whitelist: true
 		})) query: PublicInvoiceQueryDTO
-	) {
-		try {
-			return await this.queryBus.execute(
-				new FindPublicInvoiceQuery(params, query.relations)
-			);
-		} catch (error) {
-			throw new BadRequestException(error);
-		}
+	): Promise<IInvoice> {
+		return await this.queryBus.execute(
+			new FindPublicInvoiceQuery(params, query.relations)
+		);
+	}
+
+	/**
+	 * Update public estimate/invoice status
+	 *
+	 * @param params
+	 * @param entity
+	 * @returns
+	 */
+	@ApiOperation({ summary: 'Update Estimate by estimate token.' })
+	@ApiResponse({
+		status: HttpStatus.ACCEPTED,
+		description: 'Estimate updated successfully.'
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found.'
+	})
+	@Put(':id/:token')
+	async updateInvoiceByEstimateEmailToken(
+		@Param() params: IInvoice,
+		@Body(new ValidationPipe({ whitelist: true })) entity: PublicEstimateUpdateDTO
+	): Promise<IInvoice | UpdateResult> {
+		return await this.commandBus.execute(
+			new PublicInvoiceUpdateCommand(params, entity)
+		);
 	}
 }

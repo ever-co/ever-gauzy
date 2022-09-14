@@ -12,14 +12,14 @@ export abstract class OptionParams<T> {
 	/**
 	 * Order, in which entities should be ordered.
 	 */
-	@ApiPropertyOptional()
+	@ApiPropertyOptional({ type: Object, readOnly: true })
 	@IsOptional()
 	readonly order: FindOptionsOrder<T>;
 
 	/**
      * Simple condition that should be applied to match entities.
      */
-	@ApiProperty()
+	@ApiProperty({ type: Object, readOnly: true })
 	@IsNotEmpty()
 	@ValidateNested({ each: true })
 	@Type(() => TenantOrganizationBaseDTO)
@@ -30,7 +30,7 @@ export abstract class OptionParams<T> {
 	/**
      * Indicates what relations of entity should be loaded (simplified left join form).
      */
-	@ApiPropertyOptional()
+	@ApiPropertyOptional({ type: Object, readOnly: true })
 	@IsOptional()
 	readonly relations?: FindOptionsRelations<T>;
 }
