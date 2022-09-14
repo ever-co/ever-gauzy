@@ -12,7 +12,7 @@ import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { Public } from '@gauzy/common';
 import { FindOptionsWhere, UpdateResult } from 'typeorm';
-import { HttpStatus, IEstimateEmail, IInvoice } from '@gauzy/contracts';
+import { HttpStatus, IInvoice } from '@gauzy/contracts';
 import { Invoice } from './../../core/entities/internal';
 import { PublicTransformInterceptor } from './../public-transform.interceptor';
 import { FindPublicInvoiceQuery } from './queries';
@@ -76,7 +76,7 @@ export class PublicInvoiceController {
 	})
 	@Put(':id/:token')
 	async updateInvoiceByEstimateEmailToken(
-		@Param() params: IEstimateEmail,
+		@Param() params: IInvoice,
 		@Body(new ValidationPipe({ whitelist: true })) entity: PublicEstimateUpdateDTO
 	): Promise<IInvoice | UpdateResult> {
 		return await this.commandBus.execute(
