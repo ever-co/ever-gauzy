@@ -98,11 +98,7 @@ export class InvoiceController extends CrudController<Invoice> {
 	@Permissions(PermissionsEnum.INVOICES_VIEW)
 	@Get('highest')
 	async findHighestInvoiceNumber(): Promise<Invoice> {
-		try {
-			return await this.invoiceService.getHighestInvoiceNumber();
-		} catch (error) {
-			throw new BadRequestException(error);
-		}
+		return await this.invoiceService.getHighestInvoiceNumber();
 	}
 
 	/**
@@ -231,13 +227,9 @@ export class InvoiceController extends CrudController<Invoice> {
 		@Param('id', UUIDValidationPipe) id: IInvoice['id'],
 		@Body() entity: UpdateEstimateInvoiceDTO
 	){
-		try {
-			return await this.commandBus.execute(
-				new InvoiceUpdateCommand({ id, ...entity })
-			);
-		} catch (error) {
-			throw new BadRequestException(error);
-		}
+		return await this.commandBus.execute(
+			new InvoiceUpdateCommand({ id, ...entity })
+		);
 	}
 
 	/**
@@ -268,13 +260,9 @@ export class InvoiceController extends CrudController<Invoice> {
 		@Param('id', UUIDValidationPipe) id: IInvoice['id'],
 		@Body() entity: UpdateInvoiceActionDTO
 	){
-		try {
-			return await this.commandBus.execute(
-				new InvoiceUpdateCommand({ id, ...entity })
-			);
-		} catch (error) {
-			throw new BadRequestException(error);
-		}
+		return await this.commandBus.execute(
+			new InvoiceUpdateCommand({ id, ...entity })
+		);
 	}
 
 	/**
@@ -315,13 +303,9 @@ export class InvoiceController extends CrudController<Invoice> {
 	async generateLink(
 		@Param('uuid', UUIDValidationPipe) uuid: IInvoice['id']
 	): Promise<IInvoice> {
-		try {
-			return await this.commandBus.execute(
-				new InvoiceGenerateLinkCommand(uuid)
-			);
-		} catch (error) {
-			throw new BadRequestException(error);
-		}
+		return await this.commandBus.execute(
+			new InvoiceGenerateLinkCommand(uuid)
+		);
 	}
 
 	@ApiOperation({ summary: 'Delete record' })
@@ -338,13 +322,9 @@ export class InvoiceController extends CrudController<Invoice> {
 	async delete(
 		@Param('id', UUIDValidationPipe) id: IInvoice['id']
 	): Promise<DeleteResult> {
-		try {
-			return await this.commandBus.execute(
-				new InvoiceDeleteCommand(id)
-			);
-		} catch (error) {
-			throw new BadRequestException(error);
-		}
+		return await this.commandBus.execute(
+			new InvoiceDeleteCommand(id)
+		);
 	}
 
 	/**

@@ -2,7 +2,7 @@ import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/com
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindOptionsWhere, Repository, UpdateResult } from 'typeorm';
 import { verify } from 'jsonwebtoken';
-import { IEstimateEmail, IInvoice, IInvoiceUpdateInput } from '@gauzy/contracts';
+import { IInvoice, IInvoiceUpdateInput } from '@gauzy/contracts';
 import { environment } from '@gauzy/config';
 import { Invoice } from './../../core/entities/internal';
 
@@ -110,7 +110,7 @@ export class PublicInvoiceService {
 	 * @returns
 	 */
 	async updateInvoice(
-		params: IEstimateEmail,
+		params: IInvoice,
 		entity: IInvoiceUpdateInput
 	): Promise<IInvoice | UpdateResult> {
 		try {
