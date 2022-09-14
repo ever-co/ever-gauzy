@@ -1,29 +1,31 @@
-import { AfterViewInit, Component, Input, OnInit, ViewChild } from '@angular/core';
+import {AfterViewInit, Component, Input, OnInit, ViewChild} from '@angular/core';
 import {
 	IWarehouse,
 	IOrganization
 } from '@gauzy/contracts';
-import { distinctUntilChange } from '@gauzy/common-angular';
-import { TranslateService } from '@ngx-translate/core';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
-import { NbDialogService } from '@nebular/theme';
-import { filter, firstValueFrom, Subject } from 'rxjs';
-import { debounceTime, tap } from 'rxjs/operators';
-import { TranslationBaseComponent } from './../../../../../@shared/language-base/translation-base.component';
-import { InventoryStore, Store, ToastrService, WarehouseService } from './../../../../../@core/services';
-import { SelectProductComponent } from '../select-product-form/select-product-form.component';
-import { ImageRowComponent } from '../../inventory-table-components/image-row.component';
-import { ManageQuantityComponent } from '../manage-quantity/manage-quantity.component';
-import { ManageVariantsQuantityComponent } from '../manage-variants-quantity/manage-variants-quantity.component';
+import {distinctUntilChange} from '@gauzy/common-angular';
+import {TranslateService} from '@ngx-translate/core';
+import {UntilDestroy, untilDestroyed} from '@ngneat/until-destroy';
+import {LocalDataSource, Ng2SmartTableComponent} from 'ng2-smart-table';
+import {NbDialogService} from '@nebular/theme';
+import {filter, firstValueFrom, Subject} from 'rxjs';
+import {debounceTime, tap} from 'rxjs/operators';
+import {InventoryStore, Store, ToastrService, WarehouseService} from './../../../../../@core/services';
+import {SelectProductComponent} from '../select-product-form/select-product-form.component';
+import {ImageRowComponent} from '../../inventory-table-components/image-row.component';
+import {ManageQuantityComponent} from '../manage-quantity/manage-quantity.component';
+import {
+	IPaginationBase,
+	PaginationFilterBaseComponent
+} from "../../../../../@shared/pagination/pagination-filter-base.component";
 
-@UntilDestroy({ checkProperties: true })
+@UntilDestroy({checkProperties: true})
 @Component({
 	selector: 'ga-warehouse-products-table',
 	templateUrl: './warehouse-products-table.component.html',
 	styleUrls: ['./warehouse-products-table.component.scss']
 })
-export class WarehouseProductsTableComponent extends TranslationBaseComponent
+export class WarehouseProductsTableComponent extends PaginationFilterBaseComponent
 	implements AfterViewInit, OnInit {
 
 	loading: boolean = true;
@@ -34,6 +36,7 @@ export class WarehouseProductsTableComponent extends TranslationBaseComponent
 	products$: Subject<boolean> = new Subject();
 
 	warehouseProductsTable: Ng2SmartTableComponent;
+
 	@ViewChild('warehouseProductsTable') set content(content: Ng2SmartTableComponent) {
 		if (content) {
 			this.warehouseProductsTable = content;
@@ -42,6 +45,10 @@ export class WarehouseProductsTableComponent extends TranslationBaseComponent
 	}
 
 	@Input() warehouse: IWarehouse;
+	selectedWarehouse: any = {
+		isSelected: false,
+		data: null
+	}
 
 	constructor(
 		private readonly dialogService: NbDialogService,
@@ -68,6 +75,7 @@ export class WarehouseProductsTableComponent extends TranslationBaseComponent
 			.subscribe();
 		this.store.selectedOrganization$
 			.pipe(
+				debounceTime(100),
 				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
 				tap((organization: IOrganization) => this.organization = organization),
@@ -77,10 +85,18 @@ export class WarehouseProductsTableComponent extends TranslationBaseComponent
 			.subscribe();
 		this.inventoryStore.warehouseProductsCountUpdate$
 			.pipe(
+				debounceTime(100),
+				distinctUntilChange(),
 				tap(() => this.products$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
+		this.pagination$.pipe(
+			debounceTime(100),
+			distinctUntilChange(),
+			tap(() => this.products$.next(true)),
+			untilDestroyed(this)
+		).subscribe();
 	}
 
 	/*
@@ -105,7 +121,8 @@ export class WarehouseProductsTableComponent extends TranslationBaseComponent
 		}
 	}
 
- 	private _loadSmartTableSettings() {
+	private _loadSmartTableSettings() {
+		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
 			actions: false,
 			mode: 'external',
@@ -115,6 +132,7 @@ export class WarehouseProductsTableComponent extends TranslationBaseComponent
 				image: {
 					title: this.getTranslation('INVENTORY_PAGE.IMAGE'),
 					type: 'custom',
+					filter: false,
 					renderComponent: ImageRowComponent
 				},
 				name: {
@@ -125,12 +143,11 @@ export class WarehouseProductsTableComponent extends TranslationBaseComponent
 					title: this.getTranslation('INVENTORY_PAGE.QUANTITY'),
 					type: 'custom',
 					renderComponent: ManageQuantityComponent
-				},
-				variants: {
-					title: this.getTranslation('INVENTORY_PAGE.MANAGE_VARIANTS_QUANTITY'),
-					type: 'custom',
-					renderComponent: ManageVariantsQuantityComponent
 				}
+			},
+			pager: {
+				display: false,
+				perPage: pagination ? pagination.itemsPerPage : this.minItemPerPage
 			}
 		};
 	}
@@ -153,15 +170,21 @@ export class WarehouseProductsTableComponent extends TranslationBaseComponent
 			);
 			let mappedItems = items
 				? items.map((item) => {
-						return {
-							...item,
-							name: item.product.translations[0]['name'],
-							featuredImage: item.product.featuredImage,
-							quantity: item.quantity
-						};
+					return {
+						...item,
+						name: item.product.translations[0]['name'],
+						featuredImage: item.product.featuredImage,
+						quantity: item.quantity
+					};
 				})
-			: [];
+				: [];
+			const {activePage, itemsPerPage} = this.getPagination();
+			this.smartTableSource.setPaging(activePage, itemsPerPage);
 			this.smartTableSource.load(mappedItems);
+			this.setPagination({
+				...this.getPagination(),
+				totalItems: this.smartTableSource.count()
+			})
 		} catch (error) {
 
 		} finally {
@@ -173,21 +196,21 @@ export class WarehouseProductsTableComponent extends TranslationBaseComponent
 		if (!this.organization) {
 			return;
 		}
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.store.selectedOrganization;
+		const {tenantId} = this.store.user;
+		const {id: organizationId} = this.store.selectedOrganization;
 
 		const dialog = this.dialogService.open(SelectProductComponent, {});
 		const selectedProducts = await firstValueFrom(dialog.onClose);
 
 		let createWarehouseProductsInput = selectedProducts
 			? selectedProducts.map((pr) => {
-					return {
-						productId: pr.id,
-						variants: pr.variants.map((variant) => variant.id),
-						tenantId,
-						organizationId
-					};
-			  })
+				return {
+					productId: pr.id,
+					variants: pr.variants.map((variant) => variant.id),
+					tenantId,
+					organizationId
+				};
+			})
 			: [];
 
 		let result = await this.warehouseService.addWarehouseProducts(
@@ -200,5 +223,13 @@ export class WarehouseProductsTableComponent extends TranslationBaseComponent
 		}
 
 		this.loadItems();
+	}
+
+	public selectWarehouse(event: any) {
+		this.selectedWarehouse = event;
+	}
+
+	public get variants() {
+		return this.selectedWarehouse && this.selectedWarehouse.data ? this.selectedWarehouse.data.variants : [];
 	}
 }

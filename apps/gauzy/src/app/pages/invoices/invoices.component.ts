@@ -74,8 +74,7 @@ import { getAdjustDateRangeFutureAllowed } from '../../@theme/components/header/
 	templateUrl: './invoices.component.html',
 	styleUrls: ['invoices.component.scss']
 })
-export class InvoicesComponent
-	extends PaginationFilterBaseComponent
+export class InvoicesComponent extends PaginationFilterBaseComponent
 	implements AfterViewInit, OnInit, OnDestroy {
 
 	settingsSmartTable: object;
@@ -822,7 +821,7 @@ export class InvoicesComponent
 		}
 	}
 
-	async generatePublicLink(selectedItem) {
+	async generatePublicLink(selectedItem: IInvoice) {
 		if (selectedItem) {
 			this.selectInvoice({
 				isSelected: true,

@@ -8,7 +8,8 @@ export interface IEstimateEmail
 	convertAcceptedEstimates?: boolean;
 }
 
-export interface IEstimateEmailFindInput {
+export interface IEstimateEmailFindInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	token?: string;
 	email?: string;
 }

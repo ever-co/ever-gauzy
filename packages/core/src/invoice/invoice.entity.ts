@@ -45,7 +45,7 @@ import {
 @Entity('invoice')
 @Unique(['invoiceNumber'])
 export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
-	
+
 	@ApiProperty({ type: () => Date })
 	@IsDate()
 	@Column({ nullable: true })
@@ -201,12 +201,6 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 	@IsString()
 	@IsOptional()
 	@Column({ nullable: true })
-	publicLink?: string;
-
-	@ApiPropertyOptional({ type: () => String })
-	@IsString()
-	@IsOptional()
-	@Column({ nullable: true })
 	token?: string;
 
 	@ApiPropertyOptional({ type: () => Boolean })
@@ -216,7 +210,7 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 
 	/*
     |--------------------------------------------------------------------------
-    | @ManyToOne 
+    | @ManyToOne
     |--------------------------------------------------------------------------
     */
 	// From Organization
@@ -249,7 +243,7 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 
 	/*
     |--------------------------------------------------------------------------
-    | @OneToMany 
+    | @OneToMany
     |--------------------------------------------------------------------------
     */
 	// Invoice Estimate Items
@@ -268,7 +262,7 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 
 	// Invoice Estimate History
 	@ApiPropertyOptional({ type: () => InvoiceEstimateHistory, isArray: true })
-	@OneToMany(() => InvoiceEstimateHistory, (invoiceEstimateHistory) => invoiceEstimateHistory.invoice, { 
+	@OneToMany(() => InvoiceEstimateHistory, (invoiceEstimateHistory) => invoiceEstimateHistory.invoice, {
 		cascade: true
 	})
 	@JoinColumn()
@@ -276,7 +270,7 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 
 	/*
     |--------------------------------------------------------------------------
-    | @ManyToMany 
+    | @ManyToMany
     |--------------------------------------------------------------------------
     */
 	@ApiProperty({ type: () => Tag })

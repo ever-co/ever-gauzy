@@ -181,7 +181,7 @@ export function toUTC(data: string | Date | moment.Moment): moment.Moment {
 
 export function distinctUntilChange<T>() {
 	try {
-		return distinctUntilChanged<T>((a, b) => JSON.stringify(a) === JSON.stringify(b));	
+		return distinctUntilChanged<T>((a, b) => JSON.stringify(a) === JSON.stringify(b));
 	} catch (error) {
 		console.log({ error });
 	}
@@ -210,15 +210,15 @@ export function splitCamelCase(word: string): string {
 	split.forEach((text: string) => {
 		output.push(ucFirst(text, true));
 	});
-	return output.join(' ');	
+	return output.join(' ');
 }
 
 /**
  * Deep Merge
- * 
- * @param target 
- * @param sources 
- * @returns 
+ *
+ * @param target
+ * @param sources
+ * @returns
  */
 export function mergeDeep(target: any, ...sources: any) {
 	if (!sources.length) return target;
@@ -243,16 +243,16 @@ export function mergeDeep(target: any, ...sources: any) {
 
 /**
  * Delete Keys from nested object
- * 
- * @param data 
- * @param deleteKeys 
- * @returns 
+ *
+ * @param data
+ * @param deleteKeys
+ * @returns
  */
 export function cleanKeys(data, deleteKeys) {
 	// There is nothing to be done if `data` is not an object,
 	if (typeof data != "object") return;
 	if (!data) return; // null object
-	
+
 	for (const key in data) {
 		if (deleteKeys.includes(key)) {
 			delete data[key];
@@ -265,9 +265,9 @@ export function cleanKeys(data, deleteKeys) {
 }
 
 /**
- * 
- * @param row 
- * @returns partial employee state 
+ *
+ * @param row
+ * @returns partial employee state
  */
 
 export function employeeMapper(row: any) {
@@ -280,4 +280,49 @@ export function employeeMapper(row: any) {
 				? row.employee.user.imageUrl
 				: null
 	};
+}
+
+/**
+ * Adding Trailing Slash In URL
+ *
+ * "/#/pages/home"
+ * console.log(addTrailingSlashIfMissing('#/pages/home'));
+ *
+ * "/pages/home"
+ * console.log(addTrailingSlashIfMissing('pages/home'));
+ *
+ */
+ export function addTrailingSlash(str: string) {
+	if (!str) {
+		return;
+	}
+	const slashChar = str.startsWith('/') ? '': '/';
+    return slashChar + str;
+}
+
+/**
+ * Removing Trailing Slash In URL
+ *
+ * "example.com"
+ * console.log(stripTrailingSlash('example.com/'));
+ *
+ */
+export function removeTrailingSlash(str: string) {
+	if (!str) {
+		return;
+	}
+	return str.endsWith('/') ? str.replace(/\/+$/, '') : str;
+}
+
+/**
+ * Prepare external URL
+ *
+ * @param url
+ * @returns
+ */
+export function __prepareExternalUrlLocation (url: string) {
+	return [
+		removeTrailingSlash(location.origin),
+		addTrailingSlash(url)
+	].join('');
 }

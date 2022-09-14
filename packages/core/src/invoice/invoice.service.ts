@@ -1,12 +1,12 @@
-import { TenantAwareCrudService } from './../core/crud';
+import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { Invoice } from './invoice.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Between, In, Repository } from 'typeorm';
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { EmailService } from '../email';
 import { IInvoice, IOrganization, LanguagesEnum } from '@gauzy/contracts';
 import { sign } from 'jsonwebtoken';
-import { ConfigService, IEnvironment } from '@gauzy/config';
+import { ConfigService, environment } from '@gauzy/config';
 import { I18nService } from 'nestjs-i18n';
 import * as moment from 'moment';
 import { EstimateEmailService } from '../estimate-email/estimate-email.service';
@@ -33,12 +33,18 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 		super(invoiceRepository);
 	}
 
-	async getHighestInvoiceNumber() {
-		const invoice = await this.invoiceRepository
-			.createQueryBuilder('invoice')
-			.select('MAX(invoice.invoiceNumber)', 'max')
-			.getRawOne();
-		return invoice;
+	/**
+	 * GET highest invoice number
+	 *
+	 * @returns
+	 */
+	async getHighestInvoiceNumber(): Promise<IInvoice> {
+		try {
+			const query = this.invoiceRepository.createQueryBuilder(this.alias);
+			return await query.select('COALESCE(MAX(invoice.invoiceNumber), 0)', 'max').getRawOne();
+		} catch (error) {
+			throw new BadRequestException(error);
+		}
 	}
 
 	async sendEmail(
@@ -50,58 +56,60 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 		originUrl: string,
 		organizationId: string
 	) {
-		const token = this.createToken(email);
-		await this.estimateEmailService.createEstimateEmail(
-			invoiceId,
-			email,
-			token
-		);
-
-		//generate estimate/invoice pdf and attached in email
-		const buffer: Buffer = await this.generateInvoicePdf(
-			invoiceId,
-			languageCode
-		);
-		const base64 = buffer.toString('base64');
-
-		const organization: IOrganization = await this.organizationService.findOneByIdString(organizationId);
-		this.emailService.emailInvoice(
-			languageCode,
-			email,
-			base64,
-			invoiceNumber,
-			invoiceId,
-			isEstimate,
-			token,
-			originUrl,
-			organization
-		);
+		try {
+			//create estimate email record
+			const estimateEmail = await this.estimateEmailService.createEstimateEmail(
+				invoiceId,
+				email
+			);
+			const organization: IOrganization = await this.organizationService.findOneByIdString(organizationId);
+			try {
+				//generate estimate/invoice pdf and attached in email
+				const buffer: Buffer = await this.generateInvoicePdf(
+					invoiceId,
+					languageCode
+				);
+				const base64 = buffer.toString('base64');
+				this.emailService.emailInvoice(
+					languageCode,
+					email,
+					base64,
+					invoiceNumber,
+					invoiceId,
+					isEstimate,
+					estimateEmail.token,
+					originUrl,
+					organization
+				);
+			} catch (error) {
+				console.error('Error while sending estimate email');
+			}
+		} catch (error) {
+			console.error('Error while creating estimate email');
+		}
 	}
 
-	async generateLink(invoiceId: string, isEstimate: boolean) {
-		const token = this.createToken(invoiceId);
-		const clientBaseUrl = this.configService.get(
-			'clientBaseUrl'
-		) as keyof IEnvironment;
-		const result = `${clientBaseUrl}/#/share/${
-			isEstimate ? 'estimates' : 'invoices'
-		}/${invoiceId}/${token}`;
-
-		await this.invoiceRepository.update(invoiceId, {
-			token: token,
-			publicLink: result
-		});
-		return await this.invoiceRepository.findOneBy({
-			id: invoiceId
-		});
-	}
-
-	createToken(email): string {
-		const JWT_SECRET = this.configService.get(
-			'JWT_SECRET'
-		) as keyof IEnvironment;
-		const token: string = sign({ email }, JWT_SECRET, {});
-		return token;
+	/**
+	 * Generate invoice public link
+	 *
+	 * @param invoiceId
+	 * @returns
+	 */
+	async generateLink(invoiceId: string): Promise<IInvoice> {
+		try {
+			const invoice = await this.findOneByIdString(invoiceId);
+			const payload = {
+				id: invoice.id,
+				organizationId: invoice.organizationId,
+				tenantId: invoice.tenantId
+			}
+			return await this.create({
+				id: invoiceId,
+				token: sign(payload, environment.JWT_SECRET, {})
+			});
+		} catch (error) {
+			throw new BadRequestException(error);
+		}
 	}
 
 	async generateInvoicePdf(invoiceId: string, langulage: string) {
@@ -312,7 +320,13 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 		return stream;
 	}
 
-	public pagination(filter?: any) {
+	/**
+	 * GET invoices pagination by params
+	 *
+	 * @param filter
+	 * @returns
+	 */
+	public pagination(filter?: PaginationParams<any>) {
 		if ('where' in filter) {
 			const { where } = filter;
 			if (where.tags) {

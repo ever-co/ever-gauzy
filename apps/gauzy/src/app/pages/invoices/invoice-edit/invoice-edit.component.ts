@@ -497,7 +497,7 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 			}
 			const { tenantId } = this.store.user;
 			const { id: organizationId } = this.organization;
-			const invoice = await this.invoicesService.getAll([], {
+			const invoice = await this.invoicesService.getAll({
 				invoiceNumber: invoiceData.invoiceNumber,
 				organizationId,
 				tenantId
@@ -686,7 +686,7 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 			}
 			const { tenantId } = this.store.user;
 			const { id: organizationId } = this.organization;
-			const invoiceExists = await this.invoicesService.getAll([], {
+			const invoiceExists = await this.invoicesService.getAll({
 				invoiceNumber: invoiceData.invoiceNumber,
 				organizationId,
 				tenantId

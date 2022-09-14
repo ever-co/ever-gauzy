@@ -1,8 +1,8 @@
 <nb-card>
 	<nb-card-header>
-    <span class="cancel"
-			><i class="fas fa-times" (click)="cancel()"></i
-		></span>
+		<span class="cancel">
+			<i class="fas fa-times" (click)="cancel()"></i>
+		</span>
 		<h5 class="title">
 			{{ 'INVOICES_PAGE.PUBLIC_LINK.HEADER' | translate }}
 		</h5>
@@ -10,24 +10,37 @@
 	<nb-card-body>
 		<div class="mb-3">
 			{{
-				'INVOICES_PAGE.PUBLIC_LINK.ACCESS'
-					| translate
-						: { text: invoice.isEstimate ? 'estimate' : 'invoice' }
+				'INVOICES_PAGE.PUBLIC_LINK.ACCESS' | translate : {
+					text: invoice.isEstimate ? 'estimate' : 'invoice'
+				}
 			}}
 		</div>
 		<div>
-			<label for="inputDiscountValue" class="label">
+			<label for="publicLink" class="label">
 				{{ 'FORM.LABELS.PUBLIC_LINK' | translate }}
 			</label>
-			<input [ngModel]="invoice.publicLink" disabled nbInput fullWidth />
+			<input
+				id="publicLink"
+				[ngModel]="publicLink"
+				readonly
+				nbInput
+				fullWidth
+				#inputTarget
+			/>
 		</div>
 	</nb-card-body>
 	<nb-card-footer class="text-left">
-		<button status="basic" outline class="mr-3" nbButton (click)="cancel()">
+		<button
+			outline
+			nbButton
+			status="basic"
+			class="mr-3"
+			(click)="cancel()"
+		>
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
 		<button
-			(click)="copyToClipboard()"
+			[ngxClipboard]="inputTarget"
 			class="mr-3"
 			status="success"
 			nbButton

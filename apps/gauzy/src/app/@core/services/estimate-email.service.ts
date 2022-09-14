@@ -1,24 +1,25 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
 import { IEstimateEmailFindInput, IEstimateEmail } from '@gauzy/contracts';
-import { firstValueFrom } from 'rxjs';
+import { toParams } from '@gauzy/common-angular';
 import { API_PREFIX } from '../constants/app.constants';
 
-@Injectable()
+@Injectable({
+	providedIn: 'root'
+})
 export class EstimateEmailService {
-	constructor(private http: HttpClient) {}
+
+	constructor(
+		private readonly http: HttpClient
+	) {}
 
 	validate(
-		relations: string[],
-		findInput: IEstimateEmailFindInput
-	): Promise<IEstimateEmail> {
-		const data = JSON.stringify({ relations, findInput });
-
-		return firstValueFrom(
-			this.http
-			.get<IEstimateEmail>(`${API_PREFIX}/estimate-email/validate`, {
-				params: { data }
-			})
-		);
+		where: IEstimateEmailFindInput,
+		relations: string[] = []
+	): Observable<IEstimateEmail> {
+		return this.http.get<IEstimateEmail>(`${API_PREFIX}/estimate-email/validate`, {
+			params: toParams({ ...where, relations })
+		});
 	}
 }

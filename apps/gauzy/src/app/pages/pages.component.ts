@@ -42,10 +42,9 @@ interface GaMenuItem extends NbMenuItem {
 		</ngx-one-column-layout>
 	`
 })
-export class PagesComponent
-	extends TranslationBaseComponent
-	implements OnInit, OnDestroy
-{
+export class PagesComponent extends TranslationBaseComponent
+	implements OnInit, OnDestroy {
+
 	isEmployee: boolean;
 	organization: IOrganization;
 	user: IUser;
@@ -802,7 +801,7 @@ export class PagesComponent
 		this.store.user$
 			.pipe(
 				filter((user: IUser) => !!user),
-				tap(() => this.checkForEmployee()),
+				tap((user: IUser) => this.isEmployee = !!user.employeeId),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -988,15 +987,6 @@ export class PagesComponent
 				this.refreshMenuItem(childItem, withOrganizationShortcuts);
 			});
 		}
-	}
-
-	checkForEmployee() {
-		const { tenantId, id: userId } = this.store.user;
-		this.employeeService
-			.getEmployeeByUserId(userId, [], { tenantId })
-			.then(({ success }) => {
-				this.isEmployee = success;
-			});
 	}
 
 	private _applyTranslationOnSmartTable() {

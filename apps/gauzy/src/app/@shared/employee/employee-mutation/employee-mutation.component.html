@@ -1,4 +1,8 @@
-<nb-card>
+<nb-card
+	[nbSpinner]="loading"
+	nbSpinnerStatus="primary"
+	nbSpinnerSize="large"
+>
 	<nb-card-header class="d-flex flex-column">
 		<span class="cancel"
 			><i class="fas fa-times" (click)="closeDialog()"></i
@@ -26,8 +30,7 @@
 									removable
 									*ngFor="let employee of employees"
 									[text]="employee?.user?.email"
-								>
-								</nb-tag>
+								></nb-tag>
 							</nb-tag-list>
 						</div>
 					</div>
@@ -36,8 +39,7 @@
 					#userBasicInfo
 					[isShowRole]="false"
 					[isEmployee]="true"
-				>
-				</ga-user-basic-info-form>
+				></ga-user-basic-info-form>
 				<div class="text-left">
 					<button
 						class="mr-2"
