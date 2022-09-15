@@ -209,7 +209,7 @@ export class EditUserOrganizationsComponent
 		const user = items[0]['user'];
 		this.selectedUserName = (user.name || '');
 
-		const { items: organizations } = await this.organizationsService.getAll([], {
+		const { items: organizations } = await this.organizationsService.getAll({
 			tenantId
 		});
 

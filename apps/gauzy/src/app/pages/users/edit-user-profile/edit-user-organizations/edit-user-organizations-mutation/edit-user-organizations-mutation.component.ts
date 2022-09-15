@@ -68,7 +68,7 @@ export class EditUserOrganizationsMutationComponent
 
 		this.selectedUserId = items[0].userId;
 
-		const all_orgs = await this.organizationsService.getAll([], {
+		const all_orgs = await this.organizationsService.getAll({
 			tenantId
 		});
 

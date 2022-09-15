@@ -115,7 +115,7 @@ export class EditOrganizationOtherSettingsComponent extends NotesWithTagsCompone
 			.pipe(
 				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
-				switchMap((organization) => this.organizationService.getById(organization.id, null, [
+				switchMap((organization) => this.organizationService.getById(organization.id, [
 					'contact',
 					'tags',
 					'accountingTemplates'
