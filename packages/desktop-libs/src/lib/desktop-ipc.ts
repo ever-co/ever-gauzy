@@ -1,4 +1,4 @@
-import { ipcMain, screen } from 'electron';
+import { BrowserWindow, ipcMain, screen } from 'electron';
 import { TimerData } from './desktop-timer-activity';
 import TimerHandler from './desktop-timer';
 import moment from 'moment';
@@ -168,7 +168,7 @@ export function ipcTimer(
 	});
 
 	ipcMain.on('data_push_activity', async (event, arg) => {
-		
+
 		const collections = arg.windowEvent.map((item) => {
 			return {
 				eventId: item.id,
@@ -183,7 +183,7 @@ export function ipcTimer(
 		});
 		if (collections.length > 0) {
 			await timerHandler.createQueue(
-				'sqlite-queue', 
+				'sqlite-queue',
 				{
 					data: collections,
 					type: 'window-events'
@@ -232,7 +232,7 @@ export function ipcTimer(
 		console.log(
 			`Return To Timeslot Last Timeslot ID: ${arg.timeSlotId} and Timer ID: ${arg.timerId}`
 		);
-		timerHandler.createQueue('sqlite-queue', 
+		timerHandler.createQueue('sqlite-queue',
 		{
 			data: {
 				id: arg.timerId,
@@ -252,7 +252,7 @@ export function ipcTimer(
 		log.info(`Config: ${moment().format()}`, config);
 
     /* TODO: was removed, why? moved to func takeScreenshotActivities on desktop-timer
-		this fix notify popup screenshot on time  
+		this fix notify popup screenshot on time
     switch (
 			appSetting.SCREENSHOTS_ENGINE_METHOD ||
 			config.SCREENSHOTS_ENGINE_METHOD
@@ -387,6 +387,7 @@ export function ipcTimer(
 	})
 
 	ipcMain.on('expand', (event, arg) => {
+		const isLinux = process.platform === 'linux';
 		const display = screen.getPrimaryDisplay();
 		const { width, height } = display.workArea;
 		const maxHeight = height <= 768 ? height - 20 : 768;
@@ -394,29 +395,47 @@ export function ipcTimer(
 		const widthLarge = height < 768 ? 1024 - 50 : 1024;
 		if (arg) {
 			try {
-				timeTrackerWindow.setBounds({
-					width: widthLarge,
-					height: maxHeight,
-					x: (width - widthLarge) * (0.5),
-					y: (height - maxHeight) * (0.5)
-				}, true)
+				isLinux
+					? resizeLinux(timeTrackerWindow, arg)
+					: timeTrackerWindow.setBounds(
+							{
+								width: widthLarge,
+								height: maxHeight,
+								x: (width - widthLarge) * 0.5,
+								y: (height - maxHeight) * 0.5
+							},
+							true
+					  );
 			} catch (error) {
 				console.log('error on change window width', error);
 			}
 		} else {
 			try {
-				timeTrackerWindow.setBounds({
-					width: maxWidth,
-					height: maxHeight,
-					x: (width - maxWidth) * (0.5),
-					y: (height - maxHeight) * (0.5)
-				}, true)
+				isLinux
+					? resizeLinux(timeTrackerWindow, arg)
+					: timeTrackerWindow.setBounds(
+							{
+								width: maxWidth,
+								height: maxHeight,
+								x: (width - maxWidth) * 0.5,
+								y: (height - maxHeight) * 0.5
+							},
+							true
+					  );
 			} catch (error) {
 				console.log('error on change window width', error);
 			}
 		}
 		event.sender.send('expand', arg);
-	})
+	});
+
+	function resizeLinux(window: BrowserWindow, isExpanded: boolean): void {
+		const width = isExpanded ? 1024: 360;
+		const height = 748;
+		window.setMinimumSize(width, height);
+		window.setSize(width, height, true);
+		window.setResizable(false);
+	}
 
 	ipcMain.on('timer_stopped', (event, arg) => {
 		timeTrackerWindow.webContents.send('timer_already_stop');
