@@ -5,7 +5,8 @@ import {
 	NbButtonModule,
 	NbIconModule,
 	NbStepperModule,
-	NbTagModule
+	NbTagModule,
+	NbSpinnerModule
 } from '@nebular/theme';
 import { EmployeeMutationComponent } from './employee-mutation.component';
 import { UserFormsModule } from '../../user/forms/user-forms.module';
@@ -22,6 +23,7 @@ import { TranslateModule } from '../../translate/translate.module';
 		NbIconModule,
 		NbStepperModule,
 		NbTagModule,
+		NbSpinnerModule,
 		UserFormsModule,
 		TranslateModule
 	],

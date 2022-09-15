@@ -12,6 +12,7 @@ import { CommandHandlers } from './commands';
 import { PdfmakerService } from './pdfmaker.service';
 import { OrganizationModule } from './../organization/organization.module';
 import { UserModule } from './../user/user.module';
+import * as moment from 'moment';
 
 @Module({
 	imports: [
@@ -22,14 +23,18 @@ import { UserModule } from './../user/user.module';
 		TenantModule,
 		UserModule,
 		OrganizationModule,
-		CqrsModule
+		CqrsModule,
 	],
 	controllers: [InvoiceController],
 	providers: [
 		InvoiceService,
 		PdfmakerService,
 		EmailService,
-		...CommandHandlers
+		...CommandHandlers,
+		{
+			provide: 'MomentWrapper',
+			useValue: moment
+		},
 	],
 	exports: [
 		InvoiceService,

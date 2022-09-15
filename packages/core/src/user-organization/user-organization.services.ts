@@ -3,7 +3,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { IUserOrganization, RolesEnum } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
-import { Organization, User, UserOrganization } from './../core/entities/internal';
+import { Organization, User } from './../core/entities/internal';
+import { UserOrganization } from './user-organization.entity';
 
 @Injectable()
 export class UserOrganizationService extends TenantAwareCrudService<UserOrganization> {

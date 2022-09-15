@@ -1,32 +1,41 @@
 <nb-card>
-	<nb-card-header class="d-flex">
-		<h5>
+	<nb-card-header class="d-flex flex-column">
+		<span class="cancel"><i class="fas fa-times" (click)="dialogRef.close()"></i></span>
+		<h5 class="title">
 			{{ 'INVENTORY_PAGE.ADD_PRODUCTS' | translate }}
 		</h5>
-		<nb-icon
-			class="ml-auto mt-1 close"
-			icon="close-outline"
-			(click)="dialogRef.close()"
-		></nb-icon>
 	</nb-card-header>
-	<nb-card-body>
-		<ng2-smart-table
-			class="tags-table"
-			[settings]="settingsSmartTable"
-			[source]="smartTableSource"
-			style="cursor: pointer"
-			#productsTable
-			(userRowSelect)="onUserRowSelect($event)"
-		></ng2-smart-table>
+	<nb-card-body class="content">
+		<div class="table-scroll-container">
+			<ng2-smart-table
+				[settings]="settingsSmartTable"
+				[source]="smartTableSource"
+				style="cursor: pointer"
+				#productsTable
+				(userRowSelect)="onUserRowSelect($event)"
+			></ng2-smart-table>
+		</div>
+		<ng-container
+			*ngIf="pagination.totalItems > minItemPerPage"
+		>
+			<ga-pagination
+				(selectedOption)="onUpdateOption($event)"
+				(selectedPage)="onPageChange($event)"
+				[doEmit]="false"
+				[totalItems]="pagination?.totalItems"
+				[itemsPerPage]="pagination?.itemsPerPage"
+				[activePage]="pagination?.activePage"
+			></ga-pagination>
+		</ng-container>
 	</nb-card-body>
-	<nb-card-footer class="text-right">
+	<nb-card-footer>
 		<button
 			(click)="dialogRef.close(selectedRows)"
-			status="primary"
-			class="mr-2"
+			status="success"
+			class="action"
 			nbButton
 		>
-			{{ 'BUTTONS.OK' | translate }}
+			{{ 'BUTTONS.SAVE' | translate }}
 		</button>
 	</nb-card-footer>
 </nb-card>

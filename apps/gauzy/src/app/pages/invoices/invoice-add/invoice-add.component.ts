@@ -591,10 +591,8 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 			return;
 		}
 
-		const { tenantId } = this.store.user;
-		const invoice = await this.invoicesService.getAll([], {
-			invoiceNumber,
-			tenantId
+		const invoice = await this.invoicesService.getAll({
+			invoiceNumber
 		});
 
 		if (invoice.items.length) {
@@ -696,7 +694,7 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 			return;
 		}
 
-		const invoiceExists = await this.invoicesService.getAll([], {
+		const invoiceExists = await this.invoicesService.getAll({
 			invoiceNumber
 		});
 		if (invoiceExists.items.length) {

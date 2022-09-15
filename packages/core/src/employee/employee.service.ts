@@ -1,4 +1,4 @@
-import { IDateRangePicker, IEmployee, IEmployeeCreateInput, IPagination, PermissionsEnum } from '@gauzy/contracts';
+import { IDateRangePicker, IEmployee, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { isNotEmpty } from '@gauzy/common';
@@ -15,23 +15,6 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 		protected readonly employeeRepository: Repository<Employee>
 	) {
 		super(employeeRepository);
-	}
-
-	/**
-	 * Create Bulk Employee User
-	 *
-	 * @param input
-	 * @returns
-	 */
-	async createBulk(input: IEmployeeCreateInput[]): Promise<Employee[]> {
-		const employees: IEmployee[] = [];
-		for await (let employee of input) {
-			employee.user.tenant = {
-				id: employee.organization.tenantId
-			};
-			employees.push(await this.create(employee));
-		}
-		return employees;
 	}
 
 	public async findAllActive(): Promise<Employee[]> {

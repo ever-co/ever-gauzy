@@ -1,4 +1,8 @@
-<div [nbSpinner]="loading" nbSpinnerStatus="primary">
+<div
+	[nbSpinner]="loading"
+	nbSpinnerStatus="primary"
+	nbSpinnerSize="large"
+>
 	<div *ngIf="!loading">
 		<div *ngIf="!errorMessage">
 			<h1 *ngIf="isAccepted">

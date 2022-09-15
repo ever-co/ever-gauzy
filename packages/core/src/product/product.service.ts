@@ -103,8 +103,8 @@ export class ProductService extends TenantAwareCrudService<Product> {
 		options = { page: 1, limit: 10 }
 	): Promise<IPagination<Product | IProductTranslated>> {
 		const [items, total] = await this.productRepository.findAndCount({
-			skip: (options.page - 1) * options.limit,
-			take: options.limit,
+			// skip: (options.page - 1) * options.limit,
+			// take: options.limit,
 			relations: relations,
 			where: {
 				...findInput

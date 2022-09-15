@@ -42,7 +42,7 @@ export class PaymentMutationComponent
 	}
 
 	/*
-	* Payment Mutation Form 
+	* Payment Mutation Form
 	*/
 	public form: FormGroup = PaymentMutationComponent.buildForm(this.fb, this);
 	static buildForm(
@@ -50,8 +50,8 @@ export class PaymentMutationComponent
 		self: PaymentMutationComponent
 	): FormGroup {
 		return fb.group({
-			amount: ['', Validators.compose([ 
-				Validators.required, 
+			amount: ['', Validators.compose([
+				Validators.required,
 				Validators.min(1)
 			])],
 			currency: [],
@@ -76,7 +76,7 @@ export class PaymentMutationComponent
 	) {
 		super(translateService);
 	}
-	
+
 	ngOnInit() {
 		this.store.selectedOrganization$
 			.pipe(
@@ -106,7 +106,7 @@ export class PaymentMutationComponent
 		const { id: organizationId } = this.organization;
 
 		this.invoicesService
-			.getAll([], { organizationId, tenantId, isEstimate: false })
+			.getAll({ organizationId, tenantId, isEstimate: false })
 			.then(({ items }) => {
 				this.invoices = items;
 			});
@@ -172,7 +172,7 @@ export class PaymentMutationComponent
 
 		if (this.payment) {
 			payment['id'] = this.payment.id;
-		} 
+		}
 
 		this.dialogRef.close(payment);
 	}

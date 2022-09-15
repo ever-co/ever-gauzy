@@ -1,10 +1,12 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import {
+	IEstimateEmail,
 	IInvoice,
 	IInvoiceCreateInput,
 	IInvoiceFindInput,
-	IInvoiceUpdateInput
+	IInvoiceUpdateInput,
+	IPagination
 } from '@gauzy/contracts';
 import { firstValueFrom } from 'rxjs';
 import { BehaviorSubject } from 'rxjs';
@@ -19,15 +21,12 @@ export class InvoicesService {
 	constructor(private http: HttpClient) {}
 
 	getAll(
-		relations?: string[],
-		findInput?: IInvoiceFindInput
-	): Promise<{ items: IInvoice[] }> {
-		const data = JSON.stringify({ relations, findInput });
-
+		where: IInvoiceFindInput,
+		relations: string[] = []
+	): Promise<IPagination<IInvoice>> {
 		return firstValueFrom(
-			this.http
-			.get<{ items: IInvoice[] }>(`${API_PREFIX}/invoices`, {
-				params: { data }
+			this.http.get<IPagination<IInvoice>>(`${API_PREFIX}/invoices`, {
+				params: toParams({ where, relations })
 			})
 		);
 	}
@@ -51,12 +50,10 @@ export class InvoicesService {
 		);
 	}
 
-	getWithoutAuth(id: string, token: string, relations?: string[]) {
-		const data = JSON.stringify({ relations });
+	getPublicInvoice(id: string, token: string, relations: string[] = []) {
 		return firstValueFrom(
-			this.http
-			.get<IInvoice>(`${API_PREFIX}/invoices/public/${id}/${token}`, {
-				params: { data }
+			this.http.get<IInvoice>(`${API_PREFIX}/public/invoice/${id}/${token}`, {
+				params: toParams({ relations })
 			})
 		);
 	}
@@ -90,12 +87,13 @@ export class InvoicesService {
 	}
 
 	updateWithoutAuth(
-		id: string,
-		updateInput: IInvoiceUpdateInput
+		id: IInvoice['id'],
+		token: IEstimateEmail['token'],
+		input: IInvoiceUpdateInput
 	): Promise<IInvoice> {
 		return firstValueFrom(
 			this.http
-			.put<IInvoice>(`${API_PREFIX}/invoices/estimate/${id}`, updateInput)
+			.put<IInvoice>(`${API_PREFIX}/public/invoice/${id}/${token}`, input)
 		);
 	}
 
@@ -106,14 +104,9 @@ export class InvoicesService {
 		);
 	}
 
-	generateLink(id: string, isEstimate: boolean): Promise<any> {
+	generateLink(id: string): Promise<IInvoice> {
 		return firstValueFrom(
-			this.http
-			.put<any>(`${API_PREFIX}/invoices/generate/${id}`, {
-				params: {
-					isEstimate
-				}
-			})
+			this.http.put<IInvoice>(`${API_PREFIX}/invoices/generate/${id}`, {})
 		);
 	}
 
