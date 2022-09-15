@@ -112,9 +112,7 @@ export class UserController extends CrudController<User> {
 	/**
 	 * UPDATE user preferred language
 	 *
-	 * @param id
 	 * @param entity
-	 * @param options
 	 * @returns
 	 */
 	@HttpCode(HttpStatus.ACCEPTED)
@@ -132,12 +130,11 @@ export class UserController extends CrudController<User> {
 		);
 	}
 
+
 	/**
 	 * UPDATE user preferred component layout
 	 *
-	 * @param id
 	 * @param entity
-	 * @param options
 	 * @returns
 	 */
 	@HttpCode(HttpStatus.ACCEPTED)
@@ -154,7 +151,6 @@ export class UserController extends CrudController<User> {
 			entity.preferredComponentLayout
 		);
 	}
-
 
 	/**
 	 * GET user count
@@ -300,7 +296,7 @@ export class UserController extends CrudController<User> {
 	/**
 	 * DELTE user account
 	 *
-	 * @param userId
+	 * @param id
 	 * @returns
 	 */
 	@ApiOperation({
@@ -318,17 +314,16 @@ export class UserController extends CrudController<User> {
 	@Permissions(PermissionsEnum.ACCESS_DELETE_ACCOUNT)
 	@Delete(':id')
 	async delete(
-		@Param('id', UUIDValidationPipe) userId: string,
+		@Param('id', UUIDValidationPipe) id: string,
 	): Promise<DeleteResult> {
 		return await this.commandBus.execute(
-			new UserDeleteCommand(userId)
+			new UserDeleteCommand(id)
 		);
 	}
 
 	/**
 	 * DELETE all user data from all tables
 	 *
-	 * @param id
 	 * @returns
 	 */
 	@ApiOperation({ summary: 'Delete all user data.' })

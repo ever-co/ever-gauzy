@@ -11,22 +11,28 @@ import {
 	Put,
 	Query,
 	ValidationPipe,
-	UsePipes
+	UsePipes,
+	BadRequestException
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import { isNotEmpty } from '@gauzy/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { FindOptionsWhere } from 'typeorm';
 import { CrudController } from './../core/crud';
-import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
+import { UUIDValidationPipe } from './../shared/pipes';
 import { Permissions } from './../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { OrganizationCreateCommand, OrganizationUpdateCommand } from './commands';
 import { Organization } from './organization.entity';
 import { OrganizationService } from './organization.service';
-import { CreateOrganizationDTO, UpdateOrganizationDTO } from './dto';
-
+import {
+	CreateOrganizationDTO,
+	OrganizationFindQueryDTO,
+	UpdateOrganizationDTO
+} from './dto';
 
 @ApiTags('Organization')
+@UseGuards(TenantPermissionGuard, PermissionGuard)
+@Permissions(PermissionsEnum.ALL_ORG_EDIT)
 @Controller()
 export class OrganizationController extends CrudController<Organization> {
 	constructor(
@@ -36,6 +42,42 @@ export class OrganizationController extends CrudController<Organization> {
 		super(organizationService);
 	}
 
+	/**
+	 * GET organization count
+	 *
+	 * @param options
+	 * @returns
+	 */
+	@Permissions(PermissionsEnum.ALL_ORG_VIEW)
+	@Get('count')
+	async getCount(
+		@Query() options: FindOptionsWhere<Organization>
+	): Promise<number> {
+		return await this.organizationService.countBy(options);
+	}
+
+	/**
+	 * GET organization pagination
+	 *
+	 * @param options
+	 * @returns
+	 */
+	@Permissions(PermissionsEnum.ALL_ORG_VIEW)
+	@Get('pagination')
+	async pagination(
+		@Query(new ValidationPipe({
+			transform: true
+		})) options: OrganizationFindQueryDTO<Organization>
+	): Promise<IPagination<IOrganization>> {
+		return this.organizationService.paginate(options);
+	}
+
+	/**
+	 * GET organizations by find many conditions
+	 *
+	 * @param options
+	 * @returns
+	 */
 	@ApiOperation({ summary: 'Find all organizations within the tenant.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -46,19 +88,26 @@ export class OrganizationController extends CrudController<Organization> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW)
 	@Get()
+	@UsePipes(new ValidationPipe({ transform: true }))
 	async findAll(
-		@Query('data', ParseJsonPipe) data: any
+		@Query() options: OrganizationFindQueryDTO<Organization>
 	): Promise<IPagination<IOrganization>> {
-		const { relations, findInput } = data;
-		return await this.organizationService.findAll({
-			where: findInput,
-			relations
-		});
+		try {
+			return await this.organizationService.findAll(options);
+		} catch (error) {
+			throw new BadRequestException(error);
+		}
 	}
 
+	/**
+	 * GET organization by id
+	 *
+	 * @param id
+	 * @param options
+	 * @returns
+	 */
 	@ApiOperation({ summary: 'Find Organization by id within the tenant.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -69,23 +118,21 @@ export class OrganizationController extends CrudController<Organization> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@Get(':id/:select')
-	async findOneById(
+	@Permissions(PermissionsEnum.ALL_ORG_VIEW)
+	@Get(':id')
+	async findById(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Param('select', ParseJsonPipe) select: any,
-		@Query('data', ParseJsonPipe) data: any
+		@Query() options: OrganizationFindQueryDTO<Organization>
 	): Promise<IOrganization> {
-		const request = {};
-		const { relations } = data;
-		if (isNotEmpty(select)) {
-			request['select'] = select;
-		}
-		if (isNotEmpty(relations)) {
-			request['relations'] = relations;
-		}
-		return await this.organizationService.findOneByIdString(id, request);
+		return await this.organizationService.findOneByIdString(id, options);
 	}
 
+	/**
+	 * CREATE organization for specific tenant
+	 *
+	 * @param entity
+	 * @returns
+	 */
 	@ApiOperation({ summary: 'Create new Organization' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
@@ -97,8 +144,6 @@ export class OrganizationController extends CrudController<Organization> {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.CREATED)
-	@UseGuards(TenantPermissionGuard, PermissionGuard)
-	@Permissions(PermissionsEnum.ALL_ORG_EDIT)
 	@Post()
 	@UsePipes(new ValidationPipe({ transform : true }))
 	async create(
@@ -109,6 +154,13 @@ export class OrganizationController extends CrudController<Organization> {
 		);
 	}
 
+	/**
+	 * UPDATE organization by id
+	 *
+	 * @param id
+	 * @param entity
+	 * @returns
+	 */
 	@ApiOperation({ summary: 'Update existing Organization' })
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -120,8 +172,6 @@ export class OrganizationController extends CrudController<Organization> {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.OK)
-	@UseGuards(TenantPermissionGuard, PermissionGuard)
-	@Permissions(PermissionsEnum.ALL_ORG_EDIT)
 	@Put(':id')
 	@UsePipes(new ValidationPipe({ transform : true }))
 	async update(

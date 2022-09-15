@@ -29,6 +29,7 @@ import { RolePermissionService } from './role-permission.service';
 
 @ApiTags('Role')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
+@Permissions(PermissionsEnum.CHANGE_ROLES_PERMISSIONS)
 @Controller()
 export class RolePermissionController extends CrudController<RolePermission> {
 	constructor(
@@ -37,6 +38,12 @@ export class RolePermissionController extends CrudController<RolePermission> {
 		super(rolePermissionService);
 	}
 
+	/**
+	 * Import/Migrate role-permissions for specific tenant
+	 *
+	 * @param input
+	 * @returns
+	 */
 	@ApiOperation({ summary: 'Import role-permissions from self hosted to gauzy cloud hosted in bulk' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
@@ -54,7 +61,12 @@ export class RolePermissionController extends CrudController<RolePermission> {
 		return await this.rolePermissionService.migrateImportRecord(input);
 	}
 
-	@Permissions(PermissionsEnum.CHANGE_ROLES_PERMISSIONS)
+	/**
+	 * GET role-permissions for specific tenant
+	 *
+	 * @param options
+	 * @returns
+	 */
 	@Get('pagination')
 	async pagination(
 		@Query() options: PaginationParams<RolePermission>
@@ -62,6 +74,12 @@ export class RolePermissionController extends CrudController<RolePermission> {
 		return await this.rolePermissionService.findAllRolePermissions(options);
 	}
 
+	/**
+	 * GET all role permissions for specific tenant
+	 *
+	 * @param data
+	 * @returns
+	 */
 	@ApiOperation({ summary: 'Find role permissions.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -72,7 +90,6 @@ export class RolePermissionController extends CrudController<RolePermission> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@Permissions(PermissionsEnum.CHANGE_ROLES_PERMISSIONS)
 	@HttpCode(HttpStatus.OK)
 	@Get()
 	async findAll(
@@ -82,6 +99,12 @@ export class RolePermissionController extends CrudController<RolePermission> {
 		return this.rolePermissionService.findAllRolePermissions({ where: findInput });
 	}
 
+	/**
+	 * CREATE role permissions for specific tenant
+	 *
+	 * @param entity
+	 * @returns
+	 */
 	@ApiOperation({ summary: 'Create new record' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
@@ -92,7 +115,6 @@ export class RolePermissionController extends CrudController<RolePermission> {
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
-	@Permissions(PermissionsEnum.CHANGE_ROLES_PERMISSIONS)
 	@HttpCode(HttpStatus.CREATED)
 	@Post()
 	async create(
@@ -104,6 +126,13 @@ export class RolePermissionController extends CrudController<RolePermission> {
 		return this.rolePermissionService.createPermission(entity);
 	}
 
+	/**
+	 * UPDATE role permissions for specific tenant
+	 *
+	 * @param id
+	 * @param entity
+	 * @returns
+	 */
 	@ApiOperation({ summary: 'Update an existing record' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
@@ -118,7 +147,6 @@ export class RolePermissionController extends CrudController<RolePermission> {
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
-	@Permissions(PermissionsEnum.CHANGE_ROLES_PERMISSIONS)
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
 	async update(
@@ -131,8 +159,13 @@ export class RolePermissionController extends CrudController<RolePermission> {
 		return await this.rolePermissionService.updatePermission(id, entity);
 	}
 
+	/**
+	 * DELETE role permissions for specific tenant
+	 *
+	 * @param id
+	 * @returns
+	 */
 	@HttpCode(HttpStatus.ACCEPTED)
-	@Permissions(PermissionsEnum.CHANGE_ROLES_PERMISSIONS)
 	@Delete(':id')
 	async delete(
 		@Param('id', UUIDValidationPipe) id: string

@@ -44,7 +44,7 @@ export class RoleController extends CrudController<Role> {
 	/**
 	 * GET role by where condition
 	 *
-	 * @param data
+	 * @param options
 	 * @returns
 	 */
 	@ApiOperation({ summary: 'Find role.' })
@@ -72,7 +72,7 @@ export class RoleController extends CrudController<Role> {
 	}
 
 	/**
-	 * Get roles for same tenant
+	 * GET roles for specific tenant
 	 *
 	 * @returns
 	 */
@@ -92,7 +92,7 @@ export class RoleController extends CrudController<Role> {
 	}
 
 	/**
-	 * Create role
+	 * CREATE role for specific tenant
 	 *
 	 * @param entity
 	 * @returns
@@ -113,7 +113,7 @@ export class RoleController extends CrudController<Role> {
 	}
 
 	/**
-	 * Update role
+	 * UPDATE role by id
 	 *
 	 * @param id
 	 * @param entity
@@ -137,7 +137,7 @@ export class RoleController extends CrudController<Role> {
 	}
 
 	/**
-	 * Delete role
+	 * DELETE role by id
 	 *
 	 * @param id
 	 * @returns
