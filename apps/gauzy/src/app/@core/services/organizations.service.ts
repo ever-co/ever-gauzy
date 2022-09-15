@@ -3,7 +3,6 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, firstValueFrom } from 'rxjs';
 import {
 	IOrganization,
-	OrganizationSelectInput,
 	IOrganizationCreateInput,
 	IOrganizationFindInput,
 	IOrganizationContactFindInput,
