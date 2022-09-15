@@ -335,8 +335,7 @@ export class HeaderComponent extends TranslationBaseComponent
 				 */
 				const organization$ = this.organizationsService.getById(
 					firstUserOrg.organizationId,
-					null,
-					['contact']
+					['contact'],
 				);
 				const organization = await lastValueFrom(organization$);
 

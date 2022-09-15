@@ -21,7 +21,7 @@ export class EditOrganizationResolver implements Resolve<Observable<IOrganizatio
             return observableOf(EMPTY);
         }
         try {
-            return this.organizationsService.getById(organizationId, null, ['tags']).pipe(
+            return this.organizationsService.getById(organizationId, ['tags']).pipe(
                 catchError((error) => {
                     return observableOf(error);
                 })

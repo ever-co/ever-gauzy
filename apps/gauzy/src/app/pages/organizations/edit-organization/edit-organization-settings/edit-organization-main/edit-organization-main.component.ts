@@ -67,12 +67,12 @@ export class EditOrganizationMainComponent
 	ngOnInit(): void {
 		this.store.selectedOrganization$
 			.pipe(
-				filter((organization) => !!organization),
+				filter((organization: IOrganization) => !!organization),
 				tap(
 					(organization: IOrganization) =>
 						(this.organization = organization)
 				),
-				tap((organization) => (this.imageUrl = organization.imageUrl)),
+				tap((organization: IOrganization) => (this.imageUrl = organization.imageUrl)),
 				untilDestroyed(this)
 			)
 			.subscribe((organization) => {
@@ -177,22 +177,22 @@ export class EditOrganizationMainComponent
 		this.tags = this.form.get('tags').value || [];
 	}
 
-	private async _loadOrganizationData(organization) {
+	private async _loadOrganizationData(organization: IOrganization) {
 		if (!organization) {
 			return;
 		}
-		const { id } = organization;
-		const { tenantId } = this.store.user;
-		const { items } = await this.organizationService.getAll(
-			['contact', 'tags'],
-			{ id, tenantId }
-		);
-
-		this.organization = items[0];
-		this.organizationEditStore.selectedOrganization = this.organization;
-
-		this.loadEmployeesCount();
-		this._initializeForm();
+		const { id: organizationId } = organization;
+	 	this.organizationService.getById(organizationId, [
+			'contact', 'tags'
+		]).pipe(
+			filter((organization: IOrganization) => !!organization),
+			tap((organization: IOrganization) => this.organization = organization),
+			tap(() => {
+				this.organizationEditStore.selectedOrganization = this.organization;
+				this.loadEmployeesCount();
+				this._initializeForm();
+			}),
+		).subscribe();
 	}
 
 	selectedTagsEvent(currentSelection: ITag[]) {
