@@ -1,5 +1,5 @@
 import { DefaultValueDateTypeEnum, WeekDaysEnum } from "@gauzy/contracts";
-import { ApiProperty } from "@nestjs/swagger";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { IsOptional, IsEnum, IsString } from "class-validator";
 
 /**
@@ -11,12 +11,12 @@ export class OrganizationSettingDTO {
 	@IsEnum(DefaultValueDateTypeEnum)
 	readonly defaultValueDateType: DefaultValueDateTypeEnum;
 
-	@ApiProperty({ type: () => String, enum: WeekDaysEnum, readOnly: true })
+	@ApiPropertyOptional({ type: () => String, enum: WeekDaysEnum, readOnly: true })
 	@IsOptional()
 	@IsEnum(WeekDaysEnum)
 	readonly startWeekOn: WeekDaysEnum;
 
-    @ApiProperty({ type: () => String, readOnly: true })
+    @ApiPropertyOptional({ type: () => String, readOnly: true })
 	@IsOptional()
 	@IsString()
 	readonly regionCode: string;
