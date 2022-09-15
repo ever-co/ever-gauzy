@@ -6,9 +6,9 @@ import {
 	Input,
 	Output
 } from '@angular/core';
-import { environment } from '../../../../../environments/environment';
 import L, { icon, LatLng, latLng, Layer, marker, tileLayer } from 'leaflet';
 import { convertPrecisionFloatDigit } from '@gauzy/common-angular';
+import { environment } from '../../../../../environments/environment';
 
 @Component({
 	selector: 'ga-leaflet-map',
@@ -16,7 +16,8 @@ import { convertPrecisionFloatDigit } from '@gauzy/common-angular';
 	styleUrls: ['./leaflet.component.scss']
 })
 export class LeafletMapComponent implements AfterViewInit {
-	loaded: boolean;
+
+	public loaded: boolean;
 	private _zoom: number;
 	private _icon: string;
 	private _marker: LatLng;
@@ -69,7 +70,9 @@ export class LeafletMapComponent implements AfterViewInit {
 	@Output() mapClicked = new EventEmitter<LatLng>();
 	@Output() mapDoubleClicked = new EventEmitter<LatLng>();
 
-	constructor(private cdr: ChangeDetectorRef) {}
+	constructor(
+		private readonly cdr: ChangeDetectorRef
+	) {}
 
 	ngAfterViewInit() {
 		setTimeout(() => {
@@ -138,6 +141,9 @@ export class LeafletMapComponent implements AfterViewInit {
 	 * Add location marker after click on map
 	 */
 	addMarker(latlng: LatLng) {
+		if (!this.map) {
+			return;
+		}
 		const { lat, lng } = latlng;
 		const newMarker = marker([lat, lng], {
 			icon: icon({

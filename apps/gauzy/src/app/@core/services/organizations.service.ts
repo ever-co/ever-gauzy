@@ -3,7 +3,6 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, firstValueFrom } from 'rxjs';
 import {
 	IOrganization,
-	OrganizationSelectInput,
 	IOrganizationCreateInput,
 	IOrganizationFindInput,
 	IOrganizationContactFindInput,
@@ -24,7 +23,7 @@ export class OrganizationsService {
 		);
 	}
 
-	update(id: string, updateInput: IOrganizationCreateInput): Promise<any> {
+	update(id: IOrganization['id'], updateInput: IOrganizationCreateInput): Promise<any> {
 		return firstValueFrom(
 			this.http
 			.put(`${API_PREFIX}/organization/${id}`, updateInput)
@@ -32,7 +31,7 @@ export class OrganizationsService {
 
 	}
 
-	delete(id: string): Promise<any> {
+	delete(id: IOrganization['id']): Promise<any> {
 		return firstValueFrom(
 			this.http
 			.delete(`${API_PREFIX}/organization/${id}`)
@@ -41,33 +40,23 @@ export class OrganizationsService {
 	}
 
 	getAll(
-		relations?: string[],
-		findInput?: IOrganizationFindInput
+		where: IOrganizationFindInput,
+		relations: string[] = [],
 	): Promise<{ items: IOrganization[]; total: number }> {
-		const data = JSON.stringify({ relations, findInput });
 		return firstValueFrom(
-			this.http
-			.get<{ items: IOrganization[]; total: number }>(
-				`${API_PREFIX}/organization`,
-				{
-					params: { data }
-				}
-			)
+			this.http.get<IPagination<IOrganization>>(`${API_PREFIX}/organization`, {
+				params: toParams({ where, relations })
+			})
 		);
 	}
 
 	getById(
-		id: string = '',
-		select?: OrganizationSelectInput[],
-		relations?: string[]
+		id: IOrganization['id'],
+		relations: string[] = []
 	): Observable<IOrganization> {
-		const data = JSON.stringify({ relations });
-		return this.http.get<IOrganization>(
-			`${API_PREFIX}/organization/${id}/${JSON.stringify(select || '')}`,
-			{
-				params: { data }
-			}
-		);
+		return this.http.get<IOrganization>( `${API_PREFIX}/organization/${id}`, {
+			params: toParams({ relations })
+		});
 	}
 
 	/**
@@ -77,7 +66,7 @@ export class OrganizationsService {
 	 * @returns
 	 */
 	getByProfileLink(
-		profile_link: string,
+		profile_link: IOrganization['profile_link'],
 		relations: string[] = []
 	): Observable<IOrganization> {
 		return this.http.get<IOrganization>(`${API_PREFIX}/public/organization/${profile_link}`, {
