@@ -6283,10 +6283,10 @@
   dependencies:
     "@types/node" "*"
 
-"@types/leaflet@^1.7.10":
-  version "1.7.10"
-  resolved "https://registry.yarnpkg.com/@types/leaflet/-/leaflet-1.7.10.tgz#092f97af29bb870b7d1ed72d516d4b3dde66a6c8"
-  integrity sha512-RzK5BYwYboOXXxyF01tp8g1J8UbdRvoaf+F/jCnVaWC42+QITB6wKvUklcX7jCMRWkzTnGO9NLg7A6SzrlGALA==
+"@types/leaflet@^1.8.0":
+  version "1.8.0"
+  resolved "https://registry.yarnpkg.com/@types/leaflet/-/leaflet-1.8.0.tgz#dc92d3e868fb6d5067b4b59fa08cd4441f84fabe"
+  integrity sha512-+sXFmiJTFdhaXXIGFlV5re9AdqtAODoXbGAvxx02e5SHXL3ir7ClP5J7pahO8VmzKY3dth4RUS1nf2BTT+DW1A==
   dependencies:
     "@types/geojson" "*"
 
@@ -20469,7 +20469,7 @@ lcid@^2.0.0:
   dependencies:
     invert-kv "^2.0.0"
 
-leaflet@^1.7.1:
+leaflet@^1.8.0:
   version "1.8.0"
   resolved "https://registry.yarnpkg.com/leaflet/-/leaflet-1.8.0.tgz#4615db4a22a304e8e692cae9270b983b38a2055e"
   integrity sha512-gwhMjFCQiYs3x/Sf+d49f10ERXaEFCPr+nVTryhAW8DWbMGqJqt9G4XuIaHmFW08zYvhgdzqXGr8AlW8v8dQkA==
