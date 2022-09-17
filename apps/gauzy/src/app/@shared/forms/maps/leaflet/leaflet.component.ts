@@ -75,9 +75,7 @@ export class LeafletMapComponent implements AfterViewInit {
 	) {}
 
 	ngAfterViewInit() {
-		setTimeout(() => {
-			this.loaded = true;
-		}, 100);
+		setTimeout(() => { this.loaded = true; }, 200);
 		this.cdr.detectChanges();
 	}
 
@@ -105,7 +103,6 @@ export class LeafletMapComponent implements AfterViewInit {
 	onMapZoomEnd(map: any) {
 		// Do stuff with map
 	}
-
 	/*
 	 * Mouse Interactions: LeafletMouseEvent
 	 */
