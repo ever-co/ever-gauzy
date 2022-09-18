@@ -1,4 +1,4 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, OnInit, Input, AfterViewInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { IOrganization } from '@gauzy/contracts';
 import { NbRouteTab } from '@nebular/theme';
@@ -17,7 +17,7 @@ import { TranslationBaseComponent } from '../../../../@shared/language-base/tran
 	]
 })
 export class EditOrganizationSettingsComponent extends TranslationBaseComponent
-	implements OnInit {
+	implements AfterViewInit, OnInit {
 
 	@Input() organization: IOrganization;
 	tabs: NbRouteTab[] = [];
@@ -30,7 +30,15 @@ export class EditOrganizationSettingsComponent extends TranslationBaseComponent
 	}
 
 	ngOnInit() {
-		this.loadTabs();
+		this.route.params
+			.pipe(
+				tap(() => this.loadTabs()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
+
+	ngAfterViewInit() {
 		this._applyTranslationOnTabs();
 	}
 
