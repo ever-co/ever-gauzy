@@ -7,7 +7,7 @@ import {
 	OnInit
 } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Data, Router } from '@angular/router';
 import {
 	ICurrency,
 	IOrganization,
@@ -16,11 +16,11 @@ import {
 } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { debounceTime, firstValueFrom, map } from 'rxjs';
-import { filter, tap } from 'rxjs/operators';
+import { distinctUntilChange } from '@gauzy/common-angular';
+import { debounceTime } from 'rxjs';
+import { filter, map, tap } from 'rxjs/operators';
 import { TranslationBaseComponent } from '../../../../../@shared/language-base/translation-base.component';
 import {
-	EmployeesService,
 	ErrorHandlingService,
 	OrganizationEditStore,
 	OrganizationsService,
@@ -68,7 +68,6 @@ export class EditOrganizationMainComponent extends TranslationBaseComponent
 		private readonly route: ActivatedRoute,
 		private readonly router: Router,
 		private readonly fb: FormBuilder,
-		private readonly employeesService: EmployeesService,
 		private readonly organizationService: OrganizationsService,
 		private readonly toastrService: ToastrService,
 		private readonly organizationEditStore: OrganizationEditStore,
@@ -84,17 +83,19 @@ export class EditOrganizationMainComponent extends TranslationBaseComponent
 		this.route.parent.data
 			.pipe(
 				debounceTime(100),
-				filter((data) => !!data && !!data.organization),
+				distinctUntilChange(),
+				filter((data: Data) => !!data && !!data.organization),
+				tap(
+					({ employeesCount }) =>
+						(this.employeesCount = employeesCount)
+				),
 				map(({ organization }) => organization),
 				tap(
 					(organization: IOrganization) =>
 						(this.organization = organization)
 				),
-				tap(() => {
-					this.loadEmployeesCount();
-					this._setFormValues();
-				}),
 				tap((organization: IOrganization) => (this.imageUrl = organization.imageUrl)),
+				tap(() => this._setFormValues()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -111,19 +112,6 @@ export class EditOrganizationMainComponent extends TranslationBaseComponent
 	}
 
 	handleImageUploadError(event: any) { }
-
-	private async loadEmployeesCount() {
-		if (!this.organization) {
-			return;
-		}
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.organization;
-		const { total } = await firstValueFrom(
-			this.employeesService.getAll([], { organizationId, tenantId })
-		);
-
-		this.employeesCount = total;
-	}
 
 	/**
 	 * Update organization main settings

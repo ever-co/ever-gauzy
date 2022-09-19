@@ -7,6 +7,7 @@ import { EditOrganizationLocationComponent } from './edit-organization-settings/
 import { EditOrganizationOtherSettingsComponent } from './edit-organization-settings/edit-organization-other-settings/edit-organization-other-settings.component';
 import { EditOrganizationResolver } from './edit-organization.resolver';
 import { EditOrganizationComponent } from './edit-organization.component';
+import { EmployeeCountResolver } from '../../../@core/resolvers';
 
 export function redirectTo() {
 	return '/pages/dashboard';
@@ -24,7 +25,8 @@ const routes: Routes = [
 			}
 		},
 		resolve: {
-			organization: EditOrganizationResolver
+			organization: EditOrganizationResolver,
+			employeesCount: EmployeeCountResolver
 		},
 		runGuardsAndResolvers: 'always',
 		children: [

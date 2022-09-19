@@ -1,13 +1,13 @@
 import { AfterViewInit, Component, OnDestroy, OnInit } from '@angular/core';
-import { ActivatedRoute, Router, UrlSerializer } from '@angular/router';
+import { ActivatedRoute, Data, Router, UrlSerializer } from '@angular/router';
 import { Location } from '@angular/common';
 import { IOrganization, PermissionsEnum } from '@gauzy/contracts';
-import { debounceTime, firstValueFrom, takeLast } from 'rxjs';
+import { debounceTime } from 'rxjs';
 import { filter, map, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange } from '@gauzy/common-angular';
-import { EmployeesService, Store } from '../../../@core/services';
+import { Store } from '../../../@core/services';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 
 @UntilDestroy({ checkProperties: true })
@@ -27,7 +27,6 @@ export class EditOrganizationComponent extends TranslationBaseComponent
 	constructor(
 		private readonly router: Router,
 		private readonly route: ActivatedRoute,
-		private readonly employeesService: EmployeesService,
 		private readonly store: Store,
 		public readonly translateService: TranslateService,
 		private readonly _urlSerializer: UrlSerializer,
@@ -41,14 +40,19 @@ export class EditOrganizationComponent extends TranslationBaseComponent
 			.pipe(
 				debounceTime(100),
 				distinctUntilChange(),
-				filter((data) => !!data && !!data.organization),
+				filter((data: Data) => !!data && !!data.organization),
+				tap(
+					({ employeesCount }) =>
+						(this.employeesCount = employeesCount)
+				),
 				map(({ organization }) => organization),
-				tap((organization: IOrganization) => this.organization = organization),
-				tap(() => this.loadEmployeesCount()),
+				tap(
+					(organization: IOrganization) =>
+						(this.organization = organization)
+				),
 				untilDestroyed(this)
 			)
 			.subscribe();
-
 	}
 
 	ngAfterViewInit() {
@@ -83,22 +87,6 @@ export class EditOrganizationComponent extends TranslationBaseComponent
     	// As far as I can tell you don't really need the UrlSerializer.
 		const externalUrl = this._location.prepareExternalUrl(this._urlSerializer.serialize(tree));
 		window.open(externalUrl, '_blank');
-	}
-
-	private async loadEmployeesCount() {
-		if (!this.organization) {
-			return;
-		}
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.organization;
-
-		const { total } = await firstValueFrom(
-			this.employeesService.getAll([], {
-				organizationId,
-				tenantId
-			})
-		);
-		this.employeesCount = total;
 	}
 
 	ngOnDestroy() {}

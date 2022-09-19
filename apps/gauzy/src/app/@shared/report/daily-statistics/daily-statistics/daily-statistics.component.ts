@@ -129,10 +129,12 @@ export class DailyStatisticsComponent extends BaseSelectorFilterComponent
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 
-		this.employeesCount = await this.employeesService.getCount({
-			organizationId,
-			tenantId
-		});
+		this.employeesService.getCount({ organizationId, tenantId })
+			.pipe(
+				tap((count: number) => this.employeesCount = count),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	private async loadProjectsCount() {

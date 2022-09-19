@@ -51,12 +51,10 @@ export class EmployeesService {
 
 	getCount(
 		request: IEmployeeFindInput
-	): Promise<any> {
-		return firstValueFrom(
-			this.http.get<{ items: IEmployeeFindInput[]; total: number }>(`${API_PREFIX}/employee/count`, {
-				params: toParams({ ...request })
-			})
-		);
+	): Observable<number> {
+		return this.http.get<number>(`${API_PREFIX}/employee/count`, {
+			params: toParams({ ...request })
+		})
 	}
 
 	getWorking(
