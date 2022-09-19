@@ -21,8 +21,6 @@ import { OrganizationsMutationModule } from '../../@shared/organizations/organiz
 import { RemoveLodashModule } from '../../@shared/remove-lodash/remove-lodash.module';
 import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
 import { ThemeModule } from '../../@theme/theme.module';
-import { EditOrganizationSettingsModule } from './edit-organization/edit-organization-settings/edit-organization-settings.module';
-import { EditOrganizationComponent } from './edit-organization/edit-organization.component';
 import { OrganizationsRoutingModule } from './organizations-routing.module';
 import { OrganizationsComponent } from './organizations.component';
 import { OrganizationsCurrencyComponent, OrganizationsEmployeesComponent, OrganizationsFullnameComponent, OrganizationsStatusComponent } from './table-components';
@@ -56,7 +54,6 @@ import { PaginationModule } from '../../@shared/pagination/pagination.module';
 		RemoveLodashModule,
 		NbListModule,
 		NbTabsetModule,
-		EditOrganizationSettingsModule,
 		RecurringExpenseMutationModule,
 		RecurringExpenseDeleteConfirmationModule,
 		NbTooltipModule,
@@ -74,7 +71,6 @@ import { PaginationModule } from '../../@shared/pagination/pagination.module';
 		OrganizationsComponent,
 		OrganizationsFullnameComponent,
 		OrganizationsStatusComponent,
-		EditOrganizationComponent,
 		OrganizationsEmployeesComponent,
 		OrganizationsCurrencyComponent
 	],
