@@ -119,7 +119,6 @@ export const createDefaultOrganizations = async (
 		defaultOrganization.officialName = faker.company.companyName();
 		defaultOrganization.separateInvoiceItemTaxAndDiscount = faker.datatype.boolean();
 		defaultOrganization.startWeekOn = WeekDaysEnum.MONDAY;
-		defaultOrganization.totalEmployees = faker.datatype.number(4);
 		defaultOrganization.tenant = tenant;
 		defaultOrganization.valueDate = moment(new Date())
 			.add(faker.datatype.number(10), 'days')
@@ -226,7 +225,6 @@ export const createRandomOrganizations = async (
 				organization.officialName = faker.company.companyName();
 				organization.separateInvoiceItemTaxAndDiscount = faker.datatype.boolean();
 				organization.startWeekOn = WeekDaysEnum.MONDAY;
-				organization.totalEmployees = faker.datatype.number(4);
 				organization.tenant = tenant;
 				organization.valueDate = moment(new Date())
 					.add(faker.datatype.number(10), 'days')
