@@ -258,4 +258,18 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 			throw new BadRequestException(error);
 		}
 	}
+
+	/**
+	 * Removed employee
+	 *
+	 * @param employeeId
+	 */
+	async remove(employeeId: IEmployee['id']) {
+		try {
+			const entity = await this.findOneByIdString(employeeId);
+			return await this.repository.remove(entity);
+		} catch (error) {
+			throw new BadRequestException(error);
+		}
+	}
 }

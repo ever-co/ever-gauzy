@@ -1,7 +1,8 @@
-import { EntitySubscriberInterface, EventSubscriber, InsertEvent } from "typeorm";
+import { EntityManager, EntitySubscriberInterface, EventSubscriber, InsertEvent, RemoveEvent } from "typeorm";
 import { retrieveNameFromEmail } from "@gauzy/common";
 import { Employee } from "./employee.entity";
 import { generateSlug, getUserDummyImage } from "./../core/utils";
+import { Organization } from "./../core/entities/internal";
 
 @EventSubscriber()
 export class EmployeeSubscriber implements EntitySubscriberInterface<Employee> {
@@ -40,6 +41,20 @@ export class EmployeeSubscriber implements EntitySubscriberInterface<Employee> {
         }
     }
 
+    async afterInsert(event: InsertEvent<Employee>): Promise<any | void>  {
+        if (event.entity) {
+            const { entity } = event;
+            await this.calculateTotalEmployees(entity, event.manager);
+        }
+    }
+
+    async afterRemove(event: RemoveEvent<Employee>): Promise<any | void> {
+        if (event.entity) {
+            const { entity } = event;
+            await this.calculateTotalEmployees(entity, event.manager);
+        }
+    }
+
     /**
      * Generate employee public profile slug
      */
@@ -53,6 +68,24 @@ export class EmployeeSubscriber implements EntitySubscriberInterface<Employee> {
         } else { // Use email to create slug if nothing found
             const { email } = entity.user;
             entity.profile_link = generateSlug(`${retrieveNameFromEmail(email)}`);
+        }
+    }
+
+    /**
+     * Handler request for count total employee
+     */
+    async calculateTotalEmployees(entity: Employee, manager: EntityManager) {
+        try {
+            const { organizationId, tenantId } = entity;
+            const count = await manager.countBy(Employee, {
+                organizationId,
+                tenantId
+            });
+            await manager.update(Organization, { id: organizationId, tenantId }, {
+                totalEmployees: count
+            });
+        } catch (error) {
+            console.log('error while updating total employee of the organization', error);
         }
     }
 }

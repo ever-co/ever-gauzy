@@ -8,6 +8,7 @@ import {
 	BadRequestException,
 	Body,
 	Controller,
+	Delete,
 	Get,
 	Headers,
 	HttpCode,
@@ -421,5 +422,22 @@ export class EmployeeController extends CrudController<Employee> {
 		return await this.commandBus.execute(
 			new UpdateEmployeeJobSearchStatusCommand(employeeId, entity)
 		);
+	}
+
+	@ApiOperation({ summary: 'Delete record' })
+	@ApiResponse({
+		status: HttpStatus.NO_CONTENT,
+		description: 'The record has been successfully deleted'
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Delete(':id')
+	async delete(
+		@Param('id', UUIDValidationPipe) employeeId: string
+	): Promise<IEmployee> {
+		return await this.employeeService.remove(employeeId);
 	}
 }

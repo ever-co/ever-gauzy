@@ -1,15 +1,11 @@
-import { ApiPropertyOptional } from "@nestjs/swagger";
-import { IsArray, IsOptional } from "class-validator";
 import { IGetTimesheetInput } from "@gauzy/contracts";
-import { SelectorsQueryDTO } from "./../../../../shared/dto";
+import { RelationsQueryDTO, SelectorsQueryDTO } from "./../../../../shared/dto";
+import { IntersectionType } from "@nestjs/mapped-types";
 
 /**
  * Get timesheet request DTO validation
  */
-export class TimesheetQueryDTO extends SelectorsQueryDTO implements IGetTimesheetInput {
-    
-    @ApiPropertyOptional({ type: () => Array, isArray: true })
-    @IsOptional()
-    @IsArray()
-    readonly relations: string[];
-}
+export class TimesheetQueryDTO extends IntersectionType(
+    RelationsQueryDTO,
+    SelectorsQueryDTO
+) implements IGetTimesheetInput {}

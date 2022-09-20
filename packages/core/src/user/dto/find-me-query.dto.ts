@@ -1,13 +1,6 @@
-import { ApiPropertyOptional } from "@nestjs/swagger";
-import { IsArray, IsOptional } from "class-validator";
+import { RelationsQueryDTO } from "./../../shared/dto";
 
 /**
  * Get find me (self logged in user) request DTO validation
  */
-export class FindMeQueryDTO {
-
-    @ApiPropertyOptional({ type: () => Array, isArray: true })
-    @IsOptional()
-    @IsArray()
-    readonly relations: string[] = [];
-}
+export class FindMeQueryDTO extends RelationsQueryDTO {}

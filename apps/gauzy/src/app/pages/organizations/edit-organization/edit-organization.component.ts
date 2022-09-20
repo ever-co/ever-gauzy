@@ -1,13 +1,13 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
-import { ActivatedRoute, Router, UrlSerializer } from '@angular/router';
+import { AfterViewInit, Component, OnDestroy, OnInit } from '@angular/core';
+import { ActivatedRoute, Data, Router, UrlSerializer } from '@angular/router';
 import { Location } from '@angular/common';
-import { IOrganization } from '@gauzy/contracts';
-import { firstValueFrom } from 'rxjs';
-import { filter, tap } from 'rxjs/operators';
+import { IOrganization, PermissionsEnum } from '@gauzy/contracts';
+import { debounceTime } from 'rxjs';
+import { filter, map, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange } from '@gauzy/common-angular';
-import { EmployeesService, Store } from '../../../@core/services';
+import { Store } from '../../../@core/services';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 
 @UntilDestroy({ checkProperties: true })
@@ -19,17 +19,16 @@ import { TranslationBaseComponent } from '../../../@shared/language-base/transla
 	]
 })
 export class EditOrganizationComponent extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
+	implements AfterViewInit, OnInit, OnDestroy {
 
 	employeesCount: number;
-	organization: IOrganization;
+	public organization: IOrganization;
 
 	constructor(
 		private readonly router: Router,
 		private readonly route: ActivatedRoute,
-		private readonly employeesService: EmployeesService,
 		private readonly store: Store,
-		readonly translateService: TranslateService,
+		public readonly translateService: TranslateService,
 		private readonly _urlSerializer: UrlSerializer,
 		private readonly _location: Location
 	) {
@@ -39,19 +38,34 @@ export class EditOrganizationComponent extends TranslationBaseComponent
 	ngOnInit() {
 		this.route.data
 			.pipe(
+				debounceTime(100),
 				distinctUntilChange(),
-				filter((data) => !!data && !!data.organization),
-				tap(({ organization }) => this.organization = organization),
-				tap(() => this.loadEmployeesCount()),
+				filter((data: Data) => !!data && !!data.organization),
+				tap(
+					({ employeesCount }) =>
+						(this.employeesCount = employeesCount)
+				),
+				map(({ organization }) => organization),
+				tap(
+					(organization: IOrganization) =>
+						(this.organization = organization)
+				),
 				untilDestroyed(this)
 			)
 			.subscribe();
+	}
+
+	ngAfterViewInit() {
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization: IOrganization) => !!organization),
+				debounceTime(200),
 				distinctUntilChange(),
-				tap(({ id }) => {
-					this.router.navigate(['/pages/organizations/edit/', id]);
+				tap((organization: IOrganization) => {
+					this.router.navigate(['/pages/organizations/edit',
+						organization.id,
+						this.route.firstChild.snapshot.routeConfig.path
+					]);
 				}),
 				untilDestroyed(this)
 			)
@@ -64,32 +78,15 @@ export class EditOrganizationComponent extends TranslationBaseComponent
 	 * @returns
 	 */
 	editPublicPage() {
-		if (!this.organization) {
+		if (!this.organization || !this.store.hasPermission(PermissionsEnum.PUBLIC_PAGE_EDIT)) {
 			return;
 		}
-
 		// The call to Location.prepareExternalUrl is the key thing here.
 		let tree = this.router.createUrlTree([`/share/organization/${this.organization.profile_link}`]);
 
     	// As far as I can tell you don't really need the UrlSerializer.
 		const externalUrl = this._location.prepareExternalUrl(this._urlSerializer.serialize(tree));
 		window.open(externalUrl, '_blank');
-	}
-
-	private async loadEmployeesCount() {
-		if (!this.organization) {
-			return;
-		}
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.organization;
-
-		const { total } = await firstValueFrom(
-			this.employeesService.getAll([], {
-				organizationId,
-				tenantId
-			})
-		);
-		this.employeesCount = total;
 	}
 
 	ngOnDestroy() {}

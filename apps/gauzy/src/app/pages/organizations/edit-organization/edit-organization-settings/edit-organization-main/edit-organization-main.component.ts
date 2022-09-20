@@ -2,28 +2,31 @@ import {
 	AfterViewInit,
 	ChangeDetectorRef,
 	Component,
+	Input,
 	OnDestroy,
 	OnInit
 } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { ActivatedRoute, Data, Router } from '@angular/router';
 import {
 	ICurrency,
 	IOrganization,
 	ITag,
 	CrudActionEnum
 } from '@gauzy/contracts';
-import { OrganizationEditStore } from '../../../../../@core/services/organization-edit-store.service';
-import { filter, tap } from 'rxjs/operators';
-import { firstValueFrom } from 'rxjs';
-import { EmployeesService } from '../../../../../@core/services';
-import { OrganizationsService } from '../../../../../@core/services/organizations.service';
-import { TranslationBaseComponent } from '../../../../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
-import { Router } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { Store } from '../../../../../@core/services/store.service';
-import { ErrorHandlingService } from 'apps/gauzy/src/app/@core/services/error-handling.service';
-import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
+import { distinctUntilChange } from '@gauzy/common-angular';
+import { debounceTime } from 'rxjs';
+import { filter, map, tap } from 'rxjs/operators';
+import { TranslationBaseComponent } from '../../../../../@shared/language-base/translation-base.component';
+import {
+	ErrorHandlingService,
+	OrganizationEditStore,
+	OrganizationsService,
+	Store,
+	ToastrService
+} from '../../../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -31,26 +34,44 @@ import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service'
 	templateUrl: './edit-organization-main.component.html',
 	styleUrls: ['./edit-organization-main.component.scss']
 })
-export class EditOrganizationMainComponent
-	extends TranslationBaseComponent
+export class EditOrganizationMainComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy, AfterViewInit {
-	organization: IOrganization;
+
 	imageUrl: string;
 	hoverState: boolean;
 	employeesCount: number;
-	form: FormGroup;
-	tags: ITag[] = [];
-	selectedTags: any;
-	currency: string;
+
+	@Input() organization: IOrganization;
+
+	/*
+	* Organization Mutation Form
+	*/
+	public form: FormGroup = EditOrganizationMainComponent.buildForm(this.fb);
+	static buildForm(fb: FormBuilder): FormGroup {
+		return fb.group({
+			tags: [null],
+			currency: [null, Validators.required],
+			name: [null, Validators.required],
+			officialName: [null],
+			profile_link: [null, [
+					Validators.required,
+					Validators.pattern('^[a-z0-9-]+$')
+				]
+			],
+			taxId: [null],
+			registrationDate: [null],
+			website: [null]
+		});
+	}
 
 	constructor(
+		private readonly route: ActivatedRoute,
 		private readonly router: Router,
 		private readonly fb: FormBuilder,
-		private readonly employeesService: EmployeesService,
 		private readonly organizationService: OrganizationsService,
 		private readonly toastrService: ToastrService,
 		private readonly organizationEditStore: OrganizationEditStore,
-		readonly translateService: TranslateService,
+		public readonly translateService: TranslateService,
 		private readonly store: Store,
 		private readonly cdr: ChangeDetectorRef,
 		private readonly errorHandler: ErrorHandlingService
@@ -58,26 +79,26 @@ export class EditOrganizationMainComponent
 		super(translateService);
 	}
 
-	updateImageUrl(url: string) {
-		this.imageUrl = url;
-	}
-
-	handleImageUploadError(event: any) { }
-
 	ngOnInit(): void {
-		this.store.selectedOrganization$
+		this.route.parent.data
 			.pipe(
-				filter((organization: IOrganization) => !!organization),
+				debounceTime(100),
+				distinctUntilChange(),
+				filter((data: Data) => !!data && !!data.organization),
+				tap(
+					({ employeesCount }) =>
+						(this.employeesCount = employeesCount)
+				),
+				map(({ organization }) => organization),
 				tap(
 					(organization: IOrganization) =>
 						(this.organization = organization)
 				),
 				tap((organization: IOrganization) => (this.imageUrl = organization.imageUrl)),
+				tap(() => this._setFormValues()),
 				untilDestroyed(this)
 			)
-			.subscribe((organization) => {
-				this._loadOrganizationData(organization);
-			});
+			.subscribe();
 	}
 
 	ngOnDestroy(): void { }
@@ -86,121 +107,82 @@ export class EditOrganizationMainComponent
 		this.cdr.detectChanges();
 	}
 
-	private async loadEmployeesCount() {
-		if (!this.organization) {
-			return;
-		}
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.organization;
-		const { total } = await firstValueFrom(
-			this.employeesService
-				.getAll([], { organizationId, tenantId })
-		);
-
-		this.employeesCount = total;
+	updateImageUrl(url: string) {
+		this.imageUrl = url;
 	}
 
-	async updateOrganizationSettings() {
-		try {
-			this.organizationService
-				.update(this.organization.id, {
-					imageUrl: this.imageUrl,
-					defaultValueDateType: this.organization.defaultValueDateType,
-					...this.form.getRawValue()
-				})
-				.then((organization: IOrganization) => {
-					if (organization) {
-						this.organizationEditStore.organizationAction = {
-							organization,
-							action: CrudActionEnum.UPDATED
-						};
-						this.store.selectedOrganization = organization;
-					}
+	handleImageUploadError(event: any) { }
 
-					this.toastrService.success(
-						`TOASTR.MESSAGE.MAIN_ORGANIZATION_UPDATED`,
-						{
-							name: this.organization.name
-						}
-					);
-					this.goBack();
-				})
-				.catch((error) => {
-					this.errorHandler.handleError(error);
+	/**
+	 * Update organization main settings
+	 *
+	 * @returns
+	 */
+	async updateOrganizationSettings() {
+		if (!this.organization || this.form.invalid) {
+			return;
+		}
+		try {
+			const organization = await this.organizationService.update(this.organization.id, {
+				imageUrl: this.imageUrl,
+				defaultValueDateType: this.organization.defaultValueDateType,
+				...this.form.getRawValue()
+			});
+			if (organization) {
+				this.organizationEditStore.organizationAction = {
+					organization,
+					action: CrudActionEnum.UPDATED
+				};
+				this.store.selectedOrganization = organization;
+			}
+			if (this.organization) {
+				this.toastrService.success(`TOASTR.MESSAGE.MAIN_ORGANIZATION_UPDATED`, {
+					name: this.organization.name
 				});
+			}
+			this.router.navigate([`/pages/organizations`]);
 		} catch (error) {
+			console.log('Error while updating organization main details', error);
 			this.errorHandler.handleError(error);
 		}
 	}
 
-	goBack() {
-		this.router.navigate([`/pages/organizations`]);
-	}
-
-	private _initializeForm() {
-		this.form = this.fb.group({
-			tags: [''],
-			currency: ['', Validators.required],
-			name: ['', Validators.required],
-			officialName: [''],
-			profile_link: ['', [
-				Validators.required,
-				Validators.pattern('^[a-z0-9-]+$')
-			]
-			],
-			taxId: [''],
-			registrationDate: [''],
-			website: ['']
-		});
-		setTimeout(() => {
-			this._setValues();
-		}, 100);
-	}
-
-	private _setValues() {
+	/**
+	 * Pre filled default form fields
+	 *
+	 * @returns
+	 */
+	private _setFormValues() {
 		if (!this.organization) {
 			return;
 		}
-		this.form.patchValue({
+		this.form.setValue({
 			tags: this.organization.tags,
 			currency: this.organization.currency,
 			name: this.organization.name,
 			officialName: this.organization.officialName,
 			profile_link: this.organization.profile_link,
 			taxId: this.organization.taxId,
+			website: this.organization.website,
 			registrationDate: this.organization.registrationDate
 				? new Date(this.organization.registrationDate)
-				: null,
-			website: this.organization.website
+				: null
 		});
-		this.currency = this.organization.currency;
-		this.tags = this.form.get('tags').value || [];
+		this.form.updateValueAndValidity();
 	}
 
-	private async _loadOrganizationData(organization: IOrganization) {
-		if (!organization) {
-			return;
-		}
-		const { id: organizationId } = organization;
-	 	this.organizationService.getById(organizationId, [
-			'contact', 'tags'
-		]).pipe(
-			filter((organization: IOrganization) => !!organization),
-			tap((organization: IOrganization) => this.organization = organization),
-			tap(() => {
-				this.organizationEditStore.selectedOrganization = this.organization;
-				this.loadEmployeesCount();
-				this._initializeForm();
-			}),
-		).subscribe();
-	}
-
-	selectedTagsEvent(currentSelection: ITag[]) {
-		this.form.get('tags').setValue(currentSelection);
+	/**
+	 * On Changed Tags Event Emitter
+	 *
+	 * @param tags
+	 */
+	selectedTagsEvent(tags: ITag[]) {
+		this.form.get('tags').setValue(tags);
+		this.form.get('tags').updateValueAndValidity();
 	}
 
 	/*
 	 * On Changed Currency Event Emitter
 	 */
-	currencyChanged($event: ICurrency) { }
+	currencyChanged($event: ICurrency) {}
 }

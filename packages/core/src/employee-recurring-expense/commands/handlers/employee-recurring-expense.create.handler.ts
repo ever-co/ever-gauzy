@@ -1,6 +1,7 @@
-import { IEmployeeRecurringExpense } from '@gauzy/contracts';
+import { IEmployeeRecurringExpense, PermissionsEnum } from '@gauzy/contracts';
 import { BadRequestException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { RequestContext } from './../../../core/context';
 import { EmployeeRecurringExpenseService } from '../../employee-recurring-expense.service';
 import { EmployeeRecurringExpenseCreateCommand } from '../employee-recurring-expense.create.command';
 
@@ -20,6 +21,16 @@ export class EmployeeRecurringExpenseCreateHandler
 	): Promise<IEmployeeRecurringExpense> {
 		try {
 			const { input } = command;
+			/**
+			 * If employee create self recurring expense
+			 */
+			if (!RequestContext.hasPermission(
+				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+			)) {
+				input.employeeId = RequestContext.currentEmployeeId();
+			} else {
+				input.employeeId = input.employeeId || null;
+			}
 			const recurringExpense = await this.employeeRecurringExpenseService.create(
 				input
 			);
