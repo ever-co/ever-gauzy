@@ -6,6 +6,7 @@ import {
 	IPagination
 } from '@gauzy/contracts';
 import {
+	BadRequestException,
 	Body,
 	Controller,
 	Delete,
@@ -21,7 +22,7 @@ import {
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { CrudController } from './../core/crud';
+import { CrudController, PaginationParams } from './../core/crud';
 import { Permissions } from './../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
@@ -31,6 +32,7 @@ import {
 	EmployeeRecurringExpenseEditCommand
 } from './commands';
 import { CreateEmployeeRecurringExpenseDTO, UpdateEmployeeRecurringExpenseDTO } from './dto';
+import { EmployeeRecurringExpenseQueryDTO } from './dto/employee-recurring-expense-query.dto';
 import { EmployeeRecurringExpense } from './employee-recurring-expense.entity';
 import { EmployeeRecurringExpenseService } from './employee-recurring-expense.service';
 import {
@@ -40,6 +42,7 @@ import {
 
 @ApiTags('EmployeeRecurringExpense')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
+@Permissions(PermissionsEnum.EMPLOYEE_EXPENSES_EDIT)
 @Controller()
 export class EmployeeRecurringExpenseController extends CrudController<EmployeeRecurringExpense> {
 	constructor(
@@ -61,13 +64,15 @@ export class EmployeeRecurringExpenseController extends CrudController<EmployeeR
 		description: 'Record not found'
 	})
 	@Permissions(PermissionsEnum.EMPLOYEE_EXPENSES_VIEW)
-	@Get('/month')
+	@Get('month')
 	async findAllByMonth(
-		@Query('data', ParseJsonPipe) data: any
+		@Query(new ValidationPipe()) options: EmployeeRecurringExpenseQueryDTO
 	): Promise<IPagination<IEmployeeRecurringExpense>> {
-		const { findInput, relations } = data;
-		return this.queryBus.execute(
-			new EmployeeRecurringExpenseByMonthQuery(findInput, relations)
+		return await this.queryBus.execute(
+			new EmployeeRecurringExpenseByMonthQuery(
+				options,
+				options.relations
+			)
 		);
 	}
 
@@ -83,7 +88,7 @@ export class EmployeeRecurringExpenseController extends CrudController<EmployeeR
 		description: 'Record not found'
 	})
 	@Permissions(PermissionsEnum.EMPLOYEE_EXPENSES_VIEW)
-	@Get('/date-update-type')
+	@Get('date-update-type')
 	async findStartDateUpdateType(
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<IStartUpdateTypeInfo> {
@@ -108,14 +113,29 @@ export class EmployeeRecurringExpenseController extends CrudController<EmployeeR
 	@Permissions(PermissionsEnum.EMPLOYEE_EXPENSES_VIEW)
 	@Get()
 	async findAll(
-		@Query('data', ParseJsonPipe) data: any
+		@Query(new ValidationPipe()) params: PaginationParams<EmployeeRecurringExpense>,
 	): Promise<IPagination<IEmployeeRecurringExpense>> {
-		const { findInput, order = {}, relations = [] } = data;
-		return this.employeeRecurringExpenseService.findAll({
-			where: findInput,
-			order: order,
-			relations
-		});
+		try {
+			return this.employeeRecurringExpenseService.findAll({
+				...(
+					(params && params.relations) ? {
+						relations: params.relations
+					} : {}
+				),
+				...(
+					(params && params.where) ? {
+						where: params.where
+					} : {}
+				),
+				...(
+					(params && params.order) ? {
+						order: params.order
+					} : {}
+				),
+			});
+		} catch (error) {
+			throw new BadRequestException(error);
+		}
 	}
 
 	@ApiOperation({ summary: 'Create new expense' })
@@ -129,14 +149,13 @@ export class EmployeeRecurringExpenseController extends CrudController<EmployeeR
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.CREATED)
-	@Permissions(PermissionsEnum.EMPLOYEE_EXPENSES_EDIT)
 	@Post()
 	async create(
 		@Body(new ValidationPipe({
 			transform: true
 		})) entity: CreateEmployeeRecurringExpenseDTO
 	): Promise<IEmployeeRecurringExpense> {
-		return this.commandBus.execute(
+		return await this.commandBus.execute(
 			new EmployeeRecurringExpenseCreateCommand(entity)
 		);
 	}
@@ -156,7 +175,6 @@ export class EmployeeRecurringExpenseController extends CrudController<EmployeeR
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
-	@Permissions(PermissionsEnum.EMPLOYEE_EXPENSES_EDIT)
 	@Put(':id')
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
@@ -179,8 +197,6 @@ export class EmployeeRecurringExpenseController extends CrudController<EmployeeR
 		description: 'Record not found'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
-	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.EMPLOYEE_EXPENSES_EDIT)
 	@Delete(':id')
 	async delete(
 		@Param('id', UUIDValidationPipe) id: string,

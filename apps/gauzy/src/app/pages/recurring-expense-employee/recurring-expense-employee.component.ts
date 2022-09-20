@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Params } from '@angular/router';
 import {
 	IOrganization,
 	RecurringExpenseDefaultCategoriesEnum,
@@ -14,7 +14,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { combineLatest, firstValueFrom, Subject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { distinctUntilChange } from '@gauzy/common-angular';
+import { distinctUntilChange, toUTC } from '@gauzy/common-angular';
 import { TranslationBaseComponent } from '../../@shared/language-base';
 import { monthNames } from '../../@core/utils/date';
 import {
@@ -85,7 +85,7 @@ export class RecurringExpensesEmployeeComponent extends TranslationBaseComponent
 			.pipe(
 				debounceTime(300),
 				distinctUntilChange(),
-				filter(([organization, dateRange, employee]) => !!organization && !!dateRange && !!employee),
+				filter(([organization, dateRange]) => !!organization && !!dateRange),
 				tap(([organization, dateRange, employee]) => {
 					this.organization = organization;
 					this.selectedDateRange = dateRange;
@@ -97,14 +97,15 @@ export class RecurringExpensesEmployeeComponent extends TranslationBaseComponent
 			.subscribe();
 		this.route.params
 			.pipe(
-				filter((params) => !!params && !!params.id),
-				tap((params) => this.getSelectedEmployee(params.id)),
+				filter((params: Params) => !!params && !!params.id),
+				tap((params: Params) => this.getSelectedEmployee(params.id)),
 				untilDestroyed(this)
 			)
 			.subscribe();
 		this.route.queryParamMap
 			.pipe(
-				filter((params) => !!params && params.get('openAddDialog') === 'true'),
+				filter((params: Params) => !!params),
+				filter((params: Params) => params.get('openAddDialog') === 'true'),
 				debounceTime(1000),
 				tap(() => this.addEmployeeRecurringExpense()),
 				untilDestroyed(this)
@@ -315,8 +316,8 @@ export class RecurringExpensesEmployeeComponent extends TranslationBaseComponent
 					['employee', 'employee.user'],
 					{
 						employeeId: this.selectedEmployeeId,
-						startDate,
-						endDate,
+						startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm'),
+						endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm'),
 						organizationId,
 						tenantId
 					}
@@ -330,7 +331,8 @@ export class RecurringExpensesEmployeeComponent extends TranslationBaseComponent
 					{
 						organizationId,
 						tenantId
-					}
+					},
+					{}
 				)
 			).items;
 			this.loading = false;
@@ -338,6 +340,13 @@ export class RecurringExpensesEmployeeComponent extends TranslationBaseComponent
 	}
 
 	public async fetchHistory() {
+		if (!this.organization) {
+			return;
+		}
+
+		const { id: organizationId } = this.organization;
+		const { tenantId } = this.store.user;
+
 		this.showHistory = !this.showHistory;
 		this.fetchedHistories[this.selectedRecurringExpense.index] = (
 			await this.employeeRecurringExpenseService.getAll(
@@ -345,7 +354,9 @@ export class RecurringExpensesEmployeeComponent extends TranslationBaseComponent
 				{
 					parentRecurringExpenseId:
 						this.selectedRecurringExpense.data
-							.parentRecurringExpenseId
+							.parentRecurringExpenseId,
+					organizationId,
+					tenantId
 				},
 				{ startDate: 'ASC' }
 			)

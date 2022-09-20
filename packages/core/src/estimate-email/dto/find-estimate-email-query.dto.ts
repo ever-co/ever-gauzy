@@ -1,8 +1,9 @@
 import { IEstimateEmailFindInput } from "@gauzy/contracts";
-import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { IsArray, IsEmail, IsNotEmpty, IsOptional, IsString } from "class-validator";
+import { ApiProperty } from "@nestjs/swagger";
+import { IsEmail, IsNotEmpty, IsString } from "class-validator";
+import { RelationsQueryDTO } from "./../../shared/dto";
 
-export class FindEstimateEmailQueryDTO implements IEstimateEmailFindInput {
+export class FindEstimateEmailQueryDTO extends RelationsQueryDTO implements IEstimateEmailFindInput {
 
     @ApiProperty({ type: () => String, readOnly: true })
 	@IsNotEmpty()
@@ -13,9 +14,4 @@ export class FindEstimateEmailQueryDTO implements IEstimateEmailFindInput {
 	@IsNotEmpty()
 	@IsString()
 	readonly token: string;
-
-	@ApiPropertyOptional({ type: () => Array, isArray: true, readOnly: true })
-    @IsOptional()
-    @IsArray()
-    readonly relations: string[];
 }
