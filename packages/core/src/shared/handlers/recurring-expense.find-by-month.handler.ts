@@ -4,8 +4,9 @@ import {
 	IRecurringExpenseModel
 } from '@gauzy/contracts';
 import { Between, FindManyOptions, IsNull, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
+import * as moment from 'moment';
 import { CrudService } from './../../core/crud';
-import { getDateRange } from './../../core/utils';
+import { getDateRangeFormat } from './../../core/utils';
 import { RequestContext } from './../../core/context';
 
 /**
@@ -29,29 +30,30 @@ export abstract class FindRecurringExpenseByMonthHandler<
 		const { organizationId, employeeId, startDate, endDate } = input;
 		const tenantId = RequestContext.currentTenantId();
 
-		const where: Object = {
+		let where: Object = {
 			organizationId,
 			tenantId
 		}
-
-		let whereId: Object = employeeId ? { employeeId, ...where } : { ...where };
+		where = employeeId ? { employeeId, ...where } : { ...where };
 		if (input.parentRecurringExpenseId) {
-			whereId = {
-				...whereId,
+			where = {
+				...where,
 				parentRecurringExpenseId: input.parentRecurringExpenseId
 			};
 		}
-
-		const { start, end } = getDateRange(startDate, endDate);
+		const { start, end } = getDateRangeFormat(
+			moment.utc(startDate),
+			moment.utc(endDate)
+		);
 		const expenses = await this.crudService.findAll({
 			where: [
 				{
-					...whereId,
+					...where,
 					startDate: Between(start, end),
 					endDate: IsNull()
 				},
 				{
-					...whereId,
+					...where,
 					startDate: LessThanOrEqual(start),
 					endDate: MoreThanOrEqual(end)
 				}

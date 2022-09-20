@@ -7,8 +7,10 @@ import {
 	IFindStartDateUpdateTypeInput,
 	IStartUpdateTypeInfo,
 	IRecurringExpenseDeleteInput,
-	IRecurringExpenseOrderFields
+	IRecurringExpenseOrderFields,
+	IPagination
 } from '@gauzy/contracts';
+import { toParams } from '@gauzy/common-angular';
 import { firstValueFrom } from 'rxjs';
 import { API_PREFIX } from '../constants/app.constants';
 
@@ -18,7 +20,9 @@ import { API_PREFIX } from '../constants/app.constants';
 export class EmployeeRecurringExpenseService {
 	private readonly API_URL = `${API_PREFIX}/employee-recurring-expense`;
 
-	constructor(private http: HttpClient) {}
+	constructor(
+		private readonly http: HttpClient
+	) {}
 
 	create(createInput: IEmployeeRecurringExpense): Promise<any> {
 		return firstValueFrom(
@@ -28,42 +32,24 @@ export class EmployeeRecurringExpenseService {
 	}
 
 	getAll(
-		relations?: string[],
-		findInput?: IEmployeeRecurringExpenseFindInput,
-		order?: IRecurringExpenseOrderFields
-	): Promise<{
-		items: IEmployeeRecurringExpense[];
-		total: number;
-	}> {
-		const data = JSON.stringify({ relations, findInput, order });
-
+		relations: string[] = [],
+		where?: IEmployeeRecurringExpenseFindInput,
+		order?: IRecurringExpenseOrderFields,
+	): Promise<IPagination<IEmployeeRecurringExpense>> {
 		return firstValueFrom(
-			this.http
-			.get<{
-				items: IEmployeeRecurringExpense[];
-				total: number;
-			}>(this.API_URL, {
-				params: { data }
+			this.http.get<IPagination<IEmployeeRecurringExpense>>(this.API_URL, {
+				params: toParams({ relations, where, order })
 			})
 		);
 	}
 
 	getAllByRange(
 		relations?: string[],
-		findInput?: IEmployeeRecurringExpenseByMonthFindInput
-	): Promise<{
-		items: IEmployeeRecurringExpense[];
-		total: number;
-	}> {
-		const data = JSON.stringify({ relations, findInput });
-
+		where?: IEmployeeRecurringExpenseByMonthFindInput
+	): Promise<IPagination<IEmployeeRecurringExpense>> {
 		return firstValueFrom(
-			this.http
-			.get<{
-				items: IEmployeeRecurringExpense[];
-				total: number;
-			}>(`${this.API_URL}/month`, {
-				params: { data }
+			this.http.get<IPagination<IEmployeeRecurringExpense>>(`${this.API_URL}/month`, {
+				params: toParams({ relations, ...where })
 			})
 		);
 	}

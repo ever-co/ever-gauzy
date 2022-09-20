@@ -6,6 +6,6 @@ export class EmployeeRecurringExpenseByMonthQuery implements IQuery {
 
 	constructor(
 		public readonly input: IEmployeeRecurringExpenseByMonthFindInput,
-		public readonly relations?: string[]
+		public readonly relations: string[] = []
 	) {}
 }
