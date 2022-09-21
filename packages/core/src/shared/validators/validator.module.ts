@@ -9,7 +9,8 @@ import {
     IsExpenseCategoryAlreadyExistConstraint,
     IsOrganizationShouldBelongsToConstraint,
     IsRoleAlreadyExistConstraint,
-    IsRoleShouldExistConstraint
+    IsRoleShouldExistConstraint,
+    IsTenantBelongsToUserConstraint
 } from "./constraints";
 
 @Module({
@@ -25,6 +26,7 @@ import {
         IsOrganizationShouldBelongsToConstraint,
         IsRoleAlreadyExistConstraint,
         IsRoleShouldExistConstraint,
+        IsTenantBelongsToUserConstraint
     ]
 })
 export class ValidatorModule {}
