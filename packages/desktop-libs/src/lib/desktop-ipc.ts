@@ -1,9 +1,9 @@
-import { BrowserWindow, ipcMain, screen } from 'electron';
-import { TimerData } from './desktop-timer-activity';
+import {BrowserWindow, ipcMain, screen, systemPreferences} from 'electron';
+import {TimerData} from './desktop-timer-activity';
 import TimerHandler from './desktop-timer';
 import moment from 'moment';
-import { LocalStore } from './desktop-store';
-import { takeshot, notifyScreenshot } from './desktop-screenshot';
+import {LocalStore} from './desktop-store';
+import {takeshot, notifyScreenshot} from './desktop-screenshot';
 import {
 	hasPromptedForPermission,
 	hasScreenCapturePermission,
@@ -13,6 +13,7 @@ import * as _ from 'underscore';
 import {
 	timeTrackerPage
 } from '@gauzy/desktop-window';
+
 const timerHandler = new TimerHandler();
 
 // Import logging for electron and override default console logging
@@ -82,7 +83,7 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 	ipcMain.on('time_tracker_ready', async (event, arg) => {
 		const auth = LocalStore.getStore('auth');
 		if (auth && auth.userId) {
-			const [ lastTime ] = await TimerData.getLastCaptureTimeSlot(
+			const [lastTime] = await TimerData.getLastCaptureTimeSlot(
 				knex,
 				LocalStore.beforeRequestParams()
 			);
@@ -115,9 +116,9 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 	ipcMain.on('request_permission', async (event) => {
 		try {
 			if (process.platform === 'darwin') {
-				const screenCapturePermission = hasScreenCapturePermission();
-				if (!screenCapturePermission) {
-					if (!hasPromptedForPermission()) {
+				const screenCapturePermission = systemPreferences.getMediaAccessStatus('screen');
+				if (screenCapturePermission !== 'granted') {
+					if (hasPromptedForPermission()) {
 						await openSystemPreferences();
 					}
 				}
