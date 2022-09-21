@@ -6,7 +6,7 @@ import {
 	NgZone
 } from '@angular/core';
 import { transition, trigger, style, animate } from '@angular/animations';
-import { ElectronServices } from '../electron/services';
+import { ElectronService } from '../electron/services';
 export const fadeInOutAnimation = trigger('fadeInOut', [
 	transition(':enter', [
 		// :enter is alias to 'void => *'
@@ -36,7 +36,7 @@ export class ImageViewerComponent implements OnInit {
 	item: any = {};
 	constructor(
 		// private dialogRef: NbDialogRef<any>
-		private electronService: ElectronServices,
+		private electronService: ElectronService,
 		private readonly _ngZone: NgZone
 	) {}
 
