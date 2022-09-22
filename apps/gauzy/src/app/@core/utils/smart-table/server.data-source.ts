@@ -3,7 +3,7 @@ import { firstValueFrom, Observable } from 'rxjs';
 import { ServerSourceConf } from './server-source.conf';
 import { LocalDataSource } from 'ng2-smart-table';
 import { catchError, map, tap } from 'rxjs/operators';
-import { isNotEmpty, toParams } from '@gauzy/common-angular';
+import { toParams } from '@gauzy/common-angular';
 
 export class ServerDataSource extends LocalDataSource {
 
@@ -96,7 +96,6 @@ export class ServerDataSource extends LocalDataSource {
             ...(this.conf.join ? { join: this.conf.join } : {}),
             ...(this.conf.relations ? { relations: this.conf.relations } : {}),
             ...this.addSortRequestParams(),
-            ...this.addFilterRequestParams(),
             ...this.addPagerRequestParams(),
         }
         return toParams(requestParams);
@@ -109,40 +108,7 @@ export class ServerDataSource extends LocalDataSource {
                 orders[fieldConf.field] = fieldConf.direction.toUpperCase();
             });
             return {
-                [this.conf.sortFieldKey]: orders
-            }
-        } else {
-            return {}
-        }
-    }
-
-    protected addFilterRequestParams() {
-        if (this.filterConf.filters) {
-            const filters: any = {}
-            try {
-                this.filterConf.filters.forEach((fieldConf: any) => {
-                    let condition = 'default';
-                    let dataType = 'string';
-
-                    if (fieldConf.filter && fieldConf.filter.condition) {
-                        condition = fieldConf.filter.condition;
-                    } else if (dataType == 'string') {
-                        condition = 'ILike';
-                    }
-                    if (isNotEmpty(fieldConf['search'])) {
-                        const { field, search } = fieldConf;
-                        filters[field] = {
-                            dataType,
-                            condition,
-                            search,
-                        };
-                    }
-                });
-                return {
-                    [this.conf.filterFieldKey]: filters
-                }
-            } catch (error) {
-                console.log({ error });
+                [this.conf.sortDirKey]: orders
             }
         } else {
             return {}

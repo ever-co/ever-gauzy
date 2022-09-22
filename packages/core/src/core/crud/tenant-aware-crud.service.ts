@@ -45,9 +45,14 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity> extends
 		user: IUser
 	): FindOptionsWhere<T>{
 		return {
-			tenant: {
-				id: user.tenantId
-			},
+			...(
+				this.repository.metadata.hasColumnWithPropertyPath('tenantId')
+			) ? {
+				tenant: {
+					id: user.tenantId
+				},
+				tenantId: user.tenantId
+			} : {},
 			...this.findConditionsWithEmployeeByUser()
 		} as FindOptionsWhere<T>;
 	}
@@ -61,10 +66,7 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity> extends
 			where.forEach((options: FindOptionsWhere<T>) => {
 				wheres.push({
 					...options,
-					tenant: {
-						id: user.tenantId
-					},
-					...this.findConditionsWithEmployeeByUser()
+					...this.findConditionsWithTenantByUser(user)
 				})
 			});
 			return wheres;
@@ -72,15 +74,9 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity> extends
 		return (
 			where ? {
 				...where,
-				tenant: {
-					id: user.tenantId
-				},
-				...this.findConditionsWithEmployeeByUser()
+				...this.findConditionsWithTenantByUser(user)
 			} : {
-				tenant: {
-					id: user.tenantId
-				},
-				...this.findConditionsWithEmployeeByUser()
+				...this.findConditionsWithTenantByUser(user)
 			}
 		) as FindOptionsWhere<T>;
 	}
@@ -161,13 +157,17 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity> extends
 	public async countBy(options?: FindOptionsWhere<T>): Promise<number> {
 		const user = RequestContext.currentUser();
 		return await super.countBy({
-			...this.findConditionsWithTenantByUser(user),
-			...options
+			...options,
+			...this.findConditionsWithTenantByUser(user)
 		});
 	}
 
 	public async findAll(filter?: FindManyOptions<T>): Promise<IPagination<T>> {
 		return await super.findAll(this.findManyWithTenant(filter));
+	}
+
+	public async paginate(filter?: FindManyOptions<T>): Promise<IPagination<T>> {
+		return await super.paginate(this.findManyWithTenant(filter));
 	}
 
 	/*
@@ -185,10 +185,13 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity> extends
 	 * @returns
 	 */
 	public async findOneOrFailByIdString(
-		id: string,
+		id: T['id'],
 		options?: FindOneOptions<T>
 	): Promise<ITryRequest<T>> {
-		return await super.findOneOrFailByIdString(id, this.findOneWithTenant(options));
+		return await super.findOneOrFailByIdString(
+			id,
+			this.findOneWithTenant(options)
+		);
 	}
 
 	/**
@@ -201,7 +204,9 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity> extends
 	public async findOneOrFailByOptions(
 		options?: FindOneOptions<T>
 	): Promise<ITryRequest<T>> {
-		return await super.findOneOrFailByOptions(this.findOneWithTenant(options));
+		return await super.findOneOrFailByOptions(
+			this.findOneWithTenant(options)
+		);
 	}
 
 	/**
@@ -216,8 +221,8 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity> extends
 	): Promise<ITryRequest<T>> {
 		const user = RequestContext.currentUser();
 		return await super.findOneOrFailByWhereOptions({
-			...this.findConditionsWithTenantByUser(user),
-			...options
+			...options,
+			...this.findConditionsWithTenantByUser(user)
 		});
 	}
 
@@ -235,10 +240,13 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity> extends
 	 * @returns
 	 */
 	public async findOneByIdString(
-		id: string,
+		id: T['id'],
 		options?: FindOneOptions<T>
 	): Promise<T> {
-		return await super.findOneByIdString(id, this.findOneWithTenant(options));
+		return await super.findOneByIdString(
+			id,
+			this.findOneWithTenant(options)
+		);
 	}
 
 	/**
@@ -257,6 +265,23 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity> extends
 	}
 
 	/**
+	 * Finds first entity that matches given where condition with current tenant.
+	 * If entity was not found in the database - returns null.
+	 *
+	 * @param options
+	 * @returns
+	 */
+	public async findOneByWhereOptions(
+		options: FindOptionsWhere<T>
+	): Promise<T> {
+		const user = RequestContext.currentUser();
+		return await super.findOneByWhereOptions({
+			...options,
+			...this.findConditionsWithTenantByUser(user)
+		});
+	}
+
+	/**
 	 * Creates a new entity instance and copies all entity properties from this object into a new entity.
 	 * Note that it copies only properties that are present in entity schema.
 	 *
@@ -264,15 +289,27 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity> extends
 	 * @param options
 	 * @returns
 	 */
-	public async create(entity: DeepPartial<T>, ...options: any[]): Promise<T> {
+	public async create(entity: DeepPartial<T>): Promise<T> {
 		const tenantId = RequestContext.currentTenantId();
-		if (tenantId) {
-			return super.create({
-				...entity,
-				tenant: { id: tenantId }
-			});
-		}
-		return super.create(entity);
+		return super.create({
+			...entity,
+			...(
+				this.repository.metadata.hasColumnWithPropertyPath('tenantId')
+			) ? {
+				tenant: {
+					id: tenantId
+				},
+				tenantId,
+			} : {},
+			...(
+				!RequestContext.hasPermission(
+					PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+				) &&
+				this.repository.metadata.hasColumnWithPropertyPath('employeeId')
+			) ? {
+				employeeId: RequestContext.currentEmployeeId()
+			} : {}
+		});
 	}
 
 	/**
