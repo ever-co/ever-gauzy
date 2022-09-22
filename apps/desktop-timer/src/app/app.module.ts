@@ -22,7 +22,8 @@ import {
 	ScreenCaptureModule,
 	TimeTrackerModule,
 	SetupModule,
-	SplashScreenModule
+	SplashScreenModule,
+	ElectronService
 } from '@gauzy/desktop-ui-lib';
 import { NbCardModule, NbButtonModule } from '@nebular/theme';
 import { HttpLoaderFactory } from '../../../gauzy/src/app/@shared/translate/translate.module';
@@ -86,6 +87,7 @@ import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 		AuthStrategy,
 		AuthService,
 		ServerConnectionService,
+		ElectronService,
 		{
 			provide: APP_INITIALIZER,
 			useFactory: serverConnectionFactory,

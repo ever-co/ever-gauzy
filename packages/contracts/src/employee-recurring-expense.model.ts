@@ -8,8 +8,8 @@ export interface IEmployeeRecurringExpense extends IRecurringExpenseModel {
 export interface IEmployeeRecurringExpenseByMonthFindInput
 	extends IBasePerTenantAndOrganizationEntityModel {
 	employeeId?: string;
-	startDate?: Date;
-	endDate?: Date;
+	startDate?: Date | string;
+	endDate?: Date | string;
 }
 
 export interface IEmployeeRecurringExpenseFindInput

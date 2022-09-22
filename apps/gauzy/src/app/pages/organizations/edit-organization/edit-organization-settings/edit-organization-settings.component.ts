@@ -1,9 +1,12 @@
-import { Component, OnInit, Input } from '@angular/core';
-import { ActivatedRoute, Params } from '@angular/router';
+import { Component, OnInit, Input, AfterViewInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { IOrganization } from '@gauzy/contracts';
+import { NbRouteTab } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
+import { tap } from 'rxjs/operators';
 import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
+
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-edit-organization-settings',
@@ -13,31 +16,34 @@ import { TranslationBaseComponent } from '../../../../@shared/language-base/tran
 		'../../../../@shared/user/edit-profile-form/edit-profile-form.component.scss'
 	]
 })
-export class EditOrganizationSettingsComponent
-	extends TranslationBaseComponent
-	implements OnInit {
-	@Input() organization: IOrganization;
+export class EditOrganizationSettingsComponent extends TranslationBaseComponent
+	implements AfterViewInit, OnInit {
 
-	routeParams: Params;
-	tabs: any[];
+	@Input() organization: IOrganization;
+	tabs: NbRouteTab[] = [];
 
 	constructor(
-		private route: ActivatedRoute,
-		readonly translateService: TranslateService
+		private readonly route: ActivatedRoute,
+		public readonly translateService: TranslateService
 	) {
 		super(translateService);
 	}
 
 	ngOnInit() {
-		this.route.params.pipe(untilDestroyed(this)).subscribe((params) => {
-			this.routeParams = params;
-			this.loadTabs();
-			this._applyTranslationOnTabs();
-		});
+		this.route.params
+			.pipe(
+				tap(() => this.loadTabs()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
-	getRoute(tabName: string) {
-		return `/pages/organizations/edit/${this.routeParams.id}/${tabName}`;
+	ngAfterViewInit() {
+		this._applyTranslationOnTabs();
+	}
+
+	getRoute(tab: string) {
+		return `/pages/organizations/edit/${this.route.snapshot.paramMap.get('id')}/${tab}`;
 	}
 
 	loadTabs() {
@@ -65,9 +71,10 @@ export class EditOrganizationSettingsComponent
 
 	private _applyTranslationOnTabs() {
 		this.translateService.onLangChange
-			.pipe(untilDestroyed(this))
-			.subscribe(() => {
-				this.loadTabs();
-			});
+			.pipe(
+				tap(() => this.loadTabs()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 }

@@ -118,7 +118,7 @@ export class OrganizationController extends CrudController<Organization> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@Permissions(PermissionsEnum.ALL_ORG_VIEW)
+	@Permissions()
 	@Get(':id')
 	async findById(
 		@Param('id', UUIDValidationPipe) id: string,

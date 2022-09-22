@@ -1,4 +1,4 @@
-<form class="main-form" [formGroup]="form" *ngIf="form">
+<form class="main-form" [formGroup]="form">
 	<aside class="aside-nav">
 		<h4 class="settings-section-header">
 			{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS_SECTION' | translate }}
@@ -47,7 +47,7 @@
 	<section class="fields-section">
 		<div class="actions">
 			<button
-				[disabled]="this.form.invalid"
+				[disabled]="form.invalid"
 				(click)="updateOrganizationSettings()"
 				nbButton
 				status="success"
@@ -323,7 +323,7 @@
 					<nb-accordion-item-body>
 						<div class="fields">
 							<div class="row">
-								<div class="col-6 color-pick">
+								<!-- <div class="col-6 color-pick">
 									<div class="form-group">
 										<label class="label">
 											{{
@@ -357,7 +357,7 @@
 											"
 										/>
 									</div>
-								</div>
+								</div> -->
 								<div class="select-wrapper">
 									<div class="form-group design-select">
 										<label class="label">
@@ -474,9 +474,6 @@
 										formControlName="separateInvoiceItemTaxAndDiscount"
 										status="primary"
 										labelPosition="start"
-										(checkedChange)="
-											toggleSeparateTaxing($event)
-										"
 									>
 										{{
 											'FORM.LABELS.ALLOW_TAXING_AND_DISCOUNTING_OF_INVOICE_ITEMS_SEPARATELY'
@@ -496,9 +493,6 @@
 										formControlName="discountAfterTax"
 										status="primary"
 										labelPosition="start"
-										(checkedChange)="
-											toggleDiscountAfterTax($event)
-										"
 									>
 										{{
 											'FORM.LABELS.APPLY_DISCOUNT_AFTER_TAX_FOR_INVOICES_AND_ESTIMATES'
@@ -518,9 +512,6 @@
 										formControlName="convertAcceptedEstimates"
 										status="primary"
 										labelPosition="start"
-										(checkedChange)="
-											toggleEstimateConverting($event)
-										"
 									>
 										{{
 											'FORM.LABELS.ALLOW_CONVERTING'
@@ -669,9 +660,6 @@
 												'FORM.PLACEHOLDERS.TYPE_OF_BONUS'
 													| translate
 											"
-											(selectedChange)="
-												loadDefaultBonusPercentage($event)
-											"
 											fullWidth
 										>
 											<nb-option [value]="null">
@@ -739,7 +727,6 @@
 											formControlName="invitesAllowed"
 											status="primary"
 											labelPosition="start"
-											(checkedChange)="toggleExpiry($event)"
 										>
 											{{
 												'FORM.LABELS.ALLOW_USER_INVITES'

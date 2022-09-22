@@ -33,7 +33,7 @@ import {
 	ITimeLogFilters,
 	IUser
 } from '@gauzy/contracts';
-import { BehaviorSubject, combineLatest, firstValueFrom, Subject, Subscription, timer } from 'rxjs';
+import { BehaviorSubject, combineLatest, firstValueFrom, of, Subject, Subscription, switchMap, timer } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { indexBy, range, reduce } from 'underscore';
 import {
@@ -190,12 +190,16 @@ export class TimeTrackingComponent extends TranslationBaseComponent
 			.pipe(
 				distinctUntilChange(),
 				debounceTime(500),
-				filter(([organization, dateRange, employee]) => !!organization && !!dateRange && !!employee),
-				tap(([organization, dateRange, employee, project]) => {
+				filter(([organization, dateRange]) => !!organization && !!dateRange),
+				switchMap(([organization, dateRange, employee, project]) => {
 					this.organization = organization;
+					this.selectedDateRange = dateRange;
+					return combineLatest([of(employee), of(project)]);
+				}),
+				filter(([employee]) => !!employee),
+				tap(([employee, project]) => {
 					this.employeeIds = employee ? [employee.id] : [];
 					this.projectIds = project ? [project.id] : [];
-					this.selectedDateRange = dateRange;
 					this.widgetService.widgets.forEach((widget: GuiDrag) => {
 						if (widget.position === 0 && this.employeeIds[0]) {
 							widget.hide = true;
@@ -607,10 +611,12 @@ export class TimeTrackingComponent extends TranslationBaseComponent
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 
-		this.employeesCount = await this.employeesService.getCount({
-			organizationId,
-			tenantId
-		});
+		this.employeesService.getCount({ organizationId, tenantId })
+			.pipe(
+				tap((count: number) => this.employeesCount = count),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
   	private async loadProjectsCount() {

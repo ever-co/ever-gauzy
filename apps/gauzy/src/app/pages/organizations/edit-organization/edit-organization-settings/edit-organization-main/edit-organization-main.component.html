@@ -7,8 +7,8 @@
 				(uploadImageError)="handleImageUploadError($event)"
 			></ngx-image-uploader>
 			<div
-					class="image-overlay"
-					[ngStyle]="{ opacity: hoverState ? '0.2' : '0' }"
+				class="image-overlay"
+				[ngStyle]="{ opacity: hoverState ? '0.2' : '0' }"
 			></div>
 			<img
 				*ngIf="imageUrl"
@@ -23,70 +23,62 @@
 			{{ 'ORGANIZATIONS_PAGE.EMPLOYEES' | translate }}
 		</h6>
 	</div>
-
-	<form class="main-form" [formGroup]="form" *ngIf="form">
+	<form class="main-form" [formGroup]="form">
 		<div class="fields">
 			<div class="row">
 				<div class="col">
 					<div class="form-group">
-						<label class="label" for="nameInput">{{
-							'FORM.LABELS.NAME' | translate
-						}}</label>
+						<label class="label" for="nameInput">
+							{{ 'FORM.LABELS.NAME' | translate }}
+						</label>
 						<input
 							fullWidth
 							id="nameInput"
 							type="text"
 							nbInput
 							formControlName="name"
-							placeholder="{{
-								'FORM.PLACEHOLDERS.NAME' | translate
-							}}"
+							[placeholder]=" 'FORM.PLACEHOLDERS.NAME' | translate"
 						/>
 					</div>
 				</div>
 				<div class="col">
 					<span>
 					<ga-currency
-						[(ngModel)]="currency"
+						formControlName="currency"
 						[formControl]="form.get('currency')"
 						(optionChange)="currencyChanged($event)"
 					></ga-currency>
 					</span>
 				</div>
 			</div>
-
 			<div class="row">
 				<div class="col-6">
 					<div class="form-group">
-						<label class="label" for="officialNameInput">{{
-							'FORM.LABELS.OFFICIAL_NAME' | translate
-						}}</label>
+						<label class="label" for="officialNameInput">
+							{{ 'FORM.LABELS.OFFICIAL_NAME' | translate }}
+						</label>
 						<input
 							fullWidth
 							id="officialNameInput"
 							type="text"
 							nbInput
 							formControlName="officialName"
-							placeholder="{{
-								'FORM.PLACEHOLDERS.OFFICIAL_NAME' | translate
-							}}"
+							[placeholder]="'FORM.PLACEHOLDERS.OFFICIAL_NAME' | translate"
 						/>
 					</div>
 				</div>
 				<div class="col-6">
 					<div class="form-group tax-form-group">
-						<label class="label" for="taxIdInput">{{
-							'FORM.LABELS.TAX_ID' | translate
-						}}</label>
+						<label class="label" for="taxIdInput">
+							{{ 'FORM.LABELS.TAX_ID' | translate }}
+						</label>
 						<input
 							fullWidth
 							id="taxIdInput"
 							type="text"
 							nbInput
 							formControlName="taxId"
-							placeholder="{{
-								'FORM.PLACEHOLDERS.TAX_ID' | translate
-							}}"
+							[placeholder]="'FORM.PLACEHOLDERS.TAX_ID' | translate"
 						/>
 					</div>
 				</div>
@@ -94,46 +86,40 @@
 			<div class="row">
 				<div class="col-6">
 					<div class="form-group">
-						<label class="label" for="profileLinkInput">{{
-							'FORM.LABELS.PROFILE_LINK' | translate
-						}}</label>
+						<label class="label" for="profileLinkInput">
+							{{ 'FORM.LABELS.PROFILE_LINK' | translate }}
+						</label>
 						<input
 							fullWidth
 							id="profileLinkInput"
 							type="text"
 							nbInput
 							formControlName="profile_link"
-							placeholder="{{
-								'FORM.PLACEHOLDERS.PROFILE_LINK' | translate
-							}}"
+							[placeholder]="'FORM.PLACEHOLDERS.PROFILE_LINK' | translate"
 						/>
 					</div>
 				</div>
 				<div class="col-6">
 					<div class="form-group">
 						<ga-tags-color-input
-							[selectedTags]="tags"
+							[selectedTags]="form.get('tags').value"
 							(selectedTagsEvent)="selectedTagsEvent($event)"
 							[isOrgLevel]="true"
-						>
-						</ga-tags-color-input>
+						></ga-tags-color-input>
 					</div>
 				</div>
 			</div>
 			<div class="row">
 				<div class="col-6">
 					<div class="form-group registration-form-group">
-						<label class="label" for="registrationDate">{{
-							'FORM.LABELS.REGISTRATION_DATE' | translate
-						}}</label>
+						<label class="label" for="registrationDate">
+							{{ 'FORM.LABELS.REGISTRATION_DATE' | translate }}
+						</label>
 						<input
 							nbInput
 							fullWidth
 							id="registrationDate"
-							placeholder="{{
-								'FORM.PLACEHOLDERS.REGISTRATION_DATE'
-									| translate
-							}}"
+							[placeholder]="'FORM.PLACEHOLDERS.REGISTRATION_DATE' | translate"
 							[nbDatepicker]="registrationDate"
 							formControlName="registrationDate"
 						/>
@@ -142,23 +128,20 @@
 				</div>
 				<div class="col-6">
 					<div class="form-group">
-						<label class="label" for="website">{{
-							'FORM.LABELS.WEBSITE' | translate
-						}}</label>
+						<label class="label" for="website">
+							{{ 'FORM.LABELS.WEBSITE' | translate }}
+						</label>
 						<input
 							nbInput
 							fullWidth
 							id="website"
-							placeholder="{{
-								'FORM.PLACEHOLDERS.WEBSITE' | translate
-							}}"
+							[placeholder]="'FORM.PLACEHOLDERS.WEBSITE' | translate"
 							formControlName="website"
 						/>
 					</div>
 				</div>
 			</div>
 		</div>
-
 		<div class="actions">
 			<button
 				[disabled]="this.form.invalid"

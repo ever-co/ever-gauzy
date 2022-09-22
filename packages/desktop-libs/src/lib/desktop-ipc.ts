@@ -1,18 +1,17 @@
-import { BrowserWindow, ipcMain, screen } from 'electron';
-import { TimerData } from './desktop-timer-activity';
+import {BrowserWindow, ipcMain, screen, systemPreferences} from 'electron';
+import {TimerData} from './desktop-timer-activity';
 import TimerHandler from './desktop-timer';
 import moment from 'moment';
-import { LocalStore } from './desktop-store';
-import { takeshot, notifyScreenshot } from './desktop-screenshot';
+import {LocalStore} from './desktop-store';
+import {takeshot, notifyScreenshot} from './desktop-screenshot';
 import {
-	hasPromptedForPermission,
-	hasScreenCapturePermission,
 	openSystemPreferences
 } from 'mac-screen-capture-permissions';
 import * as _ from 'underscore';
 import {
 	timeTrackerPage
 } from '@gauzy/desktop-window';
+
 const timerHandler = new TimerHandler();
 
 // Import logging for electron and override default console logging
@@ -82,7 +81,7 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 	ipcMain.on('time_tracker_ready', async (event, arg) => {
 		const auth = LocalStore.getStore('auth');
 		if (auth && auth.userId) {
-			const [ lastTime ] = await TimerData.getLastCaptureTimeSlot(
+			const [lastTime] = await TimerData.getLastCaptureTimeSlot(
 				knex,
 				LocalStore.beforeRequestParams()
 			);
@@ -115,11 +114,9 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 	ipcMain.on('request_permission', async (event) => {
 		try {
 			if (process.platform === 'darwin') {
-				const screenCapturePermission = hasScreenCapturePermission();
-				if (!screenCapturePermission) {
-					if (!hasPromptedForPermission()) {
-						await openSystemPreferences();
-					}
+				const screenCapturePermission = systemPreferences.getMediaAccessStatus('screen');
+				if (screenCapturePermission !== 'granted') {
+					await openSystemPreferences();
 				}
 			}
 		} catch (error) {
@@ -293,10 +290,12 @@ export function ipcTimer(
 	ipcMain.on('show_screenshot_notif_window', (event, arg) => {
 		const appSetting = LocalStore.getStore('appSetting');
 		const notify = new NotificationDesktop();
-		if(appSetting.simpleScreenshotNotification){
-			notify.customNotification('Screenshot taken', 'Gauzy');
-		}else if (appSetting.screenshotNotification) {
-			notifyScreenshot(notificationWindow, arg, windowPath, soundPath, timeTrackerWindow);
+		if (appSetting) {
+			if (appSetting.simpleScreenshotNotification) {
+				notify.customNotification('Screenshot taken', 'Gauzy');
+			} else if (appSetting.screenshotNotification) {
+				notifyScreenshot(notificationWindow, arg, windowPath, soundPath, timeTrackerWindow);
+			}
 		}
 	})
 

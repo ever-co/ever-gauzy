@@ -1,6 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { NbComponentStatus } from '@nebular/theme';
-import { ViewCell } from 'ng2-smart-table';
 import { IRole, RolesEnum } from '@gauzy/contracts';
 
 @Component({
@@ -8,20 +7,36 @@ import { IRole, RolesEnum } from '@gauzy/contracts';
 	templateUrl: './role.component.html',
 	styleUrls: ['./role.component.scss']
 })
-export class RoleComponent implements OnInit, ViewCell {
+export class RoleComponent implements OnInit {
 	@Input()
-	value: string | number;
+	value: string | number | any;
 
-	@Input()
-	rowData: any;
+	/*
+	* Getter & Setter for status
+	*/
+	_status: NbComponentStatus;
+	get status(): NbComponentStatus {
+		return this._status;
+	}
+	@Input() set status(value: NbComponentStatus) {
+		this._status = value;
+	}
 
-	status: NbComponentStatus;
-	role: IRole;
+	/*
+	* Getter & Setter for role
+	*/
+	_role: IRole;
+	get role(): IRole {
+		return this._role;
+	}
+	@Input() set role(value: IRole) {
+		this._role = value;
+	}
 
 	constructor() {}
 
 	ngOnInit(): void {
-		this.role = this.rowData.value || this.rowData.role;
+		this.role = this.value;
 		switch (this.role.name) {
 			case RolesEnum.ADMIN:
 				this.status = 'primary';

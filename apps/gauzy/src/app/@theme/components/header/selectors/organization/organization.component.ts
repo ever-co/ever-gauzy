@@ -1,6 +1,8 @@
 import { Component, OnInit, OnDestroy, AfterViewInit, Input } from '@angular/core';
+import { Router } from '@angular/router';
 import { IOrganization, CrudActionEnum, PermissionsEnum } from '@gauzy/contracts';
 import { filter, map, tap } from 'rxjs/operators';
+import { Observable } from 'rxjs/internal/Observable';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
 import { uniq } from 'underscore';
@@ -10,8 +12,6 @@ import {
 	ToastrService,
 	UsersOrganizationsService
 } from './../../../../../@core/services';
-import { Observable } from 'rxjs/internal/Observable';
-import { Router } from '@angular/router';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -19,7 +19,7 @@ import { Router } from '@angular/router';
 	templateUrl: './organization.component.html',
 	styleUrls: ['./organization.component.scss']
 })
-export class OrganizationSelectorComponent 
+export class OrganizationSelectorComponent
 	implements AfterViewInit, OnInit, OnDestroy {
 
 	organizations: IOrganization[] = [];
@@ -89,15 +89,12 @@ export class OrganizationSelectorComponent
 
 			if (this.store.organizationId) {
 				const organization = this.organizations.find(
-					(organization: IOrganization) =>
-						organization.id === this.store.organizationId
+					(organization: IOrganization) => organization.id === this.store.organizationId
 				);
-				this.store.selectedOrganization =
-					organization || defaultOrganization || firstOrganization;
+				this.store.selectedOrganization = organization || defaultOrganization || firstOrganization;
 			} else {
 				// set default organization as selected
-				this.store.selectedOrganization =
-					defaultOrganization || firstOrganization;
+				this.store.selectedOrganization = defaultOrganization || firstOrganization;
 			}
 		}
 	}
@@ -193,11 +190,14 @@ export class OrganizationSelectorComponent
 
 	/**
 	 * Create new employee from ng-select tag
-	 * 
-	 * @param name 
-	 * @returns 
+	 *
+	 * @param name
+	 * @returns
 	 */
 	createNew = async (name: string) => {
+		if (!this.store.hasPermission(PermissionsEnum.ALL_ORG_EDIT)) {
+			return;
+		}
 		if (!this.selectedOrganization || !name) {
 			return;
 		}
