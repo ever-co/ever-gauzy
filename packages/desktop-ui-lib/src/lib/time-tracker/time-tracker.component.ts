@@ -10,7 +10,6 @@ import {
 	OnInit
 } from '@angular/core';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
-import { ElectronService } from 'ngx-electron';
 import { TimeTrackerService } from './time-tracker.service';
 import * as moment from 'moment';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
@@ -19,6 +18,7 @@ import { CustomRenderComponent } from './custom-render-cell.component';
 import { LocalDataSource } from 'ng2-smart-table';
 import { DomSanitizer } from '@angular/platform-browser';
 import { BehaviorSubject } from 'rxjs';
+import {ElectronService} from "../electron/services";
 
 // Import logging for electron and override default console logging
 const log = window.require('electron-log');
@@ -111,7 +111,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	get appSetting(): any {
 		return this.appSetting$.getValue();
 	}
-	
+
 	isExpand$: BehaviorSubject<boolean> = new BehaviorSubject(false);
 	get isExpand(): boolean {
 		return this.isExpand$.getValue();

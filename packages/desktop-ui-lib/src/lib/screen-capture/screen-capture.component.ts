@@ -1,6 +1,6 @@
 import { Component, OnInit, NgZone } from '@angular/core';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
-import { ElectronServices } from '../electron/services';
+import { ElectronService } from '../electron/services';
 const log = window.require('electron-log');
 console.log = log.log;
 Object.assign(console, log.functions);
@@ -14,7 +14,7 @@ export class ScreenCaptureComponent implements OnInit {
 	note: string;
 
 	constructor(
-		private readonly electronService: ElectronServices,
+		private readonly electronService: ElectronService,
 		private _ngZone: NgZone,
 		private domSanitizer: DomSanitizer
 	) {}

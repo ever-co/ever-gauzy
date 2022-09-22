@@ -14,7 +14,7 @@ export default class NotificationDesktop {
 			body: isStart ? 'Time Tracking Started' : 'Time Tracking Stopped',
 			icon: iconNativePath,
 			closeButtonText: 'Close',
-			silent: appSetting.mutedNotification
+			silent: appSetting ? appSetting.mutedNotification : false
 		});
 
 		notification.show();
@@ -34,7 +34,7 @@ export default class NotificationDesktop {
 			body: message,
 			icon: iconNativePath,
 			closeButtonText: 'Close',
-			silent: appSetting.mutedNotification
+			silent: appSetting ? appSetting.mutedNotification : false
 		});
 
 		notification.show();
