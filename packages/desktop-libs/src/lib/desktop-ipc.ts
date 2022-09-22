@@ -5,8 +5,6 @@ import moment from 'moment';
 import {LocalStore} from './desktop-store';
 import {takeshot, notifyScreenshot} from './desktop-screenshot';
 import {
-	hasPromptedForPermission,
-	hasScreenCapturePermission,
 	openSystemPreferences
 } from 'mac-screen-capture-permissions';
 import * as _ from 'underscore';
@@ -118,9 +116,7 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 			if (process.platform === 'darwin') {
 				const screenCapturePermission = systemPreferences.getMediaAccessStatus('screen');
 				if (screenCapturePermission !== 'granted') {
-					if (hasPromptedForPermission()) {
-						await openSystemPreferences();
-					}
+					await openSystemPreferences();
 				}
 			}
 		} catch (error) {
