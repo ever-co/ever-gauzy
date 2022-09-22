@@ -187,7 +187,7 @@ export class AccountingTemplateService extends TenantAwareCrudService<Accounting
 			languageCode = themeLanguage
 		} = options;
 		try {
-			return await this.findOneByWhereOptions({
+			return await this.repository.findOneBy({
 				languageCode,
 				templateType,
 				organizationId,
@@ -195,7 +195,7 @@ export class AccountingTemplateService extends TenantAwareCrudService<Accounting
 			});
 		} catch (error) {
 			try {
-				return await this.findOneByWhereOptions({
+				return await this.repository.findOneBy({
 					languageCode,
 					templateType,
 					organizationId: IsNull(),
@@ -203,14 +203,14 @@ export class AccountingTemplateService extends TenantAwareCrudService<Accounting
 				});
 			} catch (error) {
 				try {
-					return await this.findOneByWhereOptions({
+					return await this.repository.findOneBy({
 						languageCode: LanguagesEnum.ENGLISH,
 						templateType,
 						organizationId,
 						tenantId
 					});
 				} catch (error) {
-					return await this.findOneByWhereOptions({
+					return await this.repository.findOneBy({
 						languageCode: LanguagesEnum.ENGLISH,
 						templateType,
 						organizationId: IsNull(),

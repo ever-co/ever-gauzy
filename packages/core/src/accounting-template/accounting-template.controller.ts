@@ -27,7 +27,6 @@ import {
 	PermissionsEnum
 } from '@gauzy/contracts';
 import { CrudController, PaginationParams } from '../core/crud';
-import { RequestContext } from './../core/context';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { UUIDValidationPipe } from './../shared/pipes';
 import { Permissions, LanguageDecorator } from './../shared/decorators';
@@ -171,10 +170,7 @@ export class AccountingTemplateController extends CrudController<AccountingTempl
 		@Param('id', UUIDValidationPipe) id: string
 	): Promise<IAccountingTemplate> {
 		try {
-			return await this.accountingTemplateService.findOneByWhereOptions({
-				id,
-				tenantId: RequestContext.currentTenantId()
-			});
+			return await this.accountingTemplateService.findOneByIdString(id);
 		} catch (error) {
 			throw new BadRequestException();
 		}
