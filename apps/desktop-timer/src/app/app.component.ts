@@ -1,5 +1,5 @@
 import { Component, NgZone, OnInit, AfterViewInit } from '@angular/core';
-import { ElectronService } from 'ngx-electron';
+import { ElectronService } from '@gauzy/desktop-ui-lib';
 import { AppService } from './app.service';
 import { AuthStrategy } from './auth/auth-strategy.service';
 import { TranslateService } from '@ngx-translate/core';
