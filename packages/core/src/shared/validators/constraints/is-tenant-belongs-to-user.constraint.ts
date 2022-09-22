@@ -1,3 +1,4 @@
+import { Injectable } from "@nestjs/common";
 import {
 	ValidationArguments,
 	ValidatorConstraint,
@@ -8,6 +9,7 @@ import { isEmpty } from "underscore";
 import { RequestContext } from "./../../../core/context";
 
 @ValidatorConstraint({ name: "IsTenantBelongsToUser", async: true })
+@Injectable()
 export class IsTenantBelongsToUserConstraint implements ValidatorConstraintInterface {
 
 	/**

@@ -1,4 +1,5 @@
 import { InjectRepository } from "@nestjs/typeorm";
+import { Injectable } from "@nestjs/common";
 import { Repository } from "typeorm";
 import {
 	ValidationArguments,
@@ -9,8 +10,8 @@ import { IOrganization } from "@gauzy/contracts";
 import { UserOrganization } from "../../../core/entities/internal";
 import { RequestContext } from "../../../core/context";
 
-
 @ValidatorConstraint({ name: "IsOrganizationShouldExist", async: true })
+@Injectable()
 export class IsOrganizationShouldBelongsToConstraint implements ValidatorConstraintInterface {
 	constructor(
         @InjectRepository(UserOrganization)
