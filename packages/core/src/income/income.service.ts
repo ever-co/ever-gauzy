@@ -50,7 +50,7 @@ export class IncomeService extends TenantAwareCrudService<Income> {
 		if ('where' in filter) {
 			const { where } = filter;
 			if ('notes' in where) {
-				filter['where']['notes'] = Raw((alias) => `${alias} ILIKE '%${where.notes}%'`)
+				filter['where']['notes'] = Raw((alias) => `${alias} ILIKE '%${where.notes}%'`);
 			}
 			if ('valueDate' in where) {
 				const { valueDate } = where;

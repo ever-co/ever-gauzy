@@ -1,6 +1,4 @@
 import {
-    CurrenciesEnum,
-    IEmployee,
     IInvoice,
     IOrganizationContact,
     IOrganizationProject,
@@ -16,11 +14,6 @@ export class PaymentDTO extends TenantOrganizationBaseDTO {
     @ApiProperty({ type: () => Number, readOnly: true })
     @IsNotEmpty()
     readonly amount: number;
-
-    @ApiProperty({ type: () => String, enum: CurrenciesEnum, readOnly: true  })
-    @IsEnum(CurrenciesEnum)
-    @IsNotEmpty()
-    readonly currency: CurrenciesEnum;
 
     @ApiProperty({ type: () => Boolean, readOnly: true })
     @IsOptional()
@@ -39,18 +32,13 @@ export class PaymentDTO extends TenantOrganizationBaseDTO {
 
     @ApiProperty({ type: () => String, readOnly: true })
     @IsOptional()
-    @IsString()
-    readonly employeeId: string;
-
-    @ApiProperty({ type: () => Object, readOnly: true })
-    @IsOptional()
     @IsObject()
-    readonly employee: IEmployee;
+    readonly invoice: IInvoice;
 
     @ApiProperty({ type: () => String, readOnly: true })
     @IsOptional()
-    @IsObject()
-    readonly invoice: IInvoice;
+    @IsString()
+    readonly invoiceId: string;
 
     @ApiProperty({ type: () => Object, readOnly: true })
     @IsOptional()
@@ -61,11 +49,6 @@ export class PaymentDTO extends TenantOrganizationBaseDTO {
     @IsOptional()
     @IsString()
     readonly recordedById: string;
-
-    @ApiProperty({ type: () => String, readOnly: true })
-    @IsOptional()
-    @IsString()
-    readonly invoiceId: string;
 
     @ApiProperty({ type: () => Object, readOnly: true })
     @IsOptional()

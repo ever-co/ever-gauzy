@@ -311,7 +311,6 @@ export abstract class CrudService<T extends BaseEntity>
 	}
 
 	public async create(entity: DeepPartial<T>): Promise<T> {
-		console.log({ entity });
 		const obj = this.repository.create(entity);
 		try {
 			// https://github.com/Microsoft/TypeScript/issues/21592
