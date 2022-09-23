@@ -29,14 +29,21 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity> extends
 	}
 
 	private findConditionsWithEmployeeByUser(): FindOptionsWhere<T>{
+		const employeeId = RequestContext.currentEmployeeId();
 		return (
+			/**
+			 * If employee has login & retrieve self data
+			 */
 			(
 				!RequestContext.hasPermission(
 					PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
 				) &&
 				this.repository.metadata.hasColumnWithPropertyPath('employeeId')
 			) ? {
-				employeeId: RequestContext.currentEmployeeId()
+				employee: {
+					id: employeeId
+				},
+				employeeId
 			} : {}
 		) as FindOptionsWhere<T>
 	}
@@ -291,6 +298,8 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity> extends
 	 */
 	public async create(entity: DeepPartial<T>): Promise<T> {
 		const tenantId = RequestContext.currentTenantId();
+		const employeeId = RequestContext.currentEmployeeId();
+
 		return super.create({
 			...entity,
 			...(
@@ -301,13 +310,19 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity> extends
 				},
 				tenantId,
 			} : {},
+			/**
+			 * If employee has login & create data for self
+			 */
 			...(
 				!RequestContext.hasPermission(
 					PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
 				) &&
 				this.repository.metadata.hasColumnWithPropertyPath('employeeId')
 			) ? {
-				employeeId: RequestContext.currentEmployeeId()
+				employee: {
+					id: employeeId
+				},
+				employeeId: employeeId
 			} : {}
 		});
 	}

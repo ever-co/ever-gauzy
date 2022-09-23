@@ -1,5 +1,5 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { IIncome, PermissionsEnum } from '@gauzy/contracts';
+import { IIncome } from '@gauzy/contracts';
 import { BadRequestException } from '@nestjs/common';
 import { isNotEmpty } from '@gauzy/common';
 import { IncomeCreateCommand } from '../income.create.command';
@@ -56,18 +56,10 @@ export class IncomeCreateHandler
 		);
 		try {
 			const income = new Income();
-			/**
-			 * If employee create self income
-			 */
-			if (!RequestContext.hasPermission(
-				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-			)) {
-				income.employeeId = RequestContext.currentEmployeeId();
-			} else {
-				income.employeeId = input.employeeId || null;
-			}
-			income.clientId = input.clientId;
+			income.tenantId = RequestContext.currentTenantId();
 			income.organizationId = input.organizationId;
+			income.employeeId = input.employeeId || null;
+			income.clientId = input.clientId;
 			income.amount = input.amount;
 			income.valueDate = input.valueDate;
 			income.notes = input.notes;
@@ -75,7 +67,6 @@ export class IncomeCreateHandler
 			income.isBonus = input.isBonus;
 			income.reference = input.reference;
 			income.tags = input.tags;
-			income.tenantId = RequestContext.currentTenantId();
 			return await this.incomeService.create(income);
 		} catch (error) {
 			throw new BadRequestException(error);

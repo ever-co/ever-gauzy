@@ -1,5 +1,5 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { IExpense, PermissionsEnum } from '@gauzy/contracts';
+import { IExpense } from '@gauzy/contracts';
 import { BadRequestException } from '@nestjs/common';
 import { isNotEmpty } from '@gauzy/common';
 import { ExpenseCreateCommand } from '../expense.create.command';
@@ -52,16 +52,9 @@ export class ExpenseCreateHandler
 		);
 		try {
 			const expense = new Expense();
-			/**
-			 * If employee create self expense
-			 */
-			if (!RequestContext.hasPermission(
-				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-			)) {
-				expense.employeeId = RequestContext.currentEmployeeId();
-			} else {
-				expense.employeeId = input.employeeId || null;
-			}
+			expense.tenantId = RequestContext.currentTenantId();
+			expense.organizationId = input.organizationId;
+			expense.employeeId = input.employeeId || null;
 			expense.amount = Math.abs(input.amount);
 			expense.category = input.category;
 			expense.vendor = input.vendor;
@@ -72,7 +65,6 @@ export class ExpenseCreateHandler
 			expense.projectId = input.projectId;
 			expense.notes = input.notes;
 			expense.valueDate = input.valueDate;
-			expense.organizationId = input.organizationId;
 			expense.currency = input.currency || organization.currency;
 			expense.purpose = input.purpose;
 			expense.taxType = input.taxType;
@@ -82,7 +74,6 @@ export class ExpenseCreateHandler
 			expense.splitExpense = input.splitExpense;
 			expense.tags = input.tags;
 			expense.status = input.status;
-			expense.tenantId = RequestContext.currentTenantId();
 			return await this.expenseService.create(expense);
 		} catch (error) {
 			throw new BadRequestException(error);
