@@ -1,6 +1,8 @@
 import { BrowserWindow, screen } from 'electron';
 import * as url from 'url';
 import * as remoteMain from '@electron/remote/main';
+const Store = require('electron-store');
+const store = new Store();
 
 export function createTimeTrackerWindow(timeTrackerWindow, filePath) {
 	const mainWindowSettings: Electron.BrowserWindowConstructorOptions = windowSetting();
@@ -31,6 +33,8 @@ const windowSetting = () => {
 	const height = sizes.height < 768 ? sizes.height - 20 : 768;
 	const zoomF = sizes.height < 768 ? 0.8 : 1.0;
 	const width = sizes.height < 768 ? 310 : 360;
+	const filesPath = store.get('filePath');
+	console.log('file path == ', filesPath);
 	const mainWindowSettings: Electron.BrowserWindowConstructorOptions = {
 		frame: true,
 		resizable: false,
@@ -49,6 +53,10 @@ const windowSetting = () => {
 		show: false,
 		
 	};
+
+	if (process.platform === 'linux') {
+		mainWindowSettings.icon = filesPath.iconPath;
+	}
 
 	return mainWindowSettings;
 };

@@ -9,7 +9,7 @@ import {
 } from '@angular/core';
 import { TimeTrackerService } from '../time-tracker/time-tracker.service';
 import { NbToastrService } from '@nebular/theme';
-import { ElectronServices } from '../electron/services';
+import { ElectronService } from '../electron/services';
 import { BehaviorSubject, Observable } from 'rxjs';
 @Component({
 	selector: 'ngx-settings',
@@ -363,7 +363,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	muted: boolean;
 
 	constructor(
-		private electronService: ElectronServices,
+		private electronService: ElectronService,
 		private _ngZone: NgZone,
 		private readonly timeTrackerService: TimeTrackerService,
 		private toastrService: NbToastrService

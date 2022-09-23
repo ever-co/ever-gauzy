@@ -143,5 +143,11 @@ export const LocalStore = {
 			additionalSetting: addSetting,
 			activeProject: projectInfo
 		}
+	},
+
+	setFilePath: (filePath) => {
+		store.set({
+			filePath: filePath
+		});
 	}
 };

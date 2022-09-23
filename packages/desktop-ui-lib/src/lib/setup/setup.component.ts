@@ -9,7 +9,7 @@ import {
 import { SetupService } from './setup.service';
 import { NbDialogService } from '@nebular/theme';
 import { AlertComponent } from '../../lib/dialogs/alert/alert.component';
-import { ElectronServices } from '../electron/services';
+import { ElectronService } from '../electron/services';
 
 // Import logging for electron and override default console logging
 const log = window.require('electron-log');
@@ -28,7 +28,7 @@ export class SetupComponent implements OnInit {
 		private setupService: SetupService,
 		private _cdr: ChangeDetectorRef,
 		private dialogService: NbDialogService,
-		private electronService: ElectronServices
+		private electronService: ElectronService
 	) {
 		electronService.ipcRenderer.on('setup-data', (event, arg) => {
 			this.desktopFeatures.gauzyPlatform = arg.gauzyWindow;
@@ -214,7 +214,7 @@ export class SetupComponent implements OnInit {
 					reminders/notifications.
 				`;
 				break;
-		
+
 			default:
 				break;
 		}

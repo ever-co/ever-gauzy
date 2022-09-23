@@ -14,17 +14,15 @@ const routes: Routes = [
 		children: [
 			{
 				path: 'general',
-				loadChildren: () =>
-					import('./general-setting/general-setting.module').then(
-						(m) => m.GeneralSettingModule
-					)
+				loadChildren: () => import('./general-setting/general-setting.module').then(
+					(m) => m.GeneralSettingModule
+				)
 			},
 			{
 				path: 'features',
-				loadChildren: () =>
-					import('./feature/feature.module').then(
-						(m) => m.FeatureModule
-					)
+				loadChildren: () => import('./feature/feature.module').then(
+					(m) => m.FeatureModule
+				)
 			},
 			{
 				path: 'email-history',
@@ -45,17 +43,15 @@ const routes: Routes = [
 			},
 			{
 				path: 'email-templates',
-				loadChildren: () =>
-					import('../email-templates/email-templates.module').then(
-						(m) => m.EmailTemplatesModule
-					)
+				loadChildren: () => import('../email-templates/email-templates.module').then(
+					(m) => m.EmailTemplatesModule
+				)
 			},
 			{
 				path: 'accounting-templates',
-				loadChildren: () =>
-					import('../accounting-templates/accounting-templates.module').then(
-						(m) => m.AccountingTemplatesModule
-					)
+				loadChildren: () => import('../accounting-templates/accounting-templates.module').then(
+					(m) => m.AccountingTemplatesModule
+				)
 			},
 			{
 				path: 'roles-permissions',
@@ -65,10 +61,9 @@ const routes: Routes = [
 			},
 			{
 				path: 'import-export',
-				loadChildren: () =>
-					import('../import-export/import-export.module').then(
-						(m) => m.ImportExportModule
-					)
+				loadChildren: () => import('../import-export/import-export.module').then(
+					(m) => m.ImportExportModule
+				)
 			},
 			{
 				path: 'sms-gateway',
@@ -89,17 +84,15 @@ const routes: Routes = [
 			},
 			{
 				path: 'custom-smtp',
-				loadChildren: () =>
-					import('./custom-smtp/custom-smtp.module').then(
-						(m) => m.CustomSmtpModule
-					)
+				loadChildren: () => import('./custom-smtp/custom-smtp.module').then(
+					(m) => m.CustomSmtpModule
+				)
 			},
 			{
 				path: 'file-storage',
-				loadChildren: () => 
-					import('./file-storage/file-storage.module').then(
-						(m) => m.FileStorageModule
-					)
+				loadChildren: () => import('./file-storage/file-storage.module').then(
+					(m) => m.FileStorageModule
+				)
 			},
 			{
 				path: 'danger-zone',

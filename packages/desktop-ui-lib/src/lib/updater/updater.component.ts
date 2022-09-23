@@ -6,8 +6,7 @@ import {
 	ElementRef,
 	NgZone
 } from '@angular/core';
-import { ElectronService } from 'ngx-electron';
-import { ElectronServices } from '../electron/services';
+import { ElectronService } from '../electron/services';
 
 @Component({
 	selector: 'ngx-updater',
@@ -21,7 +20,7 @@ export class UpdaterComponent implements OnInit {
 	constructor(
 		private electronService: ElectronService,
 		private _ngZone: NgZone,
-		private electronServices: ElectronServices
+		private electronServices: ElectronService
 	) {}
 	version = '0.0.0';
 	loading = false;

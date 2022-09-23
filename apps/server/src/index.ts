@@ -62,6 +62,11 @@ const pathWindow: {
 	timeTrackerUi: path.join(__dirname, 'index.html')
 };
 
+
+LocalStore.setFilePath({
+	iconPath: path.join(__dirname, 'icons', 'icon.png')
+})
+
 const runSetup = () => {
 	if (setupWindow) {
 		setupWindow.show();
