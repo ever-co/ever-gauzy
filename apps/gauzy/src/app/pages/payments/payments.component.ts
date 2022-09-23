@@ -1,5 +1,5 @@
 import { OnInit, Component, OnDestroy, ViewChild } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Ng2SmartTableComponent } from 'ng2-smart-table';
 import { filter, tap, debounceTime } from 'rxjs/operators';
@@ -82,6 +82,7 @@ export class PaymentsComponent extends PaginationFilterBaseComponent
 	}
 
 	constructor(
+		private readonly _router: Router,
 		public readonly translateService: TranslateService,
 		private readonly paymentService: PaymentService,
 		private readonly store: Store,
@@ -147,12 +148,14 @@ export class PaymentsComponent extends PaginationFilterBaseComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this._refresh$.pipe(
+		this._refresh$
+			.pipe(
 				filter(() => this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => this.refreshPagination()),
 				tap(() => this.payments = []),
 				untilDestroyed(this)
-			).subscribe();
+			)
+			.subscribe();
 	}
 
 	setView() {
@@ -328,9 +331,11 @@ export class PaymentsComponent extends PaginationFilterBaseComponent
 			}
 
 			this.toastrService.success('INVOICES_PAGE.PAYMENTS.PAYMENT_ADD');
-			this.dateRangePickerBuilderService.refreshDateRangePicker(moment(payment.paymentDate));
-			this._refresh$.next(true);
-			this.payments$.next(true);
+			this._router.navigate(['/pages/accounting/payments'], {
+				queryParams: {
+					date: moment(payment.paymentDate).format("MM-DD-YYYY")
+				}
+			});
 		}
 	}
 
@@ -362,9 +367,11 @@ export class PaymentsComponent extends PaginationFilterBaseComponent
 			}
 
 			this.toastrService.success('INVOICES_PAGE.PAYMENTS.PAYMENT_EDIT');
-			this.dateRangePickerBuilderService.refreshDateRangePicker(moment(payment.paymentDate));
-			this._refresh$.next(true);
-			this.payments$.next(true);
+			this._router.navigate(['/pages/accounting/payments'], {
+				queryParams: {
+					date: moment(payment.paymentDate).format("MM-DD-YYYY")
+				}
+			});
 		}
 	}
 

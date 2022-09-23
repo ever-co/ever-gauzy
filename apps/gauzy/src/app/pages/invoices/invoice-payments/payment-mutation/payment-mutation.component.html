@@ -134,6 +134,7 @@
 			<div class="row">
 				<div class="col-sm-12">
 					<ga-currency
+						formControlName="currency"
 						[formControl]="form.get('currency')"
 						(optionChange)="currencyChanged($event)"
 					></ga-currency>
@@ -177,7 +178,7 @@
 		</form>
 	</nb-card-body>
 	<nb-card-footer class="text-left">
-		<button 
+		<button
 			status="basic"
 			outline
 			size="small"
