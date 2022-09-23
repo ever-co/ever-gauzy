@@ -46,23 +46,22 @@ export class IncomeService extends TenantAwareCrudService<Income> {
 			: 0;
 	}
 
-	public pagination(filter: any) {
+	public pagination(filter: FindManyOptions) {
 		if ('where' in filter) {
 			const { where } = filter;
 			if ('notes' in where) {
-				const { notes } = where;
-				filter.where.notes = Raw((alias) => `${alias} ILIKE '%${notes}%'`)
+				filter['where']['notes'] = Raw((alias) => `${alias} ILIKE '%${where.notes}%'`)
 			}
 			if ('valueDate' in where) {
 				const { valueDate } = where;
 				const { startDate, endDate } = valueDate as IDateRangePicker;
 				if (startDate && endDate) {
-					filter.where.valueDate = Between(
+					filter['where']['valueDate'] = Between(
 						moment.utc(startDate).format('YYYY-MM-DD HH:mm:ss'),
 						moment.utc(endDate).format('YYYY-MM-DD HH:mm:ss')
 					);
 				} else {
-					filter.where.valueDate = Between(
+					filter['where']['valueDate'] = Between(
 						moment().startOf('month').utc().format('YYYY-MM-DD HH:mm:ss'),
 						moment().endOf('month').utc().format('YYYY-MM-DD HH:mm:ss')
 					);
@@ -70,7 +69,7 @@ export class IncomeService extends TenantAwareCrudService<Income> {
 			}
 			if ('tags' in where) {
 				const { tags } = where;
-				filter.where.tags = {
+				filter['where']['tags'] = {
 					id: In(tags)
 				}
 			}

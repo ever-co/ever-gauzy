@@ -10,7 +10,6 @@ import {
 	FindOneOptions,
 	FindOptionsWhere,
 	Repository,
-	SelectQueryBuilder,
 	UpdateResult
 } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
@@ -18,12 +17,9 @@ import * as moment from 'moment';
 import { of as observableOf, throwError } from 'rxjs';
 import { mergeMap } from 'rxjs/operators';
 import { IPagination } from '@gauzy/contracts';
-import { isNotEmpty } from '@gauzy/common';
 import { BaseEntity } from '../entities/internal';
 import { ICrudService } from './icrud.service';
 import { ITryRequest } from './try-request';
-import { filterQuery } from './query-builder';
-import { RequestContext } from './../../core/context';
 
 export abstract class CrudService<T extends BaseEntity>
 	implements ICrudService<T> {
@@ -81,44 +77,39 @@ export abstract class CrudService<T extends BaseEntity>
 	 * @param options
 	 * @returns
 	 */
-	public async paginate(options?: any): Promise<IPagination<T>> {
+	public async paginate(options?: FindManyOptions<T>): Promise<IPagination<T>> {
 		try {
 			const query = this.repository.createQueryBuilder(this.alias);
 			query.setFindOptions({
 				skip: options && options.skip ? (options.take * (options.skip - 1)) : 0,
 				take: options && options.take ? (options.take) : 10
 			});
-			if (options) {
-				if (options.orderBy && options.order) {
-					query.setFindOptions({
-						order: {
-							[options.orderBy]: options.order
-						}
-					});
-				} else if (options.orderBy) {
-					query.setFindOptions({ order: options.orderBy });
-				}
-				if (isNotEmpty(options.join)) {
-					query.setFindOptions({ join: options.join });
-				}
-				if (options.relations) {
-					query.setFindOptions({ relations: options.relations });
-				}
-			}
-			query.where((query: SelectQueryBuilder<T>) => {
-				if (options && (options.filters || options.where)) {
-					if (options.where) {
-						const wheres: any = {}
-						for (const field in options.where) {
-							if (Object.prototype.hasOwnProperty.call(options.where, field)) {
-								wheres[field] = options.where[field];
-							}
-						}
-						filterQuery(query, wheres);
-					}
-				}
-				const tenantId = RequestContext.currentTenantId();
-				query.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
+			query.setFindOptions({
+				...(
+					(options && options.relations) ? {
+						relations: options.relations
+					} : {}
+				),
+				/**
+				 * Specifies what relations should be loaded.
+				 *
+				 * @deprecated
+				 */
+				...(
+					(options && options.join) ? {
+						join: options.join
+					} : {}
+				),
+				...(
+					(options && options.where) ? {
+						where: options.where
+					} : {}
+				),
+				...(
+					(options && options.order) ? {
+						order: options.order
+					} : {}
+				),
 			});
 			console.log(options, moment().format('DD.MM.YYYY HH:mm:ss'));
 			const [items, total] = await query.getManyAndCount();
@@ -249,7 +240,7 @@ export abstract class CrudService<T extends BaseEntity>
 	 * @returns
 	 */
 	public async findOneByIdString(
-		id: string,
+		id: T['id'],
 		options?: FindOneOptions<T>
 	): Promise<T> {
 		const record = await this.repository.findOne({
@@ -320,6 +311,7 @@ export abstract class CrudService<T extends BaseEntity>
 	}
 
 	public async create(entity: DeepPartial<T>): Promise<T> {
+		console.log({ entity });
 		const obj = this.repository.create(entity);
 		try {
 			// https://github.com/Microsoft/TypeScript/issues/21592

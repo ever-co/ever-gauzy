@@ -31,6 +31,7 @@ import {
 } from '../../@shared/table-components';
 import {
 	ExpenseCategoryFilterComponent,
+	InputFilterComponent,
 	VendorFilterComponent
 } from '../../@shared/table-filters';
 import { IPaginationBase, PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
@@ -152,19 +153,18 @@ export class ExpensesComponent extends PaginationFilterBaseComponent
 				tap(() => this.expenses = []),
 				untilDestroyed(this)
 			).subscribe();
-	
+
 	}
 
 	ngAfterViewInit() {
-		if (
-			!this.store.hasPermission(
-				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-			) &&
-			this.store.user &&
-			this.store.user.employeeId
-		) {
+		if ((this.store.user && this.store.user.employeeId) || !this.store.hasPermission(
+			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+		)) {
 			delete this.smartTableSettings['columns']['employee'];
-			this.smartTableSettings = Object.assign({}, this.smartTableSettings);
+			this.smartTableSettings = Object.assign(
+				{},
+				this.smartTableSettings
+			);
 		}
 	}
 
@@ -274,13 +274,27 @@ export class ExpensesComponent extends PaginationFilterBaseComponent
 				},
 				notes: {
 					title: this.getTranslation('SM_TABLE.NOTES'),
-					type: 'string'
+					type: 'text',
+					class: 'align-row',
+					filter: {
+						type: 'custom',
+						component: InputFilterComponent
+					},
+					filterFunction: (value: string) => {
+						this.setFilter({ field: 'notes', search: value });
+					}
 				},
 				purpose: {
 					title:  this.getTranslation('POP_UPS.PURPOSE'),
-					type: 'custom',
+					type: 'string',
 					class: 'align-row',
-					renderComponent: NotesWithTagsComponent
+					filter: {
+						type: 'custom',
+						component: InputFilterComponent
+					},
+					filterFunction: (value: string) => {
+						this.setFilter({ field: 'purpose', search: value });
+					}
 				},
 				statuses: {
 					title: this.getTranslation('SM_TABLE.STATUS'),
