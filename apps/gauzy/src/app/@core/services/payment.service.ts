@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import {
 	IGetPaymentInput,
 	IInvoice,
+	IPagination,
 	IPayment,
 	IPaymentFindInput,
 	IPaymentReportChartData,
@@ -20,15 +21,12 @@ export class PaymentService {
 	constructor(private http: HttpClient) {}
 
 	getAll(
-		relations?: string[],
-		findInput?: IPaymentFindInput
-	): Promise<{ items: IPayment[] }> {
-		const data = JSON.stringify({ relations, findInput });
-
+		relations: string[] = [],
+		where?: IPaymentFindInput
+	): Promise<IPagination<IPayment>> {
 		return firstValueFrom(
-			this.http
-			.get<{ items: IPayment[] }>(`${API_PREFIX}/payments`, {
-				params: { data }
+			this.http.get<IPagination<IPayment>>(`${API_PREFIX}/payments`, {
+				params: toParams({ relations, where })
 			})
 		);
 	}
