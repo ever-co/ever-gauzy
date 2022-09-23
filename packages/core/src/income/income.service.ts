@@ -1,11 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { IPagination, PermissionsEnum } from '@gauzy/contracts';
-import { Repository, FindManyOptions, Between, Like, In } from 'typeorm';
+import { IDateRangePicker, IPagination } from '@gauzy/contracts';
+import { Repository, FindManyOptions, Between, In, Raw } from 'typeorm';
 import * as moment from 'moment';
 import { Income } from './income.entity';
 import { TenantAwareCrudService } from './../core/crud';
-import { RequestContext } from './../core/context';
 
 @Injectable()
 export class IncomeService extends TenantAwareCrudService<Income> {
@@ -48,28 +47,15 @@ export class IncomeService extends TenantAwareCrudService<Income> {
 	}
 
 	public pagination(filter: any) {
-		/**
-		 * If employee has login, return only self incomes
-		 */
-		 if (!RequestContext.hasPermission(
-			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-		)) {
-			filter.where.employeeId = RequestContext.currentEmployeeId();
-		}
-		if ('filters' in filter) {
-			const { filters } = filter;
-			if ('notes' in filters) {
-				const { search } = filters.notes;
-				filter.where.notes = Like(`%${search}%`)
-			}
-			delete filter['filters'];
-		}
 		if ('where' in filter) {
 			const { where } = filter;
+			if ('notes' in where) {
+				const { notes } = where;
+				filter.where.notes = Raw((alias) => `${alias} ILIKE '%${notes}%'`)
+			}
 			if ('valueDate' in where) {
 				const { valueDate } = where;
-				const { startDate, endDate } = valueDate;
-
+				const { startDate, endDate } = valueDate as IDateRangePicker;
 				if (startDate && endDate) {
 					filter.where.valueDate = Between(
 						moment.utc(startDate).format('YYYY-MM-DD HH:mm:ss'),

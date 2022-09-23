@@ -40,6 +40,7 @@ import {
 	TagsOnlyComponent
 } from '../../@shared/table-components';
 import {
+	InputFilterComponent,
 	OrganizationContactFilterComponent,
 	TagsColorFilterComponent
 } from '../../@shared/table-filters';
@@ -65,10 +66,9 @@ import { getAdjustDateRangeFutureAllowed } from '../../@theme/components/header/
 	templateUrl: './income.component.html',
 	styleUrls: ['./income.component.scss']
 })
-export class IncomeComponent
-	extends PaginationFilterBaseComponent
-	implements AfterViewInit, OnInit, OnDestroy
-{
+export class IncomeComponent extends PaginationFilterBaseComponent
+	implements AfterViewInit, OnInit, OnDestroy {
+
 	smartTableSettings: object;
 	selectedEmployeeId: string;
 	selectedDateRange: IDateRangePicker;
@@ -134,16 +134,13 @@ export class IncomeComponent
 			)
 			.subscribe();
 		const storeOrganization$ = this.store.selectedOrganization$;
-		const selectedDateRange$ =
-			this.dateRangePickerBuilderService.selectedDateRange$;
+		const storeDateRange$ = this.dateRangePickerBuilderService.selectedDateRange$;
 		const storeEmployee$ = this.store.selectedEmployee$;
-		combineLatest([storeOrganization$, selectedDateRange$, storeEmployee$])
+		combineLatest([storeOrganization$, storeDateRange$, storeEmployee$])
 			.pipe(
 				debounceTime(300),
-				filter(
-					([organization, dateRange]) => !!organization && !!dateRange
-				),
 				distinctUntilChange(),
+				filter(([organization, dateRange]) => !!organization && !!dateRange),
 				tap(([organization, dateRange, employee]) => {
 					this.organization = organization;
 					this.selectedDateRange = dateRange;
@@ -180,13 +177,9 @@ export class IncomeComponent
 	}
 
 	ngAfterViewInit() {
-		if (
-			!this.store.hasPermission(
-				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-			) &&
-			this.store.user &&
-			this.store.user.employeeId
-		) {
+		if ((this.store.user && this.store.user.employeeId) || !this.store.hasPermission(
+			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+		)) {
 			delete this.smartTableSettings['columns']['employee'];
 			this.smartTableSettings = Object.assign(
 				{},
@@ -280,7 +273,14 @@ export class IncomeComponent
 				notes: {
 					title: this.getTranslation('SM_TABLE.NOTES'),
 					type: 'text',
-					class: 'align-row'
+					class: 'align-row',
+					filter: {
+						type: 'custom',
+						component: InputFilterComponent
+					},
+					filterFunction: (value: string) => {
+						this.setFilter({ field: 'notes', search: value });
+					}
 				},
 				tags: {
 					title: this.getTranslation('SM_TABLE.TAGS'),
