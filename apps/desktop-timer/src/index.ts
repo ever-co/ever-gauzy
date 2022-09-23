@@ -9,7 +9,7 @@ import * as path from 'path';
 import { app, dialog, BrowserWindow, ipcMain, shell, Menu } from 'electron';
 import { environment } from './environments/environment';
 import Url from 'url';
-  
+
 
 // setup logger to catch all unhandled errors and submit as bug reports to our repo
 log.catchErrors({
@@ -198,7 +198,7 @@ async function startServer(value, restart = false) {
 		knex,
 		pathWindow
 	);
-	
+
 	if (tray) {
 		tray.destroy();
 	}
@@ -214,7 +214,7 @@ async function startServer(value, restart = false) {
 			__dirname,
 			'assets',
 			'icons',
-			'icon_16x16.png'
+			'icon.png'
 		),
 		gauzyWindow
 	);
@@ -342,7 +342,7 @@ app.on('ready', async () => {
 		);
 		setupWindow.show();
 	}
-	
+
 	removeMainListener();
 	ipcMainHandler(store, startServer, knex, { ...environment }, timeTrackerWindow);
 });
