@@ -32,9 +32,9 @@ export class OrganizationVendorController extends CrudController<OrganizationVen
 
 	/**
 	 * GET all organization vendors recurring expense
-	 * 
-	 * @param data 
-	 * @returns 
+	 *
+	 * @param data
+	 * @returns
 	 */
 	@ApiOperation({
 		summary: 'Find all organization vendors recurring expense.'
@@ -63,17 +63,17 @@ export class OrganizationVendorController extends CrudController<OrganizationVen
 	@Get('pagination')
 	@UsePipes(new ValidationPipe({ transform: true }))
 	async pagination(
-		@Query() filter: PaginationParams<IOrganizationVendor>
+		@Query() filter: PaginationParams<OrganizationVendor>
 	): Promise<IPagination<IOrganizationVendor>> {
 		return this.organizationVendorService.pagination(filter);
 	}
 
 	/**
 	 * UPDATE organization vendor by id
-	 * 
-	 * @param id 
-	 * @param body 
-	 * @returns 
+	 *
+	 * @param id
+	 * @param body
+	 * @returns
 	 */
 	 @Put(':id')
 	 async update(
@@ -88,9 +88,9 @@ export class OrganizationVendorController extends CrudController<OrganizationVen
 
 	/**
 	 * DELETE organization vendor by id
-	 * 
-	 * @param id 
-	 * @returns 
+	 *
+	 * @param id
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'Delete record' })
 	@ApiResponse({

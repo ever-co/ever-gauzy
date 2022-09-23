@@ -93,7 +93,7 @@ export class IncomeController extends CrudController<Income> {
 	async pagination(
 		@Query(new ValidationPipe({
 			transform: true
-		})) options: PaginationParams<IIncome>
+		})) options: PaginationParams<Income>
 	): Promise<IPagination<IIncome>> {
 		return this.incomeService.pagination(options);
 	}

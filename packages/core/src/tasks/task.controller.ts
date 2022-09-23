@@ -47,7 +47,7 @@ export class TaskController extends CrudController<Task> {
 	@Get('pagination')
 	@UsePipes(new ValidationPipe({ transform: true }))
 	async pagination(
-		@Query() filter: PaginationParams<ITask>
+		@Query() filter: PaginationParams<Task>
 	): Promise<IPagination<ITask>> {
 		return this.taskService.pagination(filter);
 	}

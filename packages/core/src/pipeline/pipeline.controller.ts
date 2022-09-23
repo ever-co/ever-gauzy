@@ -37,7 +37,7 @@ export class PipelineController extends CrudController<Pipeline> {
 	@Get('pagination')
 	@UsePipes(new ValidationPipe({ transform: true }))
 	async pagination(
-		@Query() filter: PaginationParams<IPipeline>
+		@Query() filter: PaginationParams<Pipeline>
 	): Promise<IPagination<IPipeline>> {
 		return this.pipelineService.pagination(filter);
 	}

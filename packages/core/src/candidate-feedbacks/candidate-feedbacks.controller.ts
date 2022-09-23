@@ -126,7 +126,7 @@ export class CandidateFeedbacksController extends CrudController<CandidateFeedba
 	@Get('pagination')
 	@UsePipes(new ValidationPipe({ transform: true }))
 	async pagination(
-		@Query() filter: PaginationParams<ICandidateFeedback>
+		@Query() filter: PaginationParams<CandidateFeedback>
 	): Promise<IPagination<ICandidateFeedback>> {
 		return this.candidateFeedbacksService.paginate(filter);
 	}

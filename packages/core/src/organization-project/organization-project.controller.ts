@@ -187,7 +187,7 @@ export class OrganizationProjectController extends CrudController<OrganizationPr
 	@Get('pagination')
 	@UsePipes(new ValidationPipe({ transform: true }))
 	async pagination(
-		@Query() filter: PaginationParams<IOrganizationProject>
+		@Query() filter: PaginationParams<OrganizationProject>
 	): Promise<IPagination<IOrganizationProject>> {
 		return this.organizationProjectService.pagination(filter);
 	}

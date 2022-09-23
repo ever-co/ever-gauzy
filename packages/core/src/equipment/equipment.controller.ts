@@ -45,7 +45,7 @@ export class EquipmentController extends CrudController<Equipment> {
 	@Get('pagination')
 	@UsePipes(new ValidationPipe({ transform: true }))
 	async pagination(
-		@Query() filter: PaginationParams<IEquipment>
+		@Query() filter: PaginationParams<Equipment>
 	): Promise<IPagination<IEquipment>> {
 		return this.equipmentService.pagination(filter);
 	}
@@ -117,8 +117,8 @@ export class EquipmentController extends CrudController<Equipment> {
 	): Promise<IEquipment> {
 		//We are using create here because create calls the method save()
 		//We need save() to save ManyToMany relations
-		return await this.equipmentService.create({ 
-			id, 
+		return await this.equipmentService.create({
+			id,
 			...entity
 		});
 	}

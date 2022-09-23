@@ -118,7 +118,7 @@ export class PaymentController extends CrudController<Payment> {
 	@Get('pagination')
 	@UsePipes(new ValidationPipe({ transform: true }))
 	async pagination(
-		@Query() filter: PaginationParams<IPayment>
+		@Query() filter: PaginationParams<Payment>
 	): Promise<IPagination<IPayment>> {
 		return this.paymentService.pagination(filter);
 	}

@@ -50,7 +50,7 @@ export class ExpenseCategoriesController extends CrudController<ExpenseCategory>
 	@Get('pagination')
 	@UsePipes(new ValidationPipe({ transform: true }))
 	async pagination(
-		@Query() options: PaginationParams<IExpenseCategory>
+		@Query() options: PaginationParams<ExpenseCategory>
 	): Promise<IPagination<IExpenseCategory>> {
 		return this._expenseCategoriesService.paginate(options);
 	}

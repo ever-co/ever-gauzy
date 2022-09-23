@@ -179,7 +179,7 @@ export class UserController extends CrudController<User> {
 	@Permissions(PermissionsEnum.ORG_USERS_VIEW)
 	@Get('pagination')
 	async pagination(
-		@Query() options: PaginationParams<IUser>
+		@Query() options: PaginationParams<User>
 	): Promise<IPagination<IUser>> {
 		return this.userService.paginate(options);
 	}
