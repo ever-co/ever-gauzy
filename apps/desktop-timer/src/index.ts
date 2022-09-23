@@ -148,6 +148,9 @@ const pathWindow = {
 	timeTrackerUi: path.join(__dirname, './index.html')
 };
 
+LocalStore.setFilePath({
+	iconPath: path.join(__dirname, 'icons', 'icon.png')
+})
 async function startServer(value, restart = false) {
 	await knex.raw(`pragma journal_mode = WAL;`).then((res) => console.log(res));
 	const dataModel = new DataModel();

@@ -1,6 +1,8 @@
 import { BrowserWindow } from 'electron';
 import * as url from 'url';
 import * as remoteMain from '@electron/remote/main';
+const Store = require('electron-store');
+const store = new Store();
 export function createUpdaterWindow(updaterWindow, filePath) {
 	const mainWindowSettings: Electron.BrowserWindowConstructorOptions = windowSetting();
 	updaterWindow = new BrowserWindow(mainWindowSettings);
@@ -27,6 +29,7 @@ export function createUpdaterWindow(updaterWindow, filePath) {
 }
 
 const windowSetting = () => {
+	const filesPath = store.get('filePath');
 	const mainWindowSettings: Electron.BrowserWindowConstructorOptions = {
 		frame: true,
 		resizable: false,
@@ -45,5 +48,8 @@ const windowSetting = () => {
 		show: false
 	};
 
+	if (process.platform === 'linux') {
+		mainWindowSettings.icon = filesPath.iconPath;
+	}
 	return mainWindowSettings;
 };

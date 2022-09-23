@@ -1,6 +1,8 @@
 import { BrowserWindow, Menu, app } from 'electron';
 import * as url from 'url';
 import * as remoteMain from '@electron/remote/main';
+const Store = require('electron-store');
+const store = new Store();
 
 export function createSetupWindow(setupWindow, value, filePath) {
 	const mainWindowSettings: Electron.BrowserWindowConstructorOptions = windowSetting();
@@ -57,6 +59,9 @@ const windowSetting = () => {
 		maximizable: false,
 		show: false
 	};
-
+	const filesPath = store.get('filePath');
+	if (process.platform === 'linux') {
+		mainWindowSettings.icon = filesPath.iconPath;
+	}
 	return mainWindowSettings;
 };
