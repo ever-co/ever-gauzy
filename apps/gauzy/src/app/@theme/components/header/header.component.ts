@@ -218,7 +218,7 @@ export class HeaderComponent extends TranslationBaseComponent
 		const selectedDateRange$ = this.dateRangeService.selectedDateRange$;
 		combineLatest([storeOrganization$, selectedDateRange$])
 			.pipe(
-				filter(([organization, dateRange]) => !!organization && !!dateRange),
+				filter(([organization]) => !!organization),
 				untilDestroyed(this)
 			)
 			.subscribe(([organization, dateRange]) => {
