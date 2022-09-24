@@ -10,9 +10,10 @@
 }
 
 .icon-logo {
-  width: 16px;
-  height: 16px;
-  border-radius: calc(var(--border-radius) / 2);
+	width: 16px;
+	height: 16px;
+	border-radius: calc(var(--border-radius) / 2);
+	box-shadow: var(--gauzy-shadow);
 }
 
 .title-window {

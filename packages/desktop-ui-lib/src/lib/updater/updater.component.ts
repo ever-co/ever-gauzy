@@ -6,8 +6,7 @@ import {
 	ElementRef,
 	NgZone
 } from '@angular/core';
-import { ElectronService } from 'ngx-electron';
-import { ElectronServices } from '../electron/services';
+import { ElectronService } from '../electron/services';
 
 @Component({
 	selector: 'ngx-updater',
@@ -20,8 +19,7 @@ export class UpdaterComponent implements OnInit {
 	@ViewChild('logUpdate') logAccordion;
 	constructor(
 		private electronService: ElectronService,
-		private _ngZone: NgZone,
-		private electronServices: ElectronServices
+		private _ngZone: NgZone
 	) {}
 	version = '0.0.0';
 	loading = false;
@@ -73,7 +71,7 @@ export class UpdaterComponent implements OnInit {
 					this.scrollToBottom();
 				})
 		);
-		this.version = this.electronServices.remote.app.getVersion();
+		this.version = this.electronService.remote.app.getVersion();
 	}
 
 	checkForUpdate() {

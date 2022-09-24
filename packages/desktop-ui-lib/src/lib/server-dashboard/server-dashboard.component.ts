@@ -6,7 +6,7 @@ import {
 	ChangeDetectorRef,
 	ChangeDetectionStrategy
 } from '@angular/core';
-import { ElectronServices } from '../electron/services';
+import { ElectronService } from '../electron/services';
 
 @Component({
 	selector: 'ngx-server-dashboard',
@@ -34,7 +34,7 @@ export class ServerDashboardComponent implements OnInit {
 	}
 
     constructor(
-		private electronService: ElectronServices,
+		private electronService: ElectronService,
 		private _cdr: ChangeDetectorRef
 	) {
 		this.electronService.ipcRenderer.on(
@@ -82,7 +82,7 @@ export class ServerDashboardComponent implements OnInit {
 		})
 	}
 
-	
+
 	ngOnInit(): void {
 		this.active_index = 0;
 	}

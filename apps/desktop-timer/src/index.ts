@@ -9,7 +9,7 @@ import * as path from 'path';
 import { app, dialog, BrowserWindow, ipcMain, shell, Menu } from 'electron';
 import { environment } from './environments/environment';
 import Url from 'url';
-  
+
 
 // setup logger to catch all unhandled errors and submit as bug reports to our repo
 log.catchErrors({
@@ -148,6 +148,9 @@ const pathWindow = {
 	timeTrackerUi: path.join(__dirname, './index.html')
 };
 
+LocalStore.setFilePath({
+	iconPath: path.join(__dirname, 'icons', 'icon.png')
+})
 async function startServer(value, restart = false) {
 	await knex.raw(`pragma journal_mode = WAL;`).then((res) => console.log(res));
 	const dataModel = new DataModel();
@@ -195,7 +198,7 @@ async function startServer(value, restart = false) {
 		knex,
 		pathWindow
 	);
-	
+
 	if (tray) {
 		tray.destroy();
 	}
@@ -211,7 +214,7 @@ async function startServer(value, restart = false) {
 			__dirname,
 			'assets',
 			'icons',
-			'icon_16x16.png'
+			'icon.png'
 		),
 		gauzyWindow
 	);
@@ -339,7 +342,7 @@ app.on('ready', async () => {
 		);
 		setupWindow.show();
 	}
-	
+
 	removeMainListener();
 	ipcMainHandler(store, startServer, knex, { ...environment }, timeTrackerWindow);
 });
