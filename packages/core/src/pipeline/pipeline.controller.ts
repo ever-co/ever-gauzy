@@ -39,7 +39,7 @@ export class PipelineController extends CrudController<Pipeline> {
 	async pagination(
 		@Query() filter: PaginationParams<Pipeline>
 	): Promise<IPagination<IPipeline>> {
-		return this.pipelineService.pagination(filter);
+		return await this.pipelineService.pagination(filter);
 	}
 
 	@ApiOperation({ summary: 'find all' })
