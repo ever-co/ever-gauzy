@@ -42,16 +42,9 @@ const routes: Routes = [
 			},
 			{
 				path: 'proposal-template',
-				loadChildren: () =>
-					import('./proposal-template/proposal-template.module').then(
-						(m) => m.ProposalTemplateModule
-					),
-				data: {
-					selectors: {
-						project: false,
-						date: false
-					}
-				}
+				loadChildren: () => import('./proposal-template/proposal-template.module').then(
+					(m) => m.ProposalTemplateModule
+				)
 			},
 			{
 				path: 'employee',
