@@ -94,9 +94,7 @@ export class DesktopEventCounter {
 		if (this._intervalDuration === 0 || this._activeSeconds.system === 0)
 			return 0;
 
-		return Math.ceil(
-			this._activeSeconds.system / (this._intervalDuration / 100)
-		);
+		return this._activeSeconds.system / this._intervalDuration;
 	}
 
 	/**
@@ -171,5 +169,12 @@ export class DesktopEventCounter {
 		this._keyboardActiveDuringThisSecond = false;
 		this._mouseActiveDuringThisSecond = false;
 		this._systemActiveDuringThisSecond = true;
+	}
+
+	/**
+	 * Getter interval duration
+	 */
+	public get intervalDuration(): number {
+		return this._intervalDuration;
 	}
 }

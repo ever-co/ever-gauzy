@@ -63,7 +63,7 @@ export default class Timerhandler {
 		}
 
 		this.eventCounter.start();
-
+		
 		const appSetting = LocalStore.getStore('appSetting');
 		
 		appSetting.timerStarted = true;
@@ -399,13 +399,14 @@ export default class Timerhandler {
 		const config = LocalStore.getStore('configs');
 		log.info(`App Setting: ${moment().format()}`, appSetting);
 		log.info(`Config: ${moment().format()}`, config);
+		const updatePeriod =
+			parseInt(appSetting.timer.updatePeriod, 10) * 60;
 		const { id: lastTimerId, timeLogId } = this.lastTimer;
 		const durationNow = now.diff(moment(lastTimeSlot), 'seconds');
 		let durationNonAfk = durationNow - dataCollection.durationAfk;
 		if (!projectInfo.aw.isAw || !appSetting.awIsConnected || dataCollection.allActivities.length === 0) {
 			durationNonAfk = 0;
 		}
-		console.log(this.eventCounter);
 		switch (
 			appSetting.SCREENSHOTS_ENGINE_METHOD ||
 			config.SCREENSHOTS_ENGINE_METHOD
@@ -440,9 +441,9 @@ export default class Timerhandler {
 						isAw: projectInfo.aw.isAw,
 						isAwConnected: appSetting.awIsConnected,
 						keyboard:
-							this.eventCounter.keyboardPercentage,
-						mouse: this.eventCounter.mousePercentage,
-						system: this.eventCounter.systemPercentage
+							this.eventCounter.keyboardPercentage * durationNow,
+						mouse: this.eventCounter.mousePercentage * durationNow,
+						system: this.eventCounter.systemPercentage * durationNow
 					}
 				);
 				break;
@@ -477,15 +478,19 @@ export default class Timerhandler {
 						isAw: projectInfo.aw.isAw,
 						isAwConnected: appSetting.awIsConnected,
 						keyboard:
-							this.eventCounter.keyboardPercentage,
-						mouse: this.eventCounter.mousePercentage,
-						system: this.eventCounter.systemPercentage
+							this.eventCounter.keyboardPercentage * durationNow,
+						mouse: this.eventCounter.mousePercentage * durationNow,
+						system: this.eventCounter.systemPercentage * durationNow
 					}
 				);
 				break;
 			default:
 				break;
 		}
+
+		if(this.eventCounter.intervalDuration >= updatePeriod ) {
+			this.eventCounter.reset();
+		}	
 	}
 
 

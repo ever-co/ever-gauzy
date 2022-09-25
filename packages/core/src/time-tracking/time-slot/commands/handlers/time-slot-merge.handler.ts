@@ -116,7 +116,6 @@ export class TimeSlotMergeHandler
 					}
 
 					const timeSlotsLength = oldTimeSlots.filter((item) => item.keyboard !== 0).length;
-					overall = Math.round(overall / timeSlotsLength || 0);
 					keyboard = Math.round(keyboard / timeSlotsLength || 0);
 					mouse = Math.round(mouse / timeSlotsLength || 0);
 
