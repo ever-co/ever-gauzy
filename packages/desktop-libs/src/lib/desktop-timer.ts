@@ -11,6 +11,7 @@ import { powerMonitor, ipcMain, screen } from 'electron';
 import { getScreeshot, detectActiveWindow } from './desktop-screenshot';
 import log from 'electron-log';
 import { ActivityType, TimeLogSourceEnum } from '@gauzy/contracts';
+import { DesktopEventCounter } from './desktop-event-counter';
 console.log = log.log;
 Object.assign(console, log.functions);
 const EmbeddedQueue = require('embedded-queue');
@@ -33,6 +34,8 @@ export default class Timerhandler {
 	queue:any = null;
 	queueType:any = {};
 	appName = app.getName();
+	eventCounter = new DesktopEventCounter();
+
 	startTimer(setupWindow, knex, timeTrackerWindow, timeLog) {
 		// store timer is start to electron-store
 		if (!this.listener) {
@@ -59,6 +62,8 @@ export default class Timerhandler {
 			});
 		}
 
+		this.eventCounter.start();
+		
 		const appSetting = LocalStore.getStore('appSetting');
 		
 		appSetting.timerStarted = true;
@@ -250,6 +255,7 @@ export default class Timerhandler {
 	 */
 	stopTimerIntervalPeriod() {
 		try {
+			this.eventCounter.stop();
 			clearInterval(this.intevalTimer);
 			clearInterval(this.intervalUpdateTime);
 		} catch (error) {
@@ -393,6 +399,8 @@ export default class Timerhandler {
 		const config = LocalStore.getStore('configs');
 		log.info(`App Setting: ${moment().format()}`, appSetting);
 		log.info(`Config: ${moment().format()}`, config);
+		const updatePeriod =
+			parseInt(appSetting.timer.updatePeriod, 10) * 60;
 		const { id: lastTimerId, timeLogId } = this.lastTimer;
 		const durationNow = now.diff(moment(lastTimeSlot), 'seconds');
 		let durationNonAfk = durationNow - dataCollection.durationAfk;
@@ -404,67 +412,85 @@ export default class Timerhandler {
 			config.SCREENSHOTS_ENGINE_METHOD
 		) {
 			case 'ElectronDesktopCapturer':
-				timeTrackerWindow.webContents.send('prepare_activities_screenshot', {
-					screensize: screen.getPrimaryDisplay().workAreaSize,
-					type: 'ElectronDesktopCapturer',
-					displays: null,
-					start: lastTimeSlot.utc().format(),
-					end: moment().utc().format(),
-					tpURL: projectInfo.aw.host,
-					tp: 'aw',
-					taskId: userInfo.taskId,
-					organizationId: userInfo.organizationId,
-					projectId: userInfo.projectId,
-					organizationContactId: userInfo.organizationContactId,
-					timeUpdatePeriode: appSetting.timer.updatePeriod,
-					employeeId: userInfo.employeeId,
-					...userInfo,
-					timerId: lastTimerId,
-					timeLogId: timeLogId,
-					startedAt: lastTimeSlot.utc().toDate(),
-					activities: dataCollection.allActivities,
-					idsAw: dataCollection.idsAw,
-					idsWakatime: dataCollection.idsWakatime,
-					duration: durationNow,
-					durationNonAfk: durationNonAfk < 0 ? 0 : durationNonAfk,
-					activeWindow: detectActiveWindow(),
-					isAw: projectInfo.aw.isAw,
-					isAwConnected: appSetting.awIsConnected
-				});
+				timeTrackerWindow.webContents.send(
+					'prepare_activities_screenshot',
+					{
+						screensize: screen.getPrimaryDisplay().workAreaSize,
+						type: 'ElectronDesktopCapturer',
+						displays: null,
+						start: lastTimeSlot.utc().format(),
+						end: moment().utc().format(),
+						tpURL: projectInfo.aw.host,
+						tp: 'aw',
+						taskId: userInfo.taskId,
+						organizationId: userInfo.organizationId,
+						projectId: userInfo.projectId,
+						organizationContactId: userInfo.organizationContactId,
+						timeUpdatePeriode: appSetting.timer.updatePeriod,
+						employeeId: userInfo.employeeId,
+						...userInfo,
+						timerId: lastTimerId,
+						timeLogId: timeLogId,
+						startedAt: lastTimeSlot.utc().toDate(),
+						activities: dataCollection.allActivities,
+						idsAw: dataCollection.idsAw,
+						idsWakatime: dataCollection.idsWakatime,
+						duration: durationNow,
+						durationNonAfk: durationNonAfk < 0 ? 0 : durationNonAfk,
+						activeWindow: detectActiveWindow(),
+						isAw: projectInfo.aw.isAw,
+						isAwConnected: appSetting.awIsConnected,
+						keyboard:
+							this.eventCounter.keyboardPercentage * durationNow,
+						mouse: this.eventCounter.mousePercentage * durationNow,
+						system: this.eventCounter.systemPercentage * durationNow
+					}
+				);
 				break;
 			case 'ScreenshotDesktopLib':
 				const displays = await getScreeshot();
-				timeTrackerWindow.webContents.send('prepare_activities_screenshot', {
-					screensize: screen.getPrimaryDisplay().workAreaSize,
-					type: 'ScreenshotDesktopLib',
-					displays,
-					start: lastTimeSlot.utc().format(),
-					end: moment().utc().format(),
-					tpURL: projectInfo.aw.host,
-					tp: 'aw',
-					taskId: userInfo.taskId,
-					organizationId: userInfo.organizationId,
-					projectId: userInfo.projectId,
-					organizationContactId: userInfo.organizationContactId,
-					employeeId: userInfo.employeeId,
-					timeUpdatePeriode: appSetting.timer.updatePeriod,
-					...userInfo,
-					timerId: lastTimerId,
-					timeLogId: timeLogId,
-					startedAt: lastTimeSlot.utc().toDate(),
-					activities: dataCollection.allActivities,
-					idsAw: dataCollection.idsAw,
-					idsWakatime: dataCollection.idsWakatime,
-					duration: durationNow,
-					durationNonAfk: durationNonAfk < 0 ? 0 : durationNonAfk,
-					activeWindow: null,
-					isAw: projectInfo.aw.isAw,
-					isAwConnected: appSetting.awIsConnected
-				});
+				timeTrackerWindow.webContents.send(
+					'prepare_activities_screenshot',
+					{
+						screensize: screen.getPrimaryDisplay().workAreaSize,
+						type: 'ScreenshotDesktopLib',
+						displays,
+						start: lastTimeSlot.utc().format(),
+						end: moment().utc().format(),
+						tpURL: projectInfo.aw.host,
+						tp: 'aw',
+						taskId: userInfo.taskId,
+						organizationId: userInfo.organizationId,
+						projectId: userInfo.projectId,
+						organizationContactId: userInfo.organizationContactId,
+						employeeId: userInfo.employeeId,
+						timeUpdatePeriode: appSetting.timer.updatePeriod,
+						...userInfo,
+						timerId: lastTimerId,
+						timeLogId: timeLogId,
+						startedAt: lastTimeSlot.utc().toDate(),
+						activities: dataCollection.allActivities,
+						idsAw: dataCollection.idsAw,
+						idsWakatime: dataCollection.idsWakatime,
+						duration: durationNow,
+						durationNonAfk: durationNonAfk < 0 ? 0 : durationNonAfk,
+						activeWindow: null,
+						isAw: projectInfo.aw.isAw,
+						isAwConnected: appSetting.awIsConnected,
+						keyboard:
+							this.eventCounter.keyboardPercentage * durationNow,
+						mouse: this.eventCounter.mousePercentage * durationNow,
+						system: this.eventCounter.systemPercentage * durationNow
+					}
+				);
 				break;
 			default:
 				break;
 		}
+
+		if(this.eventCounter.intervalDuration >= updatePeriod ) {
+			this.eventCounter.reset();
+		}	
 	}
 
 

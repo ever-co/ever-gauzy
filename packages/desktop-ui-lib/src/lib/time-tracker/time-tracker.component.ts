@@ -1111,13 +1111,13 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			activities = arg.activities;
 		}
 
-		const ParamActivity = {
+		const paramActivity = {
 			employeeId: arg.employeeId,
 			projectId: arg.projectId,
-			duration: duration,
-			keyboard: Math.floor(arg.durationNonAfk),
-			mouse: Math.floor(arg.durationNonAfk),
-			overall: Math.floor(arg.durationNonAfk),
+			duration: this.aw ? duration : arg.duration,
+			keyboard: this.aw ? Math.floor(arg.durationNonAfk) : arg.keyboard,
+			mouse: this.aw ? Math.floor(arg.durationNonAfk) : arg.mouse,
+			overall: this.aw ? Math.floor(arg.durationNonAfk) : arg.system,
 			startedAt: arg.startedAt,
 			activities: activities,
 			timeLogId: arg.timeLogId,
@@ -1132,7 +1132,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 		try {
 			const resActivities: any =
-				await this.timeTrackerService.pushToTimeSlot(ParamActivity);
+				await this.timeTrackerService.pushToTimeSlot(paramActivity);
 			console.log('result of timeslot', resActivities);
 			const timeLogs = resActivities.timeLogs;
 			this.electronService.ipcRenderer.send('return_time_slot', {
@@ -1168,7 +1168,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			console.log('error send to api timeslot', error);
 			this.electronService.ipcRenderer.send('failed_save_time_slot', {
 				params: JSON.stringify({
-					...ParamActivity,
+					...paramActivity,
 					b64Imgs: screenshotImg.map((img) => {
 						return {
 							b64img: this.buffToB64(img),

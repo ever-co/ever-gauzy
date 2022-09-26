@@ -169,7 +169,7 @@ export class EmployeeSelectorComponent
 		const selectedDateRange$ = this.dateRangePickerBuilderService.selectedDateRange$;
 		combineLatest([storeOrganization$, selectedDateRange$])
 			.pipe(
-				filter(([organization, dateRange]) => !!organization && !!dateRange),
+				filter(([organization]) => !!organization),
 				tap(([organization, dateRange]) => {
 					this.organization = organization as IOrganization;
 					this._selectedDateRange = dateRange as IDateRangePicker;

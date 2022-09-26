@@ -73,7 +73,6 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 			}
 		});
 		query.where((qb: SelectQueryBuilder<Employee>) => {
-			const { startDate, endDate } = forRange;
 			const tenantId = RequestContext.currentTenantId();
 			qb.andWhere(
 				new Brackets((web: WhereExpressionBuilder) => {
@@ -82,21 +81,26 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 					web.andWhere(`"${qb.alias}"."isActive" = :isActive`, { isActive: true });
 				})
 			);
-			qb.andWhere(
-				new Brackets((web: WhereExpressionBuilder) => {
-					web.andWhere(`"${qb.alias}"."startedWorkOn" <= :startedWorkOn`, {
-						startedWorkOn: moment.utc(endDate).format('YYYY-MM-DD hh:mm:ss')
-					});
-				})
-			);
-			qb.andWhere(
-				new Brackets((web: WhereExpressionBuilder) => {
-					web.where(`"${qb.alias}"."endWork" IS NULL`);
-					web.orWhere( `"${qb.alias}"."endWork" >= :endWork`, {
-						endWork: moment.utc(startDate).format('YYYY-MM-DD hh:mm:ss')
-					});
-				})
-			);
+			if (isNotEmpty(forRange)) {
+				if (forRange.startDate && forRange.endDate) {
+					const { startDate, endDate } = forRange;
+					qb.andWhere(
+						new Brackets((web: WhereExpressionBuilder) => {
+							web.andWhere(`"${qb.alias}"."startedWorkOn" <= :startedWorkOn`, {
+								startedWorkOn: moment.utc(endDate).format('YYYY-MM-DD hh:mm:ss')
+							});
+						})
+					);
+					qb.andWhere(
+						new Brackets((web: WhereExpressionBuilder) => {
+							web.where(`"${qb.alias}"."endWork" IS NULL`);
+							web.orWhere( `"${qb.alias}"."endWork" >= :endWork`, {
+								endWork: moment.utc(startDate).format('YYYY-MM-DD hh:mm:ss')
+							});
+						})
+					);
+				}
+			}
 			if (!RequestContext.hasPermission(
 				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
 			)) {
