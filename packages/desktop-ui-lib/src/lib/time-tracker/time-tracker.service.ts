@@ -559,11 +559,12 @@ export class TimeTrackerService {
 			organizationContactId: values.organizationContactId
 		};
 
-		if (!values.isAw || !values.isAwConnected) {
-			delete params.overall;
-			delete params.mouse;
-			delete params.keyboard;
-		}
+		// if (!values.isAw || !values.isAwConnected) {
+		// 	delete params.overall;
+		// 	delete params.mouse;
+		// 	delete params.keyboard;
+		// }
+		
 		return firstValueFrom(this.http
 			.post(`${values.apiHost}/api/timesheet/time-slot`, params, {
 				headers: headers
