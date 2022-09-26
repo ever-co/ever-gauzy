@@ -12,7 +12,8 @@ import {
 	Post,
 	Req,
 	ValidationPipe,
-	UsePipes
+	UsePipes,
+	BadRequestException
 } from '@nestjs/common';
 import { I18nLang } from 'nestjs-i18n';
 import {
@@ -163,7 +164,7 @@ export class PaymentController extends CrudController<Payment> {
 	 */
 	@HttpCode(HttpStatus.CREATED)
 	@Post()
-	@UsePipes(new ValidationPipe({ transform : true }))
+	@UsePipes(new ValidationPipe({ transform : true, whitelist: true }))
 	async create(
 		@Body() entity: CreatePaymentDTO
 	): Promise<IPayment> {
@@ -179,14 +180,20 @@ export class PaymentController extends CrudController<Payment> {
 	 */
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
-	@UsePipes(new ValidationPipe({ transform : true }))
+	@UsePipes(new ValidationPipe({ transform : true, whitelist: true }))
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: UpdatePaymentDTO
 	): Promise<IPayment> {
-		return await this.paymentService.create({
-			id,
-			...entity
-		});
+		console.log({ entity });
+		try {
+			await this.paymentService.findOneByIdString(id);
+			return await this.paymentService.create({
+				id,
+				...entity
+			});
+		} catch (error) {
+			throw new BadRequestException(error);
+		}
 	}
 }

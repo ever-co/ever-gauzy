@@ -16,7 +16,7 @@
 		<form [formGroup]="form">
 			<ng-container *ngIf="!invoice">
 				<div class="row">
-					<div class="col-sm-6">
+					<div class="col-9">
 						<div class="form-group">
 							<label for="inputInvoiceNumber" class="label">
 								{{
@@ -40,16 +40,9 @@
 							</nb-select>
 						</div>
 					</div>
-					<div class="col-sm-6">
-						<ga-tags-color-input
-							[selectedTags]="form.get('tags').value"
-							(selectedTagsEvent)="selectedTagsEvent($event)"
-							[isOrgLevel]="true"
-						></ga-tags-color-input>
-					</div>
 				</div>
 				<div class="row">
-					<div class="col-sm-6">
+					<div class="col-6">
 						<div class="form-group">
 							<label for="inputOrganizationContact" class="label">
 								{{ 'INVOICES_PAGE.CONTACT' | translate }}
@@ -63,7 +56,7 @@
 							></ga-contact-select>
 						</div>
 					</div>
-					<div class="col-sm-6">
+					<div class="col-6">
 						<div class="form-group">
 							<label class="label">
 								{{
@@ -84,7 +77,7 @@
 				</div>
 			</ng-container>
 			<div class="row">
-				<div class="col-sm-6">
+				<div class="col-6">
 					<div class="form-group">
 						<label for="inputPaymentDate" class="label">
 							{{
@@ -103,7 +96,7 @@
 						<nb-datepicker #paymentDatePicker></nb-datepicker>
 					</div>
 				</div>
-				<div class="col-sm-6">
+				<div class="col-6">
 					<div class="form-group">
 						<label for="inputPaymentMethod" class="label">
 							{{
@@ -132,7 +125,7 @@
 				</div>
 			</div>
 			<div class="row">
-				<div class="col-sm-12">
+				<div class="col-12">
 					<ga-currency
 						formControlName="currency"
 						[formControl]="form.get('currency')"
@@ -141,7 +134,16 @@
 				</div>
 			</div>
 			<div class="row">
-				<div class="col-sm-12">
+				<div class="col-12 mb-3">
+					<ga-tags-color-input
+						[selectedTags]="form.get('tags').value"
+						(selectedTagsEvent)="selectedTagsEvent($event)"
+						[isOrgLevel]="true"
+					></ga-tags-color-input>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-12">
 					<div class="form-group">
 						<label for="inputAmount" class="label">
 							<span>
@@ -160,7 +162,7 @@
 				</div>
 			</div>
 			<div class="row">
-				<div class="col-sm-12">
+				<div class="col-12">
 					<div class="form-group">
 						<label for="inputNote" class="label">
 							{{ 'INVOICES_PAGE.PAYMENTS.NOTE' | translate }}

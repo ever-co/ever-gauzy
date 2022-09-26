@@ -2,7 +2,6 @@ import {
     IInvoice,
     IOrganizationContact,
     IOrganizationProject,
-    IUser,
     PaymentMethodEnum
 } from "@gauzy/contracts";
 import { ApiProperty } from "@nestjs/swagger";
@@ -10,6 +9,10 @@ import { IsBoolean, IsEnum, IsNotEmpty, IsObject, IsOptional, IsString } from "c
 import { TenantOrganizationBaseDTO } from "./../../core/dto";
 
 export class PaymentDTO extends TenantOrganizationBaseDTO {
+
+    @ApiProperty({ type: () => String, readOnly: true })
+    @IsOptional()
+    readonly paymentDate: Date;
 
     @ApiProperty({ type: () => Number, readOnly: true })
     @IsNotEmpty()
@@ -39,16 +42,6 @@ export class PaymentDTO extends TenantOrganizationBaseDTO {
     @IsOptional()
     @IsString()
     readonly invoiceId: string;
-
-    @ApiProperty({ type: () => Object, readOnly: true })
-    @IsOptional()
-    @IsObject()
-    readonly recordedBy: IUser;
-
-    @ApiProperty({ type: () => String, readOnly: true })
-    @IsOptional()
-    @IsString()
-    readonly recordedById: string;
 
     @ApiProperty({ type: () => Object, readOnly: true })
     @IsOptional()

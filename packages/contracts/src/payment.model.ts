@@ -27,7 +27,7 @@ export interface IPayment extends IBasePerTenantAndOrganizationEntityModel {
 	projectId?: string;
 }
 
-export interface IPaymentUpdateInput {
+export interface IPaymentUpdateInput extends IBasePerTenantAndOrganizationEntityModel {
 	amount?: number;
 	note?: string;
 	currency?: string;
