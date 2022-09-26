@@ -440,10 +440,15 @@ export default class Timerhandler {
 						activeWindow: detectActiveWindow(),
 						isAw: projectInfo.aw.isAw,
 						isAwConnected: appSetting.awIsConnected,
-						keyboard:
-							this.eventCounter.keyboardPercentage * durationNow,
-						mouse: this.eventCounter.mousePercentage * durationNow,
-						system: this.eventCounter.systemPercentage * durationNow
+						keyboard: Math.ceil(
+							this.eventCounter.keyboardPercentage * durationNow
+						),
+						mouse: Math.ceil(
+							this.eventCounter.mousePercentage * durationNow
+						),
+						system: Math.ceil(
+							this.eventCounter.systemPercentage * durationNow
+						)
 					}
 				);
 				break;
