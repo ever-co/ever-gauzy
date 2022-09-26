@@ -42,7 +42,7 @@ export class IsOrganizationShouldBelongsToConstraint implements ValidatorConstra
 				tenantId: RequestContext.currentTenantId(),
 				userId: RequestContext.currentUserId(),
 				organizationId: organizationId
-			})
+			});
 		} catch (error) {
 			return false;
 		}

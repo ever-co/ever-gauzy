@@ -6,3 +6,4 @@ export * from './is-organization-should-belongs-to.constraint';
 export * from './is-role-already-exist.constraint';
 export * from './is-role-should-exist.constraint';
 export * from './is-tenant-belongs-to-user.constraint';
+export * from './is-employee-belongs-to-organization.constraint';

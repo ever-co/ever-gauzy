@@ -1,11 +1,13 @@
 import { Module } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import {
+    Employee,
     ExpenseCategory,
     Role,
     UserOrganization
 } from "./../../core/entities/internal";
 import {
+    IsEmployeeBelongsToOrganizationConstraint,
     IsExpenseCategoryAlreadyExistConstraint,
     IsOrganizationShouldBelongsToConstraint,
     IsRoleAlreadyExistConstraint,
@@ -18,7 +20,8 @@ import {
         TypeOrmModule.forFeature([
             ExpenseCategory,
             Role,
-            UserOrganization
+            UserOrganization,
+            Employee
         ])
     ],
     providers: [
@@ -26,7 +29,8 @@ import {
         IsOrganizationShouldBelongsToConstraint,
         IsRoleAlreadyExistConstraint,
         IsRoleShouldExistConstraint,
-        IsTenantBelongsToUserConstraint
+        IsTenantBelongsToUserConstraint,
+        IsEmployeeBelongsToOrganizationConstraint
     ]
 })
 export class ValidatorModule {}
