@@ -5,8 +5,10 @@ import {
 	FindOptionsWhere,
 	FindManyOptions,
 	FindOneOptions,
-	Repository
+	Repository,
+	UpdateResult
 } from 'typeorm';
+import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { IPagination, IUser, PermissionsEnum } from '@gauzy/contracts';
 import { User } from '../../user/user.entity';
 import { RequestContext } from '../context';
@@ -169,10 +171,26 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity> extends
 		});
 	}
 
+	/**
+	 * Finds entities that match given find options.
+	 * Also counts all entities that match given conditions,
+	 * but ignores pagination settings (from and take options).
+	 *
+	 * @param filter
+	 * @returns
+	 */
 	public async findAll(filter?: FindManyOptions<T>): Promise<IPagination<T>> {
 		return await super.findAll(this.findManyWithTenant(filter));
 	}
 
+	/**
+	 * Finds entities that match given find options.
+	 * Also counts all entities that match given conditions,
+	 * But includes pagination settings
+	 *
+	 * @param filter
+	 * @returns
+	 */
 	public async paginate(filter?: FindManyOptions<T>): Promise<IPagination<T>> {
 		return await super.paginate(this.findManyWithTenant(filter));
 	}
@@ -223,7 +241,7 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity> extends
 	 * @param options
 	 * @returns
 	 */
-	 public async findOneOrFailByWhereOptions(
+	public async findOneOrFailByWhereOptions(
 		options: FindOptionsWhere<T>
 	): Promise<ITryRequest<T>> {
 		const user = RequestContext.currentUser();
@@ -293,7 +311,6 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity> extends
 	 * Note that it copies only properties that are present in entity schema.
 	 *
 	 * @param entity
-	 * @param options
 	 * @returns
 	 */
 	public async create(entity: DeepPartial<T>): Promise<T> {
@@ -325,6 +342,25 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity> extends
 				employeeId: employeeId
 			} : {}
 		});
+	}
+
+	/**
+	 * Updates entity partially. Entity can be found by a given conditions.
+	 *
+	 * @param id
+	 * @param partialEntity
+	 * @returns
+	 */
+	public async update(
+		id: string | FindOptionsWhere<T>,
+		partialEntity: QueryDeepPartialEntity<T>
+	): Promise<T | UpdateResult> {
+		if (typeof id === 'string') {
+			await this.findOneByIdString(id);
+		} else if (typeof id === 'object') {
+			await this.findOneByWhereOptions(id as FindOptionsWhere<T>);
+		}
+		return await super.update(id, partialEntity);
 	}
 
 	/**

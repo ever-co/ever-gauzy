@@ -331,7 +331,7 @@ export abstract class CrudService<T extends BaseEntity>
 	 * @returns
 	 */
 	public async update(
-		id: string | number | FindOptionsWhere<T>,
+		id: string | FindOptionsWhere<T>,
 		partialEntity: QueryDeepPartialEntity<T>
 	): Promise<UpdateResult | T> {
 		try {
