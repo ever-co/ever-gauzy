@@ -1,19 +1,19 @@
-import { CurrenciesEnum } from "@gauzy/contracts";
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { Transform, TransformFnParams } from "class-transformer";
-import { IsBoolean, IsEnum, IsNotEmpty, IsNumber, IsOptional } from "class-validator";
+import { IsBoolean, IsNotEmpty, IsNumber, IsOptional, IsString } from "class-validator";
 import { TenantOrganizationBaseDTO } from "./../../core/dto";
 
 export class IncomeDTO extends TenantOrganizationBaseDTO {
+
+	@ApiProperty({ type: () => String, readOnly: true })
+    @IsNotEmpty()
+    @IsString()
+    readonly clientId: string;
 
 	@ApiProperty({ type: () => Number, readOnly: true })
 	@IsNotEmpty()
 	@IsNumber()
 	readonly amount: number;
-
-	@ApiProperty({ type: () => String, enum: CurrenciesEnum, readOnly: true })
-	@IsEnum(CurrenciesEnum)
-	readonly currency: string;
 
 	@ApiPropertyOptional({ type: () => Date, readOnly: true })
 	@IsOptional()

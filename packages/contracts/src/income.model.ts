@@ -1,5 +1,4 @@
 import { IEmployee, IEmployeeFindInput } from './employee.model';
-import { IOrganizationFindInput } from './organization.model';
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 import { ITag } from './tag-entity.model';
 import { IOrganizationContact } from './organization-contact.model';
@@ -43,10 +42,9 @@ export interface IIncomeUpdateInput extends IBasePerTenantAndOrganizationEntityM
 	tags: ITag[];
 }
 
-export interface IIncomeFindInput {
-	employee?: IEmployeeFindInput;
-	organization?: IOrganizationFindInput;
-	tenantId?: string;
+export interface IIncomeFindInput extends IBasePerTenantAndOrganizationEntityModel {
+	employee?: IEmployee;
+	employeeId?: IEmployee['id'];
 	amount?: number;
 	isBonus?: boolean;
 	clientId?: string;

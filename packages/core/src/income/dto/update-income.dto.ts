@@ -1,4 +1,14 @@
 import { IIncomeUpdateInput } from "@gauzy/contracts";
-import { CreateIncomeDTO } from "./create-income.dto";
+import { IntersectionType } from "@nestjs/mapped-types";
+import { RelationalCurrencyDTO } from "./../../currency/dto";
+import { RelationalTagDTO } from "./../../tags/dto";
+import { IncomeDTO } from "./income.dto";
 
-export class UpdateIncomeDTO extends CreateIncomeDTO implements IIncomeUpdateInput {}
+/**
+ * Update income request DTO validation
+ */
+export class UpdateIncomeDTO extends IntersectionType(
+    IncomeDTO,
+    RelationalTagDTO,
+    RelationalCurrencyDTO
+) implements IIncomeUpdateInput {}

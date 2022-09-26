@@ -10,7 +10,8 @@ import {
 	Query,
 	UseGuards,
 	Delete,
-	ValidationPipe
+	ValidationPipe,
+	UsePipes
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
@@ -33,11 +34,11 @@ import {
 } from './commands';
 import { Income } from './income.entity';
 import { IncomeService } from './income.service';
-import { CreateIncomeDTO, UpdateIncomeDTO } from './dto';
-import { EmployeeFeatureDTO } from './../employee/dto';
+import { CreateIncomeDTO, DeleteIncomeDTO, UpdateIncomeDTO } from './dto';
 
 @ApiTags('Income')
-@UseGuards(TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard)
+@Permissions(PermissionsEnum.ORG_INCOMES_EDIT)
 @Controller()
 export class IncomeController extends CrudController<Income> {
 	constructor(
@@ -58,6 +59,7 @@ export class IncomeController extends CrudController<Income> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
+	@Permissions(PermissionsEnum.ORG_INCOMES_VIEW)
 	@Get('me')
 	async findMyIncome(
 		@Query('data', ParseJsonPipe) data: any
@@ -87,15 +89,13 @@ export class IncomeController extends CrudController<Income> {
 		return await this.incomeService.countBy(options);
 	}
 
-	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_INCOMES_VIEW)
 	@Get('pagination')
+	@UsePipes(new ValidationPipe({ transform: true }))
 	async pagination(
-		@Query(new ValidationPipe({
-			transform: true
-		})) options: PaginationParams<Income>
+		@Query() params: PaginationParams<Income>
 	): Promise<IPagination<IIncome>> {
-		return this.incomeService.pagination(options);
+		return this.incomeService.pagination(params);
 	}
 
 	@ApiOperation({ summary: 'Find all income.' })
@@ -108,7 +108,6 @@ export class IncomeController extends CrudController<Income> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_INCOMES_VIEW)
 	@Get()
 	async findAll(
@@ -127,6 +126,7 @@ export class IncomeController extends CrudController<Income> {
 	 * @param id
 	 * @returns
 	 */
+	@Permissions(PermissionsEnum.ORG_INCOMES_VIEW)
 	@Get(':id')
 	async findById(
 		@Param('id', UUIDValidationPipe) id: string,
@@ -144,14 +144,11 @@ export class IncomeController extends CrudController<Income> {
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
-	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.ORG_INCOMES_EDIT)
+	@HttpCode(HttpStatus.CREATED)
 	@Post()
+	@UsePipes(new ValidationPipe({ transform : true, whitelist: true }))
 	async create(
-		@Body(new ValidationPipe({
-			transform: true,
-			whitelist: true
-		})) entity: CreateIncomeDTO
+		@Body() entity: CreateIncomeDTO
 	): Promise<IIncome> {
 		return await this.commandBus.execute(
 			new IncomeCreateCommand(entity)
@@ -173,14 +170,11 @@ export class IncomeController extends CrudController<Income> {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
-	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.ORG_INCOMES_EDIT)
 	@Put(':id')
+	@UsePipes(new ValidationPipe({ transform : true, whitelist: true }))
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body(new ValidationPipe({
-			transform : true
-		})) entity: UpdateIncomeDTO
+		@Body() entity: UpdateIncomeDTO
 	): Promise<IIncome> {
 		return await this.commandBus.execute(
 			new IncomeUpdateCommand(id, entity)
@@ -198,15 +192,12 @@ export class IncomeController extends CrudController<Income> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.ORG_INCOMES_EDIT)
+	@HttpCode(HttpStatus.ACCEPTED)
 	@Delete(':id')
+	@UsePipes(new ValidationPipe({ transform : true, whitelist: true }))
 	async delete(
 		@Param('id', UUIDValidationPipe) incomeId: string,
-		@Query(new ValidationPipe({
-			transform : true,
-			whitelist: true
-		})) options: EmployeeFeatureDTO
+		@Query() options: DeleteIncomeDTO
 	): Promise<DeleteResult> {
 		return await this.commandBus.execute(
 			new IncomeDeleteCommand(

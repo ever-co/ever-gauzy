@@ -1,6 +1,6 @@
 import { IExpenseCategory, IExpenseCreateInput } from "@gauzy/contracts";
 import { IntersectionType } from "@nestjs/mapped-types";
-import { ApiProperty } from "@nestjs/swagger";
+import { ApiProperty, PartialType } from "@nestjs/swagger";
 import { IsObject, IsOptional, IsString } from "class-validator";
 import { RelationalTagDTO } from "./../../tags/dto";
 import { EmployeeFeatureDTO } from "./../../employee/dto";
@@ -13,7 +13,7 @@ import { ExpenseDTO } from "./expense.dto";
 export class CreateExpenseDTO extends IntersectionType(
     ExpenseDTO,
     OrganizationVendorFeatureDTO,
-    EmployeeFeatureDTO,
+    PartialType(EmployeeFeatureDTO),
     RelationalTagDTO
 ) implements IExpenseCreateInput {
 

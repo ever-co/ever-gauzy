@@ -19,8 +19,10 @@ export class IncomeUpdateHandler implements
 
 	public async execute(command: IncomeUpdateCommand): Promise<IIncome> {
 		const { id, entity } = command;
-		const income = await this.updateIncome(id, entity);
 		try {
+			await this.incomeService.findOneByIdString(id);
+			const income = await this.updateIncome(id, entity);
+
 			let averageIncome = 0;
 			let averageBonus = 0;
 			if (isNotEmpty(income.employeeId)) {
@@ -40,23 +42,19 @@ export class IncomeUpdateHandler implements
 					averageBonus: averageBonus
 				});
 			}
+			return income;
 		} catch (error) {
 			throw new BadRequestException(error);
 		}
-		return await this.incomeService.findOneByIdString(income.id);
 	}
 
 	public async updateIncome(
 		incomeId: string,
 		entity: IIncome
 	): Promise<IIncome> {
-		try {
-			return this.incomeService.create({
-				id: incomeId,
-				...entity
-			});
-		} catch (error) {
-			throw new BadRequestException(error);
-		}
+		return await this.incomeService.create({
+			id: incomeId,
+			...entity
+		});
 	}
 }

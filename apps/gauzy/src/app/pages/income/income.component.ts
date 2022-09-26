@@ -460,16 +460,15 @@ export class IncomeComponent extends PaginationFilterBaseComponent
 			.subscribe(async (result) => {
 				if (result) {
 					try {
-						const { id, employee } = this.selectedIncome;
-						await this.incomeService
-							.delete(id, employee ? employee.id : null)
+						const { id, employee, employeeId, organizationId } = this.selectedIncome;
+						await this.incomeService.delete(id, {
+								employeeId,
+								organizationId
+							})
 							.then(() => {
-								this.toastrService.success(
-									'NOTES.INCOME.DELETE_INCOME',
-									{
-										name: this.employeeName(employee)
-									}
-								);
+								this.toastrService.success( 'NOTES.INCOME.DELETE_INCOME', {
+									name: this.employeeName(employee)
+								});
 							})
 							.finally(() => {
 								this._refresh$.next(true);

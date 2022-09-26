@@ -13,7 +13,10 @@ import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable()
 export class IncomeService {
-	constructor(private http: HttpClient) {}
+
+	constructor(
+		private readonly http: HttpClient
+	) {}
 
 	create(createInput: IIncomeCreateInput): Promise<IIncome> {
 		return firstValueFrom(
@@ -60,10 +63,10 @@ export class IncomeService {
 		);
 	}
 
-	delete(incomeId: string, employeeId: string): Promise<any> {
+	delete(incomeId: string, input: IIncomeFindInput): Promise<any> {
 		return firstValueFrom(
 			this.http.delete(`${API_PREFIX}/income/${incomeId}`, {
-				params: toParams({ employeeId })
+				params: toParams({ ...input })
 			})
 		);
 	}
