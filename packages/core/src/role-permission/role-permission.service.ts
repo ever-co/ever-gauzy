@@ -185,7 +185,7 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 	}
 
 	public async updatePermission(
-		id: string | number | FindOptionsWhere<IRolePermission>,
+		id: string | FindOptionsWhere<IRolePermission>,
 		partialEntity: DeepPartial<IRolePermission>
 	): Promise<UpdateResult | IRolePermission> {
 		try {

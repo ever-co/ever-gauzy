@@ -1,34 +1,26 @@
-import { IEmployee, PermissionsEnum } from "@gauzy/contracts";
+import { IEmployee } from "@gauzy/contracts";
 import { ApiPropertyOptional } from "@nestjs/swagger";
-import { Transform, TransformFnParams } from "class-transformer";
-import { IsObject, IsOptional, IsString } from "class-validator";
+import { IsObject, IsString, ValidateIf } from "class-validator";
 import { Employee } from "./../employee.entity";
-import { RequestContext } from "./../../core/context";
+import { TenantOrganizationBaseDTO } from "./../../core/dto";
+import { IsEmployeeBelongsToOrganization } from "./../../shared/validators";
 
 interface IRelationalEmployee {
     readonly employee: IEmployee;
     readonly employeeId: IEmployee['id'];
 }
 
-export class EmployeeFeatureDTO implements IRelationalEmployee  {
+export class EmployeeFeatureDTO extends TenantOrganizationBaseDTO implements IRelationalEmployee  {
 
     @ApiPropertyOptional({ type: () => Employee, readOnly: true })
-    @IsOptional()
+    @ValidateIf((it) => !it.employeeId || it.employee)
     @IsObject()
-    @Transform((params: TransformFnParams) => RequestContext.hasPermission(
-        PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-    ) ? params.value : {
-        id: RequestContext.currentEmployeeId()
-    })
+    @IsEmployeeBelongsToOrganization()
     readonly employee: IEmployee;
 
     @ApiPropertyOptional({ type: () => String, readOnly: true })
-    @IsOptional()
+    @ValidateIf((it) => !it.employee || it.employeeId)
     @IsString()
-    @Transform(
-        (params: TransformFnParams) => RequestContext.hasPermission(
-            PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-        ) ? params.value : RequestContext.currentEmployeeId()
-    )
+    @IsEmployeeBelongsToOrganization()
     readonly employeeId: IEmployee['id'];
 }
