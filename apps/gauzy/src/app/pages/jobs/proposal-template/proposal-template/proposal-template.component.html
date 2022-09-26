@@ -23,21 +23,21 @@
 			></ngx-gauzy-button-action>
 		</div>
 		<nb-tabset (changeTab)="onTabChange($event)" class="mt-4">
-			<nb-tab 
+			<nb-tab
 				[tabTitle]="'PROPOSAL_TEMPLATE.BROWSE' | translate"
 				[tabId]="proposalTemplateTabsEnum.ACTIONS"
 			>
-				<ng-container 
+				<ng-container
 					*ngIf="(nbTab$ | async) === proposalTemplateTabsEnum.ACTIONS"
 				>
 					<ng-template [ngTemplateOutlet]="tableLayout"></ng-template>
 				</ng-container>
 			</nb-tab>
-			<nb-tab 
+			<nb-tab
 				[tabTitle]="'PROPOSAL_TEMPLATE.SEARCH' | translate"
 				[tabId]="proposalTemplateTabsEnum.SEARCH"
 			>
-				<ng-container 
+				<ng-container
 					*ngIf="(nbTab$ | async) === proposalTemplateTabsEnum.SEARCH"
 				>
 					<ng-template [ngTemplateOutlet]="tableLayout"></ng-template>
@@ -53,7 +53,7 @@
 	let-selectedItem="selectedItem"
 >
 	<div class="btn-group actions">
-		<ng-template ngxPermissionsOnly="ORG_PROPOSAL_TEMPLATES_EDIT">
+		<ng-template ngxPermissionsOnly="ORG_PROPOSAL_TEMPLATES_VIEW">
 			<button
 				nbButton
 				status="basic"
@@ -65,10 +65,12 @@
 				<nb-icon class="mr-1" icon="eye-outline"></nb-icon>
 				{{ 'BUTTONS.VIEW' | translate }}
 			</button>
+		</ng-template>
+		<ng-template ngxPermissionsOnly="ORG_PROPOSAL_TEMPLATES_EDIT">
 			<button
 				nbButton
 				status="basic"
-				(click)="editProposal()"
+				(click)="editProposalTemplate()"
 				[disabled]="!selectedItem && disableButton"
 				class="mr-2"
 				class="action primary"
@@ -82,7 +84,7 @@
 				status="basic"
 				ngxConfirmDialog
 				[message]="'PROPOSAL_TEMPLATE.CONFIRM_DELETE' | translate"
-				(confirm)="deleteProposal()"
+				(confirm)="deleteProposalTemplate()"
 				[disabled]="!selectedItem && disableButton"
 				class="mr-2"
 				class="action"
@@ -91,21 +93,21 @@
 			>
 				<nb-icon status="danger" icon="trash-2-outline"> </nb-icon>
 			</button>
+			<button
+				nbButton
+				status="basic"
+				(click)="makeDefaultTemplate()"
+				[disabled]="
+					!selectedItem && disableButton && !selectedItem?.isDefault
+				"
+				class="mr-2"
+				class="action primary"
+				size="small"
+			>
+				<!-- <nb-icon class="mr-1" icon="edit-outline"></nb-icon> -->
+				{{ 'BUTTONS.MAKE_DEFAULT' | translate }}
+			</button>
 		</ng-template>
-		<button
-			nbButton
-			status="basic"
-			(click)="makeDefault()"
-			[disabled]="
-				!selectedItem && disableButton && !selectedItem?.isDefault
-			"
-			class="mr-2"
-			class="action primary"
-			size="small"
-		>
-			<!-- <nb-icon class="mr-1" icon="edit-outline"></nb-icon> -->
-			{{ 'BUTTONS.MAKE_DEFAULT' | translate }}
-		</button>
 	</div>
 </ng-template>
 <ng-template #visibleButton>
@@ -114,7 +116,7 @@
 			nbButton
 			status="success"
 			size="small"
-			(click)="createProposal()"
+			(click)="createProposalTemplate()"
 		>
 			<nb-icon class="mr-1" icon="plus-outline"></nb-icon>
 			{{ 'BUTTONS.ADD' | translate }}
@@ -122,25 +124,27 @@
 	</ng-template>
 </ng-template>
 <ng-template #tableLayout>
-	<div class="table-scroll-container">
-		<ng2-smart-table
-			style="cursor: pointer"
-			[settings]="smartTableSettings"
-			[source]="smartTableSource"
-			(userRowSelect)="selectItem($event)"
-			#proposalTemplateTable
-		></ng2-smart-table>
-	</div>
-	<div class="pagination-container">
-		<ng-container *ngIf="pagination.totalItems > minItemPerPage">
-			<ga-pagination
-				(selectedOption)="onUpdateOption($event)"
-				(selectedPage)="onPageChange($event)"
-				[doEmit]="false"
-				[totalItems]="pagination?.totalItems"
-				[itemsPerPage]="pagination?.itemsPerPage"
-				[activePage]="pagination?.activePage"
-			></ga-pagination>
-		</ng-container>
-	</div>
+	<ng-template ngxPermissionsOnly="ORG_PROPOSAL_TEMPLATES_VIEW">
+		<div class="table-scroll-container">
+			<ng2-smart-table
+				style="cursor: pointer"
+				[settings]="smartTableSettings"
+				[source]="smartTableSource"
+				(userRowSelect)="selectItem($event)"
+				#proposalTemplateTable
+			></ng2-smart-table>
+		</div>
+		<div class="pagination-container">
+			<ng-container *ngIf="pagination.totalItems > minItemPerPage">
+				<ga-pagination
+					(selectedOption)="onUpdateOption($event)"
+					(selectedPage)="onPageChange($event)"
+					[doEmit]="false"
+					[totalItems]="pagination?.totalItems"
+					[itemsPerPage]="pagination?.itemsPerPage"
+					[activePage]="pagination?.activePage"
+				></ga-pagination>
+			</ng-container>
+		</div>
+	</ng-template>
 </ng-template>
