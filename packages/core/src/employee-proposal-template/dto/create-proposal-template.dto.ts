@@ -1,23 +1,13 @@
 import { IEmployeeProposalTemplate } from "@gauzy/contracts";
-import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { IsBoolean, IsNotEmpty, IsOptional, IsString } from "class-validator";
+import { IntersectionType } from "@nestjs/mapped-types";
 import { EmployeeFeatureDTO } from "./../../employee/dto";
+import { ProposalTemplateDTO } from "./proposal-template.dto";
 
-export class CreateProposalTemplateDTO extends EmployeeFeatureDTO
-	implements IEmployeeProposalTemplate {
-
-	@ApiProperty({ type: () => String, readOnly: true })
-	@IsNotEmpty()
-	@IsString()
-	readonly name: string;
-
-    @ApiPropertyOptional({ type: () => String, readOnly: true })
-	@IsOptional()
-	@IsString()
-	readonly content: string;
-
-    @ApiPropertyOptional({ type: () => Boolean, readOnly: true })
-	@IsOptional()
-	@IsBoolean()
-	readonly isDefault: boolean;
-}
+/**
+ * Create proposal template request DTO validation
+ *
+ */
+export class CreateProposalTemplateDTO extends IntersectionType(
+    ProposalTemplateDTO,
+    EmployeeFeatureDTO
+) implements IEmployeeProposalTemplate {}

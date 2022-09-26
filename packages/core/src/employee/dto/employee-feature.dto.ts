@@ -2,7 +2,6 @@ import { IEmployee } from "@gauzy/contracts";
 import { ApiPropertyOptional } from "@nestjs/swagger";
 import { IsObject, IsString, ValidateIf } from "class-validator";
 import { Employee } from "./../employee.entity";
-import { TenantOrganizationBaseDTO } from "./../../core/dto";
 import { IsEmployeeBelongsToOrganization } from "./../../shared/validators";
 
 interface IRelationalEmployee {
@@ -10,7 +9,7 @@ interface IRelationalEmployee {
     readonly employeeId: IEmployee['id'];
 }
 
-export class EmployeeFeatureDTO extends TenantOrganizationBaseDTO implements IRelationalEmployee  {
+export class EmployeeFeatureDTO implements IRelationalEmployee  {
 
     @ApiPropertyOptional({ type: () => Employee, readOnly: true })
     @ValidateIf((it) => !it.employeeId || it.employee)

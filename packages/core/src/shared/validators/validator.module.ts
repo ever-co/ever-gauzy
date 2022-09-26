@@ -9,7 +9,7 @@ import {
 import {
     IsEmployeeBelongsToOrganizationConstraint,
     IsExpenseCategoryAlreadyExistConstraint,
-    IsOrganizationShouldBelongsToConstraint,
+    IsOrganizationBelongsToUserConstraint,
     IsRoleAlreadyExistConstraint,
     IsRoleShouldExistConstraint,
     IsTenantBelongsToUserConstraint
@@ -26,7 +26,7 @@ import {
     ],
     providers: [
         IsExpenseCategoryAlreadyExistConstraint,
-        IsOrganizationShouldBelongsToConstraint,
+        IsOrganizationBelongsToUserConstraint,
         IsRoleAlreadyExistConstraint,
         IsRoleShouldExistConstraint,
         IsTenantBelongsToUserConstraint,

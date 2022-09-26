@@ -1,7 +1,9 @@
 import { IEmployeeProposalTemplate } from "@gauzy/contracts";
-import { OmitType } from "@nestjs/mapped-types";
-import { CreateProposalTemplateDTO } from "./create-proposal-template.dto";
+import { ProposalTemplateDTO } from "./proposal-template.dto";
 
-export class UpdateProposalTemplateDTO extends OmitType(
-    CreateProposalTemplateDTO, ['employee', 'employeeId'] as const
-) implements IEmployeeProposalTemplate {}
+/**
+ * Update proposal template request DTO validation
+ *
+ */
+export class UpdateProposalTemplateDTO extends ProposalTemplateDTO
+    implements IEmployeeProposalTemplate {}

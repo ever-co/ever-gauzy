@@ -7,12 +7,14 @@ import {
 	ValidatorConstraintInterface
 } from "class-validator";
 import { IOrganization } from "@gauzy/contracts";
+import { isEmpty } from "@gauzy/common";
 import { UserOrganization } from "../../../core/entities/internal";
 import { RequestContext } from "../../../core/context";
 
-@ValidatorConstraint({ name: "IsOrganizationShouldExist", async: true })
+@ValidatorConstraint({ name: "IsOrganizationBelongsToUser", async: true })
 @Injectable()
-export class IsOrganizationShouldBelongsToConstraint implements ValidatorConstraintInterface {
+export class IsOrganizationBelongsToUserConstraint implements ValidatorConstraintInterface {
+
 	constructor(
         @InjectRepository(UserOrganization)
 		private readonly repository: Repository<UserOrganization>
@@ -22,26 +24,23 @@ export class IsOrganizationShouldBelongsToConstraint implements ValidatorConstra
      * Method to be called to perform custom validation over given value.
      */
 	async validate(
-		organization: IOrganization['id'] | IOrganization,
+		value: IOrganization['id'] | IOrganization,
 		args: ValidationArguments
 	) {
-		if (!organization) { return false; }
+		if (isEmpty(value)) { return true; }
 
 		let organizationId: string;
-		if (typeof(organization) === 'string') {
-			organizationId = organization;
-		} else if (typeof(organization) == 'object') {
-			organizationId = organization.id
-		}
-		if (!organizationId) {
-			return false;
+		if (typeof(value) === 'string') {
+			organizationId = value;
+		} else if (typeof(value) == 'object') {
+			organizationId = value.id
 		}
 
 		try {
             return !!await this.repository.findOneByOrFail({
 				tenantId: RequestContext.currentTenantId(),
 				userId: RequestContext.currentUserId(),
-				organizationId: organizationId
+				organizationId
 			});
 		} catch (error) {
 			return false;
@@ -53,6 +52,6 @@ export class IsOrganizationShouldBelongsToConstraint implements ValidatorConstra
      */
 	defaultMessage(validationArguments?: ValidationArguments): string {
 		const { value } = validationArguments;
-		return `This user is not belongs to this organization ${value}.`;
+		return `This user is not belongs to this organization (${JSON.stringify(value)}).`;
 	}
 }
