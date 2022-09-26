@@ -26,6 +26,7 @@ export interface ICrudService<T> {
 	findOneOrFailByOptions(options: FindOneOptions<T>): Promise<ITryRequest<T>>;
 	findOneOrFailByWhereOptions(options: FindOptionsWhere<T>): Promise<ITryRequest<T>>;
 	create(entity: DeepPartial<T>, ...options: any[]): Promise<T>;
+	save(entity: DeepPartial<T>): Promise<T>;
 	update(
 		id: any,
 		entity: QueryDeepPartialEntity<T>,

@@ -321,6 +321,21 @@ export abstract class CrudService<T extends BaseEntity>
 	}
 
 	/**
+	 * Saves a given entity in the database.
+	 * If entity does not exist in the database then inserts, otherwise updates.
+	 *
+	 * @param entity
+	 * @returns
+	 */
+	public async save(entity: DeepPartial<T>): Promise<T> {
+		try {
+			return await this.repository.save(entity);
+		} catch (error) {
+			throw new BadRequestException(error);
+		}
+	}
+
+	/**
 	 * Updates entity partially. Entity can be found by a given conditions.
 	 * Unlike save method executes a primitive operation without cascades, relations and other operations included.
 	 * Executes fast and efficient UPDATE query.

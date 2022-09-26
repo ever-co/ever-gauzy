@@ -345,6 +345,28 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity> extends
 	}
 
 	/**
+	 * Saves a given entity in the database.
+	 * If entity does not exist in the database then inserts, otherwise updates.
+	 *
+	 * @param entity
+	 * @returns
+	 */
+	public async save(entity: DeepPartial<T>): Promise<T> {
+		const tenantId = RequestContext.currentTenantId();
+		return await super.save({
+			...entity,
+			...(
+				this.repository.metadata.hasColumnWithPropertyPath('tenantId')
+			) ? {
+				tenant: {
+					id: tenantId
+				},
+				tenantId,
+			} : {},
+		});
+	}
+
+	/**
 	 * Updates entity partially. Entity can be found by a given conditions.
 	 *
 	 * @param id
