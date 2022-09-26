@@ -8,15 +8,13 @@
 	</nb-card-header>
 	<nb-card-body class="content">
 		<div *ngFor="let reportCategory of reportCategories">
-			<div class="mb-4">
 				<h5 class="report-category-name">
 					<span class="category-icon mr-2">
 						<i class="fa {{ reportCategory.iconClass }}"></i>
 					</span>
 					{{ reportCategory.name }}
 				</h5>
-			</div>
-			<div class="card-grid mb-4">
+			<div class="card-grid">
 				<div
 					class="mb-0 card custom-view-report"
 					*ngFor="let report of reportCategory.reports"
