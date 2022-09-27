@@ -63,9 +63,9 @@ export default class Timerhandler {
 		}
 
 		this.eventCounter.start();
-		
+
 		const appSetting = LocalStore.getStore('appSetting');
-		
+
 		appSetting.timerStarted = true;
 		LocalStore.updateApplicationSetting(appSetting);
 
@@ -90,7 +90,7 @@ export default class Timerhandler {
 			if (!appSetting.randomScreenshotTime) {
 				this.startTimerIntervalPeriod(setupWindow, knex, timeTrackerWindow);
 			}
-			
+
 			/*
 			 * Create screenshots at begining of timer
 			//  */
@@ -166,7 +166,7 @@ export default class Timerhandler {
 					minute: this.timeRecordMinute,
 					hours: this.timeRecordHours
 				});
-				
+
 				if (appSetting.randomScreenshotTime) {
 					if (this.nextScreenshot === this.timeRecordSecond) {
 						this.randomScreenshotUpdate(setupWindow, knex, timeTrackerWindow);
@@ -202,7 +202,7 @@ export default class Timerhandler {
 		const appSetting = LocalStore.getStore('appSetting');
 		const updatePeriod = appSetting.timer.updatePeriod;
 		console.log('Update Period:', updatePeriod, 60 * 1000 * updatePeriod);
-		
+
 		this.timeSlotStart = moment();
 		console.log('Timeslot Start Time', this.timeSlotStart);
 
@@ -286,7 +286,7 @@ export default class Timerhandler {
 	}
 
 	async getSetActivity(knex, setupWindow, lastTimeSlot, timeTrackerWindow, quitApp) {
-		const dataCollection = await this.activitiesCollection(knex, lastTimeSlot); 
+		const dataCollection = await this.activitiesCollection(knex, lastTimeSlot);
 		this.takeScreenshotActivities(timeTrackerWindow, lastTimeSlot, dataCollection);
 		// get aw activity
 	}
@@ -295,10 +295,10 @@ export default class Timerhandler {
 		const userInfo = LocalStore.beforeRequestParams();
 		const appSetting = LocalStore.getStore('appSetting');
 		const config = LocalStore.getStore('configs');
-		
+
 		log.info(`App Setting: ${moment().format()}`, appSetting);
 		log.info(`Config: ${moment().format()}`, config);
-		
+
 		const { id: lastTimerId } = this.lastTimer;
 		let awActivities = await TimerData.getWindowEvent(knex, lastTimerId);
 
@@ -377,7 +377,7 @@ export default class Timerhandler {
 
 	afkCount(afkList) {
 		let afkTime:number = 0;
-		
+
 		const afkOnly = afkList.filter((afk) => {
 			const jsonData = JSON.parse(afk.data);
 			if (jsonData.status === 'afk') {
@@ -440,13 +440,13 @@ export default class Timerhandler {
 						activeWindow: detectActiveWindow(),
 						isAw: projectInfo.aw.isAw,
 						isAwConnected: appSetting.awIsConnected,
-						keyboard: Math.ceil(
+						keyboard: Math.round(
 							this.eventCounter.keyboardPercentage * durationNow
 						),
-						mouse: Math.ceil(
+						mouse: Math.round(
 							this.eventCounter.mousePercentage * durationNow
 						),
-						system: Math.ceil(
+						system: Math.round(
 							this.eventCounter.systemPercentage * durationNow
 						)
 					}
@@ -495,7 +495,7 @@ export default class Timerhandler {
 
 		if(this.eventCounter.intervalDuration >= updatePeriod ) {
 			this.eventCounter.reset();
-		}	
+		}
 	}
 
 
@@ -609,11 +609,11 @@ export default class Timerhandler {
 								default:
 									break;
 							}
-							resolve(true);					
+							resolve(true);
 						} catch (error) {
 							console.log('failed insert window activity');
 							resolve(false);
-						}	
+						}
 					})
 				},
 				1
@@ -627,13 +627,13 @@ export default class Timerhandler {
 				}
 			);
 		}
-	
+
 		// create "adder" type job
 		await this.queue.createJob({
 			type: queName,
 			data: data,
 		});
-		
-	
+
+
 	}
 }
