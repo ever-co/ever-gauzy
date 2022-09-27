@@ -180,6 +180,12 @@ nb-card, nb-card-body, .card {
 
     }
 
+	.weekly-logs{
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+	}
+
     ::ng-deep {
         @include nb-select-overrides(
                 2rem,

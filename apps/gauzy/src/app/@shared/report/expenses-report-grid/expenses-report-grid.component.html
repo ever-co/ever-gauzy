@@ -3,7 +3,7 @@
 		{{ 'REPORT_PAGE.GROUP_BY' | translate }}
 	</div>
 	<div class="ml-3">
-		<nb-select 
+		<nb-select
 			[(ngModel)]="groupBy"
 			(selectedChange)="groupByChange()"
 			optionsListClass="nb-options"
@@ -87,7 +87,7 @@
 		</nb-card>
 	</ng-template>
 	<ng-template #notFound>
-		<ngx-no-data-message 
+		<ngx-no-data-message
 			[message]="'SM_TABLE.NO_DATA.EXPENSE'"
 		></ngx-no-data-message>
 	</ng-template>
@@ -97,7 +97,7 @@
 	<nb-card-header class="card-title">
 		{{ day.date | dateFormat }}
 	</nb-card-header>
-	<nb-card-body>
+	<nb-card-body class="expense-report-container">
 		<ng-container *ngTemplateOutlet="columnsHeader"></ng-container>
 		<div class="cart-body project-row"
 			 *ngFor="let employeeRow of day.employees; let employeeIndex = index">
@@ -105,8 +105,8 @@
 				 *ngFor="let projectRow of employeeRow.projects; let projectIndex = index">
 				<div class="expanse-row" *ngFor="let expanseRow of projectRow.expanse; let expanseIndex = index">
 					<div class="table-inner-wrapper">
-						<div 
-							class="responsive-table-row employee-column main-column-responsive responsive-heading-row" 
+						<div
+							class="responsive-table-row employee-column main-column-responsive responsive-heading-row"
 							*ngIf="expanseIndex == 0 && projectIndex == 0; else noEmployee"
 						>
 							<div class="responsive-table-header">
@@ -160,10 +160,10 @@
 								{{ 'REPORT_PAGE.AMOUNT' | translate }}
 							</div>
 							<div class="responsive-table-content project-name">
-								{{ 
-									expanseRow?.amount | currency:  
-										expanseRow?.currency | position: 
-											organization?.currencyPosition 
+								{{
+									expanseRow?.amount | currency:
+										expanseRow?.currency | position:
+											organization?.currencyPosition
 								}}
 							</div>
 						</div>
@@ -184,16 +184,16 @@
 	</nb-card-header>
 	<nb-card-body>
 		<ng-container *ngTemplateOutlet="columnsHeader"></ng-container>
-		<div 
-			class="cart-body project-row" 
+		<div
+			class="cart-body project-row"
 			*ngFor="let dateRow of employee.dates; let dateIndex = index"
 		>
-			<div 
-				class="table-row" 
+			<div
+				class="table-row"
 				*ngFor="let projectRow of dateRow.projects;let projectIndex = index"
 			>
-				<div 
-					class="expanse-row date-expanse-row" 
+				<div
+					class="expanse-row date-expanse-row"
 					*ngFor="let expanseRow of projectRow.expanse;let expanseIndex = index"
 				>
 					<div class="table-inner-wrapper">
@@ -242,9 +242,9 @@
 								{{ 'REPORT_PAGE.AMOUNT' | translate }}
 							</div>
 							<div class="responsive-table-content project-name">
-								{{ 
-									expanseRow?.amount | currency:  
-										expanseRow?.currency | position: 
+								{{
+									expanseRow?.amount | currency:
+										expanseRow?.currency | position:
 											organization?.currencyPosition
 								}}
 							</div>
@@ -266,21 +266,21 @@
 	</nb-card-header>
 	<nb-card-body>
 		<ng-container *ngTemplateOutlet="columnsHeader"></ng-container>
-		<div 
-			class="cart-body project-row" 
+		<div
+			class="cart-body project-row"
 			*ngFor="let dateRow of project.dates; let dateIndex = index"
 		>
-			<div 
+			<div
 				class="table-row"
 				*ngFor="let employeeRow of dateRow.employees;let employeeIndex = index"
 			>
-				<div 
+				<div
 					class="expanse-row"
 					*ngFor="let expanseRow of employeeRow.expanse;let expanseIndex = index"
 				>
 					<div class="table-inner-wrapper">
-						<div 
-							class="responsive-table-row project-column responsive-heading-row" 
+						<div
+							class="responsive-table-row project-column responsive-heading-row"
 							*ngIf="employeeIndex == 0 && expanseIndex == 0; else noDate"
 						>
 							<div class="responsive-table-header">
@@ -336,9 +336,9 @@
 								{{ 'REPORT_PAGE.AMOUNT' | translate }}
 							</div>
 							<div class="responsive-table-content project-name">
-								{{ 
-									expanseRow?.amount | currency:  
-										expanseRow?.currency | position: 
+								{{
+									expanseRow?.amount | currency:
+										expanseRow?.currency | position:
 											organization?.currencyPosition
 								}}
 							</div>
@@ -351,7 +351,7 @@
 </ng-template>
 
 <ng-template let-project #projectEl>
-	<ga-project-column-view 
+	<ga-project-column-view
 		*ngIf="project; else noProjects"
 		[project]="project"
 	></ga-project-column-view>
@@ -362,7 +362,7 @@
 
 <ng-template let-client #clientEl>
 	<span *ngIf="client; else noClient">
-		<ngx-contact-links 
+		<ngx-contact-links
 			[value]="client"
 		></ngx-contact-links>
 	</span>
