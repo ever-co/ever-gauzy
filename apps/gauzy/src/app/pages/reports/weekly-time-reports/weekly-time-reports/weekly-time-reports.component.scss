@@ -53,3 +53,7 @@
 		background-color: unset !important;
 	}
 }
+
+nb-card-body.report-body {
+	height: calc(100% - 8rem) !important;
+}
