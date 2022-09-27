@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, Repository } from 'typeorm';
-import { Feature } from './feature.entity';
-import { CrudService } from '../core/crud/crud.service';
 import {
 	IFeature,
 	IPagination
 } from '@gauzy/contracts';
+import { Feature } from './feature.entity';
+import { CrudService } from '../core/crud/crud.service';
 
 @Injectable()
 export class FeatureService extends CrudService<Feature> {
@@ -17,8 +17,7 @@ export class FeatureService extends CrudService<Feature> {
 		super(featureRepository);
 	}
 
-	async getParentFeatures(request: any): Promise<IPagination<IFeature>> {
-		const { relations = [] } = request;
+	async getParentFeatures(relations: string[] = []): Promise<IPagination<IFeature>> {
 		return await this.findAll({
 			where: {
 				parentId: IsNull()

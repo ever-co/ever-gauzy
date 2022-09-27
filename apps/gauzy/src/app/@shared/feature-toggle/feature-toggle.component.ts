@@ -30,8 +30,7 @@ import { environment } from './../../../environments/environment';
 	templateUrl: './feature-toggle.component.html',
 	styleUrls: ['./feature-toggle.component.scss']
 })
-export class FeatureToggleComponent
-	extends TranslationBaseComponent
+export class FeatureToggleComponent extends TranslationBaseComponent
 	implements OnInit, OnChanges {
 
 	@Input() organization: IOrganization;
@@ -122,16 +121,19 @@ export class FeatureToggleComponent
 	}
 
 	getFeatureOrganizations() {
-		const { tenantId } = this.user;
-		const request = { tenantId };
-
-		if (this.organization && this.isOrganization) {
-			const { id: organizationId } = this.organization;
-			request['organizationId'] = organizationId;
+		if (!this.user) {
+			return;
 		}
-
+		const { tenantId } = this.user;
 		this._featureStoreService
-			.loadFeatureOrganizations(['feature'], request)
+			.loadFeatureOrganizations(['feature'], {
+				tenantId,
+				...(this.organization && this.isOrganization
+					? {
+						organizationId: this.organization.id
+					  }
+					: {})
+			})
 			.pipe(untilDestroyed(this))
 			.subscribe();
 	}

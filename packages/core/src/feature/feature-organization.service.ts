@@ -22,17 +22,17 @@ export class FeatureOrganizationService extends TenantAwareCrudService<FeatureOr
 
 	/**
 	 * UPDATE feature organization respective tenant by feature id
-	 * 
-	 * @param input 
-	 * @returns 
+	 *
+	 * @param input
+	 * @returns
 	 */
 	async updateFeatureOrganization(
 		entity: IFeatureOrganizationUpdateInput
-	): Promise<IFeatureOrganization[]> {
+	): Promise<boolean> {
 
 		const tenantId = RequestContext.currentTenantId();
 		const { featureId, organizationId } = entity;
-		
+
 		// find all feature organization by feature id
 		const { items : featureOrganizations, total } = await this.findAll({
 			where: {
@@ -42,29 +42,34 @@ export class FeatureOrganizationService extends TenantAwareCrudService<FeatureOr
 			}
 		});
 
-		if (!total) {
-			const featureOrganization: IFeatureOrganization  = new FeatureOrganization({
-				...entity,
-				tenantId
-			});
-			await this.featureOrganizationRepository.save(featureOrganization);
-		} else {
-			featureOrganizations.map((item: IFeatureOrganization) => {
-				return new FeatureOrganization(Object.assign(item, {
+		try {
+			if (!total) {
+				const featureOrganization: IFeatureOrganization  = new FeatureOrganization({
 					...entity,
 					tenantId
-				}));
-			});
-			await this.featureOrganizationRepository.save(featureOrganizations);
+				});
+				await this.featureOrganizationRepository.save(featureOrganization);
+			} else {
+				featureOrganizations.map((item: IFeatureOrganization) => {
+					return new FeatureOrganization(Object.assign(item, {
+						...entity,
+						tenantId
+					}));
+				});
+				await this.featureOrganizationRepository.save(featureOrganizations);
+			}
+			return true;
+		} catch (error) {
+			console.log('Error while updating feature organization', error);
+			return false;
 		}
-		return featureOrganizations;
 	}
 
 	/**
 	 * Create/Update feature organization for relative tenants
-	 * 
-	 * @param tenants 
-	 * @returns 
+	 *
+	 * @param tenants
+	 * @returns
 	 */
 	public async updateTenantFeatureOrganizations(
 		tenants: ITenant[]
@@ -72,11 +77,11 @@ export class FeatureOrganizationService extends TenantAwareCrudService<FeatureOr
 		if (!tenants.length) {
 			return;
 		}
-		
+
 		const featureOrganizations: IFeatureOrganization[] = [];
 		const { items } = await this._featureService.findAll();
 		const features: IFeature[] = items;
-		
+
 		for await (const feature of features) {
 			for await (const tenant of tenants) {
 				const { isEnabled } = feature;
