@@ -31,24 +31,25 @@
 			</div>
 		</div>
 	</nb-card-header>
-	<nb-card-body>
-		<div class="daily-statistics">
-			<ga-daily-statistics
-				class="mb-4"
+	<nb-card-body class="report-body">
+		<div class="report-container">
+			<div class="daily-statistics">
+				<ga-daily-statistics
+					[filters]="filters"
+				></ga-daily-statistics>
+			</div>
+			<div class="daily-time-report">
+				<nb-card>
+					<nb-card-body class="chart">
+						<ngx-line-chart
+							[data]="chartData"
+						></ngx-line-chart>
+					</nb-card-body>
+				</nb-card>
+			</div>
+			<ga-daily-grid
 				[filters]="filters"
-			></ga-daily-statistics>
+			></ga-daily-grid>
 		</div>
-		<div class="daily-time-report">
-			<nb-card>
-				<nb-card-body class="chart">
-					<ngx-line-chart
-						[data]="chartData"
-					></ngx-line-chart>
-				</nb-card-body>
-			</nb-card>
-		</div>
-		<ga-daily-grid
-			[filters]="filters"
-		></ga-daily-grid>
 	</nb-card-body>
 </nb-card>
