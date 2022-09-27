@@ -39,7 +39,7 @@
 						<nb-card-header class="card-title">
 							{{ day.date | dateFormat }}
 						</nb-card-header>
-						<nb-card-body>
+						<nb-card-body class="budget-container">
 							<div class="columns-header" *ngIf="day.employees?.length > 0; else noEmployees">
 								<div class="table-inner-wrapper font-weight-bold align-items-center">
 									<ng-template [ngIf]="duration === 'week'">
