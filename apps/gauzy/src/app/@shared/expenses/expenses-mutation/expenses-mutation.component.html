@@ -55,15 +55,11 @@
 						}}
 					</label>
 					<ga-employee-selector
-						#employeeSelector
 						fullWidth
 						[hidden]="expense && !duplicate"
 						[skipGlobalChange]="true"
 						class="employees"
-						[placeholder]="
-							'EXPENSES_PAGE.MUTATION.EMPLOYEES_GENERATE_EXPENSE'
-								| translate
-						"
+						[placeholder]="'EXPENSES_PAGE.MUTATION.EMPLOYEES_GENERATE_EXPENSE' | translate"
 						[defaultSelected]="true"
 						(selectionChanged)="onEmployeeChange($event)"
 					></ga-employee-selector>
