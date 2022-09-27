@@ -1,5 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import {
 	IEmployeeProposalTemplate,
 	IOrganization,
@@ -9,7 +9,7 @@ import { NbDialogRef } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, tap } from 'rxjs/operators';
-import { distinctUntilChange } from '@gauzy/common-angular';
+import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
 import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
 import { Store, ToastrService } from './../../../../@core/services';
 import { TranslationBaseComponent } from './../../../../@shared/language-base/translation-base.component';
@@ -22,23 +22,48 @@ import { ckEditorConfig } from "../../../../@shared/ckeditor.config";
 	templateUrl: './add-edit-proposal-template.component.html',
 	styleUrls: ['./add-edit-proposal-template.component.scss']
 })
-export class AddEditProposalTemplateComponent
-	extends TranslationBaseComponent
+export class AddEditProposalTemplateComponent extends TranslationBaseComponent
 	implements OnInit {
-	mode: 'create' | 'update' = 'create';
 
-	@Input() selectedEmployee: ISelectedEmployee;
-	@Input() proposalTemplate: IEmployeeProposalTemplate = {};
-
-	organization: IOrganization;
+	public organization: IOrganization;
 	public ckConfig: CKEditor4.Config = ckEditorConfig;
+
 	public form: FormGroup = AddEditProposalTemplateComponent.buildForm(this.fb);
 	static buildForm(fb: FormBuilder): FormGroup {
 		return fb.group({
-			employeeId: [],
-			name: [],
+			employeeId: [null, Validators.required],
+			name: [null, Validators.required],
 			content: []
 		});
+	}
+
+	/*
+	* Getter & Setter for proposal template selected employee
+	*/
+	_selectedEmployee: ISelectedEmployee;
+	get selectedEmployee(): ISelectedEmployee {
+		return this._selectedEmployee;
+	}
+	@Input() set selectedEmployee(value: ISelectedEmployee) {
+		this._selectedEmployee = value;
+		/**
+		 * Set default select employee
+		 */
+		if (isNotEmpty(value) && this.form.get('employeeId')) {
+			this.form.get('employeeId').setValue(value.id);
+			this.form.get('employeeId').updateValueAndValidity();
+		}
+	}
+
+	/*
+	* Getter & Setter for selected proposal template
+	*/
+	_proposalTemplate: IEmployeeProposalTemplate;
+	get proposalTemplate(): IEmployeeProposalTemplate {
+		return this._proposalTemplate;
+	}
+	@Input() set proposalTemplate(value: IEmployeeProposalTemplate) {
+		this._proposalTemplate = value;
 	}
 
 	constructor(
@@ -53,30 +78,26 @@ export class AddEditProposalTemplateComponent
 	}
 
 	ngOnInit(): void {
-		if (this.proposalTemplate.id) {
-			this.mode = 'update';
-		} else {
-			this.mode = 'create';
-		}
 		this.store.selectedOrganization$
 			.pipe(
 				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
 				tap((organization: IOrganization) => this.organization = organization),
-				tap(() => this._initializeForm()),
+				tap(() => this._setFormValues()),
 				untilDestroyed(this)
 			)
 			.subscribe();
 	}
 
-	private _initializeForm() {
-		if (this.proposalTemplate) {
+	private _setFormValues() {
+		if (isNotEmpty(this.proposalTemplate)) {
 			const { employeeId, name, content } = this.proposalTemplate;
 			this.form.patchValue({
 				employeeId,
 				name,
 				content
 			});
+			this.form.updateValueAndValidity();
 		}
 	}
 
@@ -85,28 +106,28 @@ export class AddEditProposalTemplateComponent
 	}
 
 	onSave(): void {
-		if (this.form.invalid) {
+		if (!this.organization || this.form.invalid) {
 			return;
 		}
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 
 		let resp: Promise<IEmployeeProposalTemplate>;
-		const request = {
-			...this.form.value,
+		const template = {
+			...this.form.getRawValue(),
 			organizationId,
 			tenantId
 		};
 		if (this.selectedEmployee && this.selectedEmployee.id) {
-			request.employeeId = this.selectedEmployee.id;
+			template.employeeId = this.selectedEmployee.id;
 		}
-		if (this.mode === 'create') {
-			resp = this.proposalTemplateService.create(request);
+		if (!this.proposalTemplate) {
+			resp = this.proposalTemplateService.create(template);
 		} else {
 			resp = this.proposalTemplateService.update(
 				this.proposalTemplate.id,
 				{
-					...request,
+					...template,
 					employeeId: this.proposalTemplate.employeeId
 				}
 			);
@@ -114,18 +135,18 @@ export class AddEditProposalTemplateComponent
 
 		resp.then((data) => {
 			this.dialogRef.close(data);
-			if (this.mode === 'create') {
+			if (!this.proposalTemplate) {
 				this.toastrService.success(
 					'PROPOSAL_TEMPLATE.PROPOSAL_CREATE_MESSAGE',
 					{
-						name: request.name
+						name: template.name
 					}
 				);
 			} else {
 				this.toastrService.success(
 					'PROPOSAL_TEMPLATE.PROPOSAL_EDIT_MESSAGE',
 					{
-						name: request.name
+						name: template.name
 					}
 				);
 			}

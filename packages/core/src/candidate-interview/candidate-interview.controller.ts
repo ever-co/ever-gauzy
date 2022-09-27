@@ -98,7 +98,7 @@ export class CandidateInterviewController extends CrudController<CandidateInterv
 	@Get('pagination')
 	@UsePipes(new ValidationPipe({ transform: true }))
 	async pagination(
-		@Query() filter: PaginationParams<ICandidateInterview>
+		@Query() filter: PaginationParams<CandidateInterview>
 	): Promise<IPagination<ICandidateInterview>> {
 		return this.candidateInterviewService.paginate(filter);
 	}

@@ -38,9 +38,9 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 
 	/**
 	 * GET find my organization teams
-	 * 
-	 * @param data 
-	 * @returns 
+	 *
+	 * @param data
+	 * @returns
 	 */
 	@ApiOperation({
 		summary: 'Find all organization Teams.'
@@ -68,10 +68,10 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 
 	/**
 	 * CREATE organization team
-	 * 
-	 * @param entity 
-	 * @param options 
-	 * @returns 
+	 *
+	 * @param entity
+	 * @param options
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'Create new record' })
 	@ApiResponse({
@@ -94,26 +94,26 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 
 	/**
 	 * Get pagination data of organization team
-	 * 
-	 * @param id 
-	 * @param entity 
-	 * @returns 
+	 *
+	 * @param id
+	 * @param entity
+	 * @returns
 	 */
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW)
 	@Get('pagination')
 	@UsePipes(new ValidationPipe({ transform: true }))
 	async pagination(
-		@Query() filter: PaginationParams<IOrganizationTeam>
+		@Query() filter: PaginationParams<OrganizationTeam>
 	): Promise<IPagination<IOrganizationTeam>> {
 		return this.organizationTeamService.pagination(filter);
 	}
 
 	/**
 	 * GET all organization teams
-	 * 
-	 * @param data 
-	 * @returns 
+	 *
+	 * @param data
+	 * @returns
 	 */
 	@ApiOperation({
 		summary: 'Find all organization Teams.'
@@ -142,11 +142,11 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 
 	/**
 	 * UPDATE organization team by id
-	 * 
-	 * @param id 
-	 * @param entity 
-	 * @param options 
-	 * @returns 
+	 *
+	 * @param id
+	 * @param entity
+	 * @param options
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'Update an organization Team' })
 	@ApiResponse({

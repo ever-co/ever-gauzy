@@ -92,8 +92,8 @@ export class RoleService extends TenantAwareCrudService<Role> {
 	 * @param id
 	 * @returns
 	 */
-	async deleteRole(id: string): Promise<DeleteResult> {
-		return await this.delete(id, {
+	async delete(id: IRole['id']): Promise<DeleteResult> {
+		return await super.delete(id, {
 			where: {
 				isSystem: false
 			}

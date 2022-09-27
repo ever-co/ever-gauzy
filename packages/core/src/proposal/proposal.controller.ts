@@ -9,9 +9,11 @@ import {
 	Put,
 	Param,
 	ValidationPipe,
-	BadRequestException
+	BadRequestException,
+	UsePipes
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { UpdateResult } from 'typeorm';
 import { IProposal, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import { ProposalService } from './proposal.service';
 import { Proposal } from './proposal.entity';
@@ -26,24 +28,26 @@ import { CreateProposalDTO, UpdateProposalDTO } from './dto';
 @Permissions(PermissionsEnum.ORG_PROPOSALS_EDIT)
 @Controller()
 export class ProposalController extends CrudController<Proposal> {
-	constructor(private readonly proposalService: ProposalService) {
+
+	constructor(
+		private readonly proposalService: ProposalService
+	) {
 		super(proposalService);
 	}
 
 	/**
 	 * GET proposal by pagination
 	 *
-	 * @param options
+	 * @param params
 	 * @returns
 	 */
 	@Permissions(PermissionsEnum.ORG_PROPOSALS_VIEW)
 	@Get('pagination')
+	@UsePipes(new ValidationPipe({ transform: true }))
 	async pagination(
-		@Query(new ValidationPipe({
-			transform: true
-		})) options: PaginationParams<Proposal>
+		@Query() params: PaginationParams<Proposal>
 	): Promise<IPagination<IProposal>> {
-		return this.proposalService.pagination(options);
+		return this.proposalService.pagination(params);
 	}
 
 	/**
@@ -106,11 +110,9 @@ export class ProposalController extends CrudController<Proposal> {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Post()
+	@UsePipes(new ValidationPipe({ transform : true, whitelist: true }))
 	async create(
-		@Body(new ValidationPipe({
-			transform : true,
-			whitelist: true
-		})) entity: CreateProposalDTO
+		@Body() entity: CreateProposalDTO
 	): Promise<IProposal> {
 		try {
 			return await this.proposalService.create(entity);
@@ -136,21 +138,15 @@ export class ProposalController extends CrudController<Proposal> {
 		description: 'Record not found'
 	})
 	@Put(':id')
+	@UsePipes(new ValidationPipe({ transform : true, whitelist: true }))
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body(new ValidationPipe({
-			transform : true,
-			whitelist: true
-		})) entity: UpdateProposalDTO
-	): Promise<IProposal> {
+		@Body() entity: UpdateProposalDTO
+	): Promise<IProposal | UpdateResult> {
 		try {
-			await this.proposalService.create({
-				id,
-				...entity
-			});
-			return await this.proposalService.findOneByIdString(id);
+			return await this.proposalService.update(id, entity);
 		} catch (error) {
-			throw new BadRequestException();
+			throw new BadRequestException(error);
 		}
 	}
 }

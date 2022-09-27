@@ -85,18 +85,7 @@ const routes: Routes = [
 						path: 'payments',
 						loadChildren: () => import('./payments/payments.module').then(
 							(m) => m.PaymentsModule
-						),
-						data: {
-							selectors: {
-								employee: false
-							},
-							datePicker: {
-								unitOfTime: 'month'
-							}
-						},
-						resolve: {
-							dates: DateRangePickerResolver
-						}
+						)
 					}
 				]
 			},

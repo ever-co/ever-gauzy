@@ -1,9 +1,11 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import {
 	IEmployeeProposalTemplate,
 	IOrganization,
-	ISelectedEmployee
+	ISelectedEmployee,
+	PermissionsEnum
 } from '@gauzy/contracts';
 import { NbDialogService, NbTabComponent } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -12,7 +14,6 @@ import { Ng2SmartTableComponent } from 'ng2-smart-table';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import { combineLatest, Subject, firstValueFrom, BehaviorSubject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
-import { AvatarComponent } from './../../../../@shared/components/avatar/avatar.component';
 import { Nl2BrPipe, TruncatePipe } from './../../../../@shared/pipes';
 import { AddEditProposalTemplateComponent } from '../add-edit-proposal-template/add-edit-proposal-template.component';
 import { Store, ToastrService } from './../../../../@core/services';
@@ -23,7 +24,7 @@ import {
 	PaginationFilterBaseComponent,
 	IPaginationBase
 } from '../../../../@shared/pagination/pagination-filter-base.component';
-import { ActivatedRoute } from '@angular/router';
+import { EmployeeLinksComponent } from './../../../../@shared/table-components';
 
 export enum ProposalTemplateTabsEnum {
 	ACTIONS = 'ACTIONS',
@@ -36,7 +37,7 @@ export enum ProposalTemplateTabsEnum {
 	templateUrl: './proposal-template.component.html',
 	styleUrls: ['./proposal-template.component.scss']
 })
-export class ProposalTemplateComponent extends PaginationFilterBaseComponent 
+export class ProposalTemplateComponent extends PaginationFilterBaseComponent
 	implements OnInit, OnDestroy {
 
 	smartTableSettings: object;
@@ -62,7 +63,7 @@ export class ProposalTemplateComponent extends PaginationFilterBaseComponent
 	}
 
 	constructor(
-		public translateService: TranslateService,
+		public readonly translateService: TranslateService,
 		private readonly store: Store,
 		private readonly toastrService: ToastrService,
 		private readonly proposalTemplateService: ProposalTemplateService,
@@ -122,15 +123,17 @@ export class ProposalTemplateComponent extends PaginationFilterBaseComponent
 			.pipe(
 				filter((params) => !!params && params.get('openAddDialog') === 'true'),
 				debounceTime(1000),
-				tap(() => this.createProposal()),
+				tap(() => this.createProposalTemplate()),
 				untilDestroyed(this)
 			)
 			.subscribe();
 	}
 
 	ngAfterViewInit() {
-		const { employeeId } = this.store.user;
-		if (employeeId) {
+		if (
+			!this.store.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE) ||
+			(this.store.user && this.store.user.employeeId)
+		) {
 			delete this.smartTableSettings['columns']['employeeId'];
 			this.smartTableSettings = Object.assign(
 				{},
@@ -151,18 +154,24 @@ export class ProposalTemplateComponent extends PaginationFilterBaseComponent
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 
-		const request = {};
-		if (this.selectedEmployee) request['employeeId'] = this.selectedEmployee.id;
-
 		this.smartTableSource = new ServerDataSource(this.http, {
 			endPoint: `${API_PREFIX}/employee-proposal-template/pagination`,
 			relations: ['employee', 'employee.user'],
 			where: {
-				...{ organizationId, tenantId },
-				...request,
-				...this.filters.where
+				organizationId,
+				tenantId,
+				...(this.selectedEmployee
+					? {
+							employeeId: this.selectedEmployee.id
+					  }
+					: {}),
+				...(this.filters.where ? this.filters.where : {})
 			},
 			finalize: () => {
+				this.setPagination({
+					...this.getPagination(),
+					totalItems: this.smartTableSource.count()
+				});
 				this.loading = false;
 			}
 		});
@@ -194,15 +203,14 @@ export class ProposalTemplateComponent extends PaginationFilterBaseComponent
 	private _loadSmartTableSettings() {
 		const pagination: IPaginationBase = this.getPagination();
 		this.smartTableSettings = {
+			actions: false,
+			editable: true,
+			hideSubHeader: true,
+			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.PROPOSAL_TEMPLATE'),
 			pager: {
 				display: false,
 				perPage: pagination ? pagination.itemsPerPage : 10
 			},
-			hideSubHeader: true,
-			actions: false,
-			mode: 'external',
-			editable: true,
-			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.PROPOSAL_TEMPLATE'),
 			columns: {
 				employeeId: {
 					title: this.getTranslation('PROPOSAL_TEMPLATE.EMPLOYEE'),
@@ -210,21 +218,15 @@ export class ProposalTemplateComponent extends PaginationFilterBaseComponent
 					width: '20%',
 					type: 'custom',
 					sort: false,
-					renderComponent: AvatarComponent,
+					renderComponent: EmployeeLinksComponent,
 					valuePrepareFunction: (
 						cell,
 						row: IEmployeeProposalTemplate
 					) => {
 						return {
-							name:
-								row.employee && row.employee.user
-									? row.employee.fullName
-									: null,
-							src:
-								row.employee && row.employee.user
-									? row.employee.user.imageUrl
-									: null,
-							id: row.employee ? row.employee.id : null
+							id: row?.employee ? row?.employee.id : null,
+							name: row?.employee?.user ? row.employee?.user?.name : null,
+							imageUrl: row?.employee?.user ? row.employee?.user?.imageUrl : null,
 						};
 					}
 				},
@@ -277,7 +279,7 @@ export class ProposalTemplateComponent extends PaginationFilterBaseComponent
 		};
 	}
 
-	async createProposal(): Promise<void> {
+	async createProposalTemplate(): Promise<void> {
 		const dialog = this.dialogService.open(
 			AddEditProposalTemplateComponent,
 			{
@@ -293,7 +295,7 @@ export class ProposalTemplateComponent extends PaginationFilterBaseComponent
 		}
 	}
 
-	async editProposal(): Promise<void> {
+	async editProposalTemplate(): Promise<void> {
 		const dialog = this.dialogService.open(
 			AddEditProposalTemplateComponent,
 			{
@@ -310,7 +312,7 @@ export class ProposalTemplateComponent extends PaginationFilterBaseComponent
 		}
 	}
 
-	deleteProposal(): void {
+	deleteProposalTemplate(): void {
 		this.proposalTemplateService
 			.delete(this.selectedItem.id)
 			.then(() => {
@@ -326,7 +328,7 @@ export class ProposalTemplateComponent extends PaginationFilterBaseComponent
 			});
 	}
 
-	makeDefault(): void {
+	makeDefaultTemplate(): void {
 		this.proposalTemplateService
 			.makeDefault(this.selectedItem.id)
 			.then(() => {

@@ -1,4 +1,5 @@
 import { InjectRepository } from "@nestjs/typeorm";
+import { Injectable } from "@nestjs/common";
 import { Repository } from "typeorm";
 import {
 	ValidationArguments,
@@ -16,6 +17,7 @@ import { RequestContext } from "../../../core/context";
  * @returns
  */
 @ValidatorConstraint({ name: "IsRoleShouldExist", async: true })
+@Injectable()
 export class IsRoleShouldExistConstraint implements ValidatorConstraintInterface {
 	constructor(
         @InjectRepository(Role)

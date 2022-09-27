@@ -1,11 +1,11 @@
-import { IExpenseCategory, IExpenseCreateInput } from "@gauzy/contracts";
+import { IExpenseCreateInput } from "@gauzy/contracts";
 import { IntersectionType } from "@nestjs/mapped-types";
-import { ApiProperty } from "@nestjs/swagger";
-import { IsObject, IsOptional, IsString } from "class-validator";
+import { PartialType } from "@nestjs/swagger";
 import { RelationalTagDTO } from "./../../tags/dto";
 import { EmployeeFeatureDTO } from "./../../employee/dto";
 import { OrganizationVendorFeatureDTO } from "./../../organization-vendor/dto";
 import { ExpenseDTO } from "./expense.dto";
+import { RelationalCurrencyDTO } from "currency/dto";
 
 /**
  * Create Expense DTO request validation
@@ -13,17 +13,6 @@ import { ExpenseDTO } from "./expense.dto";
 export class CreateExpenseDTO extends IntersectionType(
     ExpenseDTO,
     OrganizationVendorFeatureDTO,
-    EmployeeFeatureDTO,
-    RelationalTagDTO
-) implements IExpenseCreateInput {
-
-    @ApiProperty({ type: () => Object, readOnly: true })
-    @IsOptional()
-    @IsObject()
-    readonly category: IExpenseCategory;
-
-    @ApiProperty({ type: () => String, readOnly: true })
-    @IsOptional()
-    @IsString()
-    readonly categoryId: string;
-}
+    PartialType(EmployeeFeatureDTO),
+    IntersectionType(RelationalTagDTO, RelationalCurrencyDTO)
+) implements IExpenseCreateInput {}

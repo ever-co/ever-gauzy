@@ -6,7 +6,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { EmailService } from '../email';
 import { IInvoice, IOrganization, LanguagesEnum } from '@gauzy/contracts';
 import { sign } from 'jsonwebtoken';
-import { ConfigService, environment } from '@gauzy/config';
+import { environment } from '@gauzy/config';
 import { I18nService } from 'nestjs-i18n';
 import * as moment from 'moment';
 import { EstimateEmailService } from '../estimate-email/estimate-email.service';
@@ -25,7 +25,6 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 		private readonly invoiceRepository: Repository<Invoice>,
 		private readonly emailService: EmailService,
 		private readonly estimateEmailService: EstimateEmailService,
-		private readonly configService: ConfigService,
 		private readonly pdfmakerServier: PdfmakerService,
 		private readonly i18n: I18nService,
 		private readonly organizationService: OrganizationService
@@ -41,7 +40,7 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 	async getHighestInvoiceNumber(): Promise<IInvoice> {
 		try {
 			const query = this.invoiceRepository.createQueryBuilder(this.alias);
-			return await query.select('COALESCE(MAX(invoice.invoiceNumber), 0)', 'max').getRawOne();
+			return await query.select(`COALESCE(MAX(${query.alias}.invoiceNumber), 0)`, 'max').getRawOne();
 		} catch (error) {
 			throw new BadRequestException(error);
 		}

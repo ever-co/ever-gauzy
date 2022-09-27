@@ -47,7 +47,7 @@ export class TimeOffRequestController extends CrudController<TimeOffRequest> {
 	async pagination(
 		@Query(new ValidationPipe({
 			transform: true
-		})) options: PaginationParams<ITimeOffRequest>
+		})) options: PaginationParams<TimeOffRequest>
 	): Promise<IPagination<ITimeOffRequest>> {
 		return this.timeOffRequestService.pagination(options);
 	}

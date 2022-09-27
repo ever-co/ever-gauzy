@@ -11,8 +11,7 @@ import {
 	Param,
 	HttpStatus,
 	HttpCode,
-	Query,
-	ValidationPipe
+	Query
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { IPagination } from '@gauzy/contracts';
@@ -54,7 +53,7 @@ export abstract class CrudController<T extends BaseEntity> {
 	})
 	@Get('pagination')
 	async pagination(
-		@Query(new ValidationPipe()) filter?: PaginationParams<T>,
+		@Query() filter?: PaginationParams<T>,
 		...options: any[]
 	): Promise<IPagination<T> | void> {
 		return this.crudService.paginate(filter);

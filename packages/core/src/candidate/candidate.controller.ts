@@ -119,7 +119,7 @@ export class CandidateController extends CrudController<Candidate> {
 	async pagination(
 		@Query(new ValidationPipe({
 			transform: true
-		})) options: PaginationParams<ICandidate>
+		})) options: PaginationParams<Candidate>
 	): Promise<IPagination<ICandidate>> {
 		return this.candidateService.pagination(options);
 	}

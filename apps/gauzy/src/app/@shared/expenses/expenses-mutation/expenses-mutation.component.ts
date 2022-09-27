@@ -1,7 +1,6 @@
 import {
 	Component,
 	OnInit,
-	ViewChild,
 	OnDestroy,
 	AfterViewInit,
 	Input
@@ -25,14 +24,11 @@ import {
 	ExpenseStatusesEnum,
 	ICurrency
 } from '@gauzy/contracts';
-import { distinctUntilChange, isEmpty } from '@gauzy/common-angular';
+import { distinctUntilChange } from '@gauzy/common-angular';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { filter, tap } from 'rxjs/operators';
-import {
-	EmployeeSelectorComponent,
-	ALL_EMPLOYEES_SELECTED
-} from '../../../@theme/components/header/selectors/employee';
+import { ALL_EMPLOYEES_SELECTED } from '../../../@theme/components/header/selectors/employee';
 import { AttachReceiptComponent } from './attach-receipt/attach-receipt.component';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
 import { Store } from '../../../@core/services';
@@ -48,9 +44,6 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 	implements AfterViewInit, OnInit, OnDestroy {
 
 	FormHelpers: typeof FormHelpers = FormHelpers;
-
-	@ViewChild('employeeSelector', { static: false })
-	employeeSelector: EmployeeSelectorComponent;
 
 	/*
 	* Getter & Setter for expense
@@ -181,7 +174,7 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 	 *
 	 * @param tags
 	 */
-	 selectedTagsHandler(tags: ITag[]) {
+	selectedTagsHandler(tags: ITag[]) {
 		this.form.get('tags').setValue(tags);
 		this.form.get('tags').updateValueAndValidity();
 	}
@@ -304,14 +297,11 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 	}
 
 	onEmployeeChange(employee: ISelectedEmployee) {
+		this.showTooltip = (!employee || JSON.stringify(employee) == JSON.stringify(ALL_EMPLOYEES_SELECTED));
 		if (employee) {
-			this.form.patchValue({ employee: employee });
-			this.form.updateValueAndValidity();
+			this.form.get('employee').setValue(employee);
+			this.form.get('employee').updateValueAndValidity();
 		}
-		this.showTooltip = (
-			isEmpty(this.employeeSelector) ||
-			this.employeeSelector.selectedEmployee === ALL_EMPLOYEES_SELECTED
-		);
 	}
 
 	close() {
@@ -326,7 +316,5 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 		this.form.get('currency').updateValueAndValidity();
 	}
 
-	ngOnDestroy() {
-		clearTimeout();
-	}
+	ngOnDestroy() {}
 }

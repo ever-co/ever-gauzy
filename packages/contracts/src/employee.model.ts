@@ -18,6 +18,11 @@ import { ITimesheet, ITimeSlot } from './timesheet.model';
 import { ITask } from './task-entity.model';
 import { ICandidate } from './candidate.model';
 
+export interface IRelationalEmployee {
+    readonly employee?: IEmployee;
+    readonly employeeId?: IEmployee['id'];
+}
+
 export interface IEmployee extends IBasePerTenantAndOrganizationEntityModel {
 	[x: string]: any;
 	endWork?: any;

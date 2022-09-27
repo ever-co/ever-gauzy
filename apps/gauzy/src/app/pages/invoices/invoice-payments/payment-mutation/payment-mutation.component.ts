@@ -26,8 +26,7 @@ import { environment as ENV } from './../../../../../environments/environment';
 	templateUrl: './payment-mutation.component.html',
 	styleUrls: ['./payment-mutation.component.scss']
 })
-export class PaymentMutationComponent
-	extends TranslationBaseComponent
+export class PaymentMutationComponent extends TranslationBaseComponent
 	implements OnInit, AfterViewInit {
 
 	invoice: IInvoice;
@@ -149,16 +148,11 @@ export class PaymentMutationComponent
 			paymentDate: moment(paymentDate).startOf('day').toDate(),
 			note,
 			currency: this.currency.value,
-			invoice,
 			invoiceId: invoice ? invoice.id : null,
 			tenantId,
 			organizationId,
-			recordedBy: this.store.user,
-			userId: this.store.userId,
 			paymentMethod,
-			organizationContact,
-			contactId: organizationContact ? organizationContact.id : null,
-			project: project ? project : null,
+			organizationContactId: organizationContact ? organizationContact.id : null,
 			projectId: project ? project.id : null,
 			tags
 		};

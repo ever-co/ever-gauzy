@@ -1,7 +1,7 @@
 import { IOrganizationContact } from '@gauzy/contracts';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Brackets, In, Like, Repository } from 'typeorm';
+import { Brackets, FindManyOptions, In, Raw, Repository } from 'typeorm';
 import { RequestContext } from '../core/context';
 import { TenantAwareCrudService } from './../core/crud';
 import { OrganizationContact } from './organization-contact.entity';
@@ -107,7 +107,7 @@ export class OrganizationContactService extends TenantAwareCrudService<Organizat
         return await this.findOneByIdString(id, { relations });
     }
 
-	public pagination(filter?: any) {
+	public pagination(filter?: FindManyOptions) {
 		/**
 		 * Custom Filters
 		 */
@@ -115,19 +115,19 @@ export class OrganizationContactService extends TenantAwareCrudService<Organizat
 			const { where } = filter;
 			if ('name' in where) {
 				const { name } = where;
-				filter.where.name = Like(`%${name}%`);
+				filter['where']['name'] = Raw((alias) => `${alias} ILIKE '%${name}%'`);
 			}
 			if ('primaryPhone' in where) {
 				const { primaryPhone } = where;
-				filter.where.primaryPhone = Like(`%${primaryPhone}%`);
+				filter['where']['primaryPhone'] = Raw((alias) => `${alias} ILIKE '%${primaryPhone}%'`);
 			}
 			if ('primaryEmail' in where) {
 				const { primaryEmail } = where;
-				filter.where.primaryEmail = Like(`%${primaryEmail}%`);
+				filter['where']['primaryEmail'] = Raw((alias) => `${alias} ILIKE '%${primaryEmail}%'`);
 			}
 			if ('members' in where) {
 				const { members } = where;
-				filter.where.members = {
+				filter['where']['members'] = {
 					id: In(members)
 				}
 			}

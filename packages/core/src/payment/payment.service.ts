@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Between, Like, In, Repository, Brackets, WhereExpressionBuilder } from 'typeorm';
+import { Between, In, Repository, Brackets, WhereExpressionBuilder, Raw } from 'typeorm';
 import { chain } from 'underscore';
 import * as moment from 'moment';
-import { IGetPaymentInput } from '@gauzy/contracts';
+import { IDateRangePicker, IGetPaymentInput } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
 import { Payment } from './payment.entity';
 import { getDateRangeFormat, getDaysBetweenDates,  } from '../core/utils';
@@ -91,20 +91,20 @@ export class PaymentService extends TenantAwareCrudService<Payment> {
 			query.skip((request.page || 0) * request.limit);
 		}
 		query.andWhere(
-			new Brackets((qb: WhereExpressionBuilder) => { 
+			new Brackets((qb: WhereExpressionBuilder) => {
 				qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
 				qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
 			})
 		);
 		query.andWhere(
-			new Brackets((qb: WhereExpressionBuilder) => { 
+			new Brackets((qb: WhereExpressionBuilder) => {
 				qb.where(						{
 					paymentDate: Between(start, end)
 				});
 			})
 		);
 		query.andWhere(
-			new Brackets((qb: WhereExpressionBuilder) => { 			
+			new Brackets((qb: WhereExpressionBuilder) => {
 				if (isNotEmpty(projectIds)) {
 					qb.andWhere(`"${query.alias}"."projectId" IN (:...projectIds)`, {
 						projectIds
@@ -138,31 +138,30 @@ export class PaymentService extends TenantAwareCrudService<Payment> {
 	public pagination(filter: any) {
 		if ('where' in filter) {
 			const { where } = filter;
+			if ('note' in where) {
+				const { note } = where;
+				filter['where']['note'] = Raw((alias) => `${alias} ILIKE '%${note}%'`);
+			}
 			if ('paymentDate' in where) {
 				const { paymentDate } = where;
-				const { startDate, endDate } = paymentDate;
-
+				const { startDate, endDate } = paymentDate as IDateRangePicker;
 				if (startDate && endDate) {
-					filter.where.paymentDate = Between(
+					filter['where']['paymentDate'] = Between(
 						moment.utc(startDate).format('YYYY-MM-DD HH:mm:ss'),
 						moment.utc(endDate).format('YYYY-MM-DD HH:mm:ss')
 					);
 				} else {
-					filter.where.paymentDate = Between(
+					filter['where']['paymentDate'] = Between(
 						moment().startOf('month').utc().format('YYYY-MM-DD HH:mm:ss'),
 						moment().endOf('month').utc().format('YYYY-MM-DD HH:mm:ss')
 					);
 				}
 			}
 			if ('tags' in where) {
-				const { tags } = where; 
-				filter.where.tags = {
+				const { tags } = where;
+				filter['where']['tags'] = {
 					id: In(tags)
 				}
-			}
-			if ('note' in where) {
-				const { note } = where;
-				filter.where.note = Like(`%${note}%`);
 			}
 		}
 		return super.paginate(filter);
