@@ -346,7 +346,8 @@ nb-card-body > .header-widget {
 }
 
 :host .card-body {
-  @include nb-ltr(padding, 1rem 0.5rem 1rem 18px);
-  @include nb-rtl(padding, 1rem 18px 1rem 0.5rem);
-  border-radius: 0 0 $default-radius $default-radius;
+	@include nb-ltr(padding, 1rem 0.5rem 1rem 18px);
+	@include nb-rtl(padding, 1rem 18px 1rem 0.5rem);
+	border-radius: 0 0 $default-radius $default-radius;
+	height: calc($default-card-height + 1.5rem) !important;
 }
