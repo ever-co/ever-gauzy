@@ -102,7 +102,7 @@
 	<nb-card-header class="card-title">
 		{{ day.date | dateFormat }}
 	</nb-card-header>
-	<nb-card-body>
+	<nb-card-body class="activities-container">
 		<ng-container *ngTemplateOutlet="columnsHeader"></ng-container>
 		<div class="cart-body project-row" *ngFor="let employeeRow of day.employees; let employeeIndex = index">
 			<div class="table-row-custom" *ngFor="let projectRow of employeeRow.projects;let projectIndex = index">

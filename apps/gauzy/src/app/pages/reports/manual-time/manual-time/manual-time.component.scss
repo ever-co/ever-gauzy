@@ -3,10 +3,15 @@
 
 :host {
     nb-badge {
-        border: 2px solid rgba(126, 126, 143, 0.2);
-        border-radius: 4px;
-        position: relative;
-    }
+		border: 2px solid var(--gauzy-border-default-color);
+		position: relative;
+		color: var(--gauzy-text-color-2);
+		font-size: 12px;
+		font-weight: 600;
+		line-height: 15px;
+		letter-spacing: 0em;
+
+	}
     .table-row {
         height: auto;
     }
@@ -33,7 +38,6 @@
     .filters {
         display: flex;
         justify-content: flex-end;
-        margin-bottom: 15px;
         ng-select{
             min-width: 7rem;
         }
@@ -54,7 +58,15 @@
             $default-box-shadow );
 
         .weekly-logs .no-data-found {
-            max-height: calc(100vh - 26rem);        
+            height: calc(100vh - 20.1rem) !important;
         }
     }
+}
+
+nb-card-body.report-body {
+	height: calc(100% - 9rem) !important;
+}
+
+.manual-time-container {
+	padding-bottom: 6px !important;
 }

@@ -2,7 +2,7 @@
 	<div class="col-auto ml-auto">
 		<div class="row filter-item-list align-items-end">
 			<ng-container *ngIf="hasSourceFilter">
-				<div class="col-auto filter-item single-filter-wrapper pl-1">
+				<div class="col-auto filter-item single-filter-wrapper">
 					<nb-select
 						multiple
 						[placeholder]="'TIMESHEET.SELECT_SOURCE' | translate"
@@ -19,7 +19,7 @@
 				</div>
 			</ng-container>
 			<ng-container *ngIf="hasActivityLevelFilter">
-				<div class="col-auto filter-item single-filter-wrapper pl-1">
+				<div class="col-auto filter-item single-filter-wrapper">
 					<button
 						class="activity-level-filter text-capitalize"
 						nbButton
@@ -50,7 +50,7 @@
 				</div>
 			</ng-container>
 			<ng-container *ngIf="hasLogTypeFilter">
-				<div class="col-auto filter-item single-filter-wrapper pl-1">
+				<div class="col-auto filter-item single-filter-wrapper">
 					<nb-select
 						multiple
 						[placeholder]="'TIMESHEET.SELECT_LOG_TYPE' | translate"
@@ -67,7 +67,7 @@
 				</div>
 			</ng-container>
 			<ng-container *ngIf="hasFilterApplies">
-				<div class="col-auto single-filter-wrapper pl-1 clear-fitlers">
+				<div class="col-auto single-filter-wrapper clear-fitlers">
 					<button
 						nbButton
 						status="danger"

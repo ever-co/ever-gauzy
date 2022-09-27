@@ -1,4 +1,4 @@
-<nb-card class="card">
+<nb-card class="card-scroll">
 	<nb-card-header>
 		<div class="header-flex">
 			<div>
@@ -26,9 +26,11 @@
 			</div>
 		</div>
 	</nb-card-header>
-	<nb-card-body>
-		<ga-activities-report-grid
-			[filters]="filters"
-		></ga-activities-report-grid>
+	<nb-card-body class="report-body">
+		<div class="report-container">
+			<ga-activities-report-grid
+				[filters]="filters"
+			></ga-activities-report-grid>
+		</div>
 	</nb-card-body>
 </nb-card>

@@ -1,4 +1,4 @@
-<div class="d-flex align-items-center">
+<div class="d-flex align-items-center mb-3">
 	<div class="label">
 		{{ 'REPORT_PAGE.GROUP_BY' | translate }}
 	</div>
@@ -68,7 +68,7 @@
 	<nb-card-header class="card-title">
 		{{ day.date | dateFormat }}
 	</nb-card-header>
-	<nb-card-body>
+	<nb-card-body class="budget-container">
 		<ng-container *ngTemplateOutlet="columnsHeader"></ng-container>
 		<div class="cart-body project-row" *ngFor="let clientRow of day.clients; let clientIndex = index">
 			<div class="project-row" *ngFor="let projectRow of clientRow.projects; let projectIndex = index">

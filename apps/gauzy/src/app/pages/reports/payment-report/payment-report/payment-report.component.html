@@ -1,4 +1,4 @@
-<nb-card 
+<nb-card
 	[nbSpinner]="loading"
 	nbSpinnerStatus="primary"
 	nbSpinnerSize="large"
@@ -19,9 +19,7 @@
 				[format]="'dddd, LL'"
 			></ngx-date-range-title>
 		</ng-container>
-	</nb-card-header>
-	<nb-card-body>
-		<div class="filters mt-4 mb-4">
+		<div class="filters">
 			<ngx-gauzy-filters
 				[filters]="filters"
 				[hasActivityLevelFilter]="false"
@@ -37,23 +35,27 @@
 				[placeholder]="'CONTEXT_MENU.CONTACT' | translate"
 				(onChanged)="contactChanged($event)"
 			></ga-contact-select>
-			<ga-currency 
+			<ga-currency
 				[attr.class]="'action-select currency-select'"
 				[label]="false"
 				(optionChange)="currencyChanged($event)"
 			></ga-currency>
 		</div>
-		<div class="daily-time-report">
-			<nb-card>
-				<nb-card-body class="chart">
-					<ngx-line-chart 
-						[data]="chartData"
-					></ngx-line-chart>
-				</nb-card-body>
-			</nb-card>
+	</nb-card-header>
+	<nb-card-body class="report-body">
+		<div class="report-container">
+			<div class="daily-time-report">
+				<nb-card>
+					<nb-card-body class="chart">
+						<ngx-line-chart
+							[data]="chartData"
+						></ngx-line-chart>
+					</nb-card-body>
+				</nb-card>
+			</div>
+			<ga-payment-report-grid
+				[filters]="filters"
+			></ga-payment-report-grid>
 		</div>
-		<ga-payment-report-grid
-			[filters]="filters"
-		></ga-payment-report-grid>
 	</nb-card-body>
 </nb-card>

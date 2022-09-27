@@ -1,17 +1,18 @@
 @import 'report';
 
 .group-by-wrapper {
-    display: flex; 
-    align-items: center;
-    gap: 18px;
+	display: flex;
+	align-items: center;
+	gap: 18px;
 }
 
 :host {
     display: block;
 
-    .no-data{
-        height: calc(100vh - 34rem);
-    }
+    .no-data {
+		min-height: 10rem;
+		height: calc(100vh - 57.5rem) !important
+	}
 
     ::ng-deep {
         .select-button {
@@ -20,9 +21,6 @@
         }
         .names-wrapper {
             max-width: 110px;
-        }
-        .day-grid-container {
-            height: 100%;            
         }
     }
 }

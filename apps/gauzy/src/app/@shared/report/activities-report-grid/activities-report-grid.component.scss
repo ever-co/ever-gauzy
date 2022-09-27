@@ -22,6 +22,10 @@
     }
 }
 
+.weekly-logs {
+	height: calc(100% - 2.7rem);
+}
+
 // column proportions
 .employee-column {
     width: 20%;
@@ -41,6 +45,7 @@
 }
 
 :host {
+	height: 100%;
     ::ng-deep {
         .progress-percentage {
             @include nb-rtl(padding-left, 0);
@@ -73,4 +78,8 @@
     .progress-bar-column, .no-height {
         border-left: none;
     }
+}
+
+.activities-container {
+	padding-bottom: 6px !important;
 }
