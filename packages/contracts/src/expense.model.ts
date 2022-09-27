@@ -1,24 +1,24 @@
-import { IEmployee, IEmployeeFindInput } from './employee.model';
+import { IEmployee } from './employee.model';
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 import { ITag } from './tag-entity.model';
 import { IExpenseCategory } from './expense-category.model';
 import { IOrganizationVendor } from './organization-vendors.model';
 import { IOrganizationProject } from './organization-projects.model';
 import { IPaginationInput } from './core.model';
-import { IOrganizationContact } from 'index';
+import { IOrganizationContact } from './organization-contact.model';
 
 export interface IExpense extends IBasePerTenantAndOrganizationEntityModel {
 	employee?: IEmployee;
-	employeeId?: string;
+	employeeId?: IEmployee['id'];
 	amount: number;
 	vendor: IOrganizationVendor;
-	vendorId: string;
+	vendorId: IOrganizationVendor['id'];
 	typeOfExpense: string;
 	category: IExpenseCategory;
-	categoryId: string;
-	organizationContactId?: string;
+	categoryId: IExpenseCategory['id'];
+	organizationContactId?: IOrganizationContact['id'];
 	organizationContact?: IOrganizationContact;
-	projectId?: string;
+	projectId?: IOrganizationProject['id'];
 	project?: IOrganizationProject;
 	notes?: string;
 	valueDate?: Date;
@@ -33,16 +33,16 @@ export interface IExpense extends IBasePerTenantAndOrganizationEntityModel {
 	status?: ExpenseStatusesEnum;
 }
 
-export interface IExpenseCreateInput
-	extends IBasePerTenantAndOrganizationEntityModel {
-	employeeId?: string;
+export interface IExpenseCreateInput extends IBasePerTenantAndOrganizationEntityModel {
+	employee?: IEmployee;
+	employeeId?: IEmployee['id'];
 	amount: number;
 	typeOfExpense?: string;
 	category: IExpenseCategory;
 	vendor: IOrganizationVendor;
-	organizationContactId?: string;
+	organizationContactId?: IOrganizationContact['id'];
 	organizationContact?: IOrganizationContact;
-	projectId?: string;
+	projectId?: IOrganizationProject['id'];
 	project?: IOrganizationProject;
 	notes?: string;
 	valueDate?: Date;
@@ -58,18 +58,18 @@ export interface IExpenseCreateInput
 	status?: ExpenseStatusesEnum;
 }
 
-export interface IExpenseFindInput
-	extends IBasePerTenantAndOrganizationEntityModel {
-	employee?: IEmployeeFindInput;
+export interface IExpenseFindInput extends IBasePerTenantAndOrganizationEntityModel {
+	employee?: IEmployee;
+	employeeId?: IEmployee['id'];
 	vendorName?: string;
 	vendorId?: string;
 	typeOfExpense?: string;
 	categoryName?: string;
 	categoryId?: string;
 	amount?: number;
-	organizationContactId?: string;
+	organizationContactId?: IOrganizationContact['id'];
 	organizationContact?: IOrganizationContact;
-	projectId?: string;
+	projectId?: IOrganizationProject['id'];
 	project?: IOrganizationProject;
 	notes?: string;
 	valueDate?: Date;
@@ -85,8 +85,8 @@ export interface IExpenseFindInput
 }
 
 export interface IExpenseUpdateInput extends IBasePerTenantAndOrganizationEntityModel {
-	employeeId?: string;
-	organizationId?: string;
+	employee?: IEmployee;
+	employeeId?: IEmployee['id'];
 	amount?: number;
 	vendorName?: string;
 	vendorId?: string;
@@ -136,34 +136,6 @@ export enum ExpenseStatusesEnum {
 	UNINVOICED = 'UNINVOICED',
 	PAID = 'PAID',
 	NOT_BILLABLE = 'NOT_BILLABLE'
-}
-
-export interface IExpenseViewModel {
-	id: string;
-	valueDate: Date;
-	vendorId: string;
-	vendorName: string;
-	vendor: IOrganizationVendor;
-	typeOfExpense: string;
-	categoryId: string;
-	category: IExpenseCategory;
-	organizationContactId: string;
-	organizationContact?: IOrganizationContact;
-	projectId: string;
-	project: IOrganizationProject;
-	currency: string;
-	amount: number;
-	notes: string;
-	purpose: string;
-	taxType: string;
-	taxLabel: string;
-	employee: IEmployee;
-	employeeName: string;
-	rateValue: number;
-	receipt: string;
-	splitExpense: boolean;
-	tags: ITag[];
-	status: ExpenseStatusesEnum;
 }
 
 export interface IGetExpenseInput

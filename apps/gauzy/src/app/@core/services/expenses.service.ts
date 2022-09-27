@@ -91,10 +91,10 @@ export class ExpensesService {
 		);
 	}
 
-	delete(expenseId: string, employeeId: string): Promise<any> {
+	delete(expenseId: string, input: IExpenseFindInput): Promise<any> {
 		return firstValueFrom(
 			this.http.delete(`${API_PREFIX}/expense/${expenseId}`, {
-				params: toParams({ employeeId })
+				params: toParams({ ...input })
 			})
 		);
 	}

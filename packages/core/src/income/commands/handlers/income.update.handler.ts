@@ -8,8 +8,7 @@ import { EmployeeStatisticsService } from '../../../employee-statistics';
 import { IncomeUpdateCommand } from '../income.update.command';
 
 @CommandHandler(IncomeUpdateCommand)
-export class IncomeUpdateHandler implements
-	ICommandHandler<IncomeUpdateCommand> {
+export class IncomeUpdateHandler implements ICommandHandler<IncomeUpdateCommand> {
 
 	constructor(
 		private readonly incomeService: IncomeService,
@@ -21,7 +20,10 @@ export class IncomeUpdateHandler implements
 		const { id, entity } = command;
 		try {
 			await this.incomeService.findOneByIdString(id);
-			const income = await this.updateIncome(id, entity);
+			const income = await this.incomeService.create({
+				id,
+				...entity
+			});
 
 			let averageIncome = 0;
 			let averageBonus = 0;
@@ -46,15 +48,5 @@ export class IncomeUpdateHandler implements
 		} catch (error) {
 			throw new BadRequestException(error);
 		}
-	}
-
-	public async updateIncome(
-		incomeId: string,
-		entity: IIncome
-	): Promise<IIncome> {
-		return await this.incomeService.create({
-			id: incomeId,
-			...entity
-		});
 	}
 }

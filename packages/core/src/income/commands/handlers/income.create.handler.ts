@@ -20,11 +20,9 @@ export class IncomeCreateHandler
 	public async execute(command: IncomeCreateCommand): Promise<IIncome> {
 		const { input } = command;
 		const income = await this.incomeService.create(input);
-
 		try {
 			let averageIncome = 0;
 			let averageBonus = 0;
-
 			if (isNotEmpty(income.employeeId)) {
 				const { employeeId } = income;
 				const stat = await this.employeeStatisticsService.getStatisticsByEmployeeId(

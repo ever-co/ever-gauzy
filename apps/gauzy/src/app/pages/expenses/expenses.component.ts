@@ -5,7 +5,6 @@ import {
 	IExpense,
 	ComponentLayoutStyleEnum,
 	IOrganization,
-	IExpenseViewModel,
 	IEmployee,
 	IOrganizationVendor,
 	IExpenseCategory,
@@ -17,7 +16,7 @@ import { combineLatest, Subject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { distinctUntilChange, employeeMapper, isNotEmpty, toUTC } from '@gauzy/common-angular';
+import { distinctUntilChange, employeeMapper, toUTC } from '@gauzy/common-angular';
 import * as moment from 'moment';
 import { Ng2SmartTableComponent } from 'ng2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
@@ -26,8 +25,7 @@ import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import {
 	DateViewComponent,
 	EmployeeLinksComponent,
-	IncomeExpenseAmountComponent,
-	NotesWithTagsComponent
+	IncomeExpenseAmountComponent
 } from '../../@shared/table-components';
 import {
 	ExpenseCategoryFilterComponent,
@@ -62,8 +60,8 @@ export class ExpensesComponent extends PaginationFilterBaseComponent
 	projectId: string | null;
 	selectedDateRange: IDateRangePicker;
 	smartTableSource: ServerDataSource;
-	expenses: IExpenseViewModel[] = [];
-	selectedExpense: IExpenseViewModel;
+	expenses: IExpense[] = [];
+	selectedExpense: IExpense;
 	loading: boolean = false;
 	disableButton: boolean = true;
 	viewComponentName: ComponentEnum;
@@ -446,10 +444,13 @@ export class ExpensesComponent extends PaginationFilterBaseComponent
 						if (!this.selectedExpense) {
 							return;
 						}
-						const { id, employee } = this.selectedExpense;
+						const { id, employee, employeeId, organizationId } = this.selectedExpense;
 						await this.expenseService.delete(
 							id,
-							isNotEmpty(employee) ? employee.id : null
+							{
+								employeeId,
+								organizationId
+							}
 						);
 						this.toastrService.success('NOTES.EXPENSES.DELETE_EXPENSE', {
 							name: this.employeeName(employee)
