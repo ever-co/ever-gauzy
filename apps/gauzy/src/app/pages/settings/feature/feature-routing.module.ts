@@ -18,12 +18,6 @@ const routes: Routes = [
 			permissions: {
 				only: [PermissionsEnum.ALL_ORG_VIEW],
 				redirectTo
-			},
-			selectors: {
-				project: false,
-				employee: false,
-				organization: false,
-				date: false
 			}
 		},
 		children: [

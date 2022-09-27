@@ -25,31 +25,29 @@ export class FeatureService {
 
 	getParentFeatures(
 		relations?: string[]
-	): Observable<{ items: IFeature[]; total: number }> {
-		const data = { relations };
-		return this.http.get<{ items: IFeature[]; total: number }>(
+	): Observable<IPagination<IFeature>> {
+		return this.http.get<IPagination<IFeature>>(
 			`${this.API_URL}/parent`,
 			{
-				params: toParams({ data })
+				params: toParams({ relations })
 			}
 		);
 	}
 
-	getAllFeatures(): Observable<{ items: IFeature[]; total: number }> {
-		return this.http.get<{ items: IFeature[]; total: number }>(
+	getAllFeatures(): Observable<IPagination<IFeature>> {
+		return this.http.get<IPagination<IFeature>>(
 			`${this.API_URL}`
 		);
 	}
 
 	getFeatureOrganizations(
-		findInput?: IFeatureOrganizationFindInput,
+		where?: IFeatureOrganizationFindInput,
 		relations?: string[]
 	): Observable<IPagination<IFeatureOrganization>> {
-		const data = { relations, findInput };
 		return this.http.get<IPagination<IFeatureOrganization>>(
 			`${this.API_URL}/organizations`,
 			{
-				params: toParams({ data })
+				params: toParams({ relations, ...where })
 			}
 		);
 	}

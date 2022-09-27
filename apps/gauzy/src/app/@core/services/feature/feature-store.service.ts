@@ -29,7 +29,9 @@ export class FeatureStoreService {
 	private _featureToggles$: BehaviorSubject<any> = new BehaviorSubject([]);
 	public featureToggles$: Observable<any> = this._featureToggles$.asObservable();
 
-	constructor(private _featureService: FeatureService) {}
+	constructor(
+		private readonly _featureService: FeatureService
+	) {}
 
 	public loadUnleashFeatures() {
 		const promise = this._featureService.getFeatureToggleDefinition();
@@ -43,7 +45,7 @@ export class FeatureStoreService {
 
 	public loadFeatures(
 		relations?: string[]
-	): Observable<{ items: IFeature[]; total: number }> {
+	): Observable<IPagination<IFeature>> {
 		const features$ = this._features$.getValue();
 		if (features$.length > 0) {
 			return EMPTY;
