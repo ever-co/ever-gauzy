@@ -5,7 +5,7 @@
   .filters {
     display: flex;
     justify-content: flex-end;
-    gap: 5px;
+    gap: 1rem;
   }
   ::ng-deep {
     ng-select {
@@ -17,4 +17,8 @@
       $default-box-shadow
     );
   }
+}
+
+.report-body{
+	height: calc(100% - 8rem) !important;
 }

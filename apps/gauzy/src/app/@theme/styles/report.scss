@@ -169,6 +169,9 @@ nb-card, nb-card-body, .card {
 			padding: 1rem 0.5rem 1rem 18px;
 			height: calc(100% - 6rem);
 			.report-container{
+				display: flex;
+				flex-direction: column;
+				gap: 1rem;
 				overflow: auto;
 				padding-right: 0.5rem;
 				height: 100%;
@@ -290,7 +293,7 @@ nb-card, nb-card-body, .card {
 }
 
 .chart{
-    border-radius: var(--border-radius);
+    border-radius: var(--border-radius) !important;
 }
 
 :host {
