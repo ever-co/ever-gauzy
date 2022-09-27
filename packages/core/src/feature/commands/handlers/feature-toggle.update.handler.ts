@@ -3,14 +3,15 @@ import { FeatureOrganizationService } from 'feature/feature-organization.service
 import { FeatureToggleUpdateCommand } from '../feature-toggle.update.command';
 
 @CommandHandler(FeatureToggleUpdateCommand)
-export class FeatureToggleUpdateHandler
-	implements ICommandHandler<FeatureToggleUpdateCommand> {
+export class FeatureToggleUpdateHandler implements ICommandHandler<FeatureToggleUpdateCommand> {
 	constructor(
 		private readonly _featureOrganizationService: FeatureOrganizationService
 	) {}
 
-	public async execute(command: FeatureToggleUpdateCommand): Promise<any> {
+	public async execute(
+		command: FeatureToggleUpdateCommand
+	): Promise<boolean> {
 		const { input } = command;
-		return this._featureOrganizationService.updateFeatureOrganization(input);
+		return await this._featureOrganizationService.updateFeatureOrganization(input);
 	}
 }
