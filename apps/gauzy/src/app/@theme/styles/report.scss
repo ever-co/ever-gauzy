@@ -166,14 +166,16 @@ nb-card, nb-card-body, .card {
 		border-radius: 0 0 var(--border-radius) var(--border-radius);
 		&.report-body {
 			overflow: unset;
-			padding: 1rem 0.5rem 1rem 18px;
+			@include nb-ltr(padding, 1rem 0.5rem 1rem 18px);
+			@include nb-rtl(padding, 1rem 18px 1rem 0.5rem);
 			height: calc(100% - 6rem);
 			.report-container{
 				display: flex;
 				flex-direction: column;
 				gap: 1rem;
 				overflow: auto;
-				padding-right: 0.5rem;
+				@include nb-ltr(padding-right, 0.5rem);
+				@include nb-rtl(padding-left, 0.5rem);
 				height: 100%;
 			}
 		}
