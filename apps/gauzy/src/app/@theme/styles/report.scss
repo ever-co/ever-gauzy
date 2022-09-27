@@ -186,6 +186,14 @@ nb-card, nb-card-body, .card {
 		gap: 1rem;
 	}
 
+	.not-found{
+		height: 100%;
+	}
+
+	.budget-container{
+		padding-bottom: 6px !important;
+	}
+
     ::ng-deep {
         @include nb-select-overrides(
                 2rem,
