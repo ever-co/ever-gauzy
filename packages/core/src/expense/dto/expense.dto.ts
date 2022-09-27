@@ -1,5 +1,4 @@
 import {
-    CurrenciesEnum,
     ExpenseStatusesEnum,
     IExpenseCategory,
     IOrganizationContact,

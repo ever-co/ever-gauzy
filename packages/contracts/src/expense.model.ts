@@ -1,4 +1,4 @@
-import { IEmployee } from './employee.model';
+import { IEmployee, IRelationalEmployee } from './employee.model';
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 import { ITag } from './tag-entity.model';
 import { IExpenseCategory } from './expense-category.model';
@@ -7,9 +7,7 @@ import { IOrganizationProject } from './organization-projects.model';
 import { IPaginationInput } from './core.model';
 import { IOrganizationContact } from './organization-contact.model';
 
-export interface IExpense extends IBasePerTenantAndOrganizationEntityModel {
-	employee?: IEmployee;
-	employeeId?: IEmployee['id'];
+export interface IExpense extends IBasePerTenantAndOrganizationEntityModel, IRelationalEmployee {
 	amount: number;
 	vendor: IOrganizationVendor;
 	vendorId: IOrganizationVendor['id'];
@@ -33,9 +31,7 @@ export interface IExpense extends IBasePerTenantAndOrganizationEntityModel {
 	status?: ExpenseStatusesEnum;
 }
 
-export interface IExpenseCreateInput extends IBasePerTenantAndOrganizationEntityModel {
-	employee?: IEmployee;
-	employeeId?: IEmployee['id'];
+export interface IExpenseCreateInput extends IBasePerTenantAndOrganizationEntityModel, IRelationalEmployee {
 	amount: number;
 	typeOfExpense?: string;
 	category: IExpenseCategory;
@@ -58,9 +54,7 @@ export interface IExpenseCreateInput extends IBasePerTenantAndOrganizationEntity
 	status?: ExpenseStatusesEnum;
 }
 
-export interface IExpenseFindInput extends IBasePerTenantAndOrganizationEntityModel {
-	employee?: IEmployee;
-	employeeId?: IEmployee['id'];
+export interface IExpenseFindInput extends IBasePerTenantAndOrganizationEntityModel, IRelationalEmployee {
 	vendorName?: string;
 	vendorId?: string;
 	typeOfExpense?: string;
@@ -84,9 +78,7 @@ export interface IExpenseFindInput extends IBasePerTenantAndOrganizationEntityMo
 	status?: ExpenseStatusesEnum;
 }
 
-export interface IExpenseUpdateInput extends IBasePerTenantAndOrganizationEntityModel {
-	employee?: IEmployee;
-	employeeId?: IEmployee['id'];
+export interface IExpenseUpdateInput extends IBasePerTenantAndOrganizationEntityModel, IRelationalEmployee {
 	amount?: number;
 	vendorName?: string;
 	vendorId?: string;

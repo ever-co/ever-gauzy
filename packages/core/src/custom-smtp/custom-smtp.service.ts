@@ -10,7 +10,6 @@ import {
 import { isEmpty, ISMTPConfig } from '@gauzy/common';
 import { environment as env } from '@gauzy/config';
 import { TenantAwareCrudService } from './../core/crud';
-import { RequestContext } from './../core/context';
 import { CustomSmtp } from './custom-smtp.entity';
 
 @Injectable()

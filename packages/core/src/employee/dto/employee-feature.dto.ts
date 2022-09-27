@@ -1,13 +1,8 @@
-import { IEmployee } from "@gauzy/contracts";
+import { IEmployee, IRelationalEmployee } from "@gauzy/contracts";
 import { ApiPropertyOptional } from "@nestjs/swagger";
 import { IsObject, IsString, ValidateIf } from "class-validator";
 import { Employee } from "./../employee.entity";
 import { IsEmployeeBelongsToOrganization } from "./../../shared/validators";
-
-interface IRelationalEmployee {
-    readonly employee: IEmployee;
-    readonly employeeId: IEmployee['id'];
-}
 
 export class EmployeeFeatureDTO implements IRelationalEmployee  {
 
