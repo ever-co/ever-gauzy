@@ -2,22 +2,26 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CqrsModule } from '@nestjs/cqrs';
 import { RouterModule } from 'nest-router';
+import * as moment from 'moment';
 import { InvoiceController } from './invoice.controller';
 import { InvoiceService } from './invoice.service';
 import { Invoice } from './invoice.entity';
-import { EmailService, EmailModule } from '../email';
+import { CommandHandlers } from './commands';
+import { EmailModule } from '../email/email.module';
 import { EstimateEmailModule } from '../estimate-email/estimate-email.module';
 import { TenantModule } from '../tenant/tenant.module';
-import { CommandHandlers } from './commands';
 import { PdfmakerService } from './pdfmaker.service';
 import { OrganizationModule } from './../organization/organization.module';
 import { UserModule } from './../user/user.module';
-import * as moment from 'moment';
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([{ path: '/invoices', module: InvoiceModule }]),
-		TypeOrmModule.forFeature([Invoice]),
+		RouterModule.forRoutes([
+			{ path: '/invoices', module: InvoiceModule }
+		]),
+		TypeOrmModule.forFeature([
+			Invoice
+		]),
 		EmailModule,
 		EstimateEmailModule,
 		TenantModule,
@@ -29,7 +33,6 @@ import * as moment from 'moment';
 	providers: [
 		InvoiceService,
 		PdfmakerService,
-		EmailService,
 		...CommandHandlers,
 		{
 			provide: 'MomentWrapper',
@@ -37,6 +40,7 @@ import * as moment from 'moment';
 		},
 	],
 	exports: [
+		TypeOrmModule,
 		InvoiceService,
 		PdfmakerService
 	]

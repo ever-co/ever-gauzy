@@ -20,7 +20,7 @@ import { UserModule } from './../../user/user.module';
 		TypeOrmModule.forFeature([
 			TimeLog
 		]),
-		TenantModule,
+		forwardRef(() => TenantModule),
 		forwardRef(() => UserModule),
 		forwardRef(() => EmployeeModule),
 		forwardRef(() => OrganizationProjectModule),

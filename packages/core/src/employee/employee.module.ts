@@ -10,15 +10,20 @@ import { CommandHandlers } from './commands/handlers';
 import { EmployeeController } from './employee.controller';
 import { EmployeeService } from './employee.service';
 import { AuthService } from '../auth/auth.service';
-import { EmailService, EmailModule } from '../email';
+import { EmailModule } from '../email/email.module';
 import { UserOrganizationModule } from '../user-organization/user-organization.module';
 import { TenantModule } from '../tenant/tenant.module';
 import { RoleModule } from './../role/role.module';
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([{ path: '/employee', module: EmployeeModule }]),
-		TypeOrmModule.forFeature([Employee, TimeLog]),
+		RouterModule.forRoutes([
+			{ path: '/employee', module: EmployeeModule }
+		]),
+		TypeOrmModule.forFeature([
+			Employee,
+			TimeLog
+		]),
 		EmailModule,
 		UserOrganizationModule,
 		CqrsModule,
@@ -30,7 +35,6 @@ import { RoleModule } from './../role/role.module';
 	providers: [
 		EmployeeService,
 		AuthService,
-		EmailService,
 		GauzyAIService,
 		...CommandHandlers
 	],
