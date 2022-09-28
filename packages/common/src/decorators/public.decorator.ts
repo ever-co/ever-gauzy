@@ -1,4 +1,4 @@
-import { SetMetadata } from '@nestjs/common';
+import { CustomDecorator, SetMetadata } from '@nestjs/common';
 import { PUBLIC_METHOD_METADATA } from './../constants';
 
 /**
@@ -12,4 +12,4 @@ import { PUBLIC_METHOD_METADATA } from './../constants';
  *
  * @publicApi
  */
-export const Public = () => SetMetadata(PUBLIC_METHOD_METADATA, true);
+export const Public = (): CustomDecorator => SetMetadata(PUBLIC_METHOD_METADATA, true);

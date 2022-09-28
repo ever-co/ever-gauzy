@@ -16,8 +16,8 @@ export class RoleGuard implements CanActivate {
 		* Retrieve metadata for a specified key for a specified set of roles
 		*/
 		const roles = this._reflector.getAllAndOverride<RolesEnum[]>(ROLES_METADATA, [
-			context.getHandler(),
-			context.getClass(),
+			context.getHandler(), // Method Roles
+			context.getClass(), // Controller Roles
 		]) || [];
 		let isAuthorized = false;
 		if (isEmpty(roles)) {
