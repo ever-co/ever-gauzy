@@ -8,8 +8,8 @@
 			<div class="organization" *ngIf="!isCollapse">
 				<img [src]="organization.imageUrl" alt="" />
 				<div class="description text">
-					<div>{{ organization?.name }}</div>
-					<div>{{ organization?.website }}</div>
+					<div [nbTooltip]="organization?.name">{{ organization?.name }}</div>
+					<div [nbTooltip]="organization?.website">{{ organization?.website }}</div>
 				</div>
 			</div>
 		</nb-accordion-item-header>

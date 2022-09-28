@@ -21,6 +21,11 @@
 
     .description {
       >div {
+		  overflow: hidden;
+		  white-space: nowrap;
+		  text-overflow: ellipsis;
+		  width: 150px;
+
         &:first-child {
           font-size: 0.75rem;
         }
