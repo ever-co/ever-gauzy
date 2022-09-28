@@ -84,6 +84,7 @@ export class CandidateInterviewersController extends CrudController<CandidateInt
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
+	@Permissions(PermissionsEnum.ORG_CANDIDATES_INTERVIEWERS_VIEW)
 	@Get('interview/:interviewId')
 	async findByInterviewId(
 		@Param('interviewId', UUIDValidationPipe) interviewId: string
@@ -166,7 +167,7 @@ export class CandidateInterviewersController extends CrudController<CandidateInt
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@Permissions(PermissionsEnum.ORG_CANDIDATES_VIEW)
+	@Permissions(PermissionsEnum.ORG_CANDIDATES_INTERVIEWERS_VIEW)
 	@Get()
 	async findAll(
 		@Query('data', ParseJsonPipe) data: any
