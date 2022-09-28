@@ -24,75 +24,78 @@
 			</ngx-gauzy-filters>
 		</div>
 	</nb-card-header>
-	<nb-card-body>
-		<div class="table">
-			<div
-				class="time-logs row-table"
-				[nbSpinner]="loading"
-				[nbSpinnerSize]="'giant'"
-				[nbSpinnerStatus]="'primary'"
-			></div>
-			<ng-template [ngIf]="dailyData?.length > 0" [ngIfElse]="notFound">
-				<nb-card class="card" *ngFor="let day of dailyData">
-					<nb-card-header class="card-title">
-						{{ day.date | dateFormat }}
-					</nb-card-header>
-					<nb-card-body>
-						<div class="columns-header" *ngIf="day.employees?.length > 0; else noEmployees">
-							<div class="table-inner-wrapper font-weight-bold align-items-center">
-								<ng-template [ngIf]="duration === 'week'">
-									<ng-container *ngTemplateOutlet="weeklyHeadings"></ng-container>
-								</ng-template>
-								<ng-template [ngIf]="duration === 'day'">
-									<ng-container *ngTemplateOutlet="dailyHeadings"></ng-container>
-								</ng-template>
-							</div>
-						</div>
-						<ng-template #noEmployees>
-							<div class="ml-3">
-								{{ 'REPORT_PAGE.NO_EMPLOYEES_WORKED' | translate }}
-							</div>
-						</ng-template>
-						<div class="cart-body project-row">
-							<div class="table-row" *ngFor="let timeLogRow of day.employees">
-								<div class="table-inner-wrapper">
+	<nb-card-body class="report-body">
+		<div class="report-container">
+			<div class="table">
+				<div
+					class="time-logs row-table"
+					*ngIf="loading"
+					[nbSpinner]="loading"
+					[nbSpinnerSize]="'giant'"
+					[nbSpinnerStatus]="'primary'"
+				></div>
+				<ng-template [ngIf]="dailyData?.length > 0" [ngIfElse]="notFound">
+					<nb-card class="card" *ngFor="let day of dailyData">
+						<nb-card-header class="card-title">
+							{{ day.date | dateFormat }}
+						</nb-card-header>
+						<nb-card-body class="budget-container">
+							<div class="columns-header" *ngIf="day.employees?.length > 0; else noEmployees">
+								<div class="table-inner-wrapper font-weight-bold align-items-center">
 									<ng-template [ngIf]="duration === 'week'">
-										<ng-container
-												*ngTemplateOutlet="
-													weeklyTable;
-													context: { $implicit: timeLogRow }">
-										</ng-container>
+										<ng-container *ngTemplateOutlet="weeklyHeadings"></ng-container>
 									</ng-template>
 									<ng-template [ngIf]="duration === 'day'">
-										<ng-container
-												*ngTemplateOutlet="
-													dailyTable;
-													context: { $implicit: timeLogRow }">
-										</ng-container>
+										<ng-container *ngTemplateOutlet="dailyHeadings"></ng-container>
 									</ng-template>
 								</div>
 							</div>
-						</div>
-					</nb-card-body>
-				</nb-card>
-			</ng-template>
-			<ng-template #notFound>
-				<nb-card>
-					<nb-card-body>
-						<div class="row font-weight-bold py-5 align-items-center">
-							<div class="col text-center">
-								{{ 'REPORT_PAGE.NO_EMPLOYEES' | translate }}
+							<ng-template #noEmployees>
+								<div class="ml-3">
+									{{ 'REPORT_PAGE.NO_EMPLOYEES_WORKED' | translate }}
+								</div>
+							</ng-template>
+							<div class="cart-body project-row">
+								<div class="table-row" *ngFor="let timeLogRow of day.employees">
+									<div class="table-inner-wrapper">
+										<ng-template [ngIf]="duration === 'week'">
+											<ng-container
+												*ngTemplateOutlet="
+													weeklyTable;
+													context: { $implicit: timeLogRow }">
+											</ng-container>
+										</ng-template>
+										<ng-template [ngIf]="duration === 'day'">
+											<ng-container
+												*ngTemplateOutlet="
+													dailyTable;
+													context: { $implicit: timeLogRow }">
+											</ng-container>
+										</ng-template>
+									</div>
+								</div>
 							</div>
-						</div>
-					</nb-card-body>
-				</nb-card>
-			</ng-template>
+						</nb-card-body>
+					</nb-card>
+				</ng-template>
+				<ng-template #notFound>
+					<nb-card>
+						<nb-card-body>
+							<div class="row font-weight-bold py-5 align-items-center">
+								<div class="col text-center">
+									{{ 'REPORT_PAGE.NO_EMPLOYEES' | translate }}
+								</div>
+							</div>
+						</nb-card-body>
+					</nb-card>
+				</ng-template>
+			</div>
 		</div>
 	</nb-card-body>
 </nb-card>
 
 <ng-template let-project #projectEl>
-	<ga-project-column-view 
+	<ga-project-column-view
 		*ngIf="project; else noProjects"
 		[project]="project"
 	></ga-project-column-view>

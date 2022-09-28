@@ -44,9 +44,9 @@ export class OrganizationDepartmentController extends CrudController<Organizatio
 
 	/**
 	 * GET organization department by employee
-	 * 
-	 * @param id 
-	 * @returns 
+	 *
+	 * @param id
+	 * @returns
 	 */
 	@ApiOperation({
 		summary: 'Find all organization departments.'
@@ -69,9 +69,9 @@ export class OrganizationDepartmentController extends CrudController<Organizatio
 
 	/**
 	 * UPDATE organization department by employee
-	 * 
-	 * @param entity 
-	 * @returns 
+	 *
+	 * @param entity
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'Update an existing record' })
 	@ApiResponse({
@@ -101,9 +101,9 @@ export class OrganizationDepartmentController extends CrudController<Organizatio
 
 	/**
 	 * GET all organization department
-	 * 
-	 * @param data 
-	 * @returns 
+	 *
+	 * @param data
+	 * @returns
 	 */
 	@ApiOperation({
 		summary: 'Find all organization departments.'
@@ -131,27 +131,27 @@ export class OrganizationDepartmentController extends CrudController<Organizatio
 
 	/**
 	 * Get pagination data of organization department
-	 * 
-	 * @param id 
-	 * @param entity 
-	 * @returns 
+	 *
+	 * @param id
+	 * @param entity
+	 * @returns
 	 */
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_INCOMES_VIEW)
 	@Get('pagination')
 	@UsePipes(new ValidationPipe({ transform: true }))
 	async pagination(
-		@Query() filter: PaginationParams<IOrganizationDepartment>
+		@Query() filter: PaginationParams<OrganizationDepartment>
 	): Promise<IPagination<IOrganizationDepartment>> {
 		return this.organizationDepartmentService.pagination(filter);
 	}
-	
+
 	/**
 	 * UPDATE organization department by id
-	 * 
-	 * @param id 
-	 * @param entity 
-	 * @returns 
+	 *
+	 * @param id
+	 * @param entity
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'Update an existing record' })
 	@ApiResponse({

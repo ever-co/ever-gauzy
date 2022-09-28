@@ -1,4 +1,5 @@
 import { InjectRepository } from "@nestjs/typeorm";
+import { Injectable } from "@nestjs/common";
 import { Not, Repository } from "typeorm";
 import {
 	ValidationArguments,
@@ -9,12 +10,13 @@ import { ExpenseCategory } from "../../../core/entities/internal";
 import { RequestContext } from "../../../core/context";
 
 /**
- * Role already existed validation constraint
+ * Expense category already existed validation constraint
  *
  * @param validationOptions
  * @returns
  */
 @ValidatorConstraint({ name: "IsExpenseCategoryAlreadyExist", async: true })
+@Injectable()
 export class IsExpenseCategoryAlreadyExistConstraint
 	implements ValidatorConstraintInterface {
 

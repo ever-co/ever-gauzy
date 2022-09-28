@@ -1,5 +1,5 @@
 import { IProposalCreateInput } from "@gauzy/contracts";
-import { IntersectionType } from "@nestjs/mapped-types";
+import { IntersectionType, PartialType } from "@nestjs/mapped-types";
 import { EmployeeFeatureDTO } from "./../../employee/dto";
 import { RelationalTagDTO } from "./../../tags/dto";
 import { ProposalDTO } from "./proposal.dto";
@@ -9,6 +9,6 @@ import { ProposalDTO } from "./proposal.dto";
  */
 export class CreateProposalDTO extends IntersectionType(
     ProposalDTO,
-    EmployeeFeatureDTO,
+    PartialType(EmployeeFeatureDTO),
     RelationalTagDTO
 ) implements IProposalCreateInput {}

@@ -1,2 +1,3 @@
-export { CreateExpenseDTO } from "./create-expense.dto";
-export { UpdateExpenseDTO } from "./update-expense.dto";
+export * from "./create-expense.dto";
+export * from "./update-expense.dto";
+export * from "./delete-expense.dto";

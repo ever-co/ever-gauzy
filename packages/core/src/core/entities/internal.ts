@@ -147,6 +147,7 @@ export * from './../../invoice/invoice.subscriber';
 export * from './../../organization-contact/organization-contact.subscriber';
 export * from './../../organization-project/organization-project.subscriber';
 export * from './../../organization/organization.subscriber';
+export * from './../../payment/payment.subscriber';
 export * from './../../reports/report.subscriber';
 export * from './../../tasks/task.subscriber';
 export * from './../../tenant/tenant.subscriber';

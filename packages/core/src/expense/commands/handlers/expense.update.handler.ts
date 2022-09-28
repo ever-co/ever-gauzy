@@ -1,15 +1,15 @@
+import { BadRequestException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { isNotEmpty } from '@gauzy/common';
 import { IExpense } from '@gauzy/contracts';
 import { ExpenseService } from '../../expense.service';
 import { EmployeeService } from '../../../employee/employee.service';
 import { EmployeeStatisticsService } from '../../../employee-statistics';
 import { ExpenseUpdateCommand } from '../expense.update.command';
-import { BadRequestException } from '@nestjs/common';
-import { isNotEmpty } from '@gauzy/common';
 
 @CommandHandler(ExpenseUpdateCommand)
-export class ExpenseUpdateHandler
-	implements ICommandHandler<ExpenseUpdateCommand> {
+export class ExpenseUpdateHandler implements ICommandHandler<ExpenseUpdateCommand> {
+
 	constructor(
 		private readonly expenseService: ExpenseService,
 		private readonly employeeService: EmployeeService,
@@ -18,8 +18,12 @@ export class ExpenseUpdateHandler
 
 	public async execute(command: ExpenseUpdateCommand): Promise<IExpense> {
 		let { id, entity } = command;
-		const expense = await this.updateExpense(id, entity);
 		try {
+			await this.expenseService.findOneByIdString(id);
+			const expense = await this.expenseService.create({
+				id,
+				...entity
+			});
 			let averageExpense = 0;
 			if (isNotEmpty(expense.employeeId)) {
 				const { employeeId } = expense;
@@ -34,21 +38,7 @@ export class ExpenseUpdateHandler
 					averageExpenses: averageExpense
 				});
 			}
-		} catch (error) {
-			throw new BadRequestException(error);
-		}
-		return await this.expenseService.findOneByIdString(expense.id);
-	}
-
-	public async updateExpense(
-		expenseId: string,
-		entity: IExpense
-	): Promise<IExpense> {
-		try {
-			return this.expenseService.create({
-				id: expenseId,
-				...entity
-			});
+			return expense;
 		} catch (error) {
 			throw new BadRequestException(error);
 		}

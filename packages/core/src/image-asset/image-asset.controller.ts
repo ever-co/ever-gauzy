@@ -73,7 +73,7 @@ export class ImageAssetController extends CrudController<ImageAsset> {
 	@Get('pagination')
 	@UsePipes(new ValidationPipe({ transform: true }))
 	async pagination(
-		@Query() filter: PaginationParams<IImageAsset>
+		@Query() filter: PaginationParams<ImageAsset>
 	): Promise<IPagination<IImageAsset>> {
 		return this.imageAssetService.paginate(filter);
 	}

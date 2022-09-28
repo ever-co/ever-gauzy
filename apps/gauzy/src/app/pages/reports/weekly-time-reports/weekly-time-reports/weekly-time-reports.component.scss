@@ -19,8 +19,8 @@
         max-width: 99%;
     }
     ::ng-deep .weekly-time-grid .no-data-found {
-        max-height: calc(100vh - 45rem);  
-    }
+		max-height: calc(100vh - 45rem);
+	}
 }
 
 @include respond(lg) {
@@ -33,13 +33,27 @@
     }
     .responsive-table-content .avatar-wrapper {
         width: unset;
-        max-width: 100%;
-        display: block;
-    }
+		max-width: 100%;
+		display: block;
+	}
 }
 
 @include respond(md) {
-    .mobile-padding {
-        padding-left: 10px;
-    }
+	.mobile-padding {
+		padding-left: 10px;
+	}
+}
+
+.table.card, .weekly-logs {
+	&.not-found {
+		height: 100%;
+	}
+	.weekly-time-container {
+		padding-bottom: 6px !important;
+		background-color: unset !important;
+	}
+}
+
+nb-card-body.report-body {
+	height: calc(100% - 8rem) !important;
 }

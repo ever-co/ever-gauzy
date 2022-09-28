@@ -16,6 +16,12 @@ $button-radius : nb-theme(button-rectangle-border-radius);
     }
 }
 
+.filter-item-list {
+	display: flex;
+	align-items: center;
+	gap: 0;
+}
+
 nb-select {
     min-width: 150px;
 }

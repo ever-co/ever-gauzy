@@ -65,8 +65,10 @@ const routes: Routes = [
 				redirectTo
 			},
 			selectors: {
-				project: false,
-				employee: false
+				organization: false,
+				date: false,
+				employee: false,
+				project: false
 			},
 		},
 		resolve: {
@@ -83,8 +85,10 @@ const routes: Routes = [
 				redirectTo
 			},
 			selectors: {
-				project: false,
-				employee: false
+				organization: false,
+				date: false,
+				employee: false,
+				project: false
 			}
 		},
 		resolve: {

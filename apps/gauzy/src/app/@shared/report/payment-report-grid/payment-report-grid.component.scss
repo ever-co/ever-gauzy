@@ -7,8 +7,7 @@
     min-height: 56px;
   }
   ::ng-deep .payment-report-grid .no-data-found {
-    max-height: calc(100vh - 45rem);  
-    margin-top: 1rem; 
+  	height: calc(100vh - 50.65rem) !important;
   }
 }
 
@@ -30,4 +29,9 @@
 }
 .amount-column {
   width: 10%;
+}
+.weekly-logs{
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
 }

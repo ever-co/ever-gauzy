@@ -7,10 +7,9 @@ import {
 	ICustomSmtpCreateInput,
 	ICustomSmtpFindInput
 } from '@gauzy/contracts';
-import { ISMTPConfig } from '@gauzy/common';
+import { isEmpty, ISMTPConfig } from '@gauzy/common';
 import { environment as env } from '@gauzy/config';
 import { TenantAwareCrudService } from './../core/crud';
-import { RequestContext } from './../core/context';
 import { CustomSmtp } from './custom-smtp.entity';
 
 @Injectable()
@@ -31,20 +30,17 @@ export class CustomSmtpService extends TenantAwareCrudService<CustomSmtp> {
 	public async getSmtpSetting(
 		query: ICustomSmtpFindInput
 	): Promise<ICustomSmtp | ISMTPConfig> {
-		const tenantId = RequestContext.currentTenantId();
 		const { organizationId } = query;
 
 		const globalSmtp = this.defaultSMTPTransporter();
 		delete globalSmtp['auth'];
 		try {
-			if (!organizationId) {
+			if (isEmpty(organizationId)) {
 				return await this.findOneByWhereOptions({
-					tenantId,
 					organizationId: IsNull()
 				});
 			}
 			return await this.findOneByWhereOptions({
-				tenantId,
 				organizationId
 			});
 		} catch (error) {

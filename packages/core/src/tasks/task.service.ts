@@ -4,7 +4,7 @@ import {
 	HttpStatus
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Like, IsNull, Repository, SelectQueryBuilder, Brackets, WhereExpressionBuilder } from 'typeorm';
+import { IsNull, Repository, SelectQueryBuilder, Brackets, WhereExpressionBuilder, FindManyOptions, Raw } from 'typeorm';
 import { IEmployee, IGetTaskByEmployeeOptions, IGetTaskOptions, RolesEnum } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
 import { TenantAwareCrudService } from './../core/crud';
@@ -163,7 +163,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 
 		query.skip(filter.skip ? (filter.take * (filter.skip - 1)) : 0);
 		query.take(filter.take ? (filter.take) : 10);
-	
+
 		const [ items, total ] = await query
 			.leftJoinAndSelect(`${query.alias}.project`, 'project')
 			.leftJoinAndSelect(`${query.alias}.tags`, 'tags')
@@ -178,8 +178,8 @@ export class TaskService extends TenantAwareCrudService<Task> {
 						.select('"task_team_sub"."taskId"')
 						.from('task_team', 'task_team_sub')
 						.leftJoin(
-							'organization_team_employee', 
-							'organization_team_employee_sub', 
+							'organization_team_employee',
+							'organization_team_employee_sub',
 							'"organization_team_employee_sub"."organizationTeamId" = "task_team_sub"."organizationTeamId"'
 						);
 						if (employeeId) {
@@ -215,7 +215,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 
 	async findTeamTasks(filter: any) {
 		const { where: { employeeId } } = filter;
-		
+
 		// If user is not an employee, then this will return 404
 		let employee: IEmployee;
 		let role;
@@ -233,12 +233,12 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				role = await this.roleService.findOneByIdString(roleId);
 			}
 		} catch (e) {}
-		
+
 		// selected user not passed
 		if (employeeId) {
 			if (
-				role.name === RolesEnum.ADMIN || 
-				role.name === RolesEnum.SUPER_ADMIN || 
+				role.name === RolesEnum.ADMIN ||
+				role.name === RolesEnum.SUPER_ADMIN ||
 				employee.id === employeeId
 			) {
 				return this.getTeamTasks(filter);
@@ -253,19 +253,19 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		}
 	}
 
-	public pagination(filter: any) {
+	public pagination(filter: FindManyOptions) {
 		if ('where' in filter) {
 			const { where } = filter;
 			if ('title' in where) {
 				const { title } = where;
-				filter.where.title = Like(`%${title}%`);
+				filter['where']['title'] = Raw((alias) => `${alias} ILIKE '%${title}%'`);
 			}
 			if ('prefix' in where) {
 				const { prefix } = where;
-				filter.where.prefix = Like(`%${prefix}%`);
+				filter['where']['prefix'] = Raw((alias) => `${alias} ILIKE '%${prefix}%'`);
 			}
 			if ('organizationSprintId' in where) {
-				filter.where.organizationSprintId = IsNull();	
+				filter['where']['organizationSprintId'] = IsNull();
 			}
 		}
 		return super.paginate(filter);
@@ -273,8 +273,8 @@ export class TaskService extends TenantAwareCrudService<Task> {
 
 	/**
 	 * GET maximum task number by project filter
-	 * 
-	 * @param options 
+	 *
+	 * @param options
 	 */
 	public async getMaxTaskNumberByProject(options: IGetTaskOptions) {
 		const tenantId = RequestContext.currentTenantId();

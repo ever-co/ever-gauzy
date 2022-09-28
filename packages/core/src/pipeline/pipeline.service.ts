@@ -3,8 +3,9 @@ import { InjectConnection, InjectRepository } from '@nestjs/typeorm';
 import {
 	Connection,
 	DeepPartial,
+	FindManyOptions,
 	FindOptionsWhere,
-	Like,
+	Raw,
 	Repository,
 	UpdateResult
 } from 'typeorm';
@@ -118,30 +119,30 @@ export class PipelineService extends TenantAwareCrudService<Pipeline> {
         }
 	}
 
-	public pagination(filter: any) {
+	public pagination(filter: FindManyOptions) {
 		if ('where' in filter) {
 			const { where } = filter;
 			if ('name' in where) {
 				const { name } = where;
-				filter.where.name = Like(`%${name}%`)
+				filter['where']['name'] = Raw((alias) => `${alias} ILIKE '%${name}%'`);
 			}
 			if ('description' in where) {
 				const { description } = where;
-				filter.where.description = Like(`%${description}%`)
+				filter['where']['description'] = Raw((alias) => `${alias} ILIKE '%${description}%'`);
 			}
 			if ('isActive' in where) {
 				const { isActive } = where;
 				if (isActive === 'active') {
-					filter.where.isActive = 1;
+					filter['where']['isActive'] = 1;
 				}
 				if (isActive === 'inactive') {
-					filter.where.isActive = 0;
+					filter['where']['isActive'] = 0;
 				}
 			}
 			if ('stages' in where) {
 				const { stages } = where;
-				filter.where.stages = {
-					name: Like(`%${stages}%`)
+				filter['where']['stages'] = {
+					name: Raw((alias) => `${alias} ILIKE '%${stages}%'`)
 				}
 			}
 		}

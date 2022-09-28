@@ -1,6 +1,6 @@
 import {
-    CurrenciesEnum,
     ExpenseStatusesEnum,
+    IExpenseCategory,
     IOrganizationContact,
     IOrganizationProject
 } from "@gauzy/contracts";
@@ -13,11 +13,6 @@ export class ExpenseDTO extends TenantOrganizationBaseDTO {
     @ApiProperty({ type: () => Number, readOnly: true  })
     @IsNotEmpty()
     readonly amount: number;
-
-    @ApiProperty({ type: () => String, enum: CurrenciesEnum, readOnly: true  })
-    @IsEnum(CurrenciesEnum)
-    @IsNotEmpty()
-    readonly currency: CurrenciesEnum;
 
     @ApiPropertyOptional({ type: () => Date, readOnly: true  })
     @IsOptional()
@@ -91,4 +86,14 @@ export class ExpenseDTO extends TenantOrganizationBaseDTO {
     @IsOptional()
     @IsObject()
     readonly organizationContact: IOrganizationContact;
+
+    @ApiProperty({ type: () => Object, readOnly: true })
+    @IsOptional()
+    @IsObject()
+    readonly category: IExpenseCategory;
+
+    @ApiProperty({ type: () => String, readOnly: true })
+    @IsOptional()
+    @IsString()
+    readonly categoryId: IExpenseCategory['id'];
 }

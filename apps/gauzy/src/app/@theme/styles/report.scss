@@ -30,7 +30,7 @@
         align-items: center;
         margin-bottom: 10px;
         padding: 10px;
-        border-radius: 8px;
+        border-radius: var(--border-radius);
         border-left: 1px solid nb-theme(border-basic-color-4);
     }
     .responsive-table-header {
@@ -57,7 +57,7 @@
 
 nb-card, nb-card-body, .card {
     background-color: nb-theme(gauzy-card-2);
-    border-color: nb-theme(border-basic-color-3);
+    border: none;
 }
 
 ::ng-deep {
@@ -162,7 +162,39 @@ nb-card, nb-card-body, .card {
 
     nb-card-body{
         background-color: var(--gauzy-card-2);
+		padding: 1rem;
+		border-radius: 0 0 var(--border-radius) var(--border-radius);
+		&.report-body {
+			overflow: unset;
+			@include nb-ltr(padding, 1rem 0.5rem 1rem 18px);
+			@include nb-rtl(padding, 1rem 18px 1rem 0.5rem);
+			height: calc(100% - 6rem);
+			.report-container{
+				display: flex;
+				flex-direction: column;
+				gap: 1rem;
+				overflow: auto;
+				@include nb-ltr(padding-right, 0.5rem);
+				@include nb-rtl(padding-left, 0.5rem);
+				height: 100%;
+			}
+		}
+
     }
+
+	.weekly-logs{
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+	}
+
+	.not-found{
+		height: 100%;
+	}
+
+	.budget-container{
+		padding-bottom: 6px !important;
+	}
 
     ::ng-deep {
         @include nb-select-overrides(
@@ -185,6 +217,13 @@ nb-card, nb-card-body, .card {
     }
 }
 
+.table {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+	margin-bottom: 0;
+}
+
 .daily-time-report {
     nb-card-body, nb-accordion-item-body {
         background-color: nb-theme(gauzy-card-1);
@@ -196,7 +235,7 @@ nb-card, nb-card-body, .card {
     justify-content: space-between;
 }
 .table-row {
-    border-radius: 8px;
+    border-radius: var(--border-radius);
     height: 86px;
     background-color: nb-theme(gauzy-card-1);
     display: flex;
@@ -270,7 +309,7 @@ nb-card, nb-card-body, .card {
 }
 
 .chart{
-    border-radius: var(--border-radius);
+    border-radius: var(--border-radius) !important;
 }
 
 :host {

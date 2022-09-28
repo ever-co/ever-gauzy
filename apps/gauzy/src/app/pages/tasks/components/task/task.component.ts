@@ -56,10 +56,9 @@ import {
 	templateUrl: './task.component.html',
 	styleUrls: ['task.component.scss']
 })
-export class TaskComponent
-	extends PaginationFilterBaseComponent
-	implements OnInit, OnDestroy
-{
+export class TaskComponent extends PaginationFilterBaseComponent
+	implements OnInit, OnDestroy {
+
 	settingsSmartTable: object;
 	loading: boolean = false;
 	disableButton: boolean = true;
@@ -406,8 +405,8 @@ export class TaskComponent
 						type: 'custom',
 						component: InputFilterComponent
 					},
-					filterFunction: (value) => {
-						this.setFilter({ field: 'creator', search: value });
+					filterFunction: (value: string) => {
+						this.setFilter({ field: 'creator.firstName', search: value });
 					}
 				},
 				...this.getColumnsByPage(),
@@ -449,7 +448,7 @@ export class TaskComponent
 						'/' +
 						this.getTranslation('TASKS_PAGE.TASK_TEAMS'),
 					type: 'custom',
-					filter: true,
+					filter: false,
 					renderComponent: EmployeesMergedTeamsComponent
 				}
 			};

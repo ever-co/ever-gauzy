@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { IEmail, IEmailFindInput, IEmailUpdateInput } from '@gauzy/contracts';
+import { IEmail, IEmailFindInput, IEmailUpdateInput, IPagination } from '@gauzy/contracts';
+import { toParams } from '@gauzy/common-angular';
 import { firstValueFrom } from 'rxjs';
 import { API_PREFIX } from '../constants/app.constants';
 
@@ -8,27 +9,30 @@ import { API_PREFIX } from '../constants/app.constants';
 	providedIn: 'root'
 })
 export class EmailService {
-	constructor(private http: HttpClient) {}
+
+	constructor(
+		private readonly http: HttpClient
+	) {}
 
 	getAll(
-		relations?: string[],
-		findInput?: IEmailFindInput,
+		relations: string[] = [],
+		where?: IEmailFindInput,
 		take?: number
-	): Promise<{ items: IEmail[]; total: number }> {
-		const data = JSON.stringify({ relations, findInput, take });
-
+	): Promise<IPagination<IEmail>> {
+		const data = { relations, where };
+		if (take) {
+			data['take'] = take;
+		}
 		return firstValueFrom(
-			this.http
-			.get<{ items: IEmail[]; total: number }>(`${API_PREFIX}/email`, {
-				params: { data }
+			this.http.get<IPagination<IEmail>>(`${API_PREFIX}/email`, {
+				params: toParams({ ...data })
 			})
 		);
 	}
 
-	update(id: string, updateInput: IEmailUpdateInput): Promise<any> {
+	update(id: string, body: IEmailUpdateInput): Promise<any> {
 		return firstValueFrom(
-			this.http
-			.put<IEmail>(`${API_PREFIX}/email/${id}`, updateInput)
+			this.http.put<IEmail>(`${API_PREFIX}/email/${id}`, body)
 		);
 	}
 }

@@ -16,8 +16,6 @@
 					></ngx-date-range-title>
 				</ng-container>
 			</div>
-		</div>
-		<div class="row">
 			<div class="mb-4 ml-auto col-auto d-flex align-items-center">
 				<button
 					class="manage-widget"
@@ -261,13 +259,9 @@
 				<div class="row" *ngFor="let employee of timeSlotEmployees">
 					<ng-container *ngIf="employee?.timeSlots?.length > 0">
 						<div class="col">
-							<div
-								class="hour-label mt-3"
-								*ngxPermissionsOnly="
-									PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-								"
-							>
+							<div class="hour-label mb-3">
 								<ngx-avatar
+									*ngxPermissionsOnly="PermissionsEnum.CHANGE_SELECTED_EMPLOYEE"
 									size="sm"
 									[name]="employee?.user?.name"
 									[src]="employee?.user?.imageUrl"
@@ -277,8 +271,8 @@
 											| dateFormat
 									"
 									[id]="employee?.id"
-									class="mb-3"
 								></ngx-avatar>
+								<div></div>
 								<div class="button-container">
 									<div class="swiper-button-container">
 										<div
@@ -294,7 +288,8 @@
 											<i class="fas fa-angle-right"></i>
 										</div>
 									</div>
-									<div class="view-all">
+									<div *ngxPermissionsOnly="PermissionsEnum.CHANGE_SELECTED_EMPLOYEE"
+										 class="view-all">
 										<ng-container>
 											<button
 												nbButton

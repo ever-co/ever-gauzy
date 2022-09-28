@@ -1,20 +1,20 @@
 import { registerDecorator, ValidationOptions } from "class-validator";
-import { IsOrganizationShouldBelongsToConstraint } from "./constraints";
+import { IsEmployeeBelongsToOrganizationConstraint } from "./constraints";
 
 /**
- * Role should existed validation decorator
+ * Is employee should belongs to organization for specific tenant validation decorator
  *
  * @param validationOptions
  * @returns
  */
-export const IsOrganizationShouldBelongsTo = (validationOptions?: ValidationOptions) => {
+export const IsEmployeeBelongsToOrganization = (validationOptions?: ValidationOptions) => {
 	return (object: Object, propertyName: string) => {
         registerDecorator({
 			target: object.constructor,
 			propertyName: propertyName,
 			options: validationOptions,
 			constraints: [],
-			validator: IsOrganizationShouldBelongsToConstraint,
+			validator: IsEmployeeBelongsToOrganizationConstraint,
 		});
     };
 }

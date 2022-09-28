@@ -23,8 +23,7 @@
       max-width: 110px;
     }
     .expense-report-grid .no-data-found {
-      max-height: calc(100vh - 45rem);  
-      margin-top: 1rem; 
+		height: calc(100vh - 50.25rem) !important;
     }
   }
 }
@@ -84,4 +83,8 @@
     margin-bottom: 15px;
     margin-top: 15px;
   }
+}
+
+.expense-report-container {
+	padding-bottom: 6px !important;
 }

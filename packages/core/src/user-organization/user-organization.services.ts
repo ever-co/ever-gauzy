@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { IUserOrganization, RolesEnum } from '@gauzy/contracts';
+import { IOrganization, ITenant, IUser, IUserOrganization, RolesEnum } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
-import { Organization, User } from './../core/entities/internal';
+import { Organization } from './../core/entities/internal';
 import { UserOrganization } from './user-organization.entity';
 
 @Injectable()
@@ -19,8 +19,8 @@ export class UserOrganizationService extends TenantAwareCrudService<UserOrganiza
 	}
 
 	async addUserToOrganization(
-		user: User,
-		organizationId: string
+		user: IUser,
+		organizationId: IOrganization['id']
 	): Promise<IUserOrganization | IUserOrganization[]> {
 		const roleName: string = user.role.name;
 
@@ -35,8 +35,8 @@ export class UserOrganizationService extends TenantAwareCrudService<UserOrganiza
 	}
 
 	private async _addUserToAllOrganizations(
-		userId: string,
-		tenantId: string
+		userId: IUser['id'],
+		tenantId: ITenant['id']
 	): Promise<IUserOrganization[]> {
 		const organizations = await this.organizationRepository.find({
 			select: ['id'],

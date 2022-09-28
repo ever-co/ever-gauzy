@@ -8,6 +8,7 @@ import { FeatureToggleController } from './feature-toggle.controller';
 import { FeatureService } from './feature.service';
 import { FeatureOrganizationService } from './feature-organization.service';
 import { TenantModule } from '../tenant/tenant.module';
+import { UserModule } from './../user/user.module';
 import { CommandHandlers } from './commands/handlers';
 
 @Module({
@@ -17,6 +18,7 @@ import { CommandHandlers } from './commands/handlers';
 		]),
 		TypeOrmModule.forFeature([Feature, FeatureOrganization]),
 		forwardRef(() => TenantModule),
+		forwardRef(() => UserModule),
 		CqrsModule
 	],
 	controllers: [FeatureToggleController],

@@ -1,25 +1,31 @@
-import { IEmployeeProposalTemplate, IPagination,  } from '@gauzy/contracts';
 import {
+	BadRequestException,
+	Body,
 	Controller,
 	Get,
 	HttpStatus,
 	Param,
 	Post,
+	Put,
 	Query,
 	UseGuards,
 	UsePipes,
 	ValidationPipe
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { FindManyOptions } from 'typeorm';
+import { UpdateResult } from 'typeorm';
+import { IEmployeeProposalTemplate, IPagination, PermissionsEnum,  } from '@gauzy/contracts';
 import { UUIDValidationPipe } from './../shared/pipes';
-import { TenantPermissionGuard } from './../shared/guards';
+import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
+import { Permissions } from './../shared/decorators';
 import { CrudController, PaginationParams } from './../core/crud';
 import { EmployeeProposalTemplate } from './employee-proposal-template.entity';
 import { EmployeeProposalTemplateService } from './employee-proposal-template.service';
+import { CreateProposalTemplateDTO, UpdateProposalTemplateDTO } from './dto';
 
 @ApiTags('EmployeeProposalTemplate')
-@UseGuards(TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard)
+@Permissions(PermissionsEnum.ORG_PROPOSAL_TEMPLATES_EDIT)
 @Controller()
 export class EmployeeProposalTemplateController extends CrudController<EmployeeProposalTemplate> {
 	constructor(
@@ -30,23 +36,24 @@ export class EmployeeProposalTemplateController extends CrudController<EmployeeP
 
 	/**
 	 * GET employee proposal template via pagination
-	 * 
-	 * @param filter 
-	 * @returns 
+	 *
+	 * @param params
+	 * @returns
 	 */
+	@Permissions(PermissionsEnum.ORG_PROPOSAL_TEMPLATES_VIEW)
 	@Get('pagination')
 	@UsePipes(new ValidationPipe({ transform: true }))
 	async pagination(
-		@Query() filter: PaginationParams<EmployeeProposalTemplate>
+		@Query() params: PaginationParams<EmployeeProposalTemplate>
 	): Promise<IPagination<IEmployeeProposalTemplate>> {
-		return this.employeeProposalTemplateService.paginate(filter);
+		return await this.employeeProposalTemplateService.paginate(params);
 	}
 
 	/**
 	 * CREATE make default template by id
-	 * 
-	 * @param id 
-	 * @returns 
+	 *
+	 * @param id
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'Make Default' })
 	@ApiResponse({
@@ -56,27 +63,60 @@ export class EmployeeProposalTemplateController extends CrudController<EmployeeP
 	@Post(':id/make-default')
 	async makeDefault(
 		@Param('id', UUIDValidationPipe) id: string
-	): Promise<EmployeeProposalTemplate> {
-		return await this.employeeProposalTemplateService.makeDefault(
-			id
-		);
+	): Promise<IEmployeeProposalTemplate> {
+		return await this.employeeProposalTemplateService.makeDefault(id);
 	}
 
 	/**
 	 * GET all employee proposal templates
-	 * 
-	 * @param filter 
-	 * @returns 
+	 *
+	 * @param params
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'find all employee proposal templates' })
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found records'
 	})
+	@Permissions(PermissionsEnum.ORG_PROPOSAL_TEMPLATES_VIEW)
 	@Get()
+	@UsePipes(new ValidationPipe())
 	async findAll(
-		@Query() filter?: FindManyOptions<EmployeeProposalTemplate>
+		@Query() params?: PaginationParams<EmployeeProposalTemplate>
 	): Promise<IPagination<IEmployeeProposalTemplate>> {
-		return this.employeeProposalTemplateService.findAll(filter);
+		try {
+			return await this.employeeProposalTemplateService.findAll(params);
+		} catch (error) {
+			throw new BadRequestException(error);
+		}
+	}
+
+	/**
+	 * CREATE employee proposal template
+	 *
+	 * @param entity
+	 * @returns
+	 */
+	@Post()
+	@UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
+	async create(
+		@Body() entity: CreateProposalTemplateDTO
+	): Promise<IEmployeeProposalTemplate> {
+		return await this.employeeProposalTemplateService.create(entity);
+	}
+
+	/**
+	 * UPDATE employee proposal template
+	 *
+	 * @param entity
+	 * @returns
+	 */
+	@Put(':id')
+	@UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
+	async update(
+		@Param('id', UUIDValidationPipe) id: string,
+		@Body() entity: UpdateProposalTemplateDTO
+	): Promise<IEmployeeProposalTemplate | UpdateResult> {
+		return await this.employeeProposalTemplateService.update(id, entity);
 	}
 }

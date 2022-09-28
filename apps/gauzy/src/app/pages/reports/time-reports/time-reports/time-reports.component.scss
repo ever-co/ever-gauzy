@@ -1,5 +1,5 @@
 @import "report";
 
-.daily-statistics {
-    margin-bottom: 25px;
+:host ::ng-deep  nb-accordion .item-body {
+	padding-bottom: 0 !important;
 }

@@ -24,8 +24,7 @@ import {
 } from '../core/entities/internal';
 
 @Entity('proposal')
-export class Proposal
-	extends TenantOrganizationBaseEntity
+export class Proposal extends TenantOrganizationBaseEntity
 	implements IProposal {
 
 	@ApiProperty({ type: () => String })

@@ -13,7 +13,6 @@ import { EmployeeRecurringExpenseModule } from './../employee-recurring-expense/
 import { IncomeModule } from './../income/income.module';
 import { TenantModule } from './../tenant/tenant.module';
 import { ExpenseMapService } from './expense.map.service';
-import { OrganizationModule } from './../organization/organization.module';
 import { EmployeeModule } from './../employee/employee.module';
 import { OrganizationRecurringExpenseModule } from './../organization-recurring-expense/organization-recurring-expense.module';
 
@@ -30,7 +29,6 @@ import { OrganizationRecurringExpenseModule } from './../organization-recurring-
 		forwardRef(() => TenantModule),
 		forwardRef(() => UserModule),
 		forwardRef(() => EmployeeModule),
-		forwardRef(() => OrganizationModule),
 		CqrsModule
 	],
 	controllers: [ExpenseController],

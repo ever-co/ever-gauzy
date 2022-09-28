@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import {
+	IPagination,
 	IProposal,
 	IProposalCreateInput,
 	IProposalFindInput,
@@ -14,7 +15,7 @@ import { API_PREFIX } from '../constants/app.constants';
 	providedIn: 'root'
 })
 export class ProposalsService {
-	constructor(private http: HttpClient) {}
+	constructor(private readonly http: HttpClient) {}
 
 	create(createInput: IProposalCreateInput): Promise<any> {
 		return firstValueFrom(
@@ -38,20 +39,13 @@ export class ProposalsService {
 	}
 
 	getAll(
-		relations?: string[],
-		findInput?: IProposalFindInput,
-		filterDate?: Date
-	): Promise<{ items: IProposal[]; total: number }> {
-		const data = JSON.stringify({ relations, findInput, filterDate });
-
+		relations: string[] = [],
+		where?: IProposalFindInput
+	): Promise<IPagination<IProposal>> {
 		return firstValueFrom(
-			this.http
-			.get<{ items: IProposal[]; total: number }>(
-				`${API_PREFIX}/proposal`,
-				{
-					params: { data }
-				}
-			)
+			this.http.get<IPagination<IProposal>>(`${API_PREFIX}/proposal`, {
+				params: toParams({ where, relations })
+			})
 		);
 	}
 

@@ -19,9 +19,7 @@
 				[format]="'dddd, LL'"
 			></ngx-date-range-title>
 		</ng-container>
-	</nb-card-header>
-	<nb-card-body>
-		<div class="filters mt-4 mb-4">
+		<div class="filters">
 			<ngx-gauzy-filters
 				[hasActivityLevelFilter]="false"
 				[hasSourceFilter]="false"
@@ -31,17 +29,21 @@
 				(filtersChange)="filtersChange($event)"
 			></ngx-gauzy-filters>
 		</div>
-		<div class="daily-time-report">
-			<nb-card>
-				<nb-card-body class="chart">
-					<ngx-line-chart 
-						[data]="chartData"
-					></ngx-line-chart>
-				</nb-card-body>
-			</nb-card>
+	</nb-card-header>
+	<nb-card-body class="report-body">
+		<div class="report-container">
+			<div class="daily-time-report">
+				<nb-card>
+					<nb-card-body class="chart">
+						<ngx-line-chart
+							[data]="chartData"
+						></ngx-line-chart>
+					</nb-card-body>
+				</nb-card>
+			</div>
+			<ga-amounts-owed-grid
+				[filters]="filters"
+			></ga-amounts-owed-grid>
 		</div>
-		<ga-amounts-owed-grid
-			[filters]="filters"
-		></ga-amounts-owed-grid>
 	</nb-card-body>
 </nb-card>

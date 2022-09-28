@@ -21,14 +21,6 @@ import {
 } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
-	IsEnum,
-	IsString,
-	IsOptional,
-	IsDate,
-	IsNumber,
-	IsBoolean
-} from 'class-validator';
-import {
 	Employee,
 	Invoice,
 	OrganizationContact,
@@ -41,16 +33,12 @@ import { ColumnNumericTransformerPipe } from './../shared/pipes';
 
 @Entity('payment')
 export class Payment extends TenantOrganizationBaseEntity implements IPayment {
-	
+
 	@ApiPropertyOptional({ type: () => Date })
-	@IsDate()
-	@IsOptional()
 	@Column({ nullable: true })
 	paymentDate?: Date;
 
 	@ApiPropertyOptional({ type: () => Number })
-	@IsNumber()
-	@IsOptional()
 	@Column({
 		nullable: true,
 		type: 'numeric',
@@ -59,19 +47,14 @@ export class Payment extends TenantOrganizationBaseEntity implements IPayment {
 	amount?: number;
 
 	@ApiPropertyOptional({ type: () => String })
-	@IsString()
-	@IsOptional()
 	@Column({ nullable: true })
 	note?: string;
 
 	@ApiPropertyOptional({ type: () => String, enum: CurrenciesEnum })
-	@IsEnum(CurrenciesEnum)
 	@Column()
 	currency?: string;
 
 	@ApiPropertyOptional({ type: () => String, enum: PaymentMethodEnum })
-	@IsEnum(PaymentMethodEnum)
-	@IsOptional()
 	@Column({
 		type: 'simple-enum',
 		nullable: true,
@@ -80,13 +63,12 @@ export class Payment extends TenantOrganizationBaseEntity implements IPayment {
 	paymentMethod?: PaymentMethodEnum;
 
 	@ApiPropertyOptional({ type: () => Boolean })
-	@IsBoolean()
 	@Column({ nullable: true })
 	overdue?: boolean;
-	
+
 	/*
     |--------------------------------------------------------------------------
-    | @ManyToOne 
+    | @ManyToOne
     |--------------------------------------------------------------------------
     */
 
@@ -95,7 +77,6 @@ export class Payment extends TenantOrganizationBaseEntity implements IPayment {
 	 */
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Payment) => it.employee)
-	@IsString()
 	@Index()
 	@Column({ nullable: true })
 	employeeId?: string;
@@ -112,8 +93,6 @@ export class Payment extends TenantOrganizationBaseEntity implements IPayment {
 	 */
 	@ApiPropertyOptional({ type: () => String })
 	@RelationId((it: Payment) => it.invoice)
-	@IsString()
-	@IsOptional()
 	@Index()
 	@Column({ nullable: true })
 	invoiceId?: string;
@@ -135,7 +114,6 @@ export class Payment extends TenantOrganizationBaseEntity implements IPayment {
 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Payment) => it.recordedBy)
-	@IsString()
 	@Index()
 	@Column()
 	recordedById?: string;
@@ -152,8 +130,6 @@ export class Payment extends TenantOrganizationBaseEntity implements IPayment {
 
 	@ApiPropertyOptional({ type: () => String })
 	@RelationId((it: Payment) => it.project)
-	@IsString()
-	@IsOptional()
 	@Index()
 	@Column({ nullable: true })
 	projectId?: string;
@@ -170,15 +146,13 @@ export class Payment extends TenantOrganizationBaseEntity implements IPayment {
 
 	@ApiPropertyOptional({ type: () => String })
 	@RelationId((it: Payment) => it.organizationContact)
-	@IsString()
-	@IsOptional()
 	@Index()
 	@Column({ nullable: true })
 	organizationContactId?: string;
 
 	/*
     |--------------------------------------------------------------------------
-    | @ManyToMany 
+    | @ManyToMany
     |--------------------------------------------------------------------------
     */
 	@ApiProperty({ type: () => Tag, isArray: true })

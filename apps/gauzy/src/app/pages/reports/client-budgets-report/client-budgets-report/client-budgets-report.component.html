@@ -14,9 +14,7 @@
 				[format]="'dddd, LL'"
 			></ngx-date-range-title>
 		</ng-container>
-	</nb-card-header>
-	<nb-card-body>
-		<div class="filters mt-4 mb-4">
+		<div class="filters">
 			<ngx-gauzy-filters
 				[hasActivityLevelFilter]="false"
 				[hasSourceFilter]="false"
@@ -26,16 +24,20 @@
 				(filtersChange)="filtersChange($event)"
 			></ngx-gauzy-filters>
 		</div>
-		<div
-			class="weekly-logs row-table"
-			[nbSpinner]="loading"
-			nbSpinnerSize="giant"
-			nbSpinnerStatus="primary"
-		>
-			<ng-template [ngIf]="clients?.length > 0" [ngIfElse]="notFound">
-				<nb-card class="card">
-					<nb-card-body>
-						<div class="columns-header" *ngIf="clients?.length > 0">
+	</nb-card-header>
+	<nb-card-body class="report-body">
+		<div class="report-container">
+			<div
+				class="weekly-logs row-table"
+				[nbSpinner]="loading"
+				nbSpinnerSize="giant"
+				nbSpinnerStatus="primary"
+				[ngClass]="{'not-found': !clients?.length}"
+			>
+				<ng-template [ngIf]="clients?.length > 0" [ngIfElse]="notFound">
+					<nb-card class="card">
+						<nb-card-body class="budget-container">
+							<div class="columns-header" *ngIf="clients?.length > 0">
 							<div class="table-inner-wrapper font-weight-bold align-items-center">
 								<div class="responsive-table-row contact-column">
 									{{ 'REPORT_PAGE.CLIENT' | translate }}
@@ -139,14 +141,15 @@
 								</div>
 							</div>
 						</div>
-					</nb-card-body>
-				</nb-card>
-			</ng-template>
-			<ng-template #notFound>
-				<ngx-no-data-message
-					[message]="'REPORT_PAGE.NO_DATA.CLIENT_BUDGET'"
-				></ngx-no-data-message>
-			</ng-template>
+						</nb-card-body>
+					</nb-card>
+				</ng-template>
+				<ng-template #notFound>
+					<ngx-no-data-message
+						[message]="'REPORT_PAGE.NO_DATA.CLIENT_BUDGET'"
+					></ngx-no-data-message>
+				</ng-template>
+			</div>
 		</div>
 	</nb-card-body>
 </nb-card>

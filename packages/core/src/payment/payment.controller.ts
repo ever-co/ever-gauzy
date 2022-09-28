@@ -10,10 +10,10 @@ import {
 	Param,
 	Body,
 	Post,
-	Delete,
 	Req,
 	ValidationPipe,
-	UsePipes
+	UsePipes,
+	BadRequestException
 } from '@nestjs/common';
 import { I18nLang } from 'nestjs-i18n';
 import {
@@ -25,7 +25,7 @@ import {
 	ReportGroupFilterEnum
 } from '@gauzy/contracts';
 import { CrudController, PaginationParams } from '../core';
-import { ParseJsonPipe, UUIDValidationPipe } from './../shared';
+import { UUIDValidationPipe } from './../shared/pipes';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
 import { Payment } from './payment.entity';
@@ -35,7 +35,8 @@ import { CreatePaymentDTO, UpdatePaymentDTO } from './dto';
 import { PaymentReportQueryDTO } from './dto/query';
 
 @ApiTags('Payment')
-@UseGuards(TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard)
+@Permissions(PermissionsEnum.ORG_PAYMENT_ADD_EDIT)
 @Controller()
 export class PaymentController extends CrudController<Payment> {
 	constructor(
@@ -45,6 +46,12 @@ export class PaymentController extends CrudController<Payment> {
 		super(paymentService);
 	}
 
+	/**
+	 * GET payments report
+	 *
+	 * @param options
+	 * @returns
+	 */
 	@ApiOperation({
 		summary: 'Payments report.'
 	})
@@ -56,14 +63,11 @@ export class PaymentController extends CrudController<Payment> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_PAYMENT_VIEW)
 	@Get('report')
+	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
 	async getPaymentReport(
-		@Query(new ValidationPipe({
-			transform: true,
-			whitelist: true
-		})) options: PaymentReportQueryDTO
+		@Query() options: PaymentReportQueryDTO
 	): Promise<IPaymentReportData[]> {
 		const reports = await this.paymentService.getPayments(options);
 		let response: IPaymentReportData[] = [];
@@ -77,6 +81,12 @@ export class PaymentController extends CrudController<Payment> {
 		return response;
 	}
 
+	/**
+	 * GET payments report daily chart data
+	 *
+	 * @param options
+	 * @returns
+	 */
 	@ApiOperation({ summary: 'Payment Report daily chart' })
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -86,21 +96,23 @@ export class PaymentController extends CrudController<Payment> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_PAYMENT_VIEW)
 	@Get('report/chart-data')
+	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
 	async getDailyReportChartData(
-		@Query(new ValidationPipe({
-			transform: true,
-			whitelist: true
-		})) options: PaymentReportQueryDTO
+		@Query() options: PaymentReportQueryDTO
 	) {
 		return this.paymentService.getDailyReportChartData(options);
 	}
 
+	/**
+	 * SEND receipt
+	 *
+	 * @param request
+	 * @param languageCode
+	 * @returns
+	 */
 	@HttpCode(HttpStatus.ACCEPTED)
-	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.ORG_PAYMENT_ADD_EDIT)
 	@Post('receipt')
 	async sendReceipt(
 		@Req() request,
@@ -113,63 +125,75 @@ export class PaymentController extends CrudController<Payment> {
 		);
 	}
 
-	@UseGuards(PermissionGuard)
+	/**
+	 * GET payment records by pagination
+	 *
+	 * @param params
+	 * @returns
+	 */
 	@Permissions(PermissionsEnum.ORG_PAYMENT_VIEW)
 	@Get('pagination')
 	@UsePipes(new ValidationPipe({ transform: true }))
 	async pagination(
-		@Query() filter: PaginationParams<IPayment>
+		@Query() params: PaginationParams<Payment>
 	): Promise<IPagination<IPayment>> {
-		return this.paymentService.pagination(filter);
+		return await this.paymentService.pagination(params);
 	}
 
+	/**
+	 * GET payment records
+	 *
+	 * @param data
+	 * @returns
+	 */
 	@HttpCode(HttpStatus.ACCEPTED)
-	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_PAYMENT_VIEW)
 	@Get()
+	@UsePipes(new ValidationPipe())
 	async findAll(
-		@Query('data', ParseJsonPipe) data: any
+		@Query() params: PaginationParams<Payment>
 	): Promise<IPagination<IPayment>> {
-		const { relations = [], findInput = null } = data;
-		return this.paymentService.findAll({
-			where: findInput,
-			relations
-		});
+		return await this.paymentService.findAll(params);
 	}
 
-	@HttpCode(HttpStatus.ACCEPTED)
-	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.ORG_PAYMENT_ADD_EDIT)
+	/**
+	 * CREATE new payment record
+	 *
+	 * @param entity
+	 * @returns
+	 */
+	@HttpCode(HttpStatus.CREATED)
 	@Post()
-	@UsePipes(new ValidationPipe({ transform : true }))
+	@UsePipes(new ValidationPipe({ transform : true, whitelist: true }))
 	async create(
 		@Body() entity: CreatePaymentDTO
 	): Promise<IPayment> {
-		return this.paymentService.create(entity);
+		return await this.paymentService.create(entity);
 	}
 
+	/**
+	 * UPDATE existing payment record
+	 *
+	 * @param id
+	 * @param entity
+	 * @returns
+	 */
 	@HttpCode(HttpStatus.ACCEPTED)
-	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.ORG_PAYMENT_ADD_EDIT)
 	@Put(':id')
-	@UsePipes( new ValidationPipe({ transform : true }))
+	@UsePipes(new ValidationPipe({ transform : true, whitelist: true }))
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: UpdatePaymentDTO
 	): Promise<IPayment> {
-		return this.paymentService.create({
-			id,
-			...entity
-		});
-	}
-
-	@HttpCode(HttpStatus.ACCEPTED)
-	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.ORG_PAYMENT_ADD_EDIT)
-	@Delete(':id')
-	async delete(
-		@Param('id', UUIDValidationPipe) id: string
-	): Promise<any> {
-		return this.paymentService.delete(id);
+		console.log({ entity });
+		try {
+			await this.paymentService.findOneByIdString(id);
+			return await this.paymentService.create({
+				id,
+				...entity
+			});
+		} catch (error) {
+			throw new BadRequestException(error);
+		}
 	}
 }

@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindManyOptions, Between, Like, Brackets, WhereExpressionBuilder } from 'typeorm';
+import { Repository, FindManyOptions, Between, Brackets, WhereExpressionBuilder, In, ILike } from 'typeorm';
 import * as moment from 'moment';
 import { chain } from 'underscore';
-import { IExpense, IGetExpenseInput, IPagination, PermissionsEnum } from '@gauzy/contracts';
+import { IDateRangePicker, IExpense, IGetExpenseInput, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
 import { Expense } from './expense.entity';
 import { TenantAwareCrudService } from './../core/crud';
@@ -180,43 +180,33 @@ export class ExpenseService extends TenantAwareCrudService<Expense> {
 		return query;
 	}
 
-	public pagination(filter: any) {
-		/**
-		 * If employee has login, return only self incomes
-		 */
-		 if (!RequestContext.hasPermission(
-			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-		)) {
-			filter.where.employeeId = RequestContext.currentEmployeeId();
-		}
-		if ('filters' in filter) {
-			const { filters } = filter;
-			if ('notes' in filters) {
-				const { search } = filters.notes;
-				filter.where.notes = Like(`%${search}%`);
-			}
-			if ('purpose' in filters) {
-				const { search } = filters.purpose;
-				filter.where.purpose = Like(`%${search}%`);
-			}
-			delete filter['filters'];
-		}
+	public pagination(filter: FindManyOptions) {
 		if ('where' in filter) {
 			const { where } = filter;
+			if ('notes' in where) {
+				filter['where']['notes'] = ILike(`%${where.notes}%`);
+			}
+			if ('purpose' in where) {
+				filter['where']['purpose'] = ILike(`%${where.purpose}%`);
+			}
 			if ('valueDate' in where) {
 				const { valueDate } = where;
-				const { startDate, endDate } = valueDate;
-
+				const { startDate, endDate } = valueDate as IDateRangePicker;
 				if (startDate && endDate) {
-					filter.where.valueDate = Between(
+					filter['where']['valueDate'] = Between(
 						moment.utc(startDate).format('YYYY-MM-DD HH:mm:ss'),
 						moment.utc(endDate).format('YYYY-MM-DD HH:mm:ss')
 					);
 				} else {
-					filter.where.valueDate = Between(
+					filter['where']['valueDate'] = Between(
 						moment().startOf('month').utc().format('YYYY-MM-DD HH:mm:ss'),
 						moment().endOf('month').utc().format('YYYY-MM-DD HH:mm:ss')
 					);
+				}
+			}
+			if ('tags' in where) {
+				filter['where']['tags'] = {
+					id: In(where.tags)
 				}
 			}
 		}

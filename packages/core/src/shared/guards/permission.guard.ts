@@ -20,8 +20,8 @@ export class PermissionGuard implements CanActivate {
 		* Retrieve metadata for a specified key for a specified set of permissions
 		*/
 		const permissions = removeDuplicates(this._reflector.getAllAndOverride<PermissionsEnum[]>(PERMISSIONS_METADATA, [
-			context.getHandler(),
-			context.getClass(),
+			context.getHandler(), // Method Roles
+			context.getClass(), // Controller Roles
 		])) || [];
 		if (isEmpty(permissions)) {
 			isAuthorized = true;

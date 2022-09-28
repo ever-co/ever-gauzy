@@ -9,18 +9,33 @@ import {
 	Put,
 	HttpCode,
 	UsePipes,
-	ValidationPipe
+	ValidationPipe,
+	UseInterceptors,
+	BadRequestException
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiInternalServerErrorResponse, ApiOkResponse, ApiNotFoundResponse } from '@nestjs/swagger';
-import { IEmail, IPagination } from '@gauzy/contracts';
+import {
+	ApiTags,
+	ApiOperation,
+	ApiResponse,
+	ApiInternalServerErrorResponse,
+	ApiOkResponse,
+	ApiNotFoundResponse
+} from '@nestjs/swagger';
+import { UpdateResult } from 'typeorm';
+import { IEmail, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import { Email } from './email.entity';
 import { EmailService } from './email.service';
-import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
-import { TenantPermissionGuard } from './../shared/guards';
+import { Permissions } from './../shared/decorators';
+import { UUIDValidationPipe } from './../shared/pipes';
+import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { UpdateEmailDTO } from './dto';
+import { PaginationParams } from './../core/crud';
+import { TransformInterceptor } from './../core/interceptors';
 
 @ApiTags('Email')
-@UseGuards(TenantPermissionGuard)
+@UseInterceptors(TransformInterceptor)
+@UseGuards(TenantPermissionGuard, PermissionGuard)
+@Permissions(PermissionsEnum.VIEW_ALL_EMAILS)
 @Controller()
 export class EmailController {
 	constructor(
@@ -42,18 +57,15 @@ export class EmailController {
 		description: "Invalid input, The response body may contain clues as to what went wrong"
 	})
 	@Get()
+	@UsePipes(new ValidationPipe())
 	async findAll(
-		@Query('data', ParseJsonPipe) data: any
+		@Query() params: PaginationParams<Email>
 	): Promise<IPagination<IEmail>> {
-		const { relations, findInput, take } = data;
-		return await this.emailService.findAll({
-			where: findInput,
-			relations,
-			order: {
-				createdAt: 'DESC'
-			},
-			take: take
-		});
+		try {
+			return await this.emailService.findAll(params);
+		} catch (error) {
+			throw new BadRequestException(error);
+		}
 	}
 
 	@ApiOperation({ summary: 'Update an existing record' })
@@ -72,14 +84,11 @@ export class EmailController {
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
-	@UsePipes(new ValidationPipe({
-		transform: true,
-		whitelist: true
-	}))
+	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: UpdateEmailDTO
-	): Promise<any> {
+	): Promise<IEmail | UpdateResult> {
 		return await this.emailService.update(id, entity);
 	}
 }

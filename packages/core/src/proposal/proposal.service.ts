@@ -1,20 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindManyOptions, Between, Like } from 'typeorm';
+import { Repository, FindManyOptions, Between, Raw } from 'typeorm';
 import * as moment from 'moment';
 import { Proposal } from './proposal.entity';
 import { IProposalCreateInput, IProposal, IPagination } from '@gauzy/contracts';
-import { Employee } from '../employee/employee.entity';
 import { TenantAwareCrudService } from './../core/crud';
 
 @Injectable()
 export class ProposalService extends TenantAwareCrudService<Proposal> {
 	constructor(
 		@InjectRepository(Proposal)
-		private readonly proposalRepository: Repository<Proposal>,
-
-		@InjectRepository(Employee)
-		private readonly employeeRepository: Repository<Employee>
+		private readonly proposalRepository: Repository<Proposal>
 	) {
 		super(proposalRepository);
 	}
@@ -52,20 +48,19 @@ export class ProposalService extends TenantAwareCrudService<Proposal> {
 		return this.proposalRepository.save(proposal);
 	}
 
-	public pagination(filter: any) {
+	public pagination(filter: FindManyOptions) {
 		if ('where' in filter) {
 			const { where } = filter;
 			if ('valueDate' in where) {
 				const { valueDate } = where;
 				const { startDate, endDate } = valueDate;
-
 				if (startDate && endDate) {
-					filter.where.valueDate = Between(
+					filter['where']['valueDate'] = Between(
 						moment.utc(startDate).format('YYYY-MM-DD HH:mm:ss'),
 						moment.utc(endDate).format('YYYY-MM-DD HH:mm:ss')
 					);
 				} else {
-					filter.where.valueDate = Between(
+					filter['where']['valueDate'] = Between(
 						moment().startOf('month').utc().format('YYYY-MM-DD HH:mm:ss'),
 						moment().endOf('month').utc().format('YYYY-MM-DD HH:mm:ss')
 					);
@@ -73,7 +68,7 @@ export class ProposalService extends TenantAwareCrudService<Proposal> {
 			}
 			if ('jobPostContent' in where) {
 				const { jobPostContent } = where;
-				filter.where.jobPostContent = Like(`%${jobPostContent}%`);
+				filter['where']['jobPostContent'] = Raw((alias) => `${alias} ILIKE '%${jobPostContent}%'`);
 			}
 		}
 		return super.paginate(filter);

@@ -80,7 +80,7 @@ export class OrganizationContactController extends CrudController<OrganizationCo
 	@Get('pagination')
 	@UsePipes(new ValidationPipe({ transform: true }))
 	async pagination(
-		@Query() filter: PaginationParams<IOrganizationContact>
+		@Query() filter: PaginationParams<OrganizationContact>
 	): Promise<IPagination<IOrganizationContact>> {
 		return this.organizationContactService.pagination(filter);
 	}

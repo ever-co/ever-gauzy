@@ -20,10 +20,9 @@ import { IPagination, IRole, IRoleMigrateInput, PermissionsEnum } from '@gauzy/c
 import { DeleteResult, FindOptionsWhere, UpdateResult } from 'typeorm';
 import { RoleService } from './role.service';
 import { Role } from './role.entity';
-import { CreateRoleDTO, CreateRoleDTO as UpdateRoleDTO } from './dto';
+import { CreateRoleDTO, CreateRoleDTO as UpdateRoleDTO, FindRoleQueryDTO } from './dto';
 import { TransformInterceptor } from './../core/interceptors';
 import { CrudController } from './../core/crud';
-import { RequestContext } from './../core/context';
 import { UUIDValidationPipe } from './../shared/pipes';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
@@ -59,13 +58,14 @@ export class RoleController extends CrudController<Role> {
 	})
 	@Get('options')
 	async findOneRoleByOptions(
-		@Query(new ValidationPipe()) options: FindOptionsWhere<Role>
+		@Query(new ValidationPipe({
+			whitelist: true
+		})) options: FindRoleQueryDTO
 	): Promise<IRole> {
 		try {
-			return await this.roleService.findOneByWhereOptions({
-				tenantId: RequestContext.currentTenantId(),
-				...options
-			});
+			return await this.roleService.findOneByWhereOptions(
+				options as FindOptionsWhere<Role>
+			);
 		} catch (error) {
 			throw new ForbiddenException();
 		}
@@ -147,7 +147,7 @@ export class RoleController extends CrudController<Role> {
 		@Param('id', UUIDValidationPipe) id: string
 	): Promise<DeleteResult> {
 		try {
-			return await this.roleService.deleteRole(id);
+			return await this.roleService.delete(id);
 		} catch (error) {
 			throw new ForbiddenException();
 		}
