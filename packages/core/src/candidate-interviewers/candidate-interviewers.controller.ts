@@ -30,7 +30,8 @@ import {
 } from './commands';
 
 @ApiTags('CandidateInterviewer')
-@UseGuards(TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard)
+@Permissions(PermissionsEnum.ORG_CANDIDATES_INTERVIEWERS_EDIT)
 @Controller()
 export class CandidateInterviewersController extends CrudController<CandidateInterviewers> {
 	constructor(
@@ -42,9 +43,9 @@ export class CandidateInterviewersController extends CrudController<CandidateInt
 
 	/**
 	 * CREATE bulk candidate interviewers
-	 * 
-	 * @param body 
-	 * @returns 
+	 *
+	 * @param body
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'Create interviewers in Bulk' })
 	@ApiResponse({
@@ -56,8 +57,6 @@ export class CandidateInterviewersController extends CrudController<CandidateInt
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
-	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.ORG_CANDIDATES_EDIT)
 	@Post('bulk')
 	async createBulk(
 		@Body() body: ICandidateInterviewersCreateInput
@@ -69,9 +68,9 @@ export class CandidateInterviewersController extends CrudController<CandidateInt
 
 	/**
 	 * GET candidate interviewers by interview id
-	 * 
-	 * @param interviewId 
-	 * @returns 
+	 *
+	 * @param interviewId
+	 * @returns
 	 */
 	@ApiOperation({
 		summary: 'Find Interviewers By Interview Id.'
@@ -85,8 +84,6 @@ export class CandidateInterviewersController extends CrudController<CandidateInt
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.ORG_CANDIDATES_INTERVIEWERS_EDIT)
 	@Get('interview/:interviewId')
 	async findByInterviewId(
 		@Param('interviewId', UUIDValidationPipe) interviewId: string
@@ -98,9 +95,9 @@ export class CandidateInterviewersController extends CrudController<CandidateInt
 
 	/**
 	 * DELETE bulk interviewer by interview id
-	 * 
-	 * @param id 
-	 * @returns 
+	 *
+	 * @param id
+	 * @returns
 	 */
 	@ApiOperation({
 		summary: 'Delete Interviewers By Interview Id.'
@@ -114,8 +111,6 @@ export class CandidateInterviewersController extends CrudController<CandidateInt
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.ORG_CANDIDATES_INTERVIEWERS_EDIT)
 	@Delete('interview/:interviewId')
 	async deleteBulkByInterviewId(
 		@Param('interviewId', UUIDValidationPipe) id: string
@@ -127,9 +122,9 @@ export class CandidateInterviewersController extends CrudController<CandidateInt
 
 	/**
 	 * DELETE candidate interviewers by bulk employee ids
-	 * 
-	 * @param data 
-	 * @returns 
+	 *
+	 * @param data
+	 * @returns
 	 */
 	@ApiOperation({
 		summary: 'Delete Interviewers By employeeId.'
@@ -143,8 +138,6 @@ export class CandidateInterviewersController extends CrudController<CandidateInt
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.ORG_CANDIDATES_INTERVIEWERS_EDIT)
 	@Delete('deleteBulkByEmployeeId')
 	async deleteBulkByEmployeeId(
 		@Query('data', ParseJsonPipe) data: any
@@ -157,9 +150,9 @@ export class CandidateInterviewersController extends CrudController<CandidateInt
 
 	/**
 	 * GET all candidate interviewers
-	 * 
-	 * @param data 
-	 * @returns 
+	 *
+	 * @param data
+	 * @returns
 	 */
 	@ApiOperation({
 		summary: 'Find all candidate interviewers.'
@@ -173,6 +166,7 @@ export class CandidateInterviewersController extends CrudController<CandidateInt
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
+	@Permissions(PermissionsEnum.ORG_CANDIDATES_VIEW)
 	@Get()
 	async findAll(
 		@Query('data', ParseJsonPipe) data: any
@@ -183,9 +177,9 @@ export class CandidateInterviewersController extends CrudController<CandidateInt
 
 	/**
 	 * CREATE candidate interviewer
-	 * 
-	 * @param body 
-	 * @returns 
+	 *
+	 * @param body
+	 * @returns
 	 */
 	@ApiOperation({
 		summary: 'Create new record interviewers'
@@ -195,8 +189,6 @@ export class CandidateInterviewersController extends CrudController<CandidateInt
 		description: 'Success Add Interviewers',
 		type: CandidateInterviewers
 	})
-	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.ORG_CANDIDATES_INTERVIEWERS_EDIT)
 	@Post()
 	async create(
 		@Body() body: ICandidateInterviewersCreateInput

@@ -1,14 +1,13 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RouterModule } from 'nest-router';
-import { UserService } from '../user/user.service';
-import { User } from '../user/user.entity';
+import { CqrsModule } from '@nestjs/cqrs';
 import { CandidateInterviewers } from './candidate-interviewers.entity';
 import { CandidateInterviewersService } from './candidate-interviewers.service';
 import { CandidateInterviewersController } from './candidate-interviewers.controller';
-import { CommandHandlers } from './commands/handlers';
-import { CqrsModule } from '@nestjs/cqrs';
 import { TenantModule } from '../tenant/tenant.module';
+import { UserModule } from './../user/user.module';
+import { CommandHandlers } from './commands/handlers';
 
 @Module({
 	imports: [
@@ -18,12 +17,18 @@ import { TenantModule } from '../tenant/tenant.module';
 				module: CandidateInterviewersModule
 			}
 		]),
-		TypeOrmModule.forFeature([CandidateInterviewers, User]),
+		TypeOrmModule.forFeature([
+			CandidateInterviewers
+		]),
+		TenantModule,
+		UserModule,
 		CqrsModule,
-		TenantModule
 	],
-	providers: [CandidateInterviewersService, UserService, ...CommandHandlers],
 	controllers: [CandidateInterviewersController],
-	exports: [CandidateInterviewersService]
+	providers: [CandidateInterviewersService, ...CommandHandlers],
+	exports: [
+		TypeOrmModule,
+		CandidateInterviewersService
+	]
 })
 export class CandidateInterviewersModule {}
