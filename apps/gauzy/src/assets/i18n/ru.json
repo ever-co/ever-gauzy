@@ -1863,6 +1863,7 @@
 			"REQUEST_APPROVAL_EDIT": "Редактировать запрос на утверждение",
 			"REQUEST_APPROVAL_VIEW": "Просмотр запроса на утверждение",
 			"ORG_CANDIDATES_INTERVIEWERS_EDIT": "Создать/редактировать интервьюера",
+			"ORG_CANDIDATES_INTERVIEWERS_VIEW": "Просмотр интервью",
 			"VIEW_ALL_EMAILS": "Посмотреть все письма",
 			"VIEW_ALL_EMAIL_TEMPLATES": "Просмотреть все шаблоны писем",
 			"ORG_HELP_CENTER_EDIT": "Редактировать справочный центр организации",
