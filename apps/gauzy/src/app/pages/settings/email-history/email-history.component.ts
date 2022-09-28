@@ -192,8 +192,11 @@ export class EmailHistoryComponent extends TranslationBaseComponent
 			return;
 		}
 		try {
+			const { organizationId, tenantId } = this.selectedEmail;
 			await this.emailService.update(this.selectedEmail.id, {
-				isArchived: true
+				isArchived: true,
+				organizationId,
+				tenantId
 			});
 			this.toastrService.success(
 				this.getTranslation('SETTINGS.EMAIL_HISTORY.EMAIL_ARCHIVED')
