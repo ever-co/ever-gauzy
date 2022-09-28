@@ -7,6 +7,7 @@ import { EmailService } from './email.service';
 import { EmailController } from './email.controller';
 import { Organization } from '../organization/organization.entity';
 import { TenantModule } from '../tenant/tenant.module';
+import { UserModule } from './../user/user.module';
 import { CustomSmtpModule } from './../custom-smtp/custom-smtp.module';
 
 @Module({
@@ -16,6 +17,7 @@ import { CustomSmtpModule } from './../custom-smtp/custom-smtp.module';
 			TypeOrmModule.forFeature([Email, Organization])
 		),
 		forwardRef(() => TenantModule),
+		forwardRef(() => UserModule),
 		forwardRef(() => EmailTemplateModule),
 		forwardRef(() => CustomSmtpModule)
 	],

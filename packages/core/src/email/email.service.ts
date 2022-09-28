@@ -9,14 +9,15 @@ import {
 	ITimesheet,
 	IEmail,
 	IUser,
-	IInvite
+	IInvite,
+	IPagination
 } from '@gauzy/contracts';
 import { forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as Email from 'email-templates';
 import * as Handlebars from 'handlebars';
 import * as nodemailer from 'nodemailer';
-import { Repository, IsNull } from 'typeorm';
+import { Repository, IsNull, FindManyOptions } from 'typeorm';
 import { environment as env } from '@gauzy/config';
 import { ISMTPConfig } from '@gauzy/common';
 import { TenantAwareCrudService } from './../core/crud';
@@ -44,6 +45,25 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 		private readonly customSmtpService: CustomSmtpService
 	) {
 		super(emailRepository);
+	}
+
+	public async findAll(filter?: FindManyOptions<EmailEntity>): Promise<IPagination<IEmail>> {
+		return await super.findAll({
+			select: {
+				user: {
+					email: true,
+					firstName: true,
+					lastName: true,
+					imageUrl: true
+				}
+			},
+			where: filter.where,
+			relations: filter.relations || [],
+			order: {
+				createdAt: 'DESC'
+			},
+			take: filter.take
+		});
 	}
 
 	/**

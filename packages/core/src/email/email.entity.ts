@@ -46,7 +46,7 @@ export class Email extends TenantOrganizationBaseEntity implements IEmail {
 	@RelationId((it: Email) => it.user)
 	@Index()
 	@Column({ nullable: true })
-	userId?: string;
+	userId?: IUser['id'];
 
 	@ApiProperty({ type: () => EmailTemplate })
 	@ManyToOne(() => EmailTemplate, (template) => template.emails, {
@@ -58,5 +58,5 @@ export class Email extends TenantOrganizationBaseEntity implements IEmail {
 	@ApiPropertyOptional({ type: () => String })
 	@RelationId((it: Email) => it.emailTemplate)
 	@Column({ nullable: false })
-	emailTemplateId: string;
+	emailTemplateId: IEmailTemplate['id'];
 }
