@@ -3,16 +3,20 @@ import { HttpClient } from '@angular/common/http';
 import {
 	IEmployeeAward,
 	IEmployeeAwardFindInput,
-	IEmployeeAwardCreateInput
+	IEmployeeAwardCreateInput,
+	IPagination
 } from '@gauzy/contracts';
 import { Observable } from 'rxjs';
+import { toParams } from '@gauzy/common-angular';
 import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable({
 	providedIn: 'root'
 })
 export class EmployeeAwardService {
-	constructor(private http: HttpClient) {}
+	constructor(
+		private readonly http: HttpClient
+	) {}
 
 	create(createInput: IEmployeeAwardCreateInput): Observable<IEmployeeAward> {
 		return this.http.post<IEmployeeAward>(
@@ -22,17 +26,12 @@ export class EmployeeAwardService {
 	}
 
 	getAll(
-		findInput?: IEmployeeAwardFindInput,
-		relations?: string[]
-	): Observable<{ items: IEmployeeAward[]; total: number }> {
-		const data = JSON.stringify({ relations, findInput });
-
-		return this.http.get<{ items: IEmployeeAward[]; total: number }>(
-			`${API_PREFIX}/employee-award`,
-			{
-				params: { data }
-			}
-		);
+		where?: IEmployeeAwardFindInput,
+		relations: string[] = []
+	): Observable<IPagination<IEmployeeAward>> {
+		return this.http.get<IPagination<IEmployeeAward>>(`${API_PREFIX}/employee-award`, {
+			params: toParams({ relations, where })
+		});
 	}
 
 	update(id: string, updateInput: any): Observable<any> {
