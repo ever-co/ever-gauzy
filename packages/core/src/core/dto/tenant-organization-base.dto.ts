@@ -4,7 +4,7 @@ import { IOrganization, IBasePerTenantAndOrganizationEntityModel } from '@gauzy/
 import { TenantBaseDTO } from './tenant-base.dto';
 import { IsOrganizationBelongsToUser } from './../../shared/validators';
 
-export abstract class TenantOrganizationBaseDTO extends TenantBaseDTO
+export class TenantOrganizationBaseDTO extends TenantBaseDTO
 	implements IBasePerTenantAndOrganizationEntityModel {
 
 	@ApiProperty({ type: () => Object, readOnly: true })
