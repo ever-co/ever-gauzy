@@ -10,7 +10,8 @@ import {
 	PayPeriodEnum,
 	LanguagesEnum,
 	IEmployeeAward,
-	IEmployeeLevel
+	IEmployeeLevel,
+	IOrganization
 } from '@gauzy/contracts';
 import {
 	switchMap,
@@ -38,10 +39,8 @@ import { ckEditorConfig } from "../../ckeditor.config";
 	selector: 'ngx-public-page-employee-mutation',
 	templateUrl: './public-page-employee-mutation.component.html',
 	styleUrls: ['./public-page-employee-mutation.component.scss'],
-	providers: []
 })
-export class PublicPageEmployeeMutationComponent
-	extends TranslationBaseComponent
+export class PublicPageEmployeeMutationComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 
 	employee: IEmployee;
@@ -51,7 +50,7 @@ export class PublicPageEmployeeMutationComponent
 	payPeriods = Object.values(PayPeriodEnum);
 	languages: string[] = Object.values(LanguagesEnum);
 	privacySettings: any[];
-	employeeAwards: IEmployeeAward[];
+	employeeAwards: IEmployeeAward[] = [];
 	showAddAward: boolean;
 	ckConfig: CKEditor4.Config = {
 		...ckEditorConfig,
@@ -77,8 +76,8 @@ export class PublicPageEmployeeMutationComponent
 		this._initForm();
 
 		this.employmentTypes$ = this.store.selectedOrganization$.pipe(
-			filter((organization) => !!organization),
-			tap(async (organization) => {
+			filter((organization: IOrganization) => !!organization),
+			tap(async (organization: IOrganization) => {
 				const { tenantId } = this.store.user;
 				const { id: organizationId } = organization;
 				const { items } = await this.employeeLevelService.getAll([], {
@@ -176,16 +175,16 @@ export class PublicPageEmployeeMutationComponent
 		}
 	}
 
-	addAward(name, year) {
+	addAward(name: IEmployeeAward['name'], year: IEmployeeAward['year']) {
 		if (name && year) {
-			const employeeAwardCreateDto = {
-				name,
-				year,
-				employeeId: this.employee.id
-			};
-
+			const { organizationId, id: employeeId } = this.employee;
 			this.employeeAwardService
-				.create(employeeAwardCreateDto)
+				.create({
+					name,
+					year,
+					organizationId,
+					employeeId
+				})
 				.pipe(
 					tap((award) => this.employeeAwards.push(award)),
 					tap(() => {
@@ -212,23 +211,17 @@ export class PublicPageEmployeeMutationComponent
 		}
 	}
 
-	async removeAward(award) {
+	async removeAward(award: IEmployeeAward) {
 		this.employeeAwardService
 			.delete(award.id)
 			.pipe(
-				tap(
-					() =>
-						(this.employeeAwards = this.employeeAwards.filter(
-							(a) => a.id !== award.id
-						))
-				),
+				tap(() => (this.employeeAwards = this.employeeAwards.filter(
+					(a) => a.id !== award.id
+				))),
 				tap(() => {
-					this.toastrService.success(
-						'NOTES.EMPLOYEE.EDIT_EMPLOYEE_AWARDS.REMOVE_AWARD',
-						{
-							name
-						}
-					);
+					this.toastrService.success('NOTES.EMPLOYEE.EDIT_EMPLOYEE_AWARDS.REMOVE_AWARD', {
+						name: award.name
+					});
 				}),
 				catchError((err) => {
 					this.errorHandlingService.handleError(err);
