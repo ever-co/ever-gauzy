@@ -1,15 +1,15 @@
-import { Controller, HttpStatus, Get, Query, UseGuards } from '@nestjs/common';
+import { Controller, HttpStatus, Get, Query, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ICandidateDocument, IPagination, PermissionsEnum } from '@gauzy/contracts';
-import { CrudController } from './../core/crud';
+import { CrudController, PaginationParams } from './../core/crud';
 import { CandidateDocumentsService } from './candidate-documents.service';
 import { CandidateDocument } from './candidate-documents.entity';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
-import { ParseJsonPipe } from './../shared/pipes';
 
 @ApiTags('CandidateDocument')
-@UseGuards(TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard)
+@Permissions(PermissionsEnum.ORG_CANDIDATES_EDIT)
 @Controller()
 export class CandidateDocumentsController extends CrudController<CandidateDocument> {
 	constructor(
@@ -17,12 +17,12 @@ export class CandidateDocumentsController extends CrudController<CandidateDocume
 	) {
 		super(candidateDocumentsService);
 	}
-	
+
 	/**
 	 * GET all candidate documents
-	 * 
-	 * @param data 
-	 * @returns 
+	 *
+	 * @param data
+	 * @returns
 	 */
 	@ApiOperation({
 		summary: 'Find all candidate document.'
@@ -36,13 +36,14 @@ export class CandidateDocumentsController extends CrudController<CandidateDocume
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_DOCUMENTS_VIEW)
 	@Get()
+	@UsePipes(new ValidationPipe())
 	async findAll(
-		@Query('data', ParseJsonPipe) data: any
+		@Query() params: PaginationParams<CandidateDocument>
 	): Promise<IPagination<ICandidateDocument>> {
-		const { findInput } = data;
-		return this.candidateDocumentsService.findAll({ where: findInput });
+		return await this.candidateDocumentsService.findAll({
+			where: params.where
+		});
 	}
 }
