@@ -10,22 +10,28 @@ import {
 	Param,
 	Delete,
 	Query,
-	Get
+	Get,
+	UsePipes,
+	ValidationPipe
 } from '@nestjs/common';
-import { CrudController } from './../core/crud';
+import { DeleteResult, UpdateResult } from 'typeorm';
+import { IEmployeeAward, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import { EmployeeAward } from './employee-award.entity';
-import { DeepPartial, UpdateResult } from 'typeorm';
-import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { EmployeeAwardService } from './employee-award.service';
-import { TenantPermissionGuard } from './../shared/guards';
-import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
-import { IEmployeeAward, IPagination } from '@gauzy/contracts';
+import { CrudController, PaginationParams } from './../core/crud';
+import { Permissions } from './../shared/decorators';
+import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
+import { UUIDValidationPipe } from './../shared/pipes';
+import { CreateEmployeeAwardDTO, UpdateEmployeeAwardDTO } from './dto';
 
 @ApiTags('EmployeeAward')
-@UseGuards(TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard)
+@Permissions(PermissionsEnum.PUBLIC_PAGE_EDIT, PermissionsEnum.ALL_ORG_EDIT)
 @Controller()
 export class EmployeeAwardController extends CrudController<EmployeeAward> {
-	constructor(private readonly employeeAwardService: EmployeeAwardService) {
+	constructor(
+		private readonly employeeAwardService: EmployeeAwardService
+	) {
 		super(employeeAwardService);
 	}
 
@@ -42,12 +48,12 @@ export class EmployeeAwardController extends CrudController<EmployeeAward> {
 		description: 'Record not found'
 	})
 	@Get()
+	@UsePipes(new ValidationPipe())
 	async findAll(
-		@Query('data', ParseJsonPipe) data: any
+		@Query() params: PaginationParams<EmployeeAward>,
 	): Promise<IPagination<IEmployeeAward>> {
-		const { findInput } = data;
-		return this.employeeAwardService.findAll({
-			where: findInput
+		return await this.employeeAwardService.findAll({
+			where: params.where
 		});
 	}
 
@@ -63,10 +69,11 @@ export class EmployeeAwardController extends CrudController<EmployeeAward> {
 	})
 	@HttpCode(HttpStatus.CREATED)
 	@Post()
+	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
 	async create(
-		@Body() entity: DeepPartial<EmployeeAward>
+		@Body() entity: CreateEmployeeAwardDTO
 	): Promise<IEmployeeAward> {
-		return this.employeeAwardService.create(entity);
+		return await this.employeeAwardService.create(entity);
 	}
 
 	@ApiOperation({ summary: 'Update an existing record' })
@@ -85,11 +92,12 @@ export class EmployeeAwardController extends CrudController<EmployeeAward> {
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
+	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
 	async update(
-		@Param('id', UUIDValidationPipe) id: string,
-		@Body() entity: QueryDeepPartialEntity<EmployeeAward>
+		@Param('id', UUIDValidationPipe) id: IEmployeeAward['id'],
+		@Body() entity: UpdateEmployeeAwardDTO
 	): Promise<IEmployeeAward | UpdateResult> {
-		return this.employeeAwardService.update(id, entity);
+		return await this.employeeAwardService.update(id, entity);
 	}
 
 	@ApiOperation({ summary: 'Delete record' })
@@ -103,7 +111,9 @@ export class EmployeeAwardController extends CrudController<EmployeeAward> {
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Delete(':id')
-	async delete(@Param('id', UUIDValidationPipe) id: string): Promise<any> {
-		return this.employeeAwardService.delete(id);
+	async delete(
+		@Param('id', UUIDValidationPipe) id: IEmployeeAward['id']
+	): Promise<DeleteResult> {
+		return await this.employeeAwardService.delete(id);
 	}
 }
