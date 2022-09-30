@@ -1,12 +1,13 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsEmail, IsNotEmpty, IsNotEmptyObject, IsObject, IsOptional } from "class-validator";
-import { IRole, IUserCreateInput } from "@gauzy/contracts";
+import { IsEmail, IsNotEmpty, IsOptional } from "class-validator";
+import { IUserCreateInput } from "@gauzy/contracts";
 import { Transform, TransformFnParams } from "class-transformer";
+import { RoleFeatureDTO } from "./../../role/dto";
 
 /**
  * Create User DTO validation
  */
-export class CreateUserDTO implements IUserCreateInput {
+export class CreateUserDTO extends RoleFeatureDTO implements IUserCreateInput {
 
     @ApiProperty({ type: () => String, required : true })
     @IsNotEmpty()
@@ -26,10 +27,4 @@ export class CreateUserDTO implements IUserCreateInput {
 
     @ApiProperty({ type: () => String })
     readonly imageUrl?: string;
-
-    @ApiProperty({ type: () => Object })
-    @IsOptional()
-    @IsObject()
-    @IsNotEmptyObject()
-    readonly role?: IRole;
 }

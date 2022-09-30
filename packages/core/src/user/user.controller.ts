@@ -25,7 +25,7 @@ import {
 	ApiBearerAuth
 } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
-import { DeleteResult } from 'typeorm';
+import { DeleteResult, UpdateResult } from 'typeorm';
 import {
 	IPagination,
 	IUser,
@@ -33,7 +33,6 @@ import {
 } from '@gauzy/contracts';
 import { CrudController, PaginationParams } from './../core/crud';
 import { TransformInterceptor } from './../core/interceptors';
-import { RequestContext } from '../core/context';
 import { UUIDValidationPipe, ParseJsonPipe } from './../shared/pipes';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
@@ -118,14 +117,11 @@ export class UserController extends CrudController<User> {
 	@HttpCode(HttpStatus.ACCEPTED)
 	@UseGuards(TenantPermissionGuard)
 	@Put('/preferred-language')
+	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
 	async updatePreferredLanguage(
-		@Body(new ValidationPipe({
-			transform: true,
-			whitelist: true
-		})) entity: UpdatePreferredLanguageDTO
-	): Promise<IUser> {
+		@Body() entity: UpdatePreferredLanguageDTO
+	): Promise<IUser | UpdateResult> {
 		return await this.userService.updatePreferredLanguage(
-			RequestContext.currentUserId(),
 			entity.preferredLanguage
 		);
 	}
@@ -140,14 +136,11 @@ export class UserController extends CrudController<User> {
 	@HttpCode(HttpStatus.ACCEPTED)
 	@UseGuards(TenantPermissionGuard)
 	@Put('/preferred-layout')
+	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
 	async updatePreferredComponentLayout(
-		@Body(new ValidationPipe({
-			transform: true,
-			whitelist: true
-		})) entity: UpdatePreferredComponentLayoutDTO
-	): Promise<IUser> {
+		@Body() entity: UpdatePreferredComponentLayoutDTO
+	): Promise<IUser | UpdateResult> {
 		return await this.userService.updatePreferredComponentLayout(
-			RequestContext.currentUserId(),
 			entity.preferredComponentLayout
 		);
 	}
