@@ -13,16 +13,6 @@ import {
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Exclude } from 'class-transformer';
 import {
-	IsAscii,
-	IsEmail,
-	IsNotEmpty,
-	IsOptional,
-	IsString,
-	MaxLength,
-	MinLength,
-	IsEnum
-} from 'class-validator';
-import {
 	Column,
 	Entity,
 	Index,
@@ -46,47 +36,32 @@ import {
 export class User extends TenantBaseEntity implements IUser {
 
 	@ApiPropertyOptional({ type: () => String })
-	@IsString()
 	@Index()
-	@IsOptional()
 	@Column({ nullable: true })
 	thirdPartyId?: string;
 
 	@ApiPropertyOptional({ type: () => String })
-	@IsString()
 	@Index()
-	@IsOptional()
 	@Column({ nullable: true })
 	firstName?: string;
 
 	@ApiPropertyOptional({ type: () => String })
-	@IsString()
 	@Index()
-	@IsOptional()
 	@Column({ nullable: true })
 	lastName?: string;
 
 	@ApiProperty({ type: () => String, minLength: 3, maxLength: 100 })
-	@IsEmail()
-	@IsNotEmpty()
 	@Index({ unique: false })
-	@IsOptional()
 	@Column({ nullable: true })
 	email?: string;
 
 	@ApiPropertyOptional({ type: () => String, minLength: 3, maxLength: 20 })
-	@IsAscii()
-	@MinLength(3)
-	@MaxLength(20)
 	@Index({ unique: false })
-	@IsOptional()
 	@Column({ nullable: true })
 	username?: string;
 
 	@ApiProperty({ type: () => String })
-	@IsString()
 	@Column()
-	@IsOptional()
 	@Exclude({ toPlainOnly: true })
 	@Column({ nullable: true })
 	hash?: string;
@@ -97,17 +72,14 @@ export class User extends TenantBaseEntity implements IUser {
 	public refreshToken?: string;
 
 	@ApiPropertyOptional({ type: () => String, maxLength: 500 })
-	@IsOptional()
 	@Column({ length: 500, nullable: true })
 	imageUrl?: string;
 
 	@ApiProperty({ type: () => String, enum: LanguagesEnum })
-	@IsEnum(LanguagesEnum)
 	@Column({ nullable: true, default: LanguagesEnum.ENGLISH })
 	preferredLanguage?: string;
 
 	@ApiProperty({ type: () => String, enum: ComponentLayoutStyleEnum })
-	@IsEnum(ComponentLayoutStyleEnum)
 	@Column({
 		type: 'simple-enum',
 		nullable: true,
@@ -139,8 +111,6 @@ export class User extends TenantBaseEntity implements IUser {
 
 	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((it: User) => it.role)
-	@IsString()
-	@IsOptional()
 	@Index()
 	@Column({ nullable: true })
 	readonly roleId?: string;

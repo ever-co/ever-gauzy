@@ -158,6 +158,8 @@ export class UserController extends CrudController<User> {
 	 * @param data
 	 * @returns
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_USERS_VIEW)
 	@Get('count')
 	async getCount(
 		@Query('data', ParseJsonPipe) data: any
