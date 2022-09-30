@@ -2,16 +2,18 @@
 // 	return 'desktop-timer';
 // }
 import moment from 'moment';
-import { Tray, app } from 'electron';
-import { TimerData } from './desktop-timer-activity';
-import { metaData } from './desktop-wakatime';
-import { LocalStore } from './desktop-store';
+import {Tray, app} from 'electron';
+import {TimerData} from './desktop-timer-activity';
+import {metaData} from './desktop-wakatime';
+import {LocalStore} from './desktop-store';
 import NotificationDesktop from './desktop-notifier';
-import { powerMonitor, ipcMain, screen } from 'electron';
-import { getScreeshot, detectActiveWindow } from './desktop-screenshot';
+import {powerMonitor, ipcMain, screen} from 'electron';
+import {getScreeshot, detectActiveWindow} from './desktop-screenshot';
 import log from 'electron-log';
-import { ActivityType, TimeLogSourceEnum } from '@gauzy/contracts';
-import { DesktopEventCounter } from './desktop-event-counter';
+import {ActivityType, TimeLogSourceEnum} from '@gauzy/contracts';
+import {DesktopEventCounter} from './desktop-event-counter';
+import {DesktopActiveWindow} from "./desktop-active-window";
+
 console.log = log.log;
 Object.assign(console, log.functions);
 const EmbeddedQueue = require('embedded-queue');
@@ -31,10 +33,25 @@ export default class Timerhandler {
 	isPaused = false;
 	listener = false;
 	nextScreenshot = 0;
-	queue:any = null;
-	queueType:any = {};
+	queue: any = null;
+	queueType: any = {};
 	appName = app.getName();
 	eventCounter = new DesktopEventCounter();
+	private _activeWindow = new DesktopActiveWindow();
+	private _activities = [];
+
+	constructor() {
+		/**
+		 * Handle windows change
+		 */
+		this._activeWindow.on('updated', async win => {
+			try {
+				this._activities.push({...win});
+			} catch (e) {
+				console.log('Error on handle window', e);
+			}
+		})
+	}
 
 	startTimer(setupWindow, knex, timeTrackerWindow, timeLog) {
 		// store timer is start to electron-store
@@ -63,6 +80,8 @@ export default class Timerhandler {
 		}
 
 		this.eventCounter.start();
+		this._activities = [];
+		this._activeWindow.start();
 
 		const appSetting = LocalStore.getStore('appSetting');
 
@@ -253,9 +272,11 @@ export default class Timerhandler {
 	/*
 	 * Stop timer interval period after stop timer
 	 */
-	stopTimerIntervalPeriod() {
+	async stopTimerIntervalPeriod() {
 		try {
 			this.eventCounter.stop();
+			if (this._activeWindow.active) await this._activeWindow.stop();
+			this._activities = [];
 			clearInterval(this.intevalTimer);
 			clearInterval(this.intervalUpdateTime);
 		} catch (error) {
@@ -310,7 +331,7 @@ export default class Timerhandler {
 
 		//get aw afk
 		const awAfk = await TimerData.getAfk(knex, lastTimerId);
-		const durationAfk:number = this.afkCount(awAfk);
+		const durationAfk: number = this.afkCount(awAfk);
 
 		//calculate mouse and keyboard activity as per selected period
 
@@ -319,6 +340,25 @@ export default class Timerhandler {
 		const idsAfk = awAfk.length > 0
 			? awAfk.map((afk) => afk.id) : [];
 		idsAw = [...idsAfk, ...idsAw]
+
+		// formatting window activities
+		this._activities = this._activities.map((item) => {
+			return {
+				title: item.data ? (item.data.app || item.data.title) : '',
+				date: moment(item.timestamp).utc().format('YYYY-MM-DD'),
+				time: moment(item.timestamp).utc().format('HH:mm:ss'),
+				duration: Math.floor(item.duration),
+				type: item.data && item.data.url ? ActivityType.URL : ActivityType.APP,
+				taskId: userInfo.taskId,
+				projectId: userInfo.projectId,
+				organizationContactId: userInfo.organizationContactId,
+				organizationId: userInfo.organizationId,
+				employeeId: userInfo.employeeId,
+				source: TimeLogSourceEnum.DESKTOP,
+				recordedAt: moment(item.timestamp).utc().toDate(),
+				metaData: item.data
+			};
+		});
 
 		// formating aw
 		awActivities = awActivities.map((item) => {
@@ -371,7 +411,7 @@ export default class Timerhandler {
 			};
 		});
 
-		const allActivities = [...awActivities, ...wakatimeHeartbeats];
+		const allActivities = [...awActivities, ...wakatimeHeartbeats, ...this._activities];
 		return { allActivities, idsAw, idsWakatime, durationAfk };
 	}
 
@@ -482,10 +522,15 @@ export default class Timerhandler {
 						activeWindow: null,
 						isAw: projectInfo.aw.isAw,
 						isAwConnected: appSetting.awIsConnected,
-						keyboard:
-							this.eventCounter.keyboardPercentage * durationNow,
-						mouse: this.eventCounter.mousePercentage * durationNow,
-						system: this.eventCounter.systemPercentage * durationNow
+						keyboard: Math.round(
+							this.eventCounter.keyboardPercentage * durationNow
+						),
+						mouse: Math.round(
+							this.eventCounter.mousePercentage * durationNow
+						),
+						system: Math.round(
+							this.eventCounter.systemPercentage * durationNow
+						)
 					}
 				);
 				break;
@@ -495,6 +540,7 @@ export default class Timerhandler {
 
 		if(this.eventCounter.intervalDuration >= updatePeriod ) {
 			this.eventCounter.reset();
+			this._activities = [];
 		}
 	}
 
