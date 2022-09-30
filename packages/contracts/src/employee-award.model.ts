@@ -1,23 +1,13 @@
-import { IEmployee } from './employee.model';
+import { IRelationalEmployee } from './employee.model';
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 
-export interface IEmployeeAward
-	extends IBasePerTenantAndOrganizationEntityModel {
-	name: string;
-	year: string;
-	employee?: IEmployee;
-	employeeId: string;
-}
+export interface IEmployeeAward extends IEmployeeAwardCreateInput {}
 
-export interface IEmployeeAwardFindInput
-	extends IBasePerTenantAndOrganizationEntityModel {
-	name?: string;
-	employeeId?: string;
-	year?: string;
-}
+export interface IEmployeeAwardFindInput extends Partial<IEmployeeAwardUpdateInput>, IRelationalEmployee {}
 
-export interface IEmployeeAwardCreateInput {
+export interface IEmployeeAwardCreateInput extends IEmployeeAwardUpdateInput, IRelationalEmployee {}
+
+export interface IEmployeeAwardUpdateInput extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
-	employeeId: string;
 	year: string;
 }

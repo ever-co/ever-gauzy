@@ -5,6 +5,7 @@ import { EmployeeAward } from './employee-award.entity';
 import { EmployeeAwardController } from './employee-award.controller';
 import { EmployeeAwardService } from './employee-award.service';
 import { TenantModule } from '../tenant/tenant.module';
+import { UserModule } from './../user/user.module';
 
 @Module({
 	imports: [
@@ -12,7 +13,8 @@ import { TenantModule } from '../tenant/tenant.module';
 			{ path: '/employee-award', module: EmployeeAwardModule }
 		]),
 		TypeOrmModule.forFeature([EmployeeAward]),
-		TenantModule
+		TenantModule,
+		UserModule
 	],
 	controllers: [EmployeeAwardController],
 	providers: [EmployeeAwardService]

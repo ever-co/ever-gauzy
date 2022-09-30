@@ -17,6 +17,7 @@ import { IExpense } from './expense.model';
 import { ITimesheet, ITimeSlot } from './timesheet.model';
 import { ITask } from './task-entity.model';
 import { ICandidate } from './candidate.model';
+import { IEmployeeAward } from './employee-award.model';
 
 export interface IRelationalEmployee {
     readonly employee?: IEmployee;
@@ -44,6 +45,7 @@ export interface IEmployee extends IBasePerTenantAndOrganizationEntityModel {
 	organizationPosition?: IOrganizationPosition;
 	tags: ITag[];
 	skills: ISkill[];
+	awards?: IEmployeeAward[];
 	offerDate?: Date;
 	acceptDate?: Date;
 	rejectDate?: Date;

@@ -9,7 +9,8 @@ export enum EmployeeRelationEnum {
     'user' = 'user',
     'organizationEmploymentTypes' = 'organizationEmploymentTypes',
     'organizationPosition' = 'organizationPosition',
-	'skills' = 'skills'
+	'skills' = 'skills',
+    'awards' = 'awards',
 }
 
 export class PublicEmployeeQueryDTO {

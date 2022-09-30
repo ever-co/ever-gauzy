@@ -3,7 +3,7 @@ import { IsString, IsObject, IsOptional } from 'class-validator';
 import { IBasePerTenantEntityModel, ITenant } from '@gauzy/contracts';
 import { IsTenantBelongsToUser } from './../../shared/validators';
 
-export abstract class TenantBaseDTO implements IBasePerTenantEntityModel {
+export class TenantBaseDTO implements IBasePerTenantEntityModel {
 
 	@ApiPropertyOptional({ type: () => Object, readOnly: true })
 	@IsOptional()

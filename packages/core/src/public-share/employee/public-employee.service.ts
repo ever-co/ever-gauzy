@@ -15,7 +15,8 @@ export class PublicEmployeeService {
 	/**
 	 * GET all public employees by organization condition
 	 *
-	 * @param options
+	 * @param where
+	 * @param relations
 	 * @returns
 	 */
 	async findPublicEmployeeByOrganization(
@@ -36,7 +37,8 @@ export class PublicEmployeeService {
 	/**
 	 * GET employee by profile link & primary ID
 	 *
-	 * @param options
+	 * @param where
+	 * @param relations
 	 * @returns
 	 */
 	async findOneByConditions(
