@@ -1,13 +1,14 @@
 import { ApiProperty } from "@nestjs/swagger";
+import { PartialType } from "@nestjs/mapped-types";
 import { IsEmail, IsNotEmpty, IsOptional } from "class-validator";
-import { IUserCreateInput } from "@gauzy/contracts";
 import { Transform, TransformFnParams } from "class-transformer";
+import { IUserCreateInput } from "@gauzy/contracts";
 import { RoleFeatureDTO } from "./../../role/dto";
 
 /**
  * Create User DTO validation
  */
-export class CreateUserDTO extends RoleFeatureDTO implements IUserCreateInput {
+export class CreateUserDTO extends PartialType(RoleFeatureDTO) implements IUserCreateInput {
 
     @ApiProperty({ type: () => String, required : true })
     @IsNotEmpty()
@@ -26,5 +27,6 @@ export class CreateUserDTO extends RoleFeatureDTO implements IUserCreateInput {
     readonly lastName?: string;
 
     @ApiProperty({ type: () => String })
+    @IsOptional()
     readonly imageUrl?: string;
 }
