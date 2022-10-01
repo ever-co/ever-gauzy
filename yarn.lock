@@ -23788,10 +23788,10 @@ ngx-daterangepicker-material@^5.0.2:
     dayjs "^1.10.4"
     tslib "^2.0.0"
 
-ngx-draggable-dom@^2.4.6:
-  version "2.5.2"
-  resolved "https://registry.yarnpkg.com/ngx-draggable-dom/-/ngx-draggable-dom-2.5.2.tgz#93c76a07a6986a52da9f06d79f3adedbec9fb57c"
-  integrity sha512-g0JXeEUKqlFBukEkk6CKWtT7sJ1UGDcTiU1u7R3TX5IH8/eNRtOsBUC4ZKuLXsbosjlC6dFyVSA4pb+SA5jUbw==
+ngx-draggable-dom@2.4.6:
+  version "2.4.6"
+  resolved "https://registry.yarnpkg.com/ngx-draggable-dom/-/ngx-draggable-dom-2.4.6.tgz#1460486b6f1a4065b9d5c677b92fb64f8829dd90"
+  integrity sha512-yL+pVl+jOJqnqXSLwSu5OYdrsvH3NhgMQND7MhcXkJD7sWDX/U/HRnGS383uzrIMRraNCm4qSvsQHGO9PK8fMg==
   dependencies:
     tslib "^2.3.1"
 
