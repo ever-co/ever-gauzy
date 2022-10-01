@@ -29,7 +29,8 @@ export class PublicEmployeeResolver implements Resolve<any> {
 			return this.employeesService.getPublicById(slug, employeeId, [
 				'user',
 				'organizationEmploymentTypes',
-				'skills'
+				'skills',
+				'awards'
 			])
 			.pipe(
 				catchError((e) => {

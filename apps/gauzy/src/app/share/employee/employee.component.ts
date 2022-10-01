@@ -9,7 +9,6 @@ import * as moment from 'moment';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import {
-	EmployeeAwardService,
 	EmployeesService,
 	ErrorHandlingService,
 	Store,
@@ -44,8 +43,7 @@ export class EmployeeComponent extends TranslationBaseComponent
 		private readonly dialogService: NbDialogService,
 		private readonly toastrService: ToastrService,
 		private readonly store: Store,
-		private readonly errorHandlingService: ErrorHandlingService,
-		private readonly employeeAwardService: EmployeeAwardService
+		private readonly errorHandlingService: ErrorHandlingService
 	) {
 		super(translateService);
 	}
@@ -62,7 +60,8 @@ export class EmployeeComponent extends TranslationBaseComponent
 					? moment(employee.startedWorkOn).toDate()
 					: undefined
 			})),
-			tap((employee) => (this.imageUrl = employee.user.imageUrl))
+			tap((employee: IEmployee) => (this.imageUrl = employee.user.imageUrl)),
+			tap((employee: IEmployee) => (this.employeeAwards = employee.awards))
 		);
 		this.hasEditPermission$ = this.store.userRolePermissions$.pipe(
 			map(() =>
@@ -71,20 +70,7 @@ export class EmployeeComponent extends TranslationBaseComponent
 		);
 	}
 
-	ngAfterViewInit() {
-		this.initEmployeeAwards();
-	}
-
-	private initEmployeeAwards() {
-		const employeeId = this.route.snapshot.params.employeeId;
-		this.employeeAwardService
-			.getAll({ employeeId })
-			.pipe(untilDestroyed(this))
-			.subscribe({
-				next: ({ items }) => (this.employeeAwards = items),
-				error: (error) => console.warn(error)
-			});
-	}
+	ngAfterViewInit() {}
 
 	updateImageUrl(url: string) {
 		this.imageUrl = url;
@@ -104,7 +90,10 @@ export class EmployeeComponent extends TranslationBaseComponent
 		this.imageUpdateButton = false;
 	}
 
-	openEditEmployeeDialog(employee) {
+	openEditEmployeeDialog(employee: IEmployee) {
+		if (!this.store.hasPermission(PermissionsEnum.PUBLIC_PAGE_EDIT)) {
+			return;
+		}
 		this.dialogService
 			.open(PublicPageEmployeeMutationComponent, {
 				context: {
