@@ -16,6 +16,7 @@ import { TenantBaseEntity } from '../entities/internal';
 import { CrudService } from './crud.service';
 import { ICrudService } from './icrud.service';
 import { ITryRequest } from './try-request';
+import { isNotEmpty } from '@gauzy/common';
 
 /**
  * This abstract class adds tenantId to all query filters if a user is available in the current RequestContext
@@ -36,17 +37,19 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity> extends
 			/**
 			 * If employee has login & retrieve self data
 			 */
-			(
-				!RequestContext.hasPermission(
-					PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-				) &&
-				this.repository.metadata.hasColumnWithPropertyPath('employeeId')
-			) ? {
-				employee: {
-					id: employeeId
-				},
-				employeeId
-			} : {}
+			(isNotEmpty(employeeId)) ?
+				(
+					!RequestContext.hasPermission(
+						PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+					) &&
+					this.repository.metadata.hasColumnWithPropertyPath('employeeId')
+				) ? {
+					employee: {
+						id: employeeId
+					},
+					employeeId: employeeId
+				} : {}
+			: {}
 		) as FindOptionsWhere<T>
 	}
 
@@ -331,16 +334,20 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity> extends
 			 * If employee has login & create data for self
 			 */
 			...(
-				!RequestContext.hasPermission(
-					PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-				) &&
-				this.repository.metadata.hasColumnWithPropertyPath('employeeId')
-			) ? {
-				employee: {
-					id: employeeId
-				},
-				employeeId: employeeId
-			} : {}
+				(isNotEmpty(employeeId)) ?
+					(
+						!RequestContext.hasPermission(
+							PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+						) &&
+						this.repository.metadata.hasColumnWithPropertyPath('employeeId')
+					) ? {
+						employee: {
+							id: employeeId
+						},
+						employeeId: employeeId
+					} : {}
+				: {}
+			)
 		});
 	}
 

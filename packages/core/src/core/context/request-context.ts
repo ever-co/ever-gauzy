@@ -13,6 +13,7 @@ import {
 import { ExtractJwt } from 'passport-jwt';
 import { JsonWebTokenError, verify } from 'jsonwebtoken';
 import { environment as env } from '@gauzy/config';
+import { isNotEmpty } from '@gauzy/common';
 
 export class RequestContext {
 	readonly id: number;
@@ -70,13 +71,19 @@ export class RequestContext {
 	}
 
 	static currentEmployeeId(): string {
-		const user: IUser = RequestContext.currentUser();
-		if(!RequestContext.hasPermission(
-			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-		) && user) {
-			return user.employeeId;
+		try {
+			const user: IUser = RequestContext.currentUser();
+			if (isNotEmpty(user)) {
+				if(!RequestContext.hasPermission(
+					PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+				)) {
+					return user.employeeId;
+				}
+			}
+			return null;
+		} catch (error) {
+			return null;
 		}
-		return null;
 	}
 
 	static currentUser(throwError?: boolean): IUser {
