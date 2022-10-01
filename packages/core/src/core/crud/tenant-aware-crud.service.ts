@@ -1,13 +1,13 @@
 import { NotFoundException } from '@nestjs/common';
 import {
 	DeepPartial,
-	DeleteResult,
-	FindOptionsWhere,
+	DeleteResult,	
 	FindManyOptions,
 	FindOneOptions,
 	Repository,
 	UpdateResult
 } from 'typeorm';
+import { FindOptionsWhere } from 'typeorm/find-options/FindOptionsWhere';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { IPagination, IUser, PermissionsEnum } from '@gauzy/contracts';
 import { User } from '../../user/user.entity';

@@ -3,9 +3,11 @@
 // Copyright (c) 2018 Sumanth Chinthagunta
 
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { FindOptionsOrder, FindOptionsRelations, FindOptionsWhereProperty } from 'typeorm';
 import { Transform, TransformFnParams, Type } from 'class-transformer';
 import { IsNotEmpty, IsOptional, Max, Min, ValidateNested } from 'class-validator';
+import { FindOptionsWhereProperty } from 'typeorm/find-options/FindOptionsWhere';
+import { FindOptionsOrder } from 'typeorm/find-options/FindOptionsOrder';
+import { FindOptionsRelations } from 'typeorm/find-options/FindOptionsRelations';
 import { TenantOrganizationBaseDTO } from './../../core/dto';
 
 export abstract class OptionParams<T> {

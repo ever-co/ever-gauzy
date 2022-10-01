@@ -18,7 +18,8 @@ import {
 	ApiTags
 } from '@nestjs/swagger';
 import { QueryBus } from '@nestjs/cqrs';
-import { FindOptionsWhere, UpdateResult } from 'typeorm';
+import { UpdateResult } from 'typeorm';
+import { FindOptionsWhere } from 'typeorm/find-options/FindOptionsWhere';
 import {
 	IAccountingTemplate,
 	IAccountingTemplateUpdateInput,

@@ -1,7 +1,8 @@
 import { Injectable, BadRequestException, NotAcceptableException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CommandBus } from '@nestjs/cqrs';
-import { Repository, UpdateResult, FindManyOptions, Not, In, DeepPartial, FindOptionsWhere } from 'typeorm';
+import { Repository, UpdateResult, FindManyOptions, Not, In, DeepPartial } from 'typeorm';
+import { FindOptionsWhere } from 'typeorm/find-options/FindOptionsWhere';
 import {
 	RolesEnum,
 	ITenant,

@@ -14,7 +14,7 @@ import {
 	Post
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import { FindOptionsWhere } from 'typeorm';
+import { FindOptionsWhere } from 'typeorm/find-options/FindOptionsWhere';
 import { I18nLang } from 'nestjs-i18n';
 import {
 	LanguagesEnum,

@@ -3,12 +3,12 @@ import { InjectConnection, InjectRepository } from '@nestjs/typeorm';
 import {
 	Connection,
 	DeepPartial,
-	FindManyOptions,
-	FindOptionsWhere,
+	FindManyOptions,	
 	Raw,
 	Repository,
 	UpdateResult
 } from 'typeorm';
+import { FindOptionsWhere } from 'typeorm/find-options/FindOptionsWhere';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { IPipelineStage } from '@gauzy/contracts';
 import { Pipeline } from './pipeline.entity';

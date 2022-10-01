@@ -1,5 +1,5 @@
 import { ICommand } from '@nestjs/cqrs';
-import { FindOptionsWhere } from 'typeorm';
+import { FindOptionsWhere } from 'typeorm/find-options/FindOptionsWhere';
 import { IImportRecordFind } from '@gauzy/contracts';
 
 export class ImportRecordFindOrFailCommand implements ICommand {

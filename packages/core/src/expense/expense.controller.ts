@@ -24,7 +24,8 @@ import {
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { DeleteResult, FindOptionsWhere } from 'typeorm';
+import { DeleteResult } from 'typeorm';
+import { FindOptionsWhere } from 'typeorm/find-options/FindOptionsWhere';
 import { CrudController, PaginationParams } from '../core/crud';
 import { EmployeeService } from '../employee/employee.service';
 import { Permissions } from './../shared/decorators';

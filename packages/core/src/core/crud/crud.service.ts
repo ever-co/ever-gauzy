@@ -7,11 +7,11 @@ import {
 	DeepPartial,
 	DeleteResult,
 	FindManyOptions,
-	FindOneOptions,
-	FindOptionsWhere,
+	FindOneOptions,	
 	Repository,
 	UpdateResult
 } from 'typeorm';
+import { FindOptionsWhere } from 'typeorm/find-options/FindOptionsWhere';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import * as moment from 'moment';
 import { of as observableOf, throwError } from 'rxjs';

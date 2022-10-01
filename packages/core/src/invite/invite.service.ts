@@ -21,8 +21,7 @@ import {
 import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { sign } from 'jsonwebtoken';
-import {
-	FindOptionsWhere,
+import {	
 	In,
 	IsNull,
 	MoreThanOrEqual,
@@ -30,6 +29,7 @@ import {
 	Repository,
 	SelectQueryBuilder
 } from 'typeorm';
+import { FindOptionsWhere } from 'typeorm/find-options/FindOptionsWhere';
 import { isNotEmpty } from '@gauzy/common';
 import { TenantAwareCrudService } from './../core/crud';
 import { Invite } from './invite.entity';

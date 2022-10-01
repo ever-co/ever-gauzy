@@ -1,5 +1,5 @@
 import { IQuery } from '@nestjs/cqrs';
-import { FindOptionsWhere } from 'typeorm';
+import { FindOptionsWhere } from 'typeorm/find-options/FindOptionsWhere';
 import { Invoice } from '../../../core/entities/internal';
 
 export class FindPublicInvoiceQuery implements IQuery {

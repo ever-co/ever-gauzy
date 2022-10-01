@@ -16,7 +16,7 @@ import {
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { FindOptionsWhere } from 'typeorm';
+import { FindOptionsWhere } from 'typeorm/find-options/FindOptionsWhere';
 import { CrudController } from './../core/crud';
 import { UUIDValidationPipe } from './../shared/pipes';
 import { Permissions } from './../shared/decorators';

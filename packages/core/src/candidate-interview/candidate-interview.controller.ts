@@ -12,7 +12,8 @@ import {
 	ValidationPipe
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { FindOptionsWhere, UpdateResult } from 'typeorm';
+import { UpdateResult } from 'typeorm';
+import { FindOptionsWhere } from 'typeorm/find-options/FindOptionsWhere';
 import {
 	ICandidateInterview,
 	ICandidateInterviewCreateInput,

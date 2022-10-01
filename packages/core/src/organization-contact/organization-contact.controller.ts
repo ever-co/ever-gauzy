@@ -13,7 +13,7 @@ import {
 	ValidationPipe
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import { FindOptionsWhere } from 'typeorm';
+import { FindOptionsWhere } from 'typeorm/find-options/FindOptionsWhere';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import {
 	IEditEntityByMemberInput,

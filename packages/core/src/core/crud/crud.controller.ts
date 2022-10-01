@@ -15,7 +15,8 @@ import {
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { IPagination } from '@gauzy/contracts';
-import { DeepPartial, FindOptionsWhere } from 'typeorm';
+import { DeepPartial } from 'typeorm';
+import { FindOptionsWhere } from 'typeorm/find-options/FindOptionsWhere';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { BaseEntity } from '../entities/internal';
 import { ICrudService } from './icrud.service';

@@ -17,7 +17,8 @@ import {
 	BadRequestException,
 	Headers
 } from '@nestjs/common';
-import { DeleteResult, FindOptionsWhere } from 'typeorm';
+import { DeleteResult } from 'typeorm';
+import { FindOptionsWhere } from 'typeorm/find-options/FindOptionsWhere';
 import { Response } from 'express';
 import { CommandBus } from '@nestjs/cqrs';
 import { I18nLang } from 'nestjs-i18n';

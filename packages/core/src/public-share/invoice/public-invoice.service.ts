@@ -1,6 +1,7 @@
 import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindOptionsWhere, Repository, UpdateResult } from 'typeorm';
+import { Repository, UpdateResult } from 'typeorm';
+import { FindOptionsWhere } from 'typeorm/find-options/FindOptionsWhere';
 import { verify } from 'jsonwebtoken';
 import { IInvoice, IInvoiceUpdateInput } from '@gauzy/contracts';
 import { environment } from '@gauzy/config';

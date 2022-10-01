@@ -6,10 +6,10 @@ import {
 	DeepPartial,
 	DeleteResult,
 	FindManyOptions,
-	FindOneOptions,
-	FindOptionsWhere,
+	FindOneOptions,	
 	UpdateResult
 } from 'typeorm';
+import { FindOptionsWhere } from 'typeorm/find-options/FindOptionsWhere';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { IPagination } from '@gauzy/contracts';
 import { ITryRequest } from './try-request';

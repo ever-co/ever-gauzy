@@ -1,7 +1,7 @@
 import { Controller, Get, HttpStatus, Param, Query, UseInterceptors, ValidationPipe } from '@nestjs/common';
 import { QueryBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { FindOptionsWhere } from 'typeorm';
+import { FindOptionsWhere } from 'typeorm/find-options/FindOptionsWhere';
 import { IEmployee, IPagination } from '@gauzy/contracts';
 import { Public } from '@gauzy/common';
 import { TenantOrganizationBaseDTO } from './../../core/dto';

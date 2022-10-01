@@ -1,5 +1,6 @@
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindOptionsWhere, MoreThan, Repository } from 'typeorm';
+import { MoreThan, Repository } from 'typeorm';
+import { FindOptionsWhere } from 'typeorm/find-options/FindOptionsWhere';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import * as moment from 'moment';
 import { sign, verify } from 'jsonwebtoken';

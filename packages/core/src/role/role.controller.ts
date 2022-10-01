@@ -17,7 +17,8 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { IPagination, IRole, IRoleMigrateInput, PermissionsEnum } from '@gauzy/contracts';
-import { DeleteResult, FindOptionsWhere, UpdateResult } from 'typeorm';
+import { DeleteResult, UpdateResult } from 'typeorm';
+import { FindOptionsWhere } from 'typeorm/find-options/FindOptionsWhere';
 import { RoleService } from './role.service';
 import { Role } from './role.entity';
 import { CreateRoleDTO, CreateRoleDTO as UpdateRoleDTO, FindRoleQueryDTO } from './dto';

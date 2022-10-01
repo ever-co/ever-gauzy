@@ -12,7 +12,7 @@ import {
 	Query
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { FindOptionsWhere } from 'typeorm';
+import { FindOptionsWhere } from 'typeorm/find-options/FindOptionsWhere';
 import { Report } from './report.entity';
 import { ReportService } from './report.service';
 

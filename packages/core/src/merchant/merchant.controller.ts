@@ -15,7 +15,7 @@ import {
 } from '@nestjs/common';
 import { ApiResponse, ApiOperation } from '@nestjs/swagger';
 import { IMerchant, IPagination } from '@gauzy/contracts';
-import { FindOptionsWhere } from 'typeorm';
+import { FindOptionsWhere } from 'typeorm/find-options/FindOptionsWhere';
 import { CrudController, PaginationParams } from './../core/crud';
 import { Merchant } from './merchant.entity';
 import { MerchantService } from './merchant.service';

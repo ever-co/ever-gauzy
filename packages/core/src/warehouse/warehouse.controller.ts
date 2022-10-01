@@ -13,7 +13,7 @@ import {
 	UseGuards,
 	ValidationPipe
 } from '@nestjs/common';
-import { FindOptionsWhere } from 'typeorm';
+import { FindOptionsWhere } from 'typeorm/find-options/FindOptionsWhere';
 import {
 	IPagination,
 	PermissionsEnum,

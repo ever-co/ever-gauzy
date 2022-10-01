@@ -20,7 +20,8 @@ import {
 	IPagination,
 	PermissionsEnum
 } from '@gauzy/contracts';
-import { DeleteResult, FindOptionsWhere } from 'typeorm';
+import { DeleteResult } from 'typeorm';
+import { FindOptionsWhere } from 'typeorm/find-options/FindOptionsWhere';
 import { RequestContext } from '../core/context';
 import { CrudController, PaginationParams } from './../core/crud';
 import { EmployeeService } from '../employee/employee.service';

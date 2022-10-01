@@ -26,7 +26,8 @@ import {
 	ApiResponse,
 	ApiTags
 } from '@nestjs/swagger';
-import { FindOptionsWhere, UpdateResult } from 'typeorm';
+import { UpdateResult } from 'typeorm';
+import { FindOptionsWhere } from 'typeorm/find-options/FindOptionsWhere';
 import { CrudController, PaginationParams } from './../core/crud';
 import { RequestContext } from './../core/context';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';

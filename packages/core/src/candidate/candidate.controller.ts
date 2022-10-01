@@ -21,7 +21,7 @@ import {
 	ICandidate,
 	IPagination
 } from '@gauzy/contracts';
-import { FindOptionsWhere } from 'typeorm';
+import { FindOptionsWhere } from 'typeorm/find-options/FindOptionsWhere';
 import { CrudController, PaginationParams} from './../core/crud';
 import { CandidateService } from './candidate.service';
 import { Candidate } from './candidate.entity';
