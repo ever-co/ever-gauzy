@@ -1,4 +1,4 @@
-## Contributing to Gauzy Platform
+# Contributing to Gauzy Platform
 
 We would love for you to contribute to Gauzy Platform!
 

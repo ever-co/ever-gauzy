@@ -77,7 +77,7 @@ export class EmailTemplateGeneratePreviewHandler
 			task_status: 'In Progress',
 			task_update_project: 'Gauzy Project',
 			task_update_assign_by: 'Ruslan Konviser',
-			task_update_url: 'https://github.com/ever-co/gauzy/issues/1688'
+			task_update_url: 'https://github.com/ever-co/ever-gauzy/issues/1688'
 		});
 		return { html };
 	}

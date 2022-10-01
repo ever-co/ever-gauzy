@@ -25,11 +25,9 @@
 		"compile": "tsc -p tsconfig.lib.json"
 	},
 	"keywords": [],
-	"devDependencies": {
-		"@electron/remote": "^2.0.1",
-		"@gauzy/desktop-window": "^0.1.0",
+	"devDependencies": {		
 		"@types/node": "^17.0.33"
-	},
+	},	
 	"peerDependencies": {
 		"@angular/animations": "13.2.2",
 		"@angular/common": "13.2.2",
@@ -40,9 +38,11 @@
 		"moment": "^2.29.4",
 		"ng2-smart-table": "^1.7.2",
 		"ngx-electron": "^2.2.0",
-		"underscore": "^1.13.3"
+		"underscore": "^1.13.3"		
 	},
 	"dependencies": {
+		"@electron/remote": "^2.0.8",
+		"@gauzy/desktop-window": "^0.1.0",
 		"@gauzy/contracts": "^0.1.0",
 		"ng2-smart-table": "^1.7.2"
 	}
