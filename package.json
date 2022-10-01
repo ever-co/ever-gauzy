@@ -250,7 +250,7 @@
 		"@commitlint/travis-cli": "^15.0.0",
 		"@compodoc/compodoc": "^1.1.11",
 		"@cypress/browserify-preprocessor": "^3.0.2",
-		"@electron/remote": "^2.0.1",
+		"@electron/remote": "^2.0.8",
 		"@nrwl/angular": "13.8.0",
 		"@nrwl/cli": "13.8.0",
 		"@nrwl/cypress": "^13.8.0",
