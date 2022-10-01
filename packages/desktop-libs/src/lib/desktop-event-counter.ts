@@ -143,13 +143,7 @@ export class DesktopEventCounter {
 		this._intervalId = null;
 		this._keyboardActiveDuringThisSecond = false;
 		this._mouseActiveDuringThisSecond = false;
-		this._activeSeconds.keyboard = 0;
-		this._activeSeconds.mouse = 0;
-		this._activeSeconds.system = 0;
-		this._intervalDuration = 0;
-		this._keyboardActiveDuringThisSecond = false;
-		this._mouseActiveDuringThisSecond = false;
-		this._systemActiveDuringThisSecond = true;
+		this.reset();
 
 		if (this._detectorIntervalId) {
 			clearInterval(this._detectorIntervalId);
@@ -165,7 +159,6 @@ export class DesktopEventCounter {
 		this._activeSeconds.mouse = 0;
 		this._activeSeconds.system = 0;
 		this._intervalDuration = 0;
-
 		this._keyboardActiveDuringThisSecond = false;
 		this._mouseActiveDuringThisSecond = false;
 		this._systemActiveDuringThisSecond = true;

@@ -53,7 +53,13 @@
 				"zip",
 				"dmg"
 			],
-			"artifactName": "${name}-${version}.${ext}"
+			"asarUnpack": "**/*.node",
+			"artifactName": "${name}-${version}.${ext}",
+			"hardenedRuntime": true,
+			"gatekeeperAssess": false,
+			"extendInfo": {
+				"NSAppleEventsUsageDescription": "Please allow access to script browser applications to detect the current URL when triggering instant lookup."
+			}
 		},
 		"win": {
 			"publisherName": "Ever",
