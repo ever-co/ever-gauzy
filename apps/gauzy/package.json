@@ -133,7 +133,7 @@
 		"ngx-cookie-service": "^13.2.1",
 		"ngx-countdown": "^13.0.0",
 		"ngx-daterangepicker-material": "^5.0.2",
-		"ngx-draggable-dom": "^2.4.6",
+		"ngx-draggable-dom": "2.4.6",
 		"ngx-echarts": "^8.0.1",
 		"ngx-electron": "^2.2.0",
 		"ngx-feature-toggle": "^11.0.0",
