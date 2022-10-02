@@ -20,15 +20,15 @@ jobs:
               uses: actions/checkout@v2
 
             - name: Install Node.js, NPM and Yarn
-              uses: actions/setup-node@v2
+              uses: actions/setup-node@v3
               with:
-                  node-version: 16.14.0
+                  node-version: 16.17.1
 
             - name: Change permissions
               run: 'sudo chown -R $(whoami) ./*'
 
             - name: Install system dependencies
-              run: 'sudo apt install -y curl gnupg git libappindicator3-1 ca-certificates binutils icnsutils graphicsmagick'
+              run: 'sudo apt-get update && sudo apt install -y curl gnupg git libappindicator3-1 ca-certificates binutils icnsutils graphicsmagick'
 
             - name: Install latest version of NPM
               run: 'sudo npm install -g npm'
@@ -69,9 +69,9 @@ jobs:
               uses: actions/checkout@v2
 
             - name: Install Node.js, NPM and Yarn
-              uses: actions/setup-node@v2
+              uses: actions/setup-node@v3
               with:
-                  node-version: 16.14.0
+                  node-version: 16.17.1
 
             - name: Install latest version of NPM
               run: 'sudo npm install -g npm'
@@ -112,9 +112,9 @@ jobs:
               uses: actions/checkout@v2
 
             - name: Install Node.js, NPM and Yarn
-              uses: actions/setup-node@v2
+              uses: actions/setup-node@v3
               with:
-                  node-version: 16.14.0
+                  node-version: 16.17.1
 
             - name: Install latest version of NPM
               run: 'npm install -g npm'

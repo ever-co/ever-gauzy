@@ -108,7 +108,7 @@
 		]
 	},
 	"dependencies": {
-		"sqlite3": "^5.0.8",
+		"sqlite3": "^5.1.1",
 		"electron-store": "^8.0.0",
 		"electron-log": "^4.3.5",
     	"node-notifier": "^8.0.0",
@@ -140,11 +140,11 @@
 		"@gauzy/desktop-libs": "^0.1.0",
 		"@gauzy/knowledge-base": "^0.1.0",
 		"@gauzy/changelog": "^0.1.0",
-		"@electron/remote": "^2.0.1"
+		"@electron/remote": "^2.0.8"
 	},
   	"optionalDependencies": {
-    	"node-windows": "^1.0.0-beta.5",
-		"node-mac": "^1.0.1"
+		"node-mac": "^1.0.1",
+    	"node-windows": "^1.0.0-beta.8"		
   	},
 	"pkg": {
 		"assets": [

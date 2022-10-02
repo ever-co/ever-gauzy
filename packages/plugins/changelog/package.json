@@ -40,8 +40,8 @@
 		"@nestjs/typeorm": "^9.0.0",
 		"class-validator": "^0.13.2",
 		"nest-router": "^1.0.9",
-		"typeorm": "^0.3.7",
-		"typeorm-aurora-data-api-driver": "^2.3.3",
+		"typeorm": "0.3.7",
+		"typeorm-aurora-data-api-driver": "^2.4.4",
 		"typeorm-express-query-builder": "https://github.com/ever-co/typeorm-express-query-builder.git"
 	},
 	"devDependencies": {

@@ -20,47 +20,47 @@ You can get more information about our products at **<https://ever.co>**.
 
 Ever® Gauzy™ Platform main features:
 
--   Human Resources Management (HRM) with Time Management / Tracking and Employees Performance Monitoring
--   Customer Relationship Management (CRM)
--   Enterprise Resource Planning (ERP)
--   Projects / Tasks Management
--   Sales Management
--   Financial and Cost Management (including _Accounting_, _Invoicing_, etc)
--   Inventory, Supply Chain Management and Production Management
+- Human Resources Management (HRM) with Time Management / Tracking and Employees Performance Monitoring
+- Customer Relationship Management (CRM)
+- Enterprise Resource Planning (ERP)
+- Projects / Tasks Management
+- Sales Management
+- Financial and Cost Management (including _Accounting_, _Invoicing_, etc)
+- Inventory, Supply Chain Management and Production Management
 
 More detailed list of the features available in the platform:
 
--   Dashboard (provides overview of different metrics, such as company income / expenses, employees bonuses, etc.)
--   Time Management / Time Tracking / Activity Tracking / Timesheets
--   Employees Management (register of company employees / contractors, rates of employees, etc.)
--   Employees Onboarding / Candidates Interviews
--   Contacts Management (Clients / Customers / Leads / etc.)
--   Schedules / Appointments / Events
--   Project Management / Tasks
--   Goals / KPI / Objectives / Key Results
--   Sales Pipelines
--   Proposals
--   Accounting / Invoicing / Estimates
--   Billing
--   Payments
--   Income / Expenses Management
--   Time Off Management / Holidays / Approvals
--   Inventory
--   Equipment / Sharing
--   Organization Departments and Teams
--   Organization Clients and Vendors
--   Help Center / Knowledge Base
--   Multiple Organizations Management
--   Tags / Labels
--   Reports
--   Organization and Employee Public Pages
--   Integrations (Upwork, HubStaff, etc.)
--   Email History / Email Templates
--   Data Import / Export
--   Roles / Permissions
--   Multi-currency
--   Multi-language
--   Dark / Light / Corporate / Material and other Themes
+- Dashboard (provides overview of different metrics, such as company income / expenses, employees bonuses, etc.)
+- Time Management / Time Tracking / Activity Tracking / Timesheets
+- Employees Management (register of company employees / contractors, rates of employees, etc.)
+- Employees Onboarding / Candidates Interviews
+- Contacts Management (Clients / Customers / Leads / etc.)
+- Schedules / Appointments / Events
+- Project Management / Tasks
+- Goals / KPI / Objectives / Key Results
+- Sales Pipelines
+- Proposals
+- Accounting / Invoicing / Estimates
+- Billing
+- Payments
+- Income / Expenses Management
+- Time Off Management / Holidays / Approvals
+- Inventory
+- Equipment / Sharing
+- Organization Departments and Teams
+- Organization Clients and Vendors
+- Help Center / Knowledge Base
+- Multiple Organizations Management
+- Tags / Labels
+- Reports
+- Organization and Employee Public Pages
+- Integrations (Upwork, HubStaff, etc.)
+- Email History / Email Templates
+- Data Import / Export
+- Roles / Permissions
+- Multi-currency
+- Multi-language
+- Dark / Light / Corporate / Material and other Themes
 
 Read more [About Gauzy](https://github.com/ever-co/ever-gauzy/wiki/About-Gauzy) and [How to use it](https://github.com/ever-co/ever-gauzy/wiki/How-to-use-Gauzy) at your company, on-demand business, freelance business, agency, studio or in-house teams.
 
@@ -68,13 +68,14 @@ Read more [About Gauzy](https://github.com/ever-co/ever-gauzy/wiki/About-Gauzy) 
 
 ### Demo
 
--   Gauzy Platform Demo at <https://demo.gauzy.co> (login `admin@ever.co` and password: `admin`).
+- Ever Gauzy Platform Demo at <https://demo.gauzy.co> (login `admin@ever.co` and password: `admin`).
 
 ### Download
 
 You can download Gauzy Platform, Gauzy Server or Desktop Apps (Windows/Mac/Linux) from the official [Downloads](https://web.gauzy.co/downloads) page.
 
 In addition, all downloads are also available from the following pages:
+
 - [Gauzy Releases](https://github.com/ever-co/ever-gauzy/releases)
 - [Server Releases](https://github.com/ever-co/ever-gauzy-server/releases)
 - [Desktop App Releases](https://github.com/ever-co/ever-gauzy-desktop/releases)
@@ -82,46 +83,46 @@ In addition, all downloads are also available from the following pages:
 
 ### Production (SaaS, WIP)
 
--   Ever® Gauzy™ Platform SaaS at <https://app.gauzy.co> (not used yet in production / in testing mode and it's the same as <https://demo.gauzy.co> for now)
+- Ever® Gauzy™ Platform SaaS at <https://app.gauzy.co> (not used yet in production / in testing mode and it's the same as <https://demo.gauzy.co> for now)
 
 ### Dev Builds
 
--   Gauzy Platform Dev builds (using CI/CD, from the `develop` branch) will be available later at <https://app.gauzy.dev>
+- Gauzy Platform Dev builds (using CI/CD, from the `develop` branch) will be available later at <https://app.gauzy.dev>
 
 ### Server & Desktop Apps
 
 We have Gauzy Server and two Desktop Apps (for Windows/Mac/Linux): 
 
--   Ever® Gauzy™ Server - includes Gauzy API, SQLite DB (or connects to external PostgreSQL) and serves Guazy frontend. It allows to quickly run Gauzy Server for multiple clients (browser based or Desktop based). It's recommended option if you want to setup Ever Gauzy Platform in the small to medium organizations.
+- Ever® Gauzy™ Server - includes Gauzy API, SQLite DB (or connects to external PostgreSQL) and serves Guazy frontend. It allows to quickly run Gauzy Server for multiple clients (browser based or Desktop based). It's recommended option if you want to setup Ever Gauzy Platform in the small to medium organizations.
 
--   Ever® Gauzy™ Desktop App - includes Gauzy frontend (UI), Gauzy API, SQLite DB, etc., all-in-one! It allows to quickly run the whole Gauzy solution locally, both UI and Timer (for time tracking, optionally of course). In addition, it allows to connect to the external database (e.g. PostgreSQL) or external API (if you have Gauzy Server with API / DB installed on different computer or if you want to connect to our live API). It's recommended option if you want to try Gauzy quickly / for personal use or if you want to connect to Gauzy Server in the "client-server" configuration (and use Desktop App instead of web browser).
- 
--   Ever® Gauzy™ Desktop Timer App - allows to run Time & Activity Tracking for employees (agent) with screenshots and activity monitoring. Recommended to setup by organization employees as long as they are not interested in other Gauzy Platform features (e.g. accounting) and only need to track work time.
+- Ever® Gauzy™ Desktop App - includes Gauzy frontend (UI), Gauzy API, SQLite DB, etc., all-in-one! It allows to quickly run the whole Gauzy solution locally, both UI and Timer (for time tracking, optionally of course). In addition, it allows to connect to the external database (e.g. PostgreSQL) or external API (if you have Gauzy Server with API / DB installed on different computer or if you want to connect to our live API). It's recommended option if you want to try Gauzy quickly / for personal use or if you want to connect to Gauzy Server in the "client-server" configuration (and use Desktop App instead of web browser).
+
+- Ever® Gauzy™ Desktop Timer App - allows to run Time & Activity Tracking for employees (agent) with screenshots and activity monitoring. Recommended to setup by organization employees as long as they are not interested in other Gauzy Platform features (e.g. accounting) and only need to track work time.
 
 More information about our Server & Desktop Apps:
 
--   Download for your OS from the official [Downloads](https://web.gauzy.co/downloads) page or see section "Download" above for other links to our releases pages.
--   Setup Gauzy Server with default choices in Setup Wizard and run it.
--   You can also setup Gauzy Desktop App (can run independently or connect to Gauzy Server) or Gauzy Desktop Timer App (should be connected to Gauzy Server)
--   You can login with `admin@ever.co` and password `admin` to check Admin functionality if you installed Gauzy Server or Gauzy Desktop App. Note: such Admin user is not an employee, so you will not be able to track time.
--   You can login with `employee@ever.co` and password `123456` to check Employee related functionality in Gauzy UI or to run Desktop Timer from "Employee" perspective (such user is an Employee and can track time).
--   If you install Gauzy Server, it is possible to connect to it using browser (by default on <http://localhost:8084>) or using Gauzy Desktop Apps (make sure to configure Desktop apps to connect to Gauzy API on <http://127.0.0.1:5620/api> because it's where Gauzy Server API runs by default).
--   You can read more information about our Desktop Apps in the [Desktop Apps Wiki Page](https://github.com/ever-co/ever-gauzy/wiki/Gauzy-Desktop-Apps) and about our Server in the [Server Wiki Page](https://github.com/ever-co/ever-gauzy/wiki/Gauzy-Server).
+- Download for your OS from the official [Downloads](https://web.gauzy.co/downloads) page or see section "Download" above for other links to our releases pages.
+- Setup Gauzy Server with default choices in Setup Wizard and run it.
+- You can also setup Gauzy Desktop App (can run independently or connect to Gauzy Server) or Gauzy Desktop Timer App (should be connected to Gauzy Server)
+- You can login with `admin@ever.co` and password `admin` to check Admin functionality if you installed Gauzy Server or Gauzy Desktop App. Note: such Admin user is not an employee, so you will not be able to track time.
+- You can login with `employee@ever.co` and password `123456` to check Employee related functionality in Gauzy UI or to run Desktop Timer from "Employee" perspective (such user is an Employee and can track time).
+- If you install Gauzy Server, it is possible to connect to it using browser (by default on <http://localhost:8084>) or using Gauzy Desktop Apps (make sure to configure Desktop apps to connect to Gauzy API on <http://127.0.0.1:5620/api> because it's where Gauzy Server API runs by default).
+- You can read more information about our Desktop Apps in the [Desktop Apps Wiki Page](https://github.com/ever-co/ever-gauzy/wiki/Gauzy-Desktop-Apps) and about our Server in the [Server Wiki Page](https://github.com/ever-co/ever-gauzy/wiki/Gauzy-Server).
 
 ## Technology Stack and Requirements
 
--   [TypeScript](https://www.typescriptlang.org) language
--   [NodeJs](https://nodejs.org) / [NestJs](https://github.com/nestjs/nest)
--   [Nx](https://nx.dev)
--   [Angular](https://angular.io)
--   [RxJS](http://reactivex.io/rxjs)
--   [TypeORM](https://github.com/typeorm/typeorm)
--   [Ngx-admin](https://github.com/akveo/ngx-admin)
+- [TypeScript](https://www.typescriptlang.org) language
+- [NodeJs](https://nodejs.org) / [NestJs](https://github.com/nestjs/nest)
+- [Nx](https://nx.dev)
+- [Angular](https://angular.io)
+- [RxJS](http://reactivex.io/rxjs)
+- [TypeORM](https://github.com/typeorm/typeorm)
+- [Ngx-admin](https://github.com/akveo/ngx-admin)
 
 For Production, we recommend:
 
--   [PostgreSQL](https://www.postgresql.org)
--   [PM2](https://github.com/Unitech/pm2)
+- [PostgreSQL](https://www.postgresql.org)
+- [PM2](https://github.com/Unitech/pm2)
 
 Note: thanks to TypeORM, Gauzy will support lots of DBs: SQLite (default, for demos), PostgreSQL (development/production), MySql, MariaDb, CockroachDb, MS SQL, Oracle, MongoDb and others, with minimal changes.
 
@@ -194,21 +195,21 @@ View full list of our [contributors](https://github.com/ever-co/ever-gauzy/graph
 
 ## Contact Us
 
--   [Ever.co Website Contact Us page](https://ever.co/contacts)
--   [Slack Community](https://join.slack.com/t/gauzy/shared_invite/enQtNzc5MTA5MDUwODg2LTI0MGEwYTlmNWFlNzQzMzBlOWExNTk0NzAyY2IwYWYwMzZjMTliYjMwNDI3NTJmYmM4MDQ4NDliMDNiNDY1NWU)
--   [Discord Chat](https://discord.gg/hKQfn4j)
--   [Spectrum Community](https://spectrum.chat/gauzy)
--   [Gitter Chat](https://gitter.im/ever-co/gauzy)
--   [CodeMentor](https://www.codementor.io/evereq)
--   For business inquiries: <mailto:gauzy@ever.co>
--   Please report security vulnerabilities to <mailto:security@ever.co>
--   [Gauzy Platform @ Twitter](https://twitter.com/gauzyplatform)
--   [Gauzy Platform @ Facebook](https://www.facebook.com/gauzyplatform)
+- [Ever.co Website Contact Us page](https://ever.co/contacts)
+- [Slack Community](https://join.slack.com/t/gauzy/shared_invite/enQtNzc5MTA5MDUwODg2LTI0MGEwYTlmNWFlNzQzMzBlOWExNTk0NzAyY2IwYWYwMzZjMTliYjMwNDI3NTJmYmM4MDQ4NDliMDNiNDY1NWU)
+- [Discord Chat](https://discord.gg/hKQfn4j)
+- [Spectrum Community](https://spectrum.chat/gauzy)
+- [Gitter Chat](https://gitter.im/ever-co/gauzy)
+- [CodeMentor](https://www.codementor.io/evereq)
+- For business inquiries: <mailto:gauzy@ever.co>
+- Please report security vulnerabilities to <mailto:security@ever.co>
+- [Gauzy Platform @ Twitter](https://twitter.com/gauzyplatform)
+- [Gauzy Platform @ Facebook](https://www.facebook.com/gauzyplatform)
 
 ## Security
 
-Gauzy™ follows good security practices, but 100% security cannot be guaranteed in any software!  
-Gauzy™ is provided AS IS without any warranty. Use at your own risk!  
+Ever® Gauzy™ follows good security practices, but 100% security cannot be guaranteed in any software!  
+Ever® Gauzy™ is provided AS IS without any warranty. Use at your own risk!  
 See more details in the [LICENSE](LICENSE.md).
 
 In a production setup, all client-side to server-side (backend, APIs) communications should be encrypted using HTTPS/WSS/SSL (REST APIs, GraphQL endpoint, Socket.io WebSockets, etc.).
@@ -221,9 +222,9 @@ We support the open-source community. If you're building awesome non-profit/open
 
 This software is available under following licenses:
 
--   [Ever® Gauzy™ Platform Community Edition](https://github.com/ever-co/ever-gauzy/blob/master/LICENSE.md#gauzy-platform-community-edition-license)
--   [Ever® Gauzy™ Platform Small Business](https://github.com/ever-co/ever-gauzy/blob/master/LICENSE.md#gauzy-platform-small-business-license)
--   [Ever® Gauzy™ Platform Enterprise](https://github.com/ever-co/ever-gauzy/blob/master/LICENSE.md#gauzy-platform-enterprise-license)
+- [Ever® Gauzy™ Platform Community Edition](https://github.com/ever-co/ever-gauzy/blob/master/LICENSE.md#gauzy-platform-community-edition-license)
+- [Ever® Gauzy™ Platform Small Business](https://github.com/ever-co/ever-gauzy/blob/master/LICENSE.md#gauzy-platform-small-business-license)
+- [Ever® Gauzy™ Platform Enterprise](https://github.com/ever-co/ever-gauzy/blob/master/LICENSE.md#gauzy-platform-enterprise-license)
 
 #### The default Ever® Gauzy™ Platform license, without a valid Ever® Gauzy™ Platform Enterprise or Ever® Gauzy™ Platform Small Business License agreement, is the Ever® Gauzy™ Platform Community Edition License.
 
@@ -258,5 +259,5 @@ All other brand and product names are trademarks, registered trademarks or servi
 
 ## P.S.
 
--   If you interested to run on-demand (delivery) or digital marketplace business, check open-source [Ever Demand Platform](https://github.com/ever-co/ever-demand)
--   [We are Hiring: remote TypeScript / NestJS / Angular developers](https://github.com/ever-co/jobs#available-positions)
+- If you interested to run on-demand (delivery) or digital marketplace business, check open-source [Ever Demand Platform](https://github.com/ever-co/ever-demand)
+- [We are Hiring: remote TypeScript / NestJS / Angular developers](https://github.com/ever-co/jobs#available-positions)

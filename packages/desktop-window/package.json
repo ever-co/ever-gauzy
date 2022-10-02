@@ -27,11 +27,11 @@
 	"keywords": [],
 	"dependencies": {
 		"electron": "^15.1.2",
-		"@electron/remote": "^2.0.1",
+		"@electron/remote": "^2.0.8",
 		"electron-log": "^4.3.5",
 		"electron-store": "^8.0.0"
 	},
-  "devDependencies": {
-    "@types/node": "^17.0.33"
-  }
+	"devDependencies": {
+		"@types/node": "^17.0.33"
+	}
 }
