@@ -1,17 +1,16 @@
-import { ICandidate } from "@gauzy/contracts";
+import { ICandidate, IRelationalCandidate } from "@gauzy/contracts";
 import { ApiProperty } from "@nestjs/swagger";
 import { IsObject, IsString, ValidateIf } from "class-validator";
-import { TenantOrganizationBaseDTO } from "./../../core/dto";
 
-export class CandidateFeatureDTO extends TenantOrganizationBaseDTO {
+export class CandidateFeatureDTO implements IRelationalCandidate {
 
     @ApiProperty({ type: () => String, readOnly: true })
-    @ValidateIf((ca) => !ca.candidate)
+    @ValidateIf((it) => !it.candidate || it.candidateId)
     @IsString()
-    readonly candidateId: string;
+    readonly candidateId: ICandidate['id'];
 
     @ApiProperty({ type: () => Object, readOnly: true })
-    @ValidateIf((ca) => !ca.candidateId)
+    @ValidateIf((it) => !it.candidateId || it.candidate)
     @IsObject()
     readonly candidate: ICandidate;
 }

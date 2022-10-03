@@ -1,4 +1,4 @@
-export { CreateCandidateDTO } from "./create-candidate.dto";
-export { UpdateCandidateDTO } from "./update-candidate.dto";
-export { CandidateBulkInputDTO } from "./candidate-bulk-input.dto";
-export { CandidateFeatureDTO } from "./candidate-feature.dto";
+export * from "./create-candidate.dto";
+export * from "./update-candidate.dto";
+export * from "./candidate-bulk-input.dto";
+export * from "./candidate-feature.dto";

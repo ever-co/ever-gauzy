@@ -1,23 +1,15 @@
-import { ICandidate } from './candidate.model';
+import { IRelationalCandidate } from './candidate.model';
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 
-export interface ICandidateSkill
-	extends IBasePerTenantAndOrganizationEntityModel {
-	name: string;
-	candidateId?: string;
-	candidate?: ICandidate
-}
+export interface ICandidateSkill extends ICandidateSkillCreateInput {}
 
-export interface ISkillFindInput
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface ICandidateSkillFindInput extends IBasePerTenantAndOrganizationEntityModel, IRelationalCandidate {
 	name?: string;
-	candidateId?: string;
-	candidate?: ICandidate
+}
+export interface ICandidateSkillCreateInput extends IBasePerTenantAndOrganizationEntityModel, IRelationalCandidate {
+	name: string;
 }
 
-export interface ISkillCreateInput
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface ICandidateSkillUpdateInput extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
-	candidateId?: string;
-	candidate?: ICandidate
 }
