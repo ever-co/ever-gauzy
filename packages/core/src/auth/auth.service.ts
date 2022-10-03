@@ -217,7 +217,6 @@ export class AuthService extends SocialAuthService {
 		languageCode: LanguagesEnum
 	): Promise<User> {
 		let tenant = input.user.tenant;
-
 		if (input.createdById) {
 			const creatingUser = await this.userService.findOneByIdString(
 				input.createdById,
@@ -230,7 +229,7 @@ export class AuthService extends SocialAuthService {
 			tenant = creatingUser.tenant;
 		}
 
-		const user = await this.userService.create({
+		const create = this.userRepository.create({
 			...input.user,
 			tenant,
 			...(input.password
@@ -239,6 +238,7 @@ export class AuthService extends SocialAuthService {
 				  }
 				: {})
 		});
+		const user = await this.userRepository.save(create);
 
 		if (input.organizationId) {
 			await this.userOrganizationService.addUserToOrganization(
