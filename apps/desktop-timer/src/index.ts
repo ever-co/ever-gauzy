@@ -115,8 +115,7 @@ const exeName = path.basename(process.execPath);
 const store = new Store();
 
 const args = process.argv.slice(1);
-const serve: boolean = args.some((val) => val === '--serve');
-
+args.some((val) => val === '--serve');
 let gauzyWindow: BrowserWindow = null;
 let setupWindow: BrowserWindow = null;
 let timeTrackerWindow: BrowserWindow = null;
@@ -128,7 +127,6 @@ let tray = null;
 let isAlreadyRun = false;
 let willQuit = false;
 let onWaitingServer = false;
-let alreadyQuit = false;
 let serverGauzy = null;
 let serverDesktop = null;
 let dialogErr = false;
@@ -280,8 +278,12 @@ const getApiBaseUrl = (configs) => {
 app.on('ready', async () => {
 	// require(path.join(__dirname, 'desktop-api/main.js'));
 	/* set menu */
-	setTimeout(() => {
-		checForUpdateNotify()
+	setTimeout(async () => {
+		try {
+			await checkForUpdateNotify();
+		} catch (e) {
+			console.log('Error on checking update:', e);
+		}
 	}, 5000);
 	const configs: any = store.get('configs');
 	if (configs && typeof configs.autoLaunch === 'undefined') {
@@ -409,7 +411,7 @@ ipcMain.on('restart_app', (event, arg) => {
 				API_BASE_URL: getApiBaseUrl(configs),
 				IS_INTEGRATED_DESKTOP: configs.isLocalServer
 			};
-			await startServer(configs, tray ? true : false);
+			await startServer(configs, !!tray);
 			removeMainListener();
 			ipcMainHandler(store, startServer, knex, { ...environment }, timeTrackerWindow);
 			setupWindow.webContents.send('server_ping_restart', {
@@ -431,11 +433,11 @@ ipcMain.on('server_already_start', () => {
 	}
 });
 
-ipcMain.on('open_browser', (event, arg) => {
-	shell.openExternal(arg.url);
+ipcMain.on('open_browser', async (event, arg) => {
+	await shell.openExternal(arg.url);
 });
 
-ipcMain.on('check_for_update', async (event, arg) => {
+ipcMain.on('check_for_update', async () => {
 	autoUpdater.autoDownload = true;
 	const updateFeedUrl = await getUpdaterConfig();
 	if (updateFeedUrl) {
@@ -447,6 +449,8 @@ ipcMain.on('check_for_update', async (event, arg) => {
 		autoUpdater.checkForUpdatesAndNotify().then((downloadPromise) => {
 			if (cancellationToken)
 				cancellationToken = downloadPromise.cancellationToken;
+		}).catch((e) => {
+			console.log('Error occurred', e);
 		});
 	} else {
 		settingsWindow.webContents.send('error_update');
@@ -492,7 +496,7 @@ ipcMain.on('restart_and_update', () => {
 });
 
 ipcMain.on('check_database_connection', async (event, arg) => {
-	let databaseOptions = {};
+	let databaseOptions;
 	if (arg.db == 'postgres') {
 		databaseOptions = {
 			client: 'pg',
@@ -519,7 +523,7 @@ ipcMain.on('check_database_connection', async (event, arg) => {
 			status: true,
 			message:
 				arg.db === 'postgres'
-					? 'Connection to PostgreSQL DB Succeeds'
+					? 'Connection to PostgresSQL DB Succeeds'
 					: 'Connection to SQLITE DB Succeeds'
 		});
 	} catch (error) {
@@ -552,7 +556,7 @@ app.on('activate', () => {
 		LocalStore.getStore('configs') &&
 		LocalStore.getStore('configs').isSetup
 	) {
-		// On macOS it's common to re-create a window in the app when the
+		// On macOS, it's common to re-create a window in the app when the
 		// dock icon is clicked and there are no other windows open.
 		gauzyWindow = timeTrackerWindow;
 		gauzyWindow.show();
@@ -608,9 +612,9 @@ async function getUpdaterConfig() {
 	return null;
 }
 
-async function checForUpdateNotify() {
+async function checkForUpdateNotify() {
 	const updateFeedUrl = await getUpdaterConfig();
-	appUpdateNotification(updateFeedUrl);
+	await appUpdateNotification(updateFeedUrl);
 }
 // On OS X it is common for applications and their menu bar
 // to stay active until the user quits explicitly with Cmd + Q
@@ -657,30 +661,30 @@ function launchAtStartup(autoLaunch, hidden) {
 app.on('web-contents-created', (e, contents) => {
 	contents.on(
 		'will-redirect',
-		(e, url, isInPlace, isMainFrame, frameProcessId) => {
-		const defaultBrowserConfig: any = {
-			title: '',
-			width: 1280,
-			height: 600,
-			webPreferences: {
-			  allowRunningInsecureContent: false,
-			  contextIsolation: true,
-			  enableRemoteModule: true,
-			  javascript: true,
-			  webSecurity: false,
-			  webviewTag: false
+		async (e, url) => {
+			const defaultBrowserConfig: any = {
+				title: '',
+				width: 1280,
+				height: 600,
+				webPreferences: {
+					allowRunningInsecureContent: false,
+					contextIsolation: true,
+					enableRemoteModule: true,
+					javascript: true,
+					webSecurity: false,
+					webviewTag: false
 				}
-		};
+			};
 			if (
 				[
-			'https://www.linkedin.com/oauth',
-			'https://accounts.google.com'
+					'https://www.linkedin.com/oauth',
+					'https://accounts.google.com'
 				].findIndex((str) => url.indexOf(str) > -1) > -1
 			) {
-			e.preventDefault();
-				showPopup(url, defaultBrowserConfig);
-			return;
-		}
+				e.preventDefault();
+				await showPopup(url, defaultBrowserConfig);
+				return;
+			}
 
 		if (url.indexOf('sign-in/success?jwt') > -1) {
 			if (popupWin) popupWin.destroy();
@@ -699,7 +703,7 @@ app.on('web-contents-created', (e, contents) => {
 		}
 
 		if (url.indexOf('/auth/register') > -1) {
-			shell.openExternal(url);
+			await shell.openExternal(url);
 		}
 		}
 	);
@@ -716,6 +720,6 @@ const showPopup = async (url: string, options: any) => {
 	if (popupWin) popupWin.destroy();
 	popupWin = new BrowserWindow(options);
 	let userAgentWb = 'Chrome/87.0.4280.66';
-	popupWin.loadURL(url, { userAgent: userAgentWb });
+	await popupWin.loadURL(url, {userAgent: userAgentWb});
 	popupWin.show();
  };
