@@ -1,9 +1,11 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { combineLatest, debounceTime, firstValueFrom } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { Subject } from 'rxjs/internal/Subject';
+import { pluck } from 'underscore';
+import { TranslateService } from '@ngx-translate/core';
 import {
 	IAggregatedEmployeeStatistic,
 	IDateRangePicker,
@@ -11,7 +13,7 @@ import {
 	ISelectedEmployee,
 	IUser
 } from '@gauzy/contracts';
-import { distinctUntilChange } from '@gauzy/common-angular';
+import { distinctUntilChange, isEmpty } from '@gauzy/common-angular';
 import { ALL_EMPLOYEES_SELECTED } from '../../../@theme/components/header/selectors/employee';
 import {
 	DateRangePickerBuilderService,
@@ -21,31 +23,28 @@ import {
 	ToastrService
 } from '../../../@core/services';
 import { IChartData } from '../../../@shared/report/charts/line-chart/line-chart.component';
-import { pluck } from 'underscore';
 import { ChartUtil } from '../../../@shared/report/charts/line-chart/chart-utils';
-import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../../@shared/language-base';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-accounting',
+	selector: 'ga-dashboard-accounting',
 	templateUrl: './accounting.component.html',
 	styleUrls: [
 		'../../organizations/edit-organization/edit-organization.component.scss',
 		'./accounting.component.scss'
 	]
 })
-export class AccountingComponent
-	extends TranslationBaseComponent
-	implements OnInit, OnDestroy
-{
+export class AccountingComponent extends TranslationBaseComponent
+	implements AfterViewInit, OnInit, OnDestroy {
+
 	aggregatedEmployeeStatistics: IAggregatedEmployeeStatistic;
 	selectedDateRange: IDateRangePicker;
-	organization: IOrganization;
+	public organization: IOrganization;
 	isEmployee: boolean;
 	chartData: IChartData;
-	statistics$: Subject<any> = new Subject();
-	isLoading: boolean = false;
+	statistics$: Subject<boolean> = new Subject();
+	loading: boolean = false;
 
 	constructor(
 		private readonly employeesService: EmployeesService,
@@ -54,13 +53,20 @@ export class AccountingComponent
 		private readonly router: Router,
 		private readonly employeeStatisticsService: EmployeeStatisticsService,
 		private readonly toastrService: ToastrService,
-		readonly translateService: TranslateService
+		public readonly translateService: TranslateService
 	) {
 		super(translateService);
 	}
 
 	ngOnInit() {
-		this._applyTranslationOnSmartTable();
+		this._applyTranslationOnChart();
+		this.store.selectedEmployee$
+			.pipe(
+				filter((employee: ISelectedEmployee) => !!employee && !!employee.id),
+				tap(() => this.navigateToEmployeeStatistics()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this.store.user$
 			.pipe(
 				filter((user: IUser) => !!user),
@@ -71,25 +77,21 @@ export class AccountingComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.store.selectedEmployee$
-			.pipe(
-				filter((employee: ISelectedEmployee) => !!employee && !!employee.id),
-				tap(() => this.navigateToEmployeeStatistics()),
-				untilDestroyed(this)
-			)
-			.subscribe();
 		this.statistics$
 			.pipe(
-				debounceTime(300),
+				debounceTime(200),
 				tap(() => this.getAggregateStatistics()),
 				untilDestroyed(this)
 			)
 			.subscribe();
+	}
+
+	ngAfterViewInit() {
 		const storeOrganization$ = this.store.selectedOrganization$;
-		const selectedDateRange$ = this.dateRangePickerBuilderService.selectedDateRange$;
-		combineLatest([storeOrganization$, selectedDateRange$])
+		const storeDateRange$ = this.dateRangePickerBuilderService.selectedDateRange$;
+		combineLatest([storeOrganization$, storeDateRange$])
 			.pipe(
-				debounceTime(300),
+				debounceTime(200),
 				distinctUntilChange(),
 				filter(([organization, dateRange]) => !!organization && !!dateRange),
 				tap(([organization, dateRange]) => {
@@ -102,7 +104,7 @@ export class AccountingComponent
 			.subscribe();
 	}
 
-	private _applyTranslationOnSmartTable() {
+	private _applyTranslationOnChart() {
 		this.translateService.onLangChange
 			.pipe(
 				tap(() => this.generateDataForChart()),
@@ -123,7 +125,8 @@ export class AccountingComponent
 			const { tenantId } = this.store.user;
 			const { id: organizationId } = this.organization;
 			const { startDate, endDate } = this.selectedDateRange;
-			this.isLoading = true;
+
+			this.loading = true;
 			this.aggregatedEmployeeStatistics =
 				await this.employeeStatisticsService.getAggregateStatisticsByOrganizationId(
 					{
@@ -136,17 +139,17 @@ export class AccountingComponent
 			do {
 				this.generateDataForChart();
 			} while (!this.aggregatedEmployeeStatistics.chart.length);
-			this.isLoading = false;
+			this.loading = false;
 		} catch (error) {
-			console.log(
-				'Error while retriving employee aggregate statistics',
-				error
-			);
+			console.log('Error while retriving employee aggregate statistics', error);
 			this.toastrService.danger(error);
 		}
 	}
 
 	public generateDataForChart() {
+		if (isEmpty(this.aggregatedEmployeeStatistics)) {
+			return;
+		}
 		const commonOptions = {
 			borderWidth: 2,
 			pointRadius: 2,
