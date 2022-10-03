@@ -85,7 +85,7 @@ export class CandidateSkillController extends CrudController<CandidateSkill> {
 	/**
 	 * CREATE candidate skill
 	 *
-	 * @param body
+	 * @param entity
 	 * @returns
 	 */
 	@Post()
@@ -99,7 +99,7 @@ export class CandidateSkillController extends CrudController<CandidateSkill> {
 	/**
 	 * UPDATE candidate skill
 	 *
-	 * @param body
+	 * @param entity
 	 * @returns
 	 */
 	@Put(':id')
