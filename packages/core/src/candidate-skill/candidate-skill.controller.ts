@@ -6,38 +6,58 @@ import {
 	UseGuards,
 	Post,
 	Body,
-	Delete,
-	Param,
 	UsePipes,
-	ValidationPipe
+	ValidationPipe,
+	Put,
+	Param
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { UpdateResult } from 'typeorm';
 import {
 	ICandidateSkill,
 	IPagination,
 	PermissionsEnum
 } from '@gauzy/contracts';
-import { CrudController } from './../core/crud';
+import { CrudController, PaginationParams } from './../core/crud';
 import { CandidateSkill } from './candidate-skill.entity';
 import { CandidateSkillService } from './candidate-skill.service';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
-import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
-import { CreateCandidateSkillDTO } from './dto';
+import { UUIDValidationPipe } from './../shared/pipes';
+import { CreateCandidateSkillDTO, UpdateCandidateSkillDTO } from './dto';
 
 @ApiTags('CandidateSkill')
-@UseGuards(TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard)
+@Permissions(PermissionsEnum.ORG_CANDIDATES_EDIT)
 @Controller()
 export class CandidateSkillController extends CrudController<CandidateSkill> {
-	constructor(private readonly candidateSkillService: CandidateSkillService) {
+
+	constructor(
+		private readonly candidateSkillService: CandidateSkillService
+	) {
 		super(candidateSkillService);
 	}
 
 	/**
-	 * GET all candidate skills tenant base
-	 * 
-	 * @param data 
-	 * @returns 
+	 * GET candidate skills by pagination
+	 *
+	 * @param params
+	 * @returns
+	 */
+	@Permissions(PermissionsEnum.ORG_CANDIDATES_VIEW)
+	@Get('pagination')
+	@UsePipes(new ValidationPipe({ transform: true }))
+	async pagination(
+		@Query() params: PaginationParams<CandidateSkill>
+	): Promise<IPagination<ICandidateSkill>> {
+		return await this.candidateSkillService.paginate(params);
+	}
+
+	/**
+	 * GET candidate skills
+	 *
+	 * @param params
+	 * @returns
 	 */
 	@ApiOperation({
 		summary: 'Find all candidate skill.'
@@ -51,38 +71,43 @@ export class CandidateSkillController extends CrudController<CandidateSkill> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
+	@Permissions(PermissionsEnum.ORG_CANDIDATES_VIEW)
 	@Get()
+	@UsePipes(new ValidationPipe())
 	async findAll(
-		@Query('data', ParseJsonPipe) data: any
+		@Query() params: PaginationParams<CandidateSkill>
 	): Promise<IPagination<ICandidateSkill>> {
-		const { findInput } = data;
-		return this.candidateSkillService.findAll({ where: findInput });
+		return await this.candidateSkillService.findAll({
+			where: params.where
+		});
 	}
 
 	/**
 	 * CREATE candidate skill
-	 * 
-	 * @param body 
-	 * @returns 
+	 *
+	 * @param body
+	 * @returns
 	 */
-	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.ORG_CANDIDATES_EDIT)
 	@Post()
-	@UsePipes(new ValidationPipe({ transform: true }))
-	async create(@Body() body: CreateCandidateSkillDTO): Promise<ICandidateSkill> {
-		return this.candidateSkillService.create(body);
+	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
+	async create(
+		@Body() entity: CreateCandidateSkillDTO
+	): Promise<ICandidateSkill> {
+		return await this.candidateSkillService.create(entity);
 	}
 
 	/**
-	 * DELETE candidate skill by id
-	 * 
-	 * @param id 
-	 * @returns 
+	 * UPDATE candidate skill
+	 *
+	 * @param body
+	 * @returns
 	 */
-	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.ORG_CANDIDATES_EDIT)
-	@Delete(':id')
-	delete(@Param('id', UUIDValidationPipe) id: string): Promise<any> {
-		return this.candidateSkillService.delete(id);
+	@Put(':id')
+	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
+	async update(
+		@Param('id', UUIDValidationPipe) id: ICandidateSkill['id'],
+		@Body() entity: UpdateCandidateSkillDTO
+	): Promise<ICandidateSkill | UpdateResult> {
+		return await this.candidateSkillService.update(id, entity);
 	}
 }

@@ -15,6 +15,11 @@ import { IContact } from './contact.model';
 import { ITag } from './tag-entity.model';
 import { IEmployee } from './employee.model';
 
+export interface IRelationalCandidate {
+    readonly candidate?: ICandidate;
+    readonly candidateId?: ICandidate['id'];
+}
+
 export interface ICandidate extends IBasePerTenantAndOrganizationEntityModel {
 	user: IUser;
 	userId: string;
@@ -65,7 +70,7 @@ export interface ICandidateFindInput
 	isArchived?: boolean;
 }
 
-export interface ICandidateUpdateInput 
+export interface ICandidateUpdateInput
 	extends IBasePerTenantAndOrganizationEntityModel {
 	id?: string;
 	payPeriod?: string;
@@ -84,7 +89,7 @@ export interface ICandidateUpdateInput
 	candidateLevel?: string;
 }
 
-export interface ICandidateCreateInput 
+export interface ICandidateCreateInput
 	extends IBasePerTenantAndOrganizationEntityModel {
 	user: IUser;
 	password?: string;
@@ -97,12 +102,12 @@ export interface ICandidateCreateInput
 	tags?: ITag[];
 	documents: ICandidateDocument[];
 }
-export interface ICandidateLevel 
+export interface ICandidateLevel
 	extends IBasePerTenantAndOrganizationEntityModel {
 	id: string;
 	level: string;
 }
-export interface ICandidateLevelInput 
+export interface ICandidateLevelInput
 	extends IBasePerTenantAndOrganizationEntityModel {
 	level: string;
 }
@@ -118,3 +123,4 @@ export interface ICandidateViewModel
 	isArchived?: boolean;
 	status?: string;
 }
+
