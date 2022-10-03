@@ -31,10 +31,6 @@ export class InviteAcceptUserHandler
 			{ relations: ['tenant'] }
 		);
 
-		if (!input.user.imageUrl) {
-			input.user.imageUrl = getUserDummyImage(input.user);
-		}
-
 		await this.authService.register(
 			{
 				...input,
