@@ -126,6 +126,9 @@ export class DailyStatisticsComponent extends BaseSelectorFilterComponent
 	}
 
 	private async loadEmployeesCount() {
+		if (this.store.user.employeeId) {
+			return;
+		}
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 

@@ -25,7 +25,7 @@ import {
 	ApiBearerAuth
 } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
-import { DeleteResult } from 'typeorm';
+import { DeleteResult, FindOptionsWhere, UpdateResult } from 'typeorm';
 import {
 	IPagination,
 	IUser,
@@ -33,7 +33,6 @@ import {
 } from '@gauzy/contracts';
 import { CrudController, PaginationParams } from './../core/crud';
 import { TransformInterceptor } from './../core/interceptors';
-import { RequestContext } from '../core/context';
 import { UUIDValidationPipe, ParseJsonPipe } from './../shared/pipes';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
@@ -118,14 +117,11 @@ export class UserController extends CrudController<User> {
 	@HttpCode(HttpStatus.ACCEPTED)
 	@UseGuards(TenantPermissionGuard)
 	@Put('/preferred-language')
+	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
 	async updatePreferredLanguage(
-		@Body(new ValidationPipe({
-			transform: true,
-			whitelist: true
-		})) entity: UpdatePreferredLanguageDTO
-	): Promise<IUser> {
+		@Body() entity: UpdatePreferredLanguageDTO
+	): Promise<IUser | UpdateResult> {
 		return await this.userService.updatePreferredLanguage(
-			RequestContext.currentUserId(),
 			entity.preferredLanguage
 		);
 	}
@@ -140,42 +136,36 @@ export class UserController extends CrudController<User> {
 	@HttpCode(HttpStatus.ACCEPTED)
 	@UseGuards(TenantPermissionGuard)
 	@Put('/preferred-layout')
+	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
 	async updatePreferredComponentLayout(
-		@Body(new ValidationPipe({
-			transform: true,
-			whitelist: true
-		})) entity: UpdatePreferredComponentLayoutDTO
-	): Promise<IUser> {
+		@Body() entity: UpdatePreferredComponentLayoutDTO
+	): Promise<IUser | UpdateResult> {
 		return await this.userService.updatePreferredComponentLayout(
-			RequestContext.currentUserId(),
 			entity.preferredComponentLayout
 		);
 	}
 
 	/**
-	 * GET user count
+	 * GET user count for specific tenant
 	 *
-	 * @param data
 	 * @returns
 	 */
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_USERS_VIEW)
 	@Get('count')
 	async getCount(
-		@Query('data', ParseJsonPipe) data: any
+		@Query() options: FindOptionsWhere<User>
 	): Promise<number> {
-		const { relations, findInput } = data;
-		return this.userService.count({
-			where: findInput,
-			relations
-		});
+		return await this.userService.countBy(options);
 	}
 
 	/**
-	 * GET user list by pagination
+	 * GET users for specific tenant using pagination
 	 *
 	 * @param options
 	 * @returns
 	 */
-	@UseGuards(PermissionGuard)
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_USERS_VIEW)
 	@Get('pagination')
 	async pagination(
@@ -185,9 +175,9 @@ export class UserController extends CrudController<User> {
 	}
 
 	/**
-	 * GET all users
+	 * GET users for specific tenant
 	 *
-	 * @param data
+	 * @param options
 	 * @returns
 	 */
 	@ApiOperation({ summary: 'Find all users.' })
@@ -200,17 +190,13 @@ export class UserController extends CrudController<User> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@UseGuards(PermissionGuard)
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_USERS_VIEW)
 	@Get()
 	async findAll(
-		@Query('data', ParseJsonPipe) data: any
+		@Query() options: PaginationParams<User>
 	): Promise<IPagination<IUser>> {
-		const { relations, findInput } = data;
-		return this.userService.findAll({
-			where: findInput,
-			relations
-		});
+		return this.userService.findAll(options);
 	}
 
 	/**
@@ -240,10 +226,9 @@ export class UserController extends CrudController<User> {
 	}
 
 	/**
-	 * CREATE new user
+	 * CREATE user for specific tenant
 	 *
 	 * @param entity
-	 * @param options
 	 * @returns
 	 */
 	@ApiOperation({ summary: 'Create new record' })
@@ -275,7 +260,6 @@ export class UserController extends CrudController<User> {
 	 *
 	 * @param id
 	 * @param entity
-	 * @param options
 	 * @returns
 	 */
 	@HttpCode(HttpStatus.ACCEPTED)

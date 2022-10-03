@@ -1,12 +1,7 @@
-import { IRole } from "@gauzy/contracts";
+import { IRelationalRole, IRole } from "@gauzy/contracts";
 import { ApiProperty } from "@nestjs/swagger";
 import { IsNotEmpty, ValidateIf } from "class-validator";
 import { IsRoleShouldExist } from "./../../shared/validators";
-
-interface IRelationalRole {
-    readonly role: IRole;
-    readonly roleId: IRole['id'];
-}
 
 export class RoleFeatureDTO implements IRelationalRole  {
 
