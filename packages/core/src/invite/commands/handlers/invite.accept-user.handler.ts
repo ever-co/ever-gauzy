@@ -4,7 +4,6 @@ import { UpdateResult } from 'typeorm';
 import { AuthService } from '../../../auth/auth.service';
 import { InviteService } from '../../invite.service';
 import { InviteAcceptUserCommand } from '../invite.accept-user.command';
-import { getUserDummyImage } from '../../../core';
 import { OrganizationService } from '../../../organization/organization.service';
 
 /**
