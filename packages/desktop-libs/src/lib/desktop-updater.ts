@@ -11,15 +11,15 @@ autoUpdater.on('update-available', (arg) => {
     }
 });
 
-export function appUpdateNotification(updateFeedUrl) {
-    showUpdateNotification = true;
-    autoUpdater.autoDownload = false;
+export async function appUpdateNotification(updateFeedUrl) {
+	showUpdateNotification = true;
+	autoUpdater.autoDownload = false;
 
-    autoUpdater.setFeedURL({
-        channel: 'latest',
-        provider: 'generic',
-        url: updateFeedUrl
-    });
+	autoUpdater.setFeedURL({
+		channel: 'latest',
+		provider: 'generic',
+		url: updateFeedUrl
+	});
 
-    autoUpdater.checkForUpdatesAndNotify();
+	await autoUpdater.checkForUpdatesAndNotify();
 }
