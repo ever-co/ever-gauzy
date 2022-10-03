@@ -1,1 +1,2 @@
-export { CreateCandidateSkillDTO } from "./create-candidate-skill.dto";
+export * from "./create-candidate-skill.dto";
+export * from "./update-candidate-skill.dto";

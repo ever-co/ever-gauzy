@@ -6,7 +6,7 @@
 		<nb-accordion-item-header class="principal">
 			<ng-container *ngTemplateOutlet="logo"></ng-container>
 			<div class="organization" *ngIf="!isCollapse">
-				<img [src]="organization.imageUrl" alt="" />
+				<img [src]="organization?.imageUrl" [alt]="organization?.name"/>
 				<div class="description text">
 					<div [nbTooltip]="organization?.name">{{ organization?.name }}</div>
 					<div [nbTooltip]="organization?.website">{{ organization?.website }}</div>

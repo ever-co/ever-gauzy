@@ -17,15 +17,14 @@ export interface IUser extends IBasePerTenantEntityModel {
 	email?: string;
 	username?: string;
 	role?: IRole;
-	roleId?: string;
+	roleId?: IRole['id'];
 	hash?: string;
 	imageUrl?: string;
 	employee?: IEmployee;
-	employeeId?: string;
+	employeeId?: IEmployee['id'];
 	tags?: ITag[];
 	preferredLanguage?: string;
 	payments?: IPayment[];
-	paymentsId?: string;
 	preferredComponentLayout?: ComponentLayoutStyleEnum;
 	fullName?: string;
 	organizations?: IOrganization[];

@@ -4,7 +4,6 @@ import { UpdateResult } from 'typeorm';
 import { AuthService } from '../../../auth/auth.service';
 import { InviteService } from '../../invite.service';
 import { InviteAcceptUserCommand } from '../invite.accept-user.command';
-import { getUserDummyImage } from '../../../core';
 import { OrganizationService } from '../../../organization/organization.service';
 
 /**
@@ -30,10 +29,6 @@ export class InviteAcceptUserHandler
 			input.organization.id,
 			{ relations: ['tenant'] }
 		);
-
-		if (!input.user.imageUrl) {
-			input.user.imageUrl = getUserDummyImage(input.user);
-		}
 
 		await this.authService.register(
 			{

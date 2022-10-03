@@ -4,7 +4,7 @@
 
 import { ForbiddenException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, InsertResult, SelectQueryBuilder, Brackets, WhereExpressionBuilder, In } from 'typeorm';
+import { Repository, InsertResult, SelectQueryBuilder, Brackets, WhereExpressionBuilder, In, UpdateResult } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { JwtPayload } from 'jsonwebtoken';
 import { ComponentLayoutStyleEnum, IUser, LanguagesEnum, PermissionsEnum, RolesEnum } from '@gauzy/contracts';
@@ -175,16 +175,12 @@ export class UserService extends TenantAwareCrudService<User> {
 	 * Update user preferred language
 	 */
 	async updatePreferredLanguage(
-		id: string | number,
 		preferredLanguage: LanguagesEnum
-	): Promise<IUser> {
+	): Promise<IUser | UpdateResult> {
 		try {
-			let user: User;
-			if (typeof(id) == 'string') {
-				user = await this.findOneByIdString(id);
-			}
-			user.preferredLanguage = preferredLanguage;
-			return await this.repository.save(user);
+			return await this.update(RequestContext.currentUserId(), {
+				preferredLanguage
+			});
 		} catch (err) {
 			throw new NotFoundException(`The record was not found`, err);
 		}
@@ -194,16 +190,12 @@ export class UserService extends TenantAwareCrudService<User> {
 	 * Update user preferred component layout
 	 */
 	async updatePreferredComponentLayout(
-		id: string | number,
 		preferredComponentLayout: ComponentLayoutStyleEnum
-	): Promise<IUser> {
+	): Promise<IUser | UpdateResult> {
 		try {
-			let user: User;
-			if (typeof(id) == 'string') {
-				user = await this.findOneByIdString(id);
-			}
-			user.preferredComponentLayout = preferredComponentLayout;
-			return await this.repository.save(user);
+			return await this.update(RequestContext.currentUserId(), {
+				preferredComponentLayout
+			});
 		} catch (err) {
 			throw new NotFoundException(`The record was not found`, err);
 		}
@@ -256,7 +248,7 @@ export class UserService extends TenantAwareCrudService<User> {
 	 * Get user if refresh token matches
 	 *
 	 * @param refreshToken
-	 * @param userId
+	 * @param payload
 	 * @returns
 	 */
 	async getUserIfRefreshTokenMatches(refreshToken: string, payload: JwtPayload) {

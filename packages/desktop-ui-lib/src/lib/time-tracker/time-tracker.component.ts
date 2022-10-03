@@ -469,6 +469,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	}
 
 	setTime(value) {
+		const time = this.timeRun.getValue();
 		value.second = value.second % 60;
 		value.minute = value.minute % 60;
 		this.timeRun.next({
@@ -485,10 +486,15 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					? `${value.hours}`
 					: `0${value.hours}`
 		});
+
+		this.electronService.ipcRenderer.send('update_tray_time_title', {
+			timeRun: time.hours + ':' + time.minute + ':' + time.second
+		});
+
 		if (value.second % 60 === 0) {
 			this.electronService.ipcRenderer.send('update_tray_time_update', {
-				hours: this.timeRun.getValue().hours,
-				minutes: this.timeRun.getValue().minute
+				hours: time.hours,
+				minutes: time.minute
 			});
 		}
 

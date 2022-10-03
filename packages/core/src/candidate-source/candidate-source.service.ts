@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { ICandidateSource } from '@gauzy/contracts';
 import { Repository } from 'typeorm';
 import { TenantAwareCrudService } from './../core/crud';
 import { CandidateSource } from './candidate-source.entity';
-import { ICandidateSource } from '@gauzy/contracts';
 
 @Injectable()
 export class CandidateSourceService extends TenantAwareCrudService<CandidateSource> {
@@ -14,7 +14,7 @@ export class CandidateSourceService extends TenantAwareCrudService<CandidateSour
 		super(candidateSourceRepository);
 	}
 
-	async updateBulk(sources: ICandidateSource[]): Promise<any> {
+	async createBulk(sources: ICandidateSource[]): Promise<ICandidateSource[]> {
 		const candidateSources: ICandidateSource[] = [];
 		if (sources) {
 			for await (const source of sources) {

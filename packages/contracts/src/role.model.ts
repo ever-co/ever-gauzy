@@ -33,3 +33,8 @@ export interface IRoleMigrateInput extends IBasePerTenantEntityModel {
 	isImporting: boolean;
 	sourceId: string;
 }
+
+export interface IRelationalRole {
+    readonly role: IRole;
+    readonly roleId: IRole['id'];
+}

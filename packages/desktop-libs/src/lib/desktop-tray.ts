@@ -9,6 +9,7 @@ import {
 	timeTrackerPage,
 	getApiBaseUrl
 } from '@gauzy/desktop-window';
+import TitleOptions = Electron.TitleOptions;
 
 export class TrayIcon {
 	tray: Tray;
@@ -23,14 +24,16 @@ export class TrayIcon {
 		iconPath,
 		mainWindow
 	) {
-		this.removeTrayListner()
+		this.removeTrayListener();
 		let loginPageAlreadyShow = false;
+		const options: TitleOptions = {fontType: "monospacedDigit"};
 		const appConfig = LocalStore.getStore('configs');
 		const store = new Store();
 		console.log('icon path', iconPath);
 		const iconNativePath = nativeImage.createFromPath(iconPath);
 		iconNativePath.resize({ width: 16, height: 16 });
 		this.tray = new Tray(iconNativePath);
+		this.tray.setTitle('00:00:00', options);
 		let contextMenu: any = [
 			{
 				id: '4',
@@ -321,6 +324,10 @@ export class TrayIcon {
 			this.tray.setContextMenu(Menu.buildFromTemplate(contextMenu));
 		});
 
+		ipcMain.on('update_tray_time_title', (event, arg) => {
+			this.tray.setTitle(arg ? arg.timeRun : '00:00:00', options);
+		});
+
 		ipcMain.on('auth_success', (event, arg) => {
 			console.log('Auth Success:', arg);
 
@@ -424,11 +431,12 @@ export class TrayIcon {
 		this.tray.destroy()
 	}
 
-	removeTrayListner() {
+	removeTrayListener() {
 		const trayListener = [
 			'update_tray_start',
 			'update_tray_stop',
 			'update_tray_time_update',
+			'update_tray_time_title',
 			'auth_success',
 			'logout',
 			'user_detail'

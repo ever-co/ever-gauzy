@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
-import { ISkillCreateInput, ISkill, ISkillFindInput } from '@gauzy/contracts';
+import { ICandidateSkillCreateInput, ISkill, ICandidateSkillFindInput, IPagination } from '@gauzy/contracts';
+import { toParams } from '@gauzy/common-angular';
 import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable({
@@ -10,7 +11,7 @@ import { API_PREFIX } from '../constants/app.constants';
 export class CandidateSkillsService {
 	constructor(private http: HttpClient) { }
 
-	create(createInput: ISkillCreateInput): Promise<ISkill> {
+	create(createInput: ICandidateSkillCreateInput): Promise<ISkill> {
 		return firstValueFrom(
 			this.http
 				.post<ISkill>(`${API_PREFIX}/candidate-skills`, createInput)
@@ -18,17 +19,12 @@ export class CandidateSkillsService {
 	}
 
 	getAll(
-		findInput?: ISkillFindInput
-	): Promise<{ items: any[]; total: number }> {
-		const data = JSON.stringify({ findInput });
+		where?: ICandidateSkillFindInput
+	): Promise<IPagination<ISkill>> {
 		return firstValueFrom(
-			this.http
-				.get<{ items: ISkill[]; total: number }>(
-					`${API_PREFIX}/candidate-skills`,
-					{
-						params: { data }
-					}
-				)
+			this.http.get<IPagination<ISkill>>( `${API_PREFIX}/candidate-skills`, {
+				params: toParams({ where })
+			})
 		);
 	}
 

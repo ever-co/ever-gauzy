@@ -4,47 +4,36 @@ import { firstValueFrom } from 'rxjs';
 import {
 	ICandidateSourceFindInput,
 	ICandidateSource,
-	ICandidateSourceCreateInput
+	ICandidateSourceCreateInput,
+	IPagination
 } from '@gauzy/contracts';
+import { toParams } from '@gauzy/common-angular';
 import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable({
 	providedIn: 'root'
 })
 export class CandidateSourceService {
-	constructor(private http: HttpClient) { }
+
+	constructor(
+		private readonly http: HttpClient
+	) { }
 
 	getAll(
-		findInput?: ICandidateSourceFindInput
-	): Promise<{ items: any[]; total: number }> {
-		const data = JSON.stringify({ findInput });
+		where?: ICandidateSourceFindInput
+	): Promise<IPagination<ICandidateSource>> {
 		return firstValueFrom(
-			this.http
-				.get<{ items: ICandidateSource[]; total: number }>(
-					`${API_PREFIX}/candidate-source`,
-					{
-						params: { data }
-					}
-				)
+			this.http.get<IPagination<ICandidateSource>>( `${API_PREFIX}/candidate-source`, {
+				params: toParams({ where })
+			})
 		);
 	}
 
 	create(
-		createInput: ICandidateSourceCreateInput
+		input: ICandidateSourceCreateInput
 	): Promise<ICandidateSource> {
 		return firstValueFrom(
-			this.http
-				.post<ICandidateSource>(
-					`${API_PREFIX}/candidate-source`,
-					createInput
-				)
-		);
-	}
-
-	updateBulk(updateInput: ICandidateSource[]): Promise<any> {
-		return firstValueFrom(
-			this.http
-				.put(`${API_PREFIX}/candidate-source/bulk`, updateInput)
+			this.http.post<ICandidateSource>( `${API_PREFIX}/candidate-source`, input)
 		);
 	}
 }
