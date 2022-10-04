@@ -1,6 +1,5 @@
 import { Column, Entity, ManyToOne, RelationId } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNotEmpty } from 'class-validator';
 import { ICandidateExperience, ICandidate } from '@gauzy/contracts';
 import {
 	Candidate,
@@ -8,9 +7,9 @@ import {
 } from '../core/entities/internal';
 
 @Entity('candidate_experience')
-export class CandidateExperience
-	extends TenantOrganizationBaseEntity
+export class CandidateExperience extends TenantOrganizationBaseEntity
 	implements ICandidateExperience {
+
 	@ApiProperty({ type: () => String })
 	@Column()
 	occupation: string;
@@ -25,7 +24,7 @@ export class CandidateExperience
 
 	/*
     |--------------------------------------------------------------------------
-    | @ManyToOne 
+    | @ManyToOne
     |--------------------------------------------------------------------------
     */
 	@ApiProperty({ type: () => Candidate })
@@ -36,8 +35,6 @@ export class CandidateExperience
 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: CandidateExperience) => it.candidate)
-	@IsString()
-	@IsNotEmpty()
 	@Column({ nullable: true })
 	candidateId?: string;
 }

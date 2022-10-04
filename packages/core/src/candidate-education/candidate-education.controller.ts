@@ -22,7 +22,7 @@ export class CandidateEducationController extends CrudController<CandidateEducat
 	}
 
 	/**
-	 * GET candidate skills by pagination
+	 * GET candidate educations by pagination
 	 *
 	 * @param params
 	 * @returns
@@ -37,7 +37,7 @@ export class CandidateEducationController extends CrudController<CandidateEducat
 	}
 
 	/**
-	 * GET all candidate educations
+	 * GET candidate educations
 	 *
 	 * @param params
 	 * @returns
