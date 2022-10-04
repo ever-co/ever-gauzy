@@ -17,7 +17,7 @@ import {
 	ICandidate,
 	ICandidateInterview
 } from '@gauzy/contracts';
-import { IsEnum, IsOptional, IsString } from 'class-validator';
+import { ColumnNumericTransformerPipe } from './../shared/pipes';
 import {
 	Candidate,
 	CandidateCriterionsRating,
@@ -25,12 +25,11 @@ import {
 	CandidateInterviewers,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { ColumnNumericTransformerPipe } from './../shared/pipes';
 
 @Entity('candidate_feedback')
-export class CandidateFeedback
-	extends TenantOrganizationBaseEntity
+export class CandidateFeedback extends TenantOrganizationBaseEntity
 	implements ICandidateFeedback {
+
 	@ApiProperty({ type: () => String })
 	@Column({ nullable: true })
 	description: string;
@@ -44,17 +43,21 @@ export class CandidateFeedback
 	rating: number;
 
 	@ApiProperty({ type: () => String, enum: CandidateStatusEnum })
-	@IsEnum(CandidateStatusEnum)
-	@IsOptional()
-	@Column({ nullable: true })
-	status?: string;
+	@Column({
+		type: 'simple-enum',
+		nullable: true,
+		enum: CandidateStatusEnum
+	})
+	status?: CandidateStatusEnum;
 
 	/*
     |--------------------------------------------------------------------------
-    | @ManyToOne 
+    | @ManyToOne
     |--------------------------------------------------------------------------
     */
-   
+	/**
+	 * Candidate
+	 */
 	@ApiProperty({ type: () => Candidate })
 	@ManyToOne(() => Candidate, (candidate) => candidate.feedbacks, {
 		onDelete: 'CASCADE'
@@ -63,11 +66,12 @@ export class CandidateFeedback
 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: CandidateFeedback) => it.candidate)
-	@IsString()
 	@Index()
 	@Column({ nullable: true })
 	candidateId?: string;
-
+	/**
+	 * Candidate Interview
+	 */
 	@ApiProperty({ type: () => CandidateInterview })
 	@ManyToOne(() => CandidateInterview, (candidateInterview) => candidateInterview.feedbacks, {
 		onDelete: 'CASCADE'
@@ -76,29 +80,31 @@ export class CandidateFeedback
 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: CandidateFeedback) => it.interview)
-	@IsString()
 	@Index()
 	@Column({ nullable: true })
 	interviewId?: string;
-
 	/*
     |--------------------------------------------------------------------------
-    | @OneToMany 
+    | @OneToMany
     |--------------------------------------------------------------------------
     */
-
+	/**
+	 * Candidate Criterions Rating
+	 */
 	@ApiProperty({ type: () => CandidateCriterionsRating })
-	@OneToMany(() => CandidateCriterionsRating, (criterionsRating) => criterionsRating.feedback, { 
-		cascade: true 
+	@OneToMany(() => CandidateCriterionsRating, (criterionsRating) => criterionsRating.feedback, {
+		cascade: true
 	})
 	criterionsRating?: ICandidateCriterionsRating[];
 
 	/*
     |--------------------------------------------------------------------------
-    | @OneToOne 
+    | @OneToOne
     |--------------------------------------------------------------------------
     */
-
+	/**
+	 * Candidate Interviewers
+	 */
 	@ApiProperty({ type: () => CandidateInterviewers })
 	@OneToOne(() => CandidateInterviewers)
 	@JoinColumn()
