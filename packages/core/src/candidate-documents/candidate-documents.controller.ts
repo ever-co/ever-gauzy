@@ -21,7 +21,7 @@ export class CandidateDocumentsController extends CrudController<CandidateDocume
 	/**
 	 * GET all candidate documents
 	 *
-	 * @param data
+	 * @param params
 	 * @returns
 	 */
 	@ApiOperation({
