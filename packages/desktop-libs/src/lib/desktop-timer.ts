@@ -343,8 +343,8 @@ export default class Timerhandler {
 
 		// formatting window activities
 		this._activities = this._activities.map((item) => {
-			return {
-				title: item.data ? (item.data.app || item.data.title) : '',
+			return item.data ? {
+				title: item.data.app || item.data.title,
 				date: moment(item.timestamp).utc().format('YYYY-MM-DD'),
 				time: moment(item.timestamp).utc().format('HH:mm:ss'),
 				duration: Math.floor(item.duration),
@@ -357,7 +357,7 @@ export default class Timerhandler {
 				source: TimeLogSourceEnum.DESKTOP,
 				recordedAt: moment(item.timestamp).utc().toDate(),
 				metaData: item.data
-			};
+			} : {};
 		});
 
 		// formating aw
