@@ -1,7 +1,6 @@
 import {IPowerManager} from 'lib/interfaces';
 import {BasePowerManagerDecorator} from '../abstracts/base-power-manager-decorator';
-import {ipcMain, powerSaveBlocker} from "electron";
-import {LocalStore} from "../../desktop-store";
+import {powerSaveBlocker} from "electron";
 
 export class PowerManagerPreventDisplaySleep extends BasePowerManagerDecorator {
 	private _powerSaverBlockedId: number;
