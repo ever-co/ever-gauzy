@@ -430,41 +430,43 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 		if (this.validationField()) {
 			if (val) {
-				const paramsTimeStart = {
-					token: this.token,
-					note: this.note,
-					projectId: this.projectSelect,
-					taskId: this.taskSelect,
-					organizationId: this.userOrganization.id,
-					tenantId: this.userData.tenantId,
-					organizationContactId: this.organizationContactId,
-					apiHost: this.apiHost
-				};
-				this.timeTrackerService
-					.toggleApiStart(paramsTimeStart)
-					.then(async (res: any) => {
-						// We are temporary comment below condition
-						// if (res && res.stoppedAt) {
-						// 	await this.timeTrackerService.toggleApiStart(paramsTimeStart)
-						// }
-						this.startTime(res);
-					})
-					.catch((error) => {
-						this.loading = false;
-						let messageError = error.message;
-						if (messageError.includes('Http failure response')) {
-							messageError = `Can't connect to api server`;
-						} else {
-							messageError = 'Internal server error';
-						}
-						this.toastrService.show(messageError, `Warning`, {
-							status: 'danger'
+				if (!this.start) {
+					const paramsTimeStart = {
+						token: this.token,
+						note: this.note,
+						projectId: this.projectSelect,
+						taskId: this.taskSelect,
+						organizationId: this.userOrganization.id,
+						tenantId: this.userData.tenantId,
+						organizationContactId: this.organizationContactId,
+						apiHost: this.apiHost
+					};
+					this.timeTrackerService
+						.toggleApiStart(paramsTimeStart)
+						.then(async (res: any) => {
+							// We are temporary comment below condition
+							// if (res && res.stoppedAt) {
+							// 	await this.timeTrackerService.toggleApiStart(paramsTimeStart)
+							// }
+							this.startTime(res);
+						})
+						.catch((error) => {
+							this.loading = false;
+							let messageError = error.message;
+							if (messageError.includes('Http failure response')) {
+								messageError = `Can't connect to api server`;
+							} else {
+								messageError = 'Internal server error';
+							}
+							this.toastrService.show(messageError, `Warning`, {
+								status: 'danger'
+							});
+							log.info(
+								`Timer Toggle Catch: ${moment().format()}`,
+								error
+							);
 						});
-						log.info(
-							`Timer Toggle Catch: ${moment().format()}`,
-							error
-						);
-					});
+				} else this.loading = false;
 			} else {
 				console.log('stop tracking');
 				this.stopTimer();
@@ -888,7 +890,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					default:
 						break;
 				}
-			}
+			} else this.stopTimer();
 		});
 	}
 
@@ -1166,12 +1168,11 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			try {
 				await Promise.all(
 					screenshotImg.map(async (img) => {
-						const imgResult = await this.uploadsScreenshot(
+						return await this.uploadsScreenshot(
 							arg,
 							img,
 							resActivities.id
 						);
-						return imgResult;
 					})
 				);
 			} catch (error) {

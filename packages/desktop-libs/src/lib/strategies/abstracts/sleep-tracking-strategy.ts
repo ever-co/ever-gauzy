@@ -12,6 +12,5 @@ export abstract class SleepTrackingStrategy implements ISleepTrackingStrategy {
 	}
 
 	pause(): void {
-		this._window.webContents.send('device_sleep');
 	}
 }
