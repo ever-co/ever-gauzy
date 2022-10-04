@@ -321,7 +321,7 @@ export default class TimerHandler {
 				date: moment(item.timestamp).utc().format('YYYY-MM-DD'),
 				time: moment(item.timestamp).utc().format('HH:mm:ss'),
 				duration: Math.floor(item.duration),
-				type: item.data && item.data.url ? ActivityType.URL : ActivityType.APP,
+				type: item.data.url ? ActivityType.URL : ActivityType.APP,
 				taskId: userInfo.taskId,
 				projectId: userInfo.projectId,
 				organizationContactId: userInfo.organizationContactId,
