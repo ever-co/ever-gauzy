@@ -1,14 +1,18 @@
-import { CandidateEducationService } from './candidate-education.service';
-import { Controller, HttpStatus, Get, Query, UseGuards } from '@nestjs/common';
+import { Controller, HttpStatus, Get, Query, UseGuards, UsePipes, ValidationPipe, Post, Body, Put, Param } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { ICandidateEducation, IPagination } from '@gauzy/contracts';
-import { CrudController } from './../core/crud';
+import { UpdateResult } from 'typeorm';
+import { ICandidateEducation, IPagination, PermissionsEnum } from '@gauzy/contracts';
+import { CrudController, PaginationParams } from './../core/crud';
+import { CandidateEducationService } from './candidate-education.service';
 import { CandidateEducation } from './candidate-education.entity';
-import { TenantPermissionGuard } from './../shared/guards';
-import { ParseJsonPipe } from './../shared/pipes';
+import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
+import { Permissions } from './../shared/decorators';
+import { UUIDValidationPipe } from './../shared/pipes';
+import { CreateCandidateEducationDTO, UpdateCandidateEducationDTO } from './dto';
 
 @ApiTags('CandidateEducation')
-@UseGuards(TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard)
+@Permissions(PermissionsEnum.ORG_CANDIDATES_EDIT)
 @Controller()
 export class CandidateEducationController extends CrudController<CandidateEducation> {
 	constructor(
@@ -16,12 +20,27 @@ export class CandidateEducationController extends CrudController<CandidateEducat
 	) {
 		super(candidateEducationService);
 	}
-	
+
 	/**
-	 * GET all candidate educations 
-	 * 
-	 * @param data 
-	 * @returns 
+	 * GET candidate skills by pagination
+	 *
+	 * @param params
+	 * @returns
+	 */
+	@Permissions(PermissionsEnum.ORG_CANDIDATES_VIEW)
+	@Get('pagination')
+	@UsePipes(new ValidationPipe({ transform: true }))
+	async pagination(
+		@Query() params: PaginationParams<CandidateEducation>
+	): Promise<IPagination<ICandidateEducation>> {
+		return await this.candidateEducationService.paginate(params);
+	}
+
+	/**
+	 * GET all candidate educations
+	 *
+	 * @param params
+	 * @returns
 	 */
 	@ApiOperation({
 		summary: 'Find all candidate education.'
@@ -35,11 +54,43 @@ export class CandidateEducationController extends CrudController<CandidateEducat
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
+	@Permissions(PermissionsEnum.ORG_CANDIDATES_VIEW)
 	@Get()
+	@UsePipes(new ValidationPipe())
 	async findAll(
-		@Query('data', ParseJsonPipe) data: any
+		@Query() params: PaginationParams<CandidateEducation>
 	): Promise<IPagination<ICandidateEducation>> {
-		const { findInput } = data;
-		return this.candidateEducationService.findAll({ where: findInput });
+		return await this.candidateEducationService.findAll({
+			where: params.where
+		});
+	}
+
+	/**
+	 * CREATE candidate education
+	 *
+	 * @param entity
+	 * @returns
+	 */
+	@Post()
+	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
+	async create(
+		@Body() entity: CreateCandidateEducationDTO
+	): Promise<ICandidateEducation> {
+		return await this.candidateEducationService.create(entity);
+	}
+
+	/**
+	 * UPDATE candidate education
+	 *
+	 * @param entity
+	 * @returns
+	 */
+	@Put(':id')
+	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
+	async update(
+		@Param('id', UUIDValidationPipe) id: ICandidateEducation['id'],
+		@Body() entity: UpdateCandidateEducationDTO
+	): Promise<ICandidateEducation | UpdateResult> {
+		return await this.candidateEducationService.update(id, entity);
 	}
 }
