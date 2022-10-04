@@ -86,6 +86,11 @@ export abstract class CrudService<T extends BaseEntity>
 			});
 			query.setFindOptions({
 				...(
+					(options && options.select) ? {
+						select: options.select
+					} : {}
+				),
+				...(
 					(options && options.relations) ? {
 						relations: options.relations
 					} : {}

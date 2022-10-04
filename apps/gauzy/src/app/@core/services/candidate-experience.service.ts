@@ -4,8 +4,10 @@ import { firstValueFrom } from 'rxjs';
 import {
 	ICandidateExperience,
 	IExperienceCreateInput,
-	IExperienceFindInput
+	IExperienceFindInput,
+	IPagination
 } from '@gauzy/contracts';
+import { toParams } from '@gauzy/common-angular';
 import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable({
@@ -25,18 +27,13 @@ export class CandidateExperienceService {
 	}
 
 	getAll(
-		findInput?: IExperienceFindInput,
-		relations?: string[]
-	): Promise<{ items: any[]; total: number }> {
-		const data = JSON.stringify({ findInput, relations });
+		where?: IExperienceFindInput,
+		relations: string[] = []
+	): Promise<IPagination<ICandidateExperience>> {
 		return firstValueFrom(
-			this.http
-				.get<{ items: ICandidateExperience[]; total: number }>(
-					`${API_PREFIX}/candidate-experience`,
-					{
-						params: { data }
-					}
-				)
+			this.http.get<IPagination<ICandidateExperience>>(`${API_PREFIX}/candidate-experience`, {
+				params: toParams({ where, relations })
+			})
 		);
 	}
 
