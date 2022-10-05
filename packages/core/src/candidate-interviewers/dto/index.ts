@@ -1,1 +1,1 @@
-export * from './interviewer-feature.dto';
+export * from './candidate-interviewer-feature.dto';
