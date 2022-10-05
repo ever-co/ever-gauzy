@@ -55,6 +55,7 @@ export class CandidateFeedback extends TenantOrganizationBaseEntity
     | @ManyToOne
     |--------------------------------------------------------------------------
     */
+
 	/**
 	 * Candidate
 	 */
@@ -68,7 +69,8 @@ export class CandidateFeedback extends TenantOrganizationBaseEntity
 	@RelationId((it: CandidateFeedback) => it.candidate)
 	@Index()
 	@Column({ nullable: true })
-	candidateId?: string;
+	candidateId?: ICandidate['id'];
+
 	/**
 	 * Candidate Interview
 	 */
@@ -82,12 +84,13 @@ export class CandidateFeedback extends TenantOrganizationBaseEntity
 	@RelationId((it: CandidateFeedback) => it.interview)
 	@Index()
 	@Column({ nullable: true })
-	interviewId?: string;
+	interviewId?: ICandidateInterview['id'];
 	/*
     |--------------------------------------------------------------------------
     | @OneToMany
     |--------------------------------------------------------------------------
     */
+
 	/**
 	 * Candidate Criterions Rating
 	 */
@@ -102,6 +105,7 @@ export class CandidateFeedback extends TenantOrganizationBaseEntity
     | @OneToOne
     |--------------------------------------------------------------------------
     */
+
 	/**
 	 * Candidate Interviewers
 	 */
@@ -109,4 +113,9 @@ export class CandidateFeedback extends TenantOrganizationBaseEntity
 	@OneToOne(() => CandidateInterviewers)
 	@JoinColumn()
 	interviewer?: ICandidateInterviewers;
+
+	@ApiProperty({ type: () => String })
+	@RelationId((it: CandidateFeedback) => it.interviewer)
+	@Column({ nullable: true })
+	interviewerId?: ICandidateInterviewers['id'];
 }
