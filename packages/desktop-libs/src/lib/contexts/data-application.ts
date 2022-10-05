@@ -1,4 +1,4 @@
-import {IDataApplication} from "../interfaces/i-data-application";
+import {IDataApplication} from "../interfaces";
 
 export class DataApplication implements IDataApplication {
 	constructor(title?: string, executable?: string, name?: string, url?: string) {

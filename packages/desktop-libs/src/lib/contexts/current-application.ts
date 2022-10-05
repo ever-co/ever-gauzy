@@ -1,6 +1,5 @@
 import {DataApplication} from "./data-application";
-import {ICurrentApplication} from "../interfaces/i-current-application";
-import {IDataApplication} from "../interfaces/i-data-application";
+import {ICurrentApplication, IDataApplication} from "../interfaces";
 
 
 export class CurrentApplication implements ICurrentApplication {

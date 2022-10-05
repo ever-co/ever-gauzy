@@ -59,7 +59,8 @@ export const LocalStore = {
 					randomScreenshotTime: false,
 					visibleWakatimeOption: false,
 					trackOnPcSleep: false,
-					awIsConnected: true
+					awIsConnected: true,
+					preventDisplaySleep: false
 				};
 				store.set({
 					appSetting: defaultAppSetting

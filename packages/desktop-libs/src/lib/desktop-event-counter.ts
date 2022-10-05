@@ -101,8 +101,11 @@ export class DesktopEventCounter {
 	 * Starts event tracking & counting
 	 */
 	public start(): void {
-		if (this._intervalId)
-			throw new Error('This instance of EventCounter is already started');
+		if (this._intervalId) {
+			console.log('This instance of EventCounter is already started');
+			// soft fail
+			return;
+		}
 
 		// Set counting interval
 		this._intervalId = setInterval(() => {
