@@ -209,13 +209,13 @@
 							</div>
 						</div>
 						<div class="row">
-							<ng-template #dialog let-data let-ref="dialogRef">
-								<nb-card class="dialog" accent="warning">
+							<ng-template class="dialog-container" #dialog let-data let-ref="dialogRef">
+								<nb-card class="dialog" accent="danger">
 									<nb-card-header>Warning</nb-card-header>
 									<nb-card-body>{{ data }}</nb-card-body>
 									<nb-card-footer>
 										<div class="row">
-											<div class="col-4">
+											<div class="col-3">
 												<button status="primary" nbButton (click)="ref.close(false)">
 													No
 												</button>

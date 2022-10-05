@@ -3,20 +3,18 @@ import {TimerData} from './desktop-timer-activity';
 import TimerHandler from './desktop-timer';
 import moment from 'moment';
 import {LocalStore} from './desktop-store';
-import {takeshot, notifyScreenshot} from './desktop-screenshot';
-import {
-	openSystemPreferences
-} from 'mac-screen-capture-permissions';
+import {notifyScreenshot, takeshot} from './desktop-screenshot';
+import {openSystemPreferences} from 'mac-screen-capture-permissions';
 import * as _ from 'underscore';
-import {
-	timeTrackerPage
-} from '@gauzy/desktop-window';
-
-const timerHandler = new TimerHandler();
-
+import {timeTrackerPage} from '@gauzy/desktop-window';
 // Import logging for electron and override default console logging
 import log from 'electron-log';
 import NotificationDesktop from './desktop-notifier';
+import {DesktopPowerManager} from "./desktop-power-manager";
+import {PowerManagerPreventDisplaySleep} from "./decorators";
+
+const timerHandler = new TimerHandler();
+
 console.log = log.log;
 Object.assign(console, log.functions);
 
@@ -32,8 +30,8 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 			API_BASE_URL: arg.serverUrl
 				? arg.serverUrl
 				: arg.port
-				? `http://localhost:${arg.port}`
-				: `http://localhost:${config.API_DEFAULT_PORT}`,
+					? `http://localhost:${arg.port}`
+					: `http://localhost:${config.API_DEFAULT_PORT}`,
 			IS_INTEGRATED_DESKTOP: arg.isLocalServer
 		};
 		startServer(arg);
@@ -142,7 +140,11 @@ export function ipcTimer(
 	windowPath,
 	soundPath
 ) {
+	const powerManager = new DesktopPowerManager(timeTrackerWindow);
+	const powerManagerPreventSleep = new PowerManagerPreventDisplaySleep(powerManager);
+
 	ipcMain.on('start_timer', (event, arg) => {
+		const setting = LocalStore.getStore('appSetting');
 		log.info(`Timer Start: ${moment().format()}`);
 		store.set({
 			project: {
@@ -162,6 +164,7 @@ export function ipcTimer(
 		settingWindow.webContents.send('app_setting_update', {
 			setting: LocalStore.getStore('appSetting')
 		});
+		if (setting && setting.preventDisplaySleep) powerManagerPreventSleep.start();
 	});
 
 	ipcMain.on('data_push_activity', async (event, arg) => {
@@ -192,10 +195,10 @@ export function ipcTimer(
 		if (arg.idsAw && arg.idsAw.length > 0) {
 			await timerHandler.createQueue(
 				'sqlite-queue',
-				 {
-					 type: 'remove-window-events',
-					 data: arg.idsAw
-				 }, knex);
+				{
+					type: 'remove-window-events',
+					data: arg.idsAw
+				}, knex);
 		}
 	});
 
@@ -223,6 +226,7 @@ export function ipcTimer(
 		settingWindow.webContents.send('app_setting_update', {
 			setting: LocalStore.getStore('appSetting')
 		});
+		powerManagerPreventSleep.stop();
 	});
 
 	ipcMain.on('return_time_slot', async (event, arg) => {
@@ -230,13 +234,13 @@ export function ipcTimer(
 			`Return To Timeslot Last Timeslot ID: ${arg.timeSlotId} and Timer ID: ${arg.timerId}`
 		);
 		timerHandler.createQueue('sqlite-queue',
-		{
-			data: {
-				id: arg.timerId,
-				timeSlotId: arg.timeSlotId
-			},
-			type: 'update-timer-time-slot'
-		}, knex);
+			{
+				data: {
+					id: arg.timerId,
+					timeSlotId: arg.timeSlotId
+				},
+				type: 'update-timer-time-slot'
+			}, knex);
 
 		timeTrackerWindow.webContents.send(
 			'refresh_time_log',
@@ -248,32 +252,32 @@ export function ipcTimer(
 		log.info(`App Setting: ${moment().format()}`, appSetting);
 		log.info(`Config: ${moment().format()}`, config);
 
-    /* TODO: was removed, why? moved to func takeScreenshotActivities on desktop-timer
-		this fix notify popup screenshot on time
-    switch (
-			appSetting.SCREENSHOTS_ENGINE_METHOD ||
-			config.SCREENSHOTS_ENGINE_METHOD
-		) {
-			case 'ElectronDesktopCapturer':
-				timeTrackerWindow.webContents.send('take_screenshot', {
-					timeSlotId: arg.timeSlotId,
-					screensize: screen.getPrimaryDisplay().workAreaSize
-				});
-				break;
-			case 'ScreenshotDesktopLib':
-				captureScreen(
-					timeTrackerWindow,
-					notificationWindow,
-					arg.timeSlotId,
-					arg.quitApp,
-					windowPath,
-					soundPath
-				);
-				break;
-			default:
-				break;
-		}
-    */
+		/* TODO: was removed, why? moved to func takeScreenshotActivities on desktop-timer
+			this fix notify popup screenshot on time
+		switch (
+				appSetting.SCREENSHOTS_ENGINE_METHOD ||
+				config.SCREENSHOTS_ENGINE_METHOD
+			) {
+				case 'ElectronDesktopCapturer':
+					timeTrackerWindow.webContents.send('take_screenshot', {
+						timeSlotId: arg.timeSlotId,
+						screensize: screen.getPrimaryDisplay().workAreaSize
+					});
+					break;
+				case 'ScreenshotDesktopLib':
+					captureScreen(
+						timeTrackerWindow,
+						notificationWindow,
+						arg.timeSlotId,
+						arg.quitApp,
+						windowPath,
+						soundPath
+					);
+					break;
+				default:
+					break;
+			}
+		*/
 
 		if (!arg.quitApp) {
 			console.log('TimeLogs:', arg.timeLogs);
@@ -381,14 +385,14 @@ export function ipcTimer(
 		timeTrackerWindow.loadURL(
 			timeTrackerPage(windowPath.timeTrackerUi)
 		);
-		LocalStore.updateAuthSetting({ isLogout: true })
+		LocalStore.updateAuthSetting({isLogout: true})
 		settingWindow.webContents.send('logout_success');
 	})
 
 	ipcMain.on('expand', (event, arg) => {
 		const isLinux = process.platform === 'linux';
 		const display = screen.getPrimaryDisplay();
-		const { width, height } = display.workArea;
+		const {width, height} = display.workArea;
 		const maxHeight = height <= 768 ? height - 20 : 768;
 		const maxWidth = height < 768 ? 360 - 50 : 360;
 		const widthLarge = height < 768 ? 1024 - 50 : 1024;
@@ -397,14 +401,14 @@ export function ipcTimer(
 				isLinux
 					? resizeLinux(timeTrackerWindow, arg)
 					: timeTrackerWindow.setBounds(
-							{
-								width: widthLarge,
-								height: maxHeight,
-								x: (width - widthLarge) * 0.5,
-								y: (height - maxHeight) * 0.5
-							},
-							true
-					  );
+						{
+							width: widthLarge,
+							height: maxHeight,
+							x: (width - widthLarge) * 0.5,
+							y: (height - maxHeight) * 0.5
+						},
+						true
+					);
 			} catch (error) {
 				console.log('error on change window width', error);
 			}
@@ -413,14 +417,14 @@ export function ipcTimer(
 				isLinux
 					? resizeLinux(timeTrackerWindow, arg)
 					: timeTrackerWindow.setBounds(
-							{
-								width: maxWidth,
-								height: maxHeight,
-								x: (width - maxWidth) * 0.5,
-								y: (height - maxHeight) * 0.5
-							},
-							true
-					  );
+						{
+							width: maxWidth,
+							height: maxHeight,
+							x: (width - maxWidth) * 0.5,
+							y: (height - maxHeight) * 0.5
+						},
+						true
+					);
 			} catch (error) {
 				console.log('error on change window width', error);
 			}
@@ -429,7 +433,7 @@ export function ipcTimer(
 	});
 
 	function resizeLinux(window: BrowserWindow, isExpanded: boolean): void {
-		const width = isExpanded ? 1024: 360;
+		const width = isExpanded ? 1024 : 360;
 		const height = 748;
 		window.setMinimumSize(width, height);
 		window.setSize(width, height, true);
@@ -441,7 +445,7 @@ export function ipcTimer(
 	})
 
 	ipcMain.on('refresh-timer', async (event) => {
-		const [ lastTime ] = await TimerData.getLastCaptureTimeSlot(
+		const [lastTime] = await TimerData.getLastCaptureTimeSlot(
 			knex,
 			LocalStore.beforeRequestParams()
 		);

@@ -278,19 +278,31 @@ nb-card-body {
 }
 
 ::ng-deep .page-link {
-  margin: auto !important;
+	margin: auto !important;
 }
 
 ::ng-deep .ng-select.ng-select-single .ng-select-container {
-  height: 30px;
+	height: 30px;
 }
 
 ::ng-deep textarea {
-  height: 90px;
+	height: 90px;
+}
+
+::ng-deep nb-dialog-container {
+	display: flex;
+	justify-content: center;
 }
 
 nb-card.dialog {
-  background-color: var(--gauzy-card-1);
+	background-color: var(--gauzy-card-1);
+	width: 90%;
+
+	nb-card-header {
+		background-color: var(--color-danger-default);
+		border-radius: var(--border-radius) var(--border-radius) 0 0;
+		color: var(--text-control-color);
+	}
 }
 
 $input-background-color: var(--gauzy-card-1);
