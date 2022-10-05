@@ -1,41 +1,42 @@
-import { ICandidateInterviewers } from './candidate-interviewers.model';
+import { IRelationalCandidateInterviewer } from './candidate-interviewers.model';
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 import { ICandidateCriterionsRating } from './candidate-criterions-rating.model';
-import { ICandidate } from './candidate.model';
-import { ICandidateInterview } from './candidate-interview.model';
+import { CandidateStatusEnum, IRelationalCandidate } from './candidate.model';
+import { IRelationalCandidateInterview } from './candidate-interview.model';
 
-export interface ICandidateFeedback
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface ICandidateFeedback extends
+	IBasePerTenantAndOrganizationEntityModel,
+	IRelationalCandidate,
+	IRelationalCandidateInterview,
+	IRelationalCandidateInterviewer
+{
 	description: string;
 	rating: number;
-	status?: string;
-	candidateId?: string;
-	candidate?: ICandidate;
-	interview?: ICandidateInterview;
-	interviewId?: string;
+	status?: CandidateStatusEnum;
 	criterionsRating?: ICandidateCriterionsRating[];
-	interviewer?: ICandidateInterviewers;
 	interviewTitle?: string;
 }
 
-export interface ICandidateFeedbackFindInput
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface ICandidateFeedbackFindInput extends
+	IBasePerTenantAndOrganizationEntityModel,
+	IRelationalCandidate,
+	IRelationalCandidateInterview,
+	IRelationalCandidateInterviewer
+{
 	description?: string;
-	candidateId?: string;
 	rating?: number;
-	interviewId?: string;
-	status?: string;
-	interviewer?: ICandidateInterviewers;
+	status?: CandidateStatusEnum;
 	criterionsRating?: ICandidateCriterionsRating[];
 }
 
-export interface ICandidateFeedbackCreateInput
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface ICandidateFeedbackCreateInput extends
+	IBasePerTenantAndOrganizationEntityModel,
+	IRelationalCandidate,
+	IRelationalCandidateInterview,
+	IRelationalCandidateInterviewer
+{
 	description: string;
-	candidateId?: string;
 	rating: number;
-	interviewId?: string;
-	status?: string;
-	interviewer?: ICandidateInterviewers;
+	status?: CandidateStatusEnum;
 	criterionsRating?: ICandidateCriterionsRating[];
 }
