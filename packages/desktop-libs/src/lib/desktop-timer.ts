@@ -2,13 +2,12 @@
 // 	return 'desktop-timer';
 // }
 import moment from 'moment';
-import {Tray, app} from 'electron';
+import {app, screen} from 'electron';
 import {TimerData} from './desktop-timer-activity';
 import {metaData} from './desktop-wakatime';
 import {LocalStore} from './desktop-store';
 import NotificationDesktop from './desktop-notifier';
-import {powerMonitor, ipcMain, screen} from 'electron';
-import {getScreeshot, detectActiveWindow} from './desktop-screenshot';
+import {detectActiveWindow, getScreeshot} from './desktop-screenshot';
 import log from 'electron-log';
 import {ActivityType, TimeLogSourceEnum} from '@gauzy/contracts';
 import {DesktopEventCounter} from './desktop-event-counter';
@@ -18,13 +17,12 @@ console.log = log.log;
 Object.assign(console, log.functions);
 const EmbeddedQueue = require('embedded-queue');
 
-export default class Timerhandler {
+export default class TimerHandler {
 	timeRecordMinute = 0;
 	timeRecordHours = 0;
 	timeRecordSecond = 0;
 	timeStart = null;
-	trayTime: Tray;
-	intevalTimer = null;
+	intervalTimer = null;
 	intervalUpdateTime = null;
 	lastTimer: any;
 	configs: any;
@@ -36,7 +34,7 @@ export default class Timerhandler {
 	queue: any = null;
 	queueType: any = {};
 	appName = app.getName();
-	eventCounter = new DesktopEventCounter();
+	_eventCounter = new DesktopEventCounter();
 	private _activeWindow = new DesktopActiveWindow();
 	private _activities = [];
 
@@ -54,34 +52,9 @@ export default class Timerhandler {
 	}
 
 	startTimer(setupWindow, knex, timeTrackerWindow, timeLog) {
-		// store timer is start to electron-store
-		if (!this.listener) {
-			this.listener = true;
-			powerMonitor.on('lock-screen', () => {
-				const appSetting = LocalStore.getStore('appSetting');
-				if (this.intevalTimer && !appSetting.trackOnPcSleep) {
-					this.isPaused = true;
-					timeTrackerWindow.webContents.send('device_sleep');
-				}
-			});
-
-			powerMonitor.on('unlock-screen', () => {
-				// this.isPaused = false;
-				const appSetting = LocalStore.getStore('appSetting');
-				if (this.isPaused && appSetting.trackOnPcSleep) {
-					this.isPaused = false;
-					timeTrackerWindow.webContents.send('device_wakeup');
-				}
-			});
-
-			ipcMain.on('time_tracking_status', (event, arg) => {
-				this.isPaused = arg;
-			});
-		}
-
-		this.eventCounter.start();
-		this._activities = [];
+		this._eventCounter.start();
 		this._activeWindow.start();
+		this._activities = [];
 
 		const appSetting = LocalStore.getStore('appSetting');
 
@@ -111,11 +84,10 @@ export default class Timerhandler {
 			}
 
 			/*
-			 * Create screenshots at begining of timer
-			//  */
-			(async () => {
-				await this.makeScreenshot(setupWindow, knex, timeTrackerWindow, false);
-			})();
+			 * Create screenshots at beginning of timer
+			*/
+
+			await this.makeScreenshot(setupWindow, knex, timeTrackerWindow, false);
 
 			timeTrackerWindow.webContents.send('timer_status', {
 				...LocalStore.beforeRequestParams()
@@ -127,7 +99,7 @@ export default class Timerhandler {
 	 * Collect windows and afk activities
 	 */
 	collectActivities(setupWindow, knex, timeTrackerWindow) {
-		this.intevalTimer = setInterval(async () => {
+		this.intervalTimer = setInterval(async () => {
 			try {
 				const projectInfo = LocalStore.getStore('project');
 				const appSetting = LocalStore.getStore('appSetting');
@@ -274,10 +246,10 @@ export default class Timerhandler {
 	 */
 	async stopTimerIntervalPeriod() {
 		try {
-			this.eventCounter.stop();
+			this._eventCounter.stop();
 			if (this._activeWindow.active) await this._activeWindow.stop();
 			this._activities = [];
-			clearInterval(this.intevalTimer);
+			clearInterval(this.intervalTimer);
 			clearInterval(this.intervalUpdateTime);
 		} catch (error) {
 			console.log('error on clear all intervals for timer');
@@ -285,7 +257,7 @@ export default class Timerhandler {
 		console.log(
 			'Stop Timer Interval Period:',
 			this.timeSlotStart,
-			this.intevalTimer,
+			this.intervalTimer,
 			this.intervalUpdateTime
 		);
 	}
@@ -300,9 +272,10 @@ export default class Timerhandler {
 	}
 
 	async getSetTimeSlot(setupWindow, knex) {
-		const { id } = this.lastTimer;
+		const {id} = this.lastTimer;
 		await TimerData.getTimer(knex, id).then(async (timerD) => {
-			await TimerData.getAfk(knex, id).then((afk) => {});
+			await TimerData.getAfk(knex, id).then((afk) => {
+			});
 		});
 	}
 
@@ -320,7 +293,7 @@ export default class Timerhandler {
 		log.info(`App Setting: ${moment().format()}`, appSetting);
 		log.info(`Config: ${moment().format()}`, config);
 
-		const { id: lastTimerId } = this.lastTimer;
+		const {id: lastTimerId} = this.lastTimer;
 		let awActivities = await TimerData.getWindowEvent(knex, lastTimerId);
 
 		// get waktime heartbeats
@@ -343,12 +316,12 @@ export default class Timerhandler {
 
 		// formatting window activities
 		this._activities = this._activities.map((item) => {
-			return {
-				title: item.data ? (item.data.app || item.data.title) : '',
+			return item.data ? {
+				title: item.data.app || item.data.title,
 				date: moment(item.timestamp).utc().format('YYYY-MM-DD'),
 				time: moment(item.timestamp).utc().format('HH:mm:ss'),
 				duration: Math.floor(item.duration),
-				type: item.data && item.data.url ? ActivityType.URL : ActivityType.APP,
+				type: item.data.url ? ActivityType.URL : ActivityType.APP,
 				taskId: userInfo.taskId,
 				projectId: userInfo.projectId,
 				organizationContactId: userInfo.organizationContactId,
@@ -357,7 +330,7 @@ export default class Timerhandler {
 				source: TimeLogSourceEnum.DESKTOP,
 				recordedAt: moment(item.timestamp).utc().toDate(),
 				metaData: item.data
-			};
+			} : {};
 		});
 
 		// formating aw
@@ -412,11 +385,11 @@ export default class Timerhandler {
 		});
 
 		const allActivities = [...awActivities, ...wakatimeHeartbeats, ...this._activities];
-		return { allActivities, idsAw, idsWakatime, durationAfk };
+		return {allActivities, idsAw, idsWakatime, durationAfk};
 	}
 
 	afkCount(afkList) {
-		let afkTime:number = 0;
+		let afkTime: number = 0;
 
 		const afkOnly = afkList.filter((afk) => {
 			const jsonData = JSON.parse(afk.data);
@@ -441,16 +414,16 @@ export default class Timerhandler {
 		log.info(`Config: ${moment().format()}`, config);
 		const updatePeriod =
 			parseInt(appSetting.timer.updatePeriod, 10) * 60;
-		const { id: lastTimerId, timeLogId } = this.lastTimer;
+		const {id: lastTimerId, timeLogId} = this.lastTimer;
 		const durationNow = now.diff(moment(lastTimeSlot), 'seconds');
 		let durationNonAfk = durationNow - dataCollection.durationAfk;
 		if (!projectInfo.aw.isAw || !appSetting.awIsConnected || dataCollection.allActivities.length === 0) {
 			durationNonAfk = 0;
 		}
 		switch (
-			appSetting.SCREENSHOTS_ENGINE_METHOD ||
-			config.SCREENSHOTS_ENGINE_METHOD
-		) {
+		appSetting.SCREENSHOTS_ENGINE_METHOD ||
+		config.SCREENSHOTS_ENGINE_METHOD
+			) {
 			case 'ElectronDesktopCapturer':
 				timeTrackerWindow.webContents.send(
 					'prepare_activities_screenshot',
@@ -481,13 +454,13 @@ export default class Timerhandler {
 						isAw: projectInfo.aw.isAw,
 						isAwConnected: appSetting.awIsConnected,
 						keyboard: Math.round(
-							this.eventCounter.keyboardPercentage * durationNow
+							this._eventCounter.keyboardPercentage * durationNow
 						),
 						mouse: Math.round(
-							this.eventCounter.mousePercentage * durationNow
+							this._eventCounter.mousePercentage * durationNow
 						),
 						system: Math.round(
-							this.eventCounter.systemPercentage * durationNow
+							this._eventCounter.systemPercentage * durationNow
 						)
 					}
 				);
@@ -523,13 +496,13 @@ export default class Timerhandler {
 						isAw: projectInfo.aw.isAw,
 						isAwConnected: appSetting.awIsConnected,
 						keyboard: Math.round(
-							this.eventCounter.keyboardPercentage * durationNow
+							this._eventCounter.keyboardPercentage * durationNow
 						),
 						mouse: Math.round(
-							this.eventCounter.mousePercentage * durationNow
+							this._eventCounter.mousePercentage * durationNow
 						),
 						system: Math.round(
-							this.eventCounter.systemPercentage * durationNow
+							this._eventCounter.systemPercentage * durationNow
 						)
 					}
 				);
@@ -538,8 +511,8 @@ export default class Timerhandler {
 				break;
 		}
 
-		if(this.eventCounter.intervalDuration >= updatePeriod ) {
-			this.eventCounter.reset();
+		if (this._eventCounter.intervalDuration >= updatePeriod) {
+			this._eventCounter.reset();
 			this._activities = [];
 		}
 	}
@@ -612,10 +585,10 @@ export default class Timerhandler {
 	async createQueue(type, data, knex) {
 		const queName = `${type}-${this.appName}`;
 		if (!this.queue) {
-			this.queue = await EmbeddedQueue.Queue.createQueue({ inMemoryOnly: true  });
+			this.queue = await EmbeddedQueue.Queue.createQueue({inMemoryOnly: true});
 		}
 
-		if(!this.queueType[queName]) {
+		if (!this.queueType[queName]) {
 			this.queueType[queName] = this.queue;
 			this.queue.process(
 				queName,

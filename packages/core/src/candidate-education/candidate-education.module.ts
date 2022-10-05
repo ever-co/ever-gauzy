@@ -5,17 +5,24 @@ import { CandidateEducationService } from './candidate-education.service';
 import { CandidateEducation } from './candidate-education.entity';
 import { CandidateEducationController } from './candidate-education.controller';
 import { TenantModule } from '../tenant/tenant.module';
+import { UserModule } from './../user/user.module';
 
 @Module({
 	imports: [
 		RouterModule.forRoutes([
 			{ path: '/candidate-educations', module: CandidateEducationModule }
 		]),
-		TypeOrmModule.forFeature([CandidateEducation]),
-		TenantModule
+		TypeOrmModule.forFeature([
+			CandidateEducation
+		]),
+		TenantModule,
+		UserModule
 	],
-	providers: [CandidateEducationService],
 	controllers: [CandidateEducationController],
-	exports: [CandidateEducationService]
+	providers: [CandidateEducationService],
+	exports: [
+		TypeOrmModule,
+		CandidateEducationService
+	]
 })
 export class CandidateEducationModule {}

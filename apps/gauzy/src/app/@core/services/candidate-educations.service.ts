@@ -4,15 +4,19 @@ import { firstValueFrom } from 'rxjs';
 import {
 	IEducationCreateInput,
 	ICandidateEducation,
-	IEducationFindInput
+	IEducationFindInput,
+	IPagination
 } from '@gauzy/contracts';
+import { toParams } from '@gauzy/common-angular';
 import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable({
 	providedIn: 'root'
 })
 export class CandidateEducationsService {
-	constructor(private http: HttpClient) { }
+	constructor(
+		private readonly http: HttpClient
+	) { }
 
 	create(createInput: IEducationCreateInput): Promise<ICandidateEducation> {
 		return firstValueFrom(
@@ -25,17 +29,12 @@ export class CandidateEducationsService {
 	}
 
 	getAll(
-		findInput?: IEducationFindInput
-	): Promise<{ items: any[]; total: number }> {
-		const data = JSON.stringify({ findInput });
+		where?: IEducationFindInput
+	): Promise<IPagination<ICandidateEducation>> {
 		return firstValueFrom(
-			this.http
-				.get<{ items: ICandidateEducation[]; total: number }>(
-					`${API_PREFIX}/candidate-educations`,
-					{
-						params: { data }
-					}
-				)
+			this.http.get<IPagination<ICandidateEducation>>( `${API_PREFIX}/candidate-educations`, {
+				params: toParams({ where })
+			})
 		);
 	}
 

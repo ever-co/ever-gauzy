@@ -109,38 +109,70 @@
 					<nb-card>
 						<nb-card-body>
 							<nb-toggle [checked]="muted"
-								(checkedChange)="toggleNotificationSoundChange($event)" status="basic"> Muted Notification
+									   (checkedChange)="toggleNotificationSoundChange($event)" status="basic"> Muted
+								Notification
 							</nb-toggle>
 						</nb-card-body>
 					</nb-card>
 				</div>
 			</div>
 		</ng-container>
-		<div class="row" *ngIf="selectedMenu === 'Timer'">
-			<div class="col-12">
-				<h4>Timer</h4>
+		<ng-container *ngIf="selectedMenu === 'Timer'">
+			<div class="row">
+				<div class="col-12">
+					<h4>Timer</h4>
+				</div>
 			</div>
-			<div class="col-12">
-				<h6>Update activities or screen capture every</h6>
+			<div class="row">
+				<div class="col-12">
+					<h6>Update activities or screen capture every</h6>
+				</div>
 			</div>
-			<div class="col-12 form-group">
-				<nb-select placeholder="Select Period" [(ngModel)]="selectedPeriod"
-					(ngModelChange)="selectPeriod($event)" [disabled]="appSetting.timerStarted">
-					<nb-option *ngFor="let item of periodOption" [value]="item">{{ item }} Minute</nb-option>
-				</nb-select>
+			<div class="row notification">
+				<div class="col-10">
+					<nb-card>
+						<nb-card-body>
+							<nb-select class="mb-3" placeholder="Select Period" [(ngModel)]="selectedPeriod"
+									   (ngModelChange)="selectPeriod($event)" [disabled]="appSetting.timerStarted">
+								<nb-option *ngFor="let item of periodOption" [value]="item">{{ item }}Minute
+								</nb-option>
+							</nb-select>
+							<nb-toggle [(ngModel)]="appSetting.randomScreenshotTime"
+									   (ngModelChange)="toggleRandomScreenshot($event)" status="basic"
+									   [disabled]="appSetting.timerStarted">Random Screenshot Time
+							</nb-toggle>
+							<nb-toggle [(ngModel)]="appSetting.trackOnPcSleep"
+									   (ngModelChange)="toggleTrackOnPcSleep($event)"
+									   [disabled]="appSetting.timerStarted"
+									   status="basic">Track Time when PC locked
+							</nb-toggle>
+						</nb-card-body>
+					</nb-card>
+				</div>
 			</div>
-			<div class="col-12">
-				<nb-toggle [(ngModel)]="appSetting.randomScreenshotTime"
-					(ngModelChange)="toggleRandomScreenshot($event)" status="basic"
-					[disabled]="appSetting.timerStarted">Random Screenshot Time
-				</nb-toggle>
+			<div class="row">
+				<div class="col-12">
+					<h6>Keeps system and screen active</h6>
+				</div>
 			</div>
-			<div class="col-12">
-				<nb-toggle [(ngModel)]="appSetting.trackOnPcSleep" (ngModelChange)="toggleTrackOnPcSleep($event)"
-					status="basic">Track Time when PC locked
-				</nb-toggle>
+			<div class="row">
+				<div class="col-12">
+					<p>Prevent the display from going to sleep</p>
+				</div>
 			</div>
-		</div>
+			<div class="row notification">
+				<div class="col-10">
+					<nb-card>
+						<nb-card-body>
+							<nb-toggle [(ngModel)]="appSetting.preventDisplaySleep"
+									   (ngModelChange)="togglePreventDisplaySleep($event)" status="basic"
+									   [disabled]="appSetting.timerStarted">Prevent display sleep
+							</nb-toggle>
+						</nb-card-body>
+					</nb-card>
+				</div>
+			</div>
+		</ng-container>
 		<div class="row" *ngIf="selectedMenu === 'Update'">
 			<div class="col-12">
 				<nb-card class="card-full-height">

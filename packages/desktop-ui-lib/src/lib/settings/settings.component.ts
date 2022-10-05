@@ -755,4 +755,8 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				this._logbox.nativeElement.scrollHeight;
 		}
 	}
+
+	public togglePreventDisplaySleep(event: boolean): void {
+		this.updateSetting(event, 'preventDisplaySleep');
+	}
 }
