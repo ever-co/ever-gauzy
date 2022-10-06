@@ -16,13 +16,12 @@ import {
 	CandidateTechnologies,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { IsOptional, IsString } from 'class-validator';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
 
 @Entity('candidate_interview')
-export class CandidateInterview
-	extends TenantOrganizationBaseEntity
+export class CandidateInterview extends TenantOrganizationBaseEntity
 	implements ICandidateInterview {
+
 	@ApiProperty({ type: () => String })
 	@Column()
 	title: string;
@@ -40,7 +39,7 @@ export class CandidateInterview
 	location?: string;
 
 	@ApiProperty({ type: () => String })
-	@Column()
+	@Column({ nullable: true })
 	note?: string;
 
 	@ApiPropertyOptional({ type: () => Boolean, default: false })
@@ -57,7 +56,7 @@ export class CandidateInterview
 
 	/*
     |--------------------------------------------------------------------------
-    | @OneToMany 
+    | @OneToMany
     |--------------------------------------------------------------------------
     */
 	@ApiProperty({ type: () => CandidateFeedback })
@@ -90,9 +89,13 @@ export class CandidateInterview
 
 	/*
     |--------------------------------------------------------------------------
-    | @ManyToOne 
+    | @ManyToOne
     |--------------------------------------------------------------------------
     */
+
+	/**
+	 * Candidate
+	 */
 	@ApiProperty({ type: () => Candidate })
 	@ManyToOne(() => Candidate, (candidate) => candidate.interview, {
 		onDelete: 'CASCADE'
@@ -101,8 +104,6 @@ export class CandidateInterview
 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: CandidateInterview) => it.candidate)
-	@IsString()
-	@IsOptional()
 	@Index()
 	@Column({ nullable: true })
 	candidateId?: string;
