@@ -1,38 +1,44 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { FullCalendarComponent } from '@fullcalendar/angular';
-import { CalendarOptions, EventInput, disableCursor } from '@fullcalendar/core';
+import { CalendarOptions, EventInput, disableCursor, DateSelectArg, EventHoveringArg } from '@fullcalendar/core';
 import bootstrapPlugin from '@fullcalendar/bootstrap';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGrigPlugin from '@fullcalendar/timegrid';
-import interactionPlugin from '@fullcalendar/interaction';
-import { CandidateInterviewService } from '../../../@core/services/candidate-interview.service';
+import interactionPlugin, { DateClickArg } from '@fullcalendar/interaction';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import * as moment from 'moment';
+import { debounceTime, filter, tap } from 'rxjs/operators';
+import { distinctUntilChange } from '@gauzy/common-angular';
+import { IOrganization } from '@gauzy/contracts';
+import { CandidateInterviewService, Store } from '../../../@core/services';
+
+@UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-candidate-calendar-info',
+	selector: 'ga-candidate-interviews-calendar-info',
 	templateUrl: './candidate-calendar-info.component.html',
 	styleUrls: ['./candidate-calendar-info.component.scss']
 })
 export class CandidateCalendarInfoComponent implements OnInit {
-	@ViewChild('calendar', { static: true })
-	calendarComponent: FullCalendarComponent;
+
+	@ViewChild('calendar', { static: true }) calendar: FullCalendarComponent;
+
 	calendarOptions: CalendarOptions;
 	calendarEvents: EventInput[] = [];
+
 	eventStartTime: Date;
 	eventEndTime: Date;
-	isPast = false;
+	isPast: boolean = false;
 	titleText: string;
 	employeeNames: string;
 
-	constructor(
-		protected dialogRef: NbDialogRef<CandidateCalendarInfoComponent>,
-		private candidateInterviewService: CandidateInterviewService
-	) {}
+	public organization: IOrganization;
 
-	ngOnInit() {
-		this.loadData();
-	}
-	async loadData() {
+	constructor(
+		protected readonly dialogRef: NbDialogRef<CandidateCalendarInfoComponent>,
+		private readonly candidateInterviewService: CandidateInterviewService,
+		private readonly store: Store
+	) {
 		this.calendarOptions = {
 			initialView: 'timeGridWeek',
 			headerToolbar: {
@@ -50,66 +56,101 @@ export class CandidateCalendarInfoComponent implements OnInit {
 			weekends: true,
 			height: 'auto',
 			selectable: true,
-			selectAllow: ({ start, end }) =>
-				moment(start).isSame(moment(end), 'day'),
+			selectAllow: ({ start, end }) => moment(start).isSame(moment(end), 'day'),
 			select: this.handleEventSelect.bind(this),
 			dateClick: this.handleDateClick.bind(this),
 			eventMouseEnter: this.handleEventMouseEnter.bind(this),
 			eventMouseLeave: this.handleEventMouseLeave.bind(this)
-		};
-		const res = await this.candidateInterviewService.getAll([
-			'interviewers'
-		]);
-		if (res) {
-			this.calendarEvents = [];
-			for (const interview of res.items) {
-				this.calendarEvents.push({
-					title: interview.title,
-					start: interview.startTime,
-					end: interview.endTime,
-					candidateId: interview.candidateId,
-					id: interview.id,
-					extendedProps: {
-						id: interview.id
-					},
-					backgroundColor: '#36f'
-				});
-			}
-			this.calendarOptions.events = this.calendarEvents;
 		}
 	}
+
+	ngOnInit(): void {
+		this.store.selectedOrganization$
+			.pipe(
+				debounceTime(100),
+				distinctUntilChange(),
+				filter((organization: IOrganization) => !!organization),
+				tap((organization: IOrganization) => this.organization = organization),
+				tap(() => this.getCandidateInterviewes()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
+
+	/**
+	 * GET candidate calendar interview events
+	 *
+	 * @returns
+	 */
+	async getCandidateInterviewes() {
+		if (!this.organization) {
+			return;
+		}
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
+
+		const interviews = (await this.candidateInterviewService.getAll(['interviewers'], {
+			tenantId,
+			organizationId
+		})).items;
+
+		this.calendarEvents = [];
+		for (const interview of interviews) {
+			this.calendarEvents.push({
+				title: interview.title,
+				start: interview.startTime,
+				end: interview.endTime,
+				candidateId: interview.candidateId,
+				id: interview.id,
+				extendedProps: {
+					id: interview.id
+				},
+				backgroundColor: '#36f'
+			});
+		}
+		this.calendarOptions.events = this.calendarEvents;
+	}
+
+	/**
+	 * Continue with selected date range times
+	 *
+	 * @returns
+	 */
 	continue() {
+		if (this.isPastDates()) {
+			return;
+		}
 		this.dialogRef.close({
 			startTime: this.eventStartTime,
 			endTime: this.eventEndTime
 		});
 	}
-	handleDateClick(event) {
+
+	handleDateClick(event: DateClickArg) {
 		if (event.view.type === 'dayGridMonth') {
-			this.calendarComponent
-				.getApi()
-				.changeView('timeGridWeek', event.date);
+			this.calendar.getApi().changeView('timeGridWeek', event.date);
 		}
 	}
 
-	handleEventSelect(event) {
-		const now = new Date().getTime();
-		if (now < event.start.getTime()) {
-			this.eventStartTime = event.start;
-			this.eventEndTime = event.end;
-			this.isPast = false;
-		} else {
+	handleEventSelect(event: DateSelectArg) {
+		this.eventStartTime = event.start;
+		this.eventEndTime = event.end;
+
+		if (this.isPastDates()) {
 			disableCursor();
 			this.isPast = true;
+		} else {
+			this.isPast = false;
 		}
 	}
 
-	handleEventMouseEnter({ el }) {
+	handleEventMouseEnter({ el } : EventHoveringArg) {
 		if (this.hasOverflow(el.querySelector('.fc-event-main'))) {
 			el.style.position = 'unset';
 		}
 	}
-	handleEventMouseLeave({ el }) {
+
+	handleEventMouseLeave({ el }: EventHoveringArg) {
 		el.removeAttribute('style');
 	}
 
@@ -132,7 +173,20 @@ export class CandidateCalendarInfoComponent implements OnInit {
 		}
 		return isOverflowing;
 	}
+
 	closeDialog() {
 		this.dialogRef.close();
+	}
+
+	/**
+	 * If, selected date range is past
+	 *
+	 * @returns {Boolean}
+	 */
+	isPastDates(): boolean {
+		if (!this.eventStartTime) {
+			return;
+		}
+		return (moment(this.eventStartTime).diff(moment()) < 0);
 	}
 }
