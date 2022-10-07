@@ -7,7 +7,7 @@ import { InvoiceController } from './invoice.controller';
 import { InvoiceService } from './invoice.service';
 import { Invoice } from './invoice.entity';
 import { CommandHandlers } from './commands';
-import { EmailModule } from '../email/email.module';
+import { EmailModule } from '../email';
 import { EstimateEmailModule } from '../estimate-email/estimate-email.module';
 import { TenantModule } from '../tenant/tenant.module';
 import { PdfmakerService } from './pdfmaker.service';
@@ -40,7 +40,6 @@ import { UserModule } from './../user/user.module';
 		},
 	],
 	exports: [
-		TypeOrmModule,
 		InvoiceService,
 		PdfmakerService
 	]

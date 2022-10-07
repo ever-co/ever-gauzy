@@ -5,9 +5,10 @@ import { Payment } from './payment.entity';
 import { PaymentController } from './payment.controller';
 import { PaymentService } from './payment.service';
 import { TenantModule } from '../tenant/tenant.module';
-import { UserModule } from './../user/user.module';
+import { UserService } from '../user/user.service';
 import { PaymentMapService } from './payment.map.service';
 import { EmailModule } from './../email/email.module';
+import { User } from '../user/user.entity';
 
 @Module({
 	imports: [
@@ -15,18 +16,14 @@ import { EmailModule } from './../email/email.module';
 			{ path: '/payments', module: PaymentModule }
 		]),
 		TypeOrmModule.forFeature([
+			User,
 			Payment
 		]),
 		TenantModule,
-		UserModule,
 		EmailModule
 	],
 	controllers: [PaymentController],
-	providers: [PaymentService, PaymentMapService],
-	exports: [
-		TypeOrmModule,
-		PaymentService,
-		PaymentMapService
-	]
+	providers: [PaymentService, UserService, PaymentMapService],
+	exports: [PaymentService, UserService, PaymentMapService]
 })
 export class PaymentModule {}
