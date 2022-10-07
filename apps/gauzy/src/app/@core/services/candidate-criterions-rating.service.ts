@@ -4,7 +4,8 @@ import { firstValueFrom } from 'rxjs';
 import {
 	ICandidatePersonalQualities,
 	ICandidateCriterionsRating,
-	ICandidateTechnologies
+	ICandidateTechnologies,
+	IPagination
 } from '@gauzy/contracts';
 import { API_PREFIX } from '../constants/app.constants';
 
@@ -30,14 +31,14 @@ export class CandidateCriterionsRatingService {
 		);
 	}
 
-	getAll(): Promise<{ items: any[]; total: number }> {
+	getAll(): Promise<IPagination<ICandidateCriterionsRating>> {
 		return firstValueFrom(
-			this.http
-				.get<{ items: ICandidateCriterionsRating[]; total: number }>(
-					`${API_PREFIX}/candidate-criterions-rating`
-				)
+			this.http.get<IPagination<ICandidateCriterionsRating>>(
+				`${API_PREFIX}/candidate-criterions-rating`
+			)
 		);
 	}
+
 	updateBulk(
 		criterionsRating: ICandidateCriterionsRating[],
 		technologies: number[],

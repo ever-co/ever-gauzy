@@ -1,45 +1,50 @@
-import { Notification, nativeImage } from 'electron';
+import {nativeImage, Notification} from 'electron';
 import * as path from 'path';
-import { LocalStore } from './desktop-store';
+import {LocalStore} from './desktop-store';
+import NativeImage = Electron.NativeImage;
 
 export default class NotificationDesktop {
-	timerActionNotification(isStart) {
-		const iconPath = path.join(__dirname, '..', 'icons', 'icon.png');
-		console.log(iconPath);
-		const iconNativePath = nativeImage.createFromPath(iconPath);
-		iconNativePath.resize({ width: 16, height: 16 });
-		const appSetting = LocalStore.getStore('appSetting');
-		const notification = new Notification({
-			title: 'Gauzy',
-			body: isStart ? 'Time Tracking Started' : 'Time Tracking Stopped',
-			icon: iconNativePath,
-			closeButtonText: 'Close',
-			silent: appSetting ? appSetting.mutedNotification : false
-		});
+	private readonly _iconPath: string;
+	private readonly _iconNativePath: NativeImage;
 
-		notification.show();
-		setTimeout(() => {
-			notification.close();
-		}, 2000);
+	constructor() {
+		this._iconPath = path.join(__dirname, '..', 'icons', 'icon.png');
+		this._iconNativePath = nativeImage.createFromPath(this._iconPath);
+		this._iconNativePath.resize({width: 16, height: 16});
 	}
 
-	customNotification(message, title) {
-		const iconPath = path.join(__dirname, '..', 'icons', 'icon.png');
-		console.log(iconPath);
-		const iconNativePath = nativeImage.createFromPath(iconPath);
-		iconNativePath.resize({ width: 16, height: 16 });
-		const appSetting = LocalStore.getStore('appSetting');
+	private get _isSilent(): boolean {
+		const setting = LocalStore.getStore('appSetting');
+		return setting ? setting.mutedNotification : false;
+	}
+
+	public customNotification(message, title) {
 		const notification = new Notification({
 			title: title,
 			body: message,
-			icon: iconNativePath,
+			icon: this._iconNativePath,
 			closeButtonText: 'Close',
-			silent: appSetting ? appSetting.mutedNotification : false
+			silent: this._isSilent
 		});
 
 		notification.show();
 		setTimeout(() => {
 			notification.close();
 		}, 3000);
+	}
+
+	public timerActionNotification(isStart) {
+		const notification = new Notification({
+			title: 'Gauzy',
+			body: isStart ? 'Time Tracking Started' : 'Time Tracking Stopped',
+			icon: this._iconNativePath,
+			closeButtonText: 'Close',
+			silent: this._isSilent
+		});
+
+		notification.show();
+		setTimeout(() => {
+			notification.close();
+		}, 2000);
 	}
 }

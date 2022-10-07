@@ -1,10 +1,7 @@
 <nb-card class="card-calendar">
 	<nb-card-header class="card-calendar-header">
 		<h4>
-			{{
-				'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.SCHEDULED_INTERVIEWS'
-					| translate
-			}}
+			{{ 'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.SCHEDULED_INTERVIEWS' | translate }}
 		</h4>
 		<nb-icon
 			icon="close-outline"
@@ -14,13 +11,17 @@
 	</nb-card-header>
 	<nb-card-body>
 		<full-calendar
-			class="calendar"
 			#calendar
+			class="calendar"
 			[options]="calendarOptions"
 		></full-calendar>
 	</nb-card-body>
 	<div class="button">
-		<button nbButton status="danger" (click)="closeDialog()">
+		<button
+			nbButton
+			status="danger"
+			(click)="closeDialog()"
+		>
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
 		<button
@@ -29,27 +30,21 @@
 			[disabled]="!eventStartTime || isPast"
 			(click)="continue()"
 		>
-			<span *ngIf="!isPast">
-				{{
-					'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.CONTINUE'
-						| translate
-				}}<span *ngIf="eventStartTime">
-					{{
-						'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.WITH'
-							| translate
-					}}
-					: {{ eventStartTime | date: 'mediumDate' }},
-					{{ eventStartTime | date: 'shortTime' }}-{{
-						eventEndTime | date: 'shortTime'
-					}}
+			<ng-template [ngIf]="!isPast" [ngIfElse]="pastTemplateText">
+				<span>
+					{{ 'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.CONTINUE' | translate }}
+					<span *ngIf="eventStartTime">
+						{{ 'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.WITH' | translate }} :
+						{{ eventStartTime | date: 'mediumDate' }},
+						{{ eventStartTime | date: 'shortTime' }}-{{ eventEndTime | date: 'shortTime' }}
+					</span>
 				</span>
-			</span>
-			<span *ngIf="isPast"
-				>{{
-					'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.PAST_DATE'
-						| translate
-				}}
-			</span>
+		  	</ng-template>
 		</button>
 	</div>
 </nb-card>
+<ng-template #pastTemplateText>
+	<span>
+		{{ 'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.PAST_DATE' | translate }}
+	</span>
+</ng-template>

@@ -23,10 +23,6 @@ import { EmailModule } from './../email/email.module';
 	],
 	controllers: [PaymentController],
 	providers: [PaymentService, PaymentMapService],
-	exports: [
-		TypeOrmModule,
-		PaymentService,
-		PaymentMapService
-	]
+	exports: [PaymentService, PaymentMapService]
 })
 export class PaymentModule {}

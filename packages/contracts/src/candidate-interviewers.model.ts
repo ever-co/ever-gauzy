@@ -2,6 +2,11 @@ import { ICandidateInterview } from './candidate-interview.model';
 import { IEmployee } from './employee.model';
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 
+export interface IRelationalCandidateInterviewer {
+	readonly interviewer?: ICandidateInterviewers;
+	readonly interviewerId?: ICandidateInterviewers['id'];
+}
+
 export interface ICandidateInterviewers
 	extends IBasePerTenantAndOrganizationEntityModel {
 	interviewId: string;
@@ -24,6 +29,7 @@ export interface ICandidateInterviewersCreateInput
 	employeeId?: string;
 	employeeIds?: string[];
 }
+
 export interface ICandidateInterviewersDeleteInput {
 	interviewId?: string;
 	employeeId?: string;

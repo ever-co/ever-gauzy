@@ -11,7 +11,8 @@ import {timeTrackerPage} from '@gauzy/desktop-window';
 import log from 'electron-log';
 import NotificationDesktop from './desktop-notifier';
 import {DesktopPowerManager} from "./desktop-power-manager";
-import {PowerManagerPreventDisplaySleep} from "./decorators";
+import {PowerManagerPreventDisplaySleep, PowerManagerDetectInactivity} from "./decorators";
+import {DesktopOsInactivityHandler} from "./desktop-os-inactivity-handler";
 
 const timerHandler = new TimerHandler();
 
@@ -142,6 +143,8 @@ export function ipcTimer(
 ) {
 	const powerManager = new DesktopPowerManager(timeTrackerWindow);
 	const powerManagerPreventSleep = new PowerManagerPreventDisplaySleep(powerManager);
+	const powerManagerDetectInactivity = new PowerManagerDetectInactivity(powerManager);
+	new DesktopOsInactivityHandler(powerManagerDetectInactivity);
 
 	ipcMain.on('start_timer', (event, arg) => {
 		const setting = LocalStore.getStore('appSetting');
@@ -165,6 +168,7 @@ export function ipcTimer(
 			setting: LocalStore.getStore('appSetting')
 		});
 		if (setting && setting.preventDisplaySleep) powerManagerPreventSleep.start();
+		powerManagerDetectInactivity.startInactivityDetection();
 	});
 
 	ipcMain.on('data_push_activity', async (event, arg) => {
@@ -227,6 +231,7 @@ export function ipcTimer(
 			setting: LocalStore.getStore('appSetting')
 		});
 		powerManagerPreventSleep.stop();
+		powerManagerDetectInactivity.stopInactivityDetection();
 	});
 
 	ipcMain.on('return_time_slot', async (event, arg) => {
