@@ -20,3 +20,9 @@
   }
   @include nb-select-overrides(2rem, $default-button-radius, $default-box-shadow);
 }
+
+.preferred-layout {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}

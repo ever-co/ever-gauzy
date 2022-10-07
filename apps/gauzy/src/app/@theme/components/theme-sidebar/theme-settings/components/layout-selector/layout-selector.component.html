@@ -1,7 +1,10 @@
 <div class="theme-container">
-	<span
+	<span class="preferred-layout"
 		>{{ 'SETTINGS_MENU.PREFERRED_LAYOUT' | translate }}
-		<nb-icon icon="question-mark-circle-outline"></nb-icon
+		<nb-icon  
+			[nbTooltip]="'SETTINGS_MENU.PREFERRED_LAYOUT_TOOLTIP' | translate"
+			icon="question-mark-circle-outline"
+		></nb-icon
 	></span>
 	<div>
 		<nb-select
