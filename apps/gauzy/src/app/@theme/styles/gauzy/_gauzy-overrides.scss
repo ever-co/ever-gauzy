@@ -122,6 +122,7 @@ $default-box-shadow: var(--gauzy-shadow);
     display: block;
     overflow-x: hidden;
     text-overflow: ellipsis;
+    color: var(--gauzy-text-color-1);
   }
 }
 
