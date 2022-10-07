@@ -337,6 +337,18 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			})
 		);
 
+		this.electronService.ipcRenderer.on('stop_from_inactivity_handler', async () => {
+			await this._ngZone.run(() => {
+				if (this.start) this.toggleStart(false);
+			})
+		});
+
+		this.electronService.ipcRenderer.on('start_from_inactivity_handler', async () => {
+			await this._ngZone.run(() => {
+				this.toggleStart(true);
+			})
+		});
+
 		this.electronService.ipcRenderer.on('device_wakeup', () =>
 			this._ngZone.run(() => {
 				const elBtn: HTMLElement = this.btnDialogOpen.nativeElement;
