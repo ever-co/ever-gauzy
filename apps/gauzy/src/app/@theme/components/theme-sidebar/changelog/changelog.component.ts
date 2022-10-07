@@ -1,5 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { IChangelog } from '@gauzy/contracts';
+import { NbSidebarService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
@@ -17,7 +18,7 @@ export class ChangelogComponent implements OnInit, OnDestroy {
 
 	constructor(
 		private readonly _changelogService: ChangelogService,
-		private readonly _sidebarService
+		private readonly _sidebarService: NbSidebarService
 	) {}
 
 	ngOnInit() {
