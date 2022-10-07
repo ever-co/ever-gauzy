@@ -1,6 +1,11 @@
 .charts {
 	display: flex;
 	justify-content: flex-end;
+	align-items: center;
+	label {
+		margin: 0;
+	}
+	margin-bottom: 20px;
 	gap: 0.6rem
 }
 .chart-wrap {
@@ -12,10 +17,8 @@
 .select-charts {
 	cursor: pointer;
 	font-size: 0.875rem;
-	margin-bottom: 20px;
 	min-width: 150px;
 	width: fit-content;
-	margin-top: -10px;
 }
 .chart-option {
 	margin-left: 5px;
