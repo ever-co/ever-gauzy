@@ -15,7 +15,10 @@ export class ChangelogComponent implements OnInit, OnDestroy {
 	learnMore: string;
 	items$: Observable<IChangelog[]> = this._changelogService.changelogs$;
 
-	constructor(private readonly _changelogService: ChangelogService) {}
+	constructor(
+		private readonly _changelogService: ChangelogService,
+		private readonly _sidebarService
+	) {}
 
 	ngOnInit() {
 		this._changelogService
@@ -30,6 +33,10 @@ export class ChangelogComponent implements OnInit, OnDestroy {
 				untilDestroyed(this)
 			)
 			.subscribe();
+	}
+
+	public closeSidebar() {
+		this._sidebarService.toggle(false, 'changelog_sidebar');
 	}
 
 	ngOnDestroy(): void {}
