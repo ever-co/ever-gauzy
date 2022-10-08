@@ -17,6 +17,13 @@
     color: rgba($color: rgba(126, 126, 143), $alpha: 1);
     border-width: 2px;
     border-color: rgba($color: rgba(126, 126, 143), $alpha: .5);
+    width: 120px;
   }
   @include nb-select-overrides(2rem, $default-button-radius, $default-box-shadow);
+}
+
+.preferred-layout {
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }

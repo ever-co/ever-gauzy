@@ -5,6 +5,7 @@ import { Merchant } from './merchant.entity';
 import { MerchantController } from './merchant.controller';
 import { MerchantService } from './merchant.service';
 import { TenantModule } from '../tenant/tenant.module';
+import { UserModule } from './../user/user.module';
 import { WarehouseModule } from './../warehouse/warehouse.module';
 import { ImageAssetModule } from './../image-asset/image-asset.module';
 
@@ -15,6 +16,7 @@ import { ImageAssetModule } from './../image-asset/image-asset.module';
 		]),
 		TypeOrmModule.forFeature([Merchant]),
 		TenantModule,
+		UserModule,
 		WarehouseModule,
 		ImageAssetModule
 	],

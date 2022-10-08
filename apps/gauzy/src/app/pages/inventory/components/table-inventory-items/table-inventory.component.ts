@@ -27,7 +27,6 @@ import {
 	IPaginationBase,
 	PaginationFilterBaseComponent
 } from './../../../../@shared/pagination/pagination-filter-base.component';
-import { DeleteConfirmationComponent } from '../../../../@shared/user/forms';
 import { API_PREFIX, ComponentEnum } from '../../../../@core/constants';
 import {
 	ProductService,
@@ -35,9 +34,9 @@ import {
 	ToastrService
 } from '../../../../@core/services';
 import { ServerDataSource } from './../../../../@core/utils/smart-table/server.data-source';
-import { ImageRowComponent } from '../inventory-table-components';
-import { NameWithDescriptionComponent } from '../inventory-table-components/name-with-description/name-with-description.component';
-import { TagsOnlyComponent } from 'apps/gauzy/src/app/@shared';
+import { DeleteConfirmationComponent } from '../../../../@shared/user/forms';
+import { TagsOnlyComponent } from './../../../../@shared/table-components';
+import { ImageRowComponent, NameWithDescriptionComponent } from '../inventory-table-components';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -45,10 +44,9 @@ import { TagsOnlyComponent } from 'apps/gauzy/src/app/@shared';
 	templateUrl: './table-inventory.component.html',
 	styleUrls: ['./table-inventory.component.scss']
 })
-export class TableInventoryComponent
-	extends PaginationFilterBaseComponent
-	implements AfterViewInit, OnInit, OnDestroy
-{
+export class TableInventoryComponent extends PaginationFilterBaseComponent
+	implements AfterViewInit, OnInit, OnDestroy {
+
 	settingsSmartTable: object;
 	loading: boolean = false;
 	disableButton: boolean = true;
@@ -63,6 +61,7 @@ export class TableInventoryComponent
 	public organization: IOrganization;
 	products$: Subject<any> = this.subject$;
 	private _refresh$: Subject<any> = new Subject();
+
 	inventoryTable: Ng2SmartTableComponent;
 	@ViewChild('inventoryTable') set content(content: Ng2SmartTableComponent) {
 		if (content) {

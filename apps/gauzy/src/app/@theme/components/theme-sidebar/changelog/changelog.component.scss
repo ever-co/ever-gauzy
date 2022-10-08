@@ -1,7 +1,13 @@
 @import 'apps/gauzy/src/app/auth/login/whats-new/whats-new.component.scss';
+@import 'gauzy/_gauzy-dialogs';
 
 ::ng-deep.changelog-sidebar {
   .main-container {
     width: 33rem !important;
   }
+}
+i {
+  position: absolute;
+  right: .75rem;
+  top: .75rem;
 }

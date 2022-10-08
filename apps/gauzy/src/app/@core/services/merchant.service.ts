@@ -1,56 +1,29 @@
 import { Injectable } from '@angular/core';
-import { API_PREFIX } from '../constants/app.constants';
-import {
-	IMerchant,
-} from '@gauzy/contracts';
-import { firstValueFrom } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
+import { IMerchant } from '@gauzy/contracts';
+import { toParams } from '@gauzy/common-angular';
+import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable({
 	providedIn: 'root'
 })
 export class MerchantService {
+
 	MERCHANTS_URL = `${API_PREFIX}/merchants`;
 
-	constructor(private http: HttpClient) { }
+	constructor(
+		private readonly http: HttpClient
+	) { }
 
-	getById(id: string, relations?: string[]): Promise<IMerchant> {
-		const data = JSON.stringify({ relations });
+	getById(
+		id: IMerchant['id'],
+		relations: string[] = []
+	): Promise<IMerchant> {
 		return firstValueFrom(
-			this.http
-			.get<IMerchant>(
-				`${this.MERCHANTS_URL}/${id}`,
-				{
-					params: { data }
-				}
-			)
-		);
-	}
-
-	getAll(options, params) {
-		const data = JSON.stringify({
-			relations: options.relations,
-			findInput: options.findInput
-		});
-		return firstValueFrom(
-			this.http
-			.get<{ items: IMerchant[] }>(
-				`${this.MERCHANTS_URL}`,
-				{ params: { data, ...params } }
-			)
-		);
-	}
-
-	count(findInput): Promise<Number> {
-		const data = JSON.stringify(findInput);
-		return firstValueFrom(
-			this.http
-			.get<number>(
-				`${this.MERCHANTS_URL}/count`,
-				{
-					params: { data }
-				}
-			)
+			this.http.get<IMerchant>(`${this.MERCHANTS_URL}/${id}`, {
+				params: toParams({ relations })
+			})
 		);
 	}
 
@@ -78,7 +51,7 @@ export class MerchantService {
 		);
 	}
 
-	delete(id: string): Promise<IMerchant> {
+	delete(id: IMerchant['id']): Promise<IMerchant> {
 		return firstValueFrom(
 			this.http
 			.delete<IMerchant>(
@@ -86,5 +59,4 @@ export class MerchantService {
 			)
 		);
 	}
-
 }

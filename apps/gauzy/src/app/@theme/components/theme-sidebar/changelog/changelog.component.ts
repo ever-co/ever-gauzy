@@ -1,5 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { IChangelog } from '@gauzy/contracts';
+import { NbSidebarService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
@@ -15,7 +16,10 @@ export class ChangelogComponent implements OnInit, OnDestroy {
 	learnMore: string;
 	items$: Observable<IChangelog[]> = this._changelogService.changelogs$;
 
-	constructor(private readonly _changelogService: ChangelogService) {}
+	constructor(
+		private readonly _changelogService: ChangelogService,
+		private readonly _sidebarService: NbSidebarService
+	) {}
 
 	ngOnInit() {
 		this._changelogService
@@ -30,6 +34,10 @@ export class ChangelogComponent implements OnInit, OnDestroy {
 				untilDestroyed(this)
 			)
 			.subscribe();
+	}
+
+	public closeSidebar() {
+		this._sidebarService.toggle(false, 'changelog_sidebar');
 	}
 
 	ngOnDestroy(): void {}

@@ -1,16 +1,11 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import { MerchantComponent } from './merchant.component';
 import { NgxPermissionsGuard } from 'ngx-permissions';
 import { PermissionsEnum } from '@gauzy/contracts';
+import { MerchantComponent } from './merchant.component';
 import { MerchantTableComponent } from './merchant-table/merchant-table.component';
 import { MerchantFormComponent } from './merchant-form/merchant-form.component';
 import { MerchantFormResolver } from './merchant-form/merchant-form.resolver';
-
-const ORG_PERMISSIONS = [
-	PermissionsEnum.ALL_ORG_VIEW,
-	PermissionsEnum.ALL_ORG_EDIT
-];
 
 const routes: Routes = [
 	{
@@ -20,7 +15,6 @@ const routes: Routes = [
 		data: {
 			permissions: {
 				only: [
-					...ORG_PERMISSIONS,
 					PermissionsEnum.ORG_INVENTORY_VIEW
 				],
 				redirectTo: '/pages/dashboard'

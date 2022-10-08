@@ -1,32 +1,33 @@
 <section class="section-wrapper">
-    <div class="whats-new-wrapper">
-        <h3 class="main-header">
-            {{ 'CHANGELOG_MENU.HEADER' | translate }}
-        </h3>
-        <div *ngFor="let item of items$ | async " class="entry">
-            <div class="entry-headings-wrapper">
-                <nb-icon [icon]="item.icon" class="icon"></nb-icon>
-                <div class="entry-headings">
-                    <div class="entry-header">{{ item.title }}</div>
-                    <div class="entry-header-date">{{ item.date | date }}</div>
-                </div>
-            </div>
-            <p class="paragraph">
-                {{ item.content }}
-            </p>
-        </div>
-    </div>
-    <ng-container *ngIf="learnMore">
-        <a 
-            nbButton
-            outline
-            status="primary"
-            class="learn-more"
+	<span class="cancel"><i class="fas fa-times" (click)="closeSidebar()"></i></span>
+	<div class="whats-new-wrapper">
+		<h3 class="main-header">
+			{{ 'CHANGELOG_MENU.HEADER' | translate }}
+		</h3>
+		<div *ngFor="let item of items$ | async " class="entry">
+			<div class="entry-headings-wrapper">
+				<nb-icon [icon]="item.icon" class="icon"></nb-icon>
+				<div class="entry-headings">
+					<div class="entry-header">{{ item.title }}</div>
+					<div class="entry-header-date">{{ item.date | date }}</div>
+				</div>
+			</div>
+			<p class="paragraph">
+				{{ item.content }}
+			</p>
+		</div>
+	</div>
+	<ng-container *ngIf="learnMore">
+		<a
+			nbButton
+			outline
+			status="primary"
+			class="learn-more"
 			target="_blank"
-            [href]="learnMore"
+			[href]="learnMore"
 			rel="noopener"
-        >
-            {{ 'CHANGELOG_MENU.LEARN_MORE_URL' | translate }}
-        </a>
-    </ng-container>
+		>
+			{{ 'CHANGELOG_MENU.LEARN_MORE_URL' | translate }}
+		</a>
+	</ng-container>
 </section>

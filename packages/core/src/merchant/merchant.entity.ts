@@ -78,7 +78,7 @@ export class Merchant extends TenantOrganizationBaseEntity implements IMerchant 
 	@RelationId((it: Merchant) => it.contact)
 	@Index()
 	@Column({ nullable: true })
-	contactId?: string;
+	contactId?: IContact['id'];
 
 	/*
     |--------------------------------------------------------------------------
@@ -98,7 +98,7 @@ export class Merchant extends TenantOrganizationBaseEntity implements IMerchant 
 	@RelationId((it: Merchant) => it.logo)
 	@Index()
 	@Column({ nullable: true })
-	logoId?: string;
+	logoId?: IImageAsset['id'];
 
 	/*
     |--------------------------------------------------------------------------

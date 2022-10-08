@@ -1,4 +1,8 @@
-<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
+<nb-card
+	[nbSpinner]="loading"
+	nbSpinnerStatus="primary"
+	nbSpinnerSize="large"
+>
 	<nb-card-header class="d-flex flex-column pb-0">
 		<div class="card-header-title">
 			<h4>
@@ -18,45 +22,47 @@
 		</div>
 	</nb-card-header>
 	<nb-card-body>
-		<ng-template
-			[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
-			[ngIfElse]="gridLayout"
-		>
-			<div class="table-scroll-container">
-				<ng2-smart-table
+		<ng-template ngxPermissionsOnly="ORG_INVENTORY_VIEW">
+			<ng-template
+				[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
+				[ngIfElse]="gridLayout"
+			>
+				<div class="table-scroll-container">
+					<ng2-smart-table
+						[settings]="settingsSmartTable"
+						(userRowSelect)="selectStore($event)"
+						[source]="smartTableSource"
+						style="cursor: pointer"
+						#merchantsTable
+					></ng2-smart-table>
+				</div>
+				<div class="pagination-container">
+					<ng-container *ngIf="pagination.totalItems > minItemPerPage">
+						<ga-pagination
+							(selectedOption)="onUpdateOption($event)"
+							(selectedPage)="onPageChange($event)"
+							[doEmit]="false"
+							[totalItems]="pagination?.totalItems"
+							[itemsPerPage]="pagination?.itemsPerPage"
+							[activePage]="pagination?.activePage"
+						></ga-pagination>
+					</ng-container>
+				</div>
+			</ng-template>
+			<ng-template #gridLayout>
+				<ga-card-grid
+					[totalItems]="pagination?.totalItems"
 					[settings]="settingsSmartTable"
-					(userRowSelect)="selectStore($event)"
-					[source]="smartTableSource"
-					style="cursor: pointer"
-					#merchantsTable
-				></ng2-smart-table>
-			</div>
-			<div class="pagination-container">
-				<ng-container *ngIf="pagination.totalItems > minItemPerPage">
-					<ga-pagination
-						(selectedOption)="onUpdateOption($event)"
-						(selectedPage)="onPageChange($event)"
-						[doEmit]="false"
-						[totalItems]="pagination?.totalItems"
-						[itemsPerPage]="pagination?.itemsPerPage"
-						[activePage]="pagination?.activePage"
-					></ga-pagination>
-				</ng-container>
-			</div>
-		</ng-template>
-		<ng-template #gridLayout>
-			<ga-card-grid 
-				[totalItems]="pagination?.totalItems"
-				[settings]="settingsSmartTable"
-				[source]="merchants"
-				(onSelectedItem)="selectStore($event)"
-				(scroll)="onScroll()"
-			></ga-card-grid>
+					[source]="merchants"
+					(onSelectedItem)="selectStore($event)"
+					(scroll)="onScroll()"
+				></ga-card-grid>
+			</ng-template>
 		</ng-template>
 	</nb-card-body>
 </nb-card>
 <ng-template #visibleButton>
-	<ng-template ngxPermissionsOnly="ORG_PRODUCT_TYPES_EDIT">
+	<ng-template ngxPermissionsOnly="ORG_INVENTORY_PRODUCT_EDIT">
 		<button
 			(click)="onAddStoreClick()"
 			nbButton
@@ -74,14 +80,9 @@
 	let-buttonSize="buttonSize"
 	let-selectedItem="selectedItem"
 >
-	<ng-container
-		*ngxPermissionsOnly="[
-			'ORG_PRODUCT_TYPES_EDIT',
-			'ORG_PRODUCT_TYPES_VIEW'
-		]"
-	>
+	<ng-container *ngxPermissionsOnly="['ORG_INVENTORY_VIEW', 'ORG_INVENTORY_PRODUCT_EDIT']">
 		<div class="btn-group actions">
-			<ng-container *ngxPermissionsOnly="ORG_PRODUCT_TYPES_VIEW">
+			<ng-template ngxPermissionsOnly="ORG_INVENTORY_VIEW">
 				<button
 					nbButton
 					status="basic"
@@ -92,29 +93,31 @@
 					<nb-icon icon="eye-outline"></nb-icon>
 					{{ 'BUTTONS.VIEW' | translate }}
 				</button>
-			</ng-container>
-			<button
-				(click)="onEditStore(selectedItem)"
-				nbButton
-				status="basic"
-				class="action primary"
-				size="small"
-				[disabled]="!selectedItem && disableButton"
-			>
-				<nb-icon icon="edit-outline"></nb-icon>
-				{{ 'BUTTONS.EDIT' | translate }}
-			</button>
-			<button
-				(click)="onDelete(selectedItem)"
-				nbButton
-				status="basic"
-				class="action"
-				[disabled]="!selectedItem && disableButton"
-				size="small"
-				[nbTooltip]="'BUTTONS.DELETE' | translate"
-			>
-				<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
-			</button>
+			</ng-template>
+			<ng-template ngxPermissionsOnly="ORG_INVENTORY_PRODUCT_EDIT">
+				<button
+					(click)="onEditStore(selectedItem)"
+					nbButton
+					status="basic"
+					class="action primary"
+					size="small"
+					[disabled]="!selectedItem && disableButton"
+				>
+					<nb-icon icon="edit-outline"></nb-icon>
+					{{ 'BUTTONS.EDIT' | translate }}
+				</button>
+				<button
+					(click)="onDelete(selectedItem)"
+					nbButton
+					status="basic"
+					class="action"
+					[disabled]="!selectedItem && disableButton"
+					size="small"
+					[nbTooltip]="'BUTTONS.DELETE' | translate"
+				>
+					<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
+				</button>
+			</ng-template>
 		</div>
 	</ng-container>
 </ng-template>

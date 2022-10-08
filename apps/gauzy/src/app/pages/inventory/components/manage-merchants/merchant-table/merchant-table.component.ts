@@ -39,10 +39,9 @@ import { InputFilterComponent } from './../../../../../@shared/table-filters';
 	templateUrl: './merchant-table.component.html',
 	styleUrls: ['./merchant-table.component.scss']
 })
-export class MerchantTableComponent
-	extends PaginationFilterBaseComponent
-	implements OnInit
-{
+export class MerchantTableComponent extends PaginationFilterBaseComponent
+	implements OnInit {
+
 	settingsSmartTable: object;
 	loading: boolean = false;
 	selectedMerchant: IMerchant;

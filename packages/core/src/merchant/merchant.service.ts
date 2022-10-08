@@ -1,8 +1,8 @@
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { IMerchant, IPagination } from '@gauzy/contracts';
+import { IMerchant } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
-import { Merchant } from './../core/entities/internal';
+import { Merchant } from './merchant.entity';
 
 export class MerchantService extends TenantAwareCrudService<Merchant> {
 
@@ -14,26 +14,14 @@ export class MerchantService extends TenantAwareCrudService<Merchant> {
     }
 
     async findById(
-		id: string,
-		relations: string[]
+		id: IMerchant['id'],
+		relations: string[] = []
 	): Promise<IMerchant> {
         return await this.findOneByIdString(id, { relations });
     }
 
-    async findAllMerchants(
-		relations?: string[],
-		findInput?: any
-	): Promise<IPagination<IMerchant>> {
-		return await this.findAll({
-			where: {
-				...findInput
-			},
-			relations
-		});
-	}
-
     async update(
-		id: string,
+		id: IMerchant['id'],
 		merchant: Merchant
 	): Promise<IMerchant> {
 		return await this.merchantRepository.save({ id, ...merchant });

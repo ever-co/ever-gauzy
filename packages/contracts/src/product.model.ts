@@ -4,9 +4,10 @@ import {
 } from './base-entity.model';
 import { ITranslation, ITranslatable } from './translation.model';
 import { ITag } from './tag-entity.model';
-import { IContact } from './contact.model';
+import { IContact, IRelationalContact } from './contact.model';
 import { IInvoiceItem } from './invoice-item.model';
 import { CurrenciesEnum } from './currency.model';
+import { IImageAsset } from './image-asset.model';
 
 export interface IProduct extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
@@ -242,14 +243,6 @@ export interface IProductOptionGroupTranslation
 	languageCode: string;
 }
 
-export interface IImageAsset extends IBasePerTenantEntityModel {
-	name: string;
-	url: string;
-	width: number;
-	height: number;
-	isFeatured: boolean;
-}
-
 export interface IWarehouse extends IBasePerTenantEntityModel {
 	name: string;
 	email: string;
@@ -264,7 +257,7 @@ export interface IWarehouse extends IBasePerTenantEntityModel {
 	tags?: ITag[];
 }
 
-export interface IMerchant extends IBasePerTenantAndOrganizationEntityModel {
+export interface IMerchant extends IBasePerTenantAndOrganizationEntityModel, IRelationalContact {
 	name: string;
 	email: string;
 	phone: string;
@@ -272,8 +265,6 @@ export interface IMerchant extends IBasePerTenantAndOrganizationEntityModel {
 	active: boolean;
 	currency: CurrenciesEnum;
 	description: string;
-	contact?: IContact;
-	contactId?: string;
 	logo?: IImageAsset;
 	logoId?: IImageAsset['id'];
 	tags?: ITag[];

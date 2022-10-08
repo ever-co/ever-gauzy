@@ -3,6 +3,11 @@ import { ICandidate } from './candidate.model';
 import { IEmployee } from './employee.model';
 import { IOrganizationContact } from './organization-contact.model';
 
+export interface IRelationalContact {
+    readonly contact?: IContact;
+    readonly contactId?: IContact['id'];
+}
+
 export interface IContact extends IBasePerTenantAndOrganizationEntityModel {
 	id?: string;
 	name?: string;
