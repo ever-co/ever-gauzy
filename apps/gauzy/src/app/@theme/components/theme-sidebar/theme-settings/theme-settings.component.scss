@@ -1,4 +1,5 @@
 @import './../../../styles/themes';
+@import 'gauzy/_gauzy-dialogs';
 
 @include nb-install-component() {
   h6 {
@@ -133,4 +134,6 @@
   .language-select {
     margin-right: 65px;
   }
+
+  @include input-appearance(2rem, var(--gauzy-sidebar-background-4));
 }
