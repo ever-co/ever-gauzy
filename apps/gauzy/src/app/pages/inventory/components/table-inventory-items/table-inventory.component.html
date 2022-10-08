@@ -1,4 +1,8 @@
-<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
+<nb-card
+	[nbSpinner]="loading"
+	nbSpinnerStatus="primary"
+	nbSpinnerSize="large"
+>
 	<nb-card-header class="d-flex flex-column pb-0">
 		<div class="card-header-title">
 			<div class="card-header-title">
@@ -55,7 +59,7 @@
 			</div>
 		</ng-template>
 		<ng-template #gridLayout>
-			<ga-card-grid 
+			<ga-card-grid
 				[totalItems]="pagination?.totalItems"
 				[settings]="settingsSmartTable"
 				[source]="products"
@@ -65,7 +69,6 @@
 		</ng-template>
 	</nb-card-body>
 </nb-card>
-
 <ng-template #visibleButton>
 	<ng-template ngxPermissionsOnly="ORG_INVENTORY_PRODUCT_EDIT">
 		<button
@@ -127,7 +130,7 @@
 	</div>
 </ng-template>
 <ng-template #subActionButtons>
-	<ng-template ngxPermissionsOnly="ORG_INVENTORY_PRODUCT_EDIT">
+	<ng-template ngxPermissionsOnly="ORG_INVENTORY_VIEW">
 		<button
 			(click)="manageStores()"
 			status="warning"
