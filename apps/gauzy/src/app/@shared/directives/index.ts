@@ -5,7 +5,7 @@ import { OutsideDirective } from './outside.directive';
 import { ReadMoreDirective } from './read-more';
 import { TimeTrackingAuthorizedDirective } from './time-tracking-authorized-directive';
 
-export const Directives = [
+export const DIRECTIVES = [
     AutocompleteOffDirective,
     DebounceClickDirective,
     ImgDirective,
