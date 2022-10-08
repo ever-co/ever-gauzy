@@ -187,7 +187,7 @@ export class MerchantController extends CrudController<Merchant> {
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
-	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
+	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async update(
 		@Param('id', UUIDValidationPipe) id: IMerchant['id'],
 		@Body() entity: UpdateMerchantDTO
