@@ -1,11 +1,11 @@
 import {NgModule} from '@angular/core';
 import {CommonModule} from '@angular/common';
-import {Directives} from "./index";
+import {DIRECTIVES} from "./index";
 
 
 @NgModule({
-	declarations: [...Directives],
-	exports: [...Directives],
+	declarations: [...DIRECTIVES],
+	exports: [...DIRECTIVES],
 	imports: [
 		CommonModule
 	]
