@@ -1806,7 +1806,12 @@
 				"REQUIRE_TASK_INFO": "Task of the tracked time will be required when timer starting and also for the time logs adding or editing manual time.",
 				"REQUIRE_CLIENT": "Require Client",
 				"REQUIRE_CLIENT_INFO": "Client of the tracked time will be required when timer starting and also for the time logs adding or editing manual time.",
-				"ALLOW_TO_SET_DEFAULT_ORGANIZATION": "Allow user to set default organization"
+				"ALLOW_TO_SET_DEFAULT_ORGANIZATION": "Allow user to set default organization",
+				"INACTIVITY_TIME_LIMIT": "Inactivity Limit",
+				"INACTIVITY_TIME_LIMIT_INFO": "Inactivity tracking timeout (i.e., how many seconds of inactivity is allowed)",
+				"ACTIVITY_PROOF_DURATION": "Activity proof duration",
+				"ACTIVITY_PROOF_DURATION_INFO": "Duration of activity proof countdown dialog, it represent an amount of seconds given to prove activity",
+				"ALLOW_TRACK_INACTIVITY": "Allow to track inactivity"
 			},
 			"TEAMS_PAGE": {
 				"MANAGERS": "Managers",
