@@ -1,34 +1,29 @@
-import {
-	Component,
-	OnInit,
-	OnDestroy,
-	ViewChild,
-	ChangeDetectorRef,
-	AfterViewInit
-} from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { formatDate } from '@angular/common';
 import * as moment from 'moment';
 import * as timezone from 'moment-timezone';
 import {
-	AlignmentOptions,
-	DefaultValueDateTypeEnum,
-	IOrganization,
-	WeekDaysEnum,
-	RegionsEnum,
-	BonusTypeEnum,
-	CurrencyPosition,
 	AccountingTemplateTypeEnum,
-	IAccountingTemplate,
-	CurrenciesEnum,
-	DEFAULT_DATE_FORMATS,
+	AlignmentOptions,
+	BonusTypeEnum,
 	CrudActionEnum,
-	IKeyValuePair,
-	DEFAULT_TIME_FORMATS,
+	CurrenciesEnum,
+	CurrencyPosition,
+	DEFAULT_ACTIVITY_PROOF_DURATIONS,
+	DEFAULT_DATE_FORMATS,
+	DEFAULT_INACTIVITY_TIME_LIMITS,
 	DEFAULT_INVITE_EXPIRY_PERIOD,
 	DEFAULT_PROFIT_BASED_BONUS,
-	DEFAULT_REVENUE_BASED_BONUS
+	DEFAULT_REVENUE_BASED_BONUS,
+	DEFAULT_TIME_FORMATS,
+	DefaultValueDateTypeEnum,
+	IAccountingTemplate,
+	IKeyValuePair,
+	IOrganization,
+	RegionsEnum,
+	WeekDaysEnum
 } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -72,6 +67,8 @@ export class EditOrganizationOtherSettingsComponent extends NotesWithTagsCompone
 	listOfZones = timezone.tz.names().filter((zone) => zone.includes('/'));
 	listOfDateFormats = DEFAULT_DATE_FORMATS;
 	listOfTimeFormats = DEFAULT_TIME_FORMATS;
+	listOfInactivityLimits = DEFAULT_INACTIVITY_TIME_LIMITS;
+	listOfActivityProofDuration = DEFAULT_ACTIVITY_PROOF_DURATIONS;
 	numberFormats = ['USD', 'BGN', 'ILS'];
 	numberFormat: string;
 	weekdays: WeekDaysEnum[] = Object.values(WeekDaysEnum);
@@ -119,6 +116,9 @@ export class EditOrganizationOtherSettingsComponent extends NotesWithTagsCompone
 			allowManualTime: [],
 			allowModifyTime: [],
 			allowDeleteTime: [],
+			allowTrackInactivity: [],
+			inactivityTimeLimit: [1],
+			activityProofDuration: [1],
 			requireReason: [],
 			requireDescription: [],
 			requireProject: [],
@@ -452,6 +452,9 @@ export class EditOrganizationOtherSettingsComponent extends NotesWithTagsCompone
 			allowManualTime: this.organization.allowManualTime,
 			allowModifyTime: this.organization.allowModifyTime,
 			allowDeleteTime: this.organization.allowDeleteTime,
+			allowTrackInactivity: this.organization.allowTrackInactivity,
+			inactivityTimeLimit: this.organization.inactivityTimeLimit,
+			activityProofDuration: this.organization.activityProofDuration,
 			requireReason: this.organization.requireReason,
 			requireDescription: this.organization.requireDescription,
 			requireProject: this.organization.requireProject,
@@ -513,5 +516,10 @@ export class EditOrganizationOtherSettingsComponent extends NotesWithTagsCompone
 		}
 	}
 
-	ngOnDestroy(): void {}
+	public get isTrackInactivity(): boolean {
+		return this.form.get('allowTrackInactivity').value;
+	}
+
+	ngOnDestroy(): void {
+	}
 }
