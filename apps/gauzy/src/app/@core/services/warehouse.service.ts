@@ -5,7 +5,9 @@ import {
 	IWarehouse,
 	IWarehouseProductCreateInput,
 	IWarehouseProduct,
-	IWarehouseProductVariant
+	IWarehouseProductVariant,
+	IPagination,
+	IWarehouseFindInput
 } from '@gauzy/contracts';
 import { toParams } from '@gauzy/common-angular';
 import { API_PREFIX } from '../constants/app.constants';
@@ -16,48 +18,37 @@ import { API_PREFIX } from '../constants/app.constants';
 export class WarehouseService {
 	WAREHOUSES_URL = `${API_PREFIX}/warehouses`;
 
-	constructor(private http: HttpClient) { }
+	constructor(
+		private readonly http: HttpClient
+	) { }
 
-	count(findInput): Promise<Number> {
-		const data = JSON.stringify(findInput);
+	create(warehouse: IWarehouse): Promise<IWarehouse> {
 		return firstValueFrom(
-			this.http
-			.get<number>(
-				`${this.WAREHOUSES_URL}/count`,
-				{
-					params: { data }
-				}
-			)
+			this.http.post<IWarehouse>(`${this.WAREHOUSES_URL}`, warehouse)
 		);
 	}
 
-	getAll(options?, params?): Promise<{ items: IWarehouse[] }> {
-		const data = JSON.stringify({
-			relations: options.relations, findInput: options.findInput
-		});
+	getAll(where: IWarehouseFindInput): Promise<IPagination<IWarehouse>> {
 		return firstValueFrom(
-			this.http
-			.get<{ items: IWarehouse[] }>(`${this.WAREHOUSES_URL}`, {
-				params: { data, ...params }
+			this.http.get<IPagination<IWarehouse>>(`${this.WAREHOUSES_URL}`, {
+				params: toParams({ where })
 			})
 		);
 	}
 
-	create(warehouseRequest: IWarehouse): Promise<IWarehouse> {
+	update(
+		id: IWarehouse['id'],
+		warehouse: IWarehouse
+	): Promise<IWarehouse> {
 		return firstValueFrom(
-			this.http
-			.post<IWarehouse>(`${this.WAREHOUSES_URL}`, warehouseRequest)
+			this.http.put<IWarehouse>(`${this.WAREHOUSES_URL}/${id}`, warehouse)
 		);
 	}
 
-	update(id: string, warehouseRequest: IWarehouse): Promise<IWarehouse> {
-		return firstValueFrom(
-			this.http
-			.put<IWarehouse>(`${this.WAREHOUSES_URL}/${id}`, warehouseRequest)
-		);
-	}
-
-	getById(id: string, relations: string[] = []) {
+	getById(
+		id: IWarehouse['id'],
+		relations: string[] = []
+	) {
 		return firstValueFrom(
 			this.http.get<IWarehouse>(`${this.WAREHOUSES_URL}/${id}`, {
 				params: toParams({ relations })
@@ -65,7 +56,7 @@ export class WarehouseService {
 		);
 	}
 
-	deleteFeaturedImage(id: string): Promise<{ raw: any; affected: number }> {
+	deleteFeaturedImage(id: IWarehouse['id']): Promise<{ raw: any; affected: number }> {
 		return firstValueFrom(
 			this.http
 			.delete<{ raw: any; affected: number }>(
@@ -76,7 +67,7 @@ export class WarehouseService {
 
 	addWarehouseProducts(
 		warehouseProductCreateInput: IWarehouseProductCreateInput[],
-		warehouseId: String
+		warehouseId: IWarehouse['id']
 	): Promise<IWarehouseProduct[]> {
 		return firstValueFrom(
 			this.http
@@ -87,7 +78,7 @@ export class WarehouseService {
 		);
 	}
 
-	getWarehouseProducts(warehouseId: String) {
+	getWarehouseProducts(warehouseId: IWarehouse['id']) {
 		return firstValueFrom(
 			this.http
 			.get<IWarehouseProduct[]>(
@@ -97,7 +88,7 @@ export class WarehouseService {
 	}
 
 	updateWarehouseProductCount(
-		warehouseProductId: String,
+		warehouseProductId: IWarehouseProduct['id'],
 		count: number
 	): Promise<IWarehouseProduct> {
 		return firstValueFrom(
@@ -110,7 +101,7 @@ export class WarehouseService {
 	}
 
 	updateWarehouseProductVariantCount(
-		warehouseProductVariantId: String,
+		warehouseProductVariantId: IWarehouseProductVariant['id'],
 		count: number
 	): Promise<IWarehouseProductVariant> {
 		return firstValueFrom(

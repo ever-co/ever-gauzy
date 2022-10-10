@@ -1,12 +1,19 @@
-import { IImageAsset } from "@gauzy/contracts";
+import { IImageAsset, IWarehouse } from "@gauzy/contracts";
+import { IntersectionType } from "@nestjs/mapped-types";
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { IsBoolean, IsEmail, IsNotEmpty, IsOptional, IsString } from "class-validator";
+import { RelationalContactDTO } from "./../../contact/dto";
+import { RelationalTagDTO } from "./../../tags/dto";
 import { TenantOrganizationBaseDTO } from "./../../core/dto";
 
 /**
  * Warehouse request DTO validation
  */
-export class WarehouseDTO extends TenantOrganizationBaseDTO {
+export class WarehouseDTO extends IntersectionType(
+	TenantOrganizationBaseDTO,
+	RelationalTagDTO,
+	RelationalContactDTO
+) implements IWarehouse {
 
     @ApiProperty({ type: () => String, readOnly: true })
 	@IsNotEmpty()

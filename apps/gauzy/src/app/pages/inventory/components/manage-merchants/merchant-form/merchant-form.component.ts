@@ -158,7 +158,7 @@ export class MerchantFormComponent extends TranslationBaseComponent
 		const { tenantId } = this.store.user;
 
 		this.warehouses = (
-			await this.warehouseService.getAll({ findInput: { organizationId, tenantId } })
+			await this.warehouseService.getAll({ organizationId, tenantId })
 		).items;
 	}
 

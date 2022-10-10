@@ -1,4 +1,8 @@
-<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
+<nb-card
+	[nbSpinner]="loading"
+	nbSpinnerStatus="primary"
+	nbSpinnerSize="large"
+>
 	<nb-card-header class="d-flex flex-column pb-0">
 		<div class="card-header-title">
 			<h4>
@@ -14,8 +18,7 @@
 				[componentName]="viewComponentName"
 				[buttonTemplateVisible]="visibleButton"
 				[isDisable]="disableButton"
-			>
-			</ngx-gauzy-button-action>
+			></ngx-gauzy-button-action>
 		</div>
 	</nb-card-header>
 	<nb-card-body>
@@ -46,7 +49,7 @@
 			</div>
 		</ng-template>
 		<ng-template #gridLayout>
-			<ga-card-grid 
+			<ga-card-grid
 				[totalItems]="pagination?.totalItems"
 				[settings]="settingsSmartTable"
 				[source]="warehouses"
@@ -65,8 +68,8 @@
 			class="action"
 			size="small"
 		>
-			<nb-icon icon="plus-outline"></nb-icon
-			>{{ 'BUTTONS.ADD' | translate }}
+			<nb-icon icon="plus-outline"></nb-icon>
+			{{ 'BUTTONS.ADD' | translate }}
 		</button>
 	</ng-template>
 </ng-template>
@@ -75,15 +78,15 @@
 	let-buttonSize="buttonSize"
 	let-selectedItem="selectedItem"
 >
-	<div class="btn-group actions">
-		<ng-template ngxPermissionsOnly="ORG_INVENTORY_PRODUCT_EDIT">
+	<ng-template ngxPermissionsOnly="ORG_INVENTORY_PRODUCT_EDIT">
+		<div class="btn-group actions">
 			<button
 				(click)="onUpdateWarehouse(selectedItem)"
 				nbButton
 				status="basic"
 				class="action primary"
 				size="small"
-				[disabled]="!selectedItem && disableButton"
+				[disabled]="disableButton"
 			>
 				<nb-icon icon="edit-outline"></nb-icon>
 				{{ 'BUTTONS.EDIT' | translate }}
@@ -93,12 +96,12 @@
 				nbButton
 				status="basic"
 				class="action"
-				[disabled]="!selectedItem && disableButton"
 				size="small"
+				[disabled]="disableButton"
 				[nbTooltip]="'BUTTONS.DELETE' | translate"
 			>
 				<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
 			</button>
-		</ng-template>
-	</div>
+		</div>
+	</ng-template>
 </ng-template>
