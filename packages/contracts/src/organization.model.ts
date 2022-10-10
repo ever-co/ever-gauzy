@@ -99,6 +99,9 @@ export interface IOrganization extends IBasePerTenantEntityModel {
 	daysUntilDue?: number;
 	accountingTemplates?: IAccountingTemplate[];
 	reportOrganizations?: IReportOrganization[];
+	allowTrackInactivity?: boolean,
+	inactivityTimeLimit?: number,
+	activityProofDuration?: number
 }
 
 export interface IOrganizationFindInput extends IBasePerTenantEntityModel {
