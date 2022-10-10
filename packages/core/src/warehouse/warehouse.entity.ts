@@ -96,7 +96,7 @@ export class Warehouse extends TenantOrganizationBaseEntity implements IWarehous
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Warehouse) => it.contact)
 	@Index()
-	@Column({ nullable: false })
+	@Column({ nullable: true })
 	contactId?: string;
 
 	/*
