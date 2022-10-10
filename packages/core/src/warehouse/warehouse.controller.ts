@@ -11,9 +11,10 @@ import {
 	Put,
 	Query,
 	UseGuards,
+	UsePipes,
 	ValidationPipe
 } from '@nestjs/common';
-import { FindOptionsWhere } from 'typeorm';
+import { FindOptionsWhere, UpdateResult } from 'typeorm';
 import {
 	IPagination,
 	PermissionsEnum,
@@ -27,12 +28,14 @@ import { Warehouse } from './warehouse.entity';
 import { WarehouseProductService } from './warehouse-product-service';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
-import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
+import { UUIDValidationPipe } from './../shared/pipes';
+import { RelationsQueryDTO } from './../shared/dto';
 import { CrudController, PaginationParams } from './../core/crud';
 import { CreateWarehouseDTO, UpdateWarehouseDTO } from './dto';
 
 @ApiTags('Warehouses')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
+@Permissions(PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT)
 @Controller()
 export class WarehouseController extends CrudController<Warehouse> {
 	constructor(
@@ -63,7 +66,7 @@ export class WarehouseController extends CrudController<Warehouse> {
 	@Permissions(PermissionsEnum.ORG_INVENTORY_VIEW)
 	@Get('inventory/:warehouseId')
 	async findAllWarehouseProducts(
-		@Param('warehouseId', UUIDValidationPipe) warehouseId: string
+		@Param('warehouseId', UUIDValidationPipe) warehouseId: IWarehouse['id']
 	): Promise<IWarehouseProduct[]> {
 		return await this.warehouseProductsService.getAllWarehouseProducts(
 			warehouseId
@@ -88,11 +91,10 @@ export class WarehouseController extends CrudController<Warehouse> {
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
-	@Permissions(PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT)
 	@Post('inventory/:warehouseId')
 	async addWarehouseProducts(
 		@Body() entity: IWarehouseProductCreateInput[],
-		@Param('warehouseId', UUIDValidationPipe) warehouseId: string
+		@Param('warehouseId', UUIDValidationPipe) warehouseId: IWarehouse['id']
 	): Promise<IPagination<IWarehouseProduct[]>> {
 		return await this.warehouseProductsService.createWarehouseProductBulk(
 			entity,
@@ -119,13 +121,12 @@ export class WarehouseController extends CrudController<Warehouse> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@Permissions(PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT)
 	@Post('inventory-quantity/:warehouseProductId')
 	async updateWarehouseProductQuantity(
-		@Param('warehouseProductId', UUIDValidationPipe) warehouseProductId: string,
+		@Param('warehouseProductId', UUIDValidationPipe) warehouseProductId: IWarehouseProduct['id'],
 		@Body() value: { count: number }
 	): Promise<IWarehouseProduct> {
-		return this.warehouseProductsService.updateWarehouseProductQuantity(
+		return await this.warehouseProductsService.updateWarehouseProductQuantity(
 			warehouseProductId,
 			value.count
 		);
@@ -150,13 +151,12 @@ export class WarehouseController extends CrudController<Warehouse> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@Permissions(PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT)
 	@Post('inventory-quantity/variants/:warehouseProductVariantId')
 	async updateWarehouseProductVariantQuantity(
-		@Param('warehouseProductVariantId', UUIDValidationPipe) warehouseProductVariantId: string,
+		@Param('warehouseProductVariantId', UUIDValidationPipe) warehouseProductVariantId: IWarehouseProductVariant['id'],
 		@Body() value: { count: number }
 	): Promise<IWarehouseProductVariant> {
-		return this.warehouseProductsService.updateWarehouseProductVariantQuantity(
+		return await this.warehouseProductsService.updateWarehouseProductVariantQuantity(
 			warehouseProductVariantId,
 			value.count
 		);
@@ -184,23 +184,22 @@ export class WarehouseController extends CrudController<Warehouse> {
 	/**
 	 * GET warehouses by pagination
 	 *
-	 * @param filter
+	 * @param params
 	 * @returns
 	 */
 	@Permissions(PermissionsEnum.ORG_INVENTORY_VIEW)
 	@Get('pagination')
+	@UsePipes(new ValidationPipe({ transform: true }))
 	async pagination(
-		@Query(
-			new ValidationPipe({ transform: true })
-		) options: PaginationParams<Warehouse>
+		@Query() params: PaginationParams<Warehouse>
 	): Promise<IPagination<IWarehouse>> {
-		return this.warehouseService.paginate(options);
+		return await this.warehouseService.paginate(params);
 	}
 
 	/**
-	 * GET all warehouses
+	 * GET warehouses
 	 *
-	 * @param data
+	 * @param params
 	 * @returns
 	 */
 	@ApiOperation({
@@ -217,11 +216,15 @@ export class WarehouseController extends CrudController<Warehouse> {
 	})
 	@Permissions(PermissionsEnum.ORG_INVENTORY_VIEW)
 	@Get()
+	@UsePipes(new ValidationPipe())
 	async findAll(
-		@Query('data', ParseJsonPipe) data: any
+		@Query() params: PaginationParams<Warehouse>
 	): Promise<IPagination<IWarehouse>> {
-		const { relations = [], findInput = null } = data;
-		return this.warehouseService.findAllWarehouses(relations, findInput);
+		try {
+			return await this.warehouseService.findAll(params);
+		} catch (error) {
+			throw new BadRequestException(error);
+		}
 	}
 
 	/**
@@ -230,40 +233,36 @@ export class WarehouseController extends CrudController<Warehouse> {
 	 * @param id
 	 * @returns
 	 */
-	@Permissions(PermissionsEnum.ORG_INVENTORY_VIEW)
 	@Get(':id')
+	@Permissions(PermissionsEnum.ORG_INVENTORY_VIEW)
 	async findById(
-		@Param('id', UUIDValidationPipe) id: string,
-		@Query('relations') relations: string[]
+		@Param('id', UUIDValidationPipe) id: IWarehouse['id'],
+		@Query() query: RelationsQueryDTO
 	): Promise<IWarehouse> {
 		return await this.warehouseService.findOneByIdString(id, {
-			relations
+			relations: query.relations
 		});
 	}
 
 	/**
-	 * CREATE new warehouse record
+	 * CREATE new warehouse store
 	 *
 	 * @param entity
 	 * @returns
 	 */
-	@Permissions(PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT)
+	@HttpCode(HttpStatus.CREATED)
 	@Post()
-	async create(
-		@Body(new ValidationPipe({
-			transform: true,
-			whitelist: true
-		})) entity: CreateWarehouseDTO
-	): Promise<IWarehouse> {
+	@UsePipes(new ValidationPipe({ whitelist: true }))
+	async create(@Body() entity: CreateWarehouseDTO): Promise<IWarehouse> {
 		try {
-			return this.warehouseService.create(entity);
+			return await this.warehouseService.create(entity);
 		} catch (error) {
 			throw new BadRequestException(error);
 		}
 	}
 
 	/**
-	 * UPDATE an existing warehouse
+	 * UPDATE warehouse by id
 	 *
 	 * @param id
 	 * @param entity
@@ -284,15 +283,12 @@ export class WarehouseController extends CrudController<Warehouse> {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
-	@Permissions(PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT)
 	@Put(':id')
+	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async update(
-		@Param('id', UUIDValidationPipe) id: string,
-		@Body(new ValidationPipe({
-			transform: true,
-			whitelist: true
-		})) entity: UpdateWarehouseDTO
-	): Promise<IWarehouse> {
+		@Param('id', UUIDValidationPipe) id: IWarehouse['id'],
+		@Body() entity: UpdateWarehouseDTO
+	): Promise<IWarehouse | UpdateResult> {
 		try {
 			return await this.warehouseService.update(id, entity);
 		} catch (error) {
