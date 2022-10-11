@@ -10,6 +10,7 @@ import {
 	Post,
 	Put,
 	UseGuards,
+	UsePipes,
 	ValidationPipe
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
@@ -69,10 +70,9 @@ export class TenantController {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Post()
+	@UsePipes(new ValidationPipe({ transform: true }))
 	async create(
-		@Body(new ValidationPipe({
-			transform: true
-		})) entity: CreateTenantDTO
+		@Body() entity: CreateTenantDTO
 	): Promise<ITenant> {
 		const user = RequestContext.currentUser();
 		if (user.tenantId || user.roleId) {
@@ -105,11 +105,9 @@ export class TenantController {
 	@UseGuards(TenantPermissionGuard, RoleGuard)
 	@Roles(RolesEnum.SUPER_ADMIN)
 	@Put()
+	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
 	async update(
-		@Body(new ValidationPipe({
-			transform: true,
-			whitelist: true
-		})) entity: UpdateTenantDTO
+		@Body() entity: UpdateTenantDTO
 	): Promise<ITenant | UpdateResult> {
 		try {
 			return await this.tenantService.update(
