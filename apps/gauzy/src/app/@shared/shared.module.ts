@@ -4,21 +4,20 @@ import { BackNavigationModule } from './back-navigation';
 import { Pipes } from './pipes';
 import { Components } from './components';
 import { RouterModule } from '@angular/router';
-import { AlertModalModule } from './alert-modal/alert-modal.module';
+import { AlertModalModule } from './alert-modal';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { Directives } from './directives';
+import { DirectivesModule } from "./directives/directives.module";
 
-const Modules = [NgxPermissionsModule, BackNavigationModule];
+const Modules = [NgxPermissionsModule, BackNavigationModule, DirectivesModule];
 
 @NgModule({
-	declarations: [...Pipes, ...Components, ...Directives],
+	declarations: [...Pipes, ...Components],
 	imports: [CommonModule, RouterModule, ...Modules],
 	exports: [
 		AlertModalModule,
 		...Pipes,
 		...Components,
-		...Modules,
-		...Directives
+		...Modules
 	],
 	providers: [...Pipes]
 })

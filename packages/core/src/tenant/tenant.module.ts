@@ -19,14 +19,14 @@ import { CommandHandlers } from './commands/handlers';
 		]),
 		TypeOrmModule.forFeature([ Tenant ]),
 		AuthModule,
-		UserModule,
-		RoleModule,
-		RolePermissionModule,
+		CqrsModule,
+		forwardRef(() => UserModule),
+		forwardRef(() => RoleModule),
+		forwardRef(() => RolePermissionModule),
 		forwardRef(() => FeatureModule),
-		CqrsModule
 	],
 	controllers: [TenantController],
 	providers: [TenantService, ...CommandHandlers],
-	exports: [TenantService, RolePermissionModule]
+	exports: [TenantService]
 })
 export class TenantModule {}

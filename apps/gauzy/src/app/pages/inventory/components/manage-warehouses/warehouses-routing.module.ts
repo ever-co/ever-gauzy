@@ -7,11 +7,6 @@ import { WarehouseFormComponent } from './warehouse-form/warehouse-form.componen
 import { WarehousesTableComponent } from './warehouses-table/warehouses-table.component';
 import { WarehouseFormResolver } from './warehouse-form/warehouse-form.resolver';
 
-const ORG_PERMISSIONS = [
-	PermissionsEnum.ALL_ORG_VIEW,
-	PermissionsEnum.ALL_ORG_EDIT
-];
-
 const routes: Routes = [
 	{
 		path: '',
@@ -20,7 +15,6 @@ const routes: Routes = [
 		data: {
 			permissions: {
 				only: [
-					...ORG_PERMISSIONS,
 					PermissionsEnum.ORG_INVENTORY_VIEW
 				],
 				redirectTo: '/pages/dashboard'
@@ -66,7 +60,6 @@ const routes: Routes = [
 		]
 	}
 ];
-
 
 @NgModule({
 	imports: [RouterModule.forChild(routes)],

@@ -839,13 +839,28 @@
 								<div class="col-6">
 									<div class="form-group invite-toggle">
 										<nb-toggle
-											class="d-block"
-											formControlName="allowDeleteTime"
-											status="primary"
-											labelPosition="start"
+												class="d-block"
+												formControlName="allowDeleteTime"
+												labelPosition="start"
+												status="primary"
 										>
 											{{
-												'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ALLOW_DELETE_TIME'
+											'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ALLOW_DELETE_TIME'
+													| translate
+											}}
+										</nb-toggle>
+									</div>
+								</div>
+								<div class="col-6">
+									<div class="form-group invite-toggle">
+										<nb-toggle
+												class="d-block"
+												formControlName="allowTrackInactivity"
+												labelPosition="start"
+												status="primary"
+										>
+											{{
+											'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ALLOW_TRACK_INACTIVITY'
 													| translate
 											}}
 										</nb-toggle>
@@ -916,17 +931,87 @@
 								<div class="col-6">
 									<div class="form-group invite-toggle">
 										<nb-toggle
-											class="d-block"
-											formControlName="requireClient"
-											status="primary"
-											labelPosition="start"
+												class="d-block"
+												formControlName="requireClient"
+												labelPosition="start"
+												status="primary"
 										>
 											{{
-												'ORGANIZATIONS_PAGE.EDIT.SETTINGS.REQUIRE_CLIENT'
+											'ORGANIZATIONS_PAGE.EDIT.SETTINGS.REQUIRE_CLIENT'
 													| translate
 											}}
 										</nb-toggle>
 									</div>
+								</div>
+							</div>
+							<div *ngIf="isTrackInactivity" class="row mt-4">
+								<div class="col-6">
+									<label class="label">
+										{{'ORGANIZATIONS_PAGE.EDIT.SETTINGS.INACTIVITY_TIME_LIMIT'
+											| translate}}
+									</label>
+									<button
+											[nbTooltip]="
+											'ORGANIZATIONS_PAGE.EDIT.SETTINGS.INACTIVITY_TIME_LIMIT_INFO'
+												| translate
+										"
+											ghost
+											nbButton
+											size="small"
+											status="info"
+									>
+										<nb-icon icon="info"></nb-icon>
+									</button>
+									<nb-select
+											[placeholder]="'ORGANIZATIONS_PAGE.EDIT.SETTINGS.INACTIVITY_TIME_LIMIT'
+											| translate"
+											formControlName="inactivityTimeLimit"
+											fullWidth
+											size="medium"
+									>
+										<nb-option
+												*ngFor="
+												let inactivity of listOfInactivityLimits
+											"
+												[value]="inactivity"
+										>
+											{{inactivity}}
+										</nb-option>
+									</nb-select>
+								</div>
+								<div class="col-6">
+									<label class="label">
+										{{'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ACTIVITY_PROOF_DURATION'
+											| translate}}
+									</label>
+									<button
+											[nbTooltip]="
+											'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ACTIVITY_PROOF_DURATION_INFO'
+											| translate
+										"
+											ghost
+											nbButton
+											size="small"
+											status="info"
+									>
+										<nb-icon icon="info"></nb-icon>
+									</button>
+									<nb-select
+											[placeholder]="'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ACTIVITY_PROOF_DURATION'
+											| translate"
+											formControlName="activityProofDuration"
+											fullWidth
+											size="medium"
+									>
+										<nb-option
+												*ngFor="
+												let proof of listOfActivityProofDuration
+											"
+												[value]="proof"
+										>
+											{{proof}}
+										</nb-option>
+									</nb-select>
 								</div>
 							</div>
 						</div>

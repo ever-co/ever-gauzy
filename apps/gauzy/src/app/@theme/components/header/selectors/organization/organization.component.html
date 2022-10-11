@@ -16,6 +16,7 @@
 		(change)="onChange()"
 		(click)="isOpen = !isOpen"
 		[ngClass]="isOpen ? 'organization' : 'organization close'"
+		gauzyOutside (clickOutside)="onClickOutside($event)"
 	>
 		<ng-template ng-option-tmp let-item="item" let-index="index">
 			<img

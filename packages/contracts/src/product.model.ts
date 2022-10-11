@@ -243,7 +243,7 @@ export interface IProductOptionGroupTranslation
 	languageCode: string;
 }
 
-export interface IWarehouse extends IBasePerTenantEntityModel {
+export interface IWarehouse extends IBasePerTenantAndOrganizationEntityModel, IRelationalContact {
 	name: string;
 	email: string;
 	description: string;
@@ -251,10 +251,13 @@ export interface IWarehouse extends IBasePerTenantEntityModel {
 	active: boolean;
 	logo?: IImageAsset;
 	logoId?: string;
-	contact?: IContact;
-	contactId?: string;
 	products?: IWarehouseProduct[];
 	tags?: ITag[];
+}
+
+export interface IWarehouseFindInput extends IBasePerTenantAndOrganizationEntityModel {
+	name?: IWarehouse['name'];
+	email?: IWarehouse['email'];
 }
 
 export interface IMerchant extends IBasePerTenantAndOrganizationEntityModel, IRelationalContact {

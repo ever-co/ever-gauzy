@@ -11,13 +11,14 @@ import { HttpClient } from '@angular/common/http';
 import { Ng2SmartTableComponent } from 'ng2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService } from '@nebular/theme';
-import { debounceTime, filter, tap } from 'rxjs/operators';
 import { Subject, firstValueFrom } from 'rxjs';
+import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
 	ComponentLayoutStyleEnum,
 	IOrganization,
-	IWarehouse
+	IWarehouse,
+	PermissionsEnum
 } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import { DeleteConfirmationComponent } from './../../../../../@shared/user/forms';
@@ -38,7 +39,7 @@ import {
 } from './../../../../../@shared/pagination/pagination-filter-base.component';
 import { ServerDataSource } from './../../../../../@core/utils/smart-table/server.data-source';
 import { InputFilterComponent } from './../../../../../@shared/table-filters';
-import {DescriptionComponent} from "../../inventory-table-components/description/description.component";
+import { DescriptionComponent } from "../../inventory-table-components/description/description.component";
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -46,10 +47,9 @@ import {DescriptionComponent} from "../../inventory-table-components/description
 	templateUrl: './warehouses-table.component.html',
 	styleUrls: ['./warehouses-table.component.scss']
 })
-export class WarehousesTableComponent
-	extends PaginationFilterBaseComponent
-	implements AfterViewInit, OnInit, OnDestroy
-{
+export class WarehousesTableComponent extends PaginationFilterBaseComponent
+	implements AfterViewInit, OnInit, OnDestroy {
+
 	settingsSmartTable: object;
 	loading: boolean = false;
 	disableButton: boolean = true;
@@ -100,9 +100,8 @@ export class WarehousesTableComponent
 		this.warehouses$
 			.pipe(
 				debounceTime(300),
-				tap(() => (this.loading = true)),
-				tap(() => this.getWarehouses()),
 				tap(() => this.clearItem()),
+				tap(() => this.getWarehouses()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -171,13 +170,13 @@ export class WarehousesTableComponent
 	onChangedSource() {
 		this.warehousesTable.source.onChangedSource
 			.pipe(
-				untilDestroyed(this),
-				tap(() => this.clearItem())
+				tap(() => this.clearItem()),
+				untilDestroyed(this)
 			)
 			.subscribe();
 	}
 
-	async _loadSmartTableSettings() {
+	private _loadSmartTableSettings() {
 		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
 			actions: false,
@@ -248,9 +247,12 @@ export class WarehousesTableComponent
 	}
 
 	onCreateWarehouse() {
-		this.router.navigate([
-			'/pages/organization/inventory/warehouses/create'
-		]);
+		if (!this.store.hasPermission(
+			PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT)
+		) {
+			return;
+		}
+		this.router.navigate(['/pages/organization/inventory/warehouses/create']);
 	}
 
 	onUpdateWarehouse(selectedItem?: IWarehouse) {
@@ -260,10 +262,13 @@ export class WarehousesTableComponent
 				data: selectedItem
 			});
 		}
-		this.router.navigate([
-			'/pages/organization/inventory/warehouses/edit',
-			this.selectedWarehouse.id
-		]);
+		if (!this.store.hasPermission(
+			PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT)
+		) {
+			return;
+		}
+		const { id } = this.selectedWarehouse;
+		this.router.navigate([ '/pages/organization/inventory/warehouses/edit', id]);
 	}
 
 	async onDelete(selectedItem?: IWarehouse) {
@@ -276,11 +281,14 @@ export class WarehousesTableComponent
 		if (!this.selectedWarehouse) {
 			return;
 		}
-
+		if (!this.store.hasPermission(
+			PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT)
+		) {
+			return;
+		}
 		const result = await firstValueFrom(
 			this.dialogService.open(DeleteConfirmationComponent).onClose
 		);
-
 		if (result) {
 			await this.warehouseService
 				.deleteFeaturedImage(this.selectedWarehouse.id)
@@ -319,11 +327,9 @@ export class WarehousesTableComponent
 				endPoint: `${API_PREFIX}/warehouses/pagination`,
 				relations: ['logo', 'contact'],
 				where: {
-					...{ organizationId, tenantId },
-					...this.filters.where
-				},
-				resultMap: (warehouse: IWarehouse) => {
-					return Object.assign({}, warehouse);
+					organizationId,
+					tenantId,
+					...(this.filters.where ? this.filters.where : {})
 				},
 				finalize: () => {
 					if (
@@ -356,8 +362,10 @@ export class WarehousesTableComponent
 		}
 		try {
 			this.setSmartTableSource();
+
 			const { activePage, itemsPerPage } = this.getPagination();
 			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
+
 			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
 				await this.smartTableSource.getElements();
 			}

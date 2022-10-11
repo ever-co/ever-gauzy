@@ -237,6 +237,18 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	allowDeleteTime?: boolean;
 
 	@ApiProperty({ type: () => Boolean })
+	@Column({ default: true })
+	allowTrackInactivity?: boolean;
+
+	@ApiProperty({ type: () => Number })
+	@Column({ default: 1 })
+	inactivityTimeLimit?: number;
+
+	@ApiProperty({ type: () => Number })
+	@Column({ default: 1 })
+	activityProofDuration?: number
+
+	@ApiProperty({ type: () => Boolean })
 	@Column({ default: false })
 	requireReason?: boolean;
 

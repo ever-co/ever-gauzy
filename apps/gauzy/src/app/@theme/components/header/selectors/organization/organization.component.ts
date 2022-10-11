@@ -216,5 +216,9 @@ export class OrganizationSelectorComponent
 		}
 	};
 
+	onClickOutside(event){
+		if(this.isOpen && !event) this.isOpen = false;
+	}
+
 	ngOnDestroy() {}
 }
