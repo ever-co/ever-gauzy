@@ -99,6 +99,9 @@ export interface IOrganization extends IBasePerTenantEntityModel {
 	daysUntilDue?: number;
 	accountingTemplates?: IAccountingTemplate[];
 	reportOrganizations?: IReportOrganization[];
+	allowTrackInactivity?: boolean,
+	inactivityTimeLimit?: number,
+	activityProofDuration?: number
 }
 
 export interface IOrganizationFindInput extends IBasePerTenantEntityModel {
@@ -263,3 +266,6 @@ export interface IKeyValuePair {
     key: string;
     value: boolean | string;
 }
+
+export const DEFAULT_INACTIVITY_TIME_LIMITS: number[] = [1, 5, 10, 20, 30];
+export const DEFAULT_ACTIVITY_PROOF_DURATIONS: number[] = [1, 3, 5, 10];
