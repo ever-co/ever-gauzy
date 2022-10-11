@@ -6,6 +6,7 @@ import { ConfigModule, ConfigService } from '@gauzy/config';
 import { TenantModule } from './../tenant/tenant.module';
 import { RoleModule } from './../role/role.module';
 import { UserModule } from './../user/user.module';
+import { RolePermissionModule } from './../role-permission/role-permission.module';
 import { GauzyCloudController } from './gauzy-cloud.controller';
 import { GauzyCloudService } from './gauzy-cloud.service';
 import { CommandHandlers } from './commands/handlers';
@@ -31,10 +32,11 @@ import { CommandHandlers } from './commands/handlers';
 		forwardRef(() => UserModule),
 		TenantModule,
 		RoleModule,
+		RolePermissionModule
 	],
 	controllers: [GauzyCloudController],
 	providers: [
-		GauzyCloudService, 
+		GauzyCloudService,
 		...CommandHandlers
 	],
 	exports: []

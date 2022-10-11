@@ -5,7 +5,6 @@ import { RouterModule } from 'nest-router';
 import { UserOrganizationModule } from './../user-organization/user-organization.module';
 import { TenantModule } from '../tenant/tenant.module';
 import { UserModule } from './../user/user.module';
-import { RoleModule } from './../role/role.module';
 import { CommandHandlers } from './commands/handlers';
 import { OrganizationController } from './organization.controller';
 import { Organization } from './organization.entity';
@@ -20,7 +19,6 @@ import { OrganizationService } from './organization.service';
 		forwardRef(() => TenantModule),
 		forwardRef(() => UserOrganizationModule),
 		forwardRef(() => UserModule),
-		forwardRef(() => RoleModule),
 		CqrsModule,
 	],
 	controllers: [OrganizationController],

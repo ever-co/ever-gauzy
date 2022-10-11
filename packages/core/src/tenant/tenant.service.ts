@@ -12,12 +12,10 @@ import {
 	FileStorageProviderEnum
 } from '@gauzy/contracts';
 import { ConfigService, IEnvironment } from '@gauzy/config';
-import { UserService } from '../user/user.service';
-import { RoleService } from 'role/role.service';
 import { TenantRoleBulkCreateCommand } from '../role/commands/tenant-role-bulk-create.command';
 import { TenantFeatureOrganizationCreateCommand } from './commands/tenant-feature-organization.create.command';
 import { ImportRecordUpdateOrCreateCommand } from './../export-import/import-record';
-import { User } from './../core/entities/internal';
+import { Role, User } from './../core/entities/internal';
 import { TenantSettingSaveCommand } from './tenant-setting/commands';
 
 @Injectable()
@@ -25,8 +23,7 @@ export class TenantService extends CrudService<Tenant> {
 	constructor(
 		@InjectRepository(Tenant) private readonly tenantRepository: Repository<Tenant>,
 		@InjectRepository(User) private readonly userRepository: Repository<User>,
-		private readonly userService: UserService,
-		private readonly roleService: RoleService,
+		@InjectRepository(Role) private readonly roleRepository: Repository<Role>,
 		private readonly commandBus: CommandBus,
 		private readonly configService: ConfigService
 	) {
@@ -64,13 +61,13 @@ export class TenantService extends CrudService<Tenant> {
 		);
 
 		//4. Find SUPER_ADMIN role to relative tenant.
-		const role = await this.roleService.findOneByWhereOptions({
+		const role = await this.roleRepository.findOneBy({
 			tenantId,
 			name: RolesEnum.SUPER_ADMIN
 		});
 
 		//5. Assign tenant and role to user.
-		await this.userService.update(user.id, {
+		await this.userRepository.update(user.id, {
 			tenant: {
 				id: tenant.id
 			},
