@@ -23,15 +23,14 @@ export class UserOrganizationService extends TenantAwareCrudService<UserOrganiza
 		organizationId: IOrganization['id']
 	): Promise<IUserOrganization | IUserOrganization[]> {
 		const roleName: string = user.role.name;
-
-		if (roleName === RolesEnum.SUPER_ADMIN)
+		if (roleName === RolesEnum.SUPER_ADMIN) {
 			return await this._addUserToAllOrganizations(user.id, user.tenant.id);
-
+		}
 		const entity: IUserOrganization = new UserOrganization();
 		entity.organizationId = organizationId;
 		entity.tenantId = user.tenantId;
 		entity.userId = user.id;
-		return await this.create(entity);
+		return await this.repository.save(entity);
 	}
 
 	private async _addUserToAllOrganizations(
@@ -39,12 +38,11 @@ export class UserOrganizationService extends TenantAwareCrudService<UserOrganiza
 		tenantId: ITenant['id']
 	): Promise<IUserOrganization[]> {
 		const organizations = await this.organizationRepository.find({
-			select: ['id'],
-			where: { tenant: { id: tenantId } },
-			relations: ['tenant']
+			where: {
+				tenantId
+			}
 		});
 		const entities: IUserOrganization[] = [];
-
 		for await (const organization of organizations) {
 			const entity: IUserOrganization = new UserOrganization();
 			entity.organizationId = organization.id;
