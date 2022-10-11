@@ -37,7 +37,9 @@ export class AlterOrganizationTable1665399395983 implements MigrationInterface {
     * @param queryRunner
     */
     public async postgresUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
-        
+        await queryRunner.query(`ALTER TABLE "organization" ADD "allowTrackInactivity" boolean NOT NULL DEFAULT true`);
+        await queryRunner.query(`ALTER TABLE "organization" ADD "inactivityTimeLimit" integer NOT NULL DEFAULT '1'`);
+        await queryRunner.query(`ALTER TABLE "organization" ADD "activityProofDuration" integer NOT NULL DEFAULT '1'`);
     }
 
     /**
@@ -46,7 +48,9 @@ export class AlterOrganizationTable1665399395983 implements MigrationInterface {
     * @param queryRunner
     */
     public async postgresDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
-        
+        await queryRunner.query(`ALTER TABLE "organization" DROP COLUMN "activityProofDuration"`);
+        await queryRunner.query(`ALTER TABLE "organization" DROP COLUMN "inactivityTimeLimit"`);
+        await queryRunner.query(`ALTER TABLE "organization" DROP COLUMN "allowTrackInactivity"`);
     }
 
     /**
