@@ -3,29 +3,28 @@ import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { faker } from '@ever-co/faker';
-import { IOrganization, RolesEnum } from '@gauzy/contracts';
-import { RoleService } from '../../../role/role.service';
+import { IOrganization, IUser, RolesEnum } from '@gauzy/contracts';
 import { UserService } from '../../../user/user.service';
 import { UserOrganizationService } from '../../../user-organization/user-organization.services';
 import { OrganizationService } from '../../organization.service';
 import { OrganizationCreateCommand } from '../organization.create.command';
-import { RequestContext } from '../../../core/context';
 import { ReportOrganizationCreateCommand } from './../../../reports/commands';
-import { Organization, UserOrganization } from './../../../core/entities/internal';
+import { RequestContext } from '../../../core/context';
+import { UserOrganization } from './../../../core/entities/internal';
+import { Organization } from './../../organization.entity';
 import { ImportRecordUpdateOrCreateCommand } from './../../../export-import/import-record';
-
 
 @CommandHandler(OrganizationCreateCommand)
 export class OrganizationCreateHandler
 	implements ICommandHandler<OrganizationCreateCommand> {
+
 	constructor(
 		private readonly commandBus: CommandBus,
 		private readonly organizationService: OrganizationService,
 		private readonly userOrganizationService: UserOrganizationService,
 		private readonly userService: UserService,
-		private readonly roleService: RoleService,
-		@InjectRepository(UserOrganization) private readonly userOrganizationRepository: Repository<UserOrganization>,
 		@InjectRepository(Organization) private readonly organizationRepository: Repository<Organization>,
+		@InjectRepository(UserOrganization) private readonly userOrganizationRepository: Repository<UserOrganization>,
 	) {}
 
 	public async execute(
@@ -34,27 +33,35 @@ export class OrganizationCreateHandler
 		try {
 			const { input } = command;
 			const { isImporting = false, sourceId = null, userOrganizationSourceId = null } = input;
+			const tenantId = RequestContext.currentTenantId();
 
-			//1. Get roleId for Super Admin user of the Tenant
-			const { id: roleId } = await this.roleService.findOneByOptions({
-				where: {
-					name: RolesEnum.SUPER_ADMIN,
-					tenantId: RequestContext.currentTenantId()
-				}
-			});
+			const admins: IUser[] = [];
 
-			// 2. Get all Super Admin Users of the Tenant
-			// have to get user from context, as user service is not tenant-aware
-			const user = RequestContext.currentUser();
-			const { tenantId } = user;
-
+			// 1. Get all Super Admin Users of the Tenant
 			const { items: superAdminUsers } = await this.userService.findAll({
-				relations: ['role'],
 				where: {
-					tenant: { id: tenantId },
-					role: { id: roleId }
+					tenantId,
+					role: {
+						name: RolesEnum.SUPER_ADMIN,
+						tenantId
+					}
 				}
 			});
+			admins.push(...superAdminUsers);
+
+			// 2. Organization will add to all SUPER_ADMIN/ADMIN users, if ADMIN create organization.
+			if (RequestContext.hasRole(RolesEnum.ADMIN)) {
+				const { items: adminUsers } = await this.userService.findAll({
+					where: {
+						tenantId,
+						role: {
+							name: RolesEnum.ADMIN,
+							tenantId
+						}
+					}
+				});
+				admins.push(...adminUsers);
+			}
 
 			let { contact = {} } = input;
 			delete input['contact'];
@@ -76,12 +83,12 @@ export class OrganizationCreateHandler
 
 			// 4. Take each super admin user and add him/her to created organization
 			try {
-				for await (const superAdmin of superAdminUsers) {
+				for await (const admin of admins) {
 					const userOrganization = await this.userOrganizationService.create(
 						new UserOrganization({
 							organization: createdOrganization,
 							tenantId,
-							user: superAdmin
+							user: admin
 						})
 					);
 					if (isImporting && userOrganizationSourceId) {
