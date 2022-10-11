@@ -1332,7 +1332,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		let isPassed: boolean = false;
 		// Verify if tracking is enabled
 		if (
-			this.userData.employee &&
 			!this.userData.employee.isTrackingEnabled
 		) {
 			this.toastrService.show('Your can\'t run timer for the moment', `Warning`, {
