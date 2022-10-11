@@ -9,16 +9,16 @@ import {
 	TemplateRef,
 	ViewChild
 } from '@angular/core';
-import {NbDialogService, NbToastrService} from '@nebular/theme';
-import {TimeTrackerService} from './time-tracker.service';
+import { NbDialogService, NbToastrService } from '@nebular/theme';
+import { TimeTrackerService } from './time-tracker.service';
 import * as moment from 'moment';
-import {NG_VALUE_ACCESSOR} from '@angular/forms';
+import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import * as _ from 'underscore';
-import {CustomRenderComponent} from './custom-render-cell.component';
-import {LocalDataSource} from 'ng2-smart-table';
-import {DomSanitizer} from '@angular/platform-browser';
-import {BehaviorSubject} from 'rxjs';
-import {ElectronService} from "../electron/services";
+import { CustomRenderComponent } from './custom-render-cell.component';
+import { LocalDataSource } from 'ng2-smart-table';
+import { DomSanitizer } from '@angular/platform-browser';
+import { BehaviorSubject } from 'rxjs';
+import { ElectronService } from "../electron/services";
 
 // Import logging for electron and override default console logging
 const log = window.require('electron-log');
@@ -431,13 +431,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			return;
 		}
 
-		if (this.appSetting)
-			if (
-				this.userData.employee &&
-				!this.userData.employee.isTrackingEnabled
-			) {
-				return;
-			}
+		if (!this._passedAllAuthorizations()) return;
+
 		this.loading = true;
 
 		if (this.validationField()) {
@@ -483,7 +478,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				console.log('stop tracking');
 				this.stopTimer();
 			}
-		}
+		} else this.loading = false;
 	}
 
 	setTime(value) {
@@ -1328,5 +1323,42 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		this.toastrService.show(`${msg}`, `Warning`, {
 			status: 'danger'
 		});
+	}
+
+	/**
+	 * Check if user have required authorization to use time tracker
+	 */
+	private _passedAllAuthorizations(): boolean {
+		let isPassed: boolean = false;
+		// Verify if tracking is enabled
+		if (
+			!this.userData.employee.isTrackingEnabled
+		) {
+			this.toastrService.show('Your can\'t run timer for the moment', `Warning`, {
+				status: 'danger'
+			});
+			isPassed = false;
+		}
+		// Verify work status of user
+		else if (
+			!this.userData.employee.startedWorkOn
+			|| !this.userData.employee.isActive
+			|| this.userData.employee.workStatus
+		) {
+			// Verify if user are already started to work for organization, if yes you can run time tracker else no
+			if (!this.userData.employee.startedWorkOn) {
+				this.toastrService.show('Your are not authorized to work', `Warning`, {
+					status: 'danger'
+				});
+			}
+			// Verify if user are deleted for organization, if yes can't run time tracker
+			if (this.userData.employee.startedWorkOn && !this.userData.employee.isActive) {
+				this.toastrService.show('Your account it already deleted', `Warning`, {
+					status: 'danger'
+				});
+			}
+			isPassed = false;
+		} else isPassed = true;
+		return isPassed;
 	}
 }
