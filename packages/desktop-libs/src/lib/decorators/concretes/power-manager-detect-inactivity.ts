@@ -4,6 +4,7 @@ import {ControlledSleepTracking} from "../../strategies";
 import {IPowerManager} from "../../interfaces";
 import {powerMonitor} from "electron";
 import EventEmitter from "events";
+import {LocalStore} from "../../desktop-store";
 
 export class PowerManagerDetectInactivity extends BasePowerManagerDecorator {
 	private readonly _detectionEmitter: EventEmitter;
@@ -21,8 +22,8 @@ export class PowerManagerDetectInactivity extends BasePowerManagerDecorator {
 		 * Implement inactivity time limit as record in organization model
 		 * And add ui to change value
 		 */
-		this._inactivityTimeLimit = 10 * 60; // inactivityTimeLimit fixed to 10 minutes
-		this._activityProofDuration = 60; // activityProofDuration fixed to 1 minutes
+		this._inactivityTimeLimit = this.inactivityTimeLimit * 60; // inactivityTimeLimit fixed to 10 minutes
+		this._activityProofDuration = this.activityProofDuration * 60; // activityProofDuration fixed to 1 minutes
 		this._detectionEmitter = new EventEmitter();
 		this._detectionEmitter.on('activity-proof-result', async res => {
 			if (this._activityProofTimoutIntervalId) {
@@ -75,5 +76,15 @@ export class PowerManagerDetectInactivity extends BasePowerManagerDecorator {
 				this._detectionEmitter.emit('activity-proof-result', false),
 			(this._activityProofDuration + 1) * 1000
 		);
+	}
+
+	public get inactivityTimeLimit(): number {
+		const auth = LocalStore.getStore('auth');
+		return auth ? auth.inactivityTimeLimit : 1;
+	}
+
+	public get activityProofDuration(): number {
+		const auth = LocalStore.getStore('auth');
+		return auth ? auth.activityProofDuration : 1;
 	}
 }
