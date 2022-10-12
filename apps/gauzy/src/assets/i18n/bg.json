@@ -271,7 +271,7 @@
 			"FROM": "From",
 			"TO": "To",
 			"EMPLOYEE": "Служител",
-			"START_DATE": "Date when started work (optional)",
+			"START_DATE": "Дата на започване на работа (по избор)",
 			"APPLIED_DATE_LABEL": "Date when applied",
 			"IMAGE_URL": "Снимка URL (незадължително)",
 			"CV_URL": "CV URL (optional)",
