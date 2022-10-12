@@ -861,6 +861,11 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					);
 				}
 				this.userOrganization$.next(res.employee.organization);
+				this.electronService.ipcRenderer.send('update_timer_auth_config', {
+					activityProofDuration: res.employee.organization.activityProofDuration,
+					inactivityTimeLimit: res.employee.organization.inactivityTimeLimit,
+					allowTrackInactivity: res.employee.organization.allowTrackInactivity
+				});
 				this.isTrackingEnabled =
 					typeof res.employee.isTrackingEnabled !== 'undefined'
 						? res.employee.isTrackingEnabled
