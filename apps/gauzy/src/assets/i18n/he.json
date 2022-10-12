@@ -271,7 +271,7 @@
 			"FROM": "From",
 			"TO": "To",
 			"EMPLOYEE": "עובד",
-			"START_DATE": "תאריך התחלת העבודה",
+			"START_DATE": "Date when started work (optional)",
 			"APPLIED_DATE_LABEL": "Date when applied",
 			"IMAGE_URL": "תמונה URL",
 			"CV_URL": "CV URL (optional)",
