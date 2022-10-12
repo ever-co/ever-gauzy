@@ -469,10 +469,15 @@ export function ipcTimer(
 			awIsConnected: arg
 		});
 	})
+
+	ipcMain.on('update_timer_auth_config', (event, arg) => {
+		LocalStore.updateAuthSetting({...arg});
+	});
 }
 
 export function removeMainListener() {
 	const mainListeners = [
+		'update_timer_auth_config',
 		'start_server',
 		'remove_afk_local_Data',
 		'return_time_sheet',
