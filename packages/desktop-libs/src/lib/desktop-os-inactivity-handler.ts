@@ -2,6 +2,7 @@ import {PowerManagerDetectInactivity} from "./decorators";
 import NotificationDesktop from "./desktop-notifier";
 import {DesktopDialog} from "./desktop-dialog";
 import {BrowserWindow} from "electron";
+import {LocalStore} from "./desktop-store";
 
 export class DesktopOsInactivityHandler {
 	private _inactivityResultAccepted: boolean;
