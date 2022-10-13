@@ -86,6 +86,12 @@ export class DashboardComponent
 				icon: 'browser-outline',
 				responsive: true,
 				route: this.getRoute('project-management')
+			},
+			{
+				title: 'Teams',
+				icon: 'people-outline',
+				responsive: true,
+				route: this.getRoute('teams')
 			}
 		];
 

@@ -6,6 +6,7 @@ import { AccountingComponent } from './accounting/accounting.component';
 import { ProjectManagementComponent } from './project-management/project-management.component';
 import { TimeTrackingComponent } from './time-tracking/time-tracking.component';
 import { DateRangePickerResolver } from '../../@theme/components/header/selectors/date-range-picker';
+import { TeamComponent } from "./team/team.component";
 
 const routes: Routes = [
 	{
@@ -70,6 +71,10 @@ const routes: Routes = [
 				resolve: {
 					dates: DateRangePickerResolver
 				}
+			},
+			{
+				path: 'teams',
+				component: TeamComponent
 			}
 		]
 	}

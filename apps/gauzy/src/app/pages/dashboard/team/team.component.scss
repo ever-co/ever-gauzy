@@ -1,0 +1,24 @@
+@import 'gauzy/_gauzy-cards';
+
+:host {
+  @include nb-card_overrides(auto, calc($default-card-height), $default-radius);
+
+  .card {
+    background-color: var(--gauzy-card-2);
+
+    .card-header {
+      background-color: unset;
+    }
+  }
+
+  nb-card {
+    background-color: var(--gauzy-card-2);
+    margin: 0;
+
+    nb-card-header,
+    nb-card-body {
+      background-color: var(--gauzy-card-2);
+      padding: 1rem;
+    }
+  }
+}
