@@ -1,7 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { IOrganizationCreateInput, ITenant } from '@gauzy/contracts';
-import { User } from '@sentry/browser';
+import { IOrganizationCreateInput, IUser } from '@gauzy/contracts';
 import {
 	AuthService,
 	OrganizationsService,
@@ -17,7 +16,7 @@ import {
 })
 export class TenantDetailsComponent implements OnInit, OnDestroy {
 	isLoading = true;
-	user: User = {};
+	user: IUser;
 
 	constructor(
 		private readonly router: Router,
@@ -42,32 +41,48 @@ export class TenantDetailsComponent implements OnInit, OnDestroy {
 		}
 	}
 
-	async onboardUser(formData: IOrganizationCreateInput) {
-		this.tenantService
-			.create({ name: formData.name })
-			.then(async (tenant: ITenant) => {
-				this.user = await this.usersService.getMe(['tenant']);
-				this.store.user = this.user;
-				this.organizationsService
-					.create({ ...formData, tenant, isDefault: true })
-					.then(() => {
-						this.getAccessTokenFromRefreshToken();
-						this.router.navigate(['/onboarding/complete']);
-					})
-					.catch((error) => {});
-			})
-			.catch((error) => {});
+	async onboardUser(organization: IOrganizationCreateInput) {
+		try {
+			const tenant = await this.tenantService.create({ name: organization.name });
+			this.user = await this.usersService.getMe(['tenant']);
+			this.store.user = this.user;
+			try {
+				await this.organizationsService.create({
+					...organization,
+					tenant,
+					isDefault: true
+				});
+
+				await this.registerEmployeeFeature();
+				await this.getAccessTokenFromRefreshToken();
+
+				this.router.navigate(['/onboarding/complete']);
+			} catch (error) {
+				console.log('Error while creating organization');
+			}
+		} catch (error) {
+			console.log('Error while creating tenant');
+		}
 	}
+
+	/**
+	 * Register user as a employee on initial onboarding
+	 */
+	async registerEmployeeFeature() {}
 
 	/**
 	 * Get new generated access token using refresh token
 	 */
 	async getAccessTokenFromRefreshToken() {
-		if (this.store.refresh_token) {
-			const { token } = await this.authService.refreshToken(this.store.refresh_token);
-			if (token) {
-				this.store.token  = token;
+		try {
+			if (this.store.refresh_token) {
+				const { token } = await this.authService.refreshToken(this.store.refresh_token);
+				if (token) {
+					this.store.token  = token;
+				}
 			}
+		} catch (error) {
+			console.log('Error while retrieving refresh token', error);
 		}
 	}
 

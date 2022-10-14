@@ -40,6 +40,7 @@ import { LeafletMapComponent } from '../../forms/maps';
 import { environment as ENV } from './../../../../environments/environment';
 import { Store, ToastrService } from '../../../@core/services';
 import { DUMMY_PROFILE_IMAGE } from '../../../@core/constants';
+import { FormHelpers } from '../../forms';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -51,19 +52,19 @@ import { DUMMY_PROFILE_IMAGE } from '../../../@core/constants';
 	]
 })
 export class OrganizationsStepFormComponent
-	implements OnInit, OnDestroy, AfterViewInit
-{
+	implements OnInit, OnDestroy, AfterViewInit {
+
 	@ViewChild('locationFormDirective')
 	locationFormDirective: LocationFormComponent;
 
 	@ViewChild('leafletTemplate')
 	leafletTemplate: LeafletMapComponent;
 
-	readonly locationForm: FormGroup = LocationFormComponent.buildForm(this.fb);
+	FormHelpers: typeof FormHelpers = FormHelpers;
 
-	locationFormBlank: boolean;
+	locationFormBlank: boolean = true;
 	hoverState: boolean;
-	countries: ICountry[];
+	countries: ICountry[] = [];
 	defaultValueDateTypes: string[] = Object.values(DefaultValueDateTypeEnum);
 	defaultBonusTypes: string[] = Object.values(BonusTypeEnum);
 	listOfZones = timezone.tz.names().filter((zone) => zone.includes('/'));
@@ -72,76 +73,75 @@ export class OrganizationsStepFormComponent
 	regionCode: string;
 	numberFormats = ['USD', 'BGN', 'ILS'];
 	listOfDateFormats = DEFAULT_DATE_FORMATS;
-	orgMainForm: FormGroup;
-	orgBonusForm: FormGroup;
-	orgSettingsForm: FormGroup;
-	tags: ITag[] = [];
-	country: ICountry;
+
 	user: IUser;
 	retriveEmail: string;
 	dummyImage = DUMMY_PROFILE_IMAGE;
 
-	@Input('onboarding') onboarding?: boolean;
-
-	@Output()
-	createOrganization = new EventEmitter();
-
+	@Output() createOrganization = new EventEmitter();
 	@Output() closeForm = new EventEmitter();
-	@Input() closable = false;
 
-	constructor(
-		private readonly fb: FormBuilder,
-		private readonly toastrService: ToastrService,
-		private readonly cdr: ChangeDetectorRef,
-		private readonly store: Store,
-		private readonly _activatedRoute: ActivatedRoute,
-		private readonly location: Location
-	) {}
-
-	ngOnInit() {
-		this.store.user$
-			.pipe(
-				filter((user) => !!user),
-				tap((user: IUser) => (this.user = user)),
-				tap(({ email }) => (this.retriveEmail = email)),
-				tap(() => this._initializedForm()),
-				filter(() => !!this.location.getState()),
-				tap(() =>
-					this.patchUsingLocationState(this.location.getState())
-				)
-			)
-			.subscribe();
-		this._activatedRoute.queryParams
-			.pipe(
-				filter(({ email }) => !!email),
-				tap(({ email }) => (this.retriveEmail = email)),
-				tap(() => this._initializedForm()),
-				untilDestroyed(this)
-			)
-			.subscribe();
+	/*
+	* Getter & Setter for onboarding
+	*/
+	_isOnboarding: boolean = false;
+	get isOnboarding(): boolean {
+		return this._isOnboarding;
+	}
+	@Input() set isOnboarding(value: boolean) {
+		this._isOnboarding = value;
 	}
 
-	ngAfterViewInit() {
-		this.cdr.detectChanges();
+	/*
+	* Getter & Setter for onboarding
+	*/
+	_closable: boolean = false;
+	get closable(): boolean {
+		return this._closable;
+	}
+	@Input() set closable(value: boolean) {
+		this._closable = value;
 	}
 
-	private _initializedForm() {
-		this.orgMainForm = this.fb.group({
+	/*
+	* Organization Main Mutation Form
+	*/
+	public readonly orgMainForm: FormGroup = OrganizationsStepFormComponent.buildOrgMainForm(this.fb);
+	static buildOrgMainForm(fb: FormBuilder): FormGroup {
+		return fb.group({
 			imageUrl: [],
 			currency: [ENV.DEFAULT_CURRENCY || CurrenciesEnum.USD],
-			name: [
-				retrieveNameFromEmail(this.user?.email || this.retriveEmail),
-				Validators.required
-			],
+			name: [null, Validators.required],
 			officialName: [],
 			taxId: [],
 			tags: []
 		});
-		this.orgBonusForm = this.fb.group({
+	}
+
+	/**
+	* Location Mutation Form
+	*/
+	readonly locationForm: FormGroup = LocationFormComponent.buildForm(this.fb);
+
+	/*
+	* Organization Bonus Form
+	*/
+	public readonly orgBonusForm: FormGroup = OrganizationsStepFormComponent.buildOrgBonusForm(this.fb);
+	static buildOrgBonusForm(fb: FormBuilder): FormGroup {
+		return fb.group({
 			bonusType: [],
-			bonusPercentage: [{ value: null, disabled: true }]
+			bonusPercentage: [
+				{ value: null, disabled: true }
+			]
 		});
-		this.orgSettingsForm = this.fb.group({
+	}
+
+	/*
+	* Organization Settings Form
+	*/
+	public readonly orgSettingsForm: FormGroup = OrganizationsStepFormComponent.buildOrgSettingsForm(this.fb);
+	static buildOrgSettingsForm(fb: FormBuilder): FormGroup {
+		return fb.group({
 			timeZone: [],
 			startWeekOn: [],
 			defaultValueDateType: [
@@ -168,11 +168,57 @@ export class OrganizationsStepFormComponent
 			invitesAllowed: [true],
 			inviteExpiryPeriod: [7, [Validators.min(1)]]
 		});
+	}
 
+	/*
+	* Employee Feature Form
+	*/
+	readonly employeeFeatureForm: FormGroup = OrganizationsStepFormComponent.buildEmployeeFeatureForm(this.fb);
+	static buildEmployeeFeatureForm(fb: FormBuilder): FormGroup {
+		return fb.group({
+			registerAsEmployee: [true],
+			startedWorkOn: [new Date(), Validators.required]
+		});
+	}
+
+	constructor(
+		private readonly fb: FormBuilder,
+		private readonly toastrService: ToastrService,
+		private readonly cdr: ChangeDetectorRef,
+		private readonly store: Store,
+		private readonly _activatedRoute: ActivatedRoute,
+		private readonly location: Location
+	) {}
+
+	ngOnInit() {
+		this.store.user$
+			.pipe(
+				filter((user) => !!user),
+				tap((user: IUser) => (this.user = user)),
+				tap(({ email }) => (this.retriveEmail = email)),
+				tap(() => this._setFormValues()),
+				filter(() => !!this.location.getState()),
+				tap(() =>
+					this.patchUsingLocationState(this.location.getState())
+				)
+			)
+			.subscribe();
+		this._activatedRoute.queryParams
+			.pipe(
+				filter(({ email }) => !!email),
+				tap(({ email }) => (this.retriveEmail = email)),
+				tap(() => this._setFormValues()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
+
+	ngAfterViewInit() {
+		/**
+		 * organization bonus controls value changes
+		 */
 		const bonusType = <FormControl>this.orgBonusForm.get('bonusType');
-		const bonusPercentage = <FormControl>(
-			this.orgBonusForm.get('bonusPercentage')
-		);
+		const bonusPercentage = <FormControl>this.orgBonusForm.get('bonusPercentage');
 		bonusType.valueChanges.subscribe((value) => {
 			if (value) {
 				bonusPercentage.setValidators([
@@ -186,14 +232,46 @@ export class OrganizationsStepFormComponent
 			bonusPercentage.updateValueAndValidity();
 		});
 
-		this.locationForm.valueChanges.subscribe((value) => {
+		/**
+		 * location controls value changes
+		 */
+		const locationForm = <FormGroup>this.locationForm;
+		locationForm.valueChanges.subscribe((value) => {
 			if (value.hasOwnProperty('loc')) {
 				delete value['loc'];
 			}
 			const values = Object.values(value).filter((item) => item);
 			this.locationFormBlank = values.length === 0 ? true : false;
 		});
+
+		if (!this.isOnboarding) {
+			/**
+			 * Employee feature controls value changes
+			 */
+			const registerAsEmployee = <FormControl>this.employeeFeatureForm.get('registerAsEmployee');
+			const startedWorkOn = <FormControl>this.employeeFeatureForm.get('startedWorkOn');
+
+			registerAsEmployee.disable();
+			startedWorkOn.disable();
+
+			registerAsEmployee.valueChanges.subscribe((value: boolean) => {
+				console.log(value, startedWorkOn);
+				if (value) {
+					startedWorkOn.setValidators([Validators.required]);
+				} else {
+					startedWorkOn.setValidators(null);
+				}
+				startedWorkOn.updateValueAndValidity();
+			});
+		}
 		this.cdr.detectChanges();
+	}
+
+	private _setFormValues() {
+		this.orgMainForm.patchValue({
+			name: retrieveNameFromEmail(this.user?.email || this.retriveEmail)
+		});
+		this.orgMainForm.updateValueAndValidity();
 	}
 
 	handleImageUploadError(error) {
@@ -201,9 +279,7 @@ export class OrganizationsStepFormComponent
 	}
 
 	loadDefaultBonusPercentage(bonusType: BonusTypeEnum) {
-		const bonusPercentageControl = this.orgBonusForm.get(
-			'bonusPercentage'
-		) as FormControl;
+		const bonusPercentageControl = <FormControl>this.orgBonusForm.get('bonusPercentage');
 		switch (bonusType) {
 			case BonusTypeEnum.PROFIT_BASED_BONUS:
 				bonusPercentageControl.setValue(75);
@@ -221,10 +297,8 @@ export class OrganizationsStepFormComponent
 		bonusPercentageControl.updateValueAndValidity();
 	}
 
-	toggleExpiry(checked) {
-		const inviteExpiryControl = this.orgSettingsForm.get(
-			'inviteExpiryPeriod'
-		) as FormControl;
+	toggleExpiry(checked: boolean) {
+		const inviteExpiryControl = <FormControl>this.orgSettingsForm.get('inviteExpiryPeriod');
 		checked ? inviteExpiryControl.enable() : inviteExpiryControl.disable();
 	}
 
@@ -282,17 +356,31 @@ export class OrganizationsStepFormComponent
 			...{ latitude, longitude }
 		};
 
-		const consolidatedFormValues = {
+		let consolidatedFormValues = {
 			...this.orgMainForm.value,
-			contact,
 			...this.orgBonusForm.value,
-			...this.orgSettingsForm.value
+			...this.orgSettingsForm.value,
+			contact,
 		};
+		if (this.isOnboarding) {
+			consolidatedFormValues = {
+				...consolidatedFormValues,
+				...this.employeeFeatureForm.value
+			}
+		}
 		this.createOrganization.emit(consolidatedFormValues);
 	}
 
-	selectedTagsEvent(currentSelection: ITag[]) {
-		this.orgMainForm.get('tags').setValue(currentSelection);
+	submitEmployeeFeature() {
+		if (this.employeeFeatureForm.invalid) {
+			return;
+		}
+		this.addOrganization();
+	}
+
+	selectedTagsEvent(tags: ITag[]) {
+		this.orgMainForm.get('tags').setValue(tags);
+		this.orgMainForm.get('tags').updateValueAndValidity();
 	}
 
 	/*
@@ -306,9 +394,10 @@ export class OrganizationsStepFormComponent
 	onCoordinatesChanges(
 		$event: google.maps.LatLng | google.maps.LatLngLiteral
 	) {
-		const {
-			loc: { coordinates }
-		} = this.locationFormDirective.getValue();
+		if (!this.locationFormDirective) {
+			return;
+		}
+		const { loc: { coordinates } } = this.locationFormDirective.getValue();
 		const [lat, lng] = coordinates;
 
 		if (this.leafletTemplate) {
@@ -320,6 +409,9 @@ export class OrganizationsStepFormComponent
 	 * Leaflet Map Click Event Emitter
 	 */
 	onMapClicked(latlng: LatLng) {
+		if (!this.locationFormDirective) {
+			return;
+		}
 		const { lat, lng }: LatLng = latlng;
 		const location = this.locationFormDirective.getValue();
 		this.locationFormDirective.setValue({
@@ -339,7 +431,9 @@ export class OrganizationsStepFormComponent
 	 *
 	 * @param state
 	 */
-	patchUsingLocationState(state: any) {
+	patchUsingLocationState(state: {
+        [key: string]: any;
+    }) {
 		if (!this.orgMainForm) {
 			return;
 		}
