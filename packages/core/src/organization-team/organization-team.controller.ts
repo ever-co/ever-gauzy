@@ -54,7 +54,7 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@Permissions(PermissionsEnum.ALL_ORG_VIEW)
+	@Permissions()
 	@Get('me')
 	async findMyTeams(
 		@Query('data', ParseJsonPipe) data: any
