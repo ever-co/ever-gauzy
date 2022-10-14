@@ -39,6 +39,17 @@
         "projectManagement",
         "review"
       ]
+    },
+    {
+      "login": "adkif",
+      "name": "Adolphe Kifungo",
+      "avatar_url": "https://avatars.githubusercontent.com/u/45813955?v=4",
+      "profile": "http://adkif.netlify.app",
+      "contributions": [
+        "code",
+        "ideas",
+        "bug"
+      ]
     }
   ]
 }
