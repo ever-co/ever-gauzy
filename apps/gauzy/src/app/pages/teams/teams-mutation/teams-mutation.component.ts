@@ -1,43 +1,39 @@
 import { Component, OnInit, Output, EventEmitter, Input } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { IEmployee, IOrganization, ITag } from '@gauzy/contracts';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { filter, tap } from 'rxjs/operators';
+import { IEmployee, IOrganization, IOrganizationTeam, ITag } from '@gauzy/contracts';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { distinctUntilChange } from '@gauzy/common-angular';
 import { Store } from '../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-teams-mutation',
 	templateUrl: './teams-mutation.component.html',
-	styleUrls: ['./teams-mutation.component.scss']	
+	styleUrls: ['./teams-mutation.component.scss']
 })
 export class TeamsMutationComponent implements OnInit {
-	@Input()
-	employees: IEmployee[];
 
-	@Input()
-	team?: any;
-
-	@Output()
-	canceled = new EventEmitter();
-
-	@Output()
-	addOrEditTeam = new EventEmitter();
+	@Input() employees: IEmployee[] = [];
+	@Input() team?: IOrganizationTeam;
+	@Output() canceled = new EventEmitter();
+	@Output() addOrEditTeam = new EventEmitter();
 
 	public organization: IOrganization;
-
 	/*
-	* Team Mutation Form 
+	* Team Mutation Form
 	*/
 	public form: FormGroup = TeamsMutationComponent.buildForm(this.fb);
 	static buildForm(fb: FormBuilder): FormGroup {
 		const form = fb.group({
-			name: ['', Validators.required],
-			members: [[], Validators.required],
+			name: [null, Validators.required],
 			tags: [],
-			managers: []
-		}) as FormGroup;
-		form.controls['managers'].setValue([]);
+			members: [],
+			managers: [],
+		});
+		form.get('managers').setValue([]);
+		form.get('members').setValue([]);
+		form.get('tags').setValue([]);
 		return form;
 	}
 
@@ -49,6 +45,7 @@ export class TeamsMutationComponent implements OnInit {
 	ngOnInit() {
 		this.store.selectedOrganization$
 			.pipe(
+				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
 				tap((organization) => this.organization = organization),
 				tap(() => this.patchFormValue()),
@@ -57,6 +54,10 @@ export class TeamsMutationComponent implements OnInit {
 			.subscribe();
 	}
 
+	/**
+	 * Set Form Values
+	 *
+	 */
 	patchFormValue() {
 		if (this.team) {
 			const selectedEmployees = this.team.members.map((member) => member.id);
@@ -77,7 +78,7 @@ export class TeamsMutationComponent implements OnInit {
 
 		const { id: organizationId } = this.organization;
 		const { tenantId } = this.store.user;
-	
+
 		this.addOrEditTeam.emit({
 			...this.form.getRawValue(),
 			organizationId,
@@ -87,22 +88,22 @@ export class TeamsMutationComponent implements OnInit {
 
 	/**
 	 * On Selected Members Handler
-	 * 
-	 * @param members 
+	 *
+	 * @param members
 	 */
 	onMembersSelected(members: string[]) {
 		this.form.get('members').setValue(members);
-		this.form.updateValueAndValidity();
+		this.form.get('members').updateValueAndValidity();
 	}
 
 	/**
 	 * On Selected Managers Handler
-	 * 
-	 * @param managers 
+	 *
+	 * @param managers
 	 */
 	onManagersSelected(managers: string[]) {
 		this.form.get('managers').setValue(managers);
-		this.form.updateValueAndValidity();
+		this.form.get('managers').updateValueAndValidity();
 	}
 
 	cancel() {
@@ -111,11 +112,11 @@ export class TeamsMutationComponent implements OnInit {
 
 	/**
 	 * On Selected Tags Handler
-	 * 
-	 * @param tags 
+	 *
+	 * @param tags
 	 */
 	selectedTagsEvent(tags: ITag[]) {
 		this.form.get('tags').setValue(tags);
-		this.form.updateValueAndValidity();
+		this.form.get('tags').updateValueAndValidity();
 	}
 }
