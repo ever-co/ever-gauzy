@@ -5,8 +5,7 @@ import {
 	HttpStatus
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindManyOptions, Like, In } from 'typeorm';
-import { TenantAwareCrudService } from './../core/crud';
+import { Repository, FindManyOptions, In, ILike } from 'typeorm';
 import {
 	IOrganizationTeamCreateInput,
 	IOrganizationTeam,
@@ -16,10 +15,10 @@ import {
 import { Employee } from '../employee/employee.entity';
 import { OrganizationTeam } from './organization-team.entity';
 import { OrganizationTeamEmployee } from '../organization-team-employee/organization-team-employee.entity';
+import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
 import { RoleService } from '../role/role.service';
 import { EmployeeService } from '../employee/employee.service';
-import { OrganizationService } from '../organization/organization.service';
 import { OrganizationTeamEmployeeService } from '../organization-team-employee/organization-team-employee.service';
 
 @Injectable()
@@ -33,7 +32,6 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 
 		private readonly employeeService: EmployeeService,
 		private readonly roleService: RoleService,
-		private readonly organizationService: OrganizationService,
 		private readonly organizationTeamEmployeeService: OrganizationTeamEmployeeService
 	) {
 		super(organizationTeamRepository);
@@ -211,17 +209,21 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 		}
 	}
 
-	public pagination(filter?: any) {
+	/**
+	 * GET organization teams pagination by params
+	 *
+	 * @param filter
+	 * @returns
+	 */
+	public pagination(filter?: PaginationParams<any>) {
 		if ('where' in filter) {
 			const { where } = filter;
 			if ('name' in where) {
-				const { name } = where;
-				filter.where.name = Like(`%${name}%`);
+				filter['where']['name'] = ILike(`%${where.name}%`);
 			}
 			if ('tags' in where) {
-				const { tags } = where;
-				filter.where.tags = {
-					id: In(tags)
+				filter['where']['tags'] = {
+					id: In(where.tags)
 				}
 			}
 		}
