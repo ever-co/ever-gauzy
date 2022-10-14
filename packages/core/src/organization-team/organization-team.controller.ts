@@ -1,3 +1,4 @@
+import { PermissionsEnum, IPagination, IOrganizationTeam } from '@gauzy/contracts';
 import {
 	Controller,
 	Get,
@@ -10,24 +11,23 @@ import {
 	Param,
 	UseGuards,
 	UsePipes,
-	ValidationPipe
+	ValidationPipe,
+	UseInterceptors
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CrudController, PaginationParams } from './../core/crud';
-import { OrganizationTeamService } from './organization-team.service';
-import {
-	IOrganizationTeam,
-	IPagination,
-	PermissionsEnum
-} from '@gauzy/contracts';
-import { OrganizationTeam } from './organization-team.entity';
-import { CreateOrganizationTeamDTO, UpdateOrganizationTeamDTO } from './dto';
-import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
+import { TransformInterceptor } from ',./../core/interceptors';
+import { TenantPermissionGuard, PermissionGuard } from './../shared/guards';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { Permissions } from './../shared/decorators';
+import { CreateOrganizationTeamDTO, UpdateOrganizationTeamDTO } from './dto';
+import { OrganizationTeam } from './organization-team.entity';
+import { OrganizationTeamService } from './organization-team.service';
 
 @ApiTags('OrganizationTeam')
-@UseGuards(TenantPermissionGuard)
+@UseInterceptors(TransformInterceptor)
+@UseGuards(TenantPermissionGuard, PermissionGuard)
+@Permissions(PermissionsEnum.ALL_ORG_EDIT)
 @Controller()
 export class OrganizationTeamController extends CrudController<OrganizationTeam> {
 	constructor(
@@ -54,6 +54,7 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
+	@Permissions()
 	@Get('me')
 	async findMyTeams(
 		@Query('data', ParseJsonPipe) data: any
@@ -67,52 +68,24 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 	}
 
 	/**
-	 * CREATE organization team
+	 * GET organization teams by pagination
 	 *
-	 * @param entity
-	 * @param options
+	 * @param params
 	 * @returns
 	 */
-	@ApiOperation({ summary: 'Create new record' })
-	@ApiResponse({
-		status: HttpStatus.CREATED,
-		description: 'The record has been successfully created.' /*, type: T*/
-	})
-	@ApiResponse({
-		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
-	})
-	@Post('/create')
-	@UsePipes( new ValidationPipe({ transform : true }))
-	async createOrganizationTeam(
-		@Body() body: CreateOrganizationTeamDTO,
-		...options: any[]
-	): Promise<OrganizationTeam> {
-		return this.organizationTeamService.createOrgTeam(body);
-	}
-
-	/**
-	 * Get pagination data of organization team
-	 *
-	 * @param id
-	 * @param entity
-	 * @returns
-	 */
-	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW)
 	@Get('pagination')
 	@UsePipes(new ValidationPipe({ transform: true }))
 	async pagination(
-		@Query() filter: PaginationParams<OrganizationTeam>
+		@Query() params: PaginationParams<OrganizationTeam>
 	): Promise<IPagination<IOrganizationTeam>> {
-		return this.organizationTeamService.pagination(filter);
+		return await this.organizationTeamService.pagination(params);
 	}
 
 	/**
-	 * GET all organization teams
+	 * GET organization teams
 	 *
-	 * @param data
+	 * @param params
 	 * @returns
 	 */
 	@ApiOperation({
@@ -127,17 +100,37 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW)
 	@Get()
+	@UsePipes(new ValidationPipe())
 	async findAll(
-		@Query('data', ParseJsonPipe) data: any
+		@Query() params: PaginationParams<OrganizationTeam>
 	): Promise<IPagination<IOrganizationTeam>> {
-		const { relations, findInput } = data;
-		return this.organizationTeamService.findAll({
-			where: findInput,
-			relations
-		});
+		return await this.organizationTeamService.findAll(params);
+	}
+
+	/**
+	 * CREATE organization team
+	 *
+	 * @param entity
+	 * @returns
+	 */
+	@ApiOperation({ summary: 'Create new record' })
+	@ApiResponse({
+		status: HttpStatus.CREATED,
+		description: 'The record has been successfully created.' /*, type: T*/
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description:
+			'Invalid input, The response body may contain clues as to what went wrong'
+	})
+	@Post()
+	@UsePipes(new ValidationPipe({ transform : true }))
+	async createOrganizationTeam(
+		@Body() entity: CreateOrganizationTeamDTO
+	): Promise<OrganizationTeam> {
+		return await this.organizationTeamService.createOrgTeam(entity);
 	}
 
 	/**
@@ -145,7 +138,6 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 	 *
 	 * @param id
 	 * @param entity
-	 * @param options
 	 * @returns
 	 */
 	@ApiOperation({ summary: 'Update an organization Team' })
@@ -164,12 +156,11 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
-	@UsePipes( new ValidationPipe( { transform : true }))
+	@UsePipes(new ValidationPipe({ transform : true }))
 	async updateOrganizationTeam(
-		@Param('id', UUIDValidationPipe) id: string,
-		@Body() body: UpdateOrganizationTeamDTO,
-		...options: any[]
+		@Param('id', UUIDValidationPipe) id: IOrganizationTeam['id'],
+		@Body() entity: UpdateOrganizationTeamDTO
 	): Promise<OrganizationTeam> {
-		return this.organizationTeamService.updateOrgTeam(id, body);
+		return await this.organizationTeamService.updateOrgTeam(id, entity);
 	}
 }

@@ -7,7 +7,6 @@ import {
 	JoinTable
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsNotEmpty, IsString } from 'class-validator';
 import {
 	IGoal,
 	IOrganizationTeam,
@@ -26,29 +25,26 @@ import {
 } from '../core/entities/internal';
 
 @Entity('organization_team')
-export class OrganizationTeam
-	extends TenantOrganizationBaseEntity
+export class OrganizationTeam extends TenantOrganizationBaseEntity
 	implements IOrganizationTeam {
 
 	@ApiProperty({ type: () => String })
-	@IsString()
-	@IsNotEmpty()
 	@Index()
 	@Column()
 	name: string;
 
 	/*
     |--------------------------------------------------------------------------
-    | @OneToMany 
+    | @OneToMany
     |--------------------------------------------------------------------------
     */
-   	
+
 	/**
 	 * OrganizationTeamEmployee
 	 */
 	@ApiPropertyOptional({ type: () => OrganizationTeamEmployee, isArray: true })
-	@OneToMany(() => OrganizationTeamEmployee, (entity) => entity.organizationTeam, { 
-		cascade: true 
+	@OneToMany(() => OrganizationTeamEmployee, (entity) => entity.organizationTeam, {
+		cascade: true
 	})
 	members?: IOrganizationTeamEmployee[];
 
@@ -70,7 +66,7 @@ export class OrganizationTeam
 
 	/*
     |--------------------------------------------------------------------------
-    | @ManyToMany 
+    | @ManyToMany
     |--------------------------------------------------------------------------
     */
 	@ApiProperty({ type: () => Tag, isArray: true })

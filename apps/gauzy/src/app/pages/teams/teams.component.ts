@@ -194,50 +194,41 @@ export class TeamsComponent
 	}
 
 	async addOrEditTeam(team: IOrganizationTeamCreateInput) {
-		if (team.members.length) {
-			if (this.selectedTeam) {
-				try {
-					await this.organizationTeamsService.update(
-						this.selectedTeam.id,
-						team
-					);
+		if (this.selectedTeam) {
+			try {
+				await this.organizationTeamsService.update(
+					this.selectedTeam.id,
+					team
+				);
 
-					this.toastrService.success(
-						'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_TEAM.EDIT_EXISTING_TEAM',
-						{
-							name: team.name
-						}
-					);
-					this.clearItem();
-					this._refresh$.next(true);
-					this.teams$.next(true);
-				} catch (error) {
-					console.error(error);
-				}
-			} else {
-				try {
-					await this.organizationTeamsService.create(team);
-
-					this.toastrService.success(
-						'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_TEAM.ADD_NEW_TEAM',
-						{
-							name: team.name
-						}
-					);
-					this.clearItem();
-					this._refresh$.next(true);
-					this.teams$.next(true);
-				} catch (error) {
-					console.error(error);
-				}
+				this.toastrService.success(
+					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_TEAM.EDIT_EXISTING_TEAM',
+					{
+						name: team.name
+					}
+				);
+				this.clearItem();
+				this._refresh$.next(true);
+				this.teams$.next(true);
+			} catch (error) {
+				console.error(error);
 			}
 		} else {
-			this.toastrService.danger(
-				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_TEAM.INVALID_TEAM_NAME',
-				this.getTranslation(
-					'TOASTR.MESSAGE.NEW_ORGANIZATION_TEAM_INVALID_NAME'
-				)
-			);
+			try {
+				await this.organizationTeamsService.create(team);
+
+				this.toastrService.success(
+					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_TEAM.ADD_NEW_TEAM',
+					{
+						name: team.name
+					}
+				);
+				this.clearItem();
+				this._refresh$.next(true);
+				this.teams$.next(true);
+			} catch (error) {
+				console.error(error);
+			}
 		}
 	}
 
