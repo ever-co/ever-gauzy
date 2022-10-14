@@ -1,0 +1,9 @@
+{
+  "projectName": "ever-gauzy",
+  "projectOwner": "ever-co",
+  "repoType": "github",
+  "repoHost": "https://github.com",
+  "files": [
+   ".github/CONTRIBUTORS.md"
+  ]
+}
