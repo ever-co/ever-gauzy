@@ -271,7 +271,7 @@
 			"FROM": "From",
 			"TO": "To",
 			"EMPLOYEE": "Employee",
-			"START_DATE": "Date when started work",
+			"START_DATE": "Date when started work (optional)",
 			"APPLIED_DATE_LABEL": "Date when applied",
 			"IMAGE_URL": "Image URL (optional)",
 			"CV_URL": "CV URL (optional)",
@@ -405,7 +405,8 @@
 			"DEFAULT_RECEIPT_TEMPLATE": "Default Receipt Template",
 			"DEFAULT": "Default Organization",
 			"INVITATION_EXPIRATION": "Invitation Expiration",
-			"PERIOD": "Period"
+			"PERIOD": "Period",
+			"REGISTER_AS_EMPLOYEE_OF_ORGANIZATION": "Do you want to register as Employee of Organization?"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Name",
@@ -712,7 +713,8 @@
 		"DESCRIPTION": "Description",
 		"MAIN": "Main",
 		"CATEGORIES": "Categories",
-		"ADD_LANGUAGE": "Add language"
+		"ADD_LANGUAGE": "Add language",
+		"REGISTER_AS_EMPLOYEE_TOOLTIP": "You must be employee in order to be able to track time, create split expenses and use other employees related features."
 	},
 	"MENU": {
 		"PIPELINES": "Pipelines",
@@ -1705,6 +1707,7 @@
 		"ARCHIVED": "Archived",
 		"LOCATION": "Location",
 		"SETTINGS": "Settings",
+		"REGISTER_AS_EMPLOYEE": "Register as Employee",
 		"TEAMS": "Teams",
 		"ROLES": "Roles",
 		"HELP_CENTER": "Help Center",

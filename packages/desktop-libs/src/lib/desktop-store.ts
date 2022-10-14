@@ -103,8 +103,10 @@ export const LocalStore = {
 	},
 
 	updateAuthSetting: (values) => {
+		const auth = store.get('auth');
 		store.set({
 			auth: {
+				...auth,
 				...values
 			}
 		});

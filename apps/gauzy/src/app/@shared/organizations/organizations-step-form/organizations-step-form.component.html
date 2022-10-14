@@ -98,67 +98,46 @@
 						</div>
 					</div>
 					<form
-						[formGroup]="orgMainForm"
-						(ngSubmit)="this.orgMainForm.markAsDirty()"
 						class="step-container"
+						[formGroup]="orgMainForm"
+						(ngSubmit)="orgMainForm.markAsDirty()"
 					>
 						<div class="fields">
 							<div class="row">
 								<div class="col">
 									<div class="form-group">
-										<label class="label" for="nameInput">{{
-											'FORM.LABELS.ORGANIZATION_NAME'
-												| translate
-										}}</label>
+										<label class="label" for="nameInput">
+											{{ 'FORM.LABELS.ORGANIZATION_NAME' | translate }}
+										</label>
 										<input
 											fullWidth
 											id="nameInput"
 											type="text"
 											nbInput
 											formControlName="name"
-											placeholder="{{
-												'FORM.LABELS.ORGANIZATION_NAME'
-													| translate
-											}}"
-											[status]="
-												orgMainForm.get('name')
-													.invalid &&
-												orgMainForm.get('name').touched
-													? 'danger'
-													: 'basic'
-											"
+											[placeholder]="'FORM.LABELS.ORGANIZATION_NAME' | translate"
+											[status]="FormHelpers.isInvalidControl(orgMainForm, 'name') ? 'danger' : 'basic'"
 										/>
 									</div>
 								</div>
 								<div class="col">
 									<ga-currency
-										[formControl]="
-											orgMainForm.get('currency')
-										"
+										[formControl]="orgMainForm.get('currency')"
 										(optionChange)="currencyChanged($event)"
 									></ga-currency>
 								</div>
 							</div>
-
 							<div class="row">
 								<div class="col-6">
 									<div class="form-group">
 										<div>
-											<label
-												class="label"
-												for="officialNameInput"
-												>{{
-													'FORM.LABELS.OFFICIAL_NAME'
-														| translate
-												}}</label
-											>
+											<label class="label" for="officialNameInput">
+												{{ 'FORM.LABELS.OFFICIAL_NAME' | translate }}
+											</label>
 											<nb-icon
 												class="help-icon"
 												status="info"
-												nbTooltip="{{
-													'POP_UPS.OFFICIAL_NAME'
-														| translate
-												}}"
+												[nbTooltip]="'POP_UPS.OFFICIAL_NAME' | translate"
 												icon="question-mark-circle-outline"
 											></nb-icon>
 										</div>
@@ -168,34 +147,28 @@
 											type="text"
 											nbInput
 											formControlName="officialName"
-											placeholder="{{
-												'FORM.PLACEHOLDERS.OFFICIAL_NAME'
-													| translate
-											}}"
+											[placeholder]="'FORM.PLACEHOLDERS.OFFICIAL_NAME' | translate"
 										/>
 									</div>
 								</div>
 								<div class="col-6">
 									<div class="form-group">
-										<label class="label" for="taxIdInput">{{
-											'FORM.LABELS.TAX_ID' | translate
-										}}</label>
+										<label class="label" for="taxIdInput">
+											{{ 'FORM.LABELS.TAX_ID' | translate }}
+										</label>
 										<input
 											fullWidth
 											id="taxIdInput"
 											type="text"
 											nbInput
 											formControlName="taxId"
-											placeholder="{{
-												'FORM.PLACEHOLDERS.TAX_ID'
-													| translate
-											}}"
+											[placeholder]="'FORM.PLACEHOLDERS.TAX_ID' | translate"
 										/>
 									</div>
 								</div>
 							</div>
 						</div>
-						<ng-container *ngIf="!onboarding">
+						<ng-container *ngIf="!isOnboarding">
 							<div class="row">
 								<div class="col-6">
 									<ga-tags-color-input
@@ -225,37 +198,32 @@
 
 			<!-- Step 2 Organization Location Form -->
 			<nb-step [stepControl]="locationForm" [label]="location">
-				<ng-template #location>{{
-					'ORGANIZATIONS_PAGE.LOCATION' | translate
-				}}</ng-template>
+				<ng-template #location>
+					{{ 'ORGANIZATIONS_PAGE.LOCATION' | translate }}
+				</ng-template>
 				<form
+					*ngIf="locationForm"
 					class="step-container row location"
 					[formGroup]="locationForm"
-					*ngIf="locationForm"
-					(ngSubmit)="this.locationForm.markAsDirty()"
+					(ngSubmit)="locationForm.markAsDirty()"
 				>
 					<div class="col-5">
 						<ga-location-form
 							#locationFormDirective
 							[form]="locationForm"
 							[showAutocompleteSearch]="true"
-							(mapCoordinatesEmitter)="
-								onCoordinatesChanges($event)
-							"
+							(mapCoordinatesEmitter)="onCoordinatesChanges($event)"
 							(mapGeometryEmitter)="onGeometrySend($event)"
-						>
-						</ga-location-form>
+						></ga-location-form>
 					</div>
 					<div class="leaflet col-7">
 						<ng-container *ngIf="stepper._selectedIndex === 1">
 							<ga-leaflet-map
 								#leafletTemplate
 								(mapClicked)="onMapClicked($event)"
-							>
-							</ga-leaflet-map>
+							></ga-leaflet-map>
 						</ng-container>
 					</div>
-
 					<div class="stepper-buttons two">
 						<button
 							nbButton
@@ -266,14 +234,17 @@
 						>
 							{{ 'BUTTONS.PREVIOUS' | translate }}
 						</button>
-						<ng-container
-							*ngIf="
-								locationFormBlank;
-								then skipButton;
-								else nextButton
-							"
-						>
-						</ng-container>
+						<ng-template [ngIf]="locationFormBlank" [ngIfElse]="nextButton">
+							<button
+								nbButton
+								class="green"
+								status="basic"
+								outline
+								nbStepperNext
+							>
+								{{ 'BUTTONS.SKIP_CONTINUE' | translate: { label: 'address' } }}
+							</button>
+						</ng-template>
 						<ng-template #nextButton>
 							<button
 								nbButton
@@ -285,20 +256,6 @@
 								{{ 'BUTTONS.NEXT' | translate }}
 							</button>
 						</ng-template>
-						<ng-template #skipButton>
-							<button
-								nbButton
-								class="green"
-								status="basic"
-								outline
-								nbStepperNext
-							>
-								{{
-									'BUTTONS.SKIP_CONTINUE'
-										| translate: { label: 'address' }
-								}}
-							</button>
-						</ng-template>
 					</div>
 				</form>
 			</nb-step>
@@ -306,34 +263,26 @@
 
 			<!-- Step 3 Organization Bonus Form -->
 			<nb-step [stepControl]="orgBonusForm" [label]="bonus">
-				<ng-template #bonus>{{
-					'SM_TABLE.BONUS' | translate
-				}}</ng-template>
+				<ng-template #bonus>
+					{{ 'SM_TABLE.BONUS' | translate }}
+				</ng-template>
 				<form
 					class="step-container"
 					[formGroup]="orgBonusForm"
-					*ngIf="orgBonusForm"
-					(ngSubmit)="this.orgBonusForm.markAsDirty()"
+					(ngSubmit)="orgBonusForm.markAsDirty()"
 				>
 					<div class="row justify-content-center">
-						<div [ngClass]="onboarding ? 'col-3' : 'col-6'">
+						<div [ngClass]="isOnboarding ? 'col-3' : 'col-6'">
 							<div class="form-group">
 								<label class="label">
-									{{
-										'FORM.LABELS.TYPE_OF_BONUS' | translate
-									}}
+									{{ 'FORM.LABELS.TYPE_OF_BONUS' | translate }}
 								</label>
 								<nb-select
 									class="d-block"
 									size="medium"
 									formControlName="bonusType"
-									placeholder="{{
-										'FORM.PLACEHOLDERS.TYPE_OF_BONUS'
-											| translate
-									}}"
-									(selectedChange)="
-										loadDefaultBonusPercentage($event)
-									"
+									[placeholder]="'FORM.PLACEHOLDERS.TYPE_OF_BONUS' | translate"
+									(selectedChange)="loadDefaultBonusPercentage($event)"
 									fullWidth
 								>
 									<nb-option [value]="null">
@@ -348,38 +297,24 @@
 								</nb-select>
 							</div>
 						</div>
-						<div [ngClass]="onboarding ? 'col-3' : 'col-6'">
+						<div [ngClass]="isOnboarding ? 'col-3' : 'col-6'">
 							<div class="form-group">
 								<label class="label">
-									{{
-										'FORM.LABELS.BONUS_PERCENTAGE'
-											| translate
-									}}
+									{{ 'FORM.LABELS.BONUS_PERCENTAGE' | translate }}
 								</label>
 								<input
 									nbInput
 									type="number"
 									[min]="0"
 									formControlName="bonusPercentage"
-									placeholder="{{
-										'FORM.PLACEHOLDERS.BONUS_PERCENTAGE'
-											| translate
-									}}"
+									[placeholder]="'FORM.PLACEHOLDERS.BONUS_PERCENTAGE' | translate"
 									fullWidth
 									class="d-block"
-									[status]="
-										orgBonusForm.get('bonusPercentage')
-											.invalid &&
-										orgBonusForm.get('bonusPercentage')
-											.invalid
-											? 'danger'
-											: 'basic'
-									"
+									[status]="FormHelpers.isInvalidControl(orgBonusForm, 'bonusPercentage') ? 'danger' : 'basic'"
 								/>
 							</div>
 						</div>
 					</div>
-
 					<div class="stepper-buttons">
 						<button
 							nbButton
@@ -391,7 +326,7 @@
 							{{ 'BUTTONS.PREVIOUS' | translate }}
 						</button>
 						<button
-							[disabled]="this.orgBonusForm.invalid"
+							[disabled]="orgBonusForm.invalid"
 							nbButton
 							class="green"
 							status="basic"
@@ -407,29 +342,24 @@
 
 			<!-- Step 4 Organization Settings Form -->
 			<nb-step [stepControl]="orgSettingsForm" [label]="settings">
-				<ng-template #settings>{{
-					'ORGANIZATIONS_PAGE.SETTINGS' | translate
-				}}</ng-template>
+				<ng-template #settings>
+					{{ 'ORGANIZATIONS_PAGE.SETTINGS' | translate }}
+				</ng-template>
 				<form
 					class="step-container"
 					[formGroup]="orgSettingsForm"
-					*ngIf="orgSettingsForm"
-					(ngSubmit)="this.orgSettingsForm.markAsDirty()"
+					(ngSubmit)="orgSettingsForm.markAsDirty()"
 				>
 					<div class="fields">
 						<div class="row">
 							<div class="col-6">
 								<div class="form-group">
-									<label class="label">{{
-										'FORM.LABELS.CHOOSE_TIME_ZONE'
-											| translate
-									}}</label>
+									<label class="label">
+										{{ 'FORM.LABELS.CHOOSE_TIME_ZONE' | translate }}
+									</label>
 									<ng-select
 										[(items)]="listOfZones"
-										placeholder="{{
-											'FORM.PLACEHOLDERS.CHOOSE_TIME_ZONE'
-												| translate
-										}}"
+										[placeholder]="'FORM.PLACEHOLDERS.CHOOSE_TIME_ZONE' | translate"
 										[searchable]="true"
 										formControlName="timeZone"
 										appendTo="body"
@@ -452,33 +382,22 @@
 							</div>
 							<div class="col-6">
 								<div class="form-group">
-									<label
-										class="label"
-										for="startWeekOnSelect"
-										>{{
-											'FORM.LABELS.START_WEEK_ON'
-												| translate
-										}}</label
-									>
+									<label class="label" for="startWeekOnSelect">
+										{{ 'FORM.LABELS.START_WEEK_ON' | translate }}
+									</label >
 									<nb-select
 										class="d-block"
 										size="medium"
 										formControlName="startWeekOn"
 										id="startWeekOnSelect"
-										placeholder="{{
-											'FORM.PLACEHOLDERS.START_WEEK_ON'
-												| translate
-										}}"
+										[placeholder]="'FORM.PLACEHOLDERS.START_WEEK_ON' | translate"
 										fullWidth="true"
 									>
 										<nb-option
 											*ngFor="let weekday of weekdays"
 											[value]="weekday"
 										>
-											{{
-												'SM_TABLE.' + weekday
-													| translate
-											}}
+											{{ 'SM_TABLE.' + weekday | translate }}
 										</nb-option>
 									</nb-select>
 								</div>
@@ -487,25 +406,17 @@
 						<div class="row">
 							<div class="col-6">
 								<div class="form-group">
-									<label class="label">{{
-										'FORM.LABELS.DATE_TYPE' | translate
-									}}</label>
+									<label class="label">
+										{{ 'FORM.LABELS.DATE_TYPE' | translate }}
+									</label>
 									<nb-select
 										class="d-block"
 										size="medium"
 										formControlName="defaultValueDateType"
-										placeholder="{{
-											'FORM.PLACEHOLDERS.DATE_TYPE'
-												| translate
-										}}"
+										[placeholder]="'FORM.PLACEHOLDERS.DATE_TYPE' | translate"
 										fullWidth
 									>
-										<nb-option
-											*ngFor="
-												let type of defaultValueDateTypes
-											"
-											[value]="type"
-										>
+										<nb-option *ngFor="let type of defaultValueDateTypes" [value]="type">
 											{{ 'SM_TABLE.' + type | translate }}
 										</nb-option>
 									</nb-select>
@@ -513,54 +424,35 @@
 							</div>
 							<div class="col-6">
 								<div class="form-group">
-									<label class="label">{{
-										'ORGANIZATIONS_PAGE.EDIT.REGIONS'
-											| translate
-									}}</label>
+									<label class="label">
+										{{ 'ORGANIZATIONS_PAGE.EDIT.REGIONS' | translate }}
+									</label>
 									<nb-select
 										class="d-block"
 										size="medium"
-										placeholder="{{
-											'FORM.PLACEHOLDERS.REGIONS'
-												| translate
-										}}"
+										[placeholder]="'FORM.PLACEHOLDERS.REGIONS' | translate"
 										formControlName="regionCode"
 										fullWidth
 									>
-										<nb-option
-											*ngFor="let code of regionCodes"
-											[value]="code"
-										>
-											{{
-												'SM_TABLE.REGION.' + code
-													| translate
-											}}
+										<nb-option *ngFor="let code of regionCodes" [value]="code">
+											{{ 'SM_TABLE.REGION.' + code | translate }}
 										</nb-option>
 									</nb-select>
 								</div>
 							</div>
 							<div class="col-6">
 								<div class="form-group">
-									<label class="label">{{
-										'FORM.PLACEHOLDERS.NUMBER_FORMAT'
-											| translate
-									}}</label>
+									<label class="label">
+										{{ 'FORM.PLACEHOLDERS.NUMBER_FORMAT' | translate }}
+									</label>
 									<nb-select
 										class="d-block"
 										size="medium"
-										placeholder="{{
-											'FORM.PLACEHOLDERS.NUMBER_FORMAT'
-												| translate
-										}}"
+										[placeholder]="'FORM.PLACEHOLDERS.NUMBER_FORMAT' | translate"
 										formControlName="numberFormat"
 										fullWidth
 									>
-										<nb-option
-											*ngFor="
-												let numFormat of numberFormats
-											"
-											[value]="numFormat"
-										>
+										<nb-option *ngFor="let numFormat of numberFormats " [value]="numFormat" >
 											{{ numberFormatPreview(numFormat) }}
 										</nb-option>
 									</nb-select>
@@ -569,27 +461,16 @@
 							<div class="col-6">
 								<div class="form-group">
 									<label class="label">
-										{{
-											'FORM.LABELS.DATE_FORMAT'
-												| translate
-										}}
+										{{ 'FORM.LABELS.DATE_FORMAT' | translate }}
 									</label>
 									<nb-select
 										class="d-block"
 										size="medium"
 										formControlName="dateFormat"
-										placeholder="{{
-											'FORM.PLACEHOLDERS.CHOOSE_FORMAT'
-												| translate
-										}}"
+										[placeholder]="'FORM.PLACEHOLDERS.CHOOSE_FORMAT' | translate"
 										fullWidth
 									>
-										<nb-option
-											*ngFor="
-												let format of listOfDateFormats
-											"
-											[value]="format"
-										>
+										<nb-option *ngFor="let format of listOfDateFormats " [value]="format">
 											{{ dateFormatPreview(format) }}
 										</nb-option>
 									</nb-select>
@@ -600,10 +481,7 @@
 							<div class="col-6">
 								<div class="form-group">
 									<label class="label">
-										{{
-											'FORM.LABELS.FISCAL_YEAR_START_DATE'
-												| translate
-										}}
+										{{ 'FORM.LABELS.FISCAL_YEAR_START_DATE' | translate }}
 									</label>
 									<input
 										fullWidth
@@ -617,10 +495,7 @@
 							<div class="col-6">
 								<div class="form-group">
 									<label class="label">
-										{{
-											'FORM.LABELS.FISCAL_YEAR_END_DATE'
-												| translate
-										}}
+										{{ 'FORM.LABELS.FISCAL_YEAR_END_DATE' | translate }}
 									</label>
 									<input
 										fullWidth
@@ -636,10 +511,7 @@
 							<div class="col-6">
 								<div class="form-group invite-toggle">
 									<label class="label">
-										{{
-											'FORM.LABELS.ENABLE_DISABLE_INVITES'
-												| translate
-										}}
+										{{ 'FORM.LABELS.ENABLE_DISABLE_INVITES' | translate }}
 									</label>
 									<nb-toggle
 										class="d-block"
@@ -648,44 +520,29 @@
 										labelPosition="start"
 										(checkedChange)="toggleExpiry($event)"
 									>
-										{{
-											'FORM.LABELS.ALLOW_USER_INVITES'
-												| translate
-										}}
+										{{ 'FORM.LABELS.ALLOW_USER_INVITES' | translate }}
 									</nb-toggle>
 								</div>
 							</div>
 							<div class="col-6">
 								<div class="form-group">
 									<label class="label">
-										{{
-											'FORM.LABELS.INVITE_EXPIRY_PERIOD'
-												| translate
-										}}
+										{{ 'FORM.LABELS.INVITE_EXPIRY_PERIOD' | translate }}
 									</label>
 									<input
 										nbInput
 										type="number"
 										[min]="0"
 										formControlName="inviteExpiryPeriod"
-										placeholder="{{
-											'FORM.PLACEHOLDERS.INVITE_EXPIRY_PERIOD'
-												| translate
-										}}"
+										[placeholder]="'FORM.PLACEHOLDERS.INVITE_EXPIRY_PERIOD' | translate"
 										fullWidth
 										class="d-block"
-										[ngClass]="{
-											'status-danger':
-												this.orgSettingsForm.get(
-													'inviteExpiryPeriod'
-												).invalid
-										}"
+										[status]="FormHelpers.isInvalidControl(orgSettingsForm, 'inviteExpiryPeriod') ? 'danger' : 'basic'"
 									/>
 								</div>
 							</div>
 						</div>
 					</div>
-
 					<div class="stepper-buttons">
 						<button
 							nbButton
@@ -696,19 +553,110 @@
 						>
 							{{ 'BUTTONS.PREVIOUS' | translate }}
 						</button>
-						<button
-							[disabled]="this.orgSettingsForm.invalid"
-							(click)="addOrganization()"
-							nbButton
-							status="success"
-							nbStepperNext
-						>
-							{{ 'BUTTONS.ADD' | translate }}
-						</button>
+						<ng-template [ngIf]="isOnboarding" [ngIfElse]="addButton">
+							<button
+								[disabled]="orgSettingsForm.invalid"
+								nbButton
+								class="green"
+								status="basic"
+								outline
+								nbStepperNext
+							>
+								{{ 'BUTTONS.NEXT' | translate }}
+							</button>
+						</ng-template>
+						<ng-template #addButton>
+							<button
+								[disabled]="orgSettingsForm.invalid"
+								(click)="addOrganization()"
+								nbButton
+								status="success"
+								nbStepperNext
+							>
+								{{ 'BUTTONS.ADD' | translate }}
+							</button>
+						</ng-template>
 					</div>
 				</form>
 			</nb-step>
 			<!-- Step 4 Organization Settings Form End -->
+
+			<!-- Step 5 Register as Employee Feature Form -->
+			<nb-step [stepControl]="employeeFeatureForm" [label]="employeeFeature" [hidden]="!isOnboarding">
+				<ng-template #employeeFeature>
+					{{ 'ORGANIZATIONS_PAGE.REGISTER_AS_EMPLOYEE' | translate }}
+				</ng-template>
+				<form
+					class="step-container"
+					[formGroup]="employeeFeatureForm"
+					(ngSubmit)="submitEmployeeFeature()"
+				>
+					<div class="fields">
+						<div class="row justify-content-center">
+							<div class="col-6">
+								<div class="form-group">
+									<div class="mt-1">
+										<label class="label" for="registerAsEmployee">
+											{{ 'ORGANIZATIONS_PAGE.REGISTER_AS_EMPLOYEE' | translate }}
+										</label>
+										<nb-icon
+											class="help-icon"
+											status="info"
+											[nbTooltip]="'POP_UPS.REGISTER_AS_EMPLOYEE_TOOLTIP' | translate"
+											icon="question-mark-circle-outline"
+										></nb-icon>
+									</div>
+									<nb-toggle
+										class="d-block"
+										formControlName="registerAsEmployee"
+										status="primary"
+										labelPosition="start"
+										id="registerAsEmployee"
+									>
+										{{ 'FORM.LABELS.REGISTER_AS_EMPLOYEE_OF_ORGANIZATION' | translate }}
+									</nb-toggle>
+								</div>
+							</div>
+							<div class="col-6">
+								<div class="form-group">
+									<label for="startedWork" class="label">
+										{{ 'FORM.LABELS.START_DATE' | translate }}
+									</label>
+									<input
+										[nbDatepicker]="startWorkOnDatepicker"
+										nbInput
+										fullWidth
+										[placeholder]="'FORM.PLACEHOLDERS.START_DATE' | translate"
+										formControlName="startedWorkOn"
+									/>
+									<nb-datepicker #startWorkOnDatepicker></nb-datepicker>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="stepper-buttons">
+						<button
+							nbButton
+							class="gray"
+							status="basic"
+							outline
+							nbStepperPrevious
+						>
+							{{ 'BUTTONS.PREVIOUS' | translate }}
+						</button>
+						<ng-template [ngIf]="isOnboarding">
+							<button
+								[disabled]="employeeFeatureForm.invalid"
+								nbButton
+								status="success"
+							>
+								{{ 'BUTTONS.ADD' | translate }}
+							</button>
+						</ng-template>
+					</div>
+				</form>
+			</nb-step>
+			<!-- Step 5 Register as Employee Feature Form End -->
 		</nb-stepper>
 	</nb-card-body>
 </nb-card>

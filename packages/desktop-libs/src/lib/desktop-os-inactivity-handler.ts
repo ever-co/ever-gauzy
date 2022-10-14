@@ -2,6 +2,7 @@ import {PowerManagerDetectInactivity} from "./decorators";
 import NotificationDesktop from "./desktop-notifier";
 import {DesktopDialog} from "./desktop-dialog";
 import {BrowserWindow} from "electron";
+import {LocalStore} from "./desktop-store";
 
 export class DesktopOsInactivityHandler {
 	private _inactivityResultAccepted: boolean;
@@ -14,6 +15,7 @@ export class DesktopOsInactivityHandler {
 		this._powerManager = powerManager;
 		this._inactivityResultAccepted = false;
 		this._powerManager.detectInactivity.on('activity-proof-request', async () => {
+			if (!this._isAllowTrackInactivity) return;
 			this._inactivityResultAccepted = false;
 			this._windowFocus();
 			this._dialog = new DesktopDialog(
@@ -65,5 +67,10 @@ export class DesktopOsInactivityHandler {
 		window.restore();
 		// focus on the main window
 		window.focus();
+	}
+
+	private get _isAllowTrackInactivity(): boolean {
+		const auth = LocalStore.getStore('auth');
+		return auth && auth.allowTrackInactivity;
 	}
 }
