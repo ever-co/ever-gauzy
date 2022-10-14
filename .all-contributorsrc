@@ -19,6 +19,26 @@
         "code",
         "ideas"
       ]
+    },
+    {
+      "login": "evereq",
+      "name": "Ruslan Konviser",
+      "avatar_url": "https://avatars.githubusercontent.com/u/118497?v=4",
+      "profile": "https://github.com/ever-co",
+      "contributions": [
+        "business",
+        "ideas",
+        "code",
+        "bug",
+        "doc",
+        "design",
+        "infra",
+        "financial",
+        "maintenance",
+        "mentoring",
+        "projectManagement",
+        "review"
+      ]
     }
   ]
 }
