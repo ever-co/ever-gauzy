@@ -9,15 +9,17 @@
 			</div>
 		</div>
 		<div class="row mb-3">
-			<h5 class="title mr-3 ml-3">{{ this.team ? ('POP_UPS.EDIT' | translate) : ('POP_UPS.ADD' | translate) }}</h5>
+			<h5 class="title mr-3 ml-3">
+				{{ (team ? 'POP_UPS.EDIT' : 'POP_UPS.ADD' ) | translate }}
+			</h5>
 		</div>
 		<form [formGroup]="form">
 			<div class="row mb-3">
 				<div class="col-sm-12 d-flex flex-column">
 					<div class="form-group">
-						<label class="label">{{
-							'FORM.PLACEHOLDERS.TEAM_NAME' | translate
-						}}</label>
+						<label class="label">
+							{{ 'FORM.PLACEHOLDERS.TEAM_NAME' | translate }}
+						</label>
 						<input
 							formControlName="name"
 							type="text"
@@ -27,7 +29,7 @@
 						/>
 					</div>
 				</div>
-			</div>			
+			</div>
 			<div class="row mb-3">
 				<div class="form-group col-12">
 					<ga-employee-multi-select
@@ -57,7 +59,7 @@
 							[isOrgLevel]="true"
 						></ga-tags-color-input>
 					</div>
-				</div>							
+				</div>
 			</div>
 		</form>
 		<div class="row mb-3">

@@ -1,11 +1,13 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
 import {
 	IOrganizationTeam,
 	IOrganizationTeamFindInput,
-	IOrganizationTeamCreateInput
+	IOrganizationTeamCreateInput,
+	IPagination
 } from '@gauzy/contracts';
-import { firstValueFrom } from 'rxjs';
+import { toParams } from '@gauzy/common-angular';
 import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable({
@@ -14,55 +16,42 @@ import { API_PREFIX } from '../constants/app.constants';
 export class OrganizationTeamsService {
 	constructor(private http: HttpClient) {}
 
-	// TODO: Implement logic to proceed the fowolling requests:
+	// TODO: Implement logic to proceed the following requests:
 	// 1) Get all employees of selected Organization and put in in the select as options;
 	// 2) Create a team with name and members (employees involved);
 	// 3) Edit team- simillar with create;
 	// 4) Delete a team
 	// 5) Display all teams: show team name and members - avatar + full name for each member;
 
-	create(
-		createInput: IOrganizationTeamCreateInput
-	): Promise<IOrganizationTeam> {
+	create(body: IOrganizationTeamCreateInput): Promise<IOrganizationTeam> {
 		return firstValueFrom(
-			this.http
-			.post<IOrganizationTeam>(
-				`${API_PREFIX}/organization-team/create`,
-				createInput
-			)
+			this.http.post<IOrganizationTeam>(`${API_PREFIX}/organization-team`, body)
 		);
 	}
 
 	getAll(
-		relations?: string[],
-		findInput?: IOrganizationTeamFindInput
-	): Promise<{ items: any[]; total: number }> {
-		const data = JSON.stringify({ relations, findInput });
+		relations: string[] = [],
+		where?: IOrganizationTeamFindInput
+	): Promise<IPagination<IOrganizationTeam>> {
 		return firstValueFrom(
-			this.http
-			.get<{ items: IOrganizationTeam[]; total: number }>(
-				`${API_PREFIX}/organization-team`,
-				{
-					params: { data }
-				}
-			)
+			this.http.get<IPagination<IOrganizationTeam>>(`${API_PREFIX}/organization-team`, {
+				params: toParams({ where, relations })
+			})
 		);
 	}
 
 	update(
-		id: string,
-		updateInput: IOrganizationTeamCreateInput
+		id: IOrganizationTeam['id'],
+		body: IOrganizationTeamCreateInput
 	): Promise<any> {
 		return firstValueFrom(
-			this.http
-			.put(`${API_PREFIX}/organization-team/${id}`, updateInput)
+			this.http.put(`${API_PREFIX}/organization-team/${id}`, body)
 		);
 	}
 
-	delete(id: string): Promise<any> {
+	delete(id: IOrganizationTeam['id']): Promise<any> {
 		return firstValueFrom(
-			this.http
-			.delete(`${API_PREFIX}/organization-team/${id}`)
+			this.http.delete(`${API_PREFIX}/organization-team/${id}`)
 		);
 	}
 
@@ -70,16 +59,12 @@ export class OrganizationTeamsService {
 		relations?: string[],
 		findInput?: IOrganizationTeamFindInput,
 		employeeId: string = ''
-	): Promise<{ items: any[]; total: number }> {
+	): Promise<IPagination<IOrganizationTeam>> {
 		const data = JSON.stringify({ relations, findInput, employeeId });
 		return firstValueFrom(
-			this.http
-			.get<{ items: IOrganizationTeam[]; total: number }>(
-				`${API_PREFIX}/organization-team/me`,
-				{
-					params: { data }
-				}
-			)
+			this.http.get<IPagination<IOrganizationTeam>>(`${API_PREFIX}/organization-team/me`, {
+				params: { data }
+			})
 		);
 	}
 }
