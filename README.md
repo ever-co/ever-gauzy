@@ -191,7 +191,8 @@ Notes:
 
 ## Contributors
 
-View full list of our [contributors](https://github.com/ever-co/ever-gauzy/graphs/contributors).
+See our contributors list in [CONTRIBUTORS.md](https://github.com/ever-co/ever-gauzy/blob/develop/.github/CONTRIBUTORS.md).  
+You can also view full list of our [contributors tracked by Github](https://github.com/ever-co/ever-gauzy/graphs/contributors).
 
 ## Contact Us
 
