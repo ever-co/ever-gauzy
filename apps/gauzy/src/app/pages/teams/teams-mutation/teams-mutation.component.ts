@@ -1,9 +1,9 @@
 import { Component, OnInit, Output, EventEmitter, Input } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { filter, tap } from 'rxjs/operators';
 import { IEmployee, IOrganization, IOrganizationTeam, ITag } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { distinctUntilChange } from '@gauzy/common-angular';
+import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
 import { Store } from '../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
@@ -20,6 +20,7 @@ export class TeamsMutationComponent implements OnInit {
 	@Output() addOrEditTeam = new EventEmitter();
 
 	public organization: IOrganization;
+
 	/*
 	* Team Mutation Form
 	*/
@@ -27,12 +28,12 @@ export class TeamsMutationComponent implements OnInit {
 	static buildForm(fb: FormBuilder): FormGroup {
 		const form = fb.group({
 			name: [null, Validators.required],
-			tags: [],
-			members: [],
+			members: [null, Validators.required],
 			managers: [],
+			tags: [],
 		});
-		form.get('managers').setValue([]);
 		form.get('members').setValue([]);
+		form.get('managers').setValue([]);
 		form.get('tags').setValue([]);
 		return form;
 	}
@@ -52,6 +53,20 @@ export class TeamsMutationComponent implements OnInit {
 				untilDestroyed(this)
 			)
 			.subscribe();
+	}
+
+	ngAfterViewInit(): void {
+		const members = <FormControl>this.form.get('members');
+		const managers = <FormControl>this.form.get('managers');
+
+		managers.valueChanges.subscribe((value) => {
+			if (isNotEmpty(value)) {
+				members.setValidators(null);
+			} else {
+				members.setValidators([Validators.required]);
+			}
+			members.updateValueAndValidity();
+		});
 	}
 
 	/**
