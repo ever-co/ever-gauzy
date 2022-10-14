@@ -405,7 +405,8 @@
 			"DEFAULT_RECEIPT_TEMPLATE": "crwdns10380:0crwdne10380:0",
 			"DEFAULT": "crwdns10382:0crwdne10382:0",
 			"INVITATION_EXPIRATION": "crwdns10561:0crwdne10561:0",
-			"PERIOD": "crwdns11327:0crwdne11327:0"
+			"PERIOD": "crwdns11327:0crwdne11327:0",
+			"REGISTER_AS_EMPLOYEE_OF_ORGANIZATION": "crwdns11505:0crwdne11505:0"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "crwdns90:0crwdne90:0",
@@ -712,7 +713,8 @@
 		"DESCRIPTION": "crwdns10551:0crwdne10551:0",
 		"MAIN": "crwdns10553:0crwdne10553:0",
 		"CATEGORIES": "crwdns10583:0crwdne10583:0",
-		"ADD_LANGUAGE": "crwdns11209:0crwdne11209:0"
+		"ADD_LANGUAGE": "crwdns11209:0crwdne11209:0",
+		"REGISTER_AS_EMPLOYEE_TOOLTIP": "crwdns11507:0crwdne11507:0"
 	},
 	"MENU": {
 		"PIPELINES": "crwdns4734:0crwdne4734:0",
@@ -1705,6 +1707,7 @@
 		"ARCHIVED": "crwdns258:0crwdne258:0",
 		"LOCATION": "crwdns2263:0crwdne2263:0",
 		"SETTINGS": "crwdns2265:0crwdne2265:0",
+		"REGISTER_AS_EMPLOYEE": "crwdns11509:0crwdne11509:0",
 		"TEAMS": "crwdns7834:0crwdne7834:0",
 		"ROLES": "crwdns2647:0crwdne2647:0",
 		"HELP_CENTER": "crwdns7708:0crwdne7708:0",
