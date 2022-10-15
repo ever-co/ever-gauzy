@@ -5,7 +5,8 @@ import {
 	IOrganizationProject,
 	IOrganizationContact,
 	IOrganizationDepartment,
-	IOrganization
+	IOrganization,
+	IOrganizationTeam
 } from '@gauzy/contracts';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -17,6 +18,7 @@ import {
 	OrganizationContactService,
 	OrganizationDepartmentsService,
 	OrganizationProjectsService,
+	OrganizationTeamsService,
 	Store,
 	ToastrService
 } from '../../../@core/services';
@@ -44,9 +46,11 @@ export class InviteMutationComponent extends TranslationBaseComponent
 	@ViewChild('emailInviteForm')
 	emailInviteForm: EmailInviteFormComponent;
 
-	organizationProjects: IOrganizationProject[] = [];
-	organizationContacts: IOrganizationContact[] = [];
-	organizationDepartments: IOrganizationDepartment[] = [];
+	public organizationProjects: IOrganizationProject[] = [];
+	public organizationContacts: IOrganizationContact[] = [];
+	public organizationDepartments: IOrganizationDepartment[] = [];
+	public organizationTeams: IOrganizationTeam[] = [];
+
 	public organization: IOrganization;
 
 	constructor(
@@ -54,6 +58,7 @@ export class InviteMutationComponent extends TranslationBaseComponent
 		private readonly organizationProjectsService: OrganizationProjectsService,
 		private readonly organizationContactService: OrganizationContactService,
 		private readonly organizationDepartmentsService: OrganizationDepartmentsService,
+		private readonly organizationTeamsService: OrganizationTeamsService,
 		public readonly translateService: TranslateService,
 		private readonly toastrService: ToastrService,
 		private readonly store: Store
@@ -80,6 +85,7 @@ export class InviteMutationComponent extends TranslationBaseComponent
 			await this.loadProjects();
 			await this.loadOrganizationContacts();
 			await this.loadDepartments();
+			await this.getOrganizationTeams()
 		} catch (error) {
 			this.toastrService.danger(error);
 		}
@@ -116,6 +122,20 @@ export class InviteMutationComponent extends TranslationBaseComponent
 			{ organizationId, tenantId }
 		);
 		this.organizationDepartments = items;
+	}
+
+	async getOrganizationTeams() {
+		if (!this.organization) {
+			return;
+		}
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
+
+		const { items = [] } = await this.organizationTeamsService.getAll(
+			[],
+			{ organizationId, tenantId }
+		);
+		this.organizationTeams = items;
 	}
 
 	closeDialog(savedInvites: IInvite[] = []) {
