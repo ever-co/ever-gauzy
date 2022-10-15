@@ -5,7 +5,8 @@ import {
 	IOrganizationContact,
 	IOrganizationProject,
 	IUser,
-	IRole
+	IRole,
+	IOrganizationTeam
 } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
@@ -22,6 +23,7 @@ import {
 	OrganizationContact,
 	OrganizationDepartment,
 	OrganizationProject,
+	OrganizationTeam,
 	Role,
 	TenantOrganizationBaseEntity,
 	User
@@ -120,4 +122,14 @@ export class Invite extends TenantOrganizationBaseEntity implements IInvite {
 		name: 'invite_organization_department'
 	})
 	departments?: IOrganizationDepartment[];
+
+	/**
+	* Organization Teams
+    */
+	@ApiPropertyOptional({ type: () => OrganizationTeam })
+	@ManyToMany(() => OrganizationTeam)
+	@JoinTable({
+		name: 'invite_organization_team'
+	})
+	teams?: IOrganizationTeam[];
 }
