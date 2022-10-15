@@ -1,0 +1,39 @@
+.team-name {
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 16px;
+  letter-spacing: -0.009em;
+  color: var(--gauzy-text-color-2);
+}
+
+nb-card {
+  padding: 8px 12px 8px 15px;
+  background-color: var(--gauzy-card-1);
+  min-width: 242px;
+}
+
+.team-header {
+  padding: 0;
+}
+
+.counter-container {
+  width: 71%;
+}
+
+.team-container {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+
+  .team-member {
+    display: flex;
+    gap: 0.25rem;
+    flex-direction: column;
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 16px;
+    letter-spacing: -0.009em;
+    color: var(--gauzy-text-color-2);
+  }
+}
+

@@ -74,7 +74,19 @@ const routes: Routes = [
 			},
 			{
 				path: 'teams',
-				component: TeamComponent
+				component: TeamComponent,
+				data: {
+					datePicker: {
+						unitOfTime: 'day',
+						isLockDatePicker: true,
+						isSaveDatePicker: true,
+						isSingleDatePicker: true,
+						isDisableFutureDate: true
+					}
+				},
+				resolve: {
+					dates: DateRangePickerResolver
+				}
 			}
 		]
 	}
