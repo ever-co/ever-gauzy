@@ -36,6 +36,9 @@ import { OrganizationTeamService } from './organization-team.service';
 		EmployeeService,
 		OrganizationService
 	],
-	exports: [OrganizationTeamService]
+	exports: [
+		TypeOrmModule,
+		OrganizationTeamService
+	]
 })
 export class OrganizationTeamModule {}
