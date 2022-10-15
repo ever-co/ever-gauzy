@@ -146,7 +146,42 @@
 		"
 	>
 		<div class="row">
-			<div class="col-sm-12">
+			<ng-container *ngIf="invitationType === invitationTypeEnum.EMPLOYEE">
+				<div class="col-6">
+					<div class="form-group">
+						<label for="teamSelection" class="label label-with-select">
+							{{ 'FORM.LABELS.TEAMS_OPTIONAL' | translate }}
+							<button
+								nbButton
+								ghost
+								size="tiny"
+								type="button"
+								(click)="selectAllTeams()"
+							>
+								{{ 'BUTTONS.SELECT_ALL' | translate }}
+							</button>
+						</label>
+						<ng-select
+							id="teamSelection"
+							class="adjust-height"
+							[hideSelected]="true"
+							[multiple]="true"
+							bindLabel="name"
+							appendTo="body"
+							formControlName="teams"
+							[placeholder]="'FORM.PLACEHOLDERS.TEAMS' | translate"
+						>
+							<ng-option
+								*ngFor="let team of organizationTeams"
+								[value]="team.id"
+							>
+								{{ team.name }}
+							</ng-option>
+						</ng-select>
+					</div>
+				</div>
+			</ng-container>
+			<div [ngClass]="invitationType === invitationTypeEnum.EMPLOYEE ? 'col-6' : 'col-12'">
 				<div class="form-group">
 					<label
 						for="departmentSelection"
