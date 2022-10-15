@@ -18,6 +18,7 @@ import { UserOrganizationModule } from './../user-organization/user-organization
 import { InviteController } from './invite.controller';
 import { Invite } from './invite.entity';
 import { InviteService } from './invite.service';
+import { OrganizationTeamModule } from 'organization-team/organization-team.module';
 
 @Module({
 	imports: [
@@ -37,6 +38,7 @@ import { InviteService } from './invite.service';
 		OrganizationProjectModule,
 		OrganizationContactModule,
 		OrganizationDepartmentModule,
+		OrganizationTeamModule,
 		UserOrganizationModule
 	],
 	controllers: [InviteController],

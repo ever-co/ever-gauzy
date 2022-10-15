@@ -40,12 +40,12 @@ export interface IInviteResendInput {
 
 }
 
-export interface ICreateEmailInvitesInput
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface ICreateEmailInvitesInput extends IBasePerTenantAndOrganizationEntityModel {
 	emailIds: string[];
 	projectIds?: string[];
 	organizationContactIds?: string[];
 	departmentIds?: string[];
+	teamIds?: string[];
 	roleId: string;
 	invitedById: string;
 	inviteType: any;

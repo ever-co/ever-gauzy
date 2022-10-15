@@ -16,7 +16,8 @@ import {
 	IRole,
 	InvitationExpirationEnum,
 	IInvite,
-	InvitationTypeEnum
+	InvitationTypeEnum,
+	IOrganizationTeam
 } from '@gauzy/contracts';
 import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -30,45 +31,35 @@ import {
 	Repository,
 	SelectQueryBuilder
 } from 'typeorm';
+import { addDays } from 'date-fns';
 import { isNotEmpty } from '@gauzy/common';
 import { TenantAwareCrudService } from './../core/crud';
+import { RequestContext } from './../core/context';
 import { Invite } from './invite.entity';
 import { EmailService } from '../email/email.service';
-import { addDays } from 'date-fns';
 import { UserService } from '../user/user.service';
-import { RequestContext } from './../core/context';
-import {
-	Organization,
-	OrganizationContact,
-	OrganizationDepartment,
-	OrganizationProject,
-	Role,
-} from './../core/entities/internal';
+import { RoleService } from './../role/role.service';
+import { OrganizationService } from './../organization/organization.service';
+import { OrganizationTeamService } from './../organization-team/organization-team.service';
+import { OrganizationDepartmentService } from './../organization-department/organization-department.service';
+import { OrganizationContactService } from './../organization-contact/organization-contact.service';
+import { OrganizationProjectService } from './../organization-project/organization-project.service';
 
 @Injectable()
 export class InviteService extends TenantAwareCrudService<Invite> {
 	constructor(
 		@InjectRepository(Invite)
-		private readonly inviteRepository: Repository<Invite>,
+		protected readonly inviteRepository: Repository<Invite>,
 
-		@InjectRepository(OrganizationProject)
-		private readonly organizationProjectsRepository: Repository<OrganizationProject>,
-
-		@InjectRepository(OrganizationContact)
-		private readonly organizationContactRepository: Repository<OrganizationContact>,
-
-		@InjectRepository(OrganizationDepartment)
-		private readonly organizationDepartmentRepository: Repository<OrganizationDepartment>,
-
-		@InjectRepository(Organization)
-		private readonly organizationRepository: Repository<Organization>,
-
-		@InjectRepository(Role)
-		private readonly roleRepository: Repository<Role>,
-
+		private readonly configSerice: ConfigService,
 		private readonly emailService: EmailService,
+		private readonly organizationContactService: OrganizationContactService,
+		private readonly organizationDepartmentService: OrganizationDepartmentService,
+		private readonly organizationProjectService: OrganizationProjectService,
+		private readonly organizationService: OrganizationService,
+		private readonly organizationTeamService: OrganizationTeamService,
+		private readonly roleService: RoleService,
 		private readonly userService: UserService,
-		private readonly configSerice: ConfigService
 	) {
 		super(inviteRepository);
 	}
@@ -89,6 +80,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 			projectIds,
 			organizationContactIds,
 			departmentIds,
+			teamIds,
 			organizationId,
 			invitedById,
 			startedWorkOn,
@@ -97,28 +89,35 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 		} = emailInvites;
 		const originUrl = this.configSerice.get('clientBaseUrl') as string;
 
-		const projects: IOrganizationProject[] = await this.organizationProjectsRepository.findBy({
-			id: In(projectIds || [])
+		const projects: IOrganizationProject[] = await this.organizationProjectService.find({
+			where: {
+				id: In(projectIds || []),
+				organizationId
+			}
 		});
-
-		const departments: IOrganizationDepartment[] = await this.organizationDepartmentRepository.findBy({
-			id: In(departmentIds || [])
+		const departments: IOrganizationDepartment[] = await this.organizationDepartmentService.find({
+			where: {
+				id: In(departmentIds || []),
+				organizationId
+			}
 		});
-
-		const organizationContacts: IOrganizationContact[] = await this.organizationContactRepository.findBy({
-			id: In(organizationContactIds || [])
+		const organizationContacts: IOrganizationContact[] = await this.organizationContactService.find({
+			where: {
+				id: In(organizationContactIds || []),
+				organizationId
+			}
 		});
-
-		const organization: IOrganization = await this.organizationRepository.findOneBy({
-			id: organizationId
+		const teams: IOrganizationTeam[] = await this.organizationTeamService.find({
+			where: {
+				id: In(teamIds || []),
+				organizationId
+			}
 		});
-		const role: IRole = await this.roleRepository.findOneBy({
-			id: roleId
-		});
+		const organization: IOrganization = await this.organizationService.findOneByIdString(organizationId);
+		const role: IRole = await this.roleService.findOneByIdString(roleId);
 		const user: IUser = await this.userService.findOneByIdString(invitedById, {
 			relations: ['role']
 		});
-
 		const tenantId = RequestContext.currentTenantId();
 		if (role.name === RolesEnum.SUPER_ADMIN) {
 			const { role: inviterRole } = user;
@@ -166,6 +165,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 			invite.status = InviteStatusEnum.INVITED;
 			invite.expireDate = expireDate;
 			invite.projects = projects;
+			invite.teams = teams;
 			invite.departments = departments;
 			invite.organizationContact = organizationContacts;
 			invite.actionDate = startedWorkOn || appliedDate;
@@ -294,14 +294,12 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 			originalUrl,
 			languageCode
 		} = inviteInput;
-
-		const organizationContact: IOrganizationContact = await this.organizationContactRepository.findOneBy({
-			id: organizationContactId
-		});
-		const organization: Organization = await this.organizationRepository.findOneBy({
-			id: organizationId
-		});
-
+		const organizationContact: IOrganizationContact = await this.organizationContactService.findOneByIdString(
+			organizationContactId
+		);
+		const organization: IOrganization = await this.organizationService.findOneByIdString(
+			organizationId
+		);
 		const inviterUser: IUser = await this.userService.findOneByIdString(invitedById);
 
 		const inviteExpiryPeriod =
@@ -340,7 +338,6 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 	 * Check, if invite exist or expired for user
 	 *
 	 * @param where
-	 * @param relations
 	 * @returns
 	 */
 	async validate(
