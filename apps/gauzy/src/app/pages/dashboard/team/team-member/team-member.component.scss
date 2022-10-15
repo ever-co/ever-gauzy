@@ -1,0 +1,35 @@
+nb-card {
+  background-color: var(--gauzy-card-1);
+
+  nb-card-body {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .user-container {
+    display: flex;
+    gap: .5rem;
+    align-items: center;
+  }
+
+  .dot-container {
+    width: 17px;
+    height: 17px;
+  }
+
+  .dot {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background-color: orange;
+
+    &.online {
+      background-color: green;
+    }
+
+    &.offline {
+      background-color: red;
+    }
+  }
+}
