@@ -1,7 +1,7 @@
 @import 'gauzy/_gauzy-cards';
 
 :host {
-  @include nb-card_overrides(auto, calc($default-card-height), $default-radius);
+  @include nb-card_overrides(auto, calc($default-card-height + 3rem), $default-radius);
 
   .card {
     background-color: var(--gauzy-card-2);
@@ -11,14 +11,65 @@
     }
   }
 
+  gauzy-team-card {
+    cursor: pointer;
+  }
+
+  .team-selected-card {
+    ::ng-deep {
+      nb-card {
+        background-color: var(--color-primary-transparent-100);
+      }
+    }
+  }
+
+  .team-list {
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+    width: 100%;
+    overflow: auto;
+    padding-right: 0.5rem;
+    margin-right: -0.5rem;
+  }
+
+  .team-chart {
+    height: 100%;
+  }
+
+  .team-selected-container {
+    display: flex;
+    height: 100%;
+    gap: 1rem;
+  }
+
   nb-card {
     background-color: var(--gauzy-card-2);
     margin: 0;
 
-    nb-card-header,
     nb-card-body {
       background-color: var(--gauzy-card-2);
       padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+
+      .team-selected {
+        height: calc(100% - 7rem);
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+
+      .team-card {
+        display: flex;
+        flex-wrap: nowrap;
+        height: max-content;
+        overflow-x: auto;
+        gap: 1rem;
+        width: 100%;
+        padding-bottom: 0.5rem;
+      }
     }
   }
 }

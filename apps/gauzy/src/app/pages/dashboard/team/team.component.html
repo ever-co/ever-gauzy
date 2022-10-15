@@ -1,8 +1,46 @@
 <nb-card>
-    <nb-card-header>
-
+    <nb-card-header class="mb-3">
+        <h4>
+            <ngx-header-title>
+                Teams
+            </ngx-header-title>
+        </h4>
     </nb-card-header>
     <nb-card-body>
-
+        <ng-template [ngIfElse]="noTeam" [ngIf]="teams.length > 0">
+            <div class="team-card">
+                <ng-container *ngFor="let team of todayTeamsWorkers; trackBy: fnTracker">
+                    <gauzy-team-card
+                            (click)="select(team)"
+                            [ngClass]="{
+                                'team-selected-card': selectedTeam?.isSelected &&
+                                 selectedTeam?.data.id === team?.id
+                             }"
+                            [team]="team">
+                    </gauzy-team-card>
+                </ng-container>
+            </div>
+            <div class="team-selected">
+                <ng-template [ngIfElse]="noTeamSelected" [ngIf]="selectedTeam && selectedTeam?.isSelected">
+                    <div class="team-selected-container">
+                        <div class="team-chart">
+                            <gauzy-chart [statistics]="selectedTeam?.data?.statistics"></gauzy-chart>
+                        </div>
+                        <div class="team-list">
+                            <ng-container *ngFor="let member of members; trackBy: fnTracker">
+                                <gauzy-team-member [member]="member"></gauzy-team-member>
+                            </ng-container>
+                        </div>
+                    </div>
+                </ng-template>
+            </div>
+        </ng-template>
     </nb-card-body>
 </nb-card>
+
+<ng-template #noTeamSelected>
+    <ngx-no-data-message [message]="'No selected team'"></ngx-no-data-message>
+</ng-template>
+<ng-template #noTeam>
+    <ngx-no-data-message [message]="'No team'"></ngx-no-data-message>
+</ng-template>
