@@ -29,6 +29,10 @@ export class TeamMemberComponent implements OnInit {
         return progressStatus(value);
     }
 
+    public calculatePercentage(a, b) {
+        return Math.abs(a / b * 100)
+    }
+
     ngOnInit(): void {
     }
 }

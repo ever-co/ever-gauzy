@@ -75,7 +75,8 @@ export class TeamComponent implements OnInit, OnDestroy {
     }
 
     public get members(): IOrganizationTeamEmployee[] {
-        return this.selectedTeam.data.membersWorkingToday.concat(this.selectedTeam.data.membersNotWorkingToday);
+        const membersDuplicatedByRoles = this.selectedTeam.data.membersWorkingToday.concat(this.selectedTeam.data.membersNotWorkingToday);
+        return membersDuplicatedByRoles.filter((member, index, self) => index === self.findIndex((searchMember) => searchMember.id === member.id));
     }
 
     ngOnInit(): void {
@@ -165,28 +166,29 @@ export class TeamComponent implements OnInit, OnDestroy {
         this._teams.forEach(team => {
             const members = [];
             team.members.forEach(member => {
-                let logs = [];
-                let tasks = [];
-                logs = this._logs
+                const tasks = [];
+                const logs = this._logs
                     .map(log => log.employee.userId === member.employee.userId ? log : null)
                     .filter(log => !!log)
-                logs.forEach((log) => {
-                    logs.forEach(filter => {
-                        if (log.taskId === filter.taskId) {
-                            tasks.push({
-                                duration: log.duration,
-                                task: log.task
-                            })
-                        }
+                const isWorkingToday = logs.length > 0;
+                const groupByTask = isWorkingToday ? logs.reduce((res, log) => {
+                    (res[log['taskId']] = res[log['taskId']] || []).push(log);
+                    return res
+                }, {}) : [];
+                const keys = Object.keys(groupByTask);
+                keys.forEach(key => {
+                    tasks.push({
+                        ...groupByTask[key][0].task,
+                        duration: groupByTask[key].reduce((accumulator, log) => {
+                            return accumulator + log.duration
+                        }, 0)
                     })
                 })
-                console.log(tasks);
-                const isWorkingToday = logs.length > 0;
                 members.push({
                     ...member,
                     isRunningTimer: isWorkingToday ? logs[0].isRunning : false,
                     isWorkingToday: isWorkingToday,
-                    task: isWorkingToday ? logs[0].task ? logs[0].task : 'No task' : '-'
+                    tasks: tasks
                 });
             })
             const membersOnline = members.filter((member) => member.isRunningTimer);

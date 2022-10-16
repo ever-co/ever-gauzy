@@ -1,38 +1,45 @@
 <nb-card>
     <nb-card-body>
         <div class="row w-100">
-            <div class="col-3 user-container">
-                <div class="dot-container">
-                    <div [ngClass]="{
+            <div class="col-3">
+                <div class="user-container">
+                    <div class="dot-container">
+                        <div [ngClass]="{
                         online: member?.isRunningTimer,
                         offline: !member?.isWorkingToday
                     }" class="dot"></div>
+                    </div>
+                    <ngx-avatar
+                            [id]="member?.employee?.id"
+                            [name]="member?.employee?.user?.name"
+                            [src]="member?.employee?.user?.imageUrl"
+                            class="report-table"
+                    ></ngx-avatar>
                 </div>
-                <ngx-avatar
-                        [id]="member?.employee?.id"
-                        [name]="member?.employee?.user?.name"
-                        [src]="member?.employee?.user?.imageUrl"
-                        class="report-table"
-                ></ngx-avatar>
             </div>
-            <div class="col-4">{{ member?.task?.title}}</div>
-            <div class="col-5">
-                <div class="row align-items-center">
-                    <div class="col-auto percentage-col">
-                        2:10:20
-                    </div>
-                    <div class="col">
-                        <nb-progress-bar
-                                [displayValue]="false"
-                                [status]="progressStatus(10)"
-                                [value]="10"
-                                class="mb-1"
-                                size="tiny"
-                        >
-                        </nb-progress-bar>
-                    </div>
-                    <div class="col-auto percentage-col">
-                        {{member?.task?.estimate | date:'hh:mm:ss' }}
+            <div class="col-9">
+                <div *ngIf="!member?.tasks?.length">&#8212;</div>
+                <div *ngFor="let task of member?.tasks" class="row">
+                    <div class="col-6">{{ task.title ? task.title : 'No task'}}</div>
+                    <div class="col-6">
+                        <div class="row align-items-center">
+                            <div class="col-auto percentage-col">
+                                {{task.duration | durationFormat}}
+                            </div>
+                            <div class="col">
+                                <nb-progress-bar
+                                        [displayValue]="false"
+                                        [status]="progressStatus(calculatePercentage(task.duration, task?.estimate))"
+                                        [value]="calculatePercentage(task.duration, task?.estimate)"
+                                        class="mb-1"
+                                        size="tiny"
+                                >
+                                </nb-progress-bar>
+                            </div>
+                            <div class="col-auto percentage-col">
+                                {{task?.estimate | durationFormat }}
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
