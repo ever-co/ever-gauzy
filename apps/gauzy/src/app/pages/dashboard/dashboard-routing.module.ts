@@ -82,6 +82,12 @@ const routes: Routes = [
 						isSaveDatePicker: true,
 						isSingleDatePicker: true,
 						isDisableFutureDate: true
+					},
+					selectors: {
+						date: true,
+						project: false,
+						employee: false,
+						organization: true
 					}
 				},
 				resolve: {
