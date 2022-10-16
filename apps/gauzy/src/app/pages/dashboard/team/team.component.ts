@@ -144,9 +144,7 @@ export class TeamComponent implements OnInit, OnDestroy {
                 'members',
                 'members.role',
                 'members.employee',
-                'members.employee.user',
-                'members.employee.timeSlots',
-                'members.employee.timeSlots.timeLogs'
+                'members.employee.user'
             ],
             {
                 organizationId: this._organization.id,
@@ -201,6 +199,7 @@ export class TeamComponent implements OnInit, OnDestroy {
                 }
             }
         });
+        console.log(this._todayTeamsWorkers);
     }
 
     private _sortByIdAndDate(a, b) {
