@@ -24,7 +24,6 @@ import * as moment from 'moment';
 export class TeamComponent implements OnInit, OnDestroy {
     private _organization: IOrganization;
     private _teams$: Subject<any>;
-    private _totalTeams: number;
     private _logs: ITimeLog[] = [];
 
     constructor(
@@ -34,7 +33,6 @@ export class TeamComponent implements OnInit, OnDestroy {
         private readonly _store: Store
     ) {
         this._teams$ = new Subject();
-        this._totalTeams = 0;
         this._selectedTeam = {
             data: null,
             isSelected: false
@@ -49,11 +47,11 @@ export class TeamComponent implements OnInit, OnDestroy {
 
     private _selectedDateRange: IDateRangePicker;
 
-    get selectedDateRange(): IDateRangePicker {
+    public get selectedDateRange(): IDateRangePicker {
         return this._selectedDateRange;
     }
 
-    set selectedDateRange(range: IDateRangePicker) {
+    public set selectedDateRange(range: IDateRangePicker) {
         if (isNotEmpty(range)) {
             this._selectedDateRange = range;
         }
@@ -64,7 +62,7 @@ export class TeamComponent implements OnInit, OnDestroy {
         isSelected: boolean
     };
 
-    get selectedTeam(): any {
+    public get selectedTeam(): any {
         return this._selectedTeam;
     }
 
@@ -86,7 +84,6 @@ export class TeamComponent implements OnInit, OnDestroy {
             .pipe(
                 debounceTime(300),
                 tap(() => this._loadTeams()),
-                tap(() => this.getTimeSlots()),
                 untilDestroyed(this)
             )
             .subscribe();
@@ -116,7 +113,7 @@ export class TeamComponent implements OnInit, OnDestroy {
             : {isSelected: true, data: team};
     }
 
-    async getTimeSlots() {
+    private async getTimeSlots() {
         const request: IGetTimeSlotStatistics = {
             endDate: moment(this.selectedDateRange.endDate).format('YYYY-MM-DD HH:mm'),
             organizationId: this._organization.id,
@@ -155,18 +152,15 @@ export class TeamComponent implements OnInit, OnDestroy {
                 organizationId: this._organization.id,
                 tenantId: this._organization.tenantId
             }
-        ).then((res) => {
+        ).then(async (res) => {
             this._teams = res.items;
-            this._totalTeams = res.total;
+            await this.getTimeSlots();
         }).catch((e) => console.log(e));
     }
 
     private teamMapper() {
-        this._todayTeamsWorkers = [];
-        this._teams.forEach(team => {
-            const members = [];
-            team.members.forEach(member => {
-                const tasks = [];
+        this._todayTeamsWorkers = this._teams.map(team => {
+            const members = team.members.map(member => {
                 const logs = this._logs
                     .map(log => log.employee.userId === member.employee.userId ? log : null)
                     .filter(log => !!log)
@@ -176,25 +170,25 @@ export class TeamComponent implements OnInit, OnDestroy {
                     return res
                 }, {}) : [];
                 const keys = Object.keys(groupByTask);
-                keys.forEach(key => {
-                    tasks.push({
+                const tasks = keys.map(key => {
+                    return {
                         ...groupByTask[key][0].task,
                         duration: groupByTask[key].reduce((accumulator, log) => {
                             return accumulator + log.duration
                         }, 0)
-                    })
+                    }
                 })
-                members.push({
+                return {
                     ...member,
                     isRunningTimer: isWorkingToday ? logs[0].isRunning : false,
                     isWorkingToday: isWorkingToday,
                     tasks: tasks
-                });
+                }
             })
             const membersOnline = members.filter((member) => member.isRunningTimer);
             const membersWorkingToday = members.filter(member => member.isWorkingToday);
             const membersNotWorkingToday = members.filter(member => !member.isWorkingToday)
-            this._todayTeamsWorkers.push({
+            return {
                 ...team,
                 membersWorkingToday: membersWorkingToday,
                 membersNotWorkingToday: membersNotWorkingToday,
@@ -205,8 +199,8 @@ export class TeamComponent implements OnInit, OnDestroy {
                     countNotWorking: membersNotWorkingToday.length,
                     countTotal: members.length,
                 }
-            })
-        })
+            }
+        });
     }
 
     private _sortByIdAndDate(a, b) {

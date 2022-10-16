@@ -7,7 +7,7 @@
         </h4>
     </nb-card-header>
     <nb-card-body>
-        <ng-template [ngIfElse]="noTeam" [ngIf]="teams.length > 0">
+        <ng-template [ngIfElse]="noTeam" [ngIf]="todayTeamsWorkers.length > 0">
             <div class="team-card">
                 <ng-container *ngFor="let team of todayTeamsWorkers; trackBy: fnTracker">
                     <gauzy-team-card
