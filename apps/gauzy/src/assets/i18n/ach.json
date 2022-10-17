@@ -1146,7 +1146,10 @@
 			"PROFIT": "crwdns3218:0crwdne3218:0",
 			"BONUS": "crwdns3220:0crwdne3220:0",
 			"NO_MONTH_DATA": "crwdns3222:0crwdne3222:0",
-			"CASH_FLOW": "crwdns11415:0crwdne11415:0"
+			"CASH_FLOW": "crwdns11415:0crwdne11415:0",
+			"WORKING": "crwdns11511:0crwdne11511:0",
+			"WORKING_NOW": "crwdns11513:0crwdne11513:0",
+			"NOT_WORKING": "crwdns11515:0crwdne11515:0"
 		},
 		"PROFIT_HISTORY": {
 			"PROFIT_REPORT": "crwdns2585:0crwdne2585:0",

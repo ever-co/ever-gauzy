@@ -1146,7 +1146,10 @@
 			"PROFIT": "Прибыль",
 			"BONUS": "Бонус",
 			"NO_MONTH_DATA": "Нет данных за этот месяц",
-			"CASH_FLOW": "Поток Наличных"
+			"CASH_FLOW": "Поток Наличных",
+			"WORKING": "Работает",
+			"WORKING_NOW": "Работает сейчас",
+			"NOT_WORKING": "Не работает"
 		},
 		"PROFIT_HISTORY": {
 			"PROFIT_REPORT": "Отчет о прибыли",
