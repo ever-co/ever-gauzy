@@ -1,0 +1,37 @@
+.grid-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(22.5rem, 1fr));
+  -webkit-box-align: start;
+  align-items: flex-start;
+  -webkit-box-pack: start;
+  justify-content: flex-start;
+  gap: 1rem;
+  overflow-y: auto;
+  max-height: 100%;
+  width: 100%;
+  margin-right: -0.5rem;
+  padding-right: 0.5rem;
+  nb-card{
+    height: 22.5rem;
+  }
+}
+
+.main-card-container {
+  display: flex;
+  gap: 1rem;
+  width: 100%;
+  height: calc(100vh - 19.7rem);
+}
+
+nb-card-body, nb-card-header {
+  padding: 1rem;
+}
+
+.custom-legend {
+  display: flex;
+  gap: 4px;
+}
+
+.main-card{
+  min-width: 500px;
+}
