@@ -6,6 +6,7 @@ import { IOrganization } from './organization.model';
 import { IOrganizationContact } from './organization-contact.model';
 import { IOrganizationDepartment } from './organization-department.model';
 import { IEmployee } from './employee.model';
+import { IOrganizationTeam } from './organization-team-model';
 
 export interface IInvite extends IBasePerTenantAndOrganizationEntityModel {
 	token: string;
@@ -18,6 +19,7 @@ export interface IInvite extends IBasePerTenantAndOrganizationEntityModel {
 	role?: IRole;
 	invitedBy?: IUser;
 	projects?: IOrganizationProject[];
+	teams?: IOrganizationTeam[];
 	organizationContacts?: IOrganizationContact[];
 	departments?: IOrganizationDepartment[];
 }

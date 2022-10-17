@@ -1,16 +1,14 @@
-import { IInvite, InviteStatusEnum } from '@gauzy/contracts';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { UpdateResult } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository, UpdateResult } from 'typeorm';
+import { IEmployee, IInvite, InviteStatusEnum, IOrganizationTeam } from '@gauzy/contracts';
 import { AuthService } from '../../../auth/auth.service';
-import { getUserDummyImage } from '../../../core';
-import { Employee } from '../../../employee/employee.entity';
-import { EmployeeService } from '../../../employee/employee.service';
-import { OrganizationService } from '../../../organization/organization.service';
 import { OrganizationContactService } from '../../../organization-contact/organization-contact.service';
 import { OrganizationDepartmentService } from '../../../organization-department/organization-department.service';
 import { OrganizationProjectService } from '../../../organization-project/organization-project.service';
 import { InviteService } from '../../invite.service';
 import { InviteAcceptEmployeeCommand } from '../invite.accept-employee.command';
+import { Employee, Organization, OrganizationTeamEmployee } from './../../../core/entities/internal';
 
 /**
  * Use this command for registering employees.
@@ -18,12 +16,19 @@ import { InviteAcceptEmployeeCommand } from '../invite.accept-employee.command';
  * If the above two steps are successful, it finally sets the invitation status to accepted
  */
 @CommandHandler(InviteAcceptEmployeeCommand)
-export class InviteAcceptEmployeeHandler
-	implements ICommandHandler<InviteAcceptEmployeeCommand> {
+export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAcceptEmployeeCommand> {
+
 	constructor(
+		@InjectRepository(Organization)
+		private readonly organizationRepository: Repository<Organization>,
+
+		@InjectRepository(Employee)
+		private readonly employeeRepository: Repository<Employee>,
+
+		@InjectRepository(OrganizationTeamEmployee)
+		private readonly organizationTeamEmployee: Repository<OrganizationTeamEmployee>,
+
 		private readonly inviteService: InviteService,
-		private readonly employeeService: EmployeeService,
-		private readonly organizationService: OrganizationService,
 		private readonly organizationProjectService: OrganizationProjectService,
 		private readonly organizationContactService: OrganizationContactService,
 		private readonly organizationDepartmentsService: OrganizationDepartmentService,
@@ -34,8 +39,9 @@ export class InviteAcceptEmployeeHandler
 		command: InviteAcceptEmployeeCommand
 	): Promise<UpdateResult | IInvite> {
 		const { input, languageCode } = command;
-		const invite = await this.inviteService.findOneByOptions({
-			where: { id: input.inviteId },
+		const { inviteId } = input;
+
+		const invite = await this.inviteService.findOneByIdString(inviteId, {
 			relations: {
 				projects: true,
 				departments: {
@@ -43,21 +49,28 @@ export class InviteAcceptEmployeeHandler
 				},
 				organizationContact: {
 					members: true
+				},
+				teams: {
+					members: true
 				}
 			}
 		});
 		if (!invite) {
 			throw Error('Invite does not exist');
 		}
-		const organization = await this.organizationService.findOneByIdString(
-			input.organization.id
-		);
+
+		const { organizationId, tenantId } = invite;
+		const organization = await this.organizationRepository.findOneBy({
+			id: organizationId,
+			tenantId
+		});
 		if (!organization.invitesAllowed) {
 			throw Error('Organization no longer allows invites');
 		}
-		if (!input.user.imageUrl) {
-			input.user.imageUrl = getUserDummyImage(input.user);
-		}
+
+		/**
+		 * User register after accept invitation
+		 */
 		const user = await this.authService.register(
 			{
 				...input,
@@ -67,30 +80,31 @@ export class InviteAcceptEmployeeHandler
 						id: organization.tenantId
 					}
 				},
-				organizationId: input.organization.id
+				organizationId
 			},
 			languageCode
 		);
-
-		const employee = await this.employeeService.create({
+		/**
+		 * Create employee after create user
+		 */
+		const create = this.employeeRepository.create({
 			user,
-			organization: input.organization,
-			tenant: {
-				id: organization.tenantId
-			},
+			organization,
+			tenantId,
 			startedWorkOn: invite.actionDate || null
 		});
+		const employee = await this.employeeRepository.save(create);
 
 		this.updateEmployeeMemberships(invite, employee);
 
-		this.inviteService.sendAcceptInvitationEmail(organization, employee, languageCode);
+		// this.inviteService.sendAcceptInvitationEmail(organization, employee, languageCode);
 
 		return await this.inviteService.update(input.inviteId, {
-			status: InviteStatusEnum.ACCEPTED
+			status: InviteStatusEnum.INVITED
 		});
 	}
 
-	updateEmployeeMemberships = (invite: IInvite, employee: Employee) => {
+	updateEmployeeMemberships = (invite: IInvite, employee: IEmployee) => {
 		//Update project members
 		if (invite.projects) {
 			invite.projects.forEach((project) => {
@@ -127,6 +141,14 @@ export class InviteAcceptEmployeeHandler
 					...department,
 					members
 				});
+			});
+		}
+
+		//Update team members
+		if (invite.teams) {
+			invite.teams.forEach((team: IOrganizationTeam) => {
+				let members = team.members || [];
+				console.log(team, members);
 			});
 		}
 	};
