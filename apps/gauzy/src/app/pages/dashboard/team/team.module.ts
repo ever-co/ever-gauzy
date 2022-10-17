@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 
 import { TeamRoutingModule } from './team-routing.module';
 import { TeamComponent } from './team.component';
-import { NbCardModule, NbProgressBarModule } from "@nebular/theme";
+import { NbButtonModule, NbCardModule, NbIconModule, NbProgressBarModule } from "@nebular/theme";
 import { HeaderTitleModule } from "../../../@shared/components/header-title/header-title.module";
 import { TeamCardComponent } from './team-card/team-card.component';
 import { CounterPointModule } from "../../../@shared/counter-point/counter-point.module";
@@ -12,6 +12,7 @@ import { TeamMemberComponent } from './team-member/team-member.component';
 import { ChartComponent } from './chart/chart.component';
 import { ChartModule } from "angular2-chartjs";
 import { SharedModule } from "../../../@shared/shared.module";
+import { AllTeamComponent } from './all-team/all-team.component';
 
 
 @NgModule({
@@ -19,7 +20,8 @@ import { SharedModule } from "../../../@shared/shared.module";
         TeamComponent,
         TeamCardComponent,
         TeamMemberComponent,
-        ChartComponent
+        ChartComponent,
+        AllTeamComponent
     ],
     imports: [
         CommonModule,
@@ -30,7 +32,9 @@ import { SharedModule } from "../../../@shared/shared.module";
         NoDataMessageModule,
         NbProgressBarModule,
         ChartModule,
-        SharedModule
+        SharedModule,
+        NbIconModule,
+        NbButtonModule
     ]
 })
 export class TeamModule {

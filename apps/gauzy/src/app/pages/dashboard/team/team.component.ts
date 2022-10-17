@@ -140,7 +140,6 @@ export class TeamComponent implements OnInit, OnDestroy {
     private _loadTeams(): void {
         this._organizationTeamsService.getAll(
             [
-                'tags',
                 'members',
                 'members.role',
                 'members.employee',
@@ -199,7 +198,6 @@ export class TeamComponent implements OnInit, OnDestroy {
                 }
             }
         });
-        console.log(this._todayTeamsWorkers);
     }
 
     private _sortByIdAndDate(a, b) {
@@ -214,6 +212,27 @@ export class TeamComponent implements OnInit, OnDestroy {
         this._selectedTeam = {
             data: null,
             isSelected: false
+        }
+    }
+
+    public get todayOrganization() {
+        return {
+            ...this._organization,
+            statistics: {
+                countOnline: this._todayTeamsWorkers.reduce((accumulator, res) => {
+                    const teamsOnline = res.statistics.countOnline > 0 ? 1 : 0
+                    return accumulator + teamsOnline;
+                }, 0),
+                countWorking: this._todayTeamsWorkers.reduce((accumulator, res) => {
+                    const teamsWorking = res.statistics.countWorking > 0 ? 1 : 0;
+                    return accumulator + teamsWorking;
+                }, 0),
+                countNotWorking: this._todayTeamsWorkers.reduce((accumulator, res) => {
+                    const teamsNotWorking = res.statistics.countNotWorking > 0 && res.statistics.countWorking === 0 ? 1 : 0;
+                    return accumulator + teamsNotWorking;
+                }, 0),
+                countTeams: this._teams.length
+            }
         }
     }
 

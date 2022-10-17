@@ -8,20 +8,20 @@
     </nb-card-header>
     <nb-card-body>
         <ng-template [ngIfElse]="noTeam" [ngIf]="todayTeamsWorkers.length > 0">
-            <div class="team-card">
-                <ng-container *ngFor="let team of todayTeamsWorkers; trackBy: fnTracker">
-                    <gauzy-team-card
-                            (click)="select(team)"
-                            [ngClass]="{
+            <div class="team-selected">
+                <ng-template [ngIfElse]="noTeamSelected" [ngIf]="selectedTeam && selectedTeam?.isSelected">
+                    <div class="team-card">
+                        <ng-container *ngFor="let team of todayTeamsWorkers; trackBy: fnTracker">
+                            <gauzy-team-card
+                                    (click)="select(team)"
+                                    [ngClass]="{
                                 'team-selected-card': selectedTeam?.isSelected &&
                                  selectedTeam?.data.id === team?.id
                              }"
-                            [team]="team">
-                    </gauzy-team-card>
-                </ng-container>
-            </div>
-            <div class="team-selected">
-                <ng-template [ngIfElse]="noTeamSelected" [ngIf]="selectedTeam && selectedTeam?.isSelected">
+                                    [team]="team">
+                            </gauzy-team-card>
+                        </ng-container>
+                    </div>
                     <div class="team-selected-container">
                         <div class="team-chart">
                             <gauzy-chart [statistics]="selectedTeam?.data?.statistics"></gauzy-chart>
@@ -39,8 +39,8 @@
 </nb-card>
 
 <ng-template #noTeamSelected>
-    <ngx-no-data-message [message]="'No selected team'"></ngx-no-data-message>
+    <gauzy-all-team (selectedTeam)="select($event)" [organization]="todayOrganization" [teams]="todayTeamsWorkers" ></gauzy-all-team>
 </ng-template>
 <ng-template #noTeam>
-    <ngx-no-data-message [message]="'No team'"></ngx-no-data-message>
+    <ngx-no-data-message [message]="'For teams'"></ngx-no-data-message>
 </ng-template>
