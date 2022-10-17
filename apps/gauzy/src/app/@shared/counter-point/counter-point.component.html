@@ -1,6 +1,6 @@
 <div *ngIf="!progress" class="counter">
   <div class="counter" *ngFor="let point of points">
-    <div class="point" [style.background]="point.color"></div>
+    <div [style.background]="'var(--color-'+point.color+'-default)'" [class]="'point '+point.className "></div>
   </div>
 </div>
 <div *ngIf="progress">

@@ -6,6 +6,10 @@
     border-radius: 5px;
     @include nb-ltr(margin-right, 3px);
     @include nb-rtl(margin-left, 3px);
+
+    &.basic {
+        background-color: var(--progress-bar-danger-background-color) !important;
+    }
 }
 
 .counter{
