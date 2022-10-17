@@ -12,7 +12,6 @@ import { UserModule } from './../user/user.module';
 import { EmployeeModule } from './../employee/employee.module';
 import { OrganizationModule } from './../organization/organization.module';
 import { OrganizationTeamModule } from './../organization-team/organization-team.module';
-import { OrganizationTeamEmployeeModule } from './../organization-team-employee/organization-team-employee.module';
 import { OrganizationProjectModule } from './../organization-project/organization-project.module';
 import { OrganizationContactModule } from './../organization-contact/organization-contact.module';
 import { OrganizationDepartmentModule } from './../organization-department/organization-department.module';
@@ -40,7 +39,6 @@ import { InviteService } from './invite.service';
 		OrganizationContactModule,
 		OrganizationDepartmentModule,
 		OrganizationTeamModule,
-		OrganizationTeamEmployeeModule,
 		UserOrganizationModule
 	],
 	controllers: [InviteController],

@@ -167,7 +167,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 			invite.projects = projects;
 			invite.teams = teams;
 			invite.departments = departments;
-			invite.organizationContact = organizationContacts;
+			invite.organizationContacts = organizationContacts;
 			invite.actionDate = startedWorkOn || appliedDate;
 			invites.push(invite);
 		}
@@ -318,7 +318,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 		invite.invitedById = invitedById;
 		invite.status = InviteStatusEnum.INVITED;
 		invite.expireDate = expireDate;
-		invite.organizationContact = [organizationContact];
+		invite.organizationContacts = [organizationContact];
 
 		const createdInvite = await this.repository.save(invite);
 

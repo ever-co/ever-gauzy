@@ -111,7 +111,7 @@ export class Invite extends TenantOrganizationBaseEntity implements IInvite {
 	@JoinTable({
 		name: 'invite_organization_contact'
 	})
-	organizationContact?: IOrganizationContact[];
+	organizationContacts?: IOrganizationContact[];
 
 	/**
 	 * Organization Departments
