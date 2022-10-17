@@ -88,7 +88,7 @@ export class DashboardComponent
 				route: this.getRoute('project-management')
 			},
 			{
-				title: 'Teams',
+				title: this.getTranslation('ORGANIZATIONS_PAGE.TEAMS'),
 				icon: 'people-outline',
 				responsive: true,
 				route: this.getRoute('teams')

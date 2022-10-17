@@ -43,9 +43,9 @@ export class ChartComponent extends TranslationBaseComponent implements OnInit, 
                 const chart: any = config.variables.chartjs;
                 this.data = {
                     labels: [
-                        `Working now: ${this.statistics.countOnline}`,
-                        `Working: ${this.statistics.countWorking - this.statistics.countOnline}`,
-                        `Not working: ${this.statistics.countNotWorking}`
+                        `${this.getTranslation('DASHBOARD_PAGE.CHARTS.WORKING_NOW')}: ${this.statistics.countOnline}`,
+                        `${this.getTranslation('DASHBOARD_PAGE.CHARTS.WORKING')}: ${this.statistics.countWorking - this.statistics.countOnline}`,
+                        `${this.getTranslation('DASHBOARD_PAGE.CHARTS.NOT_WORKING')}: ${this.statistics.countNotWorking}`
                     ],
                     datasets: [
                         {
