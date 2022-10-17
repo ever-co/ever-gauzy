@@ -40,6 +40,7 @@ import { InfiniteScrollModule } from 'ngx-infinite-scroll';
 import { TableComponentsModule } from '../../@shared';
 import { NoDataMessageModule } from '../../@shared/no-data-message/no-data-message.module';
 import { WorkInProgressModule } from '../work-in-progress/work-in-progress.module';
+import { TeamModule } from "./team/team.module";
 
 @NgModule({
 	imports: [
@@ -73,7 +74,8 @@ import { WorkInProgressModule } from '../work-in-progress/work-in-progress.modul
 		InfiniteScrollModule,
 		TableComponentsModule,
 		NoDataMessageModule,
-		WorkInProgressModule
+		WorkInProgressModule,
+		TeamModule
 	],
 	declarations: [
 		DashboardComponent,

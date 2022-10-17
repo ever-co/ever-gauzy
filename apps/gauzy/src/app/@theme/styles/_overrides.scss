@@ -9,6 +9,7 @@
 /*  Apply style on scrollbar for Chrome */
 *::-webkit-scrollbar {
   width: nb-theme(scrollbar-width);
+  height: nb-theme(scrollbar-width);
 }
 
 *::-webkit-scrollbar-track {

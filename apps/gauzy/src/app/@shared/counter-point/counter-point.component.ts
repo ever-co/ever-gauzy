@@ -1,10 +1,4 @@
-import {
-	Component,
-	Input,
-	OnChanges,
-	OnInit,
-	SimpleChanges
-} from '@angular/core';
+import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import { Point } from './point/point.class';
 import { progressStatus } from '@gauzy/common-angular';
 import { NbThemeService } from '@nebular/theme';
@@ -45,9 +39,9 @@ export class CounterPointComponent implements OnInit, OnChanges {
 		}
 		for (let i = 0; i < total; i++) {
 			if (i < value) {
-				points.push(new Point(this.color));
+				points.push(new Point(progressStatus(value / total * 100)));
 			} else {
-				points.push(new Point(this.DEFAULT_COLOR));
+				points.push(new Point('basic'));
 			}
 		}
 		this.points = points;

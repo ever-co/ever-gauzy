@@ -1,12 +1,20 @@
 export class Point {
-  private color: string;
-  constructor(color: string){
-    this.color = color;
+  constructor(color: string) {
+    this._color = color;
   }
-  get getColor() {
-    return this.color;
+
+  private _color: string;
+
+  get color() {
+    return this._color;
   }
-  set setColor(color: string){
-    this.color = color;
+
+  set color(color: string) {
+    this._color = color;
   }
+
+  get className(): string {
+    return this._color;
+  }
+
 }
