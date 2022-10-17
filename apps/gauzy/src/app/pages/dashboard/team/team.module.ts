@@ -13,6 +13,7 @@ import { ChartComponent } from './chart/chart.component';
 import { ChartModule } from "angular2-chartjs";
 import { SharedModule } from "../../../@shared/shared.module";
 import { AllTeamComponent } from './all-team/all-team.component';
+import { TranslateModule } from "@ngx-translate/core";
 
 
 @NgModule({
@@ -34,7 +35,8 @@ import { AllTeamComponent } from './all-team/all-team.component';
         ChartModule,
         SharedModule,
         NbIconModule,
-        NbButtonModule
+        NbButtonModule,
+        TranslateModule
     ]
 })
 export class TeamModule {

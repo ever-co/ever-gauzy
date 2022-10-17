@@ -20,7 +20,7 @@
             <div class="col-9">
                 <div *ngIf="!member?.tasks?.length">&#8212;</div>
                 <div *ngFor="let task of member?.tasks" class="row">
-                    <div class="col-6">{{ task.title ? task.title : 'No task'}}</div>
+                    <div class="col-6">{{ task.title ? task.title : ('REPORT_PAGE.NO_TASK' | translate)}}</div>
                     <div class="col-6">
                         <div class="row align-items-center">
                             <div class="col-auto percentage-col">

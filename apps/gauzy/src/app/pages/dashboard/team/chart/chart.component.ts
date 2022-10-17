@@ -9,14 +9,14 @@ import { NbThemeService } from "@nebular/theme";
     styleUrls: ['./chart.component.scss']
 })
 export class ChartComponent extends TranslationBaseComponent implements OnInit, OnChanges {
-    data: any;
-    options: any;
+    public data: any;
+    public options: any;
     @Input()
-    statistics: any;
+    public statistics: any;
     @Input()
-    hideLegend: boolean = false;
+    public hideLegend: boolean = false;
     @Input()
-    type: string = 'doughnut';
+    public type: string = 'doughnut';
 
     constructor(
         public readonly translateService: TranslateService,

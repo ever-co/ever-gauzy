@@ -7,12 +7,12 @@ import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 })
 export class AllTeamComponent implements OnInit {
     @Input()
-    teams: any[];
+    public teams: any[];
     @Input()
-    organization: any;
+    public organization: any;
 
     @Output()
-    selectedTeam: EventEmitter<any> = new EventEmitter()
+    public selectedTeam: EventEmitter<any> = new EventEmitter()
 
     constructor() {
     }
@@ -20,7 +20,7 @@ export class AllTeamComponent implements OnInit {
     ngOnInit(): void {
     }
 
-    onSelectTeam(team: any) {
+    public onSelectTeam(team: any) {
         this.selectedTeam.emit(team);
     }
 }
