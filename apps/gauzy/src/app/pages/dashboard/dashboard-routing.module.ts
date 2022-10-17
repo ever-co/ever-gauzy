@@ -7,6 +7,8 @@ import { ProjectManagementComponent } from './project-management/project-managem
 import { TimeTrackingComponent } from './time-tracking/time-tracking.component';
 import { DateRangePickerResolver } from '../../@theme/components/header/selectors/date-range-picker';
 import { TeamComponent } from "./team/team.component";
+import { PermissionsEnum } from "@gauzy/contracts";
+import { NgxPermissionsGuard } from "ngx-permissions";
 
 const routes: Routes = [
 	{
@@ -75,6 +77,7 @@ const routes: Routes = [
 			{
 				path: 'teams',
 				component: TeamComponent,
+				canActivate: [NgxPermissionsGuard],
 				data: {
 					datePicker: {
 						unitOfTime: 'day',
@@ -88,7 +91,10 @@ const routes: Routes = [
 						project: false,
 						employee: false,
 						organization: true
-					}
+					},
+					permissions: {
+						only: [PermissionsEnum.ALL_ORG_VIEW]
+					},
 				},
 				resolve: {
 					dates: DateRangePickerResolver

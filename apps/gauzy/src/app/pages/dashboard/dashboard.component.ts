@@ -1,9 +1,10 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ISelectedEmployee } from '@gauzy/contracts';
+import { ISelectedEmployee, PermissionsEnum } from '@gauzy/contracts';
 import { Store } from '../../@core/services/store.service';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
+import { NgxPermissionsService } from "ngx-permissions";
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -25,7 +26,8 @@ export class DashboardComponent
 
 	constructor(
 		private store: Store,
-		readonly translateService: TranslateService
+		readonly translateService: TranslateService,
+		private readonly _ngxPermissionsService: NgxPermissionsService,
 	) {
 		super(translateService);
 	}
@@ -86,14 +88,20 @@ export class DashboardComponent
 				icon: 'browser-outline',
 				responsive: true,
 				route: this.getRoute('project-management')
-			},
-			{
-				title: this.getTranslation('ORGANIZATIONS_PAGE.TEAMS'),
-				icon: 'people-outline',
-				responsive: true,
-				route: this.getRoute('teams')
 			}
 		];
+		this._ngxPermissionsService
+			.hasPermission(PermissionsEnum.ALL_ORG_VIEW)
+			.then((hasPermission) => {
+				if (hasPermission) {
+					this.tabs.push({
+						title: this.getTranslation('ORGANIZATIONS_PAGE.TEAMS'),
+						icon: 'people-outline',
+						responsive: true,
+						route: this.getRoute('teams')
+					});
+				}
+			});
 
 		this.loading = false;
 	}
