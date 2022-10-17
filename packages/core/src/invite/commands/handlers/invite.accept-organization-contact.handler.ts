@@ -104,21 +104,23 @@ export class InviteAcceptOrganizationContactHandler
 		}, languageCode );
 
 		// 8. Link newly created contact organization to organization contact invite
-		const { organizationContact } = await this.inviteService.findOneByIdString(inviteId, {
+		const { organizationContacts } = await this.inviteService.findOneByIdString(inviteId, {
 			relations: {
-				organizationContact: true
+				organizationContacts: true
 			}
 		});
 
 		// TODO Make invite and contact as one to one, since an invite is not shared by multiple contacts
-		const organizationContactId = organizationContact[0].id;
+		const [organizationContact] = organizationContacts;
+		const { id: organizationContactId } = organizationContact;
+
 		await this.organizationContactService.update(organizationContactId, {
 			tenant,
 			organization,
 			inviteStatus: ContactOrganizationInviteStatus.ACCEPTED
 		});
 
-		return this.inviteService.update(inviteId, {
+		return await this.inviteService.update(inviteId, {
 			status: InviteStatusEnum.ACCEPTED
 		});
 	}

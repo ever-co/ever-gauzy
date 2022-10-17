@@ -24,7 +24,8 @@ import {
 	Put,
 	Req,
 	UseInterceptors,
-	ValidationPipe
+	ValidationPipe,
+	UsePipes
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import {
@@ -77,8 +78,9 @@ export class InviteController {
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_INVITE_EDIT)
 	@Post('/emails')
+	@UsePipes(new ValidationPipe({ transform: true }))
 	async createManyWithEmailsId(
-		@Body(new ValidationPipe({ transform: true })) entity: CreateInviteDTO,
+		@Body() entity: CreateInviteDTO,
 		@LanguageDecorator() languageCode: LanguagesEnum
 	): Promise<ICreateEmailInvitesOutput> {
 		return await this.commandBus.execute(
@@ -101,12 +103,8 @@ export class InviteController {
 	})
 	@Public()
 	@Get('validate')
-	async validateInvite(
-		@Query(new ValidationPipe({
-			transform: true,
-			whitelist: true
-		})) options: FindInviteQueryDTO
-	) {
+	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
+	async validateInvite(@Query() options: FindInviteQueryDTO) {
 		return await this.queryBus.execute(
 			new FindPublicInviteByEmailTokenQuery({
 				email: options.email,
@@ -159,8 +157,9 @@ export class InviteController {
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_INVITE_VIEW)
 	@Get()
+	@UsePipes(new ValidationPipe({ transform: true }))
 	async findAll(
-		@Query(new ValidationPipe({ transform: true })) options: PaginationParams<Invite>
+		@Query() options: PaginationParams<Invite>
 	): Promise<IPagination<IInvite>> {
 		return await this.inviteService.findAllInvites(options);
 	}
@@ -183,8 +182,11 @@ export class InviteController {
 		@I18nLang() languageCode: LanguagesEnum
 	): Promise<any> {
 		input.originalUrl = request.get('Origin');
-		return this.commandBus.execute(
-			new InviteAcceptOrganizationContactCommand(input, languageCode)
+		return await this.commandBus.execute(
+			new InviteAcceptOrganizationContactCommand(
+				input,
+				languageCode
+			)
 		);
 	}
 
@@ -205,7 +207,12 @@ export class InviteController {
 		@Body() entity: IInviteResendInput,
 		@LanguageDecorator() languageCode: LanguagesEnum
 	): Promise<UpdateResult | Invite> {
-		return this.commandBus.execute(new InviteResendCommand(entity, languageCode));
+		return await this.commandBus.execute(
+			new InviteResendCommand(
+				entity,
+				languageCode
+			)
+		);
 	}
 
 	@ApiOperation({ summary: 'Delete record' })
@@ -222,9 +229,9 @@ export class InviteController {
 	@Permissions(PermissionsEnum.ORG_INVITE_EDIT)
 	@Delete(':id')
 	async delete(
-		@Param('id', UUIDValidationPipe) id: string
+		@Param('id', UUIDValidationPipe) id: IInvite['id']
 	): Promise<DeleteResult> {
-		return this.inviteService.delete(id);
+		return await this.inviteService.delete(id);
 	}
 
 	@ApiOperation({ summary: 'Update an existing record' })
@@ -250,7 +257,7 @@ export class InviteController {
 		@Req() request,
 		@I18nLang() languageCode: LanguagesEnum
 	): Promise<IOrganizationContact> {
-		return this.commandBus.execute(
+		return await this.commandBus.execute(
 			new InviteOrganizationContactCommand({
 				id,
 				originalUrl: request.get('Origin'),
