@@ -1,7 +1,6 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
-import { TeamRoutingModule } from './team-routing.module';
 import { TeamComponent } from './team.component';
 import { NbButtonModule, NbCardModule, NbIconModule, NbProgressBarModule } from "@nebular/theme";
 import { HeaderTitleModule } from "../../../@shared/components/header-title/header-title.module";
@@ -26,7 +25,6 @@ import { TranslateModule } from "@ngx-translate/core";
     ],
     imports: [
         CommonModule,
-        TeamRoutingModule,
         NbCardModule,
         HeaderTitleModule,
         CounterPointModule,
