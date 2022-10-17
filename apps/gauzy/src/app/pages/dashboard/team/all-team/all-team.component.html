@@ -1,0 +1,31 @@
+<div class="main-card-container">
+    <nb-card class="main-card">
+        <nb-card-header class="pb-0">
+            <div>
+                <div class="h1">{{organization?.statistics?.countTeams || 0}}</div>
+                <span>Teams</span>
+            </div>
+        </nb-card-header>
+        <nb-card-body>
+            <gauzy-chart [statistics]="organization?.statistics" type="polarArea"></gauzy-chart>
+        </nb-card-body>
+    </nb-card>
+    <div class="grid-container">
+        <nb-card *ngFor="let team of teams">
+            <nb-card-header class="pb-0 d-flex justify-content-between">
+                <div>
+                    <div class="h1">{{team?.statistics?.countWorking + team?.statistics.countNotWorking}}</div>
+                    <span>{{team?.name}}</span>
+                </div>
+                <div>
+                    <button (click)="onSelectTeam(team)" size="small" nbButton outline status="primary">
+                        <nb-icon icon="arrow-forward-outline"></nb-icon>
+                    </button>
+                </div>
+            </nb-card-header>
+            <nb-card-body>
+                <gauzy-chart [hideLegend]="true" [statistics]="team?.statistics" type="bar"></gauzy-chart>
+            </nb-card-body>
+        </nb-card>
+    </div>
+</div>
