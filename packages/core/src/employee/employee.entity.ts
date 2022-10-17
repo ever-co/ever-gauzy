@@ -408,7 +408,6 @@ export class Employee extends TenantOrganizationBaseEntity
 	})
 	leads?: IGoal[];
 
-
 	/**
 	 * Awards
 	 */
@@ -424,7 +423,9 @@ export class Employee extends TenantOrganizationBaseEntity
     |--------------------------------------------------------------------------
     */
 
-	// Employee Organization Projects
+	/**
+	 * Employee Organization Projects
+	 */
 	@ManyToMany(() => OrganizationProject, (it) => it.members, {
         onUpdate: 'CASCADE',
 		onDelete: 'CASCADE'
@@ -434,7 +435,9 @@ export class Employee extends TenantOrganizationBaseEntity
 	})
     projects?: IOrganizationProject[];
 
-	// Employee Tags
+	/**
+	 * Employee Tags
+	 */
 	@ManyToMany(() => Tag, (tag) => tag.employees, {
 		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE'
@@ -444,32 +447,42 @@ export class Employee extends TenantOrganizationBaseEntity
 	})
 	tags: ITag[];
 
-	// Employee Skills
+	/**
+	 * Employee Skills
+	 */
 	@ApiProperty({ type: () => Skill })
 	@ManyToMany(() => Skill, (skill) => skill.employees)
     skills: ISkill[];
 
-	// Organization Departments
+	/**
+	 * Organization Departments
+	 */
 	@ApiProperty({ type: () => OrganizationDepartment })
 	@ManyToMany(() => OrganizationDepartment, (it) => it.members, {
-		cascade: true
+		onUpdate: 'CASCADE',
+		onDelete: 'CASCADE'
 	})
 	organizationDepartments?: IOrganizationDepartment[];
 
-	// Organization Employment Types
+	/**
+	 * Organization Employment Types
+	 */
 	@ApiProperty({ type: () => OrganizationEmploymentType })
 	@ManyToMany(() => OrganizationEmploymentType, (it) => it.members, {
 		cascade: true
 	})
 	organizationEmploymentTypes?: IOrganizationEmploymentType[];
 
-	// Employee Job Presets
+	/**
+	 * Employee Job Presets
+	 */
 	@ApiProperty({ type: () => JobPreset })
 	@ManyToMany(() => JobPreset, (jobPreset) => jobPreset.employees)
 	jobPresets?: JobPreset[];
 
-
-	// Employee Organization Contacts
+	/**
+	 * Employee Organization Contacts
+	 */
 	@ManyToMany(() => OrganizationContact, (it) => it.members, {
         onUpdate: 'CASCADE',
 		onDelete: 'CASCADE'
@@ -478,7 +491,6 @@ export class Employee extends TenantOrganizationBaseEntity
 		name: 'organization_contact_employee'
 	})
     organizationContacts?: IOrganizationContact[];
-
 
 	/**
 	 * TimeOffPolicy
