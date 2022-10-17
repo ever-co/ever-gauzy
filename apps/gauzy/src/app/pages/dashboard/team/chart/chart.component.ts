@@ -13,6 +13,10 @@ export class ChartComponent extends TranslationBaseComponent implements OnInit, 
     options: any;
     @Input()
     statistics: any;
+    @Input()
+    hideLegend: boolean = false;
+    @Input()
+    type: string = 'doughnut';
 
     constructor(
         public readonly translateService: TranslateService,
@@ -21,11 +25,14 @@ export class ChartComponent extends TranslationBaseComponent implements OnInit, 
     }
 
     ngOnInit(): void {
-
     }
 
     ngOnChanges(changes: SimpleChanges): void {
-        this._loadChart();
+        const statistics = changes['statistics'];
+        if (JSON.stringify(statistics.previousValue) !==
+            JSON.stringify(statistics.currentValue)) {
+            this._loadChart();
+        }
     }
 
     private _loadChart() {
@@ -67,7 +74,7 @@ export class ChartComponent extends TranslationBaseComponent implements OnInit, 
                     },
                     scales: {},
                     legend: {
-                        display: true,
+                        display: !this.hideLegend,
                         position: 'bottom',
                         labels: {
                             fontColor: chart.textColor

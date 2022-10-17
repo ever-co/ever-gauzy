@@ -5,8 +5,10 @@
 
 nb-card, nb-card-body {
   height: 100%;
+  margin: 0;
 }
 
 nb-card {
   background-color: var(--gauzy-card-1);
+  padding: 0.5rem;
 }
