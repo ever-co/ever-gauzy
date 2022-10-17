@@ -188,6 +188,16 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity> extends
 
 	/**
 	 * Finds entities that match given find options.
+	 *
+	 * @param filter
+	 * @returns
+	 */
+	public async find(filter?: FindManyOptions<T>): Promise<T[]> {
+		return await super.find(this.findManyWithTenant(filter));
+	}
+
+	/**
+	 * Finds entities that match given find options.
 	 * Also counts all entities that match given conditions,
 	 * But includes pagination settings
 	 *

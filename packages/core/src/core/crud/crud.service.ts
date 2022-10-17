@@ -71,6 +71,16 @@ export abstract class CrudService<T extends BaseEntity>
 
 	/**
 	 * Finds entities that match given find options.
+	 *
+	 * @param options
+	 * @returns
+	 */
+	public async find(options?: FindManyOptions<T>): Promise<T[]> {
+		return await this.repository.find(options);
+	}
+
+	/**
+	 * Finds entities that match given find options.
 	 * Also counts all entities that match given conditions,
 	 * But includes pagination settings
 	 *

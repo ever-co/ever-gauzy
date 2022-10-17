@@ -281,7 +281,7 @@ export class InvitesComponent extends PaginationFilterBaseComponent
 				'projects',
 				'invitedBy',
 				'role',
-				'organizationContact',
+				'organizationContacts',
 				'departments'
 			],
 			where: {

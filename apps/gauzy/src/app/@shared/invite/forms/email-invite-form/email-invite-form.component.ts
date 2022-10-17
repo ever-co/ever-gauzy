@@ -10,7 +10,8 @@ import {
 	IOrganization,
 	IUser,
 	InvitationExpirationEnum,
-	IRole
+	IRole,
+	IOrganizationTeam
 } from '@gauzy/contracts';
 import { firstValueFrom } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
@@ -39,6 +40,7 @@ export class EmailInviteFormComponent extends TranslationBaseComponent
 	@Input() public organizationProjects: IOrganizationProject[] = [];
 	@Input() public organizationContacts: IOrganizationContact[] = [];
 	@Input() public organizationDepartments: IOrganizationDepartment[] = [];
+	@Input() public organizationTeams: IOrganizationTeam[] = [];
 
 	/*
 	* Getter & Setter for InvitationTypeEnum
@@ -66,7 +68,8 @@ export class EmailInviteFormComponent extends TranslationBaseComponent
 			departments: [],
 			organizationContacts: [],
 			role: [],
-			invitationExpirationPeriod: []
+			invitationExpirationPeriod: [],
+			teams: []
 		}, {
 			validators: [
 				EmailValidator.pattern('emails')
@@ -77,8 +80,8 @@ export class EmailInviteFormComponent extends TranslationBaseComponent
 	@ViewChild(NbTagInputDirective, { read: ElementRef })
 	tagInput: ElementRef<HTMLInputElement>;
 
-	user: IUser;
-	organization: IOrganization;
+	public user: IUser;
+	public organization: IOrganization;
 
 	emails: Set<string> = new Set([]);
 	excludes: RolesEnum[] = [];
@@ -200,6 +203,18 @@ export class EmailInviteFormComponent extends TranslationBaseComponent
 		this.form.get('organizationContacts').updateValueAndValidity();
 	}
 
+	/**
+	 * SELECT all organization teams
+	 */
+	selectAllTeams() {
+		const organizationTeams = this.organizationTeams
+			.filter((department) => !!department.id)
+			.map((department) => department.id)
+
+		this.form.get('teams').setValue(organizationTeams);
+		this.form.get('teams').updateValueAndValidity();
+	}
+
 	getRoleFromForm = () => {
 		if (this.isEmployeeInvitation()) {
 			return RolesEnum.EMPLOYEE;
@@ -231,7 +246,8 @@ export class EmailInviteFormComponent extends TranslationBaseComponent
 			invitationExpirationPeriod,
 			projects = [],
 			departments = [],
-			organizationContacts = []
+			organizationContacts = [],
+			teams = []
 		} = this.form.value;
 
 		return this.inviteService.createWithEmails({
@@ -239,6 +255,7 @@ export class EmailInviteFormComponent extends TranslationBaseComponent
 			projectIds: projects,
 			departmentIds: departments,
 			organizationContactIds: organizationContacts,
+			teamIds: teams,
 			roleId: role.id,
 			organizationId,
 			tenantId,

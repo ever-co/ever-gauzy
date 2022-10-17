@@ -6,6 +6,7 @@ import { IOrganization } from './organization.model';
 import { IOrganizationContact } from './organization-contact.model';
 import { IOrganizationDepartment } from './organization-department.model';
 import { IEmployee } from './employee.model';
+import { IOrganizationTeam } from './organization-team-model';
 
 export interface IInvite extends IBasePerTenantAndOrganizationEntityModel {
 	token: string;
@@ -18,6 +19,7 @@ export interface IInvite extends IBasePerTenantAndOrganizationEntityModel {
 	role?: IRole;
 	invitedBy?: IUser;
 	projects?: IOrganizationProject[];
+	teams?: IOrganizationTeam[];
 	organizationContacts?: IOrganizationContact[];
 	departments?: IOrganizationDepartment[];
 }
@@ -40,12 +42,12 @@ export interface IInviteResendInput {
 
 }
 
-export interface ICreateEmailInvitesInput
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface ICreateEmailInvitesInput extends IBasePerTenantAndOrganizationEntityModel {
 	emailIds: string[];
 	projectIds?: string[];
 	organizationContactIds?: string[];
 	departmentIds?: string[];
+	teamIds?: string[];
 	roleId: string;
 	invitedById: string;
 	inviteType: any;
