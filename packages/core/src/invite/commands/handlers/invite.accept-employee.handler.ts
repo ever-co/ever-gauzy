@@ -98,7 +98,7 @@ export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAccept
 		// this.inviteService.sendAcceptInvitationEmail(organization, employee, languageCode);
 
 		return await this.inviteService.update(input.inviteId, {
-			status: InviteStatusEnum.INVITED
+			status: InviteStatusEnum.ACCEPTED
 		});
 	}
 
