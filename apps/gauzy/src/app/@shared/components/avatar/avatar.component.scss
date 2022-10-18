@@ -72,7 +72,7 @@
 
     .avatar-wrapper {
         width: 100%;
-        border-radius: var(--button-rectangle-border-radius);
+        border-radius: var(--border-radius);
     }
 
     .names-wrapper {
@@ -102,13 +102,14 @@
     .image-container {
         width: 20px;
         cursor: pointer;
-        border-radius: var(--button-rectangle-border-radius);
+        border-radius: var(--border-radius);
         display: flex;
 
         img {
             width: 20px;
             height: 20px;
             object-fit: cover;
+            border-radius: var(--border-radius) !important;
         }
     }
 }
