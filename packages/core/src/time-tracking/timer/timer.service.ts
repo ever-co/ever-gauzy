@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, NotAcceptableException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CommandBus } from '@nestjs/cqrs';
 import { Repository, IsNull, Between, Not } from 'typeorm';
@@ -47,7 +47,7 @@ export class TimerService {
 		});
 
 		if (!employee) {
-			throw new NotFoundException('Employee not found.');
+			throw new NotFoundException("We couldn't find the employee you were looking for.");
 		}
 
 		const { organizationId, id: employeeId } = employee;
@@ -123,9 +123,8 @@ export class TimerService {
 			tenantId
 		});
 		if (!employee) {
-			throw new NotFoundException('Ooaps! You weren\'t supposed to run time tracker.');
+			throw new NotFoundException("We couldn't find the employee you were looking for.");
 		}
-
 		const { organizationId, id: employeeId } = employee;
 		const lastLog = await this.getLastRunningLog();
 
@@ -148,25 +147,24 @@ export class TimerService {
 
 		const now = moment.utc().toDate();
 		const { source, projectId, taskId, organizationContactId, logType, description, isBillable } = request;
-		const timeLog = {
-			organizationId,
-			tenantId,
-			employeeId,
-			startedAt: now,
-			stoppedAt: now,
-			duration: 0,
-			source: source || TimeLogSourceEnum.BROWSER,
-			projectId: projectId || null,
-			taskId: taskId || null,
-			organizationContactId: organizationContactId || null,
-			logType: logType || TimeLogType.TRACKED,
-			description: description || null,
-			isBillable: isBillable || false,
-			isRunning: true
-		};
 
 		return await this.commandBus.execute(
-			new TimeLogCreateCommand(timeLog)
+			new TimeLogCreateCommand({
+				organizationId,
+				tenantId,
+				employeeId,
+				startedAt: now,
+				stoppedAt: now,
+				duration: 0,
+				source: source || TimeLogSourceEnum.BROWSER,
+				projectId: projectId || null,
+				taskId: taskId || null,
+				organizationContactId: organizationContactId || null,
+				logType: logType || TimeLogType.TRACKED,
+				description: description || null,
+				isBillable: isBillable || false,
+				isRunning: true
+			})
 		);
 	}
 
@@ -262,10 +260,10 @@ export class TimerService {
 			}
 		});
 		if (!employee) {
-			throw new NotFoundException('Employee not found.');
+			throw new NotFoundException("We couldn't find the employee you were looking for.");
 		}
 		if (!employee.isTrackingEnabled) {
-			throw new NotAcceptableException(`Time tracker has been disabled for ${employee.fullName}`);
+			throw new ForbiddenException(`The time tracking functionality has been disabled for you.`);
 		}
 		const { organizationId, id: employeeId } = employee;
 		return await this.timeLogRepository.findOne({
