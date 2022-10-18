@@ -264,7 +264,11 @@ export class Employee extends TenantOrganizationBaseEntity
 	 * Enabled/Disabled Time Tracking Feature
 	 */
 	@ApiPropertyOptional({ type: () => Boolean, default: true })
-	@Column({ type: Boolean, nullable: true, default: true })
+	@Column({
+		type: Boolean,
+		nullable: true,
+		default: false
+	})
 	isTrackingEnabled: boolean;
 
 	/**
