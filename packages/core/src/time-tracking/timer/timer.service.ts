@@ -123,7 +123,7 @@ export class TimerService {
 			tenantId
 		});
 		if (!employee) {
-			throw new NotFoundException('Employee not found.');
+			throw new NotFoundException('Ooaps! You weren\'t supposed to run time tracker.');
 		}
 
 		const { organizationId, id: employeeId } = employee;
