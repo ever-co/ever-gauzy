@@ -43,6 +43,7 @@ export const createDefaultEmployees = async (
 		employee.billRateValue = faker.datatype.number({ min: 15, max: 40 });
 		employee.billRateCurrency = organization.currency || env.defaultCurrency;
 		employee.reWeeklyLimit = faker.datatype.number({ min: 10, max: 40 });
+		employee.isTrackingEnabled = !!employee.startedWorkOn;
 		employees.push(employee);
 	}
 	await insertEmployees(dataSource, employees);
@@ -75,6 +76,7 @@ export const createRandomEmployees = async (
 				employee.billRateValue = faker.datatype.number({ min: 15, max: 40 });
 				employee.billRateCurrency = organization.currency || env.defaultCurrency;
 				employee.reWeeklyLimit = faker.datatype.number({ min: 10, max: 40 });
+				employee.isTrackingEnabled = !!employee.startedWorkOn;
 				employees.push(employee);
 			}
 			organizationEmployeesMap.set(organization, employees);
