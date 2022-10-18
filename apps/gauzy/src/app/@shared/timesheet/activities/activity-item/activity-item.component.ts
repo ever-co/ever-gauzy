@@ -21,6 +21,7 @@ export class ActivityItemComponent implements OnInit, OnDestroy {
 
 	@Output() loadChild: EventEmitter<any> = new EventEmitter();
 	@Input() allowChild = false;
+	@Input() isDashboard =  false;
 
 	public get item(): IDailyActivity {
 		return this._item;
