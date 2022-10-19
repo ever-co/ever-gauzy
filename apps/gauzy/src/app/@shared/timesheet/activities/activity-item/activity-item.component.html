@@ -1,6 +1,6 @@
 <div class="row align-items-center clickable">
-	<div class="col-sm-2 text-left" [nbTooltip]="item.title">
-		<div class="row align-items-center">
+	<div [class]="isDashboard ? 'col-sm-5' : 'col-sm-2'" [nbTooltip]="item.title">
+		<div class="row w-100 align-items-center">
 			<div class="arrow" *ngIf="allowChild">
 				<button
 					nbButton
@@ -20,11 +20,11 @@
 				</button>
 			</div>
 			<div [ngClass]="allowChild ? 'col child' : 'col no-child'">
-				{{ item.title | truncate: 13 }}
+				{{ item.title }}
 			</div>
 		</div>
 	</div>
-	<div class="col-sm-3 times">{{ visitedDate }}</div>
+	<div *ngIf="!isDashboard" class="col-sm-3 times">{{ visitedDate }}</div>
   <div class="col-sm-5">
 		<div class="row align-items-center">
 			<div class="col-auto percentage-col">
