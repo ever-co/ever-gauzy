@@ -6,3 +6,7 @@ $radius: nb-theme(border-radius);
   overflow-y: auto;
   max-height: calc(100vh - 20.5rem);
 }
+nb-card-body{
+	background-color: var(--gauzy-sidebar-background-2);
+	border-radius: var(--border-radius);
+}

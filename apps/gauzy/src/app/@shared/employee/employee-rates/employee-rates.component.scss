@@ -9,6 +9,11 @@
   height: 100%;
 }
 
+nb-card-body{
+	background-color: var(--gauzy-sidebar-background-2);
+	border-radius: var(--border-radius);
+}
+
 form{
   height: 100%;
   display: flex;
