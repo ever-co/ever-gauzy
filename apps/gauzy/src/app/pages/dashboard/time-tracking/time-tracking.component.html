@@ -263,6 +263,7 @@
 								<ngx-avatar
 									*ngxPermissionsOnly="PermissionsEnum.CHANGE_SELECTED_EMPLOYEE"
 									size="sm"
+									class="avatar-dashboard activity"
 									[name]="employee?.user?.name"
 									[src]="employee?.user?.imageUrl"
 									[caption]="
@@ -419,6 +420,7 @@
 										[src]="manualTime?.user?.imageUrl"
 										[id]="manualTime?.employeeId"
 										size="sm"
+										class="avatar-dashboard"
 									></ngx-avatar>
 								</div>
 								<div class="col-sm-5 project-name">
@@ -615,6 +617,7 @@
 							<ngx-activity-item
 								class="tracking-progress"
 								[item]="activity"
+								[isDashboard]="true"
 							></ngx-activity-item>
 						</div>
 					</nb-list-item>
@@ -686,6 +689,7 @@
 											[src]="member?.user?.imageUrl"
 											[id]="member?.id"
 											size="sm"
+											class="avatar-dashboard"
 										>
 										</ngx-avatar>
 									</div>

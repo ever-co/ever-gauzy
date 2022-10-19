@@ -33,6 +33,10 @@ export class Email extends TenantOrganizationBaseEntity implements IEmail {
     | @ManyToOne
     |--------------------------------------------------------------------------
     */
+
+	/**
+	 * User
+	 */
 	@ApiProperty({ type: () => User })
 	@ManyToOne(() => User, {
 		nullable: true,
@@ -48,6 +52,9 @@ export class Email extends TenantOrganizationBaseEntity implements IEmail {
 	@Column({ nullable: true })
 	userId?: IUser['id'];
 
+	/**
+	 * Email Template
+	 */
 	@ApiProperty({ type: () => EmailTemplate })
 	@ManyToOne(() => EmailTemplate, (template) => template.emails, {
 		nullable: false,
@@ -57,6 +64,6 @@ export class Email extends TenantOrganizationBaseEntity implements IEmail {
 
 	@ApiPropertyOptional({ type: () => String })
 	@RelationId((it: Email) => it.emailTemplate)
-	@Column({ nullable: false })
+	@Column()
 	emailTemplateId: IEmailTemplate['id'];
 }

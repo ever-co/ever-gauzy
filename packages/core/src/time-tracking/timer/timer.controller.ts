@@ -5,7 +5,9 @@ import {
 	Post,
 	Body,
 	Get,
-	Query
+	Query,
+	UsePipes,
+	ValidationPipe
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import {
@@ -20,14 +22,18 @@ import { TimerService } from './timer.service';
 import { PermissionGuard, RoleGuard, TenantPermissionGuard } from './../../shared/guards';
 import { Permissions } from './../../shared/decorators';
 import { Roles } from './../../shared/decorators';
+import { StartTimerDTO, StopTimerDTO } from './dto';
 
-@ApiTags('Timer')
+@ApiTags('Timer Tracker')
 @UseGuards(TenantPermissionGuard, PermissionGuard, RoleGuard)
 @Permissions(PermissionsEnum.TIME_TRACKER)
 @Roles(RolesEnum.EMPLOYEE)
 @Controller()
 export class TimerController {
-	constructor(private readonly timerService: TimerService) {}
+
+	constructor(
+		private readonly timerService: TimerService
+	) {}
 
 	@ApiOperation({ summary: 'Toggle timer' })
 	@ApiResponse({
@@ -70,12 +76,12 @@ export class TimerController {
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Post('/start')
+	@UsePipes(new ValidationPipe({ transform: true }))
 	async startTimer(
-		@Body() entity: ITimerToggleInput
+		@Body() entity: StartTimerDTO
 	): Promise<ITimeLog> {
 		return await this.timerService.startTimer(entity);
 	}
@@ -91,8 +97,9 @@ export class TimerController {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Post('/stop')
+	@UsePipes(new ValidationPipe({ transform: true }))
 	async stopTimer(
-		@Body() entity: ITimerToggleInput
+		@Body() entity: StopTimerDTO
 	): Promise<ITimeLog | null> {
 		return await this.timerService.stopTimer(entity);
 	}

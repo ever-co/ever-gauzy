@@ -1,17 +1,42 @@
 .logo {
 	display: flex;
+	align-items: center;
 	flex-direction: column;
 	justify-content: center;
-	align-items: center;
-	margin-bottom: 50px;
+	margin-bottom: 32px;
+
+	h4 {
+		font-size: 20px;
+		margin-top: 20px;
+	}
+
+	h4, h6 {
+		font-weight: 600;
+	}
+
+	h6 {
+		font-size: 16px;
+	}
+
+	ngx-gauzy-logo::ng-deep {
+		object {
+			width: 216px;
+		}
+	}
 }
 
 .shortcut-card {
-	&:hover {
-		box-shadow: 0 2px 9px 0 rgba(0, 0, 0, 0.26);
-		transform: translateY(-1px);
-	}
+	margin-bottom: 20px;
 	cursor: pointer;
+	background-color: var(--gauzy-card-2);
+	nb-card-body {
+		border-radius: 0 0 var(--border-radius) var(--border-radius);
+	}
+
+	&:hover {
+		transform: translateY(-1px);
+		box-shadow: 0 2px 9px 0 rgba(0, 0, 0, 0.26);
+	}
 }
 
 .centered {

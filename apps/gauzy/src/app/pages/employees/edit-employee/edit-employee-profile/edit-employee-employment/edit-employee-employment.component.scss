@@ -3,14 +3,15 @@ $radius: nb-theme(border-radius);
 .notes {
   margin-top: 16px;
   padding: 10px;
-  border-radius: 5px;
-  text-indent: 1em;
+  border-radius: var(--border-radius);
+  background-color: var(--color-warning-transparent-100);
 }
 .notes p {
   margin: 0;
-  color: #eac72d;
+  color: var(--color-warning-default);
   font-size: 0.75rem;
-  font-weight: 700;
+  font-weight: 600;
+  text-align: justify;
 }
 .card{
   background-color: var(--gauzy-card-2);

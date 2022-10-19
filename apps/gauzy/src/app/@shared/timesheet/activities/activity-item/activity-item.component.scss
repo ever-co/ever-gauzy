@@ -27,6 +27,9 @@
   letter-spacing: 0em;
   text-align: left;
   color: nb-theme(text-primary-color);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .no-child {
@@ -35,6 +38,9 @@
   line-height: 17px;
   letter-spacing: 0em;
   text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .clickable {
