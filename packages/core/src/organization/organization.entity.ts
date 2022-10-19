@@ -109,8 +109,13 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 
 	@ApiProperty({ type: () => String, enum: DefaultValueDateTypeEnum })
 	@Index()
-	@Column()
-	defaultValueDateType: string;
+	@Column({
+		type: 'simple-enum',
+		nullable: true,
+		enum: DefaultValueDateTypeEnum,
+		default: DefaultValueDateTypeEnum.TODAY
+	})
+	defaultValueDateType: DefaultValueDateTypeEnum;
 
 	@ApiProperty({ type: () => Boolean, default: true })
 	@Column({ default: true })
