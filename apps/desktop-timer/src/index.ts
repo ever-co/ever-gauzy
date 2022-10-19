@@ -119,7 +119,7 @@ args.some((val) => val === '--serve');
 let gauzyWindow: BrowserWindow = null;
 let setupWindow: BrowserWindow = null;
 let timeTrackerWindow: BrowserWindow = null;
-let notificationWindow: BrowserWindow = null;
+const notificationWindow: BrowserWindow = null;
 let settingsWindow: BrowserWindow = null;
 let updaterWindow: BrowserWindow = null;
 let imageView: BrowserWindow = null;
@@ -127,7 +127,7 @@ let tray = null;
 let isAlreadyRun = false;
 let willQuit = false;
 let onWaitingServer = false;
-let serverGauzy = null;
+const serverGauzy = null;
 let serverDesktop = null;
 let dialogErr = false;
 let cancellationToken;
@@ -149,6 +149,26 @@ const pathWindow = {
 LocalStore.setFilePath({
 	iconPath: path.join(__dirname, 'icons', 'icon.png')
 })
+// Instance detection
+const gotTheLock = app.requestSingleInstanceLock();
+
+if (!gotTheLock) {
+	app.quit()
+} else {
+	app.on('second-instance', () => {
+		// if someone tried to run a second instance, we should focus our window and show warning message.
+		if (gauzyWindow) {
+			if (gauzyWindow.isMinimized()) gauzyWindow.restore();
+			gauzyWindow.focus();
+			dialog.showMessageBoxSync(gauzyWindow, {
+				type: "warning",
+				title: "Gauzy",
+				message: "You already have a running instance"
+			});
+		}
+	})
+}
+
 async function startServer(value, restart = false) {
 	await knex.raw(`pragma journal_mode = WAL;`).then((res) => console.log(res));
 	const dataModel = new DataModel();
