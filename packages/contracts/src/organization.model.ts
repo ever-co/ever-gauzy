@@ -49,7 +49,7 @@ export interface IOrganization extends IBasePerTenantEntityModel {
 	skills: ISkill[];
 	currency: string;
 	isActive: boolean;
-	defaultValueDateType: string;
+	defaultValueDateType: DefaultValueDateTypeEnum;
 	defaultAlignmentType?: string;
 	dateFormat?: string;
 	brandColor?: string;
