@@ -17,7 +17,7 @@ import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { DeleteResult, UpdateResult } from 'typeorm';
 import { RequestContext } from '../core/context';
 import { Roles } from './../shared/decorators';
-import { RoleGuard, TenantPermissionGuard } from './../shared/guards';
+import { RoleGuard } from './../shared/guards';
 import { CreateTenantDTO, UpdateTenantDTO } from './dto';
 import { TenantService } from './tenant.service';
 
@@ -43,7 +43,6 @@ export class TenantController {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@UseGuards(TenantPermissionGuard)
 	@Get()
 	async findById(): Promise<ITenant> {
 		return await this.tenantService.findOneByIdString(
@@ -70,7 +69,7 @@ export class TenantController {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Post()
-	@UsePipes(new ValidationPipe({ transform: true }))
+	@UsePipes(new ValidationPipe())
 	async create(
 		@Body() entity: CreateTenantDTO
 	): Promise<ITenant> {
@@ -102,10 +101,10 @@ export class TenantController {
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
-	@UseGuards(TenantPermissionGuard, RoleGuard)
+	@UseGuards(RoleGuard)
 	@Roles(RolesEnum.SUPER_ADMIN)
 	@Put()
-	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
+	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async update(
 		@Body() entity: UpdateTenantDTO
 	): Promise<ITenant | UpdateResult> {
@@ -140,13 +139,14 @@ export class TenantController {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Tenant not found'
 	})
-	@UseGuards(TenantPermissionGuard, RoleGuard)
+	@UseGuards(RoleGuard)
 	@Roles(RolesEnum.SUPER_ADMIN)
 	@Delete()
 	async delete(): Promise<DeleteResult> {
 		try {
-			const tenantId = RequestContext.currentTenantId();
-			return await this.tenantService.delete(tenantId);
+			return await this.tenantService.delete(
+				RequestContext.currentTenantId()
+			);
 		} catch (error) {
 			throw new ForbiddenException();
 		}
