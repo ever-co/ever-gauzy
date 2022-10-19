@@ -22,7 +22,7 @@ import { TimerService } from './timer.service';
 import { PermissionGuard, RoleGuard, TenantPermissionGuard } from './../../shared/guards';
 import { Permissions } from './../../shared/decorators';
 import { Roles } from './../../shared/decorators';
-import { StartTimerDTO } from './dto';
+import { StartTimerDTO, StopTimerDTO } from './dto';
 
 @ApiTags('Timer Tracker')
 @UseGuards(TenantPermissionGuard, PermissionGuard, RoleGuard)
@@ -97,8 +97,9 @@ export class TimerController {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Post('/stop')
+	@UsePipes(new ValidationPipe({ transform: true }))
 	async stopTimer(
-		@Body() entity: ITimerToggleInput
+		@Body() entity: StopTimerDTO
 	): Promise<ITimeLog | null> {
 		return await this.timerService.stopTimer(entity);
 	}
