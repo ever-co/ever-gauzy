@@ -104,7 +104,9 @@ $nb-themes: nb-register-theme(
 			gauzy-primary-background: rgb(214, 200, 255),
 			gauzy-card-6: rgb(57, 52, 62),
 			layout-padding: 24px 24px 0 12px,
-			header-height: 4.5rem
+			header-height: 4.5rem,
+			gauzy-text-color-1: rgba(255, 255, 255, 1),
+			gauzy-text-color-2: rgba(255, 255, 255, 0.5),
 		),
 		cosmic,
 		cosmic
@@ -366,7 +368,7 @@ $nb-themes: nb-register-theme(
 			color-primary-900: #1a1038,
 			color-primary-transparent-100: rgba(110, 73, 232, 0.1),
 			// Supporting variables - border radius, outline, shadow, divider
-			border-radius: 0.5rem,
+			border-radius: 0.625rem,
 			outline-width: 0.375rem,
 			outline-color: color-basic-transparent-200,
 			scrollbar-color: background-basic-color-4,
