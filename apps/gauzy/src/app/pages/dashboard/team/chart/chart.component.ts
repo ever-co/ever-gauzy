@@ -1,14 +1,17 @@
-import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
+import { Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
 import { TranslationBaseComponent } from "../../../../@shared/language-base";
 import { TranslateService } from "@ngx-translate/core";
 import { NbThemeService } from "@nebular/theme";
+import { tap } from "rxjs";
+import { UntilDestroy, untilDestroyed } from "@ngneat/until-destroy";
 
+@UntilDestroy({checkProperties: true})
 @Component({
     selector: 'gauzy-chart',
     templateUrl: './chart.component.html',
     styleUrls: ['./chart.component.scss']
 })
-export class ChartComponent extends TranslationBaseComponent implements OnInit, OnChanges {
+export class ChartComponent extends TranslationBaseComponent implements OnInit, OnChanges, OnDestroy {
     public data: any;
     public options: any;
     @Input()
@@ -24,7 +27,23 @@ export class ChartComponent extends TranslationBaseComponent implements OnInit, 
         super(translateService);
     }
 
+    private get _labels() {
+        return {
+            labels: [
+                `${this.getTranslation('DASHBOARD_PAGE.CHARTS.WORKING_NOW')}: ${this.statistics.countOnline}`,
+                `${this.getTranslation('DASHBOARD_PAGE.CHARTS.WORKING')}: ${this.statistics.countWorking - this.statistics.countOnline}`,
+                `${this.getTranslation('DASHBOARD_PAGE.CHARTS.NOT_WORKING')}: ${this.statistics.countNotWorking}`
+            ]
+        }
+    }
+
     ngOnInit(): void {
+        this.translateService
+            .onLangChange
+            .pipe(
+                tap(() => this._updateLabels()),
+                untilDestroyed(this)
+            ).subscribe()
     }
 
     ngOnChanges(changes: SimpleChanges): void {
@@ -35,18 +54,17 @@ export class ChartComponent extends TranslationBaseComponent implements OnInit, 
         }
     }
 
+    ngOnDestroy(): void {
+    }
+
     private _loadChart() {
         this.themeService
             .getJsTheme()
-            .pipe()
+            .pipe(untilDestroyed(this))
             .subscribe((config) => {
                 const chart: any = config.variables.chartjs;
                 this.data = {
-                    labels: [
-                        `${this.getTranslation('DASHBOARD_PAGE.CHARTS.WORKING_NOW')}: ${this.statistics.countOnline}`,
-                        `${this.getTranslation('DASHBOARD_PAGE.CHARTS.WORKING')}: ${this.statistics.countWorking - this.statistics.countOnline}`,
-                        `${this.getTranslation('DASHBOARD_PAGE.CHARTS.NOT_WORKING')}: ${this.statistics.countNotWorking}`
-                    ],
+                    ...this._labels,
                     datasets: [
                         {
                             data: [
@@ -90,5 +108,12 @@ export class ChartComponent extends TranslationBaseComponent implements OnInit, 
                     }
                 };
             });
+    }
+
+    private _updateLabels() {
+        this.data = {
+            ...this.data,
+            ...this._labels
+        }
     }
 }
