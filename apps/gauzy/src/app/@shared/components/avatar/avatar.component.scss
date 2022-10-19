@@ -142,5 +142,18 @@
 		color: var(--gauzy-text-color-1) !important;
 	}
 
+	&.activity {
+		.image-container {
+			width: 28px;
+			border-radius: var(--button-rectangle-border-radius) !important;
+
+			img {
+				border-radius: var(--button-rectangle-border-radius) !important;
+				width: 28px;
+				height: 28px;
+			}
+		}
+	}
+
 	@include common;
 }
