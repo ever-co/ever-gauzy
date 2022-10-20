@@ -22,9 +22,7 @@ export interface ITenant {
 	importRecords?: IImportRecord[];
 }
 
-export interface ITenantCreateInput {
-	name: string;
-
+export interface ITenantCreateInput extends ITenantUpdateInput {
 	isImporting?: boolean;
 	sourceId?: string;
 	userSourceId?: string;
@@ -32,7 +30,7 @@ export interface ITenantCreateInput {
 
 export interface ITenantUpdateInput {
 	name: string;
-	logo: string;
+	logo?: string;
 }
 
 export interface ITenantSetting

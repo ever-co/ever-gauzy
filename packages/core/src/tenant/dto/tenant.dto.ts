@@ -4,12 +4,11 @@ import { IsNotEmpty, IsString, IsOptional } from "class-validator";
 
 export class TenantDTO implements ITenant {
 
-    @ApiProperty({ type: () => String, readOnly: true })
+    @ApiProperty({ type: () => String, required: true })
     @IsNotEmpty()
-    @IsString()
     readonly name: string;
 
-    @ApiPropertyOptional({ type: () => String, readOnly: true })
+    @ApiPropertyOptional({ type: () => String })
     @IsOptional()
     @IsString()
     readonly logo: string;
