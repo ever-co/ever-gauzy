@@ -64,12 +64,11 @@ export class OrganizationController extends CrudController<Organization> {
 	 */
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW)
 	@Get('pagination')
+	@UsePipes(new ValidationPipe({ transform: true }))
 	async pagination(
-		@Query(new ValidationPipe({
-			transform: true
-		})) options: OrganizationFindQueryDTO<Organization>
+		@Query() options: OrganizationFindQueryDTO<Organization>
 	): Promise<IPagination<IOrganization>> {
-		return this.organizationService.paginate(options);
+		return await this.organizationService.paginate(options);
 	}
 
 	/**
