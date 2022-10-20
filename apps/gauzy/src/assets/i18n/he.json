@@ -171,7 +171,8 @@
 			"INVOICE": "You have not created any invoice.",
 			"ESTIMATE": "You have not created any estimate.",
 			"EVENT_TYPE": "You have not created any event type.",
-			"PRODUCT_TYPE_NO_DATA": "You have not created any product type."
+			"PRODUCT_TYPE_NO_DATA": "You have not created any product type.",
+			"TEAM_DASHBOARD": "You don't have any teams"
 		},
 		"TRANSACTION_TYPE": "סוג",
 		"AMOUNT": "כמות",
