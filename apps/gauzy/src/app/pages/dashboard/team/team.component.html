@@ -39,8 +39,8 @@
 </nb-card>
 
 <ng-template #noTeamSelected>
-    <gauzy-all-team (selectedTeam)="select($event)" [organization]="todayOrganization" [teams]="todayTeamsWorkers" ></gauzy-all-team>
+    <gauzy-all-team (selectedTeam)="select($event)" [organization]="todayOrganization" [teams]="todayTeamsWorkers"></gauzy-all-team>
 </ng-template>
 <ng-template #noTeam>
-    <ngx-no-data-message [message]="'For teams'"></ngx-no-data-message>
+    <ngx-no-data-message [message]="'SM_TABLE.NO_DATA.TEAM_DASHBOARD' | translate"></ngx-no-data-message>
 </ng-template>
