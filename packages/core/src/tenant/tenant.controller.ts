@@ -34,14 +34,14 @@ export class TenantController {
 	 *
 	 * @returns
 	 */
-	@ApiOperation({ summary: 'Find by id' })
+	@ApiOperation({summary: 'Find by id' })
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Found one record' /*, type: T*/
+		description: 'Found tenant record'
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
+		description: 'Tenant record not found'
 	})
 	@Get()
 	async findById(): Promise<ITenant> {
@@ -56,8 +56,12 @@ export class TenantController {
 	 * @returns
 	 */
 	@ApiOperation({
-		summary:
-			'Create new tenant. The user who creates the tenant is given the super admin role.'
+		summary: 'Create new tenant. The user who creates the tenant is given the super admin role.',
+		security: [
+			{
+				role: [RolesEnum.SUPER_ADMIN]
+			}
+		]
 	})
 	@ApiResponse({
 		status: HttpStatus.CREATED,
@@ -65,8 +69,7 @@ export class TenantController {
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Post()
 	@UsePipes(new ValidationPipe())
@@ -132,12 +135,12 @@ export class TenantController {
 		]
 	})
 	@ApiResponse({
-		status: HttpStatus.NO_CONTENT,
+		status: HttpStatus.OK,
 		description: 'The tenant has been successfully deleted'
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Tenant not found'
+		description: 'Tenant record not found'
 	})
 	@UseGuards(RoleGuard)
 	@Roles(RolesEnum.SUPER_ADMIN)
