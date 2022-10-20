@@ -135,23 +135,23 @@ export class EditOrganizationLocationComponent extends TranslationBaseComponent
 			if (isNotEmpty(contact)) {
 				if (this.locationFormDirective) {
 					this.locationFormDirective.setValue({
-						country: contact.country,
-						city: contact.city,
-						postcode: contact.postcode,
-						address: contact.address,
-						address2: contact.address2,
+						country: contact.country || null,
+						city: contact.city || null,
+						postcode: contact.postcode || null,
+						address: contact.address || null,
+						address2: contact.address2 || null,
 						loc: {
 							type: 'Point',
 							coordinates: [
-								contact.latitude,
-								contact.longitude
+								contact.latitude || null,
+								contact.longitude || null
 							]
 						}
 					});
 				}
 				if (this.leafletTemplate) {
 					this.leafletTemplate.addMarker(
-						new LatLng(contact.latitude, contact.longitude)
+						new LatLng(contact.latitude || null, contact.longitude || null)
 					);
 				}
 			}

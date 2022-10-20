@@ -376,7 +376,7 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 
 	/**
 	 * listen range click event on ngx-daterangepicker-material
-	 * @param event
+	 * @param range
 	 */
 	rangeClicked(range: any) {
 		const { label } = range
@@ -470,7 +470,6 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 	/**
 	 * If has future strategy or not
 	 *
-	 * @param date
 	 * @returns {Boolean}
 	 */
 	hasFutureStrategy(): boolean {
