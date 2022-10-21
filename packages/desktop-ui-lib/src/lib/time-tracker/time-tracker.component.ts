@@ -756,7 +756,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 	countDurationToday(countTodayTime) {
 		if (countTodayTime) {
-			const timeRun = this.timeRun.getValue();
 			const seconds = Math.round(countTodayTime.todayDuration) % 60;
 			const minutes = Math.round(countTodayTime.todayDuration / 60) % 60;
 			const hours = Math.floor(countTodayTime.todayDuration / 3600);
@@ -776,7 +775,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					hours: hours.toString().length > 1 ? `${hours}` : `0${hours}`
 				});
 				this.electronService.ipcRenderer.send('update_tray_time_title', {
-					timeRun: timeRun.hours + ':' + timeRun.minute + ':' + timeRun.second
+					timeRun: this.timeRun.getValue().hours + ':' + this.timeRun.getValue().minute + ':' + this.timeRun.getValue().second
 				});
 			}
 		}
