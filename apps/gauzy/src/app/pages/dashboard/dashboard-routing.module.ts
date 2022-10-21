@@ -1,14 +1,14 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
+import { NgxPermissionsGuard } from "ngx-permissions";
+import { PermissionsEnum } from "@gauzy/contracts";
 import { DashboardComponent } from './dashboard.component';
 import { HumanResourcesComponent } from './human-resources/human-resources.component';
 import { AccountingComponent } from './accounting/accounting.component';
 import { ProjectManagementComponent } from './project-management/project-management.component';
 import { TimeTrackingComponent } from './time-tracking/time-tracking.component';
-import { DateRangePickerResolver } from '../../@theme/components/header/selectors/date-range-picker';
 import { TeamComponent } from "./team/team.component";
-import { PermissionsEnum } from "@gauzy/contracts";
-import { NgxPermissionsGuard } from "ngx-permissions";
+import { DateRangePickerResolver } from '../../@theme/components/header/selectors/date-range-picker';
 
 const routes: Routes = [
 	{
@@ -81,16 +81,13 @@ const routes: Routes = [
 				data: {
 					datePicker: {
 						unitOfTime: 'day',
-						isLockDatePicker: true,
-						isSaveDatePicker: true,
 						isSingleDatePicker: true,
+						isLockDatePicker: true,
 						isDisableFutureDate: true
 					},
 					selectors: {
-						date: true,
 						project: false,
-						employee: false,
-						organization: true
+						employee: false
 					},
 					permissions: {
 						only: [PermissionsEnum.ALL_ORG_VIEW]

@@ -63,7 +63,7 @@ export class EmailInviteFormComponent extends TranslationBaseComponent
 		return fb.group({
 			emails: ['', Validators.required],
 			projects: [],
-			startedWorkOn: [],
+			startedWorkOn: [new Date()],
 			appliedDate: [],
 			departments: [],
 			organizationContacts: [],

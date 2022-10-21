@@ -527,7 +527,9 @@ export default class TimerHandler {
 		/*
 			* Stop time interval after stop timer
 		*/
-		this.stopTimerIntervalPeriod();
+		(async () => {
+			await this.stopTimerIntervalPeriod();
+		})();
 
 		this.updateToggle(setupWindow, knex, true);
 

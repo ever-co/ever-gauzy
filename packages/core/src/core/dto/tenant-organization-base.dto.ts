@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsObject, IsOptional, IsString, ValidateIf } from 'class-validator';
 import { IOrganization, IBasePerTenantAndOrganizationEntityModel } from '@gauzy/contracts';
 import { TenantBaseDTO } from './tenant-base.dto';
@@ -19,7 +19,7 @@ export class TenantOrganizationBaseDTO extends TenantBaseDTO
 	@IsOrganizationBelongsToUser()
 	readonly organizationId: IOrganization['id'];
 
-	@ApiProperty({ type: () => String, readOnly: true })
+	@ApiPropertyOptional({ type: () => String, readOnly: true })
 	@ValidateIf((it) => !it.organization && !it.organizationId)
 	@IsOptional()
 	@IsString()
