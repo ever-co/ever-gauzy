@@ -124,6 +124,11 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	isTrackingEnabled = true;
 	isAddTask = false;
 	sound: any = null;
+	private _lastTotalWorkedTime = {
+		second: 0,
+		minute: 0,
+		hours: 0
+	}
 
 	constructor(
 		private electronService: ElectronService,
@@ -199,9 +204,11 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					this.note = arg.note;
 					this.aw$.next(arg.aw && arg.aw.isAw ? arg.aw.isAw : false);
 					this.appSetting$.next(arg.settings);
-					this.getClient(arg);
-					this.getProjects(arg);
-					this.getTask(arg);
+					(async () => {
+						await this.getClient(arg);
+						await this.getProjects(arg);
+						await this.getTask(arg);
+					})();
 					this.getTodayTime(arg);
 					this.getUserInfo(arg, false);
 					console.log(this.projectSelect);
@@ -382,7 +389,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			'prepare_activities_screenshot',
 			(event, arg) =>
 				this._ngZone.run(() => {
-					this.sendActivities(arg);
+					(async () => await this.sendActivities(arg))();
 				})
 		);
 
@@ -483,8 +490,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 	setTime(value) {
 		const time = this.timeRun.getValue();
-		value.second = value.second % 60;
-		value.minute = value.minute % 60;
+		value.second = (value.second + this._lastTotalWorkedTime.second) % 60;
+		value.minute = (value.minute + this._lastTotalWorkedTime.minute) % 60;
+		value.hours = value.hours + this._lastTotalWorkedTime.hours;
 		this.timeRun.next({
 			second:
 				value.second.toString().length > 1
@@ -544,15 +552,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			quitApp: this.quitApp
 		});
 		this.electronService.ipcRenderer.send('update_tray_stop');
-		this.electronService.ipcRenderer.send('update_tray_time_update', {
-			hours: '00',
-			minutes: '00'
-		});
-		this.timeRun.next({
-			second: '00',
-			minute: '00',
-			hours: '00'
-		});
 		this.start$.next(false);
 		this.loading = false;
 	}
@@ -564,7 +563,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			this.tasks[idx].isSelected = true;
 		}
 		this.tableData = this.tasks;
-		this.sourceData.load(this.tableData);
+		await this.sourceData.load(this.tableData);
 	}
 
 	async getProjects(arg) {
@@ -595,7 +594,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				val: item
 			});
 		} else {
-			this.selectClient(item);
+			await this.selectClient(item);
 		}
 	}
 
@@ -757,13 +756,28 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 	countDurationToday(countTodayTime) {
 		if (countTodayTime) {
-			const minutes = Math.floor(countTodayTime.todayDuration / 60);
-			const hours = Math.floor(minutes / 60);
-			const minuteDuration = minutes % 60;
+			const seconds = Math.round(countTodayTime.todayDuration) % 60;
+			const minutes = Math.round(countTodayTime.todayDuration / 60) % 60;
+			const hours = Math.floor(countTodayTime.todayDuration / 3600);
 			this.todayDuration$.next({
 				hours: this.formatingDuration('hours', hours),
-				minutes: this.formatingDuration('minutes', minuteDuration)
+				minutes: this.formatingDuration('minutes', minutes)
 			});
+			if (!this.start) {
+				this._lastTotalWorkedTime = {
+					second: seconds,
+					minute: minutes,
+					hours: hours
+				}
+				this.timeRun.next({
+					second: seconds.toString().length > 1 ? `${seconds}` : `0${seconds}`,
+					minute: minutes.toString().length > 1 ? `${minutes}` : `0${minutes}`,
+					hours: hours.toString().length > 1 ? `${hours}` : `0${hours}`
+				});
+				this.electronService.ipcRenderer.send('update_tray_time_title', {
+					timeRun: hours + ':' + minutes + ':' + seconds
+				});
+			}
 		}
 	}
 
