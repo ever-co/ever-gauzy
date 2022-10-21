@@ -1,38 +1,39 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import {
-    IDateRangePicker,
-    IGetTimeSlotStatistics,
-    IOrganization,
     IOrganizationTeam,
     IOrganizationTeamEmployee,
-    ITimeLog
+    ITimeLog,
+    ITimeLogFilters
 } from "@gauzy/contracts";
-import { DateRangePickerBuilderService, OrganizationTeamsService, Store } from "../../../@core";
-import { combineLatest, debounceTime, distinctUntilChanged, Subject, tap } from "rxjs";
-import { filter } from "rxjs/operators";
+import { debounceTime, tap } from "rxjs";
 import { UntilDestroy, untilDestroyed } from "@ngneat/until-destroy";
+import { TranslateService } from '@ngx-translate/core';
+import {
+    DateRangePickerBuilderService,
+    OrganizationTeamsService,
+    Store
+} from "../../../@core/services";
 import { TimesheetService } from "../../../@shared/timesheet";
-import { isNotEmpty } from "@gauzy/common-angular";
-import * as moment from 'moment';
+import { BaseSelectorFilterComponent } from '../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
 
-@UntilDestroy({checkProperties: true})
+@UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'gauzy-team',
+    selector: 'gauzy-teams',
     templateUrl: './team.component.html',
     styleUrls: ['./team.component.scss']
 })
-export class TeamComponent implements OnInit, OnDestroy {
-    private _organization: IOrganization;
-    private _teams$: Subject<any>;
+export class TeamComponent extends BaseSelectorFilterComponent implements OnInit, OnDestroy {
+
     private _logs: ITimeLog[] = [];
 
     constructor(
         private readonly _organizationTeamsService: OrganizationTeamsService,
-        private readonly _dateRangePickerBuilderService: DateRangePickerBuilderService,
         private readonly _timesheetService: TimesheetService,
-        private readonly _store: Store
+        protected readonly _dateRangePickerBuilderService: DateRangePickerBuilderService,
+        protected readonly _store: Store,
+        protected readonly _translateService: TranslateService,
     ) {
-        this._teams$ = new Subject();
+        super(_store, _translateService, _dateRangePickerBuilderService);
         this._selectedTeam = {
             data: null,
             isSelected: false
@@ -43,18 +44,6 @@ export class TeamComponent implements OnInit, OnDestroy {
 
     public get todayTeamsWorkers(): any[] {
         return this._todayTeamsWorkers;
-    }
-
-    private _selectedDateRange: IDateRangePicker;
-
-    public get selectedDateRange(): IDateRangePicker {
-        return this._selectedDateRange;
-    }
-
-    public set selectedDateRange(range: IDateRangePicker) {
-        if (isNotEmpty(range)) {
-            this._selectedDateRange = range;
-        }
     }
 
     private _selectedTeam: {
@@ -78,33 +67,17 @@ export class TeamComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit(): void {
-        const selectedDateRange$ = this._dateRangePickerBuilderService.selectedDateRange$;
-        const selectedOrganization$ = this._store.selectedOrganization$;
-        this._teams$
+        this.subject$
             .pipe(
-                debounceTime(300),
+                debounceTime(100),
+                tap(() => this._clearItem()),
                 tap(() => this._loadTeams()),
-                untilDestroyed(this)
-            )
-            .subscribe();
-        combineLatest([selectedOrganization$, selectedDateRange$])
-            .pipe(
-                debounceTime(300),
-                distinctUntilChanged(),
-                filter(([organization, dateRange]) => !!organization && !!dateRange),
-                tap(([organization, dateRange]) => {
-                    this._organization = organization;
-                    this.selectedDateRange = dateRange;
-                    this._teams$.next(true);
-                }),
-                tap(() => this._clear()),
                 untilDestroyed(this)
             )
             .subscribe();
     }
 
-    ngOnDestroy(): void {
-    }
+    ngOnDestroy(): void {}
 
     public select(team: IOrganizationTeam) {
         this._selectedTeam =
@@ -113,12 +86,12 @@ export class TeamComponent implements OnInit, OnDestroy {
             : {isSelected: true, data: team};
     }
 
-    private async getTimeSlots() {
-        const request: IGetTimeSlotStatistics = {
-            endDate: moment(this.selectedDateRange.endDate).format('YYYY-MM-DD HH:mm'),
-            organizationId: this._organization.id,
-            startDate: moment(this.selectedDateRange.startDate).format('YYYY-MM-DD HH:mm'),
-            tenantId: this._organization.tenantId
+    private async getTimeLogs() {
+        if (!this.organization) {
+            return;
+        }
+        const request: ITimeLogFilters = {
+            ...this.getFilterRequest(this.request)
         };
         try {
             this._logs = await this._timesheetService.getTimeLogs(request);
@@ -133,11 +106,17 @@ export class TeamComponent implements OnInit, OnDestroy {
         }
     }
 
-    public fnTracker = (index, item) => {
+    public fnTracker = (index: number, item: IOrganizationTeam) => {
         return item.id;
     }
 
     private _loadTeams(): void {
+        if (!this.organization) {
+            return;
+        }
+        const { id: organizationId } = this.organization;
+		const { tenantId } = this.store.user;
+
         this._organizationTeamsService.getAll(
             [
                 'members',
@@ -146,13 +125,13 @@ export class TeamComponent implements OnInit, OnDestroy {
                 'members.employee.user'
             ],
             {
-                organizationId: this._organization.id,
-                tenantId: this._organization.tenantId
+                organizationId,
+                tenantId
             }
         ).then(async (res) => {
             this._teams = res.items;
-            await this.getTimeSlots();
-        }).catch((e) => console.log(e));
+            await this.getTimeLogs();
+        }).catch((e) => console.error(e));
     }
 
     private teamMapper() {
@@ -208,7 +187,7 @@ export class TeamComponent implements OnInit, OnDestroy {
         );
     }
 
-    private _clear() {
+    private _clearItem() {
         this._selectedTeam = {
             data: null,
             isSelected: false
@@ -217,7 +196,7 @@ export class TeamComponent implements OnInit, OnDestroy {
 
     public get todayOrganization() {
         return {
-            ...this._organization,
+            ...this.organization,
             statistics: {
                 countOnline: this._todayTeamsWorkers.reduce((accumulator, res) => {
                     const teamsOnline = res.statistics.countOnline > 0 ? 1 : 0
