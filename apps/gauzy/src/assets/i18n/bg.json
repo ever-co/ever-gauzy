@@ -722,6 +722,7 @@
 	"MENU": {
 		"PIPELINES": "Pipelines",
 		"DASHBOARD": "Табло",
+		"DASHBOARDS": "Dashboards",
 		"APPOINTMENTS": "Appointments",
 		"ACCOUNTING": "Accounting",
 		"INCOME": "Доход",
