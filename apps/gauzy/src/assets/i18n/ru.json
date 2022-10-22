@@ -722,6 +722,7 @@
 	"MENU": {
 		"PIPELINES": "Трубопроводы",
 		"DASHBOARD": "Приборная доска",
+		"DASHBOARDS": "Рабочие столы",
 		"APPOINTMENTS": "Назначения",
 		"ACCOUNTING": "Бухгалтер",
 		"INCOME": "Доход",

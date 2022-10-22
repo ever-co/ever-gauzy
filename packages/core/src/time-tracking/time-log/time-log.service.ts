@@ -84,6 +84,10 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				innerJoin: {
 					employee: 'time_log.employee',
 					time_slot: 'time_log.timeSlots'
+				},
+				leftJoin: {
+					team_employee: 'time_log.employee',
+					organization_teams: 'team_employee.teams'
 				}
 			},
 			relations: {
@@ -795,10 +799,9 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			const user = RequestContext.currentUser();
 			employeeIds = [user.employeeId];
 		}
-
 		if (isNotEmpty(request.timesheetId)) {
 			const { timesheetId } = request;
-			query.andWhere('"timesheetId" = :timesheetId', {
+			query.andWhere(`"${query.alias}"."timesheetId" = :timesheetId`, {
 				timesheetId
 			});
 		}
@@ -859,6 +862,15 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 					logType
 				});
 			}
+		}
+		if (isNotEmpty(request.teamId)) {
+			const { teamId } = request;
+			/**
+			 * If used organization team filter
+			 */
+			query.andWhere(`"organization_teams"."organizationTeamId" = :teamId`, {
+				teamId
+			});
 		}
 		query.andWhere(
 			new Brackets((qb: WhereExpressionBuilder) => {

@@ -22,4 +22,9 @@ export class TimeLogQueryDTO extends IntersectionType(
     @IsOptional()
     @IsString()
     readonly timesheetId: string;
+
+    @ApiPropertyOptional({ type: () => String, readOnly: true })
+    @IsOptional()
+    @IsString()
+    readonly teamId: string;
 }

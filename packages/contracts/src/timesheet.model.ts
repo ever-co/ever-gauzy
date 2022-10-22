@@ -374,6 +374,7 @@ export interface IManualTimeInput
 
 export interface IGetTimeLogInput extends ITimeLogFilters {
 	timesheetId?: string;
+	teamId?: string;
 }
 
 export interface IGetTimeLogReportInput extends IGetTimeLogInput {
