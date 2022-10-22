@@ -1,16 +1,9 @@
-@import 'var';
+@import 'gauzy/_gauzy-dialogs';
 
-@include nb-install-component() {
-	nb-card {
-		nb-card-header {
-			nb-icon.close {
-				cursor: pointer;
-			}
-		}
-		nb-card-footer {
-			button {
-				margin-left: 8px;
-			}
-		}
+nb-card {
+	width: 375px;
+	nb-card-footer{
+		display: flex;
+		gap: 1rem;
 	}
 }
