@@ -68,13 +68,13 @@ export class PagesComponent extends TranslationBaseComponent
 	getMenuItems(): GaMenuItem[] {
 		return [
 			{
-				title: 'Dashboard',
+				title: 'Dashboards',
 				icon: 'fas fa-th',
 				link: '/pages/dashboard',
 				pathMatch: 'prefix',
 				home: true,
 				data: {
-					translationKey: 'MENU.DASHBOARD',
+					translationKey: 'MENU.DASHBOARDS',
 					featureKey: FeatureEnum.FEATURE_DASHBOARD
 				}
 			},
