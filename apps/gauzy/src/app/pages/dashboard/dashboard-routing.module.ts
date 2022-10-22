@@ -17,7 +17,7 @@ const routes: Routes = [
 		children: [
 			{
 				path: '',
-				redirectTo: 'accounting',
+				redirectTo: 'time-tracking',
 				pathMatch: 'full'
 			},
 			{

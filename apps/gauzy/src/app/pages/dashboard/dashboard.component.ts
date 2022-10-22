@@ -1,117 +1,91 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ISelectedEmployee, PermissionsEnum } from '@gauzy/contracts';
-import { Store } from '../../@core/services/store.service';
+import { NbRouteTab } from '@nebular/theme';
+import { tap } from 'rxjs/operators';
+import { Store } from '../../@core/services';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
-import { NgxPermissionsService } from "ngx-permissions";
 
 @UntilDestroy({ checkProperties: true })
 @Component({
 	templateUrl: './dashboard.component.html',
 	styleUrls: ['./dashboard.component.scss']
 })
-export class DashboardComponent
-	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
-	tabs: {
-		title: string;
-		icon: string;
-		responsive: boolean;
-		route: string;
-	}[] = [];
+export class DashboardComponent extends TranslationBaseComponent
+	implements AfterViewInit, OnInit, OnDestroy {
 
-	loading = true;
-	selectedEmployee: ISelectedEmployee;
+	public tabs: NbRouteTab[] = [];
+	public loading: boolean = true;
+	public selectedEmployee: ISelectedEmployee;
 
 	constructor(
-		private store: Store,
-		readonly translateService: TranslateService,
-		private readonly _ngxPermissionsService: NgxPermissionsService,
+		private readonly store: Store,
+		public readonly translateService: TranslateService
 	) {
 		super(translateService);
 	}
 
 	ngOnInit(): void {
-		this._applyTranslation();
-		this.store.userRolePermissions$
-			.pipe(untilDestroyed(this))
-			.subscribe(() => {
-				this.store.selectedEmployee$
-					.pipe(untilDestroyed(this))
-					.subscribe((emp) => {
-						this.selectedEmployee = emp;
-						this.loadTabs(emp);
-					});
-			});
+		this.store.selectedEmployee$
+			.pipe(
+				tap((employee: ISelectedEmployee) => this.selectedEmployee = employee),
+				tap(() => this.loadTabs()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
+
+	ngAfterViewInit(): void {
+		this._applyTranslationOnTabs();
 	}
 
 	getRoute(name: string) {
 		return `/pages/dashboard/${name}`;
 	}
 
-	loadTabs(selectedEmployee: ISelectedEmployee) {
-		let conditionalTabs = [];
-
-		if (selectedEmployee && selectedEmployee.id) {
-			conditionalTabs = [
-				{
-					title: this.getTranslation(
-						'DASHBOARD_PAGE.HUMAN_RESOURCES'
-					),
-					icon: 'person-outline',
-					responsive: true,
-					route: this.getRoute('hr')
-				}
-			];
-		} else {
-			conditionalTabs = [
-				{
-					title: this.getTranslation('DASHBOARD_PAGE.ACCOUNTING'),
-					icon: 'credit-card-outline',
-					responsive: true,
-					route: this.getRoute('accounting')
-				}
-			];
-		}
-
+	loadTabs() {
 		this.tabs = [
-			...conditionalTabs,
+			...(this.store.hasPermission(PermissionsEnum.ALL_ORG_VIEW) ? [{
+				title: this.getTranslation('ORGANIZATIONS_PAGE.TEAMS'),
+				icon: 'people-outline',
+				responsive: true,
+				route: this.getRoute('teams')
+			}] : []),
+			{
+				title: this.getTranslation('DASHBOARD_PAGE.PROJECT_MANAGEMENT'),
+				icon: 'browser-outline',
+				responsive: true,
+				route: this.getRoute('project-management')
+			},
 			{
 				title: this.getTranslation('DASHBOARD_PAGE.TIME_TRACKING'),
 				icon: 'clock-outline',
 				responsive: true,
 				route: this.getRoute('time-tracking')
 			},
-			{
-				title: this.getTranslation('DASHBOARD_PAGE.PROJECT_MANAGEMENT'),
-				icon: 'browser-outline',
+			((this.selectedEmployee && this.selectedEmployee.id) ? {
+				title: this.getTranslation('DASHBOARD_PAGE.HUMAN_RESOURCES'),
+				icon: 'person-outline',
 				responsive: true,
-				route: this.getRoute('project-management')
-			}
+				route: this.getRoute('hr')
+			} : {
+				title: this.getTranslation('DASHBOARD_PAGE.ACCOUNTING'),
+				icon: 'credit-card-outline',
+				responsive: true,
+				route: this.getRoute('accounting')
+			}),
 		];
-		this._ngxPermissionsService
-			.hasPermission(PermissionsEnum.ALL_ORG_VIEW)
-			.then((hasPermission) => {
-				if (hasPermission) {
-					this.tabs.push({
-						title: this.getTranslation('ORGANIZATIONS_PAGE.TEAMS'),
-						icon: 'people-outline',
-						responsive: true,
-						route: this.getRoute('teams')
-					});
-				}
-			});
-
 		this.loading = false;
 	}
 
-	_applyTranslation() {
+	private _applyTranslationOnTabs() {
 		this.translateService.onLangChange
-			.pipe(untilDestroyed(this))
-			.subscribe(() => {
-				this.loadTabs(this.selectedEmployee);
-			});
+			.pipe(
+				tap(() => this.loadTabs()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	ngOnDestroy() {}
