@@ -58,6 +58,7 @@ import {
 	EmployeeWorkStatusComponent
 } from './table-components';
 import { ServerDataSource } from '../../@core/utils/smart-table';
+import {ToggleFilterComponent} from "../../@shared/table-filters";
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -527,7 +528,6 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 			this.setSmartTableSource();
 			const { activePage, itemsPerPage } = this.getPagination();
 			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
-
 			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
 				await this.smartTableSource.getElements();
 				this.employees.push(
@@ -644,7 +644,13 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 					type: 'custom',
 					class: 'text-center',
 					renderComponent: EmployeeTimeTrackingStatusComponent,
-					filter: false
+					filter: {
+						type: 'custom',
+						component: ToggleFilterComponent
+					},
+					filterFunction: (checked: boolean) => {
+						this.setFilter({ field: 'isTrackingEnabled', search: checked });
+					}
 				},
 				tags: {
 					title: this.getTranslation('SM_TABLE.TAGS'),
@@ -669,7 +675,13 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 					type: 'custom',
 					class: 'text-center',
 					renderComponent: EmployeeWorkStatusComponent,
-					filter: false
+					filter: {
+						type: 'custom',
+						component: ToggleFilterComponent
+					},
+					filterFunction: (isActive: boolean) => {
+						this.setFilter({ field: 'isActive', search: isActive });
+					}
 				}
 			}
 		};
