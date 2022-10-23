@@ -81,7 +81,7 @@ export class PaginationFilterBaseComponent extends TranslationBaseComponent
 
 	protected setFilter(filter: any, doEmit: boolean = true) {
 		const fields = filter.field.split('.');
-		if (isNotEmpty(filter.search)) {
+		if (isNotEmpty(filter.search) || 'boolean' === typeof (filter.search)) {
 			const search = filter.search;
 			const keys = fields.reduceRight(
 				(value: string, key: string) => ({[key]: value}),
