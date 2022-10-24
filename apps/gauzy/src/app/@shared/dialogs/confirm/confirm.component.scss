@@ -1,1 +1,16 @@
-//@import 'dialog.scss';
+@import 'gauzy/_gauzy-dialogs';
+
+nb-card {
+	min-width: 375px;
+}
+
+nb-card-header,
+nb-card-footer,
+nb-card-body {
+	padding: 1rem;
+}
+
+nb-card-footer {
+	display: flex;
+	gap: 1rem;
+}
