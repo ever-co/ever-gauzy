@@ -124,11 +124,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	isTrackingEnabled = true;
 	isAddTask = false;
 	sound: any = null;
-	private _lastTotalWorkedTime = {
-		second: 0,
-		minute: 0,
-		hours: 0
-	}
+	private _lastTotalWorkedTime = 0;
 
 	constructor(
 		private electronService: ElectronService,
@@ -490,9 +486,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 	setTime(value) {
 		const time = this.timeRun.getValue();
-		value.second = (value.second + this._lastTotalWorkedTime.second) % 60;
-		value.minute = (value.minute + this._lastTotalWorkedTime.minute) % 60;
-		value.hours = value.hours + this._lastTotalWorkedTime.hours;
+		value.second = moment.duration(this._lastTotalWorkedTime + value.second, 'seconds').seconds()
+		value.minute = moment.duration(this._lastTotalWorkedTime + value.minute * 60, "seconds").minutes();
+		value.hours = moment.duration(this._lastTotalWorkedTime + value.hours * 3600, "seconds").hours();
 		this.timeRun.next({
 			second:
 				value.second.toString().length > 1
@@ -756,19 +752,15 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 	countDurationToday(countTodayTime) {
 		if (countTodayTime) {
-			const seconds = Math.round(countTodayTime.todayDuration) % 60;
-			const minutes = Math.round(countTodayTime.todayDuration / 60) % 60;
-			const hours = Math.floor(countTodayTime.todayDuration / 3600);
+			const seconds = moment.duration(countTodayTime.todayDuration, 'seconds').seconds();
+			const minutes = moment.duration(countTodayTime.todayDuration, 'seconds').minutes();
+			const hours = moment.duration(countTodayTime.todayDuration, 'seconds').hours();
 			this.todayDuration$.next({
 				hours: this.formatingDuration('hours', hours),
 				minutes: this.formatingDuration('minutes', minutes)
 			});
 			if (!this.start) {
-				this._lastTotalWorkedTime = {
-					second: seconds,
-					minute: minutes,
-					hours: hours
-				}
+				this._lastTotalWorkedTime = countTodayTime.todayDuration;
 				this.timeRun.next({
 					second: seconds.toString().length > 1 ? `${seconds}` : `0${seconds}`,
 					minute: minutes.toString().length > 1 ? `${minutes}` : `0${minutes}`,
