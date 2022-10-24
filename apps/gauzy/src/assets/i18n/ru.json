@@ -127,7 +127,8 @@
 		"MOVE": "Переместить",
 		"COLLAPSE": "Свернуть",
 		"EXPAND": "Развернуть",
-		"SHOW_MORE": "Показать больше"
+		"SHOW_MORE": "Показать больше",
+		"START_WORK": "Начать работу"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -667,6 +668,7 @@
 		"PURPOSE": "Цель",
 		"BACK_TO_WORK": "вернуться к работе",
 		"END_WORK": "Конец Работы для",
+		"START_WORK_FOR": "Начать работу для",
 		"AMOUNT": "Количество",
 		"NOTES": "Заметки",
 		"EDIT": "Редактировать",
@@ -3321,7 +3323,8 @@
 			"SCREENSHOT_DELETED": "Скриншот для '{{ name }}' ' удален из '{{ organization }}'",
 			"TIME_LOG_DELETED": "Журнал времени для '{{ name }}' ' удален из '{{ organization }}'",
 			"TIME_LOGS_DELETED": "Журналы времени удалены из '{{ organization }}'",
-			"BUCKET_CREATED": "'{{ bucket }}' для '{{ region }}' был успешно создан"
+			"BUCKET_CREATED": "'{{ bucket }}' для '{{ region }}' был успешно создан",
+			"AUTHORIZED_TO_WORK": "{{ name }} авторизован для работы"
 		}
 	},
 	"ACCEPT_INVITE": {
