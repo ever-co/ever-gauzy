@@ -127,7 +127,8 @@
 		"MOVE": "Move",
 		"COLLAPSE": "Collapse",
 		"EXPAND": "Expand",
-		"SHOW_MORE": "Show More"
+		"SHOW_MORE": "Show More",
+		"START_WORK": "Start Work"
 	},
 	"SM_TABLE": {
 		"NO_DATA" : {
@@ -667,6 +668,7 @@
 		"PURPOSE": "Purpose",
 		"BACK_TO_WORK": "back to work",
 		"END_WORK": "End Work for",
+		"START_WORK_FOR": "Start work for",
 		"AMOUNT": "Amount",
 		"NOTES": "Notes",
 		"EDIT": "Edit",
