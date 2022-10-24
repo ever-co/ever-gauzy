@@ -114,7 +114,7 @@ export class EmployeeController extends CrudController<Employee> {
 	): Promise<{ total: number }> {
 		const { findInput } = data;
 		const { organizationId, forRange, withUser } = findInput;
-		return this.employeeService.findWorkingEmployeesCount(
+		return await this.employeeService.findWorkingEmployeesCount(
 			organizationId,
 			forRange,
 			withUser
@@ -190,11 +190,10 @@ export class EmployeeController extends CrudController<Employee> {
 	 */
 	@Permissions(PermissionsEnum.ORG_EMPLOYEES_VIEW)
 	@Get('count')
-	@UsePipes(new ValidationPipe())
 	async getCount(
 		@Query() options: FindOptionsWhere<Employee>
 	): Promise<number> {
-		return this.employeeService.countBy(options);
+		return await this.employeeService.countBy(options);
 	}
 
 	/**
@@ -209,7 +208,7 @@ export class EmployeeController extends CrudController<Employee> {
 	async pagination(
 		@Query() options: PaginationParams<Employee>
 	): Promise<IPagination<IEmployee>> {
-		return this.employeeService.pagination(options);
+		return await this.employeeService.pagination(options);
 	}
 
 	/**
@@ -230,7 +229,7 @@ export class EmployeeController extends CrudController<Employee> {
 	})
 	@Permissions(PermissionsEnum.ORG_EMPLOYEES_VIEW)
 	@Get()
-	@UsePipes(new ValidationPipe({ transform: true }))
+	@UsePipes(new ValidationPipe())
 	async findAll(
 		@Query() options: PaginationParams<Employee>
 	): Promise<IPagination<IEmployee>> {
@@ -290,7 +289,7 @@ export class EmployeeController extends CrudController<Employee> {
 	 * CREATE employee in the same tenant
 	 *
 	 * @param entity
-	 * @param request
+	 * @param originUrl
 	 * @param languageCode
 	 * @returns
 	 */
@@ -424,6 +423,12 @@ export class EmployeeController extends CrudController<Employee> {
 		);
 	}
 
+	/**
+	 * Removed employee from organization
+	 *
+	 * @param employeeId
+	 * @returns
+	 */
 	@ApiOperation({ summary: 'Delete record' })
 	@ApiResponse({
 		status: HttpStatus.NO_CONTENT,

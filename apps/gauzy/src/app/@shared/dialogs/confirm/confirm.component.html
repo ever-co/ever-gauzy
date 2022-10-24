@@ -1,29 +1,19 @@
 <nb-card class="confirm-dialog">
-	<nb-card-header>
-		<div class="row">
-			<div class="col">
-				{{ data?.title ? data?.title : ('DIALOG.CONFIRM' | translate) }}
-			</div>
-			<button
-				class="col-auto"
-				nbButton
-				ghost
-				(click)="close(false)"
-				type="button"
-			>
-				<nb-icon icon="close-outline"></nb-icon>
-			</button>
+	<nb-card-header class="d-flex flex-column">
+		<span class="cancel"><i (click)="close(false)" class="fas fa-times"></i></span>
+		<div class="title">
+			{{ data?.title ? data?.title : ('DIALOG.CONFIRM' | translate) }}
 		</div>
 	</nb-card-header>
 	<nb-card-body class="custom-scroll">
 		{{ data?.message }}
 	</nb-card-body>
 	<nb-card-footer>
+		<button (click)="close(false)" class="mr-2" nbButton outline status="basic">
+			{{ data?.noText || ('BUTTONS.NO' | translate) }}
+		</button>
 		<button class="mr-2" nbButton status="primary" (click)="close(true)">
 			{{ data?.yesText || ('BUTTONS.YES' | translate) }}
-		</button>
-		<button class="mr-2" nbButton status="warn" (click)="close(false)">
-			{{ data?.noText || ('BUTTONS.NO' | translate) }}
 		</button>
 	</nb-card-footer>
 </nb-card>

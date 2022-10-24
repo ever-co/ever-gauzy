@@ -26,7 +26,7 @@ import { distinctUntilChange } from '@gauzy/common-angular';
 import { monthNames } from '../../@core/utils/date';
 import {
 	EmployeeEndWorkComponent,
-	EmployeeMutationComponent
+	EmployeeMutationComponent, EmployeeStartWorkComponent
 } from '../../@shared/employee';
 import { InviteMutationComponent } from '../../@shared/invite/invite-mutation/invite-mutation.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
@@ -58,6 +58,7 @@ import {
 	EmployeeWorkStatusComponent
 } from './table-components';
 import { ServerDataSource } from '../../@core/utils/smart-table';
+import {ToggleFilterComponent} from "../../@shared/table-filters";
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -527,7 +528,6 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 			this.setSmartTableSource();
 			const { activePage, itemsPerPage } = this.getPagination();
 			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
-
 			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
 				await this.smartTableSource.getElements();
 				this.employees.push(
@@ -644,7 +644,13 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 					type: 'custom',
 					class: 'text-center',
 					renderComponent: EmployeeTimeTrackingStatusComponent,
-					filter: false
+					filter: {
+						type: 'custom',
+						component: ToggleFilterComponent
+					},
+					filterFunction: (checked: boolean) => {
+						this.setFilter({ field: 'isTrackingEnabled', search: checked });
+					}
 				},
 				tags: {
 					title: this.getTranslation('SM_TABLE.TAGS'),
@@ -669,7 +675,13 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 					type: 'custom',
 					class: 'text-center',
 					renderComponent: EmployeeWorkStatusComponent,
-					filter: false
+					filter: {
+						type: 'custom',
+						component: ToggleFilterComponent
+					},
+					filterFunction: (isActive: boolean) => {
+						this.setFilter({ field: 'isActive', search: isActive });
+					}
 				}
 			}
 		};
@@ -711,5 +723,41 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 		}
 	}
 
-	ngOnDestroy() {}
+	async startEmployeeWork() {
+		try {
+			const {id: organizationId} = this.organization;
+			const {tenantId} = this.store.user;
+
+			const dialog = this.dialogService.open(EmployeeStartWorkComponent, {
+				context: {
+					employeeFullName: this.selectedEmployee.fullName
+				}
+			});
+			const data = await firstValueFrom(dialog.onClose);
+			if (data) {
+				await this.employeesService.setEmployeeStartWork(
+					this.selectedEmployee.id,
+					data,
+					{
+						organizationId,
+						tenantId
+					}
+				);
+				this.toastrService.success(this.getTranslation('TOASTR.MESSAGE.AUTHORIZED_TO_WORK', {
+						name: this.selectedEmployee.fullName.trim()
+					}
+				), {
+					name: this.selectedEmployee.fullName.trim()
+				});
+			}
+		} catch (error) {
+			this.errorHandler.handleError(error);
+		} finally {
+			this._refresh$.next(true);
+			this.employees$.next(true);
+		}
+	}
+
+	ngOnDestroy() {
+	}
 }
