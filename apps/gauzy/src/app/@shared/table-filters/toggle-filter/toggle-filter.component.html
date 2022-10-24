@@ -1,0 +1,33 @@
+<div class="container">
+	<div class="btn-grp">
+		<button
+			nbButton
+			class="check"
+			[ngClass]="choice === 'accept' ? ['on'] : ['off']"
+			type="button"
+			(click)="choice = 'accept'; onChange()"
+		>
+			<fa-icon [icon]="faCheck"></fa-icon>
+		</button>
+		<button
+			nbButton
+			class="na"
+			[ngClass]="choice?.length > 0 ? ['off'] : ['on']"
+			(click)="choice = '';onChange()"
+		>
+			<fa-icon [icon]="faBan" *ngIf="choice?.length > 0; else blank"></fa-icon>
+
+			<ng-template #blank>
+				<fa-icon [icon]=""></fa-icon>
+			</ng-template>
+		</button>
+		<button
+			nbButton
+			class="deny"
+			[ngClass]="choice === 'deny' ? ['on'] : ['off']"
+			(click)="choice = 'deny';onChange()"
+		>
+			<fa-icon [icon]="faTimes"></fa-icon>
+		</button>
+	</div>
+</div>

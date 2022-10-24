@@ -16,6 +16,9 @@ import { OrganizationTeamFilterComponent } from './organization-team-filter.comp
 import { VendorFilterComponent } from './vendor-filter.component';
 import { TaskStatusFilterComponent } from './task-status-filter.component';
 import { TaskStatusSelectModule } from '../tasks/task-status-select/task-status-select.module';
+import { ToggleFilterComponent } from './toggle-filter/toggle-filter.component';
+import {NbToggleModule} from "@nebular/theme";
+import {FontAwesomeModule} from "@fortawesome/angular-fontawesome";
 
 @NgModule({
 	imports: [
@@ -28,7 +31,9 @@ import { TaskStatusSelectModule } from '../tasks/task-status-select/task-status-
 		VendorSelectModule,
 		ExpenseCategorySelectModule,
 		ContactSelectModule,
-		TaskStatusSelectModule
+		TaskStatusSelectModule,
+		NbToggleModule,
+		FontAwesomeModule
 	],
 	declarations: [
 		OrganizationContactFilterComponent,
@@ -38,7 +43,8 @@ import { TaskStatusSelectModule } from '../tasks/task-status-select/task-status-
 		ExpenseCategoryFilterComponent,
 		InputFilterComponent,
 		OrganizationTeamFilterComponent,
-		TaskStatusFilterComponent
+		TaskStatusFilterComponent,
+  		ToggleFilterComponent
 	],
 	exports: [],
 	providers: []

@@ -31,7 +31,7 @@
 			</div>
 		</div>
 		<div class="gauzy-button-container">
-			<ngx-gauzy-button-action									
+			<ngx-gauzy-button-action
 				[hasLayoutSelector]="false"
 				[isDisable]="disableButton"
 			>
@@ -68,7 +68,7 @@
 		></ng-template>
 	</nb-card-body>
 </nb-card>
-<ng-template 
+<ng-template
 	#actionButtons
 	let-selectedItem
 >
@@ -96,44 +96,49 @@
 					{{ 'BUTTONS.RESTORE' | translate }}
 				</button>
 			</ng-container>
-			<ng-container *ngIf="selectedItem">
-				<button
-					nbButton
-					size="small"
-					class="action warning"
-					debounceClick
-					(throttledClick)="timeTrackingAction(selectedItem)"
-					status="basic"
-				>
-					<nb-icon icon="edit-outline"></nb-icon>
-					{{
+			<ng-container *ngIf="selectedEmployee?.startedWorkOn
+						&& selectedEmployee?.isActive
+						&& !selectedEmployee?.workStatus; else startWork">
+				<ng-container *ngIf="selectedItem">
+					<button
+						(throttledClick)="timeTrackingAction(selectedItem)"
+						class="action warning"
+						debounceClick
+						nbButton
+						size="small"
+						status="basic"
+					>
+						<nb-icon icon="edit-outline"></nb-icon>
+						{{
 						(selectedItem?.isTrackingEnabled
-							? 'BUTTONS.TIME_TRACKING_DISABLE'
-							: 'BUTTONS.TIME_TRACKING_ENABLE'
+								? 'BUTTONS.TIME_TRACKING_DISABLE'
+								: 'BUTTONS.TIME_TRACKING_ENABLE'
 						) | translate
-					}}
-				</button>
-			</ng-container>
-			<button
-				nbButton
-				[disabled]="disableButton || !selectedItem?.isActive"
-				size="small"
-				(click)="
+						}}
+					</button>
+				</ng-container>
+				<button
+					(click)="
 					selectedItem?.endWork
 						? backToWork(selectedItem)
 						: endWork(selectedItem)
 				"
-				status="basic"
-				class="action orange"
-			>
-				<nb-icon icon="person-delete-outline"></nb-icon>
-				{{
+					[disabled]="disableButton || !selectedItem?.isActive"
+					class="action orange"
+					nbButton
+					size="small"
+					status="basic"
+				>
+					<nb-icon icon="person-delete-outline"></nb-icon>
+					{{
 					(selectedItem && selectedItem?.endWork
-						? 'EMPLOYEES_PAGE.BACK_TO_WORK'
-						: 'EMPLOYEES_PAGE.END_WORK'
+							? 'EMPLOYEES_PAGE.BACK_TO_WORK'
+							: 'EMPLOYEES_PAGE.END_WORK'
 					) | translate
-				}}
-			</button>
+					}}
+				</button>
+			</ng-container>
+
 			<button
 				nbButton
 				[disabled]="disableButton"
@@ -164,7 +169,7 @@
 		<ng-template ngxPermissionsOnly="ORG_INVITE_EDIT">
 			<ng-template [ngIf]="organizationInvitesAllowed">
 				<button
-					nbButton	
+					nbButton
 					status="info"
 					class="action"
 					(click)="invite()"
@@ -175,7 +180,7 @@
 				</button>
 			</ng-template>
 		</ng-template>
-		<button 
+		<button
 			nbButton
 			size="small"
 			status="success"
@@ -220,4 +225,14 @@
 			(scroll)="onScroll()"
 		></ga-card-grid>
 	</div>
+</ng-template>
+<ng-template #startWork>
+	<button
+		(click)="startEmployeeWork()"
+		class="action text-info"
+		nbButton size="small"
+		status="basic">
+		<nb-icon icon="person-done-outline"></nb-icon>
+		{{ 'BUTTONS.START_WORK' | translate }}
+	</button>
 </ng-template>
