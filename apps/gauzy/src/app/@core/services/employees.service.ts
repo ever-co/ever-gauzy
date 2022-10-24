@@ -175,4 +175,13 @@ export class EmployeesService {
 			createInput
 		);
 	}
+
+	setEmployeeStartWork(id: string, date: Date, request: IBasePerTenantAndOrganizationEntityModel): Promise<IEmployee> {
+		return firstValueFrom(
+			this.http.put<IEmployee>(`${API_PREFIX}/employee/${id}`, {
+				startedWorkOn: date,
+				...request
+			})
+		);
+	}
 }
