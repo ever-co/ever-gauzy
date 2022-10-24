@@ -223,6 +223,16 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 							}
 						})
 					);
+					if ('isTrackingEnabled' in where)  {
+						qb.andWhere(
+							new Brackets((web: WhereExpressionBuilder) => {
+								const { isTrackingEnabled } = where;
+								web.andWhere(`"${qb.alias}"."isTrackingEnabled" = :isTrackingEnabled`, {
+									isTrackingEnabled: Boolean(JSON.parse(isTrackingEnabled))
+								});
+							})
+						);
+					}
 					qb.andWhere(
 						new Brackets((web: WhereExpressionBuilder) => {
 							if (isNotEmpty(where.tags)) {
