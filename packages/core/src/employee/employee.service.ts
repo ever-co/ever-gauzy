@@ -211,18 +211,16 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 				);
 				if (isNotEmpty(options.where)) {
 					const { where } = options;
-					qb.andWhere(
-						new Brackets((web: WhereExpressionBuilder) => {
-							if (
-								isNotEmpty(where.isActive) &&
-								isNotEmpty(Boolean(JSON.parse(where.isActive)))
-							) {
-								web.andWhere(`"${qb.alias}"."isActive" = :isActive`, {
-									isActive: true
-								});
-							}
-						})
-					);
+					if ('isActive' in where) {
+						qb.andWhere(
+							new Brackets((web: WhereExpressionBuilder) => {
+									web.andWhere(`"${qb.alias}"."isActive" = :isActive`, {
+										isActive: Boolean(JSON.parse(where.isActive))
+									});
+								}
+							)
+						);
+					}
 					if ('isTrackingEnabled' in where)  {
 						qb.andWhere(
 							new Brackets((web: WhereExpressionBuilder) => {
