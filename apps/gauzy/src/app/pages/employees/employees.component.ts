@@ -26,7 +26,7 @@ import { distinctUntilChange } from '@gauzy/common-angular';
 import { monthNames } from '../../@core/utils/date';
 import {
 	EmployeeEndWorkComponent,
-	EmployeeMutationComponent
+	EmployeeMutationComponent, EmployeeStartWorkComponent
 } from '../../@shared/employee';
 import { InviteMutationComponent } from '../../@shared/invite/invite-mutation/invite-mutation.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
@@ -723,5 +723,41 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 		}
 	}
 
-	ngOnDestroy() {}
+	async startEmployeeWork() {
+		try {
+			const {id: organizationId} = this.organization;
+			const {tenantId} = this.store.user;
+
+			const dialog = this.dialogService.open(EmployeeStartWorkComponent, {
+				context: {
+					employeeFullName: this.selectedEmployee.fullName
+				}
+			});
+			const data = await firstValueFrom(dialog.onClose);
+			if (data) {
+				await this.employeesService.setEmployeeStartWork(
+					this.selectedEmployee.id,
+					data,
+					{
+						organizationId,
+						tenantId
+					}
+				);
+				this.toastrService.success(this.getTranslation('TOASTR.MESSAGE.AUTHORIZED_TO_WORK', {
+						name: this.selectedEmployee.fullName.trim()
+					}
+				), {
+					name: this.selectedEmployee.fullName.trim()
+				});
+			}
+		} catch (error) {
+			this.errorHandler.handleError(error);
+		} finally {
+			this._refresh$.next(true);
+			this.employees$.next(true);
+		}
+	}
+
+	ngOnDestroy() {
+	}
 }

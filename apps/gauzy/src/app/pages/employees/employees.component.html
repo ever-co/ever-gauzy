@@ -98,7 +98,7 @@
 			</ng-container>
 			<ng-container *ngIf="selectedEmployee?.startedWorkOn
 						&& selectedEmployee?.isActive
-						&& !selectedEmployee?.workStatus">
+						&& !selectedEmployee?.workStatus; else startWork">
 				<ng-container *ngIf="selectedItem">
 					<button
 						(throttledClick)="timeTrackingAction(selectedItem)"
@@ -225,4 +225,14 @@
 			(scroll)="onScroll()"
 		></ga-card-grid>
 	</div>
+</ng-template>
+<ng-template #startWork>
+	<button
+		(click)="startEmployeeWork()"
+		class="action text-info"
+		nbButton size="small"
+		status="basic">
+		<nb-icon icon="person-done-outline"></nb-icon>
+		{{ 'BUTTONS.START_WORK' | translate }}
+	</button>
 </ng-template>
