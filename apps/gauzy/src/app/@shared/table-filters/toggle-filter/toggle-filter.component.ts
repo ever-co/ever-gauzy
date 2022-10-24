@@ -1,22 +1,22 @@
 import {Component, OnChanges, SimpleChanges} from '@angular/core';
 import {DefaultFilter} from "ng2-smart-table";
+import {
+	faCheck,
+	faBan,
+	faTimes
+} from "@fortawesome/free-solid-svg-icons";
 
 @Component({
 	selector: 'ga-toggle-filter',
-	template: `
-		<div class="toggle">
-			<nb-toggle [checked]="isChecked" (checkedChange)="onChange($event)"></nb-toggle>
-		</div>`,
-	styles: [
-		`div.toggle {
-			display: flex;
-			align-items: center;
-			justify-content: center;
-			width: 100%;
-		}`
-	]
+	templateUrl: './toggle-filter.component.html',
+	styleUrls: ['./toggle-filter.component.scss']
 })
 export class ToggleFilterComponent extends DefaultFilter implements OnChanges {
+	faCheck = faCheck;
+	faBan = faBan;
+	faTimes = faTimes;
+	choice;
+
 	constructor() {
 		super();
 		this._isChecked = false;
@@ -32,8 +32,17 @@ export class ToggleFilterComponent extends DefaultFilter implements OnChanges {
 		this._isChecked = value;
 	}
 
-	public onChange(isChecked: boolean) {
-		this.isChecked = isChecked;
+	public onChange() {
+		switch (this.choice) {
+			case 'accept':
+				this.isChecked = true;
+				break;
+			case 'deny':
+				this.isChecked = false;
+				break;
+			default:
+				this.isChecked = null;
+		}
 		this.column.filterFunction(this.isChecked);
 	}
 
