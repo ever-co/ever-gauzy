@@ -26,7 +26,7 @@ import {
 	ToastrService
 } from '../../@core/services';
 import { ServerDataSource } from '../../@core/utils/smart-table';
-import {InputFilterComponent, ToggleFilterComponent} from '../../@shared/table-filters';
+import {InputFilterComponent} from '../../@shared/table-filters';
 import {
 	IPaginationBase,
 	PaginationFilterBaseComponent
