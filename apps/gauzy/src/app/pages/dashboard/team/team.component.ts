@@ -290,4 +290,8 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 		);
 	}
 
+	public reset() {
+		this._clearItem();
+	}
+
 }
