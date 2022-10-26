@@ -26,7 +26,7 @@ import {
 	ToastrService
 } from '../../@core/services';
 import { ServerDataSource } from '../../@core/utils/smart-table';
-import { InputFilterComponent } from '../../@shared/table-filters';
+import {InputFilterComponent} from '../../@shared/table-filters';
 import {
 	IPaginationBase,
 	PaginationFilterBaseComponent
@@ -168,6 +168,7 @@ export class PipelinesComponent
 		this.store
 			.componentLayout$(this.viewComponentName)
 			.pipe(
+				debounceTime(300),
 				distinctUntilChange(),
 				tap(
 					(componentLayout) =>
@@ -213,7 +214,7 @@ export class PipelinesComponent
 		this.smartTableSettings = {
 			pager: {
 				display: false,
-				perPage: pagination ? pagination.itemsPerPage : 10
+				perPage: pagination ? pagination.itemsPerPage : this.minItemPerPage
 			},
 			actions: false,
 			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.PIPELINE'),
@@ -251,7 +252,7 @@ export class PipelinesComponent
 					editor: false,
 					title: this.getTranslation('SM_TABLE.STATUS'),
 					type: 'custom',
-					width: '10%',
+					width: '5%',
 					renderComponent: StatusBadgeComponent
 				}
 			}
@@ -301,6 +302,9 @@ export class PipelinesComponent
 				});
 			},
 			finalize: () => {
+				if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
+					this.pipelines.push(...this.smartTableSource.getData());
+				}
 				this.setPagination({
 					...this.getPagination(),
 					totalItems: this.smartTableSource.count()
@@ -334,12 +338,6 @@ export class PipelinesComponent
 			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
 				// Initiate GRID view pagination
 				await this.smartTableSource.getElements();
-				this.pipelines.push(...this.smartTableSource.getData());
-
-				this.setPagination({
-					...this.getPagination(),
-					totalItems: this.smartTableSource.count()
-				});
 			}
 		} catch (error) {
 			this.errorHandlingService.handleError(error);
