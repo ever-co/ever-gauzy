@@ -1,31 +1,128 @@
 <div class="main-card-container">
-    <nb-card class="main-card">
-        <nb-card-header class="pb-0">
-            <div>
-                <div class="h1">{{organization?.statistics?.countTeams || 0}}</div>
-                <span>{{'ORGANIZATIONS_PAGE.TEAMS' | translate}}</span>
-            </div>
-        </nb-card-header>
-        <nb-card-body>
-            <gauzy-chart [statistics]="organization?.statistics" type="polarArea"></gauzy-chart>
-        </nb-card-body>
-    </nb-card>
-    <div class="grid-container">
-        <nb-card *ngFor="let team of teams">
-            <nb-card-header class="pb-0 d-flex justify-content-between">
-                <div>
-                    <div class="h1">{{team?.statistics?.countWorking + team?.statistics.countNotWorking}}</div>
-                    <span>{{team?.name}}</span>
-                </div>
-                <div>
-                    <button (click)="onSelectTeam(team)" size="small" nbButton outline status="primary">
-                        <nb-icon icon="arrow-forward-outline"></nb-icon>
-                    </button>
-                </div>
-            </nb-card-header>
-            <nb-card-body>
-                <gauzy-chart [hideLegend]="true" [statistics]="team?.statistics" type="bar"></gauzy-chart>
-            </nb-card-body>
-        </nb-card>
-    </div>
+	<div class="widgets-container">
+		<nb-card>
+			<nb-card-header class="team-header">
+				<h6 class="title">{{'ORGANIZATIONS_PAGE.TEAMS' | translate}}</h6>
+			</nb-card-header>
+			<nb-card-body class="team-container">
+				<div class="d-flex align-items-center">
+					<div class="h1">
+						{{organization?.statistics?.countWorking}}
+					</div>
+					<div>/{{organization?.statistics?.countTeams}}</div>
+				</div>
+
+				<div class="counter-container">
+					<gauzy-counter-point
+						[total]="organization?.statistics?.countTeams"
+						[value]="organization?.statistics?.countWorking"
+					></gauzy-counter-point>
+				</div>
+			</nb-card-body>
+		</nb-card>
+		<nb-card>
+			<nb-card-header class="team-header">
+				<h6 class="title">{{ 'TIMESHEET.MEMBERS_WORKED' | translate }}</h6>
+			</nb-card-header>
+			<nb-card-body class="team-container">
+				<div class="d-flex align-items-center">
+					<div class="h1">
+						{{organization?.statistics?.counts?.employeesCount || 0}}
+					</div>
+					<div>/{{organization?.statistics?.counts?.employeesCountTotal || 0}}</div>
+				</div>
+				<div class="counter-container">
+					<gauzy-counter-point
+						[total]="organization?.statistics?.counts?.employeesCountTotal"
+						[value]="organization?.statistics?.counts?.employeesCount"
+					></gauzy-counter-point>
+				</div>
+			</nb-card-body>
+		</nb-card>
+		<nb-card>
+			<nb-card-header class="team-header">
+				<h6 class="title">{{ 'TIMESHEET.PROJECTS_WORKED' | translate }}</h6>
+			</nb-card-header>
+			<nb-card-body class="team-container">
+				<div class="d-flex align-items-center">
+					<div class="h1">
+						{{organization?.statistics?.counts?.projectsCount || 0}}
+					</div>
+					<div>/{{projectCount}}</div>
+				</div>
+				<div class="counter-container">
+					<gauzy-counter-point
+						[total]="projectCount"
+						[value]="organization?.statistics?.counts?.projectsCount"
+					></gauzy-counter-point>
+				</div>
+
+			</nb-card-body>
+		</nb-card>
+		<nb-card>
+			<nb-card-header>
+				<h6 class="title">{{ 'TIMESHEET.WORKED_FOR_DAY' | translate }}</h6>
+			</nb-card-header>
+			<nb-card-body class="team-container">
+				<div class="d-flex align-items-center">
+					<div class="h1">
+						{{organization?.statistics?.counts?.weekActivities || 0}}
+					</div>
+					<div>%</div>
+				</div>
+				<div class="counter-container">
+					<gauzy-counter-point
+						[progress]="true"
+						[total]="100"
+						[value]="organization?.statistics?.counts?.weekActivities  || 0"
+					></gauzy-counter-point>
+				</div>
+			</nb-card-body>
+		</nb-card>
+	</div>
+	<div class="grid-container">
+		<nb-card *ngFor="let team of teams">
+			<nb-card-header class="pb-0 d-flex justify-content-between">
+				<div>
+					<div class="h1">{{team?.statistics?.countWorking + team?.statistics.countNotWorking}}</div>
+					<span>{{team?.name}}</span>
+				</div>
+				<div>
+					<button (click)="onSelectTeam(team)" nbButton outline size="small" status="primary">
+						<nb-icon icon="arrow-forward-outline"></nb-icon>
+					</button>
+				</div>
+			</nb-card-header>
+			<nb-card-body>
+				<div class="d-flex flex-column">
+					<ng-container
+						*ngFor="let member of team?.membersWorkingToday.concat(team?.membersNotWorkingToday)">
+						<gauzy-team-member [member]="member" class="mt-2" isClassic=true></gauzy-team-member>
+					</ng-container>
+					<div class="legend-container">
+						<div class="legend">
+							<button nbButton outline
+									status="success">{{'DASHBOARD_PAGE.CHARTS.WORKING_NOW'|translate}}</button>
+							<nb-badge [text]="team?.statistics?.countOnline" position="top right"
+									  status="success"></nb-badge>
+						</div>
+						<div class="legend">
+							<button nbButton outline
+									status="warning">{{'DASHBOARD_PAGE.CHARTS.WORKING'|translate}}</button>
+							<nb-badge
+								[text]="(team?.statistics?.countWorking - team?.statistics?.countOnline).toString()"
+								position="top right"
+								status="warning"></nb-badge>
+						</div>
+						<div class="legend">
+							<button nbButton outline
+									status="danger">{{'DASHBOARD_PAGE.CHARTS.NOT_WORKING'|translate}}</button>
+							<nb-badge [text]="team?.statistics?.countNotWorking" position="top right"
+									  status="danger"></nb-badge>
+						</div>
+					</div>
+				</div>
+			</nb-card-body>
+		</nb-card>
+	</div>
 </div>
