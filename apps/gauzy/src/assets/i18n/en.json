@@ -1718,6 +1718,7 @@
 		"SETTINGS": "Settings",
 		"REGISTER_AS_EMPLOYEE": "Register as Employee",
 		"TEAMS": "Teams",
+		"TEAM_NAME": "{{ name }} Team",
 		"ROLES": "Roles",
 		"HELP_CENTER": "Help Center",
 		"DOCUMENTS": "Documents",

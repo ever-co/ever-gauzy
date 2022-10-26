@@ -1,6 +1,6 @@
 <nb-card>
 	<nb-card-header class="team-header">
-		<h6 class="team-name">{{team?.name}} {{'ORGANIZATIONS_PAGE.TEAMS' | translate }}</h6>
+		<h6 class="team-name">{{'ORGANIZATIONS_PAGE.TEAM_NAME' | translate : {name: team?.name} }}</h6>
 	</nb-card-header>
 	<nb-card-body class="team-container">
 		<div class="d-flex align-items-center">
