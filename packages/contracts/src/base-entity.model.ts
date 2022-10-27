@@ -1,7 +1,11 @@
 import { ITenant } from './tenant.model';
 import { IOrganization } from './organization.model';
 
-export interface IBaseEntityModel {
+export interface IBaseSoftDeleteEntityModel {
+	deletedAt?: Date;
+}
+
+export interface IBaseEntityModel extends IBaseSoftDeleteEntityModel  {
 	id?: string;
 
 	readonly createdAt?: Date;
