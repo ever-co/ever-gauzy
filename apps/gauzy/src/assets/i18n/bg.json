@@ -1718,6 +1718,8 @@
 		"SETTINGS": "Настройки",
 		"REGISTER_AS_EMPLOYEE": "Register as Employee",
 		"TEAMS": "Отбори",
+		"TEAM_NAME": "{{ name }} Team",
+		"NOT_WORKED": "Not Worked",
 		"ROLES": "Роли",
 		"HELP_CENTER": "Help Center",
 		"DOCUMENTS": "Documents",

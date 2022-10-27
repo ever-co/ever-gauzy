@@ -1718,6 +1718,8 @@
 		"SETTINGS": "Настройки",
 		"REGISTER_AS_EMPLOYEE": "Зарегистрироваться как Сотрудник",
 		"TEAMS": "Команды",
+		"TEAM_NAME": "Команда {{ name }}",
+		"NOT_WORKED": "Не работает",
 		"ROLES": "Роли",
 		"HELP_CENTER": "Центр поддержки",
 		"DOCUMENTS": "Документы",

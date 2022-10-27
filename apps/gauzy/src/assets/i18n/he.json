@@ -1718,6 +1718,8 @@
 		"SETTINGS": "הגדרות",
 		"REGISTER_AS_EMPLOYEE": "Register as Employee",
 		"TEAMS": "Teams",
+		"TEAM_NAME": "{{ name }} Team",
+		"NOT_WORKED": "Not Worked",
 		"ROLES": "Roles",
 		"HELP_CENTER": "Help Center",
 		"DOCUMENTS": "Documents",
