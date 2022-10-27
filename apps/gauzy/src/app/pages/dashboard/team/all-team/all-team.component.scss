@@ -1,16 +1,37 @@
-.grid-container {
-	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(32rem, 1fr));
-	-webkit-box-align: start;
-	align-items: flex-start;
-	-webkit-box-pack: start;
-	justify-content: flex-start;
-	gap: 1rem;
+.masonry {
+	-webkit-column-count: 2;
+	-moz-column-count: 2;
+	column-count: 2;
+	-webkit-column-gap: 1rem;
+	-moz-column-gap: 1rem;
+	column-gap: 1rem;
+
+
 	overflow-y: auto;
-	max-height: 100%;
 	width: 100%;
-	margin-right: -0.5rem;
 	padding-right: 0.5rem;
+
+	nb-card {
+		width: 100%;
+		display: inline-flex;
+		margin-bottom: 1rem;
+	}
+}
+
+@media only screen and (max-width: 1200px) {
+	.masonry {
+		-moz-column-count: 1;
+		-webkit-column-count: 1;
+		column-count: 1;
+	}
+}
+
+@media only screen and (min-width: 1201px) {
+	.grid-container {
+		-moz-column-count: 2;
+		-webkit-column-count: 2;
+		column-count: 2;
+	}
 }
 
 .legend-container {
