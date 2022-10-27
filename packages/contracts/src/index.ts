@@ -111,5 +111,6 @@ export * from './project.model';
 export { IBaseEntityModel as BaseEntityModel } from './base-entity.model';
 export {
 	IBasePerTenantAndOrganizationEntityModel,
-	IBasePerTenantEntityModel
+	IBasePerTenantEntityModel,
+	IBaseSoftDeleteEntityModel
 } from './base-entity.model';

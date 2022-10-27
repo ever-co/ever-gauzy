@@ -343,7 +343,7 @@ export class EmployeeController extends CrudController<Employee> {
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
-	@UsePipes(new ValidationPipe({ transform:true, whitelist: true }))
+	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: UpdateEmployeeDTO
@@ -378,7 +378,7 @@ export class EmployeeController extends CrudController<Employee> {
 	})
 	@Permissions(PermissionsEnum.PROFILE_EDIT)
 	@Put('/:id/profile')
-	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
+	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async updateProfile(
 		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: UpdateProfileDTO

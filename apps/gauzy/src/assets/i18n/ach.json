@@ -127,7 +127,8 @@
 		"MOVE": "crwdns11459:0crwdne11459:0",
 		"COLLAPSE": "crwdns11461:0crwdne11461:0",
 		"EXPAND": "crwdns11463:0crwdne11463:0",
-		"SHOW_MORE": "crwdns11483:0crwdne11483:0"
+		"SHOW_MORE": "crwdns11483:0crwdne11483:0",
+		"START_WORK": "crwdns11525:0crwdne11525:0"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -667,6 +668,7 @@
 		"PURPOSE": "crwdns2335:0crwdne2335:0",
 		"BACK_TO_WORK": "crwdns162:0crwdne162:0",
 		"END_WORK": "crwdns164:0crwdne164:0",
+		"START_WORK_FOR": "crwdns11527:0crwdne11527:0",
 		"AMOUNT": "crwdns166:0crwdne166:0",
 		"NOTES": "crwdns168:0crwdne168:0",
 		"EDIT": "crwdns170:0crwdne170:0",
@@ -3321,7 +3323,8 @@
 			"SCREENSHOT_DELETED": "crwdns10883:0{{ name }}crwdnd10883:0{{ organization }}crwdne10883:0",
 			"TIME_LOG_DELETED": "crwdns11014:0{{ name }}crwdnd11014:0{{ organization }}crwdne11014:0",
 			"TIME_LOGS_DELETED": "crwdns11016:0{{ organization }}crwdne11016:0",
-			"BUCKET_CREATED": "crwdns10996:0{{ bucket }}crwdnd10996:0{{ region }}crwdne10996:0"
+			"BUCKET_CREATED": "crwdns10996:0{{ bucket }}crwdnd10996:0{{ region }}crwdne10996:0",
+			"AUTHORIZED_TO_WORK": "crwdns11529:0{{ name }}crwdne11529:0"
 		}
 	},
 	"ACCEPT_INVITE": {

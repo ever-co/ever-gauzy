@@ -1,48 +1,74 @@
 <nb-card>
     <nb-card-body>
-        <div class="row w-100">
-            <div class="col-3">
-                <div class="user-container">
-                    <div class="dot-container">
-                        <div [ngClass]="{
+		<div class="row w-100">
+			<div class="col-3">
+				<div [class]="isClassic ?'user-container' : 'row'">
+					<div class="col-3">
+						<div class="dot-container">
+							<div [ngClass]="{
                         online: member?.isRunningTimer,
                         offline: !member?.isWorkingToday
                     }" class="dot"></div>
-                    </div>
-                    <ngx-avatar
-                            [id]="member?.employee?.id"
-                            [name]="member?.employee?.user?.name"
-                            [src]="member?.employee?.user?.imageUrl"
-                            class="report-table"
-                    ></ngx-avatar>
-                </div>
-            </div>
-            <div class="col-9">
-                <div *ngIf="!member?.tasks?.length">&#8212;</div>
-                <div *ngFor="let task of member?.tasks" class="row">
-                    <div class="col-6">{{ task.title ? task.title : ('REPORT_PAGE.NO_TASK' | translate)}}</div>
-                    <div class="col-6">
-                        <div class="row align-items-center">
-                            <div class="col-auto percentage-col">
-                                {{task.duration | durationFormat}}
-                            </div>
-                            <div class="col">
-                                <nb-progress-bar
-                                        [displayValue]="false"
-                                        [status]="progressStatus(calculatePercentage(task.duration, task?.estimate))"
-                                        [value]="calculatePercentage(task.duration, task?.estimate)"
-                                        class="mb-1"
-                                        size="tiny"
-                                >
-                                </nb-progress-bar>
-                            </div>
-                            <div class="col-auto percentage-col">
-                                {{task?.estimate | durationFormat }}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </nb-card-body>
+						</div>
+					</div>
+					<div class="col-9">
+						<ngx-avatar
+							[class]="isClassic ?  'avatar-dashboard' : 'report-table'"
+							[id]="member?.employee?.id"
+							[name]="member?.employee?.user?.name"
+							[src]="member?.employee?.user?.imageUrl"
+						></ngx-avatar>
+					</div>
+				</div>
+			</div>
+			<ng-template [ngIfElse]="classic" [ngIf]="!isClassic">
+				<div class="col-9">
+					<div *ngIf="!member?.tasks?.length" class="col-6">&#8212;</div>
+					<div *ngFor="let task of member?.tasks" class="row">
+						<div class="col-6">{{ task.title ? task.title : ('REPORT_PAGE.NO_TASK' | translate)}}</div>
+						<div class="col-6">
+							<div class="row align-items-center">
+								<div class="col-auto percentage-col">
+									{{task.duration | durationFormat}}
+								</div>
+								<div class="col">
+									<nb-progress-bar
+										[displayValue]="false"
+										[status]="progressStatus(calculatePercentage(task.duration, task?.estimate))"
+										[value]="calculatePercentage(task.duration, task?.estimate)"
+										class="mb-1"
+										size="tiny"
+									>
+									</nb-progress-bar>
+								</div>
+								<div class="col-auto percentage-col">
+									{{task?.estimate | durationFormat }}
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</ng-template>
+		</div>
+	</nb-card-body>
 </nb-card>
+
+<ng-template #classic>
+	<div class="col-9">
+		<div class="row align-items-center">
+			<div class="col">
+				<nb-progress-bar
+					[displayValue]="false"
+					[status]="progressStatus(calculatePercentage(member?.todayWorkDuration, member?.workPeriod))"
+					[value]="calculatePercentage(member?.todayWorkDuration, member?.workPeriod)"
+					class="mb-1"
+					size="tiny"
+				>
+				</nb-progress-bar>
+			</div>
+			<div class="col-auto percentage-col">
+				{{member?.todayWorkDuration > 0 ? humanize(member?.todayWorkDuration) : ('ORGANIZATIONS_PAGE.NOT_WORKED'|translate)}}
+			</div>
+		</div>
+	</div>
+</ng-template>

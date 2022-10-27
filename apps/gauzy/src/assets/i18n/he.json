@@ -127,7 +127,8 @@
 		"MOVE": "Move",
 		"COLLAPSE": "Collapse",
 		"EXPAND": "Expand",
-		"SHOW_MORE": "Show More"
+		"SHOW_MORE": "Show More",
+		"START_WORK": "Start Work"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -667,6 +668,7 @@
 		"PURPOSE": "Purpose",
 		"BACK_TO_WORK": "לחזור לעבודה",
 		"END_WORK": "סיום העבודה עבור",
+		"START_WORK_FOR": "Start work for",
 		"AMOUNT": "כמות",
 		"NOTES": "הערות",
 		"EDIT": "ערוך",
@@ -3321,7 +3323,8 @@
 			"SCREENSHOT_DELETED": "Screenshot for '{{ name }}' removed from '{{ organization }}'",
 			"TIME_LOG_DELETED": "Time log for '{{ name }}' removed from '{{ organization }}'",
 			"TIME_LOGS_DELETED": "Time logs removed from '{{ organization }}'",
-			"BUCKET_CREATED": "'{{ bucket }}' for '{{ region }}' has been created successfully"
+			"BUCKET_CREATED": "'{{ bucket }}' for '{{ region }}' has been created successfully",
+			"AUTHORIZED_TO_WORK": "{{ name }} is authorized to work"
 		}
 	},
 	"ACCEPT_INVITE": {
