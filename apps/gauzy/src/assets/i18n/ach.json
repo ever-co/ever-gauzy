@@ -1718,6 +1718,8 @@
 		"SETTINGS": "crwdns2265:0crwdne2265:0",
 		"REGISTER_AS_EMPLOYEE": "crwdns11509:0crwdne11509:0",
 		"TEAMS": "crwdns7834:0crwdne7834:0",
+		"TEAM_NAME": "crwdns11530:0{{ name }}crwdne11530:0",
+		"NOT_WORKED": "crwdns11532:0crwdne11532:0",
 		"ROLES": "crwdns2647:0crwdne2647:0",
 		"HELP_CENTER": "crwdns7708:0crwdne7708:0",
 		"DOCUMENTS": "crwdns7414:0crwdne7414:0",
