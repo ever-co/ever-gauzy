@@ -485,37 +485,36 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	}
 
 	setTime(value) {
-		const time = this.timeRun.getValue();
-		value.second = moment.duration(this._lastTotalWorkedTime + value.second, 'seconds').seconds()
-		value.minute = moment.duration(this._lastTotalWorkedTime + value.minute * 60, "seconds").minutes();
-		value.hours = moment.duration(this._lastTotalWorkedTime + value.hours * 3600, "seconds").hours();
+		const seconds = moment.duration(this._lastTotalWorkedTime + value.second, 'seconds').seconds()
+		const minutes = moment.duration(this._lastTotalWorkedTime + value.second, "seconds").minutes();
+		const hours = moment.duration(this._lastTotalWorkedTime + value.second, "seconds").hours();
 		this.timeRun.next({
 			second:
-				value.second.toString().length > 1
-					? `${value.second}`
-					: `0${value.second}`,
+				seconds.toString().length > 1
+					? `${seconds}`
+					: `0${seconds}`,
 			minute:
-				value.minute.toString().length > 1
-					? `${value.minute}`
-					: `0${value.minute}`,
+				minutes.toString().length > 1
+					? `${minutes}`
+					: `0${minutes}`,
 			hours:
-				value.hours.toString().length > 1
-					? `${value.hours}`
-					: `0${value.hours}`
+				hours.toString().length > 1
+					? `${hours}`
+					: `0${hours}`
 		});
-
+		const time = this.timeRun.getValue();
 		this.electronService.ipcRenderer.send('update_tray_time_title', {
 			timeRun: time.hours + ':' + time.minute + ':' + time.second
 		});
 
-		if (value.second % 60 === 0) {
+		if (seconds % 60 === 0) {
 			this.electronService.ipcRenderer.send('update_tray_time_update', {
 				hours: time.hours,
 				minutes: time.minute
 			});
 		}
 
-		if (value.second % 5 === 0) {
+		if (seconds % 5 === 0) {
 			this.pingAw(null);
 			if (this.lastScreenCapture.createdAt) {
 				this.lastScreenCapture$.next({
