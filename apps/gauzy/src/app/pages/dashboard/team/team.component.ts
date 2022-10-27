@@ -28,7 +28,6 @@ import * as moment from 'moment';
 	styleUrls: ['./team.component.scss']
 })
 export class TeamComponent extends BaseSelectorFilterComponent implements OnInit, OnDestroy {
-
 	private _logs: ITimeLog[] = [];
 	private _countsStatistics: any;
 
@@ -45,6 +44,17 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 			data: null,
 			isSelected: false
 		};
+		this._isLoading = false;
+	}
+
+	private _isLoading: boolean;
+
+	get isLoading(): boolean {
+		return this._isLoading;
+	}
+
+	set isLoading(value: boolean) {
+		this._isLoading = value;
 	}
 
 	private _selectedTeam: {
@@ -133,6 +143,7 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 		}
 		const {id: organizationId} = this.organization;
 		const {tenantId} = this.store.user;
+		this.isLoading = true;
 		this._organizationTeamsService.getAll(
 			[
 				'members',
@@ -239,6 +250,7 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 			employeesCount: allMembersWorking.length,
 			employeesCountTotal: allMembers.length
 		}
+		this.isLoading = false;
 	}
 
 	private async getCounts() {
@@ -249,13 +261,9 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 			...this.getFilterRequest(this.request)
 		};
 		try {
-			//this.countsLoading = true;
 			this._countsStatistics = await this._timesheetStatisticsService.getCounts(request);
-
 		} catch (error) {
-			//this.toastrService.error(error);
-		} finally {
-			//this.countsLoading = false;
+			console.log(error)
 		}
 	}
 

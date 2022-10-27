@@ -11,24 +11,24 @@
 				{{'ORGANIZATIONS_PAGE.TEAMS' | translate}}
 			</ngx-header-title>
 		</h4>
-    </nb-card-header>
-    <nb-card-body class="card-body-content">
-        <ng-template [ngIfElse]="noTeam" [ngIf]="todayTeamsWorkers.length > 0">
-            <div class="team-selected">
-                <ng-template [ngIfElse]="noTeamSelected" [ngIf]="selectedTeam && selectedTeam?.isSelected">
-                    <div class="team-card">
-                        <ng-container *ngFor="let team of todayTeamsWorkers; trackBy: fnTracker">
-                            <gauzy-team-card
-                                    (click)="select(team)"
-                                    [ngClass]="{
+	</nb-card-header>
+	<nb-card-body [nbSpinner]="isLoading" class="card-body-content" nbSpinnerSize="large" nbSpinnerStatus="primary">
+		<ng-template [ngIfElse]="noTeam" [ngIf]="todayTeamsWorkers.length > 0">
+			<div class="team-selected">
+				<ng-template [ngIfElse]="noTeamSelected" [ngIf]="selectedTeam && selectedTeam?.isSelected">
+					<div class="team-card">
+						<ng-container *ngFor="let team of todayTeamsWorkers; trackBy: fnTracker">
+							<gauzy-team-card
+								(click)="select(team)"
+								[ngClass]="{
                                 'team-selected-card': selectedTeam?.isSelected &&
                                  selectedTeam?.data.id === team?.id
                              }"
-                                    [team]="team">
-                            </gauzy-team-card>
-                        </ng-container>
-                    </div>
-                    <div class="team-selected-container">
+								[team]="team">
+							</gauzy-team-card>
+						</ng-container>
+					</div>
+					<div class="team-selected-container">
 						<div class="team-header-list">
 							<nb-card>
 								<nb-card-body class="h-auto">
