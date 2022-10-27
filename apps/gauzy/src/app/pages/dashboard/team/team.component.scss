@@ -38,11 +38,13 @@
 	}
 
 	.team-header-list {
-		font-size: 12px;
-		font-weight: 600;
-		line-height: 15px;
-		letter-spacing: 0em;
-		color: var(--gauzy-text-color-2) !important;
+		nb-card-body {
+			font-size: 12px;
+			font-weight: 600;
+			line-height: 15px;
+			letter-spacing: 0em;
+			color: var(--gauzy-text-color-2) !important;
+		}
 	}
 
 	.team-selected-container {
