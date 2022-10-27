@@ -1,5 +1,12 @@
-import { EntityManager, EntitySubscriberInterface, EventSubscriber, InsertEvent, RemoveEvent } from "typeorm";
-import { retrieveNameFromEmail } from "@gauzy/common";
+import {
+    EntityManager,
+    EntitySubscriberInterface,
+    EventSubscriber,
+    InsertEvent,
+    RemoveEvent,
+    UpdateEvent
+} from "typeorm";
+import { isNotEmpty, retrieveNameFromEmail } from "@gauzy/common";
 import { Employee } from "./employee.entity";
 import { generateSlug, getUserDummyImage } from "./../core/utils";
 import { Organization } from "./../core/entities/internal";
@@ -37,6 +44,33 @@ export class EmployeeSubscriber implements EntitySubscriberInterface<Employee> {
                     entity.user.imageUrl = getUserDummyImage(entity.user)
                 }
                 this.createSlug(entity);
+            }
+            /**
+             * If Date when started work filled then enabled time tracking functionality for the employee. 
+             */
+            if (isNotEmpty(entity.startedWorkOn)) {
+                entity.isTrackingEnabled = true;
+            }
+        }
+    }
+
+    /**
+     * Called before employee update.
+     */
+    beforeUpdate(event: UpdateEvent<Employee>): void | Promise<any> {
+        if (event.entity) {
+            const { entity } = event;
+            /**
+             * If Date when started work filled then enabled time tracking functionality for the employee. 
+             */
+            if (isNotEmpty(entity.startedWorkOn)) {
+                entity.isTrackingEnabled = true;
+            }
+            /**
+            * If Date when ended work filled then disable time tracking functionality for the employee. 
+            */
+            if (isNotEmpty(entity.endWork)) {
+                entity.isTrackingEnabled = false;
             }
         }
     }
