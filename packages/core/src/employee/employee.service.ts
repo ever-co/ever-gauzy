@@ -174,6 +174,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 					averageExpenses: true,
 					averageBonus: true,
 					startedWorkOn: true,
+					endWork: true,
 					isTrackingEnabled: true,
 					user: {
 						id: true,

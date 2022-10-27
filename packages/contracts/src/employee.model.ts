@@ -26,8 +26,8 @@ export interface IRelationalEmployee {
 
 export interface IEmployee extends IBasePerTenantAndOrganizationEntityModel {
 	[x: string]: any;
-	endWork?: any;
-	startedWorkOn?: any;
+	endWork?: Date;
+	startedWorkOn?: Date;
 	user: IUser;
 	userId: string;
 	valueDate?: Date;
@@ -147,7 +147,7 @@ export interface IEmployeeCreateInput
 	members?: IEmployee[];
 	tags?: ITag[];
 	skills?: ISkill[];
-	startedWorkOn?: any;
+	startedWorkOn?: Date;
 	short_description?: string;
 	description?: string;
 	originalUrl?: string;
@@ -201,14 +201,14 @@ export interface EmployeeViewModel {
 	fullName: string;
 	email: string;
 	bonus?: number;
-	endWork?: any;
+	endWork?: Date;
 	id: string;
 	imageUrl?: string;
 	averageIncome?: number;
 	averageExpenses?: number;
 	averageBonus?: number;
 	workStatus?: string;
-	startedWorkOn?: string;
+	startedWorkOn?: Date;
 	isActive?: boolean;
 	isTrackingEnabled: boolean;
 	tags?: ITag[];

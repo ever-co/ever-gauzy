@@ -13,17 +13,15 @@ import { TenantOrganizationBaseDTO } from "./../../core/dto";
 
 export class EmploymentDTO extends TenantOrganizationBaseDTO {
 
-    @ApiPropertyOptional({ type: () => String, readOnly: true })
-    @IsOptional()
-    @IsString({
-        message: "Started worked on must be a Date string"
-    })
-    readonly startedWorkOn?: string;
-
-    @ApiPropertyOptional({ type: () => String, readOnly: true })
+    @ApiPropertyOptional({ type: () => Date, readOnly: true })
     @IsOptional()
     @IsDateString()
-    readonly endWork?: string;
+    readonly startedWorkOn?: Date;
+
+    @ApiPropertyOptional({ type: () => Date, readOnly: true })
+    @IsOptional()
+    @IsDateString()
+    readonly endWork?: Date;
 
     @ApiPropertyOptional({ type: () => String, readOnly: true })
     @IsOptional()
