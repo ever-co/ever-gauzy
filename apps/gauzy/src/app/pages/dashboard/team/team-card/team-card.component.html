@@ -1,17 +1,19 @@
 <nb-card>
-    <nb-card-header class="team-header">
-        <h6 class="team-name">{{team?.name}}</h6>
-    </nb-card-header>
-    <nb-card-body class="team-container">
-        <div class="h1">
-            {{team?.statistics?.countWorking}}
-        </div>
-        <div class="counter-container">
-            <gauzy-counter-point
-                    [color]="'#00D68F'"
-                    [total]="team?.statistics?.countTotal"
-                    [value]="team?.statistics?.countWorking || 0"
-            ></gauzy-counter-point>
-        </div>
-    </nb-card-body>
+	<nb-card-header class="team-header">
+		<h6 class="team-name">{{'ORGANIZATIONS_PAGE.TEAM_NAME' | translate : {name: team?.name} }}</h6>
+	</nb-card-header>
+	<nb-card-body class="team-container">
+		<div class="d-flex align-items-center">
+			<div class="h1">
+				{{team?.statistics?.countWorking}}
+			</div>
+			<div>/{{team?.statistics?.countTotal}}</div>
+		</div>
+		<div class="counter-container">
+			<gauzy-counter-point
+				[total]="team?.statistics?.countTotal"
+				[value]="team?.statistics?.countWorking || 0"
+			></gauzy-counter-point>
+		</div>
+	</nb-card-body>
 </nb-card>

@@ -5,12 +5,16 @@ nb-card {
     display: flex;
     align-items: center;
     gap: 0.5rem;
+	  padding: 1rem;
   }
 
   .user-container {
     display: flex;
     gap: .5rem;
     align-items: center;
+	  .col-3, .col-9{
+		  width: fit-content;
+	  }
   }
 
   .dot-container {
@@ -32,4 +36,8 @@ nb-card {
       background-color: red;
     }
   }
+}
+
+::ng-deep nb-progress-bar.size-tiny .progress-container {
+	height: 10px;
 }

@@ -2,7 +2,14 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 import { TeamComponent } from './team.component';
-import { NbButtonModule, NbCardModule, NbIconModule, NbProgressBarModule } from "@nebular/theme";
+import {
+    NbBadgeModule,
+    NbButtonModule,
+    NbCardModule,
+    NbIconModule,
+    NbProgressBarModule,
+    NbSpinnerModule
+} from "@nebular/theme";
 import { HeaderTitleModule } from "../../../@shared/components/header-title/header-title.module";
 import { TeamCardComponent } from './team-card/team-card.component';
 import { CounterPointModule } from "../../../@shared/counter-point/counter-point.module";
@@ -34,7 +41,9 @@ import { TranslateModule } from "@ngx-translate/core";
         SharedModule,
         NbIconModule,
         NbButtonModule,
-        TranslateModule
+        TranslateModule,
+        NbBadgeModule,
+        NbSpinnerModule
     ]
 })
 export class TeamModule {

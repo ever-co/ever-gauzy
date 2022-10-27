@@ -67,6 +67,10 @@ export class ChartComponent extends TranslationBaseComponent implements OnInit, 
                     ...this._labels,
                     datasets: [
                         {
+							barPercentage: 0.5,
+							barThickness: 10,
+							maxBarThickness: 12,
+							minBarLength: 2,
                             data: [
                                 this.statistics.countOnline,
                                 this.statistics.countWorking - this.statistics.countOnline,
@@ -78,7 +82,9 @@ export class ChartComponent extends TranslationBaseComponent implements OnInit, 
                                 'red',
                             ],
                             hoverBorderColor: 'rgba(0, 0, 0, 0)',
-                            borderWidth: 0
+                            borderWidth: 0,
+							fill: false,
+							indexAxis: 'y'
                         }
                     ]
                 };
