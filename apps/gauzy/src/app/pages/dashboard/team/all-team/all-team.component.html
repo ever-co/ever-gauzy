@@ -84,8 +84,33 @@
 		<nb-card *ngFor="let team of teams">
 			<nb-card-header class="pb-0 d-flex justify-content-between">
 				<div>
-					<div class="h1">{{team?.statistics?.countWorking + team?.statistics.countNotWorking}}</div>
+					<div class="d-flex align-items-center">
+						<div class="h1">{{team?.statistics?.countWorking}}</div>
+						<div>/{{team?.statistics?.countWorking + team?.statistics.countNotWorking}}</div>
+					</div>
 					<span>{{team?.name}}</span>
+				</div>
+				<div class="legend-container">
+					<div class="legend">
+						<button nbButton outline size="tiny"
+								status="success">{{'DASHBOARD_PAGE.CHARTS.WORKING_NOW'|translate}}</button>
+						<nb-badge [text]="team?.statistics?.countOnline" position="bottom right"
+								  status="success"></nb-badge>
+					</div>
+					<div class="legend">
+						<button nbButton outline size="tiny"
+								status="warning">{{'DASHBOARD_PAGE.CHARTS.WORKING_TODAY'|translate}}</button>
+						<nb-badge
+							[text]="(team?.statistics?.countWorking - team?.statistics?.countOnline).toString()"
+							position="bottom right"
+							status="warning"></nb-badge>
+					</div>
+					<div class="legend">
+						<button nbButton outline size="tiny"
+								status="danger">{{'DASHBOARD_PAGE.CHARTS.NOT_WORKING'|translate}}</button>
+						<nb-badge [text]="team?.statistics?.countNotWorking" position="bottom right"
+								  status="danger"></nb-badge>
+					</div>
 				</div>
 				<div>
 					<button (click)="onSelectTeam(team)" nbButton outline size="small" status="primary">
@@ -99,28 +124,6 @@
 						*ngFor="let member of team?.membersWorkingToday.concat(team?.membersNotWorkingToday)">
 						<gauzy-team-member [member]="member" class="mt-2" isClassic=true></gauzy-team-member>
 					</ng-container>
-					<div class="legend-container">
-						<div class="legend">
-							<button nbButton outline
-									status="success">{{'DASHBOARD_PAGE.CHARTS.WORKING_NOW'|translate}}</button>
-							<nb-badge [text]="team?.statistics?.countOnline" position="top right"
-									  status="success"></nb-badge>
-						</div>
-						<div class="legend">
-							<button nbButton outline
-									status="warning">{{'DASHBOARD_PAGE.CHARTS.WORKING'|translate}}</button>
-							<nb-badge
-								[text]="(team?.statistics?.countWorking - team?.statistics?.countOnline).toString()"
-								position="top right"
-								status="warning"></nb-badge>
-						</div>
-						<div class="legend">
-							<button nbButton outline
-									status="danger">{{'DASHBOARD_PAGE.CHARTS.NOT_WORKING'|translate}}</button>
-							<nb-badge [text]="team?.statistics?.countNotWorking" position="top right"
-									  status="danger"></nb-badge>
-						</div>
-					</div>
 				</div>
 			</nb-card-body>
 		</nb-card>
