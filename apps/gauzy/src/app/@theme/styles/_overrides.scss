@@ -416,23 +416,35 @@ nb-card-body {
     top: -1px;
   }
 
+  ng2-smart-table table tr th {
+    border-top: 1px solid var(--gauzy-card-2);
+    border-bottom: 1px solid var(--gauzy-card-2);
+  }
+
   table thead th {
     border-left: none;
     border-right: none;
     &:first-child {
-      border-left: 1px solid nb-theme(smart-table-separator);
+      border-left: 1px solid var(--gauzy-card-2);
       border-radius: var(--border-radius) 0 0 var(--border-radius);
     }
     &:last-child {
-      border-right: 1px solid nb-theme(smart-table-separator);
+      border-right: 1px solid var(--gauzy-card-2);
       border-radius: 0 var(--border-radius) var(--border-radius) 0;
     }
   }
 
-  table tbody td {
-    border-left: none;
-    border-right: none;
-    border-top: none;
+  table tbody tr {
+    &:last-child td {
+      border-bottom: none
+    }
+
+    td {
+      border-left: none;
+      border-right: none;
+      border-top: none;
+      border-bottom: 1px solid var(--gauzy-card-2);
+    }
   }
 
   tr:first-child td:first-child {
@@ -661,3 +673,4 @@ ng2-smart-table table tr.ng2-smart-titles th a.sort {
     }
   }
 }
+
