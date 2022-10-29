@@ -1,6 +1,18 @@
 <ng-container *ngIf="!isEmployee">
 	<nb-card class="card">
 		<nb-card-header class="card-header">
+			<div class="body-header">
+				<h4>
+					<ngx-header-title>
+						{{ 'DASHBOARD_PAGE.EMPLOYEE_STATISTICS' | translate }}
+					</ngx-header-title>
+				</h4>
+				<ng-container *ngIf="selectedDateRange?.startDate && selectedDateRange?.endDate">
+					<ngx-date-range-title [start]="selectedDateRange?.startDate" [end]="selectedDateRange?.endDate"
+						[format]="'dddd, LL'">
+					</ngx-date-range-title>
+				</ng-container>
+			</div>
 			<div class="organization-employee-header">
 				<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary">
 					<nb-card-body>
@@ -80,13 +92,6 @@
 			</div>
 		</nb-card-header>
 		<nb-card-body class="card-body">
-			<div class="body-header">
-				<h4>
-					<ngx-header-title>
-						{{ 'DASHBOARD_PAGE.EMPLOYEE_STATISTICS' | translate }}
-					</ngx-header-title>
-				</h4>
-			</div>
 			<div class="setting-block sub-header">
 				<div class="block-content">
 					<div class="block-info">
