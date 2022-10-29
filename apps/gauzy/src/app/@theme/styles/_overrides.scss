@@ -417,19 +417,19 @@ nb-card-body {
   }
 
   ng2-smart-table table tr th {
-    border-top: 1px solid var(--gauzy-border-default-color);
-    border-bottom: 1px solid var(--gauzy-border-default-color);
+    border-top: 1px solid var(--gauzy-border-table);
+    border-bottom: 1px solid var(--gauzy-border-table);
   }
 
   table thead th {
     border-left: none;
     border-right: none;
     &:first-child {
-      border-left: 1px solid var(--gauzy-border-default-color);
+      border-left: 1px solid var(--gauzy-border-table);
       border-radius: var(--border-radius) 0 0 var(--border-radius);
     }
     &:last-child {
-      border-right: 1px solidvar(--gauzy-border-default-color);
+      border-right: 1px solidvar(--gauzy-border-table);
       border-radius: 0 var(--border-radius) var(--border-radius) 0;
     }
   }
@@ -443,7 +443,7 @@ nb-card-body {
       border-left: none;
       border-right: none;
       border-top: none;
-      border-bottom: 1px solid var(--gauzy-border-default-color);
+      border-bottom: 1px solid var(--gauzy-border-table);
     }
   }
 
