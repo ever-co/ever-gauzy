@@ -1,7 +1,7 @@
 <nb-card>
     <nb-card-body>
 		<div class="row w-100">
-			<div class="col-3">
+			<div [class]="isClassic ? 'col-5' : 'col-3'">
 				<div [class]="isClassic ?'user-container' : 'row'">
 					<div class="col-3">
 						<div class="dot-container">
@@ -28,7 +28,7 @@
 						<div class="col-6">{{ task.title ? task.title : ('REPORT_PAGE.NO_TASK' | translate)}}</div>
 						<div class="col-6">
 							<div class="row align-items-center">
-								<div class="col-auto percentage-col">
+								<div class="col-3">
 									{{task.duration | durationFormat}}
 								</div>
 								<div class="col">
@@ -41,7 +41,7 @@
 									>
 									</nb-progress-bar>
 								</div>
-								<div class="col-auto percentage-col">
+								<div class="col-3 text-right">
 									{{task?.estimate | durationFormat }}
 								</div>
 							</div>
@@ -54,9 +54,9 @@
 </nb-card>
 
 <ng-template #classic>
-	<div class="col-9">
+	<div class="col-7">
 		<div class="row align-items-center">
-			<div class="col">
+			<div class="col-8">
 				<nb-progress-bar
 					[displayValue]="false"
 					[status]="progressStatus(calculatePercentage(member?.todayWorkDuration, member?.workPeriod))"
@@ -66,7 +66,7 @@
 				>
 				</nb-progress-bar>
 			</div>
-			<div class="col-auto percentage-col">
+			<div class="col-4 text-right">
 				{{member?.todayWorkDuration > 0 ? humanize(member?.todayWorkDuration) : ('ORGANIZATIONS_PAGE.NOT_WORKED'|translate)}}
 			</div>
 		</div>

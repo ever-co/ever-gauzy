@@ -5,13 +5,23 @@ import { DateFormatPipe } from '../../pipes';
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-date-range-title',
-	template: `{{ title }}`
+	template: `<span>{{ title }}</span>`,
+	styles: [
+		`
+			span {
+				font-size: 14px;
+				font-weight: 600;
+				line-height: 16px;
+				letter-spacing: -0.009em;
+				color: var(--gauzy-text-color-2);
+			}
+		`
+	]
 })
 export class DateRangeTitleComponent {
-
 	/*
-	* Getter & Setter for start element
-	*/
+	 * Getter & Setter for start element
+	 */
 	_start: Date;
 	get start(): Date {
 		return this._start;
@@ -21,8 +31,8 @@ export class DateRangeTitleComponent {
 	}
 
 	/*
-	* Getter & Setter for end element
-	*/
+	 * Getter & Setter for end element
+	 */
 	_end: Date;
 	get end(): Date {
 		return this._end;
@@ -32,8 +42,8 @@ export class DateRangeTitleComponent {
 	}
 
 	/*
-	* Getter & Setter for default format
-	*/
+	 * Getter & Setter for default format
+	 */
 	_format: string;
 	get format(): string {
 		return this._format;
@@ -42,16 +52,18 @@ export class DateRangeTitleComponent {
 		this._format = format;
 	}
 
-	constructor(
-		private readonly dateFormatPipe: DateFormatPipe
-	) {}
+	constructor(private readonly dateFormatPipe: DateFormatPipe) {}
 
 	/**
 	 * GET date range title
 	 */
 	get title() {
-		const start = this.dateFormatPipe.transform(this.start, null, this.format);
+		const start = this.dateFormatPipe.transform(
+			this.start,
+			null,
+			this.format
+		);
 		const end = this.dateFormatPipe.transform(this.end, null, this.format);
-		return [ start, end ].filter(Boolean).join(' - ');
+		return [start, end].filter(Boolean).join(' - ');
 	}
 }

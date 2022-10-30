@@ -38,18 +38,19 @@
 	display: flex;
 	gap: 1rem;
 	flex-wrap: wrap;
-	margin-top: 8px;
 }
 
 .legend {
 	position: relative;
 	width: fit-content;
-	padding: 10px 10px 0 0;
+	padding: 0 10px 10px 0;
 	font-weight: 600;
+	height: fit-content;
 	color: var(--gauzy-text-color-2);
 
 	button {
 		border: unset;
+		border-radius: calc(var(--border-radius) / 2);
 	}
 }
 

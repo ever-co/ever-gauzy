@@ -1155,7 +1155,8 @@
 			"CASH_FLOW": "Cash Flow",
 			"WORKING": "Working",
 			"WORKING_NOW": "Working now",
-			"NOT_WORKING": "Not working"
+			"NOT_WORKING": "Not working",
+			"WORKING_TODAY": "Working today"
 		},
 		"PROFIT_HISTORY": {
 			"PROFIT_REPORT": "Репорт на печалбата",
@@ -1718,6 +1719,8 @@
 		"SETTINGS": "Настройки",
 		"REGISTER_AS_EMPLOYEE": "Register as Employee",
 		"TEAMS": "Отбори",
+		"TEAM_NAME": "{{ name }} Team",
+		"NOT_WORKED": "Not Worked",
 		"ROLES": "Роли",
 		"HELP_CENTER": "Help Center",
 		"DOCUMENTS": "Documents",
