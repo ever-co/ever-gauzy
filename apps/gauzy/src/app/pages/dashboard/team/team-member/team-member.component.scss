@@ -41,3 +41,9 @@ nb-card {
 ::ng-deep nb-progress-bar.size-tiny .progress-container {
 	height: 10px;
 }
+
+.text-right {
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
