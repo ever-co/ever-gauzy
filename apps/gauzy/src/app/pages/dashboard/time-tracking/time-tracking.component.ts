@@ -427,10 +427,11 @@ export class TimeTrackingComponent extends TranslationBaseComponent
 		const endWork = moment(this.organization.defaultEndTime, 'HH:mm');
 		const startWork = moment(this.organization.defaultStartTime, 'HH:mm');
 		const duration = endWork.diff(startWork) / 1000;
-		if (startDate && endDate) {
+		if (startDate && endDate && this.counts) {
 			const start = moment(startDate);
 			const end = moment(endDate);
-			return end.diff(start, 'days') * (isNaN(duration) ? 86400 : duration);
+			const dayCount = end.diff(start, 'days') + 1;
+			return dayCount * (isNaN(duration) ? 86400 : duration) * this.counts.employeesCount;
 		}
 	}
 
