@@ -1,7 +1,7 @@
 const { notarize } = require('electron-notarize');
 require('dotenv').config();
 
-exports.default = (context) => {
+exports.default = async (context) => {
 	const {
 		electronPlatformName,
 		appOutDir,
@@ -24,7 +24,7 @@ exports.default = (context) => {
 		throw new Error('`APPLE_ID` or `APPLE_ID_APP_PASSWORD` is missing');
 	}
 
-	return notarize({
+	await notarize({
 		appBundleId,
 		appPath: `${appOutDir}/${appName}.app`,
 		appleId: APPLE_ID,
