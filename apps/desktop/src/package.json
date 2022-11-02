@@ -79,7 +79,7 @@
 			"verifyUpdateCodeSignature": false
 		},
 		"linux": {
-			"icon": "icon.png",
+			"icon": "linux",
 			"target": [
 				"AppImage",
 				"deb",
