@@ -228,12 +228,12 @@
 		"@angular/platform-browser-dynamic": "13.2.2",
 		"@angular/router": "13.2.2",
 		"@angular/service-worker": "13.2.2",
+		"autoprefixer": "10.4.5",
+		"dotenv": "^16.0.0",
 		"ng2-smart-table": "^1.7.2",
 		"rxjs": "^7.4.0",
 		"unleash": "^2.0.2",
-		"autoprefixer": "10.4.5",
-		"yargs": "^17.5.0",
-		"dotenv": "^16.0.0"
+		"yargs": "^17.5.0"
 	},
 	"devDependencies": {
 		"@angular-devkit/architect": "^0.1302.2",
@@ -287,7 +287,7 @@
 		"cypress-file-upload": "^5.0.8",
 		"cz-conventional-changelog": "^3.3.0",
 		"electron": "^15.1.2",
-		"electron-builder": "^22.14.5",
+		"electron-builder": "^23.6.0",
 		"envalid": "^6.0.2",
 		"eslint-plugin-cypress": "^2.12.1",
 		"fork-ts-checker-webpack-plugin": "^5.2.0",
