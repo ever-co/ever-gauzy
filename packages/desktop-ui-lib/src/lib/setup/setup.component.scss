@@ -102,7 +102,7 @@ $border-radius: calc(2 * var(--border-radius));
 
 .card-item-label {
   font-size: 18px;
-  font-weight: 600er;
+  font-weight: 600;
 }
 
 .btn-fixed {
@@ -210,4 +210,12 @@ $border-radius: calc(2 * var(--border-radius));
   font-weight: 600;
   height: 56px;
   width: 120px;
+}
+
+.main-card-body{
+  background-color: var(--gauzy-card-2);
+}
+
+h4 {
+  font-weight: 600;
 }
