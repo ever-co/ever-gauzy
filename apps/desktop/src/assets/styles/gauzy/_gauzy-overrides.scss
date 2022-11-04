@@ -1,0 +1,567 @@
+@import 'themes';
+
+$default-box-shadow-inset: var(--gauzy-shadow) inset;
+$default-height: 42px;
+$default-radius: nb-theme(border-radius);
+$default-button-radius: calc(nb-theme(button-rectangle-border-radius) / 1.625);
+$default-box-shadow: var(--gauzy-shadow);
+
+@mixin ng-select-overrides($height, $radius, $box-shadow) {
+  .ng-select {
+    &.ng-select-single .ng-select-container {
+      height: $height;
+    }
+
+    &.ng-select-opened > .ng-select-container:hover {
+      box-shadow: $box-shadow !important;
+    }
+
+    &.ng-select-focused .ng-select-container {
+      box-shadow: $box-shadow !important;
+    }
+
+    .ng-select-container {
+      border-radius: $radius;
+      box-shadow: $box-shadow;
+      height: $height;
+      border: none;
+      &:hover {
+        box-shadow: $box-shadow;
+      }
+
+      input {
+        height: unset;
+      }
+    }
+  }
+}
+
+@mixin dialog($card-background-color, $input-background-color) {
+  @include input-appearance(42px, $input-background-color);
+  nb-card {
+    background-color: $card-background-color;
+  }
+}
+
+@mixin input-appearance($height, $input-background-color) {
+  ::ng-deep input,
+  ::ng-deep nb-select.appearance-outline.status-basic .select-button,
+  ::ng-deep .ng-select .ng-select-container {
+    background-color: $input-background-color !important;
+    border: none;
+    height: $height !important;
+  }
+
+  ::ng-deep
+    .ng-select.ng-select-multiple
+    .ng-select-container
+    .ng-value-container
+    .ng-placeholder,
+  ::ng-deep
+    .ng-select.ng-select-single
+    .ng-select-container
+    .ng-value-container
+    .ng-input {
+    top: unset !important;
+  }
+
+  ::ng-deep label,
+  ::ng-deep .label {
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 13px;
+    letter-spacing: -0.01em;
+    color: var(--gauzy-text-color-2);
+  }
+
+  ::ng-deep textarea {
+    background-color: $input-background-color !important;
+    border: none;
+  }
+
+  ::ng-deep .ng-select .ng-select-container,
+  ::ng-deep nb-tag-list {
+    input {
+      background-color: unset !important;
+    }
+  }
+}
+
+@mixin text-inputs-overrides() {
+  input {
+    border-radius: $default-radius;
+    box-shadow: $default-box-shadow-inset;
+    height: $default-height;
+    background-color: nb-theme(select-outline-basic-background-color);
+  }
+
+  textarea {
+    border-radius: $default-radius;
+    box-shadow: $default-box-shadow-inset;
+    resize: none;
+    height: 102px;
+    background-color: nb-theme(select-outline-basic-background-color);
+  }
+}
+
+@mixin nb-select-overrides($height, $radius, $box-shadow) {
+  nb-select.shape-rectangle .select-button {
+    border-radius: $radius;
+    box-shadow: $box-shadow;
+    height: $height;
+    display: flex;
+    align-items: center;
+    border: none;
+  }
+
+  nb-select.appearance-outline.size-medium .select-button {
+    border: none;
+  }
+
+  nb-select button span {
+    display: block;
+    overflow-x: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+/*
+* Begin
+* Override nb-stepper
+*/
+@mixin nb-stepper() {
+  nb-stepper .header .step.selected .label-index {
+    background-color: nb-theme(background-primary-color-1);
+    color: nb-theme(text-control-color);
+    border: unset;
+  }
+
+  nb-stepper .header .step .label-index {
+    width: 24px;
+    height: 24px;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 13px;
+    letter-spacing: -0.01em;
+    text-align: left;
+    margin: 0 !important;
+    padding: 0;
+  }
+
+  nb-stepper .header .step .label {
+    display: none;
+  }
+
+  nb-stepper.horizontal .header .step {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  nb-stepper .header .step.selected + .connector,
+  nb-stepper .header .step.completed + .connector {
+    background-color: nb-theme(background-primary-color-1);
+    height: 10px !important;
+    margin: 0px 10px 0 -5px !important;
+    border-radius: 0 nb-theme(border-radius) nb-theme(border-radius) 0;
+  }
+
+  nb-stepper .header {
+    align-items: center !important;
+    margin-bottom: 0px !important;
+  }
+
+  nb-stepper .header .label-index {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: var(--gauzy-sidebar-background-3);
+    border: none;
+  }
+
+  nb-stepper .header .connector {
+    flex: auto;
+    background-color: var(--gauzy-sidebar-background-3);
+    height: 10px !important;
+    margin: 0px 10px 0 -5px !important;
+    border-radius: 0 var(--border-radius) var(--border-radius) 0;
+  }
+}
+
+/*
+* End
+* Override nb-stepper
+*/
+
+/*
+* Begin
+* Override ck-editor
+*/
+@mixin ck-editor() {
+  ckeditor .cke_top.cke_reset_all {
+    background-color: var(--gauzy-sidebar-background-4);
+    border-radius: var(--border-radius);
+  }
+
+  ckeditor .cke_chrome {
+    border: none;
+    border-radius: var(--border-radius);
+    padding: 12px;
+    box-shadow: var(--gauzy-shadow) inset;
+    background: var(--gauzy-card-1);
+    width: calc(100% - 20px) !important;
+  }
+
+  ckeditor .cke_top {
+    border-bottom: none;
+  }
+
+  ckeditor .cke_inner.cke_reset {
+    border-radius: var(--border-radius);
+  }
+
+  ckeditor .cke_bottom {
+    border: none;
+    border-radius: var(--border-radius);
+    background-color: var(--gauzy-sidebar-background-4);
+  }
+
+  ckeditor .cke_inner {
+    background: transparent;
+  }
+
+  .nb-theme-gauzy-light {
+    ckeditor .cke_button_icon {
+      filter: brightness(0) invert(0);
+    }
+  }
+
+  .nb-theme-gauzy-dark {
+    ckeditor .cke_button_icon {
+      filter: brightness(0) invert(1);
+    }
+  }
+
+  ckeditor {
+    a.cke_button_off:hover,
+    a.cke_button_on,
+    a.cke_button_off:focus,
+    a.cke_button_off:active {
+      background: var(--gauzy-card-1);
+      border: none;
+      border-radius: var(--border-radius);
+    }
+  }
+
+  ckeditor .cke_button_label {
+    color: var(--text-basic-color);
+  }
+}
+
+/*
+* End
+*/
+
+@mixin gauzy-overrides() {
+  @include nb-select-overrides(
+    $default-height,
+    $default-radius,
+    $default-box-shadow-inset
+  );
+  @include text-inputs-overrides;
+  @include ng-select-overrides(
+    $default-height,
+    $default-radius,
+    $default-box-shadow-inset
+  );
+  @include nb-stepper;
+  @include full-calendar();
+  @include ck-editor();
+  @include input-appearance(42px, var(--gauzy-card-1));
+  @include nb-tabset-overrides;
+}
+
+@mixin full-calendar() {
+  /* Overrides full-calendar */
+  full-calendar {
+    /* Header */
+    div.fc-header-toolbar {
+      .fc-toolbar-chunk {
+        h2.fc-toolbar-title {
+          /* Override title typography*/
+          font-size: 18px;
+          font-weight: 600;
+          line-height: 30px;
+          letter-spacing: 0em;
+          text-align: left;
+        }
+
+        .btn-group {
+          padding: 4px 0px 3px 0px;
+          box-shadow: 0px 1px 1px 0px rgba(0, 0, 0, 0.1) inset;
+          border-radius: nb-theme(button-rectangle-border-radius);
+
+          .fc-next-button,
+          .fc-prev-button {
+            border-radius: nb-theme(button-rectangle-border-radius);
+            font-size: 12px;
+            padding: 0;
+            background-color: nb-theme(background-primary-color-1);
+            border-color: nb-theme(background-primary-color-1);
+            margin: 0 4px;
+
+            span {
+              padding: 8px 10px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            }
+          }
+
+          .fc-timeGridDay-button,
+          .fc-timeGridWeek-button,
+          .fc-dayGridMonth-button {
+            border-color: rgba(126, 126, 143, 0.5);
+            border-width: 2px;
+            background-color: transparent;
+            color: rgba(126, 126, 143, 1);
+            padding: 8px 16px;
+            font-style: normal;
+            font-weight: 600;
+            font-size: 12px;
+            line-height: 11px;
+            border-radius: nb-theme(button-rectangle-border-radius);
+            text-transform: capitalize;
+            margin: 0 4px;
+
+            &.active {
+              background-color: nb-theme(background-primary-color-1);
+              border-color: nb-theme(background-primary-color-1);
+              color: white;
+            }
+          }
+        }
+
+        .fc-next-button,
+        .fc-prev-button {
+          border-radius: nb-theme(button-rectangle-border-radius);
+          font-size: 12px;
+          padding: 0;
+          background-color: nb-theme(background-primary-color-1);
+          border-color: nb-theme(background-primary-color-1);
+          margin: 0 4px;
+
+          span {
+            padding: 8px 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          }
+        }
+
+        .fc-today-button {
+          border-color: rgba(126, 126, 143, 0.5);
+          border-width: 2px;
+          background-color: transparent;
+          color: rgba(126, 126, 143, 1);
+          padding: 8px 24px;
+          font-style: normal;
+          font-weight: 600;
+          font-size: 12px;
+          line-height: 11px;
+          border-radius: nb-theme(button-rectangle-border-radius);
+          text-transform: capitalize;
+        }
+      }
+    }
+
+    .btn-primary:focus {
+      box-shadow: 0 0 0 0.2rem nb-theme(color-primary-transparent-default) !important;
+    }
+
+    /*table*/
+
+    thead .fc-col-header-cell-cushion {
+      font-size: 12px;
+      font-weight: 400;
+      line-height: 15px;
+      letter-spacing: 0em;
+      text-align: left;
+      text-decoration: none;
+      padding: 4px 10px;
+    }
+
+    table {
+      border-spacing: 4px !important;
+      border-collapse: separate !important;
+      border: none !important;
+
+      table {
+        border-spacing: 4px !important;
+        border-collapse: separate !important;
+        border: none !important;
+
+        .fc-col-header {
+          background-color: transparent;
+        }
+
+        th.fc-col-header-cell {
+          border: none;
+          border-radius: nb-theme(border-radius);
+          background-color: rgba($color: white, $alpha: 0.75);
+          padding: 11px 15px 11px 10px;
+        }
+
+        th.fc-timegrid-axis {
+          border: none;
+        }
+
+        .fc .fc-timegrid-divider {
+          padding: 0;
+        }
+
+        td.fc-timegrid-slot-lane {
+          background-color: rgba($color: white, $alpha: 0.25);
+          border-radius: nb-theme(border-radius);
+        }
+
+        td[role='gridcell'].fc-timegrid-col {
+          background-color: rgba($color: white, $alpha: 0.25);
+          border-radius: nb-theme(border-radius);
+        }
+      }
+    }
+
+    a {
+      text-decoration: none;
+    }
+  }
+
+  .fc .fc-scrollgrid-section-sticky > * {
+    background: unset !important;
+  }
+
+  table-bordered th,
+  .table-bordered td {
+    border: none;
+  }
+
+  .fc .fc-timegrid-divider {
+    display: none;
+  }
+
+  .fc-daygrid-event-dot {
+    width: 7px !important;
+    height: 7px !important;
+    border-radius: 32px !important;
+    border-width: 2px !important;
+    border-color: nb-theme(background-primary-color-1) !important;
+
+    font-family: 'Font Awesome 5 Pro' !important;
+    font-style: normal !important;
+    font-weight: 400 !important;
+    font-size: 7px !important;
+    line-height: 7px !important;
+    /* identical to box height */
+
+    display: flex !important;
+    align-items: center !important;
+
+    /* Inside auto layout */
+
+    flex: none !important;
+    order: 0 !important;
+    flex-grow: 0 !important;
+  }
+
+  .fc-event {
+    background-color: rgba(126, 126, 143, 0.1);
+    border-radius: nb-theme(border-radius);
+
+    &.fc-v-event {
+      background-color: nb-theme(gauzy-background-transparent) !important;
+      border-color: nb-theme(gauzy-background-transparent) !important;
+    }
+  }
+
+  .fc-day-today .fc-daygrid-day-number {
+    background-color: nb-theme(background-primary-color-1) !important;
+    color: white !important;
+    border-radius: 50%;
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .fc .fc-timegrid-slot-minor {
+    border: unset !important;
+  }
+
+  .fc-h-event {
+    background-color: nb-theme(background-primary-color-1) !important;
+  }
+
+  .fc .fc-timegrid-slot-label,
+  .fc .fc-timegrid-axis-frame,
+  .fc .fc-daygrid-day-frame,
+  .fc fc-timegrid-col-bg > * {
+    background-color: rgba($color: white, $alpha: 0.5);
+    border-radius: nb-theme(border-radius);
+  }
+
+  .fc .fc-daygrid-day.fc-day-today {
+    border-radius: nb-theme(border-radius);
+  }
+}
+
+@mixin nb-tabset-overrides() {
+  nb-tabset .tabset .tab.active a.tab-link,
+  nb-route-tabset .route-tabset .route-tab.active a.tab-link {
+    border-radius: nb-theme(border-radius) nb-theme(border-radius) 0 0;
+    display: flex;
+    align-items: center;
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 16px;
+    letter-spacing: 0em;
+    text-align: center;
+    color: var(--text-primary-color);
+
+    nb-icon {
+      svg {
+        fill: var(--text-primary-color);
+      }
+    }
+  }
+
+  nb-tabset .tabset .tab a.tab-link,
+  nb-route-tabset .route-tabset .route-tab a.tab-link {
+    display: flex;
+    align-items: center;
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 16px;
+    letter-spacing: 0em;
+    text-align: center;
+    color: var(--gauzy-text-color-2);
+
+    nb-icon {
+      svg {
+        fill: var(--gauzy-text-color-2);
+      }
+    }
+
+    &:hover {
+      color: var(--text-primary-color);
+
+      nb-icon {
+        svg {
+          fill: var(--text-primary-color);
+        }
+      }
+    }
+  }
+}

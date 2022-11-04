@@ -20,7 +20,8 @@ import {
 	SettingsModule,
 	ScreenCaptureModule,
 	TimeTrackerModule,
-	SetupModule
+	SetupModule,
+	ElectronService
 } from '@gauzy/desktop-ui-lib';
 import { NbCardModule, NbButtonModule } from '@nebular/theme';
 import { RouterModule } from '@angular/router';
@@ -37,7 +38,7 @@ import { RouterModule } from '@angular/router';
 		BrowserAnimationsModule,
 		RouterModule,
 		AppRoutingModule,
-		NbThemeModule.forRoot({ name: 'default' }),
+		NbThemeModule.forRoot({ name: 'gauzy-light' }),
 		SetupModule,
 		TimeTrackerModule,
 		NgxElectronModule,
@@ -48,7 +49,7 @@ import { RouterModule } from '@angular/router';
 		ImageViewerModule,
 		NbDatepickerModule.forRoot()
 	],
-	providers: [AppService, HttpClientModule, NbDialogService],
+	providers: [AppService, HttpClientModule, NbDialogService, ElectronService],
 	bootstrap: [AppComponent]
 })
 export class AppModule {}

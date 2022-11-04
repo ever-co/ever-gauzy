@@ -1,7 +1,7 @@
 <nb-layout center>
 	<nb-layout-column class="top-bottom-space">
 		<nb-card class="card-full-height">
-			<nb-card-body>
+			<nb-card-body class="main-card-body">
 				<nb-stepper orientation="horizontal">
 					<nb-step [label]="labelOne">
 						<ng-template #labelOne>WELCOME</ng-template>
@@ -10,12 +10,13 @@
 								<img [src]="gauzyIcon" class="margin-icon" />
 							</div>
 							<div class="col-12 text-center margin-content">
-								<h4>Welcome to</h4>
-								<h4>{{welcomeTitle}}</h4>
-							</div>
-							<div class="col-12 text-center margin-content">
 								<div class="row">
-									<div class="col-10 text-center col-center">
+									<div class="col-9 text-justify col-center">
+										<h4>{{welcomeTitle}}</h4>
+									</div>
+								</div>
+								<div class="row">
+									<div class="col-9 text-justify col-center">
 										<p>
 											{{welcomeLabel}}
 										</p>
@@ -29,7 +30,7 @@
 									nbButton
 									nbStepperNext
 								>
-									LET'S GO
+									Let's go
 								</button>
 							</div>
 						</div>
@@ -132,7 +133,7 @@
 										icon="arrow-back-outline"
 										class="icon-medium"
 									></nb-icon
-									>BACK
+									>Back
 								</button>
 							</div>
 							<div class="col-2 btn-fixed pull-right">
@@ -146,7 +147,7 @@
 										!desktopFeatures.timeTracking
 									"
 								>
-									CONTINUE<nb-icon
+									Continue<nb-icon
 										icon="arrow-forward-outline"
 										class="icon-medium"
 									></nb-icon>
@@ -320,7 +321,7 @@
 										icon="arrow-back-outline"
 										class="icon-medium"
 									></nb-icon
-									>BACk
+									>Back
 								</button>
 							</div>
 							<div class="col-2 btn-fixed pull-right">
@@ -521,7 +522,7 @@
 										icon="arrow-back-outline"
 										class="icon-medium"
 									></nb-icon
-									>BACK
+									>Back
 								</button>
 							</div>
 							<div class="col-2 btn-fixed pull-right">
@@ -536,7 +537,7 @@
 											: validation()
 									"
 								>
-									{{ connectivity.live ? 'Save' : 'CONTINUE'
+									{{ connectivity.live ? 'Save' : 'Continue'
 									}}<nb-icon
 										icon="arrow-forward-outline"
 										class="icon-medium"
@@ -946,7 +947,7 @@
 										icon="arrow-back-outline"
 										class="icon-medium"
 									></nb-icon
-									>BACK
+									>Back
 								</button>
 							</div>
 							<div class="col-2 btn-fixed"></div>
@@ -982,7 +983,7 @@
 											[disabled]="!buttonSave"
 											(click)="saveChange()"
 										>
-											SAVE<nb-icon
+											Save<nb-icon
 												icon="save"
 												class="icon-medium"
 											></nb-icon>

@@ -187,7 +187,7 @@ export class SetupComponent implements OnInit {
 
 	runApp: boolean = false;
 	welcomeTitle: string =
-		'Ever® Gauzy™ - Open-Source Business Management Platform (ERP/CRM/HRM)';
+		'Welcome to Ever® Gauzy™ - Open-Source Business Management Platform (ERP/CRM/HRM)';
 	welcomeLabel: string = `
 		Gauzy Desktop App provides the full
 		functionality of the Gauzy Platform
