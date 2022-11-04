@@ -1,3 +1,5 @@
+$border-radius: calc(2 * var(--border-radius));
+
 .button-at-bottom {
   bottom: 0;
 }
@@ -70,9 +72,9 @@
 }
 
 .card-item {
-  border-radius: 15px;
+  border-radius: $border-radius;
   text-align: left;
-  box-shadow: 0px 7px 10px #00000029;
+  box-shadow: var(--gauzy-shadow);
 }
 
 .icon-item {
@@ -88,18 +90,19 @@
   background: #f2f6ff 0 0 no-repeat padding-box;
   text-align: center;
   padding-top: 40px;
-  border-radius: 0 15px 15px 0;
+  border-radius: 0 $border-radius $border-radius 0;
   position: relative;
   left: -15px;
 }
 
 .card-item ::ng-deep nb-card-body {
   padding: 0;
+  overflow: unset;
 }
 
 .card-item-label {
   font-size: 18px;
-  font-weight: 600er;
+  font-weight: 600;
 }
 
 .btn-fixed {
@@ -120,9 +123,9 @@
 }
 
 .card-small-item {
-  border-radius: 15px;
+  border-radius: $border-radius;
   text-align: left;
-  box-shadow: 0px 7px 10px #00000029;
+  box-shadow: var(--gauzy-shadow);
 }
 
 .icon-connectivity {
@@ -207,4 +210,12 @@
   font-weight: 600;
   height: 56px;
   width: 120px;
+}
+
+.main-card-body{
+  background-color: var(--gauzy-card-2);
+}
+
+h4 {
+  font-weight: 600;
 }
