@@ -197,7 +197,7 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	@Column({ default: true })
 	allowTrackInactivity?: boolean;
 
-	@Column({ default: 1 })
+	@Column({ default: 10 })
 	inactivityTimeLimit?: number;
 
 	@Column({ default: 1 })
