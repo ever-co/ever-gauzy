@@ -20,21 +20,22 @@ export const DEFAULT_DATE_PICKER_CONFIG: IDatePickerConfig = {
 	isDisableFutureDate: false
 };
 
+export const DEFAULT_DATE_RANGE: IDateRangePicker = {
+	startDate: moment().startOf(DEFAULT_DATE_PICKER_CONFIG.unitOfTime).toDate(),
+	endDate: moment().endOf(DEFAULT_DATE_PICKER_CONFIG.unitOfTime).toDate(),
+	isCustomDate: false
+}
+
 @Injectable({
 	providedIn: 'root'
 })
 export class DateRangePickerBuilderService {
-
 	public _datePickerConfig$: BehaviorSubject<IDatePickerConfig> = new BehaviorSubject(DEFAULT_DATE_PICKER_CONFIG);
 	public datePickerConfig$: Observable<IDatePickerConfig> = this._datePickerConfig$.asObservable();
 
-	public dates$: BehaviorSubject<IDateRangePicker> = new BehaviorSubject({
-		startDate: moment().startOf(DEFAULT_DATE_PICKER_CONFIG.unitOfTime).toDate(),
-		endDate: moment().endOf(DEFAULT_DATE_PICKER_CONFIG.unitOfTime).toDate(),
-		isCustomDate: false
-	});
+	public dates$: BehaviorSubject<IDateRangePicker> = new BehaviorSubject(DEFAULT_DATE_RANGE);
 
-	public _selectedDateRange$: BehaviorSubject<IDateRangePicker> = new BehaviorSubject(null);
+	public _selectedDateRange$: BehaviorSubject<IDateRangePicker> = new BehaviorSubject(DEFAULT_DATE_RANGE);
 	public selectedDateRange$: Observable<IDateRangePicker> = this._selectedDateRange$.asObservable();
 
 	constructor() {}

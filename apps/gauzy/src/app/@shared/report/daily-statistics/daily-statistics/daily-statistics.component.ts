@@ -150,8 +150,8 @@ export class DailyStatisticsComponent extends BaseSelectorFilterComponent
 		});
 	}
 
-	get period() {
-		if (this.request) {
+	public get period() {
+		if (this.request && this.organization) {
 			const { startDate, endDate } = this.request;
 			const endWork = moment(this.organization.defaultEndTime, 'HH:mm');
 			const startWork = moment(
