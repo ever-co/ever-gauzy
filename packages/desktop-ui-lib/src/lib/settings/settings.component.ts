@@ -48,8 +48,8 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	appName: string = this.electronService.remote.app.getName();
 	menus =
 		this.appName === 'gauzy-server'
-			? ['Update', 'Advanced Setting']
-			: ['Screen Capture', 'Timer', 'Update', 'Advanced Setting'];
+			? ['Update', 'Advanced Setting', 'About']
+			: ['Screen Capture', 'Timer', 'Update', 'Advanced Setting', 'About'];
 	gauzyIcon =
 		this.appName === 'gauzy-desktop-timer' ||
 		this.appName === 'gauzy-server'
@@ -322,7 +322,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		}
 	];
 
-	selectedMenu = 'Screen Capture';
+	selectedMenu = this.appName === 'gauzy-server' ? 'Advanced Setting' : 'Screen Capture';
 
 	monitorOptionSelected = null;
 	appSetting = null;
@@ -580,6 +580,10 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		});
 	}
 
+	toggleAutomaticUpdate(value) {
+		this.updateSetting(value, 'automaticUpdate');
+	}
+
 	restartApp() {
 		if (this.appName === 'gauzy-server' && this.serverIsRunning) {
 			this.restartDisable = true;
@@ -758,5 +762,10 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 
 	public togglePreventDisplaySleep(event: boolean): void {
 		this.updateSetting(event, 'preventDisplaySleep');
+	}
+
+	public openLink(){
+		const url = 'https://gauzy.co';
+		this.electronService.shell.openExternal(url);
 	}
 }

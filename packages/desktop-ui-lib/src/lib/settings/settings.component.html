@@ -85,10 +85,12 @@
 					<nb-card>
 						<nb-card-body>
 							<nb-toggle [(ngModel)]="screenshotNotification"
-								(ngModelChange)="toggleNotificationChange($event)" status="basic"> Detailled Notification
+								(ngModelChange)="toggleNotificationChange($event)" status="basic"> Detailled
+								Notification
 							</nb-toggle>
 							<nb-toggle [checked]="!screenshotNotification"
-								(checkedChange)="toggleSimpleNotificationChange($event)" status="basic"> Simple Notification
+								(checkedChange)="toggleSimpleNotificationChange($event)" status="basic"> Simple
+								Notification
 							</nb-toggle>
 						</nb-card-body>
 					</nb-card>
@@ -108,8 +110,8 @@
 				<div class="col-10">
 					<nb-card>
 						<nb-card-body>
-							<nb-toggle [checked]="muted"
-									   (checkedChange)="toggleNotificationSoundChange($event)" status="basic"> Muted
+							<nb-toggle [checked]="muted" (checkedChange)="toggleNotificationSoundChange($event)"
+								status="basic"> Muted
 								Notification
 							</nb-toggle>
 						</nb-card-body>
@@ -133,18 +135,17 @@
 					<nb-card>
 						<nb-card-body>
 							<nb-select class="mb-3" placeholder="Select Period" [(ngModel)]="selectedPeriod"
-									   (ngModelChange)="selectPeriod($event)" [disabled]="appSetting.timerStarted">
+								(ngModelChange)="selectPeriod($event)" [disabled]="appSetting.timerStarted">
 								<nb-option *ngFor="let item of periodOption" [value]="item">{{ item }}Minute
 								</nb-option>
 							</nb-select>
 							<nb-toggle [(ngModel)]="appSetting.randomScreenshotTime"
-									   (ngModelChange)="toggleRandomScreenshot($event)" status="basic"
-									   [disabled]="appSetting.timerStarted">Random Screenshot Time
+								(ngModelChange)="toggleRandomScreenshot($event)" status="basic"
+								[disabled]="appSetting.timerStarted">Random Screenshot Time
 							</nb-toggle>
 							<nb-toggle [(ngModel)]="appSetting.trackOnPcSleep"
-									   (ngModelChange)="toggleTrackOnPcSleep($event)"
-									   [disabled]="appSetting.timerStarted"
-									   status="basic">Track Time when PC locked
+								(ngModelChange)="toggleTrackOnPcSleep($event)" [disabled]="appSetting.timerStarted"
+								status="basic">Track Time when PC locked
 							</nb-toggle>
 						</nb-card-body>
 					</nb-card>
@@ -165,8 +166,8 @@
 					<nb-card>
 						<nb-card-body>
 							<nb-toggle [(ngModel)]="appSetting.preventDisplaySleep"
-									   (ngModelChange)="togglePreventDisplaySleep($event)" status="basic"
-									   [disabled]="appSetting.timerStarted">Prevent display sleep
+								(ngModelChange)="togglePreventDisplaySleep($event)" status="basic"
+								[disabled]="appSetting.timerStarted">Prevent display sleep
 							</nb-toggle>
 						</nb-card-body>
 					</nb-card>
@@ -175,57 +176,85 @@
 		</ng-container>
 		<div class="row" *ngIf="selectedMenu === 'Update'">
 			<div class="col-12">
-				<nb-card class="card-full-height">
-					<nb-card-body>
-						<div class="row update-setting center-content">
-							<div class="col-12 text-center margin-content">
-								<img [src]="gauzyIcon" class="margin-icon" />
-							</div>
-							<div class="col-12 version-text">
-								<span>Version {{ version }}</span>
-							</div>
-							<div class="col-12 button-update" *ngIf="!downloadFinish">
-								<button nbButton [disabled]="loading" status="primary" class="button-big"
-									(click)="checkForUpdate()">
-									Check Update<nb-icon icon="sync-outline" [class]="
-											loading
-												? 'icon-medium icon-spin'
-												: 'icon-medium'
-										"></nb-icon>
-								</button>
-							</div>
-							<div class="col-12 button-update" *ngIf="downloadFinish">
-								<button nbButton status="primary" class="button-big" (click)="restartAndUpdate()">
-									Update Now<nb-icon icon="arrow-circle-up-outline" class="icon-medium"></nb-icon>
-								</button>
-							</div>
-							<div class="col-12 update-message" *ngIf="notAvailable">
-								<span class="update-message-content">{{ message }}</span>
-							</div>
-							<div class="col-12 update-message" *ngIf="showProgressBar">
-								<nb-progress-bar [value]="progressDownload" status="primary" [displayValue]="true">
-								</nb-progress-bar>
-							</div>
-							<div class="col-12 text-center update-message" *ngIf="loading">
-								<nb-accordion multi>
-									<nb-accordion-item #logUpdate [expanded]="logIsOpen"
-										(collapsedChange)="logBoxChange($event)">
-										<nb-accordion-item-header>
-											Update Logs
-										</nb-accordion-item-header>
-										<nb-accordion-item-body class="log-box">
-											<div class="log-content" #logbox>
-												<p class="content-text" *ngFor="let content of logContents$ | async">
-													{{content}}
-												</p>
-											</div>
-										</nb-accordion-item-body>
-									</nb-accordion-item>
-								</nb-accordion>
-							</div>
-						</div>
-					</nb-card-body>
-				</nb-card>
+				<div class="row">
+					<div class="col-12">
+						<h4>Update</h4>
+					</div>
+				</div>
+				<div class="row">
+					<div class="col-12">
+						<h6>Automatic Update</h6>
+					</div>
+				</div>
+				<div class="row">
+					<div class="col-10">
+						<p>Enable automatic update check, in order to run a request to check if a new version is
+							available and notify</p>
+					</div>
+				</div>
+				<div class="row notification">
+					<div class="col-10">
+						<nb-card>
+							<nb-card-body>
+								<nb-toggle [(ngModel)]="appSetting.automaticUpdate"
+									(ngModelChange)="toggleAutomaticUpdate($event)" status="basic"
+									[disabled]="appSetting.timerStarted">Automatically keep up to date
+								</nb-toggle>
+							</nb-card-body>
+						</nb-card>
+					</div>
+				</div>
+				<div class="row">
+					<div class="col-10">
+						<h6>Check & update your app version</h6>
+					</div>
+				</div>
+				<div class="row">
+					<div class="col-10">
+						<p>You can check for updates and tap the update button.</p>
+					</div>
+				</div>
+				<div class="row update-setting center-content">
+					<div class="col-12 button-update" *ngIf="!downloadFinish">
+						<button nbButton [disabled]="loading" status="primary" class="button-big"
+							(click)="checkForUpdate()">
+							Check Update<nb-icon icon="sync-outline" [class]="
+															loading
+																? 'icon-medium icon-spin'
+																: 'icon-medium'
+														"></nb-icon>
+						</button>
+					</div>
+					<div class="col-12 button-update" *ngIf="downloadFinish">
+						<button nbButton status="primary" class="button-big" (click)="restartAndUpdate()">
+							Update Now<nb-icon icon="arrow-circle-up-outline" class="icon-medium"></nb-icon>
+						</button>
+					</div>
+					<div class="col-12 update-message" *ngIf="notAvailable">
+						<span class="update-message-content">{{ message }}</span>
+					</div>
+					<div class="col-12 update-message" *ngIf="showProgressBar">
+						<nb-progress-bar [value]="progressDownload" status="primary" [displayValue]="true">
+						</nb-progress-bar>
+					</div>
+					<div class="col-12 text-center update-message" *ngIf="loading">
+						<nb-accordion multi>
+							<nb-accordion-item #logUpdate [expanded]="logIsOpen"
+								(collapsedChange)="logBoxChange($event)">
+								<nb-accordion-item-header>
+									Update Logs
+								</nb-accordion-item-header>
+								<nb-accordion-item-body class="log-box">
+									<div class="log-content" #logbox>
+										<p class="content-text" *ngFor="let content of logContents$ | async">
+											{{content}}
+										</p>
+									</div>
+								</nb-accordion-item-body>
+							</nb-accordion-item>
+						</nb-accordion>
+					</div>
+				</div>
 			</div>
 		</div>
 		<div class="row" *ngIf="selectedMenu === 'Advanced Setting'">
@@ -437,13 +466,35 @@
 				</nb-tabset>
 			</div>
 		</div>
+		<ng-container class="row" *ngIf="selectedMenu === 'About'">
+			<div class="col-12">
+				<div class="row">
+					<div class="col-12 text-center margin-content">
+						<img [src]="gauzyIcon" class="margin-icon" />
+					</div>
+					<div class="col-12 version-text">
+						<span>Version {{ version }}</span>
+					</div>
+					<div class="col-12 copyright-text text-center">
+						<span>© 2019-Present, Gauzy by Ever Co. LTD.</span>
+					</div>
+					<div class="col-12 copyright-text text-center">
+						<span>All rights reserved.</span>
+					</div>
+					<div class="col-12 copyright-text text-center">
+						<a (click)="openLink()">www.gauzy.co</a>
+					</div>
+				</div>
+			</div>
+		</ng-container>
 	</nb-layout-column>
 	<nb-layout-footer fixed *ngIf="(currentUser$ | async) && appName === 'gauzy-desktop-timer'">
 		<span>
-			<p>
+			<p class="m-0">
 				Signed in as {{ (currentUser$ | async).name }} ({{(currentUser$ | async).email}}) -
 				<a href="javascript:void(0);" (click)="logout()"> Sign Out </a>
 			</p>
+			<div class="text-center footer-version-text">V{{version}}</div>
 		</span>
 	</nb-layout-footer>
 </nb-layout>
