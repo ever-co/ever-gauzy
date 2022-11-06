@@ -48,8 +48,8 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	appName: string = this.electronService.remote.app.getName();
 	menus =
 		this.appName === 'gauzy-server'
-			? ['Update', 'Advanced Setting']
-			: ['Screen Capture', 'Timer', 'Update', 'Advanced Setting'];
+			? ['Update', 'Advanced Setting', 'About']
+			: ['Screen Capture', 'Timer', 'Update', 'Advanced Setting', 'About'];
 	gauzyIcon =
 		this.appName === 'gauzy-desktop-timer' ||
 		this.appName === 'gauzy-server'
@@ -322,7 +322,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		}
 	];
 
-	selectedMenu = 'Screen Capture';
+	selectedMenu = this.appName === 'gauzy-server' ? 'Advanced Setting' : 'Screen Capture';
 
 	monitorOptionSelected = null;
 	appSetting = null;
@@ -334,7 +334,10 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	loading = false;
 	version = '0.0.0';
 	notAvailable = false;
-	message = 'Application Update';
+	message = {
+		text: 'Application Update',
+		status: 'basic'
+	};
 	downloadFinish = false;
 	progressDownload = 0;
 	showProgressBar = false;
@@ -414,8 +417,11 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		this.electronService.ipcRenderer.on('update_not_available', () =>
 			this._ngZone.run(() => {
 				this.notAvailable = true;
-				this.message = 'Update Not Available';
-				this.logContents = this.message;
+				this.message = {
+					text: 'Update Not Available',
+					status: 'basic'
+				};
+				this.logContents = this.message.text;
 				this.scrollToBottom();
 				this.loading = false;
 			})
@@ -424,8 +430,11 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		this.electronService.ipcRenderer.on('error_update', (event, arg) =>
 			this._ngZone.run(() => {
 				this.notAvailable = true;
-				this.message = 'Update Error';
-				this.logContents = this.message;
+				this.message = {
+					text:  'Update Error',
+					status: 'danger'
+				};
+				this.logContents = this.message.text;
 				this.logContents = `error message: ${arg}`;
 				this.scrollToBottom();
 				this.loading = false;
@@ -435,8 +444,11 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		this.electronService.ipcRenderer.on('update_available', () =>
 			this._ngZone.run(() => {
 				this.notAvailable = true;
-				this.message = 'Update Available';
-				this.logContents = this.message;
+				this.message = {
+					text:  'Update Available',
+					status: 'primary'
+				};
+				this.logContents = this.message.text;
 				this.scrollToBottom();
 			})
 		);
@@ -444,8 +456,11 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		this.electronService.ipcRenderer.on('update_downloaded', () =>
 			this._ngZone.run(() => {
 				this.notAvailable = true;
-				this.message = 'Update Download Completed';
-				this.logContents = this.message;
+				this.message = {
+					text: 'Update Download Completed',
+					status: 'success'
+				};
+				this.logContents = this.message.text;
 				this.scrollToBottom();
 				this.showProgressBar = false;
 				this.downloadFinish = true;
@@ -459,7 +474,10 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				this._ngZone.run(() => {
 					this.notAvailable = true;
 					this.showProgressBar = true;
-					this.message = `Update Downloading`;
+					this.message = {
+						text: 'Update Downloading',
+						status: 'warning'
+					};
 					this.progressDownload = Math.floor(Number(arg.percent));
 					this.logContents = `Downloading update ${Math.floor(
 						arg.transferred / 1000000
@@ -578,6 +596,10 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 			autoLaunch: this.autoLaunch,
 			hidden: value
 		});
+	}
+
+	toggleAutomaticUpdate(value) {
+		this.updateSetting(value, 'automaticUpdate');
 	}
 
 	restartApp() {
@@ -758,5 +780,10 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 
 	public togglePreventDisplaySleep(event: boolean): void {
 		this.updateSetting(event, 'preventDisplaySleep');
+	}
+
+	public openLink(){
+		const url = 'https://gauzy.co';
+		this.electronService.shell.openExternal(url);
 	}
 }
