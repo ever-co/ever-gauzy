@@ -55,6 +55,9 @@
   font-size: 12px;
   font-weight: 600;
   color: var(--color-warning-default);
+  position: absolute;
+  right: 10px;
+  top: 30px;
 
   span {
     background-color: var(--color-warning-transparent-300);
