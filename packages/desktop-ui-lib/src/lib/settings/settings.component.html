@@ -211,7 +211,7 @@
 				</div>
 				<div class="row">
 					<div class="col-10">
-						<p>You can check for updates and tap the update button.</p>
+						<p>You can check for updates by tapping the update button.</p>
 					</div>
 				</div>
 				<div class="row update-setting center-content">
@@ -231,7 +231,9 @@
 						</button>
 					</div>
 					<div class="col-12 update-message" *ngIf="notAvailable">
-						<span class="update-message-content">{{ message }}</span>
+						<button nbButton outline [status]="message?.status" size="small" class="update-message-content">
+							{{ message?.text }}
+						</button>
 					</div>
 					<div class="col-12 update-message" *ngIf="showProgressBar">
 						<nb-progress-bar [value]="progressDownload" status="primary" [displayValue]="true">

@@ -141,7 +141,7 @@
 }
 
 .update-message-content {
-  background-color: rgba(100, 100, 100, 0.25);
+  border: unset;
   padding: 2px 4px;
   border-radius: calc(var(--border-radius) / 2);
 }

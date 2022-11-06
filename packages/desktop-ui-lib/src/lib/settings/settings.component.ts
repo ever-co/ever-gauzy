@@ -334,7 +334,10 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	loading = false;
 	version = '0.0.0';
 	notAvailable = false;
-	message = 'Application Update';
+	message = {
+		text: 'Application Update',
+		status: 'basic'
+	};
 	downloadFinish = false;
 	progressDownload = 0;
 	showProgressBar = false;
@@ -414,8 +417,11 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		this.electronService.ipcRenderer.on('update_not_available', () =>
 			this._ngZone.run(() => {
 				this.notAvailable = true;
-				this.message = 'Update Not Available';
-				this.logContents = this.message;
+				this.message = {
+					text: 'Update Not Available',
+					status: 'basic'
+				};
+				this.logContents = this.message.text;
 				this.scrollToBottom();
 				this.loading = false;
 			})
@@ -424,8 +430,11 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		this.electronService.ipcRenderer.on('error_update', (event, arg) =>
 			this._ngZone.run(() => {
 				this.notAvailable = true;
-				this.message = 'Update Error';
-				this.logContents = this.message;
+				this.message = {
+					text:  'Update Error',
+					status: 'danger'
+				};
+				this.logContents = this.message.text;
 				this.logContents = `error message: ${arg}`;
 				this.scrollToBottom();
 				this.loading = false;
@@ -435,8 +444,11 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		this.electronService.ipcRenderer.on('update_available', () =>
 			this._ngZone.run(() => {
 				this.notAvailable = true;
-				this.message = 'Update Available';
-				this.logContents = this.message;
+				this.message = {
+					text:  'Update Available',
+					status: 'primary'
+				};
+				this.logContents = this.message.text;
 				this.scrollToBottom();
 			})
 		);
@@ -444,8 +456,11 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		this.electronService.ipcRenderer.on('update_downloaded', () =>
 			this._ngZone.run(() => {
 				this.notAvailable = true;
-				this.message = 'Update Download Completed';
-				this.logContents = this.message;
+				this.message = {
+					text: 'Update Download Completed',
+					status: 'success'
+				};
+				this.logContents = this.message.text;
 				this.scrollToBottom();
 				this.showProgressBar = false;
 				this.downloadFinish = true;
@@ -459,7 +474,10 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				this._ngZone.run(() => {
 					this.notAvailable = true;
 					this.showProgressBar = true;
-					this.message = `Update Downloading`;
+					this.message = {
+						text: 'Update Downloading',
+						status: 'warning'
+					};
 					this.progressDownload = Math.floor(Number(arg.percent));
 					this.logContents = `Downloading update ${Math.floor(
 						arg.transferred / 1000000
