@@ -426,6 +426,8 @@ app.on('ready', async () => {
 
 app.on('window-all-closed', quit);
 
+app.commandLine.appendSwitch('disable-http2');
+
 ipcMain.on('server_is_ready', () => {
 	LocalStore.setDefaultApplicationSetting();
 	const appConfig = LocalStore.getStore('configs');
@@ -565,6 +567,11 @@ autoUpdater.on('download-progress', (event) => {
 autoUpdater.on('error', (e) => {
 	settingsWindow.webContents.send('error_update', e);
 });
+
+autoUpdater.requestHeaders = {
+	'Cache-Control':
+		'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0'
+};
 
 ipcMain.on('restart_and_update', () => {
 	setImmediate(() => {
