@@ -58,7 +58,7 @@ import {
 	EmployeeWorkStatusComponent
 } from './table-components';
 import { ServerDataSource } from '../../@core/utils/smart-table';
-import {ToggleFilterComponent} from "../../@shared/table-filters";
+import { ToggleFilterComponent } from "../../@shared/table-filters";
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -265,6 +265,11 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 		await firstValueFrom(dialog.onClose);
 	}
 
+	/**
+	 * Delete employee
+	 *
+	 * @param selectedItem
+	 */
 	async delete(selectedItem?: EmployeeViewModel) {
 		if (selectedItem) {
 			this.selectEmployee({
@@ -285,27 +290,21 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 			.subscribe(async (result) => {
 				if (result) {
 					try {
+						if (!this.organization) {
+							return;
+						} 
 						const { id: organizationId } = this.organization;
-						const { tenantId } = this.store.user;
+						await this.employeesService.delete(this.selectedEmployee.id, {
+							organizationId
+						});
 
-						await this.employeesService.setEmployeeProfileStatus(
-							this.selectedEmployee.id,
-							{
-								isActive: false,
-								tenantId,
-								organizationId
-							}
-						);
 						this._employeeStore.employeeAction = {
 							action: CrudActionEnum.DELETED,
 							employees: [this.selectedEmployee as any]
 						};
-						this.toastrService.success(
-							'TOASTR.MESSAGE.EMPLOYEE_INACTIVE',
-							{
-								name: this.selectedEmployee.fullName.trim()
-							}
-						);
+						this.toastrService.success('TOASTR.MESSAGE.EMPLOYEE_INACTIVE', {
+							name: this.selectedEmployee.fullName.trim()
+						});
 					} catch (error) {
 						this.errorHandler.handleError(error);
 					} finally {
@@ -403,7 +402,6 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 		if (!this.organization) {
 			return;
 		}
-
 		if (selectedItem) {
 			this.selectEmployee({
 				isSelected: true,
@@ -414,14 +412,10 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 			const { id: organizationId } = this.organization;
 			const { tenantId } = this.store.user;
 
-			await this.employeesService.setEmployeeProfileStatus(
-				this.selectedEmployee.id,
-				{
-					isActive: true,
-					tenantId,
-					organizationId
-				}
-			);
+			await this.employeesService.resort(this.selectedEmployee.id, {
+				organizationId,
+				tenantId
+			});
 			this.toastrService.success('TOASTR.MESSAGE.EMPLOYEE_ACTIVE', {
 				name: this.selectedEmployee.fullName.trim()
 			});
@@ -497,10 +491,10 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 		this.smartTableSource = new ServerDataSource(this.http, {
 			endPoint: `${API_PREFIX}/employee/pagination`,
 			relations: ['user', 'tags'],
+			withDeleted: this.includeDeleted,
 			where: {
 				organizationId,
 				tenantId,
-				isActive: !this.includeDeleted,
 				...(this.filters.where ? this.filters.where : {})
 			},
 			resultMap: (employee: IEmployee) => {
@@ -550,7 +544,8 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 			averageExpenses,
 			averageBonus,
 			startedWorkOn,
-			isTrackingEnabled
+			isTrackingEnabled,
+			isDeleted
 		} = employee;
 		return {
 			fullName: `${user.name}`,
@@ -574,7 +569,8 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 			averageBonus: Math.floor(averageBonus),
 			bonusDate: Date.now(),
 			startedWorkOn,
-			isTrackingEnabled
+			isTrackingEnabled,
+			isDeleted
 		};
 	}
 
@@ -758,6 +754,5 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 		}
 	}
 
-	ngOnDestroy() {
-	}
+	ngOnDestroy(): void {}
 }

@@ -1,9 +1,9 @@
-import { IDateRangePicker, IEmployee, IPagination, PermissionsEnum } from '@gauzy/contracts';
+import { IBasePerTenantAndOrganizationEntityModel, IDateRangePicker, IEmployee, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { isNotEmpty } from '@gauzy/common';
 import * as moment from 'moment';
-import { Brackets, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
+import { Brackets, Repository, SelectQueryBuilder, UpdateResult, WhereExpressionBuilder } from 'typeorm';
 import { RequestContext } from '../core/context';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { Employee } from './employee.entity';
@@ -176,6 +176,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 					startedWorkOn: true,
 					endWork: true,
 					isTrackingEnabled: true,
+					deletedAt: true,
 					user: {
 						id: true,
 						firstName: true,
@@ -190,6 +191,14 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 				...(
 					(options && options.relations) ? {
 						relations: options.relations
+					} : {}
+				),
+				/**
+				 * Indicates if soft-deleted rows should be included in entity result.
+				 */
+				...(
+					(options && options.withDeleted) ? {
+						withDeleted: Boolean(options.withDeleted)
 					} : {}
 				)
 			});
@@ -273,14 +282,46 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 	}
 
 	/**
-	 * Removed employee
-	 *
-	 * @param employeeId
+	 * Soft Delete employee
+	 * 
+	 * @param employeeId 
+	 * @returns 
 	 */
-	async remove(employeeId: IEmployee['id']) {
+	async softDelete(
+		employeeId: IEmployee['id'],
+		options: IBasePerTenantAndOrganizationEntityModel
+	): Promise<UpdateResult> {
 		try {
-			const entity = await this.findOneByIdString(employeeId);
-			return await this.repository.remove(entity);
+			const { organizationId } = options;
+			await this.findOneByIdString(employeeId, {
+				where: {
+					organizationId
+				}
+			});
+			return await this.repository.softDelete({
+				id: employeeId,
+				organizationId,
+				tenantId: RequestContext.currentTenantId()
+			});
+		} catch (error) {
+			throw new BadRequestException(error);
+		}
+	}
+
+	/**
+	 * Alternatively, You can recover the soft deleted rows by using the restore() method:
+	 */
+	async restoreSoftDelete(
+		employeeId: IEmployee['id'],
+		options: IBasePerTenantAndOrganizationEntityModel
+	): Promise<UpdateResult> {
+		try {
+			const { organizationId } = options;
+			return await this.repository.restore({
+				id: employeeId,
+				organizationId,
+				tenantId: RequestContext.currentTenantId()
+			});
 		} catch (error) {
 			throw new BadRequestException(error);
 		}

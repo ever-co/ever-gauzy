@@ -83,7 +83,7 @@
 				<nb-icon icon="eye-outline" pack="eva"></nb-icon>
 				<span> {{ 'BUTTONS.VIEW' | translate }} </span>
 			</button>
-			<ng-container *ngIf="selectedItem && !selectedItem?.isActive">
+			<ng-container *ngIf="selectedItem && selectedItem?.isDeleted">
 				<button
 					nbButton
 					size="small"
