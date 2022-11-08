@@ -1,10 +1,11 @@
 import {BrowserWindow, dialog, MessageBoxOptions} from "electron";
+import { IDesktopDialog } from './interfaces';
 
-export class DesktopDialog {
+export class DesktopDialog implements IDesktopDialog {
 	private _abortSignal: AbortController;
 	private readonly _title: string;
 	private readonly _message: string;
-	private readonly _options: MessageBoxOptions;
+	private _options: MessageBoxOptions;
 	private readonly _window: BrowserWindow;
 
 	/**
@@ -39,5 +40,17 @@ export class DesktopDialog {
 	 */
 	public close(): void {
 		this._abortSignal.abort();
+	}
+	/**
+	 * Getter for dialog option
+	 */
+	public get options(): MessageBoxOptions {
+		return this._options;
+	}
+	/**
+	 * Setter for dialog option
+	 */
+	public set options(value: MessageBoxOptions) {
+		 this._options = value;
 	}
 }
