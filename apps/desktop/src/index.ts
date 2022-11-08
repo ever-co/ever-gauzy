@@ -136,13 +136,11 @@ const pathWindow = {
 
 let tray = null;
 let isAlreadyRun = false;
-let willQuit = false;
 let onWaitingServer = false;
-let alreadyQuit = false;
 let serverGauzy = null;
 let serverDesktop = null;
 let dialogErr = false;
-let cancellationToken = null;
+let cancellationToken: any;
 
 try {
 	cancellationToken = new CancellationToken();
@@ -508,7 +506,7 @@ ipcMain.on('open_browser', (event, arg) => {
 	shell.openExternal(arg.url);
 });
 
-ipcMain.on('check_for_update', async (event, arg) => {
+ipcMain.on('check_for_update', async () => {
 	const updateFeedUrl = await getUpdaterConfig();
 
 	if (updateFeedUrl) {
@@ -632,7 +630,6 @@ app.on('before-quit', (e) => {
 	if (appSetting && appSetting.timerStarted) {
 		e.preventDefault();
 		setTimeout(() => {
-			willQuit = true;
 			timeTrackerWindow.webContents.send('stop_from_tray', {
 				quitApp: true
 			});
