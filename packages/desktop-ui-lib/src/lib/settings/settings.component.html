@@ -183,7 +183,7 @@
 				</div>
 				<div class="row">
 					<div class="col-12">
-						<h6>Automatic Update</h6>
+						<h6>Automatic Update Check</h6>
 					</div>
 				</div>
 				<div class="row">
@@ -198,7 +198,7 @@
 							<nb-card-body>
 								<nb-toggle [(ngModel)]="appSetting.automaticUpdate"
 									(ngModelChange)="toggleAutomaticUpdate($event)" status="basic"
-									[disabled]="appSetting.timerStarted">Automatically keep up to date
+									[disabled]="appSetting.timerStarted">Enable
 								</nb-toggle>
 							</nb-card-body>
 						</nb-card>
@@ -216,10 +216,10 @@
 				</div>
 				<div class="row update-setting center-content">
 					<div class="col-12 button-update" *ngIf="!downloadFinish">
-						<button nbButton [disabled]="loading" status="primary" class="button-big"
+						<button nbButton [disabled]="loading$ | async" status="primary" class="button-big"
 							(click)="checkForUpdate()">
 							Check Update<nb-icon icon="sync-outline" [class]="
-															loading
+															(loading$ | async)
 																? 'icon-medium icon-spin'
 																: 'icon-medium'
 														"></nb-icon>
@@ -239,7 +239,7 @@
 						<nb-progress-bar [value]="progressDownload" status="primary" [displayValue]="true">
 						</nb-progress-bar>
 					</div>
-					<div class="col-12 text-center update-message" *ngIf="loading">
+					<div class="col-12 text-center update-message" *ngIf="loading$ | async">
 						<nb-accordion multi>
 							<nb-accordion-item #logUpdate [expanded]="logIsOpen"
 								(collapsedChange)="logBoxChange($event)">
