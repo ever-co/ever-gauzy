@@ -63,7 +63,10 @@ import {
 	AppMenu,
 	removeMainListener,
 	removeTimerListener,
-	appUpdateNotification
+	appUpdateNotification,
+	DesktopDialog,
+	DialogConfirmUpgradeDownload,
+	DialogConfirmInstallDownload
 } from '@gauzy/desktop-libs';
 import {
 	createGauzyWindow,
@@ -141,6 +144,7 @@ let serverGauzy = null;
 let serverDesktop = null;
 let dialogErr = false;
 let cancellationToken: any;
+let isDownloadTriggered: boolean = false;
 
 try {
 	cancellationToken = new CancellationToken();
@@ -511,29 +515,41 @@ ipcMain.on('open_browser', (event, arg) => {
 });
 
 ipcMain.on('check_for_update', async () => {
-	const updateFeedUrl = await getUpdaterConfig();
-
-	if (updateFeedUrl) {
-		autoUpdater.setFeedURL({
-			channel: 'latest',
-			provider: 'generic',
-			url: updateFeedUrl
-		});
-		autoUpdater.checkForUpdatesAndNotify().then((downloadPromise) => {
-			if (cancellationToken)
-				cancellationToken = downloadPromise.cancellationToken;
-		});
-	} else {
-		settingsWindow.webContents.send('error_update');
-	}
+	await checkUpdate();
 });
 
-autoUpdater.on('update-available', () => {
+autoUpdater.once('update-available', (event, releaseNotes, releaseName) => {
+	const setting = LocalStore.getStore('appSetting');
 	settingsWindow.webContents.send('update_available');
+	if(setting && !setting.automaticUpdate) return;
+	const dialog = new DialogConfirmUpgradeDownload(
+		new DesktopDialog(
+			'Gauzy',
+			process.platform === 'win32' ? releaseNotes : releaseName,
+			gauzyWindow
+		)
+	);
+	dialog.show().then(async (button) => {
+		if (button.response === 0) {
+			await checkUpdate();
+		}
+	});
 });
 
-autoUpdater.on('update-downloaded', () => {
+autoUpdater.on('update-downloaded', (event, releaseNotes, releaseName) => {
+	const setting = LocalStore.getStore('appSetting');
 	settingsWindow.webContents.send('update_downloaded');
+	if(setting && !setting.automaticUpdate) return;
+	const dialog = new DialogConfirmInstallDownload(
+		new DesktopDialog(
+			'Gauzy',
+			process.platform === 'win32' ? releaseNotes : releaseName,
+			gauzyWindow
+		)
+	);
+	dialog.show().then((button) => {
+		if (button.response === 0) autoUpdater.quitAndInstall();
+	  })
 });
 
 autoUpdater.on('update-not-available', () => {
@@ -717,4 +733,27 @@ async function getUpdaterConfig() {
 async function checForUpdateNotify() {
 	const updateFeedUrl = await getUpdaterConfig();
 	await appUpdateNotification(updateFeedUrl);
+}
+
+const checkUpdate = async () => {
+	autoUpdater.autoDownload = !isDownloadTriggered;
+	const updateFeedUrl = await getUpdaterConfig();
+	if (updateFeedUrl) {
+		autoUpdater.setFeedURL({
+			channel: 'latest',
+			provider: 'generic',
+			url: updateFeedUrl
+		});
+		autoUpdater.checkForUpdatesAndNotify().then((downloadPromise) => {
+			if (cancellationToken){
+				cancellationToken = downloadPromise.cancellationToken;
+			}else {
+				 isDownloadTriggered = true;
+			}
+		}).catch((e) => {
+			console.log('Error occurred', e);
+		});
+	} else {
+		settingsWindow.webContents.send('error_update');
+	}
 }
