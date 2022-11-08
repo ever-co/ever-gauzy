@@ -86,6 +86,7 @@ export interface IEmployee extends IBasePerTenantAndOrganizationEntityModel {
 	fullName?: string;
 	profile_link?: string;
 	isTrackingEnabled: boolean;
+	isDeleted?: boolean;
 }
 
 export type IEmployeeJobsStatisticsResponse = IEmployee &
@@ -211,6 +212,7 @@ export interface EmployeeViewModel {
 	startedWorkOn?: Date;
 	isActive?: boolean;
 	isTrackingEnabled: boolean;
+	isDeleted?: boolean;
 	tags?: ITag[];
 }
 

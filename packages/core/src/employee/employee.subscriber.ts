@@ -28,6 +28,7 @@ export class EmployeeSubscriber implements EntitySubscriberInterface<Employee> {
         if (entity.user) {
             entity.fullName = entity.user.name;
         }
+        entity.isDeleted = !!entity.deletedAt;
     }
 
     /**

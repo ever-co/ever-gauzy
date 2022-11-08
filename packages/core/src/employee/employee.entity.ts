@@ -283,7 +283,8 @@ export class Employee extends TenantOrganizationBaseEntity
 	 * Additional Property
 	 */
 	fullName?: string;
-
+	isDeleted?: boolean;
+	
 	/*
     |--------------------------------------------------------------------------
     | @OneToOne
