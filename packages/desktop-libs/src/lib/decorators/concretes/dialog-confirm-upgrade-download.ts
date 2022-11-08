@@ -10,7 +10,7 @@ export class DialogConfirmUpgradeDownload
 		this.options = {
 			...this.options,
 			buttons: ['Upgrade', 'Skip Now'],
-			detail: 'A new version is  available. Upgrade the application to download the updates.'
+			detail: 'A new version is  available. Upgrade the application by downloading the updates.'
 		};
 	}
 }
