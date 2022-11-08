@@ -331,7 +331,6 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	screenshotNotification = null;
 	config = null;
 	restartDisable = false;
-	loading = false;
 	version = '0.0.0';
 	notAvailable = false;
 	message = {
@@ -365,12 +364,16 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	driverOptions = ['sqlite', 'postgres'];
 	muted: boolean;
 
+	private _loading$ : BehaviorSubject<boolean>;
+
 	constructor(
 		private electronService: ElectronService,
 		private _ngZone: NgZone,
 		private readonly timeTrackerService: TimeTrackerService,
 		private toastrService: NbToastrService
-	) {}
+	) {
+		this._loading$ = new BehaviorSubject(false);
+	}
 
 	ngOnInit(): void {
 		this.electronService.ipcRenderer.send('request_permission');
@@ -423,7 +426,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				};
 				this.logContents = this.message.text;
 				this.scrollToBottom();
-				this.loading = false;
+				this._loading$.next(false);
 			})
 		);
 
@@ -437,7 +440,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				this.logContents = this.message.text;
 				this.logContents = `error message: ${arg}`;
 				this.scrollToBottom();
-				this.loading = false;
+				this._loading$.next(false);
 			})
 		);
 
@@ -464,7 +467,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				this.scrollToBottom();
 				this.showProgressBar = false;
 				this.downloadFinish = true;
-				this.loading = false;
+				this._loading$.next(false);
 			})
 		);
 
@@ -472,6 +475,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 			'download_on_progress',
 			(event, arg) =>
 				this._ngZone.run(() => {
+					this._loading$.next(true);
 					this.notAvailable = true;
 					this.showProgressBar = true;
 					this.message = {
@@ -656,7 +660,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	}
 
 	checkForUpdate() {
-		this.loading = true;
+		this._loading$.next(true);
 		this.logIsOpen = true;
 		this.electronService.ipcRenderer.send('check_for_update');
 	}
@@ -785,5 +789,9 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	public openLink(){
 		const url = 'https://gauzy.co';
 		this.electronService.shell.openExternal(url);
+	}
+
+	public get loading$() {
+		return this._loading$.asObservable();
 	}
 }
