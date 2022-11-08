@@ -332,8 +332,12 @@ const getApiBaseUrl = (configs) => {
 app.on('ready', async () => {
 	// require(path.join(__dirname, 'desktop-api/main.js'));
 	/* set menu */
-	setTimeout(() => {
-		checForUpdateNotify()
+	setTimeout(async () => {
+		try {
+			await checForUpdateNotify();
+		} catch (error) {
+			console.log('Error on checking update:', error);
+		}
 	}, 5000);
 	await knex.raw(`pragma journal_mode = WAL;`).then((res) => console.log(res));
 	await dataModel.createNewTable(knex);
@@ -712,5 +716,5 @@ async function getUpdaterConfig() {
 
 async function checForUpdateNotify() {
 	const updateFeedUrl = await getUpdaterConfig();
-	appUpdateNotification(updateFeedUrl)
+	await appUpdateNotification(updateFeedUrl);
 }
