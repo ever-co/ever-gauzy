@@ -31,6 +31,10 @@
 		"artifactName": "${name}-${version}.${ext}",
 		"productName": "Gauzy Desktop Timer",
 		"copyright": "Copyright © 2019-Present. Ever Co. LTD",
+		"afterSign": "tools/notarize.js",
+		"dmg":{
+			"sign": false
+		},
 		"asar": true,
 		"npmRebuild": true,
 		"asarUnpack": [
@@ -57,6 +61,8 @@
 			"artifactName": "${name}-${version}.${ext}",
 			"hardenedRuntime": true,
 			"gatekeeperAssess": false,
+			"entitlements": "tools/build/entitlements.mas.plist",
+    		"entitlementsInherit": "tools/build/entitlements.mas.plist",
 			"extendInfo": {
 				"NSAppleEventsUsageDescription": "Please allow access to script browser applications to detect the current URL when triggering instant lookup."
 			}

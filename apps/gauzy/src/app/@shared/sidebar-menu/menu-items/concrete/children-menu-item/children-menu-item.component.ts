@@ -23,12 +23,12 @@ export class ChildrenMenuItemComponent implements OnInit {
 	) {}
 
 	ngOnInit(): void {
+		this.checkUrl(this.router.url);
 		this.router.events.subscribe((val) => {
 			if ((val as NavigationEnd).url) {
-				this.checkUrl();
+				this.checkUrl((val as NavigationEnd).url);
 			}
 		});
-		this.checkUrl();
 	}
 
 	public redirectTo(): void {
@@ -43,8 +43,8 @@ export class ChildrenMenuItemComponent implements OnInit {
 		this.redirectTo();
 	}
 
-	public checkUrl() {
-		if (this.router.url === this.item.link) {
+	public checkUrl(url: string) {
+		if (url === this.item.link) {
 			this.focusItemChange.emit({
 				children: this.item,
 				parent: this.parent

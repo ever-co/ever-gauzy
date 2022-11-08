@@ -1,0 +1,116 @@
+@import './gauzy-overrides';
+$orange: rgba(245, 109, 88, 1);
+$gray: rgba(126, 126, 143, 1);
+$green: rgba(37, 184, 105, 1);
+$shadow: 0 0 0 nb-theme(button-outline-width) rgba($color: $green,
+    $alpha: 0.05),
+  inset nb-theme(button-outline-focus-inset-shadow-length) transparent;
+
+:host {
+  i {
+    cursor: pointer;
+  }
+
+  .cancel {
+    width: 100%;
+    display: flex;
+    @include nb-ltr(justify-content, flex-end);
+    @include nb-rtl(justify-content, flex-start);
+    i {
+      font-size: 11px;
+      color: var(--gauzy-text-color-1);
+    }
+  }
+
+  [nbButton].appearance-outline.status-basic {
+    background-color: transparent;
+    border-color: rgba($color: $orange, $alpha: 0.3);
+    border-width: 2px;
+    color: $orange;
+
+    &:hover {
+      border-color: $orange;
+    }
+  }
+
+  [nbButton].appearance-outline:hover {
+    box-shadow: 0 0 0 nb-theme(button-outline-width) rgba($color: $orange, $alpha: 0.05),
+      inset nb-theme(button-outline-focus-inset-shadow-length) transparent;
+  }
+
+  [nbButton].appearance-outline:focus:not(:hover):not(:active) {
+    box-shadow: unset;
+  }
+
+  .title {
+    color: nb-theme(text-primary-color);
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 16px;
+    letter-spacing: 0em;
+  }
+
+  [nbButton].gray.appearance-outline.status-basic {
+    background-color: transparent;
+    border-color: rgba($color: $gray, $alpha: 0.3);
+    border-width: 2px;
+    color: $gray;
+
+    &:hover {
+      border-color: $gray;
+    }
+  }
+
+  [nbButton].gray.appearance-outline:hover {
+    box-shadow: 0 0 0 nb-theme(button-outline-width) rgba($color: $gray, $alpha: 0.05),
+      inset nb-theme(button-outline-focus-inset-shadow-length) transparent;
+  }
+
+  [nbButton].gray.appearance-outline:focus:not(:hover):not(:active) {
+    box-shadow: unset;
+  }
+
+  [nbButton].green.appearance-outline.status-basic {
+    background-color: transparent;
+    border-color: rgba($color: $green, $alpha: 0.3);
+    border-width: 2px;
+    color: $green;
+
+    &:hover {
+      border-color: $green;
+    }
+  }
+
+  [nbButton].green.appearance-outline:hover {
+    box-shadow: $shadow;
+  }
+
+  [nbButton].green.appearance-outline:focus:not(:hover):not(:active) {
+    box-shadow: unset;
+  }
+
+  [nbButton].green.appearance-outline.status-basic[disabled],
+  [nbButton].green.appearance-outline.status-basic.btn-disabled {
+    background-color: nb-theme(button-outline-basic-disabled-background-color);
+    border-color: nb-theme(button-outline-basic-disabled-border-color);
+    color: nb-theme(button-outline-basic-disabled-text-color);
+    box-shadow: unset;
+  }
+
+  [nbButton].primary.appearance-filled.status-primary {
+    color: nb-theme(text-primary-color);
+    border: unset;
+    background-color: nb-theme(color-primary-transparent-default);
+    box-shadow: var(--gauzy-shadow)(0, 0, 0, 0.15);
+  }
+
+  ::ng-deep {
+    input,
+    textarea {
+      @include nb-ltr(text-align, start);
+      @include nb-rtl(text-align, end);
+    }
+  }
+
+  @include dialog(var(--gauzy-card-1), var(--gauzy-sidebar-background-4));
+}

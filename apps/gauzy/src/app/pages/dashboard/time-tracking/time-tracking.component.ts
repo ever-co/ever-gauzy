@@ -424,10 +424,14 @@ export class TimeTrackingComponent extends TranslationBaseComponent
 			return;
 		}
 		const { startDate, endDate } = this.selectedDateRange as IDateRangePicker;
-		if (startDate && endDate) {
+		const endWork = moment(this.organization.defaultEndTime, 'HH:mm');
+		const startWork = moment(this.organization.defaultStartTime, 'HH:mm');
+		const duration = endWork.diff(startWork) / 1000;
+		if (startDate && endDate && this.counts) {
 			const start = moment(startDate);
 			const end = moment(endDate);
-			return end.diff(start, 'days') * 86400;
+			const dayCount = end.diff(start, 'days') + 1;
+			return dayCount * (isNaN(duration) ? 86400 : duration) * this.counts.employeesCount;
 		}
 	}
 

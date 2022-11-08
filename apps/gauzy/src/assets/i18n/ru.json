@@ -1155,7 +1155,8 @@
 			"CASH_FLOW": "Поток Наличных",
 			"WORKING": "Работает",
 			"WORKING_NOW": "Работает сейчас",
-			"NOT_WORKING": "Не работает"
+			"NOT_WORKING": "Не работает",
+			"WORKING_TODAY": "Работа сегодня"
 		},
 		"PROFIT_HISTORY": {
 			"PROFIT_REPORT": "Отчет о прибыли",

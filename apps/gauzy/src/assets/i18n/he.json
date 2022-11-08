@@ -1155,7 +1155,8 @@
 			"CASH_FLOW": "Cash Flow",
 			"WORKING": "Working",
 			"WORKING_NOW": "Working now",
-			"NOT_WORKING": "Not working"
+			"NOT_WORKING": "Not working",
+			"WORKING_TODAY": "Working today"
 		},
 		"PROFIT_HISTORY": {
 			"PROFIT_REPORT": "Profit Report",
