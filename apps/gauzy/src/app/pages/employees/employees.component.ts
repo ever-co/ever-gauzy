@@ -667,7 +667,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 					sort: false
 				},
 				workStatus: {
-					title: this.getTranslation('SM_TABLE.WORK_STATUS'),
+					title: this.getTranslation('SM_TABLE.STATUS'),
 					type: 'custom',
 					class: 'text-center',
 					renderComponent: EmployeeWorkStatusComponent,
