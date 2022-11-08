@@ -592,7 +592,7 @@
 			"LIMITS": "Limits"
 		},
 		"CHECKBOXES": {
-			"INCLUDE_DELETED": "Include Deleted",
+			"INCLUDE_DELETED": "Show Deleted",
 			"INCLUDE_ARCHIVED": "Include Archived",
 			"ONLY_PAST": "Only Past",
 			"ONLY_FUTURE": "Only Future"
