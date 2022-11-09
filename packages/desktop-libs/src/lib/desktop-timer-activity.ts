@@ -14,7 +14,7 @@ export const TimerData = {
 	},
 	insertWindowEvent: async (knex, query, retry = 0) => {
 		try {
-			const sql = `${knex('window-events')
+			const sql = `${await knex('window-events')
 			.insert(query)
 			.toQuery()} 
 			ON CONFLICT (eventId) 
@@ -89,7 +89,7 @@ export const TimerData = {
 	},
 	insertAfkEvent: async (knex, query, retry = 0) => {
 		try {
-			const sql = `${knex('afk-events')
+			const sql = `${await knex('afk-events')
 			.insert(query)
 			.toQuery()} 
 			ON CONFLICT (eventId) 
