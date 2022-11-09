@@ -1103,7 +1103,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			const afkOnly = afkWatch.filter(
 				(afk) => afk.data && afk.data.status === 'afk'
 			);
-			return this.afkCount(afkOnly);
+			return await this.afkCount(afkOnly);
 		} catch (error) {
 			return 0;
 		}
