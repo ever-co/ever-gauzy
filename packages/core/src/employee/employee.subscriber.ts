@@ -51,6 +51,7 @@ export class EmployeeSubscriber implements EntitySubscriberInterface<Employee> {
              */
             if (entity.startedWorkOn) {
                 entity.isTrackingEnabled = true;
+                entity.isActive = true;
             }
         }
     }
@@ -72,6 +73,7 @@ export class EmployeeSubscriber implements EntitySubscriberInterface<Employee> {
             */
             if (entity.endWork) {
                 entity.isTrackingEnabled = false;
+                entity.isActive = false;
             }
         }
     }
