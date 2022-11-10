@@ -150,17 +150,18 @@
 				<nb-icon class="mr-1" icon="edit-outline"></nb-icon
 				>{{ 'BUTTONS.EDIT' | translate }}
 			</button>
-			<button
-				nbButton
-				[disabled]="disableButton || !selectedItem?.isActive"
-				size="small"
-				(click)="delete(selectedItem)"
-				status="basic"
-				class="action"
-				[nbTooltip]="'BUTTONS.DELETE' | translate"
-			>
-				<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
-			</button>
+			<ng-container *ngIf="selectedItem && !selectedItem?.isDeleted">
+				<button
+					nbButton
+					size="small"
+					(throttledClick)="delete(selectedItem)"
+					status="basic"
+					class="action"
+					[nbTooltip]="'BUTTONS.DELETE' | translate"
+				>
+					<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
+				</button>
+			</ng-container>
 		</ng-template>
 	</div>
 </ng-template>
