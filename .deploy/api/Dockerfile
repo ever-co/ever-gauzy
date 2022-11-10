@@ -103,15 +103,14 @@ RUN yarn install --network-timeout 1000000 --frozen-lockfile && yarn cache clean
 
 FROM node:16-alpine3.14 AS prodDependencies
 
-RUN apk --update add bash \
-    && apk add libexecinfo libexecinfo-dev \
-	&& npm i -g npm \
+RUN apk --update add bash && apk add libexecinfo libexecinfo-dev && npm i -g npm \
     && apk add --no-cache --virtual build-dependencies build-base \
-    snappy libheif dos2unix gcc g++ snappy-dev git libgcc libstdc++ linux-headers autoconf automake make nasm python2 py2-setuptools vips-dev vips \
-    && npm install --quiet node-gyp -g \
-	&& npm config set python /usr/bin/python \
-	&& npm install yarn -g --force \
-    && mkdir /srv/gauzy && chown -R node:node /srv/gauzy
+    snappy libheif dos2unix gcc g++ snappy-dev git libgcc libstdc++ linux-headers autoconf automake make nasm python2 py2-setuptools vips-dev vips 
+
+RUN npm install --quiet node-gyp -g
+RUN npm config set python /usr/bin/python
+RUN npm install yarn -g --force
+RUN mkdir /srv/gauzy && chown -R node:node /srv/gauzy
 
 USER node:node
 
