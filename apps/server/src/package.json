@@ -80,7 +80,7 @@
 			"requestedExecutionLevel": "requireAdministrator"
 		},
 		"linux": {
-			"icon": "icon.png",
+			"icon": "linux",
 			"target": [
 				"AppImage",
 				"deb",

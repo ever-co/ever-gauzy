@@ -193,7 +193,7 @@ const createTray = () => {
 		__dirname,
 		'assets',
 		'icons',
-		'icon_16x16.png'
+		'icon.png'
 	));
 	iconNativePath.resize({ width: 16, height: 16 });
 	tray = new Tray(iconNativePath);
