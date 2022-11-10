@@ -1,4 +1,4 @@
-import {IPowerManager} from 'lib/interfaces';
+import {IPowerManager} from '../../interfaces';
 import {BasePowerManagerDecorator} from '../abstracts/base-power-manager-decorator';
 import {powerSaveBlocker} from "electron";
 

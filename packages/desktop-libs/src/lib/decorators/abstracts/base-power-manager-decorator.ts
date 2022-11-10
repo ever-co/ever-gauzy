@@ -1,4 +1,4 @@
-import {IPowerManager} from "lib/interfaces";
+import {IPowerManager} from "../../interfaces";
 
 export abstract class BasePowerManagerDecorator {
 	private readonly _decorator: IPowerManager;

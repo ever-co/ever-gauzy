@@ -160,7 +160,7 @@ export default class TimerHandler {
 
 				if (appSetting.randomScreenshotTime) {
 					if (this.nextScreenshot === this.timeRecordSecond) {
-						this.randomScreenshotUpdate(setupWindow, knex, timeTrackerWindow);
+						await this.randomScreenshotUpdate(setupWindow, knex, timeTrackerWindow);
 					}
 				}
 			} catch (error) {
@@ -280,9 +280,13 @@ export default class TimerHandler {
 	}
 
 	async getSetActivity(knex, setupWindow, lastTimeSlot, timeTrackerWindow, quitApp) {
-		const dataCollection = await this.activitiesCollection(knex, lastTimeSlot);
-		this.takeScreenshotActivities(timeTrackerWindow, lastTimeSlot, dataCollection);
 		// get aw activity
+		try {
+			const dataCollection = await this.activitiesCollection(knex, lastTimeSlot);
+			await this.takeScreenshotActivities(timeTrackerWindow, lastTimeSlot, dataCollection);
+		} catch (error) {
+			console.log('Get AW activity Error', error);
+		}
 	}
 
 	async activitiesCollection(knex, lastTimeSlot) {
@@ -548,20 +552,23 @@ export default class TimerHandler {
 	async createTimer(knex, timeLog) {
 		const project = LocalStore.getStore('project');
 		const info = LocalStore.beforeRequestParams();
-
-		await TimerData.createTimer(knex, {
-			day: moment().format('YYYY-MM-DD'),
-			updated_at: moment(),
-			created_at: moment(),
-			durations: 0,
-			projectid: project.projectId,
-			userId: info.employeeId,
-			timeLogId: timeLog ? timeLog.id : null
-		});
-
-		const [lastSavedTimer] = await TimerData.getLastTimer(knex, info);
-		if (lastSavedTimer) {
-			this.lastTimer = lastSavedTimer;
+		try {
+			await TimerData.createTimer(knex, {
+				day: moment().format('YYYY-MM-DD'),
+				updated_at: moment(),
+				created_at: moment(),
+				durations: 0,
+				projectid: project.projectId,
+				userId: info.employeeId,
+				timeLogId: timeLog ? timeLog.id : null
+			});
+	
+			const [lastSavedTimer] = await TimerData.getLastTimer(knex, info);
+			if (lastSavedTimer) {
+				this.lastTimer = lastSavedTimer;
+			}
+		} catch (error) {
+			console.log('Error create timer', error);
 		}
 	}
 

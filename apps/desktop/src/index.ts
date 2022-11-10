@@ -63,7 +63,10 @@ import {
 	AppMenu,
 	removeMainListener,
 	removeTimerListener,
-	appUpdateNotification
+	appUpdateNotification,
+	DesktopDialog,
+	DialogConfirmUpgradeDownload,
+	DialogConfirmInstallDownload
 } from '@gauzy/desktop-libs';
 import {
 	createGauzyWindow,
@@ -136,13 +139,12 @@ const pathWindow = {
 
 let tray = null;
 let isAlreadyRun = false;
-let willQuit = false;
 let onWaitingServer = false;
-let alreadyQuit = false;
 let serverGauzy = null;
 let serverDesktop = null;
 let dialogErr = false;
-let cancellationToken = null;
+let cancellationToken: any;
+let isDownloadTriggered: boolean = false;
 
 try {
 	cancellationToken = new CancellationToken();
@@ -334,8 +336,12 @@ const getApiBaseUrl = (configs) => {
 app.on('ready', async () => {
 	// require(path.join(__dirname, 'desktop-api/main.js'));
 	/* set menu */
-	setTimeout(() => {
-		checForUpdateNotify()
+	setTimeout(async () => {
+		try {
+			await checForUpdateNotify();
+		} catch (error) {
+			console.log('Error on checking update:', error);
+		}
 	}, 5000);
 	await knex.raw(`pragma journal_mode = WAL;`).then((res) => console.log(res));
 	await dataModel.createNewTable(knex);
@@ -419,6 +425,8 @@ app.on('ready', async () => {
 });
 
 app.on('window-all-closed', quit);
+
+app.commandLine.appendSwitch('disable-http2');
 
 ipcMain.on('server_is_ready', () => {
 	LocalStore.setDefaultApplicationSetting();
@@ -508,30 +516,42 @@ ipcMain.on('open_browser', (event, arg) => {
 	shell.openExternal(arg.url);
 });
 
-ipcMain.on('check_for_update', async (event, arg) => {
-	const updateFeedUrl = await getUpdaterConfig();
-
-	if (updateFeedUrl) {
-		autoUpdater.setFeedURL({
-			channel: 'latest',
-			provider: 'generic',
-			url: updateFeedUrl
-		});
-		autoUpdater.checkForUpdatesAndNotify().then((downloadPromise) => {
-			if (cancellationToken)
-				cancellationToken = downloadPromise.cancellationToken;
-		});
-	} else {
-		settingsWindow.webContents.send('error_update');
-	}
+ipcMain.on('check_for_update', async () => {
+	await checkUpdate();
 });
 
-autoUpdater.on('update-available', () => {
+autoUpdater.once('update-available', (event, releaseNotes, releaseName) => {
+	const setting = LocalStore.getStore('appSetting');
 	settingsWindow.webContents.send('update_available');
+	if(setting && !setting.automaticUpdate) return;
+	const dialog = new DialogConfirmUpgradeDownload(
+		new DesktopDialog(
+			'Gauzy',
+			process.platform === 'win32' ? releaseNotes : releaseName,
+			gauzyWindow
+		)
+	);
+	dialog.show().then(async (button) => {
+		if (button.response === 0) {
+			await checkUpdate();
+		}
+	});
 });
 
-autoUpdater.on('update-downloaded', () => {
+autoUpdater.on('update-downloaded', (event, releaseNotes, releaseName) => {
+	const setting = LocalStore.getStore('appSetting');
 	settingsWindow.webContents.send('update_downloaded');
+	if(setting && !setting.automaticUpdate) return;
+	const dialog = new DialogConfirmInstallDownload(
+		new DesktopDialog(
+			'Gauzy',
+			process.platform === 'win32' ? releaseNotes : releaseName,
+			gauzyWindow
+		)
+	);
+	dialog.show().then((button) => {
+		if (button.response === 0) autoUpdater.quitAndInstall();
+	  })
 });
 
 autoUpdater.on('update-not-available', () => {
@@ -547,6 +567,11 @@ autoUpdater.on('download-progress', (event) => {
 autoUpdater.on('error', (e) => {
 	settingsWindow.webContents.send('error_update', e);
 });
+
+autoUpdater.requestHeaders = {
+	'Cache-Control':
+		'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0'
+};
 
 ipcMain.on('restart_and_update', () => {
 	setImmediate(() => {
@@ -632,7 +657,6 @@ app.on('before-quit', (e) => {
 	if (appSetting && appSetting.timerStarted) {
 		e.preventDefault();
 		setTimeout(() => {
-			willQuit = true;
 			timeTrackerWindow.webContents.send('stop_from_tray', {
 				quitApp: true
 			});
@@ -715,5 +739,28 @@ async function getUpdaterConfig() {
 
 async function checForUpdateNotify() {
 	const updateFeedUrl = await getUpdaterConfig();
-	appUpdateNotification(updateFeedUrl)
+	await appUpdateNotification(updateFeedUrl);
+}
+
+const checkUpdate = async () => {
+	autoUpdater.autoDownload = !isDownloadTriggered;
+	const updateFeedUrl = await getUpdaterConfig();
+	if (updateFeedUrl) {
+		autoUpdater.setFeedURL({
+			channel: 'latest',
+			provider: 'generic',
+			url: updateFeedUrl
+		});
+		autoUpdater.checkForUpdatesAndNotify().then((downloadPromise) => {
+			if (cancellationToken){
+				cancellationToken = downloadPromise.cancellationToken;
+			}else {
+				 isDownloadTriggered = true;
+			}
+		}).catch((e) => {
+			console.log('Error occurred', e);
+		});
+	} else {
+		settingsWindow.webContents.send('error_update');
+	}
 }
