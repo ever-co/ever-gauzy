@@ -6,7 +6,7 @@ import {
     RemoveEvent,
     UpdateEvent
 } from "typeorm";
-import { isNotEmpty, retrieveNameFromEmail } from "@gauzy/common";
+import { retrieveNameFromEmail } from "@gauzy/common";
 import { Employee } from "./employee.entity";
 import { generateSlug, getUserDummyImage } from "./../core/utils";
 import { Organization } from "./../core/entities/internal";
@@ -46,9 +46,9 @@ export class EmployeeSubscriber implements EntitySubscriberInterface<Employee> {
                 this.createSlug(entity);
             }
             /**
-             * If Date when started work filled then enabled time tracking functionality for the employee. 
+             * If Date when started work filled then enabled time tracking functionality for the employee.
              */
-            if (isNotEmpty(entity.startedWorkOn)) {
+            if (entity.startedWorkOn) {
                 entity.isTrackingEnabled = true;
             }
         }
@@ -61,15 +61,15 @@ export class EmployeeSubscriber implements EntitySubscriberInterface<Employee> {
         if (event.entity) {
             const { entity } = event;
             /**
-             * If Date when started work filled then enabled time tracking functionality for the employee. 
+             * If Date when started work filled then enabled time tracking functionality for the employee.
              */
-            if (isNotEmpty(entity.startedWorkOn)) {
+            if (entity.startedWorkOn) {
                 entity.isTrackingEnabled = true;
             }
             /**
-            * If Date when ended work filled then disable time tracking functionality for the employee. 
+            * If Date when ended work filled then disable time tracking functionality for the employee.
             */
-            if (isNotEmpty(entity.endWork)) {
+            if (entity.endWork) {
                 entity.isTrackingEnabled = false;
             }
         }
