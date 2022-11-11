@@ -283,9 +283,9 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 
 	/**
 	 * Soft Delete employee
-	 * 
-	 * @param employeeId 
-	 * @returns 
+	 *
+	 * @param employeeId
+	 * @returns
 	 */
 	async softDelete(
 		employeeId: IEmployee['id'],

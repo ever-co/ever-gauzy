@@ -278,6 +278,7 @@ export class EmployeeController extends CrudController<Employee> {
 								relations: params.relations
 							} : {}
 						),
+						withDeleted: true
 					}
 				)
 			);
@@ -426,9 +427,9 @@ export class EmployeeController extends CrudController<Employee> {
 
 	/**
 	 * Restore soft deleted employee
-	 * 
-	 * @param employeeId 
-	 * @returns 
+	 *
+	 * @param employeeId
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'Resort soft delete record' })
 	@ApiResponse({

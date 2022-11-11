@@ -5,7 +5,7 @@
 				<ng-container *ngFor="let employee of groups; let i = index">
 					<a
 						class="avatar"
-						*ngIf="employee.user"
+						*ngIf="employee?.user"
 						(click)="
 							selectEmployee(
 								employee,
