@@ -145,7 +145,7 @@ export function isNullOrUndefined<T>(string: T | null | undefined): string is nu
  *
  * @returns {Array[]}
  */
- export function chunks(items: any[], size: number): any[] {
+export function chunks(items: any[], size: number): any[] {
 	const chunks = [];
 	items = [].concat(...items);
 	while (items.length) {
