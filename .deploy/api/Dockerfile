@@ -63,15 +63,16 @@ LABEL org.opencontainers.image.source https://github.com/ever-co/ever-gauzy
 
 ENV CI=true
 
-RUN apk --update add bash \
-    && apk add libexecinfo libexecinfo-dev \
-	&& npm i -g npm \
+# Set Python interpreter for `node-gyp` to use
+ENV PYTHON /usr/bin/python
+
+RUN apk --update add bash && apk add libexecinfo libexecinfo-dev && npm i -g npm \
     && apk add --no-cache --virtual build-dependencies build-base \
-    snappy libheif dos2unix gcc g++ snappy-dev git libgcc libstdc++ linux-headers autoconf automake make nasm python2 py2-setuptools vips-dev vips \
-    && npm install --quiet node-gyp -g \
-	&& npm config set python /usr/bin/python \
-	&& npm install yarn -g --force \
-    && mkdir /srv/gauzy && chown -R node:node /srv/gauzy
+    snappy libheif dos2unix gcc g++ snappy-dev git libgcc libstdc++ linux-headers autoconf automake make nasm python2 py2-setuptools vips-dev vips
+
+RUN npm install --quiet node-gyp -g
+RUN npm install yarn -g --force
+RUN mkdir /srv/gauzy && chown -R node:node /srv/gauzy
 
 COPY wait .deploy/api/entrypoint.prod.sh .deploy/api/entrypoint.compose.sh /
 RUN chmod +x /wait /entrypoint.compose.sh /entrypoint.prod.sh && dos2unix /entrypoint.prod.sh && dos2unix /entrypoint.compose.sh
@@ -104,15 +105,16 @@ RUN yarn install --network-timeout 1000000 --frozen-lockfile && yarn cache clean
 
 FROM node:16-alpine3.14 AS prodDependencies
 
-RUN apk --update add bash \
-    && apk add libexecinfo libexecinfo-dev \
-	&& npm i -g npm \
+# Set Python interpreter for `node-gyp` to use
+ENV PYTHON /usr/bin/python
+
+RUN apk --update add bash && apk add libexecinfo libexecinfo-dev && npm i -g npm \
     && apk add --no-cache --virtual build-dependencies build-base \
-    snappy libheif dos2unix gcc g++ snappy-dev git libgcc libstdc++ linux-headers autoconf automake make nasm python2 py2-setuptools vips-dev vips \
-    && npm install --quiet node-gyp -g \
-	&& npm config set python /usr/bin/python \
-	&& npm install yarn -g --force \
-    && mkdir /srv/gauzy && chown -R node:node /srv/gauzy
+    snappy libheif dos2unix gcc g++ snappy-dev git libgcc libstdc++ linux-headers autoconf automake make nasm python2 py2-setuptools vips-dev vips 
+
+RUN npm install --quiet node-gyp -g
+RUN npm install yarn -g --force
+RUN mkdir /srv/gauzy && chown -R node:node /srv/gauzy
 
 USER node:node
 
