@@ -80,7 +80,7 @@
 			"requestedExecutionLevel": "requireAdministrator"
 		},
 		"linux": {
-			"icon": "icon.png",
+			"icon": "linux",
 			"target": [
 				"AppImage",
 				"deb",
@@ -108,7 +108,7 @@
 		]
 	},
 	"dependencies": {
-		"sqlite3": "^5.1.1",
+		"sqlite3": "^5.1.2",
 		"electron-store": "^8.0.0",
 		"electron-log": "^4.3.5",
     	"node-notifier": "^8.0.0",
@@ -144,7 +144,7 @@
 	},
   	"optionalDependencies": {
 		"node-mac": "^1.0.1",
-    	"node-windows": "^1.0.0-beta.8"		
+    	"node-windows": "^1.0.0-beta.8"
   	},
 	"pkg": {
 		"assets": [

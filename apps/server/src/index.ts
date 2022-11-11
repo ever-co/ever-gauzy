@@ -29,7 +29,6 @@ import {
 	createSettingsWindow
 } from '@gauzy/desktop-window';
 // import { initSentry } from './sentry';
-import os from 'os';
 import { readFileSync, writeFileSync, accessSync, constants } from 'fs';
 import * as remoteMain from '@electron/remote/main';
 remoteMain.initialize();
@@ -193,7 +192,7 @@ const createTray = () => {
 		__dirname,
 		'assets',
 		'icons',
-		'icon_16x16.png'
+		'icon.png'
 	));
 	iconNativePath.resize({ width: 16, height: 16 });
 	tray = new Tray(iconNativePath);
@@ -403,7 +402,7 @@ ipcMain.on('running_state', (event, arg) => {
 })
 
 ipcMain.on('loading_state', (event, arg) => {
-	const trayContextMenu = contextMenu();;
+	const trayContextMenu = contextMenu();
 	trayContextMenu[3].enabled = false;
 	trayContextMenu[4].enabled = false;
 	tray.setContextMenu(Menu.buildFromTemplate(trayContextMenu))
