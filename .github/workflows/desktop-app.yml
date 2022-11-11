@@ -22,7 +22,7 @@ jobs:
             - name: Install Node.js, NPM and Yarn
               uses: actions/setup-node@v3
               with:
-                  node-version: 16.17.1
+                  node-version: 18.12.0
 
             - name: Change permissions
               run: 'sudo chown -R $(whoami) ./*'
@@ -34,7 +34,7 @@ jobs:
               run: 'sudo npm install -g npm'
 
             - name: Install latest node-gyp package
-              run: 'sudo npm install --quiet -g node-gyp@latest'
+              run: 'sudo npm install --quiet -g node-gyp@9.3.0'
 
             - name: Install Yarn dependencies
               run: 'yarn install --network-timeout 1000000 --frozen-lockfile'
@@ -71,13 +71,13 @@ jobs:
             - name: Install Node.js, NPM and Yarn
               uses: actions/setup-node@v3
               with:
-                  node-version: 16.17.1
+                  node-version: 18.12.0
 
             - name: Install latest version of NPM
               run: 'sudo npm install -g npm'
 
             - name: Install latest node-gyp package
-              run: 'sudo npm install --quiet -g node-gyp@latest'
+              run: 'sudo npm install --quiet -g node-gyp@9.3.0'
 
             - name: Install Yarn dependencies
               run: 'yarn install --network-timeout 1000000 --frozen-lockfile'
@@ -105,7 +105,7 @@ jobs:
 
         strategy:
             matrix:
-                os: [windows-2019]
+                os: [windows-2022]
 
         steps:
             - name: Check out Git repository
@@ -114,16 +114,13 @@ jobs:
             - name: Install Node.js, NPM and Yarn
               uses: actions/setup-node@v3
               with:
-                  node-version: 16.17.1
+                  node-version: 18.12.0
 
             - name: Install latest version of NPM
               run: 'npm install -g npm'
 
-            - name: Set to use VS 2022
-              run: 'npm config set msvs_version 2022 --global'
-
             - name: Install latest node-gyp package
-              run: 'npm install --quiet -g node-gyp@latest'
+              run: 'npm install --quiet -g node-gyp@9.3.0'
 
             - name: Install Yarn dependencies
               run: 'yarn install --network-timeout 1000000 --frozen-lockfile'
