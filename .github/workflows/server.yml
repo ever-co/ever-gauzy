@@ -122,9 +122,6 @@ jobs:
             - name: Install latest node-gyp package
               run: 'npm install --quiet -g node-gyp@latest'
 
-            - name: Set to use VS 2022
-              run: 'node-gyp configure --msvs_version=2022'
-
             - name: Install Yarn dependencies
               run: 'yarn install --network-timeout 1000000 --frozen-lockfile'
 
