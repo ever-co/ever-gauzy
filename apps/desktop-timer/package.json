@@ -47,7 +47,7 @@
 		"pg-query-stream": "^4.2.3",
 		"rxjs": "^7.4.0",
 		"sound-play": "1.1.0",
-		"sqlite3": "^5.1.1",
+		"sqlite3": "^5.1.2",
 		"underscore": "^1.13.3"
 	}
 }

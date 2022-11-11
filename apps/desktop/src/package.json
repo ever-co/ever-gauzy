@@ -107,7 +107,7 @@
 		]
 	},
 	"dependencies": {
-		"sqlite3": "^5.1.1",
+		"sqlite3": "^5.1.2",
 		"electron-store": "^8.0.0",
 		"electron-log": "^4.3.5",
 		"node-notifier": "^8.0.0",
