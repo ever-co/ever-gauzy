@@ -29,7 +29,6 @@ import {
 	createSettingsWindow
 } from '@gauzy/desktop-window';
 // import { initSentry } from './sentry';
-import os from 'os';
 import { readFileSync, writeFileSync, accessSync, constants } from 'fs';
 import * as remoteMain from '@electron/remote/main';
 remoteMain.initialize();
@@ -403,7 +402,7 @@ ipcMain.on('running_state', (event, arg) => {
 })
 
 ipcMain.on('loading_state', (event, arg) => {
-	const trayContextMenu = contextMenu();;
+	const trayContextMenu = contextMenu();
 	trayContextMenu[3].enabled = false;
 	trayContextMenu[4].enabled = false;
 	tray.setContextMenu(Menu.buildFromTemplate(trayContextMenu))

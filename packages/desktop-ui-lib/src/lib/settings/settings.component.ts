@@ -322,7 +322,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		}
 	];
 
-	selectedMenu = this.appName === 'gauzy-server' ? 'Advanced Setting' : 'Screen Capture';
+	selectedMenu = this.appName === 'gauzy-server' ? 'Update' : 'Screen Capture';
 
 	monitorOptionSelected = null;
 	appSetting = null;
@@ -365,6 +365,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	muted: boolean;
 
 	private _loading$ : BehaviorSubject<boolean>;
+	private _automaticUpdate$: BehaviorSubject<boolean>;
 
 	constructor(
 		private electronService: ElectronService,
@@ -373,6 +374,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		private toastrService: NbToastrService
 	) {
 		this._loading$ = new BehaviorSubject(false);
+		this._automaticUpdate$ = new BehaviorSubject(false);
 	}
 
 	ngOnInit(): void {
@@ -400,6 +402,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				this.muted = setting.mutedNotification;
 				this.autoLaunch = setting.autoLaunch;
 				this.minimizeOnStartup = setting.minimizeOnStartup;
+				this._automaticUpdate$.next(setting.automaticUpdate);
 
 				this.selectPeriod(setting.timer.updatePeriod);
 				if (this.appName !== 'gauzy-server') {
@@ -603,6 +606,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	}
 
 	toggleAutomaticUpdate(value) {
+		this._automaticUpdate$.next(value);
 		this.updateSetting(value, 'automaticUpdate');
 	}
 
@@ -793,5 +797,9 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 
 	public get loading$() {
 		return this._loading$.asObservable();
+	}
+
+	public get automaticUpdate$(): Observable<boolean> {
+		return this._automaticUpdate$.asObservable();
 	}
 }

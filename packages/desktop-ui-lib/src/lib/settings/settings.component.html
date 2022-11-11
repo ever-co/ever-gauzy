@@ -196,9 +196,9 @@
 					<div class="col-10">
 						<nb-card>
 							<nb-card-body>
-								<nb-toggle [(ngModel)]="appSetting.automaticUpdate"
-									(ngModelChange)="toggleAutomaticUpdate($event)" status="basic"
-									[disabled]="appSetting.timerStarted">Enable
+								<nb-toggle [checked]="automaticUpdate$ | async"
+									(checkedChange)="toggleAutomaticUpdate($event)" status="basic"
+									[disabled]="appSetting?.timerStarted">Enable
 								</nb-toggle>
 							</nb-card-body>
 						</nb-card>
