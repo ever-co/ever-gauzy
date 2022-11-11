@@ -273,3 +273,14 @@ export function getDaysBetweenDates(
 
 	return days;
 }
+
+/**
+ * Generating a random integer number with flexible length
+ *
+ * @param length
+ */
+export function generateRandomInteger(length = 6) {
+	return Math.floor(
+		Math.pow(10, length-1) + Math.random() * (Math.pow(10, length) - Math.pow(10, length-1) - 1)
+	);
+}
