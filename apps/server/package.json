@@ -30,9 +30,13 @@
 	},
 	"dependencies": {
 		"@angular/cdk": "13.2.2",
+		"@angular/material": "13.2.2",
 		"@electron/remote": "^2.0.8",
 		"@gauzy/desktop-ui-lib": "^0.1.0",
 		"@grpc/grpc-js": "^1.6.7",
+		"@ngneat/until-destroy": "^9.2.0",
+		"@ngx-translate/core": "^14.0.0",
+		"@ngx-translate/http-loader": "^7.0.0",
 		"@nebular/auth": "^9.0.3",
 		"@nebular/bootstrap": "^9.0.3",
 		"@nebular/eva-icons": "^9.0.3",
@@ -45,12 +49,13 @@
 		"@sentry/tracing": "^6.19.7",
 		"@sentry/types": "^6.19.7",
 		"app-root-path": "^3.0.0",
-		"auto-launch": "5.0.5",
 		"consolidate": "^0.16.0",
 		"electron-log": "^4.4.8",
 		"electron-store": "^8.1.0",
 		"electron-updater": "^5.3.0",
 		"electron-util": "^0.17.2",
+		"electron-notarize": "^1.2.2",
+		"auto-launch": "5.0.5",
 		"form-data": "^3.0.0",
 		"knex": "^0.21.6",
 		"moment": "^2.29.4",
@@ -69,6 +74,7 @@
 		"typeorm-express-query-builder": "https://github.com/ever-co/typeorm-express-query-builder.git"
 	},
 	"optionalDependencies": {
+		"node-linux": "^0.1.12",
 		"node-mac": "^1.0.1",
 		"node-windows": "^1.0.0-beta.8"
 	}
