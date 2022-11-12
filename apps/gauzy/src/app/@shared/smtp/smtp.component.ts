@@ -64,13 +64,14 @@ export class SMTPComponent extends TranslationBaseComponent
 		return fb.group({
 			id: [],
 			organizationId: [],
-			host: [
-				null,
-				Validators.compose([
-					Validators.required,
-					Validators.pattern(patterns.host)
-				])
-			],
+			fromAddress: [null, Validators.compose([
+				Validators.required,
+				Validators.pattern(patterns.email)
+			])],
+			host: [null, Validators.compose([
+				Validators.required,
+				Validators.pattern(patterns.host)
+			])],
 			port: [],
 			secure: [],
 			username: [null, Validators.required],
@@ -197,7 +198,8 @@ export class SMTPComponent extends TranslationBaseComponent
 				secure: this.customSmtp.secure,
 				username: this.customSmtp.username,
 				password: this.customSmtp.password,
-				isValidate: this.customSmtp.isValidate
+				isValidate: this.customSmtp.isValidate,
+				fromAddress: this.customSmtp.fromAddress
 			});
 		}
 	}

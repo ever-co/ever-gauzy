@@ -34,7 +34,25 @@
 				(ngSubmit)="onSubmit()"
 			>
 				<div class="row">
-					<div class="col-sm-12 col-md-4">
+					<div class="col-sm-12 col-md-3">
+						<label class="label" for="fromAddress">
+							{{ 'CUSTOM_SMTP_PAGE.FROM_ADDRESS' | translate }}
+						</label>
+						<input
+							id="fromAddress"
+							nbInput
+							fullWidth
+							type="text"
+							[placeholder]="'CUSTOM_SMTP_PAGE.FROM_ADDRESS' | translate"
+							formControlName="fromAddress"
+							[status]="
+								FormHelpers.isInvalidControl(form, 'fromAddress')
+									? 'danger' :
+									'basic'
+							"
+						/>
+					</div>
+					<div class="col-sm-12 col-md-3">
 						<label class="label" for="host">
 							{{ 'CUSTOM_SMTP_PAGE.HOST' | translate }}
 						</label>
@@ -52,7 +70,7 @@
 							"
 						/>
 					</div>
-					<div class="col-sm-12 col-md-4">
+					<div class="col-sm-12 col-md-3">
 						<label class="label" for="port">
 							{{ 'CUSTOM_SMTP_PAGE.PORT' | translate }}
 						</label>
