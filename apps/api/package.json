@@ -43,7 +43,7 @@
 		"@gauzy/changelog": "^0.1.0",
 		"@gauzy/core": "^0.1.0",
 		"@gauzy/knowledge-base": "^0.1.0",
-		"dotenv": "^16.0.0",
+		"dotenv": "^16.0.3",
 		"yargs": "^17.5.0"
 	},
 	"devDependencies": {
