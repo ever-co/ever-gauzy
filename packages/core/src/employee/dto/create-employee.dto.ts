@@ -1,32 +1,44 @@
-import { ApiProperty } from "@nestjs/swagger";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { Type } from "class-transformer";
-import { IsNotEmpty, IsNotEmptyObject, IsObject, ValidateNested } from "class-validator";
+import { IsNotEmpty, IsObject, IsString, ValidateIf, ValidateNested } from "class-validator";
 import { IntersectionType } from "@nestjs/mapped-types";
-import { IEmployee, IEmployeeCreateInput } from "@gauzy/contracts";
+import { IEmployee, IEmployeeCreateInput, IUser } from "@gauzy/contracts";
 import { EmploymentDTO } from "./employment.dto";
 import { UserInputDTO } from "./user-input-dto";
 import { RelationalTagDTO } from "./../../tags/dto";
 
 /**
  * Employee Create DTO
- * 
+ *
  */
 export class CreateEmployeeDTO extends IntersectionType(
     EmploymentDTO,
     RelationalTagDTO
 ) implements IEmployeeCreateInput {
-
-    @ApiProperty({ type: () => UserInputDTO, required: true, readOnly: true })
+    /**
+     * Create user to the employee
+     */
+    @ApiPropertyOptional({ type: () => UserInputDTO })
+    @ValidateIf((it) => !it.userId)
     @IsObject()
-    @IsNotEmptyObject()
     @ValidateNested()
     @Type(() => UserInputDTO)
     readonly user: UserInputDTO;
 
-    @ApiProperty({ type: () => String, required: true, readOnly: true })
+    /**
+     * Sync user to the employee
+     */
+    @ApiPropertyOptional({ type: () => String })
+    @ValidateIf((it) => !it.user)
+    @IsNotEmpty()
+    @IsString()
+    readonly userId: IUser['id'];
+
+    @ApiProperty({ type: () => String, required: true })
+    @ValidateIf((it) => !it.userId)
     @IsNotEmpty()
     readonly password: string;
 
     readonly members?: IEmployee[];
-    originalUrl?: string;
+    public originalUrl?: string;
 }

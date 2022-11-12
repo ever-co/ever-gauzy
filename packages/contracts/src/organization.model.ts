@@ -12,6 +12,11 @@ import { ITag } from './tag-entity.model';
 import { ITenant } from './tenant.model';
 import { IReportOrganization } from './report.model';
 
+export interface IRegisterAsEmployee {
+	registerAsEmployee?: boolean;
+	startedWorkOn?: Date;
+}
+
 export enum OrganizationPermissionsEnum {
 	ALLOW_MANUAL_TIME = 'ALLOW_MANUAL_TIME',
 	ALLOW_MODIFY_TIME = 'ALLOW_MODIFY_TIME',
@@ -117,7 +122,7 @@ export interface IOrganizationFindInput extends IBasePerTenantEntityModel {
 	tags?: ITag[];
 }
 
-export interface IOrganizationCreateInput extends IContact {
+export interface IOrganizationCreateInput extends IContact, IRegisterAsEmployee {
 	name: string;
 	isDefault?: boolean;
 	profile_link?: string;
