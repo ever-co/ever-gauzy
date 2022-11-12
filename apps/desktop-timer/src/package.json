@@ -39,7 +39,8 @@
 		"npmRebuild": true,
 		"asarUnpack": [
 			"node_modules/screenshot-desktop/lib/win32",
-      		"node_modules/@sentry/electron"
+      		"node_modules/@sentry/electron",
+			"node_modules/sqlite3/lib"
 		],
 		"directories": {
 			"buildResources": "icons",

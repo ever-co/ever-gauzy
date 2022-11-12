@@ -45,7 +45,8 @@
 		"asar": true,
 		"npmRebuild": true,
 		"asarUnpack": [
-			"node_modules/@sentry/electron"
+			"node_modules/@sentry/electron",
+			"node_modules/sqlite3/lib"
 		],
 		"directories": {
 			"buildResources": "icons",
