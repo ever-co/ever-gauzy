@@ -46,15 +46,20 @@
 			"buildResources": "icons",
 			"output": "../desktop-timer-packages"
 		},
-		"publish": {
-			"provider": ["github","spaces"],
-			"name": "ever",
-			"region": "sfo3",
-			"path": "/ever-gauzy-desktop-timer",
-			"acl": "public-read",
-			"repo": "ever-gauzy-desktop-timer",
-			"releaseType": "release"
-		},
+		"publish": [
+			{
+				"provider": "github",
+				"repo": "ever-gauzy-desktop-timer",
+				"releaseType": "release"
+			},
+			{
+				"provider": "spaces",
+				"name": "ever",
+				"region": "sfo3",
+				"path": "/ever-gauzy-desktop-timer",
+				"acl": "public-read"
+			}
+		],
 		"mac": {
 			"category": "public.app-category.developer-tools",
 			"icon": "icon.png",
