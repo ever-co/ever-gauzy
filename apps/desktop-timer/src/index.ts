@@ -78,8 +78,8 @@ import {
 	createImageViewerWindow
 } from '@gauzy/desktop-window';
 import { fork } from 'child_process';
-import { autoUpdater, UpdateDownloadedEvent } from 'electron-updater';
-import { CancellationToken, UpdateInfo } from "builder-util-runtime";
+import { autoUpdater } from 'electron-updater';
+import { CancellationToken } from "builder-util-runtime";
 import { initSentry } from './sentry';
 
 // Can be like this: import fetch from '@gauzy/desktop-libs' for v3 of node-fetch;
