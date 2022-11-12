@@ -82,7 +82,7 @@ export class CustomSmtpController extends CrudController<CustomSmtp>{
 	@UsePipes(new ValidationPipe())
 	async validateSmtpSetting(
 		@Body() entity: CustomSmtpDTO
-	) {
+	): Promise<Boolean | any> {
 		return await this.customSmtpService.verifyTransporter(entity);
 	}
 

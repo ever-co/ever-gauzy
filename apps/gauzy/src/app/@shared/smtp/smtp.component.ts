@@ -32,7 +32,6 @@ import { patterns } from '../regex/regex-patterns.const';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-smtp',
 	templateUrl: './smtp.component.html',
 	styleUrls: ['./smtp.component.scss']
 })
@@ -52,6 +51,7 @@ export class SMTPComponent extends TranslationBaseComponent
 	customSmtp: ICustomSmtp;
 	user: IUser;
 	isValidated: boolean;
+	isWrapped: boolean;
 
 	PermissionsEnum: typeof PermissionsEnum = PermissionsEnum;
 	FormHelpers: typeof FormHelpers = FormHelpers;
@@ -65,7 +65,7 @@ export class SMTPComponent extends TranslationBaseComponent
 			id: [],
 			organizationId: [],
 			host: [
-				'',
+				null,
 				Validators.compose([
 					Validators.required,
 					Validators.pattern(patterns.host)
@@ -73,8 +73,8 @@ export class SMTPComponent extends TranslationBaseComponent
 			],
 			port: [],
 			secure: [],
-			username: [],
-			password: [],
+			username: [null, Validators.required],
+			password: [null, Validators.required],
 			isValidate: [false]
 		});
 	}
@@ -125,17 +125,11 @@ export class SMTPComponent extends TranslationBaseComponent
 	}
 
 	ngAfterViewInit() {
-		const control1 = <FormControl>this.form.get('username');
-		const control2 = <FormControl>this.form.get('password');
-		control1.valueChanges.subscribe((value) => {
-			if (value) {
-				control2.setValidators([Validators.required]);
-			} else {
-				control2.setValidators(null);
-			}
-			control2.updateValueAndValidity();
+		const username = <FormControl>this.form.get('username');
+		username.valueChanges.pipe(filter((val) => !!val)).subscribe((value) => {
+			const substring = '****';
+			this.isWrapped = value.includes(substring);
 		});
-
 		this.form.valueChanges.pipe(pairwise()).subscribe((values) => {
 			const oldVal = values[0];
 			const newVal = values[1];
@@ -160,17 +154,18 @@ export class SMTPComponent extends TranslationBaseComponent
 		if (!this.user) {
 			return;
 		}
-
 		const { tenantId } = this.user;
-		const request = { tenantId };
-
-		if (this.organization && this.isOrganization) {
-			request['organizationId'] = this.organization.id;
-		}
 
 		this.loading = true;
 		this.customSmtpService
-			.getSMTPSetting(request)
+			.getSMTPSetting({
+				tenantId,
+				...(this.organization && this.isOrganization
+					? 	{
+							organizationId: this.organization.id
+					  	}
+					: {})
+			})
 			.then((setting) => {
 				this.formDirective.resetForm();
 				if (setting && setting.hasOwnProperty('auth')) {
@@ -224,7 +219,6 @@ export class SMTPComponent extends TranslationBaseComponent
 		if (this.form.invalid) {
 			return;
 		}
-
 		if (this.form.get('id').value) {
 			this.updateSetting();
 		} else {
@@ -233,11 +227,14 @@ export class SMTPComponent extends TranslationBaseComponent
 	}
 
 	saveSetting() {
-		const { value } = this.form;
-		value['isValidate'] = this.isValidated;
-
+		if (this.form.invalid) {
+			return;
+		}
 		this.customSmtpService
-			.saveSMTPSetting(value)
+			.saveSMTPSetting({
+				...this.form.getRawValue(),
+				isValidate: this.isValidated
+			})
 			.then(() => {
 				this.toastrService.success(
 					this.getTranslation('TOASTR.TITLE.SUCCESS'),
@@ -251,12 +248,15 @@ export class SMTPComponent extends TranslationBaseComponent
 	}
 
 	updateSetting() {
-		const { id } = this.form.value;
-		const { value } = this.form;
-		value['isValidate'] = this.isValidated;
-
+		if (this.form.invalid) {
+			return;
+		}
+		const { id } = this.form.getRawValue();
 		this.customSmtpService
-			.updateSMTPSetting(id, value)
+			.updateSMTPSetting(id, {
+				...this.form.getRawValue(),
+				isValidate: this.isValidated
+			})
 			.then(() => {
 				this.toastrService.success(
 					this.getTranslation('TOASTR.TITLE.SUCCESS'),
@@ -269,13 +269,21 @@ export class SMTPComponent extends TranslationBaseComponent
 			.finally(() => this.getTenantSmtpSetting());
 	}
 
+	/**
+	 * Validate SMTP Credentials
+	 */
 	async validateSmtp() {
 		try {
 			const smtp = this.form.getRawValue();
-			await this.customSmtpService.validateSMTPSetting(smtp);
+			const validatedSmtp = await this.customSmtpService.validateSMTPSetting(smtp);
 
-			this.isValidated = true;
-			this.toastrService.success(this.getTranslation('TOASTR.TITLE.SUCCESS'));
+			if (typeof validatedSmtp === 'object') {
+				this.isValidated = false;
+				this.toastrService.error(validatedSmtp);
+			} else {
+				this.isValidated = true;
+				this.toastrService.success(this.getTranslation('TOASTR.TITLE.SUCCESS'));
+			}
 		} catch (error) {
 			this.isValidated = false;
 			this.toastrService.error(this.getTranslation('TOASTR.MESSAGE.ERRORS'));
