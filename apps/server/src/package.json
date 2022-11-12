@@ -52,7 +52,11 @@
 			"output": "../desktop-packages"
 		},
 		"publish": {
-			"provider": "github",
+			"provider": ["github","spaces"],
+			"name": "ever",
+			"region": "sfo3",
+			"path": "/ever-gauzy-server",
+			"acl": "public-read",
 			"repo": "ever-gauzy-server",
 			"releaseType": "release"
 		},
