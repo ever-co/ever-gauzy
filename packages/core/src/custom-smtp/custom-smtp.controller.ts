@@ -9,6 +9,7 @@ import {
 	Query,
 	UseGuards,
 	UseInterceptors,
+	UsePipes,
 	ValidationPipe
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
@@ -58,11 +59,9 @@ export class CustomSmtpController extends CrudController<CustomSmtp>{
 		description: 'Record not found'
 	})
 	@Get('setting')
+	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async smtpSetting(
-		@Query(new ValidationPipe({
-			transform: true,
-			whitelist: true
-		})) query: CustomSmtpQueryDTO
+		@Query() query: CustomSmtpQueryDTO
 	): Promise<ICustomSmtp | ISMTPConfig> {
 		return await this.customSmtpService.getSmtpSetting(query);
 	}
@@ -80,11 +79,10 @@ export class CustomSmtpController extends CrudController<CustomSmtp>{
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Post('validate')
+	@UsePipes(new ValidationPipe())
 	async validateSmtpSetting(
-		@Body(new ValidationPipe({
-			transform: true
-		})) entity: CustomSmtpDTO
-	) {
+		@Body() entity: CustomSmtpDTO
+	): Promise<Boolean | any> {
 		return await this.customSmtpService.verifyTransporter(entity);
 	}
 
@@ -105,11 +103,9 @@ export class CustomSmtpController extends CrudController<CustomSmtp>{
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Post()
+	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async create(
-		@Body(new ValidationPipe({
-			transform: true,
-			whitelist: true
-		})) entity: CustomSmtpDTO
+		@Body() entity: CustomSmtpDTO
 	): Promise<ICustomSmtp> {
 		return await this.commandBus.execute(
 			new CustomSmtpCreateCommand(entity)
@@ -138,12 +134,10 @@ export class CustomSmtpController extends CrudController<CustomSmtp>{
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Put(':id')
+	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body(new ValidationPipe({
-			transform: true,
-			whitelist: true
-		})) entity: CustomSmtpDTO
+		@Body() entity: CustomSmtpDTO
 	): Promise<ICustomSmtp> {
 		return await this.commandBus.execute(
 			new CustomSmtpUpdateCommand({ id, ...entity })
