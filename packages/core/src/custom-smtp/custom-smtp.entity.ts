@@ -62,6 +62,7 @@ export class CustomSmtp extends TenantOrganizationBaseEntity
 
 	getSmtpTransporter?() {
 		return {
+			fromAddress: this.fromAddress,
 			host: this.host,
 			port: this.port,
 			secure: this.secure || false, // true for 465, false for other ports

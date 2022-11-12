@@ -7,6 +7,7 @@ export interface ICustomSmtp extends IBasePerTenantAndOrganizationEntityModel {
 	username: string;
 	password: string;
 	isValidate?: boolean;
+	fromAddress?: string;
 }
 
 export interface ICustomSmtpFindInput
@@ -21,6 +22,7 @@ export interface ICustomSmtpCreateInput
 	secure: boolean;
 	username: string;
 	password: string;
+	fromAddress?: string;
 }
 
 export interface ICustomSmtpUpdateInput extends ICustomSmtpCreateInput {
