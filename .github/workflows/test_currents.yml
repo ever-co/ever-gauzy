@@ -2,8 +2,8 @@ name: Currents Cypress Tests
 on:
     push:
         branches: [develop]
-jobs:    
-          
+jobs:
+
     prepare:
       runs-on: ubuntu-latest
       outputs:
@@ -59,14 +59,14 @@ jobs:
 
         steps:
             - name: Checkout
-              uses: actions/checkout@v2
+              uses: actions/checkout@v3
 
             - name: Print custom build id 🖨
               run: echo "Custom build id is ${{ needs.prepare.outputs.uuid }}"
 
             - uses: actions/cache@v2
               with:
-                path: |                  
+                path: |
                   ~/.cache
                 key: ${{ runner.os }}-cache-${{ hashFiles('yarn.lock') }}
                 restore-keys: |
@@ -95,15 +95,15 @@ jobs:
 
             - name: Run UI in background
               run: yarn start:gauzy:forever
-                        
+
             - name: Install Required Packages
               run: npm install -g wait-on cypress@8.3.1 @currents/cli https://github.com/sorry-cypress/cy2#feat/use-CYPRESS_PACKAGE_CONFIG_PATH
-            
+
             # - name: Install Cypress for our e2e tests
-            #   run: | 
+            #   run: |
             #     cd apps/gauzy-e2e
             #     yarn cypress install
-            
+
             - name: Cypress info
               env:
                 # make sure every Cypress install prints minimal information
@@ -121,11 +121,11 @@ jobs:
             - name: Wait API
               run: |
                 wait-on http://localhost:3000/api -l -t 600000
-              
+
             - name: Wait UI
               run: |
                 wait-on http://localhost:4200 -l -t 600000
-            
+
             - name: Currents Cypress run
               env:
                 DEBUG: cy2*

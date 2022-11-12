@@ -1,12 +1,16 @@
 import { ICustomSmtp } from "@gauzy/contracts";
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { IsBoolean, IsNotEmpty, IsNumber, IsOptional, IsString } from "class-validator";
+import { IsBoolean, IsEmail, IsNotEmpty, IsNumber, IsOptional, IsString } from "class-validator";
 import { CustomSmtpQueryDTO } from "./custom-smtp.query.dto";
 
 /**
  * Custom Smtp Request DTO validation
  */
 export class CustomSmtpDTO extends CustomSmtpQueryDTO implements ICustomSmtp {
+
+	@ApiProperty({ type: () => String, examples: ['noreply@domain.com'] })
+	@IsEmail()
+	readonly fromAddress: string;
 
     @ApiProperty({ type: () => String, examples: ['smtp.postmarkapp.com', 'smtp.gmail.com'] })
 	@IsString()
