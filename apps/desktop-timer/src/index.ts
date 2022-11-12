@@ -465,14 +465,14 @@ ipcMain.on('check_for_update', async () => {
 	await checkUpdate();
 });
 
-autoUpdater.once('update-available', (event, releaseNotes, releaseName) => {
+autoUpdater.once('update-available', () => {
 	const setting = LocalStore.getStore('appSetting');
 	settingsWindow.webContents.send('update_available');
 	if(setting && !setting.automaticUpdate) return;
 	const dialog = new DialogConfirmUpgradeDownload(
 		new DesktopDialog(
 			'Gauzy',
-			process.platform === 'win32' ? releaseNotes : releaseName,
+			'Update Ready to Download',
 			gauzyWindow
 		)
 	);
@@ -483,14 +483,14 @@ autoUpdater.once('update-available', (event, releaseNotes, releaseName) => {
 	});
 });
 
-autoUpdater.on('update-downloaded', (event, releaseNotes, releaseName) => {
+autoUpdater.on('update-downloaded', () => {
 	const setting = LocalStore.getStore('appSetting');
 	settingsWindow.webContents.send('update_downloaded');
 	if(setting && !setting.automaticUpdate) return;
 	const dialog = new DialogConfirmInstallDownload(
 		new DesktopDialog(
 			'Gauzy',
-			process.platform === 'win32' ? releaseNotes : releaseName,
+			'Update Ready to Install',
 			gauzyWindow
 		)
 	);
