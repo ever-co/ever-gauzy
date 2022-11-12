@@ -58,10 +58,17 @@ export interface IUserRegistrationInput {
 	sourceId?: string;
 }
 
-export interface IUserLoginInput {
+export interface IUserInviteCodeConfirmationInput extends IUserEmailInput {
+	code: number;
+}
+export interface IUserEmailInput {
 	email: string;
+}
+export interface IUserPasswordInput {
 	password: string;
 }
+
+export interface IUserLoginInput extends IUserEmailInput, IUserPasswordInput {}
 export interface IAuthResponse {
 	user: IUser;
 	token: string;
