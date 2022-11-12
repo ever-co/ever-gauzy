@@ -13,54 +13,54 @@ import { TenantOrganizationBaseDTO } from "./../../core/dto";
 
 export class EmploymentDTO extends TenantOrganizationBaseDTO {
 
-    @ApiPropertyOptional({ type: () => Date, readOnly: true })
+    @ApiPropertyOptional({ type: () => Date })
     @IsOptional()
     @IsDateString()
     readonly startedWorkOn?: Date;
 
-    @ApiPropertyOptional({ type: () => Date, readOnly: true })
+    @ApiPropertyOptional({ type: () => Date })
     @IsOptional()
     @IsDateString()
     readonly endWork?: Date;
 
-    @ApiPropertyOptional({ type: () => String, readOnly: true })
+    @ApiPropertyOptional({ type: () => String })
     @IsOptional()
     @IsString()
     readonly short_description?: string;
 
-    @ApiPropertyOptional({ type: () => String, readOnly: true })
+    @ApiPropertyOptional({ type: () => String })
     @IsOptional()
     @IsString()
     readonly description?: string;
 
-    @ApiPropertyOptional({ type: () => Boolean, readOnly: true })
+    @ApiPropertyOptional({ type: () => Boolean })
     @IsOptional()
     @IsBoolean()
     readonly anonymousBonus?: boolean;
 
-    @ApiPropertyOptional({ type: () => Array, isArray: true, readOnly: true })
+    @ApiPropertyOptional({ type: () => Array, isArray: true })
     @IsOptional()
     @IsArray()
     @ValidateNested({ each: true })
     @Type(() => CreateOrganizationEmploymentTypeDTO)
     readonly organizationEmploymentTypes?: IOrganizationEmploymentType[];
 
-    @ApiPropertyOptional({ type: () => Array, isArray: true, readOnly: true })
+    @ApiPropertyOptional({ type: () => Array, isArray: true })
     @IsOptional()
     @IsArray()
     @ValidateNested({ each: true })
     @Type(() => CreateOrganizationDepartmentDTO)
     readonly organizationDepartments?: IOrganizationDepartment[];
 
-    @ApiPropertyOptional({ type: () => String, readOnly: true })
+    @ApiPropertyOptional({ type: () => String })
     @IsOptional()
     readonly employeeLevel?: string;
 
-    @ApiPropertyOptional({ type: () => Object, readOnly: true })
+    @ApiPropertyOptional({ type: () => Object })
     @IsOptional()
     readonly organizationPosition?: IOrganizationPosition;
 
-    @ApiPropertyOptional({ type: () => Array, isArray: true, readOnly: true })
+    @ApiPropertyOptional({ type: () => Array, isArray: true })
     @IsOptional()
     @IsArray()
     readonly skills?: ISkill[];

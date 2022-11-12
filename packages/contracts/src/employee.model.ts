@@ -139,7 +139,8 @@ export interface IEmployeeUpdateInput
 
 export interface IEmployeeCreateInput
 	extends IBasePerTenantAndOrganizationEntityModel {
-	user: IUser;
+	user?: IUser;
+	userId?: IUser['id'];
 	password?: string;
 	offerDate?: Date;
 	acceptDate?: Date;
