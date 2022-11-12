@@ -1,7 +1,9 @@
-export { CreateUserDTO } from './create-user.dto';
-export { UpdateUserDTO } from './update-user.dto';
-export { RegisterUserDTO } from './register-user.dto';
-export { LoginUserDTO } from './login-user.dto';
-export { UpdatePreferredComponentLayoutDTO } from './update-preferred-component-layout.dto';
-export { UpdatePreferredLanguageDTO } from './update-preferred-language.dto';
-export { FindMeQueryDTO } from './find-me-query.dto';
+export * from './create-user.dto';
+export * from './update-user.dto';
+export * from './register-user.dto';
+export * from './user-login.dto';
+export * from './update-preferred-component-layout.dto';
+export * from './update-preferred-language.dto';
+export * from './find-me-query.dto';
+export * from './user-email.dto';
+export * from './user-password.dto';
