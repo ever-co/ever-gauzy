@@ -78,8 +78,8 @@ import {
 	createImageViewerWindow
 } from '@gauzy/desktop-window';
 import { fork } from 'child_process';
-import { autoUpdater } from 'electron-updater';
-import { CancellationToken } from "builder-util-runtime";
+import { autoUpdater, UpdateDownloadedEvent } from 'electron-updater';
+import { CancellationToken, UpdateInfo } from "builder-util-runtime";
 import { initSentry } from './sentry';
 
 // Can be like this: import fetch from '@gauzy/desktop-libs' for v3 of node-fetch;
@@ -465,14 +465,14 @@ ipcMain.on('check_for_update', async () => {
 	await checkUpdate();
 });
 
-autoUpdater.once('update-available', (event, releaseNotes, releaseName) => {
+autoUpdater.once('update-available', () => {
 	const setting = LocalStore.getStore('appSetting');
 	settingsWindow.webContents.send('update_available');
 	if(setting && !setting.automaticUpdate) return;
 	const dialog = new DialogConfirmUpgradeDownload(
 		new DesktopDialog(
 			'Gauzy',
-			process.platform === 'win32' ? releaseNotes : releaseName,
+			'Update Ready to Download',
 			gauzyWindow
 		)
 	);
@@ -483,14 +483,14 @@ autoUpdater.once('update-available', (event, releaseNotes, releaseName) => {
 	});
 });
 
-autoUpdater.on('update-downloaded', (event, releaseNotes, releaseName) => {
+autoUpdater.on('update-downloaded', () => {
 	const setting = LocalStore.getStore('appSetting');
 	settingsWindow.webContents.send('update_downloaded');
 	if(setting && !setting.automaticUpdate) return;
 	const dialog = new DialogConfirmInstallDownload(
 		new DesktopDialog(
 			'Gauzy',
-			process.platform === 'win32' ? releaseNotes : releaseName,
+			'Update Ready to Install',
 			gauzyWindow
 		)
 	);
