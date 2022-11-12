@@ -1,14 +1,16 @@
-import { ICustomSmtpFindInput } from "@gauzy/contracts";
-import { ApiProperty } from "@nestjs/swagger";
+import { ICustomSmtpFindInput, IOrganization } from "@gauzy/contracts";
+import { ApiPropertyOptional } from "@nestjs/swagger";
 import { IsOptional, IsString } from "class-validator";
+import { IsOrganizationBelongsToUser } from "./../../shared/validators";
 
 /**
  * Custom Smtp Query Request DTO validation
  */
 export class CustomSmtpQueryDTO implements ICustomSmtpFindInput {
 
-	@ApiProperty({ type: () => String, readOnly: true })
+	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
-	readonly organizationId: string;
+	@IsOrganizationBelongsToUser()
+	readonly organizationId: IOrganization['id'];
 }
