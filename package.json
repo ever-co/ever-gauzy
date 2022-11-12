@@ -230,6 +230,7 @@
 		"@angular/service-worker": "13.2.2",
 		"bcrypt": "^5.1.0",
 		"ffi-napi": "^4.0.3",
+		"iconv": "^3.0.1",
 		"autoprefixer": "10.4.5",
 		"dotenv": "^16.0.3",
 		"ng2-smart-table": "^1.7.2",
