@@ -7,7 +7,10 @@ import { CustomSmtpCreateCommand } from '../custom-smtp.create.command';
 @CommandHandler(CustomSmtpCreateCommand)
 export class CustomSmtpCreateHandler
 	implements ICommandHandler<CustomSmtpCreateCommand> {
-	constructor(private readonly customSmtpService: CustomSmtpService) {}
+
+	constructor(
+		private readonly customSmtpService: CustomSmtpService
+	) {}
 
 	public async execute(
 		command: CustomSmtpCreateCommand
@@ -15,7 +18,7 @@ export class CustomSmtpCreateHandler
 		const { input } = command;
 		delete input['id'];
 		try {
-			return this.customSmtpService.create(input);	
+			return await this.customSmtpService.create(input);
 		} catch (error) {
 			throw new BadRequestException(error);
 		}
