@@ -14,14 +14,14 @@ jobs:
 
         steps:
             - name: Check out Git repository
-              uses: actions/checkout@v2
-            
+              uses: actions/checkout@v3
+
             - name: Bump version and push tag
               uses: mathieudutour/github-tag-action@v5.6
               id: tag_version
               with:
                   github_token: ${{ secrets.GITHUB_TOKEN }}
-          
+
             - name: Create a GitHub release
               uses: ncipollo/release-action@v1
               with:
@@ -29,4 +29,4 @@ jobs:
                   token: ${{ secrets.GITHUB_TOKEN }}
                   tag: ${{ steps.tag_version.outputs.new_tag }}
                   name: ${{ steps.tag_version.outputs.new_tag }}
-                  body: ${{ steps.tag_version.outputs.changelog }}      
+                  body: ${{ steps.tag_version.outputs.changelog }}

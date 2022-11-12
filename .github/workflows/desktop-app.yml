@@ -17,7 +17,7 @@ jobs:
 
         steps:
             - name: Check out Git repository
-              uses: actions/checkout@v2
+              uses: actions/checkout@v3
 
             - name: Install Node.js, NPM and Yarn
               uses: actions/setup-node@v3
@@ -43,7 +43,7 @@ jobs:
               run: 'yarn bootstrap'
 
             - name: Bump version desktop app
-              uses: actions/github-script@v4
+              uses: actions/github-script@v6
               with:
                 script: |
                   const script = require('./.scripts/bump-version-electron.js')
@@ -66,7 +66,7 @@ jobs:
 
         steps:
             - name: Check out Git repository
-              uses: actions/checkout@v2
+              uses: actions/checkout@v3
 
             - name: Install Node.js, NPM and Yarn
               uses: actions/setup-node@v3
@@ -86,7 +86,7 @@ jobs:
               run: 'yarn bootstrap'
 
             - name: Bump version desktop app
-              uses: actions/github-script@v4
+              uses: actions/github-script@v6
               with:
                 script: |
                   const script = require('./.scripts/bump-version-electron.js')
@@ -109,7 +109,7 @@ jobs:
 
         steps:
             - name: Check out Git repository
-              uses: actions/checkout@v2
+              uses: actions/checkout@v3
 
             - name: Install Node.js, NPM and Yarn
               uses: actions/setup-node@v3
@@ -129,7 +129,7 @@ jobs:
               run: 'yarn bootstrap'
 
             - name: Bump version desktop app
-              uses: actions/github-script@v4
+              uses: actions/github-script@v6
               with:
                 script: |
                   const script = require('./.scripts/bump-version-electron.js')

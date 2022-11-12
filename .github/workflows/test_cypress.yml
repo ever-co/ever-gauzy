@@ -2,7 +2,7 @@ name: Cypress Tests
 on:
     push:
         branches: [nope]
-jobs:    
+jobs:
 
     e2e-tests-setup:
 
@@ -12,7 +12,7 @@ jobs:
 
         steps:
             - name: Checkout
-              uses: actions/checkout@v2
+              uses: actions/checkout@v3
 
             - name: Cypress install
               uses: cypress-io/github-action@v2
@@ -21,10 +21,10 @@ jobs:
               id: cypress
 
               with:
-                # we want to install Cypress only                
+                # we want to install Cypress only
                 install: true
                 install-command: node -p 'os.cpus()'
-                
+
                 # we don't want to run tests in this job, we only setup Cypress here
                 runTests: false
 
@@ -61,11 +61,11 @@ jobs:
 
         steps:
             - name: Checkout
-              uses: actions/checkout@v2
+              uses: actions/checkout@v3
 
             - uses: actions/cache@v2
               with:
-                path: |                  
+                path: |
                   ~/.cache
                 key: ${{ runner.os }}-cache-${{ hashFiles('yarn.lock') }}
                 restore-keys: |
@@ -91,15 +91,15 @@ jobs:
 
             - name: Run UI in background
               run: yarn start:gauzy:forever
-                        
+
             - name: Install Cypress Package
               run: npm install -g cypress@8.3.1
 
             - name: Install Cypress for our e2e tests
-              run: | 
+              run: |
                 cd apps/gauzy-e2e
                 yarn cypress install
-            
+
             - name: Cypress info
               env:
                 # make sure every Cypress install prints minimal information
@@ -116,10 +116,10 @@ jobs:
 
             - name: Cypress run
               uses: cypress-io/github-action@v2
-              
+
               # let's give this action an ID so we can refer to its output values later
               id: cypress
-              
+
               # Continue the build in case of an error, as we need to set the
               # commit status in the next step, both in case of success and failure
               continue-on-error: true
