@@ -22,7 +22,7 @@ jobs:
             - name: Install Node.js, NPM and Yarn
               uses: actions/setup-node@v3
               with:
-                  node-version: 16.18.0
+                  node-version: 18.12.0
 
             - name: Change permissions
               run: 'sudo chown -R $(whoami) ./*'
@@ -71,7 +71,7 @@ jobs:
             - name: Install Node.js, NPM and Yarn
               uses: actions/setup-node@v3
               with:
-                  node-version: 16.18.0
+                  node-version: 18.12.0
 
             - name: Install latest version of NPM
               run: 'sudo npm install -g npm'
