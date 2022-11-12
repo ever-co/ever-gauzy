@@ -97,6 +97,7 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ACCESS_DELETE_ACCOUNT,
 			PermissionsEnum.ACCESS_DELETE_ALL_DATA,
 			PermissionsEnum.PROFILE_EDIT,
+			PermissionsEnum.TIME_TRACKER,
 			PermissionsEnum.TENANT_SETTING,
 			PermissionsEnum.ALLOW_DELETE_TIME,
 			PermissionsEnum.ALLOW_MODIFY_TIME,
