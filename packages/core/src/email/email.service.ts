@@ -103,15 +103,14 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 				smtpConfig = this.customSmtpService.defaultSMTPTransporter() as ISMTPConfig;
 			}
 		}
-
 		const config: Email.EmailConfig<any> = {
 			message: {
-				from: env.smtpConfig.from || 'gauzy@ever.co'
+				from: smtpConfig.fromAddress || 'noreply@gauzy.co'
 			},
 
 			// if you want to send emails in development or test environments, set options.send to true.
 			send: true,
-			transport: smtpConfig || this.customSmtpService.defaultSMTPTransporter() as ISMTPConfig,
+			transport: smtpConfig,
 			i18n: {},
 			views: {
 				options: {
