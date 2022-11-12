@@ -56,8 +56,8 @@ jobs:
                   GH_TOKEN: ${{ secrets.GH_TOKEN }}
                   EP_GH_IGNORE_TIME: true
                   SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
-				  DO_KEY_ID: ${{ secrets.DO_KEY_ID }}
-				  DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
+                  DO_KEY_ID: ${{ secrets.DO_KEY_ID }}
+                  DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
 
     release-mac:
         runs-on: ${{ matrix.os }}
@@ -101,8 +101,8 @@ jobs:
                   GH_TOKEN: ${{ secrets.GH_TOKEN }}
                   EP_GH_IGNORE_TIME: true
                   SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
-				  DO_KEY_ID: ${{ secrets.DO_KEY_ID }}
-				  DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
+                  DO_KEY_ID: ${{ secrets.DO_KEY_ID }}
+                  DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
 
     release-windows:
         runs-on: ${{ matrix.os }}
@@ -146,5 +146,5 @@ jobs:
                   GH_TOKEN: ${{ secrets.GH_TOKEN }}
                   EP_GH_IGNORE_TIME: true
                   SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
-				  DO_KEY_ID: ${{ secrets.DO_KEY_ID }}
-				  DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
+                  DO_KEY_ID: ${{ secrets.DO_KEY_ID }}
+                  DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
