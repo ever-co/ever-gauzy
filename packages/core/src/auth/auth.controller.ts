@@ -17,32 +17,34 @@ import { ApiTags, ApiOperation, ApiResponse, ApiOkResponse, ApiBadRequestRespons
 import { CommandBus } from '@nestjs/cqrs';
 import { Request } from 'express';
 import { I18nLang } from 'nestjs-i18n';
-import {
-	IAuthResponse,
-	LanguagesEnum
-} from '@gauzy/contracts';
+import { IAuthResponse, LanguagesEnum } from '@gauzy/contracts';
 import { Public } from '@gauzy/common';
 import { AuthService } from './auth.service';
 import { User as IUser } from '../user/user.entity';
-import { AuthLoginCommand, AuthRegisterCommand } from './commands';
+import { AuthLoginCommand, AuthRegisterCommand, ConfirmInviteCodeCommand, SendInviteCodeCommand } from './commands';
 import { RequestContext } from '../core/context';
 import { TransformInterceptor } from './../core/interceptors';
 import { AuthRefreshGuard } from './../shared/guards';
 import { ChangePasswordRequestDTO, ResetPasswordRequestDTO } from './../password-reset/dto';
-import { LoginUserDTO, RegisterUserDTO } from './../user/dto';
+import { RegisterUserDTO, UserLoginDTO } from './../user/dto';
 import { UserService } from './../user/user.service';
-import { HasRoleQueryDTO, RefreshTokenDto } from './dto';
+import { ConfirmInviteCodeDTO, HasRoleQueryDTO, RefreshTokenDto, SendInviteCodeDTO } from './dto';
 
 @ApiTags('Auth')
 @UseInterceptors(TransformInterceptor)
 @Controller()
 export class AuthController {
+
 	constructor(
 		private readonly authService: AuthService,
 		private readonly userService: UserService,
 		private readonly commandBus: CommandBus
 	) {}
 
+	/**
+	 *
+	 * @returns
+	 */
 	@ApiOperation({ summary: 'Check if user is authenticated' })
 	@ApiOkResponse({ status: HttpStatus.OK, description:'The success server response' })
 	@ApiBadRequestResponse({ status: HttpStatus.BAD_REQUEST, })
@@ -53,6 +55,11 @@ export class AuthController {
 		return await this.authService.isAuthenticated(token);
 	}
 
+	/**
+	 *
+	 * @param query
+	 * @returns
+	 */
 	@ApiOperation({ summary: 'Has role?' })
 	@ApiResponse({ status: HttpStatus.OK })
 	@ApiResponse({ status: HttpStatus.BAD_REQUEST })
@@ -64,6 +71,13 @@ export class AuthController {
 		return await this.authService.hasRole(query.roles);
 	}
 
+	/**
+	 *
+	 * @param entity
+	 * @param request
+	 * @param languageCode
+	 * @returns
+	 */
 	@ApiOperation({ summary: 'Create new record' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
@@ -90,18 +104,62 @@ export class AuthController {
 		);
 	}
 
+	/**
+	 *
+	 * @param entity
+	 * @returns
+	 */
 	@HttpCode(HttpStatus.OK)
 	@Post('/login')
 	@Public()
 	@UsePipes(new ValidationPipe({ transform: true }))
 	async login(
-		@Body() entity: LoginUserDTO
+		@Body() entity: UserLoginDTO
 	): Promise<IAuthResponse | null> {
 		return await this.commandBus.execute(
 			new AuthLoginCommand(entity)
 		);
 	}
 
+	/**
+	 * Send invite code on email
+	 *
+	 * @param entity
+	 * @returns
+	 */
+	@HttpCode(HttpStatus.OK)
+	@Post('/send-invite-code')
+	@Public()
+	@UsePipes(new ValidationPipe())
+	async sendInviteCode(
+		@Body() entity: SendInviteCodeDTO
+	): Promise<any> {
+	 	return await this.commandBus.execute(
+			new SendInviteCodeCommand(entity)
+		);
+	}
+
+	/**
+	 * Verify invite code along with email
+	 *
+	 * @param entity
+	 */
+	@Post('/verify-invite-code')
+	@Public()
+	@UsePipes(new ValidationPipe())
+	async confirmInviteCode(
+		@Body() entity: ConfirmInviteCodeDTO
+	): Promise<any> {
+		return await this.commandBus.execute(
+			new ConfirmInviteCodeCommand(entity)
+		);
+	}
+
+	/**
+	 *
+	 * @param request
+	 * @returns
+	 */
 	@Post('/reset-password')
 	@Public()
 	@UsePipes(new ValidationPipe({ transform: true }))
@@ -111,6 +169,13 @@ export class AuthController {
 		return await this.authService.resetPassword(request);
 	}
 
+	/**
+	 *
+	 * @param body
+	 * @param request
+	 * @param languageCode
+	 * @returns
+	 */
 	@Post('/request-password')
 	@Public()
 	@UsePipes(new ValidationPipe({
@@ -129,6 +194,11 @@ export class AuthController {
 		);
 	}
 
+	/**
+	 * Logout (Removed refresh token from database)
+	 *
+	 * @returns
+	 */
 	@HttpCode(HttpStatus.OK)
 	@ApiOperation({ summary: 'Logout' })
 	@Get('logout')
@@ -136,6 +206,12 @@ export class AuthController {
 		return await this.userService.removeRefreshToken();
 	}
 
+	/**
+	 *
+	 *
+	 * @param body
+	 * @returns
+	 */
 	@HttpCode(HttpStatus.OK)
 	@ApiOperation({ summary: 'Refresh token' })
 	@Public()
