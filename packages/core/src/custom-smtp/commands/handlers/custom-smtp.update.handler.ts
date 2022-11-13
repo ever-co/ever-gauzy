@@ -7,7 +7,10 @@ import { CustomSmtpUpdateCommand } from '../custom-smtp.update.command';
 @CommandHandler(CustomSmtpUpdateCommand)
 export class CustomSmtpUpdateHandler
 	implements ICommandHandler<CustomSmtpUpdateCommand> {
-	constructor(private readonly customSmtpService: CustomSmtpService) {}
+
+	constructor(
+		private readonly customSmtpService: CustomSmtpService
+	) {}
 
 	public async execute(
 		command: CustomSmtpUpdateCommand
@@ -15,7 +18,10 @@ export class CustomSmtpUpdateHandler
 		const { input } = command;
 		const { id } = input;
 		try {
-			return this.customSmtpService.create({ id, ...input });
+			return await this.customSmtpService.create({
+				id,
+				...input
+			});
 		} catch (error) {
 			throw new BadRequestException(error);
 		}

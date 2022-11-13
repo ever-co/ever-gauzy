@@ -1,4 +1,4 @@
-import {BrowserWindow, ipcMain, screen, systemPreferences} from 'electron';
+import {BrowserWindow, ipcMain, screen, desktopCapturer, systemPreferences} from 'electron';
 import {TimerData} from './desktop-timer-activity';
 import TimerHandler from './desktop-timer';
 import moment from 'moment';
@@ -126,6 +126,10 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 	ipcMain.on('auth_failed', (event, arg) => {
 		event.sender.send('show_error_message', arg.message);
 	})
+
+	ipcMain.handle('DESKTOP_CAPTURER_GET_SOURCES', (event, opts) =>
+		desktopCapturer.getSources(opts)
+	);
 }
 
 export function ipcTimer(
@@ -351,6 +355,7 @@ export function ipcTimer(
 			knex
 		)
 	});
+	
 
 	ipcMain.on('open_setting_window', (event, arg) => {
 		const appSetting = LocalStore.getStore('appSetting');

@@ -2,9 +2,9 @@ import { isClassInstance, isNotEmpty, isObject } from "@gauzy/common";
 
 /**
  * Checks if value is needs to be wrap with specific character.
- *  
- * @param boolean 
- * @returns 
+ *
+ * @param boolean
+ * @returns
  */
 export function IsSecret(boolean: boolean = true): PropertyDecorator {
     return (target, property) => {
@@ -18,14 +18,14 @@ export function IsSecret(boolean: boolean = true): PropertyDecorator {
 
 /**
  * Wrapper for secrets keys
- * 
- * @param secrets 
- * @param target 
- * @param offset 
- * @param character 
- * @returns 
+ *
+ * @param secrets
+ * @param targets
+ * @param offset
+ * @param character
+ * @returns
  */
-export function WrapSecrets(secrets: any, targets : any, offset = 6, character = '*') {
+export function WrapSecrets(secrets: any, targets : any, offset = 4, character = '*') {
 	// Check if found class target, convert it into array to use for loop
 	if (isClassInstance(targets)) {
 		targets = [targets];

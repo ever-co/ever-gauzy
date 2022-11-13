@@ -11,23 +11,19 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import {
-	ITimerToggleInput,
 	ITimeLog,
 	ITimerStatus,
 	ITimerStatusInput,
-	RolesEnum,
 	PermissionsEnum
 } from '@gauzy/contracts';
 import { TimerService } from './timer.service';
-import { PermissionGuard, RoleGuard, TenantPermissionGuard } from './../../shared/guards';
+import { PermissionGuard, TenantPermissionGuard } from './../../shared/guards';
 import { Permissions } from './../../shared/decorators';
-import { Roles } from './../../shared/decorators';
 import { StartTimerDTO, StopTimerDTO } from './dto';
 
 @ApiTags('Timer Tracker')
-@UseGuards(TenantPermissionGuard, PermissionGuard, RoleGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.TIME_TRACKER)
-@Roles(RolesEnum.EMPLOYEE)
 @Controller()
 export class TimerController {
 
@@ -64,8 +60,8 @@ export class TimerController {
 	})
 	@Post('/toggle')
 	async toggleTimer(
-		@Body() entity: ITimerToggleInput
-	): Promise<ITimeLog> {
+		@Body(new ValidationPipe()) entity: StartTimerDTO
+	): Promise<ITimeLog | null> {
 		return await this.timerService.toggleTimeLog(entity);
 	}
 
@@ -79,9 +75,8 @@ export class TimerController {
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Post('/start')
-	@UsePipes(new ValidationPipe({ transform: true }))
 	async startTimer(
-		@Body() entity: StartTimerDTO
+		@Body(new ValidationPipe()) entity: StartTimerDTO
 	): Promise<ITimeLog> {
 		return await this.timerService.startTimer(entity);
 	}
@@ -99,7 +94,7 @@ export class TimerController {
 	@Post('/stop')
 	@UsePipes(new ValidationPipe({ transform: true }))
 	async stopTimer(
-		@Body() entity: StopTimerDTO
+		@Body(new ValidationPipe()) entity: StopTimerDTO
 	): Promise<ITimeLog | null> {
 		return await this.timerService.stopTimer(entity);
 	}

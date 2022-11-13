@@ -17,12 +17,12 @@ jobs:
 
         steps:
             - name: Check out Git repository
-              uses: actions/checkout@v2
+              uses: actions/checkout@v3
 
             - name: Install Node.js, NPM and Yarn
               uses: actions/setup-node@v3
               with:
-                  node-version: 18.12.0
+                  node-version: 16.18.0
 
             - name: Change permissions
               run: 'sudo chown -R $(whoami) ./*'
@@ -43,7 +43,7 @@ jobs:
               run: 'yarn bootstrap'
 
             - name: Bump server version
-              uses: actions/github-script@v4
+              uses: actions/github-script@v6
               with:
                 script: |
                   const script = require('./.scripts/bump-version-electron.js')
@@ -56,6 +56,8 @@ jobs:
                   GH_TOKEN: ${{ secrets.GH_TOKEN }}
                   EP_GH_IGNORE_TIME: true
                   SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+                  DO_KEY_ID: ${{ secrets.DO_KEY_ID }}
+                  DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
 
     release-mac:
         runs-on: ${{ matrix.os }}
@@ -66,12 +68,12 @@ jobs:
 
         steps:
             - name: Check out Git repository
-              uses: actions/checkout@v2
+              uses: actions/checkout@v3
 
             - name: Install Node.js, NPM and Yarn
               uses: actions/setup-node@v3
               with:
-                  node-version: 18.12.0
+                  node-version: 16.18.0
 
             - name: Install latest version of NPM
               run: 'sudo npm install -g npm'
@@ -86,7 +88,7 @@ jobs:
               run: 'yarn bootstrap'
 
             - name: Bump Server version
-              uses: actions/github-script@v4
+              uses: actions/github-script@v6
               with:
                 script: |
                   const script = require('./.scripts/bump-version-electron.js')
@@ -99,6 +101,8 @@ jobs:
                   GH_TOKEN: ${{ secrets.GH_TOKEN }}
                   EP_GH_IGNORE_TIME: true
                   SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+                  DO_KEY_ID: ${{ secrets.DO_KEY_ID }}
+                  DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
 
     release-windows:
         runs-on: ${{ matrix.os }}
@@ -109,12 +113,12 @@ jobs:
 
         steps:
             - name: Check out Git repository
-              uses: actions/checkout@v2
+              uses: actions/checkout@v3
 
             - name: Install Node.js, NPM and Yarn
               uses: actions/setup-node@v3
               with:
-                  node-version: 18.12.0
+                  node-version: 16.18.0
 
             - name: Install latest version of NPM
               run: 'npm install -g npm'
@@ -129,7 +133,7 @@ jobs:
               run: 'yarn bootstrap'
 
             - name: Bump Server version
-              uses: actions/github-script@v4
+              uses: actions/github-script@v6
               with:
                 script: |
                   const script = require('./.scripts/bump-version-electron.js')
@@ -142,3 +146,5 @@ jobs:
                   GH_TOKEN: ${{ secrets.GH_TOKEN }}
                   EP_GH_IGNORE_TIME: true
                   SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+                  DO_KEY_ID: ${{ secrets.DO_KEY_ID }}
+                  DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}

@@ -43,19 +43,29 @@
 		"productName": "Gauzy Server",
 		"copyright": "Copyright © 2019-Present. Ever Co. LTD",
 		"asar": true,
-    "npmRebuild": true,
-    "asarUnpack": [
-      "node_modules/@sentry/electron"
+		"npmRebuild": true,
+		"asarUnpack": [
+			"node_modules/@sentry/electron",
+			"node_modules/sqlite3/lib"
 		],
 		"directories": {
 			"buildResources": "icons",
 			"output": "../desktop-packages"
 		},
-		"publish": {
-			"provider": "github",
-			"repo": "ever-gauzy-server",
-			"releaseType": "release"
-		},
+		"publish": [
+			{
+				"provider": "github",
+				"repo": "ever-gauzy-server",
+				"releaseType": "release"
+			},
+			{
+				"provider": "spaces",
+				"name": "ever",
+				"region": "sfo3",
+				"path": "/ever-gauzy-server",
+				"acl": "public-read"
+			}
+		],
 		"mac": {
 			"category": "public.app-category.developer-tools",
 			"icon": "icon.png",
@@ -63,7 +73,12 @@
 				"zip",
 				"dmg"
 			],
-			"artifactName": "${name}-${version}.${ext}"
+			"asarUnpack": "**/*.node",
+			"artifactName": "${name}-${version}.${ext}",
+			"hardenedRuntime": true,
+			"gatekeeperAssess": false,
+			"entitlements": "tools/build/entitlements.mas.plist",
+			"entitlementsInherit": "tools/build/entitlements.mas.plist"
 		},
 		"win": {
 			"publisherName": "Ever",
@@ -109,43 +124,47 @@
 	},
 	"dependencies": {
 		"sqlite3": "^5.1.2",
-		"electron-store": "^8.0.0",
-		"electron-log": "^4.3.5",
-    	"node-notifier": "^8.0.0",
+		"ffi-napi": "^4.0.3",
+		"iconv": "^3.0.1",
+		"electron-store": "^8.1.0",
+		"electron-log": "^4.4.8",
+		"electron-updater": "^5.3.0",
+		"electron-util": "^0.17.2",
+		"node-notifier": "^8.0.0",
 		"moment": "^2.29.4",
 		"knex": "^0.21.6",
 		"consolidate": "^0.16.0",
 		"squirrelly": "^8.0.8",
 		"twing": "^5.0.2",
-    	"electron-util": "^0.17.2",
 		"form-data": "^3.0.0",
-		"electron-updater": "~4.3.8",
-		"pg": "^8.7.3",
-		"pg-query-stream": "^4.2.3",
+		"node-fetch": "^2.6.7",
+		"pg": "^8.8.0",
+		"pg-query-stream": "^4.2.4",
 		"@nestjs/platform-express": "^9.0.5",
 		"sound-play": "1.1.0",
-    	"auto-launch": "5.0.5",
+		"auto-launch": "5.0.5",
 		"tslib": "^2.3.1",
 		"@sentry/electron": "^3.0.7",
 		"@sentry/types": "^6.19.7",
 		"@sentry/node": "^6.19.7",
 		"@sentry/tracing": "^6.19.7",
-    	"underscore": "^1.13.3",
-		"node-static": "^0.7.11",
-		"pdfmake": "^0.2.0",
-    	"htmlparser2": "^3.10.1",
-    	"@gauzy/core": "^0.1.0",
+		"underscore": "^1.13.3",
+		"htmlparser2": "^3.10.1",
+		"@gauzy/core": "^0.1.0",
 		"@gauzy/auth": "^0.1.0",
-    	"@gauzy/desktop-window": "^0.1.0",
+		"@gauzy/desktop-window": "^0.1.0",
 		"@gauzy/desktop-libs": "^0.1.0",
 		"@gauzy/knowledge-base": "^0.1.0",
 		"@gauzy/changelog": "^0.1.0",
-		"@electron/remote": "^2.0.8"
+		"@electron/remote": "^2.0.8",
+		"node-static": "^0.7.11",
+		"pdfmake": "^0.2.0"
 	},
-  	"optionalDependencies": {
+	"optionalDependencies": {
+		"node-linux": "^0.1.12",
 		"node-mac": "^1.0.1",
-    	"node-windows": "^1.0.0-beta.8"
-  	},
+		"node-windows": "^1.0.0-beta.8"
+	},
 	"pkg": {
 		"assets": [
 			"api/assets/**/*",
@@ -153,8 +172,9 @@
 			"node_modules/linebreak/src/classes.trie"
 		],
 		"targets": [
-			"node14-mac-x64",
-			"node14-win-x64"
+			"node16-linux-x64",
+			"node16-mac-x64",
+			"node16-win-x64"
 		]
 	}
 }

@@ -49,7 +49,7 @@ export class CustomSmtpService extends TenantAwareCrudService<CustomSmtp> {
 	}
 
 	// Verify connection configuration
-	public async verifyTransporter(configuration: ICustomSmtpCreateInput) {
+	public async verifyTransporter(configuration: ICustomSmtpCreateInput): Promise<Boolean | any> {
 		return new Promise((resolve, reject) => {
 			try {
 				const transporter = nodemailer.createTransport({
@@ -59,12 +59,13 @@ export class CustomSmtpService extends TenantAwareCrudService<CustomSmtp> {
 					auth: {
 						user: configuration.username,
 						pass: configuration.password
-					}
+					},
+					from: configuration.fromAddress
 				});
 				transporter.verify(function (error, success) {
 					if (error) {
 						console.log(error);
-						reject(false);
+						reject(error);
 					} else {
 						resolve(true);
 					}
@@ -81,6 +82,7 @@ export class CustomSmtpService extends TenantAwareCrudService<CustomSmtp> {
 	public defaultSMTPTransporter(): ISMTPConfig {
 		const smtp: ISMTPConfig = env.smtpConfig;
 		return {
+			fromAddress: smtp.fromAddress,
 			host: smtp.host,
 			port: smtp.port,
 			secure: smtp.secure, // true for 465, false for other ports

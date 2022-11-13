@@ -30,7 +30,7 @@
 		"@gauzy/desktop-window": "^0.1.0",
 		"active-win": "^7.7.2",
 		"electron": "^21.2.3",
-		"electron-store": "^8.0.0",
+		"electron-store": "^8.1.0",
 		"electron-util": "^0.17.2",
 		"embedded-queue": "^0.0.11",
 		"form-data": "^3.0.0",

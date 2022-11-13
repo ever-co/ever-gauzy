@@ -19,8 +19,14 @@ export class ElectronService {
 		if (this.isElectron) {
 			this.ipcRenderer = window.require('electron').ipcRenderer;
 			this.remote = window.require('@electron/remote');
-			this.desktopCapturer = window.require('electron').desktopCapturer;
-      this.shell = window.require('electron').shell;
+			this.shell = window.require('electron').shell;
+			this.desktopCapturer = {
+				getSources: (opts) =>
+					this.ipcRenderer.invoke(
+						'DESKTOP_CAPTURER_GET_SOURCES',
+						opts
+					)
+			};
 		}
 	}
 }

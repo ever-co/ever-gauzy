@@ -475,10 +475,10 @@
 						<img [src]="gauzyIcon" class="margin-icon" />
 					</div>
 					<div class="col-12 version-text">
-						<span>Version {{ version }}</span>
+						<span>Version v{{ version }}</span>
 					</div>
 					<div class="col-12 copyright-text text-center">
-						<span>© 2019-Present, Gauzy by Ever Co. LTD.</span>
+						<span>© 2019-Present, <strong>Ever Gauzy</strong> by <strong>Ever Co. LTD.</strong></span>
 					</div>
 					<div class="col-12 copyright-text text-center">
 						<span>All rights reserved.</span>
@@ -496,7 +496,6 @@
 				Signed in as {{ (currentUser$ | async).name }} ({{(currentUser$ | async).email}}) -
 				<a href="javascript:void(0);" (click)="logout()"> Sign Out </a>
 			</p>
-			<div class="text-center footer-version-text">V{{version}}</div>
 		</span>
 	</nb-layout-footer>
 </nb-layout>
