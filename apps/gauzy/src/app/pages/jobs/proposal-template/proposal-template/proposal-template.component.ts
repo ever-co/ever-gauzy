@@ -130,10 +130,9 @@ export class ProposalTemplateComponent extends PaginationFilterBaseComponent
 	}
 
 	ngAfterViewInit() {
-		if (
-			!this.store.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE) ||
-			(this.store.user && this.store.user.employeeId)
-		) {
+		if (this.store.user && !this.store.hasPermission(
+			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+		)) {
 			delete this.smartTableSettings['columns']['employeeId'];
 			this.smartTableSettings = Object.assign(
 				{},

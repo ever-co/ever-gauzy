@@ -177,7 +177,7 @@ export class IncomeComponent extends PaginationFilterBaseComponent
 	}
 
 	ngAfterViewInit() {
-		if ((this.store.user && this.store.user.employeeId) || !this.store.hasPermission(
+		if (this.store.user && !this.store.hasPermission(
 			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
 		)) {
 			delete this.smartTableSettings['columns']['employee'];
