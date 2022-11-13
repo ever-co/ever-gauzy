@@ -10,8 +10,7 @@ import {
 	IAggregatedEmployeeStatistic,
 	IDateRangePicker,
 	IOrganization,
-	ISelectedEmployee,
-	IUser
+	ISelectedEmployee
 } from '@gauzy/contracts';
 import { distinctUntilChange, isEmpty } from '@gauzy/common-angular';
 import { ALL_EMPLOYEES_SELECTED } from '../../../@theme/components/header/selectors/employee';
@@ -41,7 +40,6 @@ export class AccountingComponent extends TranslationBaseComponent
 	aggregatedEmployeeStatistics: IAggregatedEmployeeStatistic;
 	selectedDateRange: IDateRangePicker;
 	public organization: IOrganization;
-	isEmployee: boolean;
 	chartData: IChartData;
 	statistics$: Subject<boolean> = new Subject();
 	loading: boolean = false;
@@ -64,16 +62,6 @@ export class AccountingComponent extends TranslationBaseComponent
 			.pipe(
 				filter((employee: ISelectedEmployee) => !!employee && !!employee.id),
 				tap(() => this.navigateToEmployeeStatistics()),
-				untilDestroyed(this)
-			)
-			.subscribe();
-		this.store.user$
-			.pipe(
-				filter((user: IUser) => !!user),
-				tap(
-					(user: IUser) =>
-						(this.isEmployee = user.employee ? true : false)
-				),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -118,7 +106,7 @@ export class AccountingComponent extends TranslationBaseComponent
 	}
 
 	async getAggregateStatistics() {
-		if (!this.organization || this.isEmployee) {
+		if (!this.organization) {
 			return;
 		}
 		try {
