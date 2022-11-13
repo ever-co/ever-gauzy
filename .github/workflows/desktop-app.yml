@@ -13,7 +13,7 @@ jobs:
 
         strategy:
             matrix:
-                os: [ubuntu-latest]
+                os: [ubuntu-22.04]
 
         steps:
             - name: Check out Git repository

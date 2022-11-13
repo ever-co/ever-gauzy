@@ -6,7 +6,7 @@ on:
 
 jobs:
     gauzy-api:
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-22.04
         steps:
             - name: Checkout
               uses: actions/checkout@v3
@@ -81,7 +81,7 @@ jobs:
                   docker push ghcr.io/ever-co/gauzy-api-demo:latest
 
     gauzy-webapp:
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-22.04
         steps:
             - name: Checkout
               uses: actions/checkout@v3
