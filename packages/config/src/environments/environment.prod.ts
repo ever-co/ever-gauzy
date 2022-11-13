@@ -162,7 +162,7 @@ export const environment: IEnvironment = {
 			user: process.env.MAIL_USERNAME,
 			pass: process.env.MAIL_PASSWORD
 		},
-		from: process.env.MAIL_FROM_ADDRESS
+		fromAddress: process.env.MAIL_FROM_ADDRESS
 	},
 	defaultCurrency: process.env.DEFAULT_CURRENCY || 'USD',
 

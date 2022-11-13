@@ -6,5 +6,5 @@ export interface ISMTPConfig {
 		user: string;
 		pass: string;
 	};
-	from?: string;
+	fromAddress?: string;
 }

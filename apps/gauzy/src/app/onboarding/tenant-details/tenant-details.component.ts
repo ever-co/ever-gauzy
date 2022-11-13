@@ -1,8 +1,10 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { IOrganizationCreateInput, IUser } from '@gauzy/contracts';
+import { IOrganization, IOrganizationCreateInput, IUser } from '@gauzy/contracts';
+import { firstValueFrom } from 'rxjs';
 import {
 	AuthService,
+	EmployeesService,
 	OrganizationsService,
 	Store,
 	TenantService,
@@ -24,7 +26,8 @@ export class TenantDetailsComponent implements OnInit, OnDestroy {
 		private readonly tenantService: TenantService,
 		private readonly usersService: UsersService,
 		private readonly store: Store,
-		private readonly authService: AuthService
+		private readonly authService: AuthService,
+		private readonly employeesService: EmployeesService
 	) {}
 
 	ngOnInit() {
@@ -46,15 +49,16 @@ export class TenantDetailsComponent implements OnInit, OnDestroy {
 			const tenant = await this.tenantService.create({ name: organization.name });
 			this.user = await this.usersService.getMe(['tenant']);
 			this.store.user = this.user;
+
 			try {
-				await this.organizationsService.create({
+				const createdOrganization = await this.organizationsService.create({
 					...organization,
 					tenant,
 					isDefault: true
 				});
 
-				await this.registerEmployeeFeature();
 				await this.getAccessTokenFromRefreshToken();
+				await this.registerEmployeeFeature(organization, createdOrganization);
 
 				this.router.navigate(['/onboarding/complete']);
 			} catch (error) {
@@ -68,7 +72,26 @@ export class TenantDetailsComponent implements OnInit, OnDestroy {
 	/**
 	 * Register user as a employee on initial onboarding
 	 */
-	async registerEmployeeFeature() {}
+	async registerEmployeeFeature(
+		organization: IOrganizationCreateInput,
+		createdOrganization: IOrganization
+	) {
+		if (!createdOrganization || !this.user) {
+			return;
+		}
+		if (organization.registerAsEmployee) {
+			const { id: organizationId } = createdOrganization;
+			const { id: userId } = this.user;
+
+			return await firstValueFrom(
+				this.employeesService.create({
+					startedWorkOn: organization.startedWorkOn ? new Date(organization.startedWorkOn) : null,
+					userId,
+					organizationId
+				})
+			);
+		}
+	}
 
 	/**
 	 * Get new generated access token using refresh token

@@ -194,11 +194,8 @@ export class EmployeesService {
 		);
 	}
 
-	create(createInput: IEmployeeCreateInput): Observable<IEmployee> {
-		return this.http.post<IEmployee>(
-			`${API_PREFIX}/employee`,
-			createInput
-		);
+	create(body: IEmployeeCreateInput): Observable<IEmployee> {
+		return this.http.post<IEmployee>(`${API_PREFIX}/employee`, body);
 	}
 
 	createBulk(createInput: IEmployeeCreateInput[]): Observable<IEmployee[]> {

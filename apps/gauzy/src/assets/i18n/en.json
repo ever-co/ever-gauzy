@@ -3876,6 +3876,7 @@
 	},
 	"CUSTOM_SMTP_PAGE": {
 		"HEADER": "Manage SMTP for '{{ name }}'",
+		"FROM_ADDRESS": "From Email Address",
 		"HOST": "Host",
 		"PORT": "Port",
 		"SECURE": "Secure",

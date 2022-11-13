@@ -34,16 +34,34 @@
 				(ngSubmit)="onSubmit()"
 			>
 				<div class="row">
-					<div class="col-sm-12 col-md-4">
-						<label class="label" for="name">
+					<div class="col-sm-12 col-md-3">
+						<label class="label" for="fromAddress">
+							{{ 'CUSTOM_SMTP_PAGE.FROM_ADDRESS' | translate }}
+						</label>
+						<input
+							id="fromAddress"
+							nbInput
+							fullWidth
+							type="text"
+							[placeholder]="'CUSTOM_SMTP_PAGE.FROM_ADDRESS' | translate"
+							formControlName="fromAddress"
+							[status]="
+								FormHelpers.isInvalidControl(form, 'fromAddress')
+									? 'danger' :
+									'basic'
+							"
+						/>
+					</div>
+					<div class="col-sm-12 col-md-3">
+						<label class="label" for="host">
 							{{ 'CUSTOM_SMTP_PAGE.HOST' | translate }}
 						</label>
 						<input
-							nbInput
-							type="text"
-							fullWidth
-							[placeholder]="'CUSTOM_SMTP_PAGE.HOST' | translate"
 							id="host"
+							nbInput
+							fullWidth
+							type="text"
+							[placeholder]="'CUSTOM_SMTP_PAGE.HOST' | translate"
 							formControlName="host"
 							[status]="
 								FormHelpers.isInvalidControl(form, 'host')
@@ -52,28 +70,28 @@
 							"
 						/>
 					</div>
-					<div class="col-sm-12 col-md-4">
-						<label class="label" for="name">
+					<div class="col-sm-12 col-md-3">
+						<label class="label" for="port">
 							{{ 'CUSTOM_SMTP_PAGE.PORT' | translate }}
 						</label>
 						<input
-							nbInput
-							type="number"
-							fullWidth
-							[placeholder]="'CUSTOM_SMTP_PAGE.PORT' | translate"
 							id="port"
+							nbInput
+							fullWidth
+							type="number"
+							[placeholder]="'CUSTOM_SMTP_PAGE.PORT' | translate"
 							formControlName="port"
 						/>
 					</div>
 					<div class="col-sm-12 col-md-3">
-						<label class="label" for="name">
+						<label class="label" for="secure">
 							{{ 'CUSTOM_SMTP_PAGE.SECURE' | translate }}
 						</label>
 						<nb-select
+							id="secure"
 							class="d-block"
 							size="medium"
 							fullWidth
-							id="secure"
 							formControlName="secure"
 						>
 							<nb-option
@@ -87,7 +105,7 @@
 				</div>
 				<div class="row mt-2">
 					<div class="col-sm-12 col-md-5">
-						<label class="label" for="name">
+						<label class="label" for="username">
 							{{ 'CUSTOM_SMTP_PAGE.AUTH.USERNAME' | translate }}
 						</label>
 						<input
@@ -105,7 +123,7 @@
 						/>
 					</div>
 					<div class="col-sm-12 col-md-5">
-						<label class="label" for="name">
+						<label class="label" for="password">
 							{{ 'CUSTOM_SMTP_PAGE.AUTH.PASSWORD' | translate }}
 						</label>
 						<input
@@ -126,21 +144,13 @@
 			</form>
 		</nb-card-body>
 		<nb-card-footer>
-			<ng-container
-				*ngIf="
-					isValidated;
-					then validatedTemplate;
-					else notValidatedTemplate
-				"
-			>
-			</ng-container>
-			<ng-template #validatedTemplate>
+			<ng-template [ngIf]="isValidated" [ngIfElse]="notValidatedTemplate">
 				<button
 					class="mr-2"
 					nbButton
 					status="success"
 					(click)="formDirective.ngSubmit.emit()"
-					[disabled]="form.invalid"
+					[disabled]="form.invalid || isWrapped"
 				>
 					{{ 'BUTTONS.SAVE' | translate }}
 				</button>

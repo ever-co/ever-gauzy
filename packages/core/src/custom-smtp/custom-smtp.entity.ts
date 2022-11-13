@@ -1,5 +1,5 @@
 import { Entity, Column, AfterLoad } from 'typeorm';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ICustomSmtp } from '@gauzy/contracts';
 import { ISMTPConfig } from '@gauzy/common';
 import { Exclude, Expose } from 'class-transformer';
@@ -36,6 +36,10 @@ export class CustomSmtp extends TenantOrganizationBaseEntity
 	@Column({ default: false })
 	isValidate?: boolean;
 
+	@ApiPropertyOptional({ type: () => String })
+	@Column({ nullable: true })
+	fromAddress?: string
+
 	@ApiProperty({ type: () => String })
 	@Expose({ toPlainOnly: true, name: 'username' })
 	@IsSecret()
@@ -58,6 +62,7 @@ export class CustomSmtp extends TenantOrganizationBaseEntity
 
 	getSmtpTransporter?() {
 		return {
+			fromAddress: this.fromAddress,
 			host: this.host,
 			port: this.port,
 			secure: this.secure || false, // true for 465, false for other ports

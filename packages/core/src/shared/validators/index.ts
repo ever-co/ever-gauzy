@@ -1,3 +1,4 @@
+export * from './custom-length.decorator';
 export * from './is-before-date.decorator';
 export * from './is-between-activity.decorator';
 export * from './is-employee-belongs-to-organization.decorator';

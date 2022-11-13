@@ -47,7 +47,7 @@ export class EmployeeSubscriber implements EntitySubscriberInterface<Employee> {
                 this.createSlug(entity);
             }
             /**
-             * If Date when started work filled then enabled time tracking functionality for the employee. 
+             * If Date when started work filled then enabled time tracking functionality for the employee.
              */
             if (entity.startedWorkOn) {
                 entity.isTrackingEnabled = true;
@@ -63,13 +63,13 @@ export class EmployeeSubscriber implements EntitySubscriberInterface<Employee> {
         if (event.entity) {
             const { entity } = event;
             /**
-             * If Date when started work filled then enabled time tracking functionality for the employee. 
+             * If Date when started work filled then enabled time tracking functionality for the employee.
              */
             if (entity.startedWorkOn) {
                 entity.isTrackingEnabled = true;
             }
             /**
-            * If Date when ended work filled then disable time tracking functionality for the employee. 
+            * If Date when ended work filled then disable time tracking functionality for the employee.
             */
             if (entity.endWork) {
                 entity.isTrackingEnabled = false;

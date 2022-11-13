@@ -17,12 +17,12 @@ jobs:
 
         steps:
             - name: Check out Git repository
-              uses: actions/checkout@v2
+              uses: actions/checkout@v3
 
             - name: Install Node.js, NPM and Yarn
               uses: actions/setup-node@v3
               with:
-                  node-version: 16.17.1
+                  node-version: 16.18.0
 
             - name: Change permissions
               run: 'sudo chown -R $(whoami) ./*'
@@ -34,7 +34,7 @@ jobs:
               run: 'sudo npm install -g npm'
 
             - name: Install latest node-gyp package
-              run: 'sudo npm install --quiet -g node-gyp@latest'
+              run: 'sudo npm install --quiet -g node-gyp@9.3.0'
 
             - name: Install Yarn dependencies
               run: 'yarn install --network-timeout 1000000 --frozen-lockfile'
@@ -43,7 +43,7 @@ jobs:
               run: 'yarn bootstrap'
 
             - name: Bump server version
-              uses: actions/github-script@v4
+              uses: actions/github-script@v6
               with:
                 script: |
                   const script = require('./.scripts/bump-version-electron.js')
@@ -56,6 +56,8 @@ jobs:
                   GH_TOKEN: ${{ secrets.GH_TOKEN }}
                   EP_GH_IGNORE_TIME: true
                   SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+                  DO_KEY_ID: ${{ secrets.DO_KEY_ID }}
+                  DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
 
     release-mac:
         runs-on: ${{ matrix.os }}
@@ -66,18 +68,18 @@ jobs:
 
         steps:
             - name: Check out Git repository
-              uses: actions/checkout@v2
+              uses: actions/checkout@v3
 
             - name: Install Node.js, NPM and Yarn
               uses: actions/setup-node@v3
               with:
-                  node-version: 16.17.1
+                  node-version: 16.18.0
 
             - name: Install latest version of NPM
               run: 'sudo npm install -g npm'
 
             - name: Install latest node-gyp package
-              run: 'sudo npm install --quiet -g node-gyp@latest'
+              run: 'sudo npm install --quiet -g node-gyp@9.3.0'
 
             - name: Install Yarn dependencies
               run: 'yarn install --network-timeout 1000000 --frozen-lockfile'
@@ -86,7 +88,7 @@ jobs:
               run: 'yarn bootstrap'
 
             - name: Bump Server version
-              uses: actions/github-script@v4
+              uses: actions/github-script@v6
               with:
                 script: |
                   const script = require('./.scripts/bump-version-electron.js')
@@ -99,31 +101,30 @@ jobs:
                   GH_TOKEN: ${{ secrets.GH_TOKEN }}
                   EP_GH_IGNORE_TIME: true
                   SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+                  DO_KEY_ID: ${{ secrets.DO_KEY_ID }}
+                  DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
 
     release-windows:
         runs-on: ${{ matrix.os }}
 
         strategy:
             matrix:
-                os: [windows-2019]
+                os: [windows-2022]
 
         steps:
             - name: Check out Git repository
-              uses: actions/checkout@v2
+              uses: actions/checkout@v3
 
             - name: Install Node.js, NPM and Yarn
               uses: actions/setup-node@v3
               with:
-                  node-version: 16.17.1
+                  node-version: 16.18.0
 
             - name: Install latest version of NPM
               run: 'npm install -g npm'
 
-            - name: Set to use VS 2022
-              run: 'npm config set msvs_version 2022 --global'
-
             - name: Install latest node-gyp package
-              run: 'npm install --quiet -g node-gyp@latest'
+              run: 'npm install --quiet -g node-gyp@9.3.0'
 
             - name: Install Yarn dependencies
               run: 'yarn install --network-timeout 1000000 --frozen-lockfile'
@@ -132,7 +133,7 @@ jobs:
               run: 'yarn bootstrap'
 
             - name: Bump Server version
-              uses: actions/github-script@v4
+              uses: actions/github-script@v6
               with:
                 script: |
                   const script = require('./.scripts/bump-version-electron.js')
@@ -145,3 +146,5 @@ jobs:
                   GH_TOKEN: ${{ secrets.GH_TOKEN }}
                   EP_GH_IGNORE_TIME: true
                   SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+                  DO_KEY_ID: ${{ secrets.DO_KEY_ID }}
+                  DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
