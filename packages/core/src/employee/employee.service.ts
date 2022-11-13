@@ -6,6 +6,7 @@ import * as moment from 'moment';
 import { Brackets, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import { RequestContext } from '../core/context';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
+import { getDateRangeFormat } from './../core/utils';
 import { Employee } from './employee.entity';
 
 @Injectable()
@@ -83,11 +84,14 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 			);
 			if (isNotEmpty(forRange)) {
 				if (forRange.startDate && forRange.endDate) {
-					const { startDate, endDate } = forRange;
+					const { start: startDate, end: endDate } = getDateRangeFormat(
+						moment.utc(forRange.startDate),
+						moment.utc(forRange.endDate)
+					);
 					qb.andWhere(
 						new Brackets((web: WhereExpressionBuilder) => {
 							web.andWhere(`"${qb.alias}"."startedWorkOn" <= :startedWorkOn`, {
-								startedWorkOn: moment.utc(endDate).format('YYYY-MM-DD hh:mm:ss')
+								startedWorkOn: endDate
 							});
 						})
 					);
@@ -95,7 +99,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 						new Brackets((web: WhereExpressionBuilder) => {
 							web.where(`"${qb.alias}"."endWork" IS NULL`);
 							web.orWhere( `"${qb.alias}"."endWork" >= :endWork`, {
-								endWork: moment.utc(startDate).format('YYYY-MM-DD hh:mm:ss')
+								endWork: startDate
 							});
 						})
 					);
