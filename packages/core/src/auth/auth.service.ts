@@ -7,7 +7,8 @@ import {
 	IUser,
 	IChangePasswordRequest,
 	IPasswordReset,
-	IResetPasswordRequest
+	IResetPasswordRequest,
+	IUserInviteCodeConfirmationInput
 } from '@gauzy/contracts';
 import { CommandBus } from '@nestjs/cqrs';
 import {
@@ -29,9 +30,11 @@ import { UserOrganizationService } from '../user-organization/user-organization.
 import { ImportRecordUpdateOrCreateCommand } from './../export-import/import-record';
 import { PasswordResetCreateCommand, PasswordResetGetCommand } from './../password-reset/commands';
 import { RequestContext } from './../core/context';
+import { generateRandomInteger } from './../core/utils';
 
 @Injectable()
 export class AuthService extends SocialAuthService {
+
 	constructor(
 		@InjectRepository(User)
 		private readonly userRepository: Repository<User>,
@@ -416,7 +419,7 @@ export class AuthService extends SocialAuthService {
 	/**
 	 * Get JWT refresh token
 	 *
-	 * @param payload
+	 * @param user
 	 * @returns
 	 */
 	public async getJwtRefreshToken(user: Partial<IUser>) {
@@ -450,5 +453,23 @@ export class AuthService extends SocialAuthService {
 		} catch (error) {
 			console.log('Error while getting jwt access token from refresh token', error);
 		}
+	}
+
+	/**
+	 * Send verification code to the register email address
+	 *
+	 * @param email
+	 */
+	async sendInviteCodeToTheEmail(email: IUser['email']) {
+		console.log('verification code sent to the email, please check your email', email, generateRandomInteger(6));
+	}
+
+	/**
+	 * Confirmed verification code and email
+	 *
+	 * @param body
+	 */
+	async confirmInviteCodeWithEmail(body: IUserInviteCodeConfirmationInput) {
+		console.log('confirmed email & code', body);
 	}
 }
