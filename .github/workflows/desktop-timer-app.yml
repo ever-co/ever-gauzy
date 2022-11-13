@@ -64,7 +64,7 @@ jobs:
 
         strategy:
             matrix:
-                os: [macos-latest]
+                os: [macos-12]
 
         steps:
             - name: Check out Git repository
