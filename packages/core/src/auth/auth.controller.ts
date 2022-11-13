@@ -21,7 +21,7 @@ import { IAuthResponse, LanguagesEnum } from '@gauzy/contracts';
 import { Public } from '@gauzy/common';
 import { AuthService } from './auth.service';
 import { User as IUser } from '../user/user.entity';
-import { AuthLoginCommand, AuthRegisterCommand, SendInviteCodeCommand } from './commands';
+import { AuthLoginCommand, AuthRegisterCommand, ConfirmInviteCodeCommand, SendInviteCodeCommand } from './commands';
 import { RequestContext } from '../core/context';
 import { TransformInterceptor } from './../core/interceptors';
 import { AuthRefreshGuard } from './../shared/guards';
@@ -134,7 +134,6 @@ export class AuthController {
 	async sendInviteCode(
 		@Body() entity: SendInviteCodeDTO
 	): Promise<any> {
-		console.log({ entity });
 	 	return await this.commandBus.execute(
 			new SendInviteCodeCommand(entity)
 		);
@@ -151,7 +150,9 @@ export class AuthController {
 	async confirmInviteCode(
 		@Body() entity: ConfirmInviteCodeDTO
 	): Promise<any> {
-		console.log({ entity });
+		return await this.commandBus.execute(
+			new ConfirmInviteCodeCommand(entity)
+		);
 	}
 
 	/**

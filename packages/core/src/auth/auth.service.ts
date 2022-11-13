@@ -7,7 +7,8 @@ import {
 	IUser,
 	IChangePasswordRequest,
 	IPasswordReset,
-	IResetPasswordRequest
+	IResetPasswordRequest,
+	IUserInviteCodeConfirmationInput
 } from '@gauzy/contracts';
 import { CommandBus } from '@nestjs/cqrs';
 import {
@@ -460,7 +461,15 @@ export class AuthService extends SocialAuthService {
 	 * @param email
 	 */
 	async sendInviteCodeToTheEmail(email: IUser['email']) {
-		console.log('verification code sent to the email, please check your email', email);
-		console.log(generateRandomInteger(6));
+		console.log('verification code sent to the email, please check your email', email, generateRandomInteger(6));
+	}
+
+	/**
+	 * Confirmed verification code and email
+	 *
+	 * @param body
+	 */
+	async confirmInviteCodeWithEmail(body: IUserInviteCodeConfirmationInput) {
+		console.log('confirmed email & code', body);
 	}
 }
