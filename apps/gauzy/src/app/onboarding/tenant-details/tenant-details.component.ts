@@ -76,15 +76,17 @@ export class TenantDetailsComponent implements OnInit, OnDestroy {
 		organization: IOrganizationCreateInput,
 		createdOrganization: IOrganization
 	) {
-		if (!createdOrganization) {
+		if (!createdOrganization || !this.user) {
 			return;
 		}
 		if (organization.registerAsEmployee) {
 			const { id: organizationId } = createdOrganization;
+			const { id: userId } = this.user;
+
 			return await firstValueFrom(
 				this.employeesService.create({
-					startedWorkOn: organization.startedWorkOn,
-					userId: this.user.id,
+					startedWorkOn: organization.startedWorkOn ? new Date(organization.startedWorkOn) : null,
+					userId,
 					organizationId
 				})
 			);
