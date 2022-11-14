@@ -54,6 +54,9 @@ export class Invite extends TenantOrganizationBaseEntity implements IInvite {
 	@Column({ nullable: true })
 	actionDate?: Date;
 
+	@ApiPropertyOptional({ type: () => Number })
+	@Column({ nullable: true })
+	public code?: number;
 	/*
     |--------------------------------------------------------------------------
     | @ManyToOne
