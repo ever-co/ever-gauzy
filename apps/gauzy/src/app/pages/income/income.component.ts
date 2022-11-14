@@ -493,27 +493,7 @@ export class IncomeComponent extends PaginationFilterBaseComponent
 
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
-
-		const request = {};
-		if (this.selectedEmployeeId)
-			request['employeeId'] = this.selectedEmployeeId;
-
-		const { startDate, endDate } = getAdjustDateRangeFutureAllowed(
-			this.selectedDateRange
-		);
-		if (startDate && endDate) {
-			request['valueDate'] = {};
-			if (moment(startDate).isValid()) {
-				request['valueDate']['startDate'] = toUTC(startDate).format(
-					'YYYY-MM-DD HH:mm:ss'
-				);
-			}
-			if (moment(endDate).isValid()) {
-				request['valueDate']['endDate'] = toUTC(endDate).format(
-					'YYYY-MM-DD HH:mm:ss'
-				);
-			}
-		}
+		const { startDate, endDate } = getAdjustDateRangeFutureAllowed(this.selectedDateRange);
 
 		this.smartTableSource = new ServerDataSource(this.httpClient, {
 			endPoint: `${API_PREFIX}/income/pagination`,
