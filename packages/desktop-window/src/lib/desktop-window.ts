@@ -69,7 +69,8 @@ const windowSetting = () => {
 		webPreferences: {
 			nodeIntegration: true,
 			webSecurity: false,			
-			contextIsolation: false
+			contextIsolation: false,
+			sandbox: false
 		},
 		width: sizes.width,
 		height: sizes.height,

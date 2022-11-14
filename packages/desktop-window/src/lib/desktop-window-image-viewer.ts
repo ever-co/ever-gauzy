@@ -40,7 +40,8 @@ const windowSetting = () => {
 			nodeIntegration: true,
 			webSecurity: false,
 			devTools: true,			
-			contextIsolation: false
+			contextIsolation: false,
+			sandbox: false
 		},
 		width: 1000,
 		height: 728,

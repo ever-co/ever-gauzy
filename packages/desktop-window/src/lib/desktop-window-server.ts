@@ -48,7 +48,8 @@ const windowSetting = () => {
 		webPreferences: {
 			nodeIntegration: true,
 			webSecurity: false,			
-			contextIsolation: false
+			contextIsolation: false,
+			sandbox: false
 		},
 		width: 380,
 		height: 400,

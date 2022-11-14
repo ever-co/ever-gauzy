@@ -753,7 +753,7 @@ const showPopup = async (url: string, options: any) => {
 	options.height = 768;
 	if (popupWin) popupWin.destroy();
 	popupWin = new BrowserWindow(options);
-	let userAgentWb = 'Chrome/87.0.4280.66';
+	let userAgentWb = 'Chrome/104.0.0.0';
 	await popupWin.loadURL(url, {userAgent: userAgentWb});
 	popupWin.show();
  };
