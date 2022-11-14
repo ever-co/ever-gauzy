@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, AfterViewInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { combineLatest, Subject } from 'rxjs';
@@ -14,7 +14,9 @@ import {
 	ProposalStatusEnum,
 	IOrganizationContact,
 	IDateRangePicker,
-	ITag
+	ITag,
+	PermissionsEnum,
+	IEmployee
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange, toUTC } from '@gauzy/common-angular';
@@ -51,10 +53,10 @@ import { getAdjustDateRangeFutureAllowed } from '../../@theme/components/header/
 	styleUrls: ['./proposals.component.scss']
 })
 export class ProposalsComponent extends PaginationFilterBaseComponent
-	implements OnInit, OnDestroy {
+	implements AfterViewInit, OnInit, OnDestroy {
 
 	smartTableSettings: object;
-	employeeId: string | null;
+	selectedEmployeeId: IEmployee['id'] | null;
 	selectedDateRange: IDateRangePicker;
 	proposals: IProposalViewModel[];
 	smartTableSource: ServerDataSource;
@@ -125,24 +127,27 @@ export class ProposalsComponent extends PaginationFilterBaseComponent
 				tap(([organization, dateRange, employee]) => {
 					this.organization = organization;
 					this.selectedDateRange = dateRange;
-					this.employeeId = employee ? employee.id : null;
+					this.selectedEmployeeId = employee ? employee.id : null;
 				}),
 				tap(() => this._refresh$.next(true)),
 				tap(() => this.proposals$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this._refresh$.pipe(
+		this._refresh$
+			.pipe(
 				filter(() => this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => this.refreshPagination()),
 				tap(() => this.proposals = []),
 				untilDestroyed(this)
-			).subscribe();
+			)
+			.subscribe();
 	}
 
 	ngAfterViewInit() {
-		const { employeeId } = this.store.user;
-		if (employeeId) {
+		if (this.store.user && !this.store.hasPermission(
+			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+		)) {
 			delete this.smartTableSettings['columns']['author'];
 			this.smartTableSettings = Object.assign(
 				{},
@@ -443,8 +448,6 @@ export class ProposalsComponent extends PaginationFilterBaseComponent
 		const { id: organizationId } = this.organization;
 		const { startDate, endDate } = getAdjustDateRangeFutureAllowed(this.selectedDateRange);
 
-		if (this.employeeId) { delete this.smartTableSettings['columns']['author']; }
-
 		this.smartTableSource = new ServerDataSource(this.httpClient, {
 			endPoint: `${API_PREFIX}/proposal/pagination`,
 			relations: [
@@ -460,11 +463,11 @@ export class ProposalsComponent extends PaginationFilterBaseComponent
 			where: {
 				organizationId,
 				tenantId,
-				...(
-					this.employeeId ? {
-						employeeId: this.employeeId
-					} : {}
-				),
+				...(this.selectedEmployeeId
+					? {
+							employeeId: this.selectedEmployeeId
+					  }
+					: {}),
 				valueDate: {
 					startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm:ss'),
 					endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm:ss')

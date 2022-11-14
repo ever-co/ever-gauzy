@@ -12,7 +12,8 @@ import {
 	IEventType,
 	ComponentLayoutStyleEnum,
 	IOrganization,
-	IEventTypeViewModel
+	IEventTypeViewModel,
+	PermissionsEnum
 } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
@@ -43,10 +44,9 @@ import { ServerDataSource } from '../../../@core/utils/smart-table/server.data-s
 	templateUrl: './event-type.component.html',
 	styleUrls: ['event-type.component.scss']
 })
-export class EventTypeComponent
-	extends PaginationFilterBaseComponent
-	implements AfterViewInit, OnInit, OnDestroy
-{
+export class EventTypeComponent extends PaginationFilterBaseComponent
+	implements AfterViewInit, OnInit, OnDestroy {
+
 	smartTableSource: ServerDataSource;
 	smartTableSettings: object;
 	localDataSource = new LocalDataSource();
@@ -149,8 +149,9 @@ export class EventTypeComponent
 	}
 
 	ngAfterViewInit() {
-		const { employeeId } = this.store.user;
-		if (employeeId) {
+		if (this.store.user && !this.store.hasPermission(
+			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+		)) {
 			delete this.smartTableSettings['columns']['employeeName'];
 			this.smartTableSettings = Object.assign(
 				{},
@@ -396,18 +397,22 @@ export class EventTypeComponent
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 
-		const request = {};
-		if (this.selectedEmployeeId) {
-			request['employeeId'] = this.selectedEmployeeId;
-		}
-
 		this.smartTableSource = new ServerDataSource(this.httpClient, {
 			endPoint: `${API_PREFIX}/event-type/pagination`,
-			relations: ['employee', 'employee.user', 'tags'],
+			relations: [
+				'employee',
+				'employee.user',
+				'tags'
+			],
 			where: {
-				...{ organizationId, tenantId },
-				...request,
-				...this.filters.where
+				organizationId,
+				tenantId,
+				...(this.selectedEmployeeId
+					? {
+							employeeId: this.selectedEmployeeId
+					  }
+					: {}),
+				...(this.filters.where ? this.filters.where : {})
 			},
 			resultMap: (i: IEventType) => {
 				const durationFormat = `${i.duration} ${i.durationUnit}`;

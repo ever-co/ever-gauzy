@@ -1,19 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { ServerDataSource } from './../../../../@core/utils/smart-table';
-import {
-	IOrganization,
-	IOrganizationProject,
-	ISelectedEmployee,
-	ITask,
-	TaskStatusEnum
-} from '@gauzy/contracts';
+import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
-import {
-	ErrorHandlingService,
-	Store,
-	TasksService
-} from 'apps/gauzy/src/app/@core/services';
-import { API_PREFIX } from 'apps/gauzy/src/app/@core/constants';
 import {
 	combineLatest,
 	debounceTime,
@@ -23,18 +10,28 @@ import {
 	Subject
 } from 'rxjs';
 import { tap } from 'rxjs/operators';
-import { distinctUntilChange } from '@gauzy/common-angular';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import {
-	IPaginationBase,
-	PaginationFilterBaseComponent
-} from 'apps/gauzy/src/app/@shared/pagination/pagination-filter-base.component';
 import { TranslateService } from '@ngx-translate/core';
 import { pluck } from 'underscore';
 import { NbDialogService } from '@nebular/theme';
-import { AddTaskDialogComponent } from 'apps/gauzy/src/app/@shared/tasks/add-task-dialog/add-task-dialog.component';
+import { ServerDataSource } from './../../../../@core/utils/smart-table';
+import {
+	IOrganization,
+	IOrganizationProject,
+	ISelectedEmployee,
+	ITask,
+	TaskStatusEnum
+} from '@gauzy/contracts';
+import { distinctUntilChange } from '@gauzy/common-angular';
+import {
+	ErrorHandlingService,
+	Store,
+	TasksService
+} from './../../../../@core/services';
+import { API_PREFIX } from './../../../../@core/constants';
+import { PaginationFilterBaseComponent } from './../../../../@shared/pagination/pagination-filter-base.component';
+import { AddTaskDialogComponent } from './../../../../@shared/tasks/add-task-dialog/add-task-dialog.component';
 import { MyTaskDialogComponent } from '../../../tasks/components/my-task-dialog/my-task-dialog.component';
-import { Router } from '@angular/router';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -42,17 +39,16 @@ import { Router } from '@angular/router';
 	templateUrl: './project-management-details.component.html',
 	styleUrls: ['./project-management-details.component.scss']
 })
-export class ProjectManagementDetailsComponent
-	extends PaginationFilterBaseComponent
-	implements OnInit, OnDestroy
-{
+export class ProjectManagementDetailsComponent extends PaginationFilterBaseComponent
+	implements OnInit, OnDestroy {
+
 	private _smartTableSource: ServerDataSource;
 	private _tasks: ITask[] = [];
 	private _selectedEmployee: ISelectedEmployee;
-	private _selectedProject: IOrganizationProject;
+	public selectedEmployeeId: ISelectedEmployee['id'];
+	private selectedProjectId: IOrganizationProject['id'];
 	private _organization: IOrganization;
-	private _task$: Subject<any> = this.subject$;
-	private _settingsSmartTable: object;
+	private _task$: Subject<boolean> = this.subject$;
 	private _projects: IOrganizationProject[] = [];
 	public status = TaskStatusEnum;
 
@@ -72,17 +68,18 @@ export class ProjectManagementDetailsComponent
 		const storeOrganization$ = this._store.selectedOrganization$;
 		const storeEmployee$ = this._store.selectedEmployee$;
 		const storeProject$ = this._store.selectedProject$;
-		combineLatest([storeEmployee$, storeOrganization$, storeProject$])
+		combineLatest([storeOrganization$,storeEmployee$, storeProject$])
 			.pipe(
 				debounceTime(300),
-				filter(
-					([organization, employee]) => !!organization && !!employee
-				),
 				distinctUntilChange(),
-				tap(([employee, organization, project]) => {
+				filter(([organization]) => !!organization),
+				tap(([organization, employee, project]) => {
 					this._organization = organization;
 					this._selectedEmployee = employee;
-					this._selectedProject = project;
+					this.selectedEmployeeId = employee ? employee.id : null;
+					this.selectedProjectId = project ? project.id : null;
+				}),
+				tap(() => {
 					this.refreshPagination();
 					this.tasks = [];
 					this._task$.next(true);
@@ -105,36 +102,42 @@ export class ProjectManagementDetailsComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this._loadSmartTableSettings();
 	}
 
+	/*
+	 * Register Smart Table Source Config
+	 */
 	private _setSmartTableSource() {
 		if (!this._organization) {
 			return;
 		}
 		const { tenantId } = this._store.user;
 		const { id: organizationId } = this._organization;
-		const request = {};
-		const relations = [];
-		let endPoint: string = `${API_PREFIX}/tasks/pagination`;
-		relations.push(...['project', 'tags']);
-
-		if (this.isSelectedEmployee) {
-			request['employeeId'] = this._selectedEmployee.id;
-			endPoint = `${API_PREFIX}/tasks/employee`;
-		}
-
-		if (this._selectedProject && this._selectedProject.id) {
-			request['projectId'] = this._selectedProject.id;
-		}
 
 		this._smartTableSource = new ServerDataSource(this._httpClient, {
-			endPoint,
-			relations,
+			...(this.selectedEmployeeId ? {
+				endPoint: `${API_PREFIX}/tasks/employee`
+			} : {
+				endPoint: `${API_PREFIX}/tasks/pagination`
+			}),
+			relations: [
+				'project',
+				'tags'
+			],
 			where: {
-				...{ organizationId, tenantId },
-				...request,
-				...this.filters.where
+				organizationId,
+				tenantId,
+				...(this.selectedEmployeeId
+					? {
+						employeeId: this.selectedEmployeeId
+					  }
+					: {}),
+				...(this.selectedProjectId
+					? {
+						projectId: this.selectedProjectId
+					  }
+					: {}),
+				...(this.filters.where ? this.filters.where : {})
 			}
 		});
 	}
@@ -145,9 +148,8 @@ export class ProjectManagementDetailsComponent
 		}
 		try {
 			this._setSmartTableSource();
-			const { activePage, itemsPerPage } = this.pagination;
-			this._smartTableSource.setPaging(activePage, itemsPerPage, false);
-			this._smartTableSource.setSort([
+			const { activePage, itemsPerPage } = this.getPagination();
+			this._smartTableSource.setPaging(activePage, itemsPerPage, false).setSort([
 				{ field: 'dueDate', direction: 'asc' }
 			]);
 			await this._smartTableSource.getElements();
@@ -156,19 +158,6 @@ export class ProjectManagementDetailsComponent
 		} catch (error) {
 			this._errorHandlingService.handleError(error);
 		}
-	}
-
-	private _loadSmartTableSettings() {
-		const pagination: IPaginationBase = this.getPagination();
-		this._settingsSmartTable = {
-			actions: false,
-			pager: {
-				display: false,
-				perPage: pagination
-					? pagination.itemsPerPage
-					: this.minItemPerPage
-			}
-		};
 	}
 
 	private _sortProjectByPopularity() {
@@ -187,7 +176,10 @@ export class ProjectManagementDetailsComponent
 	}
 
 	public get isMyTask() {
-		return this._selectedEmployee.id === this._store.user.employeeId;
+		if (!this._store.user) {
+			return;
+		}
+		return this.selectedEmployeeId === this._store.user.employeeId;
 	}
 
 	public onScrollTasks(): void {
@@ -206,12 +198,6 @@ export class ProjectManagementDetailsComponent
 		this._tasks = value;
 	}
 
-	public get isSelectedEmployee(): boolean {
-		return this._selectedEmployee && this._selectedEmployee.id
-			? true
-			: false;
-	}
-
 	public get projects(): IOrganizationProject[] {
 		return this._projects;
 	}
@@ -227,11 +213,14 @@ export class ProjectManagementDetailsComponent
 	}
 
 	public async addTodo() {
+		if (!this._organization) {
+			return;
+		}
 		let dialog: any;
 		if (!this.isMyTask) {
 			dialog = this._dialogService.open(AddTaskDialogComponent, {
 				context: {
-					selectedTask: this.isSelectedEmployee
+					selectedTask: this.selectedEmployeeId
 						? ({
 								members: [{ ...this._selectedEmployee }] as any,
 								status: this.status.TODO

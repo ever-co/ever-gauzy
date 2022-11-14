@@ -1,8 +1,8 @@
 <div class="main">
 	<nb-card class="inbox">
-		<nb-card-header>{{
-			'DASHBOARD_PAGE.INBOX' | translate
-		}}</nb-card-header>
+		<nb-card-header>
+			{{ 'DASHBOARD_PAGE.INBOX' | translate }}
+		</nb-card-header>
 		<nb-card-body>
 			<div class="soon">
 				<ga-wip></ga-wip>
@@ -10,7 +10,9 @@
 		</nb-card-body>
 	</nb-card>
 	<nb-card class="today">
-		<nb-card-header>{{ 'TIMESHEET.TODAY' | translate }}</nb-card-header>
+		<nb-card-header>
+			{{ 'TIMESHEET.TODAY' | translate }}
+		</nb-card-header>
 		<nb-card-body>
 			<button status="primary" size="small" outline nbButton>
 				{{ 'DASHBOARD_PAGE.PLAN_MY_DAY' | translate }}
@@ -32,9 +34,7 @@
 						></div>
 						<div>
 							<div class="status">{{ task?.status }}:</div>
-							<div class="title">
-								{{ task?.title }}
-							</div>
+							<div class="title">{{ task?.title }}</div>
 						</div>
 					</div>
 				</ng-container>
@@ -52,14 +52,12 @@
 	</nb-card>
 	<div class="last-column">
 		<nb-card
-			[ngStyle]="{
-				height: !isSelectedEmployee ? '100%' : ''
-			}"
-			class="projects"
+			[ngStyle]="{ 'height': !selectedEmployeeId ? '100%' : '' }"
+ 			class="projects"
 		>
-			<nb-card-header>{{
-				'DASHBOARD_PAGE.MOST_VIEW_PROJECTS' | translate
-			}}</nb-card-header>
+			<nb-card-header>
+				{{ 'DASHBOARD_PAGE.MOST_VIEW_PROJECTS' | translate }}
+			</nb-card-header>
 			<nb-card-body>
 				<button
 					*ngxPermissionsOnly="'ALL_ORG_VIEW'"
@@ -87,46 +85,44 @@
 				</div>
 			</nb-card-body>
 		</nb-card>
-		<nb-card *ngIf="isSelectedEmployee" class="recently">
-			<nb-card-header>{{
-				'DASHBOARD_PAGE.RECENTLY_ASSIGNED' | translate
-			}}</nb-card-header>
-			<nb-card-body>
-				<button
-					*ngIf="isMyTask"
-					(click)="redirectToMyTasks()"
-					status="primary"
-					size="small"
-					outline
-					nbButton
-				>
-					{{ 'BUTTONS.VIEW_ALL' | translate }}
-				</button>
-				<div
-					[ngStyle]="{
-						'max-height': !isMyTask ? 'calc(100% - 28px)' : ''
-					}"
-					class="card-body-content"
-				>
-					<ng-container *ngFor="let task of assigned">
-						<div class="card assigned">
-							<div class="">
-								<div class="title">
-									{{ task?.title }}
+		<ng-template [ngIf]="selectedEmployeeId">
+			<nb-card class="recently">
+				<nb-card-header>
+					{{ 'DASHBOARD_PAGE.RECENTLY_ASSIGNED' | translate }}
+				</nb-card-header>
+				<nb-card-body>
+					<button
+						*ngIf="isMyTask"
+						(click)="redirectToMyTasks()"
+						status="primary"
+						size="small"
+						outline
+						nbButton
+					>
+						{{ 'BUTTONS.VIEW_ALL' | translate }}
+					</button>
+					<div
+						[ngStyle]="{'max-height': !isMyTask ? 'calc(100% - 28px)' : ''}"
+						class="card-body-content"
+					>
+						<ng-container *ngFor="let task of assigned">
+							<div class="card assigned">
+								<div class="">
+									<div class="title">
+										{{ task?.title }}
+									</div>
+									<ga-only-tags [rowData]="task"></ga-only-tags>
 								</div>
-								<ga-only-tags [rowData]="task"></ga-only-tags>
 							</div>
-						</div>
-					</ng-container>
-					<ng-template [ngIf]="!assigned?.length">
-						<ngx-no-data-message
-							[message]="
-								'DASHBOARD_PAGE.NO_TODO_ASSIGNED' | translate
-							"
-						></ngx-no-data-message>
-					</ng-template>
-				</div>
-			</nb-card-body>
-		</nb-card>
+						</ng-container>
+						<ng-template [ngIf]="!assigned?.length">
+							<ngx-no-data-message
+								[message]="'DASHBOARD_PAGE.NO_TODO_ASSIGNED' | translate"
+							></ngx-no-data-message>
+						</ng-template>
+					</div>
+				</nb-card-body>
+			</nb-card>
+		</ng-template>
 	</div>
 </div>
