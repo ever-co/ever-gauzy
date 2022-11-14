@@ -338,6 +338,11 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	})
 	tags: ITag[];
 
-	@ManyToMany(() => Skill, (skill) => skill.organizations)
+	@ManyToMany(() => Skill, (skill) => skill.organizations, {
+        cascade: true
+    })
+	@JoinTable({
+		name: 'skill_organization'
+	})
 	skills: ISkill[];
 }
