@@ -26,6 +26,7 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 	ipcMain.removeAllListeners('return_time_sheet');
 	ipcMain.removeAllListeners('return_toggle_api');
 	ipcMain.removeAllListeners('set_project_task');
+	ipcMain.removeHandler('DESKTOP_CAPTURER_GET_SOURCES');
 	ipcMain.on('start_server', (event, arg) => {
 		global.variableGlobal = {
 			API_BASE_URL: arg.serverUrl
