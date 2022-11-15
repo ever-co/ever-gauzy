@@ -61,7 +61,6 @@ export class User extends TenantBaseEntity implements IUser {
 	username?: string;
 
 	@ApiProperty({ type: () => String })
-	@Column()
 	@Exclude({ toPlainOnly: true })
 	@Column({ nullable: true })
 	hash?: string;
@@ -91,6 +90,16 @@ export class User extends TenantBaseEntity implements IUser {
 	@ApiPropertyOptional({ type: () => Boolean, default: true })
 	@Column({ nullable: true, default: true })
 	isActive?: boolean;
+
+	@ApiPropertyOptional({ type: () => Number })
+	@Exclude({ toPlainOnly: true })
+	@Column({ nullable: true })
+	public code?: number;
+
+	@ApiPropertyOptional({ type: () => Date })
+	@Exclude({ toPlainOnly: true })
+	@Column({ nullable: true })
+	public codeExpireAt?: Date;
 
 	name?: string;
 	employeeId?: string;
