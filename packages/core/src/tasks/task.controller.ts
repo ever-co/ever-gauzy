@@ -12,10 +12,12 @@ import {
 	Post,
 	Delete,
 	ValidationPipe,
-	UsePipes
+	UsePipes,
+	UseInterceptors
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
+import { DeleteResult } from 'typeorm';
 import {
 	PermissionsEnum,
 	IGetTaskByEmployeeOptions,
@@ -32,9 +34,11 @@ import { Task } from './task.entity';
 import { TaskService } from './task.service';
 import { TaskCreateCommand, TaskUpdateCommand } from './commands';
 import { CreateTaskDTO, UpdateTaskDTO } from './dto';
+import { TransformInterceptor } from './../core/interceptors';
 
 @ApiTags('Tasks')
 @UseGuards(TenantPermissionGuard)
+@UseInterceptors(TransformInterceptor)
 @Controller()
 export class TaskController extends CrudController<Task> {
 	constructor(
@@ -49,7 +53,7 @@ export class TaskController extends CrudController<Task> {
 	async pagination(
 		@Query() filter: PaginationParams<Task>
 	): Promise<IPagination<ITask>> {
-		return this.taskService.pagination(filter);
+		return await this.taskService.pagination(filter);
 	}
 
 	@ApiOperation({ summary: 'Find maximum task number.' })
@@ -69,7 +73,6 @@ export class TaskController extends CrudController<Task> {
 		return await this.taskService.getMaxTaskNumberByProject(filter);
 	}
 
-
 	@ApiOperation({ summary: 'Find my tasks.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -84,7 +87,7 @@ export class TaskController extends CrudController<Task> {
 	async findMyTasks(
 		@Query() filter: PaginationParams<ITask>
 	): Promise<IPagination<ITask>> {
-		return this.taskService.getMyTasks(filter);
+		return await this.taskService.getMyTasks(filter);
 	}
 
 	@ApiOperation({ summary: 'Find my tasks.' })
@@ -101,7 +104,7 @@ export class TaskController extends CrudController<Task> {
 	async findEmployeeTask(
 		@Query() filter: PaginationParams<ITask>
 	): Promise<IPagination<ITask>> {
-		return this.taskService.getEmployeeTasks(filter);
+		return await this.taskService.getEmployeeTasks(filter);
 	}
 
 	@ApiOperation({ summary: 'Find my team tasks.' })
@@ -118,7 +121,7 @@ export class TaskController extends CrudController<Task> {
 	async findTeamTasks(
 		@Query() filter: PaginationParams<ITask>
 	): Promise<IPagination<ITask>> {
-		return this.taskService.findTeamTasks(filter);
+		return await this.taskService.findTeamTasks(filter);
 	}
 
 	@ApiOperation({
@@ -138,7 +141,7 @@ export class TaskController extends CrudController<Task> {
 		@Param('id') employeeId: string,
 		@Body() findInput: IGetTaskByEmployeeOptions
 	): Promise<ITask[]> {
-		return this.taskService.getAllTasksByEmployee(employeeId, findInput);
+		return await this.taskService.getAllTasksByEmployee(employeeId, findInput);
 	}
 
 	@ApiOperation({ summary: 'Find all tasks.' })
@@ -156,7 +159,7 @@ export class TaskController extends CrudController<Task> {
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<ITask>> {
 		const { relations, findInput } = data;
-		return this.taskService.findAll({
+		return await this.taskService.findAll({
 			where: findInput,
 			relations
 		});
@@ -176,7 +179,7 @@ export class TaskController extends CrudController<Task> {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_TASK_EDIT)
 	@Post()
-	@UsePipes(new ValidationPipe({ transform : true, whitelist: true }))
+	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async create(
 		@Body() entity: CreateTaskDTO
 	): Promise<ITask> {
@@ -210,7 +213,7 @@ export class TaskController extends CrudController<Task> {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_TASK_EDIT)
 	@Put(':id')
-	@UsePipes(new ValidationPipe({ transform : true, whitelist: true }))
+	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: UpdateTaskDTO
@@ -232,7 +235,7 @@ export class TaskController extends CrudController<Task> {
 	@Delete(':id')
 	async delete(
 		@Param('id', UUIDValidationPipe) id: string
-	): Promise<any> {
-		return this.taskService.delete(id);
+	): Promise<DeleteResult> {
+		return await this.taskService.delete(id);
 	}
 }

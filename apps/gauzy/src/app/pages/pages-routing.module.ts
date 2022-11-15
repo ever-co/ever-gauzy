@@ -116,19 +116,9 @@ const routes: Routes = [
 			},
 			{
 				path: 'tasks',
-				children: [
-					{
-						path: '',
-						loadChildren: () => import('./tasks/tasks.module').then(
-							(m) => m.TasksModule
-						),
-						data: {
-							selectors: {
-								date: false,
-							}
-						}
-					}
-				]
+				loadChildren: () => import('./tasks/tasks.module').then(
+					(m) => m.TasksModule
+				)
 			},
 			{
 				path: 'jobs',

@@ -5,20 +5,30 @@ import { TaskSettingsComponent } from './components/task/task-settings/task-sett
 
 const routes: Routes = [
 	{
-		path: 'dashboard',
-		component: TaskComponent
-	},
-	{
-		path: 'team',
-		component: TaskComponent
-	},
-	{
-		path: 'me',
-		component: TaskComponent
-	},
-	{
-		path: 'settings/:id',
-		component: TaskSettingsComponent
+		path: '',
+		children: [
+			{
+				path: '',
+				redirectTo: 'dashboard',
+				pathMatch: 'full'
+			},
+			{
+				path: 'dashboard',
+				component: TaskComponent
+			},
+			{
+				path: 'team',
+				component: TaskComponent
+			},
+			{
+				path: 'me',
+				component: TaskComponent
+			},
+			{
+				path: 'settings/:id',
+				component: TaskSettingsComponent
+			}
+		]
 	}
 ];
 
