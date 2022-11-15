@@ -456,11 +456,9 @@ export class Employee extends TenantOrganizationBaseEntity
 	 */
 	@ApiProperty({ type: () => Skill })
 	@ManyToMany(() => Skill, (skill) => skill.employees, {
-        cascade: true
+        onUpdate: 'CASCADE',
+		onDelete: 'CASCADE'
     })
-	@JoinTable({
-		name: 'skill_employee'
-	})
     skills: ISkill[];
 
 	/**

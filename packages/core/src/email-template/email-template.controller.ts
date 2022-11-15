@@ -159,10 +159,9 @@ export class EmailTemplateController extends CrudController<EmailTemplate> {
 		type: EmailTemplate
 	})
 	@Post('template/save')
+	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async saveEmailTemplate(
-		@Body(new ValidationPipe({
-			whitelist: true
-		})) entity: SaveEmailTemplateDTO
+		@Body() entity: SaveEmailTemplateDTO
 	): Promise<IEmailTemplate> {
 		return await this.commandBus.execute(
 			new EmailTemplateSaveCommand(entity)
