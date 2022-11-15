@@ -17,7 +17,7 @@ import {
 	InternalServerErrorException,
 	UnauthorizedException
 } from '@nestjs/common';
-import { IsNull, MoreThanOrEqual, Repository } from 'typeorm';
+import { MoreThanOrEqual, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { SocialAuthService } from '@gauzy/auth';
 import { isNotEmpty } from '@gauzy/common';
