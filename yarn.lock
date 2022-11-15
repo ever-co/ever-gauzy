@@ -5736,6 +5736,16 @@
     rxjs "^6.6.0"
     tslib "^1.9.3"
 
+"@sentry/angular@^7.19.0":
+  version "7.19.0"
+  resolved "https://registry.yarnpkg.com/@sentry/angular/-/angular-7.19.0.tgz#fcf878dbc484956e811b4bf92bf21dd863aaa199"
+  integrity sha512-0A/u621zmDpmr6LdZSzTomTCqugFusAh9FVbrCvUwUkxfb5I//5LlaDg8QO2v+kdnds/B8w4POnWdGQuv7h3/A==
+  dependencies:
+    "@sentry/browser" "7.19.0"
+    "@sentry/types" "7.19.0"
+    "@sentry/utils" "7.19.0"
+    tslib "^2.0.0"
+
 "@sentry/browser@6.19.2":
   version "6.19.2"
   resolved "https://registry.yarnpkg.com/@sentry/browser/-/browser-6.19.2.tgz#c0f6df07584f3b36fa037067aea20b2c8c2095a3"
@@ -5764,6 +5774,16 @@
     "@sentry/core" "7.16.0"
     "@sentry/types" "7.16.0"
     "@sentry/utils" "7.16.0"
+    tslib "^1.9.3"
+
+"@sentry/browser@7.19.0":
+  version "7.19.0"
+  resolved "https://registry.yarnpkg.com/@sentry/browser/-/browser-7.19.0.tgz#ce21544b843d5c4d5dcb9fe9b7ee31c5c4e91f42"
+  integrity sha512-dWi5VjEwiLb4ofata0UCLdTbXLD1uDUebe9rNSBkHZ3fHF4eap4ZJlu3dYePKB0CKZhZrjzbydimMhaMUNdnug==
+  dependencies:
+    "@sentry/core" "7.19.0"
+    "@sentry/types" "7.19.0"
+    "@sentry/utils" "7.19.0"
     tslib "^1.9.3"
 
 "@sentry/core@6.19.2":
