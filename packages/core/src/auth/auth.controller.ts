@@ -128,7 +128,7 @@ export class AuthController {
 	 * @returns
 	 */
 	@HttpCode(HttpStatus.OK)
-	@Post('/send-invite-code')
+	@Post('/send-code')
 	@Public()
 	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async sendInviteCode(
@@ -144,7 +144,7 @@ export class AuthController {
 	 *
 	 * @param entity
 	 */
-	@Post('/verify-invite-code')
+	@Post('/verify-code')
 	@Public()
 	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async confirmInviteCode(
