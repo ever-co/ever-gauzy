@@ -17,7 +17,7 @@ import {
 	InternalServerErrorException,
 	UnauthorizedException
 } from '@nestjs/common';
-import { Repository } from 'typeorm';
+import { IsNull, MoreThanOrEqual, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { SocialAuthService } from '@gauzy/auth';
 import { isNotEmpty } from '@gauzy/common';
@@ -473,11 +473,10 @@ export class AuthService extends SocialAuthService {
 					}
 				});
 				if (!!existed) {
-					await this.userRepository.save(this.userRepository.create({
-						id: existed.id,
+					await this.userRepository.update(existed.id, {
 						code: generateRandomInteger(6),
-						codeExpireAt: moment(new Date()).add(10, 'minutes')
-					}));
+						codeExpireAt: moment(new Date()).add(10, 'minutes').toDate()
+					});
 					const user = await this.userRepository.findOneOrFail({
 						where: {
 							id: existed.id
@@ -499,7 +498,48 @@ export class AuthService extends SocialAuthService {
 	 *
 	 * @param body
 	 */
-	async confirmInviteCodeWithEmail(body: IUserInviteCodeConfirmationInput) {
-		console.log('confirmed email & code', body);
+	async confirmInviteCode(body: IUserInviteCodeConfirmationInput) {
+		try {
+			const user = await this.userRepository.findOneOrFail({
+				where: {
+					email: body.email,
+					code: body.code,
+					codeExpireAt: MoreThanOrEqual(new Date())
+				},
+				relations: {
+					employee: true,
+					role: {
+						rolePermissions: true
+					}
+				},
+				order: {
+					createdAt: 'DESC'
+				}
+			});
+			await this.userRepository.update(user.id, {
+				code: null,
+				codeExpireAt: null
+			});
+			// If users are inactive
+			if (user.isActive === false) {
+				throw new UnauthorizedException();
+			}
+			// If employees are inactive
+			if (isNotEmpty(user.employee) && user.employee.isActive === false) {
+				throw new UnauthorizedException();
+			}
+
+			const access_token = await this.getJwtAccessToken(user);
+			const refresh_token = await this.getJwtRefreshToken(user);
+			await this.userService.setCurrentRefreshToken(refresh_token, user.id);
+
+			return new Object({
+				user,
+				token: access_token,
+				refresh_token: refresh_token
+			});
+		} catch (error) {
+			throw new UnauthorizedException();
+		}
 	}
 }

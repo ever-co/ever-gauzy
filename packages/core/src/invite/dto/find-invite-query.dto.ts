@@ -1,14 +1,10 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsEmail, IsNotEmpty, IsString } from "class-validator";
+import { IsNotEmpty, IsString } from "class-validator";
+import { UserEmailDTO } from "./../../user/dto";
 
-export class FindInviteQueryDTO {
+export class FindInviteQueryDTO extends UserEmailDTO {
 
-    @ApiProperty({ type: () => String, readOnly: true })
-	@IsNotEmpty()
-	@IsEmail()
-	readonly email: string;
-
-    @ApiProperty({ type: () => String, readOnly: true })
+    @ApiProperty({ type: () => String })
 	@IsNotEmpty()
 	@IsString()
 	readonly token: string;
