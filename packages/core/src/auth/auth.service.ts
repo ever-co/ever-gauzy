@@ -22,6 +22,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { SocialAuthService } from '@gauzy/auth';
 import { isNotEmpty } from '@gauzy/common';
 import * as bcrypt from 'bcrypt';
+import * as moment from 'moment';
 import { JsonWebTokenError, JwtPayload, sign, verify } from 'jsonwebtoken';
 import { EmailService } from '../email/email.service';
 import { User } from '../user/user.entity';
@@ -460,8 +461,37 @@ export class AuthService extends SocialAuthService {
 	 *
 	 * @param email
 	 */
-	async sendInviteCodeToTheEmail(email: IUser['email']) {
-		console.log('verification code sent to the email, please check your email', email, generateRandomInteger(6));
+	async sendInviteCode(email: IUser['email']) {
+		try {
+			if (email) {
+				const existed = await this.userRepository.findOneOrFail({
+					where: {
+						email
+					},
+					order: {
+						createdAt: 'DESC'
+					}
+				});
+				if (!!existed) {
+					await this.userRepository.save(this.userRepository.create({
+						id: existed.id,
+						code: generateRandomInteger(6),
+						codeExpireAt: moment(new Date()).add(10, 'minutes')
+					}));
+					const user = await this.userRepository.findOneOrFail({
+						where: {
+							id: existed.id
+						}
+					});
+					await this.emailService.passwordLessAuthentication(
+						user,
+						user.preferredLanguage as LanguagesEnum
+					);
+				}
+			}
+		} catch (error) {
+			console.log('Error while sending invite code', error);
+		}
 	}
 
 	/**

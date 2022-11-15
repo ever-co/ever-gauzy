@@ -21,10 +21,9 @@
 				>
 					{{inviteCode}}
 				</mj-button>
-
                 <mj-text font-size="16px" font-family="helvetica">
 					<p>Best regards,</p>
-					<p>The {{organizationName}} Team</p>
+					<p>The Gauzy Team</p>
 				</mj-text>
 				<mj-divider
 					border-color="#1B005D"

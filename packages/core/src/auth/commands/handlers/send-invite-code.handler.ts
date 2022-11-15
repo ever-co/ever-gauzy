@@ -15,7 +15,7 @@ export class SendInviteCodeHandler implements ICommandHandler<SendInviteCodeComm
 			const { input } = command;
 			const { email } = input;
 
-			this.authService.sendInviteCodeToTheEmail(email);
+			await this.authService.sendInviteCode(email);
 		} finally {
 			return new Object({
 				status: HttpStatus.OK,
