@@ -18,6 +18,7 @@ export interface IEmailTemplateFindInput
 
 export enum EmailTemplateNameEnum {
 	PASSWORD_RESET = 'password',
+	PASSWORD_LESS_AUTHENTICATION = 'password-less-authentication',
 	APPOINTMENT_CONFIRMATION = 'appointment-confirmation',
 	APPOINTMENT_CANCELLATION = 'appointment-cancellation',
 	TIME_OFF_POLICY_ACTION = 'time-off-report-action',

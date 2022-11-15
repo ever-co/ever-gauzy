@@ -4,6 +4,7 @@ import * as mjml2html from 'mjml';
 import { EmailTemplateService } from '../../email-template.service';
 import { EmailTemplateGeneratePreviewQuery } from '../email-template.generate-preview.query';
 import { moment } from '../../../core/moment-extend';
+import { generateRandomInteger } from './../../../core/utils';
 import { ConfigService } from '@gauzy/config';
 
 @QueryHandler(EmailTemplateGeneratePreviewQuery)
@@ -77,7 +78,8 @@ export class EmailTemplateGeneratePreviewHandler
 			task_status: 'In Progress',
 			task_update_project: 'Gauzy Project',
 			task_update_assign_by: 'Ruslan Konviser',
-			task_update_url: 'https://github.com/ever-co/ever-gauzy/issues/1688'
+			task_update_url: 'https://github.com/ever-co/ever-gauzy/issues/1688',
+			inviteCode: generateRandomInteger(6)
 		});
 		return { html };
 	}
