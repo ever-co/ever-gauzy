@@ -1,5 +1,5 @@
 import { BrowserModule } from '@angular/platform-browser';
-import { NgModule, APP_INITIALIZER } from '@angular/core';
+import { NgModule, APP_INITIALIZER, ErrorHandler } from '@angular/core';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { AppComponent } from './app.component';
 import { AppRoutingModule } from './app-routing.module';
@@ -13,7 +13,11 @@ import {
 } from '@nebular/theme';
 import { NgxElectronModule } from 'ngx-electron';
 import { AppService } from './app.service';
-import { HttpClientModule, HTTP_INTERCEPTORS, HttpClient } from '@angular/common/http';
+import {
+	HttpClientModule,
+	HTTP_INTERCEPTORS,
+	HttpClient
+} from '@angular/common/http';
 import {
 	NgxLoginModule,
 	ImageViewerModule,
@@ -42,6 +46,7 @@ import { ServerConnectionService } from './auth/services/server-connection.servi
 import { environment } from '../../../gauzy/src/environments/environment';
 import { Router } from '@angular/router';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
+import * as Sentry from '@sentry/angular';
 
 @NgModule({
 	declarations: [AppComponent],
@@ -104,12 +109,27 @@ import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 			provide: HTTP_INTERCEPTORS,
 			useClass: TokenInterceptor,
 			multi: true
+		},
+		{
+			provide: ErrorHandler,
+			useValue: Sentry.createErrorHandler({
+				showDialog: true
+			})
+		},
+		{
+			provide: Sentry.TraceService,
+			deps: [Router]
+		},
+		{
+			provide: APP_INITIALIZER,
+			useFactory: () => () => {},
+			deps: [Sentry.TraceService],
+			multi: true
 		}
 	],
 	bootstrap: [AppComponent],
 	exports: [NgSelectModule]
 })
-
 export class AppModule {}
 
 export function serverConnectionFactory(
