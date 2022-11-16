@@ -7,6 +7,6 @@ import { environment } from './environments/environment';
 
 export function initSentry() {
 	if (environment.SENTRY_DSN) {
-		init({ dsn: environment.SENTRY_DSN });
+		init({ dsn: environment.SENTRY_DSN, autoSessionTracking: true });
 	}
 }

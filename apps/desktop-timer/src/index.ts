@@ -9,12 +9,20 @@ import * as path from 'path';
 import { app, dialog, BrowserWindow, ipcMain, shell, Menu } from 'electron';
 import { environment } from './environments/environment';
 import Url from 'url';
-
+import * as Sentry from '@sentry/electron';
 
 // setup logger to catch all unhandled errors and submit as bug reports to our repo
 log.catchErrors({
 	showDialog: false,
 	onError(error, versions, submitIssue) {
+		// Set user information, as well as tags and further extras
+		Sentry.configureScope((scope) => {
+			scope.setExtra('Version', versions.app);
+			scope.setTag('OS', versions.os);
+		});
+		// Capture exceptions, messages
+		Sentry.captureMessage(error.message);
+		Sentry.captureException(new Error(error.stack));
 		dialog
 			.showMessageBox({
 				title: 'An error occurred',
