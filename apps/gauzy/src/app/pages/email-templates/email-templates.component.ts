@@ -36,7 +36,7 @@ import { TranslationBaseComponent } from '../../@shared/language-base/translatio
 export class EmailTemplatesComponent extends TranslationBaseComponent
 	implements OnInit, AfterViewInit, OnDestroy {
 
-	templateNames: string[] = Object.values(EmailTemplateNameEnum);
+	templates: string[] = Object.values(EmailTemplateNameEnum);
 	subject$: Subject<any> = new Subject();
 
 	public previewEmail: SafeHtml;

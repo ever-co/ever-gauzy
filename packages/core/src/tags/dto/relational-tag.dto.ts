@@ -4,7 +4,7 @@ import { IsOptional } from "class-validator";
 
 export class RelationalTagDTO {
 
-    @ApiPropertyOptional({ type: () => Array, isArray: true, readOnly: true })
+    @ApiPropertyOptional({ type: () => Array, isArray: true })
     @IsOptional()
     readonly tags: ITag[];
 }

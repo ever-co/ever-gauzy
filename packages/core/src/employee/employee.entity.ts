@@ -455,7 +455,10 @@ export class Employee extends TenantOrganizationBaseEntity
 	 * Employee Skills
 	 */
 	@ApiProperty({ type: () => Skill })
-	@ManyToMany(() => Skill, (skill) => skill.employees)
+	@ManyToMany(() => Skill, (skill) => skill.employees, {
+        onUpdate: 'CASCADE',
+		onDelete: 'CASCADE'
+    })
     skills: ISkill[];
 
 	/**
@@ -473,7 +476,8 @@ export class Employee extends TenantOrganizationBaseEntity
 	 */
 	@ApiProperty({ type: () => OrganizationEmploymentType })
 	@ManyToMany(() => OrganizationEmploymentType, (it) => it.members, {
-		cascade: true
+		onUpdate: 'CASCADE',
+		onDelete: 'CASCADE'
 	})
 	organizationEmploymentTypes?: IOrganizationEmploymentType[];
 

@@ -29,6 +29,7 @@ aliases:
     - &install-deps
       name: Install Global Dependencies
       command: |
+          sudo rm -rf /etc/apt/sources.list.d/heroku.list
           sudo apt-get update
           sudo apt install npm
           sudo apt install build-essential

@@ -31,6 +31,8 @@ export interface IUser extends IBasePerTenantEntityModel {
 	isImporting?: boolean;
 	sourceId?: string;
 	isActive?: boolean;
+	code?: number;
+	codeExpireAt?: Date;
 }
 
 export interface IUserFindInput extends IBasePerTenantEntityModel {

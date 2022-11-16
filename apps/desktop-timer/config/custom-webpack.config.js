@@ -1,3 +1,4 @@
+const webpack = require('webpack');
 //Polyfill Node.js core modules in Webpack. This module is only needed for webpack 5+.
 const TerserPlugin = require('terser-webpack-plugin');
 
@@ -34,7 +35,18 @@ module.exports = {
 	},
 	externals: {
 		'electron-log': 'electron-log',
-	}
+	},
+	plugins: [
+        // main process
+        new webpack.DefinePlugin({
+            'process.type': '"browser"'
+        }),
+
+        // renderer process
+        new webpack.DefinePlugin({
+            'process.type': '"renderer"'
+        }),
+    ]
 };
 
 /* NOTE: below code can be used to fix some more things, see https://github.com/maximegris/angular-electron/blob/master/angular.webpack.js#L10
