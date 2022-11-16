@@ -33,6 +33,7 @@ export interface IUser extends IBasePerTenantEntityModel {
 	isActive?: boolean;
 	code?: number;
 	codeExpireAt?: Date;
+	emailVerifiedAt?: Date;
 }
 
 export interface IUserFindInput extends IBasePerTenantEntityModel {

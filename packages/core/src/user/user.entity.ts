@@ -101,6 +101,10 @@ export class User extends TenantBaseEntity implements IUser {
 	@Column({ nullable: true })
 	public codeExpireAt?: Date;
 
+	@ApiPropertyOptional({ type: () => Date })
+	@Column({ nullable: true })
+	public emailVerifiedAt?: Date;
+
 	name?: string;
 	employeeId?: string;
 
