@@ -172,11 +172,6 @@ if (!gotTheLock) {
 		if (gauzyWindow) {
 			if (gauzyWindow.isMinimized()) gauzyWindow.restore();
 			gauzyWindow.focus();
-			dialog.showMessageBoxSync(gauzyWindow, {
-				type: "warning",
-				title: "Gauzy",
-				message: "You already have a running instance"
-			});
 		}
 	})
 }
