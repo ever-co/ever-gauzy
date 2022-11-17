@@ -57,7 +57,7 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<IOrganizationTeam>> {
 		const { relations, findInput, employeeId } = data;
-		return this.organizationTeamService.findMyTeams(
+		return await this.organizationTeamService.findMyTeams(
 			relations,
 			findInput,
 			employeeId
@@ -119,15 +119,15 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
+	@HttpCode(HttpStatus.OK)
 	@Post()
-	@UsePipes(new ValidationPipe({ transform : true }))
-	async createOrganizationTeam(
+	@UsePipes(new ValidationPipe({ whitelist: true }))
+	async create(
 		@Body() entity: CreateOrganizationTeamDTO
-	): Promise<OrganizationTeam> {
-		return await this.organizationTeamService.createOrgTeam(entity);
+	): Promise<IOrganizationTeam> {
+		return await this.organizationTeamService.create(entity);
 	}
 
 	/**
@@ -148,16 +148,15 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
-	@UsePipes(new ValidationPipe({ transform : true }))
-	async updateOrganizationTeam(
-		@Param('id', UUIDValidationPipe) id: IOrganizationTeam['id'],
+	@UsePipes(new ValidationPipe({ whitelist: true }))
+	async update(
+		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: UpdateOrganizationTeamDTO
-	): Promise<OrganizationTeam> {
-		return await this.organizationTeamService.updateOrgTeam(id, entity);
+	): Promise<IOrganizationTeam> {
+		return await this.organizationTeamService.update(id, entity);
 	}
 }
