@@ -9,8 +9,7 @@ import {
 	Query,
 	UseGuards,
 	Delete,
-	ValidationPipe,
-	UseInterceptors
+	ValidationPipe
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { DeleteResult, FindOneOptions, UpdateResult } from 'typeorm';
@@ -24,7 +23,6 @@ import { TimeLogService } from './time-log.service';
 import { Permissions, Roles } from './../../shared/decorators';
 import { OrganizationPermissionGuard, PermissionGuard, RoleGuard, TenantBaseGuard } from './../../shared/guards';
 import { UUIDValidationPipe } from './../../shared/pipes';
-import { TransformInterceptor } from './../../core/interceptors';
 import { CreateManualTimeLogDTO, DeleteTimeLogDTO, UpdateManualTimeLogDTO } from './dto';
 import { TimeLogLimitQueryDTO, TimeLogQueryDTO } from './dto/query';
 import { TimeLogBodyTransformPipe } from './pipes';
@@ -32,7 +30,6 @@ import { TimeLogBodyTransformPipe } from './pipes';
 @ApiTags('TimeLog')
 @UseGuards(TenantBaseGuard, RoleGuard)
 @Roles(RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN, RolesEnum.EMPLOYEE)
-@UseInterceptors(TransformInterceptor)
 @Controller()
 export class TimeLogController {
 	constructor(
