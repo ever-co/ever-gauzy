@@ -28,12 +28,12 @@ export class TeamsMutationComponent implements OnInit {
 	static buildForm(fb: FormBuilder): FormGroup {
 		const form = fb.group({
 			name: [null, Validators.required],
-			members: [null, Validators.required],
-			managers: [],
+			memberIds: [null, Validators.required],
+			managerIds: [],
 			tags: [],
 		});
-		form.get('members').setValue([]);
-		form.get('managers').setValue([]);
+		form.get('memberIds').setValue([]);
+		form.get('managerIds').setValue([]);
 		form.get('tags').setValue([]);
 		return form;
 	}
@@ -56,8 +56,8 @@ export class TeamsMutationComponent implements OnInit {
 	}
 
 	ngAfterViewInit(): void {
-		const members = <FormControl>this.form.get('members');
-		const managers = <FormControl>this.form.get('managers');
+		const members = <FormControl>this.form.get('memberIds');
+		const managers = <FormControl>this.form.get('managerIds');
 
 		managers.valueChanges.subscribe((value) => {
 			if (isNotEmpty(value)) {
@@ -80,8 +80,8 @@ export class TeamsMutationComponent implements OnInit {
 			this.form.patchValue({
 				name: this.team.name,
 				tags: this.team.tags,
-				members: selectedEmployees,
-				managers: selectedManagers
+				memberIds: selectedEmployees,
+				managerIds: selectedManagers
 			});
 		}
 	}
@@ -90,7 +90,6 @@ export class TeamsMutationComponent implements OnInit {
 		if (!this.organization) {
 			return;
 		}
-
 		const { id: organizationId } = this.organization;
 		const { tenantId } = this.store.user;
 
@@ -107,8 +106,8 @@ export class TeamsMutationComponent implements OnInit {
 	 * @param members
 	 */
 	onMembersSelected(members: string[]) {
-		this.form.get('members').setValue(members);
-		this.form.get('members').updateValueAndValidity();
+		this.form.get('memberIds').setValue(members);
+		this.form.get('memberIds').updateValueAndValidity();
 	}
 
 	/**
@@ -117,8 +116,8 @@ export class TeamsMutationComponent implements OnInit {
 	 * @param managers
 	 */
 	onManagersSelected(managers: string[]) {
-		this.form.get('managers').setValue(managers);
-		this.form.get('managers').updateValueAndValidity();
+		this.form.get('managerIds').setValue(managers);
+		this.form.get('managerIds').updateValueAndValidity();
 	}
 
 	cancel() {
