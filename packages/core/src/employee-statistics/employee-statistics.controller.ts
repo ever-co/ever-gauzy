@@ -2,8 +2,7 @@ import {
 	IAggregatedEmployeeStatistic,
 	IEmployeeStatistics,
 	IMonthAggregatedEmployeeStatistics,
-	IEmployeeStatisticsHistory,
-	IMonthAggregatedEmployeeStatisticsFindInput
+	IEmployeeStatisticsHistory
 } from '@gauzy/contracts';
 import {
 	Controller,
@@ -12,14 +11,12 @@ import {
 	Param,
 	Query,
 	UseGuards,
-	UseInterceptors,
 	UsePipes,
 	ValidationPipe
 } from '@nestjs/common';
 import { QueryBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { EmployeeStatisticsService } from './employee-statistics.service';
-import { TransformInterceptor } from './../core/interceptors';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { TenantPermissionGuard } from './../shared/guards';
 import {
@@ -31,7 +28,6 @@ import { EmployeeAggregatedStatisticByMonthQueryDTO } from './dto';
 
 @ApiTags('EmployeeStatistics')
 @UseGuards(TenantPermissionGuard)
-@UseInterceptors(TransformInterceptor)
 @Controller()
 export class EmployeeStatisticsController {
 	constructor(

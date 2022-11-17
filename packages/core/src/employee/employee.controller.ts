@@ -18,7 +18,6 @@ import {
 	Put,
 	Query,
 	UseGuards,
-	UseInterceptors,
 	UsePipes,
 	ValidationPipe
 } from '@nestjs/common';
@@ -36,7 +35,6 @@ import {
 	EmployeeGetCommand
 } from './commands';
 import { CrudController, OptionParams, PaginationParams } from './../core/crud';
-import { TransformInterceptor } from './../core/interceptors';
 import { LanguageDecorator, Permissions } from './../shared/decorators';
 import { BulkBodyLoadTransformPipe, ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
@@ -52,7 +50,6 @@ import {
 import { RequestContext } from './../core/context';
 
 @ApiTags('Employee')
-@UseInterceptors(TransformInterceptor)
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.ORG_EMPLOYEES_EDIT)
 @Controller()

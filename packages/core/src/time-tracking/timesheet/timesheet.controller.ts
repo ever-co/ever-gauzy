@@ -7,7 +7,6 @@ import {
 	Get,
 	Query,
 	Param,
-	UseInterceptors,
 	ValidationPipe,
 	BadRequestException
 } from '@nestjs/common';
@@ -21,7 +20,6 @@ import { TimeSheetService } from './timesheet.service';
 import { PermissionGuard, TenantPermissionGuard } from './../../shared/guards';
 import { UUIDValidationPipe } from './../../shared/pipes';
 import { Permissions } from './../../shared/decorators';
-import { TransformInterceptor } from './../../core/interceptors';
 import {
 	SubmitTimesheetStatusDTO,
 	TimesheetQueryDTO,
@@ -35,7 +33,6 @@ import {
 @ApiTags('TimeSheet')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.CAN_APPROVE_TIMESHEET)
-@UseInterceptors(TransformInterceptor)
 @Controller()
 export class TimeSheetController {
 

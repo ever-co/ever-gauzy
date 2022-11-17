@@ -8,7 +8,6 @@ import {
 	Put,
 	Query,
 	UseGuards,
-	UseInterceptors,
 	UsePipes,
 	ValidationPipe
 } from '@nestjs/common';
@@ -26,13 +25,11 @@ import { CustomSmtp } from './custom-smtp.entity';
 import { CustomSmtpService } from './custom-smtp.service';
 import { CustomSmtpCreateCommand, CustomSmtpUpdateCommand } from './commands';
 import { CrudController } from './../core/crud';
-import { TransformInterceptor } from './../core/interceptors';
 import { CustomSmtpDTO, CustomSmtpQueryDTO } from './dto';
 
 @ApiTags('CustomSmtp')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.CUSTOM_SMTP_VIEW)
-@UseInterceptors(TransformInterceptor)
 @Controller()
 export class CustomSmtpController extends CrudController<CustomSmtp>{
 	constructor(

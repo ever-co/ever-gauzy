@@ -9,8 +9,7 @@ import {
 	Post,
 	Body,
 	Put,
-	ValidationPipe,
-	UseInterceptors
+	ValidationPipe
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
@@ -23,13 +22,11 @@ import { UUIDValidationPipe } from './../../shared/pipes';
 import { Permissions, Roles } from './../../shared/decorators';
 import { DeleteTimeSlotDTO } from './dto';
 import { DeleteTimeSlotCommand } from './commands';
-import { TransformInterceptor } from './../../core/interceptors';
 import { TimeSlotQueryDTO } from './dto/query';
 
 @ApiTags('TimeSlot')
 @UseGuards(TenantPermissionGuard, RoleGuard)
 @Roles(RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN, RolesEnum.EMPLOYEE)
-@UseInterceptors(TransformInterceptor)
 @Controller()
 export class TimeSlotController {
 	constructor(

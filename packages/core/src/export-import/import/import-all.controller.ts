@@ -18,10 +18,8 @@ import { FileStorage, UploadedFileStorage } from '../../core/file-storage';
 import { ImportHistoryCreateCommand, ImportHistoryService } from './../import-history';
 import { PermissionGuard, TenantPermissionGuard } from './../../shared/guards';
 import { Permissions } from './../../shared/decorators';
-import { TransformInterceptor } from './../../core/interceptors';
 
 @ApiTags('Import')
-@UseInterceptors(TransformInterceptor)
 @UseGuards(TenantPermissionGuard)
 @Controller()
 export class ImportAllController {

@@ -23,7 +23,6 @@ import {
 	Param,
 	Put,
 	Req,
-	UseInterceptors,
 	ValidationPipe,
 	UsePipes
 } from '@nestjs/common';
@@ -42,7 +41,6 @@ import { InviteService } from './invite.service';
 import { LanguageDecorator, Permissions } from './../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { UUIDValidationPipe } from './../shared/pipes';
-import { TransformInterceptor } from './../core/interceptors';
 import { PaginationParams } from './../core/crud';
 import {
 	InviteAcceptCommand,
@@ -55,7 +53,6 @@ import { CreateInviteDTO, FindInviteQueryDTO } from './dto';
 import { FindPublicInviteByEmailTokenQuery } from './queries';
 
 @ApiTags('Invite')
-@UseInterceptors(TransformInterceptor)
 @Controller()
 export class InviteController {
 	constructor(
