@@ -35,7 +35,7 @@
 					<ga-employee-multi-select
 						[label]="'FORM.LABELS.ADD_REMOVE_MEMBERS' | translate"
 						[placeholder]="'FORM.PLACEHOLDERS.ADD_REMOVE_MEMBERS' | translate"
-						[selectedEmployeeIds]="form.get('members').value"
+						[selectedEmployeeIds]="form.get('memberIds').value"
 						[allEmployees]="employees"
 						(selectedChange)="onMembersSelected($event)"
 					></ga-employee-multi-select>
@@ -44,7 +44,7 @@
 					<ga-employee-multi-select
 						[label]="'FORM.LABELS.ADD_REMOVE_MANAGERS' | translate"
 						[placeholder]="'FORM.PLACEHOLDERS.ADD_REMOVE_MANAGERS' | translate"
-						[selectedEmployeeIds]="form.get('managers').value"
+						[selectedEmployeeIds]="form.get('managerIds').value"
 						[allEmployees]="employees"
 						(selectedChange)="onManagersSelected($event)"
 					></ga-employee-multi-select>
