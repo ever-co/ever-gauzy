@@ -8,7 +8,6 @@ import {
 	Put,
 	Query,
 	UseGuards,
-	UseInterceptors,
 	UsePipes,
 	ValidationPipe
 } from '@nestjs/common';
