@@ -313,9 +313,10 @@ app.on('ready', async () => {
 		}
 	}, 5000);
 	const configs: any = store.get('configs');
-	if (configs && typeof configs.autoLaunch === 'undefined') {
-		launchAtStartup(true, false);
-	}
+	const settings: any = store.get('appSetting');
+	const autoLaunch: boolean =
+		typeof settings.autoLaunch === 'undefined' ? true : settings.autoLaunch;
+	launchAtStartup(autoLaunch, false);
 	Menu.setApplicationMenu(
 		Menu.buildFromTemplate([
 			{

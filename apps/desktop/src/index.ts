@@ -346,9 +346,10 @@ app.on('ready', async () => {
 	await knex.raw(`pragma journal_mode = WAL;`).then((res) => console.log(res));
 	await dataModel.createNewTable(knex);
 	const configs: any = store.get('configs');
-	if (configs && typeof configs.autoLaunch === 'undefined') {
-		launchAtStartup(true, false);
-	}
+	const settings: any = store.get('appSetting');
+	const autoLaunch: boolean =
+		typeof settings.autoLaunch === 'undefined' ? true : settings.autoLaunch;
+	launchAtStartup(autoLaunch, false);
 	Menu.setApplicationMenu(
 		Menu.buildFromTemplate([
 			{
