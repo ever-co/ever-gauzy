@@ -9,7 +9,6 @@ import {
 	Query,
 	UseGuards,
 	Post,
-	UseInterceptors,
 	ValidationPipe
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
@@ -35,11 +34,9 @@ import {
 	CandidateHiredCommand,
 	CandidateRejectedCommand
 } from './commands';
-import { TransformInterceptor } from './../core/interceptors';
 import { CreateCandidateDTO, UpdateCandidateDTO, CandidateBulkInputDTO } from './dto';
 
 @ApiTags('Candidate')
-@UseInterceptors(TransformInterceptor)
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.ORG_CANDIDATES_EDIT)
 @Controller()

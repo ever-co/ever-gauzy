@@ -11,12 +11,10 @@ import {
 	Param,
 	UseGuards,
 	UsePipes,
-	ValidationPipe,
-	UseInterceptors
+	ValidationPipe
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CrudController, PaginationParams } from './../core/crud';
-import { TransformInterceptor } from ',./../core/interceptors';
 import { TenantPermissionGuard, PermissionGuard } from './../shared/guards';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { Permissions } from './../shared/decorators';
@@ -25,7 +23,6 @@ import { OrganizationTeam } from './organization-team.entity';
 import { OrganizationTeamService } from './organization-team.service';
 
 @ApiTags('OrganizationTeam')
-@UseInterceptors(TransformInterceptor)
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.ALL_ORG_EDIT)
 @Controller()
