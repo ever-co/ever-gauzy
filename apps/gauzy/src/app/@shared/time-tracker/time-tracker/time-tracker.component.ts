@@ -4,7 +4,8 @@ import {
 	IUser,
 	IDateRange,
 	TimeLogType,
-	PermissionsEnum
+	PermissionsEnum,
+	TimeLogSourceEnum
 } from '@gauzy/contracts';
 import { NgxDraggableDomMoveEvent, NgxDraggablePoint } from 'ngx-draggable-dom';
 import { NbThemeService } from '@nebular/theme';
@@ -26,7 +27,7 @@ import { ErrorHandlingService, Store, ToastrService } from '../../../@core/servi
 	templateUrl: './time-tracker.component.html',
 	styleUrls: ['./time-tracker.component.scss']
 })
-export class TimeTrackerComponent implements 
+export class TimeTrackerComponent implements
 	OnInit, OnDestroy {
 
   	play = faPlay;
@@ -257,7 +258,11 @@ export class TimeTrackerComponent implements
 			.addTime(payload)
 			.then((timeLog) => {
 				this.timesheetService.updateLogs(true);
-				this.timeTrackerService.checkTimerStatus(tenantId);
+				this.timeTrackerService.checkTimerStatus({
+					organizationId,
+					tenantId,
+					source: TimeLogSourceEnum.BROWSER
+				});
 				if (
 					moment
 						.utc(timeLog.startedAt)

@@ -7,7 +7,7 @@ import { IsArray, IsOptional } from "class-validator";
  */
 export class RelationsQueryDTO {
 
-    @ApiPropertyOptional({ type: () => Array, isArray: true, readOnly: true })
+    @ApiPropertyOptional({ type: () => Array, isArray: true })
     @IsOptional()
     @IsArray()
     @Transform(({ value }: TransformFnParams) => (value) ? value.map((element: string) => element.trim()) : {})
