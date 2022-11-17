@@ -6,13 +6,13 @@ import { IsEmployeeBelongsToOrganization } from "./../../shared/validators";
 
 export class EmployeeFeatureDTO implements IRelationalEmployee  {
 
-    @ApiPropertyOptional({ type: () => Employee, readOnly: true })
+    @ApiPropertyOptional({ type: () => Employee })
     @ValidateIf((it) => !it.employeeId || it.employee)
     @IsObject()
     @IsEmployeeBelongsToOrganization()
     readonly employee: IEmployee;
 
-    @ApiPropertyOptional({ type: () => String, readOnly: true })
+    @ApiPropertyOptional({ type: () => String })
     @ValidateIf((it) => !it.employee || it.employeeId)
     @IsString()
     @IsEmployeeBelongsToOrganization()
