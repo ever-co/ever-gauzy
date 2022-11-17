@@ -7,22 +7,24 @@ import {
 	Get,
 	Query,
 	UsePipes,
-	ValidationPipe
+	ValidationPipe,
+	UseInterceptors
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import {
 	ITimeLog,
 	ITimerStatus,
-	ITimerStatusInput,
 	PermissionsEnum
 } from '@gauzy/contracts';
 import { TimerService } from './timer.service';
+import { TransformInterceptor } from './../../core/interceptors';
 import { PermissionGuard, TenantPermissionGuard } from './../../shared/guards';
 import { Permissions } from './../../shared/decorators';
-import { StartTimerDTO, StopTimerDTO } from './dto';
+import { StartTimerDTO, StopTimerDTO, TimerStatusQueryDTO } from './dto';
 
 @ApiTags('Timer Tracker')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
+@UseInterceptors(TransformInterceptor)
 @Permissions(PermissionsEnum.TIME_TRACKER)
 @Controller()
 export class TimerController {
@@ -31,6 +33,10 @@ export class TimerController {
 		private readonly timerService: TimerService
 	) {}
 
+	/**
+	 * GET timer status
+	 *
+	 */
 	@ApiOperation({ summary: 'Toggle timer' })
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -42,8 +48,9 @@ export class TimerController {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Get('/status')
+	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async getTimerStatus(
-		@Query() query: ITimerStatusInput
+		@Query() query: TimerStatusQueryDTO
 	): Promise<ITimerStatus> {
 		return await this.timerService.getTimerStatus(query);
 	}
@@ -75,8 +82,9 @@ export class TimerController {
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Post('/start')
+	@UsePipes(new ValidationPipe())
 	async startTimer(
-		@Body(new ValidationPipe()) entity: StartTimerDTO
+		@Body() entity: StartTimerDTO
 	): Promise<ITimeLog> {
 		return await this.timerService.startTimer(entity);
 	}
@@ -92,9 +100,9 @@ export class TimerController {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Post('/stop')
-	@UsePipes(new ValidationPipe({ transform: true }))
+	@UsePipes(new ValidationPipe())
 	async stopTimer(
-		@Body(new ValidationPipe()) entity: StopTimerDTO
+		@Body() entity: StopTimerDTO
 	): Promise<ITimeLog | null> {
 		return await this.timerService.stopTimer(entity);
 	}

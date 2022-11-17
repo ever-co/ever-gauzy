@@ -11,7 +11,8 @@ import {
 	IDateRange,
 	TimeLogSourceEnum,
 	ITimerStatusInput,
-	ITimeLog
+	ITimeLog,
+	PermissionsEnum
 } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
 import { Employee, TimeLog } from './../../core/entities/internal';
@@ -41,15 +42,23 @@ export class TimerService {
 		const userId = RequestContext.currentUserId();
 		const tenantId = RequestContext.currentTenantId();
 
-		const employee = await this.employeeRepository.findOneBy({
+		let employee = await this.employeeRepository.findOneBy({
 			userId,
 			tenantId
 		});
 
+		if (RequestContext.hasPermission(
+			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+		) && isNotEmpty(request.employeeId)) {
+			employee = await this.employeeRepository.findOneBy({
+				id: request.employeeId,
+				tenantId
+			});
+		}
+
 		if (!employee) {
 			throw new NotFoundException("We couldn't find the employee you were looking for.");
 		}
-
 		const { organizationId, id: employeeId } = employee;
 		const { start, end } = getDateRange();
 
@@ -91,7 +100,13 @@ export class TimerService {
 			order: {
 				startedAt: 'DESC',
 				createdAt: 'DESC'
-			}
+			},
+			...(
+				(request['relations']) ? {
+					relations: request['relations']
+				} : {}
+			),
+			relationLoadStrategy: 'query'
 		});
 
 		const status: ITimerStatus = {
