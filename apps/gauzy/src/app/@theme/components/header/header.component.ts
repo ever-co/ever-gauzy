@@ -24,6 +24,7 @@ import {
 	IOrganization,
 	IUser,
 	PermissionsEnum,
+	TimeLogSourceEnum,
 	TimeLogType
 } from '@gauzy/contracts';
 import { environment } from '../../../../environments/environment';
@@ -634,9 +635,18 @@ export class HeaderComponent extends TranslationBaseComponent
 	}
 
 	private async _checkTimerStatus() {
+		if (!this.organization) {
+			return;
+		}
 		if (this.isEnabledTimeTracking()) {
+			const { id: organizationId } = this.organization;
 			const { tenantId } = this.user;
-			await this.timeTrackerService.checkTimerStatus(tenantId);
+
+			await this.timeTrackerService.checkTimerStatus({
+				organizationId,
+				tenantId,
+				source: TimeLogSourceEnum.BROWSER
+			});
 		}
 	}
 
