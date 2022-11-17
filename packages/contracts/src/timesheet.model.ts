@@ -7,7 +7,7 @@ import {
 	IOrganizationProject,
 	OrganizationProjectBudgetTypeEnum
 } from './organization-projects.model';
-import { IEmployee, IEmployeeFindInput } from './employee.model';
+import { IEmployee, IEmployeeFindInput, IRelationalEmployee } from './employee.model';
 import { ITask } from './task-entity.model';
 import { ITag } from './tag-entity.model';
 import { IPaginationInput } from './core.model';
@@ -321,7 +321,7 @@ export interface IScreenshotMap {
 	timeSlots: ITimeSlot[];
 }
 
-export interface ITimerStatusInput {
+export interface ITimerStatusInput extends IBasePerTenantAndOrganizationEntityModel, IRelationalEmployee {
 	source?: TimeLogSourceEnum;
 }
 export interface ITimerStatus {
