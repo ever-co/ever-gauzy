@@ -12,7 +12,6 @@ import {
 	Put,
 	Query,
 	UseGuards,
-	UseInterceptors,
 	ValidationPipe
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
@@ -21,7 +20,6 @@ import { DeleteResult, FindOptionsWhere, UpdateResult } from 'typeorm';
 import { RoleService } from './role.service';
 import { Role } from './role.entity';
 import { CreateRoleDTO, CreateRoleDTO as UpdateRoleDTO, FindRoleQueryDTO } from './dto';
-import { TransformInterceptor } from './../core/interceptors';
 import { CrudController } from './../core/crud';
 import { UUIDValidationPipe } from './../shared/pipes';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
@@ -30,7 +28,6 @@ import { Permissions } from './../shared/decorators';
 @ApiTags('Role')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.CHANGE_ROLES_PERMISSIONS)
-@UseInterceptors(TransformInterceptor)
 @Controller()
 export class RoleController extends CrudController<Role> {
 

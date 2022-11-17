@@ -12,8 +12,7 @@ import {
 	Post,
 	Delete,
 	ValidationPipe,
-	UsePipes,
-	UseInterceptors
+	UsePipes
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
@@ -34,11 +33,9 @@ import { Task } from './task.entity';
 import { TaskService } from './task.service';
 import { TaskCreateCommand, TaskUpdateCommand } from './commands';
 import { CreateTaskDTO, UpdateTaskDTO } from './dto';
-import { TransformInterceptor } from './../core/interceptors';
 
 @ApiTags('Tasks')
 @UseGuards(TenantPermissionGuard)
-@UseInterceptors(TransformInterceptor)
 @Controller()
 export class TaskController extends CrudController<Task> {
 	constructor(

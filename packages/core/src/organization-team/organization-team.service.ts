@@ -10,7 +10,8 @@ import {
 	IOrganizationTeamCreateInput,
 	IOrganizationTeam,
 	RolesEnum,
-	IPagination
+	IPagination,
+	IOrganizationTeamUpdateInput
 } from '@gauzy/contracts';
 import { Employee } from '../employee/employee.entity';
 import { OrganizationTeam } from './organization-team.entity';
@@ -37,15 +38,15 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 		super(organizationTeamRepository);
 	}
 
-	async createOrgTeam(
+	async create(
 		entity: IOrganizationTeamCreateInput
 	): Promise<IOrganizationTeam> {
 		const {
 			tags,
 			name,
 			organizationId,
-			members: memberIds,
-			managers: managerIds
+			memberIds = [],
+			managerIds = []
 		} = entity;
 		try {
 			const tenantId = RequestContext.currentTenantId();
@@ -74,7 +75,7 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 					: null;
 				teamEmployees.push(teamEmployee);
 			});
-			return await this.create({
+			return await super.create({
 				tags,
 				organizationId,
 				tenantId,
@@ -86,24 +87,21 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 		}
 	}
 
-	async updateOrgTeam(
-		id: string,
-		entity: IOrganizationTeamCreateInput
+	async update(
+		id: IOrganizationTeam['id'],
+		entity: IOrganizationTeamUpdateInput
 	): Promise<OrganizationTeam> {
 		const {
 			tags,
 			name,
 			organizationId,
-			members: memberIds,
-			managers: managerIds
+			memberIds = [],
+			managerIds = []
 		} = entity;
 		try {
-			const tenantId = RequestContext.currentTenantId();
-
-			const role = await this.roleService.findOneByOptions({
-				where: { tenant: { id: tenantId }, name: RolesEnum.MANAGER }
+			const role = await this.roleService.findOneByWhereOptions({
+				name: RolesEnum.MANAGER
 			});
-
 			const employees = await this.employeeRepository.find({
 				where: {
 					id: In([...memberIds, ...managerIds])

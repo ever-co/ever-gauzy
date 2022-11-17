@@ -14,7 +14,6 @@ import {
 	Body,
 	Put,
 	Delete,
-	UseInterceptors,
 	UsePipes,
 	ValidationPipe
 } from '@nestjs/common';
@@ -32,7 +31,6 @@ import {
 	PermissionsEnum,
 } from '@gauzy/contracts';
 import { CrudController, PaginationParams } from './../core/crud';
-import { TransformInterceptor } from './../core/interceptors';
 import { UUIDValidationPipe, ParseJsonPipe } from './../shared/pipes';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
@@ -50,7 +48,6 @@ import {
 
 @ApiTags('User')
 @ApiBearerAuth()
-@UseInterceptors(TransformInterceptor)
 @Controller()
 export class UserController extends CrudController<User> {
 	constructor(
@@ -171,7 +168,7 @@ export class UserController extends CrudController<User> {
 	async pagination(
 		@Query() options: PaginationParams<User>
 	): Promise<IPagination<IUser>> {
-		return this.userService.paginate(options);
+		return await this.userService.paginate(options);
 	}
 
 	/**
@@ -196,7 +193,7 @@ export class UserController extends CrudController<User> {
 	async findAll(
 		@Query() options: PaginationParams<User>
 	): Promise<IPagination<IUser>> {
-		return this.userService.findAll(options);
+		return await this.userService.findAll(options);
 	}
 
 	/**
@@ -222,7 +219,7 @@ export class UserController extends CrudController<User> {
 		@Query('data', ParseJsonPipe) data?: any
 	): Promise<IUser> {
 		const { relations } = data;
-		return this.userService.findOneByIdString(id, { relations });
+		return await this.userService.findOneByIdString(id, { relations });
 	}
 
 	/**
@@ -241,15 +238,12 @@ export class UserController extends CrudController<User> {
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
-	@UseGuards(PermissionGuard)
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_USERS_EDIT)
 	@HttpCode(HttpStatus.CREATED)
 	@Post()
-	@UsePipes(new ValidationPipe({ transform : true }))
-	async create(
-		@Body() entity: CreateUserDTO
-	): Promise<IUser> {
+	@UsePipes(new ValidationPipe())
+	async create(@Body() entity: CreateUserDTO): Promise<IUser> {
 		return await this.commandBus.execute(
 			new UserCreateCommand(entity)
 		);

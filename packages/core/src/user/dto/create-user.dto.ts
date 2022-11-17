@@ -1,32 +1,29 @@
-import { ApiProperty } from "@nestjs/swagger";
-import { PartialType } from "@nestjs/mapped-types";
-import { IsEmail, IsNotEmpty, IsOptional } from "class-validator";
+import { ApiProperty, ApiPropertyOptional, IntersectionType, PartialType } from "@nestjs/swagger";
+import { IsOptional } from "class-validator";
 import { Transform, TransformFnParams } from "class-transformer";
 import { IUserCreateInput } from "@gauzy/contracts";
 import { RoleFeatureDTO } from "./../../role/dto";
+import { UserEmailDTO } from "./user-email.dto";
 
 /**
  * Create User DTO validation
  */
-export class CreateUserDTO extends PartialType(RoleFeatureDTO) implements IUserCreateInput {
+export class CreateUserDTO extends IntersectionType(
+    UserEmailDTO,
+    PartialType(RoleFeatureDTO),
+) implements IUserCreateInput {
 
-    @ApiProperty({ type: () => String, required : true })
-    @IsNotEmpty()
-    @IsEmail()
-    @Transform((params: TransformFnParams) => params.value ? params.value.trim() : null)
-    readonly email: string;
-
-    @ApiProperty({ type: () => String })
+    @ApiPropertyOptional({ type: () => String })
     @IsOptional()
     @Transform((params: TransformFnParams) => params.value ? params.value.trim() : null)
     readonly firstName?: string;
 
     @ApiProperty({ type: () => String })
-    @IsOptional()
+    @ApiPropertyOptional()
     @Transform((params: TransformFnParams) => params.value ? params.value.trim() : null)
     readonly lastName?: string;
 
     @ApiProperty({ type: () => String })
-    @IsOptional()
+    @ApiPropertyOptional()
     readonly imageUrl?: string;
 }

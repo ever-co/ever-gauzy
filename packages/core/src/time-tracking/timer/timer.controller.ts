@@ -7,8 +7,7 @@ import {
 	Get,
 	Query,
 	UsePipes,
-	ValidationPipe,
-	UseInterceptors
+	ValidationPipe
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import {
@@ -17,14 +16,12 @@ import {
 	PermissionsEnum
 } from '@gauzy/contracts';
 import { TimerService } from './timer.service';
-import { TransformInterceptor } from './../../core/interceptors';
 import { PermissionGuard, TenantPermissionGuard } from './../../shared/guards';
 import { Permissions } from './../../shared/decorators';
 import { StartTimerDTO, StopTimerDTO, TimerStatusQueryDTO } from './dto';
 
 @ApiTags('Timer Tracker')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
-@UseInterceptors(TransformInterceptor)
 @Permissions(PermissionsEnum.TIME_TRACKER)
 @Controller()
 export class TimerController {
@@ -66,8 +63,9 @@ export class TimerController {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Post('/toggle')
+	@UsePipes(new ValidationPipe())
 	async toggleTimer(
-		@Body(new ValidationPipe()) entity: StartTimerDTO
+		@Body() entity: StartTimerDTO
 	): Promise<ITimeLog | null> {
 		return await this.timerService.toggleTimeLog(entity);
 	}
