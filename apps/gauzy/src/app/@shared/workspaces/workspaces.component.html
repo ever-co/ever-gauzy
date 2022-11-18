@@ -1,4 +1,4 @@
-<div *ngFor="let workspace of workspaces">
+<div *ngFor="let workspace of (workspaces$ | async); index as i">
 	<div [ngClass]="selected?.id === workspace.id ? 'selected' : ''">
 		<div class="img-container">
 			<img [src]="workspace.imgUrl" alt="" (click)="onChangeWorkspace(workspace)" />
