@@ -37,7 +37,7 @@ import { RouterModule } from '@angular/router';
 		BrowserAnimationsModule,
 		RouterModule,
 		AppRoutingModule,
-		NbThemeModule.forRoot({ name: 'default' }),
+		NbThemeModule.forRoot({ name: 'gauzy-light' }),
 		NbMenuModule.forRoot(),
 		NbSidebarModule.forRoot(),
 		SetupModule,
