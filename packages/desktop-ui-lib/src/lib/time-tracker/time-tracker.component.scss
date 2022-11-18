@@ -101,6 +101,7 @@
   height: 160px;
   border-radius: var(--border-radius);
   object-fit: cover;
+  image-rendering: auto;
 }
 
 .img-placeholder {
