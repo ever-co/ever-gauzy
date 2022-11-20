@@ -72,10 +72,10 @@ export class TimerService {
 			},
 			where: {
 				deletedAt: IsNull(),
-				employeeId,
 				source: request.source || TimeLogSourceEnum.BROWSER,
 				startedAt: Between(start, end),
 				stoppedAt: Not(IsNull()),
+				employeeId,
 				tenantId,
 				organizationId,
 				isRunning: false
@@ -90,10 +90,10 @@ export class TimerService {
 		const lastLog = await this.timeLogRepository.findOne({
 			where: {
 				deletedAt: IsNull(),
-				employeeId,
 				source: request.source || TimeLogSourceEnum.BROWSER,
 				startedAt: Between(start, end),
 				stoppedAt: Not(IsNull()),
+				employeeId,
 				tenantId,
 				organizationId
 			},
@@ -330,10 +330,10 @@ export class TimerService {
 		const lastLog = await this.timeLogRepository.findOne({
 			where: {
 				deletedAt: IsNull(),
-				employeeId,
 				source: request.source || TimeLogSourceEnum.BROWSER,
 				startedAt: Not(IsNull()),
 				stoppedAt: Not(IsNull()),
+				employeeId,
 				tenantId,
 				organizationId
 			},
