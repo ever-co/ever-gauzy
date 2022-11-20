@@ -31,25 +31,31 @@ export class TimerController {
 	) {}
 
 	/**
-	 * GET timer status
+	 * GET timer today's status
 	 *
+	 * @param query
+	 * @returns
 	 */
-	@ApiOperation({ summary: 'Toggle timer' })
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'The timer has been successfully On/Off.'
-	})
-	@ApiResponse({
-		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
-	})
 	@Get('/status')
 	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async getTimerStatus(
 		@Query() query: TimerStatusQueryDTO
 	): Promise<ITimerStatus> {
 		return await this.timerService.getTimerStatus(query);
+	}
+
+	/**
+	 * GET timer last worked status
+	 *
+	 * @param query
+	 * @returns
+	 */
+	@Get('/status/worked')
+	@UsePipes(new ValidationPipe({ whitelist: true }))
+	async getTimerWorkedStatus(
+		@Query() query: TimerStatusQueryDTO
+	): Promise<ITimerStatus> {
+		return await this.timerService.getTimerWorkedStatus(query);
 	}
 
 	@ApiOperation({ summary: 'Toggle timer' })
