@@ -14,11 +14,14 @@ import {
 	ValidationPipe
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { QueryBus } from '@nestjs/cqrs';
+import { FindOptionsWhere } from 'typeorm';
 import { CrudController, PaginationParams } from './../core/crud';
 import { TenantPermissionGuard, PermissionGuard } from './../shared/guards';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { Permissions } from './../shared/decorators';
-import { CreateOrganizationTeamDTO, UpdateOrganizationTeamDTO } from './dto';
+import { GetOrganizationTeamStatisticQuery } from './queries';
+import { CreateOrganizationTeamDTO, OrganizationTeamStatisticDTO, UpdateOrganizationTeamDTO } from './dto';
 import { OrganizationTeam } from './organization-team.entity';
 import { OrganizationTeamService } from './organization-team.service';
 
@@ -27,8 +30,10 @@ import { OrganizationTeamService } from './organization-team.service';
 @Permissions(PermissionsEnum.ALL_ORG_EDIT)
 @Controller()
 export class OrganizationTeamController extends CrudController<OrganizationTeam> {
+
 	constructor(
-		private readonly organizationTeamService: OrganizationTeamService
+		private readonly queryBus: QueryBus,
+		private readonly organizationTeamService: OrganizationTeamService,
 	) {
 		super(organizationTeamService);
 	}
@@ -62,6 +67,20 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 			findInput,
 			employeeId
 		);
+	}
+
+	/**
+	 * GET organization team count
+	 *
+	 * @param options
+	 * @returns
+	 */
+	@Permissions(PermissionsEnum.ALL_ORG_VIEW)
+	@Get('count')
+	async getCount(
+		@Query() options: FindOptionsWhere<OrganizationTeam>
+	): Promise<number> {
+		return await this.organizationTeamService.countBy(options);
 	}
 
 	/**
@@ -104,6 +123,27 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 		@Query() params: PaginationParams<OrganizationTeam>
 	): Promise<IPagination<IOrganizationTeam>> {
 		return await this.organizationTeamService.findAll(params);
+	}
+
+	/**
+	 * Find team by primary ID
+	 *
+	 * @param id
+	 * @returns
+	 */
+	@Permissions(PermissionsEnum.ALL_ORG_VIEW)
+	@Get(':id')
+	@UsePipes(new ValidationPipe())
+	async findById(
+		@Param('id', UUIDValidationPipe) id: string,
+		@Query() options: OrganizationTeamStatisticDTO
+	): Promise<any> {
+		return await this.queryBus.execute(
+			new GetOrganizationTeamStatisticQuery(
+				id,
+				options
+			)
+		);
 	}
 
 	/**
