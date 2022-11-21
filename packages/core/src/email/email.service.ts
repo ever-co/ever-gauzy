@@ -523,6 +523,53 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 		}
 	}
 
+	/**
+	 * Send confirmation email link
+	 *
+	 * @param user
+	 * @param verificationLink
+	 */
+	async emailVerification(
+		user: IUser,
+		verificationLink: string
+	) {
+		const { email, firstName, lastName, preferredLanguage } = user;
+		const name = [firstName, lastName].filter(Boolean).join(' ');
+
+		const sendOptions = {
+			template: 'email-verification',
+			message: {
+				to: `${email}`
+			},
+			locals: {
+				name: name,
+				locale: preferredLanguage,
+				email: email,
+				host: env.clientBaseUrl,
+				verificationLink
+			}
+		};
+		try {
+			const body = {
+				templateName: sendOptions.template,
+				email: sendOptions.message.to,
+				languageCode: sendOptions.locals.locale,
+				message: ''
+			}
+			const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
+			if (!match) {
+				try {
+					const send = await (await this.getEmailInstance()).send(sendOptions);
+					body['message'] = send.originalMessage;
+				} catch (error) {
+					console.error(error);
+				}
+			}
+		} catch (error) {
+			console.error(error);
+		}
+	}
+
 	async requestPassword(
 		user: IUser,
 		url: string,

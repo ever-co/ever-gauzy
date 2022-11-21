@@ -61,6 +61,13 @@ export interface IUserRegistrationInput {
 	sourceId?: string;
 }
 
+/**
+ * email verfication token payload
+ */
+export interface IVerificationTokenPayload extends IUserEmailInput {
+	id: string;
+}
+
 export interface IUserInviteCodeConfirmationInput extends IUserEmailInput {
 	code: number;
 }
