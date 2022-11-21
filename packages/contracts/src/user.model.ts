@@ -34,6 +34,7 @@ export interface IUser extends IBasePerTenantEntityModel {
 	code?: number;
 	codeExpireAt?: Date;
 	emailVerifiedAt?: Date;
+	emailToken?: string;
 }
 
 export interface IUserFindInput extends IBasePerTenantEntityModel {

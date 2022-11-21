@@ -1,9 +1,9 @@
 
 import { MigrationInterface, QueryRunner } from "typeorm";
 
-export class AlterUserTableEmailVerificationColumn1668592360338 implements MigrationInterface {
+export class AlterUserTableEmailVerificationColumns1669033406667 implements MigrationInterface {
 
-    name = 'AlterUserTableEmailVerificationColumn1668592360338';
+    name = 'AlterUserTableEmailVerificationColumns1669033406667';
 
     /**
     * Up Migration
@@ -38,6 +38,7 @@ export class AlterUserTableEmailVerificationColumn1668592360338 implements Migra
     */
     public async postgresUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
         await queryRunner.query(`ALTER TABLE "user" ADD "emailVerifiedAt" TIMESTAMP`);
+        await queryRunner.query(`ALTER TABLE "user" ADD "emailToken" character varying`);
     }
 
     /**
@@ -46,6 +47,7 @@ export class AlterUserTableEmailVerificationColumn1668592360338 implements Migra
     * @param queryRunner
     */
     public async postgresDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
+        await queryRunner.query(`ALTER TABLE "user" DROP COLUMN "emailToken"`);
         await queryRunner.query(`ALTER TABLE "user" DROP COLUMN "emailVerifiedAt"`);
     }
 
@@ -62,7 +64,7 @@ export class AlterUserTableEmailVerificationColumn1668592360338 implements Migra
         await queryRunner.query(`DROP INDEX "IDX_58e4dbff0e1a32a9bdc861bb29"`);
         await queryRunner.query(`DROP INDEX "IDX_19de43e9f1842360ce646253d7"`);
         await queryRunner.query(`DROP INDEX "IDX_685bf353c85f23b6f848e4dcde"`);
-        await queryRunner.query(`CREATE TABLE "temporary_user" ("id" varchar PRIMARY KEY NOT NULL, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "tenantId" varchar, "thirdPartyId" varchar, "firstName" varchar, "lastName" varchar, "email" varchar, "username" varchar, "hash" varchar, "imageUrl" varchar(500), "preferredLanguage" varchar DEFAULT ('en'), "preferredComponentLayout" varchar CHECK( "preferredComponentLayout" IN ('CARDS_GRID','TABLE') ) DEFAULT ('TABLE'), "roleId" varchar, "refreshToken" varchar, "isActive" boolean DEFAULT (1), "code" integer, "codeExpireAt" datetime, "emailVerifiedAt" datetime, CONSTRAINT "FK_c28e52f758e7bbc53828db92194" FOREIGN KEY ("roleId") REFERENCES "role" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_685bf353c85f23b6f848e4dcded" FOREIGN KEY ("tenantId") REFERENCES "tenant" ("id") ON DELETE CASCADE ON UPDATE NO ACTION)`);
+        await queryRunner.query(`CREATE TABLE "temporary_user" ("id" varchar PRIMARY KEY NOT NULL, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "tenantId" varchar, "thirdPartyId" varchar, "firstName" varchar, "lastName" varchar, "email" varchar, "username" varchar, "hash" varchar, "imageUrl" varchar(500), "preferredLanguage" varchar DEFAULT ('en'), "preferredComponentLayout" varchar CHECK( "preferredComponentLayout" IN ('CARDS_GRID','TABLE') ) DEFAULT ('TABLE'), "roleId" varchar, "refreshToken" varchar, "isActive" boolean DEFAULT (1), "code" integer, "codeExpireAt" datetime, "emailVerifiedAt" datetime, "emailToken" varchar, CONSTRAINT "FK_c28e52f758e7bbc53828db92194" FOREIGN KEY ("roleId") REFERENCES "role" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_685bf353c85f23b6f848e4dcded" FOREIGN KEY ("tenantId") REFERENCES "tenant" ("id") ON DELETE CASCADE ON UPDATE NO ACTION)`);
         await queryRunner.query(`INSERT INTO "temporary_user"("id", "createdAt", "updatedAt", "tenantId", "thirdPartyId", "firstName", "lastName", "email", "username", "hash", "imageUrl", "preferredLanguage", "preferredComponentLayout", "roleId", "refreshToken", "isActive", "code", "codeExpireAt") SELECT "id", "createdAt", "updatedAt", "tenantId", "thirdPartyId", "firstName", "lastName", "email", "username", "hash", "imageUrl", "preferredLanguage", "preferredComponentLayout", "roleId", "refreshToken", "isActive", "code", "codeExpireAt" FROM "user"`);
         await queryRunner.query(`DROP TABLE "user"`);
         await queryRunner.query(`ALTER TABLE "temporary_user" RENAME TO "user"`);

@@ -4,6 +4,7 @@ import { ConfigService, environment } from '@gauzy/config';
 import { IUser, IVerificationTokenPayload } from '@gauzy/contracts';
 import { sign } from 'jsonwebtoken';
 import { EmailService } from './../email/email.service';
+import { UserService } from './../user/user.service';
 
 @Injectable()
 export class EmailConfirmationService {
@@ -11,6 +12,7 @@ export class EmailConfirmationService {
     constructor(
         private readonly configService: ConfigService,
         private readonly emailService: EmailService,
+        private readonly userService: UserService
     ) {}
 
     /**
@@ -29,6 +31,10 @@ export class EmailConfirmationService {
             });
             const url = `${this.configService.get('EMAIL_CONFIRMATION_URL')}?email=${email}&token=${token}`;
 
+            // update email token field for user
+            await this.userService.update(id, {
+                emailToken: token
+            });
             // send email verfication link
             return this.emailService.emailVerification(user, url);
         } catch (error) {
