@@ -7,9 +7,10 @@ import {
 	ITimerStatus,
 	IOrganization,
 	TimerState,
-	TimeLogSourceEnum
+	TimeLogSourceEnum,
+	ITimerStatusInput
 } from '@gauzy/contracts';
-import { toLocal } from '@gauzy/common-angular';
+import { toLocal, toParams } from '@gauzy/common-angular';
 import * as moment from 'moment';
 import { StoreConfig, Store, Query } from '@datorama/akita';
 import { Store as AppStore } from '../../@core/services/store.service';
@@ -116,8 +117,8 @@ export class TimeTrackerService implements OnDestroy {
 	/*
 	 * Check current timer status for employee only
 	 */
-	public async checkTimerStatus(tenantId: string) {
-		await this.getTimerStatus(tenantId)
+	public async checkTimerStatus(payload: ITimerStatusInput) {
+		await this.getTimerStatus(payload)
 			.then((status: ITimerStatus) => {
 				this.duration = status.duration;
 				if (status.lastLog && status.lastLog.isRunning) {
@@ -198,13 +199,10 @@ export class TimeTrackerService implements OnDestroy {
 		});
 	}
 
-	getTimerStatus(tenantId: string): Promise<ITimerStatus> {
+	getTimerStatus(params: ITimerStatusInput): Promise<ITimerStatus> {
 		return firstValueFrom(
 			this.http.get<ITimerStatus>(`${API_PREFIX}/timesheet/timer/status`, {
-				params: {
-					source: TimeLogSourceEnum.BROWSER,
-					tenantId
-				}
+				params: toParams({ ...params })
 			})
 		);
 	}

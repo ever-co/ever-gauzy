@@ -1,5 +1,5 @@
 import { Component, OnInit, Input, OnDestroy, Output } from '@angular/core';
-import { IOrganization, ITimeLog, PermissionsEnum } from '@gauzy/contracts';
+import { IOrganization, ITimeLog, PermissionsEnum, TimeLogSourceEnum } from '@gauzy/contracts';
 import * as moment from 'moment';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -17,7 +17,7 @@ import { TimeTrackerService } from './../../time-tracker/time-tracker.service';
 	styleUrls: ['./view-time-log.component.scss']
 })
 export class ViewTimeLogComponent implements OnInit, OnDestroy {
-	
+
 	organization: IOrganization;
 	PermissionsEnum = PermissionsEnum;
 	@Input() timeLogs: ITimeLog[] = [];
@@ -107,10 +107,19 @@ export class ViewTimeLogComponent implements OnInit, OnDestroy {
 		});
 	}
 
-	checkTimerStatus() {
-		const { employee, tenantId } = this.store.user;
-		if (employee && employee.id) {
-			this.timeTrackerService.checkTimerStatus(tenantId);
+	async checkTimerStatus() {
+		if (!this.organization) {
+			return;
+		}
+		const { employeeId, tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
+
+		if (employeeId) {
+			await this.timeTrackerService.checkTimerStatus({
+				organizationId,
+				tenantId,
+				source: TimeLogSourceEnum.BROWSER
+			});
 		}
 	}
 

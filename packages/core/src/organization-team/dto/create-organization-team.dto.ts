@@ -1,5 +1,5 @@
 import { IOrganizationTeamCreateInput } from "@gauzy/contracts";
-import { IntersectionType, PartialType } from "@nestjs/mapped-types";
+import { IntersectionType, PartialType } from "@nestjs/swagger";
 import { RelationalTagDTO } from "./../../tags/dto";
 import { OrganizationTeamDTO } from "./organization-team.dto";
 

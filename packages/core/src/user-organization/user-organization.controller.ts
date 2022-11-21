@@ -6,8 +6,7 @@ import {
 	UseGuards,
 	HttpCode,
 	Delete,
-	Param,
-	UseInterceptors
+	Param
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CrudController } from './../core/crud';
@@ -21,11 +20,9 @@ import { I18nLang } from 'nestjs-i18n';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { TenantPermissionGuard } from './../shared/guards';
 import { UserDecorator } from './../shared/decorators';
-import { TransformInterceptor } from './../core/interceptors';
 
 @ApiTags('UserOrganization')
 @UseGuards(TenantPermissionGuard)
-@UseInterceptors(TransformInterceptor)
 @Controller()
 export class UserOrganizationController extends CrudController<UserOrganization> {
 	constructor(

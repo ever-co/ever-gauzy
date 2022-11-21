@@ -8,3 +8,4 @@ export * from './is-organization-belongs-to-user.constraint';
 export * from './is-role-already-exist.constraint';
 export * from './is-role-should-exist.constraint';
 export * from './is-tenant-belongs-to-user.constraint';
+export * from './is-team-already-exist.constraint';

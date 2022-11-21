@@ -1,4 +1,4 @@
-import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
+import { IBasePerTenantAndOrganizationEntityModel, IBaseRelationsEntityModel } from './base-entity.model';
 import {
 	IOrganizationContact,
 	OrganizationContactBudgetTypeEnum
@@ -7,7 +7,7 @@ import {
 	IOrganizationProject,
 	OrganizationProjectBudgetTypeEnum
 } from './organization-projects.model';
-import { IEmployee, IEmployeeFindInput } from './employee.model';
+import { IEmployee, IEmployeeFindInput, IRelationalEmployee } from './employee.model';
 import { ITask } from './task-entity.model';
 import { ITag } from './tag-entity.model';
 import { IPaginationInput } from './core.model';
@@ -321,13 +321,15 @@ export interface IScreenshotMap {
 	timeSlots: ITimeSlot[];
 }
 
-export interface ITimerStatusInput {
+export interface ITimerStatusInput extends IBasePerTenantAndOrganizationEntityModel, IBaseRelationsEntityModel, IRelationalEmployee {
 	source?: TimeLogSourceEnum;
 }
+
 export interface ITimerStatus {
-	duration: number;
-	running: boolean;
+	duration?: number;
+	running?: boolean;
 	lastLog?: ITimeLog;
+	lastWorkedTask?: ITask;
 }
 export interface TimerState {
 	showTimerWindow: boolean;

@@ -80,7 +80,7 @@ export class PowerManagerDetectInactivity extends BasePowerManagerDecorator {
 
 	public get inactivityTimeLimit(): number {
 		const auth = LocalStore.getStore('auth');
-		return auth ? auth.inactivityTimeLimit : 1;
+		return auth ? auth.inactivityTimeLimit : 10;
 	}
 
 	public get activityProofDuration(): number {

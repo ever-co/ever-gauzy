@@ -1,3 +1,4 @@
+import { Public } from '@gauzy/common';
 import { Controller, Get } from '@nestjs/common';
 import { HealthCheckService, TypeOrmHealthIndicator } from '@nestjs/terminus';
 
@@ -8,6 +9,7 @@ export class HealthController {
 		private db: TypeOrmHealthIndicator
 	) {}
 
+	@Public()
 	@Get()
 	check() {
 		return this.health.check([

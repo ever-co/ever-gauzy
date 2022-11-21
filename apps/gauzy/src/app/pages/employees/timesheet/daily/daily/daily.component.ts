@@ -17,7 +17,8 @@ import {
 	IGetTimeLogInput,
 	ITimeLog,
 	PermissionsEnum,
-	ITimeLogFilters
+	ITimeLogFilters,
+	TimeLogSourceEnum
 } from '@gauzy/contracts';
 import { DateRangePickerBuilderService, Store, ToastrService } from './../../../../../@core/services';
 import { TimesheetService, TimesheetFilterService } from './../../../../../@shared/timesheet';
@@ -302,10 +303,19 @@ export class DailyComponent extends BaseSelectorFilterComponent implements
 			});
 	}
 
-	private checkTimerStatus() {
-		const { employee, tenantId } = this.store.user;
-		if (employee && employee.id) {
-			this.timeTrackerService.checkTimerStatus(tenantId);
+	private async checkTimerStatus() {
+		if (!this.organization) {
+			return;
+		}
+		const { employeeId, tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
+
+		if (employeeId) {
+			await this.timeTrackerService.checkTimerStatus({
+				organizationId,
+				tenantId,
+				source: TimeLogSourceEnum.BROWSER
+			});
 		}
 	}
 

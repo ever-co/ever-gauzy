@@ -2,9 +2,9 @@ import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 import { IOrganizationTeamEmployee } from './organization-team-employee-model';
 import { ITag } from './tag-entity.model';
 import { ITask } from './task-entity.model';
+import { ITimerStatusInput } from './timesheet.model';
 
-export interface IOrganizationTeam
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IOrganizationTeam extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
 	members?: IOrganizationTeamEmployee[];
 	managers?: IOrganizationTeamEmployee[];
@@ -12,16 +12,21 @@ export interface IOrganizationTeam
 	tasks?: ITask[];
 }
 
-export interface IOrganizationTeamFindInput
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IOrganizationTeamFindInput extends IBasePerTenantAndOrganizationEntityModel {
 	name?: string;
+}
+
+export interface IOrganizationTeamCreateInput extends IBasePerTenantAndOrganizationEntityModel {
+	name: string;
+	memberIds?: string[];
+	managerIds?: string[];
 	tags?: ITag[];
 }
 
-export interface IOrganizationTeamCreateInput 
-	extends IBasePerTenantAndOrganizationEntityModel {
-	name?: string;
-	members?: string[];
-	managers?: string[];
-	tags?: ITag[];
+export interface IOrganizationTeamUpdateInput extends Partial<IOrganizationTeamCreateInput> {
+	id: string
+}
+
+export interface IOrganizationTeamStatisticInput extends ITimerStatusInput {
+	withLaskWorkedTask: boolean;
 }
