@@ -27,6 +27,13 @@ export const environment: IEnvironment = {
     JWT_REFRESH_TOKEN_EXPIRATION_TIME: parseInt(process.env.JWT_REFRESH_TOKEN_EXPIRATION_TIME) || 60 * 60 * 24,
 
 	/**
+	 * Email verification options
+	 */
+	JWT_VERIFICATION_TOKEN_SECRET: process.env.JWT_VERIFICATION_TOKEN_SECRET || 'verificationSecretKey',
+	JWT_VERIFICATION_TOKEN_EXPIRATION_TIME: parseInt(process.env.JWT_VERIFICATION_TOKEN_EXPIRATION_TIME) || 86400 * 7, // default verfication expire token time (7 days)
+	EMAIL_CONFIRMATION_URL: process.env.EMAIL_CONFIRMATION_URL || 'http://localhost:4200/#/auth/confirm-email',
+
+	/**
 	 * Throttler (Rate Limiting) Options
 	 */
 	THROTTLE_TTL: parseInt(process.env.THROTTLE_TTL) || 60,
