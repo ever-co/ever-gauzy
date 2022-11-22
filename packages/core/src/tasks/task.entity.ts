@@ -39,16 +39,13 @@ import {
 @Entity('task')
 @Index('taskNumber', ['projectId', 'number'], { unique: true })
 export class Task extends TenantOrganizationBaseEntity implements ITask {
-	
+
 	@ApiProperty({ type: () => Number })
 	@Column({ nullable:  true })
 	number?: number;
 
 	@ApiProperty({ type: () => String })
-	@Column({
-		nullable: true,
-		select: false
-	})
+	@Column({ nullable: true })
 	prefix?: string;
 
 	@ApiProperty({ type: () => String })
@@ -75,7 +72,7 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 
 	/*
     |--------------------------------------------------------------------------
-    | @ManyToOne 
+    | @ManyToOne
     |--------------------------------------------------------------------------
     */
 	/**
@@ -127,7 +124,7 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 
 	/*
     |--------------------------------------------------------------------------
-    | @OneToMany 
+    | @OneToMany
     |--------------------------------------------------------------------------
     */
 	/**
@@ -156,7 +153,7 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 
 	/*
     |--------------------------------------------------------------------------
-    | @ManyToMany 
+    | @ManyToMany
     |--------------------------------------------------------------------------
     */
 
