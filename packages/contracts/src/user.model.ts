@@ -79,6 +79,10 @@ export interface IUserPasswordInput {
 	password: string;
 }
 
+export interface IUserTokenInput {
+	token: string;
+}
+
 export interface IUserLoginInput extends IUserEmailInput, IUserPasswordInput {}
 export interface IAuthResponse {
 	user: IUser;
