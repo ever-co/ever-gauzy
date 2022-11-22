@@ -16,7 +16,8 @@
 						Thank you for joining with Ever® Gauzy™.
 					</p>
 					<p>
-						We’d like you to confirm the email address, click the link below.
+						We’d like you to confirm the email address!.
+						Hit the button below to verify your email.
 					</p>
 				</mj-text>
 				<mj-button
@@ -24,7 +25,7 @@
 					background-color="#3366ff"
 					color="white"
 				>
-					Click Here
+					Verify your email
 				</mj-button>
 				<mj-text font-size="16px" font-family="helvetica">
 					<p>Best regards,</p>
