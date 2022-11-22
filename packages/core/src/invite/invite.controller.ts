@@ -49,7 +49,7 @@ import {
 	InviteOrganizationContactCommand,
 	InviteResendCommand
 } from './commands';
-import { CreateInviteDTO, FindInviteQueryDTO } from './dto';
+import { CreateInviteDTO, ValidateInviteQueryDTO } from './dto';
 import { FindPublicInviteByEmailTokenQuery } from './queries';
 
 @ApiTags('Invite')
@@ -101,7 +101,9 @@ export class InviteController {
 	@Public()
 	@Get('validate')
 	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
-	async validateInvite(@Query() options: FindInviteQueryDTO) {
+	async validateInvite(
+		@Query() options: ValidateInviteQueryDTO
+	) {
 		return await this.queryBus.execute(
 			new FindPublicInviteByEmailTokenQuery({
 				email: options.email,
