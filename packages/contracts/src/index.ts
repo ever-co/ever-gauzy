@@ -112,5 +112,6 @@ export { IBaseEntityModel as BaseEntityModel } from './base-entity.model';
 export {
 	IBasePerTenantAndOrganizationEntityModel,
 	IBasePerTenantEntityModel,
-	IBaseSoftDeleteEntityModel
+	IBaseSoftDeleteEntityModel,
+	IBaseRelationsEntityModel
 } from './base-entity.model';

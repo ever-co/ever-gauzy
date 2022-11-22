@@ -72,10 +72,10 @@ export class TimerService {
 			},
 			where: {
 				deletedAt: IsNull(),
-				employeeId,
 				source: request.source || TimeLogSourceEnum.BROWSER,
 				startedAt: Between(start, end),
 				stoppedAt: Not(IsNull()),
+				employeeId,
 				tenantId,
 				organizationId,
 				isRunning: false
@@ -90,10 +90,10 @@ export class TimerService {
 		const lastLog = await this.timeLogRepository.findOne({
 			where: {
 				deletedAt: IsNull(),
-				employeeId,
 				source: request.source || TimeLogSourceEnum.BROWSER,
 				startedAt: Between(start, end),
 				stoppedAt: Not(IsNull()),
+				employeeId,
 				tenantId,
 				organizationId
 			},
@@ -295,5 +295,67 @@ export class TimerService {
 				createdAt: 'DESC'
 			}
 		});
+	}
+
+	public async getTimerWorkedStatus(request: ITimerStatusInput) {
+		const userId = RequestContext.currentUserId();
+		const tenantId = RequestContext.currentTenantId();
+
+		let employee = await this.employeeRepository.findOneBy({
+			userId,
+			tenantId
+		});
+
+		if (RequestContext.hasPermission(
+			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+		) && isNotEmpty(request.employeeId)) {
+			employee = await this.employeeRepository.findOneBy({
+				id: request.employeeId,
+				tenantId
+			});
+		}
+
+		if (!employee) {
+			throw new NotFoundException("We couldn't find the employee you were looking for.");
+		}
+		const { organizationId, id: employeeId } = employee;
+		const status: ITimerStatus = {
+			duration: 0,
+			running: false,
+			lastLog: null
+		};
+		/**
+		 * Get last log (running or completed)
+		 */
+		const lastLog = await this.timeLogRepository.findOne({
+			where: {
+				deletedAt: IsNull(),
+				source: request.source || TimeLogSourceEnum.BROWSER,
+				startedAt: Not(IsNull()),
+				stoppedAt: Not(IsNull()),
+				employeeId,
+				tenantId,
+				organizationId
+			},
+			order: {
+				startedAt: 'DESC',
+				createdAt: 'DESC'
+			},
+			...(
+				(request['relations']) ? {
+					relations: request['relations']
+				} : {}
+			),
+			relationLoadStrategy: 'query'
+		});
+		/**
+		 * calculate last timelog duration
+		 */
+		if (lastLog) {
+			status.lastLog = lastLog;
+			status.running = lastLog.isRunning;
+			status.duration = lastLog.duration;
+		}
+		return status;
 	}
 }
