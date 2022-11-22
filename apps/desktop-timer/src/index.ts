@@ -126,18 +126,21 @@ const exeName = path.basename(process.execPath);
 const store = new Store();
 
 const args = process.argv.slice(1);
+const notificationWindow: BrowserWindow = null;
+const serverGauzy = null;
+
 args.some((val) => val === '--serve');
 let gauzyWindow: BrowserWindow = null;
 let setupWindow: BrowserWindow = null;
 let timeTrackerWindow: BrowserWindow = null;
-const notificationWindow: BrowserWindow = null;
 let settingsWindow: BrowserWindow = null;
 let updaterWindow: BrowserWindow = null;
 let imageView: BrowserWindow = null;
 let tray = null;
 let isAlreadyRun = false;
 let onWaitingServer = false;
-const serverGauzy = null;
+let dialogErr = false;
+let willQuit = true;
 let serverDesktop = null;
 let popupWin: BrowserWindow | null = null;
 let updateContext;
