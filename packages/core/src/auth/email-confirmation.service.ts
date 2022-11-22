@@ -1,10 +1,12 @@
 
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, HttpStatus, Injectable } from '@nestjs/common';
 import { ConfigService, environment } from '@gauzy/config';
-import { IUser, IVerificationTokenPayload } from '@gauzy/contracts';
-import { sign } from 'jsonwebtoken';
+import { IUser, IUserTokenInput, IVerificationTokenPayload } from '@gauzy/contracts';
+import { JwtPayload, sign, verify } from 'jsonwebtoken';
+import * as bcrypt from 'bcrypt';
 import { EmailService } from './../email/email.service';
 import { UserService } from './../user/user.service';
+import { RequestContext } from './../core/context';
 
 @Injectable()
 export class EmailConfirmationService {
@@ -33,12 +35,84 @@ export class EmailConfirmationService {
 
             // update email token field for user
             await this.userService.update(id, {
-                emailToken: token
+                emailToken: await bcrypt.hash(token, 10)
             });
             // send email verfication link
             return this.emailService.emailVerification(user, url);
         } catch (error) {
             console.log(error, 'Error while sending verification email');
+        }
+    }
+
+    /**
+     * Resend confirmation email link
+     *
+     */
+    public async resendConfirmationLink() {
+        try {
+            const user = await this.userService.getIfExists(
+                RequestContext.currentUserId()
+            );
+            if (!!user.emailVerifiedAt) {
+                throw new BadRequestException('Your email is already verified.');
+            }
+            await this.sendVerificationLink(user);
+            return new Object({
+				status: HttpStatus.OK,
+				message: `OK`
+			});
+        } catch (error) {
+            throw new BadRequestException(error?.message);
+        }
+    }
+
+    /**
+     * Decode email confirmation token
+     *
+     * @param token
+     * @returns
+     */
+    public async decodeConfirmationToken(token: IUserTokenInput['token']): Promise<IUser> {
+        try {
+            const payload: JwtPayload | string = verify(token, environment.JWT_VERIFICATION_TOKEN_SECRET);
+
+            if (typeof payload === 'object' && 'email' in payload && 'id' in payload) {
+                const { id, email } = payload;
+                const user = await this.userService.findOneByOptions({
+                    where: {
+                        id,
+                        email
+                    }
+                });
+                if (!!user.emailVerifiedAt) {
+                    throw new BadRequestException('Your email is already verified.');
+                }
+                if (!!user.emailToken && !!(await bcrypt.compare(token, user.emailToken))) {
+                    return user;
+                }
+            }
+            throw new BadRequestException('Failed to verify email.');
+        } catch (error) {
+            if (error?.name === 'TokenExpiredError') {
+                throw new BadRequestException('JWT token has been expired.');
+            }
+            throw new BadRequestException(error?.message);
+        }
+    }
+
+    /**
+     * Confirm user email
+     *
+     * @param user
+     */
+    public async confirmEmail(user: IUser) {
+        try {
+            await this.userService.markEmailAsVerified(user['id']);
+        } finally {
+            return new Object({
+				status: HttpStatus.OK,
+				message: `OK`
+			});
         }
     }
 }
