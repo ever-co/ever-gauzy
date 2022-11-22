@@ -216,9 +216,19 @@
 				</div>
 				<div class="row update-setting center-content">
 					<div class="col-12 button-update" *ngIf="!downloadFinish">
-						<button nbButton [disabled]="loading$ | async" status="primary" class="button-big"
-							(click)="checkForUpdate()">
-							Check Update<nb-icon icon="sync-outline" [class]="
+						<button *ngIf="!(notAvailable$ | async)" nbButton [disabled]="loading$ | async" status="primary" class="button-big"
+							(click)=" checkForUpdate()">
+							Check Update
+							<nb-icon icon="sync-outline" [class]="
+															(loading$ | async)
+																? 'icon-medium icon-spin'
+																: 'icon-medium'
+														"></nb-icon>
+						</button>
+						<button *ngIf="notAvailable$ | async" nbButton [disabled]="loading$ | async" status="primary" class="button-big"
+							(click)="downloadNow()">
+							Download Now
+							<nb-icon icon="loader-outline" [class]="
 															(loading$ | async)
 																? 'icon-medium icon-spin'
 																: 'icon-medium'
@@ -230,7 +240,7 @@
 							Update Now<nb-icon icon="arrow-circle-up-outline" class="icon-medium"></nb-icon>
 						</button>
 					</div>
-					<div class="col-12 update-message" *ngIf="notAvailable">
+					<div class="col-12 update-message">
 						<button nbButton outline [status]="message?.status" size="small" class="update-message-content">
 							{{ message?.text }}
 						</button>
