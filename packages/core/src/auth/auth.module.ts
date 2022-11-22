@@ -13,6 +13,7 @@ import { UserOrganizationService } from '../user-organization/user-organization.
 import { UserModule } from './../user/user.module';
 import { PasswordResetModule } from './../password-reset/password-reset.module';
 import { EmailConfirmationService } from './email-confirmation.service';
+import { EmailVerificationController } from './email-verification.controller';
 
 const providers = [
 	AuthService,
@@ -50,7 +51,7 @@ const strategies = [
 		PasswordResetModule,
 		CqrsModule
 	],
-	controllers: [AuthController],
+	controllers: [AuthController, EmailVerificationController],
 	providers: [...providers, ...CommandHandlers, ...strategies],
 	exports: [...providers]
 })
