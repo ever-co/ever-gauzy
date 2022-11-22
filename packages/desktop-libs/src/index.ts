@@ -13,3 +13,5 @@ export * from './lib/desktop-updater';
 export * from './lib/decorators';
 export * from './lib/interfaces';
 export * from './lib/desktop-dialog';
+export * from './lib/contexts';
+export * from './lib/strategies';
