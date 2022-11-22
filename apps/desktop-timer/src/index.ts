@@ -73,10 +73,12 @@ import {
 	AppMenu,
 	removeMainListener,
 	removeTimerListener,
-	appUpdateNotification,
 	DesktopDialog,
 	DialogConfirmUpgradeDownload,
-	DialogConfirmInstallDownload
+	DialogConfirmInstallDownload,
+	UpdateContext,
+	CdnUpdate,
+	DigitalOceanCdn
 } from '@gauzy/desktop-libs';
 import {
 	createSetupWindow,
@@ -86,12 +88,10 @@ import {
 	createImageViewerWindow
 } from '@gauzy/desktop-window';
 import { fork } from 'child_process';
-import { autoUpdater } from 'electron-updater';
-import { CancellationToken } from "builder-util-runtime";
+import { autoUpdater, UpdateInfo } from 'electron-updater';
 import { initSentry } from './sentry';
 
 // Can be like this: import fetch from '@gauzy/desktop-libs' for v3 of node-fetch;
-import fetch from 'node-fetch';
 
 initSentry();
 
@@ -136,18 +136,11 @@ let updaterWindow: BrowserWindow = null;
 let imageView: BrowserWindow = null;
 let tray = null;
 let isAlreadyRun = false;
-let willQuit = false;
 let onWaitingServer = false;
 const serverGauzy = null;
 let serverDesktop = null;
-let dialogErr = false;
-let cancellationToken;
 let popupWin: BrowserWindow | null = null;
-let isDownloadTriggered: boolean = false;
-
-try {
-	cancellationToken = new CancellationToken();
-} catch (error) {}
+let updateContext;
 
 console.log(
 	'Time Tracker UI Render Path:',
@@ -200,7 +193,7 @@ async function startServer(value, restart = false) {
 				organizationContactId: null
 			}
 		});
-	} catch (error) {}
+	} catch (error) { }
 
 	/* create main window */
 	if (value.serverConfigConnected || !value.isLocalServer) {
@@ -257,35 +250,6 @@ async function startServer(value, restart = false) {
 	return true;
 }
 
-const dialogMessage = (msg) => {
-	dialogErr = true;
-	const options = {
-		type: 'question',
-		buttons: ['Open Setting', 'Exit'],
-		defaultId: 2,
-		title: 'Warning',
-		message: msg
-	};
-
-	dialog.showMessageBox(null, options).then((response) => {
-		if (response.response === 1) app.quit();
-		else {
-			if (settingsWindow) settingsWindow.show();
-			else {
-				if (!settingsWindow) {
-					settingsWindow = createSettingsWindow(
-						settingsWindow,
-						pathWindow.timeTrackerUi
-					);
-				}
-				settingsWindow.show();
-				setTimeout(() => {
-					settingsWindow.webContents.send('app_setting', LocalStore.getApplicationConfig());
-				}, 500);
-			}
-		}
-	});
-};
 
 const getApiBaseUrl = (configs) => {
 	if (configs.serverUrl) return configs.serverUrl;
@@ -303,11 +267,20 @@ const getApiBaseUrl = (configs) => {
 // More details at https://github.com/electron/electron/issues/15947
 
 app.on('ready', async () => {
+	// Set default update context strategy with digital Ocean CDN
+	updateContext = new UpdateContext();
+	updateContext.strategy = new DigitalOceanCdn(
+		new CdnUpdate({
+			repository: 'ever-gauzy-desktop-timer',
+			owner: 'ever-co',
+			typeRelease: 'releases'
+		})
+	);
 	// require(path.join(__dirname, 'desktop-api/main.js'));
 	/* set menu */
 	setTimeout(async () => {
 		try {
-			await checkForUpdateNotify();
+			updateContext.checkUpdate();
 		} catch (e) {
 			console.log('Error on checking update:', e);
 		}
@@ -465,14 +438,18 @@ ipcMain.on('open_browser', async (event, arg) => {
 	await shell.openExternal(arg.url);
 });
 
-ipcMain.on('check_for_update', async () => {
-	await checkUpdate();
+ipcMain.on('check_for_update', () => {
+	updateContext.checkUpdate();
+});
+
+ipcMain.on('download_update', () => {
+	updateContext.update();
 });
 
 autoUpdater.once('update-available', () => {
 	const setting = LocalStore.getStore('appSetting');
 	settingsWindow.webContents.send('update_available');
-	if(setting && !setting.automaticUpdate) return;
+	if (setting && !setting.automaticUpdate) return;
 	const dialog = new DialogConfirmUpgradeDownload(
 		new DesktopDialog(
 			'Gauzy',
@@ -482,7 +459,7 @@ autoUpdater.once('update-available', () => {
 	);
 	dialog.show().then(async (button) => {
 		if (button.response === 0) {
-			await checkUpdate();
+			updateContext.update();
 		}
 	});
 });
@@ -490,7 +467,7 @@ autoUpdater.once('update-available', () => {
 autoUpdater.on('update-downloaded', () => {
 	const setting = LocalStore.getStore('appSetting');
 	settingsWindow.webContents.send('update_downloaded');
-	if(setting && !setting.automaticUpdate) return;
+	if (setting && !setting.automaticUpdate) return;
 	const dialog = new DialogConfirmInstallDownload(
 		new DesktopDialog(
 			'Gauzy',
@@ -500,8 +477,12 @@ autoUpdater.on('update-downloaded', () => {
 	);
 	dialog.show().then((button) => {
 		if (button.response === 0) autoUpdater.quitAndInstall();
-	  })
+	})
 });
+
+autoUpdater.on('update-available', (info: UpdateInfo) => {
+	updateContext.notify(info);
+})
 
 autoUpdater.requestHeaders = {
 	'Cache-Control':
@@ -617,43 +598,12 @@ app.on('before-quit', (e) => {
 			});
 		}, 1000);
 	} else {
-		if (cancellationToken) {
-			cancellationToken.cancel();
-		}
 		app.exit(0);
 		if (serverDesktop) serverDesktop.kill();
 		if (serverGauzy) serverGauzy.kill();
 	}
 });
 
-async function getUpdaterConfig() {
-	const updaterConfig = {
-		repo: 'ever-gauzy-desktop-timer',
-		owner: 'ever-co',
-		typeRelease: 'releases'
-	};
-	let latestReleaseTag = null;
-	try {
-		latestReleaseTag = await fetch(
-			`https://github.com/${updaterConfig.owner}/${updaterConfig.repo}/${updaterConfig.typeRelease}/latest`,
-			{
-				method: 'GET',
-				headers: {
-					Accept: 'application/json'
-				}
-			}
-		).then((res) => res.json());
-	} catch (error) {}
-	if (latestReleaseTag) {
-		return `https://github.com/${updaterConfig.owner}/${updaterConfig.repo}/${updaterConfig.typeRelease}/download/${latestReleaseTag.tag_name}`;
-	}
-	return null;
-}
-
-async function checkForUpdateNotify() {
-	const updateFeedUrl = await getUpdaterConfig();
-	await appUpdateNotification(updateFeedUrl);
-}
 // On OS X it is common for applications and their menu bar
 // to stay active until the user quits explicitly with Cmd + Q
 function quit() {
@@ -677,11 +627,11 @@ function launchAtStartup(autoLaunch, hidden) {
 				path: app.getPath('exe'),
 				args: hidden
 					? [
-							'--processStart',
-							`"${exeName}"`,
-							'--process-start-args',
-							`"--hidden"`
-					  ]
+						'--processStart',
+						`"${exeName}"`,
+						'--process-start-args',
+						`"--hidden"`
+					]
 					: ['--processStart', `"${exeName}"`, '--process-start-args']
 			});
 			break;
@@ -724,25 +674,25 @@ app.on('web-contents-created', (e, contents) => {
 				return;
 			}
 
-		if (url.indexOf('sign-in/success?jwt') > -1) {
-			if (popupWin) popupWin.destroy();
-			const urlParse = Url.parse(url, true);
+			if (url.indexOf('sign-in/success?jwt') > -1) {
+				if (popupWin) popupWin.destroy();
+				const urlParse = Url.parse(url, true);
 				const urlParsed = Url.parse(
 					urlFormat(urlParse.hash, urlParse.host),
 					true
 				);
-			const query = urlParsed.query;
-			const params = LocalStore.beforeRequestParams();
+				const query = urlParsed.query;
+				const params = LocalStore.beforeRequestParams();
 				timeTrackerWindow.webContents.send('social_auth_success', {
 					...params,
-				token: query.jwt,
-				userId: query.userId
+					token: query.jwt,
+					userId: query.userId
 				});
-		}
+			}
 
-		if (url.indexOf('/auth/register') > -1) {
-			await shell.openExternal(url);
-		}
+			if (url.indexOf('/auth/register') > -1) {
+				await shell.openExternal(url);
+			}
 		}
 	);
 });
@@ -758,29 +708,6 @@ const showPopup = async (url: string, options: any) => {
 	if (popupWin) popupWin.destroy();
 	popupWin = new BrowserWindow(options);
 	let userAgentWb = 'Chrome/104.0.0.0';
-	await popupWin.loadURL(url, {userAgent: userAgentWb});
+	await popupWin.loadURL(url, { userAgent: userAgentWb });
 	popupWin.show();
- };
-
-const checkUpdate = async () => {
-	autoUpdater.autoDownload = !isDownloadTriggered;
-	const updateFeedUrl = await getUpdaterConfig();
-	if (updateFeedUrl) {
-		autoUpdater.setFeedURL({
-			channel: 'latest',
-			provider: 'generic',
-			url: updateFeedUrl
-		});
-		autoUpdater.checkForUpdatesAndNotify().then((downloadPromise) => {
-			if (cancellationToken){
-				cancellationToken = downloadPromise.cancellationToken;
-			}else {
-				 isDownloadTriggered = true;
-			}
-		}).catch((e) => {
-			console.log('Error occurred', e);
-		});
-	} else {
-		settingsWindow.webContents.send('error_update');
-	}
-}
+};
