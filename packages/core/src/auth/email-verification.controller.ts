@@ -36,7 +36,7 @@ export class EmailVerificationController {
     @UsePipes(new ValidationPipe({ whitelist: true }))
     public async confirmEmail(
         @Body() body: ConfirmEmailDTO
-    ) {
+    ): Promise<Object> {
         const user = await this.emailConfirmationService.decodeConfirmationToken(body.token);
         if (!!user) {
             if (!!user.emailVerifiedAt) {
@@ -49,7 +49,7 @@ export class EmailVerificationController {
     @ApiOperation({ summary: 'Resend email verification link' })
     @HttpCode(HttpStatus.ACCEPTED)
     @Post('resend-link')
-    public async resendConfirmationLink() {
+    public async resendConfirmationLink(): Promise<Object> {
         return await this.emailConfirmationService.resendConfirmationLink();
     }
 }
