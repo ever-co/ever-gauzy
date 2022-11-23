@@ -1,4 +1,5 @@
 import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { BadRequestException } from '@nestjs/common';
 import { RolesEnum } from '@gauzy/contracts';
 import { InviteService } from './../../invite.service';
 import { InviteAcceptEmployeeCommand } from '../invite.accept-employee.command';
@@ -16,27 +17,44 @@ export class InviteAcceptHandler
 	) {}
 
 	public async execute(command: InviteAcceptCommand) {
-		const { input, languageCode } = command;
-		const { inviteId } = input;
+		try {
+			const { input, languageCode } = command;
+			const { email, token } = input;
 
-		/**
-		 * Assign role to user
-		 */
-		const { role } = await this.inviteService.findOneByIdString(inviteId, {
-			relations: {
-				role: true
+			const invite = await this.inviteService.validate({
+				email,
+				token
+			});
+			if (!invite) {
+				throw Error('Invite does not exist');
 			}
-		});
-		input['user']['role'] = role;
-		switch (role.name) {
-			case RolesEnum.EMPLOYEE:
-				return await this.commandBus.execute(
-					new InviteAcceptEmployeeCommand(input, languageCode)
-				);
-			default:
-				return this.commandBus.execute(
-					new InviteAcceptUserCommand(input, languageCode)
-				);
+			/**
+			 * Assign role to user
+			 */
+			const { id: inviteId } = invite;
+			const { role } = await this.inviteService.findOneByIdString(inviteId, {
+				relations: {
+					role: true
+				}
+			});
+			input['user']['role'] = role;
+			input['inviteId'] = inviteId;
+
+			/**
+			 * Invite accept for employee & user
+			 */
+			switch (role.name) {
+				case RolesEnum.EMPLOYEE:
+					return await this.commandBus.execute(
+						new InviteAcceptEmployeeCommand(input, languageCode)
+					);
+				default:
+					return this.commandBus.execute(
+						new InviteAcceptUserCommand(input, languageCode)
+					);
+			}
+		} catch (error) {
+			throw new BadRequestException();
 		}
 	}
 }

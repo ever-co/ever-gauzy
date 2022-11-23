@@ -24,11 +24,21 @@ export class InviteAcceptUserHandler
 		command: InviteAcceptUserCommand
 	): Promise<UpdateResult | IInvite> {
 		const { input, languageCode } = command;
+		const { inviteId } = input;
 
-		const organization = await this.organizationService.findOneByIdString(
-			input.organization.id,
-			{ relations: ['tenant'] }
-		);
+		const invite = await this.inviteService.findOneByIdString(inviteId);
+		if (!invite) {
+			throw Error('Invite does not exist');
+		}
+
+		const organization = await this.organizationService.findOneByIdString(invite.organizationId, {
+			relations: {
+				tenant: true
+			}
+		});
+		if (!organization.invitesAllowed) {
+			throw Error('Organization no longer allows invites');
+		}
 
 		await this.authService.register(
 			{

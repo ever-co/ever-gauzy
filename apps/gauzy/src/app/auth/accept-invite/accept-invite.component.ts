@@ -31,6 +31,7 @@ export class AcceptInvitePage
 	}
 
 	ngOnInit(): void {
+		console.log();
 		this.route
 			.queryParams
 			.pipe(
@@ -43,7 +44,7 @@ export class AcceptInvitePage
 
 	loadInvite = async (email: string, token: string) => {
 		try {
-			this.invitation = await this.inviteService.validateInvite(['organization'], {
+			this.invitation = await this.inviteService.validateInvite([], {
 				email,
 				token
 			});
@@ -59,15 +60,20 @@ export class AcceptInvitePage
 	submitForm = async (input: IUserRegistrationInput) => {
 		try {
 			const { user, password } = input;
-			const { id: inviteId, organization } = this.invitation;
+			/**
+			 * Validate email & token when accept invite
+			 */
+			const token = this.route.snapshot.queryParamMap.get('token');
+			const email = this.route.snapshot.queryParamMap.get('email');
+
 			/**
 			 * Accept Invite
 			 */
 			await this.inviteService.acceptInvite({
 				user,
 				password,
-				organization,
-				inviteId
+				token,
+				email
 			}).then(() => {
 				this.toastrService.success('TOASTR.MESSAGE.PROFILE_UPDATED');
 				this.router.navigate(['/auth/login']);
