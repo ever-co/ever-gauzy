@@ -32,6 +32,7 @@ import { ImportRecordUpdateOrCreateCommand } from './../export-import/import-rec
 import { PasswordResetCreateCommand, PasswordResetGetCommand } from './../password-reset/commands';
 import { RequestContext } from './../core/context';
 import { generateRandomInteger } from './../core/utils';
+import { EmailConfirmationService } from './email-confirmation.service';
 
 @Injectable()
 export class AuthService extends SocialAuthService {
@@ -40,6 +41,7 @@ export class AuthService extends SocialAuthService {
 		@InjectRepository(User)
 		private readonly userRepository: Repository<User>,
 
+		private readonly emailConfirmationService: EmailConfirmationService,
 		private readonly userService: UserService,
 		private readonly emailService: EmailService,
 		private readonly userOrganizationService: UserOrganizationService,
@@ -263,6 +265,11 @@ export class AuthService extends SocialAuthService {
 				})
 			);
 		}
+
+		/**
+		 * Email verification
+		 */
+		await this.emailConfirmationService.sendVerificationLink(user);
 
 		this.emailService.welcomeUser(
 			input.user,

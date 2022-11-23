@@ -1,12 +1,12 @@
 import { gauzyToggleFeatures } from '@gauzy/config';
-import { IFeatureCreateInput } from '@gauzy/contracts';
+import { FeatureEnum, IFeatureCreateInput } from '@gauzy/contracts';
 
 const features = gauzyToggleFeatures;
 
 export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 	{
 		name: 'Dashboard',
-		code: 'FEATURE_DASHBOARD',
+		code: FeatureEnum.FEATURE_DASHBOARD,
 		description:
 			'Go to dashboard, Manage Employee Statistics, Time Tracking Dashboard',
 		image: 'dashboard.png',
@@ -17,7 +17,7 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 	},
 	{
 		name: 'Time Tracking',
-		code: 'FEATURE_TIME_TRACKING',
+		code: FeatureEnum.FEATURE_TIME_TRACKING,
 		description: 'Download Desktop App, Create First Timesheet',
 		image: 'time-tracking-timesheet.png',
 		link: 'employees/timesheets',
@@ -27,7 +27,7 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 	},
 	{
 		name: 'Estimate',
-		code: 'FEATURE_ESTIMATE',
+		code: FeatureEnum.FEATURE_ESTIMATE,
 		description: 'Manage Estimate, Create First Estimate',
 		image: 'estimate.png',
 		link: 'accounting/invoices/estimates',
@@ -37,7 +37,7 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 		children: [
 			{
 				name: 'Estimate Received',
-				code: 'FEATURE_ESTIMATE_RECEIVED',
+				code: FeatureEnum.FEATURE_ESTIMATE_RECEIVED,
 				description:
 					'Manage Received Estimate, Accept and Reject Estimate',
 				image: 'estimate-received.png',
@@ -50,7 +50,7 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 	},
 	{
 		name: 'Invoice',
-		code: 'FEATURE_INVOICE',
+		code: FeatureEnum.FEATURE_INVOICE,
 		description: 'Manage Invoice, Create First Invoice',
 		image: 'invoice.png',
 		link: 'accounting/invoices',
@@ -60,7 +60,7 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 		children: [
 			{
 				name: 'Invoice Received',
-				code: 'FEATURE_INVOICE_RECEIVED',
+				code: FeatureEnum.FEATURE_INVOICE_RECEIVED,
 				description: 'View Received Invoice',
 				image: 'invoice-received.png',
 				link: 'accounting/invoices/received-invoices',
@@ -72,7 +72,7 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 	},
 	{
 		name: 'Income',
-		code: 'FEATURE_INCOME',
+		code: FeatureEnum.FEATURE_INCOME,
 		description: 'Create First Income',
 		image: 'income.png',
 		link: 'accounting/income',
@@ -82,7 +82,7 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 	},
 	{
 		name: 'Expense',
-		code: 'FEATURE_EXPENSE',
+		code: FeatureEnum.FEATURE_EXPENSE,
 		description: 'Create First Expense',
 		image: 'expense.png',
 		link: 'accounting/expenses',
@@ -92,7 +92,7 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 		children: [
 			{
 				name: 'Employee Recurring Expense',
-				code: 'FEATURE_EMPLOYEE_RECURRING_EXPENSE',
+				code: FeatureEnum.FEATURE_EMPLOYEE_RECURRING_EXPENSE,
 				description: 'Manage Employee Recurring Expense',
 				image: 'recurring-expense.png',
 				link: 'employees/recurring-expenses',
@@ -102,7 +102,7 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 			},
 			{
 				name: 'Organization Recurring Expenses',
-				code: 'FEATURE_ORGANIZATION_RECURRING_EXPENSE',
+				code: FeatureEnum.FEATURE_ORGANIZATION_RECURRING_EXPENSE,
 				description:
 					'Manage Organization Recurring Expenses, Create First Recurring Expenses',
 				image: 'organization-recurring-expense.png',
@@ -115,7 +115,7 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 	},
 	{
 		name: 'Payment',
-		code: 'FEATURE_PAYMENT',
+		code: FeatureEnum.FEATURE_PAYMENT,
 		description: 'Manage Payment, Create First Payment',
 		image: 'payment.png',
 		link: 'accounting/payments',
@@ -125,7 +125,7 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 	},
 	{
 		name: 'Proposal',
-		code: 'FEATURE_PROPOSAL',
+		code: FeatureEnum.FEATURE_PROPOSAL,
 		description: 'Manage Proposal, Register First Proposal',
 		image: 'proposal.png',
 		link: 'sales/proposals',
@@ -135,7 +135,7 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 		children: [
 			{
 				name: 'Proposal Template',
-				code: 'FEATURE_PROPOSAL_TEMPLATE',
+				code: FeatureEnum.FEATURE_PROPOSAL_TEMPLATE,
 				description: 'Create First Proposal Template',
 				image: 'proposal-template.png',
 				link: 'jobs/proposal-template',
@@ -147,7 +147,7 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 	},
 	{
 		name: 'Sales Pipeline',
-		code: 'FEATURE_PIPELINE',
+		code: FeatureEnum.FEATURE_PIPELINE,
 		description: 'Create Sales Pipeline',
 		image: 'pipeline.png',
 		link: 'sales/pipelines',
@@ -157,7 +157,7 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 		children: [
 			{
 				name: 'Sales Pipeline Deal',
-				code: 'FEATURE_PIPELINE_DEAL',
+				code: FeatureEnum.FEATURE_PIPELINE_DEAL,
 				description: 'Create Sales Pipeline Deal',
 				image: 'pipeline-deal.png',
 				link: 'sales/pipelines',
@@ -169,7 +169,7 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 	},
 	{
 		name: 'Task Dashboard',
-		code: 'FEATURE_DASHBOARD_TASK',
+		code: FeatureEnum.FEATURE_DASHBOARD_TASK,
 		description: 'Task Dashboard',
 		image: 'task-dashboard.png',
 		link: 'tasks/dashboard',
@@ -179,7 +179,7 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 		children: [
 			{
 				name: 'Team Task Dashboard',
-				code: 'FEATURE_TEAM_TASK',
+				code: FeatureEnum.FEATURE_TEAM_TASK,
 				description: 'Team Task Dashboard',
 				image: 'team-task.png',
 				link: 'tasks/team',
@@ -189,7 +189,7 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 			},
 			{
 				name: 'My Task Dashboard',
-				code: 'FEATURE_MY_TASK',
+				code: FeatureEnum.FEATURE_MY_TASK,
 				description: 'My Task Dashboard',
 				image: 'team-task.png',
 				link: 'tasks/me',
@@ -201,7 +201,7 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 	},
 	{
 		name: 'Jobs',
-		code: 'FEATURE_JOB',
+		code: FeatureEnum.FEATURE_JOB,
 		description: 'Job Search & Jobs Matching',
 		image: 'job.png',
 		link: 'jobs/search',
@@ -211,7 +211,7 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 	},
 	{
 		name: 'Employees',
-		code: 'FEATURE_EMPLOYEES',
+		code: FeatureEnum.FEATURE_EMPLOYEES,
 		description: 'Manage Employees, Add or Invite Employees',
 		image: 'employee.png',
 		link: 'employees',
@@ -221,7 +221,7 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 		children: [
 			{
 				name: 'Employee Level',
-				code: 'FEATURE_EMPLOYEE_LEVEL',
+				code: FeatureEnum.FEATURE_EMPLOYEE_LEVEL,
 				description: 'Manage Employee Level',
 				image: 'employee-level.png',
 				link: 'employees/employee-level',
@@ -231,7 +231,7 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 			},
 			{
 				name: 'Employee Position',
-				code: 'FEATURE_EMPLOYEE_POSITION',
+				code: FeatureEnum.FEATURE_EMPLOYEE_POSITION,
 				description: 'Manage Employee Position',
 				image: 'position.png',
 				link: 'employees/positions',
@@ -241,7 +241,7 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 			},
 			{
 				name: 'Employee Time Off',
-				code: 'FEATURE_EMPLOYEE_TIMEOFF',
+				code: FeatureEnum.FEATURE_EMPLOYEE_TIMEOFF,
 				description: 'Manage Employee Time Off',
 				image: 'timeoff.png',
 				link: 'employees/time-off',
@@ -251,7 +251,7 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 			},
 			{
 				name: 'Employee Approval',
-				code: 'FEATURE_EMPLOYEE_APPROVAL',
+				code: FeatureEnum.FEATURE_EMPLOYEE_APPROVAL,
 				description: 'Employee Approval Request',
 				image: 'approval.png',
 				link: 'employees/approvals',
@@ -261,7 +261,7 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 			},
 			{
 				name: 'Employee Approval Policy',
-				code: 'FEATURE_EMPLOYEE_APPROVAL_POLICY',
+				code: FeatureEnum.FEATURE_EMPLOYEE_APPROVAL_POLICY,
 				description: 'Manage Employee Approval Request Policy',
 				image: 'approval-policy.png',
 				link: 'organization/approval-policy',
@@ -273,7 +273,7 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 	},
 	{
 		name: 'Time Activity',
-		code: 'FEATURE_EMPLOYEE_TIME_ACTIVITY',
+		code: FeatureEnum.FEATURE_EMPLOYEE_TIME_ACTIVITY,
 		description:
 			'Manage Time Activity, Screenshots, App, Visited Sites, Activities',
 		image: 'screenshot.png',
@@ -284,7 +284,7 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 	},
 	{
 		name: 'Timesheet',
-		code: 'FEATURE_EMPLOYEE_TIMESHEETS',
+		code: FeatureEnum.FEATURE_EMPLOYEE_TIMESHEETS,
 		description:
 			'Manage Employee Timesheet Daily, Weekly, Calendar, Create First Timesheet',
 		image: 'timesheet.png',
@@ -295,7 +295,7 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 	},
 	{
 		name: 'Appointment & Schedule',
-		code: 'FEATURE_EMPLOYEE_APPOINTMENT',
+		code: FeatureEnum.FEATURE_EMPLOYEE_APPOINTMENT,
 		description:
 			'Employee Appointment, Schedules & Book Public Appointment',
 		image: 'appointment.png',
@@ -306,7 +306,7 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 	},
 	{
 		name: 'Candidate',
-		code: 'FEATURE_EMPLOYEE_CANDIDATE',
+		code: FeatureEnum.FEATURE_EMPLOYEE_CANDIDATE,
 		description: 'Manage Candidates, Interviews & Invites',
 		image: 'candidate.png',
 		link: 'employees/candidates',
@@ -316,7 +316,7 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 		children: [
 			{
 				name: 'Manage Interview',
-				code: 'FEATURE_MANAGE_INTERVIEW',
+				code: FeatureEnum.FEATURE_MANAGE_INTERVIEW,
 				description: 'Manage Candidate Interviews',
 				image: 'interview.png',
 				link: 'employees/candidates/interviews/calendar',
@@ -326,7 +326,7 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 			},
 			{
 				name: 'Manage Invite',
-				code: 'FEATURE_MANAGE_INVITE',
+				code: FeatureEnum.FEATURE_MANAGE_INVITE,
 				description: 'Manage Invites, Create First Candidate Invites',
 				image: 'invite.png',
 				link: 'employees/candidates/invites',
@@ -338,7 +338,7 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 	},
 	{
 		name: 'Manage Organization',
-		code: 'FEATURE_ORGANIZATION',
+		code: FeatureEnum.FEATURE_ORGANIZATION,
 		description: 'Manage Organization Details, Location and Settings',
 		image: 'organization-detail.png',
 		link: 'organizations',
@@ -348,7 +348,7 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 		children: [
 			{
 				name: 'Help Center',
-				code: 'FEATURE_ORGANIZATION_HELP_CENTER',
+				code: FeatureEnum.FEATURE_ORGANIZATION_HELP_CENTER,
 				description: 'Find out more about how to use Gauzy',
 				image: 'help.png',
 				link: 'help',
@@ -358,7 +358,7 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 			},
 			{
 				name: 'Organization Tag',
-				code: 'FEATURE_ORGANIZATION_TAG',
+				code: FeatureEnum.FEATURE_ORGANIZATION_TAG,
 				description: 'Manage Organization Tag, Create First Tag',
 				image: 'tag.png',
 				link: 'organization/tags',
@@ -368,7 +368,7 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 			},
 			{
 				name: 'Organization Equipment',
-				code: 'FEATURE_ORGANIZATION_EQUIPMENT',
+				code: FeatureEnum.FEATURE_ORGANIZATION_EQUIPMENT,
 				description:
 					'Manage Organization Equipment, Create First Equipment',
 				image: 'equipment.png',
@@ -379,7 +379,7 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 			},
 			{
 				name: 'Organization Vendor',
-				code: 'FEATURE_ORGANIZATION_VENDOR',
+				code: FeatureEnum.FEATURE_ORGANIZATION_VENDOR,
 				description: 'Manage Organization Vendor, Create First Vendor',
 				image: 'vendor.png',
 				link: 'organization/vendors',
@@ -389,7 +389,7 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 			},
 			{
 				name: 'Organization Department',
-				code: 'FEATURE_ORGANIZATION_DEPARTMENT',
+				code: FeatureEnum.FEATURE_ORGANIZATION_DEPARTMENT,
 				description:
 					'Manage Organization Department, Create First Department',
 				image: 'department.png',
@@ -400,7 +400,7 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 			},
 			{
 				name: 'Organization Employment Type',
-				code: 'FEATURE_ORGANIZATION_EMPLOYMENT_TYPE',
+				code: FeatureEnum.FEATURE_ORGANIZATION_EMPLOYMENT_TYPE,
 				description: 'Manage Organization Employment Type',
 				image: 'employment-type.png',
 				link: 'organization/employment-types',
@@ -412,7 +412,7 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 	},
 	{
 		name: 'Product Inventory',
-		code: 'FEATURE_ORGANIZATION_INVENTORY',
+		code: FeatureEnum.FEATURE_ORGANIZATION_INVENTORY,
 		description: 'Manage Product Inventory, Create First Product',
 		image: 'inventory.png',
 		link: 'organization/inventory/all',
@@ -422,7 +422,7 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 	},
 	{
 		name: 'Project',
-		code: 'FEATURE_ORGANIZATION_PROJECT',
+		code: FeatureEnum.FEATURE_ORGANIZATION_PROJECT,
 		description: 'Manage Project, Create First Project',
 		image: 'project.png',
 		link: 'organization/projects',
@@ -432,7 +432,7 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 	},
 	{
 		name: 'Organization Team',
-		code: 'FEATURE_ORGANIZATION_TEAM',
+		code: FeatureEnum.FEATURE_ORGANIZATION_TEAM,
 		description: 'Manage Organization Team, Create First Team',
 		image: 'team.png',
 		link: 'organization/teams',
@@ -442,7 +442,7 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 	},
 	{
 		name: 'Organization Document',
-		code: 'FEATURE_ORGANIZATION_DOCUMENT',
+		code: FeatureEnum.FEATURE_ORGANIZATION_DOCUMENT,
 		description: 'Manage Organization Document, Create First Document',
 		image: 'document.png',
 		link: 'organization/documents',
@@ -452,7 +452,7 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 	},
 	{
 		name: 'Lead, Customer & Client',
-		code: 'FEATURE_CONTACT',
+		code: FeatureEnum.FEATURE_CONTACT,
 		description:
 			'Manage Leads, Customers and Clients, Create First Customer/Clients',
 		image: 'contact.png',
@@ -463,7 +463,7 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 	},
 	{
 		name: 'Goal and Objective',
-		code: 'FEATURE_GOAL',
+		code: FeatureEnum.FEATURE_GOAL,
 		description: 'Manage Goals and Objectives',
 		image: 'goal.png',
 		link: 'goals',
@@ -473,7 +473,7 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 		children: [
 			{
 				name: 'Goal Time Frame & KPI',
-				code: 'FEATURE_GOAL_SETTING',
+				code: FeatureEnum.FEATURE_GOAL_SETTING,
 				description: 'Manage Goal Time Framework & KPIs',
 				image: 'goal-setting.png',
 				link: 'goals/settings',
@@ -485,7 +485,7 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 	},
 	{
 		name: 'All Report',
-		code: 'FEATURE_REPORT',
+		code: FeatureEnum.FEATURE_REPORT,
 		description: 'Manage Expense, Weekly, Time & Activity and etc reports',
 		image: 'all-report.png',
 		link: 'reports/all',
@@ -495,7 +495,7 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 	},
 	{
 		name: 'Users',
-		code: 'FEATURE_USER',
+		code: FeatureEnum.FEATURE_USER,
 		description: 'Manage Tenant Users',
 		image: 'user.png',
 		link: 'users',
@@ -505,7 +505,7 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 	},
 	{
 		name: 'Organizations',
-		code: 'FEATURE_ORGANIZATIONS',
+		code: FeatureEnum.FEATURE_ORGANIZATIONS,
 		description: 'Manage Tenant Organizations',
 		image: 'organization.png',
 		link: 'organizations',
@@ -515,7 +515,7 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 	},
 	{
 		name: 'Apps & Integrations',
-		code: 'FEATURE_APP_INTEGRATION',
+		code: FeatureEnum.FEATURE_APP_INTEGRATION,
 		description:
 			'Manage Available Apps & Integrations Like Upwork & Hubstaff',
 		image: 'app-integration.png',
@@ -526,7 +526,7 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 	},
 	{
 		name: 'Email History',
-		code: 'FEATURE_EMAIL_HISTORY',
+		code: FeatureEnum.FEATURE_EMAIL_HISTORY,
 		description: 'Manage Email History',
 		image: 'email-history.png',
 		link: 'settings/email-history',
@@ -536,7 +536,7 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 		children: [
 			{
 				name: 'Custom Email Template',
-				code: 'FEATURE_EMAIL_TEMPLATE',
+				code: FeatureEnum.FEATURE_EMAIL_TEMPLATE,
 				description: 'Customize Email Template',
 				image: 'email-template.png',
 				link: 'settings/email-templates',
@@ -548,7 +548,7 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 	},
 	{
 		name: 'Setting',
-		code: 'FEATURE_SETTING',
+		code: FeatureEnum.FEATURE_SETTING,
 		description: 'Manage Setting',
 		image: 'email-history.png',
 		link: 'settings',
@@ -558,7 +558,7 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 		children: [
 			{
 				name: 'File Storage',
-				code: 'FEATURE_FILE_STORAGE',
+				code: FeatureEnum.FEATURE_FILE_STORAGE,
 				description: 'Manage File Storage Provider',
 				image: 'file-storage.png',
 				link: 'settings/file-storage',
@@ -568,7 +568,7 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 			},
 			{
 				name: 'SMS Gateway',
-				code: 'FEATURE_SMS_GATEWAY',
+				code: FeatureEnum.FEATURE_SMS_GATEWAY,
 				description: 'Manage SMS Gateway',
 				image: 'sms-gateway.png',
 				link: 'tasks/me',
@@ -580,7 +580,7 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 	},
 	{
 		name: 'Entity Import & Export',
-		code: 'FEATURE_IMPORT_EXPORT',
+		code: FeatureEnum.FEATURE_IMPORT_EXPORT,
 		description: 'Manage Entity Import and Export',
 		image: 'import.png',
 		link: 'settings/import-export',
@@ -590,7 +590,7 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 	},
 	{
 		name: 'Custom SMTP',
-		code: 'FEATURE_SMTP',
+		code: FeatureEnum.FEATURE_SMTP,
 		description: 'Manage Tenant & Organization Custom SMTP',
 		image: 'smtp.png',
 		link: 'settings/custom-smtp',
@@ -600,7 +600,7 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 	},
 	{
 		name: 'Roles & Permissions',
-		code: 'FEATURE_ROLES_PERMISSION',
+		code: FeatureEnum.FEATURE_ROLES_PERMISSION,
 		description: 'Manage Roles & Permissions',
 		image: 'role-permission.png',
 		link: 'settings/roles',

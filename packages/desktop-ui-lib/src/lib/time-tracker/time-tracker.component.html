@@ -40,6 +40,14 @@
 							</div>
 						</div>
 						<div class="row">
+							<div class="col-12 center-text">
+								<span class="work-today">Total Worked Today
+									{{ (todayDuration$ | async).hours }}:{{
+										(todayDuration$ | async).minutes
+									}}</span>
+							</div>
+						</div>
+						<div class="row">
 							<div class="col-12 form-group tp-padding">
 								<label>Client</label>
 								<ng-select [class]="
@@ -119,14 +127,6 @@
 													: 'UNKNOWN'
 											}}
 										</span>
-									</div>
-								</div>
-								<div class="row">
-									<div class="col-12 center-text">
-										<span class="work-today">Total Worked Today
-											{{ (todayDuration$ | async).hours }}:{{
-												(todayDuration$ | async).minutes
-											}}</span>
 									</div>
 								</div>
 							</div>

@@ -33,6 +33,8 @@ export interface IUser extends IBasePerTenantEntityModel {
 	isActive?: boolean;
 	code?: number;
 	codeExpireAt?: Date;
+	emailVerifiedAt?: Date;
+	emailToken?: string;
 }
 
 export interface IUserFindInput extends IBasePerTenantEntityModel {
@@ -60,6 +62,13 @@ export interface IUserRegistrationInput {
 	sourceId?: string;
 }
 
+/**
+ * email verfication token payload
+ */
+export interface IVerificationTokenPayload extends IUserEmailInput {
+	id: string;
+}
+
 export interface IUserInviteCodeConfirmationInput extends IUserEmailInput {
 	code: number;
 }
@@ -68,6 +77,10 @@ export interface IUserEmailInput {
 }
 export interface IUserPasswordInput {
 	password: string;
+}
+
+export interface IUserTokenInput {
+	token: string;
 }
 
 export interface IUserLoginInput extends IUserEmailInput, IUserPasswordInput {}

@@ -5,7 +5,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { CandidateController } from './candidate.controller';
 import { CandidateService } from './candidate.service';
 import { EmailModule } from './../email/email.module';
-import { AuthService } from '../auth/auth.service';
+import { AuthModule } from './../auth/auth.module';
 import { Candidate } from './candidate.entity';
 import { UserOrganizationModule } from '../user-organization/user-organization.module';
 import { CommandHandlers } from './commands/handlers';
@@ -26,12 +26,12 @@ import { RoleModule } from './../role/role.module';
 		TenantModule,
 		UserModule,
 		EmployeeModule,
-		RoleModule
+		RoleModule,
+		AuthModule
 	],
 	controllers: [CandidateController],
 	providers: [
 		CandidateService,
-		AuthService,
 		...CommandHandlers
 	],
 	exports: [TypeOrmModule, CandidateService]

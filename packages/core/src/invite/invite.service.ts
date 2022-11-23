@@ -33,7 +33,7 @@ import {
 } from 'typeorm';
 import { addDays } from 'date-fns';
 import { isNotEmpty } from '@gauzy/common';
-import { TenantAwareCrudService } from './../core/crud';
+import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
 import { Invite } from './invite.entity';
 import { EmailService } from '../email/email.service';
@@ -390,49 +390,70 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 	 * @param options
 	 * @returns
 	 */
-	public async findAllInvites(options: any) {
+	public async findAllInvites(options: PaginationParams<any>) {
 		try {
-			const query = this.repository.createQueryBuilder();
-			query.setFindOptions({
-				skip: (options && options.skip) ? (options.take * (options.skip - 1)) : 0,
-				take: (options && options.take) ? (options.take) : 10,
+			return await super.findAll({
+				...(
+					(options && options.skip) ? {
+						skip: (options.take * (options.skip - 1))
+					} : {}
+				),
+				...(
+					(options && options.take) ? {
+						take: (options.take)
+					} : {}
+				),
 				...(
 					(options && options.relations) ? {
 						relations: options.relations
 					} : {}
-				)
-			});
-			query.where((qb: SelectQueryBuilder<Invite>) => {
-				qb.andWhere({
-					tenantId: RequestContext.currentTenantId()
-				});
-				if (isNotEmpty(options.where)) {
-					const { where } = options;
-					if (isNotEmpty(where.organizationId)) {
-						const { organizationId, tenantId } = where;
-						qb.andWhere({
-							organizationId,
-							tenantId
-						});
-					}
-					if (isNotEmpty(where.role)) {
-						const { role } = where;
-						qb.andWhere({
-							role: {
-								...role
+				),
+				where: {
+					tenantId: RequestContext.currentTenantId(),
+					...(
+						(options && isNotEmpty(options.where)) ? {
+							organizationId: options.where.organizationId
+						} : {}
+					),
+					...(
+						(isNotEmpty(options) && isNotEmpty(options.where)) ?
+							(isNotEmpty(options.where.role)) ? {
+								role: {
+									...options.where.role
+								}
+							} : {
+								role: {
+									name: Not(RolesEnum.EMPLOYEE)
+								}
 							}
-						});
-					} else {
-						qb.andWhere({
-							role: {
-								name: Not(RolesEnum.EMPLOYEE)
-							}
-						});
-					}
+						: {}
+					),
+					/**
+					 * Organization invites filter by specific projects
+					 */
+					 ...(
+						(isNotEmpty(options) && isNotEmpty(options.where)) ?
+							(isNotEmpty(options.where.projects)) ? {
+								projects: {
+									id: In(options.where.projects.id)
+								}
+							} : {}
+						: {}
+					),
+					/**
+					 * Organization invites filter by specific teams
+					 */
+					...(
+						(isNotEmpty(options) && isNotEmpty(options.where)) ?
+							(isNotEmpty(options.where.teams)) ? {
+								teams: {
+									id: In(options.where.teams.id)
+								}
+							} : {}
+						: {}
+					),
 				}
 			});
-			const [items, total] = await query.getManyAndCount();
-			return { items, total };
 		} catch (error) {
 			throw new BadRequestException(error);
 		}
