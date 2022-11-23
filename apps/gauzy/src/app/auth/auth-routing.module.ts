@@ -10,6 +10,7 @@ import { AcceptInvitePage } from './accept-invite/accept-invite.component';
 import { AcceptClientInvitePage } from './onboard-organization-client';
 import { EstimateEmailComponent, EstimateEmailResolver } from './estimate-email';
 import { NgxResetPasswordComponent } from "./reset-password/reset-password.component";
+import { ConfirmEmailComponent } from './confirm-email';
 
 export const routes: Routes = [
 	{
@@ -43,6 +44,11 @@ export const routes: Routes = [
 			{
 				path: 'reset-password',
 				component: NgxResetPasswordComponent,
+				canActivate: [NoAuthGuard]
+			},
+			{
+				path: 'confirm-email',
+				component: ConfirmEmailComponent,
 				canActivate: [NoAuthGuard]
 			},
 			{

@@ -27,6 +27,7 @@ import { ThemeModule } from '../@theme/theme.module';
 import { ThemeSelectorModule } from '../@theme/components/theme-sidebar/theme-settings/components/theme-selector/theme-selector.module';
 import { NgxResetPasswordComponent } from "./reset-password/reset-password.component";
 import { NgxFaqModule } from '../@shared/faq';
+import { ConfirmEmailModule } from './confirm-email';
 
 @NgModule({
 	imports: [
@@ -48,7 +49,8 @@ import { NgxFaqModule } from '../@shared/faq';
 		NbLayoutModule,
         ThemeModule,
         ThemeSelectorModule,
-		NgxFaqModule
+		NgxFaqModule,
+		ConfirmEmailModule
 	],
 	declarations: [
 		NgxLoginComponent,
