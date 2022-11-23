@@ -16,12 +16,12 @@ import { Public } from '@gauzy/common';
 import { FeatureEnum } from '@gauzy/contracts';
 import { EmailConfirmationService } from './email-confirmation.service';
 import { FeatureFlagGuard } from './../shared/guards';
-import { Feature } from './../shared/decorators';
+import { FeatureFlag } from './../shared/decorators';
 import { ConfirmEmailDTO } from './dto';
 
 @Controller('email/verify')
 @UseGuards(FeatureFlagGuard)
-@Feature(FeatureEnum.FEATURE_EMAIL_VERIFICATION)
+@FeatureFlag(FeatureEnum.FEATURE_EMAIL_VERIFICATION)
 @UseInterceptors(ClassSerializerInterceptor)
 export class EmailVerificationController {
 
