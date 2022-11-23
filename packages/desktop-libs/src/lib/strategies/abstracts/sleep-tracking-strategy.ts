@@ -1,4 +1,4 @@
-import {ISleepTrackingStrategy} from "lib/interfaces";
+import {ISleepTrackingStrategy} from "../../interfaces";
 import {BrowserWindow} from "electron";
 
 export abstract class SleepTrackingStrategy implements ISleepTrackingStrategy {
