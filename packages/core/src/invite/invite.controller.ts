@@ -156,7 +156,7 @@ export class InviteController {
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_INVITE_VIEW)
 	@Get()
-	@UsePipes(new ValidationPipe({ transform: true }))
+	@UsePipes(new ValidationPipe())
 	async findAll(
 		@Query() options: PaginationParams<Invite>
 	): Promise<IPagination<IInvite>> {
