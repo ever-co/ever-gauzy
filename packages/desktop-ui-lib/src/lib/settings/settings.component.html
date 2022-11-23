@@ -228,7 +228,7 @@
 						<button *ngIf="notAvailable$ | async" nbButton [disabled]="loading$ | async" status="primary" class="button-big"
 							(click)="downloadNow()">
 							Download Now
-							<nb-icon icon="loader-outline" [class]="
+							<nb-icon [icon]="(loading$ | async) ? 'loader-outline' : 'cloud-download-outline'" [class]="
 															(loading$ | async)
 																? 'icon-medium icon-spin'
 																: 'icon-medium'

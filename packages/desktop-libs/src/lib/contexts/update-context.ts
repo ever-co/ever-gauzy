@@ -20,4 +20,8 @@ export class UpdateContext {
 	public checkUpdate() {
 		this._strategy.checkUpdate();
 	}
+
+	public cancel() {
+		this._strategy.cancel();
+	}
 }

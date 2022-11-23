@@ -291,7 +291,7 @@ app.on('ready', async () => {
 	const configs: any = store.get('configs');
 	const settings: any = store.get('appSetting');
 	const autoLaunch: boolean =
-		typeof settings.autoLaunch === 'undefined' ? true : settings.autoLaunch;
+		settings && typeof settings.autoLaunch === 'boolean' ? settings.autoLaunch : true;
 	launchAtStartup(autoLaunch, false);
 	Menu.setApplicationMenu(
 		Menu.buildFromTemplate([
@@ -601,6 +601,10 @@ app.on('before-quit', (e) => {
 			});
 		}, 1000);
 	} else {
+		// soft download cancellation
+		try {
+			updateContext.cancel();
+		} catch (e) { }
 		app.exit(0);
 		if (serverDesktop) serverDesktop.kill();
 		if (serverGauzy) serverGauzy.kill();

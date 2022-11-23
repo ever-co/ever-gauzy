@@ -55,6 +55,12 @@ export abstract class UpdateStrategy implements IDesktopUpdate {
         this._notifier.customNotification(`New update for ${app.getName()} (version ${info.version}) is available`, app.getName());
     }
 
+    public cancel(): void {
+        if(this._cancellationToken) {
+            this._cancellationToken.cancel();
+        }
+    }
+
     public abstract get url(): string;
     public abstract set url(value: string);
 }

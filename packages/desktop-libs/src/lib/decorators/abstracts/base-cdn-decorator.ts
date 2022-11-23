@@ -8,6 +8,9 @@ export abstract class BaseCdnDecorator implements IDesktopCdnUpdate {
 	constructor(update: IDesktopCdnUpdate) {
 		this._decorator = update;
 	}
+    cancel(): void {
+        this._decorator.cancel();
+    }
 
 	public async tagName(): Promise<string> {
 		return await this._decorator.tagName();

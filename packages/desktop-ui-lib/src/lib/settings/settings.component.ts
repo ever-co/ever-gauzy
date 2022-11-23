@@ -809,6 +809,8 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	}
 
 	public downloadNow() {
+		this._loading$.next(true);
+		this.logIsOpen = true;
 		this.electronService.ipcRenderer.send('download_update');
 	}
 }
