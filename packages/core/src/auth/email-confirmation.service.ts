@@ -1,11 +1,12 @@
 
 import { BadRequestException, HttpStatus, Injectable } from '@nestjs/common';
 import { ConfigService, environment } from '@gauzy/config';
-import { IUser, IUserTokenInput, IVerificationTokenPayload } from '@gauzy/contracts';
+import { FeatureEnum, IUser, IUserTokenInput, IVerificationTokenPayload } from '@gauzy/contracts';
 import { JwtPayload, sign, verify } from 'jsonwebtoken';
 import * as bcrypt from 'bcrypt';
 import { EmailService } from './../email/email.service';
 import { UserService } from './../user/user.service';
+import { FeatureService } from './../feature/feature.service';
 import { RequestContext } from './../core/context';
 
 @Injectable()
@@ -14,7 +15,8 @@ export class EmailConfirmationService {
     constructor(
         private readonly configService: ConfigService,
         private readonly emailService: EmailService,
-        private readonly userService: UserService
+        private readonly userService: UserService,
+        private readonly featureFlagService: FeatureService
     ) {}
 
     /**
@@ -24,6 +26,11 @@ export class EmailConfirmationService {
      * @returns
      */
     public async sendVerificationLink(user: IUser) {
+        if (!await this.featureFlagService.isFeatureEnabled(
+            FeatureEnum.FEATURE_EMAIL_VERIFICATION
+        )) {
+            return;
+        }
         try {
             const { id, email } = user;
             const payload: IVerificationTokenPayload = { id, email };
@@ -49,6 +56,11 @@ export class EmailConfirmationService {
      *
      */
     public async resendConfirmationLink() {
+        if (!await this.featureFlagService.isFeatureEnabled(
+            FeatureEnum.FEATURE_EMAIL_VERIFICATION
+        )) {
+            return;
+        }
         try {
             const user = await this.userService.getIfExists(
                 RequestContext.currentUserId()
@@ -73,6 +85,11 @@ export class EmailConfirmationService {
      * @returns
      */
     public async decodeConfirmationToken(token: IUserTokenInput['token']): Promise<IUser> {
+        if (!await this.featureFlagService.isFeatureEnabled(
+            FeatureEnum.FEATURE_EMAIL_VERIFICATION
+        )) {
+            return;
+        }
         try {
             const payload: JwtPayload | string = verify(token, environment.JWT_VERIFICATION_TOKEN_SECRET);
 
@@ -106,6 +123,11 @@ export class EmailConfirmationService {
      * @param user
      */
     public async confirmEmail(user: IUser) {
+        if (!await this.featureFlagService.isFeatureEnabled(
+            FeatureEnum.FEATURE_EMAIL_VERIFICATION
+        )) {
+            return;
+        }
         try {
             await this.userService.markEmailAsVerified(user['id']);
         } finally {

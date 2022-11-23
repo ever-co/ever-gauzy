@@ -1,4 +1,3 @@
-import { Public } from '@gauzy/common';
 import {
     BadRequestException,
     Body,
@@ -7,15 +6,22 @@ import {
     HttpCode,
     HttpStatus,
     Post,
+    UseGuards,
     UseInterceptors,
     UsePipes,
     ValidationPipe
 } from '@nestjs/common';
-import { EmailConfirmationService } from './email-confirmation.service';
-import { ConfirmEmailDTO } from './dto';
 import { ApiOperation } from '@nestjs/swagger';
+import { Public } from '@gauzy/common';
+import { FeatureEnum } from '@gauzy/contracts';
+import { EmailConfirmationService } from './email-confirmation.service';
+import { FeatureFlagGuard } from './../shared/guards';
+import { Feature } from './../shared/decorators';
+import { ConfirmEmailDTO } from './dto';
 
 @Controller('email/verify')
+@UseGuards(FeatureFlagGuard)
+@Feature(FeatureEnum.FEATURE_EMAIL_VERIFICATION)
 @UseInterceptors(ClassSerializerInterceptor)
 export class EmailVerificationController {
 
