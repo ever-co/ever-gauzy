@@ -60,6 +60,7 @@ export interface IUserRegistrationInput {
 	createdById?: string;
 	isImporting?: boolean;
 	sourceId?: string;
+	inviteId?: string;
 }
 
 /**

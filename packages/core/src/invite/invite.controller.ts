@@ -130,10 +130,7 @@ export class InviteController {
 		@I18nLang() languageCode: LanguagesEnum
 	) {
 		return await this.commandBus.execute(
-			new InviteAcceptCommand({
-				...entity,
-				originalUrl: origin
-			}, languageCode)
+			new InviteAcceptCommand({ ...entity, originalUrl: origin }, languageCode)
 		);
 	}
 

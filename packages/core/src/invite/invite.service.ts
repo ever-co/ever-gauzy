@@ -350,11 +350,9 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 					id: true,
 					email: true,
 					organization: {
-						id: true,
 						name: true
 					}
 				},
-				relationLoadStrategy: 'query',
 				relations: {
 					organization: true
 				}

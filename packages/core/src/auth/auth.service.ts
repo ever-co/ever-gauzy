@@ -31,7 +31,7 @@ import { UserOrganizationService } from '../user-organization/user-organization.
 import { ImportRecordUpdateOrCreateCommand } from './../export-import/import-record';
 import { PasswordResetCreateCommand, PasswordResetGetCommand } from './../password-reset/commands';
 import { RequestContext } from './../core/context';
-import { generateRandomInteger } from './../core/utils';
+import { freshTimestamp, generateRandomInteger } from './../core/utils';
 import { EmailConfirmationService } from './email-confirmation.service';
 
 @Injectable()
@@ -242,7 +242,12 @@ export class AuthService extends SocialAuthService {
 				? {
 						hash: await this.getPasswordHash(input.password)
 				  }
-				: {})
+				: {}),
+			...(input.inviteId
+				? {
+						emailVerifiedAt: freshTimestamp()
+					}
+				: {}),
 		});
 		const user = await this.userRepository.save(create);
 
@@ -269,7 +274,9 @@ export class AuthService extends SocialAuthService {
 		/**
 		 * Email verification
 		 */
-		await this.emailConfirmationService.sendVerificationLink(user);
+		if (!user.emailVerifiedAt) {
+			await this.emailConfirmationService.sendVerificationLink(user);
+		}
 
 		this.emailService.welcomeUser(
 			input.user,
