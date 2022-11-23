@@ -32,6 +32,7 @@ export enum EmailTemplateNameEnum {
 	CANDIDATE_INTERVIEW_SCHEDULE = 'candidate-schedule-interview',
 	INTERVIEWER_INTERVIEW_SCHEDULE = 'interviewer-interview-schedule',
 	WELCOME_USER = 'welcome-user',
+	EMAIL_VERIFICATION = 'email-verification',
 	INVITE_ORGANIZATION_CLIENT = 'invite-organization-client',
 	INVITE_EMPLOYEE = 'invite-employee',
 	INVITE_USER = 'invite-user',

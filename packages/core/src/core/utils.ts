@@ -284,3 +284,13 @@ export function generateRandomInteger(length = 6) {
 		Math.pow(10, length-1) + Math.random() * (Math.pow(10, length) - Math.pow(10, length-1) - 1)
 	);
 }
+
+/**
+ * Get a fresh timestamp for the entity.
+ *
+ * @returns {Date}
+ */
+export function freshTimestamp(): Date
+{
+	return new Date(moment.now());
+}

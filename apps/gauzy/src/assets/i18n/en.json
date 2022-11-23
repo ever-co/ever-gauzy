@@ -3774,6 +3774,7 @@
 			"password": "Password Reset",
 			"password-less-authentication": "Password Less Authentication",
 			"welcome-user": "Welcome User",
+			"email-verification": "Email Confirmation",
 			"invite-organization-client": "Invite Organization Client",
 			"email-estimate": "Email Estimate",
 			"email-invoice": "Email Invoice",

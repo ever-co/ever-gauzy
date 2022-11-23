@@ -7,3 +7,4 @@ export * from './update-preferred-language.dto';
 export * from './find-me-query.dto';
 export * from './user-email.dto';
 export * from './user-password.dto';
+export * from './user-token.dto';
