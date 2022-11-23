@@ -9,55 +9,46 @@ import {
 } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import {
+	FeatureEnum,
 	IFeature,
 	IFeatureOrganization
 } from '@gauzy/contracts';
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { BaseEntity, FeatureOrganization } from '../core/entities/internal';
 
 @Entity('feature')
 export class Feature extends BaseEntity implements IFeature {
-	
+
 	@ApiProperty({ type: () => String })
-	@IsString()
-	@IsNotEmpty()
 	@Index()
 	@Column()
 	name: string;
 
 	@ApiProperty({ type: () => String })
-	@IsString()
-	@IsNotEmpty()
 	@Index()
 	@Column()
-	code: string;
+	code: FeatureEnum;
 
 	@ApiProperty({ type: () => Boolean, default: false })
 	@Column({ default: false })
 	isPaid?: boolean;
 
 	@ApiProperty({ type: () => String, readOnly: true })
-	@IsString()
 	@Column({ nullable: true })
 	description: string;
 
 	@ApiProperty({ type: () => String, readOnly: true })
-	@IsString()
 	@Column({ nullable: true })
 	image: string;
 
 	@ApiProperty({ type: () => String, readOnly: true })
-	@IsString()
 	@Column()
 	link: string;
 
 	@ApiProperty({ type: () => String })
-	@IsString()
 	@Column({ nullable: true })
 	status: string;
 
 	@ApiProperty({ type: () => String })
-	@IsString()
 	@Column({ nullable: true })
 	icon: string;
 
@@ -66,7 +57,7 @@ export class Feature extends BaseEntity implements IFeature {
 
 	/*
     |--------------------------------------------------------------------------
-    | @ManyToOne 
+    | @ManyToOne
     |--------------------------------------------------------------------------
     */
 
@@ -81,15 +72,13 @@ export class Feature extends BaseEntity implements IFeature {
 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Feature) => it.parent)
-	@IsString()
-	@IsOptional()
 	@Index()
 	@Column({ nullable: true })
 	parentId?: string;
 
 	/*
     |--------------------------------------------------------------------------
-    | @OneToMany 
+    | @OneToMany
     |--------------------------------------------------------------------------
     */
 
@@ -102,7 +91,7 @@ export class Feature extends BaseEntity implements IFeature {
 	})
 	@JoinColumn()
 	featureOrganizations?: IFeatureOrganization[];
-	
+
 	/**
 	 * Feature
 	 */

@@ -24,8 +24,7 @@ export class FeatureSubscriber implements EntitySubscriberInterface<Feature> {
 		}
 
         if (gauzyToggleFeatures.hasOwnProperty(entity.code)) {
-			const feature = gauzyToggleFeatures[entity.code];
-			entity.isEnabled = feature;
+            entity.isEnabled = !!gauzyToggleFeatures[entity.code];
 		} else {
 			entity.isEnabled = true;
 		}
