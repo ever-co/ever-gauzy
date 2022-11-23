@@ -428,6 +428,30 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 							}
 						: {}
 					),
+					/**
+					 * Organization invites filter by specific projects
+					 */
+					 ...(
+						(isNotEmpty(options) && isNotEmpty(options.where)) ?
+							(isNotEmpty(options.where.projects)) ? {
+								projects: {
+									id: In(options.where.projects.id)
+								}
+							} : {}
+						: {}
+					),
+					/**
+					 * Organization invites filter by specific teams
+					 */
+					...(
+						(isNotEmpty(options) && isNotEmpty(options.where)) ?
+							(isNotEmpty(options.where.teams)) ? {
+								teams: {
+									id: In(options.where.teams.id)
+								}
+							} : {}
+						: {}
+					),
 				}
 			});
 		} catch (error) {
