@@ -30,7 +30,7 @@ export class BulkActivitiesSaveHandler
 			});
 			organizationId = employee.organizationId;
 		}
-		const insertActivities = activities.map((activity: IActivity) => {
+		const insertActivities = activities.filter(Boolean).map((activity: IActivity) => {
 			activity = new Activity({
 				employeeId,
 				organizationId,
