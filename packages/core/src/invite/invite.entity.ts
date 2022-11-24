@@ -9,6 +9,7 @@ import {
 	IOrganizationTeam
 } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Exclude } from 'class-transformer';
 import {
 	Column,
 	Entity,
@@ -36,6 +37,11 @@ export class Invite extends TenantOrganizationBaseEntity implements IInvite {
 	@Index({ unique: true })
 	@Column()
 	token: string;
+
+	@ApiPropertyOptional({ type: () => Number })
+	@Exclude({ toPlainOnly: true })
+	@Column({ nullable: true })
+	public code?: number;
 
 	@ApiProperty({ type: () => String, minLength: 3, maxLength: 100 })
 	@Index({ unique: true })
