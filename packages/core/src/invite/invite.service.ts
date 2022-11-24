@@ -35,6 +35,7 @@ import { addDays } from 'date-fns';
 import { isNotEmpty } from '@gauzy/common';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
+import { generateRandomInteger } from './../core/utils';
 import { Invite } from './invite.entity';
 import { EmailService } from '../email/email.service';
 import { UserService } from '../user/user.service';
@@ -44,7 +45,6 @@ import { OrganizationTeamService } from './../organization-team/organization-tea
 import { OrganizationDepartmentService } from './../organization-department/organization-department.service';
 import { OrganizationContactService } from './../organization-contact/organization-contact.service';
 import { OrganizationProjectService } from './../organization-project/organization-project.service';
-import { select } from 'underscore';
 
 @Injectable()
 export class InviteService extends TenantAwareCrudService<Invite> {
@@ -124,13 +124,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 		/**
 		 * Invited organization
 		 */
-		const organization: IOrganization = await this.organizationService.findOneByIdString(organizationId, {
-			select: {
-				id: true,
-				name: true,
-				inviteExpiryPeriod: true
-			}
-		});
+		const organization: IOrganization = await this.organizationService.findOneByIdString(organizationId);
 		/**
 		 * Invited for role
 		 */
@@ -184,7 +178,8 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 				teams,
 				departments,
 				organizationContacts,
-				actionDate: startedWorkOn || appliedDate
+				actionDate: startedWorkOn || appliedDate,
+				code: generateRandomInteger(6),
 			}));
 		}
 
@@ -211,6 +206,15 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 					organization: organization,
 					languageCode,
 					invitedBy
+				});
+			} else if (emailInvites.inviteType === InvitationTypeEnum.TEAM) {
+				this.emailService.inviteTeamMember({
+					email: item.email,
+					teams: teams.map((team: IOrganizationTeam) => team.name).join(', '),
+					languageCode,
+					invitedBy,
+					organization,
+					inviteCode: item.code
 				});
 			}
 		});

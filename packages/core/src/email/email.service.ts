@@ -10,7 +10,8 @@ import {
 	IEmail,
 	IUser,
 	IInvite,
-	IPagination
+	IPagination,
+	IInviteTeamMemberModel
 } from '@gauzy/contracts';
 import { forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -378,11 +379,58 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 		}
 	}
 
+	/**
+	 * Invite team members
+	 *
+	 * @param invite
+	 */
+	async inviteTeamMember(invite: IInviteTeamMemberModel) {
+		const { email, organization, languageCode, invitedBy, teams, inviteCode } = invite;
+		const { id: organizationId } = organization;
+		const tenantId = RequestContext.currentTenantId();
+
+		const sendOptions = {
+			template: 'invite-gauzy-teams',
+			message: {
+				to: `${email}`
+			},
+			locals: {
+				email,
+				organizationId,
+				tenantId,
+				inviteCode,
+				teams,
+				locale: languageCode,
+			}
+		};
+		try {
+			const body = {
+				templateName: sendOptions.template,
+				email: sendOptions.message.to,
+				languageCode,
+				message: '',
+				organization,
+				user: invitedBy
+			}
+			const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
+			if (!match) {
+				try {
+					const send = await (await this.getEmailInstance(organizationId, tenantId)).send(sendOptions);
+					body['message'] = send.originalMessage;
+				} catch (error) {
+					console.error(error);
+				}
+			}
+			await this.createEmailRecord(body);
+		} catch (error) {
+			console.error(error);
+		}
+	}
+
 	async inviteEmployee(inviteEmployeeModel: IInviteEmployeeModel) {
 		const {
 			email,
 			registerUrl,
-			projects,
 			organization,
 			originUrl,
 			languageCode,
@@ -398,7 +446,6 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 			},
 			locals: {
 				locale: languageCode,
-				role: projects,
 				organizationName: organization.name,
 				organizationId,
 				tenantId,
