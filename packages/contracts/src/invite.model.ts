@@ -48,8 +48,7 @@ export interface ICreateEmailInvitesInput extends IBasePerTenantAndOrganizationE
 	departmentIds?: string[];
 	teamIds?: string[];
 	roleId: string;
-	invitedById: string;
-	inviteType: any;
+	inviteType: InvitationTypeEnum;
 	startedWorkOn: Date;
 	appliedDate?: Date;
 	invitationExpirationPeriod?: number | string;
@@ -93,7 +92,8 @@ export enum InviteStatusEnum {
 export enum InvitationTypeEnum {
 	USER = 'USER',
 	EMPLOYEE = 'EMPLOYEE',
-	CANDIDATE = 'CANDIDATE'
+	CANDIDATE = 'CANDIDATE',
+	TEAM = 'TEAM'
 }
 
 export enum InvitationExpirationEnum {

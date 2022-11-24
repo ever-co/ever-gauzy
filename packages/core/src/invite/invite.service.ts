@@ -44,6 +44,7 @@ import { OrganizationTeamService } from './../organization-team/organization-tea
 import { OrganizationDepartmentService } from './../organization-department/organization-department.service';
 import { OrganizationContactService } from './../organization-contact/organization-contact.service';
 import { OrganizationProjectService } from './../organization-project/organization-project.service';
+import { select } from 'underscore';
 
 @Injectable()
 export class InviteService extends TenantAwareCrudService<Invite> {
@@ -73,7 +74,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 		emailInvites: ICreateEmailInvitesInput,
 		languageCode: LanguagesEnum
 	): Promise<ICreateEmailInvitesOutput> {
-		const invites: Invite[] = [];
+		const originUrl = this.configSerice.get('clientBaseUrl') as string;
 		const {
 			emailIds,
 			roleId,
@@ -82,12 +83,10 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 			departmentIds,
 			teamIds,
 			organizationId,
-			invitedById,
 			startedWorkOn,
 			appliedDate,
 			invitationExpirationPeriod
 		} = emailInvites;
-		const originUrl = this.configSerice.get('clientBaseUrl') as string;
 
 		const projects: IOrganizationProject[] = await this.organizationProjectService.find({
 			where: {
@@ -113,15 +112,31 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 				organizationId
 			}
 		});
-		const organization: IOrganization = await this.organizationService.findOneByIdString(organizationId);
-		const role: IRole = await this.roleService.findOneByIdString(roleId);
-		const user: IUser = await this.userService.findOneByIdString(invitedById, {
-			relations: ['role']
+
+		/**
+		 * Invited by the user
+		 */
+		const invitedBy: IUser = await this.userService.findOneByIdString(RequestContext.currentUserId(), {
+			relations: {
+				role: true
+			}
 		});
-		const tenantId = RequestContext.currentTenantId();
+		/**
+		 * Invited organization
+		 */
+		const organization: IOrganization = await this.organizationService.findOneByIdString(organizationId, {
+			select: {
+				id: true,
+				name: true,
+				inviteExpiryPeriod: true
+			}
+		});
+		/**
+		 * Invited for role
+		 */
+		const role: IRole = await this.roleService.findOneByIdString(roleId);
 		if (role.name === RolesEnum.SUPER_ADMIN) {
-			const { role: inviterRole } = user;
-			if (inviterRole.name !== RolesEnum.SUPER_ADMIN) {
+			if (invitedBy.role.name !== RolesEnum.SUPER_ADMIN) {
 				throw new UnauthorizedException();
 			}
 		}
@@ -151,25 +166,26 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 			(email) => existingInvites.indexOf(email) < 0
 		);
 
+		const invites: Invite[] = [];
 		for (let i = 0; i < invitesToCreate.length; i++) {
 			const email = invitesToCreate[i];
 			const token = this.createToken(email);
 
-			const invite = new Invite();
-			invite.token = token;
-			invite.email = email;
-			invite.roleId = roleId;
-			invite.organizationId = organizationId;
-			invite.tenantId = tenantId;
-			invite.invitedById = invitedById;
-			invite.status = InviteStatusEnum.INVITED;
-			invite.expireDate = expireDate;
-			invite.projects = projects;
-			invite.teams = teams;
-			invite.departments = departments;
-			invite.organizationContacts = organizationContacts;
-			invite.actionDate = startedWorkOn || appliedDate;
-			invites.push(invite);
+			invites.push(new Invite({
+				token,
+				email,
+				roleId,
+				organizationId,
+				tenantId: RequestContext.currentTenantId(),
+				invitedById: RequestContext.currentUserId(),
+				status: InviteStatusEnum.INVITED,
+				expireDate,
+				projects,
+				teams,
+				departments,
+				organizationContacts,
+				actionDate: startedWorkOn || appliedDate
+			}));
 		}
 
 		const items = await this.repository.save(invites);
@@ -183,7 +199,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 					registerUrl,
 					originUrl,
 					languageCode,
-					invitedBy: user
+					invitedBy
 				});
 			} else if (emailInvites.inviteType === InvitationTypeEnum.EMPLOYEE) {
 				this.emailService.inviteEmployee({
@@ -194,7 +210,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 					originUrl,
 					organization: organization,
 					languageCode,
-					invitedBy: user
+					invitedBy
 				});
 			}
 		});
