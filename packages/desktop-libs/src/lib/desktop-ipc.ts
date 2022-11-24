@@ -1,10 +1,11 @@
-import {BrowserWindow, ipcMain, screen, desktopCapturer, systemPreferences} from 'electron';
+import {BrowserWindow, ipcMain, screen, desktopCapturer, systemPreferences, app} from 'electron';
 import {TimerData} from './desktop-timer-activity';
 import TimerHandler from './desktop-timer';
 import moment from 'moment';
 import {LocalStore} from './desktop-store';
 import {notifyScreenshot, takeshot} from './desktop-screenshot';
-import {openSystemPreferences} from 'mac-screen-capture-permissions';
+import {resetPermissions} from 'mac-screen-capture-permissions';
+import { askForScreenCaptureAccess, askForAccessibilityAccess } from 'node-mac-permissions';
 import * as _ from 'underscore';
 import {timeTrackerPage} from '@gauzy/desktop-window';
 // Import logging for electron and override default console logging
@@ -116,8 +117,11 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 			if (process.platform === 'darwin') {
 				const screenCapturePermission = systemPreferences.getMediaAccessStatus('screen');
 				if (screenCapturePermission !== 'granted') {
-					await openSystemPreferences();
+					resetPermissions({bundleId: 'com.ever.gauzydesktoptimer'})
 				}
+				console.log('App Name',app.getName())
+				askForAccessibilityAccess();
+				askForScreenCaptureAccess();
 			}
 		} catch (error) {
 			console.log('error opening permission', error.message);
@@ -356,7 +360,7 @@ export function ipcTimer(
 			knex
 		)
 	});
-	
+
 
 	ipcMain.on('open_setting_window', (event, arg) => {
 		const appSetting = LocalStore.getStore('appSetting');

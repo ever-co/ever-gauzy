@@ -36,6 +36,7 @@
 		"form-data": "^3.0.0",
 		"mac-screen-capture-permissions": "^2.0.0",
 		"moment": "^2.29.4",
+		"node-mac-permissions": "^2.2.1",
 		"node-notifier": "^8.0.0",
 		"screenshot-desktop": "^1.12.7",
 		"sound-play": "1.1.0",
