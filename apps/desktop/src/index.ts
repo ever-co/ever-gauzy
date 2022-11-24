@@ -7,7 +7,6 @@ Object.assign(console, log.functions);
 
 import { app, dialog, BrowserWindow, ipcMain, shell, Menu } from 'electron';
 import { environment } from './environments/environment';
-import fetch from 'node-fetch';
 
 // setup logger to catch all unhandled errors and submit as bug reports to our repo
 log.catchErrors({
@@ -63,10 +62,12 @@ import {
 	AppMenu,
 	removeMainListener,
 	removeTimerListener,
-	appUpdateNotification,
 	DesktopDialog,
 	DialogConfirmUpgradeDownload,
-	DialogConfirmInstallDownload
+	DialogConfirmInstallDownload,
+	UpdateContext,
+	CdnUpdate,
+	DigitalOceanCdn
 } from '@gauzy/desktop-libs';
 import {
 	createGauzyWindow,
@@ -78,8 +79,7 @@ import {
 	createImageViewerWindow
 } from '@gauzy/desktop-window';
 import { fork } from 'child_process';
-import { autoUpdater} from 'electron-updater';
-import { CancellationToken } from "builder-util-runtime";
+import { autoUpdater, UpdateInfo} from 'electron-updater';
 import { initSentry } from './sentry';
 
 initSentry();
@@ -143,12 +143,7 @@ let onWaitingServer = false;
 let serverGauzy = null;
 let serverDesktop = null;
 let dialogErr = false;
-let cancellationToken: any;
-let isDownloadTriggered: boolean = false;
-
-try {
-	cancellationToken = new CancellationToken();
-} catch (error) {}
+let updateContext;
 
 LocalStore.setFilePath({
 	iconPath: path.join(__dirname, 'icons', 'icon.png')
@@ -334,13 +329,22 @@ const getApiBaseUrl = (configs) => {
 // More details at https://github.com/electron/electron/issues/15947
 
 app.on('ready', async () => {
+	// Set default update context strategy with digital Ocean CDN
+	updateContext = new UpdateContext();
+	updateContext.strategy = new DigitalOceanCdn(
+		new CdnUpdate({
+			repository: 'ever-gauzy-desktop',
+			owner: 'ever-co',
+			typeRelease: 'releases'
+		})
+	);
 	// require(path.join(__dirname, 'desktop-api/main.js'));
 	/* set menu */
 	setTimeout(async () => {
 		try {
-			await checForUpdateNotify();
-		} catch (error) {
-			console.log('Error on checking update:', error);
+			updateContext.checkUpdate();
+		} catch (e) {
+			console.log('Error on checking update:', e);
 		}
 	}, 5000);
 	await knex.raw(`pragma journal_mode = WAL;`).then((res) => console.log(res));
@@ -348,7 +352,7 @@ app.on('ready', async () => {
 	const configs: any = store.get('configs');
 	const settings: any = store.get('appSetting');
 	const autoLaunch: boolean =
-		typeof settings.autoLaunch === 'undefined' ? true : settings.autoLaunch;
+		settings && typeof settings.autoLaunch === 'boolean' ? settings.autoLaunch : true;
 	launchAtStartup(autoLaunch, false);
 	Menu.setApplicationMenu(
 		Menu.buildFromTemplate([
@@ -517,8 +521,12 @@ ipcMain.on('open_browser', (event, arg) => {
 	shell.openExternal(arg.url);
 });
 
-ipcMain.on('check_for_update', async () => {
-	await checkUpdate();
+ipcMain.on('check_for_update', () => {
+	updateContext.checkUpdate();
+});
+
+ipcMain.on('download_update', () => {
+	updateContext.update();
 });
 
 autoUpdater.once('update-available', () => {
@@ -534,7 +542,7 @@ autoUpdater.once('update-available', () => {
 	);
 	dialog.show().then(async (button) => {
 		if (button.response === 0) {
-			await checkUpdate();
+			updateContext.update();
 		}
 	});
 });
@@ -568,6 +576,10 @@ autoUpdater.on('download-progress', (event) => {
 autoUpdater.on('error', (e) => {
 	settingsWindow.webContents.send('error_update', e);
 });
+
+autoUpdater.on('update-available', (info: UpdateInfo) => {
+	updateContext.notify(info);
+})
 
 autoUpdater.requestHeaders = {
 	'Cache-Control':
@@ -663,9 +675,10 @@ app.on('before-quit', (e) => {
 			});
 		}, 1000);
 	} else {
-		if (cancellationToken) {
-			cancellationToken.cancel();
-		}
+		// soft download cancellation
+		try {
+			updateContext.cancel();
+		} catch (e) { }
 		app.exit(0);
 		if (serverDesktop) serverDesktop.kill();
 		if (serverGauzy) serverGauzy.kill();
@@ -711,57 +724,5 @@ function launchAtStartup(autoLaunch, hidden) {
 			break;
 		default:
 			break;
-	}
-}
-
-async function getUpdaterConfig() {
-	const updaterConfig = {
-		repo: 'ever-gauzy-desktop',
-		owner: 'ever-co',
-		typeRelease: 'releases'
-	};
-	let latestReleaseTag = null;
-	try {
-		latestReleaseTag = await fetch(
-			`https://github.com/${updaterConfig.owner}/${updaterConfig.repo}/${updaterConfig.typeRelease}/latest`,
-			{
-				method: 'GET',
-				headers: {
-					Accept: 'application/json'
-				}
-			}
-		).then((res) => res.json());
-	} catch (error) {}
-	if (latestReleaseTag) {
-		return `https://github.com/${updaterConfig.owner}/${updaterConfig.repo}/${updaterConfig.typeRelease}/download/${latestReleaseTag.tag_name}`
-	}
-	return null;
-}
-
-async function checForUpdateNotify() {
-	const updateFeedUrl = await getUpdaterConfig();
-	await appUpdateNotification(updateFeedUrl);
-}
-
-const checkUpdate = async () => {
-	autoUpdater.autoDownload = !isDownloadTriggered;
-	const updateFeedUrl = await getUpdaterConfig();
-	if (updateFeedUrl) {
-		autoUpdater.setFeedURL({
-			channel: 'latest',
-			provider: 'generic',
-			url: updateFeedUrl
-		});
-		autoUpdater.checkForUpdatesAndNotify().then((downloadPromise) => {
-			if (cancellationToken){
-				cancellationToken = downloadPromise.cancellationToken;
-			}else {
-				 isDownloadTriggered = true;
-			}
-		}).catch((e) => {
-			console.log('Error occurred', e);
-		});
-	} else {
-		settingsWindow.webContents.send('error_update');
 	}
 }
