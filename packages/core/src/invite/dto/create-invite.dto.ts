@@ -1,5 +1,5 @@
 import { ICreateEmailInvitesInput } from "@gauzy/contracts";
-import { IntersectionType } from "@nestjs/mapped-types";
+import { IntersectionType } from "@nestjs/swagger";
 import { RoleFeatureDTO } from "./../../role/dto";
 import { InviteDTO } from "./invite.dto";
 
