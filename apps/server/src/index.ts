@@ -22,10 +22,12 @@ import {
 	LocalStore,
 	apiServer,
 	AppMenu,
-	appUpdateNotification,
 	DesktopDialog,
 	DialogConfirmUpgradeDownload,
-	DialogConfirmInstallDownload
+	DialogConfirmInstallDownload,
+	UpdateContext,
+	CdnUpdate,
+	DigitalOceanCdn
 } from '@gauzy/desktop-libs';
 import {
 	createSetupWindow,
@@ -36,8 +38,7 @@ import {
 import { readFileSync, writeFileSync, accessSync, constants } from 'fs';
 import * as remoteMain from '@electron/remote/main';
 import { autoUpdater } from 'electron-updater';
-import { CancellationToken } from "builder-util-runtime";
-import fetch from 'node-fetch';
+import { UpdateInfo } from "builder-util-runtime";
 remoteMain.initialize();
 
 // the folder where all app data will be stored (e.g. sqlite DB, settings, cache, etc)
@@ -56,8 +57,7 @@ let serverWindow:BrowserWindow;
 let settingsWindow: BrowserWindow;
 let tray:Tray;
 let isServerRun: boolean;
-let cancellationToken;
-let isDownloadTriggered: boolean = false;
+let updateContext;
 
 const pathWindow: {
 	gauzyUi: string,
@@ -319,19 +319,23 @@ const stopServer = (isRestart) => {
 	
 }
 
-
-try {
-	cancellationToken = new CancellationToken();
-} catch (error) {}
-
 ipcMain.on('stop_gauzy_server', (event, arg) => {
 	stopServer(false);
 })
 
 app.on('ready', () => {
+	// Set default update context strategy with digital Ocean CDN
+	updateContext = new UpdateContext();
+	updateContext.strategy = new DigitalOceanCdn(
+		new CdnUpdate({
+			repository: 'ever-gauzy-server',
+			owner: 'ever-co',
+			typeRelease: 'releases'
+		})
+	);
 	setTimeout(async () => {
 		try {
-			await checkForUpdateNotify();
+			updateContext.checkUpdate();
 		} catch (e) {
 			console.log('Error on checking update:', e);
 		}
@@ -460,6 +464,10 @@ ipcMain.on('restart_and_update', () => {
 
 app.on('before-quit', (e) => {
 	e.preventDefault();
+	// soft download cancellation
+	try {
+		updateContext.cancel();
+	} catch (e) { }
 	app.exit(0);
 });
 
@@ -467,66 +475,16 @@ app.on('window-all-closed', quit);
 
 app.commandLine.appendSwitch('disable-http2');
 
-async function checkForUpdateNotify() {
-	const updateFeedUrl = await getUpdaterConfig();
-	await appUpdateNotification(updateFeedUrl);
-}
-
-async function getUpdaterConfig() {
-	const updaterConfig = {
-		repo: 'ever-gauzy-server',
-		owner: 'ever-co',
-		typeRelease: 'releases'
-	};
-	let latestReleaseTag = null;
-	try {
-		latestReleaseTag = await fetch(
-			`https://github.com/${updaterConfig.owner}/${updaterConfig.repo}/${updaterConfig.typeRelease}/latest`,
-			{
-				method: 'GET',
-				headers: {
-					Accept: 'application/json'
-				}
-			}
-		).then((res) => res.json());
-	} catch (error) {
-		console.log('Error', error);
-	}
-	if (latestReleaseTag) {
-		return `https://github.com/${updaterConfig.owner}/${updaterConfig.repo}/${updaterConfig.typeRelease}/download/${latestReleaseTag.tag_name}`;
-	}
-	return null;
-}
-
-const checkUpdate = async () => {
-	autoUpdater.autoDownload = !isDownloadTriggered;
-	const updateFeedUrl = await getUpdaterConfig();
-	if (updateFeedUrl) {
-		autoUpdater.setFeedURL({
-			channel: 'latest',
-			provider: 'generic',
-			url: updateFeedUrl
-		});
-		autoUpdater.checkForUpdatesAndNotify().then((downloadPromise) => {
-			if (cancellationToken){
-				cancellationToken = downloadPromise.cancellationToken;
-			}else {
-				 isDownloadTriggered = true;
-			}
-		}).catch((e) => {
-			console.log('Error occurred', e);
-		});
-	} else {
-		settingsWindow.webContents.send('error_update');
-	}
-}
-
 autoUpdater.on('error', () => {
 	console.log('error');
 });
 
-ipcMain.on('check_for_update', async () => {
-	await checkUpdate();
+ipcMain.on('check_for_update', () => {
+	updateContext.checkUpdate();
+});
+
+ipcMain.on('download_update', () => {
+	updateContext.update();
 });
 
 autoUpdater.once('update-available', () => {
@@ -542,7 +500,7 @@ autoUpdater.once('update-available', () => {
 	);
 	dialog.show().then(async (button) => {
 		if (button.response === 0) {
-			await checkUpdate();
+			updateContext.update();
 		}
 	});
 });
@@ -562,6 +520,10 @@ autoUpdater.on('update-downloaded', () => {
 		if (button.response === 0) autoUpdater.quitAndInstall();
 	  })
 });
+
+autoUpdater.on('update-available', (info: UpdateInfo) => {
+	updateContext.notify(info);
+})
 
 autoUpdater.requestHeaders = {
 	'Cache-Control':
