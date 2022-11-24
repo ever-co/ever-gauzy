@@ -140,6 +140,14 @@ export interface IInviteEmployeeModel
 	originUrl?: string;
 }
 
+export interface IInviteTeamMemberModel extends IBasePerTenantAndOrganizationEntityModel {
+	email: string;
+	languageCode: LanguagesEnum;
+	invitedBy: IUser;
+	teams: string;
+	inviteCode: number;
+}
+
 export interface IJoinEmployeeModel extends IBasePerTenantAndOrganizationEntityModel {
     email: string;
     employee: IEmployee;
