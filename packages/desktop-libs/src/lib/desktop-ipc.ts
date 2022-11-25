@@ -4,8 +4,8 @@ import TimerHandler from './desktop-timer';
 import moment from 'moment';
 import {LocalStore} from './desktop-store';
 import {notifyScreenshot, takeshot} from './desktop-screenshot';
-import {hasPromptedForPermission, hasScreenCapturePermission, openSystemPreferences, resetPermissions} from 'mac-screen-capture-permissions';
-import {askForScreenCaptureAccess, getAuthStatus} from 'node-mac-permissions';
+import {resetPermissions} from 'mac-screen-capture-permissions';
+import {getAuthStatus} from 'node-mac-permissions';
 import * as _ from 'underscore';
 import {timeTrackerPage} from '@gauzy/desktop-window';
 // Import logging for electron and override default console logging
@@ -120,15 +120,14 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 						quitApp: true
 					});
 					if (isScreenUnauthorised()) {
-						askForScreenCaptureAccess();
-					}
-					if (
-						!hasScreenCapturePermission() &&
-						!hasPromptedForPermission()
-					) {
-						openSystemPreferences().then(() => {
-							console.log('Opened');
-						});
+						// Trigger macOS to ask user for screen capture permission
+						try {
+							await desktopCapturer.getSources({
+								types: ['screen']
+							});
+						} catch (_) {
+							// softfail
+						}
 					}
 				}
 			}
