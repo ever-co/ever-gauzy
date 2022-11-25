@@ -1,11 +1,11 @@
-import {BrowserWindow, ipcMain, screen, desktopCapturer, systemPreferences, app} from 'electron';
+import {BrowserWindow, ipcMain, screen, desktopCapturer, app} from 'electron';
 import {TimerData} from './desktop-timer-activity';
 import TimerHandler from './desktop-timer';
 import moment from 'moment';
 import {LocalStore} from './desktop-store';
 import {notifyScreenshot, takeshot} from './desktop-screenshot';
 import {resetPermissions} from 'mac-screen-capture-permissions';
-import { askForScreenCaptureAccess, askForAccessibilityAccess } from 'node-mac-permissions';
+import {askForScreenCaptureAccess, getAuthStatus} from 'node-mac-permissions';
 import * as _ from 'underscore';
 import {timeTrackerPage} from '@gauzy/desktop-window';
 // Import logging for electron and override default console logging
@@ -115,18 +115,26 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 	ipcMain.on('request_permission', async (event) => {
 		try {
 			if (process.platform === 'darwin') {
-				const screenCapturePermission = systemPreferences.getMediaAccessStatus('screen');
-				if (screenCapturePermission !== 'granted') {
-					resetPermissions({bundleId: 'com.ever.gauzydesktoptimer'})
+				if (!isAuthorized()) {
+					event.sender.send('stop_from_tray', {
+						quitApp: true
+					});
+					askForScreenCaptureAccess();
 				}
-				console.log('App Name',app.getName())
-				askForAccessibilityAccess();
-				askForScreenCaptureAccess();
 			}
 		} catch (error) {
 			console.log('error opening permission', error.message);
 		}
 	});
+
+	ipcMain.on('reset_permissions', () => {
+		if (process.platform === 'darwin') {
+			if (!isAuthorized()) {
+				const name = app.getName().replaceAll('-', '');
+				resetPermissions({ bundleId: 'com.ever.' + name });
+			}
+		}
+	})
 
 	ipcMain.on('auth_failed', (event, arg) => {
 		event.sender.send('show_error_message', arg.message);
@@ -134,6 +142,13 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 
 	ipcMain.handle('DESKTOP_CAPTURER_GET_SOURCES', (event, opts) =>
 		desktopCapturer.getSources(opts)
+	);
+}
+
+function isAuthorized() {
+	return (
+		getAuthStatus('accessibility') === 'authorized' ||
+		getAuthStatus('screen') === 'authorized'
 	);
 }
 
@@ -526,7 +541,8 @@ export function removeTimerListener() {
 		'logout_desktop',
 		'navigate_to_login',
 		'expand',
-		'timer_stopped'
+		'timer_stopped',
+		'reset_permissions'
 	]
 	timerListeners.forEach((listener) => {
 		ipcMain.removeAllListeners(listener);
