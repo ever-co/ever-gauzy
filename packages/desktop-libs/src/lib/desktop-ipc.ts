@@ -1,11 +1,10 @@
-import {BrowserWindow, ipcMain, screen, desktopCapturer, app} from 'electron';
+import {BrowserWindow, ipcMain, screen, desktopCapturer, app, systemPreferences} from 'electron';
 import {TimerData} from './desktop-timer-activity';
 import TimerHandler from './desktop-timer';
 import moment from 'moment';
 import {LocalStore} from './desktop-store';
 import {notifyScreenshot, takeshot} from './desktop-screenshot';
 import {resetPermissions} from 'mac-screen-capture-permissions';
-import {getAuthStatus} from 'node-mac-permissions';
 import * as _ from 'underscore';
 import {timeTrackerPage} from '@gauzy/desktop-window';
 // Import logging for electron and override default console logging
@@ -115,19 +114,17 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 	ipcMain.on('request_permission', async (event) => {
 		try {
 			if (process.platform === 'darwin') {
-				if (isAccessibilityUnauthorised() || isScreenUnauthorised()) {
+				if (isScreenUnauthorised()) {
 					event.sender.send('stop_from_tray', {
 						quitApp: true
 					});
-					if (isScreenUnauthorised()) {
-						// Trigger macOS to ask user for screen capture permission
-						try {
-							await desktopCapturer.getSources({
-								types: ['screen']
-							});
-						} catch (_) {
-							// softfail
-						}
+					// Trigger macOS to ask user for screen capture permission
+					try {
+						await desktopCapturer.getSources({
+							types: ['screen']
+						});
+					} catch (_) {
+						// softfail
 					}
 				}
 			}
@@ -138,7 +135,7 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 
 	ipcMain.on('reset_permissions', () => {
 		if (process.platform === 'darwin') {
-			if (isScreenUnauthorised() && isAccessibilityUnauthorised()) {
+			if (isScreenUnauthorised()) {
 				const name = app.getName().split('-').join('');
 				resetPermissions({ bundleId: 'com.ever.' + name });
 			}
@@ -155,11 +152,7 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 }
 
 function isScreenUnauthorised() {
-	return getAuthStatus('screen') !== 'authorized';
-}
-
-function isAccessibilityUnauthorised() {
-	return getAuthStatus('accessibility') !== 'authorized';
+	return systemPreferences.getMediaAccessStatus('screen') !== 'granted';
 }
 
 export function ipcTimer(
