@@ -4,7 +4,7 @@ import TimerHandler from './desktop-timer';
 import moment from 'moment';
 import {LocalStore} from './desktop-store';
 import {notifyScreenshot, takeshot} from './desktop-screenshot';
-import {resetPermissions} from 'mac-screen-capture-permissions';
+import {hasPromptedForPermission, hasScreenCapturePermission, openSystemPreferences, resetPermissions} from 'mac-screen-capture-permissions';
 import {askForScreenCaptureAccess, getAuthStatus} from 'node-mac-permissions';
 import * as _ from 'underscore';
 import {timeTrackerPage} from '@gauzy/desktop-window';
@@ -115,11 +115,21 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 	ipcMain.on('request_permission', async (event) => {
 		try {
 			if (process.platform === 'darwin') {
-				if (!isAuthorized()) {
+				if (isAccessibilityUnauthorised() || isScreenUnauthorised()) {
 					event.sender.send('stop_from_tray', {
 						quitApp: true
 					});
-					askForScreenCaptureAccess();
+					if (isScreenUnauthorised()) {
+						askForScreenCaptureAccess();
+					}
+					if (
+						!hasScreenCapturePermission() &&
+						!hasPromptedForPermission()
+					) {
+						openSystemPreferences().then(() => {
+							console.log('Opened');
+						});
+					}
 				}
 			}
 		} catch (error) {
@@ -129,7 +139,7 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 
 	ipcMain.on('reset_permissions', () => {
 		if (process.platform === 'darwin') {
-			if (!isAuthorized()) {
+			if (isScreenUnauthorised() && isAccessibilityUnauthorised()) {
 				const name = app.getName().replaceAll('-', '');
 				resetPermissions({ bundleId: 'com.ever.' + name });
 			}
@@ -145,11 +155,12 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 	);
 }
 
-function isAuthorized() {
-	return (
-		getAuthStatus('accessibility') === 'authorized' ||
-		getAuthStatus('screen') === 'authorized'
-	);
+function isScreenUnauthorised() {
+	return getAuthStatus('screen') !== 'authorized';
+}
+
+function isAccessibilityUnauthorised() {
+	return getAuthStatus('accessibility') !== 'authorized';
 }
 
 export function ipcTimer(
