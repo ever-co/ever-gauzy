@@ -545,6 +545,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			},
 			timeLog: timeLog
 		});
+		this.electronService.ipcRenderer.send('request_permission');
 		this.loading = false;
 	}
 

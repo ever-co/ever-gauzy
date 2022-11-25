@@ -74,7 +74,8 @@
 			"entitlements": "tools/build/entitlements.mas.plist",
 			"entitlementsInherit": "tools/build/entitlements.mas.plist",
 			"extendInfo": {
-				"NSAppleEventsUsageDescription": "Please allow access to script browser applications to detect the current URL when triggering instant lookup."
+				"NSAppleEventsUsageDescription": "Please allow access to script browser applications to detect the current URL when triggering instant lookup.",
+				"NSCameraUsageDescription": "Please allow access to Gauzy Desktop Timer to make screenshot"
 			}
 		},
 		"win": {
