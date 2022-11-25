@@ -139,7 +139,7 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 	ipcMain.on('reset_permissions', () => {
 		if (process.platform === 'darwin') {
 			if (isScreenUnauthorised() && isAccessibilityUnauthorised()) {
-				const name = app.getName().replaceAll('-', '');
+				const name = app.getName().split('-').join('');
 				resetPermissions({ bundleId: 'com.ever.' + name });
 			}
 		}
