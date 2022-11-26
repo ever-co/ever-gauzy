@@ -18,7 +18,6 @@ import {
 	JoinTable,
 	ManyToMany,
 	ManyToOne,
-	OneToOne,
 	RelationId
 } from 'typeorm';
 import {
@@ -60,18 +59,6 @@ export class Invite extends TenantOrganizationBaseEntity implements IInvite {
 	@ApiPropertyOptional({ type: () => Date })
 	@Column({ nullable: true })
 	actionDate?: Date;
-
-	/*
-    |--------------------------------------------------------------------------
-    | @OneToOne
-    |--------------------------------------------------------------------------
-    */
-
-	/**
-	 * Invite belongs to user
-	 */
-	@OneToOne(() => User, (it: User) => it.invite)
-	user?: IUser;
 
 	/*
     |--------------------------------------------------------------------------

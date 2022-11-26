@@ -8,7 +8,6 @@ import { ITag } from './tag-entity.model';
 import { IEmployee } from './employee.model';
 import { IPayment } from './payment.model';
 import { IOrganization } from './organization.model';
-import { IInvite } from './invite.model';
 
 export interface IUser extends IBasePerTenantEntityModel {
 	thirdPartyId?: string;
@@ -23,8 +22,6 @@ export interface IUser extends IBasePerTenantEntityModel {
 	imageUrl?: string;
 	employee?: IEmployee;
 	employeeId?: IEmployee['id'];
-	invite?: IInvite;
-	inviteId?: IInvite['id'];
 	tags?: ITag[];
 	preferredLanguage?: string;
 	payments?: IPayment[];

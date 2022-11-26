@@ -1,10 +1,10 @@
-import {BrowserWindow, ipcMain, screen, desktopCapturer, systemPreferences} from 'electron';
+import {BrowserWindow, ipcMain, screen, desktopCapturer, app, systemPreferences} from 'electron';
 import {TimerData} from './desktop-timer-activity';
 import TimerHandler from './desktop-timer';
 import moment from 'moment';
 import {LocalStore} from './desktop-store';
 import {notifyScreenshot, takeshot} from './desktop-screenshot';
-import {openSystemPreferences} from 'mac-screen-capture-permissions';
+import {resetPermissions} from 'mac-screen-capture-permissions';
 import * as _ from 'underscore';
 import {timeTrackerPage} from '@gauzy/desktop-window';
 // Import logging for electron and override default console logging
@@ -114,15 +114,33 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 	ipcMain.on('request_permission', async (event) => {
 		try {
 			if (process.platform === 'darwin') {
-				const screenCapturePermission = systemPreferences.getMediaAccessStatus('screen');
-				if (screenCapturePermission !== 'granted') {
-					await openSystemPreferences();
+				if (isScreenUnauthorised()) {
+					event.sender.send('stop_from_tray', {
+						quitApp: true
+					});
+					// Trigger macOS to ask user for screen capture permission
+					try {
+						await desktopCapturer.getSources({
+							types: ['screen']
+						});
+					} catch (_) {
+						// softfail
+					}
 				}
 			}
 		} catch (error) {
 			console.log('error opening permission', error.message);
 		}
 	});
+
+	ipcMain.on('reset_permissions', () => {
+		if (process.platform === 'darwin') {
+			if (isScreenUnauthorised()) {
+				const name = app.getName().split('-').join('');
+				resetPermissions({ bundleId: 'com.ever.' + name });
+			}
+		}
+	})
 
 	ipcMain.on('auth_failed', (event, arg) => {
 		event.sender.send('show_error_message', arg.message);
@@ -131,6 +149,10 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 	ipcMain.handle('DESKTOP_CAPTURER_GET_SOURCES', (event, opts) =>
 		desktopCapturer.getSources(opts)
 	);
+}
+
+function isScreenUnauthorised() {
+	return systemPreferences.getMediaAccessStatus('screen') !== 'granted';
 }
 
 export function ipcTimer(
@@ -356,7 +378,7 @@ export function ipcTimer(
 			knex
 		)
 	});
-	
+
 
 	ipcMain.on('open_setting_window', (event, arg) => {
 		const appSetting = LocalStore.getStore('appSetting');
@@ -522,7 +544,8 @@ export function removeTimerListener() {
 		'logout_desktop',
 		'navigate_to_login',
 		'expand',
-		'timer_stopped'
+		'timer_stopped',
+		'reset_permissions'
 	]
 	timerListeners.forEach((listener) => {
 		ipcMain.removeAllListeners(listener);
