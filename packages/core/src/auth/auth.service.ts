@@ -245,7 +245,6 @@ export class AuthService extends SocialAuthService {
 				: {}),
 			...(input.inviteId
 				? {
-						inviteId: input.inviteId,
 						emailVerifiedAt: freshTimestamp()
 					}
 				: {}),

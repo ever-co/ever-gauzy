@@ -149,20 +149,6 @@ export class User extends TenantBaseEntity implements IUser {
 	@OneToOne(() => Employee, (employee: Employee) => employee.user)
 	employee?: IEmployee;
 
-	/**
-	 * User belongs to invite
-	 */
-	@OneToOne(() => Invite, (it) => it.user, {
-		onDelete: "SET NULL"
-	})
-	@JoinColumn()
-	invite?: IInvite;
-
-	@RelationId((it: User) => it.invite)
-	@Index()
-	@Column({ nullable: true })
-	inviteId?: IInvite['id'];
-
 	/*
     |--------------------------------------------------------------------------
     | @ManyToMany
