@@ -147,64 +147,29 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 				expireDate = addDays(new Date(), inviteExpiryPeriod as number);
 			}
 		}
-		// const query = this.repository.createQueryBuilder(this.alias);
-		// query.leftJoinAndSelect(`${query.alias}.teams`, 'team');
-		// query.leftJoinAndSelect(`${query.alias}.projects`, 'project');
-		// query.where({
-		// 	tenantId: RequestContext.currentTenantId(),
-		// 	...(
-		// 		(isNotEmpty(organizationId)) ? {
-		// 			organizationId
-		// 		} : {}
-		// 	),
-		// 	// organization invites filter by specific teams
-		// 	...(isNotEmpty(teamIds)) ? {
-		// 		teams: {
-		// 			id: In(teamIds)
-		// 		}
-		// 	} : {},
-		// 	// organization invites filter by specific projects
-		// 	...(isNotEmpty(projectIds)) ? {
-		// 		projects: {
-		// 			id: In(projectIds)
-		// 		}
-		// 	} : {}
-		// });
-		// console.log(await query.getRawMany());
 
-		// const { items: existedInvites, total: existedTotal } = await this.findAll({
-		// 	...(isNotEmpty(teamIds)) ? {
-		// 		relations: {
-		// 			teams: true
-		// 		}
-		// 	} : {},
-		// 	where: {
-		// 		tenantId: RequestContext.currentTenantId(),
-		// 		...(
-		// 			(isNotEmpty(organizationId)) ? {
-		// 				organizationId
-		// 			} : {}
-		// 		),
-		// 		...(
-		// 			(isNotEmpty(emailIds)) ? {
-		// 				email: In(emailIds)
-		// 			} : {}
-		// 		),
-		// 		// organization invites filter by specific teams
-		// 		...(isNotEmpty(teamIds)) ? {
-		// 			teams: {
-		// 				id: In(teamIds)
-		// 			}
-		// 		} : {},
-		// 		// organization invites filter by specific projects
-		// 		...(isNotEmpty(projectIds)) ? {
-		// 			projects: {
-		// 				id: In(projectIds)
-		// 			}
-		// 		} : {}
-		// 	}
-		// });
-		// console.log({ existedInvites, existedTotal });
+		// already existed invites
+		const { items: existedInvites } = await this.findAll({
+			...(isNotEmpty(teamIds)) ? {
+				relations: {
+					teams: true
+				}
+			} : {},
+			where: {
+				tenantId: RequestContext.currentTenantId(),
+				...(
+					(isNotEmpty(organizationId)) ? {
+						organizationId
+					} : {}
+				),
+				...(
+					(isNotEmpty(emailIds)) ? {
+						email: In(emailIds)
+					} : {}
+				),
+			}
+		});
+
 		const existingInvites = (
 			await this.repository
 				.createQueryBuilder('invite')
