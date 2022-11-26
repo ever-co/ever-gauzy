@@ -17,7 +17,6 @@ import {
 	JoinTable,
 	ManyToMany,
 	ManyToOne,
-	OneToOne,
 	RelationId
 } from 'typeorm';
 import {

@@ -8,8 +8,7 @@ import {
 	ComponentLayoutStyleEnum,
 	ITag,
 	IEmployee,
-	IOrganization,
-	IInvite
+	IOrganization
 } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Exclude } from 'class-transformer';
@@ -27,7 +26,6 @@ import {
 } from 'typeorm';
 import {
 	Employee,
-	Invite,
 	Role,
 	Tag,
 	TenantBaseEntity,
