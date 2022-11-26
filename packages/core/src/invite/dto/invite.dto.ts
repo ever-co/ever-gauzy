@@ -12,6 +12,11 @@ import { TenantOrganizationBaseDTO } from "./../../core/dto";
     @ArrayNotEmpty()
     readonly emailIds: string[] = [];
 
+    @ApiPropertyOptional({ type: () => Array })
+    @ValidateIf((it) => it.inviteType === InvitationTypeEnum.TEAM)
+    @ArrayNotEmpty()
+    readonly teamIds: string[] = [];
+
     @ApiProperty({ type: () => String, enum: InvitationTypeEnum })
     @IsEnum(InvitationTypeEnum)
     readonly inviteType: InvitationTypeEnum;
