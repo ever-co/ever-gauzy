@@ -6,3 +6,4 @@ export * from './concretes/dialog-confirm-install-download';
 export * from './abstracts/base-cdn-decorator';
 export * from './concretes/digital-ocean-cdn';
 export * from './concretes/github-cdn';
+export * from './concretes/dialog-local-update';
