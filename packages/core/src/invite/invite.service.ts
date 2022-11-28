@@ -88,13 +88,13 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 			invitationExpirationPeriod
 		} = emailInvites;
 
-		const projects: IOrganizationProject[] = await this.organizationProjectService.find({
+		const organizationProjects: IOrganizationProject[] = await this.organizationProjectService.find({
 			where: {
 				id: In(projectIds || []),
 				organizationId
 			}
 		});
-		const departments: IOrganizationDepartment[] = await this.organizationDepartmentService.find({
+		const organizationDepartments: IOrganizationDepartment[] = await this.organizationDepartmentService.find({
 			where: {
 				id: In(departmentIds || []),
 				organizationId
@@ -106,7 +106,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 				organizationId
 			}
 		});
-		const teams: IOrganizationTeam[] = await this.organizationTeamService.find({
+		const organizationTeams: IOrganizationTeam[] = await this.organizationTeamService.find({
 			where: {
 				id: In(teamIds || []),
 				organizationId
@@ -170,41 +170,60 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 			}
 		});
 
-		const existingInvites = (
-			await this.repository
-				.createQueryBuilder('invite')
-				.select('invite.email')
-				.where('invite.email IN (:...emails)', { emails: emailIds })
-				.getMany()
-		).map((invite) => invite.email);
-
-		const invitesToCreate = emailIds.filter(
-			(email) => existingInvites.indexOf(email) < 0
-		);
-
+		let ignoreInvites = 0;
 		const invites: Invite[] = [];
-		for (let i = 0; i < invitesToCreate.length; i++) {
-			const email = invitesToCreate[i];
+		for await (const email of emailIds) {
 			const token = this.createToken(email);
+			const matchedInvites = existedInvites.filter((invite: IInvite) => (invite.email === email));
 
-			invites.push(new Invite({
-				token,
-				email,
-				roleId,
-				organizationId,
-				tenantId: RequestContext.currentTenantId(),
-				invitedById: RequestContext.currentUserId(),
-				status: InviteStatusEnum.INVITED,
-				expireDate,
-				projects,
-				teams,
-				departments,
-				organizationContacts,
-				actionDate: startedWorkOn || appliedDate,
-				code: generateRandomInteger(6),
-			}));
+			const existedTeams: IOrganizationTeam[] = [];
+			for (const invite of matchedInvites) { existedTeams.push(...invite.teams); }
+
+			if (isNotEmpty(matchedInvites)) {
+				const needsToInviteTeams = organizationTeams.filter(
+					(item: IOrganizationTeam) => !existedTeams.some(
+						(team: IOrganizationTeam) => team.id === item.id
+					)
+				);
+				if (isNotEmpty(needsToInviteTeams)) {
+					invites.push(new Invite({
+						token,
+						email,
+						roleId,
+						organizationId,
+						tenantId: RequestContext.currentTenantId(),
+						invitedById: RequestContext.currentUserId(),
+						status: InviteStatusEnum.INVITED,
+						expireDate,
+						projects: organizationProjects,
+						teams: needsToInviteTeams,
+						departments:organizationDepartments,
+						organizationContacts,
+						actionDate: startedWorkOn || appliedDate,
+						code: generateRandomInteger(6),
+					}));
+				} else {
+					ignoreInvites++;
+				}
+			} else {
+				invites.push(new Invite({
+					token,
+					email,
+					roleId,
+					organizationId,
+					tenantId: RequestContext.currentTenantId(),
+					invitedById: RequestContext.currentUserId(),
+					status: InviteStatusEnum.INVITED,
+					expireDate,
+					projects: organizationProjects,
+					teams: organizationTeams,
+					departments:organizationDepartments,
+					organizationContacts,
+					actionDate: startedWorkOn || appliedDate,
+					code: generateRandomInteger(6),
+				}));
+			}
 		}
-
 		const items = await this.repository.save(invites);
 		items.forEach((item) => {
 			const registerUrl = `${originUrl}/#/auth/accept-invite?email=${item.email}&token=${item.token}`;
@@ -223,7 +242,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 					email: item.email,
 					registerUrl,
 					organizationContacts,
-					departments,
+					departments: organizationDepartments,
 					originUrl,
 					organization: organization,
 					languageCode,
@@ -232,7 +251,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 			} else if (emailInvites.inviteType === InvitationTypeEnum.TEAM) {
 				this.emailService.inviteTeamMember({
 					email: item.email,
-					teams: teams.map((team: IOrganizationTeam) => team.name).join(', '),
+					teams: item.teams.map((team: IOrganizationTeam) => team.name).join(', '),
 					languageCode,
 					invitedBy,
 					organization,
@@ -241,7 +260,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 			}
 		});
 
-		return { items, total: items.length, ignored: existingInvites.length };
+		return { items, total: items.length, ignored: ignoreInvites };
 	}
 
 	async resendEmail(data, invitedById, languageCode, expireDate){

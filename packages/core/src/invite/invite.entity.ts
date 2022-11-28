@@ -34,7 +34,6 @@ import {
 export class Invite extends TenantOrganizationBaseEntity implements IInvite {
 
 	@ApiPropertyOptional({ type: () => String })
-	@Index({ unique: true })
 	@Column()
 	token: string;
 
@@ -44,7 +43,6 @@ export class Invite extends TenantOrganizationBaseEntity implements IInvite {
 	public code?: number;
 
 	@ApiProperty({ type: () => String, minLength: 3, maxLength: 100 })
-	@Index()
 	@Column()
 	email: string;
 
