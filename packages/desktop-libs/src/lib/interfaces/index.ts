@@ -8,3 +8,5 @@ export * from './i-desktop-dialog';
 export * from './i-desktop-update';
 export * from './i-desktop-cdn-update';
 export * from './i-updater-config';
+export * from './i-desktop-open-dialog';
+export * from './i-local-update-server';

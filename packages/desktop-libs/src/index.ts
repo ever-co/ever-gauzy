@@ -14,3 +14,5 @@ export * from './lib/interfaces';
 export * from './lib/desktop-dialog';
 export * from './lib/contexts';
 export * from './lib/strategies';
+export * from './lib/config';
+export * from './lib/update-server/desktop-local-update-server';
