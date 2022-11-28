@@ -22,6 +22,8 @@ export interface IInvite extends IBasePerTenantAndOrganizationEntityModel {
 	teams?: IOrganizationTeam[];
 	organizationContacts?: IOrganizationContact[];
 	departments?: IOrganizationDepartment[];
+	user?: IUser;
+	userId?: IUser['id'];
 }
 
 export interface IInviteAcceptInput extends IUserRegistrationInput, IUserEmailInput, IUserTokenInput {

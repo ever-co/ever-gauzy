@@ -8,6 +8,7 @@ import { ITag } from './tag-entity.model';
 import { IEmployee } from './employee.model';
 import { IPayment } from './payment.model';
 import { IOrganization } from './organization.model';
+import { IInvite } from './invite.model';
 
 export interface IUser extends IBasePerTenantEntityModel {
 	thirdPartyId?: string;
@@ -35,6 +36,7 @@ export interface IUser extends IBasePerTenantEntityModel {
 	codeExpireAt?: Date;
 	emailVerifiedAt?: Date;
 	emailToken?: string;
+	invites?: IInvite[];
 }
 
 export interface IUserFindInput extends IBasePerTenantEntityModel {

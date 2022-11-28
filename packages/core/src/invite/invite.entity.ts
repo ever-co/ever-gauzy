@@ -44,7 +44,7 @@ export class Invite extends TenantOrganizationBaseEntity implements IInvite {
 	public code?: number;
 
 	@ApiProperty({ type: () => String, minLength: 3, maxLength: 100 })
-	@Index({ unique: true })
+	@Index()
 	@Column()
 	email: string;
 
@@ -94,6 +94,20 @@ export class Invite extends TenantOrganizationBaseEntity implements IInvite {
 	@Column({ nullable: true })
 	roleId: string;
 
+	/**
+	 * Invites belongs to user
+	 */
+	@ApiPropertyOptional({ type: () => Role })
+	@ManyToOne(() => User, (it) => it.invites)
+	@JoinColumn()
+	user?: IUser;
+
+	@ApiProperty({ type: () => String })
+	@RelationId((invite: Invite) => invite.user)
+	@Index()
+	@Column({ nullable: true })
+	userId?: IUser['id'];
+
 	/*
     |--------------------------------------------------------------------------
     | @ManyToMany
@@ -138,4 +152,6 @@ export class Invite extends TenantOrganizationBaseEntity implements IInvite {
 		name: 'invite_organization_team'
 	})
 	teams?: IOrganizationTeam[];
+
+
 }
