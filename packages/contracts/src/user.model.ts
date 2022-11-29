@@ -72,12 +72,12 @@ export interface IVerificationTokenPayload extends IUserEmailInput {
 	id: string;
 }
 
-export interface IUserInviteCodeConfirmationInput extends IUserEmailInput {
-	code: number;
-}
+export interface IUserInviteCodeConfirmationInput extends IUserEmailInput, IUserCodeInput {}
+
 export interface IUserEmailInput {
 	email: string;
 }
+
 export interface IUserPasswordInput {
 	password: string;
 }
@@ -86,7 +86,12 @@ export interface IUserTokenInput {
 	token: string;
 }
 
+export interface IUserCodeInput {
+	code: string;
+}
+
 export interface IUserLoginInput extends IUserEmailInput, IUserPasswordInput {}
+
 export interface IAuthResponse {
 	user: IUser;
 	token: string;

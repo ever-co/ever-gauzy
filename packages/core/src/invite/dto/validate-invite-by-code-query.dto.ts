@@ -1,5 +1,5 @@
 import { IUserInviteCodeConfirmationInput } from "@gauzy/contracts";
-import { ConfirmInviteCodeDTO } from "./../../auth/dto";
+import { ConfirmInviteCodeDTO } from "../../auth/dto";
 
 /**
  * Confirm invite by code DTO validation

@@ -85,7 +85,8 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 			organizationId,
 			startedWorkOn,
 			appliedDate,
-			invitationExpirationPeriod
+			invitationExpirationPeriod,
+			fullName
 		} = emailInvites;
 
 		const organizationProjects: IOrganizationProject[] = await this.organizationProjectService.find({
@@ -203,6 +204,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 						organizationContacts,
 						actionDate: startedWorkOn || appliedDate,
 						code,
+						fullName
 					}));
 				} else {
 					ignoreInvites++;
@@ -223,6 +225,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 					organizationContacts,
 					actionDate: startedWorkOn || appliedDate,
 					code,
+					fullName
 				}));
 			}
 		}
@@ -417,6 +420,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 						select: {
 							id: true,
 							email: true,
+							fullName: true,
 							organization: {
 								name: true
 							}
@@ -464,6 +468,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 				select: {
 					id: true,
 					email: true,
+					fullName: true,
 					organization: {
 						name: true
 					}

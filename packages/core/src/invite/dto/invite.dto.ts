@@ -28,4 +28,8 @@ import { TenantOrganizationBaseDTO } from "./../../core/dto";
     @ApiPropertyOptional({ type: () => String, enum: InvitationExpirationEnum })
     @IsOptional()
     readonly invitationExpirationPeriod: InvitationExpirationEnum;
+
+    @ApiPropertyOptional({ type: () => String })
+    @IsOptional()
+    readonly fullName: string;
 }

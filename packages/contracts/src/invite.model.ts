@@ -39,8 +39,7 @@ export interface IInviteResendInput {
 	organization: IOrganization;
 	departmentNames?: string[];
 	clientNames?: string[];
-	inviteType: any;
-
+	inviteType: InvitationTypeEnum;
 }
 
 export interface ICreateEmailInvitesInput extends IBasePerTenantAndOrganizationEntityModel {
@@ -54,6 +53,7 @@ export interface ICreateEmailInvitesInput extends IBasePerTenantAndOrganizationE
 	startedWorkOn: Date;
 	appliedDate?: Date;
 	invitationExpirationPeriod?: number | string;
+	fullName?: string;
 }
 
 export interface ICreateOrganizationContactInviteInput

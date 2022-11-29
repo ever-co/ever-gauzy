@@ -95,6 +95,12 @@ export class InviteController {
 		);
 	}
 
+	/**
+	 * Validate invite by token and email
+	 *
+	 * @param options
+	 * @returns
+	 */
 	@ApiOperation({ summary: 'Get invite.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -122,7 +128,7 @@ export class InviteController {
 	/**
 	 * Validate invite by code and email
 	 *
-	 * @param options
+	 * @param body
 	 * @returns
 	 */
 	@Public()
