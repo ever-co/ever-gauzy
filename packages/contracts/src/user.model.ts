@@ -87,7 +87,7 @@ export interface IUserTokenInput {
 }
 
 export interface IUserCodeInput {
-	code: string;
+	code: number;
 }
 
 export interface IUserLoginInput extends IUserEmailInput, IUserPasswordInput {}
