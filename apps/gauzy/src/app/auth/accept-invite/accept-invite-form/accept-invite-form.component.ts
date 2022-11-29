@@ -27,8 +27,7 @@ import { TranslationBaseComponent } from '../../../@shared/language-base';
 	templateUrl: 'accept-invite-form.component.html',
 	styleUrls: ['accept-invite-form.component.scss']
 })
-export class AcceptInviteFormComponent
-	extends TranslationBaseComponent
+export class AcceptInviteFormComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 
 	FormHelpers: typeof FormHelpers = FormHelpers;
@@ -42,10 +41,10 @@ export class AcceptInviteFormComponent
 	tenant: ITenant;
 	tags: ITag[];
 
-	public readonly form: FormGroup = AcceptInviteFormComponent.buildForm(this.fb);
-	static buildForm(fb: FormBuilder): FormGroup {
+	public readonly form: FormGroup = AcceptInviteFormComponent.buildForm(this.fb, this);
+	static buildForm(fb: FormBuilder, self: AcceptInviteFormComponent): FormGroup {
 		return fb.group({
-			fullName: ['', Validators.required],
+			fullName: [self?.invitation?.fullName, Validators.required],
 			password: ['', Validators.compose([
 					Validators.required,
 					Validators.minLength(4)
@@ -70,7 +69,12 @@ export class AcceptInviteFormComponent
 		super(translateService);
 	}
 
-	ngOnInit(): void {}
+	ngOnInit(): void {
+		if (this.form && this.invitation) {
+			this.form.get('fullName').setValue(this.invitation.fullName);
+			this.form.get('fullName').updateValueAndValidity();
+		}
+	}
 
 	saveInvites() {
 		if (this.form.valid) {

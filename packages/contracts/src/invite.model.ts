@@ -1,6 +1,6 @@
 import { IRole } from './role.model';
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
-import { IUser, IUserEmailInput, IUserRegistrationInput, IUserTokenInput, LanguagesEnum } from './user.model';
+import { IUser, IUserCodeInput, IUserEmailInput, IUserRegistrationInput, IUserTokenInput, LanguagesEnum } from './user.model';
 import { IOrganizationProject } from './organization-projects.model';
 import { IOrganization } from './organization.model';
 import { IOrganizationContact } from './organization-contact.model';
@@ -24,9 +24,10 @@ export interface IInvite extends IBasePerTenantAndOrganizationEntityModel {
 	departments?: IOrganizationDepartment[];
 	user?: IUser;
 	userId?: IUser['id'];
+	fullName?: string;
 }
 
-export interface IInviteAcceptInput extends IUserRegistrationInput, IUserEmailInput, IUserTokenInput {
+export interface IInviteAcceptInput extends IUserRegistrationInput, IUserEmailInput, IUserTokenInput, IUserCodeInput {
 	inviteId?: string;
 	originalUrl?: string;
 }

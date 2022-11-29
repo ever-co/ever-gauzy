@@ -67,7 +67,7 @@ export class InviteService {
 		);
 	}
 
-	acceptInvite(input: IInviteAcceptInput): Promise<IInvite> {
+	acceptInvite(input: Partial<IInviteAcceptInput>): Promise<IInvite> {
 		return firstValueFrom(
 			this.http.post<IInvite>(`${API_PREFIX}/invite/accept`, input)
 		);
