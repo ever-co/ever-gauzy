@@ -37,11 +37,6 @@ export class Invite extends TenantOrganizationBaseEntity implements IInvite {
 	@Column()
 	token: string;
 
-	@ApiPropertyOptional({ type: () => Number })
-	@Exclude({ toPlainOnly: true })
-	@Column({ nullable: true })
-	public code?: number;
-
 	@ApiProperty({ type: () => String, minLength: 3, maxLength: 100 })
 	@Column()
 	email: string;
@@ -58,6 +53,14 @@ export class Invite extends TenantOrganizationBaseEntity implements IInvite {
 	@Column({ nullable: true })
 	actionDate?: Date;
 
+	@ApiPropertyOptional({ type: () => Number })
+	@Exclude({ toPlainOnly: true })
+	@Column({ nullable: true })
+	public code?: number;
+
+	@ApiPropertyOptional({ type: () => String })
+	@Column({ nullable: true })
+	public fullName?: string;
 	/*
     |--------------------------------------------------------------------------
     | @ManyToOne
