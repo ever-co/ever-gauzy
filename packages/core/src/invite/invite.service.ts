@@ -21,7 +21,7 @@ import {
 } from '@gauzy/contracts';
 import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { sign } from 'jsonwebtoken';
+import { JwtPayload, sign, verify } from 'jsonwebtoken';
 import {
 	FindOptionsWhere,
 	In,
@@ -173,13 +173,15 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 		let ignoreInvites = 0;
 		const invites: Invite[] = [];
 		for await (const email of emailIds) {
-			const token = this.createToken(email);
+			const code = generateRandomInteger(6);
+			const token: string = sign({ email, code }, environment.JWT_SECRET, {});
+
 			const matchedInvites = existedInvites.filter((invite: IInvite) => (invite.email === email));
 
-			const existedTeams: IOrganizationTeam[] = [];
-			for (const invite of matchedInvites) { existedTeams.push(...invite.teams); }
-
 			if (isNotEmpty(matchedInvites)) {
+				const existedTeams: IOrganizationTeam[] = [];
+				for (const invite of matchedInvites) { existedTeams.push(...invite.teams); }
+
 				const needsToInviteTeams = organizationTeams.filter(
 					(item: IOrganizationTeam) => !existedTeams.some(
 						(team: IOrganizationTeam) => team.id === item.id
@@ -200,7 +202,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 						departments:organizationDepartments,
 						organizationContacts,
 						actionDate: startedWorkOn || appliedDate,
-						code: generateRandomInteger(6),
+						code,
 					}));
 				} else {
 					ignoreInvites++;
@@ -220,7 +222,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 					departments:organizationDepartments,
 					organizationContacts,
 					actionDate: startedWorkOn || appliedDate,
-					code: generateRandomInteger(6),
+					code,
 				}));
 			}
 		}
@@ -405,35 +407,48 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 		where: FindOptionsWhere<Invite>
 	): Promise<IInvite> {
 		try {
-			const query = this.repository.createQueryBuilder();
-			query.setFindOptions({
-				select: {
-					id: true,
-					email: true,
-					organization: {
-						name: true
-					}
-				},
-				relations: {
-					organization: true,
-					teams: true
+			const { email, token } = where;
+			const payload: string | JwtPayload = verify(token as string, environment.JWT_SECRET);
+
+			if (typeof payload === 'object' && 'email' in payload) {
+				if (payload.email === email) {
+					const query = this.repository.createQueryBuilder();
+					query.setFindOptions({
+						select: {
+							id: true,
+							email: true,
+							organization: {
+								name: true
+							}
+						},
+						relations: {
+							organization: true
+						}
+					});
+					query.where((qb: SelectQueryBuilder<Invite>) => {
+						qb.andWhere({
+							email,
+							token,
+							status: InviteStatusEnum.INVITED,
+							...(
+								(payload['code']) ? {
+									code: payload['code']
+								} : {}
+							),
+						});
+						qb.andWhere([
+							{
+								expireDate: MoreThanOrEqual(new Date())
+							},
+							{
+								expireDate: IsNull()
+							}
+						]);
+					});
+					return await query.getOneOrFail();
 				}
-			});
-			query.where((qb: SelectQueryBuilder<Invite>) => {
-				qb.andWhere({
-					...where,
-					status: InviteStatusEnum.INVITED
-				});
-				qb.andWhere([
-					{
-						expireDate: MoreThanOrEqual(new Date())
-					},
-					{
-						expireDate: IsNull()
-					}
-				]);
-			});
-			return await query.getOneOrFail();
+            }
+            throw new BadRequestException();
 		} catch (error) {
 			throw new BadRequestException();
 		}
