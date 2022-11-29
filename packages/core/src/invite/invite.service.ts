@@ -412,7 +412,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 
 			if (typeof payload === 'object' && 'email' in payload) {
 				if (payload.email === email) {
-					const query = this.repository.createQueryBuilder();
+					const query = this.repository.createQueryBuilder(this.alias);
 					query.setFindOptions({
 						select: {
 							id: true,
@@ -449,6 +449,45 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 				}
             }
             throw new BadRequestException();
+		} catch (error) {
+			throw new BadRequestException();
+		}
+	}
+
+	async validateByCode(
+		where: FindOptionsWhere<Invite>
+	): Promise<IInvite> {
+		try {
+			const { email, code } = where;
+			const query = this.repository.createQueryBuilder(this.alias);
+			query.setFindOptions({
+				select: {
+					id: true,
+					email: true,
+					organization: {
+						name: true
+					}
+				},
+				relations: {
+					organization: true
+				}
+			});
+			query.where((qb: SelectQueryBuilder<Invite>) => {
+				qb.andWhere({
+					email,
+					code,
+					status: InviteStatusEnum.INVITED
+				});
+				qb.andWhere([
+					{
+						expireDate: MoreThanOrEqual(new Date())
+					},
+					{
+						expireDate: IsNull()
+					}
+				]);
+			});
+			return await query.getOneOrFail();
 		} catch (error) {
 			throw new BadRequestException();
 		}
