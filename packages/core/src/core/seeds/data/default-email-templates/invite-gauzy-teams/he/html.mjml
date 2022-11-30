@@ -22,7 +22,7 @@
 					{{inviteCode}}
 				</mj-button>
 				<mj-text font-size="16px" font-family="helvetica">
-					<p>Kindly click on this link to join the team <a href="https://app.gauzy.team/passcode?email={{email}}&code={{inviteCode}}" style="color: #598bff">Click Here</a></p>
+					<p>Kindly click on this link to join the team <a href="{{inviteLink}}" style="color: #598bff">Click Here</a></p>
 				</mj-text>
                 <mj-text font-size="16px" font-family="helvetica">
 					<p>Best regards,</p>
