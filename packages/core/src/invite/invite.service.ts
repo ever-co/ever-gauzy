@@ -268,7 +268,8 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 					invitedBy,
 					organization,
 					inviteCode: item.code,
-					inviteLink
+					inviteLink,
+					originUrl
 				});
 			}
 		});

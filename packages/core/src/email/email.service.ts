@@ -385,7 +385,7 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 	 * @param invite
 	 */
 	async inviteTeamMember(invite: IInviteTeamMemberModel) {
-		const { email, organization, languageCode, invitedBy, teams, inviteCode, inviteLink } = invite;
+		const { email, organization, languageCode, invitedBy, teams, inviteCode, inviteLink, originUrl } = invite;
 		const { id: organizationId } = organization;
 		const tenantId = RequestContext.currentTenantId();
 
@@ -402,6 +402,7 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 				teams,
 				inviteLink,
 				locale: languageCode,
+				host: originUrl || env.clientBaseUrl
 			}
 		};
 		try {
