@@ -28,6 +28,10 @@ export class DesktopDialog implements IDesktopDialog {
 		this._window = window
 	}
 
+    get browserWindow(): BrowserWindow {
+        return this._window;
+    }
+
 	/**
 	 * Show dialog box with message over window
 	 */

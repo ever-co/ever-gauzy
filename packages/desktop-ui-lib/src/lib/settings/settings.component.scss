@@ -251,3 +251,17 @@
     }
   }
 }
+
+.file{
+  gap: 5px;
+}
+
+.file-uri {
+  width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+  font-size: 13px;
+  color: var(--text-primary-color);
+}

@@ -168,12 +168,15 @@ export function ipcTimer(
 	windowPath,
 	soundPath
 ) {
-	const powerManager = new DesktopPowerManager(timeTrackerWindow);
-	const powerManagerPreventSleep = new PowerManagerPreventDisplaySleep(powerManager);
-	const powerManagerDetectInactivity = new PowerManagerDetectInactivity(powerManager);
-	new DesktopOsInactivityHandler(powerManagerDetectInactivity);
+	let powerManager;
+	let powerManagerPreventSleep;
+	let powerManagerDetectInactivity;
 
 	ipcMain.on('start_timer', (event, arg) => {
+		powerManager = new DesktopPowerManager(timeTrackerWindow);
+		powerManagerPreventSleep = new PowerManagerPreventDisplaySleep(powerManager);
+		powerManagerDetectInactivity = new PowerManagerDetectInactivity(powerManager);
+		new DesktopOsInactivityHandler(powerManagerDetectInactivity);
 		const setting = LocalStore.getStore('appSetting');
 		log.info(`Timer Start: ${moment().format()}`);
 		store.set({
