@@ -458,6 +458,12 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 		}
 	}
 
+	/**
+	 * Validate invited by code
+	 *
+	 * @param where
+	 * @returns
+	 */
 	async validateByCode(
 		where: FindOptionsWhere<Invite>
 	): Promise<IInvite> {

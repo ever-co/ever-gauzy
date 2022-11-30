@@ -10,6 +10,7 @@ import { IOrganizationTeam } from './organization-team-model';
 
 export interface IInvite extends IBasePerTenantAndOrganizationEntityModel {
 	token: string;
+	code?: number;
 	email: string;
 	roleId: string;
 	invitedById: string;

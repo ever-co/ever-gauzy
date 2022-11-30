@@ -99,7 +99,9 @@ export class Invite extends TenantOrganizationBaseEntity implements IInvite {
 	 * Invites belongs to user
 	 */
 	@ApiPropertyOptional({ type: () => Role })
-	@ManyToOne(() => User, (it) => it.invites)
+	@ManyToOne(() => User, (it) => it.invites, {
+		onDelete: "SET NULL"
+	})
 	@JoinColumn()
 	user?: IUser;
 
@@ -153,6 +155,4 @@ export class Invite extends TenantOrganizationBaseEntity implements IInvite {
 		name: 'invite_organization_team'
 	})
 	teams?: IOrganizationTeam[];
-
-
 }
