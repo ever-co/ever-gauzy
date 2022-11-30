@@ -1,11 +1,11 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { IInvite, IUserRegistrationInput } from '@gauzy/contracts';
+import { IAuthResponse, IInvite, IUserRegistrationInput } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { SetLanguageBaseComponent } from '../../@shared/language-base/set-language-base.component';
 import { tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { InviteService, ToastrService } from '../../@core/services';
+import { InviteService, Store, ToastrService } from '../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -25,9 +25,10 @@ export class AcceptInvitePage
 		private readonly toastrService: ToastrService,
 		private readonly inviteService: InviteService,
 		private readonly route: ActivatedRoute,
-		private readonly translate: TranslateService
+		public readonly translateService: TranslateService,
+		private readonly store: Store,
 	) {
-		super(translate);
+		super(translateService);
 	}
 
 	ngOnInit(): void {
@@ -65,19 +66,30 @@ export class AcceptInvitePage
 			 */
 			const token = this.route.snapshot.queryParamMap.get('token');
 			const email = this.route.snapshot.queryParamMap.get('email');
-
 			/**
-			 * Accept Invite
+			 * If invite has successfully accepted, then login user automatically
 			 */
-			await this.inviteService.acceptInvite({
-				user,
-				password,
-				token,
-				email
-			}).then(() => {
-				this.toastrService.success('TOASTR.MESSAGE.PROFILE_UPDATED');
+			try {
+				/**
+				 * Accept Invite
+				 */
+				const auth: IAuthResponse = await this.inviteService.acceptInvite({
+					user,
+					password,
+					token,
+					email
+				});
+				if ('user' in auth && 'token' in auth) {
+					const { user, token, refresh_token } = auth;
+					this.store.userId = user.id;
+					this.store.token = token;
+					this.store.refresh_token = refresh_token;
+
+					this.router.navigate(['/']);
+				}
+			} catch (error) {
 				this.router.navigate(['/auth/login']);
-			});
+			}
 		} catch (error) {
 			this.toastrService.danger(
 				error,

@@ -79,7 +79,8 @@ export class EmailTemplateGeneratePreviewHandler
 			task_update_project: 'Gauzy Project',
 			task_update_assign_by: 'Ruslan Konviser',
 			task_update_url: 'https://github.com/ever-co/ever-gauzy/issues/1688',
-			inviteCode: generateRandomInteger(6)
+			inviteCode: generateRandomInteger(6),
+			teams: 'Gauzy Team'
 		});
 		return { html };
 	}

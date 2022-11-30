@@ -8,7 +8,8 @@ import {
 	ComponentLayoutStyleEnum,
 	ITag,
 	IEmployee,
-	IOrganization
+	IOrganization,
+	IInvite
 } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Exclude } from 'class-transformer';
@@ -26,6 +27,7 @@ import {
 } from 'typeorm';
 import {
 	Employee,
+	Invite,
 	Role,
 	Tag,
 	TenantBaseEntity,
@@ -177,4 +179,10 @@ export class User extends TenantBaseEntity implements IUser {
 	})
 	@JoinColumn()
 	organizations?: IOrganization[];
+
+	/**
+	 * User belongs to invites
+	 */
+	@OneToMany(() => Invite, (it) => it.user)
+	invites?: IInvite[];
 }

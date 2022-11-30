@@ -33,7 +33,7 @@ export const createDefaultEmailTemplates = async (
 			: path.resolve('.', ...templatePath.slice(2));
 
 		findInDir(FOLDER_PATH, files);
-
+		console.log(files);
 		await fileToTemplate(dataSource, files);
 	} catch (error) {
 		// it's not a big issue for now if we can't create email templates
