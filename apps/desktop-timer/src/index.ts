@@ -71,14 +71,9 @@ import {
 	LocalStore,
 	DataModel,
 	AppMenu,
+	DesktopUpdater,
 	removeMainListener,
-	removeTimerListener,
-	DesktopDialog,
-	DialogConfirmUpgradeDownload,
-	DialogConfirmInstallDownload,
-	UpdateContext,
-	CdnUpdate,
-	DigitalOceanCdn
+	removeTimerListener
 } from '@gauzy/desktop-libs';
 import {
 	createSetupWindow,
@@ -88,7 +83,7 @@ import {
 	createImageViewerWindow
 } from '@gauzy/desktop-window';
 import { fork } from 'child_process';
-import { autoUpdater, UpdateInfo } from 'electron-updater';
+import { autoUpdater } from 'electron-updater';
 import { initSentry } from './sentry';
 
 // Can be like this: import fetch from '@gauzy/desktop-libs' for v3 of node-fetch;
@@ -128,7 +123,11 @@ const store = new Store();
 const args = process.argv.slice(1);
 const notificationWindow: BrowserWindow = null;
 const serverGauzy = null;
-
+const updater = new DesktopUpdater({
+	repository: 'ever-gauzy-desktop-timer',
+	owner: 'ever-co',
+	typeRelease: 'releases'
+});
 args.some((val) => val === '--serve');
 let gauzyWindow: BrowserWindow = null;
 let setupWindow: BrowserWindow = null;
@@ -143,7 +142,6 @@ let dialogErr = false;
 let willQuit = true;
 let serverDesktop = null;
 let popupWin: BrowserWindow | null = null;
-let updateContext;
 
 console.log(
 	'Time Tracker UI Render Path:',
@@ -156,12 +154,12 @@ const pathWindow = {
 
 LocalStore.setFilePath({
 	iconPath: path.join(__dirname, 'icons', 'icon.png')
-})
+});
 // Instance detection
 const gotTheLock = app.requestSingleInstanceLock();
 
 if (!gotTheLock) {
-	app.quit()
+	app.quit();
 } else {
 	app.on('second-instance', () => {
 		// if someone tried to run a second instance, we should focus our window and show warning message.
@@ -169,7 +167,7 @@ if (!gotTheLock) {
 			if (gauzyWindow.isMinimized()) gauzyWindow.restore();
 			gauzyWindow.focus();
 		}
-	})
+	});
 }
 
 async function startServer(value, restart = false) {
@@ -253,7 +251,6 @@ async function startServer(value, restart = false) {
 	return true;
 }
 
-
 const getApiBaseUrl = (configs) => {
 	if (configs.serverUrl) return configs.serverUrl;
 	else {
@@ -270,24 +267,6 @@ const getApiBaseUrl = (configs) => {
 // More details at https://github.com/electron/electron/issues/15947
 
 app.on('ready', async () => {
-	// Set default update context strategy with digital Ocean CDN
-	updateContext = new UpdateContext();
-	updateContext.strategy = new DigitalOceanCdn(
-		new CdnUpdate({
-			repository: 'ever-gauzy-desktop-timer',
-			owner: 'ever-co',
-			typeRelease: 'releases'
-		})
-	);
-	// require(path.join(__dirname, 'desktop-api/main.js'));
-	/* set menu */
-	setTimeout(async () => {
-		try {
-			updateContext.checkUpdate();
-		} catch (e) {
-			console.log('Error on checking update:', e);
-		}
-	}, 5000);
 	const configs: any = store.get('configs');
 	const settings: any = store.get('appSetting');
 	const autoLaunch: boolean =
@@ -348,6 +327,10 @@ app.on('ready', async () => {
 		);
 		setupWindow.show();
 	}
+
+	updater.settingWindow = settingsWindow;
+	updater.gauzyWindow = gauzyWindow;
+	updater.checkUpdate();
 
 	removeMainListener();
 	ipcMainHandler(store, startServer, knex, { ...environment }, timeTrackerWindow);
@@ -427,7 +410,7 @@ ipcMain.on('restart_app', (event, arg) => {
 
 ipcMain.on('save_additional_setting', (event, arg) => {
 	LocalStore.updateAdditionalSetting(arg);
-})
+});
 
 ipcMain.on('server_already_start', () => {
 	if (!gauzyWindow && !isAlreadyRun) {
@@ -439,72 +422,6 @@ ipcMain.on('server_already_start', () => {
 
 ipcMain.on('open_browser', async (event, arg) => {
 	await shell.openExternal(arg.url);
-});
-
-ipcMain.on('check_for_update', () => {
-	updateContext.checkUpdate();
-});
-
-ipcMain.on('download_update', () => {
-	updateContext.update();
-});
-
-autoUpdater.once('update-available', () => {
-	const setting = LocalStore.getStore('appSetting');
-	settingsWindow.webContents.send('update_available');
-	if (setting && !setting.automaticUpdate) return;
-	const dialog = new DialogConfirmUpgradeDownload(
-		new DesktopDialog(
-			'Gauzy',
-			'Update Ready to Download',
-			gauzyWindow
-		)
-	);
-	dialog.show().then(async (button) => {
-		if (button.response === 0) {
-			updateContext.update();
-		}
-	});
-});
-
-autoUpdater.on('update-downloaded', () => {
-	const setting = LocalStore.getStore('appSetting');
-	settingsWindow.webContents.send('update_downloaded');
-	if (setting && !setting.automaticUpdate) return;
-	const dialog = new DialogConfirmInstallDownload(
-		new DesktopDialog(
-			'Gauzy',
-			'Update Ready to Install',
-			gauzyWindow
-		)
-	);
-	dialog.show().then((button) => {
-		if (button.response === 0) autoUpdater.quitAndInstall();
-	})
-});
-
-autoUpdater.on('update-available', (info: UpdateInfo) => {
-	updateContext.notify(info);
-})
-
-autoUpdater.requestHeaders = {
-	'Cache-Control':
-		'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0'
-};
-
-autoUpdater.on('update-not-available', () => {
-	settingsWindow.webContents.send('update_not_available');
-});
-
-autoUpdater.on('download-progress', (event) => {
-	console.log('update log', event);
-	if (settingsWindow) {
-		settingsWindow.webContents.send('download_on_progress', event);
-	}
-});
-
-autoUpdater.on('error', (e) => {
-	settingsWindow.webContents.send('error_update', e);
 });
 
 ipcMain.on('restart_and_update', () => {
@@ -564,10 +481,6 @@ ipcMain.on('minimize_on_startup', (event, arg) => {
 	launchAtStartup(arg.autoLaunch, arg.hidden);
 });
 
-autoUpdater.on('error', () => {
-	console.log('error');
-});
-
 app.on('activate', () => {
 	if (gauzyWindow) {
 		if (LocalStore.getStore('configs').gauzyWindow) {
@@ -603,7 +516,7 @@ app.on('before-quit', (e) => {
 	} else {
 		// soft download cancellation
 		try {
-			updateContext.cancel();
+			updater.cancel();
 		} catch (e) { }
 		app.exit(0);
 		if (serverDesktop) serverDesktop.kill();
