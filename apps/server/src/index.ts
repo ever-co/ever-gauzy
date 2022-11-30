@@ -22,12 +22,7 @@ import {
 	LocalStore,
 	apiServer,
 	AppMenu,
-	DesktopDialog,
-	DialogConfirmUpgradeDownload,
-	DialogConfirmInstallDownload,
-	UpdateContext,
-	CdnUpdate,
-	DigitalOceanCdn
+	DesktopUpdater
 } from '@gauzy/desktop-libs';
 import {
 	createSetupWindow,
@@ -38,7 +33,6 @@ import {
 import { readFileSync, writeFileSync, accessSync, constants } from 'fs';
 import * as remoteMain from '@electron/remote/main';
 import { autoUpdater } from 'electron-updater';
-import { UpdateInfo } from "builder-util-runtime";
 remoteMain.initialize();
 
 // the folder where all app data will be stored (e.g. sqlite DB, settings, cache, etc)
@@ -57,7 +51,12 @@ let serverWindow:BrowserWindow;
 let settingsWindow: BrowserWindow;
 let tray:Tray;
 let isServerRun: boolean;
-let updateContext;
+
+const updater = new DesktopUpdater({
+	repository: 'ever-gauzy-server',
+	owner: 'ever-co',
+	typeRelease: 'releases'
+});
 
 const pathWindow: {
 	gauzyUi: string,
@@ -324,22 +323,6 @@ ipcMain.on('stop_gauzy_server', (event, arg) => {
 })
 
 app.on('ready', () => {
-	// Set default update context strategy with digital Ocean CDN
-	updateContext = new UpdateContext();
-	updateContext.strategy = new DigitalOceanCdn(
-		new CdnUpdate({
-			repository: 'ever-gauzy-server',
-			owner: 'ever-co',
-			typeRelease: 'releases'
-		})
-	);
-	setTimeout(async () => {
-		try {
-			updateContext.checkUpdate();
-		} catch (e) {
-			console.log('Error on checking update:', e);
-		}
-	}, 5000);
 	LocalStore.setDefaultApplicationSetting();
 	if (!settingsWindow) {
 		settingsWindow = createSettingsWindow(
@@ -348,6 +331,9 @@ app.on('ready', () => {
 		);
 	}
 	appState();
+	updater.settingWindow = settingsWindow;
+	updater.gauzyWindow = serverWindow;
+	updater.checkUpdate();
 })
 
 ipcMain.on('restart_app', (event, arg) => {
@@ -466,7 +452,7 @@ app.on('before-quit', (e) => {
 	e.preventDefault();
 	// soft download cancellation
 	try {
-		updateContext.cancel();
+		updater.cancel();
 	} catch (e) { }
 	app.exit(0);
 });
@@ -475,72 +461,6 @@ app.on('window-all-closed', quit);
 
 app.commandLine.appendSwitch('disable-http2');
 
-autoUpdater.on('error', () => {
-	console.log('error');
-});
-
-ipcMain.on('check_for_update', () => {
-	updateContext.checkUpdate();
-});
-
-ipcMain.on('download_update', () => {
-	updateContext.update();
-});
-
-autoUpdater.once('update-available', () => {
-	const setting = LocalStore.getStore('appSetting');
-	settingsWindow.webContents.send('update_available');
-	if(setting && !setting.automaticUpdate) return;
-	const dialog = new DialogConfirmUpgradeDownload(
-		new DesktopDialog(
-			'Gauzy',
-			'Update Ready to Download',
-			serverWindow
-		)
-	);
-	dialog.show().then(async (button) => {
-		if (button.response === 0) {
-			updateContext.update();
-		}
-	});
-});
-
-autoUpdater.on('update-downloaded', () => {
-	const setting = LocalStore.getStore('appSetting');
-	settingsWindow.webContents.send('update_downloaded');
-	if(setting && !setting.automaticUpdate) return;
-	const dialog = new DialogConfirmInstallDownload(
-		new DesktopDialog(
-			'Gauzy',
-			'Update Ready to Install',
-			serverWindow
-		)
-	);
-	dialog.show().then((button) => {
-		if (button.response === 0) autoUpdater.quitAndInstall();
-	  })
-});
-
-autoUpdater.on('update-available', (info: UpdateInfo) => {
-	updateContext.notify(info);
-})
-
-autoUpdater.requestHeaders = {
-	'Cache-Control':
-		'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0'
-};
-
-autoUpdater.on('update-not-available', () => {
-	settingsWindow.webContents.send('update_not_available');
-});
-
-autoUpdater.on('download-progress', (event) => {
-	console.log('update log', event);
-	if (settingsWindow) {
-		settingsWindow.webContents.send('download_on_progress', event);
-	}
-});
-
-autoUpdater.on('error', (e) => {
-	settingsWindow.webContents.send('error_update', e);
+ipcMain.on('update_app_setting', (event, arg) => {
+	LocalStore.updateApplicationSetting(arg.values);
 });
