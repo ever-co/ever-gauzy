@@ -12,6 +12,7 @@ import {
 	IUser
 } from '@gauzy/contracts';
 import { AuthService } from '../../../auth/auth.service';
+import { UserService } from './../../../user/user.service';
 import { InviteService } from '../../invite.service';
 import { InviteAcceptEmployeeCommand } from '../invite.accept-employee.command';
 import {
@@ -24,6 +25,7 @@ import {
 	OrganizationTeamEmployee,
 	User
 } from './../../../core/entities/internal';
+import { BadRequestException } from '@nestjs/common';
 
 /**
  * Use this command for registering employees.
@@ -47,7 +49,7 @@ export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAccept
 
 	public async execute(
 		command: InviteAcceptEmployeeCommand
-	): Promise<UpdateResult | IInvite> {
+	): Promise<IUser> {
 		const { input, languageCode } = command;
 		const { inviteId } = input;
 
@@ -81,13 +83,16 @@ export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAccept
 		let user: IUser;
 		try {
 			const { tenantId, email } = invite;
-			user = await this.userRepository.findOne({
+			user = await this.userRepository.findOneOrFail({
 				where: {
 					email,
 					tenantId
 				},
 				relations: {
 					employee: true
+				},
+				order: {
+					createdAt: 'DESC'
 				}
 			});
 			await this.updateEmployeeMemberships(invite, user.employee);
@@ -122,10 +127,12 @@ export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAccept
 		}
 
 		const { id } = user;
-		return await this.inviteService.update(inviteId, {
+		await this.inviteService.update(inviteId, {
 			status: InviteStatusEnum.ACCEPTED,
 			userId: id
 		});
+
+		return user;
 	}
 
 	/**

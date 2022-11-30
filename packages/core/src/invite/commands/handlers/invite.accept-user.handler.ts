@@ -1,7 +1,7 @@
-import { IInvite, InviteStatusEnum, IUser } from '@gauzy/contracts';
+import { InviteStatusEnum, IUser } from '@gauzy/contracts';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, UpdateResult } from 'typeorm';
+import { Repository } from 'typeorm';
 import { AuthService } from '../../../auth/auth.service';
 import { InviteService } from '../../invite.service';
 import { InviteAcceptUserCommand } from '../invite.accept-user.command';
@@ -14,8 +14,8 @@ import { User } from './../../../core/entities/internal';
  * If the above two steps are successful, it finally sets the invitation status to accepted
  */
 @CommandHandler(InviteAcceptUserCommand)
-export class InviteAcceptUserHandler
-	implements ICommandHandler<InviteAcceptUserCommand> {
+export class InviteAcceptUserHandler implements ICommandHandler<InviteAcceptUserCommand> {
+
 	constructor(
 		@InjectRepository(User) private readonly userRepository: Repository<User>,
 		private readonly inviteService: InviteService,
@@ -25,7 +25,7 @@ export class InviteAcceptUserHandler
 
 	public async execute(
 		command: InviteAcceptUserCommand
-	): Promise<UpdateResult | IInvite> {
+	): Promise<IUser> {
 		const { input, languageCode } = command;
 		const { inviteId } = input;
 
@@ -46,10 +46,13 @@ export class InviteAcceptUserHandler
 		let user: IUser;
 		try {
 			const { tenantId, email } = invite;
-			user = await this.userRepository.findOne({
+			user = await this.userRepository.findOneOrFail({
 				where: {
 					email,
 					tenantId
+				},
+				order: {
+					createdAt: 'DESC'
 				}
 			});
 		} catch (error) {
@@ -65,10 +68,13 @@ export class InviteAcceptUserHandler
 				languageCode
 			);
 		}
+
 		const { id } = user;
-		return await this.inviteService.update(inviteId, {
+		await this.inviteService.update(inviteId, {
 			status: InviteStatusEnum.ACCEPTED,
 			userId: id
 		});
+
+		return user;
 	}
 }
