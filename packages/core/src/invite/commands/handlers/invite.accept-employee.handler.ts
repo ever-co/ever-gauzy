@@ -1,6 +1,6 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, UpdateResult } from 'typeorm';
+import { Repository } from 'typeorm';
 import {
 	IEmployee,
 	IInvite,
@@ -12,7 +12,6 @@ import {
 	IUser
 } from '@gauzy/contracts';
 import { AuthService } from '../../../auth/auth.service';
-import { UserService } from './../../../user/user.service';
 import { InviteService } from '../../invite.service';
 import { InviteAcceptEmployeeCommand } from '../invite.accept-employee.command';
 import {
@@ -25,7 +24,6 @@ import {
 	OrganizationTeamEmployee,
 	User
 } from './../../../core/entities/internal';
-import { BadRequestException } from '@nestjs/common';
 
 /**
  * Use this command for registering employees.
