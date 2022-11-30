@@ -26,6 +26,7 @@ export interface IInvite extends IBasePerTenantAndOrganizationEntityModel {
 	user?: IUser;
 	userId?: IUser['id'];
 	fullName?: string;
+
 }
 
 export interface IInviteAcceptInput extends IUserRegistrationInput, IUserEmailInput, IUserTokenInput, IUserCodeInput {
@@ -56,6 +57,7 @@ export interface ICreateEmailInvitesInput extends IBasePerTenantAndOrganizationE
 	appliedDate?: Date;
 	invitationExpirationPeriod?: number | string;
 	fullName?: string;
+	[x: string]: any;
 }
 
 export interface ICreateOrganizationContactInviteInput
@@ -144,12 +146,12 @@ export interface IInviteEmployeeModel
 	originUrl?: string;
 }
 
-export interface IInviteTeamMemberModel extends IBasePerTenantAndOrganizationEntityModel {
-	email: string;
+export interface IInviteTeamMemberModel extends IBasePerTenantAndOrganizationEntityModel, IUserEmailInput {
 	languageCode: LanguagesEnum;
 	invitedBy: IUser;
 	teams: string;
 	inviteCode: number;
+	[x: string]: any;
 }
 
 export interface IJoinEmployeeModel extends IBasePerTenantAndOrganizationEntityModel {
