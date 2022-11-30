@@ -49,8 +49,15 @@ import {
 	InviteOrganizationContactCommand,
 	InviteResendCommand
 } from './commands';
-import { CreateInviteDTO, ValidateInviteQueryDTO } from './dto';
-import { FindPublicInviteByEmailTokenQuery } from './queries';
+import {
+	CreateInviteDTO,
+	ValidateInviteByCodeQueryDTO,
+	ValidateInviteQueryDTO
+} from './dto';
+import {
+	FindInviteByEmailCodeQuery,
+	FindInviteByEmailTokenQuery
+} from './queries';
 
 @ApiTags('Invite')
 @Controller()
@@ -75,7 +82,7 @@ export class InviteController {
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_INVITE_EDIT)
 	@Post('/emails')
-	@UsePipes(new ValidationPipe({ transform: true }))
+	@UsePipes(new ValidationPipe())
 	async createManyWithEmailsId(
 		@Body() entity: CreateInviteDTO,
 		@LanguageDecorator() languageCode: LanguagesEnum
@@ -88,6 +95,12 @@ export class InviteController {
 		);
 	}
 
+	/**
+	 * Validate invite by token and email
+	 *
+	 * @param options
+	 * @returns
+	 */
 	@ApiOperation({ summary: 'Get invite.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -100,14 +113,34 @@ export class InviteController {
 	})
 	@Public()
 	@Get('validate')
-	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
-	async validateInvite(
+	@UsePipes(new ValidationPipe({ whitelist: true }))
+	async validateInviteByToken(
 		@Query() options: ValidateInviteQueryDTO
 	) {
 		return await this.queryBus.execute(
-			new FindPublicInviteByEmailTokenQuery({
+			new FindInviteByEmailTokenQuery({
 				email: options.email,
 				token: options.token
+			})
+		);
+	}
+
+	/**
+	 * Validate invite by code and email
+	 *
+	 * @param body
+	 * @returns
+	 */
+	@Public()
+	@Post('validate-by-code')
+	@UsePipes(new ValidationPipe({ whitelist: true }))
+	async validateInviteByCode(
+		@Body() body: ValidateInviteByCodeQueryDTO
+	) {
+		return await this.queryBus.execute(
+			new FindInviteByEmailCodeQuery({
+				email: body.email,
+				code: body.code
 			})
 		);
 	}
