@@ -32,4 +32,7 @@ import { TenantOrganizationBaseDTO } from "./../../core/dto";
     @ApiPropertyOptional({ type: () => String })
     @IsOptional()
     readonly fullName: string;
+
+    @ApiPropertyOptional({ type: () => String })
+    readonly callbackUrl: string;
 }

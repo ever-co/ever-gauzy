@@ -86,7 +86,8 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 			startedWorkOn,
 			appliedDate,
 			invitationExpirationPeriod,
-			fullName
+			fullName,
+			callbackUrl
 		} = emailInvites;
 
 		const organizationProjects: IOrganizationProject[] = await this.organizationProjectService.find({
@@ -254,13 +255,20 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 					invitedBy
 				});
 			} else if (emailInvites.inviteType === InvitationTypeEnum.TEAM) {
+				let inviteLink: string;
+				if (callbackUrl) {
+					inviteLink = `${callbackUrl}?email=${item.email}&code=${item.code}`
+				} else {
+					inviteLink = `${registerUrl}`;
+				}
 				this.emailService.inviteTeamMember({
 					email: item.email,
 					teams: item.teams.map((team: IOrganizationTeam) => team.name).join(', '),
 					languageCode,
 					invitedBy,
 					organization,
-					inviteCode: item.code
+					inviteCode: item.code,
+					inviteLink
 				});
 			}
 		});
