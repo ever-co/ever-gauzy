@@ -1,4 +1,4 @@
-import { MessageBoxOptions } from 'electron';
+import { BrowserWindow, MessageBoxOptions } from 'electron';
 import { IDesktopDialog } from '../../interfaces';
 
 
@@ -8,6 +8,10 @@ export abstract class BaseDesktopDialogDecorator implements IDesktopDialog {
 	constructor(dialog: IDesktopDialog) {
 		this._dialogWrapper = dialog;
 	}
+
+    public get browserWindow(): BrowserWindow {
+        return this._dialogWrapper.browserWindow;
+    }
 
 	public get options(): MessageBoxOptions {
 		return this._dialogWrapper.options;

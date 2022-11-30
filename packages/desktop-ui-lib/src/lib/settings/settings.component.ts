@@ -366,6 +366,8 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	private _loading$ : BehaviorSubject<boolean>;
 	private _automaticUpdate$: BehaviorSubject<boolean>;
 	private _notAvailable$: BehaviorSubject<boolean>;
+	private _updaterServer$: BehaviorSubject<any>;
+	private _file$: BehaviorSubject<any>; 
 
 	constructor(
 		private electronService: ElectronService,
@@ -376,6 +378,12 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		this._loading$ = new BehaviorSubject(false);
 		this._automaticUpdate$ = new BehaviorSubject(false);
 		this._notAvailable$ = new BehaviorSubject(false);
+		this._file$ = new BehaviorSubject({uri: null});
+		this._updaterServer$ = new BehaviorSubject({
+			github: false,
+			digitalOcean: true,
+			local: false
+		});
 	}
 
 	ngOnInit(): void {
@@ -404,7 +412,11 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				this.autoLaunch = setting.autoLaunch;
 				this.minimizeOnStartup = setting.minimizeOnStartup;
 				this._automaticUpdate$.next(setting.automaticUpdate);
-
+				this._updaterServer$ = new BehaviorSubject({
+					github: setting.cdnUpdater.github,
+					digitalOcean: setting.cdnUpdater.digitalOcean,
+					local: false
+				});
 				this.selectPeriod(setting.timer.updatePeriod);
 				if (this.appName !== 'gauzy-server') {
 					this.getUserDetails();
@@ -531,6 +543,12 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				this.serverIsRunning = arg;
 			})
 		);
+
+		this.electronService.ipcRenderer.on('update_files_directory', (event, arg) => {
+			this._ngZone.run(() => {
+				this._file$.next(arg);
+			})
+		} )
 	}
 
 	mappingAdditionalSetting(values) {
@@ -812,5 +830,46 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		this._loading$.next(true);
 		this.logIsOpen = true;
 		this.electronService.ipcRenderer.send('download_update');
+	}
+
+	public selectDirectory() {
+		this.electronService.ipcRenderer.send('update_locally');
+	}
+
+	public get updaterServer$(): Observable<any> {
+		return this._updaterServer$.asObservable();
+	}
+
+	public get file$(): Observable<any> {
+		return this._file$.asObservable();
+	}
+
+	public toggleGithubDefaultServer(event: boolean) {
+		this._updaterServer$.next({
+			github: event,
+			digitalOcean: !event,
+			local: false
+		})
+		this.updateSetting(this._updaterServer$.getValue(), 'cdnUpdater');
+		this.electronService.ipcRenderer.send('change_update_strategy', this._updaterServer$.getValue());
+	}
+
+	public toggleDigitalOceanDefaultServer(event: boolean) {
+		this._updaterServer$.next({
+			github: !event,
+			digitalOcean: event,
+			local: false
+		});
+		this.updateSetting(this._updaterServer$.getValue(), 'cdnUpdater');
+		this.electronService.ipcRenderer.send('change_update_strategy', this._updaterServer$.getValue());
+	}
+
+	public toggleLocalServer(event: boolean) {
+		this._file$.next({});
+		this._updaterServer$.next({
+			...this._updaterServer$.getValue(),
+			local: event
+		});
+		this.electronService.ipcRenderer.send('change_update_strategy', this._updaterServer$.getValue());
 	}
 }

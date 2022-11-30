@@ -3,9 +3,9 @@ import { UpdateStrategy } from '../abstracts/update-strategy';
 
 export class LocalUpdate extends UpdateStrategy implements IDesktopUpdate {
     public get url(): string {
-        throw new Error('Method not implemented.');
+        return this._url;
     }
     public set url(value: string) {
-        throw new Error('Method not implemented.');
+        this._url = value;
     }
 }

@@ -22,10 +22,7 @@ import {
 	LocalStore,
 	apiServer,
 	AppMenu,
-	appUpdateNotification,
-	DesktopDialog,
-	DialogConfirmUpgradeDownload,
-	DialogConfirmInstallDownload
+	DesktopUpdater
 } from '@gauzy/desktop-libs';
 import {
 	createSetupWindow,
@@ -36,8 +33,6 @@ import {
 import { readFileSync, writeFileSync, accessSync, constants } from 'fs';
 import * as remoteMain from '@electron/remote/main';
 import { autoUpdater } from 'electron-updater';
-import { CancellationToken } from "builder-util-runtime";
-import fetch from 'node-fetch';
 remoteMain.initialize();
 
 // the folder where all app data will be stored (e.g. sqlite DB, settings, cache, etc)
@@ -56,8 +51,12 @@ let serverWindow:BrowserWindow;
 let settingsWindow: BrowserWindow;
 let tray:Tray;
 let isServerRun: boolean;
-let cancellationToken;
-let isDownloadTriggered: boolean = false;
+
+const updater = new DesktopUpdater({
+	repository: 'ever-gauzy-server',
+	owner: 'ever-co',
+	typeRelease: 'releases'
+});
 
 const pathWindow: {
 	gauzyUi: string,
@@ -319,23 +318,11 @@ const stopServer = (isRestart) => {
 	
 }
 
-
-try {
-	cancellationToken = new CancellationToken();
-} catch (error) {}
-
 ipcMain.on('stop_gauzy_server', (event, arg) => {
 	stopServer(false);
 })
 
 app.on('ready', () => {
-	setTimeout(async () => {
-		try {
-			await checkForUpdateNotify();
-		} catch (e) {
-			console.log('Error on checking update:', e);
-		}
-	}, 5000);
 	LocalStore.setDefaultApplicationSetting();
 	if (!settingsWindow) {
 		settingsWindow = createSettingsWindow(
@@ -344,6 +331,9 @@ app.on('ready', () => {
 		);
 	}
 	appState();
+	updater.settingWindow = settingsWindow;
+	updater.gauzyWindow = serverWindow;
+	updater.checkUpdate();
 })
 
 ipcMain.on('restart_app', (event, arg) => {
@@ -460,6 +450,10 @@ ipcMain.on('restart_and_update', () => {
 
 app.on('before-quit', (e) => {
 	e.preventDefault();
+	// soft download cancellation
+	try {
+		updater.cancel();
+	} catch (e) { }
 	app.exit(0);
 });
 
@@ -467,118 +461,6 @@ app.on('window-all-closed', quit);
 
 app.commandLine.appendSwitch('disable-http2');
 
-async function checkForUpdateNotify() {
-	const updateFeedUrl = await getUpdaterConfig();
-	await appUpdateNotification(updateFeedUrl);
-}
-
-async function getUpdaterConfig() {
-	const updaterConfig = {
-		repo: 'ever-gauzy-server',
-		owner: 'ever-co',
-		typeRelease: 'releases'
-	};
-	let latestReleaseTag = null;
-	try {
-		latestReleaseTag = await fetch(
-			`https://github.com/${updaterConfig.owner}/${updaterConfig.repo}/${updaterConfig.typeRelease}/latest`,
-			{
-				method: 'GET',
-				headers: {
-					Accept: 'application/json'
-				}
-			}
-		).then((res) => res.json());
-	} catch (error) {
-		console.log('Error', error);
-	}
-	if (latestReleaseTag) {
-		return `https://github.com/${updaterConfig.owner}/${updaterConfig.repo}/${updaterConfig.typeRelease}/download/${latestReleaseTag.tag_name}`;
-	}
-	return null;
-}
-
-const checkUpdate = async () => {
-	autoUpdater.autoDownload = !isDownloadTriggered;
-	const updateFeedUrl = await getUpdaterConfig();
-	if (updateFeedUrl) {
-		autoUpdater.setFeedURL({
-			channel: 'latest',
-			provider: 'generic',
-			url: updateFeedUrl
-		});
-		autoUpdater.checkForUpdatesAndNotify().then((downloadPromise) => {
-			if (cancellationToken){
-				cancellationToken = downloadPromise.cancellationToken;
-			}else {
-				 isDownloadTriggered = true;
-			}
-		}).catch((e) => {
-			console.log('Error occurred', e);
-		});
-	} else {
-		settingsWindow.webContents.send('error_update');
-	}
-}
-
-autoUpdater.on('error', () => {
-	console.log('error');
-});
-
-ipcMain.on('check_for_update', async () => {
-	await checkUpdate();
-});
-
-autoUpdater.once('update-available', () => {
-	const setting = LocalStore.getStore('appSetting');
-	settingsWindow.webContents.send('update_available');
-	if(setting && !setting.automaticUpdate) return;
-	const dialog = new DialogConfirmUpgradeDownload(
-		new DesktopDialog(
-			'Gauzy',
-			'Update Ready to Download',
-			serverWindow
-		)
-	);
-	dialog.show().then(async (button) => {
-		if (button.response === 0) {
-			await checkUpdate();
-		}
-	});
-});
-
-autoUpdater.on('update-downloaded', () => {
-	const setting = LocalStore.getStore('appSetting');
-	settingsWindow.webContents.send('update_downloaded');
-	if(setting && !setting.automaticUpdate) return;
-	const dialog = new DialogConfirmInstallDownload(
-		new DesktopDialog(
-			'Gauzy',
-			'Update Ready to Install',
-			serverWindow
-		)
-	);
-	dialog.show().then((button) => {
-		if (button.response === 0) autoUpdater.quitAndInstall();
-	  })
-});
-
-autoUpdater.requestHeaders = {
-	'Cache-Control':
-		'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0'
-};
-
-autoUpdater.on('update-not-available', () => {
-	settingsWindow.webContents.send('update_not_available');
-});
-
-autoUpdater.on('download-progress', (event) => {
-	console.log('update log', event);
-	if (settingsWindow) {
-		settingsWindow.webContents.send('download_on_progress', event);
-	}
-});
-
-autoUpdater.on('error', (e) => {
-	settingsWindow.webContents.send('error_update', e);
+ipcMain.on('update_app_setting', (event, arg) => {
+	LocalStore.updateApplicationSetting(arg.values);
 });

@@ -28,7 +28,7 @@ export class SetupComponent implements OnInit {
 		private setupService: SetupService,
 		private _cdr: ChangeDetectorRef,
 		private dialogService: NbDialogService,
-		private electronService: ElectronService
+		private electronService: ElectronService,
 	) {
 		electronService.ipcRenderer.on('setup-data', (event, arg) => {
 			this.desktopFeatures.gauzyPlatform = arg.gauzyWindow;
@@ -84,6 +84,8 @@ export class SetupComponent implements OnInit {
 			}
 			this._cdr.detectChanges();
 		});
+
+		electronService.ipcRenderer.send('reset_permissions');
 	}
 	appName: string = this.electronService.remote.app.getName();
 	loading: Boolean = false;

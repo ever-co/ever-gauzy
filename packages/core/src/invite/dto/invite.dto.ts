@@ -1,6 +1,6 @@
-import { InvitationTypeEnum } from "@gauzy/contracts";
-import { ApiProperty } from "@nestjs/swagger";
-import { IsNotEmpty, IsString, IsEnum, ArrayNotEmpty } from "class-validator";
+import { InvitationExpirationEnum, InvitationTypeEnum } from "@gauzy/contracts";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import { IsEnum, ArrayNotEmpty, IsOptional, ValidateIf } from "class-validator";
 import { TenantOrganizationBaseDTO } from "./../../core/dto";
 
 /**
@@ -8,21 +8,31 @@ import { TenantOrganizationBaseDTO } from "./../../core/dto";
  */
  export class InviteDTO extends TenantOrganizationBaseDTO {
 
-    @ApiProperty({ type: () => Array, readOnly: true })
+    @ApiProperty({ type: () => Array })
     @ArrayNotEmpty()
     readonly emailIds: string[] = [];
 
-    @ApiProperty({ type: () => String, readOnly: true })
-    @IsNotEmpty()
-    @IsString()
-    readonly invitedById: string;
+    @ApiPropertyOptional({ type: () => Array })
+    @ValidateIf((it) => it.inviteType === InvitationTypeEnum.TEAM)
+    @ArrayNotEmpty()
+    readonly teamIds: string[] = [];
 
-    @ApiProperty({ type: () => String, readOnly: true })
-    @IsNotEmpty()
-    @IsString()
+    @ApiProperty({ type: () => String, enum: InvitationTypeEnum })
     @IsEnum(InvitationTypeEnum)
     readonly inviteType: InvitationTypeEnum;
 
-    @ApiProperty({ type: () => Date, readOnly: true })
+    @ApiPropertyOptional({ type: () => Date })
+    @IsOptional()
     readonly startedWorkOn: Date;
+
+    @ApiPropertyOptional({ type: () => String, enum: InvitationExpirationEnum })
+    @IsOptional()
+    readonly invitationExpirationPeriod: InvitationExpirationEnum;
+
+    @ApiPropertyOptional({ type: () => String })
+    @IsOptional()
+    readonly fullName: string;
+
+    @ApiPropertyOptional({ type: () => String })
+    readonly callbackUrl: string;
 }

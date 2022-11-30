@@ -1,17 +1,17 @@
 import { BadRequestException } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
-import { InviteService } from './../../invite.service';
-import { FindPublicInviteByEmailTokenQuery } from '../find-public-invite-by-email-token.query';
+import { InviteService } from '../../invite.service';
+import { FindInviteByEmailTokenQuery } from '../find-invite-by-email-token.query';
 
-@QueryHandler(FindPublicInviteByEmailTokenQuery)
-export class FindPublicInviteByEmailTokenHandler
-    implements IQueryHandler<FindPublicInviteByEmailTokenQuery> {
+@QueryHandler(FindInviteByEmailTokenQuery)
+export class FindInviteByEmailTokenHandler
+    implements IQueryHandler<FindInviteByEmailTokenQuery> {
 
     constructor(
         private readonly inviteService: InviteService
     ) {}
 
-    async execute(query: FindPublicInviteByEmailTokenQuery) {
+    async execute(query: FindInviteByEmailTokenQuery) {
         const { params } = query;
         try {
             return await this.inviteService.validate(params);

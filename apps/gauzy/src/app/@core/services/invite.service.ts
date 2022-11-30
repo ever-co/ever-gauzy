@@ -9,7 +9,8 @@ import {
 	IInviteAcceptInput,
 	IInviteResendInput,
 	IOrganizationContact,
-	IOrganizationContactAcceptInviteInput
+	IOrganizationContactAcceptInviteInput,
+	IAuthResponse
 } from '@gauzy/contracts';
 import { toParams } from '@gauzy/common-angular';
 import { firstValueFrom } from 'rxjs';
@@ -67,9 +68,9 @@ export class InviteService {
 		);
 	}
 
-	acceptInvite(input: IInviteAcceptInput): Promise<IInvite> {
+	acceptInvite(input: Partial<IInviteAcceptInput>): Promise<IAuthResponse> {
 		return firstValueFrom(
-			this.http.post<IInvite>(`${API_PREFIX}/invite/accept`, input)
+			this.http.post<IAuthResponse>(`${API_PREFIX}/invite/accept`, input)
 		);
 	}
 

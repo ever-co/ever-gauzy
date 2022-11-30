@@ -1,6 +1,6 @@
 import { IRole } from './role.model';
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
-import { IUser, IUserRegistrationInput, LanguagesEnum } from './user.model';
+import { IUser, IUserCodeInput, IUserEmailInput, IUserRegistrationInput, IUserTokenInput, LanguagesEnum } from './user.model';
 import { IOrganizationProject } from './organization-projects.model';
 import { IOrganization } from './organization.model';
 import { IOrganizationContact } from './organization-contact.model';
@@ -10,6 +10,7 @@ import { IOrganizationTeam } from './organization-team-model';
 
 export interface IInvite extends IBasePerTenantAndOrganizationEntityModel {
 	token: string;
+	code?: number;
 	email: string;
 	roleId: string;
 	invitedById: string;
@@ -22,11 +23,14 @@ export interface IInvite extends IBasePerTenantAndOrganizationEntityModel {
 	teams?: IOrganizationTeam[];
 	organizationContacts?: IOrganizationContact[];
 	departments?: IOrganizationDepartment[];
+	user?: IUser;
+	userId?: IUser['id'];
+	fullName?: string;
+
 }
 
-export interface IInviteAcceptInput extends IUserRegistrationInput {
-	inviteId: string;
-	organization: IOrganization;
+export interface IInviteAcceptInput extends IUserRegistrationInput, IUserEmailInput, IUserTokenInput, IUserCodeInput {
+	inviteId?: string;
 	originalUrl?: string;
 }
 
@@ -38,8 +42,7 @@ export interface IInviteResendInput {
 	organization: IOrganization;
 	departmentNames?: string[];
 	clientNames?: string[];
-	inviteType: any;
-
+	inviteType: InvitationTypeEnum;
 }
 
 export interface ICreateEmailInvitesInput extends IBasePerTenantAndOrganizationEntityModel {
@@ -49,11 +52,12 @@ export interface ICreateEmailInvitesInput extends IBasePerTenantAndOrganizationE
 	departmentIds?: string[];
 	teamIds?: string[];
 	roleId: string;
-	invitedById: string;
-	inviteType: any;
+	inviteType: InvitationTypeEnum;
 	startedWorkOn: Date;
 	appliedDate?: Date;
 	invitationExpirationPeriod?: number | string;
+	fullName?: string;
+	[x: string]: any;
 }
 
 export interface ICreateOrganizationContactInviteInput
@@ -94,7 +98,8 @@ export enum InviteStatusEnum {
 export enum InvitationTypeEnum {
 	USER = 'USER',
 	EMPLOYEE = 'EMPLOYEE',
-	CANDIDATE = 'CANDIDATE'
+	CANDIDATE = 'CANDIDATE',
+	TEAM = 'TEAM'
 }
 
 export enum InvitationExpirationEnum {
@@ -139,6 +144,14 @@ export interface IInviteEmployeeModel
 	organizationContacts?: IOrganizationContact[];
 	departments?: IOrganizationDepartment[];
 	originUrl?: string;
+}
+
+export interface IInviteTeamMemberModel extends IBasePerTenantAndOrganizationEntityModel, IUserEmailInput {
+	languageCode: LanguagesEnum;
+	invitedBy: IUser;
+	teams: string;
+	inviteCode: number;
+	[x: string]: any;
 }
 
 export interface IJoinEmployeeModel extends IBasePerTenantAndOrganizationEntityModel {

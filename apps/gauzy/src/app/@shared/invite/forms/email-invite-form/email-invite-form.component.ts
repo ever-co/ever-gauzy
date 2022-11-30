@@ -229,8 +229,7 @@ export class EmailInviteFormComponent extends TranslationBaseComponent
 		if (this.form.invalid) {
 			return;
 		}
-
-		const { tenantId, id: invitedById } = this.store.user;
+		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 
 		const role = await firstValueFrom(this.rolesService.getRoleByOptions({
@@ -250,7 +249,7 @@ export class EmailInviteFormComponent extends TranslationBaseComponent
 			teams = []
 		} = this.form.value;
 
-		return this.inviteService.createWithEmails({
+		return await this.inviteService.createWithEmails({
 			emailIds: emails,
 			projectIds: projects,
 			departmentIds: departments,
@@ -259,7 +258,6 @@ export class EmailInviteFormComponent extends TranslationBaseComponent
 			roleId: role.id,
 			organizationId,
 			tenantId,
-			invitedById,
 			inviteType: this.invitationType,
 			startedWorkOn: startedWorkOn ? new Date(startedWorkOn) : null,
 			appliedDate: appliedDate ? new Date(appliedDate) : null,

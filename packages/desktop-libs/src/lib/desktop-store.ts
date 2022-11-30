@@ -61,7 +61,11 @@ export const LocalStore = {
 					trackOnPcSleep: false,
 					awIsConnected: true,
 					preventDisplaySleep: false,
-					automaticUpdate: true
+					automaticUpdate: true,
+					cdnUpdater: {
+						github: false,
+						digitalOcean: true
+					}
 				};
 				store.set({
 					appSetting: defaultAppSetting

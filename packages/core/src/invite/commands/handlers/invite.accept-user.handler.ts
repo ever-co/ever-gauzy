@@ -1,10 +1,12 @@
-import { IInvite, InviteStatusEnum } from '@gauzy/contracts';
+import { InviteStatusEnum, IUser } from '@gauzy/contracts';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { UpdateResult } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { AuthService } from '../../../auth/auth.service';
 import { InviteService } from '../../invite.service';
 import { InviteAcceptUserCommand } from '../invite.accept-user.command';
 import { OrganizationService } from '../../../organization/organization.service';
+import { User } from './../../../core/entities/internal';
 
 /**
  * Use this command for registering all non-employee users.
@@ -12,9 +14,10 @@ import { OrganizationService } from '../../../organization/organization.service'
  * If the above two steps are successful, it finally sets the invitation status to accepted
  */
 @CommandHandler(InviteAcceptUserCommand)
-export class InviteAcceptUserHandler
-	implements ICommandHandler<InviteAcceptUserCommand> {
+export class InviteAcceptUserHandler implements ICommandHandler<InviteAcceptUserCommand> {
+
 	constructor(
+		@InjectRepository(User) private readonly userRepository: Repository<User>,
 		private readonly inviteService: InviteService,
 		private readonly authService: AuthService,
 		private readonly organizationService: OrganizationService
@@ -22,28 +25,56 @@ export class InviteAcceptUserHandler
 
 	public async execute(
 		command: InviteAcceptUserCommand
-	): Promise<UpdateResult | IInvite> {
+	): Promise<IUser> {
 		const { input, languageCode } = command;
+		const { inviteId } = input;
 
-		const organization = await this.organizationService.findOneByIdString(
-			input.organization.id,
-			{ relations: ['tenant'] }
-		);
+		const invite = await this.inviteService.findOneByIdString(inviteId);
+		if (!invite) {
+			throw Error('Invite does not exist');
+		}
 
-		await this.authService.register(
-			{
-				...input,
-				user: {
-					...input.user,
-					tenant: organization.tenant
-				},
-				organizationId: organization.id
-			},
-			languageCode
-		);
-
-		return await this.inviteService.update(input.inviteId, {
-			status: InviteStatusEnum.ACCEPTED
+		const organization = await this.organizationService.findOneByIdString(invite.organizationId, {
+			relations: {
+				tenant: true
+			}
 		});
+		if (!organization.invitesAllowed) {
+			throw Error('Organization no longer allows invites');
+		}
+
+		let user: IUser;
+		try {
+			const { tenantId, email } = invite;
+			user = await this.userRepository.findOneOrFail({
+				where: {
+					email,
+					tenantId
+				},
+				order: {
+					createdAt: 'DESC'
+				}
+			});
+		} catch (error) {
+			user = await this.authService.register(
+				{
+					...input,
+					user: {
+						...input.user,
+						tenant: organization.tenant
+					},
+					organizationId: organization.id
+				},
+				languageCode
+			);
+		}
+
+		const { id } = user;
+		await this.inviteService.update(inviteId, {
+			status: InviteStatusEnum.ACCEPTED,
+			userId: id
+		});
+
+		return user;
 	}
 }
