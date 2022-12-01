@@ -12,13 +12,13 @@ export interface IInvite extends IBasePerTenantAndOrganizationEntityModel {
 	token: string;
 	code?: number;
 	email: string;
-	roleId: string;
-	invitedById: string;
 	status: InviteStatusEnum;
 	expireDate: Date;
 	actionDate?: Date;
 	role?: IRole;
+	roleId: IRole['id'];
 	invitedBy?: IUser;
+	invitedById: IUser['id'];
 	projects?: IOrganizationProject[];
 	teams?: IOrganizationTeam[];
 	organizationContacts?: IOrganizationContact[];
@@ -26,7 +26,7 @@ export interface IInvite extends IBasePerTenantAndOrganizationEntityModel {
 	user?: IUser;
 	userId?: IUser['id'];
 	fullName?: string;
-
+	isExpired?: boolean;
 }
 
 export interface IInviteAcceptInput extends IUserRegistrationInput, IUserEmailInput, IUserTokenInput, IUserCodeInput {
@@ -34,15 +34,10 @@ export interface IInviteAcceptInput extends IUserRegistrationInput, IUserEmailIn
 	originalUrl?: string;
 }
 
-export interface IInviteResendInput {
-	id: string;
-	invitedById: string;
-	email: string;
-	roleName: string;
-	organization: IOrganization;
-	departmentNames?: string[];
-	clientNames?: string[];
+export interface IInviteResendInput extends IBasePerTenantAndOrganizationEntityModel {
+	inviteId: IInvite['id'];
 	inviteType: InvitationTypeEnum;
+	[x: string]: any;
 }
 
 export interface ICreateEmailInvitesInput extends IBasePerTenantAndOrganizationEntityModel {
@@ -110,7 +105,7 @@ export enum InvitationExpirationEnum {
 	NEVER = 'Never'
 }
 
-export interface IInviteViewModel {
+export interface IInviteViewModel extends IBasePerTenantAndOrganizationEntityModel {
 	email: string;
 	expireDate: string;
 	createdDate: string;

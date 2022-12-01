@@ -1,4 +1,3 @@
-import { PaymentSubscriber } from "payment/payment.subscriber";
 import {
 	ActivitySubscriber,
 	CandidateSubscriber,
@@ -6,10 +5,12 @@ import {
 	EmployeeSubscriber,
 	FeatureSubscriber,
 	ImportHistorySubscriber,
+	InviteSubscriber,
 	InvoiceSubscriber,
 	OrganizationContactSubscriber,
 	OrganizationProjectSubscriber,
 	OrganizationSubscriber,
+	PaymentSubscriber,
 	ReportSubscriber,
 	ScreenshotSubscriber,
 	TaskSubscriber,
@@ -28,6 +29,7 @@ export const coreSubscribers = [
 	EmployeeSubscriber,
 	FeatureSubscriber,
 	ImportHistorySubscriber,
+	InviteSubscriber,
 	InvoiceSubscriber,
 	OrganizationContactSubscriber,
 	OrganizationProjectSubscriber,
