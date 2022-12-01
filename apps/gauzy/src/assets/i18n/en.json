@@ -3544,7 +3544,7 @@
 		"VIEW_TIMESHEET": "View timesheet",
 		"ADD_TIME": "Add Time",
 		"TODAY": "Today",
-		"ALERT_DESKTOP_DOWNLOAD": "To record screenshots, please <a href=\"https://web.gauzy.co/downloads\" rel=\"noopener\" target=\"_blank\">download</a> and use desktop app"
+		"ALERT_DESKTOP_DOWNLOAD": "For more flexible time and activity tracking, please <a href=\"https://web.gauzy.co/downloads\" rel=\"noopener\" target=\"_blank\">Download</a> and use the <a href=\"https://web.gauzy.co/downloads\" rel=\"noopener\" target=\"_blank\">Gauzy Desktop Timer App</a>."
 	},
 	"TIMESHEET": {
 		"TODAY": "Today",
