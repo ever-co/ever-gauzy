@@ -10,7 +10,7 @@ import * as path from 'path';
  * [template-name] / [language-code] / [template-type].mjml
  *
  * template-name: Is the name of the template
- * language-code: Is the ISO language code lik bg, en, he, ru
+ * language-code: Is the ISO language code like bg, en, he, ru
  * template-type: Can be 'html', 'subject' or 'text' but needs to only have .hbs or .mjml extension
  */
 export const createDefaultEmailTemplates = async (
