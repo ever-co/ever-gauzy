@@ -1,22 +1,28 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
-import { EmailTemplateService } from '../../email-template.service';
-import { FindEmailTemplateQuery } from '../email-template.find.query';
 import {
 	ICustomizableEmailTemplate,
 	LanguagesEnum,
-	EmailTemplateNameEnum
+	EmailTemplateNameEnum,
+	IEmailTemplate
 } from '@gauzy/contracts';
 import { IsNull } from 'typeorm';
+import { EmailTemplateService } from '../../email-template.service';
+import { EmailTemplateReaderService } from './../../email-template-reader.service';
+import { FindEmailTemplateQuery } from '../email-template.find.query';
 import { RequestContext } from './../../../core/context';
 
 @QueryHandler(FindEmailTemplateQuery)
-export class FindEmailTemplateHandler
-	implements IQueryHandler<FindEmailTemplateQuery> {
-	constructor(private readonly emailTemplateService: EmailTemplateService) {}
+export class FindEmailTemplateHandler implements IQueryHandler<FindEmailTemplateQuery> {
+
+	constructor(
+		private readonly emailTemplateService: EmailTemplateService,
+		private readonly emailTemplateReaderService: EmailTemplateReaderService,
+	) {}
 
 	public async execute(
 		command: FindEmailTemplateQuery
 	): Promise<ICustomizableEmailTemplate> {
+
 		const { input, themeLanguage } = command;
 		const { name, organizationId, languageCode = themeLanguage } = input;
 		const tenantId = RequestContext.currentTenantId();
@@ -87,14 +93,42 @@ export class FindEmailTemplateHandler
 					subject = hbs;
 					template = mjml;
 				} catch (error) {
-					const { hbs, mjml } = await this.emailTemplateService.findOneByWhereOptions({
-						languageCode: LanguagesEnum.ENGLISH,
-						name: `${name}/${type}`,
-						organizationId: IsNull(),
-						tenantId: IsNull()
-					});
-					subject = hbs;
-					template = mjml;
+					try {
+						const { hbs, mjml } = await this.emailTemplateService.findOneByWhereOptions({
+							languageCode: LanguagesEnum.ENGLISH,
+							name: `${name}/${type}`,
+							organizationId: IsNull(),
+							tenantId: IsNull()
+						});
+						subject = hbs;
+						template = mjml;
+					} catch (error) {
+						/**
+						 * Fetch missing templates for production environment
+						 * Save it to the database for global tenant
+						 */
+						const emailTemplates = this.emailTemplateReaderService.readEmailTemplate(name).filter(
+							(template: IEmailTemplate) => template.name === `${name}/${type}`
+						);
+						for await (const emailTemplate of emailTemplates) {
+							await this.emailTemplateService.saveTemplate(
+								emailTemplate.languageCode as LanguagesEnum,
+								name,
+								type,
+								null,
+								null,
+								emailTemplate
+							);
+						}
+						const { hbs, mjml } = await this.emailTemplateService.findOneByWhereOptions({
+							languageCode,
+							name: `${name}/${type}`,
+							organizationId: IsNull(),
+							tenantId: IsNull()
+						});
+						subject = hbs;
+						template = mjml;
+					}
 				}
 			}
 		}
