@@ -183,15 +183,20 @@
 }
 
 .button {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   &.timesheet {
     background-color: transparent;
     font-weight: normal;
     height: 36px;
     padding: 9px 20px 18px 20px;
     margin: 0;
+    width: 150px;
   }
   &.disabled {
     height: 36px;
+    width: 120px;
   }
   &.success {
     box-shadow: 0px 10px 13px -7px #25b869;
@@ -201,6 +206,7 @@
       font-size: 14px;
       height: 36px;
       padding: 9px 20px 18px 20px;
+      width: 120px;
     }
   }
   &.switch {
@@ -234,6 +240,7 @@ nb-card-footer{
       align-items: flex-start;
       gap: 0.25rem;
       font-size: 12px;
+      border-radius: var(--border-radius);
   
       nb-icon {
         width: 30px;
