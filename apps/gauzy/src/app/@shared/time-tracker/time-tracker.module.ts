@@ -7,7 +7,8 @@ import {
 	NbButtonModule,
 	NbTooltipModule,
 	NbCheckboxModule,
-	NbDatepickerModule
+	NbDatepickerModule,
+	NbAlertModule
 } from '@nebular/theme';
 import { FormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
@@ -40,7 +41,8 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 		NgxDraggableDomModule,
 		NgxPermissionsModule,
 		ContactSelectorModule,
-    FontAwesomeModule
+    	FontAwesomeModule,
+		NbAlertModule
 	],
 	exports: [TimeTrackerComponent]
 })

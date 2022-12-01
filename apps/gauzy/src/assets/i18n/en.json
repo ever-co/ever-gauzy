@@ -3543,7 +3543,8 @@
 		},
 		"VIEW_TIMESHEET": "View timesheet",
 		"ADD_TIME": "Add Time",
-		"TODAY": "Today"
+		"TODAY": "Today",
+		"ALERT_DESKTOP_DOWNLOAD": "To record screenshots, please <a href=\"https://web.gauzy.co/downloads\" rel=\"noopener\" target=\"_blank\">download</a> and use desktop app"
 	},
 	"TIMESHEET": {
 		"TODAY": "Today",

@@ -42,7 +42,7 @@
     .is_billable {
       button {
         font-size: 12px;
-        padding: 4px 9px;
+        padding: 5px 9px;
       }
     }
     .actions {
@@ -219,4 +219,33 @@ h6 {
 
 :host {
   @include dialog(var(--gauzy-card-1), var(--gauzy-sidebar-background-4));
+}
+
+nb-card-footer{
+  position: absolute;
+    width: 153%;
+    left: -84px;
+    bottom: -96px;
+  
+    .alert {
+      width: 100%;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      gap: 0.25rem;
+      white-space: nowrap;
+      font-size: 12px;
+      div {
+        width: max-content;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        overflow: hidden;
+      }
+      ::ng-deep {
+        .close {
+          padding: 14px;
+          font-size: 1.2rem;
+        }
+      }
+    }
 }
