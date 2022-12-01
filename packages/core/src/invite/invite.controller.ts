@@ -51,6 +51,7 @@ import {
 } from './commands';
 import {
 	CreateInviteDTO,
+	ResendInviteDTO,
 	ValidateInviteByCodeQueryDTO,
 	ValidateInviteQueryDTO
 } from './dto';
@@ -219,21 +220,28 @@ export class InviteController {
 		);
 	}
 
+	/**
+	 * Resend invite
+	 *
+	 * @param entity
+	 * @param languageCode
+	 * @returns
+	 */
 	@ApiOperation({ summary: 'Resend invite.' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
-		description: 'The record has been successfully created.'
+		description: 'The record has been successfully updated.'
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_INVITE_EDIT)
 	@Post('resend')
+	@UsePipes(new ValidationPipe())
 	async resendInvite(
-		@Body() entity: IInviteResendInput,
+		@Body() entity: ResendInviteDTO,
 		@LanguageDecorator() languageCode: LanguagesEnum
 	): Promise<UpdateResult | Invite> {
 		return await this.commandBus.execute(
