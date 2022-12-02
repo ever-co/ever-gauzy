@@ -7,6 +7,5 @@ export class InviteResendCommand implements ICommand {
 	constructor(
 		public readonly input: IInviteResendInput,
 		public readonly languageCode: LanguagesEnum
-
-		) {}
+	) {}
 }

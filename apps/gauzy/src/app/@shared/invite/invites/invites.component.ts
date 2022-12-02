@@ -16,7 +16,8 @@ import {
 	IOrganization,
 	IInviteViewModel,
 	InvitationExpirationEnum,
-	IInvite
+	IInvite,
+	InviteStatusEnum
 } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -50,6 +51,8 @@ import { ServerDataSource } from '../../../@core/utils/smart-table';
 })
 export class InvitesComponent extends PaginationFilterBaseComponent
 	implements AfterViewInit, OnInit, OnDestroy {
+
+	InviteStatusEnum: typeof InviteStatusEnum = InviteStatusEnum;
 
 	/*
 	* Getter & Setter for InvitationTypeEnum
@@ -310,12 +313,6 @@ export class InvitesComponent extends PaginationFilterBaseComponent
 					imageUrl: invite.invitedBy ? invite.invitedBy.imageUrl : '',
 					fullName: invite.invitedBy ? invite.invitedBy.name : '',
 					roleName: invite.role ? invite.role.name : '',
-					status: !invite.expireDate ||
-						moment(invite.expireDate).isAfter(moment())
-							? this.getTranslation(
-									`INVITE_PAGE.STATUS.${invite.status}`
-							  )
-							: this.getTranslation(`INVITE_PAGE.STATUS.EXPIRED`),
 					projectNames: (invite.projects || []).map(
 						(project) => project.name
 					),
@@ -338,6 +335,7 @@ export class InvitesComponent extends PaginationFilterBaseComponent
 			}
 		});
 	}
+
 
 	/***
 	 * GET invites
@@ -466,7 +464,8 @@ export class InvitesComponent extends PaginationFilterBaseComponent
 						)
 				}
 			})
-			.onClose.pipe(untilDestroyed(this))
+			.onClose
+			.pipe(untilDestroyed(this))
 			.subscribe(async (result) => {
 				if (result) {
 					try {
@@ -507,13 +506,17 @@ export class InvitesComponent extends PaginationFilterBaseComponent
 				data: selectedItem
 			});
 		}
+		if (this.selectedInvite.status !== InviteStatusEnum.INVITED) {
+			return;
+		}
 		this.dialogService
 			.open(ResendConfirmationComponent, {
 				context: {
 					email: this.selectedInvite.email
 				}
 			})
-			.onClose.pipe(untilDestroyed(this))
+			.onClose
+			.pipe(untilDestroyed(this))
 			.subscribe(async (result) => {
 				if (result) {
 					try {
@@ -523,25 +526,12 @@ export class InvitesComponent extends PaginationFilterBaseComponent
 							);
 							return;
 						}
-
-						const {
-							id,
-							email,
-							departmentNames,
-							roleName,
-							clientNames
-						} = this.selectedInvite;
-
+						const { id, email, organizationId } = this.selectedInvite;
 						await this.inviteService
 							.resendInvite({
-								id,
-								invitedById: this.store.userId,
-								email,
-								roleName,
-								organization: this.organization,
-								departmentNames,
-								clientNames,
-								inviteType: this.invitationType
+								inviteId: id,
+								inviteType: this.invitationType,
+								organizationId
 							})
 							.then(() => {
 								this.toastrService.success(
