@@ -64,6 +64,14 @@
               "node_modules/echarts/dist/extension/bmap.min.js",
               "node_modules/chart.js/dist/Chart.min.js"
             ],
+            "allowedCommonJsDependencies": [
+              "underscore.string",
+              "moment-timezone",
+              "@gauzy/contracts",
+              "cloudinary-core",
+              "angular2-chartjs",
+              "brace/mode/handlebars"
+             ],
             "webWorkerTsConfig": "apps/gauzy/tsconfig.worker.json"
           },
           "configurations": {
