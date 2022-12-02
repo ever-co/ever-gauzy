@@ -1,7 +1,6 @@
 import {
 	ICreateEmailInvitesOutput,
 	IInviteAcceptInput,
-	IInviteResendInput,
 	PermissionsEnum,
 	LanguagesEnum,
 	IOrganizationContactAcceptInviteInput,
