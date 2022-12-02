@@ -17,7 +17,8 @@ import {
 	InvitationExpirationEnum,
 	IInvite,
 	InvitationTypeEnum,
-	IOrganizationTeam
+	IOrganizationTeam,
+	IInviteResendInput
 } from '@gauzy/contracts';
 import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -277,59 +278,86 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 		return { items, total: items.length, ignored: ignoreInvites };
 	}
 
-	async resendEmail(data, invitedById, languageCode, expireDate){
-		const {
-			id,
-			email,
-			roleName,
-			organization,
-			departmentNames,
-			clientNames
-		} = data
-
-		const status = InviteStatusEnum.INVITED;
-
+	async resendEmail(
+		input: IInviteResendInput,
+		languageCode: LanguagesEnum
+	) {
 		const originUrl = this.configSerice.get('clientBaseUrl') as string;
-
-		const user: IUser = await this.userService.findOneByIdString(invitedById, {
-			relations: ['role']
+		const { inviteId, inviteType, callbackUrl } = input;
+		/**
+		 * Invitation
+		 */
+		const invite: IInvite = await this.findOneByIdString(inviteId, {
+			relations: {
+				organization: true,
+				role: true,
+				teams: true
+			}
 		});
+		if (!invite) {
+			throw Error('Invite does not exist');
+		}
+		// Invited organization
+ 		const organization: IOrganization = invite.organization;
 
-		const token = this.createToken(email);
-
-		const registerUrl = `${originUrl}/#/auth/accept-invite?email=${email}&token=${token}`;
-
-
+		const role: IRole = invite.role;
+		const email: IInvite['email'] = invite.email;
+		const teams: IOrganizationTeam[] = invite.teams;
+		/**
+		 * Invited by the user
+		 */
+		const invitedBy: IUser = await this.userService.findOneByIdString(
+			RequestContext.currentUserId()
+		);
 		try{
-			await this.update(id, {
-			   status,
-			   expireDate,
-			   invitedById,
-			   token
-			})
+			const code = generateRandomInteger(6);
+			const token: string = sign({ email, code }, environment.JWT_SECRET, {});
 
-			if (data.inviteType === InvitationTypeEnum.USER) {
+			const registerUrl = `${originUrl}/#/auth/accept-invite?email=${email}&token=${token}`;
+			if (inviteType === InvitationTypeEnum.USER) {
 				this.emailService.inviteUser({
 					email,
-					role: roleName,
-					organization: organization,
+					role: role.name,
+					organization,
 					registerUrl,
 					originUrl,
 					languageCode,
-					invitedBy: user
+					invitedBy
 				});
-			} else if (data.inviteType === InvitationTypeEnum.EMPLOYEE || data.inviteType === InvitationTypeEnum.CANDIDATE) {
+			} else if (inviteType === InvitationTypeEnum.EMPLOYEE || inviteType === InvitationTypeEnum.CANDIDATE) {
 				this.emailService.inviteEmployee({
 					email,
 					registerUrl,
-					organizationContacts: clientNames,
-					departments: departmentNames,
 					originUrl,
-					organization: organization,
+					organization,
 					languageCode,
-					invitedBy: user
+					invitedBy
+				});
+			} else if (inviteType === InvitationTypeEnum.TEAM) {
+				let inviteLink: string;
+				if (callbackUrl) {
+					inviteLink = `${callbackUrl}?email=${email}&code=${code}`
+				} else {
+					inviteLink = `${registerUrl}`;
+				}
+				this.emailService.inviteTeamMember({
+					email: email,
+					inviteCode: code,
+					teams: teams.map((team: IOrganizationTeam) => team.name).join(', '),
+					languageCode,
+					invitedBy,
+					organization,
+					inviteLink,
+					originUrl
 				});
 			}
+
+			return await this.update(inviteId, {
+				status: InviteStatusEnum.INVITED,
+				invitedById: RequestContext.currentUserId(),
+				token,
+				code
+			});
 		} catch(error){
 			return error
 		}

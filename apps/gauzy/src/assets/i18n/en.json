@@ -2574,11 +2574,6 @@
 		},
 		"SENT": "{{total}} Invites Sent.",
 		"IGNORED": "{{total}} Invites Sent. {{ignored}} were already invited and have been ignored.",
-		"STATUS": {
-			"INVITED": "Invited",
-			"EXPIRED": "Expired",
-			"ACCEPTED": "Accepted"
-		},
 		"INVITATION_EXPIRATION_OPTIONS": {
 			"DAY": "1 Day",
 			"WEEK": "7 Days",

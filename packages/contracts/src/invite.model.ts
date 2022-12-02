@@ -87,7 +87,8 @@ export interface IInviteUpdateInput {
 
 export enum InviteStatusEnum {
 	INVITED = 'INVITED',
-	ACCEPTED = 'ACCEPTED'
+	ACCEPTED = 'ACCEPTED',
+	EXPIRED = 'EXPIRED'
 }
 
 export enum InvitationTypeEnum {
