@@ -42,7 +42,7 @@
     .is_billable {
       button {
         font-size: 12px;
-        padding: 4px 9px;
+        padding: 5px 9px;
       }
     }
     .actions {
@@ -183,15 +183,20 @@
 }
 
 .button {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   &.timesheet {
     background-color: transparent;
     font-weight: normal;
     height: 36px;
     padding: 9px 20px 18px 20px;
     margin: 0;
+    width: 150px;
   }
   &.disabled {
     height: 36px;
+    width: 120px;
   }
   &.success {
     box-shadow: 0px 10px 13px -7px #25b869;
@@ -201,6 +206,7 @@
       font-size: 14px;
       height: 36px;
       padding: 9px 20px 18px 20px;
+      width: 120px;
     }
   }
   &.switch {
@@ -219,4 +225,37 @@ h6 {
 
 :host {
   @include dialog(var(--gauzy-card-1), var(--gauzy-sidebar-background-4));
+}
+
+nb-card-footer{
+  position: absolute;
+  width: calc(100% + 48px);
+  left: -24px;
+  bottom: -128px;
+  
+    .alert {
+      width: 100%;
+      display: flex;
+      flex-direction: row;
+      align-items: flex-start;
+      gap: 0.25rem;
+      font-size: 12px;
+      border-radius: var(--border-radius);
+  
+      nb-icon {
+        width: 30px;
+        height: 18px;
+      }
+
+      div {
+        line-height: 1.5em;
+      }
+  
+      ::ng-deep {
+        .close {
+          padding: 4px 8px;
+          font-size: 1rem;
+        }
+      }
+    }
 }

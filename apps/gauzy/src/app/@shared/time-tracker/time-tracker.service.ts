@@ -87,6 +87,7 @@ export class TimeTrackerService implements OnDestroy {
 		this.timeType
 	);
 	public trackType$: Observable<string> = this._trackType$.asObservable();
+	private _worker: Worker;
 
 	constructor(
 		protected timerStore: TimerStore,
@@ -94,6 +95,7 @@ export class TimeTrackerService implements OnDestroy {
 		protected store: AppStore,
 		private http: HttpClient
 	) {
+		this._runWorker();
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization) => !!organization),
@@ -224,7 +226,7 @@ export class TimeTrackerService implements OnDestroy {
 	}
 
 	toggle() {
-		if (this.interval) {
+		if (this.running) {
 			this.turnOffTimer();
 			return firstValueFrom(
 				this.http.post<ITimeLog>(
@@ -246,16 +248,20 @@ export class TimeTrackerService implements OnDestroy {
 
 	turnOnTimer() {
 		this.running = true;
-		this.interval = setInterval(() => {
-			this.duration++;
-			this.currentSessionDuration++;
-		}, 1000);
+		// post state of timer to worker on start timer
+		this._worker.postMessage({
+			isRunning: this.running,
+			session: this.currentSessionDuration,
+			duration: this.duration
+		});
 	}
 
 	turnOffTimer() {
 		this.running = false;
-		clearInterval(this.interval);
-		this.interval = null;
+		// post running state to worker on turning off
+		this._worker.postMessage({
+			isRunning: this.running
+		});
 	}
 
 	canStartTimer() {
@@ -303,6 +309,24 @@ export class TimeTrackerService implements OnDestroy {
 	 */
 	clearTimeTracker() {
 		this.timerStore.reset();
+	}
+
+	private _runWorker(): void {
+		if (typeof Worker !== 'undefined') {
+			// Initialize worker
+			this._worker = new Worker(
+				new URL('./time-tracker.worker', import.meta.url)
+			);
+			// // retreive message post from time tracker worker
+			this._worker.onmessage = ({ data }) => {
+				this.currentSessionDuration = data.session;
+				this.duration = data.todayWorked;
+			};
+		} else {
+			// Web Workers are not supported in this environment.
+			// You should add a fallback so that your program still executes correctly.
+			console.log('Web worker does not supported on your browser');
+		}
 	}
 
 	ngOnDestroy(): void {}

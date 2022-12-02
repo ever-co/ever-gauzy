@@ -47,6 +47,7 @@ export class TimeTrackerComponent implements
 	organization: IOrganization;
 	PermissionsEnum = PermissionsEnum;
 	timeLogType = TimeLogType;
+	hideAlert = false;
 
 	@ViewChild(NgForm) form: NgForm;
 

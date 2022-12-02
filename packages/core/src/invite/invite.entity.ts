@@ -61,6 +61,8 @@ export class Invite extends TenantOrganizationBaseEntity implements IInvite {
 	@ApiPropertyOptional({ type: () => String })
 	@Column({ nullable: true })
 	public fullName?: string;
+
+	public isExpired?: boolean;
 	/*
     |--------------------------------------------------------------------------
     | @ManyToOne

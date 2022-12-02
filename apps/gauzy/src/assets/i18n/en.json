@@ -2574,11 +2574,6 @@
 		},
 		"SENT": "{{total}} Invites Sent.",
 		"IGNORED": "{{total}} Invites Sent. {{ignored}} were already invited and have been ignored.",
-		"STATUS": {
-			"INVITED": "Invited",
-			"EXPIRED": "Expired",
-			"ACCEPTED": "Accepted"
-		},
 		"INVITATION_EXPIRATION_OPTIONS": {
 			"DAY": "1 Day",
 			"WEEK": "7 Days",
@@ -3543,7 +3538,8 @@
 		},
 		"VIEW_TIMESHEET": "View timesheet",
 		"ADD_TIME": "Add Time",
-		"TODAY": "Today"
+		"TODAY": "Today",
+		"ALERT_DESKTOP_DOWNLOAD": "For more flexible time and activity tracking, please <a href=\"https://web.gauzy.co/downloads\" rel=\"noopener\" target=\"_blank\">Download</a> and use the <a href=\"https://web.gauzy.co/downloads\" rel=\"noopener\" target=\"_blank\">Gauzy Desktop Timer App</a>."
 	},
 	"TIMESHEET": {
 		"TODAY": "Today",
