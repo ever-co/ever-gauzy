@@ -63,7 +63,8 @@
               "node_modules/echarts/dist/echarts.min.js",
               "node_modules/echarts/dist/extension/bmap.min.js",
               "node_modules/chart.js/dist/Chart.min.js"
-            ]
+            ],
+            "webWorkerTsConfig": "apps/gauzy/tsconfig.worker.json"
           },
           "configurations": {
             "production": {
@@ -100,24 +101,24 @@
               ]
             },
             "local": {
-				"optimization": false,
-				"buildOptimizer": false,
-				"vendorChunk": true,
-				"extractLicenses": false,
-				"sourceMap": true,
-				"namedChunks": true,
-				"budgets": [
-					{
-						"type": "initial",
-						"maximumWarning": "15mb",
-						"maximumError": "40mb"
-					},
-					{
-						"type": "anyComponentStyle",
-						"maximumWarning": "1000kb",
-						"maximumError": "15mb"
-					}
-				]
+              "optimization": false,
+              "buildOptimizer": false,
+              "vendorChunk": true,
+              "extractLicenses": false,
+              "sourceMap": true,
+              "namedChunks": true,
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "15mb",
+                  "maximumError": "40mb"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "1000kb",
+                  "maximumError": "15mb"
+                }
+              ]
             }
           }
         },
@@ -150,7 +151,8 @@
           "options": {
             "jestConfig": "apps/gauzy/jest.config.js",
             "tsConfig": "apps/gauzy/tsconfig.spec.json",
-            "setupFile": "apps/gauzy/src/test-setup.ts"
+            "setupFile": "apps/gauzy/src/test-setup.ts",
+            "webWorkerTsConfig": "apps/gauzy/tsconfig.worker.json"
           }
         }
       }
