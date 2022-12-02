@@ -1,8 +1,8 @@
-import { Module } from '@nestjs/common';
+import { HttpException, Module } from '@nestjs/common';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { MulterModule } from '@nestjs/platform-express';
 import { ThrottlerGuard, ThrottlerModule, ThrottlerModuleOptions } from '@nestjs/throttler';
-import { SentryModule } from '@ntegral/nestjs-sentry';
+import { SentryInterceptor, SentryModule } from '@ntegral/nestjs-sentry';
 import {
 	ServeStaticModule,
 	ServeStaticModuleOptions
@@ -334,6 +334,15 @@ if (process.env.DB_TYPE === 'postgres') {
 			provide: APP_INTERCEPTOR,
 			useClass: TransformInterceptor,
 		},
+		{
+	      provide: APP_INTERCEPTOR,
+	      useFactory: () => new SentryInterceptor({
+	        filters: [{
+	          type: HttpException,
+	          filter: (exception: HttpException) => 500 > exception.getStatus() // Only report 500 errors
+	        }]
+	      }),
+	    }
 	],
 	exports: []
 })
