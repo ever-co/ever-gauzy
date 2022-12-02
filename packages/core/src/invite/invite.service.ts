@@ -179,12 +179,16 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 			const code = generateRandomInteger(6);
 			const token: string = sign({ email, code }, environment.JWT_SECRET, {});
 
-			const matchedInvites = existedInvites.filter((invite: IInvite) => (invite.email === email));
-
+			const matchedInvites = existedInvites.filter(
+				(invite: IInvite) => (invite.email === email)
+			);
 			if (isNotEmpty(matchedInvites)) {
 				const existedTeams: IOrganizationTeam[] = [];
-				for (const invite of matchedInvites) { existedTeams.push(...invite.teams); }
-
+				for (const invite of matchedInvites) {
+					if (isNotEmpty(invite.teams)) {
+						existedTeams.push(...invite.teams);
+					}
+				}
 				const needsToInviteTeams = organizationTeams.filter(
 					(item: IOrganizationTeam) => !existedTeams.some(
 						(team: IOrganizationTeam) => team.id === item.id
