@@ -29,8 +29,8 @@
 	"keywords": [],
 	"dependencies": {
 		"@gauzy/contracts": "^0.1.0",
-		"@nestjs/common": "^9.0.5",
-		"@nestjs/typeorm": "^9.0.0",
+		"@nestjs/common": "^9.2.1",
+		"@nestjs/typeorm": "^9.0.1",
 		"typeorm": "0.3.7",
 		"typeorm-aurora-data-api-driver": "^2.4.4"
 	},
