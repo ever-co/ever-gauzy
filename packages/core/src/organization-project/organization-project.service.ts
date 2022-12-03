@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
-import { IOrganizationProjectsFindInput } from '@gauzy/contracts';
+import { Brackets, In, Repository, WhereExpressionBuilder } from 'typeorm';
+import { isNotEmpty } from '@gauzy/common';
+import { IEmployee, IOrganizationProject, IOrganizationProjectsFindInput } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
 import { OrganizationProject } from './organization-project.entity';
@@ -15,35 +16,47 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 		super(organizationProjectRepository);
 	}
 
+	/**
+	 * Find employee assigned projects
+	 *
+	 * @param employeeId
+	 * @param options
+	 * @returns
+	 */
 	async findByEmployee(
-		id: string,
-		findInput?: IOrganizationProjectsFindInput
-	): Promise<any> {
-		const tenantId = RequestContext.currentTenantId();
-		const query = this.organizationProjectRepository.createQueryBuilder(
-			'organization_project'
-		);
-		query
-			.leftJoin('organization_project.members', 'member')
-			.where('member.id = :id', { id })
-			.andWhere(`${query.alias}.tenantId = :tenantId`, {
-				tenantId
-			});
-		if (findInput && findInput['organizationId']) {
-			const { organizationId } = findInput;
-			query.andWhere(`${query.alias}.organizationId = :organizationId`, {
-				organizationId
-			});
-		}
-		if (findInput && findInput['organizationContactId']) {
-			const { organizationContactId } = findInput;
-			query.andWhere(
-				`${query.alias}.organizationContactId = :organizationContactId`,
-				{
-					organizationContactId
+		employeeId: IEmployee['id'],
+		options: IOrganizationProjectsFindInput
+	): Promise<IOrganizationProject[]> {
+		const query = this.organizationProjectRepository.createQueryBuilder(this.alias);
+		query.setFindOptions({
+			select: {
+				id: true,
+				name: true,
+				imageUrl: true,
+				currency: true,
+				billing: true,
+				public: true,
+				owner: true,
+				taskListType: true
+			}
+		});
+		query.innerJoin(`${query.alias}.members`, 'member');
+		query.andWhere(
+			new Brackets((qb: WhereExpressionBuilder) => {
+				const tenantId = RequestContext.currentTenantId();
+				const { organizationId, organizationContactId } = options;
+
+				qb.andWhere('member.id = :employeeId', { employeeId });
+				qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
+				qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
+
+				if (isNotEmpty(organizationContactId)) {
+					query.andWhere(`${query.alias}.organizationContactId = :organizationContactId`, {
+						organizationContactId
+					});
 				}
-			);
-		}
+			})
+		);
 		return await query.getMany();
 	}
 
