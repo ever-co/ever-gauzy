@@ -167,16 +167,14 @@ export class TimeTrackerService {
 				`${values.apiHost}/api/organization-projects/employee/${values.employeeId}`,
 				{
 					headers: headers,
-					params: values.organizationContactId
-						? this.toParams({
-								data: JSON.stringify({
-									findInput: {
-										organizationContactId:
-											values.organizationContactId
-									}
-								})
-						  })
-						: this.toParams({})
+					params: this.toParams({
+						organizationId: values.organizationId,
+						tenantId: values.tenantId,
+						...(values.organizationContactId
+							? {
+								organizationContactId: values.organizationContactId
+							} : {}),
+					})
 				}
 			));
 	}
@@ -564,7 +562,7 @@ export class TimeTrackerService {
 		// 	delete params.mouse;
 		// 	delete params.keyboard;
 		// }
-		
+
 		return firstValueFrom(this.http
 			.post(`${values.apiHost}/api/timesheet/time-slot`, params, {
 				headers: headers
