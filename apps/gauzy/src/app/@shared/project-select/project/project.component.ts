@@ -47,12 +47,12 @@ export class ProjectSelectorComponent
 	projects: IOrganizationProject[] = [];
 	selectedProject: IOrganizationProject;
 	hasEditProject$: Observable<boolean>;
-	
+
 	public organization: IOrganization;
 	subject$: Subject<any> = new Subject();
 	onChange: any = () => {};
 	onTouched: any = () => {};
-	
+
 	@Input() shortened = false;
 	@Input() disabled = false;
 	@Input() multiple = false;
@@ -66,7 +66,7 @@ export class ProjectSelectorComponent
 		this.onChange(val);
 		this.onTouched(val);
 	}
-	
+
 	private _employeeId: string;
 	public get employeeId() {
 		return this._employeeId;
@@ -188,22 +188,27 @@ export class ProjectSelectorComponent
 		}
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
-		const { organizationContactId } = this;
 
 		if (this.employeeId) {
 			this.projects = await this.organizationProjects.getAllByEmployee(
 				this.employeeId,
 				{
-					organizationContactId,
 					organizationId,
-					tenantId
+					tenantId,
+					...(this.organizationContactId
+						? {
+							organizationContactId: this.organizationContactId
+						} : {}),
 				}
 			);
 		} else {
 			const { items = [] } = await this.organizationProjects.getAll([], {
-				organizationContactId,
 				organizationId,
-				tenantId
+				tenantId,
+				...(this.organizationContactId
+					? {
+						organizationContactId: this.organizationContactId
+					} : {}),
 			});
 			this.projects = items;
 		}
@@ -242,7 +247,7 @@ export class ProjectSelectorComponent
 		try {
 			const { tenantId } = this.store.user;
 			const { id: organizationId } = this.organization;
-			
+
 			const request = {
 				name,
 				organizationId,
@@ -322,8 +327,8 @@ export class ProjectSelectorComponent
 
 	/**
 	 * Display clearable option in project selector
-	 * 
-	 * @returns 
+	 *
+	 * @returns
 	 */
 	isClearable(): boolean {
 		if (this.selectedProject === ALL_PROJECT_SELECTED) {
@@ -334,9 +339,9 @@ export class ProjectSelectorComponent
 
 	/**
 	 * GET Shortend Name
-	 * 
-	 * @param name 
-	 * @returns 
+	 *
+	 * @param name
+	 * @returns
 	 */
 	getShortenedName(name: string, limit = 20) {
 		if (isEmpty(name)) {
@@ -354,7 +359,7 @@ export class ProjectSelectorComponent
 
 	/**
 	 * Clear Selector Value
-	 * 
+	 *
 	 */
 	clearSelection() {
 		if (!this.showAllOption) {

@@ -135,7 +135,7 @@
 		"@gauzy/desktop-libs": "^0.1.0",
 		"@gauzy/desktop-window": "^0.1.0",
 		"@gauzy/knowledge-base": "^0.1.0",
-		"@nestjs/platform-express": "^9.0.5",
+		"@nestjs/platform-express": "^9.2.1",
 		"@sentry/electron": "^4.1.2",
 		"@sentry/node": "^7.21.1",
 		"@sentry/tracing": "^7.21.1",
