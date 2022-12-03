@@ -39,7 +39,7 @@
 		"@nebular/eva-icons": "^9.0.3",
 		"@nebular/security": "^9.0.3",
 		"@nebular/theme": "^9.0.3",
-		"@nestjs/typeorm": "^9.0.0",
+		"@nestjs/typeorm": "^9.0.1",
 		"@ng-select/ng-select": "^8.1.1",
 		"@ngneat/until-destroy": "^9.2.0",
 		"@ngx-translate/core": "^14.0.0",
