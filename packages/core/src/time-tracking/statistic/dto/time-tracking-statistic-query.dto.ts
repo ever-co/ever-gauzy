@@ -1,5 +1,6 @@
 import { ITimeLogFilters } from "@gauzy/contracts";
 import { ApiPropertyOptional, IntersectionType } from "@nestjs/swagger";
+import { Transform, TransformFnParams } from "class-transformer";
 import { IsOptional } from "class-validator";
 import { FiltersQueryDTO, SelectorsQueryDTO } from "../../../shared/dto";
 
@@ -11,11 +12,12 @@ export class TimeTrackingStatisticQueryDTO extends IntersectionType(
     SelectorsQueryDTO
 ) implements ITimeLogFilters {
 
-    @ApiPropertyOptional({ type: () => Boolean, readOnly: true })
+    @ApiPropertyOptional({ type: () => Boolean })
     @IsOptional()
+    @Transform(({ value }: TransformFnParams) => ((value) ? (typeof value === 'string' ? Boolean(JSON.parse(value)) : value) : true))
     readonly defaultRange: boolean = true;
 
-    @ApiPropertyOptional({ type: () => String, readOnly: true })
+    @ApiPropertyOptional({ type: () => String, example: 'week' })
     @IsOptional()
-    readonly unitOfTime: moment.unitOfTime.Base = "week";
+    readonly unitOfTime: moment.unitOfTime.Base = 'week';
 }
