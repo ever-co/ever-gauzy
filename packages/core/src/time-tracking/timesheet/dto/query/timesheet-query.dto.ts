@@ -1,6 +1,6 @@
 import { IGetTimesheetInput } from "@gauzy/contracts";
+import { IntersectionType } from "@nestjs/swagger";
 import { RelationsQueryDTO, SelectorsQueryDTO } from "./../../../../shared/dto";
-import { IntersectionType } from "@nestjs/mapped-types";
 
 /**
  * Get timesheet request DTO validation

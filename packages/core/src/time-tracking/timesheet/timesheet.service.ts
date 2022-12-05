@@ -50,14 +50,12 @@ export class TimeSheetService extends TenantAwareCrudService<Timesheet> {
 				employee: {
 					id: true,
 					user: {
-						id: true,
 						firstName: true,
 						lastName: true,
 						email: true
 					}
 				},
 				organization: {
-					id: true,
 					name: true,
 					brandColor: true
 				}
