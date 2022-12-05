@@ -1035,7 +1035,7 @@ export class StatisticService {
 			.innerJoin(`${totalDurationQuery.alias}.task`, 'task')
 			.andWhere(
 				new Brackets((qb: WhereExpressionBuilder) => {
-					if (isNotEmpty(start) && isNotEmpty(end)) {
+					if (start && end) {
 						qb.andWhere(`"${totalDurationQuery.alias}"."startedAt" BETWEEN :start AND :end`, {
 							start,
 							end
