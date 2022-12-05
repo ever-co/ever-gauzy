@@ -11,6 +11,6 @@ export class RelationsQueryDTO implements IBaseRelationsEntityModel {
     @ApiPropertyOptional({ type: () => Array, isArray: true })
     @IsOptional()
     @IsArray()
-    @Transform(({ value }: TransformFnParams) => (value) ? value.map((element: string) => element.trim()) : {})
+    @Transform(({ value }: TransformFnParams) => (value) ? value.map((element: string) => element.trim()) : [])
     readonly relations: string[] = [];
 }

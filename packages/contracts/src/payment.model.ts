@@ -1,4 +1,4 @@
-import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
+import { IBasePerTenantAndOrganizationEntityModel, IBaseRelationsEntityModel } from './base-entity.model';
 import { IInvoice } from './invoice.model';
 import { ITag } from './tag-entity.model';
 import { IUser } from './user.model';
@@ -57,10 +57,7 @@ export interface IPaymentReportChartData {
 	value: number;
 }
 
-export interface IGetPaymentInput
-	extends IPaginationInput,
-		IBasePerTenantAndOrganizationEntityModel {
-	relations?: string[];
+export interface IGetPaymentInput extends IPaginationInput, IBasePerTenantAndOrganizationEntityModel, IBaseRelationsEntityModel {
 	types?: string[];
 	titles?: string[];
 	groupBy?: ReportGroupByFilter;

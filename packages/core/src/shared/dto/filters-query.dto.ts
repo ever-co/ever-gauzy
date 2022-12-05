@@ -8,17 +8,17 @@ import { IsBetweenActivty } from "./../../shared/validators";
  */
 export class FiltersQueryDTO implements ITimeLogFilters {
 
-    @ApiPropertyOptional({ type: () => String, enum: TimeLogSourceEnum, readOnly: true })
+    @ApiPropertyOptional({ enum: TimeLogSourceEnum })
     @IsOptional()
     @IsEnum(TimeLogSourceEnum, { each: true })
     readonly source: TimeLogSourceEnum[];
 
-    @ApiPropertyOptional({ type: () => String, enum: TimeLogType, readOnly: true })
+    @ApiPropertyOptional({ enum: TimeLogType })
     @IsOptional()
     @IsEnum(TimeLogType, { each: true })
     readonly logType: TimeLogType[];
 
-    @ApiPropertyOptional({ type: () => String, enum: TimeLogType, readOnly: true })
+    @ApiPropertyOptional({ type: () => 'object' })
     @IsOptional()
     @IsBetweenActivty(FiltersQueryDTO, (it) => it.activityLevel)
     readonly activityLevel: {

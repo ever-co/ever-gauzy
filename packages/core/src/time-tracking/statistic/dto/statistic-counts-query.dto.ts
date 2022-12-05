@@ -1,5 +1,5 @@
 import { IGetCountsStatistics } from "@gauzy/contracts";
-import { IntersectionType } from "@nestjs/mapped-types";
+import { IntersectionType } from "@nestjs/swagger";
 import { FiltersQueryDTO, SelectorsQueryDTO } from "./../../../shared/dto";
 
 /**
