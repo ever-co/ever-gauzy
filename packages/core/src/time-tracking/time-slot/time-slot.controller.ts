@@ -9,19 +9,20 @@ import {
 	Post,
 	Body,
 	Put,
-	ValidationPipe
+	ValidationPipe,
+	UsePipes
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
 import { DeleteResult, FindOneOptions, UpdateResult } from 'typeorm';
 import { ITimeSlot, PermissionsEnum, RolesEnum } from '@gauzy/contracts';
+import { DeleteTimeSlotCommand } from './commands';
 import { TimeSlotService } from './time-slot.service';
 import { TimeSlot } from './time-slot.entity';
 import { OrganizationPermissionGuard, PermissionGuard, RoleGuard, TenantPermissionGuard } from '../../shared/guards';
 import { UUIDValidationPipe } from './../../shared/pipes';
 import { Permissions, Roles } from './../../shared/decorators';
 import { DeleteTimeSlotDTO } from './dto';
-import { DeleteTimeSlotCommand } from './commands';
 import { TimeSlotQueryDTO } from './dto/query';
 
 @ApiTags('TimeSlot')
@@ -37,15 +38,12 @@ export class TimeSlotController {
 	@ApiOperation({ summary: 'Get Time Slots' })
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Get()
+	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async findAll(
-		@Query(new ValidationPipe({
-			transform: true,
-			whitelist: true
-		})) options: TimeSlotQueryDTO
+		@Query() options: TimeSlotQueryDTO
 	): Promise<ITimeSlot[]> {
 		return await this.timeSlotService.getTimeSlots(options);
 	}
@@ -58,10 +56,10 @@ export class TimeSlotController {
 	})
 	@Get(':id')
 	async findById(
-		@Param('id', UUIDValidationPipe) id: string,
-		@Query() option: FindOneOptions
+		@Param('id', UUIDValidationPipe) id: ITimeSlot['id'],
+		@Query() options: FindOneOptions
 	): Promise<ITimeSlot> {
-		return await this.timeSlotService.findOneByIdString(id, option);
+		return await this.timeSlotService.findOneByIdString(id, options);
 	}
 
 	@ApiOperation({ summary: 'Create Time Slot' })
@@ -85,7 +83,7 @@ export class TimeSlotController {
 	})
 	@Put(':id')
 	async update(
-		@Param('id', UUIDValidationPipe) id,
+		@Param('id', UUIDValidationPipe) id: ITimeSlot['id'],
 		@Body() entity: TimeSlot
 	): Promise<ITimeSlot> {
 		return this.timeSlotService.update(id, entity);
@@ -103,10 +101,9 @@ export class TimeSlotController {
 	@UseGuards(PermissionGuard, OrganizationPermissionGuard)
 	@Permissions(PermissionsEnum.ALLOW_DELETE_TIME)
 	@Delete()
+	@UsePipes(new ValidationPipe({ transform: true }))
 	async deleteTimeSlot(
-		@Query(new ValidationPipe({
-			transform: true
-		})) query: DeleteTimeSlotDTO
+		@Query() query: DeleteTimeSlotDTO
 	): Promise<DeleteResult | UpdateResult> {
 		return await this.commandBus.execute(
 			new DeleteTimeSlotCommand(query)

@@ -1,17 +1,17 @@
 import { IDateRangePicker } from "@gauzy/contracts";
-import { ApiPropertyOptional } from "@nestjs/swagger";
-import { IsOptional, IsString } from "class-validator";
+import { ApiPropertyOptional, OmitType } from "@nestjs/swagger";
+import { IsDateString, IsOptional } from "class-validator";
 import { IsBeforeDate } from "./../../shared/validators";
 import { TenantOrganizationBaseDTO } from "./../../core/dto";
 
 /**
  * Get date range common request DTO validation
  */
-export class DateRangeQueryDTO extends TenantOrganizationBaseDTO implements IDateRangePicker {
+export class DateRangeQueryDTO extends OmitType(TenantOrganizationBaseDTO, ['sentTo']) implements IDateRangePicker {
 
     @ApiPropertyOptional({ type: () => Date, readOnly: true })
     @IsOptional()
-    @IsString()
+    @IsDateString()
     @IsBeforeDate(DateRangeQueryDTO, (it) => it.endDate, {
         message: "Start date must be before to the end date"
     })
@@ -19,6 +19,6 @@ export class DateRangeQueryDTO extends TenantOrganizationBaseDTO implements IDat
 
     @ApiPropertyOptional({ type: () => Date, readOnly: true })
     @IsOptional()
-    @IsString()
+    @IsDateString()
     readonly endDate: Date;
 }

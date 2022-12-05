@@ -1,6 +1,6 @@
 import { ITimeLogFilters } from "@gauzy/contracts";
 import { ApiPropertyOptional } from "@nestjs/swagger";
-import { IsOptional } from "class-validator";
+import { IsArray, IsOptional } from "class-validator";
 import { DateRangeQueryDTO } from "./date-range-query.dto";
 
 /**
@@ -10,9 +10,16 @@ export class SelectorsQueryDTO extends DateRangeQueryDTO implements ITimeLogFilt
 
     @ApiPropertyOptional({ type: () => Array, isArray: true, readOnly: true })
     @IsOptional()
+    @IsArray()
     readonly employeeIds: string[];
 
     @ApiPropertyOptional({ type: () => Array, isArray: true, readOnly: true })
     @IsOptional()
+    @IsArray()
     readonly projectIds: string[];
+
+    @ApiPropertyOptional({ type: () => Array, isArray: true, readOnly: true })
+    @IsOptional()
+    @IsArray()
+    readonly taskIds: string[];
 }

@@ -1,7 +1,7 @@
-import { IGetTimeLogReportInput, ReportGroupFilterEnum } from "@gauzy/contracts";
-import { IntersectionType } from "@nestjs/mapped-types";
+import { IGetTimeLogReportInput, IOrganizationTeam, ITimesheet, ReportGroupFilterEnum } from "@gauzy/contracts";
+import { IntersectionType } from "@nestjs/swagger";
 import { ApiPropertyOptional } from "@nestjs/swagger";
-import { IsEnum, IsOptional, IsString } from "class-validator";
+import { IsEnum, IsOptional, IsUUID } from "class-validator";
 import { FiltersQueryDTO, RelationsQueryDTO, SelectorsQueryDTO } from "../../../../shared/dto";
 
 /**
@@ -9,8 +9,7 @@ import { FiltersQueryDTO, RelationsQueryDTO, SelectorsQueryDTO } from "../../../
  */
 export class TimeLogQueryDTO extends IntersectionType(
     FiltersQueryDTO,
-    SelectorsQueryDTO,
-    RelationsQueryDTO
+    IntersectionType(SelectorsQueryDTO, RelationsQueryDTO)
 ) implements IGetTimeLogReportInput {
 
     @ApiPropertyOptional({ type: () => Array, enum: ReportGroupFilterEnum, readOnly: true })
@@ -20,11 +19,11 @@ export class TimeLogQueryDTO extends IntersectionType(
 
     @ApiPropertyOptional({ type: () => String, readOnly: true })
     @IsOptional()
-    @IsString()
-    readonly timesheetId: string;
+    @IsUUID()
+    readonly timesheetId: ITimesheet['id'];
 
     @ApiPropertyOptional({ type: () => String, readOnly: true })
     @IsOptional()
-    @IsString()
-    readonly teamId: string;
+    @IsUUID()
+    readonly teamId: IOrganizationTeam['id'];
 }
