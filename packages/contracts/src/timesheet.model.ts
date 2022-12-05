@@ -182,6 +182,9 @@ export interface ITimeLogFilters
 		start: number;
 		end: number;
 	};
+	taskIds?: string[];
+	defaultRange?: boolean;
+	unitOfTime?: any;
 }
 
 export interface ITimeSlot extends IBasePerTenantAndOrganizationEntityModel {
