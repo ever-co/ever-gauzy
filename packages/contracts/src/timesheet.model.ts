@@ -84,13 +84,12 @@ export interface ISubmitTimesheetInput extends IBasePerTenantAndOrganizationEnti
 }
 
 export interface IGetTimesheetInput
-	extends IBasePerTenantAndOrganizationEntityModel {
+	extends IBasePerTenantAndOrganizationEntityModel, IBaseRelationsEntityModel {
 	startDate?: Date | string;
 	endDate?: Date | string;
 	projectIds?: string[];
 	clientId?: string[];
 	employeeIds?: string[];
-	relations?: string[];
 }
 
 export interface IDateRange {
@@ -379,27 +378,22 @@ export interface IGetTimeLogInput extends ITimeLogFilters {
 	teamId?: string;
 }
 
-export interface IGetTimeLogReportInput extends IGetTimeLogInput {
+export interface IGetTimeLogReportInput extends IGetTimeLogInput, IBaseRelationsEntityModel {
 	groupBy?: ReportGroupByFilter;
-	relations?: string[];
 }
 
-export interface IGetTimeLogConflictInput
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IGetTimeLogConflictInput extends IBasePerTenantAndOrganizationEntityModel, IBaseRelationsEntityModel {
 	ignoreId?: string | string[];
 	startDate: string | Date;
 	endDate: string | Date;
 	employeeId: string;
-	relations?: string[];
 }
 
-export interface IGetTimeSlotInput extends ITimeLogFilters {
-	relations?: string[];
+export interface IGetTimeSlotInput extends ITimeLogFilters, IBaseRelationsEntityModel {
 	[x: string]: any;
 }
 
-export interface IGetActivitiesInput extends ITimeLogFilters, IPaginationInput {
-	relations?: string[];
+export interface IGetActivitiesInput extends ITimeLogFilters, IPaginationInput, IBaseRelationsEntityModel {
 	types?: string[];
 	titles?: string[];
 	groupBy?: string;
@@ -495,13 +489,11 @@ export type IReportDayData =
 	| IReportDayGroupByProject
 	| IReportDayGroupByClient;
 
-export interface IGetTimeLimitReportInput
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IGetTimeLimitReportInput extends IBasePerTenantAndOrganizationEntityModel, IBaseRelationsEntityModel {
 	startDate?: string | Date;
 	endDate?: string | Date;
 	projectIds?: string[];
 	employeeIds?: string[];
-	relations?: string[];
 	duration?: 'day' | 'week' | 'month';
 }
 
