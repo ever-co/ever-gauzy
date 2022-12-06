@@ -67,6 +67,7 @@ export class EmployeeSubscriber implements EntitySubscriberInterface<Employee> {
              */
             if (entity.startedWorkOn) {
                 entity.isTrackingEnabled = true;
+                entity.isActive = true;
             }
             /**
             * If Date when ended work filled then disable time tracking functionality for the employee.

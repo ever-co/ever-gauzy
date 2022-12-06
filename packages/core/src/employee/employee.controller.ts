@@ -441,7 +441,7 @@ export class EmployeeController extends CrudController<Employee> {
 	@Put(':id/restore')
 	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async restoreSoftDelete(
-		@Param('id', UUIDValidationPipe) employeeId: string,
+		@Param('id', UUIDValidationPipe) employeeId: IEmployee['id'],
 		@Body() entity: TenantOrganizationBaseDTO
 	): Promise<UpdateResult> {
 		return await this.employeeService.restoreSoftDelete(employeeId, entity);

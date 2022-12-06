@@ -26,7 +26,8 @@ import { distinctUntilChange } from '@gauzy/common-angular';
 import { monthNames } from '../../@core/utils/date';
 import {
 	EmployeeEndWorkComponent,
-	EmployeeMutationComponent, EmployeeStartWorkComponent
+	EmployeeMutationComponent,
+	EmployeeStartWorkComponent
 } from '../../@shared/employee';
 import { InviteMutationComponent } from '../../@shared/invite/invite-mutation/invite-mutation.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
@@ -292,7 +293,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 					try {
 						if (!this.organization) {
 							return;
-						} 
+						}
 						const { id: organizationId } = this.organization;
 						await this.employeesService.delete(this.selectedEmployee.id, {
 							organizationId
