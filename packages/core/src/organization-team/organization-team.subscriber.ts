@@ -20,7 +20,9 @@ export class OrganizationTeamSubscriber implements EntitySubscriberInterface<Org
                 entity.prefix = entity.prefix.toUpperCase();
             } else if (!entity.prefix) {
                 const prefix = entity.name;
-                entity.prefix = prefix.substring(0, 3).toUpperCase();
+                if(prefix) {
+                    entity.prefix =  prefix.substring(0, 3).toUpperCase();
+                }
             }
         }
     }
