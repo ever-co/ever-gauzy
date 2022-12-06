@@ -14,7 +14,7 @@ export class TimeTrackingStatisticQueryDTO extends IntersectionType(
 
     @ApiPropertyOptional({ type: () => Boolean })
     @IsOptional()
-    @Transform(({ value }: TransformFnParams) => ((value) ? (typeof value === 'string' ? Boolean(JSON.parse(value)) : value) : true))
+    @Transform(({ value }: TransformFnParams) => value ? (typeof value === 'string' ? JSON.parse(value) : value) : true)
     readonly defaultRange: boolean = true;
 
     @ApiPropertyOptional({ type: () => String, example: 'week' })
