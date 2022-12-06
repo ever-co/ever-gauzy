@@ -50,6 +50,7 @@ export interface IGetTasksStatistics
 	employeeId?: string;
 	projectId?: string | string[];
 	onlyMe?: boolean;
+	take?: number;
 }
 
 export interface ITasksStatistics extends ITask {

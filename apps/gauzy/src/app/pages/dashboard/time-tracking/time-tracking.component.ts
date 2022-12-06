@@ -354,9 +354,13 @@ export class TimeTrackingComponent extends TranslationBaseComponent
 
 	async getTasks() {
 		const request: IGetTasksStatistics = this.payloads$.getValue();
+		const take = 5;
 		try {
 			this.tasksLoading = true;
-			this.tasks = await this.timesheetStatisticsService.getTasks(request);
+			this.tasks = await this.timesheetStatisticsService.getTasks({
+				...request,
+				take
+			});
 		} catch (error) {
 			this.toastrService.error(error);
 		} finally {
