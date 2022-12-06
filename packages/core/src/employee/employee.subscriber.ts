@@ -28,6 +28,7 @@ export class EmployeeSubscriber implements EntitySubscriberInterface<Employee> {
         if (entity.user) {
             entity.fullName = entity.user.name;
         }
+        entity.isDeleted = !!entity.deletedAt;
     }
 
     /**
@@ -50,6 +51,7 @@ export class EmployeeSubscriber implements EntitySubscriberInterface<Employee> {
              */
             if (entity.startedWorkOn) {
                 entity.isTrackingEnabled = true;
+                entity.isActive = true;
             }
         }
     }
@@ -65,12 +67,14 @@ export class EmployeeSubscriber implements EntitySubscriberInterface<Employee> {
              */
             if (entity.startedWorkOn) {
                 entity.isTrackingEnabled = true;
+                entity.isActive = true;
             }
             /**
             * If Date when ended work filled then disable time tracking functionality for the employee.
             */
             if (entity.endWork) {
                 entity.isTrackingEnabled = false;
+                entity.isActive = false;
             }
         }
     }

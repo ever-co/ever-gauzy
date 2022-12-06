@@ -1,7 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { ViewCell } from 'ng2-smart-table';
 import { Router } from '@angular/router';
-import { ISelectedEmployee } from '@gauzy/contracts';
+import { IEmployee, ISelectedEmployee } from '@gauzy/contracts';
 import { ALL_EMPLOYEES_SELECTED } from '../../../@theme/components/header/selectors/employee';
 import { Store } from '../../../@core/services/store.service';
 
@@ -13,11 +13,16 @@ import { Store } from '../../../@core/services/store.service';
 export class EmployeeWithLinksComponent implements ViewCell, OnInit {
 	@Input()
 	rowData: any;
+
 	@Input()
 	value: any;
+
 	employees: any[] = [];
 
-	constructor(private store: Store, private readonly router: Router) {}
+	constructor(
+		private store: Store,
+		private readonly router: Router
+	) {}
 
 	ngOnInit(): void {
 		this.initializeGrouping();
@@ -57,7 +62,7 @@ export class EmployeeWithLinksComponent implements ViewCell, OnInit {
 		this.navigateToEmployeeStatistics(employee?.id);
 	}
 
-	navigateToEmployeeStatistics(id: string) {
+	navigateToEmployeeStatistics(id: IEmployee['id']) {
 		this.router.navigate([`/pages/employees/edit/${id}/account`]);
 	}
 }

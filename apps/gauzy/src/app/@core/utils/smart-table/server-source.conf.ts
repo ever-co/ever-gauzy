@@ -22,6 +22,7 @@ export class ServerSourceConf {
     relations: string[];
     resultMap: any;
     finalize: any;
+    withDeleted: boolean;
 
     constructor({
         resultMap = null,
@@ -36,7 +37,8 @@ export class ServerSourceConf {
         dataKey = '',
         where = '',
         join = '',
-        relations = []
+        relations = [],
+        withDeleted = false
     } = {}) {
 
         this.endPoint = endPoint ? endPoint : '';
@@ -53,5 +55,6 @@ export class ServerSourceConf {
         this.relations = relations;
         this.resultMap = resultMap;
         this.finalize = finalize;
+        this.withDeleted = withDeleted;
     }
 }

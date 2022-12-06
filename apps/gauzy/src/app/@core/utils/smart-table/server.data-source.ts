@@ -95,6 +95,7 @@ export class ServerDataSource extends LocalDataSource {
             ...(this.conf.where ? { where: this.conf.where } : {}),
             ...(this.conf.join ? { join: this.conf.join } : {}),
             ...(this.conf.relations ? { relations: this.conf.relations } : {}),
+            ...(this.conf.withDeleted ? { withDeleted: this.conf.withDeleted } : {}),
             ...this.addSortRequestParams(),
             ...this.addPagerRequestParams(),
         }
