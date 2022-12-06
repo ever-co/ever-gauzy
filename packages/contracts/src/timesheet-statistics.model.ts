@@ -4,7 +4,7 @@ import { ITask } from './task-entity.model';
 import { ITimeSlot, ITimeLog, ITimeLogFilters } from './timesheet.model';
 import { IOrganizationProject } from './organization-projects.model';
 
-export interface IGetTimeSlotStatistics 
+export interface IGetTimeSlotStatistics
 	extends ITimeLogFilters {
 	employeeId?: string;
 	projectId?: string | string[];
@@ -19,7 +19,7 @@ export interface ITimeSlotStatistics extends IEmployee {
 	user: Pick<IUser, 'name' | 'imageUrl'>;
 }
 
-export interface IGetActivitiesStatistics 
+export interface IGetActivitiesStatistics
 	extends ITimeLogFilters {
 	employeeId?: string;
 	projectId?: string | string[];
@@ -33,7 +33,7 @@ export interface IActivitiesStatistics {
 	sessions?: number;
 }
 
-export interface IGetProjectsStatistics 
+export interface IGetProjectsStatistics
 	extends ITimeLogFilters {
 	employeeId?: string;
 	projectId?: string | string[];
@@ -50,6 +50,7 @@ export interface IGetTasksStatistics
 	employeeId?: string;
 	projectId?: string | string[];
 	onlyMe?: boolean;
+	take?: number;
 }
 
 export interface ITasksStatistics extends ITask {

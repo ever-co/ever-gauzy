@@ -139,6 +139,38 @@ export class EmployeesService {
 		);
 	}
 
+	/**
+	 * Delete employee
+	 * 
+	 * @param id 
+	 * @returns 
+	 */
+	delete(
+		id: IEmployee['id'],
+		options: IBasePerTenantAndOrganizationEntityModel
+	) {
+		return firstValueFrom(
+			this.http.delete(`${API_PREFIX}/employee/${id}`, {
+				params: toParams({ ...options })
+			})
+		);
+	}
+
+	/**
+	 * Resort deleted employee
+	 * 
+	 * @param id 
+	 * @returns 
+	 */
+	resort(
+		id: IEmployee['id'],
+		options: IBasePerTenantAndOrganizationEntityModel
+	) {
+		return firstValueFrom(
+			this.http.put(`${API_PREFIX}/employee/${id}/restore`, options)
+		);
+	}
+
 	updateProfile(id: string, payload: IEmployeeUpdateInput): Promise<IEmployee> {
 		return firstValueFrom(
 			this.http.put<IEmployee>(`${API_PREFIX}/employee/${id}/profile`, payload)

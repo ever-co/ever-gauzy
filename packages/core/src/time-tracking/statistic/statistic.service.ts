@@ -21,9 +21,9 @@ import {
 	TimeLogType,
 	ITask
 } from '@gauzy/contracts';
-import { RequestContext } from '../../core/context';
 import { ArraySum, isNotEmpty } from '@gauzy/common';
 import { ConfigService } from '@gauzy/config';
+import { RequestContext } from '../../core/context';
 import {
 	Activity,
 	Employee,
@@ -896,20 +896,32 @@ export class StatisticService {
 	 * @returns
 	 */
 	async getTasks(request: IGetTasksStatistics) {
-		const { organizationId, startDate, endDate } = request;
-		let { employeeIds = [], projectIds = [] } = request;
+		const { organizationId, startDate, endDate, take } = request;
+		let { employeeIds = [], projectIds = [], taskIds = [], defaultRange, unitOfTime } = request;
 
 		const user = RequestContext.currentUser();
 		const tenantId = RequestContext.currentTenantId();
-		const { start, end } = (startDate && endDate) ?
-								getDateRangeFormat(
-									moment.utc(startDate),
-									moment.utc(endDate)
-								) :
-								getDateRangeFormat(
-									moment().startOf('week').utc(),
-									moment().endOf('week').utc()
-								);
+
+		let start: string | Date;
+		let end: string | Date;
+
+		if (startDate && endDate) {
+			const range = getDateRangeFormat(
+				moment.utc(startDate),
+				moment.utc(endDate)
+			);
+			start = range.start;
+			end = range.end;
+		} else {
+			if (typeof defaultRange === 'boolean' && defaultRange) {
+				const range = getDateRangeFormat(
+					moment().startOf(unitOfTime || 'week').utc(),
+					moment().endOf(unitOfTime || 'week').utc()
+				);
+				start = range.start;
+				end = range.end;
+			}
+		}
 		/*
 		 *  Get employees id of the organization or get current employee id
 		 */
@@ -946,14 +958,16 @@ export class StatisticService {
 			.innerJoin(`${query.alias}.timeSlots`, 'time_slot')
 			.andWhere(
 				new Brackets((qb: WhereExpressionBuilder) => {
-					qb.andWhere(`"${query.alias}"."startedAt" BETWEEN :start AND :end`, {
-						start,
-						end
-					});
-					qb.andWhere(`"time_slot"."startedAt" BETWEEN :start AND :end`, {
-						start,
-						end
-					});
+					if (start && end) {
+						qb.andWhere(`"${query.alias}"."startedAt" BETWEEN :start AND :end`, {
+							start,
+							end
+						});
+						qb.andWhere(`"time_slot"."startedAt" BETWEEN :start AND :end`, {
+							start,
+							end
+						});
+					}
 				})
 			)
 			.andWhere(
@@ -984,13 +998,18 @@ export class StatisticService {
 							projectIds
 						});
 					}
+					if (isNotEmpty(taskIds)) {
+						qb.andWhere(`"${query.alias}"."taskId" IN (:...taskIds)`, {
+							taskIds
+						});
+					}
 				})
 			)
 			.groupBy(`"${query.alias}"."id"`)
 			.addGroupBy(`"task"."id"`)
 			.orderBy('duration', 'DESC');
-
 		let statistics: ITask[] = await query.getRawMany();
+
 		let tasks: ITask[] = chain(statistics)
 				.groupBy('taskId')
 				.map((tasks: ITask[], taskId) => {
@@ -1001,8 +1020,8 @@ export class StatisticService {
 						duration: reduce(pluck(tasks, 'duration'), ArraySum, 0)
 					} as ITask
 				})
-				.value()
-				.splice(0, 5);
+				.value();
+		if (isNotEmpty(take)) { tasks = tasks.splice(0, take); }
 
 		const totalDurationQuery = this.timeLogRepository.createQueryBuilder();
 		totalDurationQuery
@@ -1017,10 +1036,12 @@ export class StatisticService {
 			.innerJoin(`${totalDurationQuery.alias}.task`, 'task')
 			.andWhere(
 				new Brackets((qb: WhereExpressionBuilder) => {
-					qb.andWhere(`"${totalDurationQuery.alias}"."startedAt" BETWEEN :start AND :end`, {
-						start,
-						end
-					});
+					if (start && end) {
+						qb.andWhere(`"${totalDurationQuery.alias}"."startedAt" BETWEEN :start AND :end`, {
+							start,
+							end
+						});
+					}
 				})
 			)
 			.andWhere(

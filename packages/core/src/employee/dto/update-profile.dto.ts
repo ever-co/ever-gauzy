@@ -6,6 +6,7 @@ import { SocialNetworksDTO } from "./network.dto";
 import { EmploymentDTO } from "./employment.dto";
 import { HiringDTO } from "./hiring.dto";
 import { RatesDTO } from "./rates.dto";
+import { RelationalTagDTO } from "./../../tags/dto";
 
 /**
  * EMPLOYEE can updates these fields only
@@ -15,7 +16,8 @@ export class UpdateProfileDTO extends IntersectionType(
     SocialNetworksDTO,
     EmploymentDTO,
     HiringDTO,
-    RatesDTO
+    RatesDTO,
+    RelationalTagDTO
 ) implements IEmployeeUpdateInput {
 
     @ApiPropertyOptional({ type: () => String })

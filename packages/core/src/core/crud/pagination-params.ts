@@ -33,6 +33,13 @@ export abstract class OptionParams<T> {
 	@ApiPropertyOptional({ type: Object, readOnly: true })
 	@IsOptional()
 	readonly relations?: FindOptionsRelations<T>;
+
+	/**
+	* Indicates if soft-deleted rows should be included in entity result.
+	*/
+	@ApiPropertyOptional({ type: Boolean })
+	@IsOptional()
+	readonly withDeleted?: boolean;
 }
 
 /**

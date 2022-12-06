@@ -1,4 +1,4 @@
-import { IntersectionType } from "@nestjs/mapped-types";
+import { IntersectionType } from "@nestjs/swagger";
 import { IGetTimeSlotInput } from "@gauzy/contracts";
 import { FiltersQueryDTO, RelationsQueryDTO, SelectorsQueryDTO } from "./../../../../shared/dto";
 
@@ -7,6 +7,5 @@ import { FiltersQueryDTO, RelationsQueryDTO, SelectorsQueryDTO } from "./../../.
  */
 export class TimeSlotQueryDTO extends IntersectionType(
     FiltersQueryDTO,
-    SelectorsQueryDTO,
-    RelationsQueryDTO
+    IntersectionType(RelationsQueryDTO, SelectorsQueryDTO)
 ) implements IGetTimeSlotInput {}

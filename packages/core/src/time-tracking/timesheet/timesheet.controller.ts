@@ -8,7 +8,8 @@ import {
 	Query,
 	Param,
 	ValidationPipe,
-	BadRequestException
+	BadRequestException,
+	UsePipes
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
@@ -57,10 +58,9 @@ export class TimeSheetController {
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Get('/count')
+	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async getTimesheetCount(
-		@Query(new ValidationPipe({
-			whitelist: true
-		})) options: TimesheetQueryDTO
+		@Query() options: TimesheetQueryDTO
 	): Promise<number> {
 		try {
 			return await this.timeSheetService.getTimeSheetCount(options);
@@ -82,15 +82,12 @@ export class TimeSheetController {
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Put('/status')
+	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async updateTimesheetStatus(
-		@Body(new ValidationPipe({
-			transform: true,
-			whitelist: true
-		})) entity: UpdateTimesheetStatusDTO
+		@Body() entity: UpdateTimesheetStatusDTO
 	): Promise<ITimesheet[]> {
 		return await this.commandBus.execute(
 			new TimesheetUpdateStatusCommand(entity)
@@ -110,15 +107,12 @@ export class TimeSheetController {
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Put('/submit')
+	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async submitTimeSheet(
-		@Body(new ValidationPipe({
-			transform: true,
-			whitelist: true
-		})) entity: SubmitTimesheetStatusDTO
+		@Body() entity: SubmitTimesheetStatusDTO
 	): Promise<ITimesheet[]> {
 		return await this.commandBus.execute(
 			new TimesheetSubmitCommand(entity)
@@ -138,14 +132,12 @@ export class TimeSheetController {
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Get()
+	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async get(
-		@Query(new ValidationPipe({
-			whitelist: true
-		})) options: TimesheetQueryDTO
+		@Query() options: TimesheetQueryDTO
 	): Promise<ITimesheet[]> {
 		try {
 			return await this.timeSheetService.getTimeSheets(options);
@@ -171,7 +163,7 @@ export class TimeSheetController {
 	})
 	@Get('/:id')
 	async findById(
-		@Param('id', UUIDValidationPipe) id: string
+		@Param('id', UUIDValidationPipe) id: ITimesheet['id']
 	): Promise<ITimesheet> {
 		try {
 			return await this.timeSheetService.findOneByIdString(id);

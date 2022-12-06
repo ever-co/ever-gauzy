@@ -68,7 +68,7 @@ export const createRandomEmployees = async (
 				employee.user = user;
 				employee.isActive = true;
 				employee.endWork = null;
-				employee.startedWorkOn = new Date(moment(faker.date.past()).format( 'YYYY-MM-DD hh:mm:ss'));
+				employee.startedWorkOn = new Date(moment(faker.date.past()).format('YYYY-MM-DD hh:mm:ss'));
 				employee.payPeriod = faker.random.arrayElement(
 					Object.keys(PayPeriodEnum)
 				);

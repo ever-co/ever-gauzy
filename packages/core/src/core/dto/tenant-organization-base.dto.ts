@@ -7,19 +7,19 @@ import { IsOrganizationBelongsToUser } from './../../shared/validators';
 export class TenantOrganizationBaseDTO extends TenantBaseDTO
 	implements IBasePerTenantAndOrganizationEntityModel {
 
-	@ApiProperty({ type: () => Object, readOnly: true })
+	@ApiProperty({ type: () => Object })
 	@ValidateIf((it) => !it.organizationId && !it.sentTo)
 	@IsObject()
 	@IsOrganizationBelongsToUser()
 	readonly organization: IOrganization;
 
-	@ApiProperty({ type: () => String, readOnly: true })
+	@ApiProperty({ type: () => String })
 	@ValidateIf((it) => !it.organization && !it.sentTo)
 	@IsString()
 	@IsOrganizationBelongsToUser()
 	readonly organizationId: IOrganization['id'];
 
-	@ApiPropertyOptional({ type: () => String, readOnly: true })
+	@ApiPropertyOptional({ type: () => String })
 	@ValidateIf((it) => !it.organization && !it.organizationId)
 	@IsOptional()
 	@IsString()

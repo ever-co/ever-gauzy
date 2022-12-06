@@ -44,6 +44,7 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 		const {
 			tags,
 			name,
+			prefix,
 			organizationId,
 			memberIds = [],
 			managerIds = []
@@ -80,6 +81,7 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 				organizationId,
 				tenantId,
 				name,
+				prefix,
 				members: teamEmployees
 			});
 		} catch (error) {
@@ -94,6 +96,7 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 		const {
 			tags,
 			name,
+			prefix,
 			organizationId,
 			memberIds = [],
 			managerIds = []
@@ -122,9 +125,9 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 			);
 
 			const organizationTeam = await this.findOneByIdString(id);
-			this.repository.merge(organizationTeam, { name, tags });
+			this.repository.merge(organizationTeam, { name, tags, prefix });
 
-			return this.repository.save(organizationTeam);
+			return await this.repository.save(organizationTeam);
 		} catch (err /*: WriteError*/) {
 			throw new BadRequestException(err);
 		}

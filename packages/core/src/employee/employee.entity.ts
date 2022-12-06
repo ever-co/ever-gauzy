@@ -39,7 +39,8 @@ import {
 	OneToOne,
 	RelationId,
 	OneToMany,
-	Index
+	Index,
+	DeleteDateColumn
 } from 'typeorm';
 import {
 	Candidate,
@@ -78,8 +79,8 @@ export class Employee extends TenantOrganizationBaseEntity
 	@Column({ nullable: true })
 	valueDate?: Date;
 
-	@ApiPropertyOptional({ type: () => Boolean, default: true })
-	@Column({ nullable: true, default: true })
+	@ApiPropertyOptional({ type: () => Boolean, default: false })
+	@Column({ nullable: true, default: false })
 	isActive: boolean;
 
 	@ApiPropertyOptional({ type: () => String, maxLength: 200 })
@@ -272,9 +273,17 @@ export class Employee extends TenantOrganizationBaseEntity
 	isTrackingEnabled: boolean;
 
 	/**
+	 * Soft Delete
+	 */
+	@ApiPropertyOptional({ type: () => 'timestamptz' })
+	@DeleteDateColumn({ nullable: true })
+	deletedAt?: Date;
+
+	/**
 	 * Additional Property
 	 */
 	fullName?: string;
+	isDeleted?: boolean;
 
 	/*
     |--------------------------------------------------------------------------

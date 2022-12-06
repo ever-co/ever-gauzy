@@ -48,6 +48,7 @@ import {
 	EmployeeJobStatisticDTO
 } from './dto';
 import { RequestContext } from './../core/context';
+import { TenantOrganizationBaseDTO } from './../core/dto';
 
 @ApiTags('Employee')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -274,6 +275,7 @@ export class EmployeeController extends CrudController<Employee> {
 								relations: params.relations
 							} : {}
 						),
+						withDeleted: true
 					}
 				)
 			);
@@ -421,14 +423,39 @@ export class EmployeeController extends CrudController<Employee> {
 	}
 
 	/**
-	 * Removed employee from organization
+	 * Restore soft deleted employee
 	 *
 	 * @param employeeId
 	 * @returns
 	 */
-	@ApiOperation({ summary: 'Delete record' })
+	@ApiOperation({ summary: 'Resort soft delete record' })
 	@ApiResponse({
-		status: HttpStatus.NO_CONTENT,
+		status: HttpStatus.OK,
+		description: 'The record has been successfully restore'
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Put(':id/restore')
+	@UsePipes(new ValidationPipe({ whitelist: true }))
+	async restoreSoftDelete(
+		@Param('id', UUIDValidationPipe) employeeId: IEmployee['id'],
+		@Body() entity: TenantOrganizationBaseDTO
+	): Promise<UpdateResult> {
+		return await this.employeeService.restoreSoftDelete(employeeId, entity);
+	}
+
+	/**
+	 * Soft delete employee from organization
+	 *
+	 * @param employeeId
+	 * @returns
+	 */
+	@ApiOperation({ summary: 'Soft delete record' })
+	@ApiResponse({
+		status: HttpStatus.OK,
 		description: 'The record has been successfully deleted'
 	})
 	@ApiResponse({
@@ -437,9 +464,11 @@ export class EmployeeController extends CrudController<Employee> {
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Delete(':id')
+	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async delete(
-		@Param('id', UUIDValidationPipe) employeeId: string
-	): Promise<IEmployee> {
-		return await this.employeeService.remove(employeeId);
+		@Param('id', UUIDValidationPipe) employeeId: string,
+		@Query() params: TenantOrganizationBaseDTO
+	): Promise<UpdateResult> {
+		return await this.employeeService.softDelete(employeeId, params);
 	}
 }
