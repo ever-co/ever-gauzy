@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RouterModule } from 'nest-router';
-import { AuthService } from '../auth/auth.service';
+import { AuthModule } from '../auth/auth.module';
 import { EmailModule } from '../email/email.module';
 import { CommandHandlers } from './commands/handlers';
 import { QueryHandlers } from './queries/handlers';
@@ -39,12 +39,12 @@ import { InviteService } from './invite.service';
 		OrganizationContactModule,
 		OrganizationDepartmentModule,
 		OrganizationTeamModule,
-		UserOrganizationModule
+		UserOrganizationModule,
+		AuthModule
 	],
 	controllers: [InviteController],
 	providers: [
 		InviteService,
-		AuthService,
 		...CommandHandlers,
 		...QueryHandlers,
 	],

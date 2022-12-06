@@ -244,26 +244,30 @@ export class OrganizationsStepFormComponent
 			this.locationFormBlank = values.length === 0 ? true : false;
 		});
 
-		if (!this.isOnboarding) {
-			/**
-			 * Employee feature controls value changes
-			 */
-			const registerAsEmployee = <FormControl>this.employeeFeatureForm.get('registerAsEmployee');
-			const startedWorkOn = <FormControl>this.employeeFeatureForm.get('startedWorkOn');
+		/**
+		* Employee feature controls value changes
+		*/
+		const registerAsEmployee = <FormControl>this.employeeFeatureForm.get('registerAsEmployee');
+		const startedWorkOn = <FormControl>this.employeeFeatureForm.get('startedWorkOn');
 
+		if (this.isOnboarding) {
+			registerAsEmployee.enable();
+			startedWorkOn.enable();
+		} else {
 			registerAsEmployee.disable();
 			startedWorkOn.disable();
-
-			registerAsEmployee.valueChanges.subscribe((value: boolean) => {
-				console.log(value, startedWorkOn);
-				if (value) {
-					startedWorkOn.setValidators([Validators.required]);
-				} else {
-					startedWorkOn.setValidators(null);
-				}
-				startedWorkOn.updateValueAndValidity();
-			});
 		}
+
+		registerAsEmployee.valueChanges.subscribe((value: boolean) => {
+			if (value) {
+				startedWorkOn.enable();
+				startedWorkOn.setValidators([Validators.required]);
+			} else {
+				startedWorkOn.disable();
+				startedWorkOn.setValidators(null);
+			}
+			startedWorkOn.updateValueAndValidity();
+		});
 		this.cdr.detectChanges();
 	}
 

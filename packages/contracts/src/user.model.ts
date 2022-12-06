@@ -8,6 +8,7 @@ import { ITag } from './tag-entity.model';
 import { IEmployee } from './employee.model';
 import { IPayment } from './payment.model';
 import { IOrganization } from './organization.model';
+import { IInvite } from './invite.model';
 
 export interface IUser extends IBasePerTenantEntityModel {
 	thirdPartyId?: string;
@@ -31,6 +32,11 @@ export interface IUser extends IBasePerTenantEntityModel {
 	isImporting?: boolean;
 	sourceId?: string;
 	isActive?: boolean;
+	code?: number;
+	codeExpireAt?: Date;
+	emailVerifiedAt?: Date;
+	emailToken?: string;
+	invites?: IInvite[];
 }
 
 export interface IUserFindInput extends IBasePerTenantEntityModel {
@@ -56,19 +62,36 @@ export interface IUserRegistrationInput {
 	createdById?: string;
 	isImporting?: boolean;
 	sourceId?: string;
+	inviteId?: string;
 }
 
-export interface IUserInviteCodeConfirmationInput extends IUserEmailInput {
-	code: number;
+/**
+ * email verfication token payload
+ */
+export interface IVerificationTokenPayload extends IUserEmailInput {
+	id: string;
 }
+
+export interface IUserInviteCodeConfirmationInput extends IUserEmailInput, IUserCodeInput {}
+
 export interface IUserEmailInput {
 	email: string;
 }
+
 export interface IUserPasswordInput {
 	password: string;
 }
 
+export interface IUserTokenInput {
+	token: string;
+}
+
+export interface IUserCodeInput {
+	code: number;
+}
+
 export interface IUserLoginInput extends IUserEmailInput, IUserPasswordInput {}
+
 export interface IAuthResponse {
 	user: IUser;
 	token: string;

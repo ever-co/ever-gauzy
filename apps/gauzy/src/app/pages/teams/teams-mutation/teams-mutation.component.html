@@ -33,20 +33,20 @@
 			<div class="row mb-3">
 				<div class="form-group col-12">
 					<ga-employee-multi-select
-						[label]="'FORM.LABELS.ADD_REMOVE_MEMBERS' | translate"
-						[placeholder]="'FORM.PLACEHOLDERS.ADD_REMOVE_MEMBERS' | translate"
-						[selectedEmployeeIds]="form.get('members').value"
+						[label]="'FORM.LABELS.ADD_REMOVE_MANAGERS' | translate"
+						[placeholder]="'FORM.PLACEHOLDERS.ADD_REMOVE_MANAGERS' | translate"
+						[selectedEmployeeIds]="form.get('managerIds').value"
 						[allEmployees]="employees"
-						(selectedChange)="onMembersSelected($event)"
+						(selectedChange)="onManagersSelected($event)"
 					></ga-employee-multi-select>
 				</div>
 				<div class="form-group col-12">
 					<ga-employee-multi-select
-						[label]="'FORM.LABELS.ADD_REMOVE_MANAGERS' | translate"
-						[placeholder]="'FORM.PLACEHOLDERS.ADD_REMOVE_MANAGERS' | translate"
-						[selectedEmployeeIds]="form.get('managers').value"
+						[label]="'FORM.LABELS.ADD_REMOVE_MEMBERS' | translate"
+						[placeholder]="'FORM.PLACEHOLDERS.ADD_REMOVE_MEMBERS' | translate"
+						[selectedEmployeeIds]="form.get('memberIds').value"
 						[allEmployees]="employees"
-						(selectedChange)="onManagersSelected($event)"
+						(selectedChange)="onMembersSelected($event)"
 					></ga-employee-multi-select>
 				</div>
 			</div>

@@ -1,7 +1,7 @@
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 
 export interface IFeature extends IBasePerTenantAndOrganizationEntityModel {
-	code: string;
+	code: FeatureEnum;
 	description: string;
 	featureOrganizations?: IFeatureOrganization[];
 	image: string;
@@ -144,5 +144,6 @@ export enum FeatureEnum {
 	FEATURE_PAYMENT_GATEWAY = 'FEATURE_PAYMENT_GATEWAY',
 	FEATURE_SMS_GATEWAY = 'FEATURE_SMS_GATEWAY',
 	FEATURE_SMTP = 'FEATURE_SMTP',
-	FEATURE_ROLES_PERMISSION = 'FEATURE_ROLES_PERMISSION'
+	FEATURE_ROLES_PERMISSION = 'FEATURE_ROLES_PERMISSION',
+	FEATURE_EMAIL_VERIFICATION = 'FEATURE_EMAIL_VERIFICATION'
 }

@@ -402,5 +402,11 @@
 				</div>
 			</form>
 		</nb-card-body>
+		<nb-card-footer [ngStyle]="{'visibility': hideAlert ? 'hidden': 'visible'}">
+			<nb-alert (close)="hideAlert = true" status="primary" class="alert" closable>
+				<nb-icon size="tiny" icon="info-outline"></nb-icon>
+				<div [innerHTML]="'TIMER_TRACKER.ALERT_DESKTOP_DOWNLOAD' | translate"></div>
+			</nb-alert>
+		</nb-card-footer>
 	</nb-card>
 </ng-template>

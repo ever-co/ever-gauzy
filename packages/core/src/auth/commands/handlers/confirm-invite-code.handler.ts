@@ -1,4 +1,4 @@
-import { HttpStatus } from '@nestjs/common';
+import { UnauthorizedException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { ConfirmInviteCodeCommand } from '../confirm-invite-code.command';
 import { AuthService } from '../../auth.service';
@@ -13,12 +13,9 @@ export class ConfirmInviteCodeHandler implements ICommandHandler<ConfirmInviteCo
 	public async execute(command: ConfirmInviteCodeCommand): Promise<any> {
 		try {
 			const { input } = command;
-			this.authService.confirmInviteCodeWithEmail(input);
-		} finally {
-			return new Object({
-				status: HttpStatus.OK,
-				message: `OK`
-			});
+			return await this.authService.confirmInviteCode(input);
+		} catch (error) {
+			throw new UnauthorizedException();
 		}
 	}
 }

@@ -143,6 +143,7 @@ export * from './../../email-template/email-template.subscriber';
 export * from './../../employee/employee.subscriber';
 export * from './../../export-import/import-history/import-history.subscriber';
 export * from './../../feature/feature.subscriber';
+export * from './../../invite/invite.subscriber';
 export * from './../../invoice/invoice.subscriber';
 export * from './../../organization-contact/organization-contact.subscriber';
 export * from './../../organization-project/organization-project.subscriber';

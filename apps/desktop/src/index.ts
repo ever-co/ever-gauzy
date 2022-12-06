@@ -7,7 +7,6 @@ Object.assign(console, log.functions);
 
 import { app, dialog, BrowserWindow, ipcMain, shell, Menu } from 'electron';
 import { environment } from './environments/environment';
-import fetch from 'node-fetch';
 
 // setup logger to catch all unhandled errors and submit as bug reports to our repo
 log.catchErrors({
@@ -61,12 +60,9 @@ import {
 	LocalStore,
 	DataModel,
 	AppMenu,
+	DesktopUpdater,
 	removeMainListener,
 	removeTimerListener,
-	appUpdateNotification,
-	DesktopDialog,
-	DialogConfirmUpgradeDownload,
-	DialogConfirmInstallDownload
 } from '@gauzy/desktop-libs';
 import {
 	createGauzyWindow,
@@ -78,8 +74,7 @@ import {
 	createImageViewerWindow
 } from '@gauzy/desktop-window';
 import { fork } from 'child_process';
-import { autoUpdater} from 'electron-updater';
-import { CancellationToken } from "builder-util-runtime";
+import { autoUpdater } from 'electron-updater';
 import { initSentry } from './sentry';
 
 initSentry();
@@ -137,18 +132,18 @@ const pathWindow = {
 	screenshotWindow: path.join(__dirname, './ui/index.html')
 };
 
+const updater = new DesktopUpdater({
+	repository: 'ever-gauzy-desktop',
+	owner: 'ever-co',
+	typeRelease: 'releases'
+});
+
 let tray = null;
 let isAlreadyRun = false;
 let onWaitingServer = false;
 let serverGauzy = null;
 let serverDesktop = null;
 let dialogErr = false;
-let cancellationToken: any;
-let isDownloadTriggered: boolean = false;
-
-try {
-	cancellationToken = new CancellationToken();
-} catch (error) {}
 
 LocalStore.setFilePath({
 	iconPath: path.join(__dirname, 'icons', 'icon.png')
@@ -334,21 +329,13 @@ const getApiBaseUrl = (configs) => {
 // More details at https://github.com/electron/electron/issues/15947
 
 app.on('ready', async () => {
-	// require(path.join(__dirname, 'desktop-api/main.js'));
-	/* set menu */
-	setTimeout(async () => {
-		try {
-			await checForUpdateNotify();
-		} catch (error) {
-			console.log('Error on checking update:', error);
-		}
-	}, 5000);
+	const configs: any = store.get('configs');
+	const settings: any = store.get('appSetting');
+	const autoLaunch: boolean =
+		settings && typeof settings.autoLaunch === 'boolean' ? settings.autoLaunch : true;
 	await knex.raw(`pragma journal_mode = WAL;`).then((res) => console.log(res));
 	await dataModel.createNewTable(knex);
-	const configs: any = store.get('configs');
-	if (configs && typeof configs.autoLaunch === 'undefined') {
-		launchAtStartup(true, false);
-	}
+	launchAtStartup(autoLaunch, false);
 	Menu.setApplicationMenu(
 		Menu.buildFromTemplate([
 			{
@@ -420,6 +407,9 @@ app.on('ready', async () => {
 		);
 		setupWindow.show();
 	}
+	updater.settingWindow = settingsWindow;
+	updater.gauzyWindow = gauzyWindow;
+	updater.checkUpdate();
 	removeMainListener();
 	ipcMainHandler(store, startServer, knex, { ...environment }, timeTrackerWindow);
 });
@@ -516,63 +506,6 @@ ipcMain.on('open_browser', (event, arg) => {
 	shell.openExternal(arg.url);
 });
 
-ipcMain.on('check_for_update', async () => {
-	await checkUpdate();
-});
-
-autoUpdater.once('update-available', () => {
-	const setting = LocalStore.getStore('appSetting');
-	settingsWindow.webContents.send('update_available');
-	if(setting && !setting.automaticUpdate) return;
-	const dialog = new DialogConfirmUpgradeDownload(
-		new DesktopDialog(
-			'Gauzy',
-			'Update Ready to Download',
-			gauzyWindow
-		)
-	);
-	dialog.show().then(async (button) => {
-		if (button.response === 0) {
-			await checkUpdate();
-		}
-	});
-});
-
-autoUpdater.on('update-downloaded', () => {
-	const setting = LocalStore.getStore('appSetting');
-	settingsWindow.webContents.send('update_downloaded');
-	if(setting && !setting.automaticUpdate) return;
-	const dialog = new DialogConfirmInstallDownload(
-		new DesktopDialog(
-			'Gauzy',
-			'Update Ready to Install',
-			gauzyWindow
-		)
-	);
-	dialog.show().then((button) => {
-		if (button.response === 0) autoUpdater.quitAndInstall();
-	  })
-});
-
-autoUpdater.on('update-not-available', () => {
-	settingsWindow.webContents.send('update_not_available');
-});
-
-autoUpdater.on('download-progress', (event) => {
-	if (settingsWindow) {
-		settingsWindow.webContents.send('download_on_progress', event);
-	}
-});
-
-autoUpdater.on('error', (e) => {
-	settingsWindow.webContents.send('error_update', e);
-});
-
-autoUpdater.requestHeaders = {
-	'Cache-Control':
-		'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0'
-};
-
 ipcMain.on('restart_and_update', () => {
 	setImmediate(() => {
 		app.removeAllListeners('window-all-closed');
@@ -622,10 +555,6 @@ ipcMain.on('check_database_connection', async (event, arg) => {
 	}
 });
 
-autoUpdater.on('error', () => {
-	console.log('error');
-});
-
 app.on('activate', () => {
 	if (gauzyWindow) {
 		if (LocalStore.getStore('configs').gauzyWindow) {
@@ -662,9 +591,10 @@ app.on('before-quit', (e) => {
 			});
 		}, 1000);
 	} else {
-		if (cancellationToken) {
-			cancellationToken.cancel();
-		}
+		// soft download cancellation
+		try {
+			updater.cancel();
+		} catch (e) { }
 		app.exit(0);
 		if (serverDesktop) serverDesktop.kill();
 		if (serverGauzy) serverGauzy.kill();
@@ -710,57 +640,5 @@ function launchAtStartup(autoLaunch, hidden) {
 			break;
 		default:
 			break;
-	}
-}
-
-async function getUpdaterConfig() {
-	const updaterConfig = {
-		repo: 'ever-gauzy-desktop',
-		owner: 'ever-co',
-		typeRelease: 'releases'
-	};
-	let latestReleaseTag = null;
-	try {
-		latestReleaseTag = await fetch(
-			`https://github.com/${updaterConfig.owner}/${updaterConfig.repo}/${updaterConfig.typeRelease}/latest`,
-			{
-				method: 'GET',
-				headers: {
-					Accept: 'application/json'
-				}
-			}
-		).then((res) => res.json());
-	} catch (error) {}
-	if (latestReleaseTag) {
-		return `https://github.com/${updaterConfig.owner}/${updaterConfig.repo}/${updaterConfig.typeRelease}/download/${latestReleaseTag.tag_name}`
-	}
-	return null;
-}
-
-async function checForUpdateNotify() {
-	const updateFeedUrl = await getUpdaterConfig();
-	await appUpdateNotification(updateFeedUrl);
-}
-
-const checkUpdate = async () => {
-	autoUpdater.autoDownload = !isDownloadTriggered;
-	const updateFeedUrl = await getUpdaterConfig();
-	if (updateFeedUrl) {
-		autoUpdater.setFeedURL({
-			channel: 'latest',
-			provider: 'generic',
-			url: updateFeedUrl
-		});
-		autoUpdater.checkForUpdatesAndNotify().then((downloadPromise) => {
-			if (cancellationToken){
-				cancellationToken = downloadPromise.cancellationToken;
-			}else {
-				 isDownloadTriggered = true;
-			}
-		}).catch((e) => {
-			console.log('Error occurred', e);
-		});
-	} else {
-		settingsWindow.webContents.send('error_update');
 	}
 }

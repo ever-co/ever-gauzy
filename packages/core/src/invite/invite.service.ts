@@ -17,11 +17,12 @@ import {
 	InvitationExpirationEnum,
 	IInvite,
 	InvitationTypeEnum,
-	IOrganizationTeam
+	IOrganizationTeam,
+	IInviteResendInput
 } from '@gauzy/contracts';
 import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { sign } from 'jsonwebtoken';
+import { JwtPayload, sign, verify } from 'jsonwebtoken';
 import {
 	FindOptionsWhere,
 	In,
@@ -33,8 +34,9 @@ import {
 } from 'typeorm';
 import { addDays } from 'date-fns';
 import { isNotEmpty } from '@gauzy/common';
-import { TenantAwareCrudService } from './../core/crud';
+import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
+import { generateRandomInteger } from './../core/utils';
 import { Invite } from './invite.entity';
 import { EmailService } from '../email/email.service';
 import { UserService } from '../user/user.service';
@@ -73,7 +75,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 		emailInvites: ICreateEmailInvitesInput,
 		languageCode: LanguagesEnum
 	): Promise<ICreateEmailInvitesOutput> {
-		const invites: Invite[] = [];
+		const originUrl = this.configSerice.get('clientBaseUrl') as string;
 		const {
 			emailIds,
 			roleId,
@@ -82,20 +84,20 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 			departmentIds,
 			teamIds,
 			organizationId,
-			invitedById,
 			startedWorkOn,
 			appliedDate,
-			invitationExpirationPeriod
+			invitationExpirationPeriod,
+			fullName,
+			callbackUrl
 		} = emailInvites;
-		const originUrl = this.configSerice.get('clientBaseUrl') as string;
 
-		const projects: IOrganizationProject[] = await this.organizationProjectService.find({
+		const organizationProjects: IOrganizationProject[] = await this.organizationProjectService.find({
 			where: {
 				id: In(projectIds || []),
 				organizationId
 			}
 		});
-		const departments: IOrganizationDepartment[] = await this.organizationDepartmentService.find({
+		const organizationDepartments: IOrganizationDepartment[] = await this.organizationDepartmentService.find({
 			where: {
 				id: In(departmentIds || []),
 				organizationId
@@ -107,21 +109,31 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 				organizationId
 			}
 		});
-		const teams: IOrganizationTeam[] = await this.organizationTeamService.find({
+		const organizationTeams: IOrganizationTeam[] = await this.organizationTeamService.find({
 			where: {
 				id: In(teamIds || []),
 				organizationId
 			}
 		});
-		const organization: IOrganization = await this.organizationService.findOneByIdString(organizationId);
-		const role: IRole = await this.roleService.findOneByIdString(roleId);
-		const user: IUser = await this.userService.findOneByIdString(invitedById, {
-			relations: ['role']
+
+		/**
+		 * Invited by the user
+		 */
+		const invitedBy: IUser = await this.userService.findOneByIdString(RequestContext.currentUserId(), {
+			relations: {
+				role: true
+			}
 		});
-		const tenantId = RequestContext.currentTenantId();
+		/**
+		 * Invited organization
+		 */
+		const organization: IOrganization = await this.organizationService.findOneByIdString(organizationId);
+		/**
+		 * Invited for role
+		 */
+		const role: IRole = await this.roleService.findOneByIdString(roleId);
 		if (role.name === RolesEnum.SUPER_ADMIN) {
-			const { role: inviterRole } = user;
-			if (inviterRole.name !== RolesEnum.SUPER_ADMIN) {
+			if (invitedBy.role.name !== RolesEnum.SUPER_ADMIN) {
 				throw new UnauthorizedException();
 			}
 		}
@@ -139,39 +151,90 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 			}
 		}
 
-		const existingInvites = (
-			await this.repository
-				.createQueryBuilder('invite')
-				.select('invite.email')
-				.where('invite.email IN (:...emails)', { emails: emailIds })
-				.getMany()
-		).map((invite) => invite.email);
+		// already existed invites
+		const { items: existedInvites } = await this.findAll({
+			...(isNotEmpty(teamIds)) ? {
+				relations: {
+					teams: true
+				}
+			} : {},
+			where: {
+				tenantId: RequestContext.currentTenantId(),
+				...(
+					(isNotEmpty(organizationId)) ? {
+						organizationId
+					} : {}
+				),
+				...(
+					(isNotEmpty(emailIds)) ? {
+						email: In(emailIds)
+					} : {}
+				),
+			}
+		});
 
-		const invitesToCreate = emailIds.filter(
-			(email) => existingInvites.indexOf(email) < 0
-		);
+		let ignoreInvites = 0;
+		const invites: Invite[] = [];
+		for await (const email of emailIds) {
+			const code = generateRandomInteger(6);
+			const token: string = sign({ email, code }, environment.JWT_SECRET, {});
 
-		for (let i = 0; i < invitesToCreate.length; i++) {
-			const email = invitesToCreate[i];
-			const token = this.createToken(email);
-
-			const invite = new Invite();
-			invite.token = token;
-			invite.email = email;
-			invite.roleId = roleId;
-			invite.organizationId = organizationId;
-			invite.tenantId = tenantId;
-			invite.invitedById = invitedById;
-			invite.status = InviteStatusEnum.INVITED;
-			invite.expireDate = expireDate;
-			invite.projects = projects;
-			invite.teams = teams;
-			invite.departments = departments;
-			invite.organizationContacts = organizationContacts;
-			invite.actionDate = startedWorkOn || appliedDate;
-			invites.push(invite);
+			const matchedInvites = existedInvites.filter(
+				(invite: IInvite) => (invite.email === email)
+			);
+			if (isNotEmpty(matchedInvites)) {
+				const existedTeams: IOrganizationTeam[] = [];
+				for (const invite of matchedInvites) {
+					if (isNotEmpty(invite.teams)) {
+						existedTeams.push(...invite.teams);
+					}
+				}
+				const needsToInviteTeams = organizationTeams.filter(
+					(item: IOrganizationTeam) => !existedTeams.some(
+						(team: IOrganizationTeam) => team.id === item.id
+					)
+				);
+				if (isNotEmpty(needsToInviteTeams)) {
+					invites.push(new Invite({
+						token,
+						email,
+						roleId,
+						organizationId,
+						tenantId: RequestContext.currentTenantId(),
+						invitedById: RequestContext.currentUserId(),
+						status: InviteStatusEnum.INVITED,
+						expireDate,
+						projects: organizationProjects,
+						teams: needsToInviteTeams,
+						departments:organizationDepartments,
+						organizationContacts,
+						actionDate: startedWorkOn || appliedDate,
+						code,
+						fullName
+					}));
+				} else {
+					ignoreInvites++;
+				}
+			} else {
+				invites.push(new Invite({
+					token,
+					email,
+					roleId,
+					organizationId,
+					tenantId: RequestContext.currentTenantId(),
+					invitedById: RequestContext.currentUserId(),
+					status: InviteStatusEnum.INVITED,
+					expireDate,
+					projects: organizationProjects,
+					teams: organizationTeams,
+					departments:organizationDepartments,
+					organizationContacts,
+					actionDate: startedWorkOn || appliedDate,
+					code,
+					fullName
+				}));
+			}
 		}
-
 		const items = await this.repository.save(invites);
 		items.forEach((item) => {
 			const registerUrl = `${originUrl}/#/auth/accept-invite?email=${item.email}&token=${item.token}`;
@@ -183,78 +246,122 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 					registerUrl,
 					originUrl,
 					languageCode,
-					invitedBy: user
+					invitedBy
 				});
 			} else if (emailInvites.inviteType === InvitationTypeEnum.EMPLOYEE) {
 				this.emailService.inviteEmployee({
 					email: item.email,
 					registerUrl,
 					organizationContacts,
-					departments,
+					departments: organizationDepartments,
 					originUrl,
 					organization: organization,
 					languageCode,
-					invitedBy: user
+					invitedBy
+				});
+			} else if (emailInvites.inviteType === InvitationTypeEnum.TEAM) {
+				let inviteLink: string;
+				if (callbackUrl) {
+					inviteLink = `${callbackUrl}?email=${item.email}&code=${item.code}`
+				} else {
+					inviteLink = `${registerUrl}`;
+				}
+				this.emailService.inviteTeamMember({
+					email: item.email,
+					teams: item.teams.map((team: IOrganizationTeam) => team.name).join(', '),
+					languageCode,
+					invitedBy,
+					organization,
+					inviteCode: item.code,
+					inviteLink,
+					originUrl
 				});
 			}
 		});
 
-		return { items, total: items.length, ignored: existingInvites.length };
+		return { items, total: items.length, ignored: ignoreInvites };
 	}
 
-	async resendEmail(data, invitedById, languageCode, expireDate){
-		const {
-			id,
-			email,
-			roleName,
-			organization,
-			departmentNames,
-			clientNames
-		} = data
-
-		const status = InviteStatusEnum.INVITED;
-
+	async resendEmail(
+		input: IInviteResendInput,
+		languageCode: LanguagesEnum
+	) {
 		const originUrl = this.configSerice.get('clientBaseUrl') as string;
-
-		const user: IUser = await this.userService.findOneByIdString(invitedById, {
-			relations: ['role']
+		const { inviteId, inviteType, callbackUrl } = input;
+		/**
+		 * Invitation
+		 */
+		const invite: IInvite = await this.findOneByIdString(inviteId, {
+			relations: {
+				organization: true,
+				role: true,
+				teams: true
+			}
 		});
+		if (!invite) {
+			throw Error('Invite does not exist');
+		}
+		// Invited organization
+ 		const organization: IOrganization = invite.organization;
 
-		const token = this.createToken(email);
-
-		const registerUrl = `${originUrl}/#/auth/accept-invite?email=${email}&token=${token}`;
-
-
+		const role: IRole = invite.role;
+		const email: IInvite['email'] = invite.email;
+		const teams: IOrganizationTeam[] = invite.teams;
+		/**
+		 * Invited by the user
+		 */
+		const invitedBy: IUser = await this.userService.findOneByIdString(
+			RequestContext.currentUserId()
+		);
 		try{
-			await this.update(id, {
-			   status,
-			   expireDate,
-			   invitedById,
-			   token
-			})
+			const code = generateRandomInteger(6);
+			const token: string = sign({ email, code }, environment.JWT_SECRET, {});
 
-			if (data.inviteType === InvitationTypeEnum.USER) {
+			const registerUrl = `${originUrl}/#/auth/accept-invite?email=${email}&token=${token}`;
+			if (inviteType === InvitationTypeEnum.USER) {
 				this.emailService.inviteUser({
 					email,
-					role: roleName,
-					organization: organization,
+					role: role.name,
+					organization,
 					registerUrl,
 					originUrl,
 					languageCode,
-					invitedBy: user
+					invitedBy
 				});
-			} else if (data.inviteType === InvitationTypeEnum.EMPLOYEE || data.inviteType === InvitationTypeEnum.CANDIDATE) {
+			} else if (inviteType === InvitationTypeEnum.EMPLOYEE || inviteType === InvitationTypeEnum.CANDIDATE) {
 				this.emailService.inviteEmployee({
 					email,
 					registerUrl,
-					organizationContacts: clientNames,
-					departments: departmentNames,
 					originUrl,
-					organization: organization,
+					organization,
 					languageCode,
-					invitedBy: user
+					invitedBy
+				});
+			} else if (inviteType === InvitationTypeEnum.TEAM) {
+				let inviteLink: string;
+				if (callbackUrl) {
+					inviteLink = `${callbackUrl}?email=${email}&code=${code}`
+				} else {
+					inviteLink = `${registerUrl}`;
+				}
+				this.emailService.inviteTeamMember({
+					email: email,
+					inviteCode: code,
+					teams: teams.map((team: IOrganizationTeam) => team.name).join(', '),
+					languageCode,
+					invitedBy,
+					organization,
+					inviteLink,
+					originUrl
 				});
 			}
+
+			return await this.update(inviteId, {
+				status: InviteStatusEnum.INVITED,
+				invitedById: RequestContext.currentUserId(),
+				token,
+				code
+			});
 		} catch(error){
 			return error
 		}
@@ -344,24 +451,83 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 		where: FindOptionsWhere<Invite>
 	): Promise<IInvite> {
 		try {
-			const query = this.repository.createQueryBuilder();
+			const { email, token } = where;
+			const payload: string | JwtPayload = verify(token as string, environment.JWT_SECRET);
+
+			if (typeof payload === 'object' && 'email' in payload) {
+				if (payload.email === email) {
+					const query = this.repository.createQueryBuilder(this.alias);
+					query.setFindOptions({
+						select: {
+							id: true,
+							email: true,
+							fullName: true,
+							organization: {
+								name: true
+							}
+						},
+						relations: {
+							organization: true
+						}
+					});
+					query.where((qb: SelectQueryBuilder<Invite>) => {
+						qb.andWhere({
+							email,
+							token,
+							status: InviteStatusEnum.INVITED,
+							...(
+								(payload['code']) ? {
+									code: payload['code']
+								} : {}
+							),
+						});
+						qb.andWhere([
+							{
+								expireDate: MoreThanOrEqual(new Date())
+							},
+							{
+								expireDate: IsNull()
+							}
+						]);
+					});
+					return await query.getOneOrFail();
+				}
+            }
+            throw new BadRequestException();
+		} catch (error) {
+			throw new BadRequestException();
+		}
+	}
+
+	/**
+	 * Validate invited by code
+	 *
+	 * @param where
+	 * @returns
+	 */
+	async validateByCode(
+		where: FindOptionsWhere<Invite>
+	): Promise<IInvite> {
+		try {
+			const { email, code } = where;
+			const query = this.repository.createQueryBuilder(this.alias);
 			query.setFindOptions({
 				select: {
 					id: true,
 					email: true,
+					fullName: true,
 					organization: {
-						id: true,
 						name: true
 					}
 				},
-				relationLoadStrategy: 'query',
 				relations: {
 					organization: true
 				}
 			});
 			query.where((qb: SelectQueryBuilder<Invite>) => {
 				qb.andWhere({
-					...where,
+					email,
+					code,
 					status: InviteStatusEnum.INVITED
 				});
 				qb.andWhere([
@@ -390,49 +556,70 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 	 * @param options
 	 * @returns
 	 */
-	public async findAllInvites(options: any) {
+	public async findAllInvites(options: PaginationParams<any>) {
 		try {
-			const query = this.repository.createQueryBuilder();
-			query.setFindOptions({
-				skip: (options && options.skip) ? (options.take * (options.skip - 1)) : 0,
-				take: (options && options.take) ? (options.take) : 10,
+			return await super.findAll({
+				...(
+					(options && options.skip) ? {
+						skip: (options.take * (options.skip - 1))
+					} : {}
+				),
+				...(
+					(options && options.take) ? {
+						take: (options.take)
+					} : {}
+				),
 				...(
 					(options && options.relations) ? {
 						relations: options.relations
 					} : {}
-				)
-			});
-			query.where((qb: SelectQueryBuilder<Invite>) => {
-				qb.andWhere({
-					tenantId: RequestContext.currentTenantId()
-				});
-				if (isNotEmpty(options.where)) {
-					const { where } = options;
-					if (isNotEmpty(where.organizationId)) {
-						const { organizationId, tenantId } = where;
-						qb.andWhere({
-							organizationId,
-							tenantId
-						});
-					}
-					if (isNotEmpty(where.role)) {
-						const { role } = where;
-						qb.andWhere({
-							role: {
-								...role
+				),
+				where: {
+					tenantId: RequestContext.currentTenantId(),
+					...(
+						(options && isNotEmpty(options.where)) ? {
+							organizationId: options.where.organizationId
+						} : {}
+					),
+					...(
+						(isNotEmpty(options) && isNotEmpty(options.where)) ?
+							(isNotEmpty(options.where.role)) ? {
+								role: {
+									...options.where.role
+								}
+							} : {
+								role: {
+									name: Not(RolesEnum.EMPLOYEE)
+								}
 							}
-						});
-					} else {
-						qb.andWhere({
-							role: {
-								name: Not(RolesEnum.EMPLOYEE)
-							}
-						});
-					}
+						: {}
+					),
+					/**
+					 * Organization invites filter by specific projects
+					 */
+					 ...(
+						(isNotEmpty(options) && isNotEmpty(options.where)) ?
+							(isNotEmpty(options.where.projects)) ? {
+								projects: {
+									id: In(options.where.projects.id)
+								}
+							} : {}
+						: {}
+					),
+					/**
+					 * Organization invites filter by specific teams
+					 */
+					...(
+						(isNotEmpty(options) && isNotEmpty(options.where)) ?
+							(isNotEmpty(options.where.teams)) ? {
+								teams: {
+									id: In(options.where.teams.id)
+								}
+							} : {}
+						: {}
+					),
 				}
 			});
-			const [items, total] = await query.getManyAndCount();
-			return { items, total };
 		} catch (error) {
 			throw new BadRequestException(error);
 		}

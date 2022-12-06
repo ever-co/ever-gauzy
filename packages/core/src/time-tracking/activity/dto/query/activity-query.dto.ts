@@ -1,5 +1,5 @@
 import { IGetActivitiesInput, ReportGroupFilterEnum } from "@gauzy/contracts";
-import { IntersectionType } from "@nestjs/mapped-types";
+import { IntersectionType } from "@nestjs/swagger";
 import { ApiPropertyOptional } from "@nestjs/swagger";
 import { IsArray, IsEnum, IsOptional } from "class-validator";
 import { FiltersQueryDTO, SelectorsQueryDTO } from "../../../../shared/dto";
@@ -16,7 +16,7 @@ export class ActivityQueryDTO extends IntersectionType(
     @IsOptional()
     @IsEnum(ReportGroupFilterEnum)
     readonly groupBy: ReportGroupFilterEnum;
-    
+
     @ApiPropertyOptional({ type: () => Array, isArray: true })
     @IsOptional()
     @IsArray()

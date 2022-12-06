@@ -1,15 +1,13 @@
-import { BadRequestException, Controller, Delete, HttpCode, HttpStatus, Param, UseGuards, UseInterceptors } from '@nestjs/common';
+import { BadRequestException, Controller, Delete, HttpCode, HttpStatus, Param, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { IOrganizationTeamEmployee, PermissionsEnum } from '@gauzy/contracts';
 import { DeleteResult } from 'typeorm';
-import { TransformInterceptor } from ',./../core/interceptors';
 import { TenantPermissionGuard, PermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
 import { UUIDValidationPipe } from './../shared/pipes';
 import { OrganizationTeamEmployeeService } from './organization-team-employee.service';
 
 @ApiTags('OrganizationTeamEmployee')
-@UseInterceptors(TransformInterceptor)
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.ORG_TEAM_EDIT)
 @Controller()

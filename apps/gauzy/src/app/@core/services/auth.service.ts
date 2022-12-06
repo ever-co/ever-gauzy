@@ -6,7 +6,9 @@ import {
 	RolesEnum,
 	IUserRegistrationInput,
 	PermissionsEnum,
-	IAuthResponse
+	IAuthResponse,
+	IUserEmailInput,
+	IUserTokenInput
 } from '@gauzy/contracts';
 import { Observable } from 'rxjs';
 import { toParams } from '@gauzy/common-angular';
@@ -14,13 +16,19 @@ import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable()
 export class AuthService {
-	constructor(private http: HttpClient) { }
+
+	constructor(
+		private readonly http: HttpClient
+	) { }
 
 	isAuthenticated(): Promise<boolean> {
 		return firstValueFrom(
-			this.http
-				.get<boolean>(`${API_PREFIX}/auth/authenticated`)
+			this.http.get<boolean>(`${API_PREFIX}/auth/authenticated`)
 		);
+	}
+
+	confirmEmail(body: IUserEmailInput & IUserTokenInput): Observable<Object> {
+		return this.http.post<Object>(`${API_PREFIX}/auth/email/verify`, body);
 	}
 
 	login(loginInput): Observable<IAuthResponse> {

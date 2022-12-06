@@ -1,7 +1,6 @@
 import {
 	ICreateEmailInvitesOutput,
 	IInviteAcceptInput,
-	IInviteResendInput,
 	PermissionsEnum,
 	LanguagesEnum,
 	IOrganizationContactAcceptInviteInput,
@@ -23,7 +22,6 @@ import {
 	Param,
 	Put,
 	Req,
-	UseInterceptors,
 	ValidationPipe,
 	UsePipes
 } from '@nestjs/common';
@@ -42,7 +40,6 @@ import { InviteService } from './invite.service';
 import { LanguageDecorator, Permissions } from './../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { UUIDValidationPipe } from './../shared/pipes';
-import { TransformInterceptor } from './../core/interceptors';
 import { PaginationParams } from './../core/crud';
 import {
 	InviteAcceptCommand,
@@ -51,11 +48,18 @@ import {
 	InviteOrganizationContactCommand,
 	InviteResendCommand
 } from './commands';
-import { CreateInviteDTO, FindInviteQueryDTO } from './dto';
-import { FindPublicInviteByEmailTokenQuery } from './queries';
+import {
+	CreateInviteDTO,
+	ResendInviteDTO,
+	ValidateInviteByCodeQueryDTO,
+	ValidateInviteQueryDTO
+} from './dto';
+import {
+	FindInviteByEmailCodeQuery,
+	FindInviteByEmailTokenQuery
+} from './queries';
 
 @ApiTags('Invite')
-@UseInterceptors(TransformInterceptor)
 @Controller()
 export class InviteController {
 	constructor(
@@ -78,7 +82,7 @@ export class InviteController {
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_INVITE_EDIT)
 	@Post('/emails')
-	@UsePipes(new ValidationPipe({ transform: true }))
+	@UsePipes(new ValidationPipe())
 	async createManyWithEmailsId(
 		@Body() entity: CreateInviteDTO,
 		@LanguageDecorator() languageCode: LanguagesEnum
@@ -91,6 +95,12 @@ export class InviteController {
 		);
 	}
 
+	/**
+	 * Validate invite by token and email
+	 *
+	 * @param options
+	 * @returns
+	 */
 	@ApiOperation({ summary: 'Get invite.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -103,12 +113,34 @@ export class InviteController {
 	})
 	@Public()
 	@Get('validate')
-	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
-	async validateInvite(@Query() options: FindInviteQueryDTO) {
+	@UsePipes(new ValidationPipe({ whitelist: true }))
+	async validateInviteByToken(
+		@Query() options: ValidateInviteQueryDTO
+	) {
 		return await this.queryBus.execute(
-			new FindPublicInviteByEmailTokenQuery({
+			new FindInviteByEmailTokenQuery({
 				email: options.email,
 				token: options.token
+			})
+		);
+	}
+
+	/**
+	 * Validate invite by code and email
+	 *
+	 * @param body
+	 * @returns
+	 */
+	@Public()
+	@Post('validate-by-code')
+	@UsePipes(new ValidationPipe({ whitelist: true }))
+	async validateInviteByCode(
+		@Body() body: ValidateInviteByCodeQueryDTO
+	) {
+		return await this.queryBus.execute(
+			new FindInviteByEmailCodeQuery({
+				email: body.email,
+				code: body.code
 			})
 		);
 	}
@@ -131,10 +163,7 @@ export class InviteController {
 		@I18nLang() languageCode: LanguagesEnum
 	) {
 		return await this.commandBus.execute(
-			new InviteAcceptCommand({
-				...entity,
-				originalUrl: origin
-			}, languageCode)
+			new InviteAcceptCommand({ ...entity, originalUrl: origin }, languageCode)
 		);
 	}
 
@@ -157,7 +186,7 @@ export class InviteController {
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_INVITE_VIEW)
 	@Get()
-	@UsePipes(new ValidationPipe({ transform: true }))
+	@UsePipes(new ValidationPipe())
 	async findAll(
 		@Query() options: PaginationParams<Invite>
 	): Promise<IPagination<IInvite>> {
@@ -190,21 +219,28 @@ export class InviteController {
 		);
 	}
 
+	/**
+	 * Resend invite
+	 *
+	 * @param entity
+	 * @param languageCode
+	 * @returns
+	 */
 	@ApiOperation({ summary: 'Resend invite.' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
-		description: 'The record has been successfully created.'
+		description: 'The record has been successfully updated.'
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_INVITE_EDIT)
 	@Post('resend')
+	@UsePipes(new ValidationPipe())
 	async resendInvite(
-		@Body() entity: IInviteResendInput,
+		@Body() entity: ResendInviteDTO,
 		@LanguageDecorator() languageCode: LanguagesEnum
 	): Promise<UpdateResult | Invite> {
 		return await this.commandBus.execute(

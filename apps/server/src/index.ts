@@ -21,7 +21,8 @@ console.log('Node Modules Path', path.join(__dirname, 'node_modules'));
 import {
 	LocalStore,
 	apiServer,
-	AppMenu
+	AppMenu,
+	DesktopUpdater
 } from '@gauzy/desktop-libs';
 import {
 	createSetupWindow,
@@ -31,6 +32,7 @@ import {
 // import { initSentry } from './sentry';
 import { readFileSync, writeFileSync, accessSync, constants } from 'fs';
 import * as remoteMain from '@electron/remote/main';
+import { autoUpdater } from 'electron-updater';
 remoteMain.initialize();
 
 // the folder where all app data will be stored (e.g. sqlite DB, settings, cache, etc)
@@ -49,6 +51,13 @@ let serverWindow:BrowserWindow;
 let settingsWindow: BrowserWindow;
 let tray:Tray;
 let isServerRun: boolean;
+
+const updater = new DesktopUpdater({
+	repository: 'ever-gauzy-server',
+	owner: 'ever-co',
+	typeRelease: 'releases'
+});
+
 const pathWindow: {
 	gauzyUi: string,
 	ui: string,
@@ -315,13 +324,16 @@ ipcMain.on('stop_gauzy_server', (event, arg) => {
 
 app.on('ready', () => {
 	LocalStore.setDefaultApplicationSetting();
-	appState();
 	if (!settingsWindow) {
 		settingsWindow = createSettingsWindow(
 			settingsWindow,
 			pathWindow.ui
 		);
 	}
+	appState();
+	updater.settingWindow = settingsWindow;
+	updater.gauzyWindow = serverWindow;
+	updater.checkUpdate();
 })
 
 ipcMain.on('restart_app', (event, arg) => {
@@ -427,9 +439,28 @@ function quit() {
 	}
 }
 
+
+ipcMain.on('restart_and_update', () => {
+	setImmediate(() => {
+		app.removeAllListeners('window-all-closed');
+		autoUpdater.quitAndInstall(false);
+		app.exit(0);
+	});
+});
+
 app.on('before-quit', (e) => {
 	e.preventDefault();
+	// soft download cancellation
+	try {
+		updater.cancel();
+	} catch (e) { }
 	app.exit(0);
 });
 
 app.on('window-all-closed', quit);
+
+app.commandLine.appendSwitch('disable-http2');
+
+ipcMain.on('update_app_setting', (event, arg) => {
+	LocalStore.updateApplicationSetting(arg.values);
+});

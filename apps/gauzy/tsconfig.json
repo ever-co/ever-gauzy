@@ -2,7 +2,8 @@
 	"extends": "../../tsconfig.json",
 	"compilerOptions": {
 		"types": ["node", "jest", "googlemaps"],
-		"target": "es2016",
+		"target": "es2020",
+		"module": "es2020",
 		"downlevelIteration": true
 	},
 	"angularCompilerOptions": {

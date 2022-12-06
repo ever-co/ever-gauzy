@@ -27,7 +27,7 @@
 	},
 	"keywords": [],
 	"dependencies": {
-		"@nestjs/config": "^1.2.0",
+		"@nestjs/config": "^2.2.0",
 		"dotenv": "^16.0.3"
 	},
 	"devDependencies": {

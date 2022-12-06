@@ -10,7 +10,8 @@ import {
 	IEmail,
 	IUser,
 	IInvite,
-	IPagination
+	IPagination,
+	IInviteTeamMemberModel
 } from '@gauzy/contracts';
 import { forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -378,11 +379,60 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 		}
 	}
 
+	/**
+	 * Invite team members
+	 *
+	 * @param invite
+	 */
+	async inviteTeamMember(invite: IInviteTeamMemberModel) {
+		const { email, organization, languageCode, invitedBy, teams, inviteCode, inviteLink, originUrl } = invite;
+		const { id: organizationId } = organization;
+		const tenantId = RequestContext.currentTenantId();
+
+		const sendOptions = {
+			template: 'invite-gauzy-teams',
+			message: {
+				to: `${email}`
+			},
+			locals: {
+				email,
+				organizationId,
+				tenantId,
+				inviteCode,
+				teams,
+				inviteLink,
+				locale: languageCode,
+				host: originUrl || env.clientBaseUrl
+			}
+		};
+		try {
+			const body = {
+				templateName: sendOptions.template,
+				email: sendOptions.message.to,
+				languageCode,
+				message: '',
+				organization,
+				user: invitedBy
+			}
+			const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
+			if (!match) {
+				try {
+					const send = await (await this.getEmailInstance(organizationId, tenantId)).send(sendOptions);
+					body['message'] = send.originalMessage;
+				} catch (error) {
+					console.error(error);
+				}
+			}
+			await this.createEmailRecord(body);
+		} catch (error) {
+			console.error(error);
+		}
+	}
+
 	async inviteEmployee(inviteEmployeeModel: IInviteEmployeeModel) {
 		const {
 			email,
 			registerUrl,
-			projects,
 			organization,
 			originUrl,
 			languageCode,
@@ -398,7 +448,6 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 			},
 			locals: {
 				locale: languageCode,
-				role: projects,
 				organizationName: organization.name,
 				organizationId,
 				tenantId,
@@ -518,6 +567,53 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 				}
 			}
 			await this.createEmailRecord(body);
+		} catch (error) {
+			console.error(error);
+		}
+	}
+
+	/**
+	 * Send confirmation email link
+	 *
+	 * @param user
+	 * @param verificationLink
+	 */
+	async emailVerification(
+		user: IUser,
+		verificationLink: string
+	) {
+		const { email, firstName, lastName, preferredLanguage } = user;
+		const name = [firstName, lastName].filter(Boolean).join(' ');
+
+		const sendOptions = {
+			template: 'email-verification',
+			message: {
+				to: `${email}`
+			},
+			locals: {
+				name: name,
+				locale: preferredLanguage,
+				email: email,
+				host: env.clientBaseUrl,
+				verificationLink
+			}
+		};
+		try {
+			const body = {
+				templateName: sendOptions.template,
+				email: sendOptions.message.to,
+				languageCode: sendOptions.locals.locale,
+				message: ''
+			}
+			const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
+			if (!match) {
+				try {
+					const send = await (await this.getEmailInstance()).send(sendOptions);
+					body['message'] = send.originalMessage;
+				} catch (error) {
+					console.error(error);
+				}
+			}
 		} catch (error) {
 			console.error(error);
 		}
@@ -710,6 +806,49 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 				}
 			}
 			await this.createEmailRecord(body);
+		} catch (error) {
+			console.error(error);
+		}
+	}
+
+	/**
+	 * Passwordless Authentication
+	 *
+	 * @param user
+	 * @param languageCode
+	 */
+	async passwordLessAuthentication(
+		user: IUser,
+		languageCode: LanguagesEnum
+	) {
+		const sendOptions = {
+			template: 'password-less-authentication',
+			message: {
+				to: `${user.email}`
+			},
+			locals: {
+				locale: languageCode,
+				email: user.email,
+				host: env.clientBaseUrl,
+				inviteCode: user.code
+			}
+		};
+		try {
+			const body = {
+				templateName: sendOptions.template,
+				email: sendOptions.message.to,
+				languageCode,
+				message: ''
+			}
+			const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
+			if (!match) {
+				try {
+					const send = await (await this.getEmailInstance()).send(sendOptions);
+					body['message'] = send.originalMessage;
+				} catch (error) {
+					console.error(error);
+				}
+			}
 		} catch (error) {
 			console.error(error);
 		}

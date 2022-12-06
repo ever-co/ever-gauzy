@@ -1,6 +1,6 @@
 import { Entity, Column, ManyToMany, JoinTable } from 'typeorm';
 import { IEmployee, IOrganization, ISkill } from '@gauzy/contracts';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
 	Employee,
 	Organization,
@@ -8,12 +8,14 @@ import {
 } from '../core/entities/internal';
 
 @Entity('skill')
-export class Skill extends TenantOrganizationBaseEntity implements ISkill {
+export class Skill extends TenantOrganizationBaseEntity
+	implements ISkill {
+
 	@ApiProperty({ type: () => String })
 	@Column()
 	name?: string;
 
-	@ApiProperty({ type: () => String })
+	@ApiPropertyOptional({ type: () => String })
 	@Column({ nullable: true })
 	description?: string;
 
@@ -23,25 +25,30 @@ export class Skill extends TenantOrganizationBaseEntity implements ISkill {
 
 	/*
     |--------------------------------------------------------------------------
-    | @ManyToMany 
+    | @ManyToMany
     |--------------------------------------------------------------------------
     */
-   // employees skills
+
+   /**
+	* employees skills
+    */
 	@ManyToMany(() => Employee, (employee) => employee.skills, {
-        onUpdate: 'CASCADE',
+		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE'
-    })
-    @JoinTable({
+	})
+	@JoinTable({
 		name: 'skill_employee'
 	})
     employees?: IEmployee[];
 
-	// organizations skills
+	/**
+	 * organizations skills
+	 */
 	@ManyToMany(() => Organization, (organization) => organization.skills, {
-        onUpdate: 'CASCADE',
+		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE'
-    })
-    @JoinTable({
+	})
+	@JoinTable({
 		name: 'skill_organization'
 	})
     organizations?: IOrganization[];

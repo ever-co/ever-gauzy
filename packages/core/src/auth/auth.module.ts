@@ -12,9 +12,13 @@ import { JwtRefreshTokenStrategy, JwtStrategy } from './strategies';
 import { UserOrganizationService } from '../user-organization/user-organization.services';
 import { UserModule } from './../user/user.module';
 import { PasswordResetModule } from './../password-reset/password-reset.module';
+import { EmailConfirmationService } from './email-confirmation.service';
+import { EmailVerificationController } from './email-verification.controller';
+import { FeatureModule } from './../feature/feature.module';
 
 const providers = [
 	AuthService,
+	EmailConfirmationService,
 	UserOrganizationService
 ];
 
@@ -29,7 +33,9 @@ const strategies = [
 			{
 				path: '/auth',
 				module: AuthModule,
-				children: [{ path: '/', module: SocialAuthModule }]
+				children: [
+					{ path: '/', module: SocialAuthModule }
+				]
 			}
 		]),
 		SocialAuthModule.registerAsync({
@@ -42,13 +48,17 @@ const strategies = [
 			],
 			useClass: AuthService
 		}),
-		TypeOrmModule.forFeature([UserOrganization, Organization]),
+		TypeOrmModule.forFeature([
+			UserOrganization,
+			Organization
+		]),
 		EmailModule,
 		UserModule,
 		PasswordResetModule,
+		FeatureModule,
 		CqrsModule
 	],
-	controllers: [AuthController],
+	controllers: [AuthController, EmailVerificationController],
 	providers: [...providers, ...CommandHandlers, ...strategies],
 	exports: [...providers]
 })

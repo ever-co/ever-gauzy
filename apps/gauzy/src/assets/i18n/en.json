@@ -2573,11 +2573,6 @@
 		},
 		"SENT": "{{total}} Invites Sent.",
 		"IGNORED": "{{total}} Invites Sent. {{ignored}} were already invited and have been ignored.",
-		"STATUS": {
-			"INVITED": "Invited",
-			"EXPIRED": "Expired",
-			"ACCEPTED": "Accepted"
-		},
 		"INVITATION_EXPIRATION_OPTIONS": {
 			"DAY": "1 Day",
 			"WEEK": "7 Days",
@@ -3542,7 +3537,8 @@
 		},
 		"VIEW_TIMESHEET": "View timesheet",
 		"ADD_TIME": "Add Time",
-		"TODAY": "Today"
+		"TODAY": "Today",
+		"ALERT_DESKTOP_DOWNLOAD": "For more flexible time and activity tracking, please <a href=\"https://web.gauzy.co/downloads\" rel=\"noopener\" target=\"_blank\">Download</a> and use the <a href=\"https://web.gauzy.co/downloads\" rel=\"noopener\" target=\"_blank\">Gauzy Desktop Timer App</a>."
 	},
 	"TIMESHEET": {
 		"TODAY": "Today",
@@ -3771,12 +3767,15 @@
 		},
 		"TEMPLATE_NAMES": {
 			"password": "Password Reset",
+			"password-less-authentication": "Password Less Authentication",
 			"welcome-user": "Welcome User",
+			"email-verification": "Email Confirmation",
 			"invite-organization-client": "Invite Organization Client",
 			"email-estimate": "Email Estimate",
 			"email-invoice": "Email Invoice",
 			"invite-employee": "Invite Employee",
 			"invite-user": "Invite User",
+			"invite-gauzy-teams": "Invite Gauzy Teams",
 			"appointment-confirmation": "Appointment Confirmation",
 			"appointment-cancellation": "Appointment Cancellation",
 			"equipment": "Equipment Create",
@@ -3789,8 +3788,7 @@
 			"task-update": "Task Update",
 			"candidate-schedule-interview": "Candidate Interview Schedule",
 			"interviewer-interview-schedule": "Interviewer Schedule",
-			"employee-join": "Employee Join",
-			"TEMPLATE_NAMES": "Template Names"
+			"employee-join": "Employee Join"
 		},
 		"HTML_EDITOR":"HTML Editor"
 	},

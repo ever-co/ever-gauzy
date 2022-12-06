@@ -1,7 +1,16 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, UpdateResult } from 'typeorm';
-import { IEmployee, IInvite, InviteStatusEnum, IOrganizationContact, IOrganizationDepartment, IOrganizationProject, IOrganizationTeam } from '@gauzy/contracts';
+import { Repository } from 'typeorm';
+import {
+	IEmployee,
+	IInvite,
+	InviteStatusEnum,
+	IOrganizationContact,
+	IOrganizationDepartment,
+	IOrganizationProject,
+	IOrganizationTeam,
+	IUser
+} from '@gauzy/contracts';
 import { AuthService } from '../../../auth/auth.service';
 import { InviteService } from '../../invite.service';
 import { InviteAcceptEmployeeCommand } from '../invite.accept-employee.command';
@@ -12,7 +21,8 @@ import {
 	OrganizationDepartment,
 	OrganizationProject,
 	OrganizationTeam,
-	OrganizationTeamEmployee
+	OrganizationTeamEmployee,
+	User
 } from './../../../core/entities/internal';
 
 /**
@@ -26,6 +36,7 @@ export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAccept
 	constructor(
 		private readonly inviteService: InviteService,
 		private readonly authService: AuthService,
+		@InjectRepository(User) private readonly userRepository: Repository<User>,
 		@InjectRepository(Organization) private readonly organizationRepository: Repository<Organization>,
 		@InjectRepository(Employee) private readonly employeeRepository: Repository<Employee>,
 		@InjectRepository(OrganizationProject) private readonly organizationProjectRepository: Repository<OrganizationProject>,
@@ -36,7 +47,7 @@ export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAccept
 
 	public async execute(
 		command: InviteAcceptEmployeeCommand
-	): Promise<UpdateResult | IInvite> {
+	): Promise<IUser> {
 		const { input, languageCode } = command;
 		const { inviteId } = input;
 
@@ -66,40 +77,60 @@ export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAccept
 		if (!organization.invitesAllowed) {
 			throw Error('Organization no longer allows invites');
 		}
-		/**
-		 * User register after accept invitation
-		 */
-		const user = await this.authService.register(
-			{
-				...input,
-				user: {
-					...input.user,
-					tenant: {
-						id: organization.tenantId
-					}
+
+		let user: IUser;
+		try {
+			const { tenantId, email } = invite;
+			user = await this.userRepository.findOneOrFail({
+				where: {
+					email,
+					tenantId
 				},
-				organizationId
-			},
-			languageCode
-		);
-		/**
-		 * Create employee after create user
-		 */
-		const create = this.employeeRepository.create({
-			user,
-			organization,
-			tenantId,
-			startedWorkOn: invite.actionDate || null
+				relations: {
+					employee: true
+				},
+				order: {
+					createdAt: 'DESC'
+				}
+			});
+			await this.updateEmployeeMemberships(invite, user.employee);
+		} catch (error) {
+			/**
+			 * User register after accept invitation
+			 */
+			user = await this.authService.register(
+				{
+					...input,
+					user: {
+						...input.user,
+						tenant: {
+							id: organization.tenantId
+						}
+					},
+					organizationId
+				},
+				languageCode
+			);
+			/**
+			 * Create employee after create user
+			 */
+			const create = this.employeeRepository.create({
+				user,
+				organization,
+				tenantId,
+				startedWorkOn: invite.actionDate || null
+			});
+			const employee = await this.employeeRepository.save(create);
+			await this.updateEmployeeMemberships(invite, employee);
+		}
+
+		const { id } = user;
+		await this.inviteService.update(inviteId, {
+			status: InviteStatusEnum.ACCEPTED,
+			userId: id
 		});
-		const employee = await this.employeeRepository.save(create);
 
-		await this.updateEmployeeMemberships(invite, employee);
-
-		// this.inviteService.sendAcceptInvitationEmail(organization, employee, languageCode);
-
-		return await this.inviteService.update(input.inviteId, {
-			status: InviteStatusEnum.ACCEPTED
-		});
+		return user;
 	}
 
 	/**

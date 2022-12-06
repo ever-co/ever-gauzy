@@ -5,7 +5,7 @@ on:
 jobs:
 
     prepare:
-      runs-on: ubuntu-latest
+      runs-on: ubuntu-22.04
       outputs:
         uuid: ${{ steps.uuid.outputs.value }}
       steps:

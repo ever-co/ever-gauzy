@@ -1,8 +1,8 @@
-import { Module } from '@nestjs/common';
-import { APP_GUARD } from '@nestjs/core';
+import { HttpException, Module } from '@nestjs/common';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { MulterModule } from '@nestjs/platform-express';
 import { ThrottlerGuard, ThrottlerModule, ThrottlerModuleOptions } from '@nestjs/throttler';
-import { SentryModule } from '@ntegral/nestjs-sentry';
+import { SentryInterceptor, SentryModule } from '@ntegral/nestjs-sentry';
 import {
 	ServeStaticModule,
 	ServeStaticModuleOptions
@@ -133,6 +133,7 @@ import { MerchantModule } from './merchant/merchant.module';
 import { GauzyCloudModule } from './gauzy-cloud/gauzy-cloud.module';
 import { ContactModule } from './contact/contact.module';
 import { PublicShareModule } from './public-share/public-share.module';
+import { TransformInterceptor } from './core/interceptors';
 
 const { unleashConfig } = environment;
 if (unleashConfig.url) {
@@ -328,7 +329,20 @@ if (process.env.DB_TYPE === 'postgres') {
 		{
 			provide: APP_GUARD,
 			useClass: ThrottlerGuard,
-		}
+		},
+		{
+			provide: APP_INTERCEPTOR,
+			useClass: TransformInterceptor,
+		},
+		{
+	      provide: APP_INTERCEPTOR,
+	      useFactory: () => new SentryInterceptor({
+	        filters: [{
+	          type: HttpException,
+	          filter: (exception: HttpException) => 500 > exception.getStatus() // Only report 500 errors
+	        }]
+	      }),
+	    }
 	],
 	exports: []
 })

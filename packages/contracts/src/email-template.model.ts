@@ -18,6 +18,7 @@ export interface IEmailTemplateFindInput
 
 export enum EmailTemplateNameEnum {
 	PASSWORD_RESET = 'password',
+	PASSWORD_LESS_AUTHENTICATION = 'password-less-authentication',
 	APPOINTMENT_CONFIRMATION = 'appointment-confirmation',
 	APPOINTMENT_CANCELLATION = 'appointment-cancellation',
 	TIME_OFF_POLICY_ACTION = 'time-off-report-action',
@@ -31,8 +32,10 @@ export enum EmailTemplateNameEnum {
 	CANDIDATE_INTERVIEW_SCHEDULE = 'candidate-schedule-interview',
 	INTERVIEWER_INTERVIEW_SCHEDULE = 'interviewer-interview-schedule',
 	WELCOME_USER = 'welcome-user',
+	EMAIL_VERIFICATION = 'email-verification',
 	INVITE_ORGANIZATION_CLIENT = 'invite-organization-client',
 	INVITE_EMPLOYEE = 'invite-employee',
+	INVITE_GAUZY_TEAMS = 'invite-gauzy-teams',
 	INVITE_USER = 'invite-user',
 	EMAIL_INVOICE = 'email-invoice',
 	EMAIL_ESTIMATE = 'email-estimate',

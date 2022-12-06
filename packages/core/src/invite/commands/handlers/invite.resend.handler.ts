@@ -5,19 +5,14 @@ import { InviteService } from '../../invite.service';
 import { InviteResendCommand } from '../invite.resend.command';
 
 @CommandHandler(InviteResendCommand)
-export class InviteResendHandler
-	implements ICommandHandler<InviteResendCommand> {
-	constructor(private readonly inviteService: InviteService) {}
+export class InviteResendHandler implements ICommandHandler<InviteResendCommand> {
 
-	public async execute(
-		command: InviteResendCommand
-	): Promise<UpdateResult | IInvite> {
+	constructor(
+		private readonly inviteService: InviteService
+	) {}
+
+	public async execute(command: InviteResendCommand): Promise<UpdateResult | IInvite> {
 		const { input , languageCode } = command;
-		const { invitedById } = input;
-
-		const expireDate = new Date();
-		expireDate.setDate(expireDate.getDate() + 7);
-
-		return await this.inviteService.resendEmail(input, invitedById, languageCode, expireDate);
+		return await this.inviteService.resendEmail(input, languageCode);
 	}
 }

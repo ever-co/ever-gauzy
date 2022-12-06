@@ -1,0 +1,4 @@
+export const LOCAL_SERVER_UPDATE_CONFIG = {
+	FOLDER_PATH: '/',
+	PORT: 8080
+};

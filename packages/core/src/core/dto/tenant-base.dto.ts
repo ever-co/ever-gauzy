@@ -5,13 +5,13 @@ import { IsTenantBelongsToUser } from './../../shared/validators';
 
 export class TenantBaseDTO implements IBasePerTenantEntityModel {
 
-	@ApiPropertyOptional({ type: () => Object, readOnly: true })
+	@ApiPropertyOptional({ type: () => Object })
 	@IsOptional()
 	@IsObject()
 	@IsTenantBelongsToUser()
 	readonly tenant: ITenant;
 
-	@ApiPropertyOptional({ type: () => String, readOnly: true })
+	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
 	@IsTenantBelongsToUser()

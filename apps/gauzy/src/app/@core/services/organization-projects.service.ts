@@ -42,14 +42,12 @@ export class OrganizationProjectsService {
 
 	getAllByEmployee(
 		id: string,
-		findInput?: IOrganizationProjectsFindInput
+		where?: IOrganizationProjectsFindInput
 	): Promise<IOrganizationProject[]> {
-		const data = JSON.stringify({ findInput });
 		return firstValueFrom(
-			this.http
-				.get<IOrganizationProject[]>(`${this.API_URL}/employee/${id}`, {
-					params: toParams({ data })
-				})
+			this.http.get<IOrganizationProject[]>(`${this.API_URL}/employee/${id}`, {
+				params: toParams({ ...where })
+			})
 		);
 	}
 

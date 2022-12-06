@@ -9,11 +9,11 @@ import { TenantOrganizationBaseDTO } from "./../../../../core/dto";
 export class UpdateTimesheetStatusDTO extends TenantOrganizationBaseDTO
 	implements IUpdateTimesheetStatusInput {
 
-    @ApiProperty({ type: () => Array, readOnly: true })
+    @ApiProperty({ type: () => Array })
 	@ArrayNotEmpty()
     readonly ids: string[] = [];
 
-	@ApiProperty({ type: () => String, enum: TimesheetStatus, readOnly: true })
+	@ApiProperty({ enum: TimesheetStatus })
 	@IsEnum(TimesheetStatus)
 	readonly status: TimesheetStatus;
 }

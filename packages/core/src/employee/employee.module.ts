@@ -9,7 +9,7 @@ import { UserModule } from './../user/user.module';
 import { CommandHandlers } from './commands/handlers';
 import { EmployeeController } from './employee.controller';
 import { EmployeeService } from './employee.service';
-import { AuthService } from '../auth/auth.service';
+import { AuthModule } from './../auth/auth.module';
 import { EmailModule } from '../email/email.module';
 import { UserOrganizationModule } from '../user-organization/user-organization.module';
 import { TenantModule } from '../tenant/tenant.module';
@@ -29,12 +29,12 @@ import { RoleModule } from './../role/role.module';
 		CqrsModule,
 		TenantModule,
 		UserModule,
-		RoleModule
+		RoleModule,
+		AuthModule
 	],
 	controllers: [EmployeeController],
 	providers: [
 		EmployeeService,
-		AuthService,
 		GauzyAIService,
 		...CommandHandlers
 	],

@@ -8,7 +8,8 @@ import {
 	ComponentLayoutStyleEnum,
 	ITag,
 	IEmployee,
-	IOrganization
+	IOrganization,
+	IInvite
 } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Exclude } from 'class-transformer';
@@ -26,6 +27,7 @@ import {
 } from 'typeorm';
 import {
 	Employee,
+	Invite,
 	Role,
 	Tag,
 	TenantBaseEntity,
@@ -61,7 +63,6 @@ export class User extends TenantBaseEntity implements IUser {
 	username?: string;
 
 	@ApiProperty({ type: () => String })
-	@Column()
 	@Exclude({ toPlainOnly: true })
 	@Column({ nullable: true })
 	hash?: string;
@@ -91,6 +92,26 @@ export class User extends TenantBaseEntity implements IUser {
 	@ApiPropertyOptional({ type: () => Boolean, default: true })
 	@Column({ nullable: true, default: true })
 	isActive?: boolean;
+
+	@ApiPropertyOptional({ type: () => Number })
+	@Exclude({ toPlainOnly: true })
+	@Column({ nullable: true })
+	public code?: number;
+
+	@ApiPropertyOptional({ type: () => Date })
+	@Exclude({ toPlainOnly: true })
+	@Column({ nullable: true })
+	public codeExpireAt?: Date;
+
+	@ApiPropertyOptional({ type: () => Date })
+	@Exclude({ toPlainOnly: true })
+	@Column({ nullable: true })
+	public emailVerifiedAt?: Date;
+
+	@ApiPropertyOptional({ type: () => String })
+	@Exclude({ toPlainOnly: true })
+	@Column({ nullable: true })
+	public emailToken?: string;
 
 	name?: string;
 	employeeId?: string;
@@ -158,4 +179,10 @@ export class User extends TenantBaseEntity implements IUser {
 	})
 	@JoinColumn()
 	organizations?: IOrganization[];
+
+	/**
+	 * User belongs to invites
+	 */
+	@OneToMany(() => Invite, (it) => it.user)
+	invites?: IInvite[];
 }

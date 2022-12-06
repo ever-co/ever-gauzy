@@ -196,9 +196,18 @@ export class TeamsComponent
 	async addOrEditTeam(team: IOrganizationTeamCreateInput) {
 		if (this.selectedTeam) {
 			try {
+				const { id } = this.selectedTeam;
+				const { id: organizationId } = this.organization;
+				const { tenantId } = this.store.user;
+
 				await this.organizationTeamsService.update(
 					this.selectedTeam.id,
-					team
+					{
+						id,
+						...team,
+						organizationId,
+						tenantId
+					}
 				);
 
 				this.toastrService.success(

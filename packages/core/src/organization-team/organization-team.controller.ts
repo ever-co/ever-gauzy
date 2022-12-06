@@ -11,27 +11,29 @@ import {
 	Param,
 	UseGuards,
 	UsePipes,
-	ValidationPipe,
-	UseInterceptors
+	ValidationPipe
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { QueryBus } from '@nestjs/cqrs';
+import { FindOptionsWhere } from 'typeorm';
 import { CrudController, PaginationParams } from './../core/crud';
-import { TransformInterceptor } from ',./../core/interceptors';
 import { TenantPermissionGuard, PermissionGuard } from './../shared/guards';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { Permissions } from './../shared/decorators';
-import { CreateOrganizationTeamDTO, UpdateOrganizationTeamDTO } from './dto';
+import { GetOrganizationTeamStatisticQuery } from './queries';
+import { CreateOrganizationTeamDTO, OrganizationTeamStatisticDTO, UpdateOrganizationTeamDTO } from './dto';
 import { OrganizationTeam } from './organization-team.entity';
 import { OrganizationTeamService } from './organization-team.service';
 
 @ApiTags('OrganizationTeam')
-@UseInterceptors(TransformInterceptor)
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.ALL_ORG_EDIT)
 @Controller()
 export class OrganizationTeamController extends CrudController<OrganizationTeam> {
+
 	constructor(
-		private readonly organizationTeamService: OrganizationTeamService
+		private readonly queryBus: QueryBus,
+		private readonly organizationTeamService: OrganizationTeamService,
 	) {
 		super(organizationTeamService);
 	}
@@ -60,11 +62,25 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<IOrganizationTeam>> {
 		const { relations, findInput, employeeId } = data;
-		return this.organizationTeamService.findMyTeams(
+		return await this.organizationTeamService.findMyTeams(
 			relations,
 			findInput,
 			employeeId
 		);
+	}
+
+	/**
+	 * GET organization team count
+	 *
+	 * @param options
+	 * @returns
+	 */
+	@Permissions(PermissionsEnum.ALL_ORG_VIEW)
+	@Get('count')
+	async getCount(
+		@Query() options: FindOptionsWhere<OrganizationTeam>
+	): Promise<number> {
+		return await this.organizationTeamService.countBy(options);
 	}
 
 	/**
@@ -110,6 +126,27 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 	}
 
 	/**
+	 * Find team by primary ID
+	 *
+	 * @param id
+	 * @returns
+	 */
+	@Permissions(PermissionsEnum.ALL_ORG_VIEW)
+	@Get(':id')
+	@UsePipes(new ValidationPipe())
+	async findById(
+		@Param('id', UUIDValidationPipe) id: string,
+		@Query() options: OrganizationTeamStatisticDTO
+	): Promise<any> {
+		return await this.queryBus.execute(
+			new GetOrganizationTeamStatisticQuery(
+				id,
+				options
+			)
+		);
+	}
+
+	/**
 	 * CREATE organization team
 	 *
 	 * @param entity
@@ -122,15 +159,15 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
+	@HttpCode(HttpStatus.OK)
 	@Post()
-	@UsePipes(new ValidationPipe({ transform : true }))
-	async createOrganizationTeam(
+	@UsePipes(new ValidationPipe({ whitelist: true }))
+	async create(
 		@Body() entity: CreateOrganizationTeamDTO
-	): Promise<OrganizationTeam> {
-		return await this.organizationTeamService.createOrgTeam(entity);
+	): Promise<IOrganizationTeam> {
+		return await this.organizationTeamService.create(entity);
 	}
 
 	/**
@@ -151,16 +188,15 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
-	@UsePipes(new ValidationPipe({ transform : true }))
-	async updateOrganizationTeam(
-		@Param('id', UUIDValidationPipe) id: IOrganizationTeam['id'],
+	@UsePipes(new ValidationPipe({ whitelist: true }))
+	async update(
+		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: UpdateOrganizationTeamDTO
-	): Promise<OrganizationTeam> {
-		return await this.organizationTeamService.updateOrgTeam(id, entity);
+	): Promise<IOrganizationTeam> {
+		return await this.organizationTeamService.update(id, entity);
 	}
 }

@@ -47,6 +47,7 @@ import { EmailTemplateQueryDTO, SaveEmailTemplateDTO } from './dto';
 @Permissions(PermissionsEnum.VIEW_ALL_EMAIL_TEMPLATES)
 @Controller()
 export class EmailTemplateController extends CrudController<EmailTemplate> {
+
 	constructor(
 		private readonly emailTemplateService: EmailTemplateService,
 		private readonly queryBus: QueryBus,
@@ -62,10 +63,11 @@ export class EmailTemplateController extends CrudController<EmailTemplate> {
 	 * @returns
 	 */
 	@Get('count')
+	@UsePipes(new ValidationPipe())
 	async getCount(
-		@Query(new ValidationPipe()) options: FindOptionsWhere<EmailTemplate>
+		@Query() options: FindOptionsWhere<EmailTemplate>
 	): Promise<number> {
-		return this.emailTemplateService.countBy({
+		return await this.emailTemplateService.countBy({
 			...options,
 			tenantId: RequestContext.currentTenantId()
 		});
@@ -80,11 +82,9 @@ export class EmailTemplateController extends CrudController<EmailTemplate> {
 	@Get('pagination')
 	@UsePipes(new ValidationPipe({ transform: true }))
 	async pagination(
-		@Query(new ValidationPipe({
-			transform: true
-		})) options: PaginationParams<EmailTemplate>
+		@Query() options: PaginationParams<EmailTemplate>
 	): Promise<IPagination<IEmailTemplate>> {
-		return this.emailTemplateService.paginate(options);
+		return await this.emailTemplateService.paginate(options);
 	}
 
 	/**
@@ -107,11 +107,10 @@ export class EmailTemplateController extends CrudController<EmailTemplate> {
 		description: 'Record not found'
 	})
 	@Get('template')
+	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async findEmailTemplate(
 		@LanguageDecorator() themeLanguage: LanguagesEnum,
-		@Query(new ValidationPipe({
-			whitelist: true
-		})) options: EmailTemplateQueryDTO,
+		@Query() options: EmailTemplateQueryDTO,
 	): Promise<IEmailTemplate> {
 		return await this.queryBus.execute(
 			new FindEmailTemplateQuery(
@@ -159,10 +158,9 @@ export class EmailTemplateController extends CrudController<EmailTemplate> {
 		type: EmailTemplate
 	})
 	@Post('template/save')
+	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async saveEmailTemplate(
-		@Body(new ValidationPipe({
-			whitelist: true
-		})) entity: SaveEmailTemplateDTO
+		@Body() entity: SaveEmailTemplateDTO
 	): Promise<IEmailTemplate> {
 		return await this.commandBus.execute(
 			new EmailTemplateSaveCommand(entity)
@@ -176,10 +174,9 @@ export class EmailTemplateController extends CrudController<EmailTemplate> {
 	 * @returns
 	 */
 	@Get()
+	@UsePipes(new ValidationPipe())
 	async findAll(
-		@Query(new ValidationPipe({
-			transform: true
-		})) options: PaginationParams<EmailTemplate>
+		@Query() options: PaginationParams<EmailTemplate>
 	): Promise<IPagination<IEmailTemplate>> {
 		return await this.queryBus.execute(
 			new EmailTemplateQuery(options)

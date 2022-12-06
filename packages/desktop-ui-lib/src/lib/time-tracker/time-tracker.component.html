@@ -40,6 +40,14 @@
 							</div>
 						</div>
 						<div class="row">
+							<div class="col-12 center-text">
+								<span class="work-today">Total Worked Today
+									{{ (todayDuration$ | async).hours }}:{{
+										(todayDuration$ | async).minutes
+									}}</span>
+							</div>
+						</div>
+						<div class="row">
 							<div class="col-12 form-group tp-padding">
 								<label>Client</label>
 								<ng-select [class]="
@@ -121,14 +129,6 @@
 										</span>
 									</div>
 								</div>
-								<div class="row">
-									<div class="col-12 center-text">
-										<span class="work-today">Total Worked Today
-											{{ (todayDuration$ | async).hours }}:{{
-												(todayDuration$ | async).minutes
-											}}</span>
-									</div>
-								</div>
 							</div>
 						</div>
 						<div class="row">
@@ -153,12 +153,12 @@
 											</nb-card-header>
 											<nb-card-body class="max-card p-0">
 												<img class="screen-capture-img" *ngIf="
-												(lastScreenCapture$ | async).fullUrl
+												(lastScreenCapture$ | async).thumbUrl
 													" [src]="
-													(lastScreenCapture$ | async).fullUrl
+													(lastScreenCapture$ | async).thumbUrl
 													" (error)="updateImageUrl($event)" />
 												<nb-icon *ngIf="
-														!(lastScreenCapture$ | async).fullUrl
+														!(lastScreenCapture$ | async).thumbUrl
 													" icon="image-outline" class="icon-img-size">
 												</nb-icon>
 												<div class="overlay-img">

@@ -1,4 +1,4 @@
-import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
+import { IBasePerTenantAndOrganizationEntityModel, IBaseRelationsEntityModel } from './base-entity.model';
 import {
 	IOrganizationContact,
 	OrganizationContactBudgetTypeEnum
@@ -7,7 +7,7 @@ import {
 	IOrganizationProject,
 	OrganizationProjectBudgetTypeEnum
 } from './organization-projects.model';
-import { IEmployee, IEmployeeFindInput } from './employee.model';
+import { IEmployee, IEmployeeFindInput, IRelationalEmployee } from './employee.model';
 import { ITask } from './task-entity.model';
 import { ITag } from './tag-entity.model';
 import { IPaginationInput } from './core.model';
@@ -84,13 +84,12 @@ export interface ISubmitTimesheetInput extends IBasePerTenantAndOrganizationEnti
 }
 
 export interface IGetTimesheetInput
-	extends IBasePerTenantAndOrganizationEntityModel {
+	extends IBasePerTenantAndOrganizationEntityModel, IBaseRelationsEntityModel {
 	startDate?: Date | string;
 	endDate?: Date | string;
 	projectIds?: string[];
 	clientId?: string[];
 	employeeIds?: string[];
-	relations?: string[];
 }
 
 export interface IDateRange {
@@ -183,6 +182,9 @@ export interface ITimeLogFilters
 		start: number;
 		end: number;
 	};
+	taskIds?: string[];
+	defaultRange?: boolean;
+	unitOfTime?: any;
 }
 
 export interface ITimeSlot extends IBasePerTenantAndOrganizationEntityModel {
@@ -321,13 +323,15 @@ export interface IScreenshotMap {
 	timeSlots: ITimeSlot[];
 }
 
-export interface ITimerStatusInput {
+export interface ITimerStatusInput extends IBasePerTenantAndOrganizationEntityModel, IBaseRelationsEntityModel, IRelationalEmployee {
 	source?: TimeLogSourceEnum;
 }
+
 export interface ITimerStatus {
-	duration: number;
-	running: boolean;
+	duration?: number;
+	running?: boolean;
 	lastLog?: ITimeLog;
+	lastWorkedTask?: ITask;
 }
 export interface TimerState {
 	showTimerWindow: boolean;
@@ -377,27 +381,22 @@ export interface IGetTimeLogInput extends ITimeLogFilters {
 	teamId?: string;
 }
 
-export interface IGetTimeLogReportInput extends IGetTimeLogInput {
+export interface IGetTimeLogReportInput extends IGetTimeLogInput, IBaseRelationsEntityModel {
 	groupBy?: ReportGroupByFilter;
-	relations?: string[];
 }
 
-export interface IGetTimeLogConflictInput
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IGetTimeLogConflictInput extends IBasePerTenantAndOrganizationEntityModel, IBaseRelationsEntityModel {
 	ignoreId?: string | string[];
 	startDate: string | Date;
 	endDate: string | Date;
 	employeeId: string;
-	relations?: string[];
 }
 
-export interface IGetTimeSlotInput extends ITimeLogFilters {
-	relations?: string[];
+export interface IGetTimeSlotInput extends ITimeLogFilters, IBaseRelationsEntityModel {
 	[x: string]: any;
 }
 
-export interface IGetActivitiesInput extends ITimeLogFilters, IPaginationInput {
-	relations?: string[];
+export interface IGetActivitiesInput extends ITimeLogFilters, IPaginationInput, IBaseRelationsEntityModel {
 	types?: string[];
 	titles?: string[];
 	groupBy?: string;
@@ -493,13 +492,11 @@ export type IReportDayData =
 	| IReportDayGroupByProject
 	| IReportDayGroupByClient;
 
-export interface IGetTimeLimitReportInput
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IGetTimeLimitReportInput extends IBasePerTenantAndOrganizationEntityModel, IBaseRelationsEntityModel {
 	startDate?: string | Date;
 	endDate?: string | Date;
 	projectIds?: string[];
 	employeeIds?: string[];
-	relations?: string[];
 	duration?: 'day' | 'week' | 'month';
 }
 

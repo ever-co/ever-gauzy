@@ -1,4 +1,4 @@
-import {ISleepTracking, ISleepTrackingStrategy} from "lib/interfaces";
+import {ISleepTracking, ISleepTrackingStrategy} from "../interfaces";
 import {LocalStore} from "../desktop-store";
 import {AlwaysSleepTracking, NeverSleepTracking} from "../strategies";
 import {BrowserWindow} from "electron";

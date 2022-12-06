@@ -476,12 +476,18 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 								error
 							);
 						});
-				} else this.loading = false;
+				} else {
+					this.loading = false;
+					console.log('Error', 'Timer is already running')
+				}
 			} else {
 				console.log('stop tracking');
 				this.stopTimer();
 			}
-		} else this.loading = false;
+		} else {
+			this.loading = false;
+			console.log('Error', 'validation failed');
+		}
 	}
 
 	setTime(value) {
@@ -539,6 +545,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			},
 			timeLog: timeLog
 		});
+		this.electronService.ipcRenderer.send('request_permission');
 		this.loading = false;
 	}
 

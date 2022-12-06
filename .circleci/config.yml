@@ -29,10 +29,11 @@ aliases:
     - &install-deps
       name: Install Global Dependencies
       command: |
-          sudo apt-get update          
+          sudo rm -rf /etc/apt/sources.list.d/heroku.list
+          sudo apt-get update
           sudo apt install npm
           sudo apt install build-essential
-          sudo npm install --quiet node-gyp -g              
+          sudo npm install --quiet node-gyp -g
           sudo npm config set python /usr/bin/python
 
     - &install-yarn
@@ -55,7 +56,7 @@ jobs:
     sonarqube:
         <<: *defaults
         machine:
-            image: ubuntu-2004:202111-01
+            image: ubuntu-2204:current
         working_directory: /tmp/workspace/sonarqube-root
         description: Check Code Quality with SonarQube
         steps:
@@ -97,7 +98,7 @@ jobs:
     build-monorepo-root:
         <<: *defaults
         machine:
-            image: ubuntu-2004:202111-01
+            image: ubuntu-2204:current
         working_directory: /tmp/workspace/monorepo-root
         steps:
             - checkout
@@ -124,7 +125,7 @@ jobs:
     build-desktop:
         <<: *defaults
         machine:
-            image: ubuntu-2004:202111-01
+            image: ubuntu-2204:current
         working_directory: /tmp/workspace/desktop
         steps:
             - checkout
@@ -155,7 +156,7 @@ jobs:
     build-api:
         <<: *defaults
         machine:
-            image: ubuntu-2004:202111-01
+            image: ubuntu-2204:current
         working_directory: /tmp/workspace/api
         steps:
             - checkout
@@ -190,7 +191,7 @@ jobs:
     build-web:
         <<: *defaults
         machine:
-            image: ubuntu-2004:202111-01
+            image: ubuntu-2204:current
         working_directory: /tmp/workspace/web
         steps:
             - checkout
@@ -226,7 +227,7 @@ jobs:
     test-e2e:
         <<: *defaults
         machine:
-            image: ubuntu-2004:202111-01
+            image: ubuntu-2204:current
         working_directory: /tmp/workspace/test-e2e
         steps:
             - checkout
@@ -272,7 +273,7 @@ jobs:
     pulumi_deploy:
         <<: *defaults
         machine:
-            image: ubuntu-2004:202111-01
+            image: ubuntu-2204:current
 
         working_directory: /tmp/workspace/pulumi
         steps:

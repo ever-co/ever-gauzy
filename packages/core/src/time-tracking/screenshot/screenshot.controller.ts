@@ -15,20 +15,19 @@ import * as path from 'path';
 import * as moment from 'moment';
 import * as sharp from 'sharp';
 import * as fs from 'fs';
-import { FileStorageProviderEnum, IScreenshot, PermissionsEnum, RolesEnum } from '@gauzy/contracts';
+import { FileStorageProviderEnum, IScreenshot, PermissionsEnum } from '@gauzy/contracts';
 import { Screenshot } from './screenshot.entity';
 import { ScreenshotService } from './screenshot.service';
 import { FileStorage, UploadedFileStorage } from '../../core/file-storage';
 import { tempFile } from '../../core/utils';
-import { Permissions, Roles } from './../../shared/decorators';
-import { PermissionGuard, RoleGuard, TenantPermissionGuard } from './../../shared/guards';
+import { LazyFileInterceptor } from './../../core/interceptors';
+import { Permissions } from './../../shared/decorators';
+import { PermissionGuard, TenantPermissionGuard } from './../../shared/guards';
 import { UUIDValidationPipe } from './../../shared/pipes';
-import { LazyFileInterceptor, TransformInterceptor } from './../../core/interceptors';
 
 @ApiTags('Screenshot')
-@UseGuards(TenantPermissionGuard, RoleGuard)
-@Roles(RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN, RolesEnum.EMPLOYEE)
-@UseInterceptors(TransformInterceptor)
+@UseGuards(TenantPermissionGuard, PermissionGuard)
+@Permissions(PermissionsEnum.TIME_TRACKER)
 @Controller()
 export class ScreenshotController {
 	constructor(
@@ -45,7 +44,7 @@ export class ScreenshotController {
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
-	@Post('/')
+	@Post()
 	@UseInterceptors(
         LazyFileInterceptor('file', {
 			storage: (request: ExecutionContext) => {
@@ -124,7 +123,6 @@ export class ScreenshotController {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.DELETE_SCREENSHOTS)
 	@Delete(':id')
 	async delete(

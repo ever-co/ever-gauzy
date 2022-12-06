@@ -1,5 +1,6 @@
 import {
 	IEditEntityByMemberInput,
+	IEmployee,
 	IOrganizationProject,
 	IPagination,
 	PermissionsEnum,
@@ -29,6 +30,7 @@ import { OrganizationProjectService } from './organization-project.service';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
+import { TenantOrganizationBaseDTO } from './../core/dto';
 
 @ApiTags('OrganizationProject')
 @UseGuards(TenantPermissionGuard)
@@ -44,8 +46,8 @@ export class OrganizationProjectController extends CrudController<OrganizationPr
 	/**
 	 * GET organization project by employee
 	 *
-	 * @param id
-	 * @param data
+	 * @param employeeId
+	 * @param options
 	 * @returns
 	 */
 	@ApiOperation({
@@ -60,13 +62,13 @@ export class OrganizationProjectController extends CrudController<OrganizationPr
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@Get('employee/:id')
+	@Get('employee/:employeeId')
+	@UsePipes(new ValidationPipe())
 	async findByEmployee(
-		@Param('id', UUIDValidationPipe) id: string,
-		@Query('data', ParseJsonPipe) data?: any
-	): Promise<IPagination<IOrganizationProject>> {
-		const { findInput = null } = data;
-		return this.organizationProjectService.findByEmployee(id, findInput);
+		@Param('employeeId', UUIDValidationPipe) employeeId: IEmployee['id'],
+		@Query() options: TenantOrganizationBaseDTO
+	): Promise<IOrganizationProject[]> {
+		return await this.organizationProjectService.findByEmployee(employeeId, options);
 	}
 
 	/**

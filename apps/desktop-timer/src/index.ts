@@ -9,12 +9,20 @@ import * as path from 'path';
 import { app, dialog, BrowserWindow, ipcMain, shell, Menu } from 'electron';
 import { environment } from './environments/environment';
 import Url from 'url';
-
+import * as Sentry from '@sentry/electron';
 
 // setup logger to catch all unhandled errors and submit as bug reports to our repo
 log.catchErrors({
 	showDialog: false,
 	onError(error, versions, submitIssue) {
+		// Set user information, as well as tags and further extras
+		Sentry.configureScope((scope) => {
+			scope.setExtra('Version', versions.app);
+			scope.setTag('OS', versions.os);
+		});
+		// Capture exceptions, messages
+		Sentry.captureMessage(error.message);
+		Sentry.captureException(new Error(error.stack));
 		dialog
 			.showMessageBox({
 				title: 'An error occurred',
@@ -63,12 +71,9 @@ import {
 	LocalStore,
 	DataModel,
 	AppMenu,
+	DesktopUpdater,
 	removeMainListener,
-	removeTimerListener,
-	appUpdateNotification,
-	DesktopDialog,
-	DialogConfirmUpgradeDownload,
-	DialogConfirmInstallDownload
+	removeTimerListener
 } from '@gauzy/desktop-libs';
 import {
 	createSetupWindow,
@@ -79,11 +84,9 @@ import {
 } from '@gauzy/desktop-window';
 import { fork } from 'child_process';
 import { autoUpdater } from 'electron-updater';
-import { CancellationToken } from "builder-util-runtime";
 import { initSentry } from './sentry';
 
 // Can be like this: import fetch from '@gauzy/desktop-libs' for v3 of node-fetch;
-import fetch from 'node-fetch';
 
 initSentry();
 
@@ -118,28 +121,27 @@ const exeName = path.basename(process.execPath);
 const store = new Store();
 
 const args = process.argv.slice(1);
+const notificationWindow: BrowserWindow = null;
+const serverGauzy = null;
+const updater = new DesktopUpdater({
+	repository: 'ever-gauzy-desktop-timer',
+	owner: 'ever-co',
+	typeRelease: 'releases'
+});
 args.some((val) => val === '--serve');
 let gauzyWindow: BrowserWindow = null;
 let setupWindow: BrowserWindow = null;
 let timeTrackerWindow: BrowserWindow = null;
-const notificationWindow: BrowserWindow = null;
 let settingsWindow: BrowserWindow = null;
 let updaterWindow: BrowserWindow = null;
 let imageView: BrowserWindow = null;
 let tray = null;
 let isAlreadyRun = false;
-let willQuit = false;
 let onWaitingServer = false;
-const serverGauzy = null;
-let serverDesktop = null;
 let dialogErr = false;
-let cancellationToken;
+let willQuit = true;
+let serverDesktop = null;
 let popupWin: BrowserWindow | null = null;
-let isDownloadTriggered: boolean = false;
-
-try {
-	cancellationToken = new CancellationToken();
-} catch (error) {}
 
 console.log(
 	'Time Tracker UI Render Path:',
@@ -152,25 +154,20 @@ const pathWindow = {
 
 LocalStore.setFilePath({
 	iconPath: path.join(__dirname, 'icons', 'icon.png')
-})
+});
 // Instance detection
 const gotTheLock = app.requestSingleInstanceLock();
 
 if (!gotTheLock) {
-	app.quit()
+	app.quit();
 } else {
 	app.on('second-instance', () => {
 		// if someone tried to run a second instance, we should focus our window and show warning message.
 		if (gauzyWindow) {
 			if (gauzyWindow.isMinimized()) gauzyWindow.restore();
 			gauzyWindow.focus();
-			dialog.showMessageBoxSync(gauzyWindow, {
-				type: "warning",
-				title: "Gauzy",
-				message: "You already have a running instance"
-			});
 		}
-	})
+	});
 }
 
 async function startServer(value, restart = false) {
@@ -197,7 +194,7 @@ async function startServer(value, restart = false) {
 				organizationContactId: null
 			}
 		});
-	} catch (error) {}
+	} catch (error) { }
 
 	/* create main window */
 	if (value.serverConfigConnected || !value.isLocalServer) {
@@ -254,36 +251,6 @@ async function startServer(value, restart = false) {
 	return true;
 }
 
-const dialogMessage = (msg) => {
-	dialogErr = true;
-	const options = {
-		type: 'question',
-		buttons: ['Open Setting', 'Exit'],
-		defaultId: 2,
-		title: 'Warning',
-		message: msg
-	};
-
-	dialog.showMessageBox(null, options).then((response) => {
-		if (response.response === 1) app.quit();
-		else {
-			if (settingsWindow) settingsWindow.show();
-			else {
-				if (!settingsWindow) {
-					settingsWindow = createSettingsWindow(
-						settingsWindow,
-						pathWindow.timeTrackerUi
-					);
-				}
-				settingsWindow.show();
-				setTimeout(() => {
-					settingsWindow.webContents.send('app_setting', LocalStore.getApplicationConfig());
-				}, 500);
-			}
-		}
-	});
-};
-
 const getApiBaseUrl = (configs) => {
 	if (configs.serverUrl) return configs.serverUrl;
 	else {
@@ -300,19 +267,11 @@ const getApiBaseUrl = (configs) => {
 // More details at https://github.com/electron/electron/issues/15947
 
 app.on('ready', async () => {
-	// require(path.join(__dirname, 'desktop-api/main.js'));
-	/* set menu */
-	setTimeout(async () => {
-		try {
-			await checkForUpdateNotify();
-		} catch (e) {
-			console.log('Error on checking update:', e);
-		}
-	}, 5000);
 	const configs: any = store.get('configs');
-	if (configs && typeof configs.autoLaunch === 'undefined') {
-		launchAtStartup(true, false);
-	}
+	const settings: any = store.get('appSetting');
+	const autoLaunch: boolean =
+		settings && typeof settings.autoLaunch === 'boolean' ? settings.autoLaunch : true;
+	launchAtStartup(autoLaunch, false);
 	Menu.setApplicationMenu(
 		Menu.buildFromTemplate([
 			{
@@ -368,6 +327,10 @@ app.on('ready', async () => {
 		);
 		setupWindow.show();
 	}
+
+	updater.settingWindow = settingsWindow;
+	updater.gauzyWindow = gauzyWindow;
+	updater.checkUpdate();
 
 	removeMainListener();
 	ipcMainHandler(store, startServer, knex, { ...environment }, timeTrackerWindow);
@@ -447,7 +410,7 @@ ipcMain.on('restart_app', (event, arg) => {
 
 ipcMain.on('save_additional_setting', (event, arg) => {
 	LocalStore.updateAdditionalSetting(arg);
-})
+});
 
 ipcMain.on('server_already_start', () => {
 	if (!gauzyWindow && !isAlreadyRun) {
@@ -459,64 +422,6 @@ ipcMain.on('server_already_start', () => {
 
 ipcMain.on('open_browser', async (event, arg) => {
 	await shell.openExternal(arg.url);
-});
-
-ipcMain.on('check_for_update', async () => {
-	await checkUpdate();
-});
-
-autoUpdater.once('update-available', () => {
-	const setting = LocalStore.getStore('appSetting');
-	settingsWindow.webContents.send('update_available');
-	if(setting && !setting.automaticUpdate) return;
-	const dialog = new DialogConfirmUpgradeDownload(
-		new DesktopDialog(
-			'Gauzy',
-			'Update Ready to Download',
-			gauzyWindow
-		)
-	);
-	dialog.show().then(async (button) => {
-		if (button.response === 0) {
-			await checkUpdate();
-		}
-	});
-});
-
-autoUpdater.on('update-downloaded', () => {
-	const setting = LocalStore.getStore('appSetting');
-	settingsWindow.webContents.send('update_downloaded');
-	if(setting && !setting.automaticUpdate) return;
-	const dialog = new DialogConfirmInstallDownload(
-		new DesktopDialog(
-			'Gauzy',
-			'Update Ready to Install',
-			gauzyWindow
-		)
-	);
-	dialog.show().then((button) => {
-		if (button.response === 0) autoUpdater.quitAndInstall();
-	  })
-});
-
-autoUpdater.requestHeaders = {
-	'Cache-Control':
-		'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0'
-};
-
-autoUpdater.on('update-not-available', () => {
-	settingsWindow.webContents.send('update_not_available');
-});
-
-autoUpdater.on('download-progress', (event) => {
-	console.log('update log', event);
-	if (settingsWindow) {
-		settingsWindow.webContents.send('download_on_progress', event);
-	}
-});
-
-autoUpdater.on('error', (e) => {
-	settingsWindow.webContents.send('error_update', e);
 });
 
 ipcMain.on('restart_and_update', () => {
@@ -576,10 +481,6 @@ ipcMain.on('minimize_on_startup', (event, arg) => {
 	launchAtStartup(arg.autoLaunch, arg.hidden);
 });
 
-autoUpdater.on('error', () => {
-	console.log('error');
-});
-
 app.on('activate', () => {
 	if (gauzyWindow) {
 		if (LocalStore.getStore('configs').gauzyWindow) {
@@ -613,43 +514,16 @@ app.on('before-quit', (e) => {
 			});
 		}, 1000);
 	} else {
-		if (cancellationToken) {
-			cancellationToken.cancel();
-		}
+		// soft download cancellation
+		try {
+			updater.cancel();
+		} catch (e) { }
 		app.exit(0);
 		if (serverDesktop) serverDesktop.kill();
 		if (serverGauzy) serverGauzy.kill();
 	}
 });
 
-async function getUpdaterConfig() {
-	const updaterConfig = {
-		repo: 'ever-gauzy-desktop-timer',
-		owner: 'ever-co',
-		typeRelease: 'releases'
-	};
-	let latestReleaseTag = null;
-	try {
-		latestReleaseTag = await fetch(
-			`https://github.com/${updaterConfig.owner}/${updaterConfig.repo}/${updaterConfig.typeRelease}/latest`,
-			{
-				method: 'GET',
-				headers: {
-					Accept: 'application/json'
-				}
-			}
-		).then((res) => res.json());
-	} catch (error) {}
-	if (latestReleaseTag) {
-		return `https://github.com/${updaterConfig.owner}/${updaterConfig.repo}/${updaterConfig.typeRelease}/download/${latestReleaseTag.tag_name}`;
-	}
-	return null;
-}
-
-async function checkForUpdateNotify() {
-	const updateFeedUrl = await getUpdaterConfig();
-	await appUpdateNotification(updateFeedUrl);
-}
 // On OS X it is common for applications and their menu bar
 // to stay active until the user quits explicitly with Cmd + Q
 function quit() {
@@ -673,11 +547,11 @@ function launchAtStartup(autoLaunch, hidden) {
 				path: app.getPath('exe'),
 				args: hidden
 					? [
-							'--processStart',
-							`"${exeName}"`,
-							'--process-start-args',
-							`"--hidden"`
-					  ]
+						'--processStart',
+						`"${exeName}"`,
+						'--process-start-args',
+						`"--hidden"`
+					]
 					: ['--processStart', `"${exeName}"`, '--process-start-args']
 			});
 			break;
@@ -720,25 +594,25 @@ app.on('web-contents-created', (e, contents) => {
 				return;
 			}
 
-		if (url.indexOf('sign-in/success?jwt') > -1) {
-			if (popupWin) popupWin.destroy();
-			const urlParse = Url.parse(url, true);
+			if (url.indexOf('sign-in/success?jwt') > -1) {
+				if (popupWin) popupWin.destroy();
+				const urlParse = Url.parse(url, true);
 				const urlParsed = Url.parse(
 					urlFormat(urlParse.hash, urlParse.host),
 					true
 				);
-			const query = urlParsed.query;
-			const params = LocalStore.beforeRequestParams();
+				const query = urlParsed.query;
+				const params = LocalStore.beforeRequestParams();
 				timeTrackerWindow.webContents.send('social_auth_success', {
 					...params,
-				token: query.jwt,
-				userId: query.userId
+					token: query.jwt,
+					userId: query.userId
 				});
-		}
+			}
 
-		if (url.indexOf('/auth/register') > -1) {
-			await shell.openExternal(url);
-		}
+			if (url.indexOf('/auth/register') > -1) {
+				await shell.openExternal(url);
+			}
 		}
 	);
 });
@@ -753,30 +627,7 @@ const showPopup = async (url: string, options: any) => {
 	options.height = 768;
 	if (popupWin) popupWin.destroy();
 	popupWin = new BrowserWindow(options);
-	let userAgentWb = 'Chrome/87.0.4280.66';
-	await popupWin.loadURL(url, {userAgent: userAgentWb});
+	let userAgentWb = 'Chrome/104.0.0.0';
+	await popupWin.loadURL(url, { userAgent: userAgentWb });
 	popupWin.show();
- };
-
-const checkUpdate = async () => {
-	autoUpdater.autoDownload = !isDownloadTriggered;
-	const updateFeedUrl = await getUpdaterConfig();
-	if (updateFeedUrl) {
-		autoUpdater.setFeedURL({
-			channel: 'latest',
-			provider: 'generic',
-			url: updateFeedUrl
-		});
-		autoUpdater.checkForUpdatesAndNotify().then((downloadPromise) => {
-			if (cancellationToken){
-				cancellationToken = downloadPromise.cancellationToken;
-			}else {
-				 isDownloadTriggered = true;
-			}
-		}).catch((e) => {
-			console.log('Error occurred', e);
-		});
-	} else {
-		settingsWindow.webContents.send('error_update');
-	}
-}
+};

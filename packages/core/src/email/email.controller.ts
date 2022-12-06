@@ -10,7 +10,6 @@ import {
 	HttpCode,
 	UsePipes,
 	ValidationPipe,
-	UseInterceptors,
 	BadRequestException
 } from '@nestjs/common';
 import {
@@ -30,10 +29,8 @@ import { UUIDValidationPipe } from './../shared/pipes';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { UpdateEmailDTO } from './dto';
 import { PaginationParams } from './../core/crud';
-import { TransformInterceptor } from './../core/interceptors';
 
 @ApiTags('Email')
-@UseInterceptors(TransformInterceptor)
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.VIEW_ALL_EMAILS)
 @Controller()

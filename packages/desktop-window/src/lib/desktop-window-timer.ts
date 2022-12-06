@@ -44,7 +44,8 @@ const windowSetting = () => {
 			nodeIntegration: true,
 			webSecurity: false,			
 			contextIsolation: false,
-			zoomFactor: zoomF
+			zoomFactor: zoomF,
+			sandbox: false
 		},
 		width: width,
 		height: height,

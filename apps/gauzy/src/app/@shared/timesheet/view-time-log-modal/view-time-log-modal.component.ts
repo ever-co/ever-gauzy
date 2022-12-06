@@ -4,7 +4,8 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
 	ITimeLog,
 	PermissionsEnum,
-	IOrganization
+	IOrganization,
+	TimeLogSourceEnum
 } from '@gauzy/contracts';
 import { filter, tap } from 'rxjs/operators';
 import { EditTimeLogModalComponent } from './../edit-time-log-modal';
@@ -80,10 +81,19 @@ export class ViewTimeLogModalComponent implements OnInit, OnDestroy {
 		});
 	}
 
-	checkTimerStatus() {
-		const { employee, tenantId } = this.store.user;
-		if (employee && employee.id) {
-			this.timeTrackerService.checkTimerStatus(tenantId);
+	async checkTimerStatus() {
+		if (!this.organization) {
+			return;
+		}
+		const { employeeId, tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
+
+		if (employeeId) {
+			await this.timeTrackerService.checkTimerStatus({
+				organizationId,
+				tenantId,
+				source: TimeLogSourceEnum.BROWSER
+			});
 		}
 	}
 

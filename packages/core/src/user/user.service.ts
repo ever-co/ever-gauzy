@@ -13,14 +13,29 @@ import { environment as env } from '@gauzy/config';
 import { User } from './user.entity';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
+import { freshTimestamp } from 'core';
 
 @Injectable()
 export class UserService extends TenantAwareCrudService<User> {
+
 	constructor(
 		@InjectRepository(User)
 		private readonly userRepository: Repository<User>
 	) {
 		super(userRepository);
+	}
+
+	/**
+	 * Marked email as verified for user
+	 *
+	 * @param id
+	 * @returns
+	 */
+	public async markEmailAsVerified(id: IUser['id']) {
+		return await this.userRepository.update({ id }, {
+		  	emailVerifiedAt: freshTimestamp(),
+			emailToken: null
+		});
 	}
 
 	/**
@@ -139,10 +154,10 @@ export class UserService extends TenantAwareCrudService<User> {
 			if (entity['hash']) {
 				entity['hash'] = await this.getPasswordHash(entity['hash']);
 			}
-		 	await this.repository.save(entity);
 
+			await this.save(entity);
 			try {
-				return await this.repository.findOneBy({
+				return await this.findOneByWhereOptions({
 					id: id as string,
 					tenantId: RequestContext.currentTenantId()
 				});

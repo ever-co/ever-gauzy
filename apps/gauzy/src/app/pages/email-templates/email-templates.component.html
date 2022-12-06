@@ -2,10 +2,11 @@
 	<nb-card>
 		<nb-card-header>
 			<h4>
-				<ngx-header-title [allowEmployee]="false"
-					><span class="menu-setting"
-						>{{ 'MENU.SETTINGS' | translate }}/ </span
-					>{{ 'EMAIL_TEMPLATES_PAGE.HEADER' | translate }}
+				<ngx-header-title [allowEmployee]="false">
+					<span class="menu-setting">
+						{{ 'MENU.SETTINGS' | translate }}/
+					</span>
+					{{ 'EMAIL_TEMPLATES_PAGE.HEADER' | translate }}
 				</ngx-header-title>
 			</h4>
 		</nb-card-header>
@@ -48,8 +49,7 @@
 									class="ace-editor"
 									[durationBeforeCallback]="400"
 									(textChange)="onEmailChange($event)"
-								>
-								</ace-editor>
+								></ace-editor>
 							</div>
 						</nb-card-body>
 					</nb-card>
@@ -71,11 +71,8 @@
 										size="small"
 										template="ng-select"
 										formControlName="languageCode"
-										(selectedLanguageEvent)="
-											subject$.next(true)
-										"
-									>
-									</ngx-language-selector>
+										(selectedLanguageEvent)="subject$.next(true)"
+									></ngx-language-selector>
 								</div>
 								<div class="select-block">
 									<label class="label" for="templateName">
@@ -89,14 +86,11 @@
 										class="d-block"
 										size="small"
 										formControlName="name"
-										placeholder="{{
-											'EMAIL_TEMPLATES_PAGE.TEMPLATE_NAMES.TEMPLATE_NAMES'
-												| translate
-										}}"
+										[placeholder]="'EMAIL_TEMPLATES_PAGE.LABELS.TEMPLATE_NAME' | translate"
 										(selectedChange)="subject$.next(true)"
 									>
 										<nb-option
-											*ngFor="let name of templateNames"
+											*ngFor="let name of templates"
 											[value]="name"
 										>
 											{{

@@ -10,6 +10,9 @@ const routes: Routes = [
 		data: {
 			datePicker: {
 				unitOfTime: 'week'
+			},
+			selectors: {
+				employee: false
 			}
 		},
 		resolve: {

@@ -1,21 +1,23 @@
-import { ApiProperty } from "@nestjs/swagger";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { IsArray, IsNotEmpty, IsOptional, IsString } from "class-validator";
+import { IsTeamAlreadyExist } from "./../../shared/validators";
 import { TenantOrganizationBaseDTO } from "./../../core/dto";
 
 export class OrganizationTeamDTO extends TenantOrganizationBaseDTO {
 
-    @ApiProperty({ type: () => String, readOnly: true })
+    @ApiProperty({ type: () => String })
     @IsNotEmpty()
     @IsString()
+    @IsTeamAlreadyExist()
     readonly name: string;
 
-    @ApiProperty({ type: () => String, isArray: true, readOnly: true })
+    @ApiPropertyOptional({ type: () => String, isArray: true })
     @IsOptional()
     @IsArray()
-    readonly members: string[] = [];
+    readonly memberIds?: string[] = [];
 
-    @ApiProperty({ type: () => String, isArray: true , readOnly: true})
+    @ApiPropertyOptional({ type: () => String, isArray: true })
     @IsOptional()
     @IsArray()
-    readonly managers: string[] = [];
+    readonly managerIds?: string[] = [];
 }

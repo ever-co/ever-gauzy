@@ -9,6 +9,7 @@ import {
 	IOrganizationTeam
 } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Exclude } from 'class-transformer';
 import {
 	Column,
 	Entity,
@@ -33,12 +34,10 @@ import {
 export class Invite extends TenantOrganizationBaseEntity implements IInvite {
 
 	@ApiPropertyOptional({ type: () => String })
-	@Index({ unique: true })
 	@Column()
 	token: string;
 
 	@ApiProperty({ type: () => String, minLength: 3, maxLength: 100 })
-	@Index({ unique: true })
 	@Column()
 	email: string;
 
@@ -54,6 +53,16 @@ export class Invite extends TenantOrganizationBaseEntity implements IInvite {
 	@Column({ nullable: true })
 	actionDate?: Date;
 
+	@ApiPropertyOptional({ type: () => Number })
+	@Exclude({ toPlainOnly: true })
+	@Column({ nullable: true })
+	public code?: number;
+
+	@ApiPropertyOptional({ type: () => String })
+	@Column({ nullable: true })
+	public fullName?: string;
+
+	public isExpired?: boolean;
 	/*
     |--------------------------------------------------------------------------
     | @ManyToOne
@@ -87,6 +96,22 @@ export class Invite extends TenantOrganizationBaseEntity implements IInvite {
 	@Index()
 	@Column({ nullable: true })
 	roleId: string;
+
+	/**
+	 * Invites belongs to user
+	 */
+	@ApiPropertyOptional({ type: () => Role })
+	@ManyToOne(() => User, (it) => it.invites, {
+		onDelete: "SET NULL"
+	})
+	@JoinColumn()
+	user?: IUser;
+
+	@ApiProperty({ type: () => String })
+	@RelationId((invite: Invite) => invite.user)
+	@Index()
+	@Column({ nullable: true })
+	userId?: IUser['id'];
 
 	/*
     |--------------------------------------------------------------------------

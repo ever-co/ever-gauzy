@@ -65,8 +65,19 @@ export interface IEnvironment {
 	USER_PASSWORD_BCRYPT_SALT_ROUNDS?: number;
 
 	JWT_SECRET?: string;
+
+	/**
+	 * JWT refresh token Options
+	 */
 	JWT_REFRESH_TOKEN_SECRET?: string;
-    JWT_REFRESH_TOKEN_EXPIRATION_TIME?: number;
+	JWT_REFRESH_TOKEN_EXPIRATION_TIME?: number;
+
+	/**
+	 * Email verification options
+	 */
+	JWT_VERIFICATION_TOKEN_SECRET?: string;
+	JWT_VERIFICATION_TOKEN_EXPIRATION_TIME?: number;
+	EMAIL_CONFIRMATION_URL?: string;
 
 	/**
 	 * Throttler (Rate Limiting) Options

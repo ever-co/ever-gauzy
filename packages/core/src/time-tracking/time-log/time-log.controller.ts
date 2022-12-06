@@ -10,7 +10,7 @@ import {
 	UseGuards,
 	Delete,
 	ValidationPipe,
-	UseInterceptors
+	UsePipes
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { DeleteResult, FindOneOptions, UpdateResult } from 'typeorm';
@@ -24,7 +24,6 @@ import { TimeLogService } from './time-log.service';
 import { Permissions, Roles } from './../../shared/decorators';
 import { OrganizationPermissionGuard, PermissionGuard, RoleGuard, TenantBaseGuard } from './../../shared/guards';
 import { UUIDValidationPipe } from './../../shared/pipes';
-import { TransformInterceptor } from './../../core/interceptors';
 import { CreateManualTimeLogDTO, DeleteTimeLogDTO, UpdateManualTimeLogDTO } from './dto';
 import { TimeLogLimitQueryDTO, TimeLogQueryDTO } from './dto/query';
 import { TimeLogBodyTransformPipe } from './pipes';
@@ -32,7 +31,6 @@ import { TimeLogBodyTransformPipe } from './pipes';
 @ApiTags('TimeLog')
 @UseGuards(TenantBaseGuard, RoleGuard)
 @Roles(RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN, RolesEnum.EMPLOYEE)
-@UseInterceptors(TransformInterceptor)
 @Controller()
 export class TimeLogController {
 	constructor(
@@ -62,11 +60,9 @@ export class TimeLogController {
 		description: 'Record not found'
 	})
 	@Get('report/daily')
+	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async getDailyReport(
-		@Query(new ValidationPipe({
-			transform: true,
-			whitelist: true
-		})) options: TimeLogQueryDTO
+		@Query() options: TimeLogQueryDTO
 	) {
 		return await this.timeLogService.getDailyReport(options);
 	}
@@ -81,11 +77,9 @@ export class TimeLogController {
 		description: 'Record not found'
 	})
 	@Get('report/daily-chart')
+	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async getDailyReportChartData(
-		@Query(new ValidationPipe({
-			transform: true,
-			whitelist: true
-		})) options: TimeLogQueryDTO
+		@Query() options: TimeLogQueryDTO
 	): Promise<any> {
 		return await this.timeLogService.getDailyReportChartData(options);
 	}
@@ -101,11 +95,9 @@ export class TimeLogController {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Get('report/owed-report')
+	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async getOwedAmountReport(
-		@Query(new ValidationPipe({
-			transform: true,
-			whitelist: true
-		})) options: TimeLogQueryDTO
+		@Query() options: TimeLogQueryDTO
 	): Promise<any> {
 		return await this.timeLogService.getOwedAmountReport(options);
 	}
@@ -121,11 +113,9 @@ export class TimeLogController {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Get('report/owed-chart-data')
+	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async getOwedAmountReportChartData(
-		@Query(new ValidationPipe({
-			transform: true,
-			whitelist: true
-		})) options: TimeLogQueryDTO
+		@Query() options: TimeLogQueryDTO
 	): Promise<any> {
 		return await this.timeLogService.getOwedAmountReportChartData(options);
 	}
@@ -140,11 +130,9 @@ export class TimeLogController {
 		description: 'Record not found'
 	})
 	@Get('report/weekly')
+	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async getWeeklyReport(
-		@Query(new ValidationPipe({
-			transform: true,
-			whitelist: true
-		})) options: TimeLogQueryDTO
+		@Query() options: TimeLogQueryDTO
 	) {
 		return await this.timeLogService.getWeeklyReport(options);
 	}
@@ -164,11 +152,9 @@ export class TimeLogController {
 		description: 'Found records'
 	})
 	@Get('time-limit')
+	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async getTimeLimitReport(
-		@Query(new ValidationPipe({
-			transform: true,
-			whitelist: true
-		})) options: TimeLogLimitQueryDTO
+		@Query() options: TimeLogLimitQueryDTO
 	) {
 		return await this.timeLogService.getTimeLimit(options);
 	}
@@ -188,11 +174,9 @@ export class TimeLogController {
 		description: 'Found records'
 	})
 	@Get('project-budget-limit')
+	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async projectBudgetLimit(
-		@Query(new ValidationPipe({
-			transform: true,
-			whitelist: true
-		})) options: TimeLogQueryDTO
+		@Query() options: TimeLogQueryDTO
 	) {
 		return await this.timeLogService.projectBudgetLimit(options);
 	}
@@ -212,11 +196,9 @@ export class TimeLogController {
 		description: 'Found records'
 	})
 	@Get('client-budget-limit')
+	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async clientBudgetLimit(
-		@Query(new ValidationPipe({
-			transform: true,
-			whitelist: true
-		})) options: TimeLogQueryDTO
+		@Query() options: TimeLogQueryDTO
 	) {
 		return await this.timeLogService.clientBudgetLimit(options);
 	}
@@ -228,11 +210,9 @@ export class TimeLogController {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Get()
+	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async getLogs(
-		@Query(new ValidationPipe({
-			transform: true,
-			whitelist: true
-		})) options: TimeLogQueryDTO
+		@Query() options: TimeLogQueryDTO
 	): Promise<ITimeLog[]> {
 		return await this.timeLogService.getTimeLogs(options);
 	}
@@ -297,10 +277,9 @@ export class TimeLogController {
 	@UseGuards(PermissionGuard, OrganizationPermissionGuard)
 	@Permissions(PermissionsEnum.ALLOW_DELETE_TIME)
 	@Delete()
+	@UsePipes(new ValidationPipe())
 	async deleteTimeLog(
-		@Query(new ValidationPipe({
-			transform: true
-		})) query: DeleteTimeLogDTO
+		@Query() query: DeleteTimeLogDTO
 	): Promise<DeleteResult | UpdateResult> {
 		return await this.timeLogService.deleteTimeLogs(query);
 	}

@@ -7,7 +7,6 @@ import {
 	Get,
 	Req,
 	Query,
-	UseInterceptors,
 	UsePipes,
 	ValidationPipe,
 	UseGuards,
@@ -23,7 +22,6 @@ import { AuthService } from './auth.service';
 import { User as IUser } from '../user/user.entity';
 import { AuthLoginCommand, AuthRegisterCommand, ConfirmInviteCodeCommand, SendInviteCodeCommand } from './commands';
 import { RequestContext } from '../core/context';
-import { TransformInterceptor } from './../core/interceptors';
 import { AuthRefreshGuard } from './../shared/guards';
 import { ChangePasswordRequestDTO, ResetPasswordRequestDTO } from './../password-reset/dto';
 import { RegisterUserDTO, UserLoginDTO } from './../user/dto';
@@ -31,7 +29,6 @@ import { UserService } from './../user/user.service';
 import { ConfirmInviteCodeDTO, HasRoleQueryDTO, RefreshTokenDto, SendInviteCodeDTO } from './dto';
 
 @ApiTags('Auth')
-@UseInterceptors(TransformInterceptor)
 @Controller()
 export class AuthController {
 
@@ -128,9 +125,9 @@ export class AuthController {
 	 * @returns
 	 */
 	@HttpCode(HttpStatus.OK)
-	@Post('/send-invite-code')
+	@Post('/send-code')
 	@Public()
-	@UsePipes(new ValidationPipe())
+	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async sendInviteCode(
 		@Body() entity: SendInviteCodeDTO
 	): Promise<any> {
@@ -144,9 +141,9 @@ export class AuthController {
 	 *
 	 * @param entity
 	 */
-	@Post('/verify-invite-code')
+	@Post('/verify-code')
 	@Public()
-	@UsePipes(new ValidationPipe())
+	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async confirmInviteCode(
 		@Body() entity: ConfirmInviteCodeDTO
 	): Promise<any> {
@@ -162,7 +159,7 @@ export class AuthController {
 	 */
 	@Post('/reset-password')
 	@Public()
-	@UsePipes(new ValidationPipe({ transform: true }))
+	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async resetPassword(
 		@Body() request: ChangePasswordRequestDTO
 	) {
@@ -178,10 +175,7 @@ export class AuthController {
 	 */
 	@Post('/request-password')
 	@Public()
-	@UsePipes(new ValidationPipe({
-		transform: true,
-		whitelist: true
-	}))
+	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async requestPassword(
 		@Body() body: ResetPasswordRequestDTO,
 		@Req() request: Request,
@@ -201,7 +195,7 @@ export class AuthController {
 	 */
 	@HttpCode(HttpStatus.OK)
 	@ApiOperation({ summary: 'Logout' })
-	@Get('logout')
+	@Get('/logout')
 	async getLogOut() {
 		return await this.userService.removeRefreshToken();
 	}
@@ -215,12 +209,10 @@ export class AuthController {
 	@HttpCode(HttpStatus.OK)
 	@ApiOperation({ summary: 'Refresh token' })
 	@Public()
-	@UsePipes(new ValidationPipe({ transform: true }))
 	@UseGuards(AuthRefreshGuard)
 	@Post('/refresh-token')
-	async refreshToken(
-		@Body() body: RefreshTokenDto
-	) {
+	@UsePipes(new ValidationPipe())
+	async refreshToken(@Body() body: RefreshTokenDto) {
 		return await this.authService.getAccessTokenFromRefreshToken();
 	}
 }

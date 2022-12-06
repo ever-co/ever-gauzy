@@ -7,7 +7,6 @@ import {
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import {
     IsArray,
-    IsEnum,
     IsNotEmpty,
     IsNumber,
     IsObject,
@@ -18,13 +17,13 @@ import { TenantOrganizationBaseDTO } from "./../../core/dto";
 
 export class TaskDTO extends TenantOrganizationBaseDTO {
 
-    @ApiProperty({ type : () => String})
+    @ApiProperty({ type : () => String })
     @IsNotEmpty()
     @IsString()
     readonly title: string;
 
-    @ApiProperty({ type: () => String, enum: TaskStatusEnum })
-    @IsEnum(TaskStatusEnum)
+    @ApiProperty({ type: () => String })
+    @IsString()
     readonly status: TaskStatusEnum;
 
     @ApiPropertyOptional({ type: () => String })
@@ -52,8 +51,13 @@ export class TaskDTO extends TenantOrganizationBaseDTO {
     @IsArray()
     readonly teams: IOrganizationTeam[];
 
-    @ApiProperty({ type : () => Object })
+    @ApiPropertyOptional({ type : () => Object })
     @IsOptional()
     @IsObject()
     readonly project: IOrganizationProject;
+
+    @ApiPropertyOptional({ type : () => String })
+    @IsOptional()
+    @IsString()
+    readonly projectId: IOrganizationProject['id'];
 }
