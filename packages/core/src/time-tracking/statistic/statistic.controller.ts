@@ -10,7 +10,7 @@ import {
 	IManualTimesStatistics
 } from '@gauzy/contracts';
 import { TenantPermissionGuard } from './../../shared/guards';
-import { StatisticCountsQueryDTO } from './dto';
+import { TimeTrackingStatisticQueryDTO } from './dto';
 import { StatisticService } from './statistic.service';
 
 @ApiTags('TimesheetStatistic')
@@ -28,13 +28,12 @@ export class StatisticController {
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
-	@Get('/counts')
-	@UsePipes(new ValidationPipe({ whitelist: true }))
+	@Get('counts')
+	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
 	async getCountsStatistics(
-		@Query() request: StatisticCountsQueryDTO
+		@Query() request: TimeTrackingStatisticQueryDTO
 	): Promise<ICountsStatistics> {
 		return await this.statisticService.getCounts(request);
 	}
@@ -50,9 +49,9 @@ export class StatisticController {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Get('/members')
-	@UsePipes(new ValidationPipe({ whitelist: true }))
+	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
 	async getMembersStatistics(
-		@Query() request: StatisticCountsQueryDTO
+		@Query() request: TimeTrackingStatisticQueryDTO
 	): Promise<IMembersStatistics[]> {
 		return await this.statisticService.getMembers(request);
 	}
@@ -68,9 +67,9 @@ export class StatisticController {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Get('/projects')
-	@UsePipes(new ValidationPipe({ whitelist: true }))
+	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
 	async getProjectsStatistics(
-		@Query() request: StatisticCountsQueryDTO
+		@Query() request: TimeTrackingStatisticQueryDTO
 	): Promise<IProjectsStatistics[]> {
 		return await this.statisticService.getProjects(request);
 	}
@@ -86,9 +85,9 @@ export class StatisticController {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Get('/tasks')
-	@UsePipes(new ValidationPipe({ whitelist: true }))
+	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
 	async getTasksStatistics(
-		@Query() request: StatisticCountsQueryDTO
+		@Query() request: TimeTrackingStatisticQueryDTO
 	): Promise<ITask[]> {
 		return await this.statisticService.getTasks(request);
 	}
@@ -104,9 +103,9 @@ export class StatisticController {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Get('/manual-times')
-	@UsePipes(new ValidationPipe({ whitelist: true }))
+	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
 	async getManualTimesStatistics(
-		@Query() request: StatisticCountsQueryDTO
+		@Query() request: TimeTrackingStatisticQueryDTO
 	): Promise<IManualTimesStatistics[]> {
 		return await this.statisticService.manualTimes(request);
 	}
@@ -122,9 +121,9 @@ export class StatisticController {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Get('/time-slots')
-	@UsePipes(new ValidationPipe({ whitelist: true }))
+	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
 	async getEmployeeTimeSlotsStatistics(
-		@Query() request: StatisticCountsQueryDTO
+		@Query() request: TimeTrackingStatisticQueryDTO
 	): Promise<ITimeSlotStatistics[]> {
 		return await this.statisticService.getEmployeeTimeSlots(request);
 	}
@@ -140,9 +139,9 @@ export class StatisticController {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Get('/activities')
-	@UsePipes(new ValidationPipe({ whitelist: true }))
+	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
 	async getActivitiesStatistics(
-		@Query() request: StatisticCountsQueryDTO
+		@Query() request: TimeTrackingStatisticQueryDTO
 	): Promise<IActivitiesStatistics[]> {
 		return await this.statisticService.getActivities(request);
 	}

@@ -26,84 +26,77 @@ export class TimesheetStatisticsService {
 	constructor(private http: HttpClient) {}
 
 	getCounts(request: IGetCountsStatistics) {
-		const params = toParams(request);
 		return firstValueFrom(
 			this.http.get<ICountsStatistics>(
 				`${API_PREFIX}/timesheet/statistics/counts`,
 				{
-					params
+					params: toParams(request)
 				}
 			)
 		);
 	}
 
 	getTimeSlots(request?: IGetTimeSlotStatistics) {
-		const params = toParams(request);
 		return firstValueFrom(
 			this.http.get<ITimeSlotStatistics[]>(
 				`${API_PREFIX}/timesheet/statistics/time-slots`,
 				{
-					params
+					params: toParams(request)
 				}
 			)
 		);
 	}
 
 	getActivities(request?: IGetActivitiesStatistics) {
-		const params = toParams(request);
 		return firstValueFrom(
 			this.http.get<IActivitiesStatistics[]>(
 				`${API_PREFIX}/timesheet/statistics/activities`,
 				{
-					params
+					params: toParams(request)
 				}
 			)
 		);
 	}
 
 	getTasks(request: IGetTasksStatistics) {
-		const params = toParams(request);
 		return firstValueFrom(
 			this.http.get<ITasksStatistics[]>(
 				`${API_PREFIX}/timesheet/statistics/tasks`,
 				{
-					params
+					params: toParams(request)
 				}
 			)
 		);
 	}
 
 	getManualTimes(request: any) {
-		const params = toParams(request);
 		return firstValueFrom(
 			this.http.get<IManualTimesStatistics[]>(
 				`${API_PREFIX}/timesheet/statistics/manual-times`,
 				{
-					params
+					params: toParams(request)
 				}
 			)
 		);
 	}
 
 	getProjects(request?: IGetProjectsStatistics) {
-		const params = toParams(request);
 		return firstValueFrom(
 			this.http.get<IProjectsStatistics[]>(
 				`${API_PREFIX}/timesheet/statistics/projects`,
 				{
-					params
+					params: toParams(request)
 				}
 			)
 		);
 	}
 
 	getMembers(request: IGetMembersStatistics) {
-		const params = toParams(request);
 		return firstValueFrom(
 			this.http.get<IMembersStatistics[]>(
 				`${API_PREFIX}/timesheet/statistics/members`,
 				{
-					params
+					params: toParams(request)
 				}
 			)
 		);

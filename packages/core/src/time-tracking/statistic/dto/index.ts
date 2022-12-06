@@ -1,1 +1,1 @@
-export { StatisticCountsQueryDTO } from './statistic-counts-query.dto';
+export * from './time-tracking-statistic-query.dto';
