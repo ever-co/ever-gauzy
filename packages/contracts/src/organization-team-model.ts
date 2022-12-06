@@ -6,6 +6,7 @@ import { ITimerStatusInput } from './timesheet.model';
 
 export interface IOrganizationTeam extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
+	prefix?: string;
 	members?: IOrganizationTeamEmployee[];
 	managers?: IOrganizationTeamEmployee[];
 	tags?: ITag[];
@@ -14,10 +15,12 @@ export interface IOrganizationTeam extends IBasePerTenantAndOrganizationEntityMo
 
 export interface IOrganizationTeamFindInput extends IBasePerTenantAndOrganizationEntityModel {
 	name?: string;
+	prefix?: string;
 }
 
 export interface IOrganizationTeamCreateInput extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
+	prefix?: string;
 	memberIds?: string[];
 	managerIds?: string[];
 	tags?: ITag[];

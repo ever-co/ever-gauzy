@@ -33,6 +33,11 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity
 	@Column()
 	name: string;
 
+	/**
+	 * prefix for organization team
+	 */
+	@Column({ nullable: true })
+	prefix?: string;
 	/*
     |--------------------------------------------------------------------------
     | @OneToMany
