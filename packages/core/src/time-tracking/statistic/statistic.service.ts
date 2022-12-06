@@ -896,7 +896,7 @@ export class StatisticService {
 	 * @returns
 	 */
 	async getTasks(request: IGetTasksStatistics) {
-		const { organizationId, startDate, endDate } = request;
+		const { organizationId, startDate, endDate, take } = request;
 		let { employeeIds = [], projectIds = [], taskIds = [], defaultRange, unitOfTime } = request;
 
 		const user = RequestContext.currentUser();
@@ -1009,6 +1009,7 @@ export class StatisticService {
 			.addGroupBy(`"task"."id"`)
 			.orderBy('duration', 'DESC');
 		let statistics: ITask[] = await query.getRawMany();
+
 		let tasks: ITask[] = chain(statistics)
 				.groupBy('taskId')
 				.map((tasks: ITask[], taskId) => {
@@ -1019,8 +1020,8 @@ export class StatisticService {
 						duration: reduce(pluck(tasks, 'duration'), ArraySum, 0)
 					} as ITask
 				})
-				.value()
-				.splice(0, 5);
+				.value();
+		if (isNotEmpty(take)) { tasks = tasks.splice(0, take); }
 
 		const totalDurationQuery = this.timeLogRepository.createQueryBuilder();
 		totalDurationQuery

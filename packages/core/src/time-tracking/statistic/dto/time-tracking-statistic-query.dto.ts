@@ -20,4 +20,12 @@ export class TimeTrackingStatisticQueryDTO extends IntersectionType(
     @ApiPropertyOptional({ type: () => String, example: 'week' })
     @IsOptional()
     readonly unitOfTime: moment.unitOfTime.Base = 'week';
+
+    /**
+     * Limit - max number of entities should be taken.
+     */
+    @ApiPropertyOptional({ type: () => Number })
+    @IsOptional()
+    @Transform(({ value }: TransformFnParams) => parseInt(value, 10))
+    readonly take: number;
 }
