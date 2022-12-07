@@ -258,7 +258,7 @@ export class EmployeeController extends CrudController<Employee> {
 	@Permissions()
 	@Get(':id')
 	async findById(
-		@Param('id', UUIDValidationPipe) id: string,
+		@Param('id', UUIDValidationPipe) id: IEmployee['id'],
 		@Query() params: OptionParams<Employee>,
 	): Promise<IEmployee> {
 		try {
