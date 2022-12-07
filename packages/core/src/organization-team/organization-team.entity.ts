@@ -8,6 +8,7 @@ import {
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
+	IEquipmentSharing,
 	IGoal,
 	IOrganizationTeam,
 	IOrganizationTeamEmployee,
@@ -16,6 +17,7 @@ import {
 	ITask
 } from '@gauzy/contracts';
 import {
+	EquipmentSharing,
 	Goal,
 	OrganizationTeamEmployee,
 	RequestApprovalTeam,
@@ -93,4 +95,13 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity
 	})
 	@JoinTable()
 	tasks?: ITask[];
+
+	/**
+	 * Equipment Sharing
+	 */
+	@ManyToMany(() => EquipmentSharing, (it) => it.teams, {
+		onUpdate: 'CASCADE',
+		onDelete: 'CASCADE'
+	})
+	equipmentSharings?: IEquipmentSharing[];
 }
