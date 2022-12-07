@@ -13,8 +13,7 @@ import {
 	IEquipment,
 	IEquipmentSharing,
 	IEquipmentSharingPolicy,
-	IOrganizationTeam,
-	RequestApprovalStatusTypesEnum
+	IOrganizationTeam
 } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
 import {
@@ -115,8 +114,10 @@ export class EquipmentSharing extends TenantOrganizationBaseEntity
 	/**
 	 * OrganizationTeam
 	 */
-	@ApiProperty({ type: () => OrganizationTeam })
-	@ManyToMany(() => OrganizationTeam, { cascade: true })
+	@ManyToMany(() => OrganizationTeam, (it) => it.equipmentSharings, {
+		onUpdate: 'CASCADE',
+		onDelete: 'CASCADE'
+	})
 	@JoinTable({
 		name: 'equipment_shares_teams'
 	})
