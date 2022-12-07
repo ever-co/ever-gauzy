@@ -271,8 +271,8 @@ import {
 	createRandomEventType
 } from '../../event-types/event-type.seed';
 import {
-	createDefaultEquipmentSharingPolicyForOrg,
-	createRandomEquipmentSharingPolicyForOrg
+	createDefaultEquipmentSharingPolicy,
+	createRandomEquipmentSharingPolicy
 } from '../../equipment-sharing-policy/equipment-sharing-policy.seed';
 import {
 	createRandomProductOption,
@@ -1169,10 +1169,11 @@ export class SeedDataService {
 
 		await this.tryExecute(
 			'Default Equipment Sharing Policies',
-			createDefaultEquipmentSharingPolicyForOrg(this.dataSource, {
-				orgs: this.organizations,
-				tenant: this.tenant
-			})
+			createDefaultEquipmentSharingPolicy(
+				this.dataSource,
+				this.tenant,
+				this.organizations
+			)
 		);
 
 		await this.tryExecute(
@@ -1804,7 +1805,7 @@ export class SeedDataService {
 
 		await this.tryExecute(
 			'Random Equipment Sharing Policies',
-			createRandomEquipmentSharingPolicyForOrg(
+			createRandomEquipmentSharingPolicy(
 				this.dataSource,
 				tenants,
 				tenantOrganizationsMap

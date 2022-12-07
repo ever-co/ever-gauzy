@@ -2,27 +2,19 @@ import { DataSource } from 'typeorm';
 import { IOrganization, ITenant } from '@gauzy/contracts';
 import { EquipmentSharingPolicy } from './equipment-sharing-policy.entity';
 
-export const createDefaultEquipmentSharingPolicyForOrg = async (
+export const createDefaultEquipmentSharingPolicy = async (
 	dataSource: DataSource,
-	defaultData: {
-		orgs: IOrganization[];
-		tenant: ITenant;
-	}
+	tenant: ITenant,
+	organizations: IOrganization[]
 ): Promise<void> => {
-	const promises = [];
-
-	defaultData.orgs.forEach((org) => {
+	for await (const organization of organizations) {
 		const defaultEquipmentSharingPolicy = new EquipmentSharingPolicy();
 		defaultEquipmentSharingPolicy.name = 'Default Approval Policy';
-		defaultEquipmentSharingPolicy.organization = org;
-		defaultEquipmentSharingPolicy.tenant = org.tenant;
+		defaultEquipmentSharingPolicy.organization = organization;
+		defaultEquipmentSharingPolicy.tenant = tenant;
 		defaultEquipmentSharingPolicy.description = 'Default approval policy';
-		promises.push(
-			insertDefaultPolicy(dataSource, defaultEquipmentSharingPolicy)
-		);
-	});
-
-	await Promise.all(promises);
+		await insertDefaultPolicy(dataSource, defaultEquipmentSharingPolicy);
+	}
 };
 
 const insertDefaultPolicy = async (
@@ -37,25 +29,25 @@ const insertDefaultPolicy = async (
 		.execute();
 };
 
-export const createRandomEquipmentSharingPolicyForOrg = async (
+export const createRandomEquipmentSharingPolicy = async (
 	dataSource: DataSource,
 	tenants: ITenant[],
 	tenantOrganizationsMap: Map<ITenant, IOrganization[]>
 ): Promise<EquipmentSharingPolicy[]> => {
 	const policies: EquipmentSharingPolicy[] = [];
 	const policyArray = ['Equipment Sharing Policy'];
-	for (const tenant of tenants) {
-		const orgs = tenantOrganizationsMap.get(tenant);
-		orgs.forEach((org) => {
+	for await (const tenant of tenants) {
+		const organizations = tenantOrganizationsMap.get(tenant);
+		for await (const organization of organizations) {
 			policyArray.forEach((name) => {
 				const policy = new EquipmentSharingPolicy();
 				policy.description = name;
 				policy.name = name;
-				policy.organization = org;
+				policy.organization = organization;
 				policy.tenant = tenant;
 				policies.push(policy);
 			});
-		});
+		}
 	}
 	await dataSource
 		.createQueryBuilder()
@@ -63,6 +55,5 @@ export const createRandomEquipmentSharingPolicyForOrg = async (
 		.into(EquipmentSharingPolicy)
 		.values(policies)
 		.execute();
-
 	return policies;
 };

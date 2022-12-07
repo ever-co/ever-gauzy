@@ -5,7 +5,8 @@ import {
 	IEmployee,
 	IOrganization,
 	ISelectedEmployee,
-	IUser
+	IUser,
+	PermissionsEnum
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
@@ -48,18 +49,22 @@ export class EditEmployeeComponent extends TranslationBaseComponent
 		this.store.selectedEmployee$
 			.pipe(
 				debounceTime(200),
-				filter((employee: ISelectedEmployee) => !!employee && !!employee.id),
 				distinctUntilChange(),
+				filter((employee: ISelectedEmployee) => !!employee && !!employee.id),
 				tap((employee) => this.selectedEmployeeFromHeader = employee),
 				tap(({ id }) => {
 					this.cdr.detectChanges();
-					this.router.navigate(['/pages/employees/edit/', id]);
+					this.router.navigate(['/pages/employees/edit',
+						id,
+						this.route.firstChild.snapshot.routeConfig.path
+					]);
 				}),
 				untilDestroyed(this)
 			)
 			.subscribe();
 		this.store.selectedOrganization$
 			.pipe(
+				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
 				tap((organization: IOrganization) => this.organization = organization),
 				untilDestroyed(this)
@@ -70,7 +75,7 @@ export class EditEmployeeComponent extends TranslationBaseComponent
 	ngAfterViewInit() {
 		this.route.data
 			.pipe(
-				debounceTime(500),
+				debounceTime(300),
 				distinctUntilChange(),
 				filter((data) => !!data && !!data.employee),
 				tap(({ employee }) => this.selectedEmployee = employee),
@@ -87,7 +92,7 @@ export class EditEmployeeComponent extends TranslationBaseComponent
 									tags: employee.user.tags || [],
 									skills: employee.skills || []
 								};
-							}, 1600);
+							}, 500);
 						}
 					} catch (error) {
 						this.router.navigate(['/pages/employees']);
@@ -98,7 +103,7 @@ export class EditEmployeeComponent extends TranslationBaseComponent
 			.subscribe();
 	}
 
-	updateImage(imageUrl: string) {
+	updateImage(imageUrl: IUser['imageUrl']) {
 		try {
 			if (imageUrl) {
 				this.selectedEmployee.user.imageUrl = imageUrl;
@@ -112,6 +117,11 @@ export class EditEmployeeComponent extends TranslationBaseComponent
 		}
 	}
 
+	/**
+	 * Edit public employee page redirection
+	 *
+	 * @returns
+	 */
 	editPublicPage() {
 		if (!this.organization || !this.selectedEmployee) {
 			return;
@@ -130,7 +140,9 @@ export class EditEmployeeComponent extends TranslationBaseComponent
 			.pipe(
 				filter((user) => !!user),
 				tap((user: IUser) => {
-					if (!!user && !user.employeeId) {
+					if (!!user && this.store.hasPermission(
+						PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+					)) {
 						this.store.selectedEmployee = ALL_EMPLOYEES_SELECTED;
 					}
 				}),

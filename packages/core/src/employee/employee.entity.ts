@@ -25,7 +25,8 @@ import {
 	ITimeSlot,
 	IGoal,
 	ICandidate,
-	IEmployeeAward
+	IEmployeeAward,
+	IEquipmentSharing
 } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
@@ -47,6 +48,7 @@ import {
 	Contact,
 	EmployeeAward,
 	EmployeeSetting,
+	EquipmentSharing,
 	Expense,
 	Goal,
 	InvoiceItem,
@@ -542,4 +544,13 @@ export class Employee extends TenantOrganizationBaseEntity
 	})
 	@JoinTable()
 	tasks?: ITask[];
+
+	/**
+	 * Equipment Sharing
+	 */
+	@ManyToMany(() => EquipmentSharing, (it) => it.employees, {
+		onUpdate: 'CASCADE',
+		onDelete: 'CASCADE'
+	})
+	equipmentSharings?: IEquipmentSharing[];
 }
