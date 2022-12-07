@@ -271,8 +271,7 @@ export class TimeTrackerService {
 					startDate: moment().startOf('day').utc().format(),
 					endDate: moment().endOf('day').utc().format(),
 					tenantId: values.tenantId,
-					organizationId: values.organizationId,
-					employeeIds: [values.employeeId]
+					organizationId: values.organizationId
 				}
 			}));
 	}
@@ -461,12 +460,13 @@ export class TimeTrackerService {
 			Authorization: `Bearer ${values.token}`,
 			'Tenant-Id': values.tenantId
 		});
-
 		return firstValueFrom(this.http
 			.get(`${values.apiHost}/api/timesheet/timer/status`, {
 				params: {
 					source: 'DESKTOP',
-					tenantId: values.tenantId
+					tenantId: values.tenantId,
+					organizationId: values.organizationId,
+					relations: ['employee', 'employee.user'],
 				},
 				headers: headers
 			}));
