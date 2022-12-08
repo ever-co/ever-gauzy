@@ -149,6 +149,21 @@ LocalStore.setFilePath({
 	iconPath: path.join(__dirname, 'icons', 'icon.png')
 })
 
+// Instance detection
+const gotTheLock = app.requestSingleInstanceLock();
+
+if (!gotTheLock) {
+	app.quit();
+} else {
+	app.on('second-instance', () => {
+		// if someone tried to run a second instance, we should focus our window.
+		if (gauzyWindow) {
+			if (gauzyWindow.isMinimized()) gauzyWindow.restore();
+			gauzyWindow.focus();
+		}
+	});
+}
+
  function startServer(value, restart = false) {
 	process.env.IS_ELECTRON = 'true';
 	if (value.db === 'sqlite') {
