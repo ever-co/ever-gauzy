@@ -386,7 +386,8 @@ app.on('ready', async () => {
 		settingsWindow,
 		updaterWindow,
 		knex,
-		pathWindow
+		pathWindow,
+		true
 	);
 
 	if (configs && configs.isSetup) {
@@ -427,6 +428,13 @@ app.on('ready', async () => {
 	updater.checkUpdate();
 	removeMainListener();
 	ipcMainHandler(store, startServer, knex, { ...environment }, timeTrackerWindow);
+	gauzyWindow.webContents.setZoomFactor(1.0);
+	gauzyWindow.webContents
+		.setVisualZoomLevelLimits(1, 5)
+		.then(() =>
+			console.log('Zoom levels have been set between 100% and 500%')
+		)
+		.catch((err) => console.log(err));
 });
 
 app.on('window-all-closed', quit);
