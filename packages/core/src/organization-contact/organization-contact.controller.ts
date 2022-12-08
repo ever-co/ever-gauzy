@@ -1,4 +1,5 @@
 import {
+	BadRequestException,
 	Body,
 	Controller,
 	Get,
@@ -22,18 +23,23 @@ import {
 	PermissionsEnum
 } from '@gauzy/contracts';
 import { CrudController, PaginationParams } from './../core/crud';
-import { OrganizationContactCreateCommand, OrganizationContactEditByEmployeeCommand } from './commands';
+import {
+	OrganizationContactCreateCommand,
+	OrganizationContactEditByEmployeeCommand,
+	OrganizationContactUpdateCommand
+} from './commands';
 import { OrganizationContact } from './organization-contact.entity';
 import { OrganizationContactService } from './organization-contact.service';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
-import { CreateOrganizationContactDTO } from './dto';
+import { CreateOrganizationContactDTO, UpdateOrganizationContactDTO } from './dto';
 
 @ApiTags('OrganizationContact')
 @UseGuards(TenantPermissionGuard)
 @Controller()
 export class OrganizationContactController extends CrudController<OrganizationContact> {
+
 	constructor(
 		private readonly organizationContactService: OrganizationContactService,
 		private readonly commandBus: CommandBus
@@ -44,7 +50,7 @@ export class OrganizationContactController extends CrudController<OrganizationCo
 	/**
 	 * GET organization contact count
 	 *
-	 * @param filter
+	 * @param options
 	 * @returns
 	 */
 	@ApiOperation({ summary: 'Find all organization contact counts in the same tenant' })
@@ -52,6 +58,8 @@ export class OrganizationContactController extends CrudController<OrganizationCo
 		status: HttpStatus.OK,
 		description: 'Found organization contact count'
 	})
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_CONTACT_VIEW)
 	@Get('count')
 	async getCount(
 		@Query() options: FindOptionsWhere<OrganizationContact>
@@ -82,7 +90,7 @@ export class OrganizationContactController extends CrudController<OrganizationCo
 	async pagination(
 		@Query() filter: PaginationParams<OrganizationContact>
 	): Promise<IPagination<IOrganizationContact>> {
-		return this.organizationContactService.pagination(filter);
+		return await this.organizationContactService.pagination(filter);
 	}
 
 	/**
@@ -172,31 +180,13 @@ export class OrganizationContactController extends CrudController<OrganizationCo
 	}
 
 	/**
-	 * CREATE organization contact
-	 *
-	 * @param body
-	 * @returns
-	 */
-	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.ORG_CONTACT_EDIT)
-	@Post()
-	@UsePipes(new ValidationPipe({ transform: true }))
-	async create(
-		@Body() body: CreateOrganizationContactDTO
-	): Promise<IOrganizationContact> {
-		return this.commandBus.execute(
-			new OrganizationContactCreateCommand(body)
-		);
-	}
-
-	/**
 	 * GET organization contacts by id
 	 *
 	 * @param id
 	 * @param data
 	 * @returns
 	 */
-	@ApiOperation({
+	 @ApiOperation({
 		summary: 'Get organization contacts by id.'
 	})
 	@ApiResponse({
@@ -217,6 +207,45 @@ export class OrganizationContactController extends CrudController<OrganizationCo
 		return this.organizationContactService.findById(
 			id,
 			relations
+		);
+	}
+
+	/**
+	 * CREATE organization contact
+	 *
+	 * @param entity
+	 * @returns
+	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_CONTACT_EDIT)
+	@Post()
+	@UsePipes(new ValidationPipe())
+	async create(
+		@Body() entity: CreateOrganizationContactDTO
+	): Promise<IOrganizationContact> {
+		return await this.commandBus.execute(
+			new OrganizationContactCreateCommand(entity)
+		);
+	}
+
+	/**
+	 * Update organization contact by ID
+	 *
+	 * @param id
+	 * @param entity
+	 * @returns
+	 */
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_CONTACT_EDIT)
+	@Put(':id')
+	@UsePipes(new ValidationPipe())
+	async update(
+		@Param('id', UUIDValidationPipe) id: IOrganizationContact['id'],
+		@Body() entity: UpdateOrganizationContactDTO
+	): Promise<IOrganizationContact> {
+		return await this.commandBus.execute(
+			new OrganizationContactUpdateCommand(id, entity)
 		);
 	}
 }

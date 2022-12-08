@@ -1,9 +1,9 @@
-import { IOrganizationContact } from '@gauzy/contracts';
+import { IOrganizationContact, IPagination } from '@gauzy/contracts';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Brackets, FindManyOptions, In, Raw, Repository } from 'typeorm';
+import { Brackets, In, Raw, Repository } from 'typeorm';
 import { RequestContext } from '../core/context';
-import { TenantAwareCrudService } from './../core/crud';
+import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { OrganizationContact } from './organization-contact.entity';
 
 @Injectable()
@@ -107,10 +107,16 @@ export class OrganizationContactService extends TenantAwareCrudService<Organizat
         return await this.findOneByIdString(id, { relations });
     }
 
-	public pagination(filter?: FindManyOptions) {
-		/**
-		 * Custom Filters
-		 */
+	/**
+	 * Organization contact by pagination
+	 *
+	 * @param filter
+	 * @returns
+	 */
+	public async pagination(
+		filter?: PaginationParams<any>
+	): Promise<IPagination<IOrganizationContact>> {
+		// Custom Filters
 		if ('where' in filter) {
 			const { where } = filter;
 			if ('name' in where) {
@@ -132,6 +138,6 @@ export class OrganizationContactService extends TenantAwareCrudService<Organizat
 				}
 			}
 		}
-		return super.paginate(filter);
+		return await super.paginate(filter);
 	}
 }
