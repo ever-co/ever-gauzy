@@ -35,8 +35,7 @@ import { ckEditorConfig } from "../../../@shared/ckeditor.config";
 	templateUrl: './projects-mutation.component.html',
 	styleUrls: ['./projects-mutation.component.scss']
 })
-export class ProjectsMutationComponent
-	extends TranslationBaseComponent
+export class ProjectsMutationComponent extends TranslationBaseComponent
 	implements OnInit {
 
 	/*
@@ -71,7 +70,7 @@ export class ProjectsMutationComponent
 
 	public organization: IOrganization;
 	employees: IEmployee[] = [];
-		
+
 	FormHelpers: typeof FormHelpers = FormHelpers;
 
 	hoverState: boolean;
@@ -101,20 +100,20 @@ export class ProjectsMutationComponent
 			budgetType: [OrganizationProjectBudgetTypeEnum.HOURS],
 			openSource: [],
 			projectUrl: ['', Validators.compose([
-					Validators.pattern(new RegExp(patterns.websiteUrl)) 
+					Validators.pattern(new RegExp(patterns.websiteUrl))
 				])
 			],
-			openSourceProjectUrl: ['', Validators.compose([ 
-					Validators.pattern(new RegExp(patterns.websiteUrl)) 
+			openSourceProjectUrl: ['', Validators.compose([
+					Validators.pattern(new RegExp(patterns.websiteUrl))
 				])
 			]
-		}, { 
+		}, {
 			validators: [
 				CompareDateValidator.validateDate('startDate', 'endDate')
-			] 
+			]
 		});
 	}
-	
+
 	constructor(
 		private readonly fb: FormBuilder,
 		private readonly organizationContactService: OrganizationContactService,
@@ -124,7 +123,7 @@ export class ProjectsMutationComponent
 		private readonly router: Router,
 		private readonly store: Store
 	) {
-		super(translateService);		
+		super(translateService);
 	}
 
 	ngOnInit() {
@@ -181,8 +180,8 @@ export class ProjectsMutationComponent
 
 	/**
 	 * Sync edit organization project
-	 * 
-	 * @param project 
+	 *
+	 * @param project
 	 */
 	private _syncProject() {
 		if (!this.project) {
@@ -221,7 +220,7 @@ export class ProjectsMutationComponent
 
 	/**
 	 * Public toggle action
-	 * @param state 
+	 * @param state
 	 */
 	togglePublic(state: boolean) {
 		this.form.get('public').setValue(state);
@@ -230,7 +229,7 @@ export class ProjectsMutationComponent
 
 	/**
 	 * Billable toggle action
-	 * @param state 
+	 * @param state
 	 */
 	toggleBillable(state: boolean) {
 		this.form.get('billable').setValue(state);
@@ -239,7 +238,7 @@ export class ProjectsMutationComponent
 
 	/**
 	 * Open source toggle action
-	 * @param state 
+	 * @param state
 	 */
 	toggleOpenSource(state: boolean) {
 		this.form.get('openSource').setValue(state);
@@ -256,8 +255,8 @@ export class ProjectsMutationComponent
 
 	/**
 	 * On submit project mutation form
-	 * 
-	 * @returns 
+	 *
+	 * @returns
 	 */
 	onSubmit() {
 		if (this.form.invalid) {
@@ -327,26 +326,32 @@ export class ProjectsMutationComponent
 		this.form.get('tags').updateValueAndValidity();
 	}
 
-	addNewOrganizationContact = (
+	/**
+	 * Add organization contact
+	 *
+	 * @param name
+	 * @returns
+	 */
+	addNewOrganizationContact = async (
 		name: string
 	): Promise<IOrganizationContact> => {
 		try {
-			this.toastrService.success(
-				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CONTACTS.ADD_CONTACT',
-				{
-					name: name
-				}
-			);
 			const { id: organizationId } = this.organization;
 			const { tenantId } = this.store.user;
 
-			return this.organizationContactService.create({
+			const contact: IOrganizationContact = await this.organizationContactService.create({
 				name,
 				organizationId,
 				tenantId,
-				contactType: ContactType.CLIENT,
-				imageUrl: DUMMY_PROFILE_IMAGE
+				contactType: ContactType.CLIENT
 			});
+			if (contact) {
+				const { name } = contact;
+				this.toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CONTACTS.ADD_CONTACT', {
+					name
+				});
+			}
+			return contact;
 		} catch (error) {
 			this.errorHandler.handleError(error);
 		}
@@ -365,8 +370,8 @@ export class ProjectsMutationComponent
 
 	/**
 	 * Load employees from multiple selected employees
-	 * 
-	 * @param employees 
+	 *
+	 * @param employees
 	 */
 	public onLoadEmployees(employees: IEmployee[]) {
 		this.employees = employees;
