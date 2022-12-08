@@ -4,7 +4,8 @@ import {
 	IOrganizationContactCreateInput,
 	IOrganizationContact,
 	IOrganizationContactFindInput,
-	IEditEntityByMemberInput
+	IEditEntityByMemberInput,
+	IOrganizationContactUpdateInput
 } from '@gauzy/contracts';
 import { firstValueFrom } from 'rxjs';
 import { toParams } from '@gauzy/common-angular';
@@ -14,17 +15,33 @@ import { API_PREFIX } from '../constants/app.constants';
 	providedIn: 'root'
 })
 export class OrganizationContactService {
-	constructor(private http: HttpClient) {}
 
-	create(
-		createInput: IOrganizationContactCreateInput
-	): Promise<IOrganizationContact> {
+	constructor(
+		private readonly http: HttpClient
+	) {}
+
+	/**
+	 * Create organization contact
+	 *
+	 * @param input
+	 * @returns
+	 */
+	create(input: IOrganizationContactCreateInput): Promise<IOrganizationContact> {
 		return firstValueFrom(
-			this.http
-			.post<IOrganizationContact>(
-				`${API_PREFIX}/organization-contact`,
-				createInput
-			)
+			this.http.post<IOrganizationContact>( `${API_PREFIX}/organization-contact`, input)
+		);
+	}
+
+	/**
+	 * Update organization contact
+	 *
+	 * @param id
+	 * @param input
+	 * @returns
+	 */
+	update(id: IOrganizationContact['id'], input: IOrganizationContactUpdateInput): Promise<IOrganizationContact> {
+		return firstValueFrom(
+			this.http.put<IOrganizationContact>(`${API_PREFIX}/organization-contact/${id}`, input)
 		);
 	}
 
