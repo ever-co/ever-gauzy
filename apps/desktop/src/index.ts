@@ -156,10 +156,15 @@ if (!gotTheLock) {
 	app.quit();
 } else {
 	app.on('second-instance', () => {
-		// if someone tried to run a second instance, we should focus our window.
+		// if someone tried to run a second instance, we should focus our window and show warning message.
 		if (gauzyWindow) {
 			if (gauzyWindow.isMinimized()) gauzyWindow.restore();
 			gauzyWindow.focus();
+			dialog.showMessageBoxSync(gauzyWindow, {
+				type: "warning",
+				title: "Gauzy",
+				message: "You already have a running instance"
+			});
 		}
 	});
 }
