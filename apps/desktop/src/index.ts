@@ -149,6 +149,26 @@ LocalStore.setFilePath({
 	iconPath: path.join(__dirname, 'icons', 'icon.png')
 })
 
+// Instance detection
+const gotTheLock = app.requestSingleInstanceLock();
+
+if (!gotTheLock) {
+	app.quit();
+} else {
+	app.on('second-instance', () => {
+		// if someone tried to run a second instance, we should focus our window and show warning message.
+		if (gauzyWindow) {
+			if (gauzyWindow.isMinimized()) gauzyWindow.restore();
+			gauzyWindow.focus();
+			dialog.showMessageBoxSync(gauzyWindow, {
+				type: "warning",
+				title: "Gauzy",
+				message: "You already have a running instance"
+			});
+		}
+	});
+}
+
  function startServer(value, restart = false) {
 	process.env.IS_ELECTRON = 'true';
 	if (value.db === 'sqlite') {
@@ -371,7 +391,8 @@ app.on('ready', async () => {
 		settingsWindow,
 		updaterWindow,
 		knex,
-		pathWindow
+		pathWindow,
+		true
 	);
 
 	if (configs && configs.isSetup) {
@@ -412,6 +433,13 @@ app.on('ready', async () => {
 	updater.checkUpdate();
 	removeMainListener();
 	ipcMainHandler(store, startServer, knex, { ...environment }, timeTrackerWindow);
+	gauzyWindow.webContents.setZoomFactor(1.0);
+	gauzyWindow.webContents
+		.setVisualZoomLevelLimits(1, 5)
+		.then(() =>
+			console.log('Zoom levels have been set between 100% and 500%')
+		)
+		.catch((err) => console.log(err));
 });
 
 app.on('window-all-closed', quit);
