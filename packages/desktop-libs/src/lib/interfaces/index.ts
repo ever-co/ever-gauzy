@@ -10,3 +10,4 @@ export * from './i-desktop-cdn-update';
 export * from './i-updater-config';
 export * from './i-desktop-open-dialog';
 export * from './i-local-update-server';
+export * from './i-offline-mode';
