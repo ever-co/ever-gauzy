@@ -26,7 +26,7 @@ import { combineLatest, Subject, firstValueFrom } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { Ng2SmartTableComponent } from 'ng2-smart-table';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
+import { distinctUntilChange } from '@gauzy/common-angular';
 import { InviteContactComponent } from './invite-contact/invite-contact.component';
 import {
 	CountryService,
@@ -55,10 +55,9 @@ import { InputFilterComponent } from '../../@shared/table-filters';
 	templateUrl: './contacts.component.html',
 	styleUrls: ['./contacts.component.scss']
 })
-export class ContactsComponent
-	extends PaginationFilterBaseComponent
-	implements OnInit, OnDestroy
-{
+export class ContactsComponent extends PaginationFilterBaseComponent
+	implements OnInit, OnDestroy {
+
 	showAddCard: boolean;
 	organizationContacts: IOrganizationContact[] = [];
 	projectsWithoutOrganizationContacts: IOrganizationProject[] = [];
@@ -416,32 +415,33 @@ export class ContactsComponent
 			latitude: organizationContact.latitude,
 			longitude: organizationContact.longitude
 		};
-		const organizationContactData = {
+		const payload = {
 			...organizationContact,
 			contact
 		};
-		if (organizationContact.name) {
-			await this.organizationContactService.create(
-				organizationContactData
-			);
 
-			this.showAddCard = !this.showAddCard;
-
-			let toasterMessage: string =
-				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CONTACTS.ADD_CONTACT';
-			if (organizationContact.id) {
-				toasterMessage =
-					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CONTACTS.UPDATE_CONTACT';
+		try {
+			if (organizationContact.name) {
+				const { name } = organizationContact;
+				if (organizationContact.id) {
+					await this.organizationContactService.update(organizationContact.id, payload);
+					this.toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CONTACTS.UPDATE_CONTACT', {
+						name
+					});
+				} else {
+					await this.organizationContactService.create(payload);
+					this.toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CONTACTS.ADD_CONTACT', {
+						name
+					});
+				}
+				this.showAddCard = !this.showAddCard;
+				this._refresh$.next(true);
+				this.contacts$.next(true);
+			} else {
+				this.toastrService.danger('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CONTACTS.INVALID_CONTACT_DATA');
 			}
-			this.toastrService.success(toasterMessage, {
-				name: organizationContact.name
-			});
-			this._refresh$.next(true);
-			this.contacts$.next(true);
-		} else {
-			this.toastrService.danger(
-				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CONTACTS.INVALID_CONTACT_DATA'
-			);
+		} catch (error) {
+			this.toastrService.danger(error);
 		}
 	}
 
@@ -456,11 +456,6 @@ export class ContactsComponent
 
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
-
-		const request = {};
-		if (isNotEmpty(this.selectedEmployeeId)) {
-			request['members'] = [this.selectedEmployeeId];
-		}
 
 		try {
 			this.smartTableSource = new ServerDataSource(this.http, {
@@ -481,13 +476,15 @@ export class ContactsComponent
 					}
 				},
 				where: {
-					...{
-						organizationId,
-						tenantId,
-						contactType: this.contactType
-					},
-					...request,
-					...this.filters.where
+					organizationId,
+					tenantId,
+					contactType: this.contactType,
+					...(this.selectedEmployeeId
+						? {
+							members: [this.selectedEmployeeId]
+						}
+						: {}),
+					...(this.filters.where ? this.filters.where : {})
 				},
 				resultMap: (contact: IOrganizationContact) => {
 					return Object.assign({}, contact, {

@@ -9,7 +9,8 @@ export class AppMenu {
 		updaterWindow,
 		knex,
 		windowPath,
-		serverWindow?
+		serverWindow?,
+		isZoomVisible?
 	) {
 		const menu = Menu.buildFromTemplate([
 			{
@@ -86,6 +87,21 @@ export class AppMenu {
 								);
 							}, 500);
 						}
+					},
+					{
+						type: 'separator'
+					},
+					{
+						label: 'Zoom In',
+						role: 'zoomIn',
+						accelerator: 'CmdOrCtrl+Plus',
+						visible: isZoomVisible,
+					},
+					{
+						label: 'Zoom Out',
+						role: 'zoomOut',
+						accelerator: 'CmdOrCtrl+-',
+						visible: isZoomVisible,
 					}
 				]
 			},

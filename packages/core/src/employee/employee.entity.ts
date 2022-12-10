@@ -506,9 +506,6 @@ export class Employee extends TenantOrganizationBaseEntity
         onUpdate: 'CASCADE',
 		onDelete: 'CASCADE'
     })
-    @JoinTable({
-		name: 'organization_contact_employee'
-	})
     organizationContacts?: IOrganizationContact[];
 
 	/**
