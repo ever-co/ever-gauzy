@@ -11,3 +11,4 @@ export * from './i-updater-config';
 export * from './i-desktop-open-dialog';
 export * from './i-local-update-server';
 export * from './i-offline-mode';
+export * from './i-network-state';
