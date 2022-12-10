@@ -43,7 +43,7 @@ import {
 export class OrganizationContact
 	extends TenantOrganizationBaseEntity
 	implements IOrganizationContact {
-	
+
 	@ApiProperty({ type: () => String })
 	@Index()
 	@Column()
@@ -104,7 +104,7 @@ export class OrganizationContact
 
 	/*
     |--------------------------------------------------------------------------
-    | @ManyToOne 
+    | @ManyToOne
     |--------------------------------------------------------------------------
     */
 
@@ -127,7 +127,7 @@ export class OrganizationContact
 
 	/*
     |--------------------------------------------------------------------------
-    | @OneToMany 
+    | @OneToMany
     |--------------------------------------------------------------------------
     */
 	// Organization Projects
@@ -179,14 +179,13 @@ export class OrganizationContact
 	@ApiPropertyOptional({ type: () => TimeLog, isArray: true })
 	@OneToMany(() => TimeLog, (it) => it.organizationContact)
 	timeLogs?: ITimeLog[];
-	
+
 	/*
     |--------------------------------------------------------------------------
-    | @ManyToMany 
+    | @ManyToMany
     |--------------------------------------------------------------------------
     */
 	// Organization Contact Tags
-	@ApiProperty()
 	@ManyToMany(() => Tag, (tag) => tag.organizationContacts, {
 		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE'
@@ -201,5 +200,8 @@ export class OrganizationContact
         onUpdate: 'CASCADE',
 		onDelete: 'CASCADE'
     })
+	@JoinTable({
+		name: 'organization_contact_employee'
+	})
 	members?: IEmployee[];
 }

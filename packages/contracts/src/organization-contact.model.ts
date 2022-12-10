@@ -44,9 +44,8 @@ export interface IOrganizationContactFindInput
 	createdBy?: string;
 }
 
-export interface IOrganizationContactCreateInput extends IContact {
+export interface IOrganizationContactCreateInput extends IContact, IBasePerTenantAndOrganizationEntityModel {
 	name: string;
-	organizationId: string;
 	contactId?: string;
 	primaryEmail?: string;
 	emailAddresses?: string[];
@@ -60,17 +59,23 @@ export interface IOrganizationContactCreateInput extends IContact {
 	createdBy?: string;
 }
 
+export interface IOrganizationContactUpdateInput extends IOrganizationContactCreateInput {
+	id?: IOrganizationContact['id'];
+}
+
 export interface IOrganizationContactInviteInput {
 	id: string;
 	languageCode: LanguagesEnum;
 	originalUrl?: string;
 	inviterUser?: IUser;
 }
+
 export interface IOrganizationContactRegistrationInput {
 	user: IUser;
 	password: string;
 	contactOrganization: IOrganizationCreateInput;
 }
+
 export interface IOrganizationContactAcceptInviteInput
 	extends IOrganizationContactRegistrationInput {
 	inviteId: string;
