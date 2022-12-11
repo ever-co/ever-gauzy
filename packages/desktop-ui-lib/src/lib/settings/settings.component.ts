@@ -76,7 +76,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 
 	thirdPartyConfig = [
 		{
-			title: 'UNLEASH_APP',
+			title: 'Unleash',
 			fields: [
 				{
 					name: 'UNLEASH_APP_NAME',
@@ -191,7 +191,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 			]
 		},
 		{
-			title: 'Linkedin',
+			title: 'LinkedIn',
 			fields: [
 				{
 					name: 'LINKEDIN_CLIENT_ID',
@@ -276,7 +276,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 			]
 		},
 		{
-			title: 'KEYCLOAK',
+			title: 'Keycloak',
 			fields: [
 				{
 					name: 'KEYCLOAK_REALM',

@@ -513,10 +513,10 @@
 											</div>
 											<div class="col-12" *ngFor="let field of item.fields">
 												<div class="row">
-													<div class="col-5 centered-text" *ngIf="config.isLocalServer">
+													<div class="col-5 centered-text">
 														<p>{{field.name.replaceAll('_', ' ')}}</p>
 													</div>
-													<div class="col-7 form-group" *ngIf="config.isLocalServer">
+													<div class="col-7 form-group">
 														<input [(ngModel)]="field.value" type="text" nbInput fullWidth
 															[disabled]="appSetting?.timerStarted" status="basic" />
 													</div>
