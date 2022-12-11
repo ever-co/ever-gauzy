@@ -136,7 +136,7 @@
 						<nb-card-body>
 							<nb-select class="mb-3" placeholder="Select Period" [(ngModel)]="selectedPeriod"
 								(ngModelChange)="selectPeriod($event)" [disabled]="appSetting?.timerStarted">
-								<nb-option *ngFor="let item of periodOption" [value]="item">{{ item }}Minute
+								<nb-option *ngFor="let item of periodOption" [value]="item">{{ item }} Minute<span *ngIf="item > 1">s</span>
 								</nb-option>
 							</nb-select>
 							<nb-toggle [(ngModel)]="appSetting.randomScreenshotTime"
