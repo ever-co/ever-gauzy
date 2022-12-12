@@ -39,6 +39,7 @@ export abstract class OptionParams<T> {
 	*/
 	@ApiPropertyOptional({ type: Boolean })
 	@IsOptional()
+	@Transform(({ value }: TransformFnParams) => value ? (typeof value === 'string' ? JSON.parse(value) : value) : false)
 	readonly withDeleted?: boolean;
 }
 

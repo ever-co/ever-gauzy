@@ -201,8 +201,8 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 				 * Indicates if soft-deleted rows should be included in entity result.
 				 */
 				...(
-					(options && options.withDeleted) ? {
-						withDeleted: Boolean(options.withDeleted)
+					(options && 'withDeleted' in options) ? {
+						withDeleted: options.withDeleted
 					} : {}
 				)
 			});
