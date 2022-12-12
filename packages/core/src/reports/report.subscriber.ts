@@ -1,4 +1,4 @@
-import { EntitySubscriberInterface, EventSubscriber } from "typeorm";
+import { EntitySubscriberInterface, EventSubscriber, LoadEvent } from "typeorm";
 import { FileStorageProviderEnum } from "@gauzy/contracts";
 import { Report } from "./report.entity";
 import { FileStorage } from "./../core/file-storage";
@@ -14,13 +14,18 @@ export class ReportSubscriber implements EntitySubscriberInterface<Report> {
     }
 
     /**
-    * Called after entity is loaded.
-    */
-    afterLoad(entity: Report) {
-        if (entity.image) {
-            const store = new FileStorage()
-            store.setProvider(FileStorageProviderEnum.LOCAL);
-			entity.imageUrl = store.getProviderInstance().url(entity.image);
-		}
+     * Called after entity is loaded from the database.
+     *
+     * @param entity
+     */
+    afterLoad(entity: Report, event?: LoadEvent<Report>): void | Promise<any> {
+        try {
+            if (entity.image) {
+                const store = new FileStorage().setProvider(FileStorageProviderEnum.LOCAL);
+                entity.imageUrl = store.getProviderInstance().url(entity.image);
+            }
+        } catch (error) {
+            console.log(error);
+        }
     }
 }
