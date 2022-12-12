@@ -1,4 +1,4 @@
-import { EntitySubscriberInterface, EventSubscriber, RemoveEvent } from "typeorm";
+import { EntitySubscriberInterface, EventSubscriber, LoadEvent, RemoveEvent } from "typeorm";
 import { IScreenshot } from "@gauzy/contracts";
 import { Screenshot } from "./screenshot.entity";
 import { FileStorage } from "./../../core/file-storage";
@@ -14,24 +14,33 @@ export class ScreenshotSubscriber implements EntitySubscriberInterface<Screensho
     }
 
     /**
-    * Called after entity is loaded.
-    */
-    afterLoad(entity: Screenshot | Partial<Screenshot>) {
-        if (entity instanceof Screenshot) {
-            const { storageProvider } = entity;
-            const store = new FileStorage().setProvider(storageProvider);
-            entity.fullUrl = store.getProviderInstance().url(entity.file);
-            entity.thumbUrl = store.getProviderInstance().url(entity.thumb);
+     * Called after entity is loaded from the database.
+     *
+     * @param entity
+     * @param event
+     */
+    afterLoad(entity: Screenshot | Partial<Screenshot>, event?: LoadEvent<Screenshot>): void | Promise<any> {
+        try {
+            if (entity instanceof Screenshot) {
+                const { storageProvider } = entity;
+                const store = new FileStorage().setProvider(storageProvider);
+                entity.fullUrl = store.getProviderInstance().url(entity.file);
+                entity.thumbUrl = store.getProviderInstance().url(entity.thumb);
+            }
+        } catch (error) {
+            console.log(error);
         }
-	}
+    }
 
     /**
-    * Called before entity removal.
-    */
-    afterRemove(event: RemoveEvent<Screenshot>) {
-        if (event.entityId) {
-            console.log(`BEFORE SCREENSHOT ENTITY WITH ID ${event.entityId} REMOVED`);
-            (async () => {
+     * Called after entity is removed from the database.
+     *
+     * @param event
+     */
+    async afterRemove(event: RemoveEvent<Screenshot>):  Promise<any | void> {
+        try {
+            if (event.entityId) {
+                console.log(`BEFORE SCREENSHOT ENTITY WITH ID ${event.entityId} REMOVED`);
                 const entity: IScreenshot = event.entity;
                 const { storageProvider } = entity;
 
@@ -43,7 +52,9 @@ export class ScreenshotSubscriber implements EntitySubscriberInterface<Screensho
                 if (entity.thumb) {
                     await instance.deleteFile(entity.thumb);
                 }
-            })();
+            }
+        } catch (error) {
+            console.log(error);
         }
     }
 }

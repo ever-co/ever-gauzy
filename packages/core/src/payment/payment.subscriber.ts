@@ -13,12 +13,16 @@ export class PaymentSubscriber implements EntitySubscriberInterface<Payment> {
     }
 
     /**
-     * Called before payment insertion.
+     * Called before entity is inserted to the database.
+     *
+     * @param event
      */
-    beforeInsert(event: InsertEvent<Payment>) {
-        const entity = event.entity;
-        if (entity) {
-            entity.recordedById = RequestContext.currentUserId();
+    beforeInsert(event: InsertEvent<Payment>): void | Promise<any> {
+        try {
+            const entity = event.entity;
+            if (entity) { entity.recordedById = RequestContext.currentUserId(); }
+        } catch (error) {
+            console.log(error);
         }
     }
 }
