@@ -3,6 +3,7 @@ import {
     EntitySubscriberInterface,
     EventSubscriber,
     InsertEvent,
+    LoadEvent,
     RemoveEvent,
     UpdateEvent
 } from "typeorm";
@@ -22,70 +23,90 @@ export class EmployeeSubscriber implements EntitySubscriberInterface<Employee> {
     }
 
     /**
-    * Called after entity is loaded.
+    * Called after employee entity is loaded.
     */
-    afterLoad(entity: Employee) {
-        if (entity.user) {
-            entity.fullName = entity.user.name;
-        }
-        entity.isDeleted = !!entity.deletedAt;
-    }
-
-    /**
-     * Called before employee insertion.
-     */
-    beforeInsert(event: InsertEvent<Employee>) {
-        if (event.entity) {
-            const { entity } = event;
-            /**
-             * Use a dummy image avatar if no image is uploaded for any of the employee
-             */
+    afterLoad(entity: Employee, event?: LoadEvent<Employee>): void | Promise<any> {
+        try {
             if (entity.user) {
-                if (!entity.user.imageUrl) {
-                    entity.user.imageUrl = getUserDummyImage(entity.user)
-                }
-                this.createSlug(entity);
+                entity.fullName = entity.user.name;
             }
-            /**
-             * If Date when started work filled then enabled time tracking functionality for the employee.
-             */
-            if (entity.startedWorkOn) {
-                entity.isTrackingEnabled = true;
-                entity.isActive = true;
+            if ('deletedAt' in entity) {
+                entity.isDeleted = !!entity.deletedAt;
             }
+        } catch (error) {
+            console.error(error);
         }
     }
 
     /**
-     * Called before employee update.
+     * Called before employee entity is inserted to the database.
+     */
+    beforeInsert(event: InsertEvent<Employee>): void | Promise<any> {
+        try {
+            if (event.entity) {
+                const { entity } = event;
+                /**
+                 * Use a dummy image avatar if no image is uploaded for any of the employee
+                 */
+                if (entity.user) {
+                    if (!entity.user.imageUrl) {
+                        entity.user.imageUrl = getUserDummyImage(entity.user)
+                    }
+                    this.createSlug(entity);
+                }
+                /**
+                 * If Date when started work filled then enabled time tracking functionality for the employee.
+                 */
+                if (entity.startedWorkOn) {
+                    entity.isTrackingEnabled = true;
+                    entity.isActive = true;
+                }
+            }
+        } catch (error) {
+            console.error(error);
+        }
+    }
+
+    /**
+     * Called before entity is updated in the database.
      */
     beforeUpdate(event: UpdateEvent<Employee>): void | Promise<any> {
-        if (event.entity) {
-            const { entity } = event;
-            /**
-             * If Date when started work filled then enabled time tracking functionality for the employee.
-             */
-            if (entity.startedWorkOn) {
-                entity.isTrackingEnabled = true;
-                entity.isActive = true;
+        try {
+            if (event.entity) {
+                const { entity } = event;
+                /**
+                 * If Date when started work filled then enabled time tracking functionality for the employee.
+                 */
+                if (entity.startedWorkOn) {
+                    entity.isTrackingEnabled = true;
+                    entity.isActive = true;
+                }
+                /**
+                * If Date when ended work filled then disable time tracking functionality for the employee.
+                */
+                if (entity.endWork) {
+                    entity.isTrackingEnabled = false;
+                    entity.isActive = false;
+                }
             }
-            /**
-            * If Date when ended work filled then disable time tracking functionality for the employee.
-            */
-            if (entity.endWork) {
-                entity.isTrackingEnabled = false;
-                entity.isActive = false;
-            }
+        } catch (error) {
+            console.error(error);
         }
     }
 
-    async afterInsert(event: InsertEvent<Employee>): Promise<any | void>  {
+    /**
+     * Called after employee entity is inserted to the database.
+     */
+    async afterInsert(event: InsertEvent<Employee>): Promise<any | void> {
         if (event.entity) {
             const { entity } = event;
             await this.calculateTotalEmployees(entity, event.manager);
         }
     }
 
+    /**
+     * Called after employee entity is removed from the database.
+     */
     async afterRemove(event: RemoveEvent<Employee>): Promise<any | void> {
         if (event.entity) {
             const { entity } = event;
