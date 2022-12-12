@@ -215,7 +215,9 @@ async function startServer(value, restart = false) {
 		settingsWindow,
 		updaterWindow,
 		knex,
-		pathWindow
+		pathWindow,
+		null,
+		false
 	);
 
 	if (tray) {
