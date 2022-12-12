@@ -23,8 +23,11 @@ export class EmployeeSubscriber implements EntitySubscriberInterface<Employee> {
     }
 
     /**
-    * Called after employee entity is loaded.
-    */
+     * Called after entity is loaded from the database.
+     *
+     * @param entity
+     * @param event
+     */
     afterLoad(entity: Employee, event?: LoadEvent<Employee>): void | Promise<any> {
         try {
             if (entity.user) {
@@ -34,12 +37,14 @@ export class EmployeeSubscriber implements EntitySubscriberInterface<Employee> {
                 entity.isDeleted = !!entity.deletedAt;
             }
         } catch (error) {
-            console.error(error);
+            console.log(error);
         }
     }
 
     /**
-     * Called before employee entity is inserted to the database.
+     * Called before entity is inserted to the database.
+     *
+     * @param event
      */
     beforeInsert(event: InsertEvent<Employee>): void | Promise<any> {
         try {
@@ -63,12 +68,14 @@ export class EmployeeSubscriber implements EntitySubscriberInterface<Employee> {
                 }
             }
         } catch (error) {
-            console.error(error);
+            console.log(error);
         }
     }
 
     /**
      * Called before entity is updated in the database.
+     *
+     * @param event
      */
     beforeUpdate(event: UpdateEvent<Employee>): void | Promise<any> {
         try {
@@ -90,12 +97,14 @@ export class EmployeeSubscriber implements EntitySubscriberInterface<Employee> {
                 }
             }
         } catch (error) {
-            console.error(error);
+            console.log(error);
         }
     }
 
     /**
-     * Called after employee entity is inserted to the database.
+     * Called after entity is inserted to the database.
+     *
+     * @param event
      */
     async afterInsert(event: InsertEvent<Employee>): Promise<any | void> {
         if (event.entity) {
@@ -105,7 +114,9 @@ export class EmployeeSubscriber implements EntitySubscriberInterface<Employee> {
     }
 
     /**
-     * Called after employee entity is removed from the database.
+     * Called after entity is removed from the database.
+     *
+     * @param event
      */
     async afterRemove(event: RemoveEvent<Employee>): Promise<any | void> {
         if (event.entity) {
@@ -116,22 +127,31 @@ export class EmployeeSubscriber implements EntitySubscriberInterface<Employee> {
 
     /**
      * Generate employee public profile slug
+     *
+     * @param entity
      */
     createSlug(entity: Employee) {
-        if (entity.user.firstName || entity.user.lastName) { // Use first & last name to create slug
-            const { firstName, lastName } = entity.user;
-            entity.profile_link = generateSlug(`${firstName} ${lastName}`);
-        } else if (entity.user.username) { // Use username to create slug if first & last name not found
-            const { username } = entity.user;
-            entity.profile_link = generateSlug(`${username}`);
-        } else { // Use email to create slug if nothing found
-            const { email } = entity.user;
-            entity.profile_link = generateSlug(`${retrieveNameFromEmail(email)}`);
+        try {
+            if (entity.user.firstName || entity.user.lastName) { // Use first & last name to create slug
+                const { firstName, lastName } = entity.user;
+                entity.profile_link = generateSlug(`${firstName} ${lastName}`);
+            } else if (entity.user.username) { // Use username to create slug if first & last name not found
+                const { username } = entity.user;
+                entity.profile_link = generateSlug(`${username}`);
+            } else { // Use email to create slug if nothing found
+                const { email } = entity.user;
+                entity.profile_link = generateSlug(`${retrieveNameFromEmail(email)}`);
+            }
+        } catch (error) {
+            console.log(error);
         }
     }
 
     /**
      * Handler request for count total employee
+     *
+     * @param entity
+     * @param manager
      */
     async calculateTotalEmployees(entity: Employee, manager: EntityManager) {
         try {
