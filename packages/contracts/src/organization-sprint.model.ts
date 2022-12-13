@@ -1,6 +1,6 @@
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 import { IOrganizationProject } from './organization-projects.model';
-import { ITask } from './task-entity.model';
+import { ITask } from './task.model';
 
 export interface IOrganizationSprint
 	extends IBasePerTenantAndOrganizationEntityModel {

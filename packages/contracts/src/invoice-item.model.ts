@@ -4,7 +4,7 @@ import { IExpense } from './expense.model';
 import { IInvoice } from './invoice.model';
 import { IOrganizationProject } from './organization-projects.model';
 import { IProductTranslatable } from './product.model';
-import { ITask } from './task-entity.model';
+import { ITask } from './task.model';
 
 export interface IInvoiceItem extends IBasePerTenantAndOrganizationEntityModel {
 	description: string;
