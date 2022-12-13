@@ -17,9 +17,9 @@ export class IntegrationMapSyncTaskHandler
 
 	/**
 	 * Third party project task integrated and mapped
-	 * 
-	 * @param command 
-	 * @returns 
+	 *
+	 * @param command
+	 * @returns
 	 */
 	public async execute(
 		command: IntegrationMapSyncTaskCommand
@@ -39,7 +39,8 @@ export class IntegrationMapSyncTaskHandler
 			});
 			await this._commandBus.execute(
 				new TaskUpdateCommand(
-					Object.assign({}, taskInput, { id: taskMap.gauzyId })
+					taskMap.gauzyId,
+					Object.assign({}, taskInput)
 				)
 			);
 			return taskMap;

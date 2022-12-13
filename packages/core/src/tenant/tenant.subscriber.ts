@@ -1,4 +1,4 @@
-import { EntitySubscriberInterface, EventSubscriber, InsertEvent, UpdateEvent } from "typeorm";
+import { EntitySubscriberInterface, EventSubscriber, InsertEvent, LoadEvent, UpdateEvent } from "typeorm";
 import { Tenant } from "./tenant.entity";
 import { getTenantLogo } from "./../core/utils";
 
@@ -13,35 +13,54 @@ export class TenantSubscriber implements EntitySubscriberInterface<Tenant> {
     }
 
     /**
-    * Called after entity is loaded.
-    */
-    afterLoad(entity: Tenant) {
-        if (!entity.logo) {
-            entity.logo = getTenantLogo(entity.name);
+     * Called after entity is loaded from the database.
+     *
+     * @param entity
+     * @param event
+     */
+    afterLoad(entity: Tenant, event?: LoadEvent<Tenant>): void | Promise<any> {
+        try {
+            if (!entity.logo) {
+                entity.logo = getTenantLogo(entity.name);
+            }
+        } catch (error) {
+            console.log(error);
         }
     }
 
     /**
-     * Called before tenant insertion.
+     * Called before entity is inserted to the database.
+     *
+     * @param event
      */
     beforeInsert(event: InsertEvent<Tenant>): void | Promise<any> {
-        if (event) {
-            const { entity } = event;
-            if (!entity.logo) {
-                entity.logo = getTenantLogo(entity.name);
+        try {
+            if (event) {
+                const { entity } = event;
+                if (!entity.logo) {
+                    entity.logo = getTenantLogo(entity.name);
+                }
             }
+        } catch (error) {
+            console.log(error);
         }
     }
 
     /**
-     * Called before tenant update.
+     * Called before entity is updated in the database.
+     *
+     * @param event
      */
     beforeUpdate(event: UpdateEvent<Tenant>): void | Promise<any> {
-        if (event) {
-            const { entity } = event;
-            if (!entity.logo) {
-                entity.logo = getTenantLogo(entity.name);
+        try {
+            if (event) {
+                const { entity } = event;
+                if (!entity.logo) {
+                    entity.logo = getTenantLogo(entity.name);
+                }
             }
+        } catch (error) {
+            console.log(error);
         }
     }
 }

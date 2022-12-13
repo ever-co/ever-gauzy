@@ -14,20 +14,26 @@ export class OrganizationSubscriber implements EntitySubscriberInterface<Organiz
     }
 
     /**
-     * Called before organization insertion.
+     * Called before entity is inserted to the database.
+     *
+     * @param event
      */
     beforeInsert(event: InsertEvent<Organization>) {
-        if (event) {
-            const { entity } = event;
-            if(entity.name || entity.officialName) {
-                entity.profile_link = generateSlug(`${entity.name || entity.officialName}`);
+        try {
+            if (event) {
+                const { entity } = event;
+                if(entity.name || entity.officialName) {
+                    entity.profile_link = generateSlug(`${entity.name || entity.officialName}`);
+                }
+                if (!entity.imageUrl) {
+                    entity.imageUrl = getOrganizationDummyImage(entity.name || entity.officialName);
+                }
+                if (!entity.brandColor) {
+                    entity.brandColor = faker.internet.color();
+                }
             }
-            if (!entity.imageUrl) {
-                entity.imageUrl = getOrganizationDummyImage(entity.name || entity.officialName);
-            }
-            if (!entity.brandColor) {
-                entity.brandColor = faker.internet.color();
-            }
+        } catch (error) {
+            console.log(error);
         }
     }
 }
