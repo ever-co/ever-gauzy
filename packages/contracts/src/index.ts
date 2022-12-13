@@ -91,7 +91,7 @@ export * from './seed.model';
 export * from './skill-entity.model';
 export * from './sms.model';
 export * from './tag-entity.model';
-export * from './task-entity.model';
+export * from './task.model';
 export * from './tenant.model';
 export * from './time-off.model';
 export * from './timesheet-statistics.model';

@@ -1,4 +1,5 @@
-import { EntitySubscriberInterface, EventSubscriber, LoadEvent } from "typeorm";
+import { RequestContext } from "./../core/context";
+import { EntitySubscriberInterface, EventSubscriber, InsertEvent, LoadEvent } from "typeorm";
 import { Task } from "./task.entity";
 
 @EventSubscriber()
@@ -31,6 +32,22 @@ export class TaskSubscriber implements EntitySubscriberInterface<Task> {
                 }
                 list.push(entity.number || 0);
                 entity.taskNumber = list.join('-');
+            }
+        } catch (error) {
+            console.log(error);
+        }
+    }
+
+    /**
+     * Called before entity is inserted to the database.
+     *
+     * @param event
+     */
+    beforeInsert(event: InsertEvent<Task>): void | Promise<any> {
+        try {
+            if (event) {
+                const { entity } = event;
+                entity.creatorId = RequestContext.currentUserId();
             }
         } catch (error) {
             console.log(error);

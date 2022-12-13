@@ -4,10 +4,10 @@ import {
 	HttpStatus
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { IsNull, Repository, SelectQueryBuilder, Brackets, WhereExpressionBuilder, FindManyOptions, Raw } from 'typeorm';
+import { IsNull, Repository, SelectQueryBuilder, Brackets, WhereExpressionBuilder, Raw } from 'typeorm';
 import { IEmployee, IGetTaskByEmployeeOptions, IGetTaskOptions, RolesEnum } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
-import { TenantAwareCrudService } from './../core/crud';
+import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
 import { Task } from './task.entity';
 import { EmployeeService } from '../employee/employee.service';
@@ -253,7 +253,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		}
 	}
 
-	public pagination(filter: FindManyOptions) {
+	public pagination(filter: PaginationParams<Task>) {
 		if ('where' in filter) {
 			const { where } = filter;
 			if ('title' in where) {
