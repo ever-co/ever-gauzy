@@ -56,3 +56,8 @@ export interface ITaskCreateInput extends ITask {}
 export interface ITaskUpdateInput extends ITaskCreateInput {
 	id?: string;
 }
+
+export interface ITaskResponse {
+	items: ITask[];
+	count: number;
+}
