@@ -23,7 +23,6 @@ import { debounceTime, filter, tap } from 'rxjs/operators';
 import { Subject, firstValueFrom } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange } from '@gauzy/common-angular';
-import { monthNames } from '../../@core/utils/date';
 import {
 	EmployeeEndWorkComponent,
 	EmployeeMutationComponent,
@@ -60,6 +59,7 @@ import {
 } from './table-components';
 import { ServerDataSource } from '../../@core/utils/smart-table';
 import { ToggleFilterComponent } from "../../@shared/table-filters";
+import { DateFormatPipe } from '../../@shared/pipes';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -110,7 +110,8 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 		public readonly translate: TranslateService,
 		private readonly errorHandler: ErrorHandlingService,
 		private readonly _employeeStore: EmployeeStore,
-		private readonly http: HttpClient
+		private readonly http: HttpClient,
+		private readonly _dateFormatPipe: DateFormatPipe
 	) {
 		super(translate);
 		this.setView();
@@ -548,19 +549,21 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 			isTrackingEnabled,
 			isDeleted
 		} = employee;
+
+		/**
+		 * "Range" when was hired and when exit
+		 */
+		const start = this._dateFormatPipe.transform(startedWorkOn, null, 'LL');
+		const end = this._dateFormatPipe.transform(endWork, null, 'LL');
+		const workStatus = [start, end].filter(Boolean).join(' - ');
+
 		return {
 			fullName: `${user.name}`,
 			email: user.email,
 			id,
 			isActive,
 			endWork: endWork ? new Date(endWork) : '',
-			workStatus: endWork
-				? new Date(endWork).getDate() +
-				  ' ' +
-				  monthNames[new Date(endWork).getMonth()] +
-				  ' ' +
-				  new Date(endWork).getFullYear()
-				: '',
+			workStatus: endWork ? workStatus : '',
 			imageUrl: user.imageUrl,
 			tags,
 			// TODO: load real bonus and bonusDate
@@ -617,7 +620,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 					type: 'custom',
 					filter: false,
 					class: 'text-center',
-					width: '10%',
+					width: '5%',
 					renderComponent: EmployeeAverageIncomeComponent
 				},
 				averageExpenses: {
@@ -625,7 +628,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 					type: 'custom',
 					filter: false,
 					class: 'text-center',
-					width: '10%',
+					width: '5%',
 					renderComponent: EmployeeAverageExpensesComponent
 				},
 				averageBonus: {
@@ -633,13 +636,14 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 					type: 'custom',
 					filter: false,
 					class: 'text-center',
-					width: '20%',
+					width: '5%',
 					renderComponent: EmployeeAverageBonusComponent
 				},
 				isTrackingEnabled: {
 					title: this.getTranslation('SM_TABLE.TIME_TRACKING'),
 					type: 'custom',
 					class: 'text-center',
+					width: '5%',
 					renderComponent: EmployeeTimeTrackingStatusComponent,
 					filter: {
 						type: 'custom',
@@ -652,7 +656,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 				tags: {
 					title: this.getTranslation('SM_TABLE.TAGS'),
 					type: 'custom',
-					width: '10%',
+					width: '20%',
 					renderComponent: TagsOnlyComponent,
 					filter: {
 						type: 'custom',
@@ -671,6 +675,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 					title: this.getTranslation('SM_TABLE.STATUS'),
 					type: 'custom',
 					class: 'text-center',
+					width: '20%',
 					renderComponent: EmployeeWorkStatusComponent,
 					filter: {
 						type: 'custom',
