@@ -130,8 +130,8 @@ export class TimeReportsComponent extends BaseSelectorFilterComponent
 					...commonOptions,
 				},
 				{
-					label: TimeLogType.IDEAL,
-					data: logs.map((log) => log.value[TimeLogType.IDEAL]),
+					label: TimeLogType.IDLE,
+					data: logs.map((log) => log.value[TimeLogType.IDLE]),
 					borderColor: ChartUtil.CHART_COLORS.yellow,
 					backgroundColor: ChartUtil.transparentize(ChartUtil.CHART_COLORS.yellow, 1),
 					...commonOptions,
