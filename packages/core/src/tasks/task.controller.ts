@@ -28,7 +28,6 @@ import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
 import { CrudController, PaginationParams } from './../core/crud';
-import { RequestContext } from '../core/context';
 import { Task } from './task.entity';
 import { TaskService } from './task.service';
 import { TaskCreateCommand, TaskUpdateCommand } from './commands';
@@ -182,10 +181,7 @@ export class TaskController extends CrudController<Task> {
 	): Promise<ITask> {
 		try {
 			return await this.commandBus.execute(
-				new TaskCreateCommand({
-					...entity,
-					creator: RequestContext.currentUser()
-				})
+				new TaskCreateCommand(entity)
 			);
 		} catch (error) {
 			throw new BadRequestException(error);
@@ -212,15 +208,12 @@ export class TaskController extends CrudController<Task> {
 	@Put(':id')
 	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async update(
-		@Param('id', UUIDValidationPipe) id: string,
+		@Param('id', UUIDValidationPipe) id: ITask['id'],
 		@Body() entity: UpdateTaskDTO
 	): Promise<ITask> {
 		try {
 			return await this.commandBus.execute(
-				new TaskUpdateCommand({
-					id,
-					...entity,
-				})
+				new TaskUpdateCommand(id, entity)
 			);
 		} catch (error) {
 			throw new BadRequestException(error);
@@ -231,7 +224,7 @@ export class TaskController extends CrudController<Task> {
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_TASK_EDIT)
 	@Delete(':id')
 	async delete(
-		@Param('id', UUIDValidationPipe) id: string
+		@Param('id', UUIDValidationPipe) id: ITask['id']
 	): Promise<DeleteResult> {
 		return await this.taskService.delete(id);
 	}
