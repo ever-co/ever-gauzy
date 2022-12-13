@@ -115,6 +115,7 @@ export * from '../../request-approval/request-approval.entity';
 export * from '../../role-permission/role-permission.entity';
 export * from '../../role/role.entity';
 export * from '../../skills/skill.entity';
+export * from './../../statuses/status.entity';
 export * from '../../tags/tag.entity';
 export * from '../../tasks/task.entity';
 export * from '../../tenant/tenant-setting/tenant-setting.entity';

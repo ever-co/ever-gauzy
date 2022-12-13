@@ -20,6 +20,7 @@ import { CandidateSkillModule } from './candidate-skill/candidate-skill.module';
 import { InvoiceModule } from './invoice/invoice.module';
 import { InvoiceItemModule } from './invoice-item/invoice-item.module';
 import { TagModule } from './tags/tag.module';
+import { StatusModule } from './statuses/status.module';
 import { SkillModule } from './skills/skill.module';
 import { LanguageModule } from './language/language.module';
 import { AppController } from './app.controller';
@@ -271,6 +272,7 @@ if (process.env.DB_TYPE === 'postgres') {
 		TenantSettingModule,
 		TagModule,
 		SkillModule,
+		StatusModule,
 		LanguageModule,
 		InvoiceModule,
 		InvoiceItemModule,

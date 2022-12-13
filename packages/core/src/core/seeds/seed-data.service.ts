@@ -309,6 +309,7 @@ import { createDefaultAccountingTemplates } from './../../accounting-template/ac
 import { DEFAULT_EMPLOYEES, DEFAULT_EVER_EMPLOYEES } from './../../employee';
 import { createRandomMerchants, createDefaultMerchants } from './../../merchant/merchant.seed';
 import { createRandomWarehouses } from './../../warehouse/warehouse.seed';
+import { createDefaultStatuses } from 'statuses/status.seed';
 
 
 export enum SeederTypeEnum {
@@ -618,6 +619,11 @@ export class SeedDataService {
 		await this.tryExecute(
 			'Languages',
 			createLanguages(this.dataSource)
+		);
+
+		await this.tryExecute(
+			'Statuses',
+			createDefaultStatuses(this.dataSource)
 		);
 
 		// default and internal tenant
