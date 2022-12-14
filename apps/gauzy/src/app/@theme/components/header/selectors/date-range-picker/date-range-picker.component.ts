@@ -35,11 +35,11 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 	/**
 	 * Default selected date picker ranges
 	 */
-	public dates$: BehaviorSubject<IDateRangePicker> = this.dateRangePickerBuilderService.dates$;
+	private readonly dates$: BehaviorSubject<IDateRangePicker> = this.dateRangePickerBuilderService.dates$;
 	/**
 	 * Local store date picker ranges
 	 */
-	private range$: Subject<IDateRangePicker> = new Subject();
+	private readonly range$: Subject<IDateRangePicker> = new Subject();
 
 	/**
 	 * declaration of arrow variables
@@ -51,7 +51,7 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 	/**
 	 * ngx-daterangepicker-material local configuration
 	 */
-	_locale: LocaleConfig = {
+	public _locale: LocaleConfig = {
 		displayFormat: 'DD.MM.YYYY', // could be 'YYYY-MM-DDTHH:mm:ss.SSSSZ'
 		format: 'DD.MM.YYYY', // default is format value
 		direction: 'ltr',
@@ -78,13 +78,13 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 	/*
 	* Getter & Setter for dynamic unitOfTime
 	*/
-	_unitOfTime: moment.unitOfTime.Base = DEFAULT_DATE_PICKER_CONFIG.unitOfTime;
+	private _unitOfTime: moment.unitOfTime.Base = DEFAULT_DATE_PICKER_CONFIG.unitOfTime;
 	get unitOfTime(): moment.unitOfTime.Base {
 		return this._unitOfTime;
 	}
-	@Input() set unitOfTime(value: moment.unitOfTime.Base) {
-		if (value) {
-			this._unitOfTime = value;
+	@Input() set unitOfTime(unitOfTime: moment.unitOfTime.Base) {
+		if (unitOfTime) {
+			this._unitOfTime = unitOfTime;
 		}
 		if (this.isSaveDatePicker) {
 			this.onSavingFilter(this.getSelectorDates());
@@ -96,7 +96,7 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 	/*
 	* Getter & Setter for dynamic selected date range
 	*/
-	_selectedDateRange: IDateRangePicker;
+	private _selectedDateRange: IDateRangePicker;
 	get selectedDateRange(): IDateRangePicker {
 		return this._selectedDateRange;
 	}
@@ -132,7 +132,7 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 	/*
 	* Getter & Setter for lock date picker
 	*/
-	_isLockDatePicker: boolean = false;
+	private _isLockDatePicker: boolean = false;
 	get isLockDatePicker(): boolean {
 		return this._isLockDatePicker;
 	}
@@ -143,7 +143,7 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 	/*
 	* Getter & Setter for save date picker
 	*/
-	_isSaveDatePicker: boolean = false;
+	private _isSaveDatePicker: boolean = false;
 	get isSaveDatePicker(): boolean {
 		return this._isSaveDatePicker;
 	}
@@ -154,7 +154,7 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 	/*
 	* Getter & Setter for single date picker
 	*/
-	_isSingleDatePicker: boolean = false;
+	private _isSingleDatePicker: boolean = false;
 	get isSingleDatePicker(): boolean {
 		return this._isSingleDatePicker;
 	}
@@ -165,7 +165,7 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 	/*
 	* Getter & Setter for disabled future dates
 	*/
-	_isDisableFutureDatePicker: boolean = false;
+	private _isDisableFutureDatePicker: boolean = false;
 	get isDisableFutureDatePicker(): boolean {
 		return this._isDisableFutureDatePicker;
 	}
@@ -283,7 +283,7 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 	/**
 	 * Allowed/Disallowed future max date strategy.
 	 */
-	setFutureStrategy() {
+	private setFutureStrategy() {
 		if (this.hasFutureStrategy()) {
 			this.maxDate = null;
 		} else {
@@ -406,18 +406,19 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 	 */
 	isCustomDate(dateRange: any): boolean {
 		let isCustomRange = true;
-
-		const ranges = this.dateRangePickerDirective.ranges;
-		for (const range in ranges) {
-			if (this.ranges[range]) {
-				const [startDate, endDate] = this.ranges[range];
-				// ignore times when comparing dates if time picker is not enabled
-				if (
-					dateRange.startDate.format('YYYY-MM-DD') === startDate.format('YYYY-MM-DD') &&
-					dateRange.endDate.format('YYYY-MM-DD') === endDate.format('YYYY-MM-DD')
-				) {
-					isCustomRange = false;
-					break;
+		if (this.dateRangePickerDirective) {
+			const ranges = this.dateRangePickerDirective.ranges;
+			for (const range in ranges) {
+				if (this.ranges[range]) {
+					const [startDate, endDate] = this.ranges[range];
+					// ignore times when comparing dates if time picker is not enabled
+					if (
+						dateRange.startDate.format('YYYY-MM-DD') === startDate.format('YYYY-MM-DD') &&
+						dateRange.endDate.format('YYYY-MM-DD') === endDate.format('YYYY-MM-DD')
+					) {
+						isCustomRange = false;
+						break;
+					}
 				}
 			}
 		}
@@ -472,7 +473,7 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 	 *
 	 * @returns {Boolean}
 	 */
-	hasFutureStrategy(): boolean {
+	private hasFutureStrategy(): boolean {
 		const { isDisableFutureDatePicker, futureDateAllowed } = this;
 		if (isDisableFutureDatePicker) {
 			return !isDisableFutureDatePicker;
@@ -493,7 +494,7 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 	 *
 	 * @returns
 	 */
-	getSelectorDates(): IDateRangePicker {
+	private getSelectorDates(): IDateRangePicker {
 		const { startDate, endDate, isCustomDate } = this.dates$.getValue();
 		const start = moment(startDate);
 		const end = moment(endDate);
