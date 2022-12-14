@@ -150,7 +150,7 @@ export interface ITimeSlotCreateInput
 export enum TimeLogType {
 	TRACKED = 'TRACKED',
 	MANUAL = 'MANUAL',
-	IDEAL = 'IDEAL',
+	IDLE = 'IDLE',
 	RESUMED = 'RESUMED'
 }
 

@@ -245,7 +245,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 						return iteratee + log.duration;
 					}, 0);
 				const ideal = logs
-					.filter((log) => log.logType === TimeLogType.IDEAL)
+					.filter((log) => log.logType === TimeLogType.IDLE)
 					.reduce((iteratee: any, log: any) => {
 						return iteratee + log.duration;
 					}, 0);
@@ -263,7 +263,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 						[TimeLogType.MANUAL]: parseFloat(
 							(manual / 3600).toFixed(1)
 						),
-						[TimeLogType.IDEAL]: parseFloat(
+						[TimeLogType.IDLE]: parseFloat(
 							(ideal / 3600).toFixed(1)
 						),
 						[TimeLogType.RESUMED]: parseFloat(
@@ -283,7 +283,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 					value: {
 						[TimeLogType.TRACKED]: 0,
 						[TimeLogType.MANUAL]: 0,
-						[TimeLogType.IDEAL]: 0,
+						[TimeLogType.IDLE]: 0,
 						[TimeLogType.RESUMED]: 0
 					}
 				};

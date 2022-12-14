@@ -65,6 +65,7 @@ export class EmployeeSubscriber implements EntitySubscriberInterface<Employee> {
                 if (entity.startedWorkOn) {
                     entity.isTrackingEnabled = true;
                     entity.isActive = true;
+                    entity.endWork = entity.endWork ? entity.endWork : null;
                 }
             }
         } catch (error) {
@@ -87,6 +88,7 @@ export class EmployeeSubscriber implements EntitySubscriberInterface<Employee> {
                 if (entity.startedWorkOn) {
                     entity.isTrackingEnabled = true;
                     entity.isActive = true;
+                    entity.endWork = entity.endWork ? entity.endWork : null;
                 }
                 /**
                 * If Date when ended work filled then disable time tracking functionality for the employee.
