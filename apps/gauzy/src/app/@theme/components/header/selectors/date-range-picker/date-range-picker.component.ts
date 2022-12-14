@@ -193,7 +193,12 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 			.pipe(
 				filter(([organization, datePickerConfig]) => !!organization && !!datePickerConfig),
 				switchMap(([organization, datePickerConfig]) => combineLatest([
-					this.organizationService.getById(organization.id),
+					this.organizationService.getById(organization.id, [], {
+						id: true,
+						futureDateAllowed: true,
+						timeZone: true,
+						startWeekOn:true
+					}),
 					observableOf(datePickerConfig),
 				])),
 				tap(([organization, datePickerConfig]) => {
