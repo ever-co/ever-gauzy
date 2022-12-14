@@ -27,7 +27,8 @@ import {
 	TimeTrackerModule,
 	SetupModule,
 	SplashScreenModule,
-	ElectronService
+	ElectronService,
+	AboutModule
 } from '@gauzy/desktop-ui-lib';
 import { NbCardModule, NbButtonModule } from '@nebular/theme';
 import { HttpLoaderFactory } from '../../../gauzy/src/app/@shared/translate/translate.module';
@@ -80,7 +81,8 @@ import * as Sentry from '@sentry/angular';
 				deps: [HttpClient]
 			}
 		}),
-		NbDatepickerModule.forRoot()
+		NbDatepickerModule.forRoot(),
+		AboutModule
 	],
 	providers: [
 		AppService,

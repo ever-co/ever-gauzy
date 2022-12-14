@@ -19,7 +19,6 @@ export class AppMenu {
 			applicationVersion: 'Version v'+app.getVersion(),
 			website: 'https://web.gauzy.co',
 			authors: ['Ever\'s developers'],
-			credits: 'Open source',
 			copyright: 'Copyright © 2020-present Ever Co. LTD. All Rights Reserved.',
 			iconPath: path.join(__dirname, 'icons', 'icon.png')
 		})
@@ -28,7 +27,19 @@ export class AppMenu {
 			{
 				label: 'Gauzy',
 				submenu: [
-					{ role: 'about', label: 'About' },
+					{
+						label: 'About',
+						click() {
+							if (app.getName() === 'gauzy-desktop-timer') {
+								if (timeTrackerWindow) {
+									timeTrackerWindow.focus();
+									timeTrackerWindow.webContents.send('show_about');
+								}
+							} else {
+								app.showAboutPanel();
+							}
+						}
+					},
 					{ type: 'separator' },
 					{
 						label: 'Check For Update',
@@ -44,7 +55,10 @@ export class AppMenu {
 								settingsWindow.webContents.send('goto_update');
 							}, 100);
 							setTimeout(() => {
-								settingsWindow.webContents.send('app_setting', LocalStore.getApplicationConfig());
+								settingsWindow.webContents.send(
+									'app_setting',
+									LocalStore.getApplicationConfig()
+								);
 							}, 500);
 						}
 					},
@@ -65,16 +79,22 @@ export class AppMenu {
 						click() {
 							timeTrackerWindow.show();
 							setTimeout(async () => {
-								const [ lastTime ] = await TimerData.getLastCaptureTimeSlot(
-									knex,
-									LocalStore.beforeRequestParams()
+								const [lastTime] =
+									await TimerData.getLastCaptureTimeSlot(
+										knex,
+										LocalStore.beforeRequestParams()
+									);
+								console.log(
+									'Last Capture Time (Desktop Menu):',
+									lastTime
 								);
-								console.log('Last Capture Time (Desktop Menu):', lastTime);
 								timeTrackerWindow.webContents.send(
 									'timer_tracker_show',
 									{
 										...LocalStore.beforeRequestParams(),
-										timeSlotId: lastTime ? lastTime.timeSlotId : null
+										timeSlotId: lastTime
+											? lastTime.timeSlotId
+											: null
 									}
 								);
 							}, 1000);
@@ -93,9 +113,14 @@ export class AppMenu {
 							}
 							settingsWindow.show();
 							setTimeout(() => {
-								settingsWindow.webContents.send('app_setting', LocalStore.getApplicationConfig());
 								settingsWindow.webContents.send(
-									timeTrackerWindow ? 'goto_top_menu' : 'goto_update'
+									'app_setting',
+									LocalStore.getApplicationConfig()
+								);
+								settingsWindow.webContents.send(
+									timeTrackerWindow
+										? 'goto_top_menu'
+										: 'goto_update'
 								);
 							}, 500);
 						}
@@ -122,12 +147,12 @@ export class AppMenu {
 			{
 				label: 'Edit',
 				submenu: [
-				  { role: 'cut' },
-				  { role: 'copy' },
-				  { role: 'paste' },
-				  { role: 'selectAll'}
+					{ role: 'cut' },
+					{ role: 'copy' },
+					{ role: 'paste' },
+					{ role: 'selectAll' }
 				]
-			  },
+			},
 			{
 				label: 'Help',
 				submenu: [
@@ -157,7 +182,8 @@ export class AppMenu {
 						enabled: true,
 						visible: timeTrackerWindow ? true : false,
 						click() {
-							if (timeTrackerWindow) timeTrackerWindow.webContents.toggleDevTools();
+							if (timeTrackerWindow)
+								timeTrackerWindow.webContents.toggleDevTools();
 						}
 					},
 					{
@@ -166,7 +192,8 @@ export class AppMenu {
 						enabled: true,
 						visible: serverWindow ? true : false,
 						click() {
-							if (serverWindow) serverWindow.webContents.toggleDevTools();
+							if (serverWindow)
+								serverWindow.webContents.toggleDevTools();
 						}
 					}
 				]
