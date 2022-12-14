@@ -54,7 +54,7 @@ export abstract class OptionParams<T> extends OptionsRelations<T> {
 	*/
 	@ApiPropertyOptional({ type: 'boolean' })
 	@IsOptional()
-	@Transform(({ value }: TransformFnParams) => value ? (typeof value === 'string' ? JSON.parse(value) : value) : false)
+	@Transform(({ value }: TransformFnParams) => value ? parseToBoolean(value) : false)
 	readonly withDeleted?: boolean;
 }
 
