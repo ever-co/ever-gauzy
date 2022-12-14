@@ -1,0 +1,46 @@
+@import 'gauzy/_gauzy-dialogs';
+
+nb-card-body,
+nb-card-footer {
+    padding: 1rem;
+    padding-top: 1.5rem;
+    background-color: var(--gauzy-card-2);
+}
+
+div.logo {
+    padding: 24px 4px;
+    box-shadow: var(--gauzy-shadow);
+    width: fit-content;
+    border-radius: calc(var(--border-radius) * 1.5);
+    background: var(--gauzy-card-1);
+
+    img {
+        height: 11px;
+    }
+}
+
+.name-text {
+    font-weight: 600;
+}
+
+.version-text {
+    text-align: center;
+    margin-top: 24px;
+    margin-bottom: 6px;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.copyright-text {
+    font-size: 12px;
+    font-weight: 500;
+
+    .link {
+        color: var(--text-primary-color);
+        cursor: pointer;
+
+        &:hover {
+            text-decoration: underline;
+        }
+    }
+}
