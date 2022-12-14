@@ -8,6 +8,14 @@ export interface IPaginationInput {
 }
 
 /**
+ * Select find options for specific entity.
+ * Property paths (column names) to be selected by "find".
+ */
+export type IOptionsSelect<T> = {
+	[P in keyof T]?: NonNullable<T[P]> | boolean;
+}
+
+/**
 * Generic pagination interface
 */
 export interface IPagination<T> {

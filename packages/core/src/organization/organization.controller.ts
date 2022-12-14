@@ -26,7 +26,7 @@ import { Organization } from './organization.entity';
 import { OrganizationService } from './organization.service';
 import {
 	CreateOrganizationDTO,
-	OrganizationFindQueryDTO,
+	OrganizationFindOptionsDTO,
 	UpdateOrganizationDTO
 } from './dto';
 
@@ -66,7 +66,7 @@ export class OrganizationController extends CrudController<Organization> {
 	@Get('pagination')
 	@UsePipes(new ValidationPipe({ transform: true }))
 	async pagination(
-		@Query() options: OrganizationFindQueryDTO<Organization>
+		@Query() options: OrganizationFindOptionsDTO<Organization>
 	): Promise<IPagination<IOrganization>> {
 		return await this.organizationService.paginate(options);
 	}
@@ -91,7 +91,7 @@ export class OrganizationController extends CrudController<Organization> {
 	@Get()
 	@UsePipes(new ValidationPipe({ transform: true }))
 	async findAll(
-		@Query() options: OrganizationFindQueryDTO<Organization>
+		@Query() options: OrganizationFindOptionsDTO<Organization>
 	): Promise<IPagination<IOrganization>> {
 		try {
 			return await this.organizationService.findAll(options);
@@ -119,9 +119,10 @@ export class OrganizationController extends CrudController<Organization> {
 	})
 	@Permissions()
 	@Get(':id')
+	@UsePipes(new ValidationPipe({ transform: true }))
 	async findById(
-		@Param('id', UUIDValidationPipe) id: string,
-		@Query() options: OrganizationFindQueryDTO<Organization>
+		@Param('id', UUIDValidationPipe) id: IOrganization['id'],
+		@Query() options: OrganizationFindOptionsDTO<Organization>
 	): Promise<IOrganization> {
 		return await this.organizationService.findOneByIdString(id, options);
 	}
@@ -144,7 +145,7 @@ export class OrganizationController extends CrudController<Organization> {
 	})
 	@HttpCode(HttpStatus.CREATED)
 	@Post()
-	@UsePipes(new ValidationPipe({ transform : true }))
+	@UsePipes(new ValidationPipe())
 	async create(
 		@Body() entity: CreateOrganizationDTO
 	): Promise<IOrganization> {
@@ -172,9 +173,9 @@ export class OrganizationController extends CrudController<Organization> {
 	})
 	@HttpCode(HttpStatus.OK)
 	@Put(':id')
-	@UsePipes(new ValidationPipe({ transform : true }))
+	@UsePipes(new ValidationPipe())
 	async update(
-		@Param('id', UUIDValidationPipe) id: string,
+		@Param('id', UUIDValidationPipe) id: IOrganization['id'],
 		@Body() entity: UpdateOrganizationDTO
 	): Promise<IOrganization> {
 		return await this.commandBus.execute(
