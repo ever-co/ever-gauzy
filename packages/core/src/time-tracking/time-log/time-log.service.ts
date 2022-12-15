@@ -128,6 +128,27 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 					time_slot: 'time_log.timeSlots'
 				}
 			},
+			select: {
+				id: true,
+				employeeId: true,
+				startedAt: true,
+				stoppedAt: true,
+				employee: {
+					id: true,
+					user: {
+						id: true,
+						firstName: true,
+						lastName: true,
+						email: true,
+						imageUrl: true
+					}
+				},
+				timeSlots: {
+					id: true,
+					overall: true,
+					duration: true
+				}
+			},
 			relations: {
 				timeSlots: true,
 				...(
