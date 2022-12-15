@@ -151,14 +151,9 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			},
 			relations: {
 				timeSlots: true,
-				...(
-					RequestContext.hasPermission(
-						PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-					) ? {
-						employee: {
-							user: true
-						}
-					} : {})
+				employee: {
+					user: true
+				}
 			},
 			order: {
 				startedAt: 'ASC'
