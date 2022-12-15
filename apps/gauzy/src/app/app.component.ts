@@ -127,7 +127,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 				/**
 				 * Set Date Range Picker Default Unit
 				 */
-				tap(({ datePicker, dates, selectors }: {
+				tap(({ datePicker, dates }: {
 					datePicker: IDatePickerConfig,
 					dates: IDateRangePicker,
 					selectors: ISelectorVisibility

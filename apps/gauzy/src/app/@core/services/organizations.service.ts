@@ -7,42 +7,41 @@ import {
 	IOrganizationFindInput,
 	IOrganizationContactFindInput,
 	IPagination,
-	IOrganizationContact
+	IOrganizationContact,
+	IOptionsSelect
 } from '@gauzy/contracts';
 import { toParams } from '@gauzy/common-angular';
 import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable()
 export class OrganizationsService {
-	constructor(private http: HttpClient) {}
 
-	create(createInput: IOrganizationCreateInput): Promise<IOrganization> {
+	constructor(
+		private  readonly http: HttpClient
+	) {}
+
+	create(body: IOrganizationCreateInput): Promise<IOrganization> {
 		return firstValueFrom(
-			this.http
-			.post<IOrganization>(`${API_PREFIX}/organization`, createInput)
+			this.http.post<IOrganization>(`${API_PREFIX}/organization`, body)
 		);
 	}
 
-	update(id: IOrganization['id'], updateInput: IOrganizationCreateInput): Promise<any> {
+	update(id: IOrganization['id'], body: IOrganizationCreateInput): Promise<IOrganization> {
 		return firstValueFrom(
-			this.http
-			.put(`${API_PREFIX}/organization/${id}`, updateInput)
+			this.http.put<IOrganization>(`${API_PREFIX}/organization/${id}`, body)
 		);
-
 	}
 
 	delete(id: IOrganization['id']): Promise<any> {
 		return firstValueFrom(
-			this.http
-			.delete(`${API_PREFIX}/organization/${id}`)
+			this.http.delete(`${API_PREFIX}/organization/${id}`)
 		);
-
 	}
 
 	getAll(
 		where: IOrganizationFindInput,
 		relations: string[] = [],
-	): Promise<{ items: IOrganization[]; total: number }> {
+	): Promise<IPagination<IOrganization>> {
 		return firstValueFrom(
 			this.http.get<IPagination<IOrganization>>(`${API_PREFIX}/organization`, {
 				params: toParams({ where, relations })
@@ -52,10 +51,11 @@ export class OrganizationsService {
 
 	getById(
 		id: IOrganization['id'],
-		relations: string[] = []
+		relations: string[] = [],
+		select: IOptionsSelect<IOrganization> = {}
 	): Observable<IOrganization> {
 		return this.http.get<IOrganization>( `${API_PREFIX}/organization/${id}`, {
-			params: toParams({ relations })
+			params: toParams({ relations, select })
 		});
 	}
 
@@ -77,36 +77,42 @@ export class OrganizationsService {
 	/**
 	 * GET public clients by organization
 	 *
-	 * @param request
+	 * @param params
 	 * @returns
 	 */
-	getAllPublicClients(request: IOrganizationContactFindInput): Observable<IPagination<IOrganizationContact>> {
+	getAllPublicClients(
+		params: IOrganizationContactFindInput
+	): Observable<IPagination<IOrganizationContact>> {
 		return this.http.get<IPagination<IOrganizationContact>>(`${API_PREFIX}/public/organization/client`, {
-			params: toParams(request)
+			params: toParams(params)
 		})
 	}
 
 	/**
 	 * GET public client counts by organization
 	 *
-	 * @param request
+	 * @param params
 	 * @returns
 	 */
-	getAllPublicClientCounts(request: IOrganizationContactFindInput): Observable<Number> {
-		return this.http.get<Number>(`${API_PREFIX}/public/organization/client/count`, {
-			params: toParams(request)
+	getAllPublicClientCounts(
+		params: IOrganizationContactFindInput
+	): Observable<number> {
+		return this.http.get<number>(`${API_PREFIX}/public/organization/client/count`, {
+			params: toParams(params)
 		})
 	}
 
 	/**
 	 * GET public project counts by organization
 	 *
-	 * @param request
+	 * @param params
 	 * @returns
 	 */
-	getAllPublicProjectCounts(request: IOrganizationContactFindInput): Observable<Number> {
-		return this.http.get<Number>(`${API_PREFIX}/public/organization/project/count`, {
-			params: toParams(request)
+	getAllPublicProjectCounts(
+		params: IOrganizationContactFindInput
+	): Observable<number> {
+		return this.http.get<number>(`${API_PREFIX}/public/organization/project/count`, {
+			params: toParams(params)
 		})
 	}
 }
