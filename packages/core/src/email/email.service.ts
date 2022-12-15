@@ -89,6 +89,12 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 				}
 			});
 			smtpConfig = smtpTransporter.getSmtpTransporter() as ISMTPConfig;
+			console.log({ smtpConfig }, 'try email instance', {
+				where: {
+					tenantId: currentTenantId,
+					organizationId
+				}
+			});
 		} catch (error) {
 			try {
 				if (error instanceof NotFoundException) {
@@ -100,8 +106,15 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 					});
 					smtpConfig = smtpTransporter.getSmtpTransporter() as ISMTPConfig;
 				}
+				console.log({ smtpConfig }, 'catch try email instance', {
+					where: {
+						tenantId: currentTenantId,
+						organizationId: IsNull()
+					}
+				});
 			} catch (error) {
 				smtpConfig = this.customSmtpService.defaultSMTPTransporter() as ISMTPConfig;
+				console.log({ smtpConfig }, 'catch catch email instance');
 			}
 		}
 		const config: Email.EmailConfig<any> = {
