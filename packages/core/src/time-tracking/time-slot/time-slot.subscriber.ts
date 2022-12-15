@@ -22,13 +22,21 @@ export class TimeSlotSubscriber implements EntitySubscriberInterface<TimeSlot> {
      */
     afterLoad(entity: TimeSlot, event?: LoadEvent<TimeSlot>): void | Promise<any> {
         try {
-            entity.stoppedAt = moment(entity.startedAt).add(10, 'minutes').toDate();
+            if ('startedAt' in entity) {
+                entity.stoppedAt = moment(entity.startedAt).add(10, 'minutes').toDate();
+            }
             /***
              * Calculate activities in percentage
              */
-            entity.percentage = this.calculateOverallActivity(entity);
-            entity.keyboardPercentage = this.calculateKeyboardActivity(entity);
-            entity.mousePercentage = this.calculateMouseActivity(entity);
+            if ('overall' in entity) {
+                entity.percentage = this.calculateOverallActivity(entity);
+            }
+            if ('keyboard' in entity) {
+                entity.keyboardPercentage = this.calculateKeyboardActivity(entity);
+            }
+            if ('mouse' in entity) {
+                entity.mousePercentage = this.calculateMouseActivity(entity);
+            }
         } catch (error) {
             console.log(error);
         }
