@@ -8,7 +8,7 @@ import {
 	OrganizationProjectBudgetTypeEnum
 } from './organization-projects.model';
 import { IEmployee, IEmployeeFindInput, IRelationalEmployee } from './employee.model';
-import { ITask } from './task-entity.model';
+import { ITask } from './task.model';
 import { ITag } from './tag-entity.model';
 import { IPaginationInput } from './core.model';
 import { ReportGroupByFilter } from './report.model';
@@ -150,7 +150,7 @@ export interface ITimeSlotCreateInput
 export enum TimeLogType {
 	TRACKED = 'TRACKED',
 	MANUAL = 'MANUAL',
-	IDEAL = 'IDEAL',
+	IDLE = 'IDLE',
 	RESUMED = 'RESUMED'
 }
 

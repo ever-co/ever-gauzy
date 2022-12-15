@@ -15,7 +15,7 @@ import { IOrganizationProject } from './organization-projects.model';
 import { IEmployeeSetting } from './employee-settings.model';
 import { IExpense } from './expense.model';
 import { ITimesheet, ITimeSlot } from './timesheet.model';
-import { ITask } from './task-entity.model';
+import { ITask } from './task.model';
 import { ICandidate } from './candidate.model';
 import { IEmployeeAward } from './employee-award.model';
 

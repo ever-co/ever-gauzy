@@ -18,7 +18,7 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 
 			const projectId = (project) ? project.id : null;
 			const taskPrefix = (project) ? project.name.substring(0, 3) : null;
-			
+
 			const maxNumber = await this._taskService.getMaxTaskNumberByProject({
 				tenantId,
 				organizationId,

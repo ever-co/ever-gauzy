@@ -1,6 +1,6 @@
 import { IUser } from './user.model';
 import { IEmployee } from './employee.model';
-import { ITask } from './task-entity.model';
+import { ITask } from './task.model';
 import { ITimeSlot, ITimeLog, ITimeLogFilters } from './timesheet.model';
 import { IOrganizationProject } from './organization-projects.model';
 

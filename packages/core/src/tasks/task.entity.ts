@@ -89,7 +89,7 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	@RelationId((it: Task) => it.project)
 	@Index()
 	@Column({ nullable: true })
-	readonly projectId?: string;
+	projectId?: IOrganizationProject['id'];
 
 	/**
 	* Creator
@@ -106,7 +106,7 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	@RelationId((it: Task) => it.creator)
 	@Index()
 	@Column({ nullable: true })
-	readonly creatorId?: string;
+	creatorId?: IUser['id'];
 
 	/**
 	 * Organization Sprint
@@ -120,7 +120,7 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	@RelationId((it: Task) => it.organizationSprint)
 	@Index()
 	@Column({ nullable: true })
-	readonly organizationSprintId?: string;
+	organizationSprintId?: IOrganizationSprint['id'];
 
 	/*
     |--------------------------------------------------------------------------
