@@ -140,7 +140,7 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	@Column({ nullable: true })
 	bonusPercentage?: number;
 
-	@Column({ nullable: true })
+	@Column({ nullable: true, default: true })
 	invitesAllowed?: boolean;
 
 	@Column({ nullable: true })
