@@ -12,7 +12,7 @@ import {
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { debounceTime, filter, tap } from 'rxjs/operators';
+import { filter, tap } from 'rxjs/operators';
 import { pluck, pick } from 'underscore';
 import { TranslateService } from '@ngx-translate/core';
 import * as randomColor from 'randomcolor';
@@ -63,14 +63,13 @@ export class WeeklyTimeReportsComponent extends BaseSelectorFilterComponent
 	ngAfterViewInit() {
 		this.subject$
 			.pipe(
-				debounceTime(200),
+				filter(() => !!this.organization),
 				tap(() => this.prepareRequest()),
 				untilDestroyed(this)
 			)
 			.subscribe();
 		this.payloads$
 			.pipe(
-				debounceTime(200),
 				distinctUntilChange(),
 				filter((payloads: ITimeLogFilters) => !!payloads),
 				tap(() => this.getWeeklyLogs()),
@@ -81,7 +80,7 @@ export class WeeklyTimeReportsComponent extends BaseSelectorFilterComponent
 	}
 
 	prepareRequest() {
-		if (!this.organization || isEmpty(this.request)) {
+		if (isEmpty(this.request) || isEmpty(this.filters)) {
 			return;
 		}
 		const appliedFilter = pick(
