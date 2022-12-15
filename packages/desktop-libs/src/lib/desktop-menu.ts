@@ -1,8 +1,7 @@
-import { app, Menu, shell } from 'electron';
+import { BrowserWindow, Menu, shell } from 'electron';
 import { LocalStore } from './desktop-store';
 import { TimerData } from './desktop-timer-activity';
-import { createSettingsWindow } from '@gauzy/desktop-window';
-import path from 'path';
+import { createSettingsWindow, createAboutWindow } from '@gauzy/desktop-window';
 export class AppMenu {
 	constructor(
 		timeTrackerWindow,
@@ -13,31 +12,20 @@ export class AppMenu {
 		serverWindow?,
 		isZoomVisible?
 	) {
-		app.setAboutPanelOptions({
-			applicationName: app.getName().split('-').join(' ').replace(/(^\w{1})|(\s+\w{1})/g, letter => letter.toUpperCase()),
-			version: process.platform === 'darwin' ? app.getVersion() : '',
-			applicationVersion: 'Version v'+app.getVersion(),
-			website: 'https://web.gauzy.co',
-			authors: ['Ever\'s developers'],
-			copyright: 'Copyright © 2020-present Ever Co. LTD. All Rights Reserved.',
-			iconPath: path.join(__dirname, 'icons', 'icon.png')
-		})
 		const isZoomEnabled = isZoomVisible;
 		const menu = Menu.buildFromTemplate([
 			{
 				label: 'Gauzy',
 				submenu: [
 					{
+						id: 'gauzy-about',
 						label: 'About',
+						enabled: true,
 						click() {
-							if (app.getName() === 'gauzy-desktop-timer') {
-								if (timeTrackerWindow) {
-									timeTrackerWindow.focus();
-									timeTrackerWindow.webContents.send('show_about');
-								}
-							} else {
-								app.showAboutPanel();
-							}
+							const window: BrowserWindow = createAboutWindow(
+								windowPath.timeTrackerUi
+							);
+							window.show();
 						}
 					},
 					{ type: 'separator' },
