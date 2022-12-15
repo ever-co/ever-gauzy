@@ -1,33 +1,32 @@
-<div class="p-4 about-container">
-    <nb-card>
-        <nb-card-body>
-            <div class="row">
-                <div class="col-12 d-flex justify-content-center">
-                    <div class="logo">
-                        <img [src]="application?.iconPath" />
+<nb-layout>
+    <nb-layout-column class="p-0">
+        <div class="about-container h-100">
+            <nb-card class="h-100">
+                <nb-card-body>
+                    <div class="row">
+                        <div class="col-12 d-flex justify-content-center">
+                            <div class="logo">
+                                <img [src]="application?.iconPath" />
+                            </div>
+                        </div>
+                        <div class="col-12 name-text text-center mt-2">
+                            <span>{{ application?.name }}</span>
+                        </div>
+                        <div class="col-12 version-text mt-0">
+                            <span>Version v{{ application?.version }}</span>
+                        </div>
+                        <div class="col-12 copyright-text text-center mt-0">
+                            <span>
+                                Copyright © 2020-present
+                                <span class="link" (click)="openLink('EVER')">Ever Co. LTD.</span>
+                                All Rights Reserved.
+                                <span class="link" (click)="openLink('TOS')"> Terms of Service</span> |
+                                <span (click)="openLink('PRIVACY')" class="link">Privacy Policy</span>
+                            </span>
+                        </div>
                     </div>
-                </div>
-                <div class="col-12 name-text text-center mt-2">
-                    <span>{{ application?.name }}</span>
-                </div>
-                <div class="col-12 version-text mt-0">
-                    <span>Version v{{ application?.version }}</span>
-                </div>
-                <div class="col-12 copyright-text text-center mt-0">
-                    <span>
-                        Copyright © 2020-present
-                        <span class="link" (click)="openLink('EVER')">Ever Co. LTD.</span>
-                        All Rights Reserved.
-                        <span class="link" (click)="openLink('TOS')"> Terms of Service</span> |
-                        <span (click)="openLink('PRIVACY')" class="link">Privacy Policy</span>
-                    </span>
-                </div>
-            </div>
-        </nb-card-body>
-        <nb-card-footer class="text-right pt-0">
-            <button (click)="close()" size="small" nbButton outline status="basic">
-                Close
-            </button>
-        </nb-card-footer>
-    </nb-card>
-</div>
+                </nb-card-body>
+            </nb-card>
+        </div>
+    </nb-layout-column>
+</nb-layout>

@@ -19,7 +19,6 @@ import { LocalDataSource } from 'ng2-smart-table';
 import { DomSanitizer } from '@angular/platform-browser';
 import { BehaviorSubject } from 'rxjs';
 import { ElectronService } from "../electron/services";
-import { AboutComponent } from '../dialogs/about/about.component';
 
 // Import logging for electron and override default console logging
 const log = window.require('electron-log');
@@ -421,12 +420,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		);
 
 		this.electronService.ipcRenderer.send('time_tracker_ready');
-
-		this.electronService.ipcRenderer.on('show_about', () => {
-			this._ngZone.run(() => {
-				this.dialogService.open(AboutComponent);
-			})
-		})
 	}
 
 	async toggleStart(val) {

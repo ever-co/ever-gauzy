@@ -1,5 +1,3 @@
-@import 'gauzy/_gauzy-dialogs';
-
 nb-card-body,
 nb-card-footer {
     padding: 1rem;
@@ -8,14 +6,13 @@ nb-card-footer {
 }
 
 div.logo {
-    padding: 24px 4px;
     box-shadow: var(--gauzy-shadow);
     width: fit-content;
     border-radius: calc(var(--border-radius) * 1.5);
     background: var(--gauzy-card-1);
 
     img {
-        height: 11px;
+        height: 64px;
     }
 }
 
@@ -47,3 +44,7 @@ div.logo {
         }
     }
 }
+
+::ng-deep nb-layout .layout .layout-container .content nb-layout-footer nav {
+    padding: 0px;
+  }

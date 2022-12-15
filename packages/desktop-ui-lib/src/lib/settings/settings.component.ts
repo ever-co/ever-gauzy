@@ -8,9 +8,10 @@ import {
 	AfterViewInit
 } from '@angular/core';
 import { TimeTrackerService } from '../time-tracker/time-tracker.service';
-import { NbToastrService } from '@nebular/theme';
+import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { ElectronService } from '../electron/services';
 import { BehaviorSubject, Observable } from 'rxjs';
+import { AboutComponent } from '../dialogs/about/about.component';
 @Component({
 	selector: 'ngx-settings',
 	templateUrl: './settings.component.html',
@@ -373,7 +374,8 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		private electronService: ElectronService,
 		private _ngZone: NgZone,
 		private readonly timeTrackerService: TimeTrackerService,
-		private toastrService: NbToastrService
+		private toastrService: NbToastrService,
+		private _dialogService: NbDialogService,
 	) {
 		this._loading$ = new BehaviorSubject(false);
 		this._automaticUpdate$ = new BehaviorSubject(false);
@@ -549,6 +551,12 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				this._file$.next(arg);
 			})
 		} )
+
+		this.electronService.ipcRenderer.on('show_about', () => {
+			this._ngZone.run(() => {
+				this._dialogService.open(AboutComponent);
+			})
+		})
 	}
 
 	mappingAdditionalSetting(values) {

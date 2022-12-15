@@ -1,5 +1,4 @@
 import { Component, OnInit } from '@angular/core';
-import { NbDialogRef } from '@nebular/theme';
 import { ElectronService } from '../../electron/services';
 
 @Component({
@@ -13,16 +12,9 @@ export class AboutComponent implements OnInit {
 		version: 'dev',
 		iconPath: ''
 	};
-	constructor(
-		private _dialogRef: NbDialogRef<AboutComponent>,
-		private readonly _electronService: ElectronService
-	) {}
+	constructor(private readonly _electronService: ElectronService) {}
 
 	ngOnInit(): void {}
-
-	public close() {
-		this._dialogRef.close();
-	}
 
 	public openLink(link: string) {
 		switch (link) {
@@ -54,7 +46,7 @@ export class AboutComponent implements OnInit {
 					letter.toUpperCase()
 				),
 			version: this._electronService.remote.app.getVersion(),
-			iconPath: './assets/images/logos/logo_Gauzy.svg'
+			iconPath: './assets/icons/icon_512x512.png'
 		};
 		return this._application;
 	}
