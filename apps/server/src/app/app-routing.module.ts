@@ -4,7 +4,8 @@ import {
 	SettingsComponent,
 	SetupComponent,
 	UpdaterComponent,
-	ServerDashboardComponent
+	ServerDashboardComponent,
+	AboutComponent
 } from '@gauzy/desktop-ui-lib';
 
 const routes: Routes = [
@@ -27,6 +28,10 @@ const routes: Routes = [
 	{
 		path: 'server-dashboard',
 		component: ServerDashboardComponent
+	},
+	{
+		path: 'about',
+		component: AboutComponent
 	}
 ];
 
