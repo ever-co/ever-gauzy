@@ -21,7 +21,8 @@ import {
 	ScreenCaptureModule,
 	TimeTrackerModule,
 	SetupModule,
-	ElectronService
+	ElectronService,
+	AboutModule
 } from '@gauzy/desktop-ui-lib';
 import { NbCardModule, NbButtonModule } from '@nebular/theme';
 import { RouterModule } from '@angular/router';
@@ -47,7 +48,8 @@ import { RouterModule } from '@angular/router';
 		SettingsModule,
 		UpdaterModule,
 		ImageViewerModule,
-		NbDatepickerModule.forRoot()
+		NbDatepickerModule.forRoot(),
+		AboutModule
 	],
 	providers: [AppService, HttpClientModule, NbDialogService, ElectronService],
 	bootstrap: [AppComponent]
