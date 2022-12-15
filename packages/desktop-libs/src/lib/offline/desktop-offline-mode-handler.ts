@@ -7,13 +7,14 @@ export class DesktopOfflineModeHandler
 	extends EventEmitter
 	implements IOfflineMode
 {
+	private static _instance: DesktopOfflineModeHandler;
 	private _isEnabled: boolean;
 	private _pingTimer: any;
 	private _PING_INTERVAL: number;
 	/**
 	 * Build the class with default constructor
 	 */
-	constructor() {
+	private constructor() {
 		super();
 		// Initial status
 		this._isEnabled = false;
@@ -22,7 +23,10 @@ export class DesktopOfflineModeHandler
 		// Default ping timer interval
 		this._PING_INTERVAL = 30 * 1000;
 	}
-
+	/**
+	 * Triggers offline mode on.
+	 * @returns {void}
+	 */
 	public trigger(): void {
 		// Ignore if triggered
 		if (this._isEnabled) return;
@@ -49,7 +53,10 @@ export class DesktopOfflineModeHandler
 			return this.restore();
 		}, this._PING_INTERVAL);
 	}
-
+	/**
+	 * Cancels offline mode
+	 * @returns {void}
+	 */
 	public restore(): void {
 		// Connection restored
 		if (!this._isEnabled) {
@@ -63,8 +70,21 @@ export class DesktopOfflineModeHandler
 		// Notify about reconnection event
 		this.emit('connection-restored');
 	}
-
+	/**
+	 * Returns status of offline mode (true if enabled)
+	 * @returns {Boolean} Is offline mode enabled?
+	 */
 	public get enabled(): boolean {
 		return this._isEnabled;
+	}
+	/**
+	 * Single instance of offline mode handler
+	 * @type {DesktopOfflineModeHandler}
+	 */
+	public static get instance(): DesktopOfflineModeHandler {
+		if (!this._instance) {
+			this._instance = new DesktopOfflineModeHandler();
+		}
+		return this._instance;
 	}
 }
