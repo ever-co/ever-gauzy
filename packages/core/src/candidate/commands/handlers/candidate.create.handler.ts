@@ -56,7 +56,7 @@ export class CandidateCreateHandler
 				candidate.organizationId
 			);
 
-			//4. Send welcome email to user register employee
+			//4. Send welcome email to candidate user
 			this._emailService.welcomeUser(
 				user,
 				languageCode,
