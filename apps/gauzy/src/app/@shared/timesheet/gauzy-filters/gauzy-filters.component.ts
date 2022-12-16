@@ -178,8 +178,8 @@ export class GauzyFiltersComponent extends TranslationBaseComponent implements A
 				value: TimeLogSourceEnum.HUBSTAFF
 			},
 			{
-				label: this.getTranslation('TIMESHEET.SOURCES.BROWSER'),
-				value: TimeLogSourceEnum.BROWSER
+				label: this.getTranslation('TIMESHEET.SOURCES.BROWSER_EXTENSION'),
+				value: TimeLogSourceEnum.BROWSER_EXTENSION
 			}
 		];
 	}

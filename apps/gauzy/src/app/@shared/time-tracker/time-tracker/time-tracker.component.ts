@@ -262,7 +262,7 @@ export class TimeTrackerComponent implements
 				this.timeTrackerService.checkTimerStatus({
 					organizationId,
 					tenantId,
-					source: TimeLogSourceEnum.BROWSER
+					source: TimeLogSourceEnum.WEB_TIMER
 				});
 				if (
 					moment

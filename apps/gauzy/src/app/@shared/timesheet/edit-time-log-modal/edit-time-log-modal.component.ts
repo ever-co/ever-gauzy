@@ -284,7 +284,7 @@ export class EditTimeLogModalComponent
 				organizationId,
 				tenantId,
 				logType: TimeLogType.MANUAL,
-				source: TimeLogSourceEnum.BROWSER
+				source: TimeLogSourceEnum.WEB_TIMER
 			};
 			if (!payload.employeeId) {
 				payload.employeeId = this.store.user.employeeId;
