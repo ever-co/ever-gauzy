@@ -124,7 +124,7 @@ export class TimeLogUpdateHandler
 				await this.timeSlotRepository.remove(timeSlots);
 			}
 
-			if (!manualTimeSlot && timeLog.source === TimeLogSourceEnum.BROWSER) {
+			if (!manualTimeSlot && timeLog.source === TimeLogSourceEnum.WEB_TIMER) {
 				updateTimeSlots = updateTimeSlots
 					.map((slot) => ({
 						...slot,

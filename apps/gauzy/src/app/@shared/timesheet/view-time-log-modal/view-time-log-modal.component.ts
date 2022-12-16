@@ -92,7 +92,7 @@ export class ViewTimeLogModalComponent implements OnInit, OnDestroy {
 			await this.timeTrackerService.checkTimerStatus({
 				organizationId,
 				tenantId,
-				source: TimeLogSourceEnum.BROWSER
+				source: TimeLogSourceEnum.WEB_TIMER
 			});
 		}
 	}

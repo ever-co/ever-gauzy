@@ -314,7 +314,7 @@ export class DailyComponent extends BaseSelectorFilterComponent implements
 			await this.timeTrackerService.checkTimerStatus({
 				organizationId,
 				tenantId,
-				source: TimeLogSourceEnum.BROWSER
+				source: TimeLogSourceEnum.WEB_TIMER
 			});
 		}
 	}
