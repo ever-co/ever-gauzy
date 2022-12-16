@@ -1,12 +1,12 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { BadRequestException, ConflictException } from '@nestjs/common';
 import { CandidateStatusEnum, ICandidate, IRole, RolesEnum } from '@gauzy/contracts';
-import { RequestContext } from './../../../core/context';
 import { CandidateService } from '../../candidate.service';
 import { CandidateHiredCommand } from '../candidate.hired.command';
 import { EmployeeService } from './../../../employee/employee.service';
 import { UserService } from './../../../user/user.service';
 import { RoleService } from './../../../role/role.service';
+import { UserOrganizationService } from './../../../user-organization/user-organization.services';
 
 @CommandHandler(CandidateHiredCommand)
 export class CandidateHiredHandler
@@ -16,32 +16,26 @@ export class CandidateHiredHandler
 		private readonly candidateService: CandidateService,
 		private readonly employeeService: EmployeeService,
 		private readonly userService: UserService,
-		private readonly roleService: RoleService
+		private readonly roleService: RoleService,
+		private readonly userOrganizationService: UserOrganizationService
 	) {}
 
 	public async execute(command: CandidateHiredCommand): Promise<ICandidate> {
 		const { id } = command;
 		const candidate: ICandidate = await this.candidateService.findOneByIdString(id, {
 			relations: {
-				user: {
-					role: true
-				},
-				tenant: true,
-				organization: true,
-				contact: true,
-				organizationPosition: true
-			}
+				user: true,
+				tags: true
+			},
+			relationLoadStrategy: 'query'
 		});
 		if (candidate.alreadyHired) {
 			throw new ConflictException('The candidate is already hired, you can not hired it.');
 		}
 		try {
-			//1. Update hired candidate details
-			await this.candidateService.update(id,  {
-				status: CandidateStatusEnum.HIRED,
-				hiredDate: new Date()
-			});
-			//2. Create employee for respective candidate
+			const hiredDate = new Date();
+
+			//1. Create employee for respective candidate
 			const employee = await this.employeeService.create({
 				billRateValue: candidate.billRateValue,
 				billRateCurrency: candidate.billRateCurrency,
@@ -51,21 +45,34 @@ export class CandidateHiredHandler
 				organizationId: candidate.organizationId,
 				userId: candidate.userId,
 				contactId: candidate.contactId,
-				organizationPositionId: candidate.organizationPositionId
+				organizationPositionId: candidate.organizationPositionId,
+				tags: candidate.tags,
+				isActive: true,
+				startedWorkOn: hiredDate
 			});
-			//3. Migrate CANDIDATE role to EMPLOYEE role
-			const { user } = candidate;
+
+			//2. Migrate CANDIDATE role to EMPLOYEE role
 			const role: IRole = await this.roleService.findOneByWhereOptions({
-				tenantId: RequestContext.currentTenantId(),
 				name: RolesEnum.EMPLOYEE
 			});
-			await this.userService.create({
-				id: user.id,
+			const user = await this.userService.create({
+				id: candidate.userId,
 				role
 			});
+
+			//3. Assign organizations to the employee user
+			await this.userOrganizationService.addUserToOrganization(
+				user,
+				employee.organizationId
+			);
+
 			//4. Convert candidate to employee user
+			//5. Update hired candidate details
 			return await this.candidateService.create({
 				id,
+				status: CandidateStatusEnum.HIRED,
+				hiredDate: hiredDate,
+				rejectDate: null,
 				employee
 			});
 		} catch (error) {
