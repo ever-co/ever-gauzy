@@ -27,7 +27,7 @@ import { OrganizationTeamService } from './organization-team.service';
 
 @ApiTags('OrganizationTeam')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
-@Permissions(PermissionsEnum.ALL_ORG_EDIT)
+@Permissions(PermissionsEnum.ORG_TEAM_EDIT)
 @Controller()
 export class OrganizationTeamController extends CrudController<OrganizationTeam> {
 
@@ -56,7 +56,7 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@Permissions()
+	@Permissions(PermissionsEnum.ORG_TEAM_VIEW)
 	@Get('me')
 	async findMyTeams(
 		@Query('data', ParseJsonPipe) data: any
@@ -75,7 +75,7 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 	 * @param options
 	 * @returns
 	 */
-	@Permissions(PermissionsEnum.ALL_ORG_VIEW)
+	@Permissions(PermissionsEnum.ORG_TEAM_VIEW)
 	@Get('count')
 	async getCount(
 		@Query() options: FindOptionsWhere<OrganizationTeam>
@@ -89,7 +89,7 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 	 * @param params
 	 * @returns
 	 */
-	@Permissions(PermissionsEnum.ALL_ORG_VIEW)
+	@Permissions(PermissionsEnum.ORG_TEAM_VIEW)
 	@Get('pagination')
 	@UsePipes(new ValidationPipe({ transform: true }))
 	async pagination(
@@ -116,7 +116,7 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@Permissions(PermissionsEnum.ALL_ORG_VIEW)
+	@Permissions(PermissionsEnum.ORG_TEAM_VIEW)
 	@Get()
 	@UsePipes(new ValidationPipe())
 	async findAll(
@@ -131,7 +131,7 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 	 * @param id
 	 * @returns
 	 */
-	@Permissions(PermissionsEnum.ALL_ORG_VIEW)
+	@Permissions(PermissionsEnum.ORG_TEAM_VIEW)
 	@Get(':id')
 	@UsePipes(new ValidationPipe())
 	async findById(
