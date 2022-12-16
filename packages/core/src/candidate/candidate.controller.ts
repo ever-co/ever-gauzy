@@ -9,7 +9,8 @@ import {
 	Query,
 	UseGuards,
 	Post,
-	ValidationPipe
+	ValidationPipe,
+	UsePipes
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
@@ -113,12 +114,11 @@ export class CandidateController extends CrudController<Candidate> {
 	})
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_VIEW)
 	@Get('pagination')
+	@UsePipes(new ValidationPipe({ transform: true }))
 	async pagination(
-		@Query(new ValidationPipe({
-			transform: true
-		})) options: PaginationParams<Candidate>
+		@Query() options: PaginationParams<Candidate>
 	): Promise<IPagination<ICandidate>> {
-		return this.candidateService.pagination(options);
+		return await this.candidateService.pagination(options);
 	}
 
 	/**
@@ -168,7 +168,7 @@ export class CandidateController extends CrudController<Candidate> {
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_VIEW)
 	@Get(':id')
 	async findById(
-		@Param('id', UUIDValidationPipe) id: string,
+		@Param('id', UUIDValidationPipe) id: ICandidate['id'],
 		@Query('data', ParseJsonPipe) data?: any
 	): Promise<ICandidate> {
 		const { relations = [] } = data;
@@ -194,13 +194,12 @@ export class CandidateController extends CrudController<Candidate> {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Post()
+	@UsePipes(new ValidationPipe({ transform : true }))
 	async create(
-		@Body(new ValidationPipe({
-			transform : true
-		})) body: CreateCandidateDTO
+		@Body() entity: CreateCandidateDTO
 	): Promise<ICandidate> {
 		return await this.commandBus.execute(
-			new CandidateCreateCommand(body)
+			new CandidateCreateCommand(entity)
 		);
 	}
 
@@ -227,11 +226,10 @@ export class CandidateController extends CrudController<Candidate> {
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
+	@UsePipes(new ValidationPipe({ transform : true }))
 	async update(
-		@Param('id', UUIDValidationPipe) id: string,
-		@Body(new ValidationPipe({
-			transform : true
-		})) entity: UpdateCandidateDTO
+		@Param('id', UUIDValidationPipe) id: ICandidate['id'],
+		@Body() entity: UpdateCandidateDTO
 	): Promise<ICandidate> {
 		return await this.commandBus.execute(
 			new CandidateUpdateCommand({ id, ...entity })
@@ -256,13 +254,12 @@ export class CandidateController extends CrudController<Candidate> {
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id/hired')
 	async updateHiredStatus(
-		@Param('id', UUIDValidationPipe) id: string
+		@Param('id', UUIDValidationPipe) id: ICandidate['id']
 	): Promise<ICandidate> {
 		return await this.commandBus.execute(
 			new CandidateHiredCommand(id)
@@ -287,13 +284,12 @@ export class CandidateController extends CrudController<Candidate> {
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id/rejected')
 	async updateRejectedStatus(
-		@Param('id', UUIDValidationPipe) id: string
+		@Param('id', UUIDValidationPipe) id: ICandidate['id']
 	): Promise<ICandidate> {
 		return await this.commandBus.execute(
 			new CandidateRejectedCommand(id)
