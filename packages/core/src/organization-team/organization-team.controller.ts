@@ -27,7 +27,7 @@ import { OrganizationTeamService } from './organization-team.service';
 
 @ApiTags('OrganizationTeam')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
-@Permissions(PermissionsEnum.ORG_TEAM_EDIT)
+@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TEAM_EDIT)
 @Controller()
 export class OrganizationTeamController extends CrudController<OrganizationTeam> {
 
@@ -56,7 +56,7 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@Permissions(PermissionsEnum.ORG_TEAM_VIEW)
+	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TEAM_VIEW)
 	@Get('me')
 	async findMyTeams(
 		@Query('data', ParseJsonPipe) data: any
@@ -75,7 +75,7 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 	 * @param options
 	 * @returns
 	 */
-	@Permissions(PermissionsEnum.ORG_TEAM_VIEW)
+	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TEAM_VIEW)
 	@Get('count')
 	async getCount(
 		@Query() options: FindOptionsWhere<OrganizationTeam>
@@ -89,7 +89,7 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 	 * @param params
 	 * @returns
 	 */
-	@Permissions(PermissionsEnum.ORG_TEAM_VIEW)
+	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TEAM_VIEW)
 	@Get('pagination')
 	@UsePipes(new ValidationPipe({ transform: true }))
 	async pagination(
@@ -116,7 +116,7 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@Permissions(PermissionsEnum.ORG_TEAM_VIEW)
+	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TEAM_VIEW)
 	@Get()
 	@UsePipes(new ValidationPipe())
 	async findAll(
@@ -131,7 +131,7 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 	 * @param id
 	 * @returns
 	 */
-	@Permissions(PermissionsEnum.ORG_TEAM_VIEW)
+	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TEAM_VIEW)
 	@Get(':id')
 	@UsePipes(new ValidationPipe())
 	async findById(
@@ -194,7 +194,7 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 	@Put(':id')
 	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async update(
-		@Param('id', UUIDValidationPipe) id: string,
+		@Param('id', UUIDValidationPipe) id: IOrganizationTeam['id'],
 		@Body() entity: UpdateOrganizationTeamDTO
 	): Promise<IOrganizationTeam> {
 		return await this.organizationTeamService.update(id, entity);
