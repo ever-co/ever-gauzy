@@ -630,7 +630,10 @@ export class PagesComponent extends TranslationBaseComponent
 						link: `/pages/organization/teams`,
 						data: {
 							translationKey: 'ORGANIZATIONS_PAGE.EDIT.TEAMS',
-							permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
+							permissionKeys: [
+								PermissionsEnum.ALL_ORG_EDIT,
+								PermissionsEnum.ORG_TEAM_VIEW
+							],
 							featureKey: FeatureEnum.FEATURE_ORGANIZATION_TEAM,
 							add: '/pages/organization/teams?openAddDialog=true'
 						}
