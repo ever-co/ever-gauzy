@@ -6,7 +6,6 @@ import { CandidateHiredCommand } from '../candidate.hired.command';
 import { EmployeeService } from './../../../employee/employee.service';
 import { UserService } from './../../../user/user.service';
 import { RoleService } from './../../../role/role.service';
-import { RequestContext } from 'core';
 
 @CommandHandler(CandidateHiredCommand)
 export class CandidateHiredHandler
