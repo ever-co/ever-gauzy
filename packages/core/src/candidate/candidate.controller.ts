@@ -25,9 +25,10 @@ import { FindOptionsWhere } from 'typeorm';
 import { CrudController, PaginationParams} from './../core/crud';
 import { CandidateService } from './candidate.service';
 import { Candidate } from './candidate.entity';
-import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
-import { BulkBodyLoadTransformPipe, ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
+import { RelationsQueryDTO } from './../shared/dto';
+import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
+import { BulkBodyLoadTransformPipe, UUIDValidationPipe } from './../shared/pipes';
 import {
 	CandidateCreateCommand,
 	CandidateBulkCreateCommand,
@@ -139,14 +140,11 @@ export class CandidateController extends CrudController<Candidate> {
 	})
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_VIEW)
 	@Get()
+	@UsePipes(new ValidationPipe({ transform: true }))
 	async findAll(
-		@Query('data', ParseJsonPipe) data: any
+		@Query() options: PaginationParams<Candidate>
 	): Promise<IPagination<ICandidate>> {
-		const { relations, findInput } = data;
-		return this.candidateService.findAll({
-			where: findInput,
-			relations
-		});
+		return await this.candidateService.findAll(options);
 	}
 
 	/**
@@ -167,14 +165,12 @@ export class CandidateController extends CrudController<Candidate> {
 	})
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_VIEW)
 	@Get(':id')
+	@UsePipes(new ValidationPipe({ transform: true }))
 	async findById(
 		@Param('id', UUIDValidationPipe) id: ICandidate['id'],
-		@Query('data', ParseJsonPipe) data?: any
+		@Query() options: RelationsQueryDTO
 	): Promise<ICandidate> {
-		const { relations = [] } = data;
-		return this.candidateService.findOneByIdString(id, {
-			relations
-		});
+		return await this.candidateService.findOneByIdString(id, options);
 	}
 
 	/**
