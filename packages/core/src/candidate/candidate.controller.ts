@@ -2,6 +2,7 @@ import {
 	Body,
 	Controller,
 	Get,
+	Headers,
 	HttpCode,
 	HttpStatus,
 	Param,
@@ -22,11 +23,10 @@ import {
 	IPagination
 } from '@gauzy/contracts';
 import { FindOptionsWhere } from 'typeorm';
-import { CrudController, PaginationParams} from './../core/crud';
+import { CrudController, OptionParams, PaginationParams} from './../core/crud';
 import { CandidateService } from './candidate.service';
 import { Candidate } from './candidate.entity';
-import { Permissions } from './../shared/decorators';
-import { RelationsQueryDTO } from './../shared/dto';
+import { LanguageDecorator, Permissions } from './../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { BulkBodyLoadTransformPipe, UUIDValidationPipe } from './../shared/pipes';
 import {
@@ -69,12 +69,18 @@ export class CandidateController extends CrudController<Candidate> {
 	@Post('/bulk')
 	async createBulk(
 		@Body(BulkBodyLoadTransformPipe, new ValidationPipe({
-			transform : true
-		})) body: CandidateBulkInputDTO,
-		@I18nLang() languageCode: LanguagesEnum
+			transform: true
+		})) entity: CandidateBulkInputDTO,
+		@LanguageDecorator() themeLanguage: LanguagesEnum,
+		@I18nLang() languageCode: LanguagesEnum,
+		@Headers('origin') originUrl: string
 	): Promise<ICandidate[]> {
 		return await this.commandBus.execute(
-			new CandidateBulkCreateCommand(body.list, languageCode)
+			new CandidateBulkCreateCommand(
+				entity.list,
+				themeLanguage || languageCode,
+				originUrl
+			)
 		);
 	}
 
@@ -168,9 +174,9 @@ export class CandidateController extends CrudController<Candidate> {
 	@UsePipes(new ValidationPipe({ transform: true }))
 	async findById(
 		@Param('id', UUIDValidationPipe) id: ICandidate['id'],
-		@Query() options: RelationsQueryDTO
+		@Query() params: OptionParams<Candidate>
 	): Promise<ICandidate> {
-		return await this.candidateService.findOneByIdString(id, options);
+		return await this.candidateService.findOneByIdString(id, params);
 	}
 
 	/**
@@ -192,10 +198,16 @@ export class CandidateController extends CrudController<Candidate> {
 	@Post()
 	@UsePipes(new ValidationPipe({ transform : true }))
 	async create(
-		@Body() entity: CreateCandidateDTO
+		@Body() entity: CreateCandidateDTO,
+		@I18nLang() languageCode: LanguagesEnum,
+		@Headers('origin') originUrl: string,
 	): Promise<ICandidate> {
 		return await this.commandBus.execute(
-			new CandidateCreateCommand(entity)
+			new CandidateCreateCommand(
+				entity,
+				languageCode,
+				originUrl
+			)
 		);
 	}
 

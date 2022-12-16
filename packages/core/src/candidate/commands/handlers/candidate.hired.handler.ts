@@ -6,7 +6,7 @@ import { CandidateHiredCommand } from '../candidate.hired.command';
 import { EmployeeService } from './../../../employee/employee.service';
 import { UserService } from './../../../user/user.service';
 import { RoleService } from './../../../role/role.service';
-import { UserOrganizationService } from './../../../user-organization/user-organization.services';
+import { RequestContext } from 'core';
 
 @CommandHandler(CandidateHiredCommand)
 export class CandidateHiredHandler
@@ -16,8 +16,7 @@ export class CandidateHiredHandler
 		private readonly candidateService: CandidateService,
 		private readonly employeeService: EmployeeService,
 		private readonly userService: UserService,
-		private readonly roleService: RoleService,
-		private readonly userOrganizationService: UserOrganizationService
+		private readonly roleService: RoleService
 	) {}
 
 	public async execute(command: CandidateHiredCommand): Promise<ICandidate> {
@@ -55,19 +54,14 @@ export class CandidateHiredHandler
 			const role: IRole = await this.roleService.findOneByWhereOptions({
 				name: RolesEnum.EMPLOYEE
 			});
-			const user = await this.userService.create({
+
+			await this.userService.create({
 				id: candidate.userId,
 				role
 			});
 
-			//3. Assign organizations to the employee user
-			await this.userOrganizationService.addUserToOrganization(
-				user,
-				employee.organizationId
-			);
-
-			//4. Convert candidate to employee user
-			//5. Update hired candidate details
+			//3. Convert candidate to employee user
+			//4. Update hired candidate details
 			return await this.candidateService.create({
 				id,
 				status: CandidateStatusEnum.HIRED,
