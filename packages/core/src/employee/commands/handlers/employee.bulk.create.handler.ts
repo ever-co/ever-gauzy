@@ -16,7 +16,7 @@ export class EmployeeBulkCreateHandler
 		command: EmployeeBulkCreateCommand
 	): Promise<IEmployee[]> {
 		try {
-			const { input, languageCode, originalUrl } = command;
+			const { input, languageCode, originUrl } = command;
 			return await Promise.all(
 				input.map(
 					async (entity: IEmployeeCreateInput) => {
@@ -24,7 +24,7 @@ export class EmployeeBulkCreateHandler
 							new EmployeeCreateCommand(
 								entity,
 								languageCode,
-								originalUrl
+								originUrl
 							)
 						);
 					}

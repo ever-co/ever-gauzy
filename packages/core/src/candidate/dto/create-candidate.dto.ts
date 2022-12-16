@@ -1,6 +1,5 @@
 import { ICandidateCreateInput, ICandidateDocument } from "@gauzy/contracts";
-import { IntersectionType } from "@nestjs/mapped-types";
-import { ApiProperty } from "@nestjs/swagger";
+import { ApiProperty, IntersectionType } from "@nestjs/swagger";
 import { Type } from "class-transformer";
 import {
     IsArray,
@@ -22,21 +21,22 @@ export class CreateCandidateDTO extends IntersectionType(
     EmploymentDTO,
     RelationalTagDTO
 ) implements ICandidateCreateInput {
-    @ApiProperty({ type: () => UserInputDTO, required: true, readOnly: true })
+
+    @ApiProperty({ type: () => UserInputDTO, required: true })
     @IsObject()
     @IsNotEmptyObject()
     @ValidateNested()
     @Type(() => UserInputDTO)
     readonly user: UserInputDTO;
 
-    @ApiProperty({ type: () => String, required: true, readOnly: true })
+    @ApiProperty({ type: () => String, required: true })
     @IsNotEmpty({ message: "Password should not be empty" })
     @MinLength(4, {
         message: 'Password should be at least 4 characters long.'
     })
     readonly password: string;
 
-    @ApiProperty({ type: () => Object, readOnly: true })
+    @ApiProperty({ type: () => Object })
     @IsOptional()
     @IsArray()
     readonly documents: ICandidateDocument[];
