@@ -23,6 +23,9 @@ export * from './lib/splash-screen/splash-screen.component';
 export * from './lib/server-dashboard/server-dashboard.component';
 export * from './lib/server-dashboard/server-dashboard.module';
 export * from './lib/electron/services';
+export * from './lib/dialogs/about/about.component';
+export * from './lib/dialogs/about/about.module';
+
 
 /**
  * Auth Module

@@ -8,9 +8,10 @@ import {
 	AfterViewInit
 } from '@angular/core';
 import { TimeTrackerService } from '../time-tracker/time-tracker.service';
-import { NbToastrService } from '@nebular/theme';
+import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { ElectronService } from '../electron/services';
 import { BehaviorSubject, Observable } from 'rxjs';
+import { AboutComponent } from '../dialogs/about/about.component';
 @Component({
 	selector: 'ngx-settings',
 	templateUrl: './settings.component.html',
@@ -76,7 +77,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 
 	thirdPartyConfig = [
 		{
-			title: 'UNLEASH_APP',
+			title: 'Unleash',
 			fields: [
 				{
 					name: 'UNLEASH_APP_NAME',
@@ -191,7 +192,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 			]
 		},
 		{
-			title: 'Linkedin',
+			title: 'LinkedIn',
 			fields: [
 				{
 					name: 'LINKEDIN_CLIENT_ID',
@@ -276,7 +277,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 			]
 		},
 		{
-			title: 'KEYCLOAK',
+			title: 'Keycloak',
 			fields: [
 				{
 					name: 'KEYCLOAK_REALM',
@@ -326,7 +327,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 
 	monitorOptionSelected = null;
 	appSetting = null;
-	periodOption = [1, 5, 10];
+	periodOption = [1, 3, 5, 10, 20];
 	selectedPeriod = 5;
 	screenshotNotification = null;
 	config = null;
@@ -373,7 +374,8 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		private electronService: ElectronService,
 		private _ngZone: NgZone,
 		private readonly timeTrackerService: TimeTrackerService,
-		private toastrService: NbToastrService
+		private toastrService: NbToastrService,
+		private _dialogService: NbDialogService,
 	) {
 		this._loading$ = new BehaviorSubject(false);
 		this._automaticUpdate$ = new BehaviorSubject(false);
@@ -549,6 +551,12 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				this._file$.next(arg);
 			})
 		} )
+
+		this.electronService.ipcRenderer.on('show_about', () => {
+			this._ngZone.run(() => {
+				this._dialogService.open(AboutComponent);
+			})
+		})
 	}
 
 	mappingAdditionalSetting(values) {

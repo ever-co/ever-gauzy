@@ -20,8 +20,12 @@ export class InviteSubscriber implements EntitySubscriberInterface<Invite> {
      */
     afterLoad(entity: Invite) {
         try {
-            entity.isExpired = entity.expireDate ? moment(entity.expireDate).isBefore(moment()) : false;
-            entity.status = entity.isExpired ? InviteStatusEnum.EXPIRED : entity.status;
+            if ('expireDate' in entity) {
+                entity.isExpired = entity.expireDate ? moment(entity.expireDate).isBefore(moment()) : false;
+            }
+            if ('status' in entity) {
+                entity.status = entity.isExpired ? InviteStatusEnum.EXPIRED : entity.status;
+            }
         } catch (error) {
             console.log(error);
         }

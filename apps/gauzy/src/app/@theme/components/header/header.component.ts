@@ -645,7 +645,7 @@ export class HeaderComponent extends TranslationBaseComponent
 			await this.timeTrackerService.checkTimerStatus({
 				organizationId,
 				tenantId,
-				source: TimeLogSourceEnum.BROWSER
+				source: TimeLogSourceEnum.WEB_TIMER
 			});
 		}
 	}

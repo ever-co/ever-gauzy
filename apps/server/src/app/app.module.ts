@@ -20,7 +20,8 @@ import {
 	SettingsModule,
 	SetupModule,
 	ServerDashboardModule,
-	ElectronService
+	ElectronService,
+	AboutModule
 } from '@gauzy/desktop-ui-lib';
 import { NbCardModule, NbButtonModule } from '@nebular/theme';
 import { RouterModule } from '@angular/router';
@@ -45,7 +46,8 @@ import { RouterModule } from '@angular/router';
 		HttpClientModule,
 		SettingsModule,
 		UpdaterModule,
-		ServerDashboardModule
+		ServerDashboardModule,
+		AboutModule
 	],
 	providers: [AppService, HttpClientModule, NbDialogService, ElectronService],
 	bootstrap: [AppComponent]
