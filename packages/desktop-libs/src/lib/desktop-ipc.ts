@@ -13,6 +13,7 @@ import NotificationDesktop from './desktop-notifier';
 import {DesktopPowerManager} from "./desktop-power-manager";
 import {PowerManagerPreventDisplaySleep, PowerManagerDetectInactivity} from "./decorators";
 import {DesktopOsInactivityHandler} from "./desktop-os-inactivity-handler";
+import { DesktopOfflineModeHandler } from './offline/desktop-offline-mode-handler';
 
 const timerHandler = new TimerHandler();
 
@@ -172,6 +173,16 @@ export function ipcTimer(
 	let powerManagerPreventSleep;
 	let powerManagerDetectInactivity;
 
+	const offlineMode = DesktopOfflineModeHandler.instance;
+
+	offlineMode.on('connection-restored', () => {
+		console.log('Api connected...');
+	});
+
+	offlineMode.on('offline', () => {
+		console.log('Offline trigger...');
+	});
+
 	ipcMain.on('start_timer', (event, arg) => {
 		powerManager = new DesktopPowerManager(timeTrackerWindow);
 		powerManagerPreventSleep = new PowerManagerPreventDisplaySleep(powerManager);
@@ -329,6 +340,7 @@ export function ipcTimer(
 	ipcMain.on('show_screenshot_notif_window', (event, arg) => {
 		const appSetting = LocalStore.getStore('appSetting');
 		const notify = new NotificationDesktop();
+		offlineMode.trigger();
 		if (appSetting) {
 			if (appSetting.simpleScreenshotNotification) {
 				notify.customNotification('Screenshot taken', 'Gauzy');
@@ -381,7 +393,6 @@ export function ipcTimer(
 			knex
 		)
 	});
-
 
 	ipcMain.on('open_setting_window', (event, arg) => {
 		const appSetting = LocalStore.getStore('appSetting');
