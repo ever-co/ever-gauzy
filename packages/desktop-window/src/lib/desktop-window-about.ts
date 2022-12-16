@@ -22,7 +22,6 @@ export function createAboutWindow(filePath) {
 	window.on('show', () => {
 		Menu.getApplicationMenu().getMenuItemById('gauzy-about').enabled =
 			false;
-			window.webContents.openDevTools()
 	});
 
 	window.on('close', (event) => {
