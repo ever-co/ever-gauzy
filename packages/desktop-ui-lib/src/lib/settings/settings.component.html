@@ -67,12 +67,12 @@
 			</div>
 			<div class="row">
 				<div class="col-12">
-					<h4>Notification</h4>
+					<h4>Notifications Settings</h4>
 				</div>
 			</div>
 			<div class="row">
 				<div class="col-12">
-					<h6>Desktop Notification</h6>
+					<h6>Desktop Notifications</h6>
 				</div>
 			</div>
 			<div class="row">
@@ -84,21 +84,41 @@
 				<div class="col-10">
 					<nb-card>
 						<nb-card-body>
-							<nb-toggle [(ngModel)]="screenshotNotification"
-								(ngModelChange)="toggleNotificationChange($event)" status="basic"> Detailled
-								Notification
-							</nb-toggle>
-							<nb-toggle [checked]="!screenshotNotification"
-								(checkedChange)="toggleSimpleNotificationChange($event)" status="basic"> Simple
-								Notification
-							</nb-toggle>
+							<div class="row d-flex flex-column">
+								<div class="col-7">
+									<nb-toggle [(ngModel)]="screenshotNotification"
+										(ngModelChange)="toggleNotificationChange($event)" status="basic"> Detailed
+										Notification
+									</nb-toggle>
+								</div>
+								<div class="col-7">
+									<small>Show notification with captured image</small>
+								</div>
+								<div class="col-7">
+									<img width="100%" src="./assets/images/logos/screenshot_detailed.png" />
+								</div>
+							</div>
+							<div class="row mt-2 d-flex flex-column">
+								<div class="col-7">
+									<nb-toggle [checked]="!screenshotNotification"
+										(checkedChange)="toggleSimpleNotificationChange($event)" status="basic"> Simple
+										Notification
+									</nb-toggle>
+								</div>
+								<div class="col-7">
+									<small>Show native OS notification</small>
+								</div>
+								<div class="col-7">
+									<img width="100%" src="./assets/images/logos/screenshot_simple.png" />
+								</div>
+							</div>
 						</nb-card-body>
 					</nb-card>
 				</div>
 			</div>
-			<div class="row">
+			<div class="row mt-2">
 				<div class="col-12">
-					<h6>Sound Notification</h6>
+					<h6>Sound Notifications</h6>
 				</div>
 			</div>
 			<div class="row">
@@ -136,7 +156,8 @@
 						<nb-card-body>
 							<nb-select class="mb-3" placeholder="Select Period" [(ngModel)]="selectedPeriod"
 								(ngModelChange)="selectPeriod($event)" [disabled]="appSetting?.timerStarted">
-								<nb-option *ngFor="let item of periodOption" [value]="item">{{ item }}Minute
+								<nb-option *ngFor="let item of periodOption" [value]="item">{{ item }} Minute<span
+										*ngIf="item > 1">s</span>
 								</nb-option>
 							</nb-select>
 							<nb-toggle [(ngModel)]="appSetting.randomScreenshotTime"
@@ -220,11 +241,13 @@
 							<nb-card-body>
 								<nb-toggle [checked]="(updaterServer$ | async)?.github"
 									(checkedChange)="toggleGithubDefaultServer($event)" status="basic"
-									[disabled]="appSetting?.timerStarted || showProgressBar"><i class="fa-brands fa-github-alt"></i> Github
+									[disabled]="appSetting?.timerStarted || showProgressBar"><i
+										class="fa-brands fa-github-alt"></i> Github
 								</nb-toggle>
 								<nb-toggle [checked]="(updaterServer$ | async)?.digitalOcean"
 									(checkedChange)="toggleDigitalOceanDefaultServer($event)" status="basic"
-									[disabled]="appSetting?.timerStarted || showProgressBar"><i class="fa-brands fa-digital-ocean"></i> Digital Ocean
+									[disabled]="appSetting?.timerStarted || showProgressBar"><i
+										class="fa-brands fa-digital-ocean"></i> Digital Ocean
 								</nb-toggle>
 							</nb-card-body>
 						</nb-card>
@@ -241,24 +264,29 @@
 							<nb-card-body>
 								<nb-toggle [checked]="(updaterServer$ | async)?.local"
 									(checkedChange)="toggleLocalServer($event)" status="basic"
-									[disabled]="appSetting?.timerStarted || showProgressBar"><i class="fas fa-server"></i> Local Server
+									[disabled]="appSetting?.timerStarted || showProgressBar"><i
+										class="fas fa-server"></i> Local Server
 								</nb-toggle>
 							</nb-card-body>
 						</nb-card>
 					</div>
-					<div *ngIf="(updaterServer$ | async)?.local" class="col-5 d-flex align-items-center justify-content-center">
+					<div *ngIf="(updaterServer$ | async)?.local"
+						class="col-5 d-flex align-items-center justify-content-center">
 						<div class="row">
 							<div class="col-12">
 								<p>
-									Directory selected should contains definitely the <strong>latest.yml</strong> and/or <strong>latest-mac.yml</strong> manifest in order to make update validation
+									Directory selected should contains definitely the <strong>latest.yml</strong> and/or
+									<strong>latest-mac.yml</strong> manifest in order to make update validation
 								</p>
 							</div>
 							<div class="col-12 w-100 file d-flex align-items-center">
-								<button nbButton [disabled]="appSetting?.timerStarted || showProgressBar" size="small" (click)="selectDirectory()">
+								<button nbButton [disabled]="appSetting?.timerStarted || showProgressBar" size="small"
+									(click)="selectDirectory()">
 									<nb-icon icon="folder-outline"></nb-icon>
 									Files
 								</button>
-								<div class="file-uri" [nbTooltip]="(file$ | async)?.uri">{{ (file$ | async)?.uri }}</div>
+								<div class="file-uri" [nbTooltip]="(file$ | async)?.uri">{{ (file$ | async)?.uri }}
+								</div>
 							</div>
 						</div>
 					</div>
@@ -275,8 +303,8 @@
 				</div>
 				<div class="row update-setting center-content">
 					<div class="col-12 button-update" *ngIf="!downloadFinish">
-						<button *ngIf="!(notAvailable$ | async)" nbButton [disabled]="loading$ | async" status="primary" class="button-big"
-							(click)=" checkForUpdate()">
+						<button *ngIf="!(notAvailable$ | async)" nbButton [disabled]="loading$ | async" status="primary"
+							class="button-big" (click)=" checkForUpdate()">
 							Check Update
 							<nb-icon icon="sync-outline" [class]="
 															(loading$ | async)
@@ -284,8 +312,8 @@
 																: 'icon-medium'
 														"></nb-icon>
 						</button>
-						<button *ngIf="notAvailable$ | async" nbButton [disabled]="loading$ | async" status="primary" class="button-big"
-							(click)="downloadNow()">
+						<button *ngIf="notAvailable$ | async" nbButton [disabled]="loading$ | async" status="primary"
+							class="button-big" (click)="downloadNow()">
 							Download Now
 							<nb-icon [icon]="(loading$ | async) ? 'loader-outline' : 'cloud-download-outline'" [class]="
 															(loading$ | async)
@@ -513,10 +541,10 @@
 											</div>
 											<div class="col-12" *ngFor="let field of item.fields">
 												<div class="row">
-													<div class="col-5 centered-text" *ngIf="config.isLocalServer">
+													<div class="col-5 centered-text">
 														<p>{{field.name.replaceAll('_', ' ')}}</p>
 													</div>
-													<div class="col-7 form-group" *ngIf="config.isLocalServer">
+													<div class="col-7 form-group">
 														<input [(ngModel)]="field.value" type="text" nbInput fullWidth
 															[disabled]="appSetting?.timerStarted" status="basic" />
 													</div>

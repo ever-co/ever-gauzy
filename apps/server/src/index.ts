@@ -108,7 +108,8 @@ const runMainWindow = () => {
 		null,
 		null,
 		pathWindow,
-		serverWindow
+		serverWindow,
+		false
 	);
 	const menuWindowSetting = Menu.getApplicationMenu().getMenuItemById(
 		'window-setting'

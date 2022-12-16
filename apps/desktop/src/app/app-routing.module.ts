@@ -6,7 +6,8 @@ import {
 	ScreenCaptureComponent,
 	TimeTrackerComponent,
 	SetupComponent,
-	UpdaterComponent
+	UpdaterComponent,
+	AboutComponent
 } from '@gauzy/desktop-ui-lib';
 
 const routes: Routes = [
@@ -37,6 +38,10 @@ const routes: Routes = [
 	{
 		path: 'viewer',
 		component: ImageViewerComponent
+	},
+	{
+		path: 'about',
+		component: AboutComponent
 	}
 ];
 
