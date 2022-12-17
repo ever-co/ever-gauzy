@@ -47,7 +47,7 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	logType: string;
 
 	@ApiProperty({ type: () => String, enum: TimeLogSourceEnum })
-	@Column({ default: TimeLogSourceEnum.BROWSER })
+	@Column({ default: TimeLogSourceEnum.WEB_TIMER })
 	source?: string;
 
 	@ApiProperty({ type: () => String })

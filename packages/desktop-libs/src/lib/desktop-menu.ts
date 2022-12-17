@@ -1,7 +1,7 @@
-import { Menu, shell } from 'electron';
+import { BrowserWindow, Menu, shell } from 'electron';
 import { LocalStore } from './desktop-store';
 import { TimerData } from './desktop-timer-activity';
-import { createSettingsWindow } from '@gauzy/desktop-window';
+import { createSettingsWindow, createAboutWindow } from '@gauzy/desktop-window';
 export class AppMenu {
 	constructor(
 		timeTrackerWindow,
@@ -12,11 +12,22 @@ export class AppMenu {
 		serverWindow?,
 		isZoomVisible?
 	) {
+		const isZoomEnabled = isZoomVisible;
 		const menu = Menu.buildFromTemplate([
 			{
 				label: 'Gauzy',
 				submenu: [
-					{ role: 'about', label: 'About' },
+					{
+						id: 'gauzy-about',
+						label: 'About',
+						enabled: true,
+						click() {
+							const window: BrowserWindow = createAboutWindow(
+								windowPath.timeTrackerUi
+							);
+							window.show();
+						}
+					},
 					{ type: 'separator' },
 					{
 						label: 'Check For Update',
@@ -32,7 +43,10 @@ export class AppMenu {
 								settingsWindow.webContents.send('goto_update');
 							}, 100);
 							setTimeout(() => {
-								settingsWindow.webContents.send('app_setting', LocalStore.getApplicationConfig());
+								settingsWindow.webContents.send(
+									'app_setting',
+									LocalStore.getApplicationConfig()
+								);
 							}, 500);
 						}
 					},
@@ -53,16 +67,22 @@ export class AppMenu {
 						click() {
 							timeTrackerWindow.show();
 							setTimeout(async () => {
-								const [ lastTime ] = await TimerData.getLastCaptureTimeSlot(
-									knex,
-									LocalStore.beforeRequestParams()
+								const [lastTime] =
+									await TimerData.getLastCaptureTimeSlot(
+										knex,
+										LocalStore.beforeRequestParams()
+									);
+								console.log(
+									'Last Capture Time (Desktop Menu):',
+									lastTime
 								);
-								console.log('Last Capture Time (Desktop Menu):', lastTime);
 								timeTrackerWindow.webContents.send(
 									'timer_tracker_show',
 									{
 										...LocalStore.beforeRequestParams(),
-										timeSlotId: lastTime ? lastTime.timeSlotId : null
+										timeSlotId: lastTime
+											? lastTime.timeSlotId
+											: null
 									}
 								);
 							}, 1000);
@@ -81,9 +101,14 @@ export class AppMenu {
 							}
 							settingsWindow.show();
 							setTimeout(() => {
-								settingsWindow.webContents.send('app_setting', LocalStore.getApplicationConfig());
 								settingsWindow.webContents.send(
-									timeTrackerWindow ? 'goto_top_menu' : 'goto_update'
+									'app_setting',
+									LocalStore.getApplicationConfig()
+								);
+								settingsWindow.webContents.send(
+									timeTrackerWindow
+										? 'goto_top_menu'
+										: 'goto_update'
 								);
 							}, 500);
 						}
@@ -96,24 +121,26 @@ export class AppMenu {
 						role: 'zoomIn',
 						accelerator: 'CmdOrCtrl+Plus',
 						visible: isZoomVisible,
+						enabled: isZoomEnabled
 					},
 					{
 						label: 'Zoom Out',
 						role: 'zoomOut',
 						accelerator: 'CmdOrCtrl+-',
 						visible: isZoomVisible,
+						enabled: isZoomEnabled
 					}
 				]
 			},
 			{
 				label: 'Edit',
 				submenu: [
-				  { role: 'cut' },
-				  { role: 'copy' },
-				  { role: 'paste' },
-				  { role: 'selectAll'}
+					{ role: 'cut' },
+					{ role: 'copy' },
+					{ role: 'paste' },
+					{ role: 'selectAll' }
 				]
-			  },
+			},
 			{
 				label: 'Help',
 				submenu: [
@@ -143,7 +170,8 @@ export class AppMenu {
 						enabled: true,
 						visible: timeTrackerWindow ? true : false,
 						click() {
-							if (timeTrackerWindow) timeTrackerWindow.webContents.toggleDevTools();
+							if (timeTrackerWindow)
+								timeTrackerWindow.webContents.toggleDevTools();
 						}
 					},
 					{
@@ -152,7 +180,8 @@ export class AppMenu {
 						enabled: true,
 						visible: serverWindow ? true : false,
 						click() {
-							if (serverWindow) serverWindow.webContents.toggleDevTools();
+							if (serverWindow)
+								serverWindow.webContents.toggleDevTools();
 						}
 					}
 				]

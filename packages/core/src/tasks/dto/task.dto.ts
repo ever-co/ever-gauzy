@@ -23,6 +23,7 @@ export class TaskDTO extends TenantOrganizationBaseDTO {
     readonly title: string;
 
     @ApiProperty({ type: () => String })
+    @IsNotEmpty()
     @IsString()
     readonly status: TaskStatusEnum;
 

@@ -6,98 +6,116 @@ import {
 	ICandidate,
 	ICandidateUpdateInput,
 	CandidateStatusEnum,
-	IBasePerTenantAndOrganizationEntityModel
+	IBasePerTenantAndOrganizationEntityModel,
+	IPagination
 } from '@gauzy/contracts';
-import { Observable } from 'rxjs';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, Observable } from 'rxjs';
+import { toParams } from '@gauzy/common-angular';
 import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable()
 export class CandidatesService {
-	constructor(private http: HttpClient) { }
+
+	constructor(
+		private readonly http: HttpClient
+	) {}
 
 	getAll(
-		relations?: string[],
-		findInput?: ICandidateFindInput
-	): Observable<{ items: ICandidate[]; total: number }> {
-		const data = JSON.stringify({ relations, findInput });
-		return this.http.get<{ items: ICandidate[]; total: number }>(
-			`${API_PREFIX}/candidate`,
-			{
-				params: { data }
-			}
-		);
+		relations: string[] = [],
+		where: ICandidateFindInput
+	): Observable<IPagination<ICandidate>> {
+		return this.http.get<IPagination<ICandidate>>(`${API_PREFIX}/candidate`, {
+			params: toParams({ where, relations })
+		});
 	}
 
 	getCandidateById(
-		id: string,
-		relations?: string[],
-		findInput?: ICandidateFindInput
+		id: ICandidate['id'],
+		relations: string[] = [],
+		where?: ICandidateFindInput
 	): Promise<ICandidate> {
-		const data = JSON.stringify({ relations, findInput });
 		return firstValueFrom(
-			this.http
-				.get<ICandidate>(`${API_PREFIX}/candidate/${id}`, {
-					params: { data }
-				})
+			this.http.get<ICandidate>(`${API_PREFIX}/candidate/${id}`, {
+				params: toParams({ where, relations })
+			})
 		);
 	}
 
-	delete(id: string): Promise<ICandidate> {
+	delete(id: ICandidate['id']): Promise<ICandidate> {
 		return firstValueFrom(
-			this.http
-				.delete<ICandidate>(`${API_PREFIX}/candidate/${id}`)
+			this.http.delete<ICandidate>(`${API_PREFIX}/candidate/${id}`)
 		);
 	}
 
-	update(id: string, updateInput: ICandidateUpdateInput): Promise<any> {
-		return firstValueFrom(this.http
-			.put(`${API_PREFIX}/candidate/${id}`, updateInput)
-		);
-	}
-
-	create(createInput: ICandidateCreateInput): Observable<ICandidate> {
-		return this.http.post<ICandidate>(
-			`${API_PREFIX}/candidate`,
-			createInput
-		);
-	}
-
-	createBulk(createInput: ICandidateCreateInput[]): Observable<ICandidate[]> {
-		return this.http.post<ICandidate[]>(
-			`${API_PREFIX}/candidate/bulk`,
-			createInput
-		);
-	}
-
-	setCandidateAsArchived(id: string, baseEntity: IBasePerTenantAndOrganizationEntityModel): Promise<ICandidate> {
+	update(id: ICandidate['id'], body: ICandidateUpdateInput): Promise<ICandidate> {
 		return firstValueFrom(
-			this.http
-				.put<ICandidate>(`${API_PREFIX}/candidate/${id}`, {
-					isArchived: true,
-					...baseEntity
-				})
+			this.http.put<ICandidate>(`${API_PREFIX}/candidate/${id}`,
+			body
+		));
+	}
+
+	create(body: ICandidateCreateInput): Observable<ICandidate> {
+		return this.http.post<ICandidate>(`${API_PREFIX}/candidate`, body);
+	}
+
+	createBulk(body: ICandidateCreateInput[]): Observable<ICandidate[]> {
+		return this.http.post<ICandidate[]>(`${API_PREFIX}/candidate/bulk`, body);
+	}
+
+	/**
+	 * Set candidate as archived
+	 *
+	 * @param id
+	 * @param body
+	 * @returns
+	 */
+	setCandidateAsArchived(
+		id: ICandidate['id'],
+		body: IBasePerTenantAndOrganizationEntityModel
+	): Promise<ICandidate> {
+		return firstValueFrom(
+			this.http.put<ICandidate>(`${API_PREFIX}/candidate/${id}`, {
+				isArchived: true,
+				...body
+			})
 		);
 	}
 
-	setCandidateAsHired(id: string): Promise<ICandidate> {
+	/**
+	 * Set candidate hired as employee
+	 *
+	 * @param id
+	 * @returns
+	 */
+	setCandidateAsHired(id: ICandidate['id']): Promise<ICandidate> {
 		return firstValueFrom(
 			this.http.put<ICandidate>(`${API_PREFIX}/candidate/${id}/hired`, {})
 		);
 	}
 
-	setCandidateAsRejected(id: string): Promise<ICandidate> {
+	/**
+	 * Set candidate as rejected application
+	 *
+	 * @param id
+	 * @returns
+	 */
+	setCandidateAsRejected(id: ICandidate['id']): Promise<ICandidate> {
 		return firstValueFrom(
 			this.http.put<ICandidate>(`${API_PREFIX}/candidate/${id}/rejected`, {})
 		);
 	}
 
-	setCandidateAsApplied(id: string): Promise<ICandidate> {
+	/**
+	 * Set candidate as applied application
+	 *
+	 * @param id
+	 * @returns
+	 */
+	setCandidateAsApplied(id: ICandidate['id']): Promise<ICandidate> {
 		return firstValueFrom(
-			this.http
-				.put<ICandidate>(`${API_PREFIX}/candidate/${id}`, {
-					status: CandidateStatusEnum.APPLIED
-				})
+			this.http.put<ICandidate>(`${API_PREFIX}/candidate/${id}`, {
+				status: CandidateStatusEnum.APPLIED
+			})
 		);
 	}
 }

@@ -155,3 +155,13 @@ export function chunks(items: any[], size: number): any[] {
 	}
 	return chunks;
 }
+
+/**
+ * string should be converted to a boolean
+ *
+ * @param val
+ * @returns
+ */
+export function parseToBoolean(val: string | boolean): boolean {
+	return typeof val === 'string' ? JSON.parse(val) : val;
+}

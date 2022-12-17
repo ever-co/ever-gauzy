@@ -30,7 +30,7 @@ export function createInitialTimerState(): TimerState {
 		organizationContactId: null,
 		description: '',
 		logType: TimeLogType.TRACKED,
-		source: TimeLogSourceEnum.BROWSER,
+		source: TimeLogSourceEnum.WEB_TIMER,
 		tags: []
 	};
 	try {

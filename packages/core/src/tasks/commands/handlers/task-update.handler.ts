@@ -10,22 +10,25 @@ export class TaskUpdateHandler implements ICommandHandler<TaskUpdateCommand> {
 	) {}
 
 	public async execute(command: TaskUpdateCommand): Promise<ITask> {
-		const { input } = command;
-		const { id } = input;
-		return await this.updateTask(id, input);
+		const { id, input } = command;
+		return await this.update(id, input);
 	}
 
-	/*
-	 * Update task if already integrated
+	/**
+	 * Update task, if already exist
+	 *
+	 * @param id
+	 * @param request
+	 * @returns
 	 */
-	public async updateTask(
+	public async update(
 		id: string,
 		request: ITaskUpdateInput
 	): Promise<ITask> {
 		try {
 			return await this._taskService.create({
-				id,
 				...request,
+				id
 			});
 		} catch (error) {
 			console.log('Error while updating task', error);

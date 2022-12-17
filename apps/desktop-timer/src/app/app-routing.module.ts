@@ -8,7 +8,8 @@ import {
 	SetupComponent,
 	UpdaterComponent,
 	SplashScreenComponent,
-	NgxLoginComponent
+	NgxLoginComponent,
+	AboutComponent
 } from '@gauzy/desktop-ui-lib';
 import {
 	NbAuthComponent,
@@ -84,6 +85,10 @@ const routes: Routes = [
 		path: '',
 		component: TimeTrackerComponent,
 		canActivate: [AppModuleGuard, AuthGuard]
+	},
+	{
+		path: 'about',
+		component: AboutComponent
 	}
 ];
 

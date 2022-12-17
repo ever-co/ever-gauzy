@@ -13,8 +13,8 @@ export const TimeLogsLabel = {
 		status: 'info',
 		text: TimeLogType.RESUMED
 	},
-	[TimeLogType.IDEAL]: {
+	[TimeLogType.IDLE]: {
 		status: 'primary',
-		text: TimeLogType.IDEAL
+		text: TimeLogType.IDLE
 	}
 };

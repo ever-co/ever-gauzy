@@ -1,4 +1,4 @@
-import { EntitySubscriberInterface, EventSubscriber } from "typeorm";
+import { EntitySubscriberInterface, EventSubscriber, LoadEvent } from "typeorm";
 import { FileStorage } from "./../../core/file-storage";
 import { ImportHistory } from "./import-history.entity";
 
@@ -13,11 +13,18 @@ export class ImportHistorySubscriber implements EntitySubscriberInterface<Import
     }
 
     /**
-    * Called after entity is loaded.
-    */
-    afterLoad(entity: ImportHistory | Partial<ImportHistory>) {
-        if (entity instanceof ImportHistory) {
-            entity.fullUrl = new FileStorage().getProvider().url(entity.path);
+     * Called after entity is loaded from the database.
+     *
+     * @param entity
+     * @param event
+     */
+    afterLoad(entity: ImportHistory, event?: LoadEvent<ImportHistory>): void | Promise<any> {
+        try {
+            if (entity instanceof ImportHistory) {
+                entity.fullUrl = new FileStorage().getProvider().url(entity.path);
+            }
+        } catch (error) {
+            console.log(error);
         }
-	}
+    }
 }

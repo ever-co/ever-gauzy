@@ -1,8 +1,8 @@
 
-import { IManualTimeInput, TimeLogSourceEnum, TimeLogType } from "@gauzy/contracts";
 import { ApiProperty } from "@nestjs/swagger";
 import { Transform, TransformFnParams } from "class-transformer";
 import { IsEnum } from "class-validator";
+import { IManualTimeInput, TimeLogSourceEnum, TimeLogType } from "@gauzy/contracts";
 import { ManualTimeLogDTO } from "./manual-time-log.dto";
 
 export class CreateManualTimeLogDTO extends ManualTimeLogDTO implements IManualTimeInput {
@@ -13,7 +13,7 @@ export class CreateManualTimeLogDTO extends ManualTimeLogDTO implements IManualT
     logType: TimeLogType;
 
     @ApiProperty({ type: () => String, enum: TimeLogSourceEnum })
-    @Transform((params: TransformFnParams) => TimeLogSourceEnum.BROWSER)
+    @Transform((params: TransformFnParams) => TimeLogSourceEnum.WEB_TIMER)
     @IsEnum(TimeLogSourceEnum)
     source: TimeLogSourceEnum;
 }

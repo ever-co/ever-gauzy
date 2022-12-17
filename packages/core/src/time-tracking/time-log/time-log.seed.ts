@@ -83,7 +83,7 @@ export const createRandomTimeLogs = async (
 						let logType: TimeLogType = TimeLogType.TRACKED;
 						if (
 							source === TimeLogSourceEnum.WEB_TIMER ||
-							source === TimeLogSourceEnum.BROWSER
+							source === TimeLogSourceEnum.BROWSER_EXTENSION
 						) {
 							logType = TimeLogType.MANUAL;
 						}

@@ -66,15 +66,15 @@ export class InviteAcceptHandler
 					user = await this.commandBus.execute(
 						new InviteAcceptEmployeeCommand(input, languageCode)
 					);
-					return this._authorizeUser(user);
+					return await this._authorizeUser(user);
 				default:
 					user = await this.commandBus.execute(
 						new InviteAcceptUserCommand(input, languageCode)
 					);
-					return this._authorizeUser(user);
+					return await this._authorizeUser(user);
 			}
 		} catch (error) {
-			throw new BadRequestException();
+			throw new BadRequestException(error);
 		}
 	}
 

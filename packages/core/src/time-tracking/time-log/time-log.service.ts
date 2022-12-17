@@ -128,16 +128,32 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 					time_slot: 'time_log.timeSlots'
 				}
 			},
+			select: {
+				id: true,
+				employeeId: true,
+				startedAt: true,
+				stoppedAt: true,
+				employee: {
+					id: true,
+					user: {
+						id: true,
+						firstName: true,
+						lastName: true,
+						email: true,
+						imageUrl: true
+					}
+				},
+				timeSlots: {
+					id: true,
+					overall: true,
+					duration: true
+				}
+			},
 			relations: {
 				timeSlots: true,
-				...(
-					RequestContext.hasPermission(
-						PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-					) ? {
-						employee: {
-							user: true
-						}
-					} : {})
+				employee: {
+					user: true
+				}
 			},
 			order: {
 				startedAt: 'ASC'
@@ -245,7 +261,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 						return iteratee + log.duration;
 					}, 0);
 				const ideal = logs
-					.filter((log) => log.logType === TimeLogType.IDEAL)
+					.filter((log) => log.logType === TimeLogType.IDLE)
 					.reduce((iteratee: any, log: any) => {
 						return iteratee + log.duration;
 					}, 0);
@@ -263,7 +279,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 						[TimeLogType.MANUAL]: parseFloat(
 							(manual / 3600).toFixed(1)
 						),
-						[TimeLogType.IDEAL]: parseFloat(
+						[TimeLogType.IDLE]: parseFloat(
 							(ideal / 3600).toFixed(1)
 						),
 						[TimeLogType.RESUMED]: parseFloat(
@@ -283,7 +299,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 					value: {
 						[TimeLogType.TRACKED]: 0,
 						[TimeLogType.MANUAL]: 0,
-						[TimeLogType.IDEAL]: 0,
+						[TimeLogType.IDLE]: 0,
 						[TimeLogType.RESUMED]: 0
 					}
 				};
@@ -305,6 +321,46 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 					time_slot: 'time_log.timeSlots'
 				}
 			},
+			select: {
+				id: true,
+				employeeId: true,
+				startedAt: true,
+				stoppedAt: true,
+				project: {
+					id: true,
+					name: true,
+					imageUrl: true,
+					membersCount: true,
+					organizationContact: {
+						id: true,
+						name: true,
+						imageUrl: true
+					}
+				},
+				task: {
+					id: true,
+					title: true
+				},
+				timeSlots: {
+					id: true,
+					overall: true,
+					duration: true
+				},
+				organizationContact: {
+					id: true,
+					name: true,
+					imageUrl: true
+				},
+				employee: {
+					id: true,
+					user: {
+						id: true,
+						firstName: true,
+						lastName: true,
+						imageUrl: true
+					}
+				},
+			},
 			relations: {
 				project: {
 					organizationContact: true
@@ -312,14 +368,9 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				task: true,
 				timeSlots: true,
 				organizationContact: true,
-				...(
-					RequestContext.hasPermission(
-						PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-					) ? {
-						employee: {
-							user: true
-						}
-					} : {})
+				employee: {
+					user: true
+				}
 			},
 			order: {
 				startedAt: 'ASC'

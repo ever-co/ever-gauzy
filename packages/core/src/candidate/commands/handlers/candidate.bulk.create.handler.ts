@@ -1,57 +1,37 @@
-import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import {
-	ICandidate,
-	ICandidateCreateInput,
-	LanguagesEnum
-} from '@gauzy/contracts';
-import { AuthService } from '../../../auth/auth.service';
-import { EmailService } from '../../../email';
+import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { BadRequestException } from '@nestjs/common';
+import { ICandidate, ICandidateCreateInput } from '@gauzy/contracts';
 import { CandidateBulkCreateCommand } from '../candidate.bulk.create.command';
-import { CandidateService } from '../../candidate.service';
+import { CandidateCreateCommand } from '../candidate.create.command';
 
 @CommandHandler(CandidateBulkCreateCommand)
 export class CandidateBulkCreateHandler
 	implements ICommandHandler<CandidateBulkCreateCommand> {
+
 	constructor(
-		private readonly candidateService: CandidateService,
-		private readonly authService: AuthService,
-		private readonly emailService: EmailService
+		private readonly _commandBus: CommandBus
 	) {}
 
 	public async execute(
 		command: CandidateBulkCreateCommand
 	): Promise<ICandidate[]> {
-		const { input, languageCode } = command;
-		const inputWithHash = await this._loadPasswordHash(input);
-
-		const createdCandidates = await this.candidateService.createBulk(
-			inputWithHash
-		);
-		this._sendWelcomeEmail(createdCandidates, languageCode);
-
-		return createdCandidates;
-	}
-
-	private _sendWelcomeEmail(
-		candidates: ICandidate[],
-		languageCode: LanguagesEnum
-	) {
-		candidates.forEach((candidate) =>
-			this.emailService.welcomeUser(
-				candidate.user,
-				languageCode,
-				candidate.organization.id
-			)
-		);
-	}
-
-	private async _loadPasswordHash(input: ICandidateCreateInput[]) {
-		const mappedInput = input.map(async (entity) => {
-			entity.user.hash = await this.authService.getPasswordHash(
-				entity.password
+		try {
+			const { input, languageCode, originUrl } = command;
+			return await Promise.all(
+				input.map(
+					async (entity: ICandidateCreateInput) => {
+						return await this._commandBus.execute(
+							new CandidateCreateCommand(
+								entity,
+								languageCode,
+								originUrl
+							)
+						);
+					}
+				)
 			);
-			return entity;
-		});
-		return Promise.all(mappedInput);
+		} catch (error) {
+			throw new BadRequestException(error);
+		}
 	}
 }

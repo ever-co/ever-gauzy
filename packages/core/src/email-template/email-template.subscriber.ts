@@ -1,5 +1,4 @@
-import { EntitySubscriberInterface, EventSubscriber } from "typeorm";
-import { IEmailTemplate } from "@gauzy/contracts";
+import { EntitySubscriberInterface, EventSubscriber, LoadEvent } from "typeorm";
 import { EmailTemplate } from "./email-template.entity";
 
 @EventSubscriber()
@@ -13,11 +12,18 @@ export class EmailTemplateSubscriber implements EntitySubscriberInterface<EmailT
     }
 
     /**
-    * Called after entity is loaded.
-    */
-    afterLoad(entity: IEmailTemplate) {
-        if (entity.name) {
-            entity.title = entity.name.split('/')[0].split('-').join(' ');
+     * Called after entity is loaded from the database.
+     *
+     * @param entity
+     * @param event
+     */
+    afterLoad(entity: EmailTemplate, event?: LoadEvent<EmailTemplate>): void | Promise<any> {
+        try {
+            if (entity.name) {
+                entity.title = entity.name.split('/')[0].split('-').join(' ');
+            }
+        } catch (error) {
+            console.log(error);
         }
     }
 }

@@ -14,19 +14,25 @@ export class InvoiceSubscriber implements EntitySubscriberInterface<Invoice> {
     }
 
     /**
-     * Called after invoice insertion.
+     * Called after entity is inserted to the database.
+     *
+     * @param event
      */
     afterInsert(event: InsertEvent<Invoice>): void | Promise<any> {
-        if (event.entity) {
-            const { entity } = event;
-            const payload = {
-				id: entity.id,
-				organizationId: entity.organizationId,
-				tenantId: entity.tenantId
-			}
-            event.manager.update(Invoice, entity.id, {
-                token: this.createToken(payload)
-            });
+        try {
+            if (event.entity) {
+                const { entity } = event;
+                const payload = {
+                    id: entity.id,
+                    organizationId: entity.organizationId,
+                    tenantId: entity.tenantId
+                }
+                event.manager.update(Invoice, entity.id, {
+                    token: this.createToken(payload)
+                });
+            }
+        } catch (error) {
+            console.log(error);
         }
     }
 
