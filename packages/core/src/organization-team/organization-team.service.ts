@@ -166,64 +166,19 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 		} catch (e) {}
 
 		if (role.name === RolesEnum.ADMIN || role.name === RolesEnum.SUPER_ADMIN) {
-			if (params && params.where && params.where.employeeId) {
-				const employeeId = params.where.employeeId;
-				return await this.getMyOrgTeams(
-					{
-						where: {
-							...(
-								(params.where.organizationId) ? {
-									organizationId: params.where.organizationId
-								} : {}
-							),
-							tenantId: RequestContext.currentTenantId()
-						},
-						...(
-							(params.relations) ? {
-								relations: params.relations
-							} : {}
-						)
-					},
-					employeeId
-				);
+			const { where } = params;
+			if ('employeeId' in where) {
+				const employeeId = where.employeeId;
+				delete params.where.employeeId;
+
+				return await this.getMyOrgTeams(params, employeeId);
 			} else {
-				return await this.findAll({
-					where: {
-						...(
-							(params && params.where) ? {
-								organizationId: params.where.organizationId
-							} : {}
-						),
-						tenantId: RequestContext.currentTenantId()
-					},
-					...(
-						(params && params.relations) ? {
-							relations: params.relations
-						} : {}
-					)
-				});
+				return await this.findAll(params);
 			}
 		} else {
 			const employeeId = RequestContext.currentEmployeeId();
 			if (employeeId) {
-				return await this.getMyOrgTeams(
-					{
-						where: {
-							...(
-								(params && params.where) ? {
-									organizationId: params.where.organizationId
-								} : {}
-							),
-							tenantId: RequestContext.currentTenantId()
-						},
-						...(
-							(params && params.relations) ? {
-								relations: params.relations
-							} : {}
-						)
-					},
-					employeeId
-				);
+				return await this.getMyOrgTeams(params, employeeId);
 			}
 		}
 		throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
