@@ -18,7 +18,7 @@ import { QueryBus } from '@nestjs/cqrs';
 import { FindOptionsWhere } from 'typeorm';
 import { CrudController, PaginationParams } from './../core/crud';
 import { TenantPermissionGuard, PermissionGuard } from './../shared/guards';
-import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
+import { UUIDValidationPipe } from './../shared/pipes';
 import { Permissions } from './../shared/decorators';
 import { GetOrganizationTeamStatisticQuery } from './queries';
 import { CreateOrganizationTeamDTO, OrganizationTeamStatisticDTO, UpdateOrganizationTeamDTO } from './dto';
