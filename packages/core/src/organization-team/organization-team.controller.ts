@@ -58,15 +58,11 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 	})
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TEAM_VIEW)
 	@Get('me')
+	@UsePipes(new ValidationPipe())
 	async findMyTeams(
-		@Query('data', ParseJsonPipe) data: any
+		@Query() params: PaginationParams<OrganizationTeam>
 	): Promise<IPagination<IOrganizationTeam>> {
-		const { relations, findInput, employeeId } = data;
-		return await this.organizationTeamService.findMyTeams(
-			relations,
-			findInput,
-			employeeId
-		);
+		return await this.organizationTeamService.findMyTeams(params);
 	}
 
 	/**
