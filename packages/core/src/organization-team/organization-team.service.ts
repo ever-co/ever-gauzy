@@ -11,15 +11,17 @@ import {
 	IOrganizationTeam,
 	RolesEnum,
 	IPagination,
-	IOrganizationTeamUpdateInput
+	IOrganizationTeamUpdateInput,
+	IRole,
+	IEmployee
 } from '@gauzy/contracts';
+import { isNotEmpty } from '@gauzy/common';
 import { Employee } from '../employee/employee.entity';
 import { OrganizationTeam } from './organization-team.entity';
 import { OrganizationTeamEmployee } from '../organization-team-employee/organization-team-employee.entity';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
 import { RoleService } from '../role/role.service';
-import { EmployeeService } from '../employee/employee.service';
 import { OrganizationTeamEmployeeService } from '../organization-team-employee/organization-team-employee.service';
 
 @Injectable()
@@ -30,8 +32,6 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 
 		@InjectRepository(Employee)
 		private readonly employeeRepository: Repository<Employee>,
-
-		private readonly employeeService: EmployeeService,
 		private readonly roleService: RoleService,
 		private readonly organizationTeamEmployeeService: OrganizationTeamEmployeeService
 	) {
@@ -135,79 +135,53 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 
 	async getMyOrgTeams(
 		filter: FindManyOptions<OrganizationTeam>,
-		employeeId
+		employeeId: IEmployee['id']
 	): Promise<IPagination<IOrganizationTeam>> {
-		const teams: OrganizationTeam[] = [];
-		const items = await this.organizationTeamRepository.find(filter);
-
-		for (const orgTeams of items) {
-			for (const teamEmp of orgTeams.members) {
-				if (employeeId === teamEmp.employeeId) {
-					teams.push(orgTeams);
-					break;
+		const teams: IOrganizationTeam[] = [];
+		const items = await this.find(filter);
+		for (const team of items) {
+			if (isNotEmpty(team.members)) {
+				for (const employee of team.members) {
+					if (employeeId === employee.employeeId) {
+						teams.push(team);
+						break;
+					}
 				}
 			}
 		}
-
 		return { items: teams, total: teams.length };
 	}
 
-	async findMyTeams(relations, findInput, employeeId) {
-		// If user is not an employee, then this will return 404
-		let employee: any = { id: undefined };
-		let role;
-		try {
-			employee = await this.employeeService.findOneByOptions({
-				where: {
-					user: { id: RequestContext.currentUserId() }
-				}
-			});
-		} catch (e) {}
-
+	/**
+	 * Find my teams
+	 *
+	 * @param params
+	 * @returns
+	 */
+	public async findMyTeams(params: PaginationParams<any>): Promise<IPagination<OrganizationTeam>> {
+		let role: IRole;
 		try {
 			const roleId = RequestContext.currentRoleId();
-			if (roleId) {
-				role = await this.roleService.findOneByIdString(roleId);
-			}
+			role = await this.roleService.findOneByIdString(roleId);
 		} catch (e) {}
 
-		// selected user not passed
-		if (employeeId) {
-			if (role.name === RolesEnum.ADMIN || role.name === RolesEnum.SUPER_ADMIN) {
-				return this.findAll({
-					where: findInput,
-					relations
-				});
-			} else if (employeeId === employee.id) {
-				return this.getMyOrgTeams(
-					{
-						where: findInput,
-						relations
-					},
-					employee.id
-				);
+		if (role.name === RolesEnum.ADMIN || role.name === RolesEnum.SUPER_ADMIN) {
+			const { where } = params;
+			if ('employeeId' in where) {
+				const employeeId = where.employeeId;
+				delete params.where.employeeId;
+
+				return await this.getMyOrgTeams(params, employeeId);
 			} else {
-				throw new HttpException(
-					'Unauthorized',
-					HttpStatus.UNAUTHORIZED
-				);
+				return await this.findAll(params);
 			}
 		} else {
-			if (role.name === RolesEnum.ADMIN || role.name === RolesEnum.SUPER_ADMIN) {
-				return this.findAll({
-					where: findInput,
-					relations
-				});
-			} else {
-				return this.getMyOrgTeams(
-					{
-						where: findInput,
-						relations
-					},
-					employee.id
-				);
+			const employeeId = RequestContext.currentEmployeeId();
+			if (employeeId) {
+				return await this.getMyOrgTeams(params, employeeId);
 			}
 		}
+		throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
 	}
 
 	/**

@@ -14,7 +14,7 @@ import { OrganizationTeamsService, Store } from '../../@core/services';
         <ng-select
             [clearable]="true"
             [closeOnSelect]="true"
-            [placeholder]="'TASKS_PAGE.SELECT' | translate" 
+            [placeholder]="'TASKS_PAGE.SELECT' | translate"
             (change)="onChange($event)"
         >
             <ng-option *ngFor="let team of teams" [value]="team">
@@ -24,12 +24,12 @@ import { OrganizationTeamsService, Store } from '../../@core/services';
     `,
 })
 export class OrganizationTeamFilterComponent extends DefaultFilter implements OnInit, OnChanges {
-    
+
     teams: IOrganizationTeam[] = [];
     organization: IOrganization;
-    selectedEmployee: ISelectedEmployee;
+    selectedEmployeeId: ISelectedEmployee['id'];
 	subject$: Subject<any> = new Subject();
-    
+
     constructor(
         private readonly store: Store,
         private readonly organizationTeamsService: OrganizationTeamsService
@@ -50,11 +50,11 @@ export class OrganizationTeamFilterComponent extends DefaultFilter implements On
         combineLatest([storeOrganization$, storeEmployee$])
             .pipe(
                 debounceTime(300),
-                filter(([organization, employee]) => !!organization && !!employee),
                 distinctUntilChange(),
+                filter(([organization]) => !!organization),
                 tap(([organization, employee]) => {
                     this.organization = organization;
-                    this.selectedEmployee = employee;
+					this.selectedEmployeeId = employee ? employee.id : null;
                 }),
                 tap(() => this.subject$.next(true)),
                 untilDestroyed(this)
@@ -69,18 +69,23 @@ export class OrganizationTeamFilterComponent extends DefaultFilter implements On
     }
 
     async getTeams() {
+        if (!this.organization) {
+            return;
+        }
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 
-        let employeeId: string;
-		if (this.selectedEmployee.id) {
-			employeeId = this.selectedEmployee.id;
-		}
-        
 		const { items = [] } = await this.organizationTeamsService.getMyTeams(
 			['members'],
-			{ organizationId, tenantId },
-			employeeId
+			{
+                organizationId,
+				tenantId,
+				...(this.selectedEmployeeId
+					?   {
+						    employeeId: this.selectedEmployeeId
+					    }
+					: {}),
+            }
 		);
 		this.teams = items;
 	}

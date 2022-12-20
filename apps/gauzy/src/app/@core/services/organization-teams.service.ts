@@ -5,7 +5,8 @@ import {
 	IOrganizationTeam,
 	IOrganizationTeamFindInput,
 	IOrganizationTeamCreateInput,
-	IPagination
+	IPagination,
+	IOrganizationTeamUpdateInput
 } from '@gauzy/contracts';
 import { toParams } from '@gauzy/common-angular';
 import { API_PREFIX } from '../constants/app.constants';
@@ -14,7 +15,10 @@ import { API_PREFIX } from '../constants/app.constants';
 	providedIn: 'root'
 })
 export class OrganizationTeamsService {
-	constructor(private http: HttpClient) {}
+
+	constructor(
+		private readonly http: HttpClient
+	) {}
 
 	// TODO: Implement logic to proceed the following requests:
 	// 1) Get all employees of selected Organization and put in in the select as options;
@@ -42,7 +46,7 @@ export class OrganizationTeamsService {
 
 	update(
 		id: IOrganizationTeam['id'],
-		body: IOrganizationTeamCreateInput
+		body: IOrganizationTeamUpdateInput
 	): Promise<any> {
 		return firstValueFrom(
 			this.http.put(`${API_PREFIX}/organization-team/${id}`, body)
@@ -56,14 +60,12 @@ export class OrganizationTeamsService {
 	}
 
 	getMyTeams(
-		relations?: string[],
-		findInput?: IOrganizationTeamFindInput,
-		employeeId: string = ''
+		relations: string[] = [],
+		where?: IOrganizationTeamFindInput
 	): Promise<IPagination<IOrganizationTeam>> {
-		const data = JSON.stringify({ relations, findInput, employeeId });
 		return firstValueFrom(
 			this.http.get<IPagination<IOrganizationTeam>>(`${API_PREFIX}/organization-team/me`, {
-				params: { data }
+				params: toParams({ where, relations })
 			})
 		);
 	}
