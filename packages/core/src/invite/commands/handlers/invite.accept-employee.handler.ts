@@ -118,7 +118,8 @@ export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAccept
 				user,
 				organization,
 				tenantId,
-				startedWorkOn: invite.actionDate || null
+				startedWorkOn: invite.actionDate || null,
+				isActive: true
 			});
 			const employee = await this.employeeRepository.save(create);
 			await this.updateEmployeeMemberships(invite, employee);
