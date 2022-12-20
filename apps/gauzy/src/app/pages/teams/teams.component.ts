@@ -14,11 +14,12 @@ import {
 	IOrganizationTeam,
 	ITag,
 	RolesEnum,
-	ComponentLayoutStyleEnum
+	ComponentLayoutStyleEnum,
+	ISelectedEmployee
 } from '@gauzy/contracts';
 import { NbDialogRef, NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { firstValueFrom, Subject } from 'rxjs';
+import { combineLatest, firstValueFrom, Subject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { Ng2SmartTableComponent } from 'ng2-smart-table';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -51,10 +52,9 @@ import { ServerDataSource } from '../../@core/utils/smart-table';
 	templateUrl: './teams.component.html',
 	styleUrls: ['./teams.component.scss']
 })
-export class TeamsComponent
-	extends PaginationFilterBaseComponent
-	implements OnInit, OnDestroy
-{
+export class TeamsComponent extends PaginationFilterBaseComponent
+	implements OnInit, OnDestroy {
+
 	@ViewChild('addEditTemplate')
 	addEditTemplate: TemplateRef<any>;
 	addEditDialogRef: NbDialogRef<any>;
@@ -73,6 +73,7 @@ export class TeamsComponent
 	smartTableSettings: object;
 	smartTableSource: ServerDataSource;
 
+	public selectedEmployeeId: ISelectedEmployee['id'];
 	public organization: IOrganization;
 	teams$: Subject<any> = this.subject$;
 	employees$: Subject<any> = new Subject();
@@ -132,10 +133,17 @@ export class TeamsComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.store.selectedOrganization$
+
+		const storeOrganization$ = this.store.selectedOrganization$;
+		const storeEmployee$ = this.store.selectedEmployee$;
+		combineLatest([storeOrganization$, storeEmployee$])
 			.pipe(
-				filter((organization: IOrganization) => !!organization),
-				tap((organization) => (this.organization = organization)),
+				distinctUntilChange(),
+				filter(([organization]) => !!organization),
+				tap(([organization, employee]) => {
+					this.organization = organization;
+					this.selectedEmployeeId = employee ? employee.id : null;
+				}),
 				tap(() => this._refresh$.next(true)),
 				tap(() => this.teams$.next(true)),
 				tap(() => this.employees$.next(true)),
@@ -329,8 +337,16 @@ export class TeamsComponent
 				'tags'
 			],
 			where: {
-				...{ organizationId, tenantId },
-				...this.filters.where
+				organizationId,
+				tenantId,
+				...(this.selectedEmployeeId
+					?  {
+						 	members: {
+								employeeId: this.selectedEmployeeId
+							}
+					  	}
+					: {}),
+				...(this.filters.where ? this.filters.where : {})
 			},
 			join: {
 				alias: 'organization_team',

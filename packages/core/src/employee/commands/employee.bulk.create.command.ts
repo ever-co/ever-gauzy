@@ -7,6 +7,6 @@ export class EmployeeBulkCreateCommand implements ICommand {
 	constructor(
 		public readonly input: IEmployeeCreateInput[],
 		public readonly languageCode: LanguagesEnum,
-		public readonly originalUrl: string
+		public readonly originUrl: string
 	) {}
 }

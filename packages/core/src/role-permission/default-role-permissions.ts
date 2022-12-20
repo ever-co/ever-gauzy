@@ -71,6 +71,7 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_CONTACT_EDIT,
 			PermissionsEnum.ORG_CONTACT_VIEW,
 			PermissionsEnum.ORG_TEAM_EDIT,
+			PermissionsEnum.ORG_TEAM_VIEW,
 			PermissionsEnum.ORG_CONTRACT_EDIT,
 			PermissionsEnum.EVENT_TYPES_VIEW,
 			PermissionsEnum.TENANT_ADD_EXISTING_USER,
@@ -176,6 +177,7 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_CONTACT_EDIT,
 			PermissionsEnum.ORG_CONTACT_VIEW,
 			PermissionsEnum.ORG_TEAM_EDIT,
+			PermissionsEnum.ORG_TEAM_VIEW,
 			PermissionsEnum.ORG_CONTRACT_EDIT,
 			PermissionsEnum.EVENT_TYPES_VIEW,
 			PermissionsEnum.TENANT_ADD_EXISTING_USER,
@@ -273,6 +275,7 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ALLOW_MODIFY_TIME,
 			PermissionsEnum.ALLOW_MANUAL_TIME,
 			PermissionsEnum.DELETE_SCREENSHOTS,
+			PermissionsEnum.ORG_TEAM_VIEW
 		]
 	},
 	{

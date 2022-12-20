@@ -5,7 +5,7 @@
 [![Gitter](https://badges.gitter.im/JoinChat.svg)](https://gitter.im/ever-co/ever-gauzy?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![Get help on Codementor](https://cdn.codementor.io/badges/get_help_github.svg)](https://www.codementor.io/evereq?utm_source=github&utm_medium=button&utm_term=evereq&utm_campaign=github)
 
-Ever® Gauzy™ - **Open-Source Business Management Platform** for On-Demand and Sharing Economies.
+[Ever® Gauzy™](https://gauzy.co) - **Open-Source Business Management Platform** for On-Demand and Sharing Economies.
 
 - **Enterprise Resource Planning** (ERP) software
 - **Customer Relationship Management** (CRM) software
@@ -13,12 +13,9 @@ Ever® Gauzy™ - **Open-Source Business Management Platform** for On-Demand and
 
 ![overview](https://docs.gauzy.co/docs/assets/overview.png)
 
-You are welcome to check more information about the platform at our official website - **<https://gauzy.co>**. 
+Ever® Gauzy™ Platform is a part of our larger Open Platform for **On-Demand and Sharing Economies** - [Ever® Platform™](https://ever.co).
 
-Ever® Gauzy™ Platform is a part of our larger Open Platform for **On-Demand and Sharing Economies**.  
-You can get more information about our products at **<https://ever.co>**.
-
-Ever® Gauzy™ Platform main features:
+Main features:
 
 - Human Resources Management (HRM) with Time Management / Tracking and Employees Performance Monitoring
 - Customer Relationship Management (CRM)
@@ -63,6 +60,11 @@ More detailed list of the features available in the platform:
 - Dark / Light / Corporate / Material and other Themes
 
 Read more [About Gauzy](https://github.com/ever-co/ever-gauzy/wiki/About-Gauzy) and [How to use it](https://github.com/ever-co/ever-gauzy/wiki/How-to-use-Gauzy) at your company, on-demand business, freelance business, agency, studio or in-house teams.
+
+## Links
+
+- **<https://gauzy.co>** - check more information about the platform at official website.
+- **<https://ever.co>** - get more information about our company products. 
 
 ## Demo, Downloads, Testing and Production
 

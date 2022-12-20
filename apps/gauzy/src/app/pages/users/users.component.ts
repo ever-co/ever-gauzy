@@ -384,11 +384,6 @@ export class UsersComponent extends PaginationFilterBaseComponent
 							(organizaiton: IUserOrganization) =>
 								organizaiton.user.role
 						)
-						.filter(
-							(organizaiton: IUserOrganization) =>
-								organizaiton.user.role.name !==
-								RolesEnum.EMPLOYEE
-						)
 				),
 				tap((users: IUserOrganization[]) =>
 					organizations.push(...users)
