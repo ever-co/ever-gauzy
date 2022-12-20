@@ -389,6 +389,56 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				})
 		);
 
+		this.electronService.ipcRenderer.on(
+			'backup-no-synced',
+			(event, interval) =>
+				this._ngZone.run(() => {
+					(async () => {
+						try {
+
+							const screenshots = interval.b64Imgs;
+							const resActivities: any =
+								await this.timeTrackerService.pushToTimeSlot(
+									interval
+								);
+							console.log('backup', resActivities);
+							// upload screenshot to timeslot api
+							try {
+								const timeSlotId = resActivities.id;
+								await Promise.all(
+									screenshots.map(async (screenshot) => {
+										try {
+											const resImg =
+												await this.timeTrackerService.uploadImages(
+													{ ...interval, timeSlotId },
+													{
+														b64Img: screenshot.b64img,
+														fileName:
+															screenshot.fileName
+													}
+												);
+											this.getLastTimeSlotImage({
+												...interval,
+												timeSlotId
+											});
+											console.log('Result upload', resImg);
+											return resImg;
+										} catch (error) {
+											console.log('On upload Image', error)
+										}
+									})
+								);
+							} catch (error) {
+								console.log('Backup-error', error);
+							}
+							this.electronService.ipcRenderer.send('update-synced', interval)
+						} catch (error) {
+							console.log('error backup timeslot', error);
+						}
+					})();
+				})
+		);
+
 		this.electronService.ipcRenderer.on('play_sound', (event, arg) =>
 			this._ngZone.run(() => {
 				try {
@@ -1215,6 +1265,18 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				}),
 				message: error.message
 			});
+
+			this.electronService.ipcRenderer.send('failed_synced_timeslot', {
+				params: {
+					...paramActivity,
+					b64Imgs: screenshotImg.map((img) => {
+						return {
+							b64img: this.buffToB64(img),
+							fileName: this.fileNameFormat(img)
+						};
+					})
+				}
+			} )
 		}
 	}
 

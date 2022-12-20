@@ -539,6 +539,7 @@ export class TimeTrackerService {
 	}
 
 	pushToTimeSlot(values) {
+		console.log('TimeSlot ✅', values);
 		const headers = new HttpHeaders({
 			Authorization: `Bearer ${values.token}`
 		});
