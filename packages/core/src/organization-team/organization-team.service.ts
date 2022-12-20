@@ -191,19 +191,21 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 	 * @param filter
 	 * @returns
 	 */
-	public async pagination(filter?: PaginationParams<any>): Promise<IPagination<OrganizationTeam>> {
-		if ('where' in filter) {
-			const { where } = filter;
+	public async pagination(
+		options?: PaginationParams<OrganizationTeam>
+	): Promise<IPagination<OrganizationTeam>> {
+		if ('where' in options) {
+			const { where } = options;
 			if ('name' in where) {
-				filter['where']['name'] = ILike(`%${where.name}%`);
+				options['where']['name'] = ILike(`%${where.name}%`);
 			}
 			if ('tags' in where) {
-				filter['where']['tags'] = {
-					id: In(where.tags)
+				options['where']['tags'] = {
+					id: In(where.tags as [])
 				}
 			}
 		}
-		return await super.paginate(filter);
+		return await this.findAll(options);
 	}
 
 	/**
@@ -213,7 +215,7 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 	 * @returns
 	 */
 	public async findAll(
-		options?: PaginationParams<any>
+		options?: PaginationParams<OrganizationTeam>
 	): Promise<IPagination<OrganizationTeam>> {
 		const tenantId = RequestContext.currentTenantId();
 		const employeeId = RequestContext.currentEmployeeId();
@@ -239,6 +241,7 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 			}
 			return '"organization_team"."id" IN ' + subQuery.distinct(true).getQuery();
 		});
+
 		const [items, total] = await query.getManyAndCount();
 		return { items, total };
 	}
