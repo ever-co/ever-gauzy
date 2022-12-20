@@ -5,7 +5,7 @@ import {
 	HttpStatus
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindManyOptions, In, ILike } from 'typeorm';
+import { Repository, FindManyOptions, In, ILike, SelectQueryBuilder } from 'typeorm';
 import {
 	IOrganizationTeamCreateInput,
 	IOrganizationTeam,
@@ -212,31 +212,30 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 	 * @param options
 	 * @returns
 	 */
-	public async findAll(options?: PaginationParams<any>): Promise<IPagination<OrganizationTeam>> {
+	public async findAll(
+		options?: PaginationParams<any>
+	): Promise<IPagination<OrganizationTeam>> {
+		const tenantId = RequestContext.currentTenantId();
+		const employeeId = RequestContext.currentEmployeeId();
+
 		const query = this.repository.createQueryBuilder(this.alias).setFindOptions(options);
-		query.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
-			tenantId: RequestContext.currentTenantId()
-		});
+		query.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
+
 		// Sub Query to get only employee assigned teams
-		query.andWhere((cb) => {
+		query.andWhere((cb: SelectQueryBuilder<OrganizationTeam>) => {
 			const subQuery = cb.subQuery().select('"team"."organizationTeamId"').from('organization_team_employee', 'team');
-			subQuery.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
-				tenantId: RequestContext.currentTenantId()
-			});
-			if (options.where && 'organizationId' in options.where) {
+			subQuery.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
+
+			if (isNotEmpty(options.where)) {
 				const { organizationId } = options.where;
-				subQuery.andWhere(`"${query.alias}"."organizationId" = :organizationId`, {
-					organizationId
-				});
+				subQuery.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
 			}
+
 			// If employee has login and don't have permission to change employee
-			const employeeId = RequestContext.currentEmployeeId();
 			if (employeeId && !RequestContext.hasPermission(
 				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
 			)) {
-				subQuery.andWhere('"team"."employeeId" = :employeeId', {
-					employeeId
-				});
+				subQuery.andWhere('"team"."employeeId" = :employeeId', { employeeId });
 			}
 			return '"organization_team"."id" IN ' + subQuery.distinct(true).getQuery();
 		});
