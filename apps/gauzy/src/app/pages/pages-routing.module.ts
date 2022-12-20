@@ -459,7 +459,7 @@ const routes: Routes = [
 							selectors: {
 								project: false,
 								employee: true,
-								date: false
+								date: true
 							}
 						}
 					}
