@@ -224,8 +224,6 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 		if ('members' in options.where) { delete options.where['members']; }
 
 		const query = this.repository.createQueryBuilder(this.alias);
-		if (isNotEmpty(options)) { query.setFindOptions(options); }
-
 		// If employee has login and don't have permission to change employee
 		if (employeeId && !RequestContext.hasPermission(
 			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
@@ -260,6 +258,26 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 					return '"organization_team"."id" IN ' + subQuery.distinct(true).getQuery();
 				});
 			}
+		}
+		if (isNotEmpty(options)) {
+			query.setFindOptions({
+				skip: options.skip ? (options.take * (options.skip - 1)) : 0,
+				take: options.take ? (options.take) : 10
+			});
+			query.setFindOptions({
+				...(
+					(options.select) ? { select: options.select } : {}
+				),
+				...(
+					(options.relations) ? { relations: options.relations } : {}
+				),
+				...(
+					(options.where) ? { where: options.where } : {}
+				),
+				...(
+					(options.order) ? { order: options.order } : {}
+				)
+			});
 		}
 		query.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
 		const [items, total] = await query.getManyAndCount();
