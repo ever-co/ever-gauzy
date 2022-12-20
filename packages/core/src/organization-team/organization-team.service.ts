@@ -191,19 +191,21 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 	 * @param filter
 	 * @returns
 	 */
-	public async pagination(filter?: PaginationParams<any>): Promise<IPagination<OrganizationTeam>> {
-		if ('where' in filter) {
-			const { where } = filter;
+	public async pagination(
+		options?: PaginationParams<OrganizationTeam>
+	): Promise<IPagination<OrganizationTeam>> {
+		if ('where' in options) {
+			const { where } = options;
 			if ('name' in where) {
-				filter['where']['name'] = ILike(`%${where.name}%`);
+				options['where']['name'] = ILike(`%${where.name}%`);
 			}
 			if ('tags' in where) {
-				filter['where']['tags'] = {
-					id: In(where.tags)
+				options['where']['tags'] = {
+					id: In(where.tags as [])
 				}
 			}
 		}
-		return await super.paginate(filter);
+		return await this.findAll(options);
 	}
 
 	/**
@@ -213,32 +215,34 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 	 * @returns
 	 */
 	public async findAll(
-		options?: PaginationParams<any>
+		options?: PaginationParams<OrganizationTeam>
 	): Promise<IPagination<OrganizationTeam>> {
 		const tenantId = RequestContext.currentTenantId();
 		const employeeId = RequestContext.currentEmployeeId();
 
-		const query = this.repository.createQueryBuilder(this.alias).setFindOptions(options);
-		query.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
+		const query = this.repository.createQueryBuilder(this.alias);
+		if (isNotEmpty(options)) { query.setFindOptions(options); }
 
-		// Sub Query to get only employee assigned teams
-		query.andWhere((cb: SelectQueryBuilder<OrganizationTeam>) => {
-			const subQuery = cb.subQuery().select('"team"."organizationTeamId"').from('organization_team_employee', 'team');
-			subQuery.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
+		// If employee has login and don't have permission to change employee
+		if (employeeId && !RequestContext.hasPermission(
+			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+		)) {
+			// Sub Query to get only employee assigned teams
+			query.andWhere((cb: SelectQueryBuilder<OrganizationTeam>) => {
+				const subQuery = cb.subQuery().select('"team"."organizationTeamId"').from('organization_team_employee', 'team');
+				subQuery.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
 
-			if (isNotEmpty(options.where)) {
-				const { organizationId } = options.where;
-				subQuery.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
-			}
+				if (isNotEmpty(options) && isNotEmpty(options.where)) {
+					const { organizationId } = options.where;
+					subQuery.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
+				}
 
-			// If employee has login and don't have permission to change employee
-			if (employeeId && !RequestContext.hasPermission(
-				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-			)) {
 				subQuery.andWhere('"team"."employeeId" = :employeeId', { employeeId });
-			}
-			return '"organization_team"."id" IN ' + subQuery.distinct(true).getQuery();
-		});
+				return '"organization_team"."id" IN ' + subQuery.distinct(true).getQuery();
+			});
+		}
+
+		query.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
 		const [items, total] = await query.getManyAndCount();
 		return { items, total };
 	}
