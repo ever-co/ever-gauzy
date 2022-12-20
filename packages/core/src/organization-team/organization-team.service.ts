@@ -220,6 +220,9 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 		const tenantId = RequestContext.currentTenantId();
 		const employeeId = RequestContext.currentEmployeeId();
 
+		const members = options.where.members;
+		if ('members' in options.where) { delete options.where['members']; }
+
 		const query = this.repository.createQueryBuilder(this.alias);
 		if (isNotEmpty(options)) { query.setFindOptions(options); }
 
@@ -227,7 +230,7 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 		if (employeeId && !RequestContext.hasPermission(
 			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
 		)) {
-			// Sub Query to get only employee assigned teams
+			// Sub query to get only employee assigned teams
 			query.andWhere((cb: SelectQueryBuilder<OrganizationTeam>) => {
 				const subQuery = cb.subQuery().select('"team"."organizationTeamId"').from('organization_team_employee', 'team');
 				subQuery.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
@@ -240,8 +243,24 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 				subQuery.andWhere('"team"."employeeId" = :employeeId', { employeeId });
 				return '"organization_team"."id" IN ' + subQuery.distinct(true).getQuery();
 			});
-		}
+		} else {
+			if (isNotEmpty(members) && isNotEmpty(members['employeeId'])) {
+				// Sub query to get only employee assigned teams
+				query.andWhere((cb: SelectQueryBuilder<OrganizationTeam>) => {
+					const subQuery = cb.subQuery().select('"team"."organizationTeamId"').from('organization_team_employee', 'team');
+					subQuery.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
 
+					if (isNotEmpty(options) && isNotEmpty(options.where)) {
+						const { organizationId } = options.where;
+						subQuery.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
+					}
+
+					const employeeId = members['employeeId'];
+					subQuery.andWhere('"team"."employeeId" = :employeeId', { employeeId });
+					return '"organization_team"."id" IN ' + subQuery.distinct(true).getQuery();
+				});
+			}
+		}
 		query.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
 		const [items, total] = await query.getManyAndCount();
 		return { items, total };
