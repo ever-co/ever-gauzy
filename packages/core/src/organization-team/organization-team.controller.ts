@@ -131,7 +131,7 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 	@Get(':id')
 	@UsePipes(new ValidationPipe())
 	async findById(
-		@Param('id', UUIDValidationPipe) id: string,
+		@Param('id', UUIDValidationPipe) id: IOrganizationTeam['id'],
 		@Query() options: OrganizationTeamStatisticDTO
 	): Promise<any> {
 		return await this.queryBus.execute(

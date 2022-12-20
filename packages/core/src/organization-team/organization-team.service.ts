@@ -13,7 +13,8 @@ import {
 	IPagination,
 	IOrganizationTeamUpdateInput,
 	IRole,
-	IEmployee
+	IEmployee,
+	PermissionsEnum
 } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
 import { Employee } from '../employee/employee.entity';
@@ -26,10 +27,10 @@ import { OrganizationTeamEmployeeService } from '../organization-team-employee/o
 
 @Injectable()
 export class OrganizationTeamService extends TenantAwareCrudService<OrganizationTeam> {
+
 	constructor(
 		@InjectRepository(OrganizationTeam)
 		private readonly organizationTeamRepository: Repository<OrganizationTeam>,
-
 		@InjectRepository(Employee)
 		private readonly employeeRepository: Repository<Employee>,
 		private readonly roleService: RoleService,
@@ -173,9 +174,9 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 
 				return await this.getMyOrgTeams(params, employeeId);
 			} else {
-				return await this.findAll(params);
+				return await super.findAll(params);
 			}
-		} else {
+		} else if (role.name === RolesEnum.EMPLOYEE) {
 			const employeeId = RequestContext.currentEmployeeId();
 			if (employeeId) {
 				return await this.getMyOrgTeams(params, employeeId);
@@ -190,7 +191,7 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 	 * @param filter
 	 * @returns
 	 */
-	public pagination(filter?: PaginationParams<any>) {
+	public async pagination(filter?: PaginationParams<any>): Promise<IPagination<OrganizationTeam>> {
 		if ('where' in filter) {
 			const { where } = filter;
 			if ('name' in where) {
@@ -202,6 +203,44 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 				}
 			}
 		}
-		return super.paginate(filter);
+		return await super.paginate(filter);
+	}
+
+	/**
+	 * GET organization teams by params
+	 *
+	 * @param options
+	 * @returns
+	 */
+	public async findAll(options?: PaginationParams<any>): Promise<IPagination<OrganizationTeam>> {
+		const query = this.repository.createQueryBuilder(this.alias).setFindOptions(options);
+		query.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
+			tenantId: RequestContext.currentTenantId()
+		});
+		// Sub Query to get only employee assigned teams
+		query.andWhere((cb) => {
+			const subQuery = cb.subQuery().select('"team"."organizationTeamId"').from('organization_team_employee', 'team');
+			subQuery.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
+				tenantId: RequestContext.currentTenantId()
+			});
+			if (options.where && 'organizationId' in options.where) {
+				const { organizationId } = options.where;
+				subQuery.andWhere(`"${query.alias}"."organizationId" = :organizationId`, {
+					organizationId
+				});
+			}
+			// If employee has login and don't have permission to change employee
+			const employeeId = RequestContext.currentEmployeeId();
+			if (employeeId && !RequestContext.hasPermission(
+				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+			)) {
+				subQuery.andWhere('"team"."employeeId" = :employeeId', {
+					employeeId
+				});
+			}
+			return '"organization_team"."id" IN ' + subQuery.distinct(true).getQuery();
+		});
+		const [items, total] = await query.getManyAndCount();
+		return { items, total };
 	}
 }
