@@ -5,33 +5,34 @@ import {
 	HttpStatus
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindManyOptions, In, ILike } from 'typeorm';
+import { Repository, FindManyOptions, In, ILike, SelectQueryBuilder } from 'typeorm';
 import {
 	IOrganizationTeamCreateInput,
 	IOrganizationTeam,
 	RolesEnum,
 	IPagination,
-	IOrganizationTeamUpdateInput
+	IOrganizationTeamUpdateInput,
+	IRole,
+	IEmployee,
+	PermissionsEnum
 } from '@gauzy/contracts';
+import { isNotEmpty } from '@gauzy/common';
 import { Employee } from '../employee/employee.entity';
 import { OrganizationTeam } from './organization-team.entity';
 import { OrganizationTeamEmployee } from '../organization-team-employee/organization-team-employee.entity';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
 import { RoleService } from '../role/role.service';
-import { EmployeeService } from '../employee/employee.service';
 import { OrganizationTeamEmployeeService } from '../organization-team-employee/organization-team-employee.service';
 
 @Injectable()
 export class OrganizationTeamService extends TenantAwareCrudService<OrganizationTeam> {
+
 	constructor(
 		@InjectRepository(OrganizationTeam)
 		private readonly organizationTeamRepository: Repository<OrganizationTeam>,
-
 		@InjectRepository(Employee)
 		private readonly employeeRepository: Repository<Employee>,
-
-		private readonly employeeService: EmployeeService,
 		private readonly roleService: RoleService,
 		private readonly organizationTeamEmployeeService: OrganizationTeamEmployeeService
 	) {
@@ -135,79 +136,53 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 
 	async getMyOrgTeams(
 		filter: FindManyOptions<OrganizationTeam>,
-		employeeId
+		employeeId: IEmployee['id']
 	): Promise<IPagination<IOrganizationTeam>> {
-		const teams: OrganizationTeam[] = [];
-		const items = await this.organizationTeamRepository.find(filter);
-
-		for (const orgTeams of items) {
-			for (const teamEmp of orgTeams.members) {
-				if (employeeId === teamEmp.employeeId) {
-					teams.push(orgTeams);
-					break;
+		const teams: IOrganizationTeam[] = [];
+		const items = await this.find(filter);
+		for (const team of items) {
+			if (isNotEmpty(team.members)) {
+				for (const employee of team.members) {
+					if (employeeId === employee.employeeId) {
+						teams.push(team);
+						break;
+					}
 				}
 			}
 		}
-
 		return { items: teams, total: teams.length };
 	}
 
-	async findMyTeams(relations, findInput, employeeId) {
-		// If user is not an employee, then this will return 404
-		let employee: any = { id: undefined };
-		let role;
-		try {
-			employee = await this.employeeService.findOneByOptions({
-				where: {
-					user: { id: RequestContext.currentUserId() }
-				}
-			});
-		} catch (e) {}
-
+	/**
+	 * Find my teams
+	 *
+	 * @param params
+	 * @returns
+	 */
+	public async findMyTeams(params: PaginationParams<any>): Promise<IPagination<OrganizationTeam>> {
+		let role: IRole;
 		try {
 			const roleId = RequestContext.currentRoleId();
-			if (roleId) {
-				role = await this.roleService.findOneByIdString(roleId);
-			}
+			role = await this.roleService.findOneByIdString(roleId);
 		} catch (e) {}
 
-		// selected user not passed
-		if (employeeId) {
-			if (role.name === RolesEnum.ADMIN || role.name === RolesEnum.SUPER_ADMIN) {
-				return this.findAll({
-					where: findInput,
-					relations
-				});
-			} else if (employeeId === employee.id) {
-				return this.getMyOrgTeams(
-					{
-						where: findInput,
-						relations
-					},
-					employee.id
-				);
+		if (role.name === RolesEnum.ADMIN || role.name === RolesEnum.SUPER_ADMIN) {
+			const { where } = params;
+			if ('employeeId' in where) {
+				const employeeId = where.employeeId;
+				delete params.where.employeeId;
+
+				return await this.getMyOrgTeams(params, employeeId);
 			} else {
-				throw new HttpException(
-					'Unauthorized',
-					HttpStatus.UNAUTHORIZED
-				);
+				return await super.findAll(params);
 			}
-		} else {
-			if (role.name === RolesEnum.ADMIN || role.name === RolesEnum.SUPER_ADMIN) {
-				return this.findAll({
-					where: findInput,
-					relations
-				});
-			} else {
-				return this.getMyOrgTeams(
-					{
-						where: findInput,
-						relations
-					},
-					employee.id
-				);
+		} else if (role.name === RolesEnum.EMPLOYEE) {
+			const employeeId = RequestContext.currentEmployeeId();
+			if (employeeId) {
+				return await this.getMyOrgTeams(params, employeeId);
 			}
 		}
+		throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
 	}
 
 	/**
@@ -216,18 +191,96 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 	 * @param filter
 	 * @returns
 	 */
-	public pagination(filter?: PaginationParams<any>) {
-		if ('where' in filter) {
-			const { where } = filter;
+	public async pagination(
+		options?: PaginationParams<OrganizationTeam>
+	): Promise<IPagination<OrganizationTeam>> {
+		if ('where' in options) {
+			const { where } = options;
 			if ('name' in where) {
-				filter['where']['name'] = ILike(`%${where.name}%`);
+				options['where']['name'] = ILike(`%${where.name}%`);
 			}
 			if ('tags' in where) {
-				filter['where']['tags'] = {
-					id: In(where.tags)
+				options['where']['tags'] = {
+					id: In(where.tags as [])
 				}
 			}
 		}
-		return super.paginate(filter);
+		return await this.findAll(options);
+	}
+
+	/**
+	 * GET organization teams by params
+	 *
+	 * @param options
+	 * @returns
+	 */
+	public async findAll(
+		options?: PaginationParams<OrganizationTeam>
+	): Promise<IPagination<OrganizationTeam>> {
+		const tenantId = RequestContext.currentTenantId();
+		const employeeId = RequestContext.currentEmployeeId();
+
+		const members = options.where.members;
+		if ('members' in options.where) { delete options.where['members']; }
+
+		const query = this.repository.createQueryBuilder(this.alias);
+		// If employee has login and don't have permission to change employee
+		if (employeeId && !RequestContext.hasPermission(
+			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+		)) {
+			// Sub query to get only employee assigned teams
+			query.andWhere((cb: SelectQueryBuilder<OrganizationTeam>) => {
+				const subQuery = cb.subQuery().select('"team"."organizationTeamId"').from('organization_team_employee', 'team');
+				subQuery.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
+
+				if (isNotEmpty(options) && isNotEmpty(options.where)) {
+					const { organizationId } = options.where;
+					subQuery.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
+				}
+
+				subQuery.andWhere('"team"."employeeId" = :employeeId', { employeeId });
+				return '"organization_team"."id" IN ' + subQuery.distinct(true).getQuery();
+			});
+		} else {
+			if (isNotEmpty(members) && isNotEmpty(members['employeeId'])) {
+				// Sub query to get only employee assigned teams
+				query.andWhere((cb: SelectQueryBuilder<OrganizationTeam>) => {
+					const subQuery = cb.subQuery().select('"team"."organizationTeamId"').from('organization_team_employee', 'team');
+					subQuery.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
+
+					if (isNotEmpty(options) && isNotEmpty(options.where)) {
+						const { organizationId } = options.where;
+						subQuery.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
+					}
+
+					const employeeId = members['employeeId'];
+					subQuery.andWhere('"team"."employeeId" = :employeeId', { employeeId });
+					return '"organization_team"."id" IN ' + subQuery.distinct(true).getQuery();
+				});
+			}
+		}
+		if (isNotEmpty(options)) {
+			query.setFindOptions({
+				skip: options.skip ? (options.take * (options.skip - 1)) : 0,
+				take: options.take ? (options.take) : 10
+			});
+			query.setFindOptions({
+				...(
+					(options.select) ? { select: options.select } : {}
+				),
+				...(
+					(options.relations) ? { relations: options.relations } : {}
+				),
+				...(
+					(options.where) ? { where: options.where } : {}
+				),
+				...(
+					(options.order) ? { order: options.order } : {}
+				)
+			});
+		}
+		query.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
+		const [items, total] = await query.getManyAndCount();
+		return { items, total };
 	}
 }

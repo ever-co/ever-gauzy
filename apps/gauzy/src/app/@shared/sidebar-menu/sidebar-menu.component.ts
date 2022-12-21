@@ -1,9 +1,8 @@
 import {
-	AfterViewChecked,
+	AfterContentChecked,
 	ChangeDetectorRef,
 	Component,
-	Input,
-	OnInit
+	Input
 } from '@angular/core';
 import { IMenuItem } from './menu-items/interface/menu-item.interface';
 import { SidebarMenuService } from './sidebar-menu.service';
@@ -13,7 +12,8 @@ import { SidebarMenuService } from './sidebar-menu.service';
 	templateUrl: './sidebar-menu.component.html',
 	styleUrls: ['./sidebar-menu.component.scss']
 })
-export class SidebarMenuComponent implements OnInit, AfterViewChecked {
+export class SidebarMenuComponent implements AfterContentChecked {
+
 	@Input() items: IMenuItem[] = [];
 
 	constructor(
@@ -21,8 +21,9 @@ export class SidebarMenuComponent implements OnInit, AfterViewChecked {
 		private readonly _sidebarMenuService: SidebarMenuService
 	) {}
 
-	ngOnInit(): void {}
-	ngAfterViewChecked(): void {}
+	ngAfterContentChecked(): void {
+		this.cdr.detectChanges();
+	}
 
 	public get selectedItem() {
 		return this._sidebarMenuService.selectedItem;

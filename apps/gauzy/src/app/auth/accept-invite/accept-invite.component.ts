@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { IAuthResponse, IInvite, IUserRegistrationInput } from '@gauzy/contracts';
+import { HttpStatus, IAuthResponse, IInvite, IUserEmailInput, IUserRegistrationInput, IUserTokenInput } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { SetLanguageBaseComponent } from '../../@shared/language-base/set-language-base.component';
 import { tap } from 'rxjs/operators';
@@ -12,8 +12,7 @@ import { InviteService, Store, ToastrService } from '../../@core/services';
 	styleUrls: ['./accept-invite.component.scss'],
 	templateUrl: 'accept-invite.component.html'
 })
-export class AcceptInvitePage
-	extends SetLanguageBaseComponent
+export class AcceptInvitePage extends SetLanguageBaseComponent
 	implements OnInit, OnDestroy {
 
 	invitation: IInvite;
@@ -32,18 +31,22 @@ export class AcceptInvitePage
 	}
 
 	ngOnInit(): void {
-		console.log();
 		this.route
 			.queryParams
 			.pipe(
 				tap(() => this.loading = true),
-				tap(({ email, token }) => this.loadInvite(email, token)),
+				tap(({ email, token }) => this.loadInvite({ email, token })),
 				untilDestroyed(this)
 			)
 			.subscribe();
 	}
 
-	loadInvite = async (email: string, token: string) => {
+	/**
+	 * Validate invite by token & email
+	 *
+	 * @param param0
+	 */
+	loadInvite = async ({ email, token }: IUserEmailInput & IUserTokenInput) => {
 		try {
 			this.invitation = await this.inviteService.validateInvite([], {
 				email,
