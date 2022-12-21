@@ -27,7 +27,7 @@ export class TasksComponent
     statuses = [
         {
             id:'Todo',
-            name: 'Todo',
+            name: 'TODO',
         },
         {
             id:'In Progress',
