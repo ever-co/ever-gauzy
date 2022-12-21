@@ -90,6 +90,7 @@ export class TasksComponent
     setEmployee(event) {
 
     }
+
     setTags(event) {
     }
 
@@ -126,14 +127,11 @@ export class TasksComponent
     }
 
     validation() {
-        if (
-            !this.title || !this.projectSelect
-            || !this.statusTaskSelect || !this.dueDate
-        ) {
-            this.disableSave = true;
-        } else {
-            this.disableSave = false;
-        }
+        if (!this.title || !this.statusTaskSelect || !this.dueDate) {
+			this.disableSave = true;
+		} else {
+			this.disableSave = false;
+		}
     }
 
     async saveTask() {
