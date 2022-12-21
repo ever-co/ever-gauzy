@@ -1,14 +1,14 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { OrganizationDepartmentEditByEmployeeCommand } from '../organization-department.edit-by-employee.command';
 import { OrganizationDepartmentService } from '../../organization-department.service';
-import { UpdateEntityByMembersHandler } from '../../../shared';
+import { UpdateEntityByMembersHandler } from '../../../shared/handlers';
 
 @CommandHandler(OrganizationDepartmentEditByEmployeeCommand)
-export class OrganizationDepartmentEditByEmployeeHandler
-	extends UpdateEntityByMembersHandler
+export class OrganizationDepartmentEditByEmployeeHandler extends UpdateEntityByMembersHandler
 	implements ICommandHandler<OrganizationDepartmentEditByEmployeeCommand> {
+
 	constructor(
-		private readonly organizationDepartmentService: OrganizationDepartmentService
+		protected readonly organizationDepartmentService: OrganizationDepartmentService
 	) {
 		super(organizationDepartmentService);
 	}
@@ -16,6 +16,7 @@ export class OrganizationDepartmentEditByEmployeeHandler
 	public async execute(
 		command: OrganizationDepartmentEditByEmployeeCommand
 	): Promise<any> {
-		return this.executeCommand(command.input);
+		const { input } = command;
+		return await this.executeCommand(input);
 	}
 }

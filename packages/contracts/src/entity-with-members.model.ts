@@ -9,7 +9,7 @@ export interface IBaseEntityWithMembers
 	tags?: ITag[];
 }
 
-export interface IEditEntityByMemberInput {
+export interface IEditEntityByMemberInput extends IBasePerTenantAndOrganizationEntityModel {
 	addedEntityIds?: string[];
 	removedEntityIds?: string[];
 	member: IEmployee;
