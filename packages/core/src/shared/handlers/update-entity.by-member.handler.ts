@@ -12,11 +12,12 @@ export abstract class UpdateEntityByMembersHandler {
 
 	public async executeCommand(input: IEditEntityByMemberInput): Promise<any> {
 		try {
-			const { addedEntityIds = [], removedEntityIds = [], member } = input;
+			const { organizationId, addedEntityIds = [], removedEntityIds = [], member } = input;
 			if (addedEntityIds && addedEntityIds.length > 0) {
 				const entitiesToAdd = await this.crudService.find({
 					where: {
-						id: In(addedEntityIds)
+						id: In(addedEntityIds),
+						organizationId
 					},
 					relations: {
 						members: true
@@ -35,7 +36,8 @@ export abstract class UpdateEntityByMembersHandler {
 			if (removedEntityIds && removedEntityIds.length > 0) {
 				const entitiesToRemove = await this.crudService.find({
 					where: {
-						id: In(removedEntityIds)
+						id: In(removedEntityIds),
+						organizationId
 					},
 					relations: {
 						members: true

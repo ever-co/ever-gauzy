@@ -3,8 +3,10 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import {
 	IBaseEntityWithMembers,
 	IEditEntityByMemberInput,
-	IEmployee
+	IEmployee,
+	IOrganization
 } from '@gauzy/contracts';
+import { Store } from '../../../@core/services';
 
 @Component({
 	selector: 'ga-edit-employee-membership',
@@ -22,7 +24,8 @@ export class EditEmployeeMembershipFormComponent implements OnInit {
 	@Output() entitiesAdded = new EventEmitter<IEditEntityByMemberInput>();
 	@Output() entitiesRemoved = new EventEmitter<IEditEntityByMemberInput>();
 
-	showAddCard: boolean;
+	public showAddCard: boolean;
+	public organization: IOrganization = this.store.selectedOrganization;
 
 	public form: FormGroup = EditEmployeeMembershipFormComponent.buildForm(this.fb);
 	static buildForm(fb: FormBuilder): FormGroup {
@@ -32,23 +35,34 @@ export class EditEmployeeMembershipFormComponent implements OnInit {
 	}
 
 	constructor(
-		private readonly fb: FormBuilder
+		private readonly fb: FormBuilder,
+		private readonly store: Store
 	) {}
 
 	ngOnInit(): void {}
 
 	async removeDepartment(id: string) {
+		if (!this.organization) {
+			return;
+		}
+		const { id: organizationId } = this.organization;
 		this.entitiesRemoved.emit({
 			member: this.selectedEmployee,
-			removedEntityIds: [id]
+			removedEntityIds: [id],
+			organizationId: organizationId
 		});
 	}
 
 	async submitForm() {
+		if (!this.organization) {
+			return;
+		}
 		if (this.form.valid) {
+			const { id: organizationId } = this.organization;
 			this.entitiesAdded.emit({
 				member: this.selectedEmployee,
-				addedEntityIds: this.form.value.departments
+				addedEntityIds: this.form.value.departments,
+				organizationId: organizationId
 			});
 			this.showAddCard = !this.showAddCard;
 			this.form.reset();
