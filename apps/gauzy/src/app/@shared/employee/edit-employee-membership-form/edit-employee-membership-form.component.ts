@@ -12,8 +12,9 @@ import {
 	styleUrls: ['./edit-employee-membership-form.component.scss']
 })
 export class EditEmployeeMembershipFormComponent implements OnInit {
-	@Input() organizationEntities: IBaseEntityWithMembers[];
-	@Input() employeeEntities: IBaseEntityWithMembers[];
+
+	@Input() organizationEntities: IBaseEntityWithMembers[] = [];
+	@Input() employeeEntities: IBaseEntityWithMembers[] = [];
 	@Input() selectedEmployee: IEmployee;
 	@Input() placeholder: string;
 	@Input() title: string;
@@ -23,19 +24,18 @@ export class EditEmployeeMembershipFormComponent implements OnInit {
 
 	showAddCard: boolean;
 
-	form: FormGroup;
-
-	constructor(private fb: FormBuilder) {}
-
-	ngOnInit() {
-		this._initializeForm();
-	}
-
-	private _initializeForm() {
-		this.form = this.fb.group({
+	public form: FormGroup = EditEmployeeMembershipFormComponent.buildForm(this.fb);
+	static buildForm(fb: FormBuilder): FormGroup {
+		return fb.group({
 			departments: ['', Validators.required]
 		});
 	}
+
+	constructor(
+		private readonly fb: FormBuilder
+	) {}
+
+	ngOnInit(): void {}
 
 	async removeDepartment(id: string) {
 		this.entitiesRemoved.emit({

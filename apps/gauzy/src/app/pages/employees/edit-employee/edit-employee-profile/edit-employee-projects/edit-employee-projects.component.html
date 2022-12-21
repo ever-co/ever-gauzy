@@ -2,9 +2,8 @@
 	[selectedEmployee]="selectedEmployee"
 	[organizationEntities]="organizationProjects"
 	[employeeEntities]="employeeProjects"
-	placeholder="{{ 'FORM.PLACEHOLDERS.PROJECTS' | translate }}"
-	title="{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.EMPLOYEE_PROJECTS' | translate }}"
+	[placeholder]="'FORM.PLACEHOLDERS.PROJECTS' | translate"
+	[title]="'EMPLOYEES_PAGE.EDIT_EMPLOYEE.EMPLOYEE_PROJECTS' | translate"
 	(entitiesAdded)="submitForm($event, false)"
 	(entitiesRemoved)="submitForm($event, true)"
->
-</ga-edit-employee-membership>
+></ga-edit-employee-membership>
