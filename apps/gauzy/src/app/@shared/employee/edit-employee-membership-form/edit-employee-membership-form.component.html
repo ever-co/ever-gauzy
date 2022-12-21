@@ -11,7 +11,7 @@
 		</button>
 		<div *ngIf="showAddCard" class="container m-0 w-25">
 			<div class="row">
-				<form [formGroup]="form" *ngIf="form" class="col">
+				<form [formGroup]="form" class="col">
 					<ng-select
 						id="departmentsSelect"
 						[hideSelected]="true"
@@ -24,33 +24,34 @@
 					>
 						<ng-option
 							*ngFor="let entity of organizationEntities"
-							value="{{ entity.id }}"
-							>{{ entity.name }}</ng-option
+							[value]="entity.id"
 						>
+							{{ entity.name }}
+						</ng-option >
 					</ng-select>
 				</form>
 			</div>
 			<div class="row mt-3">
-				<span class="mr-3 ml-3"
-					><button
+				<span class="mr-3 ml-3">
+					<button
 						(click)="showAddCard = !showAddCard"
 						nbButton
 						status="basic"
-            outline
+            			outline
 					>
 						{{ 'BUTTONS.CANCEL' | translate }}
 					</button>
 				</span>
-				<span
-					><button
+				<span>
+					<button
 						(click)="submitForm()"
 						nbButton
 						status="success"
-						[disabled]="!form.valid"
+						[disabled]="form.invalid"
 					>
 						{{ 'BUTTONS.ADD' | translate }}
-					</button></span
-				>
+					</button>
+				</span>
 			</div>
 		</div>
 	</nb-card-header>
@@ -58,12 +59,12 @@
 		<div class="ml-3 mb-4">
 			<strong>{{ title }}</strong>
 		</div>
-		<nb-card class="entities" *ngFor="let d of employeeEntities">
+		<nb-card class="entities" *ngFor="let entity of employeeEntities">
 			<nb-card-body>
-				{{ d.name }}
+				{{ entity.name }}
 				<nb-actions class="float-right" e="medium">
 					<nb-action
-						(click)="removeDepartment(d.id)"
+						(click)="removeDepartment(entity.id)"
 						class="d-inline pr-0"
 						icon="close"
 					></nb-action>

@@ -150,7 +150,7 @@ export interface ITimeSlotCreateInput
 export enum TimeLogType {
 	TRACKED = 'TRACKED',
 	MANUAL = 'MANUAL',
-	IDEAL = 'IDEAL',
+	IDLE = 'IDLE',
 	RESUMED = 'RESUMED'
 }
 
@@ -161,9 +161,9 @@ export enum ManualTimeLogAction {
 
 export enum TimeLogSourceEnum {
 	MOBILE = 'MOBILE',
-	WEB_TIMER = 'WEB_TIMER',
+	WEB_TIMER = 'BROWSER',
 	DESKTOP = 'DESKTOP',
-	BROWSER = 'BROWSER',
+	BROWSER_EXTENSION = 'BROWSER_EXTENSION',
 	HUBSTAFF = 'HUBSTAFF',
 	UPWORK = 'UPWORK'
 }

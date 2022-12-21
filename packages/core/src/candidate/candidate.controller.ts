@@ -2,6 +2,7 @@ import {
 	Body,
 	Controller,
 	Get,
+	Headers,
 	HttpCode,
 	HttpStatus,
 	Param,
@@ -9,7 +10,8 @@ import {
 	Query,
 	UseGuards,
 	Post,
-	ValidationPipe
+	ValidationPipe,
+	UsePipes
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
@@ -21,12 +23,12 @@ import {
 	IPagination
 } from '@gauzy/contracts';
 import { FindOptionsWhere } from 'typeorm';
-import { CrudController, PaginationParams} from './../core/crud';
+import { CrudController, OptionParams, PaginationParams} from './../core/crud';
 import { CandidateService } from './candidate.service';
 import { Candidate } from './candidate.entity';
+import { LanguageDecorator, Permissions } from './../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
-import { Permissions } from './../shared/decorators';
-import { BulkBodyLoadTransformPipe, ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
+import { BulkBodyLoadTransformPipe, UUIDValidationPipe } from './../shared/pipes';
 import {
 	CandidateCreateCommand,
 	CandidateBulkCreateCommand,
@@ -67,12 +69,18 @@ export class CandidateController extends CrudController<Candidate> {
 	@Post('/bulk')
 	async createBulk(
 		@Body(BulkBodyLoadTransformPipe, new ValidationPipe({
-			transform : true
-		})) body: CandidateBulkInputDTO,
-		@I18nLang() languageCode: LanguagesEnum
+			transform: true
+		})) entity: CandidateBulkInputDTO,
+		@LanguageDecorator() themeLanguage: LanguagesEnum,
+		@I18nLang() languageCode: LanguagesEnum,
+		@Headers('origin') originUrl: string
 	): Promise<ICandidate[]> {
 		return await this.commandBus.execute(
-			new CandidateBulkCreateCommand(body.list, languageCode)
+			new CandidateBulkCreateCommand(
+				entity.list,
+				themeLanguage || languageCode,
+				originUrl
+			)
 		);
 	}
 
@@ -113,12 +121,11 @@ export class CandidateController extends CrudController<Candidate> {
 	})
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_VIEW)
 	@Get('pagination')
+	@UsePipes(new ValidationPipe({ transform: true }))
 	async pagination(
-		@Query(new ValidationPipe({
-			transform: true
-		})) options: PaginationParams<Candidate>
+		@Query() options: PaginationParams<Candidate>
 	): Promise<IPagination<ICandidate>> {
-		return this.candidateService.pagination(options);
+		return await this.candidateService.pagination(options);
 	}
 
 	/**
@@ -139,14 +146,11 @@ export class CandidateController extends CrudController<Candidate> {
 	})
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_VIEW)
 	@Get()
+	@UsePipes(new ValidationPipe({ transform: true }))
 	async findAll(
-		@Query('data', ParseJsonPipe) data: any
+		@Query() options: PaginationParams<Candidate>
 	): Promise<IPagination<ICandidate>> {
-		const { relations, findInput } = data;
-		return this.candidateService.findAll({
-			where: findInput,
-			relations
-		});
+		return await this.candidateService.findAll(options);
 	}
 
 	/**
@@ -167,14 +171,12 @@ export class CandidateController extends CrudController<Candidate> {
 	})
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_VIEW)
 	@Get(':id')
+	@UsePipes(new ValidationPipe({ transform: true }))
 	async findById(
-		@Param('id', UUIDValidationPipe) id: string,
-		@Query('data', ParseJsonPipe) data?: any
+		@Param('id', UUIDValidationPipe) id: ICandidate['id'],
+		@Query() params: OptionParams<Candidate>
 	): Promise<ICandidate> {
-		const { relations = [] } = data;
-		return this.candidateService.findOneByIdString(id, {
-			relations
-		});
+		return await this.candidateService.findOneByIdString(id, params);
 	}
 
 	/**
@@ -194,13 +196,18 @@ export class CandidateController extends CrudController<Candidate> {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Post()
+	@UsePipes(new ValidationPipe({ transform : true }))
 	async create(
-		@Body(new ValidationPipe({
-			transform : true
-		})) body: CreateCandidateDTO
+		@Body() entity: CreateCandidateDTO,
+		@I18nLang() languageCode: LanguagesEnum,
+		@Headers('origin') originUrl: string,
 	): Promise<ICandidate> {
 		return await this.commandBus.execute(
-			new CandidateCreateCommand(body)
+			new CandidateCreateCommand(
+				entity,
+				languageCode,
+				originUrl
+			)
 		);
 	}
 
@@ -227,11 +234,10 @@ export class CandidateController extends CrudController<Candidate> {
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
+	@UsePipes(new ValidationPipe({ transform : true }))
 	async update(
-		@Param('id', UUIDValidationPipe) id: string,
-		@Body(new ValidationPipe({
-			transform : true
-		})) entity: UpdateCandidateDTO
+		@Param('id', UUIDValidationPipe) id: ICandidate['id'],
+		@Body() entity: UpdateCandidateDTO
 	): Promise<ICandidate> {
 		return await this.commandBus.execute(
 			new CandidateUpdateCommand({ id, ...entity })
@@ -256,13 +262,12 @@ export class CandidateController extends CrudController<Candidate> {
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id/hired')
 	async updateHiredStatus(
-		@Param('id', UUIDValidationPipe) id: string
+		@Param('id', UUIDValidationPipe) id: ICandidate['id']
 	): Promise<ICandidate> {
 		return await this.commandBus.execute(
 			new CandidateHiredCommand(id)
@@ -287,13 +292,12 @@ export class CandidateController extends CrudController<Candidate> {
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id/rejected')
 	async updateRejectedStatus(
-		@Param('id', UUIDValidationPipe) id: string
+		@Param('id', UUIDValidationPipe) id: ICandidate['id']
 	): Promise<ICandidate> {
 		return await this.commandBus.execute(
 			new CandidateRejectedCommand(id)

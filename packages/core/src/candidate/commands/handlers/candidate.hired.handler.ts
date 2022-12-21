@@ -1,7 +1,6 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { BadRequestException, ConflictException } from '@nestjs/common';
 import { CandidateStatusEnum, ICandidate, IRole, RolesEnum } from '@gauzy/contracts';
-import { RequestContext } from './../../../core/context';
 import { CandidateService } from '../../candidate.service';
 import { CandidateHiredCommand } from '../candidate.hired.command';
 import { EmployeeService } from './../../../employee/employee.service';
@@ -23,25 +22,18 @@ export class CandidateHiredHandler
 		const { id } = command;
 		const candidate: ICandidate = await this.candidateService.findOneByIdString(id, {
 			relations: {
-				user: {
-					role: true
-				},
-				tenant: true,
-				organization: true,
-				contact: true,
-				organizationPosition: true
-			}
+				user: true,
+				tags: true
+			},
+			relationLoadStrategy: 'query'
 		});
 		if (candidate.alreadyHired) {
 			throw new ConflictException('The candidate is already hired, you can not hired it.');
 		}
 		try {
-			//1. Update hired candidate details
-			await this.candidateService.update(id,  {
-				status: CandidateStatusEnum.HIRED,
-				hiredDate: new Date()
-			});
-			//2. Create employee for respective candidate
+			const hiredDate = new Date();
+
+			//1. Create employee for respective candidate
 			const employee = await this.employeeService.create({
 				billRateValue: candidate.billRateValue,
 				billRateCurrency: candidate.billRateCurrency,
@@ -51,21 +43,29 @@ export class CandidateHiredHandler
 				organizationId: candidate.organizationId,
 				userId: candidate.userId,
 				contactId: candidate.contactId,
-				organizationPositionId: candidate.organizationPositionId
+				organizationPositionId: candidate.organizationPositionId,
+				tags: candidate.tags,
+				isActive: true,
+				startedWorkOn: hiredDate
 			});
-			//3. Migrate CANDIDATE role to EMPLOYEE role
-			const { user } = candidate;
+
+			//2. Migrate CANDIDATE role to EMPLOYEE role
 			const role: IRole = await this.roleService.findOneByWhereOptions({
-				tenantId: RequestContext.currentTenantId(),
 				name: RolesEnum.EMPLOYEE
 			});
+
 			await this.userService.create({
-				id: user.id,
+				id: candidate.userId,
 				role
 			});
-			//4. Convert candidate to employee user
+
+			//3. Convert candidate to employee user
+			//4. Update hired candidate details
 			return await this.candidateService.create({
 				id,
+				status: CandidateStatusEnum.HIRED,
+				hiredDate: hiredDate,
+				rejectDate: null,
 				employee
 			});
 		} catch (error) {

@@ -86,7 +86,7 @@ export class Activity extends TenantOrganizationBaseEntity implements IActivity 
 	@ApiProperty({ type: () => String, enum: TimeLogSourceEnum })
 	@IsEnum(TimeLogSourceEnum)
 	@IsString()
-	@Column({ default: TimeLogSourceEnum.BROWSER })
+	@Column({ default: TimeLogSourceEnum.WEB_TIMER })
 	source?: string;
 
 	@ApiProperty({ type: () => 'timestamptz' })

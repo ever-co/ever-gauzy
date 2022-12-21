@@ -462,6 +462,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 							id: true,
 							email: true,
 							fullName: true,
+							status: true,
 							organization: {
 								name: true
 							}
@@ -516,6 +517,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 					id: true,
 					email: true,
 					fullName: true,
+					status: true,
 					organization: {
 						name: true
 					}

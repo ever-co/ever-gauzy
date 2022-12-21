@@ -10,10 +10,10 @@
 						(selectedChange)="triggerFilterChange()"
 					>
 						<nb-option
-							*ngFor="let source of TimeLogSourceEnum | keyvalue"
-							[value]="source.key"
+							*ngFor="let source of timeLogSourceSelectors"
+							[value]="source.value"
 						>
-							{{ source.value | replace : '_' : ' ' }}
+							{{ source.label | replace : '_' : ' ' | titlecase }}
 						</nb-option>
 					</nb-select>
 				</div>
@@ -61,7 +61,7 @@
 							*ngFor="let logType of TimeLogType | keyvalue"
 							[value]="logType.key"
 						>
-							{{ logType.value }}
+							{{ logType.value | titlecase }}
 						</nb-option>
 					</nb-select>
 				</div>

@@ -31,7 +31,9 @@ export class TaskSubscriber implements EntitySubscriberInterface<Task> {
                     }
                 }
                 list.push(entity.number || 0);
-                entity.taskNumber = list.join('-');
+                if ('number' in entity) {
+                    entity.taskNumber = list.join('-');
+                }
             }
         } catch (error) {
             console.log(error);

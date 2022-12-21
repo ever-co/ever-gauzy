@@ -1917,6 +1917,7 @@
 			"ORG_CONTACT_EDIT": "Create/Edit Contacts",
 			"ORG_CONTACT_VIEW": "View Contacts",
 			"ORG_TEAM_EDIT": "Create/Edit Teams",
+			"ORG_TEAM_VIEW": "View Teams",
 			"ORG_CONTRACT_EDIT": "Create/Edit Contracts",
 			"TIME_TRACKER": "Access Time Tracker",
 			"TENANT_ADD_EXISTING_USER": "Tenant Add User To Organization",
@@ -1934,7 +1935,9 @@
 			"ALLOW_DELETE_TIME": "Allow Delete Time",
 			"ALLOW_MODIFY_TIME": "Allow Modify Time",
 			"ALLOW_MANUAL_TIME": "Allow Manual Time",
-			"DELETE_SCREENSHOTS": "Allow Delete Screenshot"
+			"DELETE_SCREENSHOTS": "Allow Delete Screenshot",
+			"ORG_TASK_EDIT": "Create/Edit Tasks",
+			"ORG_TASK_VIEW": "Create/Edit Tasks"
 		},
 		"BILLING": "Billing",
 		"BUDGET": "Budget",
@@ -3661,7 +3664,15 @@
 			"APPROVAL_TIMESHEET": "You don't have any timesheets for approvals yet for these day's."
 		},
 		"VIEW_WINDOWS": "View windows",
-		"VIEW_WIDGETS": "View widgets"
+		"VIEW_WIDGETS": "View widgets",
+		"SOURCES": {
+			"WEB_TIMER": "Web Timer",
+			"DESKTOP": "Desktop Timer App",
+			"MOBILE": "Mobile Timer App",
+			"UPWORK": "Upwork",
+			"HUBSTAFF": "HubStaff",
+			"BROWSER_EXTENSION": "Browser Extension"
+		}
 	},
 	"ACTIVITY": {
 		"SCREENSHOTS": "Screenshots",

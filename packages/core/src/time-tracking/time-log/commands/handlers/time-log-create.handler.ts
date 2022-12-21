@@ -54,7 +54,7 @@ export class TimeLogCreateHandler
 			description: input.description || null,
 			reason: input.reason || null,
 			isBillable: input.isBillable || false,
-			source: input.source || TimeLogSourceEnum.BROWSER,
+			source: input.source || TimeLogSourceEnum.WEB_TIMER,
 			isRunning: input.isRunning || (input.source === TimeLogSourceEnum.DESKTOP)
 		});
 

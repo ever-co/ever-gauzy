@@ -13,7 +13,7 @@ export interface IDatePickerConfig {
 }
 
 export const DEFAULT_DATE_PICKER_CONFIG: IDatePickerConfig = {
-	unitOfTime: 'month',
+	unitOfTime: 'week',
 	isLockDatePicker: false,
 	isSaveDatePicker: false,
 	isSingleDatePicker: false,
@@ -30,13 +30,13 @@ export const DEFAULT_DATE_RANGE: IDateRangePicker = {
 	providedIn: 'root'
 })
 export class DateRangePickerBuilderService {
-	public _datePickerConfig$: BehaviorSubject<IDatePickerConfig> = new BehaviorSubject(DEFAULT_DATE_PICKER_CONFIG);
-	public datePickerConfig$: Observable<IDatePickerConfig> = this._datePickerConfig$.asObservable();
+	private _datePickerConfig$: BehaviorSubject<IDatePickerConfig | null> = new BehaviorSubject(null);
+	public datePickerConfig$: Observable<IDatePickerConfig | null> = this._datePickerConfig$.asObservable();
 
 	public dates$: BehaviorSubject<IDateRangePicker> = new BehaviorSubject(DEFAULT_DATE_RANGE);
 
-	public _selectedDateRange$: BehaviorSubject<IDateRangePicker> = new BehaviorSubject(DEFAULT_DATE_RANGE);
-	public selectedDateRange$: Observable<IDateRangePicker> = this._selectedDateRange$.asObservable();
+	private _selectedDateRange$: BehaviorSubject<IDateRangePicker | null> = new BehaviorSubject(null);
+	public selectedDateRange$: Observable<IDateRangePicker | null> = this._selectedDateRange$.asObservable();
 
 	constructor() {}
 
@@ -44,10 +44,12 @@ export class DateRangePickerBuilderService {
 	 * Getter & Setter for selected date range
 	 */
 	get selectedDateRange(): IDateRangePicker {
-		return this._selectedDateRange$.getValue();
+		return this._selectedDateRange$.getValue() || this.dates$.getValue();
 	}
 	set selectedDateRange(range: IDateRangePicker) {
-		this._selectedDateRange$.next(range);
+		if (isNotEmpty(range)) {
+			this._selectedDateRange$.next(range);
+		}
 	}
 
 	/**

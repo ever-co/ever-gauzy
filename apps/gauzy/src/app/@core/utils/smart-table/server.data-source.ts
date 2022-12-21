@@ -117,13 +117,24 @@ export class ServerDataSource extends LocalDataSource {
     }
 
     protected addPagerRequestParams() {
-        if (this.pagingConf && this.pagingConf['page'] && this.pagingConf['perPage']) {
-            return {
-                [this.conf.pagerPageKey]: this.pagingConf['page'],
-                [this.conf.pagerLimitKey]: this.pagingConf['perPage']
+        try {
+            if (this.pagingConf) {
+                if (
+                    typeof this.pagingConf['page'] === 'number' &&
+                    typeof this.pagingConf['perPage'] === 'number'
+                ) {
+                    return {
+                        [this.conf.pagerPageKey]: this.pagingConf['page'],
+                        [this.conf.pagerLimitKey]: this.pagingConf['perPage']
+                    }
+                }
+                return {};
+            } else {
+                return {};
             }
-        } else {
-            return {}
+        } catch (error) {
+            console.log('Error while retrieving pagination configuration', error);
+            return {};
         }
     }
 }

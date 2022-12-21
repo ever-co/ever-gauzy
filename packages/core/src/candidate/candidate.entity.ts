@@ -50,8 +50,7 @@ import {
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
 
 @Entity('candidate')
-export class Candidate
-	extends TenantOrganizationBaseEntity
+export class Candidate extends TenantOrganizationBaseEntity
 	implements ICandidate {
 
 	@ApiPropertyOptional({ type: () => Number })
@@ -76,7 +75,7 @@ export class Candidate
 
 	@ApiProperty({ type: () => String, enum: CandidateStatusEnum })
 	@Column({ nullable: true, default: CandidateStatusEnum.APPLIED })
-	status?: string;
+	status?: CandidateStatusEnum;
 
 	@ApiPropertyOptional({ type: () => Date })
 	@Column({ nullable: true })
@@ -88,7 +87,7 @@ export class Candidate
 
 	@ApiPropertyOptional({ type: () => Number })
 	@Column({ nullable: true })
-	reWeeklyLimit?: number; //Recurring Weekly Limit (hours)
+	reWeeklyLimit?: number; // Recurring Weekly Limit (hours)
 
 	@ApiPropertyOptional({ type: () => String, maxLength: 255 })
 	@Column({ length: 255, nullable: true })
@@ -100,7 +99,7 @@ export class Candidate
 
 	@ApiProperty({ type: () => String, enum: PayPeriodEnum })
 	@Column({ nullable: true })
-	payPeriod?: string;
+	payPeriod?: PayPeriodEnum;
 
 	@ApiPropertyOptional({ type: () => String })
 	@Column({ nullable: true })

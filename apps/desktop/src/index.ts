@@ -392,6 +392,7 @@ app.on('ready', async () => {
 		updaterWindow,
 		knex,
 		pathWindow,
+		null,
 		true
 	);
 

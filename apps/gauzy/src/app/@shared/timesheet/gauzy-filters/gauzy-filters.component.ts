@@ -18,8 +18,10 @@ import {
 } from '@gauzy/contracts';
 import { Subject } from 'rxjs';
 import { debounceTime, take, tap } from 'rxjs/operators';
+import { TranslateService } from '@ngx-translate/core';
 import { pick } from 'underscore';
 import { ActivityLevel, TimesheetFilterService } from '../timesheet-filter.service';
+import { TranslationBaseComponent } from '../../language-base';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -27,8 +29,7 @@ import { ActivityLevel, TimesheetFilterService } from '../timesheet-filter.servi
 	templateUrl: './gauzy-filters.component.html',
 	styleUrls: ['./gauzy-filters.component.scss']
 })
-export class GauzyFiltersComponent
-	implements AfterViewInit, OnInit, OnDestroy {
+export class GauzyFiltersComponent extends TranslationBaseComponent implements AfterViewInit, OnInit, OnDestroy {
 
 	// declaration of variables
 	public PermissionsEnum = PermissionsEnum;
@@ -40,14 +41,15 @@ export class GauzyFiltersComponent
 	@Input() hasSourceFilter = true;
 	@Input() hasActivityLevelFilter = true;
 
-	hasFilterApplies: boolean;
-
-  	activityLevel = ActivityLevel;
-	sliderOptions: Partial<Options> = {
+	public hasFilterApplies: boolean;
+  	public activityLevel = ActivityLevel;
+	public sliderOptions: Partial<Options> = {
 		floor: 0,
 		ceil: 100,
 		step: 5
 	};
+	public readonly timeLogSourceSelectors = this.getTimeLogSourceSelectors();
+
 	/*
 	* Getter & Setter for dynamic enabled/disabled element
 	*/
@@ -78,8 +80,11 @@ export class GauzyFiltersComponent
    	*/
 	constructor(
 		private readonly timesheetFilterService: TimesheetFilterService,
-		private readonly cd: ChangeDetectorRef
-	) {}
+		private readonly cd: ChangeDetectorRef,
+		public readonly translateService: TranslateService
+	) {
+		super(translateService);
+	}
 
   	ngOnInit() {
 		if (this.saveFilters) {
@@ -145,6 +150,38 @@ export class GauzyFiltersComponent
 			this.filters[key] === undefined ? delete this.filters[key] : {}
 		);
 		return this.filters;
+	}
+
+	/**
+	 * Generate Dynamic Timelog Source Selector
+	 */
+	getTimeLogSourceSelectors(): Array<{ label: string, value: TimeLogSourceEnum}> {
+		return [
+			{
+				label: this.getTranslation('TIMESHEET.SOURCES.WEB_TIMER'),
+				value: TimeLogSourceEnum.WEB_TIMER
+			},
+			{
+				label: this.getTranslation('TIMESHEET.SOURCES.DESKTOP'),
+				value: TimeLogSourceEnum.DESKTOP
+			},
+			{
+				label: this.getTranslation('TIMESHEET.SOURCES.MOBILE'),
+				value: TimeLogSourceEnum.MOBILE
+			},
+			{
+				label: this.getTranslation('TIMESHEET.SOURCES.UPWORK'),
+				value: TimeLogSourceEnum.UPWORK
+			},
+			{
+				label: this.getTranslation('TIMESHEET.SOURCES.HUBSTAFF'),
+				value: TimeLogSourceEnum.HUBSTAFF
+			},
+			{
+				label: this.getTranslation('TIMESHEET.SOURCES.BROWSER_EXTENSION'),
+				value: TimeLogSourceEnum.BROWSER_EXTENSION
+			}
+		];
 	}
 
 	ngOnDestroy(): void {}
