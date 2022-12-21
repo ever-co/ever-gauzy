@@ -1,6 +1,6 @@
-import { IEditEntityByMemberInput } from '@gauzy/contracts';
 import { BadRequestException } from '@nestjs/common';
 import { In } from 'typeorm';
+import { IEditEntityByMemberInput } from '@gauzy/contracts';
 import { CrudService } from '../../core/crud';
 
 export abstract class UpdateEntityByMembersHandler {
