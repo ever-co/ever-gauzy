@@ -32,7 +32,7 @@ export class InviteAcceptHandler
 
 			let invite: IInvite;
 			if (typeof input === 'object' && 'email' in input && 'token' in input) {
-				invite = await this.inviteService.validate({
+				invite = await this.inviteService.validateByToken({
 					email,
 					token
 				});

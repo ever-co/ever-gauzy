@@ -443,11 +443,12 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 
 	/**
 	 * Check, if invite exist or expired for user
+	 * Validate invited by token
 	 *
 	 * @param where
 	 * @returns
 	 */
-	async validate(
+	async validateByToken(
 		where: FindOptionsWhere<Invite>
 	): Promise<IInvite> {
 		try {
@@ -462,7 +463,6 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 							id: true,
 							email: true,
 							fullName: true,
-							status: true,
 							organization: {
 								name: true
 							}
@@ -517,7 +517,6 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 					id: true,
 					email: true,
 					fullName: true,
-					status: true,
 					organization: {
 						name: true
 					}
