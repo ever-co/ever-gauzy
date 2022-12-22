@@ -250,6 +250,7 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_PROPOSALS_EDIT,
 			PermissionsEnum.ORG_PROPOSAL_TEMPLATES_VIEW,
 			PermissionsEnum.ORG_PROPOSAL_TEMPLATES_EDIT,
+			PermissionsEnum.ORG_EMPLOYEES_VIEW,
 			PermissionsEnum.ORG_TIME_OFF_VIEW,
 			PermissionsEnum.POLICY_VIEW,
 			PermissionsEnum.APPROVAL_POLICY_EDIT,

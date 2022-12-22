@@ -151,6 +151,7 @@ export const PermissionGroups = {
 		PermissionsEnum.ORG_PROPOSALS_VIEW,
 		PermissionsEnum.ORG_PROPOSAL_TEMPLATES_VIEW,
 		PermissionsEnum.ORG_PROPOSAL_TEMPLATES_EDIT,
+		PermissionsEnum.ORG_EMPLOYEES_VIEW,
 		PermissionsEnum.ORG_TASK_EDIT,
 		PermissionsEnum.ORG_TASK_VIEW,
 		PermissionsEnum.ORG_TIME_OFF_VIEW,
@@ -217,7 +218,6 @@ export const PermissionGroups = {
 
 	//Readonly permissions, are only enabled for Super Admin/Admin role
 	ADMINISTRATION: [
-		PermissionsEnum.ORG_EMPLOYEES_VIEW,
 		PermissionsEnum.ORG_EMPLOYEES_EDIT,
 		PermissionsEnum.ORG_CANDIDATES_VIEW,
 		PermissionsEnum.ORG_CANDIDATES_EDIT,
