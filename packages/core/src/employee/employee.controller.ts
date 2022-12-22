@@ -24,7 +24,7 @@ import {
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { I18nLang } from 'nestjs-i18n';
-import { FindOptionsWhere, UpdateResult } from 'typeorm';
+import { UpdateResult } from 'typeorm';
 import {
 	EmployeeCreateCommand,
 	EmployeeBulkCreateCommand,

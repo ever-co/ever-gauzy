@@ -103,21 +103,33 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 		id: IOrganizationTeam['id'],
 		entity: IOrganizationTeamUpdateInput
 	): Promise<OrganizationTeam> {
-		const {
-			tags,
-			name,
-			prefix,
-			organizationId,
-			memberIds = [],
-			managerIds = []
-		} = entity;
+		const { tags = [], memberIds = [], managerIds = [] } = entity;
+		const { name, prefix, organizationId } = entity;
 		try {
+			const tenantId = RequestContext.currentTenantId();
+			/**
+			 * If, employee create teams, default add as a manager
+			 */
+			try {
+				await this.roleService.findOneByIdString(RequestContext.currentRoleId(), {
+					where: {
+						name: RolesEnum.EMPLOYEE
+					}
+				});
+				managerIds.push(RequestContext.currentEmployeeId());
+			} catch (error) {}
+			/**
+			 * Get manager role
+			 */
 			const role = await this.roleService.findOneByWhereOptions({
 				name: RolesEnum.MANAGER
 			});
+
 			const employees = await this.employeeRepository.find({
 				where: {
-					id: In([...memberIds, ...managerIds])
+					id: In([...memberIds, ...managerIds]),
+					organizationId,
+					tenantId
 				},
 				relations: {
 					user: true
