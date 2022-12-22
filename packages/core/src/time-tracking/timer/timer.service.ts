@@ -59,7 +59,8 @@ export class TimerService {
 		if (!employee) {
 			throw new NotFoundException("We couldn't find the employee you were looking for.");
 		}
-		const { organizationId, id: employeeId } = employee;
+
+		const { id: employeeId } = employee;
 		const { start, end } = getDateRange();
 
 		// Get today's completed timelogs
@@ -77,7 +78,7 @@ export class TimerService {
 				stoppedAt: Not(IsNull()),
 				employeeId,
 				tenantId,
-				organizationId,
+				organizationId: request.organizationId,
 				isRunning: false
 			},
 			order: {
@@ -95,7 +96,7 @@ export class TimerService {
 				stoppedAt: Not(IsNull()),
 				employeeId,
 				tenantId,
-				organizationId
+				organizationId: request.organizationId,
 			},
 			order: {
 				startedAt: 'DESC',
@@ -140,8 +141,8 @@ export class TimerService {
 		if (!employee) {
 			throw new NotFoundException("We couldn't find the employee you were looking for.");
 		}
-		const { organizationId, id: employeeId } = employee;
-		const lastLog = await this.getLastRunningLog();
+		const { id: employeeId } = employee;
+		const lastLog = await this.getLastRunningLog(request);
 
 		console.log('Start Timer Request', {
 			request,
@@ -161,7 +162,7 @@ export class TimerService {
 		}
 
 		const now = moment.utc().toDate();
-		const { source, projectId, taskId, organizationContactId, logType, description, isBillable } = request;
+		const { source, projectId, taskId, organizationContactId, logType, description, isBillable, organizationId } = request;
 
 		return await this.commandBus.execute(
 			new TimeLogCreateCommand({
@@ -184,10 +185,9 @@ export class TimerService {
 	}
 
 	async stopTimer(request: ITimerToggleInput): Promise<ITimeLog> {
-		const { organizationId } = request;
 		const tenantId = RequestContext.currentTenantId();
 
-		let lastLog = await this.getLastRunningLog();
+		let lastLog = await this.getLastRunningLog(request);
 		if (!lastLog) {
 			/**
 			 * If you want to stop timer, but employee timer is already stopped.
@@ -195,7 +195,7 @@ export class TimerService {
 			 * It will manage to create proper entires in database
 			 */
 			await this.startTimer(request);
-			lastLog = await this.getLastRunningLog();
+			lastLog = await this.getLastRunningLog(request);
 		}
 
 		console.log('Stop Timer Request', {
@@ -221,7 +221,7 @@ export class TimerService {
 				startDate: lastLog.startedAt,
 				endDate: lastLog.stoppedAt,
 				employeeId: lastLog.employeeId,
-				organizationId: organizationId || lastLog.organizationId,
+				organizationId: request.organizationId || lastLog.organizationId,
 				tenantId
 			} as IGetTimeLogConflictInput)
 		);
@@ -250,7 +250,7 @@ export class TimerService {
 	}
 
 	async toggleTimeLog(request: ITimerToggleInput): Promise<TimeLog> {
-		const lastLog = await this.getLastRunningLog();
+		const lastLog = await this.getLastRunningLog(request);
 		if (!lastLog) {
 			return this.startTimer(request);
 		} else {
@@ -261,7 +261,7 @@ export class TimerService {
 	/*
 	* Get employee last running timer
 	*/
-	private async getLastRunningLog() {
+	private async getLastRunningLog(request: ITimerToggleInput) {
 		const userId = RequestContext.currentUserId();
 		const tenantId = RequestContext.currentTenantId();
 
@@ -280,14 +280,14 @@ export class TimerService {
 		if (!employee.isTrackingEnabled) {
 			throw new ForbiddenException(`The time tracking functionality has been disabled for you.`);
 		}
-		const { organizationId, id: employeeId } = employee;
+		const { id: employeeId } = employee;
 		return await this.timeLogRepository.findOne({
 			where: {
 				deletedAt: IsNull(),
 				stoppedAt: Not(IsNull()),
 				employeeId,
 				tenantId,
-				organizationId,
+				organizationId: request.organizationId,
 				isRunning: true
 			},
 			order: {
@@ -314,11 +314,11 @@ export class TimerService {
 				tenantId
 			});
 		}
-
 		if (!employee) {
 			throw new NotFoundException("We couldn't find the employee you were looking for.");
 		}
-		const { organizationId, id: employeeId } = employee;
+
+		const { id: employeeId } = employee;
 		const status: ITimerStatus = {
 			duration: 0,
 			running: false,
@@ -335,7 +335,7 @@ export class TimerService {
 				stoppedAt: Not(IsNull()),
 				employeeId,
 				tenantId,
-				organizationId
+				organizationId: request.organizationId,
 			},
 			order: {
 				startedAt: 'DESC',
