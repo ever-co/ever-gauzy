@@ -15,7 +15,8 @@ import {
 	ITag,
 	RolesEnum,
 	ComponentLayoutStyleEnum,
-	ISelectedEmployee
+	ISelectedEmployee,
+	IUser
 } from '@gauzy/contracts';
 import { NbDialogRef, NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -328,11 +329,10 @@ export class TeamsComponent extends PaginationFilterBaseComponent
 		this.smartTableSource = new ServerDataSource(this.httpClient, {
 			endPoint: `${API_PREFIX}/organization-team/pagination`,
 			relations: [
-				'members',
 				'members.role',
-				'members.employee',
 				'members.employee.user',
-				'tags'
+				'tags',
+				'createdBy'
 			],
 			where: {
 				organizationId,
@@ -456,6 +456,14 @@ export class TeamsComponent extends PaginationFilterBaseComponent
 					type: 'custom',
 					renderComponent: EmployeeWithLinksComponent,
 					filter: false
+				},
+				createdBy: {
+					title: this.getTranslation('TASKS_PAGE.TASKS_CREATOR'),
+					type: 'string',
+					filter: false,
+					valuePrepareFunction: (cell: IUser) => {
+						return (cell) ? cell.name : null;
+					}
 				},
 				notes: {
 					title: this.getTranslation('MENU.TAGS'),
