@@ -1,174 +1,184 @@
-import { Component, Input, OnInit, ChangeDetectorRef, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
-import { FormGroup, FormBuilder, Validators } from '@angular/forms';
+import {
+	Component,
+	Input,
+	OnInit,
+	ChangeDetectorRef,
+	Output,
+	EventEmitter,
+	ChangeDetectionStrategy
+} from '@angular/core';
+import { FormGroup, FormBuilder } from '@angular/forms';
 import { TimeTrackerService } from '../time-tracker/time-tracker.service';
 const log = window.require('electron-log');
 console.log = log.log;
 Object.assign(console, log.functions);
 
-
 @Component({
 	selector: 'ngx-tasks',
-    changeDetection: ChangeDetectionStrategy.OnPush,
+	changeDetection: ChangeDetectionStrategy.OnPush,
 	templateUrl: './tasks.component.html',
 	styleUrls: ['./tasks.component.scss']
 })
-export class TasksComponent
-	implements OnInit {
-    @Input() userData: any;
-    @Input() employee: any;
-    @Output() isAddTask = new EventEmitter<boolean>();
-    @Output() newTaskCallback = new EventEmitter<any>();
+export class TasksComponent implements OnInit {
+	@Input() userData: any;
+	@Input() employee: any;
+	@Output() isAddTask = new EventEmitter<boolean>();
+	@Output() newTaskCallback = new EventEmitter<any>();
 
 	form: FormGroup;
-	projectSelect =  null;
-    projects = [];
+	projectSelect = null;
+	projects = [];
 
-    statusTaskSelect = null
-    statuses = [
-        {
-            id:'Todo',
-            name: 'TODO',
-        },
-        {
-            id:'In Progress',
-            name:'In Progress'
-        },
-        {
-            id : 'For Testing',
-            name: 'For Testing',
-        },
-        {
-            id :'Completed',
-            name: 'Completed' 
-        }
-    ] 
+	statuses = [
+		{
+			id: 'Todo',
+			name: 'TODO'
+		},
+		{
+			id: 'In Progress',
+			name: 'In Progress'
+		},
+		{
+			id: 'For Testing',
+			name: 'For Testing'
+		},
+		{
+			id: 'Completed',
+			name: 'Completed'
+		}
+	];
 
-    employeeSelect = null
-    employees = []
+	statusTaskSelect;
 
-    selectedTags = null
-    tags = []
+	employeeSelect = null;
+	employees = [];
 
-    dueDate = null;
-    title = '';
-    description = '';
+	selectedTags = null;
+	tags = [];
 
-    disableSave = true;
+	dueDate = null;
+	title = '';
+	description = '';
 
-    estimate: {
-        days: Number | null
-        hours: Number | null
-        minutes: Number | null
-    } = {
-        days: null,
-        hours: null,
-        minutes: null
-    }
+	disableSave = true;
+
+	estimate: {
+		days: number;
+		hours: number;
+		minutes: number;
+	} = {
+		days: null,
+		hours: null,
+		minutes: null
+	};
 
 	constructor(
 		private fb: FormBuilder,
-        private _cdr: ChangeDetectorRef,
-        private timeTrackerService: TimeTrackerService,
+		private _cdr: ChangeDetectorRef,
+		private timeTrackerService: TimeTrackerService
 	) {}
 
 	ngOnInit() {
-        this.getProjects(this.userData);
-        this.getTags(this.userData)
-        this.getEmployees(this.userData);
-        this.employeeSelect = this.userData.employeeId;
-        this._cdr.detectChanges();
+		this.getProjects(this.userData);
+		this.getTags(this.userData);
+		this.getEmployees(this.userData);
+		this.employeeSelect = this.userData.employeeId;
+	    this.statusTaskSelect = this.statuses[0];
+		this._cdr.detectChanges();
 	}
 
-    setProject(event) {
-        this.projectSelect = event;
-        this.validation();
-    }
-    setStatusTask(event) {
-        this.statusTaskSelect = event;
-        this.validation();
-    }
-    setEmployee(event) {
+	setProject(event) {
+		this.projectSelect = event;
+		this.validation();
+	}
+	setStatusTask(event) {
+		this.statusTaskSelect = event;
+		this.validation();
+	}
+	setEmployee(event) {}
 
-    }
+	setTags(event) {}
 
-    setTags(event) {
-    }
-
-    async getProjects(arg) {
-        try {
-            this.projects = await this.timeTrackerService.getProjects(arg);
-            this._cdr.detectChanges();
-        } catch (error) {
-        }
+	async getProjects(arg) {
+		try {
+			this.projects = await this.timeTrackerService.getProjects(arg);
+			this._cdr.detectChanges();
+		} catch (error) {}
 	}
 
-    async getTags(arg) {
-        try {
-            const tagsRes = await this.timeTrackerService.getTags(arg);
-            this.tags = tagsRes.items;
-            this._cdr.detectChanges();
-        } catch (error) {
-            console.log('error while get tags', error.message);
-        }
-    }
+	async getTags(arg) {
+		try {
+			const tagsRes = await this.timeTrackerService.getTags(arg);
+			this.tags = tagsRes.items;
+			this._cdr.detectChanges();
+		} catch (error) {
+			console.log('error while get tags', error.message);
+		}
+	}
 
-    async getEmployees(arg) {
-        try {
-            const employees = await this.timeTrackerService.getEmployees(arg);
-            this.employees = employees.items;
-            this._cdr.detectChanges();
-        } catch (error) {
-        }
-    }
+	async getEmployees(arg) {
+		try {
+			const employee = await this.timeTrackerService.getEmployees(arg);
+			this.employees = [employee];
+			this._cdr.detectChanges();
+		} catch (error) {}
+	}
 
-    closeAdd() {
-        this.isAddTask.emit(false);
-        this._cdr.detectChanges();
-    }
+	closeAdd() {
+		this.isAddTask.emit(false);
+		this._cdr.detectChanges();
+	}
 
-    validation() {
-        if (!this.title || !this.statusTaskSelect || !this.dueDate) {
+	validation() {
+		if (!this.title || !this.statusTaskSelect || !this.dueDate) {
 			this.disableSave = true;
 		} else {
 			this.disableSave = false;
 		}
-    }
+	}
 
-    async saveTask() {
-        const payloadTask = {
-            title: this.title,
-            project: this.projects.find((i) => i.id === this.projectSelect),
-            projectId: this.projectSelect,
-            status: this.statusTaskSelect,
-            members: this.employees.filter((i) => i.id === this.employeeSelect),
-            estimateDays: this.estimate.days ? this.estimate.days : '',
-            estimateHours: this.estimate.hours ? this.estimate.hours : '',
-            estimateMinutes: this.estimate.minutes ? this.estimate.minutes : '',
-            dueDate: this.dueDate,
-            description: this.description,
-            tags: this.selectedTags.map((i) => {
-                const tag = this.tags.find((y) => y.id === i);
-                return tag;
-            }),
-            teams: null,
-            estimate: null,
-            organizationId: this.userData.organizationId,
-            tenantId: this.userData.tenantId
-        }
+	async saveTask() {
+        const days = this.estimate.days ? this.estimate.days * 24 * 3600 : 0;
+        const hours = this.estimate.hours ? this.estimate.hours * 3600 : 0;
+        const minutes = this.estimate.minutes ? this.estimate.minutes * 60 : 0;
+        
+		const payloadTask = {
+			title: this.title,
+			project: this.projects.find((i) => i.id === this.projectSelect),
+			projectId: this.projectSelect,
+			status: this.statusTaskSelect,
+			members: this.employees,
+			estimateDays: this.estimate.days ? this.estimate.days : '',
+			estimateHours: this.estimate.hours ? this.estimate.hours : '',
+			estimateMinutes: this.estimate.minutes ? this.estimate.minutes : '',
+			dueDate: this.dueDate,
+			description: this.description,
+			tags: this.selectedTags.map((i) => {
+				const tag = this.tags.find((y) => y.id === i);
+				return tag;
+			}),
+			teams: null,
+			estimate:  days + hours + minutes,
+			organizationId: this.userData.organizationId,
+			tenantId: this.userData.tenantId
+		};
 
-
-        try {
-            await this.timeTrackerService.saveNewTask(this.userData, payloadTask);
-            this.isAddTask.emit(false);
-            this.newTaskCallback.emit({
-                isSuccess: true
-            });
-            this._cdr.detectChanges();
-        } catch (error) {
-            this.newTaskCallback.emit({
-                isSuccess: false,
-                message: error.message
-            })
-        }
-    }
+		try {
+			await this.timeTrackerService.saveNewTask(
+				this.userData,
+				payloadTask
+			);
+			this.isAddTask.emit(false);
+			this.newTaskCallback.emit({
+				isSuccess: true
+			});
+			this._cdr.detectChanges();
+		} catch (error) {
+            console.log(error);
+			this.newTaskCallback.emit({
+				isSuccess: false,
+				message: error.message
+			});
+		}
+	}
 }
