@@ -431,7 +431,7 @@ export class TeamsComponent extends PaginationFilterBaseComponent
 			},
 			columns: {
 				name: {
-					title: this.getTranslation('ORGANIZATIONS_PAGE.NAME'),
+					title: this.getTranslation('SM_TABLE.NAME'),
 					type: 'string',
 					filter: {
 						type: 'custom',
@@ -458,7 +458,7 @@ export class TeamsComponent extends PaginationFilterBaseComponent
 					filter: false
 				},
 				createdBy: {
-					title: this.getTranslation('TASKS_PAGE.TASKS_CREATOR'),
+					title: this.getTranslation('SM_TABLE.CREATED_BY'),
 					type: 'string',
 					filter: false,
 					valuePrepareFunction: (cell: IUser) => {
