@@ -1,4 +1,8 @@
-<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
+<nb-card
+	[nbSpinner]="loading"
+	nbSpinnerStatus="primary"
+	nbSpinnerSize="large"
+>
 	<nb-card-header class="card-custom-header">
 		<div class="card-header-title">
 			<h4>
@@ -45,7 +49,7 @@
 		<ng-container
 			*ngIf="dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID"
 		>
-			<ga-card-grid 
+			<ga-card-grid
 				[totalItems]="pagination?.totalItems"
 				[settings]="smartTableSettings"
 				[source]="teams"
@@ -56,18 +60,19 @@
 	</nb-card-body>
 </nb-card>
 <ng-template #visibleButton>
-	<ng-template [ngxPermissionsOnly]="['ALL_ORG_EDIT']">
-		<button
-			*ngIf="!showAddCard"
-			(click)="openDialog(addEditTemplate, false)"
-			nbButton
-			status="success"
-			class="action"
-			size="small"
-		>
-			<nb-icon icon="plus-outline"></nb-icon
-			>{{ 'BUTTONS.ADD' | translate }}
-		</button>
+	<ng-template [ngxPermissionsOnly]="['ORG_TEAM_ADD', 'ALL_ORG_EDIT']">
+		<ng-container>
+			<button
+				(click)="openDialog(addEditTemplate, false)"
+				nbButton
+				status="success"
+				class="action"
+				size="small"
+			>
+				<nb-icon icon="plus-outline"></nb-icon>
+				{{ 'BUTTONS.ADD' | translate }}
+			</button>
+		</ng-container>
 	</ng-template>
 </ng-template>
 <ng-template
@@ -75,34 +80,36 @@
 	let-buttonSize="buttonSize"
 	let-selectedItem="selectedItem"
 >
-	<div class="btn-group actions">
-		<ng-template [ngxPermissionsOnly]="['ALL_ORG_EDIT']">
-			<button
-				nbButton
-				status="basic"
-				class="action primary"
-				[disabled]="!selectedItem && disableButton"
-				(click)="openDialog(addEditTemplate, true)"
-				size="small"
-			>
-				<nb-icon icon="edit-outline"></nb-icon>
-				{{ 'BUTTONS.EDIT' | translate }}
-			</button>
-		</ng-template>
-		<ng-template [ngxPermissionsOnly]="['ALL_ORG_EDIT']">
-			<button
-				nbButton
-				status="basic"
-				class="action"
-				[disabled]="disableButton"
-				(click)="removeTeam(selectedItem?.id, selectedItem?.name)"
-				size="small"
-				[nbTooltip]="'BUTTONS.DELETE' | translate"
-			>
-				<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
-			</button>
-		</ng-template>
-	</div>
+	<ng-template [ngxPermissionsOnly]="['ORG_TEAM_EDIT', 'ORG_TEAM_DELETE', 'ALL_ORG_EDIT']">
+		<div class="btn-group actions">
+			<ng-template [ngxPermissionsOnly]="['ORG_TEAM_EDIT', 'ALL_ORG_EDIT']">
+				<button
+					nbButton
+					status="basic"
+					class="action primary"
+					[disabled]="disableButton"
+					(click)="openDialog(addEditTemplate, true)"
+					size="small"
+				>
+					<nb-icon icon="edit-outline"></nb-icon>
+					{{ 'BUTTONS.EDIT' | translate }}
+				</button>
+			</ng-template>
+			<ng-template [ngxPermissionsOnly]="['ORG_TEAM_DELETE', 'ALL_ORG_EDIT']">
+				<button
+					nbButton
+					status="basic"
+					class="action"
+					[disabled]="disableButton"
+					(click)="removeTeam(selectedItem?.id, selectedItem?.name)"
+					size="small"
+					[nbTooltip]="'BUTTONS.DELETE' | translate"
+				>
+					<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
+				</button>
+			</ng-template>
+		</div>
+	</ng-template>
 </ng-template>
 <ng-template #addEditTemplate let-ref="dialogRef">
 	<ga-teams-mutation

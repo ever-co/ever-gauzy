@@ -24,7 +24,7 @@ import {
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { I18nLang } from 'nestjs-i18n';
-import { FindOptionsWhere, UpdateResult } from 'typeorm';
+import { UpdateResult } from 'typeorm';
 import {
 	EmployeeCreateCommand,
 	EmployeeBulkCreateCommand,
@@ -36,6 +36,7 @@ import {
 } from './commands';
 import { CrudController, OptionParams, PaginationParams } from './../core/crud';
 import { LanguageDecorator, Permissions } from './../shared/decorators';
+import { CountQueryDTO } from './../shared/dto';
 import { BulkBodyLoadTransformPipe, ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Employee } from './employee.entity';
@@ -188,8 +189,9 @@ export class EmployeeController extends CrudController<Employee> {
 	 */
 	@Permissions(PermissionsEnum.ORG_EMPLOYEES_VIEW)
 	@Get('count')
+	@UsePipes(new ValidationPipe())
 	async getCount(
-		@Query() options: FindOptionsWhere<Employee>
+		@Query() options: CountQueryDTO<Employee>
 	): Promise<number> {
 		return await this.employeeService.countBy(options);
 	}
