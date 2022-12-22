@@ -299,9 +299,7 @@ export class TeamsComponent extends PaginationFilterBaseComponent
 
 		const { items } = await firstValueFrom(
 			this.employeesService.getAll(['user', 'tags'], {
-				organization: {
-					id: organizationId
-				},
+				organizationId,
 				tenantId
 			})
 		);

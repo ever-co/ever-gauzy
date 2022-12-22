@@ -42,40 +42,49 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 	async create(
 		entity: IOrganizationTeamCreateInput
 	): Promise<IOrganizationTeam> {
-		const {
-			tags,
-			name,
-			prefix,
-			organizationId,
-			memberIds = [],
-			managerIds = []
-		} = entity;
+		const { tags = [], memberIds = [], managerIds = [] } = entity;
+		const { name, prefix, organizationId } = entity;
 		try {
 			const tenantId = RequestContext.currentTenantId();
-
-			const role = await this.roleService.findOneByOptions({
-				where: { tenant: { id: tenantId }, name: RolesEnum.MANAGER }
-			});
+			/**
+			 * If, employee create teams, default add as a manager
+			 */
+			try {
+				await this.roleService.findOneByIdString(RequestContext.currentRoleId(), {
+					where: {
+						name: RolesEnum.EMPLOYEE
+					}
+				});
+				managerIds.push(RequestContext.currentEmployeeId());
+			} catch (error) {}
 
 			const employees = await this.employeeRepository.find({
 				where: {
-					id: In([...memberIds, ...managerIds])
+					id: In([...memberIds, ...managerIds]),
+					organizationId,
+					tenantId
 				},
 				relations: {
 					user: true
 				}
 			});
 
-			const teamEmployees: OrganizationTeamEmployee[] = [];
-			employees.forEach((employee) => {
-				const teamEmployee = new OrganizationTeamEmployee();
-				teamEmployee.employeeId = employee.id;
-				teamEmployee.organizationId = organizationId;
-				teamEmployee.tenantId = tenantId;
-				teamEmployee.role = managerIds.includes(employee.id)
-					? role
-					: null;
-				teamEmployees.push(teamEmployee);
+			/**
+			 * Get manager role
+			 */
+			const manager = await this.roleService.findOneByWhereOptions({
+				name: RolesEnum.MANAGER
+			});
+
+			const members: OrganizationTeamEmployee[] = [];
+			employees.forEach((employee: IEmployee) => {
+				const employeeId = employee.id;
+				members.push(new OrganizationTeamEmployee({
+					employeeId,
+					organizationId,
+					tenantId,
+					role: managerIds.includes(employeeId) ? manager : null
+				}));
 			});
 			return await super.create({
 				tags,
@@ -83,7 +92,7 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 				tenantId,
 				name,
 				prefix,
-				members: teamEmployees
+				members
 			});
 		} catch (error) {
 			throw new BadRequestException(`Failed to create a team: ${error}`);
