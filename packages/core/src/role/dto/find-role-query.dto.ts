@@ -8,7 +8,7 @@ import { TenantBaseDTO } from "./../../core/dto";
  */
 export class FindRoleQueryDTO extends TenantBaseDTO implements IRoleFindInput {
 
-    @ApiProperty({ type: () => String, readOnly: true })
+    @ApiProperty({ type: () => String })
     @IsNotEmpty()
     readonly name: string;
 }

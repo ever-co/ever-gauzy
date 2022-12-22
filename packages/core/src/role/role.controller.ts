@@ -12,6 +12,7 @@ import {
 	Put,
 	Query,
 	UseGuards,
+	UsePipes,
 	ValidationPipe
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
@@ -53,11 +54,11 @@ export class RoleController extends CrudController<Role> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
+	@Permissions(PermissionsEnum.CHANGE_ROLES_PERMISSIONS, PermissionsEnum.ORG_TEAM_ADD)
 	@Get('options')
+	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async findOneRoleByOptions(
-		@Query(new ValidationPipe({
-			whitelist: true
-		})) options: FindRoleQueryDTO
+		@Query() options: FindRoleQueryDTO
 	): Promise<IRole> {
 		try {
 			return await this.roleService.findOneByWhereOptions(
@@ -96,11 +97,9 @@ export class RoleController extends CrudController<Role> {
 	 */
 	@HttpCode(HttpStatus.CREATED)
 	@Post()
+	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
 	async create(
-		@Body(new ValidationPipe({
-			transform: true,
-			whitelist: true
-		})) entity: CreateRoleDTO
+		@Body() entity: CreateRoleDTO
 	): Promise<IRole> {
 		try {
 			return await this.roleService.create(entity);
@@ -118,12 +117,10 @@ export class RoleController extends CrudController<Role> {
 	 */
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
+	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
 	async update(
-		@Param('id', UUIDValidationPipe) id: string,
-		@Body(new ValidationPipe({
-			transform: true,
-			whitelist: true
-		})) entity: UpdateRoleDTO
+		@Param('id', UUIDValidationPipe) id: IRole['id'],
+		@Body() entity: UpdateRoleDTO
 	): Promise<UpdateResult | IRole> {
 		try {
 			await this.roleService.findOneByIdString(id);
@@ -141,7 +138,7 @@ export class RoleController extends CrudController<Role> {
 	 */
 	@Delete(':id')
 	async delete(
-		@Param('id', UUIDValidationPipe) id: string
+		@Param('id', UUIDValidationPipe) id: IRole['id']
 	): Promise<DeleteResult> {
 		try {
 			return await this.roleService.delete(id);
