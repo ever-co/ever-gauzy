@@ -1,6 +1,6 @@
-import { ApiProperty } from "@nestjs/swagger";
-import { IsNotEmpty } from "class-validator";
-import { IRoleFindInput } from "@gauzy/contracts";
+import { ApiPropertyOptional } from "@nestjs/swagger";
+import { IsOptional, IsString } from "class-validator";
+import { IRole, IRoleFindInput, RolesEnum } from "@gauzy/contracts";
 import { TenantBaseDTO } from "./../../core/dto";
 
 /**
@@ -8,7 +8,8 @@ import { TenantBaseDTO } from "./../../core/dto";
  */
 export class FindRoleQueryDTO extends TenantBaseDTO implements IRoleFindInput {
 
-    @ApiProperty({ type: () => String })
-    @IsNotEmpty()
-    readonly name: string;
+    @ApiPropertyOptional({ type: () => String })
+    @IsOptional()
+    @IsString()
+    readonly name: IRole['name'] = RolesEnum.EMPLOYEE;
 }
