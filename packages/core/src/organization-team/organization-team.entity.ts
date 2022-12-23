@@ -4,9 +4,11 @@ import {
 	Index,
 	OneToMany,
 	ManyToMany,
-	JoinTable
+	JoinTable,
+	ManyToOne,
+	JoinColumn,
+	RelationId
 } from 'typeorm';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
 	IEquipmentSharing,
 	IGoal,
@@ -14,7 +16,8 @@ import {
 	IOrganizationTeamEmployee,
 	IRequestApprovalTeam,
 	ITag,
-	ITask
+	ITask,
+	IUser
 } from '@gauzy/contracts';
 import {
 	EquipmentSharing,
@@ -23,14 +26,14 @@ import {
 	RequestApprovalTeam,
 	Tag,
 	Task,
-	TenantOrganizationBaseEntity
+	TenantOrganizationBaseEntity,
+	User
 } from '../core/entities/internal';
 
 @Entity('organization_team')
 export class OrganizationTeam extends TenantOrganizationBaseEntity
 	implements IOrganizationTeam {
 
-	@ApiProperty({ type: () => String })
 	@Index()
 	@Column()
 	name: string;
@@ -40,6 +43,27 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity
 	 */
 	@Column({ nullable: true })
 	prefix?: string;
+
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToOne
+    |--------------------------------------------------------------------------
+    */
+
+	/**
+	 * User
+	 */
+	@ManyToOne(() => User, (user) => user.teams, {
+		onDelete: 'SET NULL'
+	})
+	@JoinColumn()
+	createdBy?: IUser;
+
+	@RelationId((it: OrganizationTeam) => it.createdBy)
+	@Index()
+	@Column({ nullable: true })
+	createdById?: IUser['id'];
+
 	/*
     |--------------------------------------------------------------------------
     | @OneToMany
@@ -49,7 +73,6 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity
 	/**
 	 * OrganizationTeamEmployee
 	 */
-	@ApiPropertyOptional({ type: () => OrganizationTeamEmployee, isArray: true })
 	@OneToMany(() => OrganizationTeamEmployee, (entity) => entity.organizationTeam, {
 		cascade: true
 	})
@@ -58,14 +81,12 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity
 	/**
 	 * RequestApprovalTeam
 	 */
-	@ApiPropertyOptional({ type: () => RequestApprovalTeam, isArray: true })
 	@OneToMany(() => RequestApprovalTeam, (entity) => entity.team)
 	requestApprovals?: IRequestApprovalTeam[];
 
 	/**
 	 * Goal
 	 */
-	@ApiProperty({ type: () => Goal, isArray: true })
 	@OneToMany(() => Goal, (it) => it.ownerTeam, {
 		onDelete: 'SET NULL'
 	})
@@ -76,7 +97,6 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity
     | @ManyToMany
     |--------------------------------------------------------------------------
     */
-	@ApiProperty({ type: () => Tag, isArray: true })
 	@ManyToMany(() => Tag, (tag) => tag.organizationTeams, {
 		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE'
