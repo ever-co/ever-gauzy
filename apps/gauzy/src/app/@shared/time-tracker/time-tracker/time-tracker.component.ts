@@ -5,7 +5,8 @@ import {
 	IDateRange,
 	TimeLogType,
 	PermissionsEnum,
-	TimeLogSourceEnum
+	TimeLogSourceEnum,
+	IEmployee
 } from '@gauzy/contracts';
 import { NgxDraggableDomMoveEvent, NgxDraggablePoint } from 'ngx-draggable-dom';
 import { NbThemeService } from '@nebular/theme';
@@ -36,8 +37,8 @@ export class TimeTrackerComponent implements
 	isDisable: boolean = false;
 	isOpen: boolean = false;
   	isExpanded: boolean = true;
-	futureDateAllowed: boolean = false;
-	employeeId: string;
+	futureDateAllowed: IOrganization['futureDateAllowed'] = false;
+	employeeId: IEmployee['id'];
 	todaySessionTime = moment().set({ hour: 0, minute: 0, second: 0 }).format('HH:mm:ss');
 	currentSessionTime = moment().set({ hour: 0, minute: 0, second: 0 }).format('HH:mm:ss');
 	running: boolean;
