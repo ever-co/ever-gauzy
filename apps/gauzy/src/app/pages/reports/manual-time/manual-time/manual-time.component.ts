@@ -16,10 +16,11 @@ import {
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
-import { debounceTime, distinctUntilChanged, tap } from 'rxjs/operators';
+import { distinctUntilChanged, filter, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs/internal/Observable';
+import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import { chain, pick } from 'underscore';
-import { isEmpty } from '@gauzy/common-angular';
+import { distinctUntilChange, isEmpty } from '@gauzy/common-angular';
 import { DateRangePickerBuilderService, Store } from './../../../../@core/services';
 import { TimesheetService } from './../../../../@shared/timesheet/timesheet.service';
 import { BaseSelectorFilterComponent } from './../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
@@ -45,6 +46,7 @@ export class ManualTimeComponent extends BaseSelectorFilterComponent
 
 	@ViewChild(GauzyFiltersComponent) gauzyFiltersComponent: GauzyFiltersComponent;
 	datePickerConfig$: Observable<any> = this.dateRangePickerBuilderService.datePickerConfig$;
+	payloads$: BehaviorSubject<ITimeLogFilters> = new BehaviorSubject(null);
 
 	constructor(
 		private readonly cd: ChangeDetectorRef,
@@ -60,14 +62,25 @@ export class ManualTimeComponent extends BaseSelectorFilterComponent
 	ngOnInit(): void {
 		this.subject$
 			.pipe(
-				debounceTime(100),
-				tap(() => this.getLogs()),
+				filter(() => !!this.organization),
+				tap(() => this.prepareRequest()),
 				untilDestroyed(this)
 			)
 			.subscribe();
+		this.payloads$
+			.pipe(
+				distinctUntilChange(),
+				filter((payloads: ITimeLogFilters) => !!payloads),
+				tap(() => this.getManualLogs()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
+
+	ngAfterViewInit() {
+		this.cd.detectChanges();
 		this.control.valueChanges
             .pipe(
-                debounceTime(100),
                 distinctUntilChanged(),
                 tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
@@ -75,10 +88,28 @@ export class ManualTimeComponent extends BaseSelectorFilterComponent
             .subscribe();
 	}
 
-	ngAfterViewInit() {
-		this.cd.detectChanges();
+	prepareRequest() {
+		if (isEmpty(this.request) || isEmpty(this.filters)) {
+			return;
+		}
+		const appliedFilter = pick(
+			this.filters,
+			'source',
+			'logType'
+		);
+		const request: IGetTimeLogReportInput = {
+			...appliedFilter,
+			...this.getFilterRequest(this.request),
+			logType: [TimeLogType.MANUAL]
+		};
+		this.payloads$.next(request);
 	}
 
+	/**
+	 * Gauzy timesheet default filters
+	 *
+	 * @param filters
+	 */
 	filtersChange(filters: ITimeLogFilters) {
 		if (this.gauzyFiltersComponent.saveFilters) {
 			this.timesheetFilterService.filter = filters;
@@ -87,25 +118,20 @@ export class ManualTimeComponent extends BaseSelectorFilterComponent
 		this.subject$.next(true);
 	}
 
-	getLogs() {
-		if (!this.organization || isEmpty(this.request)) {
+	/**
+	 * Get manual logs reports
+	 *
+	 * @returns
+	 */
+	getManualLogs() {
+		if (!this.organization) {
 			return;
 		}
-		const appliedFilter = pick(
-			this.filters,
-			'source',
-			'activityLevel',
-			'logType'
-		);
-		const request: IGetTimeLogReportInput = {
-			...appliedFilter,
-			...this.getFilterRequest(this.request),
-			logType: [TimeLogType.MANUAL]
-		};
+		const payloads = this.payloads$.getValue();
 
 		this.loading = true;
 		this.timesheetService
-			.getTimeLogs(request, [
+			.getTimeLogs(payloads, [
 				'task',
 				'project',
 				'employee',
