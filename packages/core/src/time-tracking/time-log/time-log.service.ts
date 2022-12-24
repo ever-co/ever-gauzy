@@ -77,34 +77,50 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	}
 
 	async getTimeLogs(request: IGetTimeLogInput): Promise<ITimeLog[]> {
-		const query = this.timeLogRepository.createQueryBuilder('time_log');
+		const query = this.timeLogRepository.createQueryBuilder(this.alias);
 		query.setFindOptions({
 			join: {
-				alias: 'time_log',
+				alias: `${this.alias}`,
 				innerJoin: {
-					employee: 'time_log.employee',
-					time_slot: 'time_log.timeSlots'
+					employee: `${this.alias}.employee`,
+					time_slot: `${this.alias}.timeSlots`
 				},
 				leftJoin: {
-					team_employee: 'time_log.employee',
+					team_employee: `${this.alias}.employee`,
 					organization_teams: 'team_employee.teams'
 				}
 			},
-			relations: {
-				project: true,
-				task: true,
-				organizationContact: true,
-				timeSlots: true,
-				...(
-					RequestContext.hasPermission(
-						PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-					) ? {
-						employee: {
-							organization: true,
-							user: true
-						}
-					} : {})
+			select: {
+				project: {
+					id: true,
+					name: true,
+					imageUrl: true,
+					membersCount: true
+				},
+				task: {
+					id: true,
+					title: true
+				},
+				organizationContact: {
+					id: true,
+					name: true,
+					imageUrl: true
+				},
+				employee: {
+					id: true,
+					user: {
+						id: true,
+						firstName: true,
+						lastName: true,
+						imageUrl: true
+					}
+				}
 			},
+			...(
+				(request && request.relations) ? {
+					relations: request.relations
+				} : {}
+			),
 			order: {
 				startedAt: 'ASC'
 			}
