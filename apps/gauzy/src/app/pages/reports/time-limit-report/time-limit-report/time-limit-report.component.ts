@@ -12,10 +12,11 @@ import {
 	ITimeLogFilters
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { debounceTime, tap } from 'rxjs/operators';
+import { filter, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs/internal/Observable';
+import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import { TranslateService } from '@ngx-translate/core';
-import { isEmpty } from '@gauzy/common-angular';
+import { distinctUntilChange, isEmpty } from '@gauzy/common-angular';
 import { DateRangePickerBuilderService, Store } from './../../../../@core/services';
 import { TimesheetService } from './../../../../@shared/timesheet/timesheet.service';
 import { BaseSelectorFilterComponent } from './../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
@@ -39,6 +40,7 @@ export class TimeLimitReportComponent extends BaseSelectorFilterComponent
 
 	@ViewChild(GauzyFiltersComponent) gauzyFiltersComponent: GauzyFiltersComponent;
 	datePickerConfig$: Observable<any> = this.dateRangePickerBuilderService.datePickerConfig$;
+	payloads$: BehaviorSubject<ITimeLogFilters> = new BehaviorSubject(null);
 
 	constructor(
 		private readonly cd: ChangeDetectorRef,
@@ -63,8 +65,16 @@ export class TimeLimitReportComponent extends BaseSelectorFilterComponent
 			).subscribe();
 		this.subject$
 			.pipe(
-				debounceTime(300),
-				tap(() => this.getLogs()),
+				filter(() => !!this.organization),
+				tap(() => this.prepareRequest()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.payloads$
+			.pipe(
+				distinctUntilChange(),
+				filter((payloads: ITimeLogFilters) => !!payloads),
+				tap(() => this.getTimeLimitReport()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -74,6 +84,28 @@ export class TimeLimitReportComponent extends BaseSelectorFilterComponent
 		this.cd.detectChanges();
 	}
 
+	/**
+	 * Get header selectors request
+	 * Get gauzy timesheet filters request
+	 *
+	 * @returns
+	 */
+	prepareRequest() {
+		if (isEmpty(this.request) || isEmpty(this.filters)) {
+			return;
+		}
+		const request: IGetTimeLimitReportInput = {
+			...this.getFilterRequest(this.request),
+			duration: this.duration
+		};
+		this.payloads$.next(request);
+	}
+
+	/**
+	 * Gauzy timesheet default filters
+	 *
+	 * @param filters
+	 */
 	filtersChange(filters: ITimeLogFilters) {
 		if (this.gauzyFiltersComponent.saveFilters) {
 			this.timesheetFilterService.filter = filters;
@@ -82,19 +114,19 @@ export class TimeLimitReportComponent extends BaseSelectorFilterComponent
 		this.subject$.next(true);
 	}
 
-	async getLogs() {
-		if (!this.organization || isEmpty(this.request)) {
+	/**
+	 * Get time limit report
+	 *
+	 * @returns
+	 */
+	async getTimeLimitReport() {
+		if (!this.organization) {
 			return;
 		}
-		const request: IGetTimeLimitReportInput = {
-			...this.getFilterRequest(this.request),
-			duration: this.duration,
-			relations: ['task', 'project', 'employee', 'employee.user']
-		};
-
 		this.loading = true;
 		try {
-			const limits: ITimeLimitReport[] = await this.timesheetService.getTimeLimit(request);
+			const payloads = this.payloads$.getValue();
+			const limits: ITimeLimitReport[] = await this.timesheetService.getTimeLimit(payloads);
 			this.dailyData = limits;
 		} catch (error) {
 			console.log(`Error while retrieving ${this.title} time limit report`, error);

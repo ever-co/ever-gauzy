@@ -576,13 +576,25 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			request.duration = 'day';
 		}
 
-		const query = this.timeLogRepository.createQueryBuilder('time_log');
+		const query = this.timeLogRepository.createQueryBuilder(this.alias);
 		query.setFindOptions({
 			join: {
-				alias: 'time_log',
+				alias: `${this.alias}`,
 				innerJoin: {
-					employee: 'time_log.employee',
-					time_slot: 'time_log.timeSlots'
+					employee: `${this.alias}.employee`,
+					time_slot: `${this.alias}.timeSlots`
+				}
+			},
+			select: {
+				employee: {
+					id: true,
+					reWeeklyLimit: true,
+					user: {
+						id: true,
+						firstName: true,
+						lastName: true,
+						imageUrl: true
+					}
 				}
 			},
 			relations: {

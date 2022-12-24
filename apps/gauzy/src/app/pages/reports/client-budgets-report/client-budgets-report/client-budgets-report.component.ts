@@ -116,9 +116,9 @@ export class ClientBudgetsReportComponent extends BaseSelectorFilterComponent
 		if (!this.organization) {
 			return;
 		}
-		const payloads = this.payloads$.getValue();
 		this.loading = true;
 		try {
+			const payloads = this.payloads$.getValue();
 			const clients: IClientBudgetLimitReport[] = await this.timesheetService.getClientBudgetLimit(payloads);
 			this.clients = clients;
 		}  catch (error) {
