@@ -208,7 +208,7 @@ export class CalendarComponent extends BaseSelectorFilterComponent
 
 		this.loading = true;
 		this.timesheetService
-			.getTimeLogs(request)
+			.getTimeLogs(request, ['project'])
 			.then((logs: ITimeLog[]) => {
 				const events = logs.map(
 					(log: ITimeLog): EventInput => {

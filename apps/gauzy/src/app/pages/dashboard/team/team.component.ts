@@ -170,7 +170,11 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 			groupBy: ReportGroupFilterEnum.employee
 		};
 		try {
-			this._logs = await this._timesheetService.getTimeLogs(request);
+			this._logs = await this._timesheetService.getTimeLogs(request, [
+				'project',
+				'task',
+				'employee.user'
+			]);
 			this._logs = this._logs.sort(
 				(a, b) => this._sortByIdAndDate(a, b)
 			);

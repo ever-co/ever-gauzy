@@ -100,13 +100,17 @@ export class ManualTimeComponent extends BaseSelectorFilterComponent
 		const request: IGetTimeLogReportInput = {
 			...appliedFilter,
 			...this.getFilterRequest(this.request),
-			logType: [TimeLogType.MANUAL],
-			relations: ['task', 'project', 'employee', 'employee.user']
+			logType: [TimeLogType.MANUAL]
 		};
 
 		this.loading = true;
 		this.timesheetService
-			.getTimeLogs(request)
+			.getTimeLogs(request, [
+				'task',
+				'project',
+				'employee',
+				'employee.user'
+			])
 			.then((logs: ITimeLog[]) => {
 				switch (this.control.value) {
 					case ManualTimeLogAction.ADDED:
