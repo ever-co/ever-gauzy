@@ -4,8 +4,8 @@ import { ViewCell } from 'ng2-smart-table';
 
 @Component({
   template: `
-    <div>
-        <nb-icon icon="arrow-right" class="icon-process" *ngIf="isSelected"></nb-icon>
+    <div class="d-flex align-items-center">
+        <nb-icon class="running-task" status="primary" icon="arrow-right-outline" *ngIf="isSelected"></nb-icon>
         {{renderValue}}
     </div>
   `,
