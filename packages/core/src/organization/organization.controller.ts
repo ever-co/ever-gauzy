@@ -145,7 +145,7 @@ export class OrganizationController extends CrudController<Organization> {
 	})
 	@HttpCode(HttpStatus.CREATED)
 	@Post()
-	@UsePipes(new ValidationPipe())
+	@UsePipes(new ValidationPipe({ transform: true }))
 	async create(
 		@Body() entity: CreateOrganizationDTO
 	): Promise<IOrganization> {

@@ -5,69 +5,70 @@ import {
 	IOrganization,
 	IOrganizationProject
 } from '@gauzy/contracts';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { EmployeeStore } from 'apps/gauzy/src/app/@core/services/employee-store.service';
-import { OrganizationProjectsService } from 'apps/gauzy/src/app/@core/services/organization-projects.service';
-import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
-import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
-import { takeUntil } from 'rxjs/operators';
-import { Subject } from 'rxjs';
-import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
+import { distinctUntilChange } from '@gauzy/common-angular';
+import { combineLatest, Subject } from 'rxjs';
+import { filter, tap } from 'rxjs/operators';
+import { EmployeeStore, OrganizationProjectsService, Store, ToastrService } from './../../../../../@core/services';
+import { TranslationBaseComponent } from './../../../../../@shared/language-base/translation-base.component';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-edit-employee-departments',
+	selector: 'ga-edit-employee-projects',
 	templateUrl: './edit-employee-projects.component.html',
 	styles: [
 		`
 			:host {
-        overflow-y: auto;
-			height: calc(100vh - 20.5rem);
+        		overflow-y: auto;
+				height: calc(100vh - 20.5rem);
 			}
 		`
 	]
 })
-export class EditEmployeeProjectsComponent
-	extends TranslationBaseComponent
-	implements OnInit, OnDestroy
-{
-	organizationProjects: IOrganizationProject[] = [];
-	employeeProjects: IOrganizationProject[] = [];
+export class EditEmployeeProjectsComponent extends TranslationBaseComponent
+	implements OnInit, OnDestroy {
 
-	selectedEmployee: IEmployee;
-	organization: IOrganization;
-	private _ngDestroy$ = new Subject<void>();
+	private subject$: Subject<boolean> = new Subject();
+	public organizationProjects: IOrganizationProject[] = [];
+	public employeeProjects: IOrganizationProject[] = [];
+	public selectedEmployee: IEmployee;
+	public organization: IOrganization;
 
 	constructor(
 		private readonly organizationProjectsService: OrganizationProjectsService,
 		private readonly toastrService: ToastrService,
 		private readonly employeeStore: EmployeeStore,
-		readonly translateService: TranslateService,
+		public readonly translateService: TranslateService,
 		private readonly store: Store
 	) {
 		super(translateService);
 	}
 
 	ngOnInit() {
-		this.store.selectedOrganization$
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((organization) => {
-				this.organization = organization;
-			});
-
-		this.employeeStore.selectedEmployee$
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((emp) => {
-				this.selectedEmployee = emp;
-				if (this.selectedEmployee) {
-					this.loadProjects();
-				}
-			});
+		this.subject$
+			.pipe(
+				tap(() => this.loadProjects()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		const storeOrganization$ = this.store.selectedOrganization$;
+		const storeEmployee$ = this.employeeStore.selectedEmployee$;
+		combineLatest([storeOrganization$, storeEmployee$])
+			.pipe(
+				distinctUntilChange(),
+				filter(([organization, employee]) => !!organization && !!employee),
+				tap(([organization, employee]) => {
+					this.organization = organization;
+					this.selectedEmployee = employee;
+				}),
+				tap(() => this.subject$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
-	ngOnDestroy(): void {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+	ngOnDestroy(): void {}
 
 	async submitForm(formInput: IEditEntityByMemberInput, removed: boolean) {
 		try {
@@ -87,43 +88,60 @@ export class EditEmployeeProjectsComponent
 		}
 	}
 
+	/**
+	 * Load organization & employee assinged projects
+	 */
 	private async loadProjects() {
 		await this.loadSelectedEmployeeProjects();
-		const orgProjects = await this.getOrganizationProjects();
-		const selectedProjectIds = this.employeeProjects.map((d) => d.id);
-		if (orgProjects) {
-			this.organizationProjects = orgProjects.filter(
-				(project) => selectedProjectIds.indexOf(project.id) < 0
-			);
-		}
+		const organizationProjects = await this.getOrganizationProjects();
+
+		this.organizationProjects = organizationProjects.filter(
+			(item: IOrganizationProject) => !this.employeeProjects.some(
+				(project: IOrganizationProject) => project.id === item.id
+			)
+		);
 	}
 
+	/**
+	 * Get selected employee projects
+	 *
+	 * @returns
+	 */
 	private async loadSelectedEmployeeProjects() {
-		if (!this.organization) {
+		if (!this.organization && this.selectedEmployee) {
 			return;
 		}
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
-		this.employeeProjects =
-			await this.organizationProjectsService.getAllByEmployee(
-				this.selectedEmployee.id,
-				{ organizationId, tenantId }
-			);
-	}
+		const { id: selectedEmployeeId } = this.selectedEmployee;
 
-	private async getOrganizationProjects() {
-		if (!this.organization) {
-			return;
-		}
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.organization;
-		const { items = [] } = await this.organizationProjectsService.getAll(
-			[],
+		this.employeeProjects = await this.organizationProjectsService.getAllByEmployee(
+			selectedEmployeeId,
 			{
 				organizationId,
 				tenantId
 			}
 		);
-		return items;
+	}
+
+	/**
+	 * Get organization projects
+	 *
+	 * @returns
+	 */
+	private async getOrganizationProjects(): Promise<IOrganizationProject[]> {
+		if (!this.organization) {
+			return;
+		}
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
+
+		return (await this.organizationProjectsService.getAll(
+			[],
+			{
+				organizationId,
+				tenantId
+			}
+		)).items;
 	}
 }

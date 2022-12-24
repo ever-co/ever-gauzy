@@ -76,7 +76,7 @@ export class HeaderComponent extends TranslationBaseComponent
 	hasPermissionEmpEdit = false;
 	hasPermissionProjEdit = false;
 	hasPermissionContactEdit = false;
-	hasPermissionTeamEdit = false;
+	hasPermissionTeamAdd = false;
 	hasPermissionContractEdit = false;
 	hasPermissionPaymentAddEdit = false;
 	hasPermissionTimesheetEdit = false;
@@ -237,7 +237,7 @@ export class HeaderComponent extends TranslationBaseComponent
 				this.theme = theme.name;
 				this.cd.detectChanges();
 			});
-		this._applyTranslationOnSmartTable();
+		this._applyTranslationOnContextMenu();
 		this._loadRolePermissions();
 	}
 
@@ -466,7 +466,6 @@ export class HeaderComponent extends TranslationBaseComponent
 				this.hasPermissionTask = this.store.hasPermission(
 					PermissionsEnum.ORG_CANDIDATES_TASK_EDIT
 				);
-
 				this.hasPermissionEEdit = this.store.hasPermission(
 					PermissionsEnum.ORG_EXPENSES_EDIT
 				);
@@ -488,8 +487,8 @@ export class HeaderComponent extends TranslationBaseComponent
 				this.hasPermissionContactEdit = this.store.hasPermission(
 					PermissionsEnum.ORG_CONTACT_EDIT
 				);
-				this.hasPermissionTeamEdit = this.store.hasPermission(
-					PermissionsEnum.ORG_TEAM_EDIT
+				this.hasPermissionTeamAdd = this.store.hasPermission(
+					PermissionsEnum.ORG_TEAM_ADD
 				);
 				this.hasPermissionContractEdit = this.store.hasPermission(
 					PermissionsEnum.ORG_CONTRACT_EDIT
@@ -504,7 +503,6 @@ export class HeaderComponent extends TranslationBaseComponent
 					PermissionsEnum.ORG_CANDIDATES_EDIT
 				);
 			});
-
 		this.createContextMenu = [
 			{
 				title: this.getTranslation('CONTEXT_MENU.TIMER'),
@@ -575,7 +573,7 @@ export class HeaderComponent extends TranslationBaseComponent
 				title: this.getTranslation('CONTEXT_MENU.TEAM'),
 				icon: 'people-outline',
 				link: `pages/organization/teams`,
-				hidden: !this.hasPermissionTeamEdit
+				hidden: !this.hasPermissionTeamAdd
 			},
 			{
 				title: this.getTranslation('CONTEXT_MENU.TASK'),
@@ -626,12 +624,17 @@ export class HeaderComponent extends TranslationBaseComponent
 		];
 	}
 
-	private _applyTranslationOnSmartTable() {
-		this.translate.onLangChange.pipe(untilDestroyed(this)).subscribe(() => {
-			this.createContextMenu = [];
-			this.supportContextMenu = [];
-			this._loadRolePermissions();
-		});
+	private _applyTranslationOnContextMenu() {
+		this.translate.onLangChange
+			.pipe(
+				tap(() => {
+					this.createContextMenu = [];
+					this.supportContextMenu = [];
+					this._loadRolePermissions();
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	private async _checkTimerStatus() {
@@ -662,9 +665,9 @@ export class HeaderComponent extends TranslationBaseComponent
 		return isTrackingEnabled && hasPermission && !this.isElectron;
 	}
 
-  onCollapse(event: boolean){
-    this.isCollapse = event;
-  }
+	onCollapse(event: boolean){
+		this.isCollapse = event;
+	}
 
 	ngOnDestroy() {}
 }

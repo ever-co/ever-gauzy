@@ -11,15 +11,17 @@ import {
 	Param,
 	UseGuards,
 	UsePipes,
-	ValidationPipe
+	ValidationPipe,
+	Delete
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { QueryBus } from '@nestjs/cqrs';
-import { FindOptionsWhere } from 'typeorm';
+import { DeleteResult } from 'typeorm';
 import { CrudController, PaginationParams } from './../core/crud';
 import { TenantPermissionGuard, PermissionGuard } from './../shared/guards';
 import { UUIDValidationPipe } from './../shared/pipes';
 import { Permissions } from './../shared/decorators';
+import { CountQueryDTO } from './../shared/dto';
 import { GetOrganizationTeamStatisticQuery } from './queries';
 import { CreateOrganizationTeamDTO, OrganizationTeamStatisticDTO, UpdateOrganizationTeamDTO } from './dto';
 import { OrganizationTeam } from './organization-team.entity';
@@ -27,7 +29,7 @@ import { OrganizationTeamService } from './organization-team.service';
 
 @ApiTags('OrganizationTeam')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
-@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TEAM_EDIT)
+@Permissions(PermissionsEnum.ALL_ORG_EDIT)
 @Controller()
 export class OrganizationTeamController extends CrudController<OrganizationTeam> {
 
@@ -73,8 +75,9 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 	 */
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TEAM_VIEW)
 	@Get('count')
+	@UsePipes(new ValidationPipe())
 	async getCount(
-		@Query() options: FindOptionsWhere<OrganizationTeam>
+		@Query() options: CountQueryDTO<OrganizationTeam>
 	): Promise<number> {
 		return await this.organizationTeamService.countBy(options);
 	}
@@ -158,6 +161,7 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.OK)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TEAM_ADD)
 	@Post()
 	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async create(
@@ -187,6 +191,7 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TEAM_EDIT)
 	@Put(':id')
 	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async update(
@@ -194,5 +199,29 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 		@Body() entity: UpdateOrganizationTeamDTO
 	): Promise<IOrganizationTeam> {
 		return await this.organizationTeamService.update(id, entity);
+	}
+
+	/**
+	 * Delete organization team
+	 *
+	 * @param id
+	 * @returns
+	 */
+	@ApiOperation({ summary: 'Delete organization team' })
+	@ApiResponse({
+		status: HttpStatus.NO_CONTENT,
+		description: 'The record has been successfully deleted'
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TEAM_DELETE)
+	@Delete(':id')
+	async delete(
+		@Param('id', UUIDValidationPipe) id: IOrganizationTeam['id']
+	): Promise<DeleteResult> {
+		return await this.organizationTeamService.delete(id);
 	}
 }

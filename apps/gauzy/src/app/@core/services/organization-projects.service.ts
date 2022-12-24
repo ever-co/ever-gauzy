@@ -5,7 +5,9 @@ import {
 	IOrganizationProject,
 	IOrganizationProjectsFindInput,
 	IEditEntityByMemberInput,
-	TaskListTypeEnum
+	TaskListTypeEnum,
+	IPagination,
+	IEmployee
 } from '@gauzy/contracts';
 import { firstValueFrom, take } from 'rxjs';
 import { toParams } from '@gauzy/common-angular';
@@ -17,7 +19,9 @@ import { API_PREFIX } from '../constants/app.constants';
 export class OrganizationProjectsService {
 	private readonly API_URL = `${API_PREFIX}/organization-projects`;
 
-	constructor(private http: HttpClient) { }
+	constructor(
+		private readonly http: HttpClient
+	) { }
 
 	create(
 		createInput: IOrganizationProjectsCreateInput
@@ -41,7 +45,7 @@ export class OrganizationProjectsService {
 	}
 
 	getAllByEmployee(
-		id: string,
+		id: IEmployee['id'],
 		where?: IOrganizationProjectsFindInput
 	): Promise<IOrganizationProject[]> {
 		return firstValueFrom(
@@ -54,16 +58,12 @@ export class OrganizationProjectsService {
 	getAll(
 		relations: string[],
 		findInput?: IOrganizationProjectsFindInput
-	): Promise<{ items: any[]; total: number }> {
+	): Promise<IPagination<IOrganizationProject>> {
 		const data = JSON.stringify({ relations, findInput });
 		return firstValueFrom(
-			this.http
-				.get<{ items: IOrganizationProject[]; total: number }>(
-					`${this.API_URL}`,
-					{
-						params: toParams({ data })
-					}
-				)
+			this.http.get<IPagination<IOrganizationProject>>(`${this.API_URL}`, {
+				params: toParams({ data })
+			})
 		);
 	}
 	getById(id: string) {

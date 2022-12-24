@@ -15,7 +15,8 @@ import {
 	ITag,
 	RolesEnum,
 	ComponentLayoutStyleEnum,
-	ISelectedEmployee
+	ISelectedEmployee,
+	IUser
 } from '@gauzy/contracts';
 import { NbDialogRef, NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -299,9 +300,7 @@ export class TeamsComponent extends PaginationFilterBaseComponent
 
 		const { items } = await firstValueFrom(
 			this.employeesService.getAll(['user', 'tags'], {
-				organization: {
-					id: organizationId
-				},
+				organizationId,
 				tenantId
 			})
 		);
@@ -330,11 +329,10 @@ export class TeamsComponent extends PaginationFilterBaseComponent
 		this.smartTableSource = new ServerDataSource(this.httpClient, {
 			endPoint: `${API_PREFIX}/organization-team/pagination`,
 			relations: [
-				'members',
 				'members.role',
-				'members.employee',
 				'members.employee.user',
-				'tags'
+				'tags',
+				'createdBy'
 			],
 			where: {
 				organizationId,
@@ -433,7 +431,7 @@ export class TeamsComponent extends PaginationFilterBaseComponent
 			},
 			columns: {
 				name: {
-					title: this.getTranslation('ORGANIZATIONS_PAGE.NAME'),
+					title: this.getTranslation('SM_TABLE.NAME'),
 					type: 'string',
 					filter: {
 						type: 'custom',
@@ -458,6 +456,14 @@ export class TeamsComponent extends PaginationFilterBaseComponent
 					type: 'custom',
 					renderComponent: EmployeeWithLinksComponent,
 					filter: false
+				},
+				createdBy: {
+					title: this.getTranslation('SM_TABLE.CREATED_BY'),
+					type: 'string',
+					filter: false,
+					valuePrepareFunction: (cell: IUser) => {
+						return (cell) ? cell.name : null;
+					}
 				},
 				notes: {
 					title: this.getTranslation('MENU.TAGS'),

@@ -277,7 +277,7 @@ export class EditOrganizationOtherSettingsComponent extends NotesWithTagsCompone
 
 	async updateOrganizationSettings() {
 		this.organizationService
-			.update(this.organization.id, this.form.getRawValue())
+			.update(this.organization.id, this.form.value)
 			.then((organization: IOrganization) => {
 				if (organization) {
 					this.organizationEditStore.organizationAction = {
@@ -342,18 +342,19 @@ export class EditOrganizationOtherSettingsComponent extends NotesWithTagsCompone
 	 */
 	toggleInviteExpiryPeriod(inviteExpiry: boolean) {
 		const inviteExpiryPeriodControl = <FormControl>this.form.get('inviteExpiryPeriod');
+		const { inviteExpiryPeriod } = this.organization;
+
 		if (inviteExpiry) {
 			inviteExpiryPeriodControl.enable();
-			inviteExpiryPeriodControl.setValue(this.organization.inviteExpiryPeriod || DEFAULT_INVITE_EXPIRY_PERIOD);
 			inviteExpiryPeriodControl.setValidators([
 				Validators.required,
 				Validators.min(1)
 			]);
 		} else {
 			inviteExpiryPeriodControl.disable();
-			inviteExpiryPeriodControl.setValue(null);
 			inviteExpiryPeriodControl.setValidators(null);
 		}
+		inviteExpiryPeriodControl.setValue(inviteExpiryPeriod || DEFAULT_INVITE_EXPIRY_PERIOD);
 		inviteExpiryPeriodControl.updateValueAndValidity();
 	}
 
@@ -445,7 +446,6 @@ export class EditOrganizationOtherSettingsComponent extends NotesWithTagsCompone
 			bonusType: this.organization.bonusType,
 			bonusPercentage: this.organization.bonusPercentage,
 			invitesAllowed: this.organization.invitesAllowed,
-			inviteExpiryPeriod: this.organization.inviteExpiryPeriod,
 			fiscalStartDate: this.organization.fiscalStartDate,
 			fiscalEndDate: this.organization.fiscalEndDate,
 			futureDateAllowed: this.organization.futureDateAllowed,
