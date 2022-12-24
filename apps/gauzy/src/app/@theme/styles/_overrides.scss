@@ -162,6 +162,7 @@ body {
   }
 
   .ng-dropdown-panel {
+    background-color: var(--gauzy-card-5) !important;
     .scroll-host {
       scrollbar-width: thin;
       &::-webkit-scrollbar {
@@ -246,7 +247,7 @@ body {
 
   .ng-dropdown-panel .ng-dropdown-panel-items .ng-option {
     background: nb-theme(background-basic-color-1);
-    color: nb-theme(text-basic-color);
+    color: var(--gauzy-text-color-1);
     transition-duration: 0.15s;
     transition-property: border, background-color, color, box-shadow;
     transition-timing-function: ease-in;
@@ -256,17 +257,16 @@ body {
   }
 
   .ng-dropdown-panel .ng-dropdown-panel-items .ng-option:hover {
-    color: nb-theme(text-primary-hover-color);
+    background-color: var(--color-primary-transparent-default);
   }
 
   .ng-dropdown-panel .ng-dropdown-panel-items .ng-option-marked {
-    color: nb-theme(text-primary-active-color);
-    background: nb-theme(background-basic-color-3);
+    background-color: unset !important;
   }
 
   .ng-dropdown-panel .ng-dropdown-panel-items .ng-option-selected {
-    color: nb-theme(text-primary-active-color);
-    background: nb-theme(background-basic-color-3);
+    color: var(--text-primary-color) !important;
+    background-color: var(--color-primary-transparent-default) !important;
   }
 
   .ng-value-container .ng-input input {
@@ -277,6 +277,7 @@ body {
   .ng-dropdown-panel {
     transform: translateY(10px);
     box-shadow: var(--gauzy-shadow);
+    border-width: 0 !important;
     &.ng-select-bottom {
       border-radius: nb-theme(border-radius);
     }

@@ -237,7 +237,7 @@
 				<nb-card class="max-width-search" *ngIf="!isAddTask">
 					<nb-card-body>
 						<div class="row">
-							<div class="col-12">
+							<div class="col-12 search">
 								<button nbButton class="mb-2" status="success" size="small" (click)="addTask()">
 									<nb-icon icon="plus-outline"></nb-icon>Add
 								</button>
@@ -254,8 +254,13 @@
 						</div>
 						<div class="row">
 							<div class="col-12 top-space-1 table-scroll-container table-max-height">
-								<ng2-smart-table [settings]="tableHeader" [source]="sourceData" class="tb-custom"
-									(userRowSelect)="rowSelect($event)"></ng2-smart-table>
+								<ng2-smart-table 
+									#taskTable 
+									style="cursor: pointer"
+									[settings]="tableHeader" 
+									[source]="sourceData" 
+									(userRowSelect)="rowSelect($event)">
+								</ng2-smart-table>
 							</div>
 						</div>
 					</nb-card-body>

@@ -8,7 +8,9 @@ import {
 	Delete,
 	Param,
 	ExecutionContext,
-	BadRequestException
+	Query,
+	UsePipes,
+	ValidationPipe
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import * as path from 'path';
@@ -24,6 +26,7 @@ import { LazyFileInterceptor } from './../../core/interceptors';
 import { Permissions } from './../../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../../shared/guards';
 import { UUIDValidationPipe } from './../../shared/pipes';
+import { DeleteQueryDTO } from './dto';
 
 @ApiTags('Screenshot')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -125,13 +128,14 @@ export class ScreenshotController {
 	})
 	@Permissions(PermissionsEnum.DELETE_SCREENSHOTS)
 	@Delete(':id')
+	@UsePipes(new ValidationPipe())
 	async delete(
-		@Param('id', UUIDValidationPipe) screenshotId: string,
+		@Param('id', UUIDValidationPipe) screenshotId: IScreenshot['id'],
+		@Query() options: DeleteQueryDTO<Screenshot>
 	): Promise<IScreenshot> {
-		try {
-			return await this.screenshotService.deleteScreenshot(screenshotId);
-		} catch (error) {
-			throw new BadRequestException(error);
-		}
+		return await this.screenshotService.deleteScreenshot(
+			screenshotId,
+			options
+		);
 	}
 }

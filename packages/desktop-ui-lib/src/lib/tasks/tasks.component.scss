@@ -11,11 +11,14 @@
   }
 
   h5 {
-    font-size: 16px;
+    font-size: 12px;
     font-weight: 600;
     line-height: 20px;
     letter-spacing: 0em;
-    color: var(--gauzy-text-color-1);
+    background: var(--color-primary-transparent-default);
+    padding: 0px 4px;
+    border-radius: calc(var(--border-radius) / 2);
+    color: var(--text-primary-color)
   }
   
   .estimate-inputs {

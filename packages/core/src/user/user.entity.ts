@@ -9,7 +9,8 @@ import {
 	ITag,
 	IEmployee,
 	IOrganization,
-	IInvite
+	IInvite,
+	IOrganizationTeam
 } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Exclude } from 'class-transformer';
@@ -28,6 +29,7 @@ import {
 import {
 	Employee,
 	Invite,
+	OrganizationTeam,
 	Role,
 	Tag,
 	TenantBaseEntity,
@@ -185,4 +187,12 @@ export class User extends TenantBaseEntity implements IUser {
 	 */
 	@OneToMany(() => Invite, (it) => it.user)
 	invites?: IInvite[];
+
+	/**
+	 * User belongs to teams
+	 */
+	@OneToMany(() => OrganizationTeam, (it) => it.createdBy, {
+		onDelete: 'CASCADE'
+	})
+	teams?: IOrganizationTeam[];
 }
