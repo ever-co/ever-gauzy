@@ -40,7 +40,7 @@ export interface IGetSprintsOptions extends IBasePerTenantAndOrganizationEntityM
 }
 
 export enum TaskStatusEnum {
-	TODO = 'Todo',
+	TODO = 'TODO',
 	IN_PROGRESS = 'In Progress',
 	FOR_TESTING = 'For Testing',
 	COMPLETED = 'Completed'

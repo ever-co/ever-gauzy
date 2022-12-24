@@ -1,4 +1,4 @@
-<nb-card class="main">
+<nb-card [formGroup]="form">
 	<nb-card-header class="d-flex">
 		<h5>
 			Add Task
@@ -9,27 +9,16 @@
 			<div class="col-sm-6">
 				<div class="form-group">
 					<label class="label">Projects</label>
-					<ng-select [clearable]="true" placeholder="Project" [(ngModel)]="projectSelect" [items]="projects"
-						bindValue="id" bindLabel="name" (ngModelChange)="setProject($event)">
+					<ng-select [clearable]="true" placeholder="Project" [items]="projects" bindValue="id"
+						bindLabel="name" formControlName="project">
 					</ng-select>
 				</div>
 			</div>
 			<div class="col-sm-6">
 				<div class="form-group">
 					<label class="label">Status</label>
-					<ng-select [clearable]="true" placeholder="Status" [(ngModel)]="statusTaskSelect" [items]="statuses"
-						bindValue="id" bindLabel="name" (ngModelChange)="setStatusTask($event)">
-					</ng-select>
-				</div>
-			</div>
-		</div>
-		<div class="row">
-			<div class="col-sm-12">
-				<div class="form-group">
-					<label class="label">Add or Remove Employees</label>
-					<ng-select [clearable]="true" placeholder="Employee" [(ngModel)]="employeeSelect"
-						[items]="employees" bindValue="id" bindLabel="user.name" (ngModelChange)="setEmployee($event)"
-						disabled="true">
+					<ng-select [clearable]="true" placeholder="Status" [items]="statuses" bindValue="id"
+						bindLabel="name" formControlName="status">
 					</ng-select>
 				</div>
 			</div>
@@ -38,8 +27,7 @@
 			<div class="col-sm-12">
 				<div class="form-group">
 					<label class="label">Title</label>
-					<input class="name-input" [(ngModel)]="title" type="text" nbInput placeholder="Title"
-						(ngModelChange)="validation()" />
+					<input class="name-input" formControlName="title" type="text" nbInput placeholder="Title" />
 				</div>
 			</div>
 			<div class="col-sm-12">
@@ -47,9 +35,8 @@
 					Tags
 				</label>
 				<div class="form-group">
-					<ng-select [clearable]="true" placeholder="Tags" [(ngModel)]="selectedTags" [items]="tags"
-						bindValue="id" bindLabel="name" [multiple]="true" (add)="setTags($event)"
-						(remove)="setTags($event)">
+					<ng-select [clearable]="true" placeholder="Tags" formControlName="tags" [items]="tags"
+						bindValue="id" bindLabel="name" [multiple]="true">
 					</ng-select>
 				</div>
 			</div>
@@ -58,19 +45,19 @@
 			<div class="col-sm-6">
 				<div class="form-group">
 					<label for="dueDate" class="label">Due Date</label>
-					<input type="text" [(ngModel)]="dueDate" nbInput placeholder="Due Date"
-						[nbDatepicker]="taskDueDatePicker" id="dueDate" fullWidth (ngModelChange)="validation()" />
+					<input type="text" formControlName="dueDate" nbInput placeholder="Due Date"
+						[nbDatepicker]="taskDueDatePicker" id="dueDate" fullWidth />
 					<nb-datepicker #taskDueDatePicker></nb-datepicker>
 				</div>
 			</div>
 			<div class="col-sm-6">
 				<label for="estimate" class="label">Estimate</label>
 				<div class="estimate-inputs">
-					<input [(ngModel)]="estimate.days" type="number" [min]="0" nbInput placeholder="Days" />
+					<input formControlName="estimateDays" type="number" [min]="0" nbInput placeholder="Days" />
 
-					<input [(ngModel)]="estimate.hours" type="number" min="0" max="23" nbInput placeholder="Hours" />
+					<input formControlName="estimateHours" type="number" min="0" max="23" nbInput placeholder="Hours" />
 
-					<input [(ngModel)]="estimate.minutes" type="number" [min]="0" min="0" max="59" nbInput
+					<input formControlName="estimateMinutes" type="number" [min]="0" min="0" max="59" nbInput
 						placeholder="Minutes" />
 				</div>
 			</div>
@@ -78,16 +65,16 @@
 		<div class="row">
 			<div class="col-sm-12">
 				<label class="label">Description</label>
-				<textarea [(ngModel)]="description" nbInput fullWidth class="description"
+				<textarea formControlName="description" nbInput fullWidth class="description"
 					placeholder="Description"></textarea>
 			</div>
 		</div>
 	</nb-card-body>
 	<nb-card-footer>
-		<button status="danger" class=" cancel mr-3" outline nbButton (click)="closeAdd()">
+		<button status="danger" class=" cancel mr-3" outline nbButton (click)="close()">
 			Cancel
 		</button>
-		<button [disabled]="disableSave" status="success" nbButton (click)="saveTask()">
+		<button [disabled]="form?.invalid" status="success" nbButton (click)="save()">
 			Save
 		</button>
 	</nb-card-footer>

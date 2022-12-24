@@ -83,7 +83,7 @@ export class TimeTrackerService {
 			'Tenant-Id': values.tenantId
 		});
 		return firstValueFrom(this.http
-			.get(`${values.apiHost}/api/employee`, {
+			.get(`${values.apiHost}/api/employee/${values.employeeId}`, {
 				headers: headers,
 				params: this.toParams({
 					data: JSON.stringify({
