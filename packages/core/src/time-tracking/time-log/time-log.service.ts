@@ -663,11 +663,27 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		return dates as ITimeLimitReport[];
 	}
 
+	/**
+	 * Project budget report
+	 *
+	 * @param request
+	 * @returns
+	 */
 	async projectBudgetLimit(request: IGetTimeLogReportInput) {
-		const { organizationId, employeeIds, startDate, endDate } = request;
+		const { organizationId, employeeIds = [], projectIds = [], startDate, endDate } = request;
 		const tenantId = RequestContext.currentTenantId();
 
 		const query = this.organizationProjectRepository.createQueryBuilder('organization_project');
+		query.setFindOptions({
+			select: {
+				id: true,
+				name: true,
+				budget: true,
+				budgetType: true,
+				imageUrl: true,
+				membersCount: true
+			}
+		});
 		query.innerJoinAndSelect(`${query.alias}.timeLogs`, 'timeLogs');
 		query.innerJoinAndSelect(`timeLogs.employee`, 'employee');
 		query.andWhere(
@@ -680,6 +696,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			new Brackets((qb: WhereExpressionBuilder) => {
 				qb.andWhere(`"employee"."organizationId" =:organizationId`, { organizationId });
 				qb.andWhere(`"employee"."tenantId" =:tenantId`, { tenantId });
+
 				if (isNotEmpty(employeeIds)) {
 					qb.andWhere(`"employee"."id" IN (:...employeeIds)`, {
 						employeeIds
@@ -700,9 +717,15 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 					startDate: start,
 					endDate: end
 				});
+
 				if (isNotEmpty(employeeIds)) {
 					qb.andWhere(`"timeLogs"."employeeId" IN (:...employeeIds)`, {
 						employeeIds
+					});
+				}
+				if (isNotEmpty(projectIds)) {
+					qb.andWhere(`"timeLogs"."projectId" IN (:...projectIds)`, {
+						projectIds
 					});
 				}
 			})
@@ -762,7 +785,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	 * @returns
 	 */
 	async clientBudgetLimit(request: IGetTimeLogReportInput) {
-		const { organizationId, employeeIds = [], startDate, endDate } = request;
+		const { organizationId, employeeIds = [],  projectIds = [], startDate, endDate } = request;
 		const tenantId = RequestContext.currentTenantId();
 
 		const query = this.organizationContactRepository.createQueryBuilder('organization_contact');
@@ -811,6 +834,11 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				if (isNotEmpty(employeeIds)) {
 					qb.andWhere(`"timeLogs"."employeeId" IN (:...employeeIds)`, {
 						employeeIds
+					});
+				}
+				if (isNotEmpty(projectIds)) {
+					qb.andWhere(`"timeLogs"."projectId" IN (:...projectIds)`, {
+						projectIds
 					});
 				}
 			})
