@@ -88,6 +88,12 @@ export class ManualTimeComponent extends BaseSelectorFilterComponent
             .subscribe();
 	}
 
+	/**
+	 * Get header selectors request
+	 * Get gauzy timesheet filters request
+	 *
+	 * @returns
+	 */
 	prepareRequest() {
 		if (isEmpty(this.request) || isEmpty(this.filters)) {
 			return;
