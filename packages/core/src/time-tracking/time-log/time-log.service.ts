@@ -155,7 +155,6 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 						id: true,
 						firstName: true,
 						lastName: true,
-						email: true,
 						imageUrl: true
 					}
 				},
