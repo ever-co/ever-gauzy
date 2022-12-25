@@ -33,7 +33,7 @@ export class ExpenseMapService {
 									this.mapExpensePercentage(row, sum)
 								)
 							};
-						});
+						}).value();
 
 						const employee =
 							byEmployeeExpense.length > 0 && byEmployeeExpense[0]
@@ -44,14 +44,14 @@ export class ExpenseMapService {
 							projects: byProject
 						};
 					}
-				);
+				).value();
 
 				return {
 					date,
 					employees: byEmployee
 				};
 			}
-		);
+		).value();
 		return dailyLogs;
 	}
 
@@ -75,14 +75,14 @@ export class ExpenseMapService {
 									this.mapExpensePercentage(row, sum)
 								)
 							};
-						});
+						}).value();
 
 						return {
 							date,
 							projects: byProject
 						};
 					}
-				);
+				).value();
 
 				const employee =
 					byEmployeeExpense.length > 0 && byEmployeeExpense[0]
@@ -93,7 +93,7 @@ export class ExpenseMapService {
 					dates: dailyLogs
 				};
 			}
-		);
+		).value();
 		return byEmployee;
 	}
 
@@ -118,14 +118,14 @@ export class ExpenseMapService {
 									this.mapExpensePercentage(row, sum)
 								)
 							};
-						});
+						}).value();
 
 						return {
 							date,
 							employees: byProject
 						};
 					}
-				);
+				).value();
 
 				const project =
 					byProjectExpense.length > 0 && byProjectExpense[0]
@@ -136,7 +136,7 @@ export class ExpenseMapService {
 					dates: dailyLogs
 				};
 			}
-		);
+		).value();
 		return byEmployee;
 	}
 
