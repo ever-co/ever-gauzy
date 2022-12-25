@@ -13,10 +13,11 @@ import {
 	ReportGroupFilterEnum
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { debounceTime, tap } from 'rxjs/operators';
 import { pick } from 'underscore';
+import { filter, tap } from 'rxjs/operators';
+import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import { TranslateService } from '@ngx-translate/core';
-import { isEmpty } from '@gauzy/common-angular';
+import { distinctUntilChange, isEmpty } from '@gauzy/common-angular';
 import { DateRangePickerBuilderService, Store } from '../../../@core/services';
 import { ActivityService } from '../../timesheet/activity.service';
 import { BaseSelectorFilterComponent } from '../../timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
@@ -43,6 +44,8 @@ export class ActivitiesReportGridComponent extends BaseSelectorFilterComponent
 		this.subject$.next(true);
 	}
 
+	payloads$: BehaviorSubject<ITimeLogFilters> = new BehaviorSubject(null);
+
 	constructor(
 		private readonly activityService: ActivityService,
 		public readonly store: Store,
@@ -54,28 +57,37 @@ export class ActivitiesReportGridComponent extends BaseSelectorFilterComponent
 	}
 
 	ngOnInit() {
-		this.cdr.detectChanges();
-	}
-
-	ngAfterViewInit() {
 		this.subject$
 			.pipe(
-				debounceTime(500),
-				tap(() => this.getActivities()),
+				filter(() => !!this.organization),
+				tap(() => this.prepareRequest()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.payloads$
+			.pipe(
+				distinctUntilChange(),
+				filter((payloads: ITimeLogFilters) => !!payloads),
+				tap(() => this.getActivitiesReport()),
 				untilDestroyed(this)
 			)
 			.subscribe();
 	}
 
-	groupByChange() {
-		this.subject$.next(true);
+	ngAfterViewInit() {
+		this.cdr.detectChanges();
 	}
 
-	getActivities() {
-		if (!this.organization || isEmpty(this.request)) {
+	/**
+	 * Get header selectors request
+	 * Get gauzy timesheet filters request
+	 *
+	 * @returns
+	 */
+	prepareRequest() {
+		if (isEmpty(this.request) || isEmpty(this.filters)) {
 			return;
 		}
-		this.loading = true;
 		const appliedFilter = pick(
 			this.filters,
 			'source',
@@ -87,8 +99,29 @@ export class ActivitiesReportGridComponent extends BaseSelectorFilterComponent
 			...this.getFilterRequest(this.request),
 			groupBy: this.groupBy
 		};
+		this.payloads$.next(request);
+	}
+
+	/**
+	 * Change by group filter
+	 */
+	groupByChange() {
+		this.subject$.next(true);
+	}
+
+	/**
+	 * Get activities report
+	 *
+	 * @returns
+	 */
+	getActivitiesReport() {
+		if (!this.organization || isEmpty(this.request)) {
+			return;
+		}
+		this.loading = true;
+		const payloads = this.payloads$.getValue();
 		this.activityService
-			.getDailyActivitiesReport(request)
+			.getDailyActivitiesReport(payloads)
 			.then((logs: IReportDayData[]) => {
 				this.dailyData = logs;
 			})

@@ -28,7 +28,7 @@ export class ActivityMapService {
 									this.mapActivitiesPercentage(row, sum)
 								)
 							};
-						});
+						}).value();
 
 						const employee =
 							byEmployeeActivity.length > 0 &&
@@ -40,14 +40,14 @@ export class ActivityMapService {
 							projects: byProject
 						};
 					}
-				);
+				).value();
 
 				return {
 					date,
 					employees: byEmployee
 				};
 			}
-		);
+		).value();
 		return dailyLogs;
 	}
 
@@ -71,14 +71,14 @@ export class ActivityMapService {
 									this.mapActivitiesPercentage(row, sum)
 								)
 							};
-						});
+						}).value();
 
 						return {
 							date,
 							projects: byProject
 						};
 					}
-				);
+				).value();
 
 				const employee =
 					byEmployeeActivity.length > 0 && byEmployeeActivity[0]
@@ -89,7 +89,7 @@ export class ActivityMapService {
 					dates: dailyLogs
 				};
 			}
-		);
+		).value();
 		return byEmployee;
 	}
 
@@ -114,14 +114,14 @@ export class ActivityMapService {
 									this.mapActivitiesPercentage(row, sum)
 								)
 							};
-						});
+						}).value();
 
 						return {
 							date,
 							employees: byProject
 						};
 					}
-				);
+				).value();
 
 				const project =
 					byProjectActivity.length > 0 && byProjectActivity[0]
@@ -132,7 +132,7 @@ export class ActivityMapService {
 					dates: dailyLogs
 				};
 			}
-		);
+		).value();
 		return byEmployee;
 	}
 
@@ -158,7 +158,7 @@ export class ActivityMapService {
 		activity.duration_percentage = (((parseInt(activity.duration, 10) * 100) / sum).toFixed(2)) || 0;
 		return activity;
 	}
-	
+
 	private getDurationSum(activities) {
 		return activities.reduce((iteratee: any, log: any) => {
 			return iteratee + parseInt(log.duration, 10);

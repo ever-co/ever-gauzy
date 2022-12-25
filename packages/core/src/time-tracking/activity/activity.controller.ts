@@ -6,7 +6,8 @@ import {
 	Query,
 	Post,
 	Body,
-	ValidationPipe
+	ValidationPipe,
+	UsePipes
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { IGetActivitiesInput, IBulkActivitiesInput, ReportGroupFilterEnum, PermissionsEnum, RolesEnum } from '@gauzy/contracts';
@@ -34,11 +35,9 @@ export class ActivityController {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Get()
+	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
 	async getActivities(
-		@Query(new ValidationPipe({
-			transform: true,
-			whitelist: true
-		})) options: ActivityQueryDTO
+		@Query() options: ActivityQueryDTO
 	) {
 		const defaultParams: Partial<IGetActivitiesInput> = {
 			page: 0,
@@ -55,11 +54,9 @@ export class ActivityController {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Get('daily')
+	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
 	async getDailyActivities(
-		@Query(new ValidationPipe({
-			transform: true,
-			whitelist: true
-		})) options: ActivityQueryDTO
+		@Query() options: ActivityQueryDTO
 	) {
 		return this.activityService.getDailyActivities(options);
 	}
@@ -71,11 +68,9 @@ export class ActivityController {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Get('report')
+	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
 	async getDailyActivitiesReport(
-		@Query(new ValidationPipe({
-			transform: true,
-			whitelist: true
-		})) options: ActivityQueryDTO
+		@Query() options: ActivityQueryDTO
 	) {
 		let activities = await this.activityService.getDailyActivitiesReport(options);
 		if (options.groupBy === ReportGroupFilterEnum.date) {
