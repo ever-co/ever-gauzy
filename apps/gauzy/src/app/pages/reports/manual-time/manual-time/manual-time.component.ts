@@ -130,12 +130,11 @@ export class ManualTimeComponent extends BaseSelectorFilterComponent
 	 * @returns
 	 */
 	getManualLogs() {
-		if (!this.organization) {
+		if (!this.organization || isEmpty(this.request)) {
 			return;
 		}
-		const payloads = this.payloads$.getValue();
-
 		this.loading = true;
+		const payloads = this.payloads$.getValue();
 		this.timesheetService
 			.getTimeLogs(payloads, [
 				'task',

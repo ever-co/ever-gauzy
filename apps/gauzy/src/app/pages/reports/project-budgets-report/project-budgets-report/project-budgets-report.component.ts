@@ -113,7 +113,7 @@ export class ProjectBudgetsReportComponent extends BaseSelectorFilterComponent
 	 * @returns
 	 */
 	async getProjectBudgetReport() {
-		if (!this.organization) {
+		if (!this.organization || isEmpty(this.request)) {
 			return;
 		}
 		this.loading = true;

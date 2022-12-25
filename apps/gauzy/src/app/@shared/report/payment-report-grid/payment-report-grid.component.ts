@@ -116,7 +116,7 @@ export class PaymentReportGridComponent extends BaseSelectorFilterComponent
 	 * @returns
 	 */
 	async getPaymentReport() {
-		if (!this.organization) {
+		if (!this.organization || isEmpty(this.request)) {
 			return;
 		}
 		this.loading = true;

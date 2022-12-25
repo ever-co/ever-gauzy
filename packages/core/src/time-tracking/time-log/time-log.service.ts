@@ -443,6 +443,18 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 					time_slot: 'time_log.timeSlots'
 				}
 			},
+			select: {
+				employee: {
+					id: true,
+					billRateValue: true,
+					user: {
+						id: true,
+						firstName: true,
+						lastName: true,
+						imageUrl: true
+					}
+				}
+			},
 			relations: {
 				employee: {
 					user: true
@@ -501,6 +513,18 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				innerJoin: {
 					employee: 'time_log.employee',
 					time_slot: 'time_log.timeSlots'
+				}
+			},
+			select: {
+				employee: {
+					id: true,
+					billRateValue: true,
+					user: {
+						id: true,
+						firstName: true,
+						lastName: true,
+						imageUrl: true
+					}
 				}
 			},
 			relations: {

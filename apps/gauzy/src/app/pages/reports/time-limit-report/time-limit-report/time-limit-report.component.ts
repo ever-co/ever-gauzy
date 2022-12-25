@@ -120,7 +120,7 @@ export class TimeLimitReportComponent extends BaseSelectorFilterComponent
 	 * @returns
 	 */
 	async getTimeLimitReport() {
-		if (!this.organization) {
+		if (!this.organization || isEmpty(this.request)) {
 			return;
 		}
 		this.loading = true;
