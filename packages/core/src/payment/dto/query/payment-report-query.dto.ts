@@ -11,7 +11,7 @@ export class PaymentReportQueryDTO extends IntersectionType(
     RelationsQueryDTO
 ) implements IGetPaymentInput {
 
-    @ApiPropertyOptional({ enum: ReportGroupFilterEnum, readOnly: true })
+    @ApiPropertyOptional({ enum: ReportGroupFilterEnum })
     @IsOptional()
     @IsEnum(ReportGroupFilterEnum)
     readonly groupBy: ReportGroupFilterEnum;
