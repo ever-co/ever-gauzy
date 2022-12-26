@@ -138,6 +138,10 @@ export class OrganizationProjectController extends CrudController<OrganizationPr
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
+	@Permissions(
+		PermissionsEnum.ALL_ORG_EDIT,
+		PermissionsEnum.ORG_PROJECT_EDIT
+	)
 	@Put('/task-view/:id')
 	async updateTaskViewMode(
 		@Param('id', UUIDValidationPipe) id: IOrganizationProject['id'],

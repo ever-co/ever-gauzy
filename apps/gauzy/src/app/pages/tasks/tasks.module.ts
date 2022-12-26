@@ -23,6 +23,7 @@ import {
 	NbContextMenuModule,
 	NbTooltipModule
 } from '@nebular/theme';
+import { NgxPermissionsModule } from 'ngx-permissions';
 import { ThemeModule } from '../../@theme/theme.module';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
@@ -99,8 +100,9 @@ import { TaskNumberFieldModule } from '../../@shared/tasks/task-number/task-numb
 		PaginationModule,
 		ProjectSelectModule,
 		TaskStatusSelectModule,
-    	GauzyButtonActionModule,
-		TaskNumberFieldModule
+		GauzyButtonActionModule,
+		TaskNumberFieldModule,
+		NgxPermissionsModule.forChild()
 	]
 })
 export class TasksModule {}
