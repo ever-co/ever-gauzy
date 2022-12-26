@@ -197,7 +197,7 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 						id: true,
 						futureDateAllowed: true,
 						timeZone: true,
-						startWeekOn:true
+						startWeekOn: true
 					}),
 					observableOf(datePickerConfig),
 				])),

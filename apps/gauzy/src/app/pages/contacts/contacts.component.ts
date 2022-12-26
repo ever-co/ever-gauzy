@@ -555,7 +555,7 @@ export class ContactsComponent extends PaginationFilterBaseComponent
 			.getAll(['organizationContact'], {
 				organizationId,
 				tenantId,
-				organizationContact: null
+				organizationContactId: null
 			})
 			.then(({ items }) => {
 				this.projectsWithoutOrganizationContacts = items;
