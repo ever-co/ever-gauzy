@@ -11,6 +11,6 @@ export class UserEmailDTO implements IUserEmailInput {
     @ApiProperty({ type: () => String, required: true })
     @IsNotEmpty()
     @IsEmail()
-    @Transform((params: TransformFnParams) => params.value.trim())
+    @Transform((params: TransformFnParams) => params.value ? params.value.trim() : null)
     readonly email: string;
 }
