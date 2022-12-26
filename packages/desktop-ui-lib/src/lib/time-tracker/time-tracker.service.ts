@@ -4,7 +4,12 @@ import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import * as moment from 'moment';
 import { catchError } from 'rxjs/operators';
 import { firstValueFrom, throwError } from 'rxjs';
-import { TimeLogSourceEnum, TimeLogType } from '@gauzy/contracts';
+import { 
+	TimeLogSourceEnum, 
+	TimeLogType,
+	IOrganizationProjectsCreateInput, 
+	IOrganizationProject } from '@gauzy/contracts';
+
 
 // Import logging for electron and override default console logging
 const log = window.require('electron-log');
@@ -47,19 +52,26 @@ export class TimeTrackerService {
 			Authorization: `Bearer ${values.token}`,
 			'Tenant-Id': values.tenantId
 		});
-		return firstValueFrom(this.http
-			.get(`${values.apiHost}/api/tasks/employee/${values.employeeId}`, {
+		const request = {
+			where: {
+				organizationId: values.organizationId,
+				employeeId: values.employeeId,
+				tenantId: values.tenantId,
+				...(values.projectId
+					? {
+							projectId: values.projectId
+					  }
+					: {})
+			}
+		};
+		return firstValueFrom(
+			this.http.get(`${values.apiHost}/api/tasks/me`, {
 				headers: headers,
-				params: values.projectId
-					? this.toParams({
-							data: JSON.stringify({
-								findInput: {
-									projectId: values.projectId
-								}
-							})
-					  })
-					: this.toParams({})
-			}));
+				params: this.toParams({
+					...request
+				})
+			})
+		);
 	}
 
 	async getEmployees(values) {
@@ -169,6 +181,7 @@ export class TimeTrackerService {
 					headers: headers,
 					params: this.toParams({
 						organizationId: values.organizationId,
+						employeeId: values.employeeId,
 						tenantId: values.tenantId,
 						...(values.organizationContactId
 							? {
@@ -671,4 +684,22 @@ export class TimeTrackerService {
 			));
 	}
 
+	createNewProject(
+		createInput: IOrganizationProjectsCreateInput,
+		data
+	): Promise<IOrganizationProject> {
+		const headers = new HttpHeaders({
+			Authorization: `Bearer ${data.token}`,
+			'Tenant-Id': data.tenantId
+		});
+		return firstValueFrom(
+			this.http.post<IOrganizationProject>(
+				data.apiHost + '/api/organization-projects',
+				createInput,
+				{
+					headers: headers
+				}
+			)
+		);
+	}
 }
