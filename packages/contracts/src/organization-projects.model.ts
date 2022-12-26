@@ -17,15 +17,15 @@ import { ITimeLog } from './timesheet.model';
 export interface IOrganizationProject extends IBaseEntityWithMembers {
 	name: string;
 	organizationContact?: IOrganizationContact;
-	organizationContactId?: string;
+	organizationContactId?: IOrganizationContact['id'];
 	startDate?: Date;
 	endDate?: Date;
-	billing: string;
-	currency: string;
+	billing: ProjectBillingEnum;
+	currency: CurrenciesEnum;
 	members?: IEmployee[];
 	public: boolean;
 	tags: ITag[];
-	owner: string;
+	owner: ProjectOwnerEnum;
 	tasks?: ITask[];
 	timeLogs?: ITimeLog[];
 	organizationSprints?: IOrganizationSprint[];
@@ -59,23 +59,19 @@ export enum OrganizationProjectBudgetTypeEnum {
 	COST = 'cost'
 }
 
-export interface IOrganizationProjectsFindInput
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IOrganizationProjectsFindInput extends IBasePerTenantAndOrganizationEntityModel {
 	name?: string;
-	organizationContactId?: string;
+	organizationContactId?: IOrganizationContact['id'];
 	organizationContact?: IOrganizationContact;
-	members?: IEmployee[];
 	public?: boolean;
-	tags?: ITag[];
 	billable?: boolean;
 	billingFlat?: boolean;
 }
 
-export interface IOrganizationProjectsCreateInput
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IOrganizationProjectsCreateInput extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
 	organizationContact?: IOrganizationContact;
-	organizationContactId?: string;
+	organizationContactId?: IOrganizationContact['id'];
 	startDate?: Date;
 	endDate?: Date;
 	billing?: ProjectBillingEnum;
@@ -95,9 +91,8 @@ export interface IOrganizationProjectsCreateInput
 	openSourceProjectUrl?: string;
 }
 
-export interface IOrganizationProjectsUpdateInput
-	extends IOrganizationProjectsCreateInput {
-	id?: string;
+export interface IOrganizationProjectsUpdateInput extends IOrganizationProjectsCreateInput {
+	id?: IOrganizationContact['id'];
 }
 
 export interface IOrganizationProjectStoreState {
