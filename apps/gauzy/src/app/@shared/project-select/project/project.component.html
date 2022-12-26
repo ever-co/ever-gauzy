@@ -1,10 +1,10 @@
-<ng-template 
-	[ngIf]="!multiple" 
+<ng-template
+	[ngIf]="!multiple"
 	[ngIfElse]="multipleSelect"
 >
 	<ng-select
 		#select
-		[addTag]="(hasEditProject$ | async) ? createNew : null"
+		[addTag]="(hasAddProject$ | async) ? createNew : null"
 		[multiple]="multiple"
 		[clearable]="isClearable()"
 		[disabled]="disabled"
