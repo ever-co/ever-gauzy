@@ -65,9 +65,9 @@
 								[rowData]="day"
 							></ngx-project>
 							<ng-template #noProject>
-								<span>{{
-									'TIMESHEET.NO_PROJECT' | translate
-								}}</span>
+								<span>
+									{{ 'TIMESHEET.NO_PROJECT' | translate }}
+								</span>
 							</ng-template>
 						</div>
 						<div
@@ -136,7 +136,6 @@
 				</div>
 			</ng-template>
 		</div>
-
 		<ng-template #notFound>
 			<ngx-no-data-message
 				[message]="'TIMESHEET.NO_DATA.WEEKLY_TIMESHEET'"

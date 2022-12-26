@@ -106,11 +106,11 @@ export class TimesheetService {
 		);
 	}
 
-	getTimeLogs(request?: IGetTimeLogInput) {
-		const params = toParams(request);
+	getTimeLogs(request?: IGetTimeLogInput, relations = []) {
 		return firstValueFrom(
-			this.http
-			.get<ITimeLog[]>(`${API_PREFIX}/timesheet/time-log`, { params })
+			this.http.get<ITimeLog[]>(`${API_PREFIX}/timesheet/time-log`, {
+				params: toParams({ ...request, relations })
+			})
 		);
 	}
 

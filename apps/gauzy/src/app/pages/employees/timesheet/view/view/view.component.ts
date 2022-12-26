@@ -28,7 +28,7 @@ import { TranslationBaseComponent } from './../../../../../@shared/language-base
 		'./view.component.scss'
 	]
 })
-export class ViewComponent extends TranslationBaseComponent 
+export class ViewComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 
 	PermissionsEnum = PermissionsEnum;
@@ -78,7 +78,11 @@ export class ViewComponent extends TranslationBaseComponent
 				timesheetId,
 				organizationId
 			};
-			const logs: ITimeLog[] = await this.timesheetService.getTimeLogs(request);
+			const logs: ITimeLog[] = await this.timesheetService.getTimeLogs(request, [
+				'project',
+				'task',
+				'employee.user'
+			]);
 			this.timeLogs = chain(logs)
 				.groupBy((log) => moment(log.startedAt).format('YYYY-MM-DD'))
 				.value();

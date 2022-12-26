@@ -13,11 +13,12 @@ import {
 	ITimeLogFilters
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { debounceTime, tap } from 'rxjs/operators';
+import { filter, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs/internal/Observable';
+import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import { pick } from 'underscore';
 import { TranslateService } from '@ngx-translate/core';
-import { isEmpty } from '@gauzy/common-angular';
+import { distinctUntilChange, isEmpty } from '@gauzy/common-angular';
 import { DateRangePickerBuilderService, Store } from './../../../../@core/services';
 import { TimesheetService } from './../../../../@shared/timesheet/timesheet.service';
 import { BaseSelectorFilterComponent } from './../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
@@ -40,6 +41,7 @@ export class ClientBudgetsReportComponent extends BaseSelectorFilterComponent
 
 	@ViewChild(GauzyFiltersComponent) gauzyFiltersComponent: GauzyFiltersComponent;
 	datePickerConfig$: Observable<any> = this.dateRangePickerBuilderService.datePickerConfig$;
+	payloads$: BehaviorSubject<ITimeLogFilters> = new BehaviorSubject(null);
 
 	constructor(
 		private readonly timesheetService: TimesheetService,
@@ -55,7 +57,15 @@ export class ClientBudgetsReportComponent extends BaseSelectorFilterComponent
 	ngOnInit() {
 		this.subject$
 			.pipe(
-				debounceTime(1350),
+				filter(() => !!this.organization),
+				tap(() => this.prepareRequest()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.payloads$
+			.pipe(
+				distinctUntilChange(),
+				filter((payloads: ITimeLogFilters) => !!payloads),
 				tap(() => this.getClientBudgetReport()),
 				untilDestroyed(this)
 			)
@@ -66,6 +76,29 @@ export class ClientBudgetsReportComponent extends BaseSelectorFilterComponent
 		this.cd.detectChanges();
 	}
 
+	/**
+	 * Get header selectors request
+	 * Get gauzy timesheet filters request
+	 *
+	 * @returns
+	 */
+	prepareRequest() {
+		if (isEmpty(this.request) || isEmpty(this.filters)) {
+			return;
+		}
+		const appliedFilter = pick(this.request, 'clientIds');
+		const request: IGetTimeLogReportInput = {
+			...appliedFilter,
+			...this.getFilterRequest(this.request)
+		};
+		this.payloads$.next(request);
+	}
+
+	/**
+	 * Gauzy timesheet default filters
+	 *
+	 * @param filters
+	 */
 	filtersChange(filters: ITimeLogFilters) {
 		if (this.gauzyFiltersComponent.saveFilters) {
 			this.timesheetFilterService.filter = filters;
@@ -74,18 +107,19 @@ export class ClientBudgetsReportComponent extends BaseSelectorFilterComponent
 		this.subject$.next(true);
 	}
 
+	/**
+	 * Get client budget report
+	 *
+	 * @returns
+	 */
 	async getClientBudgetReport() {
 		if (!this.organization || isEmpty(this.request)) {
 			return;
 		}
-		const appliedFilter = pick(this.request, 'clientIds');
-		const request: IGetTimeLogReportInput = {
-			...appliedFilter,
-			...this.getFilterRequest(this.request)
-		};
 		this.loading = true;
 		try {
-			const clients: IClientBudgetLimitReport[] = await this.timesheetService.getClientBudgetLimit(request);
+			const payloads = this.payloads$.getValue();
+			const clients: IClientBudgetLimitReport[] = await this.timesheetService.getClientBudgetLimit(payloads);
 			this.clients = clients;
 		}  catch (error) {
 			console.log('Error while retrieving client budget reports', error);

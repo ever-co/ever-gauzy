@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Between, In, Repository, Brackets, WhereExpressionBuilder, Raw } from 'typeorm';
+import { Between, In, Repository, Brackets, WhereExpressionBuilder, Raw, SelectQueryBuilder } from 'typeorm';
 import { chain } from 'underscore';
 import * as moment from 'moment';
 import { IDateRangePicker, IGetPaymentInput } from '@gauzy/contracts';
@@ -22,16 +22,70 @@ export class PaymentService extends TenantAwareCrudService<Payment> {
 		super(paymentRepository);
 	}
 
+	/**
+	 * Get payments
+	 *
+	 * @param request
+	 * @returns
+	 */
 	async getPayments(request: IGetPaymentInput) {
-		const query = this.filterQuery(request);
-		query.leftJoinAndSelect(`${query.alias}.project`, 'project');
-		query.orderBy(`"${query.alias}"."paymentDate"`, 'ASC');
+		const query = this.paymentRepository.createQueryBuilder(this.alias);
+		query.setFindOptions({
+			...(
+				(request && request.limit > 0) ? {
+					take: request.limit,
+					skip: (request.page || 0) * request.limit
+				} : {}
+			),
+			join: {
+				alias: `${this.alias}`,
+				leftJoin: {
+					project: `${this.alias}.project`
+				}
+			},
+			select: {
+				project: {
+					id: true,
+					name: true,
+					imageUrl: true,
+					membersCount: true
+				},
+				organizationContact: {
+					id: true,
+					name: true,
+					imageUrl: true
+				}
+			},
+			relations: {
+				project: true,
+				organizationContact: true
+			},
+			order: {
+				paymentDate: 'ASC'
+			}
+		});
+		query.where((qb: SelectQueryBuilder<Payment>) => {
+			this.getFilterQuery(qb, request);
+		});
 		return await query.getMany();
 	}
 
 	async getDailyReportChartData(request: IGetPaymentInput) {
-		const query = this.filterQuery(request);
-		query.orderBy(`"${query.alias}"."paymentDate"`, 'ASC');
+		const query = this.paymentRepository.createQueryBuilder(this.alias);
+		query.setFindOptions({
+			...(
+				(request.limit > 0) ? {
+					take: request.limit,
+					skip: (request.page || 0) * request.limit
+				} : {}
+			),
+			order: {
+				paymentDate: 'ASC'
+			}
+		});
+		query.where((qb: SelectQueryBuilder<Payment>) => {
+			this.getFilterQuery(qb, request);
+		});
 		const payments = await query.getMany();
 
 		const { startDate, endDate } = request;
@@ -53,7 +107,6 @@ export class PaymentService extends TenantAwareCrudService<Payment> {
 				};
 			})
 			.value();
-
 		const dates = days.map((date) => {
 			if (byDate[date]) {
 				return byDate[date];
@@ -66,14 +119,22 @@ export class PaymentService extends TenantAwareCrudService<Payment> {
 				};
 			}
 		});
-
 		return dates;
 	}
 
-	private filterQuery(request: IGetPaymentInput) {
+	/**
+	 *
+	 * @param query
+	 * @param request
+	 * @returns
+	 */
+	private getFilterQuery(
+		query: SelectQueryBuilder<Payment>,
+		request: IGetPaymentInput
+	) {
+		const tenantId = RequestContext.currentTenantId();
 		const { organizationId, startDate, endDate } = request;
 		let { projectIds = [], contactIds = [] } = request;
-		const tenantId = RequestContext.currentTenantId();
 
 		const { start, end } = (startDate && endDate) ?
 								getDateRangeFormat(
@@ -84,23 +145,17 @@ export class PaymentService extends TenantAwareCrudService<Payment> {
 									moment().startOf('week').utc(),
 									moment().endOf('week').utc()
 								);
-
-		const query = this.paymentRepository.createQueryBuilder();
-		if (request.limit > 0) {
-			query.take(request.limit);
-			query.skip((request.page || 0) * request.limit);
-		}
-		query.andWhere(
-			new Brackets((qb: WhereExpressionBuilder) => {
-				qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
-				qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
-			})
-		);
 		query.andWhere(
 			new Brackets((qb: WhereExpressionBuilder) => {
 				qb.where(						{
 					paymentDate: Between(start, end)
 				});
+			})
+		);
+		query.andWhere(
+			new Brackets((qb: WhereExpressionBuilder) => {
+				qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
+				qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
 			})
 		);
 		query.andWhere(

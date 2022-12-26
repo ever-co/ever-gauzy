@@ -14,7 +14,7 @@ import {
 	ReportGroupFilterEnum
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { debounceTime, filter, tap } from 'rxjs/operators';
+import { filter, tap } from 'rxjs/operators';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import { pick } from 'underscore';
 import { distinctUntilChange, isEmpty, progressStatus } from '@gauzy/common-angular';
@@ -66,14 +66,13 @@ export class DailyGridComponent extends BaseSelectorFilterComponent
 	ngOnInit() {
 		this.subject$
 			.pipe(
-				debounceTime(200),
+				filter(() => !!this.organization),
 				tap(() => this.prepareRequest()),
 				untilDestroyed(this)
 			)
 			.subscribe();
 		this.payloads$
 			.pipe(
-				debounceTime(200),
 				distinctUntilChange(),
 				filter((payloads: ITimeLogFilters) => !!payloads),
 				tap(() => this.getLogs()),
@@ -86,10 +85,19 @@ export class DailyGridComponent extends BaseSelectorFilterComponent
 		this.cd.detectChanges();
 	}
 
+	/**
+	 * Change by group filter
+	 */
 	groupByChange() {
 		this.subject$.next(true);
 	}
 
+	/**
+	 * Get header selectors request
+	 * Get gauzy timesheet filters request
+	 *
+	 * @returns
+	 */
 	prepareRequest() {
 		if (!this.organization || isEmpty(this.filters)) {
 			return;
@@ -109,13 +117,12 @@ export class DailyGridComponent extends BaseSelectorFilterComponent
 	}
 
 	async getLogs() {
-		if (!this.organization || isEmpty(this.filters)) {
+		if (!this.organization || isEmpty(this.request)) {
 			return;
 		}
-		const payloads = this.payloads$.getValue();
-
 		this.loading = true;
 		try {
+			const payloads = this.payloads$.getValue();
 			this.dailyLogs = await this.timesheetService.getDailyReport(payloads);
 		} catch (error) {
 			console.log('Error while retrieving daily logs report', error);

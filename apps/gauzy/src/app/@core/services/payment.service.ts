@@ -54,8 +54,7 @@ export class PaymentService {
 
 	getReportData(request: IGetPaymentInput) {
 		return firstValueFrom(
-			this.http
-			.get<IPaymentReportData[]>(`${API_PREFIX}/payments/report`, {
+			this.http.get<IPaymentReportData[]>(`${API_PREFIX}/payments/report`, {
 				params: toParams(request)
 			})
 		);

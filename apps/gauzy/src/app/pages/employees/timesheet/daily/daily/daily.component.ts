@@ -158,7 +158,12 @@ export class DailyComponent extends BaseSelectorFilterComponent implements
 
 		this.loading = true;
 		try {
-			this.timeLogs = await this.timesheetService.getTimeLogs(payloads);
+			this.timeLogs = await this.timesheetService.getTimeLogs(payloads, [
+				'project',
+				'task',
+				'organizationContact',
+				'employee.user'
+			]);
 		} catch (error) {
 			console.log('Error while retriving daily time logs entries', error);
 			this.toastrService.error(error);
