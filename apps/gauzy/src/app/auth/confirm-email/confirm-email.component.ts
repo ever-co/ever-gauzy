@@ -37,12 +37,12 @@ export class ConfirmEmailComponent extends TranslationBaseComponent
 	async verfiedEmail(response: HttpErrorResponse) {
 		try {
 			if ('status' in response && response.status === HttpStatusCode.BadRequest) {
-				this.errorMessage = 'Sorry, this verification link is not valid.';
+				this.errorMessage = this.getTranslation('TOASTR.MESSAGE.EMAIL_VERIFICATION_NOT_VALID');
 			} else if ('status' in response && response.status === HttpStatusCode.Ok) {
-				this.successMessage = 'Congrats! Your email is now verified.'
+				this.successMessage = this.getTranslation('TOASTR.MESSAGE.EMAIL_VERIFICATION_VALID');
 			}
 		} catch (error) {
-			this.errorMessage = 'Sorry, this verification link is not valid.';
+			this.errorMessage = this.getTranslation('TOASTR.MESSAGE.EMAIL_VERIFICATION_NOT_VALID');
 		} finally {
 			this.loading = false;
 		}
