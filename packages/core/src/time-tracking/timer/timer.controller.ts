@@ -90,6 +90,7 @@ export class TimerController {
 	async startTimer(
 		@Body() entity: StartTimerDTO
 	): Promise<ITimeLog> {
+		console.log('----------------------------------Start Timer----------------------------------', entity);
 		return await this.timerService.startTimer(entity);
 	}
 
@@ -108,6 +109,7 @@ export class TimerController {
 	async stopTimer(
 		@Body() entity: StopTimerDTO
 	): Promise<ITimeLog | null> {
+		console.log('----------------------------------Stop Timer----------------------------------', entity);
 		return await this.timerService.stopTimer(entity);
 	}
 }

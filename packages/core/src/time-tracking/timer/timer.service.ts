@@ -121,6 +121,7 @@ export class TimerService {
 
 		// Calculate last TimeLog duration
 		if (lastLog) {
+			console.log('----------------------------------Timer Status----------------------------------', lastLog.isRunning);
 			status.lastLog = lastLog;
 			status.running = lastLog.isRunning;
 			if (status.running) {
