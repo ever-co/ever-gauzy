@@ -168,8 +168,7 @@ export enum TimeLogSourceEnum {
 	UPWORK = 'UPWORK'
 }
 
-export interface ITimeLogFilters
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface ITimeLogFilters extends IBasePerTenantAndOrganizationEntityModel {
 	date?: Date | string;
 	startDate?: Date | string;
 	endDate?: Date | string;
@@ -376,12 +375,12 @@ export interface IManualTimeInput
 	isBillable?: boolean;
 }
 
-export interface IGetTimeLogInput extends ITimeLogFilters {
+export interface IGetTimeLogInput extends ITimeLogFilters, IBaseRelationsEntityModel {
 	timesheetId?: string;
 	teamId?: string;
 }
 
-export interface IGetTimeLogReportInput extends IGetTimeLogInput, IBaseRelationsEntityModel {
+export interface IGetTimeLogReportInput extends IGetTimeLogInput {
 	groupBy?: ReportGroupByFilter;
 }
 

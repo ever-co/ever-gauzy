@@ -13,10 +13,11 @@ import {
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { debounceTime, tap } from 'rxjs/operators';
+import { filter, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs/internal/Observable';
+import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import { pluck } from 'underscore';
-import { isEmpty } from '@gauzy/common-angular';
+import { distinctUntilChange, isEmpty } from '@gauzy/common-angular';
 import { DateRangePickerBuilderService, ExpensesService, Store } from './../../../../@core/services';
 import { BaseSelectorFilterComponent } from './../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
 import { IChartData } from './../../../../@shared/report/charts/line-chart/line-chart.component';
@@ -40,6 +41,7 @@ export class ExpensesReportComponent extends BaseSelectorFilterComponent
 
 	@ViewChild(GauzyFiltersComponent) gauzyFiltersComponent: GauzyFiltersComponent;
 	datePickerConfig$: Observable<any> = this.dateRangePickerBuilderService.datePickerConfig$;
+	payloads$: BehaviorSubject<ITimeLogFilters> = new BehaviorSubject(null);
 
 	constructor(
 		private readonly expensesService: ExpensesService,
@@ -55,7 +57,15 @@ export class ExpensesReportComponent extends BaseSelectorFilterComponent
 	ngOnInit() {
 		this.subject$
 			.pipe(
-				debounceTime(300),
+				filter(() => !!this.organization),
+				tap(() => this.prepareRequest()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.payloads$
+			.pipe(
+				distinctUntilChange(),
+				filter((payloads: ITimeLogFilters) => !!payloads),
 				tap(() => this.updateChart()),
 				untilDestroyed(this)
 			)
@@ -66,6 +76,28 @@ export class ExpensesReportComponent extends BaseSelectorFilterComponent
 		this.cd.detectChanges();
 	}
 
+	/**
+	 * Get header selectors request
+	 * Get gauzy timesheet filters request
+	 *
+	 * @returns
+	 */
+	prepareRequest() {
+		if (isEmpty(this.request) || isEmpty(this.filters)) {
+			return;
+		}
+		const request: IGetExpenseInput = {
+			...this.getFilterRequest(this.request),
+			groupBy: this.groupBy
+		};
+		this.payloads$.next(request);
+	}
+
+	/**
+	 * Gauzy timesheet default filters
+	 *
+	 * @param filters
+	 */
 	filtersChange(filters: ITimeLogFilters) {
 		if (this.gauzyFiltersComponent.saveFilters) {
 			this.timesheetFilterService.filter = filters;
@@ -78,13 +110,10 @@ export class ExpensesReportComponent extends BaseSelectorFilterComponent
 		if (!this.organization || isEmpty(this.request)) {
 			return;
 		}
-		const request: IGetExpenseInput = {
-			...this.getFilterRequest(this.request),
-			groupBy: this.groupBy
-		};
 		this.loading = true;
 		try {
-			const logs: any[] = await this.expensesService.getReportChartData(request);
+			const payloads = this.payloads$.getValue();
+			const logs: any[] = await this.expensesService.getReportChartData(payloads);
 			const datasets = [{
 				label: this.getTranslation('REPORT_PAGE.EXPENSE'),
 				data: logs.map((log) => log.value['expense']),

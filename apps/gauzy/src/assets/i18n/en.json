@@ -2468,9 +2468,9 @@
 		"AVAILABLE_JOBS": "Available Jobs",
 		"APPLIED_JOBS": "Applied Jobs",
 		"JOB_SEARCH_STATUS": "Job Search Status",
-    "BROWSE":"Browse",
-    "SEARCH":"Search",
-    "HISTORY":"History"
+		"BROWSE":"Browse",
+		"SEARCH":"Search",
+		"HISTORY":"History"
 	},
 	"PROPOSAL_TEMPLATE": {
 		"PROPOSAL_TEMPLATE": "Proposal Template",
@@ -3326,7 +3326,9 @@
 			"TIME_LOG_DELETED": "Time log for '{{ name }}' removed from '{{ organization }}'",
 			"TIME_LOGS_DELETED": "Time logs removed from '{{ organization }}'",
 			"BUCKET_CREATED": "'{{ bucket }}' for '{{ region }}' has been created successfully",
-			"AUTHORIZED_TO_WORK": "{{ name }} is authorized to work"
+			"AUTHORIZED_TO_WORK": "{{ name }} is authorized to work",
+			"EMAIL_VERIFICATION_NOT_VALID": "Sorry, this verification link is not valid.",
+			"EMAIL_VERIFICATION_VALID": "Congrats! Your email is now verified."
 		}
 	},
 	"ACCEPT_INVITE": {
