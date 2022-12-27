@@ -1,9 +1,9 @@
-import { OrganizationProjectBudgetTypeEnum, ProjectBillingEnum, TaskListTypeEnum } from "@gauzy/contracts";
-import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import { ApiProperty, ApiPropertyOptional, PartialType } from "@nestjs/swagger";
+import { OrganizationProjectBudgetTypeEnum, ProjectBillingEnum } from "@gauzy/contracts";
 import { IsEnum, IsNotEmpty, IsOptional } from "class-validator";
-import { TenantOrganizationBaseDTO } from "./../../core/dto";
+import { UpdateTaskModeDTO } from "./update-task-mode.dto";
 
-export class OrganizationProjectDTO extends TenantOrganizationBaseDTO {
+export class OrganizationProjectDTO extends PartialType(UpdateTaskModeDTO) {
 
     @ApiProperty({ type: () => String })
 	@IsNotEmpty()
@@ -16,14 +16,6 @@ export class OrganizationProjectDTO extends TenantOrganizationBaseDTO {
 	@IsOptional()
 	@IsEnum(ProjectBillingEnum)
 	readonly billing: ProjectBillingEnum;
-
-    @ApiPropertyOptional({
-		enum: TaskListTypeEnum,
-		example: TaskListTypeEnum.GRID
-	})
-	@IsOptional()
-	@IsEnum(TaskListTypeEnum)
-	readonly taskListType: TaskListTypeEnum;
 
     @ApiPropertyOptional({
 		enum: OrganizationProjectBudgetTypeEnum,
