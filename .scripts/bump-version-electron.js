@@ -18,7 +18,8 @@ module.exports.server = (isProd) => {
             let newVersion = stdout.trim();
             console.log('latest tag', newVersion);
             if (newVersion) {
-                newVersion = newVersion.split('v')[1];
+				// let's remove "v" from version, i.e. first character
+                newVersion = newVersion.substring(1);
                 package.version = newVersion;
                 fs.writeFileSync('./apps/server/src/package.json', JSON.stringify(package, null, 2));
 
@@ -47,7 +48,8 @@ module.exports.desktop = (isProd) => {
             let newVersion = stdout.trim();
             console.log('latest tag', newVersion);
             if (newVersion) {
-                newVersion = newVersion.split('v')[1];
+				// let's remove "v" from version, i.e. first character
+                newVersion = newVersion.substring(1);
                 package.version = newVersion;
                 fs.writeFileSync('./apps/desktop/src/package.json', JSON.stringify(package, null, 2));
 
@@ -75,7 +77,8 @@ module.exports.desktoptimer = (isProd) => {
         let newVersion = stdout.trim();
         console.log('latest tag', newVersion);
         if (newVersion) {
-            newVersion = newVersion.split('v')[1];
+			// let's remove "v" from version, i.e. first character
+            newVersion = newVersion.substring(1);
             package.version = newVersion;
             fs.writeFileSync('./apps/desktop-timer/src/package.json', JSON.stringify(package, null, 2));
 
