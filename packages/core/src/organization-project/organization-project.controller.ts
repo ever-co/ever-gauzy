@@ -21,8 +21,7 @@ import {
 	IEmployee,
 	IOrganizationProject,
 	IPagination,
-	PermissionsEnum,
-	TaskListTypeEnum
+	PermissionsEnum
 } from '@gauzy/contracts';
 import { CrudController, PaginationParams } from './../core/crud';
 import {
@@ -34,10 +33,10 @@ import { OrganizationProject } from './organization-project.entity';
 import { OrganizationProjectService } from './organization-project.service';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
-import { CountQueryDTO } from './../shared/dto';
+import { CountQueryDTO, RelationsQueryDTO } from './../shared/dto';
 import { UUIDValidationPipe } from './../shared/pipes';
 import { TenantOrganizationBaseDTO } from './../core/dto';
-import { CreateOrganizationProjectDTO, UpdateOrganizationProjectDTO } from './dto';
+import { CreateOrganizationProjectDTO, UpdateOrganizationProjectDTO, UpdateTaskModeDTO } from './dto';
 
 @ApiTags('OrganizationProject')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -110,7 +109,7 @@ export class OrganizationProjectController extends CrudController<OrganizationPr
 	@Put('employee')
 	async updateByEmployee(
 		@Body() body: IEditEntityByMemberInput
-	): Promise<any> {
+	): Promise<boolean> {
 		return await this.commandBus.execute(
 			new OrganizationProjectEditByEmployeeCommand(body)
 		);
@@ -143,13 +142,13 @@ export class OrganizationProjectController extends CrudController<OrganizationPr
 		PermissionsEnum.ORG_PROJECT_EDIT
 	)
 	@Put('/task-view/:id')
+	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async updateTaskViewMode(
 		@Param('id', UUIDValidationPipe) id: IOrganizationProject['id'],
-		@Body() body: { taskViewMode: TaskListTypeEnum }
-	): Promise<any> {
-		return await this.organizationProjectService.updateTaskViewMode(
-			id,
-			body.taskViewMode
+		@Body() entity: UpdateTaskModeDTO
+	): Promise<IOrganizationProject> {
+		return await this.commandBus.execute(
+			new OrganizationProjectUpdateCommand({ id, ...entity })
 		);
 	}
 
@@ -242,6 +241,24 @@ export class OrganizationProjectController extends CrudController<OrganizationPr
 		@Query() params: PaginationParams<OrganizationProject>
 	): Promise<IPagination<IOrganizationProject>> {
 		return await this.organizationProjectService.findAll(params);
+	}
+
+	/**
+	 * Find project by primary ID
+	 *
+	 * @param id
+	 * @returns
+	 */
+	@Permissions(
+		PermissionsEnum.ALL_ORG_VIEW,
+		PermissionsEnum.ORG_PROJECT_VIEW
+	)
+	@Get(':id')
+	async findById(
+		@Param('id', UUIDValidationPipe) id: IOrganizationProject['id'],
+		@Query() options: RelationsQueryDTO
+	): Promise<IOrganizationProject> {
+		return await this.organizationProjectService.findOneByIdString(id, options);
 	}
 
 	/**

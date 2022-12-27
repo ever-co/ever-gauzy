@@ -69,7 +69,7 @@ export interface IOrganizationProjectsFindInput extends IBasePerTenantAndOrganiz
 }
 
 export interface IOrganizationProjectsCreateInput extends IBasePerTenantAndOrganizationEntityModel {
-	name: string;
+	name?: string;
 	organizationContact?: IOrganizationContact;
 	organizationContactId?: IOrganizationContact['id'];
 	startDate?: Date;
@@ -89,6 +89,7 @@ export interface IOrganizationProjectsCreateInput extends IBasePerTenantAndOrgan
 	openSource?: boolean;
 	projectUrl?: string;
 	openSourceProjectUrl?: string;
+	taskListType?: string;
 }
 
 export interface IOrganizationProjectsUpdateInput extends IOrganizationProjectsCreateInput {

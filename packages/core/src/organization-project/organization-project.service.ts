@@ -60,12 +60,6 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 		return await query.getMany();
 	}
 
-	async updateTaskViewMode(id: string, taskViewMode: string): Promise<any> {
-		const project = await this.organizationProjectRepository.findOneBy({ id });
-		project.taskListType = taskViewMode;
-		return await this.organizationProjectRepository.save(project);
-	}
-
 	/**
 	 * Organization project override find all method
 	 *

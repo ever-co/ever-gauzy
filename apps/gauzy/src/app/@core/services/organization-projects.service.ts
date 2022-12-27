@@ -5,7 +5,6 @@ import {
 	IOrganizationProject,
 	IOrganizationProjectsFindInput,
 	IEditEntityByMemberInput,
-	TaskListTypeEnum,
 	IPagination,
 	IEmployee,
 	IOrganizationProjectsUpdateInput
@@ -86,20 +85,17 @@ export class OrganizationProjectsService {
 	}
 
 	updateTaskViewMode(
-		id: string,
-		taskViewMode: TaskListTypeEnum
-	): Promise<any> {
+		id: IOrganizationProject['id'],
+		body: IOrganizationProjectsUpdateInput
+	): Promise<IOrganizationProject> {
 		return firstValueFrom(
-			this.http
-				.put(`${this.API_URL}/task-view/${id}`, { taskViewMode })
-				.pipe(take(1))
+			this.http.put<IOrganizationProject>(`${this.API_URL}/task-view/${id}`, body).pipe(take(1))
 		);
 	}
 
-	delete(id: string): Promise<any> {
+	delete(id: IOrganizationProject['id']): Promise<any> {
 		return firstValueFrom(
-			this.http
-				.delete(`${this.API_URL}/${id}`)
+			this.http.delete(`${this.API_URL}/${id}`)
 		);
 	}
 }
