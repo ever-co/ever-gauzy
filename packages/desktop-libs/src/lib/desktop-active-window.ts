@@ -22,7 +22,7 @@ export class DesktopActiveWindow extends EventEmitter {
 	 * Delay between pools in milliseconds
 	 * @private
 	 */
-	private _ACTIVE_WINDOW_POLLING_INTERVAL: number = 1000;
+	private _ACTIVE_WINDOW_POLLING_INTERVAL: number = 1000 * 10;
 
 	constructor() {
 		super();
