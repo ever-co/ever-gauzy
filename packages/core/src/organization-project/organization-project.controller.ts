@@ -104,7 +104,7 @@ export class OrganizationProjectController extends CrudController<OrganizationPr
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Permissions(
 		PermissionsEnum.ALL_ORG_EDIT,
-		PermissionsEnum.ORG_EMPLOYEES_EDIT
+		PermissionsEnum.ORG_PROJECT_EDIT
 	)
 	@Put('employee')
 	async updateByEmployee(
