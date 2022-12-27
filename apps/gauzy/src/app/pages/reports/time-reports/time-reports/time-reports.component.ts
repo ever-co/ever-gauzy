@@ -15,7 +15,7 @@ import {
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { debounceTime, filter, tap } from 'rxjs/operators';
+import { filter, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { pluck } from 'underscore';
 import { distinctUntilChange, isEmpty } from '@gauzy/common-angular';
@@ -57,16 +57,19 @@ export class TimeReportsComponent extends BaseSelectorFilterComponent
 	}
 
 	ngOnInit() {
+		this.cdr.detectChanges();
+	}
+
+	ngAfterViewInit() {
 		this.subject$
 			.pipe(
-				debounceTime(100),
+				filter(() => !!this.organization),
 				tap(() => this.prepareRequest()),
 				untilDestroyed(this)
 			)
 			.subscribe();
 		this.payloads$
 			.pipe(
-				debounceTime(200),
 				distinctUntilChange(),
 				filter((payloads: ITimeLogFilters) => !!payloads),
 				tap(() => this.updateChart()),
@@ -75,10 +78,11 @@ export class TimeReportsComponent extends BaseSelectorFilterComponent
 			.subscribe();
 	}
 
-	ngAfterViewInit() {
-		this.cdr.detectChanges();
-	}
-
+	/**
+	 * Gauzy timesheet default filters
+	 *
+	 * @param filters
+	 */
 	filtersChange(filters: ITimeLogFilters) {
 		if (this.gauzyFiltersComponent.saveFilters) {
 			this.timesheetFilterService.filter = filters;
@@ -87,8 +91,14 @@ export class TimeReportsComponent extends BaseSelectorFilterComponent
 		this.subject$.next(true);
 	}
 
+	/**
+	 * Get header selectors request
+	 * Get gauzy timesheet filters request
+	 *
+	 * @returns
+	 */
 	prepareRequest() {
-		if (!this.organization || isEmpty(this.request)) {
+		if (isEmpty(this.request) || isEmpty(this.filters)) {
 			return;
 		}
 		const request: IGetTimeLogReportInput = {
@@ -100,13 +110,12 @@ export class TimeReportsComponent extends BaseSelectorFilterComponent
 	}
 
 	async updateChart() {
-		if (!this.organization) {
+		if (!this.organization || isEmpty(this.request)) {
 			return;
 		}
-		const payloads = this.payloads$.getValue();
-
 		this.loading = true;
 		try {
+			const payloads = this.payloads$.getValue();
 			const logs: any = await this.timesheetService.getDailyReportChart(payloads);
 			const commonOptions = {
 				borderWidth: 2,

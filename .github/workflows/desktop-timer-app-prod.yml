@@ -1,8 +1,8 @@
-name: Desktop Timer App Build
+name: Desktop Timer App Build Prod
 
 on:
     workflow_run:
-        workflows: ['Release']
+        workflows: ['Release Prod']
         branches: [master]
         types:
             - completed
@@ -47,7 +47,7 @@ jobs:
               with:
                 script: |
                   const script = require('./.scripts/bump-version-electron.js')
-                  console.log(script.desktoptimer())
+                  console.log(script.desktoptimer(true))
 
             - name: Build Desktop Timer App
               run: 'yarn build:desktop-timer:linux:release'
@@ -92,7 +92,7 @@ jobs:
               with:
                 script: |
                   const script = require('./.scripts/bump-version-electron.js')
-                  console.log(script.desktoptimer())
+                  console.log(script.desktoptimer(true))
 
             - name: Build Desktop Timer App
               run: 'yarn build:desktop-timer:mac:release'
@@ -137,7 +137,7 @@ jobs:
               with:
                 script: |
                   const script = require('./.scripts/bump-version-electron.js')
-                  console.log(script.desktoptimer())
+                  console.log(script.desktoptimer(true))
 
             - name: Build Desktop Timer App
               run: 'yarn build:desktop-timer:windows:release'

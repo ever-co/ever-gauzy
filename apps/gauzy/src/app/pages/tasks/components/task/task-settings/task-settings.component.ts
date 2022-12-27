@@ -2,7 +2,8 @@ import { Component } from '@angular/core';
 import {
 	IOrganizationProject,
 	TaskListTypeEnum,
-	ITaskResponse
+	ITaskResponse,
+	PermissionsEnum
 } from '@gauzy/contracts';
 import { Observable } from 'rxjs';
 import { map, tap, switchMap, take } from 'rxjs/operators';
@@ -18,8 +19,10 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 	styleUrls: ['./task-settings.component.scss']
 })
 export class TaskSettingsComponent {
+
 	projects$: Observable<IOrganizationProject[]>;
 	project$: Observable<IOrganizationProject>;
+	PermissionsEnum: typeof PermissionsEnum = PermissionsEnum;
 
 	constructor(
 		private readonly _store: TasksStoreService,

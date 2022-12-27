@@ -14,10 +14,10 @@ export interface TaskViewMode {
 	styleUrls: ['./project-view.component.scss']
 })
 export class ProjectViewComponent implements OnInit {
+
 	@Input() project: IOrganizationProject;
-	@Output() changeEvent: EventEmitter<
-		Partial<IOrganizationProject>
-	> = new EventEmitter();
+	@Output() changeEvent: EventEmitter<Partial<IOrganizationProject>> = new EventEmitter();
+
 	taskViewModeType: typeof TaskListTypeEnum = TaskListTypeEnum;
 	taskViewModeList: TaskViewMode[] = [
 		{
@@ -46,16 +46,30 @@ export class ProjectViewComponent implements OnInit {
 		};
 	}
 
-	async setTaskViewMode(evt: TaskViewMode): Promise<void> {
-		const project = await this.projectService.updateTaskViewMode(this.project.id, evt.type);
+	/**
+	 *
+	 *
+	 * @param event
+	 * @returns
+	 */
+	async setTaskViewMode(event: TaskViewMode): Promise<void> {
+		if (!this.project) {
+			return;
+		}
+
+		const { organizationId } = this.project;
+		const project = await this.projectService.updateTaskViewMode(this.project.id, {
+			organizationId,
+			taskListType: event.type
+		});
 		this.store.selectedProject = {
 			...this.project,
-			taskListType: evt.type
+			taskListType: event.type
 		};
 		this.organizationProjectStore.organizationProjectAction = {
 			project,
 			action: CrudActionEnum.UPDATED
 		};
-		this.changeEvent.emit({ taskListType: evt.type });
+		this.changeEvent.emit({ taskListType: event.type });
 	}
 }

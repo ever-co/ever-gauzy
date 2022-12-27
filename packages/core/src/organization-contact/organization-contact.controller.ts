@@ -13,15 +13,16 @@ import {
 	ValidationPipe
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import { FindOptionsWhere } from 'typeorm';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import {
 	IEditEntityByMemberInput,
+	IEmployee,
 	IOrganizationContact,
 	IPagination,
 	PermissionsEnum
 } from '@gauzy/contracts';
 import { CrudController, PaginationParams } from './../core/crud';
+import { TenantOrganizationBaseDTO } from './../core/dto';
 import {
 	OrganizationContactCreateCommand,
 	OrganizationContactEditByEmployeeCommand,
@@ -31,6 +32,7 @@ import { OrganizationContact } from './organization-contact.entity';
 import { OrganizationContactService } from './organization-contact.service';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
+import { CountQueryDTO } from './../shared/dto';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { CreateOrganizationContactDTO, UpdateOrganizationContactDTO } from './dto';
 
@@ -61,7 +63,7 @@ export class OrganizationContactController extends CrudController<OrganizationCo
 	@Permissions(PermissionsEnum.ORG_CONTACT_VIEW)
 	@Get('count')
 	async getCount(
-		@Query() options: FindOptionsWhere<OrganizationContact>
+		@Query() options: CountQueryDTO<OrganizationContact>
 	): Promise<number> {
 		return await this.organizationContactService.countBy(options);
 	}
@@ -111,12 +113,12 @@ export class OrganizationContactController extends CrudController<OrganizationCo
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@Get('employee/:id')
+	@Get('employee/:employeeId')
 	async findByEmployee(
-		@Param('id', UUIDValidationPipe) id: string,
-		@Query('data', ParseJsonPipe) data: any
-	): Promise<IPagination<IOrganizationContact>> {
-		return this.organizationContactService.findByEmployee(id, data);
+		@Param('employeeId', UUIDValidationPipe) employeeId: IEmployee['id'],
+		@Query() options: TenantOrganizationBaseDTO
+	): Promise<IOrganizationContact[]> {
+		return await this.organizationContactService.findByEmployee(employeeId, options);
 	}
 
 	/**

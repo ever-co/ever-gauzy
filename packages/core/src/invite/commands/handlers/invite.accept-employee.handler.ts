@@ -53,7 +53,9 @@ export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAccept
 
 		const invite: IInvite = await this.inviteService.findOneByIdString(inviteId, {
 			relations: {
-				projects: true,
+				projects: {
+					members: true
+				},
 				departments: {
 					members: true
 				},

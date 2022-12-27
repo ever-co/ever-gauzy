@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -85,7 +85,6 @@ export class ProjectsComponent extends PaginationFilterBaseComponent
 		private readonly store: Store,
 		public readonly translateService: TranslateService,
 		private readonly route: ActivatedRoute,
-		private readonly router: Router,
 		private readonly dialogService: NbDialogService,
 		private readonly organizationProjectStore: OrganizationProjectStore,
 		private readonly httpClient: HttpClient

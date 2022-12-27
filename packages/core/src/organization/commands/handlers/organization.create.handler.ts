@@ -69,6 +69,7 @@ export class OrganizationCreateHandler
 			// 3. Create organization
 			const createdOrganization: IOrganization = await this.organizationService.create({
 				...input,
+				futureDateAllowed: input.futureDateAllowed === false ? false : true,
 				show_profits: input.show_profits === true ? true : false,
 				show_bonuses_paid: input.show_bonuses_paid === true ? true : false,
 				show_income: input.show_income === true ? true : false,

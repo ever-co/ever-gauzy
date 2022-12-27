@@ -381,6 +381,16 @@ export class Store {
 		);
 	}
 
+	/**
+	 * Check any permissions exists
+	 */
+	hasAnyPermission(...permissions: PermissionsEnum[]) {
+		const { userRolePermissions } = this.appQuery.getValue();
+		return !!(userRolePermissions || []).find(
+			(p: IRolePermission) => permissions.includes(p.permission as PermissionsEnum) && p.enabled
+		);
+	}
+
 	getDateFromOrganizationSettings() {
 		let startDate = new Date();
 		if (this.dateRangePickerBuilderService.selectedDateRange) {

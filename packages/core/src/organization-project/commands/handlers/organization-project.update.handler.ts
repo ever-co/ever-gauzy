@@ -1,14 +1,13 @@
+import { BadRequestException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { IOrganizationProject } from '@gauzy/contracts';
 import { OrganizationProjectUpdateCommand } from '../organization-project.update.command';
 import { OrganizationProjectService } from '../../organization-project.service';
-import {
-	IOrganizationProject,
-	IOrganizationProjectsUpdateInput
-} from '@gauzy/contracts';
 
 @CommandHandler(OrganizationProjectUpdateCommand)
 export class OrganizationProjectUpdateHandler
 	implements ICommandHandler<OrganizationProjectUpdateCommand> {
+
 	constructor(
 		private readonly _organizationProjectService: OrganizationProjectService
 	) {}
@@ -16,23 +15,18 @@ export class OrganizationProjectUpdateHandler
 	public async execute(
 		command: OrganizationProjectUpdateCommand
 	): Promise<IOrganizationProject> {
-		const { input } = command;
-		const { id } = input;
-
-		return this.updateProject(id, input);
-	}
-
-	private async updateProject(
-		id: string,
-		request: IOrganizationProjectsUpdateInput
-	): Promise<IOrganizationProject> {
-		const project = await this._organizationProjectService.findOneByIdString(id);
-		if (project) {
-			delete request.id;
-			await this._organizationProjectService.update(id, request);
+		try {
+			const { input } = command;
+			const { id } = input;
+			//We are using create here because create calls the method save()
+			//We need save() to save ManyToMany relations
+			await this._organizationProjectService.create({
+				id,
+				...input
+			});
 			return await this._organizationProjectService.findOneByIdString(id);
+		} catch (error) {
+			throw new BadRequestException(error);
 		}
-
-		return project;
 	}
 }
