@@ -1,0 +1,150 @@
+name: Server Build Prod
+
+on:
+    workflow_run:
+        workflows: ['Release Prod']
+        branches: [master]
+        types:
+            - completed
+
+jobs:
+    release-linux:
+        runs-on: ${{ matrix.os }}
+
+        strategy:
+            matrix:
+                os: [ubuntu-22.04]
+
+        steps:
+            - name: Check out Git repository
+              uses: actions/checkout@v3
+
+            - name: Install Node.js, NPM and Yarn
+              uses: actions/setup-node@v3
+              with:
+                  node-version: 16.18.0
+
+            - name: Change permissions
+              run: 'sudo chown -R $(whoami) ./*'
+
+            - name: Install system dependencies
+              run: 'sudo apt-get update && sudo apt install -y curl gnupg git libappindicator3-1 ca-certificates binutils icnsutils graphicsmagick'
+
+            - name: Install latest version of NPM
+              run: 'sudo npm install -g npm'
+
+            - name: Install latest node-gyp package
+              run: 'sudo npm install --quiet -g node-gyp@9.3.0'
+
+            - name: Install Yarn dependencies
+              run: 'yarn install --network-timeout 1000000 --frozen-lockfile'
+
+            - name: Bootstrap Yarn
+              run: 'yarn bootstrap'
+
+            - name: Bump server version
+              uses: actions/github-script@v6
+              with:
+                script: |
+                  const script = require('./.scripts/bump-version-electron.js')
+                  console.log(script.server(true))
+
+            - name: Build Server
+              run: 'yarn build:gauzy-server:linux:release'
+              env:
+                  USE_HARD_LINKS: false
+                  GH_TOKEN: ${{ secrets.GH_TOKEN }}
+                  EP_GH_IGNORE_TIME: true
+                  SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+                  DO_KEY_ID: ${{ secrets.DO_KEY_ID }}
+                  DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
+
+    release-mac:
+        runs-on: ${{ matrix.os }}
+
+        strategy:
+            matrix:
+                os: [macos-12]
+
+        steps:
+            - name: Check out Git repository
+              uses: actions/checkout@v3
+
+            - name: Install Node.js, NPM and Yarn
+              uses: actions/setup-node@v3
+              with:
+                  node-version: 16.18.0
+
+            - name: Install latest version of NPM
+              run: 'sudo npm install -g npm'
+
+            - name: Install latest node-gyp package
+              run: 'sudo npm install --quiet -g node-gyp@9.3.0'
+
+            - name: Install Yarn dependencies
+              run: 'yarn install --network-timeout 1000000 --frozen-lockfile'
+
+            - name: Bootstrap Yarn
+              run: 'yarn bootstrap'
+
+            - name: Bump Server version
+              uses: actions/github-script@v6
+              with:
+                script: |
+                  const script = require('./.scripts/bump-version-electron.js')
+                  console.log(script.server(true))
+
+            - name: Build Server
+              run: 'yarn build:gauzy-server:mac:release'
+              env:
+                  USE_HARD_LINKS: false
+                  GH_TOKEN: ${{ secrets.GH_TOKEN }}
+                  EP_GH_IGNORE_TIME: true
+                  SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+                  DO_KEY_ID: ${{ secrets.DO_KEY_ID }}
+                  DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
+
+    release-windows:
+        runs-on: ${{ matrix.os }}
+
+        strategy:
+            matrix:
+                os: [windows-2022]
+
+        steps:
+            - name: Check out Git repository
+              uses: actions/checkout@v3
+
+            - name: Install Node.js, NPM and Yarn
+              uses: actions/setup-node@v3
+              with:
+                  node-version: 16.18.0
+
+            - name: Install latest version of NPM
+              run: 'npm install -g npm'
+
+            - name: Install latest node-gyp package
+              run: 'npm install --quiet -g node-gyp@9.3.0'
+
+            - name: Install Yarn dependencies
+              run: 'yarn install --network-timeout 1000000 --frozen-lockfile'
+
+            - name: Bootstrap Yarn
+              run: 'yarn bootstrap'
+
+            - name: Bump Server version
+              uses: actions/github-script@v6
+              with:
+                script: |
+                  const script = require('./.scripts/bump-version-electron.js')
+                  console.log(script.server(true))
+
+            - name: Build Server
+              run: 'yarn build:gauzy-server:windows:release'
+              env:
+                  USE_HARD_LINKS: false
+                  GH_TOKEN: ${{ secrets.GH_TOKEN }}
+                  EP_GH_IGNORE_TIME: true
+                  SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+                  DO_KEY_ID: ${{ secrets.DO_KEY_ID }}
+                  DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
