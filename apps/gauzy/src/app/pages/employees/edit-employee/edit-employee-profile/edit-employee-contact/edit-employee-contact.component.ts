@@ -15,20 +15,20 @@ import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
 
 @Component({
-	selector: 'ga-edit-employee-departments',
+	selector: 'ga-edit-employee-contacts',
 	templateUrl: './edit-employee-contact.component.html',
-  styles: [
+  	styles: [
 		`
 			:host {
-        overflow-y: auto;
+        		overflow-y: auto;
 				height: calc(100vh - 20.5rem);
 			}
 		`
 	]
 })
-export class EditEmployeeContactComponent
-	extends TranslationBaseComponent
+export class EditEmployeeContactComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
+
 	private _ngDestroy$ = new Subject<void>();
 
 	organizationContact: IOrganizationContact[] = [];
@@ -36,6 +36,7 @@ export class EditEmployeeContactComponent
 
 	selectedEmployee: IEmployee;
 	organization: IOrganization;
+
 	constructor(
 		private readonly organizationContactService: OrganizationContactService,
 		private readonly toastrService: ToastrService,

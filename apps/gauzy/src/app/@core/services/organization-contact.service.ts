@@ -5,7 +5,8 @@ import {
 	IOrganizationContact,
 	IOrganizationContactFindInput,
 	IEditEntityByMemberInput,
-	IOrganizationContactUpdateInput
+	IOrganizationContactUpdateInput,
+	IEmployee
 } from '@gauzy/contracts';
 import { firstValueFrom } from 'rxjs';
 import { toParams } from '@gauzy/common-angular';
@@ -46,18 +47,13 @@ export class OrganizationContactService {
 	}
 
 	getAllByEmployee(
-		id: string,
-		findInput?: IOrganizationContactFindInput
+		id: IEmployee['id'],
+		where?: IOrganizationContactFindInput
 	): Promise<IOrganizationContact[]> {
-		const data = JSON.stringify({ findInput });
 		return firstValueFrom(
-			this.http
-			.get<IOrganizationContact[]>(
-				`${API_PREFIX}/organization-contact/employee/${id}`,
-				{
-					params: toParams({ data })
-				}
-			)
+			this.http.get<IOrganizationContact[]>(`${API_PREFIX}/organization-contact/employee/${id}`, {
+				params: toParams({ ...where })
+			})
 		);
 	}
 
