@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Brackets, FindManyOptions, In, IsNull, Repository, WhereExpressionBuilder } from 'typeorm';
+import { Brackets, In, IsNull, Repository, WhereExpressionBuilder } from 'typeorm';
 import { isNotEmpty } from '@gauzy/common';
 import { IEmployee, IOrganizationProject, IOrganizationProjectsFindInput, IPagination } from '@gauzy/contracts';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
