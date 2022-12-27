@@ -233,7 +233,7 @@
 							</button>
 						</span>
 					</div>
-					
+
 				</div>
 				<div *ngIf="isExpanded">
 					<div class="form-group">
@@ -350,7 +350,7 @@
 						*ngIf="user?.employee?.id"
 					>
 						<ng-template [ngxPermissionsOnly]="PermissionsEnum.ALLOW_MANUAL_TIME">
-							<ng-template 
+							<ng-template
 								ngxTimeTrackingAuthorized
 								[permission]="PermissionsEnum.ALLOW_MANUAL_TIME"
 							>
