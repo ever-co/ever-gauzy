@@ -1,4 +1,4 @@
-import { BrowserWindow, ipcMain } from 'electron';
+import { BrowserWindow, app, ipcMain } from 'electron';
 import { autoUpdater, UpdateInfo } from 'electron-updater';
 import { LOCAL_SERVER_UPDATE_CONFIG } from './config';
 import { UpdateContext } from './contexts';
@@ -86,7 +86,7 @@ export class DesktopUpdater {
 	}
 
 	private _updaterProcess(): void {
-		autoUpdater.once('update-available', () => {
+		autoUpdater.once('update-available', (info: UpdateInfo) => {
 			const setting = LocalStore.getStore('appSetting');
 			if (setting && !setting.automaticUpdate) return;
 			const dialog = new DialogConfirmUpgradeDownload(
@@ -96,6 +96,14 @@ export class DesktopUpdater {
 					this._gauzyWindow
 				)
 			);
+			dialog.options = {
+				...dialog.options,
+				detail:
+					'A new version v' +
+					info.version +
+					' is available. Upgrade the application by downloading the updates for v' +
+					app.getVersion()
+			};
 			dialog.show().then(async (button) => {
 				if (button.response === 0) {
 					this._updateContext.update();
