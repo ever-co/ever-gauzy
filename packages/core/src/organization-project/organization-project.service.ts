@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Brackets, In, Repository, WhereExpressionBuilder } from 'typeorm';
+import { Brackets, In, IsNull, Repository, WhereExpressionBuilder } from 'typeorm';
 import { isNotEmpty } from '@gauzy/common';
-import { IEmployee, IOrganizationProject, IOrganizationProjectsFindInput } from '@gauzy/contracts';
-import { TenantAwareCrudService } from './../core/crud';
+import { IEmployee, IOrganizationProject, IOrganizationProjectsFindInput, IPagination } from '@gauzy/contracts';
+import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
 import { OrganizationProject } from './organization-project.entity';
 
@@ -60,21 +60,41 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 		return await query.getMany();
 	}
 
-	async updateTaskViewMode(id: string, taskViewMode: string): Promise<any> {
-		const project = await this.organizationProjectRepository.findOneBy({ id });
-		project.taskListType = taskViewMode;
-		return await this.organizationProjectRepository.save(project);
+	/**
+	 * Organization project override find all method
+	 *
+	 * @param filter
+	 * @returns
+	 */
+	public async findAll(
+		options?: PaginationParams<OrganizationProject>
+	): Promise<IPagination<OrganizationProject>> {
+		if ('where' in options) {
+			const { where } = options;
+			if (where.organizationContactId === 'null') {
+				options.where.organizationContactId = IsNull();
+			}
+		}
+		return await super.findAll(options);
 	}
 
-	public pagination(filter?: any) {
-		if ('where' in filter) {
-			const { where } = filter;
+	/**
+	 * Organization project override pagination method
+	 *
+	 * @param filter
+	 * @returns
+	 */
+	public async pagination(
+		options?: PaginationParams<OrganizationProject>
+	): Promise<IPagination<OrganizationProject>> {
+		if ('where' in options) {
+			const { where } = options;
 			if (where.tags) {
-				filter.where.tags = {
-					id: In(where.tags)
+				options.where.tags = {
+					id: In(where.tags as string[])
 				}
 			}
 		}
-		return super.paginate(filter);
+		return await super.paginate(options);
 	}
 }

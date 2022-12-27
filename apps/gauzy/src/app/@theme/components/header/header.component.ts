@@ -74,7 +74,7 @@ export class HeaderComponent extends TranslationBaseComponent
 	hasPermissionInEdit = false;
 	hasPermissionTask = false;
 	hasPermissionEmpEdit = false;
-	hasPermissionProjEdit = false;
+	hasPermissionProjectAdd = false;
 	hasPermissionContactEdit = false;
 	hasPermissionTeamAdd = false;
 	hasPermissionContractEdit = false;
@@ -248,11 +248,15 @@ export class HeaderComponent extends TranslationBaseComponent
 	 */
 	checkProjectSelectorVisibility() {
 		// hidden project selector if not activate for current page
-		if (!this.organization || !this.selectorsVisibility.project) {
+		if (!this.organization || !this.selectorsVisibility.project || !this.store.hasAnyPermission(
+			PermissionsEnum.ALL_ORG_VIEW,
+			PermissionsEnum.ORG_PROJECT_VIEW
+		)) {
 			return;
 		}
 		const { id: organizationId } = this.organization;
 		const { tenantId } = this.store.user;
+
 		this.organizationProjectsService.getCount({
 			organizationId,
 			tenantId
@@ -481,14 +485,16 @@ export class HeaderComponent extends TranslationBaseComponent
 				this.hasPermissionEmpEdit = this.store.hasPermission(
 					PermissionsEnum.ORG_EMPLOYEES_EDIT
 				);
-				this.hasPermissionProjEdit = this.store.hasPermission(
-					PermissionsEnum.ORG_PROJECT_EDIT
+				this.hasPermissionProjectAdd = this.store.hasAnyPermission(
+					PermissionsEnum.ORG_PROJECT_ADD,
+					PermissionsEnum.ALL_ORG_EDIT
+				);
+				this.hasPermissionTeamAdd = this.store.hasAnyPermission(
+					PermissionsEnum.ORG_TEAM_ADD,
+					PermissionsEnum.ALL_ORG_EDIT
 				);
 				this.hasPermissionContactEdit = this.store.hasPermission(
 					PermissionsEnum.ORG_CONTACT_EDIT
-				);
-				this.hasPermissionTeamAdd = this.store.hasPermission(
-					PermissionsEnum.ORG_TEAM_ADD
 				);
 				this.hasPermissionContractEdit = this.store.hasPermission(
 					PermissionsEnum.ORG_CONTRACT_EDIT
@@ -591,7 +597,7 @@ export class HeaderComponent extends TranslationBaseComponent
 				title: this.getTranslation('CONTEXT_MENU.PROJECT'),
 				icon: 'color-palette-outline',
 				link: `pages/organization/projects`,
-				hidden: !this.hasPermissionProjEdit
+				hidden: !this.hasPermissionProjectAdd
 			},
 			// TODO: divider
 			{

@@ -16,7 +16,7 @@ export abstract class OptionsSelect<T = any> {
 
 	@ApiPropertyOptional({ type: 'object' })
 	@IsOptional()
-	@Transform(({ value }: TransformFnParams) => parseObjectToBoolean(value))
+	@Transform(({ value }: TransformFnParams) => parseObject(value, parseToBoolean))
 	readonly select?: FindOptionsSelect<T>;
 }
 
@@ -83,20 +83,20 @@ export abstract class PaginationParams<T = any> extends OptionParams<T>{
 }
 
 /**
- * string object should be converted to a boolean object
+ * Parse object to specific type
  *
  * @param source
  * @returns
  */
-export function parseObjectToBoolean(source: Object) {
+export function parseObject(source: Object, callback: Function) {
 	if (isObject(source)) {
 		for (const key in source) {
 			if (isObject(source[key])) {
 				if (!isClassInstance(source[key])) {
-					parseObjectToBoolean(source[key]);
+					parseObject(source[key], callback);
 				}
 			} else {
-				Object.assign(source, { [key]: parseToBoolean(source[key]) })
+				Object.assign(source, { [key]: callback(source[key]) })
 			}
 		}
 	}

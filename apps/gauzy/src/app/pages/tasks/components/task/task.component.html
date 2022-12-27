@@ -1,4 +1,8 @@
-<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
+<nb-card
+	[nbSpinner]="loading"
+	nbSpinnerStatus="primary"
+	nbSpinnerSize="large"
+>
 	<nb-card-header class="card-customer-header pb-0">
 		<div class="card-header-title">
 			<h4>
@@ -14,16 +18,17 @@
 					</ng-container>
 				</ngx-header-title>
 			</h4>
-			<ng-container *ngIf="selectedProject">
-				<button
-					*ngIf="selectedProject.id !== defaultProject.id"
-					size="small"
-					nbButton
-					(click)="openTasksSettings(selectedProject)"
-				>
-					<nb-icon icon="settings-2-outline"></nb-icon>
-				</button>
-			</ng-container>
+			<ng-template [ngxPermissionsOnly]="['ALL_ORG_EDIT', 'ORG_PROJECT_EDIT']">
+				<ng-template [ngIf]="!isDefaultProject">
+					<button
+						size="small"
+						nbButton
+						(click)="openTasksSettings(selectedProject)"
+					>
+						<nb-icon icon="settings-2-outline"></nb-icon>
+					</button>
+				</ng-template>
+			</ng-template>
 		</div>
 		<div class="tasks-component__settings">
 			<div class="gauzy-button-container">
@@ -62,7 +67,7 @@
 					></ng-container>
 				</ng-template>
 				<ng-template #gridLayout>
-					<ga-card-grid 
+					<ga-card-grid
 						[totalItems]="pagination?.totalItems"
 						[settings]="settingsSmartTable"
 						[source]="availableTasks$ | async"
