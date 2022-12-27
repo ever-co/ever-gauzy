@@ -8,17 +8,17 @@ import { DateRangeQueryDTO } from "./date-range-query.dto";
  */
 export class SelectorsQueryDTO extends DateRangeQueryDTO implements ITimeLogFilters {
 
-    @ApiPropertyOptional({ type: () => Array, isArray: true, readOnly: true })
+    @ApiPropertyOptional({ type: () => Array, isArray: true })
     @IsOptional()
     @IsArray()
     readonly employeeIds: string[];
 
-    @ApiPropertyOptional({ type: () => Array, isArray: true, readOnly: true })
+    @ApiPropertyOptional({ type: () => Array, isArray: true })
     @IsOptional()
     @IsArray()
     readonly projectIds: string[];
 
-    @ApiPropertyOptional({ type: () => Array, isArray: true, readOnly: true })
+    @ApiPropertyOptional({ type: () => Array, isArray: true })
     @IsOptional()
     @IsArray()
     readonly taskIds: string[];

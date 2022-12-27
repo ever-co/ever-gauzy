@@ -21,7 +21,7 @@ import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
 import { pick } from 'underscore';
 import { Observable, Subject } from 'rxjs';
-import { debounceTime, filter, tap } from 'rxjs/operators';
+import { filter, tap } from 'rxjs/operators';
 import {
 	IGetTimeLogInput,
 	ITimeLog,
@@ -114,37 +114,8 @@ export class CalendarComponent extends BaseSelectorFilterComponent
 	ngOnInit() {
 		this.subject$
 			.pipe(
-				filter(() => !!this.calendar.getApi()),
-				debounceTime(500),
-				tap(async () => {
-					const {
-						allowManualTime,
-						allowModifyTime,
-						futureDateAllowed
-					} = this.organization;
-					const calendar = this.calendar.getApi();
-					if (
-						await this.ngxPermissionsService.hasPermission(
-							PermissionsEnum.ALLOW_MANUAL_TIME
-						) && allowManualTime
-					) {
-						calendar.setOption('selectable', true);
-					} else {
-						calendar.setOption('selectable', false);
-					}
-
-					if (
-						await this.ngxPermissionsService.hasPermission(
-							PermissionsEnum.ALLOW_MODIFY_TIME
-						) && allowModifyTime
-					) {
-						calendar.setOption('editable', true);
-					} else {
-						calendar.setOption('editable', false);
-					}
-					calendar.setOption('firstDay', dayOfWeekAsString(this.organization.startWeekOn));
-					this.futureDateAllowed = futureDateAllowed;
-				}),
+				filter(() => !!this.calendar.getApi() && !!this.organization),
+				tap(() => this.setCalendarOptions()),
 				tap(() => this.setCalenderInitialView()),
 				untilDestroyed(this)
 			)
@@ -164,7 +135,41 @@ export class CalendarComponent extends BaseSelectorFilterComponent
 	}
 
 	/**
+	 * SET calendar options
+	 *
+	 * @returns
+	 */
+	async setCalendarOptions() {
+		if (!this.organization || !this.calendar.getApi()) {
+			return;
+		}
+
+		const calendar = this.calendar.getApi();
+		const { allowManualTime, allowModifyTime, futureDateAllowed, startWeekOn } = this.organization;
+
+		this.futureDateAllowed = futureDateAllowed;
+		/**
+		 * Allow manual time
+		 */
+		if (await this.ngxPermissionsService.hasPermission(PermissionsEnum.ALLOW_MANUAL_TIME) && allowManualTime) {
+			calendar.setOption('selectable', true);
+		} else {
+			calendar.setOption('selectable', false);
+		}
+		/**
+		 * Allow modify time
+		 */
+		if (await this.ngxPermissionsService.hasPermission(PermissionsEnum.ALLOW_MODIFY_TIME) && allowModifyTime) {
+			calendar.setOption('editable', true);
+		} else {
+			calendar.setOption('editable', false);
+		}
+		calendar.setOption('firstDay', dayOfWeekAsString(startWeekOn));
+	}
+
+	/**
 	 * SET calender initial view
+	 *
 	 */
 	setCalenderInitialView() {
 		if (this.calendar.getApi()) {
@@ -179,7 +184,7 @@ export class CalendarComponent extends BaseSelectorFilterComponent
 		}
 	}
 
-	getEvents(arg: any, callback) {
+	getEvents(arg: any, callback: Function) {
 		if (!this.organization || isEmpty(this.request)) {
 			return;
 		}
@@ -203,13 +208,11 @@ export class CalendarComponent extends BaseSelectorFilterComponent
 
 		this.loading = true;
 		this.timesheetService
-			.getTimeLogs(request)
+			.getTimeLogs(request, ['project'])
 			.then((logs: ITimeLog[]) => {
 				const events = logs.map(
 					(log: ITimeLog): EventInput => {
-						const title = log.project
-							? log.project.name
-							: 'No project';
+						const title = log.project ? log.project.name : this.getTranslation('TIMESHEET.NO_PROJECT');
 						return {
 							id: log.id,
 							title: title,

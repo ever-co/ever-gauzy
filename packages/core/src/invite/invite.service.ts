@@ -131,10 +131,20 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 		/**
 		 * Invited for role
 		 */
-		const role: IRole = await this.roleService.findOneByIdString(roleId);
-		if (role.name === RolesEnum.SUPER_ADMIN) {
-			if (invitedBy.role.name !== RolesEnum.SUPER_ADMIN) {
-				throw new UnauthorizedException();
+		let role: IRole;
+		try {
+			// Employee can invite other user for employee role only
+			role = await this.roleService.findOneByIdString(RequestContext.currentRoleId(), {
+				where: {
+					name: RolesEnum.EMPLOYEE
+				}
+			});
+		} catch (error) {
+			role = await this.roleService.findOneByIdString(roleId);
+			if (role.name === RolesEnum.SUPER_ADMIN) {
+				if (invitedBy.role.name !== RolesEnum.SUPER_ADMIN) {
+					throw new UnauthorizedException();
+				}
 			}
 		}
 
@@ -443,11 +453,12 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 
 	/**
 	 * Check, if invite exist or expired for user
+	 * Validate invited by token
 	 *
 	 * @param where
 	 * @returns
 	 */
-	async validate(
+	async validateByToken(
 		where: FindOptionsWhere<Invite>
 	): Promise<IInvite> {
 		try {
@@ -462,7 +473,6 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 							id: true,
 							email: true,
 							fullName: true,
-							status: true,
 							organization: {
 								name: true
 							}
@@ -517,7 +527,6 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 					id: true,
 					email: true,
 					fullName: true,
-					status: true,
 					organization: {
 						name: true
 					}

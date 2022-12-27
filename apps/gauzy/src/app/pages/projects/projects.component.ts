@@ -4,7 +4,7 @@ import { HttpClient } from '@angular/common/http';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, tap } from 'rxjs/operators';
-import { debounceTime, firstValueFrom, Subject } from 'rxjs';
+import { combineLatest, debounceTime, firstValueFrom, Subject } from 'rxjs';
 import { Ng2SmartTableComponent } from 'ng2-smart-table';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
@@ -49,15 +49,15 @@ import { ProjectOrganizationEmployeesComponent } from '../../@shared/table-compo
 	templateUrl: './projects.component.html',
 	styleUrls: ['./projects.component.scss']
 })
-export class ProjectsComponent
-	extends PaginationFilterBaseComponent
-	implements OnInit, OnDestroy
-{
+export class ProjectsComponent extends PaginationFilterBaseComponent
+	implements OnInit, OnDestroy {
+
 	loading: boolean = false;
 	settingsSmartTable: any;
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
+	selectedEmployeeId: IEmployee['id'] | null;
 	organization: IOrganization;
 	showAddCard: boolean = false;
 	projects: IOrganizationProject[] = [];
@@ -67,8 +67,8 @@ export class ProjectsComponent
 	disableButton = true;
 	selectedProject: IOrganizationProject;
 	smartTableSource: ServerDataSource;
-	project$: Subject<any> = this.subject$;
-	private _refresh$: Subject<any> = new Subject();
+	project$: Subject<boolean> = this.subject$;
+	private _refresh$: Subject<boolean> = new Subject();
 
 	projectsTable: Ng2SmartTableComponent;
 	@ViewChild('projectsTable') set content(content: Ng2SmartTableComponent) {
@@ -104,14 +104,16 @@ export class ProjectsComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.store.selectedOrganization$
+		const storeOrganization$ = this.store.selectedOrganization$;
+		const storeEmployee$ = this.store.selectedEmployee$;
+		combineLatest([storeOrganization$, storeEmployee$])
 			.pipe(
-				debounceTime(150),
-				filter((organization) => !!organization),
-				tap(
-					(organization: IOrganization) =>
-						(this.organization = organization)
-				),
+				distinctUntilChange(),
+				filter(([organization]) => !!organization),
+				tap(([organization, employee]) => {
+					this.organization = organization;
+					this.selectedEmployeeId = employee ? employee.id : null;
+				}),
 				tap(() => this._refresh$.next(true)),
 				tap(() => this.project$.next(true)),
 				untilDestroyed(this)
@@ -280,9 +282,17 @@ export class ProjectsComponent
 		this.project$.next(true);
 	}
 
-	public setSmartTable() {
+	/*
+	 * Register Smart Table Source Config
+	 */
+	setSmartTableSource() {
+		if (!this.organization) {
+			return;
+		}
+
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
+
 		this.smartTableSource = new ServerDataSource(this.httpClient, {
 			endPoint: `${API_PREFIX}/organization-projects/pagination`,
 			relations: [
@@ -298,7 +308,18 @@ export class ProjectsComponent
 					tags: 'organization_project.tags'
 				}
 			},
-			where: { organizationId, tenantId, ...this.filters.where },
+			where: {
+				organizationId,
+				tenantId,
+				...(this.selectedEmployeeId
+					? {
+							members: {
+								id: this.selectedEmployeeId
+							}
+					  }
+					: {}),
+				...(this.filters.where ? this.filters.where : {})
+			},
 			resultMap: (project: IOrganizationProject) => {
 				return Object.assign({}, project, {
 					...this.privatePublicProjectMapper(project),
@@ -328,7 +349,7 @@ export class ProjectsComponent
 		const { activePage, itemsPerPage } = this.getPagination();
 		if (!this.organization) return;
 		try {
-			this.setSmartTable();
+			this.setSmartTableSource();
 			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
 			this.loadGridLayoutData();
 			this.loading = false;

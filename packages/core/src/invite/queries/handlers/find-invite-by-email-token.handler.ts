@@ -14,7 +14,7 @@ export class FindInviteByEmailTokenHandler
     async execute(query: FindInviteByEmailTokenQuery) {
         const { params } = query;
         try {
-            return await this.inviteService.validate(params);
+            return await this.inviteService.validateByToken(params);
         } catch (error) {
             throw new BadRequestException();
         }

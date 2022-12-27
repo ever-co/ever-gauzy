@@ -167,12 +167,12 @@
 								</div>
 								<div class="col">
 									<span class="log">
-										{{ log.logType }}
+										{{ log.logType | titlecase }}
 									</span>
 								</div>
 								<div class="col">
 									<span class="log">
-										{{ log.source | replace: '_':' ' }}
+										{{ log.source | replace : '_' : ' ' | titlecase }}
 									</span>
 								</div>
 								<div class="col">

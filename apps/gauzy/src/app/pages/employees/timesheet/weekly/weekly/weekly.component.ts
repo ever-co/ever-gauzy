@@ -143,7 +143,7 @@ export class WeeklyComponent extends BaseSelectorFilterComponent
 
 		this.loading = true;
 		this.timesheetService
-			.getTimeLogs(payloads)
+			.getTimeLogs(payloads, ['project'])
 			.then((logs: ITimeLog[]) => {
 				this.weekData = chain(logs)
 					.groupBy('projectId')

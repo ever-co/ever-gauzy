@@ -117,23 +117,31 @@ export class ViewScreenshotsModalComponent implements OnInit {
 	 * DELETE specific Screenshot
 	 *
 	 * @param screenshot
+	 * @param employee
+	 * @returns
 	 */
 	async deleteImage(
 		screenshot: IScreenshot,
 		employee: IEmployee
 	) {
-		if (!screenshot) {
+		if (!screenshot || !this.organization) {
 			return;
 		}
 		try {
-			await this.timesheetService.deleteScreenshot(screenshot.id).then(() => {
+			const { name } = this.organization;
+			const { organizationId, tenantId } = screenshot;
+
+			await this.timesheetService.deleteScreenshot(screenshot.id, {
+				organizationId,
+				tenantId
+			}).then(() => {
 				this.screenshots = this.screenshots.filter(
 					(item: IScreenshot) => item.id !== screenshot.id
 				);
 			});
 			this.toastrService.success('TOASTR.MESSAGE.SCREENSHOT_DELETED', {
 				name: employee.fullName,
-				organization: this.organization.name
+				organization: name
 			});
 		} catch (error) {
 			console.log('Error while delete screenshot: ', error);

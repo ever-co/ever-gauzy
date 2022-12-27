@@ -72,24 +72,24 @@
 		<ng-container *ngTemplateOutlet="columnsHeader"></ng-container>
 		<div class="cart-body project-row" *ngFor="let clientRow of day.clients; let clientIndex = index">
 			<div class="project-row" *ngFor="let projectRow of clientRow.projects; let projectIndex = index">
-				<div class="table-row" *ngFor="let paymentRow of projectRow.payments;let paymentIndex = index">
+				<div class="table-row" *ngFor="let paymentRow of projectRow.payments; let paymentIndex = index">
 					<div class="table-inner-wrapper">
 						<div class="responsive-table-row employee-column">
 							<div class="responsive-table-header">
-								{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
+								{{ 'REPORT_PAGE.CONTACT' | translate }}
 							</div>
 							<div class="responsive-table-content project-name">
-								<ng-template [ngIf]="paymentIndex == 0 && projectIndex == 0">
-									<ng-container
-											*ngTemplateOutlet="
-												clientEl;
-												context: { $implicit: clientRow?.contact }">
-									</ng-container>
-								</ng-template>
+								<ng-container
+										*ngTemplateOutlet="
+											clientEl;
+											context: { $implicit: paymentRow?.organizationContact }">
+								</ng-container>
 							</div>
 						</div>
 						<div class="responsive-table-row project-column">
-							<div class="responsive-table-header">{{ 'REPORT_PAGE.PROJECT' | translate }}</div>
+							<div class="responsive-table-header">
+								{{ 'REPORT_PAGE.PROJECT' | translate }}
+							</div>
 							<div class="responsive-table-content project-name">
 								<ng-template [ngIf]="paymentIndex == 0">
 									<ng-container
@@ -130,7 +130,7 @@
 
 <ng-template let-client #groupByClientCardEl>
 	<nb-card-header class="card-title">
-		<ng-container *ngTemplateOutlet="clientEl;context: { $implicit: client?.contact }">
+		<ng-container *ngTemplateOutlet="clientEl; context: { $implicit: client?.client }">
 		</ng-container>
 	</nb-card-header>
 	<nb-card-body>
@@ -205,7 +205,7 @@
 		<ng-container *ngTemplateOutlet="columnsHeader"></ng-container>
 		<div class="cart-body project-row" *ngFor="let dateRow of project.dates; let dateIndex = index">
 			<div class="project-row" *ngFor="let clientRow of dateRow.clients; let clientIndex = index">
-				<div class="table-row" *ngFor="let paymentRow of clientRow.payments;let paymentIndex = index">
+				<div class="table-row" *ngFor="let paymentRow of clientRow.payments; let paymentIndex = index">
 					<div class="table-inner-wrapper">
 						<div class="responsive-table-row employee-column">
 							<div class="responsive-table-header">
@@ -225,7 +225,7 @@
 									<ng-container
 											*ngTemplateOutlet="
 											clientEl;
-											context: { $implicit: clientRow?.client }">
+											context: { $implicit: paymentRow?.organizationContact }">
 									</ng-container>
 								</ng-template>
 							</div>

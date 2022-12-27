@@ -15,16 +15,19 @@ import * as moment from 'moment';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import * as _ from 'underscore';
 import { CustomRenderComponent } from './custom-render-cell.component';
-import { LocalDataSource } from 'ng2-smart-table';
+import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { DomSanitizer } from '@angular/platform-browser';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, tap } from 'rxjs';
 import { ElectronService } from "../electron/services";
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import  'moment-duration-format';
 
 // Import logging for electron and override default console logging
 const log = window.require('electron-log');
 console.log = log.log;
 Object.assign(console, log.functions);
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-desktop-time-tracker',
 	templateUrl: './time-tracker.component.html',
@@ -39,7 +42,14 @@ Object.assign(console, log.functions);
 	]
 })
 export class TimeTrackerComponent implements OnInit, AfterViewInit {
+	private _taskTable: Ng2SmartTableComponent;
 	@ViewChild('dialogOpenBtn') btnDialogOpen: ElementRef<HTMLElement>;
+	@ViewChild('taskTable') set taskTable(content: Ng2SmartTableComponent) {
+		if (content) {
+			this._taskTable = content;
+			this._onChangedSource();
+		}
+	}
 	public start$: BehaviorSubject<boolean> = new BehaviorSubject(false);
 	timeRun: BehaviorSubject<any> = new BehaviorSubject({
 		second: '00',
@@ -111,7 +121,11 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				title: 'Due',
 				type: 'text',
 				valuePrepareFunction: (due) => {
-					return moment(due).format('YYYY-MM-DD');
+					return moment(due).format(
+						this.userData
+							? this.userData.employee.organization.dateFormat
+							: 'YYYY-MM-DD'
+					);
 				}
 			}
 		},
@@ -133,8 +147,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		private toastrService: NbToastrService,
 		private sanitize: DomSanitizer,
 		private _ngZone: NgZone
-	) {
-	}
+	) {}
 
 	public get start(): boolean {
 		return this.start$.getValue();
@@ -340,17 +353,23 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			})
 		);
 
-		this.electronService.ipcRenderer.on('stop_from_inactivity_handler', async () => {
-			await this._ngZone.run(() => {
-				if (this.start) this.toggleStart(false);
-			})
-		});
+		this.electronService.ipcRenderer.on(
+			'stop_from_inactivity_handler',
+			async () => {
+				await this._ngZone.run(() => {
+					if (this.start) this.toggleStart(false);
+				});
+			}
+		);
 
-		this.electronService.ipcRenderer.on('start_from_inactivity_handler', async () => {
-			await this._ngZone.run(() => {
-				this.toggleStart(true);
-			})
-		});
+		this.electronService.ipcRenderer.on(
+			'start_from_inactivity_handler',
+			async () => {
+				await this._ngZone.run(() => {
+					this.toggleStart(true);
+				});
+			}
+		);
 
 		this.electronService.ipcRenderer.on('device_wakeup', () =>
 			this._ngZone.run(() => {
@@ -463,7 +482,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						.catch((error) => {
 							this.loading = false;
 							let messageError = error.message;
-							if (messageError.includes('Http failure response')) {
+							if (
+								messageError.includes('Http failure response')
+							) {
 								messageError = `Can't connect to api server`;
 							} else {
 								messageError = 'Internal server error';
@@ -478,7 +499,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						});
 				} else {
 					this.loading = false;
-					console.log('Error', 'Timer is already running')
+					console.log('Error', 'Timer is already running');
 				}
 			} else {
 				console.log('stop tracking');
@@ -491,34 +512,18 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	}
 
 	setTime(value) {
-		const seconds = moment.duration(this._lastTotalWorkedTime + value.second, 'seconds').seconds()
-		const minutes = moment.duration(this._lastTotalWorkedTime + value.second, "seconds").minutes();
-		const hours = moment.duration(this._lastTotalWorkedTime + value.second, "seconds").hours();
+		const seconds = moment.duration(value.second, 'seconds').seconds();
+		const minutes = moment.duration(value.second, 'seconds').minutes();
+		const hours = moment.duration(value.second, 'seconds').hours();
 		this.timeRun.next({
-			second:
-				seconds.toString().length > 1
-					? `${seconds}`
-					: `0${seconds}`,
-			minute:
-				minutes.toString().length > 1
-					? `${minutes}`
-					: `0${minutes}`,
-			hours:
-				hours.toString().length > 1
-					? `${hours}`
-					: `0${hours}`
-		});
-		const time = this.timeRun.getValue();
-		this.electronService.ipcRenderer.send('update_tray_time_title', {
-			timeRun: time.hours + ':' + time.minute + ':' + time.second
+			second: seconds.toString().length > 1 ? `${seconds}` : `0${seconds}`,
+			minute: minutes.toString().length > 1 ? `${minutes}` : `0${minutes}`,
+			hours: hours.toString().length > 1 ? `${hours}` : `0${hours}`
 		});
 
-		if (seconds % 60 === 0) {
-			this.electronService.ipcRenderer.send('update_tray_time_update', {
-				hours: time.hours,
-				minutes: time.minute
-			});
-		}
+		this.electronService.ipcRenderer.send('update_tray_time_title', {
+			timeRun: moment.duration(this._lastTotalWorkedTime + value.second, 'seconds').format('hh:mm:ss', { trim: false })
+		});
 
 		if (seconds % 5 === 0) {
 			this.pingAw(null);
@@ -554,6 +559,11 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			quitApp: this.quitApp
 		});
 		this.electronService.ipcRenderer.send('update_tray_stop');
+		this.timeRun.next({
+			second: '00',
+			minute: '00',
+			hours: '00'
+		});
 		this.start$.next(false);
 		this.loading = false;
 	}
@@ -758,23 +768,24 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 	countDurationToday(countTodayTime) {
 		if (countTodayTime) {
-			const seconds = moment.duration(countTodayTime.todayDuration, 'seconds').seconds();
 			const minutes = moment.duration(countTodayTime.todayDuration, 'seconds').minutes();
 			const hours = moment.duration(countTodayTime.todayDuration, 'seconds').hours();
 			this.todayDuration$.next({
 				hours: this.formatingDuration('hours', hours),
 				minutes: this.formatingDuration('minutes', minutes)
 			});
+			this.electronService.ipcRenderer.send('update_tray_time_update', {
+				minutes: this.todayDuration$.getValue().minutes,
+				hours: this.todayDuration$.getValue().hours,
+			});
 			if (!this.start) {
 				this._lastTotalWorkedTime = countTodayTime.todayDuration;
-				this.timeRun.next({
-					second: seconds.toString().length > 1 ? `${seconds}` : `0${seconds}`,
-					minute: minutes.toString().length > 1 ? `${minutes}` : `0${minutes}`,
-					hours: hours.toString().length > 1 ? `${hours}` : `0${hours}`
-				});
-				this.electronService.ipcRenderer.send('update_tray_time_title', {
-					timeRun: this.timeRun.getValue().hours + ':' + this.timeRun.getValue().minute + ':' + this.timeRun.getValue().second
-				});
+				this.electronService.ipcRenderer.send(
+					'update_tray_time_title',
+					{
+						timeRun: moment.duration(this._lastTotalWorkedTime, 'seconds').format('hh:mm:ss', { trim: false })
+					}
+				);
 			}
 		}
 	}
@@ -929,7 +940,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				this.toastrService.show(
 					`Successfully remove last screenshot and activities`,
 					`Success`,
-					{status: 'success'}
+					{ status: 'success' }
 				);
 			})
 			.catch((e) => {
@@ -1377,5 +1388,33 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			isPassed = false;
 		} else isPassed = true;
 		return isPassed;
+	}
+
+	private _onChangedSource() {
+		this._taskTable.source.onChangedSource
+			.pipe(
+				untilDestroyed(this),
+				tap(() => this._clearItem()),
+				tap(() => {
+					if (this.taskSelect) {
+						this._taskTable.grid.dataSet.getRows().map((row) => {
+							console.log(row.getData());
+							if (row.getData().id === this.taskSelect) {
+								return this._taskTable.grid.dataSet.selectRow(
+									row
+								);
+							}
+						});
+					}
+				})
+			)
+			.subscribe();
+	}
+
+	private _clearItem() {
+		if (this._taskTable && this._taskTable.grid) {
+			this._taskTable.grid.dataSet['willSelect'] = 'false';
+			this._taskTable.grid.dataSet.deselectAll();
+		}
 	}
 }

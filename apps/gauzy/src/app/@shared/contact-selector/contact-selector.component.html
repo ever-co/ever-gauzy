@@ -9,9 +9,8 @@
 		{{ contact.name }}
 	</nb-option>
 </nb-select> -->
-
 <ng-select
-	[addTag]="hasPermissionContactEdit ? createNew : null"
+	[addTag]="(hasEditContact$ | async) ? createNew : null"
 	[disabled]="disabled"
 	[clearable]="true"
 	[items]="contacts"
@@ -20,5 +19,4 @@
 	[placeholder]="'TIMER_TRACKER.SELECT_CLIENT' | translate"
 	bindValue="id"
 	bindLabel="name"
->
-</ng-select>
+></ng-select>

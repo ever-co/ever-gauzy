@@ -57,10 +57,6 @@ export class WeeklyTimeReportsComponent extends BaseSelectorFilterComponent
 	}
 
 	ngOnInit() {
-		this.cdr.detectChanges();
-	}
-
-	ngAfterViewInit() {
 		this.subject$
 			.pipe(
 				filter(() => !!this.organization),
@@ -79,6 +75,16 @@ export class WeeklyTimeReportsComponent extends BaseSelectorFilterComponent
 			.subscribe();
 	}
 
+	ngAfterViewInit() {
+		this.cdr.detectChanges();
+	}
+
+	/**
+	 * Get header selectors request
+	 * Get gauzy timesheet filters request
+	 *
+	 * @returns
+	 */
 	prepareRequest() {
 		if (isEmpty(this.request) || isEmpty(this.filters)) {
 			return;
@@ -94,6 +100,19 @@ export class WeeklyTimeReportsComponent extends BaseSelectorFilterComponent
 			...this.getFilterRequest(this.request)
 		};
 		this.payloads$.next(request);
+	}
+
+	/**
+	 * Gauzy timesheet default filters
+	 *
+	 * @param filters
+	 */
+	filtersChange(filters: ITimeLogFilters) {
+		if (this.gauzyFiltersComponent.saveFilters) {
+			this.timesheetFilterService.filter = filters;
+		}
+		this.filters = Object.assign({}, filters);
+		this.subject$.next(true);
 	}
 
 	updateWeekDays() {
@@ -116,22 +135,13 @@ export class WeeklyTimeReportsComponent extends BaseSelectorFilterComponent
 		this.weekDays = days;
 	}
 
-	filtersChange(filters: ITimeLogFilters) {
-		if (this.gauzyFiltersComponent.saveFilters) {
-			this.timesheetFilterService.filter = filters;
-		}
-		this.filters = Object.assign({}, filters);
-		this.subject$.next(true);
-	}
-
 	async getWeeklyLogs() {
-		if (!this.organization) {
+		if (!this.organization || isEmpty(this.request)) {
 			return;
 		}
-		const payloads = this.payloads$.getValue();
-
 		this.loading = true;
 		try {
+			const payloads = this.payloads$.getValue();
 			const logs: ReportDayData[] = await this.timesheetService.getWeeklyReportChart(payloads);
 			this.weekLogs = logs;
 			this._mapLogs(logs);
@@ -174,6 +184,7 @@ export class WeeklyTimeReportsComponent extends BaseSelectorFilterComponent
 			datasets: datasets
 		};
 	}
+
 	public getStatus(value: number){
 		return progressStatus(value);
 	}

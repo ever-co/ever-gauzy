@@ -1,19 +1,20 @@
-import { Component, OnInit, Input, forwardRef, OnDestroy } from '@angular/core';
-import { OrganizationContactService } from '../../@core/services/organization-contact.service';
+import { Component, OnInit, Input, forwardRef, OnDestroy, AfterViewInit } from '@angular/core';
 import {
 	ContactType,
+	IEmployee,
+	IOrganization,
 	IOrganizationContact,
 	PermissionsEnum
 } from '@gauzy/contracts';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
-import { merge, Subject } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
+import { filter, map, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { Store } from '../../@core/services/store.service';
-import { ToastrService } from '../../@core/services/toastr.service';
-import { debounceTime } from 'rxjs/operators';
+import { distinctUntilChange } from '@gauzy/common-angular';
+import { OrganizationContactService, Store, ToastrService } from '../../@core/services';
 import { DUMMY_PROFILE_IMAGE } from '../../@core/constants';
 
-@UntilDestroy()
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-contact-selector',
 	templateUrl: './contact-selector.component.html',
@@ -26,80 +27,98 @@ import { DUMMY_PROFILE_IMAGE } from '../../@core/constants';
 		}
 	]
 })
-export class ContactSelectorComponent implements OnInit, OnDestroy {
-	private _contactId: string | string[];
-	private _employeeId: string;
+export class ContactSelectorComponent implements AfterViewInit, OnInit, OnDestroy {
+
+	public organization: IOrganization;
 	contacts: IOrganizationContact[] = [];
 
 	@Input() disabled = false;
 	@Input() multiple = false;
-	hasPermissionContactEdit: boolean;
-	@Input()
-	public get employeeId() {
+
+	private _employeeId: IEmployee['id'];
+	public get employeeId(): IEmployee['id'] {
 		return this._employeeId;
 	}
-	public set employeeId(value) {
+	@Input() public set employeeId(value: IEmployee['id']) {
 		this._employeeId = value;
-		this.loadContacts$.next(true);
+		this.subject$.next(true);
 	}
 
-	set contactId(val: string | string[]) {
+	private _contactId: string | string[];
+	public get contactId(): string | string[] {
+		return this._contactId;
+	}
+	@Input() public set contactId(val: string | string[]) {
 		this._contactId = val;
 		this.onChange(val);
 		this.onTouched(val);
 	}
-	get contactId(): string | string[] {
-		return this._contactId;
-	}
 
-	loadContacts$: Subject<any> = new Subject();
+	subject$: Subject<boolean> = new Subject();
+	public hasEditContact$: Observable<boolean>;
 
 	constructor(
-		private organizationContactService: OrganizationContactService,
-		private store: Store,
-		private toastrService: ToastrService
+		private readonly organizationContactService: OrganizationContactService,
+		private readonly store: Store,
+		private readonly toastrService: ToastrService
 	) {}
 
 	onChange: any = () => {};
 	onTouched: any = () => {};
 
 	ngOnInit() {
-		this.store.userRolePermissions$
-			.pipe(untilDestroyed(this))
-			.subscribe(() => {
-				this.hasPermissionContactEdit = this.store.hasPermission(
-					PermissionsEnum.ORG_CONTACT_EDIT
-				);
-			});
+		this.subject$
+			.pipe(
+				tap(() => this.getContacts()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.store.selectedOrganization$
+			.pipe(
+				distinctUntilChange(),
+				filter((organization: IOrganization) => !!organization),
+				tap((organization: IOrganization) => this.organization = organization),
+				tap(() => this.subject$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
 
-		merge(this.loadContacts$)
-			.pipe(untilDestroyed(this), debounceTime(300))
-			.subscribe(async () => {
-				if (this.store.selectedOrganization) {
-					const { tenantId } = this.store.user;
-					const {
-						id: organizationId
-					} = this.store.selectedOrganization;
+	ngAfterViewInit(): void {
+		this.hasEditContact$ = this.store.userRolePermissions$.pipe(
+			map(() =>
+				this.store.hasPermission(PermissionsEnum.ORG_CONTACT_EDIT)
+			)
+		);
+	}
 
-					if (this.employeeId) {
-						const items = await this.organizationContactService.getAllByEmployee(
-							this.employeeId,
-							{ organizationId, tenantId }
-						);
-						this.contacts = items;
-					} else {
-						const {
-							items = []
-						} = await this.organizationContactService.getAll([], {
-							organizationId,
-							tenantId
-						});
-						this.contacts = items;
+	async getContacts() {
+		if (!this.organization) {
+			return;
+		}
+		try {
+			const { tenantId } = this.store.user;
+			const { id: organizationId } = this.organization;
+
+			if (this.employeeId) {
+				const items = await this.organizationContactService.getAllByEmployee(
+					this.employeeId,
+					{
+						organizationId,
+						tenantId
 					}
-				}
-			});
-
-		this.loadContacts$.next(true);
+				);
+				this.contacts = items;
+			} else {
+				const { items = [] } = await this.organizationContactService.getAll([], {
+					organizationId,
+					tenantId
+				});
+				this.contacts = items;
+			}
+		} catch (error) {
+			console.log('Error while retrieving organization contacts', error);
+		}
 	}
 
 	writeValue(value: string | string[]) {

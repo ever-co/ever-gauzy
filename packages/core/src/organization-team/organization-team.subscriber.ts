@@ -1,4 +1,5 @@
-import { EntitySubscriberInterface, EventSubscriber, LoadEvent } from "typeorm";
+import { RequestContext } from "core/context";
+import { EntitySubscriberInterface, EventSubscriber, InsertEvent, LoadEvent } from "typeorm";
 import { OrganizationTeam } from "./organization-team.entity";
 
 @EventSubscriber()
@@ -29,6 +30,20 @@ export class OrganizationTeamSubscriber implements EntitySubscriberInterface<Org
                     }
                 }
             }
+        } catch (error) {
+            console.log(error);
+        }
+    }
+
+    /**
+     * Called before entity is inserted to the database.
+     *
+     * @param event
+     */
+    beforeInsert(event: InsertEvent<OrganizationTeam>): void | Promise<any> {
+        try {
+            const entity = event.entity;
+            if (entity) { entity.createdById = RequestContext.currentUserId(); }
         } catch (error) {
             console.log(error);
         }

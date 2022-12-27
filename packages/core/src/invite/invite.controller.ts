@@ -80,7 +80,7 @@ export class InviteController {
 	})
 	@HttpCode(HttpStatus.CREATED)
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
-	@Permissions(PermissionsEnum.ORG_INVITE_EDIT)
+	@Permissions(PermissionsEnum.ORG_INVITE_EDIT, PermissionsEnum.ORG_TEAM_ADD)
 	@Post('/emails')
 	@UsePipes(new ValidationPipe())
 	async createManyWithEmailsId(

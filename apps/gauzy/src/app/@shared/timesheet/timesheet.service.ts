@@ -18,7 +18,9 @@ import {
 	IReportDayData,
 	ReportDayData,
 	IUpdateTimesheetStatusInput,
-	ISubmitTimesheetInput
+	ISubmitTimesheetInput,
+	IScreenshot,
+	IBasePerTenantAndOrganizationEntityModel
 } from '@gauzy/contracts';
 import { toParams } from '@gauzy/common-angular';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
@@ -104,11 +106,11 @@ export class TimesheetService {
 		);
 	}
 
-	getTimeLogs(request?: IGetTimeLogInput) {
-		const params = toParams(request);
+	getTimeLogs(request?: IGetTimeLogInput, relations = []) {
 		return firstValueFrom(
-			this.http
-			.get<ITimeLog[]>(`${API_PREFIX}/timesheet/time-log`, { params })
+			this.http.get<ITimeLog[]>(`${API_PREFIX}/timesheet/time-log`, {
+				params: toParams({ ...request, relations })
+			})
 		);
 	}
 
@@ -235,9 +237,14 @@ export class TimesheetService {
 		}));
 	}
 
-	deleteScreenshot(screenshotId: string) {
+	deleteScreenshot(
+		id: IScreenshot['id'],
+		params: IBasePerTenantAndOrganizationEntityModel
+	) {
 		return firstValueFrom(
-			this.http.delete(`${API_PREFIX}/timesheet/screenshot/${screenshotId}`)
+			this.http.delete(`${API_PREFIX}/timesheet/screenshot/${id}`, {
+				params: toParams(params)
+			})
 		);
 	}
 }

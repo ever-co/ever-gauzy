@@ -33,7 +33,8 @@ export class PaymentMapService {
 									this.mapPaymentPercentage(row, sum)
 								)
 							};
-						});
+						})
+						.value();
 
 						const employee =
 							byClientPayment.length > 0 && byClientPayment[0]
@@ -44,14 +45,16 @@ export class PaymentMapService {
 							projects: byProject
 						};
 					}
-				);
+				)
+				.value();
 
 				return {
 					date,
 					clients: byClient
 				};
 			}
-		);
+		)
+		.value();
 		return dailyLogs;
 	}
 
@@ -75,14 +78,16 @@ export class PaymentMapService {
 									this.mapPaymentPercentage(row, sum)
 								)
 							};
-						});
+						})
+						.value();
 
 						return {
 							date,
 							projects: byProject
 						};
 					}
-				);
+				)
+				.value();
 
 				const client =
 					byClientPayment.length > 0 && byClientPayment[0]
@@ -93,7 +98,8 @@ export class PaymentMapService {
 					dates: dailyLogs
 				};
 			}
-		);
+		)
+		.value();
 		return byClient;
 	}
 
@@ -118,14 +124,16 @@ export class PaymentMapService {
 									)
 								};
 							}
-						);
+						)
+						.value();
 
 						return {
 							date,
 							clients: byProject
 						};
 					}
-				);
+				)
+				.value();
 
 				const project =
 					byProjectPayment.length > 0 && byProjectPayment[0]
@@ -136,7 +144,8 @@ export class PaymentMapService {
 					dates: dailyLogs
 				};
 			}
-		);
+		)
+		.value();
 		return byClient;
 	}
 
@@ -154,15 +163,9 @@ export class PaymentMapService {
 
 	private groupByClient(payments: IPayment[]) {
 		return chain(payments).groupBy((payment) => {
-			return payment.employeeId;
+			return payment.organizationContactId;
 		});
 	}
-
-	// private groupByClient(payments: IPayment[]) {
-	// 	return chain(payments).groupBy((payment) => {
-	// 		return payment.contactId;
-	// 	});
-	// }
 
 	private mapPaymentPercentage(payments, sum = 0) {
 		payments.duration_percentage =

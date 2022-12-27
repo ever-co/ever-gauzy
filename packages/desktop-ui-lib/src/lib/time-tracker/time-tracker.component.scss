@@ -34,7 +34,7 @@
 }
 
 .search {
-  padding-right: 8px;
+  padding: 8px;
 }
 
 .timer-box {
@@ -124,10 +124,10 @@
 }
 
 .org-name {
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 600;
   background-color: var(--gauzy-background-transparent-1);
-  padding: 0 4px;
+  padding: 2px 4px;
   border-radius: 4px;
   color: var(--text-primary-color);
 }
@@ -352,4 +352,17 @@ $height: 2rem;
       background-color: unset !important;
     }
   }
+
+  ::ng-deep ng2-smart-table tbody tr.selected, ng2-smart-table tbody tr:hover {
+    background: var(--smart-table-bg-active)!important;
+  }
+
+  ::ng-deep ng2-smart-table tbody tr.selected {
+    box-shadow: 12.5px 0 0 -5px rgba(126,126,143,.05) inset!important;
+  }
+}
+
+.table-scroll-container {
+  padding: 8px;
+  background: var(--gauzy-card-2);
 }

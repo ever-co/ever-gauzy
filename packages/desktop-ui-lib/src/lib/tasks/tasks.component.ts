@@ -1,176 +1,155 @@
-import { Component, Input, OnInit, ChangeDetectorRef, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
-import { FormGroup, FormBuilder, Validators } from '@angular/forms';
+import { Component, Input, OnInit, Output, EventEmitter } from '@angular/core';
+import { FormGroup, FormControl, Validators } from '@angular/forms';
 import { TimeTrackerService } from '../time-tracker/time-tracker.service';
+import {
+	IEmployee,
+	IOrganizationProject,
+	ITag,
+	IUserOrganization,
+	TaskStatusEnum
+} from '@gauzy/contracts';
 const log = window.require('electron-log');
 console.log = log.log;
 Object.assign(console, log.functions);
 
-
 @Component({
 	selector: 'ngx-tasks',
-    changeDetection: ChangeDetectionStrategy.OnPush,
 	templateUrl: './tasks.component.html',
 	styleUrls: ['./tasks.component.scss']
 })
-export class TasksComponent
-	implements OnInit {
-    @Input() userData: any;
-    @Input() employee: any;
-    @Output() isAddTask = new EventEmitter<boolean>();
-    @Output() newTaskCallback = new EventEmitter<any>();
+export class TasksComponent implements OnInit {
+	@Input() userData: IUserOrganization;
+	@Input() employee: IEmployee;
+
+	@Output() isAddTask: EventEmitter<boolean> = new EventEmitter();
+	@Output() newTaskCallback: EventEmitter<{
+		isSuccess: boolean;
+		message: string;
+	}> = new EventEmitter();
 
 	form: FormGroup;
-	projectSelect =  null;
-    projects = [];
+	projects: IOrganizationProject[] = [];
+	employees: IEmployee[] = [];
+	tags: ITag[] = [];
+	statuses = [
+		{
+			id: 'Todo',
+			name: TaskStatusEnum.TODO
+		},
+		{
+			id: 'In Progress',
+			name: TaskStatusEnum.IN_PROGRESS
+		},
+		{
+			id: 'For Testing',
+			name: TaskStatusEnum.FOR_TESTING
+		},
+		{
+			id: 'Completed',
+			name: TaskStatusEnum.COMPLETED
+		}
+	];
 
-    statusTaskSelect = null
-    statuses = [
-        {
-            id:'Todo',
-            name: 'Todo',
-        },
-        {
-            id:'In Progress',
-            name:'In Progress'
-        },
-        {
-            id : 'For Testing',
-            name: 'For Testing',
-        },
-        {
-            id :'Completed',
-            name: 'Completed' 
-        }
-    ] 
-
-    employeeSelect = null
-    employees = []
-
-    selectedTags = null
-    tags = []
-
-    dueDate = null;
-    title = '';
-    description = '';
-
-    disableSave = true;
-
-    estimate: {
-        days: Number | null
-        hours: Number | null
-        minutes: Number | null
-    } = {
-        days: null,
-        hours: null,
-        minutes: null
-    }
-
-	constructor(
-		private fb: FormBuilder,
-        private _cdr: ChangeDetectorRef,
-        private timeTrackerService: TimeTrackerService,
-	) {}
+	constructor(private timeTrackerService: TimeTrackerService) {}
 
 	ngOnInit() {
-        this.getProjects(this.userData);
-        this.getTags(this.userData)
-        this.getEmployees(this.userData);
-        this.employeeSelect = this.userData.employeeId;
-        this._cdr.detectChanges();
+		(async () => {
+			await this._projects(this.userData);
+			await this._tags(this.userData);
+			await this._employees(this.userData);
+		})();
+		this.form = new FormGroup({
+			description: new FormControl(null),
+			dueDate: new FormControl(null, Validators.required),
+			estimate: new FormControl(null),
+			estimateDays: new FormControl(null, [Validators.min(0)]),
+			estimateHours: new FormControl(null, [
+				Validators.min(0),
+				Validators.max(23)
+			]),
+			estimateMinutes: new FormControl(null, [
+				Validators.min(0),
+				Validators.max(59)
+			]),
+			members: new FormControl([]),
+			organizationId: new FormControl(this.userData.organizationId),
+			project: new FormControl(null),
+			projectId: new FormControl(null),
+			status: new FormControl(this.statuses[0].id),
+			tags: new FormControl([]),
+			teams: new FormControl([]),
+			tenantId: new FormControl(this.userData.tenantId),
+			title: new FormControl(null, Validators.required)
+		});
+        console.log('User', this.userData);
 	}
 
-    setProject(event) {
-        this.projectSelect = event;
-        this.validation();
-    }
-    setStatusTask(event) {
-        this.statusTaskSelect = event;
-        this.validation();
-    }
-    setEmployee(event) {
-
-    }
-    setTags(event) {
-    }
-
-    async getProjects(arg) {
-        try {
-            this.projects = await this.timeTrackerService.getProjects(arg);
-            this._cdr.detectChanges();
-        } catch (error) {
-        }
+	private async _projects(user: IUserOrganization): Promise<void> {
+		try {
+			this.projects = await this.timeTrackerService.getProjects(user);
+		} catch (error) {
+			console.error(
+				'[error]',
+				"can't get employee project::" + error.message
+			);
+		}
 	}
 
-    async getTags(arg) {
-        try {
-            const tagsRes = await this.timeTrackerService.getTags(arg);
-            this.tags = tagsRes.items;
-            this._cdr.detectChanges();
-        } catch (error) {
-            console.log('error while get tags', error.message);
-        }
-    }
+	private async _tags(user: IUserOrganization): Promise<void> {
+		try {
+			const tagsRes = await this.timeTrackerService.getTags(user);
+			this.tags = tagsRes.items;
+		} catch (error) {
+			console.error('[error]', 'while get tags::' + error.message);
+		}
+	}
 
-    async getEmployees(arg) {
-        try {
-            const employees = await this.timeTrackerService.getEmployees(arg);
-            this.employees = employees.items;
-            this._cdr.detectChanges();
-        } catch (error) {
-        }
-    }
+	private async _employees(user: IUserOrganization): Promise<void> {
+		try {
+			const employee = await this.timeTrackerService.getEmployees(user);
+			this.employees = [employee];
+		} catch (error) {
+			console.error('[error]', 'while get employees::' + error.message);
+		}
+	}
 
-    closeAdd() {
-        this.isAddTask.emit(false);
-        this._cdr.detectChanges();
-    }
+	public close(): void {
+		this.isAddTask.emit(false);
+	}
 
-    validation() {
-        if (
-            !this.title || !this.projectSelect
-            || !this.statusTaskSelect || !this.dueDate
-        ) {
-            this.disableSave = true;
-        } else {
-            this.disableSave = false;
-        }
-    }
+	public async save(): Promise<void> {
+		if (this.form.invalid) return;
+		const { estimateDays, estimateHours, estimateMinutes, tags } =
+			this.form.value;
+		const days = estimateDays ? estimateDays * 24 * 3600 : 0;
+		const hours = estimateHours ? estimateHours * 3600 : 1;
+		const minutes = estimateMinutes ? estimateMinutes * 60 : 0;
+		const selectedTags = tags.map((i) => {
+			const tag = this.tags.find((y) => y.id === i);
+			return tag;
+		});
 
-    async saveTask() {
-        const payloadTask = {
-            title: this.title,
-            project: this.projects.find((i) => i.id === this.projectSelect),
-            projectId: this.projectSelect,
-            status: this.statusTaskSelect,
-            members: this.employees.filter((i) => i.id === this.employeeSelect),
-            estimateDays: this.estimate.days ? this.estimate.days : '',
-            estimateHours: this.estimate.hours ? this.estimate.hours : '',
-            estimateMinutes: this.estimate.minutes ? this.estimate.minutes : '',
-            dueDate: this.dueDate,
-            description: this.description,
-            tags: this.selectedTags.map((i) => {
-                const tag = this.tags.find((y) => y.id === i);
-                return tag;
-            }),
-            teams: null,
-            estimate: null,
-            organizationId: this.userData.organizationId,
-            tenantId: this.userData.tenantId
-        }
-
-
-        try {
-            await this.timeTrackerService.saveNewTask(this.userData, payloadTask);
-            this.isAddTask.emit(false);
-            this.newTaskCallback.emit({
-                isSuccess: true
-            });
-            this._cdr.detectChanges();
-        } catch (error) {
-            this.newTaskCallback.emit({
-                isSuccess: false,
-                message: error.message
-            })
-        }
-    }
+		try {
+			this.form.patchValue({
+				members: [...this.employees],
+				estimate: days + hours + minutes,
+				tags: selectedTags
+			});
+			await this.timeTrackerService.saveNewTask(
+				this.userData,
+				this.form.value
+			);
+			this.isAddTask.emit(false);
+			this.newTaskCallback.emit({
+				isSuccess: true,
+				message: 'Added successfully'
+			});
+		} catch (error) {
+			console.log(error);
+			this.newTaskCallback.emit({
+				isSuccess: false,
+				message: error.message
+			});
+		}
+	}
 }

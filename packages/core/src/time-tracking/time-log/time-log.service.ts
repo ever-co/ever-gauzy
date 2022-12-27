@@ -77,34 +77,50 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	}
 
 	async getTimeLogs(request: IGetTimeLogInput): Promise<ITimeLog[]> {
-		const query = this.timeLogRepository.createQueryBuilder('time_log');
+		const query = this.timeLogRepository.createQueryBuilder(this.alias);
 		query.setFindOptions({
 			join: {
-				alias: 'time_log',
+				alias: `${this.alias}`,
 				innerJoin: {
-					employee: 'time_log.employee',
-					time_slot: 'time_log.timeSlots'
+					employee: `${this.alias}.employee`,
+					time_slot: `${this.alias}.timeSlots`
 				},
 				leftJoin: {
-					team_employee: 'time_log.employee',
+					team_employee: `${this.alias}.employee`,
 					organization_teams: 'team_employee.teams'
 				}
 			},
-			relations: {
-				project: true,
-				task: true,
-				organizationContact: true,
-				timeSlots: true,
-				...(
-					RequestContext.hasPermission(
-						PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-					) ? {
-						employee: {
-							organization: true,
-							user: true
-						}
-					} : {})
+			select: {
+				project: {
+					id: true,
+					name: true,
+					imageUrl: true,
+					membersCount: true
+				},
+				task: {
+					id: true,
+					title: true
+				},
+				organizationContact: {
+					id: true,
+					name: true,
+					imageUrl: true
+				},
+				employee: {
+					id: true,
+					user: {
+						id: true,
+						firstName: true,
+						lastName: true,
+						imageUrl: true
+					}
+				}
 			},
+			...(
+				(request && request.relations) ? {
+					relations: request.relations
+				} : {}
+			),
 			order: {
 				startedAt: 'ASC'
 			}
@@ -139,7 +155,6 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 						id: true,
 						firstName: true,
 						lastName: true,
-						email: true,
 						imageUrl: true
 					}
 				},
@@ -427,6 +442,18 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 					time_slot: 'time_log.timeSlots'
 				}
 			},
+			select: {
+				employee: {
+					id: true,
+					billRateValue: true,
+					user: {
+						id: true,
+						firstName: true,
+						lastName: true,
+						imageUrl: true
+					}
+				}
+			},
 			relations: {
 				employee: {
 					user: true
@@ -485,6 +512,18 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				innerJoin: {
 					employee: 'time_log.employee',
 					time_slot: 'time_log.timeSlots'
+				}
+			},
+			select: {
+				employee: {
+					id: true,
+					billRateValue: true,
+					user: {
+						id: true,
+						firstName: true,
+						lastName: true,
+						imageUrl: true
+					}
 				}
 			},
 			relations: {
@@ -560,13 +599,25 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			request.duration = 'day';
 		}
 
-		const query = this.timeLogRepository.createQueryBuilder('time_log');
+		const query = this.timeLogRepository.createQueryBuilder(this.alias);
 		query.setFindOptions({
 			join: {
-				alias: 'time_log',
+				alias: `${this.alias}`,
 				innerJoin: {
-					employee: 'time_log.employee',
-					time_slot: 'time_log.timeSlots'
+					employee: `${this.alias}.employee`,
+					time_slot: `${this.alias}.timeSlots`
+				}
+			},
+			select: {
+				employee: {
+					id: true,
+					reWeeklyLimit: true,
+					user: {
+						id: true,
+						firstName: true,
+						lastName: true,
+						imageUrl: true
+					}
 				}
 			},
 			relations: {
@@ -647,11 +698,27 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		return dates as ITimeLimitReport[];
 	}
 
+	/**
+	 * Project budget report
+	 *
+	 * @param request
+	 * @returns
+	 */
 	async projectBudgetLimit(request: IGetTimeLogReportInput) {
-		const { organizationId, employeeIds, startDate, endDate } = request;
+		const { organizationId, employeeIds = [], projectIds = [], startDate, endDate } = request;
 		const tenantId = RequestContext.currentTenantId();
 
 		const query = this.organizationProjectRepository.createQueryBuilder('organization_project');
+		query.setFindOptions({
+			select: {
+				id: true,
+				name: true,
+				budget: true,
+				budgetType: true,
+				imageUrl: true,
+				membersCount: true
+			}
+		});
 		query.innerJoinAndSelect(`${query.alias}.timeLogs`, 'timeLogs');
 		query.innerJoinAndSelect(`timeLogs.employee`, 'employee');
 		query.andWhere(
@@ -664,6 +731,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			new Brackets((qb: WhereExpressionBuilder) => {
 				qb.andWhere(`"employee"."organizationId" =:organizationId`, { organizationId });
 				qb.andWhere(`"employee"."tenantId" =:tenantId`, { tenantId });
+
 				if (isNotEmpty(employeeIds)) {
 					qb.andWhere(`"employee"."id" IN (:...employeeIds)`, {
 						employeeIds
@@ -684,9 +752,15 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 					startDate: start,
 					endDate: end
 				});
+
 				if (isNotEmpty(employeeIds)) {
 					qb.andWhere(`"timeLogs"."employeeId" IN (:...employeeIds)`, {
 						employeeIds
+					});
+				}
+				if (isNotEmpty(projectIds)) {
+					qb.andWhere(`"timeLogs"."projectId" IN (:...projectIds)`, {
+						projectIds
 					});
 				}
 			})
@@ -739,11 +813,25 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		return projects;
 	}
 
+	/**
+	 * Client budget report
+	 *
+	 * @param request
+	 * @returns
+	 */
 	async clientBudgetLimit(request: IGetTimeLogReportInput) {
-		const { organizationId, employeeIds, startDate, endDate } = request;
+		const { organizationId, employeeIds = [],  projectIds = [], startDate, endDate } = request;
 		const tenantId = RequestContext.currentTenantId();
 
 		const query = this.organizationContactRepository.createQueryBuilder('organization_contact');
+		query.setFindOptions({
+			select: {
+				id: true,
+				name: true,
+				budget: true,
+				budgetType: true
+			}
+		});
 		query.innerJoinAndSelect(`${query.alias}.timeLogs`, 'timeLogs');
 		query.innerJoinAndSelect(`timeLogs.employee`, 'employee');
 		query.andWhere(
@@ -756,6 +844,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			new Brackets((qb: WhereExpressionBuilder) => {
 				qb.andWhere(`"employee"."organizationId" =:organizationId`, { organizationId });
 				qb.andWhere(`"employee"."tenantId" =:tenantId`, { tenantId });
+
 				if (isNotEmpty(employeeIds)) {
 					qb.andWhere(`"employee"."id" IN (:...employeeIds)`, {
 						employeeIds
@@ -776,9 +865,15 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 					startDate: start,
 					endDate: end
 				});
+
 				if (isNotEmpty(employeeIds)) {
 					qb.andWhere(`"timeLogs"."employeeId" IN (:...employeeIds)`, {
 						employeeIds
+					});
+				}
+				if (isNotEmpty(projectIds)) {
+					qb.andWhere(`"timeLogs"."projectId" IN (:...projectIds)`, {
+						projectIds
 					});
 				}
 			})

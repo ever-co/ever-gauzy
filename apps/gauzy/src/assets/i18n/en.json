@@ -1916,8 +1916,10 @@
 			"ORG_PROJECT_EDIT": "Create/Edit Projects",
 			"ORG_CONTACT_EDIT": "Create/Edit Contacts",
 			"ORG_CONTACT_VIEW": "View Contacts",
-			"ORG_TEAM_EDIT": "Create/Edit Teams",
+			"ORG_TEAM_ADD": "Add Teams",
 			"ORG_TEAM_VIEW": "View Teams",
+			"ORG_TEAM_EDIT": "Edit Teams",
+			"ORG_TEAM_DELETE": "Delete Teams",
 			"ORG_CONTRACT_EDIT": "Create/Edit Contracts",
 			"TIME_TRACKER": "Access Time Tracker",
 			"TENANT_ADD_EXISTING_USER": "Tenant Add User To Organization",
@@ -2466,9 +2468,9 @@
 		"AVAILABLE_JOBS": "Available Jobs",
 		"APPLIED_JOBS": "Applied Jobs",
 		"JOB_SEARCH_STATUS": "Job Search Status",
-    "BROWSE":"Browse",
-    "SEARCH":"Search",
-    "HISTORY":"History"
+		"BROWSE":"Browse",
+		"SEARCH":"Search",
+		"HISTORY":"History"
 	},
 	"PROPOSAL_TEMPLATE": {
 		"PROPOSAL_TEMPLATE": "Proposal Template",
@@ -3324,7 +3326,9 @@
 			"TIME_LOG_DELETED": "Time log for '{{ name }}' removed from '{{ organization }}'",
 			"TIME_LOGS_DELETED": "Time logs removed from '{{ organization }}'",
 			"BUCKET_CREATED": "'{{ bucket }}' for '{{ region }}' has been created successfully",
-			"AUTHORIZED_TO_WORK": "{{ name }} is authorized to work"
+			"AUTHORIZED_TO_WORK": "{{ name }} is authorized to work",
+			"EMAIL_VERIFICATION_NOT_VALID": "Sorry, this verification link is not valid.",
+			"EMAIL_VERIFICATION_VALID": "Congrats! Your email is now verified."
 		}
 	},
 	"ACCEPT_INVITE": {
