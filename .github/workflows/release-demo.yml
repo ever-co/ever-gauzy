@@ -21,15 +21,15 @@ jobs:
               id: tag_version
               with:
                   github_token: ${{ secrets.GITHUB_TOKEN }}
-				  release_branches: master,main
-				  pre_release_branches: develop
+                  release_branches: master,main
+                  pre_release_branches: develop
 
             - name: Create a GitHub release
               uses: ncipollo/release-action@v1
               with:
                   allowUpdates: true
-				  generateReleaseNotes: true
-				  prerelease: true
+                  generateReleaseNotes: true
+                  prerelease: true
                   token: ${{ secrets.GITHUB_TOKEN }}
                   tag: ${{ steps.tag_version.outputs.new_tag }}
                   name: ${{ steps.tag_version.outputs.new_tag }}
