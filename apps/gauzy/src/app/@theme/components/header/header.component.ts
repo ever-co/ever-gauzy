@@ -248,11 +248,15 @@ export class HeaderComponent extends TranslationBaseComponent
 	 */
 	checkProjectSelectorVisibility() {
 		// hidden project selector if not activate for current page
-		if (!this.organization || !this.selectorsVisibility.project) {
+		if (!this.organization || !this.selectorsVisibility.project || !this.store.hasAnyPermission(
+			PermissionsEnum.ALL_ORG_VIEW,
+			PermissionsEnum.ORG_PROJECT_VIEW
+		)) {
 			return;
 		}
 		const { id: organizationId } = this.organization;
 		const { tenantId } = this.store.user;
+
 		this.organizationProjectsService.getCount({
 			organizationId,
 			tenantId

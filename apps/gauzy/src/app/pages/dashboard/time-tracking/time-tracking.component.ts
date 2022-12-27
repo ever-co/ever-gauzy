@@ -628,7 +628,14 @@ export class TimeTrackingComponent extends TranslationBaseComponent
 	}
 
   	private async loadProjectsCount() {
-    	const { tenantId } = this.store.user;
+		if (!this.organization || this.store.hasAnyPermission(
+			PermissionsEnum.ALL_ORG_VIEW,
+			PermissionsEnum.ORG_PROJECT_VIEW
+		)) {
+			return;
+		}
+
+		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 
 		this.projectCount = await this.projectService.getCount({
