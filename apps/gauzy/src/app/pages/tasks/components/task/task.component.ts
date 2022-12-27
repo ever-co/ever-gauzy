@@ -12,7 +12,8 @@ import {
 	ComponentLayoutStyleEnum,
 	TaskListTypeEnum,
 	IOrganization,
-	ISelectedEmployee
+	ISelectedEmployee,
+	PermissionsEnum
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange } from '@gauzy/common-angular';
@@ -695,13 +696,35 @@ export class TaskComponent extends PaginationFilterBaseComponent
 		return this.viewComponentName === ComponentEnum.TEAM_TASKS;
 	}
 
+	/**
+	 * Open task settings page for specific project
+	 *
+	 * @param selectedProject
+	 * @returns
+	 */
 	openTasksSettings(selectedProject: IOrganizationProject): void {
-		if (selectedProject.id == this.defaultProject.id) {
+		const hasPermission = this._store.hasAnyPermission(
+			PermissionsEnum.ALL_ORG_EDIT,
+			PermissionsEnum.ORG_PROJECT_EDIT
+		);
+		if (this.isDefaultProject || !hasPermission) {
 			return;
 		}
 		this._router.navigate(['/pages/tasks/settings', selectedProject.id], {
 			state: selectedProject
 		});
+	}
+
+	/**
+	 * If, default project is selected from header
+	 *
+	 * @returns
+	 */
+	get isDefaultProject() {
+		if (this.selectedProject) {
+			return (this.selectedProject.id === this.defaultProject.id);
+		}
+		return true;
 	}
 
 	/**

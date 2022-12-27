@@ -2,7 +2,9 @@ import { ICommand } from '@nestjs/cqrs';
 import { IOrganizationProjectsUpdateInput } from '@gauzy/contracts';
 
 export class OrganizationProjectUpdateCommand implements ICommand {
-	static readonly type = '[OrganizationProject] Update Project';
+	static readonly type = '[Organization Project] Update';
 
-	constructor(public readonly input: IOrganizationProjectsUpdateInput) {}
+	constructor(
+		public readonly input: IOrganizationProjectsUpdateInput
+	) {}
 }

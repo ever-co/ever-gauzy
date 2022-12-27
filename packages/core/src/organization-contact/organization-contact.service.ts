@@ -1,7 +1,8 @@
-import { IOrganizationContact, IPagination } from '@gauzy/contracts';
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Brackets, In, Raw, Repository } from 'typeorm';
+import { Brackets, In, Raw, Repository, WhereExpressionBuilder } from 'typeorm';
+import { IEmployee, IOrganizationContact, IOrganizationContactFindInput, IPagination } from '@gauzy/contracts';
+import { isNotEmpty } from '@gauzy/common';
 import { RequestContext } from '../core/context';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { OrganizationContact } from './organization-contact.entity';
@@ -15,24 +16,45 @@ export class OrganizationContactService extends TenantAwareCrudService<Organizat
 		super(organizationContactRepository);
 	}
 
-	async findByEmployee(id: string, data: any): Promise<any> {
-		const { findInput = null } = data;
-		const query = this.organizationContactRepository
-			.createQueryBuilder('organization_contact')
-			.leftJoin('organization_contact.members', 'member')
-			.where('member.id = :id', { id });
+	/**
+	 * Find employee assigned contacts
+	 *
+	 * @param employeeId
+	 * @param options
+	 * @returns
+	 */
+	async findByEmployee(
+		employeeId: IEmployee['id'],
+		options: IOrganizationContactFindInput
+	): Promise<IOrganizationContact[]> {
+		try {
+			const query = this.repository.createQueryBuilder(this.alias);
+			query.setFindOptions({
+				select: {
+					id: true,
+					name: true,
+					imageUrl: true
+				}
+			});
+			query.innerJoin(`${query.alias}.members`, 'member');
+			query.andWhere(
+				new Brackets((qb: WhereExpressionBuilder) => {
+					const tenantId = RequestContext.currentTenantId();
+					const { organizationId, contactType } = options;
 
-		if (findInput) {
-			const { organizationId, tenantId } = findInput;
-			query
-				.andWhere(`${query.alias}.organizationId = :organizationId`, {
-					organizationId
+					qb.andWhere('member.id = :employeeId', { employeeId });
+					qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
+					qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
+
+					if (isNotEmpty(contactType)) {
+						qb.andWhere(`${query.alias}.contactType = :contactType`, { contactType });
+					}
 				})
-				.andWhere(`${query.alias}.tenantId = :tenantId`, {
-					tenantId
-				});
+			);
+			return await query.getMany();
+		} catch (error) {
+			throw new BadRequestException(error);
 		}
-		return await query.getMany();
 	}
 
 	/*

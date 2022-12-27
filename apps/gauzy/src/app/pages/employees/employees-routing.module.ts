@@ -97,11 +97,19 @@ const routes: Routes = [
 			{
 				path: 'projects',
 				component: EditEmployeeProjectsComponent,
+				canActivate: [NgxPermissionsGuard],
 				data: {
 					selectors: {
 						project: false,
 						organization: false,
 						date: false
+					},
+					permissions: {
+						only: [
+							PermissionsEnum.ALL_ORG_VIEW,
+							PermissionsEnum.ORG_PROJECT_VIEW
+						],
+						redirectTo
 					}
 				}
 			},

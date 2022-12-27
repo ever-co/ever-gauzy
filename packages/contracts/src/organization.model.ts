@@ -149,6 +149,7 @@ export interface IOrganizationCreateInput extends IContact, IRegisterAsEmployee 
 	bonusPercentage?: number;
 	invitesAllowed?: boolean;
 	inviteExpiryPeriod?: number;
+	futureDateAllowed?: boolean;
 	tags?: ITag[];
 	tenant?: ITenant;
 	contact?: IContact;
