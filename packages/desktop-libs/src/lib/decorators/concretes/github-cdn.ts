@@ -2,7 +2,6 @@ import { promisify } from 'node:util';
 import childProcess from 'node:child_process';
 import { IDesktopCdnUpdate } from '../../interfaces/i-desktop-cdn-update';
 import { BaseCdnDecorator } from '../abstracts/base-cdn-decorator';
-import { app } from 'electron';
 
 export class GithubCdn extends BaseCdnDecorator implements IDesktopCdnUpdate {
 	private _CDN_HOST: string = 'https://github.com';
