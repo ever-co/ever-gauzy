@@ -2,6 +2,7 @@ import {EventEmitter} from "events";
 import {ICurrentApplication} from "./interfaces";
 import {CurrentApplication, DataApplication} from "./contexts";
 import moment from "moment";
+import {LocalStore} from "./desktop-store";
 
 const activeWindow = require('active-win');
 
@@ -52,10 +53,10 @@ export class DesktopActiveWindow extends EventEmitter {
 	 */
 	public start(): boolean {
 		if (this.active) return false;
-		this._pollingTimerId = setInterval(async () =>
-				await this.getWindow(),
-			this._ACTIVE_WINDOW_POLLING_INTERVAL
-		);
+		this._pollingTimerId = setInterval(async () => {
+			if (this.isActivityWatch) return;
+			await this.getWindow();
+		}, this._ACTIVE_WINDOW_POLLING_INTERVAL);
 		return true;
 	}
 
@@ -105,5 +106,11 @@ export class DesktopActiveWindow extends EventEmitter {
 		} catch (e) {
 			console.log('Error occurred during active window poll', e);
 		}
+	}
+
+	private get isActivityWatch(): boolean {
+		const project = LocalStore.getStore('project');
+		const setting = LocalStore.getStore('appSetting');
+		return project && project.aw && project.aw.isAw && setting.awIsConnected;
 	}
 }
