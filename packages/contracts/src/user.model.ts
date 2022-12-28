@@ -9,6 +9,7 @@ import { IEmployee } from './employee.model';
 import { IPayment } from './payment.model';
 import { IOrganization } from './organization.model';
 import { IInvite } from './invite.model';
+import { ICandidate } from 'candidate.model';
 
 export interface IUser extends IBasePerTenantEntityModel {
 	thirdPartyId?: string;
@@ -23,6 +24,8 @@ export interface IUser extends IBasePerTenantEntityModel {
 	imageUrl?: string;
 	employee?: IEmployee;
 	employeeId?: IEmployee['id'];
+	candidate?: ICandidate;
+	candidateId?: ICandidate['id'];
 	tags?: ITag[];
 	preferredLanguage?: string;
 	payments?: IPayment[];

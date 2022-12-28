@@ -145,11 +145,11 @@ export class Candidate extends TenantOrganizationBaseEntity
 	@JoinColumn()
 	organizationPosition?: IOrganizationPosition;
 
-	@ApiProperty({ type: () => String, readOnly: true })
+	@ApiProperty({ type: () => String })
 	@RelationId((it: Candidate) => it.organizationPosition)
 	@Index()
 	@Column({ nullable: true })
-	readonly organizationPositionId?: string;
+	organizationPositionId?: IOrganizationPosition['id'];
 
 	/*
     |--------------------------------------------------------------------------
@@ -166,25 +166,28 @@ export class Candidate extends TenantOrganizationBaseEntity
 	@JoinColumn()
 	source?: ICandidateSource;
 
-	@ApiProperty({ type: () => String, readOnly: true })
+	@ApiProperty({ type: () => String })
 	@RelationId((it: Candidate) => it.source)
 	@Index()
 	@Column({ nullable: true })
-	readonly sourceId?: string;
+	sourceId?: ICandidateSource['id'];
 
+	/**
+	 * User
+	 */
 	@ApiProperty({ type: () => User })
-	@OneToOne(() => User, {
+	@OneToOne(() => User, (user) => user.candidate, {
 		cascade: true,
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
     user: IUser;
 
-	@ApiProperty({ type: () => String, readOnly: true })
+	@ApiProperty({ type: () => String })
 	@RelationId((it: Candidate) => it.user)
 	@Index()
 	@Column()
-	readonly userId: string;
+	userId: IUser['id'];
 
 	/**
 	 * Employee
@@ -194,11 +197,11 @@ export class Candidate extends TenantOrganizationBaseEntity
 	@JoinColumn()
     employee?: IEmployee;
 
-	@ApiProperty({ type: () => String, readOnly: true })
+	@ApiProperty({ type: () => String })
 	@RelationId((it: Candidate) => it.employee)
 	@Index()
 	@Column({ nullable: true })
-	employeeId?: string;
+	employeeId?: IEmployee['id'];
 
 	/*
     |--------------------------------------------------------------------------
@@ -257,9 +260,18 @@ export class Candidate extends TenantOrganizationBaseEntity
 	})
 	tags: ITag[];
 
-	@ManyToMany(() => OrganizationDepartment, (department) => department.candidates)
+	/**
+	 * Organization Departments
+	 */
+	@ManyToMany(() => OrganizationDepartment, (department) => department.candidates, {
+        onUpdate: 'CASCADE',
+		onDelete: 'CASCADE',
+    })
     organizationDepartments?: IOrganizationDepartment[];
 
+	/**
+	 * Organization Employment Types
+	 */
 	@ManyToMany(() => OrganizationEmploymentType, (employmentType) => employmentType.candidates)
     organizationEmploymentTypes?: IOrganizationEmploymentType[];
 }
