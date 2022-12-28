@@ -1,7 +1,8 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
-import { IActivity } from '@gauzy/contracts';
 import { Repository } from 'typeorm';
+import { IActivity } from '@gauzy/contracts';
+import { isEmpty } from '@gauzy/common';
 import { Activity } from '../../activity.entity';
 import { BulkActivitiesSaveCommand } from '../bulk-activities-save.command';
 import { RequestContext } from '../../../../core/context';
@@ -10,6 +11,7 @@ import { Employee } from './../../../../core/entities/internal';
 @CommandHandler(BulkActivitiesSaveCommand)
 export class BulkActivitiesSaveHandler
 	implements ICommandHandler<BulkActivitiesSaveCommand> {
+
 	constructor(
 		@InjectRepository(Activity)
 		private readonly activityRepository: Repository<Activity>,
@@ -18,31 +20,45 @@ export class BulkActivitiesSaveHandler
 		private readonly employeeRepository: Repository<Employee>
 	) {}
 
-	public async execute(command: BulkActivitiesSaveCommand): Promise<any> {
+	public async execute(command: BulkActivitiesSaveCommand): Promise<IActivity[]> {
 		const { input } = command;
-		const tenantId = RequestContext.currentTenantId();
-		let { employeeId, organizationId, activities = [] } = input;
 
-		if (!organizationId) {
-			const user = RequestContext.currentUser();
-			const employee = await this.employeeRepository.findOneBy({
-				id: user.employeeId
+		const user = RequestContext.currentUser();
+		const tenantId = RequestContext.currentTenantId();
+
+		let { employeeId, organizationId, activities = [] } = input;
+		try {
+			const userId = RequestContext.currentUserId();
+			let employee = await this.employeeRepository.findOneByOrFail({
+				userId,
+				tenantId
 			});
-			organizationId = employee.organizationId;
+			employeeId = employee.id;
+			organizationId = isEmpty(organizationId) ? employee.organizationId : organizationId;
+		} catch (error) {
+			console.log('Error while finding logged in employee for create bulk activities', error);
 		}
-		const insertActivities = activities.filter(Boolean).map((activity: IActivity) => {
+
+		console.log(`Empty Bulk App & URL's Activities For: ${user.name} : ${employeeId}`, activities.filter(
+			(activity: IActivity) => Object.keys(activity).length === 0
+		))
+
+		activities = activities.filter(
+			(activity: IActivity) => Object.keys(activity).length === 0
+		).map((activity: IActivity) => {
 			activity = new Activity({
+				...activity,
+				...(input.projectId ? { projectId: input.projectId } : {}),
 				employeeId,
 				organizationId,
 				tenantId,
-				...(input.projectId ? { projectId: input.projectId } : {}),
-				...activity
 			});
 			return activity;
 		});
 
-		if (insertActivities.length > 0) {
-			return await this.activityRepository.save(insertActivities);
+		console.log('Activities should be insert into database:', { activities });
+		if (activities.length > 0) {
+			return await this.activityRepository.save(activities);
 		} else {
 			return [];
 		}

@@ -3,8 +3,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Brackets, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import * as moment from 'moment';
 import { omit } from 'underscore';
-import { ITimeSlot, PermissionsEnum, TimeLogSourceEnum, TimeLogType } from '@gauzy/contracts';
-import { isNotEmpty } from '@gauzy/common';
+import { ITimeSlot, TimeLogSourceEnum, TimeLogType } from '@gauzy/contracts';
+import { isEmpty, isNotEmpty } from '@gauzy/common';
 import { RequestContext } from '../../../../core/context';
 import {
 	Employee,
@@ -33,42 +33,24 @@ export class CreateTimeSlotHandler
 
 	public async execute(command: CreateTimeSlotCommand): Promise<TimeSlot> {
 		const { input } = command;
-		let { organizationId, activities = [] } = input;
+		let { organizationId, employeeId, activities = [] } = input;
 
 		console.log('Time Slot Interval Request', {
 			input
 		});
 
-		const user = RequestContext.currentUser();
+		const userId = RequestContext.currentUserId();
 		const tenantId = RequestContext.currentTenantId();
 
-		/**
-		 * Check logged user has employee permission
-		 */
-		if (
-			!RequestContext.hasPermission(
-				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-			)
-		) {
-			input.employeeId = user.employeeId;
-		}
-
-		/*
-		 * If employeeId not send from desktop timer request payload
-		 */
-		if (!input.employeeId && user.employeeId) {
-			input.employeeId = user.employeeId;
-		}
-
-		/*
-		 * If organization not found in request then assign current logged user organization
-		 */
-		const { employeeId } = input;
-		if (!organizationId) {
-			const employee = await this.employeeRepository.findOneBy({
-				id: employeeId
+		try {
+			let employee = await this.employeeRepository.findOneByOrFail({
+				userId,
+				tenantId
 			});
-			organizationId = employee ? employee.organizationId : null;
+			employeeId = employee.id;
+			organizationId = isEmpty(organizationId) ? employee.organizationId : organizationId;
+		} catch (error) {
+			console.log('Error while finding logged in employee for create timeslot', error);
 		}
 
 		input.startedAt = moment(input.startedAt)
@@ -100,6 +82,7 @@ export class CreateTimeSlotHandler
 				timeSlot = new TimeSlot(omit(input, ['timeLogId']));
 				timeSlot.tenantId = tenantId;
 				timeSlot.organizationId = organizationId;
+				timeSlot.employeeId = employeeId;
 				timeSlot.timeLogs = [];
 			}
 		}
@@ -177,16 +160,23 @@ export class CreateTimeSlotHandler
 		}
 
 		if (isNotEmpty(activities)) {
-			const bulkActivities = await this.commandBus.execute(
+			console.log('Bulk activities save parameters', {
+				organizationId,
+				employeeId,
+				projectId: input.projectId,
+				activities: activities
+			});
+			timeSlot.activities = await this.commandBus.execute(
 				new BulkActivitiesSaveCommand({
-					employeeId: timeSlot.employeeId,
+					organizationId,
+					employeeId,
 					projectId: input.projectId,
 					activities: activities
 				})
 			);
-			timeSlot.activities = bulkActivities;
 		}
 
+		console.log('Timeslot save first time before bulk activities save', { timeSlot });
 		await this.timeSlotRepository.save(timeSlot);
 		/*
 		* Merge timeSlots into 10 minutes slots
