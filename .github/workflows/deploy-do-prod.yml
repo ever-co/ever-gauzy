@@ -86,6 +86,7 @@ jobs:
                 UNLEASH_INSTANCE_ID: '${{ secrets.UNLEASH_INSTANCE_ID }}'
                 UNLEASH_REFRESH_INTERVAL: '${{ secrets.UNLEASH_REFRESH_INTERVAL }}'
                 UNLEASH_METRICS_INTERVAL: '${{ secrets.UNLEASH_METRICS_INTERVAL }}'
+                UNLEASH_API_KEY: '${{ secrets.UNLEASH_API_KEY }}'
                 KEYMETRICS_MACHINE_NAME: '${{ secrets.KEYMETRICS_MACHINE_NAME }}'
                 KEYMETRICS_SECRET_KEY: '${{ secrets.KEYMETRICS_SECRET_KEY }}'
                 KEYMETRICS_PUBLIC_KEY: '${{ secrets.KEYMETRICS_PUBLIC_KEY }}'

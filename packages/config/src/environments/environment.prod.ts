@@ -182,7 +182,8 @@ export const environment: IEnvironment = {
 		environment: 'production',
 		instanceId: process.env.UNLEASH_INSTANCE_ID,
 		refreshInterval: parseInt(process.env.UNLEASH_REFRESH_INTERVAL) || 15000,
-		metricsInterval: parseInt(process.env.UNLEASH_METRICS_INTERVAL) || 60000
+		metricsInterval: parseInt(process.env.UNLEASH_METRICS_INTERVAL) || 60000,
+		apiKey: process.env.UNLEASH_API_KEY
 	},
 
 	demo: process.env.DEMO === 'true' ? true : false,

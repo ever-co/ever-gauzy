@@ -173,6 +173,8 @@ spec:
                         value: '$UNLEASH_REFRESH_INTERVAL'
                       - name: UNLEASH_METRICS_INTERVAL
                         value: '$UNLEASH_METRICS_INTERVAL'
+                      - name: UNLEASH_API_KEY
+                        value: '$UNLEASH_API_KEY'
 
                   ports:
                       - containerPort: 3000

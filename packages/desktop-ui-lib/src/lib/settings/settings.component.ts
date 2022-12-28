@@ -103,6 +103,11 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 					name: 'UNLEASH_METRICS_INTERVAL',
 					field: 'UNLEASH_METRICS_INTERVAL',
 					value: 60000
+				},
+				{
+					name: 'UNLEASH_API_KEY',
+					field: 'UNLEASH_API_KEY',
+					value: ''
 				}
 			]
 		},

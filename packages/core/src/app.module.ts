@@ -152,6 +152,12 @@ if (unleashConfig.url) {
 		storageProvider: new InMemStorageProvider()
 	};
 
+	if (unleashConfig.apiKey) {
+		unleashInstanceConfig.customHeaders = {
+			Authorization: unleashConfig.apiKey
+		}
+	}
+
 	console.log(`Using Unleash Config: ${JSON.stringify(unleashInstanceConfig)}`);
 
 	const instance = initializeUnleash(unleashInstanceConfig);
