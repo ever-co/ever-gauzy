@@ -46,35 +46,37 @@ export class DashboardComponent extends TranslationBaseComponent
 
 	loadTabs() {
 		this.tabs = [
-			...(this.store.hasPermission(PermissionsEnum.ALL_ORG_VIEW) ? [{
-				title: this.getTranslation('ORGANIZATIONS_PAGE.TEAMS'),
-				icon: 'people-outline',
-				responsive: true,
-				route: this.getRoute('teams')
-			}] : []),
-			{
-				title: this.getTranslation('DASHBOARD_PAGE.PROJECT_MANAGEMENT'),
-				icon: 'browser-outline',
-				responsive: true,
-				route: this.getRoute('project-management')
-			},
-			{
-				title: this.getTranslation('DASHBOARD_PAGE.TIME_TRACKING'),
-				icon: 'clock-outline',
-				responsive: true,
-				route: this.getRoute('time-tracking')
-			},
-			((this.selectedEmployee && this.selectedEmployee.id) ? {
-				title: this.getTranslation('DASHBOARD_PAGE.HUMAN_RESOURCES'),
-				icon: 'person-outline',
-				responsive: true,
-				route: this.getRoute('hr')
-			} : {
-				title: this.getTranslation('DASHBOARD_PAGE.ACCOUNTING'),
-				icon: 'credit-card-outline',
-				responsive: true,
-				route: this.getRoute('accounting')
-			}),
+			...(this.store.hasPermission(PermissionsEnum.ADMIN_DASHBOARD_VIEW) ? [
+				{
+					title: this.getTranslation('ORGANIZATIONS_PAGE.TEAMS'),
+					icon: 'people-outline',
+					responsive: true,
+					route: this.getRoute('teams')
+				},
+				{
+					title: this.getTranslation('DASHBOARD_PAGE.PROJECT_MANAGEMENT'),
+					icon: 'browser-outline',
+					responsive: true,
+					route: this.getRoute('project-management')
+				},
+				{
+					title: this.getTranslation('DASHBOARD_PAGE.TIME_TRACKING'),
+					icon: 'clock-outline',
+					responsive: true,
+					route: this.getRoute('time-tracking')
+				},
+				((this.selectedEmployee && this.selectedEmployee.id) ? {
+					title: this.getTranslation('DASHBOARD_PAGE.HUMAN_RESOURCES'),
+					icon: 'person-outline',
+					responsive: true,
+					route: this.getRoute('hr')
+				} : {
+					title: this.getTranslation('DASHBOARD_PAGE.ACCOUNTING'),
+					icon: 'credit-card-outline',
+					responsive: true,
+					route: this.getRoute('accounting')
+				}),
+			] : []),
 		];
 		this.loading = false;
 	}
