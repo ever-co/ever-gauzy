@@ -23,7 +23,7 @@ jobs:
                   github_token: ${{ secrets.GITHUB_TOKEN }}
                   release_branches: master,main
                   pre_release_branches: develop
-				  append_to_pre_release_tag: ''
+                  append_to_pre_release_tag: ''
 
             - name: Create a GitHub release
               uses: ncipollo/release-action@v1
