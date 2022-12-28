@@ -292,6 +292,10 @@ export class Employee extends TenantOrganizationBaseEntity
     | @OneToOne
     |--------------------------------------------------------------------------
     */
+
+	/**
+	 * User
+	 */
 	@ApiProperty({ type: () => User })
 	@OneToOne(() => User, (user) => user.employee, {
 		cascade: true,
