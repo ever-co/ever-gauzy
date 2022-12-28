@@ -1,6 +1,5 @@
 import {
 	AfterViewInit,
-	ChangeDetectionStrategy,
 	Component,
 	ElementRef,
 	forwardRef,
@@ -17,7 +16,7 @@ import * as _ from 'underscore';
 import { CustomRenderComponent } from './custom-render-cell.component';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { DomSanitizer } from '@angular/platform-browser';
-import { BehaviorSubject, tap } from 'rxjs';
+import { BehaviorSubject, Observable, tap } from 'rxjs';
 import { ElectronService } from "../electron/services";
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import  'moment-duration-format';
@@ -32,7 +31,6 @@ Object.assign(console, log.functions);
 	selector: 'ngx-desktop-time-tracker',
 	templateUrl: './time-tracker.component.html',
 	styleUrls: ['./time-tracker.component.scss'],
-	changeDetection: ChangeDetectionStrategy.OnPush,
 	providers: [
 		{
 			provide: NG_VALUE_ACCESSOR,
@@ -57,9 +55,21 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		hours: '00'
 	});
 	userData: any;
-	projects: any;
-	tasks: any = [];
-	organizationContacts: any = [];
+
+	private _projects$: BehaviorSubject<any> = new BehaviorSubject([]);
+	public get projects$(): Observable<any> {
+		return this._projects$.asObservable();
+	}
+
+	private _tasks$: BehaviorSubject<any> = new BehaviorSubject([]);
+	public get tasks$(): Observable<any> {
+		return this._tasks$.asObservable();
+	}
+
+	private _organizationContacts$: BehaviorSubject<any> = new BehaviorSubject([]);
+	public get organizationContacts$(): Observable<any> {
+		return this._organizationContacts$.asObservable();
+	}
 	organization: any = {};
 	projectSelect = '';
 	taskSelect = '';
@@ -134,7 +144,10 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		noDataMessage: 'No Tasks Found'
 	};
 	tableData = [];
-	sourceData: LocalDataSource;
+	private _sourceData$: BehaviorSubject<LocalDataSource>;
+	public get sourceData$(): Observable<LocalDataSource> {
+		return this._sourceData$.asObservable();
+	}
 	isTrackingEnabled = true;
 	isAddTask = false;
 	sound: any = null;
@@ -190,7 +203,21 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	}
 
 	ngOnInit(): void {
-		this.sourceData = new LocalDataSource(this.tableData);
+		this._sourceData$ = new BehaviorSubject(new LocalDataSource(this.tableData));
+		this.tasks$
+			.pipe(
+				tap(async (tasks) => {
+					const idx = tasks.findIndex((row) => row.id === this.taskSelect);
+					if (idx > -1) {
+						tasks[idx].isSelected = true;
+					}
+					this.tableData = tasks;
+					await this._sourceData$.getValue().load(this.tableData);
+					
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	ngAfterViewInit(): void {
@@ -569,24 +596,19 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	}
 
 	async getTask(arg) {
-		this.tasks = await this.timeTrackerService.getTasks(arg);
-		const idx = this.tasks.findIndex((row) => row.id === this.taskSelect);
-		if (idx > -1) {
-			this.tasks[idx].isSelected = true;
-		}
-		this.tableData = this.tasks;
-		await this.sourceData.load(this.tableData);
+		const res = await this.timeTrackerService.getTasks(arg);
+		this._tasks$.next(res.items);
 	}
 
 	async getProjects(arg) {
-		this.projects = await this.timeTrackerService.getProjects(arg);
-		console.log('projects', this.projects);
+		this._projects$.next(await this.timeTrackerService.getProjects(arg));
+		console.log('projects', this._projects$.getValue());
 	}
 
 	async getClient(arg) {
-		this.organizationContacts = await this.timeTrackerService.getClient(
+		this._organizationContacts$.next(await this.timeTrackerService.getClient(
 			arg
-		);
+		));
 	}
 
 	/*
@@ -617,18 +639,18 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			organizationContactId: this.organizationContactId
 		});
 		if (item) {
-			this.projects = await this.timeTrackerService.getProjects({
+			this._projects$.next(await this.timeTrackerService.getProjects({
 				...this.argFromMain,
 				organizationContactId: this.organizationContactId
-			});
-			this.tasks = [];
+			}));
+			this._tasks$.next([]);
 			this.projectSelect = null;
 			this.taskSelect = null;
 			this.errors.client = false;
 		} else {
-			this.projects = await this.timeTrackerService.getProjects(
+			this._projects$.next(await this.timeTrackerService.getProjects(
 				this.argFromMain
-			);
+			))
 		}
 	}
 
@@ -638,16 +660,18 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			projectId: this.projectSelect
 		});
 		if (item) {
-			this.tasks = await this.timeTrackerService.getTasks(
-				this.argFromMain
-			);
-			this.taskSelect = null;
-			this.errors.project = false;
-		} else {
-			this.tasks = await this.timeTrackerService.getTasks({
+			const res = await this.timeTrackerService.getTasks({
 				...this.argFromMain,
 				projectId: this.projectSelect
 			});
+			this._tasks$.next(res.items);
+			this.taskSelect = null;
+			this.errors.project = false;
+		} else {
+			const res = await this.timeTrackerService.getTasks({
+				...this.argFromMain
+			});
+			this._tasks$.next(res.items);
 		}
 		this.errorBind();
 	}
@@ -719,7 +743,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 	validationField() {
 		this.errorBind();
-		const errors = [];
+		const errors = []; 
 		const requireField = {
 			task: 'requireTask',
 			project: 'requireProject',
@@ -990,7 +1014,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 	onSearch(query: string = '') {
 		if (query) {
-			this.sourceData.setFilter(
+			this._sourceData$.getValue().setFilter(
 				[
 					{
 						field: 'title',
@@ -1000,8 +1024,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				false
 			);
 		} else {
-			this.sourceData.reset();
-			this.sourceData.refresh();
+			this._sourceData$.getValue().reset();
+			this._sourceData$.getValue().refresh();
 		}
 	}
 
