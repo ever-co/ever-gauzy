@@ -47,12 +47,14 @@ export class DashboardComponent extends TranslationBaseComponent
 	loadTabs() {
 		this.tabs = [
 			...(this.store.hasPermission(PermissionsEnum.ADMIN_DASHBOARD_VIEW) ? [
-				{
-					title: this.getTranslation('ORGANIZATIONS_PAGE.TEAMS'),
-					icon: 'people-outline',
-					responsive: true,
-					route: this.getRoute('teams')
-				},
+				...(this.store.hasPermission(PermissionsEnum.ALL_ORG_VIEW) ? [
+					{
+						title: this.getTranslation('ORGANIZATIONS_PAGE.TEAMS'),
+						icon: 'people-outline',
+						responsive: true,
+						route: this.getRoute('teams')
+					}
+				] : []),
 				{
 					title: this.getTranslation('DASHBOARD_PAGE.PROJECT_MANAGEMENT'),
 					icon: 'browser-outline',
