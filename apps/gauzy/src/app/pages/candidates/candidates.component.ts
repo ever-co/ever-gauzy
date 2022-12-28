@@ -337,7 +337,7 @@ export class CandidatesComponent extends PaginationFilterBaseComponent
 				isArchived: !this.includeArchived,
 				...(this.filters.where ? this.filters.where : {})
 			},
-			resultMap: (candidate: any) => {
+			resultMap: (candidate: ICandidate) => {
 				return Object.assign({}, candidate, {
 					fullName: candidate.user.name,
 					email: candidate.user.email,
@@ -348,6 +348,7 @@ export class CandidatesComponent extends PaginationFilterBaseComponent
 					isArchived: candidate.isArchived,
 					imageUrl: candidate.user.imageUrl,
 					tags: candidate.tags,
+					appliedDate: candidate.appliedDate,
 					hiredDate: candidate.hiredDate,
 					rejectDate: candidate.rejectDate
 				});
@@ -451,6 +452,12 @@ export class CandidatesComponent extends PaginationFilterBaseComponent
 					class: 'text-center',
 					width: '200px',
 					renderComponent: CandidateSourceComponent,
+					filter: false
+				},
+				appliedDate: {
+					title: this.getTranslation('SM_TABLE.APPLIED_DATE'),
+					type: 'custom',
+					renderComponent: DateViewComponent,
 					filter: false
 				},
 				hiredDate: {

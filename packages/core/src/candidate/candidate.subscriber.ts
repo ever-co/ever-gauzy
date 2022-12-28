@@ -1,8 +1,7 @@
-import { average } from "@gauzy/common";
 import { EntitySubscriberInterface, EventSubscriber, InsertEvent, LoadEvent } from "typeorm";
 import * as moment from 'moment';
+import { average } from "@gauzy/common";
 import { CandidateStatusEnum } from "@gauzy/contracts";
-import { getUserDummyImage } from "./../core/utils";
 import { Candidate } from "./candidate.entity";
 
 @EventSubscriber()
@@ -47,17 +46,9 @@ export class CandidateSubscriber implements EntitySubscriberInterface<Candidate>
             if (event.entity) {
                 const { entity } = event;
                 /**
-                 * Use a dummy image avatar if no image is uploaded for any of the candidate
-                 */
-                if (entity.user) {
-                    if (!entity.user.imageUrl) {
-                        entity.user.imageUrl = getUserDummyImage(entity.user)
-                    }
-                }
-                /**
                  * Automatically update candidate rejected status
                  */
-                if (moment(entity.rejectDate).isValid()) {
+                if ('rejectDate' in entity && moment(entity.rejectDate).isValid()) {
                     entity.status = CandidateStatusEnum.REJECTED;
                 }
             }

@@ -55,6 +55,7 @@ ARG UNLEASH_API_URL
 ARG UNLEASH_INSTANCE_ID
 ARG UNLEASH_REFRESH_INTERVAL
 ARG UNLEASH_METRICS_INTERVAL
+ARG UNLEASH_API_KEY
 
 FROM node:16-alpine3.14 AS dependencies
 
@@ -110,7 +111,7 @@ ENV PYTHON /usr/bin/python
 
 RUN apk --update add bash && apk add libexecinfo libexecinfo-dev && npm i -g npm \
     && apk add --no-cache --virtual build-dependencies build-base \
-    snappy libheif dos2unix gcc g++ snappy-dev git libgcc libstdc++ linux-headers autoconf automake make nasm python2 py2-setuptools vips-dev vips 
+    snappy libheif dos2unix gcc g++ snappy-dev git libgcc libstdc++ linux-headers autoconf automake make nasm python2 py2-setuptools vips-dev vips
 
 RUN npm install --quiet node-gyp -g
 RUN npm install yarn -g --force
@@ -252,6 +253,7 @@ ENV UNLEASH_API_URL=${UNLEASH_API_URL}
 ENV UNLEASH_INSTANCE_ID=${UNLEASH_INSTANCE_ID}
 ENV UNLEASH_REFRESH_INTERVAL=${UNLEASH_REFRESH_INTERVAL}
 ENV UNLEASH_METRICS_INTERVAL=${UNLEASH_METRICS_INTERVAL}
+ENV UNLEASH_API_KEY=${UNLEASH_API_KEY}
 
 EXPOSE ${API_PORT}
 

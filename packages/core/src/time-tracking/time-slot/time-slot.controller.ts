@@ -72,7 +72,7 @@ export class TimeSlotController {
 	async create(
 		@Body() entity: ITimeSlot
 	): Promise<ITimeSlot> {
-		return this.timeSlotService.create(entity);
+		return await this.timeSlotService.create(entity);
 	}
 
 	@ApiOperation({ summary: 'Update Time Slot' })

@@ -25,6 +25,9 @@ import { RelationsQueryDTO } from './../shared/dto';
 import { FeatureToggleUpdateCommand } from './commands';
 import { CreateFeatureToggleDTO } from './dto';
 import { FeatureOrganizationQueryDTO } from './dto/feature-organization-query.dto';
+import { environment } from '@gauzy/config';
+
+const { unleashConfig } = environment;
 
 @ApiTags('Feature')
 @Controller()
@@ -38,15 +41,22 @@ export class FeatureToggleController {
 	@Get('definition')
 	@Public()
 	async getFeatureToggleDefinitions() {
-		let featureToggles: FeatureInterface[] = getFeatureToggleDefinitions();
 
-		//only support gauzy feature and removed other
-		const featureEnums: string[] = Object.values(FeatureEnum);
-		if (featureToggles) {
-			featureToggles = featureToggles.filter((toggle: FeatureInterface) =>
-				featureEnums.includes(toggle.name)
-			);
+		let featureToggles: FeatureInterface[] = [];
+
+		// load toggles definitions from Unleash if it's enabled
+		if (unleashConfig.url) {
+			featureToggles = getFeatureToggleDefinitions();
+
+			// only support gauzy feature and removed other
+			const featureEnums: string[] = Object.values(FeatureEnum);
+			if (featureToggles) {
+				featureToggles = featureToggles.filter((toggle: FeatureInterface) =>
+					featureEnums.includes(toggle.name)
+				);
+			}
 		}
+
 		return featureToggles;
 	}
 

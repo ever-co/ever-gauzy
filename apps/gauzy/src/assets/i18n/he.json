@@ -254,6 +254,7 @@
 		"NO_DATA_MESSAGE": "No Data",
 		"TAGS": "Tags",
 		"CREATED": "Created",
+		"APPLIED_DATE": "Applied Date",
 		"HIRED_DATE": "Hired Date",
 		"REJECTED_DATE": "Rejected Date",
 		"TIME_TRACKING": "Time Tracking",

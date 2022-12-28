@@ -8,6 +8,7 @@ import {
 	IUserOrganization,
 	TaskStatusEnum
 } from '@gauzy/contracts';
+import { NbToastrService } from '@nebular/theme';
 const log = window.require('electron-log');
 console.log = log.log;
 Object.assign(console, log.functions);
@@ -33,7 +34,7 @@ export class TasksComponent implements OnInit {
 	tags: ITag[] = [];
 	statuses = [
 		{
-			id: 'Todo',
+			id: 'TODO',
 			name: TaskStatusEnum.TODO
 		},
 		{
@@ -50,7 +51,10 @@ export class TasksComponent implements OnInit {
 		}
 	];
 
-	constructor(private timeTrackerService: TimeTrackerService) {}
+	constructor(
+		private timeTrackerService: TimeTrackerService,
+		private toastrService: NbToastrService
+	) {}
 
 	ngOnInit() {
 		(async () => {
@@ -81,7 +85,6 @@ export class TasksComponent implements OnInit {
 			tenantId: new FormControl(this.userData.tenantId),
 			title: new FormControl(null, Validators.required)
 		});
-        console.log('User', this.userData);
 	}
 
 	private async _projects(user: IUserOrganization): Promise<void> {
@@ -119,22 +122,23 @@ export class TasksComponent implements OnInit {
 
 	public async save(): Promise<void> {
 		if (this.form.invalid) return;
-		const { estimateDays, estimateHours, estimateMinutes, tags } =
+		const { estimateDays, estimateHours, estimateMinutes, tags, project } =
 			this.form.value;
 		const days = estimateDays ? estimateDays * 24 * 3600 : 0;
 		const hours = estimateHours ? estimateHours * 3600 : 1;
 		const minutes = estimateMinutes ? estimateMinutes * 60 : 0;
-		const selectedTags = tags.map((i) => {
-			const tag = this.tags.find((y) => y.id === i);
-			return tag;
-		});
+		const selectedTags = tags.map(
+			(i: string) => this.tags.find((y) => y.id === i) || []
+		);
 
 		try {
 			this.form.patchValue({
 				members: [...this.employees],
 				estimate: days + hours + minutes,
-				tags: selectedTags
+				tags: selectedTags,
+				projectId: project ? project.id : null
 			});
+
 			await this.timeTrackerService.saveNewTask(
 				this.userData,
 				this.form.value
@@ -152,4 +156,34 @@ export class TasksComponent implements OnInit {
 			});
 		}
 	}
+
+	addProject = async (name: string) => {
+		try {
+			const data = this.userData as any;
+			const { tenantId, organizationContactId } = data;
+			const { organizationId } = data;
+
+			const request = {
+				name,
+				organizationId,
+				tenantId,
+				...(organizationContactId
+					? { contactId: organizationContactId }
+					: {})
+			};
+
+			request['members'] = [...this.employees];
+
+			const project = await this.timeTrackerService.createNewProject(
+				request,
+				data
+			);
+
+			this.projects = this.projects.concat([project]);
+
+			this.toastrService.success('Project added successfully');
+		} catch (error) {
+			this.toastrService.danger(error);
+		}
+	};
 }
