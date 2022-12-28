@@ -1,7 +1,5 @@
 import {
 	AfterViewInit,
-	ChangeDetectionStrategy,
-	ChangeDetectorRef,
 	Component,
 	ElementRef,
 	forwardRef,
@@ -33,7 +31,6 @@ Object.assign(console, log.functions);
 	selector: 'ngx-desktop-time-tracker',
 	templateUrl: './time-tracker.component.html',
 	styleUrls: ['./time-tracker.component.scss'],
-	changeDetection: ChangeDetectionStrategy.OnPush,
 	providers: [
 		{
 			provide: NG_VALUE_ACCESSOR,
@@ -162,7 +159,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		private dialogService: NbDialogService,
 		private toastrService: NbToastrService,
 		private sanitize: DomSanitizer,
-		private _cdr: ChangeDetectorRef,
 		private _ngZone: NgZone
 	) {}
 
@@ -219,7 +215,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					await this._sourceData$.getValue().load(this.tableData);
 					
 				}),
-				tap(() => this._cdr.detectChanges()),
 				untilDestroyed(this)
 			)
 			.subscribe();

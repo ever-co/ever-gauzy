@@ -216,7 +216,10 @@ export class TimeTrackerService {
 			.get(
 				`${values.apiHost}/api/organization-contact/employee/${values.employeeId}`,
 				{
-					headers: headers
+					headers: headers,
+					params: {
+						organizationId: values.organizationId
+					}
 				}
 			));
 	}
@@ -553,7 +556,8 @@ export class TimeTrackerService {
 
 	pushToTimeSlot(values) {
 		const headers = new HttpHeaders({
-			Authorization: `Bearer ${values.token}`
+			Authorization: `Bearer ${values.token}`,
+			'Tenant-Id': values.tenantId
 		});
 		const params = {
 			employeeId: values.employeeId,
@@ -569,6 +573,8 @@ export class TimeTrackerService {
 			tenantId: values.tenantId,
 			organizationContactId: values.organizationContactId
 		};
+
+		console.log('Params', params)
 
 		// if (!values.isAw || !values.isAwConnected) {
 		// 	delete params.overall;
