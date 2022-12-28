@@ -298,12 +298,16 @@
 				</div>
 				<div class="row">
 					<div class="col-10">
-						<p>You can check for updates by tapping the update button.</p>
+						<p> {{ (available$ | async ) ?
+							"New Update is available! Please click button Download Now below":
+							"You can check for updates by clicking the Check Updates button below."
+							}}
+						</p>
 					</div>
 				</div>
 				<div class="row update-setting center-content">
 					<div class="col-12 button-update" *ngIf="!downloadFinish">
-						<button *ngIf="!(notAvailable$ | async)" nbButton [disabled]="loading$ | async" status="primary"
+						<button *ngIf="!(available$ | async)" nbButton [disabled]="loading$ | async" status="primary"
 							class="button-big" (click)=" checkForUpdate()">
 							Check Update
 							<nb-icon icon="sync-outline" [class]="
@@ -312,7 +316,7 @@
 																: 'icon-medium'
 														"></nb-icon>
 						</button>
-						<button *ngIf="notAvailable$ | async" nbButton [disabled]="loading$ | async" status="primary"
+						<button *ngIf="available$ | async" nbButton [disabled]="loading$ | async" status="primary"
 							class="button-big" (click)="downloadNow()">
 							Download Now
 							<nb-icon [icon]="(loading$ | async) ? 'loader-outline' : 'cloud-download-outline'" [class]="

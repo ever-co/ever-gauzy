@@ -371,7 +371,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 
 	private _loading$ : BehaviorSubject<boolean>;
 	private _automaticUpdate$: BehaviorSubject<boolean>;
-	private _notAvailable$: BehaviorSubject<boolean>;
+	private _available$: BehaviorSubject<boolean>;
 	private _updaterServer$: BehaviorSubject<any>;
 	private _file$: BehaviorSubject<any>;
 
@@ -384,7 +384,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	) {
 		this._loading$ = new BehaviorSubject(false);
 		this._automaticUpdate$ = new BehaviorSubject(false);
-		this._notAvailable$ = new BehaviorSubject(false);
+		this._available$ = new BehaviorSubject(false);
 		this._file$ = new BehaviorSubject({uri: null});
 		this._updaterServer$ = new BehaviorSubject({
 			github: false,
@@ -442,7 +442,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 
 		this.electronService.ipcRenderer.on('update_not_available', () =>
 			this._ngZone.run(() => {
-				this._notAvailable$.next(true);
+				this._available$.next(false);
 				this.message = {
 					text: 'Update Not Available',
 					status: 'basic'
@@ -455,7 +455,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 
 		this.electronService.ipcRenderer.on('error_update', (event, arg) =>
 			this._ngZone.run(() => {
-				this._notAvailable$.next(true);
+				this._available$.next(false);
 				this.message = {
 					text:  'Update Error',
 					status: 'danger'
@@ -469,7 +469,8 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 
 		this.electronService.ipcRenderer.on('update_available', () =>
 			this._ngZone.run(() => {
-				this._notAvailable$.next(true);
+				this._available$.next(true);
+				this._loading$.next(false);
 				this.message = {
 					text:  'Update Available',
 					status: 'primary'
@@ -481,7 +482,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 
 		this.electronService.ipcRenderer.on('update_downloaded', () =>
 			this._ngZone.run(() => {
-				this._notAvailable$.next(true);
+				this._available$.next(true);
 				this.message = {
 					text: 'Update Download Completed',
 					status: 'success'
@@ -499,7 +500,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 			(event, arg) =>
 				this._ngZone.run(() => {
 					this._loading$.next(true);
-					this._notAvailable$.next(true);
+					this._available$.next(true);
 					this.showProgressBar = true;
 					this.message = {
 						text: 'Update Downloading',
@@ -831,8 +832,8 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		return this._loading$.asObservable();
 	}
 
-	public get notAvailable$() {
-		return this._notAvailable$.asObservable();
+	public get available$() {
+		return this._available$.asObservable();
 	};
 
 	public get automaticUpdate$(): Observable<boolean> {
