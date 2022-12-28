@@ -21,9 +21,8 @@ jobs:
               id: tag_version
               with:
                   github_token: ${{ secrets.GITHUB_TOKEN }}
-                  release_branches: master,main
-                  pre_release_branches: develop
-                  append_to_pre_release_tag: ''
+                  release_branches: master,main,develop
+                  pre_release_branches: something_to_possible_use_later
 
             - name: Create a GitHub release
               uses: ncipollo/release-action@v1
