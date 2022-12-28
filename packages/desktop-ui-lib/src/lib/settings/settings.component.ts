@@ -97,12 +97,12 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				{
 					name: 'UNLEASH_REFRESH_INTERVAL',
 					field: 'UNLEASH_REFRESH_INTERVAL',
-					value: 1000
+					value: 15000
 				},
 				{
 					name: 'UNLEASH_METRICS_INTERVAL',
 					field: 'UNLEASH_METRICS_INTERVAL',
-					value: 1000
+					value: 60000
 				}
 			]
 		},
@@ -368,7 +368,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	private _automaticUpdate$: BehaviorSubject<boolean>;
 	private _notAvailable$: BehaviorSubject<boolean>;
 	private _updaterServer$: BehaviorSubject<any>;
-	private _file$: BehaviorSubject<any>; 
+	private _file$: BehaviorSubject<any>;
 
 	constructor(
 		private electronService: ElectronService,

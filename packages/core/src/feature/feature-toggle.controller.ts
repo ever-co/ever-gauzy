@@ -40,7 +40,7 @@ export class FeatureToggleController {
 	async getFeatureToggleDefinitions() {
 		let featureToggles: FeatureInterface[] = getFeatureToggleDefinitions();
 
-		//only support gauzy feature and removed other
+		// only support gauzy feature and removed other
 		const featureEnums: string[] = Object.values(FeatureEnum);
 		if (featureToggles) {
 			featureToggles = featureToggles.filter((toggle: FeatureInterface) =>

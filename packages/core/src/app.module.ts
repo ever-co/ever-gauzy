@@ -136,6 +136,7 @@ import { PublicShareModule } from './public-share/public-share.module';
 import { TransformInterceptor } from './core/interceptors';
 
 const { unleashConfig } = environment;
+
 if (unleashConfig.url) {
 	const unleashInstanceConfig = {
 		appName: unleashConfig.appName,
@@ -154,8 +155,13 @@ if (unleashConfig.url) {
 		console.log('Unleash Client Registered');
 	});
 }
+else
+{
+	console.log('Unleash Client Not Registered. UNLEASH_API_URL configuration is not provided.');
+}
 
 const sentryIntegrations = [];
+
 sentryIntegrations.push(
 	// enable HTTP calls tracing
 	new SentryIntegrations.Http({ tracing: true })
@@ -164,6 +170,7 @@ sentryIntegrations.push(
 if (process.env.DB_TYPE === 'postgres') {
 	sentryIntegrations.push(new TrackingIntegrations.Postgres());
 }
+
 @Module({
 	imports: [
 		ServeStaticModule.forRootAsync({
