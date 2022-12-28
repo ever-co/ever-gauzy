@@ -8,6 +8,7 @@ import { TimeSlotModule } from './../time-slot/time-slot.module';
 import { ActivityModule } from './../activity/activity.module';
 import { TimeLogModule } from './../time-log/time-log.module';
 import { TenantModule } from './../../tenant/tenant.module';
+import { UserModule } from './../../user/user.module';
 
 @Module({
 	controllers: [
@@ -15,6 +16,7 @@ import { TenantModule } from './../../tenant/tenant.module';
 	],
 	imports: [
 		TenantModule,
+		UserModule,
 		OrganizationProjectModule,
 		TaskModule,
 		TimeSlotModule,
