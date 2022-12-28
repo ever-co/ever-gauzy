@@ -40,7 +40,7 @@ export class BulkActivitiesSaveHandler
 		}
 
 		console.log(`Empty Bulk App & URL's Activities For: ${user.name} : ${employeeId}`, activities.filter(
-			(activity: IActivity) => Object.keys(activity).length === 0
+			(activity: IActivity) => Object.keys(activity).length !== 0
 		))
 
 		activities = activities.filter(
