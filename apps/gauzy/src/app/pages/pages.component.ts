@@ -437,8 +437,11 @@ export class PagesComponent extends TranslationBaseComponent
 						pathMatch: 'prefix',
 						data: {
 							translationKey: 'MENU.TIME_ACTIVITY',
-							featureKey:
-								FeatureEnum.FEATURE_EMPLOYEE_TIME_ACTIVITY
+							permissionKeys: [
+								PermissionsEnum.ADMIN_DASHBOARD_VIEW,
+								PermissionsEnum.TIME_TRACKER
+							],
+							featureKey: FeatureEnum.FEATURE_EMPLOYEE_TIME_ACTIVITY
 						}
 					},
 					{
@@ -448,6 +451,10 @@ export class PagesComponent extends TranslationBaseComponent
 						pathMatch: 'prefix',
 						data: {
 							translationKey: 'MENU.TIMESHEETS',
+							permissionKeys: [
+								PermissionsEnum.ADMIN_DASHBOARD_VIEW,
+								PermissionsEnum.TIME_TRACKER
+							],
 							featureKey: FeatureEnum.FEATURE_EMPLOYEE_TIMESHEETS
 						}
 					},
