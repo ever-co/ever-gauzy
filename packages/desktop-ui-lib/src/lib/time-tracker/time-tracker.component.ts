@@ -465,6 +465,12 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			})
 		);
 
+		this.electronService.ipcRenderer.on('refresh_today_worked_time', (event, arg) =>
+			this._ngZone.run(() => {
+				this.getTodayTime(arg);
+			})
+		);
+
 		this.electronService.ipcRenderer.send('time_tracker_ready');
 	}
 
@@ -551,6 +557,11 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		this.electronService.ipcRenderer.send('update_tray_time_title', {
 			timeRun: moment.duration(this._lastTotalWorkedTime + value.second, 'seconds').format('hh:mm:ss', { trim: false })
 		});
+
+		if(seconds % 60 === 0){
+			console.log('Update today time...');
+			this.electronService.ipcRenderer.send('update_today_worked_time');
+		}
 
 		if (seconds % 5 === 0) {
 			this.pingAw(null);
