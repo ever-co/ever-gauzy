@@ -34,14 +34,17 @@ export const environment: IEnvironment = {
 	 * Email verification options
 	 */
 	JWT_VERIFICATION_TOKEN_SECRET: process.env.JWT_VERIFICATION_TOKEN_SECRET || 'verificationSecretKey',
-	JWT_VERIFICATION_TOKEN_EXPIRATION_TIME: parseInt(process.env.JWT_VERIFICATION_TOKEN_EXPIRATION_TIME) || 86400 * 7, // default verfication expire token time (7 days)
+
+	// default verification expire token time (7 days)
+	JWT_VERIFICATION_TOKEN_EXPIRATION_TIME: parseInt(process.env.JWT_VERIFICATION_TOKEN_EXPIRATION_TIME) || 86400 * 7,
+
 	EMAIL_CONFIRMATION_URL: process.env.EMAIL_CONFIRMATION_URL || 'http://localhost:4200/#/auth/confirm-email',
 
 	/**
 	 * Throttler (Rate Limiting) Options
 	 */
 	THROTTLE_TTL: parseInt(process.env.THROTTLE_TTL) || 60,
-	THROTTLE_LIMIT: parseInt(process.env.THROTTLE_LIMIT) || 30,
+	THROTTLE_LIMIT: parseInt(process.env.THROTTLE_LIMIT) || 300,
 
 	fileSystem: {
 		name:
@@ -182,8 +185,9 @@ export const environment: IEnvironment = {
 		appName: process.env.UNLEASH_APP_NAME,
 		environment: 'development',
 		instanceId: process.env.UNLEASH_INSTANCE_ID,
-		refreshInterval: parseInt(process.env.UNLEASH_REFRESH_INTERVAL) || 1000,
-		metricsInterval: parseInt(process.env.UNLEASH_METRICS_INTERVAL) || 1000
+		refreshInterval: parseInt(process.env.UNLEASH_REFRESH_INTERVAL) || 15000,
+		metricsInterval: parseInt(process.env.UNLEASH_METRICS_INTERVAL) || 60000,
+		apiKey: process.env.UNLEASH_API_KEY
 	},
 
 	demo: process.env.DEMO === 'true' ? true : false,

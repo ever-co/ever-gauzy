@@ -5,4 +5,5 @@ export interface IUnleashConfig {
 	instanceId?: string;
 	refreshInterval?: number;
 	metricsInterval?: number;
+	apiKey?: string;
 }

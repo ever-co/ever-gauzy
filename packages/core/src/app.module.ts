@@ -10,7 +10,7 @@ import {
 import { HeaderResolver, I18nModule } from 'nestjs-i18n';
 import { Integrations as SentryIntegrations } from '@sentry/node';
 import { Integrations as TrackingIntegrations } from '@sentry/tracing';
-import { initialize as initializeUnleash } from 'unleash-client';
+import { initialize as initializeUnleash, InMemStorageProvider, UnleashConfig } from 'unleash-client';
 import { LanguagesEnum } from '@gauzy/contracts';
 import { ConfigService, environment } from '@gauzy/config';
 import * as path from 'path';
@@ -136,14 +136,27 @@ import { PublicShareModule } from './public-share/public-share.module';
 import { TransformInterceptor } from './core/interceptors';
 
 const { unleashConfig } = environment;
+
 if (unleashConfig.url) {
-	const unleashInstanceConfig = {
+	const unleashInstanceConfig: UnleashConfig = {
 		appName: unleashConfig.appName,
 		url: unleashConfig.url,
 		instanceId: unleashConfig.instanceId,
 		refreshInterval: unleashConfig.refreshInterval,
-		metricsInterval: unleashConfig.metricsInterval
+		metricsInterval: unleashConfig.metricsInterval,
+
+		// we may disable Metrics completely in production or in demo env
+		disableMetrics: false,
+
+		// we may use Redis storage provider instead of in memory
+		storageProvider: new InMemStorageProvider()
 	};
+
+	if (unleashConfig.apiKey) {
+		unleashInstanceConfig.customHeaders = {
+			Authorization: unleashConfig.apiKey
+		}
+	}
 
 	console.log(`Using Unleash Config: ${JSON.stringify(unleashInstanceConfig)}`);
 
@@ -153,9 +166,17 @@ if (unleashConfig.url) {
 	instance.on('registered', (client) => {
 		console.log('Unleash Client Registered');
 	});
+
+	instance.on('error', console.error);
+	instance.on('warn', console.log);
+}
+else
+{
+	console.log('Unleash Client Not Registered. UNLEASH_API_URL configuration is not provided.');
 }
 
 const sentryIntegrations = [];
+
 sentryIntegrations.push(
 	// enable HTTP calls tracing
 	new SentryIntegrations.Http({ tracing: true })
@@ -164,6 +185,7 @@ sentryIntegrations.push(
 if (process.env.DB_TYPE === 'postgres') {
 	sentryIntegrations.push(new TrackingIntegrations.Postgres());
 }
+
 @Module({
 	imports: [
 		ServeStaticModule.forRootAsync({
