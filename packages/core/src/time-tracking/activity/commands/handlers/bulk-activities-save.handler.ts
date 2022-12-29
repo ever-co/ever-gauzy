@@ -1,7 +1,7 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { IActivity } from '@gauzy/contracts';
+import { IActivity, PermissionsEnum } from '@gauzy/contracts';
 import { isEmpty } from '@gauzy/common';
 import { Activity } from '../../activity.entity';
 import { BulkActivitiesSaveCommand } from '../bulk-activities-save.command';
@@ -22,24 +22,47 @@ export class BulkActivitiesSaveHandler
 
 	public async execute(command: BulkActivitiesSaveCommand): Promise<IActivity[]> {
 		const { input } = command;
+		let { employeeId, organizationId, activities = [] } = input;
 
 		const user = RequestContext.currentUser();
 		const tenantId = RequestContext.currentTenantId();
 
-		let { employeeId, organizationId, activities = [] } = input;
-		try {
-			const userId = RequestContext.currentUserId();
-			let employee = await this.employeeRepository.findOneByOrFail({
-				userId,
-				tenantId
-			});
-			employeeId = employee.id;
-			organizationId = isEmpty(organizationId) ? employee.organizationId : organizationId;
-		} catch (error) {
-			console.log('Error while finding logged in employee for create bulk activities', error);
+		/**
+		 * Check logged user does not have employee selection permission
+		 */
+		if (!RequestContext.hasPermission(
+			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+		)) {
+			try {
+				let employee = await this.employeeRepository.findOneByOrFail({
+					userId: user.id,
+					tenantId
+				});
+				employeeId = employee.id;
+				organizationId = employee.organizationId;
+			} catch (error) {
+				console.log(`Error while finding logged in employee for (${user.name}) create bulk activities`, error);
+			}
+		} else {
+			/*
+			* If employeeId not send from desktop timer request payload
+			*/
+			if (isEmpty(employeeId) && RequestContext.currentEmployeeId()) {
+				employeeId = RequestContext.currentEmployeeId();
+			}
 		}
 
-		console.log(`Empty Bulk App & URL's Activities For: ${user.name} : ${employeeId}`, activities.filter(
+		/*
+		 * If organization not found in request then assign current logged user organization
+		 */
+		if (isEmpty(organizationId)) {
+			let employee = await this.employeeRepository.findOneBy({
+				id: employeeId
+			});
+			organizationId = employee ? employee.organizationId : null;
+		}
+
+		console.log(`Empty bulk App & URL's activities for employee (${user.name}) : ${employeeId}`, activities.filter(
 			(activity: IActivity) => Object.keys(activity).length === 0
 		))
 
@@ -56,7 +79,7 @@ export class BulkActivitiesSaveHandler
 			return activity;
 		});
 
-		console.log('Activities should be insert into database:', { activities });
+		console.log(`Activities should be insert into database for employee (${user.name})`, { activities });
 		if (activities.length > 0) {
 			return await this.activityRepository.save(activities);
 		} else {
