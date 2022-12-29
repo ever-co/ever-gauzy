@@ -293,22 +293,22 @@ export class HeaderComponent extends TranslationBaseComponent
 				this.store.selectedEmployee = ALL_EMPLOYEES_SELECTED;
 			}
 		} else {
-			const employee = await firstValueFrom(
-				this.employeesService.getEmployeeById(
-					this.user.employeeId,
-					[]
-				)
-			);
-			if (isNotEmpty(employee)) {
-				this.store.selectedEmployee = {
-					id: employee.id,
-					firstName: this.user.firstName,
-					lastName: this.user.lastName,
-					fullName: this.user.name,
-					imageUrl: this.user.imageUrl
-				};
-			} else {
-				this.store.selectedEmployee = NO_EMPLOYEE_SELECTED;
+			if (this.isEmployee) {
+				const { employeeId } = this.user;
+				const employee = await firstValueFrom(
+					this.employeesService.getEmployeeById(employeeId)
+				);
+				if (isNotEmpty(employee)) {
+					this.store.selectedEmployee = {
+						id: employee.id,
+						firstName: this.user.firstName,
+						lastName: this.user.lastName,
+						fullName: this.user.name,
+						imageUrl: this.user.imageUrl
+					};
+				} else {
+					this.store.selectedEmployee = NO_EMPLOYEE_SELECTED;
+				}
 			}
 		}
 	}
