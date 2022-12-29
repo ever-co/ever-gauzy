@@ -80,8 +80,6 @@
   align-items: center;
   width: 1rem;
   height: 1rem;
-  margin-right: 10px;
-  margin-left: 10px;
 }
 
 .tag-label {
@@ -122,14 +120,16 @@ input {
   .ng-select .ng-select-container .ng-value-container {
     align-items: center;
     padding-left: 5px;
-    overflow: hidden;
+    overflow-x: overlay;
     text-overflow: ellipsis;
     white-space: nowrap;
     flex-wrap: initial;
+    gap: 4px;
   }
 }
 
 .text {
   overflow-x: hidden;
   text-overflow: ellipsis;
+  margin-left: 4px;
 }
