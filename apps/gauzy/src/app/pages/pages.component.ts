@@ -474,6 +474,9 @@ export class PagesComponent extends TranslationBaseComponent
 						link: '/pages/employees/approvals',
 						data: {
 							translationKey: 'MENU.APPROVALS',
+							permissionKeys: [
+								PermissionsEnum.REQUEST_APPROVAL_VIEW
+							],
 							featureKey: FeatureEnum.FEATURE_EMPLOYEE_APPROVAL,
 							add: '/pages/employees/approvals?openAddDialog=true'
 						}
