@@ -560,13 +560,11 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			timeRun: moment.duration(instantaneaous, 'seconds').format('hh:mm:ss', { trim: false })
 		});
 
-		if(seconds % 60 === 0){
-			console.log('Update today time...');
-			this.todayDuration$.next({
-				hours: this.formatingDuration('hours',  moment.duration(instantaneaous, 'seconds').hours()),
-				minutes: this.formatingDuration('minutes',  moment.duration(instantaneaous, 'seconds').minutes())
-			});
-		}
+		console.log('Update today time...');
+		this.todayDuration$.next({
+			hours: this.formatingDuration('hours',  moment.duration(instantaneaous, 'seconds').hours()),
+			minutes: this.formatingDuration('minutes',  moment.duration(instantaneaous, 'seconds').minutes())
+		});
 
 		if (seconds % 5 === 0) {
 			this.pingAw(null);
