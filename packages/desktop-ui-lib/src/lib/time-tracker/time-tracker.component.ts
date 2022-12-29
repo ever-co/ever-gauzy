@@ -548,6 +548,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		const seconds = moment.duration(value.second, 'seconds').seconds();
 		const minutes = moment.duration(value.second, 'seconds').minutes();
 		const hours = moment.duration(value.second, 'seconds').hours();
+		const instantaneaous = this._lastTotalWorkedTime + value.second;
+
 		this.timeRun.next({
 			second: seconds.toString().length > 1 ? `${seconds}` : `0${seconds}`,
 			minute: minutes.toString().length > 1 ? `${minutes}` : `0${minutes}`,
@@ -555,12 +557,15 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		});
 
 		this.electronService.ipcRenderer.send('update_tray_time_title', {
-			timeRun: moment.duration(this._lastTotalWorkedTime + value.second, 'seconds').format('hh:mm:ss', { trim: false })
+			timeRun: moment.duration(instantaneaous, 'seconds').format('hh:mm:ss', { trim: false })
 		});
 
 		if(seconds % 60 === 0){
 			console.log('Update today time...');
-			this.electronService.ipcRenderer.send('update_today_worked_time');
+			this.todayDuration$.next({
+				hours: this.formatingDuration('hours',  moment.duration(instantaneaous, 'seconds').hours()),
+				minutes: this.formatingDuration('minutes',  moment.duration(instantaneaous, 'seconds').minutes())
+			});
 		}
 
 		if (seconds % 5 === 0) {

@@ -504,13 +504,6 @@ export function ipcTimer(
 	ipcMain.on('update_timer_auth_config', (event, arg) => {
 		LocalStore.updateAuthSetting({...arg});
 	});
-
-	ipcMain.on('update_today_worked_time', (event, arg) => {
-		timeTrackerWindow.webContents.send(
-			'refresh_today_worked_time',
-			LocalStore.beforeRequestParams()
-		);
-	})
 }
 
 export function removeMainListener() {
@@ -526,9 +519,7 @@ export function removeMainListener() {
 		'get_last_screen_capture',
 		'update_app_setting',
 		'update_project_on',
-		'request_permission',
-		'update_today_worked_time',
-		'refresh_today_worked_time'
+		'request_permission'
 	]
 
 	mainListeners.forEach((listener) => {
