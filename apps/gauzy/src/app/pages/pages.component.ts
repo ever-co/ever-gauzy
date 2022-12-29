@@ -382,7 +382,11 @@ export class PagesComponent extends TranslationBaseComponent
 						icon: 'fas fa-list',
 						link: '/pages/jobs/search',
 						data: {
-							translationKey: 'MENU.JOBS_SEARCH'
+							translationKey: 'MENU.JOBS_SEARCH',
+							permissionKeys: [
+								PermissionsEnum.ORG_JOB_EMPLOYEE_VIEW,
+								PermissionsEnum.ORG_JOB_MATCHING_VIEW
+							]
 						}
 					},
 					{

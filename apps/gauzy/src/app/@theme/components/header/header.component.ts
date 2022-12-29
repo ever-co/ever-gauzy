@@ -64,24 +64,6 @@ import { ChangeDetectorRef } from '@angular/core';
 export class HeaderComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy, AfterViewInit {
 
-	hasPermissionE = false;
-	hasPermissionI = false;
-	hasPermissionP = false;
-	hasPermissionIn = false;
-	hasPermissionIEdit = false;
-	hasPermissionEEdit = false;
-	hasPermissionPEdit = false;
-	hasPermissionInEdit = false;
-	hasPermissionTask = false;
-	hasPermissionEmpEdit = false;
-	hasPermissionProjectAdd = false;
-	hasPermissionContactEdit = false;
-	hasPermissionTeamAdd = false;
-	hasPermissionContractEdit = false;
-	hasPermissionPaymentAddEdit = false;
-	hasPermissionTimesheetEdit = false;
-	hasPermissionCandidateEdit = false;
-	hasPermissionTimeTracker = false;
 	isEmployee = false;
 	isElectron: boolean = environment.IS_ELECTRON;
 	isDemo: boolean = environment.DEMO;
@@ -141,7 +123,7 @@ export class HeaderComponent extends TranslationBaseComponent
 				debounceTime(1300),
 				tap(() => this.checkEmployeeSelectorVisibility()),
 				tap(() => this.checkProjectSelectorVisibility()),
-				tap(() => this._loadRolePermissions()),
+				tap(() => this._loadContextMenus()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -238,7 +220,7 @@ export class HeaderComponent extends TranslationBaseComponent
 				this.cd.detectChanges();
 			});
 		this._applyTranslationOnContextMenu();
-		this._loadRolePermissions();
+		this._loadContextMenus();
 	}
 
 	/**
@@ -451,64 +433,7 @@ export class HeaderComponent extends TranslationBaseComponent
 			bool !== undefined ? bool : !this.showExtraActions;
 	}
 
-	_loadRolePermissions() {
-		this.store.userRolePermissions$
-			.pipe(untilDestroyed(this))
-			.subscribe(() => {
-				this.hasPermissionE = this.store.hasPermission(
-					PermissionsEnum.ORG_EXPENSES_VIEW
-				);
-				this.hasPermissionI = this.store.hasPermission(
-					PermissionsEnum.ORG_INCOMES_VIEW
-				);
-				this.hasPermissionP = this.store.hasPermission(
-					PermissionsEnum.ORG_PROPOSALS_VIEW
-				);
-				this.hasPermissionIn = this.store.hasPermission(
-					PermissionsEnum.INVOICES_VIEW
-				);
-				this.hasPermissionTask = this.store.hasPermission(
-					PermissionsEnum.ORG_CANDIDATES_TASK_EDIT
-				);
-				this.hasPermissionEEdit = this.store.hasPermission(
-					PermissionsEnum.ORG_EXPENSES_EDIT
-				);
-				this.hasPermissionIEdit = this.store.hasPermission(
-					PermissionsEnum.ORG_INCOMES_EDIT
-				);
-				this.hasPermissionPEdit = this.store.hasPermission(
-					PermissionsEnum.ORG_PROPOSALS_EDIT
-				);
-				this.hasPermissionInEdit = this.store.hasPermission(
-					PermissionsEnum.INVOICES_EDIT
-				);
-				this.hasPermissionEmpEdit = this.store.hasPermission(
-					PermissionsEnum.ORG_EMPLOYEES_EDIT
-				);
-				this.hasPermissionProjectAdd = this.store.hasAnyPermission(
-					PermissionsEnum.ORG_PROJECT_ADD,
-					PermissionsEnum.ALL_ORG_EDIT
-				);
-				this.hasPermissionTeamAdd = this.store.hasAnyPermission(
-					PermissionsEnum.ORG_TEAM_ADD,
-					PermissionsEnum.ALL_ORG_EDIT
-				);
-				this.hasPermissionContactEdit = this.store.hasPermission(
-					PermissionsEnum.ORG_CONTACT_EDIT
-				);
-				this.hasPermissionContractEdit = this.store.hasPermission(
-					PermissionsEnum.ORG_CONTRACT_EDIT
-				);
-				this.hasPermissionPaymentAddEdit = this.store.hasPermission(
-					PermissionsEnum.ORG_PAYMENT_ADD_EDIT
-				);
-				this.hasPermissionTimesheetEdit = this.store.hasPermission(
-					PermissionsEnum.TIMESHEET_EDIT_TIME
-				);
-				this.hasPermissionCandidateEdit = this.store.hasPermission(
-					PermissionsEnum.ORG_CANDIDATES_EDIT
-				);
-			});
+	private _loadContextMenus() {
 		this.createContextMenu = [
 			...(this.store.hasAnyPermission(PermissionsEnum.TIME_TRACKER) ? [
 				{
@@ -651,7 +576,7 @@ export class HeaderComponent extends TranslationBaseComponent
 				tap(() => {
 					this.createContextMenu = [];
 					this.supportContextMenu = [];
-					this._loadRolePermissions();
+					this._loadContextMenus();
 				}),
 				untilDestroyed(this)
 			)
