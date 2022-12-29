@@ -207,6 +207,7 @@ export class CreateTimeSlotHandler
 		*/
 		let [mergedTimeSlot] = await this.commandBus.execute(
 			new TimeSlotMergeCommand(
+				organizationId,
 				employeeId,
 				minDate,
 				maxDate
