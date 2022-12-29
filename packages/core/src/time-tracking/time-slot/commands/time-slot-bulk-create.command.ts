@@ -6,7 +6,7 @@ export class TimeSlotBulkCreateCommand implements ICommand {
 
 	constructor(
 		public readonly slots: ITimeSlot[],
-		public readonly employeeId: string,
-		public readonly organizationId: string
+		public readonly employeeId: ITimeSlot['employeeId'],
+		public readonly organizationId: ITimeSlot['organizationId']
 	) {}
 }
