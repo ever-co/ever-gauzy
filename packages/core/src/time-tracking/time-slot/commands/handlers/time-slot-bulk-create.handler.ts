@@ -103,7 +103,12 @@ export class TimeSlotBulkCreateHandler
 			return a > b ? a : b;
 		});
 		return await this.commandBus.execute(
-			new TimeSlotMergeCommand(employeeId, minDate, maxDate)
+			new TimeSlotMergeCommand(
+				organizationId,
+				employeeId,
+				minDate,
+				maxDate
+			)
 		);
 	}
 }
