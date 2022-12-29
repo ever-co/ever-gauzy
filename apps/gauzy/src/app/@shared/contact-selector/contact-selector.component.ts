@@ -67,6 +67,14 @@ export class ContactSelectorComponent implements AfterViewInit, OnInit, OnDestro
 	onTouched: any = () => {};
 
 	ngOnInit() {
+		this.hasEditContact$ = this.store.userRolePermissions$.pipe(
+			map(() =>
+				this.store.hasPermission(PermissionsEnum.ORG_CONTACT_EDIT)
+			)
+		);
+	}
+
+	ngAfterViewInit(): void {
 		this.subject$
 			.pipe(
 				tap(() => this.getContacts()),
@@ -82,14 +90,6 @@ export class ContactSelectorComponent implements AfterViewInit, OnInit, OnDestro
 				untilDestroyed(this)
 			)
 			.subscribe();
-	}
-
-	ngAfterViewInit(): void {
-		this.hasEditContact$ = this.store.userRolePermissions$.pipe(
-			map(() =>
-				this.store.hasPermission(PermissionsEnum.ORG_CONTACT_EDIT)
-			)
-		);
 	}
 
 	async getContacts() {

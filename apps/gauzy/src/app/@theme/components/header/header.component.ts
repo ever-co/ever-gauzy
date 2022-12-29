@@ -510,104 +510,119 @@ export class HeaderComponent extends TranslationBaseComponent
 				);
 			});
 		this.createContextMenu = [
-			{
-				title: this.getTranslation('CONTEXT_MENU.TIMER'),
-				icon: 'clock-outline',
-				hidden: !this.isEmployee || this.isElectron,
-				data: {
-					action: this.actions.START_TIMER //This opens the timer popup in the header, managed by menu.itemClick TOO: Start the timer also
+			...(this.store.hasAnyPermission(PermissionsEnum.TIME_TRACKER) ? [
+				{
+					title: this.getTranslation('CONTEXT_MENU.TIMER'),
+					icon: 'clock-outline',
+					hidden: !this.isEmployee || this.isElectron,
+					data: {
+						action: this.actions.START_TIMER //This opens the timer popup in the header, managed by menu.itemClick TOO: Start the timer also
+					}
 				}
-			},
+			] : []),
 			// TODO: divider
-			{
-				title: this.getTranslation('CONTEXT_MENU.ADD_INCOME'),
-				icon: 'plus-circle-outline',
-				link: 'pages/accounting/income',
-				hidden: !this.hasPermissionI || !this.hasPermissionIEdit
-			},
-			{
-				title: this.getTranslation('CONTEXT_MENU.ADD_EXPENSE'),
-				icon: 'minus-circle-outline',
-				link: 'pages/accounting/expenses',
-				hidden: !this.hasPermissionE || !this.hasPermissionEEdit
-			},
+			...(this.store.hasAnyPermission(PermissionsEnum.ORG_INCOMES_EDIT, PermissionsEnum.ALL_ORG_EDIT) ? [
+				{
+					title: this.getTranslation('CONTEXT_MENU.ADD_INCOME'),
+					icon: 'plus-circle-outline',
+					link: 'pages/accounting/income'
+				}
+			] : []),
+			...(this.store.hasAnyPermission(PermissionsEnum.ORG_EXPENSES_EDIT, PermissionsEnum.ALL_ORG_EDIT) ? [
+				{
+					title: this.getTranslation('CONTEXT_MENU.ADD_EXPENSE'),
+					icon: 'minus-circle-outline',
+					link: 'pages/accounting/expenses'
+				}
+			] : []),
 			// TODO: divider
-			{
-				title: this.getTranslation('CONTEXT_MENU.INVOICE'),
-				icon: 'archive-outline',
-				link: 'pages/accounting/invoices/add',
-				hidden: !this.hasPermissionI || !this.hasPermissionIEdit
-			},
-			{
-				title: this.getTranslation('CONTEXT_MENU.ESTIMATE'),
-				icon: 'file-outline',
-				link: 'pages/accounting/invoices/estimates/add',
-				hidden: !this.hasPermissionInEdit
-			},
-			{
-				title: this.getTranslation('CONTEXT_MENU.PAYMENT'),
-				icon: 'clipboard-outline',
-				link: 'pages/accounting/payments',
-				hidden: !this.hasPermissionPaymentAddEdit
-			},
-			{
-				title: this.getTranslation('CONTEXT_MENU.TIME_LOG'),
-				icon: 'clock-outline',
-				link: 'pages/employees/timesheets/daily',
-				hidden: !this.hasPermissionTimesheetEdit
-			},
-			{
-				title: this.getTranslation('CONTEXT_MENU.CANDIDATE'),
-				icon: 'person-done-outline',
-				link: 'pages/employees/candidates',
-				hidden: !this.hasPermissionCandidateEdit
-			},
-			{
-				title: this.getTranslation('CONTEXT_MENU.PROPOSAL'),
-				icon: 'paper-plane-outline',
-				link: 'pages/sales/proposals/register',
-				hidden: !this.hasPermissionP || !this.hasPermissionPEdit
-			},
-			{
-				title: this.getTranslation('CONTEXT_MENU.CONTRACT'),
-				icon: 'file-text-outline',
-				link: 'pages/integrations/upwork',
-				hidden: !this.hasPermissionContractEdit
-			},
+			...(this.store.hasAnyPermission(PermissionsEnum.INVOICES_EDIT, PermissionsEnum.ALL_ORG_EDIT) ? [
+				{
+					title: this.getTranslation('CONTEXT_MENU.INVOICE'),
+					icon: 'archive-outline',
+					link: 'pages/accounting/invoices/add'
+				}
+			] : []),
+			...(this.store.hasAnyPermission(PermissionsEnum.ESTIMATES_EDIT, PermissionsEnum.ALL_ORG_EDIT) ? [
+				{
+					title: this.getTranslation('CONTEXT_MENU.ESTIMATE'),
+					icon: 'file-outline',
+					link: 'pages/accounting/invoices/estimates/add'
+				}
+			] : []),
+			...(this.store.hasAnyPermission(PermissionsEnum.ORG_PAYMENT_ADD_EDIT, PermissionsEnum.ALL_ORG_EDIT) ? [
+				{
+					title: this.getTranslation('CONTEXT_MENU.PAYMENT'),
+					icon: 'clipboard-outline',
+					link: 'pages/accounting/payments'
+				}
+			] : []),
+			...(this.store.hasAnyPermission(PermissionsEnum.TIMESHEET_EDIT_TIME, PermissionsEnum.ALL_ORG_EDIT) ? [
+				{
+					title: this.getTranslation('CONTEXT_MENU.TIME_LOG'),
+					icon: 'clock-outline',
+					link: 'pages/employees/timesheets/daily'
+				}
+			] : []),
+			...(this.store.hasAnyPermission(PermissionsEnum.ORG_CANDIDATES_EDIT, PermissionsEnum.ALL_ORG_EDIT) ? [
+				{
+					title: this.getTranslation('CONTEXT_MENU.CANDIDATE'),
+					icon: 'person-done-outline',
+					link: 'pages/employees/candidates'
+				}
+			] : []),
+			...(this.store.hasAnyPermission(PermissionsEnum.ORG_PROPOSALS_EDIT, PermissionsEnum.ALL_ORG_EDIT) ? [
+				{
+					title: this.getTranslation('CONTEXT_MENU.PROPOSAL'),
+					icon: 'paper-plane-outline',
+					link: 'pages/sales/proposals/register'
+				}
+			] : []),
+			...(this.store.hasAnyPermission(PermissionsEnum.ORG_CONTRACT_EDIT, PermissionsEnum.ALL_ORG_EDIT) ? [
+				{
+					title: this.getTranslation('CONTEXT_MENU.CONTRACT'),
+					icon: 'file-text-outline',
+					link: 'pages/integrations/upwork'
+				}
+			] : []),
 			// TODO: divider
-			{
-				title: this.getTranslation('CONTEXT_MENU.TEAM'),
-				icon: 'people-outline',
-				link: `pages/organization/teams`,
-				hidden: !this.hasPermissionTeamAdd
-			},
-			{
-				title: this.getTranslation('CONTEXT_MENU.TASK'),
-				icon: 'calendar-outline',
-				link: 'pages/tasks/dashboard',
-				hidden: !this.hasPermissionTask
-			},
-			{
-				title: this.getTranslation('CONTEXT_MENU.CONTACT'),
-				icon: 'person-done-outline',
-				link: `pages/contacts`,
-				hidden: !this.hasPermissionContactEdit
-			},
-			{
-				title: this.getTranslation('CONTEXT_MENU.PROJECT'),
-				icon: 'color-palette-outline',
-				link: `pages/organization/projects`,
-				hidden: !this.hasPermissionProjectAdd
-			},
+			...(this.store.hasAnyPermission(PermissionsEnum.ORG_TEAM_ADD, PermissionsEnum.ALL_ORG_EDIT) ? [
+				{
+					title: this.getTranslation('CONTEXT_MENU.TEAM'),
+					icon: 'people-outline',
+					link: `pages/organization/teams`
+				}
+			] : []),
+			...(this.store.hasAnyPermission(PermissionsEnum.ORG_TASK_EDIT, PermissionsEnum.ALL_ORG_EDIT) ? [
+				{
+					title: this.getTranslation('CONTEXT_MENU.TASK'),
+					icon: 'calendar-outline',
+					link: 'pages/tasks/dashboard'
+				}
+			] : []),
+			...(this.store.hasAnyPermission(PermissionsEnum.ORG_CONTACT_EDIT, PermissionsEnum.ALL_ORG_EDIT) ? [
+				{
+					title: this.getTranslation('CONTEXT_MENU.CONTACT'),
+					icon: 'person-done-outline',
+					link: `pages/contacts`
+				}
+			] : []),
+			...(this.store.hasAnyPermission(PermissionsEnum.ORG_PROJECT_ADD, PermissionsEnum.ALL_ORG_EDIT) ? [
+				{
+					title: this.getTranslation('CONTEXT_MENU.PROJECT'),
+					icon: 'color-palette-outline',
+					link: `pages/organization/projects`
+				}
+			] : []),
 			// TODO: divider
-			{
-				title: this.getTranslation('CONTEXT_MENU.ADD_EMPLOYEE'),
-				icon: 'people-outline',
-				link: 'pages/employees',
-				hidden: !this.hasPermissionEmpEdit
-			}
+			...(this.store.hasAnyPermission(PermissionsEnum.ORG_EMPLOYEES_EDIT, PermissionsEnum.ALL_ORG_EDIT) ? [
+				{
+					title: this.getTranslation('CONTEXT_MENU.ADD_EMPLOYEE'),
+					icon: 'people-outline',
+					link: 'pages/employees'
+				}
+			] : [])
 		];
-
 		this.supportContextMenu = [
 			{
 				title: this.getTranslation('CONTEXT_MENU.CHAT'),
