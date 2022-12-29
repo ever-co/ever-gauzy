@@ -21,6 +21,6 @@ export class DialogAcknowledgeInactivity
 	private get _activityProofDuration(): string {
 		const auth = LocalStore.getStore('auth');
 		const res = auth ? auth.activityProofDuration : 1;
-		return res + 'minute' + (res > 1 ? 's' : '');
+		return res + ' minute' + (res > 1 ? 's' : '');
 	}
 }
