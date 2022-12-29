@@ -169,16 +169,24 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 		return slots;
 	}
 
-	async bulkCreateOrUpdate(slots) {
+	async bulkCreateOrUpdate(
+		slots: ITimeSlot[],
+		employeeId: ITimeSlot['employeeId'],
+		organizationId: ITimeSlot['organizationId'],
+	) {
 		return await this.commandBus.execute(
-			new TimeSlotBulkCreateOrUpdateCommand(slots)
+			new TimeSlotBulkCreateOrUpdateCommand(
+				slots,
+				employeeId,
+				organizationId
+			)
 		);
 	}
 
 	async bulkCreate(
 		slots: ITimeSlot[],
-		employeeId: string,
-		organizationId: string
+		employeeId: ITimeSlot['employeeId'],
+		organizationId: ITimeSlot['organizationId'],
 	) {
 		return await this.commandBus.execute(
 			new TimeSlotBulkCreateCommand(

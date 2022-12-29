@@ -20,6 +20,7 @@ import * as fs from 'fs';
 import { FileStorageProviderEnum, IScreenshot, PermissionsEnum } from '@gauzy/contracts';
 import { Screenshot } from './screenshot.entity';
 import { ScreenshotService } from './screenshot.service';
+import { RequestContext } from './../../core/context';
 import { FileStorage, UploadedFileStorage } from '../../core/file-storage';
 import { tempFile } from '../../core/utils';
 import { LazyFileInterceptor } from './../../core/interceptors';
@@ -70,7 +71,7 @@ export class ScreenshotController {
 		console.log('Screenshot Http Request', {
 			entity
 		});
-
+		const user = RequestContext.currentUser();
 		const provider = new FileStorage().getProvider();
 		let thumb;
 		try {
@@ -96,7 +97,7 @@ export class ScreenshotController {
 			await fs.promises.unlink(outputFile);
 
 			thumb = await provider.putFile(data, path.join(thumbDir, thumbName));
-			console.log(`Screenshot Created THumb:`, thumb);
+			console.log(`Screenshot thumb created for employee (${user.name})`, thumb);
 		} catch (error) {
 			console.log('Error while uploading screenshot into file storage provider:', error);
 		}
@@ -108,10 +109,10 @@ export class ScreenshotController {
 			entity.recordedAt = entity.recordedAt ? entity.recordedAt : new Date();
 
 			const screenshot = await this.screenshotService.create(entity);
-			console.log(`Screenshot Created API:`, screenshot);
+			console.log(`Screenshot created for employee (${user.name})`, screenshot);
 			return this.screenshotService.findOneByIdString(screenshot.id);
 		} catch (error) {
-			console.log('Error while creating screenshot for TimeSlot:', error);
+			console.log(`Error while creating screenshot for employee (${user.name})`, error);
 		}
 	}
 
