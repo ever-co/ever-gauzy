@@ -382,7 +382,11 @@ export class PagesComponent extends TranslationBaseComponent
 						icon: 'fas fa-list',
 						link: '/pages/jobs/search',
 						data: {
-							translationKey: 'MENU.JOBS_SEARCH'
+							translationKey: 'MENU.JOBS_SEARCH',
+							permissionKeys: [
+								PermissionsEnum.ORG_JOB_EMPLOYEE_VIEW,
+								PermissionsEnum.ORG_JOB_MATCHING_VIEW
+							]
 						}
 					},
 					{
@@ -437,8 +441,11 @@ export class PagesComponent extends TranslationBaseComponent
 						pathMatch: 'prefix',
 						data: {
 							translationKey: 'MENU.TIME_ACTIVITY',
-							featureKey:
-								FeatureEnum.FEATURE_EMPLOYEE_TIME_ACTIVITY
+							permissionKeys: [
+								PermissionsEnum.ADMIN_DASHBOARD_VIEW,
+								PermissionsEnum.TIME_TRACKER
+							],
+							featureKey: FeatureEnum.FEATURE_EMPLOYEE_TIME_ACTIVITY
 						}
 					},
 					{
@@ -448,6 +455,10 @@ export class PagesComponent extends TranslationBaseComponent
 						pathMatch: 'prefix',
 						data: {
 							translationKey: 'MENU.TIMESHEETS',
+							permissionKeys: [
+								PermissionsEnum.ADMIN_DASHBOARD_VIEW,
+								PermissionsEnum.TIME_TRACKER
+							],
 							featureKey: FeatureEnum.FEATURE_EMPLOYEE_TIMESHEETS
 						}
 					},
@@ -467,6 +478,9 @@ export class PagesComponent extends TranslationBaseComponent
 						link: '/pages/employees/approvals',
 						data: {
 							translationKey: 'MENU.APPROVALS',
+							permissionKeys: [
+								PermissionsEnum.REQUEST_APPROVAL_VIEW
+							],
 							featureKey: FeatureEnum.FEATURE_EMPLOYEE_APPROVAL,
 							add: '/pages/employees/approvals?openAddDialog=true'
 						}

@@ -141,9 +141,9 @@ export class EmployeesService {
 
 	/**
 	 * Delete employee
-	 * 
-	 * @param id 
-	 * @returns 
+	 *
+	 * @param id
+	 * @returns
 	 */
 	delete(
 		id: IEmployee['id'],
@@ -158,9 +158,9 @@ export class EmployeesService {
 
 	/**
 	 * Resort deleted employee
-	 * 
-	 * @param id 
-	 * @returns 
+	 *
+	 * @param id
+	 * @returns
 	 */
 	resort(
 		id: IEmployee['id'],
