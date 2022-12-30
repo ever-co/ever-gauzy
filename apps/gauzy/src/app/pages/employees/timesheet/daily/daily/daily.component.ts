@@ -151,7 +151,7 @@ export class DailyComponent extends BaseSelectorFilterComponent
 	}
 
 	/**
-	 *
+	 * Get daily timesheet logs
 	 * @returns
 	 */
 	async getDailyTimesheetLogs() {
