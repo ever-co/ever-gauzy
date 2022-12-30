@@ -207,7 +207,7 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 		);
 	}
 
-	async update(id: string, request: TimeSlot) {
+	async update(id: TimeSlot['id'], request: TimeSlot) {
 		return await this.commandBus.execute(
 			new UpdateTimeSlotCommand(id, request)
 		);
