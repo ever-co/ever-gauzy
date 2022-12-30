@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy, AfterViewInit, Input, ViewChild } from '@angular/core';
-import { BehaviorSubject, combineLatest, debounceTime, of as observableOf, Subject, switchMap, take } from 'rxjs';
+import { BehaviorSubject, combineLatest, of as observableOf, Subject, switchMap, take } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { DaterangepickerDirective as DateRangePickerDirective, LocaleConfig } from 'ngx-daterangepicker-material';
@@ -248,7 +248,6 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 		this.range$
 			.pipe(
 				distinctUntilChange(),
-				debounceTime(100),
 				tap((range: IDateRangePicker) => {
 					this.dateRangePickerBuilderService.selectedDateRange = range;
 				}),

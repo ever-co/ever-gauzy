@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NbDialogService, NbPopoverDirective } from '@nebular/theme';
-import { debounceTime, filter, tap } from 'rxjs/operators';
+import { filter, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs/internal/Observable';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import { chain, pick } from 'underscore';
@@ -12,7 +12,7 @@ import {
 	ITimeLogFilters,
 	PermissionsEnum
 } from '@gauzy/contracts';
-import { isEmpty } from '@gauzy/common-angular';
+import { distinctUntilChange, isEmpty } from '@gauzy/common-angular';
 import { TranslateService } from '@ngx-translate/core';
 import { moment } from './../../../../../@core/moment-extend';
 import { DateRangePickerBuilderService, Store } from './../../../../../@core/services';
@@ -65,7 +65,7 @@ export class WeeklyComponent extends BaseSelectorFilterComponent
 	ngOnInit() {
 		this.subject$
 			.pipe(
-				debounceTime(200),
+				filter(() => !!this.organization),
 				tap(() => this.updateWeekDayList()),
 				tap(() => this.prepareRequest()),
 				untilDestroyed(this)
@@ -73,16 +73,16 @@ export class WeeklyComponent extends BaseSelectorFilterComponent
 			.subscribe();
 		this.payloads$
 			.pipe(
-				debounceTime(200),
+				distinctUntilChange(),
 				filter((payloads: ITimeLogFilters) => !!payloads),
-				tap(() => this.getLogs()),
+				tap(() => this.getWeeklyTimesheetLogs()),
 				untilDestroyed(this)
 			)
 			.subscribe();
 		this.timesheetService.updateLog$
 			.pipe(
 				filter((val) => val === true),
-				tap(() => this.getLogs()),
+				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -119,7 +119,7 @@ export class WeeklyComponent extends BaseSelectorFilterComponent
 	 * @returns
 	 */
 	prepareRequest() {
-		if (!this.organization || isEmpty(this.filters)) {
+		if (isEmpty(this.request) || isEmpty(this.filters)) {
 			return;
 		}
 		const appliedFilter = pick(
@@ -135,12 +135,15 @@ export class WeeklyComponent extends BaseSelectorFilterComponent
 		this.payloads$.next(request);
 	}
 
-	async getLogs() {
-		if (!this.organization || isEmpty(this.filters)) {
+	/**
+	 * Get weekly timesheet logs
+	 * @returns
+	 */
+	async getWeeklyTimesheetLogs() {
+		if (!this.organization || isEmpty(this.request)) {
 			return;
 		}
 		const payloads = this.payloads$.getValue();
-
 		this.loading = true;
 		this.timesheetService
 			.getTimeLogs(payloads, ['project'])
