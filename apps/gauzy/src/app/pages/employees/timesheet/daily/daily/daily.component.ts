@@ -380,12 +380,14 @@ export class DailyComponent extends BaseSelectorFilterComponent
 	 */
 	private _createContextMenus() {
 		this.contextMenus = [
-			{
-				title: this.getTranslation('TIMESHEET.DELETE'),
-				data: {
-					action: 'DELETE'
+			...(this.store.hasAnyPermission(PermissionsEnum.ALLOW_DELETE_TIME) ? [
+				{
+					title: this.getTranslation('TIMESHEET.DELETE'),
+					data: {
+						action: 'DELETE'
+					}
 				}
-			}
+			] : []),
 		];
 	}
 

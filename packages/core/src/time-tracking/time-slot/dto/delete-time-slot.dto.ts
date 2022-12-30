@@ -6,7 +6,7 @@ import { TenantOrganizationBaseDTO } from "./../../../core/dto";
 export class DeleteTimeSlotDTO extends TenantOrganizationBaseDTO
 	implements IDeleteTimeSlot {
 
-	@ApiProperty({ type: () => Array, readOnly: true })
+	@ApiProperty({ type: () => Array })
 	@ArrayNotEmpty()
 	readonly ids: string[] = [];
 }
