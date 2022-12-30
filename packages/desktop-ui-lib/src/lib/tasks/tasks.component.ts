@@ -124,7 +124,7 @@ export class TasksComponent implements OnInit {
 
 	public async save(): Promise<void> {
 		if (this.form.invalid) return;
-		const { estimateDays, estimateHours, estimateMinutes, tags, project } =
+		const { estimateDays, estimateHours, estimateMinutes, project } =
 			this.form.value;
 		const days = estimateDays ? estimateDays * 24 * 3600 : 0;
 		const hours = estimateHours ? estimateHours * 3600 : 1;
