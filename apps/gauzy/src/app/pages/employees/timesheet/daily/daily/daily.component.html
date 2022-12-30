@@ -226,21 +226,25 @@
 
 <ng-template #actionButtons let-selectedItem>
 	<div class="actions">
-		<ng-container *ngIf="isCheckboxSelected()">
-			<button
-				outline
-				nbButton
-				status="primary"
-				class="action"
-				size="small"
-				[title]="'TIMESHEET.BULK_ACTION' | translate"
-				[nbContextMenu]="contextMenus"
-				nbContextMenuTag="time-logs-bulk-action"
-			>
-				{{ 'TIMESHEET.BULK_ACTION' | translate }}
-				<nb-icon icon="chevron-down-outline"></nb-icon>
-			</button>
-		</ng-container>
+		<ng-template [ngxPermissionsOnly]="PermissionsEnum.ALLOW_DELETE_TIME">
+			<ng-template ngxTimeTrackingAuthorized [permission]="PermissionsEnum.ALLOW_DELETE_TIME">
+				<ng-template [ngIf]="isCheckboxSelected() && contextMenus?.length > 0">
+					<button
+						outline
+						nbButton
+						status="primary"
+						class="action"
+						size="small"
+						[title]="'TIMESHEET.BULK_ACTION' | translate"
+						[nbContextMenu]="contextMenus"
+						nbContextMenuTag="time-logs-bulk-action"
+					>
+						{{ 'TIMESHEET.BULK_ACTION' | translate }}
+						<nb-icon icon="chevron-down-outline"></nb-icon>
+					</button>
+				</ng-template>
+			</ng-template>
+		</ng-template>
 		<ng-container *ngIf="selectedItem">
 			<button
 				nbButton
