@@ -10,12 +10,12 @@ import { TranslationBaseComponent } from './../../../../@shared/language-base/tr
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-layout',
+	selector: 'ngx-activity-layout',
 	templateUrl: './layout.component.html',
 	styleUrls: ['./layout.component.scss'],
 	providers: [RouteUtil]
 })
-export class LayoutComponent extends TranslationBaseComponent
+export class ActivityLayoutComponent extends TranslationBaseComponent
 	implements AfterContentChecked, OnInit, OnDestroy {
 
 	public title: string;
