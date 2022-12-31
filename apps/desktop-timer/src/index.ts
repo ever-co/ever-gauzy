@@ -126,7 +126,8 @@ const serverGauzy = null;
 const updater = new DesktopUpdater({
 	repository: 'ever-gauzy-desktop-timer',
 	owner: 'ever-co',
-	typeRelease: 'releases'
+	typeRelease: 'releases',
+	primeRepository: 'ever-gauzy'
 });
 args.some((val) => val === '--serve');
 let gauzyWindow: BrowserWindow = null;
