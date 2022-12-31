@@ -1,7 +1,7 @@
 <nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
 	<nb-card-header class="main-header pb-0">
-		<ng-container *ngIf="!showAddCard"
-			><div class="main-header">
+		<ng-container *ngIf="!showAddCard">
+			<div class="main-header">
 				<h4>
 					<ngx-header-title>
 						{{ 'ORGANIZATIONS_PAGE.PROJECTS' | translate }}
@@ -70,51 +70,50 @@
 	</nb-card-body>
 </nb-card>
 <ng-template #actionButtons>
-	<ng-container *ngxPermissionsOnly="ALL_ORG_EDIT">
+	<ng-template [ngxPermissionsOnly]="['ALL_ORG_EDIT', 'ORG_PROJECT_EDIT', 'ORG_PROJECT_DELETE']">
 		<div class="actions">
-			<button
-				(click)="editProject(selectedProject)"
-				nbButton
-				status="basic"
-				*ngIf="!showAddCard"
-				class="action primary"
-				[disabled]="disableButton"
-				size="small"
-			>
-				<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
-				{{ 'BUTTONS.EDIT' | translate }}
-			</button>
-			<button
-				(click)="
-					removeProject(selectedProject.id, selectedProject.name)
-				"
-				nbButton
-				*ngIf="!showAddCard"
-				status="basic"
-				class="action"
-				[disabled]="disableButton"
-				size="small"
-				[nbTooltip]="'BUTTONS.DELETE' | translate"
-			>
-				<nb-icon status="danger" icon="trash-2-outline"> </nb-icon>
-			</button>
+			<ng-template [ngxPermissionsOnly]="['ALL_ORG_EDIT', 'ORG_PROJECT_EDIT']">
+				<button
+					nbButton
+					status="basic"
+					class="action primary"
+					size="small"
+					(click)="editProject(selectedProject)"
+					[disabled]="disableButton"
+				>
+					<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
+					{{ 'BUTTONS.EDIT' | translate }}
+				</button>
+			</ng-template>
+			<ng-template [ngxPermissionsOnly]="['ALL_ORG_EDIT', 'ORG_PROJECT_DELETE']">
+				<button
+					[nbTooltip]="'BUTTONS.DELETE' | translate"
+					nbButton
+					status="basic"
+					class="action"
+					size="small"
+					(click)="removeProject(selectedProject)"
+					[disabled]="disableButton"
+				>
+					<nb-icon status="danger" icon="trash-2-outline"> </nb-icon>
+				</button>
+			</ng-template>
 		</div>
-	</ng-container>
+	</ng-template>
 </ng-template>
 <ng-template #visibleButton>
-	<ng-container *ngxPermissionsOnly="ALL_ORG_EDIT"
-		><button
-			*ngIf="!showAddCard"
+	<ng-template [ngxPermissionsOnly]="['ALL_ORG_EDIT', 'ORG_PROJECT_ADD']">
+		<button
 			class="action"
 			(click)="showAddCard = !showAddCard"
 			nbButton
 			status="success"
 			size="small"
 		>
-			<nb-icon icon="plus-outline"></nb-icon
-			>{{ 'BUTTONS.ADD' | translate }}
+			<nb-icon icon="plus-outline"></nb-icon>
+			{{ 'BUTTONS.ADD' | translate }}
 		</button>
-	</ng-container>
+	</ng-template>
 </ng-template>
 <ng-template #gridLayout>
 	<ga-card-grid

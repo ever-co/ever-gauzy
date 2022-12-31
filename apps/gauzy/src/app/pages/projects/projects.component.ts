@@ -183,7 +183,13 @@ export class ProjectsComponent extends PaginationFilterBaseComponent
 			.subscribe();
 	}
 
-	async removeProject(id?: string, name?: string) {
+	async removeProject(selectedItem: IOrganizationProject) {
+		if (selectedItem) {
+			this.selectProject({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
 		const result = await firstValueFrom(
 			this.dialogService.open(DeleteConfirmationComponent, {
 				context: {
@@ -191,26 +197,22 @@ export class ProjectsComponent extends PaginationFilterBaseComponent
 				}
 			}).onClose
 		);
-
 		if (result) {
+			const { id, name } = this.selectedProject;
 			await this.organizationProjectsService
-				.delete(this.selectedProject ? this.selectedProject.id : id)
+				.delete(id)
 				.then(() => {
 					this.organizationProjectStore.organizationProjectAction = {
 						project: this.selectedProject,
 						action: CrudActionEnum.DELETED
 					};
 				});
-
 			this.toastrService.success(
 				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.REMOVE_PROJECT',
 				{
-					name: this.selectedProject
-						? this.selectedProject.name
-						: name
+					name
 				}
 			);
-
 			this.cancel();
 			this._refresh$.next(true);
 			this.project$.next(true);
