@@ -153,7 +153,7 @@ export class ProjectsComponent extends PaginationFilterBaseComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.loadSmartTable();
+		this._loadSmartTableSettings();
 		this._applyTranslationOnSmartTable();
 	}
 
@@ -169,7 +169,7 @@ export class ProjectsComponent extends PaginationFilterBaseComponent
 					(componentLayout) =>
 						(this.dataLayoutStyle = componentLayout)
 				),
-				tap(() => this.loadSmartTable()),
+				tap(() => this._loadSmartTableSettings()),
 				tap(() => this.refreshPagination()),
 				filter(
 					(componentLayout) =>
@@ -211,6 +211,7 @@ export class ProjectsComponent extends PaginationFilterBaseComponent
 				}
 			);
 
+			this.cancel();
 			this._refresh$.next(true);
 			this.project$.next(true);
 		}
@@ -374,7 +375,7 @@ export class ProjectsComponent extends PaginationFilterBaseComponent
 			  );
 	}
 
-	loadSmartTable() {
+	private _loadSmartTableSettings() {
 		const pagination = this.getPagination();
 		this.settingsSmartTable = {
 			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.PROJECT'),
@@ -506,12 +507,13 @@ export class ProjectsComponent extends PaginationFilterBaseComponent
 		this.selectedProject = isSelected ? data : null;
 	}
 
-	_applyTranslationOnSmartTable() {
+	private _applyTranslationOnSmartTable() {
 		this.translateService.onLangChange
-			.pipe(untilDestroyed(this))
-			.subscribe(() => {
-				this.loadSmartTable();
-			});
+			.pipe(
+				tap(() => this._loadSmartTableSettings()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	private async updateProjectVisiblility(
