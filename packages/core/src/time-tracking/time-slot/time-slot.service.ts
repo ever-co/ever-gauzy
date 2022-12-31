@@ -70,6 +70,21 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 					time_log: 'time_slot.timeLogs'
 				}
 			},
+			select: {
+				organization: {
+					id: true,
+					name: true
+				},
+				employee: {
+					id: true,
+					user: {
+						id: true,
+						firstName: true,
+						lastName: true,
+						imageUrl: true
+					}
+				}
+			},
 			relations: [
 				...(request.relations ? request.relations : [])
 			]
