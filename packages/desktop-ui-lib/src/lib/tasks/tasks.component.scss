@@ -71,3 +71,65 @@
   img{
     object-fit: cover;
   }
+
+// tags selector
+
+.tag-color {
+  position: unset;
+  display: inline-flex;
+  align-items: center;
+  width: 1rem;
+  height: 1rem;
+}
+
+.tag-label {
+  display: unset;
+  margin-right: 0;
+  border-radius: 2rem;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 13px;
+  letter-spacing: 0em;
+  padding: 3px 8px;
+}
+
+input {
+  box-shadow: unset;
+}
+
+:host ::ng-deep {
+  .ng-select.ng-select-multiple .ng-select-container .ng-value-container .ng-value {
+    background-color: transparent;
+    margin-right: 0;
+  }
+
+  .ng-select .ng-select-focused .ng-select-container {
+
+    &:hover,
+    &:focus,
+    &:active,
+    &:visited {
+      box-shadow: var(--gauzy-shadow) inset !important;
+    }
+  }
+
+  .ng-select .ng-select-container {
+    box-shadow: var(--gauzy-shadow) inset !important;
+  }
+
+  .ng-select .ng-select-container .ng-value-container {
+    align-items: center;
+    padding-left: 5px;
+    overflow-x: overlay;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex-wrap: initial;
+    gap: 4px;
+  }
+}
+
+.text {
+  overflow-x: hidden;
+  text-overflow: ellipsis;
+  margin-left: 4px;
+}

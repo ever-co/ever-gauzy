@@ -1,50 +1,90 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef, AfterContentChecked } from '@angular/core';
+import { NbRouteTab } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { RouteUtil } from 'apps/gauzy/src/app/@core/services/route-utils';
-import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
+import { PermissionsEnum } from '@gauzy/contracts';
+import { tap } from 'rxjs/operators';
+import { Store } from './../../../../@core/services';
+import { RouteUtil } from './../../../../@core/services/route-utils';
+import { TranslationBaseComponent } from './../../../../@shared/language-base/translation-base.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-layout',
+	selector: 'ngx-activity-layout',
 	templateUrl: './layout.component.html',
 	styleUrls: ['./layout.component.scss'],
 	providers: [RouteUtil]
 })
-export class LayoutComponent
-	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
-	title: any;
-	tabs: any[] = [
-		{
-			title: this.getTranslation('ACTIVITY.TIME_AND_ACTIVITIES'),
-			route: '/pages/employees/activity/time-activities'
-		},
-		{
-			title: this.getTranslation('ACTIVITY.SCREENSHOTS'),
-			route: '/pages/employees/activity/screenshots'
-		},
-		{
-			title: this.getTranslation('ACTIVITY.APPS'),
-			route: '/pages/employees/activity/apps'
-		},
-		{
-			title: this.getTranslation('ACTIVITY.VISITED_SITES'),
-			route: '/pages/employees/activity/urls'
-		}
-	];
+export class ActivityLayoutComponent extends TranslationBaseComponent
+	implements AfterContentChecked, OnInit, OnDestroy {
+
+	public title: string;
+	public tabs: NbRouteTab[] = [];
 
 	constructor(
-		private routeUtil: RouteUtil,
-		readonly translateService: TranslateService
+		private readonly cdr: ChangeDetectorRef,
+		public readonly translateService: TranslateService,
+		private readonly store: Store,
+		private readonly routeUtil: RouteUtil,
 	) {
 		super(translateService);
-		this.routeUtil.data$.pipe(untilDestroyed(this)).subscribe((data) => {
-			this.title = data.title;
-		});
 	}
 
-	ngOnInit(): void {}
+	ngOnInit(): void {
+		this._loadTabs();
+		this._applyTranslationOnTabs();
+
+		this.routeUtil.data$
+			.pipe(
+				tap((data) => this.title = data.title),
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
+
+	ngAfterContentChecked(): void {
+		this.cdr.detectChanges();
+	}
+
+	private _loadTabs() {
+		this.tabs = [
+			...(this.store.hasAnyPermission(
+				PermissionsEnum.ADMIN_DASHBOARD_VIEW,
+				PermissionsEnum.TIME_TRACKER
+			) ?
+			[
+				{
+					title: this.getTranslation('ACTIVITY.TIME_AND_ACTIVITIES'),
+					responsive: true,
+					route: '/pages/employees/activity/time-activities'
+				},
+				{
+					title: this.getTranslation('ACTIVITY.SCREENSHOTS'),
+					responsive: true,
+					route: '/pages/employees/activity/screenshots'
+				},
+				{
+					title: this.getTranslation('ACTIVITY.APPS'),
+					responsive: true,
+					route: '/pages/employees/activity/apps'
+				},
+				{
+					title: this.getTranslation('ACTIVITY.VISITED_SITES'),
+					responsive: true,
+					route: '/pages/employees/activity/urls'
+				}
+			] : [])
+		];
+	}
+
+	private _applyTranslationOnTabs() {
+		this.translateService.onLangChange
+			.pipe(
+				tap(() => this._loadTabs()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
 
 	ngOnDestroy(): void {}
 }

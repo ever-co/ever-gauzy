@@ -49,8 +49,22 @@
 					Tags
 				</label>
 				<div class="form-group">
-					<ng-select [clearable]="true" placeholder="Tags" formControlName="tags" [items]="tags"
-						bindValue="id" bindLabel="name" [multiple]="true">
+					<ng-select [clearable]="true" placeholder="Tags" formControlName="tags" [items]="tags" bindLabel="name"
+						[multiple]="true">
+						<ng-template ng-option-tmp let-tag="item" let-tag$="item$">
+							<div class="d-flex align-items-center">
+								<ng-container *ngIf="multiple">
+									<input type="checkbox" [ngModel]="tag$.selected" />
+								</ng-container>
+								<nb-badge [style.background]="background(tag.color)" class="tag-color"></nb-badge>
+								<span class="text">{{ tag.name }}</span>
+							</div>
+						</ng-template>
+					
+						<ng-template ng-label-tmp let-tag="item" let-clear="clear">
+							<nb-badge class="tag-color tag-label" [style.background]="background(tag.color)"
+								[style.color]="backgroundContrast(tag.color)" [text]="tag.name" (click)="clear(tag)"></nb-badge>
+						</ng-template>
 					</ng-select>
 				</div>
 			</div>

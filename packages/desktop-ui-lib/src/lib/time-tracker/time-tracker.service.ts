@@ -279,16 +279,17 @@ export class TimeTrackerService {
 			Authorization: `Bearer ${values.token}`,
 			'Tenant-Id': values.tenantId
 		});
-
+		
 		return firstValueFrom(this.http
 			.get(`${values.apiHost}/api/timesheet/statistics/counts`, {
 				headers: headers,
-				params: {
-					startDate: moment().startOf('day').utc().format(),
-					endDate: moment().endOf('day').utc().format(),
+				params: this.toParams({
+					startDate: moment().startOf('day').utc().toISOString(),
+					endDate: moment().endOf('day').utc().toISOString(),
 					tenantId: values.tenantId,
-					organizationId: values.organizationId
-				}
+					organizationId: values.organizationId,
+					employeeIds: [values.employeeId]
+				})
 			}));
 	}
 

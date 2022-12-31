@@ -20,7 +20,7 @@ import { NgxPermissionsService } from 'ngx-permissions';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
 import { pick } from 'underscore';
-import { Observable, Subject } from 'rxjs';
+import { Observable } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import {
 	IGetTimeLogInput,
@@ -54,17 +54,14 @@ export class CalendarComponent extends BaseSelectorFilterComponent
 
 	@ViewChild('calendar', { static: true }) calendar: FullCalendarComponent;
 	@ViewChild('viewLogTemplate', { static: true }) viewLogTemplate: TemplateRef<any>;
-
 	@ViewChild(GauzyFiltersComponent) gauzyFiltersComponent: GauzyFiltersComponent;
+
 	datePickerConfig$: Observable<any> = this.dateRangePickerBuilderService.datePickerConfig$;
 
 	PermissionsEnum = PermissionsEnum;
 	calendarComponent: FullCalendarComponent; // the #calendar in the template
 	calendarOptions: CalendarOptions;
-
 	filters: ITimeLogFilters;
-	subject$: Subject<any> = new Subject();
-
 	loading: boolean = false;
 	futureDateAllowed: boolean;
 
@@ -148,6 +145,7 @@ export class CalendarComponent extends BaseSelectorFilterComponent
 		const { allowManualTime, allowModifyTime, futureDateAllowed, startWeekOn } = this.organization;
 
 		this.futureDateAllowed = futureDateAllowed;
+
 		/**
 		 * Allow manual time
 		 */
@@ -172,16 +170,19 @@ export class CalendarComponent extends BaseSelectorFilterComponent
 	 *
 	 */
 	setCalenderInitialView() {
-		if (this.calendar.getApi()) {
-			const { startDate } = this.request;
-			if (this.isMoreThanUnit('weeks')) {
-				this.calendar.getApi().changeView('dayGridMonth', startDate);
-			} else if (this.isMoreThanUnit('days')) {
-				this.calendar.getApi().changeView('timeGridWeek', startDate);
-			} else {
-				this.calendar.getApi().changeView('timeGridDay', startDate);
-			}
+		if (!this.organization || !this.calendar.getApi()) {
+			return;
 		}
+
+		const { startDate } = this.request;
+		if (this.isMoreThanUnit('weeks')) {
+			this.calendar.getApi().changeView('dayGridMonth', startDate);
+		} else if (this.isMoreThanUnit('days')) {
+			this.calendar.getApi().changeView('timeGridWeek', startDate);
+		} else {
+			this.calendar.getApi().changeView('timeGridDay', startDate);
+		}
+		this.calendar.getApi().refetchEvents();
 	}
 
 	getEvents(arg: any, callback: Function) {

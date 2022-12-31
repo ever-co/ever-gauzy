@@ -1,81 +1,82 @@
-import { Component, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
-import { NgxPermissionsService } from 'ngx-permissions';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef, AfterContentChecked } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
+import { NbRouteTab } from '@nebular/theme';
 import { tap } from 'rxjs/operators';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { TranslationBaseComponent } from './../../../../@shared/language-base';
+import { Store } from './../../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-layout',
+	selector: 'ngx-timesheet-layout',
 	templateUrl: './layout.component.html',
 	styleUrls: ['./layout.component.scss']
 })
-export class LayoutComponent
-	extends TranslationBaseComponent
-	implements AfterViewInit, OnInit, OnDestroy {
-	
-	tabs: any[] = [];
+export class TimesheetLayoutComponent extends TranslationBaseComponent
+	implements AfterContentChecked, OnInit, OnDestroy {
+
+	public tabs: NbRouteTab[] = [];
 
 	constructor(
-		private readonly ngxPermissionsService: NgxPermissionsService,
-		public readonly translateService: TranslateService
+		private readonly cdr: ChangeDetectorRef,
+		public readonly translateService: TranslateService,
+		private readonly store: Store,
 	) {
 		super(translateService);
 	}
 
-	ngOnInit() {
-		this.ngxPermissionsService.permissions$
-			.pipe(
-				tap(() => this._createContextTabs()),
-				untilDestroyed(this)
-			)
-			.subscribe();
+	ngOnInit(): void {
+		this._loadTabs();
+		this._applyTranslationOnTabs();
 	}
 
-	ngAfterViewInit() {
-		this._applyTranslationOnChange();
+	ngAfterContentChecked(): void {
+		this.cdr.detectChanges();
 	}
 
-	private _createContextTabs() {
+	private _loadTabs() {
 		this.tabs = [
-			{
-				title: this.getTranslation('TIMESHEET.DAILY'),
-				route: '/pages/employees/timesheets/daily'
-			},
-			{
-				title: this.getTranslation('TIMESHEET.WEEKLY'),
-				route: '/pages/employees/timesheets/weekly'
-			},
-			{
-				title: this.getTranslation('TIMESHEET.CALENDAR'),
-				route: '/pages/employees/timesheets/calendar'
-			}
-		];
-		this.ngxPermissionsService
-			.hasPermission(PermissionsEnum.CAN_APPROVE_TIMESHEET)
-			.then((hasPermission) => {
-				if (hasPermission) {
-					this.tabs.push({
-						title: this.getTranslation('TIMESHEET.APPROVALS'),
-						route: '/pages/employees/timesheets/approvals'
-					});
+			...(this.store.hasAnyPermission(PermissionsEnum.TIME_TRACKER) ?
+			[
+				{
+					title: this.getTranslation('TIMESHEET.DAILY'),
+					responsive: true,
+					route: '/pages/employees/timesheets/daily'
+				},
+				{
+					title: this.getTranslation('TIMESHEET.WEEKLY'),
+					responsive: true,
+					route: '/pages/employees/timesheets/weekly'
+				},
+				{
+					title: this.getTranslation('TIMESHEET.CALENDAR'),
+					responsive: true,
+					route: '/pages/employees/timesheets/calendar'
 				}
-			});
+			] : []),
+			...(this.store.hasAnyPermission(PermissionsEnum.CAN_APPROVE_TIMESHEET) ?
+			[
+				{
+					title: this.getTranslation('TIMESHEET.APPROVALS'),
+					responsive: true,
+					route: '/pages/employees/timesheets/approvals'
+				}
+			] : []),
+		];
 	}
 
 	/**
 	 * Translate context menus
 	 */
-	 private _applyTranslationOnChange() {
+	private _applyTranslationOnTabs() {
 		this.translateService.onLangChange
 			.pipe(
-				tap(() => this._createContextTabs()),
+				tap(() => this._loadTabs()),
 				untilDestroyed(this)
 			)
 			.subscribe();
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy(): void {}
 }

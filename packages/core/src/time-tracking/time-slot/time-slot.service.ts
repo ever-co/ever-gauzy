@@ -70,6 +70,21 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 					time_log: 'time_slot.timeLogs'
 				}
 			},
+			select: {
+				organization: {
+					id: true,
+					name: true
+				},
+				employee: {
+					id: true,
+					user: {
+						id: true,
+						firstName: true,
+						lastName: true,
+						imageUrl: true
+					}
+				}
+			},
 			relations: [
 				...(request.relations ? request.relations : [])
 			]
@@ -169,16 +184,24 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 		return slots;
 	}
 
-	async bulkCreateOrUpdate(slots) {
+	async bulkCreateOrUpdate(
+		slots: ITimeSlot[],
+		employeeId: ITimeSlot['employeeId'],
+		organizationId: ITimeSlot['organizationId'],
+	) {
 		return await this.commandBus.execute(
-			new TimeSlotBulkCreateOrUpdateCommand(slots)
+			new TimeSlotBulkCreateOrUpdateCommand(
+				slots,
+				employeeId,
+				organizationId
+			)
 		);
 	}
 
 	async bulkCreate(
 		slots: ITimeSlot[],
-		employeeId: string,
-		organizationId: string
+		employeeId: ITimeSlot['employeeId'],
+		organizationId: ITimeSlot['organizationId'],
 	) {
 		return await this.commandBus.execute(
 			new TimeSlotBulkCreateCommand(
@@ -199,7 +222,7 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 		);
 	}
 
-	async update(id: string, request: TimeSlot) {
+	async update(id: TimeSlot['id'], request: TimeSlot) {
 		return await this.commandBus.execute(
 			new UpdateTimeSlotCommand(id, request)
 		);

@@ -7,16 +7,23 @@ import {
 	ITask,
 	IActivitiesStatistics,
 	ITimeSlotStatistics,
-	IManualTimesStatistics
+	IManualTimesStatistics,
+	PermissionsEnum
 } from '@gauzy/contracts';
-import { TenantPermissionGuard } from './../../shared/guards';
+import { Permissions } from './../../shared/decorators';
+import { PermissionGuard, TenantPermissionGuard } from './../../shared/guards';
 import { TimeTrackingStatisticQueryDTO } from './dto';
 import { StatisticService } from './statistic.service';
 
 @ApiTags('TimesheetStatistic')
-@UseGuards(TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard)
+@Permissions(
+	PermissionsEnum.ADMIN_DASHBOARD_VIEW,
+	PermissionsEnum.TIME_TRACKER
+)
 @Controller()
 export class StatisticController {
+
 	constructor(
 		private readonly statisticService: StatisticService
 	) {}

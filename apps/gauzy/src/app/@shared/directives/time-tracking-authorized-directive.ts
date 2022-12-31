@@ -27,14 +27,14 @@ export class TimeTrackingAuthorizedDirective implements OnInit {
 	}
 
 	@Input() permissionElse: TemplateRef<any>;
-	
+
     constructor(
         private readonly _templateRef: TemplateRef<any>,
         private readonly _viewContainer: ViewContainerRef,
         private readonly _cdr: ChangeDetectorRef,
         private readonly _store: Store,
     ) {}
-  
+
     ngOnInit(): void {
         this._store.selectedOrganization$
 			.pipe(
@@ -58,9 +58,9 @@ export class TimeTrackingAuthorizedDirective implements OnInit {
 
     /**
      * Show If/Else Render Template
-     * 
-     * @param template 
-     * @returns 
+     *
+     * @param template
+     * @returns
      */
     showTemplateBlockInView(template: TemplateRef<any>) {
         this._viewContainer.clear();

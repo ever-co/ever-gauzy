@@ -7,12 +7,12 @@ import {
 	IScreenshot,
 	PermissionsEnum
 } from '@gauzy/contracts';
-import { debounceTime, filter, tap } from 'rxjs/operators';
+import { filter, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs/internal/Observable';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import { Subject } from 'rxjs/internal/Subject';
 import { toLocal, isEmpty, distinctUntilChange } from '@gauzy/common-angular';
-import { chain, indexBy, sortBy } from 'underscore';
+import { chain, indexBy, pick, sortBy } from 'underscore';
 import * as moment from 'moment';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NbDialogService } from '@nebular/theme';
@@ -65,14 +65,14 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent
 	ngOnInit(): void {
 		this.screenshots$
 			.pipe(
-				debounceTime(100),
-				tap(() => this.getLogs()),
+				filter(() => !!this.organization),
+				tap(() => this.getTimeSlotsScreenshots()),
 				untilDestroyed(this)
 			)
 			.subscribe();
 		this.subject$
 			.pipe(
-				debounceTime(100),
+				filter(() => !!this.organization),
 				tap(() => this.galleryService.clearGallery()),
 				tap(() => this.prepareRequest()),
 				untilDestroyed(this)
@@ -80,7 +80,6 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent
 			.subscribe();
 		this.payloads$
 			.pipe(
-				debounceTime(100),
 				distinctUntilChange(),
 				filter((payloads: ITimeLogFilters) => !!payloads),
 				tap(() => this.screenshots$.next(true)),
@@ -97,19 +96,30 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent
 		this.subject$.next(true);
 	}
 
+	/**
+	 * Prepare Unique Request Always
+	 *
+	 * @returns
+	 */
 	prepareRequest() {
-		if (!this.organization || isEmpty(this.filters)) {
+		if (isEmpty(this.request) || isEmpty(this.filters)) {
 			return;
 		}
+		const appliedFilter = pick(
+			this.filters,
+			'source',
+			'activityLevel',
+			'logType'
+		);
 		const request: IGetTimeSlotInput = {
-			...this.filters,
+			...appliedFilter,
 			...this.getFilterRequest(this.request),
 			relations: [
 				...(
 					this.store.hasPermission(
 						PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
 					)
-					? ['employee', 'employee.user']
+					? ['employee.user']
 					: []
 				),
 				'screenshots',
@@ -119,14 +129,17 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent
 		this.payloads$.next(request);
 	}
 
-	async getLogs() {
-		if (!this.organization || isEmpty(this.filters)) {
+	/**
+	 * Get daily timeslots screenshots
+	 * @returns
+	 */
+	async getTimeSlotsScreenshots() {
+		if (!this.organization || isEmpty(this.request)) {
 			return;
 		}
-		const payloads = this.payloads$.getValue();
-
 		this.loading = true;
 		try {
+			const payloads = this.payloads$.getValue();
 			this.screenshotsUrls = [];
 			const timeSlots = await this.timesheetService.getTimeSlots(payloads);
 

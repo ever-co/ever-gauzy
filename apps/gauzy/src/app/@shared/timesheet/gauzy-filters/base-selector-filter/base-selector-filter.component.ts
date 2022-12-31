@@ -5,7 +5,7 @@ import { filter, tap } from 'rxjs/operators';
 import { IOrganization, ITimeLogFilters } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { distinctUntilChange, toUTC } from '@gauzy/common-angular';
+import { toUTC } from '@gauzy/common-angular';
 import { pick } from 'underscore';
 import { DateRangePickerBuilderService, Store } from './../../../../@core/services';
 import { TranslationBaseComponent } from './../../../language-base/translation-base.component';
@@ -40,7 +40,6 @@ export class BaseSelectorFilterComponent extends TranslationBaseComponent {
 		combineLatest([storeOrganization$, storeDateRange$, storeEmployee$, storeProject$])
 			.pipe(
 				debounceTime(300),
-				distinctUntilChange(),
 				filter(([organization, dateRange]) => !!organization && !!dateRange),
 				tap(([organization, dateRange, employee, project]) => {
 					if (organization) {
