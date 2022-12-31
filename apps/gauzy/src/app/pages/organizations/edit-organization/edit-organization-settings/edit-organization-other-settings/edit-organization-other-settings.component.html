@@ -853,16 +853,15 @@
 								</div>
 								<div class="col-6">
 									<div class="form-group invite-toggle">
-										<nb-toggle
-												class="d-block"
-												formControlName="allowTrackInactivity"
-												labelPosition="start"
-												status="primary"
-										>
+										<nb-toggle class="d-block" formControlName="allowTrackInactivity"
+											labelPosition="start" status="primary">
 											{{
-											'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ALLOW_TRACK_INACTIVITY'
-													| translate
-											}}
+											'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ENABLE_DETECTION_INACTIVITY'
+											| translate
+											}} 
+											<button [nbTooltip]="'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ENABLE_DETECTION_INACTIVITY_INFO'| translate" ghost nbButton size="small" status="info">
+												<nb-icon icon="info"></nb-icon>
+											</button>
 										</nb-toggle>
 									</div>
 								</div>

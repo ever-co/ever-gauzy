@@ -135,7 +135,9 @@ const pathWindow = {
 const updater = new DesktopUpdater({
 	repository: 'ever-gauzy-desktop',
 	owner: 'ever-co',
-	typeRelease: 'releases'
+	typeRelease: 'releases',
+	primeRepository: 'ever-gauzy'
+
 });
 
 let tray = null;

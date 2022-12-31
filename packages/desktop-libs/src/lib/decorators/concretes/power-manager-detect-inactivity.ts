@@ -17,12 +17,9 @@ export class PowerManagerDetectInactivity extends BasePowerManagerDecorator {
 		super(powerManager);
 		this._inactivityDetectionIntervalId = null;
 		this._activityProofTimoutIntervalId = null;
-		/**
-		 * TODO
-		 * Implement inactivity time limit as record in organization model
-		 * And add ui to change value
-		 */
-		this._inactivityTimeLimit = this.inactivityTimeLimit * 60; // inactivityTimeLimit fixed to 10 minutes
+		this._inactivityTimeLimit = this._isAllowTrackInactivity
+			? this.inactivityTimeLimit * 60 // inactivityTimeLimit fixed to 10 minutes
+			: Infinity;
 		this._activityProofDuration = this.activityProofDuration * 60; // activityProofDuration fixed to 1 minutes
 		this._detectionEmitter = new EventEmitter();
 		this._detectionEmitter.on('activity-proof-result', async res => {
@@ -49,7 +46,7 @@ export class PowerManagerDetectInactivity extends BasePowerManagerDecorator {
 	}
 
 	public startInactivityDetection(): void {
-		if (this._inactivityDetectionIntervalId) return;
+		if (this._inactivityDetectionIntervalId || !this._isAllowTrackInactivity) return;
 		super.decorator.resumeTracking();
 		super.decorator.sleepTracking = new SleepTracking(this.decorator.window);
 		this._inactivityDetectionIntervalId = setInterval(() => {
@@ -86,5 +83,10 @@ export class PowerManagerDetectInactivity extends BasePowerManagerDecorator {
 	public get activityProofDuration(): number {
 		const auth = LocalStore.getStore('auth');
 		return auth ? auth.activityProofDuration : 1;
+	}
+
+	private get _isAllowTrackInactivity(): boolean {
+		const auth = LocalStore.getStore('auth');
+		return auth && auth.allowTrackInactivity;
 	}
 }

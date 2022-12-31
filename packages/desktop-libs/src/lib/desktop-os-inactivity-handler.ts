@@ -43,21 +43,26 @@ export class DesktopOsInactivityHandler {
 				});
 		});
 		this._powerManager.detectInactivity.on('activity-proof-result', res => {
-			this._inactivityResultAccepted = true;
+			console.log('Test', this._inactivityResultAccepted);
 			if (this._dialog) {
 				this._dialog.close();
 				delete this._dialog;
-				const dialog = new DialogAcknowledgeInactivity(new DesktopDialog(
-					'Gauzy',
-					'Inactivity Handler',
-					powerManager.decorator.window
-				));
-				dialog.show();
+				if(!this._inactivityResultAccepted){
+					const dialog = new DialogAcknowledgeInactivity(
+						new DesktopDialog(
+							'Gauzy',
+							'Inactivity Handler',
+							powerManager.decorator.window
+						)
+					);
+					dialog.show();	
+				}
 			}
 			if (!res) this._notify.customNotification(
 				'Tracker was stopped due to inactivity!',
 				'Gauzy'
 			);
+			this._inactivityResultAccepted = true;
 		});
 	}
 

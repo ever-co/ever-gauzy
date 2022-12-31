@@ -13,14 +13,14 @@ export class DialogAcknowledgeInactivity
 			buttons: ['Acknowledge'],
 			detail:
 				'Timer was stopped due to inactivity period exceeding ' +
-				this._activityProofDuration +
+				this._inactivityTimeLimit +
 				'. Please make sure you start timer again when continue working'
 		};
 	}
 
-	private get _activityProofDuration(): string {
+	private get _inactivityTimeLimit(): string {
 		const auth = LocalStore.getStore('auth');
-		const res = auth ? auth.activityProofDuration : 1;
+		const res = auth ? auth.inactivityTimeLimit : 10;
 		return res + ' minute' + (res > 1 ? 's' : '');
 	}
 }
