@@ -1826,7 +1826,8 @@
 				"INACTIVITY_TIME_LIMIT_INFO": "Inactivity tracking timeout (i.e., how many minutes of inactivity is allowed)",
 				"ACTIVITY_PROOF_DURATION": "Activity proof duration",
 				"ACTIVITY_PROOF_DURATION_INFO": "Duration of activity proof countdown dialog, it represent an amount of minutes given to prove activity",
-				"ALLOW_TRACK_INACTIVITY": "Allow to track inactivity"
+				"ENABLE_DETECTION_INACTIVITY": "Enable detection of employee inactivity",
+				"ENABLE_DETECTION_INACTIVITY_INFO": "Enabled - the system will detect inactivity and display a warning. Disabled - no warning will be displayed when an employee is inactive."
 			},
 			"TEAMS_PAGE": {
 				"MANAGERS": "Managers",
