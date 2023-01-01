@@ -2,6 +2,7 @@ import { IDesktopCdnUpdate } from "../../interfaces/i-desktop-cdn-update";
 import { UpdateStrategy } from "../abstracts/update-strategy";
 import fetch from 'node-fetch';
 import IUpdaterConfig from "../../interfaces/i-updater-config";
+import { app } from "electron";
 
 
 export class CdnUpdate extends UpdateStrategy implements IDesktopCdnUpdate {
@@ -22,19 +23,21 @@ export class CdnUpdate extends UpdateStrategy implements IDesktopCdnUpdate {
 
     public async tagName(): Promise<string> {
         try {
-            return await fetch(
-                `https://github.com/${this.config.owner}/${this.config.repository}/${this.config.typeRelease}/latest`,
-                {
-                    method: 'GET',
-                    headers: {
-                        Accept: 'application/json'
-                    }
-                }
-            ).then((res) => res.json())
-        } catch (e) {
-            console.log('Error', e);
-            return null;
-        }
+			const releases = await fetch(
+				`https://api.github.com/repos/${this.config.owner}/${this.config.primeRepository}/${this.config.typeRelease}`,
+				{
+					method: 'GET',
+					headers: {
+						Accept: 'application/vnd.github+json'
+					}
+				}
+			).then((res) => res.json());
+			return releases.filter((release) => !release.prerelease)[0]
+				.tag_name;
+		} catch (e) {
+			console.log('Error', e);
+			return app.getVersion();
+		}
     }
 
     public get config(): IUpdaterConfig {

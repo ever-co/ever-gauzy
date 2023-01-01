@@ -17,22 +17,22 @@ import { DeleteResult, FindOneOptions, UpdateResult } from 'typeorm';
 import {
 	ITimeLog,
 	PermissionsEnum,
-	IGetTimeLogConflictInput,
-	RolesEnum
+	IGetTimeLogConflictInput
 } from '@gauzy/contracts';
 import { TimeLogService } from './time-log.service';
-import { Permissions, Roles } from './../../shared/decorators';
-import { OrganizationPermissionGuard, PermissionGuard, RoleGuard, TenantBaseGuard } from './../../shared/guards';
+import { Permissions } from './../../shared/decorators';
+import { OrganizationPermissionGuard, PermissionGuard, TenantBaseGuard } from './../../shared/guards';
 import { UUIDValidationPipe } from './../../shared/pipes';
 import { CreateManualTimeLogDTO, DeleteTimeLogDTO, UpdateManualTimeLogDTO } from './dto';
 import { TimeLogLimitQueryDTO, TimeLogQueryDTO } from './dto/query';
 import { TimeLogBodyTransformPipe } from './pipes';
 
 @ApiTags('TimeLog')
-@UseGuards(TenantBaseGuard, RoleGuard)
-@Roles(RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN, RolesEnum.EMPLOYEE)
+@UseGuards(TenantBaseGuard, PermissionGuard)
+@Permissions(PermissionsEnum.TIME_TRACKER)
 @Controller()
 export class TimeLogController {
+
 	constructor(
 		private readonly timeLogService: TimeLogService
 	) {}
@@ -236,7 +236,7 @@ export class TimeLogController {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Post()
-	@UseGuards(PermissionGuard, OrganizationPermissionGuard)
+	@UseGuards(OrganizationPermissionGuard)
 	@Permissions(PermissionsEnum.ALLOW_MANUAL_TIME)
 	async addManualTime(
 		@Body(TimeLogBodyTransformPipe, new ValidationPipe({ transform: true })) entity: CreateManualTimeLogDTO
@@ -255,7 +255,7 @@ export class TimeLogController {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Put(':id')
-	@UseGuards(PermissionGuard, OrganizationPermissionGuard)
+	@UseGuards(OrganizationPermissionGuard)
 	@Permissions(PermissionsEnum.ALLOW_MODIFY_TIME)
 	async updateManualTime(
 		@Param('id', UUIDValidationPipe) id: string,
@@ -274,7 +274,7 @@ export class TimeLogController {
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
-	@UseGuards(PermissionGuard, OrganizationPermissionGuard)
+	@UseGuards(OrganizationPermissionGuard)
 	@Permissions(PermissionsEnum.ALLOW_DELETE_TIME)
 	@Delete()
 	@UsePipes(new ValidationPipe())

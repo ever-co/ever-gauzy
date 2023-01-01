@@ -22,7 +22,7 @@ export class TimeSlotMergeHandler
 	) {}
 
 	public async execute(command: TimeSlotMergeCommand) {
-		let { employeeId, start, end } = command;
+		let { organizationId, employeeId, start, end } = command;
 		const tenantId = RequestContext.currentTenantId();
 
 		let startMinute = moment(start).utc().get('minute');
@@ -67,6 +67,9 @@ export class TimeSlotMergeHandler
 			});
 			qb.andWhere(`"${qb.alias}"."employeeId" = :employeeId`, {
 				employeeId
+			});
+			qb.andWhere(`"${qb.alias}"."organizationId" = :organizationId`, {
+				organizationId
 			});
 			qb.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, {
 				tenantId

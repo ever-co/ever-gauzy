@@ -10,6 +10,7 @@ import { TenantModule } from '../tenant/tenant.module';
 import { RoleModule } from './../role/role.module';
 import { UserModule } from './../user/user.module';
 import { EmployeeModule } from './../employee/employee.module';
+import { CandidateModule } from './../candidate/candidate.module';
 import { OrganizationModule } from './../organization/organization.module';
 import { OrganizationTeamModule } from './../organization-team/organization-team.module';
 import { OrganizationProjectModule } from './../organization-project/organization-project.module';
@@ -34,6 +35,7 @@ import { InviteService } from './invite.service';
 		UserModule,
 		RoleModule,
 		EmployeeModule,
+		CandidateModule,
 		OrganizationModule,
 		OrganizationProjectModule,
 		OrganizationContactModule,

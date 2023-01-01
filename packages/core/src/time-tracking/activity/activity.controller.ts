@@ -10,19 +10,19 @@ import {
 	UsePipes
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { IGetActivitiesInput, IBulkActivitiesInput, ReportGroupFilterEnum, PermissionsEnum, RolesEnum } from '@gauzy/contracts';
-import { PermissionGuard, RoleGuard, TenantPermissionGuard } from './../../shared/guards';
-import { Permissions, Roles } from './../../shared/decorators';
+import { IGetActivitiesInput, IBulkActivitiesInput, ReportGroupFilterEnum, PermissionsEnum } from '@gauzy/contracts';
+import { PermissionGuard, TenantPermissionGuard } from './../../shared/guards';
+import { Permissions } from './../../shared/decorators';
 import { ActivityService } from './activity.service';
 import { ActivityMapService } from './activity.map.service';
 import { ActivityQueryDTO } from './dto/query';
 
 @ApiTags('Activity')
-@UseGuards(TenantPermissionGuard, RoleGuard, PermissionGuard)
-@Roles(RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN, RolesEnum.EMPLOYEE)
+@UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.TIME_TRACKER, PermissionsEnum.TIMESHEET_EDIT_TIME)
 @Controller()
 export class ActivityController {
+
 	constructor(
 		private readonly activityService: ActivityService,
 		private readonly activityMapService: ActivityMapService
@@ -31,8 +31,7 @@ export class ActivityController {
 	@ApiOperation({ summary: 'Get Activities' })
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Get()
 	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
@@ -44,21 +43,20 @@ export class ActivityController {
 			limit: 30
 		};
 		options = Object.assign({}, defaultParams, options);
-		return this.activityService.getActivities(options);
+		return await this.activityService.getActivities(options);
 	}
 
 	@ApiOperation({ summary: 'Get Daily Activities' })
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Get('daily')
 	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
 	async getDailyActivities(
 		@Query() options: ActivityQueryDTO
 	) {
-		return this.activityService.getDailyActivities(options);
+		return await this.activityService.getDailyActivities(options);
 	}
 
 	@ApiOperation({ summary: 'Get Daily Activities' })
@@ -90,7 +88,9 @@ export class ActivityController {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Post('bulk')
-	async bulkSaveActivities(@Body() entities: IBulkActivitiesInput) {
-		return this.activityService.bulkSave(entities);
+	async bulkSaveActivities(
+		@Body() entities: IBulkActivitiesInput
+	) {
+		return await this.activityService.bulkSave(entities);
 	}
 }

@@ -6,31 +6,34 @@
 </div>
 <div class="main-header">
 	<div
-	class="header-container"
-	[class.left]="position === 'normal'"
-	[class.right]="position === 'inverse'"
->
-
-</div>
+		class="header-container"
+		[class.left]="position === 'normal'"
+		[class.right]="position === 'inverse'"
+	></div>
 
 <div class="header-container">
-  <nb-action size="small"
-  [class.left]="position === 'normal'"
-  [class.right]="position === 'inverse'" *ngIf="createContextMenu" class="show-large-up">
-    <button
-      nbButton
-      class="button create"
-      status="warning"
-      size="small"
-      [nbContextMenu]="createContextMenu"
-      nbContextMenuTag="create-context-menu"
-      nbContextMenuPlacement="right"
-    >
-      + {{ 'BUTTONS.CREATE' | translate }}
-    </button>
-  </nb-action>
+	<ng-template [ngIf]="createContextMenu?.length > 0">
+		<nb-action
+			size="small"
+			[class.left]="position === 'normal'"
+			[class.right]="position === 'inverse'"
+			class="show-large-up"
+		>
+			<button
+				nbButton
+				class="button create"
+				status="warning"
+				size="small"
+				[nbContextMenu]="createContextMenu"
+				nbContextMenuTag="create-context-menu"
+				nbContextMenuPlacement="right"
+			>
+				+ {{ 'BUTTONS.CREATE' | translate }}
+			</button>
+		</nb-action>
+	</ng-template>
 	<div
-    class="actions"
+   		class="actions"
 		size="small"
 		[class.left]="position === 'normal'"
 		[class.right]="position === 'inverse'"

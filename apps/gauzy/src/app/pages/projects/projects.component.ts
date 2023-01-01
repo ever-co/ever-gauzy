@@ -153,7 +153,7 @@ export class ProjectsComponent extends PaginationFilterBaseComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.loadSmartTable();
+		this._loadSmartTableSettings();
 		this._applyTranslationOnSmartTable();
 	}
 
@@ -169,7 +169,7 @@ export class ProjectsComponent extends PaginationFilterBaseComponent
 					(componentLayout) =>
 						(this.dataLayoutStyle = componentLayout)
 				),
-				tap(() => this.loadSmartTable()),
+				tap(() => this._loadSmartTableSettings()),
 				tap(() => this.refreshPagination()),
 				filter(
 					(componentLayout) =>
@@ -183,7 +183,13 @@ export class ProjectsComponent extends PaginationFilterBaseComponent
 			.subscribe();
 	}
 
-	async removeProject(id?: string, name?: string) {
+	async removeProject(selectedItem: IOrganizationProject) {
+		if (selectedItem) {
+			this.selectProject({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
 		const result = await firstValueFrom(
 			this.dialogService.open(DeleteConfirmationComponent, {
 				context: {
@@ -191,26 +197,23 @@ export class ProjectsComponent extends PaginationFilterBaseComponent
 				}
 			}).onClose
 		);
-
 		if (result) {
+			const { id, name } = this.selectedProject;
 			await this.organizationProjectsService
-				.delete(this.selectedProject ? this.selectedProject.id : id)
+				.delete(id)
 				.then(() => {
 					this.organizationProjectStore.organizationProjectAction = {
 						project: this.selectedProject,
 						action: CrudActionEnum.DELETED
 					};
 				});
-
 			this.toastrService.success(
 				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.REMOVE_PROJECT',
 				{
-					name: this.selectedProject
-						? this.selectedProject.name
-						: name
+					name
 				}
 			);
-
+			this.cancel();
 			this._refresh$.next(true);
 			this.project$.next(true);
 		}
@@ -374,7 +377,7 @@ export class ProjectsComponent extends PaginationFilterBaseComponent
 			  );
 	}
 
-	loadSmartTable() {
+	private _loadSmartTableSettings() {
 		const pagination = this.getPagination();
 		this.settingsSmartTable = {
 			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.PROJECT'),
@@ -506,12 +509,13 @@ export class ProjectsComponent extends PaginationFilterBaseComponent
 		this.selectedProject = isSelected ? data : null;
 	}
 
-	_applyTranslationOnSmartTable() {
+	private _applyTranslationOnSmartTable() {
 		this.translateService.onLangChange
-			.pipe(untilDestroyed(this))
-			.subscribe(() => {
-				this.loadSmartTable();
-			});
+			.pipe(
+				tap(() => this._loadSmartTableSettings()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	private async updateProjectVisiblility(

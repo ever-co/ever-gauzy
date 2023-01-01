@@ -17,7 +17,8 @@ import {
 	NbTabsetModule,
 	NbToastrService,
 	NbAccordionModule,
-    NbDatepickerModule
+    NbDatepickerModule,
+	NbBadgeModule
 } from '@nebular/theme';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgSelectModule } from '@ng-select/ng-select';
@@ -44,7 +45,8 @@ import { TimeTrackerService } from '../time-tracker/time-tracker.service';
 		NbAccordionModule,
         NbDatepickerModule,
         NgSelectModule,
-        ReactiveFormsModule
+        ReactiveFormsModule,
+		NbBadgeModule
 	],
 	providers: [
 		NbToastrService,
