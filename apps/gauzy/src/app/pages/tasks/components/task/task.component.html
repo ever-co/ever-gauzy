@@ -88,7 +88,6 @@
 						[tasks]="availableTasks$ | async"
 					></ga-tasks-sprint-view>
 				</div>
-
 				<ng-container
 					*ngTemplateOutlet="
 						paginationTemplate;
@@ -101,55 +100,6 @@
 		</ng-container>
 	</nb-card-body>
 </nb-card>
-
-<ng-template #actionButtons let-selectedItem="selectedItem">
-	<div class="btn-group actions">
-		<button
-			nbButton
-			status="basic"
-			class="action secondary"
-			[disabled]="disableButton"
-			size="small"
-		>
-			<nb-icon icon="eye-outline" pack="eva"></nb-icon>
-			{{ 'BUTTONS.VIEW' | translate }}
-		</button>
-		<button
-			nbButton
-			status="basic"
-			(click)="editTaskDialog(selectedItem)"
-			[disabled]="!selectedItem && disableButton"
-			class="action primary"
-			size="small"
-		>
-			<nb-icon icon="edit-outline"></nb-icon>
-			{{ 'BUTTONS.EDIT' | translate }}
-		</button>
-		<button
-			nbButton
-			status="basic"
-			(click)="duplicateTaskDialog(selectedItem)"
-			[disabled]="!selectedItem && disableButton"
-			class="action primary"
-			size="small"
-		>
-			<nb-icon icon="copy-outline"></nb-icon>
-			{{ 'BUTTONS.DUPLICATE' | translate }}
-		</button>
-		<button
-			nbButton
-			status="basic"
-			(click)="deleteTask(selectedItem)"
-			[disabled]="!selectedItem && disableButton"
-			class="action"
-			size="small"
-			[nbToolTip]="'BUTTONS.DELETE' | translate"
-		>
-			<nb-icon status="danger" icon="trash-2-outline"> </nb-icon>
-		</button>
-	</div>
-</ng-template>
-
 <ng-template #paginationTemplate let-pagination="pagination">
 	<div class="pagination-container">
 		<ng-container *ngIf="pagination.totalItems > minItemPerPage">
@@ -164,9 +114,73 @@
 		</ng-container>
 	</div>
 </ng-template>
+<ng-template #actionButtons>
+	<ng-template [ngxPermissionsOnly]="['ALL_ORG_EDIT', 'ALL_ORG_VIEW', 'ORG_TASK_VIEW', 'ORG_TASK_EDIT', 'ORG_TASK_DELETE']">
+		<div class="btn-group actions">
+			<ng-template [ngxPermissionsOnly]="['ALL_ORG_VIEW', 'ORG_TASK_VIEW']">
+				<button
+					nbButton
+					status="basic"
+					class="action secondary"
+					[disabled]="disableButton"
+					size="small"
+				>
+					<nb-icon icon="eye-outline" pack="eva"></nb-icon>
+					{{ 'BUTTONS.VIEW' | translate }}
+				</button>
+			</ng-template>
+			<ng-template [ngxPermissionsOnly]="['ALL_ORG_EDIT', 'ORG_TASK_EDIT']">
+				<button
+					nbButton
+					status="basic"
+					(click)="editTaskDialog(selectedItem)"
+					[disabled]="disableButton"
+					class="action primary"
+					size="small"
+				>
+					<nb-icon icon="edit-outline"></nb-icon>
+					{{ 'BUTTONS.EDIT' | translate }}
+				</button>
+			</ng-template>
+			<ng-template [ngxPermissionsOnly]="['ALL_ORG_EDIT', 'ORG_TASK_EDIT']">
+				<button
+					nbButton
+					status="basic"
+					(click)="duplicateTaskDialog(selectedItem)"
+					[disabled]="disableButton"
+					class="action primary"
+					size="small"
+				>
+					<nb-icon icon="copy-outline"></nb-icon>
+					{{ 'BUTTONS.DUPLICATE' | translate }}
+				</button>
+			</ng-template>
+			<ng-template [ngxPermissionsOnly]="['ALL_ORG_EDIT', 'ORG_TASK_DELETE']">
+				<button
+					nbButton
+					status="basic"
+					(click)="deleteTask(selectedItem)"
+					[disabled]="disableButton"
+					class="action"
+					size="small"
+					[nbToolTip]="'BUTTONS.DELETE' | translate"
+				>
+					<nb-icon status="danger" icon="trash-2-outline"> </nb-icon>
+				</button>
+			</ng-template>
+		</div>
+	</ng-template>
+</ng-template>
 <ng-template #visibleButton>
-	<button nbButton status="success" (click)="createTaskDialog()" size="small">
-		<nb-icon icon="plus-outline"></nb-icon>
-		{{ 'BUTTONS.ADD' | translate }}
-	</button>
+	<ng-template [ngxPermissionsOnly]="['ALL_ORG_EDIT', 'ORG_TASK_ADD']">
+		<button
+			nbButton
+			status="success"
+			(click)="createTaskDialog()"
+			size="small"
+		>
+			<nb-icon icon="plus-outline"></nb-icon>
+			{{ 'BUTTONS.ADD' | translate }}
+		</button>
+	</ng-template>
 </ng-template>
