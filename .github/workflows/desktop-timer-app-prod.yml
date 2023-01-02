@@ -47,7 +47,7 @@ jobs:
               with:
                 script: |
                   const script = require('./.scripts/bump-version-electron.js')
-                  console.log(script.desktoptimer(true))
+                  console.log(script.desktopTimer(true))
 
             - name: Build Desktop Timer App
               run: 'yarn build:desktop-timer:linux:release'
@@ -92,7 +92,7 @@ jobs:
               with:
                 script: |
                   const script = require('./.scripts/bump-version-electron.js')
-                  console.log(script.desktoptimer(true))
+                  console.log(script.desktopTimer(true))
 
             - name: Build Desktop Timer App
               run: 'yarn build:desktop-timer:mac:release'
@@ -137,7 +137,7 @@ jobs:
               with:
                 script: |
                   const script = require('./.scripts/bump-version-electron.js')
-                  console.log(script.desktoptimer(true))
+                  console.log(script.desktopTimer(true))
 
             - name: Build Desktop Timer App
               run: 'yarn build:desktop-timer:windows:release'
