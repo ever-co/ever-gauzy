@@ -5,7 +5,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { DaterangepickerDirective as DateRangePickerDirective, LocaleConfig } from 'ngx-daterangepicker-material';
 import * as moment from 'moment';
 import { IDateRangePicker, IOrganization, ITimeLogFilters, WeekDaysEnum } from '@gauzy/contracts';
-import { isNotEmpty } from '@gauzy/common-angular';
+import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
 import { TranslateService } from '@ngx-translate/core';
 import {
 	DateRangePickerBuilderService,
@@ -247,6 +247,7 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 	ngAfterViewInit() {
 		this.range$
 			.pipe(
+				distinctUntilChange(),
 				tap((range: IDateRangePicker) => {
 					this.dateRangePickerBuilderService.selectedDateRange = range;
 				}),
