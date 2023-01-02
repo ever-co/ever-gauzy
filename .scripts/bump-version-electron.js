@@ -21,6 +21,24 @@ module.exports.server = (isProd) => {
 				// let's remove "v" from version, i.e. first character
                 newVersion = newVersion.substring(1);
                 package.version = newVersion;
+
+				if (!isProd) {
+					package.build.publish = [
+						{
+							"provider": "github",
+							"repo": "ever-gauzy-server",
+							"releaseType": "prerelease"
+						},
+						{
+							"provider": "spaces",
+							"name": "ever",
+							"region": "sfo3",
+							"path": "/ever-gauzy-server-pre",
+							"acl": "public-read"
+						}
+					];
+				}
+
                 fs.writeFileSync('./apps/server/src/package.json', JSON.stringify(package, null, 2));
 
                 let updated = require('../apps/server/src/package.json');
@@ -51,6 +69,24 @@ module.exports.desktop = (isProd) => {
 				// let's remove "v" from version, i.e. first character
                 newVersion = newVersion.substring(1);
                 package.version = newVersion;
+
+				if (!isProd) {
+					package.build.publish = [
+						{
+							"provider": "github",
+							"repo": "ever-gauzy-desktop",
+							"releaseType": "prerelease"
+						},
+						{
+							"provider": "spaces",
+							"name": "ever",
+							"region": "sfo3",
+							"path": "/ever-gauzy-desktop-pre",
+							"acl": "public-read"
+						}
+					];
+				}
+
                 fs.writeFileSync('./apps/desktop/src/package.json', JSON.stringify(package, null, 2));
 
                 let updated = require('../apps/desktop/src/package.json');
@@ -63,7 +99,7 @@ module.exports.desktop = (isProd) => {
     }
 }
 
-module.exports.desktoptimer = (isProd) => {
+module.exports.desktopTimer = (isProd) => {
     if (fs.existsSync('./apps/desktop-timer/src/package.json')) {
         let package = require('../apps/desktop-timer/src/package.json');
         let currentVersion = package.version;
@@ -80,6 +116,24 @@ module.exports.desktoptimer = (isProd) => {
 			// let's remove "v" from version, i.e. first character
             newVersion = newVersion.substring(1);
             package.version = newVersion;
+
+			if (!isProd) {
+				package.build.publish = [
+					{
+						"provider": "github",
+						"repo": "ever-gauzy-desktop-timer",
+						"releaseType": "prerelease"
+					},
+					{
+						"provider": "spaces",
+						"name": "ever",
+						"region": "sfo3",
+						"path": "/ever-gauzy-desktop-timer-pre",
+						"acl": "public-read"
+					}
+				];
+			}
+
             fs.writeFileSync('./apps/desktop-timer/src/package.json', JSON.stringify(package, null, 2));
 
             let updated = require('../apps/desktop-timer/src/package.json');
