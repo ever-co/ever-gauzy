@@ -334,8 +334,8 @@ export default class TimerHandler {
 				source: TimeLogSourceEnum.DESKTOP,
 				recordedAt: moment(item.timestamp).utc().toDate(),
 				metaData: item.data
-			} : {};
-		});
+			} : null;
+		}).filter((item) => !!item);
 
 		// formating aw
 		awActivities = awActivities.map((item) => {

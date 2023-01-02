@@ -1,7 +1,7 @@
 // tslint:disable: nx-enforce-module-boundaries
 import { Component, OnInit, OnDestroy, AfterViewInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, ParamMap } from '@angular/router';
-import { isEmpty } from '@gauzy/common-angular';
+import { distinctUntilChange, isEmpty } from '@gauzy/common-angular';
 import {
 	NbDialogService,
 	NbMenuItem,
@@ -34,8 +34,8 @@ import { GauzyFiltersComponent } from './../../../../../@shared/timesheet/gauzy-
 	templateUrl: './daily.component.html',
 	styleUrls: ['./daily.component.scss']
 })
-export class DailyComponent extends BaseSelectorFilterComponent implements
-	AfterViewInit, OnInit, OnDestroy {
+export class DailyComponent extends BaseSelectorFilterComponent
+	implements AfterViewInit, OnInit, OnDestroy {
 
 	PermissionsEnum = PermissionsEnum;
 	loading: boolean = false;
@@ -70,10 +70,9 @@ export class DailyComponent extends BaseSelectorFilterComponent implements
 	}
 
 	ngOnInit() {
-		this._applyTranslationOnChange();
 		this.subject$
 			.pipe(
-				debounceTime(200),
+				filter(() => !!this.organization),
 				tap(() => this._clearItem()),
 				tap(() => this.prepareRequest()),
 				tap(() => (this.allChecked = false)),
@@ -82,9 +81,9 @@ export class DailyComponent extends BaseSelectorFilterComponent implements
 			.subscribe();
 		this.payloads$
 			.pipe(
-				debounceTime(400),
+				distinctUntilChange(),
 				filter((payloads: ITimeLogFilters) => !!payloads),
-				tap(() => this.getLogs()),
+				tap(() => this.getDailyTimesheetLogs()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -118,6 +117,7 @@ export class DailyComponent extends BaseSelectorFilterComponent implements
 
 	ngAfterViewInit() {
 		this._createContextMenus();
+		this._applyTranslationOnContextMenu();
 	}
 
 	filtersChange(filters: ITimeLogFilters) {
@@ -134,7 +134,7 @@ export class DailyComponent extends BaseSelectorFilterComponent implements
 	 * @returns
 	 */
 	prepareRequest() {
-		if (!this.organization || isEmpty(this.filters)) {
+		if (isEmpty(this.request) || isEmpty(this.filters)) {
 			return;
 		}
 		const appliedFilter = pick(
@@ -150,14 +150,17 @@ export class DailyComponent extends BaseSelectorFilterComponent implements
 		this.payloads$.next(request);
 	}
 
-	async getLogs() {
-		if (!this.organization || isEmpty(this.filters)) {
+	/**
+	 * Get daily timesheet logs
+	 * @returns
+	 */
+	async getDailyTimesheetLogs() {
+		if (!this.organization || isEmpty(this.request)) {
 			return;
 		}
-		const payloads = this.payloads$.getValue();
-
 		this.loading = true;
 		try {
+			const payloads = this.payloads$.getValue();
 			this.timeLogs = await this.timesheetService.getTimeLogs(payloads, [
 				'project',
 				'task',
@@ -363,7 +366,7 @@ export class DailyComponent extends BaseSelectorFilterComponent implements
 	/**
 	 * Translate context menus
 	 */
-	private _applyTranslationOnChange() {
+	private _applyTranslationOnContextMenu() {
 		this.translateService.onLangChange
 			.pipe(
 				tap(() => this._createContextMenus()),
@@ -377,12 +380,14 @@ export class DailyComponent extends BaseSelectorFilterComponent implements
 	 */
 	private _createContextMenus() {
 		this.contextMenus = [
-			{
-				title: this.getTranslation('TIMESHEET.DELETE'),
-				data: {
-					action: 'DELETE'
+			...(this.store.hasAnyPermission(PermissionsEnum.ALLOW_DELETE_TIME) ? [
+				{
+					title: this.getTranslation('TIMESHEET.DELETE'),
+					data: {
+						action: 'DELETE'
+					}
 				}
-			}
+			] : []),
 		];
 	}
 

@@ -7,6 +7,7 @@ import { isNotEmpty } from '@gauzy/common';
 import { AuthService } from './../../../auth/auth.service';
 import { UserService } from './../../../user/user.service';
 import { InviteService } from './../../invite.service';
+import { InviteAcceptCandidateCommand } from '../invite.accept-candidate.command';
 import { InviteAcceptEmployeeCommand } from '../invite.accept-employee.command';
 import { InviteAcceptUserCommand } from '../invite.accept-user.command';
 import { InviteAcceptCommand } from '../invite-accept.command';
@@ -65,6 +66,11 @@ export class InviteAcceptHandler
 				case RolesEnum.EMPLOYEE:
 					user = await this.commandBus.execute(
 						new InviteAcceptEmployeeCommand(input, languageCode)
+					);
+					return await this._authorizeUser(user);
+				case RolesEnum.CANDIDATE:
+					user = await this.commandBus.execute(
+						new InviteAcceptCandidateCommand(input, languageCode)
 					);
 					return await this._authorizeUser(user);
 				default:

@@ -258,7 +258,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 					languageCode,
 					invitedBy
 				});
-			} else if (emailInvites.inviteType === InvitationTypeEnum.EMPLOYEE) {
+			} else if (emailInvites.inviteType === InvitationTypeEnum.EMPLOYEE || emailInvites.inviteType === InvitationTypeEnum.CANDIDATE) {
 				this.emailService.inviteEmployee({
 					email: item.email,
 					registerUrl,

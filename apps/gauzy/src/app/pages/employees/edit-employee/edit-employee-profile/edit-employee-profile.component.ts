@@ -145,14 +145,12 @@ export class EditEmployeeProfileComponent
 				responsive: true,
 				route: this.getRoute('rates')
 			},
-			{
-				title: this.getTranslation(
-					'EMPLOYEES_PAGE.EDIT_EMPLOYEE.PROJECTS'
-				),
+			...(this.store.hasAnyPermission(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_PROJECT_VIEW) ? [{
+				title: this.getTranslation('EMPLOYEES_PAGE.EDIT_EMPLOYEE.PROJECTS'),
 				icon: 'book-outline',
 				responsive: true,
 				route: this.getRoute('projects')
-			},
+			}] : []),
 			{
 				title: this.getTranslation(
 					'EMPLOYEES_PAGE.EDIT_EMPLOYEE.CONTACTS'

@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { BehaviorSubject, filter } from 'rxjs';
-import { debounceTime, tap } from 'rxjs/operators';
+import { tap } from 'rxjs/operators';
 import { Observable } from 'rxjs/internal/Observable';
 import { chain, reduce } from 'underscore';
 import * as moment from 'moment';
@@ -30,8 +30,6 @@ import { GauzyFiltersComponent } from './../../../../../@shared/timesheet/gauzy-
 export class AppUrlActivityComponent extends BaseSelectorFilterComponent
 	implements OnInit, OnDestroy {
 
-	payloads$: BehaviorSubject<ITimeLogFilters> = new BehaviorSubject(null);
-
 	filters: ITimeLogFilters = this.request;
 	loading: boolean;
 	apps: {
@@ -42,6 +40,7 @@ export class AppUrlActivityComponent extends BaseSelectorFilterComponent
 
 	@ViewChild(GauzyFiltersComponent) gauzyFiltersComponent: GauzyFiltersComponent;
 	datePickerConfig$: Observable<any> = this.dateRangePickerBuilderService.datePickerConfig$;
+	payloads$: BehaviorSubject<ITimeLogFilters> = new BehaviorSubject(null);
 
 	constructor(
 		public readonly translateService: TranslateService,
@@ -63,17 +62,16 @@ export class AppUrlActivityComponent extends BaseSelectorFilterComponent
 			.subscribe();
 		this.subject$
 			.pipe(
-				debounceTime(200),
+				filter(() => !!this.organization),
 				tap(() => this.prepareRequest()),
 				untilDestroyed(this)
 			)
 			.subscribe();
 		this.payloads$
 			.pipe(
-				debounceTime(200),
 				distinctUntilChange(),
 				filter((payloads: ITimeLogFilters) => !!payloads),
-				tap(() => this.getLogs()),
+				tap(() => this.getAppUrlActivityLogs()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -87,8 +85,13 @@ export class AppUrlActivityComponent extends BaseSelectorFilterComponent
 		this.subject$.next(true);
 	}
 
+	/**
+	 * Prepare Unique Request Always
+	 *
+	 * @returns
+	 */
 	prepareRequest() {
-		if (!this.organization || isEmpty(this.filters)) {
+		if (isEmpty(this.request) || isEmpty(this.filters)) {
 			return;
 		}
 		const request: IGetActivitiesInput = {
@@ -140,8 +143,13 @@ export class AppUrlActivityComponent extends BaseSelectorFilterComponent
 		});
 	}
 
-	getLogs() {
-		if (!this.organization || isEmpty(this.filters)) {
+	/**
+	 * Get APP & URL's activity logs
+	 *
+	 * @returns
+	 */
+	getAppUrlActivityLogs() {
+		if (!this.organization || isEmpty(this.request)) {
 			return;
 		}
 		const payloads = this.payloads$.getValue();

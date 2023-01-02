@@ -10,7 +10,8 @@ import {
 	IEmployee,
 	IOrganization,
 	IInvite,
-	IOrganizationTeam
+	IOrganizationTeam,
+	ICandidate
 } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Exclude } from 'class-transformer';
@@ -27,6 +28,7 @@ import {
 	OneToMany
 } from 'typeorm';
 import {
+	Candidate,
 	Employee,
 	Invite,
 	OrganizationTeam,
@@ -150,6 +152,14 @@ export class User extends TenantBaseEntity implements IUser {
 	@ApiPropertyOptional({ type: () => Employee })
 	@OneToOne(() => Employee, (employee: Employee) => employee.user)
 	employee?: IEmployee;
+
+
+	/**
+	 * Candidate
+	 */
+	@ApiPropertyOptional({ type: () => Candidate })
+	@OneToOne(() => Candidate, (candidate: Candidate) => candidate.user)
+	candidate?: ICandidate;
 
 	/*
     |--------------------------------------------------------------------------

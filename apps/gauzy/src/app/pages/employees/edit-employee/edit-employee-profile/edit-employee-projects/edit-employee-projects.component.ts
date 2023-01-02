@@ -3,7 +3,8 @@ import {
 	IEditEntityByMemberInput,
 	IEmployee,
 	IOrganization,
-	IOrganizationProject
+	IOrganizationProject,
+	PermissionsEnum
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
@@ -108,9 +109,13 @@ export class EditEmployeeProjectsComponent extends TranslationBaseComponent
 	 * @returns
 	 */
 	private async loadSelectedEmployeeProjects() {
-		if (!this.organization && this.selectedEmployee) {
+		if (!this.organization || !this.store.hasAnyPermission(
+			PermissionsEnum.ALL_ORG_VIEW,
+			PermissionsEnum.ORG_PROJECT_VIEW
+		)) {
 			return;
 		}
+
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 		const { id: selectedEmployeeId } = this.selectedEmployee;
@@ -130,9 +135,13 @@ export class EditEmployeeProjectsComponent extends TranslationBaseComponent
 	 * @returns
 	 */
 	private async getOrganizationProjects(): Promise<IOrganizationProject[]> {
-		if (!this.organization) {
+		if (!this.organization || !this.store.hasAnyPermission(
+			PermissionsEnum.ALL_ORG_VIEW,
+			PermissionsEnum.ORG_PROJECT_VIEW
+		)) {
 			return;
 		}
+
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 

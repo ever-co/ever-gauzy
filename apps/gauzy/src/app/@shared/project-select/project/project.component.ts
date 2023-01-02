@@ -16,7 +16,7 @@ import {
 } from '@gauzy/contracts';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { map, Observable, Subject } from 'rxjs';
-import { debounceTime, filter, tap } from 'rxjs/operators';
+import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange, isEmpty, isNotEmpty } from '@gauzy/common-angular';
 import { ALL_PROJECT_SELECTED } from './default-project';
@@ -46,7 +46,7 @@ export class ProjectSelectorComponent
 
 	projects: IOrganizationProject[] = [];
 	selectedProject: IOrganizationProject;
-	hasEditProject$: Observable<boolean>;
+	hasAddProject$: Observable<boolean>;
 
 	public organization: IOrganization;
 	subject$: Subject<any> = new Subject();
@@ -135,14 +135,16 @@ export class ProjectSelectorComponent
 	) {}
 
 	ngOnInit() {
-		this.hasEditProject$ = this.store.userRolePermissions$.pipe(
+		this.hasAddProject$ = this.store.userRolePermissions$.pipe(
 			map(() =>
-				this.store.hasPermission(PermissionsEnum.ORG_PROJECT_EDIT)
+				this.store.hasAnyPermission(
+					PermissionsEnum.ALL_ORG_EDIT,
+					PermissionsEnum.ORG_PROJECT_ADD
+				)
 			)
 		);
 		this.subject$
 			.pipe(
-				debounceTime(200),
 				tap(() => this.getProjects()),
 				untilDestroyed(this)
 			)

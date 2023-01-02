@@ -1,11 +1,11 @@
 import { Component, OnInit, OnDestroy, AfterViewInit, Input, ViewChild } from '@angular/core';
-import { BehaviorSubject, combineLatest, debounceTime, of as observableOf, Subject, switchMap, take } from 'rxjs';
+import { BehaviorSubject, combineLatest, of as observableOf, Subject, switchMap, take } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { DaterangepickerDirective as DateRangePickerDirective, LocaleConfig } from 'ngx-daterangepicker-material';
 import * as moment from 'moment';
 import { IDateRangePicker, IOrganization, ITimeLogFilters, WeekDaysEnum } from '@gauzy/contracts';
-import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
+import { isNotEmpty } from '@gauzy/common-angular';
 import { TranslateService } from '@ngx-translate/core';
 import {
 	DateRangePickerBuilderService,
@@ -197,7 +197,7 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 						id: true,
 						futureDateAllowed: true,
 						timeZone: true,
-						startWeekOn:true
+						startWeekOn: true
 					}),
 					observableOf(datePickerConfig),
 				])),
@@ -247,8 +247,6 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 	ngAfterViewInit() {
 		this.range$
 			.pipe(
-				distinctUntilChange(),
-				debounceTime(100),
 				tap((range: IDateRangePicker) => {
 					this.dateRangePickerBuilderService.selectedDateRange = range;
 				}),

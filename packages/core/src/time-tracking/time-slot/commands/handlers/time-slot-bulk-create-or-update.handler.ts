@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
 import * as moment from 'moment';
 import * as _ from 'underscore';
+import { isEmpty } from '@gauzy/common';
 import { TimeSlot } from './../../time-slot.entity';
 import { TimeSlotBulkCreateOrUpdateCommand } from './../time-slot-bulk-create-or-update.command';
 import { RequestContext } from '../../../../core/context';
@@ -28,8 +29,7 @@ export class TimeSlotBulkCreateOrUpdateHandler
 	public async execute(
 		command: TimeSlotBulkCreateOrUpdateCommand
 	): Promise<TimeSlot[]> {
-		let { slots } = command;
-
+		let { slots, employeeId, organizationId } = command;
 		if (slots.length === 0) {
 			return [];
 		}
@@ -46,14 +46,11 @@ export class TimeSlotBulkCreateOrUpdateHandler
 			relations: ['timeLogs']
 		});
 
-		let organizationId;
-		if (!slots[0].organizationId) {
+		if (isEmpty(organizationId)) {
 			const employee = await this.employeeRepository.findOneBy({
-				id: slots[0].employeeId
+				id: employeeId
 			});
 			organizationId = employee.organizationId;
-		} else {
-			organizationId = slots[0].organizationId;
 		}
 
 		const newSlotsTimeLogIds: any = _.chain(slots)
@@ -119,7 +116,12 @@ export class TimeSlotBulkCreateOrUpdateHandler
 		});
 
 		return await this.commandBus.execute(
-			new TimeSlotMergeCommand(slots[0].employeeId, minDate, maxDate)
+			new TimeSlotMergeCommand(
+				organizationId,
+				employeeId,
+				minDate,
+				maxDate
+			)
 		);
 	}
 }

@@ -64,24 +64,6 @@ import { ChangeDetectorRef } from '@angular/core';
 export class HeaderComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy, AfterViewInit {
 
-	hasPermissionE = false;
-	hasPermissionI = false;
-	hasPermissionP = false;
-	hasPermissionIn = false;
-	hasPermissionIEdit = false;
-	hasPermissionEEdit = false;
-	hasPermissionPEdit = false;
-	hasPermissionInEdit = false;
-	hasPermissionTask = false;
-	hasPermissionEmpEdit = false;
-	hasPermissionProjEdit = false;
-	hasPermissionContactEdit = false;
-	hasPermissionTeamAdd = false;
-	hasPermissionContractEdit = false;
-	hasPermissionPaymentAddEdit = false;
-	hasPermissionTimesheetEdit = false;
-	hasPermissionCandidateEdit = false;
-	hasPermissionTimeTracker = false;
 	isEmployee = false;
 	isElectron: boolean = environment.IS_ELECTRON;
 	isDemo: boolean = environment.DEMO;
@@ -141,7 +123,7 @@ export class HeaderComponent extends TranslationBaseComponent
 				debounceTime(1300),
 				tap(() => this.checkEmployeeSelectorVisibility()),
 				tap(() => this.checkProjectSelectorVisibility()),
-				tap(() => this._loadRolePermissions()),
+				tap(() => this._loadContextMenus()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -238,7 +220,7 @@ export class HeaderComponent extends TranslationBaseComponent
 				this.cd.detectChanges();
 			});
 		this._applyTranslationOnContextMenu();
-		this._loadRolePermissions();
+		this._loadContextMenus();
 	}
 
 	/**
@@ -248,11 +230,15 @@ export class HeaderComponent extends TranslationBaseComponent
 	 */
 	checkProjectSelectorVisibility() {
 		// hidden project selector if not activate for current page
-		if (!this.organization || !this.selectorsVisibility.project) {
+		if (!this.organization || !this.selectorsVisibility.project || !this.store.hasAnyPermission(
+			PermissionsEnum.ALL_ORG_VIEW,
+			PermissionsEnum.ORG_PROJECT_VIEW
+		)) {
 			return;
 		}
 		const { id: organizationId } = this.organization;
 		const { tenantId } = this.store.user;
+
 		this.organizationProjectsService.getCount({
 			organizationId,
 			tenantId
@@ -289,22 +275,22 @@ export class HeaderComponent extends TranslationBaseComponent
 				this.store.selectedEmployee = ALL_EMPLOYEES_SELECTED;
 			}
 		} else {
-			const employee = await firstValueFrom(
-				this.employeesService.getEmployeeById(
-					this.user.employeeId,
-					[]
-				)
-			);
-			if (isNotEmpty(employee)) {
-				this.store.selectedEmployee = {
-					id: employee.id,
-					firstName: this.user.firstName,
-					lastName: this.user.lastName,
-					fullName: this.user.name,
-					imageUrl: this.user.imageUrl
-				};
-			} else {
-				this.store.selectedEmployee = NO_EMPLOYEE_SELECTED;
+			if (this.isEmployee) {
+				const { employeeId } = this.user;
+				const employee = await firstValueFrom(
+					this.employeesService.getEmployeeById(employeeId)
+				);
+				if (isNotEmpty(employee)) {
+					this.store.selectedEmployee = {
+						id: employee.id,
+						firstName: this.user.firstName,
+						lastName: this.user.lastName,
+						fullName: this.user.name,
+						imageUrl: this.user.imageUrl
+					};
+				} else {
+					this.store.selectedEmployee = NO_EMPLOYEE_SELECTED;
+				}
 			}
 		}
 	}
@@ -447,161 +433,121 @@ export class HeaderComponent extends TranslationBaseComponent
 			bool !== undefined ? bool : !this.showExtraActions;
 	}
 
-	_loadRolePermissions() {
-		this.store.userRolePermissions$
-			.pipe(untilDestroyed(this))
-			.subscribe(() => {
-				this.hasPermissionE = this.store.hasPermission(
-					PermissionsEnum.ORG_EXPENSES_VIEW
-				);
-				this.hasPermissionI = this.store.hasPermission(
-					PermissionsEnum.ORG_INCOMES_VIEW
-				);
-				this.hasPermissionP = this.store.hasPermission(
-					PermissionsEnum.ORG_PROPOSALS_VIEW
-				);
-				this.hasPermissionIn = this.store.hasPermission(
-					PermissionsEnum.INVOICES_VIEW
-				);
-				this.hasPermissionTask = this.store.hasPermission(
-					PermissionsEnum.ORG_CANDIDATES_TASK_EDIT
-				);
-				this.hasPermissionEEdit = this.store.hasPermission(
-					PermissionsEnum.ORG_EXPENSES_EDIT
-				);
-				this.hasPermissionIEdit = this.store.hasPermission(
-					PermissionsEnum.ORG_INCOMES_EDIT
-				);
-				this.hasPermissionPEdit = this.store.hasPermission(
-					PermissionsEnum.ORG_PROPOSALS_EDIT
-				);
-				this.hasPermissionInEdit = this.store.hasPermission(
-					PermissionsEnum.INVOICES_EDIT
-				);
-				this.hasPermissionEmpEdit = this.store.hasPermission(
-					PermissionsEnum.ORG_EMPLOYEES_EDIT
-				);
-				this.hasPermissionProjEdit = this.store.hasPermission(
-					PermissionsEnum.ORG_PROJECT_EDIT
-				);
-				this.hasPermissionContactEdit = this.store.hasPermission(
-					PermissionsEnum.ORG_CONTACT_EDIT
-				);
-				this.hasPermissionTeamAdd = this.store.hasPermission(
-					PermissionsEnum.ORG_TEAM_ADD
-				);
-				this.hasPermissionContractEdit = this.store.hasPermission(
-					PermissionsEnum.ORG_CONTRACT_EDIT
-				);
-				this.hasPermissionPaymentAddEdit = this.store.hasPermission(
-					PermissionsEnum.ORG_PAYMENT_ADD_EDIT
-				);
-				this.hasPermissionTimesheetEdit = this.store.hasPermission(
-					PermissionsEnum.TIMESHEET_EDIT_TIME
-				);
-				this.hasPermissionCandidateEdit = this.store.hasPermission(
-					PermissionsEnum.ORG_CANDIDATES_EDIT
-				);
-			});
+	private _loadContextMenus() {
 		this.createContextMenu = [
-			{
-				title: this.getTranslation('CONTEXT_MENU.TIMER'),
-				icon: 'clock-outline',
-				hidden: !this.isEmployee || this.isElectron,
-				data: {
-					action: this.actions.START_TIMER //This opens the timer popup in the header, managed by menu.itemClick TOO: Start the timer also
+			...(this.store.hasAnyPermission(PermissionsEnum.TIME_TRACKER) ? [
+				{
+					title: this.getTranslation('CONTEXT_MENU.TIMER'),
+					icon: 'clock-outline',
+					hidden: !this.isEmployee || this.isElectron,
+					data: {
+						action: this.actions.START_TIMER //This opens the timer popup in the header, managed by menu.itemClick TOO: Start the timer also
+					}
 				}
-			},
+			] : []),
 			// TODO: divider
-			{
-				title: this.getTranslation('CONTEXT_MENU.ADD_INCOME'),
-				icon: 'plus-circle-outline',
-				link: 'pages/accounting/income',
-				hidden: !this.hasPermissionI || !this.hasPermissionIEdit
-			},
-			{
-				title: this.getTranslation('CONTEXT_MENU.ADD_EXPENSE'),
-				icon: 'minus-circle-outline',
-				link: 'pages/accounting/expenses',
-				hidden: !this.hasPermissionE || !this.hasPermissionEEdit
-			},
+			...(this.store.hasAnyPermission(PermissionsEnum.ORG_INCOMES_EDIT, PermissionsEnum.ALL_ORG_EDIT) ? [
+				{
+					title: this.getTranslation('CONTEXT_MENU.ADD_INCOME'),
+					icon: 'plus-circle-outline',
+					link: 'pages/accounting/income'
+				}
+			] : []),
+			...(this.store.hasAnyPermission(PermissionsEnum.ORG_EXPENSES_EDIT, PermissionsEnum.ALL_ORG_EDIT) ? [
+				{
+					title: this.getTranslation('CONTEXT_MENU.ADD_EXPENSE'),
+					icon: 'minus-circle-outline',
+					link: 'pages/accounting/expenses'
+				}
+			] : []),
 			// TODO: divider
-			{
-				title: this.getTranslation('CONTEXT_MENU.INVOICE'),
-				icon: 'archive-outline',
-				link: 'pages/accounting/invoices/add',
-				hidden: !this.hasPermissionI || !this.hasPermissionIEdit
-			},
-			{
-				title: this.getTranslation('CONTEXT_MENU.ESTIMATE'),
-				icon: 'file-outline',
-				link: 'pages/accounting/invoices/estimates/add',
-				hidden: !this.hasPermissionInEdit
-			},
-			{
-				title: this.getTranslation('CONTEXT_MENU.PAYMENT'),
-				icon: 'clipboard-outline',
-				link: 'pages/accounting/payments',
-				hidden: !this.hasPermissionPaymentAddEdit
-			},
-			{
-				title: this.getTranslation('CONTEXT_MENU.TIME_LOG'),
-				icon: 'clock-outline',
-				link: 'pages/employees/timesheets/daily',
-				hidden: !this.hasPermissionTimesheetEdit
-			},
-			{
-				title: this.getTranslation('CONTEXT_MENU.CANDIDATE'),
-				icon: 'person-done-outline',
-				link: 'pages/employees/candidates',
-				hidden: !this.hasPermissionCandidateEdit
-			},
-			{
-				title: this.getTranslation('CONTEXT_MENU.PROPOSAL'),
-				icon: 'paper-plane-outline',
-				link: 'pages/sales/proposals/register',
-				hidden: !this.hasPermissionP || !this.hasPermissionPEdit
-			},
-			{
-				title: this.getTranslation('CONTEXT_MENU.CONTRACT'),
-				icon: 'file-text-outline',
-				link: 'pages/integrations/upwork',
-				hidden: !this.hasPermissionContractEdit
-			},
+			...(this.store.hasAnyPermission(PermissionsEnum.INVOICES_EDIT, PermissionsEnum.ALL_ORG_EDIT) ? [
+				{
+					title: this.getTranslation('CONTEXT_MENU.INVOICE'),
+					icon: 'archive-outline',
+					link: 'pages/accounting/invoices/add'
+				}
+			] : []),
+			...(this.store.hasAnyPermission(PermissionsEnum.ESTIMATES_EDIT, PermissionsEnum.ALL_ORG_EDIT) ? [
+				{
+					title: this.getTranslation('CONTEXT_MENU.ESTIMATE'),
+					icon: 'file-outline',
+					link: 'pages/accounting/invoices/estimates/add'
+				}
+			] : []),
+			...(this.store.hasAnyPermission(PermissionsEnum.ORG_PAYMENT_ADD_EDIT, PermissionsEnum.ALL_ORG_EDIT) ? [
+				{
+					title: this.getTranslation('CONTEXT_MENU.PAYMENT'),
+					icon: 'clipboard-outline',
+					link: 'pages/accounting/payments'
+				}
+			] : []),
+			...(this.store.hasAnyPermission(PermissionsEnum.TIMESHEET_EDIT_TIME, PermissionsEnum.ALL_ORG_EDIT) ? [
+				{
+					title: this.getTranslation('CONTEXT_MENU.TIME_LOG'),
+					icon: 'clock-outline',
+					link: 'pages/employees/timesheets/daily'
+				}
+			] : []),
+			...(this.store.hasAnyPermission(PermissionsEnum.ORG_CANDIDATES_EDIT, PermissionsEnum.ALL_ORG_EDIT) ? [
+				{
+					title: this.getTranslation('CONTEXT_MENU.CANDIDATE'),
+					icon: 'person-done-outline',
+					link: 'pages/employees/candidates'
+				}
+			] : []),
+			...(this.store.hasAnyPermission(PermissionsEnum.ORG_PROPOSALS_EDIT, PermissionsEnum.ALL_ORG_EDIT) ? [
+				{
+					title: this.getTranslation('CONTEXT_MENU.PROPOSAL'),
+					icon: 'paper-plane-outline',
+					link: 'pages/sales/proposals/register'
+				}
+			] : []),
+			...(this.store.hasAnyPermission(PermissionsEnum.ORG_CONTRACT_EDIT, PermissionsEnum.ALL_ORG_EDIT) ? [
+				{
+					title: this.getTranslation('CONTEXT_MENU.CONTRACT'),
+					icon: 'file-text-outline',
+					link: 'pages/integrations/upwork'
+				}
+			] : []),
 			// TODO: divider
-			{
-				title: this.getTranslation('CONTEXT_MENU.TEAM'),
-				icon: 'people-outline',
-				link: `pages/organization/teams`,
-				hidden: !this.hasPermissionTeamAdd
-			},
-			{
-				title: this.getTranslation('CONTEXT_MENU.TASK'),
-				icon: 'calendar-outline',
-				link: 'pages/tasks/dashboard',
-				hidden: !this.hasPermissionTask
-			},
-			{
-				title: this.getTranslation('CONTEXT_MENU.CONTACT'),
-				icon: 'person-done-outline',
-				link: `pages/contacts`,
-				hidden: !this.hasPermissionContactEdit
-			},
-			{
-				title: this.getTranslation('CONTEXT_MENU.PROJECT'),
-				icon: 'color-palette-outline',
-				link: `pages/organization/projects`,
-				hidden: !this.hasPermissionProjEdit
-			},
+			...(this.store.hasAnyPermission(PermissionsEnum.ORG_TEAM_ADD, PermissionsEnum.ALL_ORG_EDIT) ? [
+				{
+					title: this.getTranslation('CONTEXT_MENU.TEAM'),
+					icon: 'people-outline',
+					link: `pages/organization/teams`
+				}
+			] : []),
+			...(this.store.hasAnyPermission(PermissionsEnum.ORG_TASK_EDIT, PermissionsEnum.ALL_ORG_EDIT) ? [
+				{
+					title: this.getTranslation('CONTEXT_MENU.TASK'),
+					icon: 'calendar-outline',
+					link: 'pages/tasks/dashboard'
+				}
+			] : []),
+			...(this.store.hasAnyPermission(PermissionsEnum.ORG_CONTACT_EDIT, PermissionsEnum.ALL_ORG_EDIT) ? [
+				{
+					title: this.getTranslation('CONTEXT_MENU.CONTACT'),
+					icon: 'person-done-outline',
+					link: `pages/contacts`
+				}
+			] : []),
+			...(this.store.hasAnyPermission(PermissionsEnum.ORG_PROJECT_ADD, PermissionsEnum.ALL_ORG_EDIT) ? [
+				{
+					title: this.getTranslation('CONTEXT_MENU.PROJECT'),
+					icon: 'color-palette-outline',
+					link: `pages/organization/projects`
+				}
+			] : []),
 			// TODO: divider
-			{
-				title: this.getTranslation('CONTEXT_MENU.ADD_EMPLOYEE'),
-				icon: 'people-outline',
-				link: 'pages/employees',
-				hidden: !this.hasPermissionEmpEdit
-			}
+			...(this.store.hasAnyPermission(PermissionsEnum.ORG_EMPLOYEES_EDIT, PermissionsEnum.ALL_ORG_EDIT) ? [
+				{
+					title: this.getTranslation('CONTEXT_MENU.ADD_EMPLOYEE'),
+					icon: 'people-outline',
+					link: 'pages/employees'
+				}
+			] : [])
 		];
-
 		this.supportContextMenu = [
 			{
 				title: this.getTranslation('CONTEXT_MENU.CHAT'),
@@ -630,7 +576,7 @@ export class HeaderComponent extends TranslationBaseComponent
 				tap(() => {
 					this.createContextMenu = [];
 					this.supportContextMenu = [];
-					this._loadRolePermissions();
+					this._loadContextMenus();
 				}),
 				untilDestroyed(this)
 			)

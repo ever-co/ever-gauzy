@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
 import { DateRangePickerResolver } from '../../../@theme/components/header/selectors/date-range-picker';
-import { LayoutComponent } from './layout/layout.component';
+import { ActivityLayoutComponent } from './layout/layout.component';
 
 const routes: Routes = [
 	{
@@ -11,7 +11,7 @@ const routes: Routes = [
 	},
 	{
 		path: '',
-		component: LayoutComponent,
+		component: ActivityLayoutComponent,
 		children: [
 			{
 				path: 'time-activities',

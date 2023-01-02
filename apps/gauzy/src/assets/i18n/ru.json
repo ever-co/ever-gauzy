@@ -254,6 +254,7 @@
 		"NO_DATA_MESSAGE": "Нет данных",
 		"TAGS": "Теги",
 		"CREATED": "Создано",
+		"APPLIED_DATE": "Дата применения",
 		"HIRED_DATE": "Дата истечения",
 		"REJECTED_DATE": "Дата отклонения",
 		"TIME_TRACKING": "Время отслеживания",

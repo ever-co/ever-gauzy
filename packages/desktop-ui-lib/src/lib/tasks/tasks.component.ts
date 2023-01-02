@@ -8,6 +8,9 @@ import {
 	IUserOrganization,
 	TaskStatusEnum
 } from '@gauzy/contracts';
+import { NbToastrService } from '@nebular/theme';
+import { Color, rgbString } from '@kurkle/color';
+
 const log = window.require('electron-log');
 console.log = log.log;
 Object.assign(console, log.functions);
@@ -33,7 +36,7 @@ export class TasksComponent implements OnInit {
 	tags: ITag[] = [];
 	statuses = [
 		{
-			id: 'Todo',
+			id: 'TODO',
 			name: TaskStatusEnum.TODO
 		},
 		{
@@ -50,7 +53,10 @@ export class TasksComponent implements OnInit {
 		}
 	];
 
-	constructor(private timeTrackerService: TimeTrackerService) {}
+	constructor(
+		private timeTrackerService: TimeTrackerService,
+		private toastrService: NbToastrService
+	) {}
 
 	ngOnInit() {
 		(async () => {
@@ -81,7 +87,6 @@ export class TasksComponent implements OnInit {
 			tenantId: new FormControl(this.userData.tenantId),
 			title: new FormControl(null, Validators.required)
 		});
-        console.log('User', this.userData);
 	}
 
 	private async _projects(user: IUserOrganization): Promise<void> {
@@ -119,22 +124,19 @@ export class TasksComponent implements OnInit {
 
 	public async save(): Promise<void> {
 		if (this.form.invalid) return;
-		const { estimateDays, estimateHours, estimateMinutes, tags } =
+		const { estimateDays, estimateHours, estimateMinutes, project } =
 			this.form.value;
 		const days = estimateDays ? estimateDays * 24 * 3600 : 0;
 		const hours = estimateHours ? estimateHours * 3600 : 1;
 		const minutes = estimateMinutes ? estimateMinutes * 60 : 0;
-		const selectedTags = tags.map((i) => {
-			const tag = this.tags.find((y) => y.id === i);
-			return tag;
-		});
 
 		try {
 			this.form.patchValue({
 				members: [...this.employees],
 				estimate: days + hours + minutes,
-				tags: selectedTags
+				projectId: project ? project.id : null
 			});
+
 			await this.timeTrackerService.saveNewTask(
 				this.userData,
 				this.form.value
@@ -150,6 +152,76 @@ export class TasksComponent implements OnInit {
 				isSuccess: false,
 				message: error.message
 			});
+		}
+	}
+
+	public addProject = async (name: string) => {
+		try {
+			const data = this.userData as any;
+			const { tenantId, organizationContactId } = data;
+			const { organizationId } = data;
+
+			const request = {
+				name,
+				organizationId,
+				tenantId,
+				...(organizationContactId
+					? { contactId: organizationContactId }
+					: {})
+			};
+
+			request['members'] = [...this.employees];
+
+			const project = await this.timeTrackerService.createNewProject(
+				request,
+				data
+			);
+
+			this.projects = this.projects.concat([project]);
+
+			this.toastrService.success('Project added successfully');
+		} catch (error) {
+			this.toastrService.danger(error);
+		}
+	};
+
+	public background(bgColor: string) {
+		let color = new Color(bgColor);
+		return color.valid ? bgColor : this._test(bgColor);
+	}
+
+	public backgroundContrast(bgColor) {
+		let color = new Color(bgColor);
+		color = color.valid ? color : new Color(this._hex2rgb(bgColor));
+		const MIN_THRESHOLD = 128;
+		const MAX_THRESHOLD = 186;
+		const contrast = color.rgb
+			? color.rgb.r * 0.299 + color.rgb.g * 0.587 + color.rgb.b * 0.114
+			: null;
+		if (contrast < MIN_THRESHOLD) {
+			return '#ffffff';
+		} else if (contrast > MAX_THRESHOLD) {
+			return '#000000';
+		}
+	}
+
+	private _hex2rgb(hex: string) {
+		hex = this._test(hex);
+		return rgbString({
+			r: parseInt(hex.slice(1, 3), 16),
+			g: parseInt(hex.slice(3, 5), 16),
+			b: parseInt(hex.slice(5, 7), 16),
+			a: 1
+		});
+	}
+
+	private _test(hex: string): string {
+		const regex = /^#[0-9A-F]{6}$/i;
+		if (regex.test(hex)) {
+			return hex;
+		} else {
+			hex = '#' + hex;
+			return regex.test(hex) ? hex : '#000000';
 		}
 	}
 }

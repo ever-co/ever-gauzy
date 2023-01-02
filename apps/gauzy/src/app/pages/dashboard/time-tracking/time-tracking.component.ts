@@ -45,6 +45,9 @@ import {
 import * as moment from 'moment';
 import { NgxPermissionsService } from 'ngx-permissions';
 import { TranslateService } from '@ngx-translate/core';
+import { SwiperComponent } from "swiper/angular";
+// import Swiper core and required modules
+import SwiperCore, { Virtual, Pagination, Navigation } from "swiper";
 import { TimesheetStatisticsService } from '../../../@shared/timesheet/timesheet-statistics.service';
 import {
 	DateRangePickerBuilderService,
@@ -61,9 +64,6 @@ import { NbPopoverDirective } from '@nebular/theme';
 import { WidgetService } from '../../../@shared/dashboard/widget/widget.service';
 import { GuiDrag } from '../../../@shared/dashboard/interfaces/gui-drag.abstract';
 import { WindowService } from '../../../@shared/dashboard/window/window.service';
-import { SwiperComponent } from "swiper/angular";
-// import Swiper core and required modules
-import SwiperCore, { Virtual, Pagination, Navigation } from "swiper";
 
 // install Swiper modules
 SwiperCore.use([Pagination, Navigation, Virtual]);
@@ -73,9 +73,10 @@ export enum RangePeriod {
 	WEEK = 'WEEK',
 	PERIOD = 'PERIOD'
 }
+
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-time-tracking',
+	selector: 'ga-time-tracking-dashboard',
 	templateUrl: './time-tracking.component.html',
 	styleUrls: ['./time-tracking.component.scss']
 })
@@ -235,8 +236,11 @@ export class TimeTrackingComponent extends TranslationBaseComponent
 		this.changeRef.detectChanges();
 	}
 
-	getStatistics() {
-		if (!this.organization) {
+	async getStatistics() {
+		if (!this.organization || !await this.ngxPermissionsService.hasPermission([
+			PermissionsEnum.ADMIN_DASHBOARD_VIEW,
+			PermissionsEnum.ALL_ORG_VIEW
+		])) {
 			return;
 		}
 		this.getCounts();
@@ -613,7 +617,14 @@ export class TimeTrackingComponent extends TranslationBaseComponent
 	 *
 	 */
   	private async loadEmployeesCount() {
+		const hasPermission = this.store.hasAnyPermission(
+			PermissionsEnum.ADMIN_DASHBOARD_VIEW,
+			PermissionsEnum.ALL_ORG_VIEW
+		);
 		if (this.user && this.user.employeeId) {
+			return;
+		}
+		if (!this.organization || !hasPermission) {
 			return;
 		}
 		const { tenantId } = this.store.user;
@@ -628,7 +639,15 @@ export class TimeTrackingComponent extends TranslationBaseComponent
 	}
 
   	private async loadProjectsCount() {
-    	const { tenantId } = this.store.user;
+		const hasPermission = this.store.hasAnyPermission(
+			PermissionsEnum.ADMIN_DASHBOARD_VIEW,
+			PermissionsEnum.ALL_ORG_VIEW,
+			PermissionsEnum.ORG_PROJECT_VIEW
+		);
+		if (!this.organization || !hasPermission) {
+			return;
+		}
+		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 
 		this.projectCount = await this.projectService.getCount({

@@ -42,9 +42,9 @@
 						<div class="row">
 							<div class="col-12 center-text">
 								<span class="work-today">Total Worked Today
-									{{ (todayDuration$ | async).hours }}:{{
-										(todayDuration$ | async).minutes
-									}}</span>
+									{{ (todayDuration$ | async).hours }}h {{
+										(todayDuration$ | async).minutes 
+									}}m</span>
 							</div>
 						</div>
 						<div class="row">
@@ -52,18 +52,44 @@
 								<label>Client</label>
 								<ng-select [class]="
 										errors.client ? 'error-border' : ''
-									" [clearable]="true" placeholder="Client" [(ngModel)]="organizationContactId" [items]="organizationContacts"
+									" [clearable]="true" placeholder="Client" [(ngModel)]="organizationContactId" [items]="organizationContacts$ | async"
 									bindValue="id" bindLabel="name" (ngModelChange)="setClient($event, dialog)">
+									<ng-template ng-option-tmp let-item="item" let-index="index">
+										<img *ngIf="item.imageUrl" [src]="item.imageUrl" width="20px" height="20px" />
+										<span>
+											{{ item?.name }}
+										</span>
+									</ng-template>
+									<ng-template ng-label-tmp let-item="item">
+										<div class="selector-template">
+											<img *ngIf="item.imageUrl" [src]="item.imageUrl" width="20px" height="20px" />
+											<span>
+												{{ item?.name }}
+											</span>
+										</div>
+									</ng-template>
 								</ng-select>
 							</div>
 						</div>
 						<div class="row">
 							<div class="col-12 form-group">
 								<label>Project</label>
-								<ng-select [class]="
-										errors.project ? 'error-border' : ''
-									" [clearable]="true" placeholder="Project" [(ngModel)]="projectSelect" [items]="projects" bindValue="id"
-									bindLabel="name" (ngModelChange)="setProject($event)">
+								<ng-select [class]="errors.project ? 'error-border' : ''" [clearable]="true" placeholder="Project"
+									[(ngModel)]="projectSelect" [items]="projects$ | async" bindValue="id" bindLabel="name" (ngModelChange)="setProject($event)">
+									<ng-template ng-option-tmp let-item="item" let-index="index">
+										<img *ngIf="item.imageUrl" [src]="item.imageUrl" width="20px" height="20px" />
+										<span>
+											{{ item?.name }}
+										</span>
+									</ng-template>
+									<ng-template ng-label-tmp let-item="item">
+										<div class="selector-template">
+											<img *ngIf="item.imageUrl" [src]="item.imageUrl" width="20px" height="20px" />
+											<span>
+												{{ item?.name }}
+											</span>
+										</div>
+									</ng-template>
 								</ng-select>
 							</div>
 						</div>
@@ -71,7 +97,7 @@
 							<div class="col-12 form-group" *ngIf="!isExpand">
 								<label>Task</label>
 								<ng-select [class]="errors.task ? 'error-border' : ''" [clearable]="true"
-									placeholder="Task" [(ngModel)]="taskSelect" [items]="tasks" bindValue="id"
+									placeholder="Task" [(ngModel)]="taskSelect" [items]="tasks$ | async" bindValue="id"
 									bindLabel="title" (ngModelChange)="setTask($event)">
 								</ng-select>
 							</div>
@@ -258,7 +284,7 @@
 									#taskTable 
 									style="cursor: pointer"
 									[settings]="tableHeader" 
-									[source]="sourceData" 
+									[source]="sourceData$ | async" 
 									(userRowSelect)="rowSelect($event)">
 								</ng2-smart-table>
 							</div>

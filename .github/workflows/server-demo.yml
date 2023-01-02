@@ -1,9 +1,9 @@
-name: Desktop App Build
+name: Server Build Demo
 
 on:
     workflow_run:
-        workflows: ['Release']
-        branches: [master]
+        workflows: ['Release Demo']
+        branches: [develop]
         types:
             - completed
 
@@ -42,15 +42,15 @@ jobs:
             - name: Bootstrap Yarn
               run: 'yarn bootstrap'
 
-            - name: Bump version desktop app
+            - name: Bump server version
               uses: actions/github-script@v6
               with:
                 script: |
                   const script = require('./.scripts/bump-version-electron.js')
-                  console.log(script.desktop())
+                  console.log(script.server(false))
 
-            - name: Build Desktop App
-              run: 'yarn build:desktop:linux:release'
+            - name: Build Server
+              run: 'yarn build:gauzy-server:linux:release'
               env:
                   USE_HARD_LINKS: false
                   GH_TOKEN: ${{ secrets.GH_TOKEN }}
@@ -87,15 +87,15 @@ jobs:
             - name: Bootstrap Yarn
               run: 'yarn bootstrap'
 
-            - name: Bump version desktop app
+            - name: Bump Server version
               uses: actions/github-script@v6
               with:
                 script: |
                   const script = require('./.scripts/bump-version-electron.js')
-                  console.log(script.desktop())
+                  console.log(script.server(false))
 
-            - name: Build Desktop App
-              run: 'yarn build:desktop:mac:release'
+            - name: Build Server
+              run: 'yarn build:gauzy-server:mac:release'
               env:
                   USE_HARD_LINKS: false
                   GH_TOKEN: ${{ secrets.GH_TOKEN }}
@@ -132,15 +132,15 @@ jobs:
             - name: Bootstrap Yarn
               run: 'yarn bootstrap'
 
-            - name: Bump version desktop app
+            - name: Bump Server version
               uses: actions/github-script@v6
               with:
                 script: |
                   const script = require('./.scripts/bump-version-electron.js')
-                  console.log(script.desktop())
+                  console.log(script.server(false))
 
-            - name: Build Desktop App
-              run: 'yarn build:desktop:windows:release'
+            - name: Build Server
+              run: 'yarn build:gauzy-server:windows:release'
               env:
                   USE_HARD_LINKS: false
                   GH_TOKEN: ${{ secrets.GH_TOKEN }}
