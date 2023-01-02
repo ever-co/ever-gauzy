@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import * as moment from 'moment';
-import { BehaviorSubject, Observable, Subject } from 'rxjs';
+import { BehaviorSubject, Observable } from 'rxjs';
 import { isNotEmpty } from '@gauzy/common-angular';
 import { IDateRangePicker } from '@gauzy/contracts';
 
@@ -35,7 +35,7 @@ export class DateRangePickerBuilderService {
 
 	public dates$: BehaviorSubject<IDateRangePicker> = new BehaviorSubject(DEFAULT_DATE_RANGE);
 
-	private _selectedDateRange$: Subject<IDateRangePicker | null> = new Subject();
+	private _selectedDateRange$: BehaviorSubject<IDateRangePicker | null> = new BehaviorSubject(null);
 	public selectedDateRange$: Observable<IDateRangePicker | null> = this._selectedDateRange$.asObservable();
 
 	constructor() {}

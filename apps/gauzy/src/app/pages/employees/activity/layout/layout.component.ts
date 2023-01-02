@@ -50,6 +50,7 @@ export class ActivityLayoutComponent extends TranslationBaseComponent
 		this.tabs = [
 			...(this.store.hasAnyPermission(
 				PermissionsEnum.ADMIN_DASHBOARD_VIEW,
+				PermissionsEnum.TIME_TRACKING_DASHBOARD,
 				PermissionsEnum.TIME_TRACKER
 			) ?
 			[

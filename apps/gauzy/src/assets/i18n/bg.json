@@ -1836,6 +1836,11 @@
 		},
 		"PERMISSIONS": {
 			"ADMIN_DASHBOARD_VIEW": "Виж Административното Табло",
+			"TEAM_DASHBOARD": "Вижте таблото за управление на екипа",
+			"PROJECT_MANAGEMENT_DASHBOARD": "Преглед на таблото за управление на проекти",
+			"TIME_TRACKING_DASHBOARD": "Вижте таблото за проследяване на времето",
+			"ACCOUNTING_DASHBOARD": "Преглед на счетоводното табло",
+			"HUMAN_RESOURCE_DASHBOARD": "Вижте таблото за управление на човешките ресурси",
 			"ORG_PAYMENT_VIEW": "View Payments",
 			"ORG_PAYMENT_ADD_EDIT": "Create/Edit/Delete Payments",
 			"ORG_EXPENSES_VIEW": "Виж всички разходи",
