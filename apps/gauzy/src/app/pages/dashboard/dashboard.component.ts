@@ -46,38 +46,49 @@ export class DashboardComponent extends TranslationBaseComponent
 
 	loadTabs() {
 		this.tabs = [
-			...(this.store.hasPermission(PermissionsEnum.ADMIN_DASHBOARD_VIEW) ? [
-				...(this.store.hasPermission(PermissionsEnum.ALL_ORG_VIEW) ? [
-					{
-						title: this.getTranslation('ORGANIZATIONS_PAGE.TEAMS'),
-						icon: 'people-outline',
-						responsive: true,
-						route: this.getRoute('teams')
-					}
-				] : []),
+			...(this.store.hasAnyPermission(PermissionsEnum.ADMIN_DASHBOARD_VIEW, PermissionsEnum.TEAM_DASHBOARD) ? [
+				{
+					title: this.getTranslation('ORGANIZATIONS_PAGE.TEAMS'),
+					icon: 'people-outline',
+					responsive: true,
+					route: this.getRoute('teams')
+				}
+			] : []),
+			...(this.store.hasAnyPermission(PermissionsEnum.ADMIN_DASHBOARD_VIEW, PermissionsEnum.PROJECT_MANAGEMENT_DASHBOARD) ? [
 				{
 					title: this.getTranslation('DASHBOARD_PAGE.PROJECT_MANAGEMENT'),
 					icon: 'browser-outline',
 					responsive: true,
 					route: this.getRoute('project-management')
-				},
+				}
+			] : []),
+			...(this.store.hasAnyPermission(PermissionsEnum.ADMIN_DASHBOARD_VIEW, PermissionsEnum.TIME_TRACKING_DASHBOARD) ? [
 				{
 					title: this.getTranslation('DASHBOARD_PAGE.TIME_TRACKING'),
 					icon: 'clock-outline',
 					responsive: true,
 					route: this.getRoute('time-tracking')
-				},
-				((this.selectedEmployee && this.selectedEmployee.id) ? {
-					title: this.getTranslation('DASHBOARD_PAGE.HUMAN_RESOURCES'),
-					icon: 'person-outline',
-					responsive: true,
-					route: this.getRoute('hr')
-				} : {
-					title: this.getTranslation('DASHBOARD_PAGE.ACCOUNTING'),
-					icon: 'credit-card-outline',
-					responsive: true,
-					route: this.getRoute('accounting')
-				}),
+				}
+			] : []),
+			...(this.store.hasAnyPermission(PermissionsEnum.ADMIN_DASHBOARD_VIEW, PermissionsEnum.ACCOUNTING_DASHBOARD) ? [
+				...(this.selectedEmployee && !this.selectedEmployee.id ? [
+					{
+						title: this.getTranslation('DASHBOARD_PAGE.ACCOUNTING'),
+						icon: 'credit-card-outline',
+						responsive: true,
+						route: this.getRoute('accounting')
+					}
+				] : [])
+			] : []),
+			...(this.store.hasAnyPermission(PermissionsEnum.ADMIN_DASHBOARD_VIEW, PermissionsEnum.HUMAN_RESOURCE_DASHBOARD) ? [
+				...(this.selectedEmployee && this.selectedEmployee.id ? [
+					{
+						title: this.getTranslation('DASHBOARD_PAGE.HUMAN_RESOURCES'),
+						icon: 'person-outline',
+						responsive: true,
+						route: this.getRoute('hr')
+					}
+				] : [])
 			] : []),
 		];
 		this.loading = false;
