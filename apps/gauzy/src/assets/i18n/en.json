@@ -1836,6 +1836,11 @@
 		},
 		"PERMISSIONS": {
 			"ADMIN_DASHBOARD_VIEW": "View Admin Dashboard",
+			"TEAM_DASHBOARD": "View Team Dashboard",
+			"PROJECT_MANAGEMENT_DASHBOARD": "View Project Management Dashboard",
+			"TIME_TRACKING_DASHBOARD": "View Time Tracking Dashboard",
+			"ACCOUNTING_DASHBOARD": "View Accounting Dashboard",
+			"HUMAN_RESOURCE_DASHBOARD": "View Human Resources Dashboard",
 			"ORG_PAYMENT_VIEW": "View Payments",
 			"ORG_PAYMENT_ADD_EDIT": "Create/Edit/Delete Payments",
 			"ORG_EXPENSES_VIEW": "View All Expenses",

@@ -237,10 +237,7 @@ export class TimeTrackingComponent extends TranslationBaseComponent
 	}
 
 	async getStatistics() {
-		if (!this.organization || !await this.ngxPermissionsService.hasPermission([
-			PermissionsEnum.ADMIN_DASHBOARD_VIEW,
-			PermissionsEnum.ALL_ORG_VIEW
-		])) {
+		if (!this.organization) {
 			return;
 		}
 		this.getCounts();
@@ -617,14 +614,10 @@ export class TimeTrackingComponent extends TranslationBaseComponent
 	 *
 	 */
   	private async loadEmployeesCount() {
-		const hasPermission = this.store.hasAnyPermission(
-			PermissionsEnum.ADMIN_DASHBOARD_VIEW,
-			PermissionsEnum.ALL_ORG_VIEW
-		);
 		if (this.user && this.user.employeeId) {
 			return;
 		}
-		if (!this.organization || !hasPermission) {
+		if (!this.organization) {
 			return;
 		}
 		const { tenantId } = this.store.user;
@@ -639,12 +632,7 @@ export class TimeTrackingComponent extends TranslationBaseComponent
 	}
 
   	private async loadProjectsCount() {
-		const hasPermission = this.store.hasAnyPermission(
-			PermissionsEnum.ADMIN_DASHBOARD_VIEW,
-			PermissionsEnum.ALL_ORG_VIEW,
-			PermissionsEnum.ORG_PROJECT_VIEW
-		);
-		if (!this.organization || !hasPermission) {
+		if (!this.organization) {
 			return;
 		}
 		const { tenantId } = this.store.user;
