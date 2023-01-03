@@ -72,8 +72,6 @@ export class TimeSlotController {
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
-	@UseGuards(OrganizationPermissionGuard)
-	@Permissions(PermissionsEnum.ALLOW_MANUAL_TIME)
 	@Post()
 	async create(
 		@Body() entity: ITimeSlot
