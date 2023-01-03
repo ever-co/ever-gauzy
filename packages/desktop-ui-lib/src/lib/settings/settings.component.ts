@@ -374,6 +374,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	private _available$: BehaviorSubject<boolean>;
 	private _updaterServer$: BehaviorSubject<any>;
 	private _file$: BehaviorSubject<any>;
+	private _prerelease$: BehaviorSubject<boolean>;
 
 	constructor(
 		private electronService: ElectronService,
@@ -391,6 +392,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 			digitalOcean: true,
 			local: false
 		});
+		this._prerelease$ = new BehaviorSubject(false);
 	}
 
 	ngOnInit(): void {
@@ -419,6 +421,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				this.autoLaunch = setting.autoLaunch;
 				this.minimizeOnStartup = setting.minimizeOnStartup;
 				this._automaticUpdate$.next(setting.automaticUpdate);
+				this._prerelease$.next(setting.prerelease);
 				this._updaterServer$ = new BehaviorSubject({
 					github: setting.cdnUpdater.github,
 					digitalOcean: setting.cdnUpdater.digitalOcean,
@@ -643,6 +646,11 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		this.updateSetting(value, 'automaticUpdate');
 	}
 
+	togglePrerelease(value) {
+		this._prerelease$.next(value);
+		this.updateSetting(value, 'prerelease');
+	}
+
 	restartApp() {
 		if (this.appName === 'gauzy-server' && this.serverIsRunning) {
 			this.restartDisable = true;
@@ -838,6 +846,10 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 
 	public get automaticUpdate$(): Observable<boolean> {
 		return this._automaticUpdate$.asObservable();
+	}
+
+	public get prerelease$(): Observable<boolean> {
+		return this._prerelease$.asObservable();
 	}
 
 	public downloadNow() {
