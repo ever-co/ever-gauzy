@@ -27,7 +27,11 @@ import { TimeSlotQueryDTO } from './dto/query';
 
 @ApiTags('TimeSlot')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
-@Permissions(PermissionsEnum.TIME_TRACKER)
+@Permissions(
+	PermissionsEnum.TIME_TRACKER,
+	PermissionsEnum.ALL_ORG_EDIT,
+	PermissionsEnum.ALL_ORG_VIEW
+)
 @Controller()
 export class TimeSlotController {
 	constructor(
@@ -68,6 +72,8 @@ export class TimeSlotController {
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
+	@UseGuards(OrganizationPermissionGuard)
+	@Permissions(PermissionsEnum.ALLOW_MANUAL_TIME)
 	@Post()
 	async create(
 		@Body() entity: ITimeSlot

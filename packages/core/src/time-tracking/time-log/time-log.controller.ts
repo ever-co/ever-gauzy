@@ -29,7 +29,11 @@ import { TimeLogBodyTransformPipe } from './pipes';
 
 @ApiTags('TimeLog')
 @UseGuards(TenantBaseGuard, PermissionGuard)
-@Permissions(PermissionsEnum.TIME_TRACKER)
+@Permissions(
+	PermissionsEnum.TIME_TRACKER,
+	PermissionsEnum.ALL_ORG_EDIT,
+	PermissionsEnum.ALL_ORG_VIEW
+)
 @Controller()
 export class TimeLogController {
 

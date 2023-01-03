@@ -18,8 +18,9 @@ import { StatisticService } from './statistic.service';
 @ApiTags('TimesheetStatistic')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(
-	PermissionsEnum.ADMIN_DASHBOARD_VIEW,
-	PermissionsEnum.TIME_TRACKER
+	PermissionsEnum.TIME_TRACKER,
+	PermissionsEnum.ALL_ORG_EDIT,
+	PermissionsEnum.ALL_ORG_VIEW
 )
 @Controller()
 export class StatisticController {
