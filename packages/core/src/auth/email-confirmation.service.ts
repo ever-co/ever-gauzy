@@ -1,7 +1,7 @@
-
 import { BadRequestException, HttpStatus, Injectable } from '@nestjs/common';
+import { IsNull, MoreThanOrEqual } from 'typeorm';
 import { ConfigService, environment } from '@gauzy/config';
-import { FeatureEnum, IUser, IUserTokenInput, IVerificationTokenPayload } from '@gauzy/contracts';
+import { FeatureEnum, IUser, IUserCodeInput, IUserEmailInput, IUserTokenInput, IVerificationTokenPayload } from '@gauzy/contracts';
 import { JwtPayload, sign, verify } from 'jsonwebtoken';
 import * as bcrypt from 'bcrypt';
 import * as moment from 'moment';
@@ -122,6 +122,47 @@ export class EmailConfirmationService {
                 throw new BadRequestException('JWT token has been expired.');
             }
             throw new BadRequestException(error?.message);
+        }
+    }
+
+    /**
+     * Email confirmation by code
+     *
+     * @param payload
+     * @returns
+     */
+    public async confirmationByCode(payload : IUserEmailInput & IUserCodeInput): Promise<IUser> {
+        if (!await this.featureFlagService.isFeatureEnabled(
+            FeatureEnum.FEATURE_EMAIL_VERIFICATION
+        )) {
+            return;
+        }
+
+        try {
+            const { email, code } = payload;
+            if (email && code) {
+                const user = await this.userService.findOneByOptions({
+                    where: [
+                        {
+                            email,
+                            code,
+                            codeExpireAt: MoreThanOrEqual(new Date())
+                        },
+                        {
+                            email,
+                            code,
+                            codeExpireAt: IsNull()
+                        }
+                    ]
+                });
+                if (!!user.emailVerifiedAt) {
+                    throw new BadRequestException('Your email is already verified.');
+                }
+                return user;
+            }
+            throw new BadRequestException('Failed to verify email.');
+        } catch (error) {
+            throw new BadRequestException('Failed to verify email.');
         }
     }
 
