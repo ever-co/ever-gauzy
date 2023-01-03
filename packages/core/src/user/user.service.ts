@@ -13,7 +13,7 @@ import { environment as env } from '@gauzy/config';
 import { User } from './user.entity';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
-import { freshTimestamp } from 'core';
+import { freshTimestamp } from './../core/utils';
 
 @Injectable()
 export class UserService extends TenantAwareCrudService<User> {

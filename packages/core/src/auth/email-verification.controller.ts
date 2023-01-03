@@ -17,7 +17,7 @@ import { FeatureEnum } from '@gauzy/contracts';
 import { EmailConfirmationService } from './email-confirmation.service';
 import { FeatureFlagGuard } from './../shared/guards';
 import { FeatureFlag } from './../shared/decorators';
-import { ConfirmEmailDTO } from './dto';
+import { ConfirmEmailDTO, ConfirmInviteCodeDTO } from './dto';
 
 @Controller('email/verify')
 @UseGuards(FeatureFlagGuard)
@@ -29,7 +29,13 @@ export class EmailVerificationController {
         private readonly emailConfirmationService: EmailConfirmationService
     ) {}
 
-    @ApiOperation({ summary: 'Email verification' })
+    /**
+     * Email verification by token
+     *
+     * @param body
+     * @returns
+     */
+    @ApiOperation({ summary: 'Email verification by token' })
     @HttpCode(HttpStatus.OK)
     @Public()
     @Post()
@@ -46,6 +52,35 @@ export class EmailVerificationController {
         }
     }
 
+    /**
+     * Email verification by token
+     *
+     * @param body
+     * @returns
+     */
+    @ApiOperation({ summary: 'Email verification by code' })
+    @HttpCode(HttpStatus.OK)
+    @Public()
+    @Post('code')
+    @UsePipes(new ValidationPipe({ whitelist: true }))
+    public async confirmEmailByCode(
+        @Body() body: ConfirmInviteCodeDTO
+    ): Promise<Object> {
+        const user = await this.emailConfirmationService.confirmationByCode(body);
+        if (!!user) {
+            if (!!user.emailVerifiedAt) {
+                throw new BadRequestException('Your email is already verified.');
+            }
+            return await this.emailConfirmationService.confirmEmail(user);
+        }
+    }
+
+
+    /**
+     * Resend email verification link
+     *
+     * @returns
+     */
     @ApiOperation({ summary: 'Resend email verification link' })
     @HttpCode(HttpStatus.ACCEPTED)
     @Post('resend-link')
