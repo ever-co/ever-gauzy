@@ -14,15 +14,12 @@ import {DesktopPowerManager} from "./desktop-power-manager";
 import {PowerManagerPreventDisplaySleep, PowerManagerDetectInactivity} from "./decorators";
 import {DesktopOsInactivityHandler} from "./desktop-os-inactivity-handler";
 import { DesktopOfflineModeHandler } from './offline/desktop-offline-mode-handler';
-import { IntervalService } from './offline/services/interval.service';
 import { IntervalTO } from './offline/dto/interval.dto';
 
 const timerHandler = new TimerHandler();
 
 console.log = log.log;
 Object.assign(console, log.functions);
-
-const intervalService = new IntervalService();
 
 const offlineMode = DesktopOfflineModeHandler.instance;
 
@@ -80,28 +77,7 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 		);
 	});
 
-	ipcMain.on('failed_synced_timeslot', async (event, arg) => {
-		const interval: IntervalTO = {
-			activities: JSON.stringify(arg.params.activities),
-			apiHost: arg.params.apiHost,
-			b64Imgs: JSON.stringify(arg.params.b64Imgs),
-			duration: arg.params.duration,
-			employeeId: arg.params.employeeId,
-			keyboard: arg.params.keyboard,
-			mouse: arg.params.mouse,
-			organizationContactId: arg.params.organizationContactId,
-			organizationId: arg.params.organizationId,
-			overall: arg.params.overall,
-			projectId: arg.params.projectId,
-			startAt: new Date(Date.now()),
-			startedAt: arg.params.startedAt,
-			synced: false,
-			tenantId: arg.params.tenantId,
-			timeLogId: arg.params.timeLogId,
-			token: JSON.stringify(arg.params.token),
-		};
-		intervalService.create(interval);
-	});
+	ipcMain.on('failed_synced_timeslot', async (event, arg) => {});
 
 	ipcMain.on('set_project_task', (event, arg) => {
 		event.sender.send('set_project_task_reply', arg);
@@ -201,22 +177,10 @@ export function ipcTimer(
 	let powerManagerPreventSleep;
 	let powerManagerDetectInactivity;
 
-	ipcMain.on('update-synced', async (event, interval: IntervalTO) => {
-		interval.activities = JSON.stringify(interval.activities);
-		interval.b64Imgs = JSON.stringify(interval.b64Imgs);
-		interval.token = JSON.stringify(interval.token);
-		intervalService.synced(interval);
-	})
+	ipcMain.on('update-synced', async (event, interval: IntervalTO) => {})
 
 	offlineMode.on('connection-restored', async () => {
 		console.log('Api connected...');
-		const intervals: IntervalTO[] = await intervalService.backedUpNoSynced();
-		intervals.forEach(interval => {
-			interval.activities = JSON.parse(interval.activities);
-			interval.b64Imgs = JSON.parse(interval.b64Imgs);
-			interval.token =  JSON.parse(interval.token);
-			timeTrackerWindow.webContents.send('backup-no-synced', interval);
-		})
 	});
 
 	ipcMain.on('start_timer', (event, arg) => {

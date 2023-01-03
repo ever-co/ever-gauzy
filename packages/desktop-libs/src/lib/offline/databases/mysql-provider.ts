@@ -45,7 +45,7 @@ export class MysqlProvider implements IDatabaseProvider {
 	}
 
 	private _initialization() {
-		this._database = 'gauzy_desktop_timer';
+		this._database = 'gauzy_timer_db';
 		this._connectionConfig = {
 			host: '127.0.0.1',
 			port: 3306,

@@ -1,7 +1,7 @@
-import { DAO } from 'lib/interfaces/i-dao';
+import { DAO } from '../../interfaces/i-dao';
 import { ProviderFactory } from '../databases/provider-factory';
 import { IntervalTO, TABLE_NAME_INTERVALS } from '../dto/interval.dto';
-import { IDatabaseProvider } from 'lib/interfaces/i-database-provider';
+import { IDatabaseProvider } from '../../interfaces/i-database-provider';
 import { IntervalTransaction } from '../transactions/interval-transaction';
 
 export class IntervalDAO implements DAO<IntervalTO> {
@@ -49,11 +49,11 @@ export class IntervalDAO implements DAO<IntervalTO> {
 	}
 
 	public async update(id: number, value: IntervalTO): Promise<void> {
-        try {
-            await this._trx.update(id, value);
-        } catch (error) {
+		try {
+			await this._trx.update(id, value);
+		} catch (error) {
 			console.log('[dao]: ', 'fail on find interval : ', error);
-        }
+		}
 	}
 
 	public async delete(value: Partial<IntervalTO>): Promise<void> {
@@ -68,25 +68,25 @@ export class IntervalDAO implements DAO<IntervalTO> {
 	}
 
 	public async backedUpNoSynced(
-		startAt: Date,
-		endAt: Date
+		startedAt: Date,
+		stoppedAt: Date
 	): Promise<IntervalTO[]> {
 		try {
-            return await this._provider
-			.connection<IntervalTO>(TABLE_NAME_INTERVALS)
-			.select('*')
-			.whereBetween('startAt', [startAt, endAt])
-			.andWhere('synced', false);
-        } catch (error) {
-            console.log('[dao]: ', 'interval backup fails : ', error);
-        }
+			return await this._provider
+				.connection<IntervalTO>(TABLE_NAME_INTERVALS)
+				.select('*')
+				.whereBetween('startedAt', [startedAt, stoppedAt])
+				.andWhere('synced', false);
+		} catch (error) {
+			console.log('[dao]: ', 'interval backup fails : ', error);
+		}
 	}
 
 	public async synced(offlineStart: Date, offlineEnd: Date): Promise<void> {
 		try {
-            await this._trx.synced(offlineStart, offlineEnd);
-        } catch (error) {
-            console.log('[dao]: ', 'interval sync fails : ', error);
-        }
+			await this._trx.synced(offlineStart, offlineEnd);
+		} catch (error) {
+			console.log('[dao]: ', 'interval sync fails : ', error);
+		}
 	}
 }

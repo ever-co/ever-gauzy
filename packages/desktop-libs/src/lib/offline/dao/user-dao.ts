@@ -25,7 +25,7 @@ export class UserDao implements DAO<UserTO> {
 	public async update(id: number, value: Partial<UserTO>): Promise<void> {
 		await this._trx.update(id, value);
 	}
-	delete(value: Partial<UserTO>): Promise<void> {
+	public async delete(value: Partial<UserTO>): Promise<void> {
 		throw new Error('Method not implemented.');
 	}
 }

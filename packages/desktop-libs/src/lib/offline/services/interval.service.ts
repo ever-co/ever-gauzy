@@ -1,4 +1,4 @@
-import { IOfflineMode } from 'lib/interfaces';
+import { IOfflineMode } from '../../interfaces';
 import { IIntervalService } from '../../interfaces/i-interval-service';
 import { IntervalDAO } from '../dao/interval-dao';
 import { DesktopOfflineModeHandler } from '../desktop-offline-mode-handler';
