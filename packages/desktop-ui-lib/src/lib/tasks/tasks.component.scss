@@ -97,6 +97,10 @@ input {
   box-shadow: unset;
 }
 
+[nbInput] {
+  box-shadow: var(--gauzy-shadow) inset;
+}
+
 :host ::ng-deep {
   .ng-select.ng-select-multiple .ng-select-container .ng-value-container .ng-value {
     background-color: transparent;
