@@ -1,6 +1,6 @@
 import { DAO } from 'lib/interfaces/i-dao';
 import { ProviderFactory } from '../databases/provider-factory';
-import { IntervalTO, TABLE_NAME_INTERVAL } from '../dto/interval.dto';
+import { IntervalTO, TABLE_NAME_INTERVALS } from '../dto/interval.dto';
 import { IDatabaseProvider } from 'lib/interfaces/i-database-provider';
 import { IntervalTransaction } from '../transactions/interval-transaction';
 
@@ -16,7 +16,7 @@ export class IntervalDAO implements DAO<IntervalTO> {
 	public async findAll(): Promise<IntervalTO[]> {
 		try {
 			return await this._provider.connection<IntervalTO>(
-				TABLE_NAME_INTERVAL
+				TABLE_NAME_INTERVALS
 			);
 		} catch (error) {
 			console.log('[dao]: ', 'interval backed up fails : ', error);
@@ -27,7 +27,7 @@ export class IntervalDAO implements DAO<IntervalTO> {
 	public async findAllSynced(isSynced: boolean): Promise<IntervalTO[]> {
 		try {
 			return await this._provider
-				.connection<IntervalTO>(TABLE_NAME_INTERVAL)
+				.connection<IntervalTO>(TABLE_NAME_INTERVALS)
 				.where('synced', isSynced);
 		} catch (error) {
 			console.log('[dao]: ', 'interval backed up fails : ', error);
@@ -41,7 +41,7 @@ export class IntervalDAO implements DAO<IntervalTO> {
 	public async findOneById(id: number): Promise<IntervalTO> {
 		try {
 			return await this._provider
-				.connection<IntervalTO>(TABLE_NAME_INTERVAL)
+				.connection<IntervalTO>(TABLE_NAME_INTERVALS)
 				.where('id', id)[0];
 		} catch (error) {
 			console.log('[dao]: ', 'fail on find interval : ', error);
@@ -59,7 +59,7 @@ export class IntervalDAO implements DAO<IntervalTO> {
 	public async delete(value: Partial<IntervalTO>): Promise<void> {
 		try {
 			return await this._provider
-				.connection<IntervalTO>(TABLE_NAME_INTERVAL)
+				.connection<IntervalTO>(TABLE_NAME_INTERVALS)
 				.where('id', value.id)
 				.del();
 		} catch (error) {
@@ -73,7 +73,7 @@ export class IntervalDAO implements DAO<IntervalTO> {
 	): Promise<IntervalTO[]> {
 		try {
             return await this._provider
-			.connection<IntervalTO>(TABLE_NAME_INTERVAL)
+			.connection<IntervalTO>(TABLE_NAME_INTERVALS)
 			.select('*')
 			.whereBetween('startAt', [startAt, endAt])
 			.andWhere('synced', false);

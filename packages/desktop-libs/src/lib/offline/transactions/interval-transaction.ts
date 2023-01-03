@@ -1,5 +1,5 @@
 import { IDatabaseProvider } from 'lib/interfaces/i-database-provider';
-import { IntervalTO, TABLE_NAME_INTERVAL } from '../dto/interval.dto';
+import { IntervalTO, TABLE_NAME_INTERVALS } from '../dto/interval.dto';
 import { Knex } from 'knex';
 import { IIntervalTransaction } from 'lib/interfaces/i-interval-transaction';
 
@@ -15,7 +15,7 @@ export class IntervalTransaction implements IIntervalTransaction {
 			await this._databaseProvider.connection.transaction(
 				async (trx: Knex.Transaction) => {
 					trx.insert(value)
-						.into(TABLE_NAME_INTERVAL)
+						.into(TABLE_NAME_INTERVALS)
 						.then(() => {
 							trx.commit;
 							console.log(
@@ -42,7 +42,7 @@ export class IntervalTransaction implements IIntervalTransaction {
 		try {
 			await this._databaseProvider.connection.transaction(
 				async (trx: Knex.Transaction) => {
-					await trx(TABLE_NAME_INTERVAL)
+					await trx(TABLE_NAME_INTERVALS)
 						.where('id', '=', id)
 						.update(value)
 						.then(trx.commit)
@@ -63,7 +63,7 @@ export class IntervalTransaction implements IIntervalTransaction {
 				.transaction(async (trx: Knex.Transaction) => {
 					await trx
 						.select('*')
-						.from(TABLE_NAME_INTERVAL)
+						.from(TABLE_NAME_INTERVALS)
 						.whereBetween('startAt', [offlineStartAt, offlineEndAt])
 						.then((intervals: IntervalTO[]) => {
 							intervals.forEach(async (interval: IntervalTO) => {

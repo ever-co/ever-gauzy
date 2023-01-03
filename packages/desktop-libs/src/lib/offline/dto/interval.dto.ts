@@ -1,22 +1,18 @@
-export class IntervalTO {
-	id?: number;
+import { BaseTO } from './base.dto';
+
+export interface IntervalTO extends BaseTO {
 	activities: any;
-	b64Imgs: any;
 	duration: number;
 	employeeId: string;
 	keyboard: number;
 	mouse: number;
 	organizationContactId: string;
-	organizationId: string;
 	overall: number;
 	projectId: string;
-	startAt: Date;
+	screenshots: Blob[];
 	startedAt: Date;
+	stoppedAt: Date;
 	synced: boolean;
-	tenantId: string;
-	timeLogId: string;
-	token: any;
-	apiHost: string;
 }
 
-export const TABLE_NAME_INTERVAL: string = 'intervals';
+export const TABLE_NAME_INTERVALS: string = 'intervals';
