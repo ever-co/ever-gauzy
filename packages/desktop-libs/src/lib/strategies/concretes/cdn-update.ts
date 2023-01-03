@@ -3,6 +3,7 @@ import { UpdateStrategy } from "../abstracts/update-strategy";
 import fetch from 'node-fetch';
 import IUpdaterConfig from "../../interfaces/i-updater-config";
 import { app } from "electron";
+import { LocalStore } from "../../desktop-store";
 
 
 export class CdnUpdate extends UpdateStrategy implements IDesktopCdnUpdate {
@@ -24,7 +25,7 @@ export class CdnUpdate extends UpdateStrategy implements IDesktopCdnUpdate {
     public async tagName(): Promise<string> {
         try {
 			const releases = await fetch(
-				`https://api.github.com/repos/${this.config.owner}/${this.config.primeRepository}/${this.config.typeRelease}`,
+				`https://api.github.com/repos/${this.config.owner}/${this.config.repository}/${this.config.typeRelease}`,
 				{
 					method: 'GET',
 					headers: {
@@ -32,8 +33,9 @@ export class CdnUpdate extends UpdateStrategy implements IDesktopCdnUpdate {
 					}
 				}
 			).then((res) => res.json());
-			return releases.filter((release) => !release.prerelease)[0]
-				.tag_name;
+			return releases.filter(
+				(release) => release.prerelease === this.isPrerelease
+			)[0].tag_name;
 		} catch (e) {
 			console.log('Error', e);
 			return app.getVersion();
@@ -42,5 +44,10 @@ export class CdnUpdate extends UpdateStrategy implements IDesktopCdnUpdate {
 
     public get config(): IUpdaterConfig {
         return this._config;
+    }
+
+    public get isPrerelease(): boolean {
+        const setting = LocalStore.getStore('appSetting');
+        return setting && setting.prerelease;
     }
 }

@@ -10,5 +10,7 @@ export * from './i-desktop-cdn-update';
 export * from './i-updater-config';
 export * from './i-desktop-open-dialog';
 export * from './i-local-update-server';
+export * from './i-updater-config-digital-ocean';
+export * from './i-desktop-github-update';
 export * from './i-offline-mode';
 export * from './i-network-state';

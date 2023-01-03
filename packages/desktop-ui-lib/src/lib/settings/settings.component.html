@@ -13,7 +13,7 @@
 		</nb-list>
 	</nb-sidebar>
 
-	<nb-layout-column class="colored-column-success">
+	<nb-layout-column class="main-layout colored-column-success">
 		<ng-container *ngIf="selectedMenu === 'Screen Capture'">
 			<div class="row">
 				<div class="col-12">
@@ -291,6 +291,24 @@
 						</div>
 					</div>
 				</div>
+				<!-- Start prerelease -->
+				<div class="row">
+					<div class="col-10">
+						<p>Other settings</p>
+					</div>
+				</div>
+				<div class="row notification">
+					<div class="col-10">
+						<nb-card>
+							<nb-card-body>
+								<nb-toggle [checked]="(prerelease$ | async)" (checkedChange)="togglePrerelease($event)" status="basic"
+									[disabled]="appSetting?.timerStarted || showProgressBar">Allow prerelease versions
+								</nb-toggle>
+							</nb-card-body>
+						</nb-card>
+					</div>
+				</div>
+				<!-- End prerelease -->
 				<div class="row">
 					<div class="col-10">
 						<h6>Check & update your app version</h6>
@@ -298,9 +316,12 @@
 				</div>
 				<div class="row">
 					<div class="col-10">
-						<p> {{ (available$ | async ) ?
+						<p>
+							{{ (available$ | async ) ?
+							downloadFinish ?
+							"New Update is already downloaded! Please click button Update Now below":
 							"New Update is available! Please click button Download Now below":
-							"You can check for updates by clicking the Check Updates button below."
+							"You can check for updates by clicking the Check Update's button below."
 							}}
 						</p>
 					</div>
@@ -337,7 +358,7 @@
 						</button>
 					</div>
 					<div class="col-12 update-message" *ngIf="showProgressBar">
-						<nb-progress-bar [value]="progressDownload" status="primary" [displayValue]="true">
+						<nb-progress-bar [value]="progressDownload" size="tiny" status="primary" [displayValue]="true">
 						</nb-progress-bar>
 					</div>
 					<div class="col-12 text-center update-message" *ngIf="loading$ | async">

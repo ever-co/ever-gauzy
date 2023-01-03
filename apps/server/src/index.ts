@@ -55,8 +55,7 @@ let isServerRun: boolean;
 const updater = new DesktopUpdater({
 	repository: 'ever-gauzy-server',
 	owner: 'ever-co',
-	typeRelease: 'releases',
-	primeRepository: 'ever-gauzy'
+	typeRelease: 'releases'
 });
 
 const pathWindow: {

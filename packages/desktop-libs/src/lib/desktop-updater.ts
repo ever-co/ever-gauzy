@@ -1,5 +1,5 @@
 import { BrowserWindow, app, ipcMain } from 'electron';
-import { autoUpdater, UpdateInfo } from 'electron-updater';
+import { autoUpdater, UpdateInfo, UpdateDownloadedEvent } from 'electron-updater';
 import { LOCAL_SERVER_UPDATE_CONFIG } from './config';
 import { UpdateContext } from './contexts';
 import {
@@ -11,7 +11,7 @@ import {
 } from './decorators';
 import { DesktopDialog } from './desktop-dialog';
 import { LocalStore } from './desktop-store';
-import { IDesktopCdnUpdate } from './interfaces';
+import { IDesktopGithubUpdate } from './interfaces';
 import IUpdaterConfig from './interfaces/i-updater-config';
 import { CdnUpdate, LocalUpdate } from './strategies';
 import { DesktopLocalUpdateServer } from './update-server/desktop-local-update-server';
@@ -19,7 +19,7 @@ import { DesktopLocalUpdateServer } from './update-server/desktop-local-update-s
 export class DesktopUpdater {
 	private _updateContext: UpdateContext;
 	private _updateServer: DesktopLocalUpdateServer;
-	private _strategy: IDesktopCdnUpdate;
+	private _strategy: IDesktopGithubUpdate;
 	private _settingWindow: BrowserWindow;
 	private _gauzyWindow: BrowserWindow;
 	private _config: IUpdaterConfig;
@@ -67,6 +67,7 @@ export class DesktopUpdater {
 
 		ipcMain.on('change_update_strategy', async (event, args) => {
 			if (args.github) {
+				await this._strategy.initialize();
 				this._updateContext.strategy = this._strategy;
 			} else if (args.digitalOcean) {
 				this._updateContext.strategy = new DigitalOceanCdn(
@@ -111,7 +112,7 @@ export class DesktopUpdater {
 			});
 		});
 
-		autoUpdater.on('update-downloaded', () => {
+		autoUpdater.on('update-downloaded', (event: UpdateDownloadedEvent) => {
 			const setting = LocalStore.getStore('appSetting');
 			this._settingWindow.webContents.send('update_downloaded');
 			if (setting && !setting.automaticUpdate) return;
@@ -122,6 +123,10 @@ export class DesktopUpdater {
 					this._gauzyWindow
 				)
 			);
+			dialog.options.detail =
+				'A new version v' +
+				event.version +
+				' has been downloaded. Restart the application to apply the updates.';
 			dialog.show().then((button) => {
 				if (button.response === 0) autoUpdater.quitAndInstall();
 			});
@@ -167,10 +172,11 @@ export class DesktopUpdater {
 		this._gauzyWindow = value;
 	}
 
-	public checkUpdate(): void {
+	public async checkUpdate(): Promise<void> {
 		const settings: any = LocalStore.getStore('appSetting');
 		if (settings && settings.cdnUpdater) {
 			if (settings.cdnUpdater.github) {
+				await this._strategy.initialize();
 				this._updateContext.strategy = this._strategy;
 			} else if (settings.cdnUpdater.digitalOcean) {
 				this._updateContext.strategy = new DigitalOceanCdn(
