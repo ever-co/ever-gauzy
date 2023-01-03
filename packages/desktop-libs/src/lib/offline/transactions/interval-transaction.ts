@@ -1,7 +1,6 @@
-import { IDatabaseProvider } from 'lib/interfaces/i-database-provider';
-import { IntervalTO, TABLE_NAME_INTERVALS } from '../dto/interval.dto';
 import { Knex } from 'knex';
-import { IIntervalTransaction } from 'lib/interfaces/i-interval-transaction';
+import { IIntervalTransaction, IDatabaseProvider } from '../../interfaces';
+import { IntervalTO, TABLE_NAME_INTERVALS } from '../dto';
 
 export class IntervalTransaction implements IIntervalTransaction {
 	private _databaseProvider: IDatabaseProvider;

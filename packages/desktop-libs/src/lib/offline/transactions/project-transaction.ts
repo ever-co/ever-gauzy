@@ -1,7 +1,6 @@
-import { IDatabaseProvider } from 'lib/interfaces/i-database-provider';
-import { ITransaction } from 'lib/interfaces/i-transaction';
-import { ProjectTO, TABLE_NAME_PROJECTS } from '../dto/project.dto';
 import { Knex } from 'knex';
+import { ITransaction, IDatabaseProvider } from '../../interfaces';
+import { ProjectTO, TABLE_NAME_PROJECTS } from '../dto';
 
 export class ProjectTransaction implements ITransaction<ProjectTO> {
 	private _databaseProvider: IDatabaseProvider;

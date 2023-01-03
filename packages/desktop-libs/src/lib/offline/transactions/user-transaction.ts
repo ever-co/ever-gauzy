@@ -1,7 +1,6 @@
-import { IDatabaseProvider } from 'lib/interfaces/i-database-provider';
 import { Knex } from 'knex';
-import { TABLE_NAME_USERS, UserTO } from '../dto/user.dto';
-import { IUserTransaction } from 'lib/interfaces/i-user-transaction';
+import { IUserTransaction, IDatabaseProvider } from '../../interfaces';
+import { UserTO, TABLE_NAME_USERS } from '../dto';
 
 export class UserTransaction implements IUserTransaction {
 	private _databaseProvider: IDatabaseProvider;

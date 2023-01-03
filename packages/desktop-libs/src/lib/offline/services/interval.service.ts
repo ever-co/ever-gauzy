@@ -1,8 +1,7 @@
-import { IOfflineMode } from '../../interfaces';
-import { IIntervalService } from '../../interfaces/i-interval-service';
-import { IntervalDAO } from '../dao/interval-dao';
+import { IIntervalService, IOfflineMode } from '../../interfaces';
+import { IntervalDAO } from '../dao';
 import { DesktopOfflineModeHandler } from '../desktop-offline-mode-handler';
-import { IntervalTO } from '../dto/interval.dto';
+import { IntervalTO } from '../dto';
 
 export class IntervalService implements IIntervalService<IntervalTO> {
 	private _intervalDAO: IntervalDAO;

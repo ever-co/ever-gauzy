@@ -19,3 +19,4 @@ export * from './lib/update-server/desktop-local-update-server';
 export * from './lib/desktop-updater';
 export * from './lib/offline/desktop-offline-mode-handler';
 export * from './lib/states';
+export * from './lib/offline';

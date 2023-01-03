@@ -1,8 +1,8 @@
 import EventEmitter from 'events';
 import { NetworkStateManager } from '../contexts';
-import { ApiServerConnectivity } from '../states';
-import { IOfflineMode } from '../interfaces';
 import { LocalStore } from '../desktop-store';
+import { IOfflineMode } from '../interfaces';
+import { ApiServerConnectivity } from '../states';
 
 export class DesktopOfflineModeHandler
 	extends EventEmitter

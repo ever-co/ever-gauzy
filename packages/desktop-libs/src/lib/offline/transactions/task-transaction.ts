@@ -1,7 +1,6 @@
-import { IDatabaseProvider } from 'lib/interfaces/i-database-provider';
-import { ITransaction } from 'lib/interfaces/i-transaction';
 import { Knex } from 'knex';
-import { TABLE_NAME_TASKS, TaskTO } from '../dto/task.dto';
+import { ITransaction, IDatabaseProvider } from '../../interfaces';
+import { TaskTO, TABLE_NAME_TASKS } from '../dto';
 
 export class TaskTransaction implements ITransaction<TaskTO> {
 	private _databaseProvider: IDatabaseProvider;
