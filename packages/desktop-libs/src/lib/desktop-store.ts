@@ -65,7 +65,8 @@ export const LocalStore = {
 					cdnUpdater: {
 						github: false,
 						digitalOcean: true
-					}
+					},
+					prerelease: false
 				};
 				store.set({
 					appSetting: defaultAppSetting
