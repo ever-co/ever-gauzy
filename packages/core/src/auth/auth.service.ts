@@ -275,7 +275,7 @@ export class AuthService extends SocialAuthService {
 		 * Email verification
 		 */
 		if (!user.emailVerifiedAt) {
-			await this.emailConfirmationService.sendVerificationLink(user);
+			await this.emailConfirmationService.sendEmailVerification(user);
 		}
 
 		this.emailService.welcomeUser(
