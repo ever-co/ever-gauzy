@@ -1,3 +1,5 @@
+import { from } from 'form-data';
+
 export * from './i-current-application';
 export * from './i-data-application';
 export * from './serializable';
@@ -10,3 +12,5 @@ export * from './i-desktop-cdn-update';
 export * from './i-updater-config';
 export * from './i-desktop-open-dialog';
 export * from './i-local-update-server';
+export * from './i-updater-config-digital-ocean';
+export * from './i-desktop-github-update';
