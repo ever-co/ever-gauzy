@@ -1,7 +1,7 @@
 import { IUserInviteCodeConfirmationInput } from "@gauzy/contracts";
-import { ConfirmInviteCodeDTO } from "../../auth/dto";
+import { ConfirmTwoFactorCodeDTO } from "../../auth/dto";
 
 /**
  * Confirm invite by code DTO validation
  */
-export class ValidateInviteByCodeQueryDTO extends ConfirmInviteCodeDTO implements IUserInviteCodeConfirmationInput {}
+export class ValidateInviteByCodeQueryDTO extends ConfirmTwoFactorCodeDTO implements IUserInviteCodeConfirmationInput {}
