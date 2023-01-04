@@ -40,12 +40,12 @@ export class ClientDAO implements DAO<ClientTO> {
 
 	public async findOneByOptions(
 		options: IClientFilterOption
-	): Promise<ClientTO[]> {
+	): Promise<ClientTO> {
 		const { clienId, remoteId, name } = options;
 		return this._provider
 			.connection(TABLE_NAME_CLIENTS)
 			.where('id', '=', clienId)
 			.orWhere('remoteId', '=', remoteId)
-			.orWhere('name', '=', name);
+			.orWhere('name', '=', name)[0];
 	}
 }
