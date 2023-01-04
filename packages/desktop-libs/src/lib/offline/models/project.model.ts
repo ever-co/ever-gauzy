@@ -1,7 +1,11 @@
+import { Serializable } from 'lib/interfaces';
 import { ProjectTO } from '../dto/project.dto';
 import { Base } from './base.model';
 
-export class Project extends Base implements ProjectTO {
+export class Project
+	extends Base
+	implements ProjectTO, Serializable<ProjectTO>
+{
 	private _contactId: string;
 	private _description: string;
 	private _imageUrl?: string;
@@ -51,5 +55,15 @@ export class Project extends Base implements ProjectTO {
 	}
 	public set organizationContactId(value: string) {
 		this._organizationContactId = value;
+	}
+	public toObject(): ProjectTO {
+		return {
+			...super.toObject(),
+			name: this._name,
+			imageUrl: this._imageUrl,
+			contactId: this._contactId,
+			organizationContactId: this._organizationContactId,
+			description: this._description
+		};
 	}
 }
