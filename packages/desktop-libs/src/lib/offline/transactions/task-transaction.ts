@@ -1,8 +1,8 @@
 import { Knex } from 'knex';
-import { ITransaction, IDatabaseProvider } from '../../interfaces';
+import { IDatabaseProvider, ITaskTransaction } from '../../interfaces';
 import { TaskTO, TABLE_NAME_TASKS } from '../dto';
 
-export class TaskTransaction implements ITransaction<TaskTO> {
+export class TaskTransaction implements ITaskTransaction {
 	private _databaseProvider: IDatabaseProvider;
 
 	constructor(databaseProvider: IDatabaseProvider) {

@@ -20,3 +20,4 @@ export * from './i-interval-service';
 export * from './i-interval-transaction';
 export * from './i-transaction';
 export * from './i-user-transaction';
+export * from './i-task-transaction';
