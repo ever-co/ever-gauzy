@@ -1,4 +1,4 @@
-import { DAO, IDatabaseProvider } from 'lib/interfaces';
+import { DAO, IDatabaseProvider } from '../../interfaces';
 import { ProjectTO, TABLE_NAME_PROJECTS } from '../dto';
 import { ProjectTransaction } from '../transactions';
 import { ProviderFactory } from '../databases';
