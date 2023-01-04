@@ -21,3 +21,8 @@ export * from './i-interval-transaction';
 export * from './i-transaction';
 export * from './i-user-transaction';
 export * from './i-task-transaction';
+export * from './i-user-service';
+export * from './i-task-service';
+export * from './i-task-filter-option';
+export * from './i-project-service';
+export * from './i-tag-service';
