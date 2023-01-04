@@ -1,11 +1,11 @@
-import { IEmployee } from '@gauzy/contracts';
 import { UserTO } from '../dto/user.dto';
 import { Base } from './base.model';
-import { Serializable } from 'lib/interfaces';
+import { Serializable } from '../../interfaces';
+import { EmployeeTO } from '../dto/employee.dto';
 
 export class User extends Base implements UserTO, Serializable<UserTO> {
 	private _email: string;
-	private _employee: Partial<IEmployee>;
+	private _employee: Partial<EmployeeTO>;
 	private _employeeId: string;
 	private _name: string;
 
@@ -23,10 +23,10 @@ export class User extends Base implements UserTO, Serializable<UserTO> {
 	public set email(value: string) {
 		this._email = value;
 	}
-	public get employee(): Partial<IEmployee> {
+	public get employee(): Partial<EmployeeTO> {
 		return this._employee;
 	}
-	public set employee(value: Partial<IEmployee>) {
+	public set employee(value: Partial<EmployeeTO>) {
 		this._employee = value;
 	}
 	public get employeeId(): string {

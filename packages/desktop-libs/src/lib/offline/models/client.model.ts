@@ -1,4 +1,4 @@
-import { Serializable } from 'lib/interfaces';
+import { Serializable } from '../../interfaces';
 import { ClientTO } from '../dto/client.dto';
 import { Base } from './base.model';
 

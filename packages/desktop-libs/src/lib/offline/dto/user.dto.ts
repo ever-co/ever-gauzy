@@ -1,9 +1,9 @@
-import { IEmployee } from '@gauzy/contracts';
 import { BaseTO } from './base.dto';
+import { EmployeeTO } from './employee.dto';
 
 export interface UserTO extends BaseTO {
 	email: string;
-	employee: Partial<IEmployee>;
+	employee: Partial<EmployeeTO>;
 	employeeId: string;
 	name: string;
 }

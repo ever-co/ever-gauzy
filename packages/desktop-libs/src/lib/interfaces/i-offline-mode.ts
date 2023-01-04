@@ -3,12 +3,12 @@ export interface IOfflineMode {
 	 * Offline mode start at
 	 * @returns {Date}
 	 */
-	startAt: Date;
+	startedAt: Date;
 	/**
 	 * Offline mode end at
 	 * @returns {Date}
 	 */
-	endAt: Date;
+	stoppedAt: Date;
 	/**
 	 * Triggers Offline mode
 	 *  @return {void}

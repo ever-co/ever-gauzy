@@ -1,4 +1,4 @@
-import { Serializable } from 'lib/interfaces';
+import { Serializable } from '../../interfaces';
 import { TagTO } from '../dto/tag.dto';
 import { Base } from './base.model';
 

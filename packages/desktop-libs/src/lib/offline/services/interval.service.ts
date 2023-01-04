@@ -15,8 +15,8 @@ export class IntervalService implements IIntervalService<IntervalTO> {
 	}
 	public async backedUpNoSynced(): Promise<IntervalTO[]> {
 		return this._intervalDAO.backedUpNoSynced(
-			this._offlineMode.startAt,
-			this._offlineMode.endAt
+			this._offlineMode.startedAt,
+			this._offlineMode.stoppedAt
 		);
 	}
 	public async destroy(interval: Partial<IntervalTO>): Promise<void> {

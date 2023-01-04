@@ -12,8 +12,8 @@ export class DesktopOfflineModeHandler
 	private _isEnabled: boolean;
 	private _pingTimer: any;
 	private _PING_INTERVAL: number;
-	private _startAt: Date;
-	private _endAt: Date;
+	private _startedAt: Date;
+	private _stoppedAt: Date;
 	/**
 	 * Build the class with default constructor
 	 */
@@ -30,12 +30,12 @@ export class DesktopOfflineModeHandler
 			// Turn offline mode on
 			this._isEnabled = true;
 			// Date on trigger offline mode
-			this._startAt = new Date(Date.now());
+			this._startedAt = new Date(Date.now());
 		});
 
 		this.on('connection-restored', () => {
 			// Date on cancels offline mode
-			this._endAt = new Date(Date.now());
+			this._stoppedAt = new Date(Date.now());
 		});
 	}
 	/**
@@ -43,9 +43,6 @@ export class DesktopOfflineModeHandler
 	 * @returns {void}
 	 */
 	public trigger(): void {
-		// Ignore if triggered
-		if (this._isEnabled && this.isTracking) return;
-		// Connectivity check timer state
 		this._pingTimer = setInterval(async () => {
 			// Check connectivity
 			const networkContext = new NetworkStateManager(
@@ -59,13 +56,14 @@ export class DesktopOfflineModeHandler
 					// Notify that offline mode is enabled
 					this.emit('offline');
 				}
-				return console.log(
+				console.log(
 					'[OfflineModeHandler]:',
 					'Connection still not restored'
 				);
+			} else {
+				// Call offline mode restore routine
+				return this.restore();
 			}
-			// Call offline mode restore routine
-			return this.restore();
 		}, this._PING_INTERVAL);
 	}
 	/**
@@ -74,12 +72,9 @@ export class DesktopOfflineModeHandler
 	 */
 	public restore(): void {
 		// Connection restored
-		if (!this._isEnabled && this.isTracking) {
+		if (!this._isEnabled) {
 			return;
 		}
-		// Reset timer
-		clearInterval(this._pingTimer);
-		this._pingTimer = null;
 		// Reset state
 		this._isEnabled = false;
 		// Notify about reconnection event
@@ -103,20 +98,20 @@ export class DesktopOfflineModeHandler
 		return this._instance;
 	}
 
-	public get startAt(): Date {
-		return this._startAt;
+	public get startedAt(): Date {
+		return this._startedAt;
 	}
 
-	public get endAt(): Date {
-		return this._endAt;
+	public get stoppedAt(): Date {
+		return this._stoppedAt;
 	}
 
-	public set startAt(value: Date) {
-		this._startAt = value;
+	public set startedAt(value: Date) {
+		this._startedAt = value;
 	}
 
-	public set endAt(value: Date) {
-		this._endAt = value;
+	public set stoppedAt(value: Date) {
+		this._stoppedAt = value;
 	}
 
 	public get isTracking(): boolean {
