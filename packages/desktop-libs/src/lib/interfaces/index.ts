@@ -26,3 +26,4 @@ export * from './i-task-service';
 export * from './i-task-filter-option';
 export * from './i-project-service';
 export * from './i-tag-service';
+export * from './i-client-filter-option';

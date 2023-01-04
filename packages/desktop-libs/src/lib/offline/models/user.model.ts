@@ -8,21 +8,12 @@ export class User extends Base implements UserTO {
 	private _employeeId: string;
 	private _name: string;
 
-	constructor(
-		email: string,
-		employee: Partial<IEmployee>,
-		employeeId: string,
-		name: string,
-		id?: number,
-		organizationId?: string,
-		remoteId?: string,
-		tenantId?: string
-	) {
-		super(id, organizationId, remoteId, tenantId);
-		this._email = email;
-		this._employee = employee;
-		this._employeeId = employeeId;
-		this._name = name;
+	constructor(user: UserTO) {
+		super(user.id, user.organizationId, user.remoteId, user.tenantId);
+		this._email = user.email;
+		this._employee = user.employee;
+		this._employeeId = user.employeeId;
+		this._name = user.name;
 	}
 
 	public get email(): string {

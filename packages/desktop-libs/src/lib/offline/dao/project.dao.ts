@@ -35,4 +35,11 @@ export class ProjectDAO implements DAO<ProjectTO> {
 			.where('id', '=', value.id)
 			.del();
 	}
+
+	public async findByClient(clientId: number): Promise<ProjectTO[]> {
+		return await this._provider
+			.connection<ProjectTO>(TABLE_NAME_PROJECTS)
+			.select('*')
+			.where('contactId', '=', clientId);
+	}
 }

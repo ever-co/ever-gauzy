@@ -5,17 +5,15 @@ export class Client extends Base implements clientTO {
 	private _imageUrl: string;
 	private _name: string;
 
-	constructor(
-		imageUrl: string,
-		name: string,
-		id?: number,
-		organizationId?: string,
-		remoteId?: string,
-		tenantId?: string
-	) {
-		super(id, organizationId, remoteId, tenantId);
-		this._imageUrl = imageUrl;
-		this._name = name;
+	constructor(client: clientTO) {
+		super(
+			client.id,
+			client.organizationId,
+			client.remoteId,
+			client.tenantId
+		);
+		this._imageUrl = client.imageUrl;
+		this._name = client.name;
 	}
 
 	public get name(): string {

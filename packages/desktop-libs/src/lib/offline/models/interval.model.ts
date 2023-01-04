@@ -15,37 +15,25 @@ export class Interval extends Base implements IntervalTO {
 	private _stoppedAt: Date;
 	private _synced: boolean;
 
-	constructor(
-		activities: any,
-		duration: number,
-		employeeId: string,
-		keyboard: number,
-		mouse: number,
-		organizationContactId: string,
-		overall: number,
-		projectId: string,
-		screenshots: Blob[],
-		startedAt: Date,
-		stoppedAt: Date,
-		synced: boolean,
-		id?: number,
-		organizationId?: string,
-		remoteId?: string,
-		tenantId?: string
-	) {
-		super(id, organizationId, remoteId, tenantId);
-		this._activities = activities;
-		this._duration = duration;
-		this._employeeId = employeeId;
-		this._keyboard = keyboard;
-		this._mouse = mouse;
-		this._organizationContactId = organizationContactId;
-		this._overall = overall;
-		this._projectId = projectId;
-		this._screenshots = screenshots;
-		this._startedAt = startedAt;
-		this._stoppedAt = stoppedAt;
-		this._synced = synced;
+	constructor(interval: IntervalTO) {
+		super(
+			interval.id,
+			interval.organizationId,
+			interval.remoteId,
+			interval.tenantId
+		);
+		this._activities = interval.activities;
+		this._duration = interval.duration;
+		this._employeeId = interval.employeeId;
+		this._keyboard = interval.keyboard;
+		this._mouse = interval.mouse;
+		this._organizationContactId = interval.organizationContactId;
+		this._overall = interval.overall;
+		this._projectId = interval.projectId;
+		this._screenshots = interval.screenshots;
+		this._startedAt = interval.startedAt;
+		this._stoppedAt = interval.stoppedAt;
+		this._synced = interval.synced;
 	}
 
 	public get activities(): any {

@@ -15,33 +15,18 @@ export class Task extends Base implements TaskTO {
 	private _title: string;
 	private _taskNumber: string;
 
-	constructor(
-		creatorId: string,
-		description: string,
-		dueDate: string,
-		estimate: number,
-		members: UserTO[],
-		projectId: string,
-		status: string,
-		tags: TagTO[],
-		title: string,
-		taskNumber: string,
-		id?: number,
-		organizationId?: string,
-		remoteId?: string,
-		tenantId?: string
-	) {
-		super(id, organizationId, remoteId, tenantId);
-		this._creatorId = creatorId;
-		this._description = description;
-		this._dueDate = dueDate;
-		this._estimate = estimate;
-		this._members = members;
-		this._projectId = projectId;
-		this._status = status;
-		this._tags = tags;
-		this._title = title;
-		this._taskNumber = taskNumber;
+	constructor(task: TaskTO) {
+		super(task.id, task.organizationId, task.remoteId, task.tenantId);
+		this._creatorId = task.creatorId;
+		this._description = task.description;
+		this._dueDate = task.dueDate;
+		this._estimate = task.estimate;
+		this._members = task.members;
+		this._projectId = task.projectId;
+		this._status = task.status;
+		this._tags = task.tags;
+		this._title = task.title;
+		this._taskNumber = task.taskNumber;
 	}
 
 	public get creatorId(): string {

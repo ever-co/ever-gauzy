@@ -8,23 +8,18 @@ export class Project extends Base implements ProjectTO {
 	private _name: string;
 	private _organizationContactId?: string;
 
-	constructor(
-		contactId: string,
-		description: string,
-		imageUrl: string,
-		name: string,
-		organizationContactId: string,
-		id?: number,
-		organizationId?: string,
-		remoteId?: string,
-		tenantId?: string
-	) {
-		super(id, organizationId, remoteId, tenantId);
-		this._contactId = contactId;
-		this._description = description;
-		this._imageUrl = imageUrl;
-		this._name = name;
-		this._organizationContactId = organizationContactId;
+	constructor(project: ProjectTO) {
+		super(
+			project.id,
+			project.organizationId,
+			project.remoteId,
+			project.tenantId
+		);
+		this._contactId = project.contactId;
+		this._description = project.description;
+		this._imageUrl = project.imageUrl;
+		this._name = project.name;
+		this._organizationContactId = project.organizationContactId;
 	}
 
 	public get contactId(): string {

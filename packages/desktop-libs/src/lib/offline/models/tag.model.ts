@@ -5,17 +5,10 @@ export class Tag extends Base implements TagTO {
 	private _color: string;
 	private _name: string;
 
-	constructor(
-		color: string,
-		name: string,
-		id?: number,
-		organizationId?: string,
-		remoteId?: string,
-		tenantId?: string
-	) {
-		super(id, organizationId, remoteId, tenantId);
-		this._color = color;
-		this._name = name;
+	constructor(tag: TagTO) {
+		super(tag.id, tag.organizationId, tag.remoteId, tag.tenantId);
+		this._color = tag.color;
+		this._name = tag.name;
 	}
 
 	public get color(): string {
