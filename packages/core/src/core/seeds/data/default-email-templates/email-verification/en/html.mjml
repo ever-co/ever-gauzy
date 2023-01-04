@@ -2,7 +2,7 @@
 	<mj-body background-color="#fff">
 		<mj-section>
 			<mj-column>
-				mj-image
+				<mj-image
 					width="100px"
 					src="{{host}}/assets/images/logos/logo_Gauzy.png"
 				></mj-image>
