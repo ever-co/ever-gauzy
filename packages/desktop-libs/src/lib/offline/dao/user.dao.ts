@@ -1,10 +1,10 @@
 import { IUserTransaction } from '../../interfaces/i-user-transaction';
 import { DAO } from '../../interfaces/i-dao';
 import { ProviderFactory } from '../databases/provider-factory';
-import { UserTO } from '../dto/user.dto';
+import { TABLE_NAME_USERS, UserTO } from '../dto/user.dto';
 import { UserTransaction } from '../transactions/user-transaction';
 
-export class UserDao implements DAO<UserTO> {
+export class UserDAO implements DAO<UserTO> {
 	private _trx: IUserTransaction;
 	private _provider: ProviderFactory;
 
@@ -13,19 +13,27 @@ export class UserDao implements DAO<UserTO> {
 		this._trx = new UserTransaction(this._provider);
 	}
 
-	findAll(): Promise<UserTO[]> {
-		throw new Error('Method not implemented.');
+	public async findAll(): Promise<UserTO[]> {
+		return await this._provider
+			.connection<UserTO>(TABLE_NAME_USERS)
+			.select('*');
 	}
 	public async save(value: UserTO): Promise<void> {
 		await this._trx.create(value);
 	}
-	findOneById(id: number): Promise<UserTO> {
-		throw new Error('Method not implemented.');
+	public async findOneById(id: number): Promise<UserTO> {
+		return await this._provider
+			.connection<UserTO>(TABLE_NAME_USERS)
+			.select('*')
+			.where('id', '=', id)[0];
 	}
 	public async update(id: number, value: Partial<UserTO>): Promise<void> {
 		await this._trx.update(id, value);
 	}
 	public async delete(value: Partial<UserTO>): Promise<void> {
-		throw new Error('Method not implemented.');
+		await this._provider
+			.connection<UserTO>(TABLE_NAME_USERS)
+			.where('id', '=', value.id)
+			.del();
 	}
 }
