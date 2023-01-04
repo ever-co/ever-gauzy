@@ -19,8 +19,7 @@
 				<ngx-label
 					[status]="TimeLogsLabel[timeLog?.logType].status"
 					[text]="TimeLogsLabel[timeLog?.logType].text"
-				>
-				</ngx-label>
+				></ngx-label>
 			</div>
 		</div>
 		<div class="row date">
@@ -109,10 +108,10 @@
 			</nb-alert>
 		</ng-container>
 		<div class="actions">
-			<ng-template 
+			<ng-template
 				[ngxPermissionsOnly]="PermissionsEnum.ALLOW_MODIFY_TIME"
 			>
-				<ng-template 
+				<ng-template
 					ngxTimeTrackingAuthorized
 					[permission]="PermissionsEnum.ALLOW_MODIFY_TIME"
 				>
@@ -129,10 +128,10 @@
 					</button>
 				</ng-template>
 			</ng-template>
-			<ng-template 
+			<ng-template
 				[ngxPermissionsOnly]="PermissionsEnum.ALLOW_DELETE_TIME"
 			>
-				<ng-template 
+				<ng-template
 					ngxTimeTrackingAuthorized
 					[permission]="PermissionsEnum.ALLOW_DELETE_TIME"
 				>
