@@ -1,7 +1,11 @@
+import { Serializable } from '../../interfaces';
 import { IntervalTO } from '../dto/interval.dto';
 import { Base } from './base.model';
 
-export class Interval extends Base implements IntervalTO {
+export class Interval
+	extends Base
+	implements IntervalTO, Serializable<IntervalTO>
+{
 	private _activities: any;
 	private _duration: number;
 	private _employeeId: string;
@@ -107,5 +111,22 @@ export class Interval extends Base implements IntervalTO {
 	}
 	public set synced(value: boolean) {
 		this._synced = value;
+	}
+	public toObject(): IntervalTO {
+		return {
+			activities: this._activities,
+			screenshots: this._screenshots,
+			startedAt: this._startedAt,
+			stoppedAt: this._stoppedAt,
+			synced: this._synced,
+			organizationContactId: this._organizationContactId,
+			overall: this._overall,
+			mouse: this._mouse,
+			keyboard: this._keyboard,
+			duration: this._duration,
+			employeeId: this._employeeId,
+			projectId: this._projectId,
+			...super.toObject()
+		};
 	}
 }

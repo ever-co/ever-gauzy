@@ -1,6 +1,6 @@
 import { BaseTO } from './base.dto';
 
-export interface clientTO extends BaseTO {
+export interface ClientTO extends BaseTO {
 	imageUrl: string;
 	name: string;
 }

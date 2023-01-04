@@ -1,7 +1,8 @@
+import { Serializable } from 'lib/interfaces';
 import { TagTO } from '../dto/tag.dto';
 import { Base } from './base.model';
 
-export class Tag extends Base implements TagTO {
+export class Tag extends Base implements TagTO, Serializable<TagTO> {
 	private _color: string;
 	private _name: string;
 
@@ -22,5 +23,13 @@ export class Tag extends Base implements TagTO {
 	}
 	public set name(value: string) {
 		this._name = value;
+	}
+
+	public toObject(): TagTO {
+		return {
+			...super.toObject(),
+			name: this._name,
+			color: this._color
+		};
 	}
 }

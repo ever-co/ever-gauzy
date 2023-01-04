@@ -1,6 +1,7 @@
+import { Serializable } from '../../interfaces';
 import { BaseTO } from '../dto/base.dto';
 
-export abstract class Base implements BaseTO {
+export abstract class Base implements BaseTO, Serializable<BaseTO> {
 	private _id?: number;
 	private _organizationId: string;
 	private _remoteId: string;
@@ -41,5 +42,13 @@ export abstract class Base implements BaseTO {
 	}
 	public set organizationId(value: string) {
 		this._organizationId = value;
+	}
+	public toObject(): BaseTO {
+		return {
+			remoteId: this._remoteId,
+			tenantId: this._tenantId,
+			organizationId: this._organizationId,
+			id: this._id
+		};
 	}
 }

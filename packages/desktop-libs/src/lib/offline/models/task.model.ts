@@ -1,9 +1,10 @@
+import { Serializable } from '../../interfaces';
 import { TagTO } from '../dto/tag.dto';
 import { TaskTO } from '../dto/task.dto';
 import { UserTO } from '../dto/user.dto';
 import { Base } from './base.model';
 
-export class Task extends Base implements TaskTO {
+export class Task extends Base implements TaskTO, Serializable<TaskTO> {
 	private _creatorId: string;
 	private _description: string;
 	private _dueDate: string;
@@ -88,5 +89,20 @@ export class Task extends Base implements TaskTO {
 	}
 	public set taskNumber(value: string) {
 		this._taskNumber = value;
+	}
+	public toObject(): TaskTO {
+		return {
+			...super.toObject(),
+			tags: this._tags,
+			taskNumber: this._taskNumber,
+			title: this._title,
+			status: this._status,
+			projectId: this._projectId,
+			members: this._members,
+			estimate: this._estimate,
+			dueDate: this._dueDate,
+			description: this._description,
+			creatorId: this._creatorId
+		};
 	}
 }

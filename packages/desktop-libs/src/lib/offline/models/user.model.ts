@@ -1,8 +1,9 @@
 import { IEmployee } from '@gauzy/contracts';
 import { UserTO } from '../dto/user.dto';
 import { Base } from './base.model';
+import { Serializable } from 'lib/interfaces';
 
-export class User extends Base implements UserTO {
+export class User extends Base implements UserTO, Serializable<UserTO> {
 	private _email: string;
 	private _employee: Partial<IEmployee>;
 	private _employeeId: string;
@@ -39,5 +40,14 @@ export class User extends Base implements UserTO {
 	}
 	public set name(value: string) {
 		this._name = value;
+	}
+	public toObject(): UserTO {
+		return {
+			...super.toObject(),
+			name: this._name,
+			email: this._email,
+			employee: this._employee,
+			employeeId: this._employeeId
+		};
 	}
 }

@@ -1,24 +1,24 @@
 import { DAO, IClientFilterOption } from '../../interfaces';
-import { clientTO } from '../dto';
+import { ClientTO } from '../dto';
 
-export class ClientDAO implements DAO<clientTO> {
-	findAll(): Promise<clientTO[]> {
+export class ClientDAO implements DAO<ClientTO> {
+	findAll(): Promise<ClientTO[]> {
 		throw new Error('Method not implemented.');
 	}
-	save(value: clientTO): Promise<void> {
+	save(value: ClientTO): Promise<void> {
 		throw new Error('Method not implemented.');
 	}
-	findOneById(id: number): Promise<clientTO> {
+	findOneById(id: number): Promise<ClientTO> {
 		throw new Error('Method not implemented.');
 	}
-	update(id: number, value: Partial<clientTO>): Promise<void> {
+	update(id: number, value: Partial<ClientTO>): Promise<void> {
 		throw new Error('Method not implemented.');
 	}
-	delete(value: Partial<clientTO>): Promise<void> {
+	delete(value: Partial<ClientTO>): Promise<void> {
 		throw new Error('Method not implemented.');
 	}
 
-	findOneByOptions(options: IClientFilterOption): Promise<clientTO> {
+	findOneByOptions(options: IClientFilterOption): Promise<ClientTO> {
 		throw new Error('Method not implemented.');
 	}
 }

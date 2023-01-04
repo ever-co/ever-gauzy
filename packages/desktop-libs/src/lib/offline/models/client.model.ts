@@ -1,11 +1,12 @@
-import { clientTO } from '../dto/client.dto';
+import { Serializable } from 'lib/interfaces';
+import { ClientTO } from '../dto/client.dto';
 import { Base } from './base.model';
 
-export class Client extends Base implements clientTO {
+export class Client extends Base implements ClientTO, Serializable<ClientTO> {
 	private _imageUrl: string;
 	private _name: string;
 
-	constructor(client: clientTO) {
+	constructor(client: ClientTO) {
 		super(
 			client.id,
 			client.organizationId,
@@ -27,5 +28,13 @@ export class Client extends Base implements clientTO {
 	}
 	public set imageUrl(value: string) {
 		this._imageUrl = value;
+	}
+
+	public toObject(): ClientTO {
+		return {
+			imageUrl: this._imageUrl,
+			name: this._name,
+			...super.toObject()
+		};
 	}
 }
