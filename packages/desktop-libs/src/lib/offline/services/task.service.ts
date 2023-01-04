@@ -1,23 +1,25 @@
-import { ITaskFilterOption, ITaskService } from "../../interfaces";
-import { TaskTO } from "../dto";
+import { ITaskFilterOption, ITaskService } from '../../interfaces';
+import { TaskDAO } from '../dao';
+import { TaskTO } from '../dto';
 
 export class TaskService implements ITaskService<TaskTO> {
-    save(task: TaskTO): Promise<void> {
-        throw new Error("Method not implemented.");
-    }
-    synced(): Promise<void> {
-        throw new Error("Method not implemented.");
-    }
-    findAll(): Promise<TaskTO[]> {
-        throw new Error("Method not implemented.");
-    }
-    findById(task: Partial<TaskTO>): Promise<TaskTO> {
-        throw new Error("Method not implemented.");
-    }
-    findByFilter(options: ITaskFilterOption): Promise<TaskTO[]> {
-        throw new Error("Method not implemented.");
-    }
-    remove(task: Partial<TaskTO>): Promise<void> {
-        throw new Error("Method not implemented.");
-    }
+	private _taskDAO: TaskDAO;
+	constructor() {
+		this._taskDAO = new TaskDAO();
+	}
+	public async save(task: TaskTO): Promise<void> {
+		await this._taskDAO.save(task);
+	}
+	public async findAll(): Promise<TaskTO[]> {
+		return await this._taskDAO.findAll();
+	}
+	public async findById(task: Partial<TaskTO>): Promise<TaskTO> {
+		return await this._taskDAO.findOneById(task.id);
+	}
+	public async findByOption(options: ITaskFilterOption): Promise<TaskTO[]> {
+		return await this._taskDAO.findByOptions(options);
+	}
+	public async remove(task: Partial<TaskTO>): Promise<void> {
+		await this._taskDAO.delete(task);
+	}
 }
