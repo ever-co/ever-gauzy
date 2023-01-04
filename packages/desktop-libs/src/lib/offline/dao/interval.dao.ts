@@ -1,8 +1,7 @@
-import { DAO } from '../../interfaces/i-dao';
-import { ProviderFactory } from '../databases/provider-factory';
-import { IntervalTO, TABLE_NAME_INTERVALS } from '../dto/interval.dto';
-import { IDatabaseProvider } from '../../interfaces/i-database-provider';
-import { IntervalTransaction } from '../transactions/interval-transaction';
+import { DAO, IDatabaseProvider } from '../../interfaces';
+import { ProviderFactory } from '../databases';
+import { IntervalTO, TABLE_NAME_INTERVALS } from '../dto';
+import { IntervalTransaction } from '../transactions';
 
 export class IntervalDAO implements DAO<IntervalTO> {
 	private _provider: IDatabaseProvider;
