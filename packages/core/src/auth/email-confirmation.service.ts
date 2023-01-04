@@ -1,7 +1,7 @@
 import { BadRequestException, HttpStatus, Injectable } from '@nestjs/common';
 import { IsNull, MoreThanOrEqual } from 'typeorm';
 import { ConfigService, environment } from '@gauzy/config';
-import { FeatureEnum, IUser, IUserCodeInput, IUserEmailInput, IUserTokenInput, IVerificationTokenPayload } from '@gauzy/contracts';
+import { FeatureEnum, IBasePerTenantEntityModel, IUser, IUserCodeInput, IUserEmailInput, IUserTokenInput, IVerificationTokenPayload } from '@gauzy/contracts';
 import { JwtPayload, sign, verify } from 'jsonwebtoken';
 import * as bcrypt from 'bcrypt';
 import * as moment from 'moment';
@@ -131,7 +131,9 @@ export class EmailConfirmationService {
      * @param payload
      * @returns
      */
-    public async confirmationByCode(payload : IUserEmailInput & IUserCodeInput): Promise<IUser> {
+    public async confirmationByCode(
+        payload : IUserEmailInput & IUserCodeInput & IBasePerTenantEntityModel
+    ): Promise<IUser> {
         if (!await this.featureFlagService.isFeatureEnabled(
             FeatureEnum.FEATURE_EMAIL_VERIFICATION
         )) {
@@ -139,18 +141,20 @@ export class EmailConfirmationService {
         }
 
         try {
-            const { email, code } = payload;
+            const { email, code, tenantId } = payload;
             if (email && code) {
                 const user = await this.userService.findOneByOptions({
                     where: [
                         {
                             email,
                             code,
+                            tenantId,
                             codeExpireAt: MoreThanOrEqual(new Date())
                         },
                         {
                             email,
                             code,
+                            tenantId,
                             codeExpireAt: IsNull()
                         }
                     ]
