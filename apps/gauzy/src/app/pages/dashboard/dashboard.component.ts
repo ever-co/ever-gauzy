@@ -73,7 +73,7 @@ export class DashboardComponent extends TranslationBaseComponent
 				}
 			] : []),
 			...(this.store.hasAnyPermission(PermissionsEnum.ADMIN_DASHBOARD_VIEW, PermissionsEnum.ACCOUNTING_DASHBOARD) ? [
-				...(this.selectedEmployee && !this.selectedEmployee.id ? [
+				...(!this.selectedEmployee || !this.selectedEmployee.id ? [
 					{
 						title: this.getTranslation('DASHBOARD_PAGE.ACCOUNTING'),
 						icon: 'credit-card-outline',
