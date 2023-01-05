@@ -8,12 +8,10 @@ export abstract class Base implements BaseTO, Serializable<BaseTO> {
 	private _tenantId: string;
 
 	constructor(
-		id?: number,
 		organizationId?: string,
 		remoteId?: string,
 		tenantId?: string
 	) {
-		this._id = id;
 		this._organizationId = organizationId;
 		this._remoteId = remoteId;
 		this._tenantId = tenantId;

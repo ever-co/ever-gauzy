@@ -7,7 +7,7 @@ export class Tag extends Base implements TagTO, Serializable<TagTO> {
 	private _name: string;
 
 	constructor(tag: TagTO) {
-		super(tag.id, tag.organizationId, tag.remoteId, tag.tenantId);
+		super(tag.organizationId, tag.remoteId, tag.tenantId);
 		this._color = tag.color;
 		this._name = tag.name;
 	}

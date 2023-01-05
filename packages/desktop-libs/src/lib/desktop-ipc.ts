@@ -15,6 +15,7 @@ import {PowerManagerPreventDisplaySleep, PowerManagerDetectInactivity} from "./d
 import {DesktopOsInactivityHandler} from "./desktop-os-inactivity-handler";
 import { DesktopOfflineModeHandler } from './offline/desktop-offline-mode-handler';
 import { IntervalTO } from './offline/dto/interval.dto';
+import { User, UserService } from './offline';
 
 const timerHandler = new TimerHandler();
 
@@ -22,6 +23,7 @@ console.log = log.log;
 Object.assign(console, log.functions);
 
 const offlineMode = DesktopOfflineModeHandler.instance;
+const userService = new UserService();
 
 export function ipcMainHandler(store, startServer, knex, config, timeTrackerWindow) {
 	ipcMain.removeAllListeners('start_server');
@@ -519,6 +521,16 @@ export function ipcTimer(
 
 	ipcMain.on('update_timer_auth_config', (event, arg) => {
 		LocalStore.updateAuthSetting({...arg});
+	});
+
+	ipcMain.on('auth_success', async (event, arg) => {
+		try {
+			const user = new User(arg.user);
+			user.remoteId = arg.user.id;
+			await userService.save(user.toObject());
+		} catch (error) {
+			console.log('Error on save user', error);
+		}
 	});
 }
 

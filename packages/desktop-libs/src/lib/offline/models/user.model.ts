@@ -10,7 +10,7 @@ export class User extends Base implements UserTO, Serializable<UserTO> {
 	private _name: string;
 
 	constructor(user: UserTO) {
-		super(user.id, user.organizationId, user.remoteId, user.tenantId);
+		super(user.organizationId, user.remoteId, user.tenantId);
 		this._email = user.email;
 		this._employee = user.employee;
 		this._employeeId = user.employeeId;

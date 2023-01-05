@@ -237,6 +237,7 @@ export class AuthStrategy extends NbAuthStrategy {
 		try {
 			if (this.electronService.isElectronApp) {
 				this.electronService.ipcRenderer.send('auth_success', {
+					user: user,
 					token: token,
 					userId: user.id,
 					employeeId: user.employee ? user.employee.id : null,

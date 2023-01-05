@@ -19,6 +19,10 @@ export class UserDAO implements DAO<UserTO> {
 			.select('*');
 	}
 	public async save(value: UserTO): Promise<void> {
+		value = {
+			...value,
+			employee: JSON.stringify(value.employee)
+		} as any;
 		await this._trx.create(value);
 	}
 	public async findOneById(id: number): Promise<UserTO> {
@@ -28,6 +32,10 @@ export class UserDAO implements DAO<UserTO> {
 			.where('id', '=', id)[0];
 	}
 	public async update(id: number, value: Partial<UserTO>): Promise<void> {
+		value = {
+			...value,
+			employee: JSON.stringify(value.employee)
+		} as any;
 		await this._trx.update(id, value);
 	}
 	public async delete(value: Partial<UserTO>): Promise<void> {

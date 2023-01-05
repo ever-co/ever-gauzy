@@ -8,7 +8,6 @@ export class Client extends Base implements ClientTO, Serializable<ClientTO> {
 
 	constructor(client: ClientTO) {
 		super(
-			client.id,
 			client.organizationId,
 			client.remoteId,
 			client.tenantId
