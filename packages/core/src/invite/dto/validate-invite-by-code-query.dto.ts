@@ -1,7 +1,11 @@
 import { IUserInviteCodeConfirmationInput } from "@gauzy/contracts";
-import { ConfirmInviteCodeDTO } from "../../auth/dto";
+import { IntersectionType } from "@nestjs/swagger";
+import { UserCodeDTO, UserEmailDTO } from "./../../user/dto";
 
 /**
- * Confirm invite by code DTO validation
+ * Validate invite by code DTO validation
  */
-export class ValidateInviteByCodeQueryDTO extends ConfirmInviteCodeDTO implements IUserInviteCodeConfirmationInput {}
+export class ValidateInviteByCodeQueryDTO extends IntersectionType(
+    UserEmailDTO,
+    UserCodeDTO,
+) implements IUserInviteCodeConfirmationInput {}

@@ -20,7 +20,7 @@ export class CustomRenderComponent implements ViewCell, OnInit {
   isSelected: boolean = false;
 
   ngOnInit() {
-    this.renderValue = this.value.toString();
+    this.renderValue = this.rowData.taskNumber +' '+ this.rowData.title;
     if (this.rowData.isSelected) {
         this.isSelected = true;
     }

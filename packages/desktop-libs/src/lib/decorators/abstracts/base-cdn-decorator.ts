@@ -8,6 +8,9 @@ export abstract class BaseCdnDecorator implements IDesktopCdnUpdate {
 	constructor(update: IDesktopCdnUpdate) {
 		this._decorator = update;
 	}
+	public get isPrerelease(): boolean {
+		return this._decorator.isPrerelease;
+	}
     cancel(): void {
         this._decorator.cancel();
     }
