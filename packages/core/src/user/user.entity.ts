@@ -73,7 +73,7 @@ export class User extends TenantBaseEntity implements IUser {
 
 	@ApiProperty({ type: () => String })
 	@Exclude({ toPlainOnly: true })
-	@Column({ nullable: true })
+	@Column({ insert: false, nullable: true })
 	public refreshToken?: string;
 
 	@ApiPropertyOptional({ type: () => String, maxLength: 500 })
@@ -99,22 +99,22 @@ export class User extends TenantBaseEntity implements IUser {
 
 	@ApiPropertyOptional({ type: () => Number })
 	@Exclude({ toPlainOnly: true })
-	@Column({ nullable: true })
+	@Column({ insert: false, nullable: true })
 	public code?: number;
 
 	@ApiPropertyOptional({ type: () => Date })
 	@Exclude({ toPlainOnly: true })
-	@Column({ nullable: true })
+	@Column({ insert: false, nullable: true })
 	public codeExpireAt?: Date;
 
 	@ApiPropertyOptional({ type: () => Date })
 	@Exclude({ toPlainOnly: true })
-	@Column({ nullable: true })
+	@Column({ insert: false, nullable: true })
 	public emailVerifiedAt?: Date;
 
 	@ApiPropertyOptional({ type: () => String })
 	@Exclude({ toPlainOnly: true })
-	@Column({ nullable: true })
+	@Column({ insert: false, nullable: true })
 	public emailToken?: string;
 
 	name?: string;
