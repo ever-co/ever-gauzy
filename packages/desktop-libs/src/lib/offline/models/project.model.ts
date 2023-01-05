@@ -14,6 +14,7 @@ export class Project
 
 	constructor(project: ProjectTO) {
 		super(
+			project.id,
 			project.organizationId,
 			project.remoteId,
 			project.tenantId

@@ -21,6 +21,7 @@ export class Interval
 
 	constructor(interval: IntervalTO) {
 		super(
+			interval.id,
 			interval.organizationId,
 			interval.remoteId,
 			interval.tenantId
