@@ -20,7 +20,7 @@ import {
 import { MoreThanOrEqual, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { SocialAuthService } from '@gauzy/auth';
-import { isNotEmpty } from '@gauzy/common';
+import { IAppIntegrationConfig, isNotEmpty } from '@gauzy/common';
 import * as bcrypt from 'bcrypt';
 import * as moment from 'moment';
 import { JsonWebTokenError, JwtPayload, sign, verify } from 'jsonwebtoken';
@@ -219,7 +219,7 @@ export class AuthService extends SocialAuthService {
 	 * 3. User invite accept scenario
 	 */
 	async register(
-		input: IUserRegistrationInput,
+		input: IUserRegistrationInput & Partial<IAppIntegrationConfig>,
 		languageCode: LanguagesEnum
 	): Promise<User> {
 		let tenant = input.user.tenant;
@@ -276,7 +276,13 @@ export class AuthService extends SocialAuthService {
 		 * Email verification
 		 */
 		if (!user.emailVerifiedAt) {
-			await this.emailConfirmationService.sendEmailVerification(user);
+			const { appName, appLogo, appSignature, appLink } = input;
+			await this.emailConfirmationService.sendEmailVerification(user, {
+				appName,
+				appLogo,
+				appSignature,
+				appLink
+			});
 		}
 
 		this.emailService.welcomeUser(

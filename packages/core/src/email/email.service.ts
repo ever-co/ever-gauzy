@@ -20,7 +20,7 @@ import * as Handlebars from 'handlebars';
 import * as nodemailer from 'nodemailer';
 import { Repository, IsNull, FindManyOptions } from 'typeorm';
 import { environment as env } from '@gauzy/config';
-import { ISMTPConfig } from '@gauzy/common';
+import { IAppIntegrationConfig, ISMTPConfig } from '@gauzy/common';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
 import { EmailTemplate, Organization } from './../core/entities/internal';
@@ -594,23 +594,32 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 	async emailVerification(
 		user: IUser,
 		verificationLink: string,
-		verificationCode: number
+		verificationCode: number,
+		thirdPartyIntegration: IAppIntegrationConfig
 	) {
 		const { email, firstName, lastName, preferredLanguage } = user;
 		const name = [firstName, lastName].filter(Boolean).join(' ');
 
+		/**
+		 * Override third party app integrations for email templates
+		 */
+		const integration = Object.assign({}, env.appIntegrationConfig, thirdPartyIntegration);
+		/**
+		 * Email template email options
+		 */
 		const sendOptions = {
 			template: 'email-verification',
 			message: {
 				to: `${email}`
 			},
 			locals: {
-				name: name,
-				locale: preferredLanguage,
-				email: email,
-				host: env.clientBaseUrl,
+				name,
+				email,
 				verificationLink,
-				verificationCode
+				verificationCode,
+				...integration,
+				locale: preferredLanguage,
+				host: env.clientBaseUrl
 			}
 		};
 		try {
