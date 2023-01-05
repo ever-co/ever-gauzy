@@ -509,50 +509,54 @@ export class AuthService extends SocialAuthService {
 	}
 
 	/**
-	 * Confirmed verification code and email
+	 * Verify authentication code and email
 	 *
 	 * @param body
 	 */
-	async confirmInviteCode(body: IUserInviteCodeConfirmationInput) {
+	async verifyAuthCode(payload: IUserInviteCodeConfirmationInput) {
 		try {
-			const user = await this.userRepository.findOneOrFail({
-				where: {
-					email: body.email,
-					code: body.code,
-					codeExpireAt: MoreThanOrEqual(new Date())
-				},
-				relations: {
-					employee: true,
-					role: {
-						rolePermissions: true
+			const { email, code } = payload;
+			if (email && code) {
+				const user = await this.userRepository.findOneOrFail({
+					where: {
+						email: email,
+						code: code,
+						codeExpireAt: MoreThanOrEqual(new Date())
+					},
+					relations: {
+						employee: true,
+						role: {
+							rolePermissions: true
+						}
+					},
+					order: {
+						createdAt: 'DESC'
 					}
-				},
-				order: {
-					createdAt: 'DESC'
+				});
+				await this.userRepository.update(user.id, {
+					code: null,
+					codeExpireAt: null
+				});
+				// If users are inactive
+				if (user.isActive === false) {
+					throw new UnauthorizedException();
 				}
-			});
-			await this.userRepository.update(user.id, {
-				code: null,
-				codeExpireAt: null
-			});
-			// If users are inactive
-			if (user.isActive === false) {
-				throw new UnauthorizedException();
-			}
-			// If employees are inactive
-			if (isNotEmpty(user.employee) && user.employee.isActive === false) {
-				throw new UnauthorizedException();
-			}
+				// If employees are inactive
+				if (isNotEmpty(user.employee) && user.employee.isActive === false) {
+					throw new UnauthorizedException();
+				}
 
-			const access_token = await this.getJwtAccessToken(user);
-			const refresh_token = await this.getJwtRefreshToken(user);
-			await this.userService.setCurrentRefreshToken(refresh_token, user.id);
+				const access_token = await this.getJwtAccessToken(user);
+				const refresh_token = await this.getJwtRefreshToken(user);
+				await this.userService.setCurrentRefreshToken(refresh_token, user.id);
 
-			return new Object({
-				user,
-				token: access_token,
-				refresh_token: refresh_token
-			});
+				return new Object({
+					user,
+					token: access_token,
+					refresh_token: refresh_token
+				});
+			}
+			throw new UnauthorizedException();
 		} catch (error) {
 			throw new UnauthorizedException();
 		}

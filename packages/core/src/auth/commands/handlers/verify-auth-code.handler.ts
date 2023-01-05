@@ -13,7 +13,7 @@ export class VerifyAuthCodeHandler implements ICommandHandler<VerifyAuthCodeComm
 	public async execute(command: VerifyAuthCodeCommand): Promise<any> {
 		try {
 			const { input } = command;
-			return await this.authService.confirmInviteCode(input);
+			return await this.authService.verifyAuthCode(input);
 		} catch (error) {
 			throw new UnauthorizedException();
 		}
