@@ -194,6 +194,8 @@ export const environment: IEnvironment = {
 	appIntegrationConfig: {
 		appName: process.env.APP_NAME || 'Gauzy',
 		appLogo: process.env.APP_LOGO || `${process.env.CLIENT_BASE_URL}/assets/images/logos/logo_Gauzy.png`,
+		appSignature: process.env.APP_SIGNATURE || 'Gauzy Team',
+		appLink: process.env.APP_LINK || 'https://app.gauzy.co/'
 	},
 
 	demo: process.env.DEMO === 'true' ? true : false,
