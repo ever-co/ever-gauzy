@@ -488,8 +488,6 @@ export class AuthService extends SocialAuthService {
 					}
 				});
 				if (!!existed) {
-					console.log(moment(new Date()).toDate());
-					console.log(moment(new Date()).add(environment.AUTHENTICATION_CODE_EXPIRATION_TIME, 'seconds').toDate());
 					await this.userRepository.update(existed.id, {
 						code: generateRandomInteger(6),
 						codeExpireAt: moment(new Date()).add(environment.AUTHENTICATION_CODE_EXPIRATION_TIME, 'seconds').toDate()
