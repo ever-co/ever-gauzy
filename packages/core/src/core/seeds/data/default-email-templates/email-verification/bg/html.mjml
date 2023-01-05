@@ -4,7 +4,7 @@
 			<mj-column>
 				<mj-image
 					width="100px"
-					src="{{host}}/assets/images/logos/logo_Gauzy.png"
+					src="{{appLogo}}"
 				></mj-image>
 				<mj-divider
 					border-color="#1B005D"
@@ -13,7 +13,7 @@
 				<mj-text font-size="20px" font-family="helvetica">Hello {{name}}</mj-text>
 				<mj-text font-size="16px" font-family="helvetica">
 					<p style="line-height: 1.5rem">
-						Thank you for joining with Ever® Gauzy™.
+						Thank you for joining with {{appName}}.
 					</p>
 					<p>
 						We’d like you to confirm the email address!.
@@ -32,21 +32,17 @@
 				</mj-text>
 				<mj-text font-size="16px" font-family="helvetica">
 					<p>Best regards,</p>
-					<p>Gauzy Team</p>
+					<p>{{appSignature}}</p>
 				</mj-text>
 				<mj-divider
 					border-color="#1B005D"
 					border-width="1px"
 				></mj-divider>
-				<mj-text align="center" font-size="12px" font-family="helvetica"
-					>© 2019,
-					<a href="https://app.gauzy.co/." style="color: #598bff"
-						>Gauzy</a
-					>
+				<mj-text align="center" font-size="12px" font-family="helvetica">
+					© 2019,
+					<a href="{{appLink}}" style="color: #598bff">{{appName}}</a>
 					by
-					<a href="https://ever.co/" style="color: #598bff"
-						>Ever Co. LTD.</a
-					>
+					<a href="https://ever.co/" style="color: #598bff">Ever Co. LTD.</a>
 					All rights reserved.
 				</mj-text>
 			</mj-column>
