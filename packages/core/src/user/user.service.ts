@@ -34,7 +34,9 @@ export class UserService extends TenantAwareCrudService<User> {
 	public async markEmailAsVerified(id: IUser['id']) {
 		return await this.userRepository.update({ id }, {
 		  	emailVerifiedAt: freshTimestamp(),
-			emailToken: null
+			emailToken: null,
+			code: null,
+			codeExpireAt: null
 		});
 	}
 

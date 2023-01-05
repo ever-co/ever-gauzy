@@ -1,21 +1,18 @@
-import { ApiProperty } from "@nestjs/swagger";
-import { IsNumber } from "class-validator";
-import { IUserInviteCodeConfirmationInput } from "@gauzy/contracts";
+import { IntersectionType } from "@nestjs/swagger";
+import { IUserCodeInput, IUserEmailInput } from "@gauzy/contracts";
 import { UserEmailDTO } from "../../user/dto";
-import { CustomLength } from "./../../shared/validators";
+import { UserCodeDTO } from "user/dto/user-code.dto";
 
 /**
- * Send invite code DTO validation
+ * Send code DTO validation
  */
-export class SendInviteCodeDTO extends UserEmailDTO {}
+export class SendTwoFactorCodeDTO extends UserEmailDTO implements IUserEmailInput {}
+
 
 /**
- * Confirm invite code DTO validation
+ * Confirm code DTO validation
  */
-export class ConfirmInviteCodeDTO extends UserEmailDTO implements IUserInviteCodeConfirmationInput {
-
-    @ApiProperty({ type: () => Number })
-    @IsNumber()
-    @CustomLength(6)
-    readonly code: number;
-}
+export class ConfirmTwoFactorCodeDTO extends IntersectionType(
+    UserEmailDTO,
+    UserCodeDTO,
+) implements IUserEmailInput, IUserCodeInput {}

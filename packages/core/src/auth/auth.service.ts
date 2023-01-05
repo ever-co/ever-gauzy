@@ -249,7 +249,8 @@ export class AuthService extends SocialAuthService {
 					}
 				: {}),
 		});
-		const user = await this.userRepository.save(create);
+		const entity = await this.userRepository.save(create);
+		const user = await this.userRepository.findOneBy({ id: entity.id });
 
 		if (input.organizationId) {
 			await this.userOrganizationService.addUserToOrganization(

@@ -26,7 +26,7 @@ import { AuthRefreshGuard } from './../shared/guards';
 import { ChangePasswordRequestDTO, ResetPasswordRequestDTO } from './../password-reset/dto';
 import { RegisterUserDTO, UserLoginDTO } from './../user/dto';
 import { UserService } from './../user/user.service';
-import { ConfirmInviteCodeDTO, HasRoleQueryDTO, RefreshTokenDto, SendInviteCodeDTO } from './dto';
+import { ConfirmTwoFactorCodeDTO, HasRoleQueryDTO, RefreshTokenDto, SendTwoFactorCodeDTO } from './dto';
 
 @ApiTags('Auth')
 @Controller()
@@ -129,7 +129,7 @@ export class AuthController {
 	@Public()
 	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async sendInviteCode(
-		@Body() entity: SendInviteCodeDTO
+		@Body() entity: SendTwoFactorCodeDTO
 	): Promise<any> {
 	 	return await this.commandBus.execute(
 			new SendInviteCodeCommand(entity)
@@ -145,7 +145,7 @@ export class AuthController {
 	@Public()
 	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async confirmInviteCode(
-		@Body() entity: ConfirmInviteCodeDTO
+		@Body() entity: ConfirmTwoFactorCodeDTO
 	): Promise<any> {
 		return await this.commandBus.execute(
 			new ConfirmInviteCodeCommand(entity)
