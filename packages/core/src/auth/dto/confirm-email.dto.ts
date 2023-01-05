@@ -1,8 +1,6 @@
 import { IBasePerTenantEntityModel, ITenant, IUserCodeInput, IUserEmailInput, IUserTokenInput } from '@gauzy/contracts';
 import { ApiProperty, IntersectionType } from '@nestjs/swagger';
-import { IsString } from 'class-validator';
-import { IsTenantBelongsToUser } from './../../shared/validators';
-import { TenantBaseDTO } from './../../core/dto';
+import { IsNotEmpty, IsUUID } from 'class-validator';
 import { UserCodeDTO, UserEmailDTO, UserTokenDTO } from './../../user/dto';
 
 /**
@@ -18,11 +16,11 @@ export class ConfirmEmailByTokenDTO extends IntersectionType(
  */
 export class ConfirmEmailByCodeDTO extends IntersectionType(
     UserEmailDTO,
-    IntersectionType(UserCodeDTO, TenantBaseDTO)
+    UserCodeDTO
 ) implements IUserEmailInput, IUserCodeInput, IBasePerTenantEntityModel {
 
-    @ApiProperty({ type: () => String })
-	@IsString()
-	@IsTenantBelongsToUser()
+    @ApiProperty({ type: () => String, required: true })
+    @IsNotEmpty()
+	@IsUUID()
 	readonly tenantId: ITenant['id'];
 }
