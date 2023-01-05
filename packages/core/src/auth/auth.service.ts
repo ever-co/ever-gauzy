@@ -249,7 +249,8 @@ export class AuthService extends SocialAuthService {
 					}
 				: {}),
 		});
-		const user = await this.userRepository.save(create);
+		const entity = await this.userRepository.save(create);
+		const user = await this.userRepository.findOneBy({ id: entity.id });
 
 		if (input.organizationId) {
 			await this.userOrganizationService.addUserToOrganization(
@@ -471,11 +472,11 @@ export class AuthService extends SocialAuthService {
 	}
 
 	/**
-	 * Send verification code to the register email address
+	 * Send authentication code to the register email address
 	 *
 	 * @param email
 	 */
-	async sendInviteCode(email: IUser['email']) {
+	async sendAuthCode(email: IUser['email']) {
 		try {
 			if (email) {
 				const existed = await this.userRepository.findOneOrFail({
@@ -489,7 +490,7 @@ export class AuthService extends SocialAuthService {
 				if (!!existed) {
 					await this.userRepository.update(existed.id, {
 						code: generateRandomInteger(6),
-						codeExpireAt: moment(new Date()).add(10, 'minutes').toDate()
+						codeExpireAt: moment(new Date()).add(environment.AUTHENTICATION_CODE_EXPIRATION_TIME, 'seconds').toDate()
 					});
 					const user = await this.userRepository.findOneOrFail({
 						where: {
@@ -503,55 +504,59 @@ export class AuthService extends SocialAuthService {
 				}
 			}
 		} catch (error) {
-			console.log('Error while sending invite code', error);
+			console.log('Error while sending authentication code', error?.message);
 		}
 	}
 
 	/**
-	 * Confirmed verification code and email
+	 * Verify authentication code and email
 	 *
 	 * @param body
 	 */
-	async confirmInviteCode(body: IUserInviteCodeConfirmationInput) {
+	async verifyAuthCode(payload: IUserInviteCodeConfirmationInput) {
 		try {
-			const user = await this.userRepository.findOneOrFail({
-				where: {
-					email: body.email,
-					code: body.code,
-					codeExpireAt: MoreThanOrEqual(new Date())
-				},
-				relations: {
-					employee: true,
-					role: {
-						rolePermissions: true
+			const { email, code } = payload;
+			if (email && code) {
+				const user = await this.userRepository.findOneOrFail({
+					where: {
+						email: email,
+						code: code,
+						codeExpireAt: MoreThanOrEqual(new Date())
+					},
+					relations: {
+						employee: true,
+						role: {
+							rolePermissions: true
+						}
+					},
+					order: {
+						createdAt: 'DESC'
 					}
-				},
-				order: {
-					createdAt: 'DESC'
+				});
+				await this.userRepository.update(user.id, {
+					code: null,
+					codeExpireAt: null
+				});
+				// If users are inactive
+				if (user.isActive === false) {
+					throw new UnauthorizedException();
 				}
-			});
-			await this.userRepository.update(user.id, {
-				code: null,
-				codeExpireAt: null
-			});
-			// If users are inactive
-			if (user.isActive === false) {
-				throw new UnauthorizedException();
-			}
-			// If employees are inactive
-			if (isNotEmpty(user.employee) && user.employee.isActive === false) {
-				throw new UnauthorizedException();
-			}
+				// If employees are inactive
+				if (isNotEmpty(user.employee) && user.employee.isActive === false) {
+					throw new UnauthorizedException();
+				}
 
-			const access_token = await this.getJwtAccessToken(user);
-			const refresh_token = await this.getJwtRefreshToken(user);
-			await this.userService.setCurrentRefreshToken(refresh_token, user.id);
+				const access_token = await this.getJwtAccessToken(user);
+				const refresh_token = await this.getJwtRefreshToken(user);
+				await this.userService.setCurrentRefreshToken(refresh_token, user.id);
 
-			return new Object({
-				user,
-				token: access_token,
-				refresh_token: refresh_token
-			});
+				return new Object({
+					user,
+					token: access_token,
+					refresh_token: refresh_token
+				});
+			}
+			throw new UnauthorizedException();
 		} catch (error) {
 			throw new UnauthorizedException();
 		}
