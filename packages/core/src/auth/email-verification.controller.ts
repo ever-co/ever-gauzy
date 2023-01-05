@@ -1,5 +1,4 @@
 import {
-    BadRequestException,
     Body,
     ClassSerializerInterceptor,
     Controller,
