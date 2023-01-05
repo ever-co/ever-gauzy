@@ -36,7 +36,7 @@ export const environment: IEnvironment = {
 	/**
 	 * Password Less Authentication Configuration
 	 */
-	AUTHENTICATION_CODE_EXPIRATION_TIME: parseInt(process.env.AUTHENTICATION_CODE_EXPIRATION_TIME) || 600,
+	AUTHENTICATION_CODE_EXPIRATION_TIME: parseInt(process.env.AUTHENTICATION_CODE_EXPIRATION_TIME) || 600, // default code expire time (10 minutes)
 
 	/**
 	 * Throttler (Rate Limiting) Options
