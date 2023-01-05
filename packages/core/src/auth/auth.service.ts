@@ -490,7 +490,7 @@ export class AuthService extends SocialAuthService {
 				if (!!existed) {
 					await this.userRepository.update(existed.id, {
 						code: generateRandomInteger(6),
-						codeExpireAt: moment(new Date()).add(10, 'minutes').toDate()
+						codeExpireAt: moment(new Date()).add(environment.AUTHENTICATION_CODE_EXPIRATION_TIME, 'seconds').toDate()
 					});
 					const user = await this.userRepository.findOneOrFail({
 						where: {

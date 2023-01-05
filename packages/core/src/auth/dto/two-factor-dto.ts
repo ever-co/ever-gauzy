@@ -1,7 +1,6 @@
 import { IntersectionType } from "@nestjs/swagger";
 import { IUserCodeInput, IUserEmailInput } from "@gauzy/contracts";
-import { UserEmailDTO } from "../../user/dto";
-import { UserCodeDTO } from "user/dto/user-code.dto";
+import { UserCodeDTO, UserEmailDTO } from "../../user/dto";
 
 /**
  * Send code DTO validation
