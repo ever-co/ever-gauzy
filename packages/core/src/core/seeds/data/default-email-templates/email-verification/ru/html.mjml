@@ -4,7 +4,7 @@
 			<mj-column>
 				<mj-image
 					width="100px"
-					src="{{ appLogo }}"
+					src="{{appLogo}}"
 				></mj-image>
 				<mj-divider
 					border-color="#1B005D"

@@ -30,7 +30,6 @@ export class EmailTemplateGeneratePreviewHandler
 		const clientBaseUrl = this.configService.get('clientBaseUrl');
 		const host = this.configService.get('host');
 		const { appName, appLogo, appSignature, appLink } = environment.appIntegrationConfig;
-		console.log(environment.appIntegrationConfig);
 
 		const handlebarsTemplate = Handlebars.compile(textToHtml);
 		const html = handlebarsTemplate({

@@ -540,7 +540,8 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 		user: IUser,
 		languageCode: LanguagesEnum,
 		organizationId?: string,
-		originUrl?: string
+		originUrl?: string,
+		thirdPartyIntegration?: IAppIntegrationConfig
 	) {
 		let organization: Organization;
 		if (organizationId) {
@@ -549,6 +550,11 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 			});
 		}
 		const tenantId = (organization) ? organization.tenantId : RequestContext.currentTenantId();
+
+		/**
+		 * Override third party app integrations for email templates
+		 */
+		const integration = Object.assign({}, env.appIntegrationConfig, thirdPartyIntegration);
 		const sendOptions = {
 			template: 'welcome-user',
 			message: {
@@ -559,7 +565,8 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 				email: user.email,
 				host: originUrl || env.clientBaseUrl,
 				organizationId: organizationId || IsNull(),
-				tenantId
+				tenantId,
+				...integration
 			}
 		};
 		try {
