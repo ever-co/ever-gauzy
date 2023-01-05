@@ -20,13 +20,13 @@ import { IAuthResponse, LanguagesEnum } from '@gauzy/contracts';
 import { Public } from '@gauzy/common';
 import { AuthService } from './auth.service';
 import { User as IUser } from '../user/user.entity';
-import { AuthLoginCommand, AuthRegisterCommand, ConfirmInviteCodeCommand, SendInviteCodeCommand } from './commands';
+import { AuthLoginCommand, AuthRegisterCommand, SendAuthCodeCommand, VerifyAuthCodeCommand } from './commands';
 import { RequestContext } from '../core/context';
 import { AuthRefreshGuard } from './../shared/guards';
 import { ChangePasswordRequestDTO, ResetPasswordRequestDTO } from './../password-reset/dto';
 import { RegisterUserDTO, UserLoginDTO } from './../user/dto';
 import { UserService } from './../user/user.service';
-import { ConfirmInviteCodeDTO, HasRoleQueryDTO, RefreshTokenDto, SendInviteCodeDTO } from './dto';
+import { HasRoleQueryDTO, RefreshTokenDto, SendAuthCodeDTO, VerifyAuthCodeDTO } from './dto';
 
 @ApiTags('Auth')
 @Controller()
@@ -129,10 +129,10 @@ export class AuthController {
 	@Public()
 	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async sendInviteCode(
-		@Body() entity: SendInviteCodeDTO
+		@Body() entity: SendAuthCodeDTO
 	): Promise<any> {
 	 	return await this.commandBus.execute(
-			new SendInviteCodeCommand(entity)
+			new SendAuthCodeCommand(entity)
 		);
 	}
 
@@ -145,10 +145,10 @@ export class AuthController {
 	@Public()
 	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async confirmInviteCode(
-		@Body() entity: ConfirmInviteCodeDTO
+		@Body() entity: VerifyAuthCodeDTO
 	): Promise<any> {
 		return await this.commandBus.execute(
-			new ConfirmInviteCodeCommand(entity)
+			new VerifyAuthCodeCommand(entity)
 		);
 	}
 

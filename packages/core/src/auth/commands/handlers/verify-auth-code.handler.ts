@@ -1,19 +1,19 @@
 import { UnauthorizedException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { ConfirmInviteCodeCommand } from '../confirm-invite-code.command';
+import { VerifyAuthCodeCommand } from '../verify-auth-code.command';
 import { AuthService } from '../../auth.service';
 
-@CommandHandler(ConfirmInviteCodeCommand)
-export class ConfirmInviteCodeHandler implements ICommandHandler<ConfirmInviteCodeCommand> {
+@CommandHandler(VerifyAuthCodeCommand)
+export class VerifyAuthCodeHandler implements ICommandHandler<VerifyAuthCodeCommand> {
 
 	constructor(
 		private readonly authService: AuthService
 	) {}
 
-	public async execute(command: ConfirmInviteCodeCommand): Promise<any> {
+	public async execute(command: VerifyAuthCodeCommand): Promise<any> {
 		try {
 			const { input } = command;
-			return await this.authService.confirmInviteCode(input);
+			return await this.authService.verifyAuthCode(input);
 		} catch (error) {
 			throw new UnauthorizedException();
 		}

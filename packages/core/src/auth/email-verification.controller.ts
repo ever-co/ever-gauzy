@@ -1,5 +1,4 @@
 import {
-    BadRequestException,
     Body,
     ClassSerializerInterceptor,
     Controller,
@@ -17,7 +16,7 @@ import { FeatureEnum } from '@gauzy/contracts';
 import { EmailConfirmationService } from './email-confirmation.service';
 import { FeatureFlagGuard } from './../shared/guards';
 import { FeatureFlag } from './../shared/decorators';
-import { ConfirmEmailDTO, ConfirmInviteCodeDTO } from './dto';
+import { ConfirmEmailByCodeDTO, ConfirmEmailByTokenDTO } from './dto';
 
 @Controller('email/verify')
 @UseGuards(FeatureFlagGuard)
@@ -41,13 +40,10 @@ export class EmailVerificationController {
     @Post()
     @UsePipes(new ValidationPipe({ whitelist: true }))
     public async confirmEmail(
-        @Body() body: ConfirmEmailDTO
+        @Body() body: ConfirmEmailByTokenDTO
     ): Promise<Object> {
         const user = await this.emailConfirmationService.decodeConfirmationToken(body.token);
         if (!!user) {
-            if (!!user.emailVerifiedAt) {
-                throw new BadRequestException('Your email is already verified.');
-            }
             return await this.emailConfirmationService.confirmEmail(user);
         }
     }
@@ -64,13 +60,10 @@ export class EmailVerificationController {
     @Post('code')
     @UsePipes(new ValidationPipe({ whitelist: true }))
     public async confirmEmailByCode(
-        @Body() body: ConfirmInviteCodeDTO
+        @Body() body: ConfirmEmailByCodeDTO
     ): Promise<Object> {
         const user = await this.emailConfirmationService.confirmationByCode(body);
         if (!!user) {
-            if (!!user.emailVerifiedAt) {
-                throw new BadRequestException('Your email is already verified.');
-            }
             return await this.emailConfirmationService.confirmEmail(user);
         }
     }

@@ -243,7 +243,9 @@ export class UserController extends CrudController<User> {
 	@HttpCode(HttpStatus.CREATED)
 	@Post()
 	@UsePipes(new ValidationPipe())
-	async create(@Body() entity: CreateUserDTO): Promise<IUser> {
+	async create(
+		@Body() entity: CreateUserDTO
+	): Promise<IUser> {
 		return await this.commandBus.execute(
 			new UserCreateCommand(entity)
 		);
@@ -262,7 +264,7 @@ export class UserController extends CrudController<User> {
 	@Put(':id')
 	@UsePipes(new ValidationPipe({ transform : true }))
 	async update(
-		@Param('id', UUIDValidationPipe) id: string,
+		@Param('id', UUIDValidationPipe) id: IUser['id'],
 		@Body() entity: UpdateUserDTO
 	): Promise<IUser> {
 		return await this.userService.updateProfile(id, {
@@ -292,7 +294,7 @@ export class UserController extends CrudController<User> {
 	@Permissions(PermissionsEnum.ACCESS_DELETE_ACCOUNT)
 	@Delete(':id')
 	async delete(
-		@Param('id', UUIDValidationPipe) id: string,
+		@Param('id', UUIDValidationPipe) id: IUser['id'],
 	): Promise<DeleteResult> {
 		return await this.commandBus.execute(
 			new UserDeleteCommand(id)
