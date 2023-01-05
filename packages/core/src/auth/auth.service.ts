@@ -472,11 +472,11 @@ export class AuthService extends SocialAuthService {
 	}
 
 	/**
-	 * Send verification code to the register email address
+	 * Send authentication code to the register email address
 	 *
 	 * @param email
 	 */
-	async sendInviteCode(email: IUser['email']) {
+	async sendAuthCode(email: IUser['email']) {
 		try {
 			if (email) {
 				const existed = await this.userRepository.findOneOrFail({
@@ -488,6 +488,8 @@ export class AuthService extends SocialAuthService {
 					}
 				});
 				if (!!existed) {
+					console.log(moment(new Date()).toDate());
+					console.log(moment(new Date()).add(environment.AUTHENTICATION_CODE_EXPIRATION_TIME, 'seconds').toDate());
 					await this.userRepository.update(existed.id, {
 						code: generateRandomInteger(6),
 						codeExpireAt: moment(new Date()).add(environment.AUTHENTICATION_CODE_EXPIRATION_TIME, 'seconds').toDate()
@@ -504,7 +506,7 @@ export class AuthService extends SocialAuthService {
 				}
 			}
 		} catch (error) {
-			console.log('Error while sending invite code', error);
+			console.log('Error while sending authentication code', error?.message);
 		}
 	}
 

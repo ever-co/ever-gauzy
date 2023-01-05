@@ -3,15 +3,15 @@ import { IUserCodeInput, IUserEmailInput } from "@gauzy/contracts";
 import { UserCodeDTO, UserEmailDTO } from "../../user/dto";
 
 /**
- * Send code DTO validation
+ * Send auth code DTO validation
  */
-export class SendTwoFactorCodeDTO extends UserEmailDTO implements IUserEmailInput {}
+export class SendAuthCodeDTO extends UserEmailDTO implements IUserEmailInput {}
 
 
 /**
- * Confirm code DTO validation
+ * Verify auth code DTO validation
  */
-export class ConfirmTwoFactorCodeDTO extends IntersectionType(
+export class VerifyAuthCodeDTO extends IntersectionType(
     UserEmailDTO,
     UserCodeDTO,
 ) implements IUserEmailInput, IUserCodeInput {}
