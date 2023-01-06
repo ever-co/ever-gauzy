@@ -3675,7 +3675,16 @@
 			"APPROVAL_TIMESHEET": "You don't have any timesheets for approvals yet for these day's."
 		},
 		"VIEW_WINDOWS": "View windows",
-		"VIEW_WIDGETS": "View widgets"
+		"VIEW_WIDGETS": "View widgets",
+		"SOURCES": {
+			"WEB_TIMER": "Web Timer",
+			"DESKTOP": "Desktop Timer App",
+			"MOBILE": "Mobile Timer App",
+			"UPWORK": "Upwork",
+			"HUBSTAFF": "HubStaff",
+			"BROWSER_EXTENSION": "Browser Extension"
+		},
+		"LAST_WORKED": "Последно работеше:"
 	},
 	"ACTIVITY": {
 		"SCREENSHOTS": "Screenshots",

@@ -31,7 +31,7 @@
 		</div>
 		<div class="row date">
 			<div class="d-flex flex-column col-12">
-				<small>{{ timeLog?.startedAt | date }}</small>
+				<small>{{ timeLog?.startedAt | dateFormat }}</small>
 				<small class="duration">{{
 					(timeLog?.startedAt | utcToLocal | timeFormat: true) +
 						' - ' +
