@@ -97,6 +97,17 @@
 						<div class="col">
 							<div class="mb-2">
 								<strong>
+									{{ 'TIMESHEET.SOURCE' | translate }} :
+								</strong>
+								<nb-badge
+									position="top"
+									class="medium"
+									status="primary"
+									[text]="timeLog?.source | replace : '_' : ' ' | titlecase"
+								></nb-badge>
+							</div>
+							<div class="mb-2">
+								<strong>
 									{{ 'TIMESHEET.ORGANIZATION_CONTACT' | translate }} :
 								</strong>
 								{{
@@ -106,7 +117,6 @@
 										  | translate)
 								}}
 							</div>
-
 							<div class="mb-2">
 								<strong>
 									{{ 'TIMESHEET.PROJECT' | translate }} :
@@ -117,7 +127,6 @@
 										: ('TIMESHEET.NO_PROJECT' | translate)
 								}}
 							</div>
-
 							<div>
 								<strong>{{ 'TIMESHEET.TODO' | translate }} : </strong>
 								{{

@@ -357,6 +357,7 @@ export interface ITimerToggleInput
 	tags?: string[];
 	isBillable?: boolean;
 	manualTimeSlot?: boolean;
+	version?: string;
 }
 
 export interface IManualTimeInput

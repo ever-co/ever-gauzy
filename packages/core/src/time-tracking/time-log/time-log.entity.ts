@@ -70,6 +70,10 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	@Column({ nullable: true })
 	isRunning?: boolean;
 
+	@ApiProperty({ type: () => String })
+	@Column({ update: false, nullable: true })
+	version?: string;
+
 	duration: number;
 	isEdited?: boolean;
 	/*
