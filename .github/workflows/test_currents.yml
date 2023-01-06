@@ -1,7 +1,7 @@
 name: Currents Cypress Tests
 on:
     push:
-        branches: [develop]
+        branches: [nope]
 jobs:
 
     prepare:
