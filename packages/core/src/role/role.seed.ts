@@ -5,7 +5,7 @@
 import { DataSource } from 'typeorm';
 import { Role } from './role.entity';
 import { IRole, ITenant, RolesEnum } from '@gauzy/contracts';
-import { defaultRoles } from './default-role';
+import { systemRoles } from './system-role';
 
 export const createRoles = async (
 	dataSource: DataSource,
@@ -18,7 +18,7 @@ export const createRoles = async (
 				const role = new Role();
 				role.name = name;
 				role.tenant = tenant;
-				role.isSystem = defaultRoles.includes(name);
+				role.isSystem = systemRoles.includes(name);
 				roles.push(role);
 			}
 		}
