@@ -463,7 +463,7 @@ export default class TimerHandler {
 						system: Math.round(
 							this._eventCounter.systemPercentage * durationNow
 						),
-						version: 'v'+app.getVersion()
+						version: 'v' + app.getVersion()
 					}
 				);
 				break;
@@ -506,7 +506,7 @@ export default class TimerHandler {
 						system: Math.round(
 							this._eventCounter.systemPercentage * durationNow
 						),
-						version: app.getVersion()
+						version: 'v' + app.getVersion()
 					}
 				);
 				break;
