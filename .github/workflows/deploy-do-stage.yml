@@ -1,16 +1,17 @@
-name: Deploy to DigitalOcean Prod
+name: Deploy to DigitalOcean Stage
 
 on:
     workflow_run:
-        workflows: ['Build and Publish Docker Images Prod']
-        branches: [master]
+        workflows: ['Build and Publish Docker Images Stage']
+        branches: [stage]
         types:
             - completed
 
 jobs:
-    deploy-prod:
+    deploy-stage:
         runs-on: ubuntu-22.04
 
+        # Stage using same Secrets for now as Production in Github Secrets Environments
         environment: prod
 
         steps:
@@ -36,14 +37,15 @@ jobs:
 
             - name: Apply k8s manifests changes in DigitalOcean k8s cluster (if any)
               run: |
-                  envsubst < $GITHUB_WORKSPACE/.deploy/k8s/k8s-manifest.prod.yaml | kubectl --context do-sfo2-k8s-ever apply -f -
+                  envsubst < $GITHUB_WORKSPACE/.deploy/k8s/k8s-manifest.stage.yaml | kubectl --context do-sfo2-k8s-ever apply -f -
               env:
                 DB_TYPE: '${{ secrets.DB_TYPE }}'
                 DB_URI: '${{ secrets.DB_URI }}'
                 DB_HOST: '${{ secrets.DB_HOST }}'
                 DB_USER: '${{ secrets.DB_USER }}'
                 DB_PASS: '${{ secrets.DB_PASS }}'
-                DB_NAME: '${{ secrets.DB_NAME }}'
+                # Note that for staging we are using for now same server, just different DB name
+                DB_NAME: '${{ secrets.DB_NAME }}_stage'
                 DB_PORT: '${{ secrets.DB_PORT }}'
                 DB_CA_CERT: '${{ secrets.DB_CA_CERT }}'
                 DB_SSL_MODE: '${{ secrets.DB_SSL_MODE }}'
@@ -95,5 +97,5 @@ jobs:
             # note: for production we will use different strategy later
             - name: Restart Pods to pick up :latest tag version
               run: |
-                  kubectl --context do-sfo2-k8s-ever rollout restart deployment/gauzy-prod-api
-                  kubectl --context do-sfo2-k8s-ever rollout restart deployment/gauzy-prod-webapp
+                  kubectl --context do-sfo2-k8s-ever rollout restart deployment/gauzy-stage-api
+                  kubectl --context do-sfo2-k8s-ever rollout restart deployment/gauzy-stage-webapp

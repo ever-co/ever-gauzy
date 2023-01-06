@@ -87,13 +87,13 @@ export class ViewScreenshotsModalComponent implements OnInit {
 		try {
 			this.timeSlot = await this.timesheetService.getTimeSlot(this.timeSlot.id, {
 				relations: [
-					'employee',
 					'employee.user',
 					'screenshots',
 					'timeLogs',
 					'timeLogs.project',
 					'timeLogs.task',
-					'timeLogs.organizationContact'
+					'timeLogs.organizationContact',
+					'timeLogs.employee.user',
 				]
 			});
 			this.timeLogs = this.timeSlot.timeLogs;
