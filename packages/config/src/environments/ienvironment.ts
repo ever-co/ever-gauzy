@@ -80,6 +80,11 @@ export interface IEnvironment {
 	EMAIL_CONFIRMATION_URL?: string;
 
 	/**
+	 * Password Less Authentication Configuration
+	 */
+	AUTHENTICATION_CODE_EXPIRATION_TIME?: number;
+
+	/**
 	 * Throttler (Rate Limiting) Options
 	 */
 	THROTTLE_TTL?: number;

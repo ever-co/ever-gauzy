@@ -1,13 +1,15 @@
-
 import { BadRequestException, HttpStatus, Injectable } from '@nestjs/common';
+import { IsNull, MoreThanOrEqual } from 'typeorm';
 import { ConfigService, environment } from '@gauzy/config';
-import { FeatureEnum, IUser, IUserTokenInput, IVerificationTokenPayload } from '@gauzy/contracts';
+import { FeatureEnum, IBasePerTenantEntityModel, IUser, IUserCodeInput, IUserEmailInput, IUserTokenInput, IVerificationTokenPayload } from '@gauzy/contracts';
 import { JwtPayload, sign, verify } from 'jsonwebtoken';
 import * as bcrypt from 'bcrypt';
+import * as moment from 'moment';
 import { EmailService } from './../email/email.service';
 import { UserService } from './../user/user.service';
 import { FeatureService } from './../feature/feature.service';
 import { RequestContext } from './../core/context';
+import { generateRandomInteger } from './../core/utils';
 
 @Injectable()
 export class EmailConfirmationService {
@@ -20,12 +22,12 @@ export class EmailConfirmationService {
     ) {}
 
     /**
-     * Send confirmation email link
+     * Send confirmation email link & code
      *
      * @param user
      * @returns
      */
-    public async sendVerificationLink(user: IUser) {
+    public async sendEmailVerification(user: IUser) {
         if (!await this.featureFlagService.isFeatureEnabled(
             FeatureEnum.FEATURE_EMAIL_VERIFICATION
         )) {
@@ -41,11 +43,17 @@ export class EmailConfirmationService {
             const url = `${this.configService.get('EMAIL_CONFIRMATION_URL')}?email=${email}&token=${token}`;
 
             // update email token field for user
+            const verificationCode = generateRandomInteger(6);
             await this.userService.update(id, {
-                emailToken: await bcrypt.hash(token, 10)
+                emailToken: await bcrypt.hash(token, 10),
+                code: verificationCode,
+                ...(environment.JWT_VERIFICATION_TOKEN_EXPIRATION_TIME ? {
+                    codeExpireAt: moment(new Date()).add(environment.JWT_VERIFICATION_TOKEN_EXPIRATION_TIME, 'seconds').toDate()
+                } : {}),
             });
+
             // send email verfication link
-            return this.emailService.emailVerification(user, url);
+            return this.emailService.emailVerification(user, url, verificationCode);
         } catch (error) {
             console.log(error, 'Error while sending verification email');
         }
@@ -68,7 +76,7 @@ export class EmailConfirmationService {
             if (!!user.emailVerifiedAt) {
                 throw new BadRequestException('Your email is already verified.');
             }
-            await this.sendVerificationLink(user);
+            await this.sendEmailVerification(user);
             return new Object({
 				status: HttpStatus.OK,
 				message: `OK`
@@ -114,6 +122,51 @@ export class EmailConfirmationService {
                 throw new BadRequestException('JWT token has been expired.');
             }
             throw new BadRequestException(error?.message);
+        }
+    }
+
+    /**
+     * Email confirmation by code
+     *
+     * @param payload
+     * @returns
+     */
+    public async confirmationByCode(
+        payload : IUserEmailInput & IUserCodeInput & IBasePerTenantEntityModel
+    ): Promise<IUser> {
+        if (!await this.featureFlagService.isFeatureEnabled(
+            FeatureEnum.FEATURE_EMAIL_VERIFICATION
+        )) {
+            return;
+        }
+
+        try {
+            const { email, code, tenantId } = payload;
+            if (email && code) {
+                const user = await this.userService.findOneByOptions({
+                    where: [
+                        {
+                            email,
+                            code,
+                            tenantId,
+                            codeExpireAt: MoreThanOrEqual(new Date())
+                        },
+                        {
+                            email,
+                            code,
+                            tenantId,
+                            codeExpireAt: IsNull()
+                        }
+                    ]
+                });
+                if (!!user.emailVerifiedAt) {
+                    throw new BadRequestException('Your email is already verified.');
+                }
+                return user;
+            }
+            throw new BadRequestException('Failed to verify email.');
+        } catch (error) {
+            throw new BadRequestException('Failed to verify email.');
         }
     }
 

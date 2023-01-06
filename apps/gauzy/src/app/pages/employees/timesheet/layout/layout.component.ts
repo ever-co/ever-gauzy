@@ -37,8 +37,11 @@ export class TimesheetLayoutComponent extends TranslationBaseComponent
 
 	private _loadTabs() {
 		this.tabs = [
-			...(this.store.hasAnyPermission(PermissionsEnum.TIME_TRACKER) ?
-			[
+			...(this.store.hasAnyPermission(
+				PermissionsEnum.TIME_TRACKER,
+				PermissionsEnum.ALL_ORG_EDIT,
+				PermissionsEnum.TIME_TRACKING_DASHBOARD
+			) ? [
 				{
 					title: this.getTranslation('TIMESHEET.DAILY'),
 					responsive: true,
