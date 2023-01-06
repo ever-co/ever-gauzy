@@ -11,8 +11,8 @@
 					border-width="1px"
 				></mj-divider>
 				<mj-text font-size="20px" font-family="helvetica">
-					Добро пожаловать в Gauzy!</mj-text
-				>
+					Добро пожаловать в {{appName}}!
+				</mj-text>
 				<mj-text font-size="16px" font-family="helvetica">
 					<p>Уважаемый {{email}},</p>
 					<p style="line-height: 1.5rem">
@@ -22,7 +22,7 @@
 					</p>
 					<p>Мы рады, что вы на борту!</p>
 					<p>С уважением,</p>
-					<p>Gauzy Team</p>
+					<p>{{appSignature}}</p>
 				</mj-text>
 				<mj-divider
 					border-color="#1B005D"
