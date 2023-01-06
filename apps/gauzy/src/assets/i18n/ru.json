@@ -3675,7 +3675,16 @@
 			"APPROVAL_TIMESHEET": "У вас пока нет отчетов для утверждений на этот день."
 		},
 		"VIEW_WINDOWS": "Просмотр окон",
-		"VIEW_WIDGETS": "Просмотр виджетов"
+		"VIEW_WIDGETS": "Просмотр виджетов",
+		"SOURCES": {
+			"WEB_TIMER": "Web Timer",
+			"DESKTOP": "Desktop Timer App",
+			"MOBILE": "Mobile Timer App",
+			"UPWORK": "Upwork",
+			"HUBSTAFF": "HubStaff",
+			"BROWSER_EXTENSION": "Browser Extension"
+		},
+		"LAST_WORKED": "Последнее сработало:"
 	},
 	"ACTIVITY": {
 		"SCREENSHOTS": "Скриншот",
