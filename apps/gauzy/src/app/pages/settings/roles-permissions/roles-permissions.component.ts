@@ -1,5 +1,6 @@
 import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { FormControl } from '@angular/forms';
+import { HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
 import {
 	PermissionGroups,
 	IRolePermission,
@@ -317,7 +318,10 @@ export class RolesPermissionsComponent
 					debounceTime(100),
 					tap(() => this.formControl.setValue('')),
 					tap(() => this.roleSubject$.next(true)),
-					tap(() => {
+					tap((result: HttpErrorResponse) => {
+						if (result.status === HttpStatusCode.Forbidden) {
+							throw new Error();
+						}
 						this.toastrService.success(
 							this.getTranslation('TOASTR.MESSAGE.ROLE_DELETED', {
 								name: this.role.name
@@ -332,7 +336,7 @@ export class RolesPermissionsComponent
 							}),
 							this.getTranslation('TOASTR.TITLE.ERROR')
 						);
-						throw new Error(error)
+						return observableOf(error);
 					}),
 					untilDestroyed(this)
 				)
