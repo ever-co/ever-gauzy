@@ -23,6 +23,7 @@ jobs:
               uses: actions/setup-node@v3
               with:
                   node-version: 16.18.0
+                  cache: 'yarn'
 
             - name: Change permissions
               run: 'sudo chown -R $(whoami) ./*'
@@ -74,6 +75,7 @@ jobs:
               uses: actions/setup-node@v3
               with:
                   node-version: 16.18.0
+                  cache: 'yarn'
 
             - name: Install latest version of NPM
               run: 'sudo npm install -g npm'
@@ -119,6 +121,7 @@ jobs:
               uses: actions/setup-node@v3
               with:
                   node-version: 16.18.0
+                  cache: 'yarn'
 
             - name: Install latest version of NPM
               run: 'npm install -g npm'

@@ -64,13 +64,17 @@ jobs:
             - name: Print custom build id 🖨
               run: echo "Custom build id is ${{ needs.prepare.outputs.uuid }}"
 
-            - uses: actions/cache@v2
+            - name: Get yarn cache directory path
+              id: yarn-cache-dir-path
+              run: echo "::set-output name=dir::$(yarn cache dir)"
+
+            - uses: actions/cache@v3
+              id: yarn-cache
               with:
-                path: |
-                  ~/.cache
-                key: ${{ runner.os }}-cache-${{ hashFiles('yarn.lock') }}
+                path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
+                key: ${{ runner.os }}-yarn-${{ hashFiles('yarn.lock') }}
                 restore-keys: |
-                  ${{ runner.os }}-cache-
+                  ${{ runner.os }}-yarn-
 
             # - name: Increase file limit
             #  run: echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
