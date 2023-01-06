@@ -44,7 +44,7 @@ jobs:
                 DB_HOST: '${{ secrets.DB_HOST }}'
                 DB_USER: '${{ secrets.DB_USER }}'
                 DB_PASS: '${{ secrets.DB_PASS }}'
-				# Note that for staging we are using for now same server, just different DB name
+                # Note that for staging we are using for now same server, just different DB name
                 DB_NAME: '${{ secrets.DB_NAME }}_stage'
                 DB_PORT: '${{ secrets.DB_PORT }}'
                 DB_CA_CERT: '${{ secrets.DB_CA_CERT }}'
