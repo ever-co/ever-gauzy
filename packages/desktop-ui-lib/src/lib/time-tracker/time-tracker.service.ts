@@ -573,7 +573,8 @@ export class TimeTrackerService {
 			timeLogId: values.timeLogId,
 			organizationId: values.organizationId,
 			tenantId: values.tenantId,
-			organizationContactId: values.organizationContactId
+			organizationContactId: values.organizationContactId,
+			version: values.version
 		};
 
 		console.log('Params', params)

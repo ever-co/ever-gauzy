@@ -1263,7 +1263,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			apiHost: arg.apiHost,
 			token: arg.token,
 			isAw: arg.isAw,
-			isAwConnected: arg.isAwConnected
+			isAwConnected: arg.isAwConnected,
+			version: arg.version
 		};
 
 		try {
