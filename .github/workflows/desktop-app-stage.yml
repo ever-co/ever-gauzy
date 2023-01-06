@@ -1,9 +1,9 @@
-name: Desktop App Build Demo
+name: Desktop App Build Stage
 
 on:
     workflow_run:
-        workflows: ['Release Demo']
-        branches: [develop]
+        workflows: ['Release Stage']
+        branches: [stage]
         types:
             - completed
 

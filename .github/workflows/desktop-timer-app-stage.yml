@@ -1,9 +1,9 @@
-name: Server Build Demo
+name: Desktop Timer App Build Stage
 
 on:
     workflow_run:
-        workflows: ['Release Demo']
-        branches: [develop]
+        workflows: ['Release Stage']
+        branches: [stage]
         types:
             - completed
 
@@ -43,15 +43,15 @@ jobs:
             - name: Bootstrap Yarn
               run: 'yarn bootstrap'
 
-            - name: Bump server version
+            - name: Bump version desktop timer app
               uses: actions/github-script@v6
               with:
                 script: |
                   const script = require('./.scripts/bump-version-electron.js')
-                  console.log(script.server(false))
+                  console.log(script.desktopTimer(false))
 
-            - name: Build Server
-              run: 'yarn build:gauzy-server:linux:release'
+            - name: Build Desktop Timer App
+              run: 'yarn build:desktop-timer:linux:release'
               env:
                   USE_HARD_LINKS: false
                   GH_TOKEN: ${{ secrets.GH_TOKEN }}
@@ -89,15 +89,15 @@ jobs:
             - name: Bootstrap Yarn
               run: 'yarn bootstrap'
 
-            - name: Bump Server version
+            - name: Bump version desktop timer app
               uses: actions/github-script@v6
               with:
                 script: |
                   const script = require('./.scripts/bump-version-electron.js')
-                  console.log(script.server(false))
+                  console.log(script.desktopTimer(false))
 
-            - name: Build Server
-              run: 'yarn build:gauzy-server:mac:release'
+            - name: Build Desktop Timer App
+              run: 'yarn build:desktop-timer:mac:release'
               env:
                   USE_HARD_LINKS: false
                   GH_TOKEN: ${{ secrets.GH_TOKEN }}
@@ -135,15 +135,15 @@ jobs:
             - name: Bootstrap Yarn
               run: 'yarn bootstrap'
 
-            - name: Bump Server version
+            - name: Bump version desktop timer app
               uses: actions/github-script@v6
               with:
                 script: |
                   const script = require('./.scripts/bump-version-electron.js')
-                  console.log(script.server(false))
+                  console.log(script.desktopTimer(false))
 
-            - name: Build Server
-              run: 'yarn build:gauzy-server:windows:release'
+            - name: Build Desktop Timer App
+              run: 'yarn build:desktop-timer:windows:release'
               env:
                   USE_HARD_LINKS: false
                   GH_TOKEN: ${{ secrets.GH_TOKEN }}
