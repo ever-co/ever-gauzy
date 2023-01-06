@@ -10,7 +10,12 @@
 				<a class="link-text" *ngIf="name" (click)="edit(id)" [title]="name">{{ name }}</a>
 			</ng-container>
 			<div *ngIf="name && isOption">{{ name }}</div>
-			<div class="text-caption caption" *ngIf="caption">{{ caption }}</div>
+			<div class="text-caption caption" *ngIf="caption">
+				<ng-template [ngIf]="appendCaption">
+					{{ appendCaption }}
+				</ng-template>
+				{{ caption }}
+			</div>
 		</div>
 	</div>
 </div>
