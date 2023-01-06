@@ -1,6 +1,7 @@
 import { IUserService } from '../../interfaces';
 import { UserDAO } from '../dao';
 import { UserTO } from '../dto';
+import { User } from '../models';
 
 export class UserService implements IUserService<UserTO> {
 	private _userDAO: UserDAO;
@@ -10,11 +11,6 @@ export class UserService implements IUserService<UserTO> {
 	}
 
 	public async save(user: UserTO): Promise<void> {
-		const stored = await this.retrieve();
-		if (stored && stored.id === user.id) {
-			await this.update(user);
-			return;
-		} 
 		await this._userDAO.save(user);
 	}
 
@@ -23,10 +19,13 @@ export class UserService implements IUserService<UserTO> {
 	}
 
 	public async retrieve(): Promise<UserTO> {
-		return await this._userDAO.findAll()[0];
+		const users = await this._userDAO.findAll();
+		const user = new User(users[0]);
+		user.employee = JSON.parse(users[0].employee as string);
+		return user;
 	}
 
-	public async remove(user: UserTO): Promise<void> {
-		await this._userDAO.delete(user);
+	public async remove(): Promise<void> {
+		await this._userDAO.delete();
 	}
 }

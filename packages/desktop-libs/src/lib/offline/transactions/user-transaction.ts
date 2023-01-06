@@ -15,6 +15,8 @@ export class UserTransaction implements IUserTransaction {
 				async (trx: Knex.Transaction) => {
 					trx.insert(value)
 						.into(TABLE_NAME_USERS)
+						.onConflict('remoteId')
+						.merge()
 						.then(() => {
 							trx.commit;
 							console.log(

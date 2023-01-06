@@ -19,29 +19,19 @@ export class UserDAO implements DAO<UserTO> {
 			.select('*');
 	}
 	public async save(value: UserTO): Promise<void> {
-		value = {
-			...value,
-			employee: JSON.stringify(value.employee)
-		} as any;
 		await this._trx.create(value);
 	}
 	public async findOneById(id: number): Promise<UserTO> {
 		return await this._provider
 			.connection<UserTO>(TABLE_NAME_USERS)
-			.select('*')
 			.where('id', '=', id)[0];
 	}
 	public async update(id: number, value: Partial<UserTO>): Promise<void> {
-		value = {
-			...value,
-			employee: JSON.stringify(value.employee)
-		} as any;
 		await this._trx.update(id, value);
 	}
-	public async delete(value: Partial<UserTO>): Promise<void> {
+	public async delete(value?: Partial<UserTO>): Promise<void> {
 		await this._provider
 			.connection<UserTO>(TABLE_NAME_USERS)
-			.where('id', '=', value.id)
 			.del();
 	}
 }

@@ -17,7 +17,7 @@ export class Task extends Base implements TaskTO, Serializable<TaskTO> {
 	private _taskNumber: string;
 
 	constructor(task: TaskTO) {
-		super(task.organizationId, task.remoteId, task.tenantId);
+		super(task.id, task.organizationId, task.remoteId, task.tenantId);
 		this._creatorId = task.creatorId;
 		this._description = task.description;
 		this._dueDate = task.dueDate;

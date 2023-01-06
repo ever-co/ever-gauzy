@@ -430,9 +430,14 @@ export function ipcTimer(
 		timeTrackerWindow.webContents.send('update_setting_value', settings);
 	});
 
-	ipcMain.on('logout_desktop', (event, arg) => {
+	ipcMain.on('logout_desktop', async (event, arg) => {
 		console.log('masuk logout main');
 		timeTrackerWindow.webContents.send('logout');
+		try {
+			await userService.remove();
+		} catch (error) {
+			console.log('Error', error);
+		}
 	})
 
 	ipcMain.on('navigate_to_login', () => {
@@ -527,6 +532,7 @@ export function ipcTimer(
 		try {
 			const user = new User(arg.user);
 			user.remoteId = arg.user.id;
+			user.organizationId = arg.organizationId;
 			await userService.save(user.toObject());
 		} catch (error) {
 			console.log('Error on save user', error);
