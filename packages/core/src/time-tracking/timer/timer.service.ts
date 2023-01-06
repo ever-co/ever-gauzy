@@ -180,6 +180,7 @@ export class TimerService {
 				logType: logType || TimeLogType.TRACKED,
 				description: description || null,
 				isBillable: isBillable || false,
+				version: request.version || null,
 				isRunning: true
 			})
 		);
