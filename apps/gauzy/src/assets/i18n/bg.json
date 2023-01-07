@@ -148,7 +148,7 @@
 			"PIPELINE": "You have not created any pipeline.",
 			"TASK": "You have not created any task.",
 			"INVITE": "You have not invited any user.",
-			"APPROVAL_REQUEST": "You have not create any approval request.",
+			"APPROVAL_REQUEST": "Не сте създали заявка за одобрение.",
 			"APPROVAL_POLICY": "You have not created any approval policy.",
 			"TIME_OFF": "You have not created any time off.",
 			"CANDIDATE": "You have not created any candidate.",
@@ -3675,7 +3675,16 @@
 			"APPROVAL_TIMESHEET": "You don't have any timesheets for approvals yet for these day's."
 		},
 		"VIEW_WINDOWS": "View windows",
-		"VIEW_WIDGETS": "View widgets"
+		"VIEW_WIDGETS": "View widgets",
+		"SOURCES": {
+			"WEB_TIMER": "Web Timer",
+			"DESKTOP": "Desktop Timer App",
+			"MOBILE": "Mobile Timer App",
+			"UPWORK": "Upwork",
+			"HUBSTAFF": "HubStaff",
+			"BROWSER_EXTENSION": "Browser Extension"
+		},
+		"LAST_WORKED": "Последно работеше:"
 	},
 	"ACTIVITY": {
 		"SCREENSHOTS": "Screenshots",
