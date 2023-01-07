@@ -15,7 +15,7 @@ import {PowerManagerPreventDisplaySleep, PowerManagerDetectInactivity} from "./d
 import {DesktopOsInactivityHandler} from "./desktop-os-inactivity-handler";
 import { DesktopOfflineModeHandler } from './offline/desktop-offline-mode-handler';
 import { IntervalTO } from './offline/dto/interval.dto';
-import { User, UserService } from './offline';
+import { Interval, IntervalService, User, UserService } from './offline';
 
 const timerHandler = new TimerHandler();
 
@@ -24,6 +24,7 @@ Object.assign(console, log.functions);
 
 const offlineMode = DesktopOfflineModeHandler.instance;
 const userService = new UserService();
+const intervalService = new IntervalService();
 
 export function ipcMainHandler(store, startServer, knex, config, timeTrackerWindow) {
 	ipcMain.removeAllListeners('start_server');
@@ -79,7 +80,15 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 		);
 	});
 
-	ipcMain.on('failed_synced_timeslot', async (event, arg) => {});
+	ipcMain.on('failed_synced_timeslot', async (event,  arg) => {
+		console.log('Synced', arg);
+		const interval = new Interval(arg.params);
+		interval.remoteId = arg.params.timeLogId;
+		interval.screenshots = arg.params.b64Imgs;
+		interval.stoppedAt = new Date();
+		interval.synced = false;
+		await intervalService.create(interval.toObject());
+	});
 
 	ipcMain.on('set_project_task', (event, arg) => {
 		event.sender.send('set_project_task_reply', arg);
@@ -179,7 +188,10 @@ export function ipcTimer(
 	let powerManagerPreventSleep;
 	let powerManagerDetectInactivity;
 
-	ipcMain.on('update-synced', async (event, interval: IntervalTO) => {});
+	ipcMain.on('update-synced', async (event, interval: IntervalTO) => {
+		console.log('Synced', interval);
+		await intervalService.create(new Interval(interval));
+	});
 
 	offlineMode.on('offline', async () => {
 		console.log('Offline mode triggered...');
@@ -187,6 +199,7 @@ export function ipcTimer(
 
 	offlineMode.on('connection-restored', async () => {
 		console.log('Api connected...');
+		console.log(await intervalService.backedUpNoSynced());
 	});
 
 	offlineMode.trigger();
