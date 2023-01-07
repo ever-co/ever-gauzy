@@ -81,13 +81,16 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 	});
 
 	ipcMain.on('failed_synced_timeslot', async (event,  arg) => {
-		console.log('Synced', arg);
-		const interval = new Interval(arg.params);
-		interval.remoteId = arg.params.timeLogId;
-		interval.screenshots = arg.params.b64Imgs;
-		interval.stoppedAt = new Date();
-		interval.synced = false;
-		await intervalService.create(interval.toObject());
+		try {
+			const interval = new Interval(arg.params);
+			interval.remoteId = arg.params.timeLogId;
+			interval.screenshots = arg.params.b64Imgs;
+			interval.stoppedAt = new Date();
+			interval.synced = false;
+			await intervalService.create(interval.toObject());
+		} catch (error) {
+			console.error('Error to save timeslot', error);
+		}
 	});
 
 	ipcMain.on('set_project_task', (event, arg) => {
