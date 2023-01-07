@@ -7,6 +7,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, Repository, SelectQueryBuilder, Brackets, WhereExpressionBuilder, Raw } from 'typeorm';
 import { IEmployee, IGetTaskByEmployeeOptions, IGetTaskOptions, RolesEnum } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
+import { isUUID } from 'class-validator';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
 import { Task } from './task.entity';
@@ -253,7 +254,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		}
 	}
 
-	public pagination(filter: PaginationParams<Task>) {
+	public async pagination(filter: PaginationParams<Task>) {
 		if ('where' in filter) {
 			const { where } = filter;
 			if ('title' in where) {
@@ -265,10 +266,13 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				filter['where']['prefix'] = Raw((alias) => `${alias} ILIKE '%${prefix}%'`);
 			}
 			if ('organizationSprintId' in where) {
-				filter['where']['organizationSprintId'] = IsNull();
+				const { organizationSprintId } = where;
+				if (!isUUID(organizationSprintId)) {
+					filter['where']['organizationSprintId'] = IsNull();
+				}
 			}
 		}
-		return super.paginate(filter);
+		return await super.paginate(filter);
 	}
 
 	/**

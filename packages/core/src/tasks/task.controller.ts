@@ -34,7 +34,7 @@ import { TaskCreateCommand, TaskUpdateCommand } from './commands';
 import { CreateTaskDTO, UpdateTaskDTO } from './dto';
 
 @ApiTags('Tasks')
-@UseGuards(TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard)
 @Controller()
 export class TaskController extends CrudController<Task> {
 	constructor(
@@ -44,14 +44,25 @@ export class TaskController extends CrudController<Task> {
 		super(taskService);
 	}
 
+	/**
+	 * GET tasks by pagination
+	 * @param filter
+	 * @returns
+	 */
 	@Get('pagination')
 	@UsePipes(new ValidationPipe({ transform: true }))
 	async pagination(
-		@Query() filter: PaginationParams<Task>
+		@Query() params: PaginationParams<Task>
 	): Promise<IPagination<ITask>> {
-		return await this.taskService.pagination(filter);
+		return await this.taskService.pagination(params);
 	}
 
+	/**
+	 * GET maximum task number
+	 *
+	 * @param filter
+	 * @returns
+	 */
 	@ApiOperation({ summary: 'Find maximum task number.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
