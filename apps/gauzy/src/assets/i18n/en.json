@@ -3686,7 +3686,8 @@
 			"UPWORK": "Upwork",
 			"HUBSTAFF": "HubStaff",
 			"BROWSER_EXTENSION": "Browser Extension"
-		}
+		},
+		"LAST_WORKED": "Last worked:"
 	},
 	"ACTIVITY": {
 		"SCREENSHOTS": "Screenshots",

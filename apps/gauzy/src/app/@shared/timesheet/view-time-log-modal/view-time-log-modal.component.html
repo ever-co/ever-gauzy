@@ -9,7 +9,7 @@
 			{{ 'TIMESHEET.VIEW_LOG' | translate }}
 		</h5>
 		<div class="row mt-5">
-			<div class="col-10">
+			<div class="col-6">
 				<ngx-avatar
 					[id]="timeLog?.employee?.id"
 					[name]="timeLog?.employee?.user?.name"
@@ -17,7 +17,12 @@
 					class="report-table"
 				></ngx-avatar>
 			</div>
-			<div class="col-2">
+			<div class="col-3">
+				<ngx-label
+					[text]="timeLog?.source | replace : '_' : ' ' | titlecase"
+				></ngx-label>
+			</div>
+			<div class="col-3">
 				<ngx-label
 					[status]="TimeLogsLabel[timeLog?.logType].status"
 					[text]="TimeLogsLabel[timeLog?.logType].text"
@@ -26,7 +31,7 @@
 		</div>
 		<div class="row date">
 			<div class="d-flex flex-column col-12">
-				<small>{{ timeLog?.startedAt | date }}</small>
+				<small>{{ timeLog?.startedAt | dateFormat }}</small>
 				<small class="duration">{{
 					(timeLog?.startedAt | utcToLocal | timeFormat: true) +
 						' - ' +

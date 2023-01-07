@@ -1,6 +1,6 @@
 import { RolesEnum } from "@gauzy/contracts";
 
-export const defaultRoles = [
+export const systemRoles = [
     RolesEnum.SUPER_ADMIN,
     RolesEnum.ADMIN,
     RolesEnum.EMPLOYEE,

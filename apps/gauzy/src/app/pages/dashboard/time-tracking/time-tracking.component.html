@@ -260,19 +260,21 @@
 					<ng-container *ngIf="employee?.timeSlots?.length > 0">
 						<div class="col">
 							<div class="hour-label mb-3">
-								<ngx-avatar
-									*ngxPermissionsOnly="PermissionsEnum.CHANGE_SELECTED_EMPLOYEE"
-									size="sm"
-									class="avatar-dashboard activity"
-									[name]="employee?.user?.name"
-									[src]="employee?.user?.imageUrl"
-									[caption]="
-										(employee?.timeSlots)[0]?.startedAt
-											| utcToLocal
-											| dateFormat
-									"
-									[id]="employee?.id"
-								></ngx-avatar>
+								<ng-template [ngxPermissionsOnly]="PermissionsEnum.CHANGE_SELECTED_EMPLOYEE">
+									<ngx-avatar
+										size="sm"
+										class="avatar-dashboard activity"
+										[name]="employee?.user?.name"
+										[src]="employee?.user?.imageUrl"
+										[appendCaption]="'TIMESHEET.LAST_WORKED' | translate"
+										[caption]="
+											(employee?.timeSlots)[0]?.startedAt
+												| utcToLocal
+												| dateFormat
+										"
+										[id]="employee?.id"
+									></ngx-avatar>
+								</ng-template>
 								<div></div>
 								<div class="button-container">
 									<div class="swiper-button-container">

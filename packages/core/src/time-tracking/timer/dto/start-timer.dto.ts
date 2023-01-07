@@ -37,4 +37,12 @@ export class StartTimerDTO extends TenantOrganizationBaseDTO implements ITimerTo
     @IsOptional()
     @IsString()
     readonly organizationContactId: IOrganizationContact['id'];
+
+    /**
+     * Version of the sources (Desktop/Web/Browser/Mobile) timer
+     */
+    @ApiPropertyOptional({ type: () => String })
+    @IsOptional()
+    @IsString()
+    readonly version: string;
 }
