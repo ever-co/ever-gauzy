@@ -1,6 +1,7 @@
 import { BadRequestException, HttpStatus, Injectable } from '@nestjs/common';
 import { IsNull, MoreThanOrEqual } from 'typeorm';
 import { ConfigService, environment } from '@gauzy/config';
+import { IAppIntegrationConfig } from '@gauzy/common';
 import { FeatureEnum, IBasePerTenantEntityModel, IUser, IUserCodeInput, IUserEmailInput, IUserTokenInput, IVerificationTokenPayload } from '@gauzy/contracts';
 import { JwtPayload, sign, verify } from 'jsonwebtoken';
 import * as bcrypt from 'bcrypt';
@@ -27,7 +28,7 @@ export class EmailConfirmationService {
      * @param user
      * @returns
      */
-    public async sendEmailVerification(user: IUser) {
+    public async sendEmailVerification(user: IUser, integration: IAppIntegrationConfig) {
         if (!await this.featureFlagService.isFeatureEnabled(
             FeatureEnum.FEATURE_EMAIL_VERIFICATION
         )) {
@@ -53,7 +54,7 @@ export class EmailConfirmationService {
             });
 
             // send email verfication link
-            return this.emailService.emailVerification(user, url, verificationCode);
+            return this.emailService.emailVerification(user, url, verificationCode, integration);
         } catch (error) {
             console.log(error, 'Error while sending verification email');
         }
@@ -63,7 +64,7 @@ export class EmailConfirmationService {
      * Resend confirmation email link
      *
      */
-    public async resendConfirmationLink() {
+    public async resendConfirmationLink(config: IAppIntegrationConfig) {
         if (!await this.featureFlagService.isFeatureEnabled(
             FeatureEnum.FEATURE_EMAIL_VERIFICATION
         )) {
@@ -76,7 +77,7 @@ export class EmailConfirmationService {
             if (!!user.emailVerifiedAt) {
                 throw new BadRequestException('Your email is already verified.');
             }
-            await this.sendEmailVerification(user);
+            await this.sendEmailVerification(user, config);
             return new Object({
 				status: HttpStatus.OK,
 				message: `OK`

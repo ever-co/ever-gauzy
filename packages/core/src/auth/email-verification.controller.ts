@@ -11,7 +11,7 @@ import {
     ValidationPipe
 } from '@nestjs/common';
 import { ApiOperation } from '@nestjs/swagger';
-import { Public } from '@gauzy/common';
+import { IAppIntegrationConfig, Public } from '@gauzy/common';
 import { FeatureEnum } from '@gauzy/contracts';
 import { EmailConfirmationService } from './email-confirmation.service';
 import { FeatureFlagGuard } from './../shared/guards';
@@ -77,7 +77,9 @@ export class EmailVerificationController {
     @ApiOperation({ summary: 'Resend email verification link' })
     @HttpCode(HttpStatus.ACCEPTED)
     @Post('resend-link')
-    public async resendConfirmationLink(): Promise<Object> {
-        return await this.emailConfirmationService.resendConfirmationLink();
+    public async resendConfirmationLink(
+        @Body() config: IAppIntegrationConfig
+    ): Promise<Object> {
+        return await this.emailConfirmationService.resendConfirmationLink(config);
     }
 }
