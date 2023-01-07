@@ -148,7 +148,7 @@
 			"PIPELINE": "Вы не создали ни одного конвейера.",
 			"TASK": "Вы не создали никакой задачи.",
 			"INVITE": "Вы не пригласили ни одного пользователя.",
-			"APPROVAL_REQUEST": "Вы не создали ни одного запроса на одобрение.",
+			"APPROVAL_REQUEST": "Вы не создали ни одного запроса на утверждение.",
 			"APPROVAL_POLICY": "Вы не создали никакой политики одобрения.",
 			"TIME_OFF": "Вы не создали никакого времени.",
 			"CANDIDATE": "Вы не создали ни одного кандидата.",
@@ -1836,6 +1836,11 @@
 		},
 		"PERMISSIONS": {
 			"ADMIN_DASHBOARD_VIEW": "Просмотр панели администратора",
+			"TEAM_DASHBOARD": "Просмотр командной панели",
+			"PROJECT_MANAGEMENT_DASHBOARD": "Просмотр панели управления проектами",
+			"TIME_TRACKING_DASHBOARD": "Просмотр панели мониторинга времени",
+			"ACCOUNTING_DASHBOARD": "Просмотр панели бухгалтерского учета",
+			"HUMAN_RESOURCE_DASHBOARD": "Просмотр панели управления персоналом",
 			"ORG_PAYMENT_VIEW": "Посмотреть платежи",
 			"ORG_PAYMENT_ADD_EDIT": "Создать/Редактировать/Удалить Платежи",
 			"ORG_EXPENSES_VIEW": "Посмотреть все расходы",
@@ -3670,7 +3675,16 @@
 			"APPROVAL_TIMESHEET": "У вас пока нет отчетов для утверждений на этот день."
 		},
 		"VIEW_WINDOWS": "Просмотр окон",
-		"VIEW_WIDGETS": "Просмотр виджетов"
+		"VIEW_WIDGETS": "Просмотр виджетов",
+		"SOURCES": {
+			"WEB_TIMER": "Web Timer",
+			"DESKTOP": "Desktop Timer App",
+			"MOBILE": "Mobile Timer App",
+			"UPWORK": "Upwork",
+			"HUBSTAFF": "HubStaff",
+			"BROWSER_EXTENSION": "Browser Extension"
+		},
+		"LAST_WORKED": "Последнее сработало:"
 	},
 	"ACTIVITY": {
 		"SCREENSHOTS": "Скриншот",

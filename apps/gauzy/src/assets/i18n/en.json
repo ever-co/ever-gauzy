@@ -148,7 +148,7 @@
 			"PIPELINE": "You have not created any pipeline.",
 			"TASK": "You have not created any task.",
 			"INVITE": "You have not invited any user.",
-			"APPROVAL_REQUEST": "You have not create any approval request.",
+			"APPROVAL_REQUEST": "You have not created any approval request.",
 			"APPROVAL_POLICY": "You have not created any approval policy.",
 			"TIME_OFF": "You have not created any time off.",
 			"CANDIDATE": "You have not created any candidate.",
@@ -1836,6 +1836,11 @@
 		},
 		"PERMISSIONS": {
 			"ADMIN_DASHBOARD_VIEW": "View Admin Dashboard",
+			"TEAM_DASHBOARD": "View Team Dashboard",
+			"PROJECT_MANAGEMENT_DASHBOARD": "View Project Management Dashboard",
+			"TIME_TRACKING_DASHBOARD": "View Time Tracking Dashboard",
+			"ACCOUNTING_DASHBOARD": "View Accounting Dashboard",
+			"HUMAN_RESOURCE_DASHBOARD": "View Human Resources Dashboard",
 			"ORG_PAYMENT_VIEW": "View Payments",
 			"ORG_PAYMENT_ADD_EDIT": "Create/Edit/Delete Payments",
 			"ORG_EXPENSES_VIEW": "View All Expenses",
@@ -3683,7 +3688,8 @@
 			"UPWORK": "Upwork",
 			"HUBSTAFF": "HubStaff",
 			"BROWSER_EXTENSION": "Browser Extension"
-		}
+		},
+		"LAST_WORKED": "Last worked:"
 	},
 	"ACTIVITY": {
 		"SCREENSHOTS": "Screenshots",

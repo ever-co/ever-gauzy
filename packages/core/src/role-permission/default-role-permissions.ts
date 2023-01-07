@@ -5,6 +5,11 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 		role: RolesEnum.SUPER_ADMIN,
 		defaultEnabledPermissions: [
 			PermissionsEnum.ADMIN_DASHBOARD_VIEW,
+			PermissionsEnum.TEAM_DASHBOARD,
+			PermissionsEnum.PROJECT_MANAGEMENT_DASHBOARD,
+			PermissionsEnum.TIME_TRACKING_DASHBOARD,
+			PermissionsEnum.ACCOUNTING_DASHBOARD,
+			PermissionsEnum.HUMAN_RESOURCE_DASHBOARD,
 			PermissionsEnum.ORG_PAYMENT_VIEW,
 			PermissionsEnum.ORG_PAYMENT_ADD_EDIT,
 			PermissionsEnum.ORG_INCOMES_VIEW,
@@ -119,6 +124,11 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 		role: RolesEnum.ADMIN,
 		defaultEnabledPermissions: [
 			PermissionsEnum.ADMIN_DASHBOARD_VIEW,
+			PermissionsEnum.TEAM_DASHBOARD,
+			PermissionsEnum.PROJECT_MANAGEMENT_DASHBOARD,
+			PermissionsEnum.TIME_TRACKING_DASHBOARD,
+			PermissionsEnum.ACCOUNTING_DASHBOARD,
+			PermissionsEnum.HUMAN_RESOURCE_DASHBOARD,
 			PermissionsEnum.ORG_PAYMENT_VIEW,
 			PermissionsEnum.ORG_PAYMENT_ADD_EDIT,
 			PermissionsEnum.ORG_INCOMES_VIEW,
@@ -260,6 +270,9 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 		role: RolesEnum.EMPLOYEE,
 		defaultEnabledPermissions: [
 			PermissionsEnum.ADMIN_DASHBOARD_VIEW,
+			PermissionsEnum.PROJECT_MANAGEMENT_DASHBOARD,
+			PermissionsEnum.TIME_TRACKING_DASHBOARD,
+			PermissionsEnum.HUMAN_RESOURCE_DASHBOARD,
 			PermissionsEnum.ORG_PROPOSALS_VIEW,
 			PermissionsEnum.ORG_PROPOSALS_EDIT,
 			PermissionsEnum.ORG_PROPOSAL_TEMPLATES_VIEW,

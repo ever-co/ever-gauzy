@@ -143,4 +143,12 @@
   line-height: 11px;
   letter-spacing: 0em;
   text-align: left;
+
+  .caption {
+		font-size: 11px;
+		font-weight: 400;
+		line-height: 11px;
+		letter-spacing: 0em;
+		color: var(--gauzy-text-color-2);
+	}
 }

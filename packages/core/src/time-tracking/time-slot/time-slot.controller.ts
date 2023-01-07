@@ -27,7 +27,11 @@ import { TimeSlotQueryDTO } from './dto/query';
 
 @ApiTags('TimeSlot')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
-@Permissions(PermissionsEnum.TIME_TRACKER)
+@Permissions(
+	PermissionsEnum.TIME_TRACKER,
+	PermissionsEnum.ALL_ORG_EDIT,
+	PermissionsEnum.ALL_ORG_VIEW
+)
 @Controller()
 export class TimeSlotController {
 	constructor(

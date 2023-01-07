@@ -23,6 +23,7 @@ jobs:
               uses: actions/setup-node@v3
               with:
                   node-version: 16.18.0
+                  cache: 'yarn'
 
             - name: Change permissions
               run: 'sudo chown -R $(whoami) ./*'
@@ -47,7 +48,7 @@ jobs:
               with:
                 script: |
                   const script = require('./.scripts/bump-version-electron.js')
-                  console.log(script.desktoptimer(true))
+                  console.log(script.desktopTimer(true))
 
             - name: Build Desktop Timer App
               run: 'yarn build:desktop-timer:linux:release'
@@ -74,6 +75,7 @@ jobs:
               uses: actions/setup-node@v3
               with:
                   node-version: 16.18.0
+                  cache: 'yarn'
 
             - name: Install latest version of NPM
               run: 'sudo npm install -g npm'
@@ -92,7 +94,7 @@ jobs:
               with:
                 script: |
                   const script = require('./.scripts/bump-version-electron.js')
-                  console.log(script.desktoptimer(true))
+                  console.log(script.desktopTimer(true))
 
             - name: Build Desktop Timer App
               run: 'yarn build:desktop-timer:mac:release'
@@ -119,6 +121,7 @@ jobs:
               uses: actions/setup-node@v3
               with:
                   node-version: 16.18.0
+                  cache: 'yarn'
 
             - name: Install latest version of NPM
               run: 'npm install -g npm'
@@ -137,7 +140,7 @@ jobs:
               with:
                 script: |
                   const script = require('./.scripts/bump-version-electron.js')
-                  console.log(script.desktoptimer(true))
+                  console.log(script.desktopTimer(true))
 
             - name: Build Desktop Timer App
               run: 'yarn build:desktop-timer:windows:release'

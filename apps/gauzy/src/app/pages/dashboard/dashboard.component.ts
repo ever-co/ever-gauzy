@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnDestroy, OnInit } from '@angular/core';
+import { AfterContentChecked, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ISelectedEmployee, PermissionsEnum } from '@gauzy/contracts';
@@ -13,13 +13,14 @@ import { TranslationBaseComponent } from '../../@shared/language-base/translatio
 	styleUrls: ['./dashboard.component.scss']
 })
 export class DashboardComponent extends TranslationBaseComponent
-	implements AfterViewInit, OnInit, OnDestroy {
+	implements AfterContentChecked, OnInit, OnDestroy {
 
 	public tabs: NbRouteTab[] = [];
 	public loading: boolean = true;
 	public selectedEmployee: ISelectedEmployee;
 
 	constructor(
+		private readonly cdr: ChangeDetectorRef,
 		private readonly store: Store,
 		public readonly translateService: TranslateService
 	) {
@@ -27,6 +28,7 @@ export class DashboardComponent extends TranslationBaseComponent
 	}
 
 	ngOnInit(): void {
+		this._applyTranslationOnTabs();
 		this.store.selectedEmployee$
 			.pipe(
 				tap((employee: ISelectedEmployee) => this.selectedEmployee = employee),
@@ -36,8 +38,8 @@ export class DashboardComponent extends TranslationBaseComponent
 			.subscribe();
 	}
 
-	ngAfterViewInit(): void {
-		this._applyTranslationOnTabs();
+	ngAfterContentChecked(): void {
+		this.cdr.detectChanges();
 	}
 
 	getRoute(name: string) {
@@ -46,38 +48,49 @@ export class DashboardComponent extends TranslationBaseComponent
 
 	loadTabs() {
 		this.tabs = [
-			...(this.store.hasPermission(PermissionsEnum.ADMIN_DASHBOARD_VIEW) ? [
-				...(this.store.hasPermission(PermissionsEnum.ALL_ORG_VIEW) ? [
-					{
-						title: this.getTranslation('ORGANIZATIONS_PAGE.TEAMS'),
-						icon: 'people-outline',
-						responsive: true,
-						route: this.getRoute('teams')
-					}
-				] : []),
+			...(this.store.hasAnyPermission(PermissionsEnum.ADMIN_DASHBOARD_VIEW, PermissionsEnum.TEAM_DASHBOARD) ? [
+				{
+					title: this.getTranslation('ORGANIZATIONS_PAGE.TEAMS'),
+					icon: 'people-outline',
+					responsive: true,
+					route: this.getRoute('teams')
+				}
+			] : []),
+			...(this.store.hasAnyPermission(PermissionsEnum.ADMIN_DASHBOARD_VIEW, PermissionsEnum.PROJECT_MANAGEMENT_DASHBOARD) ? [
 				{
 					title: this.getTranslation('DASHBOARD_PAGE.PROJECT_MANAGEMENT'),
 					icon: 'browser-outline',
 					responsive: true,
 					route: this.getRoute('project-management')
-				},
+				}
+			] : []),
+			...(this.store.hasAnyPermission(PermissionsEnum.ADMIN_DASHBOARD_VIEW, PermissionsEnum.TIME_TRACKING_DASHBOARD) ? [
 				{
 					title: this.getTranslation('DASHBOARD_PAGE.TIME_TRACKING'),
 					icon: 'clock-outline',
 					responsive: true,
 					route: this.getRoute('time-tracking')
-				},
-				((this.selectedEmployee && this.selectedEmployee.id) ? {
-					title: this.getTranslation('DASHBOARD_PAGE.HUMAN_RESOURCES'),
-					icon: 'person-outline',
-					responsive: true,
-					route: this.getRoute('hr')
-				} : {
-					title: this.getTranslation('DASHBOARD_PAGE.ACCOUNTING'),
-					icon: 'credit-card-outline',
-					responsive: true,
-					route: this.getRoute('accounting')
-				}),
+				}
+			] : []),
+			...(this.store.hasAnyPermission(PermissionsEnum.ADMIN_DASHBOARD_VIEW, PermissionsEnum.ACCOUNTING_DASHBOARD) ? [
+				...(!this.selectedEmployee || !this.selectedEmployee.id ? [
+					{
+						title: this.getTranslation('DASHBOARD_PAGE.ACCOUNTING'),
+						icon: 'credit-card-outline',
+						responsive: true,
+						route: this.getRoute('accounting')
+					}
+				] : [])
+			] : []),
+			...(this.store.hasAnyPermission(PermissionsEnum.ADMIN_DASHBOARD_VIEW, PermissionsEnum.HUMAN_RESOURCE_DASHBOARD) ? [
+				...(this.selectedEmployee && this.selectedEmployee.id ? [
+					{
+						title: this.getTranslation('DASHBOARD_PAGE.HUMAN_RESOURCES'),
+						icon: 'person-outline',
+						responsive: true,
+						route: this.getRoute('hr')
+					}
+				] : [])
 			] : []),
 		];
 		this.loading = false;

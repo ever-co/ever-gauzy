@@ -593,7 +593,8 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 	 */
 	async emailVerification(
 		user: IUser,
-		verificationLink: string
+		verificationLink: string,
+		verificationCode: number
 	) {
 		const { email, firstName, lastName, preferredLanguage } = user;
 		const name = [firstName, lastName].filter(Boolean).join(' ');
@@ -608,7 +609,8 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 				locale: preferredLanguage,
 				email: email,
 				host: env.clientBaseUrl,
-				verificationLink
+				verificationLink,
+				verificationCode
 			}
 		};
 		try {

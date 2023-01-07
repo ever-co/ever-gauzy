@@ -216,6 +216,7 @@
   nb-tab.content-active {
     background-color: var(--gauzy-card-2);
     border-radius: 0 var(--border-radius) var(--border-radius);
+    height: calc(100vh - 10rem);
 
     nb-card {
       margin-bottom: 1rem;
@@ -248,6 +249,9 @@
       div.checked+span.text {
         color: var(--text-primary-color) !important;
       }
+      .toggle-label {
+        margin-bottom: 0;
+      }
     }
   }
 }
@@ -268,4 +272,13 @@
 
 nb-card {
   margin-bottom: 0.25rem;
+}
+
+nb-card-body {
+  padding: 1rem;
+}
+
+.main-layout {
+  overflow: auto;
+  height: calc(100vh - 3.5rem);
 }

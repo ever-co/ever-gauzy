@@ -1,6 +1,3 @@
-// export function desktopTimer(): string {
-// 	return 'desktop-timer';
-// }
 import moment from 'moment';
 import {app, screen} from 'electron';
 import {TimerData} from './desktop-timer-activity';
@@ -465,7 +462,8 @@ export default class TimerHandler {
 						),
 						system: Math.round(
 							this._eventCounter.systemPercentage * durationNow
-						)
+						),
+						version: 'v' + app.getVersion()
 					}
 				);
 				break;
@@ -507,7 +505,8 @@ export default class TimerHandler {
 						),
 						system: Math.round(
 							this._eventCounter.systemPercentage * durationNow
-						)
+						),
+						version: 'v' + app.getVersion()
 					}
 				);
 				break;
@@ -562,7 +561,7 @@ export default class TimerHandler {
 				userId: info.employeeId,
 				timeLogId: timeLog ? timeLog.id : null
 			});
-	
+
 			const [lastSavedTimer] = await TimerData.getLastTimer(knex, info);
 			if (lastSavedTimer) {
 				this.lastTimer = lastSavedTimer;
