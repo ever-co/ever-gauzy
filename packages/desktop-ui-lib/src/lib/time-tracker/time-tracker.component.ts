@@ -441,22 +441,31 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				this._ngZone.run(() => {
 					(async () => {
 						try {
-
-							const screenshots = interval.b64Imgs;
+							const screenshots = interval.screenshots;
+							console.log('prepare backup', interval);
 							const resActivities: any =
 								await this.timeTrackerService.pushToTimeSlot(
-									interval
+									{
+										...interval,
+										token: this.token,
+										apiHost: this.apiHost
+									}
 								);
 							console.log('backup', resActivities);
 							// upload screenshot to timeslot api
+							const timeSlotId = resActivities.id;
 							try {
-								const timeSlotId = resActivities.id;
 								await Promise.all(
 									screenshots.map(async (screenshot) => {
 										try {
 											const resImg =
 												await this.timeTrackerService.uploadImages(
-													{ ...interval, timeSlotId },
+													{
+														...interval,
+														token: this.token,
+														apiHost: this.apiHost,
+														timeSlotId
+													},
 													{
 														b64Img: screenshot.b64img,
 														fileName:
@@ -465,6 +474,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 												);
 											this.getLastTimeSlotImage({
 												...interval,
+												token: this.token,
+												apiHost: this.apiHost,
 												timeSlotId
 											});
 											console.log('Result upload', resImg);
@@ -477,6 +488,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 							} catch (error) {
 								console.log('Backup-error', error);
 							}
+							interval.remoteId = timeSlotId;
 							this.electronService.ipcRenderer.send('update-synced', interval)
 						} catch (error) {
 							console.log('error backup timeslot', error);
@@ -610,7 +622,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			timeRun: moment.duration(instantaneaous, 'seconds').format('hh:mm:ss', { trim: false })
 		});
 
-		console.log('Update today time...');
 		this.todayDuration$.next({
 			hours: this.formatingDuration('hours',  moment.duration(instantaneaous, 'seconds').hours()),
 			minutes: this.formatingDuration('minutes',  moment.duration(instantaneaous, 'seconds').minutes())

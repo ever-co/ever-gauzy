@@ -83,7 +83,6 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 	ipcMain.on('failed_synced_timeslot', async (event,  arg) => {
 		try {
 			const interval = new Interval(arg.params);
-			interval.remoteId = arg.params.timeLogId;
 			interval.screenshots = arg.params.b64Imgs;
 			interval.stoppedAt = new Date();
 			interval.synced = false;
@@ -191,9 +190,13 @@ export function ipcTimer(
 	let powerManagerPreventSleep;
 	let powerManagerDetectInactivity;
 
-	ipcMain.on('update-synced', async (event, interval: IntervalTO) => {
-		console.log('Synced', interval);
-		await intervalService.create(new Interval(interval));
+	ipcMain.on('update-synced', async (event, arg: IntervalTO) => {
+		try {
+			const interval = new Interval(arg);
+			await intervalService.synced(interval)
+		} catch (error) {
+			console.log('Error', error);
+		}
 	});
 
 	offlineMode.on('offline', async () => {
@@ -202,7 +205,20 @@ export function ipcTimer(
 
 	offlineMode.on('connection-restored', async () => {
 		console.log('Api connected...');
-		console.log(await intervalService.backedUpNoSynced());
+		try {
+			const intervals = await intervalService.backedUpNoSynced();
+			intervals.forEach((interval: IntervalTO) => {
+				interval.activities = JSON.parse(interval.activities as any);
+				interval.screenshots = JSON.parse(interval.screenshots as any);
+				const intervalToSync = new Interval(interval);
+				timeTrackerWindow.webContents.send('backup-no-synced', {
+					...intervalToSync.toObject(),
+					id: intervalToSync.id
+				});
+			})
+		} catch (error) {
+			console.log('Error', error);
+		}
 	});
 
 	offlineMode.trigger();

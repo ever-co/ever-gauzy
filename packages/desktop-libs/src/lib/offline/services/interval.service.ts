@@ -2,6 +2,7 @@ import { IIntervalService, IOfflineMode } from '../../interfaces';
 import { IntervalDAO } from '../dao';
 import { DesktopOfflineModeHandler } from '../desktop-offline-mode-handler';
 import { IntervalTO } from '../dto';
+import { Interval } from '../models';
 
 export class IntervalService implements IIntervalService<IntervalTO> {
 	private _intervalDAO: IntervalDAO;
@@ -23,7 +24,13 @@ export class IntervalService implements IIntervalService<IntervalTO> {
 		await this._intervalDAO.delete(interval);
 	}
 	public async synced(interval: IntervalTO): Promise<void> {
-		interval.synced = true;
-		await this._intervalDAO.update(interval.id, interval);
+		const intervalToUpdate = new Interval(interval);
+		intervalToUpdate.synced = true;
+		intervalToUpdate.activities = JSON.stringify(intervalToUpdate.activities);
+		intervalToUpdate.screenshots = JSON.stringify(intervalToUpdate.screenshots) as any;
+		await this._intervalDAO.update(
+			intervalToUpdate.id,
+			intervalToUpdate.toObject()
+		);
 	}
 }

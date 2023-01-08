@@ -43,7 +43,7 @@ export class DesktopOfflineModeHandler
 	 * @returns {void}
 	 */
 	public trigger(): void {
-		this._pingTimer = setInterval(async () => {
+		this._pingTimer = setInterval(async() => {
 			// Check connectivity
 			const networkContext = new NetworkStateManager(
 				new ApiServerConnectivity()
@@ -61,8 +61,10 @@ export class DesktopOfflineModeHandler
 					'Connection still not restored'
 				);
 			} else {
-				// Call offline mode restore routine
-				return this.restore();
+				// Check again before restore
+				(await networkContext.established())
+					? setTimeout(() => this.restore(), 1000) // Call offline mode restore routine
+					: console.log('Waiting...');
 			}
 		}, this._PING_INTERVAL);
 	}
