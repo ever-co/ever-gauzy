@@ -447,6 +447,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 								await this.timeTrackerService.pushToTimeSlot(
 									{
 										...interval,
+										recordedAt: interval.startedAt,
 										token: this.token,
 										apiHost: this.apiHost
 									}
@@ -462,6 +463,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 												await this.timeTrackerService.uploadImages(
 													{
 														...interval,
+														recordedAt: interval.startedAt,
 														token: this.token,
 														apiHost: this.apiHost,
 														timeSlotId

@@ -574,6 +574,7 @@ export class TimeTrackerService {
 			organizationId: values.organizationId,
 			tenantId: values.tenantId,
 			organizationContactId: values.organizationContactId,
+			recordedAt: moment(values.recordedAt).utc().toISOString(),
 			version: values.version
 		};
 
@@ -613,6 +614,10 @@ export class TimeTrackerService {
 		formData.append('timeSlotId', values.timeSlotId);
 		formData.append('tenantId', values.tenantId);
 		formData.append('organizationId', values.organizationId);
+		formData.append(
+			'recordedAt',
+			moment(values.recordedAt).utc().toISOString()
+		);
 		return firstValueFrom(this.http
 			.post(`${values.apiHost}/api/timesheet/screenshot`, formData, {
 				headers: headers
