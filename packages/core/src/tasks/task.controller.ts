@@ -19,7 +19,6 @@ import { CommandBus } from '@nestjs/cqrs';
 import { DeleteResult } from 'typeorm';
 import {
 	PermissionsEnum,
-	IGetTaskByEmployeeOptions,
 	ITask,
 	IPagination,
 	IGetTaskOptions,
@@ -124,7 +123,7 @@ export class TaskController extends CrudController<Task> {
 	})
 	@Get('employee')
 	async findEmployeeTask(
-		@Query() params: PaginationParams<ITask>
+		@Query() params: PaginationParams<Task>
 	): Promise<IPagination<ITask>> {
 		return await this.taskService.getEmployeeTasks(params);
 	}
@@ -148,7 +147,7 @@ export class TaskController extends CrudController<Task> {
 	@Get('team')
 	@UsePipes(new ValidationPipe({ transform: true }))
 	async findTeamTasks(
-		@Query() params: PaginationParams<ITask>
+		@Query() params: PaginationParams<Task>
 	): Promise<IPagination<ITask>> {
 		return await this.taskService.findTeamTasks(params);
 	}
@@ -173,11 +172,12 @@ export class TaskController extends CrudController<Task> {
 		description: 'Record not found'
 	})
 	@Get('employee/:id')
+	@UsePipes(new ValidationPipe())
 	async getAllTasksByEmployee(
 		@Param('id') employeeId: IEmployee['id'],
-		@Body() findInput: IGetTaskByEmployeeOptions
+		@Query() params: PaginationParams<Task>
 	): Promise<ITask[]> {
-		return await this.taskService.getAllTasksByEmployee(employeeId, findInput);
+		return await this.taskService.getAllTasksByEmployee(employeeId, params);
 	}
 
 	@ApiOperation({ summary: 'Find all tasks.' })

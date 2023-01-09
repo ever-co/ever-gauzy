@@ -1,7 +1,7 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, Repository, SelectQueryBuilder, Brackets, WhereExpressionBuilder, Raw } from 'typeorm';
-import { IEmployee, IGetTaskByEmployeeOptions, IGetTaskOptions, IPagination, ITask, PermissionsEnum } from '@gauzy/contracts';
+import { IEmployee, IGetTaskOptions, IPagination, ITask, PermissionsEnum } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
 import { isUUID } from 'class-validator';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
@@ -23,7 +23,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	 * @param options
 	 * @returns
 	 */
-	async getMyTasks(options: PaginationParams<ITask>) {
+	async getMyTasks(options: PaginationParams<Task>) {
 		return await this.getEmployeeTasks(options);
 	}
 
@@ -33,7 +33,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	 * @param options
 	 * @returns
 	 */
-	async getEmployeeTasks(options: PaginationParams<ITask>) {
+	async getEmployeeTasks(options: PaginationParams<Task>) {
 		try {
 			const { where } = options;
 			const { status, title, prefix, organizationSprintId = null } = where;
@@ -118,23 +118,34 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	 */
 	async getAllTasksByEmployee(
 		employeeId: IEmployee['id'],
-		filter: IGetTaskByEmployeeOptions
+		options: PaginationParams<Task>
 	) {
 		try {
 			const query = this.taskRepository.createQueryBuilder(this.alias);
 			query.innerJoin(`${query.alias}.members`, 'members');
-			if (filter && filter.where) {
-				query.where({
-					where: filter.where
-				});
-			}
+			/**
+			 * If additional options found
+			 */
+			query.setFindOptions({
+				...(
+					(isNotEmpty(options) && isNotEmpty(options.where)) ? {
+						where: options.where
+					} : {}
+				)
+			});
 			query.andWhere((qb: SelectQueryBuilder<Task>) => {
 				const subQuery = qb.subQuery();
 				subQuery.select('"task_employee_sub"."taskId"').from('task_employee', 'task_employee_sub');
 				subQuery.andWhere('"task_employee_sub"."employeeId" = :employeeId', { employeeId });
 				return ('"task_members"."taskId" IN ' + subQuery.distinct(true).getQuery());
 			});
-			return query.getMany();
+			query.andWhere(
+				new Brackets((qb: WhereExpressionBuilder) => {
+					const tenantId = RequestContext.currentTenantId();
+					qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
+				})
+			);
+			return await query.getMany();
 		} catch (error) {
 			throw new BadRequestException(error);
 		}
@@ -147,7 +158,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	 * @returns
 	 */
 	async findTeamTasks(
-		options: PaginationParams<ITask>
+		options: PaginationParams<Task>
 	): Promise<IPagination<ITask>>  {
 		try {
 			const { where } = options;
