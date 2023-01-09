@@ -247,7 +247,6 @@ export class TaskService extends TenantAwareCrudService<Task> {
 					}
 				})
 			);
-			console.log(query.getQueryAndParameters());
 			const [ items, total ] = await query.getManyAndCount();
 			return { items, total };
 		} catch (error) {

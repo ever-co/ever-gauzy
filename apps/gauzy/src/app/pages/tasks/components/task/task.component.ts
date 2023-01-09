@@ -251,7 +251,7 @@ export class TaskComponent extends PaginationFilterBaseComponent
 			endPoint = `${API_PREFIX}/tasks/pagination`;
 			relations.push(
 				...[
-					'project.organization',
+					'project',
 					'tags',
 					'teams.members.employee.user',
 					'creator',
@@ -270,7 +270,7 @@ export class TaskComponent extends PaginationFilterBaseComponent
 			endPoint = `${API_PREFIX}/tasks/team`;
 			relations.push(
 				...[
-					'project.organization',
+					'project',
 					'tags',
 					'teams.members.employee.user',
 					'creator',
@@ -310,7 +310,6 @@ export class TaskComponent extends PaginationFilterBaseComponent
 			},
 			resultMap: (task: ITask) => {
 				return Object.assign({}, task, {
-					projectName: task.project ? task.project : undefined,
 					employees: task.members ? task.members : undefined,
 					assignTo: this._teamTaskStore._getTeamNames(task),
 					employeesMergedTeams: [task.members, task.teams]
@@ -390,7 +389,7 @@ export class TaskComponent extends PaginationFilterBaseComponent
 						this.setFilter({ field: 'title', search: value });
 					}
 				},
-				projectName: {
+				project: {
 					title: this.getTranslation('TASKS_PAGE.TASKS_PROJECT'),
 					type: 'custom',
 					renderComponent: ProjectComponent,
