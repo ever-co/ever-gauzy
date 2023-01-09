@@ -80,6 +80,12 @@ export class TaskController extends CrudController<Task> {
 		return await this.taskService.getMaxTaskNumberByProject(filter);
 	}
 
+	/**
+	 * Find my team tasks
+	 *
+	 * @param filter
+	 * @returns
+	 */
 	@ApiOperation({ summary: 'Find my tasks.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -92,9 +98,9 @@ export class TaskController extends CrudController<Task> {
 	})
 	@Get('me')
 	async findMyTasks(
-		@Query() filter: PaginationParams<ITask>
+		@Query() params: PaginationParams<Task>
 	): Promise<IPagination<ITask>> {
-		return await this.taskService.getMyTasks(filter);
+		return await this.taskService.getMyTasks(params);
 	}
 
 	@ApiOperation({ summary: 'Find my tasks.' })

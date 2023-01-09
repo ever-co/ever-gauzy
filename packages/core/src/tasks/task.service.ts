@@ -254,6 +254,12 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		}
 	}
 
+	/**
+	 * GET tasks by pagination
+	 *
+	 * @param filter
+	 * @returns
+	 */
 	public async pagination(filter: PaginationParams<Task>) {
 		if ('where' in filter) {
 			const { where } = filter;

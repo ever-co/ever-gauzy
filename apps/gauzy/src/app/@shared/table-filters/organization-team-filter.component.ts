@@ -1,9 +1,8 @@
 import {Component, OnChanges, OnInit, SimpleChanges} from '@angular/core';
 import { DefaultFilter } from 'ng2-smart-table';
-import { Subject } from 'rxjs';
-import { debounceTime, filter, tap } from 'rxjs/operators';
+import { combineLatest, Subject } from 'rxjs';
+import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { combineLatest } from 'rxjs';
 import { IOrganization, IOrganizationTeam, ISelectedEmployee } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import { OrganizationTeamsService, Store } from '../../@core/services';
@@ -40,7 +39,6 @@ export class OrganizationTeamFilterComponent extends DefaultFilter implements On
     ngOnInit() {
         this.subject$
             .pipe(
-                debounceTime(100),
                 tap(() => this.getTeams()),
                 untilDestroyed(this)
             )
@@ -49,7 +47,6 @@ export class OrganizationTeamFilterComponent extends DefaultFilter implements On
         const storeEmployee$ = this.store.selectedEmployee$;
         combineLatest([storeOrganization$, storeEmployee$])
             .pipe(
-                debounceTime(300),
                 distinctUntilChange(),
                 filter(([organization]) => !!organization),
                 tap(([organization, employee]) => {
@@ -64,7 +61,7 @@ export class OrganizationTeamFilterComponent extends DefaultFilter implements On
 
     ngOnChanges(changes: SimpleChanges) {}
 
-    onChange(event) {
+    onChange(event: any) {
         this.column.filterFunction(event);
     }
 
@@ -76,13 +73,14 @@ export class OrganizationTeamFilterComponent extends DefaultFilter implements On
 		const { id: organizationId } = this.organization;
 
 		const { items = [] } = await this.organizationTeamsService.getMyTeams(
-			['members'],
 			{
                 organizationId,
 				tenantId,
 				...(this.selectedEmployeeId
 					?   {
-						    employeeId: this.selectedEmployeeId
+                            members: {
+                                employeeId: this.selectedEmployeeId
+                            }
 					    }
 					: {}),
             }
