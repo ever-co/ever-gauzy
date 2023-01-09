@@ -131,10 +131,11 @@ export class TaskController extends CrudController<Task> {
 		description: 'Records not found'
 	})
 	@Get('team')
+	@UsePipes(new ValidationPipe({ transform: true }))
 	async findTeamTasks(
-		@Query() filter: PaginationParams<ITask>
+		@Query() params: PaginationParams<ITask>
 	): Promise<IPagination<ITask>> {
-		return await this.taskService.findTeamTasks(filter);
+		return await this.taskService.findTeamTasks(params);
 	}
 
 	@ApiOperation({

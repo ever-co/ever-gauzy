@@ -251,12 +251,8 @@ export class TaskComponent extends PaginationFilterBaseComponent
 			endPoint = `${API_PREFIX}/tasks/pagination`;
 			relations.push(
 				...[
-					'project',
 					'project.organization',
 					'tags',
-					'teams',
-					'teams.members',
-					'teams.members.employee',
 					'teams.members.employee.user',
 					'creator',
 					'organizationSprint'
@@ -272,6 +268,15 @@ export class TaskComponent extends PaginationFilterBaseComponent
 		}
 		if (this.viewComponentName == ComponentEnum.TEAM_TASKS) {
 			endPoint = `${API_PREFIX}/tasks/team`;
+			relations.push(
+				...[
+					'project.organization',
+					'tags',
+					'teams.members.employee.user',
+					'creator',
+					'organizationSprint'
+				]
+			);
 		}
 		if (this.viewComponentName == ComponentEnum.MY_TASKS) {
 			endPoint = `${API_PREFIX}/tasks/me`;
@@ -473,10 +478,7 @@ export class TaskComponent extends PaginationFilterBaseComponent
 						component: OrganizationTeamFilterComponent
 					},
 					filterFunction: (value) => {
-						this.setFilter({
-							field: 'members',
-							search: value ? [value.id] : []
-						});
+						this.setFilter({ field: 'teams', search: value ? [value.id] : [] });
 					}
 				}
 			};
