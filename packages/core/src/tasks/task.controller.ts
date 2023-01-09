@@ -22,7 +22,8 @@ import {
 	IGetTaskByEmployeeOptions,
 	ITask,
 	IPagination,
-	IGetTaskOptions
+	IGetTaskOptions,
+	IEmployee
 } from '@gauzy/contracts';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
@@ -46,7 +47,8 @@ export class TaskController extends CrudController<Task> {
 
 	/**
 	 * GET tasks by pagination
-	 * @param filter
+	 *
+	 * @param params
 	 * @returns
 	 */
 	@Get('pagination')
@@ -81,9 +83,9 @@ export class TaskController extends CrudController<Task> {
 	}
 
 	/**
-	 * Find my team tasks
+	 * GET my tasks
 	 *
-	 * @param filter
+	 * @param params
 	 * @returns
 	 */
 	@ApiOperation({ summary: 'Find my tasks.' })
@@ -97,13 +99,20 @@ export class TaskController extends CrudController<Task> {
 		description: 'Records not found'
 	})
 	@Get('me')
+	@UsePipes(new ValidationPipe({ transform: true }))
 	async findMyTasks(
 		@Query() params: PaginationParams<Task>
 	): Promise<IPagination<ITask>> {
 		return await this.taskService.getMyTasks(params);
 	}
 
-	@ApiOperation({ summary: 'Find my tasks.' })
+	/**
+	 * GET employee tasks
+	 *
+	 * @param params
+	 * @returns
+	 */
+	@ApiOperation({ summary: 'Find employee tasks.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found tasks',
@@ -115,11 +124,17 @@ export class TaskController extends CrudController<Task> {
 	})
 	@Get('employee')
 	async findEmployeeTask(
-		@Query() filter: PaginationParams<ITask>
+		@Query() params: PaginationParams<ITask>
 	): Promise<IPagination<ITask>> {
-		return await this.taskService.getEmployeeTasks(filter);
+		return await this.taskService.getEmployeeTasks(params);
 	}
 
+	/**
+	 * GET my team tasks
+	 *
+	 * @param params
+	 * @returns
+	 */
 	@ApiOperation({ summary: 'Find my team tasks.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -138,6 +153,13 @@ export class TaskController extends CrudController<Task> {
 		return await this.taskService.findTeamTasks(params);
 	}
 
+	/**
+	 * GET tasks by employee
+	 *
+	 * @param employeeId
+	 * @param findInput
+	 * @returns
+	 */
 	@ApiOperation({
 		summary: 'Find Employee Task.'
 	})
@@ -152,7 +174,7 @@ export class TaskController extends CrudController<Task> {
 	})
 	@Get('employee/:id')
 	async getAllTasksByEmployee(
-		@Param('id') employeeId: string,
+		@Param('id') employeeId: IEmployee['id'],
 		@Body() findInput: IGetTaskByEmployeeOptions
 	): Promise<ITask[]> {
 		return await this.taskService.getAllTasksByEmployee(employeeId, findInput);

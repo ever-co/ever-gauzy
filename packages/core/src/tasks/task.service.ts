@@ -1,158 +1,143 @@
-import {
-	Injectable,
-	HttpException,
-	HttpStatus,
-	UnauthorizedException,
-	BadRequestException
-} from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, Repository, SelectQueryBuilder, Brackets, WhereExpressionBuilder, Raw } from 'typeorm';
-import { IEmployee, IGetTaskByEmployeeOptions, IGetTaskOptions, IPagination, IRole, ITask, PermissionsEnum, RolesEnum } from '@gauzy/contracts';
+import { IEmployee, IGetTaskByEmployeeOptions, IGetTaskOptions, IPagination, ITask, PermissionsEnum } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
 import { isUUID } from 'class-validator';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
 import { Task } from './task.entity';
-import { EmployeeService } from '../employee/employee.service';
-import { RoleService } from '../role/role.service';
 
 @Injectable()
 export class TaskService extends TenantAwareCrudService<Task> {
 	constructor(
 		@InjectRepository(Task)
-		private readonly taskRepository: Repository<Task>,
-
-		private readonly employeeService: EmployeeService,
-		private readonly roleService: RoleService
+		private readonly taskRepository: Repository<Task>
 	) {
 		super(taskRepository);
 	}
 
-	async getMyTasks(filter: any) {
-		const {
-			where: { employeeId }
-		} = filter;
-
-		//If user is not an employee, then this will return 404
-		const employee = await this.employeeService.findOneByOptions({
-			where: {
-				user: { id: RequestContext.currentUserId() }
-			}
-		});
-
-		if (!employee || employee.id !== employeeId) {
-			throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
-		}
-
-		return this.getEmployeeTasks(filter);
+	/**
+	 * GET my tasks
+	 *
+	 * @param options
+	 * @returns
+	 */
+	async getMyTasks(options: PaginationParams<ITask>) {
+		return await this.getEmployeeTasks(options);
 	}
 
-	async getEmployeeTasks(filter: any) {
-		const {
-			where: {
-				organizationId,
-				employeeId,
-				projectId,
-				status,
-				title,
-				organizationSprintId = null
-			}
-		} = filter;
-		const query = this.taskRepository.createQueryBuilder('task');
-		if (filter.page && filter.limit) {
-			query.skip(filter.limit * (filter.page - 1));
-			query.take(filter.limit);
-		}
+	/**
+	 * Find employee tasks
+	 *
+	 * @param options
+	 * @returns
+	 */
+	async getEmployeeTasks(options: PaginationParams<ITask>) {
+		try {
+			const { where } = options;
+			const { status, title, prefix, organizationSprintId = null } = where;
+			const { organizationId, projectId, members } = where;
 
-		query.skip(filter.skip ? filter.take * (filter.skip - 1) : 0);
-		query.take(filter.take ? filter.take : 10);
-
-		const [items, total] = await query
-			.leftJoinAndSelect(`${query.alias}.project`, 'project')
-			.leftJoinAndSelect(`${query.alias}.tags`, 'tags')
-			.leftJoinAndSelect(`${query.alias}.organizationSprint`, 'sprint')
-			.leftJoinAndSelect(`${query.alias}.teams`, 'teams')
-			.leftJoinAndSelect(`${query.alias}.creator`, 'creator')
-			.leftJoinAndSelect(`${query.alias}.members`, 'members')
-			.leftJoinAndSelect('members.user', 'user')
-			.where((qb: SelectQueryBuilder<Task>) => {
-				qb.andWhere((cb) => {
-					const subQuery = cb
-						.subQuery()
-						.select('"task_employee"."taskId"')
-						.from('task_employee', 'task_employee');
-					if (employeeId) {
-						subQuery.andWhere(
-							'"task_employee"."employeeId" = :employeeId',
-							{
-								employeeId
-							}
-						);
-					}
-					return (
-						'"task_members"."taskId" IN ' +
-						subQuery.distinct(true).getQuery()
-					);
-				})
-					.andWhere(
-						`"${qb.alias}"."organizationId" = :organizationId`,
-						{ organizationId }
+			const query = this.taskRepository.createQueryBuilder(this.alias);
+			query.innerJoin(`${query.alias}.members`, 'members');
+			/**
+			 * If find options
+			 */
+			if (isNotEmpty(options)) {
+				query.setFindOptions({
+					skip: options.skip ? (options.take * (options.skip - 1)) : 0,
+					take: options.take ? (options.take) : 10
+				});
+				query.setFindOptions({
+					...(
+						(options.relations) ? { relations: options.relations } : {}
 					)
-					.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, {
-						tenantId: RequestContext.currentTenantId()
-					});
+				});
+				query.andWhere((qb: SelectQueryBuilder<Task>) => {
+					const subQuery = qb.subQuery();
+					subQuery.select('"task_employee"."taskId"').from('task_employee', 'task_employee');
 
-				if (projectId) {
-					query.andWhere(`"${qb.alias}"."projectId" = :projectId`, {
-						projectId
-					});
-				}
-				if (status) {
-					query.andWhere(`"${qb.alias}"."status" = :status`, {
-						status
-					});
-				}
-				if (title) {
-					query.andWhere(`"${qb.alias}"."title" LIKE :title`, {
-						title: `%${title}%`
-					});
-				}
-				if (organizationSprintId) {
-					query.andWhere(
-						`"${qb.alias}"."organizationSprintId" IS NULL`
-					);
-				}
-			})
-			.getManyAndCount();
-		return { items, total };
+					// If user have permission to change employee
+					if (RequestContext.hasPermission(
+						PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+					)) {
+						if (isNotEmpty(members) && isNotEmpty(members['id'])) {
+							const employeeId = members['id'];
+							subQuery.andWhere('"task_employee"."employeeId" = :employeeId', { employeeId });
+						}
+					} else {
+						// If employee has login and don't have permission to change employee
+						const employeeId = RequestContext.currentEmployeeId();
+						if (isNotEmpty(employeeId)) {
+							subQuery.andWhere('"task_employee"."employeeId" = :employeeId', { employeeId });
+						}
+					}
+					return ('"task_members"."taskId" IN ' + subQuery.distinct(true).getQuery());
+				});
+				query.andWhere(
+					new Brackets((qb: WhereExpressionBuilder) => {
+						const tenantId = RequestContext.currentTenantId();
+						qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
+						qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
+					})
+				);
+				query.andWhere(
+					new Brackets((qb: WhereExpressionBuilder) => {
+						if (isNotEmpty(projectId)) {
+							qb.andWhere(`"${query.alias}"."projectId" = :projectId`, { projectId });
+						}
+						if (isNotEmpty(status)) {
+							qb.andWhere(`"${query.alias}"."status" = :status`, { status });
+						}
+						if (isNotEmpty(title)) {
+							qb.andWhere(`"${query.alias}"."title" ILIKE :title`, { title: `%${title}%` });
+						}
+						if (isNotEmpty(title)) {
+							qb.andWhere(`"${query.alias}"."prefix" ILIKE :prefix`, { prefix: `%${prefix}%` });
+						}
+						if (isNotEmpty(organizationSprintId) && !isUUID(organizationSprintId)) {
+							qb.andWhere(`"${query.alias}"."organizationSprintId" IS NULL`);
+						}
+					})
+				);
+				const [ items, total ] = await query.getManyAndCount();
+				return { items, total };
+			}
+		} catch (error) {
+			throw new BadRequestException(error);
+		}
 	}
 
+	/**
+	 * GET all tasks by employee
+	 *
+	 * @param employeeId
+	 * @param filter
+	 * @returns
+	 */
 	async getAllTasksByEmployee(
-		employeeId: string,
+		employeeId: IEmployee['id'],
 		filter: IGetTaskByEmployeeOptions
 	) {
-		const query = await this.taskRepository
-			.createQueryBuilder('task')
-			.leftJoin('task.members', 'members');
-		if (filter && filter.where) {
-			query.where({
-				where: filter.where
+		try {
+			const query = this.taskRepository.createQueryBuilder(this.alias);
+			query.innerJoin(`${query.alias}.members`, 'members');
+			if (filter && filter.where) {
+				query.where({
+					where: filter.where
+				});
+			}
+			query.andWhere((qb: SelectQueryBuilder<Task>) => {
+				const subQuery = qb.subQuery();
+				subQuery.select('"task_employee_sub"."taskId"').from('task_employee', 'task_employee_sub');
+				subQuery.andWhere('"task_employee_sub"."employeeId" = :employeeId', { employeeId });
+				return ('"task_members"."taskId" IN ' + subQuery.distinct(true).getQuery());
 			});
+			return query.getMany();
+		} catch (error) {
+			throw new BadRequestException(error);
 		}
-		return await query
-			.andWhere((qb) => {
-				const subQuery = qb
-					.subQuery()
-					.select('"task_employee_sub"."taskId"')
-					.from('task_employee', 'task_employee_sub')
-					.where('"task_employee_sub"."employeeId" = :employeeId', {
-						employeeId
-					})
-					.distinct(true)
-					.getQuery();
-				return '"task_members"."taskId" IN(' + subQuery + ')';
-			})
-			.getMany();
 	}
 
 	/**

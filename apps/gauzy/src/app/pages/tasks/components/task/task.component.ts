@@ -243,49 +243,33 @@ export class TaskComponent extends PaginationFilterBaseComponent
 		const { tenantId } = this._store.user;
 		const { id: organizationId } = this.organization;
 
-		const relations = [];
-		let join: any = {};
-		let endPoint: string;
-
-		if (this.viewComponentName == ComponentEnum.ALL_TASKS) {
-			endPoint = `${API_PREFIX}/tasks/pagination`;
-			relations.push(
-				...[
-					'project',
-					'tags',
-					'teams.members.employee.user',
-					'creator',
-					'organizationSprint'
-				]
-			);
-			join = {
+		this.smartTableSource = new ServerDataSource(this.httpClient, {
+			...(this.viewComponentName == ComponentEnum.ALL_TASKS
+				? {endPoint: `${API_PREFIX}/tasks/pagination` }
+				: {}),
+			...(this.viewComponentName == ComponentEnum.TEAM_TASKS
+				? { endPoint: `${API_PREFIX}/tasks/team` }
+				: {}),
+			...(this.viewComponentName == ComponentEnum.MY_TASKS
+				? { endPoint: `${API_PREFIX}/tasks/me` }
+				: {}),
+			relations: [
+				'project',
+				'tags',
+				'teams',
+				'teams.members',
+				'teams.members.employee',
+				'teams.members.employee.user',
+				'creator',
+				'organizationSprint'
+			],
+			join: {
 				alias: 'task',
 				leftJoinAndSelect: {
 					members: 'task.members',
 					user: 'members.user'
 				}
-			};
-		}
-		if (this.viewComponentName == ComponentEnum.TEAM_TASKS) {
-			endPoint = `${API_PREFIX}/tasks/team`;
-			relations.push(
-				...[
-					'project',
-					'tags',
-					'teams.members.employee.user',
-					'creator',
-					'organizationSprint'
-				]
-			);
-		}
-		if (this.viewComponentName == ComponentEnum.MY_TASKS) {
-			endPoint = `${API_PREFIX}/tasks/me`;
-		}
-
-		this.smartTableSource = new ServerDataSource(this.httpClient, {
-			endPoint,
-			relations,
-			join,
+			},
 			where: {
 				organizationId,
 				tenantId,
