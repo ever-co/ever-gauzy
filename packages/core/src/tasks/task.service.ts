@@ -150,17 +150,17 @@ export class TaskService extends TenantAwareCrudService<Task> {
 						subQuery.andWhere('"task_employee"."employeeId" = :employeeId', { employeeId });
 						return ('"task_members"."taskId" IN ' + subQuery.distinct(true).getQuery());
 					});
-					// web.orWhere((qb: SelectQueryBuilder<Task>) => {
-					// 	const subQuery = qb.subQuery();
-					// 	subQuery.select('"task_team"."taskId"').from('task_team', 'task_team');
-					// 	subQuery.leftJoin(
-					// 		'organization_team_employee',
-					// 		'organization_team_employee',
-					// 		'"organization_team_employee"."organizationTeamId" = "task_team"."organizationTeamId"'
-					// 	);
-					// 	subQuery.andWhere('"organization_team_employee"."employeeId" = :employeeId', { employeeId });
-					// 	return ('"task_teams"."taskId" IN ' + subQuery.distinct(true).getQuery());
-					// });
+					web.orWhere((qb: SelectQueryBuilder<Task>) => {
+						const subQuery = qb.subQuery();
+						subQuery.select('"task_team"."taskId"').from('task_team', 'task_team');
+						subQuery.leftJoin(
+							'organization_team_employee',
+							'organization_team_employee',
+							'"organization_team_employee"."organizationTeamId" = "task_team"."organizationTeamId"'
+						);
+						subQuery.andWhere('"organization_team_employee"."employeeId" = :employeeId', { employeeId });
+						return ('"task_teams"."taskId" IN ' + subQuery.distinct(true).getQuery());
+					});
 				})
 			);
 			return await query.getMany();
