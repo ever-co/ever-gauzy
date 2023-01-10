@@ -24,7 +24,7 @@ import {
 	IGetTaskOptions,
 	IEmployee
 } from '@gauzy/contracts';
-import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
+import { UUIDValidationPipe } from './../shared/pipes';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
 import { CrudController, PaginationParams } from './../core/crud';
@@ -191,14 +191,11 @@ export class TaskController extends CrudController<Task> {
 		description: 'Record not found'
 	})
 	@Get()
+	@UsePipes(new ValidationPipe())
 	async findAll(
-		@Query('data', ParseJsonPipe) data: any
+		@Query() params: PaginationParams<Task>
 	): Promise<IPagination<ITask>> {
-		const { relations, findInput } = data;
-		return await this.taskService.findAll({
-			where: findInput,
-			relations
-		});
+		return await this.taskService.findAll(params);
 	}
 
 	@ApiOperation({ summary: 'create a task' })
