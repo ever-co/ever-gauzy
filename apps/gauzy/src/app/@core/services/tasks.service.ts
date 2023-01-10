@@ -114,9 +114,8 @@ export class TasksService extends TranslationBaseComponent {
 	}
 
 	getMaxTaskNumber(options: IGetTaskOptions): Observable<number> {
-		const data = toParams(options);
 		return this._http.get<number>(`${API_PREFIX}/tasks/max-number`, {
-			params: data
+			params: toParams(options)
 		});
 	}
 }
