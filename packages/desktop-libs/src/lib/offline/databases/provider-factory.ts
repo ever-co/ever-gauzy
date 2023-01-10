@@ -46,7 +46,7 @@ export class ProviderFactory implements IDatabaseProvider {
 	}
 
 	private get _dialect(): string {
-		return '';
+		return 'mysql';
 	}
 
 	private async _migrate(): Promise<void> {
