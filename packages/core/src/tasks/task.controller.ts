@@ -19,22 +19,22 @@ import { CommandBus } from '@nestjs/cqrs';
 import { DeleteResult } from 'typeorm';
 import {
 	PermissionsEnum,
-	IGetTaskByEmployeeOptions,
 	ITask,
 	IPagination,
-	IGetTaskOptions
+	IEmployee
 } from '@gauzy/contracts';
-import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
+import { UUIDValidationPipe } from './../shared/pipes';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
+import { CountQueryDTO } from './../shared/dto';
 import { CrudController, PaginationParams } from './../core/crud';
 import { Task } from './task.entity';
 import { TaskService } from './task.service';
 import { TaskCreateCommand, TaskUpdateCommand } from './commands';
-import { CreateTaskDTO, UpdateTaskDTO } from './dto';
+import { CreateTaskDTO, TaskMaxNumberQueryDTO, UpdateTaskDTO } from './dto';
 
 @ApiTags('Tasks')
-@UseGuards(TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard)
 @Controller()
 export class TaskController extends CrudController<Task> {
 	constructor(
@@ -44,14 +44,38 @@ export class TaskController extends CrudController<Task> {
 		super(taskService);
 	}
 
+	/**
+	 * GET task count
+	 *
+	 * @param options
+	 * @returns
+	 */
+	@Get('count')
+	@UsePipes(new ValidationPipe())
+	async getCount(@Query() options: CountQueryDTO<Task>): Promise<number> {
+		return await this.taskService.countBy(options);
+	}
+
+	/**
+	 * GET tasks by pagination
+	 *
+	 * @param params
+	 * @returns
+	 */
 	@Get('pagination')
 	@UsePipes(new ValidationPipe({ transform: true }))
 	async pagination(
-		@Query() filter: PaginationParams<Task>
+		@Query() params: PaginationParams<Task>
 	): Promise<IPagination<ITask>> {
-		return await this.taskService.pagination(filter);
+		return await this.taskService.pagination(params);
 	}
 
+	/**
+	 * GET maximum task number
+	 *
+	 * @param options
+	 * @returns
+	 */
 	@ApiOperation({ summary: 'Find maximum task number.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -63,12 +87,19 @@ export class TaskController extends CrudController<Task> {
 		description: 'Records not found'
 	})
 	@Get('max-number')
+	@UsePipes(new ValidationPipe())
 	async getMaxTaskNumberByProject(
-		@Query() filter: IGetTaskOptions
+		@Query() options: TaskMaxNumberQueryDTO
 	): Promise<number> {
-		return await this.taskService.getMaxTaskNumberByProject(filter);
+		return await this.taskService.getMaxTaskNumberByProject(options);
 	}
 
+	/**
+	 * GET my tasks
+	 *
+	 * @param params
+	 * @returns
+	 */
 	@ApiOperation({ summary: 'Find my tasks.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -80,13 +111,20 @@ export class TaskController extends CrudController<Task> {
 		description: 'Records not found'
 	})
 	@Get('me')
+	@UsePipes(new ValidationPipe({ transform: true }))
 	async findMyTasks(
-		@Query() filter: PaginationParams<ITask>
+		@Query() params: PaginationParams<Task>
 	): Promise<IPagination<ITask>> {
-		return await this.taskService.getMyTasks(filter);
+		return await this.taskService.getMyTasks(params);
 	}
 
-	@ApiOperation({ summary: 'Find my tasks.' })
+	/**
+	 * GET employee tasks
+	 *
+	 * @param params
+	 * @returns
+	 */
+	@ApiOperation({ summary: 'Find employee tasks.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found tasks',
@@ -97,12 +135,19 @@ export class TaskController extends CrudController<Task> {
 		description: 'Records not found'
 	})
 	@Get('employee')
+	@UsePipes(new ValidationPipe({ transform: true }))
 	async findEmployeeTask(
-		@Query() filter: PaginationParams<ITask>
+		@Query() params: PaginationParams<Task>
 	): Promise<IPagination<ITask>> {
-		return await this.taskService.getEmployeeTasks(filter);
+		return await this.taskService.getEmployeeTasks(params);
 	}
 
+	/**
+	 * GET my team tasks
+	 *
+	 * @param params
+	 * @returns
+	 */
 	@ApiOperation({ summary: 'Find my team tasks.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -114,12 +159,20 @@ export class TaskController extends CrudController<Task> {
 		description: 'Records not found'
 	})
 	@Get('team')
+	@UsePipes(new ValidationPipe({ transform: true }))
 	async findTeamTasks(
-		@Query() filter: PaginationParams<ITask>
+		@Query() params: PaginationParams<Task>
 	): Promise<IPagination<ITask>> {
-		return await this.taskService.findTeamTasks(filter);
+		return await this.taskService.findTeamTasks(params);
 	}
 
+	/**
+	 * GET tasks by employee
+	 *
+	 * @param employeeId
+	 * @param findInput
+	 * @returns
+	 */
 	@ApiOperation({
 		summary: 'Find Employee Task.'
 	})
@@ -133,11 +186,12 @@ export class TaskController extends CrudController<Task> {
 		description: 'Record not found'
 	})
 	@Get('employee/:id')
+	@UsePipes(new ValidationPipe())
 	async getAllTasksByEmployee(
-		@Param('id') employeeId: string,
-		@Body() findInput: IGetTaskByEmployeeOptions
+		@Param('id') employeeId: IEmployee['id'],
+		@Query() params: PaginationParams<Task>
 	): Promise<ITask[]> {
-		return await this.taskService.getAllTasksByEmployee(employeeId, findInput);
+		return await this.taskService.getAllTasksByEmployee(employeeId, params);
 	}
 
 	@ApiOperation({ summary: 'Find all tasks.' })
@@ -151,14 +205,11 @@ export class TaskController extends CrudController<Task> {
 		description: 'Record not found'
 	})
 	@Get()
+	@UsePipes(new ValidationPipe())
 	async findAll(
-		@Query('data', ParseJsonPipe) data: any
+		@Query() params: PaginationParams<Task>
 	): Promise<IPagination<ITask>> {
-		const { relations, findInput } = data;
-		return await this.taskService.findAll({
-			where: findInput,
-			relations
-		});
+		return await this.taskService.findAll(params);
 	}
 
 	@ApiOperation({ summary: 'create a task' })

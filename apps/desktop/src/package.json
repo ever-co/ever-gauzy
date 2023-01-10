@@ -151,7 +151,7 @@
 		"form-data": "^3.0.0",
 		"htmlparser2": "^3.10.1",
 		"iconv": "^3.0.1",
-		"knex": "^0.21.6",
+		"knex": "^2.4.0",
 		"mac-screen-capture-permissions": "^2.0.0",
 		"moment": "^2.29.4",
 		"node-fetch": "^2.6.7",

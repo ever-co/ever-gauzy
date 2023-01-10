@@ -69,7 +69,7 @@ export class OrganizationProject extends TenantOrganizationBaseEntity
 	owner: ProjectOwnerEnum;
 
 	@Column({ default: TaskListTypeEnum.GRID })
-	taskListType: string;
+	taskListType: TaskListTypeEnum;
 
 	@Column({ nullable: true })
 	code?: string;
