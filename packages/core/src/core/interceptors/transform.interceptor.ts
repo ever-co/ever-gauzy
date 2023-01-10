@@ -31,7 +31,7 @@ export class TransformInterceptor implements NestInterceptor {
 					}
 					return observableOf(
 						new HttpException(
-							error.getResponse(),
+							error.message,
 							error.status
 						)
 					);
