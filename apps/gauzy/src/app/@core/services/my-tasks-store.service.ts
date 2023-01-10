@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { ITask, ITaskResponse } from '@gauzy/contracts';
+import { IPagination, ITask } from '@gauzy/contracts';
 import { map, tap } from 'rxjs/operators';
 import { TasksService } from './tasks.service';
 
@@ -18,12 +18,14 @@ export class MyTasksStoreService {
 		return this._myTasks$.getValue();
 	}
 
-	constructor(private readonly _taskService: TasksService) {}
+	constructor(
+		private readonly _taskService: TasksService
+	) {}
 
 	fetchTasks(
 		tenantId: string,
 		organizationId: string
-	): Observable<ITaskResponse> {
+	): Observable<IPagination<ITask>> {
 		return this._taskService
 			.getMyTasks({ tenantId, organizationId })
 			.pipe(tap(({ items }) => this.loadAllTasks(items)));
