@@ -8,7 +8,7 @@ export class IntervalDAO implements DAO<IntervalTO> {
 	private _trx: IntervalTransaction;
 
 	constructor() {
-		this._provider = new ProviderFactory();
+		this._provider = ProviderFactory.instance;
 		this._trx = new IntervalTransaction(this._provider);
 	}
 

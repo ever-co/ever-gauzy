@@ -1,14 +1,14 @@
-import { DAO, ITaskFilterOption, ITaskTransaction } from '../../interfaces';
+import { DAO, IDatabaseProvider, ITaskFilterOption, ITaskTransaction } from '../../interfaces';
 import { ProviderFactory } from '../databases';
 import { TABLE_NAME_TASKS, TaskTO } from '../dto';
 import { TaskTransaction } from '../transactions';
 
 export class TaskDAO implements DAO<TaskTO> {
 	private _trx: ITaskTransaction;
-	private _provider: ProviderFactory;
+	private _provider: IDatabaseProvider;
 
 	constructor() {
-		this._provider = new ProviderFactory();
+		this._provider = ProviderFactory.instance;
 		this._trx = new TaskTransaction(this._provider);
 	}
 

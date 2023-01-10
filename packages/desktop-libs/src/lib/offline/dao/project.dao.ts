@@ -8,7 +8,7 @@ export class ProjectDAO implements DAO<ProjectTO> {
 	private _trx: ProjectTransaction;
 
 	constructor() {
-		this._provider = new ProviderFactory();
+		this._provider = ProviderFactory.instance;
 		this._trx = new ProjectTransaction(this._provider);
 	}
 

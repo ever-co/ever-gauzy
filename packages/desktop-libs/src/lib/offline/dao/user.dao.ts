@@ -1,15 +1,14 @@
-import { IUserTransaction } from '../../interfaces/i-user-transaction';
-import { DAO } from '../../interfaces/i-dao';
-import { ProviderFactory } from '../databases/provider-factory';
-import { TABLE_NAME_USERS, UserTO } from '../dto/user.dto';
-import { UserTransaction } from '../transactions/user-transaction';
+import { DAO, IDatabaseProvider, IUserTransaction } from "../../interfaces";
+import { ProviderFactory } from "../databases";
+import { TABLE_NAME_USERS, UserTO } from "../dto";
+import { UserTransaction } from "../transactions";
 
 export class UserDAO implements DAO<UserTO> {
 	private _trx: IUserTransaction;
-	private _provider: ProviderFactory;
+	private _provider: IDatabaseProvider;
 
 	constructor() {
-		this._provider = new ProviderFactory();
+		this._provider = ProviderFactory.instance;
 		this._trx = new UserTransaction(this._provider);
 	}
 

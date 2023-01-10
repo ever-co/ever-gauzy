@@ -6,10 +6,11 @@ import { PostgresProvider } from './postgres-provider';
 import { MysqlProvider } from './mysql-provider';
 
 export class ProviderFactory implements IDatabaseProvider {
-	private dbContext: DatabaseProviderContext;
+	private _dbContext: DatabaseProviderContext;
+	private static _instance: IDatabaseProvider;
 
-	constructor() {
-		this.dbContext = new DatabaseProviderContext();
+	private constructor() {
+		this._dbContext = new DatabaseProviderContext();
 		this._defineProvider();
 		(async () => {
 			try {
@@ -22,30 +23,30 @@ export class ProviderFactory implements IDatabaseProvider {
 
 	public get config(): Knex.Config<any> {
 		this._defineProvider();
-		return this.dbContext.provider.config;
+		return this._dbContext.provider.config;
 	}
 
 	public get connection(): Knex {
 		this._defineProvider();
-		return this.dbContext.provider.connection;
+		return this._dbContext.provider.connection;
 	}
 
 	private _defineProvider() {
 		switch (this._dialect) {
 			case 'postgres':
-				this.dbContext.provider = PostgresProvider.instance;
+				this._dbContext.provider = PostgresProvider.instance;
 				break;
 			case 'mysql':
-				this.dbContext.provider = MysqlProvider.instance;
+				this._dbContext.provider = MysqlProvider.instance;
 				break;
 			default:
-				this.dbContext.provider = SqliteProvider.instance;
+				this._dbContext.provider = SqliteProvider.instance;
 				break;
 		}
 	}
 
 	private get _dialect(): string {
-		return 'mysql';
+		return '';
 	}
 
 	private async _migrate(): Promise<void> {
@@ -64,5 +65,12 @@ export class ProviderFactory implements IDatabaseProvider {
 			.finally(async () => {
 				await connection.destroy();
 			});
+	}
+
+	public static get instance(): IDatabaseProvider {
+		if (!this._instance) {
+			this._instance = new ProviderFactory();
+		}
+		return this._instance;
 	}
 }

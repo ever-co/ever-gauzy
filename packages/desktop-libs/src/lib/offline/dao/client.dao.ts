@@ -6,7 +6,7 @@ export class ClientDAO implements DAO<ClientTO> {
 	private _provider: IDatabaseProvider;
 
 	constructor() {
-		this._provider = new ProviderFactory();
+		this._provider = ProviderFactory.instance;
 	}
 
 	public async findAll(): Promise<ClientTO[]> {
