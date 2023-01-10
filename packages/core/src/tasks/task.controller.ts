@@ -21,7 +21,6 @@ import {
 	PermissionsEnum,
 	ITask,
 	IPagination,
-	IGetTaskOptions,
 	IEmployee
 } from '@gauzy/contracts';
 import { UUIDValidationPipe } from './../shared/pipes';
@@ -31,7 +30,7 @@ import { CrudController, PaginationParams } from './../core/crud';
 import { Task } from './task.entity';
 import { TaskService } from './task.service';
 import { TaskCreateCommand, TaskUpdateCommand } from './commands';
-import { CreateTaskDTO, UpdateTaskDTO } from './dto';
+import { CreateTaskDTO, TaskMaxNumberQueryDTO, UpdateTaskDTO } from './dto';
 
 @ApiTags('Tasks')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -61,7 +60,7 @@ export class TaskController extends CrudController<Task> {
 	/**
 	 * GET maximum task number
 	 *
-	 * @param filter
+	 * @param options
 	 * @returns
 	 */
 	@ApiOperation({ summary: 'Find maximum task number.' })
@@ -75,10 +74,11 @@ export class TaskController extends CrudController<Task> {
 		description: 'Records not found'
 	})
 	@Get('max-number')
+	@UsePipes(new ValidationPipe())
 	async getMaxTaskNumberByProject(
-		@Query() filter: IGetTaskOptions
+		@Query() options: TaskMaxNumberQueryDTO
 	): Promise<number> {
-		return await this.taskService.getMaxTaskNumberByProject(filter);
+		return await this.taskService.getMaxTaskNumberByProject(options);
 	}
 
 	/**
