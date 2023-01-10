@@ -122,7 +122,8 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	) {
 		try {
 			const query = this.taskRepository.createQueryBuilder(this.alias);
-			query.innerJoin(`${query.alias}.members`, 'members');
+			query.leftJoin(`${query.alias}.members`, 'members');
+			query.leftJoin(`${query.alias}.teams`, 'teams');
 			/**
 			 * If additional options found
 			 */
@@ -133,16 +134,31 @@ export class TaskService extends TenantAwareCrudService<Task> {
 					} : {}
 				)
 			});
-			query.andWhere((qb: SelectQueryBuilder<Task>) => {
-				const subQuery = qb.subQuery();
-				subQuery.select('"task_employee_sub"."taskId"').from('task_employee', 'task_employee_sub');
-				subQuery.andWhere('"task_employee_sub"."employeeId" = :employeeId', { employeeId });
-				return ('"task_members"."taskId" IN ' + subQuery.distinct(true).getQuery());
-			});
 			query.andWhere(
 				new Brackets((qb: WhereExpressionBuilder) => {
 					const tenantId = RequestContext.currentTenantId();
 					qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
+				})
+			);
+			query.andWhere(
+				new Brackets((web: WhereExpressionBuilder) => {
+					web.andWhere((qb: SelectQueryBuilder<Task>) => {
+						const subQuery = qb.subQuery();
+						subQuery.select('"task_employee"."taskId"').from('task_employee', 'task_employee');
+						subQuery.andWhere('"task_employee"."employeeId" = :employeeId', { employeeId });
+						return ('"task_members"."taskId" IN ' + subQuery.distinct(true).getQuery());
+					});
+					// web.orWhere((qb: SelectQueryBuilder<Task>) => {
+					// 	const subQuery = qb.subQuery();
+					// 	subQuery.select('"task_team"."taskId"').from('task_team', 'task_team');
+					// 	subQuery.leftJoin(
+					// 		'organization_team_employee',
+					// 		'organization_team_employee',
+					// 		'"organization_team_employee"."organizationTeamId" = "task_team"."organizationTeamId"'
+					// 	);
+					// 	subQuery.andWhere('"organization_team_employee"."employeeId" = :employeeId', { employeeId });
+					// 	return ('"task_teams"."taskId" IN ' + subQuery.distinct(true).getQuery());
+					// });
 				})
 			);
 			return await query.getMany();

@@ -5,12 +5,13 @@ import {
 	ITask,
 	IGetTaskOptions,
 	IGetTaskByEmployeeOptions,
-	IPagination
+	IPagination,
+	IEmployee
 } from '@gauzy/contracts';
 import { tap, catchError } from 'rxjs/operators';
-import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 import { toParams } from '@gauzy/common-angular';
+import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { ToastrService } from './toastr.service';
 import { API_PREFIX } from '../constants/app.constants';
 
@@ -35,11 +36,10 @@ export class TasksService extends TranslationBaseComponent {
 		.pipe(catchError((error) => this.errorHandler(error)));
 	}
 
-	getAllTasksByEmployee(id, findInput: IGetTaskByEmployeeOptions = {}) {
-		const data = toParams(findInput);
+	getAllTasksByEmployee(id: IEmployee['id'], options: IGetTaskByEmployeeOptions) {
 		return firstValueFrom(
 			this._http.get<ITask[]>(`${this.API_URL}/employee/${id}`, {
-				params: data
+				params: toParams(options)
 			})
 			.pipe(
 				catchError(
