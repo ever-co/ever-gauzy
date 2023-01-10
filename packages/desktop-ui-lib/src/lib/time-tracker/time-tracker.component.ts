@@ -560,7 +560,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			timeRun: moment.duration(instantaneaous, 'seconds').format('hh:mm:ss', { trim: false })
 		});
 
-		console.log('Update today time...');
 		this.todayDuration$.next({
 			hours: this.formatingDuration('hours',  moment.duration(instantaneaous, 'seconds').hours()),
 			minutes: this.formatingDuration('minutes',  moment.duration(instantaneaous, 'seconds').minutes())
@@ -611,7 +610,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 	async getTask(arg) {
 		const res = await this.timeTrackerService.getTasks(arg);
-		this._tasks$.next(res.items);
+		this._tasks$.next(res || []);
 	}
 
 	async getProjects(arg) {
@@ -678,14 +677,14 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				...this.argFromMain,
 				projectId: this.projectSelect
 			});
-			this._tasks$.next(res.items);
+			this._tasks$.next(res || []);
 			this.taskSelect = null;
 			this.errors.project = false;
 		} else {
 			const res = await this.timeTrackerService.getTasks({
 				...this.argFromMain
 			});
-			this._tasks$.next(res.items);
+			this._tasks$.next(res || []);
 		}
 		this.errorBind();
 	}
