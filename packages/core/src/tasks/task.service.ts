@@ -300,26 +300,33 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	 *
 	 * @param options
 	 */
-	public async getMaxTaskNumberByProject(options: IGetTaskOptions) {
-		const tenantId = RequestContext.currentTenantId();
-		const { organizationId, projectId } = options;
-		/**
-		 * GET maximum task number by project
-		 */
-		const query = this.taskRepository.createQueryBuilder('task');
-		query.select(`COALESCE(MAX("${query.alias}"."number"), 0)`, "maxTaskNumber");
-		query.andWhere(
-			new Brackets((qb: WhereExpressionBuilder) => {
-				qb.andWhere(`"${query.alias}"."organizationId" =:organizationId`, { organizationId });
-				qb.andWhere(`"${query.alias}"."tenantId" =:tenantId`, { tenantId });
-				if (isNotEmpty(projectId)) {
-					qb.andWhere(`"${query.alias}"."projectId" = :projectId`, { projectId });
-				} else {
-					qb.andWhere(`"${query.alias}"."projectId" IS NULL`);
-				}
-			})
-		);
-		const { maxTaskNumber } = await query.getRawOne();
-		return maxTaskNumber;
+	public async getMaxTaskNumberByProject(
+		options: IGetTaskOptions
+	) {
+		try {
+			const tenantId = RequestContext.currentTenantId();
+			const { organizationId, projectId } = options;
+
+			const query = this.taskRepository.createQueryBuilder(this.alias);
+			query.select(`COALESCE(MAX("${query.alias}"."number"), 0)`, "maxTaskNumber");
+			query.andWhere(
+				new Brackets((qb: WhereExpressionBuilder) => {
+					qb.andWhere(`"${query.alias}"."organizationId" =:organizationId`, { organizationId });
+					qb.andWhere(`"${query.alias}"."tenantId" =:tenantId`, { tenantId });
+				})
+			);
+			/**
+			 * GET maximum task number by project
+			 */
+			if (isNotEmpty(projectId)) {
+				query.andWhere(`"${query.alias}"."projectId" = :projectId`, { projectId });
+			} else {
+				query.andWhere(`"${query.alias}"."projectId" IS NULL`);
+			}
+			const { maxTaskNumber } = await query.getRawOne();
+			return maxTaskNumber;
+		} catch (error) {
+			throw new BadRequestException(error);
+		}
 	}
 }
