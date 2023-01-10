@@ -1,6 +1,6 @@
 <div (click)="$event.stopPropagation()">
 	<ng-select
-		[addTag]="hasPermissionTaskEdit ? createNew : null"
+		[addTag]="((hasPermissionAddTask$ | async) && addTag) ? createNew : null"
 		[disabled]="disabled"
 		[clearable]="true"
 		[items]="tasks"
@@ -9,6 +9,5 @@
 		bindValue="id"
 		bindLabel="title"
 		appendTo="body"
-	>
-	</ng-select>
+	></ng-select>
 </div>

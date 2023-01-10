@@ -1,12 +1,11 @@
-import { Component, OnInit, OnDestroy, Input, forwardRef, AfterViewInit } from '@angular/core';
-import { ITask, PermissionsEnum, TaskStatusEnum } from '@gauzy/contracts';
+import { Component, OnInit, OnDestroy, Input, forwardRef } from '@angular/core';
 import { NG_VALUE_ACCESSOR, ControlValueAccessor } from '@angular/forms';
-import { TasksService } from '../../../../@core/services/tasks.service';
+import { IOrganization, ITask, PermissionsEnum, TaskStatusEnum } from '@gauzy/contracts';
+import { distinctUntilChange } from '@gauzy/common-angular';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { debounceTime, tap } from 'rxjs/operators';
-import { Subject, firstValueFrom } from 'rxjs';
-import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
-import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
+import { Subject, firstValueFrom, Observable } from 'rxjs';
+import { filter, map, tap } from 'rxjs/operators';
+import { Store, TasksService, ToastrService } from './../../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -20,8 +19,8 @@ import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service'
 		}
 	]
 })
-export class TaskSelectorComponent
-	implements AfterViewInit, OnInit, OnDestroy, ControlValueAccessor {
+export class TaskSelectorComponent implements
+	OnInit, OnDestroy, ControlValueAccessor {
 
 	/*
 	* Getter & Setter for dynamic enabled/disabled element
@@ -37,12 +36,12 @@ export class TaskSelectorComponent
 	/*
 	* Getter & Setter for dynamic add task option
 	*/
-	_allowAddNew: boolean = true;
-	public get allowAddNew(): boolean {
-		return this._allowAddNew;
+	_addTag: boolean = true;
+	get addTag(): boolean {
+		return this._addTag;
 	}
-	@Input() public set allowAddNew(value: boolean) {
-		this._allowAddNew = value;
+	@Input() set addTag(value: boolean) {
+		this._addTag = value;
 	}
 
 	/*
@@ -82,38 +81,44 @@ export class TaskSelectorComponent
 		this.onTouched(value);
 	}
 
-	public hasPermissionTaskEdit: boolean;
+	public organization: IOrganization;
+	public hasPermissionAddTask$: Observable<boolean>;
 	tasks: ITask[] = [];
 	subject$: Subject<any> = new Subject();
 
 	constructor(
-		private tasksService: TasksService,
-		private toastrService: ToastrService,
-		private store: Store
+		private readonly tasksService: TasksService,
+		private readonly toastrService: ToastrService,
+		private readonly store: Store
 	) { }
 
 	onChange: any = () => { };
 	onTouched: any = () => { };
 
 	ngOnInit() {
-		this.store.userRolePermissions$
-			.pipe(untilDestroyed(this))
-			.subscribe(() => {
-				this.hasPermissionTaskEdit = this.store.hasPermission(
+		this.hasPermissionAddTask$ = this.store.userRolePermissions$.pipe(
+			map(() =>
+				this.store.hasAnyPermission(
+					PermissionsEnum.ALL_ORG_EDIT,
 					PermissionsEnum.ORG_CANDIDATES_TASK_EDIT
-				);
-			});
+				)
+			)
+		);
 		this.subject$
 			.pipe(
-				debounceTime(500),
 				tap(() => this.getTasks()),
 				untilDestroyed(this)
 			)
 			.subscribe();
-	}
-
-	ngAfterViewInit() {
-		this.subject$.next(true);
+		this.store.selectedOrganization$
+			.pipe(
+				distinctUntilChange(),
+				filter((organization: IOrganization) => !!organization),
+				tap((organization: IOrganization) => this.organization = organization),
+				tap(() => this.subject$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	writeValue(value: any) {
@@ -132,20 +137,25 @@ export class TaskSelectorComponent
 		this.disabled = isDisabled;
 	}
 
-	createNew = async (title: string) => {
-		const organizationId = this.store.selectedOrganization.id;
+	createNew = async (title: ITask['title']) => {
+		if (!this.organization || !title) {
+			return;
+		}
+		const { tenantId } = this.store.user;
+		const { id: organizationId} = this.organization;
+
 		try {
 			const member: any = {
 				id: this.employeeId || this.store.user.employeeId
 			};
-			
 			const task = await firstValueFrom(this.tasksService
 				.createTask({
 					title,
-					organizationId: organizationId,
-					...(member.id && {members: [member]}),
+					organizationId,
+					tenantId,
 					status: TaskStatusEnum.IN_PROGRESS,
-					...(this.projectId && { projectId: this.projectId }),					
+					...(member.id && { members: [member] }),
+					...(this.projectId && { projectId: this.projectId }),
 				}));
 			this.tasks = this.tasks.concat(task);
 			this.taskId = task.id;
@@ -155,23 +165,42 @@ export class TaskSelectorComponent
 	};
 
 	async getTasks() {
+		if (!this.organization) {
+			return;
+		}
+
+		const { tenantId } = this.store.user;
+		const { id: organizationId} = this.organization;
+
 		if (this.employeeId) {
 			this.tasks = await this.tasksService.getAllTasksByEmployee(
 				this.employeeId,
 				{
 					where: {
-						projectId: this.projectId
+						...(this.projectId
+							? {
+								projectId: this.projectId
+							  }
+							: {}),
+						organizationId,
+						tenantId
 					}
 				}
 			);
 		} else {
 			const { items = [] } = await firstValueFrom(this.tasksService
 				.getAllTasks({
-					projectId: this.projectId
+					...(this.projectId
+						? {
+							projectId: this.projectId
+						  }
+						: {}),
+					organizationId,
+					tenantId
 				}));
 			this.tasks = items;
 		}
 	}
 
-	ngOnDestroy() { }
+	ngOnDestroy(): void { }
 }

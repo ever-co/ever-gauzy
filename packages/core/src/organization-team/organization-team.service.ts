@@ -1,18 +1,16 @@
 import {
 	Injectable,
 	BadRequestException,
-	HttpException,
-	HttpStatus
+	UnauthorizedException
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindManyOptions, In, ILike, SelectQueryBuilder } from 'typeorm';
+import { Repository, In, ILike, SelectQueryBuilder } from 'typeorm';
 import {
 	IOrganizationTeamCreateInput,
 	IOrganizationTeam,
 	RolesEnum,
 	IPagination,
 	IOrganizationTeamUpdateInput,
-	IRole,
 	IEmployee,
 	PermissionsEnum
 } from '@gauzy/contracts';
@@ -31,8 +29,10 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 	constructor(
 		@InjectRepository(OrganizationTeam)
 		private readonly organizationTeamRepository: Repository<OrganizationTeam>,
+
 		@InjectRepository(Employee)
 		private readonly employeeRepository: Repository<Employee>,
+
 		private readonly roleService: RoleService,
 		private readonly organizationTeamEmployeeService: OrganizationTeamEmployeeService
 	) {
@@ -155,55 +155,20 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 		}
 	}
 
-	async getMyOrgTeams(
-		filter: FindManyOptions<OrganizationTeam>,
-		employeeId: IEmployee['id']
-	): Promise<IPagination<IOrganizationTeam>> {
-		const teams: IOrganizationTeam[] = [];
-		const items = await this.find(filter);
-		for (const team of items) {
-			if (isNotEmpty(team.members)) {
-				for (const employee of team.members) {
-					if (employeeId === employee.employeeId) {
-						teams.push(team);
-						break;
-					}
-				}
-			}
-		}
-		return { items: teams, total: teams.length };
-	}
-
 	/**
 	 * Find my teams
 	 *
 	 * @param params
 	 * @returns
 	 */
-	public async findMyTeams(params: PaginationParams<any>): Promise<IPagination<OrganizationTeam>> {
-		let role: IRole;
+	public async findMyTeams(
+		options: PaginationParams<OrganizationTeam>
+	): Promise<IPagination<OrganizationTeam>> {
 		try {
-			const roleId = RequestContext.currentRoleId();
-			role = await this.roleService.findOneByIdString(roleId);
-		} catch (e) {}
-
-		if (role.name === RolesEnum.ADMIN || role.name === RolesEnum.SUPER_ADMIN) {
-			const { where } = params;
-			if ('employeeId' in where) {
-				const employeeId = where.employeeId;
-				delete params.where.employeeId;
-
-				return await this.getMyOrgTeams(params, employeeId);
-			} else {
-				return await super.findAll(params);
-			}
-		} else if (role.name === RolesEnum.EMPLOYEE) {
-			const employeeId = RequestContext.currentEmployeeId();
-			if (employeeId) {
-				return await this.getMyOrgTeams(params, employeeId);
-			}
+			return await this.findAll(options);
+		} catch (error) {
+			throw new UnauthorizedException();
 		}
-		throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
 	}
 
 	/**
