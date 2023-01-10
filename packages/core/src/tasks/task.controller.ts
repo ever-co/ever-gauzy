@@ -74,7 +74,7 @@ export class TaskController extends CrudController<Task> {
 		description: 'Records not found'
 	})
 	@Get('max-number')
-	@UsePipes(new ValidationPipe({ transform: true }))
+	@UsePipes(new ValidationPipe())
 	async getMaxTaskNumberByProject(
 		@Query() options: TaskMaxNumberQueryDTO
 	): Promise<number> {
