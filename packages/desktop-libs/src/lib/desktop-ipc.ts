@@ -370,7 +370,7 @@ export function ipcTimer(
 
 			// create new timer entry after create timeslot
 			let timeLogs = arg.timeLogs;
-			timeLogs = _.sortBy(timeLogs, 'createdAt').reverse();
+			timeLogs = _.sortBy(timeLogs, 'recordedAt').reverse();
 
 			const [timeLog] = timeLogs;
 			await timerHandler.createTimer(knex, timeLog);
@@ -548,6 +548,27 @@ export function ipcTimer(
 				timeSlotId: lastTime ? lastTime.timeSlotId : null
 			}
 		);
+		try {
+			// sync with server 5 second after
+			setTimeout(async () => {
+				const intervals = await intervalService.backedUpAllNoSynced();
+				intervals.forEach((interval: IntervalTO) => {
+					interval.activities = JSON.parse(
+						interval.activities as any
+					);
+					interval.screenshots = JSON.parse(
+						interval.screenshots as any
+					);
+					const intervalToSync = new Interval(interval);
+					timeTrackerWindow.webContents.send('backup-no-synced', {
+						...intervalToSync.toObject(),
+						id: intervalToSync.id
+					});
+				});
+			}, 5000);
+		} catch (error) {
+			console.log('Error', error);
+		}
 	})
 
 	ipcMain.on('aw_status', (event, arg) => {

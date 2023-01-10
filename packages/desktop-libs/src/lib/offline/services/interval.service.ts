@@ -26,11 +26,18 @@ export class IntervalService implements IIntervalService<IntervalTO> {
 	public async synced(interval: IntervalTO): Promise<void> {
 		const intervalToUpdate = new Interval(interval);
 		intervalToUpdate.synced = true;
-		intervalToUpdate.activities = JSON.stringify(intervalToUpdate.activities);
-		intervalToUpdate.screenshots = JSON.stringify(intervalToUpdate.screenshots) as any;
+		intervalToUpdate.activities = JSON.stringify(
+			intervalToUpdate.activities
+		);
+		intervalToUpdate.screenshots = JSON.stringify(
+			intervalToUpdate.screenshots
+		) as any;
 		await this._intervalDAO.update(
 			intervalToUpdate.id,
 			intervalToUpdate.toObject()
 		);
+	}
+	public async backedUpAllNoSynced(): Promise<IntervalTO[]> {
+		return await this._intervalDAO.findAllSynced(false);
 	}
 }
