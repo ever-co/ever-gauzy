@@ -35,9 +35,7 @@ export interface IGetTaskByEmployeeOptions extends IBaseRelationsEntityModel {
 	where?: IGetTaskOptions;
 }
 
-export interface IGetSprintsOptions extends IBasePerTenantAndOrganizationEntityModel {
-	projectId?: IOrganizationProject['id'];
-}
+export interface IGetSprintsOptions extends IGetTaskOptions {}
 
 export enum TaskStatusEnum {
 	TODO = 'TODO',
@@ -55,9 +53,4 @@ export interface ITaskCreateInput extends ITask {}
 
 export interface ITaskUpdateInput extends ITaskCreateInput {
 	id?: string;
-}
-
-export interface ITaskResponse {
-	items: ITask[];
-	count: number;
 }

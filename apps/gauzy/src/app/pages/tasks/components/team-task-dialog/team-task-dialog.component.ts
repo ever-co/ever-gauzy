@@ -182,7 +182,7 @@ export class TeamTaskDialogComponent
 			return;
 		}
 		this.teams = (
-			await this.organizationTeamsService.getMyTeams(['members'], {
+			await this.organizationTeamsService.getMyTeams({
 				organizationId,
 				tenantId
 			})

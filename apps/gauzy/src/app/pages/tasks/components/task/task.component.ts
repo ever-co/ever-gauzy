@@ -72,14 +72,15 @@ export class TaskComponent extends PaginationFilterBaseComponent
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
-	organization: IOrganization;
+	public organization: IOrganization;
 	viewMode: TaskListTypeEnum = TaskListTypeEnum.GRID;
 	taskListTypeEnum = TaskListTypeEnum;
 	defaultProject = ALL_PROJECT_SELECTED;
-	taskSubject$: Subject<any> = this.subject$;
+	taskSubject$: Subject<boolean> = this.subject$;
 	selectedEmployee: ISelectedEmployee;
+	selectedEmployeeId: ISelectedEmployee['id'];
 	selectedProject: IOrganizationProject;
-	private _refresh$: Subject<any> = new Subject();
+	private _refresh$: Subject<boolean> = new Subject();
 	private _tasks: ITask[] = [];
 
 	tasksTable: Ng2SmartTableComponent;
@@ -132,18 +133,13 @@ export class TaskComponent extends PaginationFilterBaseComponent
 		const storeProject$ = this._store.selectedProject$;
 		combineLatest([storeOrganization$, storeEmployee$, storeProject$])
 			.pipe(
-				debounceTime(300),
-				filter(
-					([organization, employee]) => !!organization && !!employee
-				),
 				distinctUntilChange(),
+				filter(([organization]) => !!organization),
 				tap(([organization, employee, project]) => {
 					this.organization = organization;
-					this.selectedEmployee = employee;
+					this.selectedEmployeeId = employee ? employee.id : null;
 					this.selectedProject = project;
-					this.viewMode = !!project
-						? (project.taskListType as TaskListTypeEnum)
-						: TaskListTypeEnum.GRID;
+					this.viewMode = !!project ? project.taskListType : TaskListTypeEnum.GRID;
 				}),
 				tap(() => this._refresh$.next(true)),
 				tap(() => this.taskSubject$.next(true)),
@@ -247,66 +243,57 @@ export class TaskComponent extends PaginationFilterBaseComponent
 		const { tenantId } = this._store.user;
 		const { id: organizationId } = this.organization;
 
-		const request = {};
-		if (this.selectedProject && this.selectedProject.id) {
-			request['projectId'] = this.selectedProject.id;
-			if (this.viewMode === TaskListTypeEnum.SPRINT) {
-				request['organizationSprintId'] = null;
-			}
-		}
-
-		const relations = [];
-		let join: any = {};
-		let endPoint: string;
-
-		if (this.viewComponentName == ComponentEnum.ALL_TASKS) {
-			endPoint = `${API_PREFIX}/tasks/pagination`;
-			relations.push(
-				...[
-					'project',
-					'project.organization',
-					'tags',
-					'teams',
-					'teams.members',
-					'teams.members.employee',
-					'teams.members.employee.user',
-					'creator',
-					'organizationSprint'
-				]
-			);
-			join = {
+		this.smartTableSource = new ServerDataSource(this.httpClient, {
+			...(this.viewComponentName == ComponentEnum.ALL_TASKS
+				? {endPoint: `${API_PREFIX}/tasks/pagination` }
+				: {}),
+			...(this.viewComponentName == ComponentEnum.TEAM_TASKS
+				? { endPoint: `${API_PREFIX}/tasks/team` }
+				: {}),
+			...(this.viewComponentName == ComponentEnum.MY_TASKS
+				? { endPoint: `${API_PREFIX}/tasks/me` }
+				: {}),
+			relations: [
+				'project',
+				'tags',
+				'teams',
+				'teams.members',
+				'teams.members.employee',
+				'teams.members.employee.user',
+				'creator',
+				'organizationSprint'
+			],
+			join: {
 				alias: 'task',
 				leftJoinAndSelect: {
 					members: 'task.members',
 					user: 'members.user'
 				}
-			};
-		}
-		if (this.viewComponentName == ComponentEnum.TEAM_TASKS) {
-			if (this.selectedEmployee && this.selectedEmployee.id) {
-				request['employeeId'] = this.selectedEmployee.id;
-			}
-			endPoint = `${API_PREFIX}/tasks/team`;
-		}
-		if (this.viewComponentName == ComponentEnum.MY_TASKS) {
-			if (this.selectedEmployee && this.selectedEmployee.id) {
-				request['employeeId'] = this.selectedEmployee.id;
-			}
-			endPoint = `${API_PREFIX}/tasks/me`;
-		}
-
-		this.smartTableSource = new ServerDataSource(this.httpClient, {
-			endPoint,
-			relations,
-			join,
+			},
 			where: {
-				...{ organizationId, tenantId },
-				...request,
-				...this.filters.where
+				organizationId,
+				tenantId,
+				...(this.selectedProject && this.selectedProject.id
+					? 	{
+						...(this.viewMode === TaskListTypeEnum.SPRINT
+							? 	{
+									organizationSprintId: null
+								}
+							: {}),
+							projectId: this.selectedProject.id
+						}
+					: {}),
+				...(this.selectedEmployeeId ?
+					{
+						members: {
+							id: this.selectedEmployeeId
+						}
+					}
+					: {}),
+				...(this.filters.where ? this.filters.where : {})
 			},
 			resultMap: (task: ITask) => {
 				return Object.assign({}, task, {
-					projectName: task.project ? task.project : undefined,
 					employees: task.members ? task.members : undefined,
 					assignTo: this._teamTaskStore._getTeamNames(task),
 					employeesMergedTeams: [task.members, task.teams]
@@ -386,7 +373,7 @@ export class TaskComponent extends PaginationFilterBaseComponent
 						this.setFilter({ field: 'title', search: value });
 					}
 				},
-				projectName: {
+				project: {
 					title: this.getTranslation('TASKS_PAGE.TASKS_PROJECT'),
 					type: 'custom',
 					renderComponent: ProjectComponent,
@@ -474,10 +461,7 @@ export class TaskComponent extends PaginationFilterBaseComponent
 						component: OrganizationTeamFilterComponent
 					},
 					filterFunction: (value) => {
-						this.setFilter({
-							field: 'members',
-							search: value ? [value.id] : []
-						});
+						this.setFilter({ field: 'teams', search: value ? [value.id] : [] });
 					}
 				}
 			};
