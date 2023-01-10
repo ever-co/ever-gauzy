@@ -45,65 +45,67 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			 * If find options
 			 */
 			if (isNotEmpty(options)) {
-				query.setFindOptions({
-					skip: options.skip ? (options.take * (options.skip - 1)) : 0,
-					take: options.take ? (options.take) : 10
-				});
+				if ('skip' in options) {
+					query.setFindOptions({
+						skip: (options.take || 10) * (options.skip - 1),
+						take: options.take || 10
+					});
+				}
 				query.setFindOptions({
 					...(
 						(options.relations) ? { relations: options.relations } : {}
 					)
 				});
-				query.andWhere((qb: SelectQueryBuilder<Task>) => {
-					const subQuery = qb.subQuery();
-					subQuery.select('"task_employee"."taskId"').from('task_employee', 'task_employee');
-
-					// If user have permission to change employee
-					if (RequestContext.hasPermission(
-						PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-					)) {
-						if (isNotEmpty(members) && isNotEmpty(members['id'])) {
-							const employeeId = members['id'];
-							subQuery.andWhere('"task_employee"."employeeId" = :employeeId', { employeeId });
-						}
-					} else {
-						// If employee has login and don't have permission to change employee
-						const employeeId = RequestContext.currentEmployeeId();
-						if (isNotEmpty(employeeId)) {
-							subQuery.andWhere('"task_employee"."employeeId" = :employeeId', { employeeId });
-						}
-					}
-					return ('"task_members"."taskId" IN ' + subQuery.distinct(true).getQuery());
-				});
-				query.andWhere(
-					new Brackets((qb: WhereExpressionBuilder) => {
-						const tenantId = RequestContext.currentTenantId();
-						qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
-						qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
-					})
-				);
-				query.andWhere(
-					new Brackets((qb: WhereExpressionBuilder) => {
-						if (isNotEmpty(projectId)) {
-							qb.andWhere(`"${query.alias}"."projectId" = :projectId`, { projectId });
-						}
-						if (isNotEmpty(status)) {
-							qb.andWhere(`"${query.alias}"."status" = :status`, { status });
-						}
-						if (isNotEmpty(title)) {
-							qb.andWhere(`"${query.alias}"."title" ILIKE :title`, { title: `%${title}%` });
-						}
-						if (isNotEmpty(title)) {
-							qb.andWhere(`"${query.alias}"."prefix" ILIKE :prefix`, { prefix: `%${prefix}%` });
-						}
-						if (isNotEmpty(organizationSprintId) && !isUUID(organizationSprintId)) {
-							qb.andWhere(`"${query.alias}"."organizationSprintId" IS NULL`);
-						}
-					})
-				);
-				const [ items, total ] = await query.getManyAndCount();
-				return { items, total };
 			}
+			query.andWhere((qb: SelectQueryBuilder<Task>) => {
+				const subQuery = qb.subQuery();
+				subQuery.select('"task_employee"."taskId"').from('task_employee', 'task_employee');
+
+				// If user have permission to change employee
+				if (RequestContext.hasPermission(
+					PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+				)) {
+					if (isNotEmpty(members) && isNotEmpty(members['id'])) {
+						const employeeId = members['id'];
+						subQuery.andWhere('"task_employee"."employeeId" = :employeeId', { employeeId });
+					}
+				} else {
+					// If employee has login and don't have permission to change employee
+					const employeeId = RequestContext.currentEmployeeId();
+					if (isNotEmpty(employeeId)) {
+						subQuery.andWhere('"task_employee"."employeeId" = :employeeId', { employeeId });
+					}
+				}
+				return ('"task_members"."taskId" IN ' + subQuery.distinct(true).getQuery());
+			});
+			query.andWhere(
+				new Brackets((qb: WhereExpressionBuilder) => {
+					const tenantId = RequestContext.currentTenantId();
+					qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
+					qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
+				})
+			);
+			query.andWhere(
+				new Brackets((qb: WhereExpressionBuilder) => {
+					if (isNotEmpty(projectId)) {
+						qb.andWhere(`"${query.alias}"."projectId" = :projectId`, { projectId });
+					}
+					if (isNotEmpty(status)) {
+						qb.andWhere(`"${query.alias}"."status" = :status`, { status });
+					}
+					if (isNotEmpty(title)) {
+						qb.andWhere(`"${query.alias}"."title" ILIKE :title`, { title: `%${title}%` });
+					}
+					if (isNotEmpty(title)) {
+						qb.andWhere(`"${query.alias}"."prefix" ILIKE :prefix`, { prefix: `%${prefix}%` });
+					}
+					if (isNotEmpty(organizationSprintId) && !isUUID(organizationSprintId)) {
+						qb.andWhere(`"${query.alias}"."organizationSprintId" IS NULL`);
+					}
+				})
+			);
+			const [ items, total ] = await query.getManyAndCount();
+			return { items, total };
 		} catch (error) {
 			throw new BadRequestException(error);
 		}
@@ -187,10 +189,12 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			 * If find options
 			 */
 			if (isNotEmpty(options)) {
-				query.setFindOptions({
-					skip: options.skip ? (options.take * (options.skip - 1)) : 0,
-					take: options.take ? (options.take) : 10
-				});
+				if ('skip' in options) {
+					query.setFindOptions({
+						skip: (options.take || 10) * (options.skip - 1),
+						take: options.take || 10
+					});
+				}
 				query.setFindOptions({
 					...(
 						(options.select) ? { select: options.select } : {}

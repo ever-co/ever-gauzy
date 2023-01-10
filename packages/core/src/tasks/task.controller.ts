@@ -26,6 +26,7 @@ import {
 import { UUIDValidationPipe } from './../shared/pipes';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
+import { CountQueryDTO } from './../shared/dto';
 import { CrudController, PaginationParams } from './../core/crud';
 import { Task } from './task.entity';
 import { TaskService } from './task.service';
@@ -41,6 +42,18 @@ export class TaskController extends CrudController<Task> {
 		private readonly commandBus: CommandBus
 	) {
 		super(taskService);
+	}
+
+	/**
+	 * GET task count
+	 *
+	 * @param options
+	 * @returns
+	 */
+	@Get('count')
+	@UsePipes(new ValidationPipe())
+	async getCount(@Query() options: CountQueryDTO<Task>): Promise<number> {
+		return await this.taskService.countBy(options);
 	}
 
 	/**
@@ -122,6 +135,7 @@ export class TaskController extends CrudController<Task> {
 		description: 'Records not found'
 	})
 	@Get('employee')
+	@UsePipes(new ValidationPipe({ transform: true }))
 	async findEmployeeTask(
 		@Query() params: PaginationParams<Task>
 	): Promise<IPagination<ITask>> {
