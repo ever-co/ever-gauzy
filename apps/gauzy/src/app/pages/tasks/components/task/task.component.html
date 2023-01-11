@@ -43,19 +43,51 @@
 	</nb-card-header>
 	<nb-card-body [ngClass]="{ project: selectedProject }">
 		<ng-container [ngSwitch]="viewMode">
-			<ng-template [ngSwitchCase]="taskListTypeEnum.GRID">
-				<ng-template
-					[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
-					[ngIfElse]="gridLayout"
-				>
-					<div class="table-scroll-container">
-						<ng2-smart-table
+			<ng-template [ngxPermissionsOnly]="['ALL_ORG_VIEW', 'ORG_TASK_VIEW']">
+				<ng-template [ngSwitchCase]="taskListTypeEnum.GRID">
+					<ng-template
+						[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
+						[ngIfElse]="gridLayout"
+					>
+						<div class="table-scroll-container">
+							<ng2-smart-table
+								[settings]="settingsSmartTable"
+								[source]="smartTableSource"
+								(userRowSelect)="selectTask($event)"
+								style="cursor: pointer"
+								#tasksTable
+							></ng2-smart-table>
+						</div>
+						<ng-container
+							*ngTemplateOutlet="
+								paginationTemplate;
+								context: {
+									pagination: pagination
+								}
+							"
+						></ng-container>
+					</ng-template>
+					<ng-template #gridLayout>
+						<ga-card-grid
+							[totalItems]="pagination?.totalItems"
 							[settings]="settingsSmartTable"
-							[source]="smartTableSource"
-							(userRowSelect)="selectTask($event)"
-							style="cursor: pointer"
-							#tasksTable
-						></ng2-smart-table>
+							[source]="availableTasks$ | async"
+							(onSelectedItem)="selectTask($event)"
+							(scroll)="onScroll()"
+						></ga-card-grid>
+					</ng-template>
+				</ng-template>
+				<ng-template [ngSwitchCase]="taskListTypeEnum.SPRINT">
+					<div class="sprint-view">
+						<ga-tasks-sprint-view
+							(createTaskEvent)="createTaskDialog()"
+							(editTaskEvent)="editTaskDialog($event)"
+							(deleteTaskEvent)="deleteTask($event)"
+							(selectedTaskEvent)="selectTask($event)"
+							[sync]="!disableButton"
+							[project]="selectedProject"
+							[tasks]="availableTasks$ | async"
+						></ga-tasks-sprint-view>
 					</div>
 					<ng-container
 						*ngTemplateOutlet="
@@ -66,36 +98,6 @@
 						"
 					></ng-container>
 				</ng-template>
-				<ng-template #gridLayout>
-					<ga-card-grid
-						[totalItems]="pagination?.totalItems"
-						[settings]="settingsSmartTable"
-						[source]="availableTasks$ | async"
-						(onSelectedItem)="selectTask($event)"
-						(scroll)="onScroll()"
-					></ga-card-grid>
-				</ng-template>
-			</ng-template>
-			<ng-template [ngSwitchCase]="taskListTypeEnum.SPRINT">
-				<div class="sprint-view">
-					<ga-tasks-sprint-view
-						(createTaskEvent)="createTaskDialog()"
-						(editTaskEvent)="editTaskDialog($event)"
-						(deleteTaskEvent)="deleteTask($event)"
-						(selectedTaskEvent)="selectTask($event)"
-						[sync]="!disableButton"
-						[project]="selectedProject"
-						[tasks]="availableTasks$ | async"
-					></ga-tasks-sprint-view>
-				</div>
-				<ng-container
-					*ngTemplateOutlet="
-						paginationTemplate;
-						context: {
-							pagination: pagination
-						}
-					"
-				></ng-container>
 			</ng-template>
 		</ng-container>
 	</nb-card-body>

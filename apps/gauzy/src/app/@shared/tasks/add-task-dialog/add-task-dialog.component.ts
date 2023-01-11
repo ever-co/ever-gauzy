@@ -6,18 +6,20 @@ import {
 	IOrganizationTeam,
 	ITag,
 	TaskParticipantEnum,
-	IOrganization
+	IOrganization,
+	TaskStatusEnum,
+	ISelectedEmployee
 } from '@gauzy/contracts';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
-import { firstValueFrom } from 'rxjs';
+import { combineLatest, firstValueFrom } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
-import { 
+import {
 	EmployeesService,
 	OrganizationTeamsService,
 	Store,
@@ -34,8 +36,8 @@ export class AddTaskDialogComponent extends TranslationBaseComponent implements 
 
 	employees: IEmployee[] = [];
 	teams: IOrganizationTeam[] = [];
-	selectedMembers: string[];
-	selectedTeams: string[];
+	selectedMembers: string[] = [];
+	selectedTeams: string[] = [];
 	selectedTask: ITask;
 	organization: IOrganization;
 	taskParticipantEnum = TaskParticipantEnum;
@@ -56,23 +58,22 @@ export class AddTaskDialogComponent extends TranslationBaseComponent implements 
 	}
 
 	/*
-	* Payment Mutation Form 
+	* Payment Mutation Form
 	*/
-	public form: FormGroup = AddTaskDialogComponent.buildForm(this.fb, this);
+	public form: FormGroup = AddTaskDialogComponent.buildForm(this.fb);
 	static buildForm(
-		fb: FormBuilder,
-		self: AddTaskDialogComponent
+		fb: FormBuilder
 	): FormGroup {
 		return fb.group({
 			number: [{ value: '', disabled: true }],
-			title: ['', Validators.required],
+			title: [null, Validators.required],
 			project: [],
 			projectId: [],
-			status: [self.getTranslation('TASKS_PAGE.TODO')],
+			status: [TaskStatusEnum.TODO, Validators.required],
 			members: [],
 			estimateDays: [],
-			estimateHours: ['', [Validators.min(0), Validators.max(23)]],
-			estimateMinutes: ['', [Validators.min(0), Validators.max(59)]],
+			estimateHours: [null, [Validators.min(0), Validators.max(23)]],
+			estimateMinutes: [null, [Validators.min(0), Validators.max(59)]],
 			dueDate: [],
 			description: [],
 			tags: [],
@@ -93,7 +94,10 @@ export class AddTaskDialogComponent extends TranslationBaseComponent implements 
 	}
 
 	ngOnInit() {
-		this.store.selectedOrganization$
+		const storeOrganization$ = this.store.selectedOrganization$;
+		const storeEmployee$ = this.store.selectedEmployee$;
+		const storeProject$ = this.store.selectedProject$;
+		storeOrganization$
 			.pipe(
 				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
@@ -101,6 +105,32 @@ export class AddTaskDialogComponent extends TranslationBaseComponent implements 
 				tap(() => this.loadEmployees()),
 				tap(() => this.loadTeams()),
 				tap(() => this.initializeForm()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		storeEmployee$
+			.pipe(
+				distinctUntilChange(),
+				filter((employee: ISelectedEmployee) => !!employee && !!employee.id),
+				tap((employee: ISelectedEmployee) => {
+					if (!this.task) {
+						this.selectedMembers.push(employee.id);
+					}
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		storeProject$
+			.pipe(
+				distinctUntilChange(),
+				filter((project: IOrganizationProject) => !!project && !!project.id),
+				tap((project: IOrganizationProject) => {
+					if (!this.task) {
+						this.form.get('project').setValue(project);
+						this.form.get('projectId').setValue(project.id);
+						this.form.updateValueAndValidity();
+					}
+				}),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -126,7 +156,7 @@ export class AddTaskDialogComponent extends TranslationBaseComponent implements 
 				estimateDays: duration.days(),
 				estimateHours: duration.hours(),
 				estimateMinutes: duration.minutes(),
-				dueDate: moment(dueDate).toDate(),
+				dueDate: dueDate ? new Date(dueDate) : null,
 				description,
 				tags,
 				teams: this.selectedTeams
@@ -170,13 +200,14 @@ export class AddTaskDialogComponent extends TranslationBaseComponent implements 
 		}
 	}
 
-	selectedTagsHandler(currentSelection: ITag[]) {
-		this.form.patchValue({ tags: currentSelection });
+	selectedTagsHandler(tags: ITag[]) {
+		this.form.get('tags').setValue(tags);
+		this.form.get('tags').updateValueAndValidity();
 	}
 
 	selectedProject(project: IOrganizationProject) {
-		this.form.patchValue({ project });
-		this.form.updateValueAndValidity();
+		this.form.get('project').setValue(project);
+		this.form.get('project').updateValueAndValidity();
 	}
 
 	async loadEmployees() {
@@ -185,7 +216,7 @@ export class AddTaskDialogComponent extends TranslationBaseComponent implements 
 		}
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
-		
+
 		const { items = [] } = await firstValueFrom(
 			this.employeesService.getAll(['user'], {
 				organizationId,

@@ -42,10 +42,10 @@ import {
 import { ALL_PROJECT_SELECTED } from './../../../../@shared/project-select/project/default-project';
 import { ServerDataSource } from './../../../../@core/utils/smart-table';
 import {
+	InputFilterComponent,
 	OrganizationTeamFilterComponent,
 	TaskStatusFilterComponent
 } from './../../../../@shared/table-filters';
-import { InputFilterComponent } from './../../../../@shared/table-filters';
 import {
 	IPaginationBase,
 	PaginationFilterBaseComponent
@@ -96,7 +96,7 @@ export class TaskComponent extends PaginationFilterBaseComponent
 		private readonly _taskStore: TasksStoreService,
 		private readonly _myTaskStore: MyTasksStoreService,
 		private readonly _teamTaskStore: TeamTasksStoreService,
-		readonly translateService: TranslateService,
+		public readonly translateService: TranslateService,
 		private readonly _router: Router,
 		private readonly _activatedRoute: ActivatedRoute,
 		private readonly _store: Store,
