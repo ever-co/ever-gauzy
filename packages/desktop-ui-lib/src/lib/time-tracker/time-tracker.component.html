@@ -7,44 +7,53 @@
 			<div [ngClass]="{ expanded: isExpand$ | async }" class="no-padding full-width timer">
 				<nb-card class="full-height max-width">
 					<nb-card-body>
-						<div class="row">
-							<div class="col-3">
-								<button ghost *ngIf="!(start$ | async)" class="button-ghost" (click)="toggleStart(true)"
-									[disabled]="loading || !isTrackingEnabled">
-									<nb-icon class="start-button" icon="play-circle"
-										nbTooltip="Time tracker has been disabled"
-										[nbTooltipIcon]="{icon: 'alert-triangle-outline', pack: 'eva'}"
-										nbTooltipStatus="warning" [nbTooltipDisabled]="isTrackingEnabled"
-										nbTooltipPlacement="bottom">
-									</nb-icon>
-								</button>
-								<button *ngIf="(start$ | async)" (click)="toggleStart(false)" [disabled]="loading" ghost
-									class="button-ghost">
-									<nb-icon class="start-button" icon="stop-circle-outline">
-									</nb-icon>
-								</button>
-
+						<div class="row mb-3">
+							<div class="col-12">
+								<span class="org-name">
+									{{
+									(userOrganization$ | async).name
+									? (userOrganization$ | async).name
+									: 'UNKNOWN'
+									}}
+								</span>
 							</div>
-							<div class="col-6 timer-box">
+						</div>
+						<div class="row d-flex justify-content-between">
+							<div class="col-9 timer-box">
 								<div class="timer-container">
 									{{ (timeRun | async).hours }}:{{ (timeRun | async).minute }}:{{
 										(timeRun | async).second
 									}}
 								</div>
+								<div class="mt-3">
+									<span class="work-today">Today
+										{{ (todayDuration$ | async).hours }}h {{
+											(todayDuration$ | async).minutes 
+										}}m</span>
+								</div>
 							</div>
-							<div class="col-3 text-right">
-								<button nbButton ghost (click)="refreshTimer()">
+							<div class="col-3 d-flex flex-column align-items-center">
+								<div>
+									<button nbButton status="success" *ngIf="!(start$ | async)" class="button-ghost" (click)="toggleStart(true)"
+										[disabled]="loading || !isTrackingEnabled">
+										<nb-icon class="start-button" icon="play"
+											pack="font-awesome"
+											nbTooltip="Time tracker has been disabled"
+											[nbTooltipIcon]="{icon: 'alert-triangle-outline', pack: 'eva'}"
+											nbTooltipStatus="warning" [nbTooltipDisabled]="isTrackingEnabled"
+											nbTooltipPlacement="bottom">
+										</nb-icon>
+									</button>
+									<button nbButton status="danger" *ngIf="(start$ | async)" (click)="toggleStart(false)" [disabled]="loading"
+										class="button-ghost">
+										<nb-icon class="start-button" icon="pause" pack="font-awesome">
+										</nb-icon>
+									</button>
+								</div>
+								<button class="refresh-button" nbButton ghost (click)="refreshTimer()">
 									<nb-icon icon="refresh-outline">
 									</nb-icon>
 								</button>
-							</div>
-						</div>
-						<div class="row">
-							<div class="col-12 center-text">
-								<span class="work-today">Total Worked Today
-									{{ (todayDuration$ | async).hours }}h {{
-										(todayDuration$ | async).minutes 
-									}}m</span>
 							</div>
 						</div>
 						<div class="row">
@@ -138,21 +147,6 @@
 												<nb-checkbox [disabled]="true">Wakatime</nb-checkbox>
 											</div>
 										</div>
-									</div>
-								</div>
-							</div>
-						</div>
-						<div class="row">
-							<div class="col-12">
-								<div class="row">
-									<div class="col-12 center-text">
-										<span class="org-name">
-											{{
-												(userOrganization$ | async).name
-													? (userOrganization$ | async).name
-													: 'UNKNOWN'
-											}}
-										</span>
 									</div>
 								</div>
 							</div>

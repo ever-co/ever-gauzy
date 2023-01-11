@@ -5,12 +5,10 @@
   margin-top: 0;
 }
 .timer-container {
-  background-color: black;
-  color: white;
-  font-size: large;
+  margin-left: -4px;
+  color: var(--gauzy-text-color-1);
+  font-size: 48px;
   font-weight: 600;
-  padding: 10px;
-  text-align: center;
   border-radius: var(--button-rectangle-border-radius);
 }
 
@@ -43,13 +41,17 @@
 }
 
 .start-button {
-  font-size: 45px !important;
+  font-size: 48px !important;
   cursor: pointer;
+}
+
+[nbButton].size-medium nb-icon {
+  font-size: var(--icon-font-size) !important;
 }
 
 .button-ghost {
   border: none;
-  background-color: transparent;
+  //background-color: transparent;
 }
 
 .center-text {
@@ -71,7 +73,7 @@
 }
 
 .tp-padding {
-  padding-top: 8px;
+  padding-top: 0;
 }
 
 ::ng-deep body {
@@ -135,6 +137,7 @@
 .work-today {
   font-size: 12px;
   font-weight: 600;
+  color: var(--gauzy-text-color-2);
 }
 
 .error-border {
@@ -440,6 +443,24 @@ $height: 2rem;
 
     &.offline {
       background-color: var(--color-danger-default);
+    }
+  }
+}
+
+.refresh-button {
+  width: 36px;
+  height: 36px;
+}
+
+:host {
+  ::ng-deep {
+    nb-checkbox .custom-checkbox {
+      width: 14px;
+      height: 14px;
+    }
+    nb-checkbox .text {
+      font-size: 12px;
+      color: var(--gauzy-text-color-1);
     }
   }
 }
