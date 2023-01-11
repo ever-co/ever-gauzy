@@ -11,6 +11,7 @@ import { CommandHandlers } from './commands/handlers';
 import { JwtRefreshTokenStrategy, JwtStrategy } from './strategies';
 import { UserOrganizationService } from '../user-organization/user-organization.services';
 import { UserModule } from './../user/user.module';
+import { RoleModule } from './../role/role.module';
 import { PasswordResetModule } from './../password-reset/password-reset.module';
 import { EmailConfirmationService } from './email-confirmation.service';
 import { EmailVerificationController } from './email-verification.controller';
@@ -43,6 +44,7 @@ const strategies = [
 				AuthModule,
 				EmailModule,
 				UserModule,
+				RoleModule,
 				PasswordResetModule,
 				CqrsModule
 			],
@@ -54,6 +56,7 @@ const strategies = [
 		]),
 		EmailModule,
 		UserModule,
+		RoleModule,
 		PasswordResetModule,
 		FeatureModule,
 		CqrsModule

@@ -162,7 +162,8 @@ export class ProjectManagementDetailsComponent extends PaginationFilterBaseCompo
 
 	private _sortProjectByPopularity() {
 		const count = {};
-		const projects = pluck(this.tasks, 'project');
+		const projects = pluck(this.tasks, 'project').filter(Boolean);
+
 		projects.forEach(({ id }) => {
 			count[id] = (count[id] || 0) + 1;
 		});
