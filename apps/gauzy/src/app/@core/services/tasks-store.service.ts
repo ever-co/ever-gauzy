@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { ITask, ITaskResponse, TaskListTypeEnum } from '@gauzy/contracts';
+import { IPagination, ITask, TaskListTypeEnum } from '@gauzy/contracts';
 import { map, tap } from 'rxjs/operators';
 import { TasksService } from './tasks.service';
 
@@ -25,7 +25,7 @@ export class TasksStoreService {
 	fetchTasks(
 		tenantId: string,
 		organizationId: string
-	): Observable<ITaskResponse> {
+	): Observable<IPagination<ITask>> {
 		return this._taskService
 			.getAllTasks({
 				tenantId,

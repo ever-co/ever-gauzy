@@ -11,7 +11,7 @@ import { NG_VALUE_ACCESSOR, FormControl } from '@angular/forms';
 import { combineLatest, filter, Subject, tap } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { IDateRangePicker, IEmployee, IOrganization } from '@gauzy/contracts';
+import { IDateRangePicker, IEmployee, IOrganization, PermissionsEnum } from '@gauzy/contracts';
 import {
 	DateRangePickerBuilderService,
 	EmployeesService,
@@ -182,6 +182,11 @@ export class EmployeeSelectComponent implements OnInit, OnDestroy {
 	 * Get working employees of the selected month
 	 */
 	private async getWorkingEmployees(): Promise<void> {
+		if (!this.store.hasAnyPermission(
+			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+		)) {
+			return;
+		}
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 

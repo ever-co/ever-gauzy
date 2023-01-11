@@ -7,7 +7,6 @@ import {
 	Put,
 	Param,
 	Body,
-	BadRequestException,
 	UseGuards,
 	Post,
 	Delete,
@@ -19,22 +18,23 @@ import { CommandBus } from '@nestjs/cqrs';
 import { DeleteResult } from 'typeorm';
 import {
 	PermissionsEnum,
-	IGetTaskByEmployeeOptions,
 	ITask,
 	IPagination,
-	IGetTaskOptions
+	IEmployee
 } from '@gauzy/contracts';
-import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
+import { UUIDValidationPipe } from './../shared/pipes';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
+import { CountQueryDTO } from './../shared/dto';
 import { CrudController, PaginationParams } from './../core/crud';
 import { Task } from './task.entity';
 import { TaskService } from './task.service';
 import { TaskCreateCommand, TaskUpdateCommand } from './commands';
-import { CreateTaskDTO, UpdateTaskDTO } from './dto';
+import { CreateTaskDTO, TaskMaxNumberQueryDTO, UpdateTaskDTO } from './dto';
 
 @ApiTags('Tasks')
-@UseGuards(TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard)
+@Permissions(PermissionsEnum.ALL_ORG_EDIT)
 @Controller()
 export class TaskController extends CrudController<Task> {
 	constructor(
@@ -44,14 +44,40 @@ export class TaskController extends CrudController<Task> {
 		super(taskService);
 	}
 
+	/**
+	 * GET task count
+	 *
+	 * @param options
+	 * @returns
+	 */
+	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TASK_VIEW)
+	@Get('count')
+	@UsePipes(new ValidationPipe())
+	async getCount(@Query() options: CountQueryDTO<Task>): Promise<number> {
+		return await this.taskService.countBy(options);
+	}
+
+	/**
+	 * GET tasks by pagination
+	 *
+	 * @param params
+	 * @returns
+	 */
+	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TASK_VIEW)
 	@Get('pagination')
 	@UsePipes(new ValidationPipe({ transform: true }))
 	async pagination(
-		@Query() filter: PaginationParams<Task>
+		@Query() params: PaginationParams<Task>
 	): Promise<IPagination<ITask>> {
-		return await this.taskService.pagination(filter);
+		return await this.taskService.pagination(params);
 	}
 
+	/**
+	 * GET maximum task number
+	 *
+	 * @param options
+	 * @returns
+	 */
 	@ApiOperation({ summary: 'Find maximum task number.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -62,13 +88,21 @@ export class TaskController extends CrudController<Task> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Records not found'
 	})
+	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TASK_VIEW)
 	@Get('max-number')
+	@UsePipes(new ValidationPipe())
 	async getMaxTaskNumberByProject(
-		@Query() filter: IGetTaskOptions
+		@Query() options: TaskMaxNumberQueryDTO
 	): Promise<number> {
-		return await this.taskService.getMaxTaskNumberByProject(filter);
+		return await this.taskService.getMaxTaskNumberByProject(options);
 	}
 
+	/**
+	 * GET my tasks
+	 *
+	 * @param params
+	 * @returns
+	 */
 	@ApiOperation({ summary: 'Find my tasks.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -79,14 +113,22 @@ export class TaskController extends CrudController<Task> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Records not found'
 	})
+	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TASK_VIEW)
 	@Get('me')
+	@UsePipes(new ValidationPipe({ transform: true }))
 	async findMyTasks(
-		@Query() filter: PaginationParams<ITask>
+		@Query() params: PaginationParams<Task>
 	): Promise<IPagination<ITask>> {
-		return await this.taskService.getMyTasks(filter);
+		return await this.taskService.getMyTasks(params);
 	}
 
-	@ApiOperation({ summary: 'Find my tasks.' })
+	/**
+	 * GET employee tasks
+	 *
+	 * @param params
+	 * @returns
+	 */
+	@ApiOperation({ summary: 'Find employee tasks.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found tasks',
@@ -96,13 +138,21 @@ export class TaskController extends CrudController<Task> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Records not found'
 	})
+	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TASK_VIEW)
 	@Get('employee')
+	@UsePipes(new ValidationPipe({ transform: true }))
 	async findEmployeeTask(
-		@Query() filter: PaginationParams<ITask>
+		@Query() params: PaginationParams<Task>
 	): Promise<IPagination<ITask>> {
-		return await this.taskService.getEmployeeTasks(filter);
+		return await this.taskService.getEmployeeTasks(params);
 	}
 
+	/**
+	 * GET my team tasks
+	 *
+	 * @param params
+	 * @returns
+	 */
 	@ApiOperation({ summary: 'Find my team tasks.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -113,13 +163,22 @@ export class TaskController extends CrudController<Task> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Records not found'
 	})
+	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TASK_VIEW)
 	@Get('team')
+	@UsePipes(new ValidationPipe({ transform: true }))
 	async findTeamTasks(
-		@Query() filter: PaginationParams<ITask>
+		@Query() params: PaginationParams<Task>
 	): Promise<IPagination<ITask>> {
-		return await this.taskService.findTeamTasks(filter);
+		return await this.taskService.findTeamTasks(params);
 	}
 
+	/**
+	 * GET tasks by employee
+	 *
+	 * @param employeeId
+	 * @param findInput
+	 * @returns
+	 */
 	@ApiOperation({
 		summary: 'Find Employee Task.'
 	})
@@ -132,12 +191,14 @@ export class TaskController extends CrudController<Task> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
+	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TASK_VIEW)
 	@Get('employee/:id')
+	@UsePipes(new ValidationPipe())
 	async getAllTasksByEmployee(
-		@Param('id') employeeId: string,
-		@Body() findInput: IGetTaskByEmployeeOptions
+		@Param('id') employeeId: IEmployee['id'],
+		@Query() params: PaginationParams<Task>
 	): Promise<ITask[]> {
-		return await this.taskService.getAllTasksByEmployee(employeeId, findInput);
+		return await this.taskService.getAllTasksByEmployee(employeeId, params);
 	}
 
 	@ApiOperation({ summary: 'Find all tasks.' })
@@ -150,15 +211,13 @@ export class TaskController extends CrudController<Task> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
+	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TASK_VIEW)
 	@Get()
+	@UsePipes(new ValidationPipe())
 	async findAll(
-		@Query('data', ParseJsonPipe) data: any
+		@Query() params: PaginationParams<Task>
 	): Promise<IPagination<ITask>> {
-		const { relations, findInput } = data;
-		return await this.taskService.findAll({
-			where: findInput,
-			relations
-		});
+		return await this.taskService.findAll(params);
 	}
 
 	@ApiOperation({ summary: 'create a task' })
@@ -172,20 +231,15 @@ export class TaskController extends CrudController<Task> {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
-	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.ORG_CANDIDATES_TASK_EDIT)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_ADD)
 	@Post()
 	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async create(
 		@Body() entity: CreateTaskDTO
 	): Promise<ITask> {
-		try {
-			return await this.commandBus.execute(
-				new TaskCreateCommand(entity)
-			);
-		} catch (error) {
-			throw new BadRequestException(error);
-		}
+		return await this.commandBus.execute(
+			new TaskCreateCommand(entity)
+		);
 	}
 
 	@ApiOperation({ summary: 'Update an existing task' })
@@ -203,25 +257,19 @@ export class TaskController extends CrudController<Task> {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
-	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.ORG_CANDIDATES_TASK_EDIT)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_EDIT)
 	@Put(':id')
 	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async update(
 		@Param('id', UUIDValidationPipe) id: ITask['id'],
 		@Body() entity: UpdateTaskDTO
 	): Promise<ITask> {
-		try {
-			return await this.commandBus.execute(
-				new TaskUpdateCommand(id, entity)
-			);
-		} catch (error) {
-			throw new BadRequestException(error);
-		}
+		return await this.commandBus.execute(
+			new TaskUpdateCommand(id, entity)
+		);
 	}
 
-	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.ORG_CANDIDATES_TASK_EDIT)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_DELETE)
 	@Delete(':id')
 	async delete(
 		@Param('id', UUIDValidationPipe) id: ITask['id']
