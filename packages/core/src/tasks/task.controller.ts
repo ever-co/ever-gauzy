@@ -238,13 +238,9 @@ export class TaskController extends CrudController<Task> {
 	async create(
 		@Body() entity: CreateTaskDTO
 	): Promise<ITask> {
-		try {
-			return await this.commandBus.execute(
-				new TaskCreateCommand(entity)
-			);
-		} catch (error) {
-			throw new BadRequestException(error);
-		}
+		return await this.commandBus.execute(
+			new TaskCreateCommand(entity)
+		);
 	}
 
 	@ApiOperation({ summary: 'Update an existing task' })
@@ -269,13 +265,9 @@ export class TaskController extends CrudController<Task> {
 		@Param('id', UUIDValidationPipe) id: ITask['id'],
 		@Body() entity: UpdateTaskDTO
 	): Promise<ITask> {
-		try {
-			return await this.commandBus.execute(
-				new TaskUpdateCommand(id, entity)
-			);
-		} catch (error) {
-			throw new BadRequestException(error);
-		}
+		return await this.commandBus.execute(
+			new TaskUpdateCommand(id, entity)
+		);
 	}
 
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_DELETE)
