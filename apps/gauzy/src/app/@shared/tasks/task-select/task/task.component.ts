@@ -4,8 +4,8 @@ import { IOrganization, ITask, PermissionsEnum, TaskStatusEnum } from '@gauzy/co
 import { distinctUntilChange } from '@gauzy/common-angular';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Subject, firstValueFrom, Observable } from 'rxjs';
-import { filter, map, tap } from 'rxjs/operators';
-import { Store, TasksService, ToastrService } from './../../../../@core/services';
+import { filter, tap } from 'rxjs/operators';
+import { AuthService, Store, TasksService, ToastrService } from './../../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -89,20 +89,17 @@ export class TaskSelectorComponent implements
 	constructor(
 		private readonly tasksService: TasksService,
 		private readonly toastrService: ToastrService,
-		private readonly store: Store
+		private readonly store: Store,
+		private readonly authService: AuthService,
 	) { }
 
 	onChange: any = () => { };
 	onTouched: any = () => { };
 
 	ngOnInit() {
-		this.hasPermissionAddTask$ = this.store.userRolePermissions$.pipe(
-			map(() =>
-				this.store.hasAnyPermission(
-					PermissionsEnum.ALL_ORG_EDIT,
-					PermissionsEnum.ORG_TASK_ADD
-				)
-			)
+		this.hasPermissionAddTask$ = this.authService.hasPermissions(
+			PermissionsEnum.ALL_ORG_EDIT,
+			PermissionsEnum.ORG_TASK_ADD
 		);
 		this.subject$
 			.pipe(

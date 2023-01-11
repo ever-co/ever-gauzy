@@ -76,9 +76,9 @@ export class AuthService {
 		});
 	}
 
-	hasPermission(permission: PermissionsEnum): Observable<boolean> {
-		return this.http.get<boolean>(`${API_PREFIX}/auth/permission`, {
-			params: { permission }
+	hasPermissions(...permissions: PermissionsEnum[]): Observable<boolean> {
+		return this.http.get<boolean>(`${API_PREFIX}/auth/permissions`, {
+			params: toParams({ permissions })
 		});
 	}
 

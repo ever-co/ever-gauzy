@@ -26,7 +26,7 @@ import { AuthRefreshGuard } from './../shared/guards';
 import { ChangePasswordRequestDTO, ResetPasswordRequestDTO } from './../password-reset/dto';
 import { RegisterUserDTO, UserLoginDTO } from './../user/dto';
 import { UserService } from './../user/user.service';
-import { HasRoleQueryDTO, RefreshTokenDto, SendAuthCodeDTO, VerifyAuthCodeDTO } from './dto';
+import { HasPermissionsQueryDTO, HasRoleQueryDTO, RefreshTokenDto, SendAuthCodeDTO, VerifyAuthCodeDTO } from './dto';
 
 @ApiTags('Auth')
 @Controller()
@@ -61,11 +61,28 @@ export class AuthController {
 	@ApiResponse({ status: HttpStatus.OK })
 	@ApiResponse({ status: HttpStatus.BAD_REQUEST })
 	@Get('/role')
-	@UsePipes(new ValidationPipe({ transform: true }))
+	@UsePipes(new ValidationPipe())
 	async hasRole(
 		@Query() query: HasRoleQueryDTO
 	): Promise<boolean> {
 		return await this.authService.hasRole(query.roles);
+	}
+
+	/**
+	 * Current user has permissions
+	 *
+	 * @param query
+	 * @returns
+	 */
+	@ApiOperation({ summary: 'Has permissions?' })
+	@ApiResponse({ status: HttpStatus.OK })
+	@ApiResponse({ status: HttpStatus.BAD_REQUEST })
+	@Get('/permissions')
+	@UsePipes(new ValidationPipe())
+	async hasPermissions(
+		@Query() query: HasPermissionsQueryDTO
+	): Promise<boolean> {
+		return await this.authService.hasPermissions(query.permissions);
 	}
 
 	/**
