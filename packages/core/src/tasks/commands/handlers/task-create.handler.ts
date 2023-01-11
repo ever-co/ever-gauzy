@@ -1,11 +1,13 @@
 import { ITask } from '@gauzy/contracts';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { BadRequestException } from '@nestjs/common';
 import { TaskCreateCommand } from './../task-create.command';
 import { RequestContext } from './../../../core/context';
 import { TaskService } from '../../task.service';
 
 @CommandHandler(TaskCreateCommand)
 export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
+
 	constructor(
 		private readonly _taskService: TaskService
 	) {}
@@ -30,7 +32,8 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 				prefix: taskPrefix
 			});
 		} catch (error) {
-			console.log('Error while creating task', error);
+			console.log('Error while creating task', error?.message);
+			throw new BadRequestException(error);
 		}
 	}
 }
