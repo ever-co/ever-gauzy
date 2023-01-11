@@ -35,6 +35,7 @@ import { CreateTaskDTO, TaskMaxNumberQueryDTO, UpdateTaskDTO } from './dto';
 
 @ApiTags('Tasks')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
+@Permissions(PermissionsEnum.ALL_ORG_EDIT)
 @Controller()
 export class TaskController extends CrudController<Task> {
 	constructor(
@@ -50,6 +51,7 @@ export class TaskController extends CrudController<Task> {
 	 * @param options
 	 * @returns
 	 */
+	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TASK_VIEW)
 	@Get('count')
 	@UsePipes(new ValidationPipe())
 	async getCount(@Query() options: CountQueryDTO<Task>): Promise<number> {
@@ -62,6 +64,7 @@ export class TaskController extends CrudController<Task> {
 	 * @param params
 	 * @returns
 	 */
+	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TASK_VIEW)
 	@Get('pagination')
 	@UsePipes(new ValidationPipe({ transform: true }))
 	async pagination(
@@ -86,6 +89,7 @@ export class TaskController extends CrudController<Task> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Records not found'
 	})
+	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TASK_VIEW)
 	@Get('max-number')
 	@UsePipes(new ValidationPipe())
 	async getMaxTaskNumberByProject(
@@ -110,6 +114,7 @@ export class TaskController extends CrudController<Task> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Records not found'
 	})
+	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TASK_VIEW)
 	@Get('me')
 	@UsePipes(new ValidationPipe({ transform: true }))
 	async findMyTasks(
@@ -134,6 +139,7 @@ export class TaskController extends CrudController<Task> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Records not found'
 	})
+	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TASK_VIEW)
 	@Get('employee')
 	@UsePipes(new ValidationPipe({ transform: true }))
 	async findEmployeeTask(
@@ -158,6 +164,7 @@ export class TaskController extends CrudController<Task> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Records not found'
 	})
+	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TASK_VIEW)
 	@Get('team')
 	@UsePipes(new ValidationPipe({ transform: true }))
 	async findTeamTasks(
@@ -185,6 +192,7 @@ export class TaskController extends CrudController<Task> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
+	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TASK_VIEW)
 	@Get('employee/:id')
 	@UsePipes(new ValidationPipe())
 	async getAllTasksByEmployee(
@@ -204,6 +212,7 @@ export class TaskController extends CrudController<Task> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
+	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TASK_VIEW)
 	@Get()
 	@UsePipes(new ValidationPipe())
 	async findAll(
@@ -223,8 +232,7 @@ export class TaskController extends CrudController<Task> {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
-	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.ORG_CANDIDATES_TASK_EDIT)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_ADD)
 	@Post()
 	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async create(
@@ -254,8 +262,7 @@ export class TaskController extends CrudController<Task> {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
-	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.ORG_CANDIDATES_TASK_EDIT)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_EDIT)
 	@Put(':id')
 	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async update(
@@ -271,8 +278,7 @@ export class TaskController extends CrudController<Task> {
 		}
 	}
 
-	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.ORG_CANDIDATES_TASK_EDIT)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_DELETE)
 	@Delete(':id')
 	async delete(
 		@Param('id', UUIDValidationPipe) id: ITask['id']
