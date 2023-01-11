@@ -100,7 +100,7 @@ export class TaskSelectorComponent implements
 			map(() =>
 				this.store.hasAnyPermission(
 					PermissionsEnum.ALL_ORG_EDIT,
-					PermissionsEnum.ORG_CANDIDATES_TASK_EDIT
+					PermissionsEnum.ORG_TASK_ADD
 				)
 			)
 		);
