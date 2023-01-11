@@ -1,16 +1,18 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { ITask, IOrganizationProject, IEmployee, ITag } from '@gauzy/contracts';
+import { ITask, IOrganizationProject, IEmployee, ITag, TaskStatusEnum } from '@gauzy/contracts';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
-import { OrganizationProjectsService } from '../../../../@core/services/organization-projects.service';
-import { Store } from '../../../../@core/services/store.service';
 import { TranslateService } from '@ngx-translate/core';
-import { ErrorHandlingService } from '../../../../@core/services/error-handling.service';
-import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
 import * as moment from 'moment';
-import { EmployeesService } from '../../../../@core/services';
 import { firstValueFrom } from 'rxjs';
-import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
+import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
+import {
+	EmployeesService,
+	ErrorHandlingService,
+	OrganizationProjectsService,
+	Store,
+	ToastrService
+} from '../../../../@core/services';
 
 const initialTaskValue = {
 	title: '',
@@ -29,18 +31,12 @@ const initialTaskValue = {
 	templateUrl: './my-task-dialog.component.html',
 	styleUrls: ['./my-task-dialog.component.scss']
 })
-export class MyTaskDialogComponent
-	extends TranslationBaseComponent
+export class MyTaskDialogComponent extends TranslationBaseComponent
 	implements OnInit {
+
 	form: FormGroup;
 	selectedTaskId: string;
 	projects: IOrganizationProject[];
-	statuses: string[] = [
-		this.getTranslation('TASKS_PAGE.TODO'),
-		this.getTranslation('TASKS_PAGE.IN_PROGRESS'),
-		this.getTranslation('TASKS_PAGE.FOR_TESTING'),
-		this.getTranslation('TASKS_PAGE.COMPLETED')
-	];
 	employees: IEmployee[] = [];
 	selectedMembers: string[];
 	selectedTask: ITask;
@@ -52,15 +48,15 @@ export class MyTaskDialogComponent
 	@Input() task: Partial<ITask> = {};
 
 	constructor(
-		public dialogRef: NbDialogRef<MyTaskDialogComponent>,
-		private fb: FormBuilder,
-		private store: Store,
-		private _organizationsStore: Store,
-		private organizationProjectsService: OrganizationProjectsService,
+		public readonly dialogRef: NbDialogRef<MyTaskDialogComponent>,
+		private readonly fb: FormBuilder,
+		private readonly store: Store,
+		private readonly _organizationsStore: Store,
+		private readonly organizationProjectsService: OrganizationProjectsService,
 		readonly translateService: TranslateService,
 		private readonly toastrService: ToastrService,
-		private errorHandler: ErrorHandlingService,
-		private employeesService: EmployeesService
+		private readonly errorHandler: ErrorHandlingService,
+		private readonly employeesService: EmployeesService
 	) {
 		super(translateService);
 	}
@@ -113,7 +109,7 @@ export class MyTaskDialogComponent
 			title: [title, Validators.required],
 			project: [project],
 			projectId: (project) ? project.id : null,
-			status: [status ? status : this.getTranslation('TASKS_PAGE.TODO')],
+			status: [status ? status : TaskStatusEnum.TODO],
 			members: [members],
 			estimateDays: [duration.days() || ''],
 			estimateHours: [
