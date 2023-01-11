@@ -7,7 +7,6 @@ import {
 	Put,
 	Param,
 	Body,
-	BadRequestException,
 	UseGuards,
 	Post,
 	Delete,
