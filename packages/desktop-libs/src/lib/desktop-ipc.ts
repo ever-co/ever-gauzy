@@ -193,7 +193,7 @@ export function ipcTimer(
 	ipcMain.on('update-synced', async (event, arg: IntervalTO) => {
 		try {
 			const interval = new Interval(arg);
-			await intervalService.synced(interval)
+			await intervalService.synced(interval);
 		} catch (error) {
 			console.log('Error', error);
 		}
@@ -201,10 +201,12 @@ export function ipcTimer(
 
 	offlineMode.on('offline', async () => {
 		console.log('Offline mode triggered...');
+		timeTrackerWindow.webContents.send('offline-handler', true);
 	});
 
 	offlineMode.on('connection-restored', async () => {
 		console.log('Api connected...');
+		timeTrackerWindow.webContents.send('offline-handler', false);
 		try {
 			const intervals = await intervalService.backedUpNoSynced();
 			intervals.forEach((interval: IntervalTO) => {

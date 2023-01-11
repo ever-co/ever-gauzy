@@ -248,6 +248,22 @@ nb-card-body {
   padding: 0px !important;
 }
 
+:host {
+  ::ng-deep {
+    nav.fixed {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    nb-toggle {
+      .toggle-label {
+        margin-bottom: 0;
+      }
+    }
+  }
+}
+
 ::ng-deep nb-layout .layout .layout-container .content nb-layout-footer nav {
   padding: 0px;
 }
@@ -400,3 +416,30 @@ $height: 2rem;
   img{
     object-fit: cover;
   }
+  
+.state-container {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--color-success-100);
+  padding: 0 4px;
+  border-radius: var(--border-radius);
+  color: var(--gauzy-text-color-1);
+
+  &.offline {
+    background: var(--color-danger-100);
+  }
+
+  .state {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: var(--color-success-default);
+
+    &.offline {
+      background-color: var(--color-danger-default);
+    }
+  }
+}

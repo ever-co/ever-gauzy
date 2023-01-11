@@ -152,6 +152,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	isAddTask = false;
 	sound: any = null;
 	private _lastTotalWorkedTime = 0;
+	private _isOffline$ : BehaviorSubject<boolean> = new BehaviorSubject(false);
 
 	constructor(
 		private electronService: ElectronService,
@@ -534,6 +535,12 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				this.getTodayTime(arg);
 			})
 		);
+
+		this.electronService.ipcRenderer.on('offline-handler', (event, arg) => {
+			this._ngZone.run(() => {
+				this._isOffline$.next(arg);
+			})
+		})
 
 		this.electronService.ipcRenderer.send('time_tracker_ready');
 	}
@@ -1530,5 +1537,13 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			this._taskTable.grid.dataSet['willSelect'] = 'false';
 			this._taskTable.grid.dataSet.deselectAll();
 		}
+	}
+
+	public get isOffline$(): Observable<boolean> {
+		return this._isOffline$.asObservable();
+	}
+
+	public toggle(event: boolean) {
+		this._isOffline$.next(this._isOffline$.getValue());
 	}
 }

@@ -302,6 +302,11 @@
 			<nb-icon icon="settings-2-outline"></nb-icon>
 			{{ userData.name }}
 		</button>
+		<div class="state-container" [ngClass]="{offline: isOffline$ | async}">
+			<div class="state" [ngClass]="{offline: isOffline$ | async}"></div>
+			{{(isOffline$ | async)
+			? 'Offline' : 'Online'}}
+		</div>
 		<button #dialogOpenBtn (click)="
 				open(dialog, {
 					type: 'timeTrackingOption'
