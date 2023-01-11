@@ -4,6 +4,7 @@
 
 import { FileStorageProviderEnum } from '@gauzy/contracts';
 import {
+	IAppIntegrationConfig,
 	IAuth0Config,
 	IAWSConfig,
 	IFacebookConfig,
@@ -128,6 +129,11 @@ export interface IEnvironment {
 	defaultCurrency: string;
 
 	unleashConfig?: IUnleashConfig;
+
+	/**
+	 * Email Template Config
+	 */
+	appIntegrationConfig?: IAppIntegrationConfig;
 
 	demo: boolean;
 	demoCredentialConfig?: IDemoCredential;

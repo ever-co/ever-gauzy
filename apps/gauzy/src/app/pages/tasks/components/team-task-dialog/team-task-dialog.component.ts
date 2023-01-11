@@ -4,18 +4,21 @@ import {
 	IOrganizationProject,
 	IEmployee,
 	IOrganizationTeam,
-	ITag
+	ITag,
+	TaskStatusEnum
 } from '@gauzy/contracts';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
-import { OrganizationProjectsService } from '../../../../@core/services/organization-projects.service';
-import { Store } from '../../../../@core/services/store.service';
 import { TranslateService } from '@ngx-translate/core';
-import { ErrorHandlingService } from '../../../../@core/services/error-handling.service';
-import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
 import * as moment from 'moment';
-import { OrganizationTeamsService } from '../../../../@core/services/organization-teams.service';
-import { ToastrService } from '../../../../@core/services/toastr.service';
+import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
+import {
+	ErrorHandlingService,
+	OrganizationProjectsService,
+	OrganizationTeamsService,
+	Store,
+	ToastrService
+} from '../../../../@core/services';
 
 const initialTaskValue = {
 	title: '',
@@ -34,18 +37,12 @@ const initialTaskValue = {
 	templateUrl: './team-task-dialog.component.html',
 	styleUrls: ['./team-task-dialog.component.scss']
 })
-export class TeamTaskDialogComponent
-	extends TranslationBaseComponent
+export class TeamTaskDialogComponent extends TranslationBaseComponent
 	implements OnInit {
+
 	form: FormGroup;
 	selectedTaskId: string;
 	projects: IOrganizationProject[];
-	statuses: string[] = [
-		this.getTranslation('TASKS_PAGE.TODO'),
-		this.getTranslation('TASKS_PAGE.IN_PROGRESS'),
-		this.getTranslation('TASKS_PAGE.FOR_TESTING'),
-		this.getTranslation('TASKS_PAGE.COMPLETED')
-	];
 	employees: IEmployee[] = [];
 	teams: IOrganizationTeam[] = [];
 	selectedMembers: string[];
@@ -57,15 +54,15 @@ export class TeamTaskDialogComponent
 	@Input() task: Partial<ITask> = {};
 
 	constructor(
-		public dialogRef: NbDialogRef<TeamTaskDialogComponent>,
-		private fb: FormBuilder,
-		private store: Store,
-		private _organizationsStore: Store,
-		private organizationProjectsService: OrganizationProjectsService,
+		public readonly dialogRef: NbDialogRef<TeamTaskDialogComponent>,
+		private readonly fb: FormBuilder,
+		private readonly store: Store,
+		private readonly _organizationsStore: Store,
+		private readonly organizationProjectsService: OrganizationProjectsService,
 		readonly translateService: TranslateService,
 		private readonly toastrService: ToastrService,
-		private errorHandler: ErrorHandlingService,
-		private organizationTeamsService: OrganizationTeamsService
+		private readonly errorHandler: ErrorHandlingService,
+		private readonly organizationTeamsService: OrganizationTeamsService
 	) {
 		super(translateService);
 	}
@@ -118,7 +115,7 @@ export class TeamTaskDialogComponent
 			title: [title, Validators.required],
 			project: [project],
 			projectId: (project) ? project.id : null,
-			status: [status? status :this.getTranslation('TASKS_PAGE.TODO')],
+			status: [status? status : TaskStatusEnum.TODO],
 			members: [members],
 			estimateDays: [duration.days() || ''],
 			estimateHours: [
@@ -182,7 +179,7 @@ export class TeamTaskDialogComponent
 			return;
 		}
 		this.teams = (
-			await this.organizationTeamsService.getMyTeams(['members'], {
+			await this.organizationTeamsService.getMyTeams({
 				organizationId,
 				tenantId
 			})

@@ -1,17 +1,16 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import * as Handlebars from 'handlebars';
 import * as mjml2html from 'mjml';
-import { EmailTemplateService } from '../../email-template.service';
+import { ConfigService, environment } from '@gauzy/config';
 import { EmailTemplateGeneratePreviewQuery } from '../email-template.generate-preview.query';
 import { moment } from '../../../core/moment-extend';
 import { generateRandomInteger } from './../../../core/utils';
-import { ConfigService } from '@gauzy/config';
 
 @QueryHandler(EmailTemplateGeneratePreviewQuery)
 export class EmailTemplateGeneratePreviewHandler
 	implements IQueryHandler<EmailTemplateGeneratePreviewQuery> {
+
 	constructor(
-		private readonly emailTemplateService: EmailTemplateService,
 		private readonly configService: ConfigService
 	) {}
 
@@ -30,6 +29,7 @@ export class EmailTemplateGeneratePreviewHandler
 
 		const clientBaseUrl = this.configService.get('clientBaseUrl');
 		const host = this.configService.get('host');
+		const { appName, appLogo, appSignature, appLink } = environment.appIntegrationConfig;
 
 		const handlebarsTemplate = Handlebars.compile(textToHtml);
 		const html = handlebarsTemplate({
@@ -80,7 +80,12 @@ export class EmailTemplateGeneratePreviewHandler
 			task_update_assign_by: 'Ruslan Konviser',
 			task_update_url: 'https://github.com/ever-co/ever-gauzy/issues/1688',
 			inviteCode: generateRandomInteger(6),
-			teams: 'Gauzy Team'
+			teams: 'Gauzy Team',
+			verificationCode: generateRandomInteger(6),
+			appName: appName,
+			appLogo: appLogo,
+			appSignature: appSignature,
+			appLink: appLink,
 		});
 		return { html };
 	}

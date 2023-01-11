@@ -148,7 +148,7 @@
 			"PIPELINE": "You have not created any pipeline.",
 			"TASK": "You have not created any task.",
 			"INVITE": "You have not invited any user.",
-			"APPROVAL_REQUEST": "You have not create any approval request.",
+			"APPROVAL_REQUEST": "You have not created any approval request.",
 			"APPROVAL_POLICY": "You have not created any approval policy.",
 			"TIME_OFF": "You have not created any time off.",
 			"CANDIDATE": "You have not created any candidate.",
@@ -1948,8 +1948,10 @@
 			"ALLOW_MODIFY_TIME": "Allow Modify Time",
 			"ALLOW_MANUAL_TIME": "Allow Manual Time",
 			"DELETE_SCREENSHOTS": "Allow Delete Screenshot",
-			"ORG_TASK_EDIT": "Create/Edit Tasks",
-			"ORG_TASK_VIEW": "Create/Edit Tasks"
+			"ORG_TASK_ADD": "Create Tasks",
+			"ORG_TASK_VIEW": "View Tasks",
+			"ORG_TASK_EDIT": "Edit Tasks",
+			"ORG_TASK_DELETE": "Delete Tasks"
 		},
 		"BILLING": "Billing",
 		"BUDGET": "Budget",

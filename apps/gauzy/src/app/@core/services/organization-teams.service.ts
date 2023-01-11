@@ -60,8 +60,8 @@ export class OrganizationTeamsService {
 	}
 
 	getMyTeams(
+		where?: IOrganizationTeamFindInput,
 		relations: string[] = [],
-		where?: IOrganizationTeamFindInput
 	): Promise<IPagination<IOrganizationTeam>> {
 		return firstValueFrom(
 			this.http.get<IPagination<IOrganizationTeam>>(`${API_PREFIX}/organization-team/me`, {

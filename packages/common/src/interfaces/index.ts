@@ -19,3 +19,4 @@ export * from './ISMTPConfig';
 export * from './ITwitterConfig';
 export * from './IUpworkConfig';
 export * from './IUnleashConfig';
+export * from './IAppIntegrationConfig';
