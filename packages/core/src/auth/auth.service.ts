@@ -8,7 +8,8 @@ import {
 	IChangePasswordRequest,
 	IPasswordReset,
 	IResetPasswordRequest,
-	IUserInviteCodeConfirmationInput
+	IUserInviteCodeConfirmationInput,
+	PermissionsEnum
 } from '@gauzy/contracts';
 import { CommandBus } from '@nestjs/cqrs';
 import {
@@ -17,7 +18,7 @@ import {
 	InternalServerErrorException,
 	UnauthorizedException
 } from '@nestjs/common';
-import { MoreThanOrEqual, Repository } from 'typeorm';
+import { In, MoreThanOrEqual, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { SocialAuthService } from '@gauzy/auth';
 import { IAppIntegrationConfig, isNotEmpty } from '@gauzy/common';
@@ -27,6 +28,7 @@ import { JsonWebTokenError, JwtPayload, sign, verify } from 'jsonwebtoken';
 import { EmailService } from '../email/email.service';
 import { User } from '../user/user.entity';
 import { UserService } from '../user/user.service';
+import { RoleService } from './../role/role.service';
 import { UserOrganizationService } from '../user-organization/user-organization.services';
 import { ImportRecordUpdateOrCreateCommand } from './../export-import/import-record';
 import { PasswordResetCreateCommand, PasswordResetGetCommand } from './../password-reset/commands';
@@ -43,6 +45,7 @@ export class AuthService extends SocialAuthService {
 
 		private readonly emailConfirmationService: EmailConfirmationService,
 		private readonly userService: UserService,
+		private readonly roleService: RoleService,
 		private readonly emailService: EmailService,
 		private readonly userOrganizationService: UserOrganizationService,
 		private readonly commandBus: CommandBus
@@ -354,6 +357,29 @@ export class AuthService extends SocialAuthService {
 			} else {
 				throw err;
 			}
+		}
+	}
+
+	/**
+	 * Check current user has permission
+	 *
+	 * @param token
+	 * @param roles
+	 * @returns
+	 */
+	async hasPermissions(permissions: PermissionsEnum[] = []): Promise<boolean> {
+		try {
+			const roleId = RequestContext.currentRoleId();
+			return !!await this.roleService.findOneByIdString(roleId, {
+				where: {
+					rolePermissions: {
+						permission: In(permissions),
+						enabled: true
+					}
+				}
+			});
+		} catch (error) {
+			return false;
 		}
 	}
 
