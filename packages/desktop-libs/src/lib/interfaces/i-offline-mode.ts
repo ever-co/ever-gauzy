@@ -30,4 +30,8 @@ export interface IOfflineMode {
 	 * @param listener
 	 */
 	on(eventName: string | symbol, listener: (...args: any[]) => void): this;
+	/**
+	 * Check api connectivity
+	 */
+	connectivity(): Promise<void>;
 }

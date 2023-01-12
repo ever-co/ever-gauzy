@@ -38,34 +38,37 @@ export class DesktopOfflineModeHandler
 			this._stoppedAt = new Date(Date.now());
 		});
 	}
+	public async connectivity(): Promise<void> {
+		// Check connectivity
+		const networkContext = new NetworkStateManager(
+			new ApiServerConnectivity()
+		);
+		const connectivityEstablished = await networkContext.established();
+		console.log('[NetworkContext]: ', connectivityEstablished);
+		// If connection is not restored
+		if (!connectivityEstablished) {
+			if (!this._isEnabled) {
+				// Notify that offline mode is enabled
+				this.emit('offline');
+			}
+			console.log(
+				'[OfflineModeHandler]:',
+				'Connection still not restored'
+			);
+		} else {
+			// Check again before restore
+			(await networkContext.established())
+				? setTimeout(() => this.restore(), 1000) // Call offline mode restore routine
+				: console.log('Waiting...');
+		}
+	}
 	/**
 	 * Triggers offline mode on.
 	 * @returns {void}
 	 */
 	public trigger(): void {
 		this._pingTimer = setInterval(async() => {
-			// Check connectivity
-			const networkContext = new NetworkStateManager(
-				new ApiServerConnectivity()
-			);
-			const connectivityEstablished = await networkContext.established();
-			console.log('[NetworkContext]: ', connectivityEstablished);
-			// If connection is not restored
-			if (!connectivityEstablished) {
-				if (!this._isEnabled) {
-					// Notify that offline mode is enabled
-					this.emit('offline');
-				}
-				console.log(
-					'[OfflineModeHandler]:',
-					'Connection still not restored'
-				);
-			} else {
-				// Check again before restore
-				(await networkContext.established())
-					? setTimeout(() => this.restore(), 1000) // Call offline mode restore routine
-					: console.log('Waiting...');
-			}
+			this.connectivity();
 		}, this._PING_INTERVAL);
 	}
 	/**
