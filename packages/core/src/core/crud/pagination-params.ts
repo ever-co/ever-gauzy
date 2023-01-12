@@ -70,7 +70,7 @@ export abstract class PaginationParams<T = any> extends OptionParams<T>{
 	@Min(0)
 	@Max(100)
 	@Transform((params: TransformFnParams) => parseInt(params.value, 10))
-	readonly take: number = 10;
+	readonly take: number;
 
 	/**
      * Offset (paginated) where from entities should be taken.
@@ -79,7 +79,7 @@ export abstract class PaginationParams<T = any> extends OptionParams<T>{
 	@IsOptional()
 	@Min(0)
 	@Transform((params: TransformFnParams) => parseInt(params.value, 10))
-	readonly skip: number = 0;
+	readonly skip: number;
 }
 
 /**
