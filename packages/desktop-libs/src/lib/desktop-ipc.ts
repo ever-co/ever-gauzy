@@ -98,6 +98,7 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 
 	ipcMain.on('time_tracker_ready', async (event, arg) => {
 		const auth = LocalStore.getStore('auth');
+		await offlineMode.connectivity();
 		if (auth && auth.userId) {
 			const [lastTime] = await TimerData.getLastCaptureTimeSlot(
 				knex,
