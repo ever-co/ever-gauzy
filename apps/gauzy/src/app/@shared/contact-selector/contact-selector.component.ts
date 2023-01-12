@@ -10,9 +10,8 @@ import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Observable, Subject } from 'rxjs';
 import { filter, map, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { distinctUntilChange } from '@gauzy/common-angular';
+import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
 import { OrganizationContactService, Store, ToastrService } from '../../@core/services';
-import { DUMMY_PROFILE_IMAGE } from '../../@core/constants';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -57,16 +56,16 @@ export class ContactSelectorComponent implements AfterViewInit, OnInit, OnDestro
 	subject$: Subject<boolean> = new Subject();
 	public hasEditContact$: Observable<boolean>;
 
+	onChange: any = () => {};
+	onTouched: any = () => {};
+
 	constructor(
 		private readonly organizationContactService: OrganizationContactService,
 		private readonly store: Store,
 		private readonly toastrService: ToastrService
 	) {}
 
-	onChange: any = () => {};
-	onTouched: any = () => {};
-
-	ngOnInit() {
+	ngOnInit(): void {
 		this.hasEditContact$ = this.store.userRolePermissions$.pipe(
 			map(() =>
 				this.store.hasPermission(PermissionsEnum.ORG_CONTACT_EDIT)
@@ -141,8 +140,13 @@ export class ContactSelectorComponent implements AfterViewInit, OnInit, OnDestro
 		this.disabled = isDisabled;
 	}
 
-	createNew = async (name: string) => {
-		const organizationId = this.store.selectedOrganization.id;
+	createNew = async (name: IOrganizationContact['name']) => {
+		if (!this.organization || !name) {
+			return;
+		}
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
+
 		const members = [];
 		if (this.employeeId) {
 			members.push({ id: this.employeeId });
@@ -150,21 +154,23 @@ export class ContactSelectorComponent implements AfterViewInit, OnInit, OnDestro
 		try {
 			const contact = await this.organizationContactService.create({
 				name,
-				organizationId: organizationId,
+				organizationId,
+				tenantId,
 				contactType: ContactType.CLIENT,
-				...(members.length > 0 ? { members } : 0),
-				imageUrl: DUMMY_PROFILE_IMAGE
+				...(isNotEmpty(members) ? { members } : {})
 			});
-			this.contacts = this.contacts.concat([contact]);
-			this.contactId = contact.id;
-			this.toastrService.success(
-				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CLIENTS.ADD_CLIENT',
-				{ name }
-			);
+			if (contact) {
+				this.contacts = this.contacts.concat([contact]);
+				this.contactId = contact.id;
+
+				this.toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CLIENTS.ADD_CLIENT', {
+					name
+				});
+			}
 		} catch (error) {
 			this.toastrService.error(error);
 		}
 	};
 
-	ngOnDestroy() {}
+	ngOnDestroy(): void {}
 }
