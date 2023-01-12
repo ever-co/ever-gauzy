@@ -25,11 +25,13 @@
 				<div class="col-9">
 					<div *ngIf="!member?.tasks?.length" class="col-6">&#8212;</div>
 					<div *ngFor="let task of member?.tasks" class="row">
-						<div class="col-6">{{ task.title ? task.title : ('REPORT_PAGE.NO_TASK' | translate)}}</div>
+						<div class="col-6">
+							{{ task.title ? task.title : ('REPORT_PAGE.NO_TASK' | translate) }}
+						</div>
 						<div class="col-6">
 							<div class="row align-items-center">
 								<div class="col-3">
-									{{task.duration | durationFormat}}
+									{{ task.duration | durationFormat }}
 								</div>
 								<div class="col">
 									<nb-progress-bar
@@ -38,11 +40,12 @@
 										[value]="calculatePercentage(task.duration, task?.estimate)"
 										class="mb-1"
 										size="tiny"
-									>
-									</nb-progress-bar>
+									></nb-progress-bar>
 								</div>
 								<div class="col-3 text-right">
-									{{task?.estimate | durationFormat }}
+									<ng-template [ngIf]="task?.estimate">
+										{{ task?.estimate | durationFormat }}
+									</ng-template>
 								</div>
 							</div>
 						</div>
