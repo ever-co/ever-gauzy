@@ -49,7 +49,8 @@ import { TasksModule } from '../tasks/tasks.module';
 		NbFormFieldModule,
 		Ng2SmartTableModule,
 		NbTooltipModule,
-		TasksModule
+		TasksModule,
+		NbToggleModule
 	],
 	providers: [
 		NbSidebarService,

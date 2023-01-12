@@ -78,14 +78,18 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	errors: any = {};
 	note: String = '';
 	aw$: BehaviorSubject<boolean> = new BehaviorSubject(false);
-	loadingAw = false;
+	loadingAw$: BehaviorSubject<boolean> = new BehaviorSubject(false);
 	iconAw$: BehaviorSubject<string> = new BehaviorSubject(
 		'close-square-outline'
 	);
 	statusIcon$: BehaviorSubject<string> = new BehaviorSubject('success');
-	awCheck = false;
+	awCheck$ : BehaviorSubject<boolean> = new BehaviorSubject(false);
 	defaultAwAPI = 'http:localhost:5600';
 	public todayDuration$: BehaviorSubject<any> = new BehaviorSubject({
+		hours: '00',
+		minutes: '00'
+	});
+	public weeklyDuration$: BehaviorSubject<any> = new BehaviorSubject({
 		hours: '00',
 		minutes: '00'
 	});
@@ -218,6 +222,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		this.tasks$
 			.pipe(
 				tap(async (tasks) => {
+					if(!tasks.length) return;
 					const idx = tasks.findIndex(
 						(row) => row.id === this.taskSelect
 					);
@@ -808,8 +813,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		});
 	}
 
-	setAW(event) {
-		if (event.target.checked) {
+	setAW(checked: boolean) {
+		if (checked) {
 			this.aw$.next(true);
 			this.electronService.ipcRenderer.send('set_tp_aw', {
 				host: this.defaultAwAPI,
@@ -825,33 +830,32 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 		if (this.aw) this.pingAw(null);
 		else {
-			this.awCheck = false;
+			this.awCheck$.next(false);
 		}
 	}
 
 	pingAw(host) {
-		this.loadingAw = true;
-		this.awCheck = false;
+		this.loadingAw$.next(true);
+		this.awCheck$.next(false);
 		this.timeTrackerService
 			.pingAw(`${host || this.defaultAwAPI}/api`)
 			.then((res) => {
 				this.iconAw$.next('checkmark-square-outline');
-				this.awCheck = true;
+				this.awCheck$.next(true);
 				this.statusIcon$.next('success');
 				this.electronService.ipcRenderer.send('aw_status', true);
 			})
 			.catch((e) => {
 				if (e.status === 200) {
 					this.iconAw$.next('checkmark-square-outline');
-					this.awCheck = true;
+					this.awCheck$.next(true);
 					this.statusIcon$.next('success');
 					this.electronService.ipcRenderer.send('aw_status', true);
-
-					this.loadingAw = false;
+					this.loadingAw$.next(false);
 				} else {
-					this.loadingAw = false;
+					this.loadingAw$.next(false);
 					this.iconAw$.next('close-square-outline');
-					this.awCheck = true;
+					this.awCheck$.next(true);
 					this.statusIcon$.next('danger');
 					this.electronService.ipcRenderer.send('aw_status', false);
 				}
@@ -901,30 +905,43 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 	getTodayTime(arg) {
 		this.timeTrackerService.getTimeLogs(arg).then((res: any) => {
-			if (res && res.todayDuration) {
-				this.countDurationToday(res);
+			if (res && res.todayDuration && res.weekDuration) {
+				this.countDuration(res);
 			}
 		});
 	}
 
-	countDurationToday(countTodayTime) {
-		if (countTodayTime) {
+
+	countDuration(count) {
+		if (count) {
 			const minutes = moment
-				.duration(countTodayTime.todayDuration, 'seconds')
+				.duration(count.todayDuration, 'seconds')
 				.minutes();
 			const hours = moment
-				.duration(countTodayTime.todayDuration, 'seconds')
+				.duration(count.todayDuration, 'seconds')
 				.hours();
 			this.todayDuration$.next({
 				hours: this.formatingDuration('hours', hours),
 				minutes: this.formatingDuration('minutes', minutes)
+			});
+			this.weeklyDuration$.next({
+				minutes: this.formatingDuration(
+					'hours',
+					moment.duration(count.weekDuration, 'seconds').minutes()
+				),
+				hours: this.formatingDuration(
+					'minutes',
+					Math.floor(
+						moment.duration(count.weekDuration, 'seconds').asHours()
+					)
+				)
 			});
 			this.electronService.ipcRenderer.send('update_tray_time_update', {
 				minutes: this.todayDuration$.getValue().minutes,
 				hours: this.todayDuration$.getValue().hours
 			});
 			if (!this.start) {
-				this._lastTotalWorkedTime = countTodayTime.todayDuration;
+				this._lastTotalWorkedTime = count.todayDuration;
 				this.electronService.ipcRenderer.send(
 					'update_tray_time_title',
 					{

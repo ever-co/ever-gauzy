@@ -283,8 +283,6 @@ export class TimeTrackerService {
 			.get(`${values.apiHost}/api/timesheet/statistics/counts`, {
 				headers: headers,
 				params: this.toParams({
-					startDate: moment().startOf('day').utc().toISOString(),
-					endDate: moment().endOf('day').utc().toISOString(),
 					tenantId: values.tenantId,
 					organizationId: values.organizationId,
 					employeeIds: [values.employeeId]
