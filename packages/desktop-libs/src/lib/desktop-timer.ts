@@ -9,6 +9,8 @@ import log from 'electron-log';
 import {ActivityType, TimeLogSourceEnum} from '@gauzy/contracts';
 import {DesktopEventCounter} from './desktop-event-counter';
 import {DesktopActiveWindow} from "./desktop-active-window";
+import { DesktopOfflineModeHandler } from './offline';
+import { IOfflineMode } from './interfaces';
 
 console.log = log.log;
 Object.assign(console, log.functions);
@@ -34,6 +36,7 @@ export default class TimerHandler {
 	_eventCounter = new DesktopEventCounter();
 	private _activeWindow = new DesktopActiveWindow();
 	private _activities = [];
+	private _offlineMode: IOfflineMode = DesktopOfflineModeHandler.instance;
 
 	constructor() {
 		/**
@@ -421,6 +424,8 @@ export default class TimerHandler {
 		if (!projectInfo.aw.isAw || !appSetting.awIsConnected || dataCollection.allActivities.length === 0) {
 			durationNonAfk = 0;
 		}
+		// Check api connectivity before to take a screenshot
+		await this._offlineMode.connectivity();
 		switch (
 		appSetting.SCREENSHOTS_ENGINE_METHOD ||
 		config.SCREENSHOTS_ENGINE_METHOD
