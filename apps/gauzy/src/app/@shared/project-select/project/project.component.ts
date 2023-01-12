@@ -134,7 +134,7 @@ export class ProjectSelectorComponent
 		private readonly _truncatePipe: TruncatePipe
 	) {}
 
-	ngOnInit() {
+	ngOnInit(): void {
 		this.hasAddProject$ = this.store.userRolePermissions$.pipe(
 			map(() =>
 				this.store.hasAnyPermission(
@@ -160,7 +160,7 @@ export class ProjectSelectorComponent
 			.subscribe();
 	}
 
-	ngAfterViewInit() {
+	ngAfterViewInit(): void {
 		this._organizationProjectStore.organizationProjectAction$
 			.pipe(
 				filter(({ action, project }) => !!action && !!project),
@@ -255,7 +255,9 @@ export class ProjectSelectorComponent
 				organizationId,
 				tenantId,
 				...(this.organizationContactId
-					? { contactId: this.organizationContactId }
+					? {
+						organizationContactId: this.organizationContactId
+					  }
 					: {})
 			};
 			if (this.employeeId || this.store.user.employeeId) {
@@ -369,5 +371,5 @@ export class ProjectSelectorComponent
 		}
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy(): void {}
 }
