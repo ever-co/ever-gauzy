@@ -7,7 +7,7 @@
 .timer-container {
   margin-left: -4px;
   color: var(--gauzy-text-color-1);
-  font-size: 54px;
+  font-size: 55px;
   font-weight: 600;
   border-radius: var(--button-rectangle-border-radius);
 }
@@ -439,13 +439,14 @@ $height: 2rem;
   gap: 4px;
   font-size: 12px;
   font-weight: 600;
-  background: var(--color-success-100);
+  background: var(--color-success-transparent-100);
   padding: 0 4px;
   border-radius: var(--border-radius);
   color: var(--gauzy-text-color-1);
 
   &.offline {
-    background: var(--color-danger-100);
+    background: var(--color-danger-transparent-100);
+
   }
 
   .state {

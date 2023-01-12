@@ -1,7 +1,7 @@
-import { DAO, IDatabaseProvider, IUserTransaction } from "../../interfaces";
-import { ProviderFactory } from "../databases";
-import { TABLE_NAME_USERS, UserTO } from "../dto";
-import { UserTransaction } from "../transactions";
+import { DAO, IDatabaseProvider, IUserTransaction } from '../../interfaces';
+import { ProviderFactory } from '../databases';
+import { TABLE_NAME_USERS, UserTO } from '../dto';
+import { UserTransaction } from '../transactions';
 
 export class UserDAO implements DAO<UserTO> {
 	private _trx: IUserTransaction;
@@ -29,8 +29,14 @@ export class UserDAO implements DAO<UserTO> {
 		await this._trx.update(id, value);
 	}
 	public async delete(value?: Partial<UserTO>): Promise<void> {
-		await this._provider
+		await this._provider.connection<UserTO>(TABLE_NAME_USERS).del();
+	}
+
+	public async current(): Promise<UserTO> {
+		const [user] = await this._provider
 			.connection<UserTO>(TABLE_NAME_USERS)
-			.del();
+			.orderBy('id', 'desc')
+			.limit(1);
+		return user;
 	}
 }

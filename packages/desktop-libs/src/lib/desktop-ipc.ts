@@ -467,11 +467,6 @@ export function ipcTimer(
 	ipcMain.on('logout_desktop', async (event, arg) => {
 		console.log('masuk logout main');
 		timeTrackerWindow.webContents.send('logout');
-		try {
-			await userService.remove();
-		} catch (error) {
-			console.log('Error', error);
-		}
 	})
 
 	ipcMain.on('navigate_to_login', () => {

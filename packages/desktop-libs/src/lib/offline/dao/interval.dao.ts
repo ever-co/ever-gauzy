@@ -1,6 +1,6 @@
 import { DAO, IDatabaseProvider } from '../../interfaces';
 import { ProviderFactory } from '../databases';
-import { IntervalTO, TABLE_NAME_INTERVALS } from '../dto';
+import { IntervalTO, TABLE_NAME_INTERVALS, UserTO } from '../dto';
 import { IntervalTransaction } from '../transactions';
 
 export class IntervalDAO implements DAO<IntervalTO> {
@@ -23,11 +23,12 @@ export class IntervalDAO implements DAO<IntervalTO> {
 		}
 	}
 
-	public async findAllSynced(isSynced: boolean): Promise<IntervalTO[]> {
+	public async findAllSynced(isSynced: boolean, user: UserTO): Promise<IntervalTO[]> {
 		try {
 			return await this._provider
 				.connection<IntervalTO>(TABLE_NAME_INTERVALS)
-				.where('synced', isSynced);
+				.where('employeeId', user.employeeId)
+				.andWhere('synced', isSynced);
 		} catch (error) {
 			console.log('[dao]: ', 'interval backed up fails : ', error);
 		}
@@ -68,13 +69,15 @@ export class IntervalDAO implements DAO<IntervalTO> {
 
 	public async backedUpNoSynced(
 		startedAt: Date,
-		stoppedAt: Date
+		stoppedAt: Date,
+		user: UserTO
 	): Promise<IntervalTO[]> {
 		try {
 			return await this._provider
 				.connection<IntervalTO>(TABLE_NAME_INTERVALS)
 				.select('*')
-				.whereBetween('startedAt', [startedAt, stoppedAt])
+				.where('employeeId', user.employeeId)
+				.andWhereBetween('startedAt', [startedAt, stoppedAt])
 				.andWhere('synced', false);
 		} catch (error) {
 			console.log('[dao]: ', 'interval backup fails : ', error);

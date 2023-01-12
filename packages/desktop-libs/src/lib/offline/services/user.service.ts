@@ -19,9 +19,9 @@ export class UserService implements IUserService<UserTO> {
 	}
 
 	public async retrieve(): Promise<UserTO> {
-		const users = await this._userDAO.findAll();
-		const user = new User(users[0]);
-		user.employee = JSON.parse(users[0].employee as string);
+		const userDao = await this._userDAO.current();
+		const user = new User(userDao);
+		user.employee = JSON.parse(user.employee as string);
 		return user;
 	}
 

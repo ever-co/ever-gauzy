@@ -3,21 +3,26 @@ import { IntervalDAO } from '../dao';
 import { DesktopOfflineModeHandler } from '../desktop-offline-mode-handler';
 import { IntervalTO } from '../dto';
 import { Interval } from '../models';
+import { UserService } from './user.service';
 
 export class IntervalService implements IIntervalService<IntervalTO> {
 	private _intervalDAO: IntervalDAO;
+	private _userService: UserService;
 	private _offlineMode: IOfflineMode;
 	constructor() {
 		this._intervalDAO = new IntervalDAO();
+		this._userService = new UserService();
 		this._offlineMode = DesktopOfflineModeHandler.instance;
 	}
 	public async create(interval: IntervalTO): Promise<void> {
 		await this._intervalDAO.save(interval);
 	}
 	public async backedUpNoSynced(): Promise<IntervalTO[]> {
-		return this._intervalDAO.backedUpNoSynced(
+		const user = await this._userService.retrieve();
+		return await this._intervalDAO.backedUpNoSynced(
 			this._offlineMode.startedAt,
-			this._offlineMode.stoppedAt
+			this._offlineMode.stoppedAt,
+			user
 		);
 	}
 	public async destroy(interval: Partial<IntervalTO>): Promise<void> {
@@ -38,6 +43,7 @@ export class IntervalService implements IIntervalService<IntervalTO> {
 		);
 	}
 	public async backedUpAllNoSynced(): Promise<IntervalTO[]> {
-		return await this._intervalDAO.findAllSynced(false);
+		const user = await this._userService.retrieve();
+		return await this._intervalDAO.findAllSynced(false, user);
 	}
 }
