@@ -14,10 +14,11 @@ import {
 	PaymentSubscriber,
 	ReportSubscriber,
 	ScreenshotSubscriber,
+	StatusSubscriber,
 	TaskSubscriber,
 	TenantSubscriber,
 	TimeSlotSubscriber,
-	UserSubscriber
+	UserSubscriber,
 } from "./internal";
 
 /**
@@ -39,6 +40,7 @@ export const coreSubscribers = [
 	PaymentSubscriber,
 	ReportSubscriber,
 	ScreenshotSubscriber,
+	StatusSubscriber,
 	TaskSubscriber,
 	TenantSubscriber,
 	TimeSlotSubscriber,
