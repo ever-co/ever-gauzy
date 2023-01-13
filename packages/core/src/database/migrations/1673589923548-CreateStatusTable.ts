@@ -1,9 +1,9 @@
 
 import { MigrationInterface, QueryRunner } from "typeorm";
 
-export class CreateStatusTable1670921373866 implements MigrationInterface {
+export class CreateStatusTable1673589923548 implements MigrationInterface {
 
-    name = 'CreateStatusTable1670921373866';
+    name = 'CreateStatusTable1673589923548';
 
     /**
     * Up Migration
@@ -45,7 +45,7 @@ export class CreateStatusTable1670921373866 implements MigrationInterface {
         await queryRunner.query(`CREATE INDEX "IDX_14c9897451c5ecc91211a2e873" ON "status" ("projectId") `);
         await queryRunner.query(`ALTER TABLE "status" ADD CONSTRAINT "FK_4e523a8b0628d467316dcbd45f5" FOREIGN KEY ("tenantId") REFERENCES "tenant"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE "status" ADD CONSTRAINT "FK_843edbaab7b6aac6037d50319cc" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE`);
-        await queryRunner.query(`ALTER TABLE "status" ADD CONSTRAINT "FK_14c9897451c5ecc91211a2e873d" FOREIGN KEY ("projectId") REFERENCES "organization_project"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "status" ADD CONSTRAINT "FK_14c9897451c5ecc91211a2e873d" FOREIGN KEY ("projectId") REFERENCES "organization_project"("id") ON DELETE SET NULL ON UPDATE NO ACTION`);
     }
 
     /**
@@ -82,7 +82,7 @@ export class CreateStatusTable1670921373866 implements MigrationInterface {
         await queryRunner.query(`DROP INDEX "IDX_95ff138b88fdd8a7c9ebdb97a3"`);
         await queryRunner.query(`DROP INDEX "IDX_6a043d4088c6303d62b4c6edf8"`);
         await queryRunner.query(`DROP INDEX "IDX_14c9897451c5ecc91211a2e873"`);
-        await queryRunner.query(`CREATE TABLE "temporary_status" ("id" varchar PRIMARY KEY NOT NULL, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "tenantId" varchar, "organizationId" varchar, "name" varchar NOT NULL, "value" varchar NOT NULL, "description" varchar, "icon" varchar, "color" varchar, "isSystem" boolean NOT NULL DEFAULT (0), "projectId" varchar, CONSTRAINT "FK_4e523a8b0628d467316dcbd45f5" FOREIGN KEY ("tenantId") REFERENCES "tenant" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_843edbaab7b6aac6037d50319cc" FOREIGN KEY ("organizationId") REFERENCES "organization" ("id") ON DELETE CASCADE ON UPDATE CASCADE, CONSTRAINT "FK_14c9897451c5ecc91211a2e873d" FOREIGN KEY ("projectId") REFERENCES "organization_project" ("id") ON DELETE NO ACTION ON UPDATE NO ACTION)`);
+        await queryRunner.query(`CREATE TABLE "temporary_status" ("id" varchar PRIMARY KEY NOT NULL, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "tenantId" varchar, "organizationId" varchar, "name" varchar NOT NULL, "value" varchar NOT NULL, "description" varchar, "icon" varchar, "color" varchar, "isSystem" boolean NOT NULL DEFAULT (0), "projectId" varchar, CONSTRAINT "FK_4e523a8b0628d467316dcbd45f5" FOREIGN KEY ("tenantId") REFERENCES "tenant" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_843edbaab7b6aac6037d50319cc" FOREIGN KEY ("organizationId") REFERENCES "organization" ("id") ON DELETE CASCADE ON UPDATE CASCADE, CONSTRAINT "FK_14c9897451c5ecc91211a2e873d" FOREIGN KEY ("projectId") REFERENCES "organization_project" ("id") ON DELETE SET NULL ON UPDATE NO ACTION)`);
         await queryRunner.query(`INSERT INTO "temporary_status"("id", "createdAt", "updatedAt", "tenantId", "organizationId", "name", "value", "description", "icon", "color", "isSystem", "projectId") SELECT "id", "createdAt", "updatedAt", "tenantId", "organizationId", "name", "value", "description", "icon", "color", "isSystem", "projectId" FROM "status"`);
         await queryRunner.query(`DROP TABLE "status"`);
         await queryRunner.query(`ALTER TABLE "temporary_status" RENAME TO "status"`);

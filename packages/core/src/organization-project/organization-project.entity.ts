@@ -25,7 +25,8 @@ import {
 	IExpense,
 	IActivity,
 	ProjectBillingEnum,
-	ProjectOwnerEnum
+	ProjectOwnerEnum,
+	IStatus
 } from '@gauzy/contracts';
 import {
 	Activity,
@@ -35,6 +36,7 @@ import {
 	OrganizationContact,
 	OrganizationSprint,
 	Payment,
+	Status,
 	Tag,
 	Task,
 	TenantOrganizationBaseEntity,
@@ -180,6 +182,12 @@ export class OrganizationProject extends TenantOrganizationBaseEntity
 	@OneToMany(() => Activity, (activity) => activity.project)
 	@JoinColumn()
 	activities?: IActivity[];
+
+	/**
+	 * Project Statuses
+	 */
+	@OneToMany(() => Status, (status) => status.project)
+	statuses?: IStatus[];
 
 	/*
     |--------------------------------------------------------------------------
