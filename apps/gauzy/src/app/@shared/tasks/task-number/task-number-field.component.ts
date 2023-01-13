@@ -27,7 +27,7 @@ import { Store, TasksService } from '../../../@core/services';
 		}
 	]
 })
-export class TaskNumberFieldComponent extends TranslationBaseComponent 
+export class TaskNumberFieldComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 
 	@Input() formControl: FormControl = new FormControl();
@@ -44,7 +44,7 @@ export class TaskNumberFieldComponent extends TranslationBaseComponent
 	}
 
 	/*
-	* Getter & Setter for project 
+	* Getter & Setter for project
 	*/
 	_projectId: string;
 	get projectId(): string {
@@ -82,7 +82,7 @@ export class TaskNumberFieldComponent extends TranslationBaseComponent
 		super(translateService)
 	}
 
-	ngOnInit() {
+	ngOnInit(): void {
 		this.number$
 			.pipe(
 				tap(() => this.getOneMaximumTaskNumber()),
@@ -118,20 +118,23 @@ export class TaskNumberFieldComponent extends TranslationBaseComponent
 		}
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
-		const { projectId } = this;
-
 		try {
 			this.tasksService
 				.getMaxTaskNumber({
 					tenantId,
 					organizationId,
-					projectId
+					...(this.projectId
+						? {
+							projectId: this.projectId
+						  }
+						: {}),
 				}).
 				pipe(
 					tap(
-						(maxNumber: number) => 
+						(maxNumber: number) =>
 						this.number = (maxNumber + 1)
-					)
+					),
+					untilDestroyed(this)
 				)
 				.subscribe();
 		} catch (error) {
@@ -139,5 +142,5 @@ export class TaskNumberFieldComponent extends TranslationBaseComponent
 		}
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy(): void {}
 }

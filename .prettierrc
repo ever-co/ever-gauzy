@@ -12,6 +12,12 @@
 				"useTabs": false,
 				"tabWidth": 2
 			}
+		},
+		{
+			"files": "*.yml",
+			"options": {
+				"useTabs": false
+			}
 		}
 	]
 }

@@ -1,8 +1,8 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { IOrganizationTeamEmployee } from "@gauzy/contracts";
-import { progressStatus } from 'packages/common-angular/dist/utils/shared-utils';
-import {TimesheetStatisticsService} from "../../../../@shared/timesheet";
+import { progressStatus } from '@gauzy/common-angular';
 import * as moment from 'moment';
+import { TimesheetStatisticsService } from "../../../../@shared/timesheet";
 
 @Component({
 	selector: 'gauzy-team-member',

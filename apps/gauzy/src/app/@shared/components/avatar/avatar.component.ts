@@ -7,9 +7,11 @@ import { Router } from '@angular/router';
 	styleUrls: ['./avatar.component.scss']
 })
 export class AvatarComponent implements OnInit {
+
 	@Input() size: 'lg' | 'sm' | 'md' = 'md';
 	@Input() src: string;
 	@Input() name: string;
+	@Input() appendCaption: string;
 	@Input() caption: string;
 	@Input() id: string;
 	@Input() isOption: boolean;
@@ -32,6 +34,6 @@ export class AvatarComponent implements OnInit {
 			this.router.navigate([
 				'/pages/employees/edit/' + id
 			]);
-		}	
+		}
 	}
 }

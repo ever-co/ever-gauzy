@@ -8,16 +8,15 @@ import { OrganizationContactService } from '../../../@core/services/organization
 import { UsersService } from '../../../@core/services';
 import { InviteService } from '../../../@core/services/invite.service';
 import { ToastrService } from '../../../@core/services/toastr.service';
-import { DUMMY_PROFILE_IMAGE } from '../../../@core/constants';
 
 @Component({
 	selector: 'ga-invite-contact',
 	templateUrl: './invite-contact.component.html',
 	styleUrls: ['./invite-contact.component.scss']
 })
-export class InviteContactComponent
-	extends TranslationBaseComponent
+export class InviteContactComponent extends TranslationBaseComponent
 	implements OnInit {
+
 	constructor(
 		private readonly dialogRef: NbDialogRef<InviteContactComponent>,
 		readonly translateService: TranslateService,
@@ -111,7 +110,6 @@ export class InviteContactComponent
 					...this.organizationContact,
 					tenantId: this.selectedOrganization.tenantId,
 					contactType: this.contactType,
-					imageUrl:  DUMMY_PROFILE_IMAGE,
 					...this.form.getRawValue()
 				});
 			} else if (this.form.valid) {
@@ -119,7 +117,6 @@ export class InviteContactComponent
 					organizationId: this.organizationId,
 					tenantId: this.selectedOrganization.tenantId,
 					contactType: this.contactType,
-					imageUrl: DUMMY_PROFILE_IMAGE,
 					...this.form.getRawValue()
 				});
 			}

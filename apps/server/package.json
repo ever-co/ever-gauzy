@@ -59,7 +59,7 @@
 		"ffi-napi": "^4.0.3",
 		"form-data": "^3.0.0",
 		"iconv": "^3.0.1",
-		"knex": "^0.21.6",
+		"knex": "^2.4.0",
 		"moment": "^2.29.4",
 		"ngx-electron": "^2.2.0",
 		"node-static": "^0.7.11",

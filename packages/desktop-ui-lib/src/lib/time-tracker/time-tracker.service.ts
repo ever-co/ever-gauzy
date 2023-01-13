@@ -55,7 +55,6 @@ export class TimeTrackerService {
 		const request = {
 			where: {
 				organizationId: values.organizationId,
-				employeeId: values.employeeId,
 				tenantId: values.tenantId,
 				...(values.projectId
 					? {
@@ -65,7 +64,7 @@ export class TimeTrackerService {
 			}
 		};
 		return firstValueFrom(
-			this.http.get(`${values.apiHost}/api/tasks/me`, {
+			this.http.get(`${values.apiHost}/api/tasks/employee/${values.employeeId}`, {
 				headers: headers,
 				params: this.toParams({
 					...request
@@ -572,7 +571,8 @@ export class TimeTrackerService {
 			timeLogId: values.timeLogId,
 			organizationId: values.organizationId,
 			tenantId: values.tenantId,
-			organizationContactId: values.organizationContactId
+			organizationContactId: values.organizationContactId,
+			version: values.version
 		};
 
 		console.log('Params', params)

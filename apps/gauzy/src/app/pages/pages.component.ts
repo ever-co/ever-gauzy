@@ -330,6 +330,10 @@ export class PagesComponent extends TranslationBaseComponent
 						link: '/pages/tasks/dashboard',
 						data: {
 							translationKey: 'MENU.DASHBOARD',
+							permissionKeys: [
+								PermissionsEnum.ALL_ORG_VIEW,
+								PermissionsEnum.ORG_TASK_VIEW
+							],
 							featureKey: FeatureEnum.FEATURE_DASHBOARD_TASK,
 							add: '/pages/tasks/dashboard?openAddDialog=true'
 						}
@@ -341,6 +345,10 @@ export class PagesComponent extends TranslationBaseComponent
 						data: {
 							translationKey: 'MENU.MY_TASKS',
 							hide: () => !this.isEmployee,
+							permissionKeys: [
+								PermissionsEnum.ALL_ORG_VIEW,
+								PermissionsEnum.ORG_TASK_VIEW
+							],
 							featureKey: FeatureEnum.FEATURE_MY_TASK,
 							add: '/pages/tasks/me?openAddDialog=true'
 						}
@@ -351,6 +359,10 @@ export class PagesComponent extends TranslationBaseComponent
 						link: '/pages/tasks/team',
 						data: {
 							translationKey: 'MENU.TEAM_TASKS',
+							permissionKeys: [
+								PermissionsEnum.ALL_ORG_VIEW,
+								PermissionsEnum.ORG_TASK_VIEW
+							],
 							featureKey: FeatureEnum.FEATURE_TEAM_TASK,
 							add: '/pages/tasks/team?openAddDialog=true'
 						}

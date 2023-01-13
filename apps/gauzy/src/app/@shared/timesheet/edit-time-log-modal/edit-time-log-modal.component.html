@@ -230,7 +230,7 @@
 				</div>
 			</div>
 
-			<div class="form-group" *ngIf="getControlValue('projectId')">
+			<div class="form-group">
 				<div class="col-12">
 					<label>{{ 'TIMER_TRACKER.SELECT_TASK' | translate }}</label>
 					<ga-task-selector
@@ -239,8 +239,7 @@
 						[projectId]="getControlValue('projectId')"
 						formControlName="taskId"
 						[required]="organization?.requireTask"
-					>
-					</ga-task-selector>
+					></ga-task-selector>
 					<div
 						*ngIf="form.get('taskId')?.invalid && f.submitted"
 						class="invalid-feedback d-block"

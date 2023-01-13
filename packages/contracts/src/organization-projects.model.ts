@@ -29,7 +29,7 @@ export interface IOrganizationProject extends IBaseEntityWithMembers {
 	tasks?: ITask[];
 	timeLogs?: ITimeLog[];
 	organizationSprints?: IOrganizationSprint[];
-	taskListType: string;
+	taskListType: TaskListTypeEnum;
 	payments?: IPayment[];
 	// prefix to project tasks / issues, e.g. GA-XXXX (GA is prefix)
 	code?: string;
@@ -89,7 +89,7 @@ export interface IOrganizationProjectsCreateInput extends IBasePerTenantAndOrgan
 	openSource?: boolean;
 	projectUrl?: string;
 	openSourceProjectUrl?: string;
-	taskListType?: string;
+	taskListType?: TaskListTypeEnum;
 }
 
 export interface IOrganizationProjectsUpdateInput extends IOrganizationProjectsCreateInput {

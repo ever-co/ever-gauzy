@@ -21,7 +21,7 @@ jobs:
               id: tag_version
               with:
                   github_token: ${{ secrets.GITHUB_TOKEN }}
-                  release_branches: master,main,develop
+                  release_branches: master,main,develop,stage
                   pre_release_branches: something_to_possible_use_later
 
             - name: Create a GitHub release

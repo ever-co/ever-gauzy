@@ -42,7 +42,7 @@ const routes: Routes = [
 			...CONTACT_VIEW_PERMISSION,
 			selectors: {
 				project: false,
-				date: false
+				date: true
 			},
 			contactType: ContactType.CLIENT
 		}
@@ -55,7 +55,7 @@ const routes: Routes = [
 			...CONTACT_VIEW_PERMISSION,
 			selectors: {
 				project: false,
-				date: false
+				date: true
 			},
 			contactType: ContactType.CUSTOMER
 		}
@@ -68,17 +68,16 @@ const routes: Routes = [
 			...CONTACT_VIEW_PERMISSION,
 			selectors: {
 				project: false,
-				date: false
+				date: true
 			},
 			contactType: ContactType.LEAD
 		}
 	},
 	{
 		path: 'view/:id',
-		loadChildren: () =>
-			import('./contact-view/contact-view.module').then(
-				(m) => m.ContactViewModule
-			),
+		loadChildren: () => import('./contact-view/contact-view.module').then(
+			(m) => m.ContactViewModule
+		),
 		data: {
 			...CONTACT_VIEW_PERMISSION,
 			selectors: {

@@ -1,0 +1,101 @@
+name: Deploy to DigitalOcean Stage
+
+on:
+    workflow_run:
+        workflows: ['Build and Publish Docker Images Stage']
+        branches: [stage]
+        types:
+            - completed
+
+jobs:
+    deploy-stage:
+        runs-on: ubuntu-22.04
+
+        # Stage using same Secrets for now as Production in Github Secrets Environments
+        environment: prod
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v3
+
+            - name: Install doctl
+              uses: digitalocean/action-doctl@v2
+              with:
+                  token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+
+            - name: Log in to DigitalOcean Container Registry with short-lived credentials
+              run: doctl registry login --expiry-seconds 600
+
+            - name: Save DigitalOcean kubeconfig with short-lived credentials
+              run: doctl kubernetes cluster kubeconfig save --expiry-seconds 600 k8s-ever
+
+            - name: Write PostgreSQL Certificate file
+              run: |
+                echo "$DB_CA_CERT" | base64 --decode > ${HOME}/ca-certificate.crt
+              env:
+                DB_CA_CERT: '${{ secrets.DB_CA_CERT }}'
+
+            - name: Apply k8s manifests changes in DigitalOcean k8s cluster (if any)
+              run: |
+                  envsubst < $GITHUB_WORKSPACE/.deploy/k8s/k8s-manifest.stage.yaml | kubectl --context do-sfo2-k8s-ever apply -f -
+              env:
+                DB_TYPE: '${{ secrets.DB_TYPE }}'
+                DB_URI: '${{ secrets.DB_URI }}'
+                DB_HOST: '${{ secrets.DB_HOST }}'
+                DB_USER: '${{ secrets.DB_USER }}'
+                DB_PASS: '${{ secrets.DB_PASS }}'
+                # Note that for staging we are using for now same server, just different DB name
+                DB_NAME: '${{ secrets.DB_NAME }}_stage'
+                DB_PORT: '${{ secrets.DB_PORT }}'
+                DB_CA_CERT: '${{ secrets.DB_CA_CERT }}'
+                DB_SSL_MODE: '${{ secrets.DB_SSL_MODE }}'
+                SENTRY_DSN: '${{ secrets.SENTRY_DSN }}'
+                AWS_ACCESS_KEY_ID: '${{ secrets.AWS_ACCESS_KEY_ID }}'
+                AWS_SECRET_ACCESS_KEY: '${{ secrets.AWS_SECRET_ACCESS_KEY }}'
+                AWS_REGION: '${{ secrets.AWS_REGION }}'
+                AWS_S3_BUCKET: '${{ secrets.AWS_S3_BUCKET }}'
+                WASABI_ACCESS_KEY_ID: '${{ secrets.WASABI_ACCESS_KEY_ID }}'
+                WASABI_SECRET_ACCESS_KEY: '${{ secrets.WASABI_SECRET_ACCESS_KEY }}'
+                WASABI_REGION: '${{ secrets.WASABI_REGION }}'
+                WASABI_SERVICE_URL: '${{ secrets.WASABI_SERVICE_URL }}'
+                WASABI_S3_BUCKET: '${{ secrets.WASABI_S3_BUCKET }}'
+                EXPRESS_SESSION_SECRET: '${{ secrets.EXPRESS_SESSION_SECRET }}'
+                JWT_SECRET: '${{ secrets.JWT_SECRET }}'
+                JWT_REFRESH_TOKEN_SECRET: '${{ secrets.JWT_REFRESH_TOKEN_SECRET }}'
+                JWT_REFRESH_TOKEN_EXPIRATION_TIME: '${{ secrets.JWT_REFRESH_TOKEN_EXPIRATION_TIME }}'
+                CLOUDINARY_API_KEY: '${{ secrets.CLOUDINARY_API_KEY }}'
+                CLOUDINARY_API_SECRET: '${{ secrets.CLOUDINARY_API_SECRET }}'
+                CLOUDINARY_CLOUD_NAME: '${{ secrets.CLOUDINARY_CLOUD_NAME }}'
+                MAIL_FROM_ADDRESS: '${{ secrets.MAIL_FROM_ADDRESS }}'
+                MAIL_HOST: '${{ secrets.MAIL_HOST }}'
+                MAIL_PORT: '${{ secrets.MAIL_PORT }}'
+                MAIL_USERNAME: '${{ secrets.MAIL_USERNAME }}'
+                MAIL_PASSWORD: '${{ secrets.MAIL_PASSWORD }}'
+                ALLOW_SUPER_ADMIN_ROLE: '${{ secrets.ALLOW_SUPER_ADMIN_ROLE }}'
+                GOOGLE_CLIENT_ID: '${{ secrets.GOOGLE_CLIENT_ID }}'
+                GOOGLE_CLIENT_SECRET: '${{ secrets.GOOGLE_CLIENT_SECRET }}'
+                GOOGLE_CALLBACK_URL: '${{ secrets.GOOGLE_CALLBACK_URL }}'
+                FACEBOOK_CLIENT_ID: '${{ secrets.FACEBOOK_CLIENT_ID }}'
+                FACEBOOK_CLIENT_SECRET: '${{ secrets.FACEBOOK_CLIENT_SECRET }}'
+                FACEBOOK_GRAPH_VERSION: '${{ secrets.FACEBOOK_GRAPH_VERSION }}'
+                FACEBOOK_CALLBACK_URL: '${{ secrets.FACEBOOK_CALLBACK_URL }}'
+                INTEGRATED_USER_DEFAULT_PASS: '${{ secrets.INTEGRATED_USER_DEFAULT_PASS }}'
+                UPWORK_CALLBACK_URL: '${{ secrets.UPWORK_CALLBACK_URL }}'
+                FILE_PROVIDER: '${{ secrets.FILE_PROVIDER }}'
+                GAUZY_AI_GRAPHQL_ENDPOINT: '${{ secrets.GAUZY_AI_GRAPHQL_ENDPOINT }}'
+                UNLEASH_APP_NAME: '${{ secrets.UNLEASH_APP_NAME }}'
+                UNLEASH_API_URL: '${{ secrets.UNLEASH_API_URL }}'
+                UNLEASH_INSTANCE_ID: '${{ secrets.UNLEASH_INSTANCE_ID }}'
+                UNLEASH_REFRESH_INTERVAL: '${{ secrets.UNLEASH_REFRESH_INTERVAL }}'
+                UNLEASH_METRICS_INTERVAL: '${{ secrets.UNLEASH_METRICS_INTERVAL }}'
+                UNLEASH_API_KEY: '${{ secrets.UNLEASH_API_KEY }}'
+                KEYMETRICS_MACHINE_NAME: '${{ secrets.KEYMETRICS_MACHINE_NAME }}'
+                KEYMETRICS_SECRET_KEY: '${{ secrets.KEYMETRICS_SECRET_KEY }}'
+                KEYMETRICS_PUBLIC_KEY: '${{ secrets.KEYMETRICS_PUBLIC_KEY }}'
+
+            # we need this step because for now we just use :latest tag
+            # note: for production we will use different strategy later
+            - name: Restart Pods to pick up :latest tag version
+              run: |
+                  kubectl --context do-sfo2-k8s-ever rollout restart deployment/gauzy-stage-api
+                  kubectl --context do-sfo2-k8s-ever rollout restart deployment/gauzy-stage-webapp

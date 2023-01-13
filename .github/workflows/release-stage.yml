@@ -1,0 +1,36 @@
+name: Release Stage
+
+on:
+    push:
+        branches: [stage]
+
+jobs:
+    release:
+        runs-on: ${{ matrix.os }}
+
+        strategy:
+            matrix:
+                os: [ubuntu-22.04]
+
+        steps:
+            - name: Check out Git repository
+              uses: actions/checkout@v3
+
+            - name: Bump version and push tag
+              uses: mathieudutour/github-tag-action@v6.1
+              id: tag_version
+              with:
+                  github_token: ${{ secrets.GITHUB_TOKEN }}
+                  release_branches: master,main,develop,stage
+                  pre_release_branches: something_to_possible_use_later
+
+            - name: Create a GitHub release
+              uses: ncipollo/release-action@v1
+              with:
+                  allowUpdates: true
+                  generateReleaseNotes: true
+                  prerelease: true
+                  token: ${{ secrets.GITHUB_TOKEN }}
+                  tag: ${{ steps.tag_version.outputs.new_tag }}
+                  name: ${{ steps.tag_version.outputs.new_tag }}
+                  body: ${{ steps.tag_version.outputs.changelog }}

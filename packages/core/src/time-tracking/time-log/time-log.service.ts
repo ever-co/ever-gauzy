@@ -99,7 +99,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				},
 				task: {
 					id: true,
-					title: true
+					title: true,
+					estimate: true
 				},
 				organizationContact: {
 					id: true,
@@ -108,6 +109,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				},
 				employee: {
 					id: true,
+					userId: true,
 					user: {
 						id: true,
 						firstName: true,
@@ -151,6 +153,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				stoppedAt: true,
 				employee: {
 					id: true,
+					userId: true,
 					user: {
 						id: true,
 						firstName: true,
@@ -368,6 +371,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				},
 				employee: {
 					id: true,
+					userId: true,
 					user: {
 						id: true,
 						firstName: true,
@@ -445,6 +449,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			select: {
 				employee: {
 					id: true,
+					userId: true,
 					billRateValue: true,
 					user: {
 						id: true,
@@ -518,6 +523,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				employee: {
 					id: true,
 					billRateValue: true,
+					userId: true,
 					user: {
 						id: true,
 						firstName: true,
@@ -612,6 +618,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				employee: {
 					id: true,
 					reWeeklyLimit: true,
+					userId: true,
 					user: {
 						id: true,
 						firstName: true,
