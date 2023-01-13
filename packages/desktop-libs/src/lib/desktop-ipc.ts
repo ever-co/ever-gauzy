@@ -638,7 +638,9 @@ export function removeTimerListener() {
 		'navigate_to_login',
 		'expand',
 		'timer_stopped',
-		'reset_permissions'
+		'reset_permissions',
+		'auth_success',
+		'update-synced'
 	]
 	timerListeners.forEach((listener) => {
 		ipcMain.removeAllListeners(listener);
