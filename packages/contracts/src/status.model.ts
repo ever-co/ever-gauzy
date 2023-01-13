@@ -11,3 +11,9 @@ export interface IStatus extends IBasePerTenantAndOrganizationEntityModel {
     project?:  IOrganizationProject;
     projectId?:  IOrganizationProject['id'];
 }
+
+export interface IStatusCreateInput extends Omit<IStatus, 'isSystem'> {}
+
+export interface IStatusUpdateInput extends Omit<IStatus, 'isSystem'> {
+    id?: string;
+}
