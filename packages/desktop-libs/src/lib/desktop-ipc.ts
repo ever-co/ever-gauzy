@@ -303,7 +303,7 @@ export function ipcTimer(
 		}
 	});
 
-	ipcMain.on('stop_timer', (event, arg) => {
+	ipcMain.on('stop_timer', async(event, arg) => {
 		log.info(`Timer Stop: ${moment().format()}`);
 		timerHandler.stopTime(
 			setupWindow,
@@ -316,6 +316,7 @@ export function ipcTimer(
 		});
 		powerManagerPreventSleep.stop();
 		powerManagerDetectInactivity.stopInactivityDetection();
+		await syncIntervalQueue(timeTrackerWindow);
 	});
 
 	ipcMain.on('return_time_slot', async (event, arg) => {
@@ -551,27 +552,7 @@ export function ipcTimer(
 				timeSlotId: lastTime ? lastTime.timeSlotId : null
 			}
 		);
-		try {
-			// sync with server 5 second after
-			setTimeout(async () => {
-				const intervals = await intervalService.backedUpAllNoSynced();
-				intervals.forEach((interval: IntervalTO) => {
-					interval.activities = JSON.parse(
-						interval.activities as any
-					);
-					interval.screenshots = JSON.parse(
-						interval.screenshots as any
-					);
-					const intervalToSync = new Interval(interval);
-					timeTrackerWindow.webContents.send('backup-no-synced', {
-						...intervalToSync.toObject(),
-						id: intervalToSync.id
-					});
-				});
-			}, 5000);
-		} catch (error) {
-			console.log('Error', error);
-		}
+		await syncIntervalQueue(timeTrackerWindow);
 	})
 
 	ipcMain.on('aw_status', (event, arg) => {
@@ -638,11 +619,28 @@ export function removeTimerListener() {
 		'navigate_to_login',
 		'expand',
 		'timer_stopped',
-		'reset_permissions',
-		'auth_success',
-		'update-synced'
+		'reset_permissions'
 	]
 	timerListeners.forEach((listener) => {
 		ipcMain.removeAllListeners(listener);
 	})
+}
+
+async function syncIntervalQueue(window: BrowserWindow) {
+	try {
+		await offlineMode.connectivity();
+		if(offlineMode.enabled) return;
+		const intervals = await intervalService.backedUpAllNoSynced();
+		intervals.forEach((interval: IntervalTO) => {
+			interval.activities = JSON.parse(interval.activities as any);
+			interval.screenshots = JSON.parse(interval.screenshots as any);
+			const intervalToSync = new Interval(interval);
+			window.webContents.send('backup-no-synced', {
+				...intervalToSync.toObject(),
+				id: intervalToSync.id
+			});
+		});
+	} catch (error) {
+		console.log('Error', error);
+	}
 }

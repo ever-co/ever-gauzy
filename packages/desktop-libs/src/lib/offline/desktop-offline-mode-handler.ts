@@ -58,8 +58,8 @@ export class DesktopOfflineModeHandler
 		} else {
 			// Check again before restore
 			(await networkContext.established())
-				? setTimeout(() => this.restore(), 1000) // Call offline mode restore routine
-				: console.log('Waiting...');
+				? this.restore() // Call offline mode restore routine
+				: console.log('Waiting...'); // or waiting
 		}
 	}
 	/**

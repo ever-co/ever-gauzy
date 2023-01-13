@@ -612,10 +612,10 @@
 			</div>
 		</ng-container>
 	</nb-layout-column>
-	<nb-layout-footer fixed *ngIf="(currentUser$ | async) && appName === 'gauzy-desktop-timer'">
+	<nb-layout-footer fixed *ngIf="appName === 'gauzy-desktop-timer'">
 		<span>
 			<p class="m-0">
-				Signed in as {{ (currentUser$ | async).name }} ({{(currentUser$ | async).email}}) -
+				Signed in as {{ (currentUser$ | async)?.name }} ({{(currentUser$ | async)?.email}}) -
 				<a href="javascript:void(0);" (click)="logout()"> Sign Out </a>
 			</p>
 		</span>

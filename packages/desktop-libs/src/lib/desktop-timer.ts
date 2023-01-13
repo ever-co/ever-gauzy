@@ -237,7 +237,10 @@ export default class TimerHandler {
 					min: (updatePeriod * 60) - 20
 				}
 			default:
-				break;
+				return {
+					max: (updatePeriod * 60) + updatePeriod * 2,
+					min: (updatePeriod * 60) - updatePeriod / 2
+				}
 		}
 	}
 
