@@ -1,0 +1,29 @@
+{
+    "version": "0.2",
+    "$schema": "https://raw.githubusercontent.com/streetsidesoftware/cspell/main/cspell.schema.json",
+    "words": [
+        "openapi",
+        "repos"
+    ],
+    "useGitignore": true,
+    "ignorePaths": [
+        ".git/*",
+        ".git/!{COMMIT_EDITMSG,EDITMSG}",
+        ".git/*/**",
+        ".yarn",
+        ".pnp.js",
+        ".vscode",
+        ".gitignore",
+        "action/lib/**",
+        "coverage",
+        "cspell.json",
+        "__snapshots__",
+        "__recordings__",
+        "**/coverage/**",
+        "**/fixtures/**/*.json",
+        "**/fixtures/sampleCode/*errors/",
+        "node_modules",
+        "package-lock.json",
+        "yarn.lock"
+    ]
+}
