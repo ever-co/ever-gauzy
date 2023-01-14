@@ -49,6 +49,7 @@
 		"ormlogs",
 		"pgcrypto",
 		"pgsql",
+		"Pgweb",
 		"postgres",
 		"prebuild",
 		"preload",
