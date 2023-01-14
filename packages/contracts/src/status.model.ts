@@ -17,3 +17,7 @@ export interface IStatusCreateInput extends Omit<IStatus, 'isSystem'> {}
 export interface IStatusUpdateInput extends Omit<IStatus, 'isSystem'> {
     id?: string;
 }
+
+export interface IStatusFindInput extends IBasePerTenantAndOrganizationEntityModel {
+    projectId?: IOrganizationProject['id'];
+}

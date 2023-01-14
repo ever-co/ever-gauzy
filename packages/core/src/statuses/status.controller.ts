@@ -20,36 +20,18 @@ import { DeleteResult } from 'typeorm';
 import { IPagination, IStatus } from '@gauzy/contracts';
 import { UUIDValidationPipe } from './../shared/pipes';
 import { TenantPermissionGuard } from './../shared/guards';
-import { CrudController, PaginationParams } from './../core/crud';
-import { Status } from './status.entity';
 import { StatusService } from './status.service';
-import { FindAllStatusQuery } from './queries';
-import { CreateStatusDTO, UpdatesStatusDTO } from './dto';
+import { FindStatusesQuery } from './queries';
+import { CreateStatusDTO, StatusQuerDTO, UpdatesStatusDTO } from './dto';
 
 @UseGuards(TenantPermissionGuard)
 @Controller()
-export class StatusController extends CrudController<Status> {
+export class StatusController {
 
 	constructor(
 		private readonly queryBus: QueryBus,
 		private readonly statusService: StatusService
-	) {
-		super(statusService);
-	}
-
-	/**
-	 * GET statuses by pagination
-	 *
-	 * @param params
-	 * @returns
-	 */
-	@Get('pagination')
-	@UsePipes(new ValidationPipe({ transform: true }))
-	async pagination(
-		@Query() params: PaginationParams<Status>
-	): Promise<IPagination<IStatus>> {
-		return await this.statusService.paginate(params);
-	}
+	) {}
 
 	/**
 	 * GET statuses
@@ -58,11 +40,11 @@ export class StatusController extends CrudController<Status> {
 	 * @returns
 	 */
 	@Get()
-	async findAll(
-		@Query() params: PaginationParams<Status>
+	async findAllStatuses(
+		@Query() params: StatusQuerDTO
 	): Promise<IPagination<IStatus>> {
 		return await this.queryBus.execute(
-			new FindAllStatusQuery(params)
+			new FindStatusesQuery(params)
 		);
 	}
 

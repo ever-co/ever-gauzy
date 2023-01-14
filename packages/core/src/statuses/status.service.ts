@@ -1,9 +1,9 @@
 import { Brackets, DeleteResult, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { IPagination, IStatus } from '@gauzy/contracts';
+import { IPagination, IStatus, IStatusFindInput } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
-import { PaginationParams, TenantAwareCrudService } from '../core/crud';
+import { TenantAwareCrudService } from '../core/crud';
 import { RequestContext } from './../core/context';
 import { Status } from './status.entity';
 
@@ -18,14 +18,17 @@ export class StatusService extends TenantAwareCrudService<Status> {
 	}
 
 	/**
-	 * Get Accounting Templates using pagination params
+	 * Get all statuses by params
 	 *
 	 * @param params
 	 * @returns
 	 */
-	async findAll(
-		params: PaginationParams<Status>
+	async findAllStatuses(
+		params: IStatusFindInput
 	): Promise<IPagination<Status>> {
+		const tenantId = RequestContext.currentTenantId();
+		const { organizationId, projectId } = params;
+
 		const query = this.repository.createQueryBuilder(this.alias);
 		query.setFindOptions({
 			select: {
@@ -39,22 +42,30 @@ export class StatusService extends TenantAwareCrudService<Status> {
 		query.where((qb: SelectQueryBuilder<Status>) => {
 			qb.andWhere(
 				new Brackets((bck: WhereExpressionBuilder) => {
-					const { organizationId } = params.where;
-					if (isNotEmpty(organizationId)) {
-						bck.andWhere(`"${qb.alias}"."organizationId" = :organizationId`, {
-							organizationId
-						});
+					/**
+					 * GET statuses by tenant level
+					 */
+					if (isNotEmpty(tenantId)) {
+						bck.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, { tenantId });
+					} else {
+						bck.andWhere(`"${qb.alias}"."tenantId" IS NULL`);
 					}
-					bck.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, {
-						tenantId: RequestContext.currentTenantId()
-					});
-				})
-			);
-			qb.orWhere(
-				new Brackets((bck: WhereExpressionBuilder) => {
-					bck.andWhere(`"${qb.alias}"."organizationId" IS NULL`);
-					bck.andWhere(`"${qb.alias}"."tenantId" IS NULL`);
-					bck.andWhere(`"${qb.alias}"."projectId" IS NULL`);
+					/**
+					 * GET statuses by organization level
+					 */
+					if (isNotEmpty(organizationId)) {
+						bck.andWhere(`"${qb.alias}"."organizationId" = :organizationId`, { organizationId });
+					} else {
+						bck.andWhere(`"${qb.alias}"."organizationId" IS NULL`);
+					}
+					/**
+					 * GET statuses by project level
+					 */
+					if (isNotEmpty(projectId)) {
+						bck.andWhere(`"${qb.alias}"."projectId" = :projectId`, { projectId });
+					} else {
+						bck.andWhere(`"${qb.alias}"."projectId" IS NULL`);
+					}
 				})
 			);
 		});
@@ -64,7 +75,6 @@ export class StatusService extends TenantAwareCrudService<Status> {
 
 	/**
 	 * Few Statuses can't be removed/delete because they are global
-	 * TaskStatusEnum.TODO, TaskStatusEnum.IN_PROGRESS, TaskStatusEnum.FOR_TESTING, TaskStatusEnum.COMPLETED
 	 *
 	 * @param id
 	 * @returns
