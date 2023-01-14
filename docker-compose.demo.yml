@@ -22,6 +22,47 @@ services:
         networks:
             - overlay
 
+    elasticsearch:
+        image: "elasticsearch:7.17.7"
+        volumes:
+            - elasticsearch_data:/usr/share/elasticsearch/data
+        environment:
+            ES_JAVA_OPTS: -Xms512m -Xmx1024m
+            discovery.type: single-node
+            xpack.security.enabled: "false"
+        ports:
+            - "9200"
+            - "9300"
+        healthcheck:
+            test: [ "CMD", "curl", "-f", "http://localhost:9200/_cat/health" ]
+            interval: 5s
+            timeout: 5s
+            retries: 10
+            start_period: 20s
+        networks:
+            - overlay
+
+    redis:
+        image: "redis:7.0.2-alpine"
+        ports:
+            - "6379"
+        networks:
+            - overlay
+
+    minio:
+        image: minio/minio:RELEASE.2021-09-09T21-37-07Z
+        volumes:
+            - minio_data:/data
+        environment:
+            MINIO_ROOT_USER: ever-gauzy-access-key
+            MINIO_ROOT_PASSWORD: ever-gauzy-secret-key
+        command: server --address :9000 --console-address :9001 --compat /data
+        ports:
+            - "9000:9000"
+            - "9001"
+        networks:
+            - overlay
+
     pgweb:
         image: sosedoff/pgweb
         container_name: pgweb
@@ -40,58 +81,6 @@ services:
         networks:
             - overlay
 
-    franchise:
-        image: binakot/franchise
-        container_name: franchise
-        restart: always
-        depends_on:
-            - db
-        links:
-            - db:${DB_HOST:-db}
-        environment:
-            PGHOST: ${DB_HOST:-db}
-            PGDATABASE: ${DB_NAME:-postgres}
-            PGUSER: ${DB_USER:-postgres}
-            PGPASSWORD: ${DB_PASS:-root}
-            PGPORT: ${DB_PORT:-5432}
-        ports:
-            - '8082:80'
-            - '14645:14645'
-        networks:
-            - overlay
-
-    omnidb:
-        image: taivokasper/omnidb
-        container_name: omnidb
-        restart: always
-        depends_on:
-            - db
-        links:
-            - db:${DB_HOST:-db}
-        ports:
-            - '8083:8080'
-            - '25482:25482'
-        networks:
-            - overlay
-
-    adminer:
-        image: adminer
-        container_name: adminer
-        restart: always
-        depends_on:
-            - db
-        links:
-            - db:${DB_HOST:-db}
-        environment:
-            ADMINER_DEFAULT_DB_DRIVER: pgsql
-            ADMINER_DEFAULT_DB_HOST: ${DB_HOST:-db}
-            ADMINER_DEFAULT_DB_NAME: ${DB_NAME:-postgres}
-            ADMINER_DEFAULT_DB_PASSWORD: ${DB_PASS:-root}
-        ports:
-            - '8084:8080'
-        networks:
-            - overlay
-
     api:
         container_name: api
         image: ghcr.io/ever-co/gauzy-api:latest
@@ -107,7 +96,14 @@ services:
             - .env.docker
         restart: on-failure
         depends_on:
-            - db
+            db:
+                condition: service_healthy
+            redis:
+                condition: service_started
+            minio:
+                condition: service_started
+            elasticsearch:
+                condition: service_healthy
         links:
             - db:${DB_HOST:-db}
         entrypoint: './entrypoint.compose.sh'
@@ -149,8 +145,16 @@ services:
             - db:${DB_HOST:-db}
             - api:${API_HOST:-api}
         depends_on:
-            - db
-            - api
+            db:
+                condition: service_healthy
+            redis:
+                condition: service_started
+            minio:
+                condition: service_started
+            elasticsearch:
+                condition: service_healthy
+            api:
+                condition: service_started
         entrypoint: './entrypoint.compose.sh'
         command: ['nginx', '-g', 'daemon off;']
         # volumes:
@@ -163,8 +167,10 @@ services:
 volumes:
     # webapp_node_modules:
     # api_node_modules:
-    postgres_data:
-    certificates:
+    postgres_data: {}
+    elasticsearch_data: {}
+    minio_data: {}
+    certificates: {}
 
 networks:
     overlay:
