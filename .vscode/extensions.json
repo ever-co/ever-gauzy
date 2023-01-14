@@ -1,9 +1,15 @@
 {
 	"recommendations": [
 		"nrwl.angular-console",
+		"DeepScan.vscode-deepscan",
 		"angular.ng-template",
 		"ms-vscode.vscode-typescript-tslint-plugin",
+		"folke.vscode-monorepo-workspace",
+		"seatonjiang.gitmoji-vscode",
+		"dbaeumer.vscode-eslint",
+		"jondot.vscode-hygen",
 		"esbenp.prettier-vscode",
-		"firsttris.vscode-jest-runner"
+		"firsttris.vscode-jest-runner",
+		"vscode-icons-team.vscode-icons"
 	]
 }

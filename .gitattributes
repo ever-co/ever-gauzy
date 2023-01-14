@@ -1,0 +1,15 @@
+LICENSE    text
+Jenkinfile text
+
+*.conf     text
+*.js       text
+*.ts       text
+*.json     text
+*.md       text
+*.sample   text
+*.txt      text
+*.yaml     text
+*.yml      text
+
+*.jar      binary
+*.png      binary
