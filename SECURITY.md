@@ -1,5 +1,7 @@
 # Security Policy
 
+Contact: <mailto:security@ever.co>
+
 Ever Gauzy™ follows good security practices, but 100% security cannot be guaranteed in any software!  
 Ever Gauzy™ is provided AS IS without any warranty. Use at your own risk!  
 See more details in the [LICENSE](LICENSE.md).
