@@ -8,7 +8,11 @@ import {
 	TemplateRef,
 	ViewChild
 } from '@angular/core';
-import { NbDialogService, NbIconLibraries, NbToastrService } from '@nebular/theme';
+import {
+	NbDialogService,
+	NbIconLibraries,
+	NbToastrService
+} from '@nebular/theme';
 import { TimeTrackerService } from './time-tracker.service';
 import * as moment from 'moment';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
@@ -17,9 +21,9 @@ import { CustomRenderComponent } from './custom-render-cell.component';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { DomSanitizer } from '@angular/platform-browser';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
-import { ElectronService } from "../electron/services";
+import { ElectronService } from '../electron/services';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import  'moment-duration-format';
+import 'moment-duration-format';
 
 // Import logging for electron and override default console logging
 const log = window.require('electron-log');
@@ -83,7 +87,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		'close-square-outline'
 	);
 	statusIcon$: BehaviorSubject<string> = new BehaviorSubject('success');
-	awCheck$ : BehaviorSubject<boolean> = new BehaviorSubject(false);
+	awCheck$: BehaviorSubject<boolean> = new BehaviorSubject(false);
 	defaultAwAPI = 'http:localhost:5600';
 	public todayDuration$: BehaviorSubject<any> = new BehaviorSubject({
 		hours: '00',
@@ -222,7 +226,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		this.tasks$
 			.pipe(
 				tap(async (tasks) => {
-					if(!tasks.length) return;
+					if (!tasks.length) return;
 					const idx = tasks.findIndex(
 						(row) => row.id === this.taskSelect
 					);
@@ -562,11 +566,23 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				})
 		);
 
-		this.electronService.ipcRenderer.on('offline-handler', (event, arg) => {
-			this._ngZone.run(() => {
-				this._isOffline$.next(arg);
-			});
-		});
+		this.electronService.ipcRenderer.on(
+			'offline-handler',
+			(event, isOffline) => {
+				this._ngZone.run(() => {
+					this._isOffline$.next(isOffline);
+					this.toastrService.show(
+						isOffline
+							? 'Offline mode triggered'
+							: 'Your api connection is established',
+						`Warning`,
+						{
+							status: isOffline ? 'danger' : 'success'
+						}
+					);
+				});
+			}
+		);
 
 		this.electronService.ipcRenderer.send('time_tracker_ready');
 	}
@@ -910,7 +926,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			}
 		});
 	}
-
 
 	countDuration(count) {
 		if (count) {
