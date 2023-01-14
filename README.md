@@ -151,11 +151,11 @@ Please refer to our official [Platform Documentation](https://docs.gauzy.co) and
 
 Together with Gauzy, Docker Compose will run following:
 
--   [PostgreSQL](https://www.postgresql.org)
--   Cross-platform client for PostgreSQL DBs [pgweb](https://github.com/sosedoff/pgweb), on <http://localhost:8081>.
--   [Franchise](https://github.com/HVF/franchise), lightweight but powerful SQL tool with a notebook interface, on <http://localhost:8082>.
--   [OmniDb](https://github.com/OmniDB/OmniDB), on <http://localhost:8083> and using default credentials (admin:admin) configure connection string `postgres://postgres:root@db:5432/postgres?sslmode=disable`.
--   [Adminer](https://www.adminer.org) Database management in a single PHP file, on <http://localhost:8084>.
+-   [PostgreSQL](https://www.postgresql.org) - Object-relational database system.
+-   [Redis](https://github.com/redis/redis) - In-memory data store.
+-   [ElasticSearch](https://github.com/elastic/elasticsearch) - Search Engine.
+-   [MinIO](https://github.com/minio/minio) - Multi-Cloud ☁️ Object Storage.
+-   [Pgweb](https://github.com/sosedoff/pgweb) - Cross-platform client for PostgreSQL DBs, on <http://localhost:8081>.
 
 ### Manually
 
