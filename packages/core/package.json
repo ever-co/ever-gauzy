@@ -85,7 +85,7 @@
 		"camelcase": "^6.2.1",
 		"chalk": "4.1.2",
 		"class-transformer": "^0.5.1",
-		"class-validator": "^0.13.2",
+		"class-validator": "^0.14.0",
 		"cli-ux": "^5.5.0",
 		"cls-hooked": "^4.2.2",
 		"cross-fetch": "^3.1.5",

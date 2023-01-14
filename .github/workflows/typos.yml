@@ -1,0 +1,23 @@
+name: 'Check Spelling and Typos with cspell'
+on:
+    push:
+        branches: [develop, stage, master]
+    pull_request:
+        branches: [develop]
+
+concurrency:
+    group: ${{ github.ref }}-${{ github.workflow }}
+    cancel-in-progress: true
+
+jobs:
+    spellcheck:
+        name: Cspell
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v3
+            - uses: streetsidesoftware/cspell-action@v2
+              with:
+                  # Github token used to fetch the list of changed files in the commit.
+                  github_token: ${{ secrets.GH_TOKEN || secrets.GITHUB_TOKEN }}
+                  strict: true
+                  config: '.cspell.json'
