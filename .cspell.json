@@ -3,6 +3,11 @@
 	"language": "en",
     "$schema": "https://raw.githubusercontent.com/streetsidesoftware/cspell/main/cspell.schema.json",
     "words": [
+		"Jenkinfile",
+		"codeql",
+		"Autobuild",
+		"autobuild",
+		"javascripts",
         "openapi",
         "repos",
 		"healthcheck",
