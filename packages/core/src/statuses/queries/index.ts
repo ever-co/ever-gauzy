@@ -1,1 +1,1 @@
-export * from './find-all-status.query';
+export * from './find-statuses.query';

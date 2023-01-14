@@ -1,5 +1,5 @@
-import { FindAllStatusHandler } from './find-all-status.handler';
+import { FindStatusesHandler } from './find-statuses.handler';
 
 export const QueryHandlers = [
-	FindAllStatusHandler
+	FindStatusesHandler
 ];
