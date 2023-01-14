@@ -151,16 +151,19 @@ Please refer to our official [Platform Documentation](https://docs.gauzy.co) and
 
 Together with Gauzy, Docker Compose will run following:
 
--   [PostgreSQL](https://www.postgresql.org)
--   Cross-platform client for PostgreSQL DBs [pgweb](https://github.com/sosedoff/pgweb), on <http://localhost:8081>.
--   [Franchise](https://github.com/HVF/franchise), lightweight but powerful SQL tool with a notebook interface, on <http://localhost:8082>.
--   [OmniDb](https://github.com/OmniDB/OmniDB), on <http://localhost:8083> and using default credentials (admin:admin) configure connection string `postgres://postgres:root@db:5432/postgres?sslmode=disable`.
--   [Adminer](https://www.adminer.org) Database management in a single PHP file, on <http://localhost:8084>.
+-   [PostgreSQL](https://www.postgresql.org) - Object-relational database system.
+-   [Redis](https://github.com/redis/redis) - In-memory data store.
+-   [ElasticSearch](https://github.com/elastic/elasticsearch) - Search Engine.
+-   [MinIO](https://github.com/minio/minio) - Multi-Cloud ☁️ Object Storage.
+-   [Pgweb](https://github.com/sosedoff/pgweb) - Cross-platform client for PostgreSQL DBs, on <http://localhost:8081>.
 
 ### Manually
 
--   Install [NodeJs](https://nodejs.org/en/download) LTS version, e.g. 14.x (note: at the moment Gauzy may not work with Node 15.x/16.x).
--   Optionally install and run [PostgreSQL](https://www.postgresql.org) version 11 or 12 (version 13 might not be supported yet). Note: other DB can be configured manually in TypeORM. The default DB is set to SQLite (recommended for testing/demo purposes only).
+-   Install [NodeJs](https://nodejs.org/en/download) LTS version or later, e.g. 18.x.
+-   Optionally (recommended for production) install and run [PostgreSQL](https://www.postgresql.org) version 14 or later. Note: other DB can be configured manually in TypeORM. The default DB is set to SQLite (recommended for testing/demo purposes only).
+-   Optionally (recommended for production) install and run [Redis](https://github.com/redis/redis). Note: the platform will work without Redis using in-memory caching strategy instead of distributed one (recommended for testing/demo purposes only).
+-   Optionally (recommended for production) install and run [ElasticSearch](https://github.com/elastic/elasticsearch). Note: the platform will work without ElasticSearch using DB build-in search capabilities (recommended for testing/demo purposes only).
+-   Optionally install and run [MinIO](https://github.com/minio/minio) or [LocalStack](https://github.com/localstack/localstack). Note: the platform will work without MinIO / LocalStack or other S3 compatible storage using local filesystem based storage (recommended for testing/demo purposes only).
 -   Install [Yarn](https://github.com/yarnpkg/yarn) (if you don't have it) with `npm i -g yarn`.
 -   Install NPM packages and bootstrap solution using command `yarn bootstrap`.
 -   If you will need to make code changes (and push to Git repo), please run `yarn prepare:husky`.
