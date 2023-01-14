@@ -1,8 +1,8 @@
-version: '3.7'
+version: '3.8'
 
 services:
     db:
-        image: postgres:12-alpine
+        image: postgres:14-alpine
         container_name: db
         restart: always
         environment:
@@ -50,16 +50,36 @@ services:
             - overlay
 
     minio:
-        image: minio/minio:RELEASE.2021-09-09T21-37-07Z
+        restart: always
+        image: quay.io/minio/minio:latest
         volumes:
             - minio_data:/data
         environment:
             MINIO_ROOT_USER: ever-gauzy-access-key
             MINIO_ROOT_PASSWORD: ever-gauzy-secret-key
-        command: server --address :9000 --console-address :9001 --compat /data
+        command: server /data --address :9000 --console-address ":9001"
         ports:
-            - "9000:9000"
-            - "9001"
+            - 9000:9000
+            - 9001:9001
+        networks:
+            - overlay
+
+    minio_create_buckets:
+        image: minio/mc
+        environment:
+            - MINIO_ROOT_USER=ever-gauzy-access-key
+            - MINIO_ROOT_PASSWORD=ever-gauzy-secret-key
+        entrypoint:
+            - "/bin/sh"
+            - "-c"
+        command:
+            - "until (/usr/bin/mc alias set minio http://minio:9000 $$MINIO_ROOT_USER $$MINIO_ROOT_PASSWORD) do
+                    echo 'Waiting to start minio...' && sleep 1;
+               done;
+               /usr/bin/mc mb minio/ever-gauzy --region=eu-north-1;
+               exit 0;"
+        depends_on:
+            - minio
         networks:
             - overlay
 
@@ -75,7 +95,7 @@ services:
             POSTGRES_DB: ${DB_NAME:-postgres}
             POSTGRES_USER: ${DB_USER:-postgres}
             POSTGRES_PASSWORD: ${DB_PASS:-root}
-            DATABASE_URL: postgres://${DB_USER:-postgres}:${DB_PASS:-root}@${DB_HOST:-db}:${DB_PORT:-5432}/${DB_NAME:-postgres}?sslmode=disable
+            PGWEB_DATABASE_URL: postgres://${DB_USER:-postgres}:${DB_PASS:-root}@${DB_HOST:-db}:${DB_PORT:-5432}/${DB_NAME:-postgres}?sslmode=disable
         ports:
             - '8081:8081'
         networks:
@@ -101,6 +121,8 @@ services:
             redis:
                 condition: service_started
             minio:
+                condition: service_started
+            minio_create_buckets:
                 condition: service_started
             elasticsearch:
                 condition: service_healthy
@@ -137,7 +159,6 @@ services:
             DEMO: 'true'
             API_HOST: ${API_HOST:-api}
             API_PORT: ${API_PORT:-3000}
-
         env_file:
             - .env.docker
         restart: on-failure
@@ -150,6 +171,8 @@ services:
             redis:
                 condition: service_started
             minio:
+                condition: service_started
+            minio_create_buckets:
                 condition: service_started
             elasticsearch:
                 condition: service_healthy
