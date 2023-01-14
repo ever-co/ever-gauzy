@@ -19,5 +19,5 @@ jobs:
         with:
            # Github token used to fetch the list of changed files in the commit.
            github_token: ${{ secrets.GH_TOKEN || secrets.GITHUB_TOKEN }}
-           strict: false
+           strict: true
            config: 'cspell.json'
