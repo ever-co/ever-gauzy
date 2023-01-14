@@ -98,7 +98,6 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 
 	ipcMain.on('time_tracker_ready', async (event, arg) => {
 		const auth = LocalStore.getStore('auth');
-		await offlineMode.connectivity();
 		if (auth && auth.userId) {
 			const [lastTime] = await TimerData.getLastCaptureTimeSlot(
 				knex,
@@ -110,6 +109,10 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 				timeSlotId: lastTime ? lastTime.timeSlotId : null
 			});
 		}
+		// check connectivity seven seconds after start
+		setTimeout(async () => {
+			await offlineMode.connectivity();
+		}, 7000)
 	});
 
 	ipcMain.on('screen_shoot', (event, arg) => {
