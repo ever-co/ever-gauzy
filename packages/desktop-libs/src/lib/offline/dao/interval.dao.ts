@@ -23,7 +23,10 @@ export class IntervalDAO implements DAO<IntervalTO> {
 		}
 	}
 
-	public async findAllSynced(isSynced: boolean, user: UserTO): Promise<IntervalTO[]> {
+	public async findAllSynced(
+		isSynced: boolean,
+		user: UserTO
+	): Promise<IntervalTO[]> {
 		try {
 			return await this._provider
 				.connection<IntervalTO>(TABLE_NAME_INTERVALS)
@@ -89,6 +92,18 @@ export class IntervalDAO implements DAO<IntervalTO> {
 			await this._trx.synced(offlineStart, offlineEnd);
 		} catch (error) {
 			console.log('[dao]: ', 'interval sync fails : ', error);
+		}
+	}
+
+	public async count(isSynced: boolean, user: UserTO): Promise<any> {
+		try {
+			return await this._provider
+				.connection<IntervalTO>(TABLE_NAME_INTERVALS)
+				.count('* as total')
+				.where('employeeId', user.employeeId)
+				.andWhere('synced', isSynced);
+		} catch (error) {
+			console.log('[dao]: ', 'interval backed up fails : ', error);
 		}
 	}
 }

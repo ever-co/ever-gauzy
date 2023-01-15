@@ -4,4 +4,5 @@ export interface IIntervalService<T> {
 	backedUpAllNoSynced(): Promise<T[]>;
 	synced(interval: T): Promise<void>;
 	destroy(interval: Partial<T>): Promise<void>;
+	countNoSynced(): Promise<number>;
 }

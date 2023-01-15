@@ -46,4 +46,9 @@ export class IntervalService implements IIntervalService<IntervalTO> {
 		const user = await this._userService.retrieve();
 		return await this._intervalDAO.findAllSynced(false, user);
 	}
+	public async countNoSynced(): Promise<number> {
+		const user = await this._userService.retrieve();
+		const [res] = await this._intervalDAO.count(false, user);
+		return res.total;
+	}
 }
