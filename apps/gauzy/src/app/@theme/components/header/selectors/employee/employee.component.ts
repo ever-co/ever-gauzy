@@ -41,11 +41,11 @@ import { TruncatePipe } from './../../../../../@shared/pipes';
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class EmployeeSelectorComponent
-	implements OnInit, OnDestroy, AfterViewInit {
-
+	implements OnInit, OnDestroy, AfterViewInit
+{
 	/*
-	* Getter & Setter for dynamic add tag option
-	*/
+	 * Getter & Setter for dynamic add tag option
+	 */
 	_addTag: boolean = true;
 	get addTag(): boolean {
 		return this._addTag;
@@ -166,14 +166,15 @@ export class EmployeeSelectorComponent
 			)
 			.subscribe();
 		const storeOrganization$ = this.store.selectedOrganization$;
-		const selectedDateRange$ = this.dateRangePickerBuilderService.selectedDateRange$;
+		const selectedDateRange$ =
+			this.dateRangePickerBuilderService.selectedDateRange$;
 		combineLatest([storeOrganization$, selectedDateRange$])
 			.pipe(
 				filter(([organization]) => !!organization),
 				tap(([organization, dateRange]) => {
 					this.organization = organization as IOrganization;
 					this._selectedDateRange = dateRange as IDateRangePicker;
-					this.subject$.next([organization, dateRange])
+					this.subject$.next([organization, dateRange]);
 				}),
 				untilDestroyed(this)
 			)
@@ -210,15 +211,13 @@ export class EmployeeSelectorComponent
 		const people: ISelectedEmployee[] = this.people || [];
 		if (Array.isArray(people)) {
 			employees.forEach((employee: IEmployee) => {
-				people.push(
-					{
-						id: employee.id,
-						firstName: employee.user.firstName,
-						lastName: employee.user.lastName,
-						fullName: employee.user.name,
-						imageUrl: employee.user.imageUrl
-					}
-				);
+				people.push({
+					id: employee.id,
+					firstName: employee.user.firstName,
+					lastName: employee.user.lastName,
+					fullName: employee.user.name,
+					imageUrl: employee.user.imageUrl
+				});
 			});
 			this.people = [...people].filter(isNotEmpty);
 		}
@@ -271,7 +270,7 @@ export class EmployeeSelectorComponent
 	}
 
 	/**
-	 * GET Shortend Name
+	 * GET Shortened Name
 	 *
 	 * @param firstName
 	 * @param lastName
@@ -280,9 +279,17 @@ export class EmployeeSelectorComponent
 	 */
 	getShortenedName(firstName: string, lastName: string, limit = 18) {
 		if (firstName && lastName) {
-			return this._truncatePipe.transform(firstName, limit/2, false, '') + ' ' + this._truncatePipe.transform(lastName, limit/2, false, '.');
+			return (
+				this._truncatePipe.transform(firstName, limit / 2, false, '') +
+				' ' +
+				this._truncatePipe.transform(lastName, limit / 2, false, '.')
+			);
 		} else {
-			return this._truncatePipe.transform(firstName, limit) || this._truncatePipe.transform(lastName, limit) || '[error: bad name]';
+			return (
+				this._truncatePipe.transform(firstName, limit) ||
+				this._truncatePipe.transform(lastName, limit) ||
+				'[error: bad name]'
+			);
 		}
 	}
 
@@ -345,15 +352,17 @@ export class EmployeeSelectorComponent
 		];
 
 		//Insert All Employees Option
-		if (this.showAllEmployeesOption && this.store.hasPermission(
-			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-		)) {
+		if (
+			this.showAllEmployeesOption &&
+			this.store.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)
+		) {
 			this.people.unshift(ALL_EMPLOYEES_SELECTED);
 		}
 
 		//Set selected employee if no employee selected
 		if (items.length > 0 && !this.store.selectedEmployee) {
-			this.store.selectedEmployee = this.people[0] || ALL_EMPLOYEES_SELECTED;
+			this.store.selectedEmployee =
+				this.people[0] || ALL_EMPLOYEES_SELECTED;
 		}
 	};
 
@@ -363,7 +372,8 @@ export class EmployeeSelectorComponent
 			!this.store.selectedEmployee &&
 			!this.skipGlobalChange
 		) {
-			this.store.selectedEmployee = this.people[0] || ALL_EMPLOYEES_SELECTED;
+			this.store.selectedEmployee =
+				this.people[0] || ALL_EMPLOYEES_SELECTED;
 		}
 	}
 
@@ -377,7 +387,9 @@ export class EmployeeSelectorComponent
 			this.selectedEmployee &&
 			this.selectedEmployee.hasOwnProperty('defaultType')
 		) {
-			if (this.selectedEmployee.defaultType === DEFAULT_TYPE.ALL_EMPLOYEE) {
+			if (
+				this.selectedEmployee.defaultType === DEFAULT_TYPE.ALL_EMPLOYEE
+			) {
 				return false;
 			}
 		}
