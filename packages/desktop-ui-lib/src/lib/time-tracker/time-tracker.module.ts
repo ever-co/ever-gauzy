@@ -20,7 +20,8 @@ import {
 	NbDialogModule,
 	NbToastrService,
 	NbFormFieldModule,
-	NbTooltipModule
+	NbTooltipModule,
+	NbBadgeModule
 } from '@nebular/theme';
 import { NbEvaIconsModule } from '@nebular/eva-icons';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -50,7 +51,8 @@ import { TasksModule } from '../tasks/tasks.module';
 		Ng2SmartTableModule,
 		NbTooltipModule,
 		TasksModule,
-		NbToggleModule
+		NbToggleModule,
+		NbBadgeModule
 	],
 	providers: [
 		NbSidebarService,

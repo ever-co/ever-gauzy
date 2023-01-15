@@ -6,12 +6,12 @@ import {
 	NgZone,
 	OnInit,
 	TemplateRef,
-	ViewChild
+	ViewChild,
 } from '@angular/core';
 import {
 	NbDialogService,
 	NbIconLibraries,
-	NbToastrService
+	NbToastrService,
 } from '@nebular/theme';
 import { TimeTrackerService } from './time-tracker.service';
 import * as moment from 'moment';
@@ -39,9 +39,9 @@ Object.assign(console, log.functions);
 		{
 			provide: NG_VALUE_ACCESSOR,
 			useExisting: forwardRef(() => TimeTrackerComponent),
-			multi: true
-		}
-	]
+			multi: true,
+		},
+	],
 })
 export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	private _taskTable: Ng2SmartTableComponent;
@@ -56,7 +56,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	timeRun: BehaviorSubject<any> = new BehaviorSubject({
 		second: '00',
 		minute: '00',
-		hours: '00'
+		hours: '00',
 	});
 	userData: any;
 
@@ -91,11 +91,11 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	defaultAwAPI = 'http:localhost:5600';
 	public todayDuration$: BehaviorSubject<any> = new BehaviorSubject({
 		hours: '00',
-		minutes: '00'
+		minutes: '00',
 	});
 	public weeklyDuration$: BehaviorSubject<any> = new BehaviorSubject({
 		hours: '00',
-		minutes: '00'
+		minutes: '00',
 	});
 	public userOrganization$: BehaviorSubject<any> = new BehaviorSubject({});
 	public lastScreenCapture$: BehaviorSubject<any> = new BehaviorSubject({});
@@ -117,16 +117,16 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		deleteLog: {
 			name: 'deleteLog',
 			message:
-				'Do you really want to remove this screenshot and activities log ?'
+				'Do you really want to remove this screenshot and activities log ?',
 		},
 		changeClient: {
 			name: 'changeClient',
-			message: 'Are you sure you want to change Client ?'
+			message: 'Are you sure you want to change Client ?',
 		},
 		timeTrackingOption: {
 			name: 'timeTrackingOption',
-			message: 'Your timer was running when PC was locked. Resume timer?'
-		}
+			message: 'Your timer was running when PC was locked. Resume timer?',
+		},
 	};
 	timerStatus: any;
 	expandIcon = 'arrow-right';
@@ -135,7 +135,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			title: {
 				title: 'Task',
 				type: 'custom',
-				renderComponent: CustomRenderComponent
+				renderComponent: CustomRenderComponent,
 			},
 			dueDate: {
 				title: 'Due',
@@ -146,12 +146,12 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 							? this.userData.employee.organization.dateFormat
 							: 'YYYY-MM-DD'
 					);
-				}
-			}
+				},
+			},
 		},
 		hideSubHeader: true,
 		actions: false,
-		noDataMessage: 'No Tasks Found'
+		noDataMessage: 'No Tasks Found',
 	};
 	tableData = [];
 	private _sourceData$: BehaviorSubject<LocalDataSource>;
@@ -163,6 +163,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	sound: any = null;
 	private _lastTotalWorkedTime = 0;
 	private _isOffline$: BehaviorSubject<boolean> = new BehaviorSubject(false);
+	private _inQueue$: BehaviorSubject<number> = new BehaviorSubject(0);
 
 	constructor(
 		private electronService: ElectronService,
@@ -175,7 +176,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	) {
 		this.iconLibraries.registerFontPack('font-awesome', {
 			packClass: 'fas',
-			iconClassPrefix: 'fa'
+			iconClassPrefix: 'fa',
 		});
 	}
 
@@ -315,7 +316,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				this.electronService.desktopCapturer
 					.getSources({
 						types: ['screen'],
-						thumbnailSize: thumbSize
+						thumbnailSize: thumbSize,
 					})
 					.then((sources) => {
 						const screens = [];
@@ -324,7 +325,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 							screens.push({
 								img: source.thumbnail.toPNG(),
 								name: source.name,
-								id: source.display_id
+								id: source.display_id,
 							});
 							log.info('screenshot data', screens);
 						});
@@ -332,13 +333,13 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 							event.sender.send('save_screen_shoot', {
 								screens: screens,
 								timeSlotId: arg.timeSlotId,
-								quitApp: this.quitApp
+								quitApp: this.quitApp,
 							});
 						} else {
 							event.sender.send('save_temp_screenshot', {
 								screens: screens,
 								timeSlotId: arg.timeSlotId,
-								quitApp: this.quitApp
+								quitApp: this.quitApp,
 							});
 						}
 					});
@@ -368,7 +369,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						),
 						textTime: moment().fromNow(),
 						createdAt: Date.now(),
-						recordedAt: Date.now()
+						recordedAt: Date.now(),
 					});
 				})
 		);
@@ -469,7 +470,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 									...interval,
 									recordedAt: interval.startedAt,
 									token: this.token,
-									apiHost: this.apiHost
+									apiHost: this.apiHost,
 								});
 							console.log('backup', resActivities);
 							// upload screenshot to timeslot api
@@ -486,19 +487,19 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 															interval.startedAt,
 														token: this.token,
 														apiHost: this.apiHost,
-														timeSlotId
+														timeSlotId,
 													},
 													{
 														b64Img: screenshot.b64img,
 														fileName:
-															screenshot.fileName
+															screenshot.fileName,
 													}
 												);
 											this.getLastTimeSlotImage({
 												...interval,
 												token: this.token,
 												apiHost: this.apiHost,
-												timeSlotId
+												timeSlotId,
 											});
 											console.log(
 												'Result upload',
@@ -577,12 +578,19 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 							: 'Your api connection is established',
 						`Warning`,
 						{
-							status: isOffline ? 'danger' : 'success'
+							status: isOffline ? 'danger' : 'success',
 						}
 					);
 				});
 			}
 		);
+
+		this.electronService.ipcRenderer.on('count-synced', (event, arg) => {
+			this._ngZone.run(() => {
+				console.log(arg);
+				this._inQueue$.next(arg);
+			});
+		});
 
 		this.electronService.ipcRenderer.send('time_tracker_ready');
 	}
@@ -594,7 +602,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 		if (!this.checkOnlineStatus()) {
 			this.toastrService.show(`Your connection lost`, `Warning`, {
-				status: 'danger'
+				status: 'danger',
 			});
 			return;
 		}
@@ -614,7 +622,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						organizationId: this.userOrganization.id,
 						tenantId: this.userData.tenantId,
 						organizationContactId: this.organizationContactId,
-						apiHost: this.apiHost
+						apiHost: this.apiHost,
 					};
 					this.timeTrackerService
 						.toggleApiStart(paramsTimeStart)
@@ -636,7 +644,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 								messageError = 'Internal server error';
 							}
 							this.toastrService.show(messageError, `Warning`, {
-								status: 'danger'
+								status: 'danger',
 							});
 							log.info(
 								`Timer Toggle Catch: ${moment().format()}`,
@@ -668,13 +676,13 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				seconds.toString().length > 1 ? `${seconds}` : `0${seconds}`,
 			minute:
 				minutes.toString().length > 1 ? `${minutes}` : `0${minutes}`,
-			hours: hours.toString().length > 1 ? `${hours}` : `0${hours}`
+			hours: hours.toString().length > 1 ? `${hours}` : `0${hours}`,
 		});
 
 		this.electronService.ipcRenderer.send('update_tray_time_title', {
 			timeRun: moment
 				.duration(instantaneaous, 'seconds')
-				.format('hh:mm:ss', { trim: false })
+				.format('hh:mm:ss', { trim: false }),
 		});
 
 		this.todayDuration$.next({
@@ -685,7 +693,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			minutes: this.formatingDuration(
 				'minutes',
 				moment.duration(instantaneaous, 'seconds').minutes()
-			)
+			),
 		});
 
 		if (seconds % 5 === 0) {
@@ -693,7 +701,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			if (this.lastScreenCapture.createdAt) {
 				this.lastScreenCapture$.next({
 					...this.lastScreenCapture,
-					textTime: moment(this.lastScreenCapture.createdAt).fromNow()
+					textTime: moment(
+						this.lastScreenCapture.createdAt
+					).fromNow(),
 				});
 			}
 		}
@@ -709,9 +719,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			organizationContactId: this.organizationContactId,
 			aw: {
 				host: this.defaultAwAPI,
-				isAw: this.aw
+				isAw: this.aw,
 			},
-			timeLog: timeLog
+			timeLog: timeLog,
 		});
 		this.electronService.ipcRenderer.send('request_permission');
 		this.loading = false;
@@ -719,13 +729,13 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 	stopTimer() {
 		this.electronService.ipcRenderer.send('stop_timer', {
-			quitApp: this.quitApp
+			quitApp: this.quitApp,
 		});
 		this.electronService.ipcRenderer.send('update_tray_stop');
 		this.timeRun.next({
 			second: '00',
 			minute: '00',
-			hours: '00'
+			hours: '00',
 		});
 		this.start$.next(false);
 		this.loading = false;
@@ -761,7 +771,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		if (this.start) {
 			this.open(dialog, {
 				type: this.dialogType.changeClient.name,
-				val: item
+				val: item,
 			});
 		} else {
 			await this.selectClient(item);
@@ -772,13 +782,13 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		this.organizationContactId = item;
 		this.argFromMain.organizationContactId = item;
 		this.electronService.ipcRenderer.send('update_project_on', {
-			organizationContactId: this.organizationContactId
+			organizationContactId: this.organizationContactId,
 		});
 		if (item) {
 			this._projects$.next(
 				await this.timeTrackerService.getProjects({
 					...this.argFromMain,
-					organizationContactId: this.organizationContactId
+					organizationContactId: this.organizationContactId,
 				})
 			);
 			this._tasks$.next([]);
@@ -795,19 +805,19 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	async setProject(item) {
 		this.projectSelect = item;
 		this.electronService.ipcRenderer.send('update_project_on', {
-			projectId: this.projectSelect
+			projectId: this.projectSelect,
 		});
 		if (item) {
 			const res = await this.timeTrackerService.getTasks({
 				...this.argFromMain,
-				projectId: this.projectSelect
+				projectId: this.projectSelect,
 			});
 			this._tasks$.next(res || []);
 			this.taskSelect = null;
 			this.errors.project = false;
 		} else {
 			const res = await this.timeTrackerService.getTasks({
-				...this.argFromMain
+				...this.argFromMain,
 			});
 			this._tasks$.next(res || []);
 		}
@@ -817,7 +827,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	setTask(item) {
 		this.taskSelect = item;
 		this.electronService.ipcRenderer.send('update_project_on', {
-			taskId: this.taskSelect
+			taskId: this.taskSelect,
 		});
 		if (item) this.errors.task = false;
 	}
@@ -825,7 +835,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	descriptionChange(e) {
 		if (e) this.errors.note = false;
 		this.electronService.ipcRenderer.send('update_project_on', {
-			note: this.note
+			note: this.note,
 		});
 	}
 
@@ -834,12 +844,12 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			this.aw$.next(true);
 			this.electronService.ipcRenderer.send('set_tp_aw', {
 				host: this.defaultAwAPI,
-				isAw: true
+				isAw: true,
 			});
 		} else {
 			this.electronService.ipcRenderer.send('set_tp_aw', {
 				host: this.defaultAwAPI,
-				isAw: false
+				isAw: false,
 			});
 			this.aw$.next(false);
 		}
@@ -885,7 +895,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			task: 'requireTask',
 			project: 'requireProject',
 			client: 'requireClient',
-			note: 'requireDescription'
+			note: 'requireDescription',
 		};
 		Object.keys(this.errors).forEach((key) => {
 			if (this.errors[key] && this.userOrganization[requireField[key]])
@@ -915,7 +925,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 		return {
 			width: Math.floor(maxDimension * window.devicePixelRatio),
-			height: Math.floor(maxDimension * window.devicePixelRatio)
+			height: Math.floor(maxDimension * window.devicePixelRatio),
 		};
 	}
 
@@ -937,23 +947,26 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				.hours();
 			this.todayDuration$.next({
 				hours: this.formatingDuration('hours', hours),
-				minutes: this.formatingDuration('minutes', minutes)
+				minutes: this.formatingDuration('minutes', minutes),
 			});
 			this.weeklyDuration$.next({
 				minutes: this.formatingDuration(
-					'hours',
+					'minutes',
 					moment.duration(count.weekDuration, 'seconds').minutes()
 				),
 				hours: this.formatingDuration(
-					'minutes',
-					Math.floor(
-						moment.duration(count.weekDuration, 'seconds').asHours()
+					'hours',
+					parseInt(
+						moment
+							.duration(count.weekDuration, 'seconds')
+							.format('h'),
+						10
 					)
-				)
+				),
 			});
 			this.electronService.ipcRenderer.send('update_tray_time_update', {
 				minutes: this.todayDuration$.getValue().minutes,
-				hours: this.todayDuration$.getValue().hours
+				hours: this.todayDuration$.getValue().hours,
 			});
 			if (!this.start) {
 				this._lastTotalWorkedTime = count.todayDuration;
@@ -962,7 +975,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					{
 						timeRun: moment
 							.duration(this._lastTotalWorkedTime, 'seconds')
-							.format('hh:mm:ss', { trim: false })
+							.format('hh:mm:ss', { trim: false }),
 					}
 				);
 			}
@@ -1007,7 +1020,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						...this.lastScreenCapture,
 						textTime: moment(
 							this.lastScreenCapture.createdAt
-						).fromNow()
+						).fromNow(),
 					});
 				} else {
 					this.lastScreenCapture$.next({});
@@ -1029,7 +1042,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					fullUrl: convScreenshot,
 					textTime: moment().fromNow(),
 					createdAt: Date.now(),
-					recordedAt: Date.now()
+					recordedAt: Date.now(),
 				})
 			);
 		} catch (error) {}
@@ -1047,7 +1060,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				...this.lastScreenCapture,
 				fullUrl: this.sanitize.bypassSecurityTrustUrl(
 					localLastScreenCapture.fullUrl
-				)
+				),
 			});
 		}
 	}
@@ -1070,7 +1083,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						inactivityTimeLimit:
 							res.employee.organization.inactivityTimeLimit,
 						allowTrackInactivity:
-							res.employee.organization.allowTrackInactivity
+							res.employee.organization.allowTrackInactivity,
 					}
 				);
 				this.isTrackingEnabled =
@@ -1092,7 +1105,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		this.selectedTimeSlot = this.lastTimeSlot;
 		this.dialogService
 			.open(dialog, {
-				context: this.dialogType[option.type].message
+				context: this.dialogType[option.type].message,
 			})
 			.onClose.subscribe(async (selectedOption) => {
 				if (selectedOption) {
@@ -1117,7 +1130,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		this.timeTrackerService
 			.deleteTimeSlot({
 				...this.argFromMain,
-				timeSlotId: this.selectedTimeSlot.id
+				timeSlotId: this.selectedTimeSlot.id,
 			})
 			.then((res) => {
 				this.getLastTimeSlotImage(this.argFromMain);
@@ -1130,7 +1143,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			.catch((e) => {
 				console.log('error on delete', e);
 				this.toastrService.show(`${e.statusText}`, `Warning`, {
-					status: 'danger'
+					status: 'danger',
 				});
 			});
 	}
@@ -1178,8 +1191,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				[
 					{
 						field: 'title',
-						search: query
-					}
+						search: query,
+					},
 				],
 				false
 			);
@@ -1194,12 +1207,12 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		if (isThumb)
 			thumbSize = {
 				width: 320,
-				height: 240
+				height: 240,
 			};
 		return this.electronService.desktopCapturer
 			.getSources({
 				types: ['screen'],
-				thumbnailSize: thumbSize
+				thumbnailSize: thumbSize,
 			})
 			.then((sources) => {
 				const screens = [];
@@ -1217,14 +1230,14 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 							screens.push({
 								img: source.thumbnail.toPNG(),
 								name: source.name,
-								id: source.display_id
+								id: source.display_id,
 							});
 						}
 					} else {
 						screens.push({
 							img: source.thumbnail.toPNG(),
 							name: source.name,
-							id: source.display_id
+							id: source.display_id,
 						});
 					}
 				});
@@ -1272,7 +1285,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		return this.mappingActivities(arg, [
 			...windowEvents,
 			...chromeEvent,
-			...firefoxEvent
+			...firefoxEvent,
 		]);
 	}
 
@@ -1289,7 +1302,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				organizationContactId: arg.organizationContactId,
 				organizationId: arg.organizationId,
 				employeeId: arg.employeeId,
-				source: 'DESKTOP'
+				source: 'DESKTOP',
 			};
 		});
 	}
@@ -1360,7 +1373,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			token: arg.token,
 			isAw: arg.isAw,
 			isAwConnected: arg.isAwConnected,
-			version: arg.version
+			version: arg.version,
 		};
 
 		try {
@@ -1372,15 +1385,15 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				timerId: arg.timerId,
 				timeSlotId: resActivities.id,
 				quitApp: arg.quitApp,
-				timeLogs: timeLogs
+				timeLogs: timeLogs,
 			});
 			this.electronService.ipcRenderer.send('remove_aw_local_data', {
-				idsAw: arg.idsAw
+				idsAw: arg.idsAw,
 			});
 			this.electronService.ipcRenderer.send(
 				'remove_wakatime_local_data',
 				{
-					idsWakatime: arg.idsWakatime
+					idsWakatime: arg.idsWakatime,
 				}
 			);
 
@@ -1404,11 +1417,11 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					b64Imgs: screenshotImg.map((img) => {
 						return {
 							b64img: this.buffToB64(img),
-							fileName: this.fileNameFormat(img)
+							fileName: this.fileNameFormat(img),
 						};
-					})
+					}),
 				}),
-				message: error.message
+				message: error.message,
 			});
 
 			this.electronService.ipcRenderer.send('failed_synced_timeslot', {
@@ -1417,10 +1430,10 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					b64Imgs: screenshotImg.map((img) => {
 						return {
 							b64img: this.buffToB64(img),
-							fileName: this.fileNameFormat(img)
+							fileName: this.fileNameFormat(img),
 						};
-					})
-				}
+					}),
+				},
 			});
 		}
 	}
@@ -1444,7 +1457,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				{ ...arg, timeSlotId },
 				{
 					b64Img: b64img,
-					fileName: fileName
+					fileName: fileName,
 				}
 			);
 			this.getLastTimeSlotImage({ ...arg, timeSlotId });
@@ -1455,10 +1468,10 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					...arg,
 					b64img: b64img,
 					fileName: fileName,
-					timeSlotId
+					timeSlotId,
 				}),
 				message: error.message,
-				type: 'screenshot'
+				type: 'screenshot',
 			});
 		}
 	}
@@ -1533,19 +1546,19 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	callbackNewTask(e) {
 		if (e.isSuccess) {
 			this.toastrService.show(e.message, `Success`, {
-				status: 'success'
+				status: 'success',
 			});
 			this.electronService.ipcRenderer.send('refresh-timer');
 		} else {
 			this.toastrService.show(e.message, `Warning`, {
-				status: 'danger'
+				status: 'danger',
 			});
 		}
 	}
 
 	showErrorMessage(msg) {
 		this.toastrService.show(`${msg}`, `Warning`, {
-			status: 'danger'
+			status: 'danger',
 		});
 	}
 
@@ -1560,7 +1573,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				"Your can't run timer for the moment",
 				`Warning`,
 				{
-					status: 'danger'
+					status: 'danger',
 				}
 			);
 			isPassed = false;
@@ -1577,7 +1590,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					'Your are not authorized to work',
 					`Warning`,
 					{
-						status: 'danger'
+						status: 'danger',
 					}
 				);
 			}
@@ -1590,7 +1603,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					'Your account it already deleted',
 					`Warning`,
 					{
-						status: 'danger'
+						status: 'danger',
 					}
 				);
 			}
@@ -1633,5 +1646,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 	public toggle(event: boolean) {
 		this._isOffline$.next(this._isOffline$.getValue());
+	}
+
+	public get inQueue$(): Observable<number> {
+		return this._inQueue$.asObservable();
 	}
 }

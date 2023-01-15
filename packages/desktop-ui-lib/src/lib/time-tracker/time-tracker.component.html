@@ -22,34 +22,35 @@
 							<div class="col-9 timer-box mt-2 pr-0 mb-2">
 								<div class="timer-container">
 									{{ (timeRun | async).hours }}:{{ (timeRun | async).minute }}:{{
-										(timeRun | async).second
+									(timeRun | async).second
 									}}
 								</div>
 								<div class="mt-3 d-flex justify-content-between">
 									<div>
-										<div class="work-today-duration">{{ (todayDuration$ | async)?.hours }}h {{ (todayDuration$ | async)?.minutes}}m</div>
+										<div class="work-today-duration">{{ (todayDuration$ | async)?.hours }}h {{
+											(todayDuration$ | async)?.minutes}}m</div>
 										<div class="work-today">Today</div>
 									</div>
 									<div>
-										<div class="work-weekly-duration">{{ (weeklyDuration$ | async)?.hours }}h {{ (weeklyDuration$ | async)?.minutes}}m</div>
+										<div class="work-weekly-duration">{{ (weeklyDuration$ | async)?.hours }}h {{
+											(weeklyDuration$ | async)?.minutes}}m</div>
 										<div class="work-weekly">This Week</div>
 									</div>
 								</div>
 							</div>
 							<div class="col-3 d-flex flex-column align-items-center">
 								<div>
-									<button nbButton status="success" *ngIf="!(start$ | async)" class="button-ghost" (click)="toggleStart(true)"
-										[disabled]="loading || !isTrackingEnabled">
-										<nb-icon class="start-button" icon="play"
-											pack="font-awesome"
+									<button nbButton status="success" *ngIf="!(start$ | async)" class="button-ghost"
+										(click)="toggleStart(true)" [disabled]="loading || !isTrackingEnabled">
+										<nb-icon class="start-button" icon="play" pack="font-awesome"
 											nbTooltip="Time tracker has been disabled"
 											[nbTooltipIcon]="{icon: 'alert-triangle-outline', pack: 'eva'}"
 											nbTooltipStatus="warning" [nbTooltipDisabled]="isTrackingEnabled"
 											nbTooltipPlacement="bottom">
 										</nb-icon>
 									</button>
-									<button nbButton status="danger" *ngIf="(start$ | async)" (click)="toggleStart(false)" [disabled]="loading"
-										class="button-ghost">
+									<button nbButton status="danger" *ngIf="(start$ | async)"
+										(click)="toggleStart(false)" [disabled]="loading" class="button-ghost">
 										<nb-icon class="start-button" icon="pause" pack="font-awesome">
 										</nb-icon>
 									</button>
@@ -65,8 +66,9 @@
 								<label>Client</label>
 								<ng-select [class]="
 										errors.client ? 'error-border' : ''
-									" [clearable]="true" placeholder="Client" [(ngModel)]="organizationContactId" [items]="organizationContacts$ | async"
-									bindValue="id" bindLabel="name" (ngModelChange)="setClient($event, dialog)">
+									" [clearable]="true" placeholder="Client" [(ngModel)]="organizationContactId"
+									[items]="organizationContacts$ | async" bindValue="id" bindLabel="name"
+									(ngModelChange)="setClient($event, dialog)">
 									<ng-template ng-option-tmp let-item="item" let-index="index">
 										<img *ngIf="item.imageUrl" [src]="item.imageUrl" width="20px" height="20px" />
 										<span>
@@ -75,7 +77,8 @@
 									</ng-template>
 									<ng-template ng-label-tmp let-item="item">
 										<div class="selector-template">
-											<img *ngIf="item.imageUrl" [src]="item.imageUrl" width="20px" height="20px" />
+											<img *ngIf="item.imageUrl" [src]="item.imageUrl" width="20px"
+												height="20px" />
 											<span>
 												{{ item?.name }}
 											</span>
@@ -87,8 +90,9 @@
 						<div class="row">
 							<div class="col-12 form-group">
 								<label>Project</label>
-								<ng-select [class]="errors.project ? 'error-border' : ''" [clearable]="true" placeholder="Project"
-									[(ngModel)]="projectSelect" [items]="projects$ | async" bindValue="id" bindLabel="name" (ngModelChange)="setProject($event)">
+								<ng-select [class]="errors.project ? 'error-border' : ''" [clearable]="true"
+									placeholder="Project" [(ngModel)]="projectSelect" [items]="projects$ | async"
+									bindValue="id" bindLabel="name" (ngModelChange)="setProject($event)">
 									<ng-template ng-option-tmp let-item="item" let-index="index">
 										<img *ngIf="item.imageUrl" [src]="item.imageUrl" width="20px" height="20px" />
 										<span>
@@ -97,7 +101,8 @@
 									</ng-template>
 									<ng-template ng-label-tmp let-item="item">
 										<div class="selector-template">
-											<img *ngIf="item.imageUrl" [src]="item.imageUrl" width="20px" height="20px" />
+											<img *ngIf="item.imageUrl" [src]="item.imageUrl" width="20px"
+												height="20px" />
 											<span>
 												{{ item?.name }}
 											</span>
@@ -225,12 +230,8 @@
 						</div>
 						<div class="row">
 							<div class="col-12 top-space-1 table-scroll-container table-max-height">
-								<ng2-smart-table 
-									#taskTable 
-									style="cursor: pointer"
-									[settings]="tableHeader" 
-									[source]="sourceData$ | async" 
-									(userRowSelect)="rowSelect($event)">
+								<ng2-smart-table #taskTable style="cursor: pointer" [settings]="tableHeader"
+									[source]="sourceData$ | async" (userRowSelect)="rowSelect($event)">
 								</ng2-smart-table>
 							</div>
 						</div>
@@ -251,6 +252,15 @@
 			<div class="state" [ngClass]="{offline: isOffline$ | async}"></div>
 			{{(isOffline$ | async)
 			? 'Offline' : 'Online'}}
+		</div>
+		<div *ngIf="(inQueue$ | async)?.queue === 0" class="ml-3 sync-container">
+			<nb-icon class="sync-check" size="tiny" status="success" icon="check-circle" pack="font-awesome"></nb-icon>
+		</div>
+		<div *ngIf="(inQueue$ | async)?.queue" class="ml-3 sync-container">
+			<nb-badge class="sync-badge" position="top right" size="small" status="info"
+				[text]="(inQueue$ | async)?.queue"></nb-badge>
+			<nb-icon size="tiny" class="sync" [ngClass]="{spin: (inQueue$ | async)?.isSyncing }" icon="sync-alt"
+				pack="font-awesome"></nb-icon>
 		</div>
 		<button #dialogOpenBtn (click)="
 				open(dialog, {

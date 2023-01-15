@@ -4,6 +4,7 @@
   min-height: 90%;
   margin-top: 0;
 }
+
 .timer-container {
   margin-left: -4px;
   color: var(--gauzy-text-color-1);
@@ -18,6 +19,7 @@
   align-items: flex-start;
   justify-content: flex-start;
   gap: 1rem;
+
   .task-table {
     flex-grow: 10;
   }
@@ -26,6 +28,7 @@
 .timer {
   min-width: 360px !important;
   width: auto;
+
   &.expanded {
     max-width: 360px !important;
   }
@@ -114,9 +117,11 @@
 :host {
   min-width: 200px;
   display: block;
+
   nb-select {
     max-width: none;
   }
+
   .multiple-select {
     width: 100%;
   }
@@ -174,7 +179,7 @@
   height: 160px;
 }
 
-.screen-capture-img:hover + .overlay-img,
+.screen-capture-img:hover+.overlay-img,
 .overlay-img:hover {
   display: block;
   margin: auto;
@@ -270,12 +275,12 @@ nb-card-body {
 
     nb-toggle {
       div.checked+span.text {
-          color: var(--text-primary-color) !important;
-        }
-      
-        .toggle-label {
-          margin-bottom: 0;
-        }
+        color: var(--text-primary-color) !important;
+      }
+
+      .toggle-label {
+        margin-bottom: 0;
+      }
     }
   }
 }
@@ -296,13 +301,7 @@ nb-card-body {
   border-radius: 0px !important;
 }
 
-::ng-deep
-  .nb-theme-default
-  ng2-smart-table
-  nav.ng2-smart-pagination-nav
-  .pagination
-  li
-  a {
+::ng-deep .nb-theme-default ng2-smart-table nav.ng2-smart-pagination-nav .pagination li a {
   padding: 0 1.25rem !important;
 }
 
@@ -311,37 +310,38 @@ nb-card-body {
 }
 
 ::ng-deep .page-link {
-	margin: auto !important;
+  margin: auto !important;
 }
 
 ::ng-deep .ng-select.ng-select-single .ng-select-container {
-	height: 30px;
+  height: 30px;
 }
 
 ::ng-deep textarea {
-	height: 90px;
+  height: 90px;
 }
 
 ::ng-deep nb-dialog-container {
-	display: flex;
-	justify-content: center;
+  display: flex;
+  justify-content: center;
 }
 
 nb-card.dialog {
-	background-color: var(--gauzy-card-1);
-	width: 90%;
+  background-color: var(--gauzy-card-1);
+  width: 90%;
 
-	nb-card-header {
-		background-color: var(--color-danger-default);
-		border-radius: var(--border-radius) var(--border-radius) 0 0;
-		color: var(--text-control-color);
-	}
+  nb-card-header {
+    background-color: var(--color-danger-default);
+    border-radius: var(--border-radius) var(--border-radius) 0 0;
+    color: var(--text-control-color);
+  }
 }
 
 $input-background-color: var(--gauzy-card-1);
 $height: 2rem;
 
 :host {
+
   ::ng-deep input,
   ::ng-deep nb-select.appearance-outline.status-basic .select-button,
   ::ng-deep .ng-select .ng-select-container {
@@ -351,16 +351,8 @@ $height: 2rem;
     min-height: unset;
   }
 
-  ::ng-deep
-    .ng-select.ng-select-multiple
-    .ng-select-container
-    .ng-value-container
-    .ng-placeholder,
-  ::ng-deep
-    .ng-select.ng-select-single
-    .ng-select-container
-    .ng-value-container
-    .ng-input {
+  ::ng-deep .ng-select.ng-select-multiple .ng-select-container .ng-value-container .ng-placeholder,
+  ::ng-deep .ng-select.ng-select-single .ng-select-container .ng-value-container .ng-input {
     top: unset !important;
   }
 
@@ -385,12 +377,13 @@ $height: 2rem;
     }
   }
 
-  ::ng-deep ng2-smart-table tbody tr.selected, ng2-smart-table tbody tr:hover {
-    background: var(--smart-table-bg-active)!important;
+  ::ng-deep ng2-smart-table tbody tr.selected,
+  ng2-smart-table tbody tr:hover {
+    background: var(--smart-table-bg-active) !important;
   }
 
   ::ng-deep ng2-smart-table tbody tr.selected {
-    box-shadow: 12.5px 0 0 -5px rgba(126,126,143,.05) inset!important;
+    box-shadow: 12.5px 0 0 -5px rgba(126, 126, 143, .05) inset !important;
   }
 }
 
@@ -399,40 +392,40 @@ $height: 2rem;
   background: var(--gauzy-card-2);
 }
 
-  // Project selector
+// Project selector
 
-  :host {
+:host {
 
-    .multiple-select {
-      width: 100%;
+  .multiple-select {
+    width: 100%;
+  }
+
+  ng-select {
+    .selector-template {
+      display: flex;
+      align-items: center;
+      height: 100%;
     }
-  
-    ng-select {
-      .selector-template {
-        display: flex;
-        align-items: center;
-        height: 100%;
-      }
-  
-      img {
-        margin-right: 5px;
-        border-radius: calc(var(--border-radius) * 2 / 3 );
-        box-shadow: var(--gauzy-shadow);
-      }
-    }
-  
-    ::ng-deep {
-      .ng-select .ng-select-container .ng-value-container {
-        align-items: center;
-        padding-left: 5px;
-      }
+
+    img {
+      margin-right: 5px;
+      border-radius: calc(var(--border-radius) * 2 / 3);
+      box-shadow: var(--gauzy-shadow);
     }
   }
-  
-  img{
-    object-fit: cover;
+
+  ::ng-deep {
+    .ng-select .ng-select-container .ng-value-container {
+      align-items: center;
+      padding-left: 5px;
+    }
   }
-  
+}
+
+img {
+  object-fit: cover;
+}
+
 .state-container {
   display: flex;
   align-items: center;
@@ -472,5 +465,41 @@ $height: 2rem;
       font-size: 12px;
       color: var(--gauzy-text-color-1);
     }
+  }
+}
+
+.sync-container {
+  display: flex;
+  align-items: center;
+  position: relative;
+
+  .sync {
+    color: var(--gauzy-text-color-2);
+    font-size: 14px;
+
+    &.spin {
+      animation: rotate 1s ease-in-out 0s infinite;
+    }
+  }
+
+  .sync-badge {
+    right: -16px;
+    font-size: 9px;
+    font-weight: 400;
+    padding: 1px 2px;
+  }
+}
+
+.sync-check {
+  font-size: 14px;
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
   }
 }
