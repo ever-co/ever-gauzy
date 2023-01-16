@@ -128,8 +128,12 @@ export function ipcMainHandler(
 		}
 		// check connectivity seven seconds after start
 		setTimeout(async () => {
-			await offlineMode.connectivity();
-			await countIntervalQueue(timeTrackerWindow, false);
+			try {
+				await offlineMode.connectivity();
+				await countIntervalQueue(timeTrackerWindow, false);
+			} catch (error) {
+				console.log('[ERROROFFLINECHECK001]', error);
+			}
 		}, 7000);
 	});
 

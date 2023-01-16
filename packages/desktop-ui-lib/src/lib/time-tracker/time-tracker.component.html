@@ -21,8 +21,8 @@
 						<div class="row d-flex justify-content-between">
 							<div class="col-9 timer-box mt-2 pr-0 mb-2">
 								<div class="timer-container">
-									{{ (timeRun | async).hours }}:{{ (timeRun | async).minute }}:{{
-									(timeRun | async).second
+									{{ (timeRun | async)?.hours }}:{{ (timeRun | async)?.minute }}:{{
+									(timeRun | async)?.second
 									}}
 								</div>
 								<div class="mt-3 d-flex justify-content-between">
@@ -77,7 +77,7 @@
 									</ng-template>
 									<ng-template ng-label-tmp let-item="item">
 										<div class="selector-template">
-											<img *ngIf="item.imageUrl" [src]="item.imageUrl" width="20px"
+											<img *ngIf="item.imageUrl" [src]="item?.imageUrl" width="20px"
 												height="20px" />
 											<span>
 												{{ item?.name }}
@@ -94,14 +94,14 @@
 									placeholder="Project" [(ngModel)]="projectSelect" [items]="projects$ | async"
 									bindValue="id" bindLabel="name" (ngModelChange)="setProject($event)">
 									<ng-template ng-option-tmp let-item="item" let-index="index">
-										<img *ngIf="item.imageUrl" [src]="item.imageUrl" width="20px" height="20px" />
+										<img *ngIf="item.imageUrl" [src]="item?.imageUrl" width="20px" height="20px" />
 										<span>
 											{{ item?.name }}
 										</span>
 									</ng-template>
 									<ng-template ng-label-tmp let-item="item">
 										<div class="selector-template">
-											<img *ngIf="item.imageUrl" [src]="item.imageUrl" width="20px"
+											<img *ngIf="item.imageUrl" [src]="item?.imageUrl" width="20px"
 												height="20px" />
 											<span>
 												{{ item?.name }}
@@ -166,12 +166,12 @@
 									</nb-card-header>
 									<nb-card-body class="max-card p-0">
 										<img class="screen-capture-img" *ngIf="
-										(lastScreenCapture$ | async).thumbUrl
+										(lastScreenCapture$ | async)?.thumbUrl
 											" [src]="
-											(lastScreenCapture$ | async).thumbUrl
+											(lastScreenCapture$ | async)?.thumbUrl
 											" (error)="updateImageUrl($event)" />
 										<nb-icon *ngIf="
-												!(lastScreenCapture$ | async).thumbUrl
+												!(lastScreenCapture$ | async)?.thumbUrl
 											" icon="image-outline" class="icon-img-size">
 										</nb-icon>
 										<div class="overlay-img">
@@ -224,7 +224,7 @@
 								<nb-form-field>
 									<nb-icon nbPrefix icon="search-outline"></nb-icon>
 									<input type="text" fullWidth nbInput placeholder="Search" #search
-										(keydown.enter)="onSearch(search.value)">
+										(keydown.enter)="onSearch(search?.value)">
 								</nb-form-field>
 							</div>
 						</div>
@@ -246,7 +246,7 @@
 		<button class="footer-button" nbButton ghost *ngIf="userData && userData.name" size="small"
 			(click)="openSetting()">
 			<nb-icon icon="settings-2-outline"></nb-icon>
-			{{ userData.name }}
+			{{ userData?.name }}
 		</button>
 		<div class="state-container" [ngClass]="{offline: isOffline$ | async}">
 			<div class="state" [ngClass]="{offline: isOffline$ | async}"></div>

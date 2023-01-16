@@ -29,12 +29,12 @@
 				<div class="col-12">
 					<div class="row monitors mb-3">
 						<div class="col-5" *ngFor="let item of monitorsOption">
-							<nb-card accent="{{ item.accent }}" status="primary">
+							<nb-card accent="{{ item?.accent }}" status="primary">
 								<nb-card-body class="center-card" (click)="selectMonitorOption(item)">
 									<div class="row">
 										<div class="col-12">
 											<nb-icon class="all-monitor_icon" icon="monitor-outline"
-												[status]="item.status">
+												[status]="item?.status">
 											</nb-icon>
 											<nb-icon *ngIf="item.value === 'all'" class="all-monitor_icon monitor-many"
 												icon="monitor-outline" [status]="item.status">
@@ -42,7 +42,7 @@
 										</div>
 										<div class="col-12">
 											<span [class]="
-												item.status === 'primary'
+												item?.status === 'primary'
 													? 'title-tile selected'
 													: 'title-tile'
 											">
@@ -51,11 +51,11 @@
 										</div>
 										<div class="col-12">
 											<span [class]="
-												item.status === 'primary'
+												item?.status === 'primary'
 													? 'subtitle-tile selected'
 													: 'subtitle-tile'
 											">
-												{{ item.subtitle }}
+												{{ item?.subtitle }}
 											</span>
 										</div>
 									</div>
@@ -301,8 +301,9 @@
 					<div class="col-10">
 						<nb-card>
 							<nb-card-body>
-								<nb-toggle [checked]="(prerelease$ | async)" (checkedChange)="togglePrerelease($event)" status="basic"
-									[disabled]="appSetting?.timerStarted || showProgressBar">Allow prerelease versions
+								<nb-toggle [checked]="(prerelease$ | async)" (checkedChange)="togglePrerelease($event)"
+									status="basic" [disabled]="appSetting?.timerStarted || showProgressBar">Allow
+									prerelease versions
 								</nb-toggle>
 							</nb-card-body>
 						</nb-card>
@@ -561,13 +562,13 @@
 										<div class="row">
 											<div class="col-12">
 												<p class="subtitle-tile third-party-item"><i
-														[class]="('fab fa-'+item.title)|lowercase"></i>{{item.title}}
+														[class]="('fab fa-'+item?.title)|lowercase"></i>{{item?.title}}
 												</p>
 											</div>
 											<div class="col-12" *ngFor="let field of item.fields">
 												<div class="row">
 													<div class="col-5 centered-text">
-														<p>{{field.name.replaceAll('_', ' ')}}</p>
+														<p>{{field?.name.replaceAll('_', ' ')}}</p>
 													</div>
 													<div class="col-7 form-group">
 														<input [(ngModel)]="field.value" type="text" nbInput fullWidth
