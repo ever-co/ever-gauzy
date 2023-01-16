@@ -66,7 +66,7 @@ export const createDefaultTask = async (
 
 	let count = 0;
 	for await (const issue of issues) {
-		let status = TaskStatusEnum.TODO;
+		let status = TaskStatusEnum.OPEN;
 		if (issue.state === 'open') {
 			status = TaskStatusEnum.IN_PROGRESS;
 		}
@@ -165,7 +165,7 @@ export const createRandomTask = async (
 			let count = 0;
 
 			for await (const issue of issues) {
-				let status = TaskStatusEnum.TODO;
+				let status = TaskStatusEnum.OPEN;
 				if (issue.state === 'open') {
 					status = TaskStatusEnum.IN_PROGRESS;
 				}

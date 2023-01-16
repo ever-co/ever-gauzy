@@ -37,11 +37,16 @@ export interface IGetTaskByEmployeeOptions extends IBaseRelationsEntityModel {
 
 export interface IGetSprintsOptions extends IGetTaskOptions {}
 
+/**
+ * Default task statuses
+ */
 export enum TaskStatusEnum {
-	TODO = 'TODO',
-	IN_PROGRESS = 'In Progress',
-	FOR_TESTING = 'For Testing',
-	COMPLETED = 'Completed'
+	OPEN = 'OPEN',
+	IN_PROGRESS = 'IN_PROGRESS',
+	READY_FOR_REVIEW = 'READY_FOR_REVIEW',
+	IN_REVIEW = 'IN_REVIEW',
+	COMPLETED = 'COMPLETED',
+	BLOCKED = 'BLOCKED',
 }
 
 export enum TaskParticipantEnum {
