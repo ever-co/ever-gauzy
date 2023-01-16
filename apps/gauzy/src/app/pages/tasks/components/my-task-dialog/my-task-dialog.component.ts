@@ -109,7 +109,7 @@ export class MyTaskDialogComponent extends TranslationBaseComponent
 			title: [title, Validators.required],
 			project: [project],
 			projectId: (project) ? project.id : null,
-			status: [status ? status : TaskStatusEnum.TODO],
+			status: [status ? status : TaskStatusEnum.OPEN],
 			members: [members],
 			estimateDays: [duration.days() || ''],
 			estimateHours: [

@@ -69,7 +69,7 @@ export class AddTaskDialogComponent extends TranslationBaseComponent implements 
 			title: [null, Validators.required],
 			project: [],
 			projectId: [],
-			status: [TaskStatusEnum.TODO, Validators.required],
+			status: [TaskStatusEnum.OPEN, Validators.required],
 			members: [],
 			estimateDays: [],
 			estimateHours: [null, [Validators.min(0), Validators.max(23)]],
