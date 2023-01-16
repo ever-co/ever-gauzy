@@ -66,10 +66,6 @@ export const createDefaultTask = async (
 
 	let count = 0;
 	for await (const issue of issues) {
-		let status = TaskStatusEnum.OPEN;
-		if (issue.state === 'open') {
-			status = TaskStatusEnum.IN_PROGRESS;
-		}
 		const project = faker.random.arrayElement(defaultProjects);
 		const maxTaskNumber = await getMaxTaskNumberByProject(dataSource, {
 			tenantId: tenant.id,
@@ -83,7 +79,7 @@ export const createDefaultTask = async (
 		task.organization = organization;
 		task.title = issue.title;
 		task.description = issue.body;
-		task.status = status;
+		task.status = TaskStatusEnum.OPEN;
 		task.estimate = null;
 		task.dueDate = faker.date.future(0.3);
 		task.project = project;
@@ -165,10 +161,6 @@ export const createRandomTask = async (
 			let count = 0;
 
 			for await (const issue of issues) {
-				let status = TaskStatusEnum.OPEN;
-				if (issue.state === 'open') {
-					status = TaskStatusEnum.IN_PROGRESS;
-				}
 				const project = faker.random.arrayElement(projects);
 				const maxTaskNumber = await getMaxTaskNumberByProject(dataSource, {
 					tenantId: tenant.id,
@@ -180,7 +172,7 @@ export const createRandomTask = async (
 				task.tags = filter(tags, (tag: ITag) => !!issue.labels.find((label: any) => label.name === tag.name));
 				task.title = issue.title;
 				task.description = issue.body;
-				task.status = status;
+				task.status = TaskStatusEnum.OPEN;
 				task.estimate = null;
 				task.dueDate = null;
 				task.project = project;

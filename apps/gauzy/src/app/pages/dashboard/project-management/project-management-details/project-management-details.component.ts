@@ -209,7 +209,7 @@ export class ProjectManagementDetailsComponent extends PaginationFilterBaseCompo
 
 	public get assigned(): ITask[] {
 		return this.tasks
-			.filter(({ status }) => status === this.status.TODO)
+			.filter(({ status }) => status === this.status.OPEN)
 			.reverse();
 	}
 
@@ -224,7 +224,7 @@ export class ProjectManagementDetailsComponent extends PaginationFilterBaseCompo
 					selectedTask: this.selectedEmployeeId
 						? ({
 								members: [{ ...this._selectedEmployee }] as any,
-								status: this.status.TODO
+								status: this.status.OPEN
 						  } as ITask)
 						: ({} as ITask)
 				}

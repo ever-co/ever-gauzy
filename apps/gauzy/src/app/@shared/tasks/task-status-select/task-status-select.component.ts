@@ -27,21 +27,29 @@ export class TaskStatusSelectComponent extends TranslationBaseComponent implemen
 
 	statuses: Array<{ label: string, value: TaskStatusEnum}> = [
 		{
-			label: this.getTranslation('TASKS_PAGE.TODO'),
-			value: TaskStatusEnum.TODO
+			label: this.getTranslation('TASKS_PAGE.OPEN'),
+			value: TaskStatusEnum.OPEN
 		},
 		{
 			label: this.getTranslation('TASKS_PAGE.IN_PROGRESS'),
 			value: TaskStatusEnum.IN_PROGRESS
 		},
 		{
-			label: this.getTranslation('TASKS_PAGE.FOR_TESTING'),
-			value: TaskStatusEnum.FOR_TESTING
+			label: this.getTranslation('TASKS_PAGE.READY_FOR_REVIEW'),
+			value: TaskStatusEnum.READY_FOR_REVIEW
+		},
+		{
+			label: this.getTranslation('TASKS_PAGE.IN_REVIEW'),
+			value: TaskStatusEnum.IN_REVIEW
 		},
 		{
 			label: this.getTranslation('TASKS_PAGE.COMPLETED'),
 			value: TaskStatusEnum.COMPLETED
-		}
+		},
+		{
+			label: this.getTranslation('TASKS_PAGE.BLOCKED'),
+			value: TaskStatusEnum.BLOCKED
+		},
 	];
 
 	/*
