@@ -1,21 +1,21 @@
 {
     "recommendations": [
-        "HTMLHint.vscode-htmlhint",
-        "ms-vscode.vscode-typescript-tslint-plugin",
-        "jondot.vscode-hygen",
+        "streetsidesoftware.code-spell-checker",
+        "esbenp.prettier-vscode",
+        "AquaSecurityOfficial.trivy-vulnerability-scanner",
         "MS-CST-E.vscode-devskim",
-        "firsttris.vscode-jest-runner",
+        "folke.vscode-monorepo-workspace",
         "dbaeumer.vscode-eslint",
+        "firsttris.vscode-jest-runner",
+        "HTMLHint.vscode-htmlhint",
         "Bridgecrew.checkov",
         "nrwl.angular-console",
-        "angular.ng-template",
-        "esbenp.prettier-vscode",
-        "folke.vscode-monorepo-workspace",
         "monosans.djlint",
         "vscode-icons-team.vscode-icons",
-        "seatonjiang.gitmoji-vscode",
         "DeepScan.vscode-deepscan",
-        "AquaSecurityOfficial.trivy-vulnerability-scanner",
-        "streetsidesoftware.code-spell-checker"
+        "ms-vscode.vscode-typescript-tslint-plugin",
+        "seatonjiang.gitmoji-vscode",
+        "angular.ng-template",
+        "jondot.vscode-hygen"
     ]
 }
