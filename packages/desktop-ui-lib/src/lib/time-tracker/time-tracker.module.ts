@@ -21,12 +21,13 @@ import {
 	NbToastrService,
 	NbFormFieldModule,
 	NbTooltipModule,
-	NbBadgeModule
+	NbBadgeModule,
 } from '@nebular/theme';
 import { NbEvaIconsModule } from '@nebular/eva-icons';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TasksModule } from '../tasks/tasks.module';
+import { PaginationModule } from './pagination/pagination.module';
 
 @NgModule({
 	declarations: [TimeTrackerComponent, CustomRenderComponent],
@@ -52,14 +53,15 @@ import { TasksModule } from '../tasks/tasks.module';
 		NbTooltipModule,
 		TasksModule,
 		NbToggleModule,
-		NbBadgeModule
+		NbBadgeModule,
+		PaginationModule,
 	],
 	providers: [
 		NbSidebarService,
 		TimeTrackerService,
 		NbDialogService,
-		NbToastrService
+		NbToastrService,
 	],
-	exports: [TimeTrackerComponent]
+	exports: [TimeTrackerComponent],
 })
 export class TimeTrackerModule {}

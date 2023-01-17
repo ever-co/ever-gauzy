@@ -225,6 +225,7 @@
 
   p {
     font-size: 14px;
+    font-weight: 400;
   }
 
   .monitors,
@@ -250,6 +251,7 @@
       div.checked+span.text {
         color: var(--text-primary-color) !important;
       }
+
       .toggle-label {
         margin-bottom: 0;
       }
@@ -257,7 +259,7 @@
   }
 }
 
-.file{
+.file {
   gap: 5px;
 }
 

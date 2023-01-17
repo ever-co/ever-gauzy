@@ -152,6 +152,11 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		hideSubHeader: true,
 		actions: false,
 		noDataMessage: 'No Tasks Found',
+		pager: {
+			display: true,
+			perPage: 10,
+			page: 1,
+		},
 	};
 	tableData = [];
 	private _sourceData$: BehaviorSubject<LocalDataSource>;

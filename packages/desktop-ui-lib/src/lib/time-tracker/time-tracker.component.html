@@ -214,8 +214,8 @@
 					<nb-card-body>
 						<div class="row">
 							<div class="col-12 search">
-								<button nbButton class="mb-2" status="success" size="small" (click)="addTask()">
-									<nb-icon icon="plus-outline"></nb-icon>Add
+								<button nbButton class="mb-2" status="success" (click)="addTask()">
+									<nb-icon icon="plus" pack="font-awesome"></nb-icon>Add
 								</button>
 							</div>
 						</div>
@@ -229,10 +229,16 @@
 							</div>
 						</div>
 						<div class="row">
-							<div class="col-12 top-space-1 table-scroll-container table-max-height">
-								<ng2-smart-table #taskTable style="cursor: pointer" [settings]="tableHeader"
-									[source]="sourceData$ | async" (userRowSelect)="rowSelect($event)">
-								</ng2-smart-table>
+							<div class="col-12 custom-table">
+								<div class="table-scroll-container">
+									<ng2-smart-table #taskTable style="cursor: pointer" [settings]="tableHeader"
+										[source]="sourceData$ | async" (userRowSelect)="rowSelect($event)">
+									</ng2-smart-table>
+								</div>
+								<div class="pagination-container">
+									<ga-pagination [source]="sourceData$ | async"
+										[perPageSelect]="[5, 10, 25, 50, 100]"></ga-pagination>
+								</div>
 							</div>
 						</div>
 					</nb-card-body>
@@ -260,7 +266,7 @@
 			<nb-badge class="sync-badge" position="top right" size="small" status="info"
 				[text]="(inQueue$ | async)?.queue"></nb-badge>
 			<nb-icon size="tiny" class="sync" [ngClass]="{spin: (inQueue$ | async)?.isSyncing }" icon="sync-alt"
-				pack="font-awesome"></nb-icon>
+				pack="font-awesome" (click)="refresh()"></nb-icon>
 		</div>
 		<button #dialogOpenBtn (click)="
 				open(dialog, {

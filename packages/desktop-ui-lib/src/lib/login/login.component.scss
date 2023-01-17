@@ -49,6 +49,7 @@
 					letter-spacing: 0em;
 					margin-bottom: 18px;
 					text-align: start;
+					color: var(--gauzy-text-color-1);
 				}
 
 				& .sub-title {
@@ -60,6 +61,7 @@
 					letter-spacing: 0em;
 					margin-bottom: 26px;
 					text-align: start;
+					color: var(--gauzy-text-color-2);
 				}
 			}
 		}
@@ -429,5 +431,10 @@
 
 	nb-auth-block {
 		height: 100%;
+	}
+
+	label {
+		color: var(--gauzy-text-color-2) !important;
+		font-weight: 600 !important;
 	}
 }
