@@ -413,7 +413,7 @@ export class TaskComponent extends PaginationFilterBaseComponent
 				status: {
 					title: this.getTranslation('TASKS_PAGE.TASKS_STATUS'),
 					type: 'custom',
-					width: '5%',
+					width: '10%',
 					renderComponent: StatusViewComponent,
 					filter: {
 						type: 'custom',
