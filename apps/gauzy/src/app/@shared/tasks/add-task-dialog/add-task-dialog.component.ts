@@ -32,10 +32,9 @@ import {
 	templateUrl: './add-task-dialog.component.html',
 	styleUrls: ['./add-task-dialog.component.scss'],
 })
-export class AddTaskDialogComponent
-	extends TranslationBaseComponent
-	implements OnInit
-{
+export class AddTaskDialogComponent extends TranslationBaseComponent
+	implements OnInit {
+
 	employees: IEmployee[] = [];
 	teams: IOrganizationTeam[] = [];
 	selectedMembers: string[] = [];

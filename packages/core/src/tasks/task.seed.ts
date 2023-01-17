@@ -192,7 +192,8 @@ export const createRandomTask = async (
 				task.number = maxTaskNumber + 1;
 				task.teams = [faker.random.arrayElement(teams)];
 				task.creator = faker.random.arrayElement(users);
-				(task.organization = organization), (task.tenant = tenant);
+				task.organization = organization;
+				task.tenant = tenant;
 
 				if (count % 2 === 0) {
 					task.members = faker.random.arrayElements(employees, 5);
