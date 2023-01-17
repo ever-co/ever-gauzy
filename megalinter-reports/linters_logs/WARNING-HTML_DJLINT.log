@@ -1,0 +1,71 @@
+Results of djlint linter (version 1.19.11)
+See documentation on https://megalinter.io/6.18.0/descriptors/html_djlint/
+-----------------------------------------------
+
+❌ [ERROR] for workspace /github/workspace
+Linter raw log:
+
+Linting 0/4 files ┈┈┈┈┈┈┈┈┈┈ 00:00    Linting 1/4 files ━━┈┈┈┈┈┈┈┈ 00:00    Linting 2/4 files ━━━━━┈┈┈┈┈ 05:39    Linting 3/4 files ━━━━━━━┈┈┈ 06:07    Linting 4/4 files ━━━━━━━━━━ 09:54                                          Linting 4/4 files ━━━━━━━━━━ 09:54    Linting 4/4 files ━━━━━━━━━━ 09:54    
+
+
+apps/gauzy/src/app/@shared/table-components/status-view/status-view.component.html
+───────────────────────────────────────────────────────────────────────────────
+H025 1:108 Tag seems to be an orphan. </nb-badge>
+
+megalinter-reports/copy-paste/html/index.html
+───────────────────────────────────────────────────────────────────────────────
+H030 1:15 Consider adding a meta description. <html lang="en"><hea
+H031 1:15 Consider adding meta keywords. <html lang="en"><hea
+H017 1:37 Tag should be self closing. <meta charset="utf-8
+H017 1:59 Tag should be self closing. <meta http-equiv="X-
+H017 1:112 Tag should be self closing. <meta name="viewport
+H017 1:566 Tag should be self closing. <link rel="icon" typ
+H017 1:649 Tag should be self closing. <link rel="manifest"
+H017 1:691 Tag should be self closing. <meta name="theme-co
+H017 1:734 Tag should be self closing. <meta name="apple-mo
+H017 1:789 Tag should be self closing. <meta name="apple-mo
+H017 1:858 Tag should be self closing. <meta name="apple-mo
+H017 1:916 Tag should be self closing. <link rel="apple-tou
+H017 1:991 Tag should be self closing. <link rel="mask-icon
+H017 1:1068 Tag should be self closing. <meta name="msapplic
+H017 1:1156 Tag should be self closing. <meta name="msapplic
+
+megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/index.html
+───────────────────────────────────────────────────────────────────────────────
+H030 1:15 Consider adding a meta description. <html lang="en"><hea
+H031 1:15 Consider adding meta keywords. <html lang="en"><hea
+H017 1:37 Tag should be self closing. <meta charset="utf-8
+H017 1:59 Tag should be self closing. <meta http-equiv="X-
+H017 1:112 Tag should be self closing. <meta name="viewport
+H017 1:566 Tag should be self closing. <link rel="icon" typ
+H017 1:649 Tag should be self closing. <link rel="manifest"
+H017 1:691 Tag should be self closing. <meta name="theme-co
+H017 1:734 Tag should be self closing. <meta name="apple-mo
+H017 1:789 Tag should be self closing. <meta name="apple-mo
+H017 1:858 Tag should be self closing. <meta name="apple-mo
+H017 1:916 Tag should be self closing. <link rel="apple-tou
+H017 1:991 Tag should be self closing. <link rel="mask-icon
+H017 1:1068 Tag should be self closing. <meta name="msapplic
+H017 1:1156 Tag should be self closing. <meta name="msapplic
+
+megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/index.html
+───────────────────────────────────────────────────────────────────────────────
+H030 1:15 Consider adding a meta description. <html lang="en"><hea
+H031 1:15 Consider adding meta keywords. <html lang="en"><hea
+H017 1:37 Tag should be self closing. <meta charset="utf-8
+H017 1:59 Tag should be self closing. <meta http-equiv="X-
+H017 1:112 Tag should be self closing. <meta name="viewport
+H017 1:566 Tag should be self closing. <link rel="icon" typ
+H017 1:649 Tag should be self closing. <link rel="manifest"
+H017 1:691 Tag should be self closing. <meta name="theme-co
+H017 1:734 Tag should be self closing. <meta name="apple-mo
+H017 1:789 Tag should be self closing. <meta name="apple-mo
+H017 1:858 Tag should be self closing. <meta name="apple-mo
+H017 1:916 Tag should be self closing. <link rel="apple-tou
+H017 1:991 Tag should be self closing. <link rel="mask-icon
+H017 1:1068 Tag should be self closing. <meta name="msapplic
+H017 1:1156 Tag should be self closing. <meta name="msapplic
+
+Linted 4 files, found 46 errors.
+
+

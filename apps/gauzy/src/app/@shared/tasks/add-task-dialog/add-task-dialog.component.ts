@@ -8,7 +8,7 @@ import {
 	TaskParticipantEnum,
 	IOrganization,
 	TaskStatusEnum,
-	ISelectedEmployee
+	ISelectedEmployee,
 } from '@gauzy/contracts';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
@@ -23,16 +23,17 @@ import {
 	EmployeesService,
 	OrganizationTeamsService,
 	Store,
-	TasksService
+	TasksService,
 } from '../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-add-task-dialog',
 	templateUrl: './add-task-dialog.component.html',
-	styleUrls: ['./add-task-dialog.component.scss']
+	styleUrls: ['./add-task-dialog.component.scss'],
 })
-export class AddTaskDialogComponent extends TranslationBaseComponent implements OnInit {
+export class AddTaskDialogComponent extends TranslationBaseComponent
+	implements OnInit {
 
 	employees: IEmployee[] = [];
 	teams: IOrganizationTeam[] = [];
@@ -46,8 +47,8 @@ export class AddTaskDialogComponent extends TranslationBaseComponent implements 
 	@Input() createTask = false;
 
 	/*
-	* Getter & Setter for task
-	*/
+	 * Getter & Setter for task
+	 */
 	_task: ITask;
 	get task(): ITask {
 		return this._task;
@@ -58,18 +59,16 @@ export class AddTaskDialogComponent extends TranslationBaseComponent implements 
 	}
 
 	/*
-	* Payment Mutation Form
-	*/
+	 * Payment Mutation Form
+	 */
 	public form: FormGroup = AddTaskDialogComponent.buildForm(this.fb);
-	static buildForm(
-		fb: FormBuilder
-	): FormGroup {
+	static buildForm(fb: FormBuilder): FormGroup {
 		return fb.group({
 			number: [{ value: '', disabled: true }],
 			title: [null, Validators.required],
 			project: [],
 			projectId: [],
-			status: [TaskStatusEnum.TODO, Validators.required],
+			status: [TaskStatusEnum.OPEN, Validators.required],
 			members: [],
 			estimateDays: [],
 			estimateHours: [null, [Validators.min(0), Validators.max(23)]],
@@ -77,7 +76,7 @@ export class AddTaskDialogComponent extends TranslationBaseComponent implements 
 			dueDate: [],
 			description: [],
 			tags: [],
-			teams: []
+			teams: [],
 		});
 	}
 
@@ -101,7 +100,10 @@ export class AddTaskDialogComponent extends TranslationBaseComponent implements 
 			.pipe(
 				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
-				tap((organization: IOrganization) => this.organization = organization),
+				tap(
+					(organization: IOrganization) =>
+						(this.organization = organization)
+				),
 				tap(() => this.loadEmployees()),
 				tap(() => this.loadTeams()),
 				tap(() => this.initializeForm()),
@@ -111,7 +113,9 @@ export class AddTaskDialogComponent extends TranslationBaseComponent implements 
 		storeEmployee$
 			.pipe(
 				distinctUntilChange(),
-				filter((employee: ISelectedEmployee) => !!employee && !!employee.id),
+				filter(
+					(employee: ISelectedEmployee) => !!employee && !!employee.id
+				),
 				tap((employee: ISelectedEmployee) => {
 					if (!this.task) {
 						this.selectedMembers.push(employee.id);
@@ -123,7 +127,9 @@ export class AddTaskDialogComponent extends TranslationBaseComponent implements 
 		storeProject$
 			.pipe(
 				distinctUntilChange(),
-				filter((project: IOrganizationProject) => !!project && !!project.id),
+				filter(
+					(project: IOrganizationProject) => !!project && !!project.id
+				),
 				tap((project: IOrganizationProject) => {
 					if (!this.task) {
 						this.form.get('project').setValue(project);
@@ -138,7 +144,17 @@ export class AddTaskDialogComponent extends TranslationBaseComponent implements 
 
 	initializeForm() {
 		if (this.selectedTask) {
-			const { description, dueDate, estimate, members, project, status, tags, teams, title } = this.selectedTask;
+			const {
+				description,
+				dueDate,
+				estimate,
+				members,
+				project,
+				status,
+				tags,
+				teams,
+				title,
+			} = this.selectedTask;
 			const duration = moment.duration(estimate, 'seconds');
 
 			this.selectedMembers = (members || []).map((member) => member.id);
@@ -151,7 +167,7 @@ export class AddTaskDialogComponent extends TranslationBaseComponent implements 
 			this.form.patchValue({
 				title,
 				project,
-				projectId: (project) ? project.id : null,
+				projectId: project ? project.id : null,
 				status,
 				estimateDays: duration.days(),
 				estimateHours: duration.hours(),
@@ -159,7 +175,7 @@ export class AddTaskDialogComponent extends TranslationBaseComponent implements 
 				dueDate: dueDate ? new Date(dueDate) : null,
 				description,
 				tags,
-				teams: this.selectedTeams
+				teams: this.selectedTeams,
 			});
 		}
 	}
@@ -168,16 +184,21 @@ export class AddTaskDialogComponent extends TranslationBaseComponent implements 
 		if (this.form.valid) {
 			this.form
 				.get('members')
-				.setValue((this.selectedMembers || []).map((id) => this.employees.find((e) => e.id === id)).filter((e) => !!e));
+				.setValue(
+					(this.selectedMembers || [])
+						.map((id) => this.employees.find((e) => e.id === id))
+						.filter((e) => !!e)
+				);
 			this.form
 				.get('teams')
-				.setValue((this.selectedTeams || []).map((id) => this.teams.find((e) => e.id === id)).filter((e) => !!e));
+				.setValue(
+					(this.selectedTeams || [])
+						.map((id) => this.teams.find((e) => e.id === id))
+						.filter((e) => !!e)
+				);
 
-			const {
-				estimateDays,
-				estimateHours,
-				estimateMinutes
-			} = this.form.value;
+			const { estimateDays, estimateHours, estimateMinutes } =
+				this.form.value;
 
 			const estimate =
 				estimateDays * 24 * 60 * 60 +
@@ -220,8 +241,9 @@ export class AddTaskDialogComponent extends TranslationBaseComponent implements 
 		const { items = [] } = await firstValueFrom(
 			this.employeesService.getAll(['user'], {
 				organizationId,
-				tenantId
-			}));
+				tenantId,
+			})
+		);
 		this.employees = items;
 	}
 
