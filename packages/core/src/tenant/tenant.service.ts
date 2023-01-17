@@ -12,8 +12,9 @@ import {
 	FileStorageProviderEnum
 } from '@gauzy/contracts';
 import { ConfigService, IEnvironment } from '@gauzy/config';
-import { TenantRoleBulkCreateCommand } from '../role/commands/tenant-role-bulk-create.command';
-import { TenantFeatureOrganizationCreateCommand } from './commands/tenant-feature-organization.create.command';
+import { TenantFeatureOrganizationCreateCommand } from './commands';
+import { TenantRoleBulkCreateCommand } from '../role/commands';
+import { TenantStatusBulkCreateCommand } from './../statuses/commands';
 import { ImportRecordUpdateOrCreateCommand } from './../export-import/import-record';
 import { Role, User } from './../core/entities/internal';
 import { TenantSettingSaveCommand } from './tenant-setting/commands';
@@ -36,20 +37,25 @@ export class TenantService extends CrudService<Tenant> {
 	): Promise<ITenant> {
 		const { isImporting = false, sourceId = null } = entity;
 
-		//1. Create Tenant of user.
+		// 1. Create Tenant of user.
 		const tenant = await this.create(entity);
 
-		//2. Create Role/Permissions to relative tenants.
+		// 2. Create Role/Permissions to relative tenants.
 		await this.commandBus.execute(
 			new TenantRoleBulkCreateCommand([tenant])
 		);
 
-		//3. Create Enabled/Disabled features for relative tenants.
+		// 3. Create Enabled/Disabled features for relative tenants.
 		await this.commandBus.execute(
 			new TenantFeatureOrganizationCreateCommand([tenant])
 		);
 
-		//4. Create tenant default file stoage setting (LOCAL)
+		// 4. Create Default task statuses for relative tenants.
+		await this.commandBus.execute(
+			new TenantStatusBulkCreateCommand([tenant])
+		);
+
+		// 5. Create tenant default file stoage setting (LOCAL)
 		const tenantId = tenant.id;
 		const fileSystem = this.configService.get('fileSystem') as IEnvironment['fileSystem'];
 		await this.commandBus.execute(
@@ -60,13 +66,13 @@ export class TenantService extends CrudService<Tenant> {
 			)
 		);
 
-		//4. Find SUPER_ADMIN role to relative tenant.
+		// 6. Find SUPER_ADMIN role to relative tenant.
 		const role = await this.roleRepository.findOneBy({
 			tenantId,
 			name: RolesEnum.SUPER_ADMIN
 		});
 
-		//5. Assign tenant and role to user.
+		// 7. Assign tenant and role to user.
 		await this.userRepository.update(user.id, {
 			tenant: {
 				id: tenant.id
@@ -76,7 +82,7 @@ export class TenantService extends CrudService<Tenant> {
 			}
 		});
 
-		//6. Create Import Records while migrating for relative tenant.
+		// 8. Create Import Records while migrating for relative tenant.
 		if (isImporting && sourceId) {
 			const { sourceId, userSourceId } = entity;
 			await this.commandBus.execute(
