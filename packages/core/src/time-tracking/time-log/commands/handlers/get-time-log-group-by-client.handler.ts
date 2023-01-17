@@ -1,13 +1,19 @@
 import { ICommandHandler, CommandHandler } from '@nestjs/cqrs';
 import { chain, pluck, reduce } from 'underscore';
 import * as moment from 'moment';
-import { IOrganizationContact, IReportDayGroupByClient, ITimeLog, ITimeSlot } from '@gauzy/contracts';
+import {
+	IOrganizationContact,
+	IReportDayGroupByClient,
+	ITimeLog,
+	ITimeSlot
+} from '@gauzy/contracts';
 import { GetTimeLogGroupByClientCommand } from '../get-time-log-group-by-client.command';
 import { ArraySum } from '@gauzy/common';
 
 @CommandHandler(GetTimeLogGroupByClientCommand)
 export class GetTimeLogGroupByClientHandler
-	implements ICommandHandler<GetTimeLogGroupByClientCommand> {
+	implements ICommandHandler<GetTimeLogGroupByClientCommand>
+{
 	constructor() {}
 
 	public async execute(
@@ -21,24 +27,33 @@ export class GetTimeLogGroupByClientHandler
 			)
 			.map((byClientLogs: ITimeLog[]) => {
 				/**
-				* calculate avarage duration for specific client.
-				*/
-				const avgDuration = reduce(pluck(byClientLogs, 'duration'), ArraySum, 0);
+				 * calculate average duration for specific client.
+				 */
+				const avgDuration = reduce(
+					pluck(byClientLogs, 'duration'),
+					ArraySum,
+					0
+				);
 				/**
-				* calculate average activity for specific client.
-				*/
-				const slots: ITimeSlot[] = chain(byClientLogs).pluck('timeSlots').flatten(true).value();
-				const avgActivity = (
-					(reduce(pluck(slots, 'overall'), ArraySum, 0) * 100) / 
-					(reduce(pluck(slots, 'duration'), ArraySum, 0))
-				) || 0;
-
+				 * calculate average activity for specific client.
+				 */
+				const slots: ITimeSlot[] = chain(byClientLogs)
+					.pluck('timeSlots')
+					.flatten(true)
+					.value();
+				const avgActivity =
+					(reduce(pluck(slots, 'overall'), ArraySum, 0) * 100) /
+						reduce(pluck(slots, 'duration'), ArraySum, 0) || 0;
 
 				const log = byClientLogs.length > 0 ? byClientLogs[0] : null;
 				let client: IOrganizationContact = null;
 				if (log && log.organizationContact) {
 					client = log.organizationContact;
-				} else if (log && log.project && log.project.organizationContact) {
+				} else if (
+					log &&
+					log.project &&
+					log.project.organizationContact
+				) {
 					client = log.project.organizationContact;
 				}
 
@@ -59,22 +74,39 @@ export class GetTimeLogGroupByClientHandler
 									.groupBy('employeeId')
 									.map((byEmployeeLogs: ITimeLog[]) => {
 										/**
-										* calculate avarage duration of the employee for specific date range.
-										*/
-										const sum = reduce(pluck(byEmployeeLogs, 'duration'), ArraySum, 0);
+										 * calculate average duration of the employee for specific date range.
+										 */
+										const sum = reduce(
+											pluck(byEmployeeLogs, 'duration'),
+											ArraySum,
+											0
+										);
 
 										/**
-										* calculate average activity of the employee for specific date range.
-										*/
-										const slots: ITimeSlot[] = chain(byEmployeeLogs).pluck('timeSlots').flatten(true).value();
+										 * calculate average activity of the employee for specific date range.
+										 */
+										const slots: ITimeSlot[] = chain(
+											byEmployeeLogs
+										)
+											.pluck('timeSlots')
+											.flatten(true)
+											.value();
 
 										/**
-										* Calculate Average activity of the employee
-										*/
-										const avgActivity = (
-											(reduce(pluck(slots, 'overall'), ArraySum, 0) * 100) / 
-											(reduce(pluck(slots, 'duration'), ArraySum, 0))
-										) || 0;
+										 * Calculate Average activity of the employee
+										 */
+										const avgActivity =
+											(reduce(
+												pluck(slots, 'overall'),
+												ArraySum,
+												0
+											) *
+												100) /
+												reduce(
+													pluck(slots, 'duration'),
+													ArraySum,
+													0
+												) || 0;
 
 										const employee =
 											byEmployeeLogs.length > 0
@@ -90,7 +122,9 @@ export class GetTimeLogGroupByClientHandler
 											employee,
 											sum,
 											activity: parseFloat(
-												parseFloat(avgActivity + '').toFixed(2)
+												parseFloat(
+													avgActivity + ''
+												).toFixed(2)
 											)
 										};
 									})

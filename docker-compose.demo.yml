@@ -1,8 +1,8 @@
-version: '3.7'
+version: '3.8'
 
 services:
     db:
-        image: postgres:12-alpine
+        image: postgres:14-alpine
         container_name: db
         restart: always
         environment:
@@ -22,6 +22,67 @@ services:
         networks:
             - overlay
 
+    elasticsearch:
+        image: "elasticsearch:7.17.7"
+        volumes:
+            - elasticsearch_data:/usr/share/elasticsearch/data
+        environment:
+            ES_JAVA_OPTS: -Xms512m -Xmx1024m
+            discovery.type: single-node
+            xpack.security.enabled: "false"
+        ports:
+            - "9200"
+            - "9300"
+        healthcheck:
+            test: [ "CMD", "curl", "-f", "http://localhost:9200/_cat/health" ]
+            interval: 5s
+            timeout: 5s
+            retries: 10
+            start_period: 20s
+        networks:
+            - overlay
+
+    redis:
+        image: "redis:7.0.2-alpine"
+        ports:
+            - "6379"
+        networks:
+            - overlay
+
+    minio:
+        restart: always
+        image: quay.io/minio/minio:latest
+        volumes:
+            - minio_data:/data
+        environment:
+            MINIO_ROOT_USER: ever-gauzy-access-key
+            MINIO_ROOT_PASSWORD: ever-gauzy-secret-key
+        command: server /data --address :9000 --console-address ":9001"
+        ports:
+            - 9000:9000
+            - 9001:9001
+        networks:
+            - overlay
+
+    minio_create_buckets:
+        image: minio/mc
+        environment:
+            - MINIO_ROOT_USER=ever-gauzy-access-key
+            - MINIO_ROOT_PASSWORD=ever-gauzy-secret-key
+        entrypoint:
+            - "/bin/sh"
+            - "-c"
+        command:
+            - "until (/usr/bin/mc alias set minio http://minio:9000 $$MINIO_ROOT_USER $$MINIO_ROOT_PASSWORD) do
+                    echo 'Waiting to start minio...' && sleep 1;
+               done;
+               /usr/bin/mc mb minio/ever-gauzy --region=eu-north-1;
+               exit 0;"
+        depends_on:
+            - minio
+        networks:
+            - overlay
+
     pgweb:
         image: sosedoff/pgweb
         container_name: pgweb
@@ -34,61 +95,9 @@ services:
             POSTGRES_DB: ${DB_NAME:-postgres}
             POSTGRES_USER: ${DB_USER:-postgres}
             POSTGRES_PASSWORD: ${DB_PASS:-root}
-            DATABASE_URL: postgres://${DB_USER:-postgres}:${DB_PASS:-root}@${DB_HOST:-db}:${DB_PORT:-5432}/${DB_NAME:-postgres}?sslmode=disable
+            PGWEB_DATABASE_URL: postgres://${DB_USER:-postgres}:${DB_PASS:-root}@${DB_HOST:-db}:${DB_PORT:-5432}/${DB_NAME:-postgres}?sslmode=disable
         ports:
             - '8081:8081'
-        networks:
-            - overlay
-
-    franchise:
-        image: binakot/franchise
-        container_name: franchise
-        restart: always
-        depends_on:
-            - db
-        links:
-            - db:${DB_HOST:-db}
-        environment:
-            PGHOST: ${DB_HOST:-db}
-            PGDATABASE: ${DB_NAME:-postgres}
-            PGUSER: ${DB_USER:-postgres}
-            PGPASSWORD: ${DB_PASS:-root}
-            PGPORT: ${DB_PORT:-5432}
-        ports:
-            - '8082:80'
-            - '14645:14645'
-        networks:
-            - overlay
-
-    omnidb:
-        image: taivokasper/omnidb
-        container_name: omnidb
-        restart: always
-        depends_on:
-            - db
-        links:
-            - db:${DB_HOST:-db}
-        ports:
-            - '8083:8080'
-            - '25482:25482'
-        networks:
-            - overlay
-
-    adminer:
-        image: adminer
-        container_name: adminer
-        restart: always
-        depends_on:
-            - db
-        links:
-            - db:${DB_HOST:-db}
-        environment:
-            ADMINER_DEFAULT_DB_DRIVER: pgsql
-            ADMINER_DEFAULT_DB_HOST: ${DB_HOST:-db}
-            ADMINER_DEFAULT_DB_NAME: ${DB_NAME:-postgres}
-            ADMINER_DEFAULT_DB_PASSWORD: ${DB_PASS:-root}
-        ports:
-            - '8084:8080'
         networks:
             - overlay
 
@@ -107,7 +116,16 @@ services:
             - .env.docker
         restart: on-failure
         depends_on:
-            - db
+            db:
+                condition: service_healthy
+            redis:
+                condition: service_started
+            minio:
+                condition: service_started
+            minio_create_buckets:
+                condition: service_started
+            elasticsearch:
+                condition: service_healthy
         links:
             - db:${DB_HOST:-db}
         entrypoint: './entrypoint.compose.sh'
@@ -141,7 +159,6 @@ services:
             DEMO: 'true'
             API_HOST: ${API_HOST:-api}
             API_PORT: ${API_PORT:-3000}
-
         env_file:
             - .env.docker
         restart: on-failure
@@ -149,8 +166,18 @@ services:
             - db:${DB_HOST:-db}
             - api:${API_HOST:-api}
         depends_on:
-            - db
-            - api
+            db:
+                condition: service_healthy
+            redis:
+                condition: service_started
+            minio:
+                condition: service_started
+            minio_create_buckets:
+                condition: service_started
+            elasticsearch:
+                condition: service_healthy
+            api:
+                condition: service_started
         entrypoint: './entrypoint.compose.sh'
         command: ['nginx', '-g', 'daemon off;']
         # volumes:
@@ -163,8 +190,10 @@ services:
 volumes:
     # webapp_node_modules:
     # api_node_modules:
-    postgres_data:
-    certificates:
+    postgres_data: {}
+    elasticsearch_data: {}
+    minio_data: {}
+    certificates: {}
 
 networks:
     overlay:

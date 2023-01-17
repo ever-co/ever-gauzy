@@ -17,6 +17,7 @@
 		"email": "ever@ever.co",
 		"url": "https://ever.co"
 	},
+	"keywords": [],
 	"scripts": {
 		"prepare:husky": "npx husky install .husky",
 		"ng": "cross-env NODE_ENV=development NODE_OPTIONS=--max_old_space_size=8192 yarn nx",
@@ -278,6 +279,8 @@
 		"@types/yargs": "^15.0.9",
 		"ajv-formats": "^2.1.1",
 		"cloc": "^2.7.0",
+		"codecov": "^3.8.3",
+		"cspell": "^6.18.1",
 		"codelyzer": "^6.0.1",
 		"commitizen": "^4.2.1",
 		"concurrently": "^5.3.0",
@@ -308,7 +311,7 @@
 		"node-gyp": "^9.3.0",
 		"npm-run-all": "^4.1.5",
 		"pkg": "^5.3.0",
-		"prettier": "2.5.1",
+		"prettier": "^2.8.3",
 		"prettier-tslint": "^0.4.2",
 		"pretty-quick": "^3.1.0",
 		"protractor": "^7.0.0",
@@ -316,6 +319,7 @@
 		"semantic-release": "^17.4.2",
 		"snyk": "^1.573.0",
 		"stylelint": "^13.7.2",
+		"typedoc": "^0.23.24",
 		"ts-jest": "^26.4.0",
 		"ts-loader": "^8.0.4",
 		"ts-node": "^9.1.1",
@@ -333,6 +337,9 @@
 	"engines": {
 		"node": ">=14.0.0",
 		"yarn": ">=1.13.0"
+	},
+	"prettier": {
+		"singleQuote": true
 	},
 	"snyk": true,
 	"xplat": {

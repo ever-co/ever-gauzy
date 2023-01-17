@@ -11,7 +11,6 @@ import {
 	IEmployeeStatisticsHistory
 } from '@gauzy/contracts';
 import { toParams } from '@gauzy/common-angular';
-import { Subject } from 'rxjs';
 import { firstValueFrom } from 'rxjs';
 import { API_PREFIX } from '../constants/app.constants';
 
@@ -20,7 +19,6 @@ import { API_PREFIX } from '../constants/app.constants';
 })
 export class EmployeeStatisticsService {
 	constructor(private http: HttpClient) {}
-	avarageBonus$ = new Subject<number>();
 
 	/**
 	 * Gets the aggregated statistics for all employees of the organization from the start of time till now.
@@ -32,8 +30,7 @@ export class EmployeeStatisticsService {
 		const data = JSON.stringify({ findInput });
 
 		return firstValueFrom(
-			this.http
-			.get<IAggregatedEmployeeStatistic>(
+			this.http.get<IAggregatedEmployeeStatistic>(
 				`${API_PREFIX}/employee-statistics/aggregate`,
 				{
 					params: { data }
@@ -56,8 +53,7 @@ export class EmployeeStatisticsService {
 		const data = JSON.stringify({ findInput });
 
 		return firstValueFrom(
-			this.http
-			.get<IEmployeeStatistics>(
+			this.http.get<IEmployeeStatistics>(
 				`${API_PREFIX}/employee-statistics/months/${employeeId}`,
 				{
 					params: { data }
@@ -75,9 +71,12 @@ export class EmployeeStatisticsService {
 		where: IMonthAggregatedEmployeeStatisticsFindInput
 	): Promise<IMonthAggregatedEmployeeStatistics[]> {
 		return firstValueFrom(
-			this.http.get<IMonthAggregatedEmployeeStatistics[]>(`${API_PREFIX}/employee-statistics/months`, {
-				params: toParams({ ...where })
-			})
+			this.http.get<IMonthAggregatedEmployeeStatistics[]>(
+				`${API_PREFIX}/employee-statistics/months`,
+				{
+					params: toParams({ ...where })
+				}
+			)
 		);
 	}
 
@@ -92,8 +91,7 @@ export class EmployeeStatisticsService {
 		const data = JSON.stringify({ findInput });
 
 		return firstValueFrom(
-			this.http
-			.get<IEmployeeStatisticsHistory[]>(
+			this.http.get<IEmployeeStatisticsHistory[]>(
 				`${API_PREFIX}/employee-statistics/history`,
 				{
 					params: { data }

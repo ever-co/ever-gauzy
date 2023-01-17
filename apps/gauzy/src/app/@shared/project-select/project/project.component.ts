@@ -18,7 +18,11 @@ import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { map, Observable, Subject } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { distinctUntilChange, isEmpty, isNotEmpty } from '@gauzy/common-angular';
+import {
+	distinctUntilChange,
+	isEmpty,
+	isNotEmpty
+} from '@gauzy/common-angular';
 import { ALL_PROJECT_SELECTED } from './default-project';
 import {
 	OrganizationProjectsService,
@@ -42,8 +46,8 @@ import { TruncatePipe } from '../../pipes';
 	]
 })
 export class ProjectSelectorComponent
-	implements OnInit, OnDestroy, AfterViewInit {
-
+	implements OnInit, OnDestroy, AfterViewInit
+{
 	projects: IOrganizationProject[] = [];
 	selectedProject: IOrganizationProject;
 	hasAddProject$: Observable<boolean>;
@@ -86,8 +90,8 @@ export class ProjectSelectorComponent
 	}
 
 	/*
-	* Getter & Setter for dynamic placeholder
-	*/
+	 * Getter & Setter for dynamic placeholder
+	 */
 	private _placeholder: string;
 	get placeholder(): string {
 		return this._placeholder;
@@ -97,8 +101,8 @@ export class ProjectSelectorComponent
 	}
 
 	/*
-	* Getter & Setter for skip global change
-	*/
+	 * Getter & Setter for skip global change
+	 */
 	private _skipGlobalChange: boolean = false;
 	get skipGlobalChange(): boolean {
 		return this._skipGlobalChange;
@@ -153,7 +157,10 @@ export class ProjectSelectorComponent
 			.pipe(
 				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
-				tap((organization: IOrganization) => (this.organization = organization)),
+				tap(
+					(organization: IOrganization) =>
+						(this.organization = organization)
+				),
 				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
@@ -199,8 +206,10 @@ export class ProjectSelectorComponent
 					tenantId,
 					...(this.organizationContactId
 						? {
-							organizationContactId: this.organizationContactId
-						} : {}),
+								organizationContactId:
+									this.organizationContactId
+						  }
+						: {})
 				}
 			);
 		} else {
@@ -209,8 +218,9 @@ export class ProjectSelectorComponent
 				tenantId,
 				...(this.organizationContactId
 					? {
-						organizationContactId: this.organizationContactId
-					} : {}),
+							organizationContactId: this.organizationContactId
+					  }
+					: {})
 			});
 			this.projects = items;
 		}
@@ -256,7 +266,7 @@ export class ProjectSelectorComponent
 				tenantId,
 				...(this.organizationContactId
 					? {
-						organizationContactId: this.organizationContactId
+							organizationContactId: this.organizationContactId
 					  }
 					: {})
 			};
@@ -272,9 +282,12 @@ export class ProjectSelectorComponent
 			this.projects = this.projects.concat([project]);
 			this.projectId = project.id;
 
-			this.toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.ADD_PROJECT', {
-				name
-			});
+			this.toastrService.success(
+				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.ADD_PROJECT',
+				{
+					name
+				}
+			);
 		} catch (error) {
 			this.toastrService.error(error);
 		}
@@ -342,7 +355,7 @@ export class ProjectSelectorComponent
 	}
 
 	/**
-	 * GET Shortend Name
+	 * GET Shortened Name
 	 *
 	 * @param name
 	 * @returns
@@ -355,9 +368,17 @@ export class ProjectSelectorComponent
 		const [firstName, lastName] = [chunks.shift(), chunks.join(' ')];
 
 		if (firstName && lastName) {
-			return this._truncatePipe.transform(firstName, limit/2, false, '') + ' ' + this._truncatePipe.transform(lastName, limit/2, false, '.');
+			return (
+				this._truncatePipe.transform(firstName, limit / 2, false, '') +
+				' ' +
+				this._truncatePipe.transform(lastName, limit / 2, false, '.')
+			);
 		} else {
-			return this._truncatePipe.transform(firstName, limit) || this._truncatePipe.transform(lastName, limit) || '[error: bad name]';
+			return (
+				this._truncatePipe.transform(firstName, limit) ||
+				this._truncatePipe.transform(lastName, limit) ||
+				'[error: bad name]'
+			);
 		}
 	}
 

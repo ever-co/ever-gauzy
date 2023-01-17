@@ -5,6 +5,8 @@
 [![Gitter](https://badges.gitter.im/JoinChat.svg)](https://gitter.im/ever-co/ever-gauzy?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![Get help on Codementor](https://cdn.codementor.io/badges/get_help_github.svg)](https://www.codementor.io/evereq?utm_source=github&utm_medium=button&utm_term=evereq&utm_campaign=github)
 
+## ⭐️ What is it?
+
 [Ever® Gauzy™](https://gauzy.co) - **Open-Source Business Management Platform** for On-Demand and Sharing Economies.
 
 - **Enterprise Resource Planning** (ERP) software
@@ -14,6 +16,8 @@
 ![overview](https://docs.gauzy.co/docs/assets/overview.png)
 
 Ever® Gauzy™ Platform is a part of our larger Open Platform for **On-Demand and Sharing Economies** - [Ever® Platform™](https://ever.co).
+
+## ✨ Features
 
 Main features:
 
@@ -61,12 +65,12 @@ More detailed list of the features available in the platform:
 
 Read more [About Gauzy](https://github.com/ever-co/ever-gauzy/wiki/About-Gauzy) and [How to use it](https://github.com/ever-co/ever-gauzy/wiki/How-to-use-Gauzy) at your company, on-demand business, freelance business, agency, studio or in-house teams.
 
-## Links
+## 🔗 Links
 
 - **<https://gauzy.co>** - check more information about the platform at official website.
 - **<https://ever.co>** - get more information about our company products. 
 
-## Demo, Downloads, Testing and Production
+## 💻 Demo, Downloads, Testing and Production
 
 ### Demo
 
@@ -111,7 +115,7 @@ More information about our Server & Desktop Apps:
 - If you install Gauzy Server, it is possible to connect to it using browser (by default on <http://localhost:8084>) or using Gauzy Desktop Apps (make sure to configure Desktop apps to connect to Gauzy API on <http://127.0.0.1:5620/api> because it's where Gauzy Server API runs by default).
 - You can read more information about our Desktop Apps in the [Desktop Apps Wiki Page](https://github.com/ever-co/ever-gauzy/wiki/Gauzy-Desktop-Apps) and about our Server in the [Server Wiki Page](https://github.com/ever-co/ever-gauzy/wiki/Gauzy-Server).
 
-## Technology Stack and Requirements
+## 🧱 Technology Stack and Requirements
 
 - [TypeScript](https://www.typescriptlang.org) language
 - [NodeJs](https://nodejs.org) / [NestJs](https://github.com/nestjs/nest)
@@ -130,11 +134,11 @@ Note: thanks to TypeORM, Gauzy will support lots of DBs: SQLite (default, for de
 
 #### See also README.md and CREDITS.md files in relevant folders for lists of libraries and software included in the Platform, information about licenses and other details.
 
-## Documentation
+## 📄 Documentation
 
 Please refer to our official [Platform Documentation](https://docs.gauzy.co) and to our [Wiki](https://github.com/ever-co/ever-gauzy/wiki) (WIP).
 
-## Quick Start
+## 🚀 Quick Start
 
 ### With Docker Compose
 
@@ -151,16 +155,19 @@ Please refer to our official [Platform Documentation](https://docs.gauzy.co) and
 
 Together with Gauzy, Docker Compose will run following:
 
--   [PostgreSQL](https://www.postgresql.org)
--   Cross-platform client for PostgreSQL DBs [pgweb](https://github.com/sosedoff/pgweb), on <http://localhost:8081>.
--   [Franchise](https://github.com/HVF/franchise), lightweight but powerful SQL tool with a notebook interface, on <http://localhost:8082>.
--   [OmniDb](https://github.com/OmniDB/OmniDB), on <http://localhost:8083> and using default credentials (admin:admin) configure connection string `postgres://postgres:root@db:5432/postgres?sslmode=disable`.
--   [Adminer](https://www.adminer.org) Database management in a single PHP file, on <http://localhost:8084>.
+-   [PostgreSQL](https://www.postgresql.org) - Object-relational database system.
+-   [Redis](https://github.com/redis/redis) - In-memory data store.
+-   [ElasticSearch](https://github.com/elastic/elasticsearch) - Search Engine.
+-   [MinIO](https://github.com/minio/minio) - Multi-Cloud ☁️ Object Storage.
+-   [Pgweb](https://github.com/sosedoff/pgweb) - Cross-platform client for PostgreSQL DBs, on <http://localhost:8081>.
 
 ### Manually
 
--   Install [NodeJs](https://nodejs.org/en/download) LTS version, e.g. 14.x (note: at the moment Gauzy may not work with Node 15.x/16.x).
--   Optionally install and run [PostgreSQL](https://www.postgresql.org) version 11 or 12 (version 13 might not be supported yet). Note: other DB can be configured manually in TypeORM. The default DB is set to SQLite (recommended for testing/demo purposes only).
+-   Install [NodeJs](https://nodejs.org/en/download) LTS version or later, e.g. 18.x.
+-   Optionally (recommended for production) install and run [PostgreSQL](https://www.postgresql.org) version 14 or later. Note: other DB can be configured manually in TypeORM. The default DB is set to SQLite (recommended for testing/demo purposes only).
+-   Optionally (recommended for production) install and run [Redis](https://github.com/redis/redis). Note: the platform will work without Redis using in-memory caching strategy instead of distributed one (recommended for testing/demo purposes only).
+-   Optionally (recommended for production) install and run [ElasticSearch](https://github.com/elastic/elasticsearch). Note: the platform will work without ElasticSearch using DB build-in search capabilities (recommended for testing/demo purposes only).
+-   Optionally install and run [MinIO](https://github.com/minio/minio) or [LocalStack](https://github.com/localstack/localstack). Note: the platform will work without MinIO / LocalStack or other S3 compatible storage using local filesystem based storage (recommended for testing/demo purposes only).
 -   Install [Yarn](https://github.com/yarnpkg/yarn) (if you don't have it) with `npm i -g yarn`.
 -   Install NPM packages and bootstrap solution using command `yarn bootstrap`.
 -   If you will need to make code changes (and push to Git repo), please run `yarn prepare:husky`.
@@ -185,18 +192,7 @@ Notes:
 -   For simple deployments scenarios (e.g. for yourself or your own small organization), check our [Kubernetes configurations](https://github.com/ever-co/ever-gauzy/tree/develop/.deploy/k8s), which we are using to deploy Gauzy demo into [DigitalOcean k8s cluster](https://www.digitalocean.com/products/kubernetes).
 -   In addition, check [Gauzy Pulumi](https://github.com/ever-co/ever-gauzy-pulumi) project (WIP), it makes complex Clouds deployments possible with a single command (`pulumi up`). Note: it currently supports AWS EKS (Kubernetes) for development and production with Application Load Balancers and AWS RDS Serverless PostgreSQL DB deployments. We also implemented deployments to ECS EC2 and Fargate Clusters in the same Pulumi project.
 
-## Contribute
-
--   Please give us :star: on Github, it **helps**!
--   You are more than welcome to submit feature requests in the [separate repo](https://github.com/ever-co/feature-requests/issues)
--   Pull requests are always welcome! Please base pull requests against the _develop_ branch and follow the [contributing guide](.github/CONTRIBUTING.md).
-
-## Contributors
-
-See our contributors list in [CONTRIBUTORS.md](https://github.com/ever-co/ever-gauzy/blob/develop/.github/CONTRIBUTORS.md).  
-You can also view full list of our [contributors tracked by Github](https://github.com/ever-co/ever-gauzy/graphs/contributors).
-
-## Contact Us
+## 💌 Contact Us
 
 - [Ever.co Website Contact Us page](https://ever.co/contacts)
 - [Slack Community](https://join.slack.com/t/gauzy/shared_invite/enQtNzc5MTA5MDUwODg2LTI0MGEwYTlmNWFlNzQzMzBlOWExNTk0NzAyY2IwYWYwMzZjMTliYjMwNDI3NTJmYmM4MDQ4NDliMDNiNDY1NWU)
@@ -209,7 +205,7 @@ You can also view full list of our [contributors tracked by Github](https://gith
 - [Gauzy Platform @ Twitter](https://twitter.com/gauzyplatform)
 - [Gauzy Platform @ Facebook](https://www.facebook.com/gauzyplatform)
 
-## Security
+## 🔐 Security
 
 Ever® Gauzy™ follows good security practices, but 100% security cannot be guaranteed in any software!  
 Ever® Gauzy™ is provided AS IS without any warranty. Use at your own risk!  
@@ -219,7 +215,7 @@ In a production setup, all client-side to server-side (backend, APIs) communicat
 
 If you discover any issue regarding security, please disclose the information responsibly by sending an email to <mailto:security@ever.co> or on  [![huntr](https://cdn.huntr.dev/huntr_security_badge_mono.svg)](https://huntr.dev) and not by creating a GitHub issue.
 
-## License
+## 🛡️ License
 
 We support the open-source community. If you're building awesome non-profit/open-source projects, we're happy to help and will provide (subject to [acceptance criteria](https://github.com/ever-co/ever-gauzy/wiki/Free-license-and-hosting-for-Non-profit-and-Open-Source-projects)) Ever Gauzy Enterprise edition license and free hosting option! Feel free to contact us at <mailto:ever@ever.co> to make a request. More details explained in our [Wiki](https://github.com/ever-co/ever-gauzy/wiki/Free-license-and-hosting-for-Non-profit-and-Open-Source-projects).
 
@@ -235,7 +231,7 @@ This software is available under following licenses:
 
 [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fever-co%2Fgauzy.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fever-co%2Fgauzy?ref=badge_large)
 
-## Trademarks
+## ™️ Trademarks
 
 **Ever**® is a registered trademark of [Ever Co. LTD](https://ever.co).  
 **Ever® Demand™**, **Ever® Gauzy™** and **Ever® OpenSaaS™**  are all trademarks of [Ever Co. LTD](https://ever.co).
@@ -244,9 +240,24 @@ The trademarks may only be used with the written permission of Ever Co. LTD. and
 
 All other brand and product names are trademarks, registered trademarks or service marks of their respective holders.
 
-## Copyright
+## 🍺 Contribute
+
+-   Please give us :star: on Github, it **helps**!
+-   You are more than welcome to submit feature requests in the [separate repo](https://github.com/ever-co/feature-requests/issues)
+-   Pull requests are always welcome! Please base pull requests against the _develop_ branch and follow the [contributing guide](.github/CONTRIBUTING.md).
+
+## 💪 Thanks to our Contributors
+
+See our contributors list in [CONTRIBUTORS.md](https://github.com/ever-co/ever-gauzy/blob/develop/.github/CONTRIBUTORS.md).  
+You can also view full list of our [contributors tracked by Github](https://github.com/ever-co/ever-gauzy/graphs/contributors).
+
+<img src="https://contributors-img.web.app/image?repo=ever-co/ever-gauzy" />
+
+## ©️ Copyright
 
 #### Copyright © 2019-present, Ever Co. LTD. All rights reserved.
+
+---
 
 ![visitors](https://visitor-badge.laobi.icu/badge?page_id=ever-co.gauzy-platform)
 [![huntr](https://cdn.huntr.dev/huntr_security_badge_mono.svg)](https://huntr.dev)
@@ -260,7 +271,7 @@ All other brand and product names are trademarks, registered trademarks or servi
 [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fever-co%2Fever-gauzy.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fever-co%2Fgauzy?ref=badge_shield)
 [![Crowdin](https://badges.crowdin.net/e/1d2b3405d65a56ec116d0984fd579cc9/localized.svg)](https://ever.crowdin.com/gauzy)
 
-## P.S.
+## 🔥 P.S.
 
 - If you interested to run on-demand (delivery) or digital marketplace business, check open-source [Ever Demand Platform](https://github.com/ever-co/ever-demand)
 - [We are Hiring: remote TypeScript / NestJS / Angular developers](https://github.com/ever-co/jobs#available-positions)
