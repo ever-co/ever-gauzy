@@ -5,7 +5,7 @@ import {
 	IEmployee,
 	IOrganizationTeam,
 	ITag,
-	TaskStatusEnum
+	TaskStatusEnum,
 } from '@gauzy/contracts';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
@@ -17,7 +17,7 @@ import {
 	OrganizationProjectsService,
 	OrganizationTeamsService,
 	Store,
-	ToastrService
+	ToastrService,
 } from '../../../../@core/services';
 
 const initialTaskValue = {
@@ -29,13 +29,13 @@ const initialTaskValue = {
 	estimate: null,
 	dueDate: null,
 	description: '',
-	tags: null
+	tags: null,
 };
 
 @Component({
 	selector: 'ngx-team-task-dialog',
 	templateUrl: './team-task-dialog.component.html',
-	styleUrls: ['./team-task-dialog.component.scss']
+	styleUrls: ['./team-task-dialog.component.scss'],
 })
 export class TeamTaskDialogComponent extends TranslationBaseComponent
 	implements OnInit {
@@ -82,7 +82,7 @@ export class TeamTaskDialogComponent extends TranslationBaseComponent
 		const { organizationId, tenantId } = this;
 		const { items } = await this.organizationProjectsService.getAll([], {
 			organizationId,
-			tenantId
+			tenantId,
 		});
 
 		if (items) this.projects = items;
@@ -97,7 +97,7 @@ export class TeamTaskDialogComponent extends TranslationBaseComponent
 		teams,
 		estimate,
 		dueDate,
-		tags
+		tags,
 	}: ITask) {
 		const duration = moment.duration(estimate, 'seconds');
 		this.selectedTeams = (teams || []).map((team) => team.id);
@@ -114,22 +114,22 @@ export class TeamTaskDialogComponent extends TranslationBaseComponent
 			number: [{ value: '', disabled: true }],
 			title: [title, Validators.required],
 			project: [project],
-			projectId: (project) ? project.id : null,
-			status: [status? status : TaskStatusEnum.TODO],
+			projectId: project ? project.id : null,
+			status: [status ? status : TaskStatusEnum.OPEN],
 			members: [members],
 			estimateDays: [duration.days() || ''],
 			estimateHours: [
 				duration.hours() || '',
-				[Validators.min(0), Validators.max(23)]
+				[Validators.min(0), Validators.max(23)],
 			],
 			estimateMinutes: [
 				duration.minutes() || '',
-				[Validators.min(0), Validators.max(59)]
+				[Validators.min(0), Validators.max(59)],
 			],
 			dueDate: [dueDate],
 			description: [description],
 			tags: [tags],
-			teams: [this.selectedTeams]
+			teams: [this.selectedTeams],
 		});
 
 		this.tags = this.form.get('tags').value || [];
@@ -145,7 +145,7 @@ export class TeamTaskDialogComponent extends TranslationBaseComponent
 			return this.organizationProjectsService.create({
 				name,
 				organizationId,
-				tenantId
+				tenantId,
 			});
 		} catch (error) {
 			this.errorHandler.handleError(error);
@@ -181,7 +181,7 @@ export class TeamTaskDialogComponent extends TranslationBaseComponent
 		this.teams = (
 			await this.organizationTeamsService.getMyTeams({
 				organizationId,
-				tenantId
+				tenantId,
 			})
 		).items;
 	}

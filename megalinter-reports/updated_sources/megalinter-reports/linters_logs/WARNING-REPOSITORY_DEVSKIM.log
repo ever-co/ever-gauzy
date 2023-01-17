@@ -1,0 +1,106 @@
+Results of devskim linter (version 0.7.101)
+See documentation on https://megalinter.io/6.18.0/descriptors/repository_devskim/
+-----------------------------------------------
+
+❌ [ERROR] for workspace /github/workspace
+Linter raw log:
+/github/workspace/docker-compose.demo.yml:37:43:37:50 [Moderate] DS137138 Insecure URL
+/github/workspace/docker-compose.demo.yml:76:51:76:58 [Moderate] DS137138 Insecure URL
+/github/workspace/docker-compose.demo.yml:112:43:112:50 [Moderate] DS137138 Insecure URL
+/github/workspace/docker-compose.demo.yml:113:49:113:56 [Moderate] DS137138 Insecure URL
+/github/workspace/docker-compose.demo.yml:148:43:148:50 [Moderate] DS137138 Insecure URL
+/github/workspace/docker-compose.demo.yml:149:49:149:56 [Moderate] DS137138 Insecure URL
+/github/workspace/docker-compose.yml:37:43:37:50 [Moderate] DS137138 Insecure URL
+/github/workspace/docker-compose.yml:76:51:76:58 [Moderate] DS137138 Insecure URL
+/github/workspace/docker-compose.yml:112:47:112:54 [Moderate] DS137138 Insecure URL
+/github/workspace/docker-compose.yml:113:53:113:60 [Moderate] DS137138 Insecure URL
+/github/workspace/docker-compose.yml:119:43:119:50 [Moderate] DS137138 Insecure URL
+/github/workspace/docker-compose.yml:120:49:120:56 [Moderate] DS137138 Insecure URL
+/github/workspace/docker-compose.yml:156:47:156:54 [Moderate] DS137138 Insecure URL
+/github/workspace/docker-compose.yml:157:53:157:60 [Moderate] DS137138 Insecure URL
+/github/workspace/docker-compose.yml:174:43:174:50 [Moderate] DS137138 Insecure URL
+/github/workspace/docker-compose.yml:175:49:175:56 [Moderate] DS137138 Insecure URL
+/github/workspace/.scripts/env.ts:65:36:65:43 [Moderate] DS137138 Insecure URL
+/github/workspace/.scripts/env.ts:67:33:67:40 [Moderate] DS137138 Insecure URL
+/github/workspace/.scripts/env.ts:77:42:77:49 [Moderate] DS137138 Insecure URL
+/github/workspace/.scripts/electron.env.ts:17:18:17:25 [Moderate] DS137138 Insecure URL
+/github/workspace/.github/workflows/test_cypress.yml:147:29:147:36 [Moderate] DS137138 Insecure URL
+/github/workspace/.github/workflows/test_cypress.yml:147:55:147:62 [Moderate] DS137138 Insecure URL
+/github/workspace/.github/workflows/test_currents.yml:127:25:127:32 [Moderate] DS137138 Insecure URL
+/github/workspace/.github/workflows/test_currents.yml:131:25:131:32 [Moderate] DS137138 Insecure URL
+/github/workspace/apps/gauzy/proxy.prod.conf.json:3:16:3:23 [Moderate] DS137138 Insecure URL
+/github/workspace/apps/gauzy/ngsw-config.prod.json:25:14:25:21 [Moderate] DS137138 Insecure URL
+/github/workspace/apps/gauzy/proxy.conf.json:3:14:3:21 [Moderate] DS137138 Insecure URL
+/github/workspace/apps/gauzy-e2e/cypress.json:16:14:16:21 [Moderate] DS137138 Insecure URL
+/github/workspace/apps/gauzy-e2e/cypress.json:32:13:32:20 [Moderate] DS137138 Insecure URL
+/github/workspace/apps/gauzy/ngsw-config.json:24:14:24:21 [Moderate] DS137138 Insecure URL
+/github/workspace/apps/desktop/ngsw-config.json:24:14:24:21 [Moderate] DS137138 Insecure URL
+/github/workspace/apps/desktop/ngsw-config.prod.json:25:14:25:21 [Moderate] DS137138 Insecure URL
+/github/workspace/packages/common/src/constants.ts:6:38:6:45 [Moderate] DS137138 Insecure URL
+/github/workspace/packages/desktop-api/src/main.ts:27:31:27:38 [Moderate] DS137138 Insecure URL
+/github/workspace/packages/desktop-libs/src/lib/desktop-updater.ts:53:7:53:14 [Moderate] DS137138 Insecure URL
+/github/workspace/apps/server/src/index.ts:131:7:131:14 [Moderate] DS137138 Insecure URL
+/github/workspace/apps/server/src/index.ts:132:7:132:14 [Moderate] DS137138 Insecure URL
+/github/workspace/apps/server/src/index.ts:220:25:220:32 [Moderate] DS137138 Insecure URL
+/github/workspace/apps/desktop/src/index.ts:189:31:189:38 [Moderate] DS137138 Insecure URL
+/github/workspace/packages/desktop-libs/src/lib/desktop-ipc.ts:35:9:35:16 [Moderate] DS137138 Insecure URL
+/github/workspace/packages/desktop-libs/src/lib/desktop-ipc.ts:36:9:36:16 [Moderate] DS137138 Insecure URL
+/github/workspace/apps/desktop/src/index.ts:341:7:341:14 [Moderate] DS137138 Insecure URL
+/github/workspace/apps/desktop/src/index.ts:342:7:342:14 [Moderate] DS137138 Insecure URL
+/github/workspace/apps/desktop-timer/src/index.ts:260:7:260:14 [Moderate] DS137138 Insecure URL
+/github/workspace/apps/desktop-timer/src/index.ts:261:7:261:14 [Moderate] DS137138 Insecure URL
+/github/workspace/packages/core/src/time-off-request/time-off-request.seed.ts:35:6:35:14 [Important] DS148264 Do not use weak/non-cryptographic random number generators
+/github/workspace/packages/core/src/time-off-request/time-off-request.seed.ts:84:8:84:16 [Important] DS148264 Do not use weak/non-cryptographic random number generators
+/github/workspace/packages/desktop-libs/src/lib/desktop-store.ts:10:7:10:14 [Moderate] DS137138 Insecure URL
+/github/workspace/packages/desktop-libs/src/lib/desktop-store.ts:22:9:22:16 [Moderate] DS137138 Insecure URL
+/github/workspace/packages/config/src/environments/environment.prod.ts:13:33:13:40 [Moderate] DS137138 Insecure URL
+/github/workspace/packages/config/src/environments/environment.prod.ts:97:5:97:12 [Moderate] DS137138 Insecure URL
+/github/workspace/packages/config/src/environments/environment.prod.ts:107:5:107:12 [Moderate] DS137138 Insecure URL
+/github/workspace/packages/config/src/environments/environment.prod.ts:115:5:115:12 [Moderate] DS137138 Insecure URL
+/github/workspace/packages/config/src/environments/environment.prod.ts:123:5:123:12 [Moderate] DS137138 Insecure URL
+/github/workspace/packages/config/src/environments/environment.prod.ts:155:5:155:12 [Moderate] DS137138 Insecure URL
+/github/workspace/packages/config/src/environments/environment.ts:17:33:17:40 [Moderate] DS137138 Insecure URL
+/github/workspace/packages/config/src/environments/environment.ts:18:40:18:47 [Moderate] DS137138 Insecure URL
+/github/workspace/packages/config/src/environments/environment.ts:19:49:19:56 [Moderate] DS137138 Insecure URL
+/github/workspace/packages/config/src/environments/environment.ts:38:65:38:72 [Moderate] DS137138 Insecure URL
+/github/workspace/packages/config/src/environments/environment.ts:93:5:93:12 [Moderate] DS137138 Insecure URL
+/github/workspace/packages/config/src/environments/environment.ts:101:5:101:12 [Moderate] DS137138 Insecure URL
+/github/workspace/packages/config/src/environments/environment.ts:111:5:111:12 [Moderate] DS137138 Insecure URL
+/github/workspace/packages/config/src/environments/environment.ts:119:5:119:12 [Moderate] DS137138 Insecure URL
+/github/workspace/packages/config/src/environments/environment.ts:127:5:127:12 [Moderate] DS137138 Insecure URL
+/github/workspace/packages/config/src/environments/environment.ts:159:5:159:12 [Moderate] DS137138 Insecure URL
+/github/workspace/packages/config/src/environments/environment.ts:202:37:202:44 [Moderate] DS137138 Insecure URL
+/github/workspace/packages/desktop-window/src/lib/desktop-window.ts:29:17:29:24 [Moderate] DS137138 Insecure URL
+/github/workspace/packages/desktop-window/src/lib/desktop-window.ts:102:7:102:14 [Moderate] DS137138 Insecure URL
+/github/workspace/packages/desktop-window/src/lib/desktop-window.ts:103:7:103:14 [Moderate] DS137138 Insecure URL
+/github/workspace/packages/core/src/organization/organization.seed.ts:59:5:59:13 [Important] DS148264 Do not use weak/non-cryptographic random number generators
+/github/workspace/packages/core/src/organization/organization.seed.ts:153:7:153:15 [Important] DS148264 Do not use weak/non-cryptographic random number generators
+/github/workspace/packages/core/src/payment/payment.seed.ts:63:7:63:15 [Important] DS148264 Do not use weak/non-cryptographic random number generators
+/github/workspace/packages/core/src/payment/payment.seed.ts:147:7:147:15 [Important] DS148264 Do not use weak/non-cryptographic random number generators
+/github/workspace/packages/core/src/income/income.seed.ts:93:8:93:16 [Important] DS148264 Do not use weak/non-cryptographic random number generators
+/github/workspace/packages/core/src/income/income.seed.ts:159:8:159:16 [Important] DS148264 Do not use weak/non-cryptographic random number generators
+/github/workspace/packages/core/src/organization-team/organization-team.seed.ts:87:7:87:15 [Important] DS148264 Do not use weak/non-cryptographic random number generators
+/github/workspace/packages/core/src/feature/feature.subscriber.ts:26:33:26:41 [Important] DS148264 Do not use weak/non-cryptographic random number generators
+/github/workspace/packages/core/src/organization-contact/organization-contact.seed.ts:115:4:115:12 [Important] DS148264 Do not use weak/non-cryptographic random number generators
+/github/workspace/packages/core/src/organization-contact/organization-contact.seed.ts:140:5:140:13 [Important] DS148264 Do not use weak/non-cryptographic random number generators
+/github/workspace/packages/core/src/bootstrap/index.ts:90:51:90:58 [Moderate] DS137138 Insecure URL
+/github/workspace/packages/core/src/bootstrap/index.ts:98:43:98:50 [Moderate] DS137138 Insecure URL
+/github/workspace/packages/core/src/organization-document/organization-document.seed.ts:16:18:16:25 [Moderate] DS137138 Insecure URL
+/github/workspace/packages/core/src/organization-document/organization-document.seed.ts:22:18:22:25 [Moderate] DS137138 Insecure URL
+/github/workspace/packages/core/src/organization-project/organization-project.seed.ts:169:5:169:13 [Important] DS148264 Do not use weak/non-cryptographic random number generators
+/github/workspace/packages/core/src/candidate-documents/default-candidate-documents.ts:7:5:7:12 [Moderate] DS137138 Insecure URL
+/github/workspace/packages/core/src/candidate-documents/default-candidate-documents.ts:13:5:13:12 [Moderate] DS137138 Insecure URL
+/github/workspace/packages/core/src/invoice/invoice.seed.ts:90:4:90:12 [Important] DS148264 Do not use weak/non-cryptographic random number generators
+/github/workspace/packages/core/src/time-tracking/activity/activity.seed.ts:39:31:39:39 [Important] DS148264 Do not use weak/non-cryptographic random number generators
+/github/workspace/packages/core/src/time-tracking/timesheet/timesheet.seed.ts:133:7:133:15 [Important] DS148264 Do not use weak/non-cryptographic random number generators
+/github/workspace/packages/core/src/time-tracking/time-log/time-log.seed.ts:55:6:55:14 [Important] DS148264 Do not use weak/non-cryptographic random number generators
+/github/workspace/packages/desktop-ui-lib/src/lib/settings/settings.component.ts:130:14:130:21 [Moderate] DS137138 Insecure URL
+/github/workspace/packages/desktop-ui-lib/src/lib/settings/settings.component.ts:150:14:150:21 [Moderate] DS137138 Insecure URL
+/github/workspace/packages/desktop-ui-lib/src/lib/settings/settings.component.ts:668:24:668:31 [Moderate] DS137138 Insecure URL
+/github/workspace/packages/desktop-ui-lib/src/lib/settings/settings.component.ts:774:30:774:37 [Moderate] DS137138 Insecure URL
+/github/workspace/packages/desktop-ui-lib/src/lib/setup/setup.component.ts:95:19:95:26 [Moderate] DS137138 Insecure URL
+/github/workspace/packages/desktop-ui-lib/src/lib/setup/setup.component.ts:261:9:261:16 [Moderate] DS137138 Insecure URL
+/github/workspace/packages/desktop-ui-lib/src/lib/time-tracker/time-tracker.service.ts:23:13:23:20 [Moderate] DS137138 Insecure URL
+/github/workspace/apps/gauzy/src/app/@shared/forms/maps/leaflet/leaflet.component.ts:28:21:28:28 [Moderate] DS137138 Insecure URL
+For guidance on reported issues visit the relevant page here: https://github.com/microsoft/DevSkim/tree/main/guidance.
+

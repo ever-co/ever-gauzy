@@ -119,7 +119,7 @@
 		"TIME_TRACKING_ENABLE": "Enable Time Tracking",
 		"TIME_TRACKING_DISABLE": "Disable Time Tracking",
 		"PRINT": "Print",
-		"FEEDBACK":"Feedback",
+		"FEEDBACK": "Feedback",
 		"EQUIPMENT_SHARING": "Equipment Sharing",
 		"PRIVATE": "Private",
 		"PUBLIC": "Public",
@@ -131,7 +131,7 @@
 		"START_WORK": "Start Work"
 	},
 	"SM_TABLE": {
-		"NO_DATA" : {
+		"NO_DATA": {
 			"RECEIVE_ESTIMATE": "You have not received any estimate.",
 			"INCOME": "You have not created any income.",
 			"EXPENSE_CATEGORY": "You have not created any expense category.",
@@ -1742,9 +1742,9 @@
 		"LEVEL_NAME": "Level name",
 		"EXPENSE_NAME": "Expense name",
 		"EMPLOYMENT_TYPE_NAME": "Employment type name",
-		"EMPLOYMENT_TYPE_NO_DATA_MESSAGE":"You have not created any employment type.",
-		"VENDORS_NO_DATA_MESSAGE":"You have not created any vendor.",
-		"EXPENSE_NO_DATA_MESSAGE":"You have not created any recurring expense.",
+		"EMPLOYMENT_TYPE_NO_DATA_MESSAGE": "You have not created any employment type.",
+		"VENDORS_NO_DATA_MESSAGE": "You have not created any vendor.",
+		"EXPENSE_NO_DATA_MESSAGE": "You have not created any recurring expense.",
 		"CONTACTS": "Contacts",
 		"LEVEL": "Level",
 		"ORGANIZATION": "ORGANIZATION",
@@ -1752,8 +1752,8 @@
 		"CLIENTS": "Clients",
 		"PROFILE": "Profile",
 		"PORTFOLIO": "Portfolio",
-		"BROWSE":"Browse",
-    	"SEARCH":"Search",
+		"BROWSE": "Browse",
+		"SEARCH": "Search",
 		"EDIT": {
 			"SETTINGS_SECTION": "Settings Section",
 			"ALL": "All",
@@ -1802,7 +1802,7 @@
 			"EMPLOYEE_POSITION": "Employee Position",
 			"PROJECT_URL": "Project Url",
 			"VISIBILITY": "Visibility",
-			"MEMBERS":"Employee/Teams",
+			"MEMBERS": "Employee/Teams",
 			"SETTINGS": {
 				"TIMER_SETTINGS": "Timer Settings",
 				"ALLOW_MODIFY_TIME": "Allow Modify Time",
@@ -2081,7 +2081,7 @@
 		"REFUSED": "Refused",
 		"REQUESTED": "Requested",
 		"ACTION": "Action",
-    "CREATED_AT": "Created At"
+		"CREATED_AT": "Created At"
 	},
 	"APPROVAL_POLICY_PAGE": {
 		"EDIT_APPROVAL_POLICY": "Edit Approval Policy",
@@ -2404,9 +2404,13 @@
 		"ESTIMATE_MINUTES": "Mins",
 		"TASKS_STATUS": "Status",
 		"TODO": "Todo",
+		"OPEN": "Open",
+		"READY_FOR_REVIEW": "Ready for review",
 		"IN_PROGRESS": "In Progress",
+		"IN_REVIEW": "In Review",
 		"FOR_TESTING": "For Testing",
 		"COMPLETED": "Completed",
+		"BLOCKED": "Blocked",
 		"TASK_VIEW_MODE": "Task View Mode",
 		"PROJECT": "Project",
 		"COMPLETE_SPRINT": "Complete Sprint",
@@ -2451,12 +2455,12 @@
 			"BUDGET": "Budget",
 			"LESS_THAN": "Less than"
 		},
-    "BROWSE":"Browse",
-    "SEARCH":"Search",
-    "HISTORY":"History",
-    "EMPLOYEES": "Employees",
-    "MATCHINGS":"Matchings",
-    "PROPOSALS_TEMPLATE":"Proposals Template"
+		"BROWSE": "Browse",
+		"SEARCH": "Search",
+		"HISTORY": "History",
+		"EMPLOYEES": "Employees",
+		"MATCHINGS": "Matchings",
+		"PROPOSALS_TEMPLATE": "Proposals Template"
 	},
 	"JOB_MATCHING": {
 		"CONFIGURE_EMPLOYEES_TO_JOBS_MATCHING": "Configure Employees to Jobs Matching",
@@ -2480,9 +2484,9 @@
 		"AVAILABLE_JOBS": "Available Jobs",
 		"APPLIED_JOBS": "Applied Jobs",
 		"JOB_SEARCH_STATUS": "Job Search Status",
-		"BROWSE":"Browse",
-		"SEARCH":"Search",
-		"HISTORY":"History"
+		"BROWSE": "Browse",
+		"SEARCH": "Search",
+		"HISTORY": "History"
 	},
 	"PROPOSAL_TEMPLATE": {
 		"PROPOSAL_TEMPLATE": "Proposal Template",
@@ -2502,8 +2506,8 @@
 		"PROPOSAL_MAKE_DEFAULT_MESSAGE": "Proposal template '{{ name }}' set as default",
 		"YES": "Yes",
 		"NO": "No",
-    "BROWSE":"Browse",
-    "SEARCH":"Search"
+		"BROWSE": "Browse",
+		"SEARCH": "Search"
 	},
 	"SPRINTS_PAGE": {
 		"SPRINT_ADDED": "Sprint added",
@@ -3705,7 +3709,7 @@
 		"MINUTES": "Minutes",
 		"NO_EMPLOYEES_SELECTED": "Please select Employee",
 		"DELETE_CONFIRM": "Are you sure you want to delete this screenshots and activities?",
-    	"VISITED_DATES":"Visited Dates",
+		"VISITED_DATES": "Visited Dates",
 		"NO_SCREENSHOT": "No Screenshot",
 		"NO_SCREENSHOTS": "No Screenshots",
 		"NO_RECORD_FOUND": "No records found. Please select date range, employee or project."
@@ -3818,7 +3822,7 @@
 			"interviewer-interview-schedule": "Interviewer Schedule",
 			"employee-join": "Employee Join"
 		},
-		"HTML_EDITOR":"HTML Editor"
+		"HTML_EDITOR": "HTML Editor"
 	},
 	"PIPELINES_PAGE": {
 		"HEADER": "Pipelines",
@@ -3829,15 +3833,15 @@
 		"RECORD_TYPE": "pipeline \"{{ name }}\"",
 		"ACTIVE": "Active",
 		"INACTIVE": "Inactive",
-		"BROWSE":"Browse",
-		"SEARCH":"Search",
-		"SEARCH_PIPELINE":"Search Pipeline",
-		"NAME":"Name",
-		"STAGE":"Stage",
-		"SEARCH_STAGE":"Search Stage",
-		"STATUS":"Status",
-		"ALL_STATUS":"All Status",
-		"RESET":"Reset"
+		"BROWSE": "Browse",
+		"SEARCH": "Search",
+		"SEARCH_PIPELINE": "Search Pipeline",
+		"NAME": "Name",
+		"STAGE": "Stage",
+		"SEARCH_STAGE": "Search Stage",
+		"STATUS": "Status",
+		"ALL_STATUS": "All Status",
+		"RESET": "Reset"
 	},
 	"PIPELINE_DEALS_PAGE": {
 		"HEADER": "Pipeline Deals",
@@ -3981,10 +3985,10 @@
 		"SUB_TITLE": "Enter your email address and we’ll send a link to reset your password",
 		"ALERT_TITLE": "Oh snap!",
 		"ALERT_SUCCESS_TITLE": "Hooray!",
-		"REQUEST_PASSWORD_TEXT" : "Request password",
-		"BACK_TO_LOGIN" : "Back to?",
-		"FAQ_TITLE" : "FAQ",
-		"FAQ_LEARN_MORE" : "Learn more",
+		"REQUEST_PASSWORD_TEXT": "Request password",
+		"BACK_TO_LOGIN": "Back to?",
+		"FAQ_TITLE": "FAQ",
+		"FAQ_LEARN_MORE": "Learn more",
 		"LABELS": {
 			"EMAIL": "Enter your email address:"
 		},
@@ -3996,8 +4000,8 @@
 			"EMAIL_REAL_REQUIRED": "Email should be the real one!"
 		}
 	},
-	"PAGINATION":{
-		"ITEMS":"Items"
+	"PAGINATION": {
+		"ITEMS": "Items"
 	},
 	"USER_MENU": {
 		"STATUS": "Status",
