@@ -49,8 +49,8 @@ export enum TaskStatusEnum {
 	IN_PROGRESS = 'IN_PROGRESS',
 	READY_FOR_REVIEW = 'READY_FOR_REVIEW',
 	IN_REVIEW = 'IN_REVIEW',
-	COMPLETED = 'COMPLETED',
 	BLOCKED = 'BLOCKED',
+	COMPLETED = 'COMPLETED',
 }
 
 export enum TaskParticipantEnum {
