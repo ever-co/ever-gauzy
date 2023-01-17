@@ -27,22 +27,27 @@ import { CreateStatusDTO, StatusQuerDTO, UpdatesStatusDTO } from './dto';
 @UseGuards(TenantPermissionGuard)
 @Controller()
 export class StatusController {
+
 	constructor(
 		private readonly queryBus: QueryBus,
 		private readonly statusService: StatusService
 	) {}
 
 	/**
-	 * GET statuses
+	 * GET statuses by filters
+	 * If parameters not match, retrieve global statuses
 	 *
 	 * @param params
 	 * @returns
 	 */
 	@Get()
+	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async findAllStatuses(
 		@Query() params: StatusQuerDTO
 	): Promise<IPagination<IStatus>> {
-		return await this.queryBus.execute(new FindStatusesQuery(params));
+		return await this.queryBus.execute(
+			new FindStatusesQuery(params)
+		);
 	}
 
 	/**

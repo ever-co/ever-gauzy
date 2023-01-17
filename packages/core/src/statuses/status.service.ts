@@ -10,7 +10,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { IPagination, IStatus, IStatusFindInput } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
 import { TenantAwareCrudService } from '../core/crud';
-import { RequestContext } from './../core/context';
 import { Status } from './status.entity';
 
 @Injectable()
@@ -23,7 +22,8 @@ export class StatusService extends TenantAwareCrudService<Status> {
 	}
 
 	/**
-	 * Get all statuses by params
+	 * GET statuses by filters
+	 * If parameters not match, retrieve global statuses
 	 *
 	 * @param params
 	 * @returns
@@ -31,9 +31,6 @@ export class StatusService extends TenantAwareCrudService<Status> {
 	async findAllStatuses(
 		params: IStatusFindInput
 	): Promise<IPagination<Status>> {
-		const tenantId = RequestContext.currentTenantId();
-		const { organizationId, projectId } = params;
-
 		const query = this.repository.createQueryBuilder(this.alias);
 		query.setFindOptions({
 			select: {
@@ -45,6 +42,7 @@ export class StatusService extends TenantAwareCrudService<Status> {
 			},
 		});
 		query.where((qb: SelectQueryBuilder<Status>) => {
+			const { tenantId, organizationId, projectId } = params;
 			qb.andWhere(
 				new Brackets((bck: WhereExpressionBuilder) => {
 					/**
@@ -61,10 +59,9 @@ export class StatusService extends TenantAwareCrudService<Status> {
 					 * GET statuses by organization level
 					 */
 					if (isNotEmpty(organizationId)) {
-						bck.andWhere(
-							`"${qb.alias}"."organizationId" = :organizationId`,
-							{ organizationId }
-						);
+						bck.andWhere(`"${qb.alias}"."organizationId" = :organizationId`, {
+							organizationId,
+						});
 					} else {
 						bck.andWhere(`"${qb.alias}"."organizationId" IS NULL`);
 					}
