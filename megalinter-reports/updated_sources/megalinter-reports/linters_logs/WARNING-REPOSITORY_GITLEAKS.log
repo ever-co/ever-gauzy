@@ -119,7 +119,7 @@ Email:       alish931@abv.bg
 Date:        2019-06-17T14:36:03Z
 Fingerprint: 760f3e676f8a3860df969431cd45a92ad5525726:apps/gauzy/src/app/app.module.ts:gcp-api-key:42
 
-[90m9:58AM[0m [32mINF[0m 12374 commits scanned.
-[90m9:58AM[0m [32mINF[0m scan completed in 54.7s
-[90m9:58AM[0m [31mWRN[0m leaks found: 9
+[90m10:07AM[0m [32mINF[0m 12375 commits scanned.
+[90m10:07AM[0m [32mINF[0m scan completed in 57.1s
+[90m10:07AM[0m [31mWRN[0m leaks found: 9
 

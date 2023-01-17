@@ -3801,10 +3801,6 @@ Clone found (typescript):
    packages/core/src/employee/dto/network.dto.ts [14:12 - 12:34]
 
 Clone found (typescript):
- - packages/core/src/database/migrations/1673589923548-CreateStatusTable.ts [6:33 - 40:485] (34 lines, 192 tokens)
-   packages/core/src/database/migrations/1673946248066-AlterTaskTable.ts [6:30 - 40:56]
-
-Clone found (typescript):
  - packages/core/src/database/migrations/1673423542165-AlterTaskTable.ts [6:30 - 40:57] (34 lines, 192 tokens)
    packages/core/src/database/migrations/1673946248066-AlterTaskTable.ts [6:30 - 40:56]
 
@@ -4617,8 +4613,8 @@ Clone found (typescript):
    packages/core/src/core/entities/index.ts [2:2 - 62:10]
 
 Clone found (typescript):
- - packages/core/src/core/entities/index.ts [195:14 - 263:2] (68 lines, 269 tokens)
-   packages/core/src/core/entities/index.ts [61:12 - 128:2]
+ - packages/core/src/core/entities/index.ts [195:14 - 263:2] (68 lines, 270 tokens)
+   packages/core/src/core/entities/index.ts [61:12 - 129:13]
 
 Clone found (typescript):
  - packages/core/src/core/crud/tenant-aware-crud.service.ts [125:16 - 157:5] (32 lines, 179 tokens)
@@ -6859,7 +6855,7 @@ Clone found (javascript):
 ┌────────────┬────────────────┬─────────────┬──────────────┬──────────────┬──────────────────┬───────────────────┐
 │ Format     │ Files analyzed │ Total lines │ Total tokens │ Clones found │ Duplicated lines │ Duplicated tokens │
 ├────────────┼────────────────┼─────────────┼──────────────┼──────────────┼──────────────────┼───────────────────┤
-│ typescript │ 3691           │ 295722      │ 2238034      │ 1523         │ 34980 (11.83%)   │ 264574 (11.82%)   │
+│ typescript │ 3692           │ 295828      │ 2238320      │ 1522         │ 34946 (11.81%)   │ 264383 (11.81%)   │
 ├────────────┼────────────────┼─────────────┼──────────────┼──────────────┼──────────────────┼───────────────────┤
 │ scss       │ 456            │ 37936       │ 215904       │ 140          │ 12721 (33.53%)   │ 78367 (36.3%)     │
 ├────────────┼────────────────┼─────────────┼──────────────┼──────────────┼──────────────────┼───────────────────┤
@@ -6875,12 +6871,12 @@ Clone found (javascript):
 ├────────────┼────────────────┼─────────────┼──────────────┼──────────────┼──────────────────┼───────────────────┤
 │ bash       │ 4              │ 80          │ 524          │ 1            │ 22 (27.5%)       │ 203 (38.74%)      │
 ├────────────┼────────────────┼─────────────┼──────────────┼──────────────┼──────────────────┼───────────────────┤
-│ Total:     │ 4265           │ 340035      │ 2531265      │ 1713         │ 48738 (14.33%)   │ 355990 (14.06%)   │
+│ Total:     │ 4266           │ 340141      │ 2531551      │ 1712         │ 48704 (14.32%)   │ 355799 (14.05%)   │
 └────────────┴────────────────┴─────────────┴──────────────┴──────────────┴──────────────────┴───────────────────┘
-Found 1713 clones.
+Found 1712 clones.
 HTML report saved to /github/workspace/megalinter-reports/copy-paste/html/
-ERROR: jscpd found too many duplicates (14.33%) over threshold (0%)
-Error: ERROR: jscpd found too many duplicates (14.33%) over threshold (0%)
+ERROR: jscpd found too many duplicates (14.32%) over threshold (0%)
+Error: ERROR: jscpd found too many duplicates (14.32%) over threshold (0%)
     at ThresholdReporter.report (/node-deps/node_modules/@jscpd/finder/dist/reporters/threshold.js:12:19)
     at /node-deps/node_modules/@jscpd/finder/dist/in-files-detector.js:82:26
     at Array.forEach (<anonymous>)
