@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Column, Entity, Index, JoinColumn, ManyToOne, RelationId } from 'typeorm';
+import { Column, Entity, Index, ManyToOne, RelationId } from 'typeorm';
 import { IEmail, IEmailTemplate, IUser } from '@gauzy/contracts';
 import {
 	EmailTemplate,
@@ -24,7 +24,7 @@ export class Email extends TenantOrganizationBaseEntity implements IEmail {
 	@Column()
 	email: string;
 
-	@ApiPropertyOptional({ type: () => Boolean })
+	@ApiPropertyOptional({ type: () => Boolean, default: false })
 	@Column({ type: Boolean, nullable: true, default: false })
 	isArchived?: boolean;
 
@@ -38,12 +38,9 @@ export class Email extends TenantOrganizationBaseEntity implements IEmail {
 	 * User
 	 */
 	@ApiProperty({ type: () => User })
-	@ManyToOne(() => User, {
-		nullable: true,
-		cascade: true,
+	@ManyToOne(() => User, (user) => user.emails, {
 		onDelete: 'CASCADE'
 	})
-	@JoinColumn()
 	user?: IUser;
 
 	@ApiProperty({ type: () => String })
@@ -56,10 +53,7 @@ export class Email extends TenantOrganizationBaseEntity implements IEmail {
 	 * Email Template
 	 */
 	@ApiProperty({ type: () => EmailTemplate })
-	@ManyToOne(() => EmailTemplate, (template) => template.emails, {
-		nullable: false,
-		onDelete: 'CASCADE'
-	})
+	@ManyToOne(() => EmailTemplate, (template) => template.emails)
 	emailTemplate: IEmailTemplate;
 
 	@ApiPropertyOptional({ type: () => String })
