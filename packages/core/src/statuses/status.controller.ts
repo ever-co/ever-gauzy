@@ -27,7 +27,6 @@ import { CreateStatusDTO, StatusQuerDTO, UpdatesStatusDTO } from './dto';
 @UseGuards(TenantPermissionGuard)
 @Controller()
 export class StatusController {
-
 	constructor(
 		private readonly queryBus: QueryBus,
 		private readonly statusService: StatusService
@@ -45,9 +44,7 @@ export class StatusController {
 	async findAllStatuses(
 		@Query() params: StatusQuerDTO
 	): Promise<IPagination<IStatus>> {
-		return await this.queryBus.execute(
-			new FindStatusesQuery(params)
-		);
+		return await this.queryBus.execute(new FindStatusesQuery(params));
 	}
 
 	/**

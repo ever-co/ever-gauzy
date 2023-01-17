@@ -59,9 +59,12 @@ export class StatusService extends TenantAwareCrudService<Status> {
 					 * GET statuses by organization level
 					 */
 					if (isNotEmpty(organizationId)) {
-						bck.andWhere(`"${qb.alias}"."organizationId" = :organizationId`, {
-							organizationId,
-						});
+						bck.andWhere(
+							`"${qb.alias}"."organizationId" = :organizationId`,
+							{
+								organizationId,
+							}
+						);
 					} else {
 						bck.andWhere(`"${qb.alias}"."organizationId" IS NULL`);
 					}

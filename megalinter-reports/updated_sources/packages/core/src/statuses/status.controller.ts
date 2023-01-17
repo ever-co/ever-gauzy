@@ -33,12 +33,14 @@ export class StatusController {
 	) {}
 
 	/**
-	 * GET statuses
+	 * GET statuses by filters
+	 * If parameters not match, retrieve global statuses
 	 *
 	 * @param params
 	 * @returns
 	 */
 	@Get()
+	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async findAllStatuses(
 		@Query() params: StatusQuerDTO
 	): Promise<IPagination<IStatus>> {
