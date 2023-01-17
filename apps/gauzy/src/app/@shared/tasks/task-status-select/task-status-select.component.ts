@@ -43,13 +43,12 @@ export class TaskStatusSelectComponent extends TranslationBaseComponent implemen
 			value: TaskStatusEnum.IN_REVIEW
 		},
 		{
-			label: this.getTranslation('TASKS_PAGE.COMPLETED'),
-			value: TaskStatusEnum.COMPLETED
-		},
-		{
 			label: this.getTranslation('TASKS_PAGE.BLOCKED'),
 			value: TaskStatusEnum.BLOCKED
 		},
+		{
+			label: this.getTranslation('TASKS_PAGE.COMPLETED'),
+			value: TaskStatusEnum.COMPLETED
 	];
 
 	/*
