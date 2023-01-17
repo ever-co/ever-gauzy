@@ -1,0 +1,3315 @@
+Results of git_diff linter (version 2.36.3)
+See documentation on https://megalinter.io/6.18.0/descriptors/repository_git_diff/
+-----------------------------------------------
+
+❌ [ERROR] for workspace /github/workspace
+Linter raw log:
+megalinter-reports/megalinter.log:233647: trailing whitespace.
++HIGH: Specify at least 1 USER command in Dockerfile with non-root user as argument
+megalinter-reports/megalinter.log:233648: trailing whitespace.
++════════════════════════════════════════
+megalinter-reports/megalinter.log:233649: trailing whitespace.
++Running containers with 'root' user can lead to a container escape situation. It is a best practice to run containers as non-root users, which can be done by adding a 'USER' statement to the Dockerfile.
+megalinter-reports/megalinter.log:233650: trailing whitespace.
++
+megalinter-reports/megalinter.log:233651: trailing whitespace.
++See https://avd.aquasec.com/misconfig/ds002
+megalinter-reports/megalinter.log:233652: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:233653: trailing whitespace.
++
+megalinter-reports/megalinter.log:233654: trailing whitespace.
++
+megalinter-reports/megalinter.log:233661: trailing whitespace.
++HIGH: Specify at least 1 USER command in Dockerfile with non-root user as argument
+megalinter-reports/megalinter.log:233662: trailing whitespace.
++════════════════════════════════════════
+megalinter-reports/megalinter.log:233663: trailing whitespace.
++Running containers with 'root' user can lead to a container escape situation. It is a best practice to run containers as non-root users, which can be done by adding a 'USER' statement to the Dockerfile.
+megalinter-reports/megalinter.log:233664: trailing whitespace.
++
+megalinter-reports/megalinter.log:233665: trailing whitespace.
++See https://avd.aquasec.com/misconfig/ds002
+megalinter-reports/megalinter.log:233666: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:233667: trailing whitespace.
++
+megalinter-reports/megalinter.log:233668: trailing whitespace.
++
+megalinter-reports/megalinter.log:233675: trailing whitespace.
++MEDIUM: Container 'gauzy-demo-api' of Deployment 'gauzy-demo-api' should set 'securityContext.allowPrivilegeEscalation' to false
+megalinter-reports/megalinter.log:233676: trailing whitespace.
++════════════════════════════════════════
+megalinter-reports/megalinter.log:233677: trailing whitespace.
++A program inside the container can elevate its own privileges and run as root, which might give the program control over the container and node.
+megalinter-reports/megalinter.log:233678: trailing whitespace.
++
+megalinter-reports/megalinter.log:233679: trailing whitespace.
++See https://avd.aquasec.com/misconfig/ksv001
+megalinter-reports/megalinter.log:233680: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:233681: trailing whitespace.
++ .deploy/k8s/k8s-manifest.demo.yaml:61-90
+megalinter-reports/megalinter.log:233682: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:233683: trailing whitespace.
++  61 ┌                 - name: gauzy-demo-api
+megalinter-reports/megalinter.log:233684: trailing whitespace.
++  62 │                   image: ghcr.io/ever-co/gauzy-api-demo:latest
+megalinter-reports/megalinter.log:233685: trailing whitespace.
++  63 │                   env:
+megalinter-reports/megalinter.log:233686: trailing whitespace.
++  64 │                       - name: API_HOST
+megalinter-reports/megalinter.log:233687: trailing whitespace.
++  65 │                         value: 0.0.0.0
+megalinter-reports/megalinter.log:233688: trailing whitespace.
++  66 │                       - name: DEMO
+megalinter-reports/megalinter.log:233689: trailing whitespace.
++  67 │                         value: 'true'
+megalinter-reports/megalinter.log:233690: trailing whitespace.
++  68 │                       - name: NODE_ENV
+megalinter-reports/megalinter.log:233691: trailing whitespace.
++  69 └                         value: 'development'
+megalinter-reports/megalinter.log:233692: trailing whitespace.
++  ..   
+megalinter-reports/megalinter.log:233693: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:233694: trailing whitespace.
++
+megalinter-reports/megalinter.log:233695: trailing whitespace.
++
+megalinter-reports/megalinter.log:233696: trailing whitespace.
++MEDIUM: Container 'gauzy-demo-webapp' of Deployment 'gauzy-demo-webapp' should set 'securityContext.allowPrivilegeEscalation' to false
+megalinter-reports/megalinter.log:233697: trailing whitespace.
++════════════════════════════════════════
+megalinter-reports/megalinter.log:233698: trailing whitespace.
++A program inside the container can elevate its own privileges and run as root, which might give the program control over the container and node.
+megalinter-reports/megalinter.log:233699: trailing whitespace.
++
+megalinter-reports/megalinter.log:233700: trailing whitespace.
++See https://avd.aquasec.com/misconfig/ksv001
+megalinter-reports/megalinter.log:233701: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:233702: trailing whitespace.
++ .deploy/k8s/k8s-manifest.demo.yaml:107-137
+megalinter-reports/megalinter.log:233703: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:233704: trailing whitespace.
++ 107 ┌                 - name: gauzy-demo-webapp
+megalinter-reports/megalinter.log:233705: trailing whitespace.
++ 108 │                   image: ghcr.io/ever-co/gauzy-webapp-demo:latest
+megalinter-reports/megalinter.log:233706: trailing whitespace.
++ 109 │                   env:
+megalinter-reports/megalinter.log:233707: trailing whitespace.
++ 110 │                       - name: DEMO
+megalinter-reports/megalinter.log:233708: trailing whitespace.
++ 111 │                         value: 'true'
+megalinter-reports/megalinter.log:233709: trailing whitespace.
++ 112 │                       - name: API_BASE_URL
+megalinter-reports/megalinter.log:233710: trailing whitespace.
++ 113 │                         value: 'https://apidemo.gauzy.co'
+megalinter-reports/megalinter.log:233711: trailing whitespace.
++ 114 │                       - name: CLIENT_BASE_URL
+megalinter-reports/megalinter.log:233712: trailing whitespace.
++ 115 └                         value: 'https://demo.gauzy.co'
+megalinter-reports/megalinter.log:233713: trailing whitespace.
++ ...   
+megalinter-reports/megalinter.log:233714: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:233715: trailing whitespace.
++
+megalinter-reports/megalinter.log:233716: trailing whitespace.
++
+megalinter-reports/megalinter.log:233717: trailing whitespace.
++LOW: Container 'gauzy-demo-api' of Deployment 'gauzy-demo-api' should add 'ALL' to 'securityContext.capabilities.drop'
+megalinter-reports/megalinter.log:233718: trailing whitespace.
++════════════════════════════════════════
+megalinter-reports/megalinter.log:233719: trailing whitespace.
++The container should drop all default capabilities and add only those that are needed for its execution.
+megalinter-reports/megalinter.log:233720: trailing whitespace.
++
+megalinter-reports/megalinter.log:233721: trailing whitespace.
++See https://avd.aquasec.com/misconfig/ksv003
+megalinter-reports/megalinter.log:233722: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:233723: trailing whitespace.
++ .deploy/k8s/k8s-manifest.demo.yaml:61-90
+megalinter-reports/megalinter.log:233724: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:233725: trailing whitespace.
++  61 ┌                 - name: gauzy-demo-api
+megalinter-reports/megalinter.log:233726: trailing whitespace.
++  62 │                   image: ghcr.io/ever-co/gauzy-api-demo:latest
+megalinter-reports/megalinter.log:233727: trailing whitespace.
++  63 │                   env:
+megalinter-reports/megalinter.log:233728: trailing whitespace.
++  64 │                       - name: API_HOST
+megalinter-reports/megalinter.log:233729: trailing whitespace.
++  65 │                         value: 0.0.0.0
+megalinter-reports/megalinter.log:233730: trailing whitespace.
++  66 │                       - name: DEMO
+megalinter-reports/megalinter.log:233731: trailing whitespace.
++  67 │                         value: 'true'
+megalinter-reports/megalinter.log:233732: trailing whitespace.
++  68 │                       - name: NODE_ENV
+megalinter-reports/megalinter.log:233733: trailing whitespace.
++  69 └                         value: 'development'
+megalinter-reports/megalinter.log:233734: trailing whitespace.
++  ..   
+megalinter-reports/megalinter.log:233735: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:233736: trailing whitespace.
++
+megalinter-reports/megalinter.log:233737: trailing whitespace.
++
+megalinter-reports/megalinter.log:233738: trailing whitespace.
++LOW: Container 'gauzy-demo-webapp' of Deployment 'gauzy-demo-webapp' should add 'ALL' to 'securityContext.capabilities.drop'
+megalinter-reports/megalinter.log:233739: trailing whitespace.
++════════════════════════════════════════
+megalinter-reports/megalinter.log:233740: trailing whitespace.
++The container should drop all default capabilities and add only those that are needed for its execution.
+megalinter-reports/megalinter.log:233741: trailing whitespace.
++
+megalinter-reports/megalinter.log:233742: trailing whitespace.
++See https://avd.aquasec.com/misconfig/ksv003
+megalinter-reports/megalinter.log:233743: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:233744: trailing whitespace.
++ .deploy/k8s/k8s-manifest.demo.yaml:107-137
+megalinter-reports/megalinter.log:233745: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:233746: trailing whitespace.
++ 107 ┌                 - name: gauzy-demo-webapp
+megalinter-reports/megalinter.log:233747: trailing whitespace.
++ 108 │                   image: ghcr.io/ever-co/gauzy-webapp-demo:latest
+megalinter-reports/megalinter.log:233748: trailing whitespace.
++ 109 │                   env:
+megalinter-reports/megalinter.log:233749: trailing whitespace.
++ 110 │                       - name: DEMO
+megalinter-reports/megalinter.log:233750: trailing whitespace.
++ 111 │                         value: 'true'
+megalinter-reports/megalinter.log:233751: trailing whitespace.
++ 112 │                       - name: API_BASE_URL
+megalinter-reports/megalinter.log:233752: trailing whitespace.
++ 113 │                         value: 'https://apidemo.gauzy.co'
+megalinter-reports/megalinter.log:233753: trailing whitespace.
++ 114 │                       - name: CLIENT_BASE_URL
+megalinter-reports/megalinter.log:233754: trailing whitespace.
++ 115 └                         value: 'https://demo.gauzy.co'
+megalinter-reports/megalinter.log:233755: trailing whitespace.
++ ...   
+megalinter-reports/megalinter.log:233756: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:233757: trailing whitespace.
++
+megalinter-reports/megalinter.log:233758: trailing whitespace.
++
+megalinter-reports/megalinter.log:233759: trailing whitespace.
++LOW: Container 'gauzy-demo-api' of Deployment 'gauzy-demo-api' should set 'resources.limits.cpu'
+megalinter-reports/megalinter.log:233760: trailing whitespace.
++════════════════════════════════════════
+megalinter-reports/megalinter.log:233761: trailing whitespace.
++Enforcing CPU limits prevents DoS via resource exhaustion.
+megalinter-reports/megalinter.log:233762: trailing whitespace.
++
+megalinter-reports/megalinter.log:233763: trailing whitespace.
++See https://avd.aquasec.com/misconfig/ksv011
+megalinter-reports/megalinter.log:233764: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:233765: trailing whitespace.
++ .deploy/k8s/k8s-manifest.demo.yaml:61-90
+megalinter-reports/megalinter.log:233766: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:233767: trailing whitespace.
++  61 ┌                 - name: gauzy-demo-api
+megalinter-reports/megalinter.log:233768: trailing whitespace.
++  62 │                   image: ghcr.io/ever-co/gauzy-api-demo:latest
+megalinter-reports/megalinter.log:233769: trailing whitespace.
++  63 │                   env:
+megalinter-reports/megalinter.log:233770: trailing whitespace.
++  64 │                       - name: API_HOST
+megalinter-reports/megalinter.log:233771: trailing whitespace.
++  65 │                         value: 0.0.0.0
+megalinter-reports/megalinter.log:233772: trailing whitespace.
++  66 │                       - name: DEMO
+megalinter-reports/megalinter.log:233773: trailing whitespace.
++  67 │                         value: 'true'
+megalinter-reports/megalinter.log:233774: trailing whitespace.
++  68 │                       - name: NODE_ENV
+megalinter-reports/megalinter.log:233775: trailing whitespace.
++  69 └                         value: 'development'
+megalinter-reports/megalinter.log:233776: trailing whitespace.
++  ..   
+megalinter-reports/megalinter.log:233777: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:233778: trailing whitespace.
++
+megalinter-reports/megalinter.log:233779: trailing whitespace.
++
+megalinter-reports/megalinter.log:233780: trailing whitespace.
++LOW: Container 'gauzy-demo-webapp' of Deployment 'gauzy-demo-webapp' should set 'resources.limits.cpu'
+megalinter-reports/megalinter.log:233781: trailing whitespace.
++════════════════════════════════════════
+megalinter-reports/megalinter.log:233782: trailing whitespace.
++Enforcing CPU limits prevents DoS via resource exhaustion.
+megalinter-reports/megalinter.log:233783: trailing whitespace.
++
+megalinter-reports/megalinter.log:233784: trailing whitespace.
++See https://avd.aquasec.com/misconfig/ksv011
+megalinter-reports/megalinter.log:233785: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:233786: trailing whitespace.
++ .deploy/k8s/k8s-manifest.demo.yaml:107-137
+megalinter-reports/megalinter.log:233787: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:233788: trailing whitespace.
++ 107 ┌                 - name: gauzy-demo-webapp
+megalinter-reports/megalinter.log:233789: trailing whitespace.
++ 108 │                   image: ghcr.io/ever-co/gauzy-webapp-demo:latest
+megalinter-reports/megalinter.log:233790: trailing whitespace.
++ 109 │                   env:
+megalinter-reports/megalinter.log:233791: trailing whitespace.
++ 110 │                       - name: DEMO
+megalinter-reports/megalinter.log:233792: trailing whitespace.
++ 111 │                         value: 'true'
+megalinter-reports/megalinter.log:233793: trailing whitespace.
++ 112 │                       - name: API_BASE_URL
+megalinter-reports/megalinter.log:233794: trailing whitespace.
++ 113 │                         value: 'https://apidemo.gauzy.co'
+megalinter-reports/megalinter.log:233795: trailing whitespace.
++ 114 │                       - name: CLIENT_BASE_URL
+megalinter-reports/megalinter.log:233796: trailing whitespace.
++ 115 └                         value: 'https://demo.gauzy.co'
+megalinter-reports/megalinter.log:233797: trailing whitespace.
++ ...   
+megalinter-reports/megalinter.log:233798: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:233799: trailing whitespace.
++
+megalinter-reports/megalinter.log:233800: trailing whitespace.
++
+megalinter-reports/megalinter.log:233801: trailing whitespace.
++MEDIUM: Container 'gauzy-demo-api' of Deployment 'gauzy-demo-api' should set 'securityContext.runAsNonRoot' to true
+megalinter-reports/megalinter.log:233802: trailing whitespace.
++════════════════════════════════════════
+megalinter-reports/megalinter.log:233803: trailing whitespace.
++'runAsNonRoot' forces the running image to run as a non-root user to ensure least privileges.
+megalinter-reports/megalinter.log:233804: trailing whitespace.
++
+megalinter-reports/megalinter.log:233805: trailing whitespace.
++See https://avd.aquasec.com/misconfig/ksv012
+megalinter-reports/megalinter.log:233806: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:233807: trailing whitespace.
++ .deploy/k8s/k8s-manifest.demo.yaml:61-90
+megalinter-reports/megalinter.log:233808: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:233809: trailing whitespace.
++  61 ┌                 - name: gauzy-demo-api
+megalinter-reports/megalinter.log:233810: trailing whitespace.
++  62 │                   image: ghcr.io/ever-co/gauzy-api-demo:latest
+megalinter-reports/megalinter.log:233811: trailing whitespace.
++  63 │                   env:
+megalinter-reports/megalinter.log:233812: trailing whitespace.
++  64 │                       - name: API_HOST
+megalinter-reports/megalinter.log:233813: trailing whitespace.
++  65 │                         value: 0.0.0.0
+megalinter-reports/megalinter.log:233814: trailing whitespace.
++  66 │                       - name: DEMO
+megalinter-reports/megalinter.log:233815: trailing whitespace.
++  67 │                         value: 'true'
+megalinter-reports/megalinter.log:233816: trailing whitespace.
++  68 │                       - name: NODE_ENV
+megalinter-reports/megalinter.log:233817: trailing whitespace.
++  69 └                         value: 'development'
+megalinter-reports/megalinter.log:233818: trailing whitespace.
++  ..   
+megalinter-reports/megalinter.log:233819: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:233820: trailing whitespace.
++
+megalinter-reports/megalinter.log:233821: trailing whitespace.
++
+megalinter-reports/megalinter.log:233822: trailing whitespace.
++MEDIUM: Container 'gauzy-demo-webapp' of Deployment 'gauzy-demo-webapp' should set 'securityContext.runAsNonRoot' to true
+megalinter-reports/megalinter.log:233823: trailing whitespace.
++════════════════════════════════════════
+megalinter-reports/megalinter.log:233824: trailing whitespace.
++'runAsNonRoot' forces the running image to run as a non-root user to ensure least privileges.
+megalinter-reports/megalinter.log:233825: trailing whitespace.
++
+megalinter-reports/megalinter.log:233826: trailing whitespace.
++See https://avd.aquasec.com/misconfig/ksv012
+megalinter-reports/megalinter.log:233827: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:233828: trailing whitespace.
++ .deploy/k8s/k8s-manifest.demo.yaml:107-137
+megalinter-reports/megalinter.log:233829: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:233830: trailing whitespace.
++ 107 ┌                 - name: gauzy-demo-webapp
+megalinter-reports/megalinter.log:233831: trailing whitespace.
++ 108 │                   image: ghcr.io/ever-co/gauzy-webapp-demo:latest
+megalinter-reports/megalinter.log:233832: trailing whitespace.
++ 109 │                   env:
+megalinter-reports/megalinter.log:233833: trailing whitespace.
++ 110 │                       - name: DEMO
+megalinter-reports/megalinter.log:233834: trailing whitespace.
++ 111 │                         value: 'true'
+megalinter-reports/megalinter.log:233835: trailing whitespace.
++ 112 │                       - name: API_BASE_URL
+megalinter-reports/megalinter.log:233836: trailing whitespace.
++ 113 │                         value: 'https://apidemo.gauzy.co'
+megalinter-reports/megalinter.log:233837: trailing whitespace.
++ 114 │                       - name: CLIENT_BASE_URL
+megalinter-reports/megalinter.log:233838: trailing whitespace.
++ 115 └                         value: 'https://demo.gauzy.co'
+megalinter-reports/megalinter.log:233839: trailing whitespace.
++ ...   
+megalinter-reports/megalinter.log:233840: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:233841: trailing whitespace.
++
+megalinter-reports/megalinter.log:233842: trailing whitespace.
++
+megalinter-reports/megalinter.log:233843: trailing whitespace.
++MEDIUM: Container 'gauzy-demo-api' of Deployment 'gauzy-demo-api' should specify an image tag
+megalinter-reports/megalinter.log:233844: trailing whitespace.
++════════════════════════════════════════
+megalinter-reports/megalinter.log:233845: trailing whitespace.
++It is best to avoid using the ':latest' image tag when deploying containers in production. Doing so makes it hard to track which version of the image is running, and hard to roll back the version.
+megalinter-reports/megalinter.log:233846: trailing whitespace.
++
+megalinter-reports/megalinter.log:233847: trailing whitespace.
++See https://avd.aquasec.com/misconfig/ksv013
+megalinter-reports/megalinter.log:233848: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:233849: trailing whitespace.
++ .deploy/k8s/k8s-manifest.demo.yaml:61-90
+megalinter-reports/megalinter.log:233850: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:233851: trailing whitespace.
++  61 ┌                 - name: gauzy-demo-api
+megalinter-reports/megalinter.log:233852: trailing whitespace.
++  62 │                   image: ghcr.io/ever-co/gauzy-api-demo:latest
+megalinter-reports/megalinter.log:233853: trailing whitespace.
++  63 │                   env:
+megalinter-reports/megalinter.log:233854: trailing whitespace.
++  64 │                       - name: API_HOST
+megalinter-reports/megalinter.log:233855: trailing whitespace.
++  65 │                         value: 0.0.0.0
+megalinter-reports/megalinter.log:233856: trailing whitespace.
++  66 │                       - name: DEMO
+megalinter-reports/megalinter.log:233857: trailing whitespace.
++  67 │                         value: 'true'
+megalinter-reports/megalinter.log:233858: trailing whitespace.
++  68 │                       - name: NODE_ENV
+megalinter-reports/megalinter.log:233859: trailing whitespace.
++  69 └                         value: 'development'
+megalinter-reports/megalinter.log:233860: trailing whitespace.
++  ..   
+megalinter-reports/megalinter.log:233861: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:233862: trailing whitespace.
++
+megalinter-reports/megalinter.log:233863: trailing whitespace.
++
+megalinter-reports/megalinter.log:233864: trailing whitespace.
++MEDIUM: Container 'gauzy-demo-webapp' of Deployment 'gauzy-demo-webapp' should specify an image tag
+megalinter-reports/megalinter.log:233865: trailing whitespace.
++════════════════════════════════════════
+megalinter-reports/megalinter.log:233866: trailing whitespace.
++It is best to avoid using the ':latest' image tag when deploying containers in production. Doing so makes it hard to track which version of the image is running, and hard to roll back the version.
+megalinter-reports/megalinter.log:233867: trailing whitespace.
++
+megalinter-reports/megalinter.log:233868: trailing whitespace.
++See https://avd.aquasec.com/misconfig/ksv013
+megalinter-reports/megalinter.log:233869: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:233870: trailing whitespace.
++ .deploy/k8s/k8s-manifest.demo.yaml:107-137
+megalinter-reports/megalinter.log:233871: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:233872: trailing whitespace.
++ 107 ┌                 - name: gauzy-demo-webapp
+megalinter-reports/megalinter.log:233873: trailing whitespace.
++ 108 │                   image: ghcr.io/ever-co/gauzy-webapp-demo:latest
+megalinter-reports/megalinter.log:233874: trailing whitespace.
++ 109 │                   env:
+megalinter-reports/megalinter.log:233875: trailing whitespace.
++ 110 │                       - name: DEMO
+megalinter-reports/megalinter.log:233876: trailing whitespace.
++ 111 │                         value: 'true'
+megalinter-reports/megalinter.log:233877: trailing whitespace.
++ 112 │                       - name: API_BASE_URL
+megalinter-reports/megalinter.log:233878: trailing whitespace.
++ 113 │                         value: 'https://apidemo.gauzy.co'
+megalinter-reports/megalinter.log:233879: trailing whitespace.
++ 114 │                       - name: CLIENT_BASE_URL
+megalinter-reports/megalinter.log:233880: trailing whitespace.
++ 115 └                         value: 'https://demo.gauzy.co'
+megalinter-reports/megalinter.log:233881: trailing whitespace.
++ ...   
+megalinter-reports/megalinter.log:233882: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:233883: trailing whitespace.
++
+megalinter-reports/megalinter.log:233884: trailing whitespace.
++
+megalinter-reports/megalinter.log:233885: trailing whitespace.
++LOW: Container 'gauzy-demo-api' of Deployment 'gauzy-demo-api' should set 'securityContext.readOnlyRootFilesystem' to true
+megalinter-reports/megalinter.log:233886: trailing whitespace.
++════════════════════════════════════════
+megalinter-reports/megalinter.log:233887: trailing whitespace.
++An immutable root file system prevents applications from writing to their local disk. This can limit intrusions, as attackers will not be able to tamper with the file system or write foreign executables to disk.
+megalinter-reports/megalinter.log:233888: trailing whitespace.
++
+megalinter-reports/megalinter.log:233889: trailing whitespace.
++See https://avd.aquasec.com/misconfig/ksv014
+megalinter-reports/megalinter.log:233890: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:233891: trailing whitespace.
++ .deploy/k8s/k8s-manifest.demo.yaml:61-90
+megalinter-reports/megalinter.log:233892: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:233893: trailing whitespace.
++  61 ┌                 - name: gauzy-demo-api
+megalinter-reports/megalinter.log:233894: trailing whitespace.
++  62 │                   image: ghcr.io/ever-co/gauzy-api-demo:latest
+megalinter-reports/megalinter.log:233895: trailing whitespace.
++  63 │                   env:
+megalinter-reports/megalinter.log:233896: trailing whitespace.
++  64 │                       - name: API_HOST
+megalinter-reports/megalinter.log:233897: trailing whitespace.
++  65 │                         value: 0.0.0.0
+megalinter-reports/megalinter.log:233898: trailing whitespace.
++  66 │                       - name: DEMO
+megalinter-reports/megalinter.log:233899: trailing whitespace.
++  67 │                         value: 'true'
+megalinter-reports/megalinter.log:233900: trailing whitespace.
++  68 │                       - name: NODE_ENV
+megalinter-reports/megalinter.log:233901: trailing whitespace.
++  69 └                         value: 'development'
+megalinter-reports/megalinter.log:233902: trailing whitespace.
++  ..   
+megalinter-reports/megalinter.log:233903: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:233904: trailing whitespace.
++
+megalinter-reports/megalinter.log:233905: trailing whitespace.
++
+megalinter-reports/megalinter.log:233906: trailing whitespace.
++LOW: Container 'gauzy-demo-webapp' of Deployment 'gauzy-demo-webapp' should set 'securityContext.readOnlyRootFilesystem' to true
+megalinter-reports/megalinter.log:233907: trailing whitespace.
++════════════════════════════════════════
+megalinter-reports/megalinter.log:233908: trailing whitespace.
++An immutable root file system prevents applications from writing to their local disk. This can limit intrusions, as attackers will not be able to tamper with the file system or write foreign executables to disk.
+megalinter-reports/megalinter.log:233909: trailing whitespace.
++
+megalinter-reports/megalinter.log:233910: trailing whitespace.
++See https://avd.aquasec.com/misconfig/ksv014
+megalinter-reports/megalinter.log:233911: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:233912: trailing whitespace.
++ .deploy/k8s/k8s-manifest.demo.yaml:107-137
+megalinter-reports/megalinter.log:233913: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:233914: trailing whitespace.
++ 107 ┌                 - name: gauzy-demo-webapp
+megalinter-reports/megalinter.log:233915: trailing whitespace.
++ 108 │                   image: ghcr.io/ever-co/gauzy-webapp-demo:latest
+megalinter-reports/megalinter.log:233916: trailing whitespace.
++ 109 │                   env:
+megalinter-reports/megalinter.log:233917: trailing whitespace.
++ 110 │                       - name: DEMO
+megalinter-reports/megalinter.log:233918: trailing whitespace.
++ 111 │                         value: 'true'
+megalinter-reports/megalinter.log:233919: trailing whitespace.
++ 112 │                       - name: API_BASE_URL
+megalinter-reports/megalinter.log:233920: trailing whitespace.
++ 113 │                         value: 'https://apidemo.gauzy.co'
+megalinter-reports/megalinter.log:233921: trailing whitespace.
++ 114 │                       - name: CLIENT_BASE_URL
+megalinter-reports/megalinter.log:233922: trailing whitespace.
++ 115 └                         value: 'https://demo.gauzy.co'
+megalinter-reports/megalinter.log:233923: trailing whitespace.
++ ...   
+megalinter-reports/megalinter.log:233924: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:233925: trailing whitespace.
++
+megalinter-reports/megalinter.log:233926: trailing whitespace.
++
+megalinter-reports/megalinter.log:233927: trailing whitespace.
++LOW: Container 'gauzy-demo-api' of Deployment 'gauzy-demo-api' should set 'resources.requests.cpu'
+megalinter-reports/megalinter.log:233928: trailing whitespace.
++════════════════════════════════════════
+megalinter-reports/megalinter.log:233929: trailing whitespace.
++When containers have resource requests specified, the scheduler can make better decisions about which nodes to place pods on, and how to deal with resource contention.
+megalinter-reports/megalinter.log:233930: trailing whitespace.
++
+megalinter-reports/megalinter.log:233931: trailing whitespace.
++See https://avd.aquasec.com/misconfig/ksv015
+megalinter-reports/megalinter.log:233932: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:233933: trailing whitespace.
++ .deploy/k8s/k8s-manifest.demo.yaml:61-90
+megalinter-reports/megalinter.log:233934: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:233935: trailing whitespace.
++  61 ┌                 - name: gauzy-demo-api
+megalinter-reports/megalinter.log:233936: trailing whitespace.
++  62 │                   image: ghcr.io/ever-co/gauzy-api-demo:latest
+megalinter-reports/megalinter.log:233937: trailing whitespace.
++  63 │                   env:
+megalinter-reports/megalinter.log:233938: trailing whitespace.
++  64 │                       - name: API_HOST
+megalinter-reports/megalinter.log:233939: trailing whitespace.
++  65 │                         value: 0.0.0.0
+megalinter-reports/megalinter.log:233940: trailing whitespace.
++  66 │                       - name: DEMO
+megalinter-reports/megalinter.log:233941: trailing whitespace.
++  67 │                         value: 'true'
+megalinter-reports/megalinter.log:233942: trailing whitespace.
++  68 │                       - name: NODE_ENV
+megalinter-reports/megalinter.log:233943: trailing whitespace.
++  69 └                         value: 'development'
+megalinter-reports/megalinter.log:233944: trailing whitespace.
++  ..   
+megalinter-reports/megalinter.log:233945: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:233946: trailing whitespace.
++
+megalinter-reports/megalinter.log:233947: trailing whitespace.
++
+megalinter-reports/megalinter.log:233948: trailing whitespace.
++LOW: Container 'gauzy-demo-webapp' of Deployment 'gauzy-demo-webapp' should set 'resources.requests.cpu'
+megalinter-reports/megalinter.log:233949: trailing whitespace.
++════════════════════════════════════════
+megalinter-reports/megalinter.log:233950: trailing whitespace.
++When containers have resource requests specified, the scheduler can make better decisions about which nodes to place pods on, and how to deal with resource contention.
+megalinter-reports/megalinter.log:233951: trailing whitespace.
++
+megalinter-reports/megalinter.log:233952: trailing whitespace.
++See https://avd.aquasec.com/misconfig/ksv015
+megalinter-reports/megalinter.log:233953: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:233954: trailing whitespace.
++ .deploy/k8s/k8s-manifest.demo.yaml:107-137
+megalinter-reports/megalinter.log:233955: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:233956: trailing whitespace.
++ 107 ┌                 - name: gauzy-demo-webapp
+megalinter-reports/megalinter.log:233957: trailing whitespace.
++ 108 │                   image: ghcr.io/ever-co/gauzy-webapp-demo:latest
+megalinter-reports/megalinter.log:233958: trailing whitespace.
++ 109 │                   env:
+megalinter-reports/megalinter.log:233959: trailing whitespace.
++ 110 │                       - name: DEMO
+megalinter-reports/megalinter.log:233960: trailing whitespace.
++ 111 │                         value: 'true'
+megalinter-reports/megalinter.log:233961: trailing whitespace.
++ 112 │                       - name: API_BASE_URL
+megalinter-reports/megalinter.log:233962: trailing whitespace.
++ 113 │                         value: 'https://apidemo.gauzy.co'
+megalinter-reports/megalinter.log:233963: trailing whitespace.
++ 114 │                       - name: CLIENT_BASE_URL
+megalinter-reports/megalinter.log:233964: trailing whitespace.
++ 115 └                         value: 'https://demo.gauzy.co'
+megalinter-reports/megalinter.log:233965: trailing whitespace.
++ ...   
+megalinter-reports/megalinter.log:233966: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:233967: trailing whitespace.
++
+megalinter-reports/megalinter.log:233968: trailing whitespace.
++
+megalinter-reports/megalinter.log:233969: trailing whitespace.
++LOW: Container 'gauzy-demo-api' of Deployment 'gauzy-demo-api' should set 'resources.requests.memory'
+megalinter-reports/megalinter.log:233970: trailing whitespace.
++════════════════════════════════════════
+megalinter-reports/megalinter.log:233971: trailing whitespace.
++When containers have memory requests specified, the scheduler can make better decisions about which nodes to place pods on, and how to deal with resource contention.
+megalinter-reports/megalinter.log:233972: trailing whitespace.
++
+megalinter-reports/megalinter.log:233973: trailing whitespace.
++See https://avd.aquasec.com/misconfig/ksv016
+megalinter-reports/megalinter.log:233974: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:233975: trailing whitespace.
++ .deploy/k8s/k8s-manifest.demo.yaml:61-90
+megalinter-reports/megalinter.log:233976: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:233977: trailing whitespace.
++  61 ┌                 - name: gauzy-demo-api
+megalinter-reports/megalinter.log:233978: trailing whitespace.
++  62 │                   image: ghcr.io/ever-co/gauzy-api-demo:latest
+megalinter-reports/megalinter.log:233979: trailing whitespace.
++  63 │                   env:
+megalinter-reports/megalinter.log:233980: trailing whitespace.
++  64 │                       - name: API_HOST
+megalinter-reports/megalinter.log:233981: trailing whitespace.
++  65 │                         value: 0.0.0.0
+megalinter-reports/megalinter.log:233982: trailing whitespace.
++  66 │                       - name: DEMO
+megalinter-reports/megalinter.log:233983: trailing whitespace.
++  67 │                         value: 'true'
+megalinter-reports/megalinter.log:233984: trailing whitespace.
++  68 │                       - name: NODE_ENV
+megalinter-reports/megalinter.log:233985: trailing whitespace.
++  69 └                         value: 'development'
+megalinter-reports/megalinter.log:233986: trailing whitespace.
++  ..   
+megalinter-reports/megalinter.log:233987: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:233988: trailing whitespace.
++
+megalinter-reports/megalinter.log:233989: trailing whitespace.
++
+megalinter-reports/megalinter.log:233990: trailing whitespace.
++LOW: Container 'gauzy-demo-webapp' of Deployment 'gauzy-demo-webapp' should set 'resources.requests.memory'
+megalinter-reports/megalinter.log:233991: trailing whitespace.
++════════════════════════════════════════
+megalinter-reports/megalinter.log:233992: trailing whitespace.
++When containers have memory requests specified, the scheduler can make better decisions about which nodes to place pods on, and how to deal with resource contention.
+megalinter-reports/megalinter.log:233993: trailing whitespace.
++
+megalinter-reports/megalinter.log:233994: trailing whitespace.
++See https://avd.aquasec.com/misconfig/ksv016
+megalinter-reports/megalinter.log:233995: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:233996: trailing whitespace.
++ .deploy/k8s/k8s-manifest.demo.yaml:107-137
+megalinter-reports/megalinter.log:233997: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:233998: trailing whitespace.
++ 107 ┌                 - name: gauzy-demo-webapp
+megalinter-reports/megalinter.log:233999: trailing whitespace.
++ 108 │                   image: ghcr.io/ever-co/gauzy-webapp-demo:latest
+megalinter-reports/megalinter.log:234000: trailing whitespace.
++ 109 │                   env:
+megalinter-reports/megalinter.log:234001: trailing whitespace.
++ 110 │                       - name: DEMO
+megalinter-reports/megalinter.log:234002: trailing whitespace.
++ 111 │                         value: 'true'
+megalinter-reports/megalinter.log:234003: trailing whitespace.
++ 112 │                       - name: API_BASE_URL
+megalinter-reports/megalinter.log:234004: trailing whitespace.
++ 113 │                         value: 'https://apidemo.gauzy.co'
+megalinter-reports/megalinter.log:234005: trailing whitespace.
++ 114 │                       - name: CLIENT_BASE_URL
+megalinter-reports/megalinter.log:234006: trailing whitespace.
++ 115 └                         value: 'https://demo.gauzy.co'
+megalinter-reports/megalinter.log:234007: trailing whitespace.
++ ...   
+megalinter-reports/megalinter.log:234008: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234009: trailing whitespace.
++
+megalinter-reports/megalinter.log:234010: trailing whitespace.
++
+megalinter-reports/megalinter.log:234011: trailing whitespace.
++LOW: Container 'gauzy-demo-api' of Deployment 'gauzy-demo-api' should set 'resources.limits.memory'
+megalinter-reports/megalinter.log:234012: trailing whitespace.
++════════════════════════════════════════
+megalinter-reports/megalinter.log:234013: trailing whitespace.
++Enforcing memory limits prevents DoS via resource exhaustion.
+megalinter-reports/megalinter.log:234014: trailing whitespace.
++
+megalinter-reports/megalinter.log:234015: trailing whitespace.
++See https://avd.aquasec.com/misconfig/ksv018
+megalinter-reports/megalinter.log:234016: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234017: trailing whitespace.
++ .deploy/k8s/k8s-manifest.demo.yaml:61-90
+megalinter-reports/megalinter.log:234018: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234019: trailing whitespace.
++  61 ┌                 - name: gauzy-demo-api
+megalinter-reports/megalinter.log:234020: trailing whitespace.
++  62 │                   image: ghcr.io/ever-co/gauzy-api-demo:latest
+megalinter-reports/megalinter.log:234021: trailing whitespace.
++  63 │                   env:
+megalinter-reports/megalinter.log:234022: trailing whitespace.
++  64 │                       - name: API_HOST
+megalinter-reports/megalinter.log:234023: trailing whitespace.
++  65 │                         value: 0.0.0.0
+megalinter-reports/megalinter.log:234024: trailing whitespace.
++  66 │                       - name: DEMO
+megalinter-reports/megalinter.log:234025: trailing whitespace.
++  67 │                         value: 'true'
+megalinter-reports/megalinter.log:234026: trailing whitespace.
++  68 │                       - name: NODE_ENV
+megalinter-reports/megalinter.log:234027: trailing whitespace.
++  69 └                         value: 'development'
+megalinter-reports/megalinter.log:234028: trailing whitespace.
++  ..   
+megalinter-reports/megalinter.log:234029: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234030: trailing whitespace.
++
+megalinter-reports/megalinter.log:234031: trailing whitespace.
++
+megalinter-reports/megalinter.log:234032: trailing whitespace.
++LOW: Container 'gauzy-demo-webapp' of Deployment 'gauzy-demo-webapp' should set 'resources.limits.memory'
+megalinter-reports/megalinter.log:234033: trailing whitespace.
++════════════════════════════════════════
+megalinter-reports/megalinter.log:234034: trailing whitespace.
++Enforcing memory limits prevents DoS via resource exhaustion.
+megalinter-reports/megalinter.log:234035: trailing whitespace.
++
+megalinter-reports/megalinter.log:234036: trailing whitespace.
++See https://avd.aquasec.com/misconfig/ksv018
+megalinter-reports/megalinter.log:234037: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234038: trailing whitespace.
++ .deploy/k8s/k8s-manifest.demo.yaml:107-137
+megalinter-reports/megalinter.log:234039: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234040: trailing whitespace.
++ 107 ┌                 - name: gauzy-demo-webapp
+megalinter-reports/megalinter.log:234041: trailing whitespace.
++ 108 │                   image: ghcr.io/ever-co/gauzy-webapp-demo:latest
+megalinter-reports/megalinter.log:234042: trailing whitespace.
++ 109 │                   env:
+megalinter-reports/megalinter.log:234043: trailing whitespace.
++ 110 │                       - name: DEMO
+megalinter-reports/megalinter.log:234044: trailing whitespace.
++ 111 │                         value: 'true'
+megalinter-reports/megalinter.log:234045: trailing whitespace.
++ 112 │                       - name: API_BASE_URL
+megalinter-reports/megalinter.log:234046: trailing whitespace.
++ 113 │                         value: 'https://apidemo.gauzy.co'
+megalinter-reports/megalinter.log:234047: trailing whitespace.
++ 114 │                       - name: CLIENT_BASE_URL
+megalinter-reports/megalinter.log:234048: trailing whitespace.
++ 115 └                         value: 'https://demo.gauzy.co'
+megalinter-reports/megalinter.log:234049: trailing whitespace.
++ ...   
+megalinter-reports/megalinter.log:234050: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234051: trailing whitespace.
++
+megalinter-reports/megalinter.log:234052: trailing whitespace.
++
+megalinter-reports/megalinter.log:234053: trailing whitespace.
++LOW: Container 'gauzy-demo-api' of Deployment 'gauzy-demo-api' should set 'securityContext.runAsUser' > 10000
+megalinter-reports/megalinter.log:234054: trailing whitespace.
++════════════════════════════════════════
+megalinter-reports/megalinter.log:234055: trailing whitespace.
++Force the container to run with user ID > 10000 to avoid conflicts with the host’s user table.
+megalinter-reports/megalinter.log:234056: trailing whitespace.
++
+megalinter-reports/megalinter.log:234057: trailing whitespace.
++See https://avd.aquasec.com/misconfig/ksv020
+megalinter-reports/megalinter.log:234058: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234059: trailing whitespace.
++ .deploy/k8s/k8s-manifest.demo.yaml:61-90
+megalinter-reports/megalinter.log:234060: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234061: trailing whitespace.
++  61 ┌                 - name: gauzy-demo-api
+megalinter-reports/megalinter.log:234062: trailing whitespace.
++  62 │                   image: ghcr.io/ever-co/gauzy-api-demo:latest
+megalinter-reports/megalinter.log:234063: trailing whitespace.
++  63 │                   env:
+megalinter-reports/megalinter.log:234064: trailing whitespace.
++  64 │                       - name: API_HOST
+megalinter-reports/megalinter.log:234065: trailing whitespace.
++  65 │                         value: 0.0.0.0
+megalinter-reports/megalinter.log:234066: trailing whitespace.
++  66 │                       - name: DEMO
+megalinter-reports/megalinter.log:234067: trailing whitespace.
++  67 │                         value: 'true'
+megalinter-reports/megalinter.log:234068: trailing whitespace.
++  68 │                       - name: NODE_ENV
+megalinter-reports/megalinter.log:234069: trailing whitespace.
++  69 └                         value: 'development'
+megalinter-reports/megalinter.log:234070: trailing whitespace.
++  ..   
+megalinter-reports/megalinter.log:234071: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234072: trailing whitespace.
++
+megalinter-reports/megalinter.log:234073: trailing whitespace.
++
+megalinter-reports/megalinter.log:234074: trailing whitespace.
++LOW: Container 'gauzy-demo-webapp' of Deployment 'gauzy-demo-webapp' should set 'securityContext.runAsUser' > 10000
+megalinter-reports/megalinter.log:234075: trailing whitespace.
++════════════════════════════════════════
+megalinter-reports/megalinter.log:234076: trailing whitespace.
++Force the container to run with user ID > 10000 to avoid conflicts with the host’s user table.
+megalinter-reports/megalinter.log:234077: trailing whitespace.
++
+megalinter-reports/megalinter.log:234078: trailing whitespace.
++See https://avd.aquasec.com/misconfig/ksv020
+megalinter-reports/megalinter.log:234079: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234080: trailing whitespace.
++ .deploy/k8s/k8s-manifest.demo.yaml:107-137
+megalinter-reports/megalinter.log:234081: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234082: trailing whitespace.
++ 107 ┌                 - name: gauzy-demo-webapp
+megalinter-reports/megalinter.log:234083: trailing whitespace.
++ 108 │                   image: ghcr.io/ever-co/gauzy-webapp-demo:latest
+megalinter-reports/megalinter.log:234084: trailing whitespace.
++ 109 │                   env:
+megalinter-reports/megalinter.log:234085: trailing whitespace.
++ 110 │                       - name: DEMO
+megalinter-reports/megalinter.log:234086: trailing whitespace.
++ 111 │                         value: 'true'
+megalinter-reports/megalinter.log:234087: trailing whitespace.
++ 112 │                       - name: API_BASE_URL
+megalinter-reports/megalinter.log:234088: trailing whitespace.
++ 113 │                         value: 'https://apidemo.gauzy.co'
+megalinter-reports/megalinter.log:234089: trailing whitespace.
++ 114 │                       - name: CLIENT_BASE_URL
+megalinter-reports/megalinter.log:234090: trailing whitespace.
++ 115 └                         value: 'https://demo.gauzy.co'
+megalinter-reports/megalinter.log:234091: trailing whitespace.
++ ...   
+megalinter-reports/megalinter.log:234092: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234093: trailing whitespace.
++
+megalinter-reports/megalinter.log:234094: trailing whitespace.
++
+megalinter-reports/megalinter.log:234095: trailing whitespace.
++LOW: Container 'gauzy-demo-api' of Deployment 'gauzy-demo-api' should set 'securityContext.runAsGroup' > 10000
+megalinter-reports/megalinter.log:234096: trailing whitespace.
++════════════════════════════════════════
+megalinter-reports/megalinter.log:234097: trailing whitespace.
++Force the container to run with group ID > 10000 to avoid conflicts with the host’s user table.
+megalinter-reports/megalinter.log:234098: trailing whitespace.
++
+megalinter-reports/megalinter.log:234099: trailing whitespace.
++See https://avd.aquasec.com/misconfig/ksv021
+megalinter-reports/megalinter.log:234100: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234101: trailing whitespace.
++ .deploy/k8s/k8s-manifest.demo.yaml:61-90
+megalinter-reports/megalinter.log:234102: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234103: trailing whitespace.
++  61 ┌                 - name: gauzy-demo-api
+megalinter-reports/megalinter.log:234104: trailing whitespace.
++  62 │                   image: ghcr.io/ever-co/gauzy-api-demo:latest
+megalinter-reports/megalinter.log:234105: trailing whitespace.
++  63 │                   env:
+megalinter-reports/megalinter.log:234106: trailing whitespace.
++  64 │                       - name: API_HOST
+megalinter-reports/megalinter.log:234107: trailing whitespace.
++  65 │                         value: 0.0.0.0
+megalinter-reports/megalinter.log:234108: trailing whitespace.
++  66 │                       - name: DEMO
+megalinter-reports/megalinter.log:234109: trailing whitespace.
++  67 │                         value: 'true'
+megalinter-reports/megalinter.log:234110: trailing whitespace.
++  68 │                       - name: NODE_ENV
+megalinter-reports/megalinter.log:234111: trailing whitespace.
++  69 └                         value: 'development'
+megalinter-reports/megalinter.log:234112: trailing whitespace.
++  ..   
+megalinter-reports/megalinter.log:234113: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234114: trailing whitespace.
++
+megalinter-reports/megalinter.log:234115: trailing whitespace.
++
+megalinter-reports/megalinter.log:234116: trailing whitespace.
++LOW: Container 'gauzy-demo-webapp' of Deployment 'gauzy-demo-webapp' should set 'securityContext.runAsGroup' > 10000
+megalinter-reports/megalinter.log:234117: trailing whitespace.
++════════════════════════════════════════
+megalinter-reports/megalinter.log:234118: trailing whitespace.
++Force the container to run with group ID > 10000 to avoid conflicts with the host’s user table.
+megalinter-reports/megalinter.log:234119: trailing whitespace.
++
+megalinter-reports/megalinter.log:234120: trailing whitespace.
++See https://avd.aquasec.com/misconfig/ksv021
+megalinter-reports/megalinter.log:234121: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234122: trailing whitespace.
++ .deploy/k8s/k8s-manifest.demo.yaml:107-137
+megalinter-reports/megalinter.log:234123: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234124: trailing whitespace.
++ 107 ┌                 - name: gauzy-demo-webapp
+megalinter-reports/megalinter.log:234125: trailing whitespace.
++ 108 │                   image: ghcr.io/ever-co/gauzy-webapp-demo:latest
+megalinter-reports/megalinter.log:234126: trailing whitespace.
++ 109 │                   env:
+megalinter-reports/megalinter.log:234127: trailing whitespace.
++ 110 │                       - name: DEMO
+megalinter-reports/megalinter.log:234128: trailing whitespace.
++ 111 │                         value: 'true'
+megalinter-reports/megalinter.log:234129: trailing whitespace.
++ 112 │                       - name: API_BASE_URL
+megalinter-reports/megalinter.log:234130: trailing whitespace.
++ 113 │                         value: 'https://apidemo.gauzy.co'
+megalinter-reports/megalinter.log:234131: trailing whitespace.
++ 114 │                       - name: CLIENT_BASE_URL
+megalinter-reports/megalinter.log:234132: trailing whitespace.
++ 115 └                         value: 'https://demo.gauzy.co'
+megalinter-reports/megalinter.log:234133: trailing whitespace.
++ ...   
+megalinter-reports/megalinter.log:234134: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234135: trailing whitespace.
++
+megalinter-reports/megalinter.log:234136: trailing whitespace.
++
+megalinter-reports/megalinter.log:234137: trailing whitespace.
++LOW: Either Pod or Container should set 'securityContext.seccompProfile.type' to 'RuntimeDefault'
+megalinter-reports/megalinter.log:234138: trailing whitespace.
++════════════════════════════════════════
+megalinter-reports/megalinter.log:234139: trailing whitespace.
++The RuntimeDefault/Localhost seccomp profile must be required, or allow specific additional profiles.
+megalinter-reports/megalinter.log:234140: trailing whitespace.
++
+megalinter-reports/megalinter.log:234141: trailing whitespace.
++See https://avd.aquasec.com/misconfig/ksv030
+megalinter-reports/megalinter.log:234142: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234143: trailing whitespace.
++ .deploy/k8s/k8s-manifest.demo.yaml:61-90
+megalinter-reports/megalinter.log:234144: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234145: trailing whitespace.
++  61 ┌                 - name: gauzy-demo-api
+megalinter-reports/megalinter.log:234146: trailing whitespace.
++  62 │                   image: ghcr.io/ever-co/gauzy-api-demo:latest
+megalinter-reports/megalinter.log:234147: trailing whitespace.
++  63 │                   env:
+megalinter-reports/megalinter.log:234148: trailing whitespace.
++  64 │                       - name: API_HOST
+megalinter-reports/megalinter.log:234149: trailing whitespace.
++  65 │                         value: 0.0.0.0
+megalinter-reports/megalinter.log:234150: trailing whitespace.
++  66 │                       - name: DEMO
+megalinter-reports/megalinter.log:234151: trailing whitespace.
++  67 │                         value: 'true'
+megalinter-reports/megalinter.log:234152: trailing whitespace.
++  68 │                       - name: NODE_ENV
+megalinter-reports/megalinter.log:234153: trailing whitespace.
++  69 └                         value: 'development'
+megalinter-reports/megalinter.log:234154: trailing whitespace.
++  ..   
+megalinter-reports/megalinter.log:234155: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234156: trailing whitespace.
++
+megalinter-reports/megalinter.log:234157: trailing whitespace.
++
+megalinter-reports/megalinter.log:234158: trailing whitespace.
++LOW: Either Pod or Container should set 'securityContext.seccompProfile.type' to 'RuntimeDefault'
+megalinter-reports/megalinter.log:234159: trailing whitespace.
++════════════════════════════════════════
+megalinter-reports/megalinter.log:234160: trailing whitespace.
++The RuntimeDefault/Localhost seccomp profile must be required, or allow specific additional profiles.
+megalinter-reports/megalinter.log:234161: trailing whitespace.
++
+megalinter-reports/megalinter.log:234162: trailing whitespace.
++See https://avd.aquasec.com/misconfig/ksv030
+megalinter-reports/megalinter.log:234163: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234164: trailing whitespace.
++ .deploy/k8s/k8s-manifest.demo.yaml:107-137
+megalinter-reports/megalinter.log:234165: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234166: trailing whitespace.
++ 107 ┌                 - name: gauzy-demo-webapp
+megalinter-reports/megalinter.log:234167: trailing whitespace.
++ 108 │                   image: ghcr.io/ever-co/gauzy-webapp-demo:latest
+megalinter-reports/megalinter.log:234168: trailing whitespace.
++ 109 │                   env:
+megalinter-reports/megalinter.log:234169: trailing whitespace.
++ 110 │                       - name: DEMO
+megalinter-reports/megalinter.log:234170: trailing whitespace.
++ 111 │                         value: 'true'
+megalinter-reports/megalinter.log:234171: trailing whitespace.
++ 112 │                       - name: API_BASE_URL
+megalinter-reports/megalinter.log:234172: trailing whitespace.
++ 113 │                         value: 'https://apidemo.gauzy.co'
+megalinter-reports/megalinter.log:234173: trailing whitespace.
++ 114 │                       - name: CLIENT_BASE_URL
+megalinter-reports/megalinter.log:234174: trailing whitespace.
++ 115 └                         value: 'https://demo.gauzy.co'
+megalinter-reports/megalinter.log:234175: trailing whitespace.
++ ...   
+megalinter-reports/megalinter.log:234176: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234177: trailing whitespace.
++
+megalinter-reports/megalinter.log:234178: trailing whitespace.
++
+megalinter-reports/megalinter.log:234179: trailing whitespace.
++LOW: container should drop all
+megalinter-reports/megalinter.log:234180: trailing whitespace.
++════════════════════════════════════════
+megalinter-reports/megalinter.log:234181: trailing whitespace.
++Containers must drop ALL capabilities, and are only permitted to add back the NET_BIND_SERVICE capability.
+megalinter-reports/megalinter.log:234182: trailing whitespace.
++
+megalinter-reports/megalinter.log:234183: trailing whitespace.
++See https://avd.aquasec.com/misconfig/ksv106
+megalinter-reports/megalinter.log:234184: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234185: trailing whitespace.
++ .deploy/k8s/k8s-manifest.demo.yaml:61-90
+megalinter-reports/megalinter.log:234186: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234187: trailing whitespace.
++  61 ┌                 - name: gauzy-demo-api
+megalinter-reports/megalinter.log:234188: trailing whitespace.
++  62 │                   image: ghcr.io/ever-co/gauzy-api-demo:latest
+megalinter-reports/megalinter.log:234189: trailing whitespace.
++  63 │                   env:
+megalinter-reports/megalinter.log:234190: trailing whitespace.
++  64 │                       - name: API_HOST
+megalinter-reports/megalinter.log:234191: trailing whitespace.
++  65 │                         value: 0.0.0.0
+megalinter-reports/megalinter.log:234192: trailing whitespace.
++  66 │                       - name: DEMO
+megalinter-reports/megalinter.log:234193: trailing whitespace.
++  67 │                         value: 'true'
+megalinter-reports/megalinter.log:234194: trailing whitespace.
++  68 │                       - name: NODE_ENV
+megalinter-reports/megalinter.log:234195: trailing whitespace.
++  69 └                         value: 'development'
+megalinter-reports/megalinter.log:234196: trailing whitespace.
++  ..   
+megalinter-reports/megalinter.log:234197: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234198: trailing whitespace.
++
+megalinter-reports/megalinter.log:234199: trailing whitespace.
++
+megalinter-reports/megalinter.log:234200: trailing whitespace.
++LOW: container should drop all
+megalinter-reports/megalinter.log:234201: trailing whitespace.
++════════════════════════════════════════
+megalinter-reports/megalinter.log:234202: trailing whitespace.
++Containers must drop ALL capabilities, and are only permitted to add back the NET_BIND_SERVICE capability.
+megalinter-reports/megalinter.log:234203: trailing whitespace.
++
+megalinter-reports/megalinter.log:234204: trailing whitespace.
++See https://avd.aquasec.com/misconfig/ksv106
+megalinter-reports/megalinter.log:234205: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234206: trailing whitespace.
++ .deploy/k8s/k8s-manifest.demo.yaml:107-137
+megalinter-reports/megalinter.log:234207: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234208: trailing whitespace.
++ 107 ┌                 - name: gauzy-demo-webapp
+megalinter-reports/megalinter.log:234209: trailing whitespace.
++ 108 │                   image: ghcr.io/ever-co/gauzy-webapp-demo:latest
+megalinter-reports/megalinter.log:234210: trailing whitespace.
++ 109 │                   env:
+megalinter-reports/megalinter.log:234211: trailing whitespace.
++ 110 │                       - name: DEMO
+megalinter-reports/megalinter.log:234212: trailing whitespace.
++ 111 │                         value: 'true'
+megalinter-reports/megalinter.log:234213: trailing whitespace.
++ 112 │                       - name: API_BASE_URL
+megalinter-reports/megalinter.log:234214: trailing whitespace.
++ 113 │                         value: 'https://apidemo.gauzy.co'
+megalinter-reports/megalinter.log:234215: trailing whitespace.
++ 114 │                       - name: CLIENT_BASE_URL
+megalinter-reports/megalinter.log:234216: trailing whitespace.
++ 115 └                         value: 'https://demo.gauzy.co'
+megalinter-reports/megalinter.log:234217: trailing whitespace.
++ ...   
+megalinter-reports/megalinter.log:234218: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234219: trailing whitespace.
++
+megalinter-reports/megalinter.log:234220: trailing whitespace.
++
+megalinter-reports/megalinter.log:234227: trailing whitespace.
++MEDIUM: Container 'gauzy-prod-api' of Deployment 'gauzy-prod-api' should set 'securityContext.allowPrivilegeEscalation' to false
+megalinter-reports/megalinter.log:234228: trailing whitespace.
++════════════════════════════════════════
+megalinter-reports/megalinter.log:234229: trailing whitespace.
++A program inside the container can elevate its own privileges and run as root, which might give the program control over the container and node.
+megalinter-reports/megalinter.log:234230: trailing whitespace.
++
+megalinter-reports/megalinter.log:234231: trailing whitespace.
++See https://avd.aquasec.com/misconfig/ksv001
+megalinter-reports/megalinter.log:234232: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234233: trailing whitespace.
++ .deploy/k8s/k8s-manifest.prod.yaml:61-181
+megalinter-reports/megalinter.log:234234: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234235: trailing whitespace.
++  61 ┌                 - name: gauzy-prod-api
+megalinter-reports/megalinter.log:234236: trailing whitespace.
++  62 │                   image: ghcr.io/ever-co/gauzy-api:latest
+megalinter-reports/megalinter.log:234237: trailing whitespace.
++  63 │                   env:
+megalinter-reports/megalinter.log:234238: trailing whitespace.
++  64 │                       - name: API_HOST
+megalinter-reports/megalinter.log:234239: trailing whitespace.
++  65 │                         value: 0.0.0.0
+megalinter-reports/megalinter.log:234240: trailing whitespace.
++  66 │                       - name: DEMO
+megalinter-reports/megalinter.log:234241: trailing whitespace.
++  67 │                         value: 'false'
+megalinter-reports/megalinter.log:234242: trailing whitespace.
++  68 │                       - name: NODE_ENV
+megalinter-reports/megalinter.log:234243: trailing whitespace.
++  69 └                         value: 'production'
+megalinter-reports/megalinter.log:234244: trailing whitespace.
++  ..   
+megalinter-reports/megalinter.log:234245: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234246: trailing whitespace.
++
+megalinter-reports/megalinter.log:234247: trailing whitespace.
++
+megalinter-reports/megalinter.log:234248: trailing whitespace.
++MEDIUM: Container 'gauzy-prod-webapp' of Deployment 'gauzy-prod-webapp' should set 'securityContext.allowPrivilegeEscalation' to false
+megalinter-reports/megalinter.log:234249: trailing whitespace.
++════════════════════════════════════════
+megalinter-reports/megalinter.log:234250: trailing whitespace.
++A program inside the container can elevate its own privileges and run as root, which might give the program control over the container and node.
+megalinter-reports/megalinter.log:234251: trailing whitespace.
++
+megalinter-reports/megalinter.log:234252: trailing whitespace.
++See https://avd.aquasec.com/misconfig/ksv001
+megalinter-reports/megalinter.log:234253: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234254: trailing whitespace.
++ .deploy/k8s/k8s-manifest.prod.yaml:198-227
+megalinter-reports/megalinter.log:234255: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234256: trailing whitespace.
++ 198 ┌                 - name: gauzy-prod-webapp
+megalinter-reports/megalinter.log:234257: trailing whitespace.
++ 199 │                   image: ghcr.io/ever-co/gauzy-webapp:latest
+megalinter-reports/megalinter.log:234258: trailing whitespace.
++ 200 │                   env:
+megalinter-reports/megalinter.log:234259: trailing whitespace.
++ 201 │                       - name: DEMO
+megalinter-reports/megalinter.log:234260: trailing whitespace.
++ 202 │                         value: 'false'
+megalinter-reports/megalinter.log:234261: trailing whitespace.
++ 203 │                       - name: API_BASE_URL
+megalinter-reports/megalinter.log:234262: trailing whitespace.
++ 204 │                         value: 'https://api.gauzy.co'
+megalinter-reports/megalinter.log:234263: trailing whitespace.
++ 205 │                       - name: CLIENT_BASE_URL
+megalinter-reports/megalinter.log:234264: trailing whitespace.
++ 206 └                         value: 'https://app.gauzy.co'
+megalinter-reports/megalinter.log:234265: trailing whitespace.
++ ...   
+megalinter-reports/megalinter.log:234266: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234267: trailing whitespace.
++
+megalinter-reports/megalinter.log:234268: trailing whitespace.
++
+megalinter-reports/megalinter.log:234269: trailing whitespace.
++LOW: Container 'gauzy-prod-api' of Deployment 'gauzy-prod-api' should add 'ALL' to 'securityContext.capabilities.drop'
+megalinter-reports/megalinter.log:234270: trailing whitespace.
++════════════════════════════════════════
+megalinter-reports/megalinter.log:234271: trailing whitespace.
++The container should drop all default capabilities and add only those that are needed for its execution.
+megalinter-reports/megalinter.log:234272: trailing whitespace.
++
+megalinter-reports/megalinter.log:234273: trailing whitespace.
++See https://avd.aquasec.com/misconfig/ksv003
+megalinter-reports/megalinter.log:234274: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234275: trailing whitespace.
++ .deploy/k8s/k8s-manifest.prod.yaml:61-181
+megalinter-reports/megalinter.log:234276: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234277: trailing whitespace.
++  61 ┌                 - name: gauzy-prod-api
+megalinter-reports/megalinter.log:234278: trailing whitespace.
++  62 │                   image: ghcr.io/ever-co/gauzy-api:latest
+megalinter-reports/megalinter.log:234279: trailing whitespace.
++  63 │                   env:
+megalinter-reports/megalinter.log:234280: trailing whitespace.
++  64 │                       - name: API_HOST
+megalinter-reports/megalinter.log:234281: trailing whitespace.
++  65 │                         value: 0.0.0.0
+megalinter-reports/megalinter.log:234282: trailing whitespace.
++  66 │                       - name: DEMO
+megalinter-reports/megalinter.log:234283: trailing whitespace.
++  67 │                         value: 'false'
+megalinter-reports/megalinter.log:234284: trailing whitespace.
++  68 │                       - name: NODE_ENV
+megalinter-reports/megalinter.log:234285: trailing whitespace.
++  69 └                         value: 'production'
+megalinter-reports/megalinter.log:234286: trailing whitespace.
++  ..   
+megalinter-reports/megalinter.log:234287: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234288: trailing whitespace.
++
+megalinter-reports/megalinter.log:234289: trailing whitespace.
++
+megalinter-reports/megalinter.log:234290: trailing whitespace.
++LOW: Container 'gauzy-prod-webapp' of Deployment 'gauzy-prod-webapp' should add 'ALL' to 'securityContext.capabilities.drop'
+megalinter-reports/megalinter.log:234291: trailing whitespace.
++════════════════════════════════════════
+megalinter-reports/megalinter.log:234292: trailing whitespace.
++The container should drop all default capabilities and add only those that are needed for its execution.
+megalinter-reports/megalinter.log:234293: trailing whitespace.
++
+megalinter-reports/megalinter.log:234294: trailing whitespace.
++See https://avd.aquasec.com/misconfig/ksv003
+megalinter-reports/megalinter.log:234295: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234296: trailing whitespace.
++ .deploy/k8s/k8s-manifest.prod.yaml:198-227
+megalinter-reports/megalinter.log:234297: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234298: trailing whitespace.
++ 198 ┌                 - name: gauzy-prod-webapp
+megalinter-reports/megalinter.log:234299: trailing whitespace.
++ 199 │                   image: ghcr.io/ever-co/gauzy-webapp:latest
+megalinter-reports/megalinter.log:234300: trailing whitespace.
++ 200 │                   env:
+megalinter-reports/megalinter.log:234301: trailing whitespace.
++ 201 │                       - name: DEMO
+megalinter-reports/megalinter.log:234302: trailing whitespace.
++ 202 │                         value: 'false'
+megalinter-reports/megalinter.log:234303: trailing whitespace.
++ 203 │                       - name: API_BASE_URL
+megalinter-reports/megalinter.log:234304: trailing whitespace.
++ 204 │                         value: 'https://api.gauzy.co'
+megalinter-reports/megalinter.log:234305: trailing whitespace.
++ 205 │                       - name: CLIENT_BASE_URL
+megalinter-reports/megalinter.log:234306: trailing whitespace.
++ 206 └                         value: 'https://app.gauzy.co'
+megalinter-reports/megalinter.log:234307: trailing whitespace.
++ ...   
+megalinter-reports/megalinter.log:234308: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234309: trailing whitespace.
++
+megalinter-reports/megalinter.log:234310: trailing whitespace.
++
+megalinter-reports/megalinter.log:234311: trailing whitespace.
++LOW: Container 'gauzy-prod-api' of Deployment 'gauzy-prod-api' should set 'resources.limits.cpu'
+megalinter-reports/megalinter.log:234312: trailing whitespace.
++════════════════════════════════════════
+megalinter-reports/megalinter.log:234313: trailing whitespace.
++Enforcing CPU limits prevents DoS via resource exhaustion.
+megalinter-reports/megalinter.log:234314: trailing whitespace.
++
+megalinter-reports/megalinter.log:234315: trailing whitespace.
++See https://avd.aquasec.com/misconfig/ksv011
+megalinter-reports/megalinter.log:234316: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234317: trailing whitespace.
++ .deploy/k8s/k8s-manifest.prod.yaml:61-181
+megalinter-reports/megalinter.log:234318: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234319: trailing whitespace.
++  61 ┌                 - name: gauzy-prod-api
+megalinter-reports/megalinter.log:234320: trailing whitespace.
++  62 │                   image: ghcr.io/ever-co/gauzy-api:latest
+megalinter-reports/megalinter.log:234321: trailing whitespace.
++  63 │                   env:
+megalinter-reports/megalinter.log:234322: trailing whitespace.
++  64 │                       - name: API_HOST
+megalinter-reports/megalinter.log:234323: trailing whitespace.
++  65 │                         value: 0.0.0.0
+megalinter-reports/megalinter.log:234324: trailing whitespace.
++  66 │                       - name: DEMO
+megalinter-reports/megalinter.log:234325: trailing whitespace.
++  67 │                         value: 'false'
+megalinter-reports/megalinter.log:234326: trailing whitespace.
++  68 │                       - name: NODE_ENV
+megalinter-reports/megalinter.log:234327: trailing whitespace.
++  69 └                         value: 'production'
+megalinter-reports/megalinter.log:234328: trailing whitespace.
++  ..   
+megalinter-reports/megalinter.log:234329: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234330: trailing whitespace.
++
+megalinter-reports/megalinter.log:234331: trailing whitespace.
++
+megalinter-reports/megalinter.log:234332: trailing whitespace.
++LOW: Container 'gauzy-prod-webapp' of Deployment 'gauzy-prod-webapp' should set 'resources.limits.cpu'
+megalinter-reports/megalinter.log:234333: trailing whitespace.
++════════════════════════════════════════
+megalinter-reports/megalinter.log:234334: trailing whitespace.
++Enforcing CPU limits prevents DoS via resource exhaustion.
+megalinter-reports/megalinter.log:234335: trailing whitespace.
++
+megalinter-reports/megalinter.log:234336: trailing whitespace.
++See https://avd.aquasec.com/misconfig/ksv011
+megalinter-reports/megalinter.log:234337: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234338: trailing whitespace.
++ .deploy/k8s/k8s-manifest.prod.yaml:198-227
+megalinter-reports/megalinter.log:234339: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234340: trailing whitespace.
++ 198 ┌                 - name: gauzy-prod-webapp
+megalinter-reports/megalinter.log:234341: trailing whitespace.
++ 199 │                   image: ghcr.io/ever-co/gauzy-webapp:latest
+megalinter-reports/megalinter.log:234342: trailing whitespace.
++ 200 │                   env:
+megalinter-reports/megalinter.log:234343: trailing whitespace.
++ 201 │                       - name: DEMO
+megalinter-reports/megalinter.log:234344: trailing whitespace.
++ 202 │                         value: 'false'
+megalinter-reports/megalinter.log:234345: trailing whitespace.
++ 203 │                       - name: API_BASE_URL
+megalinter-reports/megalinter.log:234346: trailing whitespace.
++ 204 │                         value: 'https://api.gauzy.co'
+megalinter-reports/megalinter.log:234347: trailing whitespace.
++ 205 │                       - name: CLIENT_BASE_URL
+megalinter-reports/megalinter.log:234348: trailing whitespace.
++ 206 └                         value: 'https://app.gauzy.co'
+megalinter-reports/megalinter.log:234349: trailing whitespace.
++ ...   
+megalinter-reports/megalinter.log:234350: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234351: trailing whitespace.
++
+megalinter-reports/megalinter.log:234352: trailing whitespace.
++
+megalinter-reports/megalinter.log:234353: trailing whitespace.
++MEDIUM: Container 'gauzy-prod-api' of Deployment 'gauzy-prod-api' should set 'securityContext.runAsNonRoot' to true
+megalinter-reports/megalinter.log:234354: trailing whitespace.
++════════════════════════════════════════
+megalinter-reports/megalinter.log:234355: trailing whitespace.
++'runAsNonRoot' forces the running image to run as a non-root user to ensure least privileges.
+megalinter-reports/megalinter.log:234356: trailing whitespace.
++
+megalinter-reports/megalinter.log:234357: trailing whitespace.
++See https://avd.aquasec.com/misconfig/ksv012
+megalinter-reports/megalinter.log:234358: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234359: trailing whitespace.
++ .deploy/k8s/k8s-manifest.prod.yaml:61-181
+megalinter-reports/megalinter.log:234360: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234361: trailing whitespace.
++  61 ┌                 - name: gauzy-prod-api
+megalinter-reports/megalinter.log:234362: trailing whitespace.
++  62 │                   image: ghcr.io/ever-co/gauzy-api:latest
+megalinter-reports/megalinter.log:234363: trailing whitespace.
++  63 │                   env:
+megalinter-reports/megalinter.log:234364: trailing whitespace.
++  64 │                       - name: API_HOST
+megalinter-reports/megalinter.log:234365: trailing whitespace.
++  65 │                         value: 0.0.0.0
+megalinter-reports/megalinter.log:234366: trailing whitespace.
++  66 │                       - name: DEMO
+megalinter-reports/megalinter.log:234367: trailing whitespace.
++  67 │                         value: 'false'
+megalinter-reports/megalinter.log:234368: trailing whitespace.
++  68 │                       - name: NODE_ENV
+megalinter-reports/megalinter.log:234369: trailing whitespace.
++  69 └                         value: 'production'
+megalinter-reports/megalinter.log:234370: trailing whitespace.
++  ..   
+megalinter-reports/megalinter.log:234371: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234372: trailing whitespace.
++
+megalinter-reports/megalinter.log:234373: trailing whitespace.
++
+megalinter-reports/megalinter.log:234374: trailing whitespace.
++MEDIUM: Container 'gauzy-prod-webapp' of Deployment 'gauzy-prod-webapp' should set 'securityContext.runAsNonRoot' to true
+megalinter-reports/megalinter.log:234375: trailing whitespace.
++════════════════════════════════════════
+megalinter-reports/megalinter.log:234376: trailing whitespace.
++'runAsNonRoot' forces the running image to run as a non-root user to ensure least privileges.
+megalinter-reports/megalinter.log:234377: trailing whitespace.
++
+megalinter-reports/megalinter.log:234378: trailing whitespace.
++See https://avd.aquasec.com/misconfig/ksv012
+megalinter-reports/megalinter.log:234379: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234380: trailing whitespace.
++ .deploy/k8s/k8s-manifest.prod.yaml:198-227
+megalinter-reports/megalinter.log:234381: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234382: trailing whitespace.
++ 198 ┌                 - name: gauzy-prod-webapp
+megalinter-reports/megalinter.log:234383: trailing whitespace.
++ 199 │                   image: ghcr.io/ever-co/gauzy-webapp:latest
+megalinter-reports/megalinter.log:234384: trailing whitespace.
++ 200 │                   env:
+megalinter-reports/megalinter.log:234385: trailing whitespace.
++ 201 │                       - name: DEMO
+megalinter-reports/megalinter.log:234386: trailing whitespace.
++ 202 │                         value: 'false'
+megalinter-reports/megalinter.log:234387: trailing whitespace.
++ 203 │                       - name: API_BASE_URL
+megalinter-reports/megalinter.log:234388: trailing whitespace.
++ 204 │                         value: 'https://api.gauzy.co'
+megalinter-reports/megalinter.log:234389: trailing whitespace.
++ 205 │                       - name: CLIENT_BASE_URL
+megalinter-reports/megalinter.log:234390: trailing whitespace.
++ 206 └                         value: 'https://app.gauzy.co'
+megalinter-reports/megalinter.log:234391: trailing whitespace.
++ ...   
+megalinter-reports/megalinter.log:234392: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234393: trailing whitespace.
++
+megalinter-reports/megalinter.log:234394: trailing whitespace.
++
+megalinter-reports/megalinter.log:234395: trailing whitespace.
++MEDIUM: Container 'gauzy-prod-api' of Deployment 'gauzy-prod-api' should specify an image tag
+megalinter-reports/megalinter.log:234396: trailing whitespace.
++════════════════════════════════════════
+megalinter-reports/megalinter.log:234397: trailing whitespace.
++It is best to avoid using the ':latest' image tag when deploying containers in production. Doing so makes it hard to track which version of the image is running, and hard to roll back the version.
+megalinter-reports/megalinter.log:234398: trailing whitespace.
++
+megalinter-reports/megalinter.log:234399: trailing whitespace.
++See https://avd.aquasec.com/misconfig/ksv013
+megalinter-reports/megalinter.log:234400: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234401: trailing whitespace.
++ .deploy/k8s/k8s-manifest.prod.yaml:61-181
+megalinter-reports/megalinter.log:234402: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234403: trailing whitespace.
++  61 ┌                 - name: gauzy-prod-api
+megalinter-reports/megalinter.log:234404: trailing whitespace.
++  62 │                   image: ghcr.io/ever-co/gauzy-api:latest
+megalinter-reports/megalinter.log:234405: trailing whitespace.
++  63 │                   env:
+megalinter-reports/megalinter.log:234406: trailing whitespace.
++  64 │                       - name: API_HOST
+megalinter-reports/megalinter.log:234407: trailing whitespace.
++  65 │                         value: 0.0.0.0
+megalinter-reports/megalinter.log:234408: trailing whitespace.
++  66 │                       - name: DEMO
+megalinter-reports/megalinter.log:234409: trailing whitespace.
++  67 │                         value: 'false'
+megalinter-reports/megalinter.log:234410: trailing whitespace.
++  68 │                       - name: NODE_ENV
+megalinter-reports/megalinter.log:234411: trailing whitespace.
++  69 └                         value: 'production'
+megalinter-reports/megalinter.log:234412: trailing whitespace.
++  ..   
+megalinter-reports/megalinter.log:234413: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234414: trailing whitespace.
++
+megalinter-reports/megalinter.log:234415: trailing whitespace.
++
+megalinter-reports/megalinter.log:234416: trailing whitespace.
++MEDIUM: Container 'gauzy-prod-webapp' of Deployment 'gauzy-prod-webapp' should specify an image tag
+megalinter-reports/megalinter.log:234417: trailing whitespace.
++════════════════════════════════════════
+megalinter-reports/megalinter.log:234418: trailing whitespace.
++It is best to avoid using the ':latest' image tag when deploying containers in production. Doing so makes it hard to track which version of the image is running, and hard to roll back the version.
+megalinter-reports/megalinter.log:234419: trailing whitespace.
++
+megalinter-reports/megalinter.log:234420: trailing whitespace.
++See https://avd.aquasec.com/misconfig/ksv013
+megalinter-reports/megalinter.log:234421: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234422: trailing whitespace.
++ .deploy/k8s/k8s-manifest.prod.yaml:198-227
+megalinter-reports/megalinter.log:234423: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234424: trailing whitespace.
++ 198 ┌                 - name: gauzy-prod-webapp
+megalinter-reports/megalinter.log:234425: trailing whitespace.
++ 199 │                   image: ghcr.io/ever-co/gauzy-webapp:latest
+megalinter-reports/megalinter.log:234426: trailing whitespace.
++ 200 │                   env:
+megalinter-reports/megalinter.log:234427: trailing whitespace.
++ 201 │                       - name: DEMO
+megalinter-reports/megalinter.log:234428: trailing whitespace.
++ 202 │                         value: 'false'
+megalinter-reports/megalinter.log:234429: trailing whitespace.
++ 203 │                       - name: API_BASE_URL
+megalinter-reports/megalinter.log:234430: trailing whitespace.
++ 204 │                         value: 'https://api.gauzy.co'
+megalinter-reports/megalinter.log:234431: trailing whitespace.
++ 205 │                       - name: CLIENT_BASE_URL
+megalinter-reports/megalinter.log:234432: trailing whitespace.
++ 206 └                         value: 'https://app.gauzy.co'
+megalinter-reports/megalinter.log:234433: trailing whitespace.
++ ...   
+megalinter-reports/megalinter.log:234434: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234435: trailing whitespace.
++
+megalinter-reports/megalinter.log:234436: trailing whitespace.
++
+megalinter-reports/megalinter.log:234437: trailing whitespace.
++LOW: Container 'gauzy-prod-api' of Deployment 'gauzy-prod-api' should set 'securityContext.readOnlyRootFilesystem' to true
+megalinter-reports/megalinter.log:234438: trailing whitespace.
++════════════════════════════════════════
+megalinter-reports/megalinter.log:234439: trailing whitespace.
++An immutable root file system prevents applications from writing to their local disk. This can limit intrusions, as attackers will not be able to tamper with the file system or write foreign executables to disk.
+megalinter-reports/megalinter.log:234440: trailing whitespace.
++
+megalinter-reports/megalinter.log:234441: trailing whitespace.
++See https://avd.aquasec.com/misconfig/ksv014
+megalinter-reports/megalinter.log:234442: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234443: trailing whitespace.
++ .deploy/k8s/k8s-manifest.prod.yaml:61-181
+megalinter-reports/megalinter.log:234444: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234445: trailing whitespace.
++  61 ┌                 - name: gauzy-prod-api
+megalinter-reports/megalinter.log:234446: trailing whitespace.
++  62 │                   image: ghcr.io/ever-co/gauzy-api:latest
+megalinter-reports/megalinter.log:234447: trailing whitespace.
++  63 │                   env:
+megalinter-reports/megalinter.log:234448: trailing whitespace.
++  64 │                       - name: API_HOST
+megalinter-reports/megalinter.log:234449: trailing whitespace.
++  65 │                         value: 0.0.0.0
+megalinter-reports/megalinter.log:234450: trailing whitespace.
++  66 │                       - name: DEMO
+megalinter-reports/megalinter.log:234451: trailing whitespace.
++  67 │                         value: 'false'
+megalinter-reports/megalinter.log:234452: trailing whitespace.
++  68 │                       - name: NODE_ENV
+megalinter-reports/megalinter.log:234453: trailing whitespace.
++  69 └                         value: 'production'
+megalinter-reports/megalinter.log:234454: trailing whitespace.
++  ..   
+megalinter-reports/megalinter.log:234455: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234456: trailing whitespace.
++
+megalinter-reports/megalinter.log:234457: trailing whitespace.
++
+megalinter-reports/megalinter.log:234458: trailing whitespace.
++LOW: Container 'gauzy-prod-webapp' of Deployment 'gauzy-prod-webapp' should set 'securityContext.readOnlyRootFilesystem' to true
+megalinter-reports/megalinter.log:234459: trailing whitespace.
++════════════════════════════════════════
+megalinter-reports/megalinter.log:234460: trailing whitespace.
++An immutable root file system prevents applications from writing to their local disk. This can limit intrusions, as attackers will not be able to tamper with the file system or write foreign executables to disk.
+megalinter-reports/megalinter.log:234461: trailing whitespace.
++
+megalinter-reports/megalinter.log:234462: trailing whitespace.
++See https://avd.aquasec.com/misconfig/ksv014
+megalinter-reports/megalinter.log:234463: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234464: trailing whitespace.
++ .deploy/k8s/k8s-manifest.prod.yaml:198-227
+megalinter-reports/megalinter.log:234465: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234466: trailing whitespace.
++ 198 ┌                 - name: gauzy-prod-webapp
+megalinter-reports/megalinter.log:234467: trailing whitespace.
++ 199 │                   image: ghcr.io/ever-co/gauzy-webapp:latest
+megalinter-reports/megalinter.log:234468: trailing whitespace.
++ 200 │                   env:
+megalinter-reports/megalinter.log:234469: trailing whitespace.
++ 201 │                       - name: DEMO
+megalinter-reports/megalinter.log:234470: trailing whitespace.
++ 202 │                         value: 'false'
+megalinter-reports/megalinter.log:234471: trailing whitespace.
++ 203 │                       - name: API_BASE_URL
+megalinter-reports/megalinter.log:234472: trailing whitespace.
++ 204 │                         value: 'https://api.gauzy.co'
+megalinter-reports/megalinter.log:234473: trailing whitespace.
++ 205 │                       - name: CLIENT_BASE_URL
+megalinter-reports/megalinter.log:234474: trailing whitespace.
++ 206 └                         value: 'https://app.gauzy.co'
+megalinter-reports/megalinter.log:234475: trailing whitespace.
++ ...   
+megalinter-reports/megalinter.log:234476: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234477: trailing whitespace.
++
+megalinter-reports/megalinter.log:234478: trailing whitespace.
++
+megalinter-reports/megalinter.log:234479: trailing whitespace.
++LOW: Container 'gauzy-prod-api' of Deployment 'gauzy-prod-api' should set 'resources.requests.cpu'
+megalinter-reports/megalinter.log:234480: trailing whitespace.
++════════════════════════════════════════
+megalinter-reports/megalinter.log:234481: trailing whitespace.
++When containers have resource requests specified, the scheduler can make better decisions about which nodes to place pods on, and how to deal with resource contention.
+megalinter-reports/megalinter.log:234482: trailing whitespace.
++
+megalinter-reports/megalinter.log:234483: trailing whitespace.
++See https://avd.aquasec.com/misconfig/ksv015
+megalinter-reports/megalinter.log:234484: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234485: trailing whitespace.
++ .deploy/k8s/k8s-manifest.prod.yaml:61-181
+megalinter-reports/megalinter.log:234486: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234487: trailing whitespace.
++  61 ┌                 - name: gauzy-prod-api
+megalinter-reports/megalinter.log:234488: trailing whitespace.
++  62 │                   image: ghcr.io/ever-co/gauzy-api:latest
+megalinter-reports/megalinter.log:234489: trailing whitespace.
++  63 │                   env:
+megalinter-reports/megalinter.log:234490: trailing whitespace.
++  64 │                       - name: API_HOST
+megalinter-reports/megalinter.log:234491: trailing whitespace.
++  65 │                         value: 0.0.0.0
+megalinter-reports/megalinter.log:234492: trailing whitespace.
++  66 │                       - name: DEMO
+megalinter-reports/megalinter.log:234493: trailing whitespace.
++  67 │                         value: 'false'
+megalinter-reports/megalinter.log:234494: trailing whitespace.
++  68 │                       - name: NODE_ENV
+megalinter-reports/megalinter.log:234495: trailing whitespace.
++  69 └                         value: 'production'
+megalinter-reports/megalinter.log:234496: trailing whitespace.
++  ..   
+megalinter-reports/megalinter.log:234497: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234498: trailing whitespace.
++
+megalinter-reports/megalinter.log:234499: trailing whitespace.
++
+megalinter-reports/megalinter.log:234500: trailing whitespace.
++LOW: Container 'gauzy-prod-webapp' of Deployment 'gauzy-prod-webapp' should set 'resources.requests.cpu'
+megalinter-reports/megalinter.log:234501: trailing whitespace.
++════════════════════════════════════════
+megalinter-reports/megalinter.log:234502: trailing whitespace.
++When containers have resource requests specified, the scheduler can make better decisions about which nodes to place pods on, and how to deal with resource contention.
+megalinter-reports/megalinter.log:234503: trailing whitespace.
++
+megalinter-reports/megalinter.log:234504: trailing whitespace.
++See https://avd.aquasec.com/misconfig/ksv015
+megalinter-reports/megalinter.log:234505: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234506: trailing whitespace.
++ .deploy/k8s/k8s-manifest.prod.yaml:198-227
+megalinter-reports/megalinter.log:234507: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234508: trailing whitespace.
++ 198 ┌                 - name: gauzy-prod-webapp
+megalinter-reports/megalinter.log:234509: trailing whitespace.
++ 199 │                   image: ghcr.io/ever-co/gauzy-webapp:latest
+megalinter-reports/megalinter.log:234510: trailing whitespace.
++ 200 │                   env:
+megalinter-reports/megalinter.log:234511: trailing whitespace.
++ 201 │                       - name: DEMO
+megalinter-reports/megalinter.log:234512: trailing whitespace.
++ 202 │                         value: 'false'
+megalinter-reports/megalinter.log:234513: trailing whitespace.
++ 203 │                       - name: API_BASE_URL
+megalinter-reports/megalinter.log:234514: trailing whitespace.
++ 204 │                         value: 'https://api.gauzy.co'
+megalinter-reports/megalinter.log:234515: trailing whitespace.
++ 205 │                       - name: CLIENT_BASE_URL
+megalinter-reports/megalinter.log:234516: trailing whitespace.
++ 206 └                         value: 'https://app.gauzy.co'
+megalinter-reports/megalinter.log:234517: trailing whitespace.
++ ...   
+megalinter-reports/megalinter.log:234518: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234519: trailing whitespace.
++
+megalinter-reports/megalinter.log:234520: trailing whitespace.
++
+megalinter-reports/megalinter.log:234521: trailing whitespace.
++LOW: Container 'gauzy-prod-api' of Deployment 'gauzy-prod-api' should set 'resources.requests.memory'
+megalinter-reports/megalinter.log:234522: trailing whitespace.
++════════════════════════════════════════
+megalinter-reports/megalinter.log:234523: trailing whitespace.
++When containers have memory requests specified, the scheduler can make better decisions about which nodes to place pods on, and how to deal with resource contention.
+megalinter-reports/megalinter.log:234524: trailing whitespace.
++
+megalinter-reports/megalinter.log:234525: trailing whitespace.
++See https://avd.aquasec.com/misconfig/ksv016
+megalinter-reports/megalinter.log:234526: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234527: trailing whitespace.
++ .deploy/k8s/k8s-manifest.prod.yaml:61-181
+megalinter-reports/megalinter.log:234528: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234529: trailing whitespace.
++  61 ┌                 - name: gauzy-prod-api
+megalinter-reports/megalinter.log:234530: trailing whitespace.
++  62 │                   image: ghcr.io/ever-co/gauzy-api:latest
+megalinter-reports/megalinter.log:234531: trailing whitespace.
++  63 │                   env:
+megalinter-reports/megalinter.log:234532: trailing whitespace.
++  64 │                       - name: API_HOST
+megalinter-reports/megalinter.log:234533: trailing whitespace.
++  65 │                         value: 0.0.0.0
+megalinter-reports/megalinter.log:234534: trailing whitespace.
++  66 │                       - name: DEMO
+megalinter-reports/megalinter.log:234535: trailing whitespace.
++  67 │                         value: 'false'
+megalinter-reports/megalinter.log:234536: trailing whitespace.
++  68 │                       - name: NODE_ENV
+megalinter-reports/megalinter.log:234537: trailing whitespace.
++  69 └                         value: 'production'
+megalinter-reports/megalinter.log:234538: trailing whitespace.
++  ..   
+megalinter-reports/megalinter.log:234539: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234540: trailing whitespace.
++
+megalinter-reports/megalinter.log:234541: trailing whitespace.
++
+megalinter-reports/megalinter.log:234542: trailing whitespace.
++LOW: Container 'gauzy-prod-webapp' of Deployment 'gauzy-prod-webapp' should set 'resources.requests.memory'
+megalinter-reports/megalinter.log:234543: trailing whitespace.
++════════════════════════════════════════
+megalinter-reports/megalinter.log:234544: trailing whitespace.
++When containers have memory requests specified, the scheduler can make better decisions about which nodes to place pods on, and how to deal with resource contention.
+megalinter-reports/megalinter.log:234545: trailing whitespace.
++
+megalinter-reports/megalinter.log:234546: trailing whitespace.
++See https://avd.aquasec.com/misconfig/ksv016
+megalinter-reports/megalinter.log:234547: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234548: trailing whitespace.
++ .deploy/k8s/k8s-manifest.prod.yaml:198-227
+megalinter-reports/megalinter.log:234549: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234550: trailing whitespace.
++ 198 ┌                 - name: gauzy-prod-webapp
+megalinter-reports/megalinter.log:234551: trailing whitespace.
++ 199 │                   image: ghcr.io/ever-co/gauzy-webapp:latest
+megalinter-reports/megalinter.log:234552: trailing whitespace.
++ 200 │                   env:
+megalinter-reports/megalinter.log:234553: trailing whitespace.
++ 201 │                       - name: DEMO
+megalinter-reports/megalinter.log:234554: trailing whitespace.
++ 202 │                         value: 'false'
+megalinter-reports/megalinter.log:234555: trailing whitespace.
++ 203 │                       - name: API_BASE_URL
+megalinter-reports/megalinter.log:234556: trailing whitespace.
++ 204 │                         value: 'https://api.gauzy.co'
+megalinter-reports/megalinter.log:234557: trailing whitespace.
++ 205 │                       - name: CLIENT_BASE_URL
+megalinter-reports/megalinter.log:234558: trailing whitespace.
++ 206 └                         value: 'https://app.gauzy.co'
+megalinter-reports/megalinter.log:234559: trailing whitespace.
++ ...   
+megalinter-reports/megalinter.log:234560: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234561: trailing whitespace.
++
+megalinter-reports/megalinter.log:234562: trailing whitespace.
++
+megalinter-reports/megalinter.log:234563: trailing whitespace.
++LOW: Container 'gauzy-prod-api' of Deployment 'gauzy-prod-api' should set 'resources.limits.memory'
+megalinter-reports/megalinter.log:234564: trailing whitespace.
++════════════════════════════════════════
+megalinter-reports/megalinter.log:234565: trailing whitespace.
++Enforcing memory limits prevents DoS via resource exhaustion.
+megalinter-reports/megalinter.log:234566: trailing whitespace.
++
+megalinter-reports/megalinter.log:234567: trailing whitespace.
++See https://avd.aquasec.com/misconfig/ksv018
+megalinter-reports/megalinter.log:234568: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234569: trailing whitespace.
++ .deploy/k8s/k8s-manifest.prod.yaml:61-181
+megalinter-reports/megalinter.log:234570: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234571: trailing whitespace.
++  61 ┌                 - name: gauzy-prod-api
+megalinter-reports/megalinter.log:234572: trailing whitespace.
++  62 │                   image: ghcr.io/ever-co/gauzy-api:latest
+megalinter-reports/megalinter.log:234573: trailing whitespace.
++  63 │                   env:
+megalinter-reports/megalinter.log:234574: trailing whitespace.
++  64 │                       - name: API_HOST
+megalinter-reports/megalinter.log:234575: trailing whitespace.
++  65 │                         value: 0.0.0.0
+megalinter-reports/megalinter.log:234576: trailing whitespace.
++  66 │                       - name: DEMO
+megalinter-reports/megalinter.log:234577: trailing whitespace.
++  67 │                         value: 'false'
+megalinter-reports/megalinter.log:234578: trailing whitespace.
++  68 │                       - name: NODE_ENV
+megalinter-reports/megalinter.log:234579: trailing whitespace.
++  69 └                         value: 'production'
+megalinter-reports/megalinter.log:234580: trailing whitespace.
++  ..   
+megalinter-reports/megalinter.log:234581: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234582: trailing whitespace.
++
+megalinter-reports/megalinter.log:234583: trailing whitespace.
++
+megalinter-reports/megalinter.log:234584: trailing whitespace.
++LOW: Container 'gauzy-prod-webapp' of Deployment 'gauzy-prod-webapp' should set 'resources.limits.memory'
+megalinter-reports/megalinter.log:234585: trailing whitespace.
++════════════════════════════════════════
+megalinter-reports/megalinter.log:234586: trailing whitespace.
++Enforcing memory limits prevents DoS via resource exhaustion.
+megalinter-reports/megalinter.log:234587: trailing whitespace.
++
+megalinter-reports/megalinter.log:234588: trailing whitespace.
++See https://avd.aquasec.com/misconfig/ksv018
+megalinter-reports/megalinter.log:234589: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234590: trailing whitespace.
++ .deploy/k8s/k8s-manifest.prod.yaml:198-227
+megalinter-reports/megalinter.log:234591: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234592: trailing whitespace.
++ 198 ┌                 - name: gauzy-prod-webapp
+megalinter-reports/megalinter.log:234593: trailing whitespace.
++ 199 │                   image: ghcr.io/ever-co/gauzy-webapp:latest
+megalinter-reports/megalinter.log:234594: trailing whitespace.
++ 200 │                   env:
+megalinter-reports/megalinter.log:234595: trailing whitespace.
++ 201 │                       - name: DEMO
+megalinter-reports/megalinter.log:234596: trailing whitespace.
++ 202 │                         value: 'false'
+megalinter-reports/megalinter.log:234597: trailing whitespace.
++ 203 │                       - name: API_BASE_URL
+megalinter-reports/megalinter.log:234598: trailing whitespace.
++ 204 │                         value: 'https://api.gauzy.co'
+megalinter-reports/megalinter.log:234599: trailing whitespace.
++ 205 │                       - name: CLIENT_BASE_URL
+megalinter-reports/megalinter.log:234600: trailing whitespace.
++ 206 └                         value: 'https://app.gauzy.co'
+megalinter-reports/megalinter.log:234601: trailing whitespace.
++ ...   
+megalinter-reports/megalinter.log:234602: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234603: trailing whitespace.
++
+megalinter-reports/megalinter.log:234604: trailing whitespace.
++
+megalinter-reports/megalinter.log:234605: trailing whitespace.
++LOW: Container 'gauzy-prod-api' of Deployment 'gauzy-prod-api' should set 'securityContext.runAsUser' > 10000
+megalinter-reports/megalinter.log:234606: trailing whitespace.
++════════════════════════════════════════
+megalinter-reports/megalinter.log:234607: trailing whitespace.
++Force the container to run with user ID > 10000 to avoid conflicts with the host’s user table.
+megalinter-reports/megalinter.log:234608: trailing whitespace.
++
+megalinter-reports/megalinter.log:234609: trailing whitespace.
++See https://avd.aquasec.com/misconfig/ksv020
+megalinter-reports/megalinter.log:234610: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234611: trailing whitespace.
++ .deploy/k8s/k8s-manifest.prod.yaml:61-181
+megalinter-reports/megalinter.log:234612: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234613: trailing whitespace.
++  61 ┌                 - name: gauzy-prod-api
+megalinter-reports/megalinter.log:234614: trailing whitespace.
++  62 │                   image: ghcr.io/ever-co/gauzy-api:latest
+megalinter-reports/megalinter.log:234615: trailing whitespace.
++  63 │                   env:
+megalinter-reports/megalinter.log:234616: trailing whitespace.
++  64 │                       - name: API_HOST
+megalinter-reports/megalinter.log:234617: trailing whitespace.
++  65 │                         value: 0.0.0.0
+megalinter-reports/megalinter.log:234618: trailing whitespace.
++  66 │                       - name: DEMO
+megalinter-reports/megalinter.log:234619: trailing whitespace.
++  67 │                         value: 'false'
+megalinter-reports/megalinter.log:234620: trailing whitespace.
++  68 │                       - name: NODE_ENV
+megalinter-reports/megalinter.log:234621: trailing whitespace.
++  69 └                         value: 'production'
+megalinter-reports/megalinter.log:234622: trailing whitespace.
++  ..   
+megalinter-reports/megalinter.log:234623: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234624: trailing whitespace.
++
+megalinter-reports/megalinter.log:234625: trailing whitespace.
++
+megalinter-reports/megalinter.log:234626: trailing whitespace.
++LOW: Container 'gauzy-prod-webapp' of Deployment 'gauzy-prod-webapp' should set 'securityContext.runAsUser' > 10000
+megalinter-reports/megalinter.log:234627: trailing whitespace.
++════════════════════════════════════════
+megalinter-reports/megalinter.log:234628: trailing whitespace.
++Force the container to run with user ID > 10000 to avoid conflicts with the host’s user table.
+megalinter-reports/megalinter.log:234629: trailing whitespace.
++
+megalinter-reports/megalinter.log:234630: trailing whitespace.
++See https://avd.aquasec.com/misconfig/ksv020
+megalinter-reports/megalinter.log:234631: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234632: trailing whitespace.
++ .deploy/k8s/k8s-manifest.prod.yaml:198-227
+megalinter-reports/megalinter.log:234633: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234634: trailing whitespace.
++ 198 ┌                 - name: gauzy-prod-webapp
+megalinter-reports/megalinter.log:234635: trailing whitespace.
++ 199 │                   image: ghcr.io/ever-co/gauzy-webapp:latest
+megalinter-reports/megalinter.log:234636: trailing whitespace.
++ 200 │                   env:
+megalinter-reports/megalinter.log:234637: trailing whitespace.
++ 201 │                       - name: DEMO
+megalinter-reports/megalinter.log:234638: trailing whitespace.
++ 202 │                         value: 'false'
+megalinter-reports/megalinter.log:234639: trailing whitespace.
++ 203 │                       - name: API_BASE_URL
+megalinter-reports/megalinter.log:234640: trailing whitespace.
++ 204 │                         value: 'https://api.gauzy.co'
+megalinter-reports/megalinter.log:234641: trailing whitespace.
++ 205 │                       - name: CLIENT_BASE_URL
+megalinter-reports/megalinter.log:234642: trailing whitespace.
++ 206 └                         value: 'https://app.gauzy.co'
+megalinter-reports/megalinter.log:234643: trailing whitespace.
++ ...   
+megalinter-reports/megalinter.log:234644: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234645: trailing whitespace.
++
+megalinter-reports/megalinter.log:234646: trailing whitespace.
++
+megalinter-reports/megalinter.log:234647: trailing whitespace.
++LOW: Container 'gauzy-prod-api' of Deployment 'gauzy-prod-api' should set 'securityContext.runAsGroup' > 10000
+megalinter-reports/megalinter.log:234648: trailing whitespace.
++════════════════════════════════════════
+megalinter-reports/megalinter.log:234649: trailing whitespace.
++Force the container to run with group ID > 10000 to avoid conflicts with the host’s user table.
+megalinter-reports/megalinter.log:234650: trailing whitespace.
++
+megalinter-reports/megalinter.log:234651: trailing whitespace.
++See https://avd.aquasec.com/misconfig/ksv021
+megalinter-reports/megalinter.log:234652: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234653: trailing whitespace.
++ .deploy/k8s/k8s-manifest.prod.yaml:61-181
+megalinter-reports/megalinter.log:234654: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234655: trailing whitespace.
++  61 ┌                 - name: gauzy-prod-api
+megalinter-reports/megalinter.log:234656: trailing whitespace.
++  62 │                   image: ghcr.io/ever-co/gauzy-api:latest
+megalinter-reports/megalinter.log:234657: trailing whitespace.
++  63 │                   env:
+megalinter-reports/megalinter.log:234658: trailing whitespace.
++  64 │                       - name: API_HOST
+megalinter-reports/megalinter.log:234659: trailing whitespace.
++  65 │                         value: 0.0.0.0
+megalinter-reports/megalinter.log:234660: trailing whitespace.
++  66 │                       - name: DEMO
+megalinter-reports/megalinter.log:234661: trailing whitespace.
++  67 │                         value: 'false'
+megalinter-reports/megalinter.log:234662: trailing whitespace.
++  68 │                       - name: NODE_ENV
+megalinter-reports/megalinter.log:234663: trailing whitespace.
++  69 └                         value: 'production'
+megalinter-reports/megalinter.log:234664: trailing whitespace.
++  ..   
+megalinter-reports/megalinter.log:234665: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234666: trailing whitespace.
++
+megalinter-reports/megalinter.log:234667: trailing whitespace.
++
+megalinter-reports/megalinter.log:234668: trailing whitespace.
++LOW: Container 'gauzy-prod-webapp' of Deployment 'gauzy-prod-webapp' should set 'securityContext.runAsGroup' > 10000
+megalinter-reports/megalinter.log:234669: trailing whitespace.
++════════════════════════════════════════
+megalinter-reports/megalinter.log:234670: trailing whitespace.
++Force the container to run with group ID > 10000 to avoid conflicts with the host’s user table.
+megalinter-reports/megalinter.log:234671: trailing whitespace.
++
+megalinter-reports/megalinter.log:234672: trailing whitespace.
++See https://avd.aquasec.com/misconfig/ksv021
+megalinter-reports/megalinter.log:234673: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234674: trailing whitespace.
++ .deploy/k8s/k8s-manifest.prod.yaml:198-227
+megalinter-reports/megalinter.log:234675: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234676: trailing whitespace.
++ 198 ┌                 - name: gauzy-prod-webapp
+megalinter-reports/megalinter.log:234677: trailing whitespace.
++ 199 │                   image: ghcr.io/ever-co/gauzy-webapp:latest
+megalinter-reports/megalinter.log:234678: trailing whitespace.
++ 200 │                   env:
+megalinter-reports/megalinter.log:234679: trailing whitespace.
++ 201 │                       - name: DEMO
+megalinter-reports/megalinter.log:234680: trailing whitespace.
++ 202 │                         value: 'false'
+megalinter-reports/megalinter.log:234681: trailing whitespace.
++ 203 │                       - name: API_BASE_URL
+megalinter-reports/megalinter.log:234682: trailing whitespace.
++ 204 │                         value: 'https://api.gauzy.co'
+megalinter-reports/megalinter.log:234683: trailing whitespace.
++ 205 │                       - name: CLIENT_BASE_URL
+megalinter-reports/megalinter.log:234684: trailing whitespace.
++ 206 └                         value: 'https://app.gauzy.co'
+megalinter-reports/megalinter.log:234685: trailing whitespace.
++ ...   
+megalinter-reports/megalinter.log:234686: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234687: trailing whitespace.
++
+megalinter-reports/megalinter.log:234688: trailing whitespace.
++
+megalinter-reports/megalinter.log:234689: trailing whitespace.
++LOW: Either Pod or Container should set 'securityContext.seccompProfile.type' to 'RuntimeDefault'
+megalinter-reports/megalinter.log:234690: trailing whitespace.
++════════════════════════════════════════
+megalinter-reports/megalinter.log:234691: trailing whitespace.
++The RuntimeDefault/Localhost seccomp profile must be required, or allow specific additional profiles.
+megalinter-reports/megalinter.log:234692: trailing whitespace.
++
+megalinter-reports/megalinter.log:234693: trailing whitespace.
++See https://avd.aquasec.com/misconfig/ksv030
+megalinter-reports/megalinter.log:234694: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234695: trailing whitespace.
++ .deploy/k8s/k8s-manifest.prod.yaml:61-181
+megalinter-reports/megalinter.log:234696: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234697: trailing whitespace.
++  61 ┌                 - name: gauzy-prod-api
+megalinter-reports/megalinter.log:234698: trailing whitespace.
++  62 │                   image: ghcr.io/ever-co/gauzy-api:latest
+megalinter-reports/megalinter.log:234699: trailing whitespace.
++  63 │                   env:
+megalinter-reports/megalinter.log:234700: trailing whitespace.
++  64 │                       - name: API_HOST
+megalinter-reports/megalinter.log:234701: trailing whitespace.
++  65 │                         value: 0.0.0.0
+megalinter-reports/megalinter.log:234702: trailing whitespace.
++  66 │                       - name: DEMO
+megalinter-reports/megalinter.log:234703: trailing whitespace.
++  67 │                         value: 'false'
+megalinter-reports/megalinter.log:234704: trailing whitespace.
++  68 │                       - name: NODE_ENV
+megalinter-reports/megalinter.log:234705: trailing whitespace.
++  69 └                         value: 'production'
+megalinter-reports/megalinter.log:234706: trailing whitespace.
++  ..   
+megalinter-reports/megalinter.log:234707: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234708: trailing whitespace.
++
+megalinter-reports/megalinter.log:234709: trailing whitespace.
++
+megalinter-reports/megalinter.log:234710: trailing whitespace.
++LOW: Either Pod or Container should set 'securityContext.seccompProfile.type' to 'RuntimeDefault'
+megalinter-reports/megalinter.log:234711: trailing whitespace.
++════════════════════════════════════════
+megalinter-reports/megalinter.log:234712: trailing whitespace.
++The RuntimeDefault/Localhost seccomp profile must be required, or allow specific additional profiles.
+megalinter-reports/megalinter.log:234713: trailing whitespace.
++
+megalinter-reports/megalinter.log:234714: trailing whitespace.
++See https://avd.aquasec.com/misconfig/ksv030
+megalinter-reports/megalinter.log:234715: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234716: trailing whitespace.
++ .deploy/k8s/k8s-manifest.prod.yaml:198-227
+megalinter-reports/megalinter.log:234717: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234718: trailing whitespace.
++ 198 ┌                 - name: gauzy-prod-webapp
+megalinter-reports/megalinter.log:234719: trailing whitespace.
++ 199 │                   image: ghcr.io/ever-co/gauzy-webapp:latest
+megalinter-reports/megalinter.log:234720: trailing whitespace.
++ 200 │                   env:
+megalinter-reports/megalinter.log:234721: trailing whitespace.
++ 201 │                       - name: DEMO
+megalinter-reports/megalinter.log:234722: trailing whitespace.
++ 202 │                         value: 'false'
+megalinter-reports/megalinter.log:234723: trailing whitespace.
++ 203 │                       - name: API_BASE_URL
+megalinter-reports/megalinter.log:234724: trailing whitespace.
++ 204 │                         value: 'https://api.gauzy.co'
+megalinter-reports/megalinter.log:234725: trailing whitespace.
++ 205 │                       - name: CLIENT_BASE_URL
+megalinter-reports/megalinter.log:234726: trailing whitespace.
++ 206 └                         value: 'https://app.gauzy.co'
+megalinter-reports/megalinter.log:234727: trailing whitespace.
++ ...   
+megalinter-reports/megalinter.log:234728: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234729: trailing whitespace.
++
+megalinter-reports/megalinter.log:234730: trailing whitespace.
++
+megalinter-reports/megalinter.log:234731: trailing whitespace.
++LOW: container should drop all
+megalinter-reports/megalinter.log:234732: trailing whitespace.
++════════════════════════════════════════
+megalinter-reports/megalinter.log:234733: trailing whitespace.
++Containers must drop ALL capabilities, and are only permitted to add back the NET_BIND_SERVICE capability.
+megalinter-reports/megalinter.log:234734: trailing whitespace.
++
+megalinter-reports/megalinter.log:234735: trailing whitespace.
++See https://avd.aquasec.com/misconfig/ksv106
+megalinter-reports/megalinter.log:234736: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234737: trailing whitespace.
++ .deploy/k8s/k8s-manifest.prod.yaml:61-181
+megalinter-reports/megalinter.log:234738: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234739: trailing whitespace.
++  61 ┌                 - name: gauzy-prod-api
+megalinter-reports/megalinter.log:234740: trailing whitespace.
++  62 │                   image: ghcr.io/ever-co/gauzy-api:latest
+megalinter-reports/megalinter.log:234741: trailing whitespace.
++  63 │                   env:
+megalinter-reports/megalinter.log:234742: trailing whitespace.
++  64 │                       - name: API_HOST
+megalinter-reports/megalinter.log:234743: trailing whitespace.
++  65 │                         value: 0.0.0.0
+megalinter-reports/megalinter.log:234744: trailing whitespace.
++  66 │                       - name: DEMO
+megalinter-reports/megalinter.log:234745: trailing whitespace.
++  67 │                         value: 'false'
+megalinter-reports/megalinter.log:234746: trailing whitespace.
++  68 │                       - name: NODE_ENV
+megalinter-reports/megalinter.log:234747: trailing whitespace.
++  69 └                         value: 'production'
+megalinter-reports/megalinter.log:234748: trailing whitespace.
++  ..   
+megalinter-reports/megalinter.log:234749: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234750: trailing whitespace.
++
+megalinter-reports/megalinter.log:234751: trailing whitespace.
++
+megalinter-reports/megalinter.log:234752: trailing whitespace.
++LOW: container should drop all
+megalinter-reports/megalinter.log:234753: trailing whitespace.
++════════════════════════════════════════
+megalinter-reports/megalinter.log:234754: trailing whitespace.
++Containers must drop ALL capabilities, and are only permitted to add back the NET_BIND_SERVICE capability.
+megalinter-reports/megalinter.log:234755: trailing whitespace.
++
+megalinter-reports/megalinter.log:234756: trailing whitespace.
++See https://avd.aquasec.com/misconfig/ksv106
+megalinter-reports/megalinter.log:234757: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234758: trailing whitespace.
++ .deploy/k8s/k8s-manifest.prod.yaml:198-227
+megalinter-reports/megalinter.log:234759: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234760: trailing whitespace.
++ 198 ┌                 - name: gauzy-prod-webapp
+megalinter-reports/megalinter.log:234761: trailing whitespace.
++ 199 │                   image: ghcr.io/ever-co/gauzy-webapp:latest
+megalinter-reports/megalinter.log:234762: trailing whitespace.
++ 200 │                   env:
+megalinter-reports/megalinter.log:234763: trailing whitespace.
++ 201 │                       - name: DEMO
+megalinter-reports/megalinter.log:234764: trailing whitespace.
++ 202 │                         value: 'false'
+megalinter-reports/megalinter.log:234765: trailing whitespace.
++ 203 │                       - name: API_BASE_URL
+megalinter-reports/megalinter.log:234766: trailing whitespace.
++ 204 │                         value: 'https://api.gauzy.co'
+megalinter-reports/megalinter.log:234767: trailing whitespace.
++ 205 │                       - name: CLIENT_BASE_URL
+megalinter-reports/megalinter.log:234768: trailing whitespace.
++ 206 └                         value: 'https://app.gauzy.co'
+megalinter-reports/megalinter.log:234769: trailing whitespace.
++ ...   
+megalinter-reports/megalinter.log:234770: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234771: trailing whitespace.
++
+megalinter-reports/megalinter.log:234772: trailing whitespace.
++
+megalinter-reports/megalinter.log:234779: trailing whitespace.
++MEDIUM: Container 'gauzy-stage-api' of Deployment 'gauzy-stage-api' should set 'securityContext.allowPrivilegeEscalation' to false
+megalinter-reports/megalinter.log:234780: trailing whitespace.
++════════════════════════════════════════
+megalinter-reports/megalinter.log:234781: trailing whitespace.
++A program inside the container can elevate its own privileges and run as root, which might give the program control over the container and node.
+megalinter-reports/megalinter.log:234782: trailing whitespace.
++
+megalinter-reports/megalinter.log:234783: trailing whitespace.
++See https://avd.aquasec.com/misconfig/ksv001
+megalinter-reports/megalinter.log:234784: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234785: trailing whitespace.
++ .deploy/k8s/k8s-manifest.stage.yaml:61-181
+megalinter-reports/megalinter.log:234786: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234787: trailing whitespace.
++  61 ┌                 - name: gauzy-stage-api
+megalinter-reports/megalinter.log:234788: trailing whitespace.
++  62 │                   image: ghcr.io/ever-co/gauzy-api-stage:latest
+megalinter-reports/megalinter.log:234789: trailing whitespace.
++  63 │                   env:
+megalinter-reports/megalinter.log:234790: trailing whitespace.
++  64 │                       - name: API_HOST
+megalinter-reports/megalinter.log:234791: trailing whitespace.
++  65 │                         value: 0.0.0.0
+megalinter-reports/megalinter.log:234792: trailing whitespace.
++  66 │                       - name: DEMO
+megalinter-reports/megalinter.log:234793: trailing whitespace.
++  67 │                         value: 'false'
+megalinter-reports/megalinter.log:234794: trailing whitespace.
++  68 │                       - name: NODE_ENV
+megalinter-reports/megalinter.log:234795: trailing whitespace.
++  69 └                         value: 'production'
+megalinter-reports/megalinter.log:234796: trailing whitespace.
++  ..   
+megalinter-reports/megalinter.log:234797: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234798: trailing whitespace.
++
+megalinter-reports/megalinter.log:234799: trailing whitespace.
++
+megalinter-reports/megalinter.log:234800: trailing whitespace.
++MEDIUM: Container 'gauzy-stage-webapp' of Deployment 'gauzy-stage-webapp' should set 'securityContext.allowPrivilegeEscalation' to false
+megalinter-reports/megalinter.log:234801: trailing whitespace.
++════════════════════════════════════════
+megalinter-reports/megalinter.log:234802: trailing whitespace.
++A program inside the container can elevate its own privileges and run as root, which might give the program control over the container and node.
+megalinter-reports/megalinter.log:234803: trailing whitespace.
++
+megalinter-reports/megalinter.log:234804: trailing whitespace.
++See https://avd.aquasec.com/misconfig/ksv001
+megalinter-reports/megalinter.log:234805: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234806: trailing whitespace.
++ .deploy/k8s/k8s-manifest.stage.yaml:198-227
+megalinter-reports/megalinter.log:234807: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234808: trailing whitespace.
++ 198 ┌                 - name: gauzy-stage-webapp
+megalinter-reports/megalinter.log:234809: trailing whitespace.
++ 199 │                   image: ghcr.io/ever-co/gauzy-webapp-stage:latest
+megalinter-reports/megalinter.log:234810: trailing whitespace.
++ 200 │                   env:
+megalinter-reports/megalinter.log:234811: trailing whitespace.
++ 201 │                       - name: DEMO
+megalinter-reports/megalinter.log:234812: trailing whitespace.
++ 202 │                         value: 'false'
+megalinter-reports/megalinter.log:234813: trailing whitespace.
++ 203 │                       - name: API_BASE_URL
+megalinter-reports/megalinter.log:234814: trailing whitespace.
++ 204 │                         value: 'https://apistage.gauzy.co'
+megalinter-reports/megalinter.log:234815: trailing whitespace.
++ 205 │                       - name: CLIENT_BASE_URL
+megalinter-reports/megalinter.log:234816: trailing whitespace.
++ 206 └                         value: 'https://stage.gauzy.co'
+megalinter-reports/megalinter.log:234817: trailing whitespace.
++ ...   
+megalinter-reports/megalinter.log:234818: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234819: trailing whitespace.
++
+megalinter-reports/megalinter.log:234820: trailing whitespace.
++
+megalinter-reports/megalinter.log:234821: trailing whitespace.
++LOW: Container 'gauzy-stage-api' of Deployment 'gauzy-stage-api' should add 'ALL' to 'securityContext.capabilities.drop'
+megalinter-reports/megalinter.log:234822: trailing whitespace.
++════════════════════════════════════════
+megalinter-reports/megalinter.log:234823: trailing whitespace.
++The container should drop all default capabilities and add only those that are needed for its execution.
+megalinter-reports/megalinter.log:234824: trailing whitespace.
++
+megalinter-reports/megalinter.log:234825: trailing whitespace.
++See https://avd.aquasec.com/misconfig/ksv003
+megalinter-reports/megalinter.log:234826: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234827: trailing whitespace.
++ .deploy/k8s/k8s-manifest.stage.yaml:61-181
+megalinter-reports/megalinter.log:234828: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234829: trailing whitespace.
++  61 ┌                 - name: gauzy-stage-api
+megalinter-reports/megalinter.log:234830: trailing whitespace.
++  62 │                   image: ghcr.io/ever-co/gauzy-api-stage:latest
+megalinter-reports/megalinter.log:234831: trailing whitespace.
++  63 │                   env:
+megalinter-reports/megalinter.log:234832: trailing whitespace.
++  64 │                       - name: API_HOST
+megalinter-reports/megalinter.log:234833: trailing whitespace.
++  65 │                         value: 0.0.0.0
+megalinter-reports/megalinter.log:234834: trailing whitespace.
++  66 │                       - name: DEMO
+megalinter-reports/megalinter.log:234835: trailing whitespace.
++  67 │                         value: 'false'
+megalinter-reports/megalinter.log:234836: trailing whitespace.
++  68 │                       - name: NODE_ENV
+megalinter-reports/megalinter.log:234837: trailing whitespace.
++  69 └                         value: 'production'
+megalinter-reports/megalinter.log:234838: trailing whitespace.
++  ..   
+megalinter-reports/megalinter.log:234839: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234840: trailing whitespace.
++
+megalinter-reports/megalinter.log:234841: trailing whitespace.
++
+megalinter-reports/megalinter.log:234842: trailing whitespace.
++LOW: Container 'gauzy-stage-webapp' of Deployment 'gauzy-stage-webapp' should add 'ALL' to 'securityContext.capabilities.drop'
+megalinter-reports/megalinter.log:234843: trailing whitespace.
++════════════════════════════════════════
+megalinter-reports/megalinter.log:234844: trailing whitespace.
++The container should drop all default capabilities and add only those that are needed for its execution.
+megalinter-reports/megalinter.log:234845: trailing whitespace.
++
+megalinter-reports/megalinter.log:234846: trailing whitespace.
++See https://avd.aquasec.com/misconfig/ksv003
+megalinter-reports/megalinter.log:234847: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234848: trailing whitespace.
++ .deploy/k8s/k8s-manifest.stage.yaml:198-227
+megalinter-reports/megalinter.log:234849: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234850: trailing whitespace.
++ 198 ┌                 - name: gauzy-stage-webapp
+megalinter-reports/megalinter.log:234851: trailing whitespace.
++ 199 │                   image: ghcr.io/ever-co/gauzy-webapp-stage:latest
+megalinter-reports/megalinter.log:234852: trailing whitespace.
++ 200 │                   env:
+megalinter-reports/megalinter.log:234853: trailing whitespace.
++ 201 │                       - name: DEMO
+megalinter-reports/megalinter.log:234854: trailing whitespace.
++ 202 │                         value: 'false'
+megalinter-reports/megalinter.log:234855: trailing whitespace.
++ 203 │                       - name: API_BASE_URL
+megalinter-reports/megalinter.log:234856: trailing whitespace.
++ 204 │                         value: 'https://apistage.gauzy.co'
+megalinter-reports/megalinter.log:234857: trailing whitespace.
++ 205 │                       - name: CLIENT_BASE_URL
+megalinter-reports/megalinter.log:234858: trailing whitespace.
++ 206 └                         value: 'https://stage.gauzy.co'
+megalinter-reports/megalinter.log:234859: trailing whitespace.
++ ...   
+megalinter-reports/megalinter.log:234860: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234861: trailing whitespace.
++
+megalinter-reports/megalinter.log:234862: trailing whitespace.
++
+megalinter-reports/megalinter.log:234863: trailing whitespace.
++LOW: Container 'gauzy-stage-api' of Deployment 'gauzy-stage-api' should set 'resources.limits.cpu'
+megalinter-reports/megalinter.log:234864: trailing whitespace.
++════════════════════════════════════════
+megalinter-reports/megalinter.log:234865: trailing whitespace.
++Enforcing CPU limits prevents DoS via resource exhaustion.
+megalinter-reports/megalinter.log:234866: trailing whitespace.
++
+megalinter-reports/megalinter.log:234867: trailing whitespace.
++See https://avd.aquasec.com/misconfig/ksv011
+megalinter-reports/megalinter.log:234868: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234869: trailing whitespace.
++ .deploy/k8s/k8s-manifest.stage.yaml:61-181
+megalinter-reports/megalinter.log:234870: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234871: trailing whitespace.
++  61 ┌                 - name: gauzy-stage-api
+megalinter-reports/megalinter.log:234872: trailing whitespace.
++  62 │                   image: ghcr.io/ever-co/gauzy-api-stage:latest
+megalinter-reports/megalinter.log:234873: trailing whitespace.
++  63 │                   env:
+megalinter-reports/megalinter.log:234874: trailing whitespace.
++  64 │                       - name: API_HOST
+megalinter-reports/megalinter.log:234875: trailing whitespace.
++  65 │                         value: 0.0.0.0
+megalinter-reports/megalinter.log:234876: trailing whitespace.
++  66 │                       - name: DEMO
+megalinter-reports/megalinter.log:234877: trailing whitespace.
++  67 │                         value: 'false'
+megalinter-reports/megalinter.log:234878: trailing whitespace.
++  68 │                       - name: NODE_ENV
+megalinter-reports/megalinter.log:234879: trailing whitespace.
++  69 └                         value: 'production'
+megalinter-reports/megalinter.log:234880: trailing whitespace.
++  ..   
+megalinter-reports/megalinter.log:234881: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234882: trailing whitespace.
++
+megalinter-reports/megalinter.log:234883: trailing whitespace.
++
+megalinter-reports/megalinter.log:234884: trailing whitespace.
++LOW: Container 'gauzy-stage-webapp' of Deployment 'gauzy-stage-webapp' should set 'resources.limits.cpu'
+megalinter-reports/megalinter.log:234885: trailing whitespace.
++════════════════════════════════════════
+megalinter-reports/megalinter.log:234886: trailing whitespace.
++Enforcing CPU limits prevents DoS via resource exhaustion.
+megalinter-reports/megalinter.log:234887: trailing whitespace.
++
+megalinter-reports/megalinter.log:234888: trailing whitespace.
++See https://avd.aquasec.com/misconfig/ksv011
+megalinter-reports/megalinter.log:234889: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234890: trailing whitespace.
++ .deploy/k8s/k8s-manifest.stage.yaml:198-227
+megalinter-reports/megalinter.log:234891: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234892: trailing whitespace.
++ 198 ┌                 - name: gauzy-stage-webapp
+megalinter-reports/megalinter.log:234893: trailing whitespace.
++ 199 │                   image: ghcr.io/ever-co/gauzy-webapp-stage:latest
+megalinter-reports/megalinter.log:234894: trailing whitespace.
++ 200 │                   env:
+megalinter-reports/megalinter.log:234895: trailing whitespace.
++ 201 │                       - name: DEMO
+megalinter-reports/megalinter.log:234896: trailing whitespace.
++ 202 │                         value: 'false'
+megalinter-reports/megalinter.log:234897: trailing whitespace.
++ 203 │                       - name: API_BASE_URL
+megalinter-reports/megalinter.log:234898: trailing whitespace.
++ 204 │                         value: 'https://apistage.gauzy.co'
+megalinter-reports/megalinter.log:234899: trailing whitespace.
++ 205 │                       - name: CLIENT_BASE_URL
+megalinter-reports/megalinter.log:234900: trailing whitespace.
++ 206 └                         value: 'https://stage.gauzy.co'
+megalinter-reports/megalinter.log:234901: trailing whitespace.
++ ...   
+megalinter-reports/megalinter.log:234902: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234903: trailing whitespace.
++
+megalinter-reports/megalinter.log:234904: trailing whitespace.
++
+megalinter-reports/megalinter.log:234905: trailing whitespace.
++MEDIUM: Container 'gauzy-stage-api' of Deployment 'gauzy-stage-api' should set 'securityContext.runAsNonRoot' to true
+megalinter-reports/megalinter.log:234906: trailing whitespace.
++════════════════════════════════════════
+megalinter-reports/megalinter.log:234907: trailing whitespace.
++'runAsNonRoot' forces the running image to run as a non-root user to ensure least privileges.
+megalinter-reports/megalinter.log:234908: trailing whitespace.
++
+megalinter-reports/megalinter.log:234909: trailing whitespace.
++See https://avd.aquasec.com/misconfig/ksv012
+megalinter-reports/megalinter.log:234910: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234911: trailing whitespace.
++ .deploy/k8s/k8s-manifest.stage.yaml:61-181
+megalinter-reports/megalinter.log:234912: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234913: trailing whitespace.
++  61 ┌                 - name: gauzy-stage-api
+megalinter-reports/megalinter.log:234914: trailing whitespace.
++  62 │                   image: ghcr.io/ever-co/gauzy-api-stage:latest
+megalinter-reports/megalinter.log:234915: trailing whitespace.
++  63 │                   env:
+megalinter-reports/megalinter.log:234916: trailing whitespace.
++  64 │                       - name: API_HOST
+megalinter-reports/megalinter.log:234917: trailing whitespace.
++  65 │                         value: 0.0.0.0
+megalinter-reports/megalinter.log:234918: trailing whitespace.
++  66 │                       - name: DEMO
+megalinter-reports/megalinter.log:234919: trailing whitespace.
++  67 │                         value: 'false'
+megalinter-reports/megalinter.log:234920: trailing whitespace.
++  68 │                       - name: NODE_ENV
+megalinter-reports/megalinter.log:234921: trailing whitespace.
++  69 └                         value: 'production'
+megalinter-reports/megalinter.log:234922: trailing whitespace.
++  ..   
+megalinter-reports/megalinter.log:234923: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234924: trailing whitespace.
++
+megalinter-reports/megalinter.log:234925: trailing whitespace.
++
+megalinter-reports/megalinter.log:234926: trailing whitespace.
++MEDIUM: Container 'gauzy-stage-webapp' of Deployment 'gauzy-stage-webapp' should set 'securityContext.runAsNonRoot' to true
+megalinter-reports/megalinter.log:234927: trailing whitespace.
++════════════════════════════════════════
+megalinter-reports/megalinter.log:234928: trailing whitespace.
++'runAsNonRoot' forces the running image to run as a non-root user to ensure least privileges.
+megalinter-reports/megalinter.log:234929: trailing whitespace.
++
+megalinter-reports/megalinter.log:234930: trailing whitespace.
++See https://avd.aquasec.com/misconfig/ksv012
+megalinter-reports/megalinter.log:234931: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234932: trailing whitespace.
++ .deploy/k8s/k8s-manifest.stage.yaml:198-227
+megalinter-reports/megalinter.log:234933: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234934: trailing whitespace.
++ 198 ┌                 - name: gauzy-stage-webapp
+megalinter-reports/megalinter.log:234935: trailing whitespace.
++ 199 │                   image: ghcr.io/ever-co/gauzy-webapp-stage:latest
+megalinter-reports/megalinter.log:234936: trailing whitespace.
++ 200 │                   env:
+megalinter-reports/megalinter.log:234937: trailing whitespace.
++ 201 │                       - name: DEMO
+megalinter-reports/megalinter.log:234938: trailing whitespace.
++ 202 │                         value: 'false'
+megalinter-reports/megalinter.log:234939: trailing whitespace.
++ 203 │                       - name: API_BASE_URL
+megalinter-reports/megalinter.log:234940: trailing whitespace.
++ 204 │                         value: 'https://apistage.gauzy.co'
+megalinter-reports/megalinter.log:234941: trailing whitespace.
++ 205 │                       - name: CLIENT_BASE_URL
+megalinter-reports/megalinter.log:234942: trailing whitespace.
++ 206 └                         value: 'https://stage.gauzy.co'
+megalinter-reports/megalinter.log:234943: trailing whitespace.
++ ...   
+megalinter-reports/megalinter.log:234944: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234945: trailing whitespace.
++
+megalinter-reports/megalinter.log:234946: trailing whitespace.
++
+megalinter-reports/megalinter.log:234947: trailing whitespace.
++MEDIUM: Container 'gauzy-stage-api' of Deployment 'gauzy-stage-api' should specify an image tag
+megalinter-reports/megalinter.log:234948: trailing whitespace.
++════════════════════════════════════════
+megalinter-reports/megalinter.log:234949: trailing whitespace.
++It is best to avoid using the ':latest' image tag when deploying containers in production. Doing so makes it hard to track which version of the image is running, and hard to roll back the version.
+megalinter-reports/megalinter.log:234950: trailing whitespace.
++
+megalinter-reports/megalinter.log:234951: trailing whitespace.
++See https://avd.aquasec.com/misconfig/ksv013
+megalinter-reports/megalinter.log:234952: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234953: trailing whitespace.
++ .deploy/k8s/k8s-manifest.stage.yaml:61-181
+megalinter-reports/megalinter.log:234954: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234955: trailing whitespace.
++  61 ┌                 - name: gauzy-stage-api
+megalinter-reports/megalinter.log:234956: trailing whitespace.
++  62 │                   image: ghcr.io/ever-co/gauzy-api-stage:latest
+megalinter-reports/megalinter.log:234957: trailing whitespace.
++  63 │                   env:
+megalinter-reports/megalinter.log:234958: trailing whitespace.
++  64 │                       - name: API_HOST
+megalinter-reports/megalinter.log:234959: trailing whitespace.
++  65 │                         value: 0.0.0.0
+megalinter-reports/megalinter.log:234960: trailing whitespace.
++  66 │                       - name: DEMO
+megalinter-reports/megalinter.log:234961: trailing whitespace.
++  67 │                         value: 'false'
+megalinter-reports/megalinter.log:234962: trailing whitespace.
++  68 │                       - name: NODE_ENV
+megalinter-reports/megalinter.log:234963: trailing whitespace.
++  69 └                         value: 'production'
+megalinter-reports/megalinter.log:234964: trailing whitespace.
++  ..   
+megalinter-reports/megalinter.log:234965: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234966: trailing whitespace.
++
+megalinter-reports/megalinter.log:234967: trailing whitespace.
++
+megalinter-reports/megalinter.log:234968: trailing whitespace.
++MEDIUM: Container 'gauzy-stage-webapp' of Deployment 'gauzy-stage-webapp' should specify an image tag
+megalinter-reports/megalinter.log:234969: trailing whitespace.
++════════════════════════════════════════
+megalinter-reports/megalinter.log:234970: trailing whitespace.
++It is best to avoid using the ':latest' image tag when deploying containers in production. Doing so makes it hard to track which version of the image is running, and hard to roll back the version.
+megalinter-reports/megalinter.log:234971: trailing whitespace.
++
+megalinter-reports/megalinter.log:234972: trailing whitespace.
++See https://avd.aquasec.com/misconfig/ksv013
+megalinter-reports/megalinter.log:234973: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234974: trailing whitespace.
++ .deploy/k8s/k8s-manifest.stage.yaml:198-227
+megalinter-reports/megalinter.log:234975: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234976: trailing whitespace.
++ 198 ┌                 - name: gauzy-stage-webapp
+megalinter-reports/megalinter.log:234977: trailing whitespace.
++ 199 │                   image: ghcr.io/ever-co/gauzy-webapp-stage:latest
+megalinter-reports/megalinter.log:234978: trailing whitespace.
++ 200 │                   env:
+megalinter-reports/megalinter.log:234979: trailing whitespace.
++ 201 │                       - name: DEMO
+megalinter-reports/megalinter.log:234980: trailing whitespace.
++ 202 │                         value: 'false'
+megalinter-reports/megalinter.log:234981: trailing whitespace.
++ 203 │                       - name: API_BASE_URL
+megalinter-reports/megalinter.log:234982: trailing whitespace.
++ 204 │                         value: 'https://apistage.gauzy.co'
+megalinter-reports/megalinter.log:234983: trailing whitespace.
++ 205 │                       - name: CLIENT_BASE_URL
+megalinter-reports/megalinter.log:234984: trailing whitespace.
++ 206 └                         value: 'https://stage.gauzy.co'
+megalinter-reports/megalinter.log:234985: trailing whitespace.
++ ...   
+megalinter-reports/megalinter.log:234986: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234987: trailing whitespace.
++
+megalinter-reports/megalinter.log:234988: trailing whitespace.
++
+megalinter-reports/megalinter.log:234989: trailing whitespace.
++LOW: Container 'gauzy-stage-api' of Deployment 'gauzy-stage-api' should set 'securityContext.readOnlyRootFilesystem' to true
+megalinter-reports/megalinter.log:234990: trailing whitespace.
++════════════════════════════════════════
+megalinter-reports/megalinter.log:234991: trailing whitespace.
++An immutable root file system prevents applications from writing to their local disk. This can limit intrusions, as attackers will not be able to tamper with the file system or write foreign executables to disk.
+megalinter-reports/megalinter.log:234992: trailing whitespace.
++
+megalinter-reports/megalinter.log:234993: trailing whitespace.
++See https://avd.aquasec.com/misconfig/ksv014
+megalinter-reports/megalinter.log:234994: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234995: trailing whitespace.
++ .deploy/k8s/k8s-manifest.stage.yaml:61-181
+megalinter-reports/megalinter.log:234996: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:234997: trailing whitespace.
++  61 ┌                 - name: gauzy-stage-api
+megalinter-reports/megalinter.log:234998: trailing whitespace.
++  62 │                   image: ghcr.io/ever-co/gauzy-api-stage:latest
+megalinter-reports/megalinter.log:234999: trailing whitespace.
++  63 │                   env:
+megalinter-reports/megalinter.log:235000: trailing whitespace.
++  64 │                       - name: API_HOST
+megalinter-reports/megalinter.log:235001: trailing whitespace.
++  65 │                         value: 0.0.0.0
+megalinter-reports/megalinter.log:235002: trailing whitespace.
++  66 │                       - name: DEMO
+megalinter-reports/megalinter.log:235003: trailing whitespace.
++  67 │                         value: 'false'
+megalinter-reports/megalinter.log:235004: trailing whitespace.
++  68 │                       - name: NODE_ENV
+megalinter-reports/megalinter.log:235005: trailing whitespace.
++  69 └                         value: 'production'
+megalinter-reports/megalinter.log:235006: trailing whitespace.
++  ..   
+megalinter-reports/megalinter.log:235007: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:235008: trailing whitespace.
++
+megalinter-reports/megalinter.log:235009: trailing whitespace.
++
+megalinter-reports/megalinter.log:235010: trailing whitespace.
++LOW: Container 'gauzy-stage-webapp' of Deployment 'gauzy-stage-webapp' should set 'securityContext.readOnlyRootFilesystem' to true
+megalinter-reports/megalinter.log:235011: trailing whitespace.
++════════════════════════════════════════
+megalinter-reports/megalinter.log:235012: trailing whitespace.
++An immutable root file system prevents applications from writing to their local disk. This can limit intrusions, as attackers will not be able to tamper with the file system or write foreign executables to disk.
+megalinter-reports/megalinter.log:235013: trailing whitespace.
++
+megalinter-reports/megalinter.log:235014: trailing whitespace.
++See https://avd.aquasec.com/misconfig/ksv014
+megalinter-reports/megalinter.log:235015: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:235016: trailing whitespace.
++ .deploy/k8s/k8s-manifest.stage.yaml:198-227
+megalinter-reports/megalinter.log:235017: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:235018: trailing whitespace.
++ 198 ┌                 - name: gauzy-stage-webapp
+megalinter-reports/megalinter.log:235019: trailing whitespace.
++ 199 │                   image: ghcr.io/ever-co/gauzy-webapp-stage:latest
+megalinter-reports/megalinter.log:235020: trailing whitespace.
++ 200 │                   env:
+megalinter-reports/megalinter.log:235021: trailing whitespace.
++ 201 │                       - name: DEMO
+megalinter-reports/megalinter.log:235022: trailing whitespace.
++ 202 │                         value: 'false'
+megalinter-reports/megalinter.log:235023: trailing whitespace.
++ 203 │                       - name: API_BASE_URL
+megalinter-reports/megalinter.log:235024: trailing whitespace.
++ 204 │                         value: 'https://apistage.gauzy.co'
+megalinter-reports/megalinter.log:235025: trailing whitespace.
++ 205 │                       - name: CLIENT_BASE_URL
+megalinter-reports/megalinter.log:235026: trailing whitespace.
++ 206 └                         value: 'https://stage.gauzy.co'
+megalinter-reports/megalinter.log:235027: trailing whitespace.
++ ...   
+megalinter-reports/megalinter.log:235028: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:235029: trailing whitespace.
++
+megalinter-reports/megalinter.log:235030: trailing whitespace.
++
+megalinter-reports/megalinter.log:235031: trailing whitespace.
++LOW: Container 'gauzy-stage-api' of Deployment 'gauzy-stage-api' should set 'resources.requests.cpu'
+megalinter-reports/megalinter.log:235032: trailing whitespace.
++════════════════════════════════════════
+megalinter-reports/megalinter.log:235033: trailing whitespace.
++When containers have resource requests specified, the scheduler can make better decisions about which nodes to place pods on, and how to deal with resource contention.
+megalinter-reports/megalinter.log:235034: trailing whitespace.
++
+megalinter-reports/megalinter.log:235035: trailing whitespace.
++See https://avd.aquasec.com/misconfig/ksv015
+megalinter-reports/megalinter.log:235036: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:235037: trailing whitespace.
++ .deploy/k8s/k8s-manifest.stage.yaml:61-181
+megalinter-reports/megalinter.log:235038: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:235039: trailing whitespace.
++  61 ┌                 - name: gauzy-stage-api
+megalinter-reports/megalinter.log:235040: trailing whitespace.
++  62 │                   image: ghcr.io/ever-co/gauzy-api-stage:latest
+megalinter-reports/megalinter.log:235041: trailing whitespace.
++  63 │                   env:
+megalinter-reports/megalinter.log:235042: trailing whitespace.
++  64 │                       - name: API_HOST
+megalinter-reports/megalinter.log:235043: trailing whitespace.
++  65 │                         value: 0.0.0.0
+megalinter-reports/megalinter.log:235044: trailing whitespace.
++  66 │                       - name: DEMO
+megalinter-reports/megalinter.log:235045: trailing whitespace.
++  67 │                         value: 'false'
+megalinter-reports/megalinter.log:235046: trailing whitespace.
++  68 │                       - name: NODE_ENV
+megalinter-reports/megalinter.log:235047: trailing whitespace.
++  69 └                         value: 'production'
+megalinter-reports/megalinter.log:235048: trailing whitespace.
++  ..   
+megalinter-reports/megalinter.log:235049: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:235050: trailing whitespace.
++
+megalinter-reports/megalinter.log:235051: trailing whitespace.
++
+megalinter-reports/megalinter.log:235052: trailing whitespace.
++LOW: Container 'gauzy-stage-webapp' of Deployment 'gauzy-stage-webapp' should set 'resources.requests.cpu'
+megalinter-reports/megalinter.log:235053: trailing whitespace.
++════════════════════════════════════════
+megalinter-reports/megalinter.log:235054: trailing whitespace.
++When containers have resource requests specified, the scheduler can make better decisions about which nodes to place pods on, and how to deal with resource contention.
+megalinter-reports/megalinter.log:235055: trailing whitespace.
++
+megalinter-reports/megalinter.log:235056: trailing whitespace.
++See https://avd.aquasec.com/misconfig/ksv015
+megalinter-reports/megalinter.log:235057: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:235058: trailing whitespace.
++ .deploy/k8s/k8s-manifest.stage.yaml:198-227
+megalinter-reports/megalinter.log:235059: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:235060: trailing whitespace.
++ 198 ┌                 - name: gauzy-stage-webapp
+megalinter-reports/megalinter.log:235061: trailing whitespace.
++ 199 │                   image: ghcr.io/ever-co/gauzy-webapp-stage:latest
+megalinter-reports/megalinter.log:235062: trailing whitespace.
++ 200 │                   env:
+megalinter-reports/megalinter.log:235063: trailing whitespace.
++ 201 │                       - name: DEMO
+megalinter-reports/megalinter.log:235064: trailing whitespace.
++ 202 │                         value: 'false'
+megalinter-reports/megalinter.log:235065: trailing whitespace.
++ 203 │                       - name: API_BASE_URL
+megalinter-reports/megalinter.log:235066: trailing whitespace.
++ 204 │                         value: 'https://apistage.gauzy.co'
+megalinter-reports/megalinter.log:235067: trailing whitespace.
++ 205 │                       - name: CLIENT_BASE_URL
+megalinter-reports/megalinter.log:235068: trailing whitespace.
++ 206 └                         value: 'https://stage.gauzy.co'
+megalinter-reports/megalinter.log:235069: trailing whitespace.
++ ...   
+megalinter-reports/megalinter.log:235070: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:235071: trailing whitespace.
++
+megalinter-reports/megalinter.log:235072: trailing whitespace.
++
+megalinter-reports/megalinter.log:235073: trailing whitespace.
++LOW: Container 'gauzy-stage-api' of Deployment 'gauzy-stage-api' should set 'resources.requests.memory'
+megalinter-reports/megalinter.log:235074: trailing whitespace.
++════════════════════════════════════════
+megalinter-reports/megalinter.log:235075: trailing whitespace.
++When containers have memory requests specified, the scheduler can make better decisions about which nodes to place pods on, and how to deal with resource contention.
+megalinter-reports/megalinter.log:235076: trailing whitespace.
++
+megalinter-reports/megalinter.log:235077: trailing whitespace.
++See https://avd.aquasec.com/misconfig/ksv016
+megalinter-reports/megalinter.log:235078: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:235079: trailing whitespace.
++ .deploy/k8s/k8s-manifest.stage.yaml:61-181
+megalinter-reports/megalinter.log:235080: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:235081: trailing whitespace.
++  61 ┌                 - name: gauzy-stage-api
+megalinter-reports/megalinter.log:235082: trailing whitespace.
++  62 │                   image: ghcr.io/ever-co/gauzy-api-stage:latest
+megalinter-reports/megalinter.log:235083: trailing whitespace.
++  63 │                   env:
+megalinter-reports/megalinter.log:235084: trailing whitespace.
++  64 │                       - name: API_HOST
+megalinter-reports/megalinter.log:235085: trailing whitespace.
++  65 │                         value: 0.0.0.0
+megalinter-reports/megalinter.log:235086: trailing whitespace.
++  66 │                       - name: DEMO
+megalinter-reports/megalinter.log:235087: trailing whitespace.
++  67 │                         value: 'false'
+megalinter-reports/megalinter.log:235088: trailing whitespace.
++  68 │                       - name: NODE_ENV
+megalinter-reports/megalinter.log:235089: trailing whitespace.
++  69 └                         value: 'production'
+megalinter-reports/megalinter.log:235090: trailing whitespace.
++  ..   
+megalinter-reports/megalinter.log:235091: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:235092: trailing whitespace.
++
+megalinter-reports/megalinter.log:235093: trailing whitespace.
++
+megalinter-reports/megalinter.log:235094: trailing whitespace.
++LOW: Container 'gauzy-stage-webapp' of Deployment 'gauzy-stage-webapp' should set 'resources.requests.memory'
+megalinter-reports/megalinter.log:235095: trailing whitespace.
++════════════════════════════════════════
+megalinter-reports/megalinter.log:235096: trailing whitespace.
++When containers have memory requests specified, the scheduler can make better decisions about which nodes to place pods on, and how to deal with resource contention.
+megalinter-reports/megalinter.log:235097: trailing whitespace.
++
+megalinter-reports/megalinter.log:235098: trailing whitespace.
++See https://avd.aquasec.com/misconfig/ksv016
+megalinter-reports/megalinter.log:235099: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:235100: trailing whitespace.
++ .deploy/k8s/k8s-manifest.stage.yaml:198-227
+megalinter-reports/megalinter.log:235101: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:235102: trailing whitespace.
++ 198 ┌                 - name: gauzy-stage-webapp
+megalinter-reports/megalinter.log:235103: trailing whitespace.
++ 199 │                   image: ghcr.io/ever-co/gauzy-webapp-stage:latest
+megalinter-reports/megalinter.log:235104: trailing whitespace.
++ 200 │                   env:
+megalinter-reports/megalinter.log:235105: trailing whitespace.
++ 201 │                       - name: DEMO
+megalinter-reports/megalinter.log:235106: trailing whitespace.
++ 202 │                         value: 'false'
+megalinter-reports/megalinter.log:235107: trailing whitespace.
++ 203 │                       - name: API_BASE_URL
+megalinter-reports/megalinter.log:235108: trailing whitespace.
++ 204 │                         value: 'https://apistage.gauzy.co'
+megalinter-reports/megalinter.log:235109: trailing whitespace.
++ 205 │                       - name: CLIENT_BASE_URL
+megalinter-reports/megalinter.log:235110: trailing whitespace.
++ 206 └                         value: 'https://stage.gauzy.co'
+megalinter-reports/megalinter.log:235111: trailing whitespace.
++ ...   
+megalinter-reports/megalinter.log:235112: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:235113: trailing whitespace.
++
+megalinter-reports/megalinter.log:235114: trailing whitespace.
++
+megalinter-reports/megalinter.log:235115: trailing whitespace.
++LOW: Container 'gauzy-stage-api' of Deployment 'gauzy-stage-api' should set 'resources.limits.memory'
+megalinter-reports/megalinter.log:235116: trailing whitespace.
++════════════════════════════════════════
+megalinter-reports/megalinter.log:235117: trailing whitespace.
++Enforcing memory limits prevents DoS via resource exhaustion.
+megalinter-reports/megalinter.log:235118: trailing whitespace.
++
+megalinter-reports/megalinter.log:235119: trailing whitespace.
++See https://avd.aquasec.com/misconfig/ksv018
+megalinter-reports/megalinter.log:235120: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:235121: trailing whitespace.
++ .deploy/k8s/k8s-manifest.stage.yaml:61-181
+megalinter-reports/megalinter.log:235122: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:235123: trailing whitespace.
++  61 ┌                 - name: gauzy-stage-api
+megalinter-reports/megalinter.log:235124: trailing whitespace.
++  62 │                   image: ghcr.io/ever-co/gauzy-api-stage:latest
+megalinter-reports/megalinter.log:235125: trailing whitespace.
++  63 │                   env:
+megalinter-reports/megalinter.log:235126: trailing whitespace.
++  64 │                       - name: API_HOST
+megalinter-reports/megalinter.log:235127: trailing whitespace.
++  65 │                         value: 0.0.0.0
+megalinter-reports/megalinter.log:235128: trailing whitespace.
++  66 │                       - name: DEMO
+megalinter-reports/megalinter.log:235129: trailing whitespace.
++  67 │                         value: 'false'
+megalinter-reports/megalinter.log:235130: trailing whitespace.
++  68 │                       - name: NODE_ENV
+megalinter-reports/megalinter.log:235131: trailing whitespace.
++  69 └                         value: 'production'
+megalinter-reports/megalinter.log:235132: trailing whitespace.
++  ..   
+megalinter-reports/megalinter.log:235133: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:235134: trailing whitespace.
++
+megalinter-reports/megalinter.log:235135: trailing whitespace.
++
+megalinter-reports/megalinter.log:235136: trailing whitespace.
++LOW: Container 'gauzy-stage-webapp' of Deployment 'gauzy-stage-webapp' should set 'resources.limits.memory'
+megalinter-reports/megalinter.log:235137: trailing whitespace.
++════════════════════════════════════════
+megalinter-reports/megalinter.log:235138: trailing whitespace.
++Enforcing memory limits prevents DoS via resource exhaustion.
+megalinter-reports/megalinter.log:235139: trailing whitespace.
++
+megalinter-reports/megalinter.log:235140: trailing whitespace.
++See https://avd.aquasec.com/misconfig/ksv018
+megalinter-reports/megalinter.log:235141: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:235142: trailing whitespace.
++ .deploy/k8s/k8s-manifest.stage.yaml:198-227
+megalinter-reports/megalinter.log:235143: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:235144: trailing whitespace.
++ 198 ┌                 - name: gauzy-stage-webapp
+megalinter-reports/megalinter.log:235145: trailing whitespace.
++ 199 │                   image: ghcr.io/ever-co/gauzy-webapp-stage:latest
+megalinter-reports/megalinter.log:235146: trailing whitespace.
++ 200 │                   env:
+megalinter-reports/megalinter.log:235147: trailing whitespace.
++ 201 │                       - name: DEMO
+megalinter-reports/megalinter.log:235148: trailing whitespace.
++ 202 │                         value: 'false'
+megalinter-reports/megalinter.log:235149: trailing whitespace.
++ 203 │                       - name: API_BASE_URL
+megalinter-reports/megalinter.log:235150: trailing whitespace.
++ 204 │                         value: 'https://apistage.gauzy.co'
+megalinter-reports/megalinter.log:235151: trailing whitespace.
++ 205 │                       - name: CLIENT_BASE_URL
+megalinter-reports/megalinter.log:235152: trailing whitespace.
++ 206 └                         value: 'https://stage.gauzy.co'
+megalinter-reports/megalinter.log:235153: trailing whitespace.
++ ...   
+megalinter-reports/megalinter.log:235154: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:235155: trailing whitespace.
++
+megalinter-reports/megalinter.log:235156: trailing whitespace.
++
+megalinter-reports/megalinter.log:235157: trailing whitespace.
++LOW: Container 'gauzy-stage-api' of Deployment 'gauzy-stage-api' should set 'securityContext.runAsUser' > 10000
+megalinter-reports/megalinter.log:235158: trailing whitespace.
++════════════════════════════════════════
+megalinter-reports/megalinter.log:235159: trailing whitespace.
++Force the container to run with user ID > 10000 to avoid conflicts with the host’s user table.
+megalinter-reports/megalinter.log:235160: trailing whitespace.
++
+megalinter-reports/megalinter.log:235161: trailing whitespace.
++See https://avd.aquasec.com/misconfig/ksv020
+megalinter-reports/megalinter.log:235162: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:235163: trailing whitespace.
++ .deploy/k8s/k8s-manifest.stage.yaml:61-181
+megalinter-reports/megalinter.log:235164: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:235165: trailing whitespace.
++  61 ┌                 - name: gauzy-stage-api
+megalinter-reports/megalinter.log:235166: trailing whitespace.
++  62 │                   image: ghcr.io/ever-co/gauzy-api-stage:latest
+megalinter-reports/megalinter.log:235167: trailing whitespace.
++  63 │                   env:
+megalinter-reports/megalinter.log:235168: trailing whitespace.
++  64 │                       - name: API_HOST
+megalinter-reports/megalinter.log:235169: trailing whitespace.
++  65 │                         value: 0.0.0.0
+megalinter-reports/megalinter.log:235170: trailing whitespace.
++  66 │                       - name: DEMO
+megalinter-reports/megalinter.log:235171: trailing whitespace.
++  67 │                         value: 'false'
+megalinter-reports/megalinter.log:235172: trailing whitespace.
++  68 │                       - name: NODE_ENV
+megalinter-reports/megalinter.log:235173: trailing whitespace.
++  69 └                         value: 'production'
+megalinter-reports/megalinter.log:235174: trailing whitespace.
++  ..   
+megalinter-reports/megalinter.log:235175: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:235176: trailing whitespace.
++
+megalinter-reports/megalinter.log:235177: trailing whitespace.
++
+megalinter-reports/megalinter.log:235178: trailing whitespace.
++LOW: Container 'gauzy-stage-webapp' of Deployment 'gauzy-stage-webapp' should set 'securityContext.runAsUser' > 10000
+megalinter-reports/megalinter.log:235179: trailing whitespace.
++════════════════════════════════════════
+megalinter-reports/megalinter.log:235180: trailing whitespace.
++Force the container to run with user ID > 10000 to avoid conflicts with the host’s user table.
+megalinter-reports/megalinter.log:235181: trailing whitespace.
++
+megalinter-reports/megalinter.log:235182: trailing whitespace.
++See https://avd.aquasec.com/misconfig/ksv020
+megalinter-reports/megalinter.log:235183: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:235184: trailing whitespace.
++ .deploy/k8s/k8s-manifest.stage.yaml:198-227
+megalinter-reports/megalinter.log:235185: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:235186: trailing whitespace.
++ 198 ┌                 - name: gauzy-stage-webapp
+megalinter-reports/megalinter.log:235187: trailing whitespace.
++ 199 │                   image: ghcr.io/ever-co/gauzy-webapp-stage:latest
+megalinter-reports/megalinter.log:235188: trailing whitespace.
++ 200 │                   env:
+megalinter-reports/megalinter.log:235189: trailing whitespace.
++ 201 │                       - name: DEMO
+megalinter-reports/megalinter.log:235190: trailing whitespace.
++ 202 │                         value: 'false'
+megalinter-reports/megalinter.log:235191: trailing whitespace.
++ 203 │                       - name: API_BASE_URL
+megalinter-reports/megalinter.log:235192: trailing whitespace.
++ 204 │                         value: 'https://apistage.gauzy.co'
+megalinter-reports/megalinter.log:235193: trailing whitespace.
++ 205 │                       - name: CLIENT_BASE_URL
+megalinter-reports/megalinter.log:235194: trailing whitespace.
++ 206 └                         value: 'https://stage.gauzy.co'
+megalinter-reports/megalinter.log:235195: trailing whitespace.
++ ...   
+megalinter-reports/megalinter.log:235196: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:235197: trailing whitespace.
++
+megalinter-reports/megalinter.log:235198: trailing whitespace.
++
+megalinter-reports/megalinter.log:235199: trailing whitespace.
++LOW: Container 'gauzy-stage-api' of Deployment 'gauzy-stage-api' should set 'securityContext.runAsGroup' > 10000
+megalinter-reports/megalinter.log:235200: trailing whitespace.
++════════════════════════════════════════
+megalinter-reports/megalinter.log:235201: trailing whitespace.
++Force the container to run with group ID > 10000 to avoid conflicts with the host’s user table.
+megalinter-reports/megalinter.log:235202: trailing whitespace.
++
+megalinter-reports/megalinter.log:235203: trailing whitespace.
++See https://avd.aquasec.com/misconfig/ksv021
+megalinter-reports/megalinter.log:235204: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:235205: trailing whitespace.
++ .deploy/k8s/k8s-manifest.stage.yaml:61-181
+megalinter-reports/megalinter.log:235206: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:235207: trailing whitespace.
++  61 ┌                 - name: gauzy-stage-api
+megalinter-reports/megalinter.log:235208: trailing whitespace.
++  62 │                   image: ghcr.io/ever-co/gauzy-api-stage:latest
+megalinter-reports/megalinter.log:235209: trailing whitespace.
++  63 │                   env:
+megalinter-reports/megalinter.log:235210: trailing whitespace.
++  64 │                       - name: API_HOST
+megalinter-reports/megalinter.log:235211: trailing whitespace.
++  65 │                         value: 0.0.0.0
+megalinter-reports/megalinter.log:235212: trailing whitespace.
++  66 │                       - name: DEMO
+megalinter-reports/megalinter.log:235213: trailing whitespace.
++  67 │                         value: 'false'
+megalinter-reports/megalinter.log:235214: trailing whitespace.
++  68 │                       - name: NODE_ENV
+megalinter-reports/megalinter.log:235215: trailing whitespace.
++  69 └                         value: 'production'
+megalinter-reports/megalinter.log:235216: trailing whitespace.
++  ..   
+megalinter-reports/megalinter.log:235217: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:235218: trailing whitespace.
++
+megalinter-reports/megalinter.log:235219: trailing whitespace.
++
+megalinter-reports/megalinter.log:235220: trailing whitespace.
++LOW: Container 'gauzy-stage-webapp' of Deployment 'gauzy-stage-webapp' should set 'securityContext.runAsGroup' > 10000
+megalinter-reports/megalinter.log:235221: trailing whitespace.
++════════════════════════════════════════
+megalinter-reports/megalinter.log:235222: trailing whitespace.
++Force the container to run with group ID > 10000 to avoid conflicts with the host’s user table.
+megalinter-reports/megalinter.log:235223: trailing whitespace.
++
+megalinter-reports/megalinter.log:235224: trailing whitespace.
++See https://avd.aquasec.com/misconfig/ksv021
+megalinter-reports/megalinter.log:235225: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:235226: trailing whitespace.
++ .deploy/k8s/k8s-manifest.stage.yaml:198-227
+megalinter-reports/megalinter.log:235227: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:235228: trailing whitespace.
++ 198 ┌                 - name: gauzy-stage-webapp
+megalinter-reports/megalinter.log:235229: trailing whitespace.
++ 199 │                   image: ghcr.io/ever-co/gauzy-webapp-stage:latest
+megalinter-reports/megalinter.log:235230: trailing whitespace.
++ 200 │                   env:
+megalinter-reports/megalinter.log:235231: trailing whitespace.
++ 201 │                       - name: DEMO
+megalinter-reports/megalinter.log:235232: trailing whitespace.
++ 202 │                         value: 'false'
+megalinter-reports/megalinter.log:235233: trailing whitespace.
++ 203 │                       - name: API_BASE_URL
+megalinter-reports/megalinter.log:235234: trailing whitespace.
++ 204 │                         value: 'https://apistage.gauzy.co'
+megalinter-reports/megalinter.log:235235: trailing whitespace.
++ 205 │                       - name: CLIENT_BASE_URL
+megalinter-reports/megalinter.log:235236: trailing whitespace.
++ 206 └                         value: 'https://stage.gauzy.co'
+megalinter-reports/megalinter.log:235237: trailing whitespace.
++ ...   
+megalinter-reports/megalinter.log:235238: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:235239: trailing whitespace.
++
+megalinter-reports/megalinter.log:235240: trailing whitespace.
++
+megalinter-reports/megalinter.log:235241: trailing whitespace.
++LOW: Either Pod or Container should set 'securityContext.seccompProfile.type' to 'RuntimeDefault'
+megalinter-reports/megalinter.log:235242: trailing whitespace.
++════════════════════════════════════════
+megalinter-reports/megalinter.log:235243: trailing whitespace.
++The RuntimeDefault/Localhost seccomp profile must be required, or allow specific additional profiles.
+megalinter-reports/megalinter.log:235244: trailing whitespace.
++
+megalinter-reports/megalinter.log:235245: trailing whitespace.
++See https://avd.aquasec.com/misconfig/ksv030
+megalinter-reports/megalinter.log:235246: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:235247: trailing whitespace.
++ .deploy/k8s/k8s-manifest.stage.yaml:61-181
+megalinter-reports/megalinter.log:235248: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:235249: trailing whitespace.
++  61 ┌                 - name: gauzy-stage-api
+megalinter-reports/megalinter.log:235250: trailing whitespace.
++  62 │                   image: ghcr.io/ever-co/gauzy-api-stage:latest
+megalinter-reports/megalinter.log:235251: trailing whitespace.
++  63 │                   env:
+megalinter-reports/megalinter.log:235252: trailing whitespace.
++  64 │                       - name: API_HOST
+megalinter-reports/megalinter.log:235253: trailing whitespace.
++  65 │                         value: 0.0.0.0
+megalinter-reports/megalinter.log:235254: trailing whitespace.
++  66 │                       - name: DEMO
+megalinter-reports/megalinter.log:235255: trailing whitespace.
++  67 │                         value: 'false'
+megalinter-reports/megalinter.log:235256: trailing whitespace.
++  68 │                       - name: NODE_ENV
+megalinter-reports/megalinter.log:235257: trailing whitespace.
++  69 └                         value: 'production'
+megalinter-reports/megalinter.log:235258: trailing whitespace.
++  ..   
+megalinter-reports/megalinter.log:235259: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:235260: trailing whitespace.
++
+megalinter-reports/megalinter.log:235261: trailing whitespace.
++
+megalinter-reports/megalinter.log:235262: trailing whitespace.
++LOW: Either Pod or Container should set 'securityContext.seccompProfile.type' to 'RuntimeDefault'
+megalinter-reports/megalinter.log:235263: trailing whitespace.
++════════════════════════════════════════
+megalinter-reports/megalinter.log:235264: trailing whitespace.
++The RuntimeDefault/Localhost seccomp profile must be required, or allow specific additional profiles.
+megalinter-reports/megalinter.log:235265: trailing whitespace.
++
+megalinter-reports/megalinter.log:235266: trailing whitespace.
++See https://avd.aquasec.com/misconfig/ksv030
+megalinter-reports/megalinter.log:235267: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:235268: trailing whitespace.
++ .deploy/k8s/k8s-manifest.stage.yaml:198-227
+megalinter-reports/megalinter.log:235269: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:235270: trailing whitespace.
++ 198 ┌                 - name: gauzy-stage-webapp
+megalinter-reports/megalinter.log:235271: trailing whitespace.
++ 199 │                   image: ghcr.io/ever-co/gauzy-webapp-stage:latest
+megalinter-reports/megalinter.log:235272: trailing whitespace.
++ 200 │                   env:
+megalinter-reports/megalinter.log:235273: trailing whitespace.
++ 201 │                       - name: DEMO
+megalinter-reports/megalinter.log:235274: trailing whitespace.
++ 202 │                         value: 'false'
+megalinter-reports/megalinter.log:235275: trailing whitespace.
++ 203 │                       - name: API_BASE_URL
+megalinter-reports/megalinter.log:235276: trailing whitespace.
++ 204 │                         value: 'https://apistage.gauzy.co'
+megalinter-reports/megalinter.log:235277: trailing whitespace.
++ 205 │                       - name: CLIENT_BASE_URL
+megalinter-reports/megalinter.log:235278: trailing whitespace.
++ 206 └                         value: 'https://stage.gauzy.co'
+megalinter-reports/megalinter.log:235279: trailing whitespace.
++ ...   
+megalinter-reports/megalinter.log:235280: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:235281: trailing whitespace.
++
+megalinter-reports/megalinter.log:235282: trailing whitespace.
++
+megalinter-reports/megalinter.log:235283: trailing whitespace.
++LOW: container should drop all
+megalinter-reports/megalinter.log:235284: trailing whitespace.
++════════════════════════════════════════
+megalinter-reports/megalinter.log:235285: trailing whitespace.
++Containers must drop ALL capabilities, and are only permitted to add back the NET_BIND_SERVICE capability.
+megalinter-reports/megalinter.log:235286: trailing whitespace.
++
+megalinter-reports/megalinter.log:235287: trailing whitespace.
++See https://avd.aquasec.com/misconfig/ksv106
+megalinter-reports/megalinter.log:235288: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:235289: trailing whitespace.
++ .deploy/k8s/k8s-manifest.stage.yaml:61-181
+megalinter-reports/megalinter.log:235290: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:235291: trailing whitespace.
++  61 ┌                 - name: gauzy-stage-api
+megalinter-reports/megalinter.log:235292: trailing whitespace.
++  62 │                   image: ghcr.io/ever-co/gauzy-api-stage:latest
+megalinter-reports/megalinter.log:235293: trailing whitespace.
++  63 │                   env:
+megalinter-reports/megalinter.log:235294: trailing whitespace.
++  64 │                       - name: API_HOST
+megalinter-reports/megalinter.log:235295: trailing whitespace.
++  65 │                         value: 0.0.0.0
+megalinter-reports/megalinter.log:235296: trailing whitespace.
++  66 │                       - name: DEMO
+megalinter-reports/megalinter.log:235297: trailing whitespace.
++  67 │                         value: 'false'
+megalinter-reports/megalinter.log:235298: trailing whitespace.
++  68 │                       - name: NODE_ENV
+megalinter-reports/megalinter.log:235299: trailing whitespace.
++  69 └                         value: 'production'
+megalinter-reports/megalinter.log:235300: trailing whitespace.
++  ..   
+megalinter-reports/megalinter.log:235301: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:235302: trailing whitespace.
++
+megalinter-reports/megalinter.log:235303: trailing whitespace.
++
+megalinter-reports/megalinter.log:235304: trailing whitespace.
++LOW: container should drop all
+megalinter-reports/megalinter.log:235305: trailing whitespace.
++════════════════════════════════════════
+megalinter-reports/megalinter.log:235306: trailing whitespace.
++Containers must drop ALL capabilities, and are only permitted to add back the NET_BIND_SERVICE capability.
+megalinter-reports/megalinter.log:235307: trailing whitespace.
++
+megalinter-reports/megalinter.log:235308: trailing whitespace.
++See https://avd.aquasec.com/misconfig/ksv106
+megalinter-reports/megalinter.log:235309: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:235310: trailing whitespace.
++ .deploy/k8s/k8s-manifest.stage.yaml:198-227
+megalinter-reports/megalinter.log:235311: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:235312: trailing whitespace.
++ 198 ┌                 - name: gauzy-stage-webapp
+megalinter-reports/megalinter.log:235313: trailing whitespace.
++ 199 │                   image: ghcr.io/ever-co/gauzy-webapp-stage:latest
+megalinter-reports/megalinter.log:235314: trailing whitespace.
++ 200 │                   env:
+megalinter-reports/megalinter.log:235315: trailing whitespace.
++ 201 │                       - name: DEMO
+megalinter-reports/megalinter.log:235316: trailing whitespace.
++ 202 │                         value: 'false'
+megalinter-reports/megalinter.log:235317: trailing whitespace.
++ 203 │                       - name: API_BASE_URL
+megalinter-reports/megalinter.log:235318: trailing whitespace.
++ 204 │                         value: 'https://apistage.gauzy.co'
+megalinter-reports/megalinter.log:235319: trailing whitespace.
++ 205 │                       - name: CLIENT_BASE_URL
+megalinter-reports/megalinter.log:235320: trailing whitespace.
++ 206 └                         value: 'https://stage.gauzy.co'
+megalinter-reports/megalinter.log:235321: trailing whitespace.
++ ...   
+megalinter-reports/megalinter.log:235322: trailing whitespace.
++────────────────────────────────────────
+megalinter-reports/megalinter.log:235323: trailing whitespace.
++
+megalinter-reports/megalinter.log:235324: trailing whitespace.
++
+
