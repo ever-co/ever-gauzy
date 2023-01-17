@@ -4,14 +4,14 @@ See documentation on https://megalinter.io/6.18.0/descriptors/repository_trivy/
 
 ❌ [ERROR] for workspace /github/workspace
 Linter raw log:
-2023-01-17T17:33:13.517Z	[34mINFO[0m	Need to update DB
-2023-01-17T17:33:13.517Z	[34mINFO[0m	DB Repository: ghcr.io/aquasecurity/trivy-db
-2023-01-17T17:33:13.517Z	[34mINFO[0m	Downloading DB...
-23.55 MiB / 36.04 MiB [--------------------------------------->_____________________] 65.33% ? p/s ?36.04 MiB / 36.04 MiB [----------------------------------------------------------->] 100.00% ? p/s ?36.04 MiB / 36.04 MiB [----------------------------------------------------------->] 100.00% ? p/s ?36.04 MiB / 36.04 MiB [---------------------------------------------->] 100.00% 20.82 MiB p/s ETA 0s36.04 MiB / 36.04 MiB [---------------------------------------------->] 100.00% 20.82 MiB p/s ETA 0s36.04 MiB / 36.04 MiB [---------------------------------------------->] 100.00% 20.82 MiB p/s ETA 0s36.04 MiB / 36.04 MiB [---------------------------------------------->] 100.00% 19.47 MiB p/s ETA 0s36.04 MiB / 36.04 MiB [-------------------------------------------------] 100.00% 27.04 MiB p/s 1.5s2023-01-17T17:33:15.719Z	[34mINFO[0m	Vulnerability scanning is enabled
-2023-01-17T17:33:15.719Z	[34mINFO[0m	Misconfiguration scanning is enabled
-2023-01-17T17:33:48.898Z	[34mINFO[0m	Number of language-specific files: 1
-2023-01-17T17:33:48.898Z	[34mINFO[0m	Detecting yarn vulnerabilities...
-2023-01-17T17:33:48.948Z	[34mINFO[0m	Detected config files: 9
+2023-01-17T17:52:53.528Z	[34mINFO[0m	Need to update DB
+2023-01-17T17:52:53.528Z	[34mINFO[0m	DB Repository: ghcr.io/aquasecurity/trivy-db
+2023-01-17T17:52:53.528Z	[34mINFO[0m	Downloading DB...
+23.39 MiB / 36.04 MiB [--------------------------------------->_____________________] 64.90% ? p/s ?36.04 MiB / 36.04 MiB [----------------------------------------------------------->] 100.00% ? p/s ?36.04 MiB / 36.04 MiB [----------------------------------------------------------->] 100.00% ? p/s ?36.04 MiB / 36.04 MiB [---------------------------------------------->] 100.00% 21.05 MiB p/s ETA 0s36.04 MiB / 36.04 MiB [---------------------------------------------->] 100.00% 21.05 MiB p/s ETA 0s36.04 MiB / 36.04 MiB [---------------------------------------------->] 100.00% 21.05 MiB p/s ETA 0s36.04 MiB / 36.04 MiB [---------------------------------------------->] 100.00% 19.70 MiB p/s ETA 0s36.04 MiB / 36.04 MiB [---------------------------------------------->] 100.00% 19.70 MiB p/s ETA 0s36.04 MiB / 36.04 MiB [-------------------------------------------------] 100.00% 24.85 MiB p/s 1.7s2023-01-17T17:52:55.635Z	[34mINFO[0m	Vulnerability scanning is enabled
+2023-01-17T17:52:55.635Z	[34mINFO[0m	Misconfiguration scanning is enabled
+2023-01-17T17:53:32.196Z	[34mINFO[0m	Number of language-specific files: 1
+2023-01-17T17:53:32.196Z	[34mINFO[0m	Detecting yarn vulnerabilities...
+2023-01-17T17:53:32.258Z	[34mINFO[0m	Detected config files: 9
 
 yarn.lock (yarn)
 ================
