@@ -5,7 +5,7 @@ See documentation on https://megalinter.io/6.18.0/descriptors/html_djlint/
 ❌ [ERROR] for workspace /github/workspace
 Linter raw log:
 
-Linting 0/6 files ┈┈┈┈┈┈┈┈┈┈ 00:00    Linting 1/6 files ━┈┈┈┈┈┈┈┈┈ 07:50    Linting 2/6 files ━━━┈┈┈┈┈┈┈ 07:53    Linting 3/6 files ━━━━━┈┈┈┈┈ 15:45    Linting 4/6 files ━━━━━━┈┈┈┈ 15:49    Linting 5/6 files ━━━━━━━━┈┈ 21:06    Linting 6/6 files ━━━━━━━━━━ 21:08                                          Linting 6/6 files ━━━━━━━━━━ 21:08    Linting 6/6 files ━━━━━━━━━━ 21:08    
+Linting 0/7 files ┈┈┈┈┈┈┈┈┈┈ 00:00    Linting 1/7 files ━┈┈┈┈┈┈┈┈┈ 07:54    Linting 2/7 files ━━┈┈┈┈┈┈┈┈ 07:56    Linting 3/7 files ━━━━┈┈┈┈┈┈ 15:44    Linting 4/7 files ━━━━━┈┈┈┈┈ 15:54    Linting 5/7 files ━━━━━━━┈┈┈ 22:28    Linting 6/7 files ━━━━━━━━┈┈ 22:36    Linting 7/7 files ━━━━━━━━━━ 27:36                                          Linting 7/7 files ━━━━━━━━━━ 27:36    Linting 7/7 files ━━━━━━━━━━ 27:36    
 
 
 megalinter-reports/copy-paste/html/index.html
@@ -116,6 +116,24 @@ H017 1:991 Tag should be self closing. <link rel="mask-icon
 H017 1:1068 Tag should be self closing. <meta name="msapplic
 H017 1:1156 Tag should be self closing. <meta name="msapplic
 
-Linted 6 files, found 90 errors.
+megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/index.html
+───────────────────────────────────────────────────────────────────────────────
+H030 1:15 Consider adding a meta description. <html lang="en"><hea
+H031 1:15 Consider adding meta keywords. <html lang="en"><hea
+H017 1:37 Tag should be self closing. <meta charset="utf-8
+H017 1:59 Tag should be self closing. <meta http-equiv="X-
+H017 1:112 Tag should be self closing. <meta name="viewport
+H017 1:566 Tag should be self closing. <link rel="icon" typ
+H017 1:649 Tag should be self closing. <link rel="manifest"
+H017 1:691 Tag should be self closing. <meta name="theme-co
+H017 1:734 Tag should be self closing. <meta name="apple-mo
+H017 1:789 Tag should be self closing. <meta name="apple-mo
+H017 1:858 Tag should be self closing. <meta name="apple-mo
+H017 1:916 Tag should be self closing. <link rel="apple-tou
+H017 1:991 Tag should be self closing. <link rel="mask-icon
+H017 1:1068 Tag should be self closing. <meta name="msapplic
+H017 1:1156 Tag should be self closing. <meta name="msapplic
+
+Linted 7 files, found 105 errors.
 
 
