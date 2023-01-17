@@ -5,7 +5,7 @@ See documentation on https://megalinter.io/6.18.0/descriptors/repository_git_dif
 ❌ [ERROR] for workspace /github/workspace
 Linter raw log:
 megalinter-reports/linters_logs/WARNING-HTML_DJLINT.log:8: trailing whitespace.
-+Linting 0/3 files ┈┈┈┈┈┈┈┈┈┈ 00:00    Linting 1/3 files ━━━┈┈┈┈┈┈┈ 00:00    Linting 2/3 files ━━━━━━┈┈┈┈ 06:02    Linting 3/3 files ━━━━━━━━━━ 06:03                                          Linting 3/3 files ━━━━━━━━━━ 06:03    Linting 3/3 files ━━━━━━━━━━ 06:03    
-megalinter-reports/megalinter.log:348255: trailing whitespace.
-+Linting 0/3 files ┈┈┈┈┈┈┈┈┈┈ 00:00    Linting 1/3 files ━━━┈┈┈┈┈┈┈ 00:00    Linting 2/3 files ━━━━━━┈┈┈┈ 06:02    Linting 3/3 files ━━━━━━━━━━ 06:03                                          Linting 3/3 files ━━━━━━━━━━ 06:03    Linting 3/3 files ━━━━━━━━━━ 06:03    
++Linting 0/8 files ┈┈┈┈┈┈┈┈┈┈ 00:00    Linting 1/8 files ━┈┈┈┈┈┈┈┈┈ 08:02    Linting 2/8 files ━━┈┈┈┈┈┈┈┈ 08:05    Linting 3/8 files ━━━┈┈┈┈┈┈┈ 15:55    Linting 4/8 files ━━━━━┈┈┈┈┈ 15:56    Linting 5/8 files ━━━━━━┈┈┈┈ 23:48    Linting 6/8 files ━━━━━━━┈┈┈ 23:51    Linting 7/8 files ━━━━━━━━┈┈ 31:41    Linting 8/8 files ━━━━━━━━━━ 31:47                                          Linting 8/8 files ━━━━━━━━━━ 31:47    Linting 8/8 files ━━━━━━━━━━ 31:47    
+megalinter-reports/megalinter.log:1027445: trailing whitespace.
++Linting 0/8 files ┈┈┈┈┈┈┈┈┈┈ 00:00    Linting 1/8 files ━┈┈┈┈┈┈┈┈┈ 08:02    Linting 2/8 files ━━┈┈┈┈┈┈┈┈ 08:05    Linting 3/8 files ━━━┈┈┈┈┈┈┈ 15:55    Linting 4/8 files ━━━━━┈┈┈┈┈ 15:56    Linting 5/8 files ━━━━━━┈┈┈┈ 23:48    Linting 6/8 files ━━━━━━━┈┈┈ 23:51    Linting 7/8 files ━━━━━━━━┈┈ 31:41    Linting 8/8 files ━━━━━━━━━━ 31:47                                          Linting 8/8 files ━━━━━━━━━━ 31:47    Linting 8/8 files ━━━━━━━━━━ 31:47    
 
