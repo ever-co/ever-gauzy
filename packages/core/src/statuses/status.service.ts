@@ -119,9 +119,12 @@ export class StatusService extends TenantAwareCrudService<Status> {
 		 * GET statuses by organization level
 		 */
 		if (isNotEmpty(organizationId)) {
-			query.andWhere(`"${query.alias}"."organizationId" = :organizationId`, {
-				organizationId,
-			});
+			query.andWhere(
+				`"${query.alias}"."organizationId" = :organizationId`,
+				{
+					organizationId,
+				}
+			);
 		} else {
 			query.andWhere(`"${query.alias}"."organizationId" IS NULL`);
 		}

@@ -3,9 +3,10 @@ import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 import { IOrganizationProject, IStatus } from '@gauzy/contracts';
 import { TenantOrganizationBaseDTO } from './../../core/dto';
 
-export class StatusDTO extends PartialType(TenantOrganizationBaseDTO)
-	implements IStatus {
-
+export class StatusDTO
+	extends PartialType(TenantOrganizationBaseDTO)
+	implements IStatus
+{
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
 	@IsString()

@@ -6855,7 +6855,7 @@ Clone found (javascript):
 ┌────────────┬────────────────┬─────────────┬──────────────┬──────────────┬──────────────────┬───────────────────┐
 │ Format     │ Files analyzed │ Total lines │ Total tokens │ Clones found │ Duplicated lines │ Duplicated tokens │
 ├────────────┼────────────────┼─────────────┼──────────────┼──────────────┼──────────────────┼───────────────────┤
-│ typescript │ 3692           │ 295859      │ 2238444      │ 1522         │ 34946 (11.81%)   │ 264383 (11.81%)   │
+│ typescript │ 3694           │ 295943      │ 2239021      │ 1522         │ 34946 (11.81%)   │ 264383 (11.81%)   │
 ├────────────┼────────────────┼─────────────┼──────────────┼──────────────┼──────────────────┼───────────────────┤
 │ scss       │ 456            │ 37936       │ 215904       │ 140          │ 12721 (33.53%)   │ 78367 (36.3%)     │
 ├────────────┼────────────────┼─────────────┼──────────────┼──────────────┼──────────────────┼───────────────────┤
@@ -6871,12 +6871,12 @@ Clone found (javascript):
 ├────────────┼────────────────┼─────────────┼──────────────┼──────────────┼──────────────────┼───────────────────┤
 │ bash       │ 4              │ 80          │ 524          │ 1            │ 22 (27.5%)       │ 203 (38.74%)      │
 ├────────────┼────────────────┼─────────────┼──────────────┼──────────────┼──────────────────┼───────────────────┤
-│ Total:     │ 4266           │ 340172      │ 2531675      │ 1712         │ 48704 (14.32%)   │ 355799 (14.05%)   │
+│ Total:     │ 4268           │ 340256      │ 2532252      │ 1712         │ 48704 (14.31%)   │ 355799 (14.05%)   │
 └────────────┴────────────────┴─────────────┴──────────────┴──────────────┴──────────────────┴───────────────────┘
 Found 1712 clones.
 HTML report saved to /github/workspace/megalinter-reports/copy-paste/html/
-ERROR: jscpd found too many duplicates (14.32%) over threshold (0%)
-Error: ERROR: jscpd found too many duplicates (14.32%) over threshold (0%)
+ERROR: jscpd found too many duplicates (14.31%) over threshold (0%)
+Error: ERROR: jscpd found too many duplicates (14.31%) over threshold (0%)
     at ThresholdReporter.report (/node-deps/node_modules/@jscpd/finder/dist/reporters/threshold.js:12:19)
     at /node-deps/node_modules/@jscpd/finder/dist/in-files-detector.js:82:26
     at Array.forEach (<anonymous>)

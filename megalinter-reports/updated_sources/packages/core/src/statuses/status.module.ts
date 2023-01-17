@@ -6,6 +6,7 @@ import { TenantModule } from '../tenant/tenant.module';
 import { Status } from './status.entity';
 import { StatusController } from './status.controller';
 import { StatusService } from './status.service';
+import { CommandHandlers } from './commands/handlers';
 import { QueryHandlers } from './queries/handlers';
 
 @Module({
@@ -16,7 +17,7 @@ import { QueryHandlers } from './queries/handlers';
 		CqrsModule,
 	],
 	controllers: [StatusController],
-	providers: [StatusService, ...QueryHandlers],
+	providers: [StatusService, ...QueryHandlers, ...CommandHandlers],
 	exports: [StatusService],
 })
 export class StatusModule {}

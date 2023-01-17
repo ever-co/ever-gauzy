@@ -11,19 +11,13 @@ import { QueryHandlers } from './queries/handlers';
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([
-			{ path: '/statuses', module: StatusModule }
-		]),
-		TypeOrmModule.forFeature([ Status ]),
+		RouterModule.forRoutes([{ path: '/statuses', module: StatusModule }]),
+		TypeOrmModule.forFeature([Status]),
 		TenantModule,
 		CqrsModule,
 	],
 	controllers: [StatusController],
-	providers: [
-		StatusService,
-		...QueryHandlers,
-		...CommandHandlers
-	],
+	providers: [StatusService, ...QueryHandlers, ...CommandHandlers],
 	exports: [StatusService],
 })
 export class StatusModule {}
