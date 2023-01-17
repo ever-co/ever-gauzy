@@ -36,19 +36,27 @@ export class TasksComponent implements OnInit {
 	tags: ITag[] = [];
 	statuses = [
 		{
-			id: 'TODO',
-			name: TaskStatusEnum.TODO
+			id: TaskStatusEnum.OPEN,
+			name: TaskStatusEnum.OPEN
 		},
 		{
-			id: 'In Progress',
+			id: TaskStatusEnum.IN_PROGRESS,
 			name: TaskStatusEnum.IN_PROGRESS
 		},
 		{
-			id: 'For Testing',
-			name: TaskStatusEnum.FOR_TESTING
+			id: TaskStatusEnum.READY_FOR_REVIEW,
+			name: TaskStatusEnum.READY_FOR_REVIEW
 		},
 		{
-			id: 'Completed',
+			id: TaskStatusEnum.IN_REVIEW,
+			name: TaskStatusEnum.IN_REVIEW
+		},
+		{
+			id: TaskStatusEnum.BLOCKED,
+			name: TaskStatusEnum.BLOCKED
+		},
+		{
+			id: TaskStatusEnum.COMPLETED,
 			name: TaskStatusEnum.COMPLETED
 		}
 	];
@@ -81,7 +89,7 @@ export class TasksComponent implements OnInit {
 			organizationId: new FormControl(this.userData.organizationId),
 			project: new FormControl(null),
 			projectId: new FormControl(null),
-			status: new FormControl(this.statuses[0].id),
+			status: new FormControl(TaskStatusEnum.OPEN),
 			tags: new FormControl([]),
 			teams: new FormControl([]),
 			tenantId: new FormControl(this.userData.tenantId),
