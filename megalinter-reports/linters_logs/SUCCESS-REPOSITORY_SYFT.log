@@ -1,0 +1,5 @@
+Results of syft linter (version 0.65.0)
+See documentation on https://megalinter.io/6.18.0/descriptors/repository_syft/
+-----------------------------------------------
+
+✅ [SUCCESS] for workspace /github/workspace

@@ -1,0 +1,15 @@
+Results of htmlhint linter (version 1.1.4)
+See documentation on https://megalinter.io/6.18.0/descriptors/html_htmlhint/
+-----------------------------------------------
+
+❌ [ERROR] for workspace /github/workspace
+Linter raw log:
+
+   Config loaded: /action/lib/.automation/.htmlhintrc
+
+   /github/workspace/apps/gauzy/src/app/@shared/table-components/status-view/status-view.component.html
+[37m      L1 |[90m<nb-badge [text]="value | replace: '_':' ' | titlecase" [status]="status" position="centered" class="...[39m
+[37m          ^ [31mDoctype must be declared first. (doctype-first)[39m
+
+Scanned 1 files, found 1 errors in 1 files (19 ms)
+

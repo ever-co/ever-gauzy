@@ -1,0 +1,84 @@
+Results of cspell linter (version 6.18.1)
+See documentation on https://megalinter.io/6.18.0/descriptors/spell_cspell/
+-----------------------------------------------
+
+❌ [ERROR] for workspace /github/workspace
+Linter raw log:
+ 1/14 ./apps/gauzy/src/app/@shared/table-components/status-view/status-view.component.html 981.31ms
+ 2/14 ./apps/gauzy/src/app/@shared/table-components/status-view/status-view.component.ts 105.53ms
+ 3/14 ./apps/gauzy/src/app/@shared/tasks/add-task-dialog/add-task-dialog.component.ts 58.71ms
+ 4/14 ./apps/gauzy/src/app/@shared/tasks/task-status-select/task-status-select.component.ts 33.31ms
+ 5/14 ./apps/gauzy/src/app/pages/dashboard/project-management/project-management-details/project-management-details.component.ts 91.03ms
+ 6/14 ./apps/gauzy/src/app/pages/tasks/components/my-task-dialog/my-task-dialog.component.ts 39.36ms
+ 7/14 ./apps/gauzy/src/app/pages/tasks/components/task/task.component.ts 104.67ms
+ 8/14 ./apps/gauzy/src/app/pages/tasks/components/team-task-dialog/team-task-dialog.component.ts 55.41ms
+ 9/14 ./apps/gauzy/src/assets/i18n/en.json 940.60ms X
+/github/workspace/apps/gauzy/src/assets/i18n/en.json:213:12 - Unknown word (JOBPOST)
+/github/workspace/apps/gauzy/src/assets/i18n/en.json:244:11 - Unknown word (Български)
+/github/workspace/apps/gauzy/src/assets/i18n/en.json:244:22 - Unknown word (България)
+/github/workspace/apps/gauzy/src/assets/i18n/en.json:246:11 - Unknown word (Русский)
+/github/workspace/apps/gauzy/src/assets/i18n/en.json:246:20 - Unknown word (Россия)
+/github/workspace/apps/gauzy/src/assets/i18n/en.json:247:11 - Unknown word (עברית)
+/github/workspace/apps/gauzy/src/assets/i18n/en.json:247:17 - Unknown word (ישראל)
+/github/workspace/apps/gauzy/src/assets/i18n/en.json:379:23 - Unknown word (Stackoverflow)
+/github/workspace/apps/gauzy/src/assets/i18n/en.json:494:43 - Unknown word (upto)
+/github/workspace/apps/gauzy/src/assets/i18n/en.json:516:23 - Unknown word (Stackoverflow)
+/github/workspace/apps/gauzy/src/assets/i18n/en.json:710:9 - Unknown word (PAYPERIOD)
+/github/workspace/apps/gauzy/src/assets/i18n/en.json:713:9 - Unknown word (BILLRATE)
+/github/workspace/apps/gauzy/src/assets/i18n/en.json:1449:15 - Unknown word (TIMEFRAME)
+/github/workspace/apps/gauzy/src/assets/i18n/en.json:2876:34 - Unknown word (DOESNT)
+/github/workspace/apps/gauzy/src/assets/i18n/en.json:3427:71 - Unknown word (orgname)
+/github/workspace/apps/gauzy/src/assets/i18n/en.json:3564:132 - Unknown word (noopener)
+/github/workspace/apps/gauzy/src/assets/i18n/en.json:3564:235 - Unknown word (noopener)
+/github/workspace/apps/gauzy/src/assets/i18n/en.json:3576:4 - Unknown word (UNSUBMIT)
+/github/workspace/apps/gauzy/src/assets/i18n/en.json:3576:47 - Unknown word (Unsubmit)
+/github/workspace/apps/gauzy/src/assets/i18n/en.json:3603:4 - Unknown word (UNSUBMIT)
+/github/workspace/apps/gauzy/src/assets/i18n/en.json:3603:26 - Unknown word (Unsubmit)
+10/14 ./packages/contracts/src/task.model.ts 16.30ms
+11/14 ./packages/core/src/tasks/task.entity.ts 22.98ms
+12/14 ./packages/core/src/tasks/task.seed.ts 37.35ms
+13/14 ./packages/desktop-ui-lib/src/lib/tasks/tasks.component.ts 39.39ms X
+/github/workspace/packages/desktop-ui-lib/src/lib/tasks/tasks.component.ts:12:36 - Unknown word (kurkle)
+14/14 ./4b07dd8f-dbcd-4c8e-815b-5002081346c9-megalinter_file_names_cspell.txt 18.84ms
+CSpell: Files checked: 14, Issues found: 22 in 2 files
+
+
+You can skip this misspellings by defining the following .cspell.json file at the root of your repository
+Of course, please correct real typos before :)
+
+{
+    "version": "0.2",
+    "language": "en",
+    "ignorePaths": [
+        "**/node_modules/**",
+        "**/vscode-extension/**",
+        "**/.git/**",
+        "**/.pnpm-lock.json",
+        ".vscode",
+        "package-lock.json",
+        "megalinter-reports"
+    ],
+    "words": [
+        "BILLRATE",
+        "DOESNT",
+        "JOBPOST",
+        "PAYPERIOD",
+        "Stackoverflow",
+        "TIMEFRAME",
+        "UNSUBMIT",
+        "Unsubmit",
+        "kurkle",
+        "noopener",
+        "orgname",
+        "upto",
+        "\u0411\u044a\u043b\u0433\u0430\u0440\u0438\u044f",
+        "\u0411\u044a\u043b\u0433\u0430\u0440\u0441\u043a\u0438",
+        "\u0420\u043e\u0441\u0441\u0438\u044f",
+        "\u0420\u0443\u0441\u0441\u043a\u0438\u0439",
+        "\u05d9\u05e9\u05e8\u05d0\u05dc",
+        "\u05e2\u05d1\u05e8\u05d9\u05ea"
+    ]
+}
+
+
+You can also copy-paste megalinter-reports/.cspell.json at the root of your repository

@@ -1,0 +1,21 @@
+{
+    "recommendations": [
+        "angular.ng-template",
+        "monosans.djlint",
+        "seatonjiang.gitmoji-vscode",
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "HTMLHint.vscode-htmlhint",
+        "firsttris.vscode-jest-runner",
+        "Bridgecrew.checkov",
+        "folke.vscode-monorepo-workspace",
+        "streetsidesoftware.code-spell-checker",
+        "MS-CST-E.vscode-devskim",
+        "AquaSecurityOfficial.trivy-vulnerability-scanner",
+        "vscode-icons-team.vscode-icons",
+        "ms-vscode.vscode-typescript-tslint-plugin",
+        "jondot.vscode-hygen",
+        "DeepScan.vscode-deepscan",
+        "nrwl.angular-console"
+    ]
+}

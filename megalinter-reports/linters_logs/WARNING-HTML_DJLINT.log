@@ -1,0 +1,17 @@
+Results of djlint linter (version 1.19.11)
+See documentation on https://megalinter.io/6.18.0/descriptors/html_djlint/
+-----------------------------------------------
+
+❌ [ERROR] for workspace /github/workspace
+Linter raw log:
+
+Linting 0/1 files ┈┈┈┈┈┈┈┈┈┈ 00:00                                          Linting 1/1 files ━━━━━━━━━━ 00:00    Linting 1/1 files ━━━━━━━━━━ 00:00    
+
+
+apps/gauzy/src/app/@shared/table-components/status-view/status-view.component.html
+───────────────────────────────────────────────────────────────────────────────
+H025 1:108 Tag seems to be an orphan. </nb-badge>
+
+Linted 1 file, found 1 error.
+
+

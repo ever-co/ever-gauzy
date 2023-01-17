@@ -1,0 +1,32 @@
+Results of editorconfig-checker linter (version 2.4.0)
+See documentation on https://megalinter.io/6.18.0/descriptors/editorconfig_editorconfig_checker/
+-----------------------------------------------
+
+❌ [ERROR] for workspace /github/workspace
+Linter raw log:
+[33;1mapps/gauzy/src/app/pages/dashboard/project-management/project-management-details/project-management-details.component.ts:[33;0m
+[31;1m	122: Wrong indentation type(spaces instead of tabs)[33;0m
+[31;1m	125: Wrong indentation type(spaces instead of tabs)[33;0m
+[31;1m	133: Wrong indentation type(spaces instead of tabs)[33;0m
+[31;1m	138: Wrong indentation type(spaces instead of tabs)[33;0m
+[31;1m	228: Wrong indentation type(spaces instead of tabs)[33;0m
+[33;1mapps/gauzy/src/app/pages/tasks/components/task/task.component.ts:[33;0m
+[31;1m	284: Wrong indentation type(spaces instead of tabs)[33;0m
+[31;1m	287: Wrong indentation type(spaces instead of tabs)[33;0m
+[31;1m	294: Wrong indentation type(spaces instead of tabs)[33;0m
+[33;1mpackages/core/src/tasks/task.entity.ts:[33;0m
+[31;1m	73: Wrong indentation type(spaces instead of tabs)[33;0m
+[31;1m	74: Wrong indentation type(spaces instead of tabs)[33;0m
+[31;1m	75: Wrong indentation type(spaces instead of tabs)[33;0m
+[31;1m	76: Wrong indentation type(spaces instead of tabs)[33;0m
+[31;1m	125: Wrong indentation type(spaces instead of tabs)[33;0m
+[31;1m	126: Wrong indentation type(spaces instead of tabs)[33;0m
+[31;1m	127: Wrong indentation type(spaces instead of tabs)[33;0m
+[31;1m	128: Wrong indentation type(spaces instead of tabs)[33;0m
+[31;1m	154: Wrong indentation type(spaces instead of tabs)[33;0m
+[31;1m	155: Wrong indentation type(spaces instead of tabs)[33;0m
+[31;1m	156: Wrong indentation type(spaces instead of tabs)[33;0m
+[31;1m	157: Wrong indentation type(spaces instead of tabs)[33;0m
+[31;1m
+20 errors found[33;0m
+
