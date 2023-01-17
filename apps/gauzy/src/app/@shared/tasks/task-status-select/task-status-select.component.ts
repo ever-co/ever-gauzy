@@ -49,6 +49,7 @@ export class TaskStatusSelectComponent extends TranslationBaseComponent implemen
 		{
 			label: this.getTranslation('TASKS_PAGE.COMPLETED'),
 			value: TaskStatusEnum.COMPLETED
+		},
 	];
 
 	/*
