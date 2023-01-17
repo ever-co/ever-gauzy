@@ -4,12 +4,11 @@ import { IEmail, IEmailTemplate, IUser } from '@gauzy/contracts';
 import {
 	EmailTemplate,
 	TenantOrganizationBaseEntity,
-	User
+	User,
 } from '../core/entities/internal';
 
 @Entity('email_sent')
 export class Email extends TenantOrganizationBaseEntity implements IEmail {
-
 	@ApiProperty({ type: () => String })
 	@Index()
 	@Column({ nullable: true })
@@ -39,7 +38,7 @@ export class Email extends TenantOrganizationBaseEntity implements IEmail {
 	 */
 	@ApiProperty({ type: () => User })
 	@ManyToOne(() => User, (user) => user.emails, {
-		onDelete: 'CASCADE'
+		onDelete: 'CASCADE',
 	})
 	user?: IUser;
 

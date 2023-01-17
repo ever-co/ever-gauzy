@@ -249,12 +249,12 @@ Clone found (typescript):
    apps/gauzy/src/app/pages/tasks/components/team-task-dialog/team-task-dialog.component.ts [18:25 - 36:23]
 
 Clone found (typescript):
- - apps/gauzy/src/app/pages/tasks/components/my-task-dialog/my-task-dialog.component.ts [114:3 - 133:2] (19 lines, 235 tokens)
-   apps/gauzy/src/app/pages/tasks/components/team-task-dialog/team-task-dialog.component.ts [114:3 - 133:5]
+ - apps/gauzy/src/app/pages/tasks/components/my-task-dialog/my-task-dialog.component.ts [113:3 - 132:2] (19 lines, 235 tokens)
+   apps/gauzy/src/app/pages/tasks/components/team-task-dialog/team-task-dialog.component.ts [113:3 - 132:5]
 
 Clone found (typescript):
- - apps/gauzy/src/app/pages/tasks/components/my-task-dialog/my-task-dialog.component.ts [162:10 - 170:11] (8 lines, 78 tokens)
-   apps/gauzy/src/app/pages/tasks/components/team-task-dialog/team-task-dialog.component.ts [162:6 - 170:4]
+ - apps/gauzy/src/app/pages/tasks/components/my-task-dialog/my-task-dialog.component.ts [161:10 - 169:11] (8 lines, 78 tokens)
+   apps/gauzy/src/app/pages/tasks/components/team-task-dialog/team-task-dialog.component.ts [161:6 - 169:4]
 
 Clone found (scss):
  - apps/gauzy/src/app/pages/tasks/components/my-task-dialog/my-task-dialog.component.scss [1:1 - 27:2] (26 lines, 105 tokens)
@@ -1093,12 +1093,12 @@ Clone found (typescript):
    apps/gauzy/src/app/@shared/tasks/task-select/task/task.component.ts [106:9 - 72:11]
 
 Clone found (typescript):
- - apps/gauzy/src/app/@shared/tasks/add-task-dialog/add-task-dialog.component.ts [184:2 - 193:5] (9 lines, 102 tokens)
-   apps/gauzy/src/app/pages/tasks/components/my-task-dialog/my-task-dialog.component.ts [156:2 - 165:10]
+ - apps/gauzy/src/app/@shared/tasks/add-task-dialog/add-task-dialog.component.ts [183:2 - 192:5] (9 lines, 102 tokens)
+   apps/gauzy/src/app/pages/tasks/components/my-task-dialog/my-task-dialog.component.ts [155:2 - 164:10]
 
 Clone found (typescript):
- - apps/gauzy/src/app/@shared/tasks/add-task-dialog/add-task-dialog.component.ts [193:4 - 201:6] (8 lines, 81 tokens)
-   apps/gauzy/src/app/pages/tasks/components/team-task-dialog/team-task-dialog.component.ts [158:4 - 165:5]
+ - apps/gauzy/src/app/@shared/tasks/add-task-dialog/add-task-dialog.component.ts [192:4 - 200:6] (8 lines, 81 tokens)
+   apps/gauzy/src/app/pages/tasks/components/team-task-dialog/team-task-dialog.component.ts [157:4 - 164:5]
 
 Clone found (scss):
  - apps/gauzy/src/app/@shared/tasks/add-task-dialog/add-task-dialog.component.scss [1:23 - 27:2] (26 lines, 102 tokens)
@@ -1206,7 +1206,7 @@ Clone found (typescript):
 
 Clone found (typescript):
  - apps/gauzy/src/app/@shared/invite/invite-mutation/invite-mutation.component.ts [127:21 - 135:2] (8 lines, 89 tokens)
-   apps/gauzy/src/app/@shared/tasks/add-task-dialog/add-task-dialog.component.ts [255:10 - 263:10]
+   apps/gauzy/src/app/@shared/tasks/add-task-dialog/add-task-dialog.component.ts [254:10 - 262:10]
 
 Clone found (typescript):
  - apps/gauzy/src/app/@shared/income/income-mutation/income-mutation.component.ts [71:2 - 82:16] (11 lines, 100 tokens)
@@ -3801,32 +3801,68 @@ Clone found (typescript):
    packages/core/src/employee/dto/network.dto.ts [14:12 - 12:34]
 
 Clone found (typescript):
+ - packages/core/src/database/migrations/1673970028746-AlterEmailSentTable.ts [79:946 - 88:2] (9 lines, 92 tokens)
+   packages/core/src/database/migrations/1673970028746-AlterEmailSentTable.ts [65:794 - 74:6]
+
+Clone found (typescript):
+ - packages/core/src/database/migrations/1673970028746-AlterEmailSentTable.ts [110:9 - 116:934] (6 lines, 72 tokens)
+   packages/core/src/database/migrations/1673970028746-AlterEmailSentTable.ts [96:9 - 102:784]
+
+Clone found (typescript):
+ - packages/core/src/database/migrations/1673970028746-AlterEmailSentTable.ts [116:934 - 124:2] (8 lines, 81 tokens)
+   packages/core/src/database/migrations/1673970028746-AlterEmailSentTable.ts [102:784 - 110:6]
+
+Clone found (typescript):
+ - packages/core/src/database/migrations/1673946248066-AlterTaskTable.ts [6:30 - 40:56] (34 lines, 192 tokens)
+   packages/core/src/database/migrations/1673970028746-AlterEmailSentTable.ts [6:35 - 40:76]
+
+Clone found (typescript):
+ - packages/core/src/database/migrations/1673423542165-AlterTaskTable.ts [6:30 - 40:57] (34 lines, 192 tokens)
+   packages/core/src/database/migrations/1673970028746-AlterEmailSentTable.ts [6:35 - 40:76]
+
+Clone found (typescript):
+ - packages/core/src/database/migrations/1673423542165-AlterTaskTable.ts [59:20 - 66:1196] (7 lines, 88 tokens)
+   packages/core/src/database/migrations/1673946248066-AlterTaskTable.ts [81:22 - 88:48]
+
+Clone found (typescript):
+ - packages/core/src/database/migrations/1673423542165-AlterTaskTable.ts [69:48 - 76:6] (7 lines, 70 tokens)
+   packages/core/src/database/migrations/1673946248066-AlterTaskTable.ts [91:30 - 98:2]
+
+Clone found (typescript):
  - packages/core/src/database/migrations/1673423542165-AlterTaskTable.ts [76:9 - 82:1187] (6 lines, 72 tokens)
-   packages/core/src/database/migrations/1673423542165-AlterTaskTable.ts [60:9 - 66:1196]
+   packages/core/src/database/migrations/1673946248066-AlterTaskTable.ts [82:9 - 88:48]
 
 Clone found (typescript):
- - packages/core/src/database/migrations/1673423542165-AlterTaskTable.ts [82:1187 - 92:2] (10 lines, 103 tokens)
-   packages/core/src/database/migrations/1673423542165-AlterTaskTable.ts [66:1196 - 76:6]
+ - packages/core/src/database/migrations/1673423542165-AlterTaskTable.ts [82:1187 - 98:7] (16 lines, 107 tokens)
+   packages/core/src/database/migrations/1673423542165-AlterTaskTable.ts [66:1196 - 99:2]
 
 Clone found (typescript):
- - packages/core/src/database/migrations/1673423542165-AlterTaskTable.ts [116:9 - 132:2] (16 lines, 176 tokens)
-   packages/core/src/database/migrations/1673423542165-AlterTaskTable.ts [100:9 - 116:6]
+ - packages/core/src/database/migrations/1673423542165-AlterTaskTable.ts [99:22 - 106:48] (7 lines, 88 tokens)
+   packages/core/src/database/migrations/1673946248066-AlterTaskTable.ts [57:20 - 64:1170]
+
+Clone found (typescript):
+ - packages/core/src/database/migrations/1673423542165-AlterTaskTable.ts [109:30 - 116:6] (7 lines, 70 tokens)
+   packages/core/src/database/migrations/1673946248066-AlterTaskTable.ts [67:48 - 74:2]
+
+Clone found (typescript):
+ - packages/core/src/database/migrations/1673423542165-AlterTaskTable.ts [116:9 - 133:2] (17 lines, 178 tokens)
+   packages/core/src/database/migrations/1673946248066-AlterTaskTable.ts [58:9 - 80:7]
 
 Clone found (typescript):
  - packages/core/src/database/migrations/1673005639130-AlterTimeLogTable.ts [6:33 - 40:57] (34 lines, 192 tokens)
-   packages/core/src/database/migrations/1673423542165-AlterTaskTable.ts [6:30 - 40:57]
+   packages/core/src/database/migrations/1673970028746-AlterEmailSentTable.ts [6:35 - 40:76]
 
 Clone found (typescript):
  - packages/core/src/database/migrations/1672211594766-AlterCandidateTable.ts [6:35 - 40:86] (34 lines, 192 tokens)
-   packages/core/src/database/migrations/1673423542165-AlterTaskTable.ts [6:30 - 40:57]
+   packages/core/src/database/migrations/1673970028746-AlterEmailSentTable.ts [6:35 - 40:76]
 
 Clone found (typescript):
  - packages/core/src/database/migrations/1671706727549-AlterOrganizationTeamTable.ts [6:42 - 40:57] (34 lines, 192 tokens)
-   packages/core/src/database/migrations/1673423542165-AlterTaskTable.ts [6:30 - 40:57]
+   packages/core/src/database/migrations/1673970028746-AlterEmailSentTable.ts [6:35 - 40:76]
 
 Clone found (typescript):
  - packages/core/src/database/migrations/1671107860058-AlterInviteAllowedOrganizationTable.ts [6:51 - 40:76] (34 lines, 192 tokens)
-   packages/core/src/database/migrations/1673423542165-AlterTaskTable.ts [6:30 - 40:57]
+   packages/core/src/database/migrations/1673970028746-AlterEmailSentTable.ts [6:35 - 40:76]
 
 Clone found (typescript):
  - packages/core/src/database/migrations/1671107860058-AlterInviteAllowedOrganizationTable.ts [58:9 - 86:2] (28 lines, 308 tokens)
@@ -3838,11 +3874,11 @@ Clone found (typescript):
 
 Clone found (typescript):
  - packages/core/src/database/migrations/1670313962263-AlterOrganizationTeamTable.ts [6:42 - 40:65] (34 lines, 192 tokens)
-   packages/core/src/database/migrations/1673423542165-AlterTaskTable.ts [6:30 - 40:57]
+   packages/core/src/database/migrations/1673970028746-AlterEmailSentTable.ts [6:35 - 40:76]
 
 Clone found (typescript):
  - packages/core/src/database/migrations/1669453028914-AlterUserInviteTable.ts [6:36 - 40:41] (34 lines, 192 tokens)
-   packages/core/src/database/migrations/1673423542165-AlterTaskTable.ts [6:30 - 40:57]
+   packages/core/src/database/migrations/1673970028746-AlterEmailSentTable.ts [6:35 - 40:76]
 
 Clone found (typescript):
  - packages/core/src/database/migrations/1669453028914-AlterUserInviteTable.ts [81:399 - 89:2] (8 lines, 81 tokens)
@@ -3854,15 +3890,15 @@ Clone found (typescript):
 
 Clone found (typescript):
  - packages/core/src/database/migrations/1669280426592-AlterInviteTable.ts [6:32 - 40:55] (34 lines, 192 tokens)
-   packages/core/src/database/migrations/1673423542165-AlterTaskTable.ts [6:30 - 40:57]
+   packages/core/src/database/migrations/1673970028746-AlterEmailSentTable.ts [6:35 - 40:76]
 
 Clone found (typescript):
  - packages/core/src/database/migrations/1669033406667-AlterUserTableEmailVerificationColumns.ts [6:54 - 40:53] (34 lines, 192 tokens)
-   packages/core/src/database/migrations/1673423542165-AlterTaskTable.ts [6:30 - 40:57]
+   packages/core/src/database/migrations/1673970028746-AlterEmailSentTable.ts [6:35 - 40:76]
 
 Clone found (typescript):
  - packages/core/src/database/migrations/1668504932478-AlterTableRelationCascading.ts [6:43 - 40:80] (34 lines, 192 tokens)
-   packages/core/src/database/migrations/1673423542165-AlterTaskTable.ts [6:30 - 40:57]
+   packages/core/src/database/migrations/1673970028746-AlterEmailSentTable.ts [6:35 - 40:76]
 
 Clone found (typescript):
  - packages/core/src/database/migrations/1668504932478-AlterTableRelationCascading.ts [82:409 - 90:429] (8 lines, 87 tokens)
@@ -3874,7 +3910,7 @@ Clone found (typescript):
 
 Clone found (typescript):
  - packages/core/src/database/migrations/1668502997873-AlterUserTable.ts [6:30 - 40:40] (34 lines, 192 tokens)
-   packages/core/src/database/migrations/1673423542165-AlterTaskTable.ts [6:30 - 40:57]
+   packages/core/src/database/migrations/1673970028746-AlterEmailSentTable.ts [6:35 - 40:76]
 
 Clone found (typescript):
  - packages/core/src/database/migrations/1668502997873-AlterUserTable.ts [59:20 - 67:886] (8 lines, 99 tokens)
@@ -3894,7 +3930,7 @@ Clone found (typescript):
 
 Clone found (typescript):
  - packages/core/src/database/migrations/1668446646237-AlterTableRelationCascading.ts [6:43 - 40:80] (34 lines, 192 tokens)
-   packages/core/src/database/migrations/1673423542165-AlterTaskTable.ts [6:30 - 40:57]
+   packages/core/src/database/migrations/1673970028746-AlterEmailSentTable.ts [6:35 - 40:76]
 
 Clone found (typescript):
  - packages/core/src/database/migrations/1668446646237-AlterTableRelationCascading.ts [102:413 - 110:518] (8 lines, 87 tokens)
@@ -3914,11 +3950,11 @@ Clone found (typescript):
 
 Clone found (typescript):
  - packages/core/src/database/migrations/1668256889786-AlterCustomSmtpTable.ts [6:36 - 40:64] (34 lines, 192 tokens)
-   packages/core/src/database/migrations/1673423542165-AlterTaskTable.ts [6:30 - 40:57]
+   packages/core/src/database/migrations/1673970028746-AlterEmailSentTable.ts [6:35 - 40:76]
 
 Clone found (typescript):
  - packages/core/src/database/migrations/1668084518509-AlterEmployeeTableColumns.ts [6:41 - 40:51] (34 lines, 192 tokens)
-   packages/core/src/database/migrations/1673423542165-AlterTaskTable.ts [6:30 - 40:57]
+   packages/core/src/database/migrations/1673970028746-AlterEmailSentTable.ts [6:35 - 40:76]
 
 Clone found (typescript):
  - packages/core/src/database/migrations/1668084518509-AlterEmployeeTableColumns.ts [76:9 - 82:2243] (6 lines, 72 tokens)
@@ -3938,7 +3974,7 @@ Clone found (typescript):
 
 Clone found (typescript):
  - packages/core/src/database/migrations/1668064327561-AlterOrganizationTable.ts [6:38 - 40:81] (34 lines, 192 tokens)
-   packages/core/src/database/migrations/1673423542165-AlterTaskTable.ts [6:30 - 40:57]
+   packages/core/src/database/migrations/1673970028746-AlterEmailSentTable.ts [6:35 - 40:76]
 
 Clone found (typescript):
  - packages/core/src/database/migrations/1668064327561-AlterOrganizationTable.ts [57:20 - 70:2576] (13 lines, 154 tokens)
@@ -3958,7 +3994,7 @@ Clone found (typescript):
 
 Clone found (typescript):
  - packages/core/src/database/migrations/1666780716428-AlterEmployeeTable.ts [6:34 - 40:76] (34 lines, 192 tokens)
-   packages/core/src/database/migrations/1673423542165-AlterTaskTable.ts [6:30 - 40:57]
+   packages/core/src/database/migrations/1673970028746-AlterEmailSentTable.ts [6:35 - 40:76]
 
 Clone found (typescript):
  - packages/core/src/database/migrations/1666780716428-AlterEmployeeTable.ts [57:20 - 64:2221] (7 lines, 88 tokens)
@@ -3978,7 +4014,7 @@ Clone found (typescript):
 
 Clone found (typescript):
  - packages/core/src/database/migrations/1666181221327-AlterOrganizationTable.ts [6:38 - 40:55] (34 lines, 192 tokens)
-   packages/core/src/database/migrations/1673423542165-AlterTaskTable.ts [6:30 - 40:57]
+   packages/core/src/database/migrations/1673970028746-AlterEmailSentTable.ts [6:35 - 40:76]
 
 Clone found (typescript):
  - packages/core/src/database/migrations/1666181221327-AlterOrganizationTable.ts [57:92 - 78:2489] (21 lines, 170 tokens)
@@ -4006,15 +4042,15 @@ Clone found (typescript):
 
 Clone found (typescript):
  - packages/core/src/database/migrations/1666007548644-AlterEmployeeTable.ts [6:34 - 40:98] (34 lines, 192 tokens)
-   packages/core/src/database/migrations/1673423542165-AlterTaskTable.ts [6:30 - 40:57]
+   packages/core/src/database/migrations/1673970028746-AlterEmailSentTable.ts [6:35 - 40:76]
 
 Clone found (typescript):
  - packages/core/src/database/migrations/1665767813286-AltereInviteTable.ts [6:33 - 40:197] (34 lines, 192 tokens)
-   packages/core/src/database/migrations/1673423542165-AlterTaskTable.ts [6:30 - 40:57]
+   packages/core/src/database/migrations/1673970028746-AlterEmailSentTable.ts [6:35 - 40:76]
 
 Clone found (typescript):
  - packages/core/src/database/migrations/1665399395983-AlterOrganizationTable.ts [6:38 - 40:86] (34 lines, 192 tokens)
-   packages/core/src/database/migrations/1673423542165-AlterTaskTable.ts [6:30 - 40:57]
+   packages/core/src/database/migrations/1673970028746-AlterEmailSentTable.ts [6:35 - 40:76]
 
 Clone found (typescript):
  - packages/core/src/database/migrations/1665399395983-AlterOrganizationTable.ts [73:77 - 86:2489] (13 lines, 142 tokens)
@@ -4058,7 +4094,7 @@ Clone found (typescript):
 
 Clone found (typescript):
  - packages/core/src/database/migrations/1665388204010-AlterWarehouseTable.ts [6:35 - 40:75] (34 lines, 192 tokens)
-   packages/core/src/database/migrations/1673423542165-AlterTaskTable.ts [6:30 - 40:57]
+   packages/core/src/database/migrations/1673970028746-AlterEmailSentTable.ts [6:35 - 40:76]
 
 Clone found (typescript):
  - packages/core/src/database/migrations/1665388204010-AlterWarehouseTable.ts [53:165 - 78:485] (25 lines, 214 tokens)
@@ -4074,7 +4110,7 @@ Clone found (typescript):
 
 Clone found (typescript):
  - packages/core/src/database/migrations/1665044607000-AlterCandidateInterviewTable.ts [6:44 - 40:70] (34 lines, 192 tokens)
-   packages/core/src/database/migrations/1673423542165-AlterTaskTable.ts [6:30 - 40:57]
+   packages/core/src/database/migrations/1673970028746-AlterEmailSentTable.ts [6:35 - 40:76]
 
 Clone found (typescript):
  - packages/core/src/database/migrations/1665044607000-AlterCandidateInterviewTable.ts [71:843 - 78:2] (7 lines, 70 tokens)
@@ -4086,15 +4122,15 @@ Clone found (typescript):
 
 Clone found (typescript):
  - packages/core/src/database/migrations/1664869127437-AlterCandidateFeedbackTable.ts [6:43 - 40:56] (34 lines, 192 tokens)
-   packages/core/src/database/migrations/1673423542165-AlterTaskTable.ts [6:30 - 40:57]
+   packages/core/src/database/migrations/1673970028746-AlterEmailSentTable.ts [6:35 - 40:76]
 
 Clone found (typescript):
  - packages/core/src/database/migrations/1662994539197-AlterInvoiceTable.ts [6:33 - 40:49] (34 lines, 192 tokens)
-   packages/core/src/database/migrations/1673423542165-AlterTaskTable.ts [6:30 - 40:57]
+   packages/core/src/database/migrations/1673970028746-AlterEmailSentTable.ts [6:35 - 40:76]
 
 Clone found (typescript):
  - packages/core/src/database/migrations/1661853087396-AlterTimesheetTable.ts [6:35 - 40:75] (34 lines, 192 tokens)
-   packages/core/src/database/migrations/1673423542165-AlterTaskTable.ts [6:30 - 40:57]
+   packages/core/src/database/migrations/1673970028746-AlterEmailSentTable.ts [6:35 - 40:76]
 
 Clone found (typescript):
  - packages/core/src/database/migrations/1661853087396-AlterTimesheetTable.ts [76:1228 - 84:2] (8 lines, 81 tokens)
@@ -4106,11 +4142,11 @@ Clone found (typescript):
 
 Clone found (typescript):
  - packages/core/src/database/migrations/1661599336316-AlterWarehouseMerchant.ts [6:38 - 40:84] (34 lines, 192 tokens)
-   packages/core/src/database/migrations/1673423542165-AlterTaskTable.ts [6:30 - 40:57]
+   packages/core/src/database/migrations/1673970028746-AlterEmailSentTable.ts [6:35 - 40:76]
 
 Clone found (typescript):
  - packages/core/src/database/migrations/1660988196279-AlterWarehouseProductTable.ts [6:42 - 40:60] (34 lines, 192 tokens)
-   packages/core/src/database/migrations/1673423542165-AlterTaskTable.ts [6:30 - 40:57]
+   packages/core/src/database/migrations/1673970028746-AlterEmailSentTable.ts [6:35 - 40:76]
 
 Clone found (typescript):
  - packages/core/src/database/migrations/1660988196279-AlterWarehouseProductTable.ts [107:335 - 114:91] (7 lines, 76 tokens)
@@ -4122,15 +4158,15 @@ Clone found (typescript):
 
 Clone found (typescript):
  - packages/core/src/database/migrations/1659696180759-AlterTenantTable.ts [15:5 - 28:2] (13 lines, 98 tokens)
-   packages/core/src/database/migrations/1673423542165-AlterTaskTable.ts [26:5 - 40:6]
+   packages/core/src/database/migrations/1673970028746-AlterEmailSentTable.ts [26:5 - 40:6]
 
 Clone found (typescript):
  - packages/core/src/database/migrations/1659684413063-AlterContactTable.ts [15:5 - 29:47] (14 lines, 90 tokens)
-   packages/core/src/database/migrations/1673423542165-AlterTaskTable.ts [26:4 - 40:57]
+   packages/core/src/database/migrations/1673970028746-AlterEmailSentTable.ts [26:4 - 40:76]
 
 Clone found (typescript):
  - packages/core/src/database/migrations/1659618978087-AlterInvoiceEstimateHistory.ts [5:43 - 29:90] (24 lines, 186 tokens)
-   packages/core/src/database/migrations/1659684413063-AlterContactTable.ts [5:33 - 40:57]
+   packages/core/src/database/migrations/1659684413063-AlterContactTable.ts [5:33 - 40:76]
 
 Clone found (typescript):
  - packages/core/src/database/migrations/1659618978087-AlterInvoiceEstimateHistory.ts [67:332 - 79:323] (12 lines, 131 tokens)
@@ -4158,7 +4194,7 @@ Clone found (typescript):
 
 Clone found (typescript):
  - packages/core/src/database/migrations/1656833636109-AlterUserTable.ts [5:30 - 29:58] (24 lines, 186 tokens)
-   packages/core/src/database/migrations/1659684413063-AlterContactTable.ts [5:33 - 40:57]
+   packages/core/src/database/migrations/1659684413063-AlterContactTable.ts [5:33 - 40:76]
 
 Clone found (typescript):
  - packages/core/src/database/migrations/1656833636109-AlterUserTable.ts [48:48 - 64:750] (16 lines, 115 tokens)
@@ -4213,16 +4249,16 @@ Clone found (typescript):
    packages/core/src/database/migrations/1659684413063-AlterContactTable.ts [5:33 - 27:7]
 
 Clone found (typescript):
- - packages/core/src/database/migrations/1652703299052-AlterTaskTableColumns.ts [50:20 - 56:1196] (6 lines, 77 tokens)
-   packages/core/src/database/migrations/1673423542165-AlterTaskTable.ts [99:22 - 105:26]
+ - packages/core/src/database/migrations/1652703299052-AlterTaskTableColumns.ts [50:5 - 56:1196] (6 lines, 82 tokens)
+   packages/core/src/database/migrations/1673946248066-AlterTaskTable.ts [57:5 - 63:26]
 
 Clone found (typescript):
- - packages/core/src/database/migrations/1652703299052-AlterTaskTableColumns.ts [59:48 - 72:8] (13 lines, 74 tokens)
-   packages/core/src/database/migrations/1673423542165-AlterTaskTable.ts [109:30 - 133:2]
+ - packages/core/src/database/migrations/1652703299052-AlterTaskTableColumns.ts [57:387 - 72:8] (15 lines, 96 tokens)
+   packages/core/src/database/migrations/1673946248066-AlterTaskTable.ts [65:427 - 80:7]
 
 Clone found (typescript):
- - packages/core/src/database/migrations/1652703299052-AlterTaskTableColumns.ts [73:22 - 80:48] (7 lines, 88 tokens)
-   packages/core/src/database/migrations/1673423542165-AlterTaskTable.ts [59:20 - 66:1196]
+ - packages/core/src/database/migrations/1652703299052-AlterTaskTableColumns.ts [73:5 - 81:1150] (8 lines, 104 tokens)
+   packages/core/src/database/migrations/1673946248066-AlterTaskTable.ts [81:5 - 89:1177]
 
 Clone found (typescript):
  - packages/core/src/database/migrations/1652270907163-AlterTimeOffRequestTable.ts [4:40 - 28:72] (24 lines, 186 tokens)
@@ -4242,7 +4278,7 @@ Clone found (typescript):
 
 Clone found (typescript):
  - packages/core/src/database/migrations/1650532321598-AlterOrganizationProject.ts [16:5 - 32:85] (16 lines, 110 tokens)
-   packages/core/src/database/migrations/1659684413063-AlterContactTable.ts [13:5 - 40:57]
+   packages/core/src/database/migrations/1659684413063-AlterContactTable.ts [13:5 - 40:76]
 
 Clone found (typescript):
  - packages/core/src/database/migrations/1650532321598-AlterOrganizationProject.ts [49:20 - 55:1174] (6 lines, 77 tokens)
@@ -4357,6 +4393,14 @@ Clone found (typescript):
    packages/core/src/database/migrations/1659684413063-AlterContactTable.ts [5:33 - 29:75]
 
 Clone found (typescript):
+ - packages/core/src/database/migrations/1645087150917-AlterEmailTable.ts [50:20 - 56:944] (6 lines, 77 tokens)
+   packages/core/src/database/migrations/1673970028746-AlterEmailSentTable.ts [95:22 - 101:60]
+
+Clone found (typescript):
+ - packages/core/src/database/migrations/1645087150917-AlterEmailTable.ts [76:22 - 82:60] (6 lines, 77 tokens)
+   packages/core/src/database/migrations/1673970028746-AlterEmailSentTable.ts [59:20 - 65:794]
+
+Clone found (typescript):
  - packages/core/src/database/migrations/1645012749640-AlterPaymentTable.ts [5:33 - 29:52] (24 lines, 186 tokens)
    packages/core/src/database/migrations/1659684413063-AlterContactTable.ts [5:33 - 29:75]
 
@@ -4414,7 +4458,7 @@ Clone found (typescript):
 
 Clone found (typescript):
  - packages/core/src/database/migrations/1643201180573-AlterTaskTable.ts [68:5 - 74:48] (6 lines, 82 tokens)
-   packages/core/src/database/migrations/1673423542165-AlterTaskTable.ts [99:5 - 105:26]
+   packages/core/src/database/migrations/1673423542165-AlterTaskTable.ts [99:5 - 63:26]
 
 Clone found (typescript):
  - packages/core/src/database/migrations/1643201180573-AlterTaskTable.ts [76:387 - 83:2] (7 lines, 70 tokens)
@@ -4431,6 +4475,10 @@ Clone found (typescript):
 Clone found (typescript):
  - packages/core/src/database/migrations/1642770124831-AlterEmailHistoryTable.ts [58:1603 - 69:784] (11 lines, 120 tokens)
    packages/core/src/database/migrations/1668084518509-AlterEmployeeTableColumns.ts [67:1645 - 113:54]
+
+Clone found (typescript):
+ - packages/core/src/database/migrations/1642770124831-AlterEmailHistoryTable.ts [79:932 - 87:46] (8 lines, 87 tokens)
+   packages/core/src/database/migrations/1673970028746-AlterEmailSentTable.ts [65:794 - 73:75]
 
 Clone found (typescript):
  - packages/core/src/database/migrations/1642770124831-AlterEmailHistoryTable.ts [86:78 - 93:2189] (7 lines, 76 tokens)
@@ -5141,8 +5189,8 @@ Clone found (typescript):
    packages/core/src/tasks/task.seed.ts [67:16 - 80:7]
 
 Clone found (typescript):
- - packages/core/src/tasks/task.seed.ts [195:7 - 207:2] (12 lines, 96 tokens)
-   packages/core/src/tasks/task.seed.ts [90:6 - 100:2]
+ - packages/core/src/tasks/task.seed.ts [196:7 - 208:2] (12 lines, 95 tokens)
+   packages/core/src/tasks/task.seed.ts [90:2 - 100:2]
 
 Clone found (typescript):
  - packages/core/src/tasks/task.entity.ts [52:6 - 60:7] (8 lines, 82 tokens)
@@ -6835,7 +6883,7 @@ Clone found (javascript):
 ┌────────────┬────────────────┬─────────────┬──────────────┬──────────────┬──────────────────┬───────────────────┐
 │ Format     │ Files analyzed │ Total lines │ Total tokens │ Clones found │ Duplicated lines │ Duplicated tokens │
 ├────────────┼────────────────┼─────────────┼──────────────┼──────────────┼──────────────────┼───────────────────┤
-│ typescript │ 3676           │ 295022      │ 2232801      │ 1517         │ 34873 (11.82%)   │ 263822 (11.82%)   │
+│ typescript │ 3678           │ 295242      │ 2234468      │ 1529         │ 35022 (11.86%)   │ 265056 (11.86%)   │
 ├────────────┼────────────────┼─────────────┼──────────────┼──────────────┼──────────────────┼───────────────────┤
 │ scss       │ 456            │ 37936       │ 215904       │ 140          │ 12721 (33.53%)   │ 78367 (36.3%)     │
 ├────────────┼────────────────┼─────────────┼──────────────┼──────────────┼──────────────────┼───────────────────┤
@@ -6851,12 +6899,12 @@ Clone found (javascript):
 ├────────────┼────────────────┼─────────────┼──────────────┼──────────────┼──────────────────┼───────────────────┤
 │ bash       │ 4              │ 80          │ 524          │ 1            │ 22 (27.5%)       │ 203 (38.74%)      │
 ├────────────┼────────────────┼─────────────┼──────────────┼──────────────┼──────────────────┼───────────────────┤
-│ Total:     │ 4250           │ 339335      │ 2526032      │ 1707         │ 48631 (14.33%)   │ 355238 (14.06%)   │
+│ Total:     │ 4252           │ 339555      │ 2527699      │ 1719         │ 48780 (14.37%)   │ 356472 (14.1%)    │
 └────────────┴────────────────┴─────────────┴──────────────┴──────────────┴──────────────────┴───────────────────┘
-Found 1707 clones.
+Found 1719 clones.
 HTML report saved to /github/workspace/megalinter-reports/copy-paste/html/
-ERROR: jscpd found too many duplicates (14.33%) over threshold (0%)
-Error: ERROR: jscpd found too many duplicates (14.33%) over threshold (0%)
+ERROR: jscpd found too many duplicates (14.37%) over threshold (0%)
+Error: ERROR: jscpd found too many duplicates (14.37%) over threshold (0%)
     at ThresholdReporter.report (/node-deps/node_modules/@jscpd/finder/dist/reporters/threshold.js:12:19)
     at /node-deps/node_modules/@jscpd/finder/dist/in-files-detector.js:82:26
     at Array.forEach (<anonymous>)
