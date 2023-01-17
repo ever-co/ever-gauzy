@@ -45,5 +45,13 @@ Linter raw log:
 [37m      L1 |[90m..."js/chunk-vendors.40c884bf.js"></script><script defer="defer" src="js/app.4a4d284c.js"></script><link...[39m
 [37m                                                     ^ [31mThe <script> tag cannot be used in a <head> tag. (head-script-disabled)[39m
 
-Scanned 5 files, found 10 errors in 5 files (380 ms)
+   Config loaded: /action/lib/.automation/.htmlhintrc
+
+   /github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/index.html
+[37m      L1 |[90m...<title>jscpd - copy/paste report</title><script defer="defer" src="js/chunk-vendors.40c884bf.js"></sc...[39m
+[37m                                                     ^ [31mThe <script> tag cannot be used in a <head> tag. (head-script-disabled)[39m
+[37m      L1 |[90m..."js/chunk-vendors.40c884bf.js"></script><script defer="defer" src="js/app.4a4d284c.js"></script><link...[39m
+[37m                                                     ^ [31mThe <script> tag cannot be used in a <head> tag. (head-script-disabled)[39m
+
+Scanned 6 files, found 12 errors in 6 files (622 ms)
 
