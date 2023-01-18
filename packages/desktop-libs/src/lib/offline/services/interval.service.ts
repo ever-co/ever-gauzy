@@ -15,6 +15,8 @@ export class IntervalService implements IIntervalService<IntervalTO> {
 		this._offlineMode = DesktopOfflineModeHandler.instance;
 	}
 	public async create(interval: IntervalTO): Promise<void> {
+		interval.activities = JSON.stringify(interval.activities);
+		interval.screenshots = JSON.stringify(interval.screenshots) as any;
 		await this._intervalDAO.save(interval);
 	}
 	public async backedUpNoSynced(): Promise<IntervalTO[]> {
