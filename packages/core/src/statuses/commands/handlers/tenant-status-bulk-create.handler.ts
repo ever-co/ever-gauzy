@@ -16,6 +16,6 @@ export class TenantStatusBulkCreateHandler
 		const { tenants } = command;
 
 		//1. Create statuses of the tenant.
-		return await this.statusService.createBulkStatus(tenants);
+		return await this.statusService.bulkCreateTenantsStatus(tenants);
 	}
 }

@@ -13,6 +13,7 @@ import { RequestContext } from '../../../core/context';
 import { UserOrganization } from './../../../core/entities/internal';
 import { Organization } from './../../organization.entity';
 import { ImportRecordUpdateOrCreateCommand } from './../../../export-import/import-record';
+import { OrganizationStatusBulkCreateCommand } from 'statuses/commands';
 
 @CommandHandler(OrganizationCreateCommand)
 export class OrganizationCreateHandler
@@ -107,7 +108,7 @@ export class OrganizationCreateHandler
 				console.log('caught', e)
 			}
 
-			//5. Create contact details of created organization
+			// 5. Create contact details of created organization
 			const { id } = createdOrganization;
 			contact = Object.assign({}, contact, {
 				organizationId: id,
@@ -119,12 +120,17 @@ export class OrganizationCreateHandler
 				...createdOrganization
 			});
 
-			//6. Create Enabled/Disabled reports for relative organization.
+			// 6. Create Enabled/Disabled reports for relative organization.
 			await this.commandBus.execute(
 				new ReportOrganizationCreateCommand(organization)
 			);
 
-			//7. Create Import Records while migrating for relative organization.
+			// 7. Create task statuses for relative organization.
+			await this.commandBus.execute(
+				new OrganizationStatusBulkCreateCommand(organization)
+			);
+
+			// 8. Create Import Records while migrating for relative organization.
 			if (isImporting && sourceId) {
 				const { sourceId } = input;
 				await this.commandBus.execute(

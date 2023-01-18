@@ -5,9 +5,9 @@ import {
 	SelectQueryBuilder,
 	WhereExpressionBuilder,
 } from 'typeorm';
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { IPagination, IStatus, IStatusFindInput, ITenant, TaskStatusEnum } from '@gauzy/contracts';
+import { IOrganization, IPagination, IStatus, IStatusFindInput, ITenant, TaskStatusEnum } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
 import { TenantAwareCrudService } from '../core/crud';
 import { RequestContext } from './../core/context';
@@ -147,13 +147,45 @@ export class StatusService extends TenantAwareCrudService<Status> {
 	 *
 	 * @param tenants '
 	 */
-	async createBulkStatus(tenants: ITenant[]): Promise<IStatus[] & Status[]>  {
-		let statuses: IStatus[] = [];
-		for await (const tenant of tenants) {
-			for await (const status of DEFAULT_GLOBAL_STATUSES) {
+	async bulkCreateTenantsStatus(tenants: ITenant[]): Promise<IStatus[] & Status[]>  {
+		const statuses: IStatus[] = [];
+		for (const tenant of tenants) {
+			for (const status of DEFAULT_GLOBAL_STATUSES) {
 				statuses.push(new Status({ ...status, isSystem: false, tenant }));
 			}
 		}
 		return await this.repository.save(statuses);
+	}
+
+	/**
+	 * Create bulk statuses for specific organization
+	 *
+	 * @param organization
+	 */
+	async bulkCreateOrganizationStatus(organization: IOrganization) {
+		try {
+			const statuses: IStatus[] = [];
+
+			const tenantId = RequestContext.currentTenantId();
+			const { items = [] } = await this.findAllStatuses({ tenantId });
+
+			for (const item of items) {
+				const { tenantId, name, value, description, icon, color } = item;
+				const status = new Status({
+					tenantId,
+					name,
+					value,
+					description,
+					icon,
+					color,
+					organization,
+					isSystem: false
+				});
+				statuses.push(status);
+			}
+			return await this.repository.save(statuses);
+		} catch (error) {
+			throw new BadRequestException(error);
+		}
 	}
 }
