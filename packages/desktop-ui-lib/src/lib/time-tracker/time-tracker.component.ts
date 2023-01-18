@@ -166,7 +166,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	isTrackingEnabled = true;
 	isAddTask = false;
 	sound: any = null;
-	private _lastTotalWorkedTime = 0;
+	private _lastTotalWorkedToday = 0;
+	private _lastTotalWorkedWeek = 0;
 	private _isOffline$: BehaviorSubject<boolean> = new BehaviorSubject(false);
 	private _inQueue$: BehaviorSubject<number> = new BehaviorSubject(0);
 
@@ -674,7 +675,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		const seconds = moment.duration(value.second, 'seconds').seconds();
 		const minutes = moment.duration(value.second, 'seconds').minutes();
 		const hours = moment.duration(value.second, 'seconds').hours();
-		const instantaneaous = this._lastTotalWorkedTime + value.second;
+		const instantaneaous = this._lastTotalWorkedToday + value.second;
+		const instantaneousWeek = this._lastTotalWorkedWeek + value.second;
 
 		this.timeRun.next({
 			second:
@@ -698,6 +700,23 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			minutes: this.formatingDuration(
 				'minutes',
 				moment.duration(instantaneaous, 'seconds').minutes()
+			),
+		});
+
+		this.weeklyDuration$.next({
+			minutes: this.formatingDuration(
+				'minutes',
+				moment.duration(instantaneousWeek, 'seconds').minutes()
+			),
+			hours: this.formatingDuration(
+				'hours',
+				Math.floor(
+					parseInt(
+						moment
+							.duration(instantaneousWeek, 'seconds')
+							.format('h', 4)
+					)
+				)
 			),
 		});
 
@@ -961,11 +980,12 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				),
 				hours: this.formatingDuration(
 					'hours',
-					parseInt(
-						moment
-							.duration(count.weekDuration, 'seconds')
-							.format('h'),
-						10
+					Math.floor(
+						parseInt(
+							moment
+								.duration(count.weekDuration, 'seconds')
+								.format('h', 4)
+						)
 					)
 				),
 			});
@@ -974,12 +994,13 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				hours: this.todayDuration$.getValue().hours,
 			});
 			if (!this.start) {
-				this._lastTotalWorkedTime = count.todayDuration;
+				this._lastTotalWorkedToday = count.todayDuration;
+				this._lastTotalWorkedWeek = count.weekDuration;
 				this.electronService.ipcRenderer.send(
 					'update_tray_time_title',
 					{
 						timeRun: moment
-							.duration(this._lastTotalWorkedTime, 'seconds')
+							.duration(this._lastTotalWorkedToday, 'seconds')
 							.format('hh:mm:ss', { trim: false }),
 					}
 				);
