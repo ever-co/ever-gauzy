@@ -71,3 +71,5 @@ ormlogs.log
 /export
 /import
 /apps/api/*.tsbuildinfo
+
+megalinter-reports/
