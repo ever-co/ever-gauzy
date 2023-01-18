@@ -31,7 +31,7 @@ export class PaginationComponent implements OnChanges, OnDestroy {
 
 	constructor() {
 		this._changePage = new EventEmitter<{ page: number }>();
-		this._perPageSelect = [];
+		this._perPageSelect = [5, 10, 25, 50, 100];
 	}
 
 	private _processPageChange(changes: any) {
