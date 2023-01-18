@@ -7,7 +7,7 @@ import {
 } from 'typeorm';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { IOrganization, IPagination, IStatus, IStatusFindInput, ITenant } from '@gauzy/contracts';
+import { IOrganization, IOrganizationProject, IPagination, IStatus, IStatusFindInput, ITenant } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
 import { TenantAwareCrudService } from '../core/crud';
 import { RequestContext } from './../core/context';
@@ -147,7 +147,7 @@ export class StatusService extends TenantAwareCrudService<Status> {
 	 *
 	 * @param tenants '
 	 */
-	async bulkCreateTenantsStatus(tenants: ITenant[]): Promise<IStatus[] & Status[]>  {
+	async bulkCreateTenantsStatus(tenants: ITenant[]): Promise<IStatus[] & Status[]> {
 		const statuses: IStatus[] = [];
 		for (const tenant of tenants) {
 			for (const status of DEFAULT_GLOBAL_STATUSES) {
@@ -162,7 +162,7 @@ export class StatusService extends TenantAwareCrudService<Status> {
 	 *
 	 * @param organization
 	 */
-	async bulkCreateOrganizationStatus(organization: IOrganization) {
+	async bulkCreateOrganizationStatus(organization: IOrganization): Promise<IStatus[] & Status[]> {
 		try {
 			const statuses: IStatus[] = [];
 
@@ -179,6 +179,40 @@ export class StatusService extends TenantAwareCrudService<Status> {
 					icon,
 					color,
 					organization,
+					isSystem: false
+				});
+				statuses.push(status);
+			}
+			return await this.repository.save(statuses);
+		} catch (error) {
+			throw new BadRequestException(error);
+		}
+	}
+
+	/**
+	 * Create bulk statuses for specific organization project
+	 *
+	 * @param project
+	 * @returns
+	 */
+	async bulkCreateOrganizationProjectStatus(project: IOrganizationProject): Promise<IStatus[] & Status[]> {
+		try {
+			const { tenantId, organizationId } = project;
+
+			const statuses: IStatus[] = [];
+			const { items = [] } = await this.findAllStatuses({ tenantId, organizationId });
+
+			for (const item of items) {
+				const { name, value, description, icon, color } = item;
+				const status = new Status({
+					tenantId,
+					organizationId,
+					name,
+					value,
+					description,
+					icon,
+					color,
+					project,
 					isSystem: false
 				});
 				statuses.push(status);
