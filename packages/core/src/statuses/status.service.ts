@@ -7,7 +7,7 @@ import {
 } from 'typeorm';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { IOrganization, IPagination, IStatus, IStatusFindInput, ITenant, TaskStatusEnum } from '@gauzy/contracts';
+import { IOrganization, IPagination, IStatus, IStatusFindInput, ITenant } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
 import { TenantAwareCrudService } from '../core/crud';
 import { RequestContext } from './../core/context';
