@@ -4,5 +4,7 @@ import { ITenant } from '@gauzy/contracts';
 export class TenantStatusBulkCreateCommand implements ICommand {
 	static readonly type = '[Status] Bulk Create';
 
-	constructor(public readonly tenants: ITenant[]) {}
+	constructor(
+		public readonly tenants: ITenant[]
+	) {}
 }

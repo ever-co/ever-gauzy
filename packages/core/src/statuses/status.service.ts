@@ -7,11 +7,12 @@ import {
 } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { IPagination, IStatus, IStatusFindInput } from '@gauzy/contracts';
+import { IPagination, IStatus, IStatusFindInput, ITenant, TaskStatusEnum } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
 import { TenantAwareCrudService } from '../core/crud';
 import { RequestContext } from './../core/context';
 import { Status } from './status.entity';
+import { DEFAULT_GLOBAL_STATUSES } from './default-global-statuses';
 
 @Injectable()
 export class StatusService extends TenantAwareCrudService<Status> {
@@ -139,5 +140,20 @@ export class StatusService extends TenantAwareCrudService<Status> {
 			query.andWhere(`"${query.alias}"."projectId" IS NULL`);
 		}
 		return query;
+	}
+
+	/**
+	 * Create bulk statuses for specific tenants
+	 *
+	 * @param tenants '
+	 */
+	async createBulkStatus(tenants: ITenant[]): Promise<IStatus[] & Status[]>  {
+		let statuses: IStatus[] = [];
+		for await (const tenant of tenants) {
+			for await (const status of DEFAULT_GLOBAL_STATUSES) {
+				statuses.push(new Status({ ...status, isSystem: false, tenant }));
+			}
+		}
+		return await this.repository.save(statuses);
 	}
 }

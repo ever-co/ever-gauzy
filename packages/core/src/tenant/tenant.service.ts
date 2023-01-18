@@ -24,10 +24,13 @@ export class TenantService extends CrudService<Tenant> {
 	constructor(
 		@InjectRepository(Tenant)
 		private readonly tenantRepository: Repository<Tenant>,
+
 		@InjectRepository(User)
 		private readonly userRepository: Repository<User>,
+
 		@InjectRepository(Role)
 		private readonly roleRepository: Repository<Role>,
+
 		private readonly commandBus: CommandBus,
 		private readonly configService: ConfigService
 	) {
