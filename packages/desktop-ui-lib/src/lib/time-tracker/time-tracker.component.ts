@@ -233,12 +233,13 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		this.tasks$
 			.pipe(
 				tap(async (tasks) => {
-					if (!tasks.length) return;
-					const idx = tasks.findIndex(
-						(row) => row.id === this.taskSelect
-					);
-					if (idx > -1) {
-						tasks[idx].isSelected = true;
+					if (tasks.length > 0) {
+						const idx = tasks.findIndex(
+							(row) => row.id === this.taskSelect
+						);
+						if (idx > -1) {
+							tasks[idx].isSelected = true;
+						}
 					}
 					this.tableData = tasks;
 					await this._sourceData$.getValue().load(this.tableData);

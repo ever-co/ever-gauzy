@@ -229,7 +229,7 @@
 							</div>
 						</div>
 						<div class="row">
-							<div class="col-12 custom-table">
+							<div *ngIf="tableData?.length > 0; else noTask" class="col-12 custom-table">
 								<div class="table-scroll-container">
 									<ng2-smart-table #taskTable style="cursor: pointer" [settings]="tableHeader"
 										[source]="sourceData$ | async" (userRowSelect)="rowSelect($event)">
@@ -239,6 +239,12 @@
 									<ga-pagination [source]="sourceData$ | async"></ga-pagination>
 								</div>
 							</div>
+							<ng-template #noTask>
+								<div class="no-data">
+									<ngx-no-data-message message="No Assigned Task">
+									</ngx-no-data-message>
+								</div>
+							</ng-template>
 						</div>
 					</nb-card-body>
 				</nb-card>
