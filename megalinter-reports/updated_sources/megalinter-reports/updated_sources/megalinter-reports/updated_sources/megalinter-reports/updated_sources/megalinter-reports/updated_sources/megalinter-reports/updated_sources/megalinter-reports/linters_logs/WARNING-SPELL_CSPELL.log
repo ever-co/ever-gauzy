@@ -1,409 +1,0 @@
-Results of cspell linter (version 6.18.1)
-See documentation on https://megalinter.io/6.18.0/descriptors/spell_cspell/
------------------------------------------------
-
-❌ [ERROR] for workspace /github/workspace
-Linter raw log:
-  1/115 ./megalinter-reports/IDE-config.txt 1360.57ms X
-/github/workspace/megalinter-reports/IDE-config.txt:57:7 - Unknown word (vison)
-  2/115 ./megalinter-reports/copy-paste/html/index.html 15944.15ms X
-/github/workspace/megalinter-reports/copy-paste/html/index.html:10521:73 - Unknown word (tranform)
-/github/workspace/megalinter-reports/copy-paste/html/index.html:61629:871 - Unknown word (transaltions)
-/github/workspace/megalinter-reports/copy-paste/html/index.html:63033:341 - Unknown word (Interviewes)
-/github/workspace/megalinter-reports/copy-paste/html/index.html:104721:174 - Unknown word (requried)
-/github/workspace/megalinter-reports/copy-paste/html/index.html:106809:304 - Unknown word (Tiem)
-/github/workspace/megalinter-reports/copy-paste/html/index.html:106845:232 - Unknown word (Estiamte)
-/github/workspace/megalinter-reports/copy-paste/html/index.html:106845:387 - Unknown word (Estiamte)
-/github/workspace/megalinter-reports/copy-paste/html/index.html:109977:373 - Unknown word (Estiamte)
-/github/workspace/megalinter-reports/copy-paste/html/index.html:109977:520 - Unknown word (Estiamte)
-/github/workspace/megalinter-reports/copy-paste/html/index.html:110013:217 - Unknown word (Estiamte)
-  3/115 ./megalinter-reports/copy-paste/html/jscpd-report.json 13745.30ms X
-/github/workspace/megalinter-reports/copy-paste/html/jscpd-report.json:10519:73 - Unknown word (tranform)
-/github/workspace/megalinter-reports/copy-paste/html/jscpd-report.json:61627:871 - Unknown word (transaltions)
-/github/workspace/megalinter-reports/copy-paste/html/jscpd-report.json:63031:341 - Unknown word (Interviewes)
-/github/workspace/megalinter-reports/copy-paste/html/jscpd-report.json:104719:174 - Unknown word (requried)
-/github/workspace/megalinter-reports/copy-paste/html/jscpd-report.json:106807:304 - Unknown word (Tiem)
-/github/workspace/megalinter-reports/copy-paste/html/jscpd-report.json:106843:232 - Unknown word (Estiamte)
-/github/workspace/megalinter-reports/copy-paste/html/jscpd-report.json:106843:387 - Unknown word (Estiamte)
-/github/workspace/megalinter-reports/copy-paste/html/jscpd-report.json:109975:373 - Unknown word (Estiamte)
-/github/workspace/megalinter-reports/copy-paste/html/jscpd-report.json:109975:520 - Unknown word (Estiamte)
-/github/workspace/megalinter-reports/copy-paste/html/jscpd-report.json:110011:217 - Unknown word (Estiamte)
-  4/115 ./megalinter-reports/linters_logs/WARNING-COPYPASTE_JSCPD.log 1399.32ms
-  5/115 ./megalinter-reports/linters_logs/WARNING-EDITORCONFIG_EDITORCONFIG_CHECKER.log 252050.02ms
-  6/115 ./megalinter-reports/linters_logs/WARNING-HTML_DJLINT.log 202.43ms X
-/github/workspace/megalinter-reports/linters_logs/WARNING-HTML_DJLINT.log:26:53 - Unknown word (msapplic)
-/github/workspace/megalinter-reports/linters_logs/WARNING-HTML_DJLINT.log:27:53 - Unknown word (msapplic)
-/github/workspace/megalinter-reports/linters_logs/WARNING-HTML_DJLINT.log:44:53 - Unknown word (msapplic)
-/github/workspace/megalinter-reports/linters_logs/WARNING-HTML_DJLINT.log:45:53 - Unknown word (msapplic)
-/github/workspace/megalinter-reports/linters_logs/WARNING-HTML_DJLINT.log:62:53 - Unknown word (msapplic)
-  7/115 ./megalinter-reports/linters_logs/WARNING-HTML_HTMLHINT.log 47.63ms
-  8/115 ./megalinter-reports/linters_logs/WARNING-REPOSITORY_DEVSKIM.log 80.44ms
-  9/115 ./megalinter-reports/linters_logs/WARNING-REPOSITORY_GITLEAKS.log 72.70ms
- 10/115 ./megalinter-reports/linters_logs/WARNING-REPOSITORY_GIT_DIFF.log 12.47ms
- 11/115 ./megalinter-reports/linters_logs/WARNING-REPOSITORY_TRIVY.log 568.31ms
- 12/115 ./megalinter-reports/linters_logs/WARNING-SPELL_CSPELL.log 8162.34ms
- 13/115 ./megalinter-reports/megalinter.log 246168.03ms
- 14/115 ./megalinter-reports/updated_sources/megalinter-reports/IDE-config.txt 115.72ms X
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/IDE-config.txt:57:7 - Unknown word (vison)
- 15/115 ./megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/index.html 12140.95ms X
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/index.html:10521:73 - Unknown word (tranform)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/index.html:63033:341 - Unknown word (Interviewes)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/index.html:104721:174 - Unknown word (requried)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/index.html:106809:304 - Unknown word (Tiem)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/index.html:106845:232 - Unknown word (Estiamte)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/index.html:106845:387 - Unknown word (Estiamte)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/index.html:109977:373 - Unknown word (Estiamte)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/index.html:109977:520 - Unknown word (Estiamte)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/index.html:110013:217 - Unknown word (Estiamte)
- 16/115 ./megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/jscpd-report.json 12613.72ms X
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/jscpd-report.json:10519:68 - Unknown word (tranform)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/jscpd-report.json:63031:338 - Unknown word (Interviewes)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/jscpd-report.json:104719:171 - Unknown word (requried)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/jscpd-report.json:106807:301 - Unknown word (Tiem)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/jscpd-report.json:106843:229 - Unknown word (Estiamte)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/jscpd-report.json:106843:384 - Unknown word (Estiamte)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/jscpd-report.json:109975:370 - Unknown word (Estiamte)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/jscpd-report.json:109975:517 - Unknown word (Estiamte)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/jscpd-report.json:110011:214 - Unknown word (Estiamte)
- 17/115 ./megalinter-reports/updated_sources/megalinter-reports/linters_logs/WARNING-COPYPASTE_JSCPD.log 1345.79ms
- 18/115 ./megalinter-reports/updated_sources/megalinter-reports/linters_logs/WARNING-EDITORCONFIG_EDITORCONFIG_CHECKER.log 217473.27ms
- 19/115 ./megalinter-reports/updated_sources/megalinter-reports/linters_logs/WARNING-HTML_DJLINT.log 118.72ms X
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/linters_logs/WARNING-HTML_DJLINT.log:26:53 - Unknown word (msapplic)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/linters_logs/WARNING-HTML_DJLINT.log:27:53 - Unknown word (msapplic)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/linters_logs/WARNING-HTML_DJLINT.log:44:53 - Unknown word (msapplic)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/linters_logs/WARNING-HTML_DJLINT.log:45:53 - Unknown word (msapplic)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/linters_logs/WARNING-HTML_DJLINT.log:62:53 - Unknown word (msapplic)
- 20/115 ./megalinter-reports/updated_sources/megalinter-reports/linters_logs/WARNING-HTML_HTMLHINT.log 49.00ms
- 21/115 ./megalinter-reports/updated_sources/megalinter-reports/linters_logs/WARNING-REPOSITORY_DEVSKIM.log 80.65ms
- 22/115 ./megalinter-reports/updated_sources/megalinter-reports/linters_logs/WARNING-REPOSITORY_GITLEAKS.log 72.55ms
- 23/115 ./megalinter-reports/updated_sources/megalinter-reports/linters_logs/WARNING-REPOSITORY_GIT_DIFF.log 28.26ms
- 24/115 ./megalinter-reports/updated_sources/megalinter-reports/linters_logs/WARNING-REPOSITORY_TRIVY.log 530.32ms
- 25/115 ./megalinter-reports/updated_sources/megalinter-reports/linters_logs/WARNING-SPELL_CSPELL.log 7497.93ms
- 26/115 ./megalinter-reports/updated_sources/megalinter-reports/megalinter.log 225692.02ms X
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/megalinter.log:1036687:53 - Unknown word (msapplic)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/megalinter.log:1036688:53 - Unknown word (msapplic)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/megalinter.log:1036705:53 - Unknown word (msapplic)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/megalinter.log:1036706:53 - Unknown word (msapplic)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/megalinter.log:1036723:53 - Unknown word (msapplic)
- 27/115 ./megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/index.html 13405.03ms X
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/index.html:10521:73 - Unknown word (tranform)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/index.html:63033:341 - Unknown word (Interviewes)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/index.html:104721:174 - Unknown word (requried)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/index.html:106809:304 - Unknown word (Tiem)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/index.html:106845:232 - Unknown word (Estiamte)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/index.html:106845:387 - Unknown word (Estiamte)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/index.html:109977:373 - Unknown word (Estiamte)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/index.html:109977:520 - Unknown word (Estiamte)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/index.html:110013:217 - Unknown word (Estiamte)
- 28/115 ./megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/jscpd-report.json 12923.33ms X
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/jscpd-report.json:10519:68 - Unknown word (tranform)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/jscpd-report.json:63031:338 - Unknown word (Interviewes)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/jscpd-report.json:104719:171 - Unknown word (requried)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/jscpd-report.json:106807:301 - Unknown word (Tiem)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/jscpd-report.json:106843:229 - Unknown word (Estiamte)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/jscpd-report.json:106843:384 - Unknown word (Estiamte)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/jscpd-report.json:109975:370 - Unknown word (Estiamte)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/jscpd-report.json:109975:517 - Unknown word (Estiamte)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/jscpd-report.json:110011:214 - Unknown word (Estiamte)
- 29/115 ./megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/linters_logs/WARNING-SPELL_CSPELL.log 8061.76ms
- 30/115 ./megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/megalinter.log 231865.29ms X
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/megalinter.log:1036687:53 - Unknown word (msapplic)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/megalinter.log:1036688:53 - Unknown word (msapplic)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/megalinter.log:1036705:53 - Unknown word (msapplic)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/megalinter.log:1036706:53 - Unknown word (msapplic)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/megalinter.log:1036723:53 - Unknown word (msapplic)
- 31/115 ./megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/index.html 13499.50ms X
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/index.html:10521:73 - Unknown word (tranform)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/index.html:63033:341 - Unknown word (Interviewes)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/index.html:104721:174 - Unknown word (requried)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/index.html:106809:304 - Unknown word (Tiem)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/index.html:106845:232 - Unknown word (Estiamte)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/index.html:106845:387 - Unknown word (Estiamte)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/index.html:109977:373 - Unknown word (Estiamte)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/index.html:109977:520 - Unknown word (Estiamte)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/index.html:110013:217 - Unknown word (Estiamte)
- 32/115 ./megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/jscpd-report.json 13309.57ms X
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/jscpd-report.json:10519:68 - Unknown word (tranform)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/jscpd-report.json:63031:338 - Unknown word (Interviewes)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/jscpd-report.json:104719:171 - Unknown word (requried)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/jscpd-report.json:106807:301 - Unknown word (Tiem)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/jscpd-report.json:106843:229 - Unknown word (Estiamte)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/jscpd-report.json:106843:384 - Unknown word (Estiamte)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/jscpd-report.json:109975:370 - Unknown word (Estiamte)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/jscpd-report.json:109975:517 - Unknown word (Estiamte)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/jscpd-report.json:110011:214 - Unknown word (Estiamte)
- 33/115 ./megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/linters_logs/WARNING-SPELL_CSPELL.log 8238.27ms
- 34/115 ./megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/megalinter.log 226237.54ms X
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/megalinter.log:1036687:53 - Unknown word (msapplic)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/megalinter.log:1036688:53 - Unknown word (msapplic)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/megalinter.log:1036705:53 - Unknown word (msapplic)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/megalinter.log:1036706:53 - Unknown word (msapplic)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/megalinter.log:1036723:53 - Unknown word (msapplic)
- 35/115 ./megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/index.html 13141.30ms X
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/index.html:10521:73 - Unknown word (tranform)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/index.html:63033:341 - Unknown word (Interviewes)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/index.html:104721:174 - Unknown word (requried)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/index.html:106809:304 - Unknown word (Tiem)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/index.html:106845:232 - Unknown word (Estiamte)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/index.html:106845:387 - Unknown word (Estiamte)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/index.html:109977:373 - Unknown word (Estiamte)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/index.html:109977:520 - Unknown word (Estiamte)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/index.html:110013:217 - Unknown word (Estiamte)
- 36/115 ./megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/jscpd-report.json 12752.35ms X
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/jscpd-report.json:10519:68 - Unknown word (tranform)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/jscpd-report.json:63031:338 - Unknown word (Interviewes)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/jscpd-report.json:104719:171 - Unknown word (requried)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/jscpd-report.json:106807:301 - Unknown word (Tiem)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/jscpd-report.json:106843:229 - Unknown word (Estiamte)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/jscpd-report.json:106843:384 - Unknown word (Estiamte)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/jscpd-report.json:109975:370 - Unknown word (Estiamte)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/jscpd-report.json:109975:517 - Unknown word (Estiamte)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/jscpd-report.json:110011:214 - Unknown word (Estiamte)
- 37/115 ./megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/linters_logs/WARNING-SPELL_CSPELL.log 7162.83ms
- 38/115 ./megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/megalinter.log 178931.28ms X
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/megalinter.log:1036687:53 - Unknown word (msapplic)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/megalinter.log:1036688:53 - Unknown word (msapplic)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/megalinter.log:1036705:53 - Unknown word (msapplic)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/megalinter.log:1036706:53 - Unknown word (msapplic)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/megalinter.log:1036723:53 - Unknown word (msapplic)
- 39/115 ./megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/index.html 9134.36ms X
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/index.html:10521:73 - Unknown word (tranform)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/index.html:63033:341 - Unknown word (Interviewes)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/index.html:104721:174 - Unknown word (requried)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/index.html:106809:304 - Unknown word (Tiem)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/index.html:106845:232 - Unknown word (Estiamte)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/index.html:106845:387 - Unknown word (Estiamte)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/index.html:109977:373 - Unknown word (Estiamte)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/index.html:109977:520 - Unknown word (Estiamte)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/index.html:110013:217 - Unknown word (Estiamte)
- 40/115 ./megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/jscpd-report.json 8950.67ms X
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/jscpd-report.json:10519:68 - Unknown word (tranform)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/jscpd-report.json:63031:338 - Unknown word (Interviewes)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/jscpd-report.json:104719:171 - Unknown word (requried)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/jscpd-report.json:106807:301 - Unknown word (Tiem)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/jscpd-report.json:106843:229 - Unknown word (Estiamte)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/jscpd-report.json:106843:384 - Unknown word (Estiamte)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/jscpd-report.json:109975:370 - Unknown word (Estiamte)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/jscpd-report.json:109975:517 - Unknown word (Estiamte)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/jscpd-report.json:110011:214 - Unknown word (Estiamte)
- 41/115 ./megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/linters_logs/WARNING-SPELL_CSPELL.log 5674.18ms
- 42/115 ./megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/megalinter.log 163245.75ms X
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/megalinter.log:1036687:53 - Unknown word (msapplic)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/megalinter.log:1036688:53 - Unknown word (msapplic)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/megalinter.log:1036705:53 - Unknown word (msapplic)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/megalinter.log:1036706:53 - Unknown word (msapplic)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/megalinter.log:1036723:53 - Unknown word (msapplic)
- 43/115 ./megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/index.html 8933.02ms X
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/index.html:10521:73 - Unknown word (tranform)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/index.html:63033:341 - Unknown word (Interviewes)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/index.html:104721:174 - Unknown word (requried)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/index.html:106809:304 - Unknown word (Tiem)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/index.html:106845:232 - Unknown word (Estiamte)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/index.html:106845:387 - Unknown word (Estiamte)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/index.html:109977:373 - Unknown word (Estiamte)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/index.html:109977:520 - Unknown word (Estiamte)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/index.html:110013:217 - Unknown word (Estiamte)
- 44/115 ./megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/jscpd-report.json 8551.78ms X
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/jscpd-report.json:10519:68 - Unknown word (tranform)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/jscpd-report.json:63031:338 - Unknown word (Interviewes)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/jscpd-report.json:104719:171 - Unknown word (requried)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/jscpd-report.json:106807:301 - Unknown word (Tiem)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/jscpd-report.json:106843:229 - Unknown word (Estiamte)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/jscpd-report.json:106843:384 - Unknown word (Estiamte)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/jscpd-report.json:109975:370 - Unknown word (Estiamte)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/jscpd-report.json:109975:517 - Unknown word (Estiamte)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/jscpd-report.json:110011:214 - Unknown word (Estiamte)
- 45/115 ./megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/linters_logs/WARNING-SPELL_CSPELL.log 5115.42ms
- 46/115 ./megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/megalinter.log 149587.41ms X
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/megalinter.log:1036687:53 - Unknown word (msapplic)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/megalinter.log:1036688:53 - Unknown word (msapplic)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/megalinter.log:1036705:53 - Unknown word (msapplic)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/megalinter.log:1036706:53 - Unknown word (msapplic)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/megalinter.log:1036723:53 - Unknown word (msapplic)
- 47/115 ./megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/index.html 8411.61ms X
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/index.html:10521:73 - Unknown word (tranform)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/index.html:63033:341 - Unknown word (Interviewes)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/index.html:104721:174 - Unknown word (requried)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/index.html:106809:304 - Unknown word (Tiem)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/index.html:106845:232 - Unknown word (Estiamte)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/index.html:106845:387 - Unknown word (Estiamte)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/index.html:109977:373 - Unknown word (Estiamte)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/index.html:109977:520 - Unknown word (Estiamte)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/index.html:110013:217 - Unknown word (Estiamte)
- 48/115 ./megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/jscpd-report.json 8062.24ms X
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/jscpd-report.json:10519:68 - Unknown word (tranform)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/jscpd-report.json:63031:338 - Unknown word (Interviewes)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/jscpd-report.json:104719:171 - Unknown word (requried)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/jscpd-report.json:106807:301 - Unknown word (Tiem)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/jscpd-report.json:106843:229 - Unknown word (Estiamte)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/jscpd-report.json:106843:384 - Unknown word (Estiamte)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/jscpd-report.json:109975:370 - Unknown word (Estiamte)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/jscpd-report.json:109975:517 - Unknown word (Estiamte)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/jscpd-report.json:110011:214 - Unknown word (Estiamte)
- 49/115 ./megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/linters_logs/WARNING-SPELL_CSPELL.log 5282.61ms
- 50/115 ./megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/megalinter.log 153723.33ms X
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/megalinter.log:1036687:53 - Unknown word (msapplic)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/megalinter.log:1036688:53 - Unknown word (msapplic)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/megalinter.log:1036705:53 - Unknown word (msapplic)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/megalinter.log:1036706:53 - Unknown word (msapplic)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/megalinter.log:1036723:53 - Unknown word (msapplic)
- 51/115 ./megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/index.html 8496.27ms X
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/index.html:10521:73 - Unknown word (tranform)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/index.html:63033:341 - Unknown word (Interviewes)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/index.html:104721:174 - Unknown word (requried)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/index.html:106809:304 - Unknown word (Tiem)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/index.html:106845:232 - Unknown word (Estiamte)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/index.html:106845:387 - Unknown word (Estiamte)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/index.html:109977:373 - Unknown word (Estiamte)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/index.html:109977:520 - Unknown word (Estiamte)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/index.html:110013:217 - Unknown word (Estiamte)
- 52/115 ./megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/jscpd-report.json 8482.33ms X
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/jscpd-report.json:10519:68 - Unknown word (tranform)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/jscpd-report.json:63031:338 - Unknown word (Interviewes)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/jscpd-report.json:104719:171 - Unknown word (requried)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/jscpd-report.json:106807:301 - Unknown word (Tiem)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/jscpd-report.json:106843:229 - Unknown word (Estiamte)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/jscpd-report.json:106843:384 - Unknown word (Estiamte)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/jscpd-report.json:109975:370 - Unknown word (Estiamte)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/jscpd-report.json:109975:517 - Unknown word (Estiamte)
-/github/workspace/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/updated_sources/megalinter-reports/copy-paste/html/jscpd-report.json:110011:214 - Unknown word (Estiamte)
- 53/115 ./megalinter-reports/updated_sources/packages/contracts/src/index.ts 78.98ms
- 54/115 ./megalinter-reports/updated_sources/packages/contracts/src/status.model.ts 19.75ms
- 55/115 ./megalinter-reports/updated_sources/packages/core/src/app.module.ts 146.36ms
- 56/115 ./megalinter-reports/updated_sources/packages/core/src/core/dto/tenant-organization-base.dto.ts 20.55ms
- 57/115 ./megalinter-reports/updated_sources/packages/core/src/core/entities/index.ts 38.93ms
- 58/115 ./megalinter-reports/updated_sources/packages/core/src/core/entities/internal.ts 63.49ms
- 59/115 ./megalinter-reports/updated_sources/packages/core/src/core/entities/subscribers.ts 18.40ms
- 60/115 ./megalinter-reports/updated_sources/packages/core/src/core/seeds/seed-data.service.ts 330.12ms
- 61/115 ./megalinter-reports/updated_sources/packages/core/src/database/migrations/1673589923548-CreateStatusTable.ts 46.73ms
- 62/115 ./megalinter-reports/updated_sources/packages/core/src/organization-project/organization-project.entity.ts 46.73ms
- 63/115 ./megalinter-reports/updated_sources/packages/core/src/statuses/commands/handlers/index.ts 14.61ms
- 64/115 ./megalinter-reports/updated_sources/packages/core/src/statuses/commands/handlers/tenant-status-bulk-create.handler.ts 10.97ms
- 65/115 ./megalinter-reports/updated_sources/packages/core/src/statuses/commands/tenant-status-bulk-create.command.ts 9.18ms
- 66/115 ./megalinter-reports/updated_sources/packages/core/src/statuses/default-global-statuses.ts 20.51ms
- 67/115 ./megalinter-reports/updated_sources/packages/core/src/statuses/dto/create-status.dto.ts 19.42ms
- 68/115 ./megalinter-reports/updated_sources/packages/core/src/statuses/dto/index.ts 7.18ms
- 69/115 ./megalinter-reports/updated_sources/packages/core/src/statuses/dto/status-query.dto.ts 11.93ms
- 70/115 ./megalinter-reports/updated_sources/packages/core/src/statuses/dto/status.dto.ts 12.11ms
- 71/115 ./megalinter-reports/updated_sources/packages/core/src/statuses/dto/update-status.dto.ts 9.34ms
- 72/115 ./megalinter-reports/updated_sources/packages/core/src/statuses/queries/find-statuses.query.ts 12.66ms
- 73/115 ./megalinter-reports/updated_sources/packages/core/src/statuses/queries/handlers/find-statuses.handler.ts 15.39ms
- 74/115 ./megalinter-reports/updated_sources/packages/core/src/statuses/queries/handlers/index.ts 18.59ms
- 75/115 ./megalinter-reports/updated_sources/packages/core/src/statuses/queries/index.ts 6.67ms
- 76/115 ./megalinter-reports/updated_sources/packages/core/src/statuses/status.controller.ts 23.06ms
- 77/115 ./megalinter-reports/updated_sources/packages/core/src/statuses/status.entity.ts 16.69ms
- 78/115 ./megalinter-reports/updated_sources/packages/core/src/statuses/status.module.ts 14.22ms
- 79/115 ./megalinter-reports/updated_sources/packages/core/src/statuses/status.seed.ts 22.08ms
- 80/115 ./megalinter-reports/updated_sources/packages/core/src/statuses/status.service.ts 29.13ms
- 81/115 ./megalinter-reports/updated_sources/packages/core/src/statuses/status.subscriber.ts 15.66ms
- 82/115 ./megalinter-reports/updated_sources/packages/core/src/tenant/tenant.service.ts 35.94ms
- 83/115 ./packages/contracts/src/index.ts 82.51ms
- 84/115 ./packages/contracts/src/status.model.ts 25.04ms
- 85/115 ./packages/contracts/src/task.model.ts 18.14ms
- 86/115 ./packages/core/src/app.module.ts 126.54ms
- 87/115 ./packages/core/src/core/dto/tenant-organization-base.dto.ts 15.10ms
- 88/115 ./packages/core/src/core/entities/index.ts 35.38ms
- 89/115 ./packages/core/src/core/entities/internal.ts 58.80ms
- 90/115 ./packages/core/src/core/entities/subscribers.ts 12.10ms
- 91/115 ./packages/core/src/core/seeds/seed-data.service.ts 272.92ms X
-/github/workspace/packages/core/src/core/seeds/seed-data.service.ts:3:23 - Unknown word (Alexi)
-/github/workspace/packages/core/src/core/seeds/seed-data.service.ts:650:38 - Unknown word (orgnaization)
- 92/115 ./packages/core/src/database/migrations/1673589923548-CreateStatusTable.ts 200.00ms X
-/github/workspace/packages/core/src/database/migrations/1673589923548-CreateStatusTable.ts:42:42 - Unknown word (dcbd)
-/github/workspace/packages/core/src/database/migrations/1673589923548-CreateStatusTable.ts:45:26 - Unknown word (edbaab)
-/github/workspace/packages/core/src/database/migrations/1673589923548-CreateStatusTable.ts:48:41 - Unknown word (ebdb)
-/github/workspace/packages/core/src/database/migrations/1673589923548-CreateStatusTable.ts:57:64 - Unknown word (dcbd)
-/github/workspace/packages/core/src/database/migrations/1673589923548-CreateStatusTable.ts:60:48 - Unknown word (edbaab)
-/github/workspace/packages/core/src/database/migrations/1673589923548-CreateStatusTable.ts:79:49 - Unknown word (edbaab)
-/github/workspace/packages/core/src/database/migrations/1673589923548-CreateStatusTable.ts:82:65 - Unknown word (dcbd)
-/github/workspace/packages/core/src/database/migrations/1673589923548-CreateStatusTable.ts:91:48 - Unknown word (ebdb)
-/github/workspace/packages/core/src/database/migrations/1673589923548-CreateStatusTable.ts:94:33 - Unknown word (edbaab)
-/github/workspace/packages/core/src/database/migrations/1673589923548-CreateStatusTable.ts:97:49 - Unknown word (dcbd)
-/github/workspace/packages/core/src/database/migrations/1673589923548-CreateStatusTable.ts:112:42 - Unknown word (dcbd)
-/github/workspace/packages/core/src/database/migrations/1673589923548-CreateStatusTable.ts:115:26 - Unknown word (edbaab)
-/github/workspace/packages/core/src/database/migrations/1673589923548-CreateStatusTable.ts:118:41 - Unknown word (ebdb)
-/github/workspace/packages/core/src/database/migrations/1673589923548-CreateStatusTable.ts:128:62 - Unknown word (ebdb)
-/github/workspace/packages/core/src/database/migrations/1673589923548-CreateStatusTable.ts:148:41 - Unknown word (ebdb)
- 93/115 ./packages/core/src/organization-project/organization-project.entity.ts 47.92ms
- 94/115 ./packages/core/src/statuses/commands/handlers/index.ts 12.41ms
- 95/115 ./packages/core/src/statuses/commands/handlers/tenant-status-bulk-create.handler.ts 9.06ms
- 96/115 ./packages/core/src/statuses/commands/index.ts 5.12ms
- 97/115 ./packages/core/src/statuses/commands/tenant-status-bulk-create.command.ts 7.19ms
- 98/115 ./packages/core/src/statuses/default-global-statuses.ts 16.23ms
- 99/115 ./packages/core/src/statuses/dto/create-status.dto.ts 8.73ms
-100/115 ./packages/core/src/statuses/dto/index.ts 12.83ms
-101/115 ./packages/core/src/statuses/dto/status-query.dto.ts 11.08ms X
-/github/workspace/packages/core/src/statuses/dto/status-query.dto.ts:6:20 - Unknown word (Quer)
-102/115 ./packages/core/src/statuses/dto/status.dto.ts 10.14ms
-103/115 ./packages/core/src/statuses/dto/update-status.dto.ts 6.04ms
-104/115 ./packages/core/src/statuses/queries/find-statuses.query.ts 9.62ms
-105/115 ./packages/core/src/statuses/queries/handlers/find-statuses.handler.ts 11.82ms
-106/115 ./packages/core/src/statuses/queries/handlers/index.ts 5.88ms
-107/115 ./packages/core/src/statuses/queries/index.ts 4.51ms
-108/115 ./packages/core/src/statuses/status.controller.ts 34.23ms X
-/github/workspace/packages/core/src/statuses/status.controller.ts:25:33 - Unknown word (Quer)
-/github/workspace/packages/core/src/statuses/status.controller.ts:45:26 - Unknown word (Quer)
-109/115 ./packages/core/src/statuses/status.entity.ts 14.39ms
-110/115 ./packages/core/src/statuses/status.module.ts 12.77ms
-111/115 ./packages/core/src/statuses/status.seed.ts 11.82ms
-112/115 ./packages/core/src/statuses/status.service.ts 26.35ms X
-/github/workspace/packages/core/src/statuses/status.service.ts:37:12 - Unknown word (atleast)
-113/115 ./packages/core/src/statuses/status.subscriber.ts 24.16ms
-114/115 ./packages/core/src/tenant/tenant.service.ts 27.19ms X
-/github/workspace/packages/core/src/tenant/tenant.service.ts:61:36 - Unknown word (stoage)
-115/115 ./f16b5118-a178-4b14-9fe7-bf4e9f606f2a-megalinter_file_names_cspell.txt 24.38ms X
-/github/workspace/f16b5118-a178-4b14-9fe7-bf4e9f606f2a-megalinter_file_names_cspell.txt:7:64 - Unknown word (DJLINT)
-/github/workspace/f16b5118-a178-4b14-9fe7-bf4e9f606f2a-megalinter_file_names_cspell.txt:8:64 - Unknown word (HTMLHINT)
-/github/workspace/f16b5118-a178-4b14-9fe7-bf4e9f606f2a-megalinter_file_names_cspell.txt:9:70 - Unknown word (DEVSKIM)
-/github/workspace/f16b5118-a178-4b14-9fe7-bf4e9f606f2a-megalinter_file_names_cspell.txt:10:70 - Unknown word (GITLEAKS)
-/github/workspace/f16b5118-a178-4b14-9fe7-bf4e9f606f2a-megalinter_file_names_cspell.txt:12:70 - Unknown word (TRIVY)
-/github/workspace/f16b5118-a178-4b14-9fe7-bf4e9f606f2a-megalinter_file_names_cspell.txt:21:99 - Unknown word (DJLINT)
-/github/workspace/f16b5118-a178-4b14-9fe7-bf4e9f606f2a-megalinter_file_names_cspell.txt:22:99 - Unknown word (HTMLHINT)
-/github/workspace/f16b5118-a178-4b14-9fe7-bf4e9f606f2a-megalinter_file_names_cspell.txt:23:105 - Unknown word (DEVSKIM)
-/github/workspace/f16b5118-a178-4b14-9fe7-bf4e9f606f2a-megalinter_file_names_cspell.txt:24:105 - Unknown word (GITLEAKS)
-/github/workspace/f16b5118-a178-4b14-9fe7-bf4e9f606f2a-megalinter_file_names_cspell.txt:26:105 - Unknown word (TRIVY)
-CSpell: Files checked: 115, Issues found: 243 in 36 files
-
-
-You can skip this misspellings by defining the following .cspell.json file at the root of your repository
-Of course, please correct real typos before :)
-
-{
-    "version": "0.2",
-    "language": "en",
-    "ignorePaths": [
-        "**/node_modules/**",
-        "**/vscode-extension/**",
-        "**/.git/**",
-        "**/.pnpm-lock.json",
-        ".vscode",
-        "package-lock.json",
-        "megalinter-reports"
-    ],
-    "words": [
-        "Alexi",
-        "DEVSKIM",
-        "DJLINT",
-        "Estiamte",
-        "GITLEAKS",
-        "HTMLHINT",
-        "Interviewes",
-        "Quer",
-        "TRIVY",
-        "Tiem",
-        "atleast",
-        "dcbd",
-        "ebdb",
-        "edbaab",
-        "msapplic",
-        "orgnaization",
-        "requried",
-        "stoage",
-        "tranform",
-        "transaltions",
-        "vison"
-    ]
-}
-
-
-You can also copy-paste megalinter-reports/.cspell.json at the root of your repository

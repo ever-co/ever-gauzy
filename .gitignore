@@ -48,7 +48,7 @@ Thumbs.db
 
 # Typeorm Logs
 ormlogs.log
- 
+
 # Cache File
 /.cache
 /apps/**/.cache
