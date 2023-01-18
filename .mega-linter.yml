@@ -1,7 +1,9 @@
 # Configuration file for Mega-Linter
 # See all available variables at https://oxsecurity.github.io/megalinter/#configuration and in linters documentation
 
-APPLY_FIXES: 'all' # When true, APPLY_FIXES must also be defined as environment variable (in github/workflows/mega-linter.yml or other CI tool)
+APPLY_FIXES: 'all'
+APPLY_FIXES_EVENT: 'pull_request'
+APPLY_FIXES_MODE: 'pull_request'
 FILTER_REGEX_EXCLUDE: (lib/example|\.github|\.vscode|pull_request_template|docs/javascripts)
 FLAVOR_SUGGESTIONS: false
 JAVASCRIPT_DEFAULT_STYLE: prettier
@@ -11,3 +13,7 @@ PRINT_ALL_FILES: false
 GITHUB_STATUS_REPORTER: true
 DISABLE_ERRORS: true
 SHOW_ELAPSED_TIME: true
+REPORT_OUTPUT_FOLDER: none
+VALIDATE_ALL_CODEBASE: false
+FILEIO_REPORTER: true
+FILEIO_REPORTER_SEND_SUCCESS: true
