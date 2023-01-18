@@ -349,8 +349,9 @@ export function ipcTimer(
 		settingWindow.webContents.send('app_setting_update', {
 			setting: LocalStore.getStore('appSetting'),
 		});
-		powerManagerPreventSleep.stop();
-		powerManagerDetectInactivity.stopInactivityDetection();
+		if (powerManagerPreventSleep) powerManagerPreventSleep.stop();
+		if (powerManagerDetectInactivity)
+			powerManagerDetectInactivity.stopInactivityDetection();
 		await syncIntervalQueue(timeTrackerWindow);
 	});
 
@@ -543,7 +544,7 @@ export function ipcTimer(
 	ipcMain.on('expand', (event, arg) => {
 		const isLinux = process.platform === 'linux';
 		const display = screen.getPrimaryDisplay();
-		const { width, height } = display.workArea;
+		const { height } = display.workArea;
 		const maxHeight = height <= 768 ? height - 20 : 768;
 		const maxWidth = height < 768 ? 360 - 50 : 360;
 		const widthLarge = height < 768 ? 1024 - 50 : 1024;
@@ -551,15 +552,8 @@ export function ipcTimer(
 			try {
 				isLinux
 					? resizeLinux(timeTrackerWindow, arg)
-					: timeTrackerWindow.setBounds(
-							{
-								width: widthLarge,
-								height: maxHeight,
-								x: (width - widthLarge) * 0.5,
-								y: (height - maxHeight) * 0.5,
-							},
-							true
-					  );
+					: timeTrackerWindow.setSize(widthLarge, maxHeight, true);
+				timeTrackerWindow.center();
 			} catch (error) {
 				console.log('error on change window width', error);
 			}
@@ -567,15 +561,7 @@ export function ipcTimer(
 			try {
 				isLinux
 					? resizeLinux(timeTrackerWindow, arg)
-					: timeTrackerWindow.setBounds(
-							{
-								width: maxWidth,
-								height: maxHeight,
-								x: (width - maxWidth) * 0.5,
-								y: (height - maxHeight) * 0.5,
-							},
-							true
-					  );
+					: timeTrackerWindow.setSize(maxWidth, maxHeight, true);
 			} catch (error) {
 				console.log('error on change window width', error);
 			}

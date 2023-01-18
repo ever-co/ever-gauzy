@@ -6,7 +6,7 @@
 		<div class="timer-window-container">
 			<div [ngClass]="{ expanded: isExpand$ | async }" class="no-padding full-width timer">
 				<nb-card class="full-height max-width">
-					<nb-card-body>
+					<nb-card-body class="timer-body">
 						<div class="row mb-3">
 							<div class="col-12">
 								<span class="org-name">
@@ -155,7 +155,7 @@
 								</div>
 							</div>
 						</div>
-						<div class="row">
+						<div class="row last">
 							<div class="col-12 center-text">
 								<nb-card>
 									<nb-card-header class="p-0 mb-1">
@@ -164,7 +164,7 @@
 											<span>{{(lastScreenCapture$ | async)?.textTime}}</span>
 										</div>
 									</nb-card-header>
-									<nb-card-body class="max-card p-0">
+									<nb-card-body class="p-0">
 										<img class="screen-capture-img" *ngIf="
 										(lastScreenCapture$ | async)?.thumbUrl
 											" [src]="
@@ -179,14 +179,14 @@
 												<div class="col-8 img-button">
 													<div class="row">
 														<div class="col-6">
-															<button nbButton status="primary" (click)="
+															<button nbButton status="basic" (click)="
 																	showImage()
 																">
-																<nb-icon icon="eye"></nb-icon>
+																<nb-icon icon="eye" pack="font-awesome"></nb-icon>
 															</button>
 														</div>
 														<div class="col-6">
-															<button nbButton status="danger" (click)="
+															<button status="basic" nbButton (click)="
 																	open(
 																		dialog,
 																		{
@@ -195,7 +195,7 @@
 																		}
 																	)
 																">
-																<nb-icon icon="trash-2"></nb-icon>
+																<nb-icon status="danger" icon="trash-2"></nb-icon>
 															</button>
 														</div>
 													</div>

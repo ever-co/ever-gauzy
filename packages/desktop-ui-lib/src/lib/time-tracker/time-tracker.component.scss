@@ -1,3 +1,5 @@
+@import 'gauzy/_gauzy-overrides';
+
 .border-vertical {
   border-right: solid 0.1px rgba($color: #000000, $alpha: 0.1);
   height: 90%;
@@ -33,6 +35,8 @@
 .timer {
   min-width: 360px !important;
   width: auto;
+  height: calc(100vh - 3rem);
+  overflow: hidden;
 
   &.expanded {
     max-width: 360px !important;
@@ -109,7 +113,7 @@
 
 .screen-capture-img {
   width: 100%;
-  height: 160px;
+  height: 100%;
   border-radius: var(--border-radius);
   object-fit: cover;
   image-rendering: auto;
@@ -163,12 +167,6 @@
   border: solid 1px red;
 }
 
-.img-button {
-  position: relative;
-  transform: translateY(156%);
-  margin: auto;
-}
-
 .overlay-img {
   position: absolute;
   background-color: rgba(0, 0, 0, 0.4);
@@ -178,6 +176,13 @@
   border-radius: var(--border-radius);
   display: none;
   padding: 0 15px;
+
+  >div.row {
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
 }
 
 .max-card {
@@ -344,7 +349,7 @@ nb-card.dialog {
 }
 
 $input-background-color: var(--gauzy-card-1);
-$height: 2rem;
+$height: 42px;
 
 :host {
 
@@ -410,7 +415,7 @@ $height: 2rem;
 
     img {
       margin-right: 5px;
-      border-radius: calc(var(--border-radius) * 2 / 3);
+      border-radius: calc(var(--border-radius) * 1 / 2);
       box-shadow: var(--gauzy-shadow);
     }
   }
@@ -418,7 +423,7 @@ $height: 2rem;
   ::ng-deep {
     .ng-select .ng-select-container .ng-value-container {
       align-items: center;
-      padding-left: 5px;
+      padding-left: 10px;
     }
   }
 }
@@ -536,5 +541,27 @@ img {
     max-height: unset;
     padding: 0px 4px 0px;
     margin-bottom: 8px;
+  }
+}
+
+.timer-body {
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  overflow: unset;
+  height: 100%;
+
+  .last {
+    flex-grow: 4;
+    min-height: 100px;
+    align-items: flex-end;
+
+    >div {
+      height: 100%;
+
+      nb-card {
+        height: 100%;
+      }
+    }
   }
 }
