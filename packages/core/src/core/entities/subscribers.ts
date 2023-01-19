@@ -14,15 +14,16 @@ import {
 	PaymentSubscriber,
 	ReportSubscriber,
 	ScreenshotSubscriber,
+	StatusSubscriber,
 	TaskSubscriber,
 	TenantSubscriber,
 	TimeSlotSubscriber,
-	UserSubscriber
-} from "./internal";
+	UserSubscriber,
+} from './internal';
 
 /**
-* A map of the core TypeORM Subscribers.
-*/
+ * A map of the core TypeORM Subscribers.
+ */
 export const coreSubscribers = [
 	ActivitySubscriber,
 	CandidateSubscriber,
@@ -39,6 +40,7 @@ export const coreSubscribers = [
 	PaymentSubscriber,
 	ReportSubscriber,
 	ScreenshotSubscriber,
+	StatusSubscriber,
 	TaskSubscriber,
 	TenantSubscriber,
 	TimeSlotSubscriber,

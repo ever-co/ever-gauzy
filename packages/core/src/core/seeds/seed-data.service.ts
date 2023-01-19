@@ -16,12 +16,12 @@ import {
 	IOrganizationProject,
 	IRole,
 	ITenant,
-	IUser
+	IUser,
 } from '@gauzy/contracts';
 import {
 	getPluginModules,
 	hasLifecycleMethod,
-	PluginLifecycleMethods
+	PluginLifecycleMethods,
 } from '@gauzy/plugin';
 import { createRoles } from '../../role/role.seed';
 import { createDefaultSkills } from '../../skills/skill.seed';
@@ -31,228 +31,223 @@ import {
 	createDefaultEmployeesUsers,
 	createDefaultUsers,
 	createRandomSuperAdminUsers,
-	createRandomUsers
+	createRandomUsers,
 } from '../../user/user.seed';
 import {
 	createDefaultEmployees,
-	createRandomEmployees
+	createRandomEmployees,
 } from '../../employee/employee.seed';
 import {
 	createDefaultOrganizations,
 	createRandomOrganizations,
 	DEFAULT_EVER_ORGANIZATIONS,
-	DEFAULT_ORGANIZATIONS
+	DEFAULT_ORGANIZATIONS,
 } from '../../organization';
 import {
 	createDefaultIncomes,
-	createRandomIncomes
+	createRandomIncomes,
 } from '../../income/income.seed';
 import {
 	createDefaultExpenses,
-	createRandomExpenses
+	createRandomExpenses,
 } from '../../expense/expense.seed';
 import {
 	createDefaultUsersOrganizations,
-	createRandomUsersOrganizations
+	createRandomUsersOrganizations,
 } from '../../user-organization/user-organization.seed';
 import { createCountries } from '../../country/country.seed';
 import {
 	createDefaultTeams,
-	createRandomTeam
+	createRandomTeam,
 } from '../../organization-team/organization-team.seed';
 import { createRolePermissions } from '../../role-permission/role-permission.seed';
 import {
 	createDefaultTenant,
 	createRandomTenants,
 	DEFAULT_EVER_TENANT,
-	DEFAULT_TENANT
+	DEFAULT_TENANT,
 } from '../../tenant';
-import {
-	createDefaultTenantSetting
-} from './../../tenant/tenant-setting/tenant-setting.seed';
+import { createDefaultTenantSetting } from './../../tenant/tenant-setting/tenant-setting.seed';
 import { createDefaultEmailTemplates } from '../../email-template/email-template.seed';
 import {
 	seedDefaultEmploymentTypes,
-	seedRandomEmploymentTypes
+	seedRandomEmploymentTypes,
 } from '../../organization-employment-type/organization-employment-type.seed';
 import { createEmployeeLevels } from '../../employee-level/employee-level.seed';
 import {
 	createDefaultTimeOffPolicy,
-	createRandomTimeOffPolicies
+	createRandomTimeOffPolicies,
 } from '../../time-off-policy/time-off-policy.seed';
 import {
 	createDefaultApprovalPolicyForOrg,
-	createRandomApprovalPolicyForOrg
+	createRandomApprovalPolicyForOrg,
 } from '../../approval-policy/approval-policy.seed';
 import {
 	createExpenseCategories,
-	createRandomExpenseCategories
+	createRandomExpenseCategories,
 } from '../../expense-categories/expense-categories.seed';
 import {
 	createOrganizationVendors,
-	createRandomOrganizationVendors
+	createRandomOrganizationVendors,
 } from '../../organization-vendor/organization-vendor.seed';
 import {
 	createDefaultCandidates,
-	createRandomCandidates
+	createRandomCandidates,
 } from '../../candidate/candidate.seed';
 import {
 	createCandidateSources,
-	createRandomCandidateSources
+	createRandomCandidateSources,
 } from '../../candidate-source/candidate-source.seed';
 import { createDefaultIntegrationTypes } from '../../integration/integration-type.seed';
 import { createDefaultIntegrations } from '../../integration/integration.seed';
 import {
 	createDefaultProducts,
-	createRandomProduct
+	createRandomProduct,
 } from '../../product/product.seed';
 import {
 	createCandidateDocuments,
-	createRandomCandidateDocuments
+	createRandomCandidateDocuments,
 } from '../../candidate-documents/candidate-documents.seed';
 import {
 	createCandidateFeedbacks,
-	createRandomCandidateFeedbacks
+	createRandomCandidateFeedbacks,
 } from '../../candidate-feedbacks/candidate-feedbacks.seed';
 import {
 	createDefaultTimeSheet,
-	createRandomTimesheet
+	createRandomTimesheet,
 } from './../../time-tracking/timesheet/timesheet.seed';
-import {
-	createDefaultTask,
-	createRandomTask
-} from '../../tasks/task.seed';
+import { createDefaultTask, createRandomTask } from '../../tasks/task.seed';
 import {
 	createDefaultOrganizationProjects,
-	createRandomOrganizationProjects
+	createRandomOrganizationProjects,
 } from '../../organization-project/organization-project.seed';
 import { createDefaultTimeFrames } from '../../goal-time-frame/goal-time-frame.seed';
 import {
 	createDefaultGoals,
 	createRandomGoal,
-	updateDefaultGoalProgress
+	updateDefaultGoalProgress,
 } from '../../goal/goal.seed';
 import {
 	createDefaultKeyResults,
 	createRandomKeyResult,
-	updateDefaultKeyResultProgress
+	updateDefaultKeyResultProgress,
 } from '../../keyresult/keyresult.seed';
 import { createDefaultKeyResultUpdates } from '../../keyresult-update/keyresult-update.seed';
 import {
 	seedRandomOrganizationDepartments,
-	createDefaultOrganizationDepartments
+	createDefaultOrganizationDepartments,
 } from '../../organization-department/organization-department.seed';
 import {
 	seedDefaultOrganizationPosition,
-	seedRandomOrganizationPosition
+	seedRandomOrganizationPosition,
 } from '../../organization-position/organization-position.seed';
 import {
 	createDefaultTags,
 	createRandomOrganizationTags,
-	createTags
+	createTags,
 } from '../../tags/tag.seed';
 import {
 	createDefaultEmailSent,
-	createRandomEmailSent
+	createRandomEmailSent,
 } from '../../email/email.seed';
 import {
 	createDefaultEmployeeInviteSent,
-	createRandomEmployeeInviteSent
+	createRandomEmployeeInviteSent,
 } from '../../invite/invite.seed';
 import { createRandomRequestApproval } from '../../request-approval/request-approval.seed';
 import {
 	createDefaultEmployeeTimeOff,
-	createRandomEmployeeTimeOff
+	createRandomEmployeeTimeOff,
 } from '../../time-off-request/time-off-request.seed';
 import {
 	createOrganizationDocuments,
-	createRandomOrganizationDocuments
+	createRandomOrganizationDocuments,
 } from '../../organization-document/organization-document.seed';
 import {
 	createDefaultEquipments,
-	createRandomEquipments
+	createRandomEquipments,
 } from '../../equipment/equipment.seed';
 import {
 	createDefaultEquipmentSharing,
-	createRandomEquipmentSharing
+	createRandomEquipmentSharing,
 } from '../../equipment-sharing/equipment-sharing.seed';
 import {
 	createDefaultProposals,
-	createRandomProposals
+	createRandomProposals,
 } from '../../proposal/proposal.seed';
 import {
 	createDefaultInvoiceItem,
-	createRandomInvoiceItem
+	createRandomInvoiceItem,
 } from '../../invoice-item/invoice-item.seed';
 import {
 	createDefaultInvoice,
-	createRandomInvoice
+	createRandomInvoice,
 } from '../../invoice/invoice.seed';
 import {
 	createCandidateSkills,
-	createRandomCandidateSkills
+	createRandomCandidateSkills,
 } from '../../candidate-skill/candidate-skill.seed';
 import { createRandomCandidateExperience } from '../../candidate-experience/candidate-experience.seed';
 import {
 	createCandidateEducations,
-	createRandomCandidateEducations
+	createRandomCandidateEducations,
 } from '../../candidate-education/candidate-education.seed';
 import { createRandomContacts } from '../../contact/contact.seed';
 import {
 	createDefaultOrganizationContact,
-	createRandomOrganizationContact
+	createRandomOrganizationContact,
 } from '../../organization-contact/organization-contact.seed';
 import {
 	createDefaultAvailabilitySlots,
-	createRandomAvailabilitySlots
+	createRandomAvailabilitySlots,
 } from '../../availability-slots/availability-slots.seed';
 import {
 	createDefaultCandidatePersonalQualities,
-	createRandomCandidatePersonalQualities
+	createRandomCandidatePersonalQualities,
 } from '../../candidate-personal-qualities/candidate-personal-qualities.seed';
 import {
 	createDefaultCandidateTechnologies,
-	createRandomCandidateTechnologies
+	createRandomCandidateTechnologies,
 } from '../../candidate-technologies/candidate-technologies.seed';
 import {
 	createDefaultCandidateInterview,
-	createRandomCandidateInterview
+	createRandomCandidateInterview,
 } from '../../candidate-interview/candidate-interview.seed';
 import {
 	createDefaultAwards,
-	createRandomAwards
+	createRandomAwards,
 } from '../../organization-award/organization-award.seed';
 import { createDefaultGeneralGoalSetting } from '../../goal-general-setting/goal-general-setting.seed';
 import {
 	createDefaultCandidateCriterionRating,
-	createRandomCandidateCriterionRating
+	createRandomCandidateCriterionRating,
 } from '../../candidate-criterions-rating/candidate-criterion-rating.seed';
 import { createDefaultGoalKpi } from '../../goal-kpi/goal-kpi.seed';
 import { createRandomEmployeeSetting } from '../../employee-setting/employee-setting.seed';
 import { createRandomEmployeeRecurringExpense } from '../../employee-recurring-expense/employee-recurring-expense.seed';
 import {
 	createDefaultCandidateInterviewers,
-	createRandomCandidateInterviewers
+	createRandomCandidateInterviewers,
 } from '../../candidate-interviewers/candidate-interviewers.seed';
 import { createRandomPipelineStage } from '../../pipeline-stage/pipeline-stage.seed';
 import {
 	createDefaultPipeline,
-	createRandomPipeline
+	createRandomPipeline,
 } from '../../pipeline/pipeline.seed';
 import {
 	createDefaultOrganizationRecurringExpense,
-	createRandomOrganizationRecurringExpense
+	createRandomOrganizationRecurringExpense,
 } from '../../organization-recurring-expense/organization-recurring-expense.seed';
 import {
 	createDefaultOrganizationLanguage,
-	createRandomOrganizationLanguage
+	createRandomOrganizationLanguage,
 } from '../../organization-language/organization-language.seed';
 import { createRandomOrganizationSprint } from '../../organization-sprint/organization-sprint.seed';
 import { createRandomOrganizationTeamEmployee } from '../../organization-team-employee/organization-team-employee.seed';
 import { createRandomAppointmentEmployees } from '../../appointment-employees/appointment-employees.seed';
 import {
 	createDefaultEmployeeAppointment,
-	createRandomEmployeeAppointment
+	createRandomEmployeeAppointment,
 } from '../../employee-appointment/employee-appointment.seed';
 import { createRandomDeal } from '../../deal/deal.seed';
 import { createRandomIntegrationSetting } from '../../integration-setting/integration-setting.seed';
@@ -264,30 +259,30 @@ import { createRandomRequestApprovalTeam } from '../../request-approval-team/req
 import { createRandomRequestApprovalEmployee } from '../../request-approval-employee/request-approval-employee.seed';
 import {
 	createDefaultPayment,
-	createRandomPayment
+	createRandomPayment,
 } from '../../payment/payment.seed';
 import {
 	createDefaultEventTypes,
-	createRandomEventType
+	createRandomEventType,
 } from '../../event-types/event-type.seed';
 import {
 	createDefaultEquipmentSharingPolicy,
-	createRandomEquipmentSharingPolicy
+	createRandomEquipmentSharingPolicy,
 } from '../../equipment-sharing-policy/equipment-sharing-policy.seed';
 import {
 	createRandomProductOption,
-	createRandomProductOptionGroups
+	createRandomProductOptionGroups,
 } from '../../product-option/product-option.seed';
 import { createRandomProductVariantSettings } from '../../product-setting/product-setting.seed';
 import { createRandomProductVariant } from '../../product-variant/product-variant.seed';
 import { createRandomProductVariantPrice } from '../../product-variant-price/product-variant-price.seed';
 import {
 	createCategories,
-	createRandomProductCategories
+	createRandomProductCategories,
 } from '../../product-category/category.seed';
 import {
 	createDefaultProductType,
-	createRandomProductType
+	createRandomProductType,
 } from '../../product-type/type.seed';
 import { createDefaultGoalTemplates } from '../../goal-template/goal-template.seed';
 import { createDefaultKeyResultTemplates } from '../../keyresult-template/keyresult-template.seed';
@@ -298,23 +293,26 @@ import { createDefaultJobSearchCategories } from '../../employee-job-preset/job-
 import { createDefaultJobSearchOccupations } from '../../employee-job-preset/job-search-occupation/job-search-occupation.seed';
 import {
 	createDefaultReport,
-	createRandomTenantOrganizationsReport
+	createRandomTenantOrganizationsReport,
 } from '../../reports/report.seed';
 import { createCurrencies } from '../../currency/currency.seed';
 import {
 	createDefaultFeatureToggle,
-	createRandomFeatureToggle
+	createRandomFeatureToggle,
 } from '../../feature/feature.seed';
 import { createDefaultAccountingTemplates } from './../../accounting-template/accounting-template.seed';
 import { DEFAULT_EMPLOYEES, DEFAULT_EVER_EMPLOYEES } from './../../employee';
-import { createRandomMerchants, createDefaultMerchants } from './../../merchant/merchant.seed';
+import {
+	createRandomMerchants,
+	createDefaultMerchants,
+} from './../../merchant/merchant.seed';
 import { createRandomWarehouses } from './../../warehouse/warehouse.seed';
-
+import { createDefaultStatuses } from './../../statuses/status.seed';
 
 export enum SeederTypeEnum {
 	ALL = 'all',
 	EVER = 'ever',
-	DEFAULT = 'default'
+	DEFAULT = 'default',
 }
 
 @Injectable()
@@ -335,7 +333,7 @@ export class SeedDataService {
 
 	constructor(
 		private readonly moduleRef: ModuleRef,
-		private readonly configService: ConfigService,
+		private readonly configService: ConfigService
 	) {}
 
 	/**
@@ -344,13 +342,13 @@ export class SeedDataService {
 	 */
 	overrideDbConfig = {
 		logging: 'all',
-		logger: 'file' //Removes console logging, instead logs all queries in a file ormlogs.log
+		logger: 'file', //Removes console logging, instead logs all queries in a file ormlogs.log
 		// dropSchema: !env.production //Drops the schema each time connection is being established in development mode.
 	};
 
 	/**
-	* Seed All Data
-	*/
+	 * Seed All Data
+	 */
 	public async runAllSeed() {
 		try {
 			this.seedType = SeederTypeEnum.ALL;
@@ -388,8 +386,8 @@ export class SeedDataService {
 	}
 
 	/**
-	* Seed Default Data
-	*/
+	 * Seed Default Data
+	 */
 	public async runDefaultSeed(fromAPI: boolean) {
 		try {
 			if (this.configService.get('demo') === true && fromAPI === true) {
@@ -422,8 +420,8 @@ export class SeedDataService {
 	}
 
 	/**
-	* Seed Default Ever Data
-	*/
+	 * Seed Default Ever Data
+	 */
 	public async runEverSeed() {
 		try {
 			this.seedType = SeederTypeEnum.EVER;
@@ -452,8 +450,8 @@ export class SeedDataService {
 	}
 
 	/**
-	* Seed Default Report Data
-	*/
+	 * Seed Default Report Data
+	 */
 	public async runReportsSeed() {
 		try {
 			// Connect to database
@@ -473,8 +471,8 @@ export class SeedDataService {
 	}
 
 	/**
-	* Seed Default & Random Data
-	*/
+	 * Seed Default & Random Data
+	 */
 	public async executeDemoSeed() {
 		try {
 			console.log('Database Demo Seed Started');
@@ -504,9 +502,9 @@ export class SeedDataService {
 	}
 
 	/**
-	* Populate database with report related data
-	*/
-	 private async seedReportsData() {
+	 * Populate database with report related data
+	 */
+	private async seedReportsData() {
 		try {
 			this.log(
 				chalk.green(
@@ -538,8 +536,8 @@ export class SeedDataService {
 	}
 
 	/**
-	* Seed Default Job Data
-	*/
+	 * Seed Default Job Data
+	 */
 	public async runJobsSeed() {
 		this.seedType = SeederTypeEnum.ALL;
 		try {
@@ -553,13 +551,14 @@ export class SeedDataService {
 	}
 
 	/**
-	* Populate database with jobs related data
-	*/
+	 * Populate database with jobs related data
+	 */
 	private async seedJobsData() {
 		try {
 			this.log(
 				chalk.green(
-					`🌱 SEEDING ${env.production ? 'PRODUCTION' : ''
+					`🌱 SEEDING ${
+						env.production ? 'PRODUCTION' : ''
 					} JOBS DATABASE...`
 				)
 			);
@@ -584,7 +583,8 @@ export class SeedDataService {
 
 			this.log(
 				chalk.green(
-					`✅ SEEDED ${env.production ? 'PRODUCTION' : ''
+					`✅ SEEDED ${
+						env.production ? 'PRODUCTION' : ''
 					} JOBS DATABASE`
 				)
 			);
@@ -594,68 +594,58 @@ export class SeedDataService {
 	}
 
 	/**
-	* Populate Database with Basic Default Data
-	*/
+	 * Populate Database with Basic Default Data
+	 */
 	private async seedBasicDefaultData() {
 		this.log(
 			chalk.magenta(
-				`🌱 SEEDING BASIC ${env.production ? 'PRODUCTION' : ''
+				`🌱 SEEDING BASIC ${
+					env.production ? 'PRODUCTION' : ''
 				} DATABASE...`
 			)
 		);
 
 		// Seed data which only needs connection
-		await this.tryExecute(
-			'Countries',
-			createCountries(this.dataSource)
-		);
+		await this.tryExecute('Countries', createCountries(this.dataSource));
+
+		await this.tryExecute('Currencies', createCurrencies(this.dataSource));
+
+		await this.tryExecute('Languages', createLanguages(this.dataSource));
 
 		await this.tryExecute(
-			'Currencies',
-			createCurrencies(this.dataSource)
-		);
-
-		await this.tryExecute(
-			'Languages',
-			createLanguages(this.dataSource)
+			'Statuses',
+			createDefaultStatuses(this.dataSource)
 		);
 
 		// default and internal tenant
-		const tenantName = (this.seedType !== SeederTypeEnum.DEFAULT) ? DEFAULT_EVER_TENANT : DEFAULT_TENANT;
-		this.tenant = await this.tryExecute(
+		const tenantName =
+			this.seedType !== SeederTypeEnum.DEFAULT
+				? DEFAULT_EVER_TENANT
+				: DEFAULT_TENANT;
+		this.tenant = (await this.tryExecute(
 			'Tenant',
-			createDefaultTenant(
-				this.dataSource,
-				tenantName
-			)
-		) as ITenant;
+			createDefaultTenant(this.dataSource, tenantName)
+		)) as ITenant;
 
-		this.roles = await createRoles(
-			this.dataSource,
-			[this.tenant]
-		);
+		this.roles = await createRoles(this.dataSource, [this.tenant]);
 
-		await createDefaultTenantSetting(
-			this.dataSource,
-			[this.tenant]
-		);
+		await createDefaultTenantSetting(this.dataSource, [this.tenant]);
 
-		await createRolePermissions(
-			this.dataSource,
-			this.roles,
-			[this.tenant]
-		);
+		await createRolePermissions(this.dataSource, this.roles, [this.tenant]);
 
 		// Tenant level inserts which only need connection, tenant, roles
-		const organizations = (this.seedType !== SeederTypeEnum.DEFAULT) ? DEFAULT_EVER_ORGANIZATIONS : DEFAULT_ORGANIZATIONS;
-		this.organizations = await this.tryExecute(
+		const organizations =
+			this.seedType !== SeederTypeEnum.DEFAULT
+				? DEFAULT_EVER_ORGANIZATIONS
+				: DEFAULT_ORGANIZATIONS;
+		this.organizations = (await this.tryExecute(
 			'Organizations',
 			createDefaultOrganizations(
 				this.dataSource,
 				this.tenant,
 				organizations
 			)
-		) as IOrganization[];
+		)) as IOrganization[];
 
 		//default organization set as main orgnaization
 		this.defaultOrganization = this.organizations.find(
@@ -690,30 +680,18 @@ export class SeedDataService {
 			)
 		);
 
-		const {
-			defaultSuperAdminUsers,
-			defaultAdminUsers
-		} = await createDefaultAdminUsers(
-			this.dataSource,
-			this.tenant
-		);
-		this.superAdminUsers.push(...defaultSuperAdminUsers as IUser[]);
+		const { defaultSuperAdminUsers, defaultAdminUsers } =
+			await createDefaultAdminUsers(this.dataSource, this.tenant);
+		this.superAdminUsers.push(...(defaultSuperAdminUsers as IUser[]));
 
-		const {
-			defaultEmployeeUsers
-		} = await createDefaultEmployeesUsers(
+		const { defaultEmployeeUsers } = await createDefaultEmployeesUsers(
 			this.dataSource,
 			this.tenant
 		);
 
 		if (this.seedType !== SeederTypeEnum.DEFAULT) {
-			const {
-				defaultEverEmployeeUsers,
-				defaultCandidateUsers
-			} = await createDefaultUsers(
-				this.dataSource,
-				this.tenant
-			);
+			const { defaultEverEmployeeUsers, defaultCandidateUsers } =
+				await createDefaultUsers(this.dataSource, this.tenant);
 			this.defaultCandidateUsers.push(...defaultCandidateUsers);
 			defaultEmployeeUsers.push(...defaultEverEmployeeUsers);
 		}
@@ -721,7 +699,7 @@ export class SeedDataService {
 		const defaultUsers = [
 			...this.superAdminUsers,
 			...defaultAdminUsers,
-			...defaultEmployeeUsers
+			...defaultEmployeeUsers,
 		];
 		await this.tryExecute(
 			'Users',
@@ -733,7 +711,9 @@ export class SeedDataService {
 			)
 		);
 
-		const allDefaultEmployees = DEFAULT_EMPLOYEES.concat(DEFAULT_EVER_EMPLOYEES);
+		const allDefaultEmployees = DEFAULT_EMPLOYEES.concat(
+			DEFAULT_EVER_EMPLOYEES
+		);
 		//User level data that needs dataSource, tenant, organization, role, users
 		this.defaultEmployees = await createDefaultEmployees(
 			this.dataSource,
@@ -772,10 +752,7 @@ export class SeedDataService {
 
 		await this.tryExecute(
 			'Default Key Result Template',
-			createDefaultKeyResultTemplates(
-				this.dataSource,
-				this.tenant
-			)
+			createDefaultKeyResultTemplates(this.dataSource, this.tenant)
 		);
 
 		await this.tryExecute(
@@ -796,10 +773,7 @@ export class SeedDataService {
 
 		await this.tryExecute(
 			'Default Integrations',
-			createDefaultIntegrations(
-				this.dataSource,
-				integrationTypes
-			)
+			createDefaultIntegrations(this.dataSource, integrationTypes)
 		);
 
 		await this.tryExecute(
@@ -829,12 +803,13 @@ export class SeedDataService {
 	}
 
 	/**
-	* Populate default data for default tenant
-	*/
+	 * Populate default data for default tenant
+	 */
 	private async seedDefaultData() {
 		this.log(
 			chalk.magenta(
-				`🌱 SEEDING DEFAULT ${env.production ? 'PRODUCTION' : ''
+				`🌱 SEEDING DEFAULT ${
+					env.production ? 'PRODUCTION' : ''
 				} DATABASE...`
 			)
 		);
@@ -851,11 +826,7 @@ export class SeedDataService {
 
 		await this.tryExecute(
 			'Default Tags',
-			createDefaultTags(
-				this.dataSource,
-				this.tenant,
-				this.organizations
-			)
+			createDefaultTags(this.dataSource, this.tenant, this.organizations)
 		);
 
 		// Organization level inserts which need connection, tenant, role, organizations
@@ -880,11 +851,7 @@ export class SeedDataService {
 		// TODO: needs to fix error of seeding Product Category
 		await this.tryExecute(
 			'Default Categories',
-			createCategories(
-				this.dataSource,
-				this.tenant,
-				this.organizations
-			)
+			createCategories(this.dataSource, this.tenant, this.organizations)
 		);
 
 		await this.tryExecute(
@@ -1163,7 +1130,7 @@ export class SeedDataService {
 		await this.tryExecute(
 			'Default Approval Policies',
 			createDefaultApprovalPolicyForOrg(this.dataSource, {
-				orgs: this.organizations
+				orgs: this.organizations,
 			})
 		);
 
@@ -1388,7 +1355,9 @@ export class SeedDataService {
 
 		this.log(
 			chalk.magenta(
-				`✅ SEEDED DEFAULT ${env.production ? 'PRODUCTION' : ''} DATABASE`
+				`✅ SEEDED DEFAULT ${
+					env.production ? 'PRODUCTION' : ''
+				} DATABASE`
 			)
 		);
 	}
@@ -1399,15 +1368,13 @@ export class SeedDataService {
 	private async seedRandomData() {
 		this.log(
 			chalk.magenta(
-				`🌱 SEEDING RANDOM ${env.production ? 'PRODUCTION' : ''
+				`🌱 SEEDING RANDOM ${
+					env.production ? 'PRODUCTION' : ''
 				} DATABASE...`
 			)
 		);
 
-		await this.tryExecute(
-			'Random Tags',
-			createTags(this.dataSource)
-		);
+		await this.tryExecute('Random Tags', createTags(this.dataSource));
 
 		// Platform level data which only need database connection
 		const tenants = await createRandomTenants(
@@ -1417,41 +1384,25 @@ export class SeedDataService {
 
 		await this.tryExecute(
 			'Random Tenant Settings',
-			createDefaultTenantSetting(
-				this.dataSource,
-				tenants
-			)
+			createDefaultTenantSetting(this.dataSource, tenants)
 		);
 
 		await this.tryExecute(
 			'Random Feature Reports',
-			createRandomTenantOrganizationsReport(
-				this.dataSource,
-				tenants
-			)
+			createRandomTenantOrganizationsReport(this.dataSource, tenants)
 		);
 
 		await this.tryExecute(
 			'Random Feature Toggle',
-			createRandomFeatureToggle(
-				this.dataSource,
-				tenants
-			)
+			createRandomFeatureToggle(this.dataSource, tenants)
 		);
 
 		// Independent roles and role permissions for each tenant
-		const roles: IRole[] = await createRoles(
-			this.dataSource,
-			tenants
-		);
+		const roles: IRole[] = await createRoles(this.dataSource, tenants);
 
 		await this.tryExecute(
 			'Random Tenant Role Permissions',
-			createRolePermissions(
-				this.dataSource,
-				roles,
-				tenants
-			)
+			createRolePermissions(this.dataSource, roles, tenants)
 		);
 
 		// Tenant level inserts which only need connection, tenant, role
@@ -1868,10 +1819,7 @@ export class SeedDataService {
 
 		await this.tryExecute(
 			'Random Tasks',
-			createRandomTask(
-				this.dataSource,
-				tenants
-			)
+			createRandomTask(this.dataSource, tenants)
 		);
 
 		await this.tryExecute(
@@ -2092,42 +2040,27 @@ export class SeedDataService {
 
 		await this.tryExecute(
 			'Random Integrations',
-			createRandomIntegrationTenant(
-				this.dataSource,
-				tenants
-			)
+			createRandomIntegrationTenant(this.dataSource, tenants)
 		);
 
 		await this.tryExecute(
 			'Random Integration Settings',
-			createRandomIntegrationSetting(
-				this.dataSource,
-				tenants
-			)
+			createRandomIntegrationSetting(this.dataSource, tenants)
 		);
 
 		await this.tryExecute(
 			'Random Integration Map',
-			createRandomIntegrationMap(
-				this.dataSource,
-				tenants
-			)
+			createRandomIntegrationMap(this.dataSource, tenants)
 		);
 
 		await this.tryExecute(
 			'Random Integration Entity Settings',
-			createRandomIntegrationEntitySetting(
-				this.dataSource,
-				tenants
-			)
+			createRandomIntegrationEntitySetting(this.dataSource, tenants)
 		);
 
 		await this.tryExecute(
 			'Random Integration Entity Settings Tied Entity',
-			createRandomIntegrationEntitySettingTied(
-				this.dataSource,
-				tenants
-			)
+			createRandomIntegrationEntitySettingTied(this.dataSource, tenants)
 		);
 
 		await this.tryExecute(
@@ -2191,14 +2124,16 @@ export class SeedDataService {
 
 		this.log(
 			chalk.magenta(
-				`✅ SEEDED RANDOM ${env.production ? 'PRODUCTION' : ''} DATABASE`
+				`✅ SEEDED RANDOM ${
+					env.production ? 'PRODUCTION' : ''
+				} DATABASE`
 			)
 		);
 	}
 
 	/**
-	* Cleans all the previous generate screenshots, reports etc
-	*/
+	 * Cleans all the previous generate screenshots, reports etc
+	 */
 	private async cleanUpPreviousRuns() {
 		this.log(chalk.green(`CLEANING UP FROM PREVIOUS RUNS...`));
 
@@ -2206,9 +2141,9 @@ export class SeedDataService {
 			const assetOptions = this.configService.assetOptions;
 			const dir = env.isElectron
 				? path.join(
-					path.resolve(env.gauzyUserPath, ...['public']),
-					'screenshots'
-				)
+						path.resolve(env.gauzyUserPath, ...['public']),
+						'screenshots'
+				  )
 				: path.join(assetOptions.assetPublicPath, 'screenshots');
 
 			// delete old generated screenshots
@@ -2220,8 +2155,8 @@ export class SeedDataService {
 	}
 
 	/**
-	* Create connection from database
-	*/
+	 * Create connection from database
+	 */
 	private async createConnection() {
 		if (!this.dataSource) {
 			this.log(
@@ -2234,10 +2169,10 @@ export class SeedDataService {
 				this.log(chalk.green(`CONNECTING TO DATABASE...`));
 				const options = {
 					...dbConnectionOptions,
-					...this.overrideDbConfig
-				}
+					...this.overrideDbConfig,
+				};
 				const dataSource = new DataSource({
-					...options
+					...options,
 				} as DataSourceOptions);
 
 				if (!dataSource.isInitialized) {
@@ -2251,8 +2186,8 @@ export class SeedDataService {
 	}
 
 	/**
-	* Close connection from database
-	*/
+	 * Close connection from database
+	 */
 	private async closeConnection() {
 		try {
 			if (this.dataSource && this.dataSource.isInitialized) {
@@ -2260,14 +2195,16 @@ export class SeedDataService {
 				this.log(chalk.green(`✅ DISCONNECTED TO DATABASE!`));
 			}
 		} catch (error) {
-			this.log('NOTE: DATABASE CONNECTION DOES NOT EXIST YET. CANT CLOSE CONNECTION!');
+			this.log(
+				'NOTE: DATABASE CONNECTION DOES NOT EXIST YET. CANT CLOSE CONNECTION!'
+			);
 		}
 	}
 
 	/**
 	 * Reset the database, truncate all tables (remove all data)
 	 */
-	 private async resetDatabase() {
+	private async resetDatabase() {
 		this.log(chalk.green(`RESETTING DATABASE...`));
 
 		const entities = await this.getEntities();
@@ -2279,13 +2216,13 @@ export class SeedDataService {
 	/**
 	 * Retrieve entities metadata
 	 */
-	 private async getEntities() {
+	private async getEntities() {
 		const entities = [];
 		try {
 			this.dataSource.entityMetadatas.forEach((entity) =>
 				entities.push({
 					name: entity.name,
-					tableName: entity.tableName
+					tableName: entity.tableName,
 				})
 			);
 			return entities;
@@ -2363,11 +2300,15 @@ export class SeedDataService {
 	 * Use this wrapper function for all seed functions which are not essential.
 	 * Essentials seeds are ONLY those which are required to start the UI/login
 	 */
-	 public tryExecute<T>(
+	public tryExecute<T>(
 		name: string,
 		p: Promise<T>
 	): Promise<T> | Promise<void> {
-		this.log(chalk.green(`${moment().format('DD.MM.YYYY HH:mm:ss')} SEEDING ${name}`));
+		this.log(
+			chalk.green(
+				`${moment().format('DD.MM.YYYY HH:mm:ss')} SEEDING ${name}`
+			)
+		);
 
 		return (p as any).then(
 			(x: T) => x,
@@ -2384,7 +2325,8 @@ export class SeedDataService {
 	private handleError(error: Error, message?: string): void {
 		this.log(
 			chalk.bgRed(
-				`🛑 ERROR: ${message ? message + '-> ' : ''} ${error ? error.message : ''
+				`🛑 ERROR: ${message ? message + '-> ' : ''} ${
+					error ? error.message : ''
 				}`
 			)
 		);
