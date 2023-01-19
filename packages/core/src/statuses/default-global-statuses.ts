@@ -1,9 +1,10 @@
 import { IStatus, TaskStatusEnum } from '@gauzy/contracts';
+import slugify from 'slugify';
 
 export const DEFAULT_GLOBAL_STATUSES: IStatus[] = [
 	{
 		name: TaskStatusEnum.OPEN,
-		value: TaskStatusEnum.OPEN,
+		value: slugify(TaskStatusEnum.OPEN, '_').toLocaleLowerCase(),
 		description:
 			'The issue/task has been reported and is waiting for the team to action it.',
 		icon: null,
@@ -12,7 +13,7 @@ export const DEFAULT_GLOBAL_STATUSES: IStatus[] = [
 	},
 	{
 		name: TaskStatusEnum.IN_PROGRESS,
-		value: TaskStatusEnum.IN_PROGRESS,
+		value: slugify(TaskStatusEnum.IN_PROGRESS, '_').toLocaleLowerCase(),
 		description:
 			'This issue/task is being actively worked on at the moment by the assignee.',
 		icon: null,
@@ -21,7 +22,7 @@ export const DEFAULT_GLOBAL_STATUSES: IStatus[] = [
 	},
 	{
 		name: TaskStatusEnum.READY_FOR_REVIEW,
-		value: TaskStatusEnum.READY_FOR_REVIEW,
+		value: slugify(TaskStatusEnum.READY_FOR_REVIEW, '_').toLocaleLowerCase(),
 		description:
 			'At this point the merge request / pull request is ready to be reviewed for issue/task.',
 		icon: null,
@@ -30,7 +31,7 @@ export const DEFAULT_GLOBAL_STATUSES: IStatus[] = [
 	},
 	{
 		name: TaskStatusEnum.IN_REVIEW,
-		value: TaskStatusEnum.IN_REVIEW,
+		value: slugify(TaskStatusEnum.IN_REVIEW, '_').toLocaleLowerCase(),
 		description:
 			'It needs peer review issue/task before being considered done.',
 		icon: null,
@@ -39,7 +40,7 @@ export const DEFAULT_GLOBAL_STATUSES: IStatus[] = [
 	},
 	{
 		name: TaskStatusEnum.BLOCKED,
-		value: TaskStatusEnum.BLOCKED,
+		value: slugify(TaskStatusEnum.BLOCKED, '_').toLocaleLowerCase(),
 		description:
 			'The issue/task is missing information, wait for customer decision, etc.',
 		icon: null,
@@ -48,7 +49,7 @@ export const DEFAULT_GLOBAL_STATUSES: IStatus[] = [
 	},
 	{
 		name: TaskStatusEnum.COMPLETED,
-		value: TaskStatusEnum.COMPLETED,
+		value: slugify(TaskStatusEnum.COMPLETED, '_').toLocaleLowerCase(),
 		description:
 			'The issue/task is considered finished. The resolution is correct.',
 		icon: null,
