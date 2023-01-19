@@ -441,7 +441,7 @@
 									</nb-card-body>
 								</nb-card>
 							</div>
-							<div class="col-12" *ngIf="config.isLocalServer">
+							<div class="col-12">
 								<nb-card>
 									<nb-card-body>
 										<div class="row">
@@ -460,38 +460,8 @@
 													</nb-option>
 												</nb-select>
 											</div>
-											<div class="col-5 centered-text" *ngIf="config.db === 'postgres'">
-												<p>DB Host</p>
-											</div>
-											<div class="col-7 form-group" *ngIf="config.db === 'postgres'">
-												<input [(ngModel)]="config.dbHost" type="text" nbInput fullWidth
-													status="basic" [disabled]="appSetting?.timerStarted"
-													(ngModelChange)="portChange($event, 'db')" />
-											</div>
-											<div class="col-5 centered-text" *ngIf="config.db === 'postgres'">
-												<p>DB UserName</p>
-											</div>
-											<div class="col-7 form-group" *ngIf="config.db === 'postgres'">
-												<input [(ngModel)]="config.dbUsername" type="text" nbInput fullWidth
-													status="basic" [disabled]="appSetting?.timerStarted"
-													(ngModelChange)="portChange($event, 'db')" />
-											</div>
-											<div class="col-5 centered-text" *ngIf="config.db === 'postgres'">
-												<p>DB Password</p>
-											</div>
-											<div class="col-7 form-group" *ngIf="config.db === 'postgres'">
-												<input [(ngModel)]="config.dbPassword" type="password" nbInput fullWidth
-													status="basic" [disabled]="appSetting?.timerStarted"
-													(ngModelChange)="portChange($event, 'db')" />
-											</div>
-											<div class="col-5 centered-text" *ngIf="config.db === 'postgres'">
-												<p>DB Port</p>
-											</div>
-											<div class="col-7 form-group" *ngIf="config.db === 'postgres'">
-												<input [(ngModel)]="config.dbPort" type="number" nbInput fullWidth
-													status="basic" [disabled]="appSetting?.timerStarted"
-													(ngModelChange)="portChange($event, 'db')" />
-											</div>
+											<ng-container
+												*ngTemplateOutlet="databaseConfig, context: {providerConfig: config}"></ng-container>
 										</div>
 									</nb-card-body>
 								</nb-card>
@@ -622,3 +592,36 @@
 		</span>
 	</nb-layout-footer>
 </nb-layout>
+
+<ng-template #databaseConfig let-provider="providerConfig">
+	<ng-container *ngIf="provider.db !== 'sqlite'">
+		<div class="col-5 centered-text">
+			<p>DB Host</p>
+		</div>
+		<div class="col-7 form-group">
+			<input [(ngModel)]="provider.dbHost" type="text" nbInput fullWidth status="basic"
+				[disabled]="appSetting?.timerStarted" (ngModelChange)="portChange($event, 'db')" />
+		</div>
+		<div class="col-5 centered-text">
+			<p>DB UserName</p>
+		</div>
+		<div class="col-7 form-group">
+			<input [(ngModel)]="provider.dbUsername" type="text" nbInput fullWidth status="basic"
+				[disabled]="appSetting?.timerStarted" (ngModelChange)="portChange($event, 'db')" />
+		</div>
+		<div class="col-5 centered-text">
+			<p>DB Password</p>
+		</div>
+		<div class="col-7 form-group">
+			<input [(ngModel)]="provider.dbPassword" type="password" nbInput fullWidth status="basic"
+				[disabled]="appSetting?.timerStarted" (ngModelChange)="portChange($event, 'db')" />
+		</div>
+		<div class="col-5 centered-text">
+			<p>DB Port</p>
+		</div>
+		<div class="col-7 form-group">
+			<input [(ngModel)]="provider.dbPort" type="number" nbInput fullWidth status="basic"
+				[disabled]="appSetting?.timerStarted" (ngModelChange)="portChange($event, 'db')" />
+		</div>
+	</ng-container>
+</ng-template>

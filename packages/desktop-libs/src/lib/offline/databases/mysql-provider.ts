@@ -1,5 +1,6 @@
 import { IDatabaseProvider } from '../../interfaces/i-database-provider';
 import { Knex } from 'knex';
+import { LocalStore } from '../../desktop-store';
 
 export class MysqlProvider implements IDatabaseProvider {
 	private _connectionConfig: Knex.StaticConnectionConfig;
@@ -18,10 +19,10 @@ export class MysqlProvider implements IDatabaseProvider {
 			client: 'mysql',
 			connection: {
 				...this._connectionConfig,
-				database: this._database
+				database: this._database,
 			},
 			migrations: {
-				directory: __dirname + '/migrations'
+				directory: __dirname + '/migrations',
 			},
 			pool: {
 				min: 2,
@@ -30,10 +31,10 @@ export class MysqlProvider implements IDatabaseProvider {
 				acquireTimeoutMillis: 60 * 1000 * 2,
 				idleTimeoutMillis: 30000,
 				reapIntervalMillis: 1000,
-				createRetryIntervalMillis: 100
+				createRetryIntervalMillis: 100,
 			},
 			useNullAsDefault: true,
-			asyncStackTraces: true
+			asyncStackTraces: true,
 		};
 	}
 
@@ -46,17 +47,18 @@ export class MysqlProvider implements IDatabaseProvider {
 
 	private _initialization() {
 		this._database = 'gauzy_timer_db';
+		const cfg = LocalStore.getApplicationConfig().config;
 		this._connectionConfig = {
-			host: '127.0.0.1',
-			port: 3306,
-			user: 'root',
-			password: ''
+			host: cfg.dbHost,
+			port: cfg.dbPort,
+			user: cfg.dbUsername,
+			password: cfg.dbPassword,
 		};
 		(async () => {
 			try {
 				const connection: Knex = require('knex')({
 					client: 'mysql',
-					connection: this._connectionConfig
+					connection: this._connectionConfig,
 				});
 				await connection
 					.raw('CREATE DATABASE IF NOT EXISTS ??', this._database)

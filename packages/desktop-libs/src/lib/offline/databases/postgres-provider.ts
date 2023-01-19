@@ -1,5 +1,6 @@
 import { IDatabaseProvider } from '../../interfaces/i-database-provider';
 import { Knex } from 'knex';
+import { LocalStore } from '../../desktop-store';
 
 export class PostgresProvider implements IDatabaseProvider {
 	private static _instance: IDatabaseProvider;
@@ -11,14 +12,15 @@ export class PostgresProvider implements IDatabaseProvider {
 	}
 
 	public get config(): Knex.Config<any> {
+		const cfg = LocalStore.getApplicationConfig().config;
 		return {
 			client: 'pg',
 			connection: {
-				host: '127.0.0.1',
-				port: 5406,
-				user: 'root',
-				password: '',
-				database: 'desktop_timer'
+				host: cfg.dbHost,
+				port: cfg.dbPort,
+				user: cfg.dbUsername,
+				password: cfg.dbPassword,
+				database: 'db_gauzy_timer',
 			},
 			pool: {
 				min: 2,
@@ -27,13 +29,13 @@ export class PostgresProvider implements IDatabaseProvider {
 				acquireTimeoutMillis: 60 * 1000 * 2,
 				idleTimeoutMillis: 30000,
 				reapIntervalMillis: 1000,
-				createRetryIntervalMillis: 100
+				createRetryIntervalMillis: 100,
 			},
 			migrations: {
-				directory: __dirname + '/migrations'
+				directory: __dirname + '/migrations',
 			},
 			useNullAsDefault: true,
-			asyncStackTraces: true
+			asyncStackTraces: true,
 		};
 	}
 

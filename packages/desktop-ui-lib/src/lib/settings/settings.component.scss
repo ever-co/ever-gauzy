@@ -279,6 +279,8 @@ nb-card {
 
 nb-card-body {
   padding: 1rem;
+  background: var(--gauzy-card-2);
+  border-radius: var(--border-radius);
 }
 
 .main-layout {

@@ -4,6 +4,7 @@ import { SqliteProvider } from './sqlite-provider';
 import { Knex } from 'knex';
 import { PostgresProvider } from './postgres-provider';
 import { MysqlProvider } from './mysql-provider';
+import { LocalStore } from '../../desktop-store';
 
 export class ProviderFactory implements IDatabaseProvider {
 	private _dbContext: DatabaseProviderContext;
@@ -46,7 +47,8 @@ export class ProviderFactory implements IDatabaseProvider {
 	}
 
 	private get _dialect(): string {
-		return 'mysql';
+		const cfg = LocalStore.getApplicationConfig().config;
+		return cfg.db;
 	}
 
 	private async _migrate(): Promise<void> {

@@ -373,7 +373,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 					this.serverTypes.live,
 			  ];
 
-	driverOptions = ['sqlite', 'postgres'];
+	driverOptions = ['sqlite', 'postgres', 'mysql'];
 	muted: boolean;
 
 	private _loading$: BehaviorSubject<boolean>;
@@ -696,6 +696,9 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				this.restartDisable = false;
 			}
 		}
+		if (type === 'db') {
+			console.log('Port change', val);
+		}
 	}
 
 	serverConnectivity() {
@@ -801,6 +804,9 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				break;
 			case 'postgres':
 				this.config.db = 'postgres';
+				break;
+			case 'mysql':
+				this.config.db = 'mysql';
 				break;
 			default:
 				break;
