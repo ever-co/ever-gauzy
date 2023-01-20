@@ -7,9 +7,9 @@ import {
     RemoveEvent,
     UpdateEvent
 } from "typeorm";
-import { retrieveNameFromEmail } from "@gauzy/common";
+import { retrieveNameFromEmail, sluggable } from "@gauzy/common";
 import { Employee } from "./employee.entity";
-import { generateSlug, getUserDummyImage } from "./../core/utils";
+import { getUserDummyImage } from "./../core/utils";
 import { Organization } from "./../core/entities/internal";
 
 @EventSubscriber()
@@ -136,13 +136,13 @@ export class EmployeeSubscriber implements EntitySubscriberInterface<Employee> {
         try {
             if (entity.user.firstName || entity.user.lastName) { // Use first & last name to create slug
                 const { firstName, lastName } = entity.user;
-                entity.profile_link = generateSlug(`${firstName} ${lastName}`);
+                entity.profile_link = sluggable(`${firstName} ${lastName}`);
             } else if (entity.user.username) { // Use username to create slug if first & last name not found
                 const { username } = entity.user;
-                entity.profile_link = generateSlug(`${username}`);
+                entity.profile_link = sluggable(`${username}`);
             } else { // Use email to create slug if nothing found
                 const { email } = entity.user;
-                entity.profile_link = generateSlug(`${retrieveNameFromEmail(email)}`);
+                entity.profile_link = sluggable(`${retrieveNameFromEmail(email)}`);
             }
         } catch (error) {
             console.log(error);
