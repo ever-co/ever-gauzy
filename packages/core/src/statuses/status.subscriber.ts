@@ -5,6 +5,7 @@ import {
 	LoadEvent,
 } from 'typeorm';
 import { faker } from '@ever-co/faker';
+import { sluggable } from '@gauzy/common';
 import { Status } from './status.entity';
 
 @EventSubscriber()
@@ -38,6 +39,9 @@ export class StatusSubscriber implements EntitySubscriberInterface<Status> {
 				const { entity } = event;
 				if (!entity.color) {
 					entity.color = faker.internet.color();
+				}
+				if ('name' in entity) {
+					entity.value = sluggable(entity.name);
 				}
 			}
 		} catch (error) {

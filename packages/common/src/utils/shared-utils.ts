@@ -1,3 +1,5 @@
+import slugify from 'slugify';
+
 /**
  * Check is function .
  * @param item
@@ -164,4 +166,20 @@ export function chunks(items: any[], size: number): any[] {
  */
 export function parseToBoolean(val: string | boolean): boolean {
 	return typeof val === 'string' ? JSON.parse(val) : val;
+}
+
+/**
+ * Generate slug from string value
+ *
+ * @param string
+ * @param replacement
+ * @returns {string}
+ */
+export function sluggable(string: string, replacement: any = '-'): string {
+	return slugify(string, {
+		replacement: replacement, // replace spaces with replacement character, defaults to `-`
+		remove: /[*+~()'"!:@,.]/g, // remove characters that match regex, defaults to `undefined`
+		lower: true, // convert to lower case, defaults to `false`
+		trim: true // trim leading and trailing replacement chars, defaults to `true`
+	}).replace(/[_]/g, replacement);
 }

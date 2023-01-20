@@ -9,8 +9,7 @@ import {
 	IGetTaskOptions,
 	IOrganization,
 	ITag,
-	ITenant,
-	TaskStatusEnum,
+	ITenant
 } from '@gauzy/contracts';
 import {
 	Organization,
@@ -81,7 +80,7 @@ export const createDefaultTask = async (
 		task.organization = organization;
 		task.title = issue.title;
 		task.description = issue.body;
-		task.status = TaskStatusEnum.OPEN;
+		task.status = issue.state;
 		task.estimate = null;
 		task.dueDate = faker.date.future(0.3);
 		task.project = project;
@@ -184,7 +183,7 @@ export const createRandomTask = async (
 				);
 				task.title = issue.title;
 				task.description = issue.body;
-				task.status = TaskStatusEnum.OPEN;
+				task.status = issue.state;
 				task.estimate = null;
 				task.dueDate = null;
 				task.project = project;
