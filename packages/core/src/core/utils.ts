@@ -150,15 +150,6 @@ export function getDateRange(
 	};
 }
 
-export function generateSlug(string: string) {
-	return slugify(string, {
-		replacement: '-', // replace spaces with replacement character, defaults to `-`
-		remove: /[*+~()'"!:@,.]/g, // remove characters that match regex, defaults to `undefined`
-		lower: true, // convert to lower case, defaults to `false`
-		trim: true // trim leading and trailing replacement chars, defaults to `true`
-	});
-}
-
 export const getOrganizationDummyImage = (name: string) => {
 	const firstNameLetter = name ? name.charAt(0).toUpperCase() : '';
 	return getDummyImage(330, 300, firstNameLetter);

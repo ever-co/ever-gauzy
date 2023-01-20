@@ -45,12 +45,12 @@ export interface IGetSprintsOptions extends IGetTaskOptions {}
  * Default task statuses
  */
 export enum TaskStatusEnum {
-	OPEN = 'OPEN',
-	IN_PROGRESS = 'IN_PROGRESS',
-	READY_FOR_REVIEW = 'READY_FOR_REVIEW',
-	IN_REVIEW = 'IN_REVIEW',
-	BLOCKED = 'BLOCKED',
-	COMPLETED = 'COMPLETED',
+	OPEN = 'open',
+	IN_PROGRESS = 'in-progress',
+	READY_FOR_REVIEW = 'ready-for-review',
+	IN_REVIEW = 'in-review',
+	BLOCKED = 'blocked',
+	COMPLETED = 'completed',
 }
 
 export enum TaskParticipantEnum {
