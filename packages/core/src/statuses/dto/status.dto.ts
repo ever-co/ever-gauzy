@@ -1,19 +1,18 @@
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
-import { IOrganizationProject, IStatus } from '@gauzy/contracts';
+import { IOrganizationProject, IStatusCreateInput } from '@gauzy/contracts';
 import { TenantOrganizationBaseDTO } from './../../core/dto';
 
-export class StatusDTO
-	extends PartialType(TenantOrganizationBaseDTO)
-	implements IStatus
-{
+export class StatusDTO extends PartialType(TenantOrganizationBaseDTO)
+	implements IStatusCreateInput {
+
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
 	@IsString()
 	name: string;
 
-	@ApiProperty({ type: () => String })
-	@IsNotEmpty()
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
 	@IsString()
 	value: string;
 

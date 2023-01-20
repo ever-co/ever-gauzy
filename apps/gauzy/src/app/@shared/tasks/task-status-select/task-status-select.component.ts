@@ -6,12 +6,20 @@ import {
 	forwardRef,
 	EventEmitter,
 	Output,
+	AfterViewInit,
 } from '@angular/core';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
+import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
+import { combineLatest, firstValueFrom, Subject } from 'rxjs';
+import { filter, map, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
-import { TaskStatusEnum } from '@gauzy/contracts';
+import { IOrganization, IOrganizationProject, IPagination, IStatus, IStatusFindInput, TaskStatusEnum } from '@gauzy/contracts';
+import { distinctUntilChange, sluggable } from '@gauzy/common-angular';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { StatusesService, Store, ToastrService } from '../../../@core/services';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-task-status-select',
 	templateUrl: './task-status-select.component.html',
@@ -23,41 +31,59 @@ import { TranslationBaseComponent } from '../../language-base/translation-base.c
 		},
 	],
 })
-export class TaskStatusSelectComponent
-	extends TranslationBaseComponent
-	implements OnInit, OnDestroy
-{
-	statuses: Array<{ label: string; value: TaskStatusEnum }> = [
+export class TaskStatusSelectComponent extends TranslationBaseComponent
+	implements AfterViewInit, OnInit, OnDestroy {
+
+	private subject$: Subject<boolean> = new Subject();
+	public selectedProjectId: IOrganizationProject['id'];
+	public organization: IOrganization;
+	public statuses$: BehaviorSubject<IStatus[]> = new BehaviorSubject([]);
+
+	/**
+	 * Default global task statuses
+	 */
+	private _statuses: Array<{ name: string; value: TaskStatusEnum & any }> = [
 		{
-			label: this.getTranslation('TASKS_PAGE.OPEN'),
-			value: TaskStatusEnum.OPEN,
+			name: TaskStatusEnum.OPEN,
+			value: sluggable(TaskStatusEnum.OPEN),
 		},
 		{
-			label: this.getTranslation('TASKS_PAGE.IN_PROGRESS'),
-			value: TaskStatusEnum.IN_PROGRESS,
+			name: TaskStatusEnum.IN_PROGRESS,
+			value: sluggable(TaskStatusEnum.IN_PROGRESS),
 		},
 		{
-			label: this.getTranslation('TASKS_PAGE.READY_FOR_REVIEW'),
-			value: TaskStatusEnum.READY_FOR_REVIEW,
+			name: TaskStatusEnum.READY_FOR_REVIEW,
+			value: sluggable(TaskStatusEnum.READY_FOR_REVIEW),
 		},
 		{
-			label: this.getTranslation('TASKS_PAGE.IN_REVIEW'),
-			value: TaskStatusEnum.IN_REVIEW,
+			name: TaskStatusEnum.IN_REVIEW,
+			value: sluggable(TaskStatusEnum.IN_REVIEW),
 		},
 		{
-			label: this.getTranslation('TASKS_PAGE.BLOCKED'),
-			value: TaskStatusEnum.BLOCKED,
+			name: TaskStatusEnum.BLOCKED,
+			value: sluggable(TaskStatusEnum.BLOCKED),
 		},
 		{
-			label: this.getTranslation('TASKS_PAGE.COMPLETED'),
-			value: TaskStatusEnum.COMPLETED,
+			name: TaskStatusEnum.COMPLETED,
+			value: sluggable(TaskStatusEnum.COMPLETED),
 		},
 	];
 
 	/*
+	* Getter & Setter for dynamic add tag option
+	*/
+	private _addTag: boolean = true;
+	get addTag(): boolean {
+		return this._addTag;
+	}
+	@Input() set addTag(value: boolean) {
+		this._addTag = value;
+	}
+
+	/*
 	 * Getter & Setter for dynamic placeholder
 	 */
-	_placeholder: string;
+	private _placeholder: string;
 	get placeholder(): string {
 		return this._placeholder;
 	}
@@ -83,11 +109,40 @@ export class TaskStatusSelectComponent
 
 	@Output() onChanged = new EventEmitter<string>();
 
-	constructor(public readonly translateService: TranslateService) {
+	constructor(
+		public readonly translateService: TranslateService,
+		public readonly store: Store,
+		public readonly statusesService: StatusesService,
+		private readonly toastrService: ToastrService
+	) {
 		super(translateService);
 	}
 
-	ngOnInit() {}
+	ngOnInit(): void {
+		this.subject$
+			.pipe(
+				tap(() => this.getStatuses()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
+
+	ngAfterViewInit(): void {
+		const storeOrganization$ = this.store.selectedOrganization$;
+		const storeProject$ = this.store.selectedProject$;
+		combineLatest([storeOrganization$, storeProject$])
+			.pipe(
+				distinctUntilChange(),
+				filter(([organization]) => !!organization),
+				tap(([organization, project]) => {
+					this.organization = organization;
+					this.selectedProjectId = project ? project.id : null;
+				}),
+				tap(() => this.subject$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
 
 	writeValue(value: TaskStatusEnum) {
 		this._status = value;
@@ -105,5 +160,64 @@ export class TaskStatusSelectComponent
 		this.onChanged.emit(event ? event.value : null);
 	}
 
-	ngOnDestroy() {}
+	/**
+	 * Get task statuses based organization & project
+	 */
+	getStatuses() {
+		if (!this.organization) {
+			return;
+		}
+
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
+
+		this.statusesService.get<IStatusFindInput>({
+			tenantId,
+			organizationId,
+			...(this.selectedProjectId
+				? {
+					projectId: this.selectedProjectId
+				  }
+				: {}),
+		}).pipe(
+			map(({ items, total }: IPagination<IStatus>) => total > 0 ? items : this._statuses),
+			tap((statuses: IStatus[]) => this.statuses$.next(statuses)),
+			untilDestroyed(this)
+		)
+		.subscribe();
+	}
+
+	/**
+	 * Create new status from ng-select tag
+	 *
+	 * @param name
+	 * @returns
+	 */
+	createNew = async (name: string) => {
+		if (!this.organization) {
+			return;
+		}
+		try {
+			const { tenantId } = this.store.user;
+			const { id: organizationId } = this.organization;
+
+			const source = this.statusesService.create({
+				tenantId,
+				organizationId,
+				name,
+				...(this.selectedProjectId
+					? {
+						projectId: this.selectedProjectId
+					  }
+					: {}),
+			});
+			await firstValueFrom(source);
+		} catch (error) {
+			this.toastrService.error(error);
+		} finally {
+			this.subject$.next(true)
+		}
+	};
+
+	ngOnDestroy(): void {}
 }
