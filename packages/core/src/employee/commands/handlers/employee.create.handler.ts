@@ -15,6 +15,7 @@ import { EmployeeCreateCommand } from '../employee.create.command';
 import { EmailService } from '../../../email/email.service';
 import { UserCreateCommand } from './../../../user/commands';
 import { RoleService } from './../../../role/role.service';
+import { UserService } from './../../../user/user.service';
 
 @CommandHandler(EmployeeCreateCommand)
 export class EmployeeCreateHandler
@@ -26,7 +27,8 @@ export class EmployeeCreateHandler
 		private readonly _userOrganizationService: UserOrganizationService,
 		private readonly _authService: AuthService,
 		private readonly _emailService: EmailService,
-		private readonly _roleService: RoleService
+		private readonly _roleService: RoleService,
+		private readonly _userService: UserService
 	) {}
 
 	public async execute(command: EmployeeCreateCommand): Promise<IEmployee> {
@@ -70,12 +72,18 @@ export class EmployeeCreateHandler
 			);
 			return employee;
 		} else {
-			const { userId } = input;
-			//2. Create employee for specific user
-			return await this._employeeService.create({
-				...input,
-				userId
-			});
+			try {
+				const { userId } = input;
+				const user = await this._userService.findOneByIdString(userId);
+
+				//2. Create employee for specific user
+				return await this._employeeService.create({
+					...input,
+					user
+				});
+			} catch (error) {
+				console.log('Error while creating employee for existing user', error);
+			}
 		}
 	}
 }
