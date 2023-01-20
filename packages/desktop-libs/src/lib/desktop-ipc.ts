@@ -116,14 +116,14 @@ export function ipcMainHandler(
 	ipcMain.on('time_tracker_ready', async (event, arg) => {
 		const auth = LocalStore.getStore('auth');
 		if (auth && auth.userId) {
-			const [lastTime] = await TimerData.getLastCaptureTimeSlot(
+			const lastTime = await TimerData.getLastCaptureTimeSlot(
 				knex,
 				LocalStore.beforeRequestParams()
 			);
 			console.log('Last Capture Time (Desktop IPC):', lastTime);
 			event.sender.send('timer_tracker_show', {
 				...LocalStore.beforeRequestParams(),
-				timeSlotId: lastTime ? lastTime.timeSlotId : null,
+				timeSlotId: lastTime ? lastTime.timeslotId : null,
 			});
 		}
 		// check connectivity seven seconds after start
@@ -292,7 +292,7 @@ export function ipcTimer(
 			return {
 				eventId: item.id,
 				timerId: arg.timerId,
-				durations: item.duration,
+				duration: item.duration,
 				data: JSON.stringify(item.data),
 				created_at: new Date(),
 				updated_at: new Date(),
@@ -582,7 +582,7 @@ export function ipcTimer(
 	});
 
 	ipcMain.on('refresh-timer', async (event) => {
-		const [lastTime] = await TimerData.getLastCaptureTimeSlot(
+		const lastTime = await TimerData.getLastCaptureTimeSlot(
 			knex,
 			LocalStore.beforeRequestParams()
 		);
@@ -592,7 +592,7 @@ export function ipcTimer(
 		);
 		event.sender.send('timer_tracker_show', {
 			...LocalStore.beforeRequestParams(),
-			timeSlotId: lastTime ? lastTime.timeSlotId : null,
+			timeSlotId: lastTime ? lastTime.timeslotId : null,
 		});
 		await syncIntervalQueue(timeTrackerWindow);
 	});

@@ -26,7 +26,7 @@ export class AppMenu {
 								windowPath.timeTrackerUi
 							);
 							window.show();
-						}
+						},
 					},
 					{ type: 'separator' },
 					{
@@ -48,11 +48,11 @@ export class AppMenu {
 									LocalStore.getApplicationConfig()
 								);
 							}, 500);
-						}
+						},
 					},
 					{ type: 'separator' },
-					{ role: 'quit', label: 'Exit' }
-				]
+					{ role: 'quit', label: 'Exit' },
+				],
 			},
 			{
 				label: 'Window',
@@ -67,7 +67,7 @@ export class AppMenu {
 						click() {
 							timeTrackerWindow.show();
 							setTimeout(async () => {
-								const [lastTime] =
+								const lastTime =
 									await TimerData.getLastCaptureTimeSlot(
 										knex,
 										LocalStore.beforeRequestParams()
@@ -81,12 +81,12 @@ export class AppMenu {
 									{
 										...LocalStore.beforeRequestParams(),
 										timeSlotId: lastTime
-											? lastTime.timeSlotId
-											: null
+											? lastTime.timeslotId
+											: null,
 									}
 								);
 							}, 1000);
-						}
+						},
 					},
 					{
 						id: 'window-setting',
@@ -111,26 +111,26 @@ export class AppMenu {
 										: 'goto_update'
 								);
 							}, 500);
-						}
+						},
 					},
 					{
-						type: 'separator'
+						type: 'separator',
 					},
 					{
 						label: 'Zoom In',
 						role: 'zoomIn',
 						accelerator: 'CmdOrCtrl+Plus',
 						visible: isZoomVisible,
-						enabled: isZoomEnabled
+						enabled: isZoomEnabled,
 					},
 					{
 						label: 'Zoom Out',
 						role: 'zoomOut',
 						accelerator: 'CmdOrCtrl+-',
 						visible: isZoomVisible,
-						enabled: isZoomEnabled
-					}
-				]
+						enabled: isZoomEnabled,
+					},
+				],
 			},
 			{
 				label: 'Edit',
@@ -138,8 +138,8 @@ export class AppMenu {
 					{ role: 'cut' },
 					{ role: 'copy' },
 					{ role: 'paste' },
-					{ role: 'selectAll' }
-				]
+					{ role: 'selectAll' },
+				],
 			},
 			{
 				label: 'Help',
@@ -148,7 +148,7 @@ export class AppMenu {
 						label: 'Learn More',
 						click() {
 							shell.openExternal('https://gauzy.co/');
-						}
+						},
 					},
 					{
 						id: 'devtools-setting',
@@ -162,7 +162,7 @@ export class AppMenu {
 								);
 							}
 							settingsWindow.webContents.toggleDevTools();
-						}
+						},
 					},
 					{
 						id: 'devtools-time-tracker',
@@ -172,7 +172,7 @@ export class AppMenu {
 						click() {
 							if (timeTrackerWindow)
 								timeTrackerWindow.webContents.toggleDevTools();
-						}
+						},
 					},
 					{
 						id: 'devtools-server',
@@ -182,10 +182,10 @@ export class AppMenu {
 						click() {
 							if (serverWindow)
 								serverWindow.webContents.toggleDevTools();
-						}
-					}
-				]
-			}
+						},
+					},
+				],
+			},
 		]);
 		Menu.setApplicationMenu(menu);
 	}
