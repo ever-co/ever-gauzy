@@ -4,7 +4,7 @@
 	"typescript.tsdk": "node_modules/typescript/lib",
 	"typescript.enablePromptUseWorkspaceTsdk": true,
 	"npm.packageManager": "yarn",
-	"editor.formatOnSave": true,
+	"editor.formatOnSave": false,
 	"eslint.format.enable": true,
 	"editor.tabSize": 4,
 	"files.insertFinalNewline": true,
