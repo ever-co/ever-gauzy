@@ -473,7 +473,7 @@ export default class TimerHandler {
 		log.info(`App Setting: ${moment().format()}`, appSetting);
 		log.info(`Config: ${moment().format()}`, config);
 		const updatePeriod = parseInt(appSetting.timer.updatePeriod, 10) * 60;
-		const timeLogId = this.lastTimer ? this.lastTimer.timeLogId : null;
+		const timeLogId = this.lastTimer ? this.lastTimer.timelogId : null;
 		const lastTimerId = this.lastTimer ? this.lastTimer.id : null;
 		const durationNow = now.diff(moment(lastTimeSlot), 'seconds');
 		let durationNonAfk = durationNow - dataCollection.durationAfk;
@@ -713,6 +713,7 @@ export default class TimerHandler {
 									await TimerData.updateTimerUpload(knex, {
 										id: job.data.data.id,
 										timeslotId: job.data.data.timeSlotId,
+										timesheetId: job.data.data.timeSheetId,
 									});
 									break;
 								default:
