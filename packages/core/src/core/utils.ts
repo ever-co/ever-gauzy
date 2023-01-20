@@ -4,7 +4,6 @@ import { moment } from './../core/moment-extend';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as os from 'os';
-import slugify from 'slugify';
 import { getConfig } from '@gauzy/config';
 
 namespace Utils {
