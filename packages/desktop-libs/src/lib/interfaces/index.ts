@@ -27,3 +27,5 @@ export * from './i-task-filter-option';
 export * from './i-project-service';
 export * from './i-tag-service';
 export * from './i-client-filter-option';
+export * from './i-timer-transaction';
+export * from './i-timer-service';
