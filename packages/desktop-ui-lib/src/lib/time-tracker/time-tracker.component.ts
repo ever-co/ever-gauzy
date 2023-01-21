@@ -168,6 +168,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	sound: any = null;
 	private _lastTotalWorkedToday = 0;
 	private _lastTotalWorkedWeek = 0;
+	private get _isOffline(): boolean {
+		return this._isOffline$.getValue();
+	}
 	private _isOffline$: BehaviorSubject<boolean> = new BehaviorSubject(false);
 	private _inQueue$: BehaviorSubject<number> = new BehaviorSubject(0);
 
@@ -276,7 +279,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					})();
 					this.getTodayTime(arg);
 					this.getUserInfo(arg, false);
-					console.log(this.projectSelect);
 					(async () => {
 						if (arg.timeSlotId) {
 							this.getLastTimeSlotImage(arg);
@@ -588,6 +590,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 							status: isOffline ? 'danger' : 'success',
 						}
 					);
+					if (!isOffline) {
+						this.refreshTimer();
+					}
 				});
 			}
 		);
@@ -598,6 +603,13 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				this._inQueue$.next(arg);
 			});
 		});
+
+		this.electronService.ipcRenderer.on(
+			'latest_screenshots',
+			(event, args) => {
+				this._mappingScreenshots(args);
+			}
+		);
 
 		this.electronService.ipcRenderer.send('time_tracker_ready');
 	}
@@ -1026,13 +1038,16 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	}
 
 	getLastTimeSlotImage(arg) {
+		if (this._isOffline) {
+			return;
+		}
 		this.timeTrackerService
 			.getTimeSlot(arg)
 			.then((res: any) => {
 				let { screenshots } = res;
 				console.log('Get Last Timeslot Image Response:', screenshots);
 				if (screenshots && screenshots.length > 0) {
-					screenshots = _.sortBy(screenshots, 'createdAt').reverse();
+					screenshots = _.sortBy(screenshots, 'recordedAt').reverse();
 					const [lastCaptureScreen] = screenshots;
 					console.log('Last Capture Screen:', lastCaptureScreen);
 					this.lastScreenCapture$.next(lastCaptureScreen);
@@ -1042,11 +1057,11 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				} else {
 					this.lastScreenCapture$.next({});
 				}
-				if (this.lastScreenCapture.createdAt) {
+				if (this.lastScreenCapture.recordedAt) {
 					this.lastScreenCapture$.next({
 						...this.lastScreenCapture,
 						textTime: moment(
-							this.lastScreenCapture.createdAt
+							this.lastScreenCapture.recordedAt
 						).fromNow(),
 					});
 				} else {
@@ -1060,9 +1075,10 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 	async localImage(img) {
 		try {
-			const convScreenshot = await this.getBase64ImageFromUrl(
-				img.fullUrl
-			);
+			const convScreenshot =
+				img && img.fullUrl
+					? await this.getBase64ImageFromUrl(img.fullUrl)
+					: img;
 			localStorage.setItem(
 				'lastScreenCapture',
 				JSON.stringify({
@@ -1436,6 +1452,18 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					})
 				);
 			} catch (error) {}
+			const remoteId = resActivities.id;
+			this.electronService.ipcRenderer.send('create-synced-interval', {
+				...paramActivity,
+				remoteId,
+				b64Imgs: screenshotImg.map((img) => {
+					this.localImage(this.buffToB64(img));
+					return {
+						b64img: this.buffToB64(img),
+						fileName: this.fileNameFormat(img),
+					};
+				}),
+			});
 		} catch (error) {
 			console.log('error send to api timeslot', error);
 			this.electronService.ipcRenderer.send('failed_save_time_slot', {
@@ -1672,10 +1700,32 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	}
 
 	public toggle(event: boolean) {
-		this._isOffline$.next(this._isOffline$.getValue());
+		this._isOffline$.next(this._isOffline);
 	}
 
 	public get inQueue$(): Observable<number> {
 		return this._inQueue$.asObservable();
+	}
+
+	private _mappingScreenshots(args: any[]) {
+		let screenshots = args.map((arg) => {
+			const imgUrl = 'data:image/png;base64,' + arg.screenshots[0].b64img;
+			return {
+				textTime: moment(arg.recordedAt).fromNow(),
+				createdAt: arg.recordedAt,
+				recordedAt: arg.recordedAt,
+				fullUrl: imgUrl,
+				thumbUrl: imgUrl,
+			};
+		});
+		if (screenshots.length > 0) {
+			screenshots = _.sortBy(screenshots, 'recordedAt').reverse();
+			const [lastCaptureScreen] = screenshots;
+			console.log('Last Capture Screen:', lastCaptureScreen);
+			this.lastScreenCapture$.next(lastCaptureScreen);
+			this.screenshots$.next(screenshots);
+			console.log('screenshots from db', screenshots);
+			this.localImage(this.lastScreenCapture);
+		}
 	}
 }

@@ -53,4 +53,8 @@ export class IntervalService implements IIntervalService<IntervalTO> {
 		const [res] = await this._intervalDAO.count(false, user);
 		return res.total;
 	}
+	public async screenshots(): Promise<any[]> {
+		const user = await this._userService.retrieve();
+		return await this._intervalDAO.screenshots(user);
+	}
 }

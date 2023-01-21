@@ -104,6 +104,7 @@ export function ipcMainHandler(
 			interval.synced = false;
 			await intervalService.create(interval.toObject());
 			await countIntervalQueue(timeTrackerWindow, false);
+			await latestScreenshots(timeTrackerWindow);
 		} catch (error) {
 			console.error('Error to save timeslot', error);
 		}
@@ -115,6 +116,10 @@ export function ipcMainHandler(
 
 	ipcMain.on('time_tracker_ready', async (event, arg) => {
 		const auth = LocalStore.getStore('auth');
+		const user = await userService.retrieve();
+		if (user && auth && user.employeeId !== auth.userId) {
+			timeTrackerWindow.webContents.send('logout');
+		}
 		if (auth && auth.userId) {
 			const lastTime = await TimerData.getLastCaptureTimeSlot(
 				knex,
@@ -131,6 +136,7 @@ export function ipcMainHandler(
 			try {
 				await offlineMode.connectivity();
 				await countIntervalQueue(timeTrackerWindow, false);
+				await latestScreenshots(timeTrackerWindow);
 			} catch (error) {
 				console.log('[ERROROFFLINECHECK001]', error);
 			}
@@ -221,6 +227,19 @@ export function ipcTimer(
 			const interval = new Interval(arg);
 			await intervalService.synced(interval);
 			await countIntervalQueue(timeTrackerWindow, true);
+		} catch (error) {
+			console.log('Error', error);
+		}
+	});
+
+	ipcMain.on('create-synced-interval', async (_event, arg) => {
+		try {
+			const interval = new Interval(arg);
+			interval.screenshots = arg.b64Imgs;
+			interval.stoppedAt = new Date();
+			interval.synced = true;
+			await intervalService.create(interval.toObject());
+			await latestScreenshots(timeTrackerWindow);
 		} catch (error) {
 			console.log('Error', error);
 		}
@@ -536,7 +555,11 @@ export function ipcTimer(
 	});
 
 	ipcMain.on('navigate_to_login', () => {
-		timeTrackerWindow.loadURL(timeTrackerPage(windowPath.timeTrackerUi));
+		if (timeTrackerWindow) {
+			timeTrackerWindow.loadURL(
+				timeTrackerPage(windowPath.timeTrackerUi)
+			);
+		}
 		LocalStore.updateAuthSetting({ isLogout: true });
 		settingWindow.webContents.send('logout_success');
 	});
@@ -595,6 +618,7 @@ export function ipcTimer(
 			timeSlotId: lastTime ? lastTime.timeslotId : null,
 		});
 		await syncIntervalQueue(timeTrackerWindow);
+		await latestScreenshots(timeTrackerWindow);
 	});
 
 	ipcMain.on('aw_status', (event, arg) => {
@@ -613,6 +637,7 @@ export function ipcTimer(
 			user.remoteId = arg.user.id;
 			user.organizationId = arg.organizationId;
 			await userService.save(user.toObject());
+			await latestScreenshots(timeTrackerWindow);
 		} catch (error) {
 			console.log('Error on save user', error);
 		}
@@ -693,4 +718,11 @@ async function countIntervalQueue(window: BrowserWindow, isSyncing: boolean) {
 		queue: total,
 		isSyncing: isSyncing,
 	});
+}
+
+async function latestScreenshots(window: BrowserWindow): Promise<void> {
+	window.webContents.send(
+		'latest_screenshots',
+		await intervalService.screenshots()
+	);
 }

@@ -106,4 +106,23 @@ export class IntervalDAO implements DAO<IntervalTO> {
 			console.log('[dao]: ', 'interval backed up fails : ', error);
 		}
 	}
+
+	public async screenshots(user: UserTO): Promise<any[]> {
+		try {
+			const latests = await this._provider
+				.connection<IntervalTO>(TABLE_NAME_INTERVALS)
+				.select('screenshots', 'createdAt as recordedAt')
+				.where('employeeId', user.employeeId)
+				.orderBy('id', 'desc')
+				.limit(10);
+			return latests.map((latest) => {
+				return {
+					...latest,
+					screenshots: JSON.parse(latest.screenshots),
+				};
+			});
+		} catch (error) {
+			console.error('[SCREENSHOTDAOERROR]', error);
+		}
+	}
 }
