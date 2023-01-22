@@ -9,7 +9,7 @@ import log from 'electron-log';
 import { ActivityType, TimeLogSourceEnum } from '@gauzy/contracts';
 import { DesktopEventCounter } from './desktop-event-counter';
 import { DesktopActiveWindow } from './desktop-active-window';
-import { DesktopOfflineModeHandler } from './offline';
+import { DesktopOfflineModeHandler, Timer, TimerService } from './offline';
 import { IOfflineMode } from './interfaces';
 
 console.log = log.log;
@@ -37,6 +37,7 @@ export default class TimerHandler {
 	private _activeWindow = new DesktopActiveWindow();
 	private _activities = [];
 	private _offlineMode: IOfflineMode = DesktopOfflineModeHandler.instance;
+	private _timerService = new TimerService();
 
 	constructor() {
 		/**
@@ -214,7 +215,12 @@ export default class TimerHandler {
 
 		this.timeSlotStart = moment();
 		console.log('Timeslot Start Time', this.timeSlotStart);
-
+		this._timerService.update(
+			new Timer({
+				id: this.lastTimer.id,
+				startedAt: new Date(),
+			})
+		);
 		this.intervalUpdateTime = setInterval(async () => {
 			console.log(
 				'Last Timer Id:',
@@ -277,6 +283,12 @@ export default class TimerHandler {
 			this._activities = [];
 			clearInterval(this.intervalTimer);
 			clearInterval(this.intervalUpdateTime);
+			this._timerService.update(
+				new Timer({
+					id: this.lastTimer.id,
+					stoppedAt: new Date(),
+				})
+			);
 		} catch (error) {
 			console.log('error on clear all intervals for timer');
 		}

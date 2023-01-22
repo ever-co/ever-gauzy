@@ -11,6 +11,8 @@ export class Timer implements TimerTO, Serializable<TimerTO> {
 	private _timelogId: string;
 	private _timesheetId: string;
 	private _timeslotId: string;
+	private _stoppedAt: Date;
+	private _startedAt: Date;
 
 	constructor(timer: TimerTO) {
 		this._id = timer.id;
@@ -22,6 +24,22 @@ export class Timer implements TimerTO, Serializable<TimerTO> {
 		this._timelogId = timer.timelogId;
 		this._timesheetId = timer.timesheetId;
 		this._timeslotId = timer.timeslotId;
+		this._stoppedAt = timer.stoppedAt;
+		this._startedAt = timer.startedAt;
+	}
+
+	public get startedAt(): Date {
+		return this._startedAt;
+	}
+	public set startedAt(value: Date) {
+		this._startedAt = value;
+	}
+
+	public get stoppedAt(): Date {
+		return this._stoppedAt;
+	}
+	public set stoppedAt(value: Date) {
+		this._stoppedAt = value;
 	}
 
 	public get id(): number {
@@ -90,6 +108,8 @@ export class Timer implements TimerTO, Serializable<TimerTO> {
 			timelogId: this._timelogId,
 			timesheetId: this._timesheetId,
 			timeslotId: this._timeslotId,
+			startedAt: this._startedAt,
+			stoppedAt: this._stoppedAt,
 		};
 	}
 }
