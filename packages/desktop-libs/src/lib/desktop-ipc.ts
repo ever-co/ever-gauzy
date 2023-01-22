@@ -151,7 +151,7 @@ export function ipcMainHandler(
 			} catch (error) {
 				console.log('[ERROROFFLINECHECK001]', error);
 			}
-		}, 5000);
+		}, 7000);
 	});
 
 	ipcMain.on('screen_shoot', async (event, arg) => {

@@ -619,13 +619,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			return;
 		}
 
-		if (!this.checkOnlineStatus()) {
-			this.toastrService.show(`Your connection lost`, `Warning`, {
-				status: 'danger',
-			});
-			return;
-		}
-
 		if (!this._passedAllAuthorizations()) return;
 
 		this.loading = true;
@@ -633,43 +626,40 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		if (this.validationField()) {
 			if (val) {
 				if (!this.start) {
-					const paramsTimeStart = {
-						token: this.token,
-						note: this.note,
-						projectId: this.projectSelect,
-						taskId: this.taskSelect,
-						organizationId: this.userOrganization.id,
-						tenantId: this.userData.tenantId,
-						organizationContactId: this.organizationContactId,
-						apiHost: this.apiHost,
-					};
-					this.timeTrackerService
-						.toggleApiStart(paramsTimeStart)
-						.then(async (res: any) => {
-							// We are temporary comment below condition
-							// if (res && res.stoppedAt) {
-							// 	await this.timeTrackerService.toggleApiStart(paramsTimeStart)
-							// }
-							this.startTime(res);
-						})
-						.catch((error) => {
-							this.loading = false;
-							let messageError = error.message;
-							if (
-								messageError.includes('Http failure response')
-							) {
-								messageError = `Can't connect to api server`;
-							} else {
-								messageError = 'Internal server error';
-							}
-							this.toastrService.show(messageError, `Warning`, {
-								status: 'danger',
-							});
-							log.info(
-								`Timer Toggle Catch: ${moment().format()}`,
-								error
-							);
+					try {
+						const paramsTimeStart = {
+							token: this.token,
+							note: this.note,
+							projectId: this.projectSelect,
+							taskId: this.taskSelect,
+							organizationId: this.userOrganization.id,
+							tenantId: this.userData.tenantId,
+							organizationContactId: this.organizationContactId,
+							apiHost: this.apiHost,
+						};
+						this.startTime(
+							this._isOffline
+								? null
+								: await this.timeTrackerService.toggleApiStart(
+										paramsTimeStart
+								  )
+						);
+					} catch (error) {
+						this.loading = false;
+						let messageError = error.message;
+						if (messageError.includes('Http failure response')) {
+							messageError = `Can't connect to api server`;
+						} else {
+							messageError = 'Internal server error';
+						}
+						this.toastrService.show(messageError, `Warning`, {
+							status: 'danger',
 						});
+						log.info(
+							`Timer Toggle Catch: ${moment().format()}`,
+							error
+						);
+					}
 				} else {
 					this.loading = false;
 					console.log('Error', 'Timer is already running');
@@ -800,6 +790,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	 * Get last running/completed timer status
 	 */
 	async getTimerStatus(arg) {
+		if (this._isOffline) return;
 		this.timerStatus = await this.timeTrackerService.getTimerStatus(arg);
 		console.log('Get Last Timer Status:', this.timerStatus);
 	}
