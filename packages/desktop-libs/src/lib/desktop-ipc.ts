@@ -25,7 +25,13 @@ import {
 import { DesktopOsInactivityHandler } from './desktop-os-inactivity-handler';
 import { DesktopOfflineModeHandler } from './offline/desktop-offline-mode-handler';
 import { IntervalTO } from './offline/dto/interval.dto';
-import { Interval, IntervalService, User, UserService } from './offline';
+import {
+	Interval,
+	IntervalService,
+	User,
+	UserService,
+	UserTO,
+} from './offline';
 
 const timerHandler = new TimerHandler();
 
@@ -116,10 +122,6 @@ export function ipcMainHandler(
 
 	ipcMain.on('time_tracker_ready', async (event, arg) => {
 		const auth = LocalStore.getStore('auth');
-		const user = await userService.retrieve();
-		if (user && auth && user.employeeId !== auth.userId) {
-			timeTrackerWindow.webContents.send('logout');
-		}
 		if (auth && auth.userId) {
 			const lastTime = await TimerData.getLastCaptureTimeSlot(
 				knex,
@@ -131,7 +133,16 @@ export function ipcMainHandler(
 				timeSlotId: lastTime ? lastTime.timeslotId : null,
 			});
 		}
-		// check connectivity seven seconds after start
+		try {
+			const user = await userService.retrieve();
+			if (auth && auth.userId !== user.remoteId) {
+				timeTrackerWindow.webContents.send('logout');
+			}
+		} catch (error) {
+			timeTrackerWindow.webContents.send('logout');
+		}
+
+		// check connectivity five seconds after start
 		setTimeout(async () => {
 			try {
 				await offlineMode.connectivity();
@@ -140,7 +151,7 @@ export function ipcMainHandler(
 			} catch (error) {
 				console.log('[ERROROFFLINECHECK001]', error);
 			}
-		}, 7000);
+		}, 5000);
 	});
 
 	ipcMain.on('screen_shoot', async (event, arg) => {
