@@ -1,11 +1,11 @@
 <ng-select
-	[addTag]="false"
-	[clearable]="true"
-	[items]="statuses"
+	[addTag]="addTag ? createNew : null"
 	(change)="selectStatus($event)"
 	[(ngModel)]="status"
 	[placeholder]="placeholder || 'TASKS_PAGE.TASKS_STATUS' | translate"
-	bindLabel="label"
-	bindValue="value"
 	appendTo="body"
-></ng-select>
+>
+	<ng-option *ngFor="let item of statuses$ | async" [value]="item.value">
+		{{ item.name | replace: '_':' ' | replace: '-':' ' | titlecase }}
+	</ng-option>
+</ng-select>

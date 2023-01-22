@@ -109,6 +109,7 @@ import {
 	RolePermission,
 	Screenshot,
 	Skill,
+	Status,
 	Tag,
 	Task,
 	Tenant,
@@ -126,7 +127,7 @@ import {
 	WarehouseProduct,
 	WarehouseProductVariant,
 	ImportRecord,
-	ImportHistory
+	ImportHistory,
 } from './internal';
 
 export const coreEntities = [
@@ -242,6 +243,7 @@ export const coreEntities = [
 	RolePermission,
 	Screenshot,
 	Skill,
+	Status,
 	Tag,
 	Task,
 	Tenant,
@@ -257,5 +259,5 @@ export const coreEntities = [
 	UserOrganization,
 	Warehouse,
 	WarehouseProduct,
-	WarehouseProductVariant
+	WarehouseProductVariant,
 ];

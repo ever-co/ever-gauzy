@@ -7,7 +7,7 @@ import {
 	filter,
 	first,
 	firstValueFrom,
-	Subject
+	Subject,
 } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -20,13 +20,13 @@ import {
 	IOrganizationProject,
 	ISelectedEmployee,
 	ITask,
-	TaskStatusEnum
+	TaskStatusEnum,
 } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import {
 	ErrorHandlingService,
 	Store,
-	TasksService
+	TasksService,
 } from './../../../../@core/services';
 import { API_PREFIX } from './../../../../@core/constants';
 import { PaginationFilterBaseComponent } from './../../../../@shared/pagination/pagination-filter-base.component';
@@ -37,11 +37,12 @@ import { MyTaskDialogComponent } from '../../../tasks/components/my-task-dialog/
 @Component({
 	selector: 'gauzy-project-management-details',
 	templateUrl: './project-management-details.component.html',
-	styleUrls: ['./project-management-details.component.scss']
+	styleUrls: ['./project-management-details.component.scss'],
 })
-export class ProjectManagementDetailsComponent extends PaginationFilterBaseComponent
-	implements OnInit, OnDestroy {
-
+export class ProjectManagementDetailsComponent
+	extends PaginationFilterBaseComponent
+	implements OnInit, OnDestroy
+{
 	private _smartTableSource: ServerDataSource;
 	private _tasks: ITask[] = [];
 	private _selectedEmployee: ISelectedEmployee;
@@ -68,7 +69,7 @@ export class ProjectManagementDetailsComponent extends PaginationFilterBaseCompo
 		const storeOrganization$ = this._store.selectedOrganization$;
 		const storeEmployee$ = this._store.selectedEmployee$;
 		const storeProject$ = this._store.selectedProject$;
-		combineLatest([storeOrganization$,storeEmployee$, storeProject$])
+		combineLatest([storeOrganization$, storeEmployee$, storeProject$])
 			.pipe(
 				debounceTime(300),
 				distinctUntilChange(),
@@ -115,30 +116,29 @@ export class ProjectManagementDetailsComponent extends PaginationFilterBaseCompo
 		const { id: organizationId } = this._organization;
 
 		this._smartTableSource = new ServerDataSource(this._httpClient, {
-			...(this.selectedEmployeeId ? {
-				endPoint: `${API_PREFIX}/tasks/employee`
-			} : {
-				endPoint: `${API_PREFIX}/tasks/pagination`
-			}),
-			relations: [
-				'project',
-				'tags'
-			],
+			...(this.selectedEmployeeId
+				? {
+						endPoint: `${API_PREFIX}/tasks/employee`,
+				  }
+				: {
+						endPoint: `${API_PREFIX}/tasks/pagination`,
+				  }),
+			relations: ['project', 'tags'],
 			where: {
 				organizationId,
 				tenantId,
 				...(this.selectedEmployeeId
 					? {
-						employeeId: this.selectedEmployeeId
+							employeeId: this.selectedEmployeeId,
 					  }
 					: {}),
 				...(this.selectedProjectId
 					? {
-						projectId: this.selectedProjectId
+							projectId: this.selectedProjectId,
 					  }
 					: {}),
-				...(this.filters.where ? this.filters.where : {})
-			}
+				...(this.filters.where ? this.filters.where : {}),
+			},
 		});
 	}
 
@@ -149,9 +149,9 @@ export class ProjectManagementDetailsComponent extends PaginationFilterBaseCompo
 		try {
 			this._setSmartTableSource();
 			const { activePage, itemsPerPage } = this.getPagination();
-			this._smartTableSource.setPaging(activePage, itemsPerPage, false).setSort([
-				{ field: 'dueDate', direction: 'asc' }
-			]);
+			this._smartTableSource
+				.setPaging(activePage, itemsPerPage, false)
+				.setSort([{ field: 'dueDate', direction: 'asc' }]);
 			await this._smartTableSource.getElements();
 			this._tasks.push(...this._smartTableSource.getData());
 			this._sortProjectByPopularity();
@@ -187,7 +187,7 @@ export class ProjectManagementDetailsComponent extends PaginationFilterBaseCompo
 		const activePage = this.pagination.activePage + 1;
 		this.setPagination({
 			...this.getPagination(),
-			activePage: activePage
+			activePage: activePage,
 		});
 	}
 
@@ -209,7 +209,7 @@ export class ProjectManagementDetailsComponent extends PaginationFilterBaseCompo
 
 	public get assigned(): ITask[] {
 		return this.tasks
-			.filter(({ status }) => status === this.status.TODO)
+			.filter(({ status }) => status === this.status.OPEN)
 			.reverse();
 	}
 
@@ -224,14 +224,14 @@ export class ProjectManagementDetailsComponent extends PaginationFilterBaseCompo
 					selectedTask: this.selectedEmployeeId
 						? ({
 								members: [{ ...this._selectedEmployee }] as any,
-								status: this.status.TODO
+								status: this.status.OPEN,
 						  } as ITask)
-						: ({} as ITask)
-				}
+						: ({} as ITask),
+				},
 			});
 		} else {
 			dialog = this._dialogService.open(MyTaskDialogComponent, {
-				context: {}
+				context: {},
 			});
 		}
 		if (dialog) {
@@ -251,7 +251,7 @@ export class ProjectManagementDetailsComponent extends PaginationFilterBaseCompo
 				const { id: organizationId } = this._organization;
 				const payload = Object.assign(data, {
 					organizationId,
-					tenantId
+					tenantId,
 				});
 				this._tasksService
 					.createTask(payload)

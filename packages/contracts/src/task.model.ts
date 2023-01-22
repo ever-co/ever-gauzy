@@ -1,4 +1,7 @@
-import { IBasePerTenantAndOrganizationEntityModel, IBaseRelationsEntityModel } from './base-entity.model';
+import {
+	IBasePerTenantAndOrganizationEntityModel,
+	IBaseRelationsEntityModel,
+} from './base-entity.model';
 import { IEmployee } from './employee.model';
 import { IInvoiceItem } from './invoice-item.model';
 import { IOrganizationProject } from './organization-projects.model';
@@ -27,7 +30,8 @@ export interface ITask extends IBasePerTenantAndOrganizationEntityModel {
 	creatorId?: IUser['id'];
 }
 
-export interface IGetTaskOptions extends IBasePerTenantAndOrganizationEntityModel {
+export interface IGetTaskOptions
+	extends IBasePerTenantAndOrganizationEntityModel {
 	projectId?: IOrganizationProject['id'];
 }
 
@@ -37,11 +41,16 @@ export interface IGetTaskByEmployeeOptions extends IBaseRelationsEntityModel {
 
 export interface IGetSprintsOptions extends IGetTaskOptions {}
 
+/**
+ * Default task statuses
+ */
 export enum TaskStatusEnum {
-	TODO = 'TODO',
-	IN_PROGRESS = 'In Progress',
-	FOR_TESTING = 'For Testing',
-	COMPLETED = 'Completed'
+	OPEN = 'open',
+	IN_PROGRESS = 'in-progress',
+	READY_FOR_REVIEW = 'ready-for-review',
+	IN_REVIEW = 'in-review',
+	BLOCKED = 'blocked',
+	COMPLETED = 'completed',
 }
 
 export enum TaskParticipantEnum {

@@ -23,8 +23,8 @@ import { TaskStatusEnum } from '@gauzy/contracts';
 				letter-spacing: 0em;
 				text-align: left;
 			}
-		`
-	]
+		`,
+	],
 })
 export class StatusViewComponent implements OnInit, ViewCell {
 	@Input() value: string;
@@ -33,17 +33,23 @@ export class StatusViewComponent implements OnInit, ViewCell {
 
 	ngOnInit(): void {
 		switch (this.value) {
-			case TaskStatusEnum.TODO:
-				this.status = 'warning';
+			case TaskStatusEnum.OPEN:
+				this.status = 'basic';
 				break;
 			case TaskStatusEnum.IN_PROGRESS:
 				this.status = 'info';
 				break;
-			case TaskStatusEnum.FOR_TESTING:
-				this.status = 'basic';
+			case TaskStatusEnum.READY_FOR_REVIEW:
+				this.status = 'info';
+				break;
+			case TaskStatusEnum.IN_REVIEW:
+				this.status = 'info';
 				break;
 			case TaskStatusEnum.COMPLETED:
 				this.status = 'success';
+				break;
+			case TaskStatusEnum.BLOCKED:
+				this.status = 'danger';
 				break;
 			default:
 				this.status = 'basic';

@@ -13,7 +13,7 @@ import {
 	TaskListTypeEnum,
 	IOrganization,
 	ISelectedEmployee,
-	PermissionsEnum
+	PermissionsEnum,
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange } from '@gauzy/common-angular';
@@ -27,7 +27,7 @@ import {
 	MyTasksStoreService,
 	Store,
 	TasksStoreService,
-	TeamTasksStoreService
+	TeamTasksStoreService,
 } from './../../../../@core/services';
 import {
 	AssignedToComponent,
@@ -37,29 +37,30 @@ import {
 	EmployeesMergedTeamsComponent,
 	NotesWithTagsComponent,
 	ProjectComponent,
-	StatusViewComponent
+	StatusViewComponent,
 } from './../../../../@shared/table-components';
 import { ALL_PROJECT_SELECTED } from './../../../../@shared/project-select/project/default-project';
 import { ServerDataSource } from './../../../../@core/utils/smart-table';
 import {
 	InputFilterComponent,
 	OrganizationTeamFilterComponent,
-	TaskStatusFilterComponent
+	TaskStatusFilterComponent,
 } from './../../../../@shared/table-filters';
 import {
 	IPaginationBase,
-	PaginationFilterBaseComponent
+	PaginationFilterBaseComponent,
 } from './../../../../@shared/pagination/pagination-filter-base.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-tasks',
 	templateUrl: './task.component.html',
-	styleUrls: ['task.component.scss']
+	styleUrls: ['task.component.scss'],
 })
-export class TaskComponent extends PaginationFilterBaseComponent
-	implements OnInit, OnDestroy {
-
+export class TaskComponent
+	extends PaginationFilterBaseComponent
+	implements OnInit, OnDestroy
+{
 	settingsSmartTable: object;
 	loading: boolean = false;
 	disableButton: boolean = true;
@@ -139,7 +140,9 @@ export class TaskComponent extends PaginationFilterBaseComponent
 					this.organization = organization;
 					this.selectedEmployeeId = employee ? employee.id : null;
 					this.selectedProject = project;
-					this.viewMode = !!project ? project.taskListType : TaskListTypeEnum.GRID;
+					this.viewMode = !!project
+						? project.taskListType
+						: TaskListTypeEnum.GRID;
 				}),
 				tap(() => this._refresh$.next(true)),
 				tap(() => this.taskSubject$.next(true)),
@@ -245,7 +248,7 @@ export class TaskComponent extends PaginationFilterBaseComponent
 
 		this.smartTableSource = new ServerDataSource(this.httpClient, {
 			...(this.viewComponentName == ComponentEnum.ALL_TASKS
-				? {endPoint: `${API_PREFIX}/tasks/pagination` }
+				? { endPoint: `${API_PREFIX}/tasks/pagination` }
 				: {}),
 			...(this.viewComponentName == ComponentEnum.TEAM_TASKS
 				? { endPoint: `${API_PREFIX}/tasks/team` }
@@ -261,42 +264,42 @@ export class TaskComponent extends PaginationFilterBaseComponent
 				'teams.members.employee',
 				'teams.members.employee.user',
 				'creator',
-				'organizationSprint'
+				'organizationSprint',
 			],
 			join: {
 				alias: 'task',
 				leftJoinAndSelect: {
 					members: 'task.members',
-					user: 'members.user'
-				}
+					user: 'members.user',
+				},
 			},
 			where: {
 				organizationId,
 				tenantId,
 				...(this.selectedProject && this.selectedProject.id
-					? 	{
-						...(this.viewMode === TaskListTypeEnum.SPRINT
-							? 	{
-									organizationSprintId: null
-								}
-							: {}),
-							projectId: this.selectedProject.id
-						}
+					? {
+							...(this.viewMode === TaskListTypeEnum.SPRINT
+								? {
+										organizationSprintId: null,
+								  }
+								: {}),
+							projectId: this.selectedProject.id,
+					  }
 					: {}),
-				...(this.selectedEmployeeId ?
-					{
-						members: {
-							id: this.selectedEmployeeId
-						}
-					}
+				...(this.selectedEmployeeId
+					? {
+							members: {
+								id: this.selectedEmployeeId,
+							},
+					  }
 					: {}),
-				...(this.filters.where ? this.filters.where : {})
+				...(this.filters.where ? this.filters.where : {}),
 			},
 			resultMap: (task: ITask) => {
 				return Object.assign({}, task, {
 					employees: task.members ? task.members : undefined,
 					assignTo: this._teamTaskStore._getTeamNames(task),
-					employeesMergedTeams: [task.members, task.teams]
+					employeesMergedTeams: [task.members, task.teams],
 				});
 			},
 			finalize: () => {
@@ -307,10 +310,10 @@ export class TaskComponent extends PaginationFilterBaseComponent
 				this.storeInstance.loadAllTasks(this._tasks);
 				this.setPagination({
 					...this.getPagination(),
-					totalItems: this.smartTableSource.count()
+					totalItems: this.smartTableSource.count(),
 				});
 				this.loading = false;
-			}
+			},
 		});
 	}
 
@@ -330,7 +333,7 @@ export class TaskComponent extends PaginationFilterBaseComponent
 				await this.smartTableSource.getElements();
 				this.setPagination({
 					...this.getPagination(),
-					totalItems: this.smartTableSource.count()
+					totalItems: this.smartTableSource.count(),
 				});
 			}
 		} catch (error) {
@@ -344,7 +347,7 @@ export class TaskComponent extends PaginationFilterBaseComponent
 			actions: false,
 			pager: {
 				display: false,
-				perPage: pagination ? pagination.itemsPerPage : 10
+				perPage: pagination ? pagination.itemsPerPage : 10,
 			},
 			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.TASK'),
 			columns: {
@@ -354,11 +357,11 @@ export class TaskComponent extends PaginationFilterBaseComponent
 					width: '10%',
 					filter: {
 						type: 'custom',
-						component: InputFilterComponent
+						component: InputFilterComponent,
 					},
 					filterFunction: (prefix: string) => {
 						this.setFilter({ field: 'prefix', search: prefix });
-					}
+					},
 				},
 				description: {
 					title: this.getTranslation('TASKS_PAGE.TASKS_TITLE'),
@@ -367,23 +370,23 @@ export class TaskComponent extends PaginationFilterBaseComponent
 					renderComponent: NotesWithTagsComponent,
 					filter: {
 						type: 'custom',
-						component: InputFilterComponent
+						component: InputFilterComponent,
 					},
 					filterFunction: (value) => {
 						this.setFilter({ field: 'title', search: value });
-					}
+					},
 				},
 				project: {
 					title: this.getTranslation('TASKS_PAGE.TASKS_PROJECT'),
 					type: 'custom',
 					renderComponent: ProjectComponent,
-					filter: false
+					filter: false,
 				},
 				createdAt: {
 					title: this.getTranslation('SM_TABLE.CREATED_AT'),
 					type: 'custom',
 					filter: false,
-					renderComponent: CreatedAtComponent
+					renderComponent: CreatedAtComponent,
 				},
 				creator: {
 					title: this.getTranslation('TASKS_PAGE.TASKS_CREATOR'),
@@ -391,11 +394,14 @@ export class TaskComponent extends PaginationFilterBaseComponent
 					renderComponent: CreateByComponent,
 					filter: {
 						type: 'custom',
-						component: InputFilterComponent
+						component: InputFilterComponent,
 					},
 					filterFunction: (value: string) => {
-						this.setFilter({ field: 'creator.firstName', search: value });
-					}
+						this.setFilter({
+							field: 'creator.firstName',
+							search: value,
+						});
+					},
 				},
 				...this.getColumnsByPage(),
 				dueDate: {
@@ -403,27 +409,27 @@ export class TaskComponent extends PaginationFilterBaseComponent
 					type: 'custom',
 					filter: {
 						type: 'custom',
-						component: InputFilterComponent
+						component: InputFilterComponent,
 					},
 					filterFunction: (value) => {
 						this.setFilter({ field: 'dueDate', search: value });
 					},
-					renderComponent: DateViewComponent
+					renderComponent: DateViewComponent,
 				},
 				status: {
 					title: this.getTranslation('TASKS_PAGE.TASKS_STATUS'),
 					type: 'custom',
-					width: '5%',
+					width: '10%',
 					renderComponent: StatusViewComponent,
 					filter: {
 						type: 'custom',
-						component: TaskStatusFilterComponent
+						component: TaskStatusFilterComponent,
 					},
 					filterFunction: (value) => {
 						this.setFilter({ field: 'status', search: value });
-					}
-				}
-			}
+					},
+				},
+			},
 		};
 	}
 
@@ -437,8 +443,8 @@ export class TaskComponent extends PaginationFilterBaseComponent
 						this.getTranslation('TASKS_PAGE.TASK_TEAMS'),
 					type: 'custom',
 					filter: false,
-					renderComponent: EmployeesMergedTeamsComponent
-				}
+					renderComponent: EmployeesMergedTeamsComponent,
+				},
 			};
 		} else if (this.isMyTasksPage()) {
 			return {
@@ -446,8 +452,8 @@ export class TaskComponent extends PaginationFilterBaseComponent
 					title: this.getTranslation('TASKS_PAGE.TASK_ASSIGNED_TO'),
 					type: 'custom',
 					filter: false,
-					renderComponent: AssignedToComponent
-				}
+					renderComponent: AssignedToComponent,
+				},
 			};
 		} else if (this.isTeamTaskPage()) {
 			return {
@@ -458,12 +464,15 @@ export class TaskComponent extends PaginationFilterBaseComponent
 					renderComponent: AssignedToComponent,
 					filter: {
 						type: 'custom',
-						component: OrganizationTeamFilterComponent
+						component: OrganizationTeamFilterComponent,
 					},
 					filterFunction: (value) => {
-						this.setFilter({ field: 'teams', search: value ? [value.id] : [] });
-					}
-				}
+						this.setFilter({
+							field: 'teams',
+							search: value ? [value.id] : [],
+						});
+					},
+				},
 			};
 		} else {
 			return {};
@@ -474,15 +483,15 @@ export class TaskComponent extends PaginationFilterBaseComponent
 		let dialog;
 		if (this.isTasksPage()) {
 			dialog = this.dialogService.open(AddTaskDialogComponent, {
-				context: {}
+				context: {},
 			});
 		} else if (this.isMyTasksPage()) {
 			dialog = this.dialogService.open(MyTaskDialogComponent, {
-				context: {}
+				context: {},
 			});
 		} else if (this.isTeamTaskPage()) {
 			dialog = this.dialogService.open(TeamTaskDialogComponent, {
-				context: {}
+				context: {},
 			});
 		}
 		if (dialog) {
@@ -502,7 +511,7 @@ export class TaskComponent extends PaginationFilterBaseComponent
 				const { id: organizationId } = this.organization;
 				const payload = Object.assign(data, {
 					organizationId,
-					tenantId
+					tenantId,
 				});
 				this.storeInstance
 					.createTask(payload)
@@ -520,27 +529,27 @@ export class TaskComponent extends PaginationFilterBaseComponent
 		if (selectedItem) {
 			this.selectTask({
 				isSelected: true,
-				data: selectedItem
+				data: selectedItem,
 			});
 		}
 		let dialog;
 		if (this.isTasksPage()) {
 			dialog = this.dialogService.open(AddTaskDialogComponent, {
 				context: {
-					selectedTask: this.selectedTask
-				}
+					selectedTask: this.selectedTask,
+				},
 			});
 		} else if (this.isMyTasksPage()) {
 			dialog = this.dialogService.open(MyTaskDialogComponent, {
 				context: {
-					selectedTask: this.selectedTask
-				}
+					selectedTask: this.selectedTask,
+				},
 			});
 		} else if (this.isTeamTaskPage()) {
 			dialog = this.dialogService.open(TeamTaskDialogComponent, {
 				context: {
-					selectedTask: this.selectedTask
-				}
+					selectedTask: this.selectedTask,
+				},
 			});
 		}
 		if (dialog) {
@@ -562,7 +571,7 @@ export class TaskComponent extends PaginationFilterBaseComponent
 				const { id: organizationId } = this.organization;
 				const payload = Object.assign(data, {
 					organizationId,
-					tenantId
+					tenantId,
 				});
 
 				this.storeInstance
@@ -581,15 +590,15 @@ export class TaskComponent extends PaginationFilterBaseComponent
 		if (selectedItem) {
 			this.selectTask({
 				isSelected: true,
-				data: selectedItem
+				data: selectedItem,
 			});
 		}
 		let dialog;
 		if (this.isTasksPage()) {
 			dialog = this.dialogService.open(AddTaskDialogComponent, {
 				context: {
-					selectedTask: this.selectedTask
-				}
+					selectedTask: this.selectedTask,
+				},
 			});
 		} else if (this.isMyTasksPage()) {
 			const selectedTask: ITask = Object.assign({}, this.selectedTask);
@@ -597,14 +606,14 @@ export class TaskComponent extends PaginationFilterBaseComponent
 			selectedTask.members = null;
 			dialog = this.dialogService.open(MyTaskDialogComponent, {
 				context: {
-					selectedTask: selectedTask
-				}
+					selectedTask: selectedTask,
+				},
 			});
 		} else if (this.isTeamTaskPage()) {
 			dialog = this.dialogService.open(TeamTaskDialogComponent, {
 				context: {
-					selectedTask: this.selectedTask
-				}
+					selectedTask: this.selectedTask,
+				},
 			});
 		}
 		if (dialog) {
@@ -625,7 +634,7 @@ export class TaskComponent extends PaginationFilterBaseComponent
 				const { id: organizationId } = this.organization;
 				const payload = Object.assign(data, {
 					organizationId,
-					tenantId
+					tenantId,
 				});
 				this.storeInstance
 					.createTask(payload)
@@ -643,7 +652,7 @@ export class TaskComponent extends PaginationFilterBaseComponent
 		if (selectedItem) {
 			this.selectTask({
 				isSelected: true,
-				data: selectedItem
+				data: selectedItem,
 			});
 		}
 		const result = await firstValueFrom(
@@ -695,7 +704,7 @@ export class TaskComponent extends PaginationFilterBaseComponent
 			return;
 		}
 		this._router.navigate(['/pages/tasks/settings', selectedProject.id], {
-			state: selectedProject
+			state: selectedProject,
 		});
 	}
 
@@ -706,7 +715,7 @@ export class TaskComponent extends PaginationFilterBaseComponent
 	 */
 	get isDefaultProject() {
 		if (this.selectedProject) {
-			return (this.selectedProject.id === this.defaultProject.id);
+			return this.selectedProject.id === this.defaultProject.id;
 		}
 		return true;
 	}
@@ -730,7 +739,7 @@ export class TaskComponent extends PaginationFilterBaseComponent
 	clearItem() {
 		this.selectTask({
 			isSelected: false,
-			data: null
+			data: null,
 		});
 		this.deselectAll();
 	}

@@ -90,6 +90,7 @@ export * from './role-permission.model';
 export * from './seed.model';
 export * from './skill-entity.model';
 export * from './sms.model';
+export * from './status.model';
 export * from './tag-entity.model';
 export * from './task.model';
 export * from './tenant.model';
@@ -113,5 +114,5 @@ export {
 	IBasePerTenantAndOrganizationEntityModel,
 	IBasePerTenantEntityModel,
 	IBaseSoftDeleteEntityModel,
-	IBaseRelationsEntityModel
+	IBaseRelationsEntityModel,
 } from './base-entity.model';
