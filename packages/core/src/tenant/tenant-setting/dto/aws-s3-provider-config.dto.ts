@@ -8,7 +8,7 @@ import { IsSecret } from "./../../../core/decorators";
  * Aws S3 FileStorage Provider Configuration DTO validation
  */
 export class AwsS3ProviderConfigDTO implements IS3FileStorageProviderConfig {
-	
+
 	@ApiProperty({ type: () => String })
 	@Transform((params: TransformFnParams) => params.value ? params.value.trim() : null)
 	@ValidateIf((it) => it.fileStorageProvider === FileStorageProviderEnum.S3)
@@ -24,7 +24,7 @@ export class AwsS3ProviderConfigDTO implements IS3FileStorageProviderConfig {
 	@IsString()
 	@IsSecret()
 	readonly aws_secret_access_key: string;
-	
+
 	@ApiProperty({ type: () => String })
 	@Transform((params: TransformFnParams) => params.value ? params.value.trim() : null)
 	@ValidateIf((it) => it.fileStorageProvider === FileStorageProviderEnum.S3)
