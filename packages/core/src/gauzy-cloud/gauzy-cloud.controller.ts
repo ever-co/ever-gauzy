@@ -71,7 +71,7 @@ export class GauzyCloudController {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Post('organization/:token')
-	async migrateOrgnaizationToGauzyCloud(
+	async migrateOrganizationToGauzyCloud(
 		@Body() body: IOrganizationCreateInput,
 		@Param('token') token: string
 	) {

@@ -647,7 +647,7 @@ export class SeedDataService {
 			)
 		)) as IOrganization[];
 
-		//default organization set as main orgnaization
+		//default organization set as main organaization
 		this.defaultOrganization = this.organizations.find(
 			(organization: IOrganization) => organization.isDefault
 		);
