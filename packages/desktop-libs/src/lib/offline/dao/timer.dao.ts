@@ -1,6 +1,6 @@
 import { ProviderFactory } from '../databases';
 import { DAO, ITimerTransaction, IDatabaseProvider } from '../../interfaces';
-import { TABLE_NAME_TIMERS, TimerTO } from '../dto';
+import { TABLE_NAME_TIMERS, TimerTO, UserTO } from '../dto';
 import { TimerTransaction } from '../transactions';
 
 export class TimerDAO implements DAO<TimerTO> {
@@ -53,5 +53,12 @@ export class TimerDAO implements DAO<TimerTO> {
 			.orderBy('id', 'desc')
 			.limit(1);
 		return last;
+	}
+
+	public async findAllNoSynced(user: UserTO): Promise<TimerTO[]> {
+		return await this._provider
+			.connection<TimerTO>(TABLE_NAME_TIMERS)
+			.where('employeeId', user.employeeId)
+			.whereNull('timesheetId');
 	}
 }

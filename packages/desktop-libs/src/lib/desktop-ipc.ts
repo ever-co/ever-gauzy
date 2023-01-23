@@ -28,9 +28,11 @@ import { IntervalTO } from './offline/dto/interval.dto';
 import {
 	Interval,
 	IntervalService,
+	Timer,
+	TimerService,
+	TimerTO,
 	User,
 	UserService,
-	UserTO,
 } from './offline';
 
 const timerHandler = new TimerHandler();
@@ -41,6 +43,7 @@ Object.assign(console, log.functions);
 const offlineMode = DesktopOfflineModeHandler.instance;
 const userService = new UserService();
 const intervalService = new IntervalService();
+const timerService = new TimerService();
 
 export function ipcMainHandler(
 	store,
@@ -243,6 +246,20 @@ export function ipcTimer(
 		}
 	});
 
+	ipcMain.on('update-synced-timer', async (event, arg) => {
+		try {
+			await timerService.update(
+				new Timer({
+					id: arg.id,
+					timelogId: arg.lastTimer.id,
+					timesheetId: arg.lastTimer.timesheetId,
+				})
+			);
+		} catch (error) {
+			console.log('[UPDATESYNCEDTIMERROR]', error);
+		}
+	});
+
 	ipcMain.on('create-synced-interval', async (_event, arg) => {
 		try {
 			const interval = new Interval(arg);
@@ -266,6 +283,7 @@ export function ipcTimer(
 		try {
 			timeTrackerWindow.webContents.send('offline-handler', false);
 			await countIntervalQueue(timeTrackerWindow, false);
+			await syncTimerQueue(timeTrackerWindow);
 			const intervals = await intervalService.backedUpAllNoSynced();
 			intervals.forEach((interval: IntervalTO) => {
 				interval.activities = JSON.parse(interval.activities as any);
@@ -736,4 +754,13 @@ async function latestScreenshots(window: BrowserWindow): Promise<void> {
 		'latest_screenshots',
 		await intervalService.screenshots()
 	);
+}
+
+async function syncTimerQueue(window: BrowserWindow) {
+	await offlineMode.connectivity();
+	if (offlineMode.enabled) return;
+	const timers = await timerService.findNoSynced();
+	timers.forEach((timer: TimerTO) => {
+		window.webContents.send('sync-timer', timer);
+	});
 }

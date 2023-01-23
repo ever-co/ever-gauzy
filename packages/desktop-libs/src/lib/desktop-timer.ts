@@ -287,6 +287,7 @@ export default class TimerHandler {
 				new Timer({
 					id: this.lastTimer.id,
 					stoppedAt: new Date(),
+					...(this._offlineMode.enabled ? { timesheetId: null } : {}),
 				})
 			);
 		} catch (error) {

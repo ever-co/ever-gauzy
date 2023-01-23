@@ -8,4 +8,5 @@ export interface ITimerService<T> {
 	update(timer: Partial<Timer>): Promise<void>;
 	findLastOne(): Promise<T>;
 	findLastCapture(): Promise<T>;
+	findNoSynced(): Promise<T[]>;
 }
