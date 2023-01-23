@@ -61,7 +61,7 @@ export class TenantService extends CrudService<Tenant> {
 			new TenantStatusBulkCreateCommand([tenant])
 		);
 
-		// 5. Create tenant default file stoage setting (LOCAL)
+		// 5. Create tenant default file storage setting (LOCAL)
 		const tenantId = tenant.id;
 		const fileSystem = this.configService.get(
 			'fileSystem'

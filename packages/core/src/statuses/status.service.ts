@@ -35,7 +35,7 @@ export class StatusService extends TenantAwareCrudService<Status> {
 	): Promise<IPagination<Status>> {
 		try {
 			/**
-			 * Find atleast one record or get global statuses
+			 * Find at least one record or get global statuses
 			 */
 			const cqb = this.repository.createQueryBuilder(this.alias);
 			cqb.where((qb: SelectQueryBuilder<Status>) => {
