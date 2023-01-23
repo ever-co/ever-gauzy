@@ -27,6 +27,7 @@ import {
 	ProjectBillingEnum,
 	ProjectOwnerEnum,
 	IStatus,
+	IPriority,
 } from '@gauzy/contracts';
 import {
 	Activity,
@@ -36,6 +37,7 @@ import {
 	OrganizationContact,
 	OrganizationSprint,
 	Payment,
+	Priority,
 	Status,
 	Tag,
 	Task,
@@ -44,10 +46,9 @@ import {
 } from '../core/entities/internal';
 
 @Entity('organization_project')
-export class OrganizationProject
-	extends TenantOrganizationBaseEntity
-	implements IOrganizationProject
-{
+export class OrganizationProject extends TenantOrganizationBaseEntity
+	implements IOrganizationProject {
+
 	@Index()
 	@Column()
 	name: string;
@@ -189,6 +190,12 @@ export class OrganizationProject
 	 */
 	@OneToMany(() => Status, (status) => status.project)
 	statuses?: IStatus[];
+
+	/**
+	 * Project Priorities
+	 */
+	@OneToMany(() => Priority, (status) => status.project)
+	priorities?: IPriority[];
 
 	/*
     |--------------------------------------------------------------------------

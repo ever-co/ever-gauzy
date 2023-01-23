@@ -108,6 +108,7 @@ export * from './role.model';
 export * from './password-reset.model';
 export * from './date-picker.model';
 export * from './project.model';
+export * from './priority.model';
 
 export { IBaseEntityModel as BaseEntityModel } from './base-entity.model';
 export {
