@@ -122,7 +122,9 @@
         "Wakatime",
         "webapp",
         "websockets",
-        "xpack"
+        "xpack",
+        "sluggable",
+        "kurkle"
     ],
     "useGitignore": true,
     "ignorePaths": [
@@ -148,6 +150,7 @@
         "**/vscode-extension/**",
         "package-lock.json",
         "yarn.lock",
-        "**/assets/i18n/*.json"
+        "**/assets/i18n/*.json",
+        "**/migrations/**"
     ]
 }
