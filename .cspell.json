@@ -124,7 +124,9 @@
         "websockets",
         "xpack",
         "sluggable",
-        "kurkle"
+        "kurkle",
+        "Quer",
+        "Alexi"
     ],
     "useGitignore": true,
     "ignorePaths": [
