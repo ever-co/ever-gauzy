@@ -1,49 +1,43 @@
-<form (ngSubmit)="submit()" #form="ngForm" aria-labelledby="title">
-	<nb-card class="card-scroll">
-		<nb-card-header class="d-flex justify-content-between">
-			<h4>
-				<span class="menu-setting">{{ 'MENU.SETTINGS' | translate }}/ </span>{{ 'MENU.FILE_STORAGE' | translate }}
-			</h4>
-		</nb-card-header>
-		<nb-card-body>
-			<div class="form-group">
-				<ng-template [ngIf]="fileStorageProviders.length > 0">
-					<label 
-						class="label cols-sm-3"
-						[innerText]="'SETTINGS_FILE_STORAGE.FILE_PROVIDER' | translate"
-					></label>
-					<nb-select
-						class="d-block"
-						size="medium"
-						[(selected)]="settings.fileStorageProvider"
-					>
-						<nb-option
-							*ngFor="let providerName of fileStorageProviders"
-							[value]="providerName.value | uppercase"
-						>
-							{{ providerName?.label | titlecase }}
-						</nb-option>
-					</nb-select>
-				</ng-template>
-			</div>
-			<ng-container [ngSwitch]="settings.fileStorageProvider">
-				<ng-container *ngSwitchCase="fileStorageProviderEnum.S3" [ngTemplateOutlet]="s3StorageFormTemplate"></ng-container>
-				<ng-container *ngSwitchCase="fileStorageProviderEnum.WASABI" [ngTemplateOutlet]="wasabiStorageFormTemplate"></ng-container>
-			</ng-container>
-		</nb-card-body>
-		<nb-card-footer>
-			<button
-				type="submit"
-				class="mr-2"
-				nbButton
-				status="success"
-			>
-				{{ 'BUTTONS.SAVE' | translate }}
-			</button>
-		</nb-card-footer>
-	</nb-card>
-</form>
+<ng-template [ngxPermissionsOnly]="PermissionsEnum.FILE_STORAGE_VIEW">
+	<form (ngSubmit)="submit()" #form="ngForm" aria-labelledby="title">
+		<nb-card class="card-scroll">
+			<nb-card-header class="d-flex justify-content-between">
+				<h4>
+					<span class="menu-setting">{{ 'MENU.SETTINGS' | translate }}/ </span>{{ 'MENU.FILE_STORAGE' | translate }}
+				</h4>
+			</nb-card-header>
+			<nb-card-body>
+				<file-provider-selector [settings]="settings"></file-provider-selector>
+				<ng-container [ngSwitch]="settings.fileStorageProvider">
+					<ng-container
+						*ngSwitchCase="FileStorageProviderEnum.S3"
+						[ngTemplateOutlet]="s3StorageFormTemplate"
+					></ng-container>
+					<ng-container
+						*ngSwitchCase="FileStorageProviderEnum.WASABI"
+						[ngTemplateOutlet]="wasabiStorageFormTemplate"
+					></ng-container>
+					<ng-container
+						*ngSwitchCase="FileStorageProviderEnum.CLOUDINARY"
+						[ngTemplateOutlet]="cloudinaryStorageFormTemplate"
+					></ng-container>
+				</ng-container>
+			</nb-card-body>
+			<nb-card-footer>
+				<button
+					type="submit"
+					class="mr-2"
+					nbButton
+					status="success"
+				>
+					{{ 'BUTTONS.SAVE' | translate }}
+				</button>
+			</nb-card-footer>
+		</nb-card>
+	</form>
+</ng-template>
 
+<!-- S3 Storage Configuration Template -->
 <ng-template #s3StorageFormTemplate>
 	<nb-card>
 		<nb-card-header>
@@ -65,7 +59,7 @@
 						fullWidth
 						class="w-100"
 						[placeholder]="
-							'SETTINGS_FILE_STORAGE.S3.PLACEHOLDERS.ACCESS_KEY_ID' 
+							'SETTINGS_FILE_STORAGE.S3.PLACEHOLDERS.ACCESS_KEY_ID'
 								| translate
 						"
 						required
@@ -85,7 +79,7 @@
 						fullWidth
 						class="w-100"
 						[placeholder]="
-							'SETTINGS_FILE_STORAGE.S3.PLACEHOLDERS.SECRET_ACCESS_KEY' 
+							'SETTINGS_FILE_STORAGE.S3.PLACEHOLDERS.SECRET_ACCESS_KEY'
 								| translate
 						"
 						required
@@ -105,7 +99,7 @@
 						fullWidth
 						class="w-100"
 						[placeholder]="
-							'SETTINGS_FILE_STORAGE.S3.PLACEHOLDERS.REGION' 
+							'SETTINGS_FILE_STORAGE.S3.PLACEHOLDERS.REGION'
 								| translate
 						"
 					/>
@@ -124,7 +118,7 @@
 						fullWidth
 						class="w-100"
 						[placeholder]="
-							'SETTINGS_FILE_STORAGE.S3.PLACEHOLDERS.BUCKET' 
+							'SETTINGS_FILE_STORAGE.S3.PLACEHOLDERS.BUCKET'
 								| translate
 						"
 					/>
@@ -134,6 +128,8 @@
 	</nb-card>
 </ng-template>
 
+
+<!-- Wasabi Storage Configuration Template -->
 <ng-template #wasabiStorageFormTemplate>
 	<nb-card>
 		<nb-card-header>
@@ -154,7 +150,7 @@
 						fullWidth
 						class="w-100"
 						[placeholder]="
-							'SETTINGS_FILE_STORAGE.WASABI.PLACEHOLDERS.ACCESS_KEY_ID' 
+							'SETTINGS_FILE_STORAGE.WASABI.PLACEHOLDERS.ACCESS_KEY_ID'
 								| translate
 						"
 						required
@@ -174,7 +170,7 @@
 						fullWidth
 						class="w-100"
 						[placeholder]="
-							'SETTINGS_FILE_STORAGE.WASABI.PLACEHOLDERS.SECRET_ACCESS_KEY' 
+							'SETTINGS_FILE_STORAGE.WASABI.PLACEHOLDERS.SECRET_ACCESS_KEY'
 								| translate
 						"
 						required
@@ -194,7 +190,7 @@
 						fullWidth
 						class="w-100"
 						[placeholder]="
-							'SETTINGS_FILE_STORAGE.WASABI.PLACEHOLDERS.REGION' 
+							'SETTINGS_FILE_STORAGE.WASABI.PLACEHOLDERS.REGION'
 								| translate
 						"
 					/>
@@ -205,7 +201,7 @@
 					'SETTINGS_FILE_STORAGE.WASABI.LABELS.SERVICE_URL' | translate
 				}}</label>
 				<div class="col-9 col-xl-4">
-					<input	
+					<input
 						id="wasabi_aws_service_url"
 						name="wasabi_aws_service_url"
 						[(ngModel)]="settings.wasabi_aws_service_url"
@@ -213,7 +209,7 @@
 						fullWidth
 						class="w-100"
 						[placeholder]="
-							'SETTINGS_FILE_STORAGE.WASABI.PLACEHOLDERS.SERVICE_URL' 
+							'SETTINGS_FILE_STORAGE.WASABI.PLACEHOLDERS.SERVICE_URL'
 								| translate
 						"
 					/>
@@ -232,9 +228,79 @@
 						fullWidth
 						class="w-100"
 						[placeholder]="
-							'SETTINGS_FILE_STORAGE.WASABI.PLACEHOLDERS.BUCKET' 
+							'SETTINGS_FILE_STORAGE.WASABI.PLACEHOLDERS.BUCKET'
 								| translate
 						"
+					/>
+				</div>
+			</div>
+		</nb-card-body>
+	</nb-card>
+</ng-template>
+
+<!-- Cloudinary Storage Configuration Template -->
+<ng-template #cloudinaryStorageFormTemplate>
+	<nb-card>
+		<nb-card-header>
+			<h6>
+				{{ 'SETTINGS_FILE_STORAGE.CLOUDINARY.HEADER' | translate }}
+			</h6>
+		</nb-card-header>
+		<nb-card-body>
+			<div class="form-group row">
+				<label class="label col-3 col-xl-2" for="cloudinary_cloud_name">
+					{{ 'SETTINGS_FILE_STORAGE.CLOUDINARY.LABELS.CLOUD_NAME' | translate }}
+				</label>
+				<div class="col-9 col-xl-4">
+					<input
+						id="cloudinary_cloud_name"
+						name="cloudinary_cloud_name"
+						[(ngModel)]="settings.cloudinary_cloud_name"
+						nbInput
+						fullWidth
+						class="w-100"
+						[placeholder]="'SETTINGS_FILE_STORAGE.CLOUDINARY.PLACEHOLDERS.CLOUD_NAME' | translate"
+						required
+					/>
+				</div>
+			</div>
+			<div class="form-group row">
+				<label class="label col-3 col-xl-2" for="cloudinary_api_key">
+					{{ 'SETTINGS_FILE_STORAGE.CLOUDINARY.LABELS.ACCESS_API_KEY' | translate }}
+				</label>
+				<div class="col-9 col-xl-4">
+					<input
+						id="cloudinary_api_key"
+						name="cloudinary_api_key"
+						[(ngModel)]="settings.cloudinary_api_key"
+						nbInput
+						fullWidth
+						class="w-100"
+						[placeholder]="
+							'SETTINGS_FILE_STORAGE.CLOUDINARY.PLACEHOLDERS.ACCESS_API_KEY'
+								| translate
+						"
+						required
+					/>
+				</div>
+			</div>
+			<div class="form-group row">
+				<label class="label col-3 col-xl-2" for="cloudinary_api_secret">
+					{{ 'SETTINGS_FILE_STORAGE.CLOUDINARY.LABELS.ACCESS_API_SECRET' | translate }}
+				</label>
+				<div class="col-9 col-xl-4">
+					<input
+						id="cloudinary_api_secret"
+						name="cloudinary_api_secret"
+						[(ngModel)]="settings.cloudinary_api_secret"
+						nbInput
+						fullWidth
+						class="w-100"
+						[placeholder]="
+							'SETTINGS_FILE_STORAGE.CLOUDINARY.PLACEHOLDERS.ACCESS_API_SECRET'
+								| translate
+						"
+						required
 					/>
 				</div>
 			</div>
