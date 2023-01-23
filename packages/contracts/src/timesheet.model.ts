@@ -1,13 +1,20 @@
-import { IBasePerTenantAndOrganizationEntityModel, IBaseRelationsEntityModel } from './base-entity.model';
+import {
+	IBasePerTenantAndOrganizationEntityModel,
+	IBaseRelationsEntityModel,
+} from './base-entity.model';
 import {
 	IOrganizationContact,
-	OrganizationContactBudgetTypeEnum
+	OrganizationContactBudgetTypeEnum,
 } from './organization-contact.model';
 import {
 	IOrganizationProject,
-	OrganizationProjectBudgetTypeEnum
+	OrganizationProjectBudgetTypeEnum,
 } from './organization-projects.model';
-import { IEmployee, IEmployeeFindInput, IRelationalEmployee } from './employee.model';
+import {
+	IEmployee,
+	IEmployeeFindInput,
+	IRelationalEmployee,
+} from './employee.model';
 import { ITask } from './task.model';
 import { ITag } from './tag-entity.model';
 import { IPaginationInput } from './core.model';
@@ -70,21 +77,24 @@ export enum TimesheetStatus {
 	PENDING = 'PENDING',
 	IN_REVIEW = 'IN REVIEW',
 	DENIED = 'DENIED',
-	APPROVED = 'APPROVED'
+	APPROVED = 'APPROVED',
 }
 
-export interface IUpdateTimesheetStatusInput extends IBasePerTenantAndOrganizationEntityModel {
+export interface IUpdateTimesheetStatusInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	ids: string | string[];
 	status?: TimesheetStatus;
 }
 
-export interface ISubmitTimesheetInput extends IBasePerTenantAndOrganizationEntityModel {
+export interface ISubmitTimesheetInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	ids: string | string[];
 	status: 'submit' | 'unsubmit';
 }
 
 export interface IGetTimesheetInput
-	extends IBasePerTenantAndOrganizationEntityModel, IBaseRelationsEntityModel {
+	extends IBasePerTenantAndOrganizationEntityModel,
+		IBaseRelationsEntityModel {
 	startDate?: Date | string;
 	endDate?: Date | string;
 	projectIds?: string[];
@@ -151,12 +161,12 @@ export enum TimeLogType {
 	TRACKED = 'TRACKED',
 	MANUAL = 'MANUAL',
 	IDLE = 'IDLE',
-	RESUMED = 'RESUMED'
+	RESUMED = 'RESUMED',
 }
 
 export enum ManualTimeLogAction {
 	ADDED = 'ADDED',
-	EDITED = 'EDITED'
+	EDITED = 'EDITED',
 }
 
 export enum TimeLogSourceEnum {
@@ -165,10 +175,11 @@ export enum TimeLogSourceEnum {
 	DESKTOP = 'DESKTOP',
 	BROWSER_EXTENSION = 'BROWSER_EXTENSION',
 	HUBSTAFF = 'HUBSTAFF',
-	UPWORK = 'UPWORK'
+	UPWORK = 'UPWORK',
 }
 
-export interface ITimeLogFilters extends IBasePerTenantAndOrganizationEntityModel {
+export interface ITimeLogFilters
+	extends IBasePerTenantAndOrganizationEntityModel {
 	date?: Date | string;
 	startDate?: Date | string;
 	endDate?: Date | string;
@@ -278,7 +289,7 @@ export interface ICreateActivityInput
 
 export enum ActivityType {
 	URL = 'URL',
-	APP = 'APP'
+	APP = 'APP',
 }
 
 export interface IURLMetaData {
@@ -288,9 +299,8 @@ export interface IURLMetaData {
 	[x: string]: any;
 }
 
-export interface IUpdateScreenshotInput
-	extends ICreateScreenshotInput {
-	id: string
+export interface IUpdateScreenshotInput extends ICreateScreenshotInput {
+	id: string;
 }
 
 export interface ICreateScreenshotInput
@@ -322,7 +332,10 @@ export interface IScreenshotMap {
 	timeSlots: ITimeSlot[];
 }
 
-export interface ITimerStatusInput extends IBasePerTenantAndOrganizationEntityModel, IBaseRelationsEntityModel, IRelationalEmployee {
+export interface ITimerStatusInput
+	extends IBasePerTenantAndOrganizationEntityModel,
+		IBaseRelationsEntityModel,
+		IRelationalEmployee {
 	source?: TimeLogSourceEnum;
 }
 
@@ -358,6 +371,8 @@ export interface ITimerToggleInput
 	isBillable?: boolean;
 	manualTimeSlot?: boolean;
 	version?: string;
+	startedAt?: Date;
+	stoppedAt?: Date;
 }
 
 export interface IManualTimeInput
@@ -376,7 +391,9 @@ export interface IManualTimeInput
 	isBillable?: boolean;
 }
 
-export interface IGetTimeLogInput extends ITimeLogFilters, IBaseRelationsEntityModel {
+export interface IGetTimeLogInput
+	extends ITimeLogFilters,
+		IBaseRelationsEntityModel {
 	timesheetId?: string;
 	teamId?: string;
 }
@@ -385,18 +402,25 @@ export interface IGetTimeLogReportInput extends IGetTimeLogInput {
 	groupBy?: ReportGroupByFilter;
 }
 
-export interface IGetTimeLogConflictInput extends IBasePerTenantAndOrganizationEntityModel, IBaseRelationsEntityModel {
+export interface IGetTimeLogConflictInput
+	extends IBasePerTenantAndOrganizationEntityModel,
+		IBaseRelationsEntityModel {
 	ignoreId?: string | string[];
 	startDate: string | Date;
 	endDate: string | Date;
 	employeeId: string;
 }
 
-export interface IGetTimeSlotInput extends ITimeLogFilters, IBaseRelationsEntityModel {
+export interface IGetTimeSlotInput
+	extends ITimeLogFilters,
+		IBaseRelationsEntityModel {
 	[x: string]: any;
 }
 
-export interface IGetActivitiesInput extends ITimeLogFilters, IPaginationInput, IBaseRelationsEntityModel {
+export interface IGetActivitiesInput
+	extends ITimeLogFilters,
+		IPaginationInput,
+		IBaseRelationsEntityModel {
 	types?: string[];
 	titles?: string[];
 	groupBy?: string;
@@ -492,7 +516,9 @@ export type IReportDayData =
 	| IReportDayGroupByProject
 	| IReportDayGroupByClient;
 
-export interface IGetTimeLimitReportInput extends IBasePerTenantAndOrganizationEntityModel, IBaseRelationsEntityModel {
+export interface IGetTimeLimitReportInput
+	extends IBasePerTenantAndOrganizationEntityModel,
+		IBaseRelationsEntityModel {
 	startDate?: string | Date;
 	endDate?: string | Date;
 	projectIds?: string[];
