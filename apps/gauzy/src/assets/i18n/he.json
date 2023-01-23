@@ -3859,7 +3859,7 @@
 		"DELETE_CONFIRM": "Alert"
 	},
 	"SETTINGS_FILE_STORAGE": {
-		"FILE_PROVIDER": "File provider",
+		"FILE_PROVIDER": "ספק קבצים",
 		"S3": {
 			"HEADER": "S3 Configuration",
 			"LABELS": {
