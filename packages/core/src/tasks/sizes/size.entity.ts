@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Column, Entity, Index, ManyToOne, RelationId } from 'typeorm';
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 import { IOrganizationProject, ITaskSize } from '@gauzy/contracts';
 import {
 	OrganizationProject,
@@ -23,14 +23,17 @@ export class TaskSize extends TenantOrganizationBaseEntity implements ITaskSize 
 	value: string;
 
 	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
 	@Column({ nullable: true })
 	description?: string;
 
 	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
 	@Column({ nullable: true })
 	icon?: string;
 
 	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
 	@Column({ nullable: true })
 	color?: string;
 
@@ -39,10 +42,10 @@ export class TaskSize extends TenantOrganizationBaseEntity implements ITaskSize 
 	isSystem?: boolean;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * Organization Project
@@ -52,6 +55,9 @@ export class TaskSize extends TenantOrganizationBaseEntity implements ITaskSize 
 	})
 	project?: IOrganizationProject;
 
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
 	@RelationId((it: TaskSize) => it.project)
 	@Index()
 	@Column({ nullable: true })
