@@ -1,38 +1,16 @@
-import {
-	Controller,
-	Delete,
-	ForbiddenException,
-	Param,
-	UseGuards,
-} from '@nestjs/common';
-import { DeleteResult } from 'typeorm';
-import { IStatus } from '@gauzy/contracts';
-import { UUIDValidationPipe } from './../../shared/pipes';
+import { Controller, UseGuards, } from '@nestjs/common';
 import { TenantPermissionGuard } from './../../shared/guards';
+import { CrudController } from './../../core/crud';
 import { TaskSizeService } from './size.service';
+import { TaskSize } from './size.entity';
 
 @UseGuards(TenantPermissionGuard)
 @Controller()
-export class TaskSizeController {
+export class TaskSizeController extends CrudController<TaskSize> {
 
 	constructor(
-		private readonly taskSizeService: TaskSizeService
-	) {}
-
-	/**
-	 * DELETE status by id
-	 *
-	 * @param id
-	 * @returns
-	 */
-	@Delete(':id')
-	async delete(
-		@Param('id', UUIDValidationPipe) id: IStatus['id']
-	): Promise<DeleteResult> {
-		try {
-			return await this.taskSizeService.delete(id);
-		} catch (error) {
-			throw new ForbiddenException();
-		}
+		protected readonly taskSizeService: TaskSizeService
+	) {
+		super(taskSizeService)
 	}
 }

@@ -1,38 +1,16 @@
-import {
-	Controller,
-	Delete,
-	ForbiddenException,
-	Param,
-	UseGuards,
-} from '@nestjs/common';
-import { DeleteResult } from 'typeorm';
-import { IStatus } from '@gauzy/contracts';
-import { UUIDValidationPipe } from './../../shared/pipes';
+import { Controller, UseGuards } from '@nestjs/common';
 import { TenantPermissionGuard } from './../../shared/guards';
+import { CrudController } from './../../core/crud';
 import { TaskPriorityService } from './priority.service';
+import { TaskPriority } from './priority.entity';
 
 @UseGuards(TenantPermissionGuard)
 @Controller()
-export class TaskPriorityController {
+export class TaskPriorityController extends CrudController<TaskPriority> {
 
 	constructor(
-		private readonly taskPriorityService: TaskPriorityService
-	) {}
-
-	/**
-	 * DELETE status by id
-	 *
-	 * @param id
-	 * @returns
-	 */
-	@Delete(':id')
-	async delete(
-		@Param('id', UUIDValidationPipe) id: IStatus['id']
-	): Promise<DeleteResult> {
-		try {
-			return await this.taskPriorityService.delete(id);
-		} catch (error) {
-			throw new ForbiddenException();
-		}
+		protected readonly taskPriorityService: TaskPriorityService
+	) {
+		super(taskPriorityService)
 	}
 }
