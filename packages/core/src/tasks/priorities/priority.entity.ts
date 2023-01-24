@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Column, Entity, Index, ManyToOne, RelationId } from 'typeorm';
 import { IOrganizationProject, ITaskPriority } from '@gauzy/contracts';
+import { IsNotEmpty, IsString } from 'class-validator';
 import {
 	OrganizationProject,
 	TenantOrganizationBaseEntity,
@@ -10,6 +11,8 @@ import {
 export class TaskPriority extends TenantOrganizationBaseEntity implements ITaskPriority {
 
 	@ApiProperty({ type: () => String })
+	@IsNotEmpty()
+	@IsString()
 	@Index()
 	@Column()
 	name: string;

@@ -155,6 +155,7 @@ export * from './../../organization/organization.subscriber';
 export * from './../../payment/payment.subscriber';
 export * from './../../reports/report.subscriber';
 export * from './../../statuses/status.subscriber';
+export * from './../../tasks/priorities/priority.subscriber';
 export * from './../../tasks/task.subscriber';
 export * from './../../tenant/tenant.subscriber';
 export * from './../../time-tracking/activity/activity.subscriber';
