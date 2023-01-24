@@ -23,6 +23,7 @@ import {
 	ITag,
 	ITask,
 	ITaskPriority,
+	ITaskSize,
 	ITimeLog,
 	OrganizationProjectBudgetTypeEnum,
 	ProjectBillingEnum,
@@ -41,6 +42,7 @@ import {
 	Tag,
 	Task,
 	TaskPriority,
+	TaskSize,
 	TenantOrganizationBaseEntity,
 	TimeLog,
 } from '../core/entities/internal';
@@ -196,6 +198,12 @@ export class OrganizationProject extends TenantOrganizationBaseEntity
 	 */
 	@OneToMany(() => TaskPriority, (status) => status.project)
 	priorities?: ITaskPriority[];
+
+	/**
+	 * Project Sizes
+	 */
+	@OneToMany(() => TaskSize, (size) => size.project)
+	sizes?: ITaskSize[];
 
 	/*
     |--------------------------------------------------------------------------
