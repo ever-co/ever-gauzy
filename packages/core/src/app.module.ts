@@ -73,8 +73,6 @@ import { EmployeeLevelModule } from './employee-level/employee-level.module';
 import { ExportAllModule } from './export-import/export/export-all.module';
 import { ImportAllModule } from './export-import/import/import-all.module';
 import { TaskModule } from './tasks/task.module';
-import { TaskPriorityModule } from './tasks/priorities/priority.module';
-import { TaskSizeModule } from './tasks/sizes/size.module';
 import { EquipmentSharingModule } from './equipment-sharing/equipment-sharing.module';
 import { OrganizationEmploymentTypeModule } from './organization-employment-type/organization-employment-type.module';
 import { TimeTrackingModule } from './time-tracking/time-tracking.module';
@@ -309,8 +307,6 @@ if (process.env.DB_TYPE === 'postgres') {
 		TagModule,
 		SkillModule,
 		StatusModule,
-		TaskPriorityModule,
-		TaskSizeModule,
 		LanguageModule,
 		InvoiceModule,
 		InvoiceItemModule,
