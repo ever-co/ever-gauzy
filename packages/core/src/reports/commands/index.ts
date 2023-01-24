@@ -1,1 +1,1 @@
-export * from './report-organization-bulk-create.command';
+export * from './report-organization-create.command';

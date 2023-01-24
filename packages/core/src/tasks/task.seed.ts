@@ -9,8 +9,7 @@ import {
 	IGetTaskOptions,
 	IOrganization,
 	ITag,
-	ITenant,
-	TaskStatusEnum
+	ITenant
 } from '@gauzy/contracts';
 import {
 	Organization,
@@ -19,7 +18,7 @@ import {
 	Tag,
 	Task,
 	User,
-	Employee
+	Employee,
 } from './../core/entities/internal';
 
 const GITHUB_API_URL = 'https://api.github.com';
@@ -33,17 +32,15 @@ export const createDefaultTask = async (
 
 	console.log(`${GITHUB_API_URL}/repos/ever-co/ever-gauzy/issues`);
 	const issues$ = httpService
-			.get(`${GITHUB_API_URL}/repos/ever-co/ever-gauzy/issues`)
-			.pipe(
-				map(
-					(response: AxiosResponse<any>) => response.data
-				)
-			);
+		.get(`${GITHUB_API_URL}/repos/ever-co/ever-gauzy/issues`)
+		.pipe(map((response: AxiosResponse<any>) => response.data));
 	const issues: any[] = await lastValueFrom(issues$);
 	console.log(`Done ${GITHUB_API_URL}/repos/ever-co/ever-gauzy/issues`);
 
 	let labels = [];
-	issues.forEach(async (issue) => { labels = labels.concat(issue.labels); });
+	issues.forEach(async (issue) => {
+		labels = labels.concat(issue.labels);
+	});
 
 	labels = uniq(labels, (label) => label.name);
 	const tags: ITag[] = await createTags(
@@ -66,24 +63,24 @@ export const createDefaultTask = async (
 
 	let count = 0;
 	for await (const issue of issues) {
-		let status = TaskStatusEnum.TODO;
-		if (issue.state === 'open') {
-			status = TaskStatusEnum.IN_PROGRESS;
-		}
 		const project = faker.random.arrayElement(defaultProjects);
 		const maxTaskNumber = await getMaxTaskNumberByProject(dataSource, {
 			tenantId: tenant.id,
 			organizationId: organization.id,
-			projectId: project.id
+			projectId: project.id,
 		});
 
 		const task = new Task();
-		task.tags = filter(tags, (tag: ITag) => !!issue.labels.find((label: any) => label.name === tag.name));
+		task.tags = filter(
+			tags,
+			(tag: ITag) =>
+				!!issue.labels.find((label: any) => label.name === tag.name)
+		);
 		task.tenant = tenant;
 		task.organization = organization;
 		task.title = issue.title;
 		task.description = issue.body;
-		task.status = status;
+		task.status = issue.state;
 		task.estimate = null;
 		task.dueDate = faker.date.future(0.3);
 		task.project = project;
@@ -109,17 +106,15 @@ export const createRandomTask = async (
 
 	console.log(`${GITHUB_API_URL}/repos/ever-co/ever-gauzy/issues`);
 	const issues$ = httpService
-			.get(`${GITHUB_API_URL}/repos/ever-co/ever-gauzy/issues`)
-			.pipe(
-				map(
-					(response: AxiosResponse<any>) => response.data
-				)
-			);
+		.get(`${GITHUB_API_URL}/repos/ever-co/ever-gauzy/issues`)
+		.pipe(map((response: AxiosResponse<any>) => response.data));
 	const issues: any[] = await lastValueFrom(issues$);
 	console.log(`Done ${GITHUB_API_URL}/repos/ever-co/ever-gauzy/issues`);
 
 	let labels = [];
-	issues.forEach(async (issue) => { labels = labels.concat(issue.labels); });
+	issues.forEach(async (issue) => {
+		labels = labels.concat(issue.labels);
+	});
 
 	labels = uniq(labels, (label) => label.name);
 
@@ -127,20 +122,23 @@ export const createRandomTask = async (
 		const { id: tenantId } = tenant;
 		const users = await dataSource.manager.find(User, {
 			where: {
-				tenantId
-			}
+				tenantId,
+			},
 		});
 		const organizations = await dataSource.manager.find(Organization, {
 			where: {
-				tenantId
-			}
+				tenantId,
+			},
 		});
 		for await (const organization of organizations) {
 			const { id: organizationId } = organization;
-			const projects = await dataSource.manager.findBy(OrganizationProject, {
-				tenantId,
-				organizationId
-			});
+			const projects = await dataSource.manager.findBy(
+				OrganizationProject,
+				{
+					tenantId,
+					organizationId,
+				}
+			);
 			if (!projects) {
 				console.warn(
 					'Warning: projects not found, RandomTasks will not be created'
@@ -149,7 +147,7 @@ export const createRandomTask = async (
 			}
 			const teams = await dataSource.manager.findBy(OrganizationTeam, {
 				tenantId,
-				organizationId
+				organizationId,
 			});
 
 			const tags: ITag[] = await createTags(
@@ -160,27 +158,32 @@ export const createRandomTask = async (
 			);
 			const employees = await dataSource.manager.findBy(Employee, {
 				tenantId,
-				organizationId
+				organizationId,
 			});
 			let count = 0;
 
 			for await (const issue of issues) {
-				let status = TaskStatusEnum.TODO;
-				if (issue.state === 'open') {
-					status = TaskStatusEnum.IN_PROGRESS;
-				}
 				const project = faker.random.arrayElement(projects);
-				const maxTaskNumber = await getMaxTaskNumberByProject(dataSource, {
-					tenantId: tenant.id,
-					organizationId: organization.id,
-					projectId: project.id
-				});
+				const maxTaskNumber = await getMaxTaskNumberByProject(
+					dataSource,
+					{
+						tenantId: tenant.id,
+						organizationId: organization.id,
+						projectId: project.id,
+					}
+				);
 
 				const task = new Task();
-				task.tags = filter(tags, (tag: ITag) => !!issue.labels.find((label: any) => label.name === tag.name));
+				task.tags = filter(
+					tags,
+					(tag: ITag) =>
+						!!issue.labels.find(
+							(label: any) => label.name === tag.name
+						)
+				);
 				task.title = issue.title;
 				task.description = issue.body;
-				task.status = status;
+				task.status = issue.state;
 				task.estimate = null;
 				task.dueDate = null;
 				task.project = project;
@@ -188,7 +191,7 @@ export const createRandomTask = async (
 				task.number = maxTaskNumber + 1;
 				task.teams = [faker.random.arrayElement(teams)];
 				task.creator = faker.random.arrayElement(users);
-				task.organization = organization,
+				task.organization = organization;
 				task.tenant = tenant;
 
 				if (count % 2 === 0) {
@@ -221,7 +224,7 @@ export async function createTags(
 				description: label.description,
 				color: label.color,
 				tenant,
-				organization
+				organization,
 			})
 	);
 
@@ -243,13 +246,20 @@ export async function getMaxTaskNumberByProject(
 	 * GET maximum task number by project
 	 */
 	const query = dataSource.createQueryBuilder(Task, 'task');
-	query.select(`COALESCE(MAX("${query.alias}"."number"), 0)`, "maxTaskNumber");
+	query.select(
+		`COALESCE(MAX("${query.alias}"."number"), 0)`,
+		'maxTaskNumber'
+	);
 	query.andWhere(
 		new Brackets((qb: WhereExpressionBuilder) => {
-			qb.andWhere(`"${query.alias}"."organizationId" =:organizationId`, { organizationId });
+			qb.andWhere(`"${query.alias}"."organizationId" =:organizationId`, {
+				organizationId,
+			});
 			qb.andWhere(`"${query.alias}"."tenantId" =:tenantId`, { tenantId });
 			if (isNotEmpty(projectId)) {
-				qb.andWhere(`"${query.alias}"."projectId" = :projectId`, { projectId });
+				qb.andWhere(`"${query.alias}"."projectId" = :projectId`, {
+					projectId,
+				});
 			} else {
 				qb.andWhere(`"${query.alias}"."projectId" IS NULL`);
 			}

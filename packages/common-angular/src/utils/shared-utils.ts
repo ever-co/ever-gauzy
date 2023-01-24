@@ -2,6 +2,7 @@ import { HttpParams } from '@angular/common/http';
 import * as moment from 'moment';
 import * as timezone from 'moment-timezone';
 import { distinctUntilChanged } from 'rxjs/operators';
+import slugify from 'slugify';
 
 // It will use for pass nested object or array in query params in get method.
 export function toParams(query) {
@@ -88,7 +89,7 @@ export function toFormData(obj: any, form?: any, namespace?: any) {
 				formKey = property;
 			}
 
-			// if the property is an object, but not a File, use recursivity.
+			// if the property is an object, but not a File, use recursively.
 			if (obj[property] instanceof Date) {
 				fd.append(formKey, obj[property].toISOString());
 			} else if (
@@ -325,4 +326,20 @@ export function __prepareExternalUrlLocation (url: string) {
 		removeTrailingSlash(location.origin),
 		addTrailingSlash(url)
 	].join('');
+}
+
+/**
+ * Generate slug from string value
+ *
+ * @param string
+ * @param replacement
+ * @returns {string}
+ */
+export function sluggable(string: string, replacement: any = '-'): string {
+	return slugify(string, {
+		replacement: replacement, // replace spaces with replacement character, defaults to `-`
+		remove: /[*+~()'"!:@,.]/g, // remove characters that match regex, defaults to `undefined`
+		lower: true, // convert to lower case, defaults to `false`
+		trim: true // trim leading and trailing replacement chars, defaults to `true`
+	}).replace(/[_]/g, replacement);
 }

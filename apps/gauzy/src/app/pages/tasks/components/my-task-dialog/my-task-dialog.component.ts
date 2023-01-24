@@ -1,5 +1,11 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { ITask, IOrganizationProject, IEmployee, ITag, TaskStatusEnum } from '@gauzy/contracts';
+import {
+	ITask,
+	IOrganizationProject,
+	IEmployee,
+	ITag,
+	TaskStatusEnum,
+} from '@gauzy/contracts';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -11,7 +17,7 @@ import {
 	ErrorHandlingService,
 	OrganizationProjectsService,
 	Store,
-	ToastrService
+	ToastrService,
 } from '../../../../@core/services';
 
 const initialTaskValue = {
@@ -23,13 +29,13 @@ const initialTaskValue = {
 	estimate: null,
 	dueDate: null,
 	description: '',
-	tags: null
+	tags: null,
 };
 
 @Component({
 	selector: 'ngx-my-task-dialog',
 	templateUrl: './my-task-dialog.component.html',
-	styleUrls: ['./my-task-dialog.component.scss']
+	styleUrls: ['./my-task-dialog.component.scss'],
 })
 export class MyTaskDialogComponent extends TranslationBaseComponent
 	implements OnInit {
@@ -75,7 +81,7 @@ export class MyTaskDialogComponent extends TranslationBaseComponent
 			//['client']
 			[],
 			{
-				organizationId: organizationId
+				organizationId: organizationId,
 			}
 		);
 
@@ -90,7 +96,7 @@ export class MyTaskDialogComponent extends TranslationBaseComponent
 		members,
 		estimate,
 		dueDate,
-		tags
+		tags,
 	}: ITask) {
 		const duration = moment.duration(estimate, 'seconds');
 		// select members from database of default value
@@ -108,22 +114,22 @@ export class MyTaskDialogComponent extends TranslationBaseComponent
 			number: [{ value: '', disabled: true }],
 			title: [title, Validators.required],
 			project: [project],
-			projectId: (project) ? project.id : null,
-			status: [status ? status : TaskStatusEnum.TODO],
+			projectId: project ? project.id : null,
+			status: [status ? status : TaskStatusEnum.OPEN],
 			members: [members],
 			estimateDays: [duration.days() || ''],
 			estimateHours: [
 				duration.hours() || '',
-				[Validators.min(0), Validators.max(23)]
+				[Validators.min(0), Validators.max(23)],
 			],
 			estimateMinutes: [
 				duration.minutes() || '',
-				[Validators.min(0), Validators.max(59)]
+				[Validators.min(0), Validators.max(59)],
 			],
 			dueDate: [dueDate],
 			description: [description],
 			tags: [tags],
-			teams: []
+			teams: [],
 		});
 		this.tags = this.form.get('tags').value || [];
 	}
@@ -139,7 +145,7 @@ export class MyTaskDialogComponent extends TranslationBaseComponent
 			);
 			return this.organizationProjectsService.create({
 				name,
-				organizationId: this.organizationId
+				organizationId: this.organizationId,
 			});
 		} catch (error) {
 			this.errorHandler.handleError(error);
@@ -173,8 +179,10 @@ export class MyTaskDialogComponent extends TranslationBaseComponent
 			return;
 		}
 
-		const { items } = await firstValueFrom(this.employeesService
-			.getAll(['user'], { organization: { id: organizationId } })
+		const { items } = await firstValueFrom(
+			this.employeesService.getAll(['user'], {
+				organization: { id: organizationId },
+			})
 		);
 
 		this.employees = items;

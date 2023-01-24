@@ -6,7 +6,7 @@ import {
 	IOrganizationProject,
 	ITag,
 	IUserOrganization,
-	TaskStatusEnum
+	TaskStatusEnum,
 } from '@gauzy/contracts';
 import { NbToastrService } from '@nebular/theme';
 import { Color, rgbString } from '@kurkle/color';
@@ -18,7 +18,7 @@ Object.assign(console, log.functions);
 @Component({
 	selector: 'ngx-tasks',
 	templateUrl: './tasks.component.html',
-	styleUrls: ['./tasks.component.scss']
+	styleUrls: ['./tasks.component.scss'],
 })
 export class TasksComponent implements OnInit {
 	@Input() userData: IUserOrganization;
@@ -36,21 +36,29 @@ export class TasksComponent implements OnInit {
 	tags: ITag[] = [];
 	statuses = [
 		{
-			id: 'TODO',
-			name: TaskStatusEnum.TODO
+			id: TaskStatusEnum.OPEN,
+			name: TaskStatusEnum.OPEN,
 		},
 		{
-			id: 'In Progress',
-			name: TaskStatusEnum.IN_PROGRESS
+			id: TaskStatusEnum.IN_PROGRESS,
+			name: TaskStatusEnum.IN_PROGRESS,
 		},
 		{
-			id: 'For Testing',
-			name: TaskStatusEnum.FOR_TESTING
+			id: TaskStatusEnum.READY_FOR_REVIEW,
+			name: TaskStatusEnum.READY_FOR_REVIEW,
 		},
 		{
-			id: 'Completed',
-			name: TaskStatusEnum.COMPLETED
-		}
+			id: TaskStatusEnum.IN_REVIEW,
+			name: TaskStatusEnum.IN_REVIEW,
+		},
+		{
+			id: TaskStatusEnum.BLOCKED,
+			name: TaskStatusEnum.BLOCKED,
+		},
+		{
+			id: TaskStatusEnum.COMPLETED,
+			name: TaskStatusEnum.COMPLETED,
+		},
 	];
 
 	constructor(
@@ -71,21 +79,21 @@ export class TasksComponent implements OnInit {
 			estimateDays: new FormControl(null, [Validators.min(0)]),
 			estimateHours: new FormControl(null, [
 				Validators.min(0),
-				Validators.max(23)
+				Validators.max(23),
 			]),
 			estimateMinutes: new FormControl(null, [
 				Validators.min(0),
-				Validators.max(59)
+				Validators.max(59),
 			]),
 			members: new FormControl([]),
 			organizationId: new FormControl(this.userData.organizationId),
 			project: new FormControl(null),
 			projectId: new FormControl(null),
-			status: new FormControl(this.statuses[0].id),
+			status: new FormControl(TaskStatusEnum.OPEN),
 			tags: new FormControl([]),
 			teams: new FormControl([]),
 			tenantId: new FormControl(this.userData.tenantId),
-			title: new FormControl(null, Validators.required)
+			title: new FormControl(null, Validators.required),
 		});
 	}
 
@@ -134,7 +142,7 @@ export class TasksComponent implements OnInit {
 			this.form.patchValue({
 				members: [...this.employees],
 				estimate: days + hours + minutes,
-				projectId: project ? project.id : null
+				projectId: project ? project.id : null,
 			});
 
 			await this.timeTrackerService.saveNewTask(
@@ -144,13 +152,13 @@ export class TasksComponent implements OnInit {
 			this.isAddTask.emit(false);
 			this.newTaskCallback.emit({
 				isSuccess: true,
-				message: 'Added successfully'
+				message: 'Added successfully',
 			});
 		} catch (error) {
 			console.log(error);
 			this.newTaskCallback.emit({
 				isSuccess: false,
-				message: error.message
+				message: error.message,
 			});
 		}
 	}
@@ -167,7 +175,7 @@ export class TasksComponent implements OnInit {
 				tenantId,
 				...(organizationContactId
 					? { contactId: organizationContactId }
-					: {})
+					: {}),
 			};
 
 			request['members'] = [...this.employees];
@@ -211,7 +219,7 @@ export class TasksComponent implements OnInit {
 			r: parseInt(hex.slice(1, 3), 16),
 			g: parseInt(hex.slice(3, 5), 16),
 			b: parseInt(hex.slice(5, 7), 16),
-			a: 1
+			a: 1,
 		});
 	}
 

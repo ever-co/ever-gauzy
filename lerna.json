@@ -8,6 +8,7 @@
 		"labels": {}
 	},
 	"packages": ["libs/*", "apps/*", "packages/*", "packages/plugins/*"],
+	"useNx": true,
 	"useWorkspaces": true,
 	"command": {
 		"exec": {

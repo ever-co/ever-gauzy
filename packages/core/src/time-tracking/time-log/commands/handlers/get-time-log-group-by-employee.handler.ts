@@ -11,7 +11,8 @@ import { GetTimeLogGroupByEmployeeCommand } from '../get-time-log-group-by-emplo
 
 @CommandHandler(GetTimeLogGroupByEmployeeCommand)
 export class GetTimeLogGroupByEmployeeHandler
-	implements ICommandHandler<GetTimeLogGroupByEmployeeCommand> {
+	implements ICommandHandler<GetTimeLogGroupByEmployeeCommand>
+{
 	constructor() {}
 
 	public async execute(
@@ -23,17 +24,23 @@ export class GetTimeLogGroupByEmployeeHandler
 			.groupBy((log) => log.employeeId)
 			.map((byEmployeeLogs: ITimeLog[]) => {
 				/**
-				* calculate avarage duration for specific employee.
-				*/
-				const avgDuration = reduce(pluck(byEmployeeLogs, 'duration'), ArraySum, 0);
+				 * calculate average duration for specific employee.
+				 */
+				const avgDuration = reduce(
+					pluck(byEmployeeLogs, 'duration'),
+					ArraySum,
+					0
+				);
 				/**
-				* calculate average activity for specific date range.
-				*/
-				const slots: ITimeSlot[] = chain(byEmployeeLogs).pluck('timeSlots').flatten(true).value();
-				const avgActivity = (
-					(reduce(pluck(slots, 'overall'), ArraySum, 0) * 100) / 
-					(reduce(pluck(slots, 'duration'), ArraySum, 0))
-				) || 0;
+				 * calculate average activity for specific date range.
+				 */
+				const slots: ITimeSlot[] = chain(byEmployeeLogs)
+					.pluck('timeSlots')
+					.flatten(true)
+					.value();
+				const avgActivity =
+					(reduce(pluck(slots, 'overall'), ArraySum, 0) * 100) /
+						reduce(pluck(slots, 'duration'), ArraySum, 0) || 0;
 
 				const employee =
 					byEmployeeLogs.length > 0
@@ -49,20 +56,35 @@ export class GetTimeLogGroupByEmployeeHandler
 							.groupBy('projectId')
 							.map((byProjectLogs: ITimeLog[]) => {
 								/**
-								* calculate avarage duration of the employee
-								*/
-								const sum = reduce(pluck(byProjectLogs, 'duration'), ArraySum, 0);
+								 * calculate average duration of the employee
+								 */
+								const sum = reduce(
+									pluck(byProjectLogs, 'duration'),
+									ArraySum,
+									0
+								);
 								/**
-								* calculate average activity of the employee
-								*/
-								const slots: ITimeSlot[] = chain(byProjectLogs).pluck('timeSlots').flatten(true).value();
+								 * calculate average activity of the employee
+								 */
+								const slots: ITimeSlot[] = chain(byProjectLogs)
+									.pluck('timeSlots')
+									.flatten(true)
+									.value();
 								/**
-								* Calculate Average activity of the employee
-								*/
-								const avgActivity = (
-									(reduce(pluck(slots, 'overall'), ArraySum, 0) * 100) / 
-									(reduce(pluck(slots, 'duration'), ArraySum, 0))
-								) || 0;
+								 * Calculate average activity of the employee
+								 */
+								const avgActivity =
+									(reduce(
+										pluck(slots, 'overall'),
+										ArraySum,
+										0
+									) *
+										100) /
+										reduce(
+											pluck(slots, 'duration'),
+											ArraySum,
+											0
+										) || 0;
 
 								const project =
 									byProjectLogs.length > 0
@@ -74,11 +96,12 @@ export class GetTimeLogGroupByEmployeeHandler
 										? byProjectLogs[0].task
 										: null;
 
-								const client = 
+								const client =
 									byProjectLogs.length > 0
 										? byProjectLogs[0].organizationContact
-											: (project) 
-												? project.organizationContact : null;
+										: project
+										? project.organizationContact
+										: null;
 
 								return {
 									task,
@@ -89,10 +112,9 @@ export class GetTimeLogGroupByEmployeeHandler
 										parseFloat(avgActivity + '').toFixed(2)
 									)
 								};
-
 							})
 							.value();
-							
+
 						return {
 							date,
 							projectLogs: byProject
